@@ -276,6 +276,7 @@ and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         (*added to support fractional splitting of data nodes*)
                         h_formula_data_origins : ident list;
                         h_formula_data_original : bool;
+                        (*h_formula_data_abstract_type : CP.spec_var option;  asankhs: keep track of the mathematical object that is associated with this points to *)
                         h_formula_data_arguments : CP.spec_var list;
 			h_formula_data_holes : int list; (* An Hoa : list of fields not to be considered for partial structures *) (*store positions*)
                         h_formula_data_label : formula_label option;
@@ -2926,7 +2927,7 @@ and h_fv_x (h : h_formula) : CP.spec_var list = match h with
 	h_formula_conjstar_pos = pos})
   | ConjConj ({h_formula_conjconj_h1 = h1;
 	h_formula_conjconj_h2 = h2;
-	h_formula_conjconj_pos = pos}) -> Gen.BList.remove_dups_eq (=) (h_fv_x h1 @ h_fv_x h2)
+	h_formula_conjconj_pos = pos}) -> CP.remove_dups_svl_stable (h_fv_x h1 @ h_fv_x h2)
   | Phase ({h_formula_phase_rd = h1;
 	h_formula_phase_rw = h2;
 	h_formula_phase_pos = pos}) -> Gen.BList.remove_dups_eq (=) (h_fv_x h1 @ h_fv_x h2)
@@ -5843,7 +5844,7 @@ let check_imm_mis rhs_mis rhs0 =
   let pr = !print_h_formula in
   Debug.no_2 "check_imm_mis" pr pr pr check_imm_mis rhs_mis rhs0
 
-
+(* asankhs : what is this method supported to do ? *)
 let rec heap_trans_heap_node fct f0 =
   let recf = heap_trans_heap_node fct in
   let rec helper f=
@@ -5872,7 +5873,8 @@ let rec heap_trans_heap_node fct f0 =
           | _ ->
             Star {b with h_formula_star_h2 = hf2; h_formula_star_h1 = hf1}
         end
-      | ConjStar _|ConjConj _|StarMinus _ -> report_error no_pos "CF.heap_trans_heap_node: not handle yet"
+      | ConjStar _|ConjConj _|StarMinus _ -> f
+  (*report_error no_pos "CF.heap_trans_heap_node: not handle yet"*)
   in
   helper f0
 
@@ -12321,13 +12323,26 @@ let join_star_conjunctions_opt (hs : h_formula list) : (h_formula option)  =
   Debug.no_1 "join_star_conjunctions_opt" pr1 pr2
   join_star_conjunctions_opt_x hs
 
+let split_all_conjunctions (f:h_formula) : (h_formula list) =
+  let rec helper f = 
+    match f with
+      | Star({h_formula_star_h1 = h1;
+              h_formula_star_h2 = h2;}) 
+      | StarMinus({h_formula_starminus_h1 = h1;
+              h_formula_starminus_h2 = h2;})
+      | Conj({h_formula_conj_h1 = h1;
+              h_formula_conj_h2 = h2;}) ->
+          let res1 = helper h1 in
+          let res2 = helper h2 in
+          (res1@res2)
+      | _ -> [f]
+  in helper f
 
 let split_star_conjunctions (f:h_formula): (h_formula list) =
   let rec helper f = 
   match f with
   | Star({h_formula_star_h1 = h1;
-	h_formula_star_h2 = h2;
-	h_formula_star_pos = pos;}) ->
+	h_formula_star_h2 = h2;}) ->
         let res1 = helper h1 in
         let res2 = helper h2 in
         (res1@res2)
@@ -17942,6 +17957,28 @@ let elim_e_var to_keep (f0 : formula) : formula =
 (* let rearrange_failesc_context_list fcl = *)
 (*   List.map rearrange_failesc_context fcl *)
 
+let rec contains_starminus (f:h_formula) : bool = 
+(*let _ = print_string ("Checking StarMinus = "^ (string_of_h_formula f) ^ "\n") in *)
+match f with
+| DataNode (h1) -> false
+| ViewNode (h1) -> false
+| Star ({h_formula_star_h1 = h1;
+		   h_formula_star_h2 = h2;
+		   h_formula_star_pos = pos}) 
+| Phase ({h_formula_phase_rd = h1;
+		    h_formula_phase_rw = h2;
+		    h_formula_phase_pos = pos})
+| Conj({h_formula_conj_h1 = h1;
+		  h_formula_conj_h2 = h2;
+		  h_formula_conj_pos = pos})
+| ConjStar({h_formula_conjstar_h1 = h1;
+		   h_formula_conjstar_h2 = h2;
+		  h_formula_conjstar_pos = pos})
+| ConjConj({h_formula_conjconj_h1 = h1;
+		   h_formula_conjconj_h2 = h2;
+		  h_formula_conjconj_pos = pos})-> (contains_starminus h1) || (contains_starminus h2)
+| StarMinus _ -> true
+| _ -> false
 let rec is_inf_tnt_struc_formula f =
   match f with 
   | EList el -> List.exists (fun (_, f) -> is_inf_tnt_struc_formula f) el 

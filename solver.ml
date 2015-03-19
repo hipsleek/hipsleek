@@ -1903,10 +1903,11 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
           normalize_combine_star uf1 uf2 pos
     | StarMinus ({h_formula_starminus_h1 = f1;
       h_formula_starminus_aliasing = al;
-      h_formula_starminus_h2 = f2}) ->
+      h_formula_starminus_h2 = f2}) -> formula_of_heap_fl f fl pos
+    (*
           let uf1 = unfold_heap_x prog f1 aset v fl uf pos in
           let uf2 = unfold_heap_x prog f2 aset v fl uf pos in
-          normalize_combine_starminus uf1 uf2 al pos (*TO CHECK*)
+          normalize_combine_starminus uf1 uf2 al pos (*TO CHECK*)*)
     | Conj ({h_formula_conj_h1 = f1;
       h_formula_conj_h2 = f2}) ->
           let uf1 = unfold_heap_x prog f1 aset v fl uf pos in
@@ -11987,12 +11988,213 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             (* let () = print_string ("xxxx do_coercion: M_rd_lemma \n") in *)
             let r1,r2 = do_coercion prog None estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
             (r1,Search r2)
-      | Context.M_lemma  ({
+      | Context.M_ramify_lemma {
             Context.match_res_lhs_node = lhs_node;
             Context.match_res_lhs_rest = lhs_rest;
             Context.match_res_rhs_node = rhs_node;
             Context.match_res_rhs_rest = rhs_rest;
-        },ln) ->
+        } -> 
+            (*let _ = print_string ("!!!do_coercion: M_ramify_lemma \n") in *)
+            let ctx0 = Ctx estate in
+            (* let ((coer_l,coer_r),univ_coers) = 
+              find_coercions (get_node_name lhs_node) (get_node_name rhs_node) prog lhs_node rhs_node in*)
+            let helper coer estate = 
+              try
+              let r1,r2 =
+            (*let () = print_endline (Cprinter.string_of_coercion coer) in*)
+            if coer.coercion_kind = RLEM then
+              (*let lhs_list = split_star_conjunctions coer.coercion_head in*)
+              (*let () = print_endline("LHS_REST : "^(Cprinter.string_of_h_formula lhs_rest)) in*)
+              let rest_heap = split_star_conjunctions lhs_rest in
+              let filter_starminus = List.filter (fun h -> Mem.contains_starminus h) rest_heap in
+              (*let _ = List.map (fun c -> print_endline(Cprinter.string_of_h_formula c)) rest_heap in*)
+              let lhs_wand =
+              if not (List.length filter_starminus > 0) 
+              then failwith "Ramification Lemma has more than one wand"
+              else List.hd filter_starminus in
+              let lhs_h,lhs_p,lhs_vp,lhs_t,lhs_fl,lhs_a = extr_formula_base lhs_b in
+              let filter_sm = List.filter (fun h -> if (Mem.contains_starminus h) then false
+                  else if (is_data h) then 
+                    if List.exists (fun c -> CP.eq_spec_var c (get_node_var h)) (h_fv lhs_wand)
+                    then true else false else true) (split_star_conjunctions lhs_h) in
+              let rest_heap = List.filter 
+                (fun h -> if (Mem.contains_starminus h) then false
+                  else 
+                    if (is_view h) ||
+                     ((is_data h) && 
+                         List.exists (fun c -> CP.eq_spec_var c (get_node_var h)) (h_fv lhs_wand))
+                    then false else true) rest_heap in
+              (*let () = print_endline("LHS_H : "^(Cprinter.string_of_h_formula lhs_h)) in
+              let () = print_endline("LHS WAND :"^Cprinter.string_of_h_formula lhs_wand) in*)
+              let wand_head = match lhs_wand with 
+                | StarMinus({h_formula_starminus_h1 = h1;
+	                         h_formula_starminus_h2 = h2})-> h2 
+                | _ -> lhs_wand in
+              let wand_head_var_lst = h_fv wand_head in
+              if (List.length filter_sm >0)
+              then 
+              (*  try *)
+              let rhs = List.hd filter_sm in
+              let fvl = Cformula.h_fv rhs in
+	      (*let fvl = List.sort CP.compare_spec_var fvl in*)	
+              let check_h,check_p,_,_,_,_ = split_components coer.coercion_head in
+              let check_h_len = List.length (List.filter (fun h -> is_data(h)) (split_all_conjunctions check_h)) in
+              let lhs_rest_len = List.length (List.filter (fun h -> is_data(h)) (split_all_conjunctions lhs_rest)) in
+              (*let rest_heap_h = split_star_conjunctions check_h in
+              let filter_starminus_h = List.filter (fun h -> Mem.contains_starminus h) rest_heap_h in
+              let check_h = List.hd filter_starminus_h in*)
+              let check_p = if (*check_h_len == lhs_rest_len*) true then Mcpure.mix_of_pure
+                (CP.join_conjunctions (List.filter (fun c -> CP.is_RelForm c || CP.contains_exists c)
+                (CP.split_conjunctions (Mcpure.pure_of_mix check_p)))) 
+                else failwith "Ramification Lemma failed heap guard checking" in
+              let h,p,vp,fl,t,a = split_components coer.coercion_body in
+              (*let () = print_endline("RLEM_H : "^(Cprinter.string_of_h_formula lhs_wand)) in*)
+              (*let () = print_endline("RLEM_P : "^Cprinter.string_of_mix_formula check_p) in
+              let () = print_endline("RHS :"^Cprinter.string_of_h_formula h) in*)
+              let vl = Cformula.h_fv h in
+	      (*let vl = List.sort CP.compare_spec_var vl in*)
+              let fresh_vl = CP.fresh_spec_vars vl in
+              let h = Cformula.h_subst (List.combine vl fresh_vl) h in
+              let check_p = Mcpure.memo_subst (List.combine vl fresh_vl) check_p in
+              (*let () = print_endline("SVL :"^Cprinter.string_of_spec_var_list vl) in*)
+              (*let () = print_endline("FVL :"^Cprinter.string_of_spec_var_list fvl) in*)
+              let gvl = Cformula.h_fv lhs_wand in
+	      (*let gvl = List.sort CP.compare_spec_var gvl in*)
+              let abs_vl = List.filter (fun c -> CP.is_void_typ c) gvl in
+              let rl = List.hd (gvl) in
+              let rl2 = List.hd (List.tl gvl) in
+              let fl2 = List.hd (List.tl fvl) in
+              (*let () = print_endline("GVL :"^Cprinter.string_of_spec_var_list gvl) in*)
+              (*let fl2 = if CP.is_void_typ fl2 then fl2 else List.hd (CP.fresh_spec_vars [rl]) in*)
+              (*let add_p = Mcpure.mix_of_pure (Cpure.mkEqVar rl2 fl2 no_pos) in*)
+              let gvl = fvl@[rl]@[rl2] in
+              let abs_vl = abs_vl in
+              let check_p_vl = CP.fv (Mcpure.pure_of_mix check_p) in
+              let check_p_vl = List.filter (fun c -> not(CP.is_rel_typ c)) check_p_vl in
+              (*let () = print_endline("CVL :"^Cprinter.string_of_spec_var_list check_p_vl) in*)
+              let rho2 = if List.length check_p_vl = List.length abs_vl
+                then List.combine check_p_vl abs_vl
+                else if List.length check_p_vl =  List.length ((List.hd abs_vl)::[List.hd gvl]@[fl2])
+                then List.combine check_p_vl ((List.hd abs_vl)::[List.hd gvl]@[fl2])
+                else []  in
+	      (*let () = print_endline("Length of Rho2"^string_of_int (List.length rho2)) in*)
+              (*let () = print_endline("GVL :"^Cprinter.string_of_spec_var_list gvl) in*)
+              let gvl = if (List.length rho2)=0 then fvl@abs_vl else gvl in
+              (*let () = print_endline("GVL :"^Cprinter.string_of_spec_var_list gvl) in
+              let () = print_endline("FreshVL :"^Cprinter.string_of_spec_var_list fresh_vl) in *)	
+              let gvl_2 = List.filter (fun h -> is_data h) (split_all_conjunctions lhs_wand) in
+              let rho = if List.length fresh_vl = List.length gvl then 
+			let fresh_vl_1 = List.sort CP.compare_spec_var fresh_vl in 
+			let gvl_1 = List.sort CP.compare_spec_var gvl in List.combine fresh_vl_1 gvl_1
+                else
+                     (*let () = print_endline("H : "^Cprinter.string_of_h_formula (List.hd gvl_2)) in*)
+                     if List.length gvl_2 > 0 && List.length ((h_fv (List.hd gvl_2))@[fl2]@[fl2]) == List.length fresh_vl 
+                     then (*let () = print_endline("GVL_2 :"^Cprinter.string_of_spec_var_list (h_fv (List.hd gvl_2))) in*)
+                          List.combine fresh_vl ((h_fv (List.hd gvl_2))@[fl2]@[fl2])
+                     else failwith "Ramification Lemma with different variables" in
+		(*let () = print_endline("wanhead : "^Cprinter.string_of_spec_var_list ((List.hd abs_vl)::wand_head_var_lst)) in*)	
+              let rho2 = if List.length rho2 > 0 then rho2 else 
+                  if List.length check_p_vl == List.length ((List.hd abs_vl)::wand_head_var_lst) then
+                  List.combine check_p_vl ((List.hd abs_vl)::wand_head_var_lst)
+                else try 
+ 			(*let () = print_endline("GVL :"^Cprinter.string_of_spec_var_list gvl) in*)
+			(*let v = List.hd (List.tl gvl) in*)
+			(*let () = print_endline("GVL_2 :"^Cprinter.string_of_spec_var_list (h_fv (List.hd gvl_2))) in*)
+                       let gvl2_vl =  (h_fv (List.hd gvl_2)) in
+                       let v = if(List.length fvl == List.length gvl2_vl) then List.hd (List.tl gvl) else List.hd (List.tl gvl2_vl)in
+                       let g' = if(List.length fvl == List.length gvl2_vl) then rl2 else List.hd (List.tl gvl) in
+                       let g = List.hd abs_vl in
+	               let check_p_vl = List.sort CP.compare_spec_var check_p_vl in
+	 	       let fix_lem_vl = g::(List.sort CP.compare_spec_var (v::gvl2_vl@[g']))  in	
+		       (*let () = print_endline("VL :"^Cprinter.string_of_spec_var_list fix_lem_vl) in
+		       let () = print_endline("CVL :"^Cprinter.string_of_spec_var_list check_p_vl) in*)
+                       List.combine check_p_vl fix_lem_vl 
+                  with _ -> (*let () = print_endline ("Exception") in *)failwith "Lemma too complex" in
+              let check_p = Mcpure.memo_subst rho2 check_p in
+              let lhs_p,_,_ = xpure 111 prog (Cformula.mkBase lhs_h lhs_p lhs_vp lhs_t lhs_fl lhs_a no_pos) in
+              let f = simple_imply (Mcpure.pure_of_mix lhs_p) (Mcpure.pure_of_mix check_p) in
+              (*let () = if (not(f) && (List.length rho2)>0)
+                then failwith "Ramification Lemma failed guard checking" else () in*)
+              let new_lhs_h = if (not(f)  (*&& List.length rho2>0*)) 
+                then failwith "Ramification Lemma failed guard checking"
+                else Cformula.h_subst rho h in
+(*              let new_lhs_p = Mcpure.merge_mems (Mcpure.memo_subst rho lhs_p) add_p true in*)
+              let new_lhs_p = Mcpure.memo_subst rho lhs_p in
+              let new_lhs_h = Cformula.join_star_conjunctions (new_lhs_h::rest_heap) in
+              let new_lhs = Cformula.mkBase new_lhs_h new_lhs_p lhs_vp lhs_t lhs_fl lhs_a no_pos in
+              (*let () = print_endline("LHS :"^Cprinter.string_of_formula_base lhs_b) in
+              let () = print_endline("NEW LHS : " ^Cprinter.string_of_formula new_lhs) in*)
+              let old_trace = estate.es_trace in
+              let estate = {estate with es_trace=(("(ramify: " ^ coer.coercion_name ^ ")")::old_trace)} in
+              let new_ctx1 = Ctx{estate with es_formula = new_lhs } in
+              (* let new_ctx = set_context_formula ctx0 new_lhs in *)
+              let new_ctx = SuccCtx[((* set_context_must_match *) new_ctx1)] in
+              let res, tmp_prf = heap_entail prog is_folding new_ctx conseq pos in
+              let prf = mkCoercionLeft ctx0 conseq coer.coercion_head
+	            coer.coercion_body tmp_prf coer.coercion_name
+              in
+              (res, [prf])
+                (*with _ -> (CF.mkFailCtx_in( Basic_Reason ( { 
+	          fc_message ="mismatched ramify lemmas";
+	          fc_current_lhs = estate;
+	          fc_prior_steps = estate.es_prior_steps;
+	          fc_orig_conseq = estate.es_orig_conseq;
+	          fc_current_conseq = CF.formula_of_heap HFalse pos; 
+	          fc_failure_pts = match (get_node_label lhs_node) with | Some s-> [s] | _ -> [];}, 
+                                                  CF.mk_failure_must "112" Globals.sl_error)),
+                  [])*)
+              else (CF.mkFailCtx_in( Basic_Reason ( { 
+	          fc_message ="no suitable ramify lemma";
+	          fc_current_lhs = estate;
+	          fc_prior_steps = estate.es_prior_steps;
+	          fc_orig_conseq = estate.es_orig_conseq;
+	          fc_current_conseq = CF.formula_of_heap HFalse pos; 
+	          fc_failure_pts = match (get_node_label lhs_node) with | Some s-> [s] | _ -> [];}, 
+                               CF.mk_failure_must "112" Globals.sl_error ,estate.es_trace)) (Ctx (convert_to_must_es estate)) (mk_cex true),
+                  [])
+            else (CF.mkFailCtx_in( Basic_Reason ( { 
+	          fc_message ="failed ramify lemma application";
+	          fc_current_lhs = estate;
+	          fc_prior_steps = estate.es_prior_steps;
+	          fc_orig_conseq = estate.es_orig_conseq;
+	          fc_current_conseq = CF.formula_of_heap HFalse pos; 
+	          fc_failure_pts = match (get_node_label lhs_node) with | Some s-> [s] | _ -> [];}, 
+                                                  CF.mk_failure_must "113" Globals.sl_error,estate.es_trace))  (Ctx (convert_to_must_es estate)) (mk_cex true),
+                  [])
+            in
+            (r1,r2)
+              with _ ->(CF.mkFailCtx_in( Basic_Reason ( { 
+	          fc_message ="failed ramify lemma application continue search";
+	          fc_current_lhs = estate;
+	          fc_prior_steps = estate.es_prior_steps;
+	          fc_orig_conseq = estate.es_orig_conseq;
+	          fc_current_conseq = CF.formula_of_heap HFalse pos; 
+	          fc_failure_pts = match (get_node_label lhs_node) with | Some s-> [s] | _ -> [];}, 
+                                             CF.mk_failure_must "115" Globals.sl_error,estate.es_trace))  (Ctx (convert_to_must_es estate)) (mk_cex true),
+                  [])
+            in
+            let coer_l = Lem_store.all_lemma # get_left_coercion in 
+            let r1,r2 = if not (List.length coer_l > 0) then failwith "No Ramification Lemma to use"
+              else let lc = List.map (fun coer -> helper coer estate) coer_l in
+                   try List.find (fun (sc,pf) -> match sc with 
+                     | FailCtx _ -> false
+                     | SuccCtx _ -> true) lc 
+                   with _ -> (CF.mkFailCtx_in( Basic_Reason ( { 
+	          fc_message ="failed ramify lemma application";
+	          fc_current_lhs = estate;
+	          fc_prior_steps = estate.es_prior_steps;
+	          fc_orig_conseq = estate.es_orig_conseq;
+	          fc_current_conseq = CF.formula_of_heap HFalse pos; 
+	          fc_failure_pts = match (get_node_label lhs_node) with | Some s-> [s] | _ -> [];}, 
+                                            CF.mk_failure_must "114" Globals.sl_error,estate.es_trace))  (Ctx (convert_to_must_es estate)) (mk_cex true),
+                              [])
+            in (r1,Search r2)
+      | Context.M_lemma  ({
+        Context.match_res_lhs_node = lhs_node;
+        Context.match_res_lhs_rest = lhs_rest;
+            Context.match_res_rhs_node = rhs_node;
+            Context.match_res_rhs_rest = rhs_rest;
+      },ln) ->
             (* let () = print_string ("xxx do_coercion: M_lemma \n") in *)
             (* let () = match ln with *)
             (*   | None -> () *)

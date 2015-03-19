@@ -1508,7 +1508,7 @@ and xpure_heap_symbolic i (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
 
 and xpure_heap_symbolic_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CP.spec_var list * CF.mem_formula) = 
   let memset = h_formula_2_mem h0 p0 [] prog in
-  let ph, pa = x_add xpure_heap_symbolic_i prog h0 which_xpure in
+  let ph, pa = x_add xpure_heap_symbolic_i prog h0 p0 which_xpure in
   if (is_sat_mem_formula memset) then (ph, pa, memset)
   else (MCP.mkMFalse no_pos, pa, memset)
 
@@ -1517,24 +1517,74 @@ and smart_same_flag = ref true
   (* this flag is to indicate if xpure0 and xpure1 
      are semantically the same *)
 
-and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula)  xp_no: (MCP.mix_formula * CP.spec_var list) = 
+and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula) p0  xp_no: (MCP.mix_formula * CP.spec_var list) = 
   (* let () = smart_same_flag := true in *)
   let pr (a,b) = pr_triple Cprinter.string_of_mix_formula Cprinter.string_of_spec_var_list string_of_bool (a,b,!smart_same_flag) in
   Debug.no_2 "xpure_heap_symbolic_i" string_of_int 
       Cprinter.string_of_h_formula pr
-      (fun xp_no h0 -> xpure_heap_symbolic_i_x prog h0 xp_no) xp_no h0
+      (fun xp_no h0 -> xpure_heap_symbolic_i_x prog h0 p0 xp_no) xp_no h0
 
-and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_formula *  CP.spec_var list) = 
+and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) p0 xp_no: (MCP.mix_formula *  CP.spec_var list) = 
+  let h = h0 in
   let rec helper h0 : (MCP.mix_formula *  CP.spec_var list) = match h0 with
     | ThreadNode {CF.h_formula_thread_resource = rsr}  ->
           (*Thread resource may be used for xpure*)
           let mf,svl,_ = x_add xpure_symbolic 5 prog rsr in
           (mf,svl)
     | DataNode ({ h_formula_data_node = p;
+      h_formula_data_arguments = args;
       h_formula_data_perm = perm;
       h_formula_data_label = lbl;
       h_formula_data_pos = pos}) ->
           let non_zero = CP.BForm ((CP.Neq (CP.Var (p, pos), CP.Null pos, pos), None), lbl) in
+          let rdels = prog.C.prog_rel_decls in
+          (* Add update relation during XPure *)
+          let update_rel = List.filter (fun r -> if r.rel_name = "update"
+                                                 || r.rel_name = "cons"
+            then true else false) rdels in
+          let rec last = function
+            | [] -> failwith "No Last Element in list"
+            | [x] -> x
+            | _ :: t -> last t in
+          let non_zero = 
+            if (List.length update_rel = 1)
+            then let rel = List.hd update_rel in
+                 let rel_vars = rel.rel_vars in
+                 let p0_rels = CP.get_RelForm (MCP.pure_of_mix p0) in
+                 let lookup_rel = List.filter (fun r -> match (CP.get_rel_id r) with
+                   | Some SpecVar(_,id,_) -> 
+                       (*let () = (print_endline id) in*)
+                       if (String.compare id "lookup") = 0 then true else false
+                   | None -> false)
+                   p0_rels in
+                 (*let () = (print_endline (string_of_int (List.length lookup_rel))) in*)
+                 let r_sv = if (List.length lookup_rel) == 1 
+                   then (List.hd (CP.get_rel_args (List.hd lookup_rel)))
+                   else  (List.hd rel_vars) in
+                 (*let r_sv = (List.hd rel_vars) in*)
+                 let link_var = (last args) in
+                 (*let () = print_endline (Cprinter.string_of_h_formula h) in*)
+                 let view_heaps = List.filter CF.is_view (CF.split_star_conjunctions h) in
+                 (*let () = (print_endline (string_of_int (List.length view_heaps))) in*)
+                 let r_sv2 = if(List.length view_heaps != 0) 
+                   then last (CF.h_fv (last view_heaps))
+                   else CP.fresh_spec_var (last rel_vars) in
+                 (*let r_sv2 = CP.fresh_spec_var (last rel_vars) in*)
+                 let pfrsv = CP.mkEqVar r_sv r_sv2 no_pos in
+                 let non_zero = if rel.rel_name = "cons"  then non_zero else
+                     CP.mkAnd non_zero pfrsv no_pos in
+                 let sbargs = if rel.rel_name = "cons" 
+                   then [r_sv]@((List.hd args)::[r_sv2])
+                   else [r_sv]@p::args@[r_sv2] in
+                 (*let () = print_endline ("RelVargs : "^string_of_spec_var_list rel_vars) in
+                 let () = print_endline ("SBArgs : " ^string_of_spec_var_list sbargs) in*)
+                 let st = List.combine rel_vars sbargs in
+                 let rel_exps = List.map CP.conv_var_to_exp rel_vars in
+                 let rel = CP.mkRel (CP.mkRel_sv rel.rel_name) rel_exps no_pos in
+                 let up_rel = CP.subst st rel in
+                 (*let non_zero = CP.subst st non_zero in*)
+                 CP.mkAnd non_zero up_rel no_pos
+            else non_zero in
           (*LDK: add fractional invariant 0<f<=1, if applicable*)
           (match perm with
             | None -> (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_zero , [p])
@@ -1622,7 +1672,36 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
     | FrmHole _ -> (mkMTrue no_pos, [])
     | HFalse -> (mkMFalse no_pos, [])
     | HEmp | HVar _  -> (mkMTrue no_pos, []) in
-  helper h0
+  (* Add lookup relation during XPure *)
+  let rdels = prog.C.prog_rel_decls in
+  let lookup_rel = List.filter (fun r -> if r.rel_name = "lookup" then true else false) rdels in
+  if (List.length lookup_rel = 1) then
+    let lookup = List.hd lookup_rel in
+    let lookup_args = lookup.rel_vars in
+    let null_vars = CP.get_null_ptrs (MCP.pure_of_mix p0) in
+    let lookup_rels = List.map (fun sv -> 
+      let fresh_args = CP.fresh_spec_vars lookup_args in
+      let f_var = List.hd fresh_args in
+      let rest_vars = List.tl (List.tl fresh_args) in
+          let rec last_elm = function
+            | [] -> failwith "No Last Element in list2"
+            | [x] -> x
+            | _ :: t -> last_elm t in
+      let heaps = List.filter CF.is_view (CF.split_star_conjunctions h) in
+                 (*let () = (print_endline (string_of_int (List.length view_heaps))) in*)
+      let n_f_var = if(List.length heaps != 0) 
+                   then last_elm (CF.h_fv (List.hd heaps))
+        else f_var in
+      let subt_vars = [n_f_var]@[sv]@rest_vars in
+      let st = List.combine  lookup_args subt_vars in
+      let rel_exps = List.map CP.conv_var_to_exp lookup_args in
+      let rel = CP.mkRel (CP.mkRel_sv lookup.rel_name) rel_exps no_pos in
+      CP.subst st rel
+    ) null_vars in
+    let add_p = CP.join_conjunctions lookup_rels in
+    let mcp,rst = helper h0 in
+    (MCP.merge_mems mcp (MCP.mix_of_pure add_p) true),rst
+ else (helper h0)
 
 let xpure_heap_x (prog : prog_decl) (h0 : h_formula) (p0 : mix_formula) (which_xpure :int) (sym_flag:bool) : (mix_formula * CP.spec_var list * CF.mem_formula) =
   (* let h0 = merge_partial_h_formula h0 in *) (*this will not work with frac permissions*)

@@ -143,7 +143,7 @@ let op_and_short = "&"
 let op_or_short = "|"  
 let op_not_short = "!"  
 let op_star_short = "*"  
-let op_starminus_short = "-*" 
+let op_starminus_short = "--@" 
 let op_phase_short = ";"  
 let op_conj_short = "U*"  
 let op_conjsep_short = "/&\\"  
@@ -174,7 +174,7 @@ let op_and = " & "
 let op_or = " | "  
 let op_not = "!"  
 let op_star = " * "  
-let op_starminus = " -* " 
+let op_starminus = " --@ " 
 let op_phase = " ; "  
 let op_conj = " U* "  
 let op_conjstar = " &* " 
@@ -1235,9 +1235,14 @@ let rec pr_h_formula h =
     | StarMinus ({h_formula_starminus_h1 = h1; h_formula_starminus_h2 = h2; h_formula_starminus_aliasing = al;
                   h_formula_starminus_pos = pos}) -> 
 	      let arg1 = bin_op_to_list op_starminus_short h_formula_assoc_op h2 in
+         (* let h1 =  match al with
+            | Not_Aliased -> mkStarH h2 h1 no_pos 
+            | May_Aliased -> mkConjH h2 h1 no_pos
+            | Must_Aliased -> mkConjConjH h2 h1 no_pos
+            | Partial_Aliased -> mkConjStarH h2 h1 no_pos in*)
           let arg2 = bin_op_to_list op_starminus_short h_formula_assoc_op h1 in
           let args = arg1@arg2 in
-          pr_aliasing_scenario al; pr_list_op op_starminus f_b args          
+          (*pr_aliasing_scenario al;*) pr_list_op op_starminus f_b args          
     | Phase ({h_formula_phase_rd = h1; h_formula_phase_rw = h2; h_formula_phase_pos = pos}) -> 
 	      let arg1 = bin_op_to_list op_phase_short h_formula_assoc_op h1 in
           let arg2 = bin_op_to_list op_phase_short h_formula_assoc_op h2 in

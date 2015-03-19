@@ -1576,22 +1576,22 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
           let crels0 = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
           let () = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT[],rd.I.rel_name)) prog.I.prog_rel_decls in
           let pr_chps = List.map (trans_hp prog) prog.I.prog_hp_decls in 
-          let chps1, pure_chps = List.split pr_chps in
+      let chps1, pure_chps = List.split pr_chps in
           let () = prog.I.prog_hp_ids <- List.map (fun rd -> (HpT,rd.I.hp_name)) prog.I.prog_hp_decls in
-          let crels1 = crels0@pure_chps in
-	  let caxms = List.map (trans_axiom prog) prog.I.prog_axiom_decls in (* [4/10/2011] An Hoa *)
+      let crels1 = crels0@pure_chps in
+      let caxms = List.map (trans_axiom prog) prog.I.prog_axiom_decls in (* [4/10/2011] An Hoa *)
           (* let () = print_string "trans_prog :: trans_rel PASSED\n" in *)
-	  let cdata =  List.map (trans_data prog) prog.I.prog_data_decls in
+      let cdata =  List.map (trans_data prog) prog.I.prog_data_decls in
 	  (* let () = print_string "trans_prog :: trans_data PASSED\n" in *)
 	  (* let () = print_endline ("trans_prog :: trans_data PASSED :: procs = " ^ (Iprinter.string_of_proc_decl_list prog.I.prog_proc_decls)) in *)
           let todo_unk = List.map (fun p ->
-              if p.I.proc_is_main then
-                I.detect_invoke prog p
-              else
+          if p.I.proc_is_main then
+            I.detect_invoke prog p
+          else
                 let () = p.I.proc_is_invoked <- false in
-                []
-          ) (prog.I.prog_proc_decls) in
-          let old_i_hp_decls = prog.I.prog_hp_decls in
+            []
+      ) (prog.I.prog_proc_decls) in
+      let old_i_hp_decls = prog.I.prog_hp_decls in
           let () = ihp_decl:= [] in
           let cprocs1 = List.map (trans_proc prog) prog.I.prog_proc_decls in
           let iloop_hp_decls = !ihp_decl in
@@ -1599,43 +1599,44 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
           (*     not (List.exists (fun hp -> String.compare hpdecl.I.hp_name hp.I.hp_name = 0) *)
           (*         old_i_hp_decls) *)
           (* ) (prog.I.prog_hp_decls) in *)
-          let pr_loop_chps = List.map (trans_hp prog) iloop_hp_decls in 
-          let c_loophps, loop_pure_chps = List.split pr_loop_chps in
-          let chps = chps1@c_loophps in
-          let crels = crels1@loop_pure_chps in
+      let pr_loop_chps = List.map (trans_hp prog) iloop_hp_decls in 
+      let c_loophps, loop_pure_chps = List.split pr_loop_chps in
+      let chps = chps1@c_loophps in
+      let crels = crels1@loop_pure_chps in
 	  (* let () = print_string "trans_prog :: trans_proc PASSED\n" in *)
-	  (* Start calling is_sat,imply,simplify from trans_proc *)
-	  let cprocs = !loop_procs @ cprocs1 in
+      (* Start calling is_sat,imply,simplify from trans_proc *)
+      let cprocs = !loop_procs @ cprocs1 in
           (* let () = print_newline () in *)
           (* let () = List.iter (fun p -> *)
-          (*     if p.C.proc_is_main then *)
-          (*     print_endline (p.C.proc_name ^ " : " ^ string_of_bool(p.C.proc_is_invoked)) *)
-          (*     else () *)
-          (* ) cprocs in *)
-	  (* let (l2r_coers, r2l_coers) = trans_coercions prog in (\* Andreeac: Lemma - to unify here *\) *)
+      (*     if p.C.proc_is_main then *)
+      (*     print_endline (p.C.proc_name ^ " : " ^ string_of_bool(p.C.proc_is_invoked)) *)
+      (*     else () *)
+      (* ) cprocs in *)
+      (* let (l2r_coers, r2l_coers) = trans_coercions prog in (\* Andreeac: Lemma - to unify here *\) *)
           (* let () = Lem_store.all_lemma # set_coercion l2r_coers r2l_coers in *)
           (* let () = List.iter proc_one_lemma cmds; *)
-	  let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
-	  let bdecls = List.map (trans_bdecl prog) prog.I.prog_barrier_decls in
+      let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
+      let bdecls = List.map (trans_bdecl prog) prog.I.prog_barrier_decls in
           let ut_vs = cuts @ C.ut_decls # get_stk in
           let () = Debug.ninfo_hprint (add_str "ut_vs added" (pr_list (fun ut -> ut.C.ut_name))) ut_vs no_pos in
-	  let cprog = {
-	      C.prog_data_decls = cdata;
-	      C.prog_view_decls = cviews2;
-	      C.prog_barrier_decls = bdecls;
-	      C.prog_logical_vars = log_vars;
-	      C.prog_rel_decls = crels; (* An Hoa *)
+      let cprog = {
+	  C.prog_data_decls = cdata;
+	  C.prog_view_decls = cviews2;
+	  C.prog_barrier_decls = bdecls;
+	  C.prog_logical_vars = log_vars;
+	  C.prog_rel_decls = crels; (* An Hoa *)
 	      C.prog_templ_decls = ctempls;
               C.prog_ut_decls = (ut_vs);
 	      C.prog_hp_decls = chps;
 	      C.prog_view_equiv = []; (*to update if views equiv is allowed to checking at beginning*)
-	      C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
-	      (*C.old_proc_decls = cprocs;*)
-	      C.new_proc_decls = C.create_proc_decls_hashtbl cprocs;
-	      (*C.prog_left_coercions = l2r_coers;*)
-	      (*C.prog_right_coercions = r2l_coers;*)} in
-	  let cprog1 = { cprog with
-	      (* C.old_proc_decls = List.map substitute_seq cprog.C.old_proc_decls; *)
+	  C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
+	  (*C.old_proc_decls = cprocs;*)
+	  C.new_proc_decls = C.create_proc_decls_hashtbl cprocs;
+	  (*C.prog_left_coercions = l2r_coers;*)
+	  (*C.prog_right_coercions = r2l_coers;*)} in
+      
+      let cprog1 = { cprog with			
+	  (* C.old_proc_decls = List.map substitute_seq cprog.C.old_proc_decls; *)
               C.new_proc_decls = C.proc_decls_map substitute_seq cprog.C.new_proc_decls; 
 	      C.prog_data_decls = List.map (fun c-> {c with C.data_methods = List.map substitute_seq c.C.data_methods;}) cprog.C.prog_data_decls; } in
           (ignore (List.map (fun vdef ->  (compute_view_x_formula cprog vdef !Globals.n_xpure )) cviews2);
@@ -2890,9 +2891,13 @@ and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
   (* Need to collect the type information before translating the formula *)
   let n_tl = gather_type_info_pure prog rdef.I.rel_formula n_tl in
   let crf = trans_pure_formula rdef.I.rel_formula n_tl in
-  {C.rel_name = rdef.I.rel_name; 
+  let crdef = {C.rel_name = rdef.I.rel_name; 
   C.rel_vars = rel_sv_vars;
   C.rel_formula = crf; }
+  in
+  (* Forward the relation to the smt solver. *)
+  let _ = Smtsolver.add_relation crdef.Cast.rel_name rel_sv_vars crf in
+  crdef
 
 and trans_templ (prog: I.prog_decl) (tdef: I.templ_decl): C.templ_decl =
   let pos = tdef.I.templ_pos in
@@ -2981,9 +2986,13 @@ and trans_axiom_x (prog : I.prog_decl) (adef : I.axiom_decl) : C.axiom_decl =
   let chyp = trans_pure_formula adef.I.axiom_hypothesis n_tl in
   let ccln = trans_pure_formula adef.I.axiom_conclusion n_tl in
   (* let () = Smtsolver.add_axiom_def (Smtsolver.AxmDefn (chyp,ccln)) in *)
-  { C.axiom_id=adef.I.axiom_id; 
+  let cadef = { C.axiom_id=adef.I.axiom_id; 
   C.axiom_hypothesis = chyp;
   C.axiom_conclusion = ccln; }
+  in
+  (* Forward the axiom to the smt solver. *)
+  let _ = Smtsolver.add_axiom chyp Smtsolver.IMPLIES ccln in
+  cadef
       (* END : trans_axiom *) 
 
 and rec_grp prog :ident list =
@@ -4152,7 +4161,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
     | CF.DataNode dn -> dn.CF.h_formula_data_name
     | _ -> 
           (*LDK: expecting complex LHS*)
-          let hs = CF.split_star_conjunctions lhs_heap in
+          let hs = CF.split_star_conjunctions lhs_heap in 
           if ( (List.length hs) > 0) then
             let head = List.hd hs in
             match head with
@@ -4163,8 +4172,12 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
                 CF.h_formula_starminus_pos = pos} -> (match h1 with
                   | CF.ViewNode vn -> vn.CF.h_formula_view_name
                   | CF.DataNode dn -> dn.CF.h_formula_data_name
-                  | _ -> let () = 
-                      print_string "[astimp] Warning: head node of ramification is neither a view node nor a data node\n" in "")
+                  | _ -> let ()= let b = 
+                                   match coer.I.coercion_kind with
+                                     | RLEM -> true | _ -> false in 
+                    if b
+                    then () 
+                    else print_string ("[astimp] Warning: head node of ramification is neither a view node nor a data node "^(Cprinter.string_of_h_formula head)^" \n") in "")
               | _ -> 
                     let () = print_string "[astsimp] Warning: lhs head node of a coercion is neither a view node nor a data node\n" in 
                     ""
@@ -9576,7 +9589,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
   let split_one_branch (vl:CP.spec_var list) (uinvl:CP.b_formula list) ((b0,lbl):(CF.formula * Globals.formula_label)) 
         : CP.formula * (formula_label * CP.spec_var list * CP.b_formula list) =
     let h,p,_,_,_,_ = CF.split_components b0 in
-    let cm,ba = x_add Cvutil.xpure_heap_symbolic_i cp h 0 in
+    let cm,ba = x_add Cvutil.xpure_heap_symbolic_i cp h p 0 in
     let ms = Cvutil.formula_2_mem b0 cp in
     let ba = match ms.CF.mem_formula_mset with | [] -> [] | h::_ -> h in
     let xp = fold_mem_lst (CP.mkTrue no_pos) true true cm in

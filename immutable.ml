@@ -541,7 +541,7 @@ and normalize_h_formula_phase (h : IF.h_formula) (wr_phase : bool) : IF.h_formul
       IF.h_formula_conjconj_h2 = h2;
       IF.h_formula_conjconj_pos = pos
       })               ->
-          if (wr_phase) && ((!Globals.allow_mem) || (!Globals.allow_field_ann)) then h else
+          if (wr_phase) && ((!Globals.allow_mem) || (!Globals.allow_field_ann) || (!Globals.allow_ramify)) then h else
             normalize_h_formula_rd_phase h
     | IF.HeapNode2 hf -> 
           (let annv = get_imm h in

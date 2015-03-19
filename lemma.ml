@@ -665,6 +665,7 @@ let process_list_lemma_helper_x ldef_lst iprog cprog lem_infer_fnct =
       | LEM_INFER_PRED      -> let r1,_,r2 = manage_infer_pred_lemmas lst iprog cprog Cvutil.xpure_heap in 
         let todo_unk = lem_infer_fnct r1 r2 in
         r2
+      | RLEM           -> manage_unsafe_lemmas lst iprog cprog
   in
   (* let () = if enable_printing then Debug.ninfo_pprint "============ end - Processing lemmas ============\n" no_pos else () in *)
   match res with

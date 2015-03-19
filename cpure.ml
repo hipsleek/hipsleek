@@ -70,6 +70,14 @@ let is_inter_deference_spec_var sv = match sv with
 	 *)
   (* | Array of typ  *)
 
+let is_arr_typ sv = match sv with
+  | SpecVar(Array _,_,_) -> true
+  | _ -> false
+
+let is_void_typ sv = match sv with
+  | SpecVar(Void,_,_) -> true
+  | _ -> false
+
 let is_self_spec_var sv = match sv with
 	| SpecVar (_,n,_) -> n = self
 
@@ -547,6 +555,13 @@ let name_of_spec_var (sv : spec_var) : ident = match sv with
 let name_of_sv (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, _) -> v
 
+let exp_to_name_spec_var e = 
+match e with
+  | Var(sv,_) -> name_of_spec_var sv 
+  | Null _ -> "null_node"
+  | IConst(i,_) -> (string_of_int i)
+  | _ -> ""
+
 let full_name_of_spec_var (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, p) -> if (p==Primed) then (v^"\'") else v
 
@@ -848,6 +863,10 @@ let eq_typed_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
       (t1 = t2) && (String.compare v1 v2 = 0) && (p1 = p2)
 
+let compare_spec_var (sv1 : spec_var) (sv2 : spec_var) = 
+match (sv1, sv2) with
+  | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) -> String.compare v1 v2
+
 let eq_ann (a1 :  ann) (a2 : ann) : bool =
   match a1, a2 with
     | ConstAnn ha1, ConstAnn ha2 -> ha1 == ha2
@@ -911,6 +930,8 @@ let eq_xpure_view xp1 xp2=
       (fun _ _ -> eq_xpure_view_x xp1 xp2) xp1 xp2
 
 let remove_dups_svl vl = Gen.BList.remove_dups_eq eq_spec_var vl
+
+let remove_dups_svl_stable vl = Gen.BList.remove_dups_eq_stable eq_spec_var vl
 
 let diff_svl vl rl = Gen.BList.difference_eq eq_spec_var vl rl
 
