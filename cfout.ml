@@ -426,11 +426,14 @@ let simplify_branch_context (pt, ctx, fail_type) =
                 let () = x_binfo_hp (add_str "important variables" (pr_list !print_sv)) imp_svl no_pos in
                 let exists_svl = Gen.BList.difference_eq Cpure.eq_spec_var all_svl imp_svl in
                 let () = x_binfo_hp (add_str "exists variables" (pr_list !print_sv)) exists_svl no_pos in
-                let pf = Mcpure.pure_of_mix mf in
-                let pf1 = Cpure.mkExists exists_svl pf None no_pos in
-                let pf_simp = !simplify_raw pf1 in
-                let mf_simp = Mcpure.mix_of_pure pf_simp in
-                mkBase h mf_simp vp t fl a no_pos
+                if (List.length exists_svl = 0)
+                then en.es_formula
+                else
+                  let pf = Mcpure.pure_of_mix mf in
+                  let pf1 = Cpure.mkExists exists_svl pf None no_pos in
+                  let pf_simp = !simplify_raw pf1 in
+                  let mf_simp = Mcpure.mix_of_pure pf_simp in
+                  mkBase h mf_simp vp t fl a no_pos
         }
       | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
   in (pt, helper ctx, fail_type)
