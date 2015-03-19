@@ -2143,7 +2143,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
                        Iformula.formula_inf_obj = i_sf.Iformula.formula_inf_obj # mk_or i_sf2.Iformula.formula_inf_obj;}
                  | _ -> ss
                in
-               let () = Debug.info_hprint (add_str "ss" !Iformula.print_struc_formula) ss no_pos in
+               let () = Debug.ninfo_hprint (add_str "ss" !Iformula.print_struc_formula) ss no_pos in
                (ss,hps,args_wi)
              else
                static_specs, [], List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs

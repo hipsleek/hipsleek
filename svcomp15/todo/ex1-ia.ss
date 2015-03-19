@@ -5,38 +5,34 @@ data node {
   node next;
 }
 
-GG<m> ==
- case { m>=0 -> [] self::node<0,null>;
-        m<0 -> [] self = null;
-};
+HeapPred H(node a, int b).
+PostPred G(node a, int b, int c).
 
-PostPred G(node a, int b).
+int NewNode(node x, int a)
 
-node NewNode(int a)
-//  requires true ensures res::GG<a>;
-  infer [G] requires emp &true ensures G(res,a);
+//  infer [H,G] requires H(x,a) ensures G(x,res,a);
 /*   requires true */
 /*   ensures case { */
 /*    a>=0 -> [] res::node<0,null>; */
 /*    a<0 -> [] res = null; */
 /* }; */
 {
-  node x = null;
-  if (a >=0) x=new node(0,null);
+  if (a < 0) x=null;
 
-  return x;
+  return x.val;
 }
 
+/*
 
-void main()
- requires true ensures true;
+void main(int x)
+// requires true ensures true;
 {
-  node tmp = NewNode(1);
-  tmp.val = 0;
+  node tmp = new node(x,null);
+  int t = NewNode(tmp, 1);
 
   return;
 }
-
+*/
 
 /*
 

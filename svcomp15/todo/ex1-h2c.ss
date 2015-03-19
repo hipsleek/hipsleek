@@ -2,7 +2,11 @@
 
 data node {
   int val;
-  node next;
+  node2 next;
+}
+
+data node2 {
+  int val2;
 }
 
 GG<m> ==
@@ -22,7 +26,8 @@ node NewNode(int a)
 /* }; */
 {
   node x = null;
-  if (a >=0) x=new node(0,null);
+  x=new node(0,null);
+  if (a >=0) x.next = new node2(0);
 
   return x;
 }
@@ -32,7 +37,7 @@ void main()
  requires true ensures true;
 {
   node tmp = NewNode(1);
-  tmp.val = 0;
+  tmp.next.val2 = 0;
 
   return;
 }
