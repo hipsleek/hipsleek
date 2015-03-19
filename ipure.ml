@@ -633,9 +633,22 @@ and pos_of_exp (e : exp) = match e with
 
 
 and fresh_old_name (s: string):string =
-  	let ri = try  (String.rindex s '_') with  _ -> (String.length s) in
-	let n = ((String.sub s 0 ri) ^ (fresh_trailer ())) in
-	n
+  let fn s = 
+    let l = String.length s in
+    try  
+      let c = (String.rindex s '_') in
+      (* let () = x_ninfo_hp (add_str "string" pr_id) s no_pos in *)
+      (* let () = x_binfo_hp (add_str "pos _ " string_of_int) c no_pos in *)
+      (* let () = x_binfo_hp (add_str "pos len " string_of_int) l no_pos in *)
+      let trail = String.sub s (c+1) (l-c-1) in
+      (* let () = x_binfo_hp (add_str "trail" pr_id) trail no_pos in *)
+      let (_:int64) = Int64.of_string trail in
+      c
+    with  _ -> l 
+  in
+  let ri = fn s in
+  let n = ((String.sub s 0 ri) ^ (fresh_trailer ())) in
+  n
 	
 
 and fresh_var (sv : (ident*primed)):(ident*primed) =
