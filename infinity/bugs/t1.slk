@@ -1,0 +1,26 @@
+checkentail 1234567358121725289 > x |- 1234567358121725288 > x.
+/*
+checkentail -\inf+\inf+1<=0 |- false. // valid but should fail
+checkentail -\inf+\inf<=0 |- false. // fail
+checkentail L=-\inf & U=\inf & L+U+1<=0 |- false.  // valid but should fail
+checkentail L=-\inf & U=\inf & L+U<=0 |- false.  // valid but should fail
+checkentail L=-\inf & U=\inf & U+L+1<=0 |- false. //fail
+checkentail L=-\inf & U=\inf & L+U+1<=0 |- false. //fail
+checkentail a = \inf & b = -\inf |- a + b = 0. //succeed
+checkentail a = \inf |- a = a + a. //succeed
+checkentail v=-\inf & w=-\inf |- v<=w. //succeed
+checkentail v=\inf & w=-\inf |- v+w=0. //succeed
+checkentail v=\inf & w=-\inf |- v>w. // succeed
+checkentail v=\inf & w=-\inf |- v=\inf & v>-\inf. //succeed
+checkentail v=\inf & w=-\inf |- w=-\inf & w<\inf. //succeed
+checkentail v=\inf & w=-\inf |- v<=w. //fail
+checkentail \inf+a<\inf+b |- false. //valid
+checkentail \inf+a=\inf+b & \inf=\inf |- a=b. //fail
+checkentail \inf+a=\inf |- a=0. //fail
+checkentail \inf+a=\inf & \inf+b=\inf |- a=b. //fail
+checkentail \inf+a=\inf+b & \inf=\inf |- a!=b. //fail
+checkentail \inf+a=\inf |- a!=0. //fail
+checkentail v>-\inf & v+1=w |- w>-\inf.//succeed
+*/
+
+

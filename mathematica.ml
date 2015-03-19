@@ -330,6 +330,7 @@ let rec math_of_exp e0 : string=
   | CP.ArrayAt _ -> failwith ("mathematica.math_of_exp: cannot handle array operator")
   | CP.Func _ -> failwith ("mathematica.math_of_exp: cannot handle func operator")
   | CP.Level _  -> failwith ("mathematica.math_of_exp: cannot handle Level operator")
+  | CP.NegInfConst _ 
   | CP.InfConst _  -> failwith ("mathematica.math_of_exp: cannot handle InfConst operator")
   | CP.Template t -> math_of_exp (CP.exp_of_template t)
 

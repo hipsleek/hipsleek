@@ -19,7 +19,7 @@ ensures x::inflist<k,res> * res::inflist<\inf,null>;
 }
 
 void append(node x, node y)
-  requires x::inflist<n1,null> * y::inflist<\inf,null> & x!=null 
+  requires x::inflist<n,null> * y::inflist<\inf,null> & x!=null
   ensures x::inflist<\inf,null>;
 {
 	if (x.next == null)

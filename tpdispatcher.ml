@@ -63,7 +63,7 @@ let prio_list = ref []
 let sat_cache = ref (Hashtbl.create 200)
 let imply_cache = ref (Hashtbl.create 200)
 
-(* An Hoa : Global variables to allow the prover interface to pass message to this interface *)
+(* An Hoa : Global variablew the prover interface to pass message to this interface *)
 
 let generated_prover_input = ref "_input_not_set_"
 
@@ -715,6 +715,7 @@ let rec is_array_exp e = match e with
   | CP.Func _ -> Some false
   | CP.TypeCast (_, e1, _) -> is_array_exp e1
   | CP.AConst _ | CP.FConst _ | CP.IConst _ | CP.Tsconst _ | CP.InfConst _ 
+  | CP.NegInfConst _
   | CP.Bptriple _
   | CP.Tup2 _
   | CP.Level _
@@ -749,7 +750,7 @@ let rec is_list_exp e = match e with
     )
   | CP.TypeCast (_, e1, _) -> is_list_exp e1
   | CP.ArrayAt (_,_,_) | CP.Func _ | CP.Template _ -> Some false
-  | CP.Null _ | CP.AConst _ | CP.Tsconst _ | CP.InfConst _
+  | CP.Null _ | CP.AConst _ | CP.Tsconst _ | CP.InfConst _ | CP.NegInfConst _
   | CP.Bptriple _
   | CP.Tup2 _
   | CP.Level _
@@ -1122,7 +1123,7 @@ let cnv_int_to_ptr f =
 (* this is to normalize result from simplify/hull/gist *)
 let norm_pure_result f =
   let f = cnv_int_to_ptr f in
-  let f = if !Globals.allow_inf
+  let f = if !Globals.allow_inf (*&& not(!Globals.allow_inf_qe_coq)*)
     then let f =  (*CP.arith_simplify 13*) (Infinity.convert_var_to_inf f) in
          let drop_inf_constr f =   
            let f_f e = None in
@@ -1131,6 +1132,12 @@ let norm_pure_result f =
              match pf with
                | Lt(a1,a2,pos) -> if Infinity.check_neg_inf2_inf a1 a2 || Infinity.check_neg_inf2_inf a2 a1
                  then Some(mkTrue_b pos) else Some bf
+               | Lte(e1,e2,pos) -> (match e1 with
+                   | Add(a1,a2,pos) -> (match a1,a2 with
+                       | IConst(1,_), e 
+                       | e,IConst(1,_) ->  if is_inf e then Some(Lt(e,e2,pos),None) else Some bf
+                       | _, _ -> Some bf)
+                   | _ -> Some bf)
                | _ -> Some bf
            in
            let f_e e = (Some e) in
@@ -1606,7 +1613,11 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let (pr_weak,pr_strong) = CP.drop_complex_ops in
   let (pr_weak_z3,pr_strong_z3) = CP.drop_complex_ops_z3 in
     (* Handle Infinity Constraints *)
-  let f = if !Globals.allow_inf then Infinity.normalize_inf_formula_sat f else f in
+  let f = if !Globals.allow_inf then 
+   (* let _ = Coqinf.cpure_to_coqpure f in *)
+      let f = Infinity.normalize_inf_formula_sat f in
+      let f = (*Infinity.fixed_point_pai_num*) f in f
+    else f in
   let wf = f in
   let omega_is_sat f = Omega.is_sat_ops pr_weak pr_strong f sat_no in
   let redlog_is_sat f = wrap_redlog (Redlog.is_sat_ops pr_weak pr_strong f) sat_no in
@@ -1756,8 +1767,32 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
 
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let f = cnv_ptr_to_int f in
-  tp_is_sat_no_cache f sat_no
-  
+  let flag = tp_is_sat_no_cache f sat_no in 
+  if !Globals.allow_inf && !Globals.allow_inf_qe
+  then  
+  (*  let exists_inf f = 
+      let alist  = Infinity.quantifier_elim f in
+       let rec aux al = match al with
+         | [] -> false
+         | x::xs -> let f = tp_is_sat_no_cache f sat_no in
+                    (*let _ = print_endline ("Ante :"^(Cprinter.string_of_pure_formula x)) in*)
+                    if f then true else aux xs
+       in aux alist in
+    let forall_lst = Infinity.get_inst_forall f in 
+    let forall_lst = f::forall_lst in 
+    let f = List.exists (fun c -> exists_inf c) forall_lst in f*)
+    let expand_quantifier = Infinity.elim_forall_exists in
+    tp_is_sat_no_cache (expand_quantifier f) sat_no
+  else if !Globals.allow_inf && !Globals.allow_inf_qe_coq then
+    let f  = Coqinf.check_sat_inf_formula f in
+    (*let fl = CP.split_disjunctions_deep f in
+    let rec aux al = match al with
+      | [] -> false
+      | x::xs -> if (tp_is_sat_no_cache x sat_no) then true else aux xs
+    in aux fl*)
+    Omega.is_sat f sat_no 
+    (*tp_is_sat_no_cache f sat_no*)
+  else flag 
 
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) = 
   Gen.Profiling.do_1 "tp_is_sat_no_cache" (tp_is_sat_no_cache f) sat_no
@@ -1855,7 +1890,7 @@ let tp_is_sat f sat_no =
 
 let norm_pure_input f =
   let f = cnv_ptr_to_int f in
-  let f = if !Globals.allow_inf 
+  let f = if !Globals.allow_inf (*&& not(!Globals.allow_inf_qe_coq)*)
     then let f = Infinity.convert_inf_to_var f
     in let add_inf_constr = BForm((mkLt (CP.Var(CP.SpecVar(Int,constinfinity,Primed),no_pos)) (CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),no_pos)) no_pos,None),None) in
       let f = mkAnd add_inf_constr f no_pos in f
@@ -1903,6 +1938,7 @@ let simplify (f : CP.formula) : CP.formula =
     else 
       let cmd = PT_SIMPLIFY f in
       let () = Log.last_proof_command # set cmd in
+      (* if !Globals.allow_inf_qe_coq then f else *)
       (* if !Globals.allow_inf && Infinity.contains_inf f then f
       else
       let f = if !Globals.allow_inf then Infinity.convert_inf_to_var f else f in*)
@@ -2480,7 +2516,12 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   (* (\* add invariant constraint @M<:v<:@A for each annotation var *\) *)
   (* let ante = CP.add_ann_constraints imm_vrs ante in *)
   (* Handle Infinity Constraints *)
-  let ante,conseq  = if !Globals.allow_inf then Infinity.normalize_inf_formula_imply ante conseq 
+  let ante,conseq  = if !Globals.allow_inf (*&& !Globals.allow_inf_qe_coq
+    then let a,c = (Infinity.convert_inf_to_var (Cpure.arith_simplify 333 ante)),
+      (Infinity.convert_inf_to_var (Cpure.arith_simplify 332 conseq)) in a,c
+    else if !Globals.allow_inf*)
+    then let a,c = Infinity.normalize_inf_formula_imply ante conseq
+         in let a = Infinity.fixed_point_pai_num a in a,c
   else ante,conseq in
   if should_output () then (
     reset_generated_prover_input ();
@@ -2681,7 +2722,46 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
     else ante in
   let ante = cnv_ptr_to_int ante in
   let conseq = cnv_ptr_to_int_weak conseq in
-  tp_imply_no_cache ante conseq imp_no timeout process
+  let flag = tp_imply_no_cache ante conseq imp_no timeout process in
+  if !Globals.allow_inf && !Globals.allow_inf_qe
+  then
+(* the following is not complete as it does not expand the conseq quantifiers over PAInf *)
+    (* let exists_inf f = 
+      let alist  = Infinity.quantifier_elim f in
+       let rec aux al = match al with
+         | [] -> false
+         | x::xs -> let f = tp_imply_no_cache x conseq imp_no timeout process in
+                    (*let _ = print_endline ("Ante :"^(Cprinter.string_of_pure_formula x)) in*)
+                    if f then true else aux xs
+       in aux alist in
+    let forall_lst = Infinity.get_inst_forall ante in 
+    let forall_lst = ante::forall_lst in
+    let f = List.for_all (fun c -> exists_inf c) forall_lst in f
+    let expand_quantifier f  = 
+      let forall_lst = Infinity.get_inst_forall f in
+      let forall_lst = ante::forall_lst in
+      conj_of_list 
+        (List.map (fun c -> disj_of_list (Infinity.quantifier_elim c) no_pos) forall_lst) no_pos in*)
+    let expand_quantifier = Infinity.elim_forall_exists in
+    tp_imply_no_cache (expand_quantifier ante) (expand_quantifier conseq) imp_no timeout process
+  else if !Globals.allow_inf && !Globals.allow_inf_qe_coq then
+    (*let f = mkAnd ante (mkNot_dumb conseq None no_pos) no_pos in
+    let f = mkForall (fv f) f None no_pos in*)
+    (*let func a c = 
+      let f = Coqinf.check_imply_inf_formula ante conseq in
+      Omega.is_valid f timeout in
+    let fl = CP.split_disjunctions_deep ante in
+    let rec aux al = match al with
+      | [] -> false
+      | x::xs -> if (func x conseq) then true else aux xs
+    in aux fl*)
+    let f  = Coqinf.check_imply_inf_formula ante conseq in
+    Omega.is_valid f timeout
+   (* not(Omega.is_sat f imp_no)*)
+    (*(tp_is_sat_no_cache f imp_no)*)
+    (* tp_imply_no_cache (Coqinf.check_sat_inf_formula  ante) 
+      (Coqinf.check_sat_inf_formula conseq) imp_no timeout process*)
+  else flag 
 
 (* let tp_imply_no_cache ante conseq imp_no timeout process = *)
 (* 	(\*wrapper for capturing equalities due to transitive equality with null*\) *)
@@ -2697,8 +2777,6 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 (* 			   else ante in *)
 (* 	tp_imply_no_cache ante conseq imp_no timeout process *)
 
-  
-  
 let tp_imply_no_cache ante conseq imp_no timeout process =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_4(* _loop *) "tp_imply_no_cache" pr pr (fun s -> s) string_of_prover string_of_bool

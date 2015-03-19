@@ -1,0 +1,17 @@
+checkentail \inf - \inf>=0 |- false.
+
+checkentail !(\inf - \inf<0) |- false.
+
+checkentail 0 * \inf = 0 |- false.
+
+checkentail !(0 * \inf = 0)  |- false.
+
+checkentail 0 * \inf = \inf |- false.
+
+checkentail 0 * -\inf = -\inf |- false.
+
+checkentail forall(x: x + \inf = \inf) |- false.
+
+checkentail exists x: x + \inf = \inf |- false.
+
+
