@@ -21,6 +21,7 @@ void append(node xxx, node yyyy)
 	}
 	else {
 		xxx.next = yyyy;
+                dprint;
 		return;
 	}
 }

@@ -15056,12 +15056,12 @@ let get_pre_rels pure =
 let rec get_pre_pure_fml xpure_heap prog fml = match fml with
   | Base b -> 
     let pure = b.formula_base_pure in
-    let xpured,_,_ = xpure_heap 11 prog (b.formula_base_heap) pure 1 in 
+    let xpured,_,_ = x_add xpure_heap 11 prog (b.formula_base_heap) pure 1 in 
     [MCP.pure_of_mix (MCP.merge_mems pure xpured true)]
   | Or o -> (get_pre_pure_fml xpure_heap prog o.formula_or_f1) @ (get_pre_pure_fml xpure_heap prog o.formula_or_f2)
   | Exists e -> 
     let pure = e.formula_exists_pure in
-    let xpured,_,_ = xpure_heap 12 prog (e.formula_exists_heap) pure 1 in 
+    let xpured,_,_ = x_add xpure_heap 12 prog (e.formula_exists_heap) pure 1 in 
     [MCP.pure_of_mix (MCP.merge_mems pure xpured true)]
 
 let rec get_grp_post_rel_flag fml = match fml with

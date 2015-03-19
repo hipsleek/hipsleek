@@ -2132,7 +2132,7 @@ let partition_eqs_subs lst1 lst2 quantif =
 
 let norm_abs_node h p xpure =
   if (isAccs (get_imm h)) then
-    let xpured, _, _ = xpure h p 0 in (* 0 or 1? *)(* !!!! add the xpure to pure *)
+    let xpured, _, _ = x_add xpure h p 0 in (* 0 or 1? *)(* !!!! add the xpure to pure *)
     (HEmp, Some (MCP.pure_of_mix xpured))
   else
     (h, None)  

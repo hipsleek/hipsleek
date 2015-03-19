@@ -1643,7 +1643,7 @@ let generate_view_rev_rec_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog
   let processed_brs = List.map (fun (f, lbl) ->
       let f1 = CF.elim_exists f in
       let _,new_f = CF.split_quantifiers f1 in
-      (* let p,_,_ = Cvutil.xpure_symbolic 20 cprog new_f in *)
+      (* let p,_,_ = x_add Cvutil.xpure_symbolic 20 cprog new_f in *)
       let p = CF.get_pure new_f in
       let p1 = CP.filter_var  p view_args in
     (new_f, p1)

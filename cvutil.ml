@@ -911,13 +911,13 @@ and xpure_mem_enum_x (prog : prog_decl) (f0 : formula) : (mix_formula * CF.mem_f
       | Base ({ formula_base_heap = h;
 	formula_base_pure = p;
 	formula_base_pos = pos}) ->
-            let (ph,_) = xpure_heap_mem_enum 2 prog h p 1 in
+            let (ph,_) = x_add xpure_heap_mem_enum 2 prog h p 1 in
 	    MCP.merge_mems p ph true
       | Exists ({ formula_exists_qvars = qvars;
 	formula_exists_heap = qh;
 	formula_exists_pure = qp;
 	formula_exists_pos = pos}) ->
-            let (pqh,_) = xpure_heap_mem_enum 3 prog qh qp 1 in
+            let (pqh,_) = x_add xpure_heap_mem_enum 3 prog qh qp 1 in
             let tmp1 = MCP.merge_mems qp pqh true in
             MCP.memo_pure_push_exists qvars tmp1
   in
@@ -969,7 +969,7 @@ and xpure_heap_mem_enum_new
       (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CF.mem_formula)
       =
   if !Globals.baga_xpure && not(!Globals.en_slc_ps) && (not (Perm.allow_perm ())) then
-    let disj = xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) in
+    let disj = x_add xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) in
     let ans = conv_from_ef_disj disj in
     ans
   else if !Globals.en_slc_ps || not(!Globals.gen_baga_inv) then
@@ -978,7 +978,7 @@ and xpure_heap_mem_enum_new
   else
     (* to call xpure_heap_enum_baga *)
     (* if !Globals.baga_xpure then *)
-    (*   let disj = xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) in *)
+    (*   let disj = x_add xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) in *)
     (*   let ans = conv_from_ef_disj disj in *)
     (*   ans *)
     (* else *)
@@ -1020,7 +1020,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
               )
       | ThreadNode {CF.h_formula_thread_resource = rsr}  ->
             (*Thread resource may be used for xpure*)
-            let mf,_ =  xpure_mem_enum 1 prog rsr in
+            let mf,_ = x_add xpure_mem_enum 1 prog rsr in
             mf
       | ViewNode ({ h_formula_view_node = p;
 	h_formula_view_name = c;
@@ -1128,8 +1128,8 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
       | ConjConj ({h_formula_conjconj_h1 = h1;
 	h_formula_conjconj_h2 = h2;
 	h_formula_conjconj_pos = pos}) ->
-            let ph1 = xpure_heap_helper prog h1 which_xpure memset in
-            let ph2 = xpure_heap_helper prog h2 which_xpure memset in
+            let ph1 = x_add xpure_heap_helper prog h1 which_xpure memset in
+            let ph2 = x_add xpure_heap_helper prog h2 which_xpure memset in
             let () = Debug.ninfo_hprint (add_str "ph1" !Cast.print_mix_formula) ph1 no_pos in
             let () = Debug.ninfo_hprint (add_str "ph2" !Cast.print_mix_formula) ph2 no_pos in
             let () = Debug.ninfo_hprint (add_str "memset" !CF.print_mem_formula) memset no_pos in
@@ -1144,7 +1144,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
   in
   (* to build a subs here *)
   let memset = h_formula_2_mem h0 p0 [] prog in
-  if (is_sat_mem_formula memset) then (xpure_heap_helper prog h0 which_xpure memset, memset)
+  if (is_sat_mem_formula memset) then (x_add xpure_heap_helper prog h0 which_xpure memset, memset)
   else
     (MCP.mkMFalse no_pos, memset)
 
@@ -1169,7 +1169,7 @@ and xpure_symbolic_slicing_x (prog : prog_decl) (f0 : formula) : (formula * CP.s
 	    let ({ formula_base_heap = h;
 	    formula_base_pure = p;
 	    formula_base_pos = pos }) = b in
-            let ph, addrs, _ = xpure_heap_symbolic 2 prog h p 1 in
+            let ph, addrs, _ = x_add xpure_heap_symbolic 2 prog h p 1 in
             let n_p = MCP.merge_mems p ph true in
 	    (* Set a complex heap formula to a simpler one *)
 	    let n_f0 = mkBase HEmp n_p CvpermUtils.empty_vperm_sets TypeTrue (mkTrueFlow ()) [] pos in (* formula_of_mix_formula n_p *)
@@ -1179,7 +1179,7 @@ and xpure_symbolic_slicing_x (prog : prog_decl) (f0 : formula) : (formula * CP.s
 	    formula_exists_heap = qh;
 	    formula_exists_pure = qp;
 	    formula_exists_pos = pos}) = e in 
-            let pqh, addrs', _ = xpure_heap_symbolic 3 prog qh qp 1 in
+            let pqh, addrs', _ = x_add xpure_heap_symbolic 3 prog qh qp 1 in
             let addrs = Gen.BList.difference_eq CP.eq_spec_var addrs' qvars in
             let n_qp = MCP.merge_mems qp pqh true in
             (* Set a complex heap formula to a simpler one *)
@@ -1446,7 +1446,7 @@ and xpure_symbolic_new_orig (prog : prog_decl) (f0 : formula) =
     (* let nb = xpure_symbolic_baga prog f0 in *)
     (* let ans = xpure_symbolic_orig prog f0 in *)
     (* if !Globals.do_under_baga_approx then *)
-      let nb = xpure_symbolic_baga prog f0 in
+      let nb = x_add xpure_symbolic_baga prog f0 in
       let () = Debug.ninfo_hprint (add_str "f(using under)" Excore.EPureI.string_of_disj) nb no_pos in
       (* let () = Debug.ninfo_hprint (add_str "old" (pr_triple Cprinter.string_of_mix_formula  Cprinter.string_of_spec_var_list Cprinter.string_of_mem_formula)) ans no_pos in *)
       (* Long : to perform conversion here *)
@@ -1457,13 +1457,13 @@ and xpure_symbolic_new_orig (prog : prog_decl) (f0 : formula) =
       let () = Debug.ninfo_hprint (add_str "new" (pr_triple Cprinter.string_of_mix_formula  Cprinter.string_of_spec_var_list Cprinter.string_of_mem_formula)) ans no_pos in
       ans
     (* else xpure_symbolic_orig prog f0 *)
-  else xpure_symbolic_orig prog f0
+  else x_add xpure_symbolic_orig prog f0
 
 (* xpure approximation without memory enumeration *)
 and xpure_symbolic_orig (prog : prog_decl) (f0 : formula) : 
       (MCP.mix_formula * CP.spec_var list * CF.mem_formula) =
   (*use different xpure functions*)
-  let xpure_h = (* if (Perm.allow_perm ()) then xpure_heap_symbolic_perm else *) xpure_heap_symbolic 4 in (*TO CHECK: temporarily use xpure_heap_symbolic only*)
+  let xpure_h = (* if (Perm.allow_perm ()) then xpure_heap_symbolic_perm else *) x_add_3 xpure_heap_symbolic 4 in (*TO CHECK: temporarily use xpure_heap_symbolic only*)
   let mset = formula_2_mem f0 prog in 
   let rec xpure_symbolic_helper (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * CP.spec_var list) = match f0 with
     | Or ({ formula_or_f1 = f1;
@@ -1476,7 +1476,7 @@ and xpure_symbolic_orig (prog : prog_decl) (f0 : formula) :
     | Base ({ formula_base_heap = h;
       formula_base_pure = p;
       formula_base_pos = pos}) ->
-          let ph, addrs, _ = xpure_heap_symbolic 5 prog h p 1 in
+          let ph, addrs, _ = x_add xpure_heap_symbolic 5 prog h p 1 in
           let n_p = MCP.merge_mems p ph true in
           (n_p, addrs)
     | Exists ({ formula_exists_qvars = qvars;
@@ -1508,7 +1508,7 @@ and xpure_heap_symbolic i (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
 
 and xpure_heap_symbolic_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CP.spec_var list * CF.mem_formula) = 
   let memset = h_formula_2_mem h0 p0 [] prog in
-  let ph, pa = xpure_heap_symbolic_i prog h0 p0 which_xpure in
+  let ph, pa = x_add xpure_heap_symbolic_i prog h0 p0 which_xpure in
   if (is_sat_mem_formula memset) then (ph, pa, memset)
   else (MCP.mkMFalse no_pos, pa, memset)
 
@@ -1529,7 +1529,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) p0 xp_no: (MCP.m
   let rec helper h0 : (MCP.mix_formula *  CP.spec_var list) = match h0 with
     | ThreadNode {CF.h_formula_thread_resource = rsr}  ->
           (*Thread resource may be used for xpure*)
-          let mf,svl,_ =  xpure_symbolic 5 prog rsr in
+          let mf,svl,_ = x_add xpure_symbolic 5 prog rsr in
           (mf,svl)
     | DataNode ({ h_formula_data_node = p;
       h_formula_data_arguments = args;
@@ -1706,13 +1706,13 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) p0 xp_no: (MCP.m
 let xpure_heap_x (prog : prog_decl) (h0 : h_formula) (p0 : mix_formula) (which_xpure :int) (sym_flag:bool) : (mix_formula * CP.spec_var list * CF.mem_formula) =
   (* let h0 = merge_partial_h_formula h0 in *) (*this will not work with frac permissions*)
   if (!Globals.allow_imm) || (!Globals.allow_field_ann) || sym_flag then
-    xpure_heap_symbolic 1 prog h0 p0 which_xpure
+    x_add xpure_heap_symbolic 1 prog h0 p0 which_xpure
   else
-    let a, c = xpure_heap_mem_enum 6 prog h0 p0 which_xpure in
+    let a, c = x_add xpure_heap_mem_enum 6 prog h0 p0 which_xpure in
     (a, [], c)
 
 let xpure_heap_new (prog : prog_decl) (h0 : h_formula) (p0 : mix_formula) (which_xpure :int) (sym_flag:bool) : (mix_formula * CP.spec_var list * CF.mem_formula) =
-  let (mf,svl,diff) as x = xpure_heap_x prog h0 p0 which_xpure sym_flag in
+  let (mf,svl,diff) as x = x_add xpure_heap_x prog h0 p0 which_xpure sym_flag in
   if (!Globals.ineq_opt_flag) then x
   else
     let diff_m = dlist_2_pure diff in
@@ -1724,7 +1724,7 @@ let xpure_heap i (prog : prog_decl) (h0 : h_formula) (p0 : mix_formula) (which_x
   let sym_flag = false in
   let () = smart_same_flag := true in
   let pr (mf,svl,m) = (pr_triple Cprinter.string_of_mix_formula Cprinter.string_of_spec_var_list Cprinter.string_of_mem_formula (mf,svl,m))^"#"^(string_of_bool !smart_same_flag) in
-  Debug.no_3_num i "xpure_heap_i"
+  Debug.no_3_num i "xpure_heap"
       Cprinter.string_of_h_formula Cprinter.string_of_mix_formula string_of_int pr
       (fun _ _ _ -> xpure_heap_new prog h0 p0 which_xpure sym_flag ) h0 p0 which_xpure
 
@@ -1732,7 +1732,7 @@ let xpure_heap_sym i (prog : prog_decl) (h0 : h_formula) (p0 : mix_formula) (whi
   let sym_flag = true in
   let () = smart_same_flag := true in
   let pr (mf,svl,m) = (pr_triple Cprinter.string_of_mix_formula Cprinter.string_of_spec_var_list Cprinter.string_of_mem_formula (mf,svl,m))^"#"^(string_of_bool !smart_same_flag) in
-  Debug.no_3_num i "xpure_heap_sym_i"
+  Debug.no_3_num i "xpure_heap_sym"
       Cprinter.string_of_h_formula Cprinter.string_of_mix_formula string_of_int pr
       (fun _ _ _ -> xpure_heap_new prog h0 p0 which_xpure sym_flag ) h0 p0 which_xpure
 
@@ -1741,9 +1741,9 @@ let xpure_heap_sym i (prog : prog_decl) (h0 : h_formula) (p0 : mix_formula) (whi
 let xpure_x (prog : prog_decl) (f0 : formula) : (mix_formula * CP.spec_var list * CF.mem_formula) =
   (* print_string "calling xpure"; *)
   if (!Globals.allow_imm)||(!Globals.allow_field_ann) then
-    xpure_symbolic 4 prog f0
+    x_add xpure_symbolic 4 prog f0
   else
-    let a, c = xpure_mem_enum 2 prog f0 in
+    let a, c = x_add xpure_mem_enum 2 prog f0 in
     (a, [], c)
 
 let xpure i (prog : prog_decl) (f0 : formula) : (mix_formula * CP.spec_var list * CF.mem_formula) =
@@ -1754,7 +1754,7 @@ let xpure i (prog : prog_decl) (f0 : formula) : (mix_formula * CP.spec_var list 
 
 let xpure_sym (prog : prog_decl) (f0 : formula) : (mix_formula * CP.spec_var list * CF.mem_formula) =
   (* print_string "calling xpure"; *)
-    xpure_symbolic 48 prog f0
+    x_add xpure_symbolic 48 prog f0
 
 (**************************************)
 (****************END XPURE ***********)
@@ -2220,15 +2220,15 @@ let remove_imm_from_heap_formula prog p0 which_xpure imml fh = (* fh *)
       | CF.DataNode (h1) -> 
             (* if (Immutable.isLend h1.h_formula_data_imm) then *)
             if (CP.eq_ann imml h1.h_formula_data_imm) then
-              (* let xpure, _  = xpure_heap_mem_enum prog fh p0 which_xpure in *)
-              let xpure, _, _  = xpure_heap_symbolic 9 prog fh p0 which_xpure in
+              (* let xpure, _  = x_add xpure_heap_mem_enum prog fh p0 which_xpure in *)
+              let xpure, _, _  = x_add xpure_heap_symbolic 9 prog fh p0 which_xpure in
               (HEmp, Some xpure, [h1.h_formula_data_node])
             else (fh, None, [])
       | CF.ViewNode (h1) ->
             (* if (Immutable.isLend h1.h_formula_view_imm) then *)
             if (CP.eq_ann imml h1.h_formula_view_imm) then
-              (* let xpure, _ = xpure_heap_mem_enum prog fh p0 which_xpure in *)
-              let xpure, _, _  = xpure_heap_symbolic 10 prog fh p0 which_xpure in
+              (* let xpure, _ = x_add xpure_heap_mem_enum prog fh p0 which_xpure in *)
+              let xpure, _, _  = x_add xpure_heap_symbolic 10 prog fh p0 which_xpure in
               (HEmp, Some xpure, [h1.h_formula_view_node])
             else (fh, None, [])
       | _          -> (fh, None, [])
@@ -2240,7 +2240,7 @@ let remove_imm_from_formula_x prog f imml = (* f *)
     not(Gen.is_empty (Gen.BList.intersect_eq CP.eq_spec_var lst1 lst2)) in
   let fun_helper p h = 
     (* decide below the value for which_xpure (1 or 0) ? *)
-    let disj = if not (CP.isAccs imml) then snd (xpure_heap_mem_enum 4 prog h p 1) else {mem_formula_mset = []} in (* get the dijointness information *)
+    let disj = if not (CP.isAccs imml) then snd (x_add xpure_heap_mem_enum 4 prog h p 1) else {mem_formula_mset = []} in (* get the dijointness information *)
     let fh, x, removed_vars = remove_imm_from_heap_formula prog p 1 imml h in (* remove @L and retrieve xpure of removed nodes *)    
     let pure = match x with
       | Some pr -> MCP.merge_mems pr p true

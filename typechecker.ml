@@ -1588,11 +1588,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 							(fun _ _ -> heap_entail_struc_init prog false true (CF.SuccCtx [CF.Ctx c]) bd_spec pos None) c bd_spec (*r,proof*) 
 					  in 
 			      helper c bd_spec in
-	      
-	      let barr_failesc_context (f,e,n) =  
+
+	      let barr_failesc_context (f,e,n) =
 		let esc_skeletal = List.map (fun (l,_) -> (l,[])) e in
 		let res = List.map (fun (lbl,c2, oft)-> 
-		    let list_context_res,prf =process_ctx c2 in					
+		    let list_context_res,prf =process_ctx c2 in
 		    match list_context_res with
 		      | CF.FailCtx (t,c,_) -> begin
                           let lc = if !Globals.enable_error_as_exc then
@@ -2006,20 +2006,21 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         | Dprint ({exp_dprint_string = str;
           exp_dprint_visible_names = visib_names;
           exp_dprint_pos = pos}) -> begin
-            let () = x_binfo_hp (add_str "Dprint" pr_id) (stk_vars # string_of_no_ln) no_pos in
+            let curr_svl = stk_vars # get_stk in
+            let () = x_binfo_hp (add_str "Dprint" !Cpure.print_svl) curr_svl no_pos in
             (* let () = print_endline ("check_exp: Dprint: ctx :" ^ (Cprinter.string_of_list_failesc_context ctx)) in *)
             (* let ctx0 = ctx in *)
 	    (* let ctx1 = prune_ctx_failesc_list prog ctx in *)
             let ctx2 = list_failesc_context_and_unsat_now prog ctx in
             let ctx = ctx2 in
-            (* let ctx_simp = Cfout.simplify_failesc_context_list ctx in *)
+            let ctx_simp = Cfout.simplify_failesc_context_list ctx in
             (* let ctx1 = if !Globals.print_en_tidy then CF.rearrange_failesc_context_list ctx else ctx in *)
             (* Debug.info_hprint (add_str "dprint ctx0:" Cprinter.string_of_list_failesc_context) ctx0 pos; *)
             (* Debug.info_hprint (add_str "dprint ctx1:" Cprinter.string_of_list_failesc_context) ctx1 pos; *)
             (* Debug.info_hprint (add_str "dprint ctx2:" Cprinter.string_of_list_failesc_context) ctx2 pos; *)
             if str = "" then begin
               let str1 = (Cprinter.string_of_list_failesc_context ctx) in
-              (* let str2 = (Cprinter.string_of_list_failesc_context ctx_simp) in *)
+              let str2 = (Cprinter.string_of_list_failesc_context ctx_simp) in
 	      (if (Gen.is_empty ctx) then
                 (print_string_quiet ("\ndprint:"^pos.start_pos.Lexing.pos_fname
                 ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^" empty context"))
@@ -2028,7 +2029,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str1 ^ "\n" in
                 let tmp1 = if (previous_failure ()) then ("failesc context: "^tmp1) else tmp1 in
                 let tmp2 = "\ndprint after: " ^ pos.start_pos.Lexing.pos_fname
-                  ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " (* ^ str2 *) ^ "\n" in
+                  ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str2 ^ "\n" in
                 let tmp2 = if (previous_failure ()) then ("failesc context: "^tmp2) else tmp2 in
                 print_string_quiet (tmp1 ^ tmp2));
               ctx

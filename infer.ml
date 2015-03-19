@@ -2785,7 +2785,7 @@ let generate_error_constraints_x prog es lhs rhs_hf lhs_hps es_cond_path pos=
     (* to transform heap to pure formula, use baga *)
     let old_baga_flag = !baga_xpure in
     let () = baga_xpure := true in
-    let prhs_guard,_,_ = (Cvutil.xpure_heap_symbolic 10 prog rhs_hf (Mcpure.mkMTrue pos) 0) in
+    let prhs_guard,_,_ = x_add Cvutil.xpure_heap_symbolic 10 prog rhs_hf (Mcpure.mkMTrue pos) 0 in
     let () = baga_xpure := old_baga_flag in
     let prhs_guard1 =  MCP.pure_of_mix prhs_guard in
     (* tranform pointers: x>0, x=1 -> x!=null *)
@@ -2795,7 +2795,7 @@ let generate_error_constraints_x prog es lhs rhs_hf lhs_hps es_cond_path pos=
       let neg_prhs0 = (CP.neg_eq_neq prhs_guard2) in
       (* contradict with LHS? *)
       let () = baga_xpure := true in
-      let lhs_p,_,_=(Cvutil.xpure_symbolic 10 prog es.es_formula) in
+      let lhs_p,_,_=(x_add Cvutil.xpure_symbolic 10 prog es.es_formula) in
       let () = baga_xpure := old_baga_flag in
       let lhs_extra = CP.mkAnd (MCP.pure_of_mix lhs_p) neg_prhs0 no_pos in
       if not( TP.is_sat_raw (MCP.mix_of_pure lhs_extra)) then None else
@@ -3747,7 +3747,7 @@ let get_spec_from_file prog =
 (*   if no_infer estate then estate *)
 (*   else *)
 (*     let () = DD.devel_pprint ("\n inferring_empty_rhs2:"^(!print_formula estate.es_formula)^ "\n\n")  pos in *)
-(*     (\* let lhs_xpure,_,_,_ = xpure prog estate.es_formula in *\) *)
+(*     (\* let lhs_xpure,_,_,_ = x_add xpure prog estate.es_formula in *\) *)
 (*     let pure_part_aux = Omega.is_sat (CP.mkAnd (MCP.pure_of_mix lhs_xpure) (MCP.pure_of_mix rhs_p) pos) "0" in *)
 (*     let rec filter_var_aux f vars = match f with *)
 (*       | CP.Or (f1,f2,l,p) -> CP.Or (filter_var_aux f1 vars, filter_var_aux f2 vars, l, p) *)
