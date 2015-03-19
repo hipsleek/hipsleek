@@ -12,6 +12,7 @@ logs/
 indent/
 arith/.*~
 baga/.*/logs/*
+/\.mona_temp*
 /*hip$
 /*sleek$
 /\#.*
