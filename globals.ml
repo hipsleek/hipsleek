@@ -1036,6 +1036,13 @@ let infer_raw_flag = ref true
 let pa = ref false
 
 let allow_inf = ref false (*enable support to use infinity (\inf and -\inf) in formulas *)
+let allow_inf_qe = ref false (*enable support to use quantifier elimination with infinity (\inf and -\inf) in formulas *)
+
+let allow_inf_qe_coq = ref false
+let allow_inf_qe_coq_simp = ref false
+(* enable support to use quantifier elimination procedure
+implemented in coq and extracted as infsolver.ml *)
+let allow_qe_fix = ref false
 
 let ann_derv = ref false
 

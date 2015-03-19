@@ -1894,7 +1894,8 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
               Ipure.FConst (f, pos)
         | Ipure.AConst (ha, pos) ->
               Ipure.AConst (ha, pos)
-        | Ipure.InfConst (id, pos) -> 
+        | Ipure.InfConst (id, pos)  
+        | Ipure.NegInfConst (id, pos) -> 
               e (* TODO *)
         | Ipure.Tsconst (t, pos) ->
               Ipure.Tsconst (t, pos)
