@@ -1,0 +1,20 @@
+
+data node {
+  node next;
+}.
+
+pred ll<> ==
+ self = null
+or (exists q_18: self::node<next = q_18> * q_18::ll<>).
+
+pred ll_e1<> ==
+(exists q: self::node<next = q> * q::ll<>).
+
+pred ll_e2<> ==
+(exists p,q: self::node<next = p> * q::ll<> & p = q).
+
+pred node_e1<q:node> ==
+(exists p: self::node<next = p> & p = q).
+
+checkentail q::ll<> * y::ll<> * xprm::node<next = q> & q != null & xprm = x & yprm = y & x != null
+         |- xprm::node_e1<q> * q::ll<> * y::ll<> & q != null & xprm = x & yprm = y & x != null.

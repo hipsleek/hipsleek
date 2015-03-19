@@ -1,4 +1,7 @@
+#include "xdebug.cppo"
+open VarGen
 open Globals
+open VarGen
 open GlobProver
 
 module CP = Cpure
@@ -117,14 +120,19 @@ and cvcl_of_exp a = match a with
       failwith ("level should not appear in cvclite")
 	| CP.Tsconst _ ->
       failwith ("Tsconst not supported in cvclite")
-	| CP.InfConst _ -> Error.report_no_pattern ()
+    | CP.NegInfConst _
+	| CP.InfConst _ -> failwith ("Infconst not supported in cvclite")
+	| CP.Template t -> cvcl_of_exp (CP.exp_of_template t)
 	| CP.Bptriple _ ->
       failwith ("cvcl_of_exp: Bptriple not supported in cvclite")
+	| CP.Tup2 _ ->
+      failwith ("cvcl_of_exp: Tup2 not supported in cvclite")
 
   
 and cvcl_of_b_formula b =
   let (pf,_) = b in
   match pf with
+    | CP.Frm (sv, _) -> (cvcl_of_spec_var sv) ^ " = 1"
   | CP.BConst (c, _) -> if c then "(TRUE)" else "(FALSE)"
   | CP.XPure _ -> "(TRUE)" (* WN : weakening *)
   (* | CP.BVar (sv, _) -> cvcl_of_spec_var sv *)
@@ -157,7 +165,7 @@ and cvcl_of_b_formula b =
   | CP.BagNotIn (v, e, l)	-> " NOT(in(" ^ (cvcl_of_spec_var v) ^ ", " ^ (cvcl_of_exp e) ^"))"
   | CP.BagSub (e1, e2, l)	-> " subset(" ^ cvcl_of_exp e1 ^ ", " ^ cvcl_of_exp e2 ^ ")"
   | CP.BagMax _ | CP.BagMin _ -> failwith ("cvcl_of_b_formula: BagMax/BagMin should not appear here.\n")
-  | CP.VarPerm _ -> failwith ("cvcl_of_b_formula: VarPerm should not appear here.\n")
+  (* | CP.VarPerm _ -> failwith ("cvcl_of_b_formula: VarPerm should not appear here.\n") *)
   | CP.ListIn _
   | CP.ListNotIn _
   | CP.ListAllN _

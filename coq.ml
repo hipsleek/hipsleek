@@ -1,8 +1,11 @@
+#include "xdebug.cppo"
 (*
   Create the input file for Coq
 *)
 
 open Globals
+open Gen.Basic
+open VarGen
 open GlobProver
 module CP = Cpure
 module Err = Error
@@ -32,8 +35,10 @@ let rec coq_of_typ = function
   | List _		  -> "list"
   | Pointer _
   | Tree_sh 	  -> "int"
+  | Tup2 _ -> illegal_format ("coq_of_typ: Tup2 type not supported for Coq")
+  | FORM -> illegal_format ("coq_of_typ: FORMULA type not supported for Coq")
   | Bptyp -> failwith ("coq_of_typ: Bptyp type not supported for Coq")
-  | UNK | NUM | TVar _ | Named _ | Array _ | RelT _ | HpT->
+  | UNK | NUM | TVar _ | Named _ | Array _ | RelT _ | FuncT _ | UtT | HpT (* | SLTyp *) ->
         Error.report_error {Err.error_loc = no_pos; 
         Err.error_text = "type var, array and named type not supported for Coq"}
 ;;
@@ -81,7 +86,7 @@ and coq_of_exp e0 =
   | CP.Var (sv, _) -> coq_of_spec_var sv
   | CP.IConst (i, _) -> string_of_int i
   | CP.Tsconst _ -> failwith ("tsconst not supported in coq, should have already been handled")
-  | CP.Bptriple _ ->  illegal_format "coq_of_exp : bptriple cannot be handled"
+  | CP.Bptriple _ | CP.Tup2 _ ->  illegal_format "coq_of_exp : bptriple/Tup2 cannot be handled"
   | CP.AConst (i, _) -> string_of_heap_ann i
   | CP.FConst (f, _) -> illegal_format "coq_of_exp : float cannot be handled"
   | CP.Add (a1, a2, _) ->  " ( " ^ (coq_of_exp a1) ^ " + " ^ (coq_of_exp a2) ^ ")"
@@ -134,7 +139,10 @@ and coq_of_exp e0 =
 	| CP.ArrayAt _ -> 
 			illegal_format "coq_of_exp : array cannot be handled"
           (* failwith ("Arrays are not supported in Coq") (\* An Hoa *\) *)
-    | CP.InfConst _ -> Error.report_no_pattern ()
+    | CP.NegInfConst _
+    | CP.InfConst _ -> illegal_format "coq_of_exp : \inf cannot be handled"
+  | CP.Template t -> coq_of_exp (CP.exp_of_template t)
+
 (* pretty printing for a list of expressions *)
 and coq_of_formula_exp_list l = match l with
   | []         -> ""
@@ -145,6 +153,7 @@ and coq_of_formula_exp_list l = match l with
 and coq_of_b_formula b =
   let (pf,_) = b in
   match pf with
+    | CP.Frm (fv, _) -> " (" ^ (coq_of_spec_var fv) ^ " = 1)"
   | CP.BConst (c, _) -> if c then "True" else "False"
   | CP.XPure _ -> "True" (* WN : weakening - need to translate> *)
   | CP.BVar (bv, _) -> " (" ^ (coq_of_spec_var bv) ^ " = 1)"
@@ -184,7 +193,7 @@ and coq_of_b_formula b =
           (* failwith ("No relations in Coq yet") (\* An Hoa *\) *)
 			illegal_format "coq_of_exp : relation cannot be handled"
     | CP.LexVar _ -> illegal_format "coq_of_exp : lexvar cannot be handled"
-    | CP.VarPerm _ ->
+    (* | CP.VarPerm _ -> *)
 		illegal_format "coq_of_exp : VarPerm cannot be handled"
 
 (* pretty printing for formulas *)
@@ -216,7 +225,7 @@ and coq_of_formula pr_w pr_s f =
   in helper f
 
 let coq_of_formula pr_w pr_s f =
-  let _ = set_prover_type () in
+  let () = set_prover_type () in
   coq_of_formula pr_w pr_s f
   
 let coq_of_formula pr_w pr_s f = 
@@ -328,7 +337,7 @@ let write pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =
 	flush log_file;
   end;
 
-  (*let _ = print_string ("[coq.ml] write " ^ ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n")) in*)
+  (*let () = print_string ("[coq.ml] write " ^ ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n")) in*)
   send_formula ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n") 2
 
 
@@ -345,9 +354,9 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =
     write pr_w pr_s ante conseq;
   with Illegal_Prover_Format s -> 
       begin
-        print_endline ("\nWARNING coq.imply : Illegal_Prover_Format for :"^s);
-        print_endline ("ante:"^(!print_p_f_f ante));
-        print_endline ("conseq:"^(!print_p_f_f conseq));
+        print_endline_quiet ("\nWARNING coq.imply : Illegal_Prover_Format for :"^s);
+        print_endline_quiet ("ante:"^(!print_p_f_f ante));
+        print_endline_quiet ("conseq:"^(!print_p_f_f conseq));
         flush stdout;
         failwith s
       end

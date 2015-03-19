@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 (* This module was generated automatically by code in Makefile and machdep-ml.c *)
 type mach = {
   version_major: int;     (* Major version number *)

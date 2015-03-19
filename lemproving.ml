@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 open Globals
 open Wrapper
 open Gen
@@ -32,18 +34,19 @@ let string_of_lem_formula lf = match lf with
   | CSFormula csf -> Cprinter.string_of_struc_formula csf
 
 let split_infer_vars vrs =
-  let p,rl,hp = List.fold_left (fun (p,rl,hp) var -> 
+  let p,rl,tl,hp = List.fold_left (fun (p,rl,tl,hp) var -> 
       match var with
-        | CP.SpecVar(RelT _,_,_) -> (p,var::rl,hp)
-        | CP.SpecVar(HpT, _, _ ) -> (p,rl,var::hp)
-        | _      -> (var::p,rl,hp)
-  ) ([],[],[]) vrs in
-  (p,rl,hp)
+        | CP.SpecVar(RelT _,_,_) -> (p,var::rl,tl,hp)
+        | CP.SpecVar(FuncT _,_,_) -> (p,rl,var::tl,hp)
+        | CP.SpecVar(HpT, _, _ ) -> (p,rl,tl,var::hp)
+        | _      -> (var::p,rl,tl,hp)
+  ) ([],[],[],[]) vrs in
+  (p,rl,tl,hp)
 
 let add_infer_vars_to_ctx ivs ctx =
-  let (p,rl,hp) = split_infer_vars ivs in
-  let _ = Debug.ninfo_hprint (add_str  "rl " !Cpure.print_svl) rl no_pos in
-  let ctx = Infer.init_vars ctx p rl hp [] in 
+  let (p,rl,tl,hp) = split_infer_vars ivs in
+  let () = Debug.ninfo_hprint (add_str  "rl " !Cpure.print_svl) rl no_pos in
+  let ctx = Infer.init_vars ctx p rl tl hp [] in 
   ctx
    
 
@@ -72,13 +75,13 @@ let run_entail_check_helper ctx (iante: lem_formula) (iconseq: lem_formula) (inf
           Error.error_text = "Cannot Prove Lemma in a False Ctx "}
   in 
   (* let ctx = add_infer_vars_to_list_ctx inf_vars ctx in *)
-  let _ = if !Globals.print_core || !Globals.print_core_all then print_string ("\nrun_entail_check_helper:\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
+  let () = if !Globals.print_core || !Globals.print_core_all then print_string ("\nrun_entail_check_helper:\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
   (* let ctx = CF.transform_list_context (Solver.elim_unsat_es 10 cprog (ref 1)) ctx in *)
   let rs1, _ = 
   if not !Globals.disable_failure_explaining then
     Solver.heap_entail_struc_init_bug_inv cprog false false ctx conseq no_pos None
   else
-     Solver.heap_entail_struc_init cprog false false ctx conseq no_pos None
+    Solver.heap_entail_struc_init cprog false false ctx conseq no_pos None
   in
   let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
   flush stdout;
@@ -114,24 +117,29 @@ let run_entail_check ctx (iante : lem_formula) (iconseq : lem_formula)
       ctx iante iconseq inf_vars exact
 
 let print_exc (check_id: string) =
-  Printexc.print_backtrace stdout;
+  print_backtrace_quiet ();
   dummy_exception() ; 
-  print_string ("exception in " ^ check_id ^ " check\n")
+  print_string_quiet ("exception in " ^ check_id ^ " check\n")
 
 (* calls the entailment method and catches possible exceptions *)
 let process_coercion_check iante iconseq (inf_vars: CP.spec_var list) iexact (lemma_name: string) (cprog: C.prog_decl)  =
-  let _ = Debug.tinfo_pprint "Calling process_coercion_check" no_pos in
-  let _ = Debug.tinfo_hprint (add_str "iconseq" string_of_lem_formula) iconseq no_pos in
+  let () = if  (!Globals.dump_lem_proc) then  
+    let () = Debug.ninfo_pprint "process_coercion_check" no_pos in
+    let () = Debug.ninfo_pprint "======================" no_pos in
+    let () = Debug.ninfo_hprint (add_str "i-ante" string_of_lem_formula) iante no_pos in
+    let () = Debug.ninfo_hprint (add_str "i-conseq" string_of_lem_formula) iconseq no_pos in ()
+  else () in
   let dummy_ctx = CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos] in  
   try 
     let (b,lc) as res = run_entail_check dummy_ctx iante iconseq inf_vars cprog (if iexact then Some true else None) in
-    (* let _ = Debug.info_hprint (add_str "inf_vars" !CP.print_svl) inf_vars no_pos in *)
+    (* let () = Debug.info_hprint (add_str "inf_vars" !CP.print_svl) inf_vars no_pos in *)
     (* (if inf_vars!=[] then *)
-    (*   let _ = Debug.info_pprint "writing to residue " no_pos in *)
+    (*   let () = Debug.info_pprint "writing to residue " no_pos in *)
     (*   CF.residues := Some (lc,b)); *)
     res
   with _ -> print_exc ("lemma \""^ lemma_name ^"\""); 
-      let rs = (CF.FailCtx (CF.Trivial_Reason (CF.mk_failure_must "exception in lemma proving" lemma_error, []))) in
+      let rs = (CF.FailCtx (CF.Trivial_Reason (CF.mk_failure_must "exception in lemma proving" lemma_error, []),
+ (CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos),  CF.mk_cex true )) in
       (false, rs)
 
 let process_coercion_check iante0 iconseq0 (inf_vars: CP.spec_var list) iexact (lemma_name: string) (cprog: C.prog_decl) =
@@ -149,21 +157,21 @@ let process_coercion_check iante0 iconseq0 (inf_vars: CP.spec_var list) iexact (
 *)(*
 let check_coercion coer lhs rhs  (cprog: C.prog_decl) =
   let pos = CF.pos_of_formula coer.C.coercion_head in
-  let lhs = Solver.unfold_nth 9 (cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
+  let lhs = Solver.unfold_nth 9 (cprog,None) lhs (CP.SpecVar (Globals.null_type, self, Unprimed)) true 0 pos in
   (* unfolding RHS need to use unflattened body to preserve case-spec *)
-  let rhs = Solver.unfold_struc_nth 9 (cprog,None) rhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
-  (*let _ = print_string("lhs_unfoldfed: "^(Cprinter.string_of_formula lhs)^"\n") in*)
+  let rhs = Solver.unfold_struc_nth 9 (cprog,None) rhs (CP.SpecVar (Globals.null_type, self, Unprimed)) true 0 pos in
+  (*let () = print_string("lhs_unfoldfed: "^(Cprinter.string_of_formula lhs)^"\n") in*)
   let lhs = if(coer.C.coercion_case == C.Ramify) then 
     Mem.ramify_unfolded_formula lhs cprog.C.prog_view_decls 
   else lhs
   in
-  (*let _ = print_string("lhs_unfoldfed_ramified: "^(Cprinter.string_of_formula lhs)^"\n") in*)
+  (*let () = print_string("lhs_unfoldfed_ramified: "^(Cprinter.string_of_formula lhs)^"\n") in*)
   let lhs = CF.add_original lhs true in
   let lhs = CF.reset_origins lhs in
   let rhs = CF.add_original rhs true in
   let rhs = CF.reset_origins rhs in
-  let self_sv_lst = (CP.SpecVar (Named "", self, Unprimed)) :: [] in
-  let self_sv_renamed_lst = (CP.SpecVar (Named "", (self ^ "_" ^ coer.C.coercion_name), Unprimed)) :: [] in
+  let self_sv_lst = (CP.SpecVar (Globals.null_type, self, Unprimed)) :: [] in
+  let self_sv_renamed_lst = (CP.SpecVar (Globals.null_type, (self ^ "_" ^ coer.C.coercion_name), Unprimed)) :: [] in
   let lhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst lhs in
   let rhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst rhs in
   process_coercion_check (CFormula lhs) (CFormula rhs) coer.C.coercion_exact coer.C.coercion_name cprog 
@@ -228,15 +236,16 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   in
   let pos = CF.pos_of_formula coer.C.coercion_head in
   let fv_lhs = CF.fv lhs in
-  let _ = pr_debug (add_str "LP.lhs" Cprinter.string_of_formula) lhs pos in
-  let _ = pr_debug (add_str "LP.fv_lhs" Cprinter.string_of_spec_var_list) fv_lhs pos in
+  let () = pr_debug (add_str "LP.lhs" Cprinter.string_of_formula) lhs pos in
+  let () = pr_debug (add_str "LP.fv_lhs" Cprinter.string_of_spec_var_list) fv_lhs pos in
   let fv_rhs = CF.struc_fv rhs in
   (* WN : fv_rhs2 seems incorrect as it does not pick free vars of rhs *)
   let (new_rhs,fv_rhs2) = add_exist_heap_of_struc fv_lhs rhs in
-  let sv_self = (CP.SpecVar (Named "", self, Unprimed)) in
-  (* let _ = print_endline ("\n== old lhs = " ^ (Cprinter.string_of_formula lhs)) in *)
+  let sv_self = (CP.SpecVar (Globals.null_type, self, Unprimed)) in
+  (* let () = print_endline ("\n== old lhs = " ^ (Cprinter.string_of_formula lhs)) in *)
   let lhs_unfold_ptrs0,rhs_unfold_ptrs0= if !Globals.enable_lemma_lhs_unfold ||
-    !Globals.enable_lemma_rhs_unfold then ([],[]) else
+    !Globals.enable_lemma_rhs_unfold then ([],[]) else (* must re-check this -if- {**} *)
+      (* rhs_unfold_ptrs below really needed? isn't lhs unfold enough? *)
       let lhs_unfold_ptrs = CF.look_up_reachable_ptrs_f cprog lhs [sv_self] true true in
       let rhs_unfold_ptrs = CF.look_up_reachable_ptrs_sf cprog new_rhs [sv_self] true true in
       if is_singl sv_self lhs_unfold_ptrs then
@@ -244,7 +253,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
           let lhs_vns = CF.get_views lhs in
           let rhs_vns = CF.get_views_struc new_rhs in
           if is_iden_unfold sv_self sv_self lhs_vns rhs_vns then
-            let _ = Debug.ninfo_hprint (add_str "xxx" pr_id) "1" pos in
+            let () = Debug.ninfo_hprint (add_str "xxx" pr_id) "1" pos in
             [sv_self],[]
           else
             (* if List.length (CF.get_dnodes lhs) = 0 &&  List.length (CF.get_dnodes_struc new_rhs) =0 then [],[] else *)
@@ -253,7 +262,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
           [sv_self],[]
       else begin
         if is_singl sv_self rhs_unfold_ptrs then
-           let _ = Debug.ninfo_hprint (add_str "xxx" pr_id) "2" pos in
+           let () = Debug.ninfo_hprint (add_str "xxx" pr_id) "2" pos in
           (CP.diff_svl lhs_unfold_ptrs rhs_unfold_ptrs),[sv_self]
         else if !Globals.allow_lemma_deep_unfold then
           let l_ptrs = if lhs_unfold_ptrs != [] then [sv_self] else [] in
@@ -273,49 +282,49 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
     in
       List.fold_left (fun (f,ss) sv0 ->
           let sv = CP.subst_var_par ss sv0 in
-          (* let _ = print_endline ("-- unfold lsh on " ^ (Cprinter.string_of_spec_var sv)) in *)
+          (* let () = print_endline ("-- unfold lsh on " ^ (Cprinter.string_of_spec_var sv)) in *)
           let nf,ss1 = Solver.unfold_nth 9 (cprog, None) f sv true 0 pos in
           (nf, ss@ss1)
       ) (lhs, []) lhs_unfold_ptrs
   ) in
-  (* let _ = print_endline ("== new lhs = " ^ (Cprinter.string_of_formula lhs)) in *)
-  let _ = pr_debug (add_str "LP.lhs(unfolded)" Cprinter.string_of_formula) lhs pos in
-  (*let _ = print_string("lhs_unfoldfed_struc: "^(Cprinter.string_of_formula lhs)^"\n") in*)
+  (* let () = print_endline ("== new lhs = " ^ (Cprinter.string_of_formula lhs)) in *)
+  let () = pr_debug (add_str "LP.lhs(unfolded)" Cprinter.string_of_formula) lhs pos in
+  (*let () = print_string("lhs_unfoldfed_struc: "^(Cprinter.string_of_formula lhs)^"\n") in*)
   let glob_vs_rhs = Gen.BList.difference_eq CP.eq_spec_var fv_rhs fv_lhs in
-  let _ = pr_debug (add_str "LP.rhs" Cprinter.string_of_struc_formula) rhs pos in
-  let _ = pr_debug (add_str "LP.new_rhs" Cprinter.string_of_struc_formula) new_rhs pos in
-  let _ = pr_debug (add_str "LP.glob_vs_rhs" Cprinter.string_of_spec_var_list) glob_vs_rhs pos in
-  let _ = pr_debug (add_str "LP.fv_rhs" Cprinter.string_of_spec_var_list) fv_rhs pos in
+  let () = pr_debug (add_str "LP.rhs" Cprinter.string_of_struc_formula) rhs pos in
+  let () = pr_debug (add_str "LP.new_rhs" Cprinter.string_of_struc_formula) new_rhs pos in
+  let () = pr_debug (add_str "LP.glob_vs_rhs" Cprinter.string_of_spec_var_list) glob_vs_rhs pos in
+  let () = pr_debug (add_str "LP.fv_rhs" Cprinter.string_of_spec_var_list) fv_rhs pos in
   (* let vs_rhs = CF.fv_s rhs in *)
-  (* let _ = print_endline ("== old rhs = " ^ (Cprinter.string_of_struc_formula rhs)) in *)
+  (* let () = print_endline ("== old rhs = " ^ (Cprinter.string_of_struc_formula rhs)) in *)
   let rhs =
     let rhs_unfold_ptrs = if !Globals.enable_lemma_rhs_unfold then
         if !Globals.allow_lemma_deep_unfold then
           CF.look_up_reachable_ptrs_sf cprog new_rhs [sv_self] true true
         else [sv_self]
-      else rhs_unfold_ptrs0
+      else  []                          (* rhs_unfold_ptrs0  *) (*cancelling the effect of computing the pointers in the -if- {**} above *)
       in
     let unfolded_rhs = List.fold_left (fun sf sv ->
         Solver.unfold_struc_nth 9 (cprog,None) sf sv true 0 pos
       ) new_rhs rhs_unfold_ptrs in
-    let _ = pr_debug (add_str "LP.unfolded_rhs" Cprinter.string_of_struc_formula) unfolded_rhs pos in
+    let () = pr_debug (add_str "LP.unfolded_rhs" Cprinter.string_of_struc_formula) unfolded_rhs pos in
     (* WN : elim_exists on RHS caused unsoundness for lemma proving! *)
     (* WN : rhs of entailment need to be in normalized state! *)
     (* CF.struc_elim_exist *) unfolded_rhs
   in
-  (* let _ = print_endline ("== new rhs = " ^ (Cprinter.string_of_struc_formula rhs)) in *)
-  let _ = pr_debug (add_str "LP.rhs(after elim_exists)" Cprinter.string_of_struc_formula) rhs pos in
+  (* let () = print_endline ("== new rhs = " ^ (Cprinter.string_of_struc_formula rhs)) in *)
+  let () = pr_debug (add_str "LP.rhs(after elim_exists)" Cprinter.string_of_struc_formula) rhs pos in
   let lhs = if(coer.C.coercion_case == C.Ramify) then 
     Mem.ramify_unfolded_formula lhs cprog.C.prog_view_decls 
   else lhs
   in
-  (* let _ = print_string("lhs_unfoldfed_ramified: "^(Cprinter.string_of_formula lhs)^"\n") in *)
+  (* let () = print_string("lhs_unfoldfed_ramified: "^(Cprinter.string_of_formula lhs)^"\n") in *)
   let lhs = CF.add_original lhs true in
   let lhs = CF.reset_origins lhs in
   let rhs = CF.add_struc_original true rhs in
   let rhs = CF.reset_struc_origins rhs in
-  let self_sv_lst = (CP.SpecVar (Named "", self, Unprimed)) :: [] in
-  let self_sv_renamed_lst = (CP.SpecVar (Named "", (self ^ "_" ^ coer.C.coercion_name), Unprimed)) :: [] in
+  let self_sv_lst = [sv_self] in
+  let self_sv_renamed_lst = [CP.SpecVar (Globals.null_type, (self ^ "_" ^ coer.C.coercion_name), Unprimed)] in
   let lhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst lhs in
   let rhs = CF.subst_struc_avoid_capture self_sv_lst self_sv_renamed_lst rhs in
   (* let rhs = CF.case_to_disjunct rhs in *)
@@ -360,6 +369,7 @@ let check_right_coercion coer (cprog: C.prog_decl) =
   let pr3 = Cprinter.string_of_formula in
   let ent_rhs = CF.struc_formula_of_formula coer.C.coercion_head_norm no_pos in
   let ent_lhs = CF.struc_to_formula coer.C.coercion_body_norm in
+  (* let ent_lhs = Cvutil.remove_imm_from_formula cprog ent_lhs (CP.ConstAnn(Lend)) in *) (* actually this removes @L nodes from the body of right lemma for proving sake *)
   Debug.tinfo_pprint "Verify Right Coercion" no_pos;
   pr_debug (add_str "lemma(med)" pr) coer no_pos;
   pr_debug (add_str "norm lhs" pr3) ent_lhs no_pos;
@@ -375,18 +385,18 @@ let check_right_coercion coer (cprog: C.prog_decl) =
 (* interprets the entailment results for proving lemma validity and prints failure cause is case lemma is invalid *)
 let print_lemma_entail_result (valid: bool) (ctx: CF.list_context) (num_id: string) =
   match valid with
-  | true -> if !Globals.lemma_ep then print_string (num_id ^ ": Valid.\n") else ()
+  | true -> if !Globals.lemma_ep then print_string_quiet (num_id ^ ": Valid.\n") else ()
   | false ->
       let s = 
       if !Globals.disable_failure_explaining then ""
       else
         match CF.get_must_failure ctx with
-          | Some s -> "(must) cause: " ^ s 
+          | Some (s,cex) -> let _, ns = Cformula.cmb_fail_msg ("(must) cause: " ^ s) cex in ns
           | _ -> (match CF.get_may_failure ctx with
-              | Some s -> "(may) cause: " ^ s
+              | Some (s,cex) -> let _, ns =  Cformula.cmb_fail_msg ("(may) cause: " ^ s) cex in ns
               | None -> "INCONSISTENCY : expected failure but success instead"
             )
-      in if !Globals.lemma_ep then print_string (num_id ^ ": Fail. " ^ s ^ "\n")
+      in if !Globals.lemma_ep then print_string_quiet (num_id ^ ": Fail. " ^ s ^ "\n")
       else ()
 
 (* check the validity of the lemma where:
@@ -424,14 +434,14 @@ let verify_lemma (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog:
         ) in
         let residue = CF.and_list_context rs1 rs2 in
         let valid = valid1 && valid2 in
-        let _ = (
+        let () = (
           if valid then print_lemma_entail_result valid residue num_id
           else
-            let _ = Debug.info_pprint (num_id ^ ": Fail. Details below:\n") no_pos in
+            let () = Debug.info_pprint (num_id ^ ": Fail. Details below:\n") no_pos in
             let typ1_str = Cprinter.string_of_coercion_type typ1 in
             let typ2_str = Cprinter.string_of_coercion_type typ2 in
-            let _ = print_lemma_entail_result valid1 rs1 ("\t \"" ^ typ1_str ^ "\" implication: ") in
-            let _ = print_lemma_entail_result valid2 rs2 ("\t \"" ^ typ2_str ^ "\" implication: ") in
+            let () = print_lemma_entail_result valid1 rs1 ("\t \"" ^ typ1_str ^ "\" implication: ") in
+            let () = print_lemma_entail_result valid2 rs2 ("\t \"" ^ typ2_str ^ "\" implication: ") in
             ()
         ) in
         residue
@@ -441,7 +451,7 @@ let verify_lemma (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog:
          | c::[] -> c
          | _ -> Error.report_error_msg "verify_lemma: Left- or Right-lemma expects 1 coercion" 
        ) in
-       let _ = print_lemma_entail_result valid rs num_id  in rs
+       let () = print_lemma_entail_result valid rs num_id  in rs
      )
   ) in
   residues

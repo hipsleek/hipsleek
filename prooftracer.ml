@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 (*
   Proof tracing facilities:
 
@@ -22,6 +23,7 @@
   selective reporting can be done separately.
 *)
 open Globals
+open VarGen
 open GlobProver
 
 module CP = Cpure
@@ -58,7 +60,8 @@ type proof =
   | PEEx of eex_step
   | Search of proof list
   | ClassicSepLogic of classic_seplogic_step
-  | Unknown 
+  | Unknown
+  | CyclicProof of ( CF.formula *  CF.formula)
 
 and ex_step = { ex_step_ante : CF.context;
 				ex_step_conseq : CF.formula;
@@ -368,6 +371,8 @@ let rec string_of_proof prf0 : string =
                        classic_seplogic_step_conseq = conseq; }) ->
       let s = Cprinter.string_of_context ctx in
       Buffer.add_string buffer ("<Classic>\n<Info>" ^ s ^ "</Info>\n</Classic>")
+  | CyclicProof (lhs,rhs) ->  let s = (Cprinter.string_of_formula lhs) ^" |- " ^(Cprinter.string_of_formula rhs)in
+      Buffer.add_string buffer ("<Classic>\n<Info>" ^ s ^ "</Info>\n</Classic>")
 	| _ -> Buffer.add_string buffer "<Failure></Failure>" 
 	in
   let buffer = Buffer.create 1024 in
@@ -630,8 +635,8 @@ let write_html_output () =
 	let setup_script = !jsonproof ^ "\n];\n" in
 	let htmloutres = Str.global_replace (Str.regexp_string "//$SETUP_SCRIPT") setup_script template in
 	let htmloutres = Str.global_replace (Str.regexp_string "$$RESOURCE_DIR_URL$$") ("file://" ^ resource_dir) htmloutres in
-	(* let _ = print_endline !jsonproof in *)
-	let _ = post_process_html () in
+	(* let () = print_endline !jsonproof in *)
+	let () = post_process_html () in
 	let chn = open_out !html_output_file in
 	let chntest = open_out "testjason.html" in
 		output_string chn !html_output;

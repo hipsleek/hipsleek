@@ -1,0 +1,25 @@
+Starting Omega...oc
+H2 is defined.
+Starting z3... 
+
+!!! formula1: emp&(self!=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+Entail (1) : Fail.(may) cause: true |-  0<n. LOCS:[0;13] (may-bug)
+
+ <1>HP_47(q)&{FLOW,(3,7)=__MayError}[]
+ inferred hprel: [H2(r)&true --> r::node<n,q> * HP_47(q)&true(3,4)]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+
+Stop Omega... 32 invocations 
+SAT Count   : 49
+SAT % Hit   : 77.55%
+IMPLY Count : 16
+IMPLY % Hit : 62.5%
+Time(cache overhead) : 0.002254 (seconds)
+
+!!! log(small):(0.033772,97)
+Total verification time: 0.08027 second(s)
+	Time spent in main process: 0.059052 second(s)
+	Time spent in child processes: 0.021218 second(s)
+

@@ -1,0 +1,42 @@
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&((self=null & n=0) | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null & n=0)])
+!!! formula1: emp&((self=null & m=0) | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&m=0 & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null & m=0)])
+!!! formula1: emp&((self=null & y=null & n=0 & m=0) | (self!=null & y!=null))&
+{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&m=0 & n=0 & y=null & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self,y], true),
+([], self=null & y=null & n=0 & m=0)])
+Entailing lemma lem_16: Fail. (no cex)(must) cause: OrL[ y::zipM{}<n>&n=0 & self1=null&{FLOW,(5,6)=__Error}[],valid]
+
+Failed to prove lem_16:<== in current context.
+Removing invalid lemma ---> lemma store restored.
+
+Entail 1: Fail.(must) cause:base case unfold failed
+
+ <1>
+    p2::zipN{}<n3>&n=n3+1 & n=0 & y=null&{FLOW,(5,6)=__Error}[]
+    or (exists m5: p2::zipN{}<n3> * q3::zipM{}<m5>&n=n3+1 & n=1+m5&
+       {FLOW,(3,4)=__norm})[]
+    
+[[ COND ==>  SEARCH ==>  Unfold 0 ==>  COND ==>  SEARCH ==>  Match(y,y) ==>  SEARCH ==>  Match(self_lem_15,self_lem_15) ==>  COND ==>  BaseCaseUnfold ==> ||OR|| ==>  COND ==>  SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(self_lem_15,self_lem_15) ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+Stop Omega... 23 invocations 
+SAT Count   : 803
+SAT % Hit   : 90.16%
+IMPLY Count : 56
+IMPLY % Hit : 55.35%
+Time(cache overhead) : 0.069875 (seconds)
+
+!!! log(small):(1.011086,920)
+Total verification time: 0.36897 second(s)
+	Time spent in main process: 0.330396 second(s)
+	Time spent in child processes: 0.038574 second(s)
+

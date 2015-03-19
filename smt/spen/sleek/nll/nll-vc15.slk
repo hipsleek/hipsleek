@@ -1,0 +1,44 @@
+data pto1 {
+     pto1 next1;
+}.
+
+data pto2 {
+     pto2 next2;
+     pto1 down;
+}.
+
+/*
+; singly-linked list
+(define-fun lso ((?in NLL_lvl1_t) (?out NLL_lvl1_t))
+  Space (tospace (or (= ?in ?out) 
+    (exists ((?u NLL_lvl1_t)) (tobool (ssep
+      (pto ?in (ref next1 ?u))
+      (lso ?u ?out))
+)))))
+
+; singly-linked list of singly-linked lists
+(define-fun nll ((?in NLL_lvl2_t) (?out NLL_lvl2_t) (?boundary NLL_lvl1_t))
+  Space (tospace (or (= ?in ?out)
+    (exists ((?u NLL_lvl2_t) (?Z1 NLL_lvl1_t)) (tobool (ssep
+      (pto ?in (sref
+        (ref next2 ?u)
+        (ref down ?Z1)))
+      (lso ?Z1 ?boundary)
+      (nll ?u ?out ?boundary))
+)))))
+*/
+
+pred lso<out> == self = out
+     or (exists u: self::pto1<u> * u::lso<out>).
+
+pred nll<out,boundary> == self = out
+     or (exists u, z1: self::pto2<u,z1> * z1::lso<boundary> * u::nll<out,boundary>).
+
+// Fail -> expected Fail.
+
+checkentail x1::nll<x2,null> *
+            x2::pto2<x3,x2_1> * x2_1::pto1<x2_1> *
+            x3::nll<null,null> |-
+            x1::nll<null,null>.
+
+expect Fail.

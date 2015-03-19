@@ -15,6 +15,7 @@ checkentail x::ll<n> & n =1  |- x::node<_,_>.
 //checkentail n = 1 |- n > 5 & flow __Err.
 
 checkentail n = 1 |- n > 5 .
+print residue.
 
 //2. may failure. cause:or[base case unfold failed,22  n=m & 2<=m |-  3<m (may-bug).]
 checkentail x::ll<n> & n > 1|- x::ll<m> & m > 3.

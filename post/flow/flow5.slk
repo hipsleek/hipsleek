@@ -1,0 +1,38 @@
+
+relation P(int x).
+
+infer [P,@flow] x=0 & flow __norm
+    |- P(x) & flow __flow.
+print residue.
+
+infer [P,@flow] x=0 & flow __Exc
+    |- P(x) & flow __flow.
+print residue.
+
+
+infer [P,@flow] x=0 & flow __flow
+    |- P(x) & flow __flow.
+print residue.
+
+/*
+# flow5.slk
+
+
+infer [P,@flow] x=0 & flow __norm    |- P(x) & flow __flow.
+infer [P,@flow] x=0 & flow __Exc    |- P(x) & flow __flow.
+infer [P,@flow] x=0 & flow __flow    |- P(x) & flow __flow.
+
+GOT:
+
+ inferred rel: [RELDEFN P(__norm#E): ( x=0) -->  P(x)]
+ inferred rel: [RELDEFN P(__Exc#E): ( x=0) -->  P(x)]
+ inferred rel: [RELDEFN P: ( x=0) -->  P(x)]
+
+For the third scenario, give a WARNING; as it is
+an impoosible scenario, give a WARNING..
+Reason is that LHS flow is either __norm or __Exc
+and should not be __flow
+
+*/
+
+

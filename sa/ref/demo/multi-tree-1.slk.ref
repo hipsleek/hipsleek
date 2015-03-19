@@ -1,0 +1,54 @@
+Starting Omega...oc
+H is defined.
+G is defined.
+H2 is defined.
+G2 is defined.
+H_7 is defined.
+H_8 is defined.
+H_9 is defined.
+Starting z3... 
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(t) ::= 
+ t::tree<children> * H2(children)
+ or emp&t!=null
+ (3,4),
+ H2(l) ::= 
+ l::node<child,sibling> * H2(sibling)&child!=null
+ or l::node<child,sibling> * child::tree<children> * H2(sibling) * 
+    H2(children)
+ or emp&l=null
+ (3,4),
+ H_7(child1) ::= 
+ child1::tree<children> * H2(children)
+ or emp&child1!=null
+ (3,4),
+ H_8(sibling1) ::= H2(sibling1)(3,4),
+ H_9(children1) ::= H2(children1)(3,4),
+ G(t1) ::= 
+ t1::tree<children2> * G2(children2)&children2!=null
+ or t1::tree<children2> * G2(children3)&children2=null
+ (3,4),
+ G2(l1) ::= 
+ l1::node<child2,sibling2> * child2::tree<children2> * G2(sibling2) * 
+ G2(children3)&children2=null
+ or l1::node<child2,sibling2> * child2::tree<children2> * G2(sibling2) * 
+    G2(children2)&children2!=null
+ or emp&l1=null
+ (3,4)]
+*************************************
+Stop Omega... 0 invocations 
+SAT Count   : 21
+SAT % Hit   : 52.38%
+IMPLY Count : 5
+IMPLY % Hit : 60.%
+Time(cache overhead) : 0.001467 (seconds)
+
+!!! log(small):(0.007702,26)
+Total verification time: 0.081987 second(s)
+	Time spent in main process: 0.067812 second(s)
+	Time spent in child processes: 0.014175 second(s)
+

@@ -1,0 +1,121 @@
+
+!!!Full processing file "examples/mutual-5b2.ss"
+Parsing file "examples/mutual-5b2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+WARNING: examples/mutual-5b2.ss_11:0_15:3:WARNING : case construct has missing scenario
+Found : : (x<=0 | (0<x & x<=8) | 10<x)
+Added : : 9<=x & x<=10
+
+
+Checking procedure f$int... 
+Procedure f$int SUCCESS.
+
+Checking procedure f$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume res=v_int_18_1135' & v_int_18_1416<=10 & 9<=v_int_18_1416 & 
+v_int_18_1416<=10 & 9<=v_int_18_1416 & v_int_18_1416+1=x' & 
+v_bool_18_1144' & x'<=10 & v_bool_18_1144' & x'<=10 & !(v_bool_17_1145') & 
+0<x' & !(v_bool_17_1145') & x'=x & 9<=x & x<=10 & 
+0<x' & fpost_1129(v_int_18_1416) --> fpost_1129(x).
+
+ termAssume res=v_int_18_1135' & v_int_18_1415<=8 & 0<v_int_18_1415 & 
+v_int_18_1415<=8 & 0<v_int_18_1415 & v_int_18_1415+1=x' & v_bool_18_1144' & 
+x'<=10 & v_bool_18_1144' & x'<=10 & !(v_bool_17_1145') & 0<x' & 
+!(v_bool_17_1145') & x'=x & 9<=x & x<=10 & 
+0<x' & fpost_1127(v_int_18_1415) --> fpost_1129(x).
+
+ termAssume res=v_int_21_1141' & 10<x' & !(v_bool_20_1142') & 
+!(v_bool_20_1142') & !(v_bool_19_1143') & x'<=20 & !(v_bool_19_1143') & 
+x'<=20 & !(v_bool_18_1144') & 10<x' & !(v_bool_18_1144') & 10<x' & 
+!(v_bool_17_1145') & 0<x' & !(v_bool_17_1145') & x'=x & 10<x & 
+0<x' & fpost_1128(x') --> fpost_1128(x).
+
+ termAssume 0<x' & 10<x & x'=x & !(v_bool_17_1145') & 0<x' & 
+!(v_bool_17_1145') & 10<x' & !(v_bool_18_1144') & 10<x' & 
+!(v_bool_18_1144') & x'<=20 & !(v_bool_19_1143') & x'<=20 & 
+!(v_bool_19_1143') & v_bool_20_1142' & v_bool_20_1142' & v_int_20_1140'=0 & 
+res=v_int_20_1140' --> fpost_1128(x).
+
+ termAssume res=v_int_19_1139' & 10<v_int_19_1347 & 10<v_int_19_1347 & 
+v_int_19_1347=1+x' & v_bool_19_1143' & 20<x' & v_bool_19_1143' & 20<x' & 
+!(v_bool_18_1144') & 10<x' & !(v_bool_18_1144') & 10<x' & 
+!(v_bool_17_1145') & 0<x' & !(v_bool_17_1145') & x'=x & 10<x & 
+0<x' & fpost_1128(v_int_19_1347) --> fpost_1128(x).
+
+ termAssume res=v_int_18_1135' & v_int_18_1270<=8 & 0<v_int_18_1270 & 
+v_int_18_1270<=8 & 0<v_int_18_1270 & v_int_18_1270+1=x' & v_bool_18_1144' & 
+x'<=10 & v_bool_18_1144' & x'<=10 & !(v_bool_17_1145') & 0<x' & 
+!(v_bool_17_1145') & x'=x & 0<x & x<=8 & 
+0<x' & fpost_1127(v_int_18_1270) --> fpost_1127(x).
+
+ termAssume res=v_int_18_1135' & v_int_18_1269<=0 & v_int_18_1269<=0 & 
+v_int_18_1269+1=x' & v_bool_18_1144' & x'<=10 & v_bool_18_1144' & x'<=10 & 
+!(v_bool_17_1145') & 0<x' & !(v_bool_17_1145') & x'=x & 0<x & x<=8 & 
+0<x' & fpost_1126(v_int_18_1269) --> fpost_1127(x).
+
+ termAssume x'<=0 & x<=0 & x'=x & v_bool_17_1145' & x'<=0 & 
+v_bool_17_1145' & v_int_17_1131'=0 & res=v_int_17_1131' --> fpost_1126(x).
+
+ termAssume 0<x' & x<=10 & 9<=x & x'=x & !(v_bool_17_1145') & 0<x' & 
+!(v_bool_17_1145') & x'<=10 & v_bool_18_1144' & x'<=10 & v_bool_18_1144' & 
+v_int_18_1134'+1=x' & 9<=v_int_18_1134' & 
+v_int_18_1134'<=10 & fpre_0(x) --> fpre_0(v_int_18_1134').
+
+ termAssume 0<x' & x<=10 & 9<=x & x'=x & !(v_bool_17_1145') & 0<x' & 
+!(v_bool_17_1145') & x'<=10 & v_bool_18_1144' & x'<=10 & v_bool_18_1144' & 
+v_int_18_1134'+1=x' & 0<v_int_18_1134' & 
+v_int_18_1134'<=8 & fpre_0(x) --> fpre_0(v_int_18_1134').
+
+ termAssume 0<x' & 10<x & x'=x & !(v_bool_17_1145') & 0<x' & 
+!(v_bool_17_1145') & 10<x' & !(v_bool_18_1144') & 10<x' & 
+!(v_bool_18_1144') & x'<=20 & !(v_bool_19_1143') & x'<=20 & 
+!(v_bool_19_1143') & !(v_bool_20_1142') & 
+!(v_bool_20_1142') & fpre_0(x) --> fpre_0(x').
+
+ termAssume 0<x' & 10<x & x'=x & !(v_bool_17_1145') & 0<x' & 
+!(v_bool_17_1145') & 10<x' & !(v_bool_18_1144') & 10<x' & 
+!(v_bool_18_1144') & 20<x' & v_bool_19_1143' & 20<x' & v_bool_19_1143' & 
+v_int_19_1138'=1+x' & 
+10<v_int_19_1138' & fpre_0(x) --> fpre_0(v_int_19_1138').
+
+ termAssume 0<x' & x<=8 & 0<x & x'=x & !(v_bool_17_1145') & 0<x' & 
+!(v_bool_17_1145') & x'<=10 & v_bool_18_1144' & x'<=10 & v_bool_18_1144' & 
+v_int_18_1134'+1=x' & 0<v_int_18_1134' & 
+v_int_18_1134'<=8 & fpre_0(x) --> fpre_0(v_int_18_1134').
+
+ termAssume 0<x' & x<=8 & 0<x & x'=x & !(v_bool_17_1145') & 0<x' & 
+!(v_bool_17_1145') & x'<=10 & v_bool_18_1144' & x'<=10 & v_bool_18_1144' & 
+v_int_18_1134'+1=x' & v_int_18_1134'<=0 & fpre_0(x) --> Term.
+
+
+Base/Rec Case Splitting:
+[	f: [[7] 11<=x & x<=20@ML,[8] x<=0@B,[9] 9<=x & x<=10@R,[10] 21<=x@R,[11] 1<=x & x<=8@R]
+]
+Termination Inference Result:
+f:  case {
+  x<=0 -> requires emp & Term[32]
+ ensures emp & x<=0; 
+  1<=x & x<=8 -> requires emp & Term[32,2,-1+(1*x)]
+ ensures emp & x<=8 & 
+  0<x; 
+  11<=x & x<=20 -> requires emp & MayLoop[]
+ ensures emp & 10<x; 
+  21<=x -> requires emp & Loop[]
+ ensures false & false; 
+  9<=x & x<=10 -> requires emp & Term[32,3,-9+(1*x)]
+ ensures emp & x<=10 & 
+  9<=x; 
+  }
+
+Termination checking result: SUCCESS
+
+
+22 false contexts at: ( (17,14)  (17,21)  (21,7)  (21,14)  (20,24)  (20,31)  (20,11)  (20,7)  (19,17)  (19,30)  (19,26)  (19,24)  (19,13)  (19,11)  (19,7)  (18,18)  (18,29)  (18,27)  (18,25)  (18,14)  (18,11)  (18,7) )

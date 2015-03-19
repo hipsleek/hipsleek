@@ -1,0 +1,17 @@
+
+data DLL_t {
+  DLL_t prev;
+  DLL_t next;
+}.
+
+pred DLL_plus<p,tl,n> ==
+ self::DLL_t<next = n,prev = p> & self = tl
+or (exists x: self::DLL_t<next = x,prev = p> * x::DLL_plus<self,tl,n>).
+
+pred DLL<p,tl,n> ==
+ emp & p = tl & self = n
+or (exists x: self::DLL_t<next = x,prev = p> * x::DLL<self,tl,n>).
+
+checkentail a::DLL_plus<null,c,null>
+         |- a::DLL<null,c,null>.
+

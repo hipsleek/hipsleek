@@ -1,0 +1,44 @@
+
+data node {
+ node next;
+}.
+
+pred ls<out:node> ==
+ self = out
+or (exists u: self::node<next = u> * u::ls<out> & self != out).
+
+
+checkentail_exact x1::ls<x2> * x2::node<next = x1> 
+ |- x3::ls<x2> * x2::node<next = x3> .
+print residue.
+/*
+still implicit x3
+
+run_infer:
+ x1::ls<x2> * x2::node<x1>&{FLOW,(21,22)=__norm}[] [] |-  EBase (exists x2_28: x3::ls<x2_28> * x2::node<x3>&x2_28=x2&
+       {FLOW,(21,22)=__norm})[]
+*/
+
+// should be translated to below ..
+checkentail_exact x1::ls<x2> * x2::node<next = x1> 
+ |- (exists xx3: x2::node<xx3> * x3::ls<x2> &  xx3=x3).
+print residue.
+
+/*
+ x1::ls<x2> * x2::node<x1>&{FLOW,(21,22)=__norm}[] [] |-  EBase (exists x2_38,xx3_37: x2::node<xx3_37> * x3::ls<x2_38>&xx3_37=x3 & 
+       x2_38=x2&{FLOW,(21,22)=__norm})[]
+
+# bug1.slk
+
+  1. please trace debug.no_? on ilinearize
+  2. make sure that x3 is a global var in h parameter
+     when transforming the conseq above
+
+  let ilinearize_formula (f:IF.formula)(h:(ident*primed) list): IF.formula = 
+    let need_quant = Gen.BList.difference_eq (=) (IF.all_fv f) h in
+    let vars = List.filter (fun (c1,c2)->(c2==Primed && c1<>Globals.ls_name && c1<>Globals.lsmu_name)) need_quant in
+    let _ = if vars!=[] then 
+      let
+*/
+
+

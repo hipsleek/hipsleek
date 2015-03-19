@@ -1,0 +1,28 @@
+data node{
+    node left;
+    node right;
+}.
+
+pred tree<> == self=null
+  or self::node<l,r> * r::tree<> * l::tree<>.
+
+// touching, segmented tree
+pred tseg<p> == self=p
+  or self::node<l,r> * r::tseg<p> * l::tree<>
+  or self::node<l,r> * l::tseg<p> * r::tree<>.
+
+
+// touching, segmented tree
+pred tseg2<p> == self=p
+  or self::node<l,r> * r::tseg2<p> * l::tree<> & self!=p
+  or self::node<l,r> * l::tseg2<p> * r::tree<>.
+
+// touching, segmented tree
+pred tseg3<p> == self=p
+  or self::node<l,r> * r::tseg3<p> * l::tree<> & self!=p
+  or self::node<l,r> * l::tseg3<p> * r::tree<> & self!=p.
+
+// nontouching, segmented tree
+pred tseg4<p> == self=p
+  or self::node<l,r> * r::tseg4<p> * l::tree<> & self!=p & l!=p
+  or self::node<l,r> * l::tseg4<p> * r::tree<> & self!=p & r!=p.

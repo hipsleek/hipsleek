@@ -1,0 +1,92 @@
+
+!!!Full processing file "validate/check-tll-1.ss"
+Parsing file "validate/check-tll-1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self!=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+!!! formula1: emp&((self=ll & self!=null) | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+!!! neqs:[]
+Checking procedure check_tll$node~node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ HP_1330,G]requires HP_1330(x,t@NI)&true
+ ensures G(x,t)&
+res{,(3,4)=__norm};
+
+!!! >>>>>> HIP gather infer pre <<<<<<
+!!!Inferred Heap: []
+!!!Inferred Pure: [ forall(right_29_1334:((right_29_1334!=0 | t<=1)) & ((right_29_1334!=0 | 
+1<=t)))]
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)HP_1330(x,t@NI)&true --> x::node<left1,right1,next1> * 
+HP_1336(left1,t@NI) * HP_1337(right1,t@NI) * HP_1338(next1,t@NI)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1336(left1,t@NI)&true --> HP_1330(left1,t@NI)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1337(right1,t@NI)&right1!=null |#| x::node<left1,right1,next1>&
+true --> HP_1330(right1,r1'@NI)&
+true(3,4),
+ // POST
+(1;0)HP_1336(left1,t@NI) * t::node<left1,right1,next1> * HP_1338(next1,t@NI)&
+right1=null --> G(x,t)&
+true(3,4),
+ // POST
+(1;0)HP_1337(right1,x@NI)&right1=null --> emp&
+true(3,4),
+ // POST
+(2;0)x::node<left1,right1,next1> * G(left1,t) * G(right1,r1) * 
+HP_1338(next1,t@NI)&right1!=null --> G(x,t)&
+true(3,4)]
+
+Procedure check_tll$node~node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ HP_1330(x1,t1) ::=  [HP_1628(x1)],
+ G(x2,t2) ::=  [x2::node<left,right,DP> * HP_1628(left)&right=null & x2=t2; 
+x2::node<DP1,right,DP>&right=null & x2=t2; x2::node<left,right,DP> * 
+G(left,t2) * G(right,r)&right!=null],
+ HP_1628(x1) ::=  [x1::node<DP1,right2,DP>&right2=null; x1::node<left2,right2,DP> * 
+HP_1628(left2) * HP_1628(right2)&right2!=null]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ HP_1330(x1,t1) ::= HP_1628(x1)(3,4),
+ G(x2,t2) ::= 
+ x2::node<DP1,right,DP>&right=null & x2=t2
+ or x2::node<left,right,DP> * G(left,t2) * G(right,r)&right!=null
+ or x2::node<left,right,DP> * HP_1628(left)&right=null & x2=t2
+ (3,4),
+ H(x,t) ::= HP_1330(x,t),
+ HP_1628(x1) ::= 
+ x1::node<left2,right2,DP> * HP_1628(left2) * HP_1628(right2)&right2!=null
+ or x1::node<DP1,right2,DP>&right2=null
+ (3,4)]
+*************************************
+Stop Omega... 33 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.100264,492)
+Total verification time: 0.44172 second(s)
+	Time spent in main process: 0.416554 second(s)
+	Time spent in child processes: 0.025166 second(s)
+

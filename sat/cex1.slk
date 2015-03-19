@@ -1,0 +1,10 @@
+
+//1.
+//checkentail n = 1 |- n > 5 .
+
+//2.
+checkentail n = 1000 & m=n+1 & t=55 |- n > 55555 &  m>34441 .
+
+
+//3.
+checkentail n < 1000 & m=n+1 & t=55 |- n > 55555 &  m>34441 .

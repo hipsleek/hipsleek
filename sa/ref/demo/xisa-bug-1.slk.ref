@@ -1,0 +1,57 @@
+Starting Omega...oc
+H is defined.
+G is defined.
+G2 is defined.
+
+Entail (1) : Valid. 
+
+ <1>H(a)&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [emp&true --> G(b)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+Starting z3... 
+
+Entail (2) : Valid. 
+
+ <1>H(a) * y::node<_,_>&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [emp&true --> G(b)&true(3,4)]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+
+
+Entail (3) : Valid. 
+
+ <1>H(a)&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [emp&true --> G(b)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (4) : Valid. 
+
+ <1>H(a)&b=null&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [emp&b=null --> G(b)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (5) : Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H(a)&true --> G2(a)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (6) : Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [emp&true --> G(b)&true(3,4); H(a)&true --> G2(a)&true(3,4)]
+[[ COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 13
+SAT % Hit   : 84.61%
+Time(cache overhead) : 0.000303 (seconds)
+
+!!! log(small):(0.010218,27)
+Total verification time: 0.100359 second(s)
+	Time spent in main process: 0.051401 second(s)
+	Time spent in child processes: 0.048958 second(s)
+

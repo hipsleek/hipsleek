@@ -1,0 +1,17 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "flow/flow3.ss"
+Parsing file "flow/flow3.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure loop$int... 
+Procedure loop$int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1358: ( x_1378+1=x & 1<=x & post_1358(x_1378,x',flow)) -->  post_1358(x,x',flow),
+RELDEFN post_1358(Exp#E): ( x'=x & x<=0) -->  post_1358(x,x',flow)]
+*************************************

@@ -1,0 +1,15 @@
+data node { int val ; node next }.
+
+pred ll_s<n> == self = null & n = 0
+	or self::node<next = r> * r::ll_s<n - 1>
+	inv n >= 0.
+
+checkentail x::ll_s<n> & m2=m3 & n=m1+1 & m1=m2 & m3=1 |- true.
+
+checkentail false |- x::ll_s<n> & m2=m3 & n=m1+1 & m1=m2 & m3=1.
+
+// conseq is struc formula --> not shorten
+checkentail x::ll_s<n> & n=2 |- x::ll_s<n_123> & m2=m3 & n_123=m1+1 & m1=m2 & m3=1.
+
+// no problem with explicit exists
+checkentail x::ll_s<n> & n=2 |- (exists n_123: x::ll_s<n_123> & n_123=2).

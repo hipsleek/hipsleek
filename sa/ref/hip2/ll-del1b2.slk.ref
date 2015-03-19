@@ -1,0 +1,11 @@
+Starting Omega...oc
+File "hip2/ll-del1b2.slk", line 10, characters 11-12
+ error: Stream.Error("CONSTR or REL_GUARD expected after [meta_constr] (in [relassume_cmd])")
+ at:(Program not linked with -g, cannot print stack backtrace)
+SLEEK FAILURE (END)
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.051175 second(s)
+	Time spent in main process: 0.037218 second(s)
+	Time spent in child processes: 0.013957 second(s)
+

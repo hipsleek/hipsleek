@@ -1,0 +1,28 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+
+WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+
+WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+
+WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+
+Entail 1: Fail.(may) cause:OrL[do_unmatched_rhs : x'::node<val_38_1421'@L,next_38_1422'@L>,valid]
+
+
+Entail 2: Fail.(must) cause:do_unmatched_rhs : x::node<Anon_221,Anon_222>
+
+
+Entail (3) : Fail.(may) cause:AndR[ true |-  inf_Anon_238=Anon_15. LOCS:[0;25];  true |-  inf_Anon_239=Anon_16. LOCS:[0;25] (may-bug).]
+
+Residue:
+ <1>emp&x!=null&{FLOW,(4,8)=__MayError#E}[]
+ inferred heap: [x::node<inf_Anon_238,inf_Anon_239>]
+[[ COND ==>  InferHeap ==>  Match(x,x) ==> ]]
+
+
+

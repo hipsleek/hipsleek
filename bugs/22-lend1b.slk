@@ -1,0 +1,27 @@
+data node {
+  node f0;
+}.
+
+
+pred foo<y:node> ==
+  self::node<y> * y::node<_>@L.
+
+/*
+# 22-lend1b.slk --pcp
+
+  materialized vars: [(self,full,[]); (y,full,[])]
+  addr vars: self,y
+  bag of addr: self,y
+
+problem:
+  baga should be only "self"
+  what is diff between addr_vars and bag_of_addr?
+
+*/
+
+checkentail x::node<a>*a::node<b> |- (exists c: x::foo<c> * c::node<_>).
+print residue.
+// fail due to x::node<..> being matched first?
+expect Valid.
+
+

@@ -1,0 +1,32 @@
+
+!!!Full processing file "inf/cell-3b.ss"
+Parsing file "inf/cell-3b.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure foo$cell... 
+Procedure foo$cell SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELASS [P1]: ( P1(a)) -->  a=@M,
+RELDEFN P2: ( b_1358=@M) -->  P2(b_1358)]
+*************************************
+
+Post Inference result:
+foo$cell
+ EBase exists (Expl)[](Impl)[a; v](ex)[]c::cell<v@a>&a=@M & MayLoop[]&
+       {FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           (exists flted_11_1357,b_1358: c::cell<flted_11_1357@b_1358>&
+           flted_11_1357=2 & b_1358=@M&{FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 0.349692 second(s)
+	Time spent in main process: 0.31907 second(s)
+	Time spent in child processes: 0.030622 second(s)
+

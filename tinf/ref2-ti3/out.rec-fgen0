@@ -1,0 +1,21 @@
+
+!!!Full processing file "examples/rec-fgen0.ss"
+Parsing file "examples/rec-fgen0.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure f$int~int... 
+Procedure f$int~int SUCCESS.
+
+Termination checking result: SUCCESS
+
+Stop Omega... 3 invocations 
+6 false contexts at: ( (16,12)  (17,7)  (17,20)  (17,18)  (17,16)  (17,14) )
+
+!!! log(small):(0.039357,206)
+Total verification time: 0.326242 second(s)
+	Time spent in main process: 0.312097 second(s)
+	Time spent in child processes: 0.014145 second(s)
+

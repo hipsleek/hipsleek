@@ -1,0 +1,31 @@
+data node {
+   node nxt;
+}.
+
+pred lseg<p> == self=p 
+  or (exists a: self::node<a> * a::lseg<p>)
+ inv true.
+
+lemma_safe self::node<u1>* u1::lseg<p> 
+       <-> (exists last: self::lseg<last>*last::node<p>).
+
+// complex lemma proving not working..
+
+/*
+# lseg0e1.slk
+
+!!! WARNING : split equiv lemma into two -> lemmas 
+!!! 
+Entailing lemma lem_11: Fail. Details below:
+	 "==>" implication: : Fail. (may) cause: OrR[UnionR[ u1_79::node<a_77> * a_77::lseg<p_76>&p_76=p_78 & p_78=p&
+{FLOW,(21,22)=__norm}[]: residue is forbidden.(2), a_77::lseg<p_76>&p_76=p_78 & p_78=p&{FLOW,(21,22)=__norm}[]: residue is forbidden.(2)],valid]
+	 "==>" implication: : Fail. (may) cause: OrR[ last_161::node<p_160>&p_158=last_161 & p_160=p&{FLOW,(21,22)=__norm}[]: residue is forbidden.(2),val
+id]
+
+Failed to prove lem_11:<==> in current context.
+Removing invalid lemma ---> lemma store restored.
+*/
+
+
+
+

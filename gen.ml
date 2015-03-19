@@ -1,4 +1,19 @@
- 
+#include "xdebug.cppo"
+open VarGen
+let silence_output = ref false
+(* let no_pos =  *)
+(* 	let no_pos1 = { Lexing.pos_fname = ""; *)
+(* 				   Lexing.pos_lnum = 0; *)
+(* 				   Lexing.pos_bol = 0;  *)
+(* 				   Lexing.pos_cnum = 0 } in *)
+(* 	{start_pos = no_pos1; mid_pos = no_pos1; end_pos = no_pos1;} *)
+
+(* let is_no_pos l = (l.start_pos.Lexing.pos_cnum == 0) *)
+let debug_precise_trace = ref false
+let enable_counters = ref false
+let profiling = ref false
+let profile_threshold = 0.5
+
 module type INC_TYPE =
 sig
   type t
@@ -9,7 +24,10 @@ end;;
 module type EQ_TYPE =
 sig
   type t
+  val zero : t
+  val is_zero : t -> bool
   val eq : t -> t -> bool
+  val compare : t -> t -> int
   val string_of : t -> string
 end;;
 
@@ -19,6 +37,8 @@ struct
 
   exception Bad_string
   exception Bail
+
+  let silenced_print f s = if !silence_output then () else f s 
 
   let rec restart f arg =
     try f arg with Unix.Unix_error(Unix.EINTR,_,_) -> print_string"#!Unix_error#";(restart f arg)
@@ -33,13 +53,35 @@ struct
 
   let pr_id x = x
   let pr_string x = "\""^x^"\""
-  
+  let opt_map f v = match v with Some a -> Some (f a) | None -> None 
+  let concatMap f xs =
+    let rec aux xs = match xs with
+      | [] -> []
+      | (x::xs) -> (f x)@(aux xs)
+    in aux xs
+
+  let print_endline_quiet s =
+    let flag = !compete_mode in
+    (* print_endline ("compete mode : "^(string_of_bool flag)); *)
+    if flag then () 
+    else print_endline s 
   let print_endline_if b s = if b then print_endline s else ()
   let print_string_if b s = if b then print_string s else ()
+  let print_string_quiet s = 
+    if !compete_mode then () 
+    else print_string s 
+
+  let print_web_mode s = 
+    if !Globals.tnt_web_mode then print_endline s
+    else print_endline_quiet s 
+
+  let print_string_web_mode s = 
+    if !Globals.tnt_web_mode then print_string s
+    else print_string_quiet s 
 
   let pr_var_prime (id,p) = match p with
-    | Globals.Primed -> id^"'"
-    | Globals.Unprimed -> id
+    | Primed -> id^"'"
+    | Unprimed -> id
 
   let print_flush s = print_endline (s); flush stdout
 
@@ -66,6 +108,8 @@ struct
 
   let pr_hepta f1 f2 f3 f4 f5 f6 f7 (x,y,z,z2,z3,z4,z5) = "("^(f1 x)^",2:"^(f2 y)^",3:"^(f3 z)^",4:"^(f4 z2)^",5:"^(f5 z3)^",6:"^(f6 z4)^",7:"^(f7 z5)^")"
 
+let pr_octa f1 f2 f3 f4 f5 f6 f7 f8 (x,y,z,z2,z3,z4,z5,z6) = "("^(f1 x)^",2:"^(f2 y)^",3:"^(f3 z)^",4:"^(f4 z2)^",5:"^(f5 z3)^",6:"^(f6 z4)^",7:"^(f7 z5)^")"^",8:"^(f8 z6)^")"
+
   let pr_quad_ln f1 f2 f3 f4 (x,y,z,z2) = "("^(f1 x)^"\n,2:"^(f2 y)^"\n,3:"^(f3 z)^"\n,4:"^(f4 z2)^")"
   let pr_penta_ln f1 f2 f3 f4 f5 (x,y,z,z2,z3) = "("^(f1 x)^"\n,2:"^(f2 y)^"\n,3:"^(f3 z)^"\n,4:"^(f4 z2)^"\n,5:"^(f5 z3)^")"
   let pr_hexa_ln f1 f2 f3 f4 f5 f6 (x,y,z,z2,z3,z4) = "("^(f1 x)^"\n,2:"^(f2 y)^"\n,3:"^(f3 z)^"\n,4:"^(f4 z2)^"\n,5:"^(f5 z3)^"\n,6:"^(f6 z4)^")"
@@ -91,6 +135,7 @@ struct
  let pr_list_round_sep sep f xs = pr_list_brk_sep "(" ")" sep f xs
  let pr_list_ln f xs = "["^(pr_lst ",\n" f xs)^"]"
  let pr_list_num f xs = "["^(pr_lst_num ",\n" f xs)^"]"
+ let pr_arr_ln f arr = pr_list_ln f (Array.to_list arr)
 
  let pr_list_mln f xs = (pr_lst "\n--------------\n" f xs)
 
@@ -115,6 +160,7 @@ struct
 	| Some v -> f v
 
  let map_l_snd f x = List.map (fun (l,c)-> (l,f c)) x
+ let map_l_fst f x = List.map (fun (l,c)-> (f l,c)) x
  let map_snd_only f x = List.map (fun (l,c)-> f c) x
  let fold_l_snd f x = List.fold_left (fun a (_,c)-> a@(f c)) []  x
  let fold_l_snd_f fj f st x = List.fold_left (fun a (_,c)-> fj a (f c)) st  x
@@ -198,7 +244,10 @@ struct
   let report_error pos msg = Error.report_error
      { Error.error_loc = pos; Error.error_text = msg}
 
-  let report_warning pos msg = Error.report_warning
+  let report_warning pos msg = 
+    if !compete_mode then ()
+    else 
+      Error.report_warning
      { Error.error_loc = pos; Error.error_text = msg}
 
 end;;
@@ -239,9 +288,9 @@ struct
 
   (* List-handling stuff *)
 
-  let string_of_f (f:'a->string) (ls:'a list) : string = 
+  let string_of_f (f:'a->string) (ls:'a list) : string =
     ("["^(String.concat "," (List.map f ls))^"]")
-    
+
   (** Split the list of length k>=1 into a pair consisting of
       the list of first k-1 elements and the last element. *)
   let rec firsts_last xs = match xs with
@@ -251,11 +300,11 @@ struct
           let (fs,l) = firsts_last xs1 in
           (x::fs,l)
 
-  let rec take n l  = if n<=0 then [] else 
+  let rec take n l  = if n<=0 then [] else
     match l with
       | h::t -> h::(take (n-1) t)
       | [] -> []
-            
+
   let rec drop n l  = if n<=0 then l else
     match l with
       | h::t -> (drop (n-1) t)
@@ -327,10 +376,24 @@ struct
       | q::qs -> if (mem_eq eq q qs) then remove_dups_eq eq qs else q::(remove_dups_eq eq qs)
     in List.rev (aux eq (List.rev n))
 
+  let rec remove_dups_eq_reserved_order eq n = 
+    match n with
+        [] -> []
+      | q::qs -> 
+          if (mem_eq eq q qs) then 
+            q::(remove_dups_eq eq (List.filter (fun p -> not (eq p q)) qs))
+          else q::(remove_dups_eq eq qs)
+
   let rec check_dups_eq eq n = 
     match n with
       | [] -> false
-      | q::qs -> if (List.exists (fun c-> eq q c) qs) then true  else check_dups_eq eq qs 
+      | q::qs -> if (List.exists (fun c-> eq q c) qs) then true else check_dups_eq eq qs 
+
+  let rec get_all_pairs ls = match ls with
+    | [] -> []
+    | c::cs -> 
+          let lst = List.map (fun x -> (c,x)) cs in
+          lst @ (get_all_pairs cs)
 
   let check_no_dups_eq eq n = not(check_dups_eq eq n)
 
@@ -344,7 +407,7 @@ struct
 	if (l2 == []) then false
 	else List.exists (fun x -> (mem_eq eq x l2)) l1
 
-  let rec find_dups_eq eq n = 
+  let rec find_dups_eq eq n =
     match n with
       | [] -> []
       | q::qs -> if (List.exists (eq q) qs) then q::(find_dups_eq eq qs) else find_dups_eq eq qs
@@ -358,14 +421,14 @@ struct
     List.exists (fun e -> eq x e) ls
 
   let intersect_eq eq l1 l2 =
-    List.filter (fun x -> List.exists (eq x) l2) l1  
+    List.filter (fun x -> List.exists (eq x) l2) l1
 
   let difference_eq eq l1 l2 =
     List.filter (fun x -> not (List.exists (eq x) l2)) l1
 
-  let diff_split_eq eq l1 l2 = 
+  let diff_split_eq eq l1 l2 =
     List.partition (fun x -> not (List.exists (eq x) l2)) l1
-    
+
   let list_subset_eq eq l1 l2 = 
     let l = (List.length (difference_eq eq l1 l2)) in
     l==0
@@ -398,14 +461,22 @@ struct
   type elist = elem list
   let eq = Elt.eq
   let string_of_elem = Elt.string_of
-
+  (* let rec compare (l1:elist) (l2:elist) = *)
+  (*   begin *)
+  (*     match l1,l2 with *)
+  (*       | [],[] -> 0 *)
+  (*       | [],x::_ -> -1 *)
+  (*       | x::_,[] -> 1 *)
+  (*       | a::t1,b::t2 ->  *)
+  (*             let c = Elt.compare a b in *)
+  (*             if c==0 then *)
+  (*               compare t1 t2 *)
+  (*             else c *)
+    (* end *)
   include BList
-
   let mem x l = List.exists (eq x) l
-
   let string_of (ls:'a list) : string 
         = string_of_f string_of_elem ls
-
 
   let rec check_dups n = 
     match n with
@@ -469,6 +540,7 @@ class change_flag =
        begin
          cnt <- cnt+1
        end
+     method exceed n = cnt>n
      method is_change = cnt>0
      method no_change = (cnt==0)
    end;;
@@ -507,18 +579,21 @@ class ['a] stack  =
      method reverse_of = List.rev stk
      method mem (i:'a) = List.mem i stk 
      method mem_eq eq (i:'a) = List.exists (fun b -> eq i b) stk 
+     method find f = List.find f stk
      (* method exists (i:'a) = List.mem i stk  *)
      (* method exists_eq eq (i:'a) = List.exists (fun b -> eq i b) stk  *)
      method exists f = List.exists f stk 
      method push_list (ls:'a list) =  stk <- ls@stk
      method pop_list (ls:'a list) = 
        stk <- BList.drop (List.length ls) stk
+     method pop_list_n (n: int) = 
+       stk <- BList.drop n stk
      method reset = stk <- []
      method clone =
        Oo.copy self
        (* let n = new Gen.stack in *)
        (*   let lst = self # get_stk in *)
-       (*   let _ = n # push_list lst in *)
+       (*   let () = n # push_list lst in *)
        (* n *)
    end;;
 
@@ -597,6 +672,8 @@ class counter x_init =
      method add (i:int) = ctr <- ctr + i
      method reset = ctr <- 0x0
      method string_of : string= (string_of_int ctr)
+     method str_get_next : string 
+     = ctr <- ctr + 1; string_of_int ctr
    end;;
 
 (* class ['a] stack2 xinit = *)
@@ -692,7 +769,7 @@ struct
 
   let warn msg = 
     warning_no #inc;
-    print_string ("*** Warning: "^ msg ^ "\n"); flush_all()
+    Basic.print_string_quiet ("*** Warning: "^ msg ^ "\n"); flush_all()
 
   let warn_if_none ov msg = match ov with
     | None -> warn msg
@@ -706,39 +783,119 @@ struct
 
 end;;
 
+let add_str s f xs = s^":"^(f xs)
+
+type 'a keyt = int option
+
+let key_cnt = new counter 0
+
+let new_key () =
+  let x = key_cnt # inc_and_get in
+  Some x
+
+
 module EqMap =
     functor (Elt : EQ_TYPE) ->
 struct
   type elem = Elt.t
-  type key = elem list
+  type key = elem keyt
   type emap = (elem * key) list
   type epart = (elem list) list
   type elist = (elem list) 
   type epair = ((elem * elem) list) 
+  open Basic
 
   let eq = Elt.eq 
   let string_of_elem = Elt.string_of 
+  (* let string_of_emap = Basic.pr_list (fun (e,_) -> Elt.string_of e) *)
+  (* let string_of_epart = Basic.pr_list (Basic.pr_list Elt.string_of) *)
 
+  let emap_sort s = List.sort (fun (e1,_) (e2,_) -> Elt.compare e1 e2) s 
+
+(* TODO : rec03.slk bug here *)
+(* partition@53 *)
+(* partition inp1 :emap[{_null,x3,y1,y2}] *)
+(* [(y1,Some(22)),(_null,Some(22)),(y3,Some(23)),(y2,Some(22)),(x3,Some(22))] *)
+(* partition@53 EXIT:[[_null,x3,y1,y2]] *)
+
+  (* TODO : can we get in sorted order by elem *)
+  (* let partition (s: emap) : epart = *)
+  (*   let s = emap_sort s in *)
+  (*   let rec insert  a k  acc =  *)
+  (*     match acc with *)
+  (*       | [] -> [(k,[a])] *)
+  (*       | ((k2,ls) as p)::xs ->  *)
+  (*             if (k=k2) then (k,a::ls)::xs *)
+  (*             else p::(insert a k xs) in *)
+  (*   let r = List.fold_left (fun acc (a,k) ->  insert a k acc) [] s in *)
+  (*   let r = List.filter (fun (_,x) -> List.length x > 1) r in *)
+  (*   (\* let r = List.rev r in *\) *)
+  (*   let r = List.map ( fun (_,b) -> List.rev b) r in *)
+  (*   r *)
+    (* print_endline ((add_str "emap" string_of_emap) s); *)
+    (* print_endline ((add_str "epart" string_of_epart) r); *)
+
+  (* let partition (s: emap) : epart = *)
+  (*   Debug.no_1 "partition" string_of_emap string_of_epart partition s *)
+
+  let compare_key k1 k2 =
+    match k1,k2 with
+      | None, None -> 0
+      | None, Some _ -> -1
+      | Some _, None -> 1
+      | Some n1, Some n2 -> 
+            if n1=n2 then 0
+            else if n1<n2 then -1 else 1
+  let compare_v (e1,k1) (e2,k2) =
+    let x1 =compare_key k1 k2 in
+    if x1=0 then -(Elt.compare e1 e2)
+    else x1
+
+  let compare_list cmp b1 b2 =
+    let rec aux b1 b2 =
+    match b1,b2 with
+      | [],[] -> 0
+      | [],_ -> -1
+      | _,[] ->1
+      | (x::xs),(y::ys) ->
+            let c = cmp x y in
+            if c==0 then aux xs ys
+            else c
+    in aux b1 b2
 
   let partition (s: emap) : epart =
-    let rec insert (a,k) lst = match lst with
-      | [] -> [(k,[a])]
-      | (k2,ls)::xs -> 
-            if k==k2 then (k,a::ls)::xs
-            else (k2,ls)::(insert (a,k) xs) in
-    let r = List.fold_left (fun lst x ->  insert x lst) [] s in
-    List.map ( fun (_,b) -> b) r
+    let s = List.sort compare_v s in
+    let rec aux k ls s =
+      match s with
+        | [] -> [ls]
+        | (e2,k2)::ss -> if k==k2 then aux k (e2::ls) ss
+          else ls::(aux k2 [e2] ss) in
+    let ans = match s with 
+      | [] -> []
+      | (e,k)::ss -> aux k [e] ss in
+    let ans = List.filter (fun x -> List.length x>1) ans in
+    List.sort (compare_list Elt.compare) ans
 
-  let string_of (e: emap) : string =
-    let f = string_of_elem in
-    let ll=partition e in 
-    "emap["^ (String.concat ";" (List.map (fun cl -> "{"^(String.concat ","(List.map f cl))^"}") ll))^"]"
+    let string_of (e: emap) : string =
+      let f = string_of_elem in
+      let ll = partition e in 
+      (* let ll = List.filter (fun v -> List.length v > 1) ll in *)
+
+      "emap["^ (String.concat ";" (List.map (fun cl -> "{"^(String.concat ","(List.map f cl))^"}") ll))^"]"
+
+  let key_string_of = pr_option string_of_int
+
+  let string_of_debug (e: emap) : string =
+    (* (string_of e)^"\n"^ *)
+        (pr_list (pr_pair Elt.string_of key_string_of) e)
 
   let un_partition (ll:epart) : emap =
-    let flat xs y = 
-      if (List.length xs>1) then List.map (fun x -> (x,y)) xs 
+    let flat xs = 
+      if (List.length xs>1) then 
+        let newk = new_key () in
+        List.map (fun x -> (x,newk)) xs 
       else [] in
-    List.concat (List.map (fun x -> flat x x) ll)
+    List.concat (List.map (fun x -> flat x) ll)
 
   let mkEmpty : emap = []
 
@@ -751,13 +908,13 @@ struct
         _ -> d
 
   (* find key of e in s *)
-  let find (s : emap) (e:elem) : key  = find_aux s e []
+  let find (s : emap) (e:elem) : key  = find_aux s e None
 
   (* find key of e in s and return remainder after
      all elements equivalent to e is removed *)
   let find_remove (s : emap) (e:elem) : key * emap  = 
-    let r1 = find_aux s e [] in
-    (r1, if r1==[] then s else List.filter (fun (e2,_)-> not(eq e e2)) s)
+    let r1 = find_aux s e None in
+    (r1, if r1==None then s else List.filter (fun (e2,_)-> not(eq e e2)) s)
 
   (* returns s |- x=y *)
   let is_equiv (s: emap)  (x:elem) (y:elem) : bool =
@@ -765,7 +922,7 @@ struct
     else
       let r1 = find s x in
       let r2 = find s y in
-      (r1==r2 && not(r1==[]))
+      (r1==r2 && not(r1==None))
 
   (* add x=y to e-set s and returning a new e-set with
      extra elements added *)
@@ -774,21 +931,37 @@ struct
     else
       let r1 = find s x in
       let r2 = find s y in
-      if r1==[] then
-        if r2==[] then
-          let r3 = [x;y] in
-          (x,r3)::((y,r3)::s)
-        else (x,r2)::s
-      else
-        if r2==[] then (y,r1)::s
-        else
-          if r1==r2 then s
-          else 
-            let r3=r1@r2 in
-            List.map (fun (a,b) -> if (b==r1 or b==r2) then (a,r3) else (a,b)) s
+      begin
+      match r1 with
+        | None -> 
+              begin
+                match r2 with
+                  | None ->
+                        let r3 = new_key () in
+                        (x,r3)::((y,r3)::s)
+                  | _ -> (x,r2)::s
+              end
+        | _ -> 
+              begin
+                match r2 with
+                  | None ->  (y,r1)::s
+                  | _ -> 
+                        begin
+                          if r1==r2 then s
+                          else
+                            (* let r3=new_key() in *)
+                            List.map (fun ((a,b) as ar) -> 
+                                if (b==r1) then (a,r2) else ar) s
+                        end
+              end
+      end
 
   let build_eset (xs:(elem * elem) list) :  emap =
-    List.fold_left (fun eqs (x,y) -> add_equiv eqs x y) mkEmpty xs 
+    let pr1 = Basic.pr_pair Elt.string_of Elt.string_of in
+    let p_aset = List.fold_left (fun eqs (x,y) ->
+        add_equiv eqs x y
+    ) mkEmpty xs in
+    p_aset
 
   let mem x ls =
     List.exists (fun e -> eq x e) ls
@@ -830,11 +1003,17 @@ struct
     else (l1,l2)
 
   (* merge two equivalence sets s1 /\ s2 *)
-  let merge_eset (s1: emap) (s2: emap): emap =
-    let (t1,t2) = order_two s1 s2 in
-    List.fold_left (fun a (p1,p2) -> add_equiv a p1 p2) t2 (get_equiv t1)
+  let merge_eset (t1: emap) (t2: emap): emap =
+    let r =
+      let (t1,t2) = order_two t1 t2 in
+      List.fold_left (fun a (p1,p2) -> add_equiv a p1 p2) t2 (get_equiv t1) in
+    let pr = string_of_debug in
+    (* let () = print_endline ("eset1 :"^ (pr t1)) in *)
+    (* let () = print_endline ("eset2 :"^ (pr t2)) in *)
+    (* let () = print_endline ("eset_out :"^ (pr r)) in *)
+    r
 
-  (* remove key e from e_set  *)
+    (* remove key e from e_set  *)
   let elim_elems_one  (s:emap) (e:elem) : emap = 
     List.filter (fun (a,k2) -> not(eq a e)) s
 
@@ -844,7 +1023,7 @@ struct
   (* return all elements equivalent to e, including itself *)
   let find_equiv_all  (e:elem) (s:emap) : elist  =
     let r1 = find s e in
-    if (r1==[]) then []
+    if (r1==None) then []
     else List.map fst (List.filter (fun (a,k) -> k==r1) s) 
   
   (* return a distinct element equal to e *)
@@ -858,7 +1037,7 @@ struct
   (* return an element r that is equiv to e but distinct from it, and elim e from e_set *)
   let find_equiv_elim_sure (e:elem) (s:emap) : elem option * emap  =
     let r1,s1 = find_remove s e in
-    if (r1==[]) then (None,s)
+    if (r1==None) then (None,s)
     else let (ls,ls2) = List.partition (fun (a,k) -> k==r1 ) s1 in
     match ls with
       | [] -> (None,s1)
@@ -874,18 +1053,29 @@ struct
 
   (* make fv=tv and then eliminate fv *)
   (* fv should never be constant *)
-  let subs_eset   ((fv,tv):elem * elem) (s:emap) : emap = 
-    if (eq fv tv) then s
-    else
-      let r1 = find s fv in
-      if (r1==[]) then s
-      else 
-        let ns = add_equiv s fv tv in
-        elim_elems_one ns fv
+  (* let subs_eset   ((fv,tv):elem * elem) (s:emap) : emap =  *)
+  (*   if (eq fv tv) then s *)
+  (*   else *)
+  (*     let r1 = find s fv in *)
+  (*     if (r1==None) then s *)
+  (*     else  *)
+  (*       let ns = add_equiv s fv tv in *)
+  (*       elim_elems_one ns fv *)
 
   (* TODO : will below suffer name-calsh *)
+  (* let subs_eset_par   (f_t_ls:(elem * elem) list) (s:emap) : emap =  *)
+  (*   List.fold_left (fun e p -> subs_eset p e) s f_t_ls *)
+
+
+  let subs_elem sst a =
+    try 
+      let (_,b) = List.find (fun (x,_) -> Elt.compare a x == 0) sst in
+      b
+    with _ -> a
+
   let subs_eset_par   (f_t_ls:(elem * elem) list) (s:emap) : emap = 
-    List.fold_left (fun e p -> subs_eset p e) s f_t_ls
+    let new_s = List.map (fun (a,k) -> (subs_elem f_t_ls a,k)) s in
+    emap_sort new_s
 
 
   (* returns true if s contains no duplicates *)
@@ -910,13 +1100,13 @@ struct
   let rename_eset (f:elem -> elem) (s:emap) : emap = 
     let b = is_one2one f (get_elems s) in
     if b then  List.map (fun (e,k) -> (f e,k)) s
-    else Error.report_error {Error.error_loc = Globals.no_pos; 
+    else Error.report_error {Error.error_loc = no_pos; 
     Error.error_text = ("rename_eset : f is not 1-to-1 map")}
 
   let rename_eset_with_key (f:elem -> elem) (s:emap) : emap = 
     let b = is_one2one f (get_elems s) in
-    if b then  List.map (fun (e,k) -> (f e, List.map f k)) s
-    else Error.report_error {Error.error_loc = Globals.no_pos; 
+    if b then  List.map (fun (e,k) -> (f e, k)) s
+    else Error.report_error {Error.error_loc = no_pos; 
     Error.error_text = ("rename_eset : f is not 1-to-1 map")}
 
   (* s - from var; t - to var *)
@@ -971,8 +1161,11 @@ end;;
 module ID =
 struct 
   type t = string
+  let zero = ""
+  let is_zero t = (t="")
   let eq = fun s1 s2 -> String.compare s1 s2 = 0
   let string_of = fun s -> s
+  let compare = String.compare
 end;;
 
 module EMapID = EqMap(ID);;
@@ -1043,8 +1236,8 @@ struct
       (* let l1 = dd_stk # get_stk in *)
       (* let l2 = debug_stk # get_stk in *)
       (* let pr = Basic.pr_list string_of_int in *)
-      (* let _ = print_endline ("ddstk:"^(pr l1)^" hostk:"^(pr l2)) in  *)
-       if (v1==v2) then Some v1 else None
+      (* let () = print_endline ("ddstk:"^(pr l1)^" hostk:"^(pr l2)) in *)
+       if (v1=v2) then Some v1 else None
 
   let is_same_dd () =
     match (is_same_dd_get()) 
@@ -1067,11 +1260,11 @@ struct
   let pop_aft_apply_with_exc_no (f:'a->'b) (e:'a) : 'b =
     try 
       let r = (f e) in
-      if !Globals.debug_precise_trace then debug_stk # pop; 
+      if !debug_precise_trace then debug_stk # pop; 
       r
     with exc -> 
         begin
-          if !Globals.debug_precise_trace then debug_stk # pop; 
+          if !debug_precise_trace then debug_stk # pop; 
           raise exc
         end
 
@@ -1082,17 +1275,18 @@ struct
     String.concat "@" (List.map string_of_int (List.filter (fun n -> n>0) h) )
 
   let push_no_call () =
-    if !Globals.debug_precise_trace then debug_stk # push (-3)
+    if !debug_precise_trace then debug_stk # push (-3)
     else ()
 
   (* returns @n and @n1;n2;.. for a new call being debugged *)
   let push_call_gen (os:string) (flag_detail:bool) : (string * string) = 
+    (* let () = print_endline ("\npush_call_gen:"^os^(string_of_bool flag_detail)) in *)
     ctr#inc;
     let v = ctr#get in
-    debug_stk#push v; if flag_detail then dd_stk#push v;
+    debug_stk#push v; 
+    if flag_detail then dd_stk#push v;
     let s = os^"@"^(string_of_int v) in
     let h = os^"@"^string_of() in
-    (* let _ = print_endline ("push_call:"^os^":"^s^":"^h) in  *)
     s,h
 
   (* push call without detailed tracing *)
@@ -1128,10 +1322,13 @@ sig
   type t
   type ef = t -> t -> bool
   type tlist = t list
+  val zero : t
+  val is_zero : t -> bool
   val eq : ef
   val intersect_eq : ef -> tlist -> tlist -> tlist
   val intersect : tlist -> tlist -> tlist
   val string_of : t -> string
+  val compare : t -> t -> int
 end;;
 
 module type EQ_PTR_TYPE =
@@ -1183,7 +1380,7 @@ struct
   let is_sat_baga_eq eq (xs:baga) : bool = 
     let r= not(is_dupl_baga_eq eq xs) in
     begin
-      print_endline ("is_sat_baga_eq("^(string_of xs)^")="^(string_of_bool r));
+      Basic.print_endline_quiet ("is_sat_baga_eq("^(string_of xs)^")="^(string_of_bool r));
       r
     end
 
@@ -1191,7 +1388,7 @@ struct
   let is_sat_baga (xs:baga) : bool = 
     let r = not(is_dupl_baga xs) in
     begin
-      print_endline ("is_sat_baga("^(string_of xs)^")="^(string_of_bool r));
+      Basic.print_endline_quiet ("is_sat_baga("^(string_of xs)^")="^(string_of_bool r));
       r
     end
 
@@ -1251,7 +1448,7 @@ struct
   (* a singleton difference set *)
   let singleton_dset (e:ptr) : dpart = [[e]]
 
-  let is_dupl_dset (xs:dpart) : bool = 
+  let is_dupl_dset (xs:dpart) : bool =
     List.exists (check_dups) xs
 
   let is_mem_dset e (el:dpart): bool =
@@ -1321,7 +1518,7 @@ struct
     List.exists (is_conflict_list) s
 
   (* false result denotes contradiction *)
-  let is_sat_dset (xs:dpart) : bool = 
+  let is_sat_dset (xs:dpart) : bool =
     let r = not(is_dupl_dset xs) in
     begin
       (* print_endline ("is_sat_dset("^(string_of xs)^")="^(string_of_bool r)); *)
@@ -1371,7 +1568,7 @@ class task_table =
 object 
   val tasks = Hashtbl.create 10
   method add_task_instance msg time = 	
-    let m = if (time>Globals.profile_threshold) then  [time] else [] in
+    let m = if (time>profile_threshold) then  [time] else [] in
     try 
           (* t1 : time, cnt1: count, max1: those that exceeed threshold *)      
 	  let (t1,cnt1,max1) = Hashtbl.find tasks msg in
@@ -1381,9 +1578,9 @@ object
   method print_task_instance msg : unit = 	
     try 
  	  let (t1,cnt1,_) = Hashtbl.find tasks msg in
-	  print_endline ("Time("^msg^") : "^(string_of_float t1)^" (seconds)")
+	  Basic.print_endline_quiet ("Time("^msg^") : "^(string_of_float t1)^" (seconds)")
     with Not_found -> 
-	  print_endline ("Task "^msg^" does not exist in profiling table.")
+	  Basic.print_endline_quiet ("Task "^msg^" does not exist in profiling table.")
   method print : unit = 
     let str_list = Hashtbl.fold (fun c1 (t,cnt,l) a-> (c1,t,cnt,l)::a) tasks [] in
     let str_list = List.sort (fun (c1,_,_,_)(c2,_,_,_)-> String.compare c1 c2) str_list in
@@ -1410,7 +1607,7 @@ struct
     (fun (s,v,b)-> "("^s^","^(string_of_float v)^","^(string_of_bool b) ^")") (=)
 
   let add_to_counter (s:string) i = 
-    if !Globals.enable_counters then counters#add s i
+    if !enable_counters then counters#add s i
     else ()
   let inc_counter (s:string) = add_to_counter s 1
 
@@ -1427,7 +1624,7 @@ struct
   let get_time () = get_all_time()
 
   let push_time_no_cnt msg = 
-    if (!Globals.profiling) then
+    if (!profiling) then
       let timer = get_time () in
 	  profiling_stack # push (msg, timer,true) 
     else ()
@@ -1438,7 +1635,7 @@ struct
 	  (* profiling_stack := (msg, timer,true) :: !profiling_stack) *)
 
   let push_time msg = 
-    if (!Globals.profiling) then
+    if (!profiling) then
       push_time_always msg
     else ()
 
@@ -1446,7 +1643,7 @@ struct
     let m1,t1,_ = profiling_stack # top in
     if (String.compare m1 msg)==0 then 
       let t2 = get_time () in
-      if (t2-.t1)< 0. then Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("negative time")}
+      if (t2-.t1)< 0. then Error.report_error {Error.error_loc = no_pos; Error.error_text = ("negative time")}
       else
 	profiling_stack # pop;
       if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0) profiling_stack#get_stk) then begin
@@ -1457,20 +1654,21 @@ struct
 	tasks # add_task_instance m1 0.
       end	
       else tasks # add_task_instance m1 (t2-.t1) 
-    else 
-      Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error popping "^msg^"from the stack")}
+    else
+      (* let () = print_endline ("profiling_stack = " ^ profiling_stack#string_of) in *)
+      Error.report_error {Error.error_loc = no_pos; Error.error_text = ("Error popping "^msg^" from the stack")}
 
   let pop_time msg = 
-    if (!Globals.profiling) then
+    if (!profiling) then
       pop_time_always msg
     else ()
 
  let print_info_task (m:string) : unit =  tasks # print_task_instance m
 
- let print_info () = if (!Globals.profiling) then  tasks # print else ()
+ let print_info () = if (!profiling) then  tasks # print else ()
 
  let print_counters_info () =
-      if !Globals.enable_counters then
+      if !enable_counters then
         print_string (string_of_counters ())
       else () 
 
@@ -1533,9 +1731,9 @@ struct
     "time_stk_"^ (spec_counter#string_of)
 
   let pop_time_to_s_no_count  msg = 
-	if (!Globals.profiling) then
+	if (!profiling) then
 	  let rec helper l = match l with
-        | [] -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error special poping "^msg^"from the stack")}
+        | [] -> Error.report_error {Error.error_loc = no_pos; Error.error_text = ("Error special poping "^msg^"from the stack")}
         | (m1,_,_)::t ->  if not ((String.compare m1 msg)==0) then helper t			
 		  else t in
       profiling_stack#set_stk (helper profiling_stack#get_stk) 
@@ -1633,12 +1831,12 @@ struct
   let trim_str input =
     let start_idx = ref 0 in
     let len = String.length input in
-    let _ = 
+    let () = 
 	  while (!start_idx < len) && ((String.get input !start_idx) = ' ') do
 	    start_idx := !start_idx + 1
 	  done in
     let end_idx = ref (len - 1) in
-    let _ = 
+    let () = 
 	  while (!end_idx > !start_idx) && ((String.get input !end_idx) = ' ') do
 	    end_idx := !end_idx - 1
 	  done in
@@ -1729,7 +1927,7 @@ let string_of_file (fname : string) =
     let chn = open_in fname in
     let len = in_channel_length chn in
     let str = String.make len ' ' in
-    let _ = really_input chn str 0 len in
+    let () = really_input chn str 0 len in
     (close_in chn; str)
   else
     (warn ("Could not read file " ^ fname ^ "; assuming empty content.");
@@ -1801,7 +1999,7 @@ let break_lines_1024 (input : string) : string =
   (* let n= String.index input ';' in *)
   (* let s = String.sub input 0 n in *)
   (* let delta = String.length input - String.length s in *)
-  (* let _ = if  delta > 0  then print_endline ("XXXXXXXXXX: " ^(string_of_int delta) ) *)
+  (* let () = if  delta > 0  then print_endline ("XXXXXXXXXX: " ^(string_of_int delta) ) *)
   (*     else  print_endline "" in *)
   break_lines_num input (1024-32)
 
@@ -1842,19 +2040,19 @@ struct
 
   let pushf_add_level (f:'a -> 'a * ('b list))  ((i,stk):('a,'b) stackable) : ('a,'b) stackable
         = match stk with
-          | [] -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("pushf_add_level on empty stack")}
+          | [] -> Error.report_error {Error.error_loc = no_pos; Error.error_text = ("pushf_add_level on empty stack")}
           | lvl::stk -> let (new_i,v)=f i 
             in (new_i,(v@lvl)::stk)
 
   let add_level (lst:'b list)  ((i,stk):('a,'b) stackable) : ('a,'b) stackable
         = match stk with
-          | [] -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("pushf_add_level on empty stack")}
+          | [] -> Error.report_error {Error.error_loc = no_pos; Error.error_text = ("pushf_add_level on empty stack")}
           | lvl::stk -> (i,(lst@lvl)::stk)
 
   let close_level ((i,stk):('a,'b) stackable) : ('a,'b) stackable
         = match stk with
           | lvl::(lvl2::stk) -> (i, (lvl@lvl2)::stk)
-          | _ -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("close level requires at least two levels")}
+          | _ -> Error.report_error {Error.error_loc = no_pos; Error.error_text = ("close level requires at least two levels")}
 
   let collapsef_stack  (f:'a -> ('b list) -> 'a)  ((i,stk):('a,'b) stackable) : 'a
         = f i (List.concat stk)
@@ -1864,7 +2062,7 @@ struct
           | lvl::stk -> let (newi,lst)=(f i lvl) in
             if (is_empty lst) then (newi, stk)
             else (add_level lst (newi,stk))
-          | _ -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("popf_level on empty stack")}
+          | _ -> Error.report_error {Error.error_loc = no_pos; Error.error_text = ("popf_level on empty stack")}
 
   let init_level_list (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
         = List.map (init_level) xs
@@ -1894,7 +2092,7 @@ struct
     let rec helper xs no =
       match xs with
         | [] -> true
-        | ((x,[])::xs1) -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("tag missing during ehc_sorted_tag")}
+        | ((x,[])::xs1) -> Error.report_error {Error.error_loc = no_pos; Error.error_text = ("tag missing during ehc_sorted_tag")}
         | ((x,n::t)::xs1) -> 
               if (n<no) then false
               else if (n==no) then helper xs1 no
@@ -1906,7 +2104,7 @@ struct
     let rec helper xs acc no =
       match xs with
         | [] -> if (is_empty acc) then [] else [(List.rev acc,no)]
-        | ((x,[])::xs1) -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("cannot happen!")}
+        | ((x,[])::xs1) -> Error.report_error {Error.error_loc = no_pos; Error.error_text = ("cannot happen!")}
         | ((x,n::t)::xs1) -> 
               if (n==no) then helper xs1 ((x,t)::acc) no
               else 
@@ -1915,7 +2113,7 @@ struct
                 else (List.rev acc,no)::rs
     in let r=check_sorted_tag xs in
     if r then helper xs acc 1 
-    else Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("need to sort group_tag!")}
+    else Error.report_error {Error.error_loc = no_pos; Error.error_text = ("need to sort group_tag!")}
 
   let zip_tag (f: 'a -> 'b -> 'c) (xs: ('a * int) list) (ys:('b * int) list) : ('c list) =
     let rec helper xs ys =
@@ -1948,3 +2146,4 @@ let range a b =
     if a > b then [] else a :: aux (a+1) b  in
   (* if a > b then List.rev (aux b a) else aux a b;; *)
   if a > b then [] else aux a b;;
+

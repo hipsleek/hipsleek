@@ -1,0 +1,40 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+Entail (1) : Fail.(may) cause:AndR[ true |-  f=a. LOCS:[0;6];  true |-  s=b. LOCS:[0;6] (may-bug).]
+
+Residue:
+ <1>emp&v=@M&{FLOW,(4,8)=__MayError#E}[]
+ inferred pure: [v=@M]
+[[ SEARCH ==>  Match(p,p) ==> ]]
+
+
+
+Entail (2) : Fail.(may) cause:AndR[ true |-  f=a. LOCS:[0;8];  true |-  s=b. LOCS:[0;8] (may-bug).]
+
+Residue:
+ <1>p::pair<f@v,s@v>&v<:@L&{FLOW,(4,8)=__MayError#E}[]
+ inferred pure: [v<:@L]
+[[ SEARCH ==>  Match(p,p) ==> ]]
+
+
+
+Entail (3) : Fail.(may) cause:AndR[ true |-  f=a. LOCS:[0;10];  true |-  s=b. LOCS:[0;10] (may-bug).]
+
+Residue:
+ <1>emp&v<:@I&{FLOW,(4,8)=__MayError#E}[]
+ inferred pure: [v<:@I]
+[[ SEARCH ==>  Match(p,p) ==> ]]
+
+
+
+Entail (4) : Fail.(may) cause:AndR[ true |-  f=a. LOCS:[0;12];  true |-  s=b. LOCS:[0;12] (may-bug).]
+
+Residue:
+ <1>p::pair<f@v,s@v>&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Match(p,p) ==> ]]
+
+
+

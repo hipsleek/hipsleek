@@ -1,0 +1,35 @@
+//CountDownLatch
+
+//data cell { int val; }
+
+checkentail @full[x] |- @lend[x].
+print residue.
+
+checkentail @value[x] |- @lend[x].
+print residue.
+
+
+checkentail @frac(1/2)[x] |- @lend[x].
+print residue.
+
+
+checkentail @lend[x] |- @lend[x].
+print residue.
+
+
+checkentail @value[x] |- @frac(1/2)[x].
+print residue.
+
+checkentail @full[x] |- @frac(1/2)[x].
+print residue.
+
+
+checkentail @full[x] * @value[x] |- @frac(1/2)[x].
+print residue.
+
+checkentail @full[x] * @lend[x] |- true.
+print residue.
+
+
+checkentail @frac(1/3)[x] * @lend[x] |- true.
+print residue.

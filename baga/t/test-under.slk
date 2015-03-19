@@ -1,0 +1,60 @@
+data node {
+     node next;
+}.
+
+pred ll<n> == self=null & n=0
+     or self::node<q> * q::ll<n-1>
+     //inv_sat BG([self],true)
+     inv_sat BG([self],n>=1)
+     .
+
+/*
+(self=null & n=0) | (self!=null) |- true        (over)
+self!=null |- (self=null & n=0) | (self!=null)  (under)
+
+(self!=null | n!=0) & (self=null) <=> n!=0 & self=null
+
+
+  under --> body   (not sound...)
+
+  body --> over
+
+
+  [self],true --> self=null & n=0
+              \/ ([self],(exists q: n=q+1 & q>=0)
+
+  [self],true --> self=null & n=0
+              \/ ([self],n=1)
+              \/ ([self],true)
+
+
+ [self],true --> self=null & n=0
+              \/ self::node<_,q> * q::ll<n-1>
+
+ [self],true --> self=null & n=0
+              \/ self::node<_,null> & n=1
+              \/ self::node<_,q>*q::node<_,q1>*q2::ll<n-1>
+
+
+  [self],n>=1 --> self=null & n=0
+              \/ self::node<_,null> & n=1
+              \/ self::node<_,q>*q::node<_,q1>*q2::ll<n-1>
+
+
+             \/ [self],n=1
+              \/ [self],n>1
+
+            \/ [self],(n=1 | n>1)
+
+
+  [self],n=1 --> self=null & n=0
+              \/ self::node<_,null> & n=1
+              \/ self::node<_,q>*q::node<_,q1>*q2::ll<n-1>
+ 
+
+ [self]:n>=1
+
+ [self]:n>=0
+
+
+*/

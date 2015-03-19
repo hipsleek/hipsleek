@@ -1,0 +1,24 @@
+Starting Omega...oc
+P1 is defined.
+P2 is defined.
+Starting z3... 
+
+!!! formula1: emp&((self=null & y=null) | (self!=null & y!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&y=null & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self,y], true),
+([], self=null & y=null)])
+Entailing lemma lem_14: Valid.
+
+ Temp Lemma(s) inferred as valid in current context.
+Stop Omega... 14 invocations 
+SAT Count   : 57
+SAT % Hit   : 75.43%
+IMPLY Count : 3
+IMPLY % Hit : 33.33%
+Time(cache overhead) : 0.003597 (seconds)
+
+!!! log(small):(0.02978,79)
+Total verification time: 0.08969 second(s)
+	Time spent in main process: 0.063566 second(s)
+	Time spent in child processes: 0.026124 second(s)
+

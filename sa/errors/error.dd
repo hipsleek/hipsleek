@@ -1,0 +1,7 @@
+#case_struc_formula_trans
+#plug_shape_into_specs
+#case_detection
+#elim_dup_with_guard
+heap_entail_empty_rhs_heap
+heap_entail_conjunct_lhs_struc
+heap_entail_conjunct

@@ -1,0 +1,11 @@
+Starting Omega...oc
+Starting z3... 
+Residue:
+ <1>emp&x=null&{FLOW,(6,7)=__Error}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+
+
+Residue:
+ <1>x::node<Anon_14,Anon_15>&{FLOW,(6,7)=__Error}[]
+
+

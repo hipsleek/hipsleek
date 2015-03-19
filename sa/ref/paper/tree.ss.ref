@@ -1,0 +1,103 @@
+
+!!!Full processing file "paper/tree.ss"
+Parsing file "paper/tree.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Checking procedure foo$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x)&true
+ ensures G(x)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H(x)&true --> x::node<key1,left1,right1> * HP_1248(left1) * 
+HP_1249(right1)&
+true(3,4),
+ // PRE_REC
+(2;2;0)HP_1248(left1)&left1!=null --> H(left1)&
+true(3,4),
+ // PRE_REC
+(2;2;0)HP_1249(right1)&right1!=null --> H(right1)&
+true(3,4),
+ // POST
+(1;2;0)x::node<key1,left1,right1> * HP_1248(left1) * HP_1249(right1)&
+right1=null & left1!=null --> G(x)&
+true(3,4),
+ // POST
+(1;0)x::node<key1,left1,right1> * HP_1248(left1) * HP_1249(right1)&
+left1=null --> G(x)&
+true(3,4),
+ // POST
+(2;2;0)x::node<key1,left1,right1> * G(left1) * G(right1)&right1!=null & 
+left1!=null --> G(x)&
+true(3,4)]
+
+Procedure foo$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x1) ::=  [x1::node<key2,DP1,right2>&right2=null|#|emp&left_29_1372!=null; 
+x1::node<key2,DP1,right2>|#|emp&left_29_1246=null; x1::node<key2,left2,DP>&
+left2=null],
+ G(x2) ::=  [x2::node<key,left,right> * left::node<key2,DP1,right2>&right2=null & 
+right=null & left!=null; x2::node<key,left,right> * 
+left::node<key2,left2,DP>&left2=null & right=null & left!=null; 
+x2::node<key,DP1,right>&DP1!=null & right=null; x2::node<key,left,right>&
+left=null & right=null; x2::node<key,left,right> * 
+right::node<key2,DP1,right2>&right2=null & left=null & right!=null; 
+x2::node<key,left,DP> * DP::node<key2,DP1,right2>&left=null & DP!=null; 
+x2::node<key,left,right> * right::node<key2,left2,DP>&left2=null & 
+left=null & right!=null; x2::node<key,left,DP>&left=null; 
+x2::node<key,left,right> * G(left) * G(right)&left!=null & right!=null]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1) |#| 
+           emp&left_29_1246=null
+           or emp&left_29_1372!=null
+            ::= 
+ x1::node<key2,DP1,right2>
+ or x1::node<key2,left2,DP>&left2=null
+ or x1::node<key2,DP1,right2>&right2=null
+ (3,4),
+ G(x2) ::= 
+ x2::node<key,left,right> * left::node<key2,left2,DP>&left2=null & 
+ right=null & left!=null
+ or x2::node<key,DP1,right>&DP1!=null & right=null
+ or x2::node<key,left,right>&left=null & right=null
+ or x2::node<key,left,right> * right::node<key2,DP1,right2>&right2=null & 
+    left=null & right!=null
+ or x2::node<key,left,DP> * DP::node<key2,DP1,right2>&left=null & DP!=null
+ or x2::node<key,left,right> * right::node<key2,left2,DP>&left2=null & 
+    left=null & right!=null
+ or x2::node<key,left,DP>&left=null
+ or x2::node<key,left,right> * G(left) * G(right)&left!=null & right!=null
+ or x2::node<key,left,right> * left::node<key2,DP1,right2>&right2=null & 
+    right=null & left!=null
+ (3,4)]
+*************************************
+Stop Omega... 12 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.073061,414)
+Total verification time: 0.435328 second(s)
+	Time spent in main process: 0.417594 second(s)
+	Time spent in child processes: 0.017734 second(s)
+

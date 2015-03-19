@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 open Globals
 open Gen.Basic
 open Exc.GTable
@@ -97,12 +99,12 @@ let extract_outer_inner_p pf0 root_args val_extns rec_args=
             | _ -> report_error no_pos "cpure.extract_outer_inner_p: wrong?"
       end
       |  EqMin (e1, e2, e3,p) (* first is min of second and third *) ->
-          (* let _ =  Debug.info_pprint ("  EqMin: " ^ (!print_p_formula pf)) no_pos in *)
+          (* let () =  Debug.info_pprint ("  EqMin: " ^ (!print_p_formula pf)) no_pos in *)
           (*find initial value: e2 or e3*)
           let e_i = find_initial [e2;e3] false in
           (false, (Eq (e1,e2,p), e1), (Min (e2,e3,no_pos),e_i))
       |  EqMax (e1, e2, e3,p) (* first is max of second and third *) ->
-          (* let _ =  Debug.info_pprint ("  EqMax: " ^ (!print_p_formula pf)) no_pos in *)
+          (* let () =  Debug.info_pprint ("  EqMax: " ^ (!print_p_formula pf)) no_pos in *)
           (*find initial value: e2 or e3*)
           let e_i = find_initial [e2;e3] false in
           (false, (Eq (e1,e2,p), e1), (Max (e2,e3,no_pos),e_i))
@@ -362,7 +364,7 @@ let norm_exp_min_max_p pf=
           | _ -> pf,[],[]
     end
     | EqMin (e1,e2,e3,l) -> begin
-        (* let _ =  Debug.info_pprint ("   EqMin: ") no_pos in *)
+        (* let () =  Debug.info_pprint ("   EqMin: ") no_pos in *)
         let b2 = is_var e2 in
         let b3= is_var e3 in
         match b2,b3 with
@@ -374,7 +376,7 @@ let norm_exp_min_max_p pf=
           | _ -> pf,[],[]
     end
     | EqMax (e1,e2,e3,l) -> begin
-        (* let _ =  Debug.info_pprint ("   EqMax: ") no_pos in *)
+        (* let () =  Debug.info_pprint ("   EqMax: ") no_pos in *)
         let b2 = is_var e2 in
         let b3= is_var e3 in
         match b2,b3 with
@@ -425,7 +427,7 @@ let norm_exp_min_max2 p =
 
 let norm_exp_min_max p=
   let pr1 = !print_formula in
-  (* let _ = norm_exp_min_max2 p in *)
+  (* let () = norm_exp_min_max2 p in *)
   Debug.no_1 "norm_exp_min_max" pr1 (pr_pair pr1 !print_svl)
       (fun _ -> norm_exp_min_max p) p
 (********************************************************)

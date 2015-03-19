@@ -1,0 +1,18 @@
+UTPost@f post1(int n, bool b).
+UTPre@f pre1(int n, bool b).
+
+
+infer [@term]
+   n<0 |- post1(n,b).
+print residue.
+
+
+infer [@term]
+   n>=0 & n'=n-1 & b=b' & pre1(n,b) & b |- pre1(n',b').
+print residue.
+/*
+ <1>emp&pre1_0(n,b)[] & 1<=b & b=b' & n=n'+1 & 0<=n&{FLOW,(21,22)=__norm}[]
+ inferred UTPre rel: [emp&b & b=b' & n=n'+1 & 0<=n&{FLOW,(21,22)=__norm}[]: 
+                       pre1_0(n,b) --> pre1_0(n',b')]
+
+*/

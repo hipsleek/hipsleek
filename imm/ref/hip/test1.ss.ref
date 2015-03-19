@@ -1,0 +1,53 @@
+
+!!!Full processing file "hip/test1.ss"
+Parsing file "hip/test1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure concat$node~node... 
+Procedure concat$node~node SUCCESS.
+
+Checking procedure foo$node... 
+Procedure foo$node SUCCESS.
+
+Checking procedure length$node... 
+Procedure length$node SUCCESS.
+
+Checking procedure length_lend$node... 
+Procedure length_lend$node SUCCESS.
+
+Checking procedure main$... 
+Proving precondition in method foo$node Failed.
+Empty list_failesc_context
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "hip/test1.ss",Line:69,Col:2
+
+Procedure main$ FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+
+Error(s) detected when checking procedure main$
+
+Checking procedure main_lend$... 
+Proving precondition in method foo$node Failed.
+Empty list_failesc_context
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "hip/test1.ss",Line:58,Col:2
+
+Procedure main_lend$ FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+
+Error(s) detected when checking procedure main_lend$
+
+14 false contexts at: ( (27,6)  (27,17)  (27,13)  (27,13)  (26,17)  (26,11)  (39,6)  (39,17)  (39,13)  (39,13)  (38,17)  (38,11)  (47,48)  (47,40) )
+
+Total verification time: 1.675612 second(s)
+	Time spent in main process: 1.526014 second(s)
+	Time spent in child processes: 0.149598 second(s)
+

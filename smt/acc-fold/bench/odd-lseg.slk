@@ -1,0 +1,25 @@
+data node {
+   node nxt;
+}.
+
+pred olseg<p> == self::node<p>
+  or (exists a,b: self::node<a> * a::node<b> * b::olseg<p>)
+ inv self!=null.
+
+lemma_safe self::olseg<p> -> (exists u: self::olseg<u>*u::olseg<p>).
+
+lemma_safe self::olseg<p> <- (exists u: self::olseg<u>*u::olseg<p>).
+
+checkentail_exact x::node<a>*a::node<p> |- x::olseg<p>.
+
+checkentail_exact x::node<p> |- x::olseg<p>.
+
+checkentail_exact x::node<a>*a::node<b> * b::olseg<p> |- x::olseg<p>.
+
+checkentail_exact x::node<b>*b::olseg<p> |- x::olseg<p>.
+
+lemma_safe self::olseg<p> <- (exists u: self::olseg<u>*u::node<w>*w::node<p>).
+
+checkentail_exact  b::olseg<p> * p::node<a> * a::node<b> |- b::olseg<b>.
+
+lemma_safe self::olseg<p> <- (exists u: self::node<uu>*uu::olseg<u>*u::node<p>).

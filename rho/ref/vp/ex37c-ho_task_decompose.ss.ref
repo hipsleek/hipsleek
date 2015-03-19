@@ -1,0 +1,39 @@
+
+!!!Full processing file "vp/ex37c-ho_task_decompose.ss"
+Parsing file "vp/ex37c-ho_task_decompose.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure inc$int... 
+Procedure inc$int SUCCESS.
+
+Checking procedure creator$int~int... 
+Procedure creator$int~int SUCCESS.
+
+Checking procedure joiner$Thrd~int... 
+Procedure joiner$Thrd~int SUCCESS.
+
+Checking procedure main$... 
+Post condition cannot be derived:
+  (may) cause:  res=1+0+1+xxx_36 |-  res=2. LOCS:[61;47] (may-bug)
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "vp/ex37c-ho_task_decompose.ss",Line:61,Col:9
+
+ERROR: at _0:0_0:0
+Message: Post condition cannot be derived.
+
+Procedure main$ FAIL.(2)
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+
+Error(s) detected when checking procedure main$
+
+0 false contexts at: ()
+
+Total verification time: 0.480028 second(s)
+	Time spent in main process: 0.452027 second(s)
+	Time spent in child processes: 0.028001 second(s)
+

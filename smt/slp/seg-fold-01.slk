@@ -1,0 +1,32 @@
+data Sll_t {
+  Sll_t f;
+}.
+
+pred ls<out> ==
+ emp & self = out
+or (exists u: self::Sll_t<f = u> * u::ls<out> & self !=out).
+
+
+//1
+checkentail x::ls<y> * y::ls<null> |- x::ls<null>.
+
+expect Valid.
+
+
+//2
+checkentail x::ls<a> * a::ls<y> * y::ls<null> |- x::ls<null>.
+
+expect Valid.
+
+
+//3
+checkentail x::Sll_t<a> * a::ls<b> * b::ls<null> |- x::ls<null>.
+
+expect Valid.
+
+
+//4
+checkentail x::Sll_t<a> * a::ls<b> * b::ls<c> |- x::ls<c>.
+
+expect Fail.
+

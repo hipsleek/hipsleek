@@ -1,0 +1,42 @@
+
+!!!Full processing file "examples/foo-fact2.ss"
+Parsing file "examples/foo-fact2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure foo$int... 
+Procedure foo$int SUCCESS.
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume n'<=0 & n<=0 & n'=n & !(v_bool_8_1149') & n'<=0 & 
+!(v_bool_8_1149') & v_int_10_1148'+1=n' & 
+res=v_int_10_1148' --> foopost_1143(n).
+
+ termAssume 0<n' & 0<n & n'=n & v_bool_8_1149' & 0<n' & v_bool_8_1149' & 
+v_int_9_1146'=1+n' & res=v_int_9_1146' --> foopost_1142(n).
+
+
+Base/Rec Case Splitting:
+[	foo: [[1] n<=0@B,[2] 1<=n@B]
+]
+Termination Inference Result:
+foo:  case {
+  1<=n -> requires emp & Term[31,2]
+ ensures emp & res=1+n; 
+  n<=0 -> requires emp & Term[31,1]
+ ensures emp & res+1=n; 
+  }
+Stop Omega... 14 invocations 
+6 false contexts at: ( (9,2)  (9,11)  (9,9)  (10,7)  (10,16)  (10,14) )
+
+!!! log(small):(0.030241,195)
+Total verification time: 0.298001 second(s)
+	Time spent in main process: 0.28128 second(s)
+	Time spent in child processes: 0.016721 second(s)
+

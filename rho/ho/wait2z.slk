@@ -1,0 +1,41 @@
+/*
+
+ -tp mona
+
+*/
+
+pred_prim WAIT<b:bag((int,int))>.
+
+// these could be added to prelude ..
+
+relation cyclic(bag((int,int)) g).
+relation acyclic(bag((int,int)) g).
+
+
+//checkentail cyclic(B) & B=C & B=union(S1,S2) & S1={tup2(1,2)} & S2={tup2(1,2)} |- cyclic(C) & C={tup2(1,2),tup2(2,3)}.
+
+//checkentail cyclic(B) & B=C & B=union(S1,S2,S1) & S1={tup2(1,2)} & S2={tup2(1,2)} |- true
+
+//checkentail B={tup2(1,2),tup2(1,2)} |- cyclic(B).
+
+
+
+//(1)
+checkentail B={tup2(1,2),tup2(1,2)} & acyclic(B) |- true.
+expect Valid.
+
+//(2)
+checkentail B={tup2(1,2),tup2(2,1)} & acyclic(B) |- false.
+expect Valid.
+
+//(3)
+checkentail B={tup2(1,2),tup2(2,1)} |- true & cyclic(B).
+expect Valid.
+
+//(4)
+checkentail B={tup2(1,2),tup2(1,2)} |- true & cyclic(B).
+expect Fail.
+
+//(5)
+checkentail B=union(S1,S2) & S1={tup2(1,2)} & S2={tup2(1,2)} |- cyclic(B).
+expect Fail.

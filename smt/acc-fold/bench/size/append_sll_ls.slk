@@ -1,0 +1,55 @@
+data node {
+  node next;
+}.
+ pred ll<> == 
+  emp&self=null or
+(exists q_20: self::node<q_20> * q_20::ll<>)
+  inv true.
+ pred lseg<p:node> == 
+  emp&self=p or
+(exists p_19,q_18: self::node<q_18> * q_18::lseg<p_19>&
+  p_19=p)
+  inv true.
+
+ 
+// id: 0; line: 16; kind: BIND
+ checkentail_exact (exists q: q::ll<> * x'::node<q>&x'=x & y'=y & x!=null)
+ |-  (exists q1: x'::node<next'> * q1::ll<>&next'=q1 & x'=x & y'=y & x!=null).
+expect Valid.
+ 
+// id: 2; line: 16; kind: PRE
+ checkentail_exact q::ll<> * x'::node<q>&v'=null & v'=q & x'=x & y'=y & x!=null
+ |-  q::ll<> * x'::node<q>&v'=null & v'=q & x'=x & y'=y & x!=null.
+expect Valid.
+ 
+// id: 4; line: 16; kind: PRE
+ checkentail_exact q::ll<> * x'::node<q>&v'!=null & v'=q & x'=x & y'=y & x!=null
+ |-  q::ll<> * x'::node<q>&v'!=null & v'=q & x'=x & y'=y & x!=null.
+expect Valid.
+ 
+// id: 6; line: 17; kind: BIND
+ checkentail_exact q::ll<> * x'::node<q>&v' & q!=null & x'=x & y'=y & x!=null
+ |-  x'::node<next'> * q::ll<>&next'=q & v' & q!=null & x'=x & y'=y & x!=null.
+expect Valid.
+ 
+// id: 8; line: 17; kind: PRE_REC
+ checkentail_exact q::ll<> * x'::node<q>&v1'=q & v' & q!=null & x'=x & y'=y & x!=null
+ |-  v1'::ll<> * x'::node<q>&v1'=q & v' & q!=null & x'=x & y'=y & x!=null & 
+v1'!=null.
+expect Valid.
+ 
+// id: 11; line: 21; kind: BIND
+ checkentail_exact q::ll<> * x'::node<q>&!(v') & q=null & x'=x & y'=y & x!=null
+ |-  x'::node<next'> * q::ll<>&next'=q & !(v') & q=null & x'=x & y'=y & x!=null.
+expect Valid.
+ 
+// id: 13; line: 13; kind: POST
+ checkentail_exact x'::node<q> * q::lseg<y'>&v' & q!=null & x'=x & y'=y & x!=null
+ |-  (exists y1: x::lseg<y1>&v' & q!=null & x'=x & y'=y & x!=null & y1=y).
+expect Valid.
+ 
+// id: 20; line: 13; kind: POST
+ checkentail_exact q::ll<> * x'::node<y'>&next=q & !(v') & q=null & x'=x & y'=y & x!=null
+ |-  (exists y1: x::lseg<y1> * q::ll<>&next=q & !(v') & q=null & x'=x & y'=y & 
+x!=null & y1=y).
+expect Valid.

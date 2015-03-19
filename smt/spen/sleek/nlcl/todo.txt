@@ -1,0 +1,97 @@
+==============================
+nlcl-vc03.slk:
+
+data pto1 {
+     pto1 next1;
+}.
+
+data pto2 {
+     pto2 next2;
+     pto1 down;
+}.
+
+/*
+; singly-linked list
+(define-fun lso ((?in NLL_lvl1_t) (?out NLL_lvl1_t))
+  Space (tospace (or (= ?in ?out) 
+    (exists ((?u NLL_lvl1_t)) (tobool (ssep
+      (pto ?in (ref next1 ?u))
+      (lso ?u ?out))
+)))))
+
+; singly-linked list of cyclic singly-linked lists
+(define-fun nlcl ((?in NLL_lvl2_t) (?out NLL_lvl2_t))
+  Space (tospace (or (= ?in ?out)
+    (exists ((?u NLL_lvl2_t) (?Z1 NLL_lvl1_t)) 
+      (tobool (ssep
+      (pto ?in (sref
+        (ref next2 ?u)
+        (ref down ?Z1)))
+      (loop (lso ?Z1 ?Z1)) 
+      (nlcl ?u ?out))
+)))))
+*/
+
+pred lso<out> == self = out
+     or (exists u: self::pto1<u> * u::lso<out>).
+
+pred nlcl<out> == self = out
+     or (exists u, z1: self::pto2<u,z1> * z1::lso<z1> * u::nlcl<out>).
+
+// Fail -> expected Valid.
+
+checkentail x1::nlcl<x2> *
+            x2::pto2<x3,x2_1> *
+            x2_1::pto1<x2_2> * x2_2::lso<x2_1> *
+            x3::nlcl<null> |-
+            x1::nlcl<null>.
+==============================
+nlcl-vc05.slk:
+
+data pto1 {
+     pto1 next1;
+}.
+
+data pto2 {
+     pto2 next2;
+     pto1 down;
+}.
+
+/*
+; singly-linked list
+(define-fun lso ((?in NLL_lvl1_t) (?out NLL_lvl1_t))
+  Space (tospace (or (= ?in ?out) 
+    (exists ((?u NLL_lvl1_t)) (tobool (ssep
+      (pto ?in (ref next1 ?u))
+      (lso ?u ?out))
+)))))
+
+; singly-linked list of cyclic singly-linked lists
+(define-fun nlcl ((?in NLL_lvl2_t) (?out NLL_lvl2_t))
+  Space (tospace (or (= ?in ?out)
+    (exists ((?u NLL_lvl2_t) (?Z1 NLL_lvl1_t)) 
+      (tobool (ssep
+      (pto ?in (sref
+        (ref next2 ?u)
+        (ref down ?Z1)))
+      (loop (lso ?Z1 ?Z1)) 
+      (nlcl ?u ?out))
+)))))
+*/
+
+pred lso<out> == self = out
+     or (exists u: self::pto1<u> * u::lso<out>).
+
+pred nlcl<out> == self = out
+     or (exists u, z1: self::pto2<u,z1> * z1::lso<z1> * u::nlcl<out>).
+
+// Fail -> expected Valid.
+
+checkentail x1::nlcl<x2> *
+            x2::pto2<x3,x2_1> *
+            x2_1::pto1<x2_2> * x2_2::lso<x2_1> *
+            x3::nlcl<null> |-
+            x1::nlcl<null>.
+==============================
+==============================
+==============================

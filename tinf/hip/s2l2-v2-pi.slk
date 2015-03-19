@@ -1,0 +1,72 @@
+template int f(int x, int y).
+template int g1(int x, int y).
+template int g2(int x, int y).
+
+//infer [f] v = 2 & r = f(v, r1) & r' = 2 + r1 |- r > r'.
+
+//infer [f] v > 2 & r = f(v, r1) & r' = f(v - 1, 1 + r1) |- r > r'.
+
+/*
+infer [f, g2] v = 2 & r = f(v, r1) & r2 = g2(1, r1) & r' = g2(v - 1, r2) |- r > r'.
+infer [f, g2] v > 2 & r = f(v, r1) & r2 = g2(1, r1) & r' = f(v - 1, r2) |- r > r'.
+infer [g2] v = 1 & r = g2(v, r1) |- r > r1.
+infer [g1] v = 0 & r = g1(v, r1) |- r > r1.
+
+infer [f]  r1 >= 0 & v >= 0 & v > 1 & r = f(v, r1) |- r >= 0.
+infer [g1] r1 >= 0 & v >= 0 & v <= 0 & r = g1(v, r1) |- r >= 0.
+infer [g2] r1 >= 0 & v >= 0 & v = 1 & r = g2(v, r1) |- r >= 0.
+*/
+
+infer [f] 0<=v_931 & r=f( v_931, r1_930) & 0<=r1_930 |- 0<=r.
+
+infer [f] 0<=v_983 & r=f( v_983, r1_985) & v_983<=0 & v_983<=0 & 
+  r1_985=r_1001 |- r>r_1001.
+
+infer [f] 0<=v_983 & r=f( v_983, r1_985) & 0<v_983 & 0<v_983 & v_983=1 & 
+  v_983=v_983 & r1_985=r_1032 |- r>r_1032.
+
+infer [f] 0<=v_983 & r=f( v_983, r1_985) & 0<v_983 & 0<v_983 & v_983!=1 & v_983!=1 & 
+  v_983=v_int_24_1071+1 & v_983=val_24_1063 & v_int_25_1081=1 & 
+  v_1094=v_int_24_1071 & v_1109=v_int_25_1081 & r1_1111=r1_985 & 0<=v_1109 & 
+  r1_1096=f( v_1109, r1_1111) & r1_1096=f( v_1109, r1_1111) & 0<=v_1094 & 
+  r_1083=f( v_1094, r1_1096) |- r>r_1083.
+
+template_solve.
+
+/*
+** Problem:
+
+template int f(int x, int y).
+
+infer [f]  r1 >= 0 & v >= 0 & r = f(v, r1) |- r >= 0.
+
+infer [f] v = 0 & r = f(v, r1) |- r > r1.
+infer [f] v = 1 & r = f(v, r1) |- r > r1.
+infer [f] v > 1 & r = f(v, r1) & r2 = f(1, r1) & r' = f(v - 1, r2) |- r > r'.
+
+template_solve.
+
+** Algorithm for piecewise function inference:
+** * Determine subdomain of the function's parameters
+     using existential quantifier elimination
+** * Specialize the function to subdomain
+** * Now infer the sub-function :)
+
+[ 0<=v_931 & r=f( v_931, r1_930) & 0<=r1_930 --> 0<=r
+
+, 0<=v_983 & r=*f( v_983, r1_985)* & v_983<=0 & v_983<=0 & r1_985=r_1001 
+  --> r>r_1001
+
+, 0<=v_983 & r=*f( v_983, r1_985)* & 0<v_983 & 0<v_983 & v_983=1 & 
+  v_983=v_983 & r1_985=r_1032 
+	--> r>r_1032
+
+, 0<=v_983 & r=*f( v_983, r1_985)* & 0<v_983 & 0<v_983 & v_983!=1 & v_983!=1 & 
+  v_983=v_int_24_1071+1 & v_983=val_24_1063 & v_int_25_1081=1 & 
+  v_1094=v_int_24_1071 & v_1109=v_int_25_1081 & r1_1111=r1_985 & 0<=v_1109 & 
+  r1_1096=f( v_1109, r1_1111) & r1_1096=f( v_1109, r1_1111) & 0<=v_1094 & 
+  r_1083=f( v_1094, r1_1096) 
+	--> r>r_1083
+]
+
+*/

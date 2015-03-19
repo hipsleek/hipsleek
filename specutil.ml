@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 open Globals
 module DD = Debug
 open Gen
@@ -135,11 +137,11 @@ let string_of_view_decl v =
 
 let test prog =
   let orig_def = List.hd prog.C.prog_view_decls in
-  let _ = print_endline ("\n\n" ^ string_of_view_decl orig_def) in
-  let _ = print_endline "\n\n" in
+  let () = print_endline_quiet ("\n\n" ^ string_of_view_decl orig_def) in
+  let () = print_endline_quiet "\n\n" in
   let abs_dom = {para_names = [SpecVar (Int, "n", Unprimed)]} in
   let new_def = gen_pred_def orig_def abs_dom in
-  print_endline (string_of_view_decl new_def)
+  print_endline_quiet (string_of_view_decl new_def)
 
 
 

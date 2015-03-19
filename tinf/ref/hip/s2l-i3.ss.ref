@@ -1,0 +1,36 @@
+
+!!!Full processing file "hip/s2l-i3.ss"
+Parsing file "hip/s2l-i3.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure s2l$node... 
+!!! WARNING : Inferable vars include some external variables!
+vars:[f,g] pre_post_vars:[r,x]
+
+Procedure s2l$node SUCCESS.
+
+Checking procedure s2l$node... 
+Post condition cannot be derived:
+  (may) cause:  0<=r1_1537 & 0<=r1_1537 & v_1535<=0 & 0<=v_1535 & r=g( v_1535, r1_1537) |-  0<=r. LOCS:[21;20;8;9] (may-bug)
+OrR
+  (must) cause:  0<=(g( v_1647, g( v_1647, r1_1537))) & 0<=r1_1537 & 0<=v_1647 & 
+g( v_1647, r1_1537)=g( v_1647, r1_1537) & 0<=v_1647 & 0<(v_1647+1) & 
+0<=(v_1647+1) & r=g( v_1647+1, r1_1537) |-  0<=r. LOCS:[27;26;25;24;20;8;9] (must-bug)
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+Last Proving Location: 1 File "hip/s2l-i3.ss",Line:27,Col:11
+
+ERROR: at _0:0_0:0 
+Message: Post condition cannot be derived.
+ 
+ExceptionFailure("Post condition cannot be derived.")Occurred!
+
+Error1(s) detected at main 
+caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("Post condition cannot be derived.")
+Error3(s) detected at main 

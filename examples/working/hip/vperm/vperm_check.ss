@@ -72,3 +72,4 @@ int test4(ref int x,ref int y)
   inc(y);
   return x; // --> No permission -> cannot return x
 }
+

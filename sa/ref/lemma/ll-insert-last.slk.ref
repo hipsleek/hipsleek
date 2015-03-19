@@ -1,0 +1,24 @@
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&((r=self & self!=null) | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&r>0&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+!!! formula1: emp&(self=p | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=p)])
+Entail 1: Fail.(must) cause:base case unfold failed
+
+Stop Omega... 16 invocations 
+SAT Count   : 58
+SAT % Hit   : 72.41%
+IMPLY Count : 6
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.005123 (seconds)
+
+!!! log(small):(0.026707,80)
+Total verification time: 0.08424 second(s)
+	Time spent in main process: 0.062992 second(s)
+	Time spent in child processes: 0.021248 second(s)
+

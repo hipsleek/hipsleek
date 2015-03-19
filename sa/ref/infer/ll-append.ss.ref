@@ -1,0 +1,39 @@
+
+!!!Full processing file "infer/ll-append.ss"
+Parsing file "infer/ll-append.ss" by default parser...
+
+!!! generate unknown predicate for Pre synthesis of : :HP_12
+!!! generate unknown predicate for Post synthesis of : :GP_13
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure append$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ HP_12,GP_13]requires HP_12(x,y@NI)&true
+ ensures GP_13(x,y)&
+true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+
+Procedure append$node~node FAIL.(2)
+
+Exception Not_found Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure append$node~node
+
+!!! proc.proc_name:append$node~nodeStop Omega... 3 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.037499,246)
+Total verification time: 0.303884 second(s)
+	Time spent in main process: 0.290008 second(s)
+	Time spent in child processes: 0.013876 second(s)
+

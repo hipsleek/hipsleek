@@ -1,0 +1,43 @@
+/*
+  General high-order primitives for threads.
+
+  A thread carrying a cell
+ */
+
+data cell{
+  int v;
+}.
+
+pred_prim THRD{P,Q}<x:cell>
+inv x!=null.
+
+pred_prim THRD2{Q}<x:cell>
+inv x!=null.
+
+//after join
+pred_prim DEAD<>
+inv true.
+
+/*
+lemma t::THRD2{%P * %Q}<x> -> t::THRD2{%P}<x> * t::THRD2{%Q}<x>;
+lemma t::THRD2{%P}<x> & t::DEAD<> -> %P;
+*/
+
+checkentail
+  (exists x:
+     r::THRD{x::cell<vx> & true,x::cell<vx+1>}<x>)   
+   |- r::THRD{%P,%Q}<xxx'>.
+print residue.
+
+
+checkentail
+  (exists x:
+     r::THRD2{x::cell<vx+1> & x=xxx'}<x>)   
+   |- (exists yyy: r::THRD2{%Q}<yyy>).
+print residue.
+
+checkentail
+  (exists x:
+     r::THRD2{x::cell<vx+1> & x=xxx'}<x> * x::cell<vx+1> & x=xxx')
+   |- (exists yyy: r::THRD2{%Q}<yyy> * %Q).
+print residue.

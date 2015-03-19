@@ -1,0 +1,1246 @@
+# foo-fact1.ss (DONE)
+
+int fact(int x)
+  infer [@post]
+  requires true  ensures true;
+
+Please strengthen spec with an unknown post, e.g.
+  requires true  ensures Upost1(x,res);
+Before inference.
+=======================================================
+# foo-fact.ss -infer "@term" (DONE)
+
+Need to consider how post and @term are inferred
+in sequence.
+
+Post Inference result:
+fact$int
+ requires emp & factpre_0(x)[31]
+ ensures emp & factpost_1127(x)[] & res=1+
+(2*x) & 0<=x;
+
+Termination Inference Result:
+fact:  case {
+  (x<=(0-1) | 1<=x) -> requires emp & MayLoop[]
+ ensures emp & Uf(x,res); 
+  x=0 -> requires emp & Term[31,1]
+ ensures emp & Uf(x,res); 
+  }
+
+  infer [Uf]
+  requires true  ensures Uf(x,res);
+//  requires true ensures res=x;
+{
+  if (x==0) return 1;
+  else return foo(1) + fact(x - 1);
+}
+
+This currently prints:
+
+!!!REL POST :  Uf(x,res)
+!!!POST:  res=1+(2*x) & 0<=x
+
+Can we merge this post into our spec,
+and then print it; as follows:
+
+fact:
+  requires true
+  ensures res=1+2*x & x>=0;
+
+The print out from @term is as follows:
+
+
+=======================================================
+# foo-fact.ss --reverify
+
+Please write some output to indicate that re-verification
+is being done. (DONE)
+
+With --reverify:
+
+Procedure fact$int SUCCESS.
+Stop Omega... 17 invocations 
+6 false contexts at: ( (17,2)  (17,11)  (17,9)  (18,7)  (18,16)  (18,14) )
+
+!!! log(small):(0.070814,275)
+Total verification time: 0.42959 second(s)
+
+Without reverify:
+
+Post Inference result:
+fact$int
+ requires emp & MayLoop[]
+ ensures emp & res=1+(2*x) & 0<=x;
+
+Procedure fact$int SUCCESS.
+Stop Omega... 17 invocations 
+6 false contexts at: ( (17,2)  (17,11)  (17,9)  (18,7)  (18,16)  (18,14) )
+
+!!! log(small):(0.051432,238)
+Total verification time: 0.368069 second(s)
+
+----
+
+Post Inference result:
+fact$int
+ requires emp & MayLoop[]
+ ensures emp & res=1+(2*x) & 0<=x;
+
+Obtained above but why did --reverify option fail?
+
+-reverify option should subject the inferred code
+to a re-verification process.
+
+# it seems the --reverify option is using old spec
+  of form Uf(x,res)
+
+Checking procedure foo$int... 
+Procedure foo$int SUCCESS.
+
+Checking procedure fact$int... 
+
+Post condition cannot be derived:
+  (must) cause:  res=1 & x=0 |-  Uf(x,res). LOCS:[21;26;23] (must-bug)
+OrR
+  (must) cause:  0<=v_int_27_1317 & res=1+(2*v_int_27_1317)+1+1 & (v_int_27_1317+1)!=0 & 
+v_int_27_1317+1=x |-  Uf(x,res). LOCS:[27;26;21;23] (must-bug)
+
+Context of Verification Failure: 1 File "foo-fact.ss",Line:23,Col:25
+Last Proving Location: 1 File "foo-fact.ss",Line:27,Col:14
+
+ERROR: at foo-fact.ss_23:25_23:34 
+Message: Post condition cannot be derived.
+
+What does --reverify-all do?
+Is it redundant?
+
+--reverify-all gave:
+Procedure fact$int SUCCESS.
+
+without --reverify-all, still have:
+Procedure fact$int SUCCESS.
+
+=======================================================
+# foo-fact2.ss
+
+  infer [@term,@post]
+  requires true  ensures true;
+
+Since both @term and @post are specified; we should
+stage it by inferring @post first.
+After that, we would infer @term.
+
+We thus expect:
+ Post Inference result:
+ fact:
+  requires true 
+  ensures res=1+2*x & x>=0;
+
+Then:
+ Termination Inference Result:
+ fact:  
+
+fact:  case {
+  1<=x -> requires emp & Term[31,3,-1+(1*x)]
+ ensures emp & res=1+2*x & x>=0; 
+  x<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  x=0 -> requires emp & Term[31,1]
+ ensures emp & res=1+2*x & x>=0; 
+  }
+
+=======================================================
+# fact1.ss (DONE)
+
+int fact(int x)
+  infer [@pre_n,x,@term,@post_n]
+  requires true  
+  ensures true;
+
+Need to support a mix of
+infer_consts @sym and varid.
+Thus, the need for twoAns type
+=======================================================
+# pre-1a.slk (DONE)
+
+relation R(int x,int y).
+infer [R] x>y & R(x,y) |- x>0.
+print residue.
+
+ <1>emp&0<=y & R(x,y) & y<x&{FLOW,(21,22)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [R]: ( R(x,y)) -->  0<=y]
+
+
+Why is there a useless true pre?
+ inferred pure: [true]
+=======================================================
+# pre-1a.slk 
+ (DONE - added 
+  let cp = List.filter (fun f -> not(CP.isConstTrue f)) cp in
+ )
+relation R(int x,int y).
+infer [R] x>y & R(x,y) |- x>0.
+print residue.
+
+ <1>emp&0<=y & R(x,y) & y<x&{FLOW,(21,22)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [R]: ( R(x,y)) -->  0<=y]
+
+
+Why is there a useless true pre?
+ inferred pure: [true]
+=======================================================
+# post-2.ss (DONE)
+
+int fact(int x)
+  infer [Uf]
+  requires true  ensures Uf(x,res);
+
+This currently prints:
+
+!!!REL POST :  Uf(x,res)
+!!!POST:  x=res-1 & 1<=res
+!!!REL PRE :  true
+
+Can we merge this post into our spec,
+and then print it; as follows: (DONE)
+
+Post Inference result:
+fact$int
+ requires emp & MayLoop[]
+ ensures emp & x=res-1 & 1<=res;
+
+The print out from @term is as follows:
+
+Termination Inference Result:
+fact:  case {
+  1<=x -> requires emp & MayLoop[]
+ ensures emp & true; 
+  x<=(0-1) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  x=0 -> requires emp & Term[31,1]
+ ensures emp & true; 
+  }
+
+=======================================================
+# post-2a.ss (DONE)
+
+  infer [Uf]
+  requires x>=0 ensures Uf(x,res);
+1
+
+GOT:
+
+Post Inference result:
+fact$int
+ requires emp & 0<=xrequires emp & MayLoop[]
+ ensures emp & x=res-1 & 1<=res;
+
+Can we flatter/unnest spec to obtain:
+
+Post Inference result:
+fact$int
+ requires emp & 0<=x & MayLoop[]
+ ensures emp & x=res-1 & 1<=res;
+
+=======================================================
+# post-2b.ss (DONE)
+
+  infer [@post_n]
+  requires true  ensures true;
+
+This currently does not do post inference.
+
+Checking procedure fact$int... 
+Procedure fact$int SUCCESS.
+
+The idea is to form a post relation,
+say post_fact(x,res) to try infer a
+good pure post-condition for the function.
+
+It would need to introduce, a fresh:
+ relation post_fact(int n, int r).
+
+and then form:
+
+  infer [post_fact]
+  requires true  
+  ensures post_fact(n,res);
+
+Before passing to hip for inference similar
+to post-2.ss.
+
+=======================================================
+# fact-case2.ss --pcp (DONE)
+
+ case {
+  x=0 -> ensures res=1;
+  x>0 -> ensures res>=1;
+  x<0 -> requires false ensures false;
+}
+{
+  if (x==0) return 1;
+  else return 1 + fact(x - 1);
+}
+
+why EList? Why missing ensures false?
+
+static  EList :ECase case {
+               x=0 -> EList :EBase emp&MayLoop[]&{FLOW,(1,27)=__flow}[]
+                                     EAssume 
+                                       emp&res=1&{FLOW,(24,25)=__norm}[]
+               0<x -> EList :EBase emp&MayLoop[]&{FLOW,(1,27)=__flow}[]
+                                     EAssume 
+                                       emp&1<=res&{FLOW,(24,25)=__norm}[]
+               ;
+               x<0 -> EBase hfalse&false&{FLOW,(24,25)=__norm}[] 
+               }
+
+Expects (maybe can be handled at parser):
+========================================
+# fact-case2-ss.
+
+Can flatten nested spec:
+
+static  ECase case {
+        x=0 -> EBase emp&MayLoop[]&{FLOW,(1,27)=__flow}[]
+                       EAssume 
+                         emp&res=1&{FLOW,(24,25)=__norm}[]
+                          ;
+        0<x -> EBase emp&MayLoop[]&{FLOW,(1,27)=__flow}[]
+                       EAssume 
+                         emp&1<=res&{FLOW,(24,25)=__norm}[]
+                          ;
+        x<0 -> EBase hfalse&false&{FLOW,(24,25)=__norm}[]
+                       EBase emp&MayLoop[]&{FLOW,(1,27)=__norm}[]
+                               EAssume 
+                                 hfalse&false&{FLOW,(24,25)=__norm}[]
+--> (simpler to use)
+        x<0 -> EBase hfalse&false & MayLoop[] & __norm
+               EAssume hfalse&false&{FLOW,(24,25)=__norm}[]
+        }
+=======================================================
+# mut-rec1.ss (DONE)
+
+Please look at examples of mutual-recursive fixpoint
+in fixcalc. Please see how to invoke those commands.
+
+Please add aux-recursion as well to your example
+
+Checking procedure foo2$int... 
+!!! WARNING : Inferable vars include some external variables!
+vars:[Uf1,Uf2] pre_post_vars:[Uf2,res,n]
+
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN Uf1: ( res=0 & n<=0) -->  Uf1(n,res),
+RELDEFN Uf1: ( Uf2(v_int_30_1193,v_int_30_1197) & 0<=v_int_30_1193 & v_int_30_1197=res-1 & 
+n=v_int_30_1193+1) -->  Uf1(n,res),
+RELDEFN Uf2: ( res=0 & n<=0) -->  Uf2(n,res),
+RELDEFN Uf2: ( Uf1(v_int_39_1229,v_int_39_1236) & 0<=v_int_39_1229 & v_int_39_1236=res-1 & 
+n=v_int_39_1229+1) -->  Uf2(n,res)]
+*************************************
+
+!!! PROBLEM with fix-point calculation
+Procedure foo2$int FAIL.(2)
+=======================================================
+# mut-rec1.ss (DONE)
+
+Current system generated "fixcalc.inf":
+
+Uf2:={[n] -> [res] -> []: ((res=0 && n<=0) || ( (exists (v_int_31_1236:( (exists
+ (v_int_31_1229:(v_int_31_1229=n-(1) && Uf1(v_int_31_1229,v_int_31_1236))))  && 
+res=v_int_31_1236+1)))  && 1<=n))
+};
+bottomupgen([Uf2], [2], SimHeur);
+
+chinwn@loris-7:~/hg/sl_post/post$ fixcalc fixcalc.inf 
+# Uf2:={ ... };
+fixcalc: bad mutual recursion detected :"Uf1"
+
+If you generated a new file, say "fc-mut.inf":
+
+Uf2:={[n] -> [res] -> []: ((res=0 && n<=0) || ( (exists (v_int_39_1236:( (exists (v_int_39_1229:(v_int_39_1229=n-(1) && Uf1(v_int_39_1229,v_int_39_1236))))  && res=v_int_39_1236+1)))  && 1<=n))
+};
+Uf1:={[n] -> [res] -> []: ((res=0 && n<=0) || ( (exists (v_int_39_1236:( (exists (v_int_39_1229:(v_int_39_1229=n-(1) && Uf2(v_int_39_1229,v_int_39_1236))))  && res=v_int_39_1236+1)))  && 1<=n))
+};
+bottomupgen([Uf1,Uf2], [2,2], SimHeur);
+
+You will get:
+
+chinwn@loris-7:~/hg/sl_post/post$ fixcalc fc-mut.inf 
+# Uf2:={ ... };
+# Uf1:={ ... };
+((n >= 1 && n = res) || (0 >= n && 0 = res))
+((n >= 1 && n = res) || (0 >= n && 0 = res))
+# Total CPU time: 0.047587 seconds
+=======================================================
+# loop2.slk  (FIXED)
+
+# -dre "is_rel_in_vars"
+
+is_rel_in_vars@2
+is_rel_in_vars inp1 :[PP,fpostXXX,fpreXXX]
+is_rel_in_vars inp2 : PP(x)
+is_rel_in_vars@2 EXIT:true
+
+Entail (1) : Valid. 
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred rel: [RELDEFN PP: ( false) -->  PP(x)]
+[[empty]]
+
+!!! rhs: fpostXXX_0(x)[]
+!!! conseq: EBase emp&fpostXXX_0(x)[]&{FLOW,(21,22)=__norm}[]
+!!! rhs1: EBase emp&fpostXXX_0(x)[]&{FLOW,(21,22)=__norm}[]
+is_rel_in_vars@3
+is_rel_in_vars inp1 :[fpostXXX,fpreXXX]
+is_rel_in_vars inp2 : fpostXXX_0(x)[]
+is_rel_in_vars@3 EXIT:false
+
+!!! pairs:[([],[ fpostXXX_0(x)[]])]
+Entail (2) : Valid. 
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+[[empty]]
+
+[Warning] False ctx
+
+is_rel_in_vars@3
+is_rel_in_vars inp1 :[fpostXXX,fpreXXX]
+is_rel_in_vars inp2 : fpostXXX_0(x)[]
+is_rel_in_vars@3 EXIT:false
+
+!!! rhs: fpostXXX_0(x)[]
+!!! conseq: EBase emp&fpostXXX_0(x)[]&{FLOW,(21,22)=__norm}[]
+!!! rhs1: EBase emp&fpostXXX_0(x)[]&{FLOW,(21,22)=__norm}[]
+!!! pairs:[([],[ fpostXXX_0(x)[]])]
+Entail (3) : Valid. 
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+=======================================================
+# ack.ss
+
+ackermann requires lexi ranking function
+Why do we have MayLoop?
+
+Base/Rec Case Splitting:
+[	Ack: [[4] m=0@B,[5] 1<=n & 1<=m@R,[6] n<=(0-1) & 1<=m@R,[7] m<=(0-1) & 1<=n@R,[8] n<=(0-1) & m<=(0-1)@R,[9] n=0 & 1<=m@R,[10] n=0 & m<=(0-1)@R]
+]
+Termination Inference Result:
+Ack:  case {
+  m=0 -> requires emp & Term[3,1]
+ ensures emp & true; 
+  ((m<=(0-1) & n<=(0-1)) | (0<=n & 1<=m) | (m<=(0-1) & 
+  0<=n)) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<=(0-1) & 1<=m -> requires emp & Loop[]
+ ensures false & false; 
+  }
+=======================================================
+# ack3b.ss
+
+ infer [@term]
+ case {
+  m<0 -> requires Loop ensures false;
+  m>=0 -> 
+   case {
+    n<0 -> requires MayLoop ensures true;
+Ack    n>=0 -> requires true ensures res>=0;
+   }
+  }
+
+Case analysis did not help..
+We need lexi ranking..
+=======================================================
+# ack-5.fc
+
+bottomupgen([post_1155], [2], SimHeur);
+
+# got:
+#   (n >= 0 || (0 = 0 && 0 = m && n + 1 = res))
+# why did we get true when [1] is used?
+# why can't we get a more precise:
+#   (n >= 0 & res>=n+1 || (0 = 0 && 0 = m && n + 1 = res))
+=======================================================
+# ack-5.ss
+
+Post Inference result:
+Ack$int~int
+ requires emp & MayLoop[]
+ ensures emp & (0<=n | (m=0 & n=res-1));
+
+Can post be made more precise.
+
+Is it possible to infer the more precise:
+ (0<=n & res>=n+1 | (m=0 & n=res-1));
+or even:
+ res>=n+1 ;
+=======================================================
+# rb.ss -p del -dd
+
+Extra inferrable rels that is not present in ti3 branch.
+Need to fix before merge into default.
+
+!!! >>>>>> infer_collect_rel <<<<<<
+!!! no relation in rhs
+!!! WN : adding vheap to exception too
+!!! bind:vheap: x'::node<val8',color8',left8',right8'>@L&{FLOW,(1,27)=__flow}[]
+!!! bind:tmp_res1:[ 
+ Successful States:
+ [
+  Label: [(,1 ); (,2 ); (,0 ); (,1 ); (,0 ); (,1 )]
+  State:hfalse&false&{FLOW,(24,25)=__norm}[]
+        es_heap: emp
+        es_pure: true
+        es_infer_vars/rel: [rotate_case_3pre; rotate_case_3post; case_2pre; 
+                            case_2post; rotate_case_3rpre; 
+                            rotate_case_3rpost; case_2rpre; case_2rpost; 
+                            is_redpre; is_redpost; is_blackpre; 
+                            is_blackpost; del_6pre; del_6post; del_6rpre; 
+                            del_6rpost; del_5pre; del_5post; del_5rpre; 
+                            del_5rpost; del_4pre; del_4post; del_4rpre; 
+                            del_4rpost; del_3pre; del_3post; del_3rpre; 
+                            del_3rpost; del_2pre; del_2post; del_2rpre; 
+                            del_2rpost; bhpre; bhpost; remove_minpre; 
+                            remove_minpost; delpre; delpost; node_errorpre; 
+                            node_errorpost; insertpre; insertpost; 
+                            div___pre; div___post; div2pre; div2post; 
+                            div3pre; div3post; div4pre; div4post; mod___pre; 
+                            mod___post; add___pre; add___post; minus___pre; 
+                            minus___post; mult___pre; mult___post; lt___pre; 
+                            lt___post; lte___pre; lte___post; gt___pre; 
+=======================================================
+# loop2.slk -dre "is_rel_in_vars" --print-type
+
+
+Why Unknown types?
+
+====is_rel_in_vars@3
+is_rel_in_vars inp1 :[fpostXXX:Unknown]
+is_rel_in_vars inp2 : fpostXXX_0(x:Unknown)[]
+is_rel_in_vars@3 EXIT:true
+
+===================================================
+# loop2.slk --pcp
+
+//(4)
+infer [@term] x>0 & false |- fpostXXX(x).
+print residue.
+
+Can we keep the input scenario somewhere, and perhaps
+obtain the following:
+   ( x>0 & false ) -->  fpostXXX_0(x:Unknown)[]]
+This would let us know that false was triggered under 
+a satisfiable scenario x>0
+
+INPUT: 
+ ### ante =  hfalse&false&{FLOW,(21,22)=__norm}[]
+ ### conseq =  EBase emp&fpostXXX_0(x:Unknown)[]&{FLOW,(21,22)=__norm}[]
+
+run_infer:
+ hfalse&false&{FLOW,(21,22)=__norm}[] [] |-  EBase emp&fpostXXX_0(x:Unknown)[]&{FLOW,(21,22)=__norm}[]
+[Warning] False ctx
+=======================================================
+# deadpool.ss -tp parahip --eps -perm fperm --classic
+
+What is Nested Timer(stop)? timeout?
+Why errors below? Is it due to lack or normalizing lemma apply?
+
+Procedure destroyDeadPool$item FAIL.(2)
+Procedure forkHelper$cell~int~int FAIL.(2)
+Procedure forkThreads$cell~int SUCCESS.
+Procedure joinHelper$item~cell~int~int FAIL.(2)
+
+Checking procedure destroyDeadPool$item... Nested Timer(stop)
+Nested Timer(stop)
+Nested Timer(stop)
+
+!!! WARNING logtime exception:9.4e-05
+!!! WARNING logtime exception:0.002291
+Procedure destroyDeadPool$item FAIL.(2)
+
+Exception Failure("get_node_var: invalid argument") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure destroyDeadPool$item
+
+Proving precondition in method fork_thrd$thrd~cell~int Failed.
+  (must) cause: do_unmatched_rhs : x_2379::cell( perm_28_2378)<_>@S1@ rem br[{1}]
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+Last Proving Location: 1 File "deadpool.ss",Line:86,Col:4
+
+Procedure forkHelper$cell~int~int FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure forkHelper$cell~int~int
+
+=======================================================
+# post/multi-join2.ss -tp parahip --eps -perm fperm --classic
+
+Where did we get this exception?
+
+chinwn@loris-7:~/hg/sl_post/post$ ../hip multi-join2.ss -tp parahip --eps  --classic | grep Exception
+Exception Failure("Proving precond failed") Occurred!
+chinwn@loris-7:~/hg/sl_post/post$ ../hip multi-join2.ss -tp parahip --eps -perm fperm --classic | grep Exception
+Exception Failure("get_node_var: invalid argument") Occurred!
+Exception Failure("get_node_var: invalid argument") Occurred!
+Exception Failure("get_node_var: invalid argument") Occurred!
+
+
+Exception Failure("get_node_var: invalid argument") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure main$
+
+!!! proc.proc_name:main$
+
+Procedure main$ FAIL.(2)
+Procedure thread1$cell~cell FAIL.(2)
+Procedure thread2$thrd~cell~cell FAIL.(2)
+
+=======================================================
+# post/multi-join2.ss -tp parahip --eps -perm fperm --classic -dre "xpure_perm"
+
+Where did we get hole in xpure_perm?
+Does this happen for normal xpure?
+Is there a relationship with "Nested Timer(stop)"?
+
+xpure_perm@66
+xpure_perm inp1 : (Hole[2689]) * y::cell()<flted_74_2687>@ rem br[{1}]
+xpure_perm inp2 : (
+([x=x' & y=y' & y!=null & x!=null & y!=x]
+ [Anon_full_perm=FLOAT 1. & f_2686=Anon_full_perm]
+ [0=flted_74_2688 & 0=val_77_1409'][0=flted_74_2687]))
+xpure_perm@66 EXIT: (())
+Nested Timer(stop)
+
+=======================================================
+# f91-z.ss [@term,@post_n]
+
+Can re-verify be done at the end after all
+inferences?
+
+Post Inference result:
+f91$int
+ requires emp & f91pre_0(n)[29]
+ ensures emp & f91post_1124(n)[] & 
+(((res=91 & n<=90) | (n=res & 91<=res)));
+
+Checking procedure f91$int... 
+!!! Performing a Re-verification, Valid?:true
+
+Base/Rec Case Splitting:
+[	f91: [[3] 91<=n@B,[4] n<=90@R]
+]
+Termination Inference Result:
+f91:  case {
+  91<=n -> requires emp & Term[29,1]
+ ensures emp & ((res=91 & n<=90) | 
+  (n=res & 91<=res)); 
+  n<=90 -> requires emp & Term[29,2,90+(-1*n)]
+ ensures emp & ((res=91 & 
+  n<=90) | (n=res & 91<=res)); 
+  }
+=======================================================
+# len.ss
+
+Below works:
+  requires x::ll<n> ensures x::ll<m>  ;
+
+Also, len1.ss works:
+
+  infer [R] requires x::ll<n> 
+  ensures x::ll<m> & R(n,m,res)  ;
+
+However below fails!
+  infer [@post_n]
+  requires x::ll<n> ensures x::ll<m>  ;
+
+Questions:
+ (1) why only base-case inferred and below inferred
+
+[RELDEFN post_1206: ( res=0 & n=0 & m_1205=0) -->  post_1206(m_1205,n,res),
+RELASS [post_1206]: ( post_1206(m_1205,n_1232,v_int_30_1269)) -->  (0>n_1232 | 0>m_1205)]
+
+From --esl, the post-cond uses m_1205 which also appeared
+on the LHS. This came from the spec of the recursive call.
+We need to generate fresh names for each implicitly bound
+parameter. Why is this not done?
+
+
+id: 17; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ post_1206]; c_heap: emp
+ checkentail (exists v_int_30_1184': x'::node<Anon_1224,q_1225> * q_1225::ll{}<m_1205>&
+flted_14_1223+1=n & x'!=null & x'=x & !(v_bool_29_1187') & x'!=null & 
+!(v_bool_29_1187') & n_1228=flted_14_1223 & 0<=flted_14_1223 & 0<=n_1228 & 
+post_1206(m_1205,n_1228,v_int_30_1184') & v_int_30_1186'=v_int_30_1184'+1 & 
+res=v_int_30_1186'&{FLOW,(24,25)=__norm})[]
+ |-  x::ll{}<m_1205>&0<=n & post_1206(m_1205,n,res)&{FLOW,(24,25)=__norm}[]. 
+pure rel_ass: [RELASS [post_1206]: ( post_1206(m_1205,n_1228,v_int_30_1239)) -->  (0>n_1228 | 0>m_1205)]
+res:  1[
+   hfalse&false&{FLOW,(24,25)=__norm}[]
+   es_infer_vars/rel/templ: [post_1206]
+   es_infer_rel: [RELASS [post_1206]: ( post_1206(m_1205,n_1228,v_int_30_1239)) -->  (0>n_1228 | 0>m_1205)]
+   ]
+
+ (2) Why perform re-verification when all
+     the scriptargument reverify_flag and reverify_all_flag false (FIXED)
+ (3) encountered a reverification problem:
+
+The 2nd relational assumption is wrong!
+
+[RELDEFN post_1206: ( res=0 & n=0 & m_1205=0) -->  post_1206(m_1205,n,res),
+RELASS [post_1206]: ( post_1206(m_1205,n_1232,v_int_30_1269)) -->  (0>n_1232 | 0>m_1205)]
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( post_1206(x,res), x=0 & res=0, true, true)]
+*************************************
+
+Post Inference result:
+length$node
+ requires x::ll<n> & MayLoop[]
+ ensures x::ll<m_1205> & 0<=n & x=0 & res=0;
+
+Checking procedure length$node... 
+Post condition cannot be derived:
+  (must) cause: AndR[ (((0=1 & x=2 & 1<=m_1328) | (x=1 & 0=null & m_1328=0))) & x!=null |-  x=0. LOCS:[1;13;29;25;0];  res=0+1 |-  res=0. LOCS:[30;0] (must-bug).]
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+Last Proving Location: 1 File "len.ss",Line:30,Col:14
+
+ERROR: at _0:0_0:0 
+Message: Post condition cannot be derived.
+ 
+ExceptionFailure("Post condition cannot be derived.")Occurred!
+
+Error1(s) detected at main 
+Stop Omega... 21 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("Post condition cannot be derived.")
+=======================================================
+# ll-app-post1.ss
+
+  infer [@post_n]
+  requires x::ll<n1> * y::ll<n2> //& n1>0 
+  ensures x::ll<r> ;
+
+Good to detect pre-condition failure.
+
+Exception Failure("Proving precond failed") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure append2$node~node
+
+QUESTION : However, why did we have Exception below?
+Is it due to reverification?
+
+!!! proc.proc_name:append2$node~node
+Checking procedure append2$node~node... 
+ExceptionNot_foundOccurred!
+
+Error1(s) detected at main 
+Stop Omega... 7 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Not_found
+Error3(s) detected at main 
+
+=======================================================
+# post/fact1.ss
+
+Why f_pre not substitute with 0<=x?
+
+!!! REL POST :  f_post(x,res)
+!!! POST:  x=res-1 & 1<=res
+!!! REL PRE :  f_pre(x)
+!!! PRE :  0<=x
+Post Inference result:
+fact$int
+ requires emp & f_pre(x) & 0<=x & MayLoop[]
+ ensures emp & x=res-1 & 1<=res;
+
+=======================================================
+# ll-insert2.ss
+
+Why can't we get a more precise post-cond?
+Why so many n!=0 for pre?
+Why isn't pre inference printed before hand?
+
+  infer [@pre_n,@post_n]
+  requires x::ll<n>
+  ensures x::ll<r>;
+
+Post Inference result:
+insert2$node~int
+ requires x::ll<n> & n!=0 & n!=0 & n!=0 & n!=0 
+     & n!=0 & n!=0 & n!=0 & n!=0 & n!=0 & n!=0 & n!=0 & n!=0 & MayLoop[]
+ ensures x::ll<r_1193> & 0<=n & (((3<=n & 2<=r_1193) | (n=1 & r_1193=2)));
+Stop Omega... 40 invocations 
+0 false contexts at: ()
+
+[RELDEFN pre_1210: ( n=n_1243+1 & 1<=n_1243 & pre_1210(r_1193,n,a')) -->  pre_1210(r_1242,n_1243,a'),
+RELASS [pre_1210]: ( pre_1210(r_1193,n,a)) -->  n!=0,
+RELDEFN post_1211: ( r_1193=2 & n=1 & pre_1210(r_1193,n,a)) -->  post_1211(r_1193,n,a),
+RELDEFN post_1211: ( 0<=n_1243 & n=n_1243+1 & r_1268=r_1193-1 & 2<=r_1193 & 
+pre_1210(r_1193,n,a) & post_1211(r_1268,n_1243,a)) -->  post_1211(r_1193,n,a)]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( post_1211(r_1193,n,a), ((3<=n & 2<=r_1193) | (n=1 & r_1193=2)), true, true)]
+*************************************
+
+=======================================================
+# len2.ss
+
+int length3(node x)
+  infer [R1,R2]
+  requires x::ll<n> & R1(n,m)
+  ensures x::ll<m> & R2(n,m,res);
+{
+  if (x==null) return 0;
+  else return 1+length3(x.next);
+}
+
+Checking procedure length3$node... 
+Procedure length3$node SUCCESS.
+
+!!! proc_specs:[ EInfer [R1,R2]
+   EBase exists (Expl)[](Impl)[n](ex)[]x::ll{}<n>&R1(n,m)&
+         {FLOW,(4,5)=__norm}[]
+           EBase emp&MayLoop[]&{FLOW,(4,5)=__norm}[]
+                   EAssume 
+                     x::ll{}<m>&R2(n,m,res) & 0<=n&{FLOW,(4,5)=__norm}[]
+                     ]
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN R1: ( 1<=n & n_1287=n-1 & R1(n,m)) -->  R1(n_1287,m),
+RELDEFN R2: ( res=0 & n=0 & m=0 & R1(n,m)) -->  R2(n,m,res),
+RELASS [R1,R2]: ( R1(n,m) & R2(n_1287,m,v_int_48_1300)) -->  (n_1287!=(n-1) | 1>n | 0>m)]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( R2(n,m,res), res=0 & n<=0 & m<=0, R1(n,m), n<=0 & m<=0)]
+*************************************
+
+!!! REL POST :  R2(n,m,res)
+!!! POST:  res=0 & n<=0 & m<=0
+!!! REL PRE :  R1(n,m)
+!!! PRE :  n<=0 & m<=0
+Post Inference result:
+length3$node
+ requires x::ll<n> & n<=0 & m<=0 & MayLoop[]
+     ensures x::ll<m> & 0<=n & 
+res=0 & n<=0 & m<=0;
+
+=======================================================
+# rec-f91a1.ss
+
+Why is this solution difference from rec-f91.ss?
+Would it not be better to use mutual-recursion?
+or at least use the case-spec to simplify post.
+
+  infer[@post_n,@term]
+ case {
+  n>=91 ->  ensures true;
+  n<91 -> ensures true;
+ }
+
+Post Inference result:
+f91$int
+ case {
+  91<=n -> requires emp & f91pre_0(n)[30]
+     ensures emp & f91post_1162(n)[] & 
+  91<=n & (((res=91 & n<=90) | (n=res & 91<=res))); 
+  n<91 -> requires emp & f91pre_0(n)[30]
+     ensures emp & f91post_1163(n)[] & 
+  n<91 & (((res=91 & n<=90) | (n=res & 91<=res))); 
+  }
+
+=======================================================
+# rec-f91a3.ss -infer "@term"
+
+Why below produce the correct result:
+
+  infer [postA,postB,@term]
+ case {
+  n>=91 ->  ensures postA(n,res);
+  n<91 -> ensures postB(n,res);
+ }
+
+but not below with -infer "@term":
+  infer [postA,postB]
+ case {
+  n>=91 ->  ensures postA(n,res);
+  n<91 -> ensures postB(n,res);
+ }
+
+It seems like post infer & @term were being done simultaneously..
+
+!!! proc_specs:[ EInfer [postA,postB]
+   ECase case {
+          91<=n -> EBase emp&f91pre_0(n)[30]&{FLOW,(4,5)=__norm}[]
+                           EAssume 
+                             emp&postA(n,res) & f91post_1164(n)[] & 91<=n&
+                             {FLOW,(4,5)=__norm}[]
+                              ;
+          n<91 -> EBase emp&f91pre_0(n)[30]&{FLOW,(4,5)=__norm}[]
+                          EAssume 
+                            emp&postB(n,res) & f91post_1165(n)[] & n<91&
+                            {FLOW,(4,5)=__norm}[]
+                             
+          }]
+
+=======================================================
+# loop1v.ss
+
+ where did this warning come from?
+
+WARNING: loop1v.ss_19:14_20:23:the result type __norm is not covered by the throw list[__Brk_top]
+
+WARNING: loop1v.ss_3:10_3:16:the result type __norm is not covered by the throw list[]
+
+=======================================================
+# loop.ss
+
+    while (y < x) 
+      infer [@post_n]
+      requires true
+      ensures true;
+    {
+      y++;
+    }
+
+Two problems:
+
+(i) Parameters x,y are passed by ref.
+    Only y need to be pass-by-ref (FIXED)
+
+(ii) We need to include x',y' in pass-by-ref (FIXED)
+     EAssume ref [x_36;y_37]
+     emp&post_1188(x_36,y_37)&{FLOW,(4,5)=__norm}[]
+
+   Correct solution in # loop1.ss
+      requires true
+      ensures (y<x & y'=x & x'=x | y>=x & y'=y & x'=x);
+
+
+void f_r_1163_while_9_4$int~int(  int x_36,  int y_37)
+@ref x_36, y_37
+ rec
+static  EInfer @post[]
+   EBase emp&{FLOW,(4,5)=__norm}[]
+           EBase emp&MayLoop[]&{FLOW,(4,5)=__norm}[]
+                   EAssume ref [x_36;y_37]
+                     emp&{FLOW,(4,5)=__norm}[]
+                     
+dynamic  EBase hfalse&false&{FLOW,(4,5)=__norm}[]
+{(boolean v_bool_9_1171;
+(v_bool_9_1171 = {lt___$int~int(y_37,x_36)};
+if (v_bool_9_1171) [{({(int v_int_9_1170;
+v_int_9_1170 = {{((int v_int_14_1168;
+v_int_14_1168 = y_37);
+(y_37 = {((int v_int_14_1169;
+v_int_14_1169 = 1);
+add___$int~int(y_37,v_int_14_1169))};
+v_int_14_1168))}})};
+{f_r_1163_while_9_4$int~int(x_36,y_37) rec})}]
+else []
+))}
+=======================================================
+# non-rec2.ss
+
+Two problems:
+  1. why is printing without a closing ")"
+     namely "post_1172("
+
+[RELDEFN post_1172: ( true) -->  post_1172(]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( post_1172(, true, true, true)]
+
+=======================================================
+# strong1.ss & str1.slk
+
+Quick patch to fix imprecision from lost of intermedicate
+post(..) predicate.
+
+
+        (* WN :filtering of rel below causes a problem for str1.slk
+           as intermeidate predicates are lost *)
+        let rel_lhs_n = [] in 
+        let rel_to_del = if rel_lhs_n=[] then []
+        else
+          let lhs_rec_vars = CP.fv lhs_p_memo in
+          DD.binfo_hprint (add_str "lhs_rec_vars:" (pr_list CP.string_of_spec_var)) lhs_rec_vars pos;
+          let rel_lhs_new = List.filter (fun x -> CP.subset (CP.get_rel_id_list x) rel_lhs_n) rel_lhs in
+          DD.binfo_hprint (add_str "rel_lhs_new:" (pr_list !CP.print_formula)) rel_lhs_new pos;
+          List.filter (fun x -> CP.intersect lhs_rec_vars (CP.fv x) = []) rel_lhs_new
+        in
+=======================================================
+# sexc3.slk --post-eres
+
+ Can we add: res=eres.val on the lhs
+ so that first entailment succeeds?
+
+checkentail (exists v_int: v_Exp_12_1214'::Exp<v_int>&
+ 0<x &  v_int=2 & eres=v_Exp_12_1214')
+ |-  emp&res=2 & 0<x . 
+=======================================================
+# sexc2.slk
+
+SLEEK cannot handle "class file". Need
+to fix.
+
+class Exp extends __Exc {
+  int val;
+}.
+
+File "sexc2.slk", line 1, characters 0-5
+ error: Stream.Error("illegal begin of sprog")
+ at:(Program not linked with -g, cannot print stack backtrace)
+SLEEK FAILURE (END)
+
+exception processing is not supported by sleek!
+can we add it ..
+=======================================================
+# exc1.ss --post-eres
+
+int loop(int x)
+  requires true
+  ensures res=2 & x>0 & flow Exp or x<=0 & res=x+1 & flow __norm;
+{
+  if (x>0) {
+    raise new Exp(2);
+    loop(x);
+  } else {
+    return x+1;
+  }
+}
+
+If we add res=eres.val thru --post-eres, the post-condition
+should be provable.
+=======================================================
+# exc3a.ss
+
+ infer [@post_n]
+  requires true
+  ensures true;
+
+Post condition cannot be derived:
+Empty list_partial_contex
+
+
+Why is failure not reported by --esl?
+when we have empty lpc?
+
+id: 4; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ post_1215]; c_heap: emp
+ checkentail emp&x'<=0 & x'=x & !(v_bool_12_1195') & x'<=0 & !(v_bool_12_1195') & 
+v_int_18_1198'=1111+x' & res=v_int_18_1198'&{FLOW,(4,5)=__norm}[]
+ |-  emp&post_1215(x,res)&{FLOW,(4,5)=__norm}[]. 
+pure rel_ass: [RELDEFN post_1215: ( x=res-1111 & res<=1111) -->  post_1215(x,res)]
+res:  1[
+   emp&x'<=0 & x'=x & !(v_bool_12_1195') & x'<=0 & !(v_bool_12_1195') & v_int_18_1198'=1111+x' & res=v_int_18_1198'&{FLOW,(4,5)=__norm}[]
+   es_infer_vars/rel/templ: [post_1215]
+   es_infer_rel: [RELDEFN post_1215: ( x=res-1111 & res<=1111) -->  post_1215(x,res)]
+   ]
+=======================================================
+# slk-exc3a.slk
+
+relation post2(int x, int res).
+
+ why res not permitted in parameter of post?
+ Is it a keyword?
+
+=======================================================
+# slk-exc3.slk
+
+infer [post2] res=2222 & 1<=x & flow __Exc |- post2(x,res) & flow __flow.
+
+infer [post2,@flow] res=2222 & 1<=x & flow __Exc  |- post2(x,res) & flow __flow.
+
+First case should be without [flow]!
+
+Residue:
+ <1>emp&res=2222 & 1<=x&{FLOW,(22,23)=__Exc}[]
+ inferred rel: [RELDEFN post2[[flow]]: ( res=2222 & 1<=x) -->  post2(x,res)]
+
+Second case should have 22<=flow<=23 also
+
+Residue:
+ <1>emp&res=2222 & 1<=x&{FLOW,(22,23)=__Exc}[]
+ inferred rel: [RELDEFN post2[[flow]]: ( res=2222 & 1<=x) -->  post2(x,res)]
+=======================================================
+# exc3a.ss
+
+ infer [@post_n]
+  requires true
+  ensures true 
+  // & flow __flow // critical to use __flow
+ 
+I think flow __flow should be the default for
+post-condition, in general; where it is
+not specified; particularly when post-inference is
+being requested by @flow.
+
+If inference is not to
+be undertaken; I think we could assume
+__norm to be the default.
+
+=======================================================
+# exc5.ss
+
+*************************************
+[RELDEFN post_1209(Exp#E): ( res=888) -->  post_1209(x,res)]
+*************************************
+
+We need to filter out exceptional flow, before passing
+it for fix-point computation; and then adding back
+as separate exceptional flow.
+
+[( post_1209(x,res), res=888, true, true)]
+ 
+
+Instead of:
+
+Post Inference result:
+loop$int
+ requires emp & MayLoop[]
+ ensures emp & res=888;
+
+Should be:
+requires emp & MayLoop[]
+ ensures emp & res=888 & flow __Exp;
+
+=======================================================
+# exc6a.ss
+
+ infer [@post_n]
+  requires true
+  ensures true & flow __flow;
+
+Why did we not trigger any post-cond inference?
+However, exc6.ss did not have any problem.
+
+!!!Full processing file "exc6a.ss"
+Parsing file "exc6a.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting z3... 
+
+Checking procedure loop$int... 
+Procedure loop$int SUCCESS.
+Stop z3... 37 invocations 
+0 false contexts at: ()
+
+# exc6.ss results:
+
+ infer [@post_n]
+  requires true
+  ensures true 
+
+!!! REL POST :  post_1212(x,res)
+!!! POST:  ((res=x-1 & 1<=x) | (res=x & x<=0))
+!!! REL PRE :  true
+!!! PRE :  true
+Post Inference result:
+loop$int
+ requires emp & MayLoop[]
+     ensures emp & ((res=x-1 & 1<=x) | (res=x & 
+x<=0));
+=======================================================
+# exc6b.ss
+
+  infer [@pre_n,@post_n]
+  requires true
+  ensures true 
+    & flow __flow
+    ;
+
+post-condition proving is lost in --esl log file
+but present in exc6c.ss when we used norm in post-flow.
+
+  infer [@pre_n,@post_n]
+  requires true
+  ensures true 
+    ;
+
+=======================================================
+# exc7a.ss
+
+    if (x>100) raise new Exp(2222);
+    else raise new __Exc();
+
+Why did we have a failure? Is it due to __Exc()
+not containing a value?
+
+Checking procedure loop$int... 
+Procedure loop$int FAIL.(2)
+
+Exception Failure("hd") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+I think we should just obtain:
+
+  Exp   : res=2222 & x>100 --> post(x,res)
+  __Exc :  x<=100 --> post(x,res)
+=======================================================
+# exc8.ss
+
+ infer [@post_n]
+  requires true
+  ensures true ;
+
+Why is there post inference despite the failure
+of post-condition proving? This should not happen.
+
+Obtained:
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure loop$int
+
+*************************************
+***pure relation assumption (norm)***
+*************************************
+[RELDEFN post_1219: ( x+1111=res & res<=1111) -->  post_1219(x,res)]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( post_1219(x,res), res=x+1111 & x<=0, true, true)]
+*************************************
+
+!!! REL POST :  post_1219(x,res)
+!!! POST:  res=x+1111 & x<=0
+!!! REL PRE :  true
+!!! PRE :  true
+Post Inference result:
+loop$int
+ requires emp & MayLoop[]
+     ensures emp & res=x+1111 & x<=0;
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================

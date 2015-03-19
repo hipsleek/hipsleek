@@ -1,0 +1,72 @@
+
+!!!Full processing file "errors/ll-delete.ss"
+Parsing file "errors/ll-delete.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! neqs:[(x,v_node_22_1209)]
+Checking procedure delete$node~int... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x,a@NI)&true
+ ensures G(x,a@NI,res)&
+true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;0)H(x,a@NI)&x!=null --> x::node<val1,next1> * HP_1246(next1,a@NI)&
+true(3,4),
+ // PRE_REC
+(2;2;0)HP_1246(next1,a@NI)&true --> H(next1,a@NI)&
+true(3,4),
+ // POST
+(1;0)H(res,a@NI)&res=null & res=null --> G(x,a@NI,res)&
+true(3,4),
+ // POST
+(1;2;0)x::node<a,res> * HP_1246(res,a@NI)&true --> G(x,a@NI,res)&
+true(3,4),
+ // POST
+(2;2;0)G(next1,a@NI,v1) * res::node<val1,v1>&true --> G(x,a@NI,res)&
+true(3,4)]
+
+Procedure delete$node~int SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x1,a1) ::=  [HP_1379(x1)],
+ G(x2,a2,res1) ::=  [emp&res1=null & x2=null; x2::node<a2,res1> * HP_1379(res1); 
+x2::node<val,v> * G(next,a2,v)&x2=res1],
+ HP_1379(x1) ::=  [emp&x1=null; x1::node<val2,next2> * HP_1379(next2)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1,a1) ::= HP_1379(x1)(3,4),
+ G(x2,a2,res1) ::= 
+ x2::node<a2,res1> * HP_1379(res1)
+ or x2::node<val,v> * G(next,a2,v)&x2=res1
+ or emp&res1=null & x2=null
+ (3,4),
+ HP_1379(x1) ::= 
+ x1::node<val2,next2> * HP_1379(next2)
+ or emp&x1=null
+ (3,4)]
+*************************************
+Stop Omega... 6 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.058032,268)
+Total verification time: 0.357004 second(s)
+	Time spent in main process: 0.332572 second(s)
+	Time spent in child processes: 0.024432 second(s)
+

@@ -1,0 +1,41 @@
+
+!!!Full processing file "paper-v/check-pos-v.ss"
+Parsing file "paper-v/check-pos-v.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure check_pos$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x)&true
+ ensures G(x)&res{,(3,4)=__norm};
+
+Post condition cannot be derived:
+  (may) cause: OrL[ !(res) |-  res. LOCS:[16;12] (must-bug),valid]
+
+Context of Verification Failure: 1 File "paper-v/check-pos-v.ss",Line:12,Col:10
+Last Proving Location: 1 File "paper-v/check-pos-v.ss",Line:16,Col:10
+
+ERROR: at paper-v/check-pos-v.ss_12:10_12:20 
+Message: Post condition cannot be derived.
+ 
+Procedure check_pos$node FAIL.(2)
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure check_pos$node
+
+!!! proc.proc_name:check_pos$nodeStop Omega... 0 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.053898,271)
+Total verification time: 0.335222 second(s)
+	Time spent in main process: 0.321859 second(s)
+	Time spent in child processes: 0.013363 second(s)
+

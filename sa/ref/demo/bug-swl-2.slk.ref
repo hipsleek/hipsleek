@@ -1,0 +1,20 @@
+Starting Omega...oc
+H_3 is defined.
+H_2 is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+SLEEK FAILURE (END)
+Stop Omega... 0 invocations 
+SAT Count   : 4
+SAT % Hit   : 25.%
+IMPLY Count : 1
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.000245 (seconds)
+
+!!! log(small):(0.01184,9)
+Total verification time: 0.060702 second(s)
+	Time spent in main process: 0.046493 second(s)
+	Time spent in child processes: 0.014209 second(s)
+

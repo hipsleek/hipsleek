@@ -1,0 +1,29 @@
+Starting Omega...oc
+SLSEG is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [l!=0]
+[[empty]]
+
+
+Entail (2) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [l!=0]
+[[empty]]
+
+Stop Omega... 2 invocations 
+SAT Count   : 13
+SAT % Hit   : 61.53%
+IMPLY Count : 2
+IMPLY % Hit : 50.%
+Time(cache overhead) : 0.000657 (seconds)
+
+!!! log(small):(0.006716,17)
+Total verification time: 0.05754 second(s)
+	Time spent in main process: 0.043625 second(s)
+	Time spent in child processes: 0.013915 second(s)
+

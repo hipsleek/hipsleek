@@ -1,0 +1,643 @@
+# ex1-get-tail.ss: FIXED
+
+node tail_fn(node x)
+  infer [P,Q]
+  requires P(x) 
+  ensures Q(x,res);
+{ 
+  return x.next;
+}
+
+What is flow(4,5) - norm?
+Can we print the inferred pre/post spec?
+Currently the int value is not preserved.
+Is there a way to preserve it or do we need @L?
+
+!!! shape inference for flow:(4,5)
+*********************************************************
+*******relational definition (flow= (4,5))********
+*********************************************************
+[ P(x_1364) ::=  x_1364::node<val_15_1365,DP_DP_HP_1361>,
+ Q(x_1366,res_1367) ::=  x_1366::node<val_15_1368,res_1367>&res_1367=DP_DP_HP_1361]
+
+------
+# ex1-get-tail.ss: 
+
+Loc: Below is incorrect as there is an (exists val_14_1359: ..)
+in the post. Hence, it is a diff var in the post. I think, currently
+only DP_ vars will connect across pre/post.
+
+[ P(x_1364) ::= x_1364::node<val_14_1359,DP_DP_HP_1361>(4,5),
+ Q(x_1365,res_1366) ::= x_1365::node<val_14_1359,res_1366>&res_1366=DP_DP_HP_1361(4,5)]
+
+!!! INFERRED SHAPE SPEC: EBase exists (Expl)[](Impl)[val_14_1359](ex)[]x::node<val_14_1359,DP_DP_HP_1361>&
+       {FLOW,(1,28)=__flow#E}[]
+         EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                 EAssume 
+                   (exists val_14_1359: x::node<val_14_1359,res>&
+                   res=DP_DP_HP_1361&{FLOW,(4,5)=__norm#E})[]
+                   Stop Omega... 66 invocations 
+
+------
+# bugs-ex1a.ss
+
+seems Ok with exists .. when x.val modified
+
+!!! INFERRED SHAPE SPEC: EBase exists (Expl)[](Impl)[val_14_1363](ex)[]x::node<val_14_1363,DP_DP_HP_1365>&
+       {FLOW,(1,28)=__flow#E}[]
+         EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                 EAssume 
+                   (exists v_int_14_1370: x::node<v_int_14_1370,res>&
+                   res=DP_DP_HP_1365&{FLOW,(4,5)=__norm#E})[]
+                   Stop Omega... 69 invocations 
+
+
+===================================================================
+# ex2-set-tail.ss: DONE
+
+void set_tail_fn(node x,node y)
+  infer [P,Q]  requires P(x,y) ensures Q(x,y);
+{ 
+  x.next=y;
+}
+
+Can we print simplified pre/post spec?
+
+!!! shape inference for flow:(4,5)
+*********************************************************
+*******relational definition (flow= (4,5))********
+*********************************************************
+[ P(x_1365,y_1366) ::=  x_1365::node<val_14_1367,DP_DP_HP_1362>&y_1366=DP_DP_HP_1363,
+ Q(x_1368,y_1369) ::=  x_1368::node<val_14_1370,y_1369>&y_1369=DP_DP_HP_1363]
+*************************************
+===================================================================
+# ex2a-set-tail.ss: FIXED
+
+void set_tail_fn(node x,node y)
+  infer [@shape]  requires true ensures true;
+{ 
+  x.next=y;
+}
+
+Why did inference failing? Should I be using emp/emp?
+
+******************************
+   ******* SPECIFICATION1 ********
+******************************
+ infer[@shape HP_12,GP_13]requires (htrue) * HP_12(x,y@NI)&
+truerequires emp
+ ensures (htrue) * GP_13(x,y)&true{,(4,5)=__norm#E};
+
+
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "ex2a-set-tail.ss",Line:9,Col:2
+
+ERROR: at _0:0_0:0
+Message: Expect a node or a hrel
+
+!!! WARNING logtime exception:0.000336
+Procedure set_tail_fn$node~node FAIL.(2)
+
+Exception Failure("Expect a node or a hrel") Occurred!
+
+===================================================================
+# ex2b-set-tail-emp.ss: FIXED
+
+How do we trigger a re-verification?
+--reverify ?
+
+However, this triggered an exception!
+
+ExceptionInvalid_argument("List.combine")Occurred!
+
+Error1(s) detected at main 
+Stop Omega... 66 invocations caught
+
+Exception occurred: Invalid_argument("List.combine")
+Error3(s) detected at main 
+
+-------
+
+void set_tail_fn(node x,node y)
+  infer [@shape]  requires emp ensures emp;
+
+Seems like emp/emp is better.
+
+!!! shape inference for flow:(4,5)
+*********************************************************
+*******relational definition (flow= (4,5))********
+*********************************************************
+[ HP_12(x_1366,y_1367) ::=  x_1366::node<val_9_1368,DP_DP_HP_1364>,
+ GP_13(x_1369,y_1370) ::=  x_1369::node<val_9_1371,y_1370>]
+
+===================================================================
+# ex1-get-tail.ss
+
+--sa-en-pure-field
+
+For pure field, can we do a similar conversion
+as dangling ptr, so that we get something like:
+
+[ P(x_1365) ::=  x_1365::node<DP_val_1361,DP_DP_HP_1362>
+ Q(x_1367,res_1368) ::=  x_1367::node<DP_val_1361,res_1368>&res_1368=DP_DP_HP_1362]
+
+
+!!! shape inference for flow:(4,5)
+*********************************************************
+*******relational definition (flow= (4,5))********
+*********************************************************
+[ P(x_1365) ::=  x_1365::node<val_14_1366,DP_DP_HP_1362> * HP_1361(val_14_1359),
+ Q(x_1367,res_1368) ::=  HP_1361(val_14_1359) * x_1367::node<val_14_1369,res_1368>&
+res_1368=DP_DP_HP_1362]
+===================================================================
+# sim1-pre.ss --esl (FIXED)
+
+void posint(int n)
+  requires n>0  ensures true;
+
+void foo(int n)
+  infer [P]
+  requires P(n)  ensures true;
+{
+  posint(n); // assert n>0 assume n>0;
+}
+
+GOT:
+  
+!!! proc_specs:[ EInfer [P]
+   EBase emp&P(n)&{FLOW,(4,5)=__norm#E}[]
+           EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                   EAssume 
+                     htrue&{FLOW,(4,5)=__norm#E}[]
+                     ]Stop Omega... 71 invocations 
+
+(i) Can we print relational assumption
+     P(n) --> n>=1
+(ii) Why did we not replace P(n) = n>=1
+
+
+id: 0; caller: []; line: 13; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ P]; c_heap: emp
+ checkentail emp&P(n) & n'=n&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&0<n'&{FLOW,(4,5)=__norm#E}[]. 
+pure rel_ass: [RELASS [P]: ( P(n)) -->  1<=n]
+res:  1[
+   emp&P(n) & n'=n & 1<=n&{FLOW,(4,5)=__norm#E}[]
+   es_infer_vars/rel/templ: [P]
+   es_infer_rel: [RELASS [P]: ( P(n)) -->  1<=n]
+   ]
+===================================================================
+# sim2-post.ss  (OK)
+
+Correct result, but we can remove some unnecessary printing
+
+>>>>>>>>>>>>>> NOT NEEDED
+!!! proc_specs:[ EInfer [Q]
+   EBase htrue&{FLOW,(4,5)=__norm#E}[]
+           EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                   EAssume 
+                     emp&Q(n,res)&{FLOW,(4,5)=__norm#E}[]
+                     ]
+<<<<<<<<<<<<<<<<<<<<<<<<<
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN Q: ( n+1=res) -->  Q(n,res)]
+*************************************
+
+>>>>>>>>>>>>>> NOT NEEDED
+!!! constraints:[( n+1=res, Q(n,res))]
+!!! bottom_up_fp:[( Q(n,res), n=res-1)]
+!!! fixpoint:[( Q(n,res), n=res-1, true, true)]
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( Q(n,res), n=res-1, true, true)]
+*************************************
+<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>> KEEP BELOW (what is fixpoint?)
+!!! bottom_up_fp:[( Q(n,res), n=res-1)]
+!!! fixpoint:[( Q(n,res), n=res-1, true, true)]
+<<<<<<<<<<<<<<<<<<<<<<<<<
+
+!!! REL POST :  Q(n,res)
+!!! POST:  n=res-1
+!!! REL PRE :  true
+!!! PRE :  true
+Post Inference result:
+foo$int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           emp&n=res-1&{FLOW,(4,5)=__norm#E}[]
+===================================================================
+# sim3-id.ss (FIXED)
+
+For below:
+
+!!! constraints:[( Q(v_int_11_1349,v_int_11_1352) & (v_int_11_1349+1)!=0 & v_int_11_1352+
+1=res & n=1+v_int_11_1349, Q(n,res)),( n=0 & res=0, Q(n,res))]
+
+Maybe better to print:
+  Q(n,res) = base \/ rec_case
+
+!!! bottom up
+!!! fixcalc file name: fixcalc1.inf
+!!! bottom_up_fp:[( Q(n,res), n=res & 0<=res)]
+!!! fixpoint:[( Q(n,res), n=res & 0<=res, P(n), 0<=n)]
+
+How did we get:
+  P(n) = n>=0
+===================================================================
+# bugs-sim5-zip.ss 
+
+Why did we have a problem with fixcalc?
+It is not-recursive and should thus be trivial.
+Check fixcalc first?
+
+> It seems no fixcalc.inp file created..
+
+!!!  Q(n,m,res) = ( res=1 & n!=0) \/ ( n=0 & res=0)
+!!! bottom_up_fp:[( Q(n,m,res), ((n!=0 & res=1) | (n=0 & res=0)))]
+!!! PROBLEM with fix-point calculation
+ExceptionEnd_of_fileOccurred!
+
+
+int zip(int n,int m)
+  infer [P,Q]
+  requires P(n,m) ensures Q(n,m,res);
+{
+  if (n==0) {
+      is_zero(m);
+      return 0;
+  }
+  else {
+       is_pos(m);
+       return 1;
+  }
+}
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELASS [P]: ( P(n,m)) -->  ((n!=0 & m!=0) | m=0),
+RELASS [P]: ( P(n,m)) -->  ((1<=m & n!=0) | n=0),
+RELDEFN Q: ( n=0 & res=0 & P(n,m)) -->  Q(n,m,res),
+RELDEFN Q: ( res=1 & n!=0 & P(n,m)) -->  Q(n,m,res)]
+*************************************
+
+!!!  Q(n,m,res) = ( res=1 & n!=0) \/ ( n=0 & res=0)
+!!! bottom_up_fp:[( Q(n,m,res), ((n!=0 & res=1) | (n=0 & res=0)))]
+!!! PROBLEM with fix-point calculation
+ExceptionEnd_of_fileOccurred!
+
+Error1(s) detected at main 
+Stop Omega... 137 invocations caught
+
+===================================================================
+# bus-sim5b.slk -debug infer.log (FIXED)
+
+infer [n,m] n=0 |-  m=0.
+print residue.
+
+GOT:
+
+Residue:
+ <1>emp&n=0 & ((m=0 | n!=0))&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [(m=0 | n!=0)]
+
+Pre is OK, but maybe we can simplify the residue to n=0 & m=0?
+
+New simplified form :)
+
+Residue:
+ <1>emp&mmm=0 & n=0&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [(mmm=0 | n!=0)]
+
+
+===================================================================
+# sim5-zip.ss
+
+We get pre-condition:
+ EBase emp&0<=n & (((1<=m & n!=0) | n=0)) & (((n!=0 & m!=0) | m=0)) & n=m 
+
+If we send it to Omega.simplifier (e.g. PairWiseCheck), we will get:
+n=m & m>=0.
+
+   { [n,n]: 0 <= n}
+
+Please send this to Omega. simplifier
+
+===================================================================
+# ex21-11-zip.ss
+
+Need to simplify pure part of pre/post..
+Expect:
+
+  {[n,m]: n <= m}
+
+Post Inference result:
+zip$node~node
+ EBase exists (Expl)[](Impl)[n; m](ex)[]x::ll{}<n> * y::ll{}<m>&((m!=0 | 
+       1>n)) & n<=m & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           (exists r_1397: res::ll{}<r_1397>&0<=n & 0<=m & n=r_1397 & 
+           r_1397<=m&{FLOW,(4,5)=__norm#E})[]
+===================================================================
+# bugs-ex21-ll-zip.ss (FIXED)
+
+Why type error for Q relation not detected.
+Should result in a failure/exception.
+
+relation P(int n).
+relation Q(int n, int m).
+
+node zip(node x, node y)
+  infer [P,Q]
+  requires x::ll<n> * y::ll<m> & P(n,m)
+  ensures res::ll<n> & Q(n,m,res);
+
+===================================================================
+# sim5-zip.ss
+
+Need to fix simplify_aux in cformula.ml
+
+(* 
+    WN : do the following
+    (i) temp remove all non-linear stuff
+    (ii) call simplify_omega
+    (iii) add back removed stuff
+    (iv) extend to disj form
+*)
+and simplify_aux f =
+  !simplify_omega f
+
+(* WN : can simplify ignore other type of pure ctrs? *)
+and simplify_pure_f_x (f0:formula) =
+  let simp f = 
+    let r1 = CP.remove_redundant f in
+    let r2 = Wrapper.wrap_exception f simplify_aux r1 in
+    let _ = Debug.binfo_hprint (add_str "simp(f)" !print_pure_f) f no_pos in
+    let _ = Debug.binfo_hprint (add_str "simp(syn)" !print_pure_f) r1 no_pos in
+    let _ = Debug.binfo_hprint (add_str "simp(oc)" !print_pure_f) r2 no_pos in r1 in
+
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: LexVar 3")
+ Formula: n'=v_int_17_1313' & v_int_17_1313'=0 & MayLoop[] & P(n,m) & m'=m & n'=n
+!!! simp(f): n'=n & m'=m & P(n,m) & MayLoop[] & v_int_17_1313'=0 & n'=v_int_17_1313'
+!!! simp(syn): n'=v_int_17_1313' & v_int_17_1313'=0 & MayLoop[] & P(n,m) & m'=m & n'=n
+!!! simp(oc): n'=v_int_17_1313' & v_int_17_1313'=0 & MayLoop[] & P(n,m) & m'=m & n'=n
+WN : can we preserve LexVar ?
+
+!!! simp(f): n'=n & m'=m & P(n,m) & v_int_17_1313'=0 & n'=v_int_17_1313'
+!!! simp(syn): n'=v_int_17_1313' & v_int_17_1313'=0 & P(n,m) & m'=m & n'=n
+!!! simp(oc): v_int_17_1313'=0 & m=m' & n'=0 & n=0
+WN : where is P(n,m)?
+
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: LexVar 3")
+ Formula: n'!=v_int_17_1313' & v_int_17_1313'=0 & MayLoop[] & P(n,m) & m'=m & n'=n
+!!! simp(f): n'=n & m'=m & P(n,m) & MayLoop[] & v_int_17_1313'=0 & n'!=v_int_17_1313'
+!!! simp(syn): n'!=v_int_17_1313' & v_int_17_1313'=0 & MayLoop[] & P(n,m) & m'=m & n'=n
+!!! simp(oc): n'!=v_int_17_1313' & v_int_17_1313'=0 & MayLoop[] & P(n,m) & m'=m & n'=n
+
+!!! simp(f): n'=n & m'=m & P(n,m) & v_int_17_1313'=0 & n'!=v_int_17_1313'
+!!! simp(syn): n'!=v_int_17_1313' & v_int_17_1313'=0 & P(n,m) & m'=m & n'=n
+!!! simp(oc): v_int_17_1313'=0 & m=m' & n=n' & n'!=0
+WN : where is P(n,m)?
+
+!!! simp(f): n'!=0 & P(n,m) & m'=m & n'=n & !(v_bool_17_1322') & n'!=0 & v_bool_17_1322'
+!!! simp(syn): v_bool_17_1322' & n'!=0 & !(v_bool_17_1322') & n'=n & m'=m & P(n,m)
+!!! simp(oc): false
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+# ex22-11-app.ss
+
+PROBLEM : why wasn't 2nd parameter of HP_1395 eliminated?
+Do we need to invoke option?
+
+let pred_elim_useless = ref true
+
+[ PP(x_1414,y_1415) ::= x_1414::node<val_25_1393,next_25_1394> * HP_1395(next_25_1394,y_1415)&
+y_1415=DP_DP_HP_1396(4,5),
+ QQ(x_1421,y_1422) ::= 
+ x_1421::node<val_25_1393,next_25_1394> * QQ(next_25_1394,y_1422)&
+ next_25_1394!=null
+ or x_1421::node<val_25_1393,y_1422>&y_1422=DP_DP_HP_1396
+ (4,5),
+ HP_1395(next_25_1419,y_1420) ::= 
+ next_25_1419::node<val_25_1393,next_25_1394> * HP_1395(next_25_1394,y_1420)&
+ y_1420=DP_DP_HP_1396
+ or emp&next_25_1419=null
+ (4,5)]
+*************************************
+
+PROBLEM : where did HP_1389(x) and HP_1390(y) came from?
+
+!!! INFERRED SHAPE SPEC: EBase HP_1389(x) * HP_1390(y)&{FLOW,(4,5)=__norm#E}[]
+         EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                 EAssume 
+                   x::QQ{}<y>&{FLOW,(4,5)=__norm#E}[]
+===================================================================
+# ex30-ll-len.ss
+
+Can the (4,5) be printed in a standard way {FLOW,(4,5)=__norm#E}
+or just omitted.
+
+[ PP(x_1387) ::= 
+ PP(next_21_1385) * x_1387::node<val_21_1384,next_21_1385>
+ or emp&x_1387=null
+ (4,5),
+ QQ(x_1388) ::= PP(x_1388)(4,5)]
+===================================================================
+# ex31-len-clist.ss
+
+PROBLEM 1 : Why is there double "requires"?
+
+infer[ PP,QQ]requires PP(x,p@NI)&truerequires emp
+ ensures QQ(x,p)&
+true{,(4,5)=__norm#E};
+
+PROBLEM 2 : Why did we not reuse ll_nt which is identical?
+
+[ PP(x_1441,p_1442) ::= 
+ PP(next_38_1438,p_1442) * x_1441::node<val_38_1437,next_38_1438>&
+ x_1441!=p_1442
+ or emp&x_1441=p_1442
+ (4,5),
+ QQ(x_1443,p_1444) ::= PP(x_1443,p_1444)(4,5)]
+
+PROBLEM 3 : Why did we have verification failure? Is it due
+to the double requires?
+
+
+!!! INFERRED SHAPE SPEC: EBase x::PP{}<p>&{FLOW,(4,5)=__norm#E}[]
+         EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                 EAssume 
+                   x::PP{}<p>&{FLOW,(1,28)=__flow#E}[]
+                   
+Checking procedure len_cll$node... 
+Proving precondition in method length$node~node Failed.
+Empty list_failesc_context
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "ex31-len-clist.ss",Line:28,Col:11
+
+Procedure len_cll$node FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+===================================================================
+# bugs-ex11c.slk
+
+
+infer[HH] HH(xxxx) & xxxx=null |- xxxx::node<_,q>.
+print residue.
+
+Entail (1) : Valid. 
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+Contra detected:
+
+!!! infer_vars:[]
+!!! infer_vars_rel:[]
+!!! infer_vars_sel_hp_rel:[]
+!!! infer_vars_sel_post_hp_rel:[]
+!!! orig_inf_vars:[]
+!!! real_contra:false
+!!! infer pure?: xxxx!=null
+!!! WARNING : Inferred pure not added: xxxx!=null
+
+
+But real_contra is false. However, we are not
+adding HH(xxxx) --> xxxx!=null. How come?
+===================================================================
+# bugs-ex13c.slk (FIXED)
+
+infer[x] x=0 |- x=y.
+print residue.
+
+why did we infer x!=0 here?
+Expected it to fail.
+==================================================================
+# bugs-sim6.ss
+
+void loop(ref int n,ref int r)
+  infer [P,Q]
+  requires P(n,r) ensures Q(n,n',r,r');
+{
+  if (n==0) {
+
+Why is there a fixcalc error?
+Is it due to -(1) ??
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN P: ( n=0 & n'+1=0 & r+1=r' & P(n,r)) -->  P(n',r'),
+RELDEFN Q: ( n=0 & Q(0-1,n',r+1,r') & P(n,r)) -->  Q(n,n',r,r'),
+RELDEFN Q: ( r'=r & n'=n & n!=0 & P(n,r)) -->  Q(n,n',r,r')]
+*************************************
+
+!!!  Q(n,n',r,r') = ( r'=r & n'=n & n!=0) \/ ( n=0 & Q(0-1,n',r+1,r'))
+!!! bottom up
+!!! fixcalc file name: fixcalc1.inffixcalc: Parse error on line 1 rest of line: -(1),fc_r_1355,PRIn,PRIr) && fc_r_1355=r+1)))  && n=0))
+
+!!! PROBLEM with fix-point calculation
+ExceptionLoc.Exc_located(_, _)Occurred!
+==================================================================
+# ex2-set-tail.ss
+
+This set-tail result is wrong. The previous one was closer to
+being correct.
+
+[ P(x_1365,y_1366) ::= x_1365::node<val_12_1360,next_12_1361>&y_1366=DP_DP_HP_1363(4,5),
+ Q(x_1367,y_1368) ::= P(x_1367,y_1368)(4,5)]
+
+Correct answer should be:
+
+[ // BIND
+ (0)P(x,y)&true --> x::node<val_12_1360,next_12_1361> * 
+         HP_1362(next_12_1361,y@NI) * HP_1363(y,x@NI) & true,
+ // POST
+ (0)HP_1363(y,x@NI) * x::node<val_12_1360,y>&true --> Q(x,y)& true]
+
+Derive:
+ P(x,y)&true --> x::node<val_12_1360,next_12_1361> 
+ x::node<val_12_1360,y>&true --> Q(x,y)& true]
+
+Why did you get?
+ P(x,y)&true --> x::node<val_12_1360,y> 
+ x::node<val_12_1360,y>&true --> Q(x,y)& true]
+
+
+[ P(x_1365,y_1366) ::=  x_1365::node<val_14_1367,DP_DP_HP_1362>&y_1366=DP_DP_HP_1363,
+ Q(x_1368,y_1369) ::=  x_1368::node<val_14_1370,y_1369>&y_1369=DP_DP_HP_1363]
+void set_tail_fn(node x,node y)
+  infer [P,Q]  requires P(x,y) ensures Q(x,y);
+{ 
+  x.next=y;
+}
+
+Can we print simplified pre/post spec?
+
+!!! shape inference for flow:(4,5)
+*********************************************************
+*******relational definition (flow= (4,5))********
+*********************************************************
+[ P(x_1365,y_1366) ::=  x_1365::node<val_14_1367,DP_DP_HP_1362>&y_1366=DP_DP_HP_1363,
+ Q(x_1368,y_1369) ::=  x_1368::node<val_14_1370,y_1369>&y_1369=DP_DP_HP_1363]
+*************************************
+
+==================================================================
+# ex14-tll.ss
+
+How come G no longer proved to be equiv to tll?
+Your engine is not using syn mode..
+
+[ H(x_1604,p_1605,t_1606) ::= x_1604::tree<>(4,5),
+ G(x_1608,p_1609,res_1610,t_1611) ::= 
+    x_1608::node<p_1609,left_32_1498,right_34_1539,t_1611> * 
+    left_32_1498::tree<>&right_34_1539=null & x_1608=res_1610
+ or x_1608::node<p_1609,DP_DP_DP_1541,right_34_1539,t_1611>&
+    right_34_1539=null & x_1608=res_1610
+ or x_1608::node<p_1609,left_32_1498,right_34_1539,DP_DP_HP_1504> * 
+    G(right_34_1539,x_1608,l_1540,t_1611) * 
+    G(left_32_1498,x_1608,res_1610,l_1540)&right_34_1539!=null
+ (4,5)]
+
+==================================================================
+# bugs-ex20.ss
+
+int length(node x)
+  infer [P,Q]
+  requires x::ll<n> & P(n)
+  ensures x::ll<n> & Q(n,res);
+{
+  if (x==null) return 0;
+  else return 1+length(x.next);
+}
+
+!!! fixcalc file name: fixcalc1.inf
+!!! bottom_up_fp:[( Q(n,res), res=n_1407)]
+!!! fixpoint:[( Q(n,res), res=n_1407, P(n), true)]
+!!! REL POST :  Q(n,res)
+!!! POST:  res=n_1407
+!!! REL PRE :  P(n)
+
+Why did we get the above, when fixcalc1.inf gave:
+
+pls2nus@loris-laptop:~/code/default/tut/ex2$ fixcalc fixcalc1.inf 
+# Q:={ ... };
+(n >= 0 && n = res)
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================

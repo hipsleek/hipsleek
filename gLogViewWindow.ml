@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 (**/**)
 open GUtil.SourceUtil
 (**/**)
@@ -126,7 +127,7 @@ class log_view_window ?(title="Log") log () =
 
     method private goto_search_result idx =
       (* unhighlight current pos *)
-      let _ = match current_pos with
+      let () = match current_pos with
         | Some pos -> 
             self#remove_tag tag_current pos;
             self#apply_tag tag_results pos

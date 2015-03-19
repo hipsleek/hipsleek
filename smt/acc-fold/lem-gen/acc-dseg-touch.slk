@@ -1,0 +1,28 @@
+data node2 {
+     node2 prev;
+     node2 next;
+}.
+
+
+pred dll<pr,last,out> ==
+    self=out & last=pr
+ or (exists u: self::node2<pr,u> * u::dll<self,last,out>).
+
+// OK, using acc-fold
+// checkentail x::node2<pr,u> * u::node2<x,v> * v::node2<u,last> * last::node2<v,out> |- x::dll<pr,last,out>.
+// print residue.
+
+// OK, using acc-fold
+// checkentail x::node2<pr,u> * u::node2<x,v> * v::node2<u,w> * w::dll<v,last,out> |- x::dll<pr,last,out>.
+// print residue.
+
+// NotOK, can prove using acc-fold???
+// checkentail x::node2<pr,u> * u::node2<x,v> * v::node2<u,w> * w::dll<v,z,last> * last::node2<z,out>|- x::dll<pr,last,out>.
+// print residue.
+
+// NotOK, can prove using acc-fold???
+// checkentail x::node2<pr,u> * u::dll<x,v,last> * last::node2<v,out>|- x::dll<pr,last,out>.
+// print residue.
+
+
+//checkentail x::dll<pr,last1,out1> * out1::dll<last1,last,out> |- x::dll<pr,last,out>.

@@ -1,0 +1,38 @@
+// nlseg3a.slk --imm
+// folding with @L node needs to be fixed.
+
+data node {
+   node nxt;
+}.
+
+pred nlseg<p> == 
+  (exists a: self::node<a> * a::node<p>@L)
+ inv true.
+/*
+  (exists a: self::node<a> & self!=a)
+  (exists a: self::node<a> & emp)
+
+*/
+
+checkentail x::node<y> |- x::node<_>@L.
+print residue.
+
+checkentail x::node<y>@L |- x::node<_>@L.
+print residue.
+/*
+replace the hole!
+ <1>Hole[30]&Anon_12=y&{FLOW,(21,22)=__norm}[]
+[[ Match ==> ]]
+*/
+
+checkentail x::node<y>@L |- x::node<_>.
+print residue.
+/*
+should fail but succeed
+
+ <1>emp&Anon_13=y&{FLOW,(21,22)=__norm}[]
+[[ Match ==> ]]
+*/
+
+
+

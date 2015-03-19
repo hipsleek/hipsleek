@@ -1,0 +1,43 @@
+
+
+checkentail x=0 & flow __norm |- 
+     requires x>=0
+     ensures x>=0 & flow __Error;.
+print residue.
+
+
+/*
+# v-next7d.slk
+
+ <1>emp&0<=x & x=0&{FLOW,(5,6)=__Error}[]
+[[empty]]
+
+Why is there an [[empty]]?
+*/
+
+checkentail x=0 & flow __norm |- 
+     requires x=1
+     ensures x>=0& flow __Error;.
+print residue.
+
+/* 
+ GOT:
+ Entail 2: Fail.(must) cause:empty states
+
+Can we display (for print residue):
+ Entail 2: Fail.(must) cause:empty states
+ Residue = { }
+
+*/
+
+
+checkentail x=0 & flow __norm |- x=1.
+print residue.
+
+
+// to return error state
+/*
+# v-next7d.slk
+ <1>emp&x=0&{FLOW,(5,6)=__Error}[]
+[[empty]]
+*/

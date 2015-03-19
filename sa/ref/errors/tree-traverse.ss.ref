@@ -1,0 +1,83 @@
+
+!!!Full processing file "errors/tree-traverse.ss"
+Parsing file "errors/tree-traverse.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure foo$node2... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x)&true
+ ensures G(x,x')&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(1;0)H(x)&x!=null --> x::node2<val1,left1,right1> * HP_1242(left1) * 
+HP_1243(right1)&
+true(3,4),
+ // PRE_REC
+(1;1;0)HP_1242(left1)&left1!=null --> H(left1)&
+true(3,4),
+ // PRE_REC
+(2;1;0)HP_1243(right1)&true --> H(right1)&
+true(3,4),
+ // POST
+(1;1;0)HP_1243(right1) * x::node2<val1,left1,right1> * G(left1,v2)&
+left1!=null --> G(x,x')&
+true(3,4),
+ // POST
+(2;1;0)HP_1242(left1) * x::node2<val1,left1,right1> * G(right1,v3)&
+left1=null --> G(x,x')&
+true(3,4),
+ // POST
+(2;0)H(x)&x=null & x=null --> G(x,x')&
+true(3,4)]
+
+Procedure foo$node2 SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x1) ::=  [emp&x1=null; x1::node2<val2,left2,DP> * H(left2)|#|emp&left_19_1353!=null; 
+x1::node2<val2,left2,right2> * H(left2) * H(right2)|#|emp&left_19_1353=null],
+ G(x2,x3) ::=  [emp&x3=null & x2=null; x3::node2<val,left,right> * G(left,v2) * H(right)&
+x3=x2 & left!=null & left=v2; x3::node2<val,left,DP> * G(left,v2)&x3=x2 & 
+left!=null & left=v2; x3::node2<val,left,right> * G(right,v3)&left=null & 
+x3=x2 & right=v3]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1) |#| 
+           emp&left_19_1353=null
+           or emp&left_19_1353!=null
+            ::= 
+ x1::node2<val2,left2,DP> * H(left2)
+ or x1::node2<val2,left2,right2> * H(left2) * H(right2)
+ or emp&x1=null
+ (3,4),
+ G(x2,x3) ::= 
+ x3::node2<val,left,right> * G(left,v2) * H(right)&x3=x2 & left!=null & 
+ left=v2
+ or x3::node2<val,left,DP> * G(left,v2)&x3=x2 & left!=null & left=v2
+ or x3::node2<val,left,right> * G(right,v3)&left=null & x3=x2 & right=v3
+ or emp&x3=null & x2=null
+ (3,4)]
+*************************************
+Stop Omega... 6 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.054557,326)
+Total verification time: 0.365418 second(s)
+	Time spent in main process: 0.344385 second(s)
+	Time spent in child processes: 0.021033 second(s)
+

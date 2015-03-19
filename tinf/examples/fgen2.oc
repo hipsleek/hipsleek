@@ -1,0 +1,31 @@
+# rec-fgen2.ss
+# fgen2.oc
+
+# Given k<n -> res=n
+# Given k=n -> res=k
+
+C1 :={[k,n,res]:k<n};
+B1 :={[k,n,res]:res=n};
+C2 :={[k,n,res]:n<=k & n=k};
+B2 :={[k,n,res]:res=k};
+C2; # k=n
+C1orC2:=PairWiseCheck (C1 union C2); # k<=n
+C1orC2; # k<n|k=n
+# Ans: k<n|k=n -> B1orB2
+#R1 := B1 intersection C1;
+#R2 := B2 intersection C2;
+#R1orR2 := gist PairWiseCheck (R1 union R2) given C1orC2;
+#R1orR2;
+
+# Choose
+B1orB2:=B1;
+# Provided:
+(C2 intersection B2) subset B1; 
+# true : use B1 in combined rhs
+# since B2 is stronger than B1, we can replace it by B1
+# this is a potential weakening
+# to ensure no info loss
+(C2 intersection B1) subset B2; 
+B1orB2; # res=n
+
+

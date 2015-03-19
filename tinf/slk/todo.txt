@@ -1,0 +1,537 @@
+# termu-1c.ss (DONE)
+
+Why isn't @term entailment logged?
+
+id: 1; caller: []; line: 10; classic: false; kind: POST; hec_num: 2; evars: []; infer_vars: []; c_heap: emp
+============================================================
+# fact2b.ss (DONE)
+
+why give printing when no termination inference
+or verification is requested?
+
+*************************
+* TERMINATION INFERENCE *
+*************************
+Temporal Assumptions:
+
+>> FIXED
+============================================================
+# termu-1c3.ss (DONE)
+
+!!!Number of sleek log entries 7
+!!!Logging logs/sleek_log_termu-1c3_ss.txt
+
+Why only 1 logged entry printed?
+============================================================
+# termu-1c4.ss (DONE)
+
+why are there 4 termination assumptions?
+
+I was expecting just 3:
+
+infer [@term] x>=0 & fpre(x) & x'=x-1 |- fpre(x').
+
+infer [@term] x>=0 & fpre(x) & x'=x-1 & fpost(x') |- fpost(x).
+
+infer [@term] x<0 & Term[] |- fpost(x).
+
+>> Due to case spec, we need to prove postconditions of two
+cases (x' >= 0 and x' < 0) when the input x >= 0.
+============================================================
+# termu-1c4.ss
+
+UTPre@f fpre(int x).
+UTPost@f fpost(int x).
+
+Perhaps fpost need not carry any parameter; as
+the purpose is to capture base versus recursive cases.
+
+>> We need parameters for fpost to do exists elim (mostly for sleek).
+
+I guess it is sufficient to declare:
+
+UTPost@f fpost().
+
+checkentail Term[] |- fpost@f().
+// ok
+
+checkentail Loop |- fpost@f().
+// should check for false leh..
+
+
+========================================================
+infer [@term] x<0 & Term[] |- fpost().
+print residue.
+/*
+# exp-u-1c4a.slk // 2
+
+ inferred UTPost rel: [emp&x<0&
+                        {FLOW,(21,22)=__norm}[]: [] -> TermR@f{0, true}()]
+should use:
+  x<0 & Term[] -> TermR@f{..}
+
+*/
+
+infer [] x<0 & Loop |- fpost().
+print residue.
+/*
+# exp-u-1c4a.slk // 3
+
+Got below but should fail!
+
+Entail (3) : Valid. 
+ <1>emp&Loop[] & x<0&{FLOW,(21,22)=__norm}[]
+[[empty]]
+*/
+
+infer [@term] x<0 & Loop |- fpost().
+print residue.
+/*
+# exp-u-1c4a.slk // 4
+
+Got below but should attempt to infer false on conseq
+
+ <1>emp&Loop[] & x<0&{FLOW,(21,22)=__norm}[]
+ inferred UTPost rel: [emp&x<0&
+                        {FLOW,(21,22)=__norm}[]: [] -> TermR@f{0, true}()]
+
+
+========================================================
+# fact.ss
+
+non-linear cannot be handled. Can we at least remove or
+transform them, so they can be partially handled.
+
+Temporal Assumptions:
+ termAssume 1<=v_int_16_922 & x'=v_int_16_919+1 & !(v_bool_15_880') & 
+x'!=0 & !(v_bool_15_880') & x=x' & x'!=0 & v_int_16_879'=x'*v_int_16_922 & 
+res=v_int_16_879' & fpost(v_int_16_877') --> fpost(x).
+
+ termAssume x'=0 & x=x' & v_bool_15_880' & x'=x' & v_bool_15_880' & 
+v_int_15_875'=1 & res=v_int_15_875' --> fpost(x).
+
+ termAssume x'!=0 & x=x' & !(v_bool_15_880') & x'!=0 & !(v_bool_15_880') & 
+x'=v_int_16_877'+1 & fpre(x) --> fpre(v_int_16_877').
+
+Starting Omega...oc
+Omega Error Exp:Globals.Illegal_Prover_Format("[omega.ml] Non-linear arithmetic is not supported by Omega.")
+============================================================
+# fact2.ss (DONE)
+
+int fact(int x)
+  infer [@term]
+  requires true & fpre(x)
+  ensures res>=1 & fpost(); //maybe just use TPost@f
+
+
+ Derived x-1 as ranking function;maybe can have a simplification which
+ returns x instead?
+
+
+Termination Inference Result:
+f:  case {
+  1<=x -> requires emp & Term[-1+(1*x)]
+ ensures emp & true; 
+  x<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  x=0 -> requires emp & Term[]
+ ensures emp & true; 
+ 
+>> x-1 is the most correct ranking function for the case x >= 1
+
+============================================================
+# fact2a.ss (DONE)
+
+Why continue with term inference after post-cond 
+proving has failed?
+
+Post condition cannot be derived:
+  (may) cause:  res=v_int_13_948+1 |-  1<=res. LOCS:[13;8] (may-bug)
+
+>> FIXED
+
+============================================================
+# fact2c.ss (DONE)
+
+int fact(int x)
+  infer [@term]
+  case {
+    x = 0 -> requires Term[] ensures res>=1 & fpost();
+    x != 0 -> requires fpre(x) ensures res>=1 & fpost();
+  }
+
+{
+  if (x==0) return 1;
+  else return 1+fact(x - 1);
+}
+
+why did this fail  detect loop?
+
+It also obtained a worse result than the
+given partial spec.
+
+>> We need fpost(x) to determine base case correctly.
+>> FIXED: only collect temporal relations from methods in same scc
+
+========================================================
+# exp-fact2c.slk (DONE)
+
+shouldn't this be a type error?
+
+Entailment Problem (3) Failure("number of arguments for unknown temporal fpost does not match")
+
+>> Due to fpost(x) in the third infer command
+>> infer [@term] x!=0 & fpre(x) & x'=x-1 & fpost(x) |- fpost().
+
+>> Entail (3) : Failure("number of arguments for unknown temporal fpost does not match")
+>> !!! Termination Inference is not performed due to errors in verification process.
+============================================================
+# fact2c.ss (DONE)
+
+Two problems
+(i) We seems to have lost the res>=1 post-state.
+(ii) I think too many base cases here.
+
+Fixing (i) is critical. Fixing (ii) is desirable.
+
+For (i)0, why did we getfour (4)4 termination assumption.
+If we had 3, we would obtain the right number of
+cases, as follows:
+
+# exp-fact2c1.slk
+
+Temporal Assumptions:
+ termAssume 1<=r & res=r+1 & x=x'+1 & x!=0 & fpost(x') --> fpost(x).
+
+ termAssume res=1 & x=0 --> fpost(x).
+
+ termAssume x=x'+1 & x!=0 & fpre(x) --> fpre(x').
+
+
+Base/Rec Case Splitting:
+[	f: [[2] 1<=x@R,[3] x<=(0-1)@R,[4] x=0@B]
+]
+Starting z3... 
+Termination Inference Result:
+f:  case {
+  1<=x -> requires emp & Term[3,-1+(1*x)]
+ ensures emp & true; 
+  x<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  x=0 -> requires emp & Term[1]
+ ensures emp & true; 
+  }
+============================================================
+# exp-fact2c3.slk (DONE)
+
+ termAssume //x'!=0
+    x=x'+1 & x!=0 & fpost(x') --> fpost(x).
+
+ //termAssume x'=0 & x=x'+1 & x!=0 & fpost(x') --> fpost(x).
+
+ termAssume x=0 --> fpost(x).
+
+ termAssume x'=0 & x=x'+1 & x!=0 & fpre(x) --> fpre(x').
+
+ termAssume x'!=0 & x=x'+1 & x!=0 & fpre(x) --> fpre(x').
+
+
+If we merge the first 2 term assume of
+rec post, we will end up with the desired result.
+
+f:  case {
+  1<=x -> requires emp & Term[7,-1+(1*x)]
+ ensures emp & true; 
+  x<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  x=0 -> requires emp & Term[5]
+ ensures emp & true; 
+  }
+
+============================================================
+# fact2c2-u.ss (DONE)
+
+This generated a requires hfalse ensures hfalse.
+
+ case {
+  x=0 -> requires emp&Term[29]
+ ensures emp&1<=res; 
+  x!=0 -> case {
+           1<=x -> requires emp&Term[29,3,-1+(1*x)]
+ ensures emp&1<=res; 
+           x<=(0-1) -> requires emp&Loop[]
+ ensures hfalse&false; 
+           x=0 -> requires hfalse&false
+ ensures hfalse&false; 
+           }
+  
+  }
+
+Maybe we can flatten the two cases into a single one,
+as a further simplification step, to give:
+
+ case {
+  x=0 -> requires emp&Term[29]
+ ensures emp&1<=res; 
+           1<=x -> requires emp&Term[29,3,-1+(1*x)]
+ ensures emp&1<=res; 
+           x<=(0-1) -> requires emp&Loop[]
+ ensures hfalse&false; 
+ }
+
+You should implement this as another transformation
+step on case-spec.
+============================================================
+# mult3a.ss
+ 
+printing problem? how come false & false
+Is it hfalse & false?
+
+Termination Inference Result:
+foo:  case {
+  x<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  x=0 -> requires emp & Term[31,1]
+ ensures emp & true; 
+  1<=x -> requires emp & Loop[]
+ ensures false & false; 
+  }
+========================================================
+# mult1.ss (DONE)
+
+Multiple return LOOP not detected properly.
+
+Got:
+f:  case {
+  0<=x -> requires emp & MayLoop[]
+ ensures emp & true; 
+  x<=(0-1) -> requires emp & Term[30,1]
+ ensures emp & true; 
+  }
+
+Should get:
+
+f:  case {
+  0<=x -> requires emp & Loop]
+ ensures false; 
+  x<=(0-1) -> requires emp & Term[30,1]
+ ensures emp & true; 
+  }
+============================================================
+# mult1b.ss 
+
+ new syntax Term[?]
+
+  case {
+  x<0 -> requires Term[] ensures res=0;
+  x>=0 -> 
+   case {
+    y<0 -> requires true // Term[?] 
+           ensures true;
+    y>=0 -> requires Loop ensures false;
+   }
+}
+============================================================
+# mult1b2.ss (DONE)
+
+Loop not detected when post is not given false
+
+Got:
+f2:  case {
+  x<0 -> requires emp & Term[29]
+ ensures emp & res=0; 
+  0<=x -> case {
+           y<0 -> requires emp & MayLoop[]
+ ensures emp & true; 
+           0<=y -> requires emp & MayLoop[]
+ ensures emp & true; 
+           }
+  
+  }
+
+Expects:
+f2:  case {
+  0<=x -> case {
+           (0+(0*x)+(1*
+           y))>=0 -> requires emp & Loop[]
+ ensures false & false; 
+           (0+(0*x)+(1*y))<0 -> requires emp & Term[29,4,0+(1*x)+(0*
+           y)]
+ ensures emp & true; 
+           }
+  
+  x<=(0-1) -> requires emp & Term[29,1]
+ ensures emp & true; 
+  }
+  
+>> Due to problem with base/rec case splitting
+>> Solved by using different UTPost for different cases
+
+f2:  case {
+  x<0 -> requires emp & Term[29]
+ ensures emp & res=0; 
+  0<=x -> case {
+           y<0 -> requires emp & Term[29,3,0+(1*x)+(0*
+           y)]
+ ensures emp & true; 
+           0<=y -> requires emp & Loop[]
+ ensures false & false; 
+           }
+  
+  }
+
+============================================================
+# mult4-2a.ss (DONE)
+
+void f(int x,int b)
+  infer [@term]
+  requires true ensures true;
+{
+  if (x < 0) return;
+  else {
+    if (b>1) f(x - 1,b);
+    else f(x + 1,b);
+  }
+}
+
+EXPECT:
+  case{
+   x>=0 -> 
+     case {
+      b>1 -> Term[x]
+      b<=1 -> Loop ..
+   x<0 -> Term[]
+
+GOT:
+f:  case {
+  0<=x -> requires emp & MayLoop[]
+ ensures emp & true; 
+  x<=(0-1) -> requires emp & Term[31,1]
+ ensures emp & true; 
+  }
+============================================================
+# mult4-2.ss (DONE)
+
+ our case-analysis don't work with boolean?
+ which was translated to b>=1
+
+void f(int x,bool b)
+  infer [@term]
+  requires true
+  ensures true;
+{
+  if (x < 0) return;
+  else {
+    if (b) f(x - 1,b);
+    else f(x + 1,b);
+  }
+}
+  
+
+Expect one Loop and one Term..
+
+GOT:
+Termination Inference Result:
+f:  case {
+  0<=x & 1<=b -> requires emp & MayLoop[]
+ ensures emp & true; 
+  x<=(0-1) -> requires emp & Term[30,1]
+ ensures emp & true; 
+  b<=0 & 0<=x -> requires emp & MayLoop[]
+ ensures emp & true; 
+  }
+
+========================================================
+# fact2.ss --esl (DONE)
+
+problems with --esl logging
+
+# (1) wWy is fpre_0(..) not present in both lhs & rhs
+
+id: 5; caller: []; line: 19; classic: false; kind: PRE; hec_num: 2; evars: []; infer_vars: [@term ]; c_heap: emp
+ checkentail emp&x'!=0 & x=x' & !(v') & v1'=1 & x'=v+1 & 1<=v2'&{FLOW,(24,25)=__norm}[]
+ |-  emp&{FLOW,(24,25)=__norm}[]. 
+tntrel_ass: [@Call:  termAssume x'!=0 & x=x' & !(v_bool_18_882') & x'!=0 & !(v_bool_18_882') & 
+v_int_19_880'=1 & x'=v_int_19_878'+1 & fpre_0(x) --> fpre_0(v_int_19_878').]
+res:  1[
+   emp&1<=v_int_19_879' & x'=v_int_19_922+1 & v_int_19_880'=1 & !(v_bool_18_882') & x'!=0 & !(v_bool_18_882') & x=x' & x'!=0&{FLOW,(24,25)=__norm}[]
+   ]
+
+# (2) why is fpost_0(..) not present in LHS?
+
+id: 8; caller: []; line: 19; classic: false; kind: POST; hec_num: 2; evars: []; infer_vars: [@term ]; c_heap: emp
+ checkentail emp&res=v' & v'=v1+1 & x'!=0 & x=x' & !(v1') & x'=v+1 & 1<=v1&
+{FLOW,(24,25)=__norm}[]
+ |-  emp&fpost_0(x)[] & 1<=res&{FLOW,(24,25)=__norm}[]. 
+tntrel_ass: [@Return:  termAssume 1<=v_int_19_925 & x'=v_int_19_922+1 & !(v_bool_18_882') & 
+x'!=0 & !(v_bool_18_882') & x=x' & x'!=0 & v_int_19_881'=v_int_19_925+1 & 
+res=v_int_19_881' & fpost_0(v_int_19_878') --> fpost_0(x).]
+res:  1[
+   emp&1<=v_int_19_925 & x'=v_int_19_922+1 & !(v_bool_18_882') & x'!=0 & !(v_bool_18_882') & x=x' & x'!=0 & v_int_19_881'=v_int_19_925+1 & res=v_int_19_881'&{FLOW,(24,25)=__norm}[]
+   ]
+
+========================================================
+# fact2.ss --esl --print-dis-tidy
+
+problems with --esl logging
+
+# fpost_0(v_int_19_878') should not be in LHS!
+
+id: 6; caller: []; line: 19; classic: false; kind: PRE; hec_num: 2; evars: []; infer_vars: [@term ]; c_heap: emp
+ checkentail emp&1<=v_int_19_879' & x'=v_int_19_922+1 & v_int_19_880'=1 & 
+!(v_bool_18_882') & x'!=0 & !(v_bool_18_882') & x=x' & x'!=0 & 
+fpre_0(x)[29] & fpost_0(v_int_19_878')[]&{FLOW,(24,25)=__norm}[]
+ |-  emp&Term[] & fpre_0(v_int_19_878')[]&{FLOW,(1,27)=__flow}[]. 
+tntrel_ass: [@Call:  termAssume x'!=0 & x=x' & !(v_bool_18_882') & x'!=0 & !(v_bool_18_882') & 
+v_int_19_880'=1 & x'=v_int_19_878'+1 & fpre_0(x) --> fpre_0(v_int_19_878').]
+res:  1[
+   emp&1<=v_int_19_879' & x'=v_int_19_922+1 & v_int_19_880'=1 & !(v_bool_18_882') & x'!=0 & !(v_bool_18_882') & x=x' & x'!=0&{FLOW,(24,25)=__norm}[]
+   ]
+
+# fpre_0(v_int_19_878') should not be in RHS!
+
+id: 8; caller: []; line: 19; classic: false; kind: POST; hec_num: 2; evars: []; infer_vars: [@term ]; c_heap: emp
+ checkentail emp&1<=v_int_19_925 & x'=v_int_19_922+1 & !(v_bool_18_882') & x'!=0 & 
+!(v_bool_18_882') & x=x' & x'!=0 & v_int_19_881'=v_int_19_925+1 & 
+res=v_int_19_881' & fpre_0(x)[29] & fpost_0(v_int_19_878')[]&
+{FLOW,(24,25)=__norm}[]
+ |-  emp&1<=res & fpost_0(x)[] & fpre_0(v_int_19_878')[]&{FLOW,(24,25)=__norm}[]. 
+tntrel_ass: [@Return:  termAssume 1<=v_int_19_925 & x'=v_int_19_922+1 & !(v_bool_18_882') & 
+x'!=0 & !(v_bool_18_882') & x=x' & x'!=0 & v_int_19_881'=v_int_19_925+1 & 
+res=v_int_19_881' & fpost_0(v_int_19_878') --> fpost_0(x).]
+res:  1[
+   emp&1<=v_int_19_925 & x'=v_int_19_922+1 & !(v_bool_18_882') & x'!=0 & !(v_bool_18_882') & x=x' & x'!=0 & v_int_19_881'=v_int_19_925+1 & res=v_int_19_881'&{FLOW,(24,25)=__norm}[]
+   ]
+
+============================================================
+# partial.slk
+
+Why rhs Term arg not printed?
+
+infer [@term] x>=0 & fpre(x) & x1=x-1 |- Term[x1].
+
+Entail (3) : Valid. 
+ <1>emp&0<=x & x1+1=x & fpre_0(x)[]&{FLOW,(21,22)=__norm}[]
+ inferred UTPre rel: [emp&0<=x & x1+1=x&{FLOW,(21,22)=__norm}[]: 
+                       fpre_0(x) --> Term]
+========================================================
+============================================================
+========================================================
+============================================================
+========================================================
+============================================================
+========================================================
+============================================================
+========================================================
+============================================================
+========================================================
+============================================================
+========================================================
+============================================================
+========================================================
+============================================================
+========================================================
+============================================================
+========================================================
+============================================================
+========================================================

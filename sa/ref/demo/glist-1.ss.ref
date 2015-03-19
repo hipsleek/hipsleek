@@ -1,0 +1,34 @@
+
+!!!Full processing file "demo/glist-1.ss"
+Parsing file "demo/glist-1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=p | (self!=null & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], (1<=self | self<=(0-1))),
+([], self=p)])
+Checking procedure g_list_concat$GList~GList... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+
+Procedure g_list_concat$GList~GList FAIL.(2)
+
+Exception Not_found Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure g_list_concat$GList~GList
+
+!!! proc.proc_name:g_list_concat$GList~GListStop Omega... 7 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.021073,192)
+Total verification time: 0.286956 second(s)
+	Time spent in main process: 0.269264 second(s)
+	Time spent in child processes: 0.017692 second(s)
+

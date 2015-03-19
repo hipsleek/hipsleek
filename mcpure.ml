@@ -1,5 +1,7 @@
+#include "xdebug.cppo"
 open Globals
 open Gen.Basic
+open VarGen
 
 open Cpure
 open Mcpure_D
@@ -10,23 +12,23 @@ module AnnoS = MCP_Util (Syn_Label_AnS)
 
 (*
  eprune = espec + ememo + eslice
- -espec enables specialization 
+ -espec enables specialization
  -ememo will enable memoizing
  -eslice will enable slicing
 *)
-  
+
 let print_mp_f = ref (fun (c: memo_pure) -> "printing not initialized")
 let print_mp_full = ref (fun (c:memo_pure)-> " printing not initialized")
 let print_mg_f = ref (fun (c: memoised_group) -> "printing not initialized")
 let print_mc_f = ref (fun (c: memoised_constraint) -> "printing not initialized")
 let print_sv_f = ref (fun (c: spec_var) -> "spec_var printing not initialized")
 let print_sv_l_f = ref (fun (c: spec_var list) -> "spec_var list printing not initialized")
-let print_sv = print_sv_f 
-let print_svl = print_svl 
+let print_sv = print_sv_f
+let print_svl = print_svl
 let print_bf_f = ref (fun (c: b_formula) -> "b_formula printing not initialized")
 let print_p_f_f = ref (fun (c: formula) -> "formula printing not initialized")
-let print_pure_f = print_p_f_f 
-let print_exp_f = ref(fun (c: exp) -> "exp printing not initialized") 
+let print_pure_f = print_p_f_f
+let print_exp_f = ref(fun (c: exp) -> "exp printing not initialized")
 (* let print_mix_f = ref (fun (c:mix_formula)-> " printing not initialized") *)
 
 let print_p_f_l l = String.concat "; " (List.map !print_p_f_f l)
@@ -35,21 +37,21 @@ let print_alias_set aset = EMapSV.string_of aset
 
 (* with const for get_equiv_eq + form_formula_eq *)
 (* converts an equiv set into a formula *)
-let fold_aset (f: var_aset) : formula = 
-  List.fold_left (fun a (c1, c2)->  mkAnd (form_formula_eq_with_const c1 c2) a no_pos) 
+let fold_aset (f: var_aset) : formula =
+  List.fold_left (fun a (c1, c2)->  mkAnd (form_formula_eq_with_const c1 c2) a no_pos)
     (mkTrue no_pos) (get_equiv_eq_with_const f)
 
 let fold_aset (f: var_aset) : formula =
-  Debug.no_1 "fold_aset" print_alias_set !print_p_f_f fold_aset f 
+  Debug.no_1 "fold_aset" print_alias_set !print_p_f_f fold_aset f
 
-let fv_memoised_constraint ({ memo_formula = bf }: memoised_constraint) : spec_var list 
+let fv_memoised_constraint ({ memo_formula = bf }: memoised_constraint) : spec_var list
   = bfv bf
-                                
+
 let fv_memoised_group (m: memoised_group) : spec_var list =
   match m with
   { memo_group_cons = mc_ls;
     memo_group_slice = f_ls;
-    memo_group_aset = eq_set }  ->  
+    memo_group_aset = eq_set }  ->
     let v1 = List.concat (List.map fv_memoised_constraint mc_ls) in
     let v2 = List.concat (List.map fv f_ls) in
     let v3 = List.filter (fun x -> not (is_const x)) (fv_var_aset eq_set) in
@@ -57,7 +59,7 @@ let fv_memoised_group (m: memoised_group) : spec_var list =
 
 let repatch_memoised_group (m: memoised_group) : memoised_group =
   let new_vars = fv_memoised_group m in
-  { m with memo_group_fv = new_vars } 
+  { m with memo_group_fv = new_vars }
 
 let repatch_memo_pure (ms: memo_pure) : memo_pure =
   List.map repatch_memoised_group ms
@@ -72,11 +74,11 @@ let consistent_memoised_group (m: memoised_group) : bool =
     if r2==[] then true
     else
      (* let s = ("WARNING: FreeVars unused :"^(!print_svl r2)) in
-      let _ = report_warning no_pos s in*)
+      let () = report_warning no_pos s in*)
       true
-  else 
+  else
     let s = ("ERROR: FreeVars not captured: " ^ (!print_svl r)) in
-    let _ = report_warning no_pos s in
+    let () = report_warning no_pos s in
     false
 
 let consistent_memo_pure (m:memo_pure) : bool =
@@ -85,7 +87,7 @@ let consistent_memo_pure (m:memo_pure) : bool =
 let check_repatch_memo_pure l s =
   if consistent_memo_pure l then l
   else 
-    let _ = report_warning no_pos ("repatching memo_pure"^s) in
+    let () = report_warning no_pos ("repatching memo_pure"^s) in
     repatch_memo_pure l
 (*
 
@@ -221,8 +223,8 @@ and subst_avoid_capture_memo_x (fr : spec_var list) (t : spec_var list) (f_l : m
   (* let st2 = List.combine fresh_fr t in *)
   let helper (s:(spec_var*spec_var) list) f  = 
     let r = EMapSV.rename_eset_allow_clash (subs_one s) f.memo_group_aset in
-    (*let _ = print_string ("rapp1: "^(print_alias_set f.memo_group_aset)^"\n") in
-      let _ = print_string ("rapp2: "^(print_alias_set r)^"\n") in*)
+    (*let () = print_string ("rapp1: "^(print_alias_set f.memo_group_aset)^"\n") in
+      let () = print_string ("rapp2: "^(print_alias_set r)^"\n") in*)
     {memo_group_fv = List.map (fun v-> subs_one s v) f.memo_group_fv;
     memo_group_linking_vars = List.map (fun v-> subs_one s v) f.memo_group_linking_vars; 
     memo_group_changed = f.memo_group_changed;
@@ -634,7 +636,7 @@ and fold_mem_lst_to_lst_gen_orig (mem:memo_pure) with_R with_P with_slice with_d
 (* find relevant slices to fold them to a formula *)
 (* [A, B, C] -> [A /\ C, B /\ C, C] *)
 and fold_mem_lst_to_lst_gen_slicing (mem:memo_pure) with_R with_P with_slice with_disj : formula list =
-  (*let _ = print_string ("\nfold_mem_lst_to_lst_gen_slicing: mem:\n" ^ (!print_mp_f mem) ^ "\n") in*)
+  (*let () = print_string ("\nfold_mem_lst_to_lst_gen_slicing: mem:\n" ^ (!print_mp_f mem) ^ "\n") in*)
   
   let rec has_disj_f c = match c with | Or _ -> true | _ -> false in
 
@@ -675,7 +677,7 @@ and fold_mem_lst_to_lst_gen_slicing (mem:memo_pure) with_R with_P with_slice wit
       filter_list_mg rel_mgs
   ) mem in
   let res = List.map join_conjunctions r in
-  (*let _ = print_string ("\nfold_mem_lst_to_lst_gen_slicing: res:\n" ^ (pr_list !print_p_f_f res) ^ "\n") in*)
+  (*let () = print_string ("\nfold_mem_lst_to_lst_gen_slicing: res:\n" ^ (pr_list !print_p_f_f res) ^ "\n") in*)
   res
 
 (* Find relevant slices to fold them to a formula for SAT checking                                     *)
@@ -691,7 +693,7 @@ and fold_mem_lst_to_lst_gen_slicing (mem:memo_pure) with_R with_P with_slice wit
 (* If C is a linking var/expr of A and B: [A, B, C] -> [A /\ C, B /\ C]                                *)
 (* [s=s1+($ v) & s>0 & s1>0, B=B1U{($ v)}, v>0] -> [s=s1+($ v) & s>0 & s1>0 & v>0, B=B1U{($ v)} & v>0] *)	
 and fold_mem_lst_to_lst_gen_for_sat_slicing (mem:memo_pure) with_R with_P with_slice with_disj : formula list =
-  (*let _ = print_string ("\nfold_mem_lst_to_lst_gen_slicing: mem:\n" ^ (!print_mp_f mem) ^ "\n") in*)
+  (*let () = print_string ("\nfold_mem_lst_to_lst_gen_slicing: mem:\n" ^ (!print_mp_f mem) ^ "\n") in*)
   
   let has_disj_f c = match c with | Or _ -> true | _ -> false in
 
@@ -801,7 +803,7 @@ and fold_mem_lst_to_lst_gen_for_sat_slicing (mem:memo_pure) with_R with_P with_s
   let res = List.map (
       fun (_, _, mgl) -> join_conjunctions (filter_list_mg mgl)
   ) n_l in
-  (*let _ = print_string ("\nfold_mem_lst_to_lst_gen_slicing: res:\n" ^ (pr_list !print_p_f_f res) ^ "\n") in*)
+  (*let () = print_string ("\nfold_mem_lst_to_lst_gen_slicing: res:\n" ^ (pr_list !print_p_f_f res) ^ "\n") in*)
   res
       
 and fold_mem_lst_to_lst_x mem with_dupl with_inv with_slice = fold_mem_lst_to_lst_gen mem with_dupl with_inv with_slice true
@@ -907,8 +909,8 @@ and merge_mems_full_check (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo
     if (consistent_memo_pure r) then r
     else report_error no_pos "merge_mems : inconsistent memo_pure after merging"
   else
-    let _ = print_endline s1 in
-    let _ = print_endline s2 in
+    let () = print_endline_quiet s1 in
+    let () = print_endline_quiet s2 in
     report_error no_pos ("merge_mems : inconsistent memo_pure before merging")
 
 and merge_mems_repatch (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure =
@@ -1001,12 +1003,20 @@ and create_memo_group_wrapper_a (l1:b_formula list) status : memo_pure =
   let l = List.map (fun c -> (c, None)) l1 in
   create_memo_group l [] status 
 
-and anon_partition (l1:(b_formula *(formula_label option)) list) = 
+and anon_partition_x (l1:(b_formula *(formula_label option)) list) = 
   List.fold_left (fun (a1,a2) (c1,c2)-> 
       if (List.exists is_anon_var (bfv c1)) then (a1,(BForm (c1,c2))::a2) else ((c1,c2)::a1,a2)
   ) ([],[]) l1
 
-and create_memo_group (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =
+and anon_partition (l1:(b_formula *(formula_label option)) list) =
+  let pr1 = fun bl -> "[" ^ (List.fold_left (fun res (b,_) -> res ^ (!print_bf_f b)) "" bl) ^ "]" in
+  let pr_out = pr_pair (pr_list (pr_pair !CP.print_b_formula pr_none)) (pr_list !CP.print_formula) in
+  Debug.no_1 "anon_partition" pr1 pr_out anon_partition_x l1
+
+
+and create_memo_group (l1:(b_formula * (formula_label option)) list) 
+    (l2:formula list) (status:prune_status)
+    : memo_pure =
   let pr1 = fun bl -> "[" ^ (List.fold_left (fun res (b,_) -> res ^ (!print_bf_f b)) "" bl) ^ "]" in
   let pr2 = fun fl -> "[" ^ (List.fold_left (fun res f -> res ^ (!print_p_f_f f)) "" fl) ^ "]" in
   Debug.no_3 "[mcpure.ml] create_memo_group" pr1 pr2 (fun s -> "") !print_mp_f create_memo_group_x l1 l2 status
@@ -1103,7 +1113,7 @@ and memo_pure_push_exists_slice_x (f_simp, do_split) (qv: spec_var list) (f0: me
   (* Get relevant constraints with respect to qv *)  
   let pick_rel_constraints slice cons aset =
     let equiv_lst = get_equiv_eq_with_const aset in
-    let nas, drp3 = List.partition (fun (c1, c2) -> (List.exists (eq_spec_var c1) qv) or (List.exists (eq_spec_var c2) qv)) equiv_lst in
+    let nas, drp3 = List.partition (fun (c1, c2) -> (List.exists (eq_spec_var c1) qv) || (List.exists (eq_spec_var c2) qv)) equiv_lst in
     let r, drp1 = List.partition (fun c -> (Gen.BList.overlap_eq eq_spec_var (bfv c.memo_formula) qv)) cons in
     let r = List.filter (fun c -> not (c.memo_status = Implied_R)) r in
     let ns, drp2 = List.partition (fun c -> (Gen.BList.overlap_eq eq_spec_var (fv c) qv)) slice in 
@@ -1145,7 +1155,7 @@ and memo_pure_push_exists_slice_x (f_simp, do_split) (qv: spec_var list) (f0: me
     helper mg
   in 
   
-  let _ = Gen.Profiling.push_time "push_exists_slicing" in
+  let () = Gen.Profiling.push_time "push_exists_slicing" in
   (* Consider only constraints which are relevant to qv *)
   let rel_mg, non_rel_mg = List.partition (fun mg -> Gen.BList.overlap_eq eq_spec_var qv mg.memo_group_fv) f0 in
   let rel_mg = 
@@ -1158,7 +1168,7 @@ and memo_pure_push_exists_slice_x (f_simp, do_split) (qv: spec_var list) (f0: me
     else rel_mg
   in
   let res = (List.concat (List.map helper rel_mg)) @ non_rel_mg in
-  let _ = Gen.Profiling.pop_time "push_exists_slicing" in res
+  let () = Gen.Profiling.pop_time "push_exists_slicing" in res
                                                               
 (* Pushes exists qv over f0. It takes two steps:
    First: searches for substitutions in the eq set,
@@ -1267,7 +1277,7 @@ and memo_pure_push_exists_lhs (qv:spec_var list) (c:memo_pure) : memo_pure =
 
   let n_c = rename_vars_memo_pure c n_lv_ex in
 
-  (*let _ = print_string ("memo_pure_push_exists_lhs: n_c: " ^ (!print_mp_f n_c) ^ "\n") in*)
+  (*let () = print_string ("memo_pure_push_exists_lhs: n_c: " ^ (!print_mp_f n_c) ^ "\n") in*)
   
   memo_pure_push_exists nlv_ex n_c
       
@@ -1503,8 +1513,8 @@ let memo_check_syn_prun_imply (p,pn,pr_branches) crt_br corr  =
 let memo_check_syn_prun p c corr =  memo_check_syn_prun_imply p c corr
     
 let memo_check_syn_prun_debug (p,pn,br) c corr = 
-  let _ = print_string (" Check_syn1: "^(!print_bf_f p)^"\n") in
-  let _ = print_string (" Check_syn2: "^(!print_mp_f [corr])^"\n") in
+  let () = print_string (" Check_syn1: "^(!print_bf_f p)^"\n") in
+  let () = print_string (" Check_syn2: "^(!print_mp_f [corr])^"\n") in
     memo_check_syn_prun_imply (p,pn,br) c corr
     
 let transform_memo_formula f l : memo_pure =
@@ -1583,10 +1593,10 @@ let fast_imply_debug_cmp impl aset (lhs:b_formula list) (rhs:b_formula) : int =
   let r = fast_imply aset lhs rhs in
   let s = slow_imply impl lhs_f rhs_f in
   if s && (r<=0) then 
-    let _ = print_string ("fast imply aset :"^(EMapSV.string_of full_name_of_spec_var aset)^"\n") in
-    let _ = print_string ("fast imply inp :"^(Gen.BList.string_of_f !print_b_formula lhs) )in
-    let _ = print_string ("fast imply inp :"^" |="^(!print_b_formula rhs)^"\n") in
-    let _ = print_string ("fast imply out : ==> "^(string_of_int r)^"\n") in
+    let () = print_string ("fast imply aset :"^(EMapSV.string_of full_name_of_spec_var aset)^"\n") in
+    let () = print_string ("fast imply inp :"^(Gen.BList.string_of_f !print_b_formula lhs) )in
+    let () = print_string ("fast imply inp :"^" |="^(!print_b_formula rhs)^"\n") in
+    let () = print_string ("fast imply out : ==> "^(string_of_int r)^"\n") in
     r
   else r
 *)
@@ -1636,12 +1646,12 @@ let elim_redundant_cons_fast_x impl aset asetf pn =
 let elim_redundant_slice_x (impl, simpl) (f:memoised_group): memoised_group * memoised_group = 
   let asetf = fold_aset f.memo_group_aset in
   (*do not elim VarPerm formula*)
-  let vperm_set, rest = List.partition (fun m_constr -> is_varperm_b m_constr.memo_formula) f.memo_group_cons in
-  let old_r_set , np_set  = List.partition isImpl_dupl rest in
+  (* let vperm_set, rest = List.partition (fun m_constr -> is_varperm_b m_constr.memo_formula) f.memo_group_cons in *)
+  let old_r_set , np_set  = List.partition isImpl_dupl f.memo_group_cons in
   let n_set, p_set  = List.partition isImplT np_set in
   let s_set,r_set, e_set =  elim_redundant_cons impl f.memo_group_aset asetf (n_set@p_set) in
-  let r2 = { (List.hd (mkMFalse no_pos)) with memo_group_cons = e_set@r_set@vperm_set} in (*TO CHECK: should vperm_set in r2 ??? *)
-  ({f with memo_group_cons = s_set @r_set @ old_r_set@vperm_set;
+  let r2 = { (List.hd (mkMFalse no_pos)) with memo_group_cons = e_set@r_set (* @vperm_set *) } in (*TO CHECK: should vperm_set in r2 ??? *)
+  ({f with memo_group_cons = s_set @ r_set @ old_r_set (* @vperm_set *);
            memo_group_slice = List.concat (List.map (fun c -> list_of_conjs (simpl c)) f.memo_group_slice)},r2)
 
 let elim_redundant_slice (impl, simpl) (f:memoised_group): memoised_group * memoised_group =
@@ -1790,9 +1800,9 @@ and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no
     | 0 -> fold_mem_lst_gen (mkTrue no_pos) !no_LHS_prop_drop true false true n_ante
     | 1 -> fold_mem_lst_no_complex (mkTrue no_pos) !no_LHS_prop_drop true n_ante
     | _ -> fold_mem_lst_with_complex (mkTrue no_pos) !no_LHS_prop_drop true n_ante in
-  let _ = Debug.devel_pprint str no_pos in
-  let _ = Debug.trace_hprint (add_str "ante" !Cpure.print_formula) r no_pos in
-  let _ = Debug.trace_hprint (add_str "conseq" !Cpure.print_formula) conseq no_pos in  
+  let () = Debug.devel_pprint str no_pos in
+  let () = Debug.trace_hprint (add_str "ante" !Cpure.print_formula) r no_pos in
+  let () = Debug.trace_hprint (add_str "conseq" !Cpure.print_formula) conseq no_pos in  
   (* print_endline ("ANTE: " ^ (!Cpure.print_formula r)); *)
   (Gen.Profiling.push_time str_time;
   let (rb,_,_) as r = t_imply r conseq ("imply_process_ante:"^(string_of_int !imp_no)) false None in
@@ -1887,7 +1897,7 @@ and pick_relevant_lhs_constraints_opt_1_1 (nlv, lv) ante_disj =
 	direct_ante@indirect_ante
 
 and pick_relevant_lhs_constraints_opt_1 fv ante_disj =
-  let _ = Gen.Profiling.push_time "--opt-imply 1" in
+  let () = Gen.Profiling.push_time "--opt-imply 1" in
   let ((direct_fv, direct_lv, direct_ante), residue_ante) = List.fold_left
 	  (fun ((fvd, dlv, atd), r) mg ->
 		let mg_ulv = Gen.BList.difference_eq eq_spec_var mg.memo_group_fv mg.memo_group_linking_vars in
@@ -1903,7 +1913,7 @@ and pick_relevant_lhs_constraints_opt_1 fv ante_disj =
   let linking_ante = List.filter
 	(fun mg -> (not (mg.memo_group_linking_vars == [])) && Gen.BList.subset_eq eq_spec_var mg.memo_group_linking_vars need_to_find_links
 	) residue_ante in
-  let _ = Gen.Profiling.pop_time "--opt-imply 1" in
+  let () = Gen.Profiling.pop_time "--opt-imply 1" in
   direct_ante @ linking_ante
 
 and pick_relevant_lhs_constraints_opt_2_1 fv ante_disj = (* exhausted search - TODO: Slicing: fix bugs *)
@@ -1936,9 +1946,9 @@ and pick_relevant_lhs_constraints_opt_2 fv ante_disj = (* exhausted search *)
 	  n_ante1 @ n_ante2
   in
   
-  let _ = Gen.Profiling.push_time "--opt-imply 2" in
+  let () = Gen.Profiling.push_time "--opt-imply 2" in
   let r = exhaustive_collect fv ante_disj in
-  let _ = Gen.Profiling.pop_time "--opt-imply 2" in r
+  let () = Gen.Profiling.pop_time "--opt-imply 2" in r
 
 and pick_relevant_lhs_constraints_opt_3 fv ante_disj = (* exhausted search *)
   let rec exhaustive_collect_with_selection fv ante =
@@ -1962,9 +1972,9 @@ and pick_relevant_lhs_constraints_opt_3 fv ante_disj = (* exhausted search *)
 	    (mg_ulv, mg)
 	  ) ante_disj in
 
-  let _ = Gen.Profiling.push_time "--opt-imply 3" in
+  let () = Gen.Profiling.push_time "--opt-imply 3" in
   let r = exhaustive_collect_with_selection fv ante_with_ulv in
-  let _ = Gen.Profiling.pop_time "--opt-imply 3" in r
+  let () = Gen.Profiling.pop_time "--opt-imply 3" in r
 	
 let mimply_one_conj ante_memo0 conseq t_imply imp_no =
   (* TODO CG : if no complex at all just try one of them *)
@@ -1992,7 +2002,7 @@ let mimply_one_conj ante_memo0 conseq_conj t_imply imp_no =
   mimply_one_conj ante_memo0 conseq_conj t_imply imp_no
  
 let rec mimply_conj ante_memo0 conseq_conj t_imply imp_no = 
-  (*let _ = print_string ("\nMcpure.ml: mimply_conj " ^ (string_of_int !imp_no)) in*)
+  (*let () = print_string ("\nMcpure.ml: mimply_conj " ^ (string_of_int !imp_no)) in*)
   match conseq_conj with
     | h :: rest -> 
 	      let (r1,r2,r3) = (mimply_one_conj ante_memo0 h t_imply imp_no) in
@@ -2000,7 +2010,7 @@ let rec mimply_conj ante_memo0 conseq_conj t_imply imp_no =
 	        let r1,r22,r23 = (mimply_conj ante_memo0 rest t_imply imp_no) in
 	        (r1,r2@r22,r23)
 	      else
-          (*let _ = print_string ("\n failed ante: "^(Cprinter.string_of_pure_formula  
+          (*let () = print_string ("\n failed ante: "^(Cprinter.string_of_pure_formula  
             (fold_mem_lst (mkTrue no_pos ) false ante_memo0))^"\t |- \t"^(Cprinter.string_of_pure_formula h)^"\n") in      *)
           (r1,r2,r3)
     | [] -> (true, [], None)
@@ -2137,6 +2147,14 @@ let mix_of_pure f =
 let pure_of_mix f = match f with
   | OnePF f -> f
   | MemoF f -> fold_mem_lst_with_complex (mkTrue no_pos) false true f 
+
+let memo_of_mix f = match f with
+  | OnePF pf -> memoise_add_pure_N (mkMTrue no_pos) pf
+  | MemoF mf -> mf
+
+let mix_of_memo f = 
+  if !Globals.en_slc_ps then MemoF f
+  else OnePF (fold_mem_lst_with_complex (mkTrue no_pos) false true f)
   
 let mkMFalse_no_mix = mkMFalse
 
@@ -2204,9 +2222,9 @@ let merge_mems f1 f2 slice_dup = match (f1,f2) with
 (*   | MemoF f1, MemoF f2 -> MemoF (merge_mems f1 f2 slice_dup) *)
 (*   | OnePF f1, OnePF f2 -> OnePF (mkAnd f1 f2 no_pos) *)
 (*   | OnePF f1, MemoF f2 -> *)
-(*       let _ = print_string "[mcpure.ml]Warning: merge mems: mix of memo and pure formulas 1 \n" in MemoF f2 *)
+(*       let () = print_string "[mcpure.ml]Warning: merge mems: mix of memo and pure formulas 1 \n" in MemoF f2 *)
 (*   | MemoF f1, OnePF f2 -> *)
-(*       let _ = print_string "[mcpure.ml]Warning: merge mems: mix of memo and pure formulas 2 \n" in MemoF f1 *)
+(*       let () = print_string "[mcpure.ml]Warning: merge mems: mix of memo and pure formulas 2 \n" in MemoF f1 *)
   (* | _ -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "merge mems: wrong mix of memo and pure formulas"} *)
   
   
@@ -2597,80 +2615,80 @@ let simplify_mix_formula mf =
 			let nf = remove_redundant_constraints nf in
 				OnePF nf
 
-(*NOTE: do not reuse the returned mix_f when --eps*)
-let normalize_varperm_mix_formula_x (mix_f:mix_formula) : mix_formula =
-  match mix_f with
-    | OnePF f -> OnePF (normalize_varperm f)
-    | MemoF mp -> 
-        let f = pure_of_mix mix_f in
-        (* let f = fold_mem_lst (mkTrue no_pos) false true mix_f in *)
-        let new_f = normalize_varperm f in
-        (mix_of_pure new_f)
+(* (*NOTE: do not reuse the returned mix_f when --eps*)                                  *)
+(* let normalize_varperm_mix_formula_x (mix_f:mix_formula) : mix_formula =               *)
+(*   match mix_f with                                                                    *)
+(*     | OnePF f -> OnePF (normalize_varperm f)                                          *)
+(*     | MemoF mp ->                                                                     *)
+(*         let f = pure_of_mix mix_f in                                                  *)
+(*         (* let f = fold_mem_lst (mkTrue no_pos) false true mix_f in *)                *)
+(*         let new_f = normalize_varperm f in                                            *)
+(*         (mix_of_pure new_f)                                                           *)
 
-(* combine VarPerm formulas into 4 types*)
-(*NOTE: do not reuse the returned mix_f when --eps*)
-let normalize_varperm_mix_formula (mix_f:mix_formula) : mix_formula =
-  Debug.no_1 "normalize_varperm_mix_formula"
-      !print_mix_f !print_mix_f
-      normalize_varperm_mix_formula_x mix_f
+(* (* combine VarPerm formulas into 4 types*)                                            *)
+(* (*NOTE: do not reuse the returned mix_f when --eps*)                                  *)
+(* let normalize_varperm_mix_formula (mix_f:mix_formula) : mix_formula =                 *)
+(*   Debug.no_1 "normalize_varperm_mix_formula"                                          *)
+(*       !print_mix_f !print_mix_f                                                       *)
+(*       normalize_varperm_mix_formula_x mix_f                                           *)
 
-(*NOTE: do not reuse the returned mix_f when --eps*)
-let filter_varperm_mix_formula_x (mix_f:mix_formula) : (formula list * mix_formula) =
-  match mix_f with
-    | OnePF f -> 
-        let ls,f1 = filter_varperm f in
-        (ls,OnePF f1)
-    | MemoF mp -> 
-        let f = fold_mem_lst (mkTrue no_pos) false true mix_f in
-        let ls,new_f = filter_varperm f in
-        (ls, (mix_of_pure new_f))
+(* (*NOTE: do not reuse the returned mix_f when --eps*)                                  *)
+(* let filter_varperm_mix_formula_x (mix_f:mix_formula) : (formula list * mix_formula) = *)
+(*   match mix_f with                                                                    *)
+(*     | OnePF f ->                                                                      *)
+(*         let ls,f1 = filter_varperm f in                                               *)
+(*         (ls,OnePF f1)                                                                 *)
+(*     | MemoF mp ->                                                                     *)
+(*         let f = fold_mem_lst (mkTrue no_pos) false true mix_f in                      *)
+(*         let ls,new_f = filter_varperm f in                                            *)
+(*         (ls, (mix_of_pure new_f))                                                     *)
 
-(*NOTE: do not reuse the returned mix_f when --eps*)
-(* pure_of_mix may discard some info when --eps *)
-let filter_varperm_mix_formula (mix_f:mix_formula) : (formula list * mix_formula) =
-  let pr_out (ls,f) =
-    "\n ### ls = " ^ (pr_list !print_formula ls)
-    ^ "\n ### f = " ^ (!print_mix_f f)
-  in
-  Debug.no_1 "filter_varperm_mix_formula"
-      !print_mix_f pr_out
-      filter_varperm_mix_formula_x mix_f
+(* (*NOTE: do not reuse the returned mix_f when --eps*)                                  *)
+(* (* pure_of_mix may discard some info when --eps *)                                    *)
+(* let filter_varperm_mix_formula (mix_f:mix_formula) : (formula list * mix_formula) =   *)
+(*   let pr_out (ls,f) =                                                                 *)
+(*     "\n ### ls = " ^ (pr_list !print_formula ls)                                      *)
+(*     ^ "\n ### f = " ^ (!print_mix_f f)                                                *)
+(*   in                                                                                  *)
+(*   Debug.no_1 "filter_varperm_mix_formula"                                             *)
+(*       !print_mix_f pr_out                                                             *)
+(*       filter_varperm_mix_formula_x mix_f                                              *)
 
-let get_varperm_mix_formula_x (mix_f:mix_formula) typ : spec_var list =
-  match mix_f with
-    | OnePF f -> 
-        let res = Cpure.get_varperm_pure f typ in
-        res
-    | MemoF mp -> 
-        let f = pure_of_mix mix_f in
-        let res = Cpure.get_varperm_pure f typ in
-        res
+(* let get_varperm_mix_formula_x (mix_f:mix_formula) typ : spec_var list =               *)
+(*   match mix_f with                                                                    *)
+(*     | OnePF f ->                                                                      *)
+(*         let res = Cpure.get_varperm_pure f typ in                                     *)
+(*         res                                                                           *)
+(*     | MemoF mp ->                                                                     *)
+(*         let f = pure_of_mix mix_f in                                                  *)
+(*         let res = Cpure.get_varperm_pure f typ in                                     *)
+(*         res                                                                           *)
 
-let get_varperm_mix_formula (mix_f:mix_formula) typ : spec_var list =
-  Debug.no_2 "get_varperm_mix_formula"
-      !print_mix_f string_of_vp_ann !print_svl
-      get_varperm_mix_formula_x mix_f typ
+(* let get_varperm_mix_formula (mix_f:mix_formula) typ : spec_var list =                 *)
+(*   Debug.no_2 "get_varperm_mix_formula"                                                *)
+(*       !print_mix_f string_of_vp_ann !print_svl                                        *)
+(*       get_varperm_mix_formula_x mix_f typ                                             *)
 
-(*Note: use this method with care.
-The conversion between pure_of_mix and mix_of_pure
-may affect --eps*)
-let drop_varperm_mix_formula (mix_f:mix_formula) : mix_formula =
-  match mix_f with
-    | OnePF f -> 
-        let f1 = Cpure.drop_varperm_formula f in
-        (OnePF f1)
-    | MemoF mp -> 
-        let f = pure_of_mix mix_f in
-        let f1 = Cpure.drop_varperm_formula f in
-        let f2 = mix_of_pure f1 in
-        f2
+(* (*Note: use this method with care.                                                    *)
+(* The conversion between pure_of_mix and mix_of_pure                                    *)
+(* may affect --eps*)                                                                    *)
+(* let drop_varperm_mix_formula (mix_f:mix_formula) : mix_formula =                      *)
+(*   match mix_f with                                                                    *)
+(*     | OnePF f ->                                                                      *)
+(*         let f1 = Cpure.drop_varperm_formula f in                                      *)
+(*         (OnePF f1)                                                                    *)
+(*     | MemoF mp ->                                                                     *)
+(*         let f = pure_of_mix mix_f in                                                  *)
+(*         let f1 = Cpure.drop_varperm_formula f in                                      *)
+(*         let f2 = mix_of_pure f1 in                                                    *)
+(*         f2                                                                            *)
 
 (*Eq, Lt, Lte, Gt, Gte*)
 let remove_dupl_conj_mix_formula_x (f:mix_formula):mix_formula =
   (match f with
     | MemoF _ -> 
         (*Todo: implement this*)
-        (* let _ = print_string ("[cformula.ml][remove_dupl_conj_eq_mix_formula] Warning: not yet support MemoF \n") in *)
+        (* let () = print_string ("[cformula.ml][remove_dupl_conj_eq_mix_formula] Warning: not yet support MemoF \n") in *)
         f
     | OnePF p_f -> (OnePF (remove_dupl_conj_pure p_f))
   )
@@ -2732,13 +2750,14 @@ let remove_level_mix_formula_x (mf : mix_formula) : mix_formula =
   let f_p_f pf = None in
   let f_b b =
 	let (pf,il) = b in
-	let npf = match pf with	  
+	let npf = match pf with
+          | Frm _
 	  | BConst _
 	  | XPure _ 
 	  | BVar _ 
 	  | BagMin _ 
-      | SubAnn _
-      | VarPerm _
+          | SubAnn _
+          (* | VarPerm _ *)
 	  | BagMax _ -> pf
 	  | Lt (e1,e2,l)
 	  | Lte (e1,e2,l)
@@ -2907,3 +2926,24 @@ let check_pointer_dis_sat mf = match mf with
 	| OnePF f -> 
 		let r,b = check_pointer_dis_sat f in
 		b, OnePF r
+
+let get_rel_ctr (mf: mix_formula) (vl: spec_var list) : mix_formula =
+  match mf with
+  | MemoF f -> 
+      MemoF (List.filter (fun m -> 
+        Gen.BList.overlap_eq eq_spec_var m.memo_group_fv vl) f)
+  | OnePF f -> 
+      let mf = memoise_add_pure_N_m (mkMTrue_no_mix ()) f in
+      let simp_mf = List.filter (fun m -> 
+        Gen.BList.overlap_eq eq_spec_var m.memo_group_fv vl) mf in
+      OnePF (pure_of_mix (MemoF simp_mf))
+
+let partition_mix_formula (mf: mix_formula) ff : mix_formula * mix_formula =
+  match mf with
+  | MemoF f -> 
+    let fm, om = List.partition (fun m -> ff m) f in
+    MemoF fm, MemoF om
+  | OnePF f -> 
+    let mf = memoise_add_pure_N_m (mkMTrue_no_mix ()) f in
+    let fmf, omf = List.partition (fun m -> ff m) mf in
+    OnePF (pure_of_mix (MemoF fmf)), OnePF (pure_of_mix (MemoF omf))

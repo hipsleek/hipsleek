@@ -1,0 +1,46 @@
+
+!!!Full processing file "hip/ex12c1-varperm-simple.ss"
+Parsing file "hip/ex12c1-varperm-simple.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure main$... 
+dprint: hip/ex12c1-varperm-simple.ss:7: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:htrue*N@full[v_35,x_33,y_34]&v_35'=5 & y_34'=40 & x_33'=4 & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint: hip/ex12c1-varperm-simple.ss:21: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists x_1349,x_33': htrue*N@lend[v_35,y_34]@zero[x_33]&x_33'=4 & y_34'=40 & v_35'=5 & x_1349=4 & y_34'=40 & v_35'=5&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint: hip/ex12c1-varperm-simple.ss:23: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists x_1351: htrue*N@full[v_35,x_33,y_34]&x_1351=4 & y_34'=40 & v_35'=5 & y_1347=40 & x_1348=4 & y_1346=40 & v_35'=5 & x_33'=1+v_35' & y_34'=40 & v_35'=5 & y_34'=40 & v_35'=5&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+assert/assume:hip/ex12c1-varperm-simple.ss:24: 2:  : failed
+
+
+Procedure main$ SUCCESS.
+
+0 false contexts at: ()
+
+Total verification time: 0.408024 second(s)
+	Time spent in main process: 0.384023 second(s)
+	Time spent in child processes: 0.024001 second(s)
+

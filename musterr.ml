@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 (*
  1. this file provides interfaces and implementations for
    - must/may errors
@@ -22,6 +24,7 @@ open Perm
 open Mcpure_D
 open Mcpure
 open Stat_global
+open Cformula
 
 (* module Inf = Infer *)
 module CP = Cpure
@@ -74,7 +77,7 @@ module LO = Label_only.LOne
 (* and fail_explaining = { *)
 (*     fe_kind: failure_kind; (\*may/must*\) *)
 (*     fe_name: string; *)
-(*     fe_locs: Globals.loc list; *)
+(*     fe_locs: VarGen.loc list; *)
 (*     (\* fe_explain: string;  *\) *)
 (*     (\* string explaining must failure *\) *)
 (*     (\*  fe_sugg = struc_formula *\) *)
@@ -105,8 +108,9 @@ let check_maymust_failure_x (ante:CP.formula) (cons:CP.formula): (CF.failure_kin
         (*compute lub of must bug and current fc_flow*)
         (CF.mk_failure_must_raw "", (r1, r2, r3))
       end
-  else
+  else (
     (CF.mk_failure_may_raw "", ([], [], [(ante, cons)]))
+  )
 
 (*maximising must bug with RAND (error information)*)
 let check_maymust_failure (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list))=
@@ -118,14 +122,14 @@ let check_maymust_failure (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*
 (*maximising must bug with AND (error information)*)
 (* to return fail_type with AND_reason *)
 let build_and_failures_x (failure_code:string) (failure_name:string) ((contra_list, must_list, may_list)
-    :((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list)) (fail_ctx_template: fail_context)
+    :((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list)) (fail_ctx_template: fail_context) cex
     (ft: formula_trace) : list_context=
   if not !disable_failure_explaining then
     let build_and_one_kind_failures (failure_string:string) (fk: CF.failure_kind) (failure_list:(CP.formula*CP.formula) list):CF.fail_type option=
       (*build must/may msg*)
       let build_failure_msg (ante, cons) =
         let ll = (CP.list_pos_of_formula ante []) @ (CP.list_pos_of_formula cons []) in
-        (*let _ = print_endline (Cprinter.string_of_list_loc ll) in*)
+        (*let () = print_endline (Cprinter.string_of_list_loc ll) in*)
         let lli = CF.get_lines ll in
         (*possible to eliminate unnecessary intermediate that are defined by equality.*)
         (*not sure it is better*)
@@ -168,30 +172,75 @@ let build_and_failures_x (failure_code:string) (failure_name:string) ((contra_li
       | Some ft -> Cprinter.string_of_fail_type ft
       | None -> "None"
       in
-      let _ = print_endline ("locle contrad:" ^ (pr contra_fail_type)) in
-      let _ = print_endline ("locle must:" ^ (pr must_fail_type)) in
-      let _ = print_endline ("locle may:" ^ (pr may_fail_type)) in
+      let () = print_endline ("locle contrad:" ^ (pr contra_fail_type)) in
+      let () = print_endline ("locle must:" ^ (pr must_fail_type)) in
+      let () = print_endline ("locle may:" ^ (pr may_fail_type)) in
     *)
     let oft = List.fold_left CF.mkAnd_Reason contra_fail_type [must_fail_type; may_fail_type] in
+    let es = {fail_ctx_template.fc_current_lhs  with es_formula = CF.substitute_flow_into_f !error_flow_int fail_ctx_template.fc_current_lhs.es_formula} in
     match oft with
-      | Some ft -> FailCtx ft
+      | Some ft -> FailCtx (ft, (Ctx es) ,cex)
       | None -> (*report_error no_pos "Solver.build_and_failures: should be a failure here"*)
             let msg =  "use different strategies in proof searching (slicing)" in
             let fe =  mk_failure_may msg failure_name in
-            FailCtx (Basic_Reason ({fail_ctx_template with fc_message = msg }, fe, ft))
+            FailCtx ((Basic_Reason ({fail_ctx_template with fc_message = msg }, fe, ft)),(Ctx es), cex)
   else
     let msg = "failed in entailing pure formula(s) in conseq" in
     CF.mkFailCtx_in (Basic_Reason ({fail_ctx_template with fc_message = msg }, mk_failure_may msg failure_name, ft))
+        (Ctx (CF.convert_to_may_es fail_ctx_template.fc_current_lhs)) cex
 
 
 let build_and_failures i (failure_code:string) (failure_name:string) ((contra_list, must_list, may_list)
     :((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list)) 
-      (fail_ctx_template: fail_context) (ft: formula_trace) : list_context=
+      (fail_ctx_template: fail_context) cex (ft: formula_trace) : list_context=
   let pr1 = Cprinter.string_of_pure_formula in
   let pr3 = pr_list (pr_pair pr1 pr1) in
   let pr4 = pr_triple pr3 pr3 pr3 in
-  let pr2 = (fun _ -> "OUT") in
+  let pr2 = Cprinter.string_of_list_context_short in
   Debug.no_1_num i "build_and_failures" pr4 pr2 
-      (fun triple_list -> build_and_failures_x failure_code failure_name triple_list fail_ctx_template ft)
+      (fun triple_list -> build_and_failures_x failure_code failure_name triple_list fail_ctx_template cex ft)
       (contra_list, must_list, may_list)
 
+(******************************************************)
+(******************************************************)
+(******************************************************)
+(*
+  Succ -> Succ
+  Fail ->
+    Basic -> Ctx
+    Trivial -> ??
+    Or_Reason () -> OCtx ()
+    And_Reason (ctx1, _) -> recf ctx1
+    Union -> [Ctx1; ctx2]
+    ContinuationErr -> 
+    Or_Continuation
+*)
+let convert_list_context prog ctxs=
+  let rec convert_failure ft cex=
+    match ft with
+      | Basic_Reason (fc, fe, _) -> begin
+            let es = match fe.fe_kind with
+              | Failure_Must msg -> {fc.fc_current_lhs with es_must_error = Some (msg, ft, cex)}
+              | Failure_May msg -> {fc.fc_current_lhs with es_may_error = Some (msg, ft, cex)}
+              | _ -> fc.fc_current_lhs
+            in
+            Ctx es
+        end
+      | Or_Reason (ft1, ft2) -> OCtx (convert_failure ft1 cex, convert_failure ft2 cex)
+      | _ -> report_error no_pos "xxx"
+      (* | Trivial_Reason of (fail_explaining * formula_trace) *)
+      (* | And_Reason of (fail_type * fail_type) *)
+      (* | Union_Reason of (fail_type * fail_type) *)
+      (* | ContinuationErr of (fail_context * formula_trace) *)
+      (* | Or_Continuation of (fail_type * fail_type) *)
+  in
+  match ctxs with
+    | SuccCtx _ -> ctxs
+    | FailCtx (ft, _, cex) -> SuccCtx [(convert_failure ft cex)]
+
+
+
+
+(******************************************************)
+(******************************************************)
+(******************************************************)

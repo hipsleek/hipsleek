@@ -1,0 +1,26 @@
+Starting Omega...oc
+P1 is defined.
+P2 is defined.
+Starting z3... 
+
+!!! formula1: emp&((self=null & n!=null) | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=0 & n>0&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([n], self=0)])
+Entail (1) : Valid. 
+
+ <1>n::node<_,flted>&self=null & flted=null&{FLOW,(3,4)=__norm}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+
+Stop Omega... 10 invocations 
+SAT Count   : 31
+SAT % Hit   : 64.51%
+IMPLY Count : 3
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.001591 (seconds)
+
+!!! log(small):(0.016736,44)
+Total verification time: 0.076591 second(s)
+	Time spent in main process: 0.05585 second(s)
+	Time spent in child processes: 0.020741 second(s)
+

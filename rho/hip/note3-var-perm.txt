@@ -1,0 +1,31 @@
+
+/'/ctx
+par case vp0 heap0
+{   case vp1 heap1  ->
+       ....
+ || case vp1 heap2  ->
+       ....
+ || else -> 
+       ....
+}
+
+
+par [v]
+{   case [v@L]
+    case [v]
+}
+
+
+par x::cell<n>
+{   case [v@L]  x::cell<n>@L
+    case [v] x::cell<n>
+}
+
+
+infer [@par] x::node<> |- x::node<>@L --> x::node<>@L
+
+
+
+
+par {x,y,z@0.5}
+ ....

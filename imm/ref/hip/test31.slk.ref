@@ -1,0 +1,39 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+
+WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+
+Warning: ::0: 0: combining two views not yet implemented
+
+Entail 1: Valid. 
+
+Residue:
+ <1>emp&flted_21_78=null & flted_21_79=null&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  SEARCH ==>  Match(x,x) ==>  SEARCH ==>  COND ==>  Match(y,y) ==> ]]
+
+
+
+Warning: ::0: 0: combining two views not yet implemented
+
+Entail 2: Valid. 
+
+Residue:
+ <1>emp&y=q & a=Anon_13 & flted_25_158=null & flted_25_159=null&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  SEARCH ==>  Match(x,x) ==>  SEARCH ==>  COND ==>  Match(q,y) ==> ]]
+
+
+
+Warning: ::0: 0: combining two views not yet implemented
+
+Entail 3: Valid. 
+
+Residue:
+ <1>q::ll{}<flted_29_244>&y=q & a=Anon_14 & flted_29_244=null & flted_29_245=null&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+

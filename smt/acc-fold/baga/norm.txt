@@ -1,0 +1,43 @@
+--inv-baga-auto
+   - generate it only for predicate with just ptr ctrs
+   - no arithmetic-etc
+
+norm_ef_pure_disj 
+  (S,F1) \/ (S,F2) --> (S,F1|F2)
+  (S,F)  \/ (S,F)  --> (S,F)
+
+
+  a=b, a!=b, a=null, a!=null
+
+
+  a=1 /\ a=2 ...  
+  a!=null  -->  a>0
+
+
+ (i) improve Omega simplify
+      Omega.simplify --> a!=0
+       --> a>0
+ (ii) Devise algo to avoid Omega simplify
+ (iii) Use MiniSAT solver?
+  
+
+(baga, pure)
+
+ (null --> "null")
+
+==> (sorted, [f_eq], [f_ineq])
+
+x!=y & y!=x
+
+Optimize ef_pure
+================
+
+ (baga1,eq1,inq1) * (baga2,eq2,inq2)
+ ==> (merge baga1 baga2, eq1/\eq2, inq1@inq2)
+     sorted eq_spec_var, emap, (var * var) list
+
+baga - duplicate, null 
+inq - v!=v
+      v!=w & v=w
+
+([a,b],eq1,in1) \/ ([a,b],eq2,in2)

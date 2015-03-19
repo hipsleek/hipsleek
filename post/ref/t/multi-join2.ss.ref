@@ -1,0 +1,10 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/multi-join2.ss"
+Parsing file "t/multi-join2.ss" by default parser...
+File "t/multi-join2.ss", line 11, characters 14-15
+ --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ at:caught
+
+Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+Error3(s) detected at main 

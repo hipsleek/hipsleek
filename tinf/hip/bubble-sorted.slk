@@ -1,0 +1,28 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ls<n, sm, lg, srt, tl> ==
+  self = tl & n = 0 & sm = \inf & lg = -\inf & srt = 1 or
+  self::node<v, q> * q::ls<n-1, sm1, lg1, srt1, tl> & 
+    sm = min(v, sm1) & lg = max(v, lg1) & 
+		(v > sm1 & srt = 0 | v <= sm1 & srt = srt1)
+  inv 0 <= srt <= 1 & n >= 0.
+
+/*
+pred ls<n, sm, lg, srt, tl> ==
+  self::node<v, tl> & n = 1 & sm = v & lg = v & srt = 1 or
+  self::node<v, q> * q::ls<n-1, sm1, lg1, srt1, tl> & 
+    sm = min(v, sm1) & lg = max(v, lg1) & (v > sm1 & srt = 0 | v <= sm1 & srt = srt1)
+  inv 0 <= srt <= 1 & n >= 1.
+*/
+
+//checkentail xs::ls<n1, sm1, lg1, srt, p> & srt = 0 |- n1 != 0.
+
+//checkentail xs::ls<n1, sm1, lg1, srt, p> & srt = 0 |- n1 != 1.
+
+checkentail xs::ls<n1, sm1, lg1, srt, p> & n1 = 0 |- srt = 1.
+
+checkentail xs::ls<n1, sm1, lg1, srt, p> & n1 = 1 |- srt = 1.
+print residue.

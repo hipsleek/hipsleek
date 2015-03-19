@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 (*
    Created 26 - 08 - 2006
    View Generator

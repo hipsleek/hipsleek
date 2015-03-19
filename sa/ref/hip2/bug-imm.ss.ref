@@ -1,0 +1,34 @@
+
+!!!Full processing file "hip2/bug-imm.ss"
+Parsing file "hip2/bug-imm.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Checking procedure delete$node... 
+Last Proving Location: 1 File "hip2/bug-imm.ss",Line:16,Col:9
+
+ERROR: at hip2/bug-imm.ss_16:9_16:35 
+Message: The postcondition cannot contain @L heap predicates/data nodes/field annotations
+
+ 
+Procedure delete$node FAIL.(2)
+
+Exception Failure("The postcondition cannot contain @L heap predicates/data nodes/field annotations\n") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure delete$node
+
+!!! proc.proc_name:delete$nodeStop Omega... 4 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.016868,188)
+Total verification time: 0.282677 second(s)
+	Time spent in main process: 0.267403 second(s)
+	Time spent in child processes: 0.015274 second(s)
+

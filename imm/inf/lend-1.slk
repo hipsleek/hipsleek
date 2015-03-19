@@ -1,0 +1,36 @@
+data pair{
+ int fst;
+ int snd;
+}.
+
+infer [v] p::pair<f,s>@v |- p::pair<a,b>.
+print residue.
+infer [v] p::pair<f,s>@v |- p::pair<a,b>@L.
+print residue.
+infer [v] p::pair<f,s>@v |- p::pair<a,b>@I.
+print residue.
+infer [v] p::pair<f,s>@v |- p::pair<a,b>@A.
+print residue.
+
+/*
+# lend-1.slk --print-type 
+
+Can you change integer formula back to annotation
+formula at Omega.ml. See trans_bool method which
+converts b>=1 to b and b<=0 to !b for boolean.
+
+infer [v] p::pair<f,s>@v |- p::pair<a,b>.
+
+GOT: 
+Entail (1) : Valid. 
+ <1>emp&a:int=f:int & b:int=s:int & v:AnnT<=0&{FLOW,(21,22)=__norm}[]
+ inferred pure: [v:AnnT<=0]
+[[ SEARCH ==>  Match(p:pair,p:pair) ==> ]]
+
+Expects:
+Entail (1) : Valid. 
+ <1>emp&v:AnnT<:@M&{FLOW,(21,22)=__norm}[]
+ inferred pure: [v:AnnT<:@M]
+[[ SEARCH ==>  Match(p:pair,p:pair) ==> ]]
+
+*/

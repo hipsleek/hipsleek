@@ -1,0 +1,41 @@
+
+data node {
+     node next;
+}.
+
+pred b1<y,z> ==
+     self=y
+     or (exists u: self::node<y> * z::node<u>).
+
+//[([], self=y),([z,self], true)]
+
+
+checkentail x::b1<y,z> * z::node<_> & x!=y |- false.
+print residue.
+expect Valid.
+
+/*
+checkentail z::node<_> & x!=y & x=y
+ or x::node<y> * z::node<_> * z::node<_> & x!=y
+ |- false.
+expect Valid.
+*/
+
+/*
+# bseg3.slk
+
+
+checkentail true |- false.
+print residue.
+expect Valid.
+
+
+!!! [[([], self=y),([self], true),([z,self], true)]]
+!!! [[([], self=y),([self], true),([z,self], true)
+                    ,([z,self], true),([z,self], true)]]
+!!! baga inv(b1):[([], self=y),([self], true),([z,self], true)
+                    ,([z,self], true),([z,self], true)]Stop Omega...
+
+need normalization.
+
+*/

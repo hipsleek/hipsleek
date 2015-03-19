@@ -1,0 +1,67 @@
+data node {
+  node f0;
+}.
+
+pred ls<y:node> ==
+ self = y
+or (exists xp: self::node<xp> * xp::ls<y> & null!= self 
+   & self != y).
+
+//lemma_unsafe self::ls<z> <- (exists u: self::ls<u>*u::ls<z> * z::ls<null>@L).
+
+//lemma_unsafe self::ls<z> <- (exists u: self::ls<u>*u::ls<z> * z::ls<_>@L).
+
+lemma_unsafe self::ls<z> <- (exists u: self::ls<u>*u::ls<z> * z::node<_>@L).
+
+//lemma_unsafe self::ls<null> <- (exists u: self::ls<u>*u::ls<null>). 
+
+checkentail x::ls<y> * y::ls<z> * z::ls<null> & z!=null
+         |- x::ls<z> * z::ls<null>.
+print residue.
+expect Valid.
+
+checkentail x::ls<y> * y::ls<z> * z::ls<null> //& z!=null
+         |- x::ls<z> * z::ls<null>.
+print residue.
+expect Valid.
+
+/*
+checkentail x::ls<y> * y::ls<null>
+         |- x::ls<null> .
+expect Valid.
+// succeeds
+*/
+
+/*
+[
+Lemma "rlem_ls":  self::ls<y>&{FLOW,(1,24)=__flow}[]<== (exists xp_49,f_r_50: self::ls<xp_49> * xp_49::ls<y> * y::node<f_r_50>@L&
+{FLOW,(1,24)=__flow})[]
+ head match:ls
+ body view:ls
+ coercion_univ_vars: []
+ materialized vars:  [(self,full,[ls]); (y,full,[])]
+ coercion_case: Simple
+ head_norm:  (exists y_46: self::ls<y_46>&y_46=y&{FLOW,(1,24)=__flow})[]
+ body_norm:  EBase exists (Expl)[](Impl)[xp_14; 
+       f_r_29](ex)[](exists y_51: self::ls<xp_14> * xp_14::ls<y_51> * 
+       y::node<f_r_29>@L&y_51=y&{FLOW,(1,24)=__flow})[]
+ coercion_univ_vars: []
+ coercion_case: Simple
+ coercion_origin: generated
+,
+Lemma "lem_12":  self::ls<z>&{FLOW,(21,22)=__norm}[]<== (exists u_65,Anon_66: self::ls<u_65> * u_65::ls<z> * z::ls<Anon_66>@L&
+{FLOW,(21,22)=__norm})[]
+ head match:ls
+ body view:ls
+ coercion_univ_vars: []
+ materialized vars:  [(self,full,[ls]); (z,full,[ls])]
+ coercion_case: Simple
+ head_norm:  (exists z_62: self::ls<z_62>&z_62=z&{FLOW,(21,22)=__norm})[]
+ body_norm:  EBase (exists z_67,Anon_68,u_69: self::ls<u_69> * u_69::ls<z_67> * 
+       z::ls<Anon_68>@L&z_67=z&{FLOW,(21,22)=__norm})[]
+ coercion_univ_vars: []
+ coercion_case: Simple
+ coercion_origin: user-given
+
+]
+*/

@@ -1,0 +1,118 @@
+
+!!!Full processing file "validate/skip2-list.ss"
+Parsing file "validate/skip2-list.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=q | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=q)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Checking procedure skip0$node2~node2... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H2]requires H2(l,e@NI)&true
+ ensures emp&res{,(3,4)=__norm};
+
+!!! >>>>>> HIP gather infer pre <<<<<<
+!!!Inferred Heap: []
+!!!Inferred Pure: [ (1<=e | s_32_1327<=0), (e<=1 | s_32_1327<=0), (0<=s_32_1327 | 1<=e), (0<=s_32_1327 | e<=1), (l!=0 | 0<=e), (l!=0 | e<=0)]
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;0)H2(l,e@NI)&l!=null & l!=e --> l::node2<val1,n1,s1> * HP_1328(n1,e@NI) * 
+HP_1329(s1,e@NI)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1328(n1,e@NI)&true --> H2(n1,e@NI)&
+true(3,4),
+ // POST
+(1;0)H2(e,e@NI)&true --> emp&
+true(3,4),
+ // POST
+(2;0)HP_1329(s1,e@NI)&s1=null --> emp&
+true(3,4)]
+
+Procedure skip0$node2~node2 SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H2(l1,e1) ::=  [emp&l1=e1; l1::node2<val2,n2,s2> * H2(n2,e1)&s2=null & l1!=e1]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H2(l1,e1) ::= 
+ l1::node2<val2,n2,s2> * H2(n2,e1)&s2=null & l1!=e1
+ or emp&l1=e1
+ (3,4)]
+*************************************
+
+!!! formula1: emp&((self!=e1 & self!=null) | self=e1)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], self=e_1492),
+([self], (e_1492<self | self<e_1492))])
+Checking procedure skip1$node2... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1]requires H1(l)&true
+ ensures emp&res{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;0)H1(l)&l!=null --> l::node2<val3,n3,s3> * HP_1566(n3) * HP_1567(s3)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1567(s3)&true --> H1(s3)&
+true(3,4),
+ // PRE
+(2;0)HP_1566(n3)&true |#| l::node2<val3,n3,s3>&true --> n3::H2<s3> * 
+HP_1593(s3)&
+true(3,4),
+ // POST
+(1;0)H1(l)&l=null --> emp&
+true(3,4)]
+
+Procedure skip1$node2 SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(l2) ::=  [emp&l2=null; l2::node2<val4,n4,DP> * n4::H2<DP> * H1(DP)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(l2) ::= 
+ l2::node2<val4,n4,DP> * n4::H2<DP> * H1(DP)
+ or emp&l2=null
+ (3,4)]
+*************************************
+Stop Omega... 47 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.174553,596)
+Total verification time: 0.552364 second(s)
+	Time spent in main process: 0.49246 second(s)
+	Time spent in child processes: 0.059904 second(s)
+

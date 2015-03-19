@@ -1,0 +1,22 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Entail (1) : Valid. 
+
+Residue:
+ <1>emp*N@full[y]@lend[v]@zero[x]&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 2: Valid. 
+
+Residue:
+ <1>emp*N@full[y]@lend[v]@zero[x]&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail (3) : Valid. 
+
+Residue:
+ <1>emp*N@lend[v]@zero[y,x]&{FLOW,(4,5)=__norm#E}[]
+
+

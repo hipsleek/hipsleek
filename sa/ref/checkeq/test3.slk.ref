@@ -1,0 +1,32 @@
+Starting Omega...oc
+
+!!!Final MTL: [[(n, m), (t, t), (x, x)]]
+Checkeq (1) : Valid.
+!!!Final MTL: [[(flted_11_20, flted_11_28), (t, t), (x, y)]]
+Checkeq (2) : Valid.
+!!!Final MTL: [[(flted_15_35, flted_15_43), (t, t)]]
+Checkeq (3) : Valid.
+Checkeq (4) : Fail.
+
+Checkeq (5) : Fail.
+
+!!!Final MTL: [[(flted_27_87, flted_27_102), (z, p), (flted_27_88, flted_27_103), (t, t), (x, y)], [(flted_27_87, flted_27_103), (z, y), (flted_27_88, flted_27_102), (t, t), (x, p)]]
+Checkeq (6) : Valid.
+!!!Final MTL: [[(flted_31_116, flted_31_132), (z, y), (flted_31_117, flted_31_131), (t, t)]]
+Checkeq (7) : Valid.
+Checkeq (8) : Fail.
+
+Checkeq (9) : Fail.
+
+ERROR: at checkeq/test3.slk_43:30_43:46 
+Message: UNIFICATION ERROR : at location {(43,30),(43,46)} types node and node2 are inconsistent
+ 
+ERROR: at checkeq/test3.slk_43:30_43:46 
+Message: gather_type_info_var : unexpected exception Failure("UNIFICATION ERROR : at location {(43,30),(43,46)} types node and node2 are inconsistent")
+ SLEEK FAILURE (END)
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.072846 second(s)
+	Time spent in main process: 0.058148 second(s)
+	Time spent in child processes: 0.014698 second(s)
+

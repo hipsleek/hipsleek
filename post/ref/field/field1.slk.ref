@@ -1,0 +1,24 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+Entail 1: Valid. 
+
+Residue:
+ <1>x::node<Anon_54,q_55> * q_55::ll{}<flted_7_53>&3<n & flted_7_53+1=n & Anon_13=Anon_54 & q=q_55&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(x,x) ==> ]]
+
+
+Residue:
+ <1>x::node<Anon_54,q_55> * q_55::ll{}<flted_7_53>&3<n & flted_7_53+1=n & Anon_13=Anon_54 & q=q_55&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 2: Valid. 
+
+Residue:
+ <1>emp&v=5 & x!=null&{FLOW,(4,5)=__norm#E}[]
+
+

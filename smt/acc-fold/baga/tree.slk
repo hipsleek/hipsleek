@@ -1,0 +1,14 @@
+
+data node {
+     node left;
+     node right;
+}.
+
+pred bintree<> ==
+     self = null
+     or (exists l,r: self::node<l,r> * l::bintree<> * r::bintree<>).
+
+pred bintreeseg<y> ==
+     self = y
+     or (exists l,r: self::node<l,r> * l::bintreeseg<y> * r::bintree<>)
+     or (exists l,r: self::node<l,r> * l::bintree<> * r::bintreeseg<y>).

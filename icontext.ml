@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 open Globals
 open Others
 open Gen
@@ -44,7 +46,7 @@ let rec string_of_iaction act=
     | I_post_oblg -> "post-oblg"
     | I_seq ls_act -> "seq:" ^ (String.concat ";" (List.map (pr_pair string_of_int string_of_iaction) ls_act))
 
-let mk_is constrs all_constrs link_hpargs dang_hpargs unk_map sel_hps post_hps cond_path
+let mk_is constrs all_constrs link_hpargs dang_hpargs unk_map sel_hps post_hps cond_path iflow
       hp_equivs hpdefs=
   {
       is_constrs = constrs; (*current process constraints*)
@@ -56,6 +58,7 @@ let mk_is constrs all_constrs link_hpargs dang_hpargs unk_map sel_hps post_hps c
       is_post_hps = post_hps;
       is_prefix_hps = [];
       is_cond_path = cond_path;
+      is_flow = iflow;
       is_hp_equivs = hp_equivs;
       is_hp_defs = hpdefs;
   }
@@ -88,7 +91,7 @@ let ranking_frozen_mutrec_preds_x pr_hp_cs=
       let is_lhs_emp = (CF.extract_hrel_head cs.CF.hprel_lhs <> None) in
       let is_rhs_emp = (CF.extract_hrel_head cs.CF.hprel_rhs <> None) in
       let is_pure = try
-        let _ = CF.extract_HRel_f cs.CF.hprel_lhs in
+        let todo_unk = CF.extract_HRel_f cs.CF.hprel_lhs in
         Sautil.is_empty_f cs.CF.hprel_rhs
       with _ -> false
       in
@@ -102,14 +105,14 @@ let ranking_frozen_mutrec_preds_x pr_hp_cs=
   let pr2 = pr_list_ln (pr_hepta !CP.print_sv pr1 string_of_bool string_of_bool string_of_bool string_of_bool
       string_of_int
   ) in
-  let _ = Debug.ninfo_zprint  (lazy  ("    pre_preds_4_equal_w_prio: " ^ ((pr2) pre_preds_4_equal_w_prio))) no_pos in
+  let () = Debug.ninfo_zprint  (lazy  ("    pre_preds_4_equal_w_prio: " ^ ((pr2) pre_preds_4_equal_w_prio))) no_pos in
   (*first ranking*)
   (* let pure_ls = List.filter (fun (_,_, is_pure,_, _, _ , _) ->  is_pure) pre_preds_4_equal_w_prio in *)
   (* match pure_ls with *)
   (*   | (hp,cs,_,_,_,_,_)::_ -> [(hp,[cs])] *)
   (*   | _ -> *) begin
         let fst_ls = List.filter (fun (_,_,_, is_empty_both, _, _ , _) ->  is_empty_both) pre_preds_4_equal_w_prio in
-        let _ = Debug.ninfo_zprint  (lazy  ("    fst_ls: " ^ ((pr2) fst_ls))) no_pos in
+        let () = Debug.ninfo_zprint  (lazy  ("    fst_ls: " ^ ((pr2) fst_ls))) no_pos in
         match fst_ls with
           | (hp,cs,_,_,_,_,_)::_ -> [(hp,[cs])]
           | _ -> begin
@@ -172,37 +175,37 @@ let icompute_action_pre_x constrs post_hps frozen_hps pre_fix_hps=
    match ls_pre with
      | [] -> (cand_equal, complex_nrec_ndep, complex_non_rec, complex_hps)
      | (hp0, cs0, dep_hps0)::rest ->
-           (* let _ = Debug.info_zprint  (lazy  ("   cs0: " ^ (pr1 cs0))) no_pos in *)
-           let _ = Debug.ninfo_zprint  (lazy  ("   hp0: " ^ (!CP.print_sv hp0))) no_pos in
+           (* let () = Debug.info_zprint  (lazy  ("   cs0: " ^ (pr1 cs0))) no_pos in *)
+           let () = Debug.ninfo_zprint  (lazy  ("   hp0: " ^ (!CP.print_sv hp0))) no_pos in
            let is_rec, is_guard, dep_hps, grp,rest1 = List.fold_left (fun (r_rec,r_guard, r_deps, ls1,ls2) (hp1,cs1,dep_hps1) ->
-               (* let _ = Debug.info_zprint  (lazy  ("   cs1: " ^ (pr1 cs1))) no_pos in *)
+               (* let () = Debug.info_zprint  (lazy  ("   cs1: " ^ (pr1 cs1))) no_pos in *)
                if CP.eq_spec_var hp1 hp0 then
                  (r_rec || CP.mem_svl hp1 dep_hps1, r_guard || ( check_is_guard cs1), r_deps@dep_hps1,  ls1@[cs1], ls2)
                else
                  (r_rec, r_guard,r_deps, ls1, ls2@[(hp1,cs1,dep_hps1)])
            ) (CP.mem_svl hp0 dep_hps0,  check_is_guard cs0, dep_hps0, [],[]) rest in
            let grp1 = (cs0::grp) in
-           (* let _ = Debug.info_zprint  (lazy  ("   is_guard: " ^ (string_of_bool is_guard))) no_pos in *)
-           (* let _ = Debug.info_zprint  (lazy  ("   is_rec: " ^ (string_of_bool is_rec))) no_pos in *)
+           (* let () = Debug.info_zprint  (lazy  ("   is_guard: " ^ (string_of_bool is_guard))) no_pos in *)
+           (* let () = Debug.info_zprint  (lazy  ("   is_rec: " ^ (string_of_bool is_rec))) no_pos in *)
            (*has more than one constraints: disj but not recursive also join the race*)
            let n_res = if List.length grp1 > 1 then
              if not is_rec && is_guard then
-               (* let _ = Debug.info_pprint ("   0: ") no_pos in *)
+               (* let () = Debug.info_pprint ("   0: ") no_pos in *)
                (cand_equal, complex_nrec_ndep, complex_non_rec@[(hp0,grp1)], complex_hps)
              else if  not is_rec && dep_hps = [] then
                (cand_equal, complex_nrec_ndep@[(hp0,grp1)], complex_non_rec, complex_hps)
              else
-               (* let _ = Debug.info_pprint ("   1: ") no_pos in *)
+               (* let () = Debug.info_pprint ("   1: ") no_pos in *)
                (cand_equal, complex_nrec_ndep, complex_non_rec, complex_hps@[hp0])
            else
              if is_guard then
-               (* let _ = Debug.info_pprint ("   2: ") no_pos in *)
+               (* let () = Debug.info_pprint ("   2: ") no_pos in *)
                (cand_equal, complex_nrec_ndep, complex_non_rec@[(hp0,grp1)], complex_hps)
              else if is_rec then
-               (* let _ = Debug.info_pprint ("   3: ") no_pos in *)
+               (* let () = Debug.info_pprint ("   3: ") no_pos in *)
                (cand_equal, complex_nrec_ndep, complex_non_rec, complex_hps@[hp0])
              else
-               (* let _ = Debug.info_pprint ("   4: ") no_pos in *)
+               (* let () = Debug.info_pprint ("   4: ") no_pos in *)
                (cand_equal@[(hp0,cs0, dep_hps0)],complex_nrec_ndep, complex_non_rec, complex_hps)
            in
            partition_equal n_res rest1
@@ -225,16 +228,16 @@ let icompute_action_pre_x constrs post_hps frozen_hps pre_fix_hps=
     partition_equal ([],[],[],[]) pr_pre_preds
   in
   let pr2 (a,_,_) = !CP.print_sv a in
-  let _ = Debug.ninfo_zprint  (lazy  ("    pre_preds_cand_equal0: " ^ ((pr_list pr2) pre_preds_cand_equal0))) no_pos in
-  let _ = Debug.ninfo_zprint  (lazy  ("    tupled_hps: " ^ (!CP.print_svl tupled_hps))) no_pos in
+  let () = Debug.ninfo_zprint  (lazy  ("    pre_preds_cand_equal0: " ^ ((pr_list pr2) pre_preds_cand_equal0))) no_pos in
+  let () = Debug.ninfo_zprint  (lazy  ("    tupled_hps: " ^ (!CP.print_svl tupled_hps))) no_pos in
   (*filter the tupled_hps *)
   let pre_preds_cand_equal1 = List.filter (fun (hp,_,_) -> not (CP.mem_svl hp tupled_hps)) pre_preds_cand_equal0 in
-  let _ = Debug.ninfo_zprint  (lazy  ("    pre_preds_cand_equal1: " ^ ((pr_list pr2) pre_preds_cand_equal1))) no_pos in
+  let () = Debug.ninfo_zprint  (lazy  ("    pre_preds_cand_equal1: " ^ ((pr_list pr2) pre_preds_cand_equal1))) no_pos in
   (*filter frozen candidates that depends on others. they will be synthesized next round.*)
   (* let cand_equal_hps = List.map fst3 pre_preds_cand_equal1 in *)
   let nonrec_complex_guard_hps = List.map fst complex_nonrec_guard_grps in
   (*remove one that depends on the guard, the guard should go first*)
-  let _ = Debug.ninfo_zprint  (lazy  ("    nonrec_complex_guard_hps: " ^ (!CP.print_svl nonrec_complex_guard_hps))) no_pos in
+  let () = Debug.ninfo_zprint  (lazy  ("    nonrec_complex_guard_hps: " ^ (!CP.print_svl nonrec_complex_guard_hps))) no_pos in
   let pre_preds_4_equal = List.fold_left (fun ls_cand (hp,cs,deps) ->
       if CP.intersect_svl deps nonrec_complex_guard_hps = [] then
         ls_cand@[(hp,cs)]

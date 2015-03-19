@@ -1,0 +1,37 @@
+
+!!!Full processing file "paper-v/check-zip-eq-v.ss"
+Parsing file "paper-v/check-zip-eq-v.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | (self!=null & p!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([p,self], true),
+([], self=null)])
+Checking procedure check_zip_eq$node~node... 
+Post condition cannot be derived:
+  (may) cause: OrL[ !(res) |-  res. LOCS:[23;21] (must-bug),valid]
+
+Context of Verification Failure: 1 File "paper-v/check-zip-eq-v.ss",Line:21,Col:32
+Last Proving Location: 1 File "paper-v/check-zip-eq-v.ss",Line:24,Col:15
+
+ERROR: at paper-v/check-zip-eq-v.ss_21:32_21:35 
+Message: Post condition cannot be derived.
+ 
+Procedure check_zip_eq$node~node FAIL.(2)
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure check_zip_eq$node~node
+
+!!! proc.proc_name:check_zip_eq$node~nodeStop Omega... 13 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.082177,409)
+Total verification time: 0.35567 second(s)
+	Time spent in main process: 0.332034 second(s)
+	Time spent in child processes: 0.023636 second(s)
+

@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open Typeclass
 
 (* module for typevar t *)

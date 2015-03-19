@@ -1,0 +1,204 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Entail (1) : Valid. 
+
+
+Entail (2) : Valid. 
+
+
+Entail (3) : Valid. 
+
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume 0<=x & x'=y+x & y'=z+y & 
+z'=z & fpost_0(x',y',z') --> fpost_0(x,y,z).
+
+ termAssume x<0 --> fpost_0(x,y,z).
+
+ termAssume 0<=x & x'=y+x & y'=z+y & 
+z'=z & fpre_0(x,y,z) --> fpre_0(x',y',z').
+
+Starting Omega.../usr/local/bin/oc
+
+Base/Rec Case Splitting:
+[	f: [[2] x<=(0-1)@B,[3] 0<=x@R]
+]
+Termination Inference Result:
+f:  case {
+  x<=(0-1) -> requires emp & Term[0,1]
+     ensures emp & true; 
+  0<=x -> case {
+           0<=y -> case {
+                    0<=z -> requires emp & Loop[]
+     ensures false & false; 
+                    z<=(0-1) -> requires emp & Term[0,3,0+(0*x)+(1*y)+(0*
+                    z)]
+     ensures emp & true; 
+                    }
+           
+           y<=(0-
+           1) -> case {
+                  z<=0 -> requires emp & Term[0,2,0+(1*x)+(0*y)+(0*
+                  z)]
+     ensures emp & true; 
+                  1<=z -> case {
+                           (0-x)<=y & y<=(0-1) & 
+                           1<=z -> case {
+                                    1<=z & z<=((0-y)-1) & 0<=(x+(2*y)+
+                                    z) -> case {
+                                           y<=((0-(2*z))-1) & 1<=z & 0<=(x+
+                                           (3*y)+(3*
+                                           z)) -> case {
+                                                   y<=((0-(3*z))-1) & 1<=z & 
+                                                   0<=(x+(4*y)+(6*
+                                                   z)) -> requires emp & MayLoop[]
+     ensures emp & true;
+                                                   
+                                                   (0-(3*z))<=y & y<=((0-(2*
+                                                   z))-1) & 0<=(x+(3*y)+(3*
+                                                   z)) -> requires emp & MayLoop[]
+     ensures emp & true;
+                                                   
+                                                   (x+(4*y)+(6*z))<0 & 
+                                                   1<=z & 0<=(x+(3*y)+(3*
+                                                   z)) -> requires emp & MayLoop[]
+     ensures emp & true;
+                                                   
+                                                   }
+                                           
+                                           (0-(2*z))<=y & y<=((0-z)-1) & 
+                                           0<=(x+(2*y)+
+                                           z) -> requires emp & Loop[]
+     ensures false & false;
+                                           
+                                           (x+(3*y)+(3*z))<0 & 1<=z & 0<=(x+
+                                           (2*y)+
+                                           z) -> requires emp & Term[0,6]
+     ensures emp & true;
+                                           
+                                           }
+                                    
+                                    0<=(x+y) & (x+(2*y)+z)<0 & 
+                                    1<=z -> requires emp & Term[0,5]
+     ensures emp & true;
+                                    
+                                    (0-x)<=y & (0-z)<=y & y<=(0-
+                                    1) -> requires emp & Loop[]
+     ensures false & false;
+                                    
+                                    }
+                           
+                           x<=((0-y)-
+                           1) -> requires emp & Term[0,4]
+     ensures emp & true;
+                           
+                           }
+                  
+                  }
+           
+           }
+  
+  }
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume v_bool_9_880' & x'<0 & v_bool_9_880' & x=x' & y=y' & z=z' & 
+x'<0 --> fpost_0(x,y,z).
+
+ termAssume 0<=x' & z=z' & y=y' & x=x' & !(v_bool_9_880') & 0<=x' & 
+!(v_bool_9_880') & fpost_0(y'+x',z'+y',z') --> fpost_0(x,y,z).
+
+ termAssume v_int_10_878'=y'+z' & v_int_10_879'=x'+y' & !(v_bool_9_880') & 
+0<=x' & !(v_bool_9_880') & x=x' & y=y' & z=z' & 
+0<=x' & fpre_0(x,y,z) --> fpre_0(v_int_10_879',v_int_10_878',z').
+
+
+Base/Rec Case Splitting:
+[	f: [[2] x<=(0-1)@B,[3] 0<=x@R]
+]
+Termination Inference Result:
+f:  case {
+  x<=(0-1) -> requires emp & Term[0,1]
+     ensures emp & true; 
+  0<=x -> case {
+           0<=y -> case {
+                    0<=z -> requires emp & Loop[]
+     ensures false & false; 
+                    z<=(0-1) -> requires emp & Term[0,3,0+(0*x)+(1*y)+(0*
+                    z)]
+     ensures emp & true; 
+                    }
+           
+           y<=(0-
+           1) -> case {
+                  z<=0 -> requires emp & Term[0,2,0+(1*x)+(0*y)+(0*
+                  z)]
+     ensures emp & true; 
+                  1<=z -> case {
+                           (0-x)<=y & y<=(0-1) & 
+                           1<=z -> case {
+                                    1<=z & z<=((0-y)-1) & 0<=(x+(2*y)+
+                                    z) -> case {
+                                           y<=((0-(2*z))-1) & 0<=(x+(3*y)+(3*
+                                           z)) & 
+                                           1<=z -> case {
+                                                    y<=((0-(3*z))-1) & 0<=(x+
+                                                    (4*y)+(6*z)) & 
+                                                    1<=z -> requires emp & MayLoop[]
+     ensures emp & true;
+                                                    
+                                                    (0-(3*z))<=y & y<=((0-(2*
+                                                    z))-1) & 0<=(x+(3*y)+(3*
+                                                    z)) -> requires emp & MayLoop[]
+     ensures emp & true;
+                                                    
+                                                    (x+(4*y)+(6*z))<0 & 
+                                                    0<=(x+(3*y)+(3*z)) & 
+                                                    1<=z -> requires emp & MayLoop[]
+     ensures emp & true;
+                                                    
+                                                    }
+                                           
+                                           (0-(2*z))<=y & y<=((0-z)-1) & 
+                                           0<=(x+(2*y)+
+                                           z) -> requires emp & Loop[]
+     ensures false & false;
+                                           
+                                           (x+(3*y)+(3*z))<0 & 0<=(x+(2*y)+
+                                           z) & 
+                                           1<=z -> requires emp & Term[0,6]
+     ensures emp & true;
+                                           
+                                           }
+                                    
+                                    0<=(x+y) & (x+(2*y)+z)<0 & 
+                                    1<=z -> requires emp & Term[0,5]
+     ensures emp & true;
+                                    
+                                    (0-x)<=y & (0-z)<=y & y<=(0-
+                                    1) -> requires emp & Loop[]
+     ensures false & false;
+                                    
+                                    }
+                           
+                           x<=((0-y)-
+                           1) -> requires emp & Term[0,4]
+     ensures emp & true;
+                           
+                           }
+                  
+                  }
+           
+           }
+  
+  }
+

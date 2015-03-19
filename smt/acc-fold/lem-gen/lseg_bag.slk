@@ -1,0 +1,16 @@
+data node {
+    int val;
+    node next
+}.
+
+pred lseg_bag2<p,S,n> == self = p & S = {} & n = 0
+    or self::node<v,r> * r::lseg_bag2<p,R,m> & self!= p
+       & S = union(R,{v}) & n = v+m.
+
+lemma_safe x::lseg_bag2<z,S,n> ->
+    x::lseg_bag2<y,R,m> * y::lseg_bag2<z,T,l> & S=union(R,T) & n=n+l.
+
+checkentail x::lseg_bag2<y,R,n> * y::lseg_bag2<z,S,m> * z::node<_,_>@L
+            |- x::lseg_bag2<z,T,l> & T = union(R,S) & l = n+m.
+
+checkentail x::lseg_bag2<z,R,n> |- x::lseg_bag2<y,S,m> * y::lseg_bag2<z,T,l>.

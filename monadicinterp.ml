@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open Monads
 open Typeclass
 
@@ -145,7 +146,7 @@ module Evalue =  struct
  
   let test (t:eTerm) : string = M.showM (interp t [])
 
-   (*let _ = print_string ("\n" ^ (test (ECon 2)) ^"\n");print_string ("\n" ^ (test (EApp ((ECon 2),(ECon 2)))) ^"\n")*)
+   (*let () = print_string ("\n" ^ (test (ECon 2)) ^"\n");print_string ("\n" ^ (test (EApp ((ECon 2),(ECon 2)))) ^"\n")*)
        
      
 end

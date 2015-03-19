@@ -1,0 +1,27 @@
+data node {
+     node next;
+}.
+
+data node1 {
+     node next;
+     node prev;
+}.
+
+pred rlist<y> ==
+     self::node<y>
+     or (exists u: self::rlist<u> * u::node<y>).
+
+pred list<y> ==
+     self::node<y>
+     or (exists u: self::node<u> * u::list<y>).
+
+pred listO<y> ==
+     self::node<y>
+     or (exists u: self::node<u> * u::listE<y>).
+
+pred listE<y> ==
+     exists u: self::node<u> * u::listO<y>.
+
+pred pelist<y> ==
+     self = y
+     or (exists u: self::node<u> * u::pelist<y>).

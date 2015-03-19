@@ -1,0 +1,43 @@
+
+!!!Full processing file "slk/fact2c1.ss"
+Parsing file "slk/fact2c1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure fact$int... 
+Procedure fact$int SUCCESS.
+
+Checking procedure fact$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume 1<=v_int_11_1191 & v_int_11_1187+1=x' & !(v_bool_10_1135') & 
+x'!=0 & !(v_bool_10_1135') & x'=x & x'!=0 & v_int_11_1134'=v_int_11_1191+1 & 
+res=v_int_11_1134' & fpost_0(v_int_11_1187) --> fpost_0(x).
+
+ termAssume x'=0 & x'=x & v_bool_10_1135' & x'=x' & v_bool_10_1135' & 
+v_int_10_1129'=1 & res=v_int_10_1129' --> fpost_0(x).
+
+ termAssume x'!=0 & x'=x & !(v_bool_10_1135') & x'!=0 & !(v_bool_10_1135') & 
+v_int_11_1133'=1 & v_int_11_1131'+
+1=x' & fpre_0(x) --> fpre_0(v_int_11_1131').
+
+
+Base/Rec Case Splitting:
+[	fact: [[2] x=0@B,[3] 1<=x@R,[4] x<=(0-1)@R]
+]
+Termination Inference Result:
+fact:  case {
+  x=0 -> requires emp & Term[29,1]
+ ensures emp & 1<=res; 
+  1<=x -> requires emp & Term[29,2,-1+(1*x)]
+ ensures emp & 1<=res; 
+  x<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  }
+
+0 false contexts at: ()

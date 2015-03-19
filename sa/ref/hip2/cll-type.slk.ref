@@ -1,0 +1,28 @@
+Starting Omega...oc
+H is defined.
+HP_6 is defined.
+Starting z3... 
+
+Entail (1) : Fail.(may) cause: true |-  y!=null. LOCS:[0;11] (may-bug)
+
+
+Entail (2) : Valid. 
+
+
+Entail (3) : Valid. 
+
+
+Entail (4) : Valid. 
+
+Stop Omega... 6 invocations 
+SAT Count   : 16
+SAT % Hit   : 68.75%
+IMPLY Count : 9
+IMPLY % Hit : 44.44%
+Time(cache overhead) : 0.000941 (seconds)
+
+!!! log(small):(0.011343,35)
+Total verification time: 0.063784 second(s)
+	Time spent in main process: 0.049394 second(s)
+	Time spent in child processes: 0.01439 second(s)
+

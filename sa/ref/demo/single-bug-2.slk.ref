@@ -1,0 +1,43 @@
+Starting Omega...oc
+HP_4 is defined.
+HP_5 is defined.
+G is defined.
+Starting z3... 
+
+!!! formula1: emp&((res=self & self!=null) | (self!=null & res!=null))&
+{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&((self>0 & self=res) | (res!=self & res!=self & self>0))&
+{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([res_91,self], true),
+([self], self=res_91)])
+
+*************************************
+*******relational definition ********
+*************************************
+[ HP_4(next,next1) ::= 
+ emp&next=null
+ or emp&next1!=null & next=null
+ (3,4),
+ HP_5(next3,t) ::= GP_150(next3,next2)&t=next2 & next2!=null(3,4),
+ G(x,res) ::= 
+ x::node<val1,next4>&res=x & next4=null
+ or x::node<val1,next4> * HP_5(next4,res) * res::node<val,v>&next4!=null & 
+    v=null
+ (3,4),
+ GP_150(next3,next2) ::= 
+ next3::node<val2,next5> * GP_150(next5,next2)&next5!=null
+ or emp&next3=next2
+ (3,4)]
+*************************************
+Stop Omega... 14 invocations 
+SAT Count   : 45
+SAT % Hit   : 64.44%
+IMPLY Count : 15
+IMPLY % Hit : 26.66%
+Time(cache overhead) : 0.004218 (seconds)
+
+!!! log(small):(0.506352,79)
+Total verification time: 0.104963 second(s)
+	Time spent in main process: 0.081558 second(s)
+	Time spent in child processes: 0.023405 second(s)
+

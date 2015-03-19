@@ -1,0 +1,50 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/rec-f91b.ss"
+Parsing file "t/rec-f91b.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure f91$int... 
+Procedure f91$int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN postA: ( n=res & 91<=res) -->  postA(n,res),
+RELDEFN postA: ( postA(v_int_12_1363,res) & n<=90 & postA(1+n,v_int_12_1363)) -->  postA(n,res)]
+*************************************
+
+Post Inference result:
+f91$int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           emp&((90>=n & 91=res) | (n>=89 & 91>=n & 91=res) | (res>=91 & 
+           res=n))&{FLOW,(4,5)=__norm#E}[]
+           
+
+Checking procedure fact$int... 
+Procedure fact$int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN postB: ( n=0 & res=0) -->  postB(n,res),
+RELDEFN postB: ( postB(0,v_int_20_1387) & res=1+v_int_20_1387 & n!=0) -->  postB(n,res)]
+*************************************
+
+Post Inference result:
+fact$int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           emp&((0>=(1+n) & 1=res) | (n>=1 & 1=res) | (0=n & 0=res))&
+           {FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 0.540032 second(s)
+	Time spent in main process: 0.396024 second(s)
+	Time spent in child processes: 0.144008 second(s)
+

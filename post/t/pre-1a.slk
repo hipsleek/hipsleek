@@ -1,0 +1,14 @@
+relation R(int x,int y).
+infer [R] x>y & R(x,y) |- x>0.
+print residue.
+/*
+# pre-1a.slk
+ <1>emp&0<=y & R(x,y) & y<x&{FLOW,(21,22)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [R]: ( R(x,y)) -->  0<=y]
+
+
+Why is there a useless 
+ inferred pure: [true]
+*/
+

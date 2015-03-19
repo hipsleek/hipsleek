@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 let tmp_files_path = ref ""
 
 (*path for the temporary files used by the prover. If you change this path here it is 
@@ -24,7 +25,12 @@ let set_tmp_files_path () =
 	end
 
 (*type of process used for communicating with the prover*)
-type prover_process_t = {name:string; pid: int; inchannel: in_channel; outchannel: out_channel; errchannel: in_channel }
+type prover_process_t = {
+  name:string; 
+  pid: int; 
+  inchannel: in_channel; 
+  outchannel: out_channel; 
+  errchannel: in_channel }
 
 (*methods that need to be defined in order to use a prover incrementally - if the prover provides this functionality*)
 class type ['a] incremMethodsType = object

@@ -1,0 +1,40 @@
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+!!! formula1: emp&(self=null | (self!=null & y!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self,y], true),
+([], self=null)])
+!!! formula1: emp&((self=null & y=null) | (self!=null & y!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&y=null & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self,y], true),
+([], self=null & y=null)])
+Entailing lemma one: Valid.
+
+ Temp Lemma(s) proved as valid in current context.
+
+Entailing lemma lem_18: Fail. (no cex)(must) cause: OrL[ (exists m2,n3: y::zipN{}<m2>&n3<=m2 & n3=0 & self2=null&
+{FLOW,(5,6)=__Error})[],valid]
+
+Failed to proved for lem_18:<== ==> invalid lemma encountered.
+: no residue 
+Stop Omega... 38 invocations 
+SAT Count   : 799
+SAT % Hit   : 86.85%
+IMPLY Count : 33
+IMPLY % Hit : 39.39%
+Time(cache overhead) : 0.064741 (seconds)
+
+!!! log(small):(0.782226,896)
+Total verification time: 0.332419 second(s)
+	Time spent in main process: 0.28917 second(s)
+	Time spent in child processes: 0.043249 second(s)
+

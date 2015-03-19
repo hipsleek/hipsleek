@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 open Globals
 open Sleekcommons
 open Sleekengine
@@ -21,12 +23,12 @@ let sleeklib_init (args:string array) =
   Arg.parse_argv args Scriptarguments.sleek_arguments (fun _ -> ()) "";
 	(if !Globals.override_slc_ps then Globals.en_slc_ps:=false else ());
   Scriptarguments.check_option_consistency ();
-  Globals.silence_output := true;
+  Gen.silence_output := true;
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.start_prover ();
-  let _ = process_data_def (I.b_data_constr b_datan []) in
-  let _ = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
-  let _ = Iast.build_exc_hierarchy true iprog in
-  let _ = exlist # compute_hierarchy  in  
+  let () = process_data_def (I.b_data_constr b_datan []) in
+  let () = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
+  let () = Iast.build_exc_hierarchy true iprog in
+  let () = exlist # compute_hierarchy  in  
   ()
   
   	
@@ -50,13 +52,12 @@ let process_cmd_list cmds :bool=
    * Otherwise, we perform second round checking!
    *)
   let udefs = !Astsimp.undef_data_types in
-  let _ = match udefs with
-    | [] ->	perform_second_parsing_stage ()
+  let () = match udefs with
+    | [] ->  ()
     | _ -> let udn,udp = List.hd (List.rev udefs) in
       Error.report_error { Error.error_loc  = udp;
       Error.error_text = "Data type " ^ udn ^ " is undefined!" }
   in ();
-  Debug.tinfo_pprint "sleek : after 2nd parsing" no_pos;
   convert_data_and_pred_to_cast ();
   Debug.tinfo_pprint "sleek : after convert_data_and_pred_to_cast" no_pos;
    (*proc_one_lemma*)
@@ -71,6 +72,7 @@ let process_cmd_list cmds :bool=
   (*proc_one_cmd*) 
   List.fold_left (fun a c-> match c with 
       | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype) && a
+      | CheckNorm f -> (process_check_norm f; a)
       | EqCheck (lv, if1, if2) -> (process_eq_check lv if1 if2; a)
       | Infer (ivars, iante, iconseq) -> (process_infer ivars iante iconseq) && a
       | CaptureResidue lvar -> (process_capture_residue lvar; a)
@@ -85,13 +87,13 @@ let process_cmd_list cmds :bool=
 
 
 let process_cmd (cmd_string:string) (flush_context:bool)= 
-	Globals.silence_output := true;
-	let _ = if flush_context then begin
-		let _ = clear_all () in
-		let _ = process_data_def (I.b_data_constr b_datan []) in
-		let _ = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
-		let _ = Iast.build_exc_hierarchy true iprog in
-		let _ = exlist # compute_hierarchy  in  
+	Gen.silence_output := true;
+	let () = if flush_context then begin
+		let () = clear_all () in
+		let () = process_data_def (I.b_data_constr b_datan []) in
+		let () = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
+		let () = Iast.build_exc_hierarchy true iprog in
+		let () = exlist # compute_hierarchy  in  
 		()
 		end 
     else () in

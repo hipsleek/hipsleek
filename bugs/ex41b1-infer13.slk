@@ -1,0 +1,41 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<q> * q::ll<n-1> 
+  inv n >= 0.
+
+pred lseg<p> == self = p 
+	or self::node<q> * q::lseg<p> & self!=p 
+  inv true.
+  
+HeapPred H1(node y).
+
+HeapPred H2(node y,node x).
+
+HeapPred H3(node y,node@NI x).
+
+/*
+infer [H3] x::node<z> * H3(z,x)  |- 
+       (exists q: x::node<q> * q::lseg<z> & x!=z).
+print residue.
+*/
+
+infer [H3] H3(z,x)  |- 
+         z::lseg<z> & x!=z.
+print residue.
+
+/*
+# ex41b1   @NI seems wrong
+
+@NI new
+ <1>H3(z,x)&z!=x&{FLOW,(4,5)=__norm#E}[]
+ inferred hprel: [H3(z,x@NI)&true --> emp&x!=z]
+
+How come q::lseg<z> disappeared from RHS?
+
+
+*/

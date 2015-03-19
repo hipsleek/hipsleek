@@ -1,0 +1,26 @@
+
+!!!Full processing file "demo/rose-tree-s.ss"
+Parsing file "demo/rose-tree-s.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Checking procedure check_tree$tree... 
+Procedure check_tree$tree SUCCESS.
+Stop Omega... 9 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.036087,272)
+Total verification time: 0.338036 second(s)
+	Time spent in main process: 0.293328 second(s)
+	Time spent in child processes: 0.044708 second(s)
+

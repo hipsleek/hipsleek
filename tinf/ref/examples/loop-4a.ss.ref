@@ -1,0 +1,34 @@
+
+!!!Full processing file "examples/loop-4a.ss"
+Parsing file "examples/loop-4a.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure f$int... 
+Procedure f$int SUCCESS.
+
+Checking procedure f$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume v_int_11_1157=1+x' & 
+x'=x & fpost_1122(v_int_11_1157) --> fpost_1122(x).
+
+ termAssume x'=x & v_int_11_1124'=1+
+x' & fpre_0(x) --> fpre_0(v_int_11_1124').
+
+ termAssume x'=x & fpre_0(x) --> Loop.
+
+
+Base/Rec Case Splitting:
+[	f: [[3] true@R]
+]
+Termination Inference Result:
+f:  requires emp & Loop[]
+ ensures false & false;
+
+0 false contexts at: ()

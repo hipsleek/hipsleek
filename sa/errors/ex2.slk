@@ -1,0 +1,117 @@
+data node {node next; }.
+
+//checkentail x=null & flow __Error |- x!=null.
+
+
+//1
+checkentail x=null |- x=null.
+print residue.
+
+
+//2
+checkentail x=null |- x::node<p>.
+print residue.
+// x=null & flow __Error
+
+
+
+/*
+# ex2.slk --efa --sa-error
+
+Got:
+Entail 3: Fail.(no cex)(may) cause:do_unmatched_rhs : x::node<p>
+
+why residue for (3) not printed nor given warning?
+
+-----
+
+why can't we have residue with error status?
+why can't we have the original state x=null in residue state?
+
+expecting residue of :
+  (x=null) & _Flow=MUST_ERRE
+
+Fail Trace?:[?] 
+Error Context: length= 1 [es_formula: emp&x=null&{FLOW,(3,4)=__Error}[]
+                          es_gen_impl_vars: [p]
+                          es_must_error: Some( true |-  x=1. LOCS:[15;0] (must-bug); true)
+                          es_infer_vars_rel: []] <1>emp&x=null&{FLOW,(3,4)=__Error}[]
+[[empty]]
+*/
+
+//3
+checkentail x!=null |- x::node<p>.
+print residue.
+// should be may
+//Entail 3: Fail.(no cex)(must) cause:do_unmatched_rhs : x::node<p>
+// x!=null & flow __MayError
+
+
+//4
+checkentail y!=null |- x::node<p>.
+print residue.
+// should be may
+//Entail 4: Fail.(no cex)(must) cause:do_unmatched_rhs : x::node<p>
+// x!=null & flow __MayError
+
+
+//5
+checkentail x::node<_>  & y=x
+   |- x::node<_>.
+print residue.
+// how about y=x & x!=null ?
+// <1>emp&{FLOW,(3,4)=__norm}[]
+
+
+//6
+checkentail y::node<_> & y=z |- x::node<p>.
+print residue.
+// should be (may)
+//Entail 6: Fail.(no cex)(must) cause:do_unmatched_rhs : x::node<p>
+//<1>z::node<_>&{FLOW,(3,7)=__MayError}[]
+
+
+/*
+# ex2.slk --efa
+
+# why did we get a must failure? shouldn't this be a may failure?
+
+
+expecting residue of :
+  true & _Flow=MAY_ERR
+
+Entail 2: Fail.(cex)(must) cause:do_unmatched_rhs : x::node<p>
+
+Fail Trace?:[?] 
+Error Context: length= 1 [es_formula: emp&{FLOW,(21,22)=__norm}[]
+                          es_gen_impl_vars: [x; p]
+                          es_must_error: Some(do_unmatched_rhs : x::node<p>; true)
+                          es_trace:  COND ==>  UnmatchedRHSData ==> 
+                          es_infer_vars_rel: []] <1>emp&{FLOW,(21,22)=__norm}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+*/
+
+/*
+//4
+checkentail x=null  |- x::node<p> & flow __Error.
+
+print residue.
+expect Fail.
+*/
+
+/*
+
+ (true)norm \/ (true)Err |- (true)norm --> fail
+
+ (true)norm \/ (true)Err |- (true)norm \/ (true)Err --> valid
+
+ (true)norm |- (true)norm \/ (true)Err --> valid
+
+ (true)norm |- (true)Err --> fail
+
+ (true)norm |- (true)MayErr --> valid
+
+ (true)Err <--> (true)Err \/ (false)Err
+
+*/
+

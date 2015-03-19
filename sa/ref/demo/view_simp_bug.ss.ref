@@ -1,0 +1,18 @@
+
+!!!Full processing file "demo/view_simp_bug.ss"
+Parsing file "demo/view_simp_bug.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+ERROR: at demo/view_simp_bug.ss_6:9_6:13 
+Message: UNIFICATION ERROR : at location {(6,9),(6,13)} types WAITS and ll1 are inconsistent
+ 
+ERROR: at demo/view_simp_bug.ss_6:9_6:13 
+Message: gather_type_info_var : unexpected exception Failure("UNIFICATION ERROR : at location {(6,9),(6,13)} types WAITS and ll1 are inconsistent")
+ Stop Omega... 0 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("gather_type_info_var : unexpected exception Failure(\"UNIFICATION ERROR : at location {(6,9),(6,13)} types WAITS and ll1 are inconsistent\")")
+Error3(s) detected at main 

@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open Gen.Basic
 open Gen.BList
 
@@ -113,18 +114,18 @@ object (self)
   method dump_left =
     let lems = left_lem # reverse_of in
     let pr = if not (!Globals.dump_lemmas_med) then !lem_pr else !lem_pr_med in
-    print_endline ("\n===========\nLEFT LEMMAS\n===========\n" ^ (pr_list_ln pr lems))
+    print_endline_quiet ("\n===========\nLEFT LEMMAS\n===========\n" ^ (pr_list_ln pr lems))
 
   method dump_right =
     let lems = right_lem # reverse_of in
     let pr = if not (!Globals.dump_lemmas_med) then !lem_pr else !lem_pr_med in
-    print_endline ("\n============\nRIGHT LEMMAS\n============\n" ^ (pr_list_ln pr lems))
+    print_endline_quiet ("\n============\nRIGHT LEMMAS\n============\n" ^ (pr_list_ln pr lems))
 
   method dump =
-    print_endline "\nLemma store dump:";
+    print_endline_quiet "\nLemma store dump:";
     self # dump_left;
     self # dump_right;
-    print_endline ""
+    print_endline_quiet ""
 
 
 
@@ -160,8 +161,8 @@ object (self)
     lst # push lemma_list
 
   method set_ilemma il_lst  =
-    let _ = lst # reset in
-    let len = List.iter (self # add_ilemma ) il_lst in
+    let () = lst # reset in
+    let () = List.iter (self # add_ilemma ) il_lst in
     ()
 
   method get_all_ilemma =
@@ -169,10 +170,36 @@ object (self)
 
   method string_of =
     let lems = lst # reverse_of in
-    print_endline ("ILemmas:"^(pr_list !ilem_lst_pr lems))
+    print_endline_quiet ("ILemmas:"^(pr_list !ilem_lst_pr lems))
 
 end;;
 
 let ilemma_st = new lemma_list_store;;
 
 
+(**********************************************************)
+(***********LEMMA APPLICATION PRE-PROCESS*****************)
+(**********************************************************)
+(*
+  pre process: check whether coercion has the same form with lhs and rhs
+*)
+(* let is_lemma_syntax_matching_x prog (lnode, largs) (rnode, rargs) lhs rhs remap coer= *)
+(*   let shape_match lhs rhs l_coer r_coer= *)
+(*     let l_reach = Cfutil.obtain_reachable_formula prog lhs [lnode] in *)
+(*     let l_reach = Cfutil.obtain_reachable_formula prog rhs [rnode] in *)
+(*     true *)
+(*   in *)
+(*   true *)
+
+(* let is_lemma_shape_matching prog (lnode,largs) (rnode,rargs) lhs rhs remap coer= *)
+(*   let pr1 = !lem_pr in *)
+(*   let pr2 = !Cpure.print_sv in *)
+(*   let pr3 = !Cpure.print_svl in *)
+(*   let pr4 = !Cformula.print_formula in *)
+(*   Debug.no_7 "is_lemma_shape_matching" pr1 pr2 pr3 pr2 pr3 pr4 pr4 string_of_bool *)
+(*       (fun _ _ _ _ _  _ _ -> is_lemma_shape_matching_x prog (lnode,largs) (rnode, rargs) lhs rhs remap coer) *)
+(*       coer lnode largs rnode rargs lhs rhs *)
+
+(**********************************************************)
+(***********END LEMMA APPLICATION PRE-PROCESS ************)
+(**********************************************************)

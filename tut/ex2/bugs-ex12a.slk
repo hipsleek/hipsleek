@@ -1,0 +1,46 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<n> == emp & self=null & n=0
+  or (exists v,q: self::node<v,q>*q::ll<n-1>)
+  inv n>=0.
+
+
+infer[n] x::ll<n> & n>3 |- m>5.
+print residue.
+
+
+infer[n] x::ll<n> & m=n+2 |- m>5.
+print residue.
+
+
+infer[n] x::ll<n> |- x=null.
+print residue.
+
+infer[n] x::ll<n> |- x!=null.
+print residue.
+
+infer[x,n] x::ll<n> |- x!=null.
+print residue.
+
+
+//slk_simplify (((x:node)=null & 1<=n & n<=3) | n<=-1 | (n=0 & x!=null) | 4<=n) & (n>=0).
+
+/*
+# bugs-ex12a.slk
+
+We obtained:
+
+Residue:
+ <1>x::ll{}<n>&(x!=null | (x=null & n!=0))&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [(x!=null | (n!=0 & x=null))]
+
+Can we get a stronger pre-condition, by adding the invariant
+of x::ll<m> to it? 
+
+EXPECT:
+Simplify  (4): x!=null & 1<=n
+
+*/
