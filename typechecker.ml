@@ -1926,7 +1926,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   exp_cast_pos = pos}) -> (
             let check_cast_body body = (
               let pr = Cprinter.string_of_exp in
-              Debug.no_1 "check Cast (body)" pr (fun _ -> "void")
+              Debug.no_1 "check_cast_body" pr (fun _ -> "void")
                 (fun rhs -> check_exp prog proc ctx body post_start_label) body
             ) in
             let casting_op () = (
