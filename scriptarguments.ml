@@ -267,6 +267,7 @@ let common_arguments = [
   ("--field-imm", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
     ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
   ("--dis-field-imm", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
+  ("--allow-array-inst", Arg.Set Globals.allow_array_inst,"Allow instantiation of existential arrays");
   ("--imm-remove-abs", Arg.Set Globals.remove_abs,"remove @A nodes from formula (incl nodes with all fields ann with @A)");
   ("--en-imm-merge", Arg.Set Globals.imm_merge,"try to merge aliased nodes");
   ("--dis-imm-merge", Arg.Clear Globals.imm_merge,"don't merge aliased nodes");
@@ -276,6 +277,11 @@ let common_arguments = [
     "Enable the use of Memory Specifications");
     ("--dis-mem", Arg.Clear Globals.allow_mem,"Disable the use of Memory Specifications");
     ("--ramify", Arg.Clear Solver.unfold_duplicated_pointers,"Use Ramification (turns off unfold on dup pointers)");
+  ("--gen-coq-file", Arg.Set Globals.gen_coq_file, "Generate a Coq file with all axioms and lemmas to prove for certified reasoning");
+  ("--allow-ramify", Arg.Unit (fun _ -> 
+    Globals.allow_ramify := true; 
+    Solver.unfold_duplicated_pointers := false;)
+    , "Enable Coq based Ramification for Shared Structures");
     ("--infer-mem",Arg.Set Globals.infer_mem,"Enable inference of memory specifications");
     ("--infer-en-raw",Arg.Set Globals.infer_raw_flag,"Enable simplify_raw during pure inference");
     ("--infer-dis-raw",Arg.Clear Globals.infer_raw_flag,"Disable simplify_raw during pure inference");
@@ -297,6 +303,47 @@ let common_arguments = [
         Globals.allow_inf:=true;
         Globals.deep_split_disjuncts:=true
     ),"enable support for infinity (tgt with --dsd) ");
+  ("--en-inf-qe", Arg.Unit( fun _ ->
+	Globals.allow_inf := true;
+	Globals.allow_inf_qe := true;
+    (*Globals.early_contra_flag := false;
+    Globals.simpl_unfold2 := true;
+    Globals.simpl_unfold3 := true;*)
+	(*Globals.elim_exists_flag := false;
+	Globals.simplify_imply := false;
+	Globals.filtering_flag := false;*)
+    Globals.ann_vp := false;),
+	"enable support for quantifier elimination in PAinfinity ");
+  ("--en-inf-qe-coq", Arg.Unit( fun _ ->
+	Globals.allow_inf := true;
+    Globals.allow_norm := false;
+	Globals.allow_inf_qe_coq := true;
+    Globals.early_contra_flag := false;
+    (*Globals.simpl_unfold2 := true;
+    Globals.simpl_unfold3 := true;*)
+	(*Globals.elim_exists_flag := false;*)
+	(*Globals.simplify_imply := false;*)
+	(*Globals.filtering_flag := false;*)
+    Globals.ann_vp := false;),
+    "use the quantifier elimination procedure implemented in coq for PAinfinity ");
+  ("--en-inf-qe-coq-simp", Arg.Unit( fun _ ->
+	Globals.allow_inf := true;
+    Globals.allow_norm := false;
+	Globals.allow_inf_qe_coq := true;
+    Globals.allow_inf_qe_coq_simp := true;
+    Globals.early_contra_flag := false;
+    (*Globals.simpl_unfold2 := true;
+    Globals.simpl_unfold3 := true;*)
+	(*Globals.elim_exists_flag := false;*)
+	(*Globals.simplify_imply := false;*)
+	(*Globals.filtering_flag := false;*)
+    Globals.ann_vp := false;),
+    "use the quantifier elimination procedure with simplification implemented in coq for PAinfinity ");
+  ("--en-qe-fix", Arg.Unit( fun _ ->
+	Globals.allow_inf := true;
+	Globals.allow_inf_qe := true;
+	Globals.allow_qe_fix := true;),
+    "use the quantifier elimination procedure for inference ");
     ("--dsd", Arg.Set Globals.deep_split_disjuncts,"enable deep splitting of disjunctions");
     ("--en-disj-conseq", Arg.Set Globals.preprocess_disjunctive_consequence,"enable handle disjunctive consequence");
     ("--ioc", Arg.Set Globals.check_integer_overflow,"Enable Integer Overflow Checker");
@@ -632,7 +679,10 @@ let common_arguments = [
     ("--dis-unexpected",Arg.Clear Globals.show_unexpected_ents,"do not show unexpected results");
     ("--double-check",Arg.Set Globals.double_check,"double checking new syn baga");
     ("--dis-double-check",Arg.Clear Globals.double_check,"disable double-checking new syn baga");
-    ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view");
+  ("--use-baga",Arg.Set Globals.use_baga,"use baga only (no inv infer)");
+  ("--dis-use-baga",Arg.Clear Globals.use_baga,"disable use baga only (no inv infer)");
+  (* ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view"); *)
+  ("--inv-baga",Arg.Unit (fun _ ->  Globals.use_baga := true; Globals.gen_baga_inv := true),"generate baga inv from view");
     ("--dis-inv-baga",Arg.Clear Globals.gen_baga_inv,"disable baga inv from view");
     ("--pred-sat", Arg.Unit Globals.en_pred_sat ," turn off oc-simp for pred sat checking");
     ("--baga-xpure",Arg.Set Globals.baga_xpure,"use baga for xpure");

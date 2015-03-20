@@ -117,6 +117,7 @@ module Make (Token : SleekTokenS)
    ("app", APPEND);
    ("ann", ANN_KEY);
    ("AndList", ANDLIST);
+   ("abstract", ABSTRACT);
    ("bagmax", BAGMAX);
    ("bagmin", BAGMIN);
    ("bag", BAG);
@@ -204,6 +205,7 @@ module Make (Token : SleekTokenS)
    ("BG", BG);
    ("inv_lock", INVLOCK);
    ("joinpred", JOIN); (*Changed by 28/12/2011*)
+   ( "rlemma",RLEMMA);
    ("lemma", LEMMA TLEM);
    ("lemma_prop", LEMMA TLEM_PROP);
    ("lemma_split", LEMMA TLEM_SPLIT);
@@ -367,7 +369,7 @@ rule tokenizer file_name = parse
   | "&*" { ANDSTAR }
   | "&&" { ANDAND }
   | "U*" { UNIONSTAR }
-  | "-*" { STARMINUS }
+  | "--@" { STARMINUS }
   | "@" { AT }
   | "@@" { ATAT }
   | "@@[" { ATATSQ }
@@ -428,6 +430,7 @@ rule tokenizer file_name = parse
   | ".." { DOTDOT }
   | "\"" { DOUBLEQUOTE }
   | "\\inf" {INFINITY}
+  | "~\\inf" {NEGINFINITY}
   | "=" { EQ }
   | "==" { EQEQ }
   | "==>" { ESCAPE }

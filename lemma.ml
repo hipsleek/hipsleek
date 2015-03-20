@@ -665,6 +665,7 @@ let process_list_lemma_helper_x ldef_lst iprog cprog lem_infer_fnct =
       | LEM_INFER_PRED      -> let r1,_,r2 = manage_infer_pred_lemmas lst iprog cprog Cvutil.xpure_heap in 
         let todo_unk = lem_infer_fnct r1 r2 in
         r2
+      | RLEM           -> manage_unsafe_lemmas lst iprog cprog
   in
   (* let () = if enable_printing then Debug.ninfo_pprint "============ end - Processing lemmas ============\n" no_pos else () in *)
   match res with
@@ -1642,7 +1643,7 @@ let generate_view_rev_rec_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog
   let processed_brs = List.map (fun (f, lbl) ->
       let f1 = CF.elim_exists f in
       let _,new_f = CF.split_quantifiers f1 in
-      (* let p,_,_ = Cvutil.xpure_symbolic 20 cprog new_f in *)
+      (* let p,_,_ = x_add Cvutil.xpure_symbolic 20 cprog new_f in *)
       let p = CF.get_pure new_f in
       let p1 = CP.filter_var  p view_args in
     (new_f, p1)

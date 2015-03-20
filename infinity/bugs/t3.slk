@@ -1,0 +1,4 @@
+//checkentail  z = 0-\inf & y = z & y = x + 4 |- z <0.
+checkentail true & exists (x: exists (y: exists (z: y = x + 4 & z = y))) |- z < 0.
+//checkentail forall(x: x =y & y = 3) |- false.
+checkentail forall(L: forall (U: L<=-1 & U>=-1 & L+U=-1 & L+U<=-8 & L<=U)) |- false.

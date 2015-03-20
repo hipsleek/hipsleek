@@ -385,6 +385,8 @@ let rec can_minisat_handle_expression (exp: Cpure.exp) : bool =
     | Cpure.IConst _       -> false
     | Cpure.FConst _       -> false
     | Cpure.AConst _       -> false
+  | Cpure.NegInfConst _ 
+  | Cpure.InfConst _  -> false
           (* arithmetic expressions *)
     | Cpure.Add _
     | Cpure.Subtract _
@@ -409,9 +411,10 @@ let rec can_minisat_handle_expression (exp: Cpure.exp) : bool =
           (* array expressions *)
     | Cpure.ArrayAt _      -> false
     | Cpure.Func _ ->  false 
-  | Cpure.Template _ -> false
-    | Cpure.Level _ | Cpure.InfConst _ | Cpure.Tsconst _ -> Error.report_no_pattern()
-  | Cpure.Tup2 _ -> Error.report_no_pattern()
+    | Cpure.Template _ -> false
+    | Cpure.Level _ 
+    | Cpure.Tsconst _ -> Error.report_no_pattern()
+    | Cpure.Tup2 _ -> Error.report_no_pattern()
     | Cpure.Bptriple _ -> Error.report_no_pattern()
 
 

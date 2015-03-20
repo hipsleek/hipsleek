@@ -200,6 +200,7 @@ let rec string_of_formula_exp = function
   | P.Level (x, l)        -> ("level(" ^ (string_of_id x) ^ ")")
   | P.IConst (i, l)           -> string_of_int i
   | P.InfConst(s,l) -> s
+  | P.NegInfConst(s,l) -> "~"^s
   | P.AConst (i, l)           -> string_of_heap_ann i
   | P.Tsconst (i,l)			  -> Tree_shares.Ts.string_of i
   | P.Bptriple (t,l) -> pr_triple string_of_formula_exp string_of_formula_exp string_of_formula_exp t
@@ -990,7 +991,6 @@ let string_of_coerc_decl c =
   ^ "\t origin: " ^ (string_of_coerc_origin c.coercion_origin) ^ "\n"
   ^ "\t head: " ^ (string_of_formula c.coercion_head) ^ "\n"
   ^ "\t body:" ^ (string_of_formula c.coercion_body) ^ "\n"
-
 (* pretty printing for one parameter *) 
 let string_of_param par = match par.param_mod with 
   | NoMod          -> (string_of_typ par.param_type) ^ " " ^ par.param_name
@@ -1070,7 +1070,13 @@ let string_of_lem_kind l =
     | LEM_SAFE     -> "safe lemmas(added to store only if valid)"
     | LEM_INFER    -> "infer lemmas"
     | LEM_INFER_PRED    -> "infer lemmas + pred"
+    | RLEM -> "Ramification Lemmas"
 ;;
+
+let string_of_coerc_decl c = (string_of_coerc_type c.coercion_type)^"coerc "^c.coercion_name^"\n\t head: "^(string_of_formula c.coercion_head)^"\n\t body:"^
+							 (string_of_formula c.coercion_body)^
+                             (string_of_lem_kind c.coercion_kind)^"\n" 
+
 
 (* pretty printing for a list of coerc_decl_list *)
 let string_of_coerc_decl_list l = 

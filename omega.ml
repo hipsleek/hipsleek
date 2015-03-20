@@ -742,6 +742,9 @@ let is_valid (pe : formula) timeout : bool =
         failwith s
       end
 
+let is_valid (pe : formula) timeout : bool =
+Gen.Profiling.do_1 "omega.is_valid" is_valid pe timeout
+
 let rec match_vars (vars_list0 : spec_var list) rel =
   (* let vars_list0 = vars_list0 in *)
   match rel with
@@ -1118,7 +1121,12 @@ let hull (pe : formula) : formula =
 	        match_vars (fv pe) rel
   end
 
+let hull (pe : formula) : formula =
+  let pf = !print_pure in
+  Debug.no_1 "omega.hull" pf pf hull pe
+
 let gist_x (pe1 : formula) (pe2 : formula) : formula =
+
   (*print_endline "LOCLE: gist";*)
   begin
     omega_subst_lst := [];
@@ -1160,4 +1168,3 @@ let log_mark (mark : string) =
 let get_model bnd_vars assertions =
   let inp_f = mkExists bnd_vars (join_conjunctions assertions) None no_pos in
   simplify inp_f
-

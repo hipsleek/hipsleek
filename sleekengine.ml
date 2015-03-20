@@ -1095,7 +1095,6 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   (* let _ = print_endline ("ivars"^(Cprinter.string_of_spec_var_list ivars_fvs)) in *)
   (* let _ = print_endline ("ante vars"^(Cprinter.string_of_spec_var_list fvs)) in *)
   (* Disable putting implicit existentials on unbound heap variables *)
-  (*let _ = print_endline "run_infer_one_pass" in*)
   let fv_idents = (List.map CP.name_of_spec_var fvs)@ivars in
   let fv_idents =
     if !Globals.dis_impl_var then

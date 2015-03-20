@@ -121,6 +121,7 @@ and exp =
   | FConst of (float * loc)
   | AConst of (heap_ann * loc)
   | InfConst of (ident * loc) (* Constant for Infinity  *)
+  | NegInfConst of (ident * loc) (* Constant for Negative Infinity *)
   | Tsconst of (Tree_shares.Ts.t_sh * loc)
   | Bptriple of ((exp * exp * exp) * loc) (*triple for bounded permissions*)
   | Tup2 of ((exp * exp) * loc) (* a pair *)

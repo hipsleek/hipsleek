@@ -538,7 +538,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
       let pres,posts_wo_rel,all_posts,inf_vars,pre_fmls,grp_post_rel_flag =
         List.fold_left (fun (pres_acc,posts_wo_rel_acc,all_posts_acc,inf_vars_acc,pre_fmls_acc,grp_post_rel_flag) proc ->
             let pres,posts_wo_rel,all_posts,inf_vars,pre_fmls,grp_post_rel_flag =
-              CF.get_pre_post_vars [] Cvutil.xpure_heap (proc.proc_stk_of_static_specs # top) prog in
+              CF.get_pre_post_vars [] (x_add Cvutil.xpure_heap) (proc.proc_stk_of_static_specs # top) prog in
             (pres_acc@pres,posts_wo_rel_acc@posts_wo_rel,all_posts_acc@all_posts,inf_vars_acc@inf_vars,pre_fmls_acc@pre_fmls,grp_post_rel_flag)) ([],[],[],[],[],0) scc
       in
       let pre_rel_fmls = List.concat (List.map CF.get_pre_rels pre_fmls) in

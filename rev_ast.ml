@@ -60,6 +60,7 @@ let rec rev_trans_exp e = match e with
   | CP.ListReverse (e,p)  -> IP.ListReverse (rev_trans_exp e, p)
   | CP.ArrayAt (v,el,p)   -> IP.ArrayAt (rev_trans_spec_var v, List.map rev_trans_exp el, p)
   | CP.Func (v,el,p)      -> IP.Func (sv_n v, List.map rev_trans_exp el, p)
+  | CP.Level _| CP.InfConst _ | CP.NegInfConst _ -> report_error no_pos "AS.rev_trans_exp: not handle yet"
   | CP.Template t         -> 
       IP.Template {
         IP.templ_id = sv_n t.CP.templ_id;
@@ -67,7 +68,6 @@ let rec rev_trans_exp e = match e with
         IP.templ_unks = List.map rev_trans_exp t.CP.templ_unks;
         IP.templ_body = map_opt rev_trans_exp t.CP.templ_body;
         IP.templ_pos = t.CP.templ_pos; }
-  | CP.Level _| CP.InfConst _ -> report_error no_pos "AS.rev_trans_exp: not handle yet"
 
 let rec rev_trans_pf f = match f with
   | CP.XPure b -> IP.XPure{  

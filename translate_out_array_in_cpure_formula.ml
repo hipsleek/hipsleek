@@ -249,6 +249,7 @@ let rec contain_array
       | BagUnion _
       | BagIntersect _
           -> false
+      | _ -> failwith "Unexpected case"
   in
   let contain_array_b_formula
         ((p,ba):b_formula):bool=
@@ -1825,6 +1826,7 @@ let rec drop_array_formula
       | BagUnion _
       | BagIntersect _
           -> false
+      | _ -> failwith "drop_array_formula: Unexpected case"
   in
   let contain_array_b_formula
         ((p,ba):b_formula):bool=

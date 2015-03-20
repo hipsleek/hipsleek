@@ -43,7 +43,7 @@ let ineq_opt_flag = ref false
 
 let illegal_format s = raise (Illegal_Prover_Format s)
 
-type lemma_kind = LEM_PROP| LEM_SPLIT | LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER | LEM_INFER_PRED
+type lemma_kind = LEM_PROP| LEM_SPLIT | LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER | LEM_INFER_PRED | RLEM
 
 type lemma_origin =
   | LEM_USER          (* user-given lemma *)
@@ -1018,6 +1018,7 @@ let allow_imm_subs_rhs = ref true (*imm rhs subs from do_match*)
 let allow_field_ann = ref false
 
 let remove_abs = ref true
+let allow_array_inst = ref false
 
 let imm_merge = ref false
 
@@ -1026,9 +1027,11 @@ run-fast-test mem test cases pass *)
 (* let allow_field_ann = ref false  *)
   (* disabled by default as it is unstable and
      other features, such as shape analysis are affected by it *)
-
+let allow_ramify = ref false
 let allow_mem = ref false
 (*enabling allow_mem will turn on field ann as well *)
+
+let gen_coq_file = ref false
 
 let infer_mem = ref false
 let infer_raw_flag = ref true
@@ -1036,6 +1039,13 @@ let infer_raw_flag = ref true
 let pa = ref false
 
 let allow_inf = ref false (*enable support to use infinity (\inf and -\inf) in formulas *)
+let allow_inf_qe = ref false (*enable support to use quantifier elimination with infinity (\inf and -\inf) in formulas *)
+
+let allow_inf_qe_coq = ref false
+let allow_inf_qe_coq_simp = ref false
+(* enable support to use quantifier elimination procedure
+implemented in coq and extracted as infsolver.ml *)
+let allow_qe_fix = ref false
 
 let ann_derv = ref false
 
@@ -2053,4 +2063,5 @@ let string_of_lemma_kind (l: lemma_kind) =
       | LEM_SAFE      -> "LEM_SAFE"
       | LEM_INFER     -> "LEM_INFER"
       | LEM_INFER_PRED   -> "LEM_INFER_PRED"
+      | RLEM -> "RLEM"
 

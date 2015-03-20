@@ -1,0 +1,39 @@
+/*
+data node {
+	int val; 
+	node next; 
+}.
+
+
+pred bnd1<n,mi,mx> == self = null & n = 0 & mi = \inf & mx=-\inf or 
+  self::node<d, p> * p::bnd1<n-1, tmi,tmx> & mi = min(d, tmi) & mx=max(d,tmx) & -\inf<d<\inf 
+  inv self=null & n=0 & mi=\inf & mx=-\inf |
+      self!=null & n=1 & mi=mx & -\inf<mi<\inf |
+      self!=null & n>1 & mi<=mx & -\inf<mi & mx<\inf.
+
+pred bnd2<n,mi,mx> == self = null & n = 0 & mi = \inf & mx=~\inf or 
+  self::node<d, p> * p::bnd2<n-1, tmi,tmx> & mi = min(d, tmi) & mx=max(d,tmx) & ~\inf<d<\inf 
+  inv self=null & n=0 & mi=\inf & mx=~\inf |
+      self!=null & n=1 & mi=mx & ~\inf<mi<\inf |
+      self!=null & n>1 & mi<=mx & ~\inf<mi & mx<\inf.
+*/
+/*
+pred  sortll<mi> == self=null & mi=\inf
+   or self::node<mi, p> * p::sortll<m2> & mi<=m2
+inv true.
+
+checkentail a = \inf  & b = ~\inf |- a + b = 0 .
+checkentail true |- a +b = 0.
+checkentail n>=0 |- n>=0.
+checkentail true |- forall(a: forall(b: a = \inf & b = ~\inf & a + b = 0)).
+checkentail v < 2 |- v = 2.
+checkentail v < \inf |- v = \inf.
+checkentail v=~\inf |- v>3.
+checkentail x::node<a,null> |- x::sortll<m>.
+checkentail v=~\inf |- v>3.
+checkentail 
+(v+2)!=0 & 0<=(v+2) & (v+2)<=(\inf) |-  0<=v.*/
+
+checkentail 
+mi_1067<(\inf) & d_1049<(\inf) & (~\inf)<d_1049 & a'=min(d_1049,mi_1067) & 
+a'!=d_1049 |-  a'=mi_1067.

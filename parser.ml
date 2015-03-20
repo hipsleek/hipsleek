@@ -1857,9 +1857,10 @@ simple_heap_constr:
      (* High-order variables, e.g. %P*)
    | `PERCENT; `IDENTIFIER id -> F.HVar (id,[])
    | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN ->
-         (* if hp_names # mem id then *)
+        if hp_names # mem id then
            F.HRel(id, cl, (get_pos_camlp4 _loc 2))
-         (* else report_error (get_pos 1) ("should be a heap pred, not pure a relation here") *)
+             (*P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))*)
+         else report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
    | `HTRUE -> F.HTrue
    | `EMPTY -> F.HEmp
   ]];
@@ -2187,6 +2188,8 @@ cexp_w:
         Pure_t((P.IConst (i, get_pos_camlp4 _loc 1)) ,(get_heap_ann_opt ann0 ))
     | `INFINITY ->
         Pure_c (P.InfConst(constinfinity,get_pos_camlp4 _loc 1))
+    | `NEGINFINITY ->
+        Pure_c (P.NegInfConst(constinfinity,get_pos_camlp4 _loc 1))
     | `FLOAT_LIT (f,_) ; ann0 = LIST1 ann_heap ->
         Pure_t((P.FConst (f, get_pos_camlp4 _loc 1)), (get_heap_ann_opt ann0 ))
     | `INT_LITER (i,_) -> Pure_c (P.IConst (i, get_pos_camlp4 _loc 1)) 
@@ -2644,6 +2647,7 @@ non_array_type:
    | `INFINT_TYPE        -> infint_type 
    | `BOOL               -> bool_type
    | `BAG               -> bag_type
+   | `ABSTRACT          -> void_type
    | `BAG; `OPAREN; t = non_array_type ; `CPAREN -> BagT t
    | `IDENTIFIER id      -> Named id
    | `OPAREN; t1=non_array_type; `COMMA; t2=non_array_type; `CPAREN -> Tup2 (t1,t2)
@@ -3010,7 +3014,9 @@ decl:
   |  g=global_var_decl            -> Global_var g
   |  l=logical_var_decl -> Logical_var l
   |  p=proc_decl                  -> Proc p
-  (* | `LEMMA lex; c= coercion_decl; `SEMICOLON    -> Coercion {c with coercion_exact = lex}]]; *)
+  | `RLEMMA ; c= coercion_decl; `SEMICOLON    -> let c =  {c with coercion_kind = RLEM} in
+                                                 Coercion_list { coercion_list_elems = [c];
+                                                                 coercion_list_kind = RLEM}
   | `LEMMA kind; c= coercion_decl; `SEMICOLON    -> 
         let k = convert_lem_kind kind in
         let c = {c with coercion_kind = k;} in
