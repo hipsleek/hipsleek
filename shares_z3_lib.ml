@@ -267,7 +267,9 @@ struct
     let cnz = List.map smt_of_anz cnz in
     let s = List.fold_left (fun a c-> "(and " ^ a ^ " " ^ c ^ ")") "true" (ccons@csub@ceq@cnz) in
     List.fold_left (fun a c -> "(exists ((" ^ (Sv.string_of c) ^ " Bool)) " ^ a ^ ")") s cex
-  (***************************************************************										INTERACTION			 **************************************************************)
+  (***************************************************************
+     INTERATION
+   **************************************************************)
   type sat_type =
     | Sat		(* solver returns sat *)
     | UnSat		(* solver returns unsat *)
@@ -428,7 +430,9 @@ struct
                                  PrvComms.outchannel = stdout;
                                  PrvComms.errchannel = stdin
                             }
-  (***************************************************************INTERACTION**************************************************************)
+  (***************************************************************
+     INTERACTION
+   **************************************************************)
   let rec collect_output (chn: in_channel)  : (string * bool) =
     try
       let line = input_line chn in
@@ -445,7 +449,7 @@ struct
       else
         false in
     validity
-  (* output:  - prover_output 									- the running status of prover: true if running, otherwise false *)
+  (* output:  - prover_output									- the running status of prover: true if running, otherwise false *)
   let get_answer (chn: in_channel) : (bool * bool)=
     let (output, running_state) = collect_output chn  in
     let
@@ -459,7 +463,7 @@ struct
     minisat_process := proc
   let start () =
     if not !is_minisat_running then (
-      print_endline ("Starting Minisat... \n");
+      print_endline_quiet ("Starting Minisat... \n");
       last_test_number := !test_number;
       if (minisat_input_format = "cnf") then (
         PrvComms.start (minisat_name, minisat_path, [|minisat_arg|]) set_process;
@@ -519,7 +523,9 @@ struct
     let () = PrvComms.stop !minisat_process 0 9  in
     remove_file infile;
     res
-  (**************************************************************MAIN INTERFACE : CHECKING IMPLICATION AND SATISFIABILITY*************************************************************)
+  (**************************************************************
+    MAIN INTERFACE : CHECKING IMPLICATION AND SATISFIABILITY
+   *************************************************************)
   (*******************zzzzzzzzzzzzzz****************)
   (*generate the CNF *)
   let cnf_to_string var_cnt f : string =

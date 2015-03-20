@@ -1526,7 +1526,7 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
 	      | F.StarMinus _ -> true
 	      | _ -> false)
 	  else false in
-  if(flag) then Ramify
+  if(flag || !Globals.allow_ramify) then Ramify
   else
     let fct f = match f with
       | Cformula.Base {F.formula_base_heap=h}
@@ -3688,3 +3688,4 @@ let add_post_for_tnt_prog prog =
         if List.mem proc.proc_name inf_post_procs then
           add_inf_post_proc proc
         else proc) prog.new_proc_decls; }
+  

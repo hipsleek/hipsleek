@@ -142,6 +142,7 @@ let rec smt_of_exp a =
 	| CP.Bptriple _ -> ""
   | CP.ArrayAt (a, idx, l) -> 
       List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
+  | CP.NegInfConst _
   | CP.InfConst _ -> Error.report_no_pattern ()
   | CP.Template t -> smt_of_exp (CP.exp_of_template t)
 
@@ -850,14 +851,14 @@ let process_stdout_print ante conseq input output res =
   if (not !(outconfig.suppress_print_implication)) then
   begin
     if !(outconfig.print_implication) then 
-      print_endline ("CHECKING IMPLICATION:\n\n" ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n");
+      print_endline_quiet ("CHECKING IMPLICATION:\n\n" ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n");
     if !(Globals.print_original_solver_input) then (
-      print_endline (">>> GENERATED SMT INPUT:\n\n" ^ input);
+      print_endline_quiet (">>> GENERATED SMT INPUT:\n\n" ^ input);
       flush stdout;
     );
     if !(Globals.print_original_solver_output) then (
-      print_endline (">>> Z3 OUTPUT RECEIVED:\n" ^ (string_of_smt_output output));
-      print_endline (match output.sat_result with
+      print_endline_quiet (">>> Z3 OUTPUT RECEIVED:\n" ^ (string_of_smt_output output));
+      print_endline_quiet (match output.sat_result with
         | UnSat -> ">>> VERDICT: UNSAT/VALID!"
         | Sat -> ">>> VERDICT: FAILED!"
         | Unknown -> ">>> VERDICT: UNKNOWN! CONSIDERED AS FAILED."
@@ -865,7 +866,7 @@ let process_stdout_print ante conseq input output res =
       flush stdout;
     );
     if (!(outconfig.print_implication) || !(Globals.print_original_solver_input) || !(Globals.print_original_solver_output)) then
-      print_string "\n";
+      print_string_quiet "\n";
   end
 
 (**************************************************************
@@ -1081,9 +1082,9 @@ let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
   try
     imply ante conseq timeout
   with Illegal_Prover_Format s -> (
-    print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
-    print_endline ("Apply z3.imply on ante Formula :"^(!print_pure ante));
-    print_endline ("and conseq Formula :"^(!print_pure conseq));
+    print_endline_quiet ("\nWARNING : Illegal_Prover_Format for :"^s);
+    print_endline_quiet ("Apply z3.imply on ante Formula :"^(!print_pure ante));
+    print_endline_quiet ("and conseq Formula :"^(!print_pure conseq));
     flush stdout;
     failwith s
   )
@@ -1152,8 +1153,8 @@ let is_sat (pe : CP.formula) sat_no : bool =
   try
     is_sat pe sat_no
   with Illegal_Prover_Format s -> 
-    print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
-    print_endline ("Apply z3.is_sat on formula :"^(!print_pure pe));
+    print_endline_quiet ("\nWARNING : Illegal_Prover_Format for :"^s);
+    print_endline_quiet ("Apply z3.is_sat on formula :"^(!print_pure pe));
     flush stdout;
     failwith s
 

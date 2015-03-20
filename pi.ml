@@ -525,6 +525,7 @@ let trans_res_struc_formula prog sf =
 let infer_pure (prog : prog_decl) (scc : proc_decl list) =
   let proc_specs = List.fold_left (fun acc proc -> acc@[CF.simplify_ann (proc.proc_stk_of_static_specs # top)]) [] scc in
   let () = DD.ninfo_hprint (add_str "proc_specs" (pr_list Cprinter.string_of_struc_formula)) proc_specs no_pos in
+  (* let _ = print_endline_quiet ("proc_specs: " ^ (pr_list Cprinter.string_of_struc_formula proc_specs)) in *)
   let rels = Infer.infer_rel_stk # get_stk in
   let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels) in
   let (lst_assume,lst_rank) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) rest) in
@@ -537,13 +538,14 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
       let pres,posts_wo_rel,all_posts,inf_vars,pre_fmls,grp_post_rel_flag =
         List.fold_left (fun (pres_acc,posts_wo_rel_acc,all_posts_acc,inf_vars_acc,pre_fmls_acc,grp_post_rel_flag) proc ->
             let pres,posts_wo_rel,all_posts,inf_vars,pre_fmls,grp_post_rel_flag =
-              CF.get_pre_post_vars [] Cvutil.xpure_heap (proc.proc_stk_of_static_specs # top) prog in
+              CF.get_pre_post_vars [] (x_add Cvutil.xpure_heap) (proc.proc_stk_of_static_specs # top) prog in
             (pres_acc@pres,posts_wo_rel_acc@posts_wo_rel,all_posts_acc@all_posts,inf_vars_acc@inf_vars,pre_fmls_acc@pre_fmls,grp_post_rel_flag)) ([],[],[],[],[],0) scc
       in
       let pre_rel_fmls = List.concat (List.map CF.get_pre_rels pre_fmls) in
       let pre_rel_fmls = List.filter (fun x -> CP.intersect (CP.get_rel_id_list x) inf_vars != []) pre_rel_fmls in
       let pre_vars = CP.remove_dups_svl (List.fold_left (fun pres proc ->
           pres @ (List.map (fun (t,id) -> CP.SpecVar (t,id,Unprimed)) proc.proc_args)) pres scc) in
+      (*let _ = print_endline ("pre_vars!!!"^(Cprinter.string_of_typed_spec_var_list pre_vars)) in*)
       let post_vars_wo_rel = CP.remove_dups_svl posts_wo_rel in
       let post_vars = CP.remove_dups_svl all_posts in
       try
@@ -607,6 +609,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                 ) ("(" ^ (pr pf1) ^")",(pr pf2) ^ " = ") tl in
             let () = DD.binfo_pprint (s2 ^ s1) no_pos in
             (* let () = DD.binfo_hprint (add_str "constraints" (pr_list (pr_pair pr (fun _ -> "")))) post_rel_df_new no_pos in *)
+            let _ = print_endline ("Pi.infer_pure") in
             let bottom_up_fp0 = Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars (List.hd proc_specs) in
             let () = DD.ninfo_hprint (add_str "bottom_up_fp0" (pr_list (pr_pair pr pr))) bottom_up_fp0 no_pos in
             (* let bottom_up_fp0 = List.fold_left (fun acc proc_spec -> acc@(Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars proc_spec)) [] proc_specs in *)

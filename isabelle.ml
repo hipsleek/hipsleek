@@ -121,6 +121,8 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.Tsconst _ -> failwith ("[isabelle.ml]: ERROR in constraints (tsconst should not appear here)")
   | CP.Bptriple _ -> failwith ("[isabelle.ml]: ERROR in constraints (Bptriple should not appear here)")
   | CP.Tup2 _ -> failwith ("[isabelle.ml]: ERROR in constraints (Tup2 should not appear here)")
+  | CP.NegInfConst _
+  | CP.InfConst _ -> failwith ("[isabelle.ml]: ERROR in constraints (infconst should not appear here)")
   | CP.Add (a1, a2, _) ->  " ( " ^ (isabelle_of_exp a1) ^ " + " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Subtract (a1, a2, _) ->  " ( " ^ (isabelle_of_exp a1) ^ " - " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Mult (a1, a2, _) -> "(" ^ (isabelle_of_exp a1) ^ " * " ^ (isabelle_of_exp a2) ^ ")"
@@ -151,7 +153,6 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.AConst _ -> failwith ("AConst are not supported in Isabelle")
 	| CP.ArrayAt _ ->  failwith ("Arrays are not supported in Isabelle") (* An Hoa *)
 	| CP.Level _ ->  failwith ("level should not appear in Isabelle")
-    | CP.InfConst _ -> Error.report_no_pattern ()
   | CP.Template t -> isabelle_of_exp (CP.exp_of_template t)
 
   

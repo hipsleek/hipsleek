@@ -212,7 +212,7 @@ checkentail v=-\inf |- v<3.
 checkentail v=-\inf |- v>3.
 
 //(66) Valid
-checkentail v=-\inf & w!=-\inf |- v<w.
+checkentail v=-\inf & w=-\inf |- v<=w.
 
 //(67) Valid
 checkentail v=-\inf |- v<\inf.

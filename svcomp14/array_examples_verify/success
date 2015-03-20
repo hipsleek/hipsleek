@@ -1,0 +1,235 @@
+
+!!!Full processing file "array_simeple3.ss"
+Parsing file "array_simeple3.ss" by default parser...
+
+!!! processing primitives "["prelude_aux.ss"]
+Starting Omega.../usr/local/bin/oc
+
+tp_imply_no_cache@1
+tp_imply_no_cache inp1 : 0<size
+tp_imply_no_cache inp2 : 0<size
+tp_imply_no_cache inp3 :1
+tp_imply_no_cache inp4 :OM
+tp_imply_no_cache@1 EXIT:true
+
+Checking procedure foo2$int[]... Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a[5]")
+ Formula: (((0<(a_1212[5]) & a'[5]=0) | ((a_1212[5])<=0 & a'[5]=a_1212[5]))) & 
+update_array_1d(a,a_1212,0,5) & 0<(a[5]) & v_bool_6_1169'
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a[5]")
+ Formula: (((0<(a_1212[5]) & a'[5]=0) | ((a_1212[5])<=0 & a'[5]=a_1212[5]))) & 
+update_array_1d(a,a_1212,0,5) & 0<(a[5]) & v_bool_6_1169'
+
+tp_imply_no_cache@5@4@3@2
+tp_imply_no_cache inp1 : (((0<(a_1212[5]) & a'[5]=0) | ((a_1212[5])<=0 & a'[5]=a_1212[5]))) & 
+update_array_1d(a,a_1212,0,5) & 0<(a[5])
+tp_imply_no_cache inp2 : ((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))
+tp_imply_no_cache inp3 :173
+tp_imply_no_cache inp4 :OM
+tp_imply_no_cache@5 EXIT:true
+
+imply_one#29@4@3@2
+imply_one#29 inp1 : (((0<(a_1212[5]) & a'[5]=0) | ((a_1212[5])<=0 & a'[5]=a_1212[5]))) & 
+update_array_1d(a,a_1212,0,5) & 0<(a[5]) & v_bool_6_1169'
+imply_one#29 inp2 : ((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))
+imply_one#29@4 EXIT:true
+
+imply_one_conj_orig@3@2
+imply_one_conj_orig inp1 :[ (((0<(a_1212[5]) & a'[5]=0) | ((a_1212[5])<=0 & a'[5]=a_1212[5]))) & 
+update_array_1d(a,a_1212,0,5) & 0<(a[5]) & v_bool_6_1169']
+imply_one_conj_orig inp2 :[ (((0<(a_1212[5]) & a'[5]=0) | ((a_1212[5])<=0 & a'[5]=a_1212[5]))) & 
+update_array_1d(a,a_1212,0,5) & 0<(a[5]) & v_bool_6_1169']
+imply_one_conj_orig inp3 : ((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))
+imply_one_conj_orig@3 EXIT:true
+
+imply_mix_formula#1@2
+imply_mix_formula#1 inp1 : (((0<(a_1212[5]) & a'[5]=0) | ((a_1212[5])<=0 & a'[5]=a_1212[5]))) & 
+update_array_1d(a,a_1212,0,5) & 0<(a[5]) & v_bool_6_1169'
+imply_mix_formula#1 inp2 :Some( (((0<(a_1212[5]) & a'[5]=0) | ((a_1212[5])<=0 & a'[5]=a_1212[5]))) & 
+update_array_1d(a,a_1212,0,5) & 0<(a[5]) & v_bool_6_1169')
+imply_mix_formula#1 inp3 : ((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))
+imply_mix_formula#1 inp4 : []
+imply_mix_formula#1@2 EXIT:(true,None)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a'[5]")
+ Formula: !(v_bool_6_1169') & (a'[5])<=0 & a'=a
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a'[5]")
+ Formula: !(v_bool_6_1169') & (a'[5])<=0 & a'=a
+
+tp_imply_no_cache@9@8@7@6
+tp_imply_no_cache inp1 : (a'[5])<=0 & a'=a
+tp_imply_no_cache inp2 : ((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))
+tp_imply_no_cache inp3 :175
+tp_imply_no_cache inp4 :OM
+tp_imply_no_cache@9 EXIT:true
+
+imply_one#29@8@7@6
+imply_one#29 inp1 : !(v_bool_6_1169') & (a'[5])<=0 & a'=a
+imply_one#29 inp2 : ((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))
+imply_one#29@8 EXIT:true
+
+imply_one_conj_orig@7@6
+imply_one_conj_orig inp1 :[ !(v_bool_6_1169') & (a'[5])<=0 & a'=a]
+imply_one_conj_orig inp2 :[ !(v_bool_6_1169') & (a'[5])<=0 & a'=a]
+imply_one_conj_orig inp3 : ((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))
+imply_one_conj_orig@7 EXIT:true
+
+imply_mix_formula#1@6
+imply_mix_formula#1 inp1 : !(v_bool_6_1169') & (a'[5])<=0 & a'=a
+imply_mix_formula#1 inp2 :Some( !(v_bool_6_1169') & (a'[5])<=0 & a'=a)
+imply_mix_formula#1 inp3 : ((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))
+imply_mix_formula#1 inp4 : []
+imply_mix_formula#1@6 EXIT:(true,None)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a_1212[5]")
+ Formula: exists(a_1212:exists(update_array_1d:update_array_1d(a,a_1212,0,5)) & 
+(((0<(a_1212[5]) & a'[5]=0) | ((a_1212[5])<=0 & a'[5]=a_1212[5]))))
+
+tp_imply_no_cache@10
+tp_imply_no_cache inp1 : exists(a_1213:exists(update_array_1d_1214:update_array_1d_1214(a,a_1213,0,5)) & 
+(((0<(a_1213[5]) & a'[5]=0) | ((a_1213[5])<=0 & a'[5]=a_1213[5])))) & 
+0<(a[5]) & (((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5])))
+tp_imply_no_cache inp2 : (a'[5])<=0 & a'=a & (((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5])))
+tp_imply_no_cache inp3 :180
+tp_imply_no_cache inp4 :OM
+tp_imply_no_cache@10 EXIT:false
+
+tp_imply_no_cache@11
+tp_imply_no_cache inp1 : (a'[5])<=0 & a'=a & (((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5])))
+tp_imply_no_cache inp2 : exists(a_1215:exists(update_array_1d_1216:update_array_1d_1216(a,a_1215,0,5)) & 
+(((0<(a_1215[5]) & a'[5]=0) | ((a_1215[5])<=0 & a'[5]=a_1215[5])))) & 
+0<(a[5]) & (((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5])))
+tp_imply_no_cache inp3 :182
+tp_imply_no_cache inp4 :OM
+tp_imply_no_cache@11 EXIT:false
+
+Procedure foo2$int[] SUCCESS.
+
+Checking procedure foo2$int[]... Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a_1244[5]")
+ Formula: v_bool_6_1169' & 0<(a[5]) & update_array_1d(a,a_1244,0,5) & 
+(((0<(a_1244[5]) & a'[5]=0) | ((a_1244[5])<=0 & a'[5]=a_1244[5])))
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a_1244[5]")
+ Formula: v_bool_6_1169' & 0<(a[5]) & update_array_1d(a,a_1244,0,5) & 
+(((0<(a_1244[5]) & a'[5]=0) | ((a_1244[5])<=0 & a'[5]=a_1244[5])))
+
+tp_imply_no_cache@15@14@13@12
+tp_imply_no_cache inp1 : 0<(a[5]) & update_array_1d(a,a_1244,0,5) & (((0<(a_1244[5]) & a'[5]=0) | 
+((a_1244[5])<=0 & a'[5]=a_1244[5])))
+tp_imply_no_cache inp2 : ((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))
+tp_imply_no_cache inp3 :198
+tp_imply_no_cache inp4 :OM
+tp_imply_no_cache@15 EXIT:true
+
+imply_one#29@14@13@12
+imply_one#29 inp1 : v_bool_6_1169' & 0<(a[5]) & update_array_1d(a,a_1244,0,5) & 
+(((0<(a_1244[5]) & a'[5]=0) | ((a_1244[5])<=0 & a'[5]=a_1244[5])))
+imply_one#29 inp2 : ((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))
+imply_one#29@14 EXIT:true
+
+imply_one_conj_orig@13@12
+imply_one_conj_orig inp1 :[ v_bool_6_1169' & 0<(a[5]) & update_array_1d(a,a_1244,0,5) & 
+(((0<(a_1244[5]) & a'[5]=0) | ((a_1244[5])<=0 & a'[5]=a_1244[5])))]
+imply_one_conj_orig inp2 :[ v_bool_6_1169' & 0<(a[5]) & update_array_1d(a,a_1244,0,5) & 
+(((0<(a_1244[5]) & a'[5]=0) | ((a_1244[5])<=0 & a'[5]=a_1244[5])))]
+imply_one_conj_orig inp3 : ((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))
+imply_one_conj_orig@13 EXIT:true
+
+imply_mix_formula#1@12
+imply_mix_formula#1 inp1 : v_bool_6_1169' & 0<(a[5]) & update_array_1d(a,a_1244,0,5) & 
+(((0<(a_1244[5]) & a'[5]=0) | ((a_1244[5])<=0 & a'[5]=a_1244[5])))
+imply_mix_formula#1 inp2 :Some( v_bool_6_1169' & 0<(a[5]) & update_array_1d(a,a_1244,0,5) & 
+(((0<(a_1244[5]) & a'[5]=0) | ((a_1244[5])<=0 & a'[5]=a_1244[5]))))
+imply_mix_formula#1 inp3 : ((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))
+imply_mix_formula#1 inp4 : []
+imply_mix_formula#1@12 EXIT:(true,None)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a'[5]")
+ Formula: !(v_bool_6_1169') & (a'[5])<=0 & a'=a
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a'[5]")
+ Formula: !(v_bool_6_1169') & (a'[5])<=0 & a'=a
+
+imply_one#29@18@17@16
+imply_one#29 inp1 : !(v_bool_6_1169') & (a'[5])<=0 & a'=a
+imply_one#29 inp2 : ((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))
+imply_one#29@18 EXIT:true
+
+imply_one_conj_orig@17@16
+imply_one_conj_orig inp1 :[ !(v_bool_6_1169') & (a'[5])<=0 & a'=a]
+imply_one_conj_orig inp2 :[ !(v_bool_6_1169') & (a'[5])<=0 & a'=a]
+imply_one_conj_orig inp3 : ((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))
+imply_one_conj_orig@17 EXIT:true
+
+imply_mix_formula#1@16
+imply_mix_formula#1 inp1 : !(v_bool_6_1169') & (a'[5])<=0 & a'=a
+imply_mix_formula#1 inp2 :Some( !(v_bool_6_1169') & (a'[5])<=0 & a'=a)
+imply_mix_formula#1 inp3 : ((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))
+imply_mix_formula#1 inp4 : []
+imply_mix_formula#1@16 EXIT:(true,None)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a_1244[5]")
+ Formula: exists(a_1244:exists(update_array_1d:update_array_1d(a,a_1244,0,5)) & 
+(((0<(a_1244[5]) & a'[5]=0) | ((a_1244[5])<=0 & a'[5]=a_1244[5]))))
+
+tp_imply_no_cache@19
+tp_imply_no_cache inp1 : exists(a_1245:exists(update_array_1d_1246:update_array_1d_1246(a,a_1245,0,5)) & 
+(((0<(a_1245[5]) & a'[5]=0) | ((a_1245[5])<=0 & a'[5]=a_1245[5])))) & 
+0<(a[5]) & (((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5])))
+tp_imply_no_cache inp2 : (a'[5])<=0 & a'=a & (((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))) & 
+foo2post_1217()[]
+tp_imply_no_cache inp3 :205
+tp_imply_no_cache inp4 :OM
+tp_imply_no_cache@19 EXIT:false
+
+tp_imply_no_cache@20
+tp_imply_no_cache inp1 : (a'[5])<=0 & a'=a & (((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5])))
+tp_imply_no_cache inp2 : exists(a_1247:exists(update_array_1d_1248:update_array_1d_1248(a,a_1247,0,5)) & 
+(((0<(a_1247[5]) & a'[5]=0) | ((a_1247[5])<=0 & a'[5]=a_1247[5])))) & 
+0<(a[5]) & (((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))) & 
+foo2post_1217()[]
+tp_imply_no_cache inp3 :207
+tp_imply_no_cache inp4 :OM
+tp_imply_no_cache@20 EXIT:false
+
+!!! Performing a Re-verification, Valid?:true
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume !(v_bool_6_1169') & (a'[5])<=0 & a'=a --> foo2post_1217().
+
+ termAssume v_bool_6_1169' & 0<(a[5]) & update_array_1d(a,a_1244,0,5) & 
+(((0<(a_1244[5]) & a'[5]=0) | ((a_1244[5])<=0 & 
+a'[5]=a_1244[5]))) & foo2post_1217() --> foo2post_1217().
+
+ termAssume v_bool_6_1169' & 0<(a[5]) & 
+update_array_1d(a,a',0,5) & foo2pre_0() --> foo2pre_0().
+
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a'[5]")
+ Formula: exists(a:exists(a':(a'[5])<=0 & a'=a)) & 
+exists(v_bool_6_1169':!(v_bool_6_1169'))
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a[5]")
+ Formula: exists(a':exists(a:exists(update_array_1d:update_array_1d(a,a',0,5)) & 
+0<(a[5]))) & exists(v_bool_6_1169':v_bool_6_1169')
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a[5]")
+ Formula: exists(a':exists(a:exists(update_array_1d:update_array_1d(a,a',0,5)) & 
+0<(a[5]))) & exists(v_bool_6_1169':v_bool_6_1169')
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a[5]")
+ Formula: exists(a':exists(a:exists(update_array_1d:update_array_1d(a,a',0,5)) & 
+0<(a[5]))) & exists(v_bool_6_1169':v_bool_6_1169')
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a[5]")
+ Formula: exists(a:exists(a':(a'[5])<=0 & a'=a)) & 
+exists(v_bool_6_1169':!(v_bool_6_1169')) & 
+!((exists(a':exists(a:exists(update_array_1d:update_array_1d(a,a',0,5)) & 
+0<(a[5]))) & exists(v_bool_6_1169':v_bool_6_1169')))
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a[5]")
+ Formula: exists(a':exists(a:exists(update_array_1d:update_array_1d(a,a',0,5)) & 
+0<(a[5]))) & exists(v_bool_6_1169':v_bool_6_1169')
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a[5]")
+ Formula: exists(a:exists(a':(a'[5])<=0 & a'=a)) & 
+exists(v_bool_6_1169':!(v_bool_6_1169')) & 
+!((exists(a':exists(a:exists(update_array_1d:update_array_1d(a,a',0,5)) & 
+0<(a[5]))) & exists(v_bool_6_1169':v_bool_6_1169')))
+
+ExceptionGlobals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a[5]")Occurred!
+
+Error1(s) detected at main 
+Stop Omega... 51 invocations caught
+
+Exception occurred: Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a[5]")
+Error3(s) detected at main 

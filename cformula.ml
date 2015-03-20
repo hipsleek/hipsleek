@@ -276,6 +276,7 @@ and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         (*added to support fractional splitting of data nodes*)
                         h_formula_data_origins : ident list;
                         h_formula_data_original : bool;
+                        (*h_formula_data_abstract_type : CP.spec_var option;  asankhs: keep track of the mathematical object that is associated with this points to *)
                         h_formula_data_arguments : CP.spec_var list;
 			h_formula_data_holes : int list; (* An Hoa : list of fields not to be considered for partial structures *) (*store positions*)
                         h_formula_data_label : formula_label option;
@@ -2926,7 +2927,7 @@ and h_fv_x (h : h_formula) : CP.spec_var list = match h with
 	h_formula_conjstar_pos = pos})
   | ConjConj ({h_formula_conjconj_h1 = h1;
 	h_formula_conjconj_h2 = h2;
-	h_formula_conjconj_pos = pos}) -> Gen.BList.remove_dups_eq (=) (h_fv_x h1 @ h_fv_x h2)
+	h_formula_conjconj_pos = pos}) -> CP.remove_dups_svl_stable (h_fv_x h1 @ h_fv_x h2)
   | Phase ({h_formula_phase_rd = h1;
 	h_formula_phase_rw = h2;
 	h_formula_phase_pos = pos}) -> Gen.BList.remove_dups_eq (=) (h_fv_x h1 @ h_fv_x h2)
@@ -4385,7 +4386,7 @@ and rename_struc_bound_vars (f:struc_formula):struc_formula = match f with
 and rename_bound_vars (f : formula) =
   let pr = !print_formula in
   let pr_out (f,_) = pr f in
-  let res = Debug.no_1 "rename_bound_vars" pr pr_out
+  let res = Debug.no_1 "CF.rename_bound_vars" pr pr_out
       (fun _ -> rename_bound_vars_x f) f in
   fst res
 
@@ -5843,7 +5844,7 @@ let check_imm_mis rhs_mis rhs0 =
   let pr = !print_h_formula in
   Debug.no_2 "check_imm_mis" pr pr pr check_imm_mis rhs_mis rhs0
 
-
+(* asankhs : what is this method supported to do ? *)
 let rec heap_trans_heap_node fct f0 =
   let recf = heap_trans_heap_node fct in
   let rec helper f=
@@ -5872,7 +5873,8 @@ let rec heap_trans_heap_node fct f0 =
           | _ ->
             Star {b with h_formula_star_h2 = hf2; h_formula_star_h1 = hf1}
         end
-      | ConjStar _|ConjConj _|StarMinus _ -> report_error no_pos "CF.heap_trans_heap_node: not handle yet"
+      | ConjStar _|ConjConj _|StarMinus _ -> f
+  (*report_error no_pos "CF.heap_trans_heap_node: not handle yet"*)
   in
   helper f0
 
@@ -10549,7 +10551,7 @@ let consistent_context (c:context) : bool =
 let must_consistent_context (s:string) l : unit =
   if !consistency_checking then
     let b = consistent_context l in
-    if b then  print_endline ("\nSuccessfully Tested Consistency at "^s)
+    if b then print_endline_quiet ("\nSuccessfully Tested Consistency at "^s)
     else report_error no_pos ("ERROR at "^s^": context inconsistent")
 		
 let must_consistent_context (s:string) l : unit =
@@ -10572,7 +10574,7 @@ let consistent_list_failesc_context (l:list_failesc_context) : bool =
 let must_consistent_list_failesc_context (s:string) l : unit =
   if !consistency_checking then
     let b = consistent_list_failesc_context l in
-    if b then  print_endline ("\nSuccessfully Tested Consistency at "^s)
+    if b then print_endline_quiet ("\nSuccessfully Tested Consistency at "^s)
     else report_error no_pos ("ERROR: "^s^" list_failesc context inconsistent")
 
 (*let isStrictFalseCtx ctx = match ctx with
@@ -11698,7 +11700,7 @@ let rec merge_esc f e1 e2 =
     | (l1,b1)::z1,(l2,b2)::z2 ->
           let flag = not ((fst l1)==(fst l2)) in
           (if flag then 
-            print_endline ("WARNING MISMATCH at merge_esc:\n"^(!print_esc_stack e1)^"\n"^(!print_esc_stack e2)))
+            print_endline_quiet ("WARNING MISMATCH at merge_esc:\n"^(!print_esc_stack e1)^"\n"^(!print_esc_stack e2)))
           ; (l1,merge_success b1 b2)::(merge_esc f z1 z2)
               (* if not ((fst l1)==(fst l2)) then  *)
               (*   Err.report_error {Err.error_loc = no_pos;  Err.error_text = "malfunction in merge failesc context lbl mismatch\n"} *)
@@ -12321,13 +12323,26 @@ let join_star_conjunctions_opt (hs : h_formula list) : (h_formula option)  =
   Debug.no_1 "join_star_conjunctions_opt" pr1 pr2
   join_star_conjunctions_opt_x hs
 
+let split_all_conjunctions (f:h_formula) : (h_formula list) =
+  let rec helper f = 
+    match f with
+      | Star({h_formula_star_h1 = h1;
+              h_formula_star_h2 = h2;}) 
+      | StarMinus({h_formula_starminus_h1 = h1;
+              h_formula_starminus_h2 = h2;})
+      | Conj({h_formula_conj_h1 = h1;
+              h_formula_conj_h2 = h2;}) ->
+          let res1 = helper h1 in
+          let res2 = helper h2 in
+          (res1@res2)
+      | _ -> [f]
+  in helper f
 
 let split_star_conjunctions (f:h_formula): (h_formula list) =
   let rec helper f = 
   match f with
   | Star({h_formula_star_h1 = h1;
-	h_formula_star_h2 = h2;
-	h_formula_star_pos = pos;}) ->
+	h_formula_star_h2 = h2;}) ->
         let res1 = helper h1 in
         let res2 = helper h2 in
         (res1@res2)
@@ -15041,12 +15056,12 @@ let get_pre_rels pure =
 let rec get_pre_pure_fml xpure_heap prog fml = match fml with
   | Base b -> 
     let pure = b.formula_base_pure in
-    let xpured,_,_ = xpure_heap 11 prog (b.formula_base_heap) pure 1 in 
+    let xpured,_,_ = x_add xpure_heap 11 prog (b.formula_base_heap) pure 1 in 
     [MCP.pure_of_mix (MCP.merge_mems pure xpured true)]
   | Or o -> (get_pre_pure_fml xpure_heap prog o.formula_or_f1) @ (get_pre_pure_fml xpure_heap prog o.formula_or_f2)
   | Exists e -> 
     let pure = e.formula_exists_pure in
-    let xpured,_,_ = xpure_heap 12 prog (e.formula_exists_heap) pure 1 in 
+    let xpured,_,_ = x_add xpure_heap 12 prog (e.formula_exists_heap) pure 1 in 
     [MCP.pure_of_mix (MCP.merge_mems pure xpured true)]
 
 let rec get_grp_post_rel_flag fml = match fml with
@@ -17359,7 +17374,9 @@ let elim_prm e =
     | CP.Tsconst _
     | CP.FConst _ 
     | CP.Func _
+    | CP.InfConst _
     | CP.Template _
+    | CP.NegInfConst _
     | CP.ArrayAt _ -> Some e 
     | CP.Var (v,p)-> Some (CP.Var (nv v, p))
     | CP.Bptriple ((c,t,a),p) -> Some (CP.Bptriple ((nv c,nv t,nv a),p))
@@ -17382,7 +17399,7 @@ let elim_prm e =
     | CP.ListLength _
     | CP.ListAppend _
     | CP.ListReverse _ -> None
-    | CP.Level _| CP.InfConst _ -> report_error no_pos "CF.elim_prm: not handle yet"
+    | CP.Level _ -> report_error no_pos "CF.elim_prm: not handle yet"
   in
 	let rec f_h_f e = match e with 
 		| Star s -> None
@@ -17453,7 +17470,7 @@ let add_struc_unfold_num (f : struc_formula) uf =
 	| _ -> (h, None)
 
 let f_fst l ( _ :'a) = l
-	
+
 let rec find_nodes e l=
 	 let f_heap_f l h  = match h with
 	  | HRel (p,vl, _) ->
@@ -17940,6 +17957,28 @@ let elim_e_var to_keep (f0 : formula) : formula =
 (* let rearrange_failesc_context_list fcl = *)
 (*   List.map rearrange_failesc_context fcl *)
 
+let rec contains_starminus (f:h_formula) : bool = 
+(*let _ = print_string ("Checking StarMinus = "^ (string_of_h_formula f) ^ "\n") in *)
+match f with
+| DataNode (h1) -> false
+| ViewNode (h1) -> false
+| Star ({h_formula_star_h1 = h1;
+		   h_formula_star_h2 = h2;
+		   h_formula_star_pos = pos}) 
+| Phase ({h_formula_phase_rd = h1;
+		    h_formula_phase_rw = h2;
+		    h_formula_phase_pos = pos})
+| Conj({h_formula_conj_h1 = h1;
+		  h_formula_conj_h2 = h2;
+		  h_formula_conj_pos = pos})
+| ConjStar({h_formula_conjstar_h1 = h1;
+		   h_formula_conjstar_h2 = h2;
+		  h_formula_conjstar_pos = pos})
+| ConjConj({h_formula_conjconj_h1 = h1;
+		   h_formula_conjconj_h2 = h2;
+		  h_formula_conjconj_pos = pos})-> (contains_starminus h1) || (contains_starminus h2)
+| StarMinus _ -> true
+| _ -> false
 let rec is_inf_tnt_struc_formula f =
   match f with 
   | EList el -> List.exists (fun (_, f) -> is_inf_tnt_struc_formula f) el 

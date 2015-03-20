@@ -28,7 +28,7 @@ module LO2 = Label_only.Lab2_List
 module SHGram = Camlp4.Struct.Grammar.Static.Make(Lexer.Make(Token))
 
 (* some variables and functions decide which parser will be used *)
-let parser_name = ref "unknown"
+let parser_name = (* ref "unknown" *) ref "default"
 
 let set_parser name =
   parser_name := name
@@ -1857,9 +1857,10 @@ simple_heap_constr:
      (* High-order variables, e.g. %P*)
    | `PERCENT; `IDENTIFIER id -> F.HVar (id,[])
    | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN ->
-         (* if hp_names # mem id then *)
+        if hp_names # mem id then
            F.HRel(id, cl, (get_pos_camlp4 _loc 2))
-         (* else report_error (get_pos 1) ("should be a heap pred, not pure a relation here") *)
+             (*P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))*)
+         else report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
    | `HTRUE -> F.HTrue
    | `EMPTY -> F.HEmp
   ]];
@@ -1893,7 +1894,7 @@ perm_aux: [[
                   let pa = List.hd (List.tl (List.tl t)) in
                   Ipure.Bptriple ((pc,pt,pa),get_pos_camlp4 _loc 1)
                 else
-                  let () = print_endline ("Warning: bounded permission has incorrect number of arguments") in
+                  let () = print_endline_quiet ("Warning: bounded permission has incorrect number of arguments") in
                   let e = Ipure.IConst (1,get_pos_camlp4 _loc 1) in
                   Ipure.Bptriple ((e,e,e),get_pos_camlp4 _loc 1)
             | _ -> List.hd t (*other permission systems have one parameter*)
@@ -2130,8 +2131,8 @@ cexp_w:
         if hp_names # mem id then Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
         else
           begin
-            if not(rel_names # mem id) then print_endline ("WARNING1 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (not in rel_names)")
-            else  print_endline ("WARNING2 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (in rel_names)") ;
+            if not(rel_names # mem id) then print_endline_quiet ("WARNING1 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (not in rel_names)")
+            else  print_endline_quiet ("WARNING2 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (in rel_names)") ;
             Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
           end
     | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN ->
@@ -2157,7 +2158,7 @@ cexp_w:
           with Not_found -> 
             if not (rel_names # mem id) then 
               if not !Globals.web_compile_flag then 
-                print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
+                print_endline_quiet ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
             Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
         end
     | peek_cexp_list; ocl = opt_comma_list -> 
@@ -2187,6 +2188,8 @@ cexp_w:
         Pure_t((P.IConst (i, get_pos_camlp4 _loc 1)) ,(get_heap_ann_opt ann0 ))
     | `INFINITY ->
         Pure_c (P.InfConst(constinfinity,get_pos_camlp4 _loc 1))
+    | `NEGINFINITY ->
+        Pure_c (P.NegInfConst(constinfinity,get_pos_camlp4 _loc 1))
     | `FLOAT_LIT (f,_) ; ann0 = LIST1 ann_heap ->
         Pure_t((P.FConst (f, get_pos_camlp4 _loc 1)), (get_heap_ann_opt ann0 ))
     | `INT_LITER (i,_) -> Pure_c (P.IConst (i, get_pos_camlp4 _loc 1)) 
@@ -2644,6 +2647,7 @@ non_array_type:
    | `INFINT_TYPE        -> infint_type 
    | `BOOL               -> bool_type
    | `BAG               -> bag_type
+   | `ABSTRACT          -> void_type
    | `BAG; `OPAREN; t = non_array_type ; `CPAREN -> BagT t
    | `IDENTIFIER id      -> Named id
    | `OPAREN; t1=non_array_type; `COMMA; t2=non_array_type; `CPAREN -> Tup2 (t1,t2)
@@ -3010,7 +3014,9 @@ decl:
   |  g=global_var_decl            -> Global_var g
   |  l=logical_var_decl -> Logical_var l
   |  p=proc_decl                  -> Proc p
-  (* | `LEMMA lex; c= coercion_decl; `SEMICOLON    -> Coercion {c with coercion_exact = lex}]]; *)
+  | `RLEMMA ; c= coercion_decl; `SEMICOLON    -> let c =  {c with coercion_kind = RLEM} in
+                                                 Coercion_list { coercion_list_elems = [c];
+                                                                 coercion_list_kind = RLEM}
   | `LEMMA kind; c= coercion_decl; `SEMICOLON    -> 
         let k = convert_lem_kind kind in
         let c = {c with coercion_kind = k;} in
@@ -4129,8 +4135,24 @@ let create_tnt_prim_proc id : Iast.proc_decl option =
     else None
   in map_opt (parse_c_aux_proc "tnt_prim_proc") proc_source  
   
+let create_tnt_stdlib_proc () : Iast.proc_decl list =
+  let alloca_proc =
+    "void_star __builtin_alloca(int size)\n" ^
+    "  case {\n" ^
+    "    size <= 0 -> requires true ensures res = null;\n" ^
+    "    size >  0 -> requires true ensures res::memLoc<h,s> & (res != null) & h; }\n" 
+  in
+  let lt_proc = 
+    "int lt___(int_star p, int_star q)\n" ^
+    "  requires p::int_star<vp, op> * q::int_star<vq, oq>\n" ^
+    "  case {\n" ^
+    "    op <  oq -> ensures p::int_star<vp, op> * q::int_star<vq, oq> & res > 0;\n" ^
+    "    op >= oq -> ensures p::int_star<vp, op> * q::int_star<vq, oq> & res <= 0; }\n"
+  in List.map (parse_c_aux_proc "tnt_stdlib_proc") [alloca_proc; lt_proc]  
+  
 let create_tnt_prim_proc_list ids : Iast.proc_decl list =
   List.concat (List.map (fun id -> 
     match (create_tnt_prim_proc id) with
     | None -> [] | Some pd -> [pd]) ids)
+
 

@@ -46,6 +46,7 @@ and match_type =
   | MaterializedArg of (mater_property*mater_source) 
         (* materialized match which can reveal some nodes when defn unfolded *)
   | WArg (* indirect matching with other parameter *)
+  | Wand
   
 and action = 
   | M_match of match_res
@@ -70,6 +71,7 @@ and action =
   | M_lhs_case of match_res
         (*match * number_of_unfold * unfold_or_fold * type_lemma_syn*)
         (* lem_type = 0: LEFT *)
+  | M_ramify_lemma of match_res
         (* lem_type = 1 :RIGHT *)
         (* lem_type = 2: INFER *)
   | M_cyclic of (match_res* int * int * int * h_formula option)
@@ -91,6 +93,7 @@ let get_rhs_rest_emp_flag act old_is_rhs_emp =
     | M_acc_fold (m,_)
     | M_rd_lemma m
     | M_lemma  (m, _)
+    | M_ramify_lemma m
     | Undefined_action m
     | M_lhs_case m
     | M_cyclic (m,_,_,_,_) ->
@@ -130,6 +133,7 @@ let pr_match_type (e:match_type):unit =
           pr_mater_source ms;
           fmt_close_box();
     | WArg -> fmt_string "WArg"
+    | Wand -> fmt_string "Wand"
 
 
 let pr_match_res (c:match_res):unit =
@@ -173,6 +177,7 @@ let rec pr_action_name a = match a with
   | M_seg_fold e -> fmt_string "SegFold"
   | M_acc_fold _ -> fmt_string "AccFold"
   | M_rd_lemma e -> fmt_string "RD_Lemma"
+  | M_ramify_lemma e -> fmt_string "Ramify Lemma"
   | M_lemma (e,s) ->
         let str = string_of_match_res_pair e in
         fmt_string (""^(match s with | None -> "AnyLemma" | Some c-> "(Lemma "
@@ -199,6 +204,7 @@ let rec pr_action_res pr_mr a = match a with
       let pr_steps s = fmt_string ("\n fold steps:" ^ (pr_list Acc_fold.print_fold_type s)) in
       fmt_string "AccFold =>"; pr_mr e; pr_steps steps
   | M_rd_lemma e -> fmt_string "RD_Lemma =>"; pr_mr e
+  | M_ramify_lemma e -> fmt_string "Ramify_Lemma =>"; pr_mr e
   | M_lemma (e,s) -> fmt_string ((match s with | None -> "AnyLemma" | Some c-> "(Lemma "
         ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name)^") =>"); pr_mr e
   | M_Nothing_to_do s -> fmt_string ("NothingToDo => "^s)
@@ -248,6 +254,7 @@ let action_get_holes a = match a with
   | M_seg_fold (e,_)
   | M_acc_fold (e,_)
   | M_rd_lemma e
+  | M_ramify_lemma e
   | M_lemma (e,_)
   | M_base_case_unfold e
   | M_cyclic (e,_,_,_,_)
@@ -349,6 +356,39 @@ let filter_match_res_list lst rhs_node =
   match rhs_node with
     | HRel _ ->    List.filter (fun m -> is_match_res_from_coerc_or_root m) lst
     | _      ->  lst
+
+let convert_starminus ls = 
+        List.map (fun m ->
+          let lhs_rest = m.match_res_lhs_rest in
+          let () = print_string ("lhs_res:"^(Cprinter.string_of_h_formula lhs_rest)^"\n") in
+          let rec helper  hrest  = 
+          (match hrest with
+            | StarMinus ({h_formula_starminus_h1 = h1;
+                          h_formula_starminus_h2 = h2;
+                          h_formula_starminus_aliasing = al;
+                          h_formula_starminus_pos = pos}) ->
+                (let h1 =  match al with
+                  | Not_Aliased -> mkStarH h2 h1 pos 
+                  | May_Aliased -> mkConjH h2 h1 pos
+                  | Must_Aliased -> mkConjConjH h2 h1 pos
+                  | Partial_Aliased -> mkConjStarH h2 h1 pos in 
+                (mkStarMinusH h1 h2 al pos 111))
+            | Star({h_formula_star_h1 = h1;
+                    h_formula_star_h2 = h2;
+                    h_formula_star_pos = pos}) ->
+                mkStarH (helper h1) (helper h2) no_pos 
+            | _ -> hrest)
+          in 
+          let h = helper lhs_rest in
+          let () = print_string ("new_lhs_res:"^(Cprinter.string_of_h_formula h)^"\n") 
+          in { match_res_lhs_node = m.match_res_lhs_node;
+               match_res_lhs_rest = h;
+               match_res_holes = m.match_res_holes;
+               match_res_type = m.match_res_type;
+               match_res_rhs_node = m.match_res_rhs_node;
+               match_res_rhs_rest = m.match_res_rhs_rest}
+        ) ls
+
 (*  (resth1, anode, r_flag, phase, ctx) *)
 
 (* 
@@ -902,38 +942,59 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
                   h_formula_starminus_h2 = f2;
                   h_formula_starminus_aliasing = al;
                   h_formula_starminus_pos = pos}) ->
-        let l1 = helper f1 in
-        let res1 = List.map (fun (lhs1, node1, hole1, match1) ->
-          (mkStarMinusH lhs1 f2 al pos 12 , node1, hole1, match1)
-        ) l1 in
-        let l2 = helper f2 in
-        let res2 = List.map (fun (lhs2, node2, hole2, match2) ->
-          (mkStarMinusH f1 lhs2 al pos 13, node2, hole2, match2)
-        ) l2 in
-        res1 @ res2
+      let f = (let f1 =  match al with
+                  | Not_Aliased -> mkStarH f2 f1 pos 
+                  | May_Aliased -> mkConjH f2 f1 pos
+                  | Must_Aliased -> mkConjConjH f2 f1 pos
+                  | Partial_Aliased -> mkConjStarH f2 f1 pos in 
+                (mkStarMinusH f1 f2 al pos 111)) in
+      [f,rhs_node,[],Wand]
+      (*
+	    let _ = print_string("[context.ml]:Use ramification lemma, lhs = " ^ (string_of_h_formula f) ^ "\n") in
+        failwith("[context.ml]: There should be no wand in the lhs at this level\n")*)
+          (*let l1 = helper f1 in
+          let res1 = List.map (fun (lhs1, node1, hole1, match1) -> (mkStarMinusH lhs1 f2 al pos 12 , node1, hole1, match1)) l1 in  
+          let l2 = helper f2 in
+          let res2 = List.map (fun (lhs2, node2, hole2, match2) -> (mkStarMinusH f1 lhs2 al pos 13, node2, hole2, match2)) l2 in
+          res1 @ res2*)
+    
     | Conj({h_formula_conj_h1 = f1;
             h_formula_conj_h2 = f2;
-            h_formula_conj_pos = pos}) ->
-        if (!Globals.allow_mem) then 
+      h_formula_conj_pos = pos}) ->  if (!Globals.allow_mem || !Globals.allow_ramify) then 
+        if CF.contains_starminus f1 || CF.contains_starminus f2 then
+          let () = print_string("[context.ml]:Use ramification lemmas lhs = " ^ (string_of_h_formula f) ^ "\n") in
+          failwith("[context.ml]: There should be no wand in the lhs at this level\n")
+        else 
           let l1 = helper f1 in
           let res1 = List.map (fun (lhs1, node1, hole1, match1) -> 
+          let nl,nn,nh,nm = 
             if not (is_empty_heap node1) && (is_empty_heap rhs_rest) then 
               let ramify_f2 = mkStarMinusH f2 node1 May_Aliased pos 37 in
-              (mkConjH lhs1 ramify_f2 pos , node1, hole1, match1)
-            else (mkConjH lhs1 f2 pos , node1, hole1, match1)
-          ) l1 in  
+             (* if CF.contains_starminus lhs1 then (lhs1, node1, hole1, match1)
+              else*) (mkStarH lhs1 ramify_f2 pos , node1, hole1, match1)
+            else (mkStarH lhs1 f2 pos , node1, hole1, match1) in
+          (*let () = print_endline("F : "^Cprinter.string_of_h_formula nl) in*) nl,nn,nh,nm) l1 in 
           let l2 = helper f2 in
           let res2 = List.map (fun (lhs2, node2, hole2, match2) -> 
+          let nl,nn,nh,nm = 
             if not (is_empty_heap node2) && (is_empty_heap rhs_rest) then 
               let ramify_f1 = mkStarMinusH f1 node2 May_Aliased pos 38 in
-              (mkConjH ramify_f1 lhs2 pos , node2, hole2, match2)
+              if CF.contains_starminus lhs2 then 
+                match lhs2 with
+                  | StarMinus ({h_formula_starminus_h1 = lhs2_f1;
+                                h_formula_starminus_h2 = lhs2_f2;
+                                h_formula_starminus_aliasing = lhs2_al;
+                                h_formula_starminus_pos = lhs2_pos}) -> (mkStarMinusH (mkConjH f1 lhs2_f1 lhs2_pos) node2 lhs2_al pos 39, node2, hole2, match2)
+                  | _ -> (mkStarH ramify_f1 lhs2 pos, node2, hole2, match2)
+              else (mkStarH ramify_f1 lhs2 pos, node2, hole2, match2)
             else
-              (mkConjH f1 lhs2 pos , node2, hole2, match2)
-          ) l2 in
+              (mkStarH f1 lhs2 pos , node2, hole2, match2) in
+          (*let () = print_endline("G : "^Cprinter.string_of_h_formula nl) in*) nl,nn,nh,nm) l2 in
           (*let helper0 lst = List.fold_left (fun res (a,_,_,_) -> res ^ (Cprinter.string_of_h_formula a) ) "" lst in 
             let () = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x res1:"  ^ helper0 res1) in
             let () = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x res2:"  ^ helper0 res2) in *)
           res1 @ res2
+      (*[(mkStarMinusH f rhs_node Not_Aliased pos 37,rhs_node,[],Root)]*)
         else 
           let () = print_string("[context.ml]: Conjunction in lhs, use mem specifications. lhs = "
               ^ (string_of_h_formula f) ^ "\n") in
@@ -1155,6 +1216,7 @@ and lookup_lemma_action_x prog (c:match_res) :action =
           (1,M_Nothing_to_do (string_of_match_res c))
     | WArg ->
           (1,M_Nothing_to_do (string_of_match_res c))
+    | Wand ->  (1,M_Nothing_to_do (string_of_match_res c))
   in
   act
 
@@ -1967,7 +2029,10 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 (***************************************************)
                 (***************************************************)
                 (1,M_Nothing_to_do (string_of_match_res m_res))
-      end
+    end
+    | Wand -> (*let _ = (print_endline"eliminate wand") in *)
+               if (Lem_store.all_lemma # any_coercion) then (1,M_ramify_lemma m_res)
+               else (1,M_Nothing_to_do (string_of_match_res m_res))
   in
 
   let r1 = match m_res.match_res_type with 
@@ -1998,7 +2063,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
           (*??? expect MATCHING only when normalizing => this situation does not need to be handled*)
           (* let () = print_string ("\n [context.ml] Warning: process_one_match not support Materialized Arg when normalizing\n") in *)
           (1,M_Nothing_to_do (string_of_match_res m_res))
-    | WArg -> (1,M_Nothing_to_do (string_of_match_res m_res)) in
+    | WArg -> (1,M_Nothing_to_do (string_of_match_res m_res)) 
+    | Wand -> (1,M_Nothing_to_do (string_of_match_res m_res)) in
   (*if in normalizing process => choose r1, otherwise, r*)
   if (is_normalizing) then r1
   else r
@@ -2203,6 +2269,7 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
     | M_base_case_fold _
     | M_rd_lemma _
     | M_lemma  _
+    | M_ramify_lemma _
     | M_base_case_unfold _ 
     | M_unfold _
     | M_fold _
@@ -2217,7 +2284,8 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
     | M_unmatched_rhs_data_node _ -> true
     | Search_action l
     | Seq_action l
-    | Cond_action l -> List.exists uncertain l  in	
+    | Cond_action l ->
+        List.exists uncertain l  in	
   
   let rec recalibrate_wt (w,a) = 
     let pick a b = if a<b then a else b in

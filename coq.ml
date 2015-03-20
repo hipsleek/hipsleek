@@ -4,6 +4,7 @@
 *)
 
 open Globals
+open Gen.Basic
 open VarGen
 open GlobProver
 module CP = Cpure
@@ -19,6 +20,7 @@ let max_flag = ref false
 let choice = ref 1
 let bag_flag = ref false
 let coq_running = ref false
+let coq_timeout = ref 5.0
 let coq_channels = ref (stdin, stdout)
 
 let print_p_f_f = ref (fun (c:CP.formula)-> " formula printing not initialized")  
@@ -137,7 +139,8 @@ and coq_of_exp e0 =
 	| CP.ArrayAt _ -> 
 			illegal_format "coq_of_exp : array cannot be handled"
           (* failwith ("Arrays are not supported in Coq") (\* An Hoa *\) *)
-    | CP.InfConst _ -> Error.report_no_pattern ()
+    | CP.NegInfConst _
+    | CP.InfConst _ -> illegal_format "coq_of_exp : \inf cannot be handled"
   | CP.Template t -> coq_of_exp (CP.exp_of_template t)
 
 (* pretty printing for a list of expressions *)
@@ -225,6 +228,9 @@ let coq_of_formula pr_w pr_s f =
   let () = set_prover_type () in
   coq_of_formula pr_w pr_s f
   
+let coq_of_formula pr_w pr_s f = 
+Debug.no_1 "coq_of_formula" (fun _ -> "Input") (fun c -> c)
+(fun _ -> coq_of_formula pr_w pr_s f) pr_w
 
 (* checking the result given by Coq *)
 let rec check fd coq_file_name : bool=
@@ -243,6 +249,7 @@ let rec check fd coq_file_name : bool=
 	  (*ignore (Sys.remove coq_file_name);	*)
 	  false
 ;;
+
 let coq_of_var_list l = String.concat "" (List.map (fun sv -> "forall " ^ (coq_of_spec_var sv) ^ ":" ^ (coq_type_of_spec_var sv) ^ ", ") l)
 
 let decidez_vo_dir = Gen.get_path Sys.executable_name
@@ -273,6 +280,7 @@ let stop_prover_debug () =
 (* sending Coq a formula; nr = nr. of retries *)
 let rec send_formula (f : string) (nr : int) : bool =
   try
+    let fnc () = 
 	  output_string (snd !coq_channels) f;
 	  output_string (snd !coq_channels) ("decidez.\nQed.\n");
 	  flush (snd !coq_channels);
@@ -294,12 +302,23 @@ let rec send_formula (f : string) (nr : int) : bool =
         end;
 	  done;
 	  !result
+    in
+    try  
+      let answ = Procutils.PrvComms.maybe_raise_timeout_num 11 fnc () !coq_timeout in
+      answ
+    with 
+      | Procutils.PrvComms.Timeout -> 
+          begin
+            print_string("\n[coq.ml]:Timeout exception\n");flush stdout;
+            false;
+          end
   with
 	_ -> ignore (Unix.close_process !coq_channels);
 		coq_running := false;
 		print_string "\nCoq crashed\n"; flush stdout;
 		start ();
 		if nr > 1 then send_formula f (nr - 1) else false
+
   
 (* writing the Coq file *)
 let write pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =
@@ -321,8 +340,9 @@ let write pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =
   (*let () = print_string ("[coq.ml] write " ^ ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n")) in*)
   send_formula ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n") 2
 
+
 let write  pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =
-  Debug.no_2 "[coq.ml] write" !print_p_f_f !print_p_f_f
+  Debug.no_2 "coqwrite" !print_p_f_f !print_p_f_f
 	string_of_bool (write pr_w pr_s) ante conseq
 	
 let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =
@@ -334,16 +354,16 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =
     write pr_w pr_s ante conseq;
   with Illegal_Prover_Format s -> 
       begin
-        print_endline ("\nWARNING coq.imply : Illegal_Prover_Format for :"^s);
-        print_endline ("ante:"^(!print_p_f_f ante));
-        print_endline ("conseq:"^(!print_p_f_f conseq));
+        print_endline_quiet ("\nWARNING coq.imply : Illegal_Prover_Format for :"^s);
+        print_endline_quiet ("ante:"^(!print_p_f_f ante));
+        print_endline_quiet ("conseq:"^(!print_p_f_f conseq));
         flush stdout;
         failwith s
       end
   (*write (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos)*)
 
 let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =
-  Debug.no_2 "[coq.ml] imply" !print_p_f_f !print_p_f_f
+  Debug.no_2 "coqimplyops" !print_p_f_f !print_p_f_f
 	string_of_bool (imply_ops pr_w pr_s) ante conseq
 
 let imply (ante : CP.formula) (conseq : CP.formula) : bool =
@@ -362,6 +382,10 @@ let is_sat_ops pr_w pr_s (f : CP.formula) (sat_no : string) : bool =
   | false ->
 	  if !log_all_flag == true then output_string log_file "[coq.ml]: is_sat --> true\n";
 	  true
+
+let is_sat_ops pr_w pr_s (f:CP.formula) (sat_no :string) : bool = 
+  Debug.no_2 "coqsimplops" !print_p_f_f (fun x -> x) 
+     string_of_bool (is_sat_ops pr_w pr_s) f sat_no
 
 let is_sat (f : CP.formula) (sat_no : string) : bool =
   let pr x = None in

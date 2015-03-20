@@ -365,7 +365,7 @@ object (self)
     begin
       let (cur,src) = sleek_stk # top_no_exc in
       (if sleek_stk # is_empty 
-      then (print_endline "ERROR : get_sleek_no on empty sleek_stk")
+      then (print_endline_quiet "ERROR : get_sleek_no on empty sleek_stk")
       else sleek_stk # pop);
       (cur,src,fst(sleek_stk # top_no_exc))
     end
@@ -399,7 +399,7 @@ object (self)
     begin
       Debug.info_hprint (add_str "Number of MONA calls" string_of_int) mona_cnt no_pos;
       Debug.info_hprint (add_str "Number of Omega calls" string_of_int) oc_cnt no_pos;
-      print_endline ""
+      print_endline_quiet ""
     end
 
 end;;
@@ -459,7 +459,7 @@ let add_sleek_logging (es_opt:Cformula.entail_state option) timeout_flag stime i
   if !Globals.sleek_logging_txt then
     (* let () = Debug.info_pprint "logging .." no_pos in *)
     let (stk_slk_no,src,slk_parent_no) = last_cmd # get_sleek_no in
-    if slk_no != stk_slk_no then print_endline ("LOGGING ERROR : inconsistent slk_no problem "
+    if slk_no != stk_slk_no then print_endline_quiet ("LOGGING ERROR : inconsistent slk_no problem "
     ^(string_of_int slk_no)^" "^((add_str "stk" string_of_int) stk_slk_no));
     let sleek_log_entry = {
         (* sleek_proving_id = get_sleek_proving_id (); *)

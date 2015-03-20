@@ -1,0 +1,9 @@
+checkentail
+   a[5]=5
+   |- a[5]=5.
+print residue.
+
+checkentail
+   a[i]=6 & a[a[i]+0]=8
+   |- a[6]=8.
+print residue.

@@ -26,7 +26,7 @@ GetOptions( "stop"  => \$stop,
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
 {
-	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|imm-filed|sleek|parahip|hip_baga|sleek_threads|hip_threads|hip_vperm|sleek_vperm|sleek_fracperm||sleek_veribsync|hip_veribsync|infinity|mem [-flags \"arguments to be transmited to hip/sleek \"]\n";
+	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|imm-filed|sleek|parahip|hip_baga|sleek_threads|hip_threads|hip_vperm|sleek_vperm|sleek_fracperm||sleek_veribsync|hip_veribsync|infinity|mem|coqinf [-flags \"arguments to be transmited to hip/sleek \"]\n";
 	exit(0);
 }
 
@@ -208,17 +208,30 @@ $output_file = "log";
 	# END OF ARRAY TESTING EXAMPLES
 	"hip_tr"=>[["trees.ss",1,"insert"]],
 	"infinity" =>[
-	["inflist.ss",2,"--dsd --en-inf","remove","SUCCESS","append","SUCCESS"],
-	["infll_take.ss",1,"--dsd --en-inf","take","SUCCESS"],
-	["inftree.ss",1,"--dsd --en-inf","count","SUCCESS"],
-	["stream.ss",1,"--dsd --en-inf","zip","SUCCESS"],
-	["bst-inf.ss",2,"--dsd --en-inf","delete","SUCCESS","remove_min","SUCCESS"],
-	["inf-selsort.ss",3,"--dsd --en-disj-compute --en-inf","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
+	["inflist.ss",2,"--en-inf","remove","SUCCESS","append","SUCCESS"],
+	["infll_take.ss",1,"--en-inf","take","SUCCESS"],
+	["inftree.ss",1,"--en-inf","count","SUCCESS"],
+	["stream.ss",1,"--en-inf","zip","SUCCESS"],
+	["bst-inf.ss",2,"--en-inf","delete","SUCCESS","remove_min","SUCCESS"],
+	["inf-selsort.ss",3,"--en-inf","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
 	["inf-ins.ss",1,"--dsd --en-inf","insert","SUCCESS"],
 	["inf-sel.ss",3,"--dsd --en-inf","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
-	["bubble-inf.ss",4,"--dsd --en-inf","id2","SUCCESS","id3","SUCCESS","bubble","SUCCESS","bsort","SUCCESS"],
+	["bubble-inf.ss",4,"--en-inf","id2","SUCCESS","id3","SUCCESS","bubble","SUCCESS","bsort","SUCCESS"],
 	["heaps-inf.ss",4,"--en-inf","insert","SUCCESS","deleteoneel","SUCCESS","deleteone","SUCCESS","deletemax","SUCCESS"],
-	["merge-inf.ss",1,"--dsd --en-inf --en-disj-compute","merge","SUCCESS"],
+	["merge-inf.ss",1,"--en-inf --en-disj-compute","merge","SUCCESS"],
+	],
+	"coqinf" =>[
+	["inflist.ss",3,"--en-inf","remove","SUCCESS","append","SUCCESS","fail_remove","FAIL"],
+	["infll_take.ss",1,"--en-inf","take","SUCCESS"],
+	["inftree.ss",1,"--en-inf","count","SUCCESS"],
+	["stream.ss",1,"--en-inf","zip","SUCCESS"],
+	["bst-inf.ss",2,"--en-inf --eps --etcsu2 --etcsu3","delete","SUCCESS","remove_min","SUCCESS"],
+	["inf-selsort.ss",3,"--en-inf --etcsu2 --etcsu3","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
+	["inf-ins.ss",1,"--dsd --en-inf","insert","SUCCESS"],
+	["inf-sel.ss",3,"--dsd --en-inf --etcsu2 --etcsu3","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
+	["bubble-inf.ss",4,"--en-inf","id2","SUCCESS","id3","SUCCESS","bubble","SUCCESS","bsort","SUCCESS"],
+#	["heaps-inf.ss",4,"--en-inf --en-inf-qe-coq --etcsu2 --etcsu3 --dis-early-contra","insert","FAIL","deleteoneel","SUCCESS","deleteone","SUCCESS","deletemax","SUCCESS"],
+	["merge-inf.ss",1,"--en-inf --en-disj-compute --etcsu2 --etcsu3","merge","SUCCESS"],
 	],
     "imm" =>[ 
         ["bigint.ss",17,  " --imm -tp redlog",

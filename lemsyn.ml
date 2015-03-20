@@ -112,14 +112,14 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
         let res = manage_unsafe_lemmas_fnc [l_coer] iprog prog in
         let _ =
           if not !Globals.smt_compete_mode then
-            print_endline (" \n gen lemma (proof):" ^ (Cprinter.string_of_formula lf1) ^ (if lem_type = 0 ||  lem_type = 3 then " -> " else " <- ")
+            print_endline_quiet (" \n gen lemma (proof):" ^ (Cprinter.string_of_formula lf1) ^ (if lem_type = 0 ||  lem_type = 3 then " -> " else " <- ")
             ^ (Cprinter.string_of_formula rf1))
           else ()
         in
         let () = Globals.lemma_syn_count := !Globals.lemma_syn_count + 1 in
         ()
   with e ->
-      let () = if not !Globals.smt_compete_mode then print_endline (" \n gen lemma: Exception: " ^ (Printexc.to_string e) ) else ()
+      let () = if not !Globals.smt_compete_mode then print_endline_quiet (" \n gen lemma: Exception: " ^ (Printexc.to_string e) ) else ()
       in ()
 
 let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
@@ -233,12 +233,12 @@ let gen_lemma_infer_x (prog) ass_stk hpdef_stk
     let l_coer = Iast.mk_lemma (lem_name) LEM_UNSAFE LEM_GEN Iast.Left [] lf2 rf4 in
     (*add lemma*)
     let res = manage_unsafe_lemmas_fnc [l_coer] iprog prog in
-    let () = print_endline "\n*******relational definition ********" in
+    let () = print_endline_quiet "\n*******relational definition ********" in
     let defs1 = if !Globals.print_en_tidy then List.map Cfout.rearrange_def (Cformula.rel_def_stk # get_stk) else
       (Cformula.rel_def_stk # get_stk) in
     let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
-    let () = print_endline (pr1 defs1) in
-    let () = print_endline (" \n gen lemma (infer):" ^ (Cprinter.string_of_formula lf1) ^ ( " -> " )
+    let () = print_endline_quiet (pr1 defs1) in
+    let () = print_endline_quiet (" \n gen lemma (infer):" ^ (Cprinter.string_of_formula lf1) ^ ( " -> " )
     ^ (Cprinter.string_of_formula rf3)) in
     ()
   else ()

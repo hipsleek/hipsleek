@@ -7,7 +7,9 @@ open VarGen
 open Gen.Basic
 open Globals
 open HipUtil
-(* module I = Iast *)
+module C = Cast
+module CP = Cpure
+module CF = Cformula
 
 module M = Lexer.Make(Token.Token)
 
@@ -63,7 +65,7 @@ let parse_file_full file_name (primitive: bool) =
         (*   "cil"                                                                 *)
         (* else if(ext = ".java") then "joust"                                     *)
         (* else "default"                                                          *)
-        "default"
+          "default"
       )
     ) in
     (* start parsing *)
@@ -76,6 +78,10 @@ let parse_file_full file_name (primitive: bool) =
       if parser_to_use = "cil" then
         let cil_prog = Cilparser.parse_hip file_name in
         cil_prog
+      else if parser_to_use = "cil-i" then
+        let cil_prog = Cilparser.parse_prep file_name in
+        let stdlib_procs = Parser.create_tnt_stdlib_proc () in
+        { cil_prog with Iast.prog_proc_decls = cil_prog.Iast.prog_proc_decls @ stdlib_procs; }
       else
         (* if parser_to_use = "joust" then                                                        *)
         (*   let ss_file_name = file_name ^ ".ss" in                                              *)
@@ -303,7 +309,7 @@ let print_spec cprog =
       | p :: pl -> (match p.Cast.proc_body with
           | None -> ""
           | Some _ ->
-                let () = print_endline (Cprinter.string_of_struc_formula p.Cast.proc_static_specs) in
+                let () = print_endline_quiet (Cprinter.string_of_struc_formula p.Cast.proc_static_specs) in
                 (* let sf = p.Cast.proc_static_specs in *)
                 (* let fvs = List.map (fun (t, id) -> Cpure.SpecVar(t, id, Unprimed)) p.Cast.proc_args in *)
                 (* let new_sf = List.fold_left (fun sf fv ->  *)
@@ -544,7 +550,179 @@ let process_source_full source =
     (* ========= lemma process (normalize, translate, verify) ========= *)
     let () = List.iter (fun x -> Lemma.process_list_lemma_helper x tiprog cprog (fun a b -> b)) tiprog.Iast.prog_coercion_decls in
     (* ========= end - lemma process (normalize, translate, verify) ========= *)
-
+    let c = cprog in
+       let () = if !Globals.gen_coq_file 
+         then 
+           let () = print_endline "Generating Coq file ..."in
+           let filename = (List.hd !Globals.source_files) in
+           let i = (String.rindex filename '.') in
+           let file = (String.sub filename 0  i) ^".v" in
+           let j = (String.rindex filename '/') in
+           let oc = open_out file in
+           let moduletypename = (String.sub filename (j+1) (i-j)) in
+           let imports = "Require Import ZArith.\n" in
+           let moduletype = "\nModule Type M"^moduletypename^"\n" in
+           let endmoduletype = "End M"^moduletypename^"\n" in
+           let parameter_formula = "  Parameter formula : Type.\n" in
+           let parameter_valid = "  Parameter valid : formula -> Prop.\n" in
+           let ptto_list = List.map (fun dd ->
+             if(List.length dd.C.data_fields > 0 
+                && not(ExtString.String.starts_with dd.C.data_name "int_ptr")
+                && not(ExtString.String.starts_with dd.C.data_name "barrier")) then
+             let param_name = "  Parameter "^dd.C.data_name^" : Type.\n" in
+             let param_null = "  Parameter null_"^dd.C.data_name^" : "
+               ^dd.C.data_name^".\n" in 
+             let param_ptto = "  Parameter ptto_"^dd.C.data_name
+               ^" : "^dd.C.data_name^" -> " in
+             let types_list = List.map (fun ((t,_),_) -> match t with
+               | Int -> "Z"
+               | Named i -> i
+               | _ -> "Unknown"
+             ) dd.C.data_fields in
+             let param_types = String.concat " -> " types_list in
+             let ptto = param_ptto^param_types^" -> formula.\n" in
+             param_name^param_null^ptto
+             else ""
+           ) c.C.prog_data_decls in
+           let parameter_ptto = String.concat "" ptto_list in
+           let view_list = List.map (fun vd -> 
+             if not(vd.C.view_is_prim) then
+               let view_params = String.concat "" (List.map (fun sv ->
+                 match (CP.type_of_spec_var sv) with
+                   | Void -> "  Parameter A : Type.\n"
+                   | _ -> ""
+               ) vd.C.view_vars) in
+               let view_params_arrow = String.concat " -> " (List.map (fun sv ->
+                match (CP.type_of_spec_var sv) with
+                  | Void -> "A"
+                  | Int -> "Z"
+                  | Named i -> i
+                  | _ -> "Uknown"
+               ) vd.C.view_vars) in
+               let view_name = "  Parameter "^vd.C.view_name^" : "^
+                 vd.C.view_data_name^" -> "^view_params_arrow^" -> formula.\n" in
+               view_params^view_name
+             else ""
+           ) c.C.prog_view_decls in
+           let parameter_views = String.concat "" view_list in
+           let parameter_formulas = 
+             "  Parameter star : formula -> formula -> formula.\n"^
+             "  Parameter and : formula -> formula -> formula.\n"^
+             "  Parameter imp : formula -> formula -> formula.\n"^
+             "  Parameter not : formula -> formula.\n"^
+             "  Parameter eq : node -> node -> formula.\n"^
+               (if !Globals.allow_ramify then 
+                   "  Parameter mwand : formula -> formula -> formula.\n"^
+                   "  Parameter union : formula -> formula -> formula.\n"^
+                   "  Parameter neq : Z -> Z -> formula.\n"
+                else "") in
+           let relation_list = List.map (fun rd ->
+             if (ExtString.String.starts_with rd.C.rel_name "dom") ||
+                (ExtString.String.starts_with rd.C.rel_name "update_array_") ||
+                (ExtString.String.starts_with rd.C.rel_name "induce") ||
+                (ExtString.String.starts_with rd.C.rel_name "amodr")
+             then ""
+             else
+             let rel_params_arrow = String.concat " -> " (List.map (fun sv ->
+                match (CP.type_of_spec_var sv) with
+                  | Void -> "A"
+                  | Int -> "Z"
+                  | Named i -> i
+                  | _ -> "Uknown"
+             ) rd.C.rel_vars) in "  Parameter "^rd.C.rel_name^" : "^rel_params_arrow^
+                             " -> formula.\n"
+           ) c.C.prog_rel_decls in
+           let parameter_relations = String.concat "" relation_list in
+           let rec convert_cp_formula f = match f with
+             | CP.BForm((pf,_),_) -> (match pf with 
+                 | CP.Eq(e1,e2,_) -> "(eq "^(CP.exp_to_name_spec_var e1)
+                     ^" "^(CP.exp_to_name_spec_var e2)^")"
+                 | CP.Neq(e1,e2,_) ->"(neq "^(CP.exp_to_name_spec_var e1)
+                     ^" "^(CP.exp_to_name_spec_var e2)^")"
+                 | CP.RelForm(sv,elist,_) -> "("^(CP.name_of_spec_var sv)^" "^
+                     (String.concat " " (List.map (fun e ->
+                     CP.exp_to_name_spec_var e) elist))^")"
+                 (*| CP.BConst(b,_) -> if b then "true" else "false"*)
+                 | _ -> ""
+             )
+             | CP.And(f1,f2,_) -> "(and "^(convert_cp_formula f1) ^" "^
+                 (convert_cp_formula f2)^")"
+             | CP.Not(f,_,_) -> "(not "^(convert_cp_formula f)^")"
+             | CP.Exists(_,f,_,_) -> convert_cp_formula f
+             | _ -> "" in
+           let axioms_list = List.map (fun axd -> 
+             let var_list = CP.remove_dups_svl (List.filter (fun sv -> 
+               (String.length (CP.name_of_spec_var sv)) < 3)
+               ((CP.fv axd.C.axiom_hypothesis)@(CP.fv axd.C.axiom_conclusion)))
+             in let var_list_string = String.concat " " (List.map 
+                  (fun sv -> CP.name_of_spec_var sv) var_list) in
+                let (_,exists_list) = CP.split_ex_quantifiers_rec axd.C.axiom_conclusion in
+                let var_exlst = String.concat " " (List.map
+                  (fun sv -> CP.name_of_spec_var sv) exists_list) in
+              "  Axiom axiom_"^(string_of_int (Globals.fresh_int2()))
+                ^" : forall "^var_list_string^","^
+                (if (String.length var_exlst) > 0 
+                 then " exists "^var_exlst^","
+                 else "")^
+                (if (CP.isConstTrue axd.C.axiom_hypothesis)
+                then " valid "^(convert_cp_formula axd.C.axiom_conclusion)^".\n"
+                else
+                " valid (imp "^(convert_cp_formula axd.C.axiom_hypothesis)
+                ^" "^(convert_cp_formula axd.C.axiom_conclusion)^").\n")
+           ) (List.filter (fun a -> 
+             if List.length (CP.fv a.C.axiom_hypothesis) > 0 then 
+               if ExtString.String.starts_with (CP.name_of_spec_var
+               (List.hd (CP.fv a.C.axiom_hypothesis))) "dom"
+               then false
+               else true
+              else true)
+                c.C.prog_axiom_decls) in
+           let parameter_axioms = String.concat "" axioms_list in
+           (*let () = Lem_store.all_lemma # dump in*)
+           let rec convert_h_formula f = match f with
+             | CF.Star({h_formula_star_h1 = h1;
+                     h_formula_star_h2 = h2;}) -> "(star "^
+                    (convert_h_formula h1)^" "^(convert_h_formula h2)^")"
+             | CF.Conj({h_formula_conj_h1 = h1;
+                     h_formula_conj_h2 = h2;}) -> "(union "^
+                    (convert_h_formula h1)^" "^(convert_h_formula h2)^")"
+             | CF.StarMinus({h_formula_starminus_h1 = h1;
+                     h_formula_starminus_h2 = h2;}) -> "(mwand "^
+                    (convert_h_formula h2)^" "^(convert_h_formula h1)^")"
+             | CF.DataNode({h_formula_data_node = d;
+                            h_formula_data_name = name;
+                            h_formula_data_arguments = args}) -> "(ptto_"^name^" "^
+                 (String.concat " " (List.map (fun sv -> CP.name_of_spec_var sv) (d::args)))
+                 ^")"
+             | CF.ViewNode({h_formula_view_node = v;
+                            h_formula_view_name = name;
+                            h_formula_view_arguments = args;}) -> "("^name^" "^
+                 (String.concat " " (List.map (fun sv -> CP.name_of_spec_var sv) (v::args)))
+                 ^")"
+             | _ -> "" in
+           let lemma_list = List.map (fun cd ->
+             let h1, p1, _,_, _, _ = CF.split_components 
+               (CF.elim_exists cd.C.coercion_head) in
+             let h2, p2,_, _, _, _ = CF.split_components 
+               (CF.elim_exists cd.C.coercion_body) in
+             let var_list = CP.remove_dups_svl (List.filter (fun sv -> 
+               (String.length (CP.name_of_spec_var sv)) < 3)
+               ((CF.h_fv h1)@(CF.h_fv h2)@(CP.fv (Mcpure.pure_of_mix p1))
+                @(CP.fv (Mcpure.pure_of_mix p2)))) in
+             let var_list_string = String.concat " " (List.map 
+                  (fun sv -> CP.name_of_spec_var sv) var_list) in
+             "  Axiom lem_"^cd.C.coercion_name^" : forall "^
+             var_list_string^", valid (imp "^"(and "^(convert_h_formula h1)^" "^
+               (convert_cp_formula (Mcpure.pure_of_mix p1))^")"^" "^(convert_h_formula h2)
+             ^").\n"
+           ) (Lem_store.all_lemma # get_left_coercion) in
+           let parameter_lemmas = String.concat "" lemma_list in
+           Printf.fprintf oc "%s\n" (imports^moduletype^parameter_formula^
+           parameter_valid^parameter_ptto^parameter_views^parameter_formulas^
+           parameter_relations^parameter_axioms^parameter_lemmas^endmoduletype);
+           close_out oc;
+           print_endline ("Complete the proof in "^file);
+         else () in 
 		(* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
     (* let () = print_string ("Translating to core language...\n"); flush stdout in *)
     (*let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in*)
@@ -705,6 +883,7 @@ let process_source_list source_files =
       let parser = 
         if (ext = ".c") || (ext = ".cc") || (ext = ".cpp") || (ext = ".h") then
           "cil"
+        else if (ext = ".i") then "cil-i"
         else (* "default" *) !Parser.parser_name
       in 
       let () = Parser.parser_name := parser in
@@ -981,13 +1160,17 @@ let old_main () =
     ()
   with _ as e -> begin
     finalize_bug ();
-    print_string "caught\n"; 
+    print_string_quiet "caught\n"; 
     Printexc.print_backtrace stderr;
-    print_string ("\nException occurred: " ^ (Printexc.to_string e));
-    print_string ("\nError3(s) detected at main \n");
+    print_string_quiet ("\nException occurred: " ^ (Printexc.to_string e));
+    print_string_quiet ("\nError3(s) detected at main \n");
     (* print result for svcomp 2015 *)
-    if (!Globals.svcomp_compete_mode) then
-      print_endline "UNKNOWN(5)";
+    (
+    if !Globals.tnt_web_mode then
+      print_web_mode ("\nError: " ^ (Printexc.to_string e))
+    else if (!Globals.svcomp_compete_mode) then
+      print_endline "UNKNOWN" (* UNKNOWN(5) *)
+    )
   end
 
 let () = 
@@ -1016,12 +1199,16 @@ let () =
           ()
         with _ as e -> begin
           finalize_bug ();
-          print_string "caught\n"; Printexc.print_backtrace stdout;
-          print_string ("\nException occurred: " ^ (Printexc.to_string e));
-          print_string ("\nError4(s) detected at main \n");
+          print_string_quiet "caught\n"; Printexc.print_backtrace stdout;
+          print_string_quiet ("\nException occurred: " ^ (Printexc.to_string e));
+          print_string_quiet ("\nError4(s) detected at main \n");
           (* print result for svcomp 2015 *)
-          if (!Globals.svcomp_compete_mode) then
-            print_endline "UNKNOWN(7)"
+          (
+          if !Globals.tnt_web_mode then
+            print_web_mode ("\nError: " ^ (Printexc.to_string e))
+          else if (!Globals.svcomp_compete_mode) then
+            print_endline "UNKNOWN" (* UNKNOWN(7) *)
+          )
         end
     done;
     hip_epilogue ()

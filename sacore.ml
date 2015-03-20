@@ -934,14 +934,14 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
      let unk_hps = List.map fst tot_unk_hpargs in
      let () = if unk_hps <> [] then
        let hp_names = List.map (CP.name_of_spec_var) unk_hps in
-       let () = print_endline ("\nDeclare_Dangling [" ^ (String.concat "," hp_names) ^ "].") in
+       let () = print_endline_quiet ("\nDeclare_Dangling [" ^ (String.concat "," hp_names) ^ "].") in
        ()
      else ()
      in
      let link_hps = List.map fst link_hpargs4 in
      let () = if link_hps <> [] then
        let hp_names = List.map (CP.name_of_spec_var) link_hps in
-       let () = print_endline ("\nDeclare_Unknown [" ^ (String.concat "," hp_names) ^ "].") in
+       let () = print_endline_quiet ("\nDeclare_Unknown [" ^ (String.concat "," hp_names) ^ "].") in
        ()
      else ()
      in
@@ -3539,7 +3539,7 @@ let prove_right_implication_x iprog cprog proc_name infer_rel_svl lhs rhs gen_hp
     let ilemma_inf = Iast.mk_lemma (fresh_any_name "tmp_safe") LEM_UNSAFE LEM_GEN Iast.Right
       (List.map CP.name_of_spec_var infer_rel_svl) (IF.add_quantifiers [] ilhs) (IF.add_quantifiers [] irhs) in
     let () = Debug.info_hprint (add_str "\nRight. ilemma_infs:\n " (Iprinter.string_of_coerc_decl)) ilemma_inf no_pos in
-    let rel_fixs,_, lc_opt = Lemma.manage_infer_pred_lemmas [ilemma_inf] iprog cprog Cvutil.xpure_heap in
+    let rel_fixs,_, lc_opt = Lemma.manage_infer_pred_lemmas [ilemma_inf] iprog cprog (x_add Cvutil.xpure_heap) in
     (* let lc_opt = Lemma.sa_infer_lemmas iprog cprog [ilemma_inf] in *)
     let valid, n_rhs = match lc_opt with
       | Some lcs -> begin
@@ -3659,7 +3659,7 @@ let prove_sem iprog cprog proc_name ass_stk hpdef_stk hp args
   let () = Debug.info_hprint (add_str "\nilemma_infs:\n " (Iprinter.string_of_coerc_decl)) ilemma_inf no_pos in
   (*L2: old*)
   (* let lc_opt = Lemma.sa_infer_lemmas iprog cprog [ilemma_inf] in *)
-  let rel_fixs,hp_defs0, lc_opt = Lemma.manage_infer_pred_lemmas [ilemma_inf] iprog cprog Cvutil.xpure_heap in
+  let rel_fixs,hp_defs0, lc_opt = Lemma.manage_infer_pred_lemmas [ilemma_inf] iprog cprog (x_add Cvutil.xpure_heap) in
   let r =
     match lc_opt with
       | Some lcs ->
@@ -3712,7 +3712,7 @@ let prove_sem iprog cprog proc_name ass_stk hpdef_stk hp args
               (*we need to prove if12 <=== if22: zip example*)
               let is_implied, n_rhs = prove_right_implication iprog cprog proc_name infer_rel_svl f12 f23 hp_defs in
               if not is_implied then
-                let () = print_endline (" can not pred_split (sem). add lemma: " ^ (!CP.print_sv hp) ^ "(" ^ (!CP.print_svl args) ^ ") --> " ^
+                let () = print_endline_quiet (" can not pred_split (sem). add lemma: " ^ (!CP.print_sv hp) ^ "(" ^ (!CP.print_svl args) ^ ") --> " ^
                     (Cprinter.prtt_string_of_formula rhs_f)) in
                 (1, hp_defs)
               else
@@ -3721,7 +3721,7 @@ let prove_sem iprog cprog proc_name ass_stk hpdef_stk hp args
                     (List.map (fun sv -> CP.name_of_spec_var sv) infer_hps) n_rhs) in
                 let ogs = List.map snd cur_hpdef.CF.def_rhs in
                 let n_hp_def = {cur_hpdef with CF.def_rhs = [(n_rhs1 , CF.combine_guard ogs)]} in
-                let () = print_endline (" pred_split (sem):" ^ (!CP.print_sv hp) ^ "(" ^ (!CP.print_svl args) ^ ") :== " ^
+                let () = print_endline_quiet (" pred_split (sem):" ^ (!CP.print_sv hp) ^ "(" ^ (!CP.print_svl args) ^ ") :== " ^
                     (Cprinter.prtt_string_of_formula n_rhs1)) in
                 (3,n_hp_def::hp_defs)
             in

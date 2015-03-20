@@ -344,7 +344,7 @@ and collect_goto_label_in_stmts (stmts: Cil.stmt list) (index: int) (depth: int)
             collect_goto_label_in_block blk index depth
         | Cil.TryFinally _
         | Cil.TryExcept _ -> 
-            let () = print_endline ("Cilparser: handle TryFinally, TryExcept later") in
+            let () = print_endline_quiet ("Cilparser: handle TryFinally, TryExcept later") in
             ([], [], index)
         | _ -> ([], [], index)
       ) in
@@ -796,16 +796,16 @@ and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
   with Not_found -> (
     let proc_str = (
       match t1, t2 with
-      | Cil.TInt _, Cil.TPtr _ ->
-          typ2_name ^ " " ^ proc_name ^ " (" ^ typ1_name ^ " i, " ^ typ2_name ^ " p)\n" 
-          ^ "  requires p::" ^ typ2_name^ "<val, offset>\n"
-          ^ "  ensures p::" ^ typ2_name^ "<val, offset>"
-             ^ " * res::" ^ typ2_name^ "<_, offset " ^ op_str ^ " i>;\n"
-      | Cil.TPtr _, Cil.TInt _ ->
-          typ1_name ^ " " ^ proc_name ^ "(" ^ typ1_name ^ " p, " ^ typ2_name ^ " i)\n" 
-          ^ "  requires p::" ^ typ1_name^ "<val, offset>\n"
-          ^ "  ensures p::" ^ typ1_name^ "<val, offset>"
-             ^ " * res::" ^ typ1_name^ "<_, offset " ^ op_str ^ " i>;\n"
+      (* | Cil.TInt _, Cil.TPtr _ ->                                                        *)
+      (*     typ2_name ^ " " ^ proc_name ^ " (" ^ typ1_name ^ " i, " ^ typ2_name ^ " p)\n"  *)
+      (*     ^ "  requires p::" ^ typ2_name^ "<val, offset>\n"                              *)
+      (*     ^ "  ensures p::" ^ typ2_name^ "<val, offset>"                                 *)
+      (*        ^ " * res::" ^ typ2_name^ "<_, offset " ^ op_str ^ " i>;\n"                 *)
+      (* | Cil.TPtr _, Cil.TInt _ ->                                                        *)
+      (*     typ1_name ^ " " ^ proc_name ^ "(" ^ typ1_name ^ " p, " ^ typ2_name ^ " i)\n"   *)
+      (*     ^ "  requires p::" ^ typ1_name^ "<val, offset>\n"                              *)
+      (*     ^ "  ensures p::" ^ typ1_name^ "<val, offset>"                                 *)
+      (*        ^ " * res::" ^ typ1_name^ "<_, offset " ^ op_str ^ " i>;\n"                 *)
       | Cil.TPtr _, Cil.TPtr _ when (cmp_typ typ1 typ2) ->
           let tn = typ1_name in
           tn ^ " " ^ proc_name ^ "(" ^ tn ^ " p, " ^ tn ^ " q)\n" 
@@ -1520,11 +1520,11 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
                   (* | Cil.BinOp (op, Cil.CastE (t1, exp1, _), Cil.CastE (t2, exp2, _), ty, l) *)
                   (*   when (t1 = t2) && ((op = Cil.Eq) || (op = Cil.Ne)) ->                   *)
                   | Cil.BinOp (op, exp1, exp2, ty, l) 
-                          when (is_arith_comparison_op op) ->
-                        let e1 = translate_exp exp1 in
-                        let e2 = translate_exp exp2 in
-                        let o = translate_binary_operator op pos in
-                        Iast.mkBinary o e1 e2 None pos
+                    when (is_arith_comparison_op op) ->
+                      let e1 = translate_exp exp1 in
+                      let e2 = translate_exp exp2 in
+                      let o = translate_binary_operator op pos in
+                      Iast.mkBinary o e1 e2 None pos
                   | _ ->
                       let cast_e e ty = 
                         let bool_of_proc = create_bool_casting_proc ty in
@@ -1541,10 +1541,8 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
                         | Globals.Float -> 
                           let zero = Iast.mkFloatLit 0.0 pos in
                           Iast.mkBinary Iast.OpGt e zero None pos 
-                        | _ ->
-                          cast_e e new_ty
-                      else
-                        cast_e e new_ty
+                        | _ -> cast_e e new_ty
+                      else cast_e e new_ty
                   )
           ) in
           let e1 = translate_block blk1 in
@@ -1896,7 +1894,8 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
               Ipure.FConst (f, pos)
         | Ipure.AConst (ha, pos) ->
               Ipure.AConst (ha, pos)
-        | Ipure.InfConst (id, pos) -> 
+        | Ipure.InfConst (id, pos)  
+        | Ipure.NegInfConst (id, pos) -> 
               e (* TODO *)
         | Ipure.Tsconst (t, pos) ->
               Ipure.Tsconst (t, pos)
@@ -2345,12 +2344,33 @@ let process_one_file (cil: Cil.file) : unit =
     )
   );
   let prog = translate_file cil in
-  let () = print_endline ("------------------------") in
-  let () = print_endline ("--> translated program: ") in
-  let () = print_endline ("------------------------") in 
-  let () = print_endline (Iprinter.string_of_program prog) in 
+  let () = print_endline_quiet ("------------------------") in
+  let () = print_endline_quiet ("--> translated program: ") in
+  let () = print_endline_quiet ("------------------------") in 
+  let () = print_endline_quiet (Iprinter.string_of_program prog) in 
   ()
 
+let parse_prep (filename: string): Iast.prog_decl = 
+  let cil = parse_one_file filename in
+  if !Cilutil.doCheck then (
+    ignore (Errormsg.log "First CIL check\n");
+    if not (Check.checkFile [] cil) && !Cilutil.strictChecking then (
+      Errormsg.bug ("CIL's internal data structures are inconsistent "
+                    ^^ "(see the warnings above).  This may be a bug "
+                    ^^ "in CIL.\n")
+    )
+  );
+  if (!Globals.print_cil_input) then (
+    print_endline_quiet "";
+    print_endline_quiet ("***********************************");
+    print_endline_quiet ("********* input cil file **********");
+    print_endline_quiet (string_of_cil_file cil);
+    print_endline_quiet ("******** end of cil file **********");
+    print_endline_quiet "";
+  );
+  (* finally, translate cil to iast *)
+  let prog = translate_file cil in
+  prog
 
 let parse_hip (filename: string) : Iast.prog_decl =
   (* do the preprocess by GCC first *)
@@ -2364,25 +2384,26 @@ let parse_hip (filename: string) : Iast.prog_decl =
   if (exit_code != 0) then
     report_error no_pos "GCC Preprocessing failed!";
   (* then use CIL to parse the preprocessed file *)
-  let cil = parse_one_file prep_filename in
-  if !Cilutil.doCheck then (
-    ignore (Errormsg.log "First CIL check\n");
-    if not (Check.checkFile [] cil) && !Cilutil.strictChecking then (
-      Errormsg.bug ("CIL's internal data structures are inconsistent "
-                    ^^ "(see the warnings above).  This may be a bug "
-                    ^^ "in CIL.\n")
-    )
-  );
-  if (!Globals.print_cil_input) then (
-    print_endline "";
-    print_endline ("***********************************");
-    print_endline ("********* input cil file **********");
-    print_endline (string_of_cil_file cil);
-    print_endline ("******** end of cil file **********");
-    print_endline "";
-  );
-  (* finally, translate cil to iast *)
-  let prog = translate_file cil in
+  (* let cil = parse_one_file prep_filename in                            *)
+  (* if !Cilutil.doCheck then (                                           *)
+  (*   ignore (Errormsg.log "First CIL check\n");                         *)
+  (*   if not (Check.checkFile [] cil) && !Cilutil.strictChecking then (  *)
+  (*     Errormsg.bug ("CIL's internal data structures are inconsistent " *)
+  (*                   ^^ "(see the warnings above).  This may be a bug " *)
+  (*                   ^^ "in CIL.\n")                                    *)
+  (*   )                                                                  *)
+  (* );                                                                   *)
+  (* if (!Globals.print_cil_input) then (                                 *)
+  (*   print_endline "";                                                  *)
+  (*   print_endline ("***********************************");             *)
+  (*   print_endline ("********* input cil file **********");             *)
+  (*   print_endline (string_of_cil_file cil);                            *)
+  (*   print_endline ("******** end of cil file **********");             *)
+  (*   print_endline "";                                                  *)
+  (* );                                                                   *)
+  (* (* finally, translate cil to iast *)                                 *)
+  (* let prog = translate_file cil in                                     *)
+  let prog = parse_prep prep_filename in
   (* and clean temp files *)
   let cmd = ("rm " ^ prep_filename) in
   let todo_unk = Sys.command cmd in
