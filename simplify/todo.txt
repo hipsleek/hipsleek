@@ -5,6 +5,11 @@
 !!! **cfout.ml#425:exists variables:
  [S2_1536,S1_1535,S1_1521,y',v_bool_26_1478']
 
+!!! **cfout.ml#426:important variables:[S2,S1,v_1519,x',y',y,x,q_1520]
+!!! **cfout.ml#428:exists variables:
+ [S2_1536,S1_1535,S1_1521,v_bool_26_1478']
+
+
 dprint before: ex2-app-bags.ss:36: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,1 ); (,2 )])]
 
 Successful States:
@@ -15,10 +20,9 @@ Successful States:
  & S1=union(S1_1521,{v_1519}) & x'=x & y'=y & x!=null 
 & q_1520!=null & !(v_bool_26_1478')
 &{FLOW,(4,5)=__norm#E}[]
-
  ]
 
-# Why isn't v_bool_26_1478' removed by simplifier?
+# Why isn't v_bool_26_1478 ' removed by simplifier?
   it has been renamed as v_bool_26_1478_1542'
 
 # similarly for the following vars:
@@ -30,10 +34,12 @@ Successful States:
 [
  Label: [(,1 ); (,2 )]
  State:x'::node<v_1519,q_1520> * q_1520::ll{}<S_1541>
- & y=y_1543' & x=x' & !(v_bool_26_1478_1542') & x'!=null 
- & q_1520!=null & S_1541=union(S1_1535_1545,S2_1536_1546) 
- & S2_1536_1546=S2 & S1_1535_1545=S1_1521_1544 
- & S1=union(S1_1521_1544,{v_1519})
+&y=y' & x=x' & !(v_bool_26_1478_1542') & x'!=null 
+& q_1520!=null & S_1541=union(S1_1535_1544,S2_1536_1545) 
+& S2_1536_1545=S2 & S1_1535_1544=S1_1521_1543 
+& S1=union(S1_1521_1543,{v_1519})&{FLOW,(4,5)=__norm#E}[]
+ ]
+
  &{FLOW,(4,5)=__norm#E}[]
 
 EXPECTING
@@ -59,8 +65,9 @@ Successful States:
 ===================================================================
 # ex3-app-new.ss
 
-!!! **cfout.ml#423:important variables:[fl_47,tmp_46,nnn,xxx,yyyy,xxx',Anon_1507,q_1508,flted_7_1506]
-!!! **cfout.ml#425:exists variables:[fl_47',yyyy',tmp_46']
+!!! **cfout.ml#421:bind variables:[xxx',Anon_1507,q_1508,flted_7_1506]
+!!! **cfout.ml#426:important variables:[Anon_1507,fl_47',yyyy',yyyy,xxx',xxx,flted_7_1506,nnn,tmp_46',q_1508]
+!!! **cfout.ml#428:exists variables:[]
 
 # Why did we use fl_47 when the variable is fl_bb?
 # Why wasn't fl_47' kept since it is an important variable.
@@ -71,11 +78,19 @@ Successful States:
  State:xxx'::node<Anon_1507,q_1508> * q_1508::ll{}<flted_7_1506>
  & fl_47' & tmp_46'!=yyyy' & 0<nnn & yyyy'=yyyy 
  & xxx'=xxx & flted_7_1506+1=nnn & tmp_46'=q_1508
-&{FLOW,(4,5)=__norm#E}[]
 
  ]
 
 dprint after: ex3-app-neq.ss:19: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+
+Successful States:
+[
+ Label: [(,0 ); (,1 )]
+ State:xxx'::node<Anon_1507,q_1508> * q_1508::ll{}<flted_7_1506>
+&yyyy=yyyy' & xxx=xxx' & nnn=1+flted_7_1506 & q_1508=tmp_46' 
+& fl_47' & 0<=flted_7_1506 & yyyy'!=tmp_46' 
+& tmp_46'!=yyyy'
+]
 
 Successful States:
 [
