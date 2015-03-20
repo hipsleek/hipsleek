@@ -413,7 +413,7 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 (* rhs_p *) 
               let es = Template.collect_templ_assume_init estate lhs_p rank_formula pos in 
               (match es with Some es -> es | None -> estate), true
             else
-              let res, _, _ = Tpdispatcher.imply_one 30 lhs rank_formula "" false None 
+              let res, _, _ = x_add Tpdispatcher.imply_one 30 lhs rank_formula "" false None 
               in estate, res
           in 
           begin
@@ -444,7 +444,7 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 (* rhs_p *) 
                     let es = Template.collect_templ_assume_init estate lhs_p bnd_formula pos
                     in (match es with Some es -> es | None -> estate), true
                   else
-                    let res, _, _ = Tpdispatcher.imply_one 31 lhs bnd_formula "" false None 
+                    let res, _, _ = x_add Tpdispatcher.imply_one 31 lhs bnd_formula "" false None 
                     in estate, res
                 in 
                 if not entail_bnd_res then

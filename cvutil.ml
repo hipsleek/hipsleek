@@ -44,7 +44,7 @@ let simpl_b_formula (f : CP.b_formula): CP.b_formula =
   | CP.BagSub (e1, e2, pos) ->
       if ((count_iconst e1) > 1) || ((count_iconst e2) > 1) then
 	    (*let () = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
-	    let simpl_f = TP.simplify_a 9 (CP.BForm(f,None)) in
+	    let simpl_f = x_add TP.simplify_a 9 (CP.BForm(f,None)) in
   	    begin
   	      match simpl_f with
   	        | CP.BForm(simpl_f1, _) ->
@@ -57,7 +57,7 @@ let simpl_b_formula (f : CP.b_formula): CP.b_formula =
   | CP.EqMin (e1, e2, e3, pos) ->
       if ((count_iconst e1) > 1) || ((count_iconst e2) > 1) || ((count_iconst e3) > 1) then
 	    (*let () = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
-	    let simpl_f = Tpdispatcher.simplify_a 8 (CP.BForm(f,None)) in
+	    let simpl_f = x_add Tpdispatcher.simplify_a 8 (CP.BForm(f,None)) in
   	    begin
   	      match simpl_f with
   	        | CP.BForm(simpl_f1,_) ->
@@ -70,7 +70,7 @@ let simpl_b_formula (f : CP.b_formula): CP.b_formula =
   | CP.BagNotIn (sv, e1, pos) ->
       if ((count_iconst e1) > 1) then
 	    (*let () = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
-	    let simpl_f = Tpdispatcher.simplify_a 7 (CP.BForm(f,None)) in
+	    let simpl_f = x_add Tpdispatcher.simplify_a 7 (CP.BForm(f,None)) in
   	    begin
   	      match simpl_f with
   	        | CP.BForm(simpl_f1,_) ->
@@ -85,7 +85,7 @@ let simpl_b_formula (f : CP.b_formula): CP.b_formula =
   | CP.ListPerm (e1, e2, pos) ->
 		if ((count_iconst e1) > 1) || ((count_iconst e2) > 1) then
 			(*let () = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
-			let simpl_f = Tpdispatcher.simplify_a 6 (CP.BForm(f,None)) in
+			let simpl_f = x_add Tpdispatcher.simplify_a 6 (CP.BForm(f,None)) in
   		begin
   		match simpl_f with
   		| CP.BForm(simpl_f1,_) ->
@@ -193,7 +193,7 @@ let extract_callee_view_info_x prog f=
       | [] -> res
   in
   let extract_pto vn= [vn.h_formula_view_node]
-    (* let vdcl = Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls vn.h_formula_view_name in *)
+    (* let vdcl = x_add Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls vn.h_formula_view_name in *)
     (* let neqNulls = CP.get_neq_null_svl (Mcpure.pure_of_mix vdcl.Cast.view_x_formula) in *)
     (* let formal_args = CP.SpecVar (Named vdcl.Cast.view_data_name, self, Unprimed):: vdcl.Cast.view_vars in *)
     (* let neqNulls1 = CP.intersect_svl neqNulls formal_args in *)
@@ -385,7 +385,7 @@ let process_vis_x prog term_first_sat (vname,p_root,p_args,p_eqs,p_neqs,p_null_s
             ([],[],new_vis)
   in
   (*********************************)
-  let vdecl = Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls vname in
+  let vdecl = x_add Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls vname in
   let self_sv = if String.compare vdecl.Cast.view_data_name "" != 0 then
      CP.SpecVar (Named vdecl.Cast.view_data_name,self,Unprimed)
   else
@@ -663,7 +663,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
                           let full_f = Perm.mkFullPerm_pure () (Cpure.get_var var) in
                           let f0 = MCP.pure_of_mix p0 in
                           x_dinfo_zp (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
-                          let res,_,_ = CP.imply_disj_orig [f0] full_f (TP.imply_one 24) imp_no in
+                          let res,_,_ = CP.imply_disj_orig [f0] full_f (x_add TP.imply_one 24) imp_no in
                           x_dinfo_zp (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
                           if (res) then
                             CP.DisjSetSV.singleton_dset (p(*, CP.mkTrue pos*))
@@ -700,7 +700,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
                     (*prove that p0 |- var=full_perm*)
                     let f0 = MCP.pure_of_mix p0 in
                     x_dinfo_zp (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
-                    let res,_,_ = CP.imply_disj_orig [f0] full_f (TP.imply_one 25) imp_no in
+                    let res,_,_ = CP.imply_disj_orig [f0] full_f (x_add TP.imply_one 25) imp_no in
                     x_dinfo_zp (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
                     if (res) then
                       (match lbl_lst with
@@ -772,7 +772,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
                                 let full_f = Perm.mkFullPerm_pure () (Cpure.get_var var) in
                                 let f0 = MCP.pure_of_mix p0 in
                                 x_dinfo_zp (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
-                                let res,_,_ = CP.imply_disj_orig [f0] full_f (TP.imply_one 24) imp_no in
+                                let res,_,_ = CP.imply_disj_orig [f0] full_f (x_add TP.imply_one 24) imp_no in
                                 x_dinfo_zp (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
                                 if (res) then
                                   CP.DisjSetSV.singleton_dset (p(*, CP.mkTrue pos*))
@@ -825,7 +825,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
                           (*prove that p0 |- var=full_perm*)
                           let f0 = MCP.pure_of_mix p0 in
                           x_dinfo_zp (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
-                          let res,_,_ = CP.imply_disj_orig [f0] full_f (TP.imply_one 25) imp_no in
+                          let res,_,_ = CP.imply_disj_orig [f0] full_f (x_add TP.imply_one 25) imp_no in
                           x_dinfo_zp (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
                           if (res) then
                             (match lbl_lst with
@@ -1315,7 +1315,7 @@ and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_f
                           let gt_f = CP.BForm ((gt_bf,None),None) in
                           let or_f = CP.mkOr neq_t1_t3 gt_f None no_pos in
 		          x_dinfo_zp (lazy ("xpure_perm: check: [Begin] check bounded permission constrainst: "^ (Cprinter.string_of_pure_formula or_f) ^ "\n")) no_pos;
-		          let b,_,_ = CP.imply_disj_orig [f] or_f (TP.imply_one 100) imp_no in
+		          let b,_,_ = CP.imply_disj_orig [f] or_f (x_add TP.imply_one 100) imp_no in
 		          x_dinfo_zp (lazy ("xpure_perm: check: [End] check bounded permission constrainst "^(string_of_bool b)^" \n")) no_pos;
                           b
                               (**********<<BPERM********************)
@@ -1336,7 +1336,7 @@ and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_f
 			    let nf, _ = perm_f vars in
 			    x_dinfo_zp (lazy ("xpure_perm: check: [Begin] check distinct fractional permission constrainst: "^ 
 				(Cprinter.string_of_pure_formula nf) ^ "\n")) no_pos;
-			    let b =  not (TP.is_sat_sub_no 8 nf (ref 0)) in
+			    let b =  not (x_add TP.is_sat_sub_no 8 nf (ref 0)) in
 			    x_dinfo_zp (lazy ("xpure_perm: check: [End] check distinct fractional permission constrainst "^(string_of_bool b)^" \n")) no_pos;
 			    b
                                 (**********<<DPERM********************)
@@ -1350,7 +1350,7 @@ and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_f
 			  (*f1+f2+f2+f4>1.0*)
 			  let gt_exp = CP.mkGtExp sum_exp full_exp no_pos in
 			  x_dinfo_zp (lazy ("xpure_perm: check: [Begin] check fractional permission constrainst: "^ (Cprinter.string_of_pure_formula gt_exp) ^ "\n")) no_pos;
-			  let b,_,_ = CP.imply_disj_orig [f] gt_exp (TP.imply_one 101) imp_no in
+			  let b,_,_ = CP.imply_disj_orig [f] gt_exp (x_add TP.imply_one 101) imp_no in
 			  x_dinfo_zp (lazy ("xpure_perm: check: [End] check fractional permission constrainst \n")) no_pos;
 			  b
                               (**********<<FPERM,CPERM,NONE********************)
@@ -1889,11 +1889,11 @@ let rec filter_formula_memo f (simp_b:bool)=
     | Or c -> mkOr (filter_formula_memo c.formula_or_f1 simp_b) (filter_formula_memo c.formula_or_f2 simp_b) no_pos
     | Base b-> 
       let fv = (h_fv b.formula_base_heap)@(mfv b.formula_base_pure) in
-      let nmem = filter_useless_memo_pure (TP.simplify_a 5) simp_b fv b.formula_base_pure in
+      let nmem = filter_useless_memo_pure (x_add TP.simplify_a 5) simp_b fv b.formula_base_pure in
       Base {b with formula_base_pure = nmem;}
     | Exists e-> 
       let fv = (h_fv e.formula_exists_heap)@(mfv e.formula_exists_pure)@e.formula_exists_qvars in
-      let nmem = filter_useless_memo_pure (TP.simplify_a 4) simp_b fv e.formula_exists_pure in
+      let nmem = filter_useless_memo_pure (x_add TP.simplify_a 4) simp_b fv e.formula_exists_pure in
       Exists {e with formula_exists_pure = nmem;}
 
 let filter_formula_memo f (simp_b:bool) =
@@ -2095,7 +2095,7 @@ and heap_prune_preds_mix prog (hp:h_formula) (old_mem:MCP.mix_formula): (h_formu
 
 and prune_preds_x prog (simp_b:bool) (f:formula):formula =
   let simp_b = simp_b && !Globals.enable_redundant_elim in 
-  let imply_w f1 f2 = let r,_,_ = TP.imply_one 26 f1 f2 "elim_rc" false None in r in   
+  let imply_w f1 f2 = let r,_,_ = x_add TP.imply_one 26 f1 f2 "elim_rc" false None in r in   
   let f_p_simp c = if simp_b then MCP.elim_redundant(*_debug*) (imply_w,TP.simplify_a 3) c else c in
   let rec fct i op oh = if (i== !Globals.prune_cnt_limit) then (op,oh)
   else
@@ -2292,7 +2292,7 @@ assumption:
 *)
 let get_oa_node_view_x prog seg_vnames=
   let get_oa res vname=
-    let vdecl = Cast.look_up_view_def_raw 56 prog.Cast.prog_view_decls vname in
+    let vdecl = x_add Cast.look_up_view_def_raw 56 prog.Cast.prog_view_decls vname in
     let ddecl = Cast.look_up_data_def_raw prog.Cast.prog_data_decls vdecl.Cast.view_data_name in
     if List.length vdecl.Cast.view_cont_vars = 1 &&
       List.length vdecl.Cast.view_vars = List.length (List.filter (fun ((t,_),_) ->

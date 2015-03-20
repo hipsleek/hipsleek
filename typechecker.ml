@@ -2719,7 +2719,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let lem = Lem_store.all_lemma # get_left_coercion in
             (* Norm CNT *)
             let norm_prop_es es = { es with 
-              CF.es_formula = Solver.prop_formula_w_coers 20 prog es es.CF.es_formula lem }
+              CF.es_formula = x_add Solver.prop_formula_w_coers 20 prog es es.CF.es_formula lem }
             in
             let res_ctx = VP.norm_list_failesc_context_for_par norm_prop_es res_ctx in
             (* Norm ERR *)
@@ -2826,7 +2826,7 @@ and check_par_case_x (prog: prog_decl) (proc: proc_decl) par_init_ctx (ctx: CF.l
   (* let post_ctx = VP.compose_list_failesc_contexts_for_par true post_ctx par_init_ctx pos in *)
   (* Norm post_ctx *)
   let norm_prop_es es = { es with 
-    CF.es_formula = Solver.prop_formula_w_coers 21 prog es es.CF.es_formula (Lem_store.all_lemma # get_left_coercion) }
+    CF.es_formula = x_add Solver.prop_formula_w_coers 21 prog es es.CF.es_formula (Lem_store.all_lemma # get_left_coercion) }
   in
   let post_ctx = VP.norm_list_failesc_context_for_par norm_prop_es post_ctx in
   (rem_ctx, post_ctx)
@@ -3640,7 +3640,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                             (*           CF.get_pre_post_invs pre_rel_ids post_rel_ids (Fixpoint.get_inv prog) (proc.proc_stk_of_static_specs # top) in *)
                             (*         let post_inv = CP.join_disjunctions post_invs in *)
                             (*         let () = Debug.ninfo_hprint (add_str "post_inv" pr ) post_inv no_pos in *)
-                            (*         let bottom_up_fp0 = Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars proc_spec in *)
+                            (*         let bottom_up_fp0 = x_add Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars proc_spec in *)
                             (*         let bottom_up_fp = List.map (fun (r,p) -> *)
                             (*             let p1 = TP.om_gist p post_inv in *)
                             (*             let p2 = TP.pairwisecheck_raw p1 in *)
@@ -3996,7 +3996,7 @@ let check_coercion (prog : prog_decl) =
           | _ ->  Error.report_error {Err.error_loc = no_pos; Err.error_text = "[typechecker.ml]: Lemma must contain only 1 or 2 coercions."}
       in
       (* Andrea : why is hip not using process_lemma in sleekengine.ml *)
-      let todo_unk = Lemproving.verify_lemma 1 l2r r2l prog coerc_name coerc_type in ()
+      let todo_unk = x_add Lemproving.verify_lemma 1 l2r r2l prog coerc_name coerc_type in ()
   ) lemmas
 
 let init_files () =

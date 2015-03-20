@@ -134,7 +134,7 @@ let generate_extn_ho_procs prog cviews extn_view_name=
         in
       (n_p3,quans)
   in
-  let extn_v = Cast.look_up_view_def_raw 47  cviews extn_view_name in
+  let extn_v = x_add Cast.look_up_view_def_raw 47  cviews extn_view_name in
   let extn_fs = fst (List.split extn_v.Cast.view_un_struc_formula) in
   let inv_p = (MCP.pure_of_mix extn_v.Cast.view_user_inv) in
   let (brs, val_extns) = CF.classify_formula_branch extn_fs inv_p extn_view_name
@@ -181,7 +181,7 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
    Now, always generate a new one
  *)
  (**********************************)
-  let extn_view = Cast.look_up_view_def_raw 48 cviews extn_view_name in
+  let extn_view = x_add Cast.look_up_view_def_raw 48 cviews extn_view_name in
   (*subst args of extn and extn_args*)
   let ss = List.combine extn_args extn_view.Cast.view_vars in
   let (extn_vname, extn_ho_bs, extn_ho_inds(* , extn_user_inv *)) = generate_extn_ho_procs prog cviews extn_view_name in
@@ -192,7 +192,7 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
  (**********************************)
   (*new args*)
   let n_args = List.map (fun (id, CP.SpecVar (t,_,pr)) ->  CP.SpecVar (t,id,pr)) ss in
-  let orig_view = Cast.look_up_view_def_raw 49 cviews orig_view_name in
+  let orig_view = x_add Cast.look_up_view_def_raw 49 cviews orig_view_name in
     (*find data fields anns*)
   let ls_dname_pos = Iast.look_up_field_ann prog orig_view.Cast.view_data_name extn_props in
     (*formula: extend with new args*)
@@ -331,7 +331,7 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
 
 let trans_view_one_derv_wrapper prog rev_form_fnc trans_view_fnc cviews derv
       (((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) as view_derv)=
-  let orig_view = Cast.look_up_view_def_raw 52 cviews orig_view_name in
+  let orig_view = x_add Cast.look_up_view_def_raw 52 cviews orig_view_name in
   if List.for_all (fun (l_extn_view,_,_) ->
       String.compare l_extn_view extn_view_name !=0) orig_view.Cast.view_domains then
     let r = trans_view_one_derv_x prog rev_form_fnc trans_view_fnc cviews derv view_derv in
@@ -378,7 +378,7 @@ let trans_view_one_spec_x (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.
     in
     helper spec_ind_fs
   in
-  let spec_view = Cast.look_up_view_def_raw 49 cviews spec_view_name in
+  let spec_view = x_add Cast.look_up_view_def_raw 49 cviews spec_view_name in
  (**********************************)
  (*
    EXTN: (1) lookup, not found: (2) generate one and store for other use.
@@ -392,7 +392,7 @@ let trans_view_one_spec_x (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.
   in
   (* let () =  Debug.info_pprint ("   extn_view_name: "^ extn_view_name) no_pos in *)
   (* let (extn_vname, extn_ho_bs, extn_ho_inds(\* , extn_user_inv *\)) = generate_extn_ho_procs prog cviews extn_view_name in *)
-  (* let extn_view = Cast.look_up_view_def_raw cviews extn_view_name in *)
+  (* let extn_view = x_add Cast.look_up_view_def_raw cviews extn_view_name in *)
   (**********************************)
  (*
    SPEC
@@ -412,7 +412,7 @@ let trans_view_one_spec_x (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.
   (*formula: spec*)
   (*new args*)
   (* let n_args = List.map (fun (id, CP.SpecVar (t,_,pr)) ->  CP.SpecVar (t,id,pr)) ss in *)
-  let orig_view = Cast.look_up_view_def_raw 50 cviews orig_view_name in
+  let orig_view = x_add Cast.look_up_view_def_raw 50 cviews orig_view_name in
   (*find data fields anns*)
   let ls_dname_pos = Iast.look_up_field_ann prog orig_view.Cast.view_data_name extn_props in
   let orig_fs,labels = List.split orig_view.Cast.view_un_struc_formula in
@@ -494,7 +494,7 @@ let trans_view_dervs_x (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc (cvie
     | [] -> report_error no_pos "astsimp.trans_view_dervs: 1"
     | [((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args))] ->
         let der_view(*,s*) =
-          let extn_view = Cast.look_up_view_def_raw 51 cviews extn_view_name in
+          let extn_view = x_add Cast.look_up_view_def_raw 51 cviews extn_view_name in
           if extn_view.Cast.view_kind = Cast.View_SPEC then
             let der_view = trans_view_one_spec prog cviews derv ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) in
            (der_view(*,("************VIEW_SPECIFIED*************")*))

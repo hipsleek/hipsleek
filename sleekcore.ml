@@ -44,11 +44,11 @@ let sleek_unsat_check isvl cprog ante=
   let () = Hgraph.reset_fress_addr () in
   let es = CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let lem = Lem_store.all_lemma # get_left_coercion in
-  let ante = Solver.normalize_formula_w_coers 11 cprog es ante (* cprog.C.prog_left_coercions *) lem in
+  let ante = x_add Solver.normalize_formula_w_coers 11 cprog es ante (* cprog.C.prog_left_coercions *) lem in
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let ctx = CF.build_context ectx ante no_pos in
   let ctx = Solver.elim_exists_ctx ctx in
-  let init_ctx =  (* CF.transform_context (Solver.elim_unsat_es 9 cprog (ref 1)) *) ctx in
+  let init_ctx =  (* CF.transform_context (x_add Solver.elim_unsat_es 9 cprog (ref 1)) *) ctx in
   (* let () = if (CF.isAnyFalseCtx ctx) then *)
   (*   print_endline ("[Warning] False ctx") *)
   (* in *)
@@ -92,7 +92,7 @@ let sleek_unsat_check isvl cprog ante=
 let sleek_entail prog ante_ctx conseq pos=
   let pid = None in
   let ante_failesc_ctx = [([],[],[([], ante_ctx, None)])] in
-  let rs, prf = Solver.heap_entail_struc_list_failesc_context_init 12 prog false true ante_failesc_ctx conseq None None None pos pid in
+  let rs, prf = x_add Solver.heap_entail_struc_list_failesc_context_init 12 prog false true ante_failesc_ctx conseq None None None pos pid in
   rs, prf
 
 (* WN : why isn't itype added to estate? *)
@@ -123,7 +123,7 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
   let es = CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let es = {es with CF.es_proof_traces = proof_traces} in
   let lem = Lem_store.all_lemma # get_left_coercion in
-  let ante = Solver.normalize_formula_w_coers 11 cprog es ante lem (* cprog.C.prog_left_coercions *) in
+  let ante = x_add Solver.normalize_formula_w_coers 11 cprog es ante lem (* cprog.C.prog_left_coercions *) in
   let inf_str = (pr_list string_of_inf_const itype)^(Cprinter.string_of_spec_var_list isvl) in
   let () = if (!Globals.print_core || !Globals.print_core_all) then print_endline_quiet ("INPUT 0: "^inf_str^" \n ### ante = " ^ (Cprinter.string_of_formula ante) ^"\n ### conseq = " ^ (Cprinter.string_of_struc_formula conseq)) else () in
   let () = x_dinfo_zp (lazy ("\nrun_entail_check 3: after normalization"
@@ -189,7 +189,7 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
       let () = Globals.smt_is_must_failure := None in
       let () = Globals.disable_failure_explaining := true in
       (* let sno = ref (0:int) in *)
-      (* let is_unsat = Solver.unsat_base_nth 22 cprog (sno) ante in *)
+      (* let is_unsat = x_add Solver.unsat_base_nth 22 cprog (sno) ante in *)
       
       let is_unsat0, is_sat, waiting_vis,_ = Cvutil.build_vis cprog ante in
       let is_unsat = if is_unsat0 then true else
@@ -209,7 +209,7 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
       (* let () = Globals.smt_is_must_failure := (Some false) in *)
       let ctx =
         if !Globals.delay_proving_sat then ctx
-        else CF.transform_context (Solver.elim_unsat_es 9 cprog (ref 1)) ctx in
+        else CF.transform_context (x_add Solver.elim_unsat_es 9 cprog (ref 1)) ctx in
       let () = if (CF.isAnyFalseCtx ctx) then
         print_endline_quiet ("[Warning] False ctx")
       in
@@ -367,7 +367,7 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
           let seg_views = List.map (fun (vn,_,_) -> vn) view_emp_map in
           let oamap_data_views = Cvutil.get_oa_node_view prog seg_views in
           let seg_data_names = List.map (fun vn ->
-              let vdecl = Cast.look_up_view_def_raw 55 prog.Cast.prog_view_decls vn in
+              let vdecl = x_add Cast.look_up_view_def_raw 55 prog.Cast.prog_view_decls vn in
               vdecl.Cast.view_data_name
           ) seg_views in
           let ante1,is_pto_inconsistent, ante_nemps, ante_neq = Cfutil.xpure_graph_pto prog seg_data_names oamap_data_views ante1a in

@@ -1492,7 +1492,7 @@ let check_imply prog lhs_b rhs_b=
             let () = Debug.ninfo_zprint (lazy (("    n_rhs_b: " ^ (Cprinter.string_of_formula_base n_rhs_b)))) no_pos in
             (* let () = Debug.info_zprint (lazy (("    lmf: " ^ (!CP.print_formula lmf)))) no_pos in *)
             (* let () = Debug.info_zprint (lazy (("    rmf: " ^ (!CP.print_formula rmf)))) no_pos in *)
-            let b,_,_ = Tpdispatcher.imply_one 20 lmf rmf "sa:check_hrels_imply" true None in
+            let b,_,_ = x_add Tpdispatcher.imply_one 20 lmf rmf "sa:check_hrels_imply" true None in
             if b then
               (* let r_res = {n_rhs_b with *)
               (*     CF.formula_base_heap = CF.drop_data_view_hrel_nodes_hf *)
@@ -2547,7 +2547,7 @@ let do_entail_check_x vars iprog cprog cs=
   let () = Infer.rel_ass_stk # reset in
   let get_view_def vname=
     let () = Debug.ninfo_hprint (add_str "vname" pr_id) vname no_pos in
-    let vdef = (Cast.look_up_view_def_raw 40 cprog.Cast.prog_view_decls vname) in
+    let vdef = (x_add Cast.look_up_view_def_raw 40 cprog.Cast.prog_view_decls vname) in
     (vname, vdef.Cast.view_un_struc_formula,vdef.Cast.view_vars)
   in
   let has_unknown vdef =
@@ -2573,7 +2573,7 @@ let do_entail_check_x vars iprog cprog cs=
         CF.do_unfold_view cprog pr_views cs.CF.hprel_rhs
   in
   let conseq = CF.struc_formula_of_formula unfolded_rhs (CF.pos_of_formula cs.CF.hprel_rhs) in
-  let (valid, rs,v_hp_rel) = Sleekcore.sleek_entail_check 6 [] vars cprog [] ante conseq in
+  let (valid, rs,v_hp_rel) = x_add Sleekcore.sleek_entail_check 6 [] vars cprog [] ante conseq in
   (* let valid = ((not (CF.isFailCtx rs))) in *)
   let () = if not valid then
     report_warning no_pos ("FAIL: Can not prove:\n" ^ (Cprinter.string_of_hprel_short cs))
@@ -3529,7 +3529,7 @@ let prove_right_implication_x iprog cprog proc_name infer_rel_svl lhs rhs gen_hp
     (* let rhs1 = CF.do_unfold_hp_def cprog pr_hp_defs rhs in *)
     let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog cprog proc_name gen_hp_defs in
     let rhs2 = Saout.trans_formula_hp_2_view iprog cprog proc_name chprels_decl gen_hp_defs [] rhs in
-    (* let (valid, _, _) = Sleekcore.sleek_entail_check [] cprog [] rhs2 (CF.struc_formula_of_formula lhs no_pos) in *)
+    (* let (valid, _, _) = x_add Sleekcore.sleek_entail_check [] cprog [] rhs2 (CF.struc_formula_of_formula lhs no_pos) in *)
     (*iformula to construct lemma*)
     let ilhs = Rev_ast.rev_trans_formula lhs in
     let irhs = Rev_ast.rev_trans_formula rhs2 in
@@ -4040,7 +4040,7 @@ let pred_split_hp_x iprog prog unk_hps ass_stk hpdef_stk (hp_defs0: CF.hp_rel_de
   let split_map_hprel_subst = check_split_global iprog prog split_cands in
   let ss_preds = List.map (fun (_,_,_,_,a,b,c) -> (a,b)) split_map_hprel_subst in
   (*prove and do split*)
-  let proving_fnc svl f1 = wrap_proving_kind PK_Pred_Split (Sleekcore.sleek_entail_check 7 [] svl prog [] f1) in
+  let proving_fnc svl f1 = wrap_proving_kind PK_Pred_Split (x_add Sleekcore.sleek_entail_check 7 [] svl prog [] f1) in
   let sing_hp_defs2, split_map_hprel_subst1 = List.fold_left (fun (hp_defs0, r_split) split ->
       let is_succ, hp_defs1, n_split = prove_split_cand iprog prog proving_fnc ass_stk hpdef_stk unk_hps ss_preds hp_defs0 split in
       if is_succ then

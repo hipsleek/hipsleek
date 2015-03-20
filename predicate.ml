@@ -371,7 +371,7 @@ let generate_extn_ho_procs prog cviews extn_view_name extn_args=
       in
       (n_p3,quans)
   in
-  let extn_v = Cast.look_up_view_def_raw 44 cviews extn_view_name in
+  let extn_v = x_add Cast.look_up_view_def_raw 44 cviews extn_view_name in
   let extn_fs0 = fst (List.split extn_v.Cast.view_un_struc_formula) in
   let inv_p0 = (MCP.pure_of_mix extn_v.Cast.view_user_inv) in
   let pr_ext_vars = List.combine extn_v.Cast.view_vars extn_args in
@@ -427,7 +427,7 @@ let extend_pred_one_derv_x (prog : I.prog_decl) cprog hp_defs hp args ((orig_pre
             nf1
   in
   (*********END INTERNAL********)
-  let extn_view = Cast.look_up_view_def_raw 45 cviews extn_view_name in
+  let extn_view = x_add Cast.look_up_view_def_raw 45 cviews extn_view_name in
   let (extn_vname, extn_ho_bs, extn_ho_inds(* , extn_user_inv *)) = generate_extn_ho_procs prog cviews extn_view_name extn_args in
   (**********************************)
  (*
@@ -485,7 +485,7 @@ let extend_pred_dervs_x (prog : I.prog_decl) cprog hp_defs hp args derv_info =
     | [] -> report_error no_pos "astsimp.trans_view_dervs: 1"
     | [((orig_pred_name,orig_args),(extn_view_name,extn_props,extn_args), extn_poss)] ->
         let der_view(*,s*) =
-          (* let extn_view = Cast.look_up_view_def_raw 46 cprog.Cast.prog_view_decls extn_view_name in *)
+          (* let extn_view = x_add Cast.look_up_view_def_raw 46 cprog.Cast.prog_view_decls extn_view_name in *)
           (* if extn_view.C.view_kind = C.View_SPEC then *)
           (*   let der_view = trans_view_one_spec prog cviews derv ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) in *)
           (*  (der_view(\*,("************VIEW_SPECIFIED*************")*\)) *)

@@ -501,7 +501,7 @@ let process_lemma ldef =
   (* let _ = Lem_store.all_lemma # add_right_coercion r2l in  *)
   (*!cprog.Cast.prog_left_coercions <- l2r @ !cprog.Cast.prog_left_coercions;*)
   (*!cprog.Cast.prog_right_coercions <- r2l @ !cprog.Cast.prog_right_coercions;*)
-  let res = Lemproving.verify_lemma 2 l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
+  let res = x_add Lemproving.verify_lemma 2 l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
   ()
   (* CF.residues := (match res with *)
   (*   | None -> None; *)
@@ -846,7 +846,7 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typein
     | MetaForm mf -> 
         let h = List.map (fun c-> (c,Unprimed)) fv_idents in
         let p = List.map (fun c-> (c,Primed)) fv_idents in
-        let wf,_ = Astsimp.case_normalize_struc_formula 12 iprog h p (Iformula.formula_to_struc_formula mf) true 
+        let wf,_ = x_add Astsimp.case_normalize_struc_formula 12 iprog h p (Iformula.formula_to_struc_formula mf) true 
           true (*allow_post_vars*) true [] in
         Astsimp.trans_I2C_struc_formula 8 iprog false quant fv_idents wf tl false (*(Cpure.Prim Void) []*) false (*check_pre*) 
     | MetaVar mvar -> 
@@ -871,7 +871,7 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typein
   | MetaEForm b -> 
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let p = List.map (fun c-> (c,Primed)) fv_idents in
-      let wf,_ = Astsimp.case_normalize_struc_formula 13 iprog h p b true (* allow_primes *) 
+      let wf,_ = x_add Astsimp.case_normalize_struc_formula 13 iprog h p b true (* allow_primes *) 
         true (*allow_post_vars*) true [] in
       let (n_tl,res) = Astsimp.trans_I2C_struc_formula 9 iprog false quant fv_idents wf tl false 
         false (*check_pre*) (*(Cpure.Prim Void) [] *) in
@@ -1074,7 +1074,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
                               ^ "\n ### iconseq0 = "^(string_of_meta_formula iconseq0)
                               ^"\n\n") no_pos in
   let (n_tl,ante) = meta_to_formula iante0 false [] [] in
-  (*let ante = Solver.normalize_formula_w_coers !cprog (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) ante !cprog.Cast.prog_left_coercions in*)
+  (*let ante = x_add Solver.normalize_formula_w_coers !cprog (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) ante !cprog.Cast.prog_left_coercions in*)
   let ante = Cvutil.prune_preds !cprog true ante in
   let ante = (*important for permissions*)
     if (Perm.allow_perm ()) then
@@ -1134,7 +1134,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
         Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos
   ) ivars in
   (* let ante,conseq = Cfutil.normalize_ex_quans_conseq !cprog ante conseq in *)
-  let (res, rs,v_hp_rel) = Sleekcore.sleek_entail_check 8 itype vars !cprog [] ante conseq in
+  let (res, rs,v_hp_rel) = x_add Sleekcore.sleek_entail_check 8 itype vars !cprog [] ante conseq in
   (* CF.residues := Some (rs, res); *)
   ((res, rs,v_hp_rel), (ante,conseq))
 
@@ -1434,7 +1434,7 @@ let process_rel_infer pre_rels post_rels =
   (* let _ = Debug.info_hprint (add_str "fixpoint2" *)
   (*     (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in *)
   (* let _ = print_endline "process_rel_infer" in *)
-  let r = Fixcalc.compute_fixpoint 2 post_rel_constrs post_rels proc_spec in
+  let r = x_add Fixcalc.compute_fixpoint 2 post_rel_constrs post_rels proc_spec in
   let _ = Debug.info_hprint (add_str "fixpoint2"
       (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_pair pr1 pr1))) r no_pos in
   let _ = print_endline_quiet "" in
@@ -2149,8 +2149,8 @@ let process_sat_check_x (f : meta_formula) =
   let num_id = "\nCheckSat "^(string_of_int nn) in
   let (_,f) = meta_to_formula f false [] [] in
   let f = Cvutil.prune_preds !cprog true f in
-  let unsat_command f = not(Solver.unsat_base_nth 7 !cprog (ref 0) f) in
-  let res = Solver.unsat_base_nth 1 !cprog (ref 0) f in
+  let unsat_command f = not(x_add Solver.unsat_base_nth 7 !cprog (ref 0) f) in
+  let res = x_add Solver.unsat_base_nth 1 !cprog (ref 0) f in
   let sat_res =
     if res then false
     else wrap_under_baga unsat_command f (* WN: invoke SAT checking *)
@@ -2223,7 +2223,7 @@ let process_check_norm_x (f : meta_formula) =
   let (n_tl, cf) = meta_to_formula f false [] []  in
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline_quiet ("INPUT 8: \n ### cf = " ^ (Cprinter.string_of_formula cf)) else () in
   let estate = (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) in
-  let newf = Solver.prop_formula_w_coers 1 !cprog estate cf (Lem_store.all_lemma # get_left_coercion) in
+  let newf = x_add Solver.prop_formula_w_coers 1 !cprog estate cf (Lem_store.all_lemma # get_left_coercion) in
   let _ = print_string (num_id ^ ": " ^ (Cprinter.string_of_formula newf) ^ "\n\n") in
   () (* TO IMPLEMENT*)
 

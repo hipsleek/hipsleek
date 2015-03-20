@@ -5378,7 +5378,7 @@ Debug.no_1 " look_up_ptr_args_data_node" pr1 !CP.print_svl
 
 (* let loop_up_ptr_args_view_node prog hv= *)
 (*   (\*view node*\) *)
-(*   let view_def =  Cast.look_up_view_def no_pos prog.Cast.prog_view_decls hv.CF.h_formula_view_name in *)
+(*   let view_def = x_add Cast.look_up_view_def no_pos prog.Cast.prog_view_decls hv.CF.h_formula_view_name in *)
 (*   (\*get prototype of a node declaration*\) *)
 (*   let args = List.map (fun (t,_) -> t) view_def.Cast.view_fields in *)
 (*   (\*combine with actual areg*\) *)

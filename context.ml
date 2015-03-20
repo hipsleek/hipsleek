@@ -1992,7 +1992,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                       | Coerc_mater s -> (* (uf_i,M_lemma (m_res,Some s))) in *)
                             (1,M_lemma (m_res,Some s))) in
                   (* WHY do we need LHS_CASE_ANALYSIS? *)
-                  let vdef = C.look_up_view_def_raw 43 prog.C.prog_view_decls vl.CF.h_formula_view_name in
+                  let vdef = x_add C.look_up_view_def_raw 43 prog.C.prog_view_decls vl.CF.h_formula_view_name in
                   let lem_infer_opt = CFU.check_seg_split_pred prog estate.CF.es_formula vdef vl dr in
                   let a1 = if !Globals.lemma_syn && lem_infer_opt !=None then
                     let () = DD.ninfo_hprint (add_str "infer lemma" pr_id) "1" no_pos in

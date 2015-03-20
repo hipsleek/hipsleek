@@ -525,7 +525,7 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
                 let () = Debug.ninfo_zprint (lazy (("  refined cs: " ^ (Cprinter.string_of_hprel_short new_cs)))) no_pos in
                 (* let rf = Cformula.mkTrue (Cformula.mkTrueFlow()) no_pos in *)
                 let () = Debug.ninfo_pprint ("  generate pre-preds-based constraints: " ) no_pos in
-                let defined_hprels = List.map (Sautil.generate_hp_ass 2 unk_svl1 new_cs.CF.hprel_path) defined_preds0 in
+                let defined_hprels = List.map (x_add Sautil.generate_hp_ass 2 unk_svl1 new_cs.CF.hprel_path) defined_preds0 in
                 if Sautil.is_empty_f new_cs.CF.hprel_lhs && Sautil.is_empty_f new_cs.CF.hprel_rhs then
                   defined_hprels
                 else

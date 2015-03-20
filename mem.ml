@@ -104,7 +104,7 @@ let rec intersect_list_ann (ann_lst_l: CP.ann list) (ann_lst_r: CP.ann list): CP
 			Err.error_text = "[mem.ml] : Memory Spec should have same number of fields in layout";}
 
 let mem_guards_checking (fl1 : CP.formula) (fl2: CP.formula list) pos =
-	let flag = List.exists (fun x -> let r,_,_  = TP.imply_one 6 fl1 x "mem_guard_imply" false None in r) fl2 in
+	let flag = List.exists (fun x -> let r,_,_  = x_add TP.imply_one 6 fl1 x "mem_guard_imply" false None in r) fl2 in
 	if flag then ()   
 	else 
 	(*if CP.isConstTrue fl1 then ()
@@ -388,7 +388,7 @@ let rec xmem_heap (f: CF.h_formula) (vl: C.view_decl list) : CF.mem_perm_formula
 			 CF.h_formula_view_pos = pos;}) -> 
 			 	(*let new_var = CP.Var(CP.SpecVar((BagT (Named name)),"Anon"^(fresh_trailer()),Unprimed),pos) in 
 			 	mk_mem_perm_formula (CP.Bag([new_var],pos)) false []*)
-			 	let vdef = C.look_up_view_def_raw 20 vl name in
+			 	let vdef = x_add C.look_up_view_def_raw 20 vl name in
 			 	let mpf = vdef.C.view_mem in
 			 	(match mpf with
 				| Some mpf -> 
@@ -816,7 +816,7 @@ match (ann_lst_l, ann_lst_r) with
       | CP.IConst(i,_),CP.Var(sv,_) -> let checkeq = CP.mkEqExp ann_l ann_r no_pos in 
                                        (*let () = print_string("pure formula:"^(string_of_pure_formula p)) in
                                        let () = print_string("check formula:"^(string_of_pure_formula checkeq)) in*)
-                                       let r,_,_ = TP.imply_one 100 p checkeq "field_value_imply" false None in
+                                       let r,_,_ = x_add TP.imply_one 100 p checkeq "field_value_imply" false None in
                                        if r then true && (is_same_field_values tl tr p) else false
       | CP.Var(sv,_),_  
       | _, CP.Var(sv,_) -> if CP.is_anon_var sv then true && (is_same_field_values tl tr p)
@@ -1734,7 +1734,7 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
 | None , None -> 
 	(match h1 with
 	| CF.DataNode {CF.h_formula_data_param_imm = paimm;} -> 
-	if String.compare (CF.get_node_name 7 h1) (CF.get_node_name 8 h2) == 0 then
+	if String.compare (x_add CF.get_node_name 7 h1) (x_add CF.get_node_name 8 h2) == 0 then
 		let old_args = CF.get_node_args h1 in
 		let new_args = CF.get_node_args h2 in
 		let h1_var = CF.get_node_var h1 in
@@ -1779,7 +1779,7 @@ match p with
                        List.fold_left (fun (h,f) q  -> 
 		       let q_mpf, q_vars  = 
 		       if (CF.is_view q) then
-		       let q_vdef = C.look_up_view_def_raw 21 vl (CF.get_node_name 9 q) in
+		       let q_vdef = x_add C.look_up_view_def_raw 21 vl (x_add CF.get_node_name 9 q) in
 		       let q_viewvars = q_vdef.C.view_vars in
 		       q_vdef.C.view_mem,q_viewvars 
 		       else None,[] in
@@ -1792,14 +1792,14 @@ match p with
 		       CF.h_formula_view_imm = imm;
 		       CF.h_formula_view_arguments = vargs;
 		       CF.h_formula_view_pos = pos} -> 
-		       let p_vdef = C.look_up_view_def_raw 22 vl name in
+		       let p_vdef = x_add C.look_up_view_def_raw 22 vl name in
 		       let p_mpf = p_vdef.C.view_mem in
 		       let p_vars = p_vdef.C.view_vars in
 		       if(CP.isMutable imm) then
 		       List.fold_left (fun (h,f) q -> 
 		       let q_mpf,q_vars = 
 		       if (CF.is_view q) then
-		       let q_vdef = C.look_up_view_def_raw 23 vl (CF.get_node_name 10 q) in
+		       let q_vdef = x_add C.look_up_view_def_raw 23 vl (x_add CF.get_node_name 10 q) in
 		       let q_vars = q_vdef.C.view_vars in
 		       q_vdef.C.view_mem, q_vars
 		       else None,[] in  
@@ -1932,7 +1932,7 @@ if (CF.is_data h) then
      	let p1 = CP.mkNeqVar (CF.get_node_var r) (CF.get_node_var h) pos in
 	CP.mkAnd p1 p pos
 	else (* r is a view *) 
-        let vdef =  C.look_up_view_def_raw 24 vl (CF.get_node_name 11 r) in
+        let vdef = x_add C.look_up_view_def_raw 24 vl (x_add CF.get_node_name 11 r) in
         let args = vdef.C.view_vars in
         let rargs = (CF.get_node_args r) in
         let sst = List.combine args rargs in 
@@ -1941,7 +1941,7 @@ if (CF.is_data h) then
         let p1 = CP.BForm((CP.BagNotIn((CF.get_node_var h),mexp,pos),None),None) in
         CP.mkAnd p1 p pos
 else if (CF.is_view h) then
-	let vdef = C.look_up_view_def_raw 25 vl (CF.get_node_name 12 h) in
+	let vdef = x_add C.look_up_view_def_raw 25 vl (x_add CF.get_node_name 12 h) in
 	let mpf = Gen.unsome vdef.C.view_mem in
 	let args = vdef.C.view_vars in
         let hargs = (CF.get_node_args h) in
@@ -1951,7 +1951,7 @@ else if (CF.is_view h) then
 	let p1 = CP.BForm((CP.BagNotIn((CF.get_node_var r),mexp,pos),None),None) in
         CP.mkAnd p1 p pos
         else (* r is a view *) 
-	let vdef_r =  C.look_up_view_def_raw 26 vl (CF.get_node_name 13 r) in
+	let vdef_r = x_add C.look_up_view_def_raw 26 vl (x_add CF.get_node_name 13 r) in
 	let mpf_r = Gen.unsome vdef_r.C.view_mem in
         let args_r = vdef_r.C.view_vars in
         let rargs_r = (CF.get_node_args r) in
@@ -2028,7 +2028,7 @@ match h with
         CF.h_formula_view_imm = rimm;
         CF.h_formula_view_arguments = rvargs;
         CF.h_formula_view_pos = rpos} -> 
-        let vdef =  C.look_up_view_def_raw 27 vl rname in
+        let vdef = x_add C.look_up_view_def_raw 27 vl rname in
         let args = vdef.C.view_vars in
         let sst = List.combine args rvargs in 
         let mpf = Gen.unsome vdef.C.view_mem in
@@ -2049,7 +2049,7 @@ match h with
      CF.h_formula_view_imm = imm;
      CF.h_formula_view_arguments = vargs;
      CF.h_formula_view_pos = pos} ->
-     let vdef =  C.look_up_view_def_raw 28 vl name in
+     let vdef = x_add C.look_up_view_def_raw 28 vl name in
      let mpf = Gen.unsome vdef.C.view_mem in
      let args = vdef.C.view_vars in
      let sst = List.combine args vargs in
@@ -2075,7 +2075,7 @@ match h with
         CF.h_formula_view_imm = rimm;
         CF.h_formula_view_arguments = rvargs;
         CF.h_formula_view_pos = rpos} ->
-        let vdef_r =  C.look_up_view_def_raw 29 vl name in
+        let vdef_r = x_add C.look_up_view_def_raw 29 vl name in
 	let mpf_r = Gen.unsome vdef_r.C.view_mem in
         let args_r = vdef_r.C.view_vars in
 	let sst_r = List.combine args_r rvargs in

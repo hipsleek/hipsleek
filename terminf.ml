@@ -191,7 +191,7 @@ let merge_loop_cond loop_cond_list =
 
 let infer_loop_status ctx loop_cond = 
   let imply ante cons = 
-    let (r, _, _) = TP.imply_one 0 ante cons "0" true None in r 
+    let (r, _, _) = x_add TP.imply_one 0 ante cons "0" true None in r 
   in
   let r1 = imply ctx loop_cond in
   if r1 then Reach_Loop

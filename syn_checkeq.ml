@@ -237,10 +237,10 @@ let check_stricteq_h_fomula stricted_eq hf1 hf2=
 let checkeq_pure_x qvars1 qvars2 p1 p2=
   if CP.equalFormula p1 p2 then true else
      let p2 = CP.mkExists qvars2 p2 None no_pos in
-     let b1,_,_ = TP.imply_one 3 p1 p2 "sa:checkeq_pure" true None in
+     let b1,_,_ = x_add TP.imply_one 3 p1 p2 "sa:checkeq_pure" true None in
     if b1 then
       let p1 = CP.mkExists qvars1 p1 None no_pos in
-      let b2,_,_ = TP.imply_one 4 p2 p1 "sa:checkeq_pure" true None in
+      let b2,_,_ = x_add TP.imply_one 4 p2 p1 "sa:checkeq_pure" true None in
       b2
     else false
 

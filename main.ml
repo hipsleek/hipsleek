@@ -316,7 +316,7 @@ let print_spec cprog =
                 (*     Solver.unfold_struc_nth 10 (cprog, None) sf fv false 0 no_pos *)
                 (*     ) sf fvs in *)
                 ("Procedure " ^ p.Cast.proc_name ^ "\n") ^
-                    (* Cprinter.string_of_struc_formula_for_spec new_sf *) (* (Solver.unfold_struc_nth 1 (cprog, None) sf (List.hd (List.tl fv)) (\* (Cpure.SpecVar (Globals.Named "node", "x", Unprimed)) *\) false 1 no_pos) *)
+                    (* Cprinter.string_of_struc_formula_for_spec new_sf *) (* (x_add Solver.unfold_struc_nth 1 (cprog, None) sf (List.hd (List.tl fv)) (\* (Cpure.SpecVar (Globals.Named "node", "x", Unprimed)) *\) false 1 no_pos) *)
                 Cprinter.string_of_struc_formula_for_spec (replace_struc_formula p.Cast.proc_static_specs cprog)
         ) ^ (helper pl)
       | [] -> ""
@@ -332,7 +332,7 @@ let reverify_with_hp_rel old_cprog iprog =
         match hp_kind with
           |  Cpure.HPRelDefn (hp,r,args) -> begin
                  try
-                   let todo_unk = Cast.look_up_view_def_raw 33 old_cprog.Cast.prog_view_decls
+                   let todo_unk = x_add Cast.look_up_view_def_raw 33 old_cprog.Cast.prog_view_decls
                      (Cpure.name_of_spec_var hp)
                    in
                    (r_hp_defs, r_unk_hps)

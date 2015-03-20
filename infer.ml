@@ -1276,7 +1276,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                             let lhs_neq_nulls = (CP.get_neq_null_svl lhs_xpure) in
                             let pf0 = remove_redudant_neq lhs_neq_nulls pf0a in
                             let pf1 = (CP.mkAnd lhs_xpure pf0 pos) in
-                                  let pf2 = TP.simplify_with_pairwise 2 pf1 in
+                                  let pf2 = x_add TP.simplify_with_pairwise 2 pf1 in
                                   (* let pf = MCP.mix_of_pure pf2 in *)
                             let () = DD.ninfo_hprint (add_str "pf2" !CP.print_formula) pf2 pos in
                             let () = DD.ninfo_hprint (add_str "lhs_wo_heap" !CP.print_formula) ( lhs_wo_heap) pos in
@@ -2997,7 +2997,7 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
   in
   (*split the constraints relating between pre- andxs post-preds*)
   let es_cond_path = CF.get_es_cond_path es in
-  let defined_hprels = List.map (Sautil.generate_hp_ass 0 [](* (closed_hprel_args_def@total_unk_svl) *) es_cond_path) defined_hps in
+  let defined_hprels = List.map (x_add Sautil.generate_hp_ass 0 [](* (closed_hprel_args_def@total_unk_svl) *) es_cond_path) defined_hps in
   (*lookup to check redundant*)
   (* let new_lhs = CF.Base new_lhs_b in *)
   (* let new_rhs = CF.Base new_rhs_b in *)
@@ -3562,7 +3562,7 @@ let collect_classic_assumption prog es lfb sel_hps infer_vars pos=
     match defined_preds0 with
       | [] -> []
       | _ -> let es_cond_path = CF.get_es_cond_path es in
-        let defined_hprels = List.map (Sautil.generate_hp_ass 1 [] es_cond_path) defined_preds0 in
+        let defined_hprels = List.map (x_add Sautil.generate_hp_ass 1 [] es_cond_path) defined_preds0 in
         defined_hprels
   in
   (new_constrs, (List.map (fun (a, _, _,_) -> a) defined_preds0))
@@ -3825,7 +3825,7 @@ let get_spec_from_file prog =
 (*    let () = x_dinfo_pp ("\n inferring_for_unfold:"^(!print_formula estate.CF.es_formula)^ "\n\n")  pos in*)
   let inv = match lhs_node with
   | ViewNode ({h_formula_view_name = c}) ->
-  let vdef = Cast.look_up_view_def pos prog.Cast.prog_view_decls c in
+  let vdef = x_add Cast.look_up_view_def pos prog.Cast.prog_view_decls c in
   let i = MCP.pure_of_mix (fst vdef.Cast.view_user_inv) in
   if List.mem i estate.es_infer_invs then estate.es_infer_invs
   else estate.es_infer_invs @ [i]
@@ -3850,7 +3850,7 @@ let get_spec_from_file prog =
 (*     let () = x_dinfo_pp ("\n inferring_for_unfold:"^(!print_formula estate.es_formula)^ "\n\n")  pos in *)
 (*     let inv = matchcntha lhs_node with *)
 (*       | ViewNode ({h_formula_view_name = c}) -> *)
-(*             let vdef = Cast.look_up_view_def pos prog.Cast.prog_view_decls c in *)
+(*             let vdef = x_add Cast.look_up_view_def pos prog.Cast.prog_view_decls c in *)
 (*             let i = MCP.pure_of_mix (fst vdef.Cast.view_user_inv) in *)
 (*             if List.mem i estate.es_infer_invs then estate.es_infer_invs *)
 (*             else estate.es_infer_invs @ [i] *)

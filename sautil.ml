@@ -2429,10 +2429,10 @@ and subst_view_hp_h_formula view_name (hp_name, _, p) hf =
 (* let checkeq_pure_x qvars1 qvars2 p1 p2= *)
 (*   if CP.equalFormula p1 p2 then true else *)
 (*      let p2 = CP.mkExists qvars2 p2 None no_pos in *)
-(*      let b1,_,_ = TP.imply_one 3 p1 p2 "sa:checkeq_pure" true None in *)
+(*      let b1,_,_ = x_add TP.imply_one 3 p1 p2 "sa:checkeq_pure" true None in *)
 (*     if b1 then *)
 (*       let p1 = CP.mkExists qvars1 p1 None no_pos in *)
-(*       let b2,_,_ = TP.imply_one 4 p2 p1 "sa:checkeq_pure" true None in *)
+(*       let b2,_,_ = x_add TP.imply_one 4 p2 p1 "sa:checkeq_pure" true None in *)
 (*       b2 *)
 (*     else false *)
 
@@ -3067,7 +3067,7 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2 (lguard1: CF.formu
             (*ptrs: cmpare node. pure --> quantifiers*)
             let () = Debug.ninfo_zprint (lazy (("    lmf: " ^ (!CP.print_formula lmf)))) no_pos in
             let () = Debug.ninfo_zprint (lazy (("    rmf1: " ^ (!CP.print_formula rmf1)))) no_pos in
-            let b,_,_ = TP.imply_one 5 rmf1 lmf "sa:check_hrels_imply" true None in
+            let b,_,_ = x_add TP.imply_one 5 rmf1 lmf "sa:check_hrels_imply" true None in
             let lpos = (CF.pos_of_formula lhs2) in
             if b then
               (*node match *)
@@ -5656,7 +5656,7 @@ let mkConjH_and_norm_x prog hp args unk_hps unk_svl f1 f2 pos=
   (*****INTERNAL*****)
   let get_view_info prog vn=
     let rec look_up_view vn0=
-      let vdef = C.look_up_view_def_raw 43 prog.C.prog_view_decls vn0.CF.h_formula_view_name in
+      let vdef = x_add C.look_up_view_def_raw 43 prog.C.prog_view_decls vn0.CF.h_formula_view_name in
       let fs = List.map fst vdef.C.view_un_struc_formula in
       let hv_opt = CF.is_only_viewnode false (CF.formula_of_disjuncts fs) in
       match hv_opt with
@@ -7577,7 +7577,7 @@ let gen_slk_file is_proper prog file_name sel_pre_hps sel_post_hps rel_assumps u
   let all_view_used = Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 = 0) all_view_used0 in
   let all_view_decls = List.fold_left (fun ls view_name ->
       try
-        let view_decl = Cast.look_up_view_def_raw 42 prog.Cast.prog_view_decls view_name in
+        let view_decl = x_add Cast.look_up_view_def_raw 42 prog.Cast.prog_view_decls view_name in
         ls@[view_decl]
       with _ -> ls
   ) [] all_view_used

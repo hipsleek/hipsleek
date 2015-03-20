@@ -69,7 +69,7 @@ let run_entail_check_helper ctx (iante: lem_formula) (iconseq: lem_formula) (inf
           let newl = List.map (fun ct -> 
               let nctx = CF.set_context_formula ct ante in
               let nctx = add_infer_vars_to_ctx inf_vars nctx in
-              let nctx = CF.transform_context (Solver.elim_unsat_es 10 cprog (ref 1)) nctx in
+              let nctx = CF.transform_context (x_add Solver.elim_unsat_es 10 cprog (ref 1)) nctx in
               nctx
           ) l in CF.SuccCtx newl
     | CF.FailCtx _ ->    
@@ -78,7 +78,7 @@ let run_entail_check_helper ctx (iante: lem_formula) (iconseq: lem_formula) (inf
   in 
   (* let ctx = add_infer_vars_to_list_ctx inf_vars ctx in *)
   let () = if !Globals.print_core || !Globals.print_core_all then print_string ("\nrun_entail_check_helper:\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
-  (* let ctx = CF.transform_list_context (Solver.elim_unsat_es 10 cprog (ref 1)) ctx in *)
+  (* let ctx = CF.transform_list_context (x_add Solver.elim_unsat_es 10 cprog (ref 1)) ctx in *)
   let rs1, _ = 
   if not !Globals.disable_failure_explaining then
     Solver.heap_entail_struc_init_bug_inv cprog false false ctx conseq no_pos None
@@ -163,7 +163,7 @@ let check_coercion coer lhs rhs  (cprog: C.prog_decl) =
   let pos = CF.pos_of_formula coer.C.coercion_head in
   let lhs = Solver.unfold_nth 9 (cprog,None) lhs (CP.SpecVar (Globals.null_type, self, Unprimed)) true 0 pos in
   (* unfolding RHS need to use unflattened body to preserve case-spec *)
-  let rhs = Solver.unfold_struc_nth 9 (cprog,None) rhs (CP.SpecVar (Globals.null_type, self, Unprimed)) true 0 pos in
+  let rhs = x_add Solver.unfold_struc_nth 9 (cprog,None) rhs (CP.SpecVar (Globals.null_type, self, Unprimed)) true 0 pos in
   (*let () = print_string("lhs_unfoldfed: "^(Cprinter.string_of_formula lhs)^"\n") in*)
   let lhs = if(coer.C.coercion_case == C.Ramify) then 
     Mem.ramify_unfolded_formula lhs cprog.C.prog_view_decls 

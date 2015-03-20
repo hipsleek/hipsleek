@@ -247,7 +247,7 @@ let rec simplify_relation_x (sp:CF.struc_formula) subst_fml pre_vars post_vars p
       if pres = [] then simplify_pre b.CF.formula_struc_base lst_assume
       else
         let pre = CP.conj_of_list pres no_pos in
-        let xpure_base,_,_ = Cvutil.xpure 16 prog b.CF.formula_struc_base in
+        let xpure_base,_,_ = x_add Cvutil.xpure 16 prog b.CF.formula_struc_base in
         let check_fml = MCP.merge_mems xpure_base (MCP.mix_of_pure pre) true in
         if TP.is_sat_raw check_fml then
           simplify_pre (CF.normalize 1 b.CF.formula_struc_base (CF.formula_of_pure_formula pre no_pos) no_pos) lst_assume
@@ -522,7 +522,7 @@ let update_with_td_fp_x bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
         (* TODO WN : need to use lhs_heap_xpure1 only *)
         let lhs_heap_xpure1 = MCP.mkMTrue no_pos in
         let () = x_binfo_pp "TODO : fix lhs_heap_xpure1" no_pos in
-          let _,_,l = Infer.infer_pure_m 3 [] es lhs_heap_xpure1 f1 f1 f1 f2 no_pos in
+          let _,_,l = x_add Infer.infer_pure_m 3 [] es lhs_heap_xpure1 f1 f1 f1 f2 no_pos in
           List.concat (List.map (fun (_,x,_) -> List.map (fun (a,b,c) -> (c,b)) x) l)
       in lst
 (*      if lst=[] then*)
@@ -669,7 +669,7 @@ let rel_fixpoint_wrapper pre_invs0 pre_fmls0 pre_rel_constrs post_rel_constrs pr
     ) post_rel_df)
   in
   (*post fix-point*)
-  let bottom_up_fp = Fixcalc.compute_fixpoint 3 post_rel_df_new pre_vars proc_spec in
+  let bottom_up_fp = x_add Fixcalc.compute_fixpoint 3 post_rel_df_new pre_vars proc_spec in
   let bottom_up_fp = List.map (fun (r,p) -> (r,TP.pairwisecheck_raw p)) bottom_up_fp in
   (****pre fixpoint***********)
   let r= update_with_td_fp bottom_up_fp (pre_rel_fmls) pre_fmls pre_invs

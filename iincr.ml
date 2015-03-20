@@ -32,8 +32,8 @@ let extend_views iprog prog ext_pred_name scc=
       r@(get_views_struc proc.Cast.proc_stk_of_static_specs # top)
   ) [] scc in
   let vns1 = Gen.BList.remove_dups_eq string_compare (List.map (fun vn -> vn.h_formula_view_name) vns) in
-  let vdcls = List.map (Cast.look_up_view_def_raw 65 prog.Cast.prog_view_decls) vns1 in
-  let pure_extn_view = Cast.look_up_view_def_raw 65 prog.Cast.prog_view_decls ext_pred_name in
+  let vdcls = List.map (x_add Cast.look_up_view_def_raw 65 prog.Cast.prog_view_decls) vns1 in
+  let pure_extn_view = x_add Cast.look_up_view_def_raw 65 prog.Cast.prog_view_decls ext_pred_name in
   let n_views = Derive.expose_pure_extn  iprog prog vdcls [pure_extn_view] in
   []
 

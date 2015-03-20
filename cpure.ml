@@ -2677,7 +2677,7 @@ and mkExists_with_simpl_x simpl (vs : spec_var list) (f : formula) lbl pos =
 and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
   | AndList b ->
 	let pusher v lf lrest= 	
-	  let rl,vl,rf = List.fold_left (fun (al,avs,af) (cl,cvs,cf)-> (LO.comb_norm 2 al cl,avs@cvs, mkAnd af cf pos)) (List.hd lf) (List.tl lf) in
+	  let rl,vl,rf = List.fold_left (fun (al,avs,af) (cl,cvs,cf)-> (x_add LO.comb_norm 2 al cl,avs@cvs, mkAnd af cf pos)) (List.hd lf) (List.tl lf) in
 	  (rl,vl, Exists (v,rf,lbel,pos))::lrest in
 	let lst = List.map (fun (l,c)-> (l,fv c,c)) b in
 	let lst1 = List.fold_left (fun lbl v-> 
