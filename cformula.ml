@@ -4386,7 +4386,7 @@ and rename_struc_bound_vars (f:struc_formula):struc_formula = match f with
 and rename_bound_vars (f : formula) =
   let pr = !print_formula in
   let pr_out (f,_) = pr f in
-  let res = Debug.no_1 "rename_bound_vars" pr pr_out
+  let res = Debug.no_1 "CF.rename_bound_vars" pr pr_out
       (fun _ -> rename_bound_vars_x f) f in
   fst res
 

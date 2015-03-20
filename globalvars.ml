@@ -886,7 +886,7 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
       let () = print_string ("inside bind with globals "^(String.concat "," list_elem)^"\n") in
       let () = print_string ("global vars: "^(Iprinter.string_of_var_list global_vars)^"\n") in
       let new_name = create_new_ids global_vars e.I.exp_bind_bound_var in
-		  let new_body = Astsimp.rename_exp [e.I.exp_bind_bound_var,new_name] e.I.exp_bind_body in
+		  let new_body = x_add Astsimp.rename_exp [e.I.exp_bind_bound_var,new_name] e.I.exp_bind_body in
 		  let new_exp = { e with I.exp_bind_bound_var = new_name; I.exp_bind_body = new_body } in
 		  I.Bind new_exp
 		else exp*)
@@ -932,7 +932,7 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
 		let ident_list = int_catch_var @ int_flow_var in
 		let new_ident_list = List.map (create_new_ids global_vars) ident_list in
 		let renlist = List.combine ident_list new_ident_list in
-		let new_exp2 = Astsimp.rename_exp renlist e.I.exp_catch_body in
+		let new_exp2 = x_add Astsimp.rename_exp renlist e.I.exp_catch_body in
 	I.Catch {e with 
 		I.exp_catch_var = f_catch_var;
 		I.exp_catch_flow_var = f_flow_var;
@@ -974,7 +974,7 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
 			let ident_list = List.map fst3 e1.I.exp_var_decl_decls in
 			let new_ident_list = List.map (create_new_ids global_vars) ident_list in 
 			let renlist = List.map2 join2 ident_list new_ident_list in
-			let new_exp2 = Astsimp.rename_exp renlist e.I.exp_seq_exp2 in
+			let new_exp2 = x_add Astsimp.rename_exp renlist e.I.exp_seq_exp2 in
 			let new_exp2 = check_and_change global_vars new_exp2 in
 			let new_var_decls = List.map2 change_fst3 e1.I.exp_var_decl_decls new_ident_list in
 			let new_exp1 = I.VarDecl { e1 with I.exp_var_decl_decls = new_var_decls } in
@@ -984,7 +984,7 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
 			let ident_list = List.map fst3 e1.I.exp_const_decl_decls in
 			let new_ident_list = List.map (create_new_ids global_vars) ident_list in
 			let renlist = List.map2 join2 ident_list new_ident_list in
-			let new_exp2 = Astsimp.rename_exp renlist e.I.exp_seq_exp2 in
+			let new_exp2 = x_add Astsimp.rename_exp renlist e.I.exp_seq_exp2 in
 			let new_exp2 = check_and_change global_vars new_exp2 in
 			let new_const_decls = List.map2 change_fst3 e1.I.exp_const_decl_decls new_ident_list in
 			let new_exp1 = I.ConstDecl { e1 with I.exp_const_decl_decls = new_const_decls } in
@@ -1039,7 +1039,7 @@ let resolve_name_conflict (proc : I.proc_decl) : I.proc_decl =
 		let params = List.map get_local_id proc.I.proc_args in
 		let new_params = List.map get_local_id new_proc_args in
 		let renlist = List.map2 join2 params new_params in
-		let new_exp2 = Astsimp.rename_exp renlist new_exp1 in
+		let new_exp2 = x_add Astsimp.rename_exp renlist new_exp1 in
 		let renspeclist1 = List.map (addp Primed) renlist in
 		let renspeclist2 = List.map (addp Unprimed) renlist in
 		let renspeclist = renspeclist1 @ renspeclist2 in

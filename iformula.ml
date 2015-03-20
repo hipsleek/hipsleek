@@ -1434,7 +1434,7 @@ and rename_bound_vars_x (f : formula) =
 
 and rename_bound_vars (f : formula): formula = 
   let pr = !print_formula in
-  Debug.no_1 "rename_bound_vars" pr pr rename_bound_vars_x f
+  Debug.no_1 "IF.rename_bound_vars" pr pr rename_bound_vars_x f
 	          
 and subst_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula):struc_formula = match f with
 	| EAssume b -> 
@@ -1784,7 +1784,7 @@ and subst_w_data_name_struc (sst:((ident * primed)*(ident * primed)) list) (f:st
 let rec rename_bound_var_struc_formula (f:struc_formula):struc_formula = match f with
 	| EAssume b -> 
 		EAssume {b with 
-			formula_assume_simpl = rename_bound_vars b.formula_assume_simpl; 
+			formula_assume_simpl = x_add_1 rename_bound_vars b.formula_assume_simpl; 
 			formula_assume_struc = rename_bound_var_struc_formula b.formula_assume_struc;}
 	| ECase b-> ECase {b with formula_case_branches = Gen.map_l_snd rename_bound_var_struc_formula b.formula_case_branches}
 	| EBase b-> 
@@ -1792,7 +1792,7 @@ let rec rename_bound_var_struc_formula (f:struc_formula):struc_formula = match f
 			EBase {b with 
 				formula_struc_explicit_inst = b.formula_struc_explicit_inst;
 		 		formula_struc_implicit_inst = snd (List.split sst2);
-				formula_struc_base=rename_bound_vars (subst sst2 b.formula_struc_base); 
+				formula_struc_base= x_add_1 rename_bound_vars (subst sst2 b.formula_struc_base); 
 				formula_struc_continuation= Gen.map_opt rename_bound_var_struc_formula (Gen.map_opt (subst_struc sst2) b.formula_struc_continuation) }			
 	| EInfer b -> EInfer {b with (* Need to check again *)
 					formula_inf_continuation = rename_bound_var_struc_formula b.formula_inf_continuation;}
@@ -2615,8 +2615,8 @@ let normalize_formula (f1 : formula) (f2 : formula) (pos : loc) =
         let eo2 = helper f1 o22 pos in
         mkOr eo1 eo2 pos
       | _ -> begin
-        let rf1 = rename_bound_vars f1 in
-        let rf2 = rename_bound_vars f2 in
+        let rf1 = x_add_1 rename_bound_vars f1 in
+        let rf2 = x_add_1 rename_bound_vars f2 in
         let qvars1, base1 = split_quantifiers rf1 in
         let qvars2, base2 = split_quantifiers rf2 in
         let new_base = mkStar_formula base1 base2 pos in

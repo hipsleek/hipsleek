@@ -65,6 +65,32 @@ Successful States:
 ===================================================================
 # ex3-app-new.ss
 
+Rename only if there is a clash 
+instead of renaming for every declaration..
+
+(==astsimp.ml#9305==)
+case_rename_var_decls@1398
+case_rename_var_decls inp1 :{local: node tmpZZZ,boolean fl_bb
+node tmpZZZ = member access xxx~~>next;
+boolean fl_bb = tmpZZZ != yyyy;
+(100, ):if (fl_bb) { 
+  (100, ):{dprint;
+(102, ):return };
+} else { 
+  (100, ):{(101, ):return }
+}}
+case_rename_var_decls@1398 EXIT:({local: node tmpZZZ,boolean fl_bb
+node tmpZZZ_46 = member access xxx~~>next;
+boolean fl_bb_47 = tmpZZZ_46 != yyyy;
+(100, ):if (fl_bb_47) { 
+  (100, ):{dprint;
+(102, ):return };
+} else { 
+  (100, ):{(101, ):return }
+}},[])
+
+-------------------------------------
+
 !!! **cfout.ml#421:bind variables:[xxx',Anon_1507,q_1508,flted_7_1506]
 !!! **cfout.ml#426:important variables:[Anon_1507,fl_47',yyyy',yyyy,xxx',xxx,flted_7_1506,nnn,tmp_46',q_1508]
 !!! **cfout.ml#428:exists variables:[]
