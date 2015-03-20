@@ -332,7 +332,7 @@ let rec check_prover_existence prover_cmd_str =
   |[] -> ()
   | "log"::rest -> check_prover_existence rest
   | prover::rest -> 
-    let _ = Debug.tinfo_hprint (add_str "check prover" pr_id) prover no_pos in
+    let _ = x_tinfo_hp (add_str "check prover" pr_id) prover no_pos in
     (* let exit_code = Sys.command ("which "^prover) in *)
     (*Do not display system info in the website*)
           (* let () = print_endline ("prover:" ^ prover) in *)
@@ -1187,8 +1187,8 @@ let add_imm_inv f1 f2 =
       let vp=Var(v,no_pos) in 
       mkAnd (mkSubAnn const_ann_bot vp) (mkSubAnn vp const_ann_top) no_pos ) vs in
   let f1_inv = join_conjunctions (f1::inv) in
-  let () = Debug.tinfo_hprint (add_str "Ann Vars" Cprinter.string_of_spec_var_list) vs no_pos in
-  let () = Debug.tinfo_hprint (add_str "Inv" Cprinter.string_of_pure_formula) f1_inv no_pos in
+  let () = x_tinfo_hp (add_str "Ann Vars" Cprinter.string_of_spec_var_list) vs no_pos in
+  let () = x_tinfo_hp (add_str "Inv" Cprinter.string_of_pure_formula) f1_inv no_pos in
   f1_inv
 
 let cnv_ptr_to_int_weak f =

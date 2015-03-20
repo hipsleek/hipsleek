@@ -105,7 +105,7 @@ let  minisat_cnf_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (ge:G.t)
     | BConst (c, _)   -> (*let _=print_endline ("minisat_cnf_of_p_formula_for_helper BConst EXIT!")  in*) ""
     | XPure _ -> "" (* WN : weakening *)
     | BVar (sv, pos)    -> 
-          let _= Debug.binfo_hprint (add_str "minisat_cnf_of_p_formula Bvar" minisat_cnf_of_spec_var) sv pos 
+          let _= x_binfo_hp (add_str "minisat_cnf_of_p_formula Bvar" minisat_cnf_of_spec_var) sv pos 
           in ""
     | Lt _            -> ""
     | Lte _           -> ""
@@ -619,7 +619,7 @@ let rtc_generate_B (f:Cpure.formula) =
       | _-> 
             
             let _= 
-              Debug.tinfo_hprint (add_str "imply Final Formula :"  Cprinter.string_of_pure_formula) f no_pos
+              x_tinfo_hp (add_str "imply Final Formula :"  Cprinter.string_of_pure_formula) f no_pos
             in ""
   in
   let cnf_str =cnf_to_string_to_file f in
@@ -778,7 +778,7 @@ let imply (ante: Cpure.formula) (conseq: Cpure.formula) (timeout: float) : bool 
   (*  let _=List.map (fun x-> print_endline (minisat_cnf_of_spec_var x)) all in*)
   let cons= (mkNot_s conseq) in
   let imply_f= mkAnd ante cons no_pos  in
-  (* Debug.tinfo_pprint "hello\n" no_pos; *)
+  (* x_tinfo_pp "hello\n" no_pos; *)
   let res =is_sat imply_f ""
   in 	
   (*		let _=if(res) then print_endline ("SAT") else print_endline ("UNSAT") in *)

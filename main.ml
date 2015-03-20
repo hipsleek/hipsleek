@@ -1145,7 +1145,7 @@ let finalize_bug () =
     | Some(cprog),None ->
           let () = Log.process_proof_logging !Globals.source_files cprog [] in ()
     | _,_ ->
-          let () = Debug.binfo_pprint "WARNING : Logging not done on finalize" no_pos in ());
+          let () = x_binfo_pp "WARNING : Logging not done on finalize" no_pos in ());
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ()
 
 let old_main () = 

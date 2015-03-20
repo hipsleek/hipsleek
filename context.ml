@@ -414,7 +414,7 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
         | HRel (hp, e, _) ->
           let args = CP.diff_svl (get_all_sv rhs_node) [hp] in
           let root, _ = Sautil.find_root prog [hp] args [] in
-          let () = Debug.tinfo_hprint (add_str "root" Cprinter.string_of_spec_var) root pos in
+          let () = x_tinfo_hp (add_str "root" Cprinter.string_of_spec_var) root pos in
           (CP.ConstAnn(Mutable), [], root)
         | _ -> report_error no_pos "choose_context unexpected rhs formula\n"
       in
@@ -517,7 +517,7 @@ and view_mater_match_x prog c vs1 aset imm f anns =
   let vdef_param = (self_param vdef)::(vdef.view_vars) in
   let mvs = subst_mater_list_nth 1 vdef_param vs1 vdef.view_materialized_vars in
   let vars =  vdef.view_vars in
-  let () = DD.tinfo_hprint  (add_str "vars" Cprinter.string_of_spec_var_list ) vars no_pos in
+  let () = x_tinfo_hp  (add_str "vars" Cprinter.string_of_spec_var_list ) vars no_pos in
   try
     let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) aset) mvs in
     if  (produces_hole imm) && not(!Globals.allow_field_ann) then
@@ -574,7 +574,7 @@ and coerc_mater_match_x coercs vname (vargs:P.spec_var list) r_aset (lhs_f:Cform
   (* TODO : how about right coercion, Cristina? *)
   (* WN_all_lemma - is this overriding of lemmas? *)
   (* let coercs = (Lem_store.all_lemma # get_left_coercion)(\*prog.prog_left_coercions*\) in *)
-  (* let () = DD.tinfo_hprint (add_str "coercs" (pr_list Cprinter.string_of_coercion)) coercs no_pos in *)
+  (* let () = x_tinfo_hp (add_str "coercs" (pr_list Cprinter.string_of_coercion)) coercs no_pos in *)
   let pos_coercs = List.fold_right (fun c a ->
       match (choose_full_mater_coercion vname vargs r_aset c) with 
         | None ->  a 
@@ -1382,8 +1382,8 @@ and process_one_match prog estate lhs_h lhs_p conseq is_normalizing
 
 and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_res) (rhs_node,rhs_rest,rhs_p) reqset
     : action_wt =
-  let pr_debug s = DD.tinfo_pprint s no_pos in
-  let pr_hdebug h a = DD.tinfo_hprint h a no_pos in
+  let pr_debug s = x_tinfo_pp s no_pos in
+  let pr_hdebug h a = x_tinfo_hp h a no_pos in
   let rhs_node = m_res.match_res_rhs_node in
   let lhs_node = m_res.match_res_lhs_node in
   let rhs_vperm_set = CF.get_vperm_set rhs in
@@ -1763,7 +1763,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                   if is_r_lock then [] else
                     if ((new_orig_r || vr_self_pts==[]) && sub_ann) then
                       let () = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 3" no_pos in
-                      let () = Debug.tinfo_hprint (add_str "cyclic:add_checkpoint" pr_id) "fold" no_pos in
+                      let () = x_tinfo_hp (add_str "cyclic:add_checkpoint" pr_id) "fold" no_pos in
                       let syn_lem_typ = if seg_fold_type >= 0 then gen_lemma_action_invalid else
                         CFU.need_cycle_checkpoint_fold prog dl estate.CF.es_formula vr rhs reqset in
                        if (syn_lem_typ != gen_lemma_action_invalid) then
@@ -2177,10 +2177,10 @@ and process_matches prog estate lhs_h lhs_p conseq is_normalizing reqset (((l:ma
 
 and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:match_res list),(rhs_node,rhs_rest,rhs_p))= 
   let rhs_vperm_set = CF.get_vperm_set conseq in
-  let () = Debug.tinfo_pprint "**** sel_hp_rel **********************" no_pos in
-  let () = Debug.tinfo_hprint (add_str "hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_hp_rel no_pos in
-  let () = Debug.tinfo_hprint (add_str "sel_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_hp_rel no_pos in
-  let () = Debug.tinfo_hprint (add_str "sel_post_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_post_hp_rel no_pos in
+  let () = x_tinfo_pp "**** sel_hp_rel **********************" no_pos in
+  let () = x_tinfo_hp (add_str "hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_hp_rel no_pos in
+  let () = x_tinfo_hp (add_str "sel_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_hp_rel no_pos in
+  let () = x_tinfo_hp (add_str "sel_post_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_post_hp_rel no_pos in
   match l with
     | [] ->  process_infer_heap_match ~vperm_set:rhs_vperm_set prog estate lhs_h lhs_p is_normalizing conseq reqset (rhs_node,rhs_rest)
           (* let r0 = (2,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in *)
@@ -2214,10 +2214,10 @@ and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:m
     | x::[] -> process_one_match prog estate lhs_h lhs_p conseq is_normalizing x (rhs_node,rhs_rest,rhs_p) reqset
     | _ ->  
           let rs = List.map (fun l -> process_one_match prog estate lhs_h lhs_p conseq is_normalizing l (rhs_node,rhs_rest,rhs_p) reqset) l in
-          let () = DD.tinfo_pprint "process many matches" no_pos in
+          let () = x_tinfo_pp "process many matches" no_pos in
           (* WN : TODO use cond_action if of different priorities *)
           let rs = sort_wt rs in
-          let () = DD.tinfo_hprint (pr_list string_of_action_wt_res_simpl) rs no_pos in
+          let () = x_tinfo_hp (pr_list string_of_action_wt_res_simpl) rs no_pos in
           (-1, Search_action rs)
 
 and choose_closest a ys =
@@ -2469,16 +2469,16 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
   (* let () = print_string (" compute_actions: before process_matches") in *)
   (* type: (match_res list * (Cformula.h_formula * Cformula.h_formula)) list *)
   (* Todo:Long *)
-  let () = DD.tinfo_hprint (add_str "r_xxx" (pr_list (pr_pair (pr_list string_of_match_res) pr_none))) r no_pos in 
+  let () = x_tinfo_hp (add_str "r_xxx" (pr_list (pr_pair (pr_list string_of_match_res) pr_none))) r no_pos in 
   let r = List.map (process_matches prog estate lhs_h lhs_p conseq is_normalizing es) r in
   match r with
     | [] -> M_Nothing_to_do "no nodes on RHS"
     | xs -> 
           (*  imm/imm1.slk imm/imm3.slk fails if sort_wt not done *)
-          let () = DD.tinfo_hprint (add_str "weighted action" (pr_list_num 
+          let () = x_tinfo_hp (add_str "weighted action" (pr_list_num 
               (string_of_action_wt_res_simpl))) r no_pos in
           let ys = sort_wt_match opt r in
-          let () = DD.tinfo_hprint (add_str "sorted action" (pr_list_num string_of_action_wt_res_simpl)) ys no_pos in
+          let () = x_tinfo_hp (add_str "sorted action" (pr_list_num string_of_action_wt_res_simpl)) ys no_pos in
           let ys2 = drop_low ys in
           (* let ys2 = snd (List.split ys) in *)
  	  (*Cond_action  ys *)

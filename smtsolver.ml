@@ -527,16 +527,16 @@ let parse_model_to_pure_formula model =
       helper new_acc (List.tl (List.tl model))
   in
   let pf = helper (Cpure.mkTrue no_pos) (List.tl model) in
-  let () = Debug.binfo_pprint ("counter example: " ^ (!print_pure pf)) no_pos in
+  let () = x_binfo_pp ("counter example: " ^ (!print_pure pf)) no_pos in
   pf
 
 let iget_answer2 chn input =
   let output = icollect_output2 chn [] in
   let solver_sat_result = List.hd output (* List.nth output (List.length output - 1) *) in
-  let () = Debug.binfo_pprint ("solver_sat_result: " ^ solver_sat_result) no_pos in
+  let () = x_binfo_pp ("solver_sat_result: " ^ solver_sat_result) no_pos in
   let model = List.tl output in
-  let () = Debug.binfo_pprint "model:" no_pos in
-  let unknown = List.map (fun s -> Debug.binfo_pprint s no_pos) model in
+  let () = x_binfo_pp "model:" no_pos in
+  let unknown = List.map (fun s -> x_binfo_pp s no_pos) model in
   let _ =
     if solver_sat_result = "sat" then
       parse_model_to_pure_formula model

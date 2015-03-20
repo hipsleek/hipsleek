@@ -344,15 +344,15 @@ let subst_cs_x prog sel_hps post_hps dang_hps link_hps frozen_hps frozen_constrs
 let subst_cs prog sel_hps post_hps dang_hps link_hps frozen_hps frozen_constrs complex_hps constrs =
   let (is_changed, new_cs1, unfrozen_hps) as res = subst_cs_x prog sel_hps post_hps dang_hps link_hps frozen_hps frozen_constrs complex_hps constrs in
    if !VarGen.sap then
-     if not is_changed then DD.binfo_pprint "*** NO NORM-CONSEQ DONE ***" no_pos
+     if not is_changed then x_binfo_pp "*** NO NORM-CONSEQ DONE ***" no_pos
       else
         begin
           let pr1 = pr_list_num Cprinter.string_of_hprel_short in
           let s1 = pr1 constrs in
           let s2 = pr1 new_cs1 in
-          let () = DD.binfo_hprint (add_str "BEFORE" pr_id) s1 no_pos in
-          let () = DD.binfo_pprint "=============>>>>" no_pos in
-          let () = DD.binfo_hprint (add_str "AFTER" pr_id) s2 no_pos in
+          let () = x_binfo_hp (add_str "BEFORE" pr_id) s1 no_pos in
+          let () = x_binfo_pp "=============>>>>" no_pos in
+          let () = x_binfo_hp (add_str "AFTER" pr_id) s2 no_pos in
           let () = DD.binfo_end "Syn-Norm-Conseq" in
           ()
      end;
@@ -394,15 +394,15 @@ let unfold_def_LHS_x prog link_hps constrs to_unfold_hps hp_defs=
 let unfold_def_LHS prog link_hps constrs to_unfold_hps hp_defs=
   let (is_changed, new_cs1) as res = unfold_def_LHS_x prog link_hps constrs to_unfold_hps hp_defs in
   if !VarGen.sap then
-     if not is_changed then DD.binfo_pprint "*** NO NORM-ANTE DONE ***" no_pos
+     if not is_changed then x_binfo_pp "*** NO NORM-ANTE DONE ***" no_pos
       else
         begin
           let pr1 = pr_list_num Cprinter.string_of_hprel_short in
           let s1 = pr1 constrs in
           let s2 = pr1 new_cs1 in
-          let () = DD.binfo_hprint (add_str "BEFORE" pr_id) s1 no_pos in
-          let () = DD.binfo_pprint "=============>>>>" no_pos in
-          let () = DD.binfo_hprint (add_str "AFTER" pr_id) s2 no_pos in
+          let () = x_binfo_hp (add_str "BEFORE" pr_id) s1 no_pos in
+          let () = x_binfo_pp "=============>>>>" no_pos in
+          let () = x_binfo_hp (add_str "AFTER" pr_id) s2 no_pos in
           let () = DD.binfo_end "Syn-Norm-Ante" in
           ()
      end;
@@ -596,16 +596,16 @@ let split_base_constr_a prog cond_path constrs post_hps sel_hps prog_vars unk_ma
   let s2 = (pr_list_num Cprinter.string_of_hprel_short) constrs2 in
   if !VarGen.sap then
     if step_change # no_change then 
-      DD.binfo_pprint "*** NO SPLITTING DONE ***" no_pos
+      x_binfo_pp "*** NO SPLITTING DONE ***" no_pos
     else 
       begin
         (* let () = DD.binfo_start "split_base" in *)
         let () = DD.ninfo_hprint (add_str "post_hps" Cprinter.string_of_spec_var_list) post_hps no_pos in
         let () = DD.ninfo_hprint (add_str "prog_vars" Cprinter.string_of_spec_var_list) prog_vars no_pos in
-        let () = DD.binfo_hprint (add_str "BEFORE" pr_id) s1 no_pos in
-        let () = DD.binfo_pprint "=============>>>>" no_pos in
-        let () = DD.binfo_hprint (add_str "AFTER" pr_id) s2 no_pos in
-        let () = DD.binfo_hprint (add_str "UNKNOWN added" (pr_list (fun (x,_) -> Cprinter.string_of_spec_var x)))  link_hpargs2 no_pos in
+        let () = x_binfo_hp (add_str "BEFORE" pr_id) s1 no_pos in
+        let () = x_binfo_pp "=============>>>>" no_pos in
+        let () = x_binfo_hp (add_str "AFTER" pr_id) s2 no_pos in
+        let () = x_binfo_hp (add_str "UNKNOWN added" (pr_list (fun (x,_) -> Cprinter.string_of_spec_var x)))  link_hpargs2 no_pos in
         let () = DD.binfo_end "split_base" in
         ()
       end;
@@ -947,9 +947,9 @@ let combine_pdefs_pre prog unk_hps link_hps pr_pdefs=
        let pr1 = pr_list_num (fun (pdef, _) -> Sautil.string_of_par_def_w_name pdef) in
        let s1 = pr1 pr_pdefs in
        let s2 = (pr_list_num Sautil.string_of_par_def_w_name) pdefs2 in
-       let () = DD.binfo_hprint (add_str "BEFORE" pr_id) s1 no_pos in
-       let () = DD.binfo_pprint "=============>>>>" no_pos in
-       let () = DD.binfo_hprint (add_str "AFTER" pr_id) s2 no_pos in
+       let () = x_binfo_hp (add_str "BEFORE" pr_id) s1 no_pos in
+       let () = x_binfo_pp "=============>>>>" no_pos in
+       let () = x_binfo_hp (add_str "AFTER" pr_id) s2 no_pos in
        let () = DD.binfo_end "Syn-Case" in
        ()
      end;
@@ -1014,7 +1014,7 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *Cformula.hp_rel_def) 
     (* (\*root = p && p:: node<_,_> ==> root = p& root::node<_,_> & *\) *)
     (f4,Cformula.subst_opt subst og, unk_args1)
   in
-  DD.tinfo_pprint ">>>>>> generalize_one_hp: <<<<<<" no_pos;
+  x_tinfo_pp ">>>>>> generalize_one_hp: <<<<<<" no_pos;
   if par_defs = [] then ([],[]) else
     begin
         let hp, args, _, f0,_ = (List.hd par_defs) in
@@ -1582,7 +1582,7 @@ let generalize_hps_par_def_x prog is_pre non_ptr_unk_hps unk_hpargs link_hps pos
   (*remove empty*)
   let () = DD.ninfo_pprint ("      groups2: " ^ (pr1 groups2)) no_pos in
   let groups3 = List.filter (fun grp -> grp <> []) groups2 in
-  let () = DD.tinfo_hprint (add_str "before remove redundant" pr1) groups2 no_pos in
+  let () = x_tinfo_hp (add_str "before remove redundant" pr1) groups2 no_pos in
   (*each group, do union partial definition*)
   let hpdefs,elim_ss = List.fold_left (fun (hpdefs,elim_ss) pdefs->
       let new_defs,ss = generalize_one_hp prog is_pre hpdefs non_ptr_unk_hps unk_hps link_hps pdefs in
@@ -1590,10 +1590,10 @@ let generalize_hps_par_def_x prog is_pre non_ptr_unk_hps unk_hpargs link_hps pos
   ) ([],[]) groups3
   in
   let prh = Cprinter.string_of_h_formula in
-  let () = DD.tinfo_hprint (add_str "elim_ss" (pr_list (pr_pair prh prh))) elim_ss no_pos in
+  let () = x_tinfo_hp (add_str "elim_ss" (pr_list (pr_pair prh prh))) elim_ss no_pos in
   let pr2 = Cprinter.string_of_hp_rel_def in
   let pr_hpd = pr_list (fun (_,a)-> pr2 a) in
-  let () = DD.tinfo_hprint (add_str "after remove redundant" pr_hpd) hpdefs no_pos in
+  let () = x_tinfo_hp (add_str "after remove redundant" pr_hpd) hpdefs no_pos in
   let hpdefs1 =
     if !Globals.pred_elim_useless then
       List.map (fun (hp,def) ->
@@ -1676,7 +1676,7 @@ let generalize_hps_cs_new prog callee_hps hpdefs unk_hps link_hps cs=
       cs callee_hps hpdefs unk_hps
 
 let generalize_hps_x prog is_pre callee_hps unk_hps link_hps sel_post_hps pre_defs predef_hps cs par_defs=
-  (* DD.binfo_pprint ">>>>>> step 6: generalization <<<<<<" no_pos; *)
+  (* x_binfo_pp ">>>>>> step 6: generalization <<<<<<" no_pos; *)
 (*general par_defs*)
   let non_ptr_unk_hps = List.concat (List.map (fun (hp,args) ->
       if List.exists (fun a ->
@@ -1883,7 +1883,7 @@ let match_hps_views_x iprog prog sel_hps (hp_defs: Cformula.hp_rel_def list) (vd
             | _ -> r1
       ) [] hfs )
   ) [] m in
-  let () = Debug.tinfo_hprint (add_str "view_equivs: " (pr_list (pr_pair pr_id pr_id))) view_equivs no_pos in
+  let () = x_tinfo_hp (add_str "view_equivs: " (pr_list (pr_pair pr_id pr_id))) view_equivs no_pos in
   let () = prog.CA.prog_view_equiv <- prog.CA.prog_view_equiv@view_equivs in
   m
     (* (List.filter (fun (_,l) -> l<>[]) m) *)
@@ -1974,12 +1974,12 @@ let partition_constrs constrs post_hps dang_hps=
    if !VarGen.sap then
      begin
        let pr1 = pr_list_num Cprinter.string_of_hprel_short in
-       let () = DD.binfo_pprint "=============>>>>" no_pos in
-       let () = DD.binfo_hprint (add_str "AFTER" pr_id) "" no_pos in
-       let () = DD.binfo_hprint (add_str "pre ass" pr1) pre_constrs no_pos in
-       let () = DD.binfo_hprint (add_str "pre-oblg" pr1) pre_oblg no_pos in
-       let () = DD.binfo_hprint (add_str "post ass" pr1) post_constrs no_pos in
-       let () = DD.binfo_hprint (add_str "post-oblg" pr1) post_oblg_constrs no_pos in
+       let () = x_binfo_pp "=============>>>>" no_pos in
+       let () = x_binfo_hp (add_str "AFTER" pr_id) "" no_pos in
+       let () = x_binfo_hp (add_str "pre ass" pr1) pre_constrs no_pos in
+       let () = x_binfo_hp (add_str "pre-oblg" pr1) pre_oblg no_pos in
+       let () = x_binfo_hp (add_str "post ass" pr1) post_constrs no_pos in
+       let () = x_binfo_hp (add_str "post-oblg" pr1) post_oblg_constrs no_pos in
        let () = DD.binfo_end "partition_constrs" in
        ()
      end;
@@ -2578,7 +2578,7 @@ and infer_process_pre_preds iprog prog proc_name callee_hps b_is_pre is (pre_fix
         let unfrozen_hps1 = CP.remove_dups_svl (CP.intersect_svl unfrozen_hps frozen_hps0) in
         let frozen_hps1 = CP.diff_svl frozen_hps0 unfrozen_hps1 in
         let () = if unfrozen_hps1 <> [] then
-          DD.binfo_pprint (" unfreeze: " ^ (!CP.print_svl unfrozen_hps) )no_pos
+          x_binfo_pp (" unfreeze: " ^ (!CP.print_svl unfrozen_hps) )no_pos
         else ()
         in
         (*for debugging*)
