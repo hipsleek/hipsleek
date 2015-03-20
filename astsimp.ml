@@ -9910,7 +9910,7 @@ and mark_rec_and_call_order_x (cp: C.prog_decl) : C.prog_decl =
   let cp = mark_recursive_call cp scc_list cg in
   let cp = mark_call_order cp scc_list cg in
   let (prims, mutual_grps) = C.re_proc_mutual (C.sort_proc_decls (C.list_of_procs cp)) in
-  Debug.trace_hprint (add_str "mutual scc" (pr_list (pr_list pr_proc_call_order))) mutual_grps no_pos;
+  x_tinfo_hp (add_str "mutual scc" (pr_list (pr_list pr_proc_call_order))) mutual_grps no_pos;
   cp
 
 and mark_rec_and_call_order (cp: C.prog_decl) : C.prog_decl =

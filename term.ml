@@ -519,7 +519,7 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 (* rhs_p *) 
 let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   try
     begin
-      let () = Debug.trace_hprint (add_str "es" !print_entail_state) estate pos in
+      let () = x_tinfo_hp (add_str "es" !print_entail_state) estate pos in
       let conseq = MCP.pure_of_mix rhs_p in
       let dst_tinfo = find_lexvar_formula conseq in (* [d1,d2] *)
       let t_ann_d, dst_lv, dst_il, l_pos = (dst_tinfo.lex_ann, dst_tinfo.lex_exp, dst_tinfo.lex_tmp, dst_tinfo.lex_loc) in
@@ -997,16 +997,16 @@ let value_of_var (v: spec_var) l : int =
 (*   let pr_v = !print_sv in *)
 (*   let pr_vl = pr_list pr_v in *)
 (*   let cl = phase_constr_of_formula_list (phase_constr_stk # get_stk) in *)
-(*   let () = Debug.trace_hprint (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl no_pos in *)
+(*   let () = x_tinfo_hp (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl no_pos in *)
 (*   let l =  *)
 (*     try rank_gt_phase_constr cl  *)
 (*     with _ ->  *)
 (*       fmt_string ("Termination: Contradiction in Phase Constraints."); []  *)
 (*   in *)
 (*   begin *)
-(*     Debug.trace_hprint (add_str "Inferred phase constraints" *)
+(*     x_tinfo_hp (add_str "Inferred phase constraints" *)
 (*       (pr_list !print_formula)) (phase_constr_stk # get_stk) no_pos; *)
-(*     Debug.trace_hprint (add_str "Phase Numbering" *)
+(*     x_tinfo_hp (add_str "Phase Numbering" *)
 (*       (pr_list (pr_pair string_of_int (pr_list !print_sv))) *)
 (*     ) l no_pos; *)
 (*   end *)
@@ -1029,17 +1029,17 @@ let phase_num_infer_one_scc (pl : CP.formula list) =
   (* let pr_vl = pr_list pr_v in *)
   let cl = phase_constr_of_formula_list pl in
   let s_msg = (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl in 
-  (* let () = Debug.trace_hprint (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl no_pos in *)
-  let () = Debug.trace_pprint s_msg no_pos in
+  (* let () = x_tinfo_hp (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl no_pos in *)
+  let () = x_tinfo_pp s_msg no_pos in
   let l = 
     try 
       (* let r = rank_gt_phase_constr cl in *)
       let r = rank_phase_constr cl in
       let () = 
         begin
-          Debug.trace_hprint (add_str "Inferred phase constraints"
+          x_tinfo_hp (add_str "Inferred phase constraints"
             (pr_list !print_formula)) (phase_constr_stk # get_stk) no_pos;
-          Debug.trace_hprint (add_str "Phase Numbering"
+          x_tinfo_hp (add_str "Phase Numbering"
             (* (pr_list (pr_pair string_of_int (pr_list !print_sv)))) r no_pos; *)
             (pr_list (pr_pair !print_sv string_of_int))) r no_pos;
         end
@@ -1065,7 +1065,7 @@ let phase_num_infer_one_scc (pl: CP.formula list)  =
 let phase_num_infer_by_scc () = 
   Hashtbl.iter (fun i pl -> 
     let cl = List.concat (List.map (fun (_, l) -> l) pl) in
-    Debug.trace_hprint (add_str ("scc " ^ (string_of_int i))
+    x_tinfo_hp (add_str ("scc " ^ (string_of_int i))
       (pr_list !CP.print_formula)) cl no_pos;
     let todo_unk = phase_num_infer_one_scc cl in ()
   ) phase_constr_tbl
@@ -1163,10 +1163,10 @@ let subst_phase_num_struc rem_phase subst (struc: struc_formula) : struc_formula
   let n_struc = transform_struc_formula s_f struc in
   let () = 
     begin
-      (* Debug.trace_hprint (add_str ("proc name") (pr_id)) pname no_pos; *)
-      Debug.trace_hprint (add_str ("subst") (pr_list (pr_pair !print_sv string_of_int))) subst no_pos;
-      Debug.trace_hprint (add_str ("OLD_SPECS") (!print_struc_formula)) struc no_pos;
-      Debug.trace_hprint (add_str ("NEW_SPECS") (!print_struc_formula)) n_struc no_pos;
+      (* x_tinfo_hp (add_str ("proc name") (pr_id)) pname no_pos; *)
+      x_tinfo_hp (add_str ("subst") (pr_list (pr_pair !print_sv string_of_int))) subst no_pos;
+      x_tinfo_hp (add_str ("OLD_SPECS") (!print_struc_formula)) struc no_pos;
+      x_tinfo_hp (add_str ("NEW_SPECS") (!print_struc_formula)) n_struc no_pos;
     end 
   in
   n_struc
@@ -1203,14 +1203,14 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
               (* let grp = fst (List.split cons) in *)
               (* let is_full_grp = Gen.BList.list_setequal_eq (=) grp mutual_grp in *)
               let is_full_grp = true in
-              Debug.trace_hprint (add_str ("proc") (pr_id)) proc.Cast.proc_name no_pos;
-              Debug.trace_hprint (add_str "full_grp?" string_of_bool) is_full_grp no_pos;
+              x_tinfo_hp (add_str ("proc") (pr_id)) proc.Cast.proc_name no_pos;
+              x_tinfo_hp (add_str "full_grp?" string_of_bool) is_full_grp no_pos;
               (* Trigger phase number inference when 
                * all needed information is collected *)
               if is_full_grp then
                 let cl = List.concat (snd (List.split cons)) in
                 let inf_num = phase_num_infer_one_scc cl in
-                Debug.trace_hprint (add_str "list of ctr" 
+                x_tinfo_hp (add_str "list of ctr" 
                     (pr_list !CP.print_formula)) cl no_pos;
                 let subst =
                   match inf_num with
@@ -1244,7 +1244,7 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
                     let all_zero = List.for_all (fun (_,i) -> i==0) subst in
                     let rp = if all_zero then List.map (fun (v,_) -> v) subst else [] in
                     if all_zero then
-                      Debug.trace_hprint (add_str ("Phase to remove") !print_svl) rp no_pos
+                      x_tinfo_hp (add_str ("Phase to remove") !print_svl) rp no_pos
                     else begin
                       x_tinfo_hp (add_str "Mutual Rec Group" (pr_list pr_id)) mutual_grp no_pos; 
                       x_tinfo_hp (add_str "Phase Numbering"
@@ -1311,14 +1311,14 @@ let add_unsound_ctx (es: entail_state) pos =
 (* if Loop, check that ctx is false *)
 let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) 
   (ctx : list_partial_context) post pos (pid:formula_label) : bool  =
-  Debug.trace_hprint (add_str "proc name" pr_id) proc.Cast.proc_name pos;
+  x_tinfo_hp (add_str "proc name" pr_id) proc.Cast.proc_name pos;
   let good_ls = List.filter (fun (fl,sl) -> fl==[]) ctx in (* Not a fail context *)
   let loop_es = List.concat (List.map (fun (fl,sl) -> get_loop_only sl) good_ls) in
   if loop_es==[] then true
   else 
     begin
       Debug.devel_zprint (lazy (" >>>>>> [term.ml][check loop safety] <<<<<<")) no_pos;
-      Debug.trace_hprint (add_str "res ctx" Cprinter.string_of_list_partial_context_short) ctx pos;
+      x_tinfo_hp (add_str "res ctx" Cprinter.string_of_list_partial_context_short) ctx pos;
       Debug.devel_hprint (add_str "loop es" (pr_list Cprinter.string_of_entail_state_short)) loop_es pos;
       (* TODO: must check that each entail_state from loop_es implies false *)
       (* let unsound_ctx = List.find_all (fun es -> not (isAnyConstFalse es.es_formula)) loop_es in *)

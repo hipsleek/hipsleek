@@ -4,6 +4,7 @@ open Exc.GTable
 open Gen.Basic
 
 module IF = Iformula
+module DDX = Debug
 
 (* --------------------- *)
 (* Global variables      *)
@@ -817,7 +818,7 @@ and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
                     ^ typ1_name ^ " vs " ^ typ2_name in
           report_error no_pos msg
     ) in
-    Debug.binfo_hprint (add_str "pointer_arith_proc_str" pr_id) proc_str no_pos;
+    DDX.binfo_hprint (add_str "pointer_arith_proc_str" pr_id) proc_str no_pos;
     let proc_decl = Parser.parse_c_aux_proc "pointer_arithmetic_proc" proc_str in
     let _ = Debug.ninfo_hprint (add_str "proc_decl" pr_id) proc_decl.Iast.proc_name no_pos in
     Hashtbl.add tbl_aux_proc proc_name proc_decl;

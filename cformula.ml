@@ -12064,13 +12064,13 @@ and formula_trace_of_context_x ctx0 = match ctx0 with
         | None -> mix_f
         | Some (ta,l1,l2) ->
             let m = CP.mkPure (CP.mkLexVar ta l1 l2 no_pos) in
-            Debug.trace_hprint (add_str "es_var_measures:" !CP.print_formula) m no_pos;
+            x_tinfo_hp (add_str "es_var_measures:" !CP.print_formula) m no_pos;
             MCP.merge_mems mix_f (MCP.mix_of_pure m) true in
       (*TO CHECK*)
       let f = add_mix_formula_to_formula mix_f orig_f in
       let trace = es.es_trace in
-      Debug.trace_hprint (add_str "es_formula:" !print_formula) orig_f no_pos;
-      DD.trace_hprint (add_str "es_pure:" !print_mix_formula) es.es_pure no_pos;
+      x_tinfo_hp (add_str "es_formula:" !print_formula) orig_f no_pos;
+      x_tinfo_hp (add_str "es_pure:" !print_mix_formula) es.es_pure no_pos;
       (f,trace)
 
 and formula_trace_of_context ctx0 = 

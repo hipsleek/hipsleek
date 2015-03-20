@@ -213,7 +213,7 @@ let compute_inv name vars fml pf no_of_disjs =
       ^ "Fix2:=topdown(" ^ name ^ ",1,SimHeur);\nFix2;"
     in
     (*print_endline ("\nINPUT: " ^ input_fixbag);*)
-    DD.trace_hprint (add_str "input_pairs: " (pr_list (pr_pair !CP.print_formula !CP.print_formula))) input_pairs no_pos;
+    x_tinfo_hp (add_str "input_pairs: " (pr_list (pr_pair !CP.print_formula !CP.print_formula))) input_pairs no_pos;
     DD.devel_pprint ">>>>>> compute_fixpoint <<<<<<" no_pos;
     DD.devel_pprint ("Input of fixbag: " ^ input_fixbag) no_pos;
     let output_of_sleek = "fixbag.inf" in
@@ -833,7 +833,7 @@ let compute_fixpoint input_pairs ante_vars is_rec =
 (*      let pf = List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (CP.mkFalse no_pos) pfs in [(hd,pf,no)]*)
     | _ -> List.concat (List.map (fun r -> helper input_pairs r ante_vars) rels)
   in
-  DD.trace_hprint (add_str "input_pairs: " (pr_list (pr_pair !CP.print_formula !CP.print_formula))) input_pairs no_pos;
+  x_tinfo_hp (add_str "input_pairs: " (pr_list (pr_pair !CP.print_formula !CP.print_formula))) input_pairs no_pos;
   List.map (fun (rel_fml,pf,no) -> compute_fixpoint_aux rel_fml pf no ante_vars is_rec) pairs
 
 let compute_fixpoint (i:int) input_pairs pre_vars is_rec =

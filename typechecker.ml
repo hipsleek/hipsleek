@@ -60,7 +60,7 @@ let parallelize num =
 (* let wrap_cond_path i exec_function args = *)
 (*   begin *)
 (*     let () = cond_path # push i in *)
-(*     let () = DD.binfo_zprint (lazy (("cond_path "^(cond_path # string_of_no_ln_rev)))) no_pos in *)
+(*     let () = x_binfo_zp (lazy (("cond_path "^(cond_path # string_of_no_ln_rev)))) no_pos in *)
 (*     try  *)
 (*       let res = exec_function args in *)
 (*       let () = cond_path # pop in *)
@@ -374,7 +374,7 @@ and check_bounded_term_x prog ctx post_pos =
       let bnd_formula = CF.formula_of_pure_formula
         (CP.join_conjunctions bnd_formula_l) m_pos in
       let rs, _ = heap_entail_one_context 12 prog false ctx bnd_formula None None None post_pos in
-      let () = Debug.trace_hprint (add_str "Result context" 
+      let () = x_tinfo_hp (add_str "Result context" 
           !CF.print_list_context) rs no_pos in
       let term_pos = (m_pos, no_pos) in
       let term_res, n_es =
@@ -388,7 +388,7 @@ and check_bounded_term_x prog ctx post_pos =
           (term_pos, None, Some f_ctx, Term.Term_S Term.Bounded_Measure),
         es
       in
-      let () = Debug.trace_hprint (add_str "New es" !CF.print_entail_state) n_es no_pos in
+      let () = x_tinfo_hp (add_str "New es" !CF.print_entail_state) n_es no_pos in
       let () = Term.add_term_res_stk term_res in 
       n_es, rs
     end
@@ -410,9 +410,9 @@ and check_bounded_term_x prog ctx post_pos =
               | None -> []
               | Some (_, ml, _) -> ml
             in 
-            let () = Debug.trace_hprint (add_str "Measures" 
+            let () = x_tinfo_hp (add_str "Measures" 
                 (pr_list !CP.print_exp)) m no_pos in
-            let () = Debug.trace_hprint (add_str "Orig context" 
+            let () = x_tinfo_hp (add_str "Orig context" 
                 !CF.print_context) ctx no_pos in
             let n_es, rs = check_bounded_one_measures m es in
             (CF.Ctx n_es, Infer.collect_rel_list_context rs)
@@ -511,8 +511,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
               | [] -> b.CF.formula_struc_base
               | [p] -> (pre_ctr # inc; Fixpoint.simplify_pre (CF.normalize 1 b.CF.formula_struc_base p pos_spec) [])
               | _ -> report_error pos_spec ("Spec has more than 2 pres but only 1 post") in
-            Debug.trace_hprint (add_str "Base" !CF.print_formula) b.CF.formula_struc_base no_pos;
-            Debug.trace_hprint (add_str "New Base" !CF.print_formula) new_base no_pos;
+            x_tinfo_hp (add_str "Base" !CF.print_formula) b.CF.formula_struc_base no_pos;
+            x_tinfo_hp (add_str "New Base" !CF.print_formula) new_base no_pos;
             let () = if (rels) ==[] && hprels == [] then () else pre_ctr#inc  in
 	        (CF.EBase {b with CF.formula_struc_base = new_base; CF.formula_struc_continuation = c}, [], rels,hprels,sel_hps,sel_post_hps,unk_map, r)
 
@@ -718,7 +718,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                   helper (CF.update_ctx_label ctx l) c in
 		(a1@[(l,b1)],a2@b2,a3@b3,a4@b4,a5@b5,a6@b6,a7@b7,a8@[b8])) ([],[],[],[],[],[],[],[]) b in
             (* let () = Debug.info_hprint (add_str "EList" pr_id) "xxx" no_pos in *)
-	    Debug.trace_hprint (add_str "SPECS (before norm_specs)" pr_spec) (CF.EList sl) no_pos;
+	    x_tinfo_hp (add_str "SPECS (before norm_specs)" pr_spec) (CF.EList sl) no_pos;
 	    (CF.norm_specs (CF.EList sl), pl, rl, hprl,selhps,sel_posthps, unk_map,List.for_all pr_id bl)
       | CF.EAssume {
 	    CF.formula_assume_vars = var_ref;
@@ -3393,7 +3393,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                   let init_ctx = 
                     if !Globals.dis_term_chk then init_ctx
                     else Infer.restore_infer_vars_ctx proc.proc_logical_vars [] init_ctx in
-                  let () = Debug.trace_hprint (add_str "Init Ctx" !CF.print_context) init_ctx no_pos in
+                  let () = x_tinfo_hp (add_str "Init Ctx" !CF.print_context) init_ctx no_pos in
 		  let () = if !print_proof then begin 
 		    Prooftracer.push_proc proc;
 		    Prooftracer.start_compound_object ();
@@ -3449,8 +3449,8 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                       (* let () = proc.proc_stk_of_static_specs # push new_spec in *)
                       let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx spec body true in
                       (* let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx (proc.proc_static_specs (\* @ proc.proc_dynamic_specs *\)) body true in *)
-                      Debug.trace_hprint (add_str "SPECS (after specs_infer)" pr_spec) new_spec no_pos;
-                      Debug.trace_hprint (add_str "fm formula " (pr_list !CF.print_formula)) fm no_pos;
+                      x_tinfo_hp (add_str "SPECS (after specs_infer)" pr_spec) new_spec no_pos;
+                      x_tinfo_hp (add_str "fm formula " (pr_list !CF.print_formula)) fm no_pos;
                       let new_spec = CF.simplify_ann new_spec in
                       let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels) in
                       let (lst_assume,lst_rank) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) rest) in
@@ -3549,9 +3549,9 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
 		      (**************end cp_test _ gen_cpfile******************)
                       let lst_rank = List.map (fun (_,a2,a3)-> (a2,a3)) lst_rank in
                       (*let () = Ranking.do_nothing in*)
-                      Debug.trace_hprint (add_str "SPECS (after simplify_ann)" pr_spec) new_spec no_pos;
+                      x_tinfo_hp (add_str "SPECS (after simplify_ann)" pr_spec) new_spec no_pos;
 
-                      Debug.trace_hprint (add_str "SPECS (before add_pre)" pr_spec) new_spec no_pos;
+                      x_tinfo_hp (add_str "SPECS (before add_pre)" pr_spec) new_spec no_pos;
                       x_tinfo_hp (add_str "NEW SPECS(B4)" pr_spec) new_spec no_pos;
                       let new_spec = Astsimp.add_pre prog new_spec in
                       x_tinfo_hp (add_str "NEW SPECS(AF)" pr_spec) new_spec no_pos;
@@ -3874,7 +3874,7 @@ let reverify_proc prog proc do_infer =
             let init_ctx =
               if !Globals.dis_term_chk then init_ctx
             else Infer.restore_infer_vars_ctx proc.proc_logical_vars [] init_ctx in
-            let () = Debug.trace_hprint (add_str "Init Ctx" !CF.print_context) init_ctx no_pos in
+            let () = x_tinfo_hp (add_str "Init Ctx" !CF.print_context) init_ctx no_pos in
             let _,_,_,_,_,_,_,is_valid = check_specs_infer prog proc init_ctx new_spec body do_infer in
             x_binfo_hp (add_str "Performing a Re-verification, Valid?" string_of_bool) is_valid no_pos;
             ()
