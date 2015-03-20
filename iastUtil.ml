@@ -858,7 +858,7 @@ let rename_exp2 e subs =
                 let e1 = 
                   (match e with
                     | None -> None
-                    | Some e0 -> Some (rename_exp e0 (bvars, subs))
+                    | Some e0 -> Some (x_add rename_exp e0 (bvars, subs))
                   )
                 in
                 let () = imp_bvars # pop_elem v in
@@ -868,7 +868,7 @@ let rename_exp2 e subs =
               Some (VarDecl {b with exp_var_decl_decls = List.map helper b.exp_var_decl_decls})
         | ConstDecl b ->
               let helper (v,e,l) = 
-                let e1 = (rename_exp e (bvars, subs)) in
+                let e1 = (x_add rename_exp e (bvars, subs)) in
                 let (v1, b) = subst_of_ident_with_bool subs v in
                 (v1, e1, l)
               in

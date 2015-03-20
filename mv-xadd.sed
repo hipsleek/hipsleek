@@ -8,4 +8,12 @@ s/= xpure /= x_add xpure /
 #s/= rename_exp /= x_add rename_exp /
 #s/=rename_exp /= x_add rename_exp /
 s/(rename_exp /(x_add rename_exp /
-s/= Astsimp.rename_exp /= (x_add Astsimp.rename_exp /
+s/= Astsimp.rename_exp /= x_add Astsimp.rename_exp /
+s/= CF.rename_bound_vars/= x_add_1 CF.rename_bound_vars/
+s/= IF.rename_bound_vars/= x_add_1 IF.rename_bound_vars/
+s/= x_add CF.rename_bound_vars/= x_add_1 CF.rename_bound_vars/
+s/= x_add IF.rename_bound_vars/= x_add_1 IF.rename_bound_vars/
+s/x_add IF.rename_bound_vars/x_add_1 IF.rename_bound_vars/
+s/x_add CF.rename_bound_vars/x_add_1 CF.rename_bound_vars/
+s/x_add rename_bound_vars/x_add_1 rename_bound_vars/
+

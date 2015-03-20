@@ -302,7 +302,7 @@ let try_fold_once_x (f: CF.formula) (root_view: C.view_decl) (fold_f: CF.formula
               subs @ [(self_var, vnode)]
             with Not_found -> subs
           ) in
-          let replacing_f = CF.rename_bound_vars fold_f in
+          let replacing_f = x_add_1 CF.rename_bound_vars fold_f in
           let replacing_f = CF.subst subs replacing_f in
           let (replacing_hf,extra_pf,_,_,_,_) = CF.split_components replacing_f in
           let extra_qvars = CF.get_exists replacing_f in

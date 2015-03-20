@@ -1326,7 +1326,7 @@ and unfold_struc_x (prog:prog_or_branches) (f : struc_formula) (v : CP.spec_var)
             (*should remove non-continuous para*)
             (* let (hf,mf,_,_,_) = CF.split_components f in *)
             (* let defined_svl = (get_ptrs hf)@(MCP.get_null_ptrs mf) in *)
-	    let rf,l = rename_bound_vars_with_subst f in
+	    let rf,l = x_add_1 rename_bound_vars_with_subst f in
             (* let l1,l = List.partition (fun (sv,_) -> Cpure.mem_svl sv defined_svl) l in *)
             (* let l2 = List.map (fun (sv1,sv2) -> sv2,sv1) l1 in *)
             (* let rf = subst l2 rf in *)
@@ -1474,7 +1474,7 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_un
 	    (normalize_formula_w_coers 1 (fst prog) tmp_es new_f (Lem_store.all_lemma # get_left_coercion), []) (*(fst prog).prog_left_coercions*) 
 
       | Exists _ -> (*report_error pos ("malfunction: trying to unfold in an existentially quantified formula!!!")*)
-            let rf,l = rename_bound_vars_with_subst f in
+            let rf,l = x_add_1 rename_bound_vars_with_subst f in
 	    let v = CP.subst_var_par l v in
             let qvars, baref = split_quantifiers rf in
             let h, p, vp, fl, t, a = split_components baref in
@@ -1571,7 +1571,7 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
                           propagate_imm_formula forms lhs_name imm mpa
                         with _ -> forms
                       in
-                      let renamed_view_formula = rename_bound_vars forms in
+                      let renamed_view_formula = x_add_1 rename_bound_vars forms in
                       (* let () = print_string ("renamed_view_formula: "^(Cprinter.string_of_formula renamed_view_formula)^"\n") in *)
                       let renamed_view_formula = add_unfold_num renamed_view_formula uf in
                       (* propagate the immutability annotation inside the definition *)

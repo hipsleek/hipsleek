@@ -8456,7 +8456,7 @@ and case_normalize_formula_x prog (h:(ident*primed) list)(f:IF.formula): IF.form
   let () = x_dinfo_hp (fun f -> ("case_normalize_formula :: CHECK POINT 1b ==> f = " ^ Iprinter.string_of_formula f ^ "\n")) f no_pos in
   let f = IF.float_out_min_max f in
   (* let () = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
-  let f = IF.rename_bound_vars f in
+  let f = x_add_1 IF.rename_bound_vars f in
   (* let () = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let ann_vars = IF.collect_annot_vars f in 
   let f,_,_ = case_normalize_renamed_formula prog h [] f ann_vars in
@@ -8471,7 +8471,7 @@ and case_normalize_formula_not_rename prog (h:(ident*primed) list)(f:IF.formula)
   let f = IF.float_out_thread f in
   let f = IF.float_out_exps_from_heap 2 (I.lbl_getter prog) (I.annot_args_getter prog) f in
   let f = IF.float_out_min_max f in
-  let f = IF.rename_bound_vars f in
+  let f = x_add_1 IF.rename_bound_vars f in
   (* let f,_,_ = case_normalize_renamed_formula prog h [] f in *)
   f
 
@@ -8896,6 +8896,10 @@ and rename_exp_x (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
         I.exp_par_pos = p.I.exp_par_pos; }
   in helper ren f 
 
+and case_rename_var_decls_init (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  
+  let pr = Iprinter.string_of_exp in
+  let pr_subs = pr_list (pr_pair pr_id pr_id) in
+  Debug.no_1 "case_rename_var_decls" pr (pr_pair pr pr_subs) case_rename_var_decls f
 
 and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  match f with
   | Iast.Assert _ -> (f,[])
@@ -9298,7 +9302,7 @@ and case_normalize_proc_x prog (f:Iast.proc_decl):Iast.proc_decl =
   let nb = match f.Iast.proc_body with 
       None -> None 
     | Some f->
-          let f,_ = case_rename_var_decls f in
+          let f,_ = x_add_1 case_rename_var_decls_init f in
           let r,_,_ = (case_normalize_exp prog h2 [(eres_name,Unprimed);(res_name,Unprimed)] f) in
           Some r in
   {f with Iast.proc_static_specs =nst;
