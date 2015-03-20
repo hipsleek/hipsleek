@@ -152,7 +152,7 @@ let elim_clause (pf : formula) (ex_vars : spec_var list) : formula =
   (* let filtered_svl = List.filter (fun sv -> *)
   (*     let SpecVar(_,name,_) = sv in *)
   (*     not (name="self" or (List.mem sv args))) svl in *)
-  (* let () = Debug.tinfo_hprint (pr_list (string_of_typed_spec_var)) filtered_svl no_pos in *)
+  (* let () = x_tinfo_hp (pr_list (string_of_typed_spec_var)) filtered_svl no_pos in *)
   (* drop_svl_pure pf filtered_svl *)
   let conj_list = list_of_conjs pf in
   match filter_formula ex_vars conj_list with
@@ -241,16 +241,16 @@ let ef_elim_exists_1 (svl : spec_var list) epf  =
   let (baga,pure) = epf in
   (* let () = Debug.ninfo_pprint "ef_elim_exists" no_pos in *)
   (* let () = Debug.ninfo_pprint "==============" no_pos in *)
-  let () = Debug.dinfo_hprint (add_str "svl" string_of_spec_var_list) svl no_pos in
+  let () = x_dinfo_hp (add_str "svl" string_of_spec_var_list) svl no_pos in
   (* let () = Debug.ninfo_hprint (add_str "old baga" string_of_spec_var_list) baga no_pos in *)
   (* let () = Debug.ninfo_hprint (add_str "pure" !print_pure_formula) pure no_pos in *)
   let p_aset = pure_ptr_equations pure in
-  let () = Debug.tinfo_hprint (add_str "pure = " !print_pure_formula) pure no_pos in
+  let () = x_tinfo_hp (add_str "pure = " !print_pure_formula) pure no_pos in
   let pure = wrap_exists_svl pure svl in
-  let () = Debug.tinfo_hprint (add_str "pure1 = " !print_pure_formula) pure no_pos in
+  let () = x_tinfo_hp (add_str "pure1 = " !print_pure_formula) pure no_pos in
   let pure = simplify_with_label_omega (* Omega.simplify *) pure in
-  let () = Debug.tinfo_hprint (add_str "pure2 = " !print_pure_formula) pure no_pos in
-  let () = Debug.tinfo_hprint (add_str "pure_ptr_eq" (pr_list (pr_pair string_of_typed_spec_var string_of_typed_spec_var))) p_aset no_pos in
+  let () = x_tinfo_hp (add_str "pure2 = " !print_pure_formula) pure no_pos in
+  let () = x_tinfo_hp (add_str "pure_ptr_eq" (pr_list (pr_pair string_of_typed_spec_var string_of_typed_spec_var))) p_aset no_pos in
   let p_aset = EMapSV.build_eset p_aset in
   (* let new_paset = EMapSV.elim_elems p_aset svl in *)
   let () = Debug.ninfo_hprint (add_str "eqmap = " EMapSV.string_of) p_aset no_pos in
@@ -785,10 +785,10 @@ struct
       let p2 = mk_partition eq in
       if (partition_compare p p2) != 0 then
         begin
-          Debug.binfo_pprint ("Inconsistent eqmap @ "^s) no_pos;
-          Debug.binfo_hprint (add_str "eqmap" EM.string_of_debug) eq no_pos;
-          Debug.binfo_hprint (add_str "part" string_of_epart) p no_pos;
-          Debug.binfo_hprint (add_str "part2" string_of_epart) p2 no_pos;
+          x_binfo_pp ("Inconsistent eqmap @ "^s) no_pos;
+          x_binfo_hp (add_str "eqmap" EM.string_of_debug) eq no_pos;
+          x_binfo_hp (add_str "part" string_of_epart) p no_pos;
+          x_binfo_hp (add_str "part2" string_of_epart) p2 no_pos;
         end
 
   let check_epure s ((_,eqmap,_) as r) =
@@ -903,9 +903,9 @@ struct
                 then mk_false
                 else 
                   let new_baga = merge_baga baga1 baga2 in
-                  (* Debug.binfo_hprint (add_str "eq1" EM.string_of_debug) eq1 no_pos; *)
-                  (* Debug.binfo_hprint (add_str "eq2" EM.string_of) eq2 no_pos; *)
-                  (* Debug.binfo_hprint (add_str "part2" string_of_epart) p2 no_pos; *)
+                  (* x_binfo_hp (add_str "eq1" EM.string_of_debug) eq1 no_pos; *)
+                  (* x_binfo_hp (add_str "eq2" EM.string_of) eq2 no_pos; *)
+                  (* x_binfo_hp (add_str "part2" string_of_epart) p2 no_pos; *)
                   let new_eq = EM.merge_eset eq1 eq2 in
                   let new_eq2 = (new_eq,mk_partition new_eq) in
                   check_eqmap "mk_part:2" new_eq2;
@@ -1379,9 +1379,9 @@ struct
         if r!=r2 then
           begin
             let pr = string_of_disj in
-            Debug.tinfo_hprint (add_str "ante" pr) ante no_pos;
-            Debug.tinfo_hprint (add_str "conseq" pr) conseq no_pos;
-            Debug.tinfo_pprint ("Got "^(string_of_bool r)^" but expects "^(string_of_bool r2)) no_pos
+            x_tinfo_hp (add_str "ante" pr) ante no_pos;
+            x_tinfo_hp (add_str "conseq" pr) conseq no_pos;
+            x_tinfo_pp ("Got "^(string_of_bool r)^" but expects "^(string_of_bool r2)) no_pos
           end
       end;
     r

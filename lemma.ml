@@ -386,14 +386,14 @@ let sa_infer_lemmas iprog cprog lemmas  =
   (* match valid_lem with *)
   (*   | false ->  *)
   (*         (\* let () = Log.last_cmd # dumping (name) in *\) *)
-  (*         let () = Debug.tinfo_pprint ("\nFailed to prove a lemma ==> during sa_infer_lemmas.") no_pos in *)
+  (*         let () = x_tinfo_pp ("\nFailed to prove a lemma ==> during sa_infer_lemmas.") no_pos in *)
   (*         None *)
   (*   | true -> Some nctx *)
   let (invalid_lem, nctx) = update_store_with_repo lemmas iprog cprog in
   Lem_store.all_lemma # pop_coercion;
    match invalid_lem with
     | Some name -> 
-          let () = Debug.tinfo_pprint ("\nFailed to prove a lemma ==> during sa_infer_lemmas.") no_pos in
+          let () = x_tinfo_pp ("\nFailed to prove a lemma ==> during sa_infer_lemmas.") no_pos in
           None
     | None ->
           Some nctx

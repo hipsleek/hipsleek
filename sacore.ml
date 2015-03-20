@@ -926,7 +926,7 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
    let punk_map = List.fold_left (fun ls (hp,_,locs) ->
        if CP.mem hp tot_unk_dang_hps then ls else ls@[(hp,locs)]) [] unk_hp_args02
    in
-   let () = Debug.dinfo_pprint ("map after: " ^
+   let () = x_dinfo_pp ("map after: " ^
        (let pr = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
        pr new_map)) no_pos in
    (*printing such that it is easy to construct a sleek test cases*)

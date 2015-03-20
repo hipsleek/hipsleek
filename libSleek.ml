@@ -59,12 +59,12 @@ let process_cmd_list cmds :bool=
       Error.error_text = "Data type " ^ udn ^ " is undefined!" }
   in ();
   convert_data_and_pred_to_cast ();
-  Debug.tinfo_pprint "sleek : after convert_data_and_pred_to_cast" no_pos;
+  x_tinfo_pp "sleek : after convert_data_and_pred_to_cast" no_pos;
    (*proc_one_lemma*)
   List.iter (fun c->  match c with
       | LemmaDef ldef -> process_lemma ldef
       | _ -> ()) cmds;
-  Debug.tinfo_pprint "sleek : after proc one lemma" no_pos;
+  x_tinfo_pp "sleek : after proc one lemma" no_pos;
   (*identify universal variables*)
   let cviews = !cprog.C.prog_view_decls in
   let cviews = List.map (Cast.add_uni_vars_to_view !cprog !cprog.C.prog_left_coercions) cviews in

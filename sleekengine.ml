@@ -342,12 +342,12 @@ It is replaced by convert_data_and_pred_to_cast
 (*     else iprog.I.prog_view_decls in  *)
 (*   iprog.I.prog_view_decls <- infer_views;  *)
 (*   let tmp_views = (Astsimp.order_views (iprog.I.prog_view_decls)) in *)
-(*   Debug.tinfo_pprint "after order_views" no_pos; *)
+(*   x_tinfo_pp "after order_views" no_pos; *)
 (*   let _ = Iast.set_check_fixpt iprog.I.prog_data_decls tmp_views in *)
-(*   Debug.tinfo_pprint "after check_fixpt" no_pos; *)
+(*   x_tinfo_pp "after check_fixpt" no_pos; *)
 (*   iprog.I.prog_view_decls <- tmp_views; *)
 (*   let cviews = List.map (Astsimp.trans_view iprog []) tmp_views in *)
-(*   Debug.tinfo_pprint "after trans_view" no_pos; *)
+(*   x_tinfo_pp "after trans_view" no_pos; *)
 (*   let cviews = *)
 (*     if !Globals.pred_elim_useless then *)
 (*       Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.Cast.view_name) cviews) *)
@@ -367,9 +367,9 @@ It is replaced by convert_data_and_pred_to_cast
 (*   in *)
 (*   let _ = !cprog.Cast.prog_view_decls <- cviews2 in *)
 (*   let _ =  (List.map (fun vdef -> Astsimp.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews2) in *)
-(*   Debug.tinfo_pprint "after compute_view" no_pos; *)
+(*   x_tinfo_pp "after compute_view" no_pos; *)
 (*   let _ = (List.map (fun vdef -> Astsimp.set_materialized_prop vdef) !cprog.Cast.prog_view_decls) in *)
-(*   Debug.tinfo_pprint "after materialzed_prop" no_pos; *)
+(*   x_tinfo_pp "after materialzed_prop" no_pos; *)
 (*   let cprog1 = Astsimp.fill_base_case !cprog in *)
 (*   let cprog2 = Astsimp.sat_warnings cprog1 in         *)
 (*   let cprog3 = if (!Globals.enable_case_inference or (not !Globals.dis_ps)(\* !Globals.allow_pred_spec *\))  *)
@@ -682,13 +682,13 @@ let convert_data_and_pred_to_cast_x () =
     new_pdef
   ) iprog.I.prog_view_decls in
   let tmp_views,ls_mut_rec_views = (Astsimp.order_views tmp_views) in
-  Debug.tinfo_pprint "after order_views" no_pos;
+  x_tinfo_pp "after order_views" no_pos;
   let _ = Iast.set_check_fixpt iprog iprog.I.prog_data_decls tmp_views in
-  Debug.tinfo_pprint "after check_fixpt" no_pos;
+  x_tinfo_pp "after check_fixpt" no_pos;
   iprog.I.prog_view_decls <- tmp_views;
   (* collect immutable info for splitting view params *)
   let _ = List.map (fun v ->  v.I.view_imm_map <- Immutable.icollect_imm v.I.view_formula v.I.view_vars v.I.view_data_name iprog.I.prog_data_decls )  iprog.I.prog_view_decls  in
-  let _ = Debug.tinfo_hprint (add_str "view_decls:"  (pr_list (pr_list (pr_pair Iprinter.string_of_imm string_of_int))))  (List.map (fun v ->  v.I.view_imm_map) iprog.I.prog_view_decls) no_pos in
+  let _ = x_tinfo_hp (add_str "view_decls:"  (pr_list (pr_list (pr_pair Iprinter.string_of_imm string_of_int))))  (List.map (fun v ->  v.I.view_imm_map) iprog.I.prog_view_decls) no_pos in
   let tmp_views_derv,tmp_views= List.partition (fun v -> v.I.view_derv) tmp_views in
   (* let all_mutrec_vnames = (List.concat ls_mut_rec_views) in *)
 (*   let cviews0,_ = List.fold_left (fun (transed_views view -> *)
@@ -726,14 +726,14 @@ let convert_data_and_pred_to_cast_x () =
   (*turn off generate lemma during trans views*)
   let _ = Globals.lemma_syn := false in
   let cviews0 = Astsimp.trans_views iprog ls_mut_rec_views (List.map (fun v -> (v,[]))  tmp_views) in
-  (* Debug.tinfo_pprint "after trans_view" no_pos; *)
+  (* x_tinfo_pp "after trans_view" no_pos; *)
   (*derv and spec views*)
   let tmp_views_derv1 = Astsimp.mark_rec_and_der_order tmp_views_derv in
   let cviews_derv = List.fold_left (fun norm_views v ->
               let der_view = Derive.trans_view_dervs iprog Rev_ast.rev_trans_formula Astsimp.trans_view norm_views v in
               (cviews0@[der_view])
           ) cviews0 tmp_views_derv1 in
-  let _ = Debug.tinfo_hprint (add_str "derv length" (fun ls -> string_of_int (List.length ls))) tmp_views_derv1 no_pos in
+  let _ = x_tinfo_hp (add_str "derv length" (fun ls -> string_of_int (List.length ls))) tmp_views_derv1 no_pos in
   let cviews = (* cviews0a@ *)cviews_derv in
   let cviews =
     if !Globals.norm_elim_useless  (* !Globals.pred_elim_useless *) then
@@ -755,11 +755,11 @@ let convert_data_and_pred_to_cast_x () =
   in
   let _ = !cprog.Cast.prog_view_decls <- cviews2 in
   let _ =  (List.map (fun vdef -> Astsimp.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews2) in
-  Debug.tinfo_pprint "after compute_view" no_pos;
+  x_tinfo_pp "after compute_view" no_pos;
   let _ = (List.map (fun vdef -> Astsimp.set_materialized_prop vdef) cviews2) in
   let cviews2 = (List.map (fun vdef -> Norm.norm_formula_for_unfold !cprog vdef) cviews2) in
   let _ = !cprog.Cast.prog_view_decls <- cviews2 in
-  Debug.tinfo_pprint "after materialzed_prop" no_pos;
+  x_tinfo_pp "after materialzed_prop" no_pos;
   let cprog1 = Astsimp.fill_base_case !cprog in
   let cprog2 = Astsimp.sat_warnings cprog1 in
   let cprog3 = if (!Globals.enable_case_inference || (not !Globals.dis_ps)(* !Globals.allow_pred_spec *)) 
@@ -1123,7 +1123,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   let ante = Cfutil.transform_bexpr ante1 in
   let conseq = CF.struc_formula_trans_heap_node [] Cfutil.transform_bexpr conseq in
   let pr = Cprinter.string_of_struc_formula in
-  let _ = Debug.tinfo_hprint (add_str "conseq(after meta-)" pr) conseq no_pos in
+  let _ = x_tinfo_hp (add_str "conseq(after meta-)" pr) conseq no_pos in
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in
   (* List of vars needed for abduction process *)
   let vars = List.map (fun v ->

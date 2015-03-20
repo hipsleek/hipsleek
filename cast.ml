@@ -1172,7 +1172,7 @@ let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos=
                List.map (fun sv -> P.mkVar sv pos) unk_args,
       pos)
     in
-    let () = Debug.tinfo_hprint (add_str "define: " !print_hp_decl) hp_decl pos in
+    let () = x_tinfo_hp (add_str "define: " !print_hp_decl) hp_decl pos in
     Debug.ninfo_zprint (lazy (("       gen hp_rel: " ^ (!F.print_h_formula hf)))) pos;
     (hf, P.SpecVar (HpT,hp_decl.hp_name, Unprimed))
   else report_error pos "sau.add_raw_hp_rel: args should be not empty"
@@ -1531,17 +1531,17 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
     let fct f = match f with
       | Cformula.Base {F.formula_base_heap=h}
       | Cformula.Exists {F.formula_exists_heap=h} ->      
-          let () = Debug.tinfo_hprint (add_str "formula_exists_heap" !print_h_formula ) h no_pos in 
+          let () = x_tinfo_hp (add_str "formula_exists_heap" !print_h_formula ) h no_pos in 
           let hs = F.split_star_conjunctions h in
           let hs = List.filter (fun c -> not (c=F.HTrue || c=F.HEmp)) hs in
 	      let self_n = List.for_all (fun c-> 
-              let () = Debug.tinfo_hprint (add_str "c" !print_h_formula ) c no_pos in
+              let () = x_tinfo_hp (add_str "c" !print_h_formula ) c no_pos in
               let only_self = match c with
                 | F.HVar _ -> false
                 | F.DataNode _
                 | F.ViewNode _-> (P.name_of_spec_var (F.get_node_var c)) = self 
                 | F.HRel (sv,exp_lst,_) -> (
-                    let () = Debug.tinfo_hprint (add_str "sv" !print_sv ) sv no_pos in
+                    let () = x_tinfo_hp (add_str "sv" !print_sv ) sv no_pos in
                     match exp_lst with
                       | [sv] -> (
                           match sv with
@@ -1993,10 +1993,10 @@ let check_proper_return cret_type exc_list f =
 		    Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond with the return type";}
 		  else ()
 	      else 
-                let () = Debug.tinfo_hprint (add_str "fl_int" !print_dflow) fl_int no_pos in
-                let () = Debug.tinfo_hprint (add_str "norm_flow_int" !print_dflow) !norm_flow_int no_pos in
+                let () = x_tinfo_hp (add_str "fl_int" !print_dflow) fl_int no_pos in
+                let () = x_tinfo_hp (add_str "norm_flow_int" !print_dflow) !norm_flow_int no_pos in
                 let exc_list = !norm_flow_int::exc_list in
-                let  _ = Debug.tinfo_hprint (add_str "exc_list" (pr_list !print_dflow)) exc_list no_pos in
+                let  _ = x_tinfo_hp (add_str "exc_list" (pr_list !print_dflow)) exc_list no_pos in
                 if not (List.exists (fun c->
                   (* let _ =print_endline_quiet"XX" in *) F.subsume_flow c fl_int) exc_list) then
                 let () = Debug.ninfo_pprint "Here:" no_pos in
@@ -2106,8 +2106,8 @@ let vdef_lemma_fold prog coer  =
                         let from_vars = vn.F.h_formula_view_arguments in
                         let subs = List.combine from_vars to_vars in
                         (* let pr = Cprinter.string_of_spec_var_list in *)
-                        (* let () = Debug.tinfo_hprint (add_str "from_vars" pr)  from_vars no_pos in *)
-                        (* let () = Debug.tinfo_hprint (add_str "to_vars" pr) to_vars no_pos in *)
+                        (* let () = x_tinfo_hp (add_str "from_vars" pr)  from_vars no_pos in *)
+                        (* let () = x_tinfo_hp (add_str "to_vars" pr) to_vars no_pos in *)
                         let rhs = F.subst_struc subs rhs in
                         (* let un_struc =  F.struc_to_view_un_s (F.label_view rhs) in *)
                         let un_struc =  F.get_view_branches (F.label_view rhs) in
@@ -2397,10 +2397,10 @@ let rec add_term_nums_prog (cp: prog_decl) : prog_decl =
           | x::_ -> stk_scc_with_phases # push mn.proc_call_order); pv
     ) mutual_grps
     in
-    let () = Debug.dinfo_hprint (add_str "Mutual Grps with Phases" 
+    let () = x_dinfo_hp (add_str "Mutual Grps with Phases" 
         (pr_list (string_of_int))) (stk_scc_with_phases # get_stk) no_pos in
-    let () = Debug.dinfo_hprint (add_str "Mutual Grps" (pr_list (pr_pair string_of_int (pr_list (fun p -> p.proc_name))))) mutual_grps no_pos in
-    let () = Debug.dinfo_hprint (add_str "Phase Vars Added" (pr_list (pr_list !P.print_sv))) pvs no_pos in
+    let () = x_dinfo_hp (add_str "Mutual Grps" (pr_list (pr_pair string_of_int (pr_list (fun p -> p.proc_name))))) mutual_grps no_pos in
+    let () = x_dinfo_hp (add_str "Phase Vars Added" (pr_list (pr_list !P.print_sv))) pvs no_pos in
     let pvl = Gen.BList.remove_dups_eq P.eq_spec_var 
       ((List.concat pvs) @ log_vars) in
     { cp with prog_logical_vars = pvl } 
@@ -2583,7 +2583,7 @@ let update_mut_vars_bu iprog cprog scc_procs =
             ) ([],[]) proc.proc_args_wi in
             (*update hp_decl of precondition*)
             let () = if diff_args_i = [] then () else
-              let () = Debug.tinfo_hprint (add_str "\n update ni:" pr_id) (proc.proc_name ^ ": " ^ (String.concat "," diff_args_i)) no_pos in
+              let () = x_tinfo_hp (add_str "\n update ni:" pr_id) (proc.proc_name ^ ": " ^ (String.concat "," diff_args_i)) no_pos in
               let hpargs = Cformula.get_hp_rel_pre_struc_formula proc.proc_static_specs in
               let todo_unk = List.map (fun (hp,args) ->
                   let s_args = List.map P.name_of_spec_var args in

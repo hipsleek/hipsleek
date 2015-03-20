@@ -2711,7 +2711,7 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
         else
           l
         in
-        let () = Debug.binfo_hprint (add_str "l1" (pr_list (pr_pair Label_only.LOne.string_of !print_formula))) l no_pos in
+        let () = x_binfo_hp (add_str "l1" (pr_list (pr_pair Label_only.LOne.string_of !print_formula))) l no_pos in
 	AndList (Label_Pure.norm l)
   | Or (f1,f2,lbl,pos) -> 
 	Or (mkExists_x vs f1 lbel pos, mkExists_x vs f2 lbel pos, lbl, pos)
@@ -4540,7 +4540,7 @@ and filter_redundant_x ante cons =
   let ls_cons = list_of_bformula cons in
   (*  let () = print_endline ("ls_cons:" ^ (string_of_ls_pure_formula ls_cons)) in *)
   let ls_irr,_= list_of_irr_bformula ls_ante ls_cons in
-  if ls_irr!=[] then Debug.dinfo_pprint "Filtered some irrelevant b_formulas" no_pos else () ;
+  if ls_irr!=[] then x_dinfo_pp "Filtered some irrelevant b_formulas" no_pos else () ;
   (* let () = print_endline ("ls_irr:" ^ (string_of_ls_pure_formula ls_irr)) in*)
   let new_ante = elim_of_bformula ante ls_irr in
   (* let () = print_endline ("new_ante:" ^ (!print_formula new_ante)) in *)
@@ -5121,10 +5121,10 @@ let filter_var_new_x (f : formula) (keep_slv : spec_var list) : formula =
       | [] -> (res_rele_fs,res_unk_fs,old_keep_svl,incr_keep)
       | f::fs ->
           begin
-              let () = Debug.tinfo_hprint (add_str "svl: "  (!print_svl)) old_keep_svl no_pos in
-              let () = Debug.tinfo_hprint ( add_str "f: "   (!print_formula )) f no_pos in
+              let () = x_tinfo_hp (add_str "svl: "  (!print_svl)) old_keep_svl no_pos in
+              let () = x_tinfo_hp ( add_str "f: "   (!print_formula )) f no_pos in
               let svl = fv f in
-              let () = Debug.tinfo_hprint (add_str "svl f: "  !print_svl ) svl no_pos in
+              let () = x_tinfo_hp (add_str "svl f: "  !print_svl ) svl no_pos in
               let inters = intersect svl old_keep_svl in
               if inters = [] then
                 get_new_rele_svl fs old_keep_svl res_rele_fs (res_unk_fs@[f]) incr_keep
@@ -7647,8 +7647,8 @@ and imply_disj_orig_x0 ante_disj conseq t_imply imp_no =
         if (i>0) 
         then
           let pri = string_of_int in
-          let () = Debug.tinfo_hprint (add_str "(unsat ante, sat ante)" (pr_pair pri pri)) (i,j) no_pos in
-          Debug.tinfo_hprint (add_str "unsat ante removed" (pr_list pr)) false_st no_pos
+          let () = x_tinfo_hp (add_str "(unsat ante, sat ante)" (pr_pair pri pri)) (i,j) no_pos in
+          x_tinfo_hp (add_str "unsat ante removed" (pr_list pr)) false_st no_pos
         else () 
       in 
       (* disable assumption filtering if ante_disj>1 *)
@@ -10048,12 +10048,12 @@ let get_rel_args (f:formula) = match f with
   | _ -> []
 
 let is_rel_in_vars (vl:spec_var list) (f:formula) =
-  (* let () = Debug.binfo_hprint (add_str "2formula" !print_formula) f no_pos in *)
+  (* let () = x_binfo_hp (add_str "2formula" !print_formula) f no_pos in *)
   match (get_rel_id f) with
     | Some n ->
           if mem n vl then true else false
     | _ ->
-          (* let () = Debug.binfo_pprint "2None" no_pos in *)
+          (* let () = x_binfo_pp "2None" no_pos in *)
           false
 
 let is_rel_in_vars (vl:spec_var list) (f:formula) =
@@ -14142,10 +14142,10 @@ let check_non_determinism_x (var_name: ident) (f: formula) =
         let svs = bfv b in
         let common_svs = intersect_svl svs !related_vars in
         if (List.length common_svs > 0) then (
-          (* Debug.binfo_hprint (add_str "common_svs" (pr_list !print_sv)) common_svs no_pos; *)
-          (* Debug.binfo_hprint (add_str "svs" (pr_list !print_sv)) svs no_pos; *)
+          (* x_binfo_hp (add_str "common_svs" (pr_list !print_sv)) common_svs no_pos; *)
+          (* x_binfo_hp (add_str "svs" (pr_list !print_sv)) svs no_pos; *)
           related_vars := remove_dups_svl (!related_vars @ svs);
-          (* Debug.binfo_hprint (add_str "related_vars" (pr_list !print_sv)) !related_vars no_pos; *)
+          (* x_binfo_hp (add_str "related_vars" (pr_list !print_sv)) !related_vars no_pos; *)
         );
         None
       ) in
@@ -14158,12 +14158,12 @@ let check_non_determinism_x (var_name: ident) (f: formula) =
       let origin_var = List.find (fun x -> eq_str (name_of_sv x) var_name) simp_svs in
       let related_vars = collect_related_vars [origin_var] in
       let related_nondet_svs = intersect_svl nondet_svs related_vars in
-      (* Debug.binfo_hprint (add_str "check var" pr_id) v no_pos;                                         *)
-      (* Debug.binfo_hprint (add_str "f" !print_formula) f no_pos;                                        *)
-      (* Debug.binfo_hprint (add_str "nondet_svs" (pr_list !print_sv)) nondet_svs no_pos;                 *)
-      (* Debug.binfo_hprint (add_str "sim_f" !print_formula) simp_f no_pos;                               *)
-      (* Debug.binfo_hprint (add_str "related_vars" (pr_list !print_sv)) related_vars no_pos;             *)
-      (* Debug.binfo_hprint (add_str "related_nondet_svs" (pr_list !print_sv)) related_nondet_svs no_pos; *)
+      (* x_binfo_hp (add_str "check var" pr_id) v no_pos;                                         *)
+      (* x_binfo_hp (add_str "f" !print_formula) f no_pos;                                        *)
+      (* x_binfo_hp (add_str "nondet_svs" (pr_list !print_sv)) nondet_svs no_pos;                 *)
+      (* x_binfo_hp (add_str "sim_f" !print_formula) simp_f no_pos;                               *)
+      (* x_binfo_hp (add_str "related_vars" (pr_list !print_sv)) related_vars no_pos;             *)
+      (* x_binfo_hp (add_str "related_nondet_svs" (pr_list !print_sv)) related_nondet_svs no_pos; *)
       (List.length related_nondet_svs != 0)
     with _ -> false
   )

@@ -679,9 +679,9 @@ and search_model_ln_x pos_zero_vars bnd_vars nln_vars templ_unks sst asserts =
     let ln_r = Omega.get_model bnd_vars n_asserts in
 
     let () = 
-      Debug.tinfo_pprint ">>>>>>> search_model_ln <<<<<<<" no_pos;
-      Debug.tinfo_hprint (add_str "asserts: " (pr_list !print_formula)) n_asserts no_pos;
-      Debug.tinfo_hprint (add_str "linear constrs: " !print_formula) ln_r no_pos 
+      x_tinfo_pp ">>>>>>> search_model_ln <<<<<<<" no_pos;
+      x_tinfo_hp (add_str "asserts: " (pr_list !print_formula)) n_asserts no_pos;
+      x_tinfo_hp (add_str "linear constrs: " !print_formula) ln_r no_pos 
     in
 
     if is_False ln_r then
@@ -696,9 +696,9 @@ and search_model_ln_x pos_zero_vars bnd_vars nln_vars templ_unks sst asserts =
       let r = Omega.get_model bnd_vars templ_unk_constrs in
 
       let () = 
-        Debug.tinfo_hprint (add_str "nonlinear constrs: " !print_formula) ln_r no_pos;
-        Debug.tinfo_hprint (add_str "unk constrs: " (pr_list !print_formula)) templ_unk_constrs no_pos;
-        Debug.tinfo_hprint (add_str "simpl unk constrs: " !print_formula) r no_pos 
+        x_tinfo_hp (add_str "nonlinear constrs: " !print_formula) ln_r no_pos;
+        x_tinfo_hp (add_str "unk constrs: " (pr_list !print_formula)) templ_unk_constrs no_pos;
+        x_tinfo_hp (add_str "simpl unk constrs: " !print_formula) r no_pos 
       in
 
       if is_False r then
@@ -729,11 +729,11 @@ let get_model_ln is_linear templ_unks vars assertions =
   let pos_vars = lcm::pos_vars in
 
   let () = 
-    Debug.tinfo_pprint ">>>>>>> get_model_ln <<<<<<<" no_pos;
-    Debug.tinfo_hprint (add_str "asserts: " (pr_list !print_formula)) assertions no_pos; 
-    Debug.tinfo_hprint (add_str "linearized asserts: " (pr_list !print_formula)) ln_asserts no_pos;
-    Debug.tinfo_hprint (add_str "pos vars: " !print_svl) pos_vars no_pos;
-    Debug.tinfo_hprint (add_str "nneg: " !print_svl) nneg_vars no_pos
+    x_tinfo_pp ">>>>>>> get_model_ln <<<<<<<" no_pos;
+    x_tinfo_hp (add_str "asserts: " (pr_list !print_formula)) assertions no_pos; 
+    x_tinfo_hp (add_str "linearized asserts: " (pr_list !print_formula)) ln_asserts no_pos;
+    x_tinfo_hp (add_str "pos vars: " !print_svl) pos_vars no_pos;
+    x_tinfo_hp (add_str "nneg: " !print_svl) nneg_vars no_pos
   in
 
   let ln_asserts = 

@@ -284,7 +284,7 @@ let check_simp_hp_eq (hp1, _) (hp2, _)=
 (*                List.map (fun sv -> CP.mkVar sv pos) unk_args, *)
 (*       pos) *)
 (*     in *)
-(*     let () = Debug.tinfo_hprint (add_str "define: " Cprinter.string_of_hp_decl) hp_decl pos in *)
+(*     let () = x_tinfo_hp (add_str "define: " Cprinter.string_of_hp_decl) hp_decl pos in *)
 (*     DD.ninfo_zprint (lazy (("       gen hp_rel: " ^ (Cprinter.string_of_h_formula hf)))) pos; *)
 (*     (hf, CP.SpecVar (HpT,hp_decl.Cast.hp_name, Unprimed)) *)
 (*   else report_error pos "sau.add_raw_hp_rel: args should be not empty" *)
@@ -2852,8 +2852,8 @@ let pattern_matching_with_guard_x rhs1 rhs2 guard match_svl check_pure=
     let sel_pats = List.fold_left (fun ls hd ->
         if String.compare hd_name hd.CF.h_formula_data_name = 0 then
           let hd_args = hd.CF.h_formula_data_node::hd.CF.h_formula_data_arguments in
-          let () = DD.tinfo_hprint (add_str " hd_args:"  !CP.print_svl) hd_args no_pos in
-          let () = DD.tinfo_hprint (add_str " match_svl:"  !CP.print_svl) match_svl no_pos in
+          let () = x_tinfo_hp (add_str " hd_args:"  !CP.print_svl) hd_args no_pos in
+          let () = x_tinfo_hp (add_str " match_svl:"  !CP.print_svl) match_svl no_pos in
           if CP.intersect_svl hd_args match_svl != [] then
             let sel_args = retrieve_args_from_locs hd_args locs in
             ls@[sel_args]
@@ -2862,7 +2862,7 @@ let pattern_matching_with_guard_x rhs1 rhs2 guard match_svl check_pure=
         else ls
     ) [] hds
     in
-    let () = DD.tinfo_hprint (add_str " sel_pats:" (pr_list !CP.print_svl)) sel_pats no_pos in
+    let () = x_tinfo_hp (add_str " sel_pats:" (pr_list !CP.print_svl)) sel_pats no_pos in
     match sel_pats with
       | [args] -> args
       | [] -> []

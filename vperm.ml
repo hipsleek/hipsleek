@@ -370,7 +370,7 @@ let vperm_entail_set ?(par_flag=false) ?(ver_post_flag=false) ?(classic_flag=fal
         if classic_flag && (CVP.is_leak_vperm res_vps) then 
           (* TODO:WN *)
           let vp_str = !print_vperm_sets res_vps in
-          let () = Debug.tinfo_hprint (add_str "residue vperm" !print_vperm_sets) res_vps no_pos in
+          let () = x_tinfo_hp (add_str "residue vperm" !print_vperm_sets) res_vps no_pos in
           let msg = " var permission leakage "^vp_str in
           (* let fctx = mkFailCtx_vp msg estate conseq pos in *)
           (* Fail fctx *)
@@ -434,7 +434,7 @@ let vperm_entail_rhs estate conseq pos =
     (*     if classic_flag && (CVP.is_leak_vperm res_vps) then  *)
     (*       (\* TODO:WN *\) *)
     (*       let vp_str = !print_vperm_sets res_vps in *)
-    (*       let () = Debug.tinfo_hprint (add_str "residue vperm" !print_vperm_sets) res_vps no_pos in *)
+    (*       let () = x_tinfo_hp (add_str "residue vperm" !print_vperm_sets) res_vps no_pos in *)
     (*       let msg = " var permission leakage "^vp_str in *)
     (*       let fctx = mkFailCtx_vp msg estate conseq pos in *)
     (*       Fail fctx *)
