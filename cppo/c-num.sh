@@ -5,12 +5,17 @@ $EX Cast subst_mater_list
 $EX Cast subst_mater_list
 $EX Cast look_up_view_def_raw
 $EX Cast look_up_view_def
+$EX C subst_mater_list
+$EX C subst_mater_list
+$EX C look_up_view_def_raw
+$EX C look_up_view_def
 $EX Cformula get_node_name
 $EX Cformula normalize
 $EX Cformula fold_context_left
 $EX Cformula add_to_context
+$EX CF get_node_name
 # $EX Cprinter string_of_proc_decl 
-# $EX Csvutil alias
+$EX Csvutil alias
 $EX Cvutil xpure_mem_enum
 $EX Cvutil xpure_heap_mem_enum
 $EX Cvutil xpure_symbolic
@@ -27,8 +32,10 @@ $EX Infer infer_collect_hp_rel_empty_rhs
 $EX Infer infer_collect_hp_rel_classsic
 $EX Label_only comb_norm
 $EX LO comb_norm
+$EX Lbl comb_norm
 $EX Lemproving verify_lemma
 $EX Mcpure imply_memo 2
+$EX MCP imply_memo 2
 $EX Musterr build_and_failures
 $EX Omega omega_of_formula
 $EX Omega omega_of_formula_old
@@ -68,6 +75,12 @@ $EX Tpdispatcher imply_one
 $EX Tpdispatcher is_sat
 $EX Tpdispatcher is_sat_sub_no_c
 $EX Tpdispatcher is_sat_sub_no 
+$EX TP simplify_a
+$EX TP simplify_with_pairwise
+$EX TP imply_one
+$EX TP is_sat
+$EX TP is_sat_sub_no_c
+$EX TP is_sat_sub_no 
 $EX Typeinfer node2_to_node
 $EX TI node2_to_node
 $EX Fixcalc compute_fixpoint
