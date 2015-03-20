@@ -3454,7 +3454,7 @@ and rename_proc (proc: I.proc_decl) : I.proc_decl =
       (* do not rename if there is some name clash *)
       proc
     else
-      let new_body = opt_map (rename_exp vs2) proc.I.proc_body in
+      let new_body = opt_map (x_add rename_exp vs2) proc.I.proc_body in
       let sst = concatMap (fun (v1,v2) -> 
           [((v1,Unprimed),(v2,Unprimed));((v1,Primed),(v2,Primed))]) vs2 in
       let new_static_specs = Iformula.subst_struc sst proc.I.proc_static_specs in
@@ -8838,21 +8838,21 @@ and rename_exp_x (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
           Iast.New {b with Iast.exp_new_arguments = List.map (helper ren) b.Iast.exp_new_arguments}
     | Iast.Return b ->  Iast.Return {b with Iast.exp_return_val = match b.Iast.exp_return_val with
         | None -> None
-        | Some f -> Some (rename_exp ren f)}
+        | Some f -> Some (x_add rename_exp ren f)}
     | Iast.Seq b -> Iast.Seq 
-          { Iast.exp_seq_exp1 = rename_exp ren b.Iast.exp_seq_exp1;
-          Iast.exp_seq_exp2 =rename_exp ren b.Iast.exp_seq_exp2;
+          { Iast.exp_seq_exp1 = x_add rename_exp ren b.Iast.exp_seq_exp1;
+          Iast.exp_seq_exp2 = x_add rename_exp ren b.Iast.exp_seq_exp2;
           Iast.exp_seq_pos = b.Iast.exp_seq_pos }         
-    | Iast.Unary b-> Iast.Unary {b with Iast.exp_unary_exp = rename_exp ren b.Iast.exp_unary_exp}
+    | Iast.Unary b-> Iast.Unary {b with Iast.exp_unary_exp = x_add rename_exp ren b.Iast.exp_unary_exp}
     | Iast.Unfold b-> Iast.Unfold{b with Iast.exp_unfold_var = ((subid ren (fst b.Iast.exp_unfold_var)),(snd b.Iast.exp_unfold_var))}
     | Iast.Var b -> Iast.Var{b with Iast.exp_var_name = subid ren b.Iast.exp_var_name}
     | Iast.While b-> 
           let nw = match b.Iast.exp_while_wrappings with
             | None -> None
-            | Some (e,l) -> Some ((rename_exp ren e),l)  in
+            | Some (e,l) -> Some ((x_add rename_exp ren e),l)  in
           Iast.While{
-              Iast.exp_while_condition = rename_exp ren b.Iast.exp_while_condition;
-              Iast.exp_while_body = rename_exp ren b.Iast.exp_while_body;
+              Iast.exp_while_condition = x_add rename_exp ren b.Iast.exp_while_condition;
+              Iast.exp_while_body = x_add rename_exp ren b.Iast.exp_while_body;
               Iast.exp_while_addr_vars = [];
               Iast.exp_while_jump_label = b.Iast.exp_while_jump_label;
               Iast.exp_while_f_name = b.Iast.exp_while_f_name;
@@ -8863,14 +8863,14 @@ and rename_exp_x (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
     | Iast.Time _ ->f
     | Iast.Try b -> 
           Iast.Try { b with
-              Iast.exp_try_block = rename_exp ren b.Iast.exp_try_block;
-              Iast.exp_catch_clauses = List.map (rename_exp ren) b.Iast.exp_catch_clauses;
-              Iast.exp_finally_clause = List.map (rename_exp ren) b.Iast.exp_finally_clause;}
+              Iast.exp_try_block = x_add rename_exp ren b.Iast.exp_try_block;
+              Iast.exp_catch_clauses = List.map (x_add rename_exp ren) b.Iast.exp_catch_clauses;
+              Iast.exp_finally_clause = List.map (x_add rename_exp ren) b.Iast.exp_finally_clause;}
     | Iast.Raise b-> 
           Iast.Raise {b with
               Iast.exp_raise_val = (match b.Iast.exp_raise_val with 
                 | None -> None 
-                | Some e -> Some (rename_exp ren e));
+                | Some e -> Some (x_add rename_exp ren e));
               Iast.exp_raise_type = (match b.Iast.exp_raise_type with
                 | Iast.Const_flow _ -> b.Iast.exp_raise_type
                 | Iast.Var_flow vf -> Iast.Var_flow (subid ren vf))}
@@ -8880,7 +8880,7 @@ and rename_exp_x (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
       in
       let subst_ren ren (id, primed) = (subid ren id, primed) in
       let rename_par_case c = 
-        let body = rename_exp ren c.I.exp_par_case_body in
+        let body = x_add rename_exp ren c.I.exp_par_case_body in
         let cond = map_opt (fun f -> IF.subst sst f) c.I.exp_par_case_cond in
         let vp = IVP.subst_f subst_ren ren c.I.exp_par_case_vperm in
         { I.exp_par_case_cond = cond;
@@ -8945,7 +8945,7 @@ and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  ma
             Iast.exp_catch_var = ncv ;
             Iast.exp_catch_flow_type = b.Iast.exp_catch_flow_type;
             Iast.exp_catch_flow_var = ncfv;
-            Iast.exp_catch_body = fst (case_rename_var_decls (rename_exp ren b.Iast.exp_catch_body));},[])
+            Iast.exp_catch_body = fst (case_rename_var_decls (x_add rename_exp ren b.Iast.exp_catch_body));},[])
   | Iast.Cond b->
         let ncond,r = case_rename_var_decls b.Iast.exp_cond_condition in    
         (Iast.Cond {b with 
@@ -8980,7 +8980,7 @@ and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  ma
   | Iast.Seq b -> 
         let l1,ren = case_rename_var_decls b.Iast.exp_seq_exp1 in
         let l2,ren2 = case_rename_var_decls b.Iast.exp_seq_exp2 in          
-        let l2 = rename_exp ren l2 in      
+        let l2 = x_add rename_exp ren l2 in      
         let aux_ren = (ren_list_concat ren ren2) in
         (Iast.Seq ({ Iast.exp_seq_exp1 = l1; Iast.exp_seq_exp2 = l2; Iast.exp_seq_pos = b.Iast.exp_seq_pos }),aux_ren)
   | Iast.Unary b -> 

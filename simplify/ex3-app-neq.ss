@@ -13,8 +13,8 @@ void foo(node xxx, node yyyy)
   ensures xxx::ll<nnn>;
 {
   // dprint;
-	node tmp = xxx.next;
-	bool fl_bb = tmp != yyyy;
+	node tmpZZZ = xxx.next;
+	bool fl_bb = tmpZZZ != yyyy;
 	if (fl_bb) {
                 dprint;
 		return;
@@ -35,8 +35,7 @@ void foo(node xxx, node yyyy)
  why fl_bb renamed to fl_47?
 
 (i) should not be any renaming
-(ii) should be from fl_bb --> fl_bb_47
-
+(ii) should be from tmp -> tmp_46 and fl_bb --> fl_bb_47
 
 void foo$node~node(  node xxx,  node yyyy)static  EBase exists (Expl)[](Impl)[nnn](ex)[]xxx::ll{}<nnn>&0<nnn&
        {FLOW,(4,5)=__norm#E}[]
