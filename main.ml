@@ -65,7 +65,7 @@ let parse_file_full file_name (primitive: bool) =
         (*   "cil"                                                                 *)
         (* else if(ext = ".java") then "joust"                                     *)
         (* else "default"                                                          *)
-        "default"
+          "default"
       )
     ) in
     (* start parsing *)

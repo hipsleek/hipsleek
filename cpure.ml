@@ -1449,7 +1449,33 @@ and afv (af : exp) : spec_var list =
     | ArrayAt (a, i, _) -> 
   	  let ifv = List.map afv i in
   	  let ifv = List.flatten ifv in
-  	  remove_dups_svl (a :: ifv) (* An Hoa *)
+          let mk_array_new_name_spec_var =
+            fun sv e ->
+                match sv with
+                  | SpecVar (typ,id,primed)->
+                        begin
+                          match typ with
+                            | Array (atyp,_)->
+                                  begin
+                                    match primed with
+                                      | Primed ->
+                                            (*Var( SpecVar (atyp,(id)^"_"^"primed_"^(ArithNormalizer.string_of_exp e),primed),no_pos)*)
+                                            SpecVar (atyp,(id)^"___"^(!print_exp e)^"___",primed)
+                                      | _ -> SpecVar (atyp,(id)^"___"^(!print_exp e)^"___",primed)
+                                  end
+                            | _ -> failwith "mk_array_new_name: Not array type"
+                        end
+          in
+          begin
+            match i with
+              | [index] ->
+                    remove_dups_svl (a :: ifv)
+                    (*remove_dups_svl ((mk_array_new_name_spec_var a index)::ifv)*)
+              | _ ->
+                    remove_dups_svl (a :: ifv)
+                    (*failwith ("afv:"^(!print_exp af)^" Invalid index")*)
+          end
+  	  (* remove_dups_svl (a :: ifv) (\* An Hoa *\) *)
     | Template t ->
         t.templ_id::
         (List.concat (List.map afv t.templ_args)) 
@@ -8157,6 +8183,12 @@ module ArithNormalizer = struct
     | Max (e1, e2, _) -> "max(" ^ (string_of_exp e1) ^ "," ^ (string_of_exp e2) ^ ")"
     | Min (e1, e2, _) -> "min(" ^ (string_of_exp e1) ^ "," ^ (string_of_exp e2) ^ ")"
     | TypeCast (ty, e1, _) -> "(" ^ (Globals.string_of_typ ty) ^ ") " ^ string_of_exp e1
+    | ArrayAt (sv,elst,_)->
+          let string_of_index_list
+                (elst:exp list):string=
+            List.fold_left (fun s e -> s ^"["^(string_of_exp e)^"]") "" elst
+          in
+          (string_of_spec_var sv)^(string_of_index_list elst) 
     | _ -> "???"
     
   let string_of_b_formula bf = 
@@ -10223,7 +10255,7 @@ let rec drop_formula (pr_w:p_formula -> formula option) pr_s (f:formula) : formu
                 | None -> f
                 | Some nf -> nf)
         | And (f1,f2,p) -> And (helper f1,helper f2,p)
-		| AndList b -> AndList (map_l_snd helper b)
+	| AndList b -> AndList (map_l_snd helper b)
         | Or (f1,f2,l,p) -> Or (helper f1,helper f2,l,p)
         | Exists (vs,f,l,p) -> Exists (vs, helper f, l, p)
         | Not (f,l,p) -> Not (drop_formula pr_s pr_w f,l,p)

@@ -1,0 +1,19 @@
+ 
+id: 0; caller: []; line: 6; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail htrue&v_int_6_1175'=5 & a'=a&{FLOW,(4,5)=__norm#E}[]
+ |-  htrue&{FLOW,(4,5)=__norm#E}[]. 
+res:  1[
+   htrue&v_int_6_1175'=5 & a'=a&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 1; caller: []; line: 6; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail htrue&v_int_6_1175'=5 & a'=a&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&Term[]&{FLOW,(4,5)=__norm#E}[]. 
+res:  1[
+   htrue&v_int_6_1175'=5 & a'=a&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 2; caller: []; line: 6; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&0<(a[5]) & a'=a&{FLOW,(4,5)=__norm#E}[]
+ |-  htrue&{FLOW,(4,5)=__norm#E}[]. 
+res : EXCEPTION

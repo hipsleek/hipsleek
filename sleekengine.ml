@@ -1118,6 +1118,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
       with _ ->  sst0
   ) [] fvs
   in
+  (*let _ = print_endline "run_infer_one_pass" in*)
   let ante1 = CF.subst sst ante in
   let ante = Cfutil.transform_bexpr ante1 in
   let conseq = CF.struc_formula_trans_heap_node [] Cfutil.transform_bexpr conseq in
@@ -1432,6 +1433,7 @@ let process_rel_infer pre_rels post_rels =
   (* let r = Fixpoint.rel_fixpoint_wrapper pre_invs0 [] pre_rel_constrs post_rel_constrs pre_rel_ids post_rels proc_spec 1 in *)
   (* let _ = Debug.info_hprint (add_str "fixpoint2" *)
   (*     (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in *)
+  (* let _ = print_endline "process_rel_infer" in *)
   let r = Fixcalc.compute_fixpoint 2 post_rel_constrs post_rels proc_spec in
   let _ = Debug.info_hprint (add_str "fixpoint2"
       (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_pair pr1 pr1))) r no_pos in
@@ -1952,6 +1954,7 @@ let process_shape_extract sel_vnames=
 let run_entail_check (iante0 : meta_formula list) (iconseq0 : meta_formula) (etype: entail_type) =
   wrap_classic etype (fun conseq ->
       let (r, (cante, cconseq)) = run_infer_one_pass_set_states [] [] iante0 conseq in
+      (*let _ = print_endline "run_entail_check_2" in*)
       let res, _, _ = r in
       let _ = if !Globals.gen_smt then
          let _ = Slk2smt.smt_ent_cmds := !Slk2smt.smt_ent_cmds@[(iante0, iconseq0, etype, cante, cconseq, res)] in
@@ -1965,6 +1968,7 @@ let run_entail_check (iante0 : meta_formula list) (iconseq0 : meta_formula) (ety
     let fctx = CF.mkFailCtx_in (CF.Trivial_Reason
       (CF.mk_failure_may "timeout" Globals.timeout_error, [])) (CF.Ctx (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled  no_pos)) (CF.mk_cex false) in
     (false, fctx,[]) in
+  (*let _ = print_endline "run_entail_check_1" in*)
   Procutils.PrvComms.maybe_raise_and_catch_timeout_sleek
     (run_entail_check iante0 iconseq0) etype with_timeout
 

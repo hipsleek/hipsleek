@@ -857,11 +857,11 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                         let cl = List.filter (fun f -> 
                             Gen.BList.overlap_eq CP.eq_spec_var (CP.fv f) log_vars) lp in
                         let () = if not (Gen.is_empty lp) then 
-                          DD.ninfo_hprint (add_str "Inferred constraints" (pr_list !CP.print_formula)) lp pos in
+                          DD.info_hprint (add_str "Inferred constraints" (pr_list !CP.print_formula)) lp pos in
                         let () = Term.add_phase_constr_by_scc proc (List.map TP.simplify_raw cl) in ()
                       in
                       (* let () = Debug.info_zprint (lazy (("res_ctx: " ^ (Cprinter.string_of_list_partial_context_short res_ctx) ^ "\n"))) no_pos in *)
-                      (* TODO : collecting rel twice as a temporary fix to losing ranking rel inferred during check_post *)
+                      (* todo : collecting rel twice as a temporary fix to losing ranking rel inferred during check_post *)
                       (*                      let rel1 =  Infer.collect_rel_list_partial_context res_ctx in*)
                       (*                      DD.dinfo_zprint (lazy (">>>>> Performing check_post STARTS")) no_pos;*)
                       (* let hp_rels1 = Gen.BList.remove_dups_eq (=) (Infer.collect_hp_rel_list_partial_context res_ctx) in *)
@@ -2732,13 +2732,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       Debug.no_1 "check_exp1" pr pr check_exp1 ctx in
     let check_exp1_x (ctx : CF.list_failesc_context) : CF.list_failesc_context =
       Gen.Profiling.do_1 "check_exp1" check_exp1_a ctx in
-
+    (* let _ = print_endline ("check_exp: 1 :" ^ (Cprinter.string_of_list_failesc_context ctx)) in *)
     let ctx = if (not !Globals.failure_analysis) then List.filter (fun (f,s,c)-> Gen.is_empty f ) ctx  
     else ctx in
     (* An Hoa : Simplify the context before checking *)
     let ctx = if (!simplify_context) then
       CF.simplify_list_failesc_context ctx proc.Cast.proc_important_vars
     else ctx in
+    (* let _ = print_endline ("check_exp: 2 :" ^ (Cprinter.string_of_list_failesc_context ctx)) in *)
     (* fl denote all failed states *)
     let (fl,cl) = List.partition (fun (_,s,c) -> Gen.is_empty c && CF.is_empty_esc_stack s) ctx in
     (*let () = print_endline ("WN:ESCAPE:"^(Cprinter.string_of_list_failesc_context fl)) in *)

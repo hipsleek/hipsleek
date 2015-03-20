@@ -96,7 +96,7 @@ let sleek_entail prog ante_ctx conseq pos=
   rs, prf
 
 (* WN : why isn't itype added to estate? *)
-let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante conseq =
+let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:CF.formula) (conseq:CF.struc_formula) =
   let () = Hgraph.reset_fress_addr () in
   let pr = Cprinter.string_of_struc_formula in
   let () = Debug.ninfo_hprint (add_str "ante(before rem @A)"  Cprinter.string_of_formula) ante no_pos in
@@ -132,7 +132,9 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante c
   ^"\n\n")) no_pos in
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let ctx = CF.build_context ectx ante no_pos in
+  
   let ctx0 = Solver.elim_exists_ctx ctx in
+  
   let ctx = CF.add_proof_traces_ctx ctx0 proof_traces in
   (* List of vars appearing in original formula *)
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in
@@ -167,29 +169,35 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante c
   let () = Debug.ninfo_hprint (add_str "seg_opz" string_of_bool) !Frame.seg_opz no_pos in
   let () = Debug.ninfo_hprint (add_str "is_base_conseq" string_of_bool) is_base_conseq no_pos in
   let () = Debug.ninfo_hprint (add_str "isvl" !CP.print_svl) isvl no_pos in
+  
   if isvl = [] && !Globals.graph_norm && !Frame.seg_opz  && is_base_conseq &&
     Cast.is_complex_entailment_4graph cprog ante conseq
   then
     let () = Debug.ninfo_hprint (add_str "graph optimization" pr_id) "" no_pos in
     let () = Globals.disable_failure_explaining := true in
     let () = Globals.smt_is_must_failure := None in
+    
     if CF.isAnyConstFalse_struc conseq then sleek_unsat_check isvl cprog ante
     else
       check_entail_w_norm cprog proof_traces ctx ante conseq_f
   else
+    
     if (!Globals.prove_invalid && not(!Globals.baga_xpure)) && CF.isAnyConstFalse_struc conseq && Cfutil.is_view_f ante then
+      
       (* TODO : new unsat checking for LHS from Loc *)
       (* need to document; and generalize? *)
       let () = Globals.smt_is_must_failure := None in
       let () = Globals.disable_failure_explaining := true in
       (* let sno = ref (0:int) in *)
       (* let is_unsat = Solver.unsat_base_nth 22 cprog (sno) ante in *)
+      
       let is_unsat0, is_sat, waiting_vis,_ = Cvutil.build_vis cprog ante in
       let is_unsat = if is_unsat0 then true else
         if is_sat then false else
           let is_unsat2 = Cvutil.view_unsat_check_topdown cprog waiting_vis [] [] [] true [] in
           is_unsat2
       in
+      
       if is_unsat then
         (true, (CF.SuccCtx[ctx]), isvl)
       else
@@ -205,6 +213,7 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante c
       let () = if (CF.isAnyFalseCtx ctx) then
         print_endline_quiet ("[Warning] False ctx")
       in
+      
       let conseq = Cfutil.elim_null_vnodes cprog conseq in
       (*****************)
       (* let is_base_conseq,conseq_f = CF.base_formula_of_struc_formula conseq in *)

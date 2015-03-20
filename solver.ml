@@ -2835,6 +2835,7 @@ and elim_unsat_es_now_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_st
     CF.mkStar_combine_heap es.es_formula es.es_heap CF.Flow_combine no_pos 
   else es.es_formula
   in
+  
   (* added consumed heap for unsat_now checking *)
    (* match es.es_orig_ante with *)
     (* | Some f -> f *)
@@ -8764,8 +8765,8 @@ type: MCP.mix_formula -> MCP.mix_formula -> MCP.mix_formula -> int ref ->
 and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
       (* :bool *(formula_label option * formula_label option) list * formula_label option  *)
   (* let () = print_string ("\nAn Hoa :: imply_mix_formula ::\n" ^ *)
-  (* "ANTECEDENT = " ^ (Cprinter.string_of_mix_formula ante_m0) ^ "\n" ^ *)
-  (* "CONSEQUENCE = " ^ (Cprinter.string_of_mix_formula conseq_m) ^ "\n" ^ *)
+  (*let _ = print_endline ("ANTECEDENT = " ^ (Cprinter.string_of_mix_formula ante_m0) ^ "\n") in*)
+  (*let _ = print_endline ("CONSEQUENCE = " ^ (Cprinter.string_of_mix_formula conseq_m) ^ "\n") in*)
   (* "memset = " ^ (Cprinter.string_of_mem_formula memset) ^ "\n\n") in  *)
   (* detect whether memset contradicts with any of the ptr equalities from antecedent *)
   let ante_m0 = if detect_false ante_m0 memset then MCP.mkMFalse no_pos else ante_m0 in
@@ -8790,21 +8791,28 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
           end
     | MCP.OnePF a0, MCP.OnePF c ->
           begin
+            (* let (a0,c) = *)
+            (*   (Translate_out_array_in_cpure_formula.drop_array_formula a0, Translate_out_array_in_cpure_formula.drop_array_formula c) in *)
+              (* let _ = Translate_out_array_in_cpure_formula.new_translate_out_array_in_imply_split_full a0 c in *)
+              (* (function *)
+            (*     | (n_a,n_c) -> (Translate_out_array_in_cpure_formula.drop_array_formula n_a, Translate_out_array_in_cpure_formula.drop_array_formula n_c)) *)
+            (*       (Translate_out_array_in_cpure_formula.new_translate_out_array_in_imply_split_full a0 c) *)
+            (* in *)
             DD.devel_pprint ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;
-            let f a0 = 
+            let f a0 =
               (* WN : what if Omega cannot handle?  *)
               (* WN : cause of performance bug? needed by tut/ex2/bugs-sim5b.slk *)
               let a0 = (* Wrapper.wrap_exception a0 TP.simplify_omega *) a0 in
               if CP.no_andl a0 && !Globals.deep_split_disjuncts
-              then 
-                let a0 = CP.drop_exists a0 in 
+              then
+                let a0 = CP.drop_exists a0 in
                 List.filter CP.is_sat_eq_ineq (CP.split_disjunctions_deep a0)
     	      else
-                if CP.no_andl a0  
+                if CP.no_andl a0
                 then
                   (* let () = print_endline "no deep split" in *)
                   (* infer_deep_ante_issues : WN : why not we handle deep? *)
-                  CP.split_disjunctions a0 
+                  CP.split_disjunctions a0
                 else
                   (* why andl need to be handled in a special way *)
 	          let r = ref (-999) in

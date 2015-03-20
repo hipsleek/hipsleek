@@ -1,0 +1,5 @@
+checkentail 0<=a'[5] & a'[5]<=0 |- a'[5]=0.
+
+checkentail 0<=b & b<=0 |- b=0.
+
+checkentail 0<=(a'[5]) & (a'[5])<=0 |-  a'[5]=0.
