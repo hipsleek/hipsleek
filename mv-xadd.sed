@@ -16,4 +16,5 @@ s/= x_add IF.rename_bound_vars/= x_add_1 IF.rename_bound_vars/
 s/x_add IF.rename_bound_vars/x_add_1 IF.rename_bound_vars/
 s/x_add CF.rename_bound_vars/x_add_1 CF.rename_bound_vars/
 s/x_add rename_bound_vars/x_add_1 rename_bound_vars/
+s/= case_normalize_renamed_formula/= x_add case_normalize_renamed_formula/
 

@@ -8027,13 +8027,13 @@ and case_normalize_renamed_struc_formula prog avail_vars posibl_expl f =
           IF.ECase {b with IF.formula_case_branches = n_br}
     | IF.EBase b -> 
           let ann_vars = IF.collect_annot_vars b.IF.formula_struc_base in 
-          let n_bf,h,_ = case_normalize_renamed_formula prog avail_vars posibl_expl b.IF.formula_struc_base ann_vars in
+          let n_bf,h,_ = x_add case_normalize_renamed_formula prog avail_vars posibl_expl b.IF.formula_struc_base ann_vars in
           let n_cont = map_opt (case_normalize_renamed_struc_formula prog (avail_vars@h) posibl_expl) b.IF.formula_struc_continuation in
           IF.EBase {b with IF.formula_struc_base = n_bf; IF.formula_struc_continuation = n_cont;}
     | IF.EAssume b -> IF.EAssume {b with 
           IF.formula_assume_simpl = 
               ( let ann_vars = IF.collect_annot_vars  b.IF.formula_assume_simpl in 
-              let f,_,_ = case_normalize_renamed_formula prog avail_vars posibl_expl  b.IF.formula_assume_simpl ann_vars in
+              let f,_,_ = x_add case_normalize_renamed_formula prog avail_vars posibl_expl  b.IF.formula_assume_simpl ann_vars in
               f);
           IF.formula_assume_struc = rf b.IF.formula_assume_struc;}
     | IF.EInfer b -> IF.EInfer {b with IF.formula_inf_continuation = rf b.IF.formula_inf_continuation}
@@ -8200,7 +8200,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
         IF.h_formula_thread_label = pi;} ->
             let dataNode = IF.mkHeapNode (v,p) c [] 0 false SPLIT0 (Ipure.ConstAnn(Mutable)) false false false perm [] [] pi pos in
             let new_used_names1, evars1, datanode2, pf = linearize_heap used_names dataNode in
-            let rsr2, new_used_names2, evars2 = case_normalize_renamed_formula prog avail_vars posib_expl rsr ann_vars in
+            let rsr2, new_used_names2, evars2 = x_add case_normalize_renamed_formula prog avail_vars posib_expl rsr ann_vars in
             let node3 = match datanode2 with
               | IF.HeapNode { IF.h_formula_heap_node = c1; IF.h_formula_heap_name = id1;} ->
                     IF.ThreadNode {IF.h_formula_thread_node = c1;
@@ -8278,7 +8278,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
                 | None -> (None,hvars)
               in
             let ho_hvars = List.map (fun ff ->
-                let n_base, _ , _  = case_normalize_renamed_formula prog new_used_names posib_expl ff.IF.rflow_base ann_vars (*TOCHECH: how about two other return values*)
+                let n_base, _ , _  = x_add case_normalize_renamed_formula prog new_used_names posib_expl ff.IF.rflow_base ann_vars (*TOCHECH: how about two other return values*)
                 in { ff with IF.rflow_base = n_base; }) b.IF.h_formula_heap_ho_arguments
               in
               let new_h = IF.HeapNode{ b with 
@@ -8460,7 +8460,7 @@ and case_normalize_formula_x prog (h:(ident*primed) list)(f:IF.formula): IF.form
   let f = x_add_1 IF.rename_bound_vars f in
   (* let () = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let ann_vars = IF.collect_annot_vars f in 
-  let f,_,_ = case_normalize_renamed_formula prog h [] f ann_vars in
+  let f,_,_ = x_add case_normalize_renamed_formula prog h [] f ann_vars in
   (* let () = print_string ("case_normalize_formula :: CHECK POINT 3 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   f
 
@@ -8473,7 +8473,7 @@ and case_normalize_formula_not_rename prog (h:(ident*primed) list)(f:IF.formula)
   let f = IF.float_out_exps_from_heap 2 (I.lbl_getter prog) (I.annot_args_getter prog) f in
   let f = IF.float_out_min_max f in
   let f = x_add_1 IF.rename_bound_vars f in
-  (* let f,_,_ = case_normalize_renamed_formula prog h [] f in *)
+  (* let f,_,_ = x_add case_normalize_renamed_formula prog h [] f in *)
   f
 
 (* TODO : WN : type error with empty predicate errors/list-bug.slk *) 
@@ -8535,7 +8535,7 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
               (*let onb_struc = convert_anonym_to_exist_struc b.IF.formula_assume_struc in*)
               let hp = rdups (hv @p_vars)in
               let ann_vars = IF.collect_annot_vars onb in 
-              let nb,nh,_ = case_normalize_renamed_formula prog hp strad_vs onb ann_vars in
+              let nb,nh,_ = x_add case_normalize_renamed_formula prog hp strad_vs onb ann_vars in
               (*let nb_struc = case_normalize_renamed_struc_formula prog hp stread_vs onb_struc in*)
               let nb = ilinearize_formula nb (hp@strad_vs) in
               (*let nb_struc = ilinearize_struc_formula nb_struc np in*)
@@ -8575,7 +8575,7 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
                 else () in
               let onb = convert_anonym_to_exist b.IF.formula_struc_base in
               let ann_vars = IF.collect_annot_vars onb in 
-              let nb,h3,new_expl = case_normalize_renamed_formula prog hv strad_vs onb ann_vars in
+              let nb,h3,new_expl = x_add case_normalize_renamed_formula prog hv strad_vs onb ann_vars in
               let all_expl = rdups (new_expl @ init_expl) in
                 let () = x_tinfo_hp (add_str "new_expl" pr_l_v)  new_expl pos in
                 let () = x_tinfo_hp (add_str "init_expl" pr_l_v)  init_expl pos in
@@ -8666,7 +8666,7 @@ and simpl_case_normalize_struc_formula id prog (h_vars:(ident*primed) list)(f:IF
 			else 
 			  let onb = convert_anonym_to_exist base in
                           let ann_vars = IF.collect_annot_vars onb in 
-			  let nb,h3,new_expl = case_normalize_renamed_formula prog hv [] onb ann_vars in
+			  let nb,h3,new_expl = x_add case_normalize_renamed_formula prog hv [] onb ann_vars in
 			  let all_expl = rdups (new_expl @ init_expl) in
 			  let v_no_inst = rdups (hv@all_expl) in 
 			  let nb_fv = IF.heap_fv nb in
