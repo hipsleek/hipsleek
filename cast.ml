@@ -2380,9 +2380,9 @@ let rec add_term_nums_prog (cp: prog_decl) : prog_decl =
     if mutual_grps!=[] then 
       begin
         let pr p = p.proc_name in
-        Debug.devel_zprint (lazy (">>>>>> [term.ml][Adding Call Number and Phase Logical Vars] <<<<<<")) no_pos;
-        Debug.devel_hprint (add_str ("Mutual Groups") (pr_list (pr_pair string_of_int (pr_list pr)))) mutual_grps no_pos;
-        Debug.devel_pprint "\n" no_pos
+        x_dinfo_zp (lazy (">>>>>> [term.ml][Adding Call Number and Phase Logical Vars] <<<<<<")) no_pos;
+        x_dinfo_hp (add_str ("Mutual Groups") (pr_list (pr_pair string_of_int (pr_list pr)))) mutual_grps no_pos;
+        x_dinfo_pp "\n" no_pos
 
       end;
     let pvs = List.map (fun (n, procs) ->

@@ -858,7 +858,7 @@ let rename_exp2 e subs =
                 let e1 = 
                   (match e with
                     | None -> None
-                    | Some e0 -> Some (rename_exp e0 (bvars, subs))
+                    | Some e0 -> Some (x_add rename_exp e0 (bvars, subs))
                   )
                 in
                 let () = imp_bvars # pop_elem v in
@@ -868,7 +868,7 @@ let rename_exp2 e subs =
               Some (VarDecl {b with exp_var_decl_decls = List.map helper b.exp_var_decl_decls})
         | ConstDecl b ->
               let helper (v,e,l) = 
-                let e1 = (rename_exp e (bvars, subs)) in
+                let e1 = (x_add rename_exp e (bvars, subs)) in
                 let (v1, b) = subst_of_ident_with_bool subs v in
                 (v1, e1, l)
               in
@@ -953,7 +953,7 @@ let rename_exp2 e subs =
 let rename_exp (e:exp) ((bvars,subs) as xx:(IS.t)*((ident * ident) list)) : exp = 
   let pr1 = Iprinter.string_of_exp in
   let pr2  = pr_pair string_of_IS (pr_list (pr_pair pr_id pr_id)) in
- Debug.no_2 "rename_exp" pr1 pr2 pr1 rename_exp2 e xx
+ Debug.no_2 "rename_exp(IastUtil)" pr1 pr2 pr1 rename_exp2 e xx
 
 let rename_proc gvs proc : proc_decl = 
 	(* let () = print_endline ("[rename_proc] input = { " ^ (string_of_IS gvs) ^ " }") in *)
@@ -979,7 +979,7 @@ let rename_proc gvs proc : proc_decl =
   let ne = match proc.proc_body with 
     | None -> None
     | Some e0 -> 
-      let e = rename_exp e0 (bvars,clash_subs) in
+      let e = x_add rename_exp e0 (bvars,clash_subs) in
       (* print_endline ("[rename_proc] procedure body after rename of clashed variables\n" ^ (Iprinter.string_of_exp e)); *)
       check_exp_if_use_before_declare e (IS.empty, IS.union nas1 gvs) (ref IS.empty); 
       Some ( e )

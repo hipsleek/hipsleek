@@ -558,7 +558,7 @@ let compute_heap_pure_inv fml (name:ident) data_name (para_names:CP.spec_var lis
     let fixc_header = slk2fix_header 1 [name] in
     (fixc_body ^ fixc_header, fr_vars, rev_sst)
   in
-  DD.binfo_zprint (lazy (("Input of fixcalc: " ^ input_fixcalc))) no_pos;
+  x_binfo_zp (lazy (("Input of fixcalc: " ^ input_fixcalc))) no_pos;
 
   let _ =
     if !Globals.gen_fixcalc then gen_fixcalc_file input_fixcalc else ()

@@ -442,7 +442,7 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
       if Gen.is_empty paset then
         failwith ("choose_context: Error in getting aliases for " ^ (string_of_spec_var p))
       else if (* not(CP.mem p lhs_fv) ||  *)(!Globals.enable_syn_base_case && (CP.mem CP.null_var paset)) then
-        (Debug.devel_zprint (lazy ("choose_context: " ^ (string_of_spec_var p) ^ " is not mentioned in lhs\n\n")) pos; [] )
+        (x_dinfo_zp (lazy ("choose_context: " ^ (string_of_spec_var p) ^ " is not mentioned in lhs\n\n")) pos; [] )
       else 
         (* (* TRUNG TODO: to insert acc_fold context here *)                  *)
         (* let accfold_res = (                                                *)

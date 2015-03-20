@@ -1069,7 +1069,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   let _ = CF.rel_def_stk # reset in
   let _ = Iast.set_iprog iprog in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline_quiet ("INPUT 6: \n ### 1 ante = " ^ (string_of_meta_formula iante0) ^"\n ### conseq = " ^ (string_of_meta_formula iconseq0)) else () in
-  let _ = Debug.devel_pprint ("\nrun_entail_check 1:"
+  let _ = x_dinfo_pp ("\nrun_entail_check 1:"
                               ^ "\n ### iante0 = "^(string_of_meta_formula iante0)
                               ^ "\n ### iconseq0 = "^(string_of_meta_formula iconseq0)
                               ^"\n\n") no_pos in
@@ -1944,7 +1944,7 @@ let process_shape_extract sel_vnames=
   let view_defs = Norm.norm_extract_common iprog !cprog !cprog.Cast.prog_view_decls sel_vnames in
   let _ = !cprog.Cast.prog_view_decls <- view_defs in
   let pr = pr_list_ln Cprinter.string_of_view_decl in
-  let _ = Debug.tinfo_zprint  (lazy  ("views after EXTRACTION: \n" ^ (pr view_defs))) no_pos in
+  let _ = x_tinfo_zp  (lazy  ("views after EXTRACTION: \n" ^ (pr view_defs))) no_pos in
   ()
 
 (* the value of flag "exact" decides the type of entailment checking              *)
@@ -2219,7 +2219,7 @@ let process_check_norm_x (f : meta_formula) =
     then print_endline_quiet ("INPUT 7: \n ### f = " ^ (string_of_meta_formula f)) 
     else () 
   in
-  let _ = Debug.devel_pprint ("\nprocess_check_norm:" ^ "\n ### f = "^(string_of_meta_formula f)  ^"\n\n") no_pos in
+  let _ = x_dinfo_pp ("\nprocess_check_norm:" ^ "\n ### f = "^(string_of_meta_formula f)  ^"\n\n") no_pos in
   let (n_tl, cf) = meta_to_formula f false [] []  in
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline_quiet ("INPUT 8: \n ### cf = " ^ (Cprinter.string_of_formula cf)) else () in
   let estate = (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) in
@@ -2236,7 +2236,7 @@ let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let num_id = "\nCheckeq "^nn in  
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline_quiet ("INPUT 9: \n ### if1 = " ^ (string_of_meta_formula if1) ^"\n ### if2 = " ^ (string_of_meta_formula if2)) else () in
-  let _ = Debug.devel_pprint ("\nrun_cmp_check:"
+  let _ = x_dinfo_pp ("\nrun_cmp_check:"
                               ^ "\n ### f1 = "^(string_of_meta_formula if1)
                               ^ "\n ### f2 = "^(string_of_meta_formula if2)
                               ^"\n\n") no_pos in

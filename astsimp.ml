@@ -2148,7 +2148,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
                   (* Debug.info_hprint (add_str "disj_form" string_of_bool) disj_form no_pos; *)
                   if disj_form && !Globals.compute_xpure_0 then
                     (vdef.C.view_user_inv <- sf; vdef.C.view_xpure_flag <- false);
-	          Debug.tinfo_zprint (lazy (("Using a simpler inv for xpure0 of "^vdef.C.view_name))) pos;
+	          x_tinfo_zp (lazy (("Using a simpler inv for xpure0 of "^vdef.C.view_name))) pos;
                   x_tinfo_hp (add_str "inv(xpure0)" pr) vdef.C.view_user_inv pos;
                   x_tinfo_hp (add_str "inv_lock" (pr_option Cprinter.string_of_formula)) vdef.C.view_inv_lock pos;
 
@@ -2508,7 +2508,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           C.view_prune_conditions_baga = [];
           C.view_ef_pure_disj = None;
           C.view_prune_invariants = []} in
-      (Debug.dinfo_zprint (lazy ("\n" ^ (Cprinter.string_of_view_decl cvdef))) (CF.pos_of_struc_formula cf);
+      (x_dinfo_zp (lazy ("\n" ^ (Cprinter.string_of_view_decl cvdef))) (CF.pos_of_struc_formula cf);
       cvdef)
   )
   )
@@ -3465,7 +3465,7 @@ and rename_proc (proc: I.proc_decl) : I.proc_decl =
       (* do not rename if there is some name clash *)
       proc
     else
-      let new_body = opt_map (rename_exp vs2) proc.I.proc_body in
+      let new_body = opt_map (x_add rename_exp vs2) proc.I.proc_body in
       let sst = concatMap (fun (v1,v2) -> 
           [((v1,Unprimed),(v2,Unprimed));((v1,Primed),(v2,Primed))]) vs2 in
       let new_static_specs = Iformula.subst_struc sst proc.I.proc_static_specs in
@@ -8471,7 +8471,7 @@ and case_normalize_formula_x prog (h:(ident*primed) list)(f:IF.formula): IF.form
   let () = x_dinfo_hp (fun f -> ("case_normalize_formula :: CHECK POINT 1b ==> f = " ^ Iprinter.string_of_formula f ^ "\n")) f no_pos in
   let f = IF.float_out_min_max f in
   (* let () = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
-  let f = IF.rename_bound_vars f in
+  let f = x_add_1 IF.rename_bound_vars f in
   (* let () = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let ann_vars = IF.collect_annot_vars f in 
   let f,_,_ = case_normalize_renamed_formula prog h [] f ann_vars in
@@ -8486,7 +8486,7 @@ and case_normalize_formula_not_rename prog (h:(ident*primed) list)(f:IF.formula)
   let f = IF.float_out_thread f in
   let f = IF.float_out_exps_from_heap 2 (I.lbl_getter prog) (I.annot_args_getter prog) f in
   let f = IF.float_out_min_max f in
-  let f = IF.rename_bound_vars f in
+  let f = x_add_1 IF.rename_bound_vars f in
   (* let f,_,_ = case_normalize_renamed_formula prog h [] f in *)
   f
 
@@ -8853,21 +8853,21 @@ and rename_exp_x (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
           Iast.New {b with Iast.exp_new_arguments = List.map (helper ren) b.Iast.exp_new_arguments}
     | Iast.Return b ->  Iast.Return {b with Iast.exp_return_val = match b.Iast.exp_return_val with
         | None -> None
-        | Some f -> Some (rename_exp ren f)}
+        | Some f -> Some (x_add rename_exp ren f)}
     | Iast.Seq b -> Iast.Seq 
-          { Iast.exp_seq_exp1 = rename_exp ren b.Iast.exp_seq_exp1;
-          Iast.exp_seq_exp2 =rename_exp ren b.Iast.exp_seq_exp2;
+          { Iast.exp_seq_exp1 = x_add rename_exp ren b.Iast.exp_seq_exp1;
+          Iast.exp_seq_exp2 = x_add rename_exp ren b.Iast.exp_seq_exp2;
           Iast.exp_seq_pos = b.Iast.exp_seq_pos }         
-    | Iast.Unary b-> Iast.Unary {b with Iast.exp_unary_exp = rename_exp ren b.Iast.exp_unary_exp}
+    | Iast.Unary b-> Iast.Unary {b with Iast.exp_unary_exp = x_add rename_exp ren b.Iast.exp_unary_exp}
     | Iast.Unfold b-> Iast.Unfold{b with Iast.exp_unfold_var = ((subid ren (fst b.Iast.exp_unfold_var)),(snd b.Iast.exp_unfold_var))}
     | Iast.Var b -> Iast.Var{b with Iast.exp_var_name = subid ren b.Iast.exp_var_name}
     | Iast.While b-> 
           let nw = match b.Iast.exp_while_wrappings with
             | None -> None
-            | Some (e,l) -> Some ((rename_exp ren e),l)  in
+            | Some (e,l) -> Some ((x_add rename_exp ren e),l)  in
           Iast.While{
-              Iast.exp_while_condition = rename_exp ren b.Iast.exp_while_condition;
-              Iast.exp_while_body = rename_exp ren b.Iast.exp_while_body;
+              Iast.exp_while_condition = x_add rename_exp ren b.Iast.exp_while_condition;
+              Iast.exp_while_body = x_add rename_exp ren b.Iast.exp_while_body;
               Iast.exp_while_addr_vars = [];
               Iast.exp_while_jump_label = b.Iast.exp_while_jump_label;
               Iast.exp_while_f_name = b.Iast.exp_while_f_name;
@@ -8878,14 +8878,14 @@ and rename_exp_x (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
     | Iast.Time _ ->f
     | Iast.Try b -> 
           Iast.Try { b with
-              Iast.exp_try_block = rename_exp ren b.Iast.exp_try_block;
-              Iast.exp_catch_clauses = List.map (rename_exp ren) b.Iast.exp_catch_clauses;
-              Iast.exp_finally_clause = List.map (rename_exp ren) b.Iast.exp_finally_clause;}
+              Iast.exp_try_block = x_add rename_exp ren b.Iast.exp_try_block;
+              Iast.exp_catch_clauses = List.map (x_add rename_exp ren) b.Iast.exp_catch_clauses;
+              Iast.exp_finally_clause = List.map (x_add rename_exp ren) b.Iast.exp_finally_clause;}
     | Iast.Raise b-> 
           Iast.Raise {b with
               Iast.exp_raise_val = (match b.Iast.exp_raise_val with 
                 | None -> None 
-                | Some e -> Some (rename_exp ren e));
+                | Some e -> Some (x_add rename_exp ren e));
               Iast.exp_raise_type = (match b.Iast.exp_raise_type with
                 | Iast.Const_flow _ -> b.Iast.exp_raise_type
                 | Iast.Var_flow vf -> Iast.Var_flow (subid ren vf))}
@@ -8895,7 +8895,7 @@ and rename_exp_x (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
       in
       let subst_ren ren (id, primed) = (subid ren id, primed) in
       let rename_par_case c = 
-        let body = rename_exp ren c.I.exp_par_case_body in
+        let body = x_add rename_exp ren c.I.exp_par_case_body in
         let cond = map_opt (fun f -> IF.subst sst f) c.I.exp_par_case_cond in
         let vp = IVP.subst_f subst_ren ren c.I.exp_par_case_vperm in
         { I.exp_par_case_cond = cond;
@@ -8911,6 +8911,10 @@ and rename_exp_x (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
         I.exp_par_pos = p.I.exp_par_pos; }
   in helper ren f 
 
+and case_rename_var_decls_init (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  
+  let pr = Iprinter.string_of_exp in
+  let pr_subs = pr_list (pr_pair pr_id pr_id) in
+  Debug.no_1 "case_rename_var_decls" pr (pr_pair pr pr_subs) case_rename_var_decls f
 
 and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  match f with
   | Iast.Assert _ -> (f,[])
@@ -8960,7 +8964,7 @@ and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  ma
             Iast.exp_catch_var = ncv ;
             Iast.exp_catch_flow_type = b.Iast.exp_catch_flow_type;
             Iast.exp_catch_flow_var = ncfv;
-            Iast.exp_catch_body = fst (case_rename_var_decls (rename_exp ren b.Iast.exp_catch_body));},[])
+            Iast.exp_catch_body = fst (case_rename_var_decls (x_add rename_exp ren b.Iast.exp_catch_body));},[])
   | Iast.Cond b->
         let ncond,r = case_rename_var_decls b.Iast.exp_cond_condition in    
         (Iast.Cond {b with 
@@ -8995,7 +8999,7 @@ and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  ma
   | Iast.Seq b -> 
         let l1,ren = case_rename_var_decls b.Iast.exp_seq_exp1 in
         let l2,ren2 = case_rename_var_decls b.Iast.exp_seq_exp2 in          
-        let l2 = rename_exp ren l2 in      
+        let l2 = x_add rename_exp ren l2 in      
         let aux_ren = (ren_list_concat ren ren2) in
         (Iast.Seq ({ Iast.exp_seq_exp1 = l1; Iast.exp_seq_exp2 = l2; Iast.exp_seq_pos = b.Iast.exp_seq_pos }),aux_ren)
   | Iast.Unary b -> 
@@ -9313,7 +9317,7 @@ and case_normalize_proc_x prog (f:Iast.proc_decl):Iast.proc_decl =
   let nb = match f.Iast.proc_body with 
       None -> None 
     | Some f->
-          let f,_ = case_rename_var_decls f in
+          let f,_ = x_add_1 case_rename_var_decls_init f in
           let r,_,_ = (case_normalize_exp prog h2 [(eres_name,Unprimed);(res_name,Unprimed)] f) in
           Some r in
   {f with Iast.proc_static_specs =nst;
@@ -9906,7 +9910,7 @@ and mark_rec_and_call_order_x (cp: C.prog_decl) : C.prog_decl =
   let cp = mark_recursive_call cp scc_list cg in
   let cp = mark_call_order cp scc_list cg in
   let (prims, mutual_grps) = C.re_proc_mutual (C.sort_proc_decls (C.list_of_procs cp)) in
-  Debug.trace_hprint (add_str "mutual scc" (pr_list (pr_list pr_proc_call_order))) mutual_grps no_pos;
+  x_tinfo_hp (add_str "mutual scc" (pr_list (pr_list pr_proc_call_order))) mutual_grps no_pos;
   cp
 
 and mark_rec_and_call_order (cp: C.prog_decl) : C.prog_decl =
@@ -10294,8 +10298,8 @@ and check_barrier_wf prog bd =
     if Solver.unsat_base_nth 4 prog (ref 0) tot_pre then raise  (Err.Malformed_barrier (" contradiction in pres for transition "^t_str ))
     else
       let tot_pre_bar = f_gen_tot fs in
-      let () = Debug.devel_zprint (lazy ("check_barriers: whole pre:  "^ (Cprinter.string_of_formula tot_pre))) no_pos in
-      let () = Debug.devel_zprint (lazy ("check_barriers: whole pre barr: "^ (Cprinter.string_of_formula tot_pre_bar))) no_pos in
+      let () = x_dinfo_zp (lazy ("check_barriers: whole pre:  "^ (Cprinter.string_of_formula tot_pre))) no_pos in
+      let () = x_dinfo_zp (lazy ("check_barriers: whole pre barr: "^ (Cprinter.string_of_formula tot_pre_bar))) no_pos in
       let fpre = one_entail tot_pre tot_pre_bar in
       if CF.isFailCtx fpre then  raise  (Err.Malformed_barrier (" preconditions do not contain the entire barrier in transition "^t_str ))
       else (*the post sum totals full barrier ts get residue F2*)
@@ -10307,13 +10311,13 @@ and check_barrier_wf prog bd =
         if Solver.unsat_base_nth 5 prog (ref 0) tot_post then raise (Err.Malformed_barrier (" contradiction in post for transition "^t_str ))
         else
           let tot_post_bar = f_gen_tot ts in
-          let () = Debug.devel_zprint (lazy ("check_barriers: whole post:  "^ (Cprinter.string_of_formula tot_post))) no_pos in
-          let () = Debug.devel_zprint (lazy ("check_barriers: whole post barr: "^ (Cprinter.string_of_formula tot_post_bar))) no_pos in
+          let () = x_dinfo_zp (lazy ("check_barriers: whole post:  "^ (Cprinter.string_of_formula tot_post))) no_pos in
+          let () = x_dinfo_zp (lazy ("check_barriers: whole post barr: "^ (Cprinter.string_of_formula tot_post_bar))) no_pos in
           let fpost = one_entail tot_post tot_post_bar in
           if CF.isFailCtx fpost then  raise  (Err.Malformed_barrier (" postconditions do not contain the entire barrier in transition "^t_str ))
           else (*show F1 = F2*)
-            let () = Debug.devel_zprint (lazy ("check_barriers: pre: "^ (Cprinter.string_of_list_context fpre))) no_pos in
-            let () = Debug.devel_zprint (lazy ("check_barriers: post: "^ (Cprinter.string_of_list_context fpost))) no_pos in
+            let () = x_dinfo_zp (lazy ("check_barriers: pre: "^ (Cprinter.string_of_list_context fpre))) no_pos in
+            let () = x_dinfo_zp (lazy ("check_barriers: post: "^ (Cprinter.string_of_list_context fpost))) no_pos in
             
             
             let fpre,fpost  =   (*add existential quantif for pure vars that do not appear on the other side*)
