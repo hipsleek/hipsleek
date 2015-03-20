@@ -9,8 +9,8 @@ $EX Cformula get_node_name
 $EX Cformula normalize
 $EX Cformula fold_context_left
 $EX Cformula add_to_context
-$EX Cprinter string_of_proc_decl 
-$EX Csvutil alias
+# $EX Cprinter string_of_proc_decl 
+# $EX Csvutil alias
 $EX Cvutil xpure_mem_enum
 $EX Cvutil xpure_heap_mem_enum
 $EX Cvutil xpure_symbolic
@@ -26,6 +26,7 @@ $EX Infer infer_collect_hp_rel
 $EX Infer infer_collect_hp_rel_empty_rhs
 $EX Infer infer_collect_hp_rel_classsic
 $EX Label_only comb_norm
+$EX LO comb_norm
 $EX Lemproving verify_lemma
 $EX Mcpure imply_memo 2
 $EX Musterr build_and_failures
@@ -68,5 +69,6 @@ $EX Tpdispatcher is_sat
 $EX Tpdispatcher is_sat_sub_no_c
 $EX Tpdispatcher is_sat_sub_no 
 $EX Typeinfer node2_to_node
+$EX TI node2_to_node
 $EX Fixcalc compute_fixpoint
 $EX Fixcalc compute_fixpoint_td
