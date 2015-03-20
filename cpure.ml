@@ -3269,27 +3269,9 @@ and subst_pos_formula p f = match f with
   | Forall (sv, f, ofl, _) -> Forall (sv,subst_pos_formula p f, ofl, p)
   | Exists (sv, f, ofl, _) -> Exists (sv,subst_pos_formula p f, ofl, p)
 
-(* pre : _<num> *)
-and fresh_old_name_x (s: string):string = 
-  let slen = (String.length s) in
-  let ri = 
-    try  
-      let n = (String.rindex s '_') in
-      (* let () = print_endline ((string_of_int n)) in *)
-      let l = (slen-(n+1)) in
-      if (l==0) then slen-1
-      else 
-        let tr = String.sub s (n+1) (slen-(n+1)) in
-        (* let () = int_of_string tr in *)
-        (* let () = print_endline ((string_of_int n)^tr^"##") in *)
-        n
-    with  _ -> slen in
-  let n = ((String.sub s 0 ri) ^ (fresh_trailer ())) in
-  (*let () = print_string ("init name: "^s^" new name: "^n ^"\n") in*)
-  n
 
 and fresh_old_name s =
-  Debug.no_1 "fresh_old_name" pr_id pr_id fresh_old_name_x s
+  Debug.no_1 "fresh_old_name" pr_id pr_id Globals.fresh_old_name s
 
 and fresh_perm_var () = SpecVar(Tree_sh, fresh_old_name "perm",Unprimed)
   
@@ -9152,7 +9134,7 @@ let rec elim_exists_with_fresh_vars f =
   match f with
 	| Exists (v, f1, _, _) -> 
 		let SpecVar (t, i, p) = v in
-		let nv = SpecVar (t, fresh_any_name i, p) in
+		let nv = SpecVar (t, fresh_old_name i, p) in
 		let l,f = elim_exists_with_fresh_vars (subst [v, nv] f1) in
 		nv::l,f
 	| BForm _ -> [],f
@@ -9174,6 +9156,10 @@ let rec elim_exists_with_fresh_vars f =
 		l1,Not (f1, fl, loc)
 	| Forall _ -> [],f  (* Not skolemization: All x. Ex y. P(x, y) -> All x. P(x, f(x)) *)
 	  
+let elim_exists_with_fresh_vars f =
+  let pr = !print_formula in
+  Debug.no_1 "elim_exists_with_fresh_vars" pr (pr_pair !print_svl pr) elim_exists_with_fresh_vars f 
+
 (* Slicing: Normalize LHS to DNF *)
 let rec dist_not_inwards f =
   match f with
@@ -9238,7 +9224,8 @@ let rec dist_and_over_or f =
 
 let trans_dnf f =
   let f = dist_not_inwards f in
-  let lex,f = elim_exists_with_fresh_vars f in
+  (* *)
+  let lex,f = x_add_1 elim_exists_with_fresh_vars f in
   let f = dist_and_over_or f in
   lex,f
 

@@ -126,6 +126,31 @@ Successful States:
  & yyyy!=q_1508
  &{FLOW,(4,5)=__norm#E}[]
 ===================================================================
+# ex2
+
+(==cpure.ml#9227==)
+elim_exists_with_fresh_vars@5131@5130@5129
+
+
+elim_exists_with_fresh_vars inp1 : 
+
+exists(v_bool_26_1478':!(v_bool_26_1478')) 
+ --> omega 
+
+exists(S1_1521:exists(S1_1535:exists(S2_1536:
+ S_1541=union(S1_1535,S2_1536) & S2_1536=S2) 
+ & S1_1535=S1_1521) & S1=union(S1_1521,{v_1519}))
+ --> use equality substitution if possible
+ --> after that use elim_exist_with_fresh_vars
+ 
+& x'=x & y'=y & x!=null & q_1520!=null
+
+elim_exists_with_fresh_vars@5131 EXIT:
+([v_bool_26_1542',S1_1543,S1_1544,S2_1545], 
+!(v_bool_26_1542') & S_1541=union(S1_1544,S2_1545) & S2_1545=S2 & 
+S1_1544=S1_1543 & S1=union(S1_1543,{v_1519}) & x'=x & y'=y & x!=null & 
+q_1520!=null)
+Push
 ===================================================================
 ===================================================================
 ===================================================================

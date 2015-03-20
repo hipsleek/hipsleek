@@ -1783,6 +1783,44 @@ let fresh_names (n : int) = (* number of names to be generated *)
     done;
     !names
 
+(* duplicated in cpure.ml *)
+(* pre : _<num> *)
+(* and fresh_old_name_x (s: string):string =  *)
+(*   let slen = (String.length s) in *)
+(*   let ri =  *)
+(*     try   *)
+(*       let n = (String.rindex s '_') in *)
+(*       (\* let () = print_endline ((string_of_int n)) in *\) *)
+(*       let l = (slen-(n+1)) in *)
+(*       if (l==0) then slen-1 *)
+(*       else  *)
+(*         let tr = String.sub s (n+1) (slen-(n+1)) in *)
+(*         (\* let () = int_of_string tr in *\) *)
+(*         (\* let () = print_endline ((string_of_int n)^tr^"##") in *\) *)
+(*         n *)
+(*     with  _ -> slen in *)
+(*   let n = ((String.sub s 0 ri) ^ (fresh_trailer ())) in *)
+(*   (\*let () = print_string ("init name: "^s^" new name: "^n ^"\n") in*\) *)
+(*   n *)
+
+let fresh_old_name (s: string):string =
+  let fn s =
+    let l = String.length s in
+    try
+      let c = (String.rindex s '_') in
+      (* let () = x_ninfo_hp (add_str "string" pr_id) s no_pos in *)
+      (* let () = x_binfo_hp (add_str "pos _ " string_of_int) c no_pos in *)
+      (* let () = x_binfo_hp (add_str "pos len " string_of_int) l no_pos in *)
+      let trail = String.sub s (c+1) (l-c-1) in
+      (* let () = x_binfo_hp (add_str "trail" pr_id) trail no_pos in *)
+      let (_:int64) = Int64.of_string trail in
+      c
+    with  _ -> l
+  in
+  let ri = fn s in
+  let n = ((String.sub s 0 ri) ^ (fresh_trailer ())) in
+  n
+
 let formula_cache_no_series = ref 0
 
 let fresh_formula_cache_no  () = 

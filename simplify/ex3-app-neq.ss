@@ -27,6 +27,14 @@ void foo(node xxx, node yyyy)
 /*
 # ex3-app-new.ss
 
+-dd gave this message. why?
+
+!!! XX View defn for ll has precise invariant
+
+
+
+-------------------------------------------------
+
 !!! **cfout.ml#423:important variables:[fl_47,tmp_46,nnn,xxx,yyyy,xxx',Anon_1507,q_1508,flted_7_1506]
 !!! **cfout.ml#425:exists variables:[fl_47',yyyy',tmp_46']
 
@@ -37,20 +45,41 @@ void foo(node xxx, node yyyy)
 (i) should not be any renaming
 (ii) should be from tmp -> tmp_46 and fl_bb --> fl_bb_47
 
+(==astsimp.ml#9314==)
+case_rename_var_decls@1
+case_rename_var_decls inp1 :{local: node tmpZZZ,boolean fl_bb
+node tmpZZZ = member access xxx~~>next;
+boolean fl_bb = tmpZZZ != yyyy;
+(100, ):if (fl_bb) { 
+  (100, ):{dprint;
+(102, ):return };
+} else { 
+  (100, ):{(101, ):return }
+}}
+case_rename_var_decls@1 EXIT:({local: node tmpZZZ,boolean fl_bb
+node tmpZZZ_46 = member access xxx~~>next;
+boolean fl_bb_47 = tmpZZZ_46 != yyyy;
+(100, ):if (fl_bb_47) { 
+  (100, ):{dprint;
+(102, ):return };
+} else { 
+  (100, ):{(101, ):return }
+}},[])
+
+
 void foo$node~node(  node xxx,  node yyyy)static  EBase exists (Expl)[](Impl)[nnn](ex)[]xxx::ll{}<nnn>&0<nnn&
        {FLOW,(4,5)=__norm#E}[]
          EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
                  EAssume 
                    (exists nnn_44: xxx::ll{}<nnn_44>&nnn_44=nnn&
                    {FLOW,(4,5)=__norm#E}[]
-                   
-dynamic  EBase hfalse&false&{FLOW,(4,5)=__norm#E}[]
-{(((node tmp_46;
-tmp_46 = bind xxx to (val_16_1467,next_16_1468) [read] in 
+dynamic  EBase hfalse&false&{FLOW,(4,5)=__norm#E}[]                   
+{(((node tmpZZZ_46;
+tmpZZZ_46 = bind xxx to (val_16_1467,next_16_1468) [read] in 
 next_16_1468);
-(boolean fl_47;
-fl_47 = {neq___$node~node(tmp_46,yyyy)}));
-if (fl_47) [LABEL! 100,0: {(dprint;
+(boolean fl_bb_47;
+fl_bb_47 = {neq___$node~node(tmpZZZ_46,yyyy)}));
+if (fl_bb_47) [LABEL! 100,0: {(dprint;
 ret#)}]
 else [LABEL! 100,1: {ret#}]
 )}
