@@ -1435,7 +1435,7 @@ and rename_bound_vars_x (f : formula) =
 and rename_bound_vars (f : formula): formula = 
   let pr = !print_formula in
   Debug.no_1 "IF.rename_bound_vars" pr pr rename_bound_vars_x f
-	          
+
 and subst_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula):struc_formula = match f with
 	| EAssume b -> 
 		EAssume {b with 

@@ -2,39 +2,35 @@
 
 /* representation of a node */
 data node {
-	int val; 
-	node next;	
+  int val;
+  node next;
 }
 
 /* view for a singly linked list */
 
+ll<S> == self = null & S = {}
+  or self::node<v, q> * q::ll<S1> & S = union(S1, {v});
 
-
-ll<S> == self = null & S = {} 
-	or self::node<v, q> * q::ll<S1> & S = union(S1, {v});
-
-	
 /*ll2<n, S> == self=null & n=0 & S={}
 	or self::node<v, r> * r::ll2<m, S1> & n=m+1 & S=union(S1, {v});*/
 
 /* append two singly linked lists */
 void append(node x, node y)
-	requires x::ll<S1> * y::ll<S2> & x != null
-	ensures x::ll<S> & S = union(S1, S2);
-
+  requires x::ll<S1> * y::ll<S2> & x != null
+  ensures x::ll<S> & S = union(S1, S2);
 {
    if (x.next==null)
-    {      
+    {
       x.next = y;
       //dprint;
       //assume false;
     }
-	else
-   {
-    //assume false;
-		append(x.next, y);
-                dprint;
-    }
+   else
+     {
+       //assume false;
+       append(x.next, y);
+       dprint;
+     }
 }
 
 /*

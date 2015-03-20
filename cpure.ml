@@ -9155,7 +9155,7 @@ let rec elim_exists_with_fresh_vars f =
 		let l1,f1 = elim_exists_with_fresh_vars f1 in
 		l1,Not (f1, fl, loc)
 	| Forall _ -> [],f  (* Not skolemization: All x. Ex y. P(x, y) -> All x. P(x, f(x)) *)
-	  
+
 let elim_exists_with_fresh_vars f =
   let pr = !print_formula in
   Debug.no_1 "elim_exists_with_fresh_vars" pr (pr_pair !print_svl pr) elim_exists_with_fresh_vars f 
@@ -9237,7 +9237,7 @@ let rec dnf_to_list f =
 	  let lex2,l_f2 = dnf_to_list f2 in
 	  lex@lex1@lex2, l_f1 @ l_f2
 	| _ -> lex,[dnf_f]
-	
+
 let dnf_to_list f = Debug.no_1 "dnf_to_list" !print_formula (pr_pair !print_svl (pr_list !print_formula)) dnf_to_list f
   	(*
 let rec partition_dnf_lhs f =

@@ -427,7 +427,8 @@ let simplify_branch_context (pt, ctx, fail_type) =
                 let exists_svl = Gen.BList.difference_eq Cpure.eq_spec_var all_svl imp_svl in
                 let () = x_binfo_hp (add_str "exists variables" (pr_list !print_sv)) exists_svl no_pos in
                 if (List.length exists_svl = 0)
-                then en.es_formula
+                then
+                  en.es_formula
                 else
                   let pf = Mcpure.pure_of_mix mf in
                   let pf1 = Cpure.mkExists exists_svl pf None no_pos in
