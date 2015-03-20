@@ -246,11 +246,11 @@ let rec infer_pre_cond_iter loop_trans_list loop_cond_list =
     match st with Reach_Both -> true | _ -> false) reach_status_trans in
 
   let () = 
-    Debug.tinfo_pprint ">>>>>>> infer_pre_cond_iter <<<<<<<" no_pos;
-    List.iter (fun (r, t) -> Debug.tinfo_hprint (add_str "loop trans: "
+    x_tinfo_pp ">>>>>>> infer_pre_cond_iter <<<<<<<" no_pos;
+    List.iter (fun (r, t) -> x_tinfo_hp (add_str "loop trans: "
       (fun (r, t) -> (print_rec_trans t) ^ "(" ^ (print_reach_status r) ^ ")")) (r, t) no_pos)
       reach_status_trans;
-    List.iter (fun c -> Debug.tinfo_hprint (add_str "loop cond: " 
+    List.iter (fun c -> x_tinfo_hp (add_str "loop cond: " 
       (fun c -> print_rec_cond c)) c no_pos) loop_cond_list
   in
   
@@ -258,7 +258,7 @@ let rec infer_pre_cond_iter loop_trans_list loop_cond_list =
    * by strengthening the context of loop transitions 
    * and loop conditions with unknown templates *)
   if reach_both_trans = [] then
-    List.iter (fun c -> Debug.tinfo_hprint (add_str "Non-Termination Condition: " 
+    List.iter (fun c -> x_tinfo_hp (add_str "Non-Termination Condition: " 
       (fun c -> print_rec_cond c)) c no_pos) loop_cond_list
   else
     let templ_reach_both_trans, templ_loop_cond, templ_id_list = List.fold_left (
@@ -268,9 +268,9 @@ let rec infer_pre_cond_iter loop_trans_list loop_cond_list =
       ([], loop_cond_list, []) reach_both_trans in
 
     let () = 
-      List.iter (fun t -> Debug.tinfo_hprint (add_str "templ loop trans: " 
+      List.iter (fun t -> x_tinfo_hp (add_str "templ loop trans: " 
         print_rec_trans) t no_pos) templ_reach_both_trans;
-      List.iter (fun c -> Debug.tinfo_hprint (add_str "templ loop cond: " 
+      List.iter (fun c -> x_tinfo_hp (add_str "templ loop cond: " 
         (fun c -> print_rec_cond c)) c no_pos) templ_loop_cond
     in
 
@@ -286,7 +286,7 @@ let rec infer_pre_cond_iter loop_trans_list loop_cond_list =
       let rec_cond = apply_par_term (List.combine rec_cond_fv trans.trans_dst_args) rec_cond in
 
       let () = 
-        Debug.tinfo_hprint (add_str "templ entail: " (fun (ctx, rc) -> 
+        x_tinfo_hp (add_str "templ entail: " (fun (ctx, rc) -> 
           (!print_formula ctx) ^ " --> " ^ (!print_formula rc))) 
           (trans.trans_ctx, rec_cond) no_pos
       in
@@ -298,7 +298,7 @@ let rec infer_pre_cond_iter loop_trans_list loop_cond_list =
     (* Solve the template constraints *)
     let _, templ_unks, res = solve_templ_assume () in
     let () = 
-      Debug.tinfo_hprint (add_str "templ res: " print_solver_res) res no_pos
+      x_tinfo_hp (add_str "templ res: " print_solver_res) res no_pos
     in
 
     match res with
@@ -313,9 +313,9 @@ let rec infer_pre_cond_iter loop_trans_list loop_cond_list =
           { t with trans_ctx = subst_model_to_formula model t.trans_ctx}) 
         templ_reach_both_trans) in 
       let _ =
-        List.iter (fun t -> Debug.tinfo_hprint (add_str "sst loop trans: " 
+        List.iter (fun t -> x_tinfo_hp (add_str "sst loop trans: " 
           print_rec_trans) t no_pos) sst_loop_trans;
-        List.iter (fun c -> Debug.tinfo_hprint (add_str "sst loop cond: " 
+        List.iter (fun c -> x_tinfo_hp (add_str "sst loop cond: " 
           (fun c -> print_rec_cond c)) c no_pos) sst_loop_cond
       in infer_pre_cond_iter sst_loop_trans sst_loop_cond
     | _ -> ()

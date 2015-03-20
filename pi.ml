@@ -607,8 +607,8 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                 List.fold_left (fun (s1,s2) (pf1,_) ->
                     (s1 ^ " \/ (" ^ (pr pf1) ^ ")",s2)
                 ) ("(" ^ (pr pf1) ^")",(pr pf2) ^ " = ") tl in
-            let () = DD.binfo_pprint (s2 ^ s1) no_pos in
-            (* let () = DD.binfo_hprint (add_str "constraints" (pr_list (pr_pair pr (fun _ -> "")))) post_rel_df_new no_pos in *)
+            let () = x_binfo_pp (s2 ^ s1) no_pos in
+            (* let () = x_binfo_hp (add_str "constraints" (pr_list (pr_pair pr (fun _ -> "")))) post_rel_df_new no_pos in *)
             let _ = print_endline ("Pi.infer_pure") in
             let bottom_up_fp0 = Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars (List.hd proc_specs) in
             let () = DD.ninfo_hprint (add_str "bottom_up_fp0" (pr_list (pr_pair pr pr))) bottom_up_fp0 no_pos in
@@ -621,14 +621,14 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             (* ) bottom_up_fp0 in *)
             let bottom_up_fp = bottom_up_fp0 in
             let proc_spec = List.hd proc_specs in
-            let () = DD.binfo_hprint (add_str "bottom_up_fp" (pr_list (pr_pair pr pr))) bottom_up_fp no_pos in
+            let () = x_binfo_hp (add_str "bottom_up_fp" (pr_list (pr_pair pr pr))) bottom_up_fp no_pos in
             let () = DD.ninfo_hprint (add_str "pre_rel_fmls" (pr_list pr)) pre_rel_fmls no_pos in
             let () = DD.ninfo_hprint (add_str "pre_fmls" (pr_list pr)) pre_fmls no_pos in
             let res = Fixpoint.update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs
                 Fixcalc.compute_fixpoint_td
                 Fixcalc.fixc_preprocess reloblgs pre_rel_df post_rel_df_new post_rel_df pre_vars proc_spec grp_post_rel_flag
             in
-            let () = DD.binfo_hprint (add_str "fixpoint" (pr_list (pr_quad pr pr pr pr))) res no_pos in
+            let () = x_binfo_hp (add_str "fixpoint" (pr_list (pr_quad pr pr pr pr))) res no_pos in
             res
           in
           Infer.fixcalc_rel_stk # push_list tuples;

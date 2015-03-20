@@ -282,9 +282,9 @@ let get_model solver obj_vars assertions =
   let lp_out = run solver lp_inp in
 
   let () = 
-    Debug.tinfo_pprint ">>>>>>> get_model_lp <<<<<<<" no_pos;
-    Debug.tinfo_hprint (add_str "lp input:\n " idf) lp_inp no_pos;
-    Debug.tinfo_hprint (add_str "lp output: " idf) lp_out no_pos 
+    x_tinfo_pp ">>>>>>> get_model_lp <<<<<<<" no_pos;
+    x_tinfo_hp (add_str "lp input:\n " idf) lp_inp no_pos;
+    x_tinfo_hp (add_str "lp output: " idf) lp_out no_pos 
   in
 
   process_output solver lp_out

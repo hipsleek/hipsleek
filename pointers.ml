@@ -175,7 +175,7 @@ let modifies (e:exp) (bvars:ident list) prog : (ident list) * (ident list) * (id
             (new_bvars,[],[])
       | Unary u ->
             let _,fvars,fw = helper u.exp_unary_exp bvars in
-            let () = Debug.binfo_hprint (add_str "Unary" string_of_exp) e no_pos in
+            let () = x_binfo_hp (add_str "Unary" string_of_exp) e no_pos in
             ( match u.exp_unary_op with
               | OpPreInc
               | OpPreDec

@@ -2,5 +2,5 @@
 for i in *.ml
 do
     echo $i,###
-    sed -n -f list-binfo.sed $i 
+    sed -i -f mv-binfo.sed $i
 done

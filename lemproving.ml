@@ -343,7 +343,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
 (* sets the lhs & rhs of the entailment when proving l2r lemma (coercion), where the rhs (coercion body) is normalized  *)
 let check_left_coercion coer (cprog: C.prog_decl) =
   (* using normalization form of lemma body and head to check *)
-  let pr_debug = Debug.tinfo_hprint in
+  let pr_debug = x_tinfo_hp in
   let pr = Cprinter.string_of_coerc_med in
   let pr2 = Cprinter.string_of_struc_formula in
   let pr3 = Cprinter.string_of_formula in
@@ -351,7 +351,7 @@ let check_left_coercion coer (cprog: C.prog_decl) =
   let ent_rhs =  coer.C.coercion_body_norm in
   (* let ent_lhs = coer.C.coercion_head in                                    *)
   (* let ent_rhs = CF.struc_formula_of_formula coer.C.coercion_body no_pos in *)
-  Debug.tinfo_pprint "Verify Left Coercion" no_pos;
+  x_tinfo_pp "Verify Left Coercion" no_pos;
   pr_debug (add_str "lemma(med)" pr) coer no_pos;
   pr_debug (add_str "norm lhs" pr3) ent_lhs no_pos;
   pr_debug (add_str "norm rhs" pr2) ent_rhs no_pos;
@@ -367,14 +367,14 @@ let check_left_coercion coer cprog  =
 (* sets the lhs & rhs of the entailment when proving r2l lemma (coercion), where the rhs (coercion head) is normalized  *)
 let check_right_coercion coer (cprog: C.prog_decl) =
   (* using normalization form of lemma body and head to check *)
-  let pr_debug = Debug.tinfo_hprint in
+  let pr_debug = x_tinfo_hp in
   let pr = Cprinter.string_of_coerc_med in
   let pr2 = Cprinter.string_of_struc_formula in
   let pr3 = Cprinter.string_of_formula in
   let ent_rhs = CF.struc_formula_of_formula coer.C.coercion_head_norm no_pos in
   let ent_lhs = CF.struc_to_formula coer.C.coercion_body_norm in
   (* let ent_lhs = Cvutil.remove_imm_from_formula cprog ent_lhs (CP.ConstAnn(Lend)) in *) (* actually this removes @L nodes from the body of right lemma for proving sake *)
-  Debug.tinfo_pprint "Verify Right Coercion" no_pos;
+  x_tinfo_pp "Verify Right Coercion" no_pos;
   pr_debug (add_str "lemma(med)" pr) coer no_pos;
   pr_debug (add_str "norm lhs" pr3) ent_lhs no_pos;
   pr_debug (add_str "norm rhs" pr2) ent_rhs no_pos;

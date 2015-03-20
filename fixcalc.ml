@@ -139,7 +139,7 @@ let rec fixcalc_of_b_formula b =
             (fixcalc_of_spec_var id) ^ "(" ^ 
                 (string_of_elems args fixcalc_of_exp ",") ^ ")"
     | _ -> 
-          let () = Debug.binfo_hprint (add_str "fixcalc trans error :" Cprinter.string_of_b_formula) b no_pos in
+          let () = x_binfo_hp (add_str "fixcalc trans error :" Cprinter.string_of_b_formula) b no_pos in
           illegal_format ("Fixcalc.fixcalc_of_b_formula: Do not support bag, list")
 
 let rec fixcalc_of_pure_formula f = match f with
@@ -640,7 +640,7 @@ let compute_inv_mutrec mutrec_vnames views =
         (* let memo_pf_N = MCP.memoise_add_pure_N (MCP.mkMTrue pos) inv in *)
         (* let xpure_flag = Tpdispatcher.check_diff memo_pf_N memo_pf_P in *)
         begin
-          Debug.tinfo_hprint (add_str "memo_pf_P" Cprinter.string_of_mix_formula) memo_pf_P no_pos;
+          x_tinfo_hp (add_str "memo_pf_P" Cprinter.string_of_mix_formula) memo_pf_P no_pos;
           view.Cast.view_fixcalc <- Some memo_pf_P;
           (* view.Cast.view_x_formula <- memo_pf_P; *)
           view.Cast.view_baga_x_over_inv <- Some [([], new_pf)];
@@ -675,7 +675,7 @@ let compute_inv_mutrec mutrec_vnames views =
     in
     (* Call the fixpoint calculation *)
     let invs = (compute_invs_fixcalc input_fixcalc) in
-    let () = DD.tinfo_hprint (add_str "invs" (pr_list Cprinter.string_of_pure_formula)) invs no_pos in
+    let () = x_tinfo_hp (add_str "invs" (pr_list Cprinter.string_of_pure_formula)) invs no_pos in
     (*get result and revert back*)
     (*set invs + flags*)
     let all_rev_sst = List.fold_left (fun r (_,_,sst) -> r@sst) [] vmaps in
@@ -879,10 +879,10 @@ let compute_cmd rel_defs bottom_up =
       CP.name_of_spec_var (CP.name_of_rel_form a)) rel_defs in
   let names = string_of_elems rels (fun x -> x) "," in
   if bottom_up then
-    let () = DD.binfo_pprint "bottom up" no_pos in
+    let () = x_binfo_pp "bottom up" no_pos in
     "\nbottomupgen([" ^ names ^ "], [" ^ nos ^ "], SimHeur);"
   else
-    let () = DD.binfo_pprint "top down" no_pos in
+    let () = x_binfo_pp "top down" no_pos in
     "\nTD:=topdown(" ^ names ^ ", " ^ nos ^ ", SimHeur);\nTD;"
 
 let compute_fixpoint_aux rel_defs ante_vars bottom_up =
@@ -1377,7 +1377,7 @@ let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up =
           | _ -> acc
         in new_acc
     ) 1 input_pairs in
-    let () = Debug.binfo_hprint (add_str "n_base" string_of_int) n_base no_pos in
+    let () = x_binfo_hp (add_str "n_base" string_of_int) n_base no_pos in
     (* Wrapper.wrap_num_disj compute_fixpoint_x n_base input_pairs ante_vars specs bottom_up *)
     compute_fixpoint_x input_pairs ante_vars specs bottom_up
 

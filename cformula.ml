@@ -3935,7 +3935,7 @@ and split_components_x (f : formula) =
         formula_exists_and = a; (* TO CHECK: omit at the moment *)
         formula_exists_type = t }) -> (h, p, vp, fl, t, a)
     | Or ({ formula_or_pos = pos }) ->
-      let () = DD.tinfo_hprint (add_str "f" !print_formula) f no_pos in
+      let () = x_tinfo_hp (add_str "f" !print_formula) f no_pos in
       Err.report_error {
         Err.error_loc = pos;
         Err.error_text = "split_components: don't expect OR" }
@@ -4182,9 +4182,9 @@ and simplify_pure_f_x (f0:formula) =
   let simp f =
     let r1 = CP.remove_redundant f in
     let r2 = Wrapper.wrap_exception f simplify_aux r1 in
-    let () = Debug.tinfo_hprint (add_str "simp(f)" !print_pure_f) f no_pos in
-    let () = Debug.tinfo_hprint (add_str "simp(syn)" !print_pure_f) r1 no_pos in
-    let () = Debug.tinfo_hprint (add_str "simp(oc)" !print_pure_f) r2 no_pos in r2 in
+    let () = x_tinfo_hp (add_str "simp(f)" !print_pure_f) f no_pos in
+    let () = x_tinfo_hp (add_str "simp(syn)" !print_pure_f) r1 no_pos in
+    let () = x_tinfo_hp (add_str "simp(oc)" !print_pure_f) r2 no_pos in r2 in
   let rec helper f=
     match f with
       | Base b-> Base {b with formula_base_pure = MCP.mix_of_pure (simp (* CP.remove_redundant *) (MCP.pure_of_mix b.formula_base_pure));}
@@ -10639,7 +10639,7 @@ let remove_dupl_false (sl:branch_ctx list) =
       (isAnyFalseCtx oc && not(is_inferred_pre_ctx oc)) ) sl) in
   let pr = pr_list (fun (_,oc,_) -> !print_context_short oc) in
   if not(fl==[]) && not(nl==[]) then
-    Debug.tinfo_hprint (add_str "false ctx removed" pr) fl no_pos; 
+    x_tinfo_hp (add_str "false ctx removed" pr) fl no_pos; 
   if nl==[] then 
     if (fl==[]) then []
     else [List.hd(fl)]
@@ -12862,8 +12862,8 @@ let extract_single_hvar_f (f0:formula) : CP.spec_var option =
     | Base ({ formula_base_heap = h1; formula_base_vperm=vp; formula_base_pure =pf;})
     | Exists ({formula_exists_heap = h1; formula_exists_vperm=vp; formula_exists_pure =pf;}) 
         -> 
-          let () = Debug.tinfo_hprint (add_str "residue:vp" !print_vperm_sets) vp no_pos in
-          let () = Debug.tinfo_hprint (add_str "residue:pure" !print_mix_formula) pf no_pos in
+          let () = x_tinfo_hp (add_str "residue:vp" !print_vperm_sets) vp no_pos in
+          let () = x_tinfo_hp (add_str "residue:pure" !print_mix_formula) pf no_pos in
           if CVP.is_empty_vperm_sets vp then 
             extract_single_hvar h1
           else None

@@ -1116,7 +1116,7 @@ let subst_phase_num_struc rem_phase subst (struc: struc_formula) : struc_formula
 		    let t_ann = t_info.lex_ann in
 		    let ml = t_info.lex_tmp in
 			  let pos = t_info.lex_loc in
-        Debug.dinfo_hprint (add_str "lex_tmp" (pr_list !print_exp)) ml no_pos;
+        x_dinfo_hp (add_str "lex_tmp" (pr_list !print_exp)) ml no_pos;
         let subs_extra = match ml with
           | _::e::_ -> begin
             match get_var_opt e with
@@ -1125,7 +1125,7 @@ let subst_phase_num_struc rem_phase subst (struc: struc_formula) : struc_formula
                 if (List.exists (fun (v2,_) -> eq_spec_var v v2) subst) then [] 
                 else 
                   begin
-                    Debug.tinfo_hprint (add_str "var -> 0" !print_sv) v no_pos;
+                    x_tinfo_hp (add_str "var -> 0" !print_sv) v no_pos;
                     [(v,0)]
                   end
                 end
@@ -1246,8 +1246,8 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
                     if all_zero then
                       Debug.trace_hprint (add_str ("Phase to remove") !print_svl) rp no_pos
                     else begin
-                      Debug.tinfo_hprint (add_str "Mutual Rec Group" (pr_list pr_id)) mutual_grp no_pos; 
-                      Debug.tinfo_hprint (add_str "Phase Numbering"
+                      x_tinfo_hp (add_str "Mutual Rec Group" (pr_list pr_id)) mutual_grp no_pos; 
+                      x_tinfo_hp (add_str "Phase Numbering"
                           (pr_list (pr_pair !print_sv string_of_int))) subst no_pos
                     end;
                     let n_tbl = Cast.proc_decls_map (fun proc ->
