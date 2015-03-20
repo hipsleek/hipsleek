@@ -296,7 +296,7 @@ class incremMethods : [CP.formula] incremMethodsType = object
   method popto (process: prover_process_t) (n: int): unit = 
     let n = 
       if ( n > !push_no) then begin
-        Debug.devel_zprint (lazy ("\nCannot pop to " ^ (string_of_int n) ^ ": no such stack. Will pop to stack no. " ^ (string_of_int !push_no))) no_pos;
+        x_dinfo_zp (lazy ("\nCannot pop to " ^ (string_of_int n) ^ ": no such stack. Will pop to stack no. " ^ (string_of_int !push_no))) no_pos;
         !push_no 
       end
       else n in
@@ -1600,7 +1600,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         let f = CP.infer_level_pure f in (*add l.mu>0*)
         let f = CP.translate_waitlevel_pure f in
         let f = CP.translate_level_pure f in
-        let () = Debug.devel_hprint (add_str "After translate_: " Cprinter.string_of_pure_formula) f no_pos in
+        let () = x_dinfo_hp (add_str "After translate_: " Cprinter.string_of_pure_formula) f no_pos in
         f
       else
         (* let f = CP.drop_svl_pure f [(CP.mkWaitlevelVar Unprimed);(CP.mkWaitlevelVar Primed)] in *)
@@ -1700,7 +1700,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
             (*TO CHECK: soundness. issat(f) = issat(f1) & is(satf2)*)
           let f_no_float = CP.drop_float_formula wf in
           let f_no_bag = CP.drop_bag_formula wf in
-          let () = Debug.devel_zprint (lazy ("SAT #" ^ sat_no ^ " : mixed float + bag constraints ===> partitioning: \n ### " ^ (!print_pure wf) ^ "\n INTO : " ^ (!print_pure f_no_float) ^ "\n AND : " ^ (!print_pure f_no_bag) )) no_pos
+          let () = x_dinfo_zp (lazy ("SAT #" ^ sat_no ^ " : mixed float + bag constraints ===> partitioning: \n ### " ^ (!print_pure wf) ^ "\n INTO : " ^ (!print_pure f_no_float) ^ "\n AND : " ^ (!print_pure f_no_bag) )) no_pos
           in
           let b1 = mona_is_sat f_no_float in
           let b2 = redlog_is_sat f_no_bag in
@@ -1719,7 +1719,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
             let f_no_float_rel = CP.drop_rel_formula (CP.drop_float_formula wf) in
             let f_no_bag_rel = CP.drop_rel_formula (CP.drop_bag_formula wf) in
             let f_no_float_bag = CP.drop_float_formula (CP.drop_bag_formula wf) in
-            let () = Debug.devel_zprint (lazy ("SAT #" ^ sat_no ^ " : mixed float + relation + bag constraints ===> partitioning: \n ### " ^ (!print_pure wf) ^ "\n INTO : " ^ (!print_pure f_no_float_rel) ^ "\n AND : " ^ (!print_pure f_no_bag_rel) ^ "\n AND : " ^ (!print_pure f_no_float_bag) )) no_pos
+            let () = x_dinfo_zp (lazy ("SAT #" ^ sat_no ^ " : mixed float + relation + bag constraints ===> partitioning: \n ### " ^ (!print_pure wf) ^ "\n INTO : " ^ (!print_pure f_no_float_rel) ^ "\n AND : " ^ (!print_pure f_no_bag_rel) ^ "\n AND : " ^ (!print_pure f_no_float_bag) )) no_pos
             in
             let b1 = mona_is_sat f_no_float_rel in
             let b2 = redlog_is_sat f_no_bag_rel in
@@ -1732,7 +1732,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
             (*TO CHECK: soundness. issat(f) = issat(f1) & is(satf2)*)
             let f_no_float = CP.drop_float_formula wf in
             let f_no_bag = CP.drop_bag_formula wf in
-            let () = Debug.devel_zprint (lazy ("SAT #" ^ sat_no ^ " : mixed float + bag constraints ===> partitioning: \n ### " ^ (!print_pure wf) ^ "\n INTO : " ^ (!print_pure f_no_float) ^ "\n AND : " ^ (!print_pure f_no_bag) )) no_pos
+            let () = x_dinfo_zp (lazy ("SAT #" ^ sat_no ^ " : mixed float + bag constraints ===> partitioning: \n ### " ^ (!print_pure wf) ^ "\n INTO : " ^ (!print_pure f_no_float) ^ "\n AND : " ^ (!print_pure f_no_bag) )) no_pos
             in
             let f_no_float_bag_only = CP.collect_all_constraints is_bag_constraint f_no_float in
             let f_no_float_no_bag = CP.drop_bag_formula f_no_float in
@@ -1865,8 +1865,8 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
 
   let sat_num = next_proof_no () in
   let sat_no = (string_of_int sat_num) in
-  Debug.devel_zprint (lazy ("SAT #" ^ sat_no)) no_pos;
-  Debug.devel_zprint (lazy (!print_pure f)) no_pos;
+  x_dinfo_zp (lazy ("SAT #" ^ sat_no)) no_pos;
+  x_dinfo_zp (lazy (!print_pure f)) no_pos;
   (* let tstart = Gen.Profiling.get_time () in		 *)
   let fn_sat f = (tp_is_sat_perm f) sat_no in
   let cmd = PT_SAT f in
@@ -2621,8 +2621,8 @@ let tp_imply_preprocess_x (ante: CP.formula) (conseq: CP.formula) : (bool option
         let conseq = CP.infer_level_pure conseq in (*add l.mu>0*)
         let conseq = CP.translate_waitlevel_pure conseq in
         let conseq = CP.translate_level_pure conseq in
-        let () = Debug.devel_hprint (add_str "After translate_: ante = " Cprinter.string_of_pure_formula) ante no_pos in
-        let () = Debug.devel_hprint (add_str "After translate_: conseq = " Cprinter.string_of_pure_formula) conseq no_pos in
+        let () = x_dinfo_hp (add_str "After translate_: ante = " Cprinter.string_of_pure_formula) ante no_pos in
+        let () = x_dinfo_hp (add_str "After translate_: conseq = " Cprinter.string_of_pure_formula) conseq no_pos in
         (ante,conseq)
       else 
         (* let ante = CP.drop_svl_pure ante [(CP.mkWaitlevelVar Unprimed);(CP.mkWaitlevelVar Primed)] in *)
@@ -3027,9 +3027,9 @@ let tp_imply ante conseq old_imp_no timeout process =
     if !Globals.imply_top_flag then imp_no^":"^old_imp_no 
     else imp_no
   in
-  Debug.devel_zprint (lazy ("IMP #" ^ imp_no)) no_pos;  
-  Debug.devel_zprint (lazy ("imply_timeout: ante: " ^ (!print_pure ante))) no_pos;
-  Debug.devel_zprint (lazy ("imply_timeout: conseq: " ^ (!print_pure conseq))) no_pos;
+  x_dinfo_zp (lazy ("IMP #" ^ imp_no)) no_pos;  
+  x_dinfo_zp (lazy ("imply_timeout: ante: " ^ (!print_pure ante))) no_pos;
+  x_dinfo_zp (lazy ("imply_timeout: conseq: " ^ (!print_pure conseq))) no_pos;
   let cmd = PT_IMPLY(ante,conseq) in
   let () = Log.last_proof_command # set cmd in
   let fn () = tp_imply ante conseq imp_no timeout process in
@@ -3234,15 +3234,15 @@ let imply_timeout_helper ante conseq process ante_inner conseq_inner imp_no time
         (* let conseq0 = CP.infer_level_pure conseq in *) (*add l.mu>0*) (*MERGE CHECK*)
 	  let acpairs = imply_label_filter ante conseq in
 	  let pairs = List.map (fun (ante,conseq) -> 
-              let () = Debug.devel_hprint (add_str "ante 1: " Cprinter.string_of_pure_formula) ante no_pos in
+              let () = x_dinfo_hp (add_str "ante 1: " Cprinter.string_of_pure_formula) ante no_pos in
               (* RHS split already done outside *)
 	      (* let cons = split_conjunctions conseq in *)
 	      let cons = [conseq] in
 	      List.map (fun cons-> 
                   let (ante,cons) = simpl_pair false (requant ante, requant cons) in
-                  let () = Debug.devel_hprint (add_str "ante 3: " Cprinter.string_of_pure_formula) ante no_pos in
+                  let () = x_dinfo_hp (add_str "ante 3: " Cprinter.string_of_pure_formula) ante no_pos in
 		  let ante = CP.remove_dup_constraints ante in
-                  let () = Debug.devel_hprint (add_str "ante 4: " Cprinter.string_of_pure_formula) ante no_pos in
+                  let () = x_dinfo_hp (add_str "ante 4: " Cprinter.string_of_pure_formula) ante no_pos in
 		  match process with
 		    | Some (Some proc, true) -> (ante, cons) (* don't filter when in incremental mode - need to send full ante to prover *)
 		    | _ -> assumption_filter ante cons  ) cons) acpairs in
@@ -3269,7 +3269,7 @@ let imply_timeout_helper ante conseq process ante_inner conseq_inner imp_no time
 		else 
                   tp_imply(*_debug*) ante conseq imp_no timeout process 
               in
-              let () = Debug.devel_hprint (add_str "res: " string_of_bool) res1 no_pos in
+              let () = x_dinfo_hp (add_str "res: " string_of_bool) res1 no_pos in
 	      let l1 = CP.get_pure_label ante in
               let l2 = CP.get_pure_label conseq in
 	      if res1 then (res1,(l1,l2)::res2,None)
@@ -3296,9 +3296,9 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
   let ante_inner = ref [] in
   let conseq_inner = ref [] in
   (* let tstart = Gen.Profiling.get_time () in		 *)
-  (* Debug.devel_zprint (lazy ("IMP #" ^ imp_no)) no_pos;   *)
-  (* Debug.devel_zprint (lazy ("imply_timeout: ante: " ^ (!print_pure ante0))) no_pos; *)
-  (* Debug.devel_zprint (lazy ("imply_timeout: conseq: " ^ (!print_pure conseq0))) no_pos; *)
+  (* x_dinfo_zp (lazy ("IMP #" ^ imp_no)) no_pos;   *)
+  (* x_dinfo_zp (lazy ("imply_timeout: ante: " ^ (!print_pure ante0))) no_pos; *)
+  (* x_dinfo_zp (lazy ("imply_timeout: conseq: " ^ (!print_pure conseq0))) no_pos; *)
   let cmd = PT_IMPLY_TOP(ante0,conseq0) in
   (* let () = Log.last_proof_command # set cmd in *)
   let fn () =
@@ -3313,8 +3313,8 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
         let ante0 = CP.translate_level_pure ante0 in
         let conseq0 = CP.translate_waitlevel_pure conseq0 in
         let conseq0 = CP.translate_level_pure conseq0 in
-        let () = Debug.devel_hprint (add_str "After translate_: ante0 = " Cprinter.string_of_pure_formula) ante0 no_pos in
-        let () = Debug.devel_hprint (add_str "After translate_: conseq0 = " Cprinter.string_of_pure_formula) conseq0 no_pos in
+        let () = x_dinfo_hp (add_str "After translate_: ante0 = " Cprinter.string_of_pure_formula) ante0 no_pos in
+        let () = x_dinfo_hp (add_str "After translate_: conseq0 = " Cprinter.string_of_pure_formula) conseq0 no_pos in
         (ante0,conseq0)
       else 
         (* let ante0 = CP.drop_svl_pure ante0 [(CP.mkWaitlevelVar Unprimed);(CP.mkWaitlevelVar Primed)] in *)
@@ -3368,9 +3368,9 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 (*   proof_no := !proof_no + 1 ;  *)
 (*   let imp_no = (string_of_int !proof_no) in *)
 (*   (\* let () = print_string ("\nTPdispatcher.ml: imply_timeout:" ^ imp_no) in *\) *)
-(*   Debug.devel_zprint (lazy ("IMP #" ^ imp_no)) no_pos;   *)
-(*   Debug.devel_zprint (lazy ("ante: " ^ (!print_pure ante0))) no_pos; *)
-(*   Debug.devel_zprint (lazy ("conseq: " ^ (!print_pure conseq0))) no_pos; *)
+(*   x_dinfo_zp (lazy ("IMP #" ^ imp_no)) no_pos;   *)
+(*   x_dinfo_zp (lazy ("ante: " ^ (!print_pure ante0))) no_pos; *)
+(*   x_dinfo_zp (lazy ("conseq: " ^ (!print_pure conseq0))) no_pos; *)
 (*   if !external_prover then  *)
 (*     match Netprover.call_prover (Imply (ante0,conseq0)) with *)
 (*       | Some res -> (res,[],None)        *)
@@ -4004,7 +4004,7 @@ let is_sat_msg_no_no prof_lbl (f:CP.formula) do_cache :bool =
   sat
   
 let imply_sub_no ante0 conseq0 imp_no do_cache =
-  Debug.devel_zprint (lazy ("IMP #" ^ imp_no ^ "\n")) no_pos;
+  x_dinfo_zp (lazy ("IMP #" ^ imp_no ^ "\n")) no_pos;
   (* imp_no := !imp_no+1;*)
   imply_one 2 ante0 conseq0 imp_no do_cache
 

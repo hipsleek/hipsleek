@@ -1800,7 +1800,7 @@ and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no
     | 0 -> fold_mem_lst_gen (mkTrue no_pos) !no_LHS_prop_drop true false true n_ante
     | 1 -> fold_mem_lst_no_complex (mkTrue no_pos) !no_LHS_prop_drop true n_ante
     | _ -> fold_mem_lst_with_complex (mkTrue no_pos) !no_LHS_prop_drop true n_ante in
-  let () = Debug.devel_pprint str no_pos in
+  let () = x_dinfo_pp str no_pos in
   let () = x_tinfo_hp (add_str "ante" !Cpure.print_formula) r no_pos in
   let () = x_tinfo_hp (add_str "conseq" !Cpure.print_formula) conseq no_pos in  
   (* print_endline ("ANTE: " ^ (!Cpure.print_formula r)); *)

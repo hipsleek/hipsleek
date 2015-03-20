@@ -509,8 +509,8 @@ let elim_unused_pre_preds post_hps constrs unk_map=
       let new_cs, n_map,_ = Sacore.do_elim_unused cs unused_pre map in
       (ls_cs@[new_cs], n_map)
   ) ([], unk_map) constrs in
-  let () = DD.dinfo_zprint (lazy (("   After removing, derived:\n" ^ (let pr = pr_list_ln Cprinter.string_of_hprel_short in pr new_constrs)))) no_pos in
-  let () = DD.dinfo_zprint (lazy (("   uu map:" ^ (let pr = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in pr new_map)))) no_pos in
+  let () = x_dinfo_zp (lazy (("   After removing, derived:\n" ^ (let pr = pr_list_ln Cprinter.string_of_hprel_short in pr new_constrs)))) no_pos in
+  let () = x_dinfo_zp (lazy (("   uu map:" ^ (let pr = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in pr new_map)))) no_pos in
   (unused_pre_preds0, new_constrs, new_map)
 
 let elim_unused_pre_preds post_hps constrs unk_map=
@@ -540,8 +540,8 @@ let elim_unused_post_preds post_hps constrs unk_map=
       let new_cs, n_map,_ = Sacore.do_elim_unused cs unused_post map in
       (ls_cs@[new_cs], n_map)
   ) ([], unk_map) constrs in
-  let () = DD.dinfo_zprint (lazy (("   After removing, derived:\n" ^ (let pr = pr_list_ln Cprinter.string_of_hprel_short in pr new_constrs)))) no_pos in
-  let () = DD.dinfo_zprint (lazy (("   uu map:" ^ (let pr = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in pr new_map)))) no_pos in
+  let () = x_dinfo_zp (lazy (("   After removing, derived:\n" ^ (let pr = pr_list_ln Cprinter.string_of_hprel_short in pr new_constrs)))) no_pos in
+  let () = x_dinfo_zp (lazy (("   uu map:" ^ (let pr = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in pr new_map)))) no_pos in
   ( unused_post_preds, new_constrs, new_map)
 
 let elim_unused_post_preds post_hps constrs unk_map=

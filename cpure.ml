@@ -7618,13 +7618,13 @@ let rec replace_pure_formula_label nl f = match f with
 let store_tp_is_sat : (formula -> bool) ref = ref (fun _ -> true)
   
 let rec imply_disj_orig_x ante_disj conseq t_imply imp_no =
-  Debug.devel_hprint (add_str "ante: " (pr_list !print_formula)) ante_disj no_pos;
-  Debug.devel_hprint (add_str "coseq : " ( !print_formula)) conseq no_pos;
+  x_dinfo_hp (add_str "ante: " (pr_list !print_formula)) ante_disj no_pos;
+  x_dinfo_hp (add_str "coseq : " ( !print_formula)) conseq no_pos;
   match ante_disj with
     | h :: rest ->
-          Debug.devel_hprint (add_str "h : " ( !print_formula)) h no_pos;
+          x_dinfo_hp (add_str "h : " ( !print_formula)) h no_pos;
 	  let r1,r2,r3 = (t_imply h conseq (string_of_int !imp_no) true None) in
-          Debug.devel_hprint (add_str "res : " (string_of_bool)) r1 no_pos;
+          x_dinfo_hp (add_str "res : " (string_of_bool)) r1 no_pos;
 	  if r1 then
 	    let r1,r22,r23 = (imply_disj_orig_x rest conseq t_imply imp_no) in
 	    (r1,r2@r22,r23)
@@ -7665,9 +7665,9 @@ and imply_disj_orig ante_disj conseq t_imply imp_no =
 let rec imply_one_conj_orig one_ante_only ante_disj0 ante_disj1 conseq t_imply imp_no =
   let xp01,xp02,xp03 = imply_disj_orig ante_disj0 conseq t_imply imp_no in
   if not(xp01) && !Globals.super_smart_xpure && not(one_ante_only) then
-    let () = Debug.devel_pprint ("\nSplitting the antecedent for xpure1:\n") no_pos in
+    let () = x_dinfo_pp ("\nSplitting the antecedent for xpure1:\n") no_pos in
     let (xp11,xp12,xp13) = imply_disj_orig ante_disj1 conseq t_imply imp_no in
-    let () = Debug.devel_pprint ("\nDone splitting the antecedent for xpure1:\n") no_pos in
+    let () = x_dinfo_pp ("\nDone splitting the antecedent for xpure1:\n") no_pos in
 	(xp11,xp12,xp13)
   else (xp01,xp02,xp03)
 
@@ -7741,9 +7741,9 @@ let imply_disj ante_disj0 ante_disj1 conseq_conj t_imply (increm_funct: (formula
       | None -> None in
   let xp01,xp02,xp03 = imply_disj_helper ante_disj0 conseq_conj t_imply increm_funct process imp_no in
   let r = if ( not(xp01) ) then begin (*xpure0 fails to prove. try xpure1*)
-    let () = Debug.devel_pprint ("\nSplitting the antecedent for xpure1:\n") in
+    let () = x_dinfo_pp ("\nSplitting the antecedent for xpure1:\n") in
     let r1 = imply_disj_helper ante_disj1 conseq_conj t_imply increm_funct process imp_no in
-    let () = Debug.devel_pprint ("\nDone splitting the antecedent for xpure1:\n") in
+    let () = x_dinfo_pp ("\nDone splitting the antecedent for xpure1:\n") in
     r1
   end else (xp01, xp02, xp03) in
   let _ =

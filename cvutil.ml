@@ -662,9 +662,9 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
                         (*prove that p0 |- var=full_perm*)
                           let full_f = Perm.mkFullPerm_pure () (Cpure.get_var var) in
                           let f0 = MCP.pure_of_mix p0 in
-                          Debug.devel_zprint (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
+                          x_dinfo_zp (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
                           let res,_,_ = CP.imply_disj_orig [f0] full_f (TP.imply_one 24) imp_no in
-                          Debug.devel_zprint (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
+                          x_dinfo_zp (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
                           if (res) then
                             CP.DisjSetSV.singleton_dset (p(*, CP.mkTrue pos*))
                           else [])
@@ -699,9 +699,9 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
                     let full_f = Perm.mkFullPerm_pure () (Cpure.get_var var) in
                     (*prove that p0 |- var=full_perm*)
                     let f0 = MCP.pure_of_mix p0 in
-                    Debug.devel_zprint (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
+                    x_dinfo_zp (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
                     let res,_,_ = CP.imply_disj_orig [f0] full_f (TP.imply_one 25) imp_no in
-                    Debug.devel_zprint (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
+                    x_dinfo_zp (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
                     if (res) then
                       (match lbl_lst with
                         |None ->
@@ -771,9 +771,9 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
                                 (*prove that p0 |- var=full_perm*)
                                 let full_f = Perm.mkFullPerm_pure () (Cpure.get_var var) in
                                 let f0 = MCP.pure_of_mix p0 in
-                                Debug.devel_zprint (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
+                                x_dinfo_zp (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
                                 let res,_,_ = CP.imply_disj_orig [f0] full_f (TP.imply_one 24) imp_no in
-                                Debug.devel_zprint (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
+                                x_dinfo_zp (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
                                 if (res) then
                                   CP.DisjSetSV.singleton_dset (p(*, CP.mkTrue pos*))
                                 else [])
@@ -824,9 +824,9 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
                           let full_f = Perm.mkFullPerm_pure () (Cpure.get_var var) in
                           (*prove that p0 |- var=full_perm*)
                           let f0 = MCP.pure_of_mix p0 in
-                          Debug.devel_zprint (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
+                          x_dinfo_zp (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
                           let res,_,_ = CP.imply_disj_orig [f0] full_f (TP.imply_one 25) imp_no in
-                          Debug.devel_zprint (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
+                          x_dinfo_zp (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
                           if (res) then
                             (match lbl_lst with
                               |None ->
@@ -1314,9 +1314,9 @@ and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_f
                           let gt_bf = CP.Gt (all_sum_c,t1_all_sum_a,no_pos) in
                           let gt_f = CP.BForm ((gt_bf,None),None) in
                           let or_f = CP.mkOr neq_t1_t3 gt_f None no_pos in
-		          Debug.devel_zprint (lazy ("xpure_perm: check: [Begin] check bounded permission constrainst: "^ (Cprinter.string_of_pure_formula or_f) ^ "\n")) no_pos;
+		          x_dinfo_zp (lazy ("xpure_perm: check: [Begin] check bounded permission constrainst: "^ (Cprinter.string_of_pure_formula or_f) ^ "\n")) no_pos;
 		          let b,_,_ = CP.imply_disj_orig [f] or_f (TP.imply_one 100) imp_no in
-		          Debug.devel_zprint (lazy ("xpure_perm: check: [End] check bounded permission constrainst "^(string_of_bool b)^" \n")) no_pos;
+		          x_dinfo_zp (lazy ("xpure_perm: check: [End] check bounded permission constrainst "^(string_of_bool b)^" \n")) no_pos;
                           b
                               (**********<<BPERM********************)
                         else if (!Globals.perm = Dperm) then
@@ -1334,10 +1334,10 @@ and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_f
 				    CP.mkAnd (CP.mkPure new_eq) conss no_pos, n_ex_var
 			      | [] -> failwith "this case has already been checked in the previous if"in
 			    let nf, _ = perm_f vars in
-			    Debug.devel_zprint (lazy ("xpure_perm: check: [Begin] check distinct fractional permission constrainst: "^ 
+			    x_dinfo_zp (lazy ("xpure_perm: check: [Begin] check distinct fractional permission constrainst: "^ 
 				(Cprinter.string_of_pure_formula nf) ^ "\n")) no_pos;
 			    let b =  not (TP.is_sat_sub_no 8 nf (ref 0)) in
-			    Debug.devel_zprint (lazy ("xpure_perm: check: [End] check distinct fractional permission constrainst "^(string_of_bool b)^" \n")) no_pos;
+			    x_dinfo_zp (lazy ("xpure_perm: check: [End] check distinct fractional permission constrainst "^(string_of_bool b)^" \n")) no_pos;
 			    b
                                 (**********<<DPERM********************)
                         else
@@ -1349,9 +1349,9 @@ and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_f
 			  let full_exp = CP.mkFConst 1.0 no_pos in
 			  (*f1+f2+f2+f4>1.0*)
 			  let gt_exp = CP.mkGtExp sum_exp full_exp no_pos in
-			  Debug.devel_zprint (lazy ("xpure_perm: check: [Begin] check fractional permission constrainst: "^ (Cprinter.string_of_pure_formula gt_exp) ^ "\n")) no_pos;
+			  x_dinfo_zp (lazy ("xpure_perm: check: [Begin] check fractional permission constrainst: "^ (Cprinter.string_of_pure_formula gt_exp) ^ "\n")) no_pos;
 			  let b,_,_ = CP.imply_disj_orig [f] gt_exp (TP.imply_one 101) imp_no in
-			  Debug.devel_zprint (lazy ("xpure_perm: check: [End] check fractional permission constrainst \n")) no_pos;
+			  x_dinfo_zp (lazy ("xpure_perm: check: [End] check fractional permission constrainst \n")) no_pos;
 			  b
                               (**********<<FPERM,CPERM,NONE********************)
                     in

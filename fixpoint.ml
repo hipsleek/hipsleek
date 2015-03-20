@@ -363,14 +363,14 @@ let pre_calculate_x fp_func input_fml pre_vars proc_spec
     let final_pre4b = TP.pairwisecheck_raw final_pre3a in
     let final_pre = TP.om_gist final_pre4b pre in
 
-    let () = Debug.devel_hprint (add_str "final_pre0" !CP.print_formula) final_pre0 no_pos in
-    let () = Debug.devel_hprint (add_str "final_pre1" !CP.print_formula) final_pre1 no_pos in
-    let () = Debug.devel_hprint (add_str "final_pre2" !CP.print_formula) final_pre2 no_pos in
-    let () = Debug.devel_hprint (add_str "final_pre3" !CP.print_formula) final_pre3 no_pos in
-    let () = Debug.devel_hprint (add_str "final_pre3a" !CP.print_formula) final_pre3a no_pos in
-    (* let () = Debug.devel_hprint (add_str "final_pre4a" !CP.print_formula) final_pre4a no_pos in *)
-    let () = Debug.devel_hprint (add_str "final_pre4b" !CP.print_formula) final_pre4b no_pos in
-    (* let () = Debug.devel_hprint (add_str "final_pre" !CP.print_formula) final_pre no_pos in *)
+    let () = x_dinfo_hp (add_str "final_pre0" !CP.print_formula) final_pre0 no_pos in
+    let () = x_dinfo_hp (add_str "final_pre1" !CP.print_formula) final_pre1 no_pos in
+    let () = x_dinfo_hp (add_str "final_pre2" !CP.print_formula) final_pre2 no_pos in
+    let () = x_dinfo_hp (add_str "final_pre3" !CP.print_formula) final_pre3 no_pos in
+    let () = x_dinfo_hp (add_str "final_pre3a" !CP.print_formula) final_pre3a no_pos in
+    (* let () = x_dinfo_hp (add_str "final_pre4a" !CP.print_formula) final_pre4a no_pos in *)
+    let () = x_dinfo_hp (add_str "final_pre4b" !CP.print_formula) final_pre4b no_pos in
+    (* let () = x_dinfo_hp (add_str "final_pre" !CP.print_formula) final_pre no_pos in *)
     let checkpoint2 = check_defn pre_rel final_pre pre_rel_df in
     if checkpoint2 then
       List.map (fun (rel,post) -> (rel,post,pre_rel,final_pre)) rel_posts
@@ -490,7 +490,7 @@ let update_with_td_fp_x bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
       let pre = TP.simplify pre in
       let pre = filter_disj pre pre_fmls in
       let pre = TP.pairwisecheck_raw pre in
-      let () = Debug.devel_hprint (add_str "pre" !CP.print_formula) pre no_pos in
+      let () = x_dinfo_hp (add_str "pre" !CP.print_formula) pre no_pos in
       List.map (fun (rel,post) -> (rel,post,pre_rel,pre)) rel_posts
     else
       let input_fml = List.map (fun (f1,f2) -> (CP.mkAnd f1 pre no_pos,f2)) post_rel_df_new in
@@ -540,7 +540,7 @@ let update_with_td_fp_x bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
             let final_pre = TP.simplify_raw final_pre in
             let final_pre = filter_disj final_pre pre_fmls in
             let final_pre = TP.pairwisecheck_raw final_pre in
-            let () = Debug.devel_hprint (add_str "final_pre(pred)" !CP.print_formula) final_pre no_pos in
+            let () = x_dinfo_hp (add_str "final_pre(pred)" !CP.print_formula) final_pre no_pos in
             let checkpoint1 = check_defn r final_pre new_pre_rel_df in
             if checkpoint1 then [(rel,post,r,final_pre)]
             else [(rel,post,constTrue,constTrue)]

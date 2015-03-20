@@ -2113,7 +2113,7 @@ let generate_hp_ass unk_svl cond_p (hp,args,lfb,rf) =
   (*     hprel_proving_kind = Others.proving_kind # top_no_exc; *)
   (* } *)
   (* in *)
-  let () = Debug.dinfo_zprint (lazy (("  new hp_ass " ^ (Cprinter.string_of_hprel_short new_cs)))) no_pos in
+  let () = x_dinfo_zp (lazy (("  new hp_ass " ^ (Cprinter.string_of_hprel_short new_cs)))) no_pos in
   new_cs
 
 let generate_hp_ass i unk_svl cond_p (hp,args,lfb,rf) =

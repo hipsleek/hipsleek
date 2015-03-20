@@ -401,7 +401,7 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 (* rhs_p *) 
           let rank_formula = List.fold_left (fun acc m ->
             CP.mkOr acc (lex_formula m) None pos) (CP.mkFalse pos) lst_measures in
           let lhs = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
-          Debug.devel_zprint (lazy ("Rank formula: " ^ (Cprinter.string_of_pure_formula rank_formula))) pos;
+          x_dinfo_zp (lazy ("Rank formula: " ^ (Cprinter.string_of_pure_formula rank_formula))) pos;
           (* TODO: rhs_p & rhs_p_br & heap_entail_build_mix_formula_check 5 pos & rank_formula(I,O) *)
           (*let (estate,_,rank_formula,_) = Infer.infer_collect_rel TP.is_sat_raw estate xpure_lhs_h1 
             lhs_p (MCP.mix_of_pure rank_formula) [] (fun i_es_vars i_lhs i_rhs i_pos -> i_lhs, i_rhs) pos in
@@ -419,12 +419,12 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 (* rhs_p *) 
           begin
             (* print_endline ">>>>>> trans_lexvar_rhs <<<<<<" ; *)
             (* print_endline ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula rhs_p)) ; *)
-            Debug.devel_zprint (lazy (">>>>>> [term.ml][trans_lexvar_rhs] <<<<<<")) pos;
-            (* Debug.devel_zprint (lazy ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula rhs_p))) pos; *)
-            Debug.devel_zprint (lazy ("LHS (lhs_p): " ^ (Cprinter.string_of_mix_formula lhs_p))) pos;
-            Debug.devel_zprint (lazy ("LHS (xpure 0): " ^ (Cprinter.string_of_mix_formula xpure_lhs_h0))) pos;
-            Debug.devel_zprint (lazy ("LHS (xpure 1): " ^ (Cprinter.string_of_mix_formula xpure_lhs_h1))) pos;
-            Debug.devel_zprint (lazy ("Wellfoundedness checking: " ^ (string_of_bool entail_dec_res))) pos;
+            x_dinfo_zp (lazy (">>>>>> [term.ml][trans_lexvar_rhs] <<<<<<")) pos;
+            (* x_dinfo_zp (lazy ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula rhs_p))) pos; *)
+            x_dinfo_zp (lazy ("LHS (lhs_p): " ^ (Cprinter.string_of_mix_formula lhs_p))) pos;
+            x_dinfo_zp (lazy ("LHS (xpure 0): " ^ (Cprinter.string_of_mix_formula xpure_lhs_h0))) pos;
+            x_dinfo_zp (lazy ("LHS (xpure 1): " ^ (Cprinter.string_of_mix_formula xpure_lhs_h1))) pos;
+            x_dinfo_zp (lazy ("Wellfoundedness checking: " ^ (string_of_bool entail_dec_res))) pos;
           end;
 
           (* Do boundedness check at recursive calls *)
@@ -679,8 +679,8 @@ let report_term_error (ctx: formula) (reason: term_reason) pos : term_res =
 let add_unreachable_res (ctx: list_failesc_context) pos : term_res =
   let () = 
     begin
-      Debug.devel_zprint (lazy (">>>>>> [term.ml][add_unreachable_res] <<<<<<")) pos;
-      Debug.devel_hprint (add_str "Context" Cprinter.string_of_list_failesc_context) ctx pos
+      x_dinfo_zp (lazy (">>>>>> [term.ml][add_unreachable_res] <<<<<<")) pos;
+      x_dinfo_hp (add_str "Context" Cprinter.string_of_list_failesc_context) ctx pos
     end
   in
   let term_pos = (post_pos # get, proving_loc # get) in
@@ -1240,7 +1240,7 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
                   (* all_zero is set if subs is only of form [v1->0,..,vn->0]
                      in this scenario, there is no need for phase vars at all *)
                   begin
-                    Debug.devel_zprint (lazy (" >>>>>> [term.ml][Adding Phase Numbering] <<<<<<")) no_pos;
+                    x_dinfo_zp (lazy (" >>>>>> [term.ml][Adding Phase Numbering] <<<<<<")) no_pos;
                     let all_zero = List.for_all (fun (_,i) -> i==0) subst in
                     let rp = if all_zero then List.map (fun (v,_) -> v) subst else [] in
                     if all_zero then
@@ -1317,9 +1317,9 @@ let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl)
   if loop_es==[] then true
   else 
     begin
-      Debug.devel_zprint (lazy (" >>>>>> [term.ml][check loop safety] <<<<<<")) no_pos;
+      x_dinfo_zp (lazy (" >>>>>> [term.ml][check loop safety] <<<<<<")) no_pos;
       x_tinfo_hp (add_str "res ctx" Cprinter.string_of_list_partial_context_short) ctx pos;
-      Debug.devel_hprint (add_str "loop es" (pr_list Cprinter.string_of_entail_state_short)) loop_es pos;
+      x_dinfo_hp (add_str "loop es" (pr_list Cprinter.string_of_entail_state_short)) loop_es pos;
       (* TODO: must check that each entail_state from loop_es implies false *)
       (* let unsound_ctx = List.find_all (fun es -> not (isAnyConstFalse es.es_formula)) loop_es in *)
       let unsound_ctx = List.find_all (fun es -> 
@@ -1327,7 +1327,7 @@ let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl)
       if unsound_ctx == [] then true
       else
         begin
-        Debug.devel_hprint (add_str "unsound Loop" (pr_list Cprinter.string_of_entail_state_short)) unsound_ctx pos;
+        x_dinfo_hp (add_str "unsound Loop" (pr_list Cprinter.string_of_entail_state_short)) unsound_ctx pos;
         List.iter (fun es -> add_unsound_ctx es pos) unsound_ctx;
         false
         end;

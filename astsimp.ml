@@ -2148,7 +2148,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
                   (* Debug.info_hprint (add_str "disj_form" string_of_bool) disj_form no_pos; *)
                   if disj_form && !Globals.compute_xpure_0 then
                     (vdef.C.view_user_inv <- sf; vdef.C.view_xpure_flag <- false);
-	          Debug.tinfo_zprint (lazy (("Using a simpler inv for xpure0 of "^vdef.C.view_name))) pos;
+	          x_tinfo_zp (lazy (("Using a simpler inv for xpure0 of "^vdef.C.view_name))) pos;
                   x_tinfo_hp (add_str "inv(xpure0)" pr) vdef.C.view_user_inv pos;
                   x_tinfo_hp (add_str "inv_lock" (pr_option Cprinter.string_of_formula)) vdef.C.view_inv_lock pos;
 
@@ -2508,7 +2508,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           C.view_prune_conditions_baga = [];
           C.view_ef_pure_disj = None;
           C.view_prune_invariants = []} in
-      (Debug.dinfo_zprint (lazy ("\n" ^ (Cprinter.string_of_view_decl cvdef))) (CF.pos_of_struc_formula cf);
+      (x_dinfo_zp (lazy ("\n" ^ (Cprinter.string_of_view_decl cvdef))) (CF.pos_of_struc_formula cf);
       cvdef)
   )
   )
@@ -10298,8 +10298,8 @@ and check_barrier_wf prog bd =
     if Solver.unsat_base_nth 4 prog (ref 0) tot_pre then raise  (Err.Malformed_barrier (" contradiction in pres for transition "^t_str ))
     else
       let tot_pre_bar = f_gen_tot fs in
-      let () = Debug.devel_zprint (lazy ("check_barriers: whole pre:  "^ (Cprinter.string_of_formula tot_pre))) no_pos in
-      let () = Debug.devel_zprint (lazy ("check_barriers: whole pre barr: "^ (Cprinter.string_of_formula tot_pre_bar))) no_pos in
+      let () = x_dinfo_zp (lazy ("check_barriers: whole pre:  "^ (Cprinter.string_of_formula tot_pre))) no_pos in
+      let () = x_dinfo_zp (lazy ("check_barriers: whole pre barr: "^ (Cprinter.string_of_formula tot_pre_bar))) no_pos in
       let fpre = one_entail tot_pre tot_pre_bar in
       if CF.isFailCtx fpre then  raise  (Err.Malformed_barrier (" preconditions do not contain the entire barrier in transition "^t_str ))
       else (*the post sum totals full barrier ts get residue F2*)
@@ -10311,13 +10311,13 @@ and check_barrier_wf prog bd =
         if Solver.unsat_base_nth 5 prog (ref 0) tot_post then raise (Err.Malformed_barrier (" contradiction in post for transition "^t_str ))
         else
           let tot_post_bar = f_gen_tot ts in
-          let () = Debug.devel_zprint (lazy ("check_barriers: whole post:  "^ (Cprinter.string_of_formula tot_post))) no_pos in
-          let () = Debug.devel_zprint (lazy ("check_barriers: whole post barr: "^ (Cprinter.string_of_formula tot_post_bar))) no_pos in
+          let () = x_dinfo_zp (lazy ("check_barriers: whole post:  "^ (Cprinter.string_of_formula tot_post))) no_pos in
+          let () = x_dinfo_zp (lazy ("check_barriers: whole post barr: "^ (Cprinter.string_of_formula tot_post_bar))) no_pos in
           let fpost = one_entail tot_post tot_post_bar in
           if CF.isFailCtx fpost then  raise  (Err.Malformed_barrier (" postconditions do not contain the entire barrier in transition "^t_str ))
           else (*show F1 = F2*)
-            let () = Debug.devel_zprint (lazy ("check_barriers: pre: "^ (Cprinter.string_of_list_context fpre))) no_pos in
-            let () = Debug.devel_zprint (lazy ("check_barriers: post: "^ (Cprinter.string_of_list_context fpost))) no_pos in
+            let () = x_dinfo_zp (lazy ("check_barriers: pre: "^ (Cprinter.string_of_list_context fpre))) no_pos in
+            let () = x_dinfo_zp (lazy ("check_barriers: post: "^ (Cprinter.string_of_list_context fpost))) no_pos in
             
             
             let fpre,fpost  =   (*add existential quantif for pure vars that do not appear on the other side*)

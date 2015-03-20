@@ -5,14 +5,21 @@
   Debug.binfo_pprint ((VarGen.build_loc_str __FILE__ __LINE__)^s))
 #define x_binfo_zp (fun s -> \
   Debug.binfo_zprint (lazy ((VarGen.build_loc_str __FILE__ __LINE__)^(Lazy.force s))))
+
 #define x_tinfo_hp (fun f -> \
   Debug.tinfo_hprint (fun x -> (VarGen.build_loc_str __FILE__ __LINE__)^(f x)))
 #define x_tinfo_pp (fun s -> \
   Debug.tinfo_pprint ((VarGen.build_loc_str __FILE__ __LINE__)^s))
+#define x_tinfo_zp (fun s -> \
+  Debug.tinfo_zprint (lazy ((VarGen.build_loc_str __FILE__ __LINE__)^(Lazy.force s))))
+
 #define x_dinfo_hp (fun f -> \
   Debug.dinfo_hprint (fun x -> (VarGen.build_loc_str __FILE__ __LINE__)^(f x)))
 #define x_dinfo_pp (fun s -> \
   Debug.dinfo_pprint ((VarGen.build_loc_str __FILE__ __LINE__)^s))
+#define x_dinfo_zp (fun s -> \
+  Debug.dinfo_zprint (lazy ((VarGen.build_loc_str __FILE__ __LINE__)^(Lazy.force s))))
+
 #define x_winfo_pp (fun s -> \
   Debug.winfo_pprint ((VarGen.build_loc_str __FILE__ __LINE__)^s))
 #define x_ninfo_hp (fun pr s p -> ())
