@@ -1,5 +1,6 @@
 #include "xdebug.cppo"
 open VarGen
+open Global_var
 
 (* Created 21 Feb 2006 Simplify Iast to Cast *)
 open Globals
@@ -8896,7 +8897,10 @@ and rename_exp_x (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
         I.exp_par_pos = p.I.exp_par_pos; }
   in helper ren f 
 
-and case_rename_var_decls_init (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  
+and case_rename_var_decls_init lst (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  
+  let () = stk_var_ident # reset in
+  let () = stk_var_ident # push_list lst in
+  let () = x_binfo_hp (add_str "rename_var_decl (param)" pr_id) (stk_var_ident # string_of_no_ln) no_pos in
   let pr = Iprinter.string_of_exp in
   let pr_subs = pr_list (pr_pair pr_id pr_id) in
   Debug.no_1 "case_rename_var_decls" pr (pr_pair pr pr_subs) case_rename_var_decls f
@@ -8938,11 +8942,13 @@ and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  ma
         let ncv,ren = match b.Iast.exp_catch_var with
           | None -> (None,[])
           | Some e-> 
+            (* TODO:WN:rename*)
                 let nn = (Ipure.fresh_old_name e) in
                 ((Some nn),[(e,nn)])in
         let ncfv,ren = match b.Iast.exp_catch_flow_var with
           | None -> (None,ren)
           | Some e-> 
+            (* TODO:WN:rename*)
                 let nn = (Ipure.fresh_old_name e) in
                 ((Some nn),(e,nn)::ren)in                               
         (Iast.Catch{b with 
@@ -8957,6 +8963,7 @@ and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  ma
             Iast.exp_cond_then_arm= fst (case_rename_var_decls b.Iast.exp_cond_then_arm);
             Iast.exp_cond_else_arm= fst (case_rename_var_decls b.Iast.exp_cond_else_arm);},r)
   | Iast.ConstDecl b->
+        (* TODO:WN:rename*)
         let ndecl,nren = List.fold_left (fun (a1,a2) (c1,c2,c3)-> 
             let nn = (Ipure.fresh_old_name c1) in
             let ne,_ = case_rename_var_decls c2 in
@@ -8990,13 +8997,14 @@ and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  ma
   | Iast.Unary b -> 
         (Iast.Unary {b with Iast.exp_unary_exp = fst (case_rename_var_decls b.Iast.exp_unary_exp)},[])
   | Iast.VarDecl b ->       
-        let ndecl,nren = List.fold_left (fun (a1,a2) (c1,c2,c3)->
-            let nn = (Ipure.fresh_old_name c1) in
-            let ne = match c2 with
-              | None -> None 
-              | Some f-> Some (fst (case_rename_var_decls f)) in
-            ((nn,ne,c3)::a1,(c1,nn)::a2)) ([],[]) b.Iast.exp_var_decl_decls in
-        (Iast.VarDecl {b with Iast.exp_var_decl_decls = ndecl;},nren)       
+    (* TODO:WN:rename*)
+    let ndecl,nren = List.fold_left (fun (a1,a2) (c1,c2,c3)->
+        let nn = (Ipure.fresh_old_name c1) in
+        let ne = match c2 with
+          | None -> None 
+          | Some f-> Some (fst (case_rename_var_decls f)) in
+        ((nn,ne,c3)::a1,(c1,nn)::a2)) ([],[]) b.Iast.exp_var_decl_decls in
+    (Iast.VarDecl {b with Iast.exp_var_decl_decls = ndecl;},nren)
   | Iast.While b->
         (Iast.While {b with 
             Iast.exp_while_condition= fst (case_rename_var_decls b.Iast.exp_while_condition); 
@@ -9301,10 +9309,11 @@ and case_normalize_proc_x prog (f:Iast.proc_decl):Iast.proc_decl =
   let h2 = Gen.BList.remove_dups_eq (=) (h@h_prm@(Gen.BList.difference_eq (=) h1 h)@ (IF.struc_free_vars true nst)) in
   let nb = match f.Iast.proc_body with 
       None -> None 
-    | Some f->
-          let f,_ = x_add_1 case_rename_var_decls_init f in
-          let r,_,_ = (case_normalize_exp prog h2 [(eres_name,Unprimed);(res_name,Unprimed)] f) in
-          Some r in
+    | Some ff->
+      let lst = List.map (fun x -> x.Iast.param_name) f.Iast.proc_args in
+      let f,_ = x_add_1 case_rename_var_decls_init  lst ff in
+      let r,_,_ = (case_normalize_exp prog h2 [(eres_name,Unprimed);(res_name,Unprimed)] f) in
+      Some r in
   {f with Iast.proc_static_specs =nst;
       Iast.proc_dynamic_specs = ndn;
       Iast.proc_body = nb;

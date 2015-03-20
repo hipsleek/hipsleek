@@ -8,4 +8,6 @@ let stk_vars = new Gen.stack_pr (pr_sv) CP.eq_spec_var_nop
 
 let stk_evars = new Gen.stack_pr (pr_sv) CP.eq_spec_var_nop
 
+let stk_var_ident = new Gen.stack_pr (Gen.pr_id) (=)
+
 let in_vars = new VarGen.store [] pr_svl
