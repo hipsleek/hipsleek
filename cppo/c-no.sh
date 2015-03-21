@@ -520,7 +520,7 @@ $EX Cpure.ml pure_mkAnd
 $EX Cpure.ml pure_mkAndList
 $EX Cpure.ml pure_mkOr
 $EX Cpure.ml pure_mkStupidOr
-$EX Cpure.ml mkNot
+# $EX Cpure.ml mkNot
 $EX Cpure.ml mkExists_with_simpl
 $EX Cpure.ml pure_mkExists
 $EX Cpure.ml split_conjunctions
@@ -528,7 +528,7 @@ $EX Cpure.ml eqExp_f
 $EX Cpure.ml build_relation
 $EX Cpure.ml diff svl
 $EX Cpure.ml fresh_old_name
-$EX Cpure.ml [cpure]subst_avoid_capture
+$EX Cpure.ml subst_avoid_capture
 $EX Cpure.ml b_apply_subs
 $EX Cpure.ml e_apply_subs_list
 $EX Cpure.ml b_subst
@@ -862,7 +862,7 @@ $EX Iast.ml fixpt_data_name
 $EX Iast.ml update_fixpt
 $EX Iast.ml set_check_fixpt
 $EX Iast.ml data_name_of_view
-$EX Iast.ml add_edge
+# $EX Iast.ml add_edge
 $EX Iast.ml exists_path
 $EX Iast.ml build_exc_hierarchy
 $EX Iast.ml look_up_field_ann
@@ -977,7 +977,7 @@ $EX Infinity.ml elim_forall_inf
 $EX Infinity.ml elim_inf_forall
 $EX Infinity.ml elim_inf_exists
 $EX Infinity.ml elim_forall_exists_inf
-$EX Ipure.ml mkAnd
+# $EX Ipure.ml mkAnd
 $EX Ipure.ml find_closure_pure
 $EX Ipure.ml mkAndList_opt
 $EX Ipure.ml transform_exp
