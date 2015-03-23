@@ -37,7 +37,7 @@
 #define x_tinfo_zp Debug.tinfo_zprint 
 #define x_dinfo_hp Debug.dinfo_hprint 
 #define x_dinfo_pp Debug.dinfo_pprint 
-#define x_dinfo_zp Debug.dinfo_zprint 
+#define x_dinfo_zp Debug.dinfo_zprint
 #define x_winfo_pp Debug.winfo_pprint
 #define x_ninfo_hp (fun pr s p -> ())
 #define x_ninfo_pp (fun s p -> ())

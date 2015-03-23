@@ -1,5 +1,6 @@
 # this is to help locate module names
-echo "s/.*\([A-Z][_a-z0-9]*\."$2"\).*/###x-add \1" $1 $2 "/"
+#echo "s/.*\([A-Z][_a-z0-9]*\."$2"\).*/###x-add \1" $1 $2 "/"
+echo "s/=\s*\([A-Z][_a-z0-9]*\."$2"\)/= x-add \1/"
 #echo "s/= *"$1\.$2" /= x_add "$1\.$2" /"
 #echo "s/("$1\.$2" /(x_add "$1\.$2" /"
 #echo "s/( *"$1\.$2" /(x_add "$1\.$2" /"
