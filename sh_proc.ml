@@ -102,6 +102,8 @@ let main file =
 
 main "cppo/dd_no2.txt";;
 
+print_endline (mapd_string_of ());;
+
 let rex_ml = Str.regexp "\\([^\.]+\\)\.ml"
 
 let read_dir dir rex =

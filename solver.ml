@@ -11846,7 +11846,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                 let lhs_h_list = split_star_conjunctions lhs_h in
                 let init_pures = List.concat (List.map (fun l -> init_para l rhs_node lhs_aset prog pos) lhs_h_list) in
                 let init_pure = CP.conj_of_list init_pures pos in
-                {estate with es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos} 
+                {estate with es_formula = x_add CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos} 
             in
           do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos
 
@@ -11888,8 +11888,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                 let lhs_h_list = split_star_conjunctions lhs_h in
                 let init_pures = List.concat (List.map (fun l -> init_para l rhs_node lhs_aset prog pos) lhs_h_list) in
                 let init_pure = CP.conj_of_list init_pures pos in
-                (* let new_es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos in *)
-                {estate with es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos}
+                (* let new_es_formula = x_add CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos in *)
+                {estate with es_formula = x_add CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos}
             in
             let ans = do_base_case_unfold_only prog estate.es_formula conseq estate lhs_node rhs_node is_folding pos rhs_b in
             (match ans with
@@ -11910,7 +11910,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                 let lhs_h_list = split_star_conjunctions lhs_h in
                 let init_pures = List.concat (List.map (fun l -> init_para l rhs_node lhs_aset prog pos) lhs_h_list) in
                 let init_pure = CP.conj_of_list init_pures pos in
-                let new_ante = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos in
+                let new_ante = x_add CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos in
                 {estate with es_formula = new_ante} 
             in
             if (estate.es_cont != []) then 
@@ -11959,7 +11959,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               let lhs_h_list = split_star_conjunctions lhs_h in
               let init_pures = List.concat (List.map (fun l -> init_para l rhs_node lhs_aset prog pos) lhs_h_list) in
               let init_pure = CP.conj_of_list init_pures pos in
-              {estate with es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos} 
+              {estate with es_formula = x_add CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos} 
           in
           (* TRUNG TODO IMPORTANT: when ACC_fold success, but the rest can not besure,
           how can check the successful context againt the rest of pure? *)
@@ -15171,7 +15171,7 @@ let () = Ti2.unsat_base_nth := unsat_base_nth
 (*           let xpure_base,_,_ = x_add xpure prog b.formula_struc_base in *)
 (*       let check_fml = MCP.merge_mems xpure_base (MCP.mix_of_pure pre) true in *)
 (*       if TP.is_sat_raw check_fml then *)
-(*         simplify_pre (CF.normalize 1 b.formula_struc_base (CF.formula_of_pure_formula pre no_pos) no_pos) lst_assume *)
+(*         simplify_pre (x_add CF.normalize 1 b.formula_struc_base (CF.formula_of_pure_formula pre no_pos) no_pos) lst_assume *)
 (*       else b.formula_struc_base in *)
 (*     (EBase {b with formula_struc_base = base; formula_struc_continuation = r}, []) *)
 (*   | EAssume b -> *)

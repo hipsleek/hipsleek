@@ -14,6 +14,9 @@ $EX Cformula normalize
 $EX Cformula fold_context_left
 $EX Cformula add_to_context
 $EX CF get_node_name
+$EX CF normalize
+$EX CF fold_context_left
+$EX CF add_to_context
 # $EX Cprinter string_of_proc_decl 
 $EX Csvutil alias
 $EX Cvutil xpure_mem_enum
