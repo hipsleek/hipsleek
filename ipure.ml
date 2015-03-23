@@ -652,7 +652,7 @@ and fresh_old_name s = Globals.fresh_old_name s
 (*   let ri = fn s in *)
 (*   let n = ((String.sub s 0 ri) ^ (fresh_trailer ())) in *)
 (*   n *)
-	
+
 
 and fresh_var (sv : (ident*primed)):(ident*primed) =
 	let old_name = fst sv in

@@ -12,35 +12,35 @@ open Iast
 open Gen.Basic
 
 (********************************)
-let transform_exp 
-      (e:exp) 
+let transform_exp
+      (e:exp)
       (init_arg:'b)
-      (f:'b->exp->(exp * 'a) option)  
+      (f:'b->exp->(exp * 'a) option)
       (f_args:'b->exp->'b)
-      (comb_f:'a list -> 'a) 
-      (zero:'a) 
+      (comb_f:'a list -> 'a)
+      (zero:'a)
       : (exp * 'a) =
-  let rec helper (in_arg:'b) (e:exp) :(exp* 'a) =	
+  let rec helper (in_arg:'b) (e:exp) :(exp* 'a) =
     match (f in_arg e) with
       | Some e1 -> e1
-      | None  -> 
-            let n_arg = f_args in_arg e in 
-            match e with	
-              | Assert _ 
-              | BoolLit _ 
+      | None  ->
+            let n_arg = f_args in_arg e in
+            match e with
+              | Assert _
+              | BoolLit _
               | Break _
-              | Continue _ 
-              | Debug _ 
-              | Dprint _ 
-              | Empty _ 
-              | FloatLit _ 
+              | Continue _
+              | Debug _
+              | Dprint _
+              | Empty _
+              | FloatLit _
               | IntLit _
-              | Java _ 
-              | Null _ 
-              | This _ 
-              | Time _ 
+              | Java _
+              | Null _
+              | This _
+              | Time _
               | Unfold _
-              | Barrier _ 	  
+              | Barrier _
               | Var _ -> (e,zero)
 	      | ArrayAt b -> (* An Hoa *)
 		    let il,rl = List.split (List.map (helper n_arg) b.exp_arrayat_index) in
@@ -49,7 +49,7 @@ let transform_exp
                     let e1,r1 = helper n_arg b.exp_assign_lhs  in
                     let e2,r2 = helper n_arg b.exp_assign_rhs  in
                     (Assign { b with exp_assign_lhs = e1; exp_assign_rhs = e2;},(comb_f [r1;r2]))
-              | Binary b -> 
+              | Binary b ->
                     let e1,r1 = helper n_arg b.exp_binary_oper1  in
                     let e2,r2 = helper n_arg b.exp_binary_oper2  in
                     (Binary {b with exp_binary_oper1 = e1; exp_binary_oper2 = e2;},(comb_f [r1;r2]))

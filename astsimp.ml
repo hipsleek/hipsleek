@@ -8721,34 +8721,33 @@ and case_normalize_coerc_x prog (cd: Iast.coercion_decl):Iast.coercion_decl =
     I.coercion_kind = cd.I.coercion_kind;
     I.coercion_origin = cd.I.coercion_origin; }
 
-and case_normalize_coerc prog (cd: Iast.coercion_decl):Iast.coercion_decl = 
+and case_normalize_coerc prog (cd: Iast.coercion_decl):Iast.coercion_decl =
   Debug.no_1 "case_normalize_coerc" pr_none pr_none (fun _ ->  case_normalize_coerc_x prog cd) cd
 
 and case_normalize_coerc_list prog (cdl: Iast.coercion_decl_list): Iast.coercion_decl_list =
   let new_elems = List.map (case_normalize_coerc prog) cdl.Iast.coercion_list_elems in
   {Iast.coercion_list_elems = new_elems;
    Iast.coercion_list_kind  = cdl.Iast.coercion_list_kind;}
-      
-and ren_list_concat (l1:((ident*ident) list)) (l2:((ident*ident) list)):((ident*ident) list) = 
+
+and ren_list_concat (l1:((ident*ident) list)) (l2:((ident*ident) list)):((ident*ident) list) =
   let fl2 = fst (List.split l2) in
   let nl1 = List.filter (fun (c1,c2)-> not (List.mem c1 fl2)) l1 in (nl1@l2)
 
-and subid (ren:(ident*ident) list) (i:ident) :ident = 
+and subid (ren:(ident*ident) list) (i:ident) :ident =
   let nl = List.filter (fun (c1,c2)-> (String.compare c1 i)==0) ren in
   if (List.length nl )> 0 then let _,l2 = List.hd nl in l2
-  else i            
-    
+  else i
+
 and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
   let pr1 = pr_list (pr_pair pr_id pr_id) in
   let pr2 = Iprinter.string_of_exp in
   Debug.no_2 "rename_exp" pr1 pr2 pr2 rename_exp_x ren f
 
-and rename_exp_x (ren:(ident*ident) list) (f:Iast.exp):Iast.exp = 
-  
+and rename_exp_x (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
   let rec helper (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =   match f with
     | Iast.Label (pid, b) -> Iast.Label (pid, (helper ren b))
     | Iast.Assert b ->
-          let subst_list = 
+          let subst_list =
             List.fold_left(fun a (c1,c2)-> ((c1,Unprimed),(c2,Unprimed))::((c1,Primed),(c2,Primed))::a) [] ren in
           let assert_formula = match b.Iast.exp_assert_asserted_formula with
             | None -> None
@@ -8790,7 +8789,7 @@ and rename_exp_x (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
     | Iast.Block b-> Iast.Block{b with Iast.exp_block_body = helper ren b.Iast.exp_block_body}
     | Iast.FloatLit _
     | Iast.IntLit _
-    | Iast.Java _     
+    | Iast.Java _
     | Iast.Null _
     | Iast.Break _
     | Iast.Continue _
@@ -8843,7 +8842,7 @@ and rename_exp_x (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
     | Iast.Seq b -> Iast.Seq 
           { Iast.exp_seq_exp1 = x_add rename_exp ren b.Iast.exp_seq_exp1;
           Iast.exp_seq_exp2 = x_add rename_exp ren b.Iast.exp_seq_exp2;
-          Iast.exp_seq_pos = b.Iast.exp_seq_pos }         
+          Iast.exp_seq_pos = b.Iast.exp_seq_pos }
     | Iast.Unary b-> Iast.Unary {b with Iast.exp_unary_exp = x_add rename_exp ren b.Iast.exp_unary_exp}
     | Iast.Unfold b-> Iast.Unfold{b with Iast.exp_unfold_var = ((subid ren (fst b.Iast.exp_unfold_var)),(snd b.Iast.exp_unfold_var))}
     | Iast.Var b -> Iast.Var{b with Iast.exp_var_name = subid ren b.Iast.exp_var_name}
@@ -8907,7 +8906,7 @@ and case_rename_var_decls_init lst (f:Iast.exp) : (Iast.exp * ((ident*ident) lis
 
 and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  match f with
   | Iast.Assert _ -> (f,[])
-  | Iast.Assign b -> 
+  | Iast.Assign b ->
         (Iast.Assign{ Iast.exp_assign_op = b.Iast.exp_assign_op;
         Iast.exp_assign_lhs = fst(case_rename_var_decls b.Iast.exp_assign_lhs);
         Iast.exp_assign_rhs = fst(case_rename_var_decls b.Iast.exp_assign_rhs);
@@ -8920,14 +8919,13 @@ and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  ma
         Iast.exp_binary_path_id = b.Iast.exp_binary_path_id;
         Iast.exp_binary_pos = b.Iast.exp_binary_pos},[])
   | Iast.Bind b ->
-        (Iast.Bind {b with Iast.exp_bind_body = fst (case_rename_var_decls b.Iast.exp_bind_body)},[])  
+        (Iast.Bind {b with Iast.exp_bind_body = fst (case_rename_var_decls b.Iast.exp_bind_body)},[])
   | Iast.Block b->
         (Iast.Block { b with Iast.exp_block_body = fst (case_rename_var_decls b.Iast.exp_block_body)},[])
-            
-  | Iast.Continue _  | Iast.Debug _ | Iast.Dprint _ | Iast.Empty _ 
+  | Iast.Continue _  | Iast.Debug _ | Iast.Dprint _ | Iast.Empty _
   | Iast.FloatLit _  | Iast.IntLit _  | Iast.Java _  | Iast.BoolLit _
   | Iast.Null _   | Iast.Unfold _  | Iast.Var _ | Iast.This _  | Iast.Time _
-  | Iast.Break _ | Iast.Barrier _ -> (f,[])  
+  | Iast.Break _ | Iast.Barrier _ -> (f,[])
   | Iast.CallNRecv b ->
         let nl = List.map (fun c-> fst (case_rename_var_decls c)) b.Iast.exp_call_nrecv_arguments in
         (Iast.CallNRecv{b with Iast.exp_call_nrecv_arguments = nl },[]) 
@@ -8950,7 +8948,7 @@ and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  ma
           | Some e-> 
             (* TODO:WN:rename*)
                 let nn = (Ipure.fresh_old_name e) in
-                ((Some nn),(e,nn)::ren)in                               
+                ((Some nn),(e,nn)::ren)in
         (Iast.Catch{b with 
             Iast.exp_catch_var = ncv ;
             Iast.exp_catch_flow_type = b.Iast.exp_catch_flow_type;
@@ -8990,13 +8988,13 @@ and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  ma
           | Some f -> Some (fst (case_rename_var_decls f))},[])
   | Iast.Seq b -> 
         let l1,ren = case_rename_var_decls b.Iast.exp_seq_exp1 in
-        let l2,ren2 = case_rename_var_decls b.Iast.exp_seq_exp2 in          
-        let l2 = x_add rename_exp ren l2 in      
+        let l2,ren2 = case_rename_var_decls b.Iast.exp_seq_exp2 in
+        let l2 = x_add rename_exp ren l2 in
         let aux_ren = (ren_list_concat ren ren2) in
         (Iast.Seq ({ Iast.exp_seq_exp1 = l1; Iast.exp_seq_exp2 = l2; Iast.exp_seq_pos = b.Iast.exp_seq_pos }),aux_ren)
   | Iast.Unary b -> 
         (Iast.Unary {b with Iast.exp_unary_exp = fst (case_rename_var_decls b.Iast.exp_unary_exp)},[])
-  | Iast.VarDecl b ->       
+  | Iast.VarDecl b ->
     (* TODO:WN:rename*)
     let ndecl,nren = List.fold_left (fun (a1,a2) (c1,c2,c3)->
         let nn = (Ipure.fresh_old_name c1) in
@@ -9288,53 +9286,52 @@ and case_normalize_proc_x prog (f:Iast.proc_decl):Iast.proc_decl =
   let lock_vars = [waitlevel_uvar;waitlevel_pvar;lsmu_uvar;lsmu_pvar;ls_uvar;ls_pvar] in
   (**************************)
   let p = lock_vars@((eres_name,Unprimed)::(res_name,Unprimed)::
-         (List.map (fun c1-> (c1.Iast.param_name,Primed)) 
+         (List.map (fun c1-> (c1.Iast.param_name,Primed))
          (List.filter (fun c-> c.Iast.param_mod == Iast.RefMod) gl_proc_args))) in
-  let strad_s = 
+  let strad_s =
     let pr,pst = IF.struc_split_fv f.Iast.proc_static_specs false in
     Gen.BList.intersect_eq (=) pr pst in
   (* let () = print_endline ("h (proc) = " ^ (pr_list (fun (id,pr) -> id^(string_of_primed pr)) h)) in *)
   (* let () = print_endline ("p (proc)= " ^ (pr_list (fun (id,pr) -> id^(string_of_primed pr)) p)) in *)
-  let nst,h11 = case_normalize_struc_formula 5 prog h p f.Iast.proc_static_specs false 
+  let nst,h11 = case_normalize_struc_formula 5 prog h p f.Iast.proc_static_specs false
     false (*allow_post_vars*) false strad_s in
   (* let () = print_endline ("strad_s = " ^ (pr_list (fun (id,pr) -> id^(string_of_primed pr)) strad_s)) in *)
-  let () = check_eprim_in_struc_formula " is not allowed in precond " nst in 
-  let strad_d = 
+  let () = check_eprim_in_struc_formula " is not allowed in precond " nst in
+  let strad_d =
     let pr,pst = IF.struc_split_fv f.Iast.proc_static_specs false in
     Gen.BList.intersect_eq (=) pr pst in
-  let ndn, h12 = case_normalize_struc_formula 6 prog h p f.Iast.proc_dynamic_specs false 
+  let ndn, h12 = case_normalize_struc_formula 6 prog h p f.Iast.proc_dynamic_specs false
     false (*allow_post_vars*) false strad_d in
   let () = check_eprim_in_struc_formula "is not allowed in precond " ndn in
-  let h1 = Gen.BList.remove_dups_eq (=) (h11@h12) in 
+  let h1 = Gen.BList.remove_dups_eq (=) (h11@h12) in
   let h2 = Gen.BList.remove_dups_eq (=) (h@h_prm@(Gen.BList.difference_eq (=) h1 h)@ (IF.struc_free_vars true nst)) in
-  let nb = match f.Iast.proc_body with 
-      None -> None 
+  let nb = match f.Iast.proc_body with
+      None -> None
     | Some ff->
-      let lst = List.map (fun x -> x.Iast.param_name) f.Iast.proc_args in
+      (* let lst = List.map (fun x -> x.Iast.param_name) f.Iast.proc_args in *)
       (* let f,_ =  x_add_1 case_rename_var_decls_init lst ff in *)
-      let f,_ = (ff,lst) in
-      let r,_,_ = (case_normalize_exp prog h2 [(eres_name,Unprimed);(res_name,Unprimed)] f) in
+      (* let r,_,_ = (case_normalize_exp prog h2 [(eres_name,Unprimed);(res_name,Unprimed)] f) in *)
+      let r,_,_ = (case_normalize_exp prog h2 [(eres_name,Unprimed);(res_name,Unprimed)] ff) in
       Some r in
   {f with Iast.proc_static_specs =nst;
       Iast.proc_dynamic_specs = ndn;
       Iast.proc_body = nb;
   }
 
-and case_normalize_barrier_x prog bd = 
+and case_normalize_barrier_x prog bd =
   (*let lv = bd.I.barrier_shared_vars in
     let u = (self,Unprimed)::(List.map (fun (_,c)-> (c,Unprimed)) lv) in
     let p = (self,Primed)::(List.map (fun (_,c)-> (c,Primed)) lv) in*)
   let u = [(self,Unprimed)] in
   let p = [(self,Primed)] in
-  let fct f = fst (case_normalize_struc_formula 7 prog u p f false 
+  let fct f = fst (case_normalize_struc_formula 7 prog u p f false
       false (*allow_post_vars*) false []) in
   {bd with I.barrier_tr_list = List.map (fun (f,t,sp)-> (f,t,List.map fct sp)) bd.I.barrier_tr_list}
-      
-and case_normalize_barrier prog bd =    
+
+and case_normalize_barrier prog bd =
   let pr_in = Iprinter.string_of_barrier_decl in
   Debug.no_1 "case_normalize_barrier " pr_in pr_in (case_normalize_barrier_x prog) bd
-      
-      
+
 (* AN HOA : WHAT IS THIS FUNCTION SUPPOSED TO DO ? *)
 and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl =
   Debug.no_1 "case_normalize_program" (Iprinter.string_of_program) (Iprinter.string_of_program) case_normalize_program_x prog
