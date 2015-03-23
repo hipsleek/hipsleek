@@ -1785,7 +1785,7 @@ tpdispatcher.ml:  Debug.no_1 "norm_pure_input" pr pr norm_pure_input f
 tpdispatcher.ml:    Debug.no_1 "simplify-syn" pr (* pr_hashtbl *) pr (fun _ -> simplify f0 vnames) f0 (* vnames *)
 tpdispatcher.ml:  Debug.no_1 "norm_var_name" pr pr norm_var_name e
 tpdispatcher.ml:	Debug.no_3 "tp_is_sat_no_cache"
-tpdispatcher.ml Debug.no_1 "tp_is_sat_perm_wrap" 
+tpdispatcher.ml: Debug.no_1 "tp_is_sat_perm_wrap" 
 tpdispatcher.ml:Debug.no_1 "tp_is_sat_perm" Cprinter.string_of_pure_formula string_of_bool (fun _ -> tp_is_sat_perm f sat_no) f
 tpdispatcher.ml:  Debug.no_1 "sat_cache" pr pr2 (sat_cache is_sat) f
 tpdispatcher.ml:  Debug.no_1 "tp_is_sat" Cprinter.string_of_pure_formula string_of_bool 
@@ -1890,7 +1890,6 @@ vperm.ml:  Debug.no_3 "compose_list_failesc_contexts_for_par" pr2 pr1 pr1 pr1
 vperm.ml:  Debug.no_2 "prepare_list_failesc_ctx_for_par" pr1 pr2 prr
 vperm.ml:    Debug.no_2 "vperm_entail_set" pr1 pr1 pr2
 vperm.ml:    Debug.no_2 "vperm_entail_rhs" pr1 pr2 pr 
-wrapper.ml:  Debug.no_2  pr pr (fun _ -> pr_pair pr pr (flag1,flag2)) (fun _ _ -> wrap_two_bools flag1 flag2 new_value f a) flag1 flag2 
 z3.ml:  Debug.no_1 "smt_of_typ" string_of_typ idf smt_of_typ t
 z3.ml:  Debug.no_1 "smt_of_formula"  !CP.print_formula idf
 z3.ml:  Debug.no_1 "smt_of_formula" !print_pure pr_id (fun _ -> smt_of_formula pr_w pr_s f) f

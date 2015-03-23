@@ -110,7 +110,7 @@ sleek.gbyte: xml parser.cmo
 	cp -u _build/sleek.byte g-sleek
 
 sh_proc.byte: 
-	@ocamlbuild $(OBB_GFLAGS) sh_proc.byte
+	@ocamlbuild -cflags -annot $(OBB_GFLAGS) sh_proc.byte
 	cp -u _build/sh_proc.byte sh_proc
 
 hip.byte: xml

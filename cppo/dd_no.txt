@@ -7,3 +7,4 @@ parser.ml:  DD.no_1 "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip 
 parser.ml:  let pr_no x = "?" in DD.no_2 "parse_hip_string" pr pr pr_no parse_hip_string n s
 $EX Mcpure.ml memo_pure_push_exists_slice@heper
 
+wrapper.ml:  Debug.no_2  pr pr (fun _ -> pr_pair pr pr (flag1,flag2)) (fun _ _ -> wrap_two_bools flag1 flag2 new_value f a) flag1 flag2 

@@ -63,6 +63,12 @@ let mapd_add_elem id m =
   with _ ->
       Hashtbl.add mapd id [m]
 
+let mapd_exists id m =
+  try 
+    let lst = Hashtbl.find mapd id in
+    true
+  with _ -> false
+
 let mapd_string_of () =
   Hashtbl.fold (fun id lst acc -> (id^":"^((pr_list (pr_pair pr_id string_of_int)) lst))^"\n"^acc) mapd ""
 
@@ -81,14 +87,14 @@ let mapd_dupl_string_of () =
         else ""
       in to_add^acc) mapd ""
 
-let reg2 = Str.regexp "^\\([^\.]+\\)\.ml: *Debug.no_\\([1-9]\\) *\"\\([^\" ]+\\)"
+let reg2 = Str.regexp "^\\([^\.]+\\)\.ml:[ \t]*Debug.no_\\([1-9]\\) *\"\\([^\"]+\\)"
 
 let main file =
   let ff = open_in file in
   let rec aux i =
     try
       let line = input_line ff in
-      let _ = print_endline ("start "^line) in
+      (* let _ = print_endline ("start "^line) in *)
       let bb = Str.string_match reg2 line 0 in
       if bb then
         let m1 = Str.matched_group 1 line in
@@ -105,6 +111,7 @@ let main file =
       (* print_endline (string_of_int i); *)
         aux (i+1)
       else
+        let _ = print_endline ("FAIL "^line) in
         aux (i+1)
     with End_of_file ->
         begin
@@ -116,12 +123,13 @@ let main file =
 
 main "cppo/dd_no2.txt";;
 
-print_endline (mapd_string_of ());; 
+(* print_endline (mapd_string_of ());;  *)
 
-print_endline (string_of_shell ());;
+(* print_endline (string_of_shell ());; *)
 
-let rex_ml = Str.regexp "\\([^\.]+\\)\.ml"
-
+(* let rex_ml = Str.regexp "\\([^\.]+\\)\.ml" *)
+let rex_ml = Str.regexp "\\(astsimp\)\.ml"
+ 
 let read_dir dir rex =
   let arr_fn = Sys.readdir dir in
   let lst = Array.to_list arr_fn in
@@ -133,11 +141,37 @@ let read_dir dir rex =
         ((String.length m1)+3) = (String.length s)
       with _ -> false
   ) lst in
-  (* let () = Debug.binfo_hprint (add_str "str" (pr_list pr_id)) lst  no_pos in *)
+  let () = Debug.binfo_hprint (add_str "str" (pr_list pr_id)) lst  no_pos in
   lst
   ;;
 
 let ml_files = read_dir "." rex_ml
+
+let reg5 = Str.regexp ".*=[ \t]*\\([A-Z][_A-Za-z0-9]*\\)\.\\([^ \t]+\\)"
+
+let process2_file f =
+  let ff = open_in f in
+  let rec aux i =
+    try
+      let line = input_line ff in
+      let bb = Str.string_match reg5 line 0 in
+      if bb then
+        let m1 = Str.matched_group 1 line in
+        let m2 = Str.matched_group 2 line in
+        if mapd_exists m2 m1 then
+          let () = Debug.binfo_hprint (add_str "found" (pr_list pr_id)) [m1;m2] no_pos in
+          let () = print_endline line in 
+          aux (i+1)
+        else aux (i+1)
+      else
+        aux (i+1)
+    with End_of_file ->
+      begin
+        print_endline ((string_of_int i)^"<-- end of file");
+      end
+  in aux 0;;
+
+List.map process2_file ml_files;;
 
 let count_lines f =
   let ff = open_in f in
