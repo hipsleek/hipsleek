@@ -9311,7 +9311,8 @@ and case_normalize_proc_x prog (f:Iast.proc_decl):Iast.proc_decl =
       None -> None 
     | Some ff->
       let lst = List.map (fun x -> x.Iast.param_name) f.Iast.proc_args in
-      let f,_ = x_add_1 case_rename_var_decls_init  lst ff in
+      (* let f,_ =  x_add_1 case_rename_var_decls_init lst ff in *)
+      let f,_ = (ff,lst) in
       let r,_,_ = (case_normalize_exp prog h2 [(eres_name,Unprimed);(res_name,Unprimed)] f) in
       Some r in
   {f with Iast.proc_static_specs =nst;
