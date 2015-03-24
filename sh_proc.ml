@@ -69,6 +69,11 @@ let mapd_exists id m =
     true
   with _ -> false
 
+(* let mapd_exists_with_lst id mlst = *)
+(*   try *)
+(*     let lst = Hashtbl.find mapd id in *)
+(*     List.exists (fun e -> List.mem e mlst *)
+
 let mapd_string_of () =
   Hashtbl.fold (fun id lst acc -> (id^":"^((pr_list (pr_pair pr_id string_of_int)) lst))^"\n"^acc) mapd ""
 
@@ -115,8 +120,8 @@ let main file =
         aux (i+1)
     with End_of_file ->
         begin
-          print_endline "end of file";
-          print_endline (mapd_dupl_string_of ())
+          (* print_endline "end of file"; *)
+          (* print_endline (mapd_dupl_string_of ()) *)
         end
   in
   aux 0;;
@@ -129,7 +134,7 @@ main "cppo/dd_no2.txt";;
 
 (* let rex_ml = Str.regexp "\\([^\.]+\\)\.ml" *)
 let rex_ml = Str.regexp "\\(astsimp\)\.ml"
- 
+
 let read_dir dir rex =
   let arr_fn = Sys.readdir dir in
   let lst = Array.to_list arr_fn in
@@ -141,16 +146,22 @@ let read_dir dir rex =
         ((String.length m1)+3) = (String.length s)
       with _ -> false
   ) lst in
-  let () = Debug.binfo_hprint (add_str "str" (pr_list pr_id)) lst  no_pos in
+  (* let () = Debug.binfo_hprint (add_str "str" (pr_list pr_id)) lst  no_pos in *)
   lst
   ;;
 
 let ml_files = read_dir "." rex_ml
 
-let reg5 = Str.regexp ".*=[ \t]*\\([A-Z][_A-Za-z0-9]*\\)\.\\([^ \t]+\\)"
+
+(* To complete the regular expression with the other calling cases. *)
+let reg5 = Str.regexp ".*=[ \t]*\\([A-Z][_A-Za-z0-9]*\\)\.\\([^ \t]+\\)" (* *)
+let reg6 = Str.regexp ".*=[ \t]*\\([a-z][_A-Za-z0-9]*\\)[ \t]+\\([^ \t]+\\)"
+
+module SSet = Set.Make(String);;
 
 let process2_file f =
   let ff = open_in f in
+  let output = ref SSet.empty in
   let rec aux i =
     try
       let line = input_line ff in
@@ -159,19 +170,37 @@ let process2_file f =
         let m1 = Str.matched_group 1 line in
         let m2 = Str.matched_group 2 line in
         if mapd_exists m2 m1 then
-          let () = Debug.binfo_hprint (add_str "found" (pr_list pr_id)) [m1;m2] no_pos in
-          let () = print_endline line in 
+          (* let () = Debug.binfo_hprint (add_str "found" (pr_list pr_id)) [m1;m2] no_pos in *)
+          (* let () = print_endline line in *)
+          (* let () = output:= "s/"^m1^"."^m2^"/x_add "^m1^"."^m2^"/\n"^(!output) in *)
+          let () = output:=SSet.add (m1^"."^m2) (!output) in
           aux (i+1)
         else aux (i+1)
       else
-        aux (i+1)
+        let bb = Str.string_match reg6 line 0 in
+        if bb then
+          let m1 = Str.matched_group 1 line in
+          if mapd_exists m1 "none" then
+            (* let () = Debug.binfo_hprint (add_str "found 2" (pr_list pr_id)) [m1;"none"] no_pos in *)
+            (* let () = print_endline line in *)
+            (* let () = output:= "s/"^m1^"/x_add "^m1^"/\n"^(!output) in *)
+            let () = output := SSet.add m1 (!output) in
+            aux (i+1)
+          else
+            aux (i+1)
+        else
+          aux (i+1)
     with End_of_file ->
       begin
-        print_endline ((string_of_int i)^"<-- end of file");
+        (* print_endline ((string_of_int i)^"<-- end of file"); *)
+        SSet.iter (fun e -> print_endline ("s/=[ \t]*"^e^" /= x_add "^e^" /")) (!output);
+        SSet.iter (fun e -> print_endline ("s/([ \t]*"^e^" /( x_add "^e^" /")) (!output);
       end
-  in aux 0;;
+  in
+  aux 0;;
 
-List.map process2_file ml_files;;
+(* List.map process2_file ml_files;; *)
+let _ = process2_file Sys.argv.(1);;
 
 let count_lines f =
   let ff = open_in f in
@@ -196,8 +225,9 @@ let find_lines fn rex =
         let m1 = Str.matched_group 1 line in
         aux (i+1) (m1::acc)
       with _ -> aux i acc
-    with _ -> acc 
-  in aux 0 [];;
+    with _ -> acc
+  in
+  aux 0 [];;
 
 let rex_open = Str.regexp "open *\\([^\b]+\\)"
 
