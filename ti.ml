@@ -315,7 +315,12 @@ let solve_turel_one_unknown_scc prog trrels tg scc =
            (* Term with phase number or MayLoop *)
       then update_ann scc (subst (CP.Term, [CP.mkIConst (scc_fresh_int ()) no_pos]))
       else
-        update_ann scc (subst (CP.Loop None, [])) (* Loop *)
+        try
+          let nd_trrel = List.find (fun rel -> CP.has_nondet_cond rel.ret_ctx) trrels in
+          let nd_pos = nd_trrel.termr_pos in
+          update_ann scc (subst (CP.MayLoop (Some { CP.tcex_trace = [nd_pos] }), [])) (* Loop with nondet *)
+        with _ -> update_ann scc (subst (CP.Loop None, [])) (* Loop without nondet *)
+
         (* proving_non_termination_scc prog trrels tg scc *)
       (* match outside_scc_succ with                                                      *)
       (* | [] ->                                                                          *)
@@ -399,11 +404,11 @@ and solve_turel_graph_one_group iter_num prog trrels tg scc_list =
     try
       let () = pr_im_case_specs iter_num in
       let tg = sub_graph_of_scc_list tg scc_list in
-      (* let () =                                                       *)
+      (* let () =                                                            *)
       (*   print_endline_quiet ("GRAPH @ ITER " ^ (string_of_int iter_num)); *)
       (*   print_endline_quiet (print_graph_by_rel tg)                       *)
-      (* in                                                            *)
-      (* let () = print_endline_quiet (print_scc_list_num scc_list) in        *)
+      (* in                                                                  *)
+      (* let () = print_endline_quiet (print_scc_list_num scc_list) in       *)
       let tg = List.fold_left (fun tg -> solve_turel_one_scc prog trrels tg) tg scc_list in
       ()
     with

@@ -1645,9 +1645,10 @@ let rec proving_non_termination_scc prog trrels tg scc =
         then subst (CP.Loop None, []) ann
         else 
           begin try
-            let _, nd_pos = List.find (fun (nd_uid, _) -> 
-              uid.CP.tu_id == nd_uid.CP.tu_id) nd_nonterm_uids in
+            (* let _, nd_pos = List.find (fun (nd_uid, _) ->                  *)
+            (*   uid.CP.tu_id == nd_uid.CP.tu_id) nd_nonterm_uids in          *)
             (* subst (CP.MayLoop (Some { CP.tcex_trace = [nd_pos] }), []) ann *)
+            (* termination-crafted-lit/GulwaniJainKoskinen-PLDI2009-Fig1_true-termination.c *)
             subst (CP.MayLoop None, []) ann
           with Not_found -> ann end
       | _ -> ann
