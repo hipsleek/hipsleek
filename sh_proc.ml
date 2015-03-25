@@ -64,11 +64,48 @@ let mapd_add_elem id m =
       Hashtbl.add mapd id [m]
 
 let mapd_exists id m =
-  try 
+  try
     let lst = Hashtbl.find mapd id in
-    true
+    if m="none" then true
+    else
+      List.exists (fun (e,_) -> (String.capitalize e)=m) lst
   with _ -> false
+;;
 
+
+(* ---------------------------------------- *)
+(* Use hashtbl to record alias for modules *)
+let m_alias = Hashtbl.create 100;;
+
+let add_m_alias (alias:string) (name:string) =
+  try
+    let lst = Hashtbl.find  m_alias name in
+    Hashtbl.replace m_alias name (alias::lst)
+  with Not_found ->
+      (* let () = print_endline ("Add alias "^alias) in *)
+      Hashtbl.add m_alias name [alias]
+;;
+
+let is_alias name alias =
+  try
+    let lst = Hashtbl.find m_alias name in
+    List.exists (fun e -> alias = e) lst
+  with Not_found ->
+      false
+;;
+
+
+(* ---------------------------------------- *)
+
+let mapd_x_add_1 id m=
+  let lst = Hashtbl.find mapd id in
+  if (not (m=""))
+  then
+    List.exists (fun (a,n) -> ((String.capitalize a)=m || is_alias (String.capitalize a) m) && n=1) lst
+  else
+    List.exists (fun (a,n) -> n=1) lst
+
+;;
 (* let mapd_exists_with_lst id mlst = *)
 (*   try *)
 (*     let lst = Hashtbl.find mapd id in *)
@@ -127,13 +164,12 @@ let main file =
   aux 0;;
 
 main "cppo/dd_no2.txt";;
-
 (* print_endline (mapd_string_of ());;  *)
 
 (* print_endline (string_of_shell ());; *)
 
-(* let rex_ml = Str.regexp "\\([^\.]+\\)\.ml" *)
-let rex_ml = Str.regexp "\\(astsimp\)\.ml"
+let rex_ml = Str.regexp "\\([^\.]+\\)\.ml"
+(* let rex_ml = Str.regexp "\\(astsimp\)\.ml" *)
 
 let read_dir dir rex =
   let arr_fn = Sys.readdir dir in
@@ -155,9 +191,20 @@ let ml_files = read_dir "." rex_ml
 
 (* To complete the regular expression with the other calling cases. *)
 let reg5 = Str.regexp ".*=[ \t]*\\([A-Z][_A-Za-z0-9]*\\)\.\\([^ \t]+\\)" (* *)
+let reg7 = Str.regexp ".*([ \t]*\\([A-Z][_A-Za-z0-9]*\\)\.\\([^ \t]+\\)"
 let reg6 = Str.regexp ".*=[ \t]*\\([a-z][_A-Za-z0-9]*\\)[ \t]+\\([^ \t]+\\)"
+let reg8 = Str.regexp ".*([ \t]*\\([a-z][_A-Za-z0-9]*\\)[ \t]+\\([^ \t]+\\)"
+let reg9 = Str.regexp "[ \t(]*\\([A-Z][_A-Za-z0-9]*\\)\.\\([^ \t]+\\)" (* *)
+let reg10 = Str.regexp "[ \t(]*\\([a-z][_A-Za-z0-9]*\\)[ \t]+\\([^ \t]+\\)"
 
-module SSet = Set.Make(String);;
+let reg_alias = Str.regexp "module[ \t]+\\([A-Z][_A-Za-z0-9]*\\)[ \t]*=[ \t]*\\([A-Z][_A-Za-z0-9]*\\)"
+
+module StringPlus=
+    struct
+      type t = (string*int)
+      let compare (a,_) (b,_)= String.compare a b
+    end
+module SSet = Set.Make(StringPlus);;
 
 let process2_file f =
   let ff = open_in f in
@@ -165,6 +212,17 @@ let process2_file f =
   let rec aux i =
     try
       let line = input_line ff in
+      (* record module alias *)
+      let al = Str.string_match reg_alias line 0 in
+      let () = 
+        if al
+        then
+          let name = Str.matched_group 1 line in
+          let alias = Str.matched_group 2 line in
+          add_m_alias name alias
+        else
+          ()
+      in
       let bb = Str.string_match reg5 line 0 in
       if bb then
         let m1 = Str.matched_group 1 line in
@@ -173,9 +231,16 @@ let process2_file f =
           (* let () = Debug.binfo_hprint (add_str "found" (pr_list pr_id)) [m1;m2] no_pos in *)
           (* let () = print_endline line in *)
           (* let () = output:= "s/"^m1^"."^m2^"/x_add "^m1^"."^m2^"/\n"^(!output) in *)
-          let () = output:=SSet.add (m1^"."^m2) (!output) in
+          let () = 
+            if mapd_x_add_1 m2 m1 then
+              (* let () = print_endline ("x_add_1: "^m2) in *)
+              output:=SSet.add ((m1^"."^m2),1) (!output)
+            else
+              output:=SSet.add ((m1^"."^m2),0) (!output)
+          in
           aux (i+1)
-        else aux (i+1)
+        else
+          aux (i+1)
       else
         let bb = Str.string_match reg6 line 0 in
         if bb then
@@ -184,20 +249,97 @@ let process2_file f =
             (* let () = Debug.binfo_hprint (add_str "found 2" (pr_list pr_id)) [m1;"none"] no_pos in *)
             (* let () = print_endline line in *)
             (* let () = output:= "s/"^m1^"/x_add "^m1^"/\n"^(!output) in *)
-            let () = output := SSet.add m1 (!output) in
+            let () =
+              if mapd_x_add_1 m1 "" then
+                output := SSet.add (m1,1) (!output)
+              else
+                output := SSet.add (m1,0) (!output)
+            in
             aux (i+1)
           else
             aux (i+1)
         else
           aux (i+1)
     with End_of_file ->
-      begin
-        (* print_endline ((string_of_int i)^"<-- end of file"); *)
-        SSet.iter (fun e -> print_endline ("s/=[ \t]*"^e^" /= x_add "^e^" /")) (!output);
-        SSet.iter (fun e -> print_endline ("s/([ \t]*"^e^" /( x_add "^e^" /")) (!output);
-      end
+        begin
+          (* print_endline ((string_of_int i)^"<-- end of file"); *)
+          SSet.iter (fun (e,n) -> if n=1 then print_endline ("s/=\s*"^e^" /= x_add_1 "^e^" /") else print_endline ("s/=\s*"^e^" /= x_add "^e^" /")) (!output);
+          SSet.iter (fun (e,n) -> if n=1 then print_endline ("s/(\s*"^e^" /( x_add_1 "^e^" /") else print_endline ("s/(\s*"^e^" /( x_add "^e^" /")) (!output);
+        end
   in
-  aux 0;;
+  aux 0
+;;
+
+(* ---------------  Collect all the call sites. --------------------- *)
+let new_mapd = Hashtbl.copy mapd;;
+let new_mapd_string_of () =
+  Hashtbl.fold (fun id lst acc -> (id^":"^((pr_list (pr_pair pr_id string_of_int)) lst))^"\n"^acc) new_mapd ""
+;;
+
+let new_mapd_exists id m =
+  try
+    let lst = Hashtbl.find mapd id in
+    true
+  with _ -> false
+;;
+
+let can_match_2 line reg =
+  if Str.string_match reg line 0 then
+    
+    let m1 = Str.matched_group 1 line in
+    let m2 = Str.matched_group 2 line in
+    let () = print_endline (line^" m1:"^m1^" m2:"^m2) in
+    if new_mapd_exists m2 m1 then
+      let () = Hashtbl.remove new_mapd m2 in
+      true
+    else
+      false
+  else
+    false
+;;
+
+let can_match_1 line reg =
+  if Str.string_match reg line 0 then
+    (* let () = print_endline line in *)
+    let m1 = Str.matched_group 1 line in
+    let () = print_endline (line^" m1:"^m1) in
+    if new_mapd_exists m1 "none" then
+      let () = Hashtbl.remove new_mapd m1 in
+      true
+    else false
+  else
+    false
+;;
+
+let collect_call_name_all dirlst =
+  let collect_call_name f=
+    let () = print_endline f in
+    let ff = open_in f in
+    let rec aux i=
+      try
+        let line = input_line ff in
+        let () =
+          begin
+            can_match_2 line reg5;
+            can_match_2 line reg7;
+            can_match_2 line reg9;
+            can_match_1 line reg6;
+            can_match_1 line reg8;
+            can_match_1 line reg10;
+            ()
+          end
+        in
+        aux (i+1)
+      with End_of_file ->
+          ()
+    in
+    aux 0
+  in
+  let () = List.iter (fun dir -> collect_call_name dir) dirlst in
+  new_mapd_string_of ()
+;;
+(* let ml_files = ["fixcalc.ml"];;  *)
+(* let () = print_endline (collect_call_name_all ml_files);; *)
 
 (* List.map process2_file ml_files;; *)
 let _ = process2_file Sys.argv.(1);;
