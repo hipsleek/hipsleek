@@ -9224,7 +9224,7 @@ let rec dist_and_over_or f =
 
 let trans_dnf f =
   let f = dist_not_inwards f in
-  (* *)
+  let f = !simplify f in
   let lex,f = x_add_1 elim_exists_with_fresh_vars f in
   let f = dist_and_over_or f in
   lex,f
