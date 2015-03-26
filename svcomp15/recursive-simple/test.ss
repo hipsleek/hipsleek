@@ -21,10 +21,10 @@ void f(int n)
   }
 }
 
-void main()
-//infer [@flow,@post_n]
-  requires true
-  ensures true ;
-{
-  f(3);
-}
+/* void main() */
+/* //infer [@flow,@post_n] */
+/*   requires true */
+/*   ensures true ; */
+/* { */
+/*   f(3); */
+/* } */

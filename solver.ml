@@ -3550,9 +3550,10 @@ and heap_entail_after_sat_struc_x prog is_folding has_post
                 let () = Debug.tinfo_hprint (add_str "es(2)" Cprinter.string_of_entail_state(* _short *)) es no_pos in
                 let () = flush(stdout) in
                 let es = (CF.add_to_estate_with_steps es ss) in
-                let () = Debug.tinfo_hprint (add_str "es(3)" Cprinter.string_of_entail_state(* _short *)) es no_pos in
+                let () = x_tinfo_hp (add_str "es(3)" Cprinter.string_of_entail_state(* _short *)) es no_pos in
                 let () = flush(stdout) in
                 let tmp, prf = heap_entail_conjunct_lhs_struc prog is_folding has_post (Ctx es) conseq tid delayed_f join_id pos pid in
+                let () = x_tinfo_hp (add_str "tmp" Cprinter.string_of_list_context) tmp no_pos in
 	        (filter_set tmp, prf)
             end
 	  in wrap_trace es.es_path_label exec ()
@@ -4300,6 +4301,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 		                                            fc_current_conseq = post;
 		                                            fc_failure_pts =  [];}, fe, es.es_trace)), Ctx ({es with es_formula = CF.substitute_flow_into_f !top_flow_int es.es_formula}),(mk_cex false))
                                                           else if CF.is_error_flow postcond then
+                                                            let () = x_binfo_pp "flow error" no_pos in
                                                             let es, ll = helper ctx postcond in
 					                    let fl = CF.get_error_flow postcond in
                                                             let err_name = (exlist # get_closest fl.CF.formula_flow_interval) in
