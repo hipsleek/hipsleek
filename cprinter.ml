@@ -1010,10 +1010,14 @@ let rec pr_b_formula (e:P.b_formula) =
     | P.ListNotIn (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <Lnotin> "  (fun ()-> pr_formula_exp e2)
     | P.ListAllN (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <allN> "  (fun ()-> pr_formula_exp e2)
     | P.ListPerm (e1, e2, l) -> pr_op_adhoc (fun ()->pr_formula_exp e1) " <perm> "  (fun ()-> pr_formula_exp e2)
-    | P.RelForm (r, args, l) -> fmt_string ((string_of_spec_var r) ^ "("); match args with
-		| [] -> fmt_string ")"
-		| arg_first::arg_rest -> let () = pr_formula_exp arg_first in 
-		  let todo_unk = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")" (* An Hoa *) 
+    | P.RelForm (r, args, l) -> 
+      fmt_string ((string_of_spec_var r) ^ (string_of_pos l) ^ "("); 
+      match args with
+      | [] -> fmt_string ")"
+      | arg_first::arg_rest -> 
+        let () = pr_formula_exp arg_first in 
+        let todo_unk = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in 
+        fmt_string ")" (* An Hoa *) 
 
 (** print a pure formula to formatter *)
 and pr_pure_formula  (e:P.formula) = 
@@ -2655,6 +2659,17 @@ let string_of_rel_decl reldecl =
   in
   let decl_kind = " relation " in
   let args = pr_lst ", " pr_arg reldecl.Cast.rel_vars in
+  decl_kind ^ name ^ "(" ^ args ^ ").\n"
+
+let string_of_ut_decl ut_decl =
+  let name = ut_decl.Cast.ut_name in
+  let pr_arg arg =
+    let t = CP.type_of_spec_var arg in
+    let arg_name = string_of_spec_var arg in
+    (CP.name_of_type t)  ^ " " ^ arg_name
+  in
+  let decl_kind = (" UT" ^ (if ut_decl.ut_is_pre then "Pre" else "Post") ^ " ") in
+  let args = pr_lst ", " pr_arg ut_decl.Cast.ut_params in
   decl_kind ^ name ^ "(" ^ args ^ ").\n"
 
 let string_of_hp_rels (e) : string =
@@ -4691,7 +4706,9 @@ let string_of_rel_decl_list rdecls =
   String.concat "\n" (List.map string_of_rel_decl rdecls)
       (* String.concat "\n" (List.map (fun r -> "relation " ^ r.rel_name) rdecls) *)
 
-
+let string_of_ut_decl_list ut_decls =
+  String.concat "\n" (List.map string_of_ut_decl ut_decls)
+  
 (* An Hoa : print axioms *)
 let string_of_axiom_decl_list adecls = 
 	String.concat "\n" (List.map (fun a -> "axiom " ^ (string_of_pure_formula a.axiom_hypothesis) ^ " |- " ^ (string_of_pure_formula a.axiom_conclusion)) adecls)
@@ -4715,6 +4732,7 @@ let string_of_prog_or_branches ((prg,br):prog_or_branches) =
 let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^
   (string_of_view_decl_list p.prog_view_decls) ^ "\n\n" ^
   (string_of_barrier_decl_list p.prog_barrier_decls) ^ "\n\n" ^
+  (string_of_ut_decl_list p.prog_ut_decls) ^ "\n\n" ^
   (string_of_rel_decl_list p.prog_rel_decls) ^ "\n\n" ^
   (string_of_axiom_decl_list p.prog_axiom_decls) ^ "\n\n" ^
   (* WN_all_lemma - override usage? *)

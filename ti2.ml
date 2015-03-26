@@ -576,6 +576,12 @@ let tnt_spec_of_proc prog proc ispec =
   let spec = norm_struc spec in
   spec
 
+let tnt_spec_of_proc prog proc ispec =
+  let pr1 = print_tnt_case_spec in
+  let pr2 = string_of_struc_formula_for_spec in
+  Debug.no_1 "tnt_spec_of_proc" pr1 pr2 
+  (fun _ -> tnt_spec_of_proc prog proc ispec) ispec
+
 let print_svcomp2015_result term_anns =
   let unknown_ans = "UNKNOWN" in
   let yes_ans = "TRUE" in
