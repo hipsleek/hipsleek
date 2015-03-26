@@ -33,6 +33,9 @@ let is_nondet_cond f =
   let svf = CP.fv f in
   Gen.BList.overlap_eq CP.eq_spec_var svf (nondet_vars_stk # get_stk)
 
+let is_nondet_var sv = 
+  Gen.BList.mem_eq CP.eq_spec_var sv (nondet_vars_stk # get_stk)
+
 (* Temporal Relation at Return *)
 type ret_trel = {
   ret_ctx: CP.formula;
@@ -113,6 +116,26 @@ type tnt_case_spec =
   | Unknown of CP.term_cex option
   | Cases of (CP.formula * tnt_case_spec) list
 
+let is_Loop sp = 
+  match sp with
+  | Sol (CP.Loop _, _) -> true
+  | _ -> false
+
+let is_cex_MayLoop sp = 
+  match sp with
+  | Sol (CP.MayLoop cex, _) -> not (is_None cex)
+  | _ -> false
+
+let is_emp_MayLoop sp = 
+  match sp with
+  | Sol (CP.MayLoop cex, _) -> is_None cex
+  | _ -> false
+
+let is_Term sp = 
+  match sp with
+  | Sol (CP.Term, _) -> true
+  | _ -> false
+  
 let rec pr_tnt_case_spec (spec: tnt_case_spec) = 
   match spec with
   | Cases cl ->

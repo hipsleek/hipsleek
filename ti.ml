@@ -121,7 +121,7 @@ let solve_base_trrels params base_trrels turels =
     (fun _ -> solve_base_trrels params base_trrels turels) params
 
 let solve_trrel_list params trrels turels = 
-  (* print_endline_quiet (pr_list print_ret_trel trrel) *)
+  (* let params = remove_nondet_vars params in *)
   let base_trrels, rec_trrels = List.partition (fun trrel -> trrel.termr_lhs == []) trrels in
   (* let base_conds = List.map (fun btr -> solve_base_trrel btr turels) base_trrels in *)
   let base_conds = solve_base_trrels params base_trrels turels in
@@ -142,7 +142,7 @@ let solve_trrel_list params trrels turels =
   (* let () = print_endline_quiet ("not_rec_cond: " ^ (!CP.print_formula not_rec_cond)) in *)
   
   let rec_conds = List.fold_left (fun acc rtr ->
-    let rec_cond = simplify 4 rtr.ret_ctx rtr.termr_rhs_params in
+    let rec_cond = simplify 4 rtr.ret_ctx ((* remove_nondet_vars *) rtr.termr_rhs_params) in
     let rec_cond =
       if CP.is_disjunct rec_cond
       then pairwisecheck rec_cond

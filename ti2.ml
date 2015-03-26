@@ -304,12 +304,80 @@ let merge_cases_tnt_case_spec spec =
   Debug.no_1 "merge_cases_tnt_case_spec" pr pr
     merge_cases_tnt_case_spec spec
 
+let rec merge_cond_tnt_case_spec spec = 
+  match spec with
+  | Cases cases ->
+    List.concat (List.map (fun (c, sp) ->
+      let flatten_sp = merge_cond_tnt_case_spec sp in
+      List.map (fun (cond_lst, sp) -> (c::cond_lst, sp)) flatten_sp) cases)
+  | _ -> [([], spec)]
+
+let add_conds_to_cex conds cex =
+  let assume_conds = List.map (fun c -> CP.TAssume c) conds in
+  match cex with
+  | None -> Some ({ CP.tcex_trace = assume_conds })
+  | Some cex -> Some ({ cex with CP.tcex_trace = assume_conds @ cex.CP.tcex_trace })
+
+let elim_nondet_vars f = 
+  let params = List.find_all (fun v -> not (is_nondet_var v)) (CP.fv f) in
+  simplify 12 f params
+
+let remove_nondet_vars svl = 
+  List.filter (fun v -> not (is_nondet_var v)) svl
+
+let merge_nondet_cases cases =
+  let flatten_cases = merge_cond_tnt_case_spec (Cases cases) in 
+  match flatten_cases with
+  | [] -> []
+  | (conds, sp)::_ ->
+    if (List.for_all (fun (_, sp) -> is_Loop sp) flatten_cases) then
+      match sp with
+      | Sol (CP.Loop cex, []) -> 
+        let loop_cond = pairwisecheck (CP.join_disjunctions (List.concat (List.map fst flatten_cases))) in
+        let loop_cond = elim_nondet_vars loop_cond in
+        [(loop_cond, Sol (CP.Loop (add_conds_to_cex conds cex), []))]
+      | _ -> report_error no_pos "[TNT Inference] merge_nondet_cases expects a Loop TNT spec"
+    else if (List.for_all (fun (_, sp) -> is_Term sp) flatten_cases) then
+      (* List.map (fun (c, sp) -> (elim_nondet_vars c, sp)) cases *)
+      cases
+    else (* MayLoop *)
+      try
+        let conds, loop_sp = List.find (fun (_, sp) -> is_Loop sp) flatten_cases in
+        (match loop_sp with
+        | Sol (CP.Loop cex, []) ->
+          let cond = pairwisecheck (CP.join_disjunctions conds) in
+          let mayloop_cond = elim_nondet_vars cond in
+          [(mayloop_cond, Sol (CP.MayLoop (add_conds_to_cex conds cex), []))]
+        | _ -> report_error no_pos "[TNT Inference] merge_nondet_cases expects a Loop TNT spec"
+        ) 
+      with _ ->
+        try
+          let conds, mayloop_sp = List.find (fun (_, sp) -> is_cex_MayLoop sp) flatten_cases in
+          (match mayloop_sp with
+          | Sol (CP.MayLoop cex, []) ->
+            let cond = pairwisecheck (CP.join_disjunctions conds) in
+            let mayloop_cond = elim_nondet_vars cond in
+            [(mayloop_cond, Sol (CP.MayLoop (add_conds_to_cex conds cex), []))]
+          | _ -> report_error no_pos "[TNT Inference] merge_nondet_cases expects a MayLoop TNT spec"
+          )
+        with _ ->
+          let mayloop_cond = pairwisecheck (CP.join_disjunctions (List.concat (List.map fst flatten_cases))) in
+          let mayloop_cond = elim_nondet_vars mayloop_cond in
+          [(mayloop_cond, Sol (CP.MayLoop None, []))]
+
 let rec norm_nondet_tnt_case_spec spec = 
   match spec with
   | Cases cases ->
-    let norm_cases = List.map (fun (c, sp) -> (c, norm_nondet_tnt_case_spec sp)) cases in
-    let nondet_cases = List.find_all (fun (c, _) -> is_nondet_cond c) norm_cases in 
-    Cases nondet_cases
+    let normed_cases = List.map (fun (c, sp) -> (c, norm_nondet_tnt_case_spec sp)) cases in
+    let nondet_cases, normal_cases = List.partition (fun (c, _) -> is_nondet_cond c) normed_cases in
+    let merged_nondet_cases = merge_nondet_cases nondet_cases in
+    (match merged_nondet_cases with
+    | [] -> Cases normal_cases
+    | (c, sp)::[] ->
+      if (is_empty normal_cases) then sp 
+      else Cases (normal_cases @ [(c, sp)])
+    | _ -> Cases (normal_cases @ merged_nondet_cases)
+    )
   | _ -> spec
     
 let rec flatten_one_case_tnt_spec c f = 
@@ -573,9 +641,12 @@ let rec norm_struc struc_f =
   | CF.EList el -> CF.mkEList_no_flatten (map_l_snd norm_struc el)
 
 let tnt_spec_of_proc prog proc ispec =
-  let ispec = merge_cases_tnt_case_spec
-    (flatten_case_tnt_spec ispec) in
   let ispec = add_cex_tnt_case_spec ispec in
+  let ispec = 
+    merge_cases_tnt_case_spec
+    (flatten_case_tnt_spec 
+    (norm_nondet_tnt_case_spec ispec)) 
+  in
   (* let spec = proc.Cast.proc_static_specs in *)
   let spec = proc.Cast.proc_stk_of_static_specs # top in
   let spec = merge_tnt_case_spec_into_struc_formula prog
