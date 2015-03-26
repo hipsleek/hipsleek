@@ -1089,7 +1089,12 @@ and pr_term_ann_assume ann =
 
 and pr_term_cex cex = 
   pr_wrap_test "" Gen.is_None (pr_opt_silent (fun cex ->
-    pr_set (fun pos -> fmt_string (string_of_pos pos)) cex.P.tcex_trace)) cex
+    pr_set (fun cmd -> pr_tcex_cmd cmd) cex.P.tcex_trace)) cex
+
+and pr_tcex_cmd cmd = 
+  match cmd with
+  | P.TAssume c -> (fmt_string "assume "; pr_pure_formula c)
+  | P.TCall pos -> fmt_string ("call" ^ (string_of_pos pos))
 
 and pr_term_ann debug ann =
   if debug then pr_term_ann_debug false ann

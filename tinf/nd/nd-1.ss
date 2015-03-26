@@ -4,6 +4,6 @@ void nd_loop(int x)
   ensures true;
 {
   if (x >= 0 && __VERIFIER_nondet_int() > 0) return;
- else nd_loop(x + 1);
+  else nd_loop(x + 1);
 }
 

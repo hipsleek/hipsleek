@@ -219,8 +219,12 @@ and uid = {
 }
 
 and term_cex = {
-  tcex_trace: loc list; 
+  tcex_trace: tcex_cmd list; 
 }
+
+and tcex_cmd = 
+  | TAssume of formula
+  | TCall of loc
 
 and term_fail =
   | TermErr_May

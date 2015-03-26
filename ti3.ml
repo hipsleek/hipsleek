@@ -25,7 +25,14 @@ let rec partition_eq eq ls =
   | e::es -> 
     let eq_es, neq_es = List.partition (eq e) es in
     (e::eq_es)::(partition_eq eq neq_es)
-    
+
+(* Stack of nondet vars *)
+let nondet_vars_stk: CP.spec_var Gen.stack = new Gen.stack
+
+let is_nondet_cond f =
+  let svf = CP.fv f in
+  Gen.BList.overlap_eq CP.eq_spec_var svf (nondet_vars_stk # get_stk)
+
 (* Temporal Relation at Return *)
 type ret_trel = {
   ret_ctx: CP.formula;
@@ -401,13 +408,13 @@ let trans_nondet_trels_proc prog trrels turels =
 
   let trans_ut_decls = List.fold_left (fun acc ut_decl ->
     let trans_ut_decl = 
-      if (List.exists (fun n -> n = ut_decl.ut_name) ut_names) then
+      if (Gen.BList.mem_eq eq_str ut_decl.ut_name ut_names) then
         { ut_decl with ut_params = ut_decl.ut_params @ nd_sv_lst; }
       else ut_decl
     in acc @ [trans_ut_decl]
   ) [] prog.prog_ut_decls in
-  let () = print_endline_quiet (Cprinter.string_of_ut_decl_list trans_ut_decls) in
   let () = prog.prog_ut_decls <- trans_ut_decls in
+  let () = nondet_vars_stk # push_list (nd_sv_lst @ (List.map CP.to_primed nd_sv_lst)) in
   trans_trrels, trans_turels
 
 let trans_nondet_trels prog trrels turels =

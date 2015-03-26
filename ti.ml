@@ -300,7 +300,7 @@ let solve_turel_one_unknown_scc prog trrels tg scc =
         try
           let nd_trrel = List.find (fun rel -> CP.has_nondet_cond rel.ret_ctx) trrels in
           let nd_pos = nd_trrel.termr_pos in
-          update_ann scc (subst (CP.MayLoop (Some { CP.tcex_trace = [nd_pos] }), [])) (* Loop with nondet *)
+          update_ann scc (subst (CP.MayLoop (Some { CP.tcex_trace = [CP.TCall nd_pos] }), [])) (* Loop with nondet *)
         with _ -> update_ann scc (subst (CP.Loop None, [])) (* Loop without nondet *)
 
       (* proving_non_termination_scc prog trrels tg scc *)
@@ -362,11 +362,11 @@ let finalize_turel_graph prog tg =
 (*     try                                                                                     *)
 (*       let scc_list = Array.to_list (TGC.scc_array tg) in                                    *)
 (*       let scc_groups = partition_scc_list tg scc_list in                                    *)
-(*       (* let () =                                                             *)             *)
+(*       (* let () =                                                            *)             *)
 (*       (*   print_endline_quiet ("GRAPH @ ITER " ^ (string_of_int iter_num)); *)             *)
 (*       (*   print_endline_quiet (print_graph_by_rel tg)                       *)             *)
 (*       (* in                                                                  *)             *)
-(*       (* let () = print_endline_quiet (print_scc_list_num scc_list) in        *)             *)
+(*       (* let () = print_endline_quiet (print_scc_list_num scc_list) in       *)             *)
 (*       let tg = List.fold_left (fun tg -> solve_turel_one_scc prog trrels tg) tg scc_list in *)
 (*       finalize_turel_graph prog tg                                                          *)
 (*     with                                                                                    *)
@@ -452,8 +452,6 @@ let solve no_verification_errors should_infer_tnt prog =
     (* Temporarily disable template assumption printing *)
     let pr_templassume = !print_relassume in
     let () = print_relassume := false in
-
-    (* let trrels, turels = trans_nondet_trels trrels turels in *)
 
     let () = print_endline_quiet "Temporal Assumptions:" in
     let () = List.iter (fun trrel -> print_endline_quiet ((print_ret_trel trrel) ^ "\n")) trrels in

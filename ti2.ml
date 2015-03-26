@@ -303,6 +303,14 @@ let merge_cases_tnt_case_spec spec =
   let pr = print_tnt_case_spec in
   Debug.no_1 "merge_cases_tnt_case_spec" pr pr
     merge_cases_tnt_case_spec spec
+
+let rec norm_nondet_tnt_case_spec spec = 
+  match spec with
+  | Cases cases ->
+    let norm_cases = List.map (fun (c, sp) -> (c, norm_nondet_tnt_case_spec sp)) cases in
+    let nondet_cases = List.find_all (fun (c, _) -> is_nondet_cond c) norm_cases in 
+    Cases nondet_cases
+  | _ -> spec
     
 let rec flatten_one_case_tnt_spec c f = 
   match f with
@@ -339,8 +347,8 @@ let add_cex_by_cond for_loop turels c cex =
     let acex = CP.cex_of_term_ann turel.termu_rhs in
     let mcex = CP.merge_term_cex cex acex in
     begin match mcex with
-    | None -> if for_loop then Some ({ CP.tcex_trace = [cpos] }) else mcex
-    | Some t -> Some ({ t with CP.tcex_trace = cpos::t.CP.tcex_trace })
+    | None -> if for_loop then Some ({ CP.tcex_trace = [CP.TCall cpos] }) else mcex
+    | Some t -> Some ({ t with CP.tcex_trace = (CP.TCall cpos)::t.CP.tcex_trace })
     end
   with Not_found -> 
     if for_loop then
@@ -348,8 +356,8 @@ let add_cex_by_cond for_loop turels c cex =
         let turel = List.find (fun tur -> is_sat (mkAnd c tur.call_ctx)) turels in
         let cpos = turel.termu_pos in
         begin match cex with
-        | None -> Some ({ CP.tcex_trace = [cpos] })
-        | Some t -> Some ({ t with CP.tcex_trace = cpos::t.CP.tcex_trace })
+        | None -> Some ({ CP.tcex_trace = [CP.TCall cpos] })
+        | Some t -> Some ({ t with CP.tcex_trace = (CP.TCall cpos)::t.CP.tcex_trace })
         end 
       with Not_found -> cex
     else cex
