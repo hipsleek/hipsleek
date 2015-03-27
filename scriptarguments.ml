@@ -437,20 +437,20 @@ let common_arguments = [
     ("-infer", Arg.String (fun s ->
         Globals.infer_const_obj # set_init_arr s),"Infer constants e.g. @term@pre@post@imm@shape");  (* some processing to check @term,@post *)
     ("-debug", Arg.String (fun s ->
-        Debug.z_debug_file:=s; Debug.z_debug_flag:=true),
+        Debug.z_debug_file:=s; z_debug_flag:=true),
     "Read from a debug log file");
     ("-prelude", Arg.String (fun s ->
         Globals.prelude_file:=Some s),
     "Read from a specified prelude file");
     ("-debug-regexp", Arg.String (fun s ->
-        Debug.z_debug_file:=("$"^s); Debug.z_debug_flag:=true),
+        Debug.z_debug_file:=("$"^s); z_debug_flag:=true),
     "Match logged methods from a regular expression");
     ("-dre", Arg.String (fun s ->
       let _ = print_endline ("!!!-dre "^s) in
-        Debug.z_debug_file:=("$"^s); Debug.z_debug_flag:=true),
+        Debug.z_debug_file:=("$"^s); z_debug_flag:=true),
     "Shorthand for -debug-regexp");
   ("-drea", Arg.String (fun s ->
-      Debug.z_debug_file:=("$.*"); Debug.z_debug_flag:=true;
+      Debug.z_debug_file:=("$.*"); z_debug_flag:=true;
       Debug.mk_debug_arg s),
    "Matched input/output with reg-exp");
     ("-v", Arg.Set Debug.debug_on,

@@ -4306,7 +4306,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
             (* move LHS guard to RHS regardless of universal lemma *)
           | v ->
                 let c_hd, c_guard,c_vp, c_fl, c_t, c_a = CF.split_components c.C.coercion_head in
-                let new_body = x_add CF.normalize 1 c.C.coercion_body (CF.formula_of_mix_formula c_guard no_pos) no_pos in
+                let new_body = CF.normalize 1 c.C.coercion_body (CF.formula_of_mix_formula c_guard no_pos) no_pos in
                 let () = Debug.ninfo_hprint (add_str "new_body_norm" Cprinter.string_of_formula) new_body no_pos in
                 let new_body = CF.push_exists c.C.coercion_univ_vars new_body in
                 let () = Debug.ninfo_hprint (add_str "new_body_norm (after push exists)" Cprinter.string_of_formula) new_body no_pos in
@@ -6712,7 +6712,7 @@ and add_pre_x (prog :C.prog_decl) (f:CF.struc_formula):CF.struc_formula =
     | CF.EAssume b -> 
           let f = CF.formula_of_pure_N pf no_pos in
           CF.EAssume {b with 
-              CF.formula_assume_simpl = x_add CF.normalize 2 b.CF.formula_assume_simpl f no_pos;
+              CF.formula_assume_simpl = CF.normalize 2 b.CF.formula_assume_simpl f no_pos;
               CF.formula_assume_struc = CF.normalize_struc b.CF.formula_assume_struc (CF.mkBase_rec f None no_pos);}
     | CF.EInfer b -> CF.EInfer {b with CF.formula_inf_continuation = helper pf b.CF.formula_inf_continuation;}
     | CF.EList b -> CF.EList (map_l_snd (helper pf) b)
