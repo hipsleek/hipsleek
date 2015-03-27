@@ -3,21 +3,27 @@
 /* } */
 
 void __error()
-  requires true
-  ensures true & flow __Error;
+  requires emp & true
+  ensures emp & true & flow __Error;
 
 
 void f(int n)
 //  infer [@flow,@post_n]
-  requires true
-  ensures n<3 & flow __norm or n>=3 & flow __Error;
+ case {
+  n<3 -> ensures emp & true;
+  n>=3 -> ensures emp & true & flow __Error;
+}
 {
+  //dprint;
   if (n<3) return;
   else {
     n--;
+    //  dprint;
     f(n);
     //raise new Error(-1);
+    // dprint;
     __error();
+    // dprint;
   }
 }
 
@@ -28,3 +34,4 @@ void f(int n)
 /* { */
 /*   f(3); */
 /* } */
+  //dprint;
