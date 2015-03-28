@@ -2522,7 +2522,7 @@ and mkStupid_Or_x f1 f2 lbl pos=
 	 | f, AndList l -> AndList (or_branches l [(LO.unlabelled,f)] lbl pos)
 	 | _ -> Or (f1, f2, lbl ,pos)
 
-and mkStupid_Or f1 f2 lbl pos = Debug.no_2 "pure_mkStupidOr" !print_formula !print_formula !print_formula (fun _ _ -> mkOr_x f1 f2 lbl pos) f1 f2
+and mkStupid_Or f1 f2 lbl pos = Debug.no_2 "mkStupidOr" !print_formula !print_formula !print_formula (fun _ _ -> mkOr_x f1 f2 lbl pos) f1 f2
 
 and mkGtExp (ae1 : exp) (ae2 : exp) pos :formula =
   match (ae1, ae2) with

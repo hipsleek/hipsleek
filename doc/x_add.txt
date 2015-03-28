@@ -1,0 +1,24 @@
+Debugging Methods with Location of Callee
+========================================
+This feature is handled through cppo and will add 
+file number and line number information to each method
+that have traced by debug.ml library.
+
+A function is being traced by debug.ml library if
+it uses a wrapper method, called no_X, for its
+method call.
+
+ ...
+
+
+Automatic Insertion of x_add
+============================
+This is currently done by sh_proc.ml procedure.
+The main methods are:
+
+(i) ..
+
+occurrence information
+whenever an debug-traced function is called.
+
+List_fold (mn.fn)

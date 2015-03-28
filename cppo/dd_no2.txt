@@ -518,7 +518,7 @@ cpure.ml:  Debug.no_1 "is_formula_arith" !print_formula string_of_bool
 cpure.ml: Debug.no_2 "pure_mkAnd" !print_formula !print_formula !print_formula (fun _ _-> mkAnd_x f1 f2 pos) f1 f2
 cpure.ml: Debug.no_1 "pure_mkAndList" (fun _ -> "") !print_formula (fun _-> mkAndList_x b) b
 cpure.ml: Debug.no_2 "pure_mkOr" !print_formula !print_formula !print_formula (fun _ _ -> mkOr_x f1 f2 lbl pos) f1 f2
-cpure.ml: Debug.no_2 "pure_mkStupidOr" !print_formula !print_formula !print_formula (fun _ _ -> mkOr_x f1 f2 lbl pos) f1 f2
+cpure.ml: Debug.no_2 "mkStupidOr" !print_formula !print_formula !print_formula (fun _ _ -> mkOr_x f1 f2 lbl pos) f1 f2
 cpure.ml: Debug.no_1 "mkNot" !print_formula !print_formula (fun _-> mkNot_x f lbl1 pos0) f
 cpure.ml:  Debug.no_2 "mkExists_with_simpl" !print_svl !print_formula !print_formula 
 cpure.ml:	Debug.no_2 "pure_mkExists" !print_svl !print_formula !print_formula (fun _ _ -> mkExists_x vs f lbel pos) vs f
@@ -803,7 +803,7 @@ frame.ml:  Debug.no_1 "force_spatial_transitive" pr2 pr1
 frame.ml:  Debug.no_1 "force_no_disctinct_loop_free" pr2 (pr_pair pr1 pr2)
 frame.ml:    Debug.no_1 "topo_sort" pr2 pr2
 frame.ml:  Debug.no_1 "combine_dependent_components" (pr_list_ln pr2) (pr_list_ln pr3)
-frame.ml:    Debug.no_2 "update_alias_comp" pr1 pr2 pr2
+frame.ml:    Debug.no_2 "update_alias_comps" pr1 pr2 pr2
 frame.ml:  Debug.no_2 "norm_dups_pred" pr1 pr2 (pr_triple string_of_bool pr1 pr3)
 frame.ml:  Debug.no_1 "heap_normal_form" pr1 (pr_list pr1)
 globalvars.ml:  Debug.no_1 "find_read_write_global_var_proc" pr1 pr2 
@@ -1028,7 +1028,7 @@ log.ml:  Debug.no_4 "add_sleek_logging"
 log.ml:  Debug.no_1 "proof_log_to_text_file" pr_id pr_none (fun _ -> proof_log_to_text_file fname src_files) fname
 log.ml:  Debug.no_1 "sleek_log_to_text_file" pr pr_none (sleek_log_to_text_file fn) (src_files)
 log.ml:  Debug.no_1 "process_proof_logging" pr pr_none 
-lp.ml:  Debug.no_1 "lp_norm_formula" pr pr norm_formula f
+lp.ml:  Debug.no_1 "norm_formula" pr pr norm_formula f
 lp.ml:  Debug.no_1 "lp_get_model" pr1 pr2
 main.ml:  Debug.no_1 "process_primitives" pr1 pr2 process_primitives file_list
 main.ml:  Debug.no_1 "process_includes" pr1 pr2 (fun _ -> process_includes file_list curdir) file_list

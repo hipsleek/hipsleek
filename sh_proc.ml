@@ -245,14 +245,16 @@ let reg2_1 = Str.regexp ".*=[ \t]*\\([A-Z][_A-Za-z0-9]*\\)\.\\([^ \t]+\\)";;
 let reg2_2 = Str.regexp ".*([ \t]*\\([A-Z][_A-Za-z0-9]*\\)\.\\([^ \t]+\\)";;
 let reg2_3 = Str.regexp "[ \t(]*\\([A-Z][_A-Za-z0-9]*\\)\.\\([^ \t]+\\)";;
 let reg2_4 = Str.regexp ".*fun.*->[ \t(]*\\([A-Z][_A-Za-z0-9]*\\)\.\\([^ \t]+\\)";;
-let reg2_5 = Str.regexp ".*then [ \t(]*\\([A-Z][_A-Za-z0-9]*\\)\.\\([^ \t]+\\)";;
+let reg2_5 = Str.regexp ".*then[ \t]+[ \t(]*\\([A-Z][_A-Za-z0-9]*\\)\.\\([^ \t]+\\)";;
+let reg2_6 = Str.regexp ".*x_add[_1]* \\([A-Z][_A-Za-z0-9]*\\)\.\\([^ \t]+\\)";;
 
 (* regular expressions that can match only one group *)
 let reg1_1 = Str.regexp ".*=[ \t]*\\([a-z][_A-Za-z0-9]*\\)[ \t]+\\([^ \t]+\\)";;
 let reg1_2 = Str.regexp ".*([ \t]*\\([a-z][_A-Za-z0-9]*\\)[ \t]+\\([^ \t]+\\)";;
 let reg1_3 = Str.regexp "[ \t(]*\\([a-z][_A-Za-z0-9]*\\)[ \t]+\\([^ \t]+\\)";;
 let reg1_4 = Str.regexp ".*fun.*->[ \t(]*\\([a-z][_A-Za-z0-9]*\\)[ \t]+\\([^ \t]+\\)";;
-let reg1_5 = Str.regexp ".*then [ \t(]*\\([a-z][_A-Za-z0-9]*\\)[ \t]+\\([^ \t]+\\)";;
+let reg1_5 = Str.regexp ".*then[ \t]+[ \t(]*\\([a-z][_A-Za-z0-9]*\\)[ \t]+\\([^ \t]+\\)";;
+
 
 let reg5 = Str.regexp ".*=[ \t]*\\([A-Z][_A-Za-z0-9]*\\)\.\\([^ \t]+\\)" (* *)
 let reg7 = Str.regexp ".*([ \t]*\\([A-Z][_A-Za-z0-9]*\\)\.\\([^ \t]+\\)"
@@ -312,12 +314,12 @@ let rec can_match_and_exist_def_lst matched_group_num reglst str:(bool * (string
           (false, [])
 ;;
 
-let check_call_sites f=
+let check_call_sites f =
   (* let () = print_endline ("check_call_sites: "^f) in *)
   let ff = open_in f in
   let output = ref SSet.empty in
-  let reglst_1 = [reg1_1;reg1_2;reg1_3;reg2_4;reg2_5] in
-  let reglst_2 = [reg2_1;reg2_2;reg2_3;reg1_4;reg1_5] in
+  let reglst_1 = [reg1_1;reg1_2;reg1_3;reg1_4;reg1_5] in
+  let reglst_2 = [reg2_1;reg2_2;reg2_3;reg2_4;reg2_5;reg2_6] in
   let rec aux i =
     try
       let line = input_line ff in
@@ -345,17 +347,58 @@ let check_call_sites f=
           then
             let fun_name = List.nth matched_group_1 0 in
             let x_add_tag = if mapd_x_add_1 fun_name "" then 1 else 0 in
-            output := SSet.add (fun_name,x_add_tag) (!output)
+            ()
+            (* output := SSet.add (fun_name,x_add_tag) (!output) *)
       end;
       aux (i+1)
     with End_of_file ->
         begin
           SSet.iter (fun (e,n) -> if n=1 then print_endline ("s/=\s*"^e^" /= x_add_1 "^e^" /") else print_endline ("s/=\s*"^e^" /= x_add "^e^" /")) (!output);
-          SSet.iter (fun (e,n) -> if n=1 then print_endline ("s/(\s*"^e^" /( x_add_1 "^e^" /") else print_endline ("s/(\s*"^e^" /( x_add "^e^" /")) (!output);
+          (* SSet.iter (fun (e,n) -> if n=1 then print_endline ("s/(\s*"^e^" /( x_add_1 "^e^" /") else print_endline ("s/(\s*"^e^" /( x_add "^e^" /")) (!output); *)
         end
   in
   aux 0
 ;;
+
+let reg3_xadd = Str.regexp ".*x_add [A-Z][_A-Za-z0-9]*\.\\([a-z][_A-Za-z0-9]*\\)";;
+let reg3_xadd = Str.regexp ".*x_add \\([A-Z][_A-Za-z0-9]*\\)\.";;
+let reg3_xadd = Str.regexp ".*x_add(_1)? \\(TP\.simplify_a\\)";;
+
+let can_match_and_exist_def0 matched_group_num reg str:(bool * (string list)) =
+  let matched_group = can_match matched_group_num reg str in
+  if List.length matched_group = 0
+  then (false,[])
+  else
+    (true,matched_group)
+
+let locate_call_sites reglst f =
+  (* let () = print_endline ("check_call_sites: "^f) in *)
+  let ff = open_in f in
+  let output = ref SSet.empty in
+  (* let reglst_1 = [reg3_xadd] in *)
+  let rec aux i =
+    try
+      let line = input_line ff in
+      (* record module alias *)
+      let (can_match_b_2,matched_group_2) = can_match_and_exist_def0 1 reglst line in
+      begin
+        if can_match_b_2
+        then
+          print_endline line
+        (* else print_endline ("no"^line) *)
+      end;
+      aux (i+1)
+    with End_of_file ->
+        begin
+          print_endline "finished locate_call_sites"
+          (* SSet.iter (fun (e,n) -> if n=1 then print_endline ("s/=\s*"^e^" /= x_add_1 "^e^" /") else print_endline ("s/=\s*"^e^" /= x_add "^e^" /")) (!output); *)
+          (* SSet.iter (fun (e,n) -> if n=1 then print_endline ("s/(\s*"^e^" /( x_add_1 "^e^" /") else print_endline ("s/(\s*"^e^" /( x_add "^e^" /")) (!output); *)
+        end
+  in
+  aux 0
+;;
+
+(* locate_call_sites reg3_xadd "astsimp.ml";; *)
 
 (* (\* *\) *)
 (* let process2_file f = *)
