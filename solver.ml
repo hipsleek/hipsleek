@@ -4333,7 +4333,6 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                                       if not !Globals.disable_failure_explaining then
                                                         let tmp_lctx = invert_ctx rs4 new_post in
                                                         (* let () = print_endline ("### tmp_lctx = "^(Cprinter.string_of_list_context tmp_lctx)) in *)
-                                                        let () = x_tinfo_pp "here" no_pos in
                                                         (tmp_lctx ,TrueConseq)
                                                       else (SuccCtx [rs4] ,TrueConseq)
                                             end)
