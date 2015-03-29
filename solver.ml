@@ -4079,8 +4079,8 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 				  formula_assume_simpl = post;
 				  formula_assume_vars = ref_vars;
 				  formula_assume_lbl = (i,y);} ->
-                                  DD.tinfo_pprint ("EAssune: " ^ (Cprinter.string_of_context ctx11)) pos; 
-                                  DD.ninfo_pprint ("EAssune post: " ^ (Cprinter.string_of_formula post)) pos; 
+                                  x_tinfo_pp ("EAssune: " ^ (Cprinter.string_of_context ctx11)) pos;
+                                  x_tinfo_pp ("EAssune post: " ^ (Cprinter.string_of_formula post)) pos;
                                   if not has_post then report_error pos ("malfunction: this formula "^ y ^" does not have a post condition!")
 	                          else
                                     (match tid with
@@ -4138,7 +4138,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                               (*let ctx1,_= heap_entail_one_context prog is_folding ctx11 (mkTrue_nf pos) pos in*)
                                               DD.ninfo_zprint  (lazy  ("  before consume post ctx11: " ^ (Cprinter.string_of_context ctx11))) pos;
 	                                      let rs = clear_entailment_history (fun x -> Some (x_add xpure_heap_symbolic 6 prog x (MCP.mkMTrue no_pos) 0)) ctx11 in (* andreeac: why also clear hole info? *)
-                                              DD.tinfo_pprint ("rs: " ^ (Cprinter.string_of_context rs)) pos; 
+                                              x_tinfo_pp ("rs: " ^ (Cprinter.string_of_context rs)) pos; 
                                               (* print_endline ("CTX11: " ^ (!print_context ctx11)); *)
                                               (* print_endline ("RS CTX: " ^ (!print_context rs));   *)
                                               (*************Compose variable permissions >>> ******************)

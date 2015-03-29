@@ -1935,7 +1935,7 @@ let simplify (f : CP.formula) : CP.formula =
   let simpl_no = (string_of_int simpl_num) in
   if !Globals.no_simpl then f else
     if !perm=Dperm && CP.has_tscons f<>CP.No_cons then f 
-    else 
+    else
       let cmd = PT_SIMPLIFY f in
       let () = Log.last_proof_command # set cmd in
       (* if !Globals.allow_inf_qe_coq then f else *)
@@ -1962,7 +1962,7 @@ let simplify (f : CP.formula) : CP.formula =
         match Netprover.call_prover (Simplify f) with
           | Some res -> res
           | None -> f
-      else 
+      else
         begin
           let tstart = Gen.Profiling.get_time () in
           try
@@ -2060,6 +2060,7 @@ let simplify (f : CP.formula) : CP.formula =
                 (0.0) (PR_exception) in
               f
         end
+
 (*for AndList it simplifies one batch at a time*)
 let simplify (f:CP.formula):CP.formula =
   let rec helper f = match f with 
@@ -2110,7 +2111,7 @@ let simplify_raw_w_rel (f: CP.formula) =
       ) disjs in
     List.fold_left (fun p1 p2 -> mkOr p1 p2 None no_pos) (mkFalse no_pos) disjs
   else simplify f
-	
+
 let simplify_raw f =
 	let pr = !CP.print_formula in
 	Debug.no_1 "simplify_raw" pr pr simplify_raw f
