@@ -10080,7 +10080,7 @@ let get_may_error_from_ctx cs =
 
  let rec is_ctx_error ctx=
    match ctx with
-     | Ctx es -> not (es.es_final_error = None || is_error_flow es.es_formula)
+     | Ctx es -> not (es.es_final_error = None)
      | OCtx (c1, c2) -> is_ctx_error c1 || is_ctx_error c2
 
 
@@ -11514,8 +11514,8 @@ let isSuccessPartialCtx_new (fs,succ_brs) =
   let is_succ = List.for_all isSuccessBranchFail fs in
   if not !Globals.enable_error_as_exc || not is_succ then is_succ else
     (* all succ branch should not subsume must, may flows *)
-    succ_brs != [] && List.for_all (fun (_, ct , oft) ->
-        oft = None && not (is_ctx_error ct)
+    succ_brs!=[] && List.for_all (fun (_, ct , oft) ->
+        oft = None
     ) succ_brs
 
 let isSuccessFailescCtx (fs,_,_) =
