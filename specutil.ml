@@ -19,21 +19,21 @@ module C = Cast
 type pure_dom = {
   para_names : spec_var list;
   (* TODO *)
-(*  inductive_def : ...;*)
+  (*  inductive_def : ...;*)
 }
 
 (******************************************************************************)
 
 let rec size_of_heap (fml:CF.h_formula) : (CP.exp*CP.p_formula list) = match fml with
   | Star {h_formula_star_h1 = h1;
-    h_formula_star_h2 = h2;
-    h_formula_star_pos = pos} -> 
+          h_formula_star_h2 = h2;
+          h_formula_star_pos = pos} -> 
     let res1 = size_of_heap h1 in
     let res2 = size_of_heap h2 in
     (Add (fst res1,fst res2,pos), snd res1 @ snd res2)
   | Conj {h_formula_conj_h1 = h1;
-    h_formula_conj_h2 = h2;
-    h_formula_conj_pos = pos} ->
+          h_formula_conj_h2 = h2;
+          h_formula_conj_pos = pos} ->
     let res1 = size_of_heap h1 in
     let res2 = size_of_heap h2 in
     (Add (fst res1,fst res2,pos), snd res1 @ snd res2)
@@ -49,7 +49,7 @@ let rec size_of_heap (fml:CF.h_formula) : (CP.exp*CP.p_formula list) = match fml
   | HTrue
   | HFalse
   | HEmp -> (IConst (0,no_pos),[])
-  
+
 
 let size_of_fml (fml:CF.formula) (lhs_para:CP.spec_var): (CF.formula * CP.formula) = match fml with
   | CF.Or _ -> report_error no_pos "size_of_fml: Do not expect Or formula"
@@ -72,34 +72,34 @@ let rec size_of (fml:CF.struc_formula) (lhs_para:CP.spec_var): (CF.struc_formula
   match fml with
   | ECase b -> 
     let res = List.map (fun (p,c) -> 
-      let r = size_of c lhs_para in
-      ((p,fst r),snd r)) b.formula_case_branches in
+        let r = size_of c lhs_para in
+        ((p,fst r),snd r)) b.formula_case_branches in
     let r1,r2 = List.split res in
     (ECase {b with formula_case_branches = r1}, List.concat r2)
   | EBase b -> 
     let rbase = size_of_fml b.formula_struc_base lhs_para in
     let rcont = (match b.formula_struc_continuation with
-      | None -> (None,[])
-      | Some f -> let r = size_of f lhs_para in
-        (Some (fst r),snd r)) in
+        | None -> (None,[])
+        | Some f -> let r = size_of f lhs_para in
+          (Some (fst r),snd r)) in
     (EBase {b with 
-      formula_struc_base = fst rbase;
-      formula_struc_continuation = fst rcont}, (snd rbase) :: (snd rcont))
+            formula_struc_base = fst rbase;
+            formula_struc_continuation = fst rcont}, (snd rbase) :: (snd rcont))
   | EAssume(svl,f,fl,t) -> let r = size_of_fml f lhs_para in
     (EAssume(svl,fst r,fl,t),[snd r])
   | EInfer b -> let r = size_of b.formula_inf_continuation lhs_para in
     (EInfer {b with formula_inf_continuation = fst r}, snd r)
   | EList b -> 
     let res = List.map (fun (l,e) -> 
-      let r = size_of e lhs_para in
-      ((l,fst r),snd r)) b in
+        let r = size_of e lhs_para in
+        ((l,fst r),snd r)) b in
     let r1,r2 = List.split res in
     (EList r1,List.concat r2)
   | EOr b -> 
     let r1 = size_of b.formula_struc_or_f1 lhs_para in
     let r2 = size_of b.formula_struc_or_f2 lhs_para in
     (EOr {b with formula_struc_or_f1 = fst r1;
-                formula_struc_or_f2 = fst r2}, snd r1 @ snd r2)
+                 formula_struc_or_f2 = fst r2}, snd r1 @ snd r2)
 
 (******************************************************************************)
 
@@ -118,10 +118,10 @@ let gen_pred_def (orig_def:C.view_decl) (abs_dom:pure_dom): C.view_decl =
   let additional_inv = Fixcalc.compute_pure_inv new_pures new_view_name abs_dom.para_names in
   let new_inv = MCP.mix_of_pure (CP.mkAnd (MCP.pure_of_mix orig_def.C.view_user_inv) additional_inv no_pos) in
   let new_def = {orig_def with
-    C.view_name = new_view_name;
-    C.view_vars = new_view_vars;
-    C.view_formula = new_fml;
-    C.view_user_inv = new_inv;}
+                 C.view_name = new_view_name;
+                 C.view_vars = new_view_vars;
+                 C.view_formula = new_fml;
+                 C.view_user_inv = new_inv;}
   in new_def
 
 let string_of_view_decl v =

@@ -25,7 +25,7 @@ let numb_i = {add =(+); shw = string_of_int}
 let numb_l numb_e = {add = List.map2 numb_e.add;
                      shw = fun a ->
                        "[" ^ List.fold_right
-                            (fun e z ->" " ^ numb_e.shw e ^ z) a "]" };;
+                         (fun e z ->" " ^ numb_e.shw e ^ z) a "]" };;
 (*
 let summ numb (h::t) = List.fold_left numb.add h t
 *)

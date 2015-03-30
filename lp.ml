@@ -27,8 +27,8 @@ let rec lp_of_typ solver t =
   match t with
   | Int -> 
     begin match solver with
-    | LPSolve -> "int"
-    | Clp | Glpk -> "Integer"
+      | LPSolve -> "int"
+      | Clp | Glpk -> "Integer"
     end
   | _ -> "free" 
 
@@ -59,7 +59,7 @@ let rec lp_of_b_formula b =
   | CP.Lte (e1, e2, _) -> (lp_of_exp e1) ^ " <= " ^ (lp_of_exp e2)
   | CP.Gte (e1, e2, _) -> (lp_of_exp e1) ^ " >= " ^ (lp_of_exp e2)
   | CP.Eq (e1, e2, _) -> (lp_of_exp e1) ^ " = " ^ (lp_of_exp e2)
-    (* UNHANDLED *)
+  (* UNHANDLED *)
   | _ -> print_endline_quiet (!print_b_formula b); Error.report_no_pattern ()
 
 let lp_of_formula f =
@@ -92,7 +92,7 @@ let norm_mult_exp in_lhs e =
   else
     (* Move var exp to lhs *)
     Some (List.fold_left (fun a e -> mkMult a e pos) 
-      (mkIConst (if in_lhs then c else -c) pos) el), 0
+            (mkIConst (if in_lhs then c else -c) pos) el), 0
 
 let norm_add_exp in_lhs e =
   let pos = pos_of_exp e in
@@ -113,30 +113,30 @@ let norm_formula f =
       let v_l, c_l = norm_add_exp true e_l in
       let v_r, c_r = norm_add_exp false e_r in
       let c = match c_l, c_r with
-      | None, None -> 0
-      | Some c_l, None -> c_l
-      | None, Some c_r -> c_r
-      | Some c_l, Some c_r -> c_l + c_r
+        | None, None -> 0
+        | Some c_l, None -> c_l
+        | None, Some c_r -> c_r
+        | Some c_l, Some c_r -> c_l + c_r
       in
       let v = match v_l @ v_r with
-      | [] -> mkMult (mkIConst 0 pos) (mkVar dummy_var pos) pos 
-      | e::es -> List.fold_left (fun a e -> mkAdd a e pos) e es 
+        | [] -> mkMult (mkIConst 0 pos) (mkVar dummy_var pos) pos 
+        | e::es -> List.fold_left (fun a e -> mkAdd a e pos) e es 
       in v, mkIConst c pos
     in
     let rec helper pf = match pf with
-    | Lt (e1, e2, p) -> helper (mkLte e1 (mkAdd e2 (mkIConst (-1) p) p) p)
-    | Gt (e1, e2, p) -> helper (mkGte (mkAdd e1 (mkIConst (-1) p) p) e2 p)
-    | Lte (e1, e2, p) -> let v, c = norm_exp e1 e2 p in mkLte v c p
-    | Gte (e1, e2, p) -> let v, c = norm_exp e1 e2 p in mkGte v c p
-    | Eq (e1, e2, p) -> let v, c = norm_exp e1 e2 p in mkEq v c p
-    | _ -> pf
+      | Lt (e1, e2, p) -> helper (mkLte e1 (mkAdd e2 (mkIConst (-1) p) p) p)
+      | Gt (e1, e2, p) -> helper (mkGte (mkAdd e1 (mkIConst (-1) p) p) e2 p)
+      | Lte (e1, e2, p) -> let v, c = norm_exp e1 e2 p in mkLte v c p
+      | Gte (e1, e2, p) -> let v, c = norm_exp e1 e2 p in mkGte v c p
+      | Eq (e1, e2, p) -> let v, c = norm_exp e1 e2 p in mkEq v c p
+      | _ -> pf
     in Some (helper pf, None)
   in transform_formula (nonef, nonef, nonef, f_b, nonef) f
 
 let norm_formula f =
   let pr = !print_formula in
   Debug.no_1 "lp_norm_formula" pr pr norm_formula f
-   
+
 let option_of_lp = function
   | Clp -> "-solv -solution stdout"
   | LPSolve -> ""
@@ -185,13 +185,13 @@ let clp_process_output lp_output =
         let out_ls = Str.split (Str.regexp "[\n]+") lp_res in
         match out_ls with
         | _::_::str_model -> begin
-          try
-            let model = List.map (fun m -> Str.split (Str.regexp "[ \t]+") m) str_model in
-            let model = List.map (fun l -> match l with
-            | _::v::i::_::[] -> (v, int_of_string i) | _ -> raise Parse_error) model in
-            Sat model
-          with _ -> Unknown end
-    | _ -> Unknown
+            try
+              let model = List.map (fun m -> Str.split (Str.regexp "[ \t]+") m) str_model in
+              let model = List.map (fun l -> match l with
+                  | _::v::i::_::[] -> (v, int_of_string i) | _ -> raise Parse_error) model in
+              Sat model
+            with _ -> Unknown end
+        | _ -> Unknown
 
       with Not_found -> Unknown
 
@@ -203,12 +203,12 @@ let glpk_process_output lp_output =
     let out_ls = Str.split (Str.regexp "[\n]+") lp_res in
     match out_ls with
     | _::str_model -> begin
-      try
-        let model = List.map (fun m -> Str.split (Str.regexp "[ \t]+") m) str_model in
-        let model = List.map (fun l -> match l with
-        | v::i::[] -> (v, int_of_string i) | _ -> raise Parse_error) model in
-        Sat model
-      with _ -> Unknown end
+        try
+          let model = List.map (fun m -> Str.split (Str.regexp "[ \t]+") m) str_model in
+          let model = List.map (fun l -> match l with
+              | v::i::[] -> (v, int_of_string i) | _ -> raise Parse_error) model in
+          Sat model
+        with _ -> Unknown end
     | _ -> Unknown
   with Not_found -> Unknown
 
@@ -216,12 +216,12 @@ let lpsolve_process_output lp_output =
   let out_ls = Str.split (Str.regexp "[\n]+") lp_output in
   match out_ls with
   | _::_::str_model -> begin
-    try
-      let model = List.map (fun m -> Str.split (Str.regexp "[ \t]+") m) str_model in
-      let model = List.map (fun l -> match l with
-      | v::i::[] -> (v, int_of_string i) | _ -> raise Parse_error) model in
-      Sat model
-    with _ -> Unknown end
+      try
+        let model = List.map (fun m -> Str.split (Str.regexp "[ \t]+") m) str_model in
+        let model = List.map (fun l -> match l with
+            | v::i::[] -> (v, int_of_string i) | _ -> raise Parse_error) model in
+        Sat model
+      with _ -> Unknown end
   | _ -> Unknown
 
 let process_output solver lp_output = 
@@ -238,35 +238,35 @@ let run solver input =
   close_out out_chn;
 
   let lp_output = syscall (String.concat " " 
-    [cmd_of_lp solver; lp_input; option_of_lp solver]) in
+                             [cmd_of_lp solver; lp_input; option_of_lp solver]) in
   lp_output
 
 let gen_clp_input obj_vars assertions =
   let obj_stmt = match obj_vars with
-  | [] -> ""
-  | _ -> "Minimize\n" ^ (String.concat " + " (List.map lp_of_spec_var obj_vars))
+    | [] -> ""
+    | _ -> "Minimize\n" ^ (String.concat " + " (List.map lp_of_spec_var obj_vars))
   in
   let model_stmt = match assertions with
-  | [] -> ""
-  | _ -> "Subject To\n" ^ (String.concat "\n" 
-    (List.map (fun f -> lp_of_formula (norm_formula f)) assertions))
+    | [] -> ""
+    | _ -> "Subject To\n" ^ (String.concat "\n" 
+                               (List.map (fun f -> lp_of_formula (norm_formula f)) assertions))
   in
   let var_decls = String.concat "\n" (List.map (fun v ->
-    (lp_of_typed_spec_var Clp v)) obj_vars)
+      (lp_of_typed_spec_var Clp v)) obj_vars)
   in
   let clp_inp = obj_stmt ^ "\n" ^ model_stmt ^ "\n" ^ var_decls ^ "\nEnd\n" in
   clp_inp
 
 let gen_lpsolve_input obj_vars assertions =
   let obj_stmt = match obj_vars with
-  | [] -> ""
-  | _ -> "min: " ^ (String.concat " + " (List.map lp_of_spec_var obj_vars)) ^ ";"
+    | [] -> ""
+    | _ -> "min: " ^ (String.concat " + " (List.map lp_of_spec_var obj_vars)) ^ ";"
   in
   let model_stmt = String.concat "\n" (List.map (fun f ->
-    (lp_of_formula (norm_formula f)) ^ ";") assertions)
+      (lp_of_formula (norm_formula f)) ^ ";") assertions)
   in
   let var_decls = String.concat "\n" (List.map (fun v ->
-    (lp_of_typed_spec_var LPSolve v) ^ ";") obj_vars)
+      (lp_of_typed_spec_var LPSolve v) ^ ";") obj_vars)
   in
   let lp_inp = obj_stmt ^ "\n\n" ^ model_stmt ^ "\n\n" ^ var_decls ^ "\n" in
   lp_inp
@@ -293,6 +293,6 @@ let get_model solver obj_vars assertions =
   let pr1 = pr_list !print_formula in 
   let pr2 = string_of_lp_res in
   Debug.no_1 "lp_get_model" pr1 pr2
-  (fun _ -> get_model solver obj_vars assertions) assertions
+    (fun _ -> get_model solver obj_vars assertions) assertions
 
 

@@ -4,25 +4,25 @@ let tmp_files_path = ref ""
 (*path for the temporary files used by the prover. If you change this path here it is 
   mandatory to also change the value of TMP_FILES_PATH in Makefile accordingly to the changes made here*)
 let set_tmp_files_path () = 	
-	begin
-      (try
-		ignore (Unix.mkdir ("/tmp/" ^ Unix.getlogin()) 0o766;)		 
-      with
-		Unix.Unix_error (_, _, _) -> (); );
-	  (try
-		ignore (Unix.chmod ("/tmp/" ^ Unix.getlogin()) 0o766;)		 
-      with
-		Unix.Unix_error (_, _, _) -> (); );
-      (try
-		ignore (Unix.mkdir ("/tmp/" ^ Unix.getlogin() ^ "/prover_tmp_files/") 0o766) 
-      with
-		Unix.Unix_error (_, _, _) -> (););
-	  (try
-		ignore (Unix.chmod ("/tmp/" ^ Unix.getlogin() ^ "/prover_tmp_files/") 0o766;)		 
-      with
-		Unix.Unix_error (_, _, _) -> (););
-	tmp_files_path := ("/tmp/" ^ Unix.getlogin() ^ "/prover_tmp_files/")
-	end
+  begin
+    (try
+       ignore (Unix.mkdir ("/tmp/" ^ Unix.getlogin()) 0o766;)		 
+     with
+       Unix.Unix_error (_, _, _) -> (); );
+    (try
+       ignore (Unix.chmod ("/tmp/" ^ Unix.getlogin()) 0o766;)		 
+     with
+       Unix.Unix_error (_, _, _) -> (); );
+    (try
+       ignore (Unix.mkdir ("/tmp/" ^ Unix.getlogin() ^ "/prover_tmp_files/") 0o766) 
+     with
+       Unix.Unix_error (_, _, _) -> (););
+    (try
+       ignore (Unix.chmod ("/tmp/" ^ Unix.getlogin() ^ "/prover_tmp_files/") 0o766;)		 
+     with
+       Unix.Unix_error (_, _, _) -> (););
+    tmp_files_path := ("/tmp/" ^ Unix.getlogin() ^ "/prover_tmp_files/")
+  end
 
 (*type of process used for communicating with the prover*)
 type prover_process_t = {
@@ -47,8 +47,8 @@ class type ['a] incremMethodsType = object
 end
 
 let open_log_out s = 
- (try
-	Unix.mkdir "logs" 0o750
- with _ -> ());
- open_out ("logs/"^s)
+  (try
+     Unix.mkdir "logs" 0o750
+   with _ -> ());
+  open_out ("logs/"^s)
 
