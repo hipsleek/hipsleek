@@ -3,7 +3,7 @@ open VarGen
 
 (* global types and utility functions *)
 (* module Lb = Label_only *)
-    (* circular with Lb *)
+(* circular with Lb *)
 
 let ramification_entailments = ref 0
 let noninter_entailments = ref 0
@@ -60,9 +60,9 @@ type ho_flow_kind =
 
 (* type nflow = (int*int)(\*numeric representation of flow*\) *)
 type flags = 
-	  Flag_str of string
-	| Flag_int of int
-	| Flag_float of float
+    Flag_str of string
+  | Flag_int of int
+  | Flag_float of float
 
 type bformula_label = int
 and ho_branch_label = string
@@ -73,7 +73,7 @@ type formula_label = (int*string)
 and control_path_id_strict = formula_label
 
 and control_path_id = control_path_id_strict option
-    (*identifier for if, catch, call*)
+(*identifier for if, catch, call*)
 
 let eq_ho_flow_kind k1 k2 = 
   match k1, k2 with
@@ -94,8 +94,8 @@ let empty_label = (0,"")
 let app_e_l c = (empty_label, c)
 let combine_lbl (i1,s1)(i2,s2) = match s1 with 
   | "" -> (match s2 with 
-            | "" -> (i1,s1)
-            | _ -> (i2,s2))
+      | "" -> (i1,s1)
+      | _ -> (i2,s2))
   | _ -> (i1,s1)
 
 
@@ -135,7 +135,7 @@ let eq_vp_ann a1 a2 =
   | VP_Value, VP_Value -> true
   | VP_Frac f1, VP_Frac f2 -> Frac.eq_frac f1 f2
   | _ -> false
-  
+
 (* and rel = REq | RNeq | RGt | RGte | RLt | RLte | RSubAnn *)
 let imm_top = Accs
 let imm_bot = Mutable
@@ -174,7 +174,7 @@ type typ =
   | BagT of typ
   (* | Prim of prim_type *)
   | Named of ident (* named type, could be enumerated or object *)
-          (* Named "R" *)
+  (* Named "R" *)
   | Array of (typ * int) (* base type and dimension *)
   | RelT of (typ list) (* relation type *)
   | HpT (* heap predicate relation type *)
@@ -183,12 +183,12 @@ type typ =
   | UtT (* unknown temporal type *)
   | Bptyp
   | Pointer of typ (* base type and dimension *)
-  (* | SLTyp (* type of ho formula *) *)
+(* | SLTyp (* type of ho formula *) *)
 
 let is_node_typ t =
   match t with
-    | Named id -> String.compare id "" != 0
-    | _ -> false
+  | Named id -> String.compare id "" != 0
+  | _ -> false
 
 let mkFuncT (param_typ: typ list) (ret_typ: typ): typ =
   match param_typ with
@@ -207,30 +207,30 @@ let rec param_typ_of_FuncT typ =
 
 let rec cmp_typ t1 t2=
   match t1,t2 with
-    | FORM, FORM
-    | UNK, UNK
-    | AnnT, AnnT
-    | Bool, Bool
-    | Float, Float
-    | Int, Int
-    | INFInt, INFInt
-    | NUM, NUM
-    | Void, Void -> true
-    | TVar i1, TVar i2 -> i1=i2
-    | BagT t11, BagT t22
-    | List t11, List t22 -> cmp_typ t11 t22
-    | Named s1, Named s2 -> String.compare s1 s2 = 0
-    | Array (t11, i1), Array (t22, i2) -> i1=i2 && cmp_typ t11 t22
-    | RelT lst1, RelT lst2 ->(
-          try
-            List.for_all (fun (t11,t22) -> cmp_typ t11 t22) (List.combine lst1 lst2)
-          with _ -> false
-      )
-    | HpT, HpT
-    | Tree_sh, Tree_sh
-    | Bptyp, Bptyp -> true
-    | Pointer t11, Pointer t22 -> cmp_typ t11 t22
-    | _ -> false
+  | FORM, FORM
+  | UNK, UNK
+  | AnnT, AnnT
+  | Bool, Bool
+  | Float, Float
+  | Int, Int
+  | INFInt, INFInt
+  | NUM, NUM
+  | Void, Void -> true
+  | TVar i1, TVar i2 -> i1=i2
+  | BagT t11, BagT t22
+  | List t11, List t22 -> cmp_typ t11 t22
+  | Named s1, Named s2 -> String.compare s1 s2 = 0
+  | Array (t11, i1), Array (t22, i2) -> i1=i2 && cmp_typ t11 t22
+  | RelT lst1, RelT lst2 ->(
+      try
+        List.for_all (fun (t11,t22) -> cmp_typ t11 t22) (List.combine lst1 lst2)
+      with _ -> false
+    )
+  | HpT, HpT
+  | Tree_sh, Tree_sh
+  | Bptyp, Bptyp -> true
+  | Pointer t11, Pointer t22 -> cmp_typ t11 t22
+  | _ -> false
 
 let is_type_var t =
   match t with
@@ -243,70 +243,70 @@ let ann_var_sufix = "_ann"
 let is_program_pointer (name:ident) = 
   let slen = (String.length name) in
   try  
-      let n = (String.rindex name '_') in
-      (* let () = print_endline ((string_of_int n)) in *)
-      let l = (slen-(n+1)) in
-      if (l==0) then (false,name)
-      else 
-        let str = String.sub name (n+1) (slen-(n+1)) in
-        if (str = "ptr") then
-          let s = String.sub name 0 n in
-          (true,s)
-        else
-          (false,name)
+    let n = (String.rindex name '_') in
+    (* let () = print_endline ((string_of_int n)) in *)
+    let l = (slen-(n+1)) in
+    if (l==0) then (false,name)
+    else 
+      let str = String.sub name (n+1) (slen-(n+1)) in
+      if (str = "ptr") then
+        let s = String.sub name 0 n in
+        (true,s)
+      else
+        (false,name)
   with  _ -> (false,name)
 
 let is_pointer_typ (t:typ) : bool =
   match t with
-    | Pointer _ -> true
-    | _ -> false
+  | Pointer _ -> true
+  | _ -> false
 
 let convert_typ (t:typ) : typ =
   match t with
-    | Pointer t1 -> 
-        (match t1 with
-          | Int -> Named "int_ptr"
-          | Pointer t2 ->
-              (match t2 with
-                | Int -> Named "int_ptr_ptr"
-                | _ -> t2 (*TO CHECK: need to generalize for float, bool, ...*)
-              )
-          | _ -> t1 (*TO CHECK: need to generalize for float, bool, ...*)
-        )
-    | _ -> t
+  | Pointer t1 -> 
+    (match t1 with
+     | Int -> Named "int_ptr"
+     | Pointer t2 ->
+       (match t2 with
+        | Int -> Named "int_ptr_ptr"
+        | _ -> t2 (*TO CHECK: need to generalize for float, bool, ...*)
+       )
+     | _ -> t1 (*TO CHECK: need to generalize for float, bool, ...*)
+    )
+  | _ -> t
 
 let revert_typ (t:typ) : typ =
   (match t with
-    | Named t1 ->
-        (match t1 with
-          | "int_ptr" -> Int
-          | "int_ptr_ptr" -> Named "int_ptr"
-          | _ -> Named "Not_Support")
-    | _ -> Named "Not_Support")
+   | Named t1 ->
+     (match t1 with
+      | "int_ptr" -> Int
+      | "int_ptr_ptr" -> Named "int_ptr"
+      | _ -> Named "Not_Support")
+   | _ -> Named "Not_Support")
 
 let name_of_typ (t:typ) : string =
   (match t with
-    | Named t1 ->
-        t1
-    | _ -> 
-        "Not_Support")
+   | Named t1 ->
+     t1
+   | _ -> 
+     "Not_Support")
 
 let is_pointer t=
- match t with
-   | Named _ -> true
-   | _ -> false
+  match t with
+  | Named _ -> true
+  | _ -> false
 
 let barrierT = Named "barrier"
 
 let convert_prim_to_obj (t:typ) : typ =
   (match t with
-    | Int -> Named "int_ptr"
-    | Named t1 ->
-        (match t1 with
-          | "int_ptr" -> Named "int_ptr_ptr"
-          | _-> t (*TO CHECK: need to generalize for float, bool, ...*)
-        )
-    | _ -> t (*TO CHECK: need to generalize for float, bool, ...*)
+   | Int -> Named "int_ptr"
+   | Named t1 ->
+     (match t1 with
+      | "int_ptr" -> Named "int_ptr_ptr"
+      | _-> t (*TO CHECK: need to generalize for float, bool, ...*)
+     )
+   | _ -> t (*TO CHECK: need to generalize for float, bool, ...*)
   )
 
 (*for heap predicate*)
@@ -329,7 +329,7 @@ let field_val_ann = "VAL"
 type mode = 
   | ModeIn
   | ModeOut
-  
+
 
 
 type perm_type =
@@ -338,7 +338,7 @@ type perm_type =
   | Count (*counting permissions*)
   | Dperm (*distinct fractional shares*)
   | Bperm (*bounded permissions*)
-  
+
 let perm = ref NoPerm
 
 (* moved to Gen *)
@@ -359,48 +359,48 @@ let remove_blanks = Str.global_replace (Str.regexp " ") ""
 
 let string_of_split_ann a =
   match a with
-    | SPLIT0 -> ""
-    | SPLIT1 -> "@S1"
-    | SPLIT2 -> "@S2"
+  | SPLIT0 -> ""
+  | SPLIT1 -> "@S1"
+  | SPLIT2 -> "@S2"
 
 let string_of_heap_ann a =
   match a with
-    | Accs -> "@A"
-    | Lend -> "@L"
-    | Imm -> "@I"
-    | Mutable -> "@M"
+  | Accs -> "@A"
+  | Lend -> "@L"
+  | Imm -> "@I"
+  | Mutable -> "@M"
 
 let int_of_heap_ann a =
   match a with
-    | Accs -> 3
-    | Lend -> 2
-    | Imm -> 1
-    | Mutable -> 0
+  | Accs -> 3
+  | Lend -> 2
+  | Imm -> 1
+  | Mutable -> 0
 
 let string_of_vp_ann a =  
   (match a with
-    | VP_Zero -> "@zero"
-    | VP_Full -> "@full"
-    | VP_Value -> "@value"
-    | VP_Lend -> "@lend"
-    | VP_Frac f -> "@" ^ (Frac.string_of_frac f) 
-    (* | VP_Ref-> "@p_ref" *)
+   | VP_Zero -> "@zero"
+   | VP_Full -> "@full"
+   | VP_Value -> "@value"
+   | VP_Lend -> "@lend"
+   | VP_Frac f -> "@" ^ (Frac.string_of_frac f) 
+   (* | VP_Ref-> "@p_ref" *)
   )
 
 
 let string_of_ho_flow_kind (k:ho_flow_kind) =
   match k with
-    | INFLOW -> "-"
-    | OUTFLOW -> "+"
-    | NEUTRAL -> "."
+  | INFLOW -> "-"
+  | OUTFLOW -> "+"
+  | NEUTRAL -> "."
 
 let string_of_ho_split_kind (k:ho_split_kind) =
   match k with
-    | HO_SPLIT -> "@Split"
-    | HO_NONE -> ""
+  | HO_SPLIT -> "@Split"
+  | HO_NONE -> ""
 
 let string_of_loc (p : loc) = 
-    Printf.sprintf "1 File \"%s\",Line:%d,Col:%d"
+  Printf.sprintf "1 File \"%s\",Line:%d,Col:%d"
     p.start_pos.Lexing.pos_fname 
     p.start_pos.Lexing.pos_lnum
     (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol)
@@ -411,13 +411,13 @@ let is_valid_loc p=
    p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol>=0)
 
 let string_of_pos (p : Lexing.position) = 
-    Printf.sprintf "(Line:%d,Col:%d)"
+  Printf.sprintf "(Line:%d,Col:%d)"
     p.Lexing.pos_lnum
-	(p.Lexing.pos_cnum-p.Lexing.pos_bol)
+    (p.Lexing.pos_cnum-p.Lexing.pos_bol)
 ;;
 
 let string_of_pos_plain (p : Lexing.position) = 
-    Printf.sprintf "%d_%d"
+  Printf.sprintf "%d_%d"
     p.Lexing.pos_lnum
     (p.Lexing.pos_cnum-p.Lexing.pos_bol)
 ;;
@@ -480,7 +480,7 @@ let z3_proof_log_list = ref ([]: string list)
 let z3_time = ref 0.0
 
 let add_to_z3_proof_log_list (f: string) =
-	z3_proof_log_list := !z3_proof_log_list @ [f]
+  z3_proof_log_list := !z3_proof_log_list @ [f]
 
 
 
@@ -490,16 +490,16 @@ let add_to_z3_proof_log_list (f: string) =
 (* let clear_proving_loc () = proving_loc#reset *)
 (*   (\* proving_loc := None *\) *)
 
- let pr_lst s f xs = String.concat s (List.map f xs)
+let pr_lst s f xs = String.concat s (List.map f xs)
 
- let pr_list_brk open_b close_b f xs  = open_b ^(pr_lst ";" f xs)^close_b
- let pr_list f xs = pr_list_brk "[" "]" f xs
- let pr_list_angle f xs = pr_list_brk "<" ">" f xs
- let pr_list_round f xs = pr_list_brk "(" ")" f xs
+let pr_list_brk open_b close_b f xs  = open_b ^(pr_lst ";" f xs)^close_b
+let pr_list f xs = pr_list_brk "[" "]" f xs
+let pr_list_angle f xs = pr_list_brk "<" ">" f xs
+let pr_list_round f xs = pr_list_brk "(" ")" f xs
 
 (* pretty printing for types *)
 let rec string_of_typ (x:typ) : string = match x with
-   (* may be based on types used !! *)
+  (* may be based on types used !! *)
   | FORM          -> "Formula"
   | UNK          -> "Unknown"
   | Bool          -> "boolean"
@@ -523,14 +523,14 @@ let rec string_of_typ (x:typ) : string = match x with
   (* | SLTyp -> "SLTyp" *)
   | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
   | Array (et, r) -> (* An Hoa *)
-	let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
-		(string_of_typ et) ^ (repeat r)
+    let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
+    (string_of_typ et) ^ (repeat r)
 ;;
 
 let is_RelT x =
   match x with
-    | RelT _ -> true
-    | _ -> false
+  | RelT _ -> true
+  | _ -> false
 ;;
 
 let is_FuncT = function
@@ -539,13 +539,13 @@ let is_FuncT = function
 
 let is_HpT x =
   match x with
-    | HpT -> true
-    | _ -> false
+  | HpT -> true
+  | _ -> false
 ;;
 
 (* aphanumeric name *)
 let rec string_of_typ_alpha = function 
-   (* may be based on types used !! *)
+  (* may be based on types used !! *)
   | FORM          -> "Formula"
   | UNK          -> "Unknown"
   | Bool          -> "boolean"
@@ -569,8 +569,8 @@ let rec string_of_typ_alpha = function
   (* | SLTyp -> "SLTyp" *)
   | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
   | Array (et, r) -> (* An Hoa *)
-	let rec repeat k = if (k == 0) then "" else "_arr" ^ (repeat (k-1)) in
-		(string_of_typ et) ^ (repeat r)
+    let rec repeat k = if (k == 0) then "" else "_arr" ^ (repeat (k-1)) in
+    (string_of_typ et) ^ (repeat r)
 ;;
 
 let subs_tvar_in_typ t (i:int) nt =
@@ -583,7 +583,7 @@ let subs_tvar_in_typ t (i:int) nt =
   in helper t
 ;;
 
- 
+
 (* let null_type = Named "" *)
 (* ;;                       *)
 
@@ -603,8 +603,8 @@ let string_of_ident_list l = "["^(s_i_list l ",")^"]"
 
 let string_of_primed p =
   match p with
-    | Primed -> "'"
-    | Unprimed -> ""
+  | Primed -> "'"
+  | Unprimed -> ""
 
 let string_of_primed_ident (id,p) =
   id ^ string_of_primed p
@@ -628,7 +628,7 @@ let is_substr s id =
     else false
   with _ -> false
 ;;
- 
+
 let is_dont_care_var id =
   if is_substr "#" id 
   then true
@@ -659,9 +659,9 @@ let push_opt_val_rev opt v = match opt with
   | Some s -> Some (v, s)
 
 let no_pos1 = { Lexing.pos_fname = "";
-				   Lexing.pos_lnum = 0;
-				   Lexing.pos_bol = 0; 
-				   Lexing.pos_cnum = 0 } 
+                Lexing.pos_lnum = 0;
+                Lexing.pos_bol = 0; 
+                Lexing.pos_cnum = 0 } 
 
 let res_name = "res"
 (* let null_name = "null" *)
@@ -987,8 +987,8 @@ let lhs_case_search_flag = ref false
 let smart_xpure = ref true
 let super_smart_xpure = ref false
 let precise_perm_xpure = ref true
-  (* this flag is dynamically set depending on
-     smart_xpure and xpure0!=xpure1 *)
+(* this flag is dynamically set depending on
+   smart_xpure and xpure0!=xpure1 *)
 let smart_memo = ref false
 
 let enable_constraint_based_filtering = ref false
@@ -1023,10 +1023,10 @@ let allow_array_inst = ref false
 let imm_merge = ref false
 
 (*Since this flag is disabled by default if you use this ensure that 
-run-fast-test mem test cases pass *)
+  run-fast-test mem test cases pass *)
 (* let allow_field_ann = ref false  *)
-  (* disabled by default as it is unstable and
-     other features, such as shape analysis are affected by it *)
+(* disabled by default as it is unstable and
+   other features, such as shape analysis are affected by it *)
 let allow_ramify = ref false
 let allow_mem = ref false
 (*enabling allow_mem will turn on field ann as well *)
@@ -1044,7 +1044,7 @@ let allow_inf_qe = ref false (*enable support to use quantifier elimination with
 let allow_inf_qe_coq = ref false
 let allow_inf_qe_coq_simp = ref false
 (* enable support to use quantifier elimination procedure
-implemented in coq and extracted as infsolver.ml *)
+   implemented in coq and extracted as infsolver.ml *)
 let allow_qe_fix = ref false
 
 let ann_derv = ref false
@@ -1056,7 +1056,7 @@ let print_clean_flag = ref false
 
 (*is used during deployment, e.g. on a website*)
 (*Will shorten the error/warning/... message delivered
-to end-users*)
+  to end-users*)
 (*Unify is_deployed an web_compile_flag*)
 (* let is_deployed = ref true *)
 
@@ -1065,7 +1065,7 @@ let web_compile_flag = ref false (*enable compilation flag for website*)
 
 
 (* Decide whether normalization/simplification
-such as x<1 --> x+1<=1 is allowed
+   such as x<1 --> x+1<=1 is allowed
    Currently, =true when using -tp parahip|rm
    or using -perm frac
    The reason for this is that when using concurrency verification,
@@ -1107,7 +1107,7 @@ let allow_ptr = ref false (*true -> enable pointer translation*)
 let print_proc = ref false
 
 let check_all = ref true
-  
+
 let auto_number = ref true
 
 let sleek_flag = ref false
@@ -1279,14 +1279,14 @@ let validate_target = ref ""
 
 let cpfile = ref ""
 
-  (*for cav experiments*)
-  let f_1_slice = ref false
-  let f_2_slice = ref false
-  let no_memoisation = ref false
-  let no_incremental = ref false
-  let no_LHS_prop_drop = ref false
-  let no_RHS_prop_drop = ref false
-  let do_sat_slice = ref false
+(*for cav experiments*)
+let f_1_slice = ref false
+let f_2_slice = ref false
+let no_memoisation = ref false
+let no_incremental = ref false
+let no_LHS_prop_drop = ref false
+let no_RHS_prop_drop = ref false
+let do_sat_slice = ref false
 
 let smt_compete_mode = ref false
 let svcomp_compete_mode = ref false
@@ -1434,81 +1434,81 @@ let string_of_inf_const x =
 (* end;; *)
 
 class inf_obj  =
-object (self)
-  val mutable arr = []
-  method set_init_arr s = 
-    let helper r c =
-      let reg = Str.regexp r in
-      try
-        begin
-          Str.search_forward reg s 0;
-          arr <- c::arr;
-          (* Trung: temporarily disable printing for svcomp15, undo it later *) 
-          (* print_endline_q ("infer option added :"^(string_of_inf_const c)); *)
-        end
-      with Not_found -> ()
-    in
-    begin
-      helper "@term"          INF_TERM;
-      helper "@term_wo_post"  INF_TERM_WO_POST;
-      helper "@pre"           INF_PRE;
-      helper "@post"          INF_POST;
-      helper "@imm"           INF_IMM;
-      helper "@shape"         INF_SHAPE;
-      helper "@error"         INF_ERROR;
-      helper "@size"          INF_SIZE;
-      helper "@efa"           INF_EFA;
-      helper "@dfa"           INF_DFA;
-      helper "@flow"          INF_FLOW;
-      helper "@leak"          INF_CLASSIC;
-      helper "@par"           INF_PAR;
-      helper "@ver_post"      INF_VER_POST;
-      (* let x = Array.fold_right (fun x r -> x || r) arr false in *)
-      if arr==[] then failwith  ("empty -infer option :"^s) 
-    end
-  method is_empty  = arr==[]
-  (* method string_at i =  *)
-  (*   try *)
-  (*     string_of_inf_const (Array.get arr i) *)
-  (*   with _ -> "" *)
-  method string_of_raw = 
-    let lst_a = List.map string_of_inf_const arr in
-    String.concat "," lst_a
-  method string_of = "["^(self #string_of_raw)^"]"
-  method get c  = List.mem c arr
-  (* method get_int i  = Array.get arr i *)
-  method is_term = (self # get INF_TERM) || (self # get INF_TERM_WO_POST)
-  method is_term_wo_post = self # get INF_TERM_WO_POST
-  method is_pre  = self # get INF_PRE
-  method is_post  = self # get INF_POST
-  method is_ver_post  = self # get INF_VER_POST
-  method is_imm  = self # get INF_IMM
-  method is_shape  = self # get INF_SHAPE
-  method is_error  = self # get INF_ERROR
-  method is_size  = self # get INF_SIZE
-  method is_efa  = self # get INF_EFA
-  method is_dfa  = self # get INF_DFA
-  method is_classic  = self # get INF_CLASSIC
-  method is_par  = self # get INF_PAR
-  method is_add_flow  = self # get INF_FLOW
-  (* method get_arr  = arr *)
-  method is_infer_type t  = self # get t
-  method get_lst = arr
-  method set c  = if self#get c then () else arr <- c::arr
-  (* method set_ind i  = Array.set arr i true *)
-  method set_list l  = List.iter (fun c -> self # set c) l
-  method reset c  = arr <- List.filter (fun x-> not(c==x)) arr
-  method mk_or (o2:inf_obj) = 
-    let o1 = o2 # clone in
-    let l = self # get_lst in
-    let () = o1 # set_list l in
-    o1
-  method clone = 
-    let no = new inf_obj in
-    let () = no # set_list arr in
-    (* let () = print_endline ("Cloning :"^(no #string_of)) in *)
-    no
-end;;
+  object (self)
+    val mutable arr = []
+    method set_init_arr s = 
+      let helper r c =
+        let reg = Str.regexp r in
+        try
+          begin
+            Str.search_forward reg s 0;
+            arr <- c::arr;
+            (* Trung: temporarily disable printing for svcomp15, undo it later *) 
+            (* print_endline_q ("infer option added :"^(string_of_inf_const c)); *)
+          end
+        with Not_found -> ()
+      in
+      begin
+        helper "@term"          INF_TERM;
+        helper "@term_wo_post"  INF_TERM_WO_POST;
+        helper "@pre"           INF_PRE;
+        helper "@post"          INF_POST;
+        helper "@imm"           INF_IMM;
+        helper "@shape"         INF_SHAPE;
+        helper "@error"         INF_ERROR;
+        helper "@size"          INF_SIZE;
+        helper "@efa"           INF_EFA;
+        helper "@dfa"           INF_DFA;
+        helper "@flow"          INF_FLOW;
+        helper "@leak"          INF_CLASSIC;
+        helper "@par"           INF_PAR;
+        helper "@ver_post"      INF_VER_POST;
+        (* let x = Array.fold_right (fun x r -> x || r) arr false in *)
+        if arr==[] then failwith  ("empty -infer option :"^s) 
+      end
+    method is_empty  = arr==[]
+    (* method string_at i =  *)
+    (*   try *)
+    (*     string_of_inf_const (Array.get arr i) *)
+    (*   with _ -> "" *)
+    method string_of_raw = 
+      let lst_a = List.map string_of_inf_const arr in
+      String.concat "," lst_a
+    method string_of = "["^(self #string_of_raw)^"]"
+    method get c  = List.mem c arr
+    (* method get_int i  = Array.get arr i *)
+    method is_term = (self # get INF_TERM) || (self # get INF_TERM_WO_POST)
+    method is_term_wo_post = self # get INF_TERM_WO_POST
+    method is_pre  = self # get INF_PRE
+    method is_post  = self # get INF_POST
+    method is_ver_post  = self # get INF_VER_POST
+    method is_imm  = self # get INF_IMM
+    method is_shape  = self # get INF_SHAPE
+    method is_error  = self # get INF_ERROR
+    method is_size  = self # get INF_SIZE
+    method is_efa  = self # get INF_EFA
+    method is_dfa  = self # get INF_DFA
+    method is_classic  = self # get INF_CLASSIC
+    method is_par  = self # get INF_PAR
+    method is_add_flow  = self # get INF_FLOW
+    (* method get_arr  = arr *)
+    method is_infer_type t  = self # get t
+    method get_lst = arr
+    method set c  = if self#get c then () else arr <- c::arr
+    (* method set_ind i  = Array.set arr i true *)
+    method set_list l  = List.iter (fun c -> self # set c) l
+    method reset c  = arr <- List.filter (fun x-> not(c==x)) arr
+    method mk_or (o2:inf_obj) = 
+      let o1 = o2 # clone in
+      let l = self # get_lst in
+      let () = o1 # set_list l in
+      o1
+    method clone = 
+      let no = new inf_obj in
+      let () = no # set_list arr in
+      (* let () = print_endline ("Cloning :"^(no #string_of)) in *)
+      no
+  end;;
 
 let infer_const_obj = new inf_obj;;
 
@@ -1593,7 +1593,7 @@ let do_infer_inc = ref false
 (*let call_graph : ((string list) list) ref = ref [[]]*)
 
 let add_count (t: int ref) = 
-	t := !t+1
+  t := !t+1
 
 let omega_err = ref false
 
@@ -1719,16 +1719,16 @@ let locs_of_partial_context ctx =
 
 
 let fresh_formula_label (s:string) :formula_label = 
-	branch_point_id := !branch_point_id + 1;
-	(!branch_point_id,s)
+  branch_point_id := !branch_point_id + 1;
+  (!branch_point_id,s)
 
 let fresh_branch_point_id (s:string) : control_path_id = Some (fresh_formula_label s)
 let fresh_strict_branch_point_id (s:string) : control_path_id_strict = (fresh_formula_label s)
 
 let mk_strict_branch_point (id:control_path_id) (s:string) : control_path_id_strict = 
   match id with 
-    | Some i -> i
-    | None -> fresh_formula_label s
+  | Some i -> i
+  | None -> fresh_formula_label s
 
 let eq_formula_label (l1:formula_label) (l2:formula_label) : bool = fst(l1)=fst(l2)
 
@@ -1753,39 +1753,39 @@ let string_compare s1 s2 =  String.compare s1 s2=0
 
 let fresh_ty_var_name (t:typ)(ln:int):string = 
   let ln = if ln<0 then 0 else ln in
-	("v_"^(string_of_typ_alpha t)^"_"^(string_of_int ln)^"_"^(string_of_int (fresh_int ())))
+  ("v_"^(string_of_typ_alpha t)^"_"^(string_of_int ln)^"_"^(string_of_int (fresh_int ())))
 
 let fresh_var_name (tn:string)(ln:int):string = 
-	("v_"^tn^"_"^(string_of_int ln)^"_"^(string_of_int (fresh_int ())))
+  ("v_"^tn^"_"^(string_of_int ln)^"_"^(string_of_int (fresh_int ())))
 
 let fresh_trailer () =
   let str = string_of_int (fresh_int ()) in
   (*-- 09.05.2008 *)
-	(*let () = (print_string ("\n[globals.ml, line 103]: fresh name = " ^ str ^ "\n")) in*)
-	(* 09.05.2008 --*)
-    "_" ^ str
+  (*let () = (print_string ("\n[globals.ml, line 103]: fresh name = " ^ str ^ "\n")) in*)
+  (* 09.05.2008 --*)
+  "_" ^ str
 
 let fresh_any_name (any:string) =
   let str = string_of_int (fresh_int ()) in
-    any ^"_"^ str
+  any ^"_"^ str
 
 let fresh_name () =
   let str = string_of_int (fresh_int ()) in
-    "f_r_" ^ str
+  "f_r_" ^ str
 
 let fresh_label pos =
- (* let str = string_of_int (fresh_int ()) in*)
-    let line = if pos.start_pos.Lexing.pos_lnum > 0 then
-                 string_of_int pos.start_pos.Lexing.pos_lnum
-               else "0" in
-    "f_l_" ^ line ^ "_"^(string_of_int (fresh_int ()))
+  (* let str = string_of_int (fresh_int ()) in*)
+  let line = if pos.start_pos.Lexing.pos_lnum > 0 then
+      string_of_int pos.start_pos.Lexing.pos_lnum
+    else "0" in
+  "f_l_" ^ line ^ "_"^(string_of_int (fresh_int ()))
 
 let fresh_names (n : int) = (* number of names to be generated *)
   let names = ref ([] : string list) in
-    for i = 1 to n do
-      names := (fresh_name ()) :: !names
-    done;
-    !names
+  for i = 1 to n do
+    names := (fresh_name ()) :: !names
+  done;
+  !names
 
 let formula_cache_no_series = ref 0
 
@@ -1797,7 +1797,7 @@ let gen_ext_name c1 c2 = "Ext~" ^ c1 ^ "~" ^ c2
 
 
 let string_of_formula_label ((i,s):formula_label) =
-      "(" ^ (string_of_int i) ^ " , " ^ s ^ ")"
+  "(" ^ (string_of_int i) ^ " , " ^ s ^ ")"
 
 let seq_local_number = ref 0
 
@@ -1848,22 +1848,22 @@ let dummy_exception () = ()
 
 (* convert a tree-like binary object into a list of objects *)
 let bin_op_to_list (op:string)
-  (fn : 'a -> (string * ('a list)) option)
-  (t:'a) : ('a list) =
+    (fn : 'a -> (string * ('a list)) option)
+    (t:'a) : ('a list) =
   let rec helper t =
     match (fn t) with
-      | None -> [t]
-      | Some (op2, xs) -> 
-          if (op=op2) then 
-            List.concat (List.map helper xs)
-          else [t]
+    | None -> [t]
+    | Some (op2, xs) -> 
+      if (op=op2) then 
+        List.concat (List.map helper xs)
+      else [t]
   in (helper t)
 
 let bin_to_list (fn : 'a -> (string * ('a list)) option) 
-  (t:'a) : string * ('a list) =
+    (t:'a) : string * ('a list) =
   match (fn t) with
-    | None -> "", [t]
-    | Some (op, _) -> op,(bin_op_to_list op fn t)
+  | None -> "", [t]
+  | Some (op, _) -> op,(bin_op_to_list op fn t)
 
 
 (* An Hoa : option to print proof *)
@@ -1873,10 +1873,10 @@ let print_proof = ref false
 let strquote s = "\"" ^ s ^ "\""
 
 let norm_file_name str =
-	for i = 0 to (String.length str) - 1 do
-		if str.[i] = '.' || str.[i] = '/' then str.[i] <- '_'
-	done;
-	str
+  for i = 0 to (String.length str) - 1 do
+    if str.[i] = '.' || str.[i] = '/' then str.[i] <- '_'
+  done;
+  str
 
 (* let wrap_classic et f a = *)
 (*   let flag = !do_classic_frame_rule in *)
@@ -2017,8 +2017,8 @@ let set_last_sleek_fail () =
 
 let gen_field_ann t=
   match t with
-    | Named _ -> fresh_any_name field_rec_ann
-    | _ -> fresh_any_name field_val_ann
+  | Named _ -> fresh_any_name field_rec_ann
+  | _ -> fresh_any_name field_val_ann
 
 let un_option opt default_val = match opt with
   | Some v -> v
@@ -2042,26 +2042,26 @@ let lcm (a: int) (b: int): int = (a * b) / (gcd a b)
 let lcm_l (l: int list): int =
   if List.exists (fun x -> x == 0) l then 0
   else match l with
-  | [] -> 1
-  | x::[] -> x
-  | x::xs -> List.fold_left (fun a x -> lcm a x) x xs
-  
+    | [] -> 1
+    | x::[] -> x
+    | x::xs -> List.fold_left (fun a x -> lcm a x) x xs
+
 let smt_return_must_on_error ()=
   let () = if !return_must_on_pure_failure then
-    (* let () = smt_is_must_failure := (Some true) in *) ()
-  else ()
+      (* let () = smt_is_must_failure := (Some true) in *) ()
+    else ()
   in ()
 
 let string_of_lemma_kind (l: lemma_kind) =
-    match l with
-      | LEM           -> "LEM"
-      | LEM_PROP      -> "LEM_PROP"
-      | LEM_SPLIT      -> "LEM_SPLIT"
-      | LEM_TEST      -> "LEM_TEST"
-      | LEM_TEST_NEW  -> "LEM_TEST_NEW"
-      | LEM_UNSAFE    -> "LEM_UNSAFE"
-      | LEM_SAFE      -> "LEM_SAFE"
-      | LEM_INFER     -> "LEM_INFER"
-      | LEM_INFER_PRED   -> "LEM_INFER_PRED"
-      | RLEM -> "RLEM"
+  match l with
+  | LEM           -> "LEM"
+  | LEM_PROP      -> "LEM_PROP"
+  | LEM_SPLIT      -> "LEM_SPLIT"
+  | LEM_TEST      -> "LEM_TEST"
+  | LEM_TEST_NEW  -> "LEM_TEST_NEW"
+  | LEM_UNSAFE    -> "LEM_UNSAFE"
+  | LEM_SAFE      -> "LEM_SAFE"
+  | LEM_INFER     -> "LEM_INFER"
+  | LEM_INFER_PRED   -> "LEM_INFER_PRED"
+  | RLEM -> "RLEM"
 

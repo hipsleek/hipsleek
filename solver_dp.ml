@@ -31,15 +31,15 @@ let compute_address (hf: CF.h_formula) : CP.formula =
 
 
 let compute_well_formed_condition (f: CF.formula) : CF.formula =
-  
-  
 
 
-(* 
+
+
+  (* 
  * Checking the validity of an entailment.
  * The antecedent and consequent must be conjunctive formula. 
  *)
-let prove_entailment (ante: CF.formula) (conseq: CF.formula) : bool =
-  
-  
-  true
+  let prove_entailment (ante: CF.formula) (conseq: CF.formula) : bool =
+
+
+    true

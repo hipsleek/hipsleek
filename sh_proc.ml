@@ -11,7 +11,7 @@ open Gen
 (*     | (a,n)::lst ->  *)
 (*           if a=e then (a,n+1)::lst *)
 (*           else (a,n)::(add_2_lst e lst) *)
-  
+
 (* let mapt_add_elem id e = *)
 (*   try  *)
 (*     let lst = Hashtbl.find mapt id in *)
@@ -57,9 +57,9 @@ let mapd_add_elem id m =
   try
     let lst = Hashtbl.find mapd id in
     let lst = add_2_lst m lst in
-     Hashtbl.replace mapd id (lst)
+    Hashtbl.replace mapd id (lst)
   with _ ->
-      Hashtbl.add mapd id [m]
+    Hashtbl.add mapd id [m]
 
 let find_mapd_called id =
   try
@@ -110,10 +110,10 @@ let mapd_called_string_of n =
     Hashtbl.fold (fun id v acc -> 
         if v=n then id::acc else acc) mapd_called []
 
- (* 0 - not called *)
- (* 1 - called without module name *)
- (* 2 - called with wrong module name *)
- (* 3 - called with correct module name *)
+(* 0 - not called *)
+(* 1 - called without module name *)
+(* 2 - called with wrong module name *)
+(* 3 - called with correct module name *)
 
 
 (* ---------------------------------------- *)
@@ -126,8 +126,8 @@ let add_m_alias (alias:string) (name:string) =
     let lst = Hashtbl.find  m_alias name in
     Hashtbl.replace m_alias name (alias::lst)
   with Not_found ->
-      (* let () = print_endline ("Add alias "^alias) in *)
-      Hashtbl.add m_alias name [alias]
+    (* let () = print_endline ("Add alias "^alias) in *)
+    Hashtbl.add m_alias name [alias]
 ;;
 
 let is_alias name alias =
@@ -135,7 +135,7 @@ let is_alias name alias =
     let lst = Hashtbl.find m_alias name in
     List.exists (fun e -> alias = e) lst
   with Not_found ->
-      false
+    false
 ;;
 
 
@@ -180,20 +180,20 @@ let main file =
         let m3 = Str.matched_group 3 line in
         let () = mapd_add_elem m3 (m1,int_of_string m2) in
         (if (not bb) then
-          let _ = print_endline line in
-          Debug.winfo_pprint line no_pos
-        else
-          ()
+           let _ = print_endline line in
+           Debug.winfo_pprint line no_pos
+         else
+           ()
         );
         aux (i+1)
       else
         let _ = print_endline ("FAIL "^line) in
         aux (i+1)
     with End_of_file ->
-        begin
-          (* print_endline "end of file"; *)
-          (* print_endline (mapd_dupl_string_of ()) *)
-        end
+      begin
+        (* print_endline "end of file"; *)
+        (* print_endline (mapd_dupl_string_of ()) *)
+      end
   in
   aux 0
 ;;
@@ -232,7 +232,7 @@ let read_dir dir rex =
         (* print_endline  (s^"==>"^m1^"**"); *)
         ((String.length m1)+3) = (String.length s)
       with _ -> false
-  ) lst in
+    ) lst in
   (* let () = Debug.binfo_hprint (add_str "str" (pr_list pr_id)) lst  no_pos in *)
   lst
 ;;
@@ -266,10 +266,10 @@ let reg10 = Str.regexp "[ \t(]*\\([a-z][_A-Za-z0-9]*\\)[ \t]+\\([^ \t]+\\)"
 let reg_alias = Str.regexp "module[ \t]+\\([A-Z][_A-Za-z0-9]*\\)[ \t]*=[ \t]*\\([A-Z][_A-Za-z0-9]*\\)"
 
 module StringPlus=
-    struct
-      type t = (string*int)
-      let compare (a,_) (b,_)= String.compare a b
-    end
+struct
+  type t = (string*int)
+  let compare (a,_) (b,_)= String.compare a b
+end
 module SSet = Set.Make(StringPlus);;
 
 let can_match matched_group_num reg str =
@@ -294,24 +294,24 @@ let can_match_and_exist_def matched_group_num reg str:(bool * (string list)) =
   if List.length matched_group = 0
   then (false,[])
   else
-    if List.length matched_group = 1 then
-      (mapd_exists (List.nth matched_group 0) "none",matched_group)
-    else
-      if List.length matched_group = 2 then
-        (mapd_exists (List.nth matched_group 1) (List.nth matched_group 0),matched_group)
-      else
-        failwith "can_match_and_exist_def: Invalid list length 2"
+  if List.length matched_group = 1 then
+    (mapd_exists (List.nth matched_group 0) "none",matched_group)
+  else
+  if List.length matched_group = 2 then
+    (mapd_exists (List.nth matched_group 1) (List.nth matched_group 0),matched_group)
+  else
+    failwith "can_match_and_exist_def: Invalid list length 2"
 ;;
 
 let rec can_match_and_exist_def_lst matched_group_num reglst str:(bool * (string list)) =
   match reglst with
-    | h::rest ->
-          let (b,res) = can_match_and_exist_def matched_group_num h str in
-          if b
-          then (b,res)
-          else can_match_and_exist_def_lst matched_group_num rest str
-    | [] ->
-          (false, [])
+  | h::rest ->
+    let (b,res) = can_match_and_exist_def matched_group_num h str in
+    if b
+    then (b,res)
+    else can_match_and_exist_def_lst matched_group_num rest str
+  | [] ->
+    (false, [])
 ;;
 
 let check_call_sites f =
@@ -352,10 +352,10 @@ let check_call_sites f =
       end;
       aux (i+1)
     with End_of_file ->
-        begin
-          SSet.iter (fun (e,n) -> if n=1 then print_endline ("s/=\s*"^e^" /= x_add_1 "^e^" /") else print_endline ("s/=\s*"^e^" /= x_add "^e^" /")) (!output);
-          (* SSet.iter (fun (e,n) -> if n=1 then print_endline ("s/(\s*"^e^" /( x_add_1 "^e^" /") else print_endline ("s/(\s*"^e^" /( x_add "^e^" /")) (!output); *)
-        end
+      begin
+        SSet.iter (fun (e,n) -> if n=1 then print_endline ("s/=\s*"^e^" /= x_add_1 "^e^" /") else print_endline ("s/=\s*"^e^" /= x_add "^e^" /")) (!output);
+        (* SSet.iter (fun (e,n) -> if n=1 then print_endline ("s/(\s*"^e^" /( x_add_1 "^e^" /") else print_endline ("s/(\s*"^e^" /( x_add "^e^" /")) (!output); *)
+      end
   in
   aux 0
 ;;
@@ -385,15 +385,15 @@ let locate_call_sites reglst f =
         if can_match_b_2
         then
           print_endline line
-        (* else print_endline ("no"^line) *)
+          (* else print_endline ("no"^line) *)
       end;
       aux (i+1)
     with End_of_file ->
-        begin
-          print_endline "finished locate_call_sites"
-          (* SSet.iter (fun (e,n) -> if n=1 then print_endline ("s/=\s*"^e^" /= x_add_1 "^e^" /") else print_endline ("s/=\s*"^e^" /= x_add "^e^" /")) (!output); *)
-          (* SSet.iter (fun (e,n) -> if n=1 then print_endline ("s/(\s*"^e^" /( x_add_1 "^e^" /") else print_endline ("s/(\s*"^e^" /( x_add "^e^" /")) (!output); *)
-        end
+      begin
+        print_endline "finished locate_call_sites"
+        (* SSet.iter (fun (e,n) -> if n=1 then print_endline ("s/=\s*"^e^" /= x_add_1 "^e^" /") else print_endline ("s/=\s*"^e^" /= x_add "^e^" /")) (!output); *)
+        (* SSet.iter (fun (e,n) -> if n=1 then print_endline ("s/(\s*"^e^" /( x_add_1 "^e^" /") else print_endline ("s/(\s*"^e^" /( x_add "^e^" /")) (!output); *)
+      end
   in
   aux 0
 ;;
@@ -522,7 +522,7 @@ let collect_call_name_all dirlst =
         in
         aux (i+1)
       with End_of_file ->
-          ()
+        ()
     in
     aux 0
   in

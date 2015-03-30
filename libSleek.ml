@@ -21,7 +21,7 @@ module NF = Nativefront
 let sleeklib_init (args:string array) =
   wrap_exists_implicit_explicit := false ;
   Arg.parse_argv args Scriptarguments.sleek_arguments (fun _ -> ()) "";
-	(if !Globals.override_slc_ps then Globals.en_slc_ps:=false else ());
+  (if !Globals.override_slc_ps then Globals.en_slc_ps:=false else ());
   Scriptarguments.check_option_consistency ();
   Gen.silence_output := true;
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.start_prover ();
@@ -30,13 +30,13 @@ let sleeklib_init (args:string array) =
   let () = Iast.build_exc_hierarchy true iprog in
   let () = exlist # compute_hierarchy  in  
   ()
-  
-  	
+
+
 let sleeklib_stop (_:bool) = 
-if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
+  if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
   Sleek.sleek_proof_log_Z3 ["stringInput"]
-						
-	
+
+
 let process_cmd_list cmds :bool= 
   (*proc_one_def*)
   List.iter (fun c ->  match c with 
@@ -50,17 +50,17 @@ let process_cmd_list cmds :bool=
       | _ -> ()) cmds;
   (* An Hoa : Parsing is completed. If there is undefined type, report error.
    * Otherwise, we perform second round checking!
-   *)
+  *)
   let udefs = !Astsimp.undef_data_types in
   let () = match udefs with
     | [] ->  ()
     | _ -> let udn,udp = List.hd (List.rev udefs) in
       Error.report_error { Error.error_loc  = udp;
-      Error.error_text = "Data type " ^ udn ^ " is undefined!" }
+                           Error.error_text = "Data type " ^ udn ^ " is undefined!" }
   in ();
   convert_data_and_pred_to_cast ();
   x_tinfo_pp "sleek : after convert_data_and_pred_to_cast" no_pos;
-   (*proc_one_lemma*)
+  (*proc_one_lemma*)
   List.iter (fun c->  match c with
       | LemmaDef ldef -> process_lemma ldef
       | _ -> ()) cmds;
@@ -81,28 +81,28 @@ let process_cmd_list cmds :bool=
       | LetDef (lvar, lbody) -> (put_var lvar lbody; a)
       | BarrierCheck bdef -> (process_barrier_def bdef; a)
       | Time (b,s,_) -> 
-            (if b then Gen.Profiling.push_time s 
-            else Gen.Profiling.pop_time s; a)
+        (if b then Gen.Profiling.push_time s 
+         else Gen.Profiling.pop_time s; a)
       | _ -> a) true cmds 
 
 
 let process_cmd (cmd_string:string) (flush_context:bool)= 
-	Gen.silence_output := true;
-	let () = if flush_context then begin
-		let () = clear_all () in
-		let () = process_data_def (I.b_data_constr b_datan []) in
-		let () = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
-		let () = Iast.build_exc_hierarchy true iprog in
-		let () = exlist # compute_hierarchy  in  
-		()
-		end 
+  Gen.silence_output := true;
+  let () = if flush_context then begin
+      let () = clear_all () in
+      let () = process_data_def (I.b_data_constr b_datan []) in
+      let () = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
+      let () = Iast.build_exc_hierarchy true iprog in
+      let () = exlist # compute_hierarchy  in  
+      ()
+    end 
     else () in
-	let cmd = NF.list_parse_string cmd_string in (*cmd list*)	
-	process_cmd_list cmd 
-	  
-	  
+  let cmd = NF.list_parse_string cmd_string in (*cmd list*)	
+  process_cmd_list cmd 
+
+
 let () =
-	  Callback.register "sleek_process_cmd" process_cmd ;
-      Callback.register "sleeklib_init" sleeklib_init ;
-      Callback.register "sleeklib_stop" sleeklib_stop
-	  
+  Callback.register "sleek_process_cmd" process_cmd ;
+  Callback.register "sleeklib_init" sleeklib_init ;
+  Callback.register "sleeklib_stop" sleeklib_stop
+

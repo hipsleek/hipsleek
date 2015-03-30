@@ -32,11 +32,11 @@ let empty_vperm_sets = {
 
 let is_empty_vperm_sets vps = 
   not (!Globals.ann_vp) ||
-      ((is_empty vps.vperm_full_vars) &&
-          (is_empty vps.vperm_lend_vars) &&
-          (is_empty vps.vperm_value_vars) &&
-          (is_empty vps.vperm_zero_vars) &&
-          (is_empty vps.vperm_frac_vars))
+  ((is_empty vps.vperm_full_vars) &&
+   (is_empty vps.vperm_lend_vars) &&
+   (is_empty vps.vperm_value_vars) &&
+   (is_empty vps.vperm_zero_vars) &&
+   (is_empty vps.vperm_frac_vars))
 
 let create_vperm_sets ann svl =
   let empty_vps = empty_vperm_sets in
@@ -81,7 +81,7 @@ let rec vperm_sets_of_anns ann_list =
     | VP_Lend -> { mvs with vperm_lend_vars = sv::mvs.vperm_lend_vars; } 
     | VP_Frac frac -> 
       let frac_vps, others = List.partition (fun (fr, _) -> 
-        Frac.eq_frac frac fr) mvs.vperm_frac_vars in
+          Frac.eq_frac frac fr) mvs.vperm_frac_vars in
       let m_frac_vps = List.concat (List.map snd frac_vps) in
       { mvs with vperm_frac_vars = (frac, sv::m_frac_vps)::others; }
 

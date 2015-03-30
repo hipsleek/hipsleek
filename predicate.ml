@@ -19,9 +19,9 @@ module TP = Tpdispatcher
 let pure_relation_name_of_heap_pred (CP.SpecVar (_, hp, p))=
   let rec look_up map=
     match map with
-      | [] -> report_error no_pos "predicate.pure_relation_name_of_heap_pred"
-      | (id1,id2)::rest -> if String.compare id1 hp = 0 then (CP.SpecVar (RelT [], id2, p)) else
-          look_up rest
+    | [] -> report_error no_pos "predicate.pure_relation_name_of_heap_pred"
+    | (id1,id2)::rest -> if String.compare id1 hp = 0 then (CP.SpecVar (RelT [], id2, p)) else
+        look_up rest
   in
   look_up !Cast.pure_hprel_map
 
@@ -29,9 +29,9 @@ let pure_relation_name_of_heap_pred (CP.SpecVar (_, hp, p))=
 let heap_pred_name_of_pure_relation (CP.SpecVar (_, pure_hp, p))=
   let rec look_up map=
     match map with
-      | [] -> None
-      | (id1,id2)::rest -> if String.compare id2 pure_hp = 0 then Some (CP.SpecVar(HpT, id1, p)) else
-          look_up rest
+    | [] -> None
+    | (id1,id2)::rest -> if String.compare id2 pure_hp = 0 then Some (CP.SpecVar(HpT, id1, p)) else
+        look_up rest
   in
   look_up !Cast.pure_hprel_map
 
@@ -39,91 +39,91 @@ let heap_pred_name_of_pure_relation (CP.SpecVar (_, pure_hp, p))=
 let pure_of_heap_pred_gen_h hf0=
   let rec helper hf=
     match hf with
-      | CF.Star { CF.h_formula_star_h1 = hf1;
-        CF.h_formula_star_h2 = hf2;
-        CF.h_formula_star_pos = pos} ->
-            let nh1,ps1 = helper hf1 in
-            let nh2, ps2 = helper hf2 in
-            let nh = match nh1,nh2 with
-              | (CF.HEmp,CF.HEmp) -> CF.HEmp
-              | (CF.HEmp,_) -> nh2
-              | (_, CF.HEmp) -> nh1
-              | _ -> CF.Star {CF.h_formula_star_h1 = nh1;
-                CF.h_formula_star_h2 = nh2;
-                CF.h_formula_star_pos = pos}
-            in (nh, ps1@ps2)
-      | CF.StarMinus { CF.h_formula_starminus_h1 = hf1;
-        CF.h_formula_starminus_h2 = hf2;
-CF.h_formula_starminus_aliasing = al;
-        CF.h_formula_starminus_pos = pos} ->
-            let nh1,ps1 = helper hf1 in
-            let nh2, ps2 = helper hf2 in
-            let nh = match nh1, nh2 with
-              | (CF.HEmp,CF.HEmp) -> CF.HEmp
-              | (CF.HEmp,_) -> nh2
-              | (_, CF.HEmp) -> nh1
-              | _ -> CF.StarMinus { CF.h_formula_starminus_h1 = nh1;
-                CF.h_formula_starminus_h2 = nh2;
-                CF.h_formula_starminus_aliasing = al;
-                CF.h_formula_starminus_pos = pos}
-            in (nh, ps1@ps2)
-      | CF.ConjStar { CF.h_formula_conjstar_h1 = hf1;
-        CF.h_formula_conjstar_h2 = hf2;
-        CF.h_formula_conjstar_pos = pos} ->
-             let nh1,ps1 = helper hf1 in
-             let nh2, ps2 = helper hf2 in
-             let nh = match nh1, nh2 with
-               | (CF.HEmp,CF.HEmp) -> CF.HEmp
-               | (CF.HEmp,_) -> nh2
-               | (_, CF.HEmp) -> nh1
-               | _ ->  CF.ConjStar { CF.h_formula_conjstar_h1 = nh1;
-                 CF.h_formula_conjstar_h2 = nh2;
-                 CF.h_formula_conjstar_pos = pos}
-             in (nh, ps1@ps2)
-      | CF.ConjConj { CF.h_formula_conjconj_h1 = hf1;
-        CF.h_formula_conjconj_h2 = hf2;
-        CF.h_formula_conjconj_pos = pos} ->
-            let nh1,ps1 = helper hf1 in
-            let nh2, ps2 = helper hf2 in
-            let nh = match nh1, nh2 with
-              | (CF.HEmp,CF.HEmp) -> CF.HEmp
-              | (CF.HEmp,_) -> nh2
-              | (_, CF.HEmp) -> nh1
-              | _ -> CF.ConjConj { CF.h_formula_conjconj_h1 = nh1;
-                CF.h_formula_conjconj_h2 = nh2;
-                CF.h_formula_conjconj_pos = pos}
-            in (nh, ps1@ps2)
-      | CF.Phase { CF.h_formula_phase_rd = hf1;
-        CF.h_formula_phase_rw = hf2;
-        CF.h_formula_phase_pos = pos} ->
-            let nh1,ps1 = helper hf1 in
-            let nh2, ps2 = helper hf2 in
-            let nh = match nh1, nh2 with
-              | (CF.HEmp,CF.HEmp) -> CF.HEmp
-              | (CF.HEmp,_) -> nh2
-              | (_, CF.HEmp) -> nh1
-              | _ -> CF.Phase { CF.h_formula_phase_rd = nh1;
-                CF.h_formula_phase_rw = nh2;
-                CF.h_formula_phase_pos = pos}
-            in (nh, ps1@ps2)
-      | CF.Conj { CF.h_formula_conj_h1 = hf1;
-        CF.h_formula_conj_h2 = hf2;
-        CF.h_formula_conj_pos = pos} ->
-            let nh1,ps1 = helper hf1 in
-            let nh2, ps2 = helper hf2 in
-            let nh = match nh1, nh2 with
-              | (CF.HEmp,CF.HEmp) -> CF.HEmp
-              | (CF.HEmp,_) -> nh2
-              | (_, CF.HEmp) -> nh1
-              | _ -> CF.Conj { CF.h_formula_conj_h1 = nh1;
-                CF.h_formula_conj_h2 = nh2;
-                CF.h_formula_conj_pos = pos}
-            in (nh, ps1@ps2)
-      | CF.HRel (hp, eargs, p) ->
-            let prel = pure_relation_name_of_heap_pred hp in
-            let p= CP.mkRel prel eargs p in
-            (CF.HEmp, [(p,hp)])
-      | _ -> (hf,[])
+    | CF.Star { CF.h_formula_star_h1 = hf1;
+                CF.h_formula_star_h2 = hf2;
+                CF.h_formula_star_pos = pos} ->
+      let nh1,ps1 = helper hf1 in
+      let nh2, ps2 = helper hf2 in
+      let nh = match nh1,nh2 with
+        | (CF.HEmp,CF.HEmp) -> CF.HEmp
+        | (CF.HEmp,_) -> nh2
+        | (_, CF.HEmp) -> nh1
+        | _ -> CF.Star {CF.h_formula_star_h1 = nh1;
+                        CF.h_formula_star_h2 = nh2;
+                        CF.h_formula_star_pos = pos}
+      in (nh, ps1@ps2)
+    | CF.StarMinus { CF.h_formula_starminus_h1 = hf1;
+                     CF.h_formula_starminus_h2 = hf2;
+                     CF.h_formula_starminus_aliasing = al;
+                     CF.h_formula_starminus_pos = pos} ->
+      let nh1,ps1 = helper hf1 in
+      let nh2, ps2 = helper hf2 in
+      let nh = match nh1, nh2 with
+        | (CF.HEmp,CF.HEmp) -> CF.HEmp
+        | (CF.HEmp,_) -> nh2
+        | (_, CF.HEmp) -> nh1
+        | _ -> CF.StarMinus { CF.h_formula_starminus_h1 = nh1;
+                              CF.h_formula_starminus_h2 = nh2;
+                              CF.h_formula_starminus_aliasing = al;
+                              CF.h_formula_starminus_pos = pos}
+      in (nh, ps1@ps2)
+    | CF.ConjStar { CF.h_formula_conjstar_h1 = hf1;
+                    CF.h_formula_conjstar_h2 = hf2;
+                    CF.h_formula_conjstar_pos = pos} ->
+      let nh1,ps1 = helper hf1 in
+      let nh2, ps2 = helper hf2 in
+      let nh = match nh1, nh2 with
+        | (CF.HEmp,CF.HEmp) -> CF.HEmp
+        | (CF.HEmp,_) -> nh2
+        | (_, CF.HEmp) -> nh1
+        | _ ->  CF.ConjStar { CF.h_formula_conjstar_h1 = nh1;
+                              CF.h_formula_conjstar_h2 = nh2;
+                              CF.h_formula_conjstar_pos = pos}
+      in (nh, ps1@ps2)
+    | CF.ConjConj { CF.h_formula_conjconj_h1 = hf1;
+                    CF.h_formula_conjconj_h2 = hf2;
+                    CF.h_formula_conjconj_pos = pos} ->
+      let nh1,ps1 = helper hf1 in
+      let nh2, ps2 = helper hf2 in
+      let nh = match nh1, nh2 with
+        | (CF.HEmp,CF.HEmp) -> CF.HEmp
+        | (CF.HEmp,_) -> nh2
+        | (_, CF.HEmp) -> nh1
+        | _ -> CF.ConjConj { CF.h_formula_conjconj_h1 = nh1;
+                             CF.h_formula_conjconj_h2 = nh2;
+                             CF.h_formula_conjconj_pos = pos}
+      in (nh, ps1@ps2)
+    | CF.Phase { CF.h_formula_phase_rd = hf1;
+                 CF.h_formula_phase_rw = hf2;
+                 CF.h_formula_phase_pos = pos} ->
+      let nh1,ps1 = helper hf1 in
+      let nh2, ps2 = helper hf2 in
+      let nh = match nh1, nh2 with
+        | (CF.HEmp,CF.HEmp) -> CF.HEmp
+        | (CF.HEmp,_) -> nh2
+        | (_, CF.HEmp) -> nh1
+        | _ -> CF.Phase { CF.h_formula_phase_rd = nh1;
+                          CF.h_formula_phase_rw = nh2;
+                          CF.h_formula_phase_pos = pos}
+      in (nh, ps1@ps2)
+    | CF.Conj { CF.h_formula_conj_h1 = hf1;
+                CF.h_formula_conj_h2 = hf2;
+                CF.h_formula_conj_pos = pos} ->
+      let nh1,ps1 = helper hf1 in
+      let nh2, ps2 = helper hf2 in
+      let nh = match nh1, nh2 with
+        | (CF.HEmp,CF.HEmp) -> CF.HEmp
+        | (CF.HEmp,_) -> nh2
+        | (_, CF.HEmp) -> nh1
+        | _ -> CF.Conj { CF.h_formula_conj_h1 = nh1;
+                         CF.h_formula_conj_h2 = nh2;
+                         CF.h_formula_conj_pos = pos}
+      in (nh, ps1@ps2)
+    | CF.HRel (hp, eargs, p) ->
+      let prel = pure_relation_name_of_heap_pred hp in
+      let p= CP.mkRel prel eargs p in
+      (CF.HEmp, [(p,hp)])
+    | _ -> (hf,[])
   in
   helper hf0
 
@@ -132,7 +132,7 @@ let pure_of_heap_pred_x pos hfs=
       let _, pr_ps =  pure_of_heap_pred_gen_h hf in
       let ps,hprels = List.split pr_ps in
       (ls@ps, ls2@hprels)
-  ) ([],[]) hfs
+    ) ([],[]) hfs
   in
   let p = CP.conj_of_list ps pos in
   p,p_hps
@@ -142,7 +142,7 @@ let pure_of_heap_pred pos hfs=
   let pr2 = pr_list_ln Cprinter.prtt_string_of_h_formula in
   (* let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in *)
   Debug.no_1 "pure_of_heap_pred" pr2 (pr_pair pr1 !CP.print_svl)
-      (fun _ -> pure_of_heap_pred_x pos hfs) hfs
+    (fun _ -> pure_of_heap_pred_x pos hfs) hfs
 
 (* let pure_of_heap_pred_x f0= *)
 (*   let rec helper f= *)
@@ -169,107 +169,107 @@ let pure_of_heap_pred pos hfs=
 let trans_rels_gen pf0 =
   let rec helper pf=
     match pf with
-      | CP.BForm (bf,a) -> begin
-          match bf with
-            | (CP.RelForm (r, eargs, p),x) ->
-                  let ohp = heap_pred_name_of_pure_relation r in
-                  (
-                      match ohp with 
-                        | None -> (pf,[])
-                        | Some hp -> (CP.BForm (((CP.BConst (true, p)), x) ,a),  [(CF.HRel (hp, eargs, p))])
-                  )
-            | _ -> (pf, [])
-        end
-      | CP.And (f1,f2,p) -> let nf1, hf1 = helper f1 in
-        let nf2, hf2= helper f2 in
-        let np = match (CP.isConstTrue nf1), (CP.isConstTrue nf2) with
-          | true,true -> nf1
-          | true,_ -> nf2
-          | _, true -> nf1
-          | _ -> CP.And (nf1,nf2,p)
-        in (np, hf1@hf2)
-  | CP.AndList lp-> let r,hfs = List.fold_left (fun (ps, hfs) (l, p) ->
+    | CP.BForm (bf,a) -> begin
+        match bf with
+        | (CP.RelForm (r, eargs, p),x) ->
+          let ohp = heap_pred_name_of_pure_relation r in
+          (
+            match ohp with 
+            | None -> (pf,[])
+            | Some hp -> (CP.BForm (((CP.BConst (true, p)), x) ,a),  [(CF.HRel (hp, eargs, p))])
+          )
+        | _ -> (pf, [])
+      end
+    | CP.And (f1,f2,p) -> let nf1, hf1 = helper f1 in
+      let nf2, hf2= helper f2 in
+      let np = match (CP.isConstTrue nf1), (CP.isConstTrue nf2) with
+        | true,true -> nf1
+        | true,_ -> nf2
+        | _, true -> nf1
+        | _ -> CP.And (nf1,nf2,p)
+      in (np, hf1@hf2)
+    | CP.AndList lp-> let r,hfs = List.fold_left (fun (ps, hfs) (l, p) ->
         let np, n_hfs = helper p in
         if CP.isConstTrue np then
           (ps, hfs@n_hfs)
         else (ps@[(l,np)], hfs@n_hfs)
-    ) ([],[]) lp in
-    if r = [] then (CP.mkTrue no_pos, hfs) else (CP.AndList r,hfs)
-  | CP.Or (f1,f2,c,p) -> let nf1, hf1 = helper f1 in
-    let nf2, hf2= helper f2 in
-    let np = match (CP.isConstTrue nf1), (CP.isConstTrue nf2) with
-      | true,true -> nf1
-      | true,_ -> nf2
-      | _, true -> nf1
-      | _ -> CP.Or (nf1,nf2, c,p)
-    in (np, hf1@hf2)
-  | CP.Not (f,b,p) -> let np,hfs = helper f in
-    if CP.isConstTrue np then
-      (CP.mkTrue p, hfs)
-    else (CP.Not (np, b, p), hfs)
-  | CP.Forall (a,f,c,p) -> let np,hfs = helper f in
-    if CP.isConstTrue np then
-      (CP.mkTrue p, hfs)
-    else
-      (CP.Forall (a,np,c,p), hfs)
-  | CP.Exists (a,f,b,p) -> let np,hfs = helper f in
-    if CP.isConstTrue np then
-      (CP.mkTrue p, hfs)
-    else
-      (CP.Exists (a,np,b,p), hfs)
+      ) ([],[]) lp in
+      if r = [] then (CP.mkTrue no_pos, hfs) else (CP.AndList r,hfs)
+    | CP.Or (f1,f2,c,p) -> let nf1, hf1 = helper f1 in
+      let nf2, hf2= helper f2 in
+      let np = match (CP.isConstTrue nf1), (CP.isConstTrue nf2) with
+        | true,true -> nf1
+        | true,_ -> nf2
+        | _, true -> nf1
+        | _ -> CP.Or (nf1,nf2, c,p)
+      in (np, hf1@hf2)
+    | CP.Not (f,b,p) -> let np,hfs = helper f in
+      if CP.isConstTrue np then
+        (CP.mkTrue p, hfs)
+      else (CP.Not (np, b, p), hfs)
+    | CP.Forall (a,f,c,p) -> let np,hfs = helper f in
+      if CP.isConstTrue np then
+        (CP.mkTrue p, hfs)
+      else
+        (CP.Forall (a,np,c,p), hfs)
+    | CP.Exists (a,f,b,p) -> let np,hfs = helper f in
+      if CP.isConstTrue np then
+        (CP.mkTrue p, hfs)
+      else
+        (CP.Exists (a,np,b,p), hfs)
   in
   helper pf0
 
 let trans_rels_x pf0 =
   let rec helper pf=
     match pf with
-      | CP.BForm (bf,a) -> begin
-          match bf with
-            | (CP.RelForm (r, eargs, p),x) ->
-                  let ohp = heap_pred_name_of_pure_relation r in
-                  (
-                      match ohp with 
-                        | None -> None
-                        | Some hp -> Some (hp, CF.HRel (hp, eargs, p))
-                  )
-            | _ -> None
-        end
-      | _ -> None
+    | CP.BForm (bf,a) -> begin
+        match bf with
+        | (CP.RelForm (r, eargs, p),x) ->
+          let ohp = heap_pred_name_of_pure_relation r in
+          (
+            match ohp with 
+            | None -> None
+            | Some hp -> Some (hp, CF.HRel (hp, eargs, p))
+          )
+        | _ -> None
+      end
+    | _ -> None
   in
   let ps = CP.list_of_conjs pf0 in
   let pr_hp_rhs = List.map helper ps in
   List.fold_left (fun r (r_opt) -> match r_opt with
-    | None -> r
-    | Some a -> r@[a]
-  ) [] pr_hp_rhs
+      | None -> r
+      | Some a -> r@[a]
+    ) [] pr_hp_rhs
 
 let trans_rels pf0 =
   let pr1 = !CP.print_formula in
   let pr2 = pr_list (pr_pair !CP.print_sv Cprinter.prtt_string_of_h_formula) in
   Debug.no_1 "trans_rels" pr1 ( pr2)
-      (fun _ -> trans_rels_x pf0) pf0
+    (fun _ -> trans_rels_x pf0) pf0
 
 let heap_pred_of_pure_x p0=
   let _,hfs = trans_rels_gen p0 in
   match hfs with
-    | [] -> false, CF.HEmp
-    | _ -> let hf = CF.join_star_conjunctions hfs in
-      true,hf
-      (* let pos = CP.pos_of_formula p0 in *)
-      (* let f0 = CF.formula_of_heap hf pos in *)
-      (* CF.mkAnd_pure f0 (MCP.mix_of_pure np) pos *)
+  | [] -> false, CF.HEmp
+  | _ -> let hf = CF.join_star_conjunctions hfs in
+    true,hf
+(* let pos = CP.pos_of_formula p0 in *)
+(* let f0 = CF.formula_of_heap hf pos in *)
+(* CF.mkAnd_pure f0 (MCP.mix_of_pure np) pos *)
 
 let heap_pred_of_pure p0=
   let pr1 = !CP.print_formula in
   let pr2 = Cprinter.prtt_string_of_h_formula in
   Debug.no_1 "heap_pred_of_pure" pr1 (pr_pair string_of_bool pr2)
-      (fun _ -> heap_pred_of_pure_x p0) p0
+    (fun _ -> heap_pred_of_pure_x p0) p0
 
 (******************************************)
 (***************PRED_EXTN**********************)
 (******************************************)
 (******************************************)
-   (***************PURE*****************)
+(***************PURE*****************)
 (******************************************)
 let  partition_extn_svl_x p svl=
   let check_one f=
@@ -286,35 +286,35 @@ let partition_extn_svl p svl=
   let pr1 = !CP.print_formula in
   let pr2 = !CP.print_svl in
   Debug.no_2 "partition_extn_svl" pr1 pr2 (pr_pair pr1 pr1)
-      (fun _ _ -> partition_extn_svl_x p svl) p svl
+    (fun _ _ -> partition_extn_svl_x p svl) p svl
 
 (******************************************)
-   (*************END PURE***************)
+(*************END PURE***************)
 (******************************************)
 
 
 let generate_extn_ho_procs prog cviews extn_view_name extn_args=
   let mk_ho_b args val_extns p =
     fun svl val_extns1 ->
-       (* let () =  Debug.info_pprint ("  val_extns: "^ (!CP.print_svl val_extns)) no_pos in *)
-       (* let () =  Debug.info_pprint ("  val_extns1: "^ (!CP.print_svl val_extns1)) no_pos in *)
-        (*may be nonnull*)
-        let ss = if List.length val_extns = List.length val_extns1 then
-              List.combine (args@val_extns) (svl@val_extns1)
-            else List.combine (args) (svl)
-        in
-        (* let () =  Debug.info_pprint ("  p: "^ (!CP.print_formula p)) no_pos in *)
-        let n_p = CP.subst ss p in
-        let n_p1,_ = CPP.norm_exp_min_max n_p in
-        (* let () =  Debug.info_pprint ("  n_p: "^ (!CP.print_formula n_p)) no_pos in *)
-        (* let () =  Debug.info_pprint ("  n_p1: "^ (!CP.print_formula n_p1)) no_pos in *)
-        n_p1
+      (* let () =  Debug.info_pprint ("  val_extns: "^ (!CP.print_svl val_extns)) no_pos in *)
+      (* let () =  Debug.info_pprint ("  val_extns1: "^ (!CP.print_svl val_extns1)) no_pos in *)
+      (*may be nonnull*)
+      let ss = if List.length val_extns = List.length val_extns1 then
+          List.combine (args@val_extns) (svl@val_extns1)
+        else List.combine (args) (svl)
+      in
+      (* let () =  Debug.info_pprint ("  p: "^ (!CP.print_formula p)) no_pos in *)
+      let n_p = CP.subst ss p in
+      let n_p1,_ = CPP.norm_exp_min_max n_p in
+      (* let () =  Debug.info_pprint ("  n_p: "^ (!CP.print_formula n_p)) no_pos in *)
+      (* let () =  Debug.info_pprint ("  n_p1: "^ (!CP.print_formula n_p1)) no_pos in *)
+      n_p1
   in
   let mk_ho_ind_rec ann args p =
     match args with
-      | [a] -> [a]
-      | [] -> [] (*rec null pointer*)
-      | _ -> report_error no_pos "astsimp.generate_extn_ho_procs: extend one property"
+    | [a] -> [a]
+    | [] -> [] (*rec null pointer*)
+    | _ -> report_error no_pos "astsimp.generate_extn_ho_procs: extend one property"
     (* (args, CP.mkTrue no_pos) *)
   in
   let process_other_const from_args to_args p=
@@ -350,7 +350,7 @@ let generate_extn_ho_procs prog cviews extn_view_name extn_args=
       (* let ss1 = List.combine val_extns val_extns1 in *)
       (* let n_first_e = CP.e_apply_subs ss1 first_e in *)
       let n_inner_e = List.fold_left (fun e1 e2 -> comb_fn inner_e e1 e2 no_pos)
-        first_e (List.map (fun sv -> CP.Var (sv,no_pos)) (val_extns1@rec_args)) in
+          first_e (List.map (fun sv -> CP.Var (sv,no_pos)) (val_extns1@rec_args)) in
       (*outer most pformula*)
       let ss2 = List.combine args svl in
       let n_root_e = CP.e_apply_subs ss2 root_e in
@@ -361,13 +361,13 @@ let generate_extn_ho_procs prog cviews extn_view_name extn_args=
       (* let () =  Debug.info_pprint ("   n_p: "^ (!CP.print_formula n_p)) no_pos in *)
       (*other constraints*)
       let n_p3= if CP.isConstTrue p_non_extn then n_p2 else
-      (*assume we extend one property each*)
-            let ls_to_args = List.concat (List.map (fun (ann,args) -> mk_ho_ind_rec ann args p) rec_ls1) in
-            (*this step is necessary for tree like*)
-            let new_ps = List.map (fun to_arg -> process_other_const (from_rec_args@val_extns) ([to_arg]@val_extns1) p_non_extn) ls_to_args in
-            let pos = CP.pos_of_formula n_p2 in
-            let n_p4 = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) n_p2 new_ps in
-            n_p4
+          (*assume we extend one property each*)
+          let ls_to_args = List.concat (List.map (fun (ann,args) -> mk_ho_ind_rec ann args p) rec_ls1) in
+          (*this step is necessary for tree like*)
+          let new_ps = List.map (fun to_arg -> process_other_const (from_rec_args@val_extns) ([to_arg]@val_extns1) p_non_extn) ls_to_args in
+          let pos = CP.pos_of_formula n_p2 in
+          let n_p4 = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) n_p2 new_ps in
+          n_p4
       in
       (n_p3,quans)
   in
@@ -378,16 +378,16 @@ let generate_extn_ho_procs prog cviews extn_view_name extn_args=
   let fr_extn_args,ss = List.fold_left (fun (r1,r2) (CP.SpecVar (t, id, p), new_id) ->
       let n_sv = CP.SpecVar (t, new_id, p) in
       (r1@[n_sv], r2@[(CP.SpecVar (t, id, p), n_sv)])
-  ) ([],[]) pr_ext_vars in
+    ) ([],[]) pr_ext_vars in
   let extn_fs = List.map (fun f -> CF.subst ss f) extn_fs0 in
   let inv_p = CP.subst ss inv_p0 in
   let (brs, val_extns) = CF.classify_formula_branch extn_fs inv_p extn_view_name
-    fr_extn_args (* extn_v.Cast.view_vars *) extn_v.Cast.view_prop_extns in
+      fr_extn_args (* extn_v.Cast.view_vars *) extn_v.Cast.view_prop_extns in
   let b_brs, ind_brs = List.partition (fun (_, ls) -> ls=[]) brs in
   (*now, we assume we always have <= 1 base case and <=1 ind case*)
   let ho_bs = List.map (fun (p,_) ->  mk_ho_b (* extn_v.Cast.view_vars *)fr_extn_args val_extns p) b_brs in
   let ho_inds = List.map (fun (p, ls) -> mk_ho_ind (*extn_v.Cast.view_vars*) fr_extn_args
-      val_extns p ls) ind_brs in
+                             val_extns p ls) ind_brs in
   (* (extn_view_name, b_brs, ind_brs, val_extns, extn_inv) *)
   (* let () =  Debug.info_pprint ("   extn_v.C.view_vars: "^ (!CP.print_svl extn_v.C.view_vars)) no_pos in *)
   (extn_view_name, ho_bs, ho_inds(* , CP.filter_var inv_p extn_v.C.view_vars *))
@@ -397,34 +397,34 @@ let extend_pred_one_derv_x (prog : I.prog_decl) cprog hp_defs hp args ((orig_pre
   let cviews = cprog.Cast.prog_view_decls in
   let rec look_up_hp_def hp defs=
     match defs with
-      | [] -> report_error no_pos "Pred.extend_pred_one_derv: base pred has not not defined"
-      | def::rest -> let hp1,_ = CF.extract_HRel def.CF.def_lhs in
-        if String.compare hp (CP.name_of_spec_var hp1) = 0 then def else
-          look_up_hp_def hp rest
+    | [] -> report_error no_pos "Pred.extend_pred_one_derv: base pred has not not defined"
+    | def::rest -> let hp1,_ = CF.extract_HRel def.CF.def_lhs in
+      if String.compare hp (CP.name_of_spec_var hp1) = 0 then def else
+        look_up_hp_def hp rest
   in
   let do_extend_base_case ho_bs extn_args val_svl f=
     match ho_bs with
-      | [] -> f
-      | ho_fn::_ -> (*now, we just care the first one*)
-          let extn_p = ho_fn extn_args val_svl in
-          (* let () =  Debug.info_pprint ("  pure np: "^ (!CP.print_formula extn_p)) no_pos in *)
-          let nf = CF.mkAnd_pure f (MCP.mix_of_pure extn_p) no_pos in
-          (*let () =  Debug.info_pprint ("  nf: "^ (!CF.print_formula nf)) no_pos in *)
-          nf
+    | [] -> f
+    | ho_fn::_ -> (*now, we just care the first one*)
+      let extn_p = ho_fn extn_args val_svl in
+      (* let () =  Debug.info_pprint ("  pure np: "^ (!CP.print_formula extn_p)) no_pos in *)
+      let nf = CF.mkAnd_pure f (MCP.mix_of_pure extn_p) no_pos in
+      (*let () =  Debug.info_pprint ("  nf: "^ (!CF.print_formula nf)) no_pos in *)
+      nf
   in
   let do_extend_ind_case ho_inds extn_args (f,val_extns,rec_extns)=
     match ho_inds with
-      | [] -> f
-      | ho_fn::_ -> (*now, we just care the first one*)
-          (*quans: ex quans from normalize min/max*)
-            let quans0, bare_f = CF.split_quantifiers f in
-            let extn_p,quans = ho_fn extn_args val_extns rec_extns in
-            let nf = CF.mkAnd_pure bare_f (MCP.mix_of_pure extn_p) no_pos in
-            (*add rec_extns into exists*)
-            let new_extn_args = CP.remove_dups_svl (List.concat (snd (List.split rec_extns))) in
-            let nf1 = CF.add_quantifiers (quans0@new_extn_args@quans) nf in
-            (* let () =  Debug.info_pprint ("  nf1: "^ (!CF.print_formula nf1)) no_pos in *)
-            nf1
+    | [] -> f
+    | ho_fn::_ -> (*now, we just care the first one*)
+      (*quans: ex quans from normalize min/max*)
+      let quans0, bare_f = CF.split_quantifiers f in
+      let extn_p,quans = ho_fn extn_args val_extns rec_extns in
+      let nf = CF.mkAnd_pure bare_f (MCP.mix_of_pure extn_p) no_pos in
+      (*add rec_extns into exists*)
+      let new_extn_args = CP.remove_dups_svl (List.concat (snd (List.split rec_extns))) in
+      let nf1 = CF.add_quantifiers (quans0@new_extn_args@quans) nf in
+      (* let () =  Debug.info_pprint ("  nf1: "^ (!CF.print_formula nf1)) no_pos in *)
+      nf1
   in
   (*********END INTERNAL********)
   let extn_view = x_add Cast.look_up_view_def_raw 45 cviews extn_view_name in
@@ -433,7 +433,7 @@ let extend_pred_one_derv_x (prog : I.prog_decl) cprog hp_defs hp args ((orig_pre
  (*
    BASE VIEW: (1) abs untruct formula, (2) extract ANN and (3) apply extn_ho
  *)
- (**********************************)
+  (**********************************)
   (*new args*)
   let ss = List.combine extn_args extn_view.Cast.view_vars in
   let n_args = List.map (fun (id, CP.SpecVar (t,_,pr)) ->  CP.SpecVar (t,id,pr)) ss in
@@ -443,7 +443,7 @@ let extend_pred_one_derv_x (prog : I.prog_decl) cprog hp_defs hp args ((orig_pre
   let orig_args,orig_ss = List.fold_left (fun (r1,r2) (CP.SpecVar (t, id, p), new_id) ->
       let n_sv = CP.SpecVar (t, new_id, p) in
       (r1@[n_sv], r2@[(CP.SpecVar (t, id, p), n_sv)])
-  ) ([],[]) pr_orig_vars in
+    ) ([],[]) pr_orig_vars in
   let orig_pred_data_name = Cast.look_up_hp_decl_data_name cprog.Cast.prog_hp_decls (CP.name_of_spec_var hp) (List.hd ls_extn_pos) in
   (*find data fields anns*)
   let ls_dname_pos = I.look_up_field_ann prog orig_pred_data_name extn_props in
@@ -466,8 +466,8 @@ let extend_pred_one_derv (prog : I.prog_decl) cprog hp_defs hp args extn_info =
   let pr2 = !CP.print_svl in
   let pr3 = pr_triple (pr_pair pr_id (pr_list pr_id)) (pr_triple pr_id (pr_list pr_id) (pr_list pr_id)) (pr_list string_of_int) in
   Debug.no_3 "extend_pred_one_derv" !CP.print_sv pr2 pr3 pr1
-      (fun _ _ _ -> extend_pred_one_derv_x prog cprog hp_defs hp args extn_info)
-      hp args extn_info
+    (fun _ _ _ -> extend_pred_one_derv_x prog cprog hp_defs hp args extn_info)
+    hp args extn_info
 
 
 (* let do_sanity_check derv= *)
@@ -482,26 +482,26 @@ let extend_pred_one_derv (prog : I.prog_decl) cprog hp_defs hp args extn_info =
 let extend_pred_dervs_x (prog : I.prog_decl) cprog hp_defs hp args derv_info =
   (* let () = do_sanity_check derv_info in *)
   match derv_info with
-    | [] -> report_error no_pos "astsimp.trans_view_dervs: 1"
-    | [((orig_pred_name,orig_args),(extn_view_name,extn_props,extn_args), extn_poss)] ->
-        let der_view(*,s*) =
-          (* let extn_view = x_add Cast.look_up_view_def_raw 46 cprog.Cast.prog_view_decls extn_view_name in *)
-          (* if extn_view.C.view_kind = C.View_SPEC then *)
-          (*   let der_view = trans_view_one_spec prog cviews derv ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) in *)
-          (*  (der_view(\*,("************VIEW_SPECIFIED*************")*\)) *)
-          (* else *)
-             let der_view = extend_pred_one_derv prog cprog hp_defs hp args ((orig_pred_name,orig_args),(extn_view_name,extn_props,extn_args), extn_poss) in
-             (der_view(*,("************VIEW_DERIVED*************")*))
-        in
-        der_view
-    | _ -> report_error no_pos "astsimp.trans_view_dervs: not handle yet"
+  | [] -> report_error no_pos "astsimp.trans_view_dervs: 1"
+  | [((orig_pred_name,orig_args),(extn_view_name,extn_props,extn_args), extn_poss)] ->
+    let der_view(*,s*) =
+      (* let extn_view = x_add Cast.look_up_view_def_raw 46 cprog.Cast.prog_view_decls extn_view_name in *)
+      (* if extn_view.C.view_kind = C.View_SPEC then *)
+      (*   let der_view = trans_view_one_spec prog cviews derv ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) in *)
+      (*  (der_view(\*,("************VIEW_SPECIFIED*************")*\)) *)
+      (* else *)
+      let der_view = extend_pred_one_derv prog cprog hp_defs hp args ((orig_pred_name,orig_args),(extn_view_name,extn_props,extn_args), extn_poss) in
+      (der_view(*,("************VIEW_DERIVED*************")*))
+    in
+    der_view
+  | _ -> report_error no_pos "astsimp.trans_view_dervs: not handle yet"
 
 
 let extend_pred_dervs (prog : I.prog_decl) cprog hp_defs hp args derv_info =
   let pr1 = Cprinter.prtt_string_of_formula in
   let pr2 = !CP.print_svl in
   Debug.no_2 "extend_pred_dervs" !CP.print_sv pr2 pr1
-      (fun _ _ -> extend_pred_dervs_x prog cprog hp_defs hp args derv_info) hp args
+    (fun _ _ -> extend_pred_dervs_x prog cprog hp_defs hp args derv_info) hp args
 
 let leverage_self_info_x xform formulas anns data_name=
   let detect_anns_f f=
@@ -523,6 +523,6 @@ let leverage_self_info xform formulas anns data_name=
   let pr1= !CP.print_formula in
   let pr2 = !CF.print_formula in
   Debug.no_3 "leverage_self_info" pr1 pr2 (!CP.print_svl) pr1
-      (fun _ _ _ -> leverage_self_info_x xform formulas anns data_name) xform formulas anns
+    (fun _ _ _ -> leverage_self_info_x xform formulas anns data_name) xform formulas anns
 
 (***************END PRED_EXTN**********************)
