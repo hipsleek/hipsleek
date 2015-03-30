@@ -70,6 +70,14 @@ let is_inter_deference_spec_var sv = match sv with
     	 *)
 (* | Array of typ  *)
 
+let is_arr_typ sv = match sv with
+  | SpecVar(Array _,_,_) -> true
+  | _ -> false
+
+let is_void_typ sv = match sv with
+  | SpecVar(Void,_,_) -> true
+  | _ -> false
+
 let is_self_spec_var sv = match sv with
   | SpecVar (_,n,_) -> n = self
 
@@ -547,6 +555,13 @@ let name_of_spec_var (sv : spec_var) : ident = match sv with
 let name_of_sv (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, _) -> v
 
+let exp_to_name_spec_var e = 
+  match e with
+  | Var(sv,_) -> name_of_spec_var sv 
+  | Null _ -> "null_node"
+  | IConst(i,_) -> (string_of_int i)
+  | _ -> ""
+
 let full_name_of_spec_var (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, p) -> if (p==Primed) then (v^"\'") else v
 
@@ -848,6 +863,10 @@ let eq_typed_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
     (t1 = t2) && (String.compare v1 v2 = 0) && (p1 = p2)
 
+let compare_spec_var (sv1 : spec_var) (sv2 : spec_var) = 
+  match (sv1, sv2) with
+  | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) -> String.compare v1 v2
+
 let eq_ann (a1 :  ann) (a2 : ann) : bool =
   match a1, a2 with
   | ConstAnn ha1, ConstAnn ha2 -> ha1 == ha2
@@ -911,6 +930,8 @@ let eq_xpure_view xp1 xp2=
     (fun _ _ -> eq_xpure_view_x xp1 xp2) xp1 xp2
 
 let remove_dups_svl vl = Gen.BList.remove_dups_eq eq_spec_var vl
+
+let remove_dups_svl_stable vl = Gen.BList.remove_dups_eq_stable eq_spec_var vl
 
 let diff_svl vl rl = Gen.BList.difference_eq eq_spec_var vl rl
 
@@ -1428,7 +1449,33 @@ and afv (af : exp) : spec_var list =
   | ArrayAt (a, i, _) -> 
     let ifv = List.map afv i in
     let ifv = List.flatten ifv in
-    remove_dups_svl (a :: ifv) (* An Hoa *)
+    let mk_array_new_name_spec_var =
+      fun sv e ->
+        match sv with
+        | SpecVar (typ,id,primed)->
+          begin
+            match typ with
+            | Array (atyp,_)->
+              begin
+                match primed with
+                | Primed ->
+                  (*Var( SpecVar (atyp,(id)^"_"^"primed_"^(ArithNormalizer.string_of_exp e),primed),no_pos)*)
+                  SpecVar (atyp,(id)^"___"^(!print_exp e)^"___",primed)
+                | _ -> SpecVar (atyp,(id)^"___"^(!print_exp e)^"___",primed)
+              end
+            | _ -> failwith "mk_array_new_name: Not array type"
+          end
+    in
+    begin
+      match i with
+      | [index] ->
+        remove_dups_svl (a :: ifv)
+      (*remove_dups_svl ((mk_array_new_name_spec_var a index)::ifv)*)
+      | _ ->
+        remove_dups_svl (a :: ifv)
+        (*failwith ("afv:"^(!print_exp af)^" Invalid index")*)
+    end
+  (* remove_dups_svl (a :: ifv) (\* An Hoa *\) *)
   | Template t ->
     t.templ_id::
     (List.concat (List.map afv t.templ_args)) 
@@ -2630,7 +2677,7 @@ and mkExists_with_simpl_x simpl (vs : spec_var list) (f : formula) lbl pos =
 and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
   | AndList b ->
     let pusher v lf lrest= 	
-      let rl,vl,rf = List.fold_left (fun (al,avs,af) (cl,cvs,cf)-> (LO.comb_norm 2 al cl,avs@cvs, mkAnd af cf pos)) (List.hd lf) (List.tl lf) in
+      let rl,vl,rf = List.fold_left (fun (al,avs,af) (cl,cvs,cf)-> (x_add LO.comb_norm 2 al cl,avs@cvs, mkAnd af cf pos)) (List.hd lf) (List.tl lf) in
       (rl,vl, Exists (v,rf,lbel,pos))::lrest in
     let lst = List.map (fun (l,c)-> (l,fv c,c)) b in
     let lst1 = List.fold_left (fun lbl v-> 
@@ -2664,7 +2711,7 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
       else
         l
     in
-    let () = Debug.binfo_hprint (add_str "l1" (pr_list (pr_pair Label_only.LOne.string_of !print_formula))) l no_pos in
+    let () = x_binfo_hp (add_str "l1" (pr_list (pr_pair Label_only.LOne.string_of !print_formula))) l no_pos in
     AndList (Label_Pure.norm l)
   | Or (f1,f2,lbl,pos) -> 
     Or (mkExists_x vs f1 lbel pos, mkExists_x vs f2 lbel pos, lbl, pos)
@@ -3269,9 +3316,27 @@ and subst_pos_formula p f = match f with
   | Forall (sv, f, ofl, _) -> Forall (sv,subst_pos_formula p f, ofl, p)
   | Exists (sv, f, ofl, _) -> Exists (sv,subst_pos_formula p f, ofl, p)
 
+(* pre : _<num> *)
+and fresh_old_name_x (s: string):string = 
+  let slen = (String.length s) in
+  let ri = 
+    try  
+      let n = (String.rindex s '_') in
+      (* let () = print_endline ((string_of_int n)) in *)
+      let l = (slen-(n+1)) in
+      if (l==0) then slen-1
+      else 
+        let tr = String.sub s (n+1) (slen-(n+1)) in
+        (* let () = int_of_string tr in *)
+        (* let () = print_endline ((string_of_int n)^tr^"##") in *)
+        n
+    with  _ -> slen in
+  let n = ((String.sub s 0 ri) ^ (fresh_trailer ())) in
+  (*let () = print_string ("init name: "^s^" new name: "^n ^"\n") in*)
+  n
 
 and fresh_old_name s =
-  Debug.no_1 "fresh_old_name" pr_id pr_id Globals.fresh_old_name s
+  Debug.no_1 "fresh_old_name" pr_id pr_id fresh_old_name_x s
 
 and fresh_perm_var () = SpecVar(Tree_sh, fresh_old_name "perm",Unprimed)
 
@@ -4475,7 +4540,7 @@ and filter_redundant_x ante cons =
   let ls_cons = list_of_bformula cons in
   (*  let () = print_endline ("ls_cons:" ^ (string_of_ls_pure_formula ls_cons)) in *)
   let ls_irr,_= list_of_irr_bformula ls_ante ls_cons in
-  if ls_irr!=[] then Debug.dinfo_pprint "Filtered some irrelevant b_formulas" no_pos else () ;
+  if ls_irr!=[] then x_dinfo_pp "Filtered some irrelevant b_formulas" no_pos else () ;
   (* let () = print_endline ("ls_irr:" ^ (string_of_ls_pure_formula ls_irr)) in*)
   let new_ante = elim_of_bformula ante ls_irr in
   (* let () = print_endline ("new_ante:" ^ (!print_formula new_ante)) in *)
@@ -7553,13 +7618,13 @@ let rec replace_pure_formula_label nl f = match f with
 let store_tp_is_sat : (formula -> bool) ref = ref (fun _ -> true)
 
 let rec imply_disj_orig_x ante_disj conseq t_imply imp_no =
-  Debug.devel_hprint (add_str "ante: " (pr_list !print_formula)) ante_disj no_pos;
-  Debug.devel_hprint (add_str "coseq : " ( !print_formula)) conseq no_pos;
+  x_dinfo_hp (add_str "ante: " (pr_list !print_formula)) ante_disj no_pos;
+  x_dinfo_hp (add_str "coseq : " ( !print_formula)) conseq no_pos;
   match ante_disj with
   | h :: rest ->
-    Debug.devel_hprint (add_str "h : " ( !print_formula)) h no_pos;
+    x_dinfo_hp (add_str "h : " ( !print_formula)) h no_pos;
     let r1,r2,r3 = (t_imply h conseq (string_of_int !imp_no) true None) in
-    Debug.devel_hprint (add_str "res : " (string_of_bool)) r1 no_pos;
+    x_dinfo_hp (add_str "res : " (string_of_bool)) r1 no_pos;
     if r1 then
       let r1,r22,r23 = (imply_disj_orig_x rest conseq t_imply imp_no) in
       (r1,r2@r22,r23)
@@ -7582,8 +7647,8 @@ and imply_disj_orig_x0 ante_disj conseq t_imply imp_no =
         if (i>0) 
         then
           let pri = string_of_int in
-          let () = Debug.tinfo_hprint (add_str "(unsat ante, sat ante)" (pr_pair pri pri)) (i,j) no_pos in
-          Debug.tinfo_hprint (add_str "unsat ante removed" (pr_list pr)) false_st no_pos
+          let () = x_tinfo_hp (add_str "(unsat ante, sat ante)" (pr_pair pri pri)) (i,j) no_pos in
+          x_tinfo_hp (add_str "unsat ante removed" (pr_list pr)) false_st no_pos
         else () 
       in 
       (* disable assumption filtering if ante_disj>1 *)
@@ -7600,9 +7665,9 @@ and imply_disj_orig ante_disj conseq t_imply imp_no =
 let rec imply_one_conj_orig one_ante_only ante_disj0 ante_disj1 conseq t_imply imp_no =
   let xp01,xp02,xp03 = imply_disj_orig ante_disj0 conseq t_imply imp_no in
   if not(xp01) && !Globals.super_smart_xpure && not(one_ante_only) then
-    let () = Debug.devel_pprint ("\nSplitting the antecedent for xpure1:\n") no_pos in
+    let () = x_dinfo_pp ("\nSplitting the antecedent for xpure1:\n") no_pos in
     let (xp11,xp12,xp13) = imply_disj_orig ante_disj1 conseq t_imply imp_no in
-    let () = Debug.devel_pprint ("\nDone splitting the antecedent for xpure1:\n") no_pos in
+    let () = x_dinfo_pp ("\nDone splitting the antecedent for xpure1:\n") no_pos in
     (xp11,xp12,xp13)
   else (xp01,xp02,xp03)
 
@@ -7676,9 +7741,9 @@ and imply_conj_orig_x one_ante_only ante_disj0 ante_disj1 conseq_conj t_imply im
       | None -> None in
   let xp01,xp02,xp03 = imply_disj_helper ante_disj0 conseq_conj t_imply increm_funct process imp_no in
   let r = if ( not(xp01) ) then begin (*xpure0 fails to prove. try xpure1*)
-    let () = Debug.devel_pprint ("\nSplitting the antecedent for xpure1:\n") in
+    let () = x_dinfo_pp ("\nSplitting the antecedent for xpure1:\n") in
     let r1 = imply_disj_helper ante_disj1 conseq_conj t_imply increm_funct process imp_no in
-    let () = Debug.devel_pprint ("\nDone splitting the antecedent for xpure1:\n") in
+    let () = x_dinfo_pp ("\nDone splitting the antecedent for xpure1:\n") in
     r1
   end else (xp01, xp02, xp03) in
   let _ =
@@ -8118,6 +8183,12 @@ module ArithNormalizer = struct
     | Max (e1, e2, _) -> "max(" ^ (string_of_exp e1) ^ "," ^ (string_of_exp e2) ^ ")"
     | Min (e1, e2, _) -> "min(" ^ (string_of_exp e1) ^ "," ^ (string_of_exp e2) ^ ")"
     | TypeCast (ty, e1, _) -> "(" ^ (Globals.string_of_typ ty) ^ ") " ^ string_of_exp e1
+    | ArrayAt (sv,elst,_)->
+      let string_of_index_list
+          (elst:exp list):string=
+        List.fold_left (fun s e -> s ^"["^(string_of_exp e)^"]") "" elst
+      in
+      (string_of_spec_var sv)^(string_of_index_list elst) 
     | _ -> "???"
 
   let string_of_b_formula bf = 
@@ -9985,7 +10056,7 @@ let get_rel_args (f:formula) = match f with
   | _ -> []
 
 let is_rel_in_vars (vl:spec_var list) (f:formula) =
-  (* let () = Debug.binfo_hprint (add_str "2formula" !print_formula) f no_pos in *)
+  (* let () = x_binfo_hp (add_str "2formula" !print_formula) f no_pos in *)
   match (get_rel_id f) with
   | Some n ->
     if mem n vl then true else false
@@ -14095,12 +14166,12 @@ let check_non_determinism_x (var_name: ident) (f: formula) =
       let origin_var = List.find (fun x -> eq_str (name_of_sv x) var_name) simp_svs in
       let related_vars = collect_related_vars [origin_var] in
       let related_nondet_svs = intersect_svl nondet_svs related_vars in
-      (* Debug.binfo_hprint (add_str "check var" pr_id) v no_pos;                                         *)
-      (* Debug.binfo_hprint (add_str "f" !print_formula) f no_pos;                                        *)
-      (* Debug.binfo_hprint (add_str "nondet_svs" (pr_list !print_sv)) nondet_svs no_pos;                 *)
-      (* Debug.binfo_hprint (add_str "sim_f" !print_formula) simp_f no_pos;                               *)
-      (* Debug.binfo_hprint (add_str "related_vars" (pr_list !print_sv)) related_vars no_pos;             *)
-      (* Debug.binfo_hprint (add_str "related_nondet_svs" (pr_list !print_sv)) related_nondet_svs no_pos; *)
+      (* x_binfo_hp (add_str "check var" pr_id) v no_pos;                                         *)
+      (* x_binfo_hp (add_str "f" !print_formula) f no_pos;                                        *)
+      (* x_binfo_hp (add_str "nondet_svs" (pr_list !print_sv)) nondet_svs no_pos;                 *)
+      (* x_binfo_hp (add_str "sim_f" !print_formula) simp_f no_pos;                               *)
+      (* x_binfo_hp (add_str "related_vars" (pr_list !print_sv)) related_vars no_pos;             *)
+      (* x_binfo_hp (add_str "related_nondet_svs" (pr_list !print_sv)) related_nondet_svs no_pos; *)
       (List.length related_nondet_svs != 0)
     with _ -> false
   )

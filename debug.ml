@@ -505,7 +505,6 @@ struct
 
   let z_debug_file = ref ""
   (* let z_debug_regexp = ref None *)
-  let z_debug_flag = ref false
   let mk_debug_arg s =
     let re = Str.regexp s in
     z_debug_arg := Some re

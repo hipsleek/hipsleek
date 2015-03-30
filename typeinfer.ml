@@ -1374,7 +1374,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
                   IF.h_formula_heap_imm = ann; (* data/pred name *)
                   IF.h_formula_heap_imm_param = ann_param;
                   IF.h_formula_heap_pos = pos } ->
-    Debug.trace_hprint (add_str "view" Iprinter.string_of_h_formula) h0 no_pos;
+    x_tinfo_hp (add_str "view" Iprinter.string_of_h_formula) h0 no_pos;
     let ft = cperm_typ () in
     let gather_type_info_ho_args hoa tlist =
       List.fold_left (fun tl a ->

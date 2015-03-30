@@ -1,0 +1,16 @@
+R := {[i]->[j]: (i<10 && j>5)};
+
+S := {[i]->[j]: i=6 && j<8};
+
+T := (R\((domain R)-(domain S))) union (R intersection S) union  (S\((domain S)-(domain R)));
+
+T;
+
+F := {[i]->[j]: i=9 && j=1};
+
+T2 := (T\((domain T)-(domain F))) union (T intersection F) union (F\((domain F)-(domain T)));
+
+T2;
+
+(((domain R) union (domain S))-(domain T2)) subset {[i]:1=0};
+

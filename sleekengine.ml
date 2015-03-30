@@ -342,12 +342,12 @@ let process_pred_def_4_iast pdef =
 (*     else iprog.I.prog_view_decls in  *)
 (*   iprog.I.prog_view_decls <- infer_views;  *)
 (*   let tmp_views = (Astsimp.order_views (iprog.I.prog_view_decls)) in *)
-(*   Debug.tinfo_pprint "after order_views" no_pos; *)
+(*   x_tinfo_pp "after order_views" no_pos; *)
 (*   let _ = Iast.set_check_fixpt iprog.I.prog_data_decls tmp_views in *)
-(*   Debug.tinfo_pprint "after check_fixpt" no_pos; *)
+(*   x_tinfo_pp "after check_fixpt" no_pos; *)
 (*   iprog.I.prog_view_decls <- tmp_views; *)
 (*   let cviews = List.map (Astsimp.trans_view iprog []) tmp_views in *)
-(*   Debug.tinfo_pprint "after trans_view" no_pos; *)
+(*   x_tinfo_pp "after trans_view" no_pos; *)
 (*   let cviews = *)
 (*     if !Globals.pred_elim_useless then *)
 (*       Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.Cast.view_name) cviews) *)
@@ -367,9 +367,9 @@ let process_pred_def_4_iast pdef =
 (*   in *)
 (*   let _ = !cprog.Cast.prog_view_decls <- cviews2 in *)
 (*   let _ =  (List.map (fun vdef -> Astsimp.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews2) in *)
-(*   Debug.tinfo_pprint "after compute_view" no_pos; *)
+(*   x_tinfo_pp "after compute_view" no_pos; *)
 (*   let _ = (List.map (fun vdef -> Astsimp.set_materialized_prop vdef) !cprog.Cast.prog_view_decls) in *)
-(*   Debug.tinfo_pprint "after materialzed_prop" no_pos; *)
+(*   x_tinfo_pp "after materialzed_prop" no_pos; *)
 (*   let cprog1 = Astsimp.fill_base_case !cprog in *)
 (*   let cprog2 = Astsimp.sat_warnings cprog1 in         *)
 (*   let cprog3 = if (!Globals.enable_case_inference or (not !Globals.dis_ps)(\* !Globals.allow_pred_spec *\))  *)
@@ -501,7 +501,7 @@ let process_lemma ldef =
   (* let _ = Lem_store.all_lemma # add_right_coercion r2l in  *)
   (*!cprog.Cast.prog_left_coercions <- l2r @ !cprog.Cast.prog_left_coercions;*)
   (*!cprog.Cast.prog_right_coercions <- r2l @ !cprog.Cast.prog_right_coercions;*)
-  let res = Lemproving.verify_lemma 2 l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
+  let res = x_add Lemproving.verify_lemma 2 l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
   ()
 (* CF.residues := (match res with *)
 (*   | None -> None; *)
@@ -682,13 +682,13 @@ let convert_data_and_pred_to_cast_x () =
       new_pdef
     ) iprog.I.prog_view_decls in
   let tmp_views,ls_mut_rec_views = (Astsimp.order_views tmp_views) in
-  Debug.tinfo_pprint "after order_views" no_pos;
+  x_tinfo_pp "after order_views" no_pos;
   let _ = Iast.set_check_fixpt iprog iprog.I.prog_data_decls tmp_views in
-  Debug.tinfo_pprint "after check_fixpt" no_pos;
+  x_tinfo_pp "after check_fixpt" no_pos;
   iprog.I.prog_view_decls <- tmp_views;
   (* collect immutable info for splitting view params *)
   let _ = List.map (fun v ->  v.I.view_imm_map <- Immutable.icollect_imm v.I.view_formula v.I.view_vars v.I.view_data_name iprog.I.prog_data_decls )  iprog.I.prog_view_decls  in
-  let _ = Debug.tinfo_hprint (add_str "view_decls:"  (pr_list (pr_list (pr_pair Iprinter.string_of_imm string_of_int))))  (List.map (fun v ->  v.I.view_imm_map) iprog.I.prog_view_decls) no_pos in
+  let _ = x_tinfo_hp (add_str "view_decls:"  (pr_list (pr_list (pr_pair Iprinter.string_of_imm string_of_int))))  (List.map (fun v ->  v.I.view_imm_map) iprog.I.prog_view_decls) no_pos in
   let tmp_views_derv,tmp_views= List.partition (fun v -> v.I.view_derv) tmp_views in
   (* let all_mutrec_vnames = (List.concat ls_mut_rec_views) in *)
   (*   let cviews0,_ = List.fold_left (fun (transed_views view -> *)
@@ -726,14 +726,14 @@ let convert_data_and_pred_to_cast_x () =
   (*turn off generate lemma during trans views*)
   let _ = Globals.lemma_syn := false in
   let cviews0 = Astsimp.trans_views iprog ls_mut_rec_views (List.map (fun v -> (v,[]))  tmp_views) in
-  (* Debug.tinfo_pprint "after trans_view" no_pos; *)
+  (* x_tinfo_pp "after trans_view" no_pos; *)
   (*derv and spec views*)
   let tmp_views_derv1 = Astsimp.mark_rec_and_der_order tmp_views_derv in
   let cviews_derv = List.fold_left (fun norm_views v ->
       let der_view = Derive.trans_view_dervs iprog Rev_ast.rev_trans_formula Astsimp.trans_view norm_views v in
       (cviews0@[der_view])
     ) cviews0 tmp_views_derv1 in
-  let _ = Debug.tinfo_hprint (add_str "derv length" (fun ls -> string_of_int (List.length ls))) tmp_views_derv1 no_pos in
+  let _ = x_tinfo_hp (add_str "derv length" (fun ls -> string_of_int (List.length ls))) tmp_views_derv1 no_pos in
   let cviews = (* cviews0a@ *)cviews_derv in
   let cviews =
     if !Globals.norm_elim_useless  (* !Globals.pred_elim_useless *) then
@@ -755,11 +755,11 @@ let convert_data_and_pred_to_cast_x () =
   in
   let _ = !cprog.Cast.prog_view_decls <- cviews2 in
   let _ =  (List.map (fun vdef -> Astsimp.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews2) in
-  Debug.tinfo_pprint "after compute_view" no_pos;
+  x_tinfo_pp "after compute_view" no_pos;
   let _ = (List.map (fun vdef -> Astsimp.set_materialized_prop vdef) cviews2) in
   let cviews2 = (List.map (fun vdef -> Norm.norm_formula_for_unfold !cprog vdef) cviews2) in
   let _ = !cprog.Cast.prog_view_decls <- cviews2 in
-  Debug.tinfo_pprint "after materialzed_prop" no_pos;
+  x_tinfo_pp "after materialzed_prop" no_pos;
   let cprog1 = Astsimp.fill_base_case !cprog in
   let cprog2 = Astsimp.sat_warnings cprog1 in
   let cprog3 = if (!Globals.enable_case_inference || (not !Globals.dis_ps)(* !Globals.allow_pred_spec *)) 
@@ -846,7 +846,7 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typein
     | MetaForm mf -> 
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let p = List.map (fun c-> (c,Primed)) fv_idents in
-      let wf,_ = Astsimp.case_normalize_struc_formula 12 iprog h p (Iformula.formula_to_struc_formula mf) true 
+      let wf,_ = x_add Astsimp.case_normalize_struc_formula 12 iprog h p (Iformula.formula_to_struc_formula mf) true 
           true (*allow_post_vars*) true [] in
       Astsimp.trans_I2C_struc_formula 8 iprog false quant fv_idents wf tl false (*(Cpure.Prim Void) []*) false (*check_pre*) 
     | MetaVar mvar -> 
@@ -871,7 +871,7 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typein
     | MetaEForm b -> 
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let p = List.map (fun c-> (c,Primed)) fv_idents in
-      let wf,_ = Astsimp.case_normalize_struc_formula 13 iprog h p b true (* allow_primes *) 
+      let wf,_ = x_add Astsimp.case_normalize_struc_formula 13 iprog h p b true (* allow_primes *) 
           true (*allow_post_vars*) true [] in
       let (n_tl,res) = Astsimp.trans_I2C_struc_formula 9 iprog false quant fv_idents wf tl false 
           false (*check_pre*) (*(Cpure.Prim Void) [] *) in
@@ -926,7 +926,7 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
   | MetaForm mf -> 
     let h = List.map (fun c-> (c,Unprimed)) fv_idents in
     (* let _ = print_string (" before norm: " ^(Iprinter.string_of_formula mf)^"\n") in *)
-    let wf = Astsimp.case_normalize_formula iprog h mf in
+    let wf = x_add Astsimp.case_normalize_formula iprog h mf in
     let n_tl = Typeinfer.gather_type_info_formula iprog wf tlist false in
     let (n_tl,r) = Astsimp.trans_formula iprog quant fv_idents false wf n_tl false in
     (* let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
@@ -1069,12 +1069,12 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   let _ = CF.rel_def_stk # reset in
   let _ = Iast.set_iprog iprog in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline_quiet ("INPUT 6: \n ### 1 ante = " ^ (string_of_meta_formula iante0) ^"\n ### conseq = " ^ (string_of_meta_formula iconseq0)) else () in
-  let _ = Debug.devel_pprint ("\nrun_entail_check 1:"
-                              ^ "\n ### iante0 = "^(string_of_meta_formula iante0)
-                              ^ "\n ### iconseq0 = "^(string_of_meta_formula iconseq0)
-                              ^"\n\n") no_pos in
+  let _ = x_dinfo_pp ("\nrun_entail_check 1:"
+                      ^ "\n ### iante0 = "^(string_of_meta_formula iante0)
+                      ^ "\n ### iconseq0 = "^(string_of_meta_formula iconseq0)
+                      ^"\n\n") no_pos in
   let (n_tl,ante) = meta_to_formula iante0 false [] [] in
-  (*let ante = Solver.normalize_formula_w_coers !cprog (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) ante !cprog.Cast.prog_left_coercions in*)
+  (*let ante = x_add Solver.normalize_formula_w_coers !cprog (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) ante !cprog.Cast.prog_left_coercions in*)
   let ante = Cvutil.prune_preds !cprog true ante in
   let ante = (*important for permissions*)
     if (Perm.allow_perm ()) then
@@ -1118,11 +1118,12 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
       with _ ->  sst0
     ) [] fvs
   in
+  (*let _ = print_endline "run_infer_one_pass" in*)
   let ante1 = CF.subst sst ante in
   let ante = Cfutil.transform_bexpr ante1 in
   let conseq = CF.struc_formula_trans_heap_node [] Cfutil.transform_bexpr conseq in
   let pr = Cprinter.string_of_struc_formula in
-  let _ = Debug.tinfo_hprint (add_str "conseq(after meta-)" pr) conseq no_pos in
+  let _ = x_tinfo_hp (add_str "conseq(after meta-)" pr) conseq no_pos in
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in
   (* List of vars needed for abduction process *)
   let vars = List.map (fun v ->
@@ -1133,7 +1134,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
         Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos
     ) ivars in
   (* let ante,conseq = Cfutil.normalize_ex_quans_conseq !cprog ante conseq in *)
-  let (res, rs,v_hp_rel) = Sleekcore.sleek_entail_check 8 itype vars !cprog [] ante conseq in
+  let (res, rs,v_hp_rel) = x_add Sleekcore.sleek_entail_check 8 itype vars !cprog [] ante conseq in
   (* CF.residues := Some (rs, res); *)
   ((res, rs,v_hp_rel), (ante,conseq))
 
@@ -1432,7 +1433,8 @@ let process_rel_infer pre_rels post_rels =
   (* let r = Fixpoint.rel_fixpoint_wrapper pre_invs0 [] pre_rel_constrs post_rel_constrs pre_rel_ids post_rels proc_spec 1 in *)
   (* let _ = Debug.info_hprint (add_str "fixpoint2" *)
   (*     (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in *)
-  let r = Fixcalc.compute_fixpoint 2 post_rel_constrs post_rels proc_spec in
+  (* let _ = print_endline "process_rel_infer" in *)
+  let r = x_add Fixcalc.compute_fixpoint 2 post_rel_constrs post_rels proc_spec in
   let _ = Debug.info_hprint (add_str "fixpoint2"
                                (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_pair pr1 pr1))) r no_pos in
   let _ = print_endline_quiet "" in
@@ -1942,7 +1944,7 @@ let process_shape_extract sel_vnames=
   let view_defs = Norm.norm_extract_common iprog !cprog !cprog.Cast.prog_view_decls sel_vnames in
   let _ = !cprog.Cast.prog_view_decls <- view_defs in
   let pr = pr_list_ln Cprinter.string_of_view_decl in
-  let _ = Debug.tinfo_zprint  (lazy  ("views after EXTRACTION: \n" ^ (pr view_defs))) no_pos in
+  let _ = x_tinfo_zp  (lazy  ("views after EXTRACTION: \n" ^ (pr view_defs))) no_pos in
   ()
 
 (* the value of flag "exact" decides the type of entailment checking              *)
@@ -1952,6 +1954,7 @@ let process_shape_extract sel_vnames=
 let run_entail_check (iante0 : meta_formula list) (iconseq0 : meta_formula) (etype: entail_type) =
   wrap_classic etype (fun conseq ->
       let (r, (cante, cconseq)) = run_infer_one_pass_set_states [] [] iante0 conseq in
+      (*let _ = print_endline "run_entail_check_2" in*)
       let res, _, _ = r in
       let _ = if !Globals.gen_smt then
           let _ = Slk2smt.smt_ent_cmds := !Slk2smt.smt_ent_cmds@[(iante0, iconseq0, etype, cante, cconseq, res)] in
@@ -1965,6 +1968,7 @@ let run_entail_check (iante0 : meta_formula list) (iconseq0 : meta_formula) (ety
     let fctx = CF.mkFailCtx_in (CF.Trivial_Reason
                                   (CF.mk_failure_may "timeout" Globals.timeout_error, [])) (CF.Ctx (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled  no_pos)) (CF.mk_cex false) in
     (false, fctx,[]) in
+  (*let _ = print_endline "run_entail_check_1" in*)
   Procutils.PrvComms.maybe_raise_and_catch_timeout_sleek
     (run_entail_check iante0 iconseq0) etype with_timeout
 
@@ -2145,8 +2149,8 @@ let process_sat_check_x (f : meta_formula) =
   let num_id = "\nCheckSat "^(string_of_int nn) in
   let (_,f) = meta_to_formula f false [] [] in
   let f = Cvutil.prune_preds !cprog true f in
-  let unsat_command f = not(Solver.unsat_base_nth 7 !cprog (ref 0) f) in
-  let res = Solver.unsat_base_nth 1 !cprog (ref 0) f in
+  let unsat_command f = not(x_add Solver.unsat_base_nth 7 !cprog (ref 0) f) in
+  let res = x_add Solver.unsat_base_nth 1 !cprog (ref 0) f in
   let sat_res =
     if res then false
     else wrap_under_baga unsat_command f (* WN: invoke SAT checking *)
@@ -2215,11 +2219,11 @@ let process_check_norm_x (f : meta_formula) =
     then print_endline_quiet ("INPUT 7: \n ### f = " ^ (string_of_meta_formula f)) 
     else () 
   in
-  let _ = Debug.devel_pprint ("\nprocess_check_norm:" ^ "\n ### f = "^(string_of_meta_formula f)  ^"\n\n") no_pos in
+  let _ = x_dinfo_pp ("\nprocess_check_norm:" ^ "\n ### f = "^(string_of_meta_formula f)  ^"\n\n") no_pos in
   let (n_tl, cf) = meta_to_formula f false [] []  in
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline_quiet ("INPUT 8: \n ### cf = " ^ (Cprinter.string_of_formula cf)) else () in
   let estate = (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) in
-  let newf = Solver.prop_formula_w_coers 1 !cprog estate cf (Lem_store.all_lemma # get_left_coercion) in
+  let newf = x_add Solver.prop_formula_w_coers 1 !cprog estate cf (Lem_store.all_lemma # get_left_coercion) in
   let _ = print_string (num_id ^ ": " ^ (Cprinter.string_of_formula newf) ^ "\n\n") in
   () (* TO IMPLEMENT*)
 
@@ -2232,10 +2236,10 @@ let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let num_id = "\nCheckeq "^nn in  
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline_quiet ("INPUT 9: \n ### if1 = " ^ (string_of_meta_formula if1) ^"\n ### if2 = " ^ (string_of_meta_formula if2)) else () in
-  let _ = Debug.devel_pprint ("\nrun_cmp_check:"
-                              ^ "\n ### f1 = "^(string_of_meta_formula if1)
-                              ^ "\n ### f2 = "^(string_of_meta_formula if2)
-                              ^"\n\n") no_pos in
+  let _ = x_dinfo_pp ("\nrun_cmp_check:"
+                      ^ "\n ### f1 = "^(string_of_meta_formula if1)
+                      ^ "\n ### f2 = "^(string_of_meta_formula if2)
+                      ^"\n\n") no_pos in
 
   let (n_tl,f1) = meta_to_formula_not_rename if1 false [] []  in
   let (n_tl,f2) = meta_to_formula_not_rename if2 false [] n_tl  in

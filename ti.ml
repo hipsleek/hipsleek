@@ -402,7 +402,7 @@ and solve_turel_graph_one_group iter_num prog trrels tg scc_list =
       (* let () =                                                       *)
       (*   print_endline_quiet ("GRAPH @ ITER " ^ (string_of_int iter_num)); *)
       (*   print_endline_quiet (print_graph_by_rel tg)                       *)
-      (* in                                                            *)
+      (* in                                                                  *)
       (* let () = print_endline_quiet (print_scc_list_num scc_list) in        *)
       let tg = List.fold_left (fun tg -> solve_turel_one_scc prog trrels tg) tg scc_list in
       ()
@@ -450,9 +450,9 @@ let solve no_verification_errors should_infer_tnt prog =
   (* If turels is empty then there is no *)
   (* unknown termination behaviors       *)
   if turels = [] && trrels = [] then 
-    Debug.tinfo_pprint ("\n\n!!! Termination Inference is not performed due to empty set of relational assumptions.\n\n") no_pos
+    x_tinfo_pp ("\n\n!!! Termination Inference is not performed due to empty set of relational assumptions.\n\n") no_pos
   else if not no_verification_errors then
-    let () = Debug.tinfo_pprint ("\n\n!!! Termination Inference is not performed due to errors in verification process.\n\n") no_pos in
+    let () = x_tinfo_pp ("\n\n!!! Termination Inference is not performed due to errors in verification process.\n\n") no_pos in
     ()
   else if not should_infer_tnt then ()
   else

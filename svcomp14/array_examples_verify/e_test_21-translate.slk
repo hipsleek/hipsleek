@@ -1,0 +1,31 @@
+
+/* 21: Fail */
+checkentail
+   a[i]=5 & (i=2 | i=3)
+   |- a[3]=5.
+print residue.
+// should fail here
+
+checkentail
+   a[i]=5 & i=2 & a[j]=5 & j=3
+   |- a[3]=5.
+
+checkentail
+   a[i]=5 & i=2 & a[j]=5 & j=3
+   |- a[4]=5.
+
+checkentail
+   (a[i]=5 & i=2) | (a[j]=5 & j=3)
+   |- a[4]=5.
+
+
+checkentail
+   a[i]=5 & (i=2 | i=3)
+   |- a[3]=5 | a[2]=5.
+
+
+checkentail
+   a[i]=5 & i=2 
+   or a[i]=5 & i=3
+       |- a[3]=5.
+print residue.

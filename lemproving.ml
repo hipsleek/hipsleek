@@ -54,6 +54,7 @@ let add_infer_vars_to_ctx ivs ctx =
    - similar to Sleekengine.run_entail_check
 *)
 let run_entail_check_helper ctx (iante: lem_formula) (iconseq: lem_formula) (inf_vars: CP.spec_var list) (cprog: C.prog_decl)  =
+
   let ante = lem_to_cformula iante in
   let ante = if !Globals.en_slc_ps then Cvutil.prune_preds cprog false ante else ante in
   (* let ante = Solver.prune_preds cprog true ante in (\* (andreeac) redundant? *\) *)
@@ -62,12 +63,13 @@ let run_entail_check_helper ctx (iante: lem_formula) (iconseq: lem_formula) (inf
   (* let conseq = Solver.prune_pred_struc cprog true conseq in (\* (andreeac) redundant ? *\) *)
   (* let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in *)
   (* let ctx = CF.build_context ctx ante no_pos in *)
+
   let ctx = match ctx with
     | CF.SuccCtx l -> 
       let newl = List.map (fun ct -> 
           let nctx = CF.set_context_formula ct ante in
           let nctx = add_infer_vars_to_ctx inf_vars nctx in
-          let nctx = CF.transform_context (Solver.elim_unsat_es 10 cprog (ref 1)) nctx in
+          let nctx = CF.transform_context (x_add Solver.elim_unsat_es 10 cprog (ref 1)) nctx in
           nctx
         ) l in CF.SuccCtx newl
     | CF.FailCtx _ ->    
@@ -76,7 +78,7 @@ let run_entail_check_helper ctx (iante: lem_formula) (iconseq: lem_formula) (inf
   in 
   (* let ctx = add_infer_vars_to_list_ctx inf_vars ctx in *)
   let () = if !Globals.print_core || !Globals.print_core_all then print_string ("\nrun_entail_check_helper:\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
-  (* let ctx = CF.transform_list_context (Solver.elim_unsat_es 10 cprog (ref 1)) ctx in *)
+  (* let ctx = CF.transform_list_context (x_add Solver.elim_unsat_es 10 cprog (ref 1)) ctx in *)
   let rs1, _ = 
     if not !Globals.disable_failure_explaining then
       Solver.heap_entail_struc_init_bug_inv cprog false false ctx conseq no_pos None
@@ -96,6 +98,7 @@ let run_entail_check_helper ctx (iante: lem_formula) (iconseq: lem_formula) (inf
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
 let run_entail_check_x ctx (iante : lem_formula) (iconseq : lem_formula) (inf_vars: CP.spec_var list) (cprog: C.prog_decl) (exact : bool option) =
+  let _ = print_endline "run_entail_check_x" in
   if (!Globals.allow_lemma_residue)
   then wrap_classic (Some false) (* inexact *) (run_entail_check_helper ctx iante iconseq inf_vars) cprog
   else wrap_classic (Some true) (* exact *) (run_entail_check_helper ctx iante iconseq inf_vars) cprog
@@ -107,6 +110,7 @@ let run_entail_check ctx (iante : lem_formula) (iconseq : lem_formula)
   let pr_conseq = add_str "conseq: " string_of_lem_formula in
   let pr_vars = add_str "inf_vars: " (pr_list Cprinter.string_of_spec_var) in
   let pr_exact = add_str "exact: " (pr_opt string_of_bool) in
+  let _ = print_endline "run_entail_check" in
   let pr_out (res, ctx_lst) = (
     ((add_str "\nresult: " string_of_bool) res) ^ "\n" ^
     ((add_str "list context: " Cprinter.string_of_list_context) ctx_lst) 
@@ -159,7 +163,7 @@ let check_coercion coer lhs rhs  (cprog: C.prog_decl) =
   let pos = CF.pos_of_formula coer.C.coercion_head in
   let lhs = Solver.unfold_nth 9 (cprog,None) lhs (CP.SpecVar (Globals.null_type, self, Unprimed)) true 0 pos in
   (* unfolding RHS need to use unflattened body to preserve case-spec *)
-  let rhs = Solver.unfold_struc_nth 9 (cprog,None) rhs (CP.SpecVar (Globals.null_type, self, Unprimed)) true 0 pos in
+  let rhs = x_add Solver.unfold_struc_nth 9 (cprog,None) rhs (CP.SpecVar (Globals.null_type, self, Unprimed)) true 0 pos in
   (*let () = print_string("lhs_unfoldfed: "^(Cprinter.string_of_formula lhs)^"\n") in*)
   let lhs = if(coer.C.coercion_case == C.Ramify) then 
     Mem.ramify_unfolded_formula lhs cprog.C.prog_view_decls 
@@ -339,7 +343,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
 (* sets the lhs & rhs of the entailment when proving l2r lemma (coercion), where the rhs (coercion body) is normalized  *)
 let check_left_coercion coer (cprog: C.prog_decl) =
   (* using normalization form of lemma body and head to check *)
-  let pr_debug = Debug.tinfo_hprint in
+  let pr_debug = x_tinfo_hp in
   let pr = Cprinter.string_of_coerc_med in
   let pr2 = Cprinter.string_of_struc_formula in
   let pr3 = Cprinter.string_of_formula in
@@ -347,7 +351,7 @@ let check_left_coercion coer (cprog: C.prog_decl) =
   let ent_rhs =  coer.C.coercion_body_norm in
   (* let ent_lhs = coer.C.coercion_head in                                    *)
   (* let ent_rhs = CF.struc_formula_of_formula coer.C.coercion_body no_pos in *)
-  Debug.tinfo_pprint "Verify Left Coercion" no_pos;
+  x_tinfo_pp "Verify Left Coercion" no_pos;
   pr_debug (add_str "lemma(med)" pr) coer no_pos;
   pr_debug (add_str "norm lhs" pr3) ent_lhs no_pos;
   pr_debug (add_str "norm rhs" pr2) ent_rhs no_pos;
@@ -363,14 +367,14 @@ let check_left_coercion coer cprog  =
 (* sets the lhs & rhs of the entailment when proving r2l lemma (coercion), where the rhs (coercion head) is normalized  *)
 let check_right_coercion coer (cprog: C.prog_decl) =
   (* using normalization form of lemma body and head to check *)
-  let pr_debug = Debug.tinfo_hprint in
+  let pr_debug = x_tinfo_hp in
   let pr = Cprinter.string_of_coerc_med in
   let pr2 = Cprinter.string_of_struc_formula in
   let pr3 = Cprinter.string_of_formula in
   let ent_rhs = CF.struc_formula_of_formula coer.C.coercion_head_norm no_pos in
   let ent_lhs = CF.struc_to_formula coer.C.coercion_body_norm in
   (* let ent_lhs = Cvutil.remove_imm_from_formula cprog ent_lhs (CP.ConstAnn(Lend)) in *) (* actually this removes @L nodes from the body of right lemma for proving sake *)
-  Debug.tinfo_pprint "Verify Right Coercion" no_pos;
+  x_tinfo_pp "Verify Right Coercion" no_pos;
   pr_debug (add_str "lemma(med)" pr) coer no_pos;
   pr_debug (add_str "norm lhs" pr3) ent_lhs no_pos;
   pr_debug (add_str "norm rhs" pr2) ent_rhs no_pos;

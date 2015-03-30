@@ -667,12 +667,12 @@ let to_spass (ante : Cpure.formula) (conseq : Cpure.formula option) : string =
 
   (* use for debug: print formula in Omega format *)
   (* let omega_temp_f = Cpure.mkOr (mkNot ante None no_pos) conseq None no_pos in
-     let omega_ante = Omega.omega_of_formula ante in
-     let omega_conseq = Omega.omega_of_formula conseq in
+     let omega_ante = x_add Omega.omega_of_formula ante in
+     let omega_conseq = x_add Omega.omega_of_formula conseq in
      let omega_pvars = Omega.get_vars_formula omega_temp_f in
      let omega_vstr = Omega.omega_of_var_list (Gen.BList.remove_dups_eq (=) omega_pvars) in
      let omega_formula  =  "complement {[" ^ omega_vstr ^ "] : (" ^ omega_ante ^ "  ==>  " ^ omega_conseq ^ ")}" ^ ";" ^ Gen.new_line_str in
-     let omega_temp_str = Omega.omega_of_formula omega_temp_f in
+     let omega_temp_str = x_add Omega.omega_of_formula omega_temp_f in
      let omega_temp_formula  =  "complement {[" ^ omega_vstr ^ "] : (" ^ omega_temp_str ^ ")}" ^ ";" ^ Gen.new_line_str in
      let () = print_endline ("-- Input problem in Omega format - omega_temp_str:\n" ^ omega_formula) in
      let () = print_endline ("-- Input problem in Omega format - omega_temp_formula:\n" ^ omega_temp_formula) in *)
@@ -708,10 +708,10 @@ and spass_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool
   let res, should_run_spass =
     if not ((can_spass_handle_formula ante) && (can_spass_handle_formula conseq)) then
       (* for debug *)
-      (* let fomega_ante = Omega.omega_of_formula ante in
+      (* let fomega_ante = x_add Omega.omega_of_formula ante in
          let () = print_endline ("can_spass_handle_formula ante:" ^ fomega_ante ^ ": " ^ 
               (if (can_spass_handle_formula ante) then "true" else "false")) in
-         let fomega_conseq = Omega.omega_of_formula conseq in
+         let fomega_conseq = x_add Omega.omega_of_formula conseq in
          let () = print_endline ("can_spass_handle_formula conseq:" ^ fomega_conseq^ ": " ^ 
               (if (can_spass_handle_formula conseq) then "true" else "false")) in *)
       try
@@ -788,7 +788,7 @@ let spass_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
   let res, should_run_spass =
     if not (can_spass_handle_formula f) then
       (* for debug *)
-      (* let fomega = Omega.omega_of_formula f in
+      (* let fomega = x_add Omega.omega_of_formula f in
          let () = print_endline ("can_spass_handle_formula f: " ^ fomega ^ ": " ^ 
               (if (can_spass_handle_formula f) then "true" else "false")) in
          let () = print_endline "-- use Omega.is_sat..." in *)

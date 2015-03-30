@@ -1,0 +1,47 @@
+
+/* 21: Fail */
+checkentail
+  a[i]=5 & i=3 |- a[3]=5.
+
+checkentail
+  a[i]=5 & i>=3 & i<=3 |- a[3]=5.
+
+/*
+translate_out_array_in_imply@3
+translate_out_array_in_imply inp1 : i<=3 & 3<=i & a[i]=5
+translate_out_array_in_imply inp2 : a[3]=5
+translate_out_array_in_imply@3 EXIT:new ante:  
+
+   i<=3 & 3<=i & 
+    ((!((3<=3 & 3<=3)) | a___3___=5)) 
+   & ((!((i<=3 & 3<=i)) | a___i___=5)) & a[i]=5
+
+new conseq:  a___3___=5
+
+*/
+
+
+checkentail
+  a[i]=5 & (i=3|i=2) |- a[3]=5.
+
+/*
+translate_out_array_in_imply@5 EXIT:new ante:  
+((i=3 | i=2)) 
+& ((!(((3=3 | 3=2))) | a___3___=5)) 
+& ((!(((i=3 | i=2))) | a___i___=5)) 
+& a[i]=5
+new conseq:  a___3___=5
+
+/*
+
+  i=3 & a[i]=5 & (i=3|i=2) |- a[3]=5.
+
+  a[i]=5 & i=3
+  \/ a[i]=5 & i=2 |- a[3]=5.
+
+
+  a_3=5 & i=3
+  \/ a_2=5 & i=2 |- a[3]=5.
+
+
+*/

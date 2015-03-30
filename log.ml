@@ -491,7 +491,7 @@ let add_sleek_logging (es_opt:Cformula.entail_state option) timeout_flag stime i
       sleek_proving_res = result;
     }
     in
-    let () =  Debug.devel_pprint (string_of_sleek_log_entry sleek_log_entry) no_pos in
+    let () =  x_dinfo_pp (string_of_sleek_log_entry sleek_log_entry) no_pos in
     let () = last_cmd # set_sleek sleek_log_entry in
     let () = sleek_log_stk # push sleek_log_entry in
     (if not(avoid) then 
@@ -576,7 +576,7 @@ let add_proof_logging timeout_flag (cache_status:bool) old_no pno tp ptype time 
     proof_log_stk # push plog;
     (* let pno_str = string_of_int pno in *)
     (* let () = add_proof_tbl pno_str plog in *)
-    let () =  Debug.devel_pprint (string_of_proof_log_entry plog) no_pos in
+    let () =  x_dinfo_pp (string_of_proof_log_entry plog) no_pos in
     (* let () = try *)
     (*   (\* let _= BatString.find (Sys.argv.(0)) "hip" in *\) *)
     (*   if (proving_kind # string_of)<>"TRANS_PROC" then *)

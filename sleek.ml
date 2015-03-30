@@ -130,7 +130,7 @@ let proc_gen_cmd cmd =
   | EqCheck (lv, if1, if2) -> process_eq_check lv if1 if2
   | InferCmd (itype, ivars, iante, iconseq, etype) ->
     let () = print_endline "InferCmd" in
-    let () = Debug.binfo_hprint (add_str "i_type" (pr_list string_of_inf_const)) itype no_pos in
+    let () = x_binfo_hp (add_str "i_type" (pr_list string_of_inf_const)) itype no_pos in
     (process_infer itype ivars iante iconseq etype; ())
   | CaptureResidue lvar -> process_capture_residue lvar
   | LemmaDef ldef -> process_list_lemma ldef
@@ -245,8 +245,8 @@ let parse_file (parse) (source_file : string) =
           | _ -> x
         else x in
       let etype = change_etype etype (List.exists (fun x -> x=INF_CLASSIC) itype) in
-      let () = Debug.tinfo_hprint (add_str "etype" (pr_option string_of_bool)) etype no_pos in
-      let () = Debug.tinfo_hprint (add_str "itype" (pr_list string_of_inf_const)) itype no_pos in
+      let () = x_tinfo_hp (add_str "etype" (pr_option string_of_bool)) etype no_pos in
+      let () = x_tinfo_hp (add_str "itype" (pr_list string_of_inf_const)) itype no_pos in
       (process_infer itype ivars iante iconseq etype;())
     | CaptureResidue lvar -> process_capture_residue lvar
     | PrintCmd pcmd ->
@@ -279,8 +279,8 @@ let parse_file (parse) (source_file : string) =
                            Error.error_text = "Data type " ^ udn ^ " is undefined!" }
   in ();
   convert_data_and_pred_to_cast ();
-  Debug.tinfo_pprint "sleek : after convert_data_and_pred_to_cast" no_pos;
-  (* Debug.tinfo_pprint "sleek : after proc one lemma" no_pos; *)
+  x_tinfo_pp "sleek : after convert_data_and_pred_to_cast" no_pos;
+  (* x_tinfo_pp "sleek : after proc one lemma" no_pos; *)
   (*identify universal variables*)
   List.iter proc_one_lemma cmds;
   let l2r = Lem_store.all_lemma # get_left_coercion in
@@ -382,7 +382,7 @@ let main () =
     else
       begin
         (* let () = print_endline "Prior to parse_file" in *)
-        Debug.tinfo_pprint "sleek : batch processing" no_pos;
+        x_tinfo_pp "sleek : batch processing" no_pos;
         let todo_unk = List.map (parse_file NF.list_parse) !Globals.source_files in ()
       end
   with

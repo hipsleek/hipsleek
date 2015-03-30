@@ -192,7 +192,7 @@ let rec build_ef_heap_formula_x (cf : Cformula.h_formula) (all_views : Cast.view
       (* if !Globals.gen_baga_inv then *)
       (*   try *)
       (* let disj = Hashtbl.find map_baga_invs vnf.Cformula.h_formula_view_name in *)
-      (* let () = Debug.binfo_hprint (add_str "disj" Excore.EPureI.string_of_disj) disj no_pos in *)
+      (* let () = x_binfo_hp (add_str "disj" Excore.EPureI.string_of_disj) disj no_pos in *)
       (*     disj *)
       (*   with Not_found -> failwith "cannot find in init_map too" *)
       (* else *)

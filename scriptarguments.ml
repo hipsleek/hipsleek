@@ -99,13 +99,13 @@ let common_arguments = [
        Globals.label_aggressive_sat := true ),
    "Shorthand for --lbl-en-aggr.");
   (* UNSAT("":cf,"a":af,"b":bf) 
-         --> UNSAT(cf&af) | UNSAT(cf & bf) *)
+     --> UNSAT(cf&af) | UNSAT(cf & bf) *)
   (* aggressive UNSAT("":cf,"a":af,"b":bf) 
-          --> UNSAT(cd) | UNSAT(af) & UNSAT(bf) *)
+     --> UNSAT(cd) | UNSAT(af) & UNSAT(bf) *)
   (* IMPLY("":cf,"a":af,"b":bf --> "a":ta,"b":tb) 
-          --> IMPLY(cf&af -->ta) & IMPLY (cf&bf-->tb) *)
+     --> IMPLY(cf&af -->ta) & IMPLY (cf&bf-->tb) *)
   (* aggressive IMPLY("":cf,"a":af,"b":bf --> "a":ta,"b":tb) 
-          --> IMPLY(af -->ta) & IMPLY (bf-->tb) *)
+     --> IMPLY(af -->ta) & IMPLY (bf-->tb) *)
   (* ("--en-label-aggr-sat", Arg.Set Globals.label_aggressive_sat, "enable aggressive splitting of labels during unsat"); *)
   (* ("--dis-label-aggr-sat", Arg.Clear Globals.label_aggressive_sat, "disable aggressive splitting of labels during unsat"); *)
   (* ("--en-label-aggr", Arg.Set Globals.label_aggressive_flag, "enable aggressive splitting of labels"); *)
@@ -149,6 +149,10 @@ let common_arguments = [
   ("--constr-filter", Arg.Set Globals.enable_constraint_based_filtering, "Enable assumption filtering based on contraint type");
   ("--no-split-rhs", Arg.Clear Globals.split_rhs_flag,
    "No Splitting of RHS(conseq).");
+  ("--array-expansion", Arg.Set Globals.array_expansion, "Use expansion strategy to deal with array, in code level");
+  ("--array-translate-out",Arg.Set Globals.array_translate, "Translate out array in formula");
+  ("--dis-array-translate-out",Arg.Clear Globals.array_translate, "Disable Translate out array in formula");
+  ("--ato",Arg.Set Globals.array_translate, "shorthand for --array-translate-out");
   ("--dlp", Arg.Clear Globals.check_coercions,
    "Disable Lemma Proving");
   ("--dis-auto-num", Arg.Clear Globals.auto_number,
@@ -263,6 +267,7 @@ let common_arguments = [
   ("--field-imm", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
   ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
   ("--dis-field-imm", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
+  ("--allow-array-inst", Arg.Set Globals.allow_array_inst,"Allow instantiation of existential arrays");
   ("--imm-remove-abs", Arg.Set Globals.remove_abs,"remove @A nodes from formula (incl nodes with all fields ann with @A)");
   ("--en-imm-merge", Arg.Set Globals.imm_merge,"try to merge aliased nodes");
   ("--dis-imm-merge", Arg.Clear Globals.imm_merge,"don't merge aliased nodes");
@@ -272,6 +277,11 @@ let common_arguments = [
    "Enable the use of Memory Specifications");
   ("--dis-mem", Arg.Clear Globals.allow_mem,"Disable the use of Memory Specifications");
   ("--ramify", Arg.Clear Solver.unfold_duplicated_pointers,"Use Ramification (turns off unfold on dup pointers)");
+  ("--gen-coq-file", Arg.Set Globals.gen_coq_file, "Generate a Coq file with all axioms and lemmas to prove for certified reasoning");
+  ("--allow-ramify", Arg.Unit (fun _ -> 
+       Globals.allow_ramify := true; 
+       Solver.unfold_duplicated_pointers := false;)
+  , "Enable Coq based Ramification for Shared Structures");
   ("--infer-mem",Arg.Set Globals.infer_mem,"Enable inference of memory specifications");
   ("--infer-en-raw",Arg.Set Globals.infer_raw_flag,"Enable simplify_raw during pure inference");
   ("--infer-dis-raw",Arg.Clear Globals.infer_raw_flag,"Disable simplify_raw during pure inference");
@@ -427,20 +437,20 @@ let common_arguments = [
   ("-infer", Arg.String (fun s ->
        Globals.infer_const_obj # set_init_arr s),"Infer constants e.g. @term@pre@post@imm@shape");  (* some processing to check @term,@post *)
   ("-debug", Arg.String (fun s ->
-       Debug.z_debug_file:=s; Debug.z_debug_flag:=true),
+       Debug.z_debug_file:=s; z_debug_flag:=true),
    "Read from a debug log file");
   ("-prelude", Arg.String (fun s ->
        Globals.prelude_file:=Some s),
    "Read from a specified prelude file");
   ("-debug-regexp", Arg.String (fun s ->
-       Debug.z_debug_file:=("$"^s); Debug.z_debug_flag:=true),
+       Debug.z_debug_file:=("$"^s); z_debug_flag:=true),
    "Match logged methods from a regular expression");
   ("-dre", Arg.String (fun s ->
        let _ = print_endline ("!!!-dre "^s) in
-       Debug.z_debug_file:=("$"^s); Debug.z_debug_flag:=true),
+       Debug.z_debug_file:=("$"^s); z_debug_flag:=true),
    "Shorthand for -debug-regexp");
   ("-drea", Arg.String (fun s ->
-       Debug.z_debug_file:=("$.*"); Debug.z_debug_flag:=true;
+       Debug.z_debug_file:=("$.*"); z_debug_flag:=true;
        Debug.mk_debug_arg s),
    "Matched input/output with reg-exp");
   ("-v", Arg.Set Debug.debug_on,
@@ -518,7 +528,6 @@ let common_arguments = [
   ("--en-failure-analysis", Arg.Clear Globals.disable_failure_explaining,"enable failure explanation analysis");
   ("--efa", Arg.Clear Globals.disable_failure_explaining,"shorthand for --en-failure-analysis");
   ("--efa-exc", Arg.Set Globals.enable_error_as_exc,"enable to transform error as exception");
-  ("--efa-dis-exc", Arg.Clear Globals.enable_error_as_exc,"disable to transform error as exception");
   ("--dfa", Arg.Set Globals.disable_failure_explaining,"shorthand for --dis-failure-analysis");
   ("--refine-error", Arg.Set Globals.simplify_error,
    "Simplify the error");

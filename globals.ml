@@ -43,7 +43,7 @@ let ineq_opt_flag = ref false
 
 let illegal_format s = raise (Illegal_Prover_Format s)
 
-type lemma_kind = LEM_PROP| LEM_SPLIT | LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER | LEM_INFER_PRED
+type lemma_kind = LEM_PROP| LEM_SPLIT | LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER | LEM_INFER_PRED | RLEM
 
 type lemma_origin =
   | LEM_USER          (* user-given lemma *)
@@ -1018,6 +1018,7 @@ let allow_imm_subs_rhs = ref true (*imm rhs subs from do_match*)
 let allow_field_ann = ref false
 
 let remove_abs = ref true
+let allow_array_inst = ref false
 
 let imm_merge = ref false
 
@@ -1026,9 +1027,11 @@ let imm_merge = ref false
 (* let allow_field_ann = ref false  *)
 (* disabled by default as it is unstable and
    other features, such as shape analysis are affected by it *)
-
+let allow_ramify = ref false
 let allow_mem = ref false
 (*enabling allow_mem will turn on field ann as well *)
+
+let gen_coq_file = ref false
 
 let infer_mem = ref false
 let infer_raw_flag = ref true
@@ -1171,7 +1174,8 @@ let dump_lemmas_med = ref false
 let dump_lem_proc = ref false
 
 let num_self_fold_search = ref 0
-
+let array_expansion = ref false;;
+let array_translate = ref false;;
 let self_fold_search_flag = ref false
 
 let show_gist = ref false
@@ -1783,44 +1787,6 @@ let fresh_names (n : int) = (* number of names to be generated *)
   done;
   !names
 
-(* duplicated in cpure.ml *)
-(* pre : _<num> *)
-(* and fresh_old_name_x (s: string):string =  *)
-(*   let slen = (String.length s) in *)
-(*   let ri =  *)
-(*     try   *)
-(*       let n = (String.rindex s '_') in *)
-(*       (\* let () = print_endline ((string_of_int n)) in *\) *)
-(*       let l = (slen-(n+1)) in *)
-(*       if (l==0) then slen-1 *)
-(*       else  *)
-(*         let tr = String.sub s (n+1) (slen-(n+1)) in *)
-(*         (\* let () = int_of_string tr in *\) *)
-(*         (\* let () = print_endline ((string_of_int n)^tr^"##") in *\) *)
-(*         n *)
-(*     with  _ -> slen in *)
-(*   let n = ((String.sub s 0 ri) ^ (fresh_trailer ())) in *)
-(*   (\*let () = print_string ("init name: "^s^" new name: "^n ^"\n") in*\) *)
-(*   n *)
-
-let fresh_old_name (s: string):string =
-  let fn s =
-    let l = String.length s in
-    try
-      let c = (String.rindex s '_') in
-      (* let () = x_ninfo_hp (add_str "string" pr_id) s no_pos in *)
-      (* let () = x_binfo_hp (add_str "pos _ " string_of_int) c no_pos in *)
-      (* let () = x_binfo_hp (add_str "pos len " string_of_int) l no_pos in *)
-      let trail = String.sub s (c+1) (l-c-1) in
-      (* let () = x_binfo_hp (add_str "trail" pr_id) trail no_pos in *)
-      let (_:int64) = Int64.of_string trail in
-      c
-    with  _ -> l
-  in
-  let ri = fn s in
-  let n = ((String.sub s 0 ri) ^ (fresh_trailer ())) in
-  n
-
 let formula_cache_no_series = ref 0
 
 let fresh_formula_cache_no  () = 
@@ -2097,4 +2063,5 @@ let string_of_lemma_kind (l: lemma_kind) =
   | LEM_SAFE      -> "LEM_SAFE"
   | LEM_INFER     -> "LEM_INFER"
   | LEM_INFER_PRED   -> "LEM_INFER_PRED"
+  | RLEM -> "RLEM"
 

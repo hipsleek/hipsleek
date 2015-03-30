@@ -182,7 +182,7 @@ let compute_inv name vars fml pf no_of_disjs =
     (*print_endline ("RES: " ^ res);*)
     DD.info_zprint (lazy (("Result of fixbag: " ^ res))) no_pos;
     let new_pf = List.hd (Parse_fixbag.parse_fix res) in
-    let () = DD.devel_hprint (add_str "Result of fixbag (parsed): "  !CP.print_formula) new_pf no_pos in
+    let () = x_dinfo_hp (add_str "Result of fixbag (parsed): "  !CP.print_formula) new_pf no_pos in
     let check_imply = Omega.imply new_pf pf "1" 100.0 in
     if check_imply then (
       Pr.fmt_string "INV:  ";
@@ -213,9 +213,9 @@ let compute_inv name vars fml pf no_of_disjs =
       ^ "Fix2:=topdown(" ^ name ^ ",1,SimHeur);\nFix2;"
     in
     (*print_endline ("\nINPUT: " ^ input_fixbag);*)
-    DD.trace_hprint (add_str "input_pairs: " (pr_list (pr_pair !CP.print_formula !CP.print_formula))) input_pairs no_pos;
-    DD.devel_pprint ">>>>>> compute_fixpoint <<<<<<" no_pos;
-    DD.devel_pprint ("Input of fixbag: " ^ input_fixbag) no_pos;
+    x_tinfo_hp (add_str "input_pairs: " (pr_list (pr_pair !CP.print_formula !CP.print_formula))) input_pairs no_pos;
+    x_dinfo_pp ">>>>>> compute_fixpoint <<<<<<" no_pos;
+    x_dinfo_pp ("Input of fixbag: " ^ input_fixbag) no_pos;
     let output_of_sleek = "fixbag.inf" in
     let oc = open_out output_of_sleek in
     Printf.fprintf oc "%s" input_fixbag;
@@ -224,9 +224,9 @@ let compute_inv name vars fml pf no_of_disjs =
     let res = syscall (fixbag ^ " " ^ output_of_sleek) in
     let res = remove_paren res (String.length res) in
     (*print_endline ("RES: " ^ res);*)
-    DD.devel_pprint ("Result of fixbag: " ^ res) no_pos;
+    x_dinfo_pp ("Result of fixbag: " ^ res) no_pos;
     let fixpoint = Parse_fix.parse_fix res in
-    DD.devel_hprint (add_str "Result of fixbag (parsed): " (pr_list !CP.print_formula)) fixpoint no_pos;
+    x_dinfo_hp (add_str "Result of fixbag (parsed): " (pr_list !CP.print_formula)) fixpoint no_pos;
     let fixpoint = List.map (fun f -> 
         let args = CP.fv f in 
         let quan_vars = CP.diff_svl args vars in
@@ -352,7 +352,7 @@ let matching_exp pf1 pf2 = match (pf1,pf2) with
 
 let matching f1 f2 = match (f1,f2) with
   | (BForm ((pf1,o),p), BForm ((pf2,_),_)) -> 
-    (*    DD.devel_hprint (add_str "matching: " (pr_list !CP.print_formula)) [f1;f2] no_pos;*)
+    (*    x_dinfo_hp (add_str "matching: " (pr_list !CP.print_formula)) [f1;f2] no_pos;*)
     let (res1,res2) = matching_exp pf1 pf2 in
     if res2 = [] then (res1,[])
     else (res1,List.map (fun r2 -> BForm((r2,o),p)) res2)
@@ -361,14 +361,14 @@ let matching f1 f2 = match (f1,f2) with
 let can_merge f1 f2 =
   let conjs1 = CP.list_of_conjs f1 in
   let conjs2 = CP.list_of_conjs f2 in
-  (*    DD.devel_hprint (add_str "CONJ1: " (pr_list !CP.print_formula)) conjs1 no_pos;*)
-  (*    DD.devel_hprint (add_str "CONJ2: " (pr_list !CP.print_formula)) conjs2 no_pos;*)
+  (*    x_dinfo_hp (add_str "CONJ1: " (pr_list !CP.print_formula)) conjs1 no_pos;*)
+  (*    x_dinfo_hp (add_str "CONJ2: " (pr_list !CP.print_formula)) conjs2 no_pos;*)
   let part_of_f1, others1 = List.partition (fun c -> Gen.BList.mem_eq (CP.equalFormula) c conjs1) conjs2 in
-  (*DD.devel_hprint (add_str "PART1: " (pr_list !CP.print_formula)) part_of_f1 no_pos;*)
-  (*DD.devel_hprint (add_str "other1: " (pr_list !CP.print_formula)) others1 no_pos;*)
+  (*x_dinfo_hp (add_str "PART1: " (pr_list !CP.print_formula)) part_of_f1 no_pos;*)
+  (*x_dinfo_hp (add_str "other1: " (pr_list !CP.print_formula)) others1 no_pos;*)
   let part_of_f2, others2 = List.partition (fun c -> Gen.BList.mem_eq (CP.equalFormula) c conjs2) conjs1 in
-  (*DD.devel_hprint (add_str "PART2: " (pr_list !CP.print_formula)) part_of_f2 no_pos;*)
-  (*DD.devel_hprint (add_str "other2: " (pr_list !CP.print_formula)) others2 no_pos;*)
+  (*x_dinfo_hp (add_str "PART2: " (pr_list !CP.print_formula)) part_of_f2 no_pos;*)
+  (*x_dinfo_hp (add_str "other2: " (pr_list !CP.print_formula)) others2 no_pos;*)
   let check1 = List.length part_of_f1 = List.length part_of_f2 && List.length others1 = List.length others2 in
   (* TODO: *)
   let matching = if check1 then List.map2 (fun o1 o2 -> matching o1 o2) others1 others2 else [] in
@@ -383,8 +383,8 @@ let rec simplify flist = match flist with
   | hd::tl ->
     let check_merge = List.map (fun f -> can_merge f hd) tl in
     let (can_merge, others) = List.partition fst check_merge in
-    (*    DD.devel_hprint (add_str "MERGE: " (pr_list !CP.print_formula)) (snd (List.split can_merge)) no_pos;*)
-    (*    DD.devel_hprint (add_str "OTHER: " (pr_list !CP.print_formula)) (snd (List.split others)) no_pos;*)
+    (*    x_dinfo_hp (add_str "MERGE: " (pr_list !CP.print_formula)) (snd (List.split can_merge)) no_pos;*)
+    (*    x_dinfo_hp (add_str "OTHER: " (pr_list !CP.print_formula)) (snd (List.split others)) no_pos;*)
     if can_merge = [] then hd::(simplify tl)
     else
       (* TODO: *)
@@ -394,7 +394,7 @@ let rec simplify flist = match flist with
 let pre_process vars fmls =
   List.filter (fun f ->
       let vs = List.filter (fun x -> CP.is_bag_typ x || CP.is_bool_typ x) (CP.fv f) in
-      (*    DD.devel_hprint (add_str "VARS: " !print_svl) vs no_pos;*)
+      (*    x_dinfo_hp (add_str "VARS: " !print_svl) vs no_pos;*)
       CP.subset vs vars) fmls
 
 let rec create_alias_tbl vs aset all_rel_vars base_case = match vs with
@@ -518,16 +518,16 @@ let rec filter_var f vars =
 
 let propagate_rec_helper rcase_orig rel ante_vars =
   let rel_vars = CP.remove_dups_svl (get_rel_vars rcase_orig) in
-  (*  DD.devel_hprint (add_str "Before: " (!CP.print_formula)) rcase_orig no_pos;*)
+  (*  x_dinfo_hp (add_str "Before: " (!CP.print_formula)) rcase_orig no_pos;*)
   (*  let rcase = TP.simplify_raw (CP.drop_rel_formula rcase_orig) in*)
-  (*  DD.devel_hprint (add_str "After: " (!CP.print_formula)) rcase no_pos;*)
+  (*  x_dinfo_hp (add_str "After: " (!CP.print_formula)) rcase no_pos;*)
   let rcase = CP.drop_rel_formula rcase_orig in
   let rel_lhs_vars = CP.fv rel in
   let all_rel_vars = rel_vars @ rel_lhs_vars in
   let rcase = filter_var rcase all_rel_vars in
-  (*  DD.devel_hprint (add_str "RCASE: " (!CP.print_formula)) rcase no_pos;*)
+  (*  x_dinfo_hp (add_str "RCASE: " (!CP.print_formula)) rcase no_pos;*)
   let rcase = rewrite rcase rel_lhs_vars rel_vars false in
-  (*  DD.devel_hprint (add_str "RCASE: " (!CP.print_formula)) rcase no_pos;*)
+  (*  x_dinfo_hp (add_str "RCASE: " (!CP.print_formula)) rcase no_pos;*)
   (*  let all_rel_vars = rel_vars @ (CP.fv rel) in*)
   (*  let als = MCP.ptr_bag_equations_without_null (MCP.mix_of_pure rcase) in*)
   (*  let aset = CP.EMapSV.build_eset als in*)
@@ -535,8 +535,8 @@ let propagate_rec_helper rcase_orig rel ante_vars =
   (*  let alias = create_alias_tbl (rel_vars@other_vars) aset (CP.fv rel) in*)
   (*  let subst_lst = List.concat (List.map (fun vars -> if vars = [] then [] else *)
   (*      let hd = List.hd vars in List.map (fun v -> (v,hd)) (List.tl vars)) alias) in*)
-  (*(*  DD.devel_hprint (add_str "SUBS: " (pr_list (pr_pair !print_sv !print_sv))) subst_lst no_pos;*)*)
-  (*(*  DD.devel_hprint (add_str "RCASE: " (!CP.print_formula)) rcase no_pos;*)*)
+  (*(*  x_dinfo_hp (add_str "SUBS: " (pr_list (pr_pair !print_sv !print_sv))) subst_lst no_pos;*)*)
+  (*(*  x_dinfo_hp (add_str "RCASE: " (!CP.print_formula)) rcase no_pos;*)*)
   (*  let rcase = CP.subst subst_lst rcase in*)
   (*  let rcase = MCP.remove_ptr_equations rcase false in*)
   let rcase_conjs = CP.list_of_conjs rcase in
@@ -552,7 +552,7 @@ let propagate_rec_helper rcase_orig rel ante_vars =
     in
     let rcase = CP.conj_of_list (pre_process all_rel_vars rcase_conjs) no_pos in
     let rcase = filter_var rcase all_rel_vars in
-    (*    DD.devel_hprint (add_str "RCASE: " (!CP.print_formula)) rcase no_pos;*)
+    (*    x_dinfo_hp (add_str "RCASE: " (!CP.print_formula)) rcase no_pos;*)
     let rcase = if CP.diff_svl (List.filter is_bag_typ rel_vars) (CP.fv rcase) != [] then CP.mkFalse no_pos else rcase in
     let rels = CP.get_RelForm rcase_orig in
     let rels,lp = List.split (List.map (fun r -> arr_para_order r rel ante_vars) rels) in
@@ -615,8 +615,8 @@ let rec transform fml v_synch fv_rel = match fml with
   | And _ -> 
     let v_synch = List.filter CP.is_int_typ (CP.diff_svl v_synch fv_rel) in
     let v_subst = List.filter CP.is_int_typ (CP.diff_svl (CP.fv fml) fv_rel) in
-    (*    DD.devel_hprint (add_str "VSYNCH: " (!print_svl)) v_synch no_pos;*)
-    (*    DD.devel_hprint (add_str "VSUBST: " (!print_svl)) v_subst no_pos;*)
+    (*    x_dinfo_hp (add_str "VSYNCH: " (!print_svl)) v_synch no_pos;*)
+    (*    x_dinfo_hp (add_str "VSUBST: " (!print_svl)) v_subst no_pos;*)
     (match (v_subst, v_synch) with
      | ([hd],[v_s]) -> CP.subst [(hd,v_s)] fml
      | _ -> fml
@@ -689,14 +689,14 @@ let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
         let conjs =  Gen.BList.remove_dups_eq CP.equalFormula (List.filter (fun x -> not (isComp x)) conjs) in
         conj_of_list conjs no_pos) bcases in
     let rcases = List.map remove_subtract rcases in
-    DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;
+    x_dinfo_hp (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;
     let bcases = simplify bcases in
-    (*    DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;*)
-    (*    DD.devel_hprint (add_str "RCASE: " (pr_list !CP.print_formula)) rcases no_pos;*)
+    (*    x_dinfo_hp (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;*)
+    (*    x_dinfo_hp (add_str "RCASE: " (pr_list !CP.print_formula)) rcases no_pos;*)
     let rcases = simplify rcases in
-    DD.devel_hprint (add_str "RCASE: " (pr_list !CP.print_formula)) rcases no_pos;
+    x_dinfo_hp (add_str "RCASE: " (pr_list !CP.print_formula)) rcases no_pos;
     let rcases = List.map (fun rcase -> propagate_rec_helper rcase rel ante_vars) rcases in
-    DD.devel_hprint (add_str "RCASE: " (pr_list !CP.print_formula)) rcases no_pos;
+    x_dinfo_hp (add_str "RCASE: " (pr_list !CP.print_formula)) rcases no_pos;
     let fv_rel = get_rel_args rel in
     let bcases = List.map (fun x -> let fv_x = CP.fv x in
                             if List.length fv_x <= 10 || !dis_ps (* not(!allow_pred_spec) *) then x else
@@ -707,12 +707,12 @@ let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
     let bcases = List.map remove_subtract bcases in
     let bcases = List.map (fun x -> rewrite x fv_rel [] true) bcases in
     let bcases = List.map (fun x -> rewrite x fv_rel [] true) bcases in
-    (*    DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;*)
+    (*    x_dinfo_hp (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;*)
     let bcases = List.map (fun x -> CP.remove_cnts2 fv_rel x) bcases in
     let v_synch = List.filter is_int_typ (List.concat (List.map fv rcases)) in
-    (*    DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;*)
+    (*    x_dinfo_hp (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;*)
     let bcases = List.map (fun x -> transform x v_synch fv_rel) bcases in
-    DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;
+    x_dinfo_hp (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;
     let bcases = Gen.BList.remove_dups_eq (fun p1 p2 -> TP.imply_raw p1 p2 && TP.imply_raw p2 p1) bcases in
     let bcases = if List.length fv_rel <= 5 then bcases else
         List.map (fun bcase -> 
@@ -755,7 +755,7 @@ let helper input_pairs rel ante_vars =
       let p = TP.simplify_raw p in 
       let exists_node_vars = List.filter CP.is_node_typ (CP.fv p) in
       let num_vars, others, num_vars_new = get_num_dom p in
-      (*    DD.devel_hprint (add_str "VARS: " (!print_svl)) others no_pos;    *)
+      (*    x_dinfo_hp (add_str "VARS: " (!print_svl)) others no_pos;    *)
       let num_vars = if CP.intersect num_vars others = [] then num_vars else num_vars_new in
       CP.remove_cnts (exists_node_vars@num_vars) p) pfs in
   let pfs,no = propagate_rec pfs rel ante_vars in
@@ -792,8 +792,8 @@ let compute_fixpoint_aux rel_fml pf no_of_disjs ante_vars is_recur =
                           ^ rhs
       in
       (*print_endline ("\nINPUT: " ^ input_fixbag);*)
-      DD.devel_pprint ">>>>>> compute_fixpoint <<<<<<" no_pos;
-      DD.devel_pprint ("Input of fixbag: " ^ input_fixbag) no_pos;
+      x_dinfo_pp ">>>>>> compute_fixpoint <<<<<<" no_pos;
+      x_dinfo_pp ("Input of fixbag: " ^ input_fixbag) no_pos;
       (*      let output_of_sleek = "fixbag.inf" in*)
       (*      let oc = open_out output_of_sleek in*)
       (*      Printf.fprintf oc "%s" input_fixbag;*)
@@ -802,15 +802,15 @@ let compute_fixpoint_aux rel_fml pf no_of_disjs ante_vars is_recur =
       let res = syscall (fixbag ^ " \'" ^ input_fixbag ^ "\' \'" ^ no ^ "\'") in
       let res = remove_paren res (String.length res) in
       (*print_endline ("RES: " ^ res);*)
-      DD.devel_pprint ("Result of fixbag: " ^ res) no_pos;
+      x_dinfo_pp ("Result of fixbag: " ^ res) no_pos;
       let fixpoint = Parse_fixbag.parse_fix res in 
-      DD.devel_hprint (add_str "Result of fixbag (parsed): " (pr_list !CP.print_formula)) fixpoint no_pos;
+      x_dinfo_hp (add_str "Result of fixbag (parsed): " (pr_list !CP.print_formula)) fixpoint no_pos;
       match fixpoint with
       | [post] -> (rel_fml, simplify_res post)
       | _ -> report_error no_pos "Expecting a post"
     with _ -> 
       if not(is_rec pf) then 
-        let () = DD.devel_hprint (add_str "Input: " !CP.print_formula) pf no_pos in
+        let () = x_dinfo_hp (add_str "Input: " !CP.print_formula) pf no_pos in
         let exists_vars = CP.diff_svl (CP.fv_wo_rel pf) (CP.fv rel_fml) in 
         let pf = TP.simplify_exists_raw exists_vars pf in
         (rel_fml, remove_subtract pf)
@@ -833,7 +833,7 @@ let compute_fixpoint input_pairs ante_vars is_rec =
     (*      let pf = List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (CP.mkFalse no_pos) pfs in [(hd,pf,no)]*)
     | _ -> List.concat (List.map (fun r -> helper input_pairs r ante_vars) rels)
   in
-  DD.trace_hprint (add_str "input_pairs: " (pr_list (pr_pair !CP.print_formula !CP.print_formula))) input_pairs no_pos;
+  x_tinfo_hp (add_str "input_pairs: " (pr_list (pr_pair !CP.print_formula !CP.print_formula))) input_pairs no_pos;
   List.map (fun (rel_fml,pf,no) -> compute_fixpoint_aux rel_fml pf no ante_vars is_rec) pairs
 
 let compute_fixpoint (i:int) input_pairs pre_vars is_rec =

@@ -1,0 +1,38 @@
+Debugging Methods with Location of Callee
+========================================
+This feature is handled through cppo and will add file number and line number information to each method
+that have traced by debug.ml library.
+
+A function is being traced by debug.ml library if
+it uses a wrapper method, called no_X, for its
+method call.
+
+
+
+
+Automatic Insertion of x_add
+============================
+The automatic insertion of x_add is a syntax-based method, in which only function calls in the form "Module_name.function_name" is dealt with.
+
+It is possible that some of the function calls are not covered.
+
+This is currently done by sh_proc.ml procedure.
+The main methods are:
+
+(i) main
+
+This method takes the information in cppo/dd_no2.txt and build up the hash table mapd.
+
+The structure of mapd is 'function name' -> list of (module name, argument number), which mapped a function name to all definitions.
+
+For example, function imply can be defined in both a.ml with 3 arguments, b.ml with 2 arguments, then the entry of imply will be imply->[(a,3),(b,2)].
+
+(ii) check_call_sites
+
+This method checks all the call possible call sites. It requires the main procedure to be called first. This method maps all the call sites to their definitions and produce the sed file for later process.
+
+
+occurrence information
+whenever an debug-traced function is called.
+
+

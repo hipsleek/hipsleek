@@ -457,7 +457,7 @@ let rec merge_tnt_case_spec_into_struc_formula prog ctx spec sf =
         | None -> CF.EBase { eb with CF.formula_struc_base = b; }
         | Some c -> merge_tnt_case_spec_into_struc_formula prog ctx spec c
       else
-        let nctx = CF.normalize 16 ctx b pos in
+        let nctx = x_add CF.normalize 16 ctx b pos in
         CF.EBase { eb with
                    CF.formula_struc_base = b;
                    CF.formula_struc_continuation = map_opt 

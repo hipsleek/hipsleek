@@ -1,0 +1,49 @@
+ 
+ id: 1<-1; prover: Z3; loc: _0:0_0:0; kind: UNKNOWN
+ raw proof:no proof raw result:no result
+ Imply: ante: 0<size
+	     conseq:  0<size
+ res: true
+ -------------------- 
+ id: 158<0; prover: Z3; loc: simple-1_ss_25:9_25:10; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  v_int_25_1163'=5 & a'=a & x'=x
+ res: SAT
+ -------------------- 
+ id: 159<1; prover : CACHED ; loc: simple-1_ss_25:9_25:10; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  v_int_25_1163'=5 & a'=a & x'=x
+ res: SAT
+ -------------------- 
+ id: 160<2; prover: Z3; loc: simple-1_ss_28:6_28:9; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  a_1188=a & x'=x & update_array_1d(a_1188,a',x',5) & v_int_28_1164'=1
+ res: SAT
+ -------------------- 
+ id: 161<3; prover : CACHED ; loc: simple-1_ss_28:6_28:9; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  a_1188=a & x'=x & update_array_1d(a_1188,a',x',5) & v_int_28_1164'=1
+ res: SAT
+ -------------------- 
+ id: 162<-1; prover: Z3; loc: simple-1_ss_30:2_30:10; kind: POST
+ raw proof:no proof raw result:no result
+ Sat:  a_1188=a & x'=x & update_array_1d(a_1188,a',x',5) & res=1+x'
+ res: SAT
+ -------------------- 
+ id: 163<4; prover: Z3; loc: simple-1_ss_30:2_30:10; kind: POST
+ raw proof:no proof raw result:no result
+ Imply: ante: a_1188=a & x'=x & update_array_1d(a_1188,a',x',5) & res=1+x'
+	     conseq:  a'[5]=x
+ res: true
+ -------------------- 
+ id: 164<4; prover: Z3; loc: simple-1_ss_30:2_30:10; kind: POST
+ raw proof:no proof raw result:no result
+ Imply: ante: a_1188=a & x'=x & update_array_1d(a_1188,a',x',5) & res=1+x'
+	     conseq:  res=x+1
+ res: true
+ -------------------- 
+ id: 165<4; prover : CACHED ; loc: simple-1_ss_30:2_30:10; kind: POST
+ raw proof:no proof raw result:no result
+ Sat:  a_1188=a & x'=x & update_array_1d(a_1188,a',x',5) & res=1+x'
+ res: SAT
+ --------------------

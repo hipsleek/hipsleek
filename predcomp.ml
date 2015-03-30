@@ -461,7 +461,7 @@ let main_result = Var ({exp_var_name = "main_result";
    		poutput is a set of pairs, but it is in a Java's Set.
    		How can we break it up here?
    	  *)
-   	  let vdef = C.look_up_view_def_raw prog.C.prog_view_decls c in
+   	  let vdef = x_add C.look_up_view_def_raw prog.C.prog_view_decls c in
    	  let cls = class_name_of_view c in
    	  let new_checker = New ({exp_new_class_name = cls;
    							  exp_new_arguments = [];
@@ -1100,7 +1100,7 @@ and gen_bindings_heap prog (h0 : h_formula) (unbound_vars : CP.spec_var list) (v
 	 corresponding positionally to v.
       *)
       let pname = CP.name_of_spec_var p in
-      let vdef = C.look_up_view_def_raw 30 prog.C.prog_view_decls c in
+      let vdef = x_add C.look_up_view_def_raw 30 prog.C.prog_view_decls c in
       let helper v vp m pb =
         if m = ModeOut then
           let vname = CP.name_of_spec_var v in
@@ -1562,7 +1562,7 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
 	ckr.root = p;
 	if (!ckr.traverse(curColor, newColor)) return false;
       *)
-      let vdef = C.look_up_view_def_raw 31 prog.C.prog_view_decls c in
+      let vdef = x_add C.look_up_view_def_raw 31 prog.C.prog_view_decls c in
       let cls = class_name_of_view c in
       let new_checker = New ({exp_new_class_name = cls;
                               exp_new_arguments = [];
@@ -1915,7 +1915,7 @@ and get_partially_bound_vars_heap prog (h0 : h_formula) : CP.spec_var list = mat
     vars1 @ vars2
   | ViewNode ({h_formula_view_arguments = args0;
                h_formula_view_name = c}) ->
-    let vdef = C.look_up_view_def_raw 32 prog.C.prog_view_decls c in
+    let vdef = x_add C.look_up_view_def_raw 32 prog.C.prog_view_decls c in
     let rec helper flags args = match flags, args with
       | (flag :: rest1, arg :: rest2) ->
         let tmp = helper rest1 rest2 in

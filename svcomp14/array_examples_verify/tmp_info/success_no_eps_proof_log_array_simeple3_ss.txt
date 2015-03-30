@@ -1,0 +1,113 @@
+ 
+ id: 1<-1; prover: Z3; loc: _0:0_0:0; kind: UNKNOWN
+ raw proof:no proof raw result:no result
+ Imply: ante: 0<size
+	     conseq:  0<size
+ res: true
+ -------------------- 
+ id: 158<0; prover: Z3; loc: array_simeple3_ss_6:6_6:10; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  v_int_6_1164'=5 & a'=a
+ res: SAT
+ -------------------- 
+ id: 159<1; prover : CACHED ; loc: array_simeple3_ss_6:6_6:10; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  v_int_6_1164'=5 & a'=a
+ res: SAT
+ -------------------- 
+ id: 160<-1; prover: Z3; loc: array_simeple3_ss_6:6_6:12; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  a'=a & v_int_6_1166'=a'[5] & v_int_6_1165'=0 & v_int_6_1165'<v_int_6_1166'
+ res: SAT
+ -------------------- 
+ id: 161<2; prover : CACHED ; loc: array_simeple3_ss_6:6_6:12; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  a'=a & v_int_6_1166'=a'[5] & v_int_6_1165'=0 & v_int_6_1165'<v_int_6_1166'
+ res: SAT
+ -------------------- 
+ id: 162<-1; prover: Z3; loc: array_simeple3_ss_6:6_6:12; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  a'=a & v_int_6_1166'=a'[5] & v_int_6_1165'=0 & v_int_6_1166'<=v_int_6_1165'
+ res: SAT
+ -------------------- 
+ id: 163<3; prover : CACHED ; loc: array_simeple3_ss_6:6_6:12; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  a'=a & v_int_6_1166'=a'[5] & v_int_6_1165'=0 & v_int_6_1166'<=v_int_6_1165'
+ res: SAT
+ -------------------- 
+ id: 164<-1; prover: Z3; loc: array_simeple3_ss_6:2_10:3; kind: If_Stmt
+ raw proof:no proof raw result:no result
+ Sat:  a'=a & (a'[5])<=0 & !(v_bool_6_1169') & (a'[5])<=0 & v_bool_6_1169'
+ res: UNSAT
+ -------------------- 
+ id: 165<-1; prover: Z3; loc: array_simeple3_ss_6:2_10:3; kind: If_Stmt
+ raw proof:no proof raw result:no result
+ Sat:  a'=a & 0<(a'[5]) & v_bool_6_1169' & 0<(a'[5]) & v_bool_6_1169'
+ res: SAT
+ -------------------- 
+ id: 166<-1; prover: Z3; loc: array_simeple3_ss_6:2_10:3; kind: If_Stmt
+ raw proof:no proof raw result:no result
+ Sat:  a'=a & (a'[5])<=0 & !(v_bool_6_1169') & (a'[5])<=0 & !(v_bool_6_1169')
+ res: SAT
+ -------------------- 
+ id: 167<-1; prover: Z3; loc: array_simeple3_ss_6:2_10:3; kind: If_Stmt
+ raw proof:no proof raw result:no result
+ Sat:  a'=a & 0<(a'[5]) & v_bool_6_1169' & 0<(a'[5]) & !(v_bool_6_1169')
+ res: UNSAT
+ -------------------- 
+ id: 168<4; prover: Z3; loc: array_simeple3_ss_8:11_8:12; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  a'=a & 0<(a'[5]) & v_bool_6_1169' & 0<(a'[5]) & v_bool_6_1169' & 
+v_int_8_1168'=0 & v_int_8_1167'=5
+ res: SAT
+ -------------------- 
+ id: 169<5; prover : CACHED ; loc: array_simeple3_ss_8:11_8:12; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  a'=a & 0<(a'[5]) & v_bool_6_1169' & 0<(a'[5]) & v_bool_6_1169' & 
+v_int_8_1168'=0 & v_int_8_1167'=5
+ res: SAT
+ -------------------- 
+ id: 170<6; prover: Z3; loc: array_simeple3_ss_9:4_9:11; kind: PRE_REC
+ raw proof:no proof raw result:no result
+ Sat:  0<(a[5]) & v_bool_6_1169' & 0<(a[5]) & v_bool_6_1169' & 
+update_array_1d(a,a',0,5)
+ res: SAT
+ -------------------- 
+ id: 171<7; prover : CACHED ; loc: array_simeple3_ss_9:4_9:11; kind: PRE_REC
+ raw proof:no proof raw result:no result
+ Sat:  0<(a[5]) & v_bool_6_1169' & 0<(a[5]) & v_bool_6_1169' & 
+update_array_1d(a,a',0,5)
+ res: SAT
+ -------------------- 
+ id: 172<-1; prover: Z3; loc: array_simeple3_ss_9:4_9:11; kind: POST
+ raw proof:no proof raw result:no result
+ Sat:  0<(a[5]) & v_bool_6_1169' & 0<(a[5]) & v_bool_6_1169' & 
+update_array_1d(a,a_1211,0,5) & (((0<(a_1211[5]) & a'[5]=0) | 
+((a_1211[5])<=0 & a'[5]=a_1211[5])))
+ res: SAT
+ -------------------- 
+ id: 173<8; prover: Z3; loc: array_simeple3_ss_9:4_9:11; kind: POST
+ raw proof:no proof raw result:no result
+ Imply: ante: 0<(a[5]) & update_array_1d(a,a_1212,0,5) & (((0<(a_1212[5]) & a'[5]=0) | 
+((a_1212[5])<=0 & a'[5]=a_1212[5])))
+	     conseq:  ((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))
+ res: true
+ -------------------- 
+ id: 174<8; prover: Z3; loc: array_simeple3_ss_9:4_9:11; kind: POST
+ raw proof:no proof raw result:no result
+ Sat:  0<(a[5]) & v_bool_6_1169' & 0<(a[5]) & v_bool_6_1169' & 
+update_array_1d(a,a_1212,0,5) & (((0<(a_1212[5]) & a'[5]=0) | 
+((a_1212[5])<=0 & a'[5]=a_1212[5])))
+ res: SAT
+ -------------------- 
+ id: 175<9; prover: Z3; loc: array_simeple3_ss_9:4_9:11; kind: POST
+ raw proof:no proof raw result:no result
+ Imply: ante: a'=a & (a'[5])<=0
+	     conseq:  ((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))
+ res: true
+ -------------------- 
+ id: 176<9; prover : CACHED ; loc: array_simeple3_ss_9:4_9:11; kind: POST
+ raw proof:no proof raw result:no result
+ Sat:  a'=a & (a'[5])<=0 & !(v_bool_6_1169') & (a'[5])<=0 & !(v_bool_6_1169')
+ res: SAT
+ --------------------

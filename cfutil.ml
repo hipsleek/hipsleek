@@ -87,7 +87,7 @@ let elim_null_vnodes_x prog sf=
     match hf with
     | ViewNode vn ->
       if String.compare (CP.name_of_spec_var vn.h_formula_view_node) null_name = 0 then
-        let vdcecl = Cast.look_up_view_def_raw 58 prog.Cast.prog_view_decls vn.h_formula_view_name in
+        let vdcecl = x_add Cast.look_up_view_def_raw 58 prog.Cast.prog_view_decls vn.h_formula_view_name in
         if vdcecl.Cast.view_is_segmented && CP.diff_svl vn.h_formula_view_arguments eq_nulls = [] then
           HEmp
         else hf
@@ -304,7 +304,7 @@ let rec collect_baga_models_heap prog hf0=
                 h_formula_view_arguments = vs;
                 h_formula_view_pos = pos
                } ->
-      let vdef = Cast.look_up_view_def pos prog.Cast.prog_view_decls c in
+      let vdef = x_add Cast.look_up_view_def pos prog.Cast.prog_view_decls c in
       let from_svs = CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed) :: vdef.Cast.view_vars in
       let to_svs = p :: vs in
       let ss = List.combine from_svs to_svs in
@@ -1064,7 +1064,7 @@ let check_tail_rec_rec_lemma_x prog lhs rhs l_reach_dns l_reach_vns r_reach_dns 
   else
     match r_reach_vns with
     | [rvn] ->
-      let rvdcl = Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls rvn.h_formula_view_name in
+      let rvdcl = x_add Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls rvn.h_formula_view_name in
       let self_sv =  CP.SpecVar (Named rvdcl.Cast.view_data_name, self, Unprimed) in
       let sst = List.combine (self_sv::rvdcl.Cast.view_vars) (rvn.h_formula_view_node::rvn.h_formula_view_arguments) in
       let rec_def_heaps = List.fold_left (fun r (f,_) ->
@@ -1238,7 +1238,7 @@ let need_cycle_checkpoint_fold_helper prog lroots lhs rroots rhs=
 (* if r_reach_dns != [] then -1 else *)
 (* match r_reach_vns with *)
 (*   | [rvn] -> *)
-(*         let rvdcl = Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls rvn.h_formula_view_name in *)
+(*         let rvdcl = x_add Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls rvn.h_formula_view_name in *)
 (*         let self_sv =  CP.SpecVar (Named rvdcl.Cast.view_data_name, self, Unprimed) in *)
 (*         let rec_def_heaps = List.fold_left (fun r (f,_) -> *)
 (*             let views = Cformula.get_views f in *)
@@ -1552,7 +1552,7 @@ let seg_fold_view_br_x prog ldnode rvnode ante conseq rhs_b=
           sst,res,dist_segs0
     | [] -> [],res,dist_segs0
   in
-  let vdecl = Cast.look_up_view_def_raw 60 prog.Cast.prog_view_decls rvnode.h_formula_view_name in
+  let vdecl = x_add Cast.look_up_view_def_raw 60 prog.Cast.prog_view_decls rvnode.h_formula_view_name in
   (* get pos of fwd seg ptrs. todo: backward seg ptrs *)
   let fwd_seg_args = (CP.intersect_svl vdecl.Cast.view_forward_ptrs vdecl.Cast.view_cont_vars) in
   let cont_args_pos = List.map (fun sv -> get_pos vdecl.Cast.view_vars 0 sv)

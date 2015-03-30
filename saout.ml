@@ -200,7 +200,7 @@ let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
           let hp_name = CP.name_of_spec_var hp in
           try
             let () =  Debug.ninfo_pprint (" hp: " ^ (!CP.print_sv hp)) no_pos in
-            let view = C.look_up_view_def_raw 33 cprog.C.prog_view_decls hp_name in
+            let view = x_add C.look_up_view_def_raw 33 cprog.C.prog_view_decls hp_name in
             (ls1,ls2, ls3@[view])
           with _ -> (ls1@[hp], ls2@[def], ls3)
         end
@@ -944,7 +944,7 @@ let plug_shape_into_specs_x cprog iprog dang_hps proc_names pre_hps post_hps hp_
             let f = CF.disj_of_list (List.map fst hp_def.CF.def_rhs) no_pos in
             let simp_hps = if not (CF.is_disj f) then r_simp_hps@[hp] else r_simp_hps in
             try
-              let todo_unk = Cast.look_up_view_def_raw 33 cprog.Cast.prog_view_decls
+              let todo_unk = x_add Cast.look_up_view_def_raw 33 cprog.Cast.prog_view_decls
                   (Cpure.name_of_spec_var hp)
               in
               (r_hp_defs, r_unk_hps, simp_hps)

@@ -1894,7 +1894,7 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
       let na,ls = List.split (List.map prep_one_arg (Gen.BList.add_index b.h_formula_heap_arguments)) in
       let ho_na = List.map (fun ff -> { ff with 
                                         rflow_base = float_out_exps_from_heap 3 lbl_getter annot_getter ff.rflow_base }) b.h_formula_heap_ho_arguments in
-      let () = Debug.dinfo_hprint (add_str "ho_na" (pr_list !print_rflow_formula)) ho_na no_pos in
+      let () = x_dinfo_hp (add_str "ho_na" (pr_list !print_rflow_formula)) ho_na no_pos in
       (HeapNode ({b with h_formula_heap_arguments = na; h_formula_heap_ho_arguments = ho_na; h_formula_heap_perm = na_perm}),(List.concat (ls_perm ::ls)))
     | HeapNode2 b ->
       (*LDK*)

@@ -12,6 +12,7 @@ logs/
 indent/
 arith/.*~
 baga/.*/logs/*
+/\.mona_temp*
 /*hip$
 /*sleek$
 /\#.*
@@ -41,6 +42,7 @@ smt2slk_src/smtlib_lex.ml$
 smt2slk_src/smtlib_parse.ml$
 decidez.glob$
 /*.native$
+cil/obj/
 cil/autom4te.cache/*
 cil/bin/.*.bat$
 cil/doc/header.html$

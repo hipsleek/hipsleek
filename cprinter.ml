@@ -143,7 +143,7 @@ let op_and_short = "&"
 let op_or_short = "|"  
 let op_not_short = "!"  
 let op_star_short = "*"  
-let op_starminus_short = "-*" 
+let op_starminus_short = "--@" 
 let op_phase_short = ";"  
 let op_conj_short = "U*"  
 let op_conjsep_short = "/&\\"  
@@ -174,7 +174,7 @@ let op_and = " & "
 let op_or = " | "  
 let op_not = "!"  
 let op_star = " * "  
-let op_starminus = " -* " 
+let op_starminus = " --@ " 
 let op_phase = " ; "  
 let op_conj = " U* "  
 let op_conjstar = " &* " 
@@ -1235,9 +1235,14 @@ let rec pr_h_formula h =
   | StarMinus ({h_formula_starminus_h1 = h1; h_formula_starminus_h2 = h2; h_formula_starminus_aliasing = al;
                 h_formula_starminus_pos = pos}) -> 
     let arg1 = bin_op_to_list op_starminus_short h_formula_assoc_op h2 in
+    (* let h1 =  match al with
+       | Not_Aliased -> mkStarH h2 h1 no_pos 
+       | May_Aliased -> mkConjH h2 h1 no_pos
+       | Must_Aliased -> mkConjConjH h2 h1 no_pos
+       | Partial_Aliased -> mkConjStarH h2 h1 no_pos in*)
     let arg2 = bin_op_to_list op_starminus_short h_formula_assoc_op h1 in
     let args = arg1@arg2 in
-    pr_aliasing_scenario al; pr_list_op op_starminus f_b args          
+    (*pr_aliasing_scenario al;*) pr_list_op op_starminus f_b args          
   | Phase ({h_formula_phase_rd = h1; h_formula_phase_rw = h2; h_formula_phase_pos = pos}) -> 
     let arg1 = bin_op_to_list op_phase_short h_formula_assoc_op h1 in
     let arg2 = bin_op_to_list op_phase_short h_formula_assoc_op h2 in
@@ -2496,7 +2501,7 @@ and pr_formula_guard_list (es0: formula_guard list)=
   in
   recf es0
 
-and string_of_formula (e:formula) : string =  poly_string_of_pr pr_formula e
+and string_of_formula (e:Cformula.formula) : string =  poly_string_of_pr pr_formula e
 
 and string_of_rflow_formula f = poly_string_of_pr pr_rflow_formula f
 
@@ -5254,7 +5259,7 @@ Mcpure_D.print_mg_f := string_of_memoised_group ;;
 Mcpure.print_mp_f := string_of_memo_pure_formula ;;
 Mcpure.print_mg_f := string_of_memoised_group ;;
 Mcpure.print_mc_f := string_of_memoise_constraint ;;
-Mcpure.print_sv_f := string_of_spec_var ;; 
+Mcpure.print_sv_f := string_of_spec_var ;;
 Mcpure.print_sv_l_f := string_of_spec_var_list;;
 Mcpure.print_bf_f := string_of_b_formula ;;
 Mcpure.print_p_f_f := string_of_pure_formula ;;
@@ -5366,6 +5371,8 @@ Lem_store.lem_pr_med:= string_of_coerc_med;;
 CVP.print_vperm_sets := string_of_vperm_sets;;
 Cformula.print_vperm_sets := string_of_vperm_sets;;
 Cfout.print_list_failesc_context := string_of_list_failesc_context;
+Translate_out_array_in_cpure_formula.print_pure := string_of_pure_formula;;
+Translate_out_array_in_cpure_formula.print_p_formula := string_of_p_formula;;
 Cfout.print_formula := string_of_formula;
 Cfout.print_pure_formula := string_of_pure_formula;
 Cfout.print_sv := string_of_spec_var;
