@@ -10079,17 +10079,17 @@ let get_may_error_from_ctx cs =
 (*   Debug.no_1 "get_may_error_from_ctx" pr1 (pr_option pr2) *)
 (*       (fun _ -> get_may_error_from_ctx cs) cs *)
 
+let rec is_ctx_error ctx=
+  match ctx with
+  | Ctx es -> not (es.es_final_error = None)
+  | OCtx (c1, c2) -> is_ctx_error c1 || is_ctx_error c2
+
 let isFailCtx_gen cl =
-  let rec get_final_error ctx=
-    match ctx with
-    | Ctx es -> not (es.es_final_error = None)
-    | OCtx (c1, c2) -> get_final_error c1 || get_final_error c2
-  in
   match cl with
   | FailCtx _ -> true
   | SuccCtx cs -> if cs = [] then true else
       (* ((get_must_error_from_ctx cs) !=None) || ((get_may_error_from_ctx cs) !=None) *)
-      List.exists (fun ctx -> get_final_error ctx) cs
+      List.exists (fun ctx -> is_ctx_error ctx) cs
 
 let get_final_error cl=
   let rec get_final_error ctx=
@@ -11514,7 +11514,9 @@ let isSuccessPartialCtx_new (fs,succ_brs) =
   let is_succ = List.for_all isSuccessBranchFail fs in
   if not !Globals.enable_error_as_exc || not is_succ then is_succ else
     (* all succ branch should not subsume must, may flows *)
-    List.for_all (fun (_,_, oft) -> oft = None) succ_brs
+    succ_brs != [] && List.for_all (fun (_, _, oft) ->
+        oft = None
+    ) succ_brs
 
 let isSuccessFailescCtx (fs,_,_) =
   if (Gen.is_empty fs) then true else false

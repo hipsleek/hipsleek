@@ -4605,7 +4605,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                           in
                           (******************************************************)
                           (* let () = print_endline ("### rs4 (2) = "^(Cprinter.string_of_context rs4)) in *)
-                          if not !Globals.disable_failure_explaining then
+                          if not !Globals.disable_failure_explaining && not !Globals.enable_error_as_exc then
                             let tmp_lctx = invert_ctx rs4 new_post in
                             (* let () = print_endline ("### tmp_lctx = "^(Cprinter.string_of_list_context tmp_lctx)) in *)
                             (tmp_lctx ,TrueConseq)
