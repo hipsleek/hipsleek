@@ -2,7 +2,8 @@ extern int __VERIFIER_nondet_int();
 extern void __VERIFIER_error();
 
 
-int fibo(int n) {
+int fibo(int n)
+{
     if (n < 1) {
         return 0;
     } else if (n == 1) {

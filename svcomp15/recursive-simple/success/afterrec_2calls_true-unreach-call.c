@@ -1,17 +1,42 @@
-void f(int n) {
+void __error()
+/*@
+  requires emp & true
+  ensures emp & true & flow __Error;
+*/;
+
+void f(int n)
+/*@
+  case {
+  n<3 -> ensures emp & true;
+  n>=3 -> ensures emp & true & flow __Error;
+  }
+ */
+{
   if (n<3) return;
   n--;
   f2(n);
-  __VERIFIER_error();
+  __error();
 }
 
-void f2(int n) {
+void f2(int n)
+/*@
+  case {
+  n<3 -> ensures emp & true;
+  n>=3 -> ensures emp & true & flow __Error;
+  }
+ */
+{
   if (n<3) return;
   n--;
   f(n);
-  __VERIFIER_error();
+  __error();
 }
 
-void main() {
+void main()
+/*@
+  requires true
+  ensures true;
+*/
+{
   f(2);
 }
