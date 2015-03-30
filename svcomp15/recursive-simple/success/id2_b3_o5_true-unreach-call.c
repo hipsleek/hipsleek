@@ -16,8 +16,8 @@ void __error()
 int id(int x)
 /*@
   case {
-  x>=0 & x<3 -> ensures emp & res=x;
-  x>=3 -> ensures emp & res=3;
+  x>=0 & x<=3 -> ensures emp & res=x;
+  x>3 -> ensures emp & res=3;
   x<0 -> requires Loop ensures false;
   }
  */
@@ -31,8 +31,8 @@ int id(int x)
 int id2(int x)
 /*@
   case {
-  x>=0 & x<3 -> ensures emp & res=x;
-  x>=3 -> ensures emp & res=3;
+  x>=0 & x<=3 -> ensures emp & res=x;
+  x>3 -> ensures emp & res=3;
   x<0 -> requires Loop ensures false;
   }
  */
