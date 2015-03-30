@@ -7,6 +7,15 @@ afterrec_2calls.c
 Spec for fibonacci
 
 ============================================
+fail/id2_b3_o2_false-unreach-call.c: should be FAIL
+fail/id_b3_o2_false-unreach-call.c: should be FAIL
+fail/id_o1000_false-unreach-call.c: should be FAIL
+fail/id_o100_false-unreach-call.c: should be FAIL
+fail/id_o10_false-unreach-call.c: should be FAIL
+fail/id_o200_false-unreach-call.c: should be FAIL
+fail/id_o20_false-unreach-call.c: should be FAIL
+fail/id_o3_false-unreach-call.c: should be FAIL
+
 ============================================
 ============================================
 ============================================
