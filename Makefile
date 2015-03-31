@@ -92,6 +92,9 @@ xml: xml/xml-light.cma
 xml/xml-light.cma:
 	$(XML)
 
+ppx: ppx
+	@ocamlbuild $(OBB_NGFLAGS) ppx/ex1.byte
+
 parser.cmo:
 	@ocamlbuild $(OBB_NGFLAGS) parser.cmo
 
