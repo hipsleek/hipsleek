@@ -1554,7 +1554,7 @@ let infer_pure_m unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig lhs_x
   let (nes,nc,nlst) = infer_pure_m  unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_orig rhs_xpure_orig iv_orig pos in
   match nc with
   | Some f ->
-    let nf = Translate_out_array_in_cpure_formula.translate_back_array_in_one_formula f in
+    let nf = Trans_arr.translate_back_array_in_one_formula f in
     (nes,Some nf,nlst)
   | None -> (nes,nc,nlst)
 ;;
@@ -2110,7 +2110,7 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
       let inf_rel_ls = List.concat (List.map wrap_exists inf_rel_ls) in
       (* -------------------------------------------------------------- *)
       (* ZH: Drop formulas with array inside quantifiers *)
-      let inf_rel_ls = List.map (fun (fr,f1,f2) -> (fr,Translate_out_array_in_cpure_formula.drop_array_quantifier f1,Translate_out_array_in_cpure_formula.drop_array_quantifier f2)) inf_rel_ls in
+      let inf_rel_ls = List.map (fun (fr,f1,f2) -> (fr,Trans_arr.drop_array_quantifier f1,Trans_arr.drop_array_quantifier f2)) inf_rel_ls in
       (* -------------------------------------------------------------- *)
       (* below causes non-linear LHS for relation *)
       (* let inf_rel_ls = List.map (simp_lhs_rhs vars) inf_rel_ls in *)
