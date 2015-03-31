@@ -930,7 +930,7 @@ let simplify (pe : formula) : formula =
   else
     (* let res_memo = simplify_ops pr_w pr_s f_memo in *)
     (* restore_memo_formula subs bvars res_memo *)
-    simplify_ops pr_w pr_s pe
+    x_add simplify_ops pr_w pr_s pe
 
 let simplify (pe : formula) : formula =
   let pf = !print_pure in

@@ -135,7 +135,7 @@ let helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_var
       (*        CP.subst subst_lst p *)
       (*      else p in*)
       let bag_vars, post_vars = List.partition CP.is_bag_typ post_vars in
-      let p = TP.simplify (CP.mkExists post_vars p None no_pos) in
+      let p = x_add_1 TP.simplify (CP.mkExists post_vars p None no_pos) in
       (p,[],bag_vars)
     | Some triples (*(rel, post, pre)*) ->
       if inf_post then
@@ -348,13 +348,13 @@ let pre_calculate_x fp_func input_fml pre_vars proc_spec
     let quan_vars = CP.diff_svl (CP.fv fml) pre_rel_vars in
     let fml = CP.mkForall quan_vars fml None no_pos in
     let () = Debug.ninfo_hprint (add_str "pre_rec_raw" !CP.print_formula) fml no_pos in
-    let pre_rec = TP.simplify fml in
+    let pre_rec = x_add_1 TP.simplify fml in
     let () = Debug.ninfo_hprint (add_str "pre_rec" !CP.print_formula) pre_rec no_pos in
 
     (*NEW procedure: not add pre_inv at the begining*)
     let list_pre = [pre_rec;pure_oblg_to_check] in
     let final_pre0 = List.fold_left (fun f1 f2 -> CP.mkAnd f1 f2 no_pos) constTrue list_pre in
-    let final_pre1 = TP.simplify final_pre0 in
+    let final_pre1 = x_add_1 TP.simplify final_pre0 in
     let final_pre2 = filter_disj final_pre1 (pre_fmls) in
     (* NEW procedure# Form pre-condition given invariant:  D:=gist Pre given Inv;*)
     let final_pre3 = TP.om_gist final_pre2 pre in
@@ -487,7 +487,7 @@ let update_with_td_fp_x bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
       let () = x_tinfo_hp (add_str "oblg to check" !CP.print_formula) pure_oblg_to_check no_pos in
       let checkpoint1 = check_oblg pre_rel pre pure_oblg_to_check pre_rel_df in
       if checkpoint1 then
-        let pre = TP.simplify pre in
+        let pre = x_add_1 TP.simplify pre in
         let pre = filter_disj pre pre_fmls in
         let pre = TP.pairwisecheck_raw pre in
         let () = x_dinfo_hp (add_str "pre" !CP.print_formula) pre no_pos in
@@ -537,7 +537,7 @@ let update_with_td_fp_x bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
      | [] -> [(rel,post,constTrue,constTrue)]
      | [(r,lst)] ->
        let final_pre = List.fold_left (fun f1 f2 -> CP.mkAnd f1 f2 no_pos) constTrue lst in
-       let final_pre = TP.simplify_raw final_pre in
+       let final_pre = x_add_1 TP.simplify_raw final_pre in
        let final_pre = filter_disj final_pre pre_fmls in
        let final_pre = TP.pairwisecheck_raw final_pre in
        let () = x_dinfo_hp (add_str "final_pre(pred)" !CP.print_formula) final_pre no_pos in

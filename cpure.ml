@@ -6291,7 +6291,7 @@ and arith_simplify_x (pf : formula) :  formula =
   if (not !Globals.allow_norm) && !Globals.allow_inf_qe_coq then pf else
   if !Globals.dis_norm then pf else
     let rec helper pf = match pf with
-      |  BForm (b,lbl) -> BForm (b_form_simplify b,lbl)
+      |  BForm (b,lbl) -> BForm (x_add_1 b_form_simplify b,lbl)
       |  And (f1, f2, loc) -> And (helper f1, helper f2, loc)
       |  AndList b -> AndList (map_l_snd helper b)
       |  Or (f1, f2, lbl, loc) -> Or (helper f1, helper f2, lbl, loc)
@@ -7041,7 +7041,7 @@ let simp_bform simp bf =
 (* normalise and simplify b_formula *)
 let norm_bform_a (bf:b_formula) : b_formula =
   if (not !Globals.allow_norm) then bf else
-    (*let bf = b_form_simplify bf in *)
+    (*let bf = x_add_1 b_form_simplify bf in *)
     let fvars = bfv bf in
     let contain_waitlevel = List.exists (fun v -> (name_of_spec_var v = Globals.waitlevel_name)) fvars in
     if (contain_waitlevel || (is_float_bformula bf)) then bf
@@ -8033,7 +8033,7 @@ let assoc_max (e:exp) : add_term_list list =
 
 (* normalise and simplify b_formula *)
 let norm_bform_b (bf:b_formula) : b_formula =
-  (*let bf = b_form_simplify bf in *)
+  (*let bf = x_add_1 b_form_simplify bf in *)
   let (pf,il) = bf in
   let npf = match pf with 
     | Lt  (e1,e2,l) -> 

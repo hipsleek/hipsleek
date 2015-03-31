@@ -1333,7 +1333,7 @@ and formula_case_inference_x cp (f_ext:CF.struc_formula)(v1:Cpure.spec_var list)
            force_verbose_xpure:=f_aux;
            let fact = x_add_1 Solver.normalize_to_CNF (pure_of_mix not_fact) no_pos in
            (* let fact = CP.drop_disjunct fact in *)
-           let sfact = TP.simplify fact in
+           let sfact = x_add_1 TP.simplify fact in
            (* let sfact = fact in *)
            let hfact = TP.hull sfact in
            let () = x_tinfo_hp (add_str "not_fact" Cprinter.string_of_mix_formula) not_fact no_pos in
@@ -2311,9 +2311,9 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
    ) in 
    let inv = if(!Globals.allow_mem) then Mem.add_mem_invariant inv vdef.I.view_mem else inv in
    let n_tl = gather_type_info_pure prog inv n_tl in 
-   let inv_pf = trans_pure_formula inv n_tl in   
+   let inv_pf = x_add trans_pure_formula inv n_tl in   
    (* Thai : pf - user given invariant in core form *) 
-   let inv_pf = Cpure.arith_simplify 1 inv_pf in
+   let inv_pf = x_add Cpure.arith_simplify 1 inv_pf in
    let cf_fv = List.map CP.name_of_spec_var (CF.struc_fv cf) in
    let inv_lock_fv = match inv_lock with
      | None -> []
@@ -2408,8 +2408,8 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
          let rr = List.map (fun (idl,pf) ->
              let svl = List.map (fun c -> trans_var (c,Unprimed) n_tl pos) idl in
              (* let svl, _, _, _ = x_add_1 Immutable.split_sv svl vdef in *)
-             let cpf = trans_pure_formula pf n_tl in
-             let cpf = Cpure.arith_simplify 1 cpf in
+             let cpf = x_add trans_pure_formula pf n_tl in
+             let cpf = x_add Cpure.arith_simplify 1 cpf in
              (svl,cpf)
            ) lst in
          Some rr
@@ -2890,7 +2890,7 @@ and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
   let n_tl = List.map (fun (var_type, var_name) -> (var_name,{ sv_info_kind = (trans_type prog var_type pos);id = fresh_int () })) rdef.I.rel_typed_vars in
   (* Need to collect the type information before translating the formula *)
   let n_tl = gather_type_info_pure prog rdef.I.rel_formula n_tl in
-  let crf = trans_pure_formula rdef.I.rel_formula n_tl in
+  let crf = x_add trans_pure_formula rdef.I.rel_formula n_tl in
   let crdef = {C.rel_name = rdef.I.rel_name; 
                C.rel_vars = rel_sv_vars;
                C.rel_formula = crf; }
@@ -2983,8 +2983,8 @@ and trans_axiom_x (prog : I.prog_decl) (adef : I.axiom_decl) : C.axiom_decl =
   let n_tl = gather_type_info_pure prog adef.I.axiom_hypothesis [] in
   let n_tl = gather_type_info_pure prog adef.I.axiom_conclusion n_tl in
   (* Translate the hypothesis and conclusion *)
-  let chyp = trans_pure_formula adef.I.axiom_hypothesis n_tl in
-  let ccln = trans_pure_formula adef.I.axiom_conclusion n_tl in
+  let chyp = x_add trans_pure_formula adef.I.axiom_hypothesis n_tl in
+  let ccln = x_add trans_pure_formula adef.I.axiom_conclusion n_tl in
   (* let () = Smtsolver.add_axiom_def (Smtsolver.AxmDefn (chyp,ccln)) in *)
   let cadef = { C.axiom_id=adef.I.axiom_id; 
                 C.axiom_hypothesis = chyp;
@@ -6805,9 +6805,9 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (prepost_flag:bool) (quantify
           match clist with
           | []->(tlist,[])
           | (c1,c2)::tl ->
-            let cf1 = trans_pure_formula c1 tlist in
+            let cf1 = x_add trans_pure_formula c1 tlist in
             let (n_tl,cf2) = trans_struc_formula fvars tlist c2 in
-            let f1 = Cpure.arith_simplify 2 cf1 in
+            let f1 = x_add Cpure.arith_simplify 2 cf1 in
             let f2 = cf2 in
             let (n_tlist, n_cl) = aux n_tl tl in
             (n_tlist, (f1, f2)::n_cl)
@@ -7293,8 +7293,8 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                        IF.h_formula_thread_label = pi;} ->
         let dataNode = IF.mkHeapNode (v,p) c [] 0 false SPLIT0 (Ipure.ConstAnn(Mutable)) false false false perm [] [] pi pos in
         let dataNode2, t_f, n_tl1, sv1 = linearize_heap dataNode pos tl in
-        let new_dl = trans_pure_formula dl tl in
-        let new_dl = Cpure.arith_simplify 5 new_dl in
+        let new_dl = x_add trans_pure_formula dl tl in
+        let new_dl = x_add Cpure.arith_simplify 5 new_dl in
         let sv2, rsr2, n_tl2 = linearize_formula prog rsr tlist in
         let newNode = CF.ThreadNode {
             CF.h_formula_thread_name = x_add CF.get_node_name 1 dataNode2;
@@ -7634,13 +7634,13 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     (*let () = print_string("Heap: "^(Cprinter.string_of_h_formula new_h)^"\n") in*)
     let new_h, new_constr, new_vars = x_add_1 Immutable.normalize_field_ann_heap_node new_h in
     let newvars = newvars@new_vars in
-    let new_p = trans_pure_formula p n_tl in
+    let new_p = x_add trans_pure_formula p n_tl in
     let new_p = CP.join_disjunctions (new_p::new_constr) in
-    let new_p = Cpure.arith_simplify 5 new_p in
+    let new_p = x_add Cpure.arith_simplify 5 new_p in
     let mix_p = (MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_p) in
     (*formula_delayed*)
-    let new_dl = trans_pure_formula dl tlist in
-    let new_dl = Cpure.arith_simplify 5 new_dl in
+    let new_dl = x_add trans_pure_formula dl tlist in
+    let new_dl = x_add Cpure.arith_simplify 5 new_dl in
     let mix_dl = (MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_dl) in
     let id_var = (match id with
         | None -> 
@@ -7687,11 +7687,11 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     let new_h, new_constr, new_vars = x_add_1 Immutable.normalize_field_ann_heap_node new_h in
     let newvars = newvars1@new_vars in
     let new_vp = trans_vperm_sets vp n_tl pos in
-    let new_p = trans_pure_formula p n_tl in
+    let new_p = x_add trans_pure_formula p n_tl in
     (* let () = print_string("\nForm: "^(Cprinter.string_of_pure_formula new_p)) in *)
     let new_p = CP.join_disjunctions (new_p::new_constr) in
     (* let () = print_string("\nForm: "^(Cprinter.string_of_pure_formula new_p)) in *)
-    let new_p = Cpure.arith_simplify 5 new_p in
+    let new_p = x_add Cpure.arith_simplify 5 new_p in
     (* let () = print_string("\nSimpleForm: "^(Cprinter.string_of_pure_formula new_p)) in *)
     let new_fl = trans_flow_formula fl pos in
     let new_a = ref [] in
@@ -7782,19 +7782,19 @@ and trans_pure_formula_x (f0 : IP.formula) (tlist:spec_var_type_list) : CP.formu
   match f1 with
   | IP.BForm (bf,lbl) -> CP.BForm (trans_pure_b_formula bf tlist , lbl) 
   | IP.And (f1, f2, pos) ->
-    let pf1 = trans_pure_formula f1 tlist in
-    let pf2 = trans_pure_formula f2 tlist in CP.mkAnd pf1 pf2 pos
-  | IP.AndList b -> CP.mkAndList (map_l_snd (fun c-> trans_pure_formula c tlist) b)
+    let pf1 = x_add trans_pure_formula f1 tlist in
+    let pf2 = x_add trans_pure_formula f2 tlist in CP.mkAnd pf1 pf2 pos
+  | IP.AndList b -> CP.mkAndList (map_l_snd (fun c-> x_add trans_pure_formula c tlist) b)
   | IP.Or (f1, f2,lbl, pos) ->
-    let pf1 = trans_pure_formula f1 tlist in
-    let pf2 = trans_pure_formula f2 tlist in CP.mkOr pf1 pf2 lbl pos
-  | IP.Not (f, lbl, pos) -> let pf = trans_pure_formula f tlist in CP.mkNot pf lbl pos
+    let pf1 = x_add trans_pure_formula f1 tlist in
+    let pf2 = x_add trans_pure_formula f2 tlist in CP.mkOr pf1 pf2 lbl pos
+  | IP.Not (f, lbl, pos) -> let pf = x_add trans_pure_formula f tlist in CP.mkNot pf lbl pos
   | IP.Forall ((v, p), f, lbl, pos) ->
-    let pf = trans_pure_formula f tlist in
+    let pf = x_add trans_pure_formula f tlist in
     let v_type = Cpure.type_of_spec_var (trans_var (v,Unprimed) tlist pos) in
     let sv = CP.SpecVar (v_type, v, p) in CP.mkForall [ sv ] pf lbl pos
   | IP.Exists ((v, p), f, lbl, pos) ->
-    let pf = trans_pure_formula f tlist in
+    let pf = x_add trans_pure_formula f tlist in
     let sv = trans_var (v,p) tlist pos in
     CP.mkExists [ sv ] pf lbl pos
 
@@ -7918,7 +7918,7 @@ and trans_term_ann (ann: IP.term_ann) (tlist:spec_var_type_list): CP.term_ann =
     CP.tu_fname = uid.IP.tu_fname;
     CP.tu_call_num = 0;
     CP.tu_args = List.map (fun e -> trans_pure_exp e tlist) uid.IP.tu_args;
-    CP.tu_cond = trans_pure_formula uid.IP.tu_cond tlist; 
+    CP.tu_cond = x_add trans_pure_formula uid.IP.tu_cond tlist; 
     CP.tu_icond = CP.mkTrue no_pos;
     CP.tu_sol = None; 
     CP.tu_pos = uid.IP.tu_pos; } in 
@@ -10417,7 +10417,7 @@ and trans_mem_formula (imem : IF.mem_formula) (tlist:spec_var_type_list) : CF.me
   let mem_exp = trans_pure_exp imem.IF.mem_formula_exp tlist in 
   let helpl1, helpl2 = List.split imem.IF.mem_formula_field_layout in
   let helpl2 = List.map trans_field_layout helpl2 in
-  let guards = List.map (fun c -> trans_pure_formula c tlist) imem.IF.mem_formula_guards in 
+  let guards = List.map (fun c -> x_add trans_pure_formula c tlist) imem.IF.mem_formula_guards in 
   let field_values = List.map (fun c -> (fst c), 
                                         (List.map (fun a -> match a with
                                              | IP.Var ((ve, pe), pos_e) -> CP.Var(trans_var_safe (ve, pe) UNK tlist pos_e,pos_e)
