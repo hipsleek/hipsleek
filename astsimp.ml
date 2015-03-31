@@ -9317,7 +9317,7 @@ and case_normalize_proc_x prog (f:Iast.proc_decl):Iast.proc_decl =
   let nb = match f.Iast.proc_body with 
       None -> None 
     | Some f->
-      let f,_ = x_add_1 case_rename_var_decls_init f in
+      (* let f,_ = x_add_1 case_rename_var_decls_init f in *)
       let r,_,_ = (case_normalize_exp prog h2 [(eres_name,Unprimed);(res_name,Unprimed)] f) in
       Some r in
   {f with Iast.proc_static_specs =nst;

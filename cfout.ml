@@ -420,14 +420,14 @@ let simplify_branch_context (pt, ctx, fail_type) =
                        let () = x_tinfo_hp (add_str "all variables" (pr_list !print_sv)) all_svl no_pos in
                        let h,mf,vp,fl,t,a = split_components en.es_formula in
                        let curr_svl = stk_vars # get_stk in
-                       let () = x_tinfo_hp (add_str "curr variables" (pr_list !print_sv)) curr_svl no_pos in
+                       let () = x_binfo_hp (add_str "curr variables" (pr_list !print_sv)) curr_svl no_pos in
                        let bind_svl = h_fv h in
-                       let () = x_tinfo_hp (add_str "bind variables" (pr_list !print_sv)) bind_svl no_pos in
+                       let () = x_binfo_hp (add_str "heap variables" (pr_list !print_sv)) bind_svl no_pos in
                        let curr_n_bind_svl = Gen.BList.remove_dups_eq Cpure.eq_spec_var (curr_svl@bind_svl) in
                        let imp_svl = List.filter (fun sv ->
                            Gen.BList.mem_eq Cpure.eq_spec_var_unp sv curr_n_bind_svl
                          ) all_svl in
-                       let () = x_tinfo_hp (add_str "important variables" (pr_list !print_sv)) imp_svl no_pos in
+                       let () = x_binfo_hp (add_str "important variables" (pr_list !print_sv)) imp_svl no_pos in
                        let new_exists_svl = Gen.BList.difference_eq Cpure.eq_spec_var all_svl imp_svl in
                        let new_exists_svl0, new_exists_svl1 = List.partition (fun sv ->
                            (Cpure.type_of_spec_var sv = Int) || (Cpure.type_of_spec_var sv = Bool)

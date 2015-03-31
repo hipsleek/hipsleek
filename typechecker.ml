@@ -2025,10 +2025,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
              (print_string_quiet ("\ndprint:"^pos.start_pos.Lexing.pos_fname
                                   ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^" empty context"))
            else
-             let tmp1 = "\ndprint before: " ^ pos.start_pos.Lexing.pos_fname
-                        ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str1 ^ "\n" in
+             let tmp1 = 
+               if !Globals.simplify_dprint then ""
+               else "\ndprint(orig): " ^ pos.start_pos.Lexing.pos_fname
+                 ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str1 ^ "\n" in
              let tmp1 = if (previous_failure ()) then ("failesc context: "^tmp1) else tmp1 in
-             let tmp2 = "\ndprint after: " ^ pos.start_pos.Lexing.pos_fname
+             let tmp2 = "\ndprint(simpl): " ^ pos.start_pos.Lexing.pos_fname
                         ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str2 ^ "\n" in
              let tmp2 = if (previous_failure ()) then ("failesc context: "^tmp2) else tmp2 in
              print_string_quiet (tmp1 ^ tmp2));

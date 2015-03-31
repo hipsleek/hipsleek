@@ -13,8 +13,8 @@ void foo(node xxx, node yyyy)
   ensures xxx::ll<nnn>;
 {
   // dprint;
-	node tmpZZZ = xxx.next;
-	bool fl_bb = tmpZZZ != yyyy;
+	node xxx = xxx.next;
+	bool fl_bb = xxx != yyyy;
 	if (fl_bb) {
                 dprint;
 		return;
@@ -37,7 +37,6 @@ void foo(node xxx, node yyyy)
 
 !!! **cfout.ml#423:important variables:[fl_47,tmp_46,nnn,xxx,yyyy,xxx',Anon_1507,q_1508,flted_7_1506]
 !!! **cfout.ml#425:exists variables:[fl_47',yyyy',tmp_46']
-
 
  why tmp renamed to tmp_46?
  why fl_bb renamed to fl_47?
