@@ -240,22 +240,22 @@ let apply_transitive_impl_fix prog post_hps callee_hps (* hp_rel_unkmap *) dang_
   *)
   (*frozen_hps: it is synthesized already*)
   let rec helper (constrs: CF.hprel list) new_cs frozen_hps =
-    DD.binfo_pprint ">>>>>> step 3a: simplification <<<<<<" no_pos;
+    x_binfo_pp ">>>>>> step 3a: simplification <<<<<<" no_pos;
     let new_cs1 = (* Sautil.simplify_constrs prog unk_hps *) new_cs in
     (*  Debug.ninfo_hprint (add_str "apply_transitive_imp LOOP: " (pr_list_ln Cprinter.string_of_hprel)) constrs no_pos; *)
     begin
       let equal_cands, complex_hps,_ = Icontext.icompute_action_pre new_cs1 post_hps frozen_hps [] in
       let equal_hps = List.map fst equal_cands in
       let () = if equal_hps <> [] then
-          DD.binfo_pprint (" freeze: " ^ (!CP.print_svl equal_hps) )no_pos
+          x_binfo_pp (" freeze: " ^ (!CP.print_svl equal_hps) )no_pos
         else ()
       in
       let frozen_hps0 = frozen_hps@equal_hps in
-      DD.binfo_pprint ">>>>>> step 3b: do apply_transitive_imp <<<<<<" no_pos;
+      x_binfo_pp ">>>>>> step 3b: do apply_transitive_imp <<<<<<" no_pos;
       (* let constrs2, new_cs2, new_non_unk_hps = subst_cs prog dang_hps constrs new_cs1 in *)
       if equal_hps = [] then
         (*stop*)
-        let () =  if complex_hps <> [] then DD.binfo_zprint (lazy ((" freeze: " ^ (!CP.print_svl complex_hps) ))) no_pos
+        let () =  if complex_hps <> [] then x_binfo_zp (lazy ((" freeze: " ^ (!CP.print_svl complex_hps) ))) no_pos
           else ()
         in
         (constrs@new_cs1,[])
@@ -265,7 +265,7 @@ let apply_transitive_impl_fix prog post_hps callee_hps (* hp_rel_unkmap *) dang_
         let unfrozen_hps1 = CP.remove_dups_svl (CP.intersect_svl unfrozen_hps frozen_hps0) in
         let frozen_hps1 = CP.diff_svl  frozen_hps0 unfrozen_hps1 in
         let () = if unfrozen_hps1 <> [] then
-            DD.binfo_pprint (" unfreeze: " ^ (!CP.print_svl unfrozen_hps) )no_pos
+            x_binfo_pp (" unfreeze: " ^ (!CP.print_svl unfrozen_hps) )no_pos
           else ()
         in
         (*for debugging*)
@@ -388,7 +388,7 @@ let split_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps link_
           let () = Debug.ninfo_zprint (lazy (("  refined cs: " ^ (Cprinter.string_of_hprel_short new_cs)))) no_pos in
           (* let rf = CF.mkTrue (CF.mkTrueFlow()) no_pos in *)
           let () = Debug.ninfo_pprint ("  generate pre-preds-based constraints: " ) no_pos in
-          let defined_hprels = List.map (Sautil.generate_hp_ass 2 unk_svl1 cond_path) defined_preds0 in
+          let defined_hprels = List.map (x_add Sautil.generate_hp_ass 2 unk_svl1 cond_path) defined_preds0 in
           new_cs::defined_hprels
       in
       (new_constrs, unk_map1, link_hps)
@@ -421,9 +421,9 @@ let split_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps link_
       begin
         step_change # inc;
         (* Debug.binfo_start "split_base"; *)
-        (* Debug.binfo_hprint (add_str "BEFORE" pr1) cs no_pos; *)
-        (* Debug.binfo_pprint "=============>>>>" no_pos; *)
-        (* Debug.binfo_hprint (add_str "AFTER" (pr_list_ln pr1)) new_cs no_pos; *)
+        (* x_binfo_hp (add_str "BEFORE" pr1) cs no_pos; *)
+        (* x_binfo_pp "=============>>>>" no_pos; *)
+        (* x_binfo_hp (add_str "AFTER" (pr_list_ln pr1)) new_cs no_pos; *)
         (* Debug.binfo_end "split_base"; *)
         res
       end
@@ -448,16 +448,16 @@ let split_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps link_
   let (constrs2, unk_map2, link_hpargs2) as res = split_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps link_hps in
   let s2 = (pr_list_num Cprinter.string_of_hprel_short) constrs2 in
   if step_change # no_change then 
-    DD.binfo_pprint "*** NO SPLITTING DONE ***" no_pos
+    x_binfo_pp "*** NO SPLITTING DONE ***" no_pos
   else 
     begin
       let () = DD.binfo_start "split_base" in
-      let () = DD.binfo_hprint (add_str "post_hps" Cprinter.string_of_spec_var_list) post_hps no_pos in
-      let () = DD.binfo_hprint (add_str "prog_vars" Cprinter.string_of_spec_var_list) prog_vars no_pos in
-      let () = DD.binfo_hprint (add_str "BEFORE" pr_id) s1 no_pos in
-      let () = DD.binfo_pprint "=============>>>>" no_pos in
-      let () = DD.binfo_hprint (add_str "AFTER" pr_id) s2 no_pos in
-      let () = DD.binfo_hprint (add_str "UNKNOWN added" (pr_list (fun (x,_) -> Cprinter.string_of_spec_var x)))  link_hpargs2 no_pos in
+      let () = x_binfo_hp (add_str "post_hps" Cprinter.string_of_spec_var_list) post_hps no_pos in
+      let () = x_binfo_hp (add_str "prog_vars" Cprinter.string_of_spec_var_list) prog_vars no_pos in
+      let () = x_binfo_hp (add_str "BEFORE" pr_id) s1 no_pos in
+      let () = x_binfo_pp "=============>>>>" no_pos in
+      let () = x_binfo_hp (add_str "AFTER" pr_id) s2 no_pos in
+      let () = x_binfo_hp (add_str "UNKNOWN added" (pr_list (fun (x,_) -> Cprinter.string_of_spec_var x)))  link_hpargs2 no_pos in
       let () = DD.binfo_end "split_base" in
       ()
     end;
@@ -504,13 +504,13 @@ let elim_unused_pre_preds post_hps constrs unk_map=
   (*and they are NOT post*)
   let unused_pre_preds0 = List.filter (fun (hp,_) -> not (CP.mem_svl hp post_hps)) unused_pre_preds in
   let unused_pre = (List.map fst unused_pre_preds0) in
-  let () = DD.binfo_zprint (lazy (("pre-preds: "  ^ (!CP.print_svl unused_pre) ^" are removed"))) no_pos in
+  let () = x_binfo_zp (lazy (("pre-preds: "  ^ (!CP.print_svl unused_pre) ^" are removed"))) no_pos in
   let new_constrs,new_map = List.fold_left (fun (ls_cs,map) cs ->
       let new_cs, n_map,_ = Sacore.do_elim_unused cs unused_pre map in
       (ls_cs@[new_cs], n_map)
     ) ([], unk_map) constrs in
-  let () = DD.dinfo_zprint (lazy (("   After removing, derived:\n" ^ (let pr = pr_list_ln Cprinter.string_of_hprel_short in pr new_constrs)))) no_pos in
-  let () = DD.dinfo_zprint (lazy (("   uu map:" ^ (let pr = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in pr new_map)))) no_pos in
+  let () = x_dinfo_zp (lazy (("   After removing, derived:\n" ^ (let pr = pr_list_ln Cprinter.string_of_hprel_short in pr new_constrs)))) no_pos in
+  let () = x_dinfo_zp (lazy (("   uu map:" ^ (let pr = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in pr new_map)))) no_pos in
   (unused_pre_preds0, new_constrs, new_map)
 
 let elim_unused_pre_preds post_hps constrs unk_map=
@@ -535,13 +535,13 @@ let elim_unused_post_preds post_hps constrs unk_map=
   (*and they are NOT pre*)
   let unused_post_preds0 = unused_post_preds(* CP.diff_svl unused_post_preds lhs_heads *) in
   let unused_post = (List.map fst unused_post_preds0) in
-  let () = DD.binfo_zprint (lazy (("post-preds: "  ^ (!CP.print_svl unused_post) ^" are removed"))) no_pos in
+  let () = x_binfo_zp (lazy (("post-preds: "  ^ (!CP.print_svl unused_post) ^" are removed"))) no_pos in
   let new_constrs,new_map = List.fold_left (fun (ls_cs,map) cs ->
       let new_cs, n_map,_ = Sacore.do_elim_unused cs unused_post map in
       (ls_cs@[new_cs], n_map)
     ) ([], unk_map) constrs in
-  let () = DD.dinfo_zprint (lazy (("   After removing, derived:\n" ^ (let pr = pr_list_ln Cprinter.string_of_hprel_short in pr new_constrs)))) no_pos in
-  let () = DD.dinfo_zprint (lazy (("   uu map:" ^ (let pr = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in pr new_map)))) no_pos in
+  let () = x_dinfo_zp (lazy (("   After removing, derived:\n" ^ (let pr = pr_list_ln Cprinter.string_of_hprel_short in pr new_constrs)))) no_pos in
+  let () = x_dinfo_zp (lazy (("   uu map:" ^ (let pr = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in pr new_map)))) no_pos in
   ( unused_post_preds, new_constrs, new_map)
 
 let elim_unused_post_preds post_hps constrs unk_map=
@@ -883,7 +883,7 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
     (* (\*root = p && p:: node<_,_> ==> root = p& root::node<_,_> & *\) *)
     (f3,CF.subst_opt subst og, unk_args1)
   in
-  DD.tinfo_pprint ">>>>>> generalize_one_hp: <<<<<<" no_pos;
+  x_tinfo_pp ">>>>>> generalize_one_hp: <<<<<<" no_pos;
   if par_defs = [] then ([],[]) else
     begin
       let hp, args, _, f0,_ = (List.hd par_defs) in
@@ -1257,7 +1257,7 @@ let generalize_hps_par_def_x prog is_pre non_ptr_unk_hps unk_hpargs link_hps pos
   (*remove empty*)
   let () = DD.ninfo_zprint (lazy (("      groups2: " ^ (pr1 groups2)))) no_pos in
   let groups3 = List.filter (fun grp -> grp <> []) groups2 in
-  let () = DD.tinfo_hprint (add_str "before remove redundant" pr1) groups2 no_pos in
+  let () = x_tinfo_hp (add_str "before remove redundant" pr1) groups2 no_pos in
   (*each group, do union partial definition*)
   let hpdefs,elim_ss = List.fold_left (fun (hpdefs,elim_ss) pdefs->
       let new_defs,ss = generalize_one_hp prog is_pre hpdefs non_ptr_unk_hps unk_hps link_hps pdefs in
@@ -1265,10 +1265,10 @@ let generalize_hps_par_def_x prog is_pre non_ptr_unk_hps unk_hpargs link_hps pos
     ) ([],[]) groups3
   in
   let prh = Cprinter.string_of_h_formula in
-  let () = DD.tinfo_hprint (add_str "elim_ss" (pr_list (pr_pair prh prh))) elim_ss no_pos in
+  let () = x_tinfo_hp (add_str "elim_ss" (pr_list (pr_pair prh prh))) elim_ss no_pos in
   let pr2 = Cprinter.string_of_hp_rel_def in
   let pr_hpd = pr_list (fun (_,a)-> pr2 a) in
-  let () = DD.tinfo_hprint (add_str "after remove redundant" pr_hpd) hpdefs no_pos in
+  let () = x_tinfo_hp (add_str "after remove redundant" pr_hpd) hpdefs no_pos in
   let hpdefs1 =
     if !Globals.pred_elim_useless then
       List.map (fun (hp,def) ->
@@ -1301,12 +1301,12 @@ let generalize_hps_par_def prog is_pre non_ptr_unk_hps unk_hpargs link_hps post_
 (*       | [] -> ([],[],[]) (\*drop constraint, no new definition*\) *)
 (*       | [(hp,args)] -> begin *)
 (*           if CP.mem_svl hp hpdefs then (\*defined already drop constraint, no new definition*\) *)
-(*             let () = DD.binfo_pprint ">>>>>> generalize_one_cs_hp: <<<<<<" no_pos in *)
-(*             let () = DD.binfo_zprint (lazy (("         " ^ (!CP.print_sv hp) ^ " is defined already: drop the constraint"))) no_pos in *)
+(*             let () = x_binfo_pp ">>>>>> generalize_one_cs_hp: <<<<<<" no_pos in *)
+(*             let () = x_binfo_zp (lazy (("         " ^ (!CP.print_sv hp) ^ " is defined already: drop the constraint"))) no_pos in *)
 (*             ([constr],[],[]) *)
 (*           else if CP.mem_svl hp unk_hps then *)
-(*             let () = DD.binfo_pprint ">>>>>> generalize_one_cs_hp: <<<<<<" no_pos in *)
-(*             let () = DD.binfo_zprint (lazy (("         " ^ (!CP.print_sv hp) ^ " is unknown. pass to next step"))) no_pos in *)
+(*             let () = x_binfo_pp ">>>>>> generalize_one_cs_hp: <<<<<<" no_pos in *)
+(*             let () = x_binfo_zp (lazy (("         " ^ (!CP.print_sv hp) ^ " is unknown. pass to next step"))) no_pos in *)
 (*             ([constr],[],[]) *)
 (*           else *)
 (*             let keep_ptrs = CF.look_up_reachable_ptr_args prog (lhds@rhds) (lhvs@rhvs) args in *)
@@ -1363,7 +1363,7 @@ let generalize_hps_cs_new_x prog callee_hps hpdefs unk_hps link_hps cs=
     match diff1 with
     | [] -> ([],[],[]) (*drop constraint, no new definition*)
     | _ -> begin
-        let () = DD.binfo_pprint ">>>>>> generalize_one_cs_hp: <<<<<<" no_pos in
+        let () = x_binfo_pp ">>>>>> generalize_one_cs_hp: <<<<<<" no_pos in
         if lhvs <> [] || lhds <> [] then
           ([constr],[],[])
         else
@@ -1411,7 +1411,7 @@ let generalize_hps_cs_new prog callee_hps hpdefs unk_hps link_hps cs=
     cs callee_hps hpdefs unk_hps
 
 let generalize_hps_x prog is_pre callee_hps unk_hps link_hps sel_post_hps pre_defs predef_hps cs par_defs=
-  DD.binfo_pprint ">>>>>> step 6: generalization <<<<<<" no_pos;
+  x_binfo_pp ">>>>>> step 6: generalization <<<<<<" no_pos;
   (*general par_defs*)
   let non_ptr_unk_hps = List.concat (List.map (fun (hp,args) ->
       if List.exists (fun a ->
@@ -1617,7 +1617,7 @@ let partition_constrs constrs post_hps=
 
 let rec infer_shapes_init_pre_x prog (constrs0: CF.hprel list) callee_hps non_ptr_unk_hps sel_post_hps unk_hps link_hps
     hp_rel_unkmap detect_dang (* :(CP.spec_var list * CF.hp_rel_def list* (CP.spec_var * CP.spec_var list) list) *) =
-  let () = DD.binfo_pprint ">>>>>> step pre-4: remove unused predicates<<<<<<" no_pos in
+  let () = x_binfo_pp ">>>>>> step pre-4: remove unused predicates<<<<<<" no_pos in
   let constrs01 = (* Sautil.remove_dups_constr *) constrs0 in
   let constrs02 = List.map (Sautil.weaken_strengthen_special_constr_pre true) constrs01 in
   let unused_pre_hps, constrs0, unk_map1 =
@@ -1626,15 +1626,15 @@ let rec infer_shapes_init_pre_x prog (constrs0: CF.hprel list) callee_hps non_pt
   in
   let unk_hpargs1 = Gen.BList.remove_dups_eq cmp_hpargs_fn (unk_hps@unused_pre_hps) in
   let unk_hps1 = (List.map fst unk_hpargs1) in
-  let () = DD.binfo_pprint ">>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<" no_pos in
+  let () = x_binfo_pp ">>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<" no_pos in
   let pr_par_defs,rem_constr1 = get_par_defs_pre constrs0 in
   (* let pr1 = pr_list_ln  Cprinter.string_of_hprel_short in *)
   (* if rem_constr1 !=[] then *)
-  (*   DD.binfo_zprint (lazy (("pre-obligation:\n" ^ (pr1 rem_constr1)))) no_pos; *)
-  (* let () = DD.binfo_pprint ">>>>>> pre-predicates: step pre-6: combine<<<<<<" no_pos in *)
+  (*   x_binfo_zp (lazy (("pre-obligation:\n" ^ (pr1 rem_constr1)))) no_pos; *)
+  (* let () = x_binfo_pp ">>>>>> pre-predicates: step pre-6: combine<<<<<<" no_pos in *)
   let par_defs, rem_constrs2, hconj_unify_cond = combine_pdefs_pre prog unk_hps1 link_hps pr_par_defs in
-  let () = DD.binfo_pprint ">>>>>> pre-predicates: step pre-7: remove redundant x!=null<<<<<<" no_pos in
-  let () = DD.binfo_pprint ">>>>>> pre-predicates: step pre-8: strengthen<<<<<<" no_pos in
+  let () = x_binfo_pp ">>>>>> pre-predicates: step pre-7: remove redundant x!=null<<<<<<" no_pos in
+  let () = x_binfo_pp ">>>>>> pre-predicates: step pre-8: strengthen<<<<<<" no_pos in
   let rem_constrs3, hp_defs, defined_hps = generalize_hps prog true callee_hps unk_hpargs1 link_hps sel_post_hps [] []
       constrs0 par_defs in
   (* check hconj_unify_cond*)
@@ -1663,23 +1663,23 @@ and infer_shapes_init_post_x prog (constrs0: CF.hprel list) non_ptr_unk_hps sel_
     hp_rel_unkmap detect_dang pre_defs (* :(CP.spec_var list * CF.hp_rel_def list * (CP.spec_var * CP.spec_var list) list * ) *) =
   let constrs0a = (* Sautil.remove_dups_constr *) constrs0 in
   let constrs0b = List.map (Sautil.weaken_strengthen_special_constr_pre false) constrs0a in
-  let () = DD.binfo_pprint ">>>>>> step post-4: step remove unused predicates<<<<<<" no_pos in
+  let () = x_binfo_pp ">>>>>> step post-4: step remove unused predicates<<<<<<" no_pos in
   let unused_post_hps,constrs1,unk_map1 =
     if detect_dang then elim_unused_post_preds (sel_post_hps@link_hps) constrs0b hp_rel_unkmap
     else ([], constrs0b, hp_rel_unkmap)
   in
   let unk_hps1 = Gen.BList.remove_dups_eq cmp_hpargs_fn (unk_hps@unused_post_hps) in
   let par_defs = get_par_defs_post constrs1 in
-  let () = DD.binfo_pprint ">>>>>> post-predicates: step post-5: remove redundant x!=null : not implemented yet<<<<<<" no_pos in
+  let () = x_binfo_pp ">>>>>> post-predicates: step post-5: remove redundant x!=null : not implemented yet<<<<<<" no_pos in
 
-  let () = DD.binfo_pprint ">>>>>> post-predicates: step post-61: weaken<<<<<<" no_pos in
+  let () = x_binfo_pp ">>>>>> post-predicates: step post-61: weaken<<<<<<" no_pos in
   (*subst pre-preds into if they are not recursive -do with care*)
   let pre_hps_need_fwd= Sautil.get_pre_fwd sel_post_hps par_defs in
   let pre_defs, pre_hps = Sautil.extract_fwd_pre_defs pre_hps_need_fwd pre_defs in
   let pair_names_defs = generalize_hps_par_def prog false non_ptr_unk_hps unk_hps1 link_hps sel_post_hps pre_defs pre_hps par_defs in
   let hp_names,hp_defs = List.split pair_names_defs in
   (* let () = if hp_names = [] then () else *)
-  (*   DD.binfo_pprint (" synthesize: " ^ (!CP.print_svl hp_names) )no_pos *)
+  (*   x_binfo_pp (" synthesize: " ^ (!CP.print_svl hp_names) )no_pos *)
   (* in *)
   (hp_names,hp_defs,unk_hps1,unk_map1)
 
@@ -1708,23 +1708,23 @@ and infer_shapes_from_fresh_obligation_x iprog cprog proc_name is_pre cond_path 
     let _ =
       begin
         let pr = pr_list_ln Cprinter.string_of_hprel_short in
-        print_endline "";
-        print_endline "\n*************************************************";
-        print_endline "*******relational assumptions (obligation)********";
-        print_endline "****************************************************";
-        print_endline (pr ho_constrs0);
-        print_endline "*************************************"
+        print_endline_quiet "";
+        print_endline_quiet "\n*************************************************";
+        print_endline_quiet "*******relational assumptions (obligation)********";
+        print_endline_quiet "****************************************************";
+        print_endline_quiet (pr ho_constrs0);
+        print_endline_quiet "*************************************"
       end
     in
     let _ =
       begin
         let pr = pr_list_ln Cprinter.string_of_hprel_short in
-        print_endline "";
-        print_endline "\n*************************************************";
-        print_endline "*******relational assumptions (pre-assumptions)********";
-        print_endline "****************************************************";
-        print_endline (pr pre_constrs);
-        print_endline "*************************************"
+        print_endline_quiet "";
+        print_endline_quiet "\n*************************************************";
+        print_endline_quiet "*******relational assumptions (pre-assumptions)********";
+        print_endline_quiet "****************************************************";
+        print_endline_quiet (pr pre_constrs);
+        print_endline_quiet "*************************************"
       end
     in
     (***************  END PRINTING*********************)
@@ -1783,7 +1783,7 @@ and infer_shapes_from_obligation_x iprog prog proc_name is_pre cond_path (constr
     let sel_lhs_hps, sel_rhs_hps, dep_def_hps, oblg_constrs, rem_constr = List.fold_left classify_hps ([],[],[],[],[]) constrs1 in
     if oblg_constrs = [] then
       let pr1 = pr_list_ln  Cprinter.string_of_hprel_short in
-      DD.binfo_zprint (lazy (("proving:\n" ^ (pr1 rem_constr)))) no_pos;
+      x_binfo_zp (lazy (("proving:\n" ^ (pr1 rem_constr)))) no_pos;
       (* let () = if rem_constr = [] then () else *)
       (* (\*prove rem_constr*\) *)
       (* (\*transform defs to cviews*\) *)
@@ -1822,7 +1822,7 @@ and infer_shapes_from_obligation_x iprog prog proc_name is_pre cond_path (constr
           need_preprocess hp_rel_unkmap detect_dang pre_defs post_defs def_hps
       in
       let pr1 = pr_list_ln  Cprinter.string_of_hprel_short in
-      DD.binfo_zprint (lazy (("rem_constr:\n" ^ (pr1 rem_constr)))) no_pos;
+      x_binfo_zp (lazy (("rem_constr:\n" ^ (pr1 rem_constr)))) no_pos;
       if rem_constr = [] then
         (*return*)
         (oblg_hps1, oblg_defs1, unk_hpargs1,unk_map1)
@@ -1855,7 +1855,7 @@ and infer_shapes_proper iprog prog proc_name cond_path (constrs2: CF.hprel list)
                                                                    (CP.spec_var * CP.spec_var list) list *  (CP.spec_var *CP.spec_var list) list * (CP.spec_var *CP.spec_var) list)=
   let unk_hps = List.map fst unk_hpargs in
   let link_hps = List.map fst link_hpargs in
-  let () = DD.binfo_pprint ">>>>>> step 3: apply transitive implication<<<<<<" no_pos in
+  let () = x_binfo_pp ">>>>>> step 3: apply transitive implication<<<<<<" no_pos in
   let constrs3,_ = apply_transitive_impl_fix prog sel_post_hps callee_hps unk_hps
       link_hps constrs2 in
   (*partition constraints into 2 groups: pre-predicates, post-predicates*)
@@ -1863,7 +1863,7 @@ and infer_shapes_proper iprog prog proc_name cond_path (constrs2: CF.hprel list)
   let sel_post_hps1 = sel_post_hps@new_post_hps in
   let pre_constrs1 = List.map (Sautil.simp_match_unknown unk_hps link_hps) pre_constrs in
   (*find inital sol*)
-  let () = DD.binfo_pprint ">>>>>> pre-predicates<<<<<<" no_pos in
+  let () = x_binfo_pp ">>>>>> pre-predicates<<<<<<" no_pos in
   let pre_hps, pre_defs, unk_hpargs1,unk_map3, pre_equivs, unk_equivs, _ (*pre_oblg_constrs*) = infer_shapes_init_pre prog pre_constrs1 callee_hps []
       (sel_post_hps1) unk_hpargs link_hps unk_map2 detect_dang in
   let pre_defs1, unify_equiv_map1 = if !Globals.pred_conj_unify then
@@ -1883,7 +1883,7 @@ and infer_shapes_proper iprog prog proc_name cond_path (constrs2: CF.hprel list)
                                          (* link_hpargs *)[] need_preprocess unk_map3 detect_dang pre_defs2 [] (pre_hps)
     else ([],[],unk_hpargs1,  unk_map3)
   in
-  let () = DD.binfo_pprint ">>>>>> post-predicates<<<<<<" no_pos in
+  let () = x_binfo_pp ">>>>>> post-predicates<<<<<<" no_pos in
   let post_constrs1 = Sautil.subst_equiv_hprel unify_equiv_map11 post_constrs in
   let post_hps, post_defs,unk_hpargs3,unk_map5  = infer_shapes_init_post prog post_constrs1 []
       (sel_post_hps1) unk_hpargs2 link_hps unk_map4 detect_dang pre_defs2 in
@@ -1895,7 +1895,7 @@ and infer_shapes_proper iprog prog proc_name cond_path (constrs2: CF.hprel list)
   (*********POST-OBLG ********)
   let pr1 = pr_list_ln  Cprinter.string_of_hprel_short in
   if post_oblg_constrs !=[] then
-    DD.binfo_zprint (lazy (("post-obligation:\n" ^ (pr1 post_oblg_constrs)))) no_pos;
+    x_binfo_zp (lazy (("post-obligation:\n" ^ (pr1 post_oblg_constrs)))) no_pos;
   let post_oblg_hps, post_oblg_defs,unk_hpargs4,unk_map6  = if !Globals.pred_en_oblg then
       infer_shapes_from_obligation iprog prog proc_name false cond_path (post_oblg_constrs) callee_hps []
         (sel_post_hps1) unk_hpargs3
@@ -1946,7 +1946,7 @@ and infer_shapes_core iprog prog proc_name cond_path (constrs0: CF.hprel list) c
   let constrs1,unk_map,unk_hpargs, link_hpargs3,_ =
     if need_preprocess then
       (*unk analysis*)
-      let () = DD.binfo_pprint ">>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<" no_pos in
+      let () = x_binfo_pp ">>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<" no_pos in
       (* let constrs3, unk_map1, unk_hpargs = Sacore.detect_dangling_pred constrs2 sel_hp_rels unk_map in *)
       let constrs1, unk_hpargs1, unk_map1, link_hpargs1, punk_map0 =
         if detect_dang then
@@ -1956,7 +1956,7 @@ and infer_shapes_core iprog prog proc_name cond_path (constrs0: CF.hprel list) c
           let punk_map =  [] in
           (constrs0, unk_hpargs,hp_rel_unkmap,link_hpargs, punk_map)
       in
-      let () = DD.binfo_pprint ">>>>>> step 2: split constraints based on pre and post-preds<<<<<<" no_pos in
+      let () = x_binfo_pp ">>>>>> step 2: split constraints based on pre and post-preds<<<<<<" no_pos in
       (*split constrs like H(x) & x = null --> G(x): separate into 2 constraints*)
       let unk_hps1 = List.map fst unk_hpargs1 in
       let link_hps1 = List.map fst link_hpargs1 in
@@ -2061,10 +2061,10 @@ and infer_shapes_new_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps se
   (* in *)
   (* let callee_hps = List.map (fun (hpname,_,_) -> CF.get_hpdef_name hpname) callee_hpdefs in *)
   let callee_hps = [] in
-  let () = DD.binfo_zprint (lazy (("  sel_hps:" ^ !CP.print_svl sel_hps))) no_pos in
-  let () = DD.binfo_zprint (lazy (("  sel post_hps:" ^ !CP.print_svl sel_post_hps))) no_pos in
+  let () = x_binfo_zp (lazy (("  sel_hps:" ^ !CP.print_svl sel_hps))) no_pos in
+  let () = x_binfo_zp (lazy (("  sel post_hps:" ^ !CP.print_svl sel_post_hps))) no_pos in
   let all_post_hps = CP.remove_dups_svl (sel_post_hps@(Sautil.collect_post_preds prog constrs0)) in
-  let () = DD.binfo_zprint (lazy (("  all post_hps:" ^ !CP.print_svl all_post_hps))) no_pos in
+  let () = x_binfo_zp (lazy (("  all post_hps:" ^ !CP.print_svl all_post_hps))) no_pos in
   let ls_path_res = infer_shapes_divide iprog prog proc_name constrs0
       callee_hps sel_hps all_post_hps hp_rel_unkmap unk_hpargs link_hpargs_w_path need_preprocess detect_dang
   in
@@ -2106,10 +2106,10 @@ and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
   (* in *)
   (* let callee_hps = List.map (fun (hpname,_,_) -> CF.get_hpdef_name hpname) callee_hpdefs in *)
   let callee_hps = [] in
-  let () = DD.binfo_zprint (lazy (("  sel_hps:" ^ !CP.print_svl sel_hps))) no_pos in
-  let () = DD.binfo_zprint (lazy (("  sel post_hps:" ^ !CP.print_svl post_hps))) no_pos in
+  let () = x_binfo_zp (lazy (("  sel_hps:" ^ !CP.print_svl sel_hps))) no_pos in
+  let () = x_binfo_zp (lazy (("  sel post_hps:" ^ !CP.print_svl post_hps))) no_pos in
   let all_post_hps = CP.remove_dups_svl (post_hps@(Sautil.collect_post_preds prog constrs0)) in
-  let () = DD.binfo_zprint (lazy (("  all post_hps:" ^ !CP.print_svl all_post_hps))) no_pos in
+  let () = x_binfo_zp (lazy (("  all post_hps:" ^ !CP.print_svl all_post_hps))) no_pos in
   (*remove hp(x) --> hp(x)*)
   (* let constrs1 = List.filter (fun cs -> not(Sautil.is_trivial_constr cs)) constrs0 in *)
   let grp_link_hpargs = Sautil.dang_partition link_hpargs0 in
@@ -2176,8 +2176,8 @@ let infer_shapes iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels se
       in
       if !Globals.sleek_flag then () 
       else
-        let () = print_endline "\nHeap Predicate Declarations" in
-        let () = print_endline "===========================" in
+        let () = print_endline_quiet "\nHeap Predicate Declarations" in
+        let () = print_endline_quiet "===========================" in
         let () = List.iter (fun hpdcl -> print_string (Cprinter.string_of_hp_decl hpdcl)) all_hp_decls in
         ()
     else ()

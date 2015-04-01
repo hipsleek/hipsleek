@@ -303,13 +303,12 @@ let pick_front n ss =
 module DebugCore  =
 struct
   let ho_aux ?(arg_rgx=None) df lz (loop_d:bool) (test:'z -> bool) (g:('a->'z) option) (s:string) (args:string list) (pr_o:'z->string) (f:'a->'z) (e:'a) :'z =
-    let pre_str = 
-      let s = !VarGen.last_posn in
-      match s with 
-      | None -> ""
-      | Some s -> 
-        let () = VarGen.last_posn := None in
-        "("^s^")" in
+    let pre_str = "(=="^(VarGen.last_posn # get_rm)^"==)" in
+    (* if s=="" thenmatch s with  *)
+    (*   | None -> "" *)
+    (*   | Some s ->  *)
+    (*         (\* let () = VarGen.last_posn := None in *\) *)
+    (*         "("^s^")" in *)
     let pr_args xs =
       let rec helper (i:int) args = match args with
         | [] -> ()
@@ -395,6 +394,7 @@ struct
 
   let ho_aux_no (f:'a -> 'z) (last:'a) : 'z =
     push_no_call ();
+    (* VarGen.last_posn # reset; *)
     pop_aft_apply_with_exc_no f last
 
 
@@ -505,7 +505,6 @@ struct
 
   let z_debug_file = ref ""
   (* let z_debug_regexp = ref None *)
-  let z_debug_flag = ref false
   let mk_debug_arg s =
     let re = Str.regexp s in
     z_debug_arg := Some re
@@ -542,7 +541,7 @@ struct
           Some(open_in (global_debug_conf))
         with _ ->
           begin
-            print_endline ("WARNING : cannot find debug file "^fname); 
+            print_endline_quiet ("WARNING : cannot find debug file "^fname); 
             z_debug_flag:=false;
             None
           end

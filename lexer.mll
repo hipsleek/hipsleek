@@ -115,7 +115,9 @@ module Make (Token : SleekTokenS)
    ("axiom", AXIOM); (* [4/10/2011] An Hoa : new keyword *)
    ("alln", ALLN);
    ("app", APPEND);
+   ("ann", ANN_KEY);
    ("AndList", ANDLIST);
+   ("abstract", ABSTRACT);
    ("bagmax", BAGMAX);
    ("bagmin", BAGMIN);
    ("bag", BAG);
@@ -135,6 +137,7 @@ module Make (Token : SleekTokenS)
    ("slk_hull", SLK_HULL);
    ("slk_pairwise", SLK_PAIRWISE);
    ("slk_simplify", SIMPLIFY);
+   (* ("slk_elim_exists", SLK_ELIM_EXISTS); (\* may weaken *\) *)
    ("relAssume", RELASSUME);
    ("relDefn", RELDEFN);
    ("shape_infer", SHAPE_INFER );
@@ -202,6 +205,7 @@ module Make (Token : SleekTokenS)
    ("BG", BG);
    ("inv_lock", INVLOCK);
    ("joinpred", JOIN); (*Changed by 28/12/2011*)
+   ( "rlemma",RLEMMA);
    ("lemma", LEMMA TLEM);
    ("lemma_prop", LEMMA TLEM_PROP);
    ("lemma_split", LEMMA TLEM_SPLIT);
@@ -365,7 +369,7 @@ rule tokenizer file_name = parse
   | "&*" { ANDSTAR }
   | "&&" { ANDAND }
   | "U*" { UNIONSTAR }
-  | "-*" { STARMINUS }
+  | "--@" { STARMINUS }
   | "@" { AT }
   | "@@" { ATAT }
   | "@@[" { ATATSQ }
@@ -426,6 +430,7 @@ rule tokenizer file_name = parse
   | ".." { DOTDOT }
   | "\"" { DOUBLEQUOTE }
   | "\\inf" {INFINITY}
+  | "~\\inf" {NEGINFINITY}
   | "=" { EQ }
   | "==" { EQEQ }
   | "==>" { ESCAPE }

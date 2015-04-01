@@ -133,7 +133,7 @@ let start () =
     let rl_bin = if !Globals.web_compile_flag then "/usr/local/etc/reduce/bin/redcsl" else "redcsl" in
     (* let rl_bin = "redcsl" in *)
     let () = Procutils.PrvComms.start !is_log_all log_file ("redlog", rl_bin,  [|"-w"; "-b";"-l reduce.log"|] ) set_process prelude in
-    print_endline "Starting Reduce... ";
+    print_endline_quiet "Starting Reduce... ";
     flush stdout
   end
 
@@ -143,7 +143,7 @@ let stop () =
     let ending_fnc () = 
       let outchannel = !process.outchannel in
       output_string outchannel "quit;\n"; flush outchannel;
-      if not !Globals.web_compile_flag then print_endline "Halting Reduce... "; flush stdout;
+      if not !Globals.web_compile_flag then print_endline_quiet "Halting Reduce... "; flush stdout;
       log DEBUG "\n***************";
       log DEBUG ("Number of Omega calls: " ^ (string_of_int !omega_call_count));
       log DEBUG ("Number of Redlog calls: " ^ (string_of_int !redlog_call_count));
@@ -154,14 +154,14 @@ let stop () =
       log DEBUG ("Linear verification time: " ^ (string_of_float !linear_time))
     in
     let () = Procutils.PrvComms.stop !is_log_all log_file !process  !redlog_call_count 9 ending_fnc in
-    print_endline "Stopping Reduce... ";
+    print_endline_quiet "Stopping Reduce... ";
     is_reduce_running := false
   end
 
 let restart reason =
   if !is_reduce_running then begin
     print_string reason;
-    if not !Globals.web_compile_flag then print_endline " Restarting Reduce... "; flush stdout;
+    if not !Globals.web_compile_flag then print_endline_quiet " Restarting Reduce... "; flush stdout;
     Procutils.PrvComms.restart !is_log_all log_file "redlog" reason start stop
   end
 
@@ -195,7 +195,7 @@ let send_and_receive f =
       restart "Restarting Reduce because of timeout.";
       raise exc
     | ex ->
-      print_endline (Printexc.to_string ex);
+      print_endline_quiet (Printexc.to_string ex);
       restart "Reduce crashed or something really bad happenned!";
       "1"
   else
@@ -1466,7 +1466,7 @@ let parse_reduce_solution solution (bv : CP.spec_var list) (revmap : (string * C
       let strrep = try
           List.map (fun (x,y) -> (List.assoc x revmap,recover_strrep y revmap)) result 
         with
-        | Not_found -> let () = print_endline "Assoc NotFound at strrep" in []
+        | Not_found -> let () = print_endline_quiet "Assoc NotFound at strrep" in []
       in
       (* let () = print_endline "String representations: " in
          		let todo_unk = List.map (fun (x,y) -> print_endline ((!CP.print_sv x) ^ " --> " ^ y)) strrep in *)
@@ -1475,7 +1475,7 @@ let parse_reduce_solution solution (bv : CP.spec_var list) (revmap : (string * C
       let eqclasses = List.map snd (group_eq_vars result) in
       let eqclasses = List.map (fun vnamelist -> List.map (fun vname -> try
                                                               List.assoc vname revmap
-                                                            with | Not_found -> let () = print_endline "Assoc NotFound at eqclasses" in failwith ""
+                                                            with | Not_found -> let () = print_endline_quiet "Assoc NotFound at eqclasses" in failwith ""
                                                           ) vnamelist) eqclasses in
       (*let () = print_endline "Equivalent classes : " in
         		let todo_unk = List.map (fun x -> print_endline (!CP.print_svl x)) eqclasses in*)
@@ -1551,7 +1551,7 @@ let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
   let rec rl_of_exp varsmap e = match e with
     | CP.Null _ -> "null" (* null serves as a symbollic variable *)
     | CP.Var (v, _) -> (try List.assoc v varsmap with 
-        | Not_found -> let () = print_endline ("Variable " ^(CP.string_of_spec_var v) ^ " cannot be found!") in failwith "solve : variable not found in variable mapping!")
+        | Not_found -> let () = print_endline_quiet ("Variable " ^(CP.string_of_spec_var v) ^ " cannot be found!") in failwith "solve : variable not found in variable mapping!")
     | CP.IConst (i, _) -> string_of_int i
     | CP.FConst (f, _) -> string_of_float f
     | CP.Add (e1, e2, _) -> "(" ^ (rl_of_exp varsmap e1) ^ " + " ^ (rl_of_exp varsmap e2) ^ ")"

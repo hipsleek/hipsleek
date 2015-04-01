@@ -1159,7 +1159,7 @@ let norm_dups_pred_x cprog f=
   (*          bool * (Hgraph.CP.spec_var * Hgraph.CP.spec_var) list * *)
   (*          Hgraph.heap_graph *)
   (*        but an expression was expected of type unit *)
-  let () = Debug.winfo_pprint "(TO FIX) norm_graph (in frame.ml) not executed!" no_pos in
+  let () = x_winfo_pp "(TO FIX) norm_graph (in frame.ml) not executed!" no_pos in
   (* let todo_unk_bug_here = Hgraph.norm_graph maybe_emps eqs0 non_emps0 in *)
   let maybe_rdups_groups = get_dups_hv eqs0 maybe_emps [] in
   let all_dups_roots = List.map fst maybe_rdups_groups in
@@ -1239,7 +1239,7 @@ let norm_dups_pred_x cprog f=
   let update_alias_comps eqs (r,chains)=
     let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
     let pr2 = pr_pair print_sym_node (pr_list (pr_triple print_sym_node !CP.print_svl !CP.print_svl)) in
-    Debug.no_2 "update_alias_comp" pr1 pr2 pr2
+    Debug.no_2 "update_alias_comps" pr1 pr2 pr2
       (fun _ _ -> update_alias_comps_x eqs (r,chains)) eqs (r,chains)
   in
   let rec find_loops_helper grps done_grps emps=

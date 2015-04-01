@@ -21,7 +21,9 @@ time ./run-fast-tests.pl musterr -flags "--efa-exc" $@
 echo -e "\n##################### infinity tests ########################"
 time ./run-fast-tests.pl infinity $@
 
-#not succ all
+echo -e "\n##################### coqinf tests ########################"
+time ./run-fast-tests.pl coqinf $@
+
 echo -e "\n##################### mem tests ######################"
 time ./run-fast-tests.pl mem $@
 

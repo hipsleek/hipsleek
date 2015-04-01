@@ -191,7 +191,7 @@ let merge_loop_cond loop_cond_list =
 
 let infer_loop_status ctx loop_cond = 
   let imply ante cons = 
-    let (r, _, _) = TP.imply_one 0 ante cons "0" true None in r 
+    let (r, _, _) = x_add TP.imply_one 0 ante cons "0" true None in r 
   in
   let r1 = imply ctx loop_cond in
   if r1 then Reach_Loop
@@ -246,20 +246,20 @@ let rec infer_pre_cond_iter loop_trans_list loop_cond_list =
       match st with Reach_Both -> true | _ -> false) reach_status_trans in
 
   let () = 
-    Debug.tinfo_pprint ">>>>>>> infer_pre_cond_iter <<<<<<<" no_pos;
-    List.iter (fun (r, t) -> Debug.tinfo_hprint (add_str "loop trans: "
-                                                   (fun (r, t) -> (print_rec_trans t) ^ "(" ^ (print_reach_status r) ^ ")")) (r, t) no_pos)
+    x_tinfo_pp ">>>>>>> infer_pre_cond_iter <<<<<<<" no_pos;
+    List.iter (fun (r, t) -> x_tinfo_hp (add_str "loop trans: "
+                                           (fun (r, t) -> (print_rec_trans t) ^ "(" ^ (print_reach_status r) ^ ")")) (r, t) no_pos)
       reach_status_trans;
-    List.iter (fun c -> Debug.tinfo_hprint (add_str "loop cond: " 
-                                              (fun c -> print_rec_cond c)) c no_pos) loop_cond_list
+    List.iter (fun c -> x_tinfo_hp (add_str "loop cond: " 
+                                      (fun c -> print_rec_cond c)) c no_pos) loop_cond_list
   in
 
   (* (2) Infer loop condition from Reach_Both group 
    * by strengthening the context of loop transitions 
    * and loop conditions with unknown templates *)
   if reach_both_trans = [] then
-    List.iter (fun c -> Debug.tinfo_hprint (add_str "Non-Termination Condition: " 
-                                              (fun c -> print_rec_cond c)) c no_pos) loop_cond_list
+    List.iter (fun c -> x_tinfo_hp (add_str "Non-Termination Condition: " 
+                                      (fun c -> print_rec_cond c)) c no_pos) loop_cond_list
   else
     let templ_reach_both_trans, templ_loop_cond, templ_id_list = List.fold_left (
         fun (trans_list, loop_cond_list, templ_id_list) (_, trans) -> 
@@ -268,10 +268,10 @@ let rec infer_pre_cond_iter loop_trans_list loop_cond_list =
         ([], loop_cond_list, []) reach_both_trans in
 
     let () = 
-      List.iter (fun t -> Debug.tinfo_hprint (add_str "templ loop trans: " 
-                                                print_rec_trans) t no_pos) templ_reach_both_trans;
-      List.iter (fun c -> Debug.tinfo_hprint (add_str "templ loop cond: " 
-                                                (fun c -> print_rec_cond c)) c no_pos) templ_loop_cond
+      List.iter (fun t -> x_tinfo_hp (add_str "templ loop trans: " 
+                                        print_rec_trans) t no_pos) templ_reach_both_trans;
+      List.iter (fun c -> x_tinfo_hp (add_str "templ loop cond: " 
+                                        (fun c -> print_rec_cond c)) c no_pos) templ_loop_cond
     in
 
     let reach_both_src_ids = List.map (fun t -> t.trans_src_id) templ_reach_both_trans in
@@ -286,7 +286,7 @@ let rec infer_pre_cond_iter loop_trans_list loop_cond_list =
         let rec_cond = apply_par_term (List.combine rec_cond_fv trans.trans_dst_args) rec_cond in
 
         let () = 
-          Debug.tinfo_hprint (add_str "templ entail: " (fun (ctx, rc) -> 
+          x_tinfo_hp (add_str "templ entail: " (fun (ctx, rc) -> 
               (!print_formula ctx) ^ " --> " ^ (!print_formula rc))) 
             (trans.trans_ctx, rec_cond) no_pos
         in
@@ -298,7 +298,7 @@ let rec infer_pre_cond_iter loop_trans_list loop_cond_list =
     (* Solve the template constraints *)
     let _, templ_unks, res = solve_templ_assume () in
     let () = 
-      Debug.tinfo_hprint (add_str "templ res: " print_solver_res) res no_pos
+      x_tinfo_hp (add_str "templ res: " print_solver_res) res no_pos
     in
 
     match res with
@@ -313,10 +313,10 @@ let rec infer_pre_cond_iter loop_trans_list loop_cond_list =
                                 { t with trans_ctx = subst_model_to_formula model t.trans_ctx}) 
                                templ_reach_both_trans) in 
       let _ =
-        List.iter (fun t -> Debug.tinfo_hprint (add_str "sst loop trans: " 
-                                                  print_rec_trans) t no_pos) sst_loop_trans;
-        List.iter (fun c -> Debug.tinfo_hprint (add_str "sst loop cond: " 
-                                                  (fun c -> print_rec_cond c)) c no_pos) sst_loop_cond
+        List.iter (fun t -> x_tinfo_hp (add_str "sst loop trans: " 
+                                          print_rec_trans) t no_pos) sst_loop_trans;
+        List.iter (fun c -> x_tinfo_hp (add_str "sst loop cond: " 
+                                          (fun c -> print_rec_cond c)) c no_pos) sst_loop_cond
       in infer_pre_cond_iter sst_loop_trans sst_loop_cond
     | _ -> ()
 
@@ -348,11 +348,11 @@ let infer_lex_template_init prog (inf_templs: ident list)
     templ_unks (templ_assumes: templ_assume list) =
   let dec_templ_assumes = List.filter (fun ta -> is_Gt_formula ta.ass_cons) templ_assumes in
   let num_call_ctx = List.length dec_templ_assumes in
-  let () = print_endline "**** LEXICOGRAPHIC RANK INFERENCE RESULT ****" in
+  let () = print_endline_quiet "**** LEXICOGRAPHIC RANK INFERENCE RESULT ****" in
 
   if num_call_ctx == 1 then begin
-    print_endline ("Nothing to do with Lexicographic Inference (only one call context).");
-    print_endline ("Trying to infer conditional termination and/or non-termination ...");
+    print_endline_quiet ("Nothing to do with Lexicographic Inference (only one call context).");
+    print_endline_quiet ("Trying to infer conditional termination and/or non-termination ...");
     infer_loop_template_init prog dec_templ_assumes
   end
   else try
@@ -361,9 +361,9 @@ let infer_lex_template_init prog (inf_templs: ident list)
       let dec_templ_assumes_l = rotate_head_list num_dec_templ_assumes in
       let rank_l = List.map (find_lex_rank prog inf_templs templ_unks) dec_templ_assumes_l in
       let res = sort_rank_list (num_call_ctx-1) rank_l in
-      print_endline (pr_list (pr_list !print_exp) res)
+      print_endline_quiet (pr_list (pr_list !print_exp) res)
     with Lex_Infer_Failure reason -> 
-      print_endline reason; ()
+      print_endline_quiet reason; ()
 (* print_endline ("Trying to infer conditional termination and/or non-termination ..."); *)
 (* infer_loop_template_init prog dec_templ_assumes *)
 
@@ -393,7 +393,7 @@ let infer_rank_template_init prog (inf_templs: ident list) =
   match res with
   | Unsat -> 
     if !Globals.templ_piecewise then
-      let () = print_endline ("Continue with piecewise function inference ...") in
+      let () = print_endline_quiet ("Continue with piecewise function inference ...") in
       let ptempl_assumes, inf_ptempls, ptempl_defs = 
         Piecewise.infer_piecewise_main prog templ_assumes in
       let estate = CF.empty_es (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
@@ -404,7 +404,7 @@ let infer_rank_template_init prog (inf_templs: ident list) =
       let prog = { prog with C.prog_templ_decls = prog.C.prog_templ_decls @ ptempl_defs } in
       let todo_unk = collect_and_solve_templ_assumes_common false prog (List.map name_of_spec_var inf_ptempls) in ()
     else 
-      let () = print_endline ("Trying to infer lexicographic termination arguments ...") in
+      let () = print_endline_quiet ("Trying to infer lexicographic termination arguments ...") in
       infer_lex_template_init prog inf_templs templ_unks templ_assumes
   | _ -> ()
 

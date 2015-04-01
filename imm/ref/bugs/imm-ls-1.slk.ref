@@ -1,0 +1,18 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+
+WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+
+WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+
+WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+[context.ml]: Conjunction in lhs, use mem specifications. lhs =  (x::node<q>) & (q::node<r>)
+
+!!! WARNING logtime exception:0.000211
+Entail 1: EXCast. Failure("[context.ml]: There should be no conj/phase in the lhs at this level 3\n")
+: no residue 
+

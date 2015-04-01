@@ -43,7 +43,7 @@ let ineq_opt_flag = ref false
 
 let illegal_format s = raise (Illegal_Prover_Format s)
 
-type lemma_kind = LEM_PROP| LEM_SPLIT | LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER | LEM_INFER_PRED
+type lemma_kind = LEM_PROP| LEM_SPLIT | LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER | LEM_INFER_PRED | RLEM
 
 type lemma_origin =
   | LEM_USER          (* user-given lemma *)
@@ -1019,14 +1019,21 @@ let allow_imm_inv = ref true (*imm inv to add of form @M<:v<:@A*)
 let allow_imm_subs_rhs = ref true (*imm rhs subs from do_match*)
 let allow_field_ann = ref false
 
+let remove_abs = ref true
+let allow_array_inst = ref false
+
+let imm_merge = ref false
+
 (*Since this flag is disabled by default if you use this ensure that 
   run-fast-test mem test cases pass *)
 (* let allow_field_ann = ref false  *)
 (* disabled by default as it is unstable and
    other features, such as shape analysis are affected by it *)
-
+let allow_ramify = ref false
 let allow_mem = ref false
 (*enabling allow_mem will turn on field ann as well *)
+
+let gen_coq_file = ref false
 
 let infer_mem = ref false
 let infer_raw_flag = ref true
@@ -1034,6 +1041,13 @@ let infer_raw_flag = ref true
 let pa = ref false
 
 let allow_inf = ref false (*enable support to use infinity (\inf and -\inf) in formulas *)
+let allow_inf_qe = ref false (*enable support to use quantifier elimination with infinity (\inf and -\inf) in formulas *)
+
+let allow_inf_qe_coq = ref false
+let allow_inf_qe_coq_simp = ref false
+(* enable support to use quantifier elimination procedure
+   implemented in coq and extracted as infsolver.ml *)
+let allow_qe_fix = ref false
 
 let ann_derv = ref false
 
@@ -1148,7 +1162,7 @@ let split_rhs_flag = ref true
 let n_xpure = ref 1
 
 
-let fixcalc_disj = ref 3 (* should be n+1 where n is the base-case *)
+let fixcalc_disj = ref 2 (* should be n+1 where n is the base-case *)
 
 let pre_residue_lvl = ref 0
 (* Lvl 0 - add conjunctive pre to residue only *)
@@ -1162,7 +1176,8 @@ let dump_lemmas_med = ref false
 let dump_lem_proc = ref false
 
 let num_self_fold_search = ref 0
-
+let array_expansion = ref false;;
+let array_translate = ref false;;
 let self_fold_search_flag = ref false
 
 let show_gist = ref false
@@ -1277,6 +1292,8 @@ let do_sat_slice = ref false
 
 let smt_compete_mode = ref false
 let svcomp_compete_mode = ref false
+let tnt_web_mode = ref false
+
 let return_must_on_pure_failure = ref false
 let smt_is_must_failure = ref (None: bool option)
 let is_solver_local = ref false (* only --smt-compete:  is_solver_local = true *)
@@ -1543,6 +1560,8 @@ let show_unexpected_ents = ref true
 (* generate baga inv from view *)
 let double_check = ref false
 let gen_baga_inv = ref false
+let is_inferring = ref false
+let use_baga = ref false
 let prove_invalid = ref false
 let gen_baga_inv_threshold = 7 (* number of preds <=6, set gen_baga_inv = false*)
 let do_under_baga_approx = ref false (* flag to choose under_baga *)
@@ -2046,4 +2065,5 @@ let string_of_lemma_kind (l: lemma_kind) =
   | LEM_SAFE      -> "LEM_SAFE"
   | LEM_INFER     -> "LEM_INFER"
   | LEM_INFER_PRED   -> "LEM_INFER_PRED"
+  | RLEM -> "RLEM"
 

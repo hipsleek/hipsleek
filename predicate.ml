@@ -6,7 +6,7 @@ open Gen
 module DD = Debug
 module Err = Error
 module I = Iast
-module CA = Cast
+(* module CA = Cast *)
 module CP = Cpure
 module CPP = Cpure_pred
 module CF = Cformula
@@ -23,7 +23,7 @@ let pure_relation_name_of_heap_pred (CP.SpecVar (_, hp, p))=
     | (id1,id2)::rest -> if String.compare id1 hp = 0 then (CP.SpecVar (RelT [], id2, p)) else
         look_up rest
   in
-  look_up !CA.pure_hprel_map
+  look_up !Cast.pure_hprel_map
 
 
 let heap_pred_name_of_pure_relation (CP.SpecVar (_, pure_hp, p))=
@@ -33,7 +33,7 @@ let heap_pred_name_of_pure_relation (CP.SpecVar (_, pure_hp, p))=
     | (id1,id2)::rest -> if String.compare id2 pure_hp = 0 then Some (CP.SpecVar(HpT, id1, p)) else
         look_up rest
   in
-  look_up !CA.pure_hprel_map
+  look_up !Cast.pure_hprel_map
 
 
 let pure_of_heap_pred_gen_h hf0=
@@ -371,10 +371,10 @@ let generate_extn_ho_procs prog cviews extn_view_name extn_args=
       in
       (n_p3,quans)
   in
-  let extn_v = CA.look_up_view_def_raw 44 cviews extn_view_name in
-  let extn_fs0 = fst (List.split extn_v.CA.view_un_struc_formula) in
-  let inv_p0 = (MCP.pure_of_mix extn_v.CA.view_user_inv) in
-  let pr_ext_vars = List.combine extn_v.CA.view_vars extn_args in
+  let extn_v = x_add Cast.look_up_view_def_raw 44 cviews extn_view_name in
+  let extn_fs0 = fst (List.split extn_v.Cast.view_un_struc_formula) in
+  let inv_p0 = (MCP.pure_of_mix extn_v.Cast.view_user_inv) in
+  let pr_ext_vars = List.combine extn_v.Cast.view_vars extn_args in
   let fr_extn_args,ss = List.fold_left (fun (r1,r2) (CP.SpecVar (t, id, p), new_id) ->
       let n_sv = CP.SpecVar (t, new_id, p) in
       (r1@[n_sv], r2@[(CP.SpecVar (t, id, p), n_sv)])
@@ -382,11 +382,11 @@ let generate_extn_ho_procs prog cviews extn_view_name extn_args=
   let extn_fs = List.map (fun f -> CF.subst ss f) extn_fs0 in
   let inv_p = CP.subst ss inv_p0 in
   let (brs, val_extns) = CF.classify_formula_branch extn_fs inv_p extn_view_name
-      fr_extn_args (* extn_v.CA.view_vars *) extn_v.CA.view_prop_extns in
+      fr_extn_args (* extn_v.Cast.view_vars *) extn_v.Cast.view_prop_extns in
   let b_brs, ind_brs = List.partition (fun (_, ls) -> ls=[]) brs in
   (*now, we assume we always have <= 1 base case and <=1 ind case*)
-  let ho_bs = List.map (fun (p,_) ->  mk_ho_b (* extn_v.CA.view_vars *)fr_extn_args val_extns p) b_brs in
-  let ho_inds = List.map (fun (p, ls) -> mk_ho_ind (*extn_v.CA.view_vars*) fr_extn_args
+  let ho_bs = List.map (fun (p,_) ->  mk_ho_b (* extn_v.Cast.view_vars *)fr_extn_args val_extns p) b_brs in
+  let ho_inds = List.map (fun (p, ls) -> mk_ho_ind (*extn_v.Cast.view_vars*) fr_extn_args
                              val_extns p ls) ind_brs in
   (* (extn_view_name, b_brs, ind_brs, val_extns, extn_inv) *)
   (* let () =  Debug.info_pprint ("   extn_v.C.view_vars: "^ (!CP.print_svl extn_v.C.view_vars)) no_pos in *)
@@ -394,7 +394,7 @@ let generate_extn_ho_procs prog cviews extn_view_name extn_args=
 
 let extend_pred_one_derv_x (prog : I.prog_decl) cprog hp_defs hp args ((orig_pred_name,orig_args),(extn_view_name,extn_props,extn_args), ls_extn_pos) =
   (*********INTERNAL********)
-  let cviews = cprog.CA.prog_view_decls in
+  let cviews = cprog.Cast.prog_view_decls in
   let rec look_up_hp_def hp defs=
     match defs with
     | [] -> report_error no_pos "Pred.extend_pred_one_derv: base pred has not not defined"
@@ -427,7 +427,7 @@ let extend_pred_one_derv_x (prog : I.prog_decl) cprog hp_defs hp args ((orig_pre
       nf1
   in
   (*********END INTERNAL********)
-  let extn_view = CA.look_up_view_def_raw 45 cviews extn_view_name in
+  let extn_view = x_add Cast.look_up_view_def_raw 45 cviews extn_view_name in
   let (extn_vname, extn_ho_bs, extn_ho_inds(* , extn_user_inv *)) = generate_extn_ho_procs prog cviews extn_view_name extn_args in
   (**********************************)
  (*
@@ -435,7 +435,7 @@ let extend_pred_one_derv_x (prog : I.prog_decl) cprog hp_defs hp args ((orig_pre
  *)
   (**********************************)
   (*new args*)
-  let ss = List.combine extn_args extn_view.CA.view_vars in
+  let ss = List.combine extn_args extn_view.Cast.view_vars in
   let n_args = List.map (fun (id, CP.SpecVar (t,_,pr)) ->  CP.SpecVar (t,id,pr)) ss in
   let orig_pred = look_up_hp_def orig_pred_name hp_defs in
   let _,orig_args_in_def = CF.extract_HRel orig_pred.CF.def_lhs in
@@ -444,7 +444,7 @@ let extend_pred_one_derv_x (prog : I.prog_decl) cprog hp_defs hp args ((orig_pre
       let n_sv = CP.SpecVar (t, new_id, p) in
       (r1@[n_sv], r2@[(CP.SpecVar (t, id, p), n_sv)])
     ) ([],[]) pr_orig_vars in
-  let orig_pred_data_name = CA.look_up_hp_decl_data_name cprog.CA.prog_hp_decls (CP.name_of_spec_var hp) (List.hd ls_extn_pos) in
+  let orig_pred_data_name = Cast.look_up_hp_decl_data_name cprog.Cast.prog_hp_decls (CP.name_of_spec_var hp) (List.hd ls_extn_pos) in
   (*find data fields anns*)
   let ls_dname_pos = I.look_up_field_ann prog orig_pred_data_name extn_props in
   (*formula: extend with new args*)
@@ -485,7 +485,7 @@ let extend_pred_dervs_x (prog : I.prog_decl) cprog hp_defs hp args derv_info =
   | [] -> report_error no_pos "astsimp.trans_view_dervs: 1"
   | [((orig_pred_name,orig_args),(extn_view_name,extn_props,extn_args), extn_poss)] ->
     let der_view(*,s*) =
-      (* let extn_view = CA.look_up_view_def_raw 46 cprog.CA.prog_view_decls extn_view_name in *)
+      (* let extn_view = x_add Cast.look_up_view_def_raw 46 cprog.Cast.prog_view_decls extn_view_name in *)
       (* if extn_view.C.view_kind = C.View_SPEC then *)
       (*   let der_view = trans_view_one_spec prog cviews derv ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) in *)
       (*  (der_view(\*,("************VIEW_SPECIFIED*************")*\)) *)

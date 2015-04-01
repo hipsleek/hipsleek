@@ -891,6 +891,9 @@ let is_num (e : exp) : bool = match e with
 let is_mult_op b = 
   match b with | OpMult -> true | _ -> false
 
+let is_div_op b = 
+  match b with | OpDiv -> true | _ -> false
+
 let is_var (e : exp) : bool = match e with
   | Var _ -> true
   | _ ->false
@@ -1142,9 +1145,9 @@ let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 infer_type infer_lst 
   let args = if !sa_pred_case then args0
     else
       List.filter (fun p -> match p.param_type with
-          | Named _ -> true
-          | _ -> false
-        ) args0 in
+      | Named _ -> true
+      | _ -> false
+    ) args0 in
   (*generate one HeapPred for args and one HeapPred for ret*)
   if args = [] && not (is_node_typ ret) (* ret = Void *) then
     F.mkETrueTrueF (),[],[]
@@ -1276,8 +1279,8 @@ let extract_mut_args prog proc=
 
 let genESpec_wNI body_header body_opt args ret pos=
   let print_gen_spec ss unk_hps=
-    let () = print_endline "\nHeap Predicate Declarations" in
-    let () = List.iter (fun hpdcl -> print_endline (!print_hp_decl hpdcl)) unk_hps in
+    let () = print_endline_quiet "\nHeap Predicate Declarations" in
+    let () = List.iter (fun hpdcl -> print_endline_quiet (!print_hp_decl hpdcl)) unk_hps in
     let () = Debug.ninfo_hprint (add_str "\ngen spec:" !F.print_struc_formula) ss no_pos in
     ()
   in

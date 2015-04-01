@@ -245,6 +245,7 @@ and afv (af : exp) : (ident * primed) list = match af with
   | IConst _ 
   | Tsconst _ 
   | InfConst _
+  | NegInfConst _
   | FConst _ -> []
   | Bptriple ((ec,et,ea),_) -> Gen.BList.remove_dups_eq (=) ((afv ec) @ (afv et) @ (afv ea))
   | Tup2 ((e1,e2),_) -> Gen.BList.remove_dups_eq (=) ((afv e1) @ (afv e2))
@@ -604,6 +605,7 @@ and pos_of_exp (e : exp) = match e with
   | Bptriple (_, p)
   | Tup2 (_, p)
   | InfConst (_, p)
+  | NegInfConst (_, p)
   | AConst (_, p) -> p
   | Ann_Exp (e,_,p) -> p
   | Add (_, _, p) -> p
@@ -631,7 +633,20 @@ and pos_of_exp (e : exp) = match e with
 
 
 and fresh_old_name (s: string):string =
-  let ri = try  (String.rindex s '_') with  _ -> (String.length s) in
+  let fn s = 
+    let l = String.length s in
+    try  
+      let c = (String.rindex s '_') in
+      (* let () = x_ninfo_hp (add_str "string" pr_id) s no_pos in *)
+      (* let () = x_binfo_hp (add_str "pos _ " string_of_int) c no_pos in *)
+      (* let () = x_binfo_hp (add_str "pos len " string_of_int) l no_pos in *)
+      let trail = String.sub s (c+1) (l-c-1) in
+      (* let () = x_binfo_hp (add_str "trail" pr_id) trail no_pos in *)
+      let (_:int64) = Int64.of_string trail in
+      c
+    with  _ -> l 
+  in
+  let ri = fn s in
   let n = ((String.sub s 0 ri) ^ (fresh_trailer ())) in
   n
 
@@ -818,6 +833,7 @@ and e_apply_one ((fr, t) as p) e = match e with
   | FConst _ 
   | Tsconst _
   | InfConst _
+  | NegInfConst _
   | AConst _ -> e
   | Bptriple ((ec,et,ea),pos) ->
     Bptriple ((e_apply_one p ec,
@@ -1031,6 +1047,7 @@ and find_lexp_exp (e: exp) ls =
     | AConst _
     | Tsconst _
     | InfConst _
+    | NegInfConst _ 
     | FConst _ -> []
     | Ann_Exp(e,_,_) -> find_lexp_exp e ls
     | Bptriple ((ec, et, ea), _) -> find_lexp_exp ec ls @ find_lexp_exp et ls @ find_lexp_exp ea ls
@@ -1102,6 +1119,8 @@ let rec contain_vars_exp (expr : exp) : bool =
   | Tsconst _
   | Bptriple _ (* TOCHECK *)
   | Tup2 _ (* TOCHECK *)
+  | InfConst _ 
+  | NegInfConst _
   | FConst _ -> false
   | Ann_Exp (exp,_,_) -> (contain_vars_exp exp)
   | Add (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
@@ -1125,7 +1144,6 @@ let rec contain_vars_exp (expr : exp) : bool =
   | Func _ -> true
   | ArrayAt _ -> true
   | Template _ -> false
-  | InfConst _ -> Error.report_no_pattern ()
   | BExpr f1 ->  f_contain_vars_exp f1
 
 and f_contain_vars_exp f=
@@ -1175,6 +1193,7 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
   | AConst _ 
   | Tsconst _
   | InfConst _ 
+  | NegInfConst _
   | FConst _ -> (e, None)
   | Ann_Exp (e, t, l) -> 
     let ne, np = float_out_exp_min_max e in
@@ -1790,6 +1809,7 @@ let rec typ_of_exp (e: exp) : typ =
   | IConst _                  -> Globals.Int
   | FConst _                  -> Globals.Float
   | InfConst _                  -> Globals.Int (* Type of Infinity should be Num keep Int for now *)
+  | NegInfConst _               -> Globals.INFInt (* Type of Infinity should be Num keep Int for now *)
   | AConst _                  -> Globals.AnnT
   | Tsconst _ 				  -> Globals.Tree_sh
   | Bptriple _ 				  -> Globals.Bptyp
@@ -2063,6 +2083,7 @@ let rec transform_exp_x f (e : exp) : exp =
       | ListReverse (e1,l) -> ListReverse ((transform_exp f e1),l)
       | Func (id, es, l) -> Func (id, (List.map (transform_exp f) es), l)
       | ArrayAt (a, i, l) -> ArrayAt (a, (List.map (transform_exp f) i), l) (* An Hoa *)
+      | NegInfConst _
       | InfConst _ -> Error.report_no_pattern ()
       | BExpr _ -> e
       | Template _ -> e

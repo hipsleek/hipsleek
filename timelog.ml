@@ -21,27 +21,27 @@ class timelog =
     (* add_str "timer status" (pr_pair string_of_float (pr_option string_of_int)) (timer,timer_exc) *)
     method timer_start pno s =
       begin
-        if trace_timer then print_endline ("inside timer_start "^pno);
+        if trace_timer then print_endline_quiet ("inside timer_start "^pno);
         timer_timeout_flag <- false;
         stk_t # push s
       end
     method timer_stop pno s =
       begin
         (* timer_timeout <- false; *)
-        if trace_timer then print_endline ("inside timer_stop "^pno); 
+        if trace_timer then print_endline_quiet ("inside timer_stop "^pno); 
         let r = stk_t # pop_top_no_exc in
         if stk_t # is_empty then 
           (if timer_val==None then timer_val <- Some s)
-        else print_endline "Nested Timer(stop)"
+        else print_endline_quiet "Nested Timer(stop)"
       end
     method timer_timeout pno s =
       begin
-        if trace_timer then print_endline ("inside timer_timeout "^pno);
+        if trace_timer then print_endline_quiet ("inside timer_timeout "^pno);
         timer_timeout_flag <- true;
         let r = stk_t # pop_top_no_exc in
         if stk_t # is_empty then 
           (if timer_val==None then timer_val <- Some s)
-        else print_endline "Nested Timer(timeout)"
+        else print_endline_quiet "Nested Timer(timeout)"
       end
     method start_time s = 
       let t = Gen.Profiling.get_main_time() in
@@ -50,12 +50,12 @@ class timelog =
 
     method add_proof_info new_s no =
       if trace_timer then 
-        print_endline ("inside add_proof_info "^new_s^" "^no);
+        print_endline_quiet ("inside add_proof_info "^new_s^" "^no);
       match last_big with
       | None -> ()
       | Some(s,t,slk_no) -> 
         begin
-          if trace_timer then print_endline "adding last_big";
+          if trace_timer then print_endline_quiet "adding last_big";
           let to_flag = timer_timeout_flag in
           (* let slk_no = get_sleek_no ()) in  *)
           last_big<-None;

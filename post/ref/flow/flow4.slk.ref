@@ -1,0 +1,21 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+Entail (1) : Valid. 
+
+Residue:
+ <1>emp&x1+1=x&{FLOW,(22,23)=__Exc#E}[]
+ inferred rel: [RELDEFN P(__Exc#E): ( true) -->  P(x)]
+
+
+Entail (2) : Valid. 
+
+Residue:
+ <1>emp&x=0&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELDEFN P(__norm#E): ( x=0) -->  P(x)]
+
+
+!!! fixpoint2:[( P(x,flow), ((x=0 & flow>=4 & flow<=5) | (flow>=22 & flow<=23)))]
+

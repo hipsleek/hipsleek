@@ -120,7 +120,8 @@ and cvcl_of_exp a = match a with
     failwith ("level should not appear in cvclite")
   | CP.Tsconst _ ->
     failwith ("Tsconst not supported in cvclite")
-  | CP.InfConst _ -> Error.report_no_pattern ()
+  | CP.NegInfConst _
+  | CP.InfConst _ -> failwith ("Infconst not supported in cvclite")
   | CP.Template t -> cvcl_of_exp (CP.exp_of_template t)
   | CP.Bptriple _ ->
     failwith ("cvcl_of_exp: Bptriple not supported in cvclite")

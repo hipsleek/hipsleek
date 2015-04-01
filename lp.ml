@@ -51,7 +51,7 @@ let rec lp_of_exp a =
   | CP.Add (e1, e2, _) -> (lp_of_exp e1) ^ " " ^ (lp_of_exp e2)
   | CP.Mult (e1, e2, _) -> (lp_of_exp e1) ^ " " ^ (lp_of_exp e2)
   (* UNHANDLED *)
-  | _ -> print_endline (!print_exp a); Error.report_no_pattern ()
+  | _ -> print_endline_quiet (!print_exp a); Error.report_no_pattern ()
 
 let rec lp_of_b_formula b =
   let (pf, _) = b in
@@ -60,12 +60,12 @@ let rec lp_of_b_formula b =
   | CP.Gte (e1, e2, _) -> (lp_of_exp e1) ^ " >= " ^ (lp_of_exp e2)
   | CP.Eq (e1, e2, _) -> (lp_of_exp e1) ^ " = " ^ (lp_of_exp e2)
   (* UNHANDLED *)
-  | _ -> print_endline (!print_b_formula b); Error.report_no_pattern ()
+  | _ -> print_endline_quiet (!print_b_formula b); Error.report_no_pattern ()
 
 let lp_of_formula f =
   match f with
   | CP.BForm ((b,_) as bf,_) -> lp_of_b_formula bf
-  | _ -> print_endline (!print_formula f); Error.report_no_pattern ()
+  | _ -> print_endline_quiet (!print_formula f); Error.report_no_pattern ()
 
 let rec split_add (e: exp): exp list =
   match e with 
@@ -282,9 +282,9 @@ let get_model solver obj_vars assertions =
   let lp_out = run solver lp_inp in
 
   let () = 
-    Debug.tinfo_pprint ">>>>>>> get_model_lp <<<<<<<" no_pos;
-    Debug.tinfo_hprint (add_str "lp input:\n " idf) lp_inp no_pos;
-    Debug.tinfo_hprint (add_str "lp output: " idf) lp_out no_pos 
+    x_tinfo_pp ">>>>>>> get_model_lp <<<<<<<" no_pos;
+    x_tinfo_hp (add_str "lp input:\n " idf) lp_inp no_pos;
+    x_tinfo_hp (add_str "lp output: " idf) lp_out no_pos 
   in
 
   process_output solver lp_out

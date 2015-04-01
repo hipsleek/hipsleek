@@ -1,0 +1,74 @@
+astsimp.ml:        Debug.no_1_num i "form_body_inv" pr Cprinter.string_of_formula form_body_inv vdef in
+astsimp.ml:  Debug.no_3_num i "case_normalize_struc_formula" pr0 pr0 pr1 pr2 
+cast.ml:  Debug.no_2_num i "subst_mater_list" pr_svl pr_svl pr_no (fun _ _ -> subst_mater_list fr t l) fr t 
+cast.ml:  Debug.no_3_num i "subst_mater_list" pr_svl pr_svl !print_mater_prop_list !print_mater_prop_list  subst_mater_list fr t l
+cast.ml:  Debug.no_1_num i "look_up_view_def_raw" pr pr_out (fun _ -> look_up_view_def_raw defs name) name
+cast.ml:  Debug.no_1_num i "look_up_view_def" pr_id pr_no 
+cformula.ml:  Debug.no_1_num i "get_node_name" !print_h_formula idf get_node_name_x h
+cformula.ml:  Debug.no_1_num i "normalize" (!print_formula) (!print_formula) (fun _ -> normalize_x f1 f2 pos) f1
+cformula.ml:  Debug.no_1_num i "fold_context_left" pr1 pr fold_context_left_x c_l
+cformula.ml:  Debug.no_1_num i "add_to_context" pr pr_no (fun _ -> add_to_context c s) c
+cprinter.ml:  Debug.no_1_num  i "string_of_proc_decl " (fun p -> p.proc_name) (fun x -> x) string_of_proc_decl p
+csvutil.ml:  Debug.no_1_num i "alias" pr1 pr2 alias_x ptr_eqs
+cvutil.ml:  Debug.no_1_num i "xpure_mem_enum"  xx
+cvutil.ml:  Debug.no_3_num i "xpure_heap_mem_enum" Cprinter.string_of_h_formula Cprinter.string_of_mix_formula string_of_int pr
+cvutil.ml:  Debug.no_1_num i "xpure_symbolic" Cprinter.string_of_formula
+cvutil.ml:  Debug.no_3_num i
+cvutil.ml:  Debug.no_3_num i "xpure_heap_i"
+cvutil.ml:  Debug.no_3_num i "xpure_heap_sym_i"
+cvutil.ml:  Debug.no_1_num i "xpure"
+infer.ml:  Debug.no_2_num i "filter_var" pr !print_svl pr filter_var f vars 
+infer.ml:  Debug.no_2_num i "simplify_contra" pr !print_svl pr simplify_contra f vars 
+infer.ml:  Debug.no_3_num i "infer_lhs_contra" pr !print_svl pr_id (pr_option pr2) 
+infer.ml:  Debug.no_3_num i "infer_lhs_contra_estate" (add_str "estate" pr0) 
+infer.ml:  Debug.no_4_num i "infer_pure_m_2" 
+infer.ml:  Debug.no_3_num i "infer_collect_hp_rel" pr2 pr1 pr1 pr5
+infer.ml:  Debug.no_2_num i "infer_collect_hp_rel_empty_rhs" pr1 pr2 pr3
+infer.ml:  Debug.no_2_num i "infer_collect_hp_rel_classsic" pr1 pr2 pr4
+label_only.ml:    Debug.no_2_num i "comb_norm" string_of string_of string_of comb_norm xs ys 
+label_only.ml:    Debug.no_2_num i "comb_norm" string_of string_of string_of comb_norm xs ys 
+label_only.ml:    Debug.no_2_num i "comb_norm" string_of string_of string_of comb_norm xs ys 
+lemproving.ml:  Debug.no_4_num c "verify_lemma" 
+mcpure.ml: Debug.no_2_num i "imply_memo 2" (!print_mp_f)
+musterr.ml:  Debug.no_1_num i "build_and_failures" pr4 pr2 
+omega.ml:  Debug.no_1_num i "omega_of_formula" 
+omega.ml:   Debug.no_1_num i "omega_of_formula_old"
+procutils.ml:    Debug.no_1_num i "maybe_raise_timeout" string_of_float pr_no (fun _ -> maybe_raise_timeout fnc arg tsec) tsec 
+sautil.ml:  Debug.no_1_num i "generate_hp_ass" pr_none pr_none (fun _ -> generate_hp_ass unk_svl cond_p (hp,args,lfb,rf)) 1
+sleekcore.ml:  Debug.no_5_num i "sleek_entail_check" pr5 !CP.print_svl  pr1 pr2 pr4 pr3
+solver.ml:  Debug.no_4_num n "unfold_struc_nth" string_of_bool prs pr pr2 pr 
+solver.ml:  Debug.no_4_num n "unfold" string_of_bool prs pr pr2 pr_out
+solver.ml:  Debug.no_2_num n "unsat_base_nth"
+solver.ml:  Debug.no_1_num i "elim_unsat_es" pr1 pr2 (fun _ -> elim_unsat_es_x prog sat_subno es) es
+solver.ml:  Debug.no_1_num i "elim_unsat_es_now" pr1 pr2 (fun _ -> elim_unsat_es_now_x prog sat_subno es) es
+solver.ml:  Debug.no_2_num i "heap_entail_failesc_prefix_init" pr2 pr (fun (c,_) -> pr2 c)
+solver.ml:  Debug.no_4_num i "heap_entail_one_context_struc"
+solver.ml:  Debug.no_2_num i "heap_entail_after_sat_struc" Cprinter.string_of_context
+solver.ml:    Debug.no_2_num i "helper_inner" Cprinter.string_of_context Cprinter.string_of_struc_formula (fun (lc, _) -> Cprinter.string_of_list_context lc)
+solver.ml:  Debug.no_2_num i "heap_entail_one_context" pr1 pr2 pr3 
+solver.ml:  Debug.no_2_num i "early_hp_contra_detection" Cprinter.string_of_entail_state_short pr2 pr_res 
+solver.ml:  Debug.no_2_num i "early_hp_contra_detection_add_to_list_context" Cprinter.string_of_entail_state_short pr2 pr_res 
+solver.ml:  Debug.no_1_num i "early_pure_contra_detection" Cprinter.string_of_entail_state_short pr_res 
+solver.ml:  Debug.no_5_num i "heap_entail_conjunct_lhs" pr1 pr2 pr3 pr4 pr5 pr_res 
+solver.ml:  Debug.no_3_num i "heap_n_pure_entail" (Cprinter.string_of_context) Cprinter.string_of_h_formula Cprinter.string_of_mix_formula
+solver.ml:  Debug.no_3_num i "heap_entail_conjunct" string_of_bool Cprinter.string_of_context Cprinter.string_of_formula
+solver.ml:  Debug.no_2_num i "heap_entail_conjunct_helper" pr1  pr3 pr2
+solver.ml:  Debug.no_3_num i "heap_entail_build_mix_formula_check"
+solver.ml:  Debug.no_4_num i "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula string_of_bool pr
+solver.ml:  Debug.no_4_num i "imply_mix_formula" pr
+solver.ml:  Debug.no_3_num i "imply_mix_formula_no_memo" Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula Cprinter.string_of_mem_formula
+solver.ml:  Debug.no_3_num i "solver_detect_lhs_rhs_contra_all" 
+solver.ml:  Debug.no_3_num i "solver_detect_lhs_rhs_contra" 
+solver.ml:    Debug.no_2_num i "normalize_formula_w_coers" pr pr3 pr 
+solver.ml:  Debug.no_2_num i "prop_formula_w_coers" pr_f pr_c pr_out
+solver.ml:  Debug.no_2_num i "heap_entail_struc_list_failesc_context_init"
+ti2.ml:  Debug.no_2_num i "simplify" pr1 pr2 pr1
+tpdispatcher.ml:  Debug.no_1_num s "simplify_a" pf pf simplify f
+tpdispatcher.ml:  Debug.no_1_num s "simplify_with_pairwise" pf pf simplify_with_pairwise f
+tpdispatcher.ml:Debug.no_2_num i "imply_one" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula)
+tpdispatcher.ml:  Debug.no_1_num i "is_sat" Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no do_cache) f
+tpdispatcher.ml:  Debug.no_1_num i "is_sat_sub_no_c" Cprinter.string_of_pure_formula string_of_bool (fun f -> is_sat_sub_no_c f sat_subno do_cache) f
+tpdispatcher.ml:  Debug.no_2_num i "is_sat_sub_no " (Cprinter.string_of_pure_formula) (fun x-> string_of_int !x)
+typeinfer.ml:  Debug.no_1_num i "node2_to_node"
+fixcalc.ml:  DD.no_2_num i "compute_fixpoint" pr1 pr2 pr_res
+fixcalc.ml:  DD.no_2_num i "compute_fixpoint_td" pr1 pr2 pr_res

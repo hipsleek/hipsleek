@@ -26,7 +26,7 @@ GetOptions( "stop"  => \$stop,
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
 {
-	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|imm-filed|sleek|parahip|hip_baga|sleek_threads|hip_threads|hip_vperm|sleek_vperm|sleek_fracperm||sleek_veribsync|hip_veribsync|infinity|mem [-flags \"arguments to be transmited to hip/sleek \"]\n";
+	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|imm-filed|sleek|parahip|hip_baga|sleek_threads|hip_threads|hip_vperm|sleek_vperm|sleek_fracperm||sleek_veribsync|hip_veribsync|infinity|mem|coqinf [-flags \"arguments to be transmited to hip/sleek \"]\n";
 	exit(0);
 }
 
@@ -208,17 +208,30 @@ $output_file = "log";
 	# END OF ARRAY TESTING EXAMPLES
 	"hip_tr"=>[["trees.ss",1,"insert"]],
 	"infinity" =>[
-	["inflist.ss",2,"--dsd --en-inf","remove","SUCCESS","append","SUCCESS"],
-	["infll_take.ss",1,"--dsd --en-inf","take","SUCCESS"],
-	["inftree.ss",1,"--dsd --en-inf","count","SUCCESS"],
-	["stream.ss",1,"--dsd --en-inf","zip","SUCCESS"],
-	["bst-inf.ss",2,"--dsd --en-inf","delete","SUCCESS","remove_min","SUCCESS"],
-	["inf-selsort.ss",3,"--dsd --en-disj-compute --en-inf","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
+	["inflist.ss",2,"--en-inf","remove","SUCCESS","append","SUCCESS"],
+	["infll_take.ss",1,"--en-inf","take","SUCCESS"],
+	["inftree.ss",1,"--en-inf","count","SUCCESS"],
+	["stream.ss",1,"--en-inf","zip","SUCCESS"],
+	["bst-inf.ss",2,"--en-inf","delete","SUCCESS","remove_min","SUCCESS"],
+	["inf-selsort.ss",3,"--en-inf","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
 	["inf-ins.ss",1,"--dsd --en-inf","insert","SUCCESS"],
 	["inf-sel.ss",3,"--dsd --en-inf","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
-	["bubble-inf.ss",4,"--dsd --en-inf","id2","SUCCESS","id3","SUCCESS","bubble","SUCCESS","bsort","SUCCESS"],
+	["bubble-inf.ss",4,"--en-inf","id2","SUCCESS","id3","SUCCESS","bubble","SUCCESS","bsort","SUCCESS"],
 	["heaps-inf.ss",4,"--en-inf","insert","SUCCESS","deleteoneel","SUCCESS","deleteone","SUCCESS","deletemax","SUCCESS"],
-	["merge-inf.ss",1,"--dsd --en-inf --en-disj-compute","merge","SUCCESS"],
+	["merge-inf.ss",1,"--en-inf --en-disj-compute","merge","SUCCESS"],
+	],
+	"coqinf" =>[
+	["inflist.ss",3,"--en-inf","remove","SUCCESS","append","SUCCESS","fail_remove","FAIL"],
+	["infll_take.ss",1,"--en-inf","take","SUCCESS"],
+	["inftree.ss",1,"--en-inf","count","SUCCESS"],
+	["stream.ss",1,"--en-inf","zip","SUCCESS"],
+	["bst-inf.ss",2,"--en-inf --eps --etcsu2 --etcsu3","delete","SUCCESS","remove_min","SUCCESS"],
+	["inf-selsort.ss",3,"--en-inf --etcsu2 --etcsu3","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
+	["inf-ins.ss",1,"--dsd --en-inf","insert","SUCCESS"],
+	["inf-sel.ss",3,"--dsd --en-inf --etcsu2 --etcsu3","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
+	["bubble-inf.ss",4,"--en-inf","id2","SUCCESS","id3","SUCCESS","bubble","SUCCESS","bsort","SUCCESS"],
+#	["heaps-inf.ss",4,"--en-inf --en-inf-qe-coq --etcsu2 --etcsu3 --dis-early-contra","insert","FAIL","deleteoneel","SUCCESS","deleteone","SUCCESS","deletemax","SUCCESS"],
+	["merge-inf.ss",1,"--en-inf --en-disj-compute --etcsu2 --etcsu3","merge","SUCCESS"],
 	],
     "imm" =>[ 
         ["bigint.ss",17,  " --imm -tp redlog",
@@ -353,12 +366,12 @@ $output_file = "log";
          "get_next", "SUCCESS"
         ]],
     "imm-field" => [
-        ["imspd.ss",2,"-tp oc --field-ann --etcsu1 ","check_pass","SUCCESS","login","SUCCESS"],
-        ["getset.ss",5,"-tp oc --field-ann --etcsu1 ","sset","SUCCESS","get","SUCCESS","setA","SUCCESS","getA","SUCCESS","non_negative","SUCCESS"],
-        ["bigint.ss",15,"-tp redlog --field-ann --etcsu1 ","clone","SUCCESS","add_one_digit","SUCCESS","add_c","SUCCESS","add","SUCCESS","div_with_remainder","SUCCESS","bigint_of","SUCCESS","compare_int","SUCCESS","is_zero","SUCCESS","compare2","SUCCESS","int_value","SUCCESS","mult_c","SUCCESS","shift_left","SUCCESS","mult","SUCCESS","sub_one_digit","SUCCESS","sub_c","SUCCESS","sub"],
-        ["insertion_simple.ss",1,"-tp oc --field-ann --etcsu1 ","insert","SUCCESS"],
-        ["schorr-waite-list.ss",1,"-tp om --field-ann --etcsu1 ","lscan","SUCCESS"],
-        ["sll.ss",4,"-tp oc --field-ann --etcsu1 ","delete","SUCCESS","get_tail","SUCCESS","insert","SUCCESS","insert2","SUCCESS"]
+        ["imspd.ss",2,"-tp oc --field-imm --etcsu1 ","check_pass","SUCCESS","login","SUCCESS"],
+        ["getset.ss",5,"-tp oc --field-imm --etcsu1 ","sset","SUCCESS","get","SUCCESS","setA","SUCCESS","getA","SUCCESS","non_negative","SUCCESS"],
+        ["bigint.ss",15,"-tp redlog --field-imm --etcsu1 ","clone","SUCCESS","add_one_digit","SUCCESS","add_c","SUCCESS","add","SUCCESS","div_with_remainder","SUCCESS","bigint_of","SUCCESS","compare_int","SUCCESS","is_zero","SUCCESS","compare2","SUCCESS","int_value","SUCCESS","mult_c","SUCCESS","shift_left","SUCCESS","mult","SUCCESS","sub_one_digit","SUCCESS","sub_c","SUCCESS","sub"],
+        ["insertion_simple.ss",1,"-tp oc --field-imm --etcsu1 ","insert","SUCCESS"],
+        ["schorr-waite-list.ss",1,"-tp om --field-imm --etcsu1 ","lscan","SUCCESS"],
+        ["sll.ss",4,"-tp oc --field-imm --etcsu1 ","delete","SUCCESS","get_tail","SUCCESS","insert","SUCCESS","insert2","SUCCESS"]
     ],
         "mem" => [
         ["dag.ss",2,"-tp om --mem --ramify","mark","SUCCESS","mark2","SUCCESS"],
@@ -856,25 +869,25 @@ $output_file = "log";
 					#"less_h", "SUCCESS", "remove_min_add","SUCCESS"],
 					],	
 	"hip_barr" => [
-		["../tree_shares/thesis/video_ex1_th3.ss",6, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+		["../tree_shares/thesis/video_ex1_th3.ss",6, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
                                 "th1_loop","SUCCESS","th1","SUCCESS",
 								"th2_loop","SUCCESS","th2","SUCCESS",
 								"th3_loop","SUCCESS","th3","SUCCESS"],
-		["../tree_shares/thesis/SIMD_ex1_v2_th3.ss",10, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+		["../tree_shares/thesis/SIMD_ex1_v2_th3.ss",10, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
                                 "controll","SUCCESS","control","SUCCESS",
 								"thl1","SUCCESS","th1","SUCCESS",
 								"thl2","SUCCESS","th2","SUCCESS",
 								"thl3","SUCCESS","th3","SUCCESS",
 								"thl4","SUCCESS","th4","SUCCESS"],						
-		["../tree_shares/thesis/SIMD_ex1_th1.ss",6, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+		["../tree_shares/thesis/SIMD_ex1_th1.ss",6, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
                                 "controll","SUCCESS","control","SUCCESS",
 								"thl1","SUCCESS","th1","SUCCESS",
 								"thl2","SUCCESS","th2","SUCCESS"],
-		["../tree_shares/thesis/PIPE_ex1_th5.ss",6, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+		["../tree_shares/thesis/PIPE_ex1_th5.ss",6, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
                                 "controll","SUCCESS","thl5","SUCCESS",
 								"thl1","SUCCESS","thl2","SUCCESS",
 								"thl3","SUCCESS","thl4","SUCCESS"],
-		["../tree_shares/thesis/MIXED_ex1_th4.ss",15, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+		["../tree_shares/thesis/MIXED_ex1_th4.ss",15, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
                                 "ctl12","SUCCESS","ctl11","SUCCESS",
 								"starterc","SUCCESS","thl12","SUCCESS",
 								"thl22","SUCCESS","thl21","SUCCESS",
@@ -884,7 +897,7 @@ $output_file = "log";
 								"thl42","SUCCESS","thl41","SUCCESS",
 								"startert4","SUCCESS",
 								],
-		["../tree_shares/thesis/MISD_ex2_th5.ss",12, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+		["../tree_shares/thesis/MISD_ex2_th5.ss",12, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
                                 "controll","SUCCESS","control","SUCCESS",
 								"thl","SUCCESS","th","SUCCESS",
 								"thl2","SUCCESS","th2","SUCCESS",
@@ -892,19 +905,19 @@ $output_file = "log";
 								"thl4","SUCCESS","th4","SUCCESS",
 								"thl5","SUCCESS","th5","SUCCESS",
 								],		
-		["../tree_shares/thesis/MISD_ex1_th5.ss",4, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+		["../tree_shares/thesis/MISD_ex1_th5.ss",4, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
                                 "controll","SUCCESS","control","SUCCESS",
 								"thl","SUCCESS","th","SUCCESS"
 								],	
-		["../tree_shares/thesis/barrier-weak.ss",4, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+		["../tree_shares/thesis/barrier-weak.ss",4, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
                                 "th1_loop","SUCCESS","th1","SUCCESS",
 								"th2_loop","SUCCESS","th2","SUCCESS"
 								],	
-		["../tree_shares/thesis/barrier-strong.ss",4, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+		["../tree_shares/thesis/barrier-strong.ss",4, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
                                 "th1_loop","SUCCESS","th1","SUCCESS",
 								"th2_loop","SUCCESS","th2","SUCCESS"
 								],	
-		["../tree_shares/thesis/barrier-paper.ss",4, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+		["../tree_shares/thesis/barrier-paper.ss",4, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
                                 "th1_loop","SUCCESS","th1","SUCCESS",
 								"th2_loop","SUCCESS","th2","SUCCESS"
 								],	
@@ -1895,11 +1908,18 @@ my $dis = '--dis-inv-baga';
                       ["imm/imm3.slk", " --imm --etcsu1 ", (), "Fail.Fail.Valid.Valid.Valid."],
                       ["imm/imm4.slk", " --imm --etcsu1 ", (), "Valid.Fail."],
                       ["imm/imm-hard.slk", " --imm --eps", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
-                      ["imm-field/sleek01.slk", " --field-ann --etcsu1 ", (), "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail."],
-                      ["imm-field/sleek02.slk", " --field-ann --etcsu1 ", (), "Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail."],
-                      ["imm-field/sleek03.slk", " --field-ann --etcsu1 ", (), "Valid.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Fail."],
+                      ["imm-field/sleek01.slk", " --field-imm --etcsu1 ", (), "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail."],
+                      ["imm-field/sleek02.slk", " --field-imm --etcsu1 ", (), "Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail."],
+                      ["imm-field/sleek03.slk", " --field-imm --etcsu1 ", (), "Valid.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Fail."],
                       ["eps.slk", " --dis-imm ", "", "Valid."],
-                      ["imm-field/sleek05.slk", " --field-ann --etcsu1 ", (), "Valid.Fail.Fail.Fail.Fail.Fail.Valid.Valid.Valid"],
+                      ["imm-field/sleek05.slk", " --field-imm --etcsu1 ", (), "Valid.Fail.Fail.Fail.Fail.Fail.Valid.Valid.Valid."],
+                      ["imm/norm/norm1.slk", " --en-imm-merge ", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
+                      ["imm/norm/norm2.slk", " --en-imm-merge ", (), "Valid.Valid.Valid.Valid.Valid."],
+                      ["imm/norm/norm3.slk", " --en-imm-merge ", (), "Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Fail.Valid."],
+                      ["imm/norm/norm4.slk", " --en-imm-merge ", (), "Valid.Valid.Valid.Fail.Fail."],
+                      ["imm/norm/norm5.slk", " --en-imm-merge ", (), "Valid.Valid.Fail."],
+                      ["imm/norm/norm6.slk", " --en-imm-merge ", (), "Valid.Valid.Fail."],
+                      ["imm/norm/field.slk", " --en-imm-merge ", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid."],
                       ["classic/classic1.slk", "", (), "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
                       ["classic/classic1.slk", " --classic", (), "Fail.Valid.Valid.Valid.Fail.Valid.Fail.Fail."],
                       ["classic/classic1a.slk", "", (), "Fail.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail."],
@@ -1949,12 +1969,12 @@ my $dis = '--dis-inv-baga';
               ["conchip/threads.slk"," -tp parahip", "", "Valid.Valid.Valid"],
               ["conchip/latch.slk"," -tp parahip", "", "Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail"],
                       ],
-      "sleek_barr"=>[["../tree_shares/barrier.slk", "--eps --dis-field-ann --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).Barrrier b4n Fail:  no contradiction found in preconditions of transitions from 1  for preconditions: .", ""],
-        			  ["../tree_shares/barrier3.slk", "--eps --dis-field-ann --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).", ""]
+      "sleek_barr"=>[["../tree_shares/barrier.slk", "--eps --dis-field-imm --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).Barrrier b4n Fail:  no contradiction found in preconditions of transitions from 1  for preconditions: .", ""],
+        			  ["../tree_shares/barrier3.slk", "--eps --dis-field-imm --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).", ""]
         			 ],
-        	"sleek_dfrac"=>[["../tree_shares/fractionals.slk", "--eps --dis-field-ann -perm dperm",(), "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
-        			  ["../tree_shares/barrier2.slk", "--eps --dis-field-ann -perm dperm",(), "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
-        			  ["../tree_shares/fractions.slk", "--eps --dis-field-ann -perm dperm",(), "Valid.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail."]
+        	"sleek_dfrac"=>[["../tree_shares/fractionals.slk", "--eps --dis-field-imm -perm dperm",(), "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
+        			  ["../tree_shares/barrier2.slk", "--eps --dis-field-imm -perm dperm",(), "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
+        			  ["../tree_shares/fractions.slk", "--eps --dis-field-imm -perm dperm",(), "Valid.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail."]
                  ],
     "sleek_threads" => [
                       ["threads/thrd1.slk"," --en-para --en-thrd-resource -tp redlog", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid"]
@@ -2268,6 +2288,7 @@ sub sleek_process_file  {
           my $barrier_results = "";
           my @lines = split /\n/, $output; 
           foreach my $line (@lines) { 
+              #print "\n!!!output: $line";
               if($line =~ m/Entailing lemma/){
                   if($line =~ m/Valid\./) { $lemmas_results = $lemmas_results ."Valid."; }
                   elsif($line =~ m/EXC\./) { $lemmas_results = $lemmas_results ."EXC."; }
@@ -2297,6 +2318,7 @@ sub sleek_process_file  {
                   else {
                       if($line =~ m/Valid\./) { $entail_results = $entail_results ."Valid."; }
                       elsif($line =~ m/EXC\./) {  $entail_results = $entail_results ."EXC."; }
+                      elsif($line =~ m/Failure\(/) {  $entail_results = $entail_results ."Failure."; }
                       elsif($line =~ m/Fail\./)  { $entail_results = $entail_results ."Fail.";}
                   }
               }

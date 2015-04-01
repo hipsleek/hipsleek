@@ -1,5 +1,6 @@
 #include "xdebug.cppo"
 open Globals
+open VarGen
 (* open Wrapper *)
 (* open Others *)
 (* open Stat_global *)
@@ -35,7 +36,8 @@ let simplify_with_label simp (f:formula) =
   join_disjunctions ls
 
 let simplify_with_label_omega_x (f:formula) =
-  let simp = (* Omega.simplify *) !simplify_raw in
+  (*  let simp = x_add_1 Omega.simplify 2 in  *)
+  let simp = (* x_add_1 Omega.simplify *) !simplify_raw in
   simplify_with_label simp f
 
 let simplify_with_label_omega (f:formula) =
@@ -150,7 +152,7 @@ let elim_clause (pf : formula) (ex_vars : spec_var list) : formula =
   (* let filtered_svl = List.filter (fun sv -> *)
   (*     let SpecVar(_,name,_) = sv in *)
   (*     not (name="self" or (List.mem sv args))) svl in *)
-  (* let () = Debug.tinfo_hprint (pr_list (string_of_typed_spec_var)) filtered_svl no_pos in *)
+  (* let () = x_tinfo_hp (pr_list (string_of_typed_spec_var)) filtered_svl no_pos in *)
   (* drop_svl_pure pf filtered_svl *)
   let conj_list = list_of_conjs pf in
   match filter_formula ex_vars conj_list with
@@ -169,7 +171,7 @@ let elim_clause (pf : formula) (ex_vars : spec_var list) : formula =
 (*  ) conj_list in *)
 (*   (\* WN : should we use Omega? will x!=y cause disjunct *\) *)
 (*  arith_simplify_new f *)
-(*  (\* Omega.simplify f *\) *)
+(*  (\* x_add_1 Omega.simplify f *\) *)
 
 let elim_clause (pf : formula) (args : spec_var list) : formula =
   Debug.no_2 "ex_elim_clause" !print_pure_formula (pr_list string_of_typed_spec_var) !print_pure_formula
@@ -239,16 +241,16 @@ let ef_elim_exists_1 (svl : spec_var list) epf  =
   let (baga,pure) = epf in
   (* let () = Debug.ninfo_pprint "ef_elim_exists" no_pos in *)
   (* let () = Debug.ninfo_pprint "==============" no_pos in *)
-  let () = Debug.dinfo_hprint (add_str "svl" string_of_spec_var_list) svl no_pos in
+  let () = x_dinfo_hp (add_str "svl" string_of_spec_var_list) svl no_pos in
   (* let () = Debug.ninfo_hprint (add_str "old baga" string_of_spec_var_list) baga no_pos in *)
   (* let () = Debug.ninfo_hprint (add_str "pure" !print_pure_formula) pure no_pos in *)
   let p_aset = pure_ptr_equations pure in
-  let () = Debug.tinfo_hprint (add_str "pure = " !print_pure_formula) pure no_pos in
+  let () = x_tinfo_hp (add_str "pure = " !print_pure_formula) pure no_pos in
   let pure = wrap_exists_svl pure svl in
-  let () = Debug.tinfo_hprint (add_str "pure1 = " !print_pure_formula) pure no_pos in
-  let pure = simplify_with_label_omega (* Omega.simplify *) pure in
-  let () = Debug.tinfo_hprint (add_str "pure2 = " !print_pure_formula) pure no_pos in
-  let () = Debug.tinfo_hprint (add_str "pure_ptr_eq" (pr_list (pr_pair string_of_typed_spec_var string_of_typed_spec_var))) p_aset no_pos in
+  let () = x_tinfo_hp (add_str "pure1 = " !print_pure_formula) pure no_pos in
+  let pure = simplify_with_label_omega (* x_add_1 Omega.simplify *) pure in
+  let () = x_tinfo_hp (add_str "pure2 = " !print_pure_formula) pure no_pos in
+  let () = x_tinfo_hp (add_str "pure_ptr_eq" (pr_list (pr_pair string_of_typed_spec_var string_of_typed_spec_var))) p_aset no_pos in
   let p_aset = EMapSV.build_eset p_aset in
   (* let new_paset = EMapSV.elim_elems p_aset svl in *)
   let () = Debug.ninfo_hprint (add_str "eqmap = " EMapSV.string_of) p_aset no_pos in
@@ -292,13 +294,13 @@ let ef_elim_exists_1 (svl : spec_var list) epf =
   ef_elim_exists_1 svl epf
 
 let calc_fix_pure (svl : spec_var list) pf =
-  let pf_base = Omega.simplify pf in
+  let pf_base = x_add_1 Omega.simplify pf in
   let conjs = split_conjunctions pf in
   let conjs = List.filter (fun conj ->
       not(List.exists (fun sv -> List.mem sv svl) (fv conj))
     ) conjs in
   let pf_indu = List.fold_left (fun pf1 pf -> mkAnd pf1 pf no_pos) (mkTrue no_pos) conjs in
-  let pf_fix = Omega.simplify (mkOr pf_base pf_indu None no_pos) in
+  let pf_fix = x_add_1 Omega.simplify (mkOr pf_base pf_indu None no_pos) in
   pf_fix
 
 let ef_elim_exists_2 (svl : spec_var list) epf =
@@ -459,12 +461,15 @@ module EPURE =
 
     (* convert ptr to integer constraints *)
     (* ([a,a,b]  --> a!=a & a!=b & a!=b & a>0 & a>0 & b>0 *)
-    let baga_conv baga : formula =
+    let baga_conv ?(neq_flag=false) baga : formula =
+      let choose hd pos =
+        if neq_flag then mkNeqNull hd pos
+        else mkGtVarInt hd 0 pos in
       let baga = Elt.conv_var baga in
       if (List.length baga = 0) then
         mkTrue no_pos
       else if (List.length baga = 1) then
-        mkGtVarInt (List.hd baga) 0 no_pos
+        choose (List.hd baga) no_pos
       else
         let rec helper i j baga len =
           let f1 = mkNeqVar (List.nth baga i) (List.nth baga j) no_pos in
@@ -478,8 +483,8 @@ module EPURE =
             mkAnd f1 f2 no_pos
         in
         let f1 = helper 0 1 baga (List.length baga) in
-        let f2 = List.fold_left (fun f sv -> mkAnd f (mkGtVarInt sv 0 no_pos) no_pos)
-            (mkGtVarInt (List.hd baga) 0 no_pos) (List.tl baga) in
+        let f2 = List.fold_left (fun f sv -> mkAnd f (choose sv no_pos) no_pos)
+            (choose (List.hd baga) no_pos) (List.tl baga) in
         mkAnd f1 f2 no_pos
 
     (* ef_conv :  ef_pure -> formula *)
@@ -487,6 +492,13 @@ module EPURE =
     (* ([a,a,b],pure)  --> baga[a,ab] & a>0 & a>0 & b>01 & pure *)
     let ef_conv ((baga,f)) : formula =
       let bf = baga_conv baga in
+      mkAnd bf f no_pos
+
+    (* ef_conv :  ef_pure -> formula *)
+    (* conseq must use this *)
+    (* ([a,a,b],pure)  --> baga[a,ab] & a!=null & a!=null & b!=null1 & pure *)
+    let ef_conv_neq ((baga,f)) : formula =
+      let bf = baga_conv ~neq_flag:true baga in
       mkAnd bf f no_pos
 
     (* ([a,a,b]  --> a=1 & a=2 & b=3 *)
@@ -514,7 +526,7 @@ module EPURE =
         ) (mkFalse no_pos) disj
 
     let ef_conv_disj_x disj : formula =
-      ef_conv_disj_ho ef_conv disj
+      ef_conv_disj_ho ef_conv_neq disj
 
     let ef_conv_disj disj : formula =
       Debug.no_1 "ef_conv_disj" string_of_disj !Cpure.print_formula
@@ -576,7 +588,7 @@ module EPURE =
 
     (* DO NOT CALL DIRECTLY *)
     let ef_unsat_0 (f : epure) : bool =
-      (* Debug.no_1 "ef_unsat" string_of_ef_pure string_of_bool *)
+      Debug.no_1 "ef_unsat" string_of(* _ef_pure *) string_of_bool
       ef_unsat_0 f
 
     let unsat (b,f) = ef_unsat_0 (b, f)
@@ -620,7 +632,7 @@ module EPURE =
       not (!is_sat_raw (Mcpure.mix_of_pure f))
 
     let ef_imply_0 (ante : epure) (conseq : epure) : bool =
-      (* Debug.no_2 "ef_imply" string_of_ef_pure string_of_ef_pure string_of_bool *)
+      Debug.no_2 "ef_imply" string_of(* _ef_pure *) string_of(* _ef_pure *) string_of_bool
       ef_imply_0 ante conseq
 
     let imply (ante : epure) (conseq : epure) : bool =
@@ -773,10 +785,10 @@ module EPUREN =
         let p2 = mk_partition eq in
         if (partition_compare p p2) != 0 then
           begin
-            Debug.binfo_pprint ("Inconsistent eqmap @ "^s) no_pos;
-            Debug.binfo_hprint (add_str "eqmap" EM.string_of_debug) eq no_pos;
-            Debug.binfo_hprint (add_str "part" string_of_epart) p no_pos;
-            Debug.binfo_hprint (add_str "part2" string_of_epart) p2 no_pos;
+            x_binfo_pp ("Inconsistent eqmap @ "^s) no_pos;
+            x_binfo_hp (add_str "eqmap" EM.string_of_debug) eq no_pos;
+            x_binfo_hp (add_str "part" string_of_epart) p no_pos;
+            x_binfo_hp (add_str "part2" string_of_epart) p2 no_pos;
           end
 
     let check_epure s ((_,eqmap,_) as r) =
@@ -891,9 +903,9 @@ module EPUREN =
             then mk_false
             else 
               let new_baga = merge_baga baga1 baga2 in
-              (* Debug.binfo_hprint (add_str "eq1" EM.string_of_debug) eq1 no_pos; *)
-              (* Debug.binfo_hprint (add_str "eq2" EM.string_of) eq2 no_pos; *)
-              (* Debug.binfo_hprint (add_str "part2" string_of_epart) p2 no_pos; *)
+              (* x_binfo_hp (add_str "eq1" EM.string_of_debug) eq1 no_pos; *)
+              (* x_binfo_hp (add_str "eq2" EM.string_of) eq2 no_pos; *)
+              (* x_binfo_hp (add_str "part2" string_of_epart) p2 no_pos; *)
               let new_eq = EM.merge_eset eq1 eq2 in
               let new_eq2 = (new_eq,mk_partition new_eq) in
               check_eqmap "mk_part:2" new_eq2;
@@ -1367,9 +1379,9 @@ module EPUREN =
           if r!=r2 then
             begin
               let pr = string_of_disj in
-              Debug.tinfo_hprint (add_str "ante" pr) ante no_pos;
-              Debug.tinfo_hprint (add_str "conseq" pr) conseq no_pos;
-              Debug.tinfo_pprint ("Got "^(string_of_bool r)^" but expects "^(string_of_bool r2)) no_pos
+              x_tinfo_hp (add_str "ante" pr) ante no_pos;
+              x_tinfo_hp (add_str "conseq" pr) conseq no_pos;
+              x_tinfo_pp ("Got "^(string_of_bool r)^" but expects "^(string_of_bool r2)) no_pos
             end
         end;
       r

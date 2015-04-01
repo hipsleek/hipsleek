@@ -1,0 +1,8 @@
+data cell{
+ int fst;
+}.
+
+checkentail 
+c::cell<v>@a //& P1(a) & a<:@L //& @M<:b
+        |- c::cell<w>@b . //& P2(b).
+print residue.

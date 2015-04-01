@@ -1,0 +1,65 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+
+WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+
+Warning: ::0: 0: combining two views not yet implemented
+
+Entail 1: Valid. 
+
+Residue:
+ <1>emp&flted_10_81=null & flted_10_82=null&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  SEARCH ==>  Match(x,x) ==>  SEARCH ==>  COND ==>  Match(y,y) ==> ]]
+
+
+
+Warning: ::0: 0: combining two views not yet implemented
+
+Entail 2: Valid. 
+
+Residue:
+ <1>emp&y=z & a=a_164 & flted_14_161=null & flted_14_162=null&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  SEARCH ==>  Match(x,x) ==>  SEARCH ==>  COND ==>  Match(z,y) ==> ]]
+
+
+
+Warning: ::0: 0: combining two views not yet implemented
+
+Entail 3: Valid. 
+
+Residue:
+ <1>emp&q_266=q & Anon_265=Anon_13 & x=y&{FLOW,(4,5)=__norm#E}[]
+[[ Fold ==>  SEARCH ==>  Match(y,x) ==>  SEARCH ==>  COND ==>  Match(q,q_266) ==> ]]
+
+
+
+Warning: ::0: 0: combining two views not yet implemented
+
+Entail 4: Fail.(may) cause:UnionR[UnionR[ x!=null |-  x=v. LOCS:[25] (may-bug), (q!=null | q=u) |-  u=v. LOCS:[7;1;0;25] (may-bug)], ((q!=null | q=q_350)) & ((q_350!=null | q_350=u)) |-  q_350=v. LOCS:[7;1;0;25] (may-bug)]
+
+Residue:
+ <1>emp&{FLOW,(1,26)=__flow#E}[]
+
+
+Warning: ::0: 0: combining two views not yet implemented
+
+Entail 5: Valid. 
+
+Residue:
+ <1>emp&q_386=q & Anon_385=Anon_15 & x=y&{FLOW,(4,5)=__norm#E}[]
+[[ Fold ==>  SEARCH ==>  Match(y,x) ==>  SEARCH ==>  COND ==>  Match(q,q_386) ==> ]]
+
+
+
+Warning: ::0: 0: combining two views not yet implemented
+
+Entail 6: Fail.(may) cause:UnionR[ (q!=null | q=u) |-  u=Anon_17. LOCS:[1;0;33] (may-bug), ((q!=null | q=q_464)) & ((q_464!=null | q_464=u)) |-  q_464=Anon_17. LOCS:[1;0;33] (may-bug)]
+
+Residue:
+ <1>emp&{FLOW,(1,26)=__flow#E}[]
+
+

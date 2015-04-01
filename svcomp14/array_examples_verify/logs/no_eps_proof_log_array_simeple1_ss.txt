@@ -1,0 +1,108 @@
+ 
+ id: 1<-1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: UNKNOWN
+ raw proof:IMPLY:complement {[size] : (((0 >= size) | (0 < size)))};
+ raw result:{[size]  : FALSE }
+ Imply: ante: 0<size
+	     conseq:  0<size
+ res: true
+ -------------------- 
+ id: 158<0; prover: OMEGA CALCULATOR; loc: array_simeple1_ss_10:9_10:12; kind: PRE
+ raw proof:SAT:{[xPRMD, x, v_int_10_1148PRMD] : (((xPRMD = x) & (v_int_10_1148PRMD = 1)))};
+ raw result:{[xPRMD,xPRMD,1]}
+ Sat:  x'=x & v_int_10_1148'=1
+ res: SAT
+ -------------------- 
+ id: 159<1; prover : CACHED ; loc: array_simeple1_ss_10:9_10:12; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  x'=x & v_int_10_1148'=1
+ res: SAT
+ -------------------- 
+ id: 160<2; prover: OMEGA CALCULATOR; loc: array_simeple1_ss_10:9_10:12; kind: PRE
+ raw proof:SAT:{[v_int_10_1149PRMD, v_int_10_1150PRMD, xPRMD, x] : ((((v_int_10_1149PRMD = 5) & (v_int_10_1150PRMD = 1 + xPRMD)) & (xPRMD = x)))};
+ raw result:{[5,v_int_10_1150PRMD,v_int_10_1150PRMD-1,v_int_10_1150PRMD-1]}
+ Sat:  v_int_10_1149'=5 & v_int_10_1150'=1+x' & x'=x
+ res: SAT
+ -------------------- 
+ id: 161<3; prover : CACHED ; loc: array_simeple1_ss_10:9_10:12; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  v_int_10_1149'=5 & v_int_10_1150'=1+x' & x'=x
+ res: SAT
+ -------------------- 
+ id: 162<4; prover: OMEGA CALCULATOR; loc: array_simeple1_ss_12:6_12:10; kind: PRE
+ raw proof:SAT:{[v_int_12_1151PRMD, xPRMD, x] : (((v_int_12_1151PRMD = 5) & (xPRMD = x)))};
+ raw result:{[5,xPRMD,xPRMD]}
+ Sat:  v_int_12_1151'=5 & update_array_1d(a_1188,a_36',1+x',5) & x'=x
+ res: SAT
+ -------------------- 
+ id: 163<5; prover : CACHED ; loc: array_simeple1_ss_12:6_12:10; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  v_int_12_1151'=5 & update_array_1d(a_1188,a_36',1+x',5) & x'=x
+ res: SAT
+ -------------------- 
+ id: 164<-1; prover: OMEGA CALCULATOR; loc: array_simeple1_ss_13:2_13:10; kind: POST
+ raw proof:SAT:{[xPRMD, x] : ((xPRMD = x))};
+ raw result:{[xPRMD,xPRMD]}
+ Sat:  x'=x & update_array_1d(a_1188,a_36',1+x',5) & res=a_36'[5]
+ res: SAT
+ -------------------- 
+ id: 165<6; prover: OMEGA CALCULATOR; loc: array_simeple1_ss_13:2_13:10; kind: POST
+ raw proof:SAT:{[xPRMD, x] : ((xPRMD = x))};
+ raw result:{[xPRMD,xPRMD]}
+ Sat:  x'=x & update_array_1d(a_1188,a_1190,1+x',5) & res=a_1190[5]
+ res: SAT
+ -------------------- 
+ id: 166<-1; prover: OMEGA CALCULATOR; loc: array_simeple1_ss_13:2_13:10; kind: Check_Specs
+ raw proof:no proof raw result:no result
+ Simplify:  exists(a_1190:exists(a_1188:exists(update_array_1d:update_array_1d(a_1188,a_1190,1+
+x,5))) & res=a_1190[5])
+ res:  exists(a_1190:exists(a_1188:exists(update_array_1d:update_array_1d(a_1188,a_1190,x+
+1,5))) & res=a_1190[5])
+ -------------------- 
+ id: 167<7; prover : CACHED ; loc: array_simeple1_ss_10:9_10:12; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  x'=x & v_int_10_1148'=1
+ res: SAT
+ -------------------- 
+ id: 168<8; prover : CACHED ; loc: array_simeple1_ss_10:9_10:12; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  x'=x & v_int_10_1148'=1
+ res: SAT
+ -------------------- 
+ id: 169<9; prover : CACHED ; loc: array_simeple1_ss_10:9_10:12; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  v_int_10_1149'=5 & v_int_10_1150'=1+x' & x'=x
+ res: SAT
+ -------------------- 
+ id: 170<10; prover : CACHED ; loc: array_simeple1_ss_10:9_10:12; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  v_int_10_1149'=5 & v_int_10_1150'=1+x' & x'=x
+ res: SAT
+ -------------------- 
+ id: 171<11; prover : CACHED ; loc: array_simeple1_ss_12:6_12:10; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  v_int_12_1151'=5 & update_array_1d(a_1212,a_36',1+x',5) & x'=x
+ res: SAT
+ -------------------- 
+ id: 172<12; prover : CACHED ; loc: array_simeple1_ss_12:6_12:10; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  v_int_12_1151'=5 & update_array_1d(a_1212,a_36',1+x',5) & x'=x
+ res: SAT
+ -------------------- 
+ id: 173<-1; prover : CACHED ; loc: array_simeple1_ss_13:2_13:10; kind: POST
+ raw proof:no proof raw result:no result
+ Sat:  x'=x & update_array_1d(a_1212,a_36',1+x',5) & res=a_36'[5]
+ res: SAT
+ -------------------- 
+ id: 174<13; prover: OMEGA CALCULATOR; loc: array_simeple1_ss_13:2_13:10; kind: POST
+ raw proof:SAT:{[xPRMD, x] : ((xPRMD = x))};
+ raw result:{[xPRMD,xPRMD]}
+ Sat:  x'=x & update_array_1d(a_1212,a_1214,1+x',5) & res=a_1214[5]
+ res: SAT
+ -------------------- 
+ id: 175<-1; prover: OMEGA CALCULATOR; loc: array_simeple1_ss_13:2_13:10; kind: Check_Specs
+ raw proof:no proof raw result:no result
+ Simplify:  exists(a_1214:exists(a_1212:exists(update_array_1d:update_array_1d(a_1212,a_1214,1+
+x,5))) & res=a_1214[5])
+ res:  exists(a_1214:exists(a_1212:exists(update_array_1d:update_array_1d(a_1212,a_1214,x+
+1,5))) & res=a_1214[5])
+ --------------------

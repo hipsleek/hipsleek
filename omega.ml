@@ -170,7 +170,8 @@ and omega_of_b_formula b =
     "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
     ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
   (* | VarPerm _ -> illegal_format ("Omega.omega_of_exp: VarPerm constraint") *)
-  | RelForm _ -> "0=0" (* illegal_format ("Omega.omega_of_exp: RelForm") *)
+  (* | RelForm _ -> "0=0" *)
+  | RelForm _ -> illegal_format ("Omega.omega_of_exp: RelForm")
   | LexVar _ -> illegal_format ("Omega.omega_of_exp: LexVar 3")
   | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
 
@@ -185,7 +186,7 @@ and omega_of_formula_x pr_w pr_s f  =
       end
     | AndList _ ->
       begin
-        let () = print_endline ("AndList:?"^(!print_formula f)) in
+        let () = print_endline_quiet ("AndList:?"^(!print_formula f)) in
         report_error no_pos "omega.ml: encountered AndList, should have been already handled"
       end
     | And (p1, p2, _) -> "(" ^ (helper p1) ^ " & " ^ (helper p2 ) ^ ")"
@@ -199,7 +200,7 @@ and omega_of_formula_x pr_w pr_s f  =
   with _ as e -> 
     let s = Printexc.to_string e in
     let () = print_string_quiet ("Omega Error Exp:"^s^"\n Formula:"^(!print_formula f)^"\n") in
-    (* let () = Debug.trace_hprint (add_str "Omega Error format:" !print_formula) f in *)
+    (* let () = x_tinfo_hp (add_str "Omega Error format:" !print_formula) f in *)
     raise e
 
 
@@ -215,7 +216,8 @@ let omega_of_formula_old i f  =
     let (pr_w, pr_s) = no_drop_ops in
     try 
       Some (omega_of_formula i pr_w pr_s f)
-    with | _ -> None
+    with | _ ->
+      None
 
 let omega_of_formula_old i f  =
   let pr = !print_formula in
@@ -490,6 +492,11 @@ let is_sat_ops_x pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
     (*  Cvclite.write_CVCLite pe; *)
     (*  Lash.write pe; *)
     (* let pe0 = drop_varperm_formula pe in *)
+    let pe =
+      if !Globals.array_translate
+      then Trans_arr.drop_array_formula pe
+      else pe
+    in
     let svl0 = Cpure.fv pe in
     let svl,fr_svl = mkSpecVarList 0 svl0 in
     let ss = List.combine svl fr_svl in
@@ -580,8 +587,8 @@ let is_sat (pe : formula) sat_no : bool =
     is_sat pe sat_no
   with Illegal_Prover_Format s -> 
     begin
-      print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
-      print_endline ("Apply Omega.is_sat on formula :"^(!print_pure pe));
+      print_endline_quiet ("\nWARNING : Illegal_Prover_Format for :"^s);
+      print_endline_quiet ("Apply Omega.is_sat on formula :"^(!print_pure pe));
       flush stdout;
       failwith s
     end
@@ -711,9 +718,9 @@ let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : st
     imply_ops pr_weak pr_strong ante conseq imp_no timeout
   with Illegal_Prover_Format s -> 
     begin
-      print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
-      print_endline ("Apply Omega.imply on ante Formula :"^(!print_pure ante));
-      print_endline ("and conseq Formula :"^(!print_pure conseq));
+      print_endline_quiet ("\nWARNING : Illegal_Prover_Format for :"^s);
+      print_endline_quiet ("Apply Omega.imply on ante Formula :"^(!print_pure ante));
+      print_endline_quiet ("and conseq Formula :"^(!print_pure conseq));
       flush stdout;
       failwith s
     end
@@ -729,11 +736,14 @@ let is_valid (pe : formula) timeout : bool =
     is_valid_ops pr_w pr_s pe timeout
   with Illegal_Prover_Format s -> 
     begin
-      print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
-      print_endline ("Apply Omega.is_valid on Formula :"^(!print_pure pe));
+      print_endline_quiet ("\nWARNING : Illegal_Prover_Format for :"^s);
+      print_endline_quiet ("Apply Omega.is_valid on Formula :"^(!print_pure pe));
       flush stdout;
       failwith s
     end
+
+let is_valid (pe : formula) timeout : bool =
+  Gen.Profiling.do_1 "omega.is_valid" is_valid pe timeout
 
 let rec match_vars (vars_list0 : spec_var list) rel =
   (* let vars_list0 = vars_list0 in *)
@@ -819,8 +829,9 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
   (* let () = print_string ("\nomega_simplify: f
      before"^(!print_formula pe)) in *)
   begin
-    (* let pe0 = drop_varperm_formula pe in *)
-    let svl0 = Cpure.fv pe in
+
+    (* let pe = Trans_arr.translate_out_array_in_one_formula_full pe in *)
+    let svl0 = Cpure.fv pe in	
     let svl,fr_svl = mkSpecVarList 0 svl0 in
     let ss1 = List.combine svl fr_svl in
     let ss2 = List.combine fr_svl svl in
@@ -829,7 +840,7 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
     let v = try 
         (* Debug.info_pprint "here1" no_pos; *)
         Some (omega_of_formula 8 pr_weak pr_strong pe1)
-      with | Illegal_Prover_Format s -> 
+      with | Illegal_Prover_Format s ->
         (* Debug.info_pprint "here1a" no_pos; *)
         None
     in
@@ -847,8 +858,8 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
           (* let () = print_endline ("sv_list: " ^ (!Cpure.print_svl sv_list)) in *)
           let vstr = omega_of_var_list (List.map omega_of_spec_var sv_list) in
           let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
-          (* Debug.binfo_hprint (add_str "(simplify) input f" !print_formula) pe no_pos; *)
-          (* Debug.binfo_hprint (add_str "(simplify) fomega" pr_id) fomega no_pos;       *)
+          (* x_binfo_hp (add_str "(simplify) input f" !print_formula) pe no_pos; *)
+          (* x_binfo_hp (add_str "(simplify) fomega" pr_id) fomega no_pos;       *)
           (*test*)
           (*print_endline (Gen.break_lines fomega);*)
           (* for simplify/hull/pairwise *)
@@ -919,7 +930,7 @@ let simplify (pe : formula) : formula =
   else
     (* let res_memo = simplify_ops pr_w pr_s f_memo in *)
     (* restore_memo_formula subs bvars res_memo *)
-    simplify_ops pr_w pr_s pe
+    x_add simplify_ops pr_w pr_s pe
 
 let simplify (pe : formula) : formula =
   let pf = !print_pure in
@@ -1048,6 +1059,10 @@ let pairwisecheck (pe : formula) : formula =
   begin
     omega_subst_lst := [];
     (* let pe = drop_varperm_formula pe in *)
+
+    (* translate out and drop array *)
+    (* let pe = Trans_arr.new_translate_out_array_in_one_formula_split pe in *)
+
     match (omega_of_formula_old 21 pe) with
     | None -> pe
     | Some fstr ->
@@ -1065,6 +1080,12 @@ let pairwisecheck (pe : formula) : formula =
       let rel = send_and_receive fomega !in_timeout (* 0. *) in
       match_vars (fv pe) rel 
   end
+;;
+
+(* ZH *)
+let pairwisecheck (pe:formula) : formula =
+  Trans_arr.split_and_combine pairwisecheck Trans_arr.can_be_simplify pe
+;;
 
 let pairwisecheck (pe : formula) : formula =
   let r = pairwisecheck pe in
@@ -1100,7 +1121,12 @@ let hull (pe : formula) : formula =
       match_vars (fv pe) rel
   end
 
+let hull (pe : formula) : formula =
+  let pf = !print_pure in
+  Debug.no_1 "omega.hull" pf pf hull pe
+
 let gist_x (pe1 : formula) (pe2 : formula) : formula =
+
   (*print_endline "LOCLE: gist";*)
   begin
     omega_subst_lst := [];
@@ -1142,4 +1168,3 @@ let log_mark (mark : string) =
 let get_model bnd_vars assertions =
   let inp_f = mkExists bnd_vars (join_conjunctions assertions) None no_pos in
   simplify inp_f
-

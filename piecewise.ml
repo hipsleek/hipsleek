@@ -74,7 +74,7 @@ let get_cond_templ_args ctx vs =
       (Gen.BList.difference_eq eq_spec_var (fv ctx) vs) 
       ctx None (pos_of_formula ctx) in 
   let pr_weak, pr_strong = drop_complex_ops in
-  Omega.simplify_ops pr_weak pr_strong exists_ctx
+  x_add Omega.simplify_ops pr_weak pr_strong exists_ctx
 
 (* Get the condition of the template's *)
 (* arguments in the current context *)
@@ -239,7 +239,7 @@ let infer_piecewise_main prog templ_assumes =
       let cons = ta.ass_cons in
       List.map (fun f -> (f, cons)) 
         (subst_piecewise_templ_formula ptempl_ls ante)) templ_assumes) in 
-  print_endline ("Piecewise template definition:\n" ^ (pr_list pr_ptempl ptempl_ls));
+  print_endline_quiet ("Piecewise template definition:\n" ^ (pr_list pr_ptempl ptempl_ls));
   (* print_endline "\n**** PIECEWISE TEMPLATE ASSUMPTION(S) ****";                                     *)
   (* print_endline (pr_list (fun pta -> (Cprinter.string_of_templ_assume pta) ^ "\n") ptempl_assumes); *)
   ptempl_assumes, inf_ptempls, ptempl_defs

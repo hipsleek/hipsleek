@@ -1,0 +1,8 @@
+infer [v] @L<:v |- v=@M.
+expect Valid.
+print residue.
+// bef merge with def: inferred pure: [!(@L<:v)] OK
+// after merge with def: inferred pure: [v<=1]   NOT OK
+
+
+

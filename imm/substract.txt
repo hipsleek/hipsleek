@@ -1,0 +1,32 @@
+
+data cell{int val;}.
+
+checkentail / infer[] x::cell<_>@w /\ ... |- x::cell<>@v /\ ...
+
+after match:
+      x::cell<_>@[@w,@v] /\ ... |- emp /\ ...
+
+change to:
+       x::cell<_>@z & z=(w \substract v) /\ ... |- emp /\ ...
+
+how to define substract?
+
+@M - @M = @A (0)
+@M - @I = @A (-1)
+@M - @L = Hole(@M) --> @M (-2)
+@M - @A = @M (-3)
+
+@I - @M = NA (1)
+@I - @I = @A (0)
+@I - @L = Hole(@I) --> @I (-1)
+@I - @A = @I (-2)
+
+@L - @M = NA (2)
+@L - @I = NA (1)
+@L - @L = Hole(@L) --> @L (0)
+@L - @A = @L (-1)
+
+@A - @M = NA (3)
+@A - @I = NA (2)
+@A - @L = NA (1)
+@A - @A = @A (0)

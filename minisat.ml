@@ -105,7 +105,7 @@ let  minisat_cnf_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (ge:G.t)
   | BConst (c, _)   -> (*let _=print_endline ("minisat_cnf_of_p_formula_for_helper BConst EXIT!")  in*) ""
   | XPure _ -> "" (* WN : weakening *)
   | BVar (sv, pos)    -> 
-    let _= Debug.binfo_hprint (add_str "minisat_cnf_of_p_formula Bvar" minisat_cnf_of_spec_var) sv pos 
+    let _= x_binfo_hp (add_str "minisat_cnf_of_p_formula Bvar" minisat_cnf_of_spec_var) sv pos 
     in ""
   | Lt _            -> ""
   | Lte _           -> ""
@@ -283,7 +283,7 @@ let unsat_in_cnf (bf : Cpure.b_formula) =
   match bf with
   | (pf, _) -> match pf with
     | Neq(e1,e2,_)->let li=minisat_of_exp e1 and ri=minisat_of_exp e2 in
-      let _=if(li=ri) then  let _=print_endline ("UNSAT CNF") (*Debug-bach*)in sat:=false in ()
+      let _=if(li=ri) then  let _=print_endline_quiet ("UNSAT CNF") (*Debug-bach*)in sat:=false in ()
     | _->()					
 
 let rec has_and f =
@@ -318,7 +318,7 @@ and is_cnf f = (*Should use heuristic in CNF*)
   | And (BForm(b,_),f2,_)->is_cnf f2 
   | And (f1,BForm(b,_),_)->is_cnf f1 
   | And (f1,f2,_)-> if(is_cnf f1) then is_cnf f2 else false
-  | _->	 let _=print_endline ("CNF conv here: "^Cprinter.string_of_pure_formula f) in true
+  | _->	 let _=print_endline_quiet ("CNF conv here: "^Cprinter.string_of_pure_formula f) in true
 
 (* distributive law 1 - (f & k) v (g & h) -> (f v g) & (f v h) & (k v g) & (k v h) *)
 let dist_1 f = 
@@ -360,13 +360,13 @@ let rec to_cnf f =
     let cnf_form=(nnf_to_cnf_no_slicing f) in
     if(is_cnf cnf_form) then cnf_form  else to_cnf cnf_form(*(to_cnf cnf_form)*)
   in
-  let _=print_endline ("CNF form: "^Cprinter.string_of_pure_formula res) in
+  let _=print_endline_quiet ("CNF form: "^Cprinter.string_of_pure_formula res) in
   res
 
 let to_cnf_no_slicing f=
-  let _=print_endline ("Orig: "^Cprinter.string_of_pure_formula f) in
+  let _=print_endline_quiet ("Orig: "^Cprinter.string_of_pure_formula f) in
   let nnf= minisat_cnf_of_formula f in 
-  let _=print_endline ("NNF here: "^Cprinter.string_of_pure_formula nnf) in
+  let _=print_endline_quiet ("NNF here: "^Cprinter.string_of_pure_formula nnf) in
   to_cnf nnf
 
 (*The no need CNF conversion adapt to slicing, we just need the distributive law*)		
@@ -385,6 +385,8 @@ let rec can_minisat_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.IConst _       -> false
   | Cpure.FConst _       -> false
   | Cpure.AConst _       -> false
+  | Cpure.NegInfConst _ 
+  | Cpure.InfConst _  -> false
   (* arithmetic expressions *)
   | Cpure.Add _
   | Cpure.Subtract _
@@ -410,7 +412,8 @@ let rec can_minisat_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.ArrayAt _      -> false
   | Cpure.Func _ ->  false 
   | Cpure.Template _ -> false
-  | Cpure.Level _ | Cpure.InfConst _ | Cpure.Tsconst _ -> Error.report_no_pattern()
+  | Cpure.Level _ 
+  | Cpure.Tsconst _ -> Error.report_no_pattern()
   | Cpure.Tup2 _ -> Error.report_no_pattern()
   | Cpure.Bptriple _ -> Error.report_no_pattern()
 
@@ -512,7 +515,7 @@ let set_process (proc: prover_process_t) =
 
 let start () =
   if not !is_minisat_running then (
-    print_endline ("Starting minisat... \n");
+    print_endline_quiet ("Starting minisat... \n");
     last_test_number := !test_number;
     let prelude () = () in
     if (minisat_input_format = "cnf") then (
@@ -616,7 +619,7 @@ let rtc_generate_B (f:Cpure.formula) =
     | _-> 
 
       let _= 
-        Debug.tinfo_hprint (add_str "imply Final Formula :"  Cprinter.string_of_pure_formula) f no_pos
+        x_tinfo_hp (add_str "imply Final Formula :"  Cprinter.string_of_pure_formula) f no_pos
       in ""
   in
   let cnf_str =cnf_to_string_to_file f in
@@ -641,7 +644,7 @@ let to_minisat_cnf (ante: Cpure.formula)  =
   (* let _=print_endline ("To minisat cnf :" ^ (Cprinter.string_of_pure_formula cnf_ante))in *)
   match ante with
   | BForm ((BConst (a,_),_),_)-> 
-    let () = print_endline ("BForm:\n ") in 
+    let () = print_endline_quiet ("BForm:\n ") in 
     if (a) 
     then (false,"t",G.create(),G.create(),Glabel.create()) 
     else (false,"f",G.create(),G.create(),Glabel.create())
@@ -755,8 +758,8 @@ let is_sat (pe : Cpure.formula) (sat_no: string) : bool =
   try
     is_sat pe sat_no;
   with Illegal_Prover_Format s -> (
-      print_endline ("\nWARNING : Illegal_Prover_Format for :" ^ s);
-      print_endline ("Apply minisat.is_sat on formula :" ^ (Cprinter.string_of_pure_formula pe));
+      print_endline_quiet ("\nWARNING : Illegal_Prover_Format for :" ^ s);
+      print_endline_quiet ("Apply minisat.is_sat on formula :" ^ (Cprinter.string_of_pure_formula pe));
       flush stdout;
       failwith s
     )
@@ -775,7 +778,7 @@ let imply (ante: Cpure.formula) (conseq: Cpure.formula) (timeout: float) : bool 
   (*  let _=List.map (fun x-> print_endline (minisat_cnf_of_spec_var x)) all in*)
   let cons= (mkNot_s conseq) in
   let imply_f= mkAnd ante cons no_pos  in
-  (* Debug.tinfo_pprint "hello\n" no_pos; *)
+  (* x_tinfo_pp "hello\n" no_pos; *)
   let res =is_sat imply_f ""
   in 	
   (*		let _=if(res) then print_endline ("SAT") else print_endline ("UNSAT") in *)
@@ -789,9 +792,9 @@ let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : boo
     result
 
   with Illegal_Prover_Format s -> (
-      print_endline ("\nWARNING : Illegal_Prover_Format for :" ^ s);
-      print_endline ("Apply minisat.imply on ante Formula :" ^ (Cprinter.string_of_pure_formula ante));
-      print_endline ("and conseq Formula :" ^ (Cprinter.string_of_pure_formula conseq));
+      print_endline_quiet ("\nWARNING : Illegal_Prover_Format for :" ^ s);
+      print_endline_quiet ("Apply minisat.imply on ante Formula :" ^ (Cprinter.string_of_pure_formula ante));
+      print_endline_quiet ("and conseq Formula :" ^ (Cprinter.string_of_pure_formula conseq));
       flush stdout;
       failwith s
     )

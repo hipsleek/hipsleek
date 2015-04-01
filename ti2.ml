@@ -457,7 +457,7 @@ let rec merge_tnt_case_spec_into_struc_formula prog ctx spec sf =
         | None -> CF.EBase { eb with CF.formula_struc_base = b; }
         | Some c -> merge_tnt_case_spec_into_struc_formula prog ctx spec c
       else
-        let nctx = CF.normalize 16 ctx b pos in
+        let nctx = x_add CF.normalize 16 ctx b pos in
         CF.EBase { eb with
                    CF.formula_struc_base = b;
                    CF.formula_struc_continuation = map_opt 
@@ -577,60 +577,58 @@ let tnt_spec_of_proc prog proc ispec =
   spec
 
 let print_svcomp2015_result term_anns =
+  let unknown_ans = "UNKNOWN" in
+  let yes_ans = "TRUE" in
+  let no_ans cex = "FALSE - Counterexample: " ^ cex in
   (* print_endline ("term_anns" ^ (pr_list string_of_term_ann term_anns)); *)
   (* no termination info --> UNKNOWN *)
   if (List.length term_anns = 0) then
     (* print_endline "UNKNOWN 1" *)
-    print_endline "UNKNOWN"
+    unknown_ans
     (* all cases terminates --> TRUE *)
-  else if (List.for_all Cpure.is_Term term_anns) then
-    print_endline "TRUE"
+  else if (List.for_all Cpure.is_Term term_anns) then yes_ans
     (* all cases are Loop --> FALSE *)
-  else if (List.exists Cpure.is_Loop term_anns) then (
+  else if (List.exists Cpure.is_Loop term_anns) then
     let cex = Cpure.cex_of_term_ann_list term_anns in
     let cex_str = Cprinter.string_of_term_cex cex in
-    print_endline ("FALSE - Counterexample: " ^ cex_str)
-  )
-  (* some cases are MayLoop --> FALSE when having counterexamples, otherwise UNKNOWN *)
-  else if (List.exists Cpure.is_MayLoop term_anns) then (
+    no_ans cex_str
+    (* some cases are MayLoop --> FALSE when having counterexamples, otherwise UNKNOWN *)
+  else if (List.exists Cpure.is_MayLoop term_anns) then
     let cex = Cpure.cex_of_term_ann_list term_anns in
-    let cex_str = (
-      match cex with
-      | None -> ""
-      | Some e when (e.Cpure.tcex_trace = []) -> ""
-      | _ -> Cprinter.string_of_term_cex cex
-    ) in
-    if (eq_str cex_str "") then
-      (* print_endline "UNKNOWN 3" *)
-      print_endline "UNKNOWN"
-    else
-      print_endline ("FALSE - Counterexample: " ^ cex_str)
-  )
-  (* the rests are UNKNOWN *)
+    match cex with
+    | None -> unknown_ans
+    | Some e when (e.Cpure.tcex_trace = []) -> unknown_ans
+    | _ -> no_ans (Cprinter.string_of_term_cex cex)
+    (* the rests are UNKNOWN *)
   else
     (* print_endline "UNKNOWN 2" *)
-    print_endline "UNKNOWN"
+    unknown_ans
 
 let print_svcomp2015_result term_anns =
-  (* print_endline "hello"; *)
   Debug.no_1 "print_svcomp2015_result" 
     (add_str "result" (fun lst -> string_of_int (List.length lst)))
-    pr_none print_svcomp2015_result term_anns
+    idf print_svcomp2015_result term_anns
 
 let pr_proc_case_specs prog =
   Hashtbl.iter (fun mn ispec ->
       try
         let proc = Cast.look_up_proc_def_no_mingling no_pos prog.Cast.new_proc_decls mn in
         let nspec = tnt_spec_of_proc prog proc ispec in
-        print_endline_quiet (mn ^ ": " ^ (string_of_struc_formula_for_spec nspec));
-        (* print result for svcomp 2015 *)
-        if !Globals.svcomp_compete_mode && (eq_str (Cast.unmingle_name mn) "main") then (
+        let svcomp_res = 
           let term_anns = Cformula.collect_term_ann_for_svcomp_competion nspec in
           print_svcomp2015_result term_anns
+        in
+        let () = print_web_mode ("Procedure " ^ mn ^ ": " ^ svcomp_res) in
+        let () = print_web_mode (string_of_struc_formula_for_spec nspec) in
+        (* print result for svcomp 2015 *)
+        if !Globals.svcomp_compete_mode &&
+           not !Globals.tnt_web_mode &&
+           (eq_str (Cast.unmingle_name mn) "main") then (
+          print_endline svcomp_res
         );
         (* Proc Decl is not found - SLEEK *)
       with _ -> (
-          print_endline_quiet (mn ^ ": " ^ (print_tnt_case_spec ispec));
+          print_web_mode ("Procedure " ^ mn ^ ":\n" ^ (print_tnt_case_spec ispec));
           (* if !Globals.svcomp_compete_mode && (eq_str mn "main") then ( *)
           (*   let term_anns = collect_term_ann_in_tnt_case_spec ispec in *)
           (*   print_svcomp2015_result term_anns                          *)
@@ -640,9 +638,9 @@ let pr_proc_case_specs prog =
 
 let pr_im_case_specs iter_num =
   if !Globals.tnt_verbosity == 0 then begin
-    print_endline ("TNT @ ITER " ^ (string_of_int iter_num));
+    print_endline_quiet ("TNT @ ITER " ^ (string_of_int iter_num));
     Hashtbl.iter (fun mn ispec -> 
-        print_endline (mn ^ ": " ^ (print_tnt_case_spec ispec))) proc_case_specs end
+        print_endline_quiet (mn ^ ": " ^ (print_tnt_case_spec ispec))) proc_case_specs end
   else ()
 
 let update_spec_proc prog proc =
@@ -1649,7 +1647,8 @@ let rec proving_non_termination_scc prog trrels tg scc =
           begin try
               let _, nd_pos = List.find (fun (nd_uid, _) -> 
                   uid.CP.tu_id == nd_uid.CP.tu_id) nd_nonterm_uids in
-              subst (CP.MayLoop (Some { CP.tcex_trace = [nd_pos] }), []) ann
+              (* subst (CP.MayLoop (Some { CP.tcex_trace = [nd_pos] }), []) ann *)
+              subst (CP.MayLoop None, []) ann
             with Not_found -> ann end
       | _ -> ann
     in

@@ -893,7 +893,7 @@ let maybe_restart_mona () : unit =
   end
 
 let prepare_formula_for_mona (f: CP.formula) (test_no: int): CP.spec_var list * CP.formula =
-  let simp_f = CP.arith_simplify 8 f in
+  let simp_f =  x_add CP.arith_simplify 8 f in
   let simp_f = (preprocess_formula simp_f) in
   let f_fv = CP.fv simp_f in
   let rename_spec_vars_fnct sv = 
@@ -946,7 +946,7 @@ let create_file_for_mona (filename: string) (fv: CP.spec_var list) (f: CP.formul
         let var_decls = first_order_var_decls ^ second_order_var_decls in
         var_decls ^(mona_of_formula f f vs)
       end
-    with exc -> print_endline ("\nEXC: " ^ Printexc.to_string exc); ""
+    with exc -> print_endline_quiet ("\nEXC: " ^ Printexc.to_string exc); ""
   in
   if not (f_str == "") then  output_string mona_file (f_str ^ ";\n" );
   flush mona_file;

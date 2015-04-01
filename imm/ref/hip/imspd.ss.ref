@@ -1,0 +1,11 @@
+
+!!!Full processing file "hip/imspd.ss"
+Parsing file "hip/imspd.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure strcmp$Pointer{int}~Pointer{int}... 
+Procedure strcmp$Pointer{int}~Pointer{int} SUCCESS.
+
+Checking procedure check_pass$Pointer{int}~user... 

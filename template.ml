@@ -209,7 +209,7 @@ let gen_slk_file prog =
   let out_chn =
     let reg = Str.regexp ".ss" in
     let file_name_slk = "logs/templ_" ^ (Str.global_replace reg ".slk" file_name_ss) in
-    let () = print_endline ("\n Generating sleek file: " ^ file_name_slk) in
+    let () = print_endline_quiet ("\n Generating sleek file: " ^ file_name_slk) in
     (try Unix.mkdir "logs" 0o750 with _ -> ());
     open_out (file_name_slk)
   in
@@ -245,8 +245,8 @@ let solve_templ_assume _ =
       if !print_relassume then
         if templ_assumes = [] then ()
         else begin
-          (print_endline "**** TEMPLATE ASSUMPTION(S) ****";
-           print_endline (pr_list (fun ta -> 
+          (print_endline_quiet "**** TEMPLATE ASSUMPTION(S) ****";
+           print_endline_quiet (pr_list (fun ta -> 
                (Cprinter.string_of_templ_assume (ta.ass_ante, ta.ass_cons)) ^ "\n") 
                templ_assumes))
         end
@@ -259,7 +259,7 @@ let solve_templ_assume _ =
 
 let silent_pr silent str =
   if silent then ()
-  else print_endline str  
+  else print_endline_quiet str  
 
 let collect_and_solve_templ_assumes_common silent prog (inf_templs: ident list) =
   let templ_assumes, templ_unks, res = solve_templ_assume () in
@@ -288,7 +288,7 @@ let collect_and_solve_templ_assumes prog (inf_templs: ident list) =
   match res with
   | Unsat -> 
     if !Globals.templ_piecewise then
-      let () = print_endline ("\nContinue with piecewise function inference ...") in
+      let () = print_endline_quiet ("\nContinue with piecewise function inference ...") in
       let ptempl_assumes, inf_ptempls, ptempl_defs = 
         Piecewise.infer_piecewise_main prog templ_assumes in
       let estate = CF.empty_es (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in

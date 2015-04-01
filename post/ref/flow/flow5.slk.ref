@@ -1,0 +1,27 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+Entail (1) : Valid. 
+
+Residue:
+ <1>emp&x=0&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELDEFN P(__norm#E): ( x=0) -->  P(x)]
+
+
+Entail (2) : Valid. 
+
+Residue:
+ <1>emp&x=0&{FLOW,(22,23)=__Exc#E}[]
+ inferred rel: [RELDEFN P(__Exc#E): ( x=0) -->  P(x)]
+
+
+WARNING: _0:0_0:0:LHS should not be top_flow
+
+Entail (3) : Valid. 
+
+Residue:
+ <1>emp&x=0&{FLOW,(1,26)=__flow#E}[]
+
+

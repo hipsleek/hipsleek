@@ -553,7 +553,7 @@ and memo_f_neg (f: b_formula): b_formula =
   in (npf,il)
 
 and memo_arith_simplify (f : memo_pure) : memo_pure = 
-  List.map (fun c -> { c with memo_group_slice = List.map (arith_simplify 5) c.memo_group_slice }) f
+  List.map (fun c -> { c with memo_group_slice = List.map ( x_add arith_simplify 5) c.memo_group_slice }) f
 
 (******************************************************************************************************************
                                                                                                                    Utilities for memoized formulas
@@ -909,8 +909,8 @@ and merge_mems_full_check (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo
     if (consistent_memo_pure r) then r
     else report_error no_pos "merge_mems : inconsistent memo_pure after merging"
   else
-    let () = print_endline s1 in
-    let () = print_endline s2 in
+    let () = print_endline_quiet s1 in
+    let () = print_endline_quiet s2 in
     report_error no_pos ("merge_mems : inconsistent memo_pure before merging")
 
 and merge_mems_repatch (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure =
@@ -1368,7 +1368,7 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
     else List.fold_left(fun a c-> cons2 (a,c,no_pos)) nel ln in*)
 
   (*  let norm_bf (c1:b_formula) : (b_formula option) =
-      let c1 = b_form_simplify c1 in
+      let c1 = x_add_1 b_form_simplify c1 in
       match c1 with
       | Lt  (e1,e2,l) -> Some (Lt  (norm_expr e1,norm_expr e2,l))
       | Lte (e1,e2,l) -> Some (Lte (norm_expr e1,norm_expr e2,l))
@@ -1395,7 +1395,7 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
 
 (*
   let l = List.fold_left (fun (a1,a2) (c1,c2)-> 
-    let c1 = b_form_simplify c1 in
+    let c1 = x_add_1 b_form_simplify c1 in
     match c1 with
       | Lt  (e1,e2,l) -> (Lt  (norm_expr e1,norm_expr e2,l)::a1,a2)
       | Lte (e1,e2,l) -> (Lte (norm_expr e1,norm_expr e2,l)::a1,a2)
@@ -1800,9 +1800,9 @@ and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no
     | 0 -> fold_mem_lst_gen (mkTrue no_pos) !no_LHS_prop_drop true false true n_ante
     | 1 -> fold_mem_lst_no_complex (mkTrue no_pos) !no_LHS_prop_drop true n_ante
     | _ -> fold_mem_lst_with_complex (mkTrue no_pos) !no_LHS_prop_drop true n_ante in
-  let () = Debug.devel_pprint str no_pos in
-  let () = Debug.trace_hprint (add_str "ante" !Cpure.print_formula) r no_pos in
-  let () = Debug.trace_hprint (add_str "conseq" !Cpure.print_formula) conseq no_pos in  
+  let () = x_dinfo_pp str no_pos in
+  let () = x_tinfo_hp (add_str "ante" !Cpure.print_formula) r no_pos in
+  let () = x_tinfo_hp (add_str "conseq" !Cpure.print_formula) conseq no_pos in  
   (* print_endline ("ANTE: " ^ (!Cpure.print_formula r)); *)
   (Gen.Profiling.push_time str_time;
    let (rb,_,_) as r = t_imply r conseq ("imply_process_ante:"^(string_of_int !imp_no)) false None in
@@ -2122,8 +2122,8 @@ let trans_memo_formula (e: memo_pure) (arg: 'a) f f_arg f_comb : (memo_pure * 'b
 
 
 type mix_formula = 
-  | MemoF of memo_pure
-  | OnePF of formula 
+  | MemoF of Mcpure_D.memo_pure
+  | OnePF of Cpure.formula 
 
 let print_mix_f  = ref (fun (c:mix_formula) -> "printing not intialized")
 let print_mix_formula  = print_mix_f
@@ -2342,7 +2342,7 @@ let simpl_memo_pure_formula b_f_f p_f_f f tp_simp =
 
 let memo_arith_simplify f = match f with
   | MemoF f -> MemoF (memo_arith_simplify f)
-  | OnePF f -> OnePF (arith_simplify 6 f)
+  | OnePF f -> OnePF ( x_add arith_simplify 6 f)
 
 let memo_arith_simplify f = 
   Debug.no_1 "memo_arith_simplify" (!print_mix_f) (!print_mix_f) memo_arith_simplify f 

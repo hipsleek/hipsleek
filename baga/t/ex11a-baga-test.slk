@@ -1,0 +1,26 @@
+data node {
+  node next;
+}.
+
+pred l6<q:node> == 
+  q::node<_> & self=null
+  or self::node<r>*r::node<_> & r=q
+ inv BG([q],self=null) | BG([self,q],true)
+.
+
+/*
+# baga/t/ex11a.slk (smt2014)
+
+Please check why inv below is incorrect?
+
+pred l6<q:node> == 
+  q::node<_> & self=null
+  or self::node<r>*r::node<_> & r=q
+ inv BG([q],self=null) | BG([self,q],true)
+
+WARNING: ex11a-baga-test.slk_6:2_6:24:view defn for l6 has incorrectly inferred/supplied invariant
+-- incorrect over-approx inv : Some([([q], self=null),
+([self,q], true)])
+
+
+*/

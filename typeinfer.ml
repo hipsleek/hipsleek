@@ -230,7 +230,7 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
         else
         if sub_type t1 t2 then (tlist, Some k2)  (* found t1, but expecting t2 *)
         else if sub_type t2 t1 then (tlist,Some k1)
-        else
+        else 
           begin
             match t1,t2 with
             | TVar i1,_ -> repl_tlist i1 k2 tl
@@ -524,7 +524,7 @@ and gather_type_info_exp_x prog a0 tlist et =
     let t = I.ann_type in
     let (n_tlist,_) = must_unify_expect t et tlist pos in
     (n_tlist,t)
-  | IP.IConst (_,pos) | IP.InfConst (_,pos) -> 
+  | IP.IConst (_,pos) | IP.InfConst (_,pos) | IP.NegInfConst (_,pos) -> 
     let t = I.int_type in
     let (n_tl,n_typ) = must_unify_expect t et tlist pos in
     (n_tl,n_typ)      
@@ -818,7 +818,7 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
      with
      | Not_found ->    failwith ("gather_type_info_b_formula: relation "^r^" cannot be found")
      | Invalid_argument _ -> failwith ("number of arguments for relation " ^ r ^ " does not match")
-     | _ -> print_endline ("gather_type_info_b_formula: relation " ^ r);tlist       
+     | _ -> print_endline_quiet ("gather_type_info_b_formula: relation " ^ r);tlist       
     )
   | IP.XPure({IP.xpure_view_node = vn ;
               IP.xpure_view_name = r;
@@ -837,7 +837,7 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
           Err.report_error{ Err.error_loc = pos; Err.error_text = ("number of arguments for heap relation "^r^" does not match"); }
       with
       | Not_found ->    failwith ("gather_type_info_b_formula: relation "^r^" cannot be found")
-      | _ -> print_endline ("gather_type_info_b_formula: relation " ^ r);tlist
+      | _ -> print_endline_quiet ("gather_type_info_b_formula: relation " ^ r);tlist
     )
 
 and gather_type_info_term_ann prog tann tlist =
@@ -1379,7 +1379,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
                   IF.h_formula_heap_imm = ann; (* data/pred name *)
                   IF.h_formula_heap_imm_param = ann_param;
                   IF.h_formula_heap_pos = pos } ->
-    Debug.trace_hprint (add_str "view" Iprinter.string_of_h_formula) h0 no_pos;
+    x_tinfo_hp (add_str "view" Iprinter.string_of_h_formula) h0 no_pos;
     let ft = cperm_typ () in
     let gather_type_info_ho_args hoa tlist =
       List.fold_left (fun tl a ->
@@ -1519,7 +1519,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
      with
      | Not_found -> failwith ("iast.gather_type_info_heap :gather_type_info_heap: relation "^r^" cannot be found")
      | Failure s -> failwith s
-     | _ -> print_endline ("gather_type_info_heap: relation " ^ r);tlist
+     | _ -> print_endline_quiet ("gather_type_info_heap: relation " ^ r);tlist
     )
   | IF.HTrue | IF.HFalse | IF.HEmp -> tlist
   (* TODO:WN:HVar *)

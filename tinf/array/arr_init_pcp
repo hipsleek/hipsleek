@@ -1,0 +1,196 @@
+
+!!!Full processing file "arr_init.ss"
+Parsing file "arr_init.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+WARNING: arr_init.ss_23:9_23:24:the result type __norm is not covered by the throw list[]
+
+WARNING: arr_init.ss_28:10_28:35:the result type __norm is not covered by the throw list[__Brk_top]
+
+data __Exc {
+;
+}
+data __Error {
+;
+}
+data __MayError {
+;
+}
+data __Fail {
+;
+}
+
+ view_prim WAITS{}[]<G:bag(tup2(Object,Object)),S:bag(Object),d:Object>= 
+  view_domains: view_prim WAITS<G:bag(tup2(Object,Object)),S:bag(Object),
+                d:Object>= 
+  EBase (* lbl: *){220}->emp&{FLOW,(1,31)=__flow}[]
+  view vars: G,S,d
+  ann vars (0 - not a posn): 
+  cont vars: 
+  inv: true
+  baga over inv: [([], true)]
+  baga over inv (unfolded): [([], true)]
+  inv_lock: None
+  unstructured formula: (* lbl: *){220}->emp&{FLOW,(1,31)=__flow}[]
+  xform: true
+  is_recursive?: false
+  is_primitive?: true
+  is_touching?: false
+  is_segmented?: false
+  is_tail_recursive?: false
+  residents: 
+  forward_ptrs: 
+  backward_ptrs: 
+  forward_fields: 
+  backward_fields: 
+  same_xpure?: YES
+  view_data_name: WAITS
+  self preds: []
+  materialized vars: []
+  addr vars: 
+  uni_vars: []
+  bag of addr: 
+  view_complex_inv: None
+  prune branches: ,[]
+  prune conditions: {
+[]}
+  prune baga conditions: 
+  prune invs:0:,[]
+ view_prim WAIT{}[]<b:bag(tup2(Object,Object))>= 
+  view_domains: view_prim WAIT<b:bag(tup2(Object,Object))>= 
+  EBase (* lbl: *){221}->emp&{FLOW,(1,31)=__flow}[]
+  view vars: b
+  ann vars (0 - not a posn): 
+  cont vars: 
+  inv: true
+  baga over inv: [([], true)]
+  baga over inv (unfolded): [([], true)]
+  inv_lock: None
+  unstructured formula: (* lbl: *){221}->emp&{FLOW,(1,31)=__flow}[]
+  xform: true
+  is_recursive?: false
+  is_primitive?: true
+  is_touching?: false
+  is_segmented?: false
+  is_tail_recursive?: false
+  residents: 
+  forward_ptrs: 
+  backward_ptrs: 
+  forward_fields: 
+  backward_fields: 
+  same_xpure?: YES
+  view_data_name: WAIT
+  self preds: []
+  materialized vars: []
+  addr vars: 
+  uni_vars: []
+  bag of addr: 
+  view_complex_inv: None
+  prune branches: ,[]
+  prune conditions: {
+[]}
+  prune baga conditions: 
+  prune invs:0:,[]
+ view_prim memLoc{}[]<heap:boolean,size:int>= 
+  view_domains: view_prim memLoc<heap:boolean,size:int>= 
+  EBase (* lbl: *){222}->emp&{FLOW,(1,31)=__flow}[]
+  view vars: heap,size
+  ann vars (0 - not a posn): 
+  cont vars: 
+  inv: 0<size
+  baga over inv: [([], 0<size)]
+  baga over inv (unfolded): [([], 0<size)]
+  inv_lock: None
+  unstructured formula: (* lbl: *){222}->emp&{FLOW,(1,31)=__flow}[]
+  xform: 0<size
+  is_recursive?: false
+  is_primitive?: true
+  is_touching?: false
+  is_segmented?: false
+  is_tail_recursive?: false
+  residents: 
+  forward_ptrs: 
+  backward_ptrs: 
+  forward_fields: 
+  backward_fields: 
+  same_xpure?: YES
+  view_data_name: memLoc
+  self preds: []
+  materialized vars: []
+  addr vars: 
+  uni_vars: []
+  bag of addr: 
+  view_complex_inv: None
+  prune branches: ,[]
+  prune conditions: {
+[]}
+  prune baga conditions: 
+  prune invs:0:,[]
+
+ relation identicalzeroes(int[] a, int[] b, int i, int j).
+
+ relation zeros(int[] a, int i, int j).
+
+
+void initloop$int[]~int~int(  int[] a,  int i,  int j)
+@ref a
+
+static  EBase emp&0<=i & 0<=j & i<=j&{FLOW,(4,5)=__norm}[]
+         EBase emp&MayLoop[]&{FLOW,(4,5)=__norm}[]
+                 EAssume ref [a]
+                   emp&zeros(a',i,j)&{FLOW,(4,5)=__norm}[]
+                   
+dynamic  EBase hfalse&false&{FLOW,(4,5)=__norm}[]
+{
+        ((int k_38; k_38 = i); 
+        {while_26_1$int~int~int~int[](k_38,i,j,a)})
+}
+
+{(21,0),(0,-1)}
+
+void while_26_1$int~int~int~int[](  int k_38,  int i,  int j,  int[] a)
+@ref k_38, j, a
+ rec
+static  EBase emp&i<=k_38 & k_38<=(1+j) & zeros(a,i,-1+k_38)&{FLOW,(4,5)=__norm}[]
+         EBase emp&MayLoop[]&{FLOW,(4,5)=__norm}[]
+                 EAssume ref [k_38;j;a]
+                   emp&k_38'=1+j & zeros(a',i,-1+k_38')&{FLOW,(4,5)=__norm}[]
+                   
+dynamic  EBase hfalse&false&{FLOW,(4,5)=__norm}[]
+{
+(boolean v_bool_26_1451;(v_bool_26_1451 = {lte___$int~int(k_38,j)};
+if (v_bool_26_1451) 
+[
+{
+        (
+        {(a = {((int v_int_30_1449; v_int_30_1449 = 0);update___1d$int~int[]~int(v_int_30_1449,a,k_38))};
+        k_38 = {((int v_int_31_1450; v_int_31_1450 = 1);add___$int~int(k_38,v_int_31_1450))})};
+        {while_26_1$int~int~int~int[](k_38,i,j,a) rec}
+        )
+}
+]
+else
+[]
+))}
+
+{(26,1),(32,2)}
+
+
+
+
+Checking procedure while_26_1$int~int~int~int[]... 
+Procedure while_26_1$int~int~int~int[] result FAIL.(1)
+
+Checking procedure initloop$int[]~int~int... 
+Procedure initloop$int[]~int~int SUCCESS.
+Stop Omega... 0 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.08902,230)
+Total verification time: 0.465052 second(s)
+	Time spent in main process: 0.384512 second(s)
+	Time spent in child processes: 0.08054 second(s)
+

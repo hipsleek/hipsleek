@@ -1,0 +1,33 @@
+relation update_array_1d(int[] aa, int[] rr, int vval, int kkk).
+relation postA(int x, int r).
+
+
+infer [postA] (exists a: htrue&res=a[5] & y=x & update_array_1d(b,a,1+y,5))
+     |- postA(x,res).
+print residue.
+
+slk_simplify (exists a: y=x & update_array_1d(b,a,1+y,5)).
+slk_simplify forall(i:(!(i!=5) | a_17[i]=b[i])) & a_17[5]=y+1 & x=y & res=y+1.
+
+/*
+Residue:
+ <1>htrue&update_array_1d(b,a_17,y+1,5) & y=x & res=a_17[5]&{FLOW,(4,5)=__norm#E}[]
+
+
+inferred rel: [RELDEFN postA: 
+
+ ( exists(y:exists(a_17:exists(b:
+    forall(i:(!(i!=5) | a_17[i]=b[i]))
+    & a_17[5]=y+1 & x=y & res=y+1 
+    -->  postA(x,res)]
+
+
+ exists(a_17:exists(b:
+    forall(i:(!(i!=5) | a_17[i]=b[i]))
+    & a_17[5]=x+1 
+    & res=x+1 
+    -->  postA(x,res)]
+
+   res=x+1  -->  postA(x,res)]
+
+*/

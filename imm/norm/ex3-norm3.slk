@@ -1,0 +1,38 @@
+data node{int val; node next;}. 
+
+pred ll<n> == self=null & n=0 or
+     self::node<_, q> * q::ll<n-1> & n>0
+   inv n>=0.
+
+
+pred lle<> == self=null or
+     self::node<_, q> * q::lle<>
+   inv true.
+
+ /* Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Fail.Valid. */
+
+
+//3
+checkentail x::ll<n> * y::ll<n>@A & n>0 & x=y |- x::ll<n>.
+print residue.
+expect Valid.
+
+//4
+checkentail x::ll<n> * x::ll<m>@A |- n=m.
+print residue.
+expect Valid.
+
+//5
+checkentail x::ll<n>@A * x::ll<m>@A |- x::ll<m>.
+print residue.
+expect Fail.
+
+//4
+checkentail x::ll<n> * x::node<_,_>@A |- n>0.
+print residue.
+expect Valid.
+
+//4
+checkentail x::ll<n>@A * x::node<_,_> |- n>0.
+print residue.
+expect Valid.

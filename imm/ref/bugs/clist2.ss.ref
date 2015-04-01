@@ -1,0 +1,16 @@
+
+!!!Full processing file "bugs/clist2.ss"
+Parsing file "bugs/clist2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure length$node... 
+Procedure length$node SUCCESS.
+
+0 false contexts at: ()
+
+Total verification time: 0.451446 second(s)
+	Time spent in main process: 0.402795 second(s)
+	Time spent in child processes: 0.048651 second(s)
+

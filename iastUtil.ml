@@ -788,7 +788,7 @@ class impset  =
           else cc::(diff xst ys)
         | [],_ -> 
           let pr = pr_list (pr_pair pr_id pr_id) in
-          let () = Debug.binfo_hprint (add_str "WARNING : un-declared remains" pr) ys no_pos in
+          let () = x_binfo_hp (add_str "WARNING : un-declared remains" pr) ys no_pos in
           []
       in
       (* let diff xs ys = *)
@@ -815,7 +815,7 @@ let rename_exp2 e subs =
     (*  let imp_bvars = new impset in *)
     let subst_of_ident_with_bool_with_wrapper subs id =
       let new_subs = imp_bvars # filter_undecl subs in
-      (* let () = Debug.binfo_hprint (add_str "subst_of... (new_subs)" (pr_list (pr_pair pr_id pr_id))) new_subs no_pos in *)
+      (* let () = x_binfo_hp (add_str "subst_of... (new_subs)" (pr_list (pr_pair pr_id pr_id))) new_subs no_pos in *)
       subst_of_ident_with_bool new_subs id
     in
     let f_args (bvars, subs) e =
@@ -858,7 +858,7 @@ let rename_exp2 e subs =
           let e1 = 
             (match e with
              | None -> None
-             | Some e0 -> Some (rename_exp e0 (bvars, subs))
+             | Some e0 -> Some (x_add rename_exp e0 (bvars, subs))
             )
           in
           let () = imp_bvars # pop_elem v in
@@ -868,7 +868,7 @@ let rename_exp2 e subs =
         Some (VarDecl {b with exp_var_decl_decls = List.map helper b.exp_var_decl_decls})
       | ConstDecl b ->
         let helper (v,e,l) = 
-          let e1 = (rename_exp e (bvars, subs)) in
+          let e1 = (x_add rename_exp e (bvars, subs)) in
           let (v1, b) = subst_of_ident_with_bool subs v in
           (v1, e1, l)
         in
@@ -900,16 +900,16 @@ let rename_exp2 e subs =
           let clash_lvars = IS.inter bvars lvars in
           if (IS.is_empty clash_lvars) then None
           else 
-            let () = Debug.tinfo_hprint (add_str "Block (clash_lvars)" string_of_IS) clash_lvars no_pos in
-            let () = Debug.tinfo_hprint (add_str "Block (local vars)" (pr_list (fun (a,_,_) -> a))) local_vs no_pos in
+            let () = x_tinfo_hp (add_str "Block (clash_lvars)" string_of_IS) clash_lvars no_pos in
+            let () = x_tinfo_hp (add_str "Block (local vars)" (pr_list (fun (a,_,_) -> a))) local_vs no_pos in
             let body = b.exp_block_body in
             (* { vs,  int x=?; e2} *) 
             let () = Debug.ninfo_hprint (add_str "Block (body)" Iprinter.string_of_exp) body no_pos in
             let clash_subs = new_naming (from_IS clash_lvars) in
             let () = imp_bvars # push_list clash_subs in
-            let () = Debug.tinfo_hprint  (add_str "Block(imp bvars)" pr_id) (imp_bvars # string_of ) no_pos in
+            let () = x_tinfo_hp  (add_str "Block(imp bvars)" pr_id) (imp_bvars # string_of ) no_pos in
             let new_subs = clash_subs @ subs in
-            let () = Debug.tinfo_hprint (add_str "Block (new_subs)" (pr_list (pr_pair pr_id pr_id))) new_subs no_pos in
+            let () = x_tinfo_hp (add_str "Block (new_subs)" (pr_list (pr_pair pr_id pr_id))) new_subs no_pos in
             let new_vars =
               let fun0 (a,b,c) = (fst (subst_of_ident_with_bool clash_subs a), b, c) in
               List.map fun0 local_vs (* b.exp_block_local_vars *) in
@@ -953,7 +953,7 @@ let rename_exp2 e subs =
 let rename_exp (e:exp) ((bvars,subs) as xx:(IS.t)*((ident * ident) list)) : exp = 
   let pr1 = Iprinter.string_of_exp in
   let pr2  = pr_pair string_of_IS (pr_list (pr_pair pr_id pr_id)) in
-  Debug.no_2 "rename_exp" pr1 pr2 pr1 rename_exp2 e xx
+  Debug.no_2 "rename_exp(IastUtil)" pr1 pr2 pr1 rename_exp2 e xx
 
 let rename_proc gvs proc : proc_decl = 
   (* let () = print_endline ("[rename_proc] input = { " ^ (string_of_IS gvs) ^ " }") in *)
@@ -979,7 +979,7 @@ let rename_proc gvs proc : proc_decl =
   let ne = match proc.proc_body with 
     | None -> None
     | Some e0 -> 
-      let e = rename_exp e0 (bvars,clash_subs) in
+      let e = x_add rename_exp e0 (bvars,clash_subs) in
       (* print_endline ("[rename_proc] procedure body after rename of clashed variables\n" ^ (Iprinter.string_of_exp e)); *)
       check_exp_if_use_before_declare e (IS.empty, IS.union nas1 gvs) (ref IS.empty); 
       Some ( e )
@@ -1079,6 +1079,9 @@ let find_free_vars (e:exp) bound : IS.t =
   let (rs,ws) = find_free_read_write e bound in
   IS.union rs ws
 
+let find_free_vars_only e =
+  let emp = IS.empty in
+  find_free_vars e emp 
 
 let find_free_read_write_of_proc proc prog: (IS.t * IS.t) = 
   (*find proc idents*)
@@ -1262,8 +1265,8 @@ let param_of_v ht md lc nm =
         param_loc = lc;
       }
   with e ->
-    let () = print_endline ("Exception!!! in param_of_v") in
-    let () = print_endline ("== nm = " ^ nm) in
+    let () = print_endline_quiet ("Exception!!! in param_of_v") in
+    let () = print_endline_quiet ("== nm = " ^ nm) in
     raise e
 
 let add_free_var_to_proc gvdefs ht proc = 

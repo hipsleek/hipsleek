@@ -249,7 +249,7 @@ let imply ante conseq impl_no _ =
 let imply ante conseq i f = Gen.Profiling.do_2 "dpimply" Smtsolver.imply ante conseq(* i f*)
 let is_sat f sn = Gen.Profiling.do_2 "dpsat" Smtsolver.is_sat f sn
 	*)  
-let simplify f = (* Omega.simplify *) !Cpure.simplify f
+let simplify f = (* (x_add Omega.simplify) *) !Cpure.simplify f
 
 let hull f = Omega.hull f	
 

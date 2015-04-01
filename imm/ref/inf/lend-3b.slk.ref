@@ -1,0 +1,14 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+Entail (1) : Fail.(may) cause:AndR[ true |-  f=a. LOCS:[0;8];  flted_7_16=2 |-  flted_7_16=Anon_11. LOCS:[7;8] (may-bug).]
+
+Residue:
+ <1>q::cell<flted_7_16@w>&R(v,w) & flted_7_16=2 & v=@M & w<:@L&{FLOW,(4,8)=__MayError#E}[]
+ inferred rel: [RELASS [R]: ( R(v,w)) -->  v=@M & w<:@L]
+[[ COND ==>  SEARCH ==>  Match(p,p) ==>  SEARCH ==>  Match(q,q) ==> ]]
+
+
+

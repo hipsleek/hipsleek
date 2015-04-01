@@ -3,9 +3,20 @@ open Globals
 open Gen.Basic
 open VarGen
 
+let wrap_infer_inv f a b =
+  let flag = !is_inferring in
+  is_inferring := true;
+  try
+    let res = f a b in
+    is_inferring := flag;
+    res
+  with _ as e ->
+    (is_inferring := flag;
+     raise e)
+
 let wrap_exception dval f e =
-  try 
-    f e 
+  try
+    f e
   with _ -> dval
 
 let wrap_num_disj f n a b c d =
@@ -82,7 +93,7 @@ let wrap_set_infer_type t f a =
   let () = Debug.ninfo_hprint (add_str "wrap set(old)" string_of_bool) flag no_pos in
   let () = infer_const_obj # set t in
   (* let flag2 = infer_const_obj # is_infer_type t in *)
-  (* let () = Debug.binfo_hprint (add_str "wrap set(new)" string_of_bool) flag2 no_pos in *)
+  (* let () = x_binfo_hp (add_str "wrap set(new)" string_of_bool) flag2 no_pos in *)
   try
     let res = f a in
     (* restore flag do_classic_frame_rule  *)

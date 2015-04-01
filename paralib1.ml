@@ -1,4 +1,6 @@
 #include "xdebug.cppo"
+open Gen.Basic
+
 (* map_para with fork *)
 let webs = ref false
 (** map_para takes an extra argument init which is a function which is called before individual evaluation of g on the list*)
@@ -20,7 +22,7 @@ let map_para init g input_list  =
       | head :: tail ->
         let input, output = Unix.pipe() in
         match Unix.fork() with
-        | -1 -> begin let () = print_endline "NOT_PARALLEL" in (List.map f mylist)end
+        | -1 -> begin let () = print_endline_quiet "NOT_PARALLEL" in (List.map f mylist)end
         | 0 ->
           Unix.dup2 (Unix.openfile ("stdout.txt."^string_of_int(Unix.getpid ())) [Unix.O_WRONLY;Unix.O_CREAT] 0o666) Unix.stdout;
           Unix.close input;

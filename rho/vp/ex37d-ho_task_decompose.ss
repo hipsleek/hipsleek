@@ -28,6 +28,7 @@ Thrd creator(ref int x,ref int y)
 {
   Thrd id;
   id=fork_inc(x);
+  x=x+1;
   inc(y);
   return id;
 }

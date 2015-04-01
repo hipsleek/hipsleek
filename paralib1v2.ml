@@ -1,4 +1,6 @@
 #include "xdebug.cppo"
+open Gen.Basic
+
 (* map_para with fork and limited number of processes *)
 let webs = ref false
 let map_para_net init g input_list max =
@@ -15,7 +17,7 @@ let map_para_net init g input_list max =
       let input, output = Unix.pipe() in
       let machine = (List.hd (!next_machines)) in
       match Unix.fork() with
-      | -1 ->let () = print_endline "NOT_PARALLEL" in 
+      | -1 ->let () = print_endline_quiet "NOT_PARALLEL" in 
         ignore(List.map f mylist)
       | 0 ->
         begin
@@ -131,7 +133,7 @@ let map_para init g input_list max =
     | head :: tail ->
       let input, output = Unix.pipe() in
       match Unix.fork() with
-      | -1 -> begin let () = print_endline "NOT_PARALLEL" in ignore(List.map f mylist) end
+      | -1 -> begin let () = print_endline_quiet "NOT_PARALLEL" in ignore(List.map f mylist) end
       | 0 ->
         begin
           let () = Unix.dup2 (Unix.openfile ("stdout.txt."^string_of_int(Unix.getpid ())) [Unix.O_WRONLY;Unix.O_CREAT] 0o666) Unix.stdout in 

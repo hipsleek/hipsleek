@@ -1,0 +1,208 @@
+ 
+id: 0; caller: []; line: 99; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&j'<i' & j'=j & i'=i & a'=a&{FLOW,(4,5)=__norm}[]
+ |-  emp&Term[]&{FLOW,(4,5)=__norm}[]. 
+res:  1[
+   emp&j'<i' & j'=j & i'=i & a'=a&{FLOW,(4,5)=__norm}[]
+   ]
+ 
+id: 1; caller: []; line: 99; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&i'<=j' & j'=j & i'=i & a'=a&{FLOW,(4,5)=__norm}[]
+ |-  emp&Term[]&{FLOW,(4,5)=__norm}[]. 
+res:  1[
+   emp&i'<=j' & j'=j & i'=i & a'=a&{FLOW,(4,5)=__norm}[]
+   ]
+ 
+id: 2; caller: []; line: 102; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_99_1432') & i'<=j' & 
+!(v_bool_99_1432') & v_int_102_1428'=1&{FLOW,(4,5)=__norm}[]
+ |-  emp&{FLOW,(4,5)=__norm}[]. 
+res:  1[
+   emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_99_1432') & i'<=j' & !(v_bool_99_1432') & v_int_102_1428'=1&{FLOW,(4,5)=__norm}[]
+   ]
+ 
+id: 3; caller: []; line: 102; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_99_1432') & i'<=j' & 
+!(v_bool_99_1432') & v_int_102_1428'=1&{FLOW,(4,5)=__norm}[]
+ |-  emp&Term[]&{FLOW,(4,5)=__norm}[]. 
+res:  1[
+   emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_99_1432') & i'<=j' & !(v_bool_99_1432') & v_int_102_1428'=1&{FLOW,(4,5)=__norm}[]
+   ]
+ 
+id: 4; caller: []; line: 102; classic: false; kind: PRE_REC; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_99_1432') & i'<=j' & 
+!(v_bool_99_1432') & v_int_102_1429'+1=j'&{FLOW,(4,5)=__norm}[]
+ |-  emp&{FLOW,(4,5)=__norm}[]. 
+res:  1[
+   emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_99_1432') & i'<=j' & !(v_bool_99_1432') & v_int_102_1429'+1=j'&{FLOW,(4,5)=__norm}[]
+   ]
+ 
+id: 5; caller: []; line: 102; classic: false; kind: PRE_REC; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_99_1432') & i'<=j' & 
+!(v_bool_99_1432') & v_int_102_1429'+1=j'&{FLOW,(4,5)=__norm}[]
+ |-  emp&MayLoop[]&{FLOW,(4,5)=__norm}[]. 
+res:  1[
+   emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_99_1432') & i'<=j' & !(v_bool_99_1432') & v_int_102_1429'+1=j'&{FLOW,(4,5)=__norm}[]
+   ]
+ 
+id: 6; caller: []; line: 102; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail (exists v_int_102_1429': emp&i'<=j' & j'=j & i'=i & a'=a & 
+!(v_bool_99_1432') & i'<=j' & !(v_bool_99_1432') & v_int_102_1429'+1=j' & 
+sumarrayL(a',i',v_int_102_1429',v_int_102_1431')&{FLOW,(4,5)=__norm})[]
+ |-  emp&{FLOW,(4,5)=__norm}[]. 
+res:  1[
+   emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_99_1432') & i'<=j' & !(v_bool_99_1432') & v_int_102_1487+1=j' & sumarrayL(a',i',v_int_102_1487,v_int_102_1431')&{FLOW,(4,5)=__norm}[]
+   ]
+ 
+id: 7; caller: []; line: 102; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_99_1432') & i'<=j' & 
+!(v_bool_99_1432') & v_int_102_1487+1=j' & 
+sumarrayL(a',i',v_int_102_1487,v_int_102_1431')&{FLOW,(4,5)=__norm}[]
+ |-  emp&Term[]&{FLOW,(4,5)=__norm}[]. 
+res:  1[
+   emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_99_1432') & i'<=j' & !(v_bool_99_1432') & v_int_102_1487+1=j' & sumarrayL(a',i',v_int_102_1487,v_int_102_1431')&{FLOW,(4,5)=__norm}[]
+   ]
+ 
+id: 8; caller: []; line: 102; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_99_1432') & i'<=j' & 
+!(v_bool_99_1432') & v_int_102_1487+1=j' & 
+sumarrayL(a',i',v_int_102_1487,v_int_102_1431') & v_int_102_1430'=a'[j']&
+{FLOW,(4,5)=__norm}[]
+ |-  emp&{FLOW,(4,5)=__norm}[]. 
+res:  1[
+   emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_99_1432') & i'<=j' & !(v_bool_99_1432') & v_int_102_1487+1=j' & sumarrayL(a',i',v_int_102_1487,v_int_102_1431') & v_int_102_1430'=a'[j']&{FLOW,(4,5)=__norm}[]
+   ]
+ 
+id: 9; caller: []; line: 102; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_99_1432') & i'<=j' & 
+!(v_bool_99_1432') & v_int_102_1487+1=j' & 
+sumarrayL(a',i',v_int_102_1487,v_int_102_1431') & v_int_102_1430'=a'[j']&
+{FLOW,(4,5)=__norm}[]
+ |-  emp&Term[]&{FLOW,(4,5)=__norm}[]. 
+res:  1[
+   emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_99_1432') & i'<=j' & !(v_bool_99_1432') & v_int_102_1487+1=j' & sumarrayL(a',i',v_int_102_1487,v_int_102_1431') & v_int_102_1430'=a'[j']&{FLOW,(4,5)=__norm}[]
+   ]
+ 
+id: 10; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&j'<i' & j'=j & i'=i & a'=a & v_bool_99_1432' & j'<i' & 
+v_bool_99_1432' & res=0&{FLOW,(4,5)=__norm}[]
+ |-  emp&sumarrayL(a,i,j,res)&{FLOW,(4,5)=__norm}[]. 
+res:  1[
+   emp&j'<i' & j'=j & i'=i & a'=a & v_bool_99_1432' & j'<i' & v_bool_99_1432' & res=0&{FLOW,(4,5)=__norm}[]
+   ]
+ 
+id: 11; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail (exists v_int_102_1431': emp&i'<=j' & j'=j & i'=i & a'=a & 
+!(v_bool_99_1432') & i'<=j' & !(v_bool_99_1432') & v_int_102_1487+1=j' & 
+sumarrayL(a',i',v_int_102_1487,v_int_102_1431') & res=(a'[j'])+
+v_int_102_1431'&{FLOW,(4,5)=__norm})[]
+ |-  emp&sumarrayL(a,i,j,res)&{FLOW,(4,5)=__norm}[]. 
+res:  1[
+   emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_99_1432') & i'<=j' & !(v_bool_99_1432') & v_int_102_1487+1=j' & sumarrayL(a',i',v_int_102_1487,v_int_102_1496) & res=(a'[j'])+v_int_102_1496&{FLOW,(4,5)=__norm}[]
+   ]
+ 
+id: 12; caller: []; line: 33; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&j'<i' & j'=j & i'=i & a'=a&{FLOW,(4,5)=__norm}[]
+ |-  emp&Term[]&{FLOW,(4,5)=__norm}[]. 
+res:  1[
+   emp&j'<i' & j'=j & i'=i & a'=a&{FLOW,(4,5)=__norm}[]
+   ]
+ 
+id: 13; caller: []; line: 33; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&i'<=j' & j'=j & i'=i & a'=a&{FLOW,(4,5)=__norm}[]
+ |-  emp&Term[]&{FLOW,(4,5)=__norm}[]. 
+res:  1[
+   emp&i'<=j' & j'=j & i'=i & a'=a&{FLOW,(4,5)=__norm}[]
+   ]
+ 
+id: 14; caller: []; line: 36; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_33_1446') & i'<=j' & 
+!(v_bool_33_1446')&{FLOW,(4,5)=__norm}[]
+ |-  emp&{FLOW,(4,5)=__norm}[]. 
+res:  1[
+   emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_33_1446') & i'<=j' & !(v_bool_33_1446')&{FLOW,(4,5)=__norm}[]
+   ]
+ 
+id: 15; caller: []; line: 36; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_33_1446') & i'<=j' & 
+!(v_bool_33_1446')&{FLOW,(4,5)=__norm}[]
+ |-  emp&Term[]&{FLOW,(4,5)=__norm}[]. 
+res:  1[
+   emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_33_1446') & i'<=j' & !(v_bool_33_1446')&{FLOW,(4,5)=__norm}[]
+   ]
+ 
+id: 16; caller: []; line: 36; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_33_1446') & i'<=j' & 
+!(v_bool_33_1446') & v_int_36_1445'=a'[i'] & v_int_36_1442'=1&
+{FLOW,(4,5)=__norm}[]
+ |-  emp&{FLOW,(4,5)=__norm}[]. 
+res:  1[
+   emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_33_1446') & i'<=j' & !(v_bool_33_1446') & v_int_36_1445'=a'[i'] & v_int_36_1442'=1&{FLOW,(4,5)=__norm}[]
+   ]
+ 
+id: 17; caller: []; line: 36; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_33_1446') & i'<=j' & 
+!(v_bool_33_1446') & v_int_36_1445'=a'[i'] & v_int_36_1442'=1&
+{FLOW,(4,5)=__norm}[]
+ |-  emp&Term[]&{FLOW,(4,5)=__norm}[]. 
+res:  1[
+   emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_33_1446') & i'<=j' & !(v_bool_33_1446') & v_int_36_1445'=a'[i'] & v_int_36_1442'=1&{FLOW,(4,5)=__norm}[]
+   ]
+ 
+id: 18; caller: []; line: 36; classic: false; kind: PRE_REC; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_33_1446') & i'<=j' & 
+!(v_bool_33_1446') & v_int_36_1445'=a'[i'] & v_int_36_1443'=1+i'&
+{FLOW,(4,5)=__norm}[]
+ |-  emp&{FLOW,(4,5)=__norm}[]. 
+res:  1[
+   emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_33_1446') & i'<=j' & !(v_bool_33_1446') & v_int_36_1445'=a'[i'] & v_int_36_1443'=1+i'&{FLOW,(4,5)=__norm}[]
+   ]
+ 
+id: 19; caller: []; line: 36; classic: false; kind: PRE_REC; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_33_1446') & i'<=j' & 
+!(v_bool_33_1446') & v_int_36_1445'=a'[i'] & v_int_36_1443'=1+i'&
+{FLOW,(4,5)=__norm}[]
+ |-  emp&MayLoop[]&{FLOW,(4,5)=__norm}[]. 
+res:  1[
+   emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_33_1446') & i'<=j' & !(v_bool_33_1446') & v_int_36_1445'=a'[i'] & v_int_36_1443'=1+i'&{FLOW,(4,5)=__norm}[]
+   ]
+ 
+id: 20; caller: []; line: 36; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_33_1446') & i'<=j' & 
+!(v_bool_33_1446') & v_int_36_1445'=a'[i'] & sumarray(a',1+
+i',j',v_int_36_1444')&{FLOW,(4,5)=__norm}[]
+ |-  emp&{FLOW,(4,5)=__norm}[]. 
+res:  1[
+   emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_33_1446') & i'<=j' & !(v_bool_33_1446') & v_int_36_1445'=a'[i'] & sumarray(a',1+i',j',v_int_36_1444')&{FLOW,(4,5)=__norm}[]
+   ]
+ 
+id: 21; caller: []; line: 36; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_33_1446') & i'<=j' & 
+!(v_bool_33_1446') & v_int_36_1445'=a'[i'] & sumarray(a',1+
+i',j',v_int_36_1444')&{FLOW,(4,5)=__norm}[]
+ |-  emp&Term[]&{FLOW,(4,5)=__norm}[]. 
+res:  1[
+   emp&i'<=j' & j'=j & i'=i & a'=a & !(v_bool_33_1446') & i'<=j' & !(v_bool_33_1446') & v_int_36_1445'=a'[i'] & sumarray(a',1+i',j',v_int_36_1444')&{FLOW,(4,5)=__norm}[]
+   ]
+ 
+id: 22; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&j'<i' & j'=j & i'=i & a'=a & v_bool_33_1446' & j'<i' & 
+v_bool_33_1446' & res=0&{FLOW,(4,5)=__norm}[]
+ |-  emp&sumarray(a,i,j,res)&{FLOW,(4,5)=__norm}[]. 
+res:  1[
+   emp&j'<i' & j'=j & i'=i & a'=a & v_bool_33_1446' & j'<i' & v_bool_33_1446' & res=0&{FLOW,(4,5)=__norm}[]
+   ]
+ 
+id: 23; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail (exists v_int_36_1444': emp&i'<=j' & j'=j & i'=i & a'=a & 
+!(v_bool_33_1446') & i'<=j' & !(v_bool_33_1446') & sumarray(a',1+
+i',j',v_int_36_1444') & res=v_int_36_1444'+(a'[i'])&{FLOW,(4,5)=__norm})[]
+ |-  emp&sumarray(a,i,j,res)&{FLOW,(4,5)=__norm}[]. 
+res:  failctx
+         fe_kind: MAY
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message: 
+                     res=v_int_36_1529+(a[i]) & sumarray(a,1+i,j,v_int_36_1529) & i<=j |-  sumarray(a,i,j,res). LOCS:[36;33;28;30] (may-bug)
+                   fc_current_lhs_flow: {FLOW,(4,11)=__MayError}}
+[[empty]]false

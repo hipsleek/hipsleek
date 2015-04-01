@@ -1,0 +1,13 @@
+ 
+ id: 1<-1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:SAT:{[x, update_array_1d, a_old, aPRMD, res, xPRMD] : (((xPRMD = x) & ((0=0) & (res = xPRMD + 1))))};
+ raw result:{[x,update_array_1d,a_old,aPRMD,x+1,x]}
+ Sat:  x'=x & update_array_1d(a_old,a',x',5) & res=x'+1
+ res: SAT
+ -------------------- 
+ id: 2<0; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:no proof raw result:no result
+ Imply: ante: x'=x & update_array_1d(a_old,a',x',5) & res=x'+1
+	     conseq:  a'[5]=x
+ res: exception thrown
+ --------------------

@@ -101,6 +101,7 @@ class prog_loc =
       | Some l -> (string_of_pos l.start_pos)
   end;;
 
+let last_posn = new store "" (fun x -> "("^x^")")
 
 (*Some global vars for logging*)
 let proving_loc  = new prog_loc
@@ -109,6 +110,11 @@ let post_pos = new prog_loc
 let entail_pos = ref no_pos
 let set_entail_pos p = entail_pos := p
 
+let z_debug_flag = ref false
+
 let buildA s i = s^"#"^(string_of_int i);;
 let build_loc_str s i = "**"^(buildA s i)^":";;
-let store_loc_str s i = let n = buildA s i in last_posn := Some n ;;
+let store_loc_str s i =
+  if !z_debug_flag then
+    let n = buildA s i 
+    in last_posn # set n ;;

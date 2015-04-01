@@ -172,15 +172,15 @@ let extract_eset_of_lbl_lst lst rhs =
          if LO.is_common l then (l,f)
          else
            let vs = (fv f)@rhs_vs in
-           Debug.tinfo_hprint (add_str "vars_from_fv" string_of_spec_var_list) vs no_pos;
+           x_tinfo_hp (add_str "vars_from_fv" string_of_spec_var_list) vs no_pos;
            let vs = List.filter (fun v -> not(is_const v)) vs in
            let ws = Gen.BList.difference_eq eq_spec_var es vs in
            let r = mk_exists_eset eq_all ws in
            let (flag,r) = formula_of_filtered_eset r em_f no_pos in
            if flag then
              begin
-               Debug.tinfo_hprint (add_str "\n f" !print_formula) f no_pos;
-               Debug.tinfo_hprint (add_str "eq_to_add" !print_formula) r no_pos
+               x_tinfo_hp (add_str "\n f" !print_formula) f no_pos;
+               x_tinfo_hp (add_str "eq_to_add" !print_formula) r no_pos
              end;
            let nf = mkAnd r f no_pos in
            (l,nf)

@@ -2,7 +2,7 @@
 "ext": include
 "frontc": include
 "src": include
-
+false: pp(cppo -I ../ -D TRACE)
 # linking
 #<cil.{cma,cmxa}>: use_perfcount
 #, is_cil

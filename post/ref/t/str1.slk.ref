@@ -1,0 +1,12 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+Entail (1) : Valid. 
+
+Residue:
+ <1>emp&res=vx_13+1 & post(kk,vx_13) & post(ww,kk) & post(vv,1+ww) & 2+vv=i & 0<i&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELDEFN post: ( post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=1+vx_13 & vv+2=i & 1<=i) -->  post(i,res)]
+
+

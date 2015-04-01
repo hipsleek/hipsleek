@@ -1,0 +1,305 @@
+grep "Debug.no_[1-8] " astsimp.ml > 9
+cristian@loris-23:~/hg/sl_clean$ grep "Debug.no_[1-8] " solver.ml >> 9
+cristian@loris-23:~/hg/sl_clean$ grep "Debug.no_[1-8] " typechecker.ml >> 9
+cristian@loris-23:~/hg/sl_clean$ grep "Debug.no_[1-8] " infer.ml >> 9
+
+====================================================
+
+  Debug.no_1 "gen_primitives" pr_no pr gen_primitives prog
+  Debug.no_1 "convert_heap2" pr pr (convert_heap2_x prog) f0
+  Debug.no_1 "convert_struc2" pr pr (convert_struc2_x prog) f0
+    Debug.no_1 "gen_name_pairs_struc" pr_id (pr_list (pr_pair pr_id pr_id))
+  Debug.no_1 "order_views" pr (pr_pair pr pr2) order_views  view_decls0
+  Debug.no_2 "join_hull"  pr pr pr join_hull a f 
+  Debug.no_1 "remove_disj_clauses" pr pr remove_disj_clauses mf
+    Debug.no_2 "need_break_continue" string_of_bool Iprinter.string_of_exp string_of_bool 
+  Debug.no_1 "prepare_labels" pr pr prepare_labels_x fct 
+  Debug.no_2 "add_case_coverage" pr pr 
+  Debug.no_2 "line_split" pr1 pr2 pr3 (fun _ _ -> line_split br_cnt  br_n cons line) cons line
+  Debug.no_2 "splitter" pr1 pr2 pr3 splitter_x f_list_init v1
+  Debug.no_1 "move_instantiations" pr (pr_pair pr !CP.print_svl) move_instantiations_x f
+  Debug.no_2 "formula_case_inference" pr pr2 pr (fun _ _ -> formula_case_inference_x cp f_ext v1) f_ext v1
+  Debug.no_1 "view_case_inference" pr pr (fun _ -> view_case_inference_x cp ivl cv) cv
+  Debug.no_1 "case_inference" pr_none pr_none (fun _ -> case_inference_x ip cp) ip
+  Debug.no_1 "trans_prog" pr_in pr_out (fun x -> trans_prog_x prog) prog
+      Debug.no_1 "trim_unsat" pr (pr_pair pr (pr_list pr)) trim_unsat f
+  Debug.no_1 "trans_data" pr_in pr_out (fun _ -> trans_data_x prog ddef) ddef
+        Debug.no_1 "form_body_inv_baga" pr Cprinter.string_of_formula form_body_inv_baga vdef in
+        Debug.no_1 "form_body_inv_baga_enum" pr Cprinter.string_of_formula form_body_inv_baga_enum vdef in
+          Debug.no_2 "helper_unfold" pr pr pr (fun _ _ -> helper_unfold no bfs ifs) bfs ifs in
+        Debug.no_3 "check_under" Cprinter.string_of_ef_pure (pr_list Cprinter.string_of_formula) pr_id string_of_bool (fun _ _ _ -> check_under  no uf fl vn) uf fl vn  in
+  Debug.no_1 "add_param_ann_constraints_struc" pr pr  (fun _ -> add_param_ann_constraints_struc_x cf) cf
+  Debug.no_1 "trans_view" pr pr_r  (fun _ -> trans_view_x prog  mutrec_vnames
+  Debug.no_2 "trans_views" (pr_list (pr_list pr_id)) pr2 pr (fun _ _ -> trans_views_x iprog ls_mut_rec_views ls_pr_view_typ) ls_mut_rec_views ls_pr_view_typ
+and fill_one_base_case prog vd = Debug.no_1 "fill_one_base_case" Cprinter.string_of_view_decl Cprinter.string_of_view_decl (fun vd -> fill_one_base_case_x prog vd) vd
+  Debug.no_1 "trans_hp" pr1 (pr_pair pr2 Cprinter.string_of_rel_decl)
+  Debug.no_1 "trans_axiom" pr1 pr2 (fun x -> trans_axiom_x prog adef) adef
+  Debug.no_2 "find_m_prop_heap" pr pr1 prr (fun _ _ -> find_m_prop_heap_x params eq_f h) h params
+  Debug.no_2 "find_trans_view_name" pr1 pr2 (pr_list pr_id) (fun _ _ -> find_trans_view_name_x ff self pos) ff self
+  (*   Debug.no_1 "find_node_vars" pr1 (pr_pair pr2 pr_id) helper h  in *)
+  Debug.no_1 "find_node_vars" Cprinter.string_of_h_formula pr (fun _ -> find_node_vars_x eq_f h) h
+  Debug.no_2 "find_materialized_prop" pr1 pr2 pr3 (fun _ _ -> find_materialized_prop_x params forced_vars f0) params f0
+  Debug.no_2 "find_materialized_vars" pr1 pr2 pr1 (fun _ _ -> find_materialized_vars_x prog params (f0 : CF.formula)) params f0
+  Debug.no_1 "set_pre_flow" pr pr set_pre_flow_x f
+  Debug.no_2 "trans_loop_proc" 
+  Debug.no_2 (* (fun res -> true) *) "add_perm_to_spec" pr_f pr_svl pr_f (fun _ _ -> add_perm_to_spec_x p_ref p_val expr) expr p_ref
+  Debug.no_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_a prog coer) coer
+(* Debug.no_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer *)
+  Debug.no_2 "find_view_name"  (fun x->x) Cprinter.string_of_formula (fun x->x)
+  Debug.no_1 "trans_exp"
+(*   Debug.no_3 "flatten_to_bind "  *)
+  Debug.no_1 "trans_args" pr1 pr2 trans_args_x args
+(*   Debug.no_2 "case_coverage" (Gen.BList.string_of_f Cpure.string_of_typed_spec_var)   *)
+  Debug.no_2 "trans_case_coverage" (Gen.BList.string_of_f Cpure.string_of_typed_spec_var)  
+  Debug.no_1 "trans_var" pr Cprinter.string_of_spec_var (fun _ -> trans_var_x p tlist pos) p
+  Debug.no_1 "add_pre"  pr pr (add_pre_x prog) f 
+  Debug.no_2 "trans_copy_spec_4caller" !Cpure.print_svl pr pr trans_copy_spec_4caller_x copy_params sf
+  Debug.no_2 "compact_nodes_with_same_name_in_h_formula" pr pr_sv pr (fun _ _ -> compact_nodes_with_same_name_in_h_formula_x f aset) f aset
+  Debug.no_1 "compact_nodes_with_same_name_in_struc" pr pr (fun _ -> compact_nodes_with_same_name_in_struc_x f ) f
+  Debug.no_3 "linearize_formula" pr1 Iprinter.string_of_formula string_of_tlist 
+      Debug.no_1 "linearize_one_formula"
+  Debug.no_2 "trans_pure_formula" pr_f pr_tlist pr_out trans_pure_formula_x f0 tlist
+  Debug.no_1 "trans_pure_b_formula" (Iprinter.string_of_b_formula) (Cprinter.string_of_b_formula) (fun b -> trans_pure_b_formula_x b tlist) b0                 
+  Debug.no_1 "trans_pure_exp" 
+  Debug.no_5 "case_normalize_renamed_formula" 
+    Debug.no_2 "match_exp" pr1 pr2 pr3 (fun _ _ -> match_exp used_names hargs pos) used_names hargs
+    Debug.no_2 "linearize_heap" pr0 pr1 pr2 (fun _ _ -> linearize_heap used_names f) used_names f in
+  Debug.no_2 "case_normalize_formula" pr2 pr pr (fun _ _ -> case_normalize_formula_x prog h f) h f
+    Debug.no_1 "case_normalize_helper2" pr (pr_pair !IF.print_struc_formula (fun _ -> "")) (helper h_vars strad_vs [])  nf 
+  Debug.no_1 "case_normalize_coerc" pr_none pr_none (fun _ ->  case_normalize_coerc_x prog cd) cd
+  Debug.no_2 "rename_exp" pr1 pr2 pr2 rename_exp_x ren f
+  Debug.no_1 "case_rename_var_decls" pr (pr_pair pr pr_subs) case_rename_var_decls f
+  Debug.no_2 "check_eprim_in_struc_formula" 
+  Debug.no_1 "case_normalize_proc" pr pr
+  Debug.no_1 "case_normalize_barrier " pr_in pr_in (case_normalize_barrier_x prog) bd
+  Debug.no_1 "case_normalize_program" (Iprinter.string_of_program) (Iprinter.string_of_program) case_normalize_program_x prog
+  Debug.no_3 "prune_inv_inference_formula" pr_svl pr pr_svl pr_out
+    Debug.no_1 "filter_pure_conj_list" pr1 pr2 filter_pure_conj_list pc in
+    Debug.no_2 "hull_invs" Cprinter.string_of_spec_var_list pr2  pr3 hull_invs v_l f in
+      Debug.no_3 "comp" string_of_int pr pr pr comp i crt_lst last_lst 
+    Debug.no_2 "compute_invariants"  
+    Debug.no_1 "split_one_branch" pr1 pr2 (fun _ -> split_one_branch vl uinvl p2) p2
+    Debug.no_1 "collect_constr" pr1 pr2 (fun _ -> collect_constr split_br x) x
+    Debug.no_3 "pick_pures" pr3 pr0 pr2 pr1 (fun _ _ _ -> pick_pures lst vl uinv) lst vl uinv in
+    Debug.no_1 "sel_prune_conds" pr1 pr2 sel_prune_conds ugl
+      Debug.no_2 "safe_test" pr1 pr2 string_of_bool safe_test bf ls in
+    Debug.no_1 "get_safe_prune_conds" pr pr (fun _ -> get_safe_prune_conds pc orig_pf) pc
+  Debug.no_1 "view_prune_inv_inference" pr pr
+  Debug.no_1 "barrier_prune_inv_inference" pr pr (barrier_prune_inv_inference_x cp) bd
+  Debug.no_1 "pred_prune_inference" pr_no pr_no pred_prune_inference_x cp 
+    let prune_bar c = Debug.no_1 "prune_bar" Cprinter.string_of_barrier_decl Cprinter.string_of_barrier_decl prune_bar c in
+  Debug.no_1 "mark_rec_and_der_order" pr pr mark_rec_and_der_order_x views
+  Debug.no_2 "mark_der_order" pr3 pr2 pr4
+  Debug.no_1 "mark_rec_and_call_order" pr pr mark_rec_and_call_order_x cp
+  Debug.no_2 "mark_call_order" pr1 pr2 pr1
+  let f_gen_base st v perm = Debug.no_1 "f_gen_base" Cprinter.string_of_pure_formula Cprinter.string_of_formula (f_gen_base st v) perm in
+  let one_entail f1 f2  = Debug.no_2 "one_entail" Cprinter.string_of_formula Cprinter.string_of_formula Cprinter.string_of_list_context one_entail f1 f2 in
+  let prep_t f = Debug.no_1 "prep_t" (fun c-> "") (fun c-> "") prep_t f in
+  let prep_grp f = Debug.no_1 "prep_grp" (fun c-> "") (fun c-> "") prep_grp f in
+  Debug.no_1 "trans_bdecl " pr_in pr_out (trans_bdecl_x prog) bd
+(*   Debug.no_1 "rev_trans_formula" pr1 pr2 *)
+(*   Debug.no_1 "transform_hp_rels_to_iviews" pr1 pr2 transform_hp_rels_to_iviews hp_rels *)
+(* Debug.no_1 "plugin_inferred_iviews" pr1 Iprinter.string_of_program (fun _ -> plugin_inferred_iviews views iprog) views *)
+(*   Debug.no_1 "check_data_pred_name" pr1 pr2 (fun _ -> check_data_pred_name iprog name) name *)
+(*   Debug.no_1 "process_pred_def_4_iast" pr pr_no *)
+  Debug.no_1 "process_pred_def_4_iast" pr pr_none
+  Debug.no_1 "convert_pred_to_cast" pr1 pr2
+  Debug.no_1 "plugin_inferred_iviews" pr1 Iprinter.string_of_program (fun _ -> plugin_inferred_iviews views iprog cprog) views
+  Debug.no_2 "simple_imply" pr pr string_of_bool
+  Debug.no_2 "subst_eqset" pr pr pr subst_eqset s e
+  Debug.no_2 "pr_branches_subsume " pr pr pr2 (fun _ _ -> prune_branches_subsume_x prog lhs_node rhs_node) lhs_node rhs_node
+(*   Debug.no_3 "h_formula_2_mem_perm"  Cprinter.string_of_h_formula Cprinter.string_of_mix_formula Cprinter.string_of_spec_var_list  *)
+(*   Debug.no_1 "xpure_mem_enum_perm" Cprinter.string_of_formula (fun (a1,a2)->(Cprinter.string_of_mix_formula a1)^" # "^(Cprinter.string_of_mem_formula a2)) *)
+(*       Debug.no_2 "partition" pr_in Cprinter.string_of_mix_formula pr_out  *)
+(*       Debug.no_1 "check" pr_in (Cprinter.string_of_mix_formula) *)
+(*       Debug.no_1 "check_consistency" *)
+(*   Debug.no_2 "xpure_perm" Cprinter.string_of_h_formula Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula *)
+(*   Debug.no_3 "xpure_heap_perm" Cprinter.string_of_h_formula Cprinter.string_of_mix_formula string_of_int  *)
+(*   Debug.no_1 "xpure_heap_symbolic_perm_i" Cprinter.string_of_h_formula pr_none *)
+(*         Debug.no_1 "split_linear_node" Cprinter.string_of_h_formula pr split_linear_node_x h *)
+  Debug.no_2 "split_linear_node_guided" Cprinter.string_of_spec_var_list Cprinter.string_of_h_formula pr split_linear_node_guided_x vars h
+(*   Debug.no_2 "Solver.get_equations_sets" pr1 !CP.print_svl pr_none *)
+  Debug.no_2 "combine_context_and_unsat_now" pr_ctx pr_mf pr_ctx (fun _ _ -> combine_context_and_unsat_now_x prog ctx f) ctx f
+  Debug.no_2 "unfold_context_unsat_now" p1 p2 pr_out (fun _ _ -> unfold_context_unsat_now_x prog0 prog ctx v pos) prog v
+  Debug.no_2 "unfold_failesc_context" pr1 pr2 pr1
+  Debug.no_5 "struc_unfold_heap"  prh (pr_list prs) prs pr2 (pr_list prs) pr_out
+  Debug.no_4 "unfold_heap" 
+  Debug.no_2 "split_universal" 
+  Debug.no_1 "normalize_to_CNF" 
+(*   Debug.no_2 "fold_op " (fun c -> match c with *)
+(*   Debug.no_2 "fold_op " Cprinter.string_of_context Cprinter.string_of_h_formula (fun (c,_) -> Cprinter.string_of_list_context c) *)
+  Debug.no_2 "fold_op" 
+          Debug.no_1 "fold_op: process_one" pr pr (fun _ -> process_one_x (ss:CF.steps) fold_rs1) fold_rs1 
+  Debug.no_4 "process_fold_result" pr_es pr1 pr2 pr3 pro 
+    Debug.no_1 "process_one" pr1 pr2 (fun _ -> process_one_x (ss:CF.steps) fold_rs1) fold_rs1 in
+  (*Debug.no_1 "process_fold_result: process_one" pr1 pr2 (fun _ -> process_one_x (ss:CF.steps) fold_rs1) fold_rs1 in*)
+  Debug.no_2 "elim_exists_mix_formula" pr !CP.print_svl pr
+  Debug.no_2 "elim_exists_memo_pure" Cprinter.string_of_spec_var_list Cprinter.string_of_memo_pure_formula Cprinter.string_of_memo_pure_formula
+  Debug.no_2 ("elim_exists_pure_branch"^(string_of_int i)) Cprinter.string_of_spec_var_list pf pf 
+(*   Debug.no_1 "entail_state_elim_exists" pr pr2 entail_state_elim_exists_x es  *)
+  Debug.no_1 "entail_state_elim_exists" pr2 pr3
+  Debug.no_1 "find_unsat" pr_f (pr_pair pr_l pr_l) (find_unsat_x prog) f
+    Debug.no_2 "Solver.tp_syn" pr1 pr2 string_of_bool
+  Debug.no_1 "elim_unsat_for_unfold" (Cprinter.string_of_formula) (Cprinter.string_of_formula)
+  Debug.no_1 "elim_unsat_all" (Cprinter.string_of_formula) (Cprinter.string_of_formula)
+  Debug.no_2 "elim_unsat " (fun c-> "?") (Cprinter.string_of_formula) (Cprinter.string_of_formula) elim_unsat_all prog f
+  Debug.no_4 "get_eqns_free" pr_st pr_svl pr_svl pr_svl pr (fun _ _ _ _ -> get_eqns_free_x st evars expl_inst struc_expl_inst pos) st evars expl_inst struc_expl_inst
+  Debug.no_3 "subs_to_inst_vars" pr2 pr_svl pr_svl pr_r (fun _ _ _-> subs_to_inst_vars_x st ivars impl_vars pos) st ivars impl_vars
+  Debug.no_2 "get_eqns_expl_inst" pr2 pr_svl pr_r (fun _ _ -> get_eqns_expl_inst_x st ivars pos) st ivars *)
+(*   Debug.no_1 "Solver.elim_exists" pr pr elim_exists_x f0 *)
+  Debug.no_2 "is_barrier_inconsistent_formula"
+  Debug.no_2 "check_barrier_inconsistency_context_svl"
+  Debug.no_1 "check_consistency_context"
+  Debug.no_1 "heap_entail_struc_list_failesc_context" pr1 pr2
+  Debug.no_1 "heap_entail_struc_failesc_context" pr1 pr2 (fun _ ->
+  Debug.no_2 "heap_entail_struc_init_bug_inv" Cprinter.string_of_list_context Cprinter.string_of_struc_formula
+  Debug.no_2 "heap_entail_struc_init" pr pr2 pr_out (fun _ _ -> heap_entail_struc_init_x prog is_folding has_post cl conseq pos pid) cl conseq
+  Debug.no_2 "heap_entail_struc" Cprinter.string_of_list_context Cprinter.string_of_struc_formula
+  Debug.no_2 "sem_imply_add" pr1 pr2 pr3 
+  Debug.no_2 "compose_thread_post_condition"
+  Debug.no_2 "heap_entail_conjunct_lhs_struc"
+  Debug.no_2 "heap_entail_init"
+  Debug.no_2 "heap_entail" pr pr_f pr_r
+      Debug.no_2 "generate_action" pr pr_1 pr_2 (fun _ _ -> generate_action_x nodes eset) nodes eset
+      Debug.no_2 "process_entail_state"  pr pr
+  Debug.no_2 "move_expl_inst_ctx_list" pr1 pr2 pr1 
+  Debug.no_2 "move_expl_inst_estate" pr1 pr2 pr1 move_expl_inst_estate_x es f
+  Debug.no_2 "move_impl_inst_estate" pr1 pr2 pr1 move_impl_inst_estate_x es f
+  Debug.no_4 "coer_target" (* Cprinter.string_of_coercion  *)
+  Debug.no_4 "check_one_target" pr1 pr2 pr3 pr4 string_of_bool
+  Debug.no_2 "heap_entail_split_rhs_phases"
+  Debug.no_1 "eliminate_exist_from_LHS" pr pr_no (fun _ -> eliminate_exist_from_LHS_x qvars qh qp qvp qt qfl pos estate) qvars
+  Debug.no_3 "one_ctx_entail" (Cprinter.string_of_context_short) Cprinter.string_of_formula Cprinter.string_of_mix_formula
+  Debug.no_1 "heap_entail_rhs_nested_phase" pr pr_none (fun _ -> heap_entail_rhs_nested_phase_x
+  Debug.no_2 "insert_ho_frame_in2_formula" Cprinter.string_of_formula (fun _ -> "?") Cprinter.string_of_formula insert_ho_frame_in2_formula f ho
+  Debug.no_2 "heap_entail_split_lhs_phases" Cprinter.string_of_context (fun _ -> "RHS") (fun (c,_) -> Cprinter.string_of_list_context c)
+      Debug.no_2 "heap_entail_with_cont" (Cprinter.string_of_context) (fun _ -> "RHS") (fun _ -> "OUT")
+  Debug.no_6 "heap_entail_thread"
+    Debug.no_4 "compute_thread_one_match"
+    Debug.no_4 "compute_thread_matches"
+            Debug.no_2 "process_thread_one_match"
+            Debug.no_2 "process_thread_matches"
+  Debug.no_1 "heap_entail_build_pure_check"
+  Debug.no_2 "xpure_imply" pr1 pr2 string_of_bool
+(*   Debug.no_2 "check_maymust_failure" pr1 pr1 pr2 (fun _ _ -> check_maymust_failure_x ante cons) ante cons *)
+(*       Debug.no_2 "find_all_failures" pr1 pr1 pr3 find_all_failures a c in *)
+  Debug.no_1 "heap_infer_decreasing_wf" pr pr_no
+  Debug.no_2 "subst_rel_by_def" pr2 pr1 pr1
+    Debug.no_1 "fold_fun_impt" pr pr1 (fun _ -> fold_fun_impt x rhs_p) rhs_p
+  Debug.no_2 "detect_false" pr1 pr2 string_of_bool detect_false_x ante memset 
+  Debug.no_3 "solve_ineq "
+  Debug.no_3 "solve_ineq_pure_formula "
+  Debug.no_2 "imply_formula_no_memo" pr pr string_of_bool (fun _ _ -> imply_formula_no_memo_x new_ante new_conseq imp_no memset) new_ante new_conseq
+  Debug.no_4 "do_base_case_unfold_only" 
+  Debug.no_1 "do_unfold_for_classic_reasoning" pr_in pr_out
+  Debug.no_4 "do_lhs_case"
+  Debug.no_6 "do_match_inst_perm_vars" 
+   Debug.no_1 "generate_rel_formulas" pr1 pr2
+  Debug.no_3 "compute_matching_thread_nodes"
+  Debug.no_5 "do_match" pr_h pr_h Cprinter.string_of_estate Cprinter.string_of_formula
+                Debug.no_1 "match_one_ho_arg" pr1 pr2 match_one_ho_arg_x ((lhs, rhs), k)
+  Debug.no_6  "heap_entail_non_empty_rhs_heap" 
+  Debug.no_3 "inst_before_fold"  pr_1 pr_2 pr_3 pr_r
+  Debug.no_2 "combine_results" pr pr pr (fun _ _ -> combine_results_x (res_es1,prf1) (res_es2,prf2)) (res_es1,prf1) (res_es2,prf2)
+  Debug.no_2 "do_fold" pr_es pr1 pr2
+  Debug.no_2 "do_base_fold" 
+  Debug.no_2 "do_full_fold" Cprinter.string_of_entail_state pr1 pr2 
+  Debug.no_2 "vdef_of_acc_fold" pr_vd pr_fold_seq pr_out
+  Debug.no_4 "do_acc_fold" pr_es pr_hf pr_base pr_fold_seq pr_out 
+  Debug.no_5 "do_seg_fold" pr_es pr_hf pr_hf pr_base pr_fold_seq pr_out 
+  Debug.no_1 "push_hole_action" pr_no pr_no 
+  Debug.no_2 "advance_unfold" pr1 p0 pr2 (fun _ _ -> advance_unfold_x prog ctx conseq) ctx conseq 
+  Debug.no_2 "comp_act" pr1 pr2 pr3 (fun _ _ -> comp_act_x prog estate rhs) estate rhs
+  Debug.no_5 "do_infer_heap" pr1 pr1 pr2 pr2 pr2 pr3 (fun _ _ _ _ _-> do_infer_heap_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos) rhs rhs_rest conseq (Base lhs_b) (Base rhs_b)
+  Debug.no_2 "do_unmatched_rhs" Cprinter.string_of_h_formula pr1 pr2
+  Debug.no_2 "process_unfold" pr1 Cprinter.string_of_entail_state pr2
+  Debug.no_1 "rank_cand_list" pr_none pr rank_cand_list_x ls
+  Debug.no_1 "choose_best_candidate " pr1 pr2 choose_best_candidate_x contr_lst 
+  Debug.no_2 "solver_infer_lhs_contra_first_sat" pr_estate Cprinter.string_of_mix_formula  
+  Debug.no_2 "solver_infer_lhs_contra_list" pr_estate Cprinter.string_of_mix_formula  
+  Debug.no_1 "match_one_ho_arg_simple" pr1 pr_out
+  Debug.no_3 "do_universal"  Cprinter.string_of_h_formula Cprinter.string_of_formula Cprinter.string_of_formula pr 
+  Debug.no_2 "is_cycle_coer" Cprinter.string_of_coercion Cprinter.str_ident_list string_of_bool
+  Debug.no_2 "is_original_match"
+  Debug.no_4 "rewrite_coercion" Cprinter.string_of_h_formula  p1 Cprinter.string_of_coercion Cprinter.string_of_entail_state
+  Debug.no_3 "apply_universal"  Cprinter.string_of_h_formula Cprinter.string_of_h_formula (fun x -> x) pr 
+  Debug.no_2 "find_coercions" p1 p1 p2 (fun _ _ -> find_coercions_x c1 c2 prog anode ln2 ) anode ln2
+  Debug.no_7 "do_coercion" pr_es pr_h pr_h pr_h pr_h Cprinter.string_of_formula_base (pr_opt Cprinter.string_of_coercion) pr 
+  Debug.no_5 "apply_left_coercion"  Cprinter.string_of_entail_state Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion Cprinter.string_of_formula pr
+              Debug.no_1 "apply_left_coercion_complex: process_one" pr1 pr2 (fun _ -> process_one_x (ss:CF.steps) res) res in
+  Debug.no_3 "apply_left_coercion_complex" Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion pr
+  Debug.no_4 "test_frac_eq" pr1 pr2 pr3 pr3 string_of_bool (test_frac_eq_x prog) lhs rhs_p l_perm r_perm
+  Debug.no_2 "pick_up_node"
+      Debug.no_7 "process_one_normalize"
+  Debug.no_1 "normalize_base_perm" pr pr (normalize_base_perm_x prog) f
+      Debug.no_2 "find_one" prh prhl pr_out find_one_x h hs
+  Debug.no_2 "find_possible_matches" pr1 pr1 pr_out
+  Debug.no_4 "prop_w_coers" pr_cl pr_h pr_p pr_fl pr_r
+    Debug.no_7 "process_one_prop_w_coer" pr1 prh prh prm prfl prf prm pr_out
+  Debug.no_5 "apply_right_coercion" pr_es Cprinter.string_of_h_formula Cprinter.string_of_h_formula
+   Debug.no_1 "elim_exists_exp"
+   Debug.no_1 "elim_exists_exp_loop"
+Debug.no_2 "combine_struc" !print_struc_formula !print_struc_formula !print_struc_formula combine_struc_x f1 f2
+  Debug.no_1 "normalize_entail_state_w_lemma"
+  Debug.no_1 "prop_entail_state_w_lemma"
+  Debug.no_1 "normalize_list_failesc_context_w_lemma" pr pr
+  Debug.no_2 "heap_entail_struc_list_partial_context_init" pr1 pr2 pr3
+	Debug.no_2 "heap_entail_list_partial_context_init" pr1 pr2 pr3 
+(*   Debug.no_2 "heap_entail_list_partial_context_init" pr2 (Cprinter.string_of_formula)  *)
+  Debug.no_2 "heap_entail_list_failesc_context_init" 
+  Debug.no_1 "verify_pre_is_sat" pr string_of_bool
+(*  Debug.no_2 "simplify_heap" pr pr2 pr*)
+(*   Debug.no_4 "elim_heap" pr pr2 pr3 pr3 pr *)
+(*   Debug.no_2 "simplify_post" pr pr2 (pr_pair pr (pr_list !CP.print_formula)) *)
+(* 	Debug.no_1 "simplify_pre" pr pr (fun _ -> simplify_pre pre_fml lst_assume)  pre_fml *)
+(* 	Debug.no_1 "simplify_relation" pr (pr_pair pr (pr_list !CP.print_formula)) *)
+(*   Debug.no_5 "pre_rel_fixpoint" pr1 (pr_list pr1) (pr_list (pr_triple pr3 pr1 pr1)) !CP.print_svl (pr_list pr2) pr4 *)
+(*   Debug.no_7 "update_with_td_fp" (pr_list_ln pr1) (pr_list_ln pr1) *)
+  Gen.Debug.no_1 "normalize_frac_heap_shallow" pr pr (normalize_frac_heap_shallow_a prog) f
+(*   Debug.no_2 "check_full_varperm"                                                                                                                                     *)
+(*   Debug.no_1 "normalize_list_failesc_context_w_lemma" pr pr *)
+    Debug.no_1 "check_bounded_one_measures"
+  Debug.no_1 "check_bounded_term" pr pr1 (fun _ -> f post_pos) ctx
+  Debug.no_2 "check_specs_infer" pr1 pr_exp pr3
+  Debug.no_2 "infer_lock_invariant"
+    Debug.no_2 "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx should_output_html) org_spec sctx in
+  Debug.no_2 "check_exp" pr (Cprinter.string_of_exp) pr (fun _ _ ->
+          let check_rhs_exp rhs = Debug.no_1 "check Assign (rhs)" pr (fun _ -> "void")
+          let check_rhs_exp rhs = Debug.no_1 "check Assign (rhs)" pr (Cprinter.string_of_list_failesc_context) (fun rhs -> check_exp prog proc ctx rhs post_start_label) rhs
+              Debug.no_1 "check Cast (body)" pr (fun _ -> "void")
+      Debug.no_1 "check_exp1" pr pr check_exp1 ctx in
+  Debug.no_2 "check_par_case" pr1 pr3 pr2 
+                              (*   Debug.no_2 "extr_subs" pr_subs pr_vars pr_res (fun _ _ -> extr_subs xs vs subs rest) xs vs in *)
+  Debug.no_2 "lookup_called_procs" pr2 (pr_list_ln pr2) (pr_list_ln pr2)
+  Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog iprog prog
+  (*Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog iprog*)
+  Debug.no_1 "simplify_conjs" (!CP.print_formula) (!CP.print_formula) simplify_conjs f 
+  Debug.no_2 "remove_infer_vars_partial" pr1 pr2 (pr_triple pr1 pr2 pr2) 
+  Debug.no_1 "is_inferred_pre_list_context"
+  Debug.no_1 "collect_rel_list_partial_context"  pr1 pr2
+(*   Debug.no_1 "collect_hp_rel_list_partial_context"  pr1 pr2 *)
+  Debug.no_1 "get_args_h_formula" pr1 pr2 (fun _ -> get_args_h_formula aset h) h
+(*   Debug.no_1 "get_alias_formula" !print_formula !print_pure_f get_alias_formula f *)
+  Debug.no_1 "is_elem_of" pr pr_no (fun _ -> is_elem_of conj conjs) conj
+  Debug.no_2 "infer_heap_nodes" pr1 pr2 pr3
+  Debug.no_2 "i.simplify" pr !print_svl pr simplify f vars 
+  Debug.no_2 "simplify_disjs" pr pr pr simplify_disjs pf lhs_rhs
+(*   Debug.no_3 "infer_lhs_rhs_pure" pr pr !print_svl (pr_option pr) infer_lhs_rhs_pure lhs rhs ivars *)
+	Debug.no_2 "detect_lhs_rhs_contra" pr pr (pr_pair string_of_bool !CP.print_formula) 
+  Debug.no_5 "infer_pure_m_1"
+  Debug.no_1 "infer_pure_top_level" pr pr2 
+  Debug.no_2 "lhs_simplifier_tp" pr pr pr lhs_simplifier_tp lhs_h lhs_p
+(*   Debug.no_2 "rel_filter_assumption" pr pr (fun (r,_) -> pr r) rel_filter_assumption lhs rel  *)
+(*   Debug.no_2 "find_close_infer_vars_rel" pr2 pr1 pr1 *)
+     Debug.no_3 "detect_lhs_rhs_contra2" (add_str "ivs" pr1)
+    Debug.no_5 "infer_collect_rel" pr2 pr0 pr1 pr1 pr1 pr3
+  Debug.no_1 "generate_linking_svl" pr1 pr2
+  Debug.no_3 "find_guard" pr1 pr2 !CP.print_svl pr3
+  Debug.no_3 "find_undefined_selective_pointers" 
+  Debug.no_3 "get_prog_vars" pr1 pr2 pr3 (pr_pair pr1 pr1)
+  Debug.no_4 "get_history_nodes" !CP.print_svl pr1 pr2 pr4 (fun (f,_,_,ss) ->(pr2 f) ^ " ;ss: " ^ (pr3 ss))
+  Debug.no_4 "lookup_eq_hprel_ass" !CP.print_svl pr1 pr2 pr2 pr4
+  Debug.no_3 " generate_error_constraints" pr2 pr1 Cprinter.string_of_h_formula (pr_option pr2)
+  Debug.no_4 "INFER.update_es" pr3 pr1 pr2 pr4 (pr_pair pr3 pr2)
+  Debug.no_2 "infer_for_unfold" 
+  Debug.no_4 "add_infer_hp_contr_to_list_context" pr1 pr2 pr3 !CP.print_formula (pr_option pr3)

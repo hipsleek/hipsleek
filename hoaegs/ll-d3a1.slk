@@ -1,0 +1,48 @@
+data node {
+	int val;
+	node next
+}.
+
+relation dm(int[] a, int low, int high).
+
+axiom dm(a,low,high) & low<=l & h<=high ==> dm(a,l,h).
+//axiom dm(a,l+1,h) & dm(a,l,l+1)  ==> dm(a,l,h).
+//axiom dm(a,l,h-1) & dm(a,h-1,h) ==> dm(a,l,h).
+axiom l>=h ==> dm(a,l,h).
+axiom dm(a,l,k) & dm(a,k,h) ==> dm(a,l,h).
+
+pred ll2<i,j,aaa> == self = null & i=j //& dm(aaa,i,j)
+  or self::node<v, r> * r::ll2<i+1,j,aaa> & aaa[i]=v
+      & dm(aaa,i,i+1) 
+     inv i<=j & dm(aaa,i,j).
+
+
+checkentail dm(aaa,1+i,j_1047) & (1+i)<=j_1047 & dm(aaa,i,1+i) 
+& (((i_1046<j_1047 & r_1027!=null) | (r_1027=null & i_1046=j_1047))) 
+& dm(aaa,i_1046,j_1047) 
+& i_1046<=j_1047 
+& forall(k:(!((i_1046<=k & k<j_1047)) | bbb[k]=1+(aaa[k]))) 
+& i_1046=1+i 
+& v=1+(aaa[i]) 
+& bbb[i]=v & dm(bbb,i,i+1)
+  |-  
+ (exists bbb_1073,i_1071 :
+  bbb=bbb_1073 & i_1046=i_1071+1 
+  & v=bbb_1073[i_1071] 
+  & dm(bbb_1073,i_1071,i_1071+1)). 
+
+
+checkentail dm(aaa,1+i,j_1051) & (1+i)<=j_1051 & dm(aaa,i,1+i) 
+& (((i_1050<j_1051 & r_1034!=null) | (r_1034=null & i_1050=j_1051))) 
+& dm(aaa,i_1050,j_1051) 
+& i_1050<=j_1051 
+& forall(k:(!((i_1050<=k & k<j_1051)) | bbb_1075[k]=1+(aaa[k]))) 
+& i_1050=1+i 
+& v_1080=bbb[i] 
+& bbb[i]=1+(aaa[i]) 
+& dm(bbb,i,i+1) 
+& bbb=bbb_1075
+|-  (exists bbb_1079,i_1077:
+  bbb_1075=bbb_1079 & i_1050=i_1077+1 
+  & v_1080=bbb_1079[i_1077] 
+  & dm(bbb_1079,i_1077,i_1077+1)). 
