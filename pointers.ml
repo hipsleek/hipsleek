@@ -2350,7 +2350,7 @@ and find_addr_inter_exp prog proc e (vs:ident list) : ident list =
 
 let trans_pointers_x (prog : prog_decl) : prog_decl =
   let gvar_decls = prog.prog_global_var_decls in
-  let new_gvar_decls = List.map trans_global_var_decl gvar_decls in
+  let new_gvar_decls = List.map (x_add_1 trans_global_var_decl) gvar_decls in
   (* let procs = prog.prog_proc_decls in *)
   (*Empty hashtbl h*)
   let () = Hashtbl.clear h in

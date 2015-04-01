@@ -3377,3 +3377,9 @@ let rec no_duplicate_while_return_type_list (proclst:proc_decl list):(typ list) 
     end
   | [] -> []
 
+(* find _num to avoid in code *)
+(* let fold_exp_args (e:exp) (init_a:'a) (f:'a -> exp-> 'b option) (f_args: 'a -> exp -> 'a) (comb_f: 'b list->'b) (zero:'b) : 'b = *)
+let find_all_num_trailer iprog =
+  let () = x_binfo_pp "TODO : find_all_num_trailer _nn in iprog and avoid those numbers (to solve simplify/ex3a-app-neq.ss)" no_pos in
+  (* use fold_exp_args .. *)
+  []
