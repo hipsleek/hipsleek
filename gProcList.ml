@@ -14,7 +14,7 @@ let col_validity = cols#add Gobject.Data.string
 (**
    Procedure list model
    Used for procedure list view below
- *)
+*)
 class procedure_list_model ?(src = "") () =
   object (self)
     val delegate = GTree.list_store cols
@@ -25,7 +25,7 @@ class procedure_list_model ?(src = "") () =
 
     initializer
       self#update_source src
-    
+
     method coerce = delegate#coerce
     method source_digest = source_digest
 
@@ -84,23 +84,23 @@ class procedure_list_model ?(src = "") () =
 
 (**
    procedure list view
- *)
+*)
 class procedure_list ?(model = new procedure_list_model ()) () =
   object (self)
     val view = GTree.view ()
     val mutable model = model
     val line_col = GTree.view_column
-      ~title:"Line"
-      ~renderer:(GTree.cell_renderer_text [], ["text", col_line])
-      ()
+        ~title:"Line"
+        ~renderer:(GTree.cell_renderer_text [], ["text", col_line])
+        ()
     val name_col = GTree.view_column
-      ~title:"Procedure"
-      ~renderer:(GTree.cell_renderer_text [], ["text", col_name])
-      ()
+        ~title:"Procedure"
+        ~renderer:(GTree.cell_renderer_text [], ["text", col_name])
+        ()
     val validity_col = GTree.view_column
-      ~title:"Validity"
-      ~renderer:(GTree.cell_renderer_pixbuf [], ["stock_id", col_validity])
-      ()
+        ~title:"Validity"
+        ~renderer:(GTree.cell_renderer_pixbuf [], ["stock_id", col_validity])
+        ()
 
     initializer
       view#selection#set_mode `SINGLE;

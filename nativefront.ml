@@ -59,7 +59,7 @@ let list_parse (input_file) : command list =
   Globals.input_file_name:= input_file;
   let cmd = Parser.parse_sleek input_file (Stream.of_channel org_in_chnl) in
   close_in org_in_chnl;
-	cmd
+  cmd
 
 (* let list_parse (input_file) : command list = *)
 (*   Debug.loop_1_no "list_parse" (fun _ -> "?") (fun _ -> "?") list_parse input_file *)

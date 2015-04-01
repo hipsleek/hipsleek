@@ -10,11 +10,11 @@ type sleek_token =
   | FRAC_LIT of   Frac.frac * string
   | CHAR_LIT      of char * string
   | STRING        of string * string
-        (*| COMMENT       of string*)
+  (*| COMMENT       of string*)
   | EOF 
   | JAVA          of string
   | LEMMA         of lemma_kind_t
-        (*keywords*)
+  (*keywords*)
   | ANDLIST
   | ASSERT | ASSERT_EXACT | ASSERT_INEXACT | ASSUME | ALLN | APPEND | AXIOM (* [4/10/2011] An Hoa *)
   | BIND | BOOL | BREAK | BAGMAX | BAGMIN | BAG | BARRIER 
@@ -61,7 +61,7 @@ type sleek_token =
   | UNFOLD | UNION
   | VOID 
   | WHILE | FLOW of string
-        (*operators*)  
+  (*operators*)  
   | CARET 
   | DOTDOT | ATPOS
   | ACCS | AND | ANDSTAR | ANDAND | UNIONSTAR | STARMINUS | AT | ATATSQ | ATAT | LEND | IMM | MUT | MAT | DERV | SPLIT1Ann | SPLIT2Ann | CBRACE | CLIST | COLON | COLONCOLON | COLONCOLONCOLON | COMMA | CPAREN | CSQUARE | DOLLAR  (* | VAL | REC *)
@@ -93,11 +93,11 @@ type sleek_token =
   | PAR
   | ARGOPTION of string
   (* | SKIP - should be an identifier! *)
-  (* | IN_RFLOW | OUT_RFLOW (* For HO resource reasoning *) *)
+(* | IN_RFLOW | OUT_RFLOW (* For HO resource reasoning *) *)
 
 
 module type SleekTokenS = Camlp4.Sig.Token with type t = sleek_token
-  
+
 module Token = struct
   open Format
   module Loc = Loc
@@ -108,7 +108,7 @@ module Token = struct
 
   let to_string k = match k with 
     | IDENTIFIER s | INT_LITER (_,s) | FLOAT_LIT (_,s)  | CHAR_LIT (_,s) | STRING (_,s)-> s | FRAC_LIT (_, s) -> s
-          (*| COMMENT s -> "/* "^s^" */"*)
+    (*| COMMENT s -> "/* "^s^" */"*)
     | EOF -> ""
     | JAVA s-> s
     | AXIOM -> "axiom" (* [4/10/2011] An Hoa *)
@@ -146,7 +146,7 @@ module Token = struct
     | RETURN->"return" | SELFT s ->"self "^s | SPLIT ->"split"| SUBSET ->"subset" | STATIC ->"static" | LEXVAR ->"LexVar"
     | THEN->"then" | THIS s->"this "^s | TO ->"to" | TRUE ->"true" | UNFOLD->"unfold" | UNION->"union"
     | VOID->"void" | WHILE ->"while" | FLOW s->"flow "^s
-          (*operators*)
+    (*operators*)
     | NI ->"@NI" | RO ->"@RO" | ATATSQ -> "@@[" | CARET -> "^"
     | DOTDOT ->".."
     | AND ->"&"  | ANDAND ->"&&" | ANDSTAR -> "&*" |  UNIONSTAR ->"U*" | STARMINUS -> "-*" | AT ->"@"  | ATAT -> "@@" | LEND->"@L" | ACCS ->"@A" | IMM->"@I"| DERV->"@D"| SPLIT1Ann ->"@S1" | SPLIT2Ann ->"@S2" | CBRACE ->"}"| COLON ->":"| COLONCOLON ->"::"| COLONCOLONCOLON -> ":::" | COMMA ->","| CPAREN->")" | CSQUARE ->"]" |PFRAC -> "@frac"(* | VAL ->"@VAL" | REC ->"@REC"*)
@@ -202,20 +202,20 @@ module Token = struct
     | TCPAREN -> "#>" (*Open and close paren for thread heap*)
     | PAR -> "par"
     | ARGOPTION arg -> "##OPTION "^arg
-    (* | SKIP -> "skip" *)
-    (* | IN_RFLOW -> "-%" | OUT_RFLOW -> "+%" *)
+  (* | SKIP -> "skip" *)
+  (* | IN_RFLOW -> "-%" | OUT_RFLOW -> "+%" *)
 
 
   let print ppf x = pp_print_string ppf (to_string x)
 
   let match_keyword kwd _ = false 
-    
+
   let extract_string t = match t with
     | IDENTIFIER s | INT_LITER (_,s) | FLOAT_LIT (_,s) | FRAC_LIT (_, s) 
     | CHAR_LIT (_,s) | STRING (_,s) (*| COMMENT s*) | JAVA s | RES s | SELFT s | THIS s | FLOW s -> s
     | _ -> ""
-     
-    
+
+
   module Error = struct
     type t = string
     exception E of string

@@ -33,15 +33,15 @@ let set_pred arg =
 
 let set_proc_verified arg =
   let procs = Gen.split_by "," arg in
-	Globals.procs_verified := procs @ !Globals.procs_verified
+  Globals.procs_verified := procs @ !Globals.procs_verified
 
 let set_validate_config arg =
   Globals.validate_target := arg;
-   Globals.validate := true
+  Globals.validate := true
 
 let set_gen_cpfile arg =
- Globals.cpfile := arg;
-   Globals.gen_cpfile := true
+  Globals.cpfile := arg;
+  Globals.gen_cpfile := true
 
 let set_lib_file arg =
   Globals.lib_files := [arg]
@@ -60,7 +60,7 @@ let set_frontend fe_str = match fe_str  with
 let common_arguments = [
   ("--sctx", Arg.Set Typechecker.simplify_context, "Simplify the context before each execution in symbolic execution."); (* An Hoa *)
   (*("--sdp", Arg.Set Cprinter.simplify_dprint,
-  "Simplify the entail state before printing the dprint state."); (* An Hoa *) *)
+    "Simplify the entail state before printing the dprint state."); (* An Hoa *) *)
   ("-wpf", Arg.Set Globals.print_proof,
    "Print all the verification conditions, the input to external prover and its output.");
   (* ("--ufdp", Arg.Set Solver.unfold_duplicated_pointers, *)
@@ -77,29 +77,29 @@ let common_arguments = [
   ("--lea-imply", Arg.Set Globals.label_aggressive_imply,
    "Enable aggressive splitting of label for implications.");
   ("--lbl-en-aggr", Arg.Unit (fun _ -> 
-     Globals.label_aggressive_imply := true;
-     Globals.label_aggressive_sat := true ),
+       Globals.label_aggressive_imply := true;
+       Globals.label_aggressive_sat := true ),
    "Enable aggressive splitting of label.");
   ("--lbl-dis-aggr", Arg.Unit (fun _ -> 
-     Globals.label_aggressive_imply := false;
-     Globals.label_aggressive_sat := false ),
+       Globals.label_aggressive_imply := false;
+       Globals.label_aggressive_sat := false ),
    "Disable aggressive splitting of label.");
   ("--lbl-dis-aggr-imply", Arg.Unit (fun _ -> 
-     Globals.label_aggressive_imply := false),
+       Globals.label_aggressive_imply := false),
    "Disable aggressive splitting of label for imply.");
   ("--lbl-dis-aggr-sat", Arg.Unit (fun _ -> 
-     Globals.label_aggressive_sat := false),
+       Globals.label_aggressive_sat := false),
    "Disable aggressive splitting of label for sat.");
   ("--lda", Arg.Unit (fun _ -> 
-     Globals.label_aggressive_imply := false;
-     Globals.label_aggressive_sat := false ),
+       Globals.label_aggressive_imply := false;
+       Globals.label_aggressive_sat := false ),
    "Shorthand for --lbl-dis-aggr splitting of label.");
   ("--lea", Arg.Unit (fun _ -> 
-     Globals.label_aggressive_imply := true;
-     Globals.label_aggressive_sat := true ),
+       Globals.label_aggressive_imply := true;
+       Globals.label_aggressive_sat := true ),
    "Shorthand for --lbl-en-aggr.");
-   (* UNSAT("":cf,"a":af,"b":bf) 
-          --> UNSAT(cf&af) | UNSAT(cf & bf) *)
+  (* UNSAT("":cf,"a":af,"b":bf) 
+         --> UNSAT(cf&af) | UNSAT(cf & bf) *)
   (* aggressive UNSAT("":cf,"a":af,"b":bf) 
           --> UNSAT(cd) | UNSAT(af) & UNSAT(bf) *)
   (* IMPLY("":cf,"a":af,"b":bf --> "a":ta,"b":tb) 
@@ -139,7 +139,7 @@ let common_arguments = [
   ("-noee", Arg.Clear Globals.elim_exists_flag,
    "No eliminate existential quantifiers before calling TP.");
   ("--no-filter", Arg.Clear Globals.filtering_flag,
-  "No assumption filtering.");
+   "No assumption filtering.");
   ("--filter-false", Arg.Set Globals.filtering_false_flag,
    "Enable false in assumption filtering.");
   ("--dis-filter-false", Arg.Clear Globals.filtering_false_flag,
@@ -162,13 +162,13 @@ let common_arguments = [
   ("--dl", Arg.Set Globals.dump_lemmas,
    "enable lemma printing");
   ("--dump-lemmas-short", Arg.Unit 
-      (fun _ -> Globals.dump_lemmas := true;
-          Globals.dump_lemmas_med := true;),
+     (fun _ -> Globals.dump_lemmas := true;
+       Globals.dump_lemmas_med := true;),
    "enable lemma printing (short version)");
   ("--dls", Arg.Unit
-      (fun _ -> 
-          Globals.dump_lemmas_med := true;
-          Globals.dump_lemmas := true;),
+     (fun _ -> 
+        Globals.dump_lemmas_med := true;
+        Globals.dump_lemmas := true;),
    "enable lemma printing (short version)");
   ("--dump-lem-processing-info", Arg.Set Globals.dump_lem_proc,
    "Turn on printing during lemma processing (incl lemma proving) ");
@@ -223,7 +223,7 @@ let common_arguments = [
   ("--log-z3", Arg.Set Smtsolver.log_all_flag,
    "Log all formulae sent to z3 in file allinput.z3");
   ("--log-z3n", Arg.Set Z3.log_all_flag,
-  "Log all formulae sent to z3 in file allinput.z3n");
+   "Log all formulae sent to z3 in file allinput.z3n");
   ("--log-isabelle", Arg.Set Isabelle.log_all_flag,
    "Log all formulae sent to Isabelle in file allinput.thy");
   ("--log-coq", Arg.Set Coq.log_all_flag,
@@ -233,7 +233,7 @@ let common_arguments = [
   ("--log-redlog", Arg.Set Redlog.is_log_all,
    "Log all formulae sent to Reduce/Redlog in file allinput.rl");
   ("--log-math", Arg.Set Mathematica.is_log_all,
-    "Log all formulae sent to Mathematica in file allinput.math");
+   "Log all formulae sent to Mathematica in file allinput.math");
   ("--use-isabelle-bag", Arg.Set Isabelle.bag_flag,
    "Use the bag theory from Isabelle, instead of the set theory");
   ("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
@@ -245,8 +245,8 @@ let common_arguments = [
   ("--dis-ls", Arg.Clear Globals.allow_ls,"disable locksets during verification");
   ("--locklevel", Arg.Set Globals.allow_locklevel,"enable locklevels during verification");
   ("--dis-locklevel", Arg.Clear Globals.allow_locklevel,"disable locklevels during verification");
-	("--dis-lsmu-infer", Arg.Clear Globals.allow_lsmu_infer,"disable simple inference of lsmu");
-	("--en-lsmu-infer", Arg.Set Globals.allow_lsmu_infer,"enable simple inference of lsmu");
+  ("--dis-lsmu-infer", Arg.Clear Globals.allow_lsmu_infer,"disable simple inference of lsmu");
+  ("--en-lsmu-infer", Arg.Set Globals.allow_lsmu_infer,"enable simple inference of lsmu");
   ("--dis-para", Arg.Unit Perm.disable_para,"disable concurrency verification");
   ("--en-para", Arg.Unit Perm.enable_para,"enable concurrency verification");
   ("--dis-change-flow", Arg.Clear Globals.change_flow,"disable change spec flow");
@@ -264,32 +264,32 @@ let common_arguments = [
   ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
   ("--dis-field-ann", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
   ("--mem", Arg.Unit (fun _ -> 
-    Globals.allow_mem := true; 
-    Globals.allow_field_ann := true;),
-  "Enable the use of Memory Specifications");
+       Globals.allow_mem := true; 
+       Globals.allow_field_ann := true;),
+   "Enable the use of Memory Specifications");
   ("--dis-mem", Arg.Clear Globals.allow_mem,"Disable the use of Memory Specifications");
   ("--ramify", Arg.Clear Solver.unfold_duplicated_pointers,"Use Ramification (turns off unfold on dup pointers)");
-    ("--infer-mem",Arg.Set Globals.infer_mem,"Enable inference of memory specifications");
+  ("--infer-mem",Arg.Set Globals.infer_mem,"Enable inference of memory specifications");
   ("--infer-en-raw",Arg.Set Globals.infer_raw_flag,"Enable simplify_raw during pure inference");
   ("--infer-dis-raw",Arg.Clear Globals.infer_raw_flag,"Disable simplify_raw during pure inference");
-    ("--pa",Arg.Set Globals.pa,"Program analysis with memory specifications");
+  ("--pa",Arg.Set Globals.pa,"Program analysis with memory specifications");
   ("--reverify", Arg.Set Globals.reverify_flag,"enable re-verification after specification inference");
   ("--reverify-all", Arg.Set Globals.reverify_all_flag,"enable re-verification after heap specification inference");
   ("--dis-imm", Arg.Unit (fun _ ->
-      Globals.allow_imm:=false; 
-      (* Globals.early_contra_flag:=false *)
-      (* WN : quick fix *)
-      (* WN : xpure_enum is not working properly with early_contra for --eps *)
-      ),"disable the use of immutability annotations");
+       Globals.allow_imm:=false; 
+       (* Globals.early_contra_flag:=false *)
+       (* WN : quick fix *)
+       (* WN : xpure_enum is not working properly with early_contra for --eps *)
+     ),"disable the use of immutability annotations");
   ("--imm-en-subs-rhs", Arg.Set Globals.allow_imm_subs_rhs,"enable the substitution of rhs eq for immutability");
   ("--imm-dis-subs-rhs", Arg.Clear Globals.allow_imm_subs_rhs,"disable the substitution of rhs eq for immutability");
   ("--en-imm-inv", Arg.Set Globals.allow_imm_inv,"enable the additionof of immutability invariant for implication");
   ("--dis-imm-inv", Arg.Clear Globals.allow_imm_inv,"disable the additionof of immutability invariant for implication");
   ("--dis-inf", Arg.Clear Globals.allow_inf,"disable support for infinity ");
   ("--en-inf", Arg.Unit (fun _ ->
-               Globals.allow_inf:=true;
-               Globals.deep_split_disjuncts:=true
-               ),"enable support for infinity (tgt with --dsd) ");
+       Globals.allow_inf:=true;
+       Globals.deep_split_disjuncts:=true
+     ),"enable support for infinity (tgt with --dsd) ");
   ("--dsd", Arg.Set Globals.deep_split_disjuncts,"enable deep splitting of disjunctions");
   ("--en-disj-conseq", Arg.Set Globals.preprocess_disjunctive_consequence,"enable handle disjunctive consequence");
   ("--ioc", Arg.Set Globals.check_integer_overflow,"Enable Integer Overflow Checker");
@@ -324,18 +324,18 @@ let common_arguments = [
   ("-v:", Arg.Set_int VarGen.verbose_num,
    "Verbosity level for Debugging");
   ("-fixcalc-disj", Arg.Set_int Globals.fixcalc_disj,
-    "Number of disjunct for fixcalc computation");
+   "Number of disjunct for fixcalc computation");
   ("--dis-smart-xpure", Arg.Clear Globals.smart_xpure,
    "Smart xpure with 0 then 1; otherwise just 1 ; not handled by infer yet");
   ("--dis-precise-xpure", Arg.Clear Globals.precise_perm_xpure, "disable adding x!=y when the permissions of x and y overlap or exceed the full permission");
   ("--en-smart-memo", Arg.Set Globals.smart_memo,
    "Smart memo with no_complex; if fail try complex formula");
-	("--en-pre-residue", Arg.Unit (fun _ -> Globals.pre_residue_lvl := 1),
-    "Always add pre inferred to residue, ee if it is disjunctive");
-	("--dis-pre-residue", Arg.Unit (fun _ -> Globals.pre_residue_lvl := -1),
-    "Never pre inferred to residue, ee if it is conjunctive");
-    (* default is to add only conjunctive pre to residue when
-       pre_residue_lvl ==0 *)
+  ("--en-pre-residue", Arg.Unit (fun _ -> Globals.pre_residue_lvl := 1),
+   "Always add pre inferred to residue, ee if it is disjunctive");
+  ("--dis-pre-residue", Arg.Unit (fun _ -> Globals.pre_residue_lvl := -1),
+   "Never pre inferred to residue, ee if it is conjunctive");
+  (* default is to add only conjunctive pre to residue when
+     pre_residue_lvl ==0 *)
   ("-num-self-fold-search", Arg.Set_int Globals.num_self_fold_search,
    "Allow Depth of Unfold/Fold Self Search");
   ("--en-self-fold-search", Arg.Set Globals.self_fold_search_flag,
@@ -365,7 +365,7 @@ let common_arguments = [
   ("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
    "Build the image theory in Isabelle - default false");
   ("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-2.19"; "z3n"; "z3-4.3.1"; "zm"; "om";
-   "oi"; "set"; "cm"; "OCRed"; "redlog"; "rm"; "prm"; "spass";"parahip"; "math"; "minisat" ;"auto";"log"; "dp"], set_tp (* Tpdispatcher.set_tp *)),
+                       "oi"; "set"; "cm"; "OCRed"; "redlog"; "rm"; "prm"; "spass";"parahip"; "math"; "minisat" ;"auto";"log"; "dp"], set_tp (* Tpdispatcher.set_tp *)),
    "Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
   ("--dis-tp-batch-mode", Arg.Clear Tpdispatcher.tp_batch_mode,"disable batch-mode processing of external theorem provers");
   ("-perm", Arg.Symbol (["fperm"; "cperm"; "dperm"; "bperm"; "none"], Perm.set_perm),
@@ -381,23 +381,23 @@ let common_arguments = [
   ("--use-large-bind", Arg.Set Globals.large_bind,
    "Use large bind construct, where the bound variable may be changed in the body of bind");
   ("-infer", Arg.String (fun s ->
-      Globals.infer_const_obj # set_init_arr s),"Infer constants e.g. @term@pre@post@imm@shape");  (* some processing to check @term,@post *)
+       Globals.infer_const_obj # set_init_arr s),"Infer constants e.g. @term@pre@post@imm@shape");  (* some processing to check @term,@post *)
   ("-debug", Arg.String (fun s ->
-      Debug.z_debug_file:=s; Debug.z_debug_flag:=true),
+       Debug.z_debug_file:=s; Debug.z_debug_flag:=true),
    "Read from a debug log file");
   ("-prelude", Arg.String (fun s ->
-      Globals.prelude_file:=Some s),
+       Globals.prelude_file:=Some s),
    "Read from a specified prelude file");
   ("-debug-regexp", Arg.String (fun s ->
-      Debug.z_debug_file:=("$"^s); Debug.z_debug_flag:=true),
+       Debug.z_debug_file:=("$"^s); Debug.z_debug_flag:=true),
    "Match logged methods from a regular expression");
   ("-dre", Arg.String (fun s ->
-      let _ = print_endline ("!!!-dre "^s) in
-      Debug.z_debug_file:=("$"^s); Debug.z_debug_flag:=true),
+       let _ = print_endline ("!!!-dre "^s) in
+       Debug.z_debug_file:=("$"^s); Debug.z_debug_flag:=true),
    "Shorthand for -debug-regexp");
   ("-drea", Arg.String (fun s ->
-      Debug.z_debug_file:=("$.*"); Debug.z_debug_flag:=true;
-      Debug.mk_debug_arg s),
+       Debug.z_debug_file:=("$.*"); Debug.z_debug_flag:=true;
+       Debug.mk_debug_arg s),
    "Matched input/output with reg-exp");
   ("-v", Arg.Set Debug.debug_on,
    "Verbose");
@@ -422,7 +422,7 @@ let common_arguments = [
    "use only syntactic base case detection");
   ("--dbc", Arg.Set Globals.dis_base_case_unfold, "explicitly disable base case unfold");
   ("--dis-simpl-view-norm" , Arg.Clear Globals.simplified_case_normalize, 
-	"disable simplified view def normalization");
+   "disable simplified view def normalization");
   ("--eci", Arg.Set Globals.enable_case_inference,
    "enable struct formula inference");
   ("--dci", Arg.Clear Globals.enable_case_inference,
@@ -433,10 +433,10 @@ let common_arguments = [
    "print input representation");
   ("--pcil", Arg.Set Globals.print_cil_input,
    "print cil representation");
-	("--pcp-all", Arg.Set Globals.print_core_all,
-	"print core representation (including primitive library)");
-	("--pip-all", Arg.Set Globals.print_input_all,
-	"print input representation (including primitive library)");
+  ("--pcp-all", Arg.Set Globals.print_core_all,
+   "print core representation (including primitive library)");
+  ("--pip-all", Arg.Set Globals.print_input_all,
+   "print input representation (including primitive library)");
   (* ("--dis-cache", Arg.Set Globals.no_cache_formula, *)
   (* "Do not cache result of satisfiability and validity checking"); *)
   ("--dis-cache", Arg.Set Globals.no_cache_formula,
@@ -511,14 +511,14 @@ let common_arguments = [
   (* Template *)
   ("--dis-norm", Arg.Set Globals.dis_norm, "Disable arithmetic normalization");
   ("-lp", Arg.Symbol ([ "z3"; "clp"; "glpk"; "lps"; "oz3"; "oclp"; "oglpk"; "olps" ], 
-    Tlutils.set_solver), "Choose LP solver");
+                      Tlutils.set_solver), "Choose LP solver");
   ("--piecewise", Arg.Set Globals.templ_piecewise, "Enable piecewise function inference");
   ("--dis-ln-z3", Arg.Set Globals.dis_ln_z3, "Disable linearization on Z3 (using non-linear engine)");
 
   (* Termination options *)
   ("--dis-term-check", Arg.Set Globals.dis_term_chk, "turn off the termination checking");
   ("--term-verbose", Arg.Set_int Globals.term_verbosity,
-      "level of detail in termination printing 0-verbose 1-standard(default)");
+   "level of detail in termination printing 0-verbose 1-standard(default)");
   ("--dis-call-num", Arg.Set Globals.dis_call_num, "turn off the automatic call numbering");
   ("--dis-phase-num", Arg.Set Globals.dis_phase_num, "turn off the automatic phase numbering");
   ("--term-reverify", Arg.Set Globals.term_reverify,
@@ -540,9 +540,9 @@ let common_arguments = [
   ("--en-gen-templ-slk", Arg.Set Globals.gen_templ_slk, "Generate sleek file for template inference");
   ("--gts", Arg.Set Globals.gen_templ_slk, "shorthand for --en-gen-templ-slk");
   ("--tnt-verbose", Arg.Set_int Globals.tnt_verbosity,
-      "level of detail in termination inference printing 0-verbose 1-standard (default)");
+   "level of detail in termination inference printing 0-verbose 1-standard (default)");
   ("--infer-lex", Arg.Set Globals.tnt_infer_lex,
-      "enable lexicographic ranking function inference");
+   "enable lexicographic ranking function inference");
   ("--term-add-post", Arg.Set Globals.tnt_add_post, "Automatically infer necessary postcondition");
   ("--dis-term-add-post", Arg.Clear Globals.tnt_add_post, "Automatically infer necessary postcondition");
 
@@ -577,42 +577,42 @@ let common_arguments = [
 
   (* Proof Logging *)
   ("--en-logging", Arg.Unit (fun _ ->
-      Globals.proof_logging_txt:=true; Globals.proof_logging:=true ), "Enable proof logging");
+       Globals.proof_logging_txt:=true; Globals.proof_logging:=true ), "Enable proof logging");
   ("--en-logging-txt", Arg.Unit (fun _ ->
-      Globals.proof_logging_txt:=true ), "Enable proof logging into text file");
+       Globals.proof_logging_txt:=true ), "Enable proof logging into text file");
   ("--dump-proof", Arg.Unit (fun _ ->
-      Globals.proof_logging_txt:=true; Globals.dump_proof:=true
-  ), "Dump proof log at end of command");
+       Globals.proof_logging_txt:=true; Globals.dump_proof:=true
+     ), "Dump proof log at end of command");
   ("--epl", Arg.Unit (fun _ ->
-      Globals.proof_logging_txt:=true ), "Shorthand for --en-logging-txt");
+       Globals.proof_logging_txt:=true ), "Shorthand for --en-logging-txt");
   ("--dis-proof-details", Arg.Unit (fun _ ->
-      Globals.log_proof_details:=false ), "Disable proof strings to be recorded");
+       Globals.log_proof_details:=false ), "Disable proof strings to be recorded");
   ("--en-proof-details", Arg.Unit (fun _ ->
-      Globals.log_proof_details:=true ), "Enable proof strings to be recorded");
+       Globals.log_proof_details:=true ), "Enable proof strings to be recorded");
   ("--epd", Arg.Unit (fun _ ->
-      Globals.log_proof_details:=true ), "Shorthand for --en-proof-details");
+       Globals.log_proof_details:=true ), "Shorthand for --en-proof-details");
   ("--en-slk-logging", Arg.Unit (fun _ ->
-      Globals.proof_logging_txt:=true; 
-      Globals.sleek_logging_txt:=true), "Enable sleek and proof logging with text file");
+       Globals.proof_logging_txt:=true; 
+       Globals.sleek_logging_txt:=true), "Enable sleek and proof logging with text file");
   ("--esl", Arg.Unit (fun _ ->
-      Globals.proof_logging_txt:=true; 
-      Globals.sleek_logging_txt:=true
-  ), "Shorthand for --en-slk-logging");
+       Globals.proof_logging_txt:=true; 
+       Globals.sleek_logging_txt:=true
+     ), "Shorthand for --en-slk-logging");
   ("--dump-slk-proof", Arg.Unit (fun _ ->
-      Globals.proof_logging_txt:=true; 
-      Globals.sleek_logging_txt:=true;
-      Globals.dump_sleek_proof:=true
-  ), "Dump sleek proof log at end of command");
+       Globals.proof_logging_txt:=true; 
+       Globals.sleek_logging_txt:=true;
+       Globals.dump_sleek_proof:=true
+     ), "Dump sleek proof log at end of command");
   ("--gen-vc", Arg.Unit (fun _ ->
-      Globals.proof_logging_txt:=true; 
-      Globals.sleek_logging_txt:=true;
-      Globals.sleek_gen_vc:=true
-  ), "Generate verification condition with frame in sleek format");
+       Globals.proof_logging_txt:=true; 
+       Globals.sleek_logging_txt:=true;
+       Globals.sleek_gen_vc:=true
+     ), "Generate verification condition with frame in sleek format");
   ("--gen-vc-exact", Arg.Unit (fun _ ->
-      Globals.proof_logging_txt:=true; 
-      Globals.sleek_logging_txt:=true;
-      Globals.sleek_gen_vc_exact:=true
-  ), "Generate exact verification condition in sleek format");
+       Globals.proof_logging_txt:=true; 
+       Globals.sleek_logging_txt:=true;
+       Globals.sleek_gen_vc_exact:=true
+     ), "Generate exact verification condition in sleek format");
   (* abduce pre from post *)
   ("--abdfpost", Arg.Set Globals.do_abd_from_post, "Enable abduction from post-condition");
   (* incremental spec *)
@@ -639,13 +639,13 @@ let common_arguments = [
 
   (* use classical reasoning in separation logic *)
   ("--classic", 
-       Arg.Unit (fun _ -> Globals.infer_const_obj # set Globals.INF_CLASSIC),
-  (* Arg.Set Globals.opt_classic,  *)
-  "Use classical reasoning in separation logic");
+   Arg.Unit (fun _ -> Globals.infer_const_obj # set Globals.INF_CLASSIC),
+   (* Arg.Set Globals.opt_classic,  *)
+   "Use classical reasoning in separation logic");
   ("--dis-classic", 
-       Arg.Unit (fun _ -> Globals.infer_const_obj # reset Globals.INF_CLASSIC),
-  (* Arg.Clear Globals.opt_classic,  *)
-  "Disable classical reasoning in separation logic");  
+   Arg.Unit (fun _ -> Globals.infer_const_obj # reset Globals.INF_CLASSIC),
+   (* Arg.Clear Globals.opt_classic,  *)
+   "Disable classical reasoning in separation logic");  
   ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");
   ("--lem-en-norm", Arg.Set Globals.allow_lemma_norm, "Allow case-normalize for lemma");
   ("--lem-dis-norm", Arg.Clear Globals.allow_lemma_norm, "Disallow case-normalize for lemma");
@@ -694,7 +694,7 @@ let common_arguments = [
   ("--en-syn-mode", Arg.Set Globals.syntatic_mode, "check two formulas are equivalent syntatically. default is semantic checking via sleek");
   ("--pred-en-oblg", Arg.Set Globals.pred_en_oblg, "enable sa_en_pre_oblg");
   ("--pred-dis-oblg", Arg.Clear Globals.pred_en_oblg, "enable sa_en_pre_oblg");
-   ("--sa-dnc", Arg.Set Globals.sa_dnc, "algorithm of normalization with divide and conquer");
+  ("--sa-dnc", Arg.Set Globals.sa_dnc, "algorithm of normalization with divide and conquer");
   (* ("--sa-en-norm", Arg.Set Globals.sa_en_norm, "do normalization"); *)
   (* ("--sa-dis-infer", Arg.Clear Globals.sa_en, "do not infer shape"); *)
   (* ("--sa-dis-pred", Arg.Clear Globals.sa_en, "do not synthesize shape"); *)
@@ -717,18 +717,18 @@ let common_arguments = [
   ("--dis-acc-fold", Arg.Clear Globals.acc_fold, "disable accelerated folding");
   ("--elg", Arg.Set Globals.lemma_gen_unsafe, "enable lemma generation (lem-gen-unsafe)");  
   ("--dlg",
-     Arg.Unit
-      (fun _ -> 
-          Globals.lemma_gen_unsafe := false; Globals.lemma_gen_unsafe_fold := false;
-          Globals.lemma_gen_safe := false; Globals.lemma_gen_safe_fold := false
-       ),
+   Arg.Unit
+     (fun _ -> 
+        Globals.lemma_gen_unsafe := false; Globals.lemma_gen_unsafe_fold := false;
+        Globals.lemma_gen_safe := false; Globals.lemma_gen_safe_fold := false
+     ),
    "disable lemma generation (--dis-lem-gen)");
   ("--dis-lem-gen", 
-     Arg.Unit
-      (fun _ -> 
-          Globals.lemma_gen_unsafe := false; Globals.lemma_gen_unsafe_fold := false;
-          Globals.lemma_gen_safe := false; Globals.lemma_gen_safe_fold := false
-       ),
+   Arg.Unit
+     (fun _ -> 
+        Globals.lemma_gen_unsafe := false; Globals.lemma_gen_unsafe_fold := false;
+        Globals.lemma_gen_safe := false; Globals.lemma_gen_safe_fold := false
+     ),
    "disable lemma generation");
   ("--en-cyc-check", Arg.Set Globals.cyc_proof_syn, "enable the detection of cyclic proof syntatically");
   ("--dis-cyc-check", Arg.Clear Globals.cyc_proof_syn, "disable the detection of cyclic proof syntatically");
@@ -789,202 +789,202 @@ let common_arguments = [
   ("--en-warning", Arg.Set VarGen.en_warning_msg, "enable warning (default)");
   ("--dis-warning", Arg.Clear VarGen.en_warning_msg, "disable warning (switch to report error)");
   ("--print-min",
-     Arg.Unit
-      (fun _ ->
-          Globals.show_unexpected_ents := false;
-          Debug.trace_on := false;
-          Debug.devel_debug_on:= false;
-          Globals.lemma_ep := false;
-          Gen.silence_output:=false;
-          Globals.enable_count_stats:=false;
-          Globals.enable_time_stats:=false;
-          Globals.lemma_gen_unsafe:=true;
-          (* Globals.lemma_syn := true; *)
-          (* Globals.acc_fold := true; *)
-          Globals.smart_lem_search := true;
-          Globals.print_min := true;
-          (* Globals.gen_baga_inv := true; *)
-          (* Globals.en_pred_sat (); *)
-          (* Globals.do_infer_inv := true; *)
-          (* Globals.lemma_gen_unsafe := true; *)
-          (* Globals.graph_norm := true; *)
-          (* Globals.is_solver_local := true; *)
-          Globals.disable_failure_explaining := false;
-          (* Globals.smt_compete_mode:=true; *)
-          Globals.return_must_on_pure_failure := true;
-          Globals.dis_impl_var := true),
+   Arg.Unit
+     (fun _ ->
+        Globals.show_unexpected_ents := false;
+        Debug.trace_on := false;
+        Debug.devel_debug_on:= false;
+        Globals.lemma_ep := false;
+        Gen.silence_output:=false;
+        Globals.enable_count_stats:=false;
+        Globals.enable_time_stats:=false;
+        Globals.lemma_gen_unsafe:=true;
+        (* Globals.lemma_syn := true; *)
+        (* Globals.acc_fold := true; *)
+        Globals.smart_lem_search := true;
+        Globals.print_min := true;
+        (* Globals.gen_baga_inv := true; *)
+        (* Globals.en_pred_sat (); *)
+        (* Globals.do_infer_inv := true; *)
+        (* Globals.lemma_gen_unsafe := true; *)
+        (* Globals.graph_norm := true; *)
+        (* Globals.is_solver_local := true; *)
+        Globals.disable_failure_explaining := false;
+        (* Globals.smt_compete_mode:=true; *)
+        Globals.return_must_on_pure_failure := true;
+        Globals.dis_impl_var := true),
    "Minimal printing only");
   ("--svcomp-compete",
-     Arg.Unit
-      (fun _ ->
-          (* print_endline "inside svcomp-compete setting"; *)
-          compete_mode:=true; (* main flag *)
-          Globals.svcomp_compete_mode:=true; (* main flag *)
-          (* Globals.show_unexpected_ents := false; *)
-          (* diable printing *)
-          VarGen.trace_failure := false;
-          Debug.trace_on := false;
-          Debug.devel_debug_on:= false;
-          Globals.lemma_ep := false;
-          Gen.silence_output:=true;
-          Globals.enable_count_stats:=false;
-          Globals.enable_time_stats:=false;
-          
-          (* Globals.lemma_gen_unsafe:=true;    *)
-          (* Globals.lemma_syn := true;         *)
-          (* Globals.acc_fold := true;          *)
-          (* Globals.smart_lem_search := true;  *)
-          (* Globals.gen_baga_inv := true; *)
-          (* Globals.en_pred_sat (); *)
-          (* Globals.do_infer_inv := true; *)
-          (* Globals.lemma_gen_unsafe := true; *)
-          (* Globals.graph_norm := true; *)
-          
-          Globals.is_solver_local := true;
-          (* Omega.omegacalc:=  *)
-          (*   if (Sys.file_exists "./oc") then "./oc" *)
-          (*   else "oc"; *)
-          (* Fixcalc.fixcalc_exe := *)
-          (*   if (Sys.file_exists "./fixcalc") then "./fixcalc" *)
-          (*   else "fixcalc"; *)
-          (* Smtsolver.smtsolver_path := *)
-          (*   if (Sys.file_exists "./z3-4.3.2") then "./z3-4.3.2" *)
-          (*   else "z3-4.3.2"; *)
-          Globals.disable_failure_explaining := false;
-          Globals.return_must_on_pure_failure := true;
-          (* Globals.dis_impl_var := true *)
-      ),
+   Arg.Unit
+     (fun _ ->
+        (* print_endline "inside svcomp-compete setting"; *)
+        compete_mode:=true; (* main flag *)
+        Globals.svcomp_compete_mode:=true; (* main flag *)
+        (* Globals.show_unexpected_ents := false; *)
+        (* diable printing *)
+        VarGen.trace_failure := false;
+        Debug.trace_on := false;
+        Debug.devel_debug_on:= false;
+        Globals.lemma_ep := false;
+        Gen.silence_output:=true;
+        Globals.enable_count_stats:=false;
+        Globals.enable_time_stats:=false;
+
+        (* Globals.lemma_gen_unsafe:=true;    *)
+        (* Globals.lemma_syn := true;         *)
+        (* Globals.acc_fold := true;          *)
+        (* Globals.smart_lem_search := true;  *)
+        (* Globals.gen_baga_inv := true; *)
+        (* Globals.en_pred_sat (); *)
+        (* Globals.do_infer_inv := true; *)
+        (* Globals.lemma_gen_unsafe := true; *)
+        (* Globals.graph_norm := true; *)
+
+        Globals.is_solver_local := true;
+        (* Omega.omegacalc:=  *)
+        (*   if (Sys.file_exists "./oc") then "./oc" *)
+        (*   else "oc"; *)
+        (* Fixcalc.fixcalc_exe := *)
+        (*   if (Sys.file_exists "./fixcalc") then "./fixcalc" *)
+        (*   else "fixcalc"; *)
+        (* Smtsolver.smtsolver_path := *)
+        (*   if (Sys.file_exists "./z3-4.3.2") then "./z3-4.3.2" *)
+        (*   else "z3-4.3.2"; *)
+        Globals.disable_failure_explaining := false;
+        Globals.return_must_on_pure_failure := true;
+        (* Globals.dis_impl_var := true *)
+     ),
    "SVCOMP14 competition mode - essential printing only");
   ("--smt-compete",
-     Arg.Unit
-      (fun _ ->
-          compete_mode:=true; (* main flag *)
-          Globals.smt_compete_mode:=true;
-          Globals.show_unexpected_ents := false;
-          Debug.trace_on := false;
-          Debug.devel_debug_on:= false;
-          Globals.lemma_ep := false;
-          Gen.silence_output:=true;
-          Globals.enable_count_stats:=false;
-          Globals.enable_time_stats:=false;
-          Globals.lemma_gen_unsafe:=true;
-          Globals.lemma_syn := true;
-          Globals.acc_fold := true;
-          Globals.smart_lem_search := true;
-          (* Globals.gen_baga_inv := true; *)
-          Globals.en_pred_sat ();
-          (* Globals.do_infer_inv := true; *)
-          (* Globals.lemma_gen_unsafe := true; *)
-          Globals.graph_norm := true;
-          Globals.is_solver_local := true;
-          Globals.disable_failure_explaining := false;
-          Globals.return_must_on_pure_failure := true;
-          Globals.dis_impl_var := true),
+   Arg.Unit
+     (fun _ ->
+        compete_mode:=true; (* main flag *)
+        Globals.smt_compete_mode:=true;
+        Globals.show_unexpected_ents := false;
+        Debug.trace_on := false;
+        Debug.devel_debug_on:= false;
+        Globals.lemma_ep := false;
+        Gen.silence_output:=true;
+        Globals.enable_count_stats:=false;
+        Globals.enable_time_stats:=false;
+        Globals.lemma_gen_unsafe:=true;
+        Globals.lemma_syn := true;
+        Globals.acc_fold := true;
+        Globals.smart_lem_search := true;
+        (* Globals.gen_baga_inv := true; *)
+        Globals.en_pred_sat ();
+        (* Globals.do_infer_inv := true; *)
+        (* Globals.lemma_gen_unsafe := true; *)
+        Globals.graph_norm := true;
+        Globals.is_solver_local := true;
+        Globals.disable_failure_explaining := false;
+        Globals.return_must_on_pure_failure := true;
+        Globals.dis_impl_var := true),
    "SMT competition mode - essential printing only");
   ("--smt-compete-test", 
-     Arg.Unit
-      (fun _ ->
-          (* Globals.show_unexpected_ents := true;  *)
-          (*this flag is one that is  diff with compared to --smt-compete *)
-          compete_mode:=true; (* main flag *)
-          Globals.smt_compete_mode :=true;
-          Debug.trace_on := true;
-          Debug.devel_debug_on:= false;
-          Globals.lemma_ep := false;
-          Gen.silence_output:=false;
-          Globals.enable_count_stats:=false;
-          Globals.enable_time_stats:=false;
-          Globals.lemma_gen_unsafe:=true;
-          Globals.lemma_syn := true;
-          Globals.acc_fold := true;
-          Globals.smart_lem_search := true;
-          (* Globals.en_pred_sat (); *)
-          Globals.gen_baga_inv := false;
-          (* Globals.do_infer_inv := true; *)
-          Globals.graph_norm := true;
-          Globals.is_solver_local := true;
-          Globals.disable_failure_explaining := false;
-          Globals.return_must_on_pure_failure := true;
-          Globals.dis_impl_var := true),
-  "SMT competition mode - essential printing only + show unexpected ents");
+   Arg.Unit
+     (fun _ ->
+        (* Globals.show_unexpected_ents := true;  *)
+        (*this flag is one that is  diff with compared to --smt-compete *)
+        compete_mode:=true; (* main flag *)
+        Globals.smt_compete_mode :=true;
+        Debug.trace_on := true;
+        Debug.devel_debug_on:= false;
+        Globals.lemma_ep := false;
+        Gen.silence_output:=false;
+        Globals.enable_count_stats:=false;
+        Globals.enable_time_stats:=false;
+        Globals.lemma_gen_unsafe:=true;
+        Globals.lemma_syn := true;
+        Globals.acc_fold := true;
+        Globals.smart_lem_search := true;
+        (* Globals.en_pred_sat (); *)
+        Globals.gen_baga_inv := false;
+        (* Globals.do_infer_inv := true; *)
+        Globals.graph_norm := true;
+        Globals.is_solver_local := true;
+        Globals.disable_failure_explaining := false;
+        Globals.return_must_on_pure_failure := true;
+        Globals.dis_impl_var := true),
+   "SMT competition mode - essential printing only + show unexpected ents");
   ("--smt-test", 
-     Arg.Unit
-      (fun _ ->
-          Globals.show_unexpected_ents := true;
-          (*this flag is one that is  diff with compared to --smt-compete *)
-          Debug.trace_on := true;
-          Debug.devel_debug_on:= false;
-          Globals.lemma_ep := false;
-          Gen.silence_output:=false;
-          Globals.enable_count_stats:=false;
-          Globals.enable_time_stats:=false;
-          (* Globals.lemma_gen_unsafe:=true; *)
-           Globals.lemma_rev_unsafe:=true;
-          Globals.lemma_syn := true;
-          (* Globals.acc_fold := true; *)
-          (* Globals.smart_lem_search := true; *)
-          Globals.seg_fold := true;
-          Globals.en_pred_sat ();
-          (* Globals.gen_baga_inv := false; *)
-          (* Globals.do_infer_inv := true; *)
-          Globals.graph_norm := true;
-          (* Globals.is_solver_local := false; *)
-          Globals.disable_failure_explaining := false;
-          Globals.smt_compete_mode :=true;
-          Globals.return_must_on_pure_failure := true;
-          Globals.dis_impl_var := true),
-  "SMT competition mode - essential printing only + show unexpected ents + sat + seg_fold");
+   Arg.Unit
+     (fun _ ->
+        Globals.show_unexpected_ents := true;
+        (*this flag is one that is  diff with compared to --smt-compete *)
+        Debug.trace_on := true;
+        Debug.devel_debug_on:= false;
+        Globals.lemma_ep := false;
+        Gen.silence_output:=false;
+        Globals.enable_count_stats:=false;
+        Globals.enable_time_stats:=false;
+        (* Globals.lemma_gen_unsafe:=true; *)
+        Globals.lemma_rev_unsafe:=true;
+        Globals.lemma_syn := true;
+        (* Globals.acc_fold := true; *)
+        (* Globals.smart_lem_search := true; *)
+        Globals.seg_fold := true;
+        Globals.en_pred_sat ();
+        (* Globals.gen_baga_inv := false; *)
+        (* Globals.do_infer_inv := true; *)
+        Globals.graph_norm := true;
+        (* Globals.is_solver_local := false; *)
+        Globals.disable_failure_explaining := false;
+        Globals.smt_compete_mode :=true;
+        Globals.return_must_on_pure_failure := true;
+        Globals.dis_impl_var := true),
+   "SMT competition mode - essential printing only + show unexpected ents + sat + seg_fold");
   ("--gen-smt",Arg.Set Globals.gen_smt,"generate smt from slk")
-  ]
+]
 
 (* arguments/flags used only by hip *)	
 let hip_specific_arguments = [ ("-cp", Arg.String set_pred,
-   "Compile specified predicate to Java.");
-  ("-rtc", Arg.Set rtc,
-   "Compile to Java with runtime checks.");
-  ("-nopp", Arg.String Rtc.set_nopp,
-   "-nopp caller:callee: do not check callee's pre/post in caller");
-  ("-nofield", Arg.String Rtc.set_nofield,
-   "-nofield proc: do not perform field check in proc");
-  ("--verify-callees", Arg.Set Globals.verify_callees,
-   "Verify callees of the specified procedures");
-  ("-inline", Arg.String Inliner.set_inlined,
-   "Procedures to be inlined");
-  ("-p", Arg.String set_proc_verified, 
-   "Procedure to be verified. If none specified, all are verified.");
-  ("-print", Arg.Set Globals.print_proc,
-   "Print procedures being checked");
-  ("--dis-pgbv", Arg.Clear Globals.pass_global_by_value, 
-   "disable pass read global variables by value");
-  ("--sqt", Arg.Set Globals.seq_to_try,
-   "translate seq to try");
-  ("-validate", Arg.String set_validate_config,
-   "compare set of constraints");
-  ("-cp-pre-test", Arg.Set Globals.cp_prefile,
-   "compare set of constraints");
-  ("-gen-cpfile", Arg.String set_gen_cpfile,
-   "compare set of constraints");
-  ("-lib", Arg.String set_lib_file,
-   "lib");
-  ] 
+                                "Compile specified predicate to Java.");
+                               ("-rtc", Arg.Set rtc,
+                                "Compile to Java with runtime checks.");
+                               ("-nopp", Arg.String Rtc.set_nopp,
+                                "-nopp caller:callee: do not check callee's pre/post in caller");
+                               ("-nofield", Arg.String Rtc.set_nofield,
+                                "-nofield proc: do not perform field check in proc");
+                               ("--verify-callees", Arg.Set Globals.verify_callees,
+                                "Verify callees of the specified procedures");
+                               ("-inline", Arg.String Inliner.set_inlined,
+                                "Procedures to be inlined");
+                               ("-p", Arg.String set_proc_verified, 
+                                "Procedure to be verified. If none specified, all are verified.");
+                               ("-print", Arg.Set Globals.print_proc,
+                                "Print procedures being checked");
+                               ("--dis-pgbv", Arg.Clear Globals.pass_global_by_value, 
+                                "disable pass read global variables by value");
+                               ("--sqt", Arg.Set Globals.seq_to_try,
+                                "translate seq to try");
+                               ("-validate", Arg.String set_validate_config,
+                                "compare set of constraints");
+                               ("-cp-pre-test", Arg.Set Globals.cp_prefile,
+                                "compare set of constraints");
+                               ("-gen-cpfile", Arg.String set_gen_cpfile,
+                                "compare set of constraints");
+                               ("-lib", Arg.String set_lib_file,
+                                "lib");
+                             ] 
 
 (* arguments/flags used only by sleek *)	
 let sleek_specific_arguments = [
-   ("-fe", Arg.Symbol (["native"; "xml"], set_frontend),
-	"Choose frontend:\n\tnative: Native (default)\n\txml: XML");
-   ("-int", Arg.Set inter_hoa,
-    "Run in interactive mode.");
-   ("--slk-err", Arg.Set Globals.print_err_sleek,
-	"print sleek errors");
-   ("--iw",  Arg.Set Globals.wrap_exists_implicit_explicit ,
-    "existentially wrap instantiations after the entailment");
-   ] 
+  ("-fe", Arg.Symbol (["native"; "xml"], set_frontend),
+   "Choose frontend:\n\tnative: Native (default)\n\txml: XML");
+  ("-int", Arg.Set inter_hoa,
+   "Run in interactive mode.");
+  ("--slk-err", Arg.Set Globals.print_err_sleek,
+   "print sleek errors");
+  ("--iw",  Arg.Set Globals.wrap_exists_implicit_explicit ,
+   "existentially wrap instantiations after the entailment");
+] 
 
 (* arguments/flags used only in the gui *)	
 let gui_specific_arguments = [
-	("--gui", Arg.Set enable_gui, "enable GUI"); 
-	]
-	
+  ("--gui", Arg.Set enable_gui, "enable GUI"); 
+]
+
 (* all hip's arguments and flags *)	
 let hip_arguments = common_arguments @ hip_specific_arguments 
 
@@ -1032,33 +1032,33 @@ let check_option_consistency () =
   (* begin *)
   (*   Gen.Basic.report_error no_pos "immutability and permission options cannot be turned on at the same time" *)
   (* end *)
-  ;; (*Clean warning*)
-  Astsimp.inter_hoa := !inter_hoa;;
+;; (*Clean warning*)
+Astsimp.inter_hoa := !inter_hoa;;
 
 Typechecker.save_flags  := fun ()->() ;;
 Typechecker.restore_flags := fun ()-> ();;
 Typechecker.parse_flags := fun (sl:(string*(Globals.flags option)) list)-> 
-	List.iter(fun (s1,s2)-> 
-		try 
-			let _,f,_=List.find(fun (a,_,_)-> (String.compare a s1) ==0) hip_arguments in
-			let rec process_arg s1 s2 f : unit= match f with 
-				|	Arg.Unit f -> f () 
-				|   Arg.Rest _ 
-				|	Arg.Bool _-> ()
-				|	Arg.Set b -> b:=true
-				|	Arg.Clear b -> b:=false
-				|	Arg.Set_string b-> (match s2 with Some (Globals.Flag_str i)-> b:=i | _ -> failwith ("invalid flag argument for "^s1))
-				|	Arg.String f -> (match s2 with | Some (Globals.Flag_str s)-> f s | _ -> failwith ("invalid flag argument for "^s1))
-				|	Arg.Set_int b-> (match s2 with Some (Globals.Flag_int i)-> b:=i | _ -> failwith ("invalid flag argument for "^s1))
-				|   Arg.Int f -> (match s2 with Some (Globals.Flag_int i)-> f i | _ -> failwith ("invalid flag argument for "^s1))
-				|	Arg.Set_float b-> (match s2 with Some (Globals.Flag_float i)-> b:=i | _ -> failwith ("invalid flag argument for "^s1))
-				|   Arg.Float f-> (match s2 with | Some (Globals.Flag_float s)-> f s | _ -> failwith ("invalid flag argument for "^s1))
-				|	Arg.Tuple l -> List.iter (process_arg s1 s2) l
-				|	Arg.Symbol (sl, f) -> 
-					 try 
-						(match s2 with 
-							| Some (Globals.Flag_str s)-> f (List.find(fun a-> (String.compare a s) ==0) sl)
-							| _ -> failwith ("invalid flag argument for "^s1))
-					with  Not_found -> failwith ("invalid flag "^s1) in
-			process_arg s1 s2 f			
-		with Not_found -> failwith ("invalid flag "^s1)) sl;;
+  List.iter(fun (s1,s2)-> 
+      try 
+        let _,f,_=List.find(fun (a,_,_)-> (String.compare a s1) ==0) hip_arguments in
+        let rec process_arg s1 s2 f : unit= match f with 
+          |	Arg.Unit f -> f () 
+          |   Arg.Rest _ 
+          |	Arg.Bool _-> ()
+          |	Arg.Set b -> b:=true
+          |	Arg.Clear b -> b:=false
+          |	Arg.Set_string b-> (match s2 with Some (Globals.Flag_str i)-> b:=i | _ -> failwith ("invalid flag argument for "^s1))
+          |	Arg.String f -> (match s2 with | Some (Globals.Flag_str s)-> f s | _ -> failwith ("invalid flag argument for "^s1))
+          |	Arg.Set_int b-> (match s2 with Some (Globals.Flag_int i)-> b:=i | _ -> failwith ("invalid flag argument for "^s1))
+          |   Arg.Int f -> (match s2 with Some (Globals.Flag_int i)-> f i | _ -> failwith ("invalid flag argument for "^s1))
+          |	Arg.Set_float b-> (match s2 with Some (Globals.Flag_float i)-> b:=i | _ -> failwith ("invalid flag argument for "^s1))
+          |   Arg.Float f-> (match s2 with | Some (Globals.Flag_float s)-> f s | _ -> failwith ("invalid flag argument for "^s1))
+          |	Arg.Tuple l -> List.iter (process_arg s1 s2) l
+          |	Arg.Symbol (sl, f) -> 
+            try 
+              (match s2 with 
+               | Some (Globals.Flag_str s)-> f (List.find(fun a-> (String.compare a s) ==0) sl)
+               | _ -> failwith ("invalid flag argument for "^s1))
+            with  Not_found -> failwith ("invalid flag "^s1) in
+        process_arg s1 s2 f			
+      with Not_found -> failwith ("invalid flag "^s1)) sl;;
