@@ -2,6 +2,7 @@
 open VarGen
 
 open Globals
+open Global_var
 
 module F = Iformula
 module P = Ipure
@@ -710,20 +711,26 @@ let subst_of_ident_with_bool (subs:(ident *ident) list) (id:ident)
 let intersect (lst1:'a list) (lst2:'a list) : 'a list =
   List.filter (fun x -> List.mem x lst2) lst1
 
-let new_name_var v = 
+let new_name_var v =
   v ^ "_" ^ string_of_int (fresh_int ())
 
 (* make new renaming substitution that avoids name clash *)
 let new_naming (lst:ident list) : (ident * ident) list =
-  List.map (fun x -> (x,new_name_var x (* fresh name *))) lst
+  let clash_subs = List.map (fun x -> (x,new_name_var x (* fresh name *))) lst in
+  clash_subs
 
+let add_renamed_vars clash_subs name_loc =
+  let clash_subs_loc = List.map (fun (name,new_name) ->
+      (name ^ (string_of_full_loc name_loc),new_name)
+  ) clash_subs in
+  stk_renamed_vars # push_list clash_subs_loc
 
-let rename_struc_formula subs1 f = 
+let rename_struc_formula subs1 f =
   let fun0 (a,b) = [((a,Primed),(b,Primed));((a,Unprimed),(b,Unprimed))] in
   let subs2 = List.concat (List.map fun0 subs1) in
   F.subst_struc subs2 f
 
-let rename_formula subs1 f = 
+let rename_formula subs1 f =
   let fun0 (a,b) = [((a,Primed),(b,Primed));((a,Unprimed),(b,Unprimed))] in
   let subs2 = List.concat (List.map fun0 subs1) in
   F.subst subs2 f
@@ -808,7 +815,7 @@ class impset  =
    subs - substitution list - pair of vars list
 *)
 
-let rename_exp2 e subs = 
+let rename_exp2 e subs =
   let imp_bvars = new impset in
 
   let rec rename_exp (e:exp) ((bvars,subs):(IS.t)*((ident * ident) list)) : exp =
@@ -833,29 +840,29 @@ let rename_exp2 e subs =
          | Some v -> (IS.add v bvars, subs)
         )
       | _ -> (bvars, subs)
-    in 
-    let f (bvars, subs) e = 
-      match e with 
-      | Assert f -> 
-        let ft1 = 
-          match f.exp_assert_asserted_formula with 
+    in
+    let f (bvars, subs) e =
+      match e with
+      | Assert f ->
+        let ft1 =
+          match f.exp_assert_asserted_formula with
           | None -> None
           | Some (sf, bl) -> Some (rename_struc_formula subs sf, bl)
         in
-        let fa1 = 
+        let fa1 =
           match f.exp_assert_assumed_formula with
           | None -> None
           | Some fml -> Some (rename_formula subs fml)
         in
-        Some (Assert 
+        Some (Assert
                 { f with
                   exp_assert_asserted_formula = ft1;
                   exp_assert_assumed_formula = fa1;
                 })
       | Var b -> Some (Var {b with exp_var_name = fst (subst_of_ident_with_bool_with_wrapper subs b.exp_var_name);})
       | VarDecl b ->
-        let helper (v, e, l) = 
-          let e1 = 
+        let helper (v, e, l) =
+          let e1 =
             (match e with
              | None -> None
              | Some e0 -> Some (x_add rename_exp e0 (bvars, subs))
@@ -867,7 +874,7 @@ let rename_exp2 e subs =
         in
         Some (VarDecl {b with exp_var_decl_decls = List.map helper b.exp_var_decl_decls})
       | ConstDecl b ->
-        let helper (v,e,l) = 
+        let helper (v,e,l) =
           let e1 = (x_add rename_exp e (bvars, subs)) in
           let (v1, b) = subst_of_ident_with_bool subs v in
           (v1, e1, l)
@@ -880,13 +887,14 @@ let rename_exp2 e subs =
         let e = b.exp_bind_body in
         let clash_fields = IS.inter bvars flds in
         let clash_subs = new_naming (from_IS clash_fields) in
+        let () = add_renamed_vars clash_subs b.exp_bind_pos in
         let new_fields = List.map (compose fst (subst_of_ident_with_bool clash_subs)) b.exp_bind_fields in
         let (nx, nb) = subst_of_ident_with_bool subs x in
-        if (nb || not (IS.is_empty clash_fields)) 
-        then 
+        if (nb || not (IS.is_empty clash_fields))
+        then
           let new_e = rename_exp e (IS.union flds bvars, subs @ clash_subs) in
-          (Some (Bind 
-                   { b with 
+          (Some (Bind
+                   { b with
                      exp_bind_bound_var = nx;
                      exp_bind_fields = new_fields;
                      exp_bind_body = new_e;
@@ -899,13 +907,14 @@ let rename_exp2 e subs =
           let lvars = to_IS (List.map three1 local_vs) in
           let clash_lvars = IS.inter bvars lvars in
           if (IS.is_empty clash_lvars) then None
-          else 
+          else
             let () = x_tinfo_hp (add_str "Block (clash_lvars)" string_of_IS) clash_lvars no_pos in
             let () = x_tinfo_hp (add_str "Block (local vars)" (pr_list (fun (a,_,_) -> a))) local_vs no_pos in
             let body = b.exp_block_body in
-            (* { vs,  int x=?; e2} *) 
+            (* { vs,  int x=?; e2} *)
             let () = Debug.ninfo_hprint (add_str "Block (body)" Iprinter.string_of_exp) body no_pos in
             let clash_subs = new_naming (from_IS clash_lvars) in
+            let () = add_renamed_vars clash_subs b.exp_block_pos in
             let () = imp_bvars # push_list clash_subs in
             let () = x_tinfo_hp  (add_str "Block(imp bvars)" pr_id) (imp_bvars # string_of ) no_pos in
             let new_subs = clash_subs @ subs in
@@ -914,30 +923,31 @@ let rename_exp2 e subs =
               let fun0 (a,b,c) = (fst (subst_of_ident_with_bool clash_subs a), b, c) in
               List.map fun0 local_vs (* b.exp_block_local_vars *) in
             let new_e = rename_exp body (IS.union lvars bvars, new_subs) in
-            Some (Block 
+            Some (Block
                     { b with
                       exp_block_local_vars = new_vars;
                       exp_block_body = new_e;
-                    }) 
+                    })
         in fn b
 
       | Catch b -> begin
-          match b.exp_catch_var with 
+          match b.exp_catch_var with
           | None -> None
-          | Some x -> 
+          | Some x ->
             let e = b.exp_catch_body in
             if (IS.mem x bvars) then None
-            else 
+            else
               let clash_subs = new_naming ([x]) in
+              let () = add_renamed_vars clash_subs b.exp_catch_pos in
               let nx = fst (subst_of_ident_with_bool clash_subs x) in
               let ne = rename_exp e (IS.add x bvars, subs @ clash_subs) in
-              Some (Catch 
+              Some (Catch
                       { b with
                         exp_catch_var = Some nx;
                         exp_catch_body = ne;
                       })
         end
-      | CallNRecv b -> 
+      | CallNRecv b ->
         begin match b.exp_call_nrecv_ho_arg with
           | None -> None
           | Some f -> 
@@ -955,7 +965,7 @@ let rename_exp (e:exp) ((bvars,subs) as xx:(IS.t)*((ident * ident) list)) : exp 
   let pr2  = pr_pair string_of_IS (pr_list (pr_pair pr_id pr_id)) in
   Debug.no_2 "rename_exp(IastUtil)" pr1 pr2 pr1 rename_exp2 e xx
 
-let rename_proc gvs proc : proc_decl = 
+let rename_proc gvs proc : proc_decl =
   (* let () = print_endline ("[rename_proc] input = { " ^ (string_of_IS gvs) ^ " }") in *)
   (* let () = print_endline ("[rename_proc] input procedure = { " ^ (Iprinter.string_of_proc_dec,l proc) ^ " }") in *)
   let pv v = v.param_name in
@@ -963,12 +973,13 @@ let rename_proc gvs proc : proc_decl =
   let clash_vars = IS.inter pargs gvs in
   (* let () = print_endline ("[rename_proc] clashed vars = { " ^ (string_of_IS clash_vars) ^ " }") in *)
   let clash_subs = new_naming (from_IS clash_vars) in
+  let () = add_renamed_vars clash_subs proc.proc_loc in
 
-  let nargs = 
-    let fun0 v = 
-      {v with param_name = fst (subst_of_ident_with_bool clash_subs v.param_name);} 
-    in 
-    List.map fun0 proc.proc_args 
+  let nargs =
+    let fun0 v =
+      {v with param_name = fst (subst_of_ident_with_bool clash_subs v.param_name);}
+    in
+    List.map fun0 proc.proc_args
   in
 
   let nsps1 = rename_struc_formula clash_subs proc.proc_static_specs in

@@ -412,6 +412,7 @@ let simplify_branch_context (pt, ctx, fail_type) =
     | Ctx en -> Ctx {en with
                      es_formula =
                        let () = x_tinfo_hp (add_str "formula" !print_formula) en.es_formula no_pos in
+                       let () = x_binfo_hp (add_str "renamed_vars" pr_id) (stk_renamed_vars # string_of_no_ln) no_pos in
                        let h,mf,vp,fl,t,a = split_components en.es_formula in
                        let exists_svl = match en.es_formula with
                          | Exists ef -> ef.formula_exists_qvars
