@@ -16521,7 +16521,6 @@ and transform_spec (sp:struc_formula) pairs = match sp with
             EAssume{b with
                 formula_assume_simpl = p2;
                 formula_assume_struc = mkEBase p2 None no_pos;}
-      | [] -> report_error no_pos "Error in transforming spec"
       | ([],p2)::_ ->(*  EList (List.map (fun (_, p2) -> (empty_spec_label_def, EAssume{b with *)
         (*         formula_assume_simpl = p2; *)
         (*         formula_assume_struc = mkEBase p2 None no_pos;}) *)
@@ -16529,6 +16528,7 @@ and transform_spec (sp:struc_formula) pairs = match sp with
             EAssume{b with
                 formula_assume_simpl = p2;
                 formula_assume_struc = mkEBase p2 None no_pos;}
+      | _ -> report_error no_pos "Error in transforming spec"
     end
   | EInfer b -> EInfer {b with formula_inf_continuation = transform_spec b.formula_inf_continuation pairs}
   | EList b -> EList (List.map (fun (l,e) ->(l,transform_spec e pairs)) b)
