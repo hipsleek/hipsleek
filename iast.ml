@@ -556,7 +556,7 @@ and exp =
   | Member of exp_member
   | New of exp_new
   | Null of loc
-  | Raise of exp_raise 
+  | Raise of exp_raise
   | Return of exp_return
   | Seq of exp_seq
   | This of exp_this
@@ -3469,7 +3469,7 @@ let detect_invoke prog proc=
   Debug.no_1 "detect_invoke" pr1 pr2
     (fun _ -> detect_invoke_x prog proc) proc
 
-let tnt_prim_procs = 
+let tnt_prim_procs =
   [ Globals.nondet_int_proc_name; "__VERIFIER_error" ]
 
 let tnt_prim_proc_tbl: (string, string) Hashtbl.t = Hashtbl.create 10
@@ -3505,9 +3505,49 @@ let rec no_duplicate_while_return_type_list (proclst:proc_decl list):(typ list) 
     end
   | [] -> []
 
+let find_all_num_trailer_exp e =
+  let comb_f = List.concat in
+  let f (ac : ident list) e : ident list option = match e with
+    | Assert b ->
+          let l = (Gen.fold_opt (fun (f,_) -> Iformula.struc_hp_fv f) b.exp_assert_asserted_formula)@(Gen.fold_opt Iformula.heap_fv b.exp_assert_assumed_formula) in
+          Some (ac@(List.map fst l))
+    | Java _ -> Some ac
+    | BoolLit _ -> Some ac
+    | Debug _ -> Some ac
+    | Dprint b -> Some (b.exp_dprint_string::ac)
+    | FloatLit _ -> Some ac
+    | CallRecv b -> Some ac
+    | CallNRecv b -> Some ac
+    | IntLit _ -> Some ac
+    | New b -> Some ac
+    | Null _ -> Some ac
+    | Empty _ -> Some ac
+    | Barrier b -> Some (b.exp_barrier_recv::ac)
+    | This _ -> Some ac
+    | Time _ -> Some ac
+    | Var b -> Some (b.exp_var_name::ac)
+    | VarDecl b -> Some ((List.map (fun (a,_,_) -> a) b.exp_var_decl_decls)@ac)
+    | Unfold b -> Some ((fst b.exp_unfold_var)::ac)
+    |  _ -> None
+  in
+  let f_args (ac : ident list) e : ident list = match e with
+    | Bind b -> ac@(b.exp_bind_bound_var::b.exp_bind_fields)
+    | Block b -> ac@(List.map (fun (a,_,_) -> a) b.exp_block_local_vars)
+    | Catch b -> (Gen.fold_opt (fun c -> [c]) b.exp_catch_var)@ac
+    | While b -> ac@(List.map fst (Iformula.struc_hp_fv b.exp_while_specs))
+    | Try b -> ac
+    | _ -> ac
+  in
+  let res = match e with
+    | None -> []
+    | Some e -> fold_exp_args_new e [] f f_args comb_f []
+  in res
+
 (* find _num to avoid in code *)
 (* let fold_exp_args (e:exp) (init_a:'a) (f:'a -> exp-> 'b option) (f_args: 'a -> exp -> 'a) (comb_f: 'b list->'b) (zero:'b) : 'b = *)
 let find_all_num_trailer iprog =
   let () = x_binfo_pp "TODO : find_all_num_trailer _nn in iprog and avoid those numbers (to solve simplify/ex3a-app-neq.ss)" no_pos in
+  let body_list = List.map (fun proc -> proc.proc_body) iprog.prog_proc_decls in
+  let id_list = List.fold_left (fun acc body -> acc@(find_all_num_trailer_exp body)) [] body_list in
   (* use fold_exp_args .. *)
   []
