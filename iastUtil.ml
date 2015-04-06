@@ -1020,13 +1020,13 @@ let rename_prog prog : prog_decl =
       List.map fun1 prog.prog_global_var_decls))
   in
   (*find proc idents*)
-  let proc_idents = 
+  let proc_idents =
     let fun0 (proc: proc_decl) : ident = proc.proc_name in
     List.map fun0 prog.prog_proc_decls
   in
   let gvs = to_IS (var_idents@proc_idents) in
   let prog = float_var_decl_prog prog in
-  map_proc prog (rename_proc gvs) 
+  map_proc prog (rename_proc gvs)
 
 (********free var************)
 let rec find_free_read_write (e:exp) bound 

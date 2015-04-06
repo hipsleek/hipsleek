@@ -481,7 +481,8 @@ let process_source_full source =
   let tnt_prim_proc_decls = snd (List.split tnt_prim_proc_decls) in
   let prog = { prog with Iast.prog_proc_decls = prog.Iast.prog_proc_decls @ tnt_prim_proc_decls; } in
   let intermediate_prog = x_add_1 Globalvars.trans_global_to_param prog in
-  let trailer_num_list = Iast.find_all_num_trailer prog in
+  let () = Globals.trailer_num_list :=  Iast.find_all_num_trailer prog in
+  let () = x_binfo_hp (add_str "trailer_num_list" (pr_list pr_id)) !Globals.trailer_num_list no_pos in
   (* let () = print_endline "hello" in *)
   (* let () = print_endline_quiet ("process_source_full: before pre_process_of_iprog" ^(Iprinter.string_of_program intermediate_prog)) in *)
   (* let () = print_endline_quiet ("== gvdecls 2 length = " ^ (string_of_int (List.length intermediate_prog.Iast.prog_global_var_decls))) in *)

@@ -3525,8 +3525,23 @@ let find_all_num_trailer_exp e =
     | Barrier b -> Some (b.exp_barrier_recv::ac)
     | This _ -> Some ac
     | Time _ -> Some ac
-    | Var b -> Some (b.exp_var_name::ac)
-    | VarDecl b -> Some ((List.map (fun (a,_,_) -> a) b.exp_var_decl_decls)@ac)
+    | Var b ->
+          let () = x_ninfo_pp ("var_name: " ^ b.exp_var_name) no_pos in
+          (* Some (b.exp_var_name::ac) *)
+          Some ac
+    | VarDecl b ->
+          let id_list = List.map (fun (a,_,_) -> a) b.exp_var_decl_decls in
+          let () = x_ninfo_hp (add_str "var_names: " (pr_list pr_id)) id_list no_pos in
+          let ac = List.fold_left (fun ac id ->
+              let l = String.length id in
+              try
+                let c = String.rindex id '_' in
+                let trail = String.sub id (c+1) (l-c-1) in
+                let (_:int64) = Int64.of_string trail in
+                trail::ac
+              with _ -> ac
+          ) ac id_list in
+          Some ac
     | Unfold b -> Some ((fst b.exp_unfold_var)::ac)
     |  _ -> None
   in
@@ -3546,8 +3561,14 @@ let find_all_num_trailer_exp e =
 (* find _num to avoid in code *)
 (* let fold_exp_args (e:exp) (init_a:'a) (f:'a -> exp-> 'b option) (f_args: 'a -> exp -> 'a) (comb_f: 'b list->'b) (zero:'b) : 'b = *)
 let find_all_num_trailer iprog =
-  let () = x_binfo_pp "TODO : find_all_num_trailer _nn in iprog and avoid those numbers (to solve simplify/ex3a-app-neq.ss)" no_pos in
-  let body_list = List.map (fun proc -> proc.proc_body) iprog.prog_proc_decls in
-  let id_list = List.fold_left (fun acc body -> acc@(find_all_num_trailer_exp body)) [] body_list in
+  let () = x_ninfo_pp "TODO : find_all_num_trailer _nn in iprog and avoid those numbers (to solve simplify/ex3a-app-neq.ss)" no_pos in
+  let proc_list = List.filter (fun proc ->
+      proc.proc_is_main
+  ) iprog.prog_proc_decls in
+  let body_list = List.map (fun proc -> proc.proc_body) (List.filter (fun proc -> proc.proc_is_main) iprog.prog_proc_decls) in
+  let id_list = List.fold_left (fun acc body ->
+      let () = x_binfo_hp (add_str "acc" (pr_list pr_id)) acc no_pos in
+      acc@(find_all_num_trailer_exp body)
+  ) [] body_list in
   (* use fold_exp_args .. *)
-  []
+  id_list
