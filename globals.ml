@@ -1736,23 +1736,25 @@ let mk_strict_branch_point (id:control_path_id) (s:string) : control_path_id_str
 let eq_formula_label (l1:formula_label) (l2:formula_label) : bool = fst(l1)=fst(l2)
 
 let fresh_int () =
-  (* let rec find i lst = match lst with *)
-  (*   | [] -> false,[] *)
-  (*   | hd::tl -> *)
-  (*         let hd_int = int_of_string hd in *)
-  (*         if i = hd_int then true,tl *)
-  (*         else if i < hd_int then false,lst *)
-  (*         else find i tl *)
-  (* and helper i = *)
-  (*   let is_mem,trailer_num_list_tail = find i !trailer_num_list in *)
-  (*   let () = trailer_num_list := trailer_num_list_tail in *)
-  (*   if is_mem then helper (i+1) else i *)
-  let rec helper i =
-    if List.mem (string_of_int i) !trailer_num_list
-    then
-      let () = trailer_num_list := List.tl !trailer_num_list in
-      helper (i+1)
-    else i
+  let rec find i lst = match lst with
+    | [] -> false,[]
+    | hd::tl ->
+      try
+        let hd_int = int_of_string hd in
+        if i = hd_int then true,tl
+        else if i < hd_int then false,lst
+        else find i tl
+      with _ -> find i tl
+  and helper i =
+    let is_mem,trailer_num_list_tail = find i !trailer_num_list in
+    let () = trailer_num_list := trailer_num_list_tail in
+    if is_mem then helper (i+1) else i
+  (* let rec helper i = *)
+  (*   if List.mem (string_of_int i) !trailer_num_list *)
+  (*   then *)
+  (*     let () = trailer_num_list := List.tl !trailer_num_list in *)
+  (*     helper (i+1) *)
+  (*   else i *)
   in
   seq_number := helper (!seq_number + 1);
   !seq_number
