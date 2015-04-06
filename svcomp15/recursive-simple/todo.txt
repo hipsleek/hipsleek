@@ -8,7 +8,7 @@ Spec for fibonacci
 
 
 ============================================
-#ex1-id2-b3.c
+#ex1-id2-b3.c: FIXED
 
 assert should fail, not ok
 
