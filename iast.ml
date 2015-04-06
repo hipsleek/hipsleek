@@ -3506,15 +3506,26 @@ let rec no_duplicate_while_return_type_list (proclst:proc_decl list):(typ list) 
   | [] -> []
 
 let find_all_num_trailer_exp e =
+  let add_id ac id =
+    let l = String.length id in
+    try
+      let c = String.rindex id '_' in
+      let trail = String.sub id (c+1) (l-c-1) in
+      let () = x_ninfo_pp ("trail: " ^ trail) no_pos in
+      let (_:int64) = Int64.of_string trail in
+      trail::ac
+    with _ -> ac
+  in
   let comb_f = List.concat in
   let f (ac : ident list) e : ident list option = match e with
     | Assert b ->
           let l = (Gen.fold_opt (fun (f,_) -> Iformula.struc_hp_fv f) b.exp_assert_asserted_formula)@(Gen.fold_opt Iformula.heap_fv b.exp_assert_assumed_formula) in
-          Some (ac@(List.map fst l))
+          let ac = List.fold_left add_id ac (List.map fst l) in
+          Some ac
     | Java _ -> Some ac
     | BoolLit _ -> Some ac
     | Debug _ -> Some ac
-    | Dprint b -> Some (b.exp_dprint_string::ac)
+    | Dprint b -> Some (add_id ac b.exp_dprint_string)
     | FloatLit _ -> Some ac
     | CallRecv b -> Some ac
     | CallNRecv b -> Some ac
@@ -3522,7 +3533,7 @@ let find_all_num_trailer_exp e =
     | New b -> Some ac
     | Null _ -> Some ac
     | Empty _ -> Some ac
-    | Barrier b -> Some (b.exp_barrier_recv::ac)
+    | Barrier b -> Some (add_id ac b.exp_barrier_recv)
     | This _ -> Some ac
     | Time _ -> Some ac
     | Var b ->
@@ -3532,18 +3543,9 @@ let find_all_num_trailer_exp e =
     | VarDecl b ->
           let id_list = List.map (fun (a,_,_) -> a) b.exp_var_decl_decls in
           let () = x_ninfo_hp (add_str "var_names: " (pr_list pr_id)) id_list no_pos in
-          let ac = List.fold_left (fun ac id ->
-              let l = String.length id in
-              try
-                let c = String.rindex id '_' in
-                let trail = String.sub id (c+1) (l-c-1) in
-                let () = x_ninfo_pp ("trail: " ^ trail) no_pos in
-                let (_:int64) = Int64.of_string trail in
-                trail::ac
-              with _ -> ac
-          ) ac id_list in
+          let ac = List.fold_left add_id ac id_list in
           Some ac
-    | Unfold b -> Some ((fst b.exp_unfold_var)::ac)
+    | Unfold b -> Some (add_id ac (fst b.exp_unfold_var))
     |  _ -> None
   in
   let f_args (ac : ident list) e : ident list = match e with
