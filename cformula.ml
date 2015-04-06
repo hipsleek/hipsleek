@@ -11542,19 +11542,30 @@ let isSuccessBranchFail (_,ft) =
   | Failure_Valid -> true
   | Failure_Bot _ -> true
 
+let isSuccBranches succ_brs=
+  (* all succ branch should not subsume must, may flows *)
+  succ_brs != [] && List.for_all (fun (_, _, oft) ->
+      oft = None
+  ) succ_brs
+
 let isSuccessPartialCtx_new (fs,succ_brs) =
   let is_succ = List.for_all isSuccessBranchFail fs in
   if not !Globals.enable_error_as_exc || not is_succ then is_succ else
     (* all succ branch should not subsume must, may flows *)
-    succ_brs != [] && List.for_all (fun (_, _, oft) ->
-        oft = None
-    ) succ_brs
+    (* succ_brs != [] && List.for_all (fun (_, _, oft) -> *)
+    (*     oft = None *)
+    (* ) succ_brs *)
+    isSuccBranches succ_brs
 
 let isSuccessFailescCtx (fs,_,_) =
   if (Gen.is_empty fs) then true else false
 
-let isSuccessFailescCtx_new (fs,_,_) =
-  List.for_all isSuccessBranchFail fs
+let isSuccessFailescCtx_new (fs,esc,succ_brs) =
+  let is_succ = List.for_all isSuccessBranchFail fs in
+  if not !Globals.enable_error_as_exc || not is_succ then is_succ else
+    isSuccBranches succ_brs && List.for_all (fun (_,brs) ->
+        isSuccBranches brs
+    ) esc
 
 (* [] denotes failure *)
 let isSuccessListPartialCtx cl =
