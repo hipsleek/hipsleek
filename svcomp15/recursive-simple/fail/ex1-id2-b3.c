@@ -28,6 +28,7 @@ int main(int input)
   if (result == 2) {
     //@ dprint;
     //@ assert false;
+    //@ assert true;
     //@ dprint;
     return 1;
   }

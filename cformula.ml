@@ -11563,9 +11563,9 @@ let isSuccessFailescCtx (fs,_,_) =
 let isSuccessFailescCtx_new (fs,esc,succ_brs) =
   let is_succ = List.for_all isSuccessBranchFail fs in
   if not !Globals.enable_error_as_exc || not is_succ then is_succ else
-    isSuccBranches succ_brs && List.for_all (fun (_,brs) ->
-        isSuccBranches brs
-    ) esc
+    isSuccBranches succ_brs (* && List.for_all (fun (_,brs) -> *)
+    (*     isSuccBranches brs *)
+    (* ) esc *)
 
 (* [] denotes failure *)
 let isSuccessListPartialCtx cl =
