@@ -556,7 +556,7 @@ and exp =
   | Member of exp_member
   | New of exp_new
   | Null of loc
-  | Raise of exp_raise 
+  | Raise of exp_raise
   | Return of exp_return
   | Seq of exp_seq
   | This of exp_this
@@ -824,6 +824,128 @@ let trans_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp* 'a) option)  (f_args:'b->e
         (Par { b with exp_par_cases = cl }, r)
   in helper init_arg e
 
+let fold_exp (e:exp) (init_arg:'b) (f:'b->exp-> 'a option)  (f_args:'b->exp->'b) (comb_f: exp -> 'a list -> 'a) : 'a =
+  let rec helper (in_arg:'b) (e:exp) : 'a =	
+    match (f in_arg e) with
+    | Some e1 -> e1
+    | None  ->
+      let n_arg = f_args in_arg e in 
+      let comb_f = comb_f e in
+      let zero = comb_f [] in
+      match e with
+      | Assert _ 
+      | BoolLit _ 
+      | Break _
+      | Continue _ 
+      | Debug _ 
+      | Dprint _ 
+      | Empty _ 
+      | FloatLit _ 
+      | IntLit _
+      | Java _ 
+      | Null _ 
+      | This _ 
+      | Time _ 
+      | Unfold _ 
+      | Var _ -> zero
+      | ArrayAt b -> (* An Hoa *)
+        let rl = (List.map (helper n_arg) b.exp_arrayat_index) in
+        comb_f rl
+      | Assign b ->
+        let r1 = helper n_arg b.exp_assign_lhs  in
+        let r2 = helper n_arg b.exp_assign_rhs  in
+        (comb_f [r1;r2])
+      | Binary b ->
+        let r1 = helper n_arg b.exp_binary_oper1  in
+        let r2 = helper n_arg b.exp_binary_oper2  in
+        (comb_f [r1;r2])
+      | Bind b ->
+        let r1 = helper n_arg b.exp_bind_body  in r1
+      | Barrier _ -> zero
+        (* let e,r = helper n_arg b.exp_barrier_recv  in *)
+        (* (Barrier {b with exp_barrier_recv = e},r) *)
+      | Block b ->
+        helper n_arg b.exp_block_body
+      | CallRecv b ->
+        let r1 = helper n_arg b.exp_call_recv_receiver  in
+        let ler = List.map (helper n_arg) b.exp_call_recv_arguments in
+        (* let e2l,r2l = List.split ler in *)
+        let r = comb_f (r1::ler) in r
+      | CallNRecv b ->
+        let ler = List.map (helper n_arg) b.exp_call_nrecv_arguments in
+        (* let e2l,r2l = List.split ler in *)
+        comb_f ler
+      | Cast b ->
+        helper n_arg b.exp_cast_body
+      | Catch b ->
+        helper n_arg b.exp_catch_body
+      | Cond b ->
+        let r1 = helper n_arg b.exp_cond_condition in
+        let r2 = helper n_arg b.exp_cond_then_arm in
+        let r3 = helper n_arg b.exp_cond_else_arm in
+        let r = comb_f [r1;r2;r3] in r
+      | Finally b ->
+        helper n_arg b.exp_finally_body
+      | Label (l,b) ->
+        helper n_arg b
+      | Member b ->
+        helper n_arg b.exp_member_base
+      (* An Hoa *)
+      | ArrayAlloc b ->
+        let rl = (List.map (helper n_arg) b.exp_aalloc_dimensions) in
+        comb_f rl
+      | New b ->
+        let rl = (List.map (helper n_arg) b.exp_new_arguments) in
+        comb_f rl
+      | Raise b -> (match b.exp_raise_val with
+          | None -> (zero)
+          | Some body -> helper n_arg body)
+      | Return b->(match b.exp_return_val with
+          | None -> (zero)
+          | Some body -> helper n_arg body)
+      | Seq b ->
+        let r1 = helper n_arg  b.exp_seq_exp1 in
+        let r2 = helper n_arg  b.exp_seq_exp2 in
+        comb_f [r1;r2]
+      | Try b ->
+        let ecl = List.map (helper n_arg) b.exp_catch_clauses in
+        let fcl = List.map (helper n_arg) b.exp_finally_clause in
+        let r1 = helper n_arg b.exp_try_block in
+        let rc = ecl in
+        let rf = fcl in
+        let r = comb_f (r1::(rc@rf)) in r
+      | Unary b ->
+        helper n_arg b.exp_unary_exp
+      | ConstDecl b ->
+        let l = List.map (fun (c1,c2,c3) ->
+            let r1 = helper n_arg c2 in
+            (r1)) b.exp_const_decl_decls in
+        let r = comb_f l in r
+      | VarDecl b ->
+        let ll = List.map (fun (c1,c2,c3)-> match c2 with
+            | None -> (zero)
+            | Some s ->
+              let r1 = helper n_arg s in
+              r1) b.exp_var_decl_decls in
+        let r = comb_f ll in r
+      | While b ->
+        let r = match b.exp_while_wrappings with
+          | None -> (zero)
+          | Some (s,l) ->
+            let r = helper n_arg s in
+            (r) in
+        let cr = helper n_arg b.exp_while_condition in
+        let br = helper n_arg b.exp_while_body in
+        let r = comb_f [r;cr;br] in r
+      | Par b ->
+        let trans_par_case c =
+          let cr = helper n_arg c.exp_par_case_body in
+          (cr)
+        in
+        let rl =(List.map trans_par_case b.exp_par_cases) in
+        let r = comb_f rl in r
+  in helper init_arg e
+
 let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b->exp->'b)(comb_f:'a list -> 'a) (zero:'a) :(exp * 'a) =
   let f_c e lst = match lst with
     | [] -> zero
@@ -846,6 +968,12 @@ let fold_exp_args (e:exp) (init_a:'a) (f:'a -> exp-> 'b option) (f_args: 'a -> e
     | Some r -> Some (e,r)
     | None ->  None in
   snd(transform_exp e init_a f1 f_args comb_f zero)
+
+let fold_exp_args_new (e:exp) (init_a:'a) (f:'a -> exp-> 'b option) (f_args: 'a -> exp -> 'a) (comb_f: 'b list->'b) (zero:'b) : 'b =
+  let combf e ls = match ls with
+    | [] -> zero
+    | _ -> comb_f ls in 
+  fold_exp e init_a f f_args combf
 
 (*this computes a result from expression without passing an argument*)
 let fold_exp (e:exp) (f:exp-> 'b option) (comb_f: 'b list->'b) (zero:'b) : 'b =
@@ -3354,7 +3482,7 @@ let detect_invoke prog proc=
   Debug.no_1 "detect_invoke" pr1 pr2
     (fun _ -> detect_invoke_x prog proc) proc
 
-let tnt_prim_procs = 
+let tnt_prim_procs =
   [ Globals.nondet_int_proc_name; "__VERIFIER_error" ]
 
 let tnt_prim_proc_tbl: (string, string) Hashtbl.t = Hashtbl.create 10
@@ -3390,3 +3518,73 @@ let rec no_duplicate_while_return_type_list (proclst:proc_decl list):(typ list) 
     end
   | [] -> []
 
+let find_all_num_trailer_exp e =
+  let add_id ac id =
+    let l = String.length id in
+    try
+      let c = String.rindex id '_' in
+      let trail = String.sub id (c+1) (l-c-1) in
+      let () = x_ninfo_pp ("trail: " ^ trail) no_pos in
+      let (_:int64) = Int64.of_string trail in
+      trail::ac
+    with _ -> ac
+  in
+  let comb_f = List.concat in
+  let f (ac : ident list) e : ident list option = match e with
+    | Assert b ->
+          let l = (Gen.fold_opt (fun (f,_) -> Iformula.struc_hp_fv f) b.exp_assert_asserted_formula)@(Gen.fold_opt Iformula.heap_fv b.exp_assert_assumed_formula) in
+          let ac = List.fold_left add_id ac (List.map fst l) in
+          Some ac
+    | Java _ -> Some ac
+    | BoolLit _ -> Some ac
+    | Debug _ -> Some ac
+    | Dprint b -> Some (add_id ac b.exp_dprint_string)
+    | FloatLit _ -> Some ac
+    | CallRecv b -> Some ac
+    | CallNRecv b -> Some ac
+    | IntLit _ -> Some ac
+    | New b -> Some ac
+    | Null _ -> Some ac
+    | Empty _ -> Some ac
+    | Barrier b -> Some (add_id ac b.exp_barrier_recv)
+    | This _ -> Some ac
+    | Time _ -> Some ac
+    | Var b ->
+          let () = x_ninfo_pp ("var_name: " ^ b.exp_var_name) no_pos in
+          (* Some (b.exp_var_name::ac) *)
+          Some ac
+    | VarDecl b ->
+          let id_list = List.map (fun (a,_,_) -> a) b.exp_var_decl_decls in
+          let () = x_ninfo_hp (add_str "var_names: " (pr_list pr_id)) id_list no_pos in
+          let ac = List.fold_left add_id ac id_list in
+          Some ac
+    | Unfold b -> Some (add_id ac (fst b.exp_unfold_var))
+    |  _ -> None
+  in
+  let f_args (ac : ident list) e : ident list = match e with
+    | Bind b -> ac@(b.exp_bind_bound_var::b.exp_bind_fields)
+    | Block b -> ac@(List.map (fun (a,_,_) -> a) b.exp_block_local_vars)
+    | Catch b -> (Gen.fold_opt (fun c -> [c]) b.exp_catch_var)@ac
+    | While b -> ac@(List.map fst (Iformula.struc_hp_fv b.exp_while_specs))
+    | Try b -> ac
+    | _ -> ac
+  in
+  let res = match e with
+    | None -> []
+    | Some e -> fold_exp_args_new e [] f f_args comb_f []
+  in res
+
+(* find _num to avoid in code *)
+(* let fold_exp_args (e:exp) (init_a:'a) (f:'a -> exp-> 'b option) (f_args: 'a -> exp -> 'a) (comb_f: 'b list->'b) (zero:'b) : 'b = *)
+let find_all_num_trailer iprog =
+  let () = x_ninfo_pp "TODO : find_all_num_trailer _nn in iprog and avoid those numbers (to solve simplify/ex3a-app-neq.ss)" no_pos in
+  let proc_list = List.filter (fun proc ->
+      proc.proc_is_main
+  ) iprog.prog_proc_decls in
+  let body_list = List.map (fun proc -> proc.proc_body) (List.filter (fun proc -> proc.proc_is_main) iprog.prog_proc_decls) in
+  let id_list = List.fold_left (fun acc body ->
+      let () = x_ninfo_hp (add_str "acc" (pr_list pr_id)) acc no_pos in
+      acc@(find_all_num_trailer_exp body)
+  ) [] body_list in
+  (* use fold_exp_args .. *)
+  id_list

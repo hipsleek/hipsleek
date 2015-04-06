@@ -2,39 +2,35 @@
 
 /* representation of a node */
 data node {
-	int val; 
-	node next;	
+  int val;
+  node next;
 }
 
 /* view for a singly linked list */
 
+ll<S> == self = null & S = {}
+  or self::node<v, q> * q::ll<S1> & S = union(S1, {v});
 
-
-ll<S> == self = null & S = {} 
-	or self::node<v, q> * q::ll<S1> & S = union(S1, {v});
-
-	
 /*ll2<n, S> == self=null & n=0 & S={}
 	or self::node<v, r> * r::ll2<m, S1> & n=m+1 & S=union(S1, {v});*/
 
 /* append two singly linked lists */
 void append(node x, node y)
-	requires x::ll<S1> * y::ll<S2> & x != null
-	ensures x::ll<S> & S = union(S1, S2);
-
+  requires x::ll<S1> * y::ll<S2> & x != null
+  ensures x::ll<S> & S = union(S1, S2);
 {
    if (x.next==null)
-    {      
+    {
       x.next = y;
       //dprint;
       //assume false;
     }
-	else
-   {
-    //assume false;
-		append(x.next, y);
-                dprint;
-    }
+   else
+     {
+       //assume false;
+       append(x.next, y);
+       dprint;
+     }
 }
 
 /*
@@ -93,6 +89,39 @@ Successful States:
  & S1=union(S1_1535,{v_1519}) & x'=x & y'=y & x!=null 
  & q_1520!=null 
  &{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+
+Successful States:
+[
+ Label: [(,1 ); (,2 )]
+ State:
+(exists S_1541: 
+  x'::node<v_1519,q_1520> * q_1520::ll{}<S_1541>
+  &  S_1541=union(S1_1535,S2_1536) 
+  & S2_1536=S2 & S1_1535=S1_1521 
+  & S1=union(S1_1521,{v_1519}) 
+  & x'=x & y'=y & x!=null & q_1520!=null & !(v_bool_22_1478')&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint after: ex2-app-bags.ss:32: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,1 ); (,2 )])]
+
+Successful States:
+[
+ Label: [(,1 ); (,2 )]
+ State:x'::node<v_1519,q_1520> * q_1520::ll{}<S_1541>
+  &y=y' & x=x' & x'!=null & q_1520!=null 
+  & S_1541=union(S1_1542,S2) & S1=union(S1_1542,{v_1519})
+ &{FLOW,(4,5)=__norm#E}[]
+
+ Why isn't exists S_1541 renamed?
+
+ Why is there a fresh S1_1542? when there is no need
+ to provide a fresh name.
+
+
 
  ]
 

@@ -276,7 +276,6 @@ and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         (*added to support fractional splitting of data nodes*)
                         h_formula_data_origins : ident list;
                         h_formula_data_original : bool;
-                        (*h_formula_data_abstract_type : CP.spec_var option;  asankhs: keep track of the mathematical object that is associated with this points to *)
                         h_formula_data_arguments : CP.spec_var list;
                         h_formula_data_holes : int list; (* An Hoa : list of fields not to be considered for partial structures *) (*store positions*)
                         h_formula_data_label : formula_label option;
@@ -2927,7 +2926,7 @@ and h_fv_x (h : h_formula) : CP.spec_var list = match h with
                h_formula_conjstar_pos = pos})
   | ConjConj ({h_formula_conjconj_h1 = h1;
                h_formula_conjconj_h2 = h2;
-               h_formula_conjconj_pos = pos}) -> CP.remove_dups_svl_stable (h_fv_x h1 @ h_fv_x h2)
+               h_formula_conjconj_pos = pos}) -> Gen.BList.remove_dups_eq (=) (h_fv_x h1 @ h_fv_x h2)
   | Phase ({h_formula_phase_rd = h1;
             h_formula_phase_rw = h2;
             h_formula_phase_pos = pos}) -> Gen.BList.remove_dups_eq (=) (h_fv_x h1 @ h_fv_x h2)
@@ -10112,17 +10111,17 @@ let get_may_error_from_ctx cs =
 (*   Debug.no_1 "get_may_error_from_ctx" pr1 (pr_option pr2) *)
 (*       (fun _ -> get_may_error_from_ctx cs) cs *)
 
+let rec is_ctx_error ctx=
+  match ctx with
+  | Ctx es -> not (es.es_final_error = None)
+  | OCtx (c1, c2) -> is_ctx_error c1 || is_ctx_error c2
+
 let isFailCtx_gen cl =
-  let rec get_final_error ctx=
-    match ctx with
-    | Ctx es -> not (es.es_final_error = None)
-    | OCtx (c1, c2) -> get_final_error c1 || get_final_error c2
-  in
   match cl with
   | FailCtx _ -> true
   | SuccCtx cs -> if cs = [] then true else
       (* ((get_must_error_from_ctx cs) !=None) || ((get_may_error_from_ctx cs) !=None) *)
-      List.exists (fun ctx -> get_final_error ctx) cs
+      List.exists (fun ctx -> is_ctx_error ctx) cs
 
 let get_final_error cl=
   let rec get_final_error ctx=
@@ -11547,7 +11546,9 @@ let isSuccessPartialCtx_new (fs,succ_brs) =
   let is_succ = List.for_all isSuccessBranchFail fs in
   if not !Globals.enable_error_as_exc || not is_succ then is_succ else
     (* all succ branch should not subsume must, may flows *)
-    List.for_all (fun (_,_, oft) -> oft = None) succ_brs
+    succ_brs != [] && List.for_all (fun (_, _, oft) ->
+        oft = None
+    ) succ_brs
 
 let isSuccessFailescCtx (fs,_,_) =
   if (Gen.is_empty fs) then true else false
@@ -12374,7 +12375,8 @@ let split_star_conjunctions (f:h_formula): (h_formula list) =
   let rec helper f = 
     match f with
     | Star({h_formula_star_h1 = h1;
-            h_formula_star_h2 = h2;}) ->
+            h_formula_star_h2 = h2;
+            h_formula_star_pos = pos;}) ->
       let res1 = helper h1 in
       let res2 = helper h2 in
       (res1@res2)
@@ -18019,6 +18021,7 @@ let rec contains_starminus (f:h_formula) : bool =
               h_formula_conjconj_pos = pos})-> (contains_starminus h1) || (contains_starminus h2)
   | StarMinus _ -> true
   | _ -> false
+
 let rec is_inf_tnt_struc_formula f =
   match f with 
   | EList el -> List.exists (fun (_, f) -> is_inf_tnt_struc_formula f) el 

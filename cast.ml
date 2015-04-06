@@ -2398,7 +2398,7 @@ let rec add_term_nums_prog (cp: prog_decl) : prog_decl =
       ) mutual_grps
     in
     let () = x_dinfo_hp (add_str "Mutual Grps with Phases" 
-                           (pr_list (string_of_int))) (stk_scc_with_phases # get_stk) no_pos in
+                                   (pr_list (string_of_int))) (stk_scc_with_phases # get_stk) no_pos in
     let () = x_dinfo_hp (add_str "Mutual Grps" (pr_list (pr_pair string_of_int (pr_list (fun p -> p.proc_name))))) mutual_grps no_pos in
     let () = x_dinfo_hp (add_str "Phase Vars Added" (pr_list (pr_list !P.print_sv))) pvs no_pos in
     let pvl = Gen.BList.remove_dups_eq P.eq_spec_var 

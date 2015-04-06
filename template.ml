@@ -103,7 +103,7 @@ let collect_templ_assume_conj_rhs (es: CF.entail_state) (ante: formula) (cons: f
 
 let simplify_templ_ante (ante: formula) =
   let ante_l = split_disjunctions_deep ante in
-  List.map (fun f -> snd (elim_exists_with_fresh_vars f)) ante_l
+  List.map (fun f -> snd (x_add_1 elim_exists_with_fresh_vars f)) ante_l
 
 let simplify_templ_ante (ante: formula) =
   let pr = !print_formula in

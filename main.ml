@@ -153,7 +153,7 @@ let rec process_intermediate_prims prims_list =
   match prims_list with
   | [] -> []
   | hd::tl ->
-    let iprims = Globalvars.trans_global_to_param hd in
+    let iprims = x_add_1 Globalvars.trans_global_to_param hd in
     let iprims = Iast.label_procs_prog iprims false in
     iprims :: (process_intermediate_prims tl)
 
@@ -480,8 +480,13 @@ let process_source_full source =
         | None -> acc | Some pd -> acc @ [(id, pd)]) Iast.tnt_prim_proc_tbl [] in
   let tnt_prim_proc_decls = snd (List.split tnt_prim_proc_decls) in
   let prog = { prog with Iast.prog_proc_decls = prog.Iast.prog_proc_decls @ tnt_prim_proc_decls; } in
-  let intermediate_prog = Globalvars.trans_global_to_param prog in
-
+  let intermediate_prog = x_add_1 Globalvars.trans_global_to_param prog in
+  let tnl = Iast.find_all_num_trailer prog in
+  let tnl = Gen.BList.remove_dups_eq (fun a b -> a = b) tnl in
+  let tnl = List.sort String.compare tnl in
+  let () = Globals.trailer_num_list := tnl in
+  let () = x_ninfo_hp (add_str "trailer_num_list" (pr_list pr_id)) !Globals.trailer_num_list no_pos in
+  (* let () = print_endline "hello" in *)
   (* let () = print_endline_quiet ("process_source_full: before pre_process_of_iprog" ^(Iprinter.string_of_program intermediate_prog)) in *)
   (* let () = print_endline_quiet ("== gvdecls 2 length = " ^ (string_of_int (List.length intermediate_prog.Iast.prog_global_var_decls))) in *)
   let intermediate_prog = IastUtil.pre_process_of_iprog iprims intermediate_prog in
@@ -931,7 +936,7 @@ let process_source_full_after_parser source (prog, prims_list) =
   (* let _= List.map (fun x-> print_endline_quiet ("Bachle: iprims "^x.Iast.proc_name)) iprims in *)
   (* let () = print_endline_quiet ("process_source_full: before Globalvars.trans_global_to_param") in *)
   (* let () = print_endline_quiet (Iprinter.string_of_program prog) in *)
-  let intermediate_prog = Globalvars.trans_global_to_param prog in
+  let intermediate_prog = x_add_1 Globalvars.trans_global_to_param prog in
   (* let () = print_endline_quiet ("process_source_full: before pre_process_of_iprog") in *)
   (* let () = print_endline_quiet (Iprinter.string_of_program intermediate_prog) in *)
   let intermediate_prog =IastUtil.pre_process_of_iprog iprims intermediate_prog in
@@ -1133,7 +1138,7 @@ let pre_main () =
       print_string "Source file(s) not specified\n";
     List.map ( fun x-> let _= print_endline_quiet ("SOURCE: "^x) in process_source_full_parse_only x) !Globals.source_files
 
-let loop_cmd parsed_content = 
+let loop_cmd parsed_content =
   let todo_unk = List.map2 (fun s t -> process_source_full_after_parser s t) !Globals.source_files parsed_content in
   ()
 
@@ -1148,7 +1153,7 @@ let finalize_bug () =
      let () = x_binfo_pp "WARNING : Logging not done on finalize" no_pos in ());
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ()
 
-let old_main () = 
+let old_main () =
   try
     main1 ();
     (* let () =  *)

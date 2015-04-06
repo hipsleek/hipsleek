@@ -59,8 +59,10 @@ let set_frontend fe_str = match fe_str  with
 (* arguments/flags that might be used both by sleek and hip *)
 let common_arguments = [
   ("--sctx", Arg.Set Typechecker.simplify_context, "Simplify the context before each execution in symbolic execution."); (* An Hoa *)
-  (*("--sdp", Arg.Set Cprinter.simplify_dprint,
-    "Simplify the entail state before printing the dprint state."); (* An Hoa *) *)
+  ("--sdp", Arg.Set Globals.simplify_dprint,
+    "Simplify the entail state before printing the dprint state."); (* An Hoa *)
+  ("--dis-sdp", Arg.Clear Globals.simplify_dprint,
+    "Disable Simplify the entail state before printing the dprint state."); (* An Hoa *)
   ("-wpf", Arg.Set Globals.print_proof,
    "Print all the verification conditions, the input to external prover and its output.");
   (* ("--ufdp", Arg.Set Solver.unfold_duplicated_pointers, *)
