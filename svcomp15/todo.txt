@@ -1,3 +1,39 @@
+Heap Manipulation / Dynamic Data Structures
+Descriptions: heap-manipulation, list-properties, ldv-regression, ddv-machzwd
+
+heap-manipulation/*_false-unreach-call*.i
+heap-manipulation/*_true-unreach-call*.i
+list-properties/*_false-unreach-call*.i
+list-properties/*_true-unreach-call*.i
+
+ldv-regression/*_false-unreach-call*.i
+ldv-regression/*_true-unreach-call*.i
+ddv-machzwd/*_false-unreach-call*.i
+ddv-machzwd/*_true-unreach-call*.i
+
+ Memory Safety
+memsafety, memsafety-ext
+
+memsafety/*_false-valid-deref*.i
+memsafety/*_false-valid-free*.i
+memsafety/*_false-valid-memtrack*.i
+memsafety/*_true-valid-memsafety*.i
+memsafety-ext/*_true-valid-memsafety*.i
+list-ext-properties/*_false-valid-deref*.i
+list-ext-properties/*_false-valid-free*.i
+list-ext-properties/*_false-valid-memtrack*.i
+list-ext-properties/*_true-valid-memsafety*.i
+memory-alloca/*_false-valid-deref*.i
+memory-alloca/*_false-valid-free*.i
+memory-alloca/*_false-valid-memtrack*.i
+memory-alloca/*_true-valid-memsafety*.i
+memory-unsafe/*_false-valid-deref*.i
+memory-unsafe/*_false-valid-free*.i
+memory-unsafe/*_false-valid-memtrack*.i
+memory-unsafe/*_true-valid-memsafety*.i
+
+
+
 #ex1-200204.c (false-memtrack)
 
 
