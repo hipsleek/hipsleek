@@ -3537,6 +3537,7 @@ let find_all_num_trailer_exp e =
               try
                 let c = String.rindex id '_' in
                 let trail = String.sub id (c+1) (l-c-1) in
+                let () = x_ninfo_pp ("trail: " ^ trail) no_pos in
                 let (_:int64) = Int64.of_string trail in
                 trail::ac
               with _ -> ac
@@ -3567,7 +3568,7 @@ let find_all_num_trailer iprog =
   ) iprog.prog_proc_decls in
   let body_list = List.map (fun proc -> proc.proc_body) (List.filter (fun proc -> proc.proc_is_main) iprog.prog_proc_decls) in
   let id_list = List.fold_left (fun acc body ->
-      let () = x_binfo_hp (add_str "acc" (pr_list pr_id)) acc no_pos in
+      let () = x_ninfo_hp (add_str "acc" (pr_list pr_id)) acc no_pos in
       acc@(find_all_num_trailer_exp body)
   ) [] body_list in
   (* use fold_exp_args .. *)

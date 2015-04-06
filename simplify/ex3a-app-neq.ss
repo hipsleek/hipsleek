@@ -14,6 +14,8 @@ void foo(node xxx, node yyyy)
 {
   // dprint;
 	node xxx = xxx.next;
+        node zzz_a = xxx;
+        node yyy_19 = xxx;
 	bool xxx_18 = xxx != yyyy;
 	if (xxx_18) {
                 dprint;

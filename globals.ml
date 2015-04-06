@@ -1738,7 +1738,9 @@ let eq_formula_label (l1:formula_label) (l2:formula_label) : bool = fst(l1)=fst(
 let fresh_int () =
   let rec helper i =
     if List.mem (string_of_int i) !trailer_num_list
-    then helper (i+1)
+    then
+      let () = trailer_num_list := List.tl !trailer_num_list in
+      helper (i+1)
     else i
   in
   seq_number := helper (!seq_number + 1);
