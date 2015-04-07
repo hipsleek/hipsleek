@@ -1256,7 +1256,7 @@ let need_cycle_checkpoint_fold_helper prog lroots lhs rroots rhs=
 
 let need_cycle_checkpoint_fold_x prog ldnode lhs0 rvnode rhs0 reqset=
   if not (!Globals.lemma_syn && is_lem_syn_in_bound() )
-  || (check_separation_unsat rhs0) || (check_separation_unsat lhs0) then -1 else
+     || (check_separation_unsat rhs0) || (check_separation_unsat lhs0) then -1 else
     (* let _, l_reach_dns,l_reach_vns = look_up_reachable_ptrs_w_alias prog lhs [ldnode.h_formula_data_node] 3 in *)
     (* let _, r_reach_dns,r_reach_vns = look_up_reachable_ptrs_w_alias prog rhs [rvnode.h_formula_view_node] 3 in *)
     (* (\* let lnlength = List.length l_reach_dns in *\) *)
@@ -1652,7 +1652,7 @@ let seg_fold_view_br prog ldnode rvnode ante conseq rhs_b=
 
 let need_cycle_checkpoint_unfold_x prog lvnode lhs0 rdnode rhs0 reqset=
   if not (!Globals.lemma_syn && is_lem_syn_in_bound() )
-  || (check_separation_unsat rhs0) || (check_separation_unsat lhs0)  then -1 else
+     || (check_separation_unsat rhs0) || (check_separation_unsat lhs0)  then -1 else
     let rhs1 = subst (reqset) rhs0 in
     let ( _,mix_f,_,_,_,_) = split_components rhs1 in
     let eqs = (MCP.ptr_equations_without_null mix_f) in

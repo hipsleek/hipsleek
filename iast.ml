@@ -862,8 +862,8 @@ let fold_exp (e:exp) (init_arg:'b) (f:'b->exp-> 'a option)  (f_args:'b->exp->'b)
       | Bind b ->
         let r1 = helper n_arg b.exp_bind_body  in r1
       | Barrier _ -> zero
-        (* let e,r = helper n_arg b.exp_barrier_recv  in *)
-        (* (Barrier {b with exp_barrier_recv = e},r) *)
+      (* let e,r = helper n_arg b.exp_barrier_recv  in *)
+      (* (Barrier {b with exp_barrier_recv = e},r) *)
       | Block b ->
         helper n_arg b.exp_block_body
       | CallRecv b ->
@@ -3519,9 +3519,9 @@ let find_all_num_trailer_exp e =
   let comb_f = List.concat in
   let f (ac : ident list) e : ident list option = match e with
     | Assert b ->
-          let l = (Gen.fold_opt (fun (f,_) -> Iformula.struc_hp_fv f) b.exp_assert_asserted_formula)@(Gen.fold_opt Iformula.heap_fv b.exp_assert_assumed_formula) in
-          let ac = List.fold_left add_id ac (List.map fst l) in
-          Some ac
+      let l = (Gen.fold_opt (fun (f,_) -> Iformula.struc_hp_fv f) b.exp_assert_asserted_formula)@(Gen.fold_opt Iformula.heap_fv b.exp_assert_assumed_formula) in
+      let ac = List.fold_left add_id ac (List.map fst l) in
+      Some ac
     | Java _ -> Some ac
     | BoolLit _ -> Some ac
     | Debug _ -> Some ac
@@ -3537,14 +3537,14 @@ let find_all_num_trailer_exp e =
     | This _ -> Some ac
     | Time _ -> Some ac
     | Var b ->
-          let () = x_ninfo_pp ("var_name: " ^ b.exp_var_name) no_pos in
-          (* Some (b.exp_var_name::ac) *)
-          Some ac
+      let () = x_ninfo_pp ("var_name: " ^ b.exp_var_name) no_pos in
+      (* Some (b.exp_var_name::ac) *)
+      Some ac
     | VarDecl b ->
-          let id_list = List.map (fun (a,_,_) -> a) b.exp_var_decl_decls in
-          let () = x_ninfo_hp (add_str "var_names: " (pr_list pr_id)) id_list no_pos in
-          let ac = List.fold_left add_id ac id_list in
-          Some ac
+      let id_list = List.map (fun (a,_,_) -> a) b.exp_var_decl_decls in
+      let () = x_ninfo_hp (add_str "var_names: " (pr_list pr_id)) id_list no_pos in
+      let ac = List.fold_left add_id ac id_list in
+      Some ac
     | Unfold b -> Some (add_id ac (fst b.exp_unfold_var))
     |  _ -> None
   in
@@ -3567,11 +3567,11 @@ let find_all_num_trailer iprog =
   let () = x_ninfo_pp "TODO : find_all_num_trailer _nn in iprog and avoid those numbers (to solve simplify/ex3a-app-neq.ss)" no_pos in
   let proc_list = List.filter (fun proc ->
       proc.proc_is_main
-  ) iprog.prog_proc_decls in
+    ) iprog.prog_proc_decls in
   let body_list = List.map (fun proc -> proc.proc_body) (List.filter (fun proc -> proc.proc_is_main) iprog.prog_proc_decls) in
   let id_list = List.fold_left (fun acc body ->
       let () = x_ninfo_hp (add_str "acc" (pr_list pr_id)) acc no_pos in
       acc@(find_all_num_trailer_exp body)
-  ) [] body_list in
+    ) [] body_list in
   (* use fold_exp_args .. *)
   id_list
