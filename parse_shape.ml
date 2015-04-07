@@ -40,79 +40,79 @@ let parse_lbl x = match x with
 
 
 EXTEND Gram
-GLOBAL: expression summaries summary fml pred preddef ptr lbl id;
-  expression:
+  GLOBAL: expression summaries summary fml pred preddef ptr lbl id;
+expression:
   [ "expression" LEFTA
-    [ x = LIST1 summaries -> x ]
+      [ x = LIST1 summaries -> x ]
   ];
 
-  summaries:
+summaries:
   [ "summaries" LEFTA
-    [ "SUMMARY"; x = summary -> x ]
+      [ "SUMMARY"; x = summary -> x ]
   ];
-  
-  summary:
+
+summary:
   [ "summary" LEFTA
-    [ x = LIST0 fml -> List.fold_left gen_conj (formula_of_heap HEmp loc) x ]
+      [ x = LIST0 fml -> List.fold_left gen_conj (formula_of_heap HEmp loc) x ]
   ];
 
-  fml:
+fml:
   [ "fml" LEFTA
-    [ "{"; x = pred; "}"; ";" -> x
-    | x = ptr; "["; "label"; "="; y=ptr; "]"; ";" -> formula_of_pure_formula (mkEqVar x y loc) loc
-    | x = ptr; "->"; y = ptr; "["; lbl; "]"; ";" -> formula_of_pure_formula (mkEqVar x y loc) loc
-    ]
+      [ "{"; x = pred; "}"; ";" -> x
+                          | x = ptr; "["; "label"; "="; y=ptr; "]"; ";" -> formula_of_pure_formula (mkEqVar x y loc) loc
+                                                                  | x = ptr; "->"; y = ptr; "["; lbl; "]"; ";" -> formula_of_pure_formula (mkEqVar x y loc) loc
+      ]
   ];
 
-  pred:
+pred:
   [ "pred" LEFTA
-    [ x=lbl; ";"; y=preddef; LIST1 preddef -> 
-      let typ,size = parse_lbl x in
-      let heap = mkViewNode y typ [] loc in
-      let pure = match size with
-        | 1 -> mkNeqVar y Cpure.SV.zero (* (SpecVar (Named "", "null", Unprimed)) *) loc
-        | _ -> mkTrue loc
-      in
-      normalize_combine_heap (formula_of_pure_formula pure loc) heap
-    ]
+      [ x=lbl; ";"; y=preddef; LIST1 preddef -> 
+        let typ,size = parse_lbl x in
+        let heap = mkViewNode y typ [] loc in
+        let pure = match size with
+          | 1 -> mkNeqVar y Cpure.SV.zero (* (SpecVar (Named "", "null", Unprimed)) *) loc
+          | _ -> mkTrue loc
+        in
+        normalize_combine_heap (formula_of_pure_formula pure loc) heap
+      ]
   ];
 
-  preddef:
+preddef:
   [ "preddef" LEFTA
-    [ x = ptr; "["; "label"; "="; ptr; "]"; ";" -> x
-    | x = ptr; "->"; ptr; "["; lbl; "]"; ";" -> x
-    ]
+      [ x = ptr; "["; "label"; "="; ptr; "]"; ";" -> x
+                                            | x = ptr; "->"; ptr; "["; lbl; "]"; ";" -> x
+      ]
   ];
 
-  ptr:
+ptr:
   [ "ptr" LEFTA
-    [ x = id -> SpecVar (Named "GenNode", x, Unprimed) ]
+      [ x = id -> SpecVar (Named "GenNode", x, Unprimed) ]
   ];  
 
-  lbl:
+lbl:
   [ "lbl" NONA
-    [ "label"; "="; "hasValue" -> None
-    | "label"; "="; "AuxValue" -> None
-    | "label"; "="; "SLS"; size=INT; "+" -> Some(1,size)
-    | "label"; "="; "["; "+"; INT; "]" -> None
-    ]
+      [ "label"; "="; "hasValue" -> None
+                    | "label"; "="; "AuxValue" -> None
+                                  | "label"; "="; "SLS"; size=INT; "+" -> Some(1,size)
+                                                                 | "label"; "="; "["; "+"; INT; "]" -> None
+      ]
   ];
 
-  id:
+id:
   [ "id" NONA
-    [ x=INT -> x
-    | x=LIDENT -> x
-    | x=UIDENT -> x
-(*    | "CL"; "#"; INT; ":"; x=SELF; "#"; INT -> x*)
-(*    | "#"; x=INT; "["; "size"; "="; INT; "B"; "]" -> x*)
-    | "next"; x=INT -> x
-    | "tl"; x=INT -> x
-    | "data"; x=INT -> x
-    ]
+      [ x=INT -> x
+      | x=LIDENT -> x
+      | x=UIDENT -> x
+      (*    | "CL"; "#"; INT; ":"; x=SELF; "#"; INT -> x*)
+      (*    | "#"; x=INT; "["; "size"; "="; INT; "B"; "]" -> x*)
+      | "next"; x=INT -> x
+              | "tl"; x=INT -> x
+                    | "data"; x=INT -> x
+      ]
   ];
 
 END
-	
+
 let parse_shape s = Gram.parse_string expression (Loc.mk "<string>") s
 
 

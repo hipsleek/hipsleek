@@ -411,29 +411,46 @@ let simplify_branch_context (pt, ctx, fail_type) =
     match ctx with
     | Ctx en -> Ctx {en with
                      es_formula =
-                       let () = x_binfo_hp (add_str "formula" !print_formula) en.es_formula no_pos in
-                       let all_svl = fv en.es_formula in
-                       let () = x_binfo_hp (add_str "all variables" (pr_list !print_sv)) all_svl no_pos in
+                       let () = x_tinfo_hp (add_str "formula" !print_formula) en.es_formula no_pos in
+                       let () = x_tinfo_hp (add_str "renamed_vars" pr_id) (stk_renamed_vars # string_of_no_ln) no_pos in
                        let h,mf,vp,fl,t,a = split_components en.es_formula in
+                       let exists_svl = match en.es_formula with
+                         | Exists ef -> ef.formula_exists_qvars
+                         | _ -> []
+                       in
+                       let free_svl = fv en.es_formula in
                        let curr_svl = stk_vars # get_stk in
-                       let () = x_binfo_hp (add_str "curr variables" (pr_list !print_sv)) curr_svl no_pos in
-                       let bind_svl = h_fv h in
-                       let () = x_binfo_hp (add_str "bind variables" (pr_list !print_sv)) bind_svl no_pos in
-                       let curr_n_bind_svl = Gen.BList.remove_dups_eq Cpure.eq_spec_var (curr_svl@bind_svl) in
-                       let imp_svl = List.filter (fun sv ->
-                           Gen.BList.mem_eq Cpure.eq_spec_var_unp sv curr_n_bind_svl
+                       let heap_svl = h_fv h in
+                       let () = x_tinfo_hp (add_str "exists variables" (pr_list !print_sv)) exists_svl no_pos in
+                       let () = x_tinfo_hp (add_str "free variables" (pr_list !print_sv)) free_svl no_pos in
+                       let () = x_tinfo_hp (add_str "curr variables" (pr_list !print_sv)) curr_svl no_pos in
+                       let () = x_tinfo_hp (add_str "heap variables" (pr_list !print_sv)) heap_svl no_pos in
+                       let all_svl = exists_svl@free_svl in
+                       let imp_svl = curr_svl@heap_svl in
+                       let elim_svl = List.filter (fun sv ->
+                           not (Gen.BList.mem_eq Cpure.eq_spec_var_unp sv imp_svl)
                          ) all_svl in
-                       let () = x_binfo_hp (add_str "important variables" (pr_list !print_sv)) imp_svl no_pos in
-                       let exists_svl = Gen.BList.difference_eq Cpure.eq_spec_var all_svl imp_svl in
-                       let () = x_binfo_hp (add_str "exists variables" (pr_list !print_sv)) exists_svl no_pos in
-                       if (List.length exists_svl = 0)
-                       then en.es_formula
+                       let () = x_tinfo_hp (add_str "elim variables" (pr_list !print_sv)) elim_svl no_pos in
+                       let elim_svl, bag_exists_svl = List.partition (fun sv ->
+                           (Cpure.type_of_spec_var sv = Int) || (Cpure.type_of_spec_var sv = Bool)
+                         ) elim_svl in
+                       let () = x_tinfo_hp (add_str "elim variables" (pr_list !print_sv)) elim_svl no_pos in
+                       let () = x_tinfo_hp (add_str "bag exists variables" (pr_list !print_sv)) bag_exists_svl no_pos in
+                       if (List.length elim_svl = 0)
+                       then
+                         en.es_formula
                        else
-                         let pf = Mcpure.pure_of_mix mf in
-                         let pf1 = Cpure.mkExists exists_svl pf None no_pos in
-                         let pf_simp = !simplify_raw pf1 in
+                         let pf0 = Mcpure.pure_of_mix mf in
+                         let pf1 = Cpure.mkExists elim_svl pf0 None no_pos in
+                         let pf2 = !simplify_raw pf1 in
+                         let pf3 = Cpure.mkExists bag_exists_svl pf2 None no_pos in
+                         let pf_simp = Cpure.elim_exists pf3 in
                          let mf_simp = Mcpure.mix_of_pure pf_simp in
-                         mkBase h mf_simp vp t fl a no_pos
+                         let new_f0 = mkExists exists_svl h mf_simp vp t fl a no_pos in
+                         let () = x_tinfo_hp (add_str "new_f0" !print_formula) new_f0 no_pos in
+                         let new_f = elim_exists new_f0 in
+                         let () = x_tinfo_hp (add_str "new_f" !print_formula) new_f no_pos in
+                         new_f
                     }
     | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
   in (pt, helper ctx, fail_type)

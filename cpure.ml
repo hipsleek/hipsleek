@@ -2509,7 +2509,7 @@ and mkStupid_Or_x f1 f2 lbl pos=
           let l2 = List.assoc branch l2 in
           (branch, mkOr l1 l2 lbl pos)
         with Not_found -> (branch, mkTrue pos)
-        with Not_found -> (branch, mkTrue pos )
+      with Not_found -> (branch, mkTrue pos )
     in
     Label_Pure.norm  (List.map map_fun branches) in
   if (isConstFalse f1) then f2
@@ -2522,7 +2522,7 @@ and mkStupid_Or_x f1 f2 lbl pos=
     | f, AndList l -> AndList (or_branches l [(LO.unlabelled,f)] lbl pos)
     | _ -> Or (f1, f2, lbl ,pos)
 
-and mkStupid_Or f1 f2 lbl pos = Debug.no_2 "mkStupidOr" !print_formula !print_formula !print_formula (fun _ _ -> mkOr_x f1 f2 lbl pos) f1 f2
+and mkStupid_Or f1 f2 lbl pos = Debug.no_2 "pure_mkStupidOr" !print_formula !print_formula !print_formula (fun _ _ -> mkOr_x f1 f2 lbl pos) f1 f2
 
 and mkGtExp (ae1 : exp) (ae2 : exp) pos :formula =
   match (ae1, ae2) with
@@ -5121,10 +5121,10 @@ let filter_var_new_x (f : formula) (keep_slv : spec_var list) : formula =
     | [] -> (res_rele_fs,res_unk_fs,old_keep_svl,incr_keep)
     | f::fs ->
       begin
-        let () = x_tinfo_hp (add_str "svl: "  (!print_svl)) old_keep_svl no_pos in
-        let () = x_tinfo_hp ( add_str "f: "   (!print_formula )) f no_pos in
+        let () = Debug.tinfo_hprint (add_str "svl: "  (!print_svl)) old_keep_svl no_pos in
+        let () = Debug.tinfo_hprint ( add_str "f: "   (!print_formula )) f no_pos in
         let svl = fv f in
-        let () = x_tinfo_hp (add_str "svl f: "  !print_svl ) svl no_pos in
+        let () = Debug.tinfo_hprint (add_str "svl f: "  !print_svl ) svl no_pos in
         let inters = intersect svl old_keep_svl in
         if inters = [] then
           get_new_rele_svl fs old_keep_svl res_rele_fs (res_unk_fs@[f]) incr_keep
@@ -8166,8 +8166,8 @@ module ArithNormalizer = struct
       | Add _ | Subtract _ -> true
       | _ -> false
     in let wrap e =
-      if need_parentheses e then "(" ^ (string_of_exp e) ^ ")"
-      else (string_of_exp e)
+         if need_parentheses e then "(" ^ (string_of_exp e) ^ ")"
+         else (string_of_exp e)
     in
     match e0 with
     | Null _ -> "null"
@@ -9205,7 +9205,7 @@ let rec elim_exists_with_fresh_vars f =
   match f with
   | Exists (v, f1, _, _) -> 
     let SpecVar (t, i, p) = v in
-    let nv = SpecVar (t, fresh_any_name i, p) in
+    let nv = SpecVar (t, fresh_old_name i, p) in
     let l,f = elim_exists_with_fresh_vars (subst [v, nv] f1) in
     nv::l,f
   | BForm _ -> [],f
@@ -9226,6 +9226,10 @@ let rec elim_exists_with_fresh_vars f =
     let l1,f1 = elim_exists_with_fresh_vars f1 in
     l1,Not (f1, fl, loc)
   | Forall _ -> [],f  (* Not skolemization: All x. Ex y. P(x, y) -> All x. P(x, f(x)) *)
+
+let elim_exists_with_fresh_vars f =
+  let pr = !print_formula in
+  Debug.no_1 "elim_exists_with_fresh_vars" pr (pr_pair !print_svl pr) elim_exists_with_fresh_vars f 
 
 (* Slicing: Normalize LHS to DNF *)
 let rec dist_not_inwards f =
@@ -9291,7 +9295,11 @@ let rec dist_and_over_or f =
 
 let trans_dnf f =
   let f = dist_not_inwards f in
-  let lex,f = elim_exists_with_fresh_vars f in
+  let () = x_tinfo_hp (add_str "before simplify" !print_formula) f no_pos in
+  let f = !simplify f in
+  let () = x_tinfo_hp (add_str "after simplify" !print_formula) f no_pos in
+  let lex,f = x_add_1 elim_exists_with_fresh_vars f in
+  let () = x_tinfo_hp (add_str "after elim" !print_formula) f no_pos in
   let f = dist_and_over_or f in
   lex,f
 
@@ -10053,7 +10061,7 @@ let is_rel_in_vars (vl:spec_var list) (f:formula) =
   | Some n ->
     if mem n vl then true else false
   | _ ->
-    (* let () = x_binfo_pp "2None" no_pos in *)
+    (* let () = Debug.binfo_pprint "2None" no_pos in *)
     false
 
 let is_rel_in_vars (vl:spec_var list) (f:formula) =
@@ -14142,10 +14150,10 @@ let check_non_determinism_x (var_name: ident) (f: formula) =
         let svs = bfv b in
         let common_svs = intersect_svl svs !related_vars in
         if (List.length common_svs > 0) then (
-          (* x_binfo_hp (add_str "common_svs" (pr_list !print_sv)) common_svs no_pos; *)
-          (* x_binfo_hp (add_str "svs" (pr_list !print_sv)) svs no_pos; *)
+          (* Debug.binfo_hprint (add_str "common_svs" (pr_list !print_sv)) common_svs no_pos; *)
+          (* Debug.binfo_hprint (add_str "svs" (pr_list !print_sv)) svs no_pos; *)
           related_vars := remove_dups_svl (!related_vars @ svs);
-          (* x_binfo_hp (add_str "related_vars" (pr_list !print_sv)) !related_vars no_pos; *)
+          (* Debug.binfo_hprint (add_str "related_vars" (pr_list !print_sv)) !related_vars no_pos; *)
         );
         None
       ) in

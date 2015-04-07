@@ -742,7 +742,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       (* Debug.info_hprint (add_str "fv post" !CP.print_svl) ovars no_pos; *)
       (* Debug.info_hprint (add_str "out vars" !CP.print_svl) ov no_pos; *)
       if ((Immutable.is_lend post_cond) && not(!Globals.allow_field_ann))
-      || (!Globals.allow_field_ann && Mem.is_lend post_cond) then
+         || (!Globals.allow_field_ann && Mem.is_lend post_cond) then
         Error.report_error {Error.error_loc = pos_spec; Error.error_text =  ("The postcondition cannot contain @L heap predicates/data nodes/field annotations\n")}
       else
         let () = post_pos#set (CF.pos_of_formula post_cond) in
@@ -2025,10 +2025,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
              (print_string_quiet ("\ndprint:"^pos.start_pos.Lexing.pos_fname
                                   ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^" empty context"))
            else
-             let tmp1 = "\ndprint before: " ^ pos.start_pos.Lexing.pos_fname
-                        ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str1 ^ "\n" in
+             let tmp1 = 
+               if !Globals.simplify_dprint then ""
+               else "\ndprint(orig): " ^ pos.start_pos.Lexing.pos_fname
+                    ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str1 ^ "\n" in
              let tmp1 = if (previous_failure ()) then ("failesc context: "^tmp1) else tmp1 in
-             let tmp2 = "\ndprint after: " ^ pos.start_pos.Lexing.pos_fname
+             let tmp2 = "\ndprint(simpl): " ^ pos.start_pos.Lexing.pos_fname
                         ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str2 ^ "\n" in
              let tmp2 = if (previous_failure ()) then ("failesc context: "^tmp2) else tmp2 in
              print_string_quiet (tmp1 ^ tmp2));
