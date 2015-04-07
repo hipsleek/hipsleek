@@ -431,6 +431,7 @@ let process_source_full source =
              "  Parameter star : formula -> formula -> formula.\n"^
              "  Parameter and : formula -> formula -> formula.\n"^
              "  Parameter imp : formula -> formula -> formula.\n"^
+             "  Parameter ext : (node -> formula) -> formula.\n"^
              "  Parameter not : formula -> formula.\n"^
              "  Parameter eq : node -> node -> formula.\n"^
                (if !Globals.allow_ramify then 
@@ -461,7 +462,21 @@ let process_source_full source =
                      ^" "^(CP.exp_to_name_spec_var e2)^")"
                  | CP.Neq(e1,e2,_) ->"(neq "^(CP.exp_to_name_spec_var e1)
                      ^" "^(CP.exp_to_name_spec_var e2)^")"
-                 | CP.RelForm(sv,elist,_) -> "("^(CP.name_of_spec_var sv)^" "^
+                 | CP.RelForm(sv,elist,_) -> 
+                     let anon_vars = List.filter 
+                       (fun e -> if (CP.is_var e) then (CP.is_anon_var (CP.exp_to_spec_var e))
+                         else false) elist in
+                     if List.length anon_vars > 0 
+                     then let inner_str = "("^(CP.name_of_spec_var sv)^" "^
+                     (String.concat " " (List.map (fun e ->
+                     CP.exp_to_name_spec_var e) elist))^")" in
+                     let exists_str = String.concat " "
+                       (List.map (fun v -> "(ext (fun "^
+                         (CP.name_of_spec_var (CP.exp_to_spec_var v))^" => " ) anon_vars) in
+                     exists_str^inner_str^(String.concat "" (List.map (fun v ->
+                     "))") anon_vars))
+                     else
+                     "("^(CP.name_of_spec_var sv)^" "^
                      (String.concat " " (List.map (fun e ->
                      CP.exp_to_name_spec_var e) elist))^")"
                  (*| CP.BConst(b,_) -> if b then "true" else "false"*)
