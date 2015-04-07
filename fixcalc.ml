@@ -904,7 +904,7 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
   in
 
   let output_of_sleek = if bottom_up then ("logs/fixcalc"^(* (fix_num #str_get_next)^ *)".inf") else "fixcalc.td" in
-  let () = DD.ninfo_pprint ("fixcalc file name: " ^ output_of_sleek) no_pos in
+  let () = DD.info_pprint ("fixcalc file name: " ^ output_of_sleek) no_pos in
   let oc = open_out output_of_sleek in
   Printf.fprintf oc "%s" input_fixcalc;
   flush oc;
@@ -1306,6 +1306,8 @@ let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
     true_const @ (* non_rec_defs @ *) (compute_fixpoint_aux rel_defs ante_vars bottom_up)
 
 let compute_fixpoint_x input_pairs ante_vars specs bottom_up =
+  DD.ninfo_pprint ("input_pairs: " ^ (pr_list
+                                            (pr_pair !CP.print_formula !CP.print_formula) input_pairs)) no_pos;
   let is_bag_cnt rel = List.exists CP.is_bag_typ (CP.fv rel) in
   let input_pairs_bag, input_pairs_num =
     List.partition (fun (p,r) -> is_bag_cnt r) input_pairs

@@ -3,36 +3,34 @@
 /* } */
 
 void __error()
-  requires emp & true
-  ensures emp & true & flow __Error;
+  requires  true
+  ensures  true & flow __Error;
 
-relation P(int a, int b).
-  relation Q(int a, int b).
+relation P(int a).
+relation Q(int a).
 
-  int f(int n, ref int fl)
+void f(int n)
 //  infer [@flow,@post_n]
 /*  case { */
 /*   n<3 -> ensures emp & true; */
 /*   n>=3 -> ensures emp & true & flow __Error; */
 /* } */
-  infer [P,Q] requires P(n,fl) & fl=0 ensures Q(n,fl') & fl'=1;
+  infer [P] requires P(n) ensures true & flow __Error;
 //requires true ensures true & flow __norm;
 {
   //dprint;
   if (n<3){
     dprint;
-    return 0;
+    return;
   }
   else {
     n--;
     //  dprint;
-    f(n,fl);
+    f(n);
     //raise new Error(-1);
      dprint;
      //  assert false;
-       fl=1;
-       return 1;
-    //__error();
+    __error();
     // dprint;
   }
 }
