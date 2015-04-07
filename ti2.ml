@@ -319,8 +319,10 @@ let add_conds_to_cex conds cex =
   | Some cex -> Some ({ cex with CP.tcex_trace = assume_conds @ cex.CP.tcex_trace })
 
 let elim_nondet_vars f = 
-  let params = List.find_all (fun v -> not (is_nondet_var v)) (CP.fv f) in
-  simplify 12 f params
+  let fv_f = CP.fv f in
+  let nondet_vars = List.find_all is_nondet_var fv_f in 
+  let params = diff fv_f nondet_vars in
+  simplify 12 f params, nondet_vars
 
 let remove_nondet_vars svl = 
   List.filter (fun v -> not (is_nondet_var v)) svl
@@ -334,7 +336,7 @@ let merge_nondet_cases cases =
       match sp with
       | Sol (CP.Loop cex, []) -> 
         let loop_cond = pairwisecheck (CP.join_disjunctions (List.concat (List.map fst flatten_cases))) in
-        let loop_cond = elim_nondet_vars loop_cond in
+        let loop_cond, _ = elim_nondet_vars loop_cond in
         [(loop_cond, Sol (CP.Loop (add_conds_to_cex conds cex), []))]
       | _ -> report_error no_pos "[TNT Inference] merge_nondet_cases expects a Loop TNT spec"
     else if (List.for_all (fun (_, sp) -> is_Term sp) flatten_cases) then
@@ -346,7 +348,7 @@ let merge_nondet_cases cases =
         (match loop_sp with
         | Sol (CP.Loop cex, []) ->
           let cond = pairwisecheck (CP.join_disjunctions conds) in
-          let mayloop_cond = elim_nondet_vars cond in
+          let mayloop_cond, _ = elim_nondet_vars cond in
           [(mayloop_cond, Sol (CP.MayLoop (add_conds_to_cex conds cex), []))]
         | _ -> report_error no_pos "[TNT Inference] merge_nondet_cases expects a Loop TNT spec"
         ) 
@@ -356,13 +358,13 @@ let merge_nondet_cases cases =
           (match mayloop_sp with
           | Sol (CP.MayLoop cex, []) ->
             let cond = pairwisecheck (CP.join_disjunctions conds) in
-            let mayloop_cond = elim_nondet_vars cond in
+            let mayloop_cond, _ = elim_nondet_vars cond in
             [(mayloop_cond, Sol (CP.MayLoop (add_conds_to_cex conds cex), []))]
           | _ -> report_error no_pos "[TNT Inference] merge_nondet_cases expects a MayLoop TNT spec"
           )
         with _ ->
           let mayloop_cond = pairwisecheck (CP.join_disjunctions (List.concat (List.map fst flatten_cases))) in
-          let mayloop_cond = elim_nondet_vars mayloop_cond in
+          let mayloop_cond, _ = elim_nondet_vars mayloop_cond in
           [(mayloop_cond, Sol (CP.MayLoop None, []))]
 
 let rec norm_nondet_tnt_case_spec spec = 
@@ -404,10 +406,15 @@ let rec flatten_case_tnt_spec f =
     Cases ncases
   | _ -> f
 
-let add_cex_by_cond for_loop turels c cex = 
+let add_cex_by_cond for_loop turels c cex =
   let rec has_feasible_cex c turel =
+    (* Due to over-approximation, the context call_ctx of turel *)
+    (* might not be reachable from c though SAT(c /\ call_ctx)  *)
     (is_sat (mkAnd c turel.call_ctx)) &&
-    not (is_None (CP.cex_of_term_ann turel.termu_rhs)) 
+    not (is_None (CP.cex_of_term_ann turel.termu_rhs)) &&
+    (if not for_loop && CP.is_Loop turel.termu_rhs then
+      (is_nondet_cond c) || (is_nondet_cond turel.call_ctx) 
+    else true)
   in
   try
     let turel = List.find (has_feasible_cex c) turels in
@@ -418,7 +425,7 @@ let add_cex_by_cond for_loop turels c cex =
     | None -> if for_loop then Some ({ CP.tcex_trace = [CP.TCall cpos] }) else mcex
     | Some t -> Some ({ t with CP.tcex_trace = (CP.TCall cpos)::t.CP.tcex_trace })
     end
-  with Not_found -> 
+  with Not_found ->
     if for_loop then
       try
         let turel = List.find (fun tur -> is_sat (mkAnd c tur.call_ctx)) turels in
@@ -426,7 +433,7 @@ let add_cex_by_cond for_loop turels c cex =
         begin match cex with
         | None -> Some ({ CP.tcex_trace = [CP.TCall cpos] })
         | Some t -> Some ({ t with CP.tcex_trace = (CP.TCall cpos)::t.CP.tcex_trace })
-        end 
+        end
       with Not_found -> cex
     else cex
 

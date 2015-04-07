@@ -10,7 +10,7 @@ open Gen
 open Ti2
 open Ti3
 
-(*******************************)
+(*******************************)   
 (* Temporal Relation at Return *)
 (*******************************)
 (* let ret_trel_stk: ret_trel Gen.stack = new Gen.stack *)
@@ -301,17 +301,18 @@ let solve_turel_one_unknown_scc prog trrels tg scc =
           let nd_trrel = List.find (fun rel -> CP.has_nondet_cond rel.ret_ctx) trrels in
           let nd_pos = nd_trrel.termr_pos in
           update_ann scc (subst (CP.MayLoop (Some { CP.tcex_trace = [CP.TCall nd_pos] }), [])) (* Loop with nondet *)
-        with _ -> update_ann scc (subst (CP.Loop None, [])) (* Loop without nondet *)
+        with _ -> 
+          (* update_ann scc (subst (CP.Loop None, [])) (* Loop without nondet *) *)
+          proving_non_termination_scc prog trrels tg scc
 
-      (* proving_non_termination_scc prog trrels tg scc *)
-      (* match outside_scc_succ with                                                      *)
-      (* | [] ->                                                                          *)
-      (*   if is_acyclic_scc tg scc                                                       *)
-      (*   (* Term with phase number or MayLoop *)                                        *)
-      (*   then update_ann scc (subst (CP.Term, [CP.mkIConst (scc_fresh_int ()) no_pos])) *)
-      (*   else                                                                           *)
-      (*     update_ann scc (subst (CP.Loop None, [])) (* Loop *)                         *)
-      (* | s::_ -> update_ann scc (subst (CP.Loop None, [])) (* Loop *)                   *)
+    (* match outside_scc_succ with                                                      *)
+    (* | [] ->                                                                          *)
+    (*   if is_acyclic_scc tg scc                                                       *)
+    (*   (* Term with phase number or MayLoop *)                                        *)
+    (*   then update_ann scc (subst (CP.Term, [CP.mkIConst (scc_fresh_int ()) no_pos])) *)
+    (*   else                                                                           *)
+    (*     update_ann scc (subst (CP.Loop None, [])) (* Loop *)                         *)
+    (* | s::_ -> update_ann scc (subst (CP.Loop None, [])) (* Loop *)                   *)
       
     else if List.for_all (fun (_, v) -> CP.is_Term v) outside_scc_succ then
       if is_acyclic_scc tg scc 
