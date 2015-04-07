@@ -11,7 +11,12 @@ extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 
 extern int __VERIFIER_nondet_int(void);
 
-int ackermann(int m, int n) {
+int ackermann(int m, int n)
+/*@
+  infer[@pre_n,@post_n]
+  requires true ensures true;
+ */
+ {
     if (m==0) {
         return n+1;
     }

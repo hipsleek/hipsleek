@@ -12,10 +12,10 @@ int id(int x)
   x<0 -> requires Loop ensures false;
   }
  */
-/* infer[P1,P3,P2]
-   requires P3(x) ensures emp & P1(x,res) & res=3 or P2(x,res);
+/*@ infer[P1,P3,P2]
+   requires P3(x) ensures emp & P1(x,res) & res=3 or emp & P2(x,res) & res<3;
  */
-/*@ infer[@pre_n,@post_n]
+/* infer[@pre_n,@post_n]
   requires  emp & true
   ensures emp & true;
  */
