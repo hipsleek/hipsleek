@@ -74,7 +74,7 @@ let get_cond_templ_args ctx vs =
       (Gen.BList.difference_eq eq_spec_var (fv ctx) vs) 
       ctx None (pos_of_formula ctx) in 
   let pr_weak, pr_strong = drop_complex_ops in
-  Omega.simplify_ops pr_weak pr_strong exists_ctx
+  x_add Omega.simplify_ops pr_weak pr_strong exists_ctx
 
 (* Get the condition of the template's *)
 (* arguments in the current context *)

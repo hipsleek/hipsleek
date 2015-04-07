@@ -494,7 +494,7 @@ let is_sat_ops_x pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
     (* let pe0 = drop_varperm_formula pe in *)
     let pe =
       if !Globals.array_translate
-      then Translate_out_array_in_cpure_formula.drop_array_formula pe
+      then Trans_arr.drop_array_formula pe
       else pe
     in
     let svl0 = Cpure.fv pe in
@@ -830,7 +830,7 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
      before"^(!print_formula pe)) in *)
   begin
 
-    (* let pe = Translate_out_array_in_cpure_formula.translate_out_array_in_one_formula_full pe in *)
+    (* let pe = Trans_arr.translate_out_array_in_one_formula_full pe in *)
     let svl0 = Cpure.fv pe in	
     let svl,fr_svl = mkSpecVarList 0 svl0 in
     let ss1 = List.combine svl fr_svl in
@@ -930,7 +930,7 @@ let simplify (pe : formula) : formula =
   else
     (* let res_memo = simplify_ops pr_w pr_s f_memo in *)
     (* restore_memo_formula subs bvars res_memo *)
-    simplify_ops pr_w pr_s pe
+    x_add simplify_ops pr_w pr_s pe
 
 let simplify (pe : formula) : formula =
   let pf = !print_pure in
@@ -1061,7 +1061,7 @@ let pairwisecheck (pe : formula) : formula =
     (* let pe = drop_varperm_formula pe in *)
 
     (* translate out and drop array *)
-    (* let pe = Translate_out_array_in_cpure_formula.new_translate_out_array_in_one_formula_split pe in *)
+    (* let pe = Trans_arr.new_translate_out_array_in_one_formula_split pe in *)
 
     match (omega_of_formula_old 21 pe) with
     | None -> pe
@@ -1084,7 +1084,7 @@ let pairwisecheck (pe : formula) : formula =
 
 (* ZH *)
 let pairwisecheck (pe:formula) : formula =
-  Translate_out_array_in_cpure_formula.split_and_combine pairwisecheck Translate_out_array_in_cpure_formula.can_be_simplify pe
+  Trans_arr.split_and_combine pairwisecheck Trans_arr.can_be_simplify pe
 ;;
 
 let pairwisecheck (pe : formula) : formula =

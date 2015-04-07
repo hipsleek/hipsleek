@@ -1442,7 +1442,7 @@ let extract_translate_scheme
         | _ -> failwith "extract_translate_scheme: Fail to deal with multi-dimensional array"
       end
     | _ ->
-      failwith ("Translate_out_array_in_cpure_formula.extract_translate_scheme: "^(ArithNormalizer.string_of_exp e)^" To Be Implemented")
+      failwith ("Trans_arr.extract_translate_scheme: "^(ArithNormalizer.string_of_exp e)^" To Be Implemented")
   in
   let helper_b_formula
       ((p,ba):b_formula) (nfsv:spec_var option)=
@@ -1663,7 +1663,7 @@ let rec get_array_element_in_f
       then [e]
       else []
     | _ ->
-      failwith ("Translate_out_array_in_cpure_formula.extract_translate_scheme: "^(ArithNormalizer.string_of_exp e)^" To Be Implemented")
+      failwith ("Trans_arr.extract_translate_scheme: "^(ArithNormalizer.string_of_exp e)^" To Be Implemented")
   in
   let get_array_element_in_b_formula
       ((p,ba):b_formula) (sv:spec_var):(exp list) =
@@ -2165,7 +2165,7 @@ let new_translate_out_array_in_one_formula_split
 (*       | Div (e1,e2,loc) -> *)
 (*             Div (helper_exp e1 index new_index, helper_exp e2 index new_index,loc) *)
 (*       | _ -> *)
-(*             failwith "Translate_out_array_in_cpure_formula.produce_new_index_predicate: To Be Implemented" *)
+(*             failwith "Trans_arr.produce_new_index_predicate: To Be Implemented" *)
 (*   in *)
 (*   let helper_b_formula *)
 (*         ((p,ba):b_formula) (index:exp) (new_index:exp):b_formula = *)
@@ -2266,7 +2266,7 @@ let new_translate_out_array_in_one_formula_split
 (*       | IConst _ -> *)
 (*             false *)
 (*       | _ -> *)
-(*             failwith ("Translate_out_array_in_cpure_formula.extract_index_predicate: "^(ArithNormalizer.string_of_exp e)^" To Be Implemented") *)
+(*             failwith ("Trans_arr.extract_index_predicate: "^(ArithNormalizer.string_of_exp e)^" To Be Implemented") *)
 (*   in *)
 (*   let helper_b_formula *)
 (*         ((p,ba):b_formula) (index:exp):(b_formula option) = *)

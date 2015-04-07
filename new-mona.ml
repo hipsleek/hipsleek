@@ -893,7 +893,7 @@ let maybe_restart_mona () : unit =
   end
 
 let prepare_formula_for_mona (f: CP.formula) (test_no: int): CP.spec_var list * CP.formula =
-  let simp_f = CP.arith_simplify 8 f in
+  let simp_f =  x_add CP.arith_simplify 8 f in
   let simp_f = (preprocess_formula simp_f) in
   let f_fv = CP.fv simp_f in
   let rename_spec_vars_fnct sv = 

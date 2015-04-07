@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open Cpure
 open Globals
 open Gen
@@ -696,7 +697,7 @@ let qe_fixpoint rel_def =
     let f = (close_form_cpure_all fa) in
     let f = drop_quantifier f var_lst in
     (*Omega.is_valid f !Globals.imply_timeout_limit*)
-    let r = (Omega.simplify f) in
+    let r = (x_add_1 Omega.simplify f) in
     (*let r = mkNot r None no_pos in*)
     let res = 
       if (is_False r) && !allow_inf_qe_coq then 
@@ -706,11 +707,11 @@ let qe_fixpoint rel_def =
         let f = coqpure_to_cpure (coq_infsolver_to_coqpure_form (transform_ZE_to_string 
                                                                    (coqpure_to_coq_infsolver_form f vl))) in
         let f = remove_redundant (remove_redundant_after_inf f) in 
-        Omega.simplify f
+        x_add_1 Omega.simplify f
       else if (is_False r) && !allow_inf_qe then
         let inf_inst = Infinity.gen_instantiations var_lst [] in
         let inf_inst = inf_inst in
-        let flist = List.map (fun c -> Omega.simplify (Infinity.normalize_inf_formula_sat (mkAnd f c no_pos))) inf_inst in
+        let flist = List.map (fun c -> x_add_1 Omega.simplify (Infinity.normalize_inf_formula_sat (mkAnd f c no_pos))) inf_inst in
         (conj_of_list flist no_pos)
         (*Omega.qe f*)
       else r
@@ -721,10 +722,10 @@ let qe_fixpoint rel_def =
       else 
         let vl = fv fu in
         (*let fulst = list_of_disjs fu in*)
-        Omega.simplify (add_exists (mkAnd c (strongest_inv fu) no_pos) vl)) 
-      (*Omega.simplify (add_exists (mkOr f1 c None no_pos) vl))*)
+        x_add_1 Omega.simplify (add_exists (mkAnd c (strongest_inv fu) no_pos) vl)) 
+      (*x_add_1 Omega.simplify (add_exists (mkOr f1 c None no_pos) vl))*)
       octinv_lst))) flist in
-  (* Omega.simplify (mkExists vl (mkOr fa (mkNot fu None no_pos) None no_pos) None no_pos))*)
+  (* x_add_1 Omega.simplify (mkExists vl (mkOr fa (mkNot fu None no_pos) None no_pos) None no_pos))*)
   (disj_of_list fl no_pos)
 (*(join_conjunctions (List.map Omega.hull fl))*)
 (* let cnsts = (list_of_conjs (Omega.hull f)) in*)

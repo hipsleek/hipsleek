@@ -1541,7 +1541,7 @@ let norm_var_name (e: CP.formula) : CP.formula =
     (*     ("(" ^ (pr_id  d1) ^ "; " ^ (pr_id d2) ^ ")\n")) h "" in *)
     Debug.no_1 "simplify-syn" pr (* pr_hashtbl *) pr (fun _ -> simplify f0 vnames) f0 (* vnames *)
   in
-  let simplify f0 =  simplify f0  (Hashtbl.create 100) in
+  let simplify f0 =  x_add simplify f0  (Hashtbl.create 100) in
   let simplify f0 = wrap_pre_post norm_pure_input norm_pure_result simplify f0 in
   simplify e (* (Hashtbl.create 100) *)
 
@@ -1859,7 +1859,7 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
   (* TODO WN : can below remove duplicate constraints? *)
   (* let f = CP.elim_idents f in *)
   (* this reduces x>=x to true; x>x to false *)
-  let f = Translate_out_array_in_cpure_formula.new_translate_out_array_in_one_formula_split f in
+  let f = Trans_arr.new_translate_out_array_in_one_formula_split f in
   (*let f = drop_array_formula f in*)
   (* let _ = print_endline ("tp_is_sat After drop: "^(Cprinter.string_of_pure_formula f)) in *)
 
@@ -1918,7 +1918,7 @@ let om_simplify f =
 
 (* Take out formulas that omega cannot handle*)
 let om_simplify f=
-  Translate_out_array_in_cpure_formula.split_and_combine om_simplify Translate_out_array_in_cpure_formula.can_be_simplify f
+  Trans_arr.split_and_combine om_simplify Trans_arr.can_be_simplify f
 ;;
 
 let om_simplify f =
@@ -1944,8 +1944,8 @@ let simplify_omega (f:CP.formula): CP.formula =
 
 let simplify (f : CP.formula) : CP.formula =
   (* proof_no := !proof_no + 1; *)
-  (* let _ = Translate_out_array_in_cpure_formula.new_translate_out_array_in_one_formula_split f in *)
-  let f = Translate_out_array_in_cpure_formula.new_translate_out_array_in_one_formula_split f in
+  (* let _ = Trans_arr.new_translate_out_array_in_one_formula_split f in *)
+  let f = Trans_arr.new_translate_out_array_in_one_formula_split f in
 
   let simpl_num = next_proof_no () in
   let simpl_no = (string_of_int simpl_num) in
@@ -1958,19 +1958,19 @@ let simplify (f : CP.formula) : CP.formula =
     (* if !Globals.allow_inf && Infinity.contains_inf f then f
        else
        let f = if !Globals.allow_inf then Infinity.convert_inf_to_var f else f in*)
-    let omega_simplify f = simplify_omega f
+    let omega_simplify f = x_add_1 simplify_omega f
     (* Omega.simplify f  *)in
     (* this simplifcation will first remove complex formula as boolean
        vars but later restore them *)
     let z3_simplify f =
       if is_array_constraint f then f else
         let f = wrap_pre_post norm_pure_input norm_pure_result Smtsolver.simplify f in
-        CP.arith_simplify 13 f
+         x_add CP.arith_simplify 13 f
     in
     let z3n_simplify f =
       if is_array_constraint f then f else
         let f = wrap_pre_post norm_pure_input norm_pure_result Z3.simplify f in
-        CP.arith_simplify 13 f
+         x_add CP.arith_simplify 13 f
     in
     (*      let redlog_simplify f =  wrap_pre_post norm_pure_input norm_pure_result Redlog.simplify f in
             let mona_simplify f =  wrap_pre_post norm_pure_input norm_pure_result Mona.simplify f in *)
@@ -1999,12 +1999,12 @@ let simplify (f : CP.formula) : CP.formula =
                 (* exist x, f0 ->  eexist x, x>0 /\ f0*)
                 let f1 = CP.add_gte0_for_mona f in
                 let f=(omega_simplify f1) in
-                CP.arith_simplify 12 f
+                 x_add CP.arith_simplify 12 f
             | OM ->
               if (is_bag_constraint f) then (Mona.simplify f)
               else
                 let f=(omega_simplify f) in
-                CP.arith_simplify 12 f
+                 x_add CP.arith_simplify 12 f
             | OI ->
               if (is_bag_constraint f) then (Isabelle.simplify f)
               else (omega_simplify f)
@@ -2084,7 +2084,7 @@ let om_pairwisecheck f =
 
 (* ZH: Take out the array part *)
 let om_pairwisecheck f =
-  Translate_out_array_in_cpure_formula.split_and_combine om_pairwisecheck (fun f-> not (Translate_out_array_in_cpure_formula.contain_array f)) f
+  Trans_arr.split_and_combine om_pairwisecheck (fun f-> not (Trans_arr.contain_array f)) f
 ;;
 
 let om_pairwisecheck f =
@@ -2204,7 +2204,7 @@ let simplify (f:CP.formula):CP.formula =
   let rec helper f = match f with 
     (* | Or(f1,f2,lbl,pos) -> mkOr (helper f1) (helper f2) lbl pos *)
     (* | AndList b -> mkAndList (map_l_snd simplify b) *)
-    | _ -> Translate_out_array_in_cpure_formula.translate_back_array_in_one_formula (tp_pairwisecheck (simplify f)) in
+    | _ -> Trans_arr.translate_back_array_in_one_formula (tp_pairwisecheck (simplify f)) in
   helper f
 
 let simplify_tp (f:CP.formula):CP.formula =
@@ -2275,7 +2275,7 @@ let simplify_always (f:CP.formula): CP.formula =
   simplify f 
 
 let simplify (f:CP.formula): CP.formula = 
-  CP.elim_exists_with_simpl simplify f 
+  x_add CP.elim_exists_with_simpl simplify f 
 
 (* let simplify (f:CP.formula): CP.formula =  *)
 (*   let pr = Cprinter.string_of_pure_formula in *)
@@ -2283,7 +2283,7 @@ let simplify (f:CP.formula): CP.formula =
 
 let simplify (f : CP.formula) : CP.formula =
   let pf = Cprinter.string_of_pure_formula in
-  Debug.no_1 "simplify_2" pf pf simplify f
+  Debug.no_1 "simplify(TP)" pf pf simplify f
 
 let simplify_a (s:int) (f:CP.formula): CP.formula = 
   let pf = Cprinter.string_of_pure_formula in
@@ -2645,8 +2645,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   (* let ante = translate_array_relation ante in *)
 
   (* let n_ante,n_conseq = new_translate_out_array_in_imply_full ante conseq in *)
-  let n_ante,n_conseq = Translate_out_array_in_cpure_formula.new_translate_out_array_in_imply_split_full ante conseq in
-  let n_ante = Translate_out_array_in_cpure_formula.drop_array_formula n_ante in
+  let n_ante,n_conseq = Trans_arr.new_translate_out_array_in_imply_split_full ante conseq in
+  let n_ante = Trans_arr.drop_array_formula n_ante in
   (* let _ = print_endline ("##After process: ante: "^(Cprinter.string_of_pure_formula n_ante)^"\n conseq: "^(Cprinter.string_of_pure_formula n_conseq)) in *)
   (* let _ = print_endline ("tp_imply_no_cache n_ante: "^(Cprinter.string_of_pure_formula n_ante)) in *)
   (* let _ = print_endline ("tp_imply_no_cache n_conseq: "^(Cprinter.string_of_pure_formula n_conseq)) in *)
@@ -2673,8 +2673,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
     (* let ante = CP.add_ann_constraints imm_vrs ante in *)
     (* Handle Infinity Constraints *)
     let ante,conseq  = if !Globals.allow_inf (*&& !Globals.allow_inf_qe_coq
-                                               then let a,c = (Infinity.convert_inf_to_var (Cpure.arith_simplify 333 ante)),
-                                               (Infinity.convert_inf_to_var (Cpure.arith_simplify 332 conseq)) in a,c
+                                               then let a,c = (Infinity.convert_inf_to_var ( x_add Cpure.arith_simplify 333 ante)),
+                                               (Infinity.convert_inf_to_var ( x_add Cpure.arith_simplify 332 conseq)) in a,c
                                                else if !Globals.allow_inf*)
       then let a,c = Infinity.normalize_inf_formula_imply ante conseq
         in let a = Infinity.fixed_point_pai_num a in a,c
@@ -3435,7 +3435,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 
 (* 		(\* A \/ B -> C <=> (A -> C) /\ (B -> C) *\) *)
 (* 		let imply_disj_lhs ante conseq = *)
-(* 		  let ante = CP.elim_exists_with_simpl simplify ante in *)
+(* 		  let ante = x_add CP.elim_exists_with_simpl simplify ante in *)
 (* 		  let _,l_ante = CP.dnf_to_list ante in *)
 (* 		  let pairs = List.map (fun ante -> (ante, conseq)) l_ante in *)
 (* 		  let fold_fun (res1, res2, res3) (ante, cons) = *)
@@ -3464,7 +3464,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 
 (* 		(\* A -> B \/ C <=> (A -> B) \/ (A -> C) *\) *)
 (* 		let imply_disj_rhs ante conseq = *)
-(* 		  let cons = CP.elim_exists_with_simpl simplify conseq in *)
+(* 		  let cons = x_add CP.elim_exists_with_simpl simplify conseq in *)
 (* 		  let _,l_cons = CP.dnf_to_list cons in (\* Transform conseq into DNF *\) *)
 (* 		  let pairs = List.map (fun cons -> (ante, cons)) l_cons in *)
 (* 		  let fold_fun (res1, res2, res3) (ante, cons) = *)
@@ -3647,7 +3647,7 @@ let is_sat_sub_no_slicing (f:CP.formula) sat_subno : bool =
     snd (List.split (fix n_l))
   in
 
-  let n_f = (*CP.elim_exists_with_fresh_vars*) CP.elim_exists_with_simpl simplify f in
+  let n_f = (*CP.elim_exists_with_fresh_vars*) x_add CP.elim_exists_with_simpl simplify f in
   let dnf_f = snd (CP.dnf_to_list n_f) in
 
   let is_related f1 f2 =
@@ -4071,5 +4071,5 @@ let () =
   Excore.is_sat_raw := is_sat_raw;
   Excore.simplify_raw := simplify_raw;
   Excore.pairwisecheck := pairwisecheck;
-  Cformula.simplify_omega := simplify_omega;
+  Cformula.simplify_omega := (x_add_1 simplify_omega);
   Cfout.simplify_raw := simplify_raw;

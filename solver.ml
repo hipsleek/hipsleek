@@ -8792,11 +8792,11 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
   | MCP.OnePF a0, MCP.OnePF c ->
     begin
       (* let (a0,c) = *)
-      (*   (Translate_out_array_in_cpure_formula.drop_array_formula a0, Translate_out_array_in_cpure_formula.drop_array_formula c) in *)
-      (* let _ = Translate_out_array_in_cpure_formula.new_translate_out_array_in_imply_split_full a0 c in *)
+      (*   (Trans_arr.drop_array_formula a0, Trans_arr.drop_array_formula c) in *)
+      (* let _ = Trans_arr.new_translate_out_array_in_imply_split_full a0 c in *)
       (* (function *)
-      (*     | (n_a,n_c) -> (Translate_out_array_in_cpure_formula.drop_array_formula n_a, Translate_out_array_in_cpure_formula.drop_array_formula n_c)) *)
-      (*       (Translate_out_array_in_cpure_formula.new_translate_out_array_in_imply_split_full a0 c) *)
+      (*     | (n_a,n_c) -> (Trans_arr.drop_array_formula n_a, Trans_arr.drop_array_formula n_c)) *)
+      (*       (Trans_arr.new_translate_out_array_in_imply_split_full a0 c) *)
       (* in *)
       x_dinfo_pp ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;
       let f a0 =

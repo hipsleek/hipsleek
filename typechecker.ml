@@ -157,7 +157,7 @@ let parallelize num =
 (*                   (\* need to add initial esc_stack *\) *)
 (*                   let init_esc = [((0,""),[])] in *)
 (*   	            let lfe = [CF.mk_failesc_context ctx1 [] init_esc] in *)
-(*   		        let res_ctx = CF.list_failesc_to_partial (check_exp prog proc lfe e0 post_label) in *)
+(*   		        let res_ctx = CF.list_failesc_to_partial (x_add check_exp prog proc lfe e0 post_label) in *)
 (*                   (\* let () = print_string_quiet ("\n WN 1 : "^(Cprinter.string_of_list_partial_context res_ctx)) in *\) *)
 (*   		        let res_ctx = CF.change_ret_flow_partial_ctx res_ctx in *)
 (*                   (\* let () = print_string_quiet ("\n WN 2 : "^(Cprinter.string_of_list_partial_context res_ctx)) in *\) *)
@@ -774,7 +774,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                   proc_used_names := Gen.BList.remove_dups_eq (=) ((exp_fv e0)@spec_names@(List.map snd proc.proc_args))
                 ;print_string_quiet ("bai-used:   "^(String.concat "," !proc_used_names)^"\n")
                 else () in
-              let res_ctx = check_exp prog proc lfe e0 post_label in
+              let res_ctx = x_add check_exp prog proc lfe e0 post_label in
               (* let () = Debug.info_hprint (add_str "EAssume xxxxxxxxxxx" pr_id) "2" no_pos in  *)
               (* let () = Debug.info_zprint (lazy (("res_ctx 0: " ^ (Cprinter.string_of_list_failesc_context_short res_ctx) ^ "\n"))) no_pos in *)
               (*Clear es_pure before check_post*)
@@ -1354,7 +1354,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
     | Label e ->
       let ctx = CF.add_path_id_ctx_failesc_list ctx e.exp_label_path_id (-1) in
       let ctx = CF.add_cond_label_list_failesc_context (fst e.exp_label_path_id) (snd e.exp_label_path_id) ctx in
-      (check_exp prog proc ctx e.exp_label_exp post_start_label)
+      (x_add check_exp prog proc ctx e.exp_label_exp post_start_label)
     | Unfold ({exp_unfold_var = sv;
                exp_unfold_pos = pos}) ->
       unfold_failesc_context (prog,None) ctx sv true pos
@@ -1464,9 +1464,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         exp_assign_pos = pos }) ->
       let pr = Cprinter.string_of_exp in
       let check_rhs_exp rhs = Debug.no_1 "check Assign (rhs)" pr (fun _ -> "void")
-          (fun rhs -> check_exp prog proc ctx rhs post_start_label) rhs 
+          (fun rhs -> x_add check_exp prog proc ctx rhs post_start_label) rhs 
       in
-      let check_rhs_exp rhs = Debug.no_1 "check Assign (rhs)" pr (Cprinter.string_of_list_failesc_context) (fun rhs -> check_exp prog proc ctx rhs post_start_label) rhs
+      let check_rhs_exp rhs = Debug.no_1 "check Assign (rhs)" pr (Cprinter.string_of_list_failesc_context) (fun rhs -> x_add check_exp prog proc ctx rhs post_start_label) rhs
       in
       let assign_op () =
         begin
@@ -1857,7 +1857,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               begin
                 stk_vars # push_list lsv;
                 let () = x_tinfo_hp (add_str "inside bind" pr_id) (stk_vars # string_of_no_ln) no_pos in
-                let tmp_res1 = check_exp prog proc rs body post_start_label in
+                let tmp_res1 = x_add check_exp prog proc rs body post_start_label in
                 stk_vars # pop_list lsv;
                 let () = CF.must_consistent_list_failesc_context "bind 5" tmp_res1  in
                 (* Debug.info_pprint "WN : adding vheap to exception too 1" no_pos; *)
@@ -1905,7 +1905,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           let vss = List.map (fun (t,i) -> CP.SpecVar (t, i, Unprimed)) local_vars in
           stk_vars # push_list vss;
           let () = x_tinfo_hp (add_str "block" pr_id) (stk_vars # string_of_no_ln) no_pos in
-          let ctx1 = check_exp prog proc ctx e post_start_label in
+          let ctx1 = x_add check_exp prog proc ctx e post_start_label in
           stk_vars # pop_list vss;
           let ctx1 = VP.clear_vperm_sets_list_failesc_ctx [(VP_Full, vss)] ctx1 in
           let svars = List.map (fun (t, n) -> CP.SpecVar (t, n, Primed)) local_vars in
@@ -1927,7 +1927,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         let check_cast_body body = (
           let pr = Cprinter.string_of_exp in
           Debug.no_1 "check_cast_body" pr (fun _ -> "void")
-            (fun rhs -> check_exp prog proc ctx body post_start_label) body
+            (fun rhs -> x_add check_exp prog proc ctx body post_start_label) body
         ) in
         let casting_op () = (
           let () = proving_loc#set pos in
@@ -1989,9 +1989,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           let else_ctx1 = CF.add_cond_label_strict_list_failesc_context pid 2 else_ctx in
           let then_ctx1 = CF.add_path_id_ctx_failesc_list then_ctx1 (None,-1) 1 in
           let else_ctx1 = CF.add_path_id_ctx_failesc_list else_ctx1 (None,-1) 2 in
-          let then_ctx2 = (check_exp prog proc then_ctx1 e1) post_start_label in
+          let then_ctx2 = (x_add check_exp prog proc then_ctx1 e1) post_start_label in
           (* let () = print_endline ("then_ctx2 :" ^ (Cprinter.string_of_list_failesc_context then_ctx2)) in *)
-          let else_ctx2 = (check_exp prog proc else_ctx1 e2) post_start_label in
+          let else_ctx2 = (x_add check_exp prog proc else_ctx1 e2) post_start_label in
           (* let () = print_endline ("else_ctx2 :" ^ (Cprinter.string_of_list_failesc_context else_ctx2)) in *)
           let res = CF.list_failesc_context_or (Cprinter.string_of_esc_stack) then_ctx2 else_ctx2 in
           (* let res = CF.pop_esc_level_list res pid in *)
@@ -2509,9 +2509,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             exp_seq_exp1 = e1;
             exp_seq_exp2 = e2;
             exp_seq_pos = pos}) -> begin
-        let ctx1 = check_exp prog proc ctx e1 post_start_label (*flow_store*) in 
+        let ctx1 = x_add check_exp prog proc ctx e1 post_start_label (*flow_store*) in 
         (* Astsimp ensures that e1 is of type void *)
-        let ctx2= check_exp prog proc ctx1 e2 post_start_label (*flow_store*) in
+        let ctx2= x_add check_exp prog proc ctx1 e2 post_start_label (*flow_store*) in
         Debug.ninfo_hprint (add_str "WN ctx1:" Cprinter.string_of_list_failesc_context) ctx1 pos;
         Debug.ninfo_hprint (add_str "WN ctx2:" Cprinter.string_of_list_failesc_context) ctx2 pos;
         ctx2
@@ -2681,7 +2681,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       let cc = get_catch_of_exp cc in
       (* let ctx = CF.transform_list_failesc_context (idf,(fun c-> CF.push_esc_level c pid),(fun x-> CF.Ctx x)) ctx in *)
       let ctx = CF.push_esc_level_list ctx idf pid in
-      let ctx1 = check_exp prog proc ctx body post_start_label in
+      let ctx1 = x_add check_exp prog proc ctx body post_start_label in
       (* WN : ctx2,ctx3 appears to be redundant *)
       let ctx2 = CF.pop_esc_level_list ctx1 pid in
       (* let ctx3 = CF.transform_list_failesc_context (idf,(fun c-> CF.push_esc_level c pid),(fun x-> CF.Ctx x)) ctx2 in *)
@@ -2692,7 +2692,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       let ctx4 = CF.splitter_failesc_context (cc.exp_catch_flow_type) (cc.exp_catch_var) 
           (fun c -> CF.add_path_id c (Some pid,0) (-1)) elim_exists_ctx ctx3 in
       (* let () = print_endline ("WN:ESCAPE ctx4:"^(Cprinter.string_of_list_failesc_context ctx4)) in *)
-      let ctx5 = check_exp prog proc ctx4 cc.exp_catch_body post_start_label in
+      let ctx5 = x_add check_exp prog proc ctx4 cc.exp_catch_body post_start_label in
       CF.pop_esc_level_list ctx5 pid
     | Par { exp_par_vperm = vp; exp_par_lend_heap = lh; exp_par_cases = cl; exp_par_pos = pos; } -> 
       if not !ann_vp then
@@ -2733,7 +2733,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
     let pr = Cprinter.string_of_list_failesc_context in
     Debug.no_1 "check_exp1" pr pr check_exp1 ctx in
   let check_exp1_x (ctx : CF.list_failesc_context) : CF.list_failesc_context =
-    Gen.Profiling.do_1 "check_exp1" check_exp1_a ctx in
+    Gen.Profiling.do_1 "check_exp1" (x_add_1 check_exp1_a) ctx in
   (* let _ = print_endline ("check_exp: 1 :" ^ (Cprinter.string_of_list_failesc_context ctx)) in *)
   let ctx = if (not !Globals.failure_analysis) then List.filter (fun (f,s,c)-> Gen.is_empty f ) ctx  
     else ctx in
@@ -2821,7 +2821,7 @@ and check_par_case_x (prog: prog_decl) (proc: proc_decl) par_init_ctx (ctx: CF.l
   let () = Debug.ninfo_hprint (add_str "check_par_case: par_init_ctx:" pr) par_init_ctx pos in
   let () = Debug.ninfo_hprint (add_str "check_par_case: pre_ctx:" pr) pre_ctx pos in
 
-  let post_ctx = check_exp prog proc pre_ctx par_case.exp_par_case_body par_label in
+  let post_ctx = x_add check_exp prog proc pre_ctx par_case.exp_par_case_body par_label in
   (* let () = x_binfo_hp (add_str "check_par_case: post_ctx:" !CF.print_list_failesc_context) post_ctx pos in *)
   let post_ctx = TermUtils.strip_lexvar_list_failesc_ctx post_ctx in
   (* let post_ctx = VP.compose_list_failesc_contexts_for_par true post_ctx rem_ctx pos in *)

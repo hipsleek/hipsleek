@@ -553,7 +553,7 @@ and memo_f_neg (f: b_formula): b_formula =
   in (npf,il)
 
 and memo_arith_simplify (f : memo_pure) : memo_pure = 
-  List.map (fun c -> { c with memo_group_slice = List.map (arith_simplify 5) c.memo_group_slice }) f
+  List.map (fun c -> { c with memo_group_slice = List.map ( x_add arith_simplify 5) c.memo_group_slice }) f
 
 (******************************************************************************************************************
                                                                                                                    Utilities for memoized formulas
@@ -1368,7 +1368,7 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
     else List.fold_left(fun a c-> cons2 (a,c,no_pos)) nel ln in*)
 
   (*  let norm_bf (c1:b_formula) : (b_formula option) =
-      let c1 = b_form_simplify c1 in
+      let c1 = x_add_1 b_form_simplify c1 in
       match c1 with
       | Lt  (e1,e2,l) -> Some (Lt  (norm_expr e1,norm_expr e2,l))
       | Lte (e1,e2,l) -> Some (Lte (norm_expr e1,norm_expr e2,l))
@@ -1395,7 +1395,7 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
 
 (*
   let l = List.fold_left (fun (a1,a2) (c1,c2)-> 
-    let c1 = b_form_simplify c1 in
+    let c1 = x_add_1 b_form_simplify c1 in
     match c1 with
       | Lt  (e1,e2,l) -> (Lt  (norm_expr e1,norm_expr e2,l)::a1,a2)
       | Lte (e1,e2,l) -> (Lte (norm_expr e1,norm_expr e2,l)::a1,a2)
@@ -2342,7 +2342,7 @@ let simpl_memo_pure_formula b_f_f p_f_f f tp_simp =
 
 let memo_arith_simplify f = match f with
   | MemoF f -> MemoF (memo_arith_simplify f)
-  | OnePF f -> OnePF (arith_simplify 6 f)
+  | OnePF f -> OnePF ( x_add arith_simplify 6 f)
 
 let memo_arith_simplify f = 
   Debug.no_1 "memo_arith_simplify" (!print_mix_f) (!print_mix_f) memo_arith_simplify f 

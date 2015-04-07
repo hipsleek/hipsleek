@@ -1119,7 +1119,7 @@ let substitute_inf (f: CP.formula) : CP.formula =
   let after_sub = List.map (fun (pf,kv) -> 
       let svneglist = (find_equiv_all_x (SpecVar(Int,constinfinity,Primed)) kv) in  
       let new_pf = sub_inf_list pf svneglist true true in
-      arith_simplify 10 new_pf) (List.combine after_sub negboundlist) in 
+       x_add arith_simplify 10 new_pf) (List.combine after_sub negboundlist) in 
   (* let () = print_string("bound > "^(string_of_pure_formula (join_disjunctions after_sub))^"\n") in*)
   join_disjunctions after_sub
 
@@ -1175,7 +1175,7 @@ let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.for
         let new_c = sub_inf_list new_c vlist false false in (* substitute +ve inf *)
         let negvlist =  find_equiv_all_x (SpecVar(Int,constinfinity,Primed)) subs_c in
         let new_c =  sub_inf_list new_c negvlist true false in (* substitute -ve inf *)
-        let new_c = arith_simplify 11 new_c in
+        let new_c =  x_add arith_simplify 11 new_c in
         let new_c_lst  = split_conjunctions new_c in
         let new_c = join_conjunctions (List.map normalize_inf_formula new_c_lst) in
         let new_c = convert_inf_to_var new_c in
@@ -1398,7 +1398,7 @@ let rec elim_forall (f: CP.formula) : CP.formula =
   let helper qid qf = 
     let inner_f = elim_forall qf in 
     let ins_lst = gen_instantiations [qid] [] in
-    let l = List.map (fun pf -> arith_simplify 199 (mkAnd pf inner_f no_pos)) ins_lst in
+    let l = List.map (fun pf ->  x_add arith_simplify 199 (mkAnd pf inner_f no_pos)) ins_lst in
     conj_of_list l no_pos in
   match f with
   | CP.BForm (b,fl) -> f
@@ -1427,7 +1427,7 @@ let elim_forall (f: CP.formula) : CP.formula =
 let get_inst_forall (f:CP.formula): CP.formula list = 
   let vars,f,_,_ = CP.split_forall_quantifiers f in
   let ins_lst = gen_instantiations vars [] in
-  List.map (fun pf -> arith_simplify 198 (mkAnd pf f no_pos)) ins_lst 
+  List.map (fun pf ->  x_add arith_simplify 198 (mkAnd pf f no_pos)) ins_lst 
 
 let get_inst_forall (f:CP.formula): CP.formula list = 
   Debug.no_1 "elim_inf_forall" string_of_pure_formula (pr_list string_of_pure_formula)
@@ -1439,7 +1439,7 @@ let quantifier_elim (f: CP.formula): CP.formula list =
   (*let vars = List.filter (fun c -> not(is_inf_sv c)) (CP.fv f) in*)
   let vars,f = CP.split_ex_quantifiers f in
   let ins_lst = gen_instantiations vars [] in
-  let ls = List.map (fun pf -> arith_simplify 200 (mkAnd pf f no_pos)) ins_lst 
+  let ls = List.map (fun pf ->  x_add arith_simplify 200 (mkAnd pf f no_pos)) ins_lst 
   in f::ls
 
 let quantifier_elim (f: CP.formula): CP.formula list = 
@@ -1450,12 +1450,12 @@ let rec elim_forall_exists (f: CP.formula) : CP.formula =
   let helper qid qf = 
     let inner_f = elim_forall_exists qf in 
     let ins_lst = gen_instantiations [qid] [] in
-    let l = List.map (fun pf -> arith_simplify 199 (mkAnd pf inner_f no_pos)) ins_lst in
+    let l = List.map (fun pf ->  x_add arith_simplify 199 (mkAnd pf inner_f no_pos)) ins_lst in
     conj_of_list l no_pos in
   let helper_ex qid qf = 
     let inner_f = elim_forall_exists qf in 
     let ins_lst = gen_instantiations [qid] [] in
-    let l = List.map (fun pf -> arith_simplify 200 (mkAnd pf inner_f no_pos)) ins_lst in
+    let l = List.map (fun pf ->  x_add arith_simplify 200 (mkAnd pf inner_f no_pos)) ins_lst in
     disj_of_list l no_pos in
   match f with
   | CP.BForm (b,fl) -> f

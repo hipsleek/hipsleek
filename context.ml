@@ -1492,6 +1492,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          let vr_vdef = look_up_view_def_raw 14 view_decls vr_name in
          let vl_is_rec = vl_vdef.view_is_rec in
          let vl_is_prim = vl_vdef.view_is_prim in
+         let vr_is_prim = vr_vdef.view_is_prim in
          let vr_is_rec = vr_vdef.view_is_rec in
          let vl_self_pts = vl_vdef.view_pt_by_self in
          let vr_self_pts = vr_vdef.view_pt_by_self in
@@ -1610,7 +1611,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                (*Do not fold/unfold LOCKs*)
                if (is_l_lock || is_r_lock) then None else 
                if not(vl_is_rec) && not(vl_is_prim) then Some (2,M_unfold (m_res,0))
-               else if not(vr_is_rec) && not(vl_is_prim) then Some (2,M_fold m_res) 
+               else if not(vr_is_rec) && not(vl_is_prim) && not(vr_is_prim)  then Some (2,M_fold m_res) 
                else None
              ) in
              let a5 = (
@@ -1619,7 +1620,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                    let l1 =
                      (*Do not fold/unfold LOCKs*)
                      if (is_l_lock) then [] else 
-                     if (vl_view_orig && vr_view_orig && en_self_fold && Gen.BList.mem_eq (=) vl_name vr_self_pts) 
+                     if (vl_view_orig && vr_view_orig && not(vr_is_prim) && en_self_fold && Gen.BList.mem_eq (=) vl_name vr_self_pts) 
                      then  [(2,M_fold m_res)] 
                      else [] in
                    let l2 =
@@ -1732,6 +1733,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          let vr_name = vr.h_formula_view_name in
          let vr_vdef = look_up_view_def_raw 15 view_decls vr_name in
          let vr_self_pts = vr_vdef.view_pt_by_self in
+         let vr_is_prim = vr_vdef.view_is_prim in
          let vr_view_orig = vr.h_formula_view_original in
          let vr_view_derv = vr.h_formula_view_derv in
          let dl_orig = dl.h_formula_data_original in
@@ -1800,6 +1802,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                acts
              else
                (* fold to activate/change  *)
+               if (vr_is_prim) then [] else
                [(1,M_fold m_res)]
            else []
          ) in

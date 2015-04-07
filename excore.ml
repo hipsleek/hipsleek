@@ -36,8 +36,8 @@ let simplify_with_label simp (f:formula) =
   join_disjunctions ls
 
 let simplify_with_label_omega_x (f:formula) =
-  (*  let simp = Omega.simplify 2 in  *)
-  let simp = (* Omega.simplify *) !simplify_raw in
+  (*  let simp = x_add_1 Omega.simplify 2 in  *)
+  let simp = (* x_add_1 Omega.simplify *) !simplify_raw in
   simplify_with_label simp f
 
 let simplify_with_label_omega (f:formula) =
@@ -171,7 +171,7 @@ let elim_clause (pf : formula) (ex_vars : spec_var list) : formula =
 (*  ) conj_list in *)
 (*   (\* WN : should we use Omega? will x!=y cause disjunct *\) *)
 (*  arith_simplify_new f *)
-(*  (\* Omega.simplify f *\) *)
+(*  (\* x_add_1 Omega.simplify f *\) *)
 
 let elim_clause (pf : formula) (args : spec_var list) : formula =
   Debug.no_2 "ex_elim_clause" !print_pure_formula (pr_list string_of_typed_spec_var) !print_pure_formula
@@ -248,7 +248,7 @@ let ef_elim_exists_1 (svl : spec_var list) epf  =
   let () = x_tinfo_hp (add_str "pure = " !print_pure_formula) pure no_pos in
   let pure = wrap_exists_svl pure svl in
   let () = x_tinfo_hp (add_str "pure1 = " !print_pure_formula) pure no_pos in
-  let pure = simplify_with_label_omega (* Omega.simplify *) pure in
+  let pure = simplify_with_label_omega (* x_add_1 Omega.simplify *) pure in
   let () = x_tinfo_hp (add_str "pure2 = " !print_pure_formula) pure no_pos in
   let () = x_tinfo_hp (add_str "pure_ptr_eq" (pr_list (pr_pair string_of_typed_spec_var string_of_typed_spec_var))) p_aset no_pos in
   let p_aset = EMapSV.build_eset p_aset in
@@ -294,13 +294,13 @@ let ef_elim_exists_1 (svl : spec_var list) epf =
   ef_elim_exists_1 svl epf
 
 let calc_fix_pure (svl : spec_var list) pf =
-  let pf_base = Omega.simplify pf in
+  let pf_base = x_add_1 Omega.simplify pf in
   let conjs = split_conjunctions pf in
   let conjs = List.filter (fun conj ->
       not(List.exists (fun sv -> List.mem sv svl) (fv conj))
     ) conjs in
   let pf_indu = List.fold_left (fun pf1 pf -> mkAnd pf1 pf no_pos) (mkTrue no_pos) conjs in
-  let pf_fix = Omega.simplify (mkOr pf_base pf_indu None no_pos) in
+  let pf_fix = x_add_1 Omega.simplify (mkOr pf_base pf_indu None no_pos) in
   pf_fix
 
 let ef_elim_exists_2 (svl : spec_var list) epf =

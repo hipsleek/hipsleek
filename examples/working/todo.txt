@@ -1236,6 +1236,11 @@ Also, below for loris23:
 ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 smtsolver.ml:      print_endline ("ERROR : "^global_oc^" cannot be found!!"); ref (global_oc^"_cannot_be_found":string)
 ====================================================================
+8Apr15 : Need to look into these failures:
+
+Total number of errors: 4 in files:
+  label-dll.slk({E1#Fail}) infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) imm/norm/norm4.slk({E4#Fail},{E5#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' s
 ====================================================================
 ====================================================================
 ====================================================================
