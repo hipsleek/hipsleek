@@ -293,6 +293,36 @@ Exception occurred: Failure("create_pointer_casting_proc: expect pointer types b
 
 
 ==============================================================
+#todo/ex12-bug-assert.ss
+
+To implement binding for assert
+
+
+(==typechecker.ml#1401==)
+heap_entail_struc_list_failesc_context_init#4@3
+heap_entail_struc_list_failesc_context_init#4 inp1 : List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+
+Successful States:
+[
+ Label: [(,0 ); (,1 )]
+ State:x'::node<d_1515,r_1516> * r_1516::ll{}<flted_9_1514>&flted_9_1514+1=n & 0<=d_1515 & v_bool_15_1475' & x'!=null & x'=x & d'=d_1515&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+heap_entail_struc_list_failesc_context_init#4 inp2 : EBase emp&0<=x.val&{FLOW,(4,5)=__norm#E}[]
+heap_entail_struc_list_failesc_context_init#4@3 EXIT: List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: [(,0 ); (,1 )]
+ State:
+        fe_kind: MAY
+        fe_name: logical bug
+        fe_locs: {
+                  fc_message:  true |-  0<=x.val. LOCS:[0;18] (may-bug)
+                  fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}}
+[[empty]]
+ ]
+
+assert/assume:ex1-check.ss:18: 4:  : failed
 
 
 ==============================================================
