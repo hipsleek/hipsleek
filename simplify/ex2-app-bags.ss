@@ -53,7 +53,20 @@ Successful States:
 
  ]
 
-# Why isn't v_bool_26_1478' removed by simplifier?
+dprint(simpl): ex2-app-bags.ss:32: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,1 ); (,2 )])]
+
+Successful States:
+[
+ Label: [(,1 ); (,2 )]
+ State:(exists S_1541: x'::node<v_1519,q_1520> * q_1520::ll{}<S_1541>
+ & exists(S1_1521: S_1541=union(S1_1521,S2) 
+ & S1=union(S1_1521,{v_1519}))  & y'=y & x'=x & x!=null 
+ & q_1520!=null
+ & {FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+# Why isn't v_bool_26_1478' removed by simplifier? (FIXED by Long)
   it has been renamed as v_bool_26_1478_1542'
 
 # similarly for the following vars:

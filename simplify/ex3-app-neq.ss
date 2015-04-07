@@ -29,7 +29,17 @@ void foo(node xxx, node yyyy)
 
 -dd gave this message. why?
 
-!!! XX View defn for ll has precise invariant
+!!! **astsimp.ml#2139:XX View defn for ll has precise invariant
+
+
+(FIXED by Long)
+
+Successful States:
+[
+ Label: [(,0 ); (,1 )]
+ State:xxx'::node<Anon_1506,q_1507> * q_1507::ll{}<flted_7_1505>&fl_bb' & xxx_18'!=yyyy' & 0<nnn & yyyy'=yyyy & xxx'=xxx & flted_7_1505+1=nnn & xxx_18'=q_1507&{FLOW,(4,5)=__norm#E}[]
+
+ ]
 
 
 

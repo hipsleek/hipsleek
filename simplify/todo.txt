@@ -1,5 +1,5 @@
 ============================================================
-# ex2
+# ex2  (FIXED by Long)
 
 !!! **cfout.ml#423:important variables:[S1,S2,x,y,x',v_1519,q_1520,S_1541]
 !!! **cfout.ml#425:exists variables:
@@ -63,7 +63,7 @@ Successful States:
 
  ]
 ===================================================================
-# ex3-app-new.ss
+# ex3-app-new.ss (FIXED)
 
 Rename only if there is a clash 
 instead of renaming for every declaration..

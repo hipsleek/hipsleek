@@ -2136,7 +2136,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
         if not(CF.isFailCtx rs) && not(CF.isFailCtx baga_rs1) && not(CF.isFailCtx baga_rs2) &&
            not(over_fail) && not(under_fail) then
           begin
-            let () = x_tinfo_pp ("XX View defn for " ^ vn ^ " has precise invariant\n") no_pos in
+            let () = n_binfo_pp ("View defn for " ^ vn ^ " has precise invariant\n") no_pos in
             let pf = pure_of_mix vdef.C.view_user_inv in
             let (disj_form,disj_f) = CP.split_disjunctions_deep_sp pf in
             let do_not_recompute_flag = disj_form (* (List.length disj_f>1) *) && not(!Globals.disj_compute_flag) in

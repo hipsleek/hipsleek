@@ -25,8 +25,7 @@ void foo(node xxx, node yyyy)
 }
 
 /*
-# ex3a-app-new.ss
-
+# ex3a-app-new.ss (FIXED by Long)
 
 renamed var xxx_18 clash with an existing var.
 What should be done here?
