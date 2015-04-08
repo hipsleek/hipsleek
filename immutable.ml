@@ -1529,7 +1529,8 @@ let rec normalize_h_formula_dn auxf (h : CF.h_formula) : CF.h_formula * (CP.form
 	  CF.h_formula_phase_rw = nh2;
 	  CF.h_formula_phase_pos = pos}) in 
           (h, lc1@lc2, nv1@nv2)
-    | CF.DataNode hn -> auxf h 
+    | CF.DataNode dn -> auxf h 
+    | CF.ViewNode vn -> auxf h 
     | _ -> (h,[],[])
 
 let rec normalize_formula_dn aux_f (f : formula): formula = match f with
@@ -1557,9 +1558,10 @@ let merge_imm_ann ann1 ann2 =
           let fresh_sv = (CP.SpecVar(AnnT, fresh_v, Unprimed)) in
           let fresh_var = CP.Var(fresh_sv, no_pos) in
           let poly_ann = CP.mkPolyAnn fresh_sv in
-          let constr1 = CP.mkSubAnn (CP.mkExpAnnSymb ann no_pos) fresh_var in
-          let constr2 = CP.mkSubAnn (CP.Var(sv, no_pos)) fresh_var in
-          (poly_ann, constr1::[constr2], [(fresh_v, Unprimed)])
+          (* let constr1 = CP.mkSubAnn (CP.mkExpAnnSymb ann no_pos) fresh_var in *)
+          (* let constr2 = CP.mkSubAnn (CP.Var(sv, no_pos)) fresh_var in *)
+          let constr = CP.mkEqMin fresh_var  (CP.mkExpAnnSymb ann no_pos)  (CP.Var(sv, no_pos)) no_pos in
+          (poly_ann, [constr](* 1::[constr2] *), [(fresh_v, Unprimed)])
     | ann_n, _ -> let ann = if (subtype_ann 2  ann_n  ann2 ) then ann2 else  ann1 in
       (ann, [], [])
 
@@ -1582,6 +1584,16 @@ let push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula  * (CP.formula
           let n_dn = CF.DataNode{dn with  CF.h_formula_data_imm = new_ann_node;
  	      CF.h_formula_data_param_imm = new_ann_param;} in
           (n_dn, constr, new_vars)
+    | CF.ViewNode vn ->
+          let ann_node = vn.CF.h_formula_view_imm in
+          let pimm = CP.annot_arg_to_imm_ann_list_no_pos vn.CF.h_formula_view_annot_arg in
+          let new_imm, constr, new_vars = List.fold_left (fun (params, constr, vars) p_ann ->
+              let new_p_ann,nc,nv = merge_imm_ann ann_node p_ann in
+              (params@[new_p_ann], nc@constr, nv@vars)
+          ) ([],[],[]) pimm in
+          let new_vn = CF.ViewNode {vn with CF.h_formula_view_annot_arg = 
+                  CP.update_positions_for_imm_view_params  new_imm vn.h_formula_view_annot_arg;} in
+          (new_vn, constr, new_vars)
     | _ -> (h, [], [])
 
 let push_node_imm_to_field_imm caller (h:CF.h_formula) : CF.h_formula * (CP.formula list) * ((Globals.ident * VarGen.primed) list) =
@@ -2060,9 +2072,11 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
       | DataNode dn, ((ViewNode vn) as vh)
       | ((ViewNode vn) as vh), DataNode dn ->
             let pimm = CP.annot_arg_to_imm_ann_list_no_pos vn.h_formula_view_annot_arg in
+            let () = x_tinfo_hp (add_str "imm:" (pr_list Cprinter.string_of_imm)) pimm no_pos in
             let comp = 
               if (List.length dn.h_formula_data_param_imm == List.length (pimm) ) then 
                 let imm = List.combine dn.h_formula_data_param_imm pimm in
+                let () = x_tinfo_hp (add_str "imm:" (pr_list (pr_pair Cprinter.string_of_imm Cprinter.string_of_imm))) imm no_pos in
                 let comp = List.fold_left (fun acc (i1,i2) -> 
                     match i1, i2 with
                       | CP.ConstAnn(Accs), a -> true && acc
@@ -2071,7 +2085,7 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
                 ) true imm in
                 comp
               else false in
-            let () = x_binfo_hp (add_str "compatible for merging:" string_of_bool) comp no_pos in
+            let () = x_tinfo_hp (add_str "compatible for merging:" string_of_bool) comp no_pos in
             if comp then
               let ret_f = unfold_and_norm vn vh dn emap unfold_fun qvars emap in
               (comp, h1, ret_f)

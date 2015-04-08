@@ -638,7 +638,7 @@ and update_field_imm_x (f : h_formula) (new_fann: CP.ann list) (consumed_ann: CP
             DataNode ( {d with h_formula_data_param_imm = new_fann; 
                 h_formula_data_arguments = new_args;
             } )
-      | ViewNode v -> ViewNode ( {v with h_formula_view_annot_arg =  CP.update_positions_for_imm_view_params  new_fann v.h_formula_view_annot_arg} )
+      | ViewNode v -> ViewNode ( {v with h_formula_view_annot_arg = CP.update_positions_for_imm_view_params  new_fann v.h_formula_view_annot_arg} )
       | _          -> report_error no_pos ("[context.ml] : only data node should allow field annotations \n")
     in
     updated_f
