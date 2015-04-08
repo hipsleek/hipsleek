@@ -1,5 +1,5 @@
 relation nondet(int i).
-relation nondetB(bool i).
+relation nondetB(int i).
   /* inv true; */
 
 int nondeterm()
@@ -18,14 +18,14 @@ void foo()
   if (b) {
     foo();
   }
-  dprint;
 }
 
 /*
-# nondet/ex3.ss
+# nondet/err3.ss
 
-Termination checking result: 
-(0) (ERR: unexpected unsound Loop at return)
+type-error but verification still proceeded.
+is this OK?
+
 
 
 */
