@@ -1,5 +1,5 @@
 ============================================================
-# ex2
+# ex2  (FIXED by Long)
 
 !!! **cfout.ml#423:important variables:[S1,S2,x,y,x',v_1519,q_1520,S_1541]
 !!! **cfout.ml#425:exists variables:
@@ -63,7 +63,7 @@ Successful States:
 
  ]
 ===================================================================
-# ex3-app-new.ss
+# ex3-app-new.ss (FIXED)
 
 Rename only if there is a clash 
 instead of renaming for every declaration..
@@ -126,8 +126,81 @@ Successful States:
  & yyyy!=q_1508
  &{FLOW,(4,5)=__norm#E}[]
 ===================================================================
+# ex2
+
+(==cpure.ml#9227==)
+elim_exists_with_fresh_vars@5131@5130@5129
+
+
+elim_exists_with_fresh_vars inp1 : 
+
+exists(v_bool_26_1478':!(v_bool_26_1478')) 
+ --> omega 
+
+exists(S1_1521:exists(S1_1535:exists(S2_1536:
+ S_1541=union(S1_1535,S2_1536) & S2_1536=S2) 
+ & S1_1535=S1_1521) & S1=union(S1_1521,{v_1519}))
+ --> use equality substitution if possible
+ --> after that use elim_exist_with_fresh_vars
+ 
+& x'=x & y'=y & x!=null & q_1520!=null
+
+elim_exists_with_fresh_vars@5131 EXIT:
+([v_bool_26_1542',S1_1543,S1_1544,S2_1545], 
+!(v_bool_26_1542') & S_1541=union(S1_1544,S2_1545) & S2_1545=S2 & 
+S1_1544=S1_1543 & S1=union(S1_1543,{v_1519}) & x'=x & y'=y & x!=null & 
+q_1520!=null)
+Push
 ===================================================================
-===================================================================
+../../hip cdl-ex1-fm.ss --ann-vp --dis-sdp > 1
+
+!!! **typechecker.ml#2010:Dprint:[S1,S2,x,y]
+!!! **cfout.ml#423:curr variables:[S1,S2,x,y]
+!!! **cfout.ml#425:heap variables:[x',v_1519,q_1520,S_1541]
+!!! **cfout.ml#430:important variables:[S2,S1,v_1519,x',y',y,x,q_1520]
+
+
+dprint(orig): cdl-ex1-fm.ss:49: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists flted_48_1804,flted_48_1805,v_int_45_1806,b_1807,v_int_45_1782: 
+   c_42'::LatchIn{ - (exists flted_48_47: h_39'::cell<flted_48_47>*U@full[h_39]&flted_48_47=1&{FLOW,(4,5)=__norm#E}[]}<> 
+  * c_42'::CNT{}<flted_48_1804>*U@full[h_39]@lend[c_42]
+  & 0<v_int_45_1782 & v_int_45_1782=2 & 0<v_int_45_1806 & v_int_45_1806=2 
+  & flted_48_1805=1 & 0<=b_1807 & 0<=1 
+  & v_int_45_1806=b_1807+1 & flted_48_1804=1&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint(simpl): cdl-ex1-fm.ss:49: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists flted_48_1804,flted_48_1805,v_int_45_1806,b_1807,v_int_45_1782: 
+   c_42'::LatchIn{ - (exists flted_48_47: h_39'::cell<flted_48_47>*U@full[h_39]&flted_48_47=1& {FLOW,(4,5)=__norm#E}[]}<> 
+ * c_42'::CNT{}<flted_48_1804>*U@full[h_39]@lend[c_42]
+ & 0<v_int_45_1782 & v_int_45_1782=2 & 0<v_int_45_1806 & v_int_45_1806=2
+ & flted_48_1805=1 & 0<=b_1807 & 0<=1 
+ & v_int_45_1806=b_1807+1 & flted_48_1804=1&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+Checking procedure main$... 
+!!! **typechecker.ml#2010:Dprint:[h_39,r_40,v_41,c_42]
+!!! **cfout.ml#423:curr variables:[h_39,r_40,v_41,c_42]
+!!! **cfout.ml#425:heap variables:[h_39',c_42',flted_48_1804]
+!!! **cfout.ml#430:important variables:[h_39',c_42']
+
+Can we print existential variables that are not heap variables?
+  e.g. flted_48_1805,v_int_45_180,b_1807,v_int_45_1782
+Why aren't they eliminated?
+
+How about heap var: h_39'::cell<flted_48_47>
+
+
 ===================================================================
 ===================================================================
 ===================================================================

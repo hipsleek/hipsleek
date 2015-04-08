@@ -67,7 +67,7 @@ let process_source_full source =
     (* Global variables translating *)
     let () = Gen.Profiling.push_time "Translating global var" in
     let () = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in
-    let intermediate_prog = Globalvars.trans_global_to_param prog in
+    let intermediate_prog = x_add_1 Globalvars.trans_global_to_param prog in
     let intermediate_prog = Iast.label_procs_prog intermediate_prog in
     let () = if (!Globals.print_input) then print_string (Iprinter.string_of_program intermediate_prog) else () in
     let () = Gen.Profiling.pop_time "Translating global var" in

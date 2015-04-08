@@ -1123,7 +1123,7 @@ let poss_prune_pred prog vnode f=
 
 let is_out_of_scope prog lvnode rvnode=
   if String.compare lvnode.h_formula_view_name rvnode.h_formula_view_name = 0 then
-    let vdcl = x_add Cast.look_up_view_def_raw 61 prog.Cast.prog_view_decls lvnode.h_formula_view_name in
+    let vdcl = Cast.look_up_view_def_raw 61 prog.Cast.prog_view_decls lvnode.h_formula_view_name in
     List.exists (fun (f, _) ->
         let vns = get_views f in
         let rec_vns, other = List.partition (fun vn ->
@@ -1256,7 +1256,7 @@ let need_cycle_checkpoint_fold_helper prog lroots lhs rroots rhs=
 
 let need_cycle_checkpoint_fold_x prog ldnode lhs0 rvnode rhs0 reqset=
   if not (!Globals.lemma_syn && is_lem_syn_in_bound() )
-  || (check_separation_unsat rhs0) || (check_separation_unsat lhs0) then -1 else
+     || (check_separation_unsat rhs0) || (check_separation_unsat lhs0) then -1 else
     (* let _, l_reach_dns,l_reach_vns = look_up_reachable_ptrs_w_alias prog lhs [ldnode.h_formula_data_node] 3 in *)
     (* let _, r_reach_dns,r_reach_vns = look_up_reachable_ptrs_w_alias prog rhs [rvnode.h_formula_view_node] 3 in *)
     (* (\* let lnlength = List.length l_reach_dns in *\) *)
@@ -1357,7 +1357,7 @@ let is_seg_fold_form_helper prog lroot largs lhs0 rroot rargs rhs0 remap conseq_
 let is_seg_view2_fold_form_x prog lvnode lhs0 rvnode rhs0 remap conseq_pure_opt=
   let seg_fold_view lvnode rvnode=
     if String.compare lvnode.h_formula_view_name rvnode.h_formula_view_name = 0 then
-      let vdcl = x_add Cast.look_up_view_def_raw 59 prog.Cast.prog_view_decls lvnode.h_formula_view_name in
+      let vdcl = Cast.look_up_view_def_raw 59 prog.Cast.prog_view_decls lvnode.h_formula_view_name in
       if vdcl.Cast.view_is_segmented then
         let fwd_seg_ptrs = CP.intersect vdcl.Cast.view_cont_vars vdcl.Cast.view_forward_ptrs in
         if List.length fwd_seg_ptrs  = 1 then
@@ -1397,7 +1397,7 @@ let is_seg_view_br_fold_form_x prog ldnode lhs0 rvnode rhs0 remap conseq_pure_op
       else is_seg_match rest
   in
   let exist_full_fold lhs rvnode=
-    let vdecl = x_add Cast.look_up_view_def_raw 60 prog.Cast.prog_view_decls rvnode.h_formula_view_name in
+    let vdecl = Cast.look_up_view_def_raw 60 prog.Cast.prog_view_decls rvnode.h_formula_view_name in
     let self_sv =  CP.SpecVar (Named vdecl.Cast.view_data_name, self, Unprimed) in
     let sst = [(self_sv,rvnode.h_formula_view_node)] in
     let ivars = [CP.name_of_spec_var rvnode.h_formula_view_node] in
@@ -1416,7 +1416,7 @@ let is_seg_view_br_fold_form_x prog ldnode lhs0 rvnode rhs0 remap conseq_pure_op
       ) vdecl.Cast.view_un_struc_formula
   in
   let seg_fold_view ldnode rvnode=
-    let vdcl = x_add Cast.look_up_view_def_raw 59 prog.Cast.prog_view_decls rvnode.h_formula_view_name in
+    let vdcl = Cast.look_up_view_def_raw 59 prog.Cast.prog_view_decls rvnode.h_formula_view_name in
     if String.compare ldnode.h_formula_data_name vdcl.Cast.view_data_name = 0 then
       if vdcl.Cast.view_is_segmented then
         let fwd_seg_ptrs = CP.intersect vdcl.Cast.view_cont_vars vdcl.Cast.view_forward_ptrs in
@@ -1480,7 +1480,7 @@ let split_r_vnode cut_points cont_args_pos rvnode conseq rhs_b = match cut_point
   | _ -> (false, conseq, rhs_b)
 
 let seg_fold_view2_x prog lvnode rvnode conseq rhs_b=
-  let vdecl = x_add Cast.look_up_view_def_raw 60 prog.Cast.prog_view_decls lvnode.h_formula_view_name in
+  let vdecl = Cast.look_up_view_def_raw 60 prog.Cast.prog_view_decls lvnode.h_formula_view_name in
   (* get pos of fwd seg ptrs. todo: backward seg ptrs *)
   let cont_args_pos = List.map (fun sv -> get_pos vdecl.Cast.view_vars 0  sv)
       (CP.intersect_svl vdecl.Cast. view_forward_ptrs vdecl.Cast.view_cont_vars) in
@@ -1652,7 +1652,7 @@ let seg_fold_view_br prog ldnode rvnode ante conseq rhs_b=
 
 let need_cycle_checkpoint_unfold_x prog lvnode lhs0 rdnode rhs0 reqset=
   if not (!Globals.lemma_syn && is_lem_syn_in_bound() )
-  || (check_separation_unsat rhs0) || (check_separation_unsat lhs0)  then -1 else
+     || (check_separation_unsat rhs0) || (check_separation_unsat lhs0)  then -1 else
     let rhs1 = subst (reqset) rhs0 in
     let ( _,mix_f,_,_,_,_) = split_components rhs1 in
     let eqs = (MCP.ptr_equations_without_null mix_f) in
@@ -2475,5 +2475,5 @@ let look_up_first_field prog lsctx0 dname=
   process_failesc_contexts lsctx0
 
 let is_view_node_segmented vn prog =
-  let vdcl = x_add Cast.look_up_view_def_raw 62 prog.Cast.prog_view_decls vn.h_formula_view_name in
+  let vdcl = Cast.look_up_view_def_raw 62 prog.Cast.prog_view_decls vn.h_formula_view_name in
   vdcl.Cast.view_is_segmented

@@ -1396,7 +1396,7 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
                (*Maybe we only need to translate for primitive types*)
                (*If this argument var needs to be translate*)
                if (List.mem e0.exp_var_name vars)  
-               && (param.param_mod = RefMod) then
+                  && (param.param_mod = RefMod) then
                  (*addressable variable that are passed by reference*)
                  (true,arg) (*need to be processed*)
                else
@@ -2350,7 +2350,7 @@ and find_addr_inter_exp prog proc e (vs:ident list) : ident list =
 
 let trans_pointers_x (prog : prog_decl) : prog_decl =
   let gvar_decls = prog.prog_global_var_decls in
-  let new_gvar_decls = List.map trans_global_var_decl gvar_decls in
+  let new_gvar_decls = List.map (x_add_1 trans_global_var_decl) gvar_decls in
   (* let procs = prog.prog_proc_decls in *)
   (*Empty hashtbl h*)
   let () = Hashtbl.clear h in
