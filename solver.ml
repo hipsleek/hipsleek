@@ -7022,13 +7022,20 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
                    CF.HEmp, [], None, [])
       | Ctx estate ->
         let proving_kind = find_impt_proving_kind () in
-        let lex_lhs = match proving_kind with
-          | PK_POST -> List.map (fun ann -> CP.mkLexVar_pure ann [] []) estate.es_term_res_lhs
-          | _ -> match estate.es_var_measures with
+        let lex_lhs =
+          let collect_lexvar m = 
+            match m with 
             | None -> []
-            | Some (ann, rnk, _) -> 
-              if CP.is_MayLoop ann then []
-              else [CP.mkLexVar_pure ann rnk []]
+            | Some (ann, rnk, _) -> [CP.mkLexVar_pure ann rnk []]
+              (* if CP.is_MayLoop ann then []       *)
+              (* else [CP.mkLexVar_pure ann rnk []] *)
+          in 
+          match proving_kind with
+          | PK_POST -> 
+            if estate.es_term_res_lhs != [] then
+              List.map (fun ann -> CP.mkLexVar_pure ann [] []) estate.es_term_res_lhs
+            else collect_lexvar estate.es_var_measures
+          | _ -> collect_lexvar estate.es_var_measures
         in
         let es = List.fold_left (fun es lv -> fst
                                     (CF.combine_and es (MCP.mix_of_pure lv))) estate.es_formula lex_lhs in
