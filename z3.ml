@@ -139,78 +139,78 @@ let rec smt_of_exp a =
   | CP.ListReverse _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (lists should not appear here)")
   | CP.Func _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (func should not appear here)")
   | CP.Tsconst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (tsconst should not appear here)")
-	| CP.Bptriple _ -> ""
+  | CP.Bptriple _ -> ""
   | CP.ArrayAt (a, idx, l) -> 
-      List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
+    List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
   | CP.InfConst _ -> Error.report_no_pattern ()
   | CP.Template t -> smt_of_exp (CP.exp_of_template t)
 
 let rec smt_of_b_formula b =
   let (pf,_) = b in
   match pf with
-    | CP.Frm (sv, _) -> "(> " ^(smt_of_spec_var sv) ^ " 0)"
-    | CP.BConst (c, _) -> if c then "true" else "false"
-    | CP.XPure _ -> "true"
-    | CP.BVar (sv, _) -> "(> " ^(smt_of_spec_var sv) ^ " 0)"
-    | CP.Lt (a1, a2, _) -> "(< " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-    | CP.SubAnn (a1, a2, _) -> "(<= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-    | CP.Lte (a1, a2, _) -> "(<= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-    | CP.Gt (a1, a2, _) -> "(> " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-    | CP.Gte (a1, a2, _) -> "(>= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-    | CP.Eq (a1, a2, _) -> 
-      if CP.is_null a2 then
-        "(< " ^(smt_of_exp a1)^ " 1)"
-      else if CP.is_null a1 then
-        "(< " ^(smt_of_exp a2)^ " 1)"
-      else
-        "(= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+  | CP.Frm (sv, _) -> "(> " ^(smt_of_spec_var sv) ^ " 0)"
+  | CP.BConst (c, _) -> if c then "true" else "false"
+  | CP.XPure _ -> "true"
+  | CP.BVar (sv, _) -> "(> " ^(smt_of_spec_var sv) ^ " 0)"
+  | CP.Lt (a1, a2, _) -> "(< " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+  | CP.SubAnn (a1, a2, _) -> "(<= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+  | CP.Lte (a1, a2, _) -> "(<= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+  | CP.Gt (a1, a2, _) -> "(> " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+  | CP.Gte (a1, a2, _) -> "(>= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+  | CP.Eq (a1, a2, _) -> 
+    if CP.is_null a2 then
+      "(< " ^(smt_of_exp a1)^ " 1)"
+    else if CP.is_null a1 then
+      "(< " ^(smt_of_exp a2)^ " 1)"
+    else
+      "(= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
   | CP.Neq (a1, a2, _) ->
-      if CP.is_null a2 then
-        "(> " ^(smt_of_exp a1)^ " 0)"
-      else if CP.is_null a1 then
-        "(> " ^(smt_of_exp a2)^ " 0)"
-      else
-        "(not (= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ "))"
+    if CP.is_null a2 then
+      "(> " ^(smt_of_exp a1)^ " 0)"
+    else if CP.is_null a1 then
+      "(> " ^(smt_of_exp a2)^ " 0)"
+    else
+      "(not (= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ "))"
   | CP.EqMax (a1, a2, a3, _) ->
-      let a1str = smt_of_exp a1 in
-      let a2str = smt_of_exp a2 in
-      let a3str = smt_of_exp a3 in
-      "(or (and (= " ^ a1str ^ " " ^ a2str ^ ") (>= "^a2str^" "^a3str^")) (and (= " ^ a1str ^ " " ^ a3str ^ ") (< "^a2str^" "^a3str^")))"
+    let a1str = smt_of_exp a1 in
+    let a2str = smt_of_exp a2 in
+    let a3str = smt_of_exp a3 in
+    "(or (and (= " ^ a1str ^ " " ^ a2str ^ ") (>= "^a2str^" "^a3str^")) (and (= " ^ a1str ^ " " ^ a3str ^ ") (< "^a2str^" "^a3str^")))"
   | CP.EqMin (a1, a2, a3, _) ->
-      let a1str = smt_of_exp a1 in
-      let a2str = smt_of_exp a2 in
-      let a3str = smt_of_exp a3 in
-      "(or (and (= " ^ a1str ^ " " ^ a2str ^ ") (< "^a2str^" "^a3str^")) (and (= " ^ a1str ^ " " ^ a3str ^ ") (>= "^a2str^" "^a3str^")))"
+    let a1str = smt_of_exp a1 in
+    let a2str = smt_of_exp a2 in
+    let a3str = smt_of_exp a3 in
+    "(or (and (= " ^ a1str ^ " " ^ a2str ^ ") (< "^a2str^" "^a3str^")) (and (= " ^ a1str ^ " " ^ a3str ^ ") (>= "^a2str^" "^a3str^")))"
   (* UNHANDLED *)
   | CP.BagIn (v, e, l)    -> " in(" ^ (smt_of_spec_var v) ^ ", " ^ (smt_of_exp e) ^ ")"
   | CP.BagNotIn (v, e, l) -> " NOT(in(" ^ (smt_of_spec_var v) ^ ", " ^ (smt_of_exp e) ^"))"
   | CP.BagSub (e1, e2, l) -> " subset(" ^ smt_of_exp e1 ^ ", " ^ smt_of_exp e2 ^ ")"
   | CP.BagMax _ | CP.BagMin _ -> 
-      illegal_format ("z3.smt_of_b_formula: BagMax/BagMin should not appear here.\n")
+    illegal_format ("z3.smt_of_b_formula: BagMax/BagMin should not appear here.\n")
   (* | CP.VarPerm _ -> illegal_format ("z3.smt_of_b_formula: Vperm should not appear here.\n") *)
   | CP.ListIn _ | CP.ListNotIn _ | CP.ListAllN _ | CP.ListPerm _ -> 
-      illegal_format ("z3.smt_of_b_formula: ListIn ListNotIn ListAllN ListPerm should not appear here.\n")
+    illegal_format ("z3.smt_of_b_formula: ListIn ListNotIn ListAllN ListPerm should not appear here.\n")
   | CP.LexVar _ ->
-      illegal_format ("z3.smt_of_b_formula: LexVar should not appear here.\n")
+    illegal_format ("z3.smt_of_b_formula: LexVar should not appear here.\n")
   | CP.RelForm (r, args, l) ->
-      let smt_args = List.map smt_of_exp args in 
-      (* special relation 'update_array' translate to smt primitive store in array theory *)
-      let rn = CP.name_of_spec_var r in
-      if Cpure.is_update_array_relation rn then
-        let orig_array = List.nth smt_args 0 in
-        let new_array = List.nth smt_args 1 in
-        let value = List.nth smt_args 2 in
-        let index = List.rev (List.tl (List.tl (List.tl smt_args))) in
-        let last_index = List.hd index in
-        let rem_index = List.rev (List.tl index) in
-        let arr_select = List.fold_left (fun x y -> let k = List.hd x in ("(select " ^ k ^ " " ^ y ^ ")") :: x) [orig_array] rem_index in
-        let arr_select = List.rev arr_select in
-        let fl = List.map2 (fun x y -> (x,y)) arr_select (rem_index @ [last_index]) in
-        let result = List.fold_right (fun x y -> "(store " ^ (fst x) ^ " " ^ (snd x) ^ " " ^ y ^ ")") fl value in
-        "(= " ^ new_array ^ " " ^ result ^ ")"
-      else
-        "(" ^ (CP.name_of_spec_var r) ^ " " ^ (String.concat " " smt_args) ^ ")"
-  (* | CP.XPure _ -> Error.report_no_pattern () *)
+    let smt_args = List.map smt_of_exp args in 
+    (* special relation 'update_array' translate to smt primitive store in array theory *)
+    let rn = CP.name_of_spec_var r in
+    if Cpure.is_update_array_relation rn then
+      let orig_array = List.nth smt_args 0 in
+      let new_array = List.nth smt_args 1 in
+      let value = List.nth smt_args 2 in
+      let index = List.rev (List.tl (List.tl (List.tl smt_args))) in
+      let last_index = List.hd index in
+      let rem_index = List.rev (List.tl index) in
+      let arr_select = List.fold_left (fun x y -> let k = List.hd x in ("(select " ^ k ^ " " ^ y ^ ")") :: x) [orig_array] rem_index in
+      let arr_select = List.rev arr_select in
+      let fl = List.map2 (fun x y -> (x,y)) arr_select (rem_index @ [last_index]) in
+      let result = List.fold_right (fun x y -> "(store " ^ (fst x) ^ " " ^ (snd x) ^ " " ^ y ^ ")") fl value in
+      "(= " ^ new_array ^ " " ^ result ^ ")"
+    else
+      "(" ^ (CP.name_of_spec_var r) ^ " " ^ (String.concat " " smt_args) ^ ")"
+(* | CP.XPure _ -> Error.report_no_pattern () *)
 
 let rec smt_of_formula pr_w pr_s f =
   let () = Debug.devel_hprint (add_str "f(z3)" !CP.print_formula) f no_pos in
@@ -226,9 +226,9 @@ let rec smt_of_formula pr_w pr_s f =
     | CP.Or (p1, p2,_, _) -> "(or " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
     | CP.Not (p,_, _) -> "(not " ^ (smt_of_formula pr_s pr_w p) ^ ")"
     | CP.Forall (sv, p, _,_) ->
-        "(forall (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (helper p) ^ ")"
+      "(forall (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (helper p) ^ ")"
     | CP.Exists (sv, p, _,_) ->
-        "(exists (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (helper p) ^ ")"
+      "(exists (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (helper p) ^ ")"
   ) in
   helper f
 
@@ -270,11 +270,11 @@ and collect_combine_formula_info f1 f2 =
  * function is only used mainly in pre-computing information of relation and
  * axiom definition.
  * The information is to be corrected by the function collect_formula_info.
- *)
+*)
 and collect_formula_info_raw f = match f with
   | CP.BForm ((b,_),_) -> collect_bformula_info b
   | CP.And (f1,f2,_) | CP.Or (f1,f2,_,_) -> 
-      collect_combine_formula_info_raw f1 f2
+    collect_combine_formula_info_raw f1 f2
   | CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
   | CP.Not (f1,_,_) -> collect_formula_info_raw f1
   | CP.Forall (svs,f1,_,_) | CP.Exists (svs,f1,_,_) -> collect_formula_info_raw f1
@@ -284,11 +284,11 @@ and collect_combine_formula_info_raw f1 f2 =
 
 and collect_bformula_info b = match b with
   | CP.RelForm (r,args,_) -> 
-      let r = CP.name_of_spec_var r in
-      if r = "update_array" then
-        default_formula_info 
-      else 
-        { default_formula_info with relations = [r]; }
+    let r = CP.name_of_spec_var r in
+    if r = "update_array" then
+      default_formula_info 
+    else 
+      { default_formula_info with relations = [r]; }
   | _ -> default_formula_info
 
 
@@ -321,13 +321,13 @@ let add_axiom h dir c =
        1)   Add reference to 'h dir c' as a related axiom
        2)   Add all other relations (appearing in h and c) to the list of related relations *)
     global_rel_defs := List.map (fun x ->
-      if (List.mem x.rel_name related_relations) then
-        let rs = Gen.BList.remove_dups_eq (=) (x.related_rels @ related_relations) in
-        { x with 
-          related_rels = rs;
-          related_axioms = x.related_axioms @ [aindex]; }
-      else x
-    ) !global_rel_defs;
+        if (List.mem x.rel_name related_relations) then
+          let rs = Gen.BList.remove_dups_eq (=) (x.related_rels @ related_relations) in
+          { x with 
+            related_rels = rs;
+            related_axioms = x.related_axioms @ [aindex]; }
+        else x
+      ) !global_rel_defs;
     (* Cache the SMT input for 'h dir c' so that we do not have to generate this over and over again *)
     let params = List.append (CP.fv h) (CP.fv c) in
     let rel_ids = List.map (fun r -> CP.SpecVar(RelT[],r.rel_name,Unprimed)) !global_rel_defs in
@@ -378,35 +378,35 @@ let add_relation (rname1:string) rargs rform =
       rel_cache_smt_declare_fun = cache_smt_input;
     } in
     global_rel_defs := !global_rel_defs @ [rdef];
-      (* Note that this axiom must be NEW i.e. no relation with this name is added earlier so that add_axiom is correct *)
+    (* Note that this axiom must be NEW i.e. no relation with this name is added earlier so that add_axiom is correct *)
     match rform with
     | CP.BForm ((CP.BConst (true, no_pos), None), None) (* no definition supplied *) -> (* do nothing *) ()
     | _ -> (* add an axiom to describe the definition *)
-        let h = CP.BForm ((CP.RelForm (rname, List.map (fun x -> CP.mkVar x no_pos) rargs, no_pos), None), None) in
-        add_axiom h IFF rform;
+      let h = CP.BForm ((CP.RelForm (rname, List.map (fun x -> CP.mkVar x no_pos) rargs, no_pos), None), None) in
+      add_axiom h IFF rform;
   )
 
 (* Interface function to add a new hp relation *)
 let add_hp_relation (rname1:string) rargs rform =
   (* let rname = CP.SpecVar(HpT,rname1,Unprimed) in *)
-    (* Cache the declaration for this relation *)
+  (* Cache the declaration for this relation *)
   let cache_smt_input = (
     let signature = List.map CP.type_of_spec_var rargs in
     let smt_signature = String.concat " " (List.map smt_of_typ signature) in
-      (* Declare the relation in form of a function --> Bool *)
+    (* Declare the relation in form of a function --> Bool *)
     "(declare-fun " ^ rname1 ^ " (" ^ smt_signature ^ ") Bool)\n"
   ) in
   let rdef = { rel_name = rname1; 
-             rel_vars = rargs;
-             related_rels = []; (* to be filled up by add_axiom *)
-             related_axioms = []; (* to be filled up by add_axiom *)
-             rel_cache_smt_declare_fun = cache_smt_input; } in
+               rel_vars = rargs;
+               related_rels = []; (* to be filled up by add_axiom *)
+               related_axioms = []; (* to be filled up by add_axiom *)
+               rel_cache_smt_declare_fun = cache_smt_input; } in
   global_rel_defs := !global_rel_defs @ [rdef];
   (* Note that this axiom must be NEW i.e. no relation with this name is added earlier so that add_axiom is correct *)
 
-(***************************************************************
-                            INTERACTION
- **************************************************************)
+  (***************************************************************
+                              INTERACTION
+   **************************************************************)
 
 type sat_type = 
   | Sat    (* solver returns sat *)
@@ -417,7 +417,7 @@ type sat_type =
 (* Record structure to store information parsed from the output 
  * of the SMT solver.
  * This change is to make development extensible in later stage.
- *)
+*)
 type smt_output = {
   original_output_text : string list;   (* original (command line) output text of the solver; included in order to support printing *)
   sat_result : sat_type; (* satisfiability information *)
@@ -440,7 +440,7 @@ let rec icollect_output2 chn accumulated_output : string list =
       else
         icollect_output2 chn (accumulated_output @ [line])
     with
-      | End_of_file -> accumulated_output in
+    | End_of_file -> accumulated_output in
   output
 
 (* Collect all Z3's output into a list of strings *)
@@ -471,9 +471,9 @@ let sat_type_from_string r input =
     try
       let todo_var_unknown:int = Str.search_forward (Str.regexp "unexpected") r 0 in
       (print_string "Z3 translation failure!";
-      Error.report_error { Error.error_loc = no_pos; Error.error_text =("Z3 translation failure!!\n"^r^"\n input: "^input)})
+       Error.report_error { Error.error_loc = no_pos; Error.error_text =("Z3 translation failure!!\n"^r^"\n input: "^input)})
     with
-      | Not_found -> Unknown
+    | Not_found -> Unknown
 
 let parse_model_to_pure_formula_x model =
   let rec helper acc model =
@@ -502,7 +502,7 @@ let parse_model_to_pure_formula model =
   let pr1 = pr_list pr_id in
   let pr2 = !print_pure in
   Debug.no_1 "parse_model_to_pure_formula" pr1 pr2
-      (fun _ -> parse_model_to_pure_formula_x model) model
+    (fun _ -> parse_model_to_pure_formula_x model) model
 
 let iget_answer2 chn input =
   let output = icollect_output2 chn [] in
@@ -544,7 +544,7 @@ let remove_file filename =
   try
     Sys.remove filename;
   with
-    | e -> ignore e
+  | e -> ignore e
 
 type smtprover = Z3N
 
@@ -561,12 +561,12 @@ let is_local_solver = ref (false: bool)
 let smtsolver_name = ref ("z3n": string)
 
 let prover_process = ref {
-  name = !smtsolver_name;
-  pid = 0;
-  inchannel = stdin;
-  outchannel = stdout;
-  errchannel = stdin 
-}
+    name = !smtsolver_name;
+    pid = 0;
+    inchannel = stdin;
+    outchannel = stdout;
+    errchannel = stdin 
+  }
 
 (***********)
 let test_number = ref 0
@@ -607,14 +607,14 @@ let run st prover input timeout =
     try
       Procutils.PrvComms.maybe_raise_timeout fnc () timeout
     with
-      | _ -> (* exception : return the safe result to ensure soundness *)
-          print_backtrace_quiet ();
-          print_endline_quiet ("WARNING for "^st^" : Restarting prover due to timeout");
-          Unix.kill !prover_process.pid 9;
-          ignore (Unix.waitpid [] !prover_process.pid);
-          { original_output_text = []; sat_result = Aborted;
-          cex = None;
-          }
+    | _ -> (* exception : return the safe result to ensure soundness *)
+      print_backtrace_quiet ();
+      print_endline_quiet ("WARNING for "^st^" : Restarting prover due to timeout");
+      Unix.kill !prover_process.pid 9;
+      ignore (Unix.waitpid [] !prover_process.pid);
+      { original_output_text = []; sat_result = Aborted;
+        cex = None;
+      }
   ) in
   let () = Procutils.PrvComms.stop false stdout !prover_process 0 9 (fun () -> ()) in
   remove_file infile;
@@ -638,7 +638,7 @@ and start() =
       else if !smtsolver_name = "z3-4.3.1" then
         Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, "./z3-4.3.1", [|!smtsolver_name; "-smt2";"-in"|]) set_process prelude
       else
-           Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"; "-in"|]) set_process prelude
+        Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"; "-in"|]) set_process prelude
     ) in
     is_z3_running := true;
   )
@@ -685,7 +685,7 @@ let check_formula f bget_cex timeout =
   ) in
   let fail_with_timeout () = (
     (* let () = print_endline ("#### fail_with_timeout f = " ^ f) in *)
-      let to_msg = if !compete_mode then "" else "[smtsolver.ml]Timeout when checking sat!" ^ (string_of_float timeout) in
+    let to_msg = if !compete_mode then "" else "[smtsolver.ml]Timeout when checking sat!" ^ (string_of_float timeout) in
     restart (to_msg);
     { original_output_text = []; sat_result = Unknown; cex=None;} 
   ) in
@@ -696,7 +696,7 @@ let check_formula f bget_cex timeout =
 
 let check_formula f bget_cex timeout =
   Debug.no_3 "Z3:check_formula" (fun x-> x) string_of_bool string_of_float string_of_smt_output
-      check_formula f bget_cex timeout
+    check_formula f bget_cex timeout
 
 let check_formula f bget_cex timeout =
   Gen.Profiling.no_2 "smt_check_formula" check_formula f bget_cex timeout
@@ -709,7 +709,7 @@ let check_formula f bget_cex timeout =
 (**
  * Logic types for smt solvers
  * based on smt-lib benchmark specs
- *)
+*)
 type smtlogic =
   | QF_LIA    (* quantifier free linear integer arithmetic *)
   | QF_NIA    (* quantifier free nonlinear integer arithmetic *)
@@ -727,10 +727,10 @@ let string_of_logic logic =
 let to_smt_v2 pr_weak pr_strong ante conseq fvars info bget_cex=
   (* Variable declarations *)
   let smt_var_decls = List.map (fun v ->
-    let tp = (CP.type_of_spec_var v)in
-    let t = smt_of_typ tp in
-    "(declare-fun " ^ (smt_of_spec_var v) ^ " () " ^ (t) ^ ")\n"
-  ) fvars in
+      let tp = (CP.type_of_spec_var v)in
+      let t = smt_of_typ tp in
+      "(declare-fun " ^ (smt_of_spec_var v) ^ " () " ^ (t) ^ ")\n"
+    ) fvars in
   let smt_var_decls = String.concat "" smt_var_decls in
   (* Relations that appears in the ante and conseq *)
   let used_rels = info.relations in
@@ -746,13 +746,13 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars info bget_cex=
   let ante_str = String.concat "" ante_strs in
   let conseq_str = smt_of_formula pr_weak pr_strong conseq in (
     ";Variables declarations\n" ^ 
-      smt_var_decls ^
+    smt_var_decls ^
     ";Relations declarations\n" ^ 
-      rel_decls ^
+    rel_decls ^
     ";Axioms assertions\n" ^ 
-      axiom_asserts ^
+    axiom_asserts ^
     ";Antecedent\n" ^ 
-      ante_str ^
+    ante_str ^
     ";Negation of Consequence\n" ^ "(assert (not " ^ conseq_str ^ "))\n" ^
     "(check-sat)" ^
     (if bget_cex (* (!Globals.get_model && !smtsolver_name="z3n")  *)then "\n(get-model)" else "")
@@ -803,10 +803,10 @@ let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (p
   let ante = 
     if (not (List.mem "dom" conseq_info.relations)) then
       CP.remove_primitive (fun x -> 
-        match x with 
-        | CP.RelForm (r, _ , _) -> CP.name_of_spec_var r = "dom" 
-        | _ -> false
-      ) ante 
+          match x with 
+          | CP.RelForm (r, _ , _) -> CP.name_of_spec_var r = "dom" 
+          | _ -> false
+        ) ante 
     else ante in
   let ante_info = collect_formula_info ante in
   let info = combine_formula_info ante_info conseq_info in
@@ -814,9 +814,9 @@ let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (p
   let conseq_fv = CP.fv conseq in
   let all_fv = Gen.BList.remove_dups_eq (=) (ante_fv @ conseq_fv) in
   let res = to_smt_v2 pr_weak pr_strong ante conseq all_fv info bget_cex in
-    (* let () = print_endline (" ### res = \n " ^ res) in *)
-    res
-  
+  (* let () = print_endline (" ### res = \n " ^ res) in *)
+  res
+
 let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (prover: smtprover) bget_cex = 
   Debug.no_1 "to_smt" (fun _ -> "") (fun c -> c) (fun c-> to_smt pr_weak pr_strong ante conseq prover bget_cex) prover
 
@@ -825,7 +825,7 @@ let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (p
  **************************************************************)
 
 type output_configuration = {
-    (* transferred to Globals *)
+  (* transferred to Globals *)
   (* print_original_solver_input                   : bool ref; (\* print generated SMT input *\) *)
   (* print_original_solver_output : bool ref; (\* print solver original output *\) *)
   print_implication            : bool ref; (* print the implication problems sent to this smt_imply *)
@@ -848,25 +848,25 @@ let unsuppress_all_output () = outconfig.suppress_print_implication := false
 
 let process_stdout_print ante conseq input output res =
   if (not !(outconfig.suppress_print_implication)) then
-  begin
-    if !(outconfig.print_implication) then 
-      print_endline_quiet ("CHECKING IMPLICATION:\n\n" ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n");
-    if !(Globals.print_original_solver_input) then (
-      print_endline_quiet (">>> GENERATED SMT INPUT:\n\n" ^ input);
-      flush stdout;
-    );
-    if !(Globals.print_original_solver_output) then (
-      print_endline_quiet (">>> Z3 OUTPUT RECEIVED:\n" ^ (string_of_smt_output output));
-      print_endline_quiet (match output.sat_result with
-        | UnSat -> ">>> VERDICT: UNSAT/VALID!"
-        | Sat -> ">>> VERDICT: FAILED!"
-        | Unknown -> ">>> VERDICT: UNKNOWN! CONSIDERED AS FAILED."
-        | Aborted -> ">>> VERDICT: ABORTED! CONSIDERED AS FAILED.");
-      flush stdout;
-    );
-    if (!(outconfig.print_implication) || !(Globals.print_original_solver_input) || !(Globals.print_original_solver_output)) then
-      print_string_quiet "\n";
-  end
+    begin
+      if !(outconfig.print_implication) then 
+        print_endline_quiet ("CHECKING IMPLICATION:\n\n" ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n");
+      if !(Globals.print_original_solver_input) then (
+        print_endline_quiet (">>> GENERATED SMT INPUT:\n\n" ^ input);
+        flush stdout;
+      );
+      if !(Globals.print_original_solver_output) then (
+        print_endline_quiet (">>> Z3 OUTPUT RECEIVED:\n" ^ (string_of_smt_output output));
+        print_endline_quiet (match output.sat_result with
+            | UnSat -> ">>> VERDICT: UNSAT/VALID!"
+            | Sat -> ">>> VERDICT: FAILED!"
+            | Unknown -> ">>> VERDICT: UNKNOWN! CONSIDERED AS FAILED."
+            | Aborted -> ">>> VERDICT: ABORTED! CONSIDERED AS FAILED.");
+        flush stdout;
+      );
+      if (!(outconfig.print_implication) || !(Globals.print_original_solver_input) || !(Globals.print_original_solver_output)) then
+        print_string_quiet "\n";
+    end
 
 (**************************************************************
    MAIN INTERFACE : CHECKING IMPLICATION AND SATISFIABILITY    
@@ -879,15 +879,15 @@ let max_induction_level = ref 0
  * Select the candidates to do induction on. Just find all
  * relation dom(_,low,high) that appears and collect the 
  * { high - low } such that ante |- low <= high.
- *)
+*)
 let rec collect_induction_value_candidates (ante : CP.formula) (conseq : CP.formula) : (CP.exp list) =
   (*let () = print_string ("collect_induction_value_candidates :: ante = " ^ (!print_pure ante) ^ "\nconseq = " ^ (!print_pure conseq) ^ "\n") in*)
   match conseq with
   | CP.BForm (b,_) -> (
-    let (p, _) = b in match p with
+      let (p, _) = b in match p with
       | CP.RelForm (r,[value],_) -> 
-          if (CP.name_of_spec_var r) ="induce" then [value]
-          else []
+        if (CP.name_of_spec_var r) ="induce" then [value]
+        else []
       | _ -> []
     )
   | CP.And (f1,f2,_) -> (collect_induction_value_candidates ante f1) @ (collect_induction_value_candidates ante f2)
@@ -895,7 +895,7 @@ let rec collect_induction_value_candidates (ante : CP.formula) (conseq : CP.form
   | CP.Or (f1,f2,_,_) -> (collect_induction_value_candidates ante f1) @ (collect_induction_value_candidates ante f2)
   | CP.Not (f,_,_) -> (collect_induction_value_candidates ante f)
   | CP.Forall _ | CP.Exists _ -> []
-        
+
 (** 
     * Select the value to do induction on.
     * A simple approach : induct on the length of an array.
@@ -914,14 +914,14 @@ and create_induction_var (vlist : CP.spec_var list) : CP.spec_var =
     match vlist with
     | [] -> i
     | hd :: tl -> 
-        let v = CP.SpecVar (Int,"omg_" ^ (string_of_int i),Unprimed) in
-        if List.mem v vlist then
-          create_induction_var_helper tl (i+1)
-        else 
-          create_induction_var_helper tl i
+      let v = CP.SpecVar (Int,"omg_" ^ (string_of_int i),Unprimed) in
+      if List.mem v vlist then
+        create_induction_var_helper tl (i+1)
+      else 
+        create_induction_var_helper tl i
   ) in let i = create_induction_var_helper vlist 0 in
   CP.SpecVar (Int,"omg_" ^ (string_of_int i),Unprimed)
-	  
+
 (** 
     * Generate the base case, induction hypothesis and induction case
     * for a formula phi(v,v_1,v_2,...) with new induction variable v.
@@ -942,7 +942,7 @@ and create_induction_var (vlist : CP.spec_var list) : CP.spec_var =
     * for Ante -> Conseq
 *)
 and gen_induction_formulas (ante : CP.formula) (conseq : CP.formula) (indval : CP.exp) : 
-	  ((CP.formula * CP.formula) * (CP.formula * CP.formula)) =
+  ((CP.formula * CP.formula) * (CP.formula * CP.formula)) =
   (*let () = print_string "gen_induction_formulas\n" in*)
   let p = CP.fv ante @ CP.fv conseq in
   let v = create_induction_var p in 
@@ -999,7 +999,7 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
 and smt_imply  pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) bget_cex timeout : bool =
   let pr = !print_pure in
   Debug.no_2(* _loop *) "smt_imply" (pr_pair pr pr) string_of_float string_of_bool
-      (fun _ _-> smt_imply_x  pr_weak pr_strong ante conseq prover bget_cex timeout) (ante, conseq) timeout
+    (fun _ _-> smt_imply_x  pr_weak pr_strong ante conseq prover bget_cex timeout) (ante, conseq) timeout
 
 and smt_imply_x pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) bget_cex timeout : bool =
   (* let () = print_endline ("smt_imply : " ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n") in *)
@@ -1026,7 +1026,7 @@ and smt_imply_x pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula
     (*   ) with                                                                     *)
     (*     | _ -> (false, true)                                                     *)
     (* else                                                                         *)
-      (false, true) 
+    (false, true) 
   ) in
   if (should_run_smt) then
     let input = to_smt pr_weak pr_strong ante (Some conseq) prover bget_cex in
@@ -1081,21 +1081,21 @@ let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
   try
     imply ante conseq timeout
   with Illegal_Prover_Format s -> (
-    print_endline_quiet ("\nWARNING : Illegal_Prover_Format for :"^s);
-    print_endline_quiet ("Apply z3.imply on ante Formula :"^(!print_pure ante));
-    print_endline_quiet ("and conseq Formula :"^(!print_pure conseq));
-    flush stdout;
-    failwith s
-  )
+      print_endline_quiet ("\nWARNING : Illegal_Prover_Format for :"^s);
+      print_endline_quiet ("Apply z3.imply on ante Formula :"^(!print_pure ante));
+      print_endline_quiet ("and conseq Formula :"^(!print_pure conseq));
+      flush stdout;
+      failwith s
+    )
 
 let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
   Debug.no_1(* _loop *) "smt.imply" string_of_float string_of_bool
-      (fun _ -> imply ante conseq timeout) timeout
+    (fun _ -> imply ante conseq timeout) timeout
 
 (**
  * Test for satisfiability
  * We also consider unknown is the same as sat
- *)
+*)
 let smt_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) (prover: smtprover) bget_cex timeout : bool =
   (* let () = print_endline ("smt_is_sat : " ^ (!print_pure f) ^ "\n") in *)
   (* (*drop VarPerm beforehand*)                           *)
@@ -1118,7 +1118,7 @@ let smt_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) (prover: 
     (*   with                                                               *)
     (*     | _ -> (true, false)                                             *)
     (* else                                                                 *)
-      (false, true)
+    (false, true)
   ) in
   if (should_run_smt) then
     let input = to_smt pr_weak pr_strong f None prover bget_cex in
@@ -1162,13 +1162,13 @@ let is_sat f sat_no = Debug.no_2(* _loop *) "is_sat" (!print_pure) (fun x->x) st
 
 (**
  * To be implemented
- *)
+*)
 let simplify (f: CP.formula) : CP.formula = 
   (* let () = print_endline "locle: simplify" in *)
   try
     (Omega.simplify f)
   with
-    | _ -> f
+  | _ -> f
 
 
 let simplify (pe : CP.formula) : CP.formula =
@@ -1209,15 +1209,15 @@ let push_smt_input inp timeout f_timeout =
 let get_model is_linear vars assertions =
   (* Variable declarations *)
   let smt_var_decls = List.map (fun v ->
-    let typ = (CP.type_of_spec_var v)in
-    let t = smt_of_typ typ in
-    "(declare-const " ^ (smt_of_spec_var v) ^ " " ^ t ^ ")\n"
-  ) vars in
+      let typ = (CP.type_of_spec_var v)in
+      let t = smt_of_typ typ in
+      "(declare-const " ^ (smt_of_spec_var v) ^ " " ^ t ^ ")\n"
+    ) vars in
   let smt_var_decls = String.concat "" smt_var_decls in
 
   let (pr_w, pr_s) = CP.drop_complex_ops_z3 in
   let smt_asserts = List.map (fun a ->
-    "(assert " ^ (smt_of_formula pr_w pr_s a) ^ ")\n") assertions in
+      "(assert " ^ (smt_of_formula pr_w pr_s a) ^ ")\n") assertions in
   let smt_asserts = String.concat "" smt_asserts in
   let smt_inp = 
     ";Variables Declarations\n" ^ smt_var_decls ^
@@ -1243,19 +1243,19 @@ let get_model is_linear vars assertions =
   let pr1 = pr_list !CP.print_formula in
   let pr2 = string_of_z3m_res in
   Debug.no_1 "z3_get_model" pr1 pr2
-  (fun _ -> get_model is_linear vars assertions) assertions
+    (fun _ -> get_model is_linear vars assertions) assertions
 
 let norm_model (m: (string * z3m_val) list): (string * int) list =
   let vl, il = List.split m in
   let il = z3m_val_to_int il in
   let m = List.combine vl il in
   m
-  (* let mi = List.map (fun (_, i) -> i) m in   *)
-  (* let gcd_mi = abs (gcd_l mi) in             *)
-  (* List.map (fun (v, i) -> (v, i / gcd_mi)) m *)
+(* let mi = List.map (fun (_, i) -> i) m in   *)
+(* let gcd_mi = abs (gcd_l mi) in             *)
+(* List.map (fun (v, i) -> (v, i / gcd_mi)) m *)
 
 let norm_model (m: (string * z3m_val) list): (string * int) list =
   let pr1 = pr_list (pr_pair idf string_of_z3m_val) in
   let pr2 = pr_list (pr_pair idf string_of_int) in
   Debug.no_1 "z3_norm_model" pr1 pr2
-  norm_model m
+    norm_model m

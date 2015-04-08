@@ -1,7 +1,7 @@
 #include "xdebug.cppo"
 (**
    Extended source view
- *)
+*)
 
 open GUtil
 open SourceUtil
@@ -18,7 +18,7 @@ class source_view ?(text = "") () =
     val delegate = GSourceView2.source_view ()
     val panel = GPack.vbox ()
     val status_lbl = GMisc.label ~show:false ~ypad:2 ()
-    
+
     initializer
       status_lbl#set_use_markup true;
       delegate#set_show_line_numbers true;
@@ -40,7 +40,7 @@ class source_view ?(text = "") () =
       let pixbuf =  delegate#misc#render_icon ~size:`DIALOG `DIALOG_ERROR in
       delegate#set_mark_category_pixbuf ~category:error (Some pixbuf);
       (*ignore (buffer#connect#mark_set *)
-        (*~callback:(fun _ _ -> highlight_selected_word ()))*)
+      (*~callback:(fun _ _ -> highlight_selected_word ()))*)
 
     method coerce = panel#coerce
     method connect = delegate#connect
@@ -77,12 +77,12 @@ class source_view ?(text = "") () =
       self#scroll_to_pos pos;
       if msg <> "" then
         let msg = Printf.sprintf 
-          "<span font_variant='smallcaps' font_weight='bold' color='#fff' bgcolor='#b24c40'>  %s  </span>"
-          msg in
+            "<span font_variant='smallcaps' font_weight='bold' color='#fff' bgcolor='#b24c40'>  %s  </span>"
+            msg in
         self#set_status msg
 
     (** clear current highlight
-       by removing checkentail tag in current source code *)
+        by removing checkentail tag in current source code *)
     method clear_highlight () =
       let start = self#source_buffer#get_iter `START in
       let stop = self#source_buffer#get_iter `END in
@@ -91,11 +91,11 @@ class source_view ?(text = "") () =
       self#source_buffer#remove_source_marks ~category:error ~start ~stop ();
       self#source_buffer#remove_source_marks ~category:highlight ~start ~stop ();
 
-    (** scroll the view window to given position *)
+      (** scroll the view window to given position *)
     method scroll_to_pos (pos: seg_pos) =
       let iter = self#source_buffer#get_iter_at_char pos.start_char in
       ignore (delegate#scroll_to_iter
-        ~use_align:true ~yalign:0.5 iter)
+                ~use_align:true ~yalign:0.5 iter)
 
     (*
      *method highlight_selected_word () =
@@ -110,7 +110,7 @@ class source_view ?(text = "") () =
 
 (**
    Sleek source view
- *)
+*)
 class sleek_source_view ?(text = "") () =
 
   let get_sleek_lang () =
@@ -125,13 +125,13 @@ class sleek_source_view ?(text = "") () =
 
   object (self)
     inherit source_view ~text () as super
-    
+
     initializer
       super#source_buffer#set_language (Some (get_sleek_lang ()));
       super#source_buffer#set_highlight_syntax true;
 
-    (** highlight checkentail command
-       by applying checkentail tag on that part of source code *)
+      (** highlight checkentail command
+          by applying checkentail tag on that part of source code *)
     method hl_entailment (e: entailment): unit =
       super#hl_segment ~clear_previous_highlight:true ~scroll:true e.pos
 
@@ -146,7 +146,7 @@ class sleek_source_view ?(text = "") () =
 
 (**
    Hip source view
- *)
+*)
 class hip_source_view ?(text = "") () =
 
   let get_hip_lang () =
@@ -162,7 +162,7 @@ class hip_source_view ?(text = "") () =
 
   object (self)
     inherit source_view ~text () as super
-    
+
     initializer
       super#source_buffer#set_language (Some (get_hip_lang ()));
       super#source_buffer#set_highlight_syntax true;

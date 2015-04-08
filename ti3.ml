@@ -18,7 +18,7 @@ let rec partition_by_key key_of key_eq ls =
     let ke = key_of e in 
     let same_es, other_es = List.partition (fun e -> key_eq ke (key_of e)) es in
     (ke, e::same_es)::(partition_by_key key_of key_eq other_es)
-    
+
 let rec partition_eq eq ls = 
   match ls with
   | [] -> []
@@ -50,7 +50,7 @@ let ret_trel_stk: ret_trel Gen.stack = new Gen.stack
 
 let print_ret_trel rel = 
   string_of_trrel_assume (rel.ret_ctx, rel.termr_lhs, rel.termr_rhs)
-  
+
 (* Temporal Relation at Call *)
 type call_trel = {
   trel_id: int;
@@ -73,9 +73,9 @@ let print_call_trel_debug rel =
 
 let print_call_trel rel = 
   string_of_turel_assume (rel.call_ctx, rel.termu_lhs, rel.termu_rhs)
-  
+
 let compare_trel r1 r2 = compare r1.trel_id r2.trel_id
-  
+
 let eq_trel r1 r2 = r1.trel_id == r2.trel_id
 
 let dummy_trel = {
@@ -88,7 +88,7 @@ let dummy_trel = {
   termu_cle = "";
   termu_rhs_args = [];
   termu_pos = no_pos; }
-  
+
 let update_call_trel rel ilhs irhs = 
   { rel with
     termu_lhs = ilhs;  
@@ -135,16 +135,16 @@ let is_Term sp =
   match sp with
   | Sol (CP.Term, _) -> true
   | _ -> false
-  
+
 let rec pr_tnt_case_spec (spec: tnt_case_spec) = 
   match spec with
   | Cases cl ->
     pr_args (Some("V",1)) (Some "A") "case " "{" "}" "" 
-    (
-      fun (c, s) -> wrap_box ("B",0) (pr_op_adhoc 
-        (fun () -> pr_pure_formula c) " -> " )
-        (fun () -> pr_tnt_case_spec s; fmt_string ";")
-    ) cl 
+      (
+        fun (c, s) -> wrap_box ("B",0) (pr_op_adhoc 
+                                          (fun () -> pr_pure_formula c) " -> " )
+            (fun () -> pr_tnt_case_spec s; fmt_string ";")
+      ) cl 
   | Unknown cex -> 
     (* fmt_string "Unk" *) 
     (* fmt_string "requires MayLoop ensures true" *)
@@ -186,12 +186,12 @@ let eq_tnt_case_spec sp1 sp2 =
   | Sol (CP.MayLoop _, _), Unknown _ -> true
   | Sol (ann1, rnk1), Sol (ann2, rnk2) ->
     begin match ann1, ann2 with
-    | CP.Loop _, CP.Loop _ -> true
-    | CP.MayLoop _, CP.MayLoop _ -> true
-    (* | CP.Term, CP.Term ->                          *)
-    (*   (* is_base_rank rnk1 && is_base_rank rnk2 *) *)
-    (*   eq_base_rank rnk1 rnk2                       *)
-    | _ -> false
+      | CP.Loop _, CP.Loop _ -> true
+      | CP.MayLoop _, CP.MayLoop _ -> true
+      (* | CP.Term, CP.Term ->                          *)
+      (*   (* is_base_rank rnk1 && is_base_rank rnk2 *) *)
+      (*   eq_base_rank rnk1 rnk2                       *)
+      | _ -> false
     end
   | _ -> false
 
@@ -218,19 +218,19 @@ let path_of_formula f =
   let bvs = List.concat (List.map (fun f -> opt_to_list (CP.getBVar f)) ls) in
   let bvs = Gen.BList.remove_dups_eq (fun (v1, _) (v2, _) -> CP.eq_spec_var v1 v2) bvs in
   bvs
-  
+
 let eq_path_elem (v1, s1) (v2, s2) =
   (CP.eq_spec_var v1 v2) && (s1 == s2)  
 
- (* p1 and p2 are in the same sequence *)   
+(* p1 and p2 are in the same sequence *)   
 let eq_path p1 p2 =
   Gen.BList.list_setequal_eq eq_path_elem p1 p2
-  
+
 (* p1 is sub-path of p2 *)  
 let is_sub_path p1 p2 = 
   (Gen.BList.subset_eq eq_path_elem p2 p1) &&
   (List.length p1 > List.length p2)
-  
+
 let rec eq_path_formula f1 f2 =
   let p1 = path_of_formula f1 in
   let p2 = path_of_formula f2 in
@@ -249,7 +249,7 @@ let rec and_or_tree_of_path_traces path_traces =
     | [] -> and_or_tree_of_path_traces others
     | grp::[] -> and_tree_of_path_traces grp others
     | _ -> TPar (List.map (fun grp -> and_tree_of_path_traces grp others) eq_path_grps)
-      
+
 and and_tree_of_path_traces same_path_grp other_traces = 
   match same_path_grp with
   | [] -> and_or_tree_of_path_traces other_traces
@@ -258,14 +258,14 @@ and and_tree_of_path_traces same_path_grp other_traces =
     let sgl_path_grp = List.map (fun p -> TSgl p) same_path_grp in
     match sub_path_traces with
     | [] -> begin match sgl_path_grp with
-      | [] -> TSgl []
-      | s::[] -> s
-      | _ -> TSeq sgl_path_grp end
+        | [] -> TSgl []
+        | s::[] -> s
+        | _ -> TSeq sgl_path_grp end
     | _ -> TSeq (sgl_path_grp @ [and_or_tree_of_path_traces sub_path_traces])
 
 let and_or_tree_of_path_traces path_traces =
   let sorted_path_traces = List.sort (fun p1 p2 -> 
-    compare (List.length p1) (List.length p2)) path_traces in
+      compare (List.length p1) (List.length p2)) path_traces in
   and_or_tree_of_path_traces sorted_path_traces
 
 (* Specification-related stuffs *)  
@@ -280,7 +280,7 @@ let is_infer_term sf =
 
 let is_infer_term_scc scc =
   List.exists (fun proc -> is_infer_term (proc.proc_stk_of_static_specs # top)) scc
-  
+
 let add_term_relation_proc prog proc spec = 
   let is_primitive = not (proc.proc_is_main) in
   if is_primitive then spec
@@ -290,28 +290,28 @@ let add_term_relation_proc prog proc spec =
     let imp_spec_vars = CF.collect_important_vars_in_spec true spec in
     let params = imp_spec_vars @ params  in
     let params = List.filter (fun sv -> 
-      match sv with
-      | CP.SpecVar(t, _, _) -> (match t with
-        | Int | Bool -> true
-        | _ -> false)) params in
+        match sv with
+        | CP.SpecVar(t, _, _) -> (match t with
+            | Int | Bool -> true
+            | _ -> false)) params in
     let pos = proc.proc_loc in
-  
+
     let utpre_name = fname ^ "pre" in
     let utpost_name = fname ^ "post" in
-  
+
     let utpre_decl = {
       ut_name = utpre_name;
       ut_params = params;
       ut_is_pre = true;
       ut_pos = pos } in
     let utpost_decl = { utpre_decl with
-      ut_name = utpost_name;
-      ut_is_pre = false; } in
-  
+                        ut_name = utpost_name;
+                        ut_is_pre = false; } in
+
     let () = Debug.ninfo_hprint (add_str "added to UT_decls" (pr_list pr_id)) [utpre_name; utpost_name] no_pos in
     (* let () = ut_decls # push_list [utpre_decl; utpost_decl] in *)
     let () = prog.prog_ut_decls <- ([utpre_decl; utpost_decl] @ prog.prog_ut_decls) in
-  
+
     let uid = {
       CP.tu_id = 0;
       CP.tu_sid = fname;
@@ -323,12 +323,12 @@ let add_term_relation_proc prog proc spec =
       CP.tu_sol = None;
       CP.tu_pos = pos; } in
     CF.norm_struc_with_lexvar is_primitive true (Some uid) spec
-  
+
 let add_term_relation_scc prog scc =
   List.iter (fun proc ->
-    let spec = proc.proc_stk_of_static_specs # top in
-    let new_spec = add_term_relation_proc prog proc spec in
-    proc.proc_stk_of_static_specs # push new_spec) scc
+      let spec = proc.proc_stk_of_static_specs # top in
+      let new_spec = add_term_relation_proc prog proc spec in
+      proc.proc_stk_of_static_specs # push new_spec) scc
 
 let partition_trels_by_proc trrels turels =
   let fn_trrels = 
@@ -346,9 +346,9 @@ let partition_trels_by_proc trrels turels =
     partition_by_key key_of key_eq turels 
   in
   let fn_rels, rem_fn_turels = List.fold_left (fun (fn_rels, rem_fn_turels) (rfn, trrels) ->
-    let turels, rem_fn_turels = List.partition (fun (ufn, _) -> eq_str (fst rfn) (fst ufn)) rem_fn_turels in
-    let turels = List.concat (List.map snd turels) in
-    fn_rels @ [(rfn, trrels, turels)], rem_fn_turels) ([], fn_turels) fn_trrels in
+      let turels, rem_fn_turels = List.partition (fun (ufn, _) -> eq_str (fst rfn) (fst ufn)) rem_fn_turels in
+      let turels = List.concat (List.map snd turels) in
+      fn_rels @ [(rfn, trrels, turels)], rem_fn_turels) ([], fn_turels) fn_trrels in
   let fn_rels = fn_rels @ (List.map (fun (fn, turels) -> (fn, [], turels)) rem_fn_turels) in
   fn_rels
 
@@ -372,11 +372,11 @@ let trans_nondet_formula prog f =
         | e::[] ->
           let nd_rel_def = look_up_rel_def_raw prog.prog_rel_decls svn in
           (try
-            let param = List.hd nd_rel_def.rel_vars in
-            let svp = CP.SpecVar (CP.type_of_spec_var param, svn ^ (string_of_nondet_pos pos), Unprimed) in
-            let nd_eq = CP.Eq ((CP.Var (svp, pos)), e, pos) in
-            Some ((nd_eq, il), [(svp, pos)])
-          with _ -> report_error pos ("Mismatch number of arguments in the nondet relation " ^ svn))
+             let param = List.hd nd_rel_def.rel_vars in
+             let svp = CP.SpecVar (CP.type_of_spec_var param, svn ^ (string_of_nondet_pos pos), Unprimed) in
+             let nd_eq = CP.Eq ((CP.Var (svp, pos)), e, pos) in
+             Some ((nd_eq, il), [(svp, pos)])
+           with _ -> report_error pos ("Mismatch number of arguments in the nondet relation " ^ svn))
         | _ -> report_error pos ("Mismatch number of arguments in the nondet relation " ^ svn)
       else Some (bf, [])
     | _ -> Some (bf, [])
@@ -388,12 +388,12 @@ let trans_nondet_ctx prog ctx pos =
   (* nondet_int__pos(v) --> nondet_int__pos = v & nondet_int__pos = nondet_int__pos' *)
   let trans_ctx, nd_vars = trans_nondet_formula prog ctx in
   let nd_vars = Gen.BList.remove_dups_eq 
-    (fun (v1, _) (v2, _) -> CP.eq_spec_var v1 v2) nd_vars in
+      (fun (v1, _) (v2, _) -> CP.eq_spec_var v1 v2) nd_vars in
   let trans_ctx = List.fold_left (fun ctx (nd, ndp) ->
-    let primed_nd = CP.to_primed nd in
-    let eqf = CP.BForm ((CP.mkEq_b (CP.Var (nd, ndp)) (CP.Var (primed_nd, ndp)) pos, None)) in
-    CP.mkAnd ctx eqf pos
-  ) trans_ctx nd_vars in
+      let primed_nd = CP.to_primed nd in
+      let eqf = CP.BForm ((CP.mkEq_b (CP.Var (nd, ndp)) (CP.Var (primed_nd, ndp)) pos, None)) in
+      CP.mkAnd ctx eqf pos
+    ) trans_ctx nd_vars in
   trans_ctx, nd_vars
 
 let trans_nondet_ctx_trrel prog trrel =
@@ -405,45 +405,44 @@ let trans_nondet_ctx_trrel prog trrel =
 let trans_nondet_trels_proc prog trrels turels = 
   let trans_trrels, nd_vars_lst = List.split (List.map (trans_nondet_ctx_trrel prog) trrels) in
   let nd_vars = Gen.BList.remove_dups_eq (fun (v1, _) (v2, _) -> CP.eq_spec_var v1 v2) 
-    (List.concat nd_vars_lst) in
+      (List.concat nd_vars_lst) in
   let nd_sv_lst = List.map fst nd_vars in
   let nd_args = List.map (fun (nd, ndp) -> CP.Var (nd, ndp)) nd_vars in
   let primed_nd_args = List.map (fun (nd, ndp) -> CP.Var (CP.to_primed nd, ndp)) nd_vars in
 
   let trans_trrels_w_rname = List.map (fun tr -> { tr with
-    termr_lhs = List.map (fun ann -> CP.add_args_term_ann ann primed_nd_args) tr.termr_lhs;
-    termr_rhs = CP.add_args_term_ann tr.termr_rhs nd_args; 
-    termr_rhs_params = tr.termr_rhs_params @ nd_sv_lst; }, tr.termr_fname) trans_trrels
+                                                   termr_lhs = List.map (fun ann -> CP.add_args_term_ann ann primed_nd_args) tr.termr_lhs;
+                                                   termr_rhs = CP.add_args_term_ann tr.termr_rhs nd_args; 
+                                                   termr_rhs_params = tr.termr_rhs_params @ nd_sv_lst; }, tr.termr_fname) trans_trrels
   in
   let trans_trrels, rname = List.split trans_trrels_w_rname in
 
   let trans_turels_w_uname = List.map (fun tu -> { tu with
-    call_ctx = fst (trans_nondet_ctx prog tu.call_ctx tu.termu_pos);
-    termu_lhs = CP.add_args_term_ann tu.termu_lhs nd_args;
-    termu_rhs = CP.add_args_term_ann tu.termu_rhs primed_nd_args;
-    termu_rhs_params = tu.termu_rhs_params @ nd_sv_lst;
-    termu_rhs_args = tu.termu_rhs_args @ primed_nd_args; }, tu.termu_fname) turels 
+                                                   call_ctx = fst (trans_nondet_ctx prog tu.call_ctx tu.termu_pos);
+                                                   termu_lhs = CP.add_args_term_ann tu.termu_lhs nd_args;
+                                                   termu_rhs = CP.add_args_term_ann tu.termu_rhs primed_nd_args;
+                                                   termu_rhs_params = tu.termu_rhs_params @ nd_sv_lst;
+                                                   termu_rhs_args = tu.termu_rhs_args @ primed_nd_args; }, tu.termu_fname) turels 
   in
   let trans_turels, uname = List.split trans_turels_w_uname in
 
   let ut_names = List.concat (List.map (fun id -> [id ^ "pre"; id ^ "post"])
-    (Gen.BList.remove_dups_eq eq_str (rname @ uname))) in
+                                (Gen.BList.remove_dups_eq eq_str (rname @ uname))) in
 
   let trans_ut_decls = List.fold_left (fun acc ut_decl ->
-    let trans_ut_decl = 
-      if (Gen.BList.mem_eq eq_str ut_decl.ut_name ut_names) then
-        { ut_decl with ut_params = ut_decl.ut_params @ nd_sv_lst; }
-      else ut_decl
-    in acc @ [trans_ut_decl]
-  ) [] prog.prog_ut_decls in
+      let trans_ut_decl = 
+        if (Gen.BList.mem_eq eq_str ut_decl.ut_name ut_names) then
+          { ut_decl with ut_params = ut_decl.ut_params @ nd_sv_lst; }
+        else ut_decl
+      in acc @ [trans_ut_decl]
+    ) [] prog.prog_ut_decls in
   let () = prog.prog_ut_decls <- trans_ut_decls in
   let () = nondet_vars_stk # push_list (nd_sv_lst @ (List.map CP.to_primed nd_sv_lst)) in
   trans_trrels, trans_turels
 
 let trans_nondet_trels prog trrels turels =
   let trel_lst = List.map (fun (_, tr, tu) -> trans_nondet_trels_proc prog trrels turels) 
-    (partition_trels_by_proc trrels turels) in
+      (partition_trels_by_proc trrels turels) in
   let trrel_lst, turel_lst = List.split trel_lst in
   List.concat trrel_lst, List.concat turel_lst
 
-  

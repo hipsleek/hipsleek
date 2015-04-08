@@ -11,13 +11,13 @@ let try_set_close_on_exec fd =
 let open_proc_full cmd args input output error toclose =
   let cloexec = List.for_all try_set_close_on_exec toclose in
   match Unix.fork() with
-     0 -> Unix.dup2 input Unix.stdin; Unix.close input;
-          Unix.dup2 output Unix.stdout; Unix.close output;
-          Unix.dup2 error Unix.stderr; Unix.close error;
-          if not cloexec then List.iter Unix.close toclose;
-          begin try Unix.execvp cmd args
-          with _ -> exit 127
-          end
+    0 -> Unix.dup2 input Unix.stdin; Unix.close input;
+    Unix.dup2 output Unix.stdout; Unix.close output;
+    Unix.dup2 error Unix.stderr; Unix.close error;
+    if not cloexec then List.iter Unix.close toclose;
+    begin try Unix.execvp cmd args
+      with _ -> exit 127
+    end
   | id -> id
 ;;
 
@@ -38,9 +38,9 @@ let open_process_full cmd args =
 let open_proc cmd args out_file:int  =
   match Unix.fork() with
   |  0 -> begin 
-			let output = Unix.openfile out_file [Unix.O_CREAT;Unix.O_WRONLY] 0o640 in
-			Unix.dup2 output Unix.stdout; Unix.close output;
-			try Unix.execvp cmd args with _ -> exit 127 end
+      let output = Unix.openfile out_file [Unix.O_CREAT;Unix.O_WRONLY] 0o640 in
+      Unix.dup2 output Unix.stdout; Unix.close output;
+      try Unix.execvp cmd args with _ -> exit 127 end
   | id -> id
 ;;
 
@@ -76,12 +76,12 @@ struct
       reset_sigalrm ();
       res
     with e ->
-        begin
-          let () = Timelog.logtime # timer_timeout proof_no limit in
-          (* Debug.info_pprint (Timelog.logtime # print_timer)  no_pos; *)
-          (* Debug.info_pprint ("TIMEOUT"^(Printexc.to_string e)) no_pos; *)
-          raise e
-        end
+      begin
+        let () = Timelog.logtime # timer_timeout proof_no limit in
+        (* Debug.info_pprint (Timelog.logtime # print_timer)  no_pos; *)
+        (* Debug.info_pprint ("TIMEOUT"^(Printexc.to_string e)) no_pos; *)
+        raise e
+      end
 
 
   let maybe_raise_timeout_num i (fnc: 'a -> 'b) (arg: 'a) (tsec:float) : 'b =
@@ -90,17 +90,17 @@ struct
   (* same as maybe_raise_timoeut just that it treats the timeout exception with the with_timeout function *)
   let maybe_raise_and_catch_timeout (fnc: 'a -> 'b) (arg: 'a) (tsec: float) (with_timeout: unit -> 'b): 'b =
     try
-        let res = maybe_raise_timeout fnc arg tsec in
-        res
+      let res = maybe_raise_timeout fnc arg tsec in
+      res
     with 
-      | Timeout -> (
-          print_endline_quiet (" Timeout after " ^ (string_of_float tsec) ^ " secs") ;
-          (with_timeout ())
-        )
-      | exc -> (
-          print_endline_quiet ("maybe_raise_and_catch_timeout : Unexpected exception : " ^ (Printexc.to_string exc));
-          raise exc
-        )
+    | Timeout -> (
+        print_endline_quiet (" Timeout after " ^ (string_of_float tsec) ^ " secs") ;
+        (with_timeout ())
+      )
+    | exc -> (
+        print_endline_quiet ("maybe_raise_and_catch_timeout : Unexpected exception : " ^ (Printexc.to_string exc));
+        raise exc
+      )
 
   let maybe_raise_and_catch_timeout_sleek (fnc: 'a -> 'b) (arg: 'a) (with_timeout: 'b): 'b =
     try 
@@ -114,24 +114,24 @@ struct
 
   let maybe_raise_and_catch_timeout_bool (fnc: 'a -> bool) (arg: 'a) (tsec: float) (with_timeout: unit -> bool): bool =
     Debug.no_1 "maybe_raise_and_catch_timeout" string_of_float string_of_bool 
-        (fun _ -> maybe_raise_and_catch_timeout fnc arg tsec with_timeout) tsec 
+      (fun _ -> maybe_raise_and_catch_timeout fnc arg tsec with_timeout) tsec 
 
   let maybe_raise_and_catch_timeout_string_bool (fnc: string -> bool) (arg: string) (tsec: float) (with_timeout: unit -> bool): bool =
     Debug.no_2 "maybe_raise_and_catch_timeout"  string_of_float (fun s -> s) string_of_bool 
-        (fun _ _ -> maybe_raise_and_catch_timeout fnc arg tsec with_timeout) tsec arg
+      (fun _ _ -> maybe_raise_and_catch_timeout fnc arg tsec with_timeout) tsec arg
 
   (* closes the pipes of the named process *)
   let close_pipes (process: proc) : unit =
     (try
-         flush process.outchannel;
-         Unix.close (Unix.descr_of_out_channel process.outchannel);
-         Unix.close (Unix.descr_of_in_channel process.errchannel)
+       flush process.outchannel;
+       Unix.close (Unix.descr_of_out_channel process.outchannel);
+       Unix.close (Unix.descr_of_in_channel process.errchannel)
      with
-       | e -> () );
+     | e -> () );
     (try
-         Unix.close (Unix.descr_of_in_channel process.inchannel)
+       Unix.close (Unix.descr_of_in_channel process.inchannel)
      with
-       | e -> () )
+     | e -> () )
 
   let log_to_file flag file_descr str =
     if flag then
@@ -152,11 +152,11 @@ struct
       set_process process;
       prelude ()
     with
-      | e -> begin
-          print_endline_quiet ("\n["^prover_name^".ml ]Unexpected exception while starting prover "^ prover_name);
-          flush stdout; flush stderr;
-          log_to_file log_all_flag log_file ("["^prover_name^".ml]: >> Error while starting "^prover_name ^ "\n");
-          raise e
+    | e -> begin
+        print_endline_quiet ("\n["^prover_name^".ml ]Unexpected exception while starting prover "^ prover_name);
+        flush stdout; flush stderr;
+        log_to_file log_all_flag log_file ("["^prover_name^".ml]: >> Error while starting "^prover_name ^ "\n");
+        raise e
       end
 
   (* Kills the prover process. Parameters have the following meaning:
@@ -176,12 +176,12 @@ struct
       (* ;print_endline "end kill" *)
     in
     try 
-        (* Timelog.logtime_wrapper "kill" *) fn ()
+      (* Timelog.logtime_wrapper "kill" *) fn ()
     with
-      | e -> 
-          (ignore e;
-           log_to_file log_all_flag log_file("\n[" ^ process.name  ^ ".ml]: >> Exception while closing process\n"); 
-           flush log_file)
+    | e -> 
+      (ignore e;
+       log_to_file log_all_flag log_file("\n[" ^ process.name  ^ ".ml]: >> Exception while closing process\n"); 
+       flush log_file)
 
   (* Restarts the prover. Parameters have the following meaning:
    ** reason - reason for restarting the prover

@@ -148,15 +148,15 @@ let send_and_receive (f : string) : string =
         read_output !process.inchannel
       ) in
       let fail_with_timeout () = (
-         restart "Timeout!";
+        restart "Timeout!";
         ""
       ) in
       let answ = Procutils.PrvComms.maybe_raise_and_catch_timeout fnc () !timeout fail_with_timeout in
       answ
     with
     | ex ->
-        print_endline_quiet (Printexc.to_string ex);
-        (restart "mathematica crashed or something really bad happenned!"; "mathematica not running 1")
+      print_endline_quiet (Printexc.to_string ex);
+      (restart "mathematica crashed or something really bad happenned!"; "mathematica not running 1")
   )
   else (
     (restart "mathematica has not started!!"; "mathematica not running 2")
@@ -183,10 +183,10 @@ let check_formula (f: string) : bool option =
       let () = Debug.dinfo_zprint (lazy (("   Output: " ^ output))) no_pos in
       failwith "Mathematica: Unexpected answer!"
   with _ ->
-      let () = Debug.dinfo_pprint ("Mathematica unexpected anser 2: ") no_pos in
-      let () = Debug.dinfo_zprint (lazy (("   Input : " ^ f))) no_pos in
-      let () = Debug.dinfo_zprint (lazy (("   Output: " ^ output))) no_pos in
-      failwith "Mathematica: Unexpected answer!"
+    let () = Debug.dinfo_pprint ("Mathematica unexpected anser 2: ") no_pos in
+    let () = Debug.dinfo_zprint (lazy (("   Input : " ^ f))) no_pos in
+    let () = Debug.dinfo_zprint (lazy (("   Output: " ^ output))) no_pos in
+    failwith "Mathematica: Unexpected answer!"
 
 let check_formula f =
   Debug.no_1 "check_formula" (fun s -> s) (pr_option string_of_bool) check_formula f
@@ -250,7 +250,7 @@ let normalize_var_name (varname : string) : string =
   done;
   varname
 
-  
+
 
 let math_of_float (f: float) =
   let res = Printf.sprintf "%.8f" f in
@@ -259,26 +259,26 @@ let math_of_float (f: float) =
 let math_of_spec_var (v: CP.spec_var) =
   match v with
   | CP.SpecVar (_, sv, prime) ->
-      (* mathematica doesn't allow var name contains underscore '_'                        *)
-      (* so convert variable name from underscore style to capitalizing-first-letter style *)
-      let new_sv = ref "" in
-      let to_uppercase = ref false in
-      for i = 0 to (String.length sv) - 1 do
-        if sv.[i] = '_' then
-          to_uppercase := true
-        else (
-          let s = if not !to_uppercase then
-                    Char.escaped sv.[i]
-                  else if (sv.[i] >= '0' && sv.[i] <= '9') then
-                    "N" ^ Char.escaped (sv.[i])
-                  else
-                    Char.escaped (Char.uppercase sv.[i]) in
-          new_sv := !new_sv ^ s;
-          to_uppercase := false
-        )
-      done;
-      if (prime = Primed) then new_sv := !new_sv ^ "P"; 
-      !new_sv
+    (* mathematica doesn't allow var name contains underscore '_'                        *)
+    (* so convert variable name from underscore style to capitalizing-first-letter style *)
+    let new_sv = ref "" in
+    let to_uppercase = ref false in
+    for i = 0 to (String.length sv) - 1 do
+      if sv.[i] = '_' then
+        to_uppercase := true
+      else (
+        let s = if not !to_uppercase then
+            Char.escaped sv.[i]
+          else if (sv.[i] >= '0' && sv.[i] <= '9') then
+            "N" ^ Char.escaped (sv.[i])
+          else
+            Char.escaped (Char.uppercase sv.[i]) in
+        new_sv := !new_sv ^ s;
+        to_uppercase := false
+      )
+    done;
+    if (prime = Primed) then new_sv := !new_sv ^ "P"; 
+    !new_sv
 
 let rec math_of_exp e0 : string= 
   match e0 with
@@ -291,21 +291,21 @@ let rec math_of_exp e0 : string=
   | CP.FConst (f, _) -> math_of_float f
   | CP.Tsconst _ -> failwith ("mathematica.math_of_exp: Tsconst can't appear here")
   | CP.Add (e1, e2, _) ->
-      let se1 = math_of_exp e1 in
-      let se2 = math_of_exp e2 in
-      "(" ^ se1 ^ " + " ^ se2 ^ ")"
+    let se1 = math_of_exp e1 in
+    let se2 = math_of_exp e2 in
+    "(" ^ se1 ^ " + " ^ se2 ^ ")"
   | CP.Subtract (e1, e2, _) ->
-      let se1 = math_of_exp e1 in
-      let se2 = math_of_exp e2 in
-      "(" ^ se1 ^ " - " ^ se2 ^ ")"
+    let se1 = math_of_exp e1 in
+    let se2 = math_of_exp e2 in
+    "(" ^ se1 ^ " - " ^ se2 ^ ")"
   | CP.Mult (e1, e2, _) ->
-      let se1 = math_of_exp e1 in
-      let se2 = math_of_exp e2 in
-      "(" ^ se1 ^ " * " ^ se2 ^ ")"
+    let se1 = math_of_exp e1 in
+    let se2 = math_of_exp e2 in
+    "(" ^ se1 ^ " * " ^ se2 ^ ")"
   | CP.Div (e1, e2, _) ->
-      let se1 = math_of_exp e1 in
-      let se2 = math_of_exp e2 in
-      "(" ^ se1 ^ " / " ^ se2 ^ ")"
+    let se1 = math_of_exp e1 in
+    let se2 = math_of_exp e2 in
+    "(" ^ se1 ^ " / " ^ se2 ^ ")"
   | CP.TypeCast (t, e1, _) -> (
       match t with
       | Globals.Int -> ("IntegerPart[" ^ (math_of_exp e1) ^ "]")
@@ -338,51 +338,51 @@ let rec math_of_b_formula b : string =
   match pf with
   | CP.Frm (fv, _) -> "(" ^ math_of_spec_var fv ^ " > 0)"
   | CP.BConst (c, _) ->
-      if c then "True"
-      else "False"
+    if c then "True"
+    else "False"
   | CP.BVar (bv, _) -> "(" ^ math_of_spec_var bv ^ " > 0)"
   | CP.Lt (e1, e2, l) ->
-      let se1 = math_of_exp e1 in
-      let se2 = math_of_exp e2 in
-      "(" ^ se1 ^ " < " ^ se2 ^ ")"
+    let se1 = math_of_exp e1 in
+    let se2 = math_of_exp e2 in
+    "(" ^ se1 ^ " < " ^ se2 ^ ")"
   | CP.Lte (e1, e2, l) ->
-      let se1 = math_of_exp e1 in
-      let se2 = math_of_exp e2 in
-      "(" ^ se1 ^ " <= " ^ se2 ^ ")"
+    let se1 = math_of_exp e1 in
+    let se2 = math_of_exp e2 in
+    "(" ^ se1 ^ " <= " ^ se2 ^ ")"
   | CP.SubAnn (e1, e2, l) ->
-      let se1 = math_of_exp e1 in
-      let se2 = math_of_exp e2 in
-      "(" ^ se1 ^ " <= " ^ se2 ^ ")"
+    let se1 = math_of_exp e1 in
+    let se2 = math_of_exp e2 in
+    "(" ^ se1 ^ " <= " ^ se2 ^ ")"
   | CP.Gt (e1, e2, l) ->
-      let se1 = math_of_exp e1 in
-      let se2 = math_of_exp e2 in
-      "(" ^ se1 ^ " > " ^ se2 ^ ")"
+    let se1 = math_of_exp e1 in
+    let se2 = math_of_exp e2 in
+    "(" ^ se1 ^ " > " ^ se2 ^ ")"
   | CP.Gte (e1, e2, l) ->
-      let se1 = math_of_exp e1 in
-      let se2 = math_of_exp e2 in
-      "(" ^ se1 ^ " >= " ^ se2 ^ ")"
+    let se1 = math_of_exp e1 in
+    let se2 = math_of_exp e2 in
+    "(" ^ se1 ^ " >= " ^ se2 ^ ")"
   | CP.Eq (e1, e2, _) ->
-      let se1 = math_of_exp e1 in
-      let se2 = math_of_exp e2 in
-      "(" ^ se1 ^ " == " ^ se2 ^ ")"
+    let se1 = math_of_exp e1 in
+    let se2 = math_of_exp e2 in
+    "(" ^ se1 ^ " == " ^ se2 ^ ")"
   | CP.Neq (e1, e2, _) ->
-      let se1 = math_of_exp e1 in
-      let se2 = math_of_exp e2 in
-      "(" ^ se1 ^ " != " ^ se2 ^ ")"
+    let se1 = math_of_exp e1 in
+    let se2 = math_of_exp e2 in
+    "(" ^ se1 ^ " != " ^ se2 ^ ")"
   | CP.EqMax (e1, e2, e3, _) ->
-      (* e1 = max(e2,e2) <-> ((e1 = e2 /\ e2 >= e3) \/ (e1 = e3 /\ e2 < e3)) *)
-      let se1 = math_of_exp e1 in
-      let se2 = math_of_exp e2 in
-      let se3 = math_of_exp e3 in
-      ("((" ^ se1 ^ " == " ^ se2 ^ " && " ^ se2 ^ " >= " ^ se3 ^ ") || " 
-        ^ "(" ^ se1 ^ " == " ^ se3 ^ " && " ^ se2 ^ " <= " ^ se3 ^ "))")
+    (* e1 = max(e2,e2) <-> ((e1 = e2 /\ e2 >= e3) \/ (e1 = e3 /\ e2 < e3)) *)
+    let se1 = math_of_exp e1 in
+    let se2 = math_of_exp e2 in
+    let se3 = math_of_exp e3 in
+    ("((" ^ se1 ^ " == " ^ se2 ^ " && " ^ se2 ^ " >= " ^ se3 ^ ") || " 
+     ^ "(" ^ se1 ^ " == " ^ se3 ^ " && " ^ se2 ^ " <= " ^ se3 ^ "))")
   | CP.EqMin (e1, e2, e3, _) ->
-      (* e1 = min(e2,e3) <-> ((e1 = e2 /\ e2 <= e3) \/ (e1 = e3 /\ e2 > e3)) *)
-      let se1 = math_of_exp e1 in
-      let se2 = math_of_exp e2 in
-      let se3 = math_of_exp e3 in
-      ("((" ^ se1 ^ " == " ^ se2 ^ " && " ^ se2 ^ " <= " ^ se3 ^ ") || "
-        ^ "(" ^ se1 ^ " == " ^ se3 ^ " && " ^ se2 ^ " >= " ^ se3 ^ "))")
+    (* e1 = min(e2,e3) <-> ((e1 = e2 /\ e2 <= e3) \/ (e1 = e3 /\ e2 > e3)) *)
+    let se1 = math_of_exp e1 in
+    let se2 = math_of_exp e2 in
+    let se3 = math_of_exp e3 in
+    ("((" ^ se1 ^ " == " ^ se2 ^ " && " ^ se2 ^ " <= " ^ se3 ^ ") || "
+     ^ "(" ^ se1 ^ " == " ^ se3 ^ " && " ^ se2 ^ " >= " ^ se3 ^ "))")
   | CP.XPure _ -> failwith ("math_of_b_formula: cannot handle XPure formula")
   | CP.LexVar _
   | CP.BagIn _
@@ -407,34 +407,34 @@ let rec math_of_formula pr_w pr_s f0 : string =
       )
     | CP.AndList _ -> Gen.report_error no_pos "mathematica.ml: encountered AndList, should have been already handled"
     | CP.Not (f, _, _) ->
-        let sf = math_of_formula pr_s pr_w f in 
-        "!( " ^ sf ^ ")"
+      let sf = math_of_formula pr_s pr_w f in 
+      "!( " ^ sf ^ ")"
     | CP.Forall (v, f, _, _) ->
-        let sv = math_of_spec_var v in
-        let sf = formula_to_string f in
-        "ForAll[" ^ sv ^ "," ^ sf ^ "]"
+      let sv = math_of_spec_var v in
+      let sf = formula_to_string f in
+      "ForAll[" ^ sv ^ "," ^ sf ^ "]"
     | CP.Exists (v, f, _, _) ->
-        let sv = math_of_spec_var v in
-        let sf = formula_to_string f in
-        "Exists[" ^ sv ^ "," ^ sf ^ "]"
+      let sv = math_of_spec_var v in
+      let sf = formula_to_string f in
+      "Exists[" ^ sv ^ "," ^ sf ^ "]"
     | CP.And (f1, f2, _) ->
-        let sf1 = formula_to_string f1 in
-        let sf2 = formula_to_string f2 in
-        "(" ^ sf1 ^ " && " ^ sf2 ^ ")"
+      let sf1 = formula_to_string f1 in
+      let sf2 = formula_to_string f2 in
+      "(" ^ sf1 ^ " && " ^ sf2 ^ ")"
     | CP.Or (f1, f2, _, _) ->
-        let sf1 = formula_to_string f1 in
-        let sf2 = formula_to_string f2 in
-        "(" ^ sf1 ^ " || " ^ sf2 ^ ")"
+      let sf1 = formula_to_string f1 in
+      let sf2 = formula_to_string f2 in
+      "(" ^ sf1 ^ " || " ^ sf2 ^ ")"
   ) in
   formula_to_string f0
 
 (***********************************
- pretty printer for pure formula
+   pretty printer for pure formula
  **********************************)
 let string_of_exp e0 = !print_exp e0 
 
 let string_of_b_formula bf = !print_b_formula bf
-  
+
 let string_of_formula f0 = !print_formula f0
 
 let simplify_var_name (e: CP.formula) : CP.formula =
@@ -444,9 +444,9 @@ let simplify_var_name (e: CP.formula) : CP.formula =
         Hashtbl.find vnames name
       with 
       | Not_found ->
-          let fresh_name = "v" ^ (string_of_int (Hashtbl.length vnames)) in
-          let () = Hashtbl.add vnames name fresh_name in
-          fresh_name 
+        let fresh_name = "v" ^ (string_of_int (Hashtbl.length vnames)) in
+        let () = Hashtbl.add vnames name fresh_name in
+        fresh_name 
     ) in
     CP.SpecVar (typ, short_name, prm)
   ) in
@@ -462,25 +462,25 @@ let simplify_var_name (e: CP.formula) : CP.formula =
   let rec simplify f0 vnames =
     match f0 with
     | CP.Forall (sv, f1, lbl, l) ->
-        let nsv = shorten_sv sv vnames in
-        let nf1 = simplify f1 vnames in
-        CP.Forall (nsv, nf1, lbl, l)
+      let nsv = shorten_sv sv vnames in
+      let nf1 = simplify f1 vnames in
+      CP.Forall (nsv, nf1, lbl, l)
     | CP.Exists (sv, f1, lbl, l) ->
-        let nsv = shorten_sv sv vnames in
-        let nf1 = simplify f1 vnames in
-        CP.Exists (nsv, nf1, lbl, l)
+      let nsv = shorten_sv sv vnames in
+      let nf1 = simplify f1 vnames in
+      CP.Exists (nsv, nf1, lbl, l)
     | CP.And (f1, f2, l) ->
-        let nf1 = simplify f1 vnames in
-        let nf2 = simplify f2 vnames in
-        CP.And (nf1, nf2, l)
+      let nf1 = simplify f1 vnames in
+      let nf2 = simplify f2 vnames in
+      CP.And (nf1, nf2, l)
     | CP.AndList _ -> Gen.report_error no_pos "mathematica.ml: encountered AndList, should have been already handled"
     | CP.Or (f1, f2, lbl, l) ->
-        let nf1 = simplify f1 vnames in
-        let nf2 = simplify f2 vnames in
-        CP.Or (nf1, nf2, lbl, l)
+      let nf1 = simplify f1 vnames in
+      let nf2 = simplify f2 vnames in
+      CP.Or (nf1, nf2, lbl, l)
     | CP.Not (f1, lbl, l) -> CP.Not (simplify f1 vnames, lbl, l)
     | CP.BForm (bf, lbl) ->
-        CP.BForm (CP.map_b_formula_arg bf vnames (f_bf, f_e) (idf2, idf2), lbl) in
+      CP.BForm (CP.map_b_formula_arg bf vnames (f_bf, f_e) (idf2, idf2), lbl) in
   simplify e (Hashtbl.create 100)
 
 let rec is_linear_exp exp = 
@@ -491,8 +491,8 @@ let rec is_linear_exp exp =
       match e1 with
       | CP.IConst _ -> is_linear_exp e2
       | _ -> (match e2 with 
-               | CP.IConst _ -> is_linear_exp e1 
-               | _ -> false)
+          | CP.IConst _ -> is_linear_exp e1 
+          | _ -> false)
     )
   | CP.Div (e1, e2, _) -> false
   | _ -> false
@@ -505,9 +505,9 @@ let is_linear_bformula b =
   | CP.Lt (e1, e2, _) | CP.Lte (e1, e2, _) 
   | CP.Gt (e1, e2, _) | CP.Gte (e1, e2, _)
   | CP.Eq (e1, e2, _) | CP.Neq (e1, e2, _) ->
-      (is_linear_exp e1) && (is_linear_exp e2)
+    (is_linear_exp e1) && (is_linear_exp e2)
   | CP.EqMax (e1, e2, e3, _) | CP.EqMin (e1, e2, e3, _) ->
-      (is_linear_exp e1) && (is_linear_exp e2) && (is_linear_exp e3)
+    (is_linear_exp e1) && (is_linear_exp e2) && (is_linear_exp e3)
   | _ -> false
 
 let rec is_linear_formula f0 = 
@@ -515,9 +515,9 @@ let rec is_linear_formula f0 =
   | CP.BForm (b,_) -> is_linear_bformula b
   | CP.AndList _ -> Gen.report_error no_pos "mathematica.ml: encountered AndList, should have been already handled"
   | CP.Not (f, _,_) | CP.Forall (_, f, _,_) | CP.Exists (_, f, _,_) ->
-      is_linear_formula f;
+    is_linear_formula f;
   | CP.And (f1, f2, _) | CP.Or (f1, f2, _,_) ->
-      (is_linear_formula f1) && (is_linear_formula f2)
+    (is_linear_formula f1) && (is_linear_formula f2)
 
 let is_linear_formula f0 =
   Debug.no_1 "is_linear_formula" !print_formula string_of_bool is_linear_formula f0
@@ -539,8 +539,8 @@ let is_linear2 f0 =
     else
       match e with
       | CP.Mult (e1, e2, _) -> 
-          if (has_var_exp e1 && has_var_exp e2) then Some false
-          else None
+        if (has_var_exp e1 && has_var_exp e2) then Some false
+        else None
       | CP.Div (e1, e2, _) -> Some false
       | _ -> None
   ) in
@@ -557,9 +557,9 @@ let rec strengthen_formula f0 =
       | CP.Lt (e1, e2, l) -> CP.BForm ((CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l), il), lbl)
       | CP.Gt (e1, e2, l) -> CP.BForm ((CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l), il), lbl)
       | CP.Neq (e1, e2, l) ->
-          let lp = CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
-          let rp = CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
-          CP.Or (CP.BForm ((lp,il), lbl), CP.BForm ((rp,il), lbl), lbl, l)
+        let lp = CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
+        let rp = CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
+        CP.Or (CP.BForm ((lp,il), lbl), CP.BForm ((rp,il), lbl), lbl, l)
       | _ -> f0
     )
   | CP.Not (f, lbl, l) -> CP.Not (strengthen_formula f, lbl, l)
@@ -577,16 +577,16 @@ let strengthen2 f0 =
   let f_f f =
     match f with
     | CP.BForm ((CP.Neq (e1, e2, l), il), lbl) ->
-          let lp = CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
-          let rp = CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
-          Some (CP.Or (CP.BForm ((lp, il), lbl), CP.BForm ((rp, il), lbl), lbl, l))
+      let lp = CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
+      let rp = CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
+      Some (CP.Or (CP.BForm ((lp, il), lbl), CP.BForm ((rp, il), lbl), lbl, l))
     | _ -> None in
   let f_bf bf =
     let (pf,il) = bf in
     match pf with
-      | CP.Lt (e1, e2, l) -> Some ((CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l)),il)
-      | CP.Gt (e1, e2, l) -> Some ((CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l)),il)
-      | _ -> Some bf in
+    | CP.Lt (e1, e2, l) -> Some ((CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l)),il)
+    | CP.Gt (e1, e2, l) -> Some ((CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l)),il)
+    | _ -> Some bf in
   CP.map_formula f0 (f_f, f_bf, nonef)
 
 (* e1 <= e2 ~> e1 < e2 + 1 *)
@@ -599,9 +599,9 @@ let rec weaken_formula f0 =
       | CP.Lte (e1, e2, l) -> CP.BForm ((CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l),l), il), lbl)
       | CP.Gte (e1, e2, l) -> CP.BForm ((CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l),l), il), lbl)
       | CP.Eq (e1, e2, l) ->
-          let lp = CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
-          let rp = CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
-          CP.And (CP.BForm ((lp,il),lbl), CP.BForm ((rp,il),lbl), l)
+        let lp = CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
+        let rp = CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
+        CP.And (CP.BForm ((lp,il),lbl), CP.BForm ((rp,il),lbl), l)
       | _ -> f0
     )
   | CP.Not (f,lbl,l) -> CP.Not (weaken_formula f, lbl, l)
@@ -615,16 +615,16 @@ let weaken2 f0 =
   let f_f f =
     match f with
     | CP.BForm ((CP.Eq (e1, e2, l),il), lbl) ->
-        let lp = CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
-        let rp = CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
-        Some (CP.And (CP.BForm ((lp,il),lbl), CP.BForm ((rp,il),lbl), l))
+      let lp = CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
+      let rp = CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
+      Some (CP.And (CP.BForm ((lp,il),lbl), CP.BForm ((rp,il),lbl), l))
     | _ -> None in
   let f_bf bf =
     let (pf,il) = bf in
     match pf with
-      | CP.Lte (e1, e2, l) -> Some ((CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l)),il)
-      | CP.Gte (e1, e2, l) -> Some ((CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l)),il)
-      | _ -> Some bf in
+    | CP.Lte (e1, e2, l) -> Some ((CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l)),il)
+    | CP.Gte (e1, e2, l) -> Some ((CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l)),il)
+    | _ -> Some bf in
   CP.map_formula f0 (f_f, f_bf, nonef)
 
 let negate_b_formula bf0 =
@@ -647,7 +647,7 @@ let negate_b_formula bf0 =
 
 let rec negate_formula f0 = match f0 with
   | CP.BForm (bf, lbl) -> (
-    let neg_bf = negate_b_formula bf in
+      let neg_bf = negate_b_formula bf in
       match neg_bf with
       | Some new_bf -> CP.BForm (new_bf, lbl)
       | None -> CP.Not (CP.BForm (bf, lbl), None, no_pos)
@@ -701,8 +701,8 @@ let is_sat_no_cache_ops pr_w pr_s (f: CP.formula) (sat_no: string) : bool * floa
       | [] -> sf
       | [sv] -> "Exists[" ^ sv ^ ", " ^ sf ^ "]"
       | _ ->
-          let svar = "{" ^ (List.fold_left (fun s sv -> s ^ ", " ^ sv ) (List.hd sv_list) (List.tl sv_list)) ^ "}" in
-          "Exists[" ^ svar ^ ", " ^ sf ^ "]"
+        let svar = "{" ^ (List.fold_left (fun s sv -> s ^ ", " ^ sv ) (List.hd sv_list) (List.tl sv_list)) ^ "}" in
+        "Exists[" ^ svar ^ ", " ^ sf ^ "]"
     ) in
     let mathematica_input = "Reduce[" ^ fmath ^ ", Reals]\n" in
     let runner () = check_formula mathematica_input in
@@ -723,7 +723,7 @@ let is_sat_ops_x pr_w pr_s f sat_no =
 
 let is_sat_ops pr_w pr_s f sat_no =
   Debug.no_2 "[mathematica] is_sat_ops" string_of_formula (fun c -> c) string_of_bool 
-             (fun f sat_no -> is_sat_ops_x pr_w pr_s f sat_no) f sat_no
+    (fun f sat_no -> is_sat_ops_x pr_w pr_s f sat_no) f sat_no
 
 let is_sat_x f sat_no =
   let (pr_w,pr_s) = CP.drop_complex_ops in
@@ -742,8 +742,8 @@ let is_valid_ops pr_w pr_s f imp_no =
     | [] -> sf
     | [sv] -> "ForAll[" ^ sv ^ ", " ^ sf ^ "]"
     | _ ->
-        let svar = "{" ^ (List.fold_left (fun s sv -> s ^ ", " ^ sv ) (List.hd sv_list) (List.tl sv_list)) ^ "}" in
-        "ForAll[" ^ svar ^ ", " ^ sf ^ "]"
+      let svar = "{" ^ (List.fold_left (fun s sv -> s ^ ", " ^ sv ) (List.hd sv_list) (List.tl sv_list)) ^ "}" in
+      "ForAll[" ^ svar ^ ", " ^ sf ^ "]"
   ) in
   let mathematica_input = "Reduce[" ^ fmath ^ ", Reals]\n" in
   let runner () = check_formula mathematica_input in
@@ -761,7 +761,7 @@ let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * floa
   let res = 
     if is_linear_formula f then
       call_omega (lazy (Omega.is_valid_with_default_ops pr_w pr_s f !timeout))
-    (* (is_valid f imp_no) *)
+      (* (is_valid f imp_no) *)
     else
       let wf =
         if (!no_pseudo_ops || CP.is_float_formula f) then f
@@ -794,19 +794,19 @@ let imply_ops pr_w pr_s ante conseq imp_no =
         log DEBUG "Cached.";
         res
       with Not_found -> (
-        let res, time = imply_no_cache_ops pr_w pr_s f imp_no in
-        let () = if time > cache_threshold then
+          let res, time = imply_no_cache_ops pr_w pr_s f imp_no in
+          let () = if time > cache_threshold then
               let () = log DEBUG "Caching."in
               Hashtbl.add !impl_cache fstring res in
-        res
-      ) in
+          res
+        ) in
   log DEBUG (if res then "VALID" else "INVALID");
   res
 
 let imply_ops pr_w pr_s ante conseq imp_no =
   let pr = !CP.print_formula in
   Debug.no_2 "[mathematica.ml]imply_ops" pr pr string_of_bool
-  (fun _ _ -> imply_ops pr_w pr_s ante conseq imp_no) ante conseq
+    (fun _ _ -> imply_ops pr_w pr_s ante conseq imp_no) ante conseq
 
 let imply f imp_no =
   let (pr_w,pr_s) = CP.drop_complex_ops in

@@ -10,21 +10,21 @@ let en_warning_msg = ref true
 let sap = ref false
 
 type loc =  {
-    start_pos : Lexing.position (* might be expanded to contain more information *);
-    mid_pos : Lexing.position;
-    end_pos : Lexing.position;
-  }
+  start_pos : Lexing.position (* might be expanded to contain more information *);
+  mid_pos : Lexing.position;
+  end_pos : Lexing.position;
+}
 
 type primed =
   | Primed
   | Unprimed
 
 let no_pos = 
-	let no_pos1 = { Lexing.pos_fname = "";
-				   Lexing.pos_lnum = 0;
-				   Lexing.pos_bol = 0; 
-				   Lexing.pos_cnum = 0 } in
-	{start_pos = no_pos1; mid_pos = no_pos1; end_pos = no_pos1;}
+  let no_pos1 = { Lexing.pos_fname = "";
+                  Lexing.pos_lnum = 0;
+                  Lexing.pos_bol = 0; 
+                  Lexing.pos_cnum = 0 } in
+  {start_pos = no_pos1; mid_pos = no_pos1; end_pos = no_pos1;}
 
 
 let is_no_pos l = (l.start_pos.Lexing.pos_cnum == 0)
@@ -74,39 +74,39 @@ let eq_loc l1 l2 =
 
 (*Proof logging facilities*)
 class ['a] store (x_init:'a) (epr:'a->string) =
-   object (self)
-     val emp_val = x_init
-     val mutable lc = None
-     method is_avail : bool = match lc with
-       | None -> false
-       | Some _ -> true
-     method set (nl:'a) = lc <- Some nl
-     method get :'a = match lc with
-       | None -> emp_val
-       | Some p -> p
-     method reset = lc <- None
-     method get_rm :'a = match lc with
-       | None -> emp_val
-       | Some p -> (self#reset; p)
-     method string_of : string = match lc with
-       | None -> "Why None?"
-       | Some l -> (epr l)
-     method dump = print_endline ("\n store dump :"^(self#string_of))
-   end;;
+  object (self)
+    val emp_val = x_init
+    val mutable lc = None
+    method is_avail : bool = match lc with
+      | None -> false
+      | Some _ -> true
+    method set (nl:'a) = lc <- Some nl
+    method get :'a = match lc with
+      | None -> emp_val
+      | Some p -> p
+    method reset = lc <- None
+    method get_rm :'a = match lc with
+      | None -> emp_val
+      | Some p -> (self#reset; p)
+    method string_of : string = match lc with
+      | None -> "Why None?"
+      | Some l -> (epr l)
+    method dump = print_endline ("\n store dump :"^(self#string_of))
+  end;;
 
 (* this will be set to true when we are in error explanation module *)
 class failure_mode =
-object
-  inherit [bool] store false string_of_bool
-end;;
+  object
+    inherit [bool] store false string_of_bool
+  end;;
 
 class prog_loc =
-object
-  inherit [loc] store no_pos string_of_loc
-     method string_of_pos : string = match lc with
-       | None -> "None"
-       | Some l -> (string_of_pos l.start_pos)
-end;;
+  object
+    inherit [loc] store no_pos string_of_loc
+    method string_of_pos : string = match lc with
+      | None -> "None"
+      | Some l -> (string_of_pos l.start_pos)
+  end;;
 
 
 (*Some global vars for logging*)

@@ -15,7 +15,7 @@ module type Monad_B = sig
   val bind : 'a m -> ('a -> 'b m) -> 'b m
 end
 
-  
+
 (* monad m with extensions *)
 module Monad_E (M : Monad_B) = struct
   open M 
@@ -25,13 +25,13 @@ module Monad_E (M : Monad_B) = struct
   let liftm = fmap
   let liftm2 f m m' =
     bind m  (fun x ->
-	       bind m' (fun y ->
-			  return (f x y)))
+        bind m' (fun y ->
+            return (f x y)))
   let liftm3 f m m' m'' =
     bind m   (fun x ->
-		bind m'  (fun y ->
-			    bind m'' (fun z ->
-					return (f x y z))))
+        bind m'  (fun y ->
+            bind m'' (fun z ->
+                return (f x y z))))
   let mapm f l =
     List.fold_right (liftm2 (fun x xs -> f x :: xs)) l (return [])
   let sequence l = mapm (fun x -> x) l
@@ -53,14 +53,14 @@ module StateM_B (S : TypeVar) = struct
   type 'a m = S.t -> 'a * S.t
   let return a = (fun s -> (a, s))
   let bind (m) f = (fun s ->
-	  let (x, s') = m s in f x s')
+      let (x, s') = m s in f x s')
 end
 
 
 (* instance state monad extension *)
 module StateM_E(S : sig
-		  type t
-		  type 'a m = t -> 'a * t end) = 
+                  type t
+                  type 'a m = t -> 'a * t end) = 
 struct
   let get = (fun s -> (s, s))
   let put s = (fun _ -> ((), s))
@@ -83,13 +83,13 @@ module Int4t = struct type t = int end
 module StateM_int = StateM(Int4t)
 
 let incr = StateM_int.bind StateM_int.get (fun s -> StateM_int.put (succ s))
-  
+
 let ( +! ) mx my =
   StateM_int.bind mx (fun x ->
-	  StateM_int.bind my (fun y -> 
+      StateM_int.bind my (fun y -> 
           StateM_int.bind incr (fun _ -> 
               StateM_int.return (x + y))))
-    
+
 (* to implement List Monad - MonadPlus*)
 
 module type MonadPlus_B = sig
