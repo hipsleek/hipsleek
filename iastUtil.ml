@@ -722,7 +722,7 @@ let new_naming (lst:ident list) : (ident * ident) list =
 let add_renamed_vars clash_subs name_loc =
   let clash_subs_loc = List.map (fun (name,new_name) ->
       (name ^ (string_of_full_loc name_loc),new_name)
-  ) clash_subs in
+    ) clash_subs in
   stk_renamed_vars # push_list clash_subs_loc
 
 let rename_struc_formula subs1 f =

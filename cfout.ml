@@ -429,7 +429,7 @@ let simplify_branch_context (pt, ctx, fail_type) =
                        let imp_svl = curr_svl@heap_svl in
                        let elim_svl = List.filter (fun sv ->
                            not (Gen.BList.mem_eq Cpure.eq_spec_var_unp sv imp_svl)
-                       ) all_svl in
+                         ) all_svl in
                        let () = x_tinfo_hp (add_str "elim variables" (pr_list !print_sv)) elim_svl no_pos in
                        let elim_svl, bag_exists_svl = List.partition (fun sv ->
                            (Cpure.type_of_spec_var sv = Int) || (Cpure.type_of_spec_var sv = Bool)

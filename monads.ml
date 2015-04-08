@@ -59,8 +59,8 @@ end
 
 (* instance state monad extension *)
 module StateM_E(S : sig
-                  type t
-                  type 'a m = t -> 'a * t end) = 
+    type t
+    type 'a m = t -> 'a * t end) = 
 struct
   let get = (fun s -> (s, s))
   let put s = (fun _ -> ((), s))

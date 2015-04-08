@@ -1751,12 +1751,12 @@ let fresh_int () =
     let is_mem,trailer_num_list_tail = find i !trailer_num_list in
     let () = trailer_num_list := trailer_num_list_tail in
     if is_mem then helper (i+1) else i
-  (* let rec helper i = *)
-  (*   if List.mem (string_of_int i) !trailer_num_list *)
-  (*   then *)
-  (*     let () = trailer_num_list := List.tl !trailer_num_list in *)
-  (*     helper (i+1) *)
-  (*   else i *)
+    (* let rec helper i = *)
+    (*   if List.mem (string_of_int i) !trailer_num_list *)
+    (*   then *)
+    (*     let () = trailer_num_list := List.tl !trailer_num_list in *)
+    (*     helper (i+1) *)
+    (*   else i *)
   in
   seq_number := helper (!seq_number + 1);
   !seq_number

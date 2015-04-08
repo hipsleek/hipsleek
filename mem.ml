@@ -140,15 +140,15 @@ let rec fl_subtyping (fl1 : (ident * (CP.ann list)) list) (fl2: (ident * (CP.ann
     in (*let todo_unk = List.map
          		    (fun c -> let () = print_string ("fl2: "^(String.concat "," (List.map string_of_imm (snd c)))^"\n") in c) fl2
          		    in*) let tmp = (List.exists (fun c -> let b,_,_ ,_= (Imm.subtype_ann_list [] [] (snd x) (snd c)) in 
-                                  (*let () = 
-                                    		    print_string ("Ann Lists: "^ (*(string_of_bool b) ^*)(String.concat "," (List.map string_of_imm (snd c)))^" :> "^
-                                    		    		(String.concat "," (List.map string_of_imm (snd x)))^ "\n")
-                                    		    in*)
-                                  b) matched_fields)
+                                             (*let () = 
+                                               		    print_string ("Ann Lists: "^ (*(string_of_bool b) ^*)(String.concat "," (List.map string_of_imm (snd c)))^" :> "^
+                                               		    		(String.concat "," (List.map string_of_imm (snd x)))^ "\n")
+                                               		    in*)
+                                             b) matched_fields)
     in (*let () = print_string ((string_of_bool tmp)^"\n") 
          		    in*)  let () = if (tmp || List.length matched_fields == 0) then () else 
-        Err.report_error { Err.error_loc = pos;
-                           Err.error_text = "[mem.ml] : Memory Spec field layout doesn't respect annotation subtyping";}
+                         Err.report_error { Err.error_loc = pos;
+                                            Err.error_text = "[mem.ml] : Memory Spec field layout doesn't respect annotation subtyping";}
     in fl_subtyping xs fl2 pos
 
 let rec fl_subtyping_rev (fl1 : (ident * (CP.ann list)) list) (fl2: (ident * (CP.ann list)) list)  pos =
@@ -161,7 +161,7 @@ let rec fl_subtyping_rev (fl1 : (ident * (CP.ann list)) list) (fl2: (ident * (CP
       if List.length matched_fields == 0 then  Err.report_error { Err.error_loc = pos;
                                                                   Err.error_text = "[mem.ml] : Memory Spec field layout doesn't have a matching field";}
       else let tmp = 
-        List.exists (fun c -> let b,_,_, _ = (Imm.subtype_ann_list [] [] (snd c) (snd (List.hd matched_fields))) in b ) fl1 in
+             List.exists (fun c -> let b,_,_, _ = (Imm.subtype_ann_list [] [] (snd c) (snd (List.hd matched_fields))) in b ) fl1 in
         if  tmp then () else Err.report_error { Err.error_loc = pos;
                                                 Err.error_text = "[mem.ml] : Memory Spec field layout doesn't respect annotation subtyping";}
   in match fl2 with
@@ -193,15 +193,15 @@ let rec fv_match (fv1 : (ident * (CP.exp list)) list) (fv2: (ident * (CP.exp lis
          		    in let todo_unk = List.map
          		    (fun c -> let () = print_string ("fl1: "^(String.concat "," (List.map string_of_imm (snd c)))^"\n") in c) fl1
          		    in *)let tmp = (List.for_all (fun c -> helper (snd x) (snd c))
-                      (*let () = 
-                        		    print_string ("Ann Lists: "^ (*(string_of_bool b) ^*)(String.concat "," (List.map string_of_imm (snd c)))^" :> "^
-                        		    		(String.concat "," (List.map string_of_imm (snd x)))^ "\n")
-                        		    in*)
-                      matched_fields)
+                                 (*let () = 
+                                   		    print_string ("Ann Lists: "^ (*(string_of_bool b) ^*)(String.concat "," (List.map string_of_imm (snd c)))^" :> "^
+                                   		    		(String.concat "," (List.map string_of_imm (snd x)))^ "\n")
+                                   		    in*)
+                                 matched_fields)
     in (*let () = print_string ((string_of_bool tmp)^"\n") 
          		    in*)  let () = if (tmp || List.length matched_fields == 0) then () else 
-        Err.report_error { Err.error_loc = pos;
-                           Err.error_text = "[mem.ml] : Memory Spec field values don't match";}
+                         Err.report_error { Err.error_loc = pos;
+                                            Err.error_text = "[mem.ml] : Memory Spec field values don't match";}
     in fv_match xs fv2 pos
 
 let rec fv_intersect_no_inter (fl1 : (ident * (CP.exp list)) list) (fl2: (ident * (CP.exp list)) list) 
@@ -1288,7 +1288,7 @@ let compact_nodes_with_same_name_in_h_formula_top (f: CF.h_formula) (aset: CP.sp
 let rec compact_nodes_with_same_name_in_formula (cf: CF.formula): CF.formula =
   match cf with
   | CF.Base f   -> let new_h,new_p = 
-    compact_nodes_with_same_name_in_h_formula_top f.CF.formula_base_heap (Csvutil.comp_aliases f.CF.formula_base_pure)
+                     compact_nodes_with_same_name_in_h_formula_top f.CF.formula_base_heap (Csvutil.comp_aliases f.CF.formula_base_pure)
     in 
     let new_mcp = MCP.merge_mems f.CF.formula_base_pure (MCP.mix_of_pure new_p) true in
     CF.Base { f with

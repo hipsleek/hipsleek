@@ -971,7 +971,7 @@ let merge_branches l1 l2 =
         let l2 = List.assoc branch l2 in
         (branch, mkAnd l1 l2 no_pos)
       with Not_found -> (branch, l1)
-      with Not_found -> (branch, List.assoc branch l2)
+    with Not_found -> (branch, List.assoc branch l2)
   in
   List.map map_fun branches
 
@@ -1590,36 +1590,36 @@ and float_out_pure_min_max (p : formula) : formula =
       (* WN : why not change below to a method? *)
       let r = match e1 with
         | Min(v1, v2, v3) -> let r2 = match e2 with
-          | Null _
-          | IConst _
-          | FConst _
-          | AConst _
-          | Tsconst _
-          | Var _ ->
-            let ne1 , np1 = float_out_exp_min_max v1 in
-            let ne2 , np2 = float_out_exp_min_max v2 in
-            let t = BForm((EqMin(e2, ne1, ne2, l), il), lbl) in
-            add_exists t np1 np2 l
-          | _ ->
-            let ne1, np1 = float_out_exp_min_max e1 in
-            let ne2, np2 = float_out_exp_min_max e2 in
-            let t = BForm ((Eq (ne1, ne2, l), il), lbl) in
-            add_exists t np1 np2 l  in r2
+            | Null _
+            | IConst _
+            | FConst _
+            | AConst _
+            | Tsconst _
+            | Var _ ->
+              let ne1 , np1 = float_out_exp_min_max v1 in
+              let ne2 , np2 = float_out_exp_min_max v2 in
+              let t = BForm((EqMin(e2, ne1, ne2, l), il), lbl) in
+              add_exists t np1 np2 l
+            | _ ->
+              let ne1, np1 = float_out_exp_min_max e1 in
+              let ne2, np2 = float_out_exp_min_max e2 in
+              let t = BForm ((Eq (ne1, ne2, l), il), lbl) in
+              add_exists t np1 np2 l  in r2
         | Max(v1, v2, v3) -> let r2 = match e2 with
-          | Null _
-          | IConst _
-          | AConst _
-          | Tsconst _
-          | Var _ ->
-            let ne1 , np1 = float_out_exp_min_max v1 in
-            let ne2 , np2 = float_out_exp_min_max v2 in
-            let t = BForm ((EqMax(e2, ne1, ne2, l), il), lbl) in
-            add_exists t np1 np2 l
-          | _ ->
-            let ne1, np1 = float_out_exp_min_max e1 in
-            let ne2, np2 = float_out_exp_min_max e2 in
-            let t = BForm ((Eq (ne1, ne2, l), il), lbl) in
-            add_exists t np1 np2 l
+            | Null _
+            | IConst _
+            | AConst _
+            | Tsconst _
+            | Var _ ->
+              let ne1 , np1 = float_out_exp_min_max v1 in
+              let ne2 , np2 = float_out_exp_min_max v2 in
+              let t = BForm ((EqMax(e2, ne1, ne2, l), il), lbl) in
+              add_exists t np1 np2 l
+            | _ ->
+              let ne1, np1 = float_out_exp_min_max e1 in
+              let ne2, np2 = float_out_exp_min_max e2 in
+              let t = BForm ((Eq (ne1, ne2, l), il), lbl) in
+              add_exists t np1 np2 l
           in r2
         | Null _
         | IConst _
@@ -1627,21 +1627,21 @@ and float_out_pure_min_max (p : formula) : formula =
         | AConst _
         | Tsconst _
         | Var _ -> let r2 = match e2 with
-          | Min (v1, v2, v3) ->
-            let ne1 , np1 = float_out_exp_min_max v1 in
-            let ne2 , np2 = float_out_exp_min_max v2 in
-            let t = BForm ((EqMin(e1, ne1, ne2, l), il), lbl) in
-            add_exists t np1 np2 l
-          | Max (v1, v2, v3) ->
-            let ne1 , np1 = float_out_exp_min_max v1 in
-            let ne2 , np2 = float_out_exp_min_max v2 in
-            let t = BForm ((EqMax(e1, ne1, ne2, l), il), lbl) in
-            add_exists t np1 np2 l
-          | _ ->
-            let ne1, np1 = float_out_exp_min_max e1 in
-            let ne2, np2 = float_out_exp_min_max e2 in
-            let t = BForm ((Eq (ne1, ne2, l), il), lbl) in
-            add_exists t np1 np2 l
+            | Min (v1, v2, v3) ->
+              let ne1 , np1 = float_out_exp_min_max v1 in
+              let ne2 , np2 = float_out_exp_min_max v2 in
+              let t = BForm ((EqMin(e1, ne1, ne2, l), il), lbl) in
+              add_exists t np1 np2 l
+            | Max (v1, v2, v3) ->
+              let ne1 , np1 = float_out_exp_min_max v1 in
+              let ne2 , np2 = float_out_exp_min_max v2 in
+              let t = BForm ((EqMax(e1, ne1, ne2, l), il), lbl) in
+              add_exists t np1 np2 l
+            | _ ->
+              let ne1, np1 = float_out_exp_min_max e1 in
+              let ne2, np2 = float_out_exp_min_max e2 in
+              let t = BForm ((Eq (ne1, ne2, l), il), lbl) in
+              add_exists t np1 np2 l
           in r2
         | _ ->
           let ne1, np1 = float_out_exp_min_max e1 in
