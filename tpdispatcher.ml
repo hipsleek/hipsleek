@@ -1965,12 +1965,12 @@ let simplify (f : CP.formula) : CP.formula =
     let z3_simplify f =
       if is_array_constraint f then f else
         let f = wrap_pre_post norm_pure_input norm_pure_result Smtsolver.simplify f in
-         x_add CP.arith_simplify 13 f
+        x_add CP.arith_simplify 13 f
     in
     let z3n_simplify f =
       if is_array_constraint f then f else
         let f = wrap_pre_post norm_pure_input norm_pure_result Z3.simplify f in
-         x_add CP.arith_simplify 13 f
+        x_add CP.arith_simplify 13 f
     in
     (*      let redlog_simplify f =  wrap_pre_post norm_pure_input norm_pure_result Redlog.simplify f in
             let mona_simplify f =  wrap_pre_post norm_pure_input norm_pure_result Mona.simplify f in *)
@@ -1999,12 +1999,12 @@ let simplify (f : CP.formula) : CP.formula =
                 (* exist x, f0 ->  eexist x, x>0 /\ f0*)
                 let f1 = CP.add_gte0_for_mona f in
                 let f=(omega_simplify f1) in
-                 x_add CP.arith_simplify 12 f
+                x_add CP.arith_simplify 12 f
             | OM ->
               if (is_bag_constraint f) then (Mona.simplify f)
               else
                 let f=(omega_simplify f) in
-                 x_add CP.arith_simplify 12 f
+                x_add CP.arith_simplify 12 f
             | OI ->
               if (is_bag_constraint f) then (Isabelle.simplify f)
               else (omega_simplify f)

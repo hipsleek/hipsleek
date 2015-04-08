@@ -543,7 +543,7 @@ let sleek_imply_wrapper (aevs,ante) (cevs,conseq) =
         Solver.eqs_eql = cle;} in
       Solver.imply aeqs ceqs
     with | Solver.Unsat_exception -> not (Solver.is_sat aeqs)
-  with | Solver.Unsat_exception -> true
+    with | Solver.Unsat_exception -> true
 
 let sleek_imply_wrapper (aevs,ante) (cevs,conseq) =
   let pr = pr_pair !CP.print_svl (pr_list (fun c-> !CP.print_b_formula (c,None))) in

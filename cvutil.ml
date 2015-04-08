@@ -1540,7 +1540,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) p0 xp_no: (MCP.m
       let rdels = prog.C.prog_rel_decls in
       (* Add update relation during XPure *)
       let update_rel = List.filter (fun r -> if r.rel_name = "update"
-                                                || r.rel_name = "cons"
+                                             || r.rel_name = "cons"
                                      then true else false) rdels in
       let rec last = function
         | [] -> failwith "No Last Element in list"

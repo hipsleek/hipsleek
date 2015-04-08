@@ -587,7 +587,7 @@ let print_svcomp2015_result term_anns =
     unknown_ans
     (* all cases terminates --> TRUE *)
   else if (List.for_all Cpure.is_Term term_anns) then yes_ans
-    (* all cases are Loop --> FALSE *)
+  (* all cases are Loop --> FALSE *)
   else if (List.exists Cpure.is_Loop term_anns) then
     let cex = Cpure.cex_of_term_ann_list term_anns in
     let cex_str = Cprinter.string_of_term_cex cex in

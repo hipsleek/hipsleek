@@ -757,14 +757,14 @@ and insert_rd_phase (f : IF.h_formula) (wr_phase : IF.h_formula) : IF.h_formula 
 and propagate_imm_struc_formula sf view_name (imm : CP.ann)  (imm_p: (CP.annot_arg * CP.annot_arg) list) =
   let res = 
     match sf with
-  | EBase f   -> EBase {f with 
+    | EBase f   -> EBase {f with 
                           formula_struc_base = propagate_imm_formula f.formula_struc_base view_name imm imm_p }
-  | EList l   -> EList  (map_l_snd (fun c->  propagate_imm_struc_formula c view_name imm imm_p) l)
-  | ECase f   -> ECase {f with formula_case_branches = map_l_snd (fun c->  propagate_imm_struc_formula c view_name imm imm_p) f.formula_case_branches;}
-  | EAssume f -> EAssume {f with
+    | EList l   -> EList  (map_l_snd (fun c->  propagate_imm_struc_formula c view_name imm imm_p) l)
+    | ECase f   -> ECase {f with formula_case_branches = map_l_snd (fun c->  propagate_imm_struc_formula c view_name imm imm_p) f.formula_case_branches;}
+    | EAssume f -> EAssume {f with
                             formula_assume_simpl = propagate_imm_formula f.formula_assume_simpl view_name imm imm_p;
                             formula_assume_struc = propagate_imm_struc_formula  f.formula_assume_struc view_name imm imm_p;}
-  | EInfer f  -> EInfer {f with formula_inf_continuation = propagate_imm_struc_formula f.formula_inf_continuation view_name imm imm_p} 
+    | EInfer f  -> EInfer {f with formula_inf_continuation = propagate_imm_struc_formula f.formula_inf_continuation view_name imm imm_p} 
   in res
 
 and propagate_imm_formula_x (f : formula) (view_name: ident) (imm : CP.ann) (imm_p: (CP.annot_arg * CP.annot_arg) list): formula = match f with
@@ -2230,8 +2230,8 @@ let merge_alias_nodes_h_formula_helper prog p lst emap quantif xpure unfold_fun 
       let updated_head, updated_tail, eqs_lst, subs_lst, struc_lst = merge_list_w_node h t emap prog quantif unfold_fun qvars in
       let (fixpoint, emap) = List.fold_left 
           ( fun (fixpoint,emap) (a,b) -> 
-              if CP.EMapSV.is_equiv emap a b then (fixpoint&&true,emap)
-              else (fixpoint&&false, CP.EMapSV.add_equiv emap a b) 
+             if CP.EMapSV.is_equiv emap a b then (fixpoint&&true,emap)
+             else (fixpoint&&false, CP.EMapSV.add_equiv emap a b) 
           ) (true, emap) eqs_lst in
       let fixpoint = fixpoint && (is_empty subs_lst) in
       let merged_tail, eqs_lst_tail, subs_lst_tail, fixpoint_tail, struc_tail = helper updated_tail emap  in

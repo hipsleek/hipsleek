@@ -258,9 +258,9 @@ let check_neg_inf (exp1: CP.exp) (exp2: CP.exp) (exp3: CP.exp)
            else false
          else false
        in let exp = 
-            if CP.is_inf e1 then e2 
-            else 
-            if CP.is_inf e2 then e1 else exp2
+         if CP.is_inf e1 then e2 
+         else 
+         if CP.is_inf e2 then e1 else exp2
        in flag,oexp,exp
      | _ -> match exp3 with
        | CP.Add(e1,e2,pos) -> 
@@ -275,9 +275,9 @@ let check_neg_inf (exp1: CP.exp) (exp2: CP.exp) (exp3: CP.exp)
              else false
            else false
          in let exp = 
-              if CP.is_inf e1 then e2 
-              else 
-              if CP.is_inf e2 then e1 else exp3
+           if CP.is_inf e1 then e2 
+           else 
+           if CP.is_inf e2 then e1 else exp3
          in flag,oexp,exp
        | _ -> false,exp2,exp3)
   | _ -> false,exp2,exp3
@@ -1119,7 +1119,7 @@ let substitute_inf (f: CP.formula) : CP.formula =
   let after_sub = List.map (fun (pf,kv) -> 
       let svneglist = (find_equiv_all_x (SpecVar(Int,constinfinity,Primed)) kv) in  
       let new_pf = sub_inf_list pf svneglist true true in
-       x_add arith_simplify 10 new_pf) (List.combine after_sub negboundlist) in 
+      x_add arith_simplify 10 new_pf) (List.combine after_sub negboundlist) in 
   (* let () = print_string("bound > "^(string_of_pure_formula (join_disjunctions after_sub))^"\n") in*)
   join_disjunctions after_sub
 

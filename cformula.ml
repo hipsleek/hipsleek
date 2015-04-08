@@ -477,10 +477,10 @@ let isAnyConstFalse f = match f with
       formula_exists_pure = p;
       formula_exists_flow = fl; })
   | Base ({
-        formula_base_heap = h;
-        formula_base_vperm = vp;
-        formula_base_pure = p;
-        formula_base_flow = fl; }) -> 
+      formula_base_heap = h;
+      formula_base_vperm = vp;
+      formula_base_pure = p;
+      formula_base_flow = fl; }) -> 
     h = HFalse || MCP.isConstMFalse p || 
     is_false_flow fl.formula_flow_interval || CVP.is_false_vperm_sets vp
   | _ -> false
@@ -4989,7 +4989,7 @@ let hp_def_cmp (d1:hp_rel_def) (d2:hp_rel_def) =
       let hp2 = get_hpdef_name d2.def_cat in
       String.compare (CP.name_of_spec_var hp1) (CP.name_of_spec_var hp2)
     with _ -> 1
-  with _ -> -1
+    with _ -> -1
 
 let hpdef_cmp d1 d2 =
   try
@@ -4998,7 +4998,7 @@ let hpdef_cmp d1 d2 =
       let hp2 = get_hpdef_name d2.hprel_def_kind in
       String.compare (CP.name_of_spec_var hp1) (CP.name_of_spec_var hp2)
     with _ -> 1
-  with _ -> -1
+    with _ -> -1
 
 let mk_hp_rel_def hp (args, r, paras) (g: formula option) f ofl pos=
   let hf = HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, pos) in
@@ -6764,12 +6764,12 @@ let fresh_data_v f0=
   let rec helper f= match f with
     | Base _
     | Exists _ ->
-  let quans, f0 = split_quantifiers f in
-  let hds, hvs, hrs = get_hp_rel_formula f0 in
-  let v_sps1 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_data_arguments)) [] hds in
-  let v_sps2 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_view_arguments)) v_sps1 hvs in
-  let fr_v_sps2 = CP.diff_svl (CP.remove_dups_svl v_sps2) quans in
-  fr_v_sps2
+      let quans, f0 = split_quantifiers f in
+      let hds, hvs, hrs = get_hp_rel_formula f0 in
+      let v_sps1 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_data_arguments)) [] hds in
+      let v_sps2 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_view_arguments)) v_sps1 hvs in
+      let fr_v_sps2 = CP.diff_svl (CP.remove_dups_svl v_sps2) quans in
+      fr_v_sps2
     | Or orf ->
       CP.remove_dups_svl ((helper orf.formula_or_f1)@(helper orf.formula_or_f2))
   in
@@ -6802,16 +6802,16 @@ let rec struc_formula_trans_heap_node pre_quans formula_fct f=
            formula_struc_base=(* formula_trans_heap_node fct *)f1;
           }
   | EAssume ea-> begin
-    let f1 = formula_fct ea.formula_assume_simpl in
-    let () =  Debug.ninfo_hprint (add_str "f1 post" (!print_formula)) f1 no_pos in
-    let () =  Debug.ninfo_hprint (add_str "pre_quans:post" (!CP.print_svl)) pre_quans no_pos in
-    let fs = list_of_disjs f1 in
-    let ass_sf =  (recf pre_quans) ea.formula_assume_struc in
-    let sfs1 = List.map (fun f ->
-        EAssume {ea with  formula_assume_simpl = process_post_disj f;
-            formula_assume_struc =ass_sf  }
-    ) fs in
-    match sfs1 with
+      let f1 = formula_fct ea.formula_assume_simpl in
+      let () =  Debug.ninfo_hprint (add_str "f1 post" (!print_formula)) f1 no_pos in
+      let () =  Debug.ninfo_hprint (add_str "pre_quans:post" (!CP.print_svl)) pre_quans no_pos in
+      let fs = list_of_disjs f1 in
+      let ass_sf =  (recf pre_quans) ea.formula_assume_struc in
+      let sfs1 = List.map (fun f ->
+          EAssume {ea with  formula_assume_simpl = process_post_disj f;
+                            formula_assume_struc =ass_sf  }
+        ) fs in
+      match sfs1 with
       | [] -> report_error no_pos "Cformula. struc_formula_trans_heap_node"
       | [sf] -> sf
       | _ -> EList (List.map (fun sf -> (empty_spec_label_def, sf)) sfs1)
@@ -6819,7 +6819,7 @@ let rec struc_formula_trans_heap_node pre_quans formula_fct f=
       (* let quans = CP.diff_svl (cur_quans@(fresh_data_v f1)) pre_quans in *)
       (* EAssume {ea with  formula_assume_simpl = (\* formula_trans_heap_node fct *\) (\* formula_fct ea.formula_assume_simpl *\) add_quantifiers quans f1_bare; *)
       (* formula_assume_struc = (recf pre_quans) ea.formula_assume_struc} *)
-  (* (formula_trans_heap_node fct f, fl, et) *)
+      (* (formula_trans_heap_node fct f, fl, et) *)
     end
   | EInfer b -> EInfer {b with formula_inf_continuation = (recf pre_quans) b.formula_inf_continuation}
   | EList l -> EList (Gen.map_l_snd (recf pre_quans) l)
@@ -7189,8 +7189,8 @@ let generate_xpure_view_x drop_hpargs total_unk_map=
       let xpvs = lookup_xpure_view hp total_unk_map in
       match xpvs with
       | [xp] -> let xp_r, xp_args = match xp.CP.xpure_view_node with
-          | None -> None, xp.CP.xpure_view_arguments
-          |Some _ -> Some (List.hd args), (List.tl args)
+        | None -> None, xp.CP.xpure_view_arguments
+        |Some _ -> Some (List.hd args), (List.tl args)
         in
         let new_xpv = {xp with CP.xpure_view_node =  xp_r;
                                xpure_view_arguments =  xp_args
@@ -7780,14 +7780,14 @@ let remove_neqNull_redundant_hnodes_f_x f0=
   let rec helper f=
     match f with
     | Base fb -> let np = remove_neqNull_redundant_hnodes_hf fb.formula_base_heap
-                     (MCP.pure_of_mix fb.formula_base_pure) in
+        (MCP.pure_of_mix fb.formula_base_pure) in
       (Base {fb with formula_base_pure = MCP.mix_of_pure np})
     | Or orf -> let nf1 = helper orf.formula_or_f1 in
       let nf2 = helper orf.formula_or_f2 in
       ( Or {orf with formula_or_f1 = nf1;
                      formula_or_f2 = nf2;})
     | Exists fe -> let np = remove_neqNull_redundant_hnodes_hf fe.formula_exists_heap
-                       (MCP.pure_of_mix fe.formula_exists_pure) in
+        (MCP.pure_of_mix fe.formula_exists_pure) in
       (Exists {fe with formula_exists_pure = MCP.mix_of_pure np;})
   in
   helper f0
@@ -7801,14 +7801,14 @@ let remove_neqNull_redundant_hnodes_f_wg (f0,og)=
   let rec helper f=
     match f with
     | Base fb -> let np = remove_neqNull_redundant_hnodes_hf fb.formula_base_heap
-                     (MCP.pure_of_mix fb.formula_base_pure) in
+        (MCP.pure_of_mix fb.formula_base_pure) in
       (Base {fb with formula_base_pure = MCP.mix_of_pure np})
     | Or orf -> let nf1 = helper orf.formula_or_f1 in
       let nf2 = helper orf.formula_or_f2 in
       ( Or {orf with formula_or_f1 = nf1;
                      formula_or_f2 = nf2;})
     | Exists fe -> let np = remove_neqNull_redundant_hnodes_hf fe.formula_exists_heap
-                       (MCP.pure_of_mix fe.formula_exists_pure) in
+        (MCP.pure_of_mix fe.formula_exists_pure) in
       (Exists {fe with formula_exists_pure = MCP.mix_of_pure np;})
   in
   let nf = helper f0 in
@@ -10353,10 +10353,10 @@ and combine_helper op los rs=
   match los with
   | [] -> rs
   | [os] -> let tmp=
-              ( match os with
-                | None -> rs
-                | Some s -> rs ^ s
-              ) in tmp
+    ( match os with
+      | None -> rs
+      | Some s -> rs ^ s
+    ) in tmp
   | os::ss ->
     (*os contains all failed of 1 path trace*)
     let tmp=
@@ -11347,8 +11347,8 @@ let proc_left t1 t2 =
         match t2 with
         | [c2] ->
           if isAnyFalseCtx c2
-             && is_inferred_pre_ctx c2
-             (* both t1 and t2 are FalseCtx with Pre *)
+          && is_inferred_pre_ctx c2
+          (* both t1 and t2 are FalseCtx with Pre *)
           then Some [merge_false_ctx c1 c2]
           else Some t2 (* drop FalseCtx t1 with Pre *)
         | _ -> Some t1 (* only t1 is FalseCtx with Pre *)
@@ -11547,7 +11547,7 @@ let isSuccBranches succ_brs=
   (* all succ branch should not subsume must, may flows *)
   succ_brs != [] && List.for_all (fun (_, _, oft) ->
       oft = None
-      ) succ_brs
+    ) succ_brs
 
 let isSuccessPartialCtx_new (fs,succ_brs) =
   let is_succ = List.for_all isSuccessBranchFail fs in
@@ -11565,8 +11565,8 @@ let isSuccessFailescCtx_new (fs,esc,succ_brs) =
   let is_succ = List.for_all isSuccessBranchFail fs in
   if not !Globals.enable_error_as_exc || not is_succ then is_succ else
     isSuccBranches succ_brs (* && List.for_all (fun (_,brs) -> *)
-    (*     isSuccBranches brs *)
-    (* ) esc *)
+(*     isSuccBranches brs *)
+(* ) esc *)
 
 (* [] denotes failure *)
 let isSuccessListPartialCtx cl =

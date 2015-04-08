@@ -589,7 +589,7 @@ module EPURE =
     (* DO NOT CALL DIRECTLY *)
     let ef_unsat_0 (f : epure) : bool =
       Debug.no_1 "ef_unsat" string_of(* _ef_pure *) string_of_bool
-      ef_unsat_0 f
+        ef_unsat_0 f
 
     let unsat (b,f) = ef_unsat_0 (b, f)
 
@@ -633,7 +633,7 @@ module EPURE =
 
     let ef_imply_0 (ante : epure) (conseq : epure) : bool =
       Debug.no_2 "ef_imply" string_of(* _ef_pure *) string_of(* _ef_pure *) string_of_bool
-      ef_imply_0 ante conseq
+        ef_imply_0 ante conseq
 
     let imply (ante : epure) (conseq : epure) : bool =
       ef_imply_0 ante conseq

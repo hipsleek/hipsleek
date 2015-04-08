@@ -2509,7 +2509,7 @@ and mkStupid_Or_x f1 f2 lbl pos=
           let l2 = List.assoc branch l2 in
           (branch, mkOr l1 l2 lbl pos)
         with Not_found -> (branch, mkTrue pos)
-      with Not_found -> (branch, mkTrue pos )
+        with Not_found -> (branch, mkTrue pos )
     in
     Label_Pure.norm  (List.map map_fun branches) in
   if (isConstFalse f1) then f2
@@ -2579,16 +2579,16 @@ and mkNot_dumb f lbl1 pos0:formula =
     | BForm (bf,lbl) -> begin
         let (pf,il) = bf in
         match pf with
-      | BConst (b, pos) -> BForm ((BConst ((not b), pos), il),lbl)
-      | Lt (e1, e2, pos) -> BForm ((Gte (e1, e2, pos), il),lbl)
-      | Lte (e1, e2, pos) -> BForm ((Gt (e1, e2, pos), il),lbl)
-      | Gt (e1, e2, pos) -> BForm ((Lte (e1, e2, pos), il),lbl)
-      | Gte (e1, e2, pos) -> BForm ((Lt (e1, e2, pos), il),lbl)
-      | Eq (e1, e2, pos) -> BForm ((Neq (e1, e2, pos), il),lbl)
-      | Neq (e1, e2, pos) -> BForm ((Eq (e1, e2, pos), il),lbl)
-      | BagIn e -> BForm (((BagNotIn e), il),lbl)
-      | BagNotIn e -> BForm (((BagIn e), il),lbl)
-      | _ -> Not (f, lbl, pos0)
+        | BConst (b, pos) -> BForm ((BConst ((not b), pos), il),lbl)
+        | Lt (e1, e2, pos) -> BForm ((Gte (e1, e2, pos), il),lbl)
+        | Lte (e1, e2, pos) -> BForm ((Gt (e1, e2, pos), il),lbl)
+        | Gt (e1, e2, pos) -> BForm ((Lte (e1, e2, pos), il),lbl)
+        | Gte (e1, e2, pos) -> BForm ((Lt (e1, e2, pos), il),lbl)
+        | Eq (e1, e2, pos) -> BForm ((Neq (e1, e2, pos), il),lbl)
+        | Neq (e1, e2, pos) -> BForm ((Eq (e1, e2, pos), il),lbl)
+        | BagIn e -> BForm (((BagNotIn e), il),lbl)
+        | BagNotIn e -> BForm (((BagIn e), il),lbl)
+        | _ -> Not (f, lbl, pos0)
       end
     | _ -> Not (f, lbl1,pos0)
 
@@ -8166,8 +8166,8 @@ module ArithNormalizer = struct
       | Add _ | Subtract _ -> true
       | _ -> false
     in let wrap e =
-         if need_parentheses e then "(" ^ (string_of_exp e) ^ ")"
-         else (string_of_exp e)
+      if need_parentheses e then "(" ^ (string_of_exp e) ^ ")"
+      else (string_of_exp e)
     in
     match e0 with
     | Null _ -> "null"
