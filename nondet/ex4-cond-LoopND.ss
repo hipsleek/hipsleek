@@ -12,7 +12,7 @@ bool nondet_bool()
   ensures res::nondet<>;
 
 void foo() 
-  requires LoopErr
+  requires LoopND
   ensures emp;
 { 
   bool b = nondet_bool();
@@ -26,7 +26,7 @@ void foo()
 /*
 # nondet/ex4.ss
 
- Can we change to LoopErr?
+ Can we change to LoopND?
 
  Termination checking result: 
 (0) (ERR: unexpected unsound Loop at return)

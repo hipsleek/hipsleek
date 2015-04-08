@@ -8,7 +8,7 @@ int nondeterm()
 void foo(int i) 
   case {
     i < 0 -> requires Term[] ensures emp;
-    i >=0 -> requires LoopErr ensures emp;
+    i >=0 -> requires LoopND ensures emp;
   }
 { 
   if (i>=0) {
@@ -35,7 +35,7 @@ void foo(int i)
   }
 }
 
-dprint(simpl): ex5-nd-param-LoopErrss:17: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+dprint(simpl): ex5-nd-param-LoopNDss:17: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
 
 Successful States:
 [
@@ -47,13 +47,13 @@ Successful States:
     &{FLOW,(4,5)=__norm#E}[]
 ]
 
-Let LoopErr denotes an error
+Let LoopND denotes an error
 
-  LoopErr |- LoopErr --> MayLoop
+  LoopND |- LoopND --> MayLoop
 
-  LoopErr |- Loop --> MayLoop
+  LoopND |- Loop --> MayLoop
 
-  LoopErr |- * --> LoopErr
+  LoopND |- * --> LoopND
 
   Loop |- Loop --> MayLoop
 

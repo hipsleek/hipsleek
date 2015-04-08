@@ -10,11 +10,11 @@ bool nondet_bool()
   ensures res::nondet<>;
 
 void foo() 
-  requires LoopErr()
+  requires LoopND()
   ensures true;
 { 
   bool b = nondet_bool();
-  // state |- ND(b) ---> NDstate()
+  // state |- ND(b) ---> NDThen(fresh) + NDElse(fresh)
   if (b) {
     foo();
     dprint;
