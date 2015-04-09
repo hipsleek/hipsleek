@@ -184,11 +184,17 @@ and omega_of_formula_x pr_w pr_s f  =
         | None -> "(" ^ (omega_of_b_formula bf) ^ ")"
         | Some f -> helper f
       end
-    | AndList _ ->
-      begin
-        let () = print_endline_quiet ("AndList:?"^(!print_formula f)) in
-        report_error no_pos "omega.ml: encountered AndList, should have been already handled"
-      end
+    (* | AndList _ -> *)
+    (*   begin *)
+    (*     let () = print_endline_quiet ("AndList:?"^(!print_formula f)) in *)
+    (*     report_error no_pos "omega.ml: encountered AndList, should have been already handled" *)
+    (*   end *)
+    | AndList fl ->
+          let acc = "(" ^ (helper (snd (List.hd fl))) ^ ")" in
+          if List.length fl = 1 then
+            acc
+          else
+            List.fold_left (fun acc (_,f) -> "(" ^ acc ^ " & " ^ (helper f) ^ ")") acc (List.tl fl)
     | And (p1, p2, _) -> "(" ^ (helper p1) ^ " & " ^ (helper p2 ) ^ ")"
     | Or (p1, p2,_ , _) -> let () = is_complex_form:= true in	"(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")"
     | Not (p,_ , _) ->       " (not (" ^ (omega_of_formula_x pr_s pr_w p) ^ ")) "	
