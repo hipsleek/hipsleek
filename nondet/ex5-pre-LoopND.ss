@@ -25,7 +25,7 @@ Adding true in post led to the following..
 void foo(int i) 
   case {
     i < 0 -> requires Term[] ensures emp;
-    i >=0 -> requires Loop ensures emp;
+    i >=0 -> requires LoopND ensures emp;
   }
 { 
   if (i>=0) {
