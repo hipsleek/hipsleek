@@ -1845,7 +1845,7 @@ my $dis = '--dis-inv-baga';
     "sleek"=>[["sleek.slk", "",(), "Valid.Valid.Valid.Fail."],
                       ["cll-d.slk", "", (), "Valid."],
                       ["label-basic.slk", "--dis-eps", (), "Fail.Valid.Valid.Fail."],
-                      ["label-dll.slk", "--dis-eps", (), "Fail.Valid.Valid.Valid."],
+                      ["label-dll.slk", "--dis-eps", (), "Valid.Valid.Valid.Valid."],
                       ["sleek1.slk", "", (), "Fail."],
                       #["sleek10.slk", "", (), "Valid.Valid."],
                       ["sleek10.slk", "", (), "Valid.Fail."],

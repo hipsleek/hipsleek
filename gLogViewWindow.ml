@@ -7,10 +7,10 @@ class log_view_window ?(title="Log") log () =
   let tag_results = "results" in
   let tag_current = "current" in
   let win = GWindow.window
-    ~title
-    ~height:600 ~width:850
-    ~allow_shrink:true
-    () in
+      ~title
+      ~height:600 ~width:850
+      ~allow_shrink:true
+      () in
   object (self)
     inherit GWindow.window win#as_window as super
 
@@ -55,19 +55,19 @@ class log_view_window ?(title="Log") log () =
 
       (* set event handlers *)
       ignore (search_field#connect#changed
-        ~callback:self#update_search);
+                ~callback:self#update_search);
       ignore (search_field#connect#activate ~callback:self#find_next);
       ignore (next_btn#connect#clicked ~callback:self#find_next);
       ignore (prev_btn#connect#clicked ~callback:self#find_previous);
       (*ignore (clear_btn#connect#clicked ~callback:self#clear_log)*)
 
-    (*****************
-     * Public methods
-     * ***************)
+      (*****************
+       * Public methods
+       * ***************)
 
     method clear_log () =
       log_view#buffer#set_text ""
-      (*clear_callback ();*)
+    (*clear_callback ();*)
 
     method set_log log =
       log_view#buffer#set_text log
@@ -129,8 +129,8 @@ class log_view_window ?(title="Log") log () =
       (* unhighlight current pos *)
       let () = match current_pos with
         | Some pos -> 
-            self#remove_tag tag_current pos;
-            self#apply_tag tag_results pos
+          self#remove_tag tag_current pos;
+          self#apply_tag tag_results pos
         | None -> ()
       in
       (* get next pos and it's iter *)
@@ -151,7 +151,7 @@ class log_view_window ?(title="Log") log () =
       log_view#buffer#remove_tag_by_name tag_results start stop
 
     (*method private set_clear_callback ~callback =*)
-      (*clear_callback <- callback*)
+    (*clear_callback <- callback*)
 
     method private set_status (msg: string) =
       status_lbl#set_label msg

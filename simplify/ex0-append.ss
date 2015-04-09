@@ -8,7 +8,7 @@ ll<n> == self=null & n=0
 	inv n>=0;
 
 
-/*
+
 void append(node xxx, node yyyy)
   requires xxx::ll<nnn> * yyyy::ll<mmm> & nnn>0
   ensures xxx::ll<eee>& eee=nnn+mmm;
@@ -27,6 +27,7 @@ void append(node xxx, node yyyy)
 	}
 }
 
+/*
 # append.ss
 
 --simpl-pure-part does not make any difference to the output

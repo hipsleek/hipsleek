@@ -11,8 +11,8 @@ let wrap_infer_inv f a b =
     is_inferring := flag;
     res
   with _ as e ->
-      (is_inferring := flag;
-      raise e)
+    (is_inferring := flag;
+     raise e)
 
 let wrap_exception dval f e =
   try
@@ -27,8 +27,8 @@ let wrap_num_disj f n a b c d =
     fixcalc_disj := old_disj;
     res
   with _ as e ->
-      (fixcalc_disj := old_disj;
-      raise e)
+    (fixcalc_disj := old_disj;
+     raise e)
 
 let wrap_under_baga f a =
   let flag = !do_under_baga_approx in
@@ -39,8 +39,8 @@ let wrap_under_baga f a =
     do_under_baga_approx := flag;
     res
   with _ as e ->
-      (do_under_baga_approx := flag;
-      raise e)
+    (do_under_baga_approx := flag;
+     raise e)
 
 let wrap_reverify_scc f a b c =
   let flag = !reverify_flag in
@@ -51,8 +51,8 @@ let wrap_reverify_scc f a b c =
     reverify_flag := flag;
     res
   with _ as e ->
-      (reverify_flag := flag;
-      raise e)
+    (reverify_flag := flag;
+     raise e)
 
 let wrap_norm flag norm f a =
   try
@@ -65,8 +65,8 @@ let wrap_norm flag norm f a =
 let wrap_classic et f a =
   let flag = !do_classic_frame_rule in
   do_classic_frame_rule := (match et with
-    | None -> infer_const_obj # get INF_CLASSIC  (* !opt_classic *)
-    | Some b -> b);
+      | None -> infer_const_obj # get INF_CLASSIC  (* !opt_classic *)
+      | Some b -> b);
   try
     let res = f a in
     (* restore flag do_classic_frame_rule  *)
@@ -74,7 +74,7 @@ let wrap_classic et f a =
     res
   with _ as e ->
     (do_classic_frame_rule := flag;
-    raise e)
+     raise e)
 
 let wrap_par_case_check f c =
   let flag = !ho_always_split in
@@ -85,15 +85,15 @@ let wrap_par_case_check f c =
     res
   with _ as e ->
     (ho_always_split := flag;
-    raise e)
-1
+     raise e)
+      1
 let wrap_set_infer_type t f a =
   let flag = infer_const_obj # is_infer_type t in
   let () = Debug.ninfo_hprint (add_str "infer_type" string_of_inf_const) t no_pos in
   let () = Debug.ninfo_hprint (add_str "wrap set(old)" string_of_bool) flag no_pos in
   let () = infer_const_obj # set t in
   (* let flag2 = infer_const_obj # is_infer_type t in *)
-  (* let () = Debug.binfo_hprint (add_str "wrap set(new)" string_of_bool) flag2 no_pos in *)
+  (* let () = x_binfo_hp (add_str "wrap set(new)" string_of_bool) flag2 no_pos in *)
   try
     let res = f a in
     (* restore flag do_classic_frame_rule  *)
@@ -101,7 +101,7 @@ let wrap_set_infer_type t f a =
     res
   with _ as e ->
     (if not(flag) then infer_const_obj # reset t ;
-    raise e)
+     raise e)
 
 let wrap_add_flow f a = wrap_set_infer_type INF_FLOW f a
 
@@ -115,8 +115,8 @@ let wrap_gen save_fn set_fn restore_fn flags f a =
     let () = restore_fn old_values in
     res
   with _ as e ->
-      (restore_fn old_values;
-      raise e)
+    (restore_fn old_values;
+     raise e)
 
 let wrap_ver_post f a = wrap_set_infer_type INF_VER_POST f a
 

@@ -173,7 +173,7 @@ let get_var (v : ident) : meta_formula = H.find var_tab v
 
 (* An Hoa : String representation of meta_formula *)
 let string_of_meta_formula (mf : meta_formula) = 
-	match mf with
+  match mf with
   | MetaVar i -> i
   | MetaForm f -> "IFORM:"^Iprinter.string_of_formula f
   | MetaFormCF cf ->  "CFORM:"^Cprinter.string_of_formula cf
@@ -184,7 +184,7 @@ let string_of_meta_formula (mf : meta_formula) =
 
 let rec fv_meta_formula (mf: meta_formula) =
   let ident_of_sv v = match v with
-  | CP.SpecVar (_, id, primed) -> (id, primed)
+    | CP.SpecVar (_, id, primed) -> (id, primed)
   in
   match mf with
   | MetaVar i -> [(i, Unprimed)]
@@ -203,10 +203,10 @@ let clear_var_table () = H.clear var_tab
 (*
   let get_var (v : ident) : let_body =
   H.find var_tab v
-  
+
   let put_var (v : ident) (body : let_body) =
   H.add var_tab v body
-  
+
   let formula_of_var (v : ident) pos : IF.formula =
   let lbody = get_var v in
   match lbody with
