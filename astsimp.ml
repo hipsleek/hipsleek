@@ -1863,7 +1863,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
          let () = Globals.baga_imm := old_baga_imm_flag in
          let addr_vars = CP.remove_dups_svl addr_vars' in
          let xform = MCP.simpl_memo_pure_formula Cvutil.simpl_b_formula Cvutil.simpl_pure_formula xform' (x_add TP.simplify_a 10) in
-         (* let () = print_endline ("\n xform: " ^ (Cprinter.string_of_mix_formula xform)) in *)
+         let () = x_binfo_pp ("\n xform: " ^ (Cprinter.string_of_mix_formula xform)) no_pos in
          let xform1 = (x_add TP.simplify_with_pairwise 1 (CP.drop_rel_formula (MCP.pure_of_mix xform))) in
          let ls_disj = CP.list_of_disjs xform1 in
          let xform2 = MCP.mix_of_pure (CP.disj_of_list (Gen.BList.remove_dups_eq CP.equalFormula ls_disj) pos) in
@@ -2136,7 +2136,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
         if not(CF.isFailCtx rs) && not(CF.isFailCtx baga_rs1) && not(CF.isFailCtx baga_rs2) &&
            not(over_fail) && not(under_fail) then
           begin
-            let () = n_binfo_pp ("View defn for " ^ vn ^ " has precise invariant\n") no_pos in
+            let () = x_ninfo_pp ("View defn for " ^ vn ^ " has precise invariant\n") no_pos in
             let pf = pure_of_mix vdef.C.view_user_inv in
             let (disj_form,disj_f) = CP.split_disjunctions_deep_sp pf in
             let do_not_recompute_flag = disj_form (* (List.length disj_f>1) *) && not(!Globals.disj_compute_flag) in

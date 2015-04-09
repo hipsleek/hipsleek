@@ -2711,18 +2711,18 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
       else
         l
     in
-    let () = x_binfo_hp (add_str "l1" (pr_list (pr_pair Label_only.LOne.string_of !print_formula))) l no_pos in
+    (* let () = x_binfo_hp (add_str "l1" (pr_list (pr_pair Label_only.LOne.string_of !print_formula))) l no_pos in *)
     AndList (Label_Pure.norm l)
-  | Or (f1,f2,lbl,pos) -> 
+  | Or (f1,f2,lbl,pos) ->
     Or (mkExists_x vs f1 lbel pos, mkExists_x vs f2 lbel pos, lbl, pos)
   (*| And(f1,f2,pos) ->
     	      let lconj = split_conjunctions f in
     	      let lrel,lunrel = List.partition (fun c->List.exists (fun v-> List.mem v (fv c)) vs) lconj in
-    	      if lrel=[] then f 
-    	      else 
+    	      if lrel=[] then f
+    	      else
     	      let lrelf = join_conjunctions lrel in
     	      let lunrelf = join_conjunctions lunrel in
-    	      let lrelf = 	
+    	      let lrelf =
     	      let fvs = fv lrelf in
     	      let to_push = List.filter (fun c-> mem c fvs) vs in
     	      List.fold_left (fun a v-> Exists (v,a,lbel,pos)) lrelf to_push in
