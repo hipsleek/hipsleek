@@ -839,12 +839,12 @@ let process_base_rec pfs rel specs = match CP.get_rel_id rel with
 let compute_def (rel_fml, pf, no) ante_vars =
   let (name,vars) = match rel_fml with
     | CP.BForm ((CP.RelForm (name,args,_),_),_) ->
-          let _ = print_endline ("### args:"^((pr_list !CP.print_exp) args)) in
+          (* let _ = print_endline ("### args:"^((pr_list !CP.print_exp) args)) in *)
           (CP.name_of_spec_var name, (List.concat (List.map CP.afv args)))
     | _ -> report_error no_pos
           ("Wrong format: " ^ (!CP.print_formula rel_fml) ^ "\n")
   in
-  let _ = print_endline ("compute_def vars: "^(Cprinter.string_of_typed_spec_var_list vars)) in
+  (* let _ = print_endline ("compute_def vars: "^(Cprinter.string_of_typed_spec_var_list vars)) in *)
   let pre_vars, post_vars =
     List.partition (fun v -> List.mem v ante_vars) vars in
   let pre_vars = Translate_out_array_in_cpure_formula.expand_array_variable pf pre_vars in
@@ -888,7 +888,7 @@ let compute_cmd rel_defs bottom_up =
 let compute_fixpoint_aux rel_defs ante_vars bottom_up =
   (* Prepare the input for the fixpoint calculation *)
   let def = List.fold_left (fun x y -> x ^ (compute_def y ante_vars)) "" rel_defs in
-  let _ = print_endline ("### compute_fixpoint_aux def:"^def) in
+  (* let _ = print_endline ("### compute_fixpoint_aux def:"^def) in *)
   let cmd = compute_cmd rel_defs bottom_up in
   let input_fixcalc =  def ^ cmd  in
   DD.ninfo_pprint ">>>>>> compute_fixpoint <<<<<<" no_pos;
