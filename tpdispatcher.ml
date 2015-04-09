@@ -2211,7 +2211,7 @@ let simplify_tp (f:CP.formula):CP.formula =
   let pr = !CP.print_formula in
   Debug.no_1 "TP.simplify" pr pr simplify f
 
-let rec simplify_raw (f: CP.formula) = 
+let rec simplify_raw (f: CP.formula) =
   if not(!Globals.infer_raw_flag) then simplify_tp f
   else
     let is_bag_cnt = is_bag_constraint f in

@@ -1863,7 +1863,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
          let () = Globals.baga_imm := old_baga_imm_flag in
          let addr_vars = CP.remove_dups_svl addr_vars' in
          let xform = MCP.simpl_memo_pure_formula Cvutil.simpl_b_formula Cvutil.simpl_pure_formula xform' (x_add TP.simplify_a 10) in
-         let () = x_binfo_pp ("\n xform: " ^ (Cprinter.string_of_mix_formula xform)) no_pos in
+         let () = x_ninfo_pp ("\n xform: " ^ (Cprinter.string_of_mix_formula xform)) no_pos in
          let xform1 = (x_add TP.simplify_with_pairwise 1 (CP.drop_rel_formula (MCP.pure_of_mix xform))) in
          let ls_disj = CP.list_of_disjs xform1 in
          let xform2 = MCP.mix_of_pure (CP.disj_of_list (Gen.BList.remove_dups_eq CP.equalFormula ls_disj) pos) in
@@ -2134,27 +2134,29 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       (* let () = print_endline (string_of_bool (not(CF.isFailCtx baga_rs2))) in *)
       let () =
         if not(CF.isFailCtx rs) && not(CF.isFailCtx baga_rs1) && not(CF.isFailCtx baga_rs2) &&
-           not(over_fail) && not(under_fail) then
-          begin
-            let () = x_ninfo_pp ("View defn for " ^ vn ^ " has precise invariant\n") no_pos in
-            let pf = pure_of_mix vdef.C.view_user_inv in
-            let (disj_form,disj_f) = CP.split_disjunctions_deep_sp pf in
-            let do_not_recompute_flag = disj_form (* (List.length disj_f>1) *) && not(!Globals.disj_compute_flag) in
-            if n>0 then helper n do_not_recompute_flag;
-            if vdef.C.view_xpure_flag then
-              begin
-                let pr = Cprinter.string_of_mix_formula in
-                let sf = remove_disj_clauses vdef.C.view_user_inv in
-                (* Debug.info_hprint (add_str "disj_form" string_of_bool) disj_form no_pos; *)
-                if disj_form && !Globals.compute_xpure_0 then
-                  (vdef.C.view_user_inv <- sf; vdef.C.view_xpure_flag <- false);
-                x_tinfo_zp (lazy (("Using a simpler inv for xpure0 of "^vdef.C.view_name))) pos;
-                x_tinfo_hp (add_str "inv(xpure0)" pr) vdef.C.view_user_inv pos;
-                x_tinfo_hp (add_str "inv_lock" (pr_option Cprinter.string_of_formula)) vdef.C.view_inv_lock pos;
-
-                x_tinfo_hp (add_str "inv(xpure1)" pr) vdef.C.view_x_formula pos
-              end
-          end
+          not(over_fail) && not(under_fail) then
+            begin
+              let () = match under_f with
+                | None -> ()
+                | _ -> x_binfo_pp ("View defn for " ^ vn ^ " has precise invariant\n") no_pos
+              in
+              let pf = pure_of_mix vdef.C.view_user_inv in
+              let (disj_form,disj_f) = CP.split_disjunctions_deep_sp pf in
+              let do_not_recompute_flag = disj_form (* (List.length disj_f>1) *) && not(!Globals.disj_compute_flag) in
+              if n>0 then helper n do_not_recompute_flag;
+              if vdef.C.view_xpure_flag then
+                begin
+                  let pr = Cprinter.string_of_mix_formula in
+                  let sf = remove_disj_clauses vdef.C.view_user_inv in
+                  (* Debug.info_hprint (add_str "disj_form" string_of_bool) disj_form no_pos; *)
+                  if disj_form && !Globals.compute_xpure_0 then
+                    (vdef.C.view_user_inv <- sf; vdef.C.view_xpure_flag <- false);
+                  x_tinfo_zp (lazy (("Using a simpler inv for xpure0 of "^vdef.C.view_name))) pos;
+                  x_tinfo_hp (add_str "inv(xpure0)" pr) vdef.C.view_user_inv pos;
+                  x_tinfo_hp (add_str "inv_lock" (pr_option Cprinter.string_of_formula)) vdef.C.view_inv_lock pos;
+                  x_tinfo_hp (add_str "inv(xpure1)" pr) vdef.C.view_x_formula pos
+                end
+            end
         else
           let s1 = if over_fail then "-- incorrect over-approx inv : "^(pr_d over_f)^"\n" else "" in
           let s2 = if under_fail then "-- incorrect under-approx inv : "^(pr_d under_f)^"\n" else "" in
