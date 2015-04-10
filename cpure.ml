@@ -2711,7 +2711,7 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
       else
         l
     in
-    let () = x_binfo_hp (add_str "l1" (pr_list (pr_pair Label_only.LOne.string_of !print_formula))) l no_pos in
+    let () = x_ninfo_hp (add_str "l1" (pr_list (pr_pair Label_only.LOne.string_of !print_formula))) l no_pos in
     AndList (Label_Pure.norm l)
   | Or (f1,f2,lbl,pos) -> 
     Or (mkExists_x vs f1 lbel pos, mkExists_x vs f2 lbel pos, lbl, pos)
