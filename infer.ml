@@ -1883,15 +1883,34 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
   let rel_rhs = List.concat rel_rhs_ls in
   let other_rhs = List.concat other_rhs_ls in
   let pr = Cprinter.string_of_pure_formula_list in
-  x_tinfo_hp (add_str "rel_rhs" pr) rel_rhs pos;
-  x_tinfo_hp (add_str "other_rhs" pr) other_rhs pos;
+  x_binfo_hp (add_str "rel_rhs" pr) rel_rhs pos;
+  x_binfo_hp (add_str "other_rhs" pr) other_rhs pos;
   if rel_rhs==[] then (
     x_tinfo_pp ">>>>>> infer_collect_rel <<<<<<" pos;
     x_tinfo_pp "no relation in rhs" pos;
     (* let _ = print_endline("if rhs_mix:"^(Cprinter.string_of_mix_formula rhs_mix)) in *)
     (* let _ = print_endline("output 3 rhs_mix_new "^(Cprinter.string_of_mix_formula rhs_mix)) in *)
     (* let _ = print_endline("output  3 lhs_mix "^(Cprinter.string_of_mix_formula lhs_mix)) in *)
-    (estate,lhs_mix,rhs_mix,None,[])
+
+    (* \pure_l /\ rel(v) |- true *)
+    (* filter (\pure_l, v) ==> rel(v) *)
+    DD.info_hprint (add_str "todo" pr_id) "add constraint" pos;
+    (* DD.info_hprint (add_str "todo: Rel Inferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos; *)
+    (*   infer_rel_stk # push_list inf_rel_ls; *)
+    (*   Log.current_infer_rel_stk # push_list inf_rel_ls; *)
+    (*   let estate = { estate with es_infer_rel = estate.es_infer_rel@inf_rel_ls;} in *)
+    (*   if inf_rel_ls != [] then *)
+    (*     begin *)
+    (*       x_dinfo_pp ">>>>>> infer_collect_rel <<<<<<" pos; *)
+    (*       x_tinfo_hp (add_str "Infer Rel Ids" !print_svl) ivs pos; *)
+    (*       (\* x_dinfo_hp (add_str "LHS heap Xpure1:" !print_mix_formula) lhs_h_mix pos; *\) *)
+    (*       x_tinfo_hp (add_str "LHS pure" !CP.print_formula) lhs_p pos; *)
+    (*       x_tinfo_hp (add_str "RHS pure" !CP.print_formula) rhs_p pos; *)
+    (*       (\* x_tinfo_hp (add_str "RHS pure" !CP.print_formula) rhs_p_n pos; *\) *)
+    (*       x_dinfo_hp (add_str "Rel Inferred:" (pr_list print_lhs_rhs)) inf_rel_ls pos; *)
+    (*       x_tinfo_hp (add_str "RHS Rel List" (pr_list !CP.print_formula)) rel_rhs pos; *)
+    (*     end; *)
+      (estate,lhs_mix,rhs_mix,None,[])
   )
   else
     (* let rhs_p_new = CP.disj_of_list  *)
