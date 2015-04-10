@@ -605,11 +605,11 @@ let smtsolver_path = if !compete_mode then ref "./z3" (* "./z3-4.3.2" *) else re
 
 
 let local_oc = "./z3" (* "./z3-4.3.2" *)
-let global_oc = "/usr/bin/z3" (* "/usr/bin/z3-4.3.2" *)
+let global_oc = "z3" (* "/usr/bin/z3" *) (* "/usr/bin/z3-4.3.2" *)
 
 let smtsolver_path = 
   if (Sys.file_exists local_oc) then ref local_oc
-  else if (Sys.file_exists global_oc)  then ref global_oc
+  else if true (* (Sys.file_exists global_oc) *)  then ref global_oc
   else 
     begin
       print_endline_quiet ("ERROR : "^global_oc^" cannot be found!!"); ref (global_oc^"_cannot_be_found":string)
