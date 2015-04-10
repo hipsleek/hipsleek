@@ -2676,13 +2676,13 @@ and mkExists_with_simpl_x simpl (vs : spec_var list) (f : formula) lbl pos =
 
 and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
   | AndList b ->
-    let pusher v lf lrest= 	
+    let pusher v lf lrest=
       let rl,vl,rf = List.fold_left (fun (al,avs,af) (cl,cvs,cf)-> (x_add LO.comb_norm 2 al cl,avs@cvs, mkAnd af cf pos)) (List.hd lf) (List.tl lf) in
       (rl,vl, Exists (v,rf,lbel,pos))::lrest in
     let lst = List.map (fun (l,c)-> (l,fv c,c)) b in
-    let lst1 = List.fold_left (fun lbl v-> 
-        let l1,l2 = List.partition (fun (_,vl,_)-> List.mem v vl) lbl in 
-        if l1=[] then l2 
+    let lst1 = List.fold_left (fun lbl v->
+        let l1,l2 = List.partition (fun (_,vl,_)-> List.mem v vl) lbl in
+        if l1=[] then l2
         else  pusher v l1 l2
         (*let lul, ll = List.partition (fun (lb,_,_)-> LO.is_unlabelled lb) l1 in
           		if lul=[] || ll=[] then pusher v l1 l2
@@ -2696,7 +2696,7 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
           		pusher v (lrel::ll) (lunrel::l2) *)
       )lst vs in
     let l = List.map (fun (l,_,f)-> (l,f)) lst1 in
-    let () = Debug.ninfo_hprint (add_str "l0" (pr_list (pr_pair Label_only.LOne.string_of !print_formula))) l no_pos in
+    let () = x_ninfo_hp (add_str "l0" (pr_list (pr_pair Label_only.LOne.string_of !print_formula))) l no_pos in
     let l = if !Globals.gen_baga_inv
       then
         List.map (fun ((a,ls) as lbl,f) ->
@@ -2713,16 +2713,16 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
     in
     let () = x_ninfo_hp (add_str "l1" (pr_list (pr_pair Label_only.LOne.string_of !print_formula))) l no_pos in
     AndList (Label_Pure.norm l)
-  | Or (f1,f2,lbl,pos) -> 
+  | Or (f1,f2,lbl,pos) ->
     Or (mkExists_x vs f1 lbel pos, mkExists_x vs f2 lbel pos, lbl, pos)
   (*| And(f1,f2,pos) ->
     	      let lconj = split_conjunctions f in
     	      let lrel,lunrel = List.partition (fun c->List.exists (fun v-> List.mem v (fv c)) vs) lconj in
-    	      if lrel=[] then f 
-    	      else 
+    	      if lrel=[] then f
+    	      else
     	      let lrelf = join_conjunctions lrel in
     	      let lunrelf = join_conjunctions lunrel in
-    	      let lrelf = 	
+    	      let lrelf =
     	      let fvs = fv lrelf in
     	      let to_push = List.filter (fun c-> mem c fvs) vs in
     	      List.fold_left (fun a v-> Exists (v,a,lbel,pos)) lrelf to_push in
