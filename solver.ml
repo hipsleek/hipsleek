@@ -2771,7 +2771,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
   | Base ({ formula_base_heap = h;
             formula_base_pure = p;
             formula_base_pos = pos}) ->
-    if !Globals.baga_xpure (* !Globals.gen_baga_inv *) then tp_syn h p
+    if !Globals.use_baga (* !Globals.baga_xpure *) (* !Globals.gen_baga_inv *) then tp_syn h p
     else tp_sem h p
   (* let p = MCP.translate_level_mix_formula p in *)
   (* let ph,_,_ = x_add xpure_heap 1 prog h p 1 in *)
@@ -2781,7 +2781,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
               formula_exists_heap = qh;
               formula_exists_pure = qp;
               formula_exists_pos = pos}) ->
-    if !Globals.baga_xpure then tp_syn qh qp
+    if !Globals.use_baga (* !Globals.baga_xpure *) then tp_syn qh qp
     else tp_sem qh qp
 (* let qp = MCP.translate_level_mix_formula qp in *)
 (* let ph,_,_ = x_add xpure_heap 1 prog qh qp 1 in *)

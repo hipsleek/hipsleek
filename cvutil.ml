@@ -968,7 +968,8 @@ and conv_from_ef_disj disj =
 and xpure_heap_mem_enum_new
     (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CF.mem_formula)
   =
-  if !Globals.baga_xpure && not(!Globals.en_slc_ps) && (not (Perm.allow_perm ())) then
+  (* if !Globals.baga_xpure && not(!Globals.en_slc_ps) && (not (Perm.allow_perm ())) then *)
+  if !Globals.use_baga && not(!Globals.en_slc_ps) && (not (Perm.allow_perm ())) then
     let disj = x_add xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) in
     let ans = conv_from_ef_disj disj in
     ans
@@ -1442,7 +1443,8 @@ and xpure_symbolic i (prog : prog_decl) (h0 : formula) : (MCP.mix_formula  * CP.
     (fun h0 -> xpure_symbolic_new_orig prog h0) h0
 
 and xpure_symbolic_new_orig (prog : prog_decl) (f0 : formula) =
-  if !Globals.baga_xpure && !Globals.do_under_baga_approx then
+  (* if !Globals.baga_xpure && !Globals.do_under_baga_approx then *)
+  if !Globals.use_baga (* && !Globals.do_under_baga_approx *) then
     (* let nb = xpure_symbolic_baga prog f0 in *)
     (* let ans = xpure_symbolic_orig prog f0 in *)
     (* if !Globals.do_under_baga_approx then *)
