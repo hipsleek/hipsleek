@@ -10912,7 +10912,7 @@ let add_infer_heap_to_ctx cp ctx =
 let add_infer_pure_to_list_context cp (l : list_context) : list_context  = 
   match l with
   | FailCtx _-> l
-  | SuccCtx sc -> SuccCtx (List.map (add_infer_pure_to_ctx cp) sc)
+  | SuccCtx sc -> SuccCtx (List.map (x_add add_infer_pure_to_ctx cp) sc)
 
 let add_infer_pure_to_list_context cp (l : list_context) : list_context  = 
   let pr = !print_list_context_short in
@@ -10940,7 +10940,7 @@ let add_infer_pre f_ctx ctx =
       report_error no_pos ("add_infer_pre: non-pure inferred heap :"^(!print_context f_ctx))
   else
     let cp = collect_pre_pure f_ctx in
-    if (cp!=[]) then add_infer_pure_to_ctx cp ctx
+    if (cp!=[]) then x_add add_infer_pure_to_ctx cp ctx
     else 
       let cr = collect_rel f_ctx in
       if (cr!=[]) then add_infer_rel_to_ctx cr ctx
