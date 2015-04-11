@@ -57,6 +57,17 @@ at the post-condition?
 Termination checking result: 
 (0) (ERR: unexpected unsound Loop at return)
 ==================================================================
+# nondet/ex12-nd-loop.slk
+
+Why did we ger inferred pre? and moreover with
+MayLoop scenario?
+
+Residue:
+ <1>emp&Loop[] & i<0&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [i<=-1]
+<2>emp&MayLoop[] & 0<=i&{FLOW,(4,5)=__norm#E}[]
+inferred pure: [0<=i]
+
 ==================================================================
 ==================================================================
 ==================================================================
