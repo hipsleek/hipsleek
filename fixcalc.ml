@@ -125,12 +125,18 @@ let rec fixcalc_of_b_formula b =
       let s = fixcalc_of_exp e1 in
       let t = fixcalc_of_exp e2 in
       "((" ^ s ^ op_lt ^ t ^ ")" ^ op_or ^ "(" ^ s ^ op_gt ^ t ^ "))"
-  | EqMax (e1, e2, e3, _) ->
+  | CP.EqMax (e1, e2, e3, _) ->
     let e1str = fixcalc_of_exp e1 in
     let e2str = fixcalc_of_exp e2 in
     let e3str = fixcalc_of_exp e3 in
     "((" ^ e2str ^ " >= " ^ e3str ^ " && " ^ e1str ^ " = " ^ e2str ^ ") || ("
     ^ e3str ^ " > " ^ e2str ^ " && " ^ e1str ^ " = " ^ e3str ^ "))"
+  | CP.EqMin (e1, e2, e3, _) ->
+    let e1str = fixcalc_of_exp e1 in
+    let e2str = fixcalc_of_exp e2 in
+    let e3str = fixcalc_of_exp e3 in
+    "((" ^ e2str ^ " <= " ^ e3str ^ " && " ^ e1str ^ " = " ^ e2str ^ ") || ("
+    ^ e3str ^ " < " ^ e2str ^ " && " ^ e1str ^ " = " ^ e3str ^ "))"
   | CP.RelForm (id,args,_) -> 
     if List.exists 
         (fun x -> match x with | CP.IConst _ -> true | _ -> false) args 

@@ -2664,8 +2664,8 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                 (* let root = CP.mk_spec_var "self" in *)
                 let ptrs_vars = List.filter (fun (CP.SpecVar(t,id,_)) -> (string_compare id "idx") || (is_node_typ t)) vd.Cast.view_vars in
                 let body = CP.wrap_exists_svl body (* [root] *) ptrs_vars in
-                let () = x_binfo_hp (add_str "body" Cprinter.string_of_pure_formula) body no_pos in
-                let () = x_binfo_hp (add_str "num_inv" Cprinter.string_of_pure_formula) fixc no_pos in
+                let () = x_ninfo_hp (add_str "body" Cprinter.string_of_pure_formula) body no_pos in
+                let () = x_ninfo_hp (add_str "num_inv" Cprinter.string_of_pure_formula) fixc no_pos in
                 let is_precise_num = if Tpdispatcher.imply_raw fixc body then
                     let () = x_binfo_pp ("Predicate " ^ vd.Cast.view_name ^ " has precise invariant\n") no_pos in
                     (true,fixc)
