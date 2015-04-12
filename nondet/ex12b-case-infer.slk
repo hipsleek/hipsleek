@@ -13,6 +13,8 @@ infer[i] true |- case {
                     }.
 
 Wrong code in solver.ml to fix
+ below seems to be from 7664 (sa_logging, WN) 24May2013 4:27am
+
                  if (d==[] && case_vs!=[]) then
                    begin
                      let () = x_binfo_pp "WARNING (WN) : inferring case wrongly " no_pos in
