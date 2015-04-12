@@ -1840,6 +1840,7 @@ let detect_lhs_rhs_contra2 ivs lhs_c rhs_mix pos =
     (fun _ _ _ -> detect_lhs_rhs_contra2 ivs lhs_c rhs_mix pos) ivs lhs_c rhs_mix
 
 let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
+
   (* TODO : need to handle pure_branches in future ? *)
   (* if no_infer_rel estate (\* && no_infer_hp_rel estate *\) then (estate,lhs_mix,rhs_mix,None,[]) *)
   (* else *)
@@ -1894,22 +1895,29 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
 
     (* \pure_l /\ rel(v) |- true *)
     (* filter (\pure_l, v) ==> rel(v) *)
-    DD.info_hprint (add_str "todo" pr_id) "add constraint" pos;
-    (* DD.info_hprint (add_str "todo: Rel Inferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos; *)
-    (*   infer_rel_stk # push_list inf_rel_ls; *)
-    (*   Log.current_infer_rel_stk # push_list inf_rel_ls; *)
-    (*   let estate = { estate with es_infer_rel = estate.es_infer_rel@inf_rel_ls;} in *)
-    (*   if inf_rel_ls != [] then *)
-    (*     begin *)
-    (*       x_dinfo_pp ">>>>>> infer_collect_rel <<<<<<" pos; *)
-    (*       x_tinfo_hp (add_str "Infer Rel Ids" !print_svl) ivs pos; *)
-    (*       (\* x_dinfo_hp (add_str "LHS heap Xpure1:" !print_mix_formula) lhs_h_mix pos; *\) *)
-    (*       x_tinfo_hp (add_str "LHS pure" !CP.print_formula) lhs_p pos; *)
-    (*       x_tinfo_hp (add_str "RHS pure" !CP.print_formula) rhs_p pos; *)
-    (*       (\* x_tinfo_hp (add_str "RHS pure" !CP.print_formula) rhs_p_n pos; *\) *)
-    (*       x_dinfo_hp (add_str "Rel Inferred:" (pr_list print_lhs_rhs)) inf_rel_ls pos; *)
-    (*       x_tinfo_hp (add_str "RHS Rel List" (pr_list !CP.print_formula)) rel_rhs pos; *)
-    (*     end; *)
+    if CP.isTrivTerm rhs_p then  (estate,lhs_mix,rhs_mix,None,[])
+    else
+      let _ = DD.info_hprint (add_str "todo" pr_id) "add constraint" pos in
+      let lhs_p = MCP.pure_of_mix lhs_mix in
+      let (lhs_p_memo,subs,bvars) = CP.memoise_rel_formula ivs lhs_p in
+      let _,rel_lhs = List.split subs in
+      let rel_lhs_n = List.concat (List.map CP.get_rel_id_list rel_lhs) in
+      let rel_cat =  (CP.RelDefn ((List.hd rel_lhs_n),None)) in
+      let l1 = (rel_cat, lhs_p,rhs_p) in
+      (* DD.info_hprint (add_str "todo: Rel Inferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos; *)
+      let inf_rel_ls = [l1] in
+      infer_rel_stk # push_list inf_rel_ls;
+      Log.current_infer_rel_stk # push_list inf_rel_ls;
+      let estate = { estate with es_infer_rel = estate.es_infer_rel@inf_rel_ls;} in
+      if inf_rel_ls != [] then
+        begin
+          x_dinfo_pp ">>>>>> infer_collect_rel <<<<<<" pos;
+          x_tinfo_hp (add_str "Infer Rel Ids" !print_svl) ivs pos;
+          x_tinfo_hp (add_str "LHS pure" !CP.print_formula) lhs_p pos;
+          x_tinfo_hp (add_str "RHS pure" !CP.print_formula) rhs_p pos;
+          x_dinfo_hp (add_str "Rel Inferred:" (pr_list print_lhs_rhs)) inf_rel_ls pos;
+          x_tinfo_hp (add_str "RHS Rel List" (pr_list !CP.print_formula)) rel_rhs pos;
+        end;
       (estate,lhs_mix,rhs_mix,None,[])
   )
   else
@@ -1981,16 +1989,16 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
 
       (* Begin - Auxiliary function *)
       let is_bag_cnt = TP.is_bag_constraint lhs in
-      let filter_ass lhs rhs = 
+      let filter_ass lhs rhs =
         let is_sat = if is_bag_cnt then (fun x -> true) else is_sat in
         let (lhs,rhs) = rel_filter_assumption is_sat lhs rhs in
-        (simplify_disj_new lhs,rhs) 
+        (simplify_disj_new lhs,rhs)
       in
       let pairwise_proc lhs =
         let lst = CP.split_conjunctions lhs in
         (* perform pairwise only for disjuncts *)
-        let lst = List.map (fun e -> 
-            if CP.is_disjunct e then TP.pairwisecheck e else e) lst 
+        let lst = List.map (fun e ->
+            if CP.is_disjunct e then TP.pairwisecheck e else e) lst
         in CP.join_conjunctions lst
       in
       let wrap_exists (lhs,rhs) =
