@@ -14,6 +14,16 @@ infer[i] true |- case {
                     }.
 print residue.
 
+infer[i] true |- case { 
+                     i<222 -> [] i<200;
+                     i>=222 -> [] i>=300;
+                    }.
+print residue.
+
+//inferred pure: [(300<=i | i<=221); (i<=199 | 222<=i)]
+// simplifies to {[i]: i <= 199} union {[i]: 300 <= i}
+
+
 /*
 # ex12b -debug z.log
 
