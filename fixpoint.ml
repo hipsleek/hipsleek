@@ -142,7 +142,7 @@ let helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_var
         let rels = CP.get_RelForm p in
         let p = CP.drop_rel_formula p in
         let ps = List.filter (fun x -> not (CP.isConstTrue x)) (CP.list_of_conjs p) in  
-        let pres,posts = List.split (List.concat (List.map (fun (a1,a2,a3) -> 
+        let pres,posts = List.split (List.concat (List.map (fun (a1,a2,_,a3) -> 
             if Gen.BList.mem_eq CP.equalFormula a1 rels
             then [(a3,a2)] else []) triples)) in
         let post = CP.conj_of_list (ps@posts) no_pos in
@@ -150,7 +150,7 @@ let helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_var
         (post,[pre],[])
       else
         let rels = CP.get_RelForm p in
-        let pres,posts = List.split (List.concat (List.map (fun (a1,a2,a3) -> 
+        let pres,posts = List.split (List.concat (List.map (fun (a1,a2,_,a3) -> 
             if Gen.BList.mem_eq CP.equalFormula a1 rels
             then [(a3,a2)] else []) triples)) in
         let pre = CP.conj_of_list pres no_pos in
@@ -188,10 +188,11 @@ let simplify_post post_fml post_vars prog subst_fml pre_vars inf_post evars ref_
   Debug.no_2 "simplify_post" pr pr2 (pr_pair pr (pr_list !CP.print_formula))
     (fun _ _ -> simplify_post post_fml post_vars prog subst_fml pre_vars inf_post evars ref_vars) post_fml post_vars
 
-let rec simplify_pre pre_fml lst_assume = match pre_fml with
+let rec simplify_pre pre_fml pre_defs lst_assume =
+  match pre_fml with
   | CF.Or _ ->
     let disjs = CF.list_of_disjs pre_fml in
-    let res = List.map (fun f -> simplify_pre f lst_assume) disjs in
+    let res = List.map (fun f -> simplify_pre f pre_defs lst_assume) disjs in
     let res = remove_dups_imply rev_imply_formula res in
     CF.disj_of_list res no_pos
   (*    let f1 = simplify_pre f1 in*)
@@ -209,8 +210,11 @@ let rec simplify_pre pre_fml lst_assume = match pre_fml with
         let rels = CP.get_RelForm p in
         let p = CP.drop_rel_formula p in
         let ps = List.filter (fun x -> not (CP.isConstTrue x)) (CP.list_of_conjs p) in
-        let pres = List.concat (List.map (fun (a1,a2,a3) ->
-            if Gen.BList.mem_eq CP.equalFormula a2 rels then [a3] else []) lst_assume) in
+        (* let pres = List.concat (List.map (fun (a1,a2,a3) -> *)
+        (*     if Gen.BList.mem_eq CP.equalFormula a2 rels then [a3] else []) lst_assume) in *)
+        let pres = List.fold_left (fun acc (a1,a2) ->
+            if Gen.BList.mem_eq CP.equalFormula a1 rels then acc@[a2] else acc
+        ) [] pre_defs in
         let pfl = ps@pres in
         let pre = CP.conj_of_list pfl no_pos in
         let pre = Wrapper.wrap_exception pre CF.simplify_aux pre in
@@ -218,14 +222,24 @@ let rec simplify_pre pre_fml lst_assume = match pre_fml with
     in
     CF.mkBase h (MCP.mix_of_pure p) vp t fl a no_pos
 
-let simplify_pre pre_fml lst_assume =
+let simplify_pre pre_fml pre_fixs lst_assume =
   let pr = !CF.print_formula in
   let pr_f = !CP.print_formula in
   let pr1 = pr_list (fun (_,f1,f2) -> (pr_pair pr_f pr_f) (f1,f2)) in
-  Debug.no_2 "simplify_pre" pr pr1 pr (fun _ _ -> simplify_pre pre_fml lst_assume) pre_fml lst_assume
+  Debug.no_3 "simplify_pre" pr (pr_list_ln (pr_pair pr_f pr_f)) pr1 pr
+      (fun _ _ _ -> simplify_pre pre_fml pre_fixs lst_assume)
+      pre_fml pre_fixs lst_assume
 
 let rec simplify_relation_x (sp:CF.struc_formula) subst_fml pre_vars post_vars prog inf_post evars lst_assume
   : CF.struc_formula * CP.formula list =
+  let pre_defs, post_defs = match subst_fml with
+    | None -> [],[]
+    | Some lst -> List.fold_left (fun (acc_pre,acc_post) (po,po_def,pr,pr_def) -> let n_acc_pre = if CP.isConstTrue pr_def then acc_pre else
+    acc_pre@[(pr,pr_def)] in
+  let n_acc_post = if CP.isConstTrue po_def then acc_post else
+    acc_post@[(po,po_def)] in
+        (n_acc_pre,n_acc_post)
+  ) ([],[]) lst in
   match sp with
   | CF.ECase b ->
     let r = map_l_snd (fun s->
@@ -244,13 +258,13 @@ let rec simplify_relation_x (sp:CF.struc_formula) subst_fml pre_vars post_vars p
         in (Some r1, r2)
     in
     let base =
-      if pres = [] then simplify_pre b.CF.formula_struc_base lst_assume
+      if pres = [] then simplify_pre b.CF.formula_struc_base pre_defs lst_assume
       else
         let pre = CP.conj_of_list pres no_pos in
         let xpure_base,_,_ = x_add Cvutil.xpure 16 prog b.CF.formula_struc_base in
         let check_fml = MCP.merge_mems xpure_base (MCP.mix_of_pure pre) true in
         if TP.is_sat_raw check_fml then
-          simplify_pre (x_add CF.normalize 1 b.CF.formula_struc_base (CF.formula_of_pure_formula pre no_pos) no_pos) lst_assume
+          simplify_pre (x_add CF.normalize 1 b.CF.formula_struc_base (CF.formula_of_pure_formula pre no_pos) no_pos) pre_defs lst_assume
         else b.CF.formula_struc_base in
     (CF.EBase {b with CF.formula_struc_base = base; CF.formula_struc_continuation = r}, [])
   | CF.EAssume b ->
@@ -271,7 +285,7 @@ let rec simplify_relation_x (sp:CF.struc_formula) subst_fml pre_vars post_vars p
 and simplify_relation sp subst_fml pre_vars post_vars prog inf_post evars lst_assume =
   let pr = !print_struc_formula in
   let pr_f = !CP.print_formula in
-  let pr1 = pr_option (pr_list (pr_triple pr_f pr_f pr_f)) in
+  let pr1 = pr_option (pr_list (pr_quad pr_f pr_f pr_f pr_f)) in
   let pr2 = pr_list (fun (_,f1,f2) -> (pr_pair pr_f pr_f) (f1,f2)) in
   Debug.no_3 "simplify_relation" pr pr1 pr2 (pr_pair pr (pr_list pr_f))
     (fun _ _ _ -> simplify_relation_x sp subst_fml pre_vars post_vars prog inf_post evars lst_assume) sp subst_fml lst_assume
@@ -346,19 +360,20 @@ let pre_calculate_x fp_func input_fml pre_vars proc_spec
   let constTrue = CP.mkTrue no_pos in
 
   let top_down_fp = fp_func 1 input_fml pre_vars proc_spec in
-  let () = Debug.ninfo_hprint (add_str "top_down_fp" (pr_list (pr_pair pr pr))) top_down_fp no_pos in
+  let () = Debug.info_hprint (add_str "top_down_fp" (pr_list (pr_pair pr pr))) top_down_fp no_pos in
 
   match top_down_fp with
   | [(_,rec_inv)] ->
     let args = List.map (fun a -> (a,CP.add_prefix_to_spec_var "REC" a)) pre_rel_vars in
     let to_check = CP.subst args pure_oblg_to_check in
-    let () = Debug.ninfo_hprint (add_str "to check" !CP.print_formula) to_check no_pos in
+    let () = Debug.info_hprint (add_str "to check" !CP.print_formula) to_check no_pos in
+    let () = Debug.info_hprint (add_str "to check" !CP.print_formula) to_check no_pos in
     let fml = CP.mkOr (CP.mkNot_s rec_inv) to_check None no_pos in
     let quan_vars = CP.diff_svl (CP.fv fml) pre_rel_vars in
     let fml = CP.mkForall quan_vars fml None no_pos in
     let () = Debug.ninfo_hprint (add_str "pre_rec_raw" !CP.print_formula) fml no_pos in
     let pre_rec = x_add_1 TP.simplify fml in
-    let () = Debug.ninfo_hprint (add_str "pre_rec" !CP.print_formula) pre_rec no_pos in
+    let () = Debug.info_hprint (add_str "pre_rec" !CP.print_formula) pre_rec no_pos in
 
     (*NEW procedure: not add pre_inv at the begining*)
     let list_pre = [pre_rec;pure_oblg_to_check] in
@@ -378,7 +393,8 @@ let pre_calculate_x fp_func input_fml pre_vars proc_spec
     let () = x_dinfo_hp (add_str "final_pre3" !CP.print_formula) final_pre3 no_pos in
     let () = x_dinfo_hp (add_str "final_pre3a" !CP.print_formula) final_pre3a no_pos in
     (* let () = x_dinfo_hp (add_str "final_pre4a" !CP.print_formula) final_pre4a no_pos in *)
-    let () = x_dinfo_hp (add_str "final_pre4b" !CP.print_formula) final_pre4b no_pos in
+    let () = Debug.info_hprint (add_str "final_pre0" !CP.print_formula) final_pre0 no_pos in
+    let () = Debug.ninfo_hprint (add_str "final_pre4b" !CP.print_formula) final_pre4b no_pos in
     (* let () = x_dinfo_hp (add_str "final_pre" !CP.print_formula) final_pre no_pos in *)
     let checkpoint2 = check_defn pre_rel final_pre pre_rel_df in
     if checkpoint2 then
@@ -475,7 +491,7 @@ let strengthen_preoblg reloblgs=
   compute fix-point for one pre-relation*)
 let pre_rel_fixpoint_x pre_rel pre_fmls pre_invs fp_func reloblgs pre_vars proc_spec pre_rel_df=
   let constTrue = CP.mkTrue no_pos in
-  (* let reloblgs = strengthen_preoblg reloblgs in *)
+  let reloblgs = strengthen_preoblg reloblgs in
   let pre_inv = CP.disj_of_list pre_invs no_pos in
   (* List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) constTrue pre_invs in *)
   let pre_rel_vars = List.filter (fun x -> not (CP.is_rel_typ x)) (CP.fv pre_rel) in

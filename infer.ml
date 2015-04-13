@@ -1913,7 +1913,11 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
       let may_drop_svl = CP.diff_svl (CP.fv lhs_p) rel_args in
       let () = Debug.ninfo_hprint (add_str "rel_args" Cprinter.string_of_spec_var_list) rel_args no_pos in
       let filter_lhs_p = Cputil.sel_subst lhs_p leqs may_drop_svl in
-      let l1 = (rel_cat, CP.remove_redundant filter_lhs_p,rhs_p) in
+      let ex_vars = CP.diff_svl (CP.fv filter_lhs_p) rel_args in
+      let lhs_p_better = x_add_1 TP.simplify_raw
+        (CP.mkExists ex_vars filter_lhs_p None pos) in
+      let _ = DD.ninfo_hprint (add_str "lhs_p_better" !CP.print_formula) lhs_p_better pos in
+      let l1 = (rel_cat, CP.remove_redundant lhs_p_better,rhs_p) in
       (* DD.info_hprint (add_str "todo: Rel Inferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos; *)
       let inf_rel_ls = [l1] in
       infer_rel_stk # push_list inf_rel_ls;

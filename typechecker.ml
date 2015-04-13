@@ -509,7 +509,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       let () = x_dinfo_zp (lazy ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n")) pos_spec in
       let new_base = match pre with
         | [] -> b.CF.formula_struc_base
-        | [p] -> (pre_ctr # inc; Fixpoint.simplify_pre (x_add CF.normalize 1 b.CF.formula_struc_base p pos_spec) [])
+        | [p] -> (pre_ctr # inc; Fixpoint.simplify_pre (x_add CF.normalize 1 b.CF.formula_struc_base p pos_spec) [] [])
         | _ -> report_error pos_spec ("Spec has more than 2 pres but only 1 post") in
       x_tinfo_hp (add_str "Base" !CF.print_formula) b.CF.formula_struc_base no_pos;
       x_tinfo_hp (add_str "New Base" !CF.print_formula) new_base no_pos;
