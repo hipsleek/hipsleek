@@ -457,8 +457,8 @@ let _ =
       then (
         let () = print_string "Unexpected: " in
         let () = List.iter (fun id_cmd ->
-            print_string ((string_of_int id_cmd) ^ " ")) !unexpected_cmd in
-        print_string "\n\n"
+            print_string_quiet ((string_of_int id_cmd) ^ " ")) !unexpected_cmd in
+        print_string_quiet "\n\n"
       ) else
         ()
     in

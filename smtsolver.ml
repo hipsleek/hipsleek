@@ -929,7 +929,7 @@ let process_stdout_print ante conseq input output res =
         flush stdout;
       );
       if (!(outconfig.print_implication) || !(Globals.print_original_solver_input) || !(Globals.print_original_solver_output)) then
-        print_string "\n";
+        print_string_quiet "\n";
     end
 
 (**************************************************************
