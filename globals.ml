@@ -1315,6 +1315,7 @@ let post_add_eres = ref false
 let post_infer_flow = ref false
 let dis_ass_chk = ref false
 let log_filter = ref true
+let oc_weaken_rel_flag = ref true
 let phase_infer_ind = ref false
 
 let infer_const_num = 0

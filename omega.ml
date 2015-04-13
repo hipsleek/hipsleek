@@ -170,8 +170,9 @@ and omega_of_b_formula b =
     "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
     ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
   (* | VarPerm _ -> illegal_format ("Omega.omega_of_exp: VarPerm constraint") *)
-  (* | RelForm _ -> "0=0" *)
-  | RelForm _ -> illegal_format ("Omega.omega_of_exp: RelForm")
+  | RelForm _ -> 
+    if !Globals.oc_weaken_rel_flag then "0=0"
+    else illegal_format ("Omega.omega_of_exp: RelForm")
   | LexVar _ -> illegal_format ("Omega.omega_of_exp: LexVar 3")
   | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
 
