@@ -98,7 +98,7 @@ let run_entail_check_helper ctx (iante: lem_formula) (iconseq: lem_formula) (inf
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
 let run_entail_check_x ctx (iante : lem_formula) (iconseq : lem_formula) (inf_vars: CP.spec_var list) (cprog: C.prog_decl) (exact : bool option) =
-  let _ = print_endline "run_entail_check_x" in
+  let () = x_tinfo_pp "run_entail_check_x" no_pos in
   if (!Globals.allow_lemma_residue)
   then wrap_classic (Some false) (* inexact *) (run_entail_check_helper ctx iante iconseq inf_vars) cprog
   else wrap_classic (Some true) (* exact *) (run_entail_check_helper ctx iante iconseq inf_vars) cprog
@@ -110,7 +110,7 @@ let run_entail_check ctx (iante : lem_formula) (iconseq : lem_formula)
   let pr_conseq = add_str "conseq: " string_of_lem_formula in
   let pr_vars = add_str "inf_vars: " (pr_list Cprinter.string_of_spec_var) in
   let pr_exact = add_str "exact: " (pr_opt string_of_bool) in
-  let _ = print_endline "run_entail_check" in
+  let () = x_tinfo_pp "run_entail_check" no_pos in
   let pr_out (res, ctx_lst) = (
     ((add_str "\nresult: " string_of_bool) res) ^ "\n" ^
     ((add_str "list context: " Cprinter.string_of_list_context) ctx_lst) 

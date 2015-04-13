@@ -1157,7 +1157,7 @@ let process_term_assume (iante: meta_formula) (iconseq: meta_formula) =
 
 
 let run_infer_one_pass_set_states itype (ivars: ident list) (iante0s : meta_formula list) (iconseq0 : meta_formula) =
-  let run_infer_fct ante = run_infer_one_pass itype ivars ante iconseq0 in
+  let run_infer_fct ante = x_add run_infer_one_pass itype ivars ante iconseq0 in
   match iante0s with
   | [] -> report_error no_pos "empty state"
   | ante::rest ->
@@ -1953,7 +1953,7 @@ let process_shape_extract sel_vnames=
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
 let run_entail_check (iante0 : meta_formula list) (iconseq0 : meta_formula) (etype: entail_type) =
   wrap_classic etype (fun conseq ->
-      let (r, (cante, cconseq)) = run_infer_one_pass_set_states [] [] iante0 conseq in
+      let (r, (cante, cconseq)) = x_add run_infer_one_pass_set_states [] [] iante0 conseq in
       (*let _ = print_endline "run_entail_check_2" in*)
       let res, _, _ = r in
       let _ = if !Globals.gen_smt then

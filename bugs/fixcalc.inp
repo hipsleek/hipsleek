@@ -1,0 +1,4 @@
+F1:={[self,n]: ( (exists (idx:self<=0 && idx=0))  && n=0 || ( (exists (idx: (exists (idx_31: (exists (idx:self<=0 && idx=0))  && self>0 && idx=1+idx_31)) ))  &&  (exists (n1:n1=0 && 1+n1=n))  ||  (exists (idx: (exists (idx_31: (exists (idx: (exists (idx_31: (exists (idx:self<=0 && idx=0))  && self>0 && idx=idx_31+1)) ))  && self>0 && idx=1+idx_31)) ))  &&  (exists (n1: (exists (n1_34:n1_34=0 && n1_34+1=n1))  && 1+n1=n)) ))};
+F2:={[self,n]: ( (exists (idx:self<=0 && idx=0))  && n=0 ||  (exists (idx: (exists (idx_31:self<=0 && self>0 && idx=1+idx_31)) ))  &&  (exists (n1:n1=0 && 1+n1=n)) )};
+F2W:=widen(F1,F2,SimHeur);
+F2W;

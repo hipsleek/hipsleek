@@ -1541,7 +1541,7 @@ let norm_var_name (e: CP.formula) : CP.formula =
     (*     ("(" ^ (pr_id  d1) ^ "; " ^ (pr_id d2) ^ ")\n")) h "" in *)
     Debug.no_1 "simplify-syn" pr (* pr_hashtbl *) pr (fun _ -> simplify f0 vnames) f0 (* vnames *)
   in
-  let simplify f0 =  x_add simplify f0  (Hashtbl.create 100) in
+  let simplify f0 = x_add simplify f0  (Hashtbl.create 100) in
   let simplify f0 = wrap_pre_post norm_pure_input norm_pure_result simplify f0 in
   simplify e (* (Hashtbl.create 100) *)
 
@@ -2211,7 +2211,7 @@ let simplify_tp (f:CP.formula):CP.formula =
   let pr = !CP.print_formula in
   Debug.no_1 "TP.simplify" pr pr simplify f
 
-let rec simplify_raw (f: CP.formula) = 
+let rec simplify_raw (f: CP.formula) =
   if not(!Globals.infer_raw_flag) then simplify_tp f
   else
     let is_bag_cnt = is_bag_constraint f in
@@ -2482,11 +2482,11 @@ let pairwisecheck_raw (f : CP.formula) : CP.formula =
 
 let simplify_with_pairwise (f : CP.formula) : CP.formula =
   let pf = Cprinter.string_of_pure_formula in
+  x_ninfo_hp (add_str "simplifyX(input)" pf) f no_pos;
   let f1 = simplify_raw f in
+  x_ninfo_hp (add_str "simplifyX(output)" pf) f1 no_pos;
   let f2 = pairwisecheck_raw f1 in
-  Debug.ninfo_hprint (add_str "simplifyX(input)" pf) f no_pos;
-  Debug.ninfo_hprint (add_str "simplifyX(output)" pf) f1 no_pos;
-  Debug.ninfo_hprint (add_str "simplifyX(pairwise)" pf) f2 no_pos;
+  x_ninfo_hp (add_str "simplifyX(pairwise)" pf) f2 no_pos;
   f2
 
 let simplify_with_pairwise (s:int) (f:CP.formula): CP.formula =

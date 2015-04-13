@@ -1,0 +1,29 @@
+//(1)
+checkentail true |- Term.
+
+//(2)
+checkentail Loop |- Term.
+
+//(3)
+checkentail Term[3] |- Term.
+
+//(4)
+checkentail Term |- Term.
+// fail as not decreasing
+
+//(5)
+checkentail Loop |- Term.
+
+checkentail Loop |- MayLoop.
+
+//(7)
+checkentail Loop |- Loop.
+
+checkentail MayLoop |- Term.
+//valid
+
+checkentail MayLoop |- MayLoop.
+//valid
+
+checkentail MayLoop |- Loop.
+//valid
