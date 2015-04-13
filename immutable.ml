@@ -1561,6 +1561,7 @@ let merge_imm_ann ann1 ann2 =
           (* let constr1 = CP.mkSubAnn (CP.mkExpAnnSymb ann no_pos) fresh_var in *)
           (* let constr2 = CP.mkSubAnn (CP.Var(sv, no_pos)) fresh_var in *)
           let constr = CP.mkEqMin fresh_var  (CP.mkExpAnnSymb ann no_pos)  (CP.Var(sv, no_pos)) no_pos in
+          let constr = CP.BForm ((constr, None), None) in
           (poly_ann, [constr](* 1::[constr2] *), [(fresh_v, Unprimed)])
   | ann_n, _ -> let ann = if (subtype_ann 2  ann_n  ann2 ) then ann2 else  ann1 in
     (ann, [], [])
@@ -2067,12 +2068,23 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
       (* !!!! Andreea: to check how to safely merge two data nodes. Origins and Original info (and other info) abt dn2 is lost *)
       let dn = DataNode {dn1 with h_formula_data_arguments = args; h_formula_data_param_imm = pimm;} in
       (comp, dn, None)
-    | ViewNode vn1, ViewNode vn2 -> Debug.print_info "Warning: " "combining two views not yet implemented" no_pos;
-      (true, h1, None)
+    | ViewNode vn1, ViewNode vn2 -> (* Debug.print_info "Warning: " "combining two views not yet implemented" no_pos; *)
+      let imm1 = get_node_param_imm h1 in
+      let imm2 = get_node_param_imm h2 in
+      let imm  = List.combine imm1 imm2 in
+      let comp = List.fold_left (fun comp (i1,i2) -> 
+          match i1, i2 with
+            | CP.ConstAnn(Accs), a -> true && comp
+            | a, CP.ConstAnn(Accs) -> true && comp
+            | _, _ ->
+                Debug.print_info "Warning: " "possible unsoundess (* between overlapping heaps) " no_pos;
+                false && comp
+      ) true imm in 
+      (comp, h1, None)
     | DataNode dn, ((ViewNode vn) as vh)
     | ((ViewNode vn) as vh), DataNode dn ->
       let pimm = CP.annot_arg_to_imm_ann_list_no_pos vn.h_formula_view_annot_arg in
-            let () = x_tinfo_hp (add_str "imm:" (pr_list Cprinter.string_of_imm)) pimm no_pos in
+      let () = x_tinfo_hp (add_str "imm:" (pr_list Cprinter.string_of_imm)) pimm no_pos in
       let comp = 
         if (List.length dn.h_formula_data_param_imm == List.length (pimm) ) then 
           let imm = List.combine dn.h_formula_data_param_imm pimm in
@@ -2085,11 +2097,11 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
             ) true imm in
           comp
         else false in
-            let () = x_tinfo_hp (add_str "compatible for merging:" string_of_bool) comp no_pos in
+      let () = x_tinfo_hp (add_str "compatible for merging:" string_of_bool) comp no_pos in
       if comp then
         let ret_f = unfold_and_norm vn vh dn emap unfold_fun qvars emap in
         (comp, h1, ret_f)
-        (* incompatible for merging *)
+            (* incompatible for merging *)
       else (comp, h1, None)
     | _, _ -> 
       Debug.print_info "Warning: " "combining different kind of nodes not yet implemented" no_pos; 

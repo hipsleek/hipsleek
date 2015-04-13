@@ -2087,6 +2087,7 @@ and get_node_imm (h : h_formula) = match h with
 
 and get_node_param_imm (h : h_formula) = match h with
   | DataNode ({h_formula_data_param_imm = param_imm}) -> param_imm
+  | ViewNode ({h_formula_view_annot_arg = field_imm}) -> (CP.annot_arg_to_imm_ann_list (List.map fst field_imm))
   | _ -> failwith ("get_node_param_imm: invalid argument "^(!print_h_formula h))
 
 and get_view_origins (h : h_formula) = match h with

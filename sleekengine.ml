@@ -769,10 +769,14 @@ let convert_data_and_pred_to_cast_x () =
   let cprog6 =  if
     (* !Globals.smt_compete_mode && (!Globals.pred_sat || !Globals.graph_norm ) && *)
     (not (!Globals.lemma_gen_safe || !Globals.lemma_gen_unsafe
-          || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold || !Globals.seg_fold || !Globals.lemma_syn)) then
-      cprog5
+          || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold || !Globals.seg_fold || !Globals.lemma_syn || !Globals.allow_field_ann)) then
+      begin 
+        x_tinfo_pp "skip categorize cprog5" no_pos;
+        cprog5
+      end
     else
       try
+        (* andreea: why do we disable this call for normal run? *)
         Cast.categorize_view cprog5
       with _ -> cprog5
   in
