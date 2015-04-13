@@ -1,4 +1,4 @@
-s/^TRUE/TRUE/
-s/^UNKNOWN/UNKOWN/
-s/^FALSE/FALSE/
+s/^TRUE/&/
+s/^UNKNOWN/&/
+s/^FALSE/&/
 /^TRUE\|^FALSE\|^UNKNOWN/!d
