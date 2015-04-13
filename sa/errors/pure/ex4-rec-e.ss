@@ -11,12 +11,14 @@ infer [P] requires P(n) ensures true & flow __Error;
 //  requires n<3  ensures true & flow __Error;
 {
 
-   assume n < 3;
-   //assert n < 3;
- // dprint;
- __error();
-
- dprint;
+  if (n < 3) {
+    return 0;
+  }
+  else {
+    foo(n-1);
+    __error();
+    return 1;
+  }
 
  return 0;
 }

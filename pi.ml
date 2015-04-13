@@ -530,6 +530,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
   let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels) in
   let (lst_assume,lst_rank) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) rest) in
   let lst_assume = Gen.Basic.remove_dups lst_assume in
+  let lst_assume = Fixpoint.strengthen_preoblg lst_assume in
   if rels = [] && lst_assume = [] then ()
   else
     let new_specs =
@@ -658,7 +659,8 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
           let new_specs = if triples = [] then
               List.map (fun old_spec -> fst (Fixpoint.simplify_relation old_spec None
                                                pre_vars post_vars_wo_rel prog true (* inf_post_flag *) evars lst_assume)) proc_specs
-            else
+          else
+              let _ = Debug.ninfo_hprint (add_str "proc_specs" (pr_list Cprinter.string_of_struc_formula)) proc_specs no_pos in
               let new_specs1 = List.map (fun proc_spec -> CF.transform_spec proc_spec (CF.list_of_posts proc_spec)) proc_specs in
               let _ = Debug.ninfo_hprint (add_str "new_specs1" (pr_list Cprinter.string_of_struc_formula)) new_specs1 no_pos in
               let new_specs2 = List.map (fun new_spec1 -> fst (Fixpoint.simplify_relation new_spec1
