@@ -983,6 +983,7 @@ let disj_compute_flag = ref false
 let compute_xpure_0 = ref true
 let inv_wrap_flag = ref true
 let lhs_case_flag = ref false
+let infer_case_as_or_flag = ref false
 let lhs_case_search_flag = ref false
 let smart_xpure = ref true
 let super_smart_xpure = ref false

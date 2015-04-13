@@ -4157,7 +4157,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                    else 
                      Wrapper.wrap_one_bool Globals.unsat_consumed_heap true
                        (combine_context_and_unsat_now prog ctx) f in	
-                 if (d==[] && case_vs!=[]) then
+                 if (d==[] && case_vs!=[] && !Globals.infer_case_as_or_flag) then
                    begin
                      (* place to add case LHS to infer_pure *)
                      (* for each (c1,c2) from case_brs
