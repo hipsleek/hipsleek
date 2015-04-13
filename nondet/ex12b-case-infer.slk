@@ -4,6 +4,16 @@ infer[i] true |- case {
                      i>=222 -> [] true;
                     }.
 print residue.
+
+infer[i] true |- i<222 or i>=222.
+print residue.
+
+infer[i] true |- case { 
+                     i<222 -> [] i<200;
+                     i>=222 -> [] true;
+                    }.
+print residue.
+
 /*
 # ex12b -debug z.log
 

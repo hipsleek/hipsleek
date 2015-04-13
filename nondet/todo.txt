@@ -71,6 +71,8 @@ inferred pure: [0<=i]
 ==================================================================
 # ex12b -debug z.log
 
+ below seems to be from 7664 (sa_logging, WN) 24May2013 4:27am
+
 infer[i] true |- case { 
                      i<222 -> [] true;
                      i>=222 -> [] true;
