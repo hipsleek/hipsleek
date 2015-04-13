@@ -602,10 +602,12 @@ let prover_process = ref {
 
 
 let smtsolver_path = if !compete_mode then ref "./z3" (* "./z3-4.3.2" *) else ref (* "z3-4.3.2" *) "z3"
-
-
 let local_oc = "./z3" (* "./z3-4.3.2" *)
 let global_oc = "z3" (* "/usr/bin/z3" *) (* "/usr/bin/z3-4.3.2" *)
+
+let smtsolver_path = if !compete_mode then ref "./z3-4.3.2" else ref "z3-4.3.2" (* "z3" *)
+let local_oc = "./z3-4.3.2"
+let global_oc = "/usr/bin/z3-4.3.2"
 
 let smtsolver_path = 
   if (Sys.file_exists local_oc) then ref local_oc
