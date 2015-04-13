@@ -92,6 +92,37 @@ $EX parse_fixbag.ml
 $EX parse_shape.ml
 $EX parser.ml
 ==================================================================
+
+./hip svcomp14/termination-crafted/RecursiveMultiplication_true-termination.c -infer "@term" 
+
+Previously we had, where relation formula
+is replaced by true.
+
+In ti_plus:
+==========
+
+omega_of_formula#8@189
+omega_of_formula#8 inp1 : exists(nondet_int__:exists(tmp_1616:nondet_int__ 23:12(tmp_1616)) & 
+nondet_int__ 24:12(0))
+omega_of_formula#8@189 EXIT: (exists (nondet_int__:( (exists (tmp_1616:(0=0)))  & (0=0)))) 
+
+
+In default
+=========
+
+In latest, relation formula
+is triggered an exception.
+
+(==omega.ml#933==)
+omega_of_formula#8@225
+omega_of_formula#8 inp1 : exists(nondet_int__:exists(tmp_1608:nondet_int__(tmp_1608)) & 
+nondet_int__(0))
+omega_of_formula#8@225 EXIT ExceptionGlobals.Illegal_Prover_Format("Omega.omega_of_exp: RelForm")Occurred!
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: RelForm")
+ Formula: exists(nondet_int__:exists(tmp_1608:nondet_int__(tmp_1608)) & 
+nondet_int__(0))
+
+
 ==================================================================
 ==================================================================
 ==================================================================
