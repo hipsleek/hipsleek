@@ -45,8 +45,8 @@ let op_diff = "-"
 (* this command will add a bracket around e if
    is simple yields false *)
 let pr_bracket (isSimple:'a -> bool) (pr_elem:'a -> unit) (e:'a) : unit =
- if (isSimple e) then pr_elem e
- else (fmt_string "("; pr_elem e; fmt_string ")")
+  if (isSimple e) then pr_elem e
+  else (fmt_string "("; pr_elem e; fmt_string ")")
 
 (* this command invokes
     f_open ; f_elem x1; f_sep .. f_sep; f_elem xn; f_close
@@ -59,8 +59,8 @@ let pr_list_open_sep (f_open:unit -> unit)
     | [x] -> (f_elem x)
     | y::ys -> (f_elem y; f_sep(); helper ys)
   in match xs with
-    | [] -> f_open();f_close()
-    | xs -> f_open(); (helper xs); f_close()
+  | [] -> f_open();f_close()
+  | xs -> f_open(); (helper xs); f_close()
 
 (* print op and a break after *)
 let pr_brk_after op = (fun () -> fmt_string (op); fmt_cut() )
@@ -81,14 +81,14 @@ let pr_brk_before op = (fun () -> fmt_cut() ; (fmt_string op))
 
 
 let pr_args open_str close_str sep_str f xs = pr_list_open_sep 
-  (fun () -> fmt_open 1; fmt_string open_str)
-  (fun () -> fmt_string close_str; fmt_close();) 
-  (pr_brk_after sep_str) f xs
+    (fun () -> fmt_open 1; fmt_string open_str)
+    (fun () -> fmt_string close_str; fmt_close();) 
+    (pr_brk_after sep_str) f xs
 
 let pr_op_args op open_str close_str sep_str f xs = pr_list_open_sep 
-  (fun () -> fmt_open 1; fmt_string op; fmt_string open_str)
-  (fun () -> fmt_string close_str; fmt_close();) 
-  (pr_brk_after sep_str) f xs
+    (fun () -> fmt_open 1; fmt_string op; fmt_string open_str)
+    (fun () -> fmt_string close_str; fmt_close();) 
+    (pr_brk_after sep_str) f xs
 
 let pr_tuple op f xs = pr_op_args op "(" ")" "," f xs
 
@@ -101,8 +101,8 @@ let pr_fn_args op f xs = match xs with
 
 (* print in infix form : x1 op .. op xn *)
 let pr_list_op op f xs = pr_list_open_sep 
-  (fun () -> fmt_open 1) fmt_close 
-  (pr_brk_after op) f xs
+    (fun () -> fmt_open 1) fmt_close 
+    (pr_brk_after op) f xs
 
 (* let pr_op_sep   *)
 (*     (pr_sep: unit -> unit )  *)
@@ -133,7 +133,7 @@ let pr_list_op op f xs = pr_list_open_sep
 (*   match op with *)
 (*   | "&" -> 0 *)
 (*   | _ -> -1 *)
- 
+
 
 (* let is_no_bracket (op:string) (trivial:'a->bool)  *)
 (*     (split:'a -> (string * 'a * 'a) option) (elem:'a) : bool  =  *)
@@ -144,11 +144,11 @@ let pr_list_op op f xs = pr_list_open_sep
 (*       | Some (op2,_,_) ->  *)
 (*          if (precedence op2) > (precedence op) then true *)
 (*          else false *)
- 
+
 let string_of_specvar x = match x with
   | P.SpecVar (t, id, p) -> id ^ (match p with 
-	  | Primed    -> "'" 
-	  | Unprimed  -> "" )
+      | Primed    -> "'" 
+      | Unprimed  -> "" )
 
 (* check if top operator of e is associative and 
    return its list of arguments if so *)
@@ -181,28 +181,28 @@ let rec pr_formula_exp (e:P.exp) =
   | P.IConst (i, l) -> fmt_string (string_of_int i)
   | P.FConst (f, l) -> fmt_string (string_of_float f)
   | P.Add (e1, e2, l) -> 
-      let args = bin_op_to_list op_add_short exp_assoc_op e in
-      pr_list_op op_add pr_opt_bracket args
+    let args = bin_op_to_list op_add_short exp_assoc_op e in
+    pr_list_op op_add pr_opt_bracket args
   | P.Mult (e1, e2, l) -> 
-      let args = bin_op_to_list op_mult_short exp_assoc_op e in
-      pr_list_op op_mult pr_opt_bracket  args
+    let args = bin_op_to_list op_mult_short exp_assoc_op e in
+    pr_list_op op_mult pr_opt_bracket  args
   | P.Max (e1, e2, l) -> 
-      let args = bin_op_to_list op_max_short exp_assoc_op e in
-      pr_fn_args op_max pr_formula_exp args
+    let args = bin_op_to_list op_max_short exp_assoc_op e in
+    pr_fn_args op_max pr_formula_exp args
   | P.Min (e1, e2, l) -> 
-      let args = bin_op_to_list op_min_short exp_assoc_op e in
-      pr_fn_args op_min pr_formula_exp  args
+    let args = bin_op_to_list op_min_short exp_assoc_op e in
+    pr_fn_args op_min pr_formula_exp  args
   | P.Bag (elist, l) 	-> pr_set pr_formula_exp elist
   | P.BagUnion (args, l) -> 
-      let args = bin_op_to_list op_union_short exp_assoc_op e in
-      pr_fn_args op_union pr_formula_exp args
+    let args = bin_op_to_list op_union_short exp_assoc_op e in
+    pr_fn_args op_union pr_formula_exp args
   | P.BagIntersect (args, l) -> 
-      let args = bin_op_to_list op_intersect_short exp_assoc_op e in
-      pr_fn_args op_intersect pr_formula_exp args
+    let args = bin_op_to_list op_intersect_short exp_assoc_op e in
+    pr_fn_args op_intersect pr_formula_exp args
   | P.Subtract (e1, e2, l) ->
-      pr_opt_bracket e1; pr_brk_after op_sub (); pr_opt_bracket e2
+    pr_opt_bracket e1; pr_brk_after op_sub (); pr_opt_bracket e2
   | P.Div (e1, e2, l) ->
-      pr_opt_bracket e1; pr_brk_after op_div (); pr_opt_bracket e2
+    pr_opt_bracket e1; pr_brk_after op_div (); pr_opt_bracket e2
   | P.BagDiff (e1, e2, l)     -> pr_formula_exp e1; pr_brk_after op_diff (); pr_formula_exp e2
 
 (* convert formula exp to a string via pr_formula_exp *)
@@ -212,8 +212,8 @@ let string_of_formula_exp (e:P.exp) =
     fmt := str_formatter;
     pr_formula_exp e;
     (let s = flush_str_formatter()in
-    fmt := old_fmt; s)
+     fmt := old_fmt; s)
   end    
-  
+
 
 

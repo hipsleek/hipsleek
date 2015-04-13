@@ -14,13 +14,13 @@ type error = {
 }
 
 (*exception Theorem_prover of (string * string) *)
- exception Ppf of (error * int * int) (*Proving_pre_fails*)
+exception Ppf of (error * int * int) (*Proving_pre_fails*)
 
- let get_error_type_str ie=
-   match ie with
-     | 0 -> "bind failure exception"
-     | 1 -> "Proving precond failed"
-     | _ -> ""
+let get_error_type_str ie=
+  match ie with
+  | 0 -> "bind failure exception"
+  | 1 -> "Proving precond failed"
+  | _ -> ""
 
 (*
 let all_errors : error list ref = ref []

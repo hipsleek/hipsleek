@@ -1,7 +1,7 @@
 #include "xdebug.cppo"
 (**
    GUI frontend for Sleek
- *)
+*)
 
 open GEntailmentList
 open GSourceViewX
@@ -14,49 +14,49 @@ module TP = Tpdispatcher
 
 let create_residue_view () =
   let view = GText.view
-    ~editable:false
-    ~wrap_mode:`WORD
-    () in
+      ~editable:false
+      ~wrap_mode:`WORD
+      () in
   view
 
 class mainwindow () =
   let ui_info =
     "<ui>\
-    <menubar name='MenuBar'>\
-      <menu action='FileMenu'>\
-        <menuitem action='New'/>\
-        <menuitem action='Open'/>\
-        <menuitem action='Save'/>\
-        <separator/>\
-        <menuitem action='Quit'/>\
-      </menu>\n
+     <menubar name='MenuBar'>\
+     <menu action='FileMenu'>\
+     <menuitem action='New'/>\
+     <menuitem action='Open'/>\
+     <menuitem action='Save'/>\
+     <separator/>\
+     <menuitem action='Quit'/>\
+     </menu>\n
       <menu action='PreferencesMenu'>\
-        <menu action='TheoremProverMenu'>\
-          <menuitem action='Omega'/>\
-          <menuitem action='Mona'/>\
-          <menuitem action='Redlog'/>\
-        </menu>\
-        <menuitem action='EPS'/>\
-        <menuitem action='EAP'/>\
-      </menu>\
-      <menu action='HelpMenu'>\
-        <menuitem action='About'/>\
-      </menu>\
-    </menubar>\
-    <toolbar name='ToolBar'>\
-      <toolitem action='New'/>\
-      <toolitem action='Open'/>\
-      <toolitem action='Save'/>\
-      <separator/>\
-      <toolitem action='Execute'/>\
-    </toolbar>\
-  </ui>"
+     <menu action='TheoremProverMenu'>\
+     <menuitem action='Omega'/>\
+     <menuitem action='Mona'/>\
+     <menuitem action='Redlog'/>\
+     </menu>\
+     <menuitem action='EPS'/>\
+     <menuitem action='EAP'/>\
+     </menu>\
+     <menu action='HelpMenu'>\
+     <menuitem action='About'/>\
+     </menu>\
+     </menubar>\
+     <toolbar name='ToolBar'>\
+     <toolitem action='New'/>\
+     <toolitem action='Open'/>\
+     <toolitem action='Save'/>\
+     <separator/>\
+     <toolitem action='Execute'/>\
+     </toolbar>\
+     </ui>"
   in
   let win = GWindow.window
-    ~height:750 ~width:1000
-    ~title:"Unsaved Document - gSleek" 
-    ~allow_shrink:true
-    () in
+      ~height:750 ~width:1000
+      ~title:"Unsaved Document - gSleek" 
+      ~allow_shrink:true
+      () in
   object (self)
     inherit GWindow.window win#as_window as super
 
@@ -69,15 +69,15 @@ class mainwindow () =
     val mutable original_digest = ""
     val mutable debug_log_window = None
     val mutable prover_log_window = None
-      
+
     initializer
       (* initialize components *)
       let residue_panel =
         let label = GMisc.label 
-          ~text:"Residue and Contexts:" 
-          ~xalign:0.0 ~yalign:0.0
-          ~xpad:5 ~ypad:5
-          () in
+            ~text:"Residue and Contexts:" 
+            ~xalign:0.0 ~yalign:0.0
+            ~xpad:5 ~ypad:5
+            () in
         let residue_scrolled = create_scrolled_win residue_view in
         let vbox = GPack.vbox () in
         vbox#pack ~expand:false label#coerce;
@@ -87,23 +87,23 @@ class mainwindow () =
       let entail_panel =
         let list_scrolled = create_scrolled_win entailment_list in
         let buttons = GPack.button_box 
-          `HORIZONTAL ~layout:`START
-          ~border_width:10
-          () in
+            `HORIZONTAL ~layout:`START
+            ~border_width:10
+            () in
         let check_btn = GButton.button
-          ~label:"Check Entailment"
-          ~packing:buttons#add
-          () in
+            ~label:"Check Entailment"
+            ~packing:buttons#add
+            () in
         ignore (check_btn#connect#clicked ~callback:(self#check_selected_entailment ~force:true));
         let show_debug_log_btn = GButton.button
-          ~label:"Show Debug Log"
-          ~packing:buttons#add
-          () in
+            ~label:"Show Debug Log"
+            ~packing:buttons#add
+            () in
         ignore (show_debug_log_btn#connect#clicked ~callback:self#show_debug_log);
         let show_prover_log_btn = GButton.button
-          ~label:"Show Prover Log"
-          ~packing:buttons#add
-          () in
+            ~label:"Show Prover Log"
+            ~packing:buttons#add
+            () in
         ignore (show_prover_log_btn#connect#clicked ~callback:self#show_prover_log);
         let vbox = GPack.vbox () in
         vbox#pack ~expand:true list_scrolled#coerce;
@@ -133,17 +133,17 @@ class mainwindow () =
       (* set event handlers *)
       ignore (self#event#connect#delete ~callback:(fun _ -> self#quit ()));
       ignore (source_view#source_buffer#connect#end_user_action
-        ~callback:self#source_changed_handler);
+                ~callback:self#source_changed_handler);
       ignore (source_view#connect#undo ~callback:self#source_changed_handler);
       ignore (source_view#connect#redo ~callback:self#source_changed_handler);
       ignore (source_view#event#connect#focus_out
-        ~callback:(fun _ -> self#update_entailment_list (); false));
+                ~callback:(fun _ -> self#update_entailment_list (); false));
       ignore (entailment_list#selection#connect#changed
-        ~callback:self#check_selected_entailment);
+                ~callback:self#check_selected_entailment);
       entailment_list#set_checkall_handler self#run_all_handler;
 
 
-    (** Setup UIManager for creating Menubar and Toolbar *)
+      (** Setup UIManager for creating Menubar and Toolbar *)
     method setup_ui_manager () =
       let a = GAction.add_action in
       let radio = GAction.group_radio_actions in
@@ -182,11 +182,11 @@ class mainwindow () =
       self#add_accel_group ui#get_accel_group;
       ignore (ui#add_ui_from_string ui_info);
       ui
-      
+
 
     (** open file chooser dialog with parent window
-       return choosen file name 
-     *)
+        return choosen file name 
+    *)
     method show_file_chooser ?(title="Select file") action : string option =
       let all_files () =
         GFile.filter ~name:"All files" ~patterns:["*"] ()
@@ -195,9 +195,9 @@ class mainwindow () =
         GFile.filter ~name:"Sleek files" ~patterns:["*.slk"] ()
       in
       let dialog = GWindow.file_chooser_dialog
-        ~action ~title
-        ~parent:self 
-        () in
+          ~action ~title
+          ~parent:self 
+          () in
       let dir = match current_file with
         | Some name -> Filename.dirname name
         | None -> Filename.current_dir_name
@@ -215,7 +215,7 @@ class mainwindow () =
       res
 
     (** open an yes/no/cancel dialog which asks user for
-       saving of modified document *)
+        saving of modified document *)
     method ask_for_saving () =
       let fname = Filename.basename (self#string_of_current_file ()) in
       let save_msg = match current_file with
@@ -223,16 +223,16 @@ class mainwindow () =
         | None -> "Save as..."
       in
       let icon = GMisc.image 
-        ~stock:`DIALOG_WARNING 
-        ~icon_size:`DIALOG
-        () in
+          ~stock:`DIALOG_WARNING 
+          ~icon_size:`DIALOG
+          () in
       let response = GToolbox.question_box
-        ~title:""
-        ~buttons:["Discard"; "Cancel"; save_msg]
-        ~icon:icon#coerce
-        ~default:3
-        ("\nSave changes to file \"" ^ fname ^ "\"\nbefore closing?\n")
-        in
+          ~title:""
+          ~buttons:["Discard"; "Cancel"; save_msg]
+          ~icon:icon#coerce
+          ~default:3
+          ("\nSave changes to file \"" ^ fname ^ "\"\nbefore closing?\n")
+      in
       let res = match response with
         | 1 -> true
         | 3 -> self#save_handler ()
@@ -247,7 +247,7 @@ class mainwindow () =
       self#update_original_digest ();
       entailment_list#update_source new_src;
       residue_view#buffer#set_text ""
-      
+
     method private string_of_current_file () =
       match current_file with
       | Some fname -> fname
@@ -275,7 +275,7 @@ class mainwindow () =
       in
       let title = prefix ^ fname ^ " - gSleek" in
       self#set_title title;
-        
+
     method get_text () = source_view#source_buffer#get_text ()
 
     method update_original_digest () =
@@ -311,13 +311,13 @@ class mainwindow () =
       let log = Debug.get_debug_log () in
       let win = match debug_log_window with
         | Some win-> 
-            win#set_log log;
-            win
+          win#set_log log;
+          win
         | None ->
-            let win = new GLogViewWindow.log_view_window
-              ~title:"Development Debug Log" log () in
-            debug_log_window <- Some win;
-            win
+          let win = new GLogViewWindow.log_view_window
+            ~title:"Development Debug Log" log () in
+          debug_log_window <- Some win;
+          win
       in
       win#present ()
 
@@ -326,26 +326,26 @@ class mainwindow () =
       let title = (TP.get_current_tp_name ()) ^ " Log" in
       let win = match prover_log_window with
         | Some win-> 
-            win#set_log log;
-            win#set_title title;
-            win
+          win#set_log log;
+          win#set_title title;
+          win
         | None ->
-            let win = new GLogViewWindow.log_view_window ~title log () in
-            prover_log_window <- Some win;
-            win
+          let win = new GLogViewWindow.log_view_window ~title log () in
+          prover_log_window <- Some win;
+          win
       in
       win#present ()
 
     method show_about_dialog () =
-        let dialog = GWindow.about_dialog 
+      let dialog = GWindow.about_dialog 
           ~name:"HIP/Sleek"
           ~authors:["Wei Ngan Chin"; "Huu Hai Nguyen"; "Cristina David"; "Cristian Gherghina"]
           ~version:"1.0"
           ~website:"http://loris-7.ddns.comp.nus.edu.sg/~project/hip/index.html"
           ~parent:self
           () in
-        ignore (dialog#connect#response ~callback:(fun _ -> dialog#destroy ()));
-        dialog#show ()
+      ignore (dialog#connect#response ~callback:(fun _ -> dialog#destroy ()));
+      dialog#show ()
 
     (*********************
      * Actions handlers 
@@ -381,12 +381,12 @@ class mainwindow () =
       let text = self#get_text () in
       match current_file with
       | Some name ->
-          (if self#source_modified then self#save text name; true)
+        (if self#source_modified then self#save text name; true)
       | None ->
-          let fname = self#show_file_chooser ~title:"Save As..." `SAVE in
-          match fname with
-          | None -> false
-          | Some fname -> (self#save text fname; true)
+        let fname = self#show_file_chooser ~title:"Save As..." `SAVE in
+        match fname with
+        | None -> false
+        | Some fname -> (self#save text fname; true)
 
     (* Toolbar's Run all button clicked or Validity column header clicked *)
     method private run_all_handler () =
@@ -423,7 +423,7 @@ class mainwindow () =
 let usage_msg = Sys.argv.(0) ^ " [options] <source file>"
 let arguments = [
   ("-v", Arg.Set verbose_flag, "Verbose")
-  ]
+]
 
 let _ =
   GUtil.initialize ();

@@ -35,9 +35,9 @@ let subtract (d,r1) (_,r2) =
 
 let comb d1 d2 = 
   match d1,d2 with
-    | None, x -> x
-    | x, None -> x
-    | Some f1, Some f2 ->Some (f1 && f2)
+  | None, x -> x
+  | x, None -> x
+  | Some f1, Some f2 ->Some (f1 && f2)
 
 let add (d1,r1) (d2,r2) =
   (comb d1 d2, Ratio.add_ratio r1 r2)
@@ -58,8 +58,8 @@ let is_zero (_,r1) =
 
 let is_value (d,r1) = 
   match d with
-    | None -> true
-    | Some f -> f
+  | None -> true
+  | Some f -> f
 
 let string_of_frac (d,r) =
   let s = match d with 

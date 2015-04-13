@@ -68,7 +68,7 @@ module ORD_E (M : ORD_B) = struct
         | [] -> failwith "[] for max argument"
         | [x] -> x
         | x::xs -> let y=helper xs in
-	      if lt x y then x else y in
+          if lt x y then x else y in
       helper xs
     end
 end
@@ -78,13 +78,13 @@ module ORD (M : ORD_B) = struct
   include M
   include ORD_E(M)
 end
-  
+
 (* instance Int EQ Base *)
 module I_Int_EQ_B = struct
   type a = int
   let eq = (=)
 end
-  
+
 (* instance Int EQ Extension *)
 module I_Int_EQ = EQ(I_Int_EQ_B)
 
@@ -122,7 +122,7 @@ module SHOW (M : SHOW_B) = struct
   (* type "s" imported from M but abstract! *)
   include M
   include SHOW_E(M)
-  (* let show (x:s) : string  = shows x "" *)
+    (* let show (x:s) : string  = shows x "" *)
 end
 
 (* module SHOW_E (S : SHOW_B) = struct *)

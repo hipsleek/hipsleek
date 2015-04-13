@@ -70,6 +70,8 @@ all: byte # decidez.vo
 # gui
 byte: sleek.byte hip.byte # decidez.vo
 
+sh_proc: sh_proc.byte
+
 gbyte: sleek.gbyte hip.gbyte
 
 test: dtest.byte
@@ -90,6 +92,9 @@ xml: xml/xml-light.cma
 xml/xml-light.cma:
 	$(XML)
 
+ppx: ppx
+	@ocamlbuild $(OBB_NGFLAGS) ppx/ex1.byte
+
 parser.cmo:
 	@ocamlbuild $(OBB_NGFLAGS) parser.cmo
 
@@ -106,6 +111,10 @@ sleek.gbyte: xml parser.cmo
 	@ocamlbuild $(OBB_GFLAGS) sleek.byte
 	cp -u _build/sleek.byte sleek
 	cp -u _build/sleek.byte g-sleek
+
+sh_proc.byte: 
+	@ocamlbuild -cflags -annot $(OBB_GFLAGS) sh_proc.byte
+	cp -u _build/sh_proc.byte sh_proc
 
 hip.byte: xml
 	@ocamlbuild $(OBB_FLAGS) main.byte

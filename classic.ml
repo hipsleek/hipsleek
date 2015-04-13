@@ -23,5 +23,5 @@ let heap_entail_rhs_htrue prog es h_ante h_conseq rhs_h_matched_set=
   let pr1 = Cprinter.prtt_string_of_h_formula in
   let pr2 = Cprinter.string_of_entail_state in
   Debug.no_2 "heap_entail_rhs_htrue" pr1 pr1 (pr_quad pr1 pr1 pr2 !CP.print_svl)
-      (fun _ _ -> heap_entail_rhs_htrue_x prog es h_ante h_conseq rhs_h_matched_set)
-      h_ante h_conseq
+    (fun _ _ -> heap_entail_rhs_htrue_x prog es h_ante h_conseq rhs_h_matched_set)
+    h_ante h_conseq

@@ -18,14 +18,14 @@ let rec partition_by_key key_of key_eq ls =
     let ke = key_of e in 
     let same_es, other_es = List.partition (fun e -> key_eq ke (key_of e)) es in
     (ke, e::same_es)::(partition_by_key key_of key_eq other_es)
-    
+
 let rec partition_eq eq ls = 
   match ls with
   | [] -> []
   | e::es -> 
     let eq_es, neq_es = List.partition (eq e) es in
     (e::eq_es)::(partition_eq eq neq_es)
-    
+
 (* Temporal Relation at Return *)
 type ret_trel = {
   ret_ctx: CP.formula;
@@ -40,7 +40,7 @@ let ret_trel_stk: ret_trel Gen.stack = new Gen.stack
 
 let print_ret_trel rel = 
   string_of_trrel_assume (rel.ret_ctx, rel.termr_lhs, rel.termr_rhs)
-  
+
 (* Temporal Relation at Call *)
 type call_trel = {
   trel_id: int;
@@ -63,9 +63,9 @@ let print_call_trel_debug rel =
 
 let print_call_trel rel = 
   string_of_turel_assume (rel.call_ctx, rel.termu_lhs, rel.termu_rhs)
-  
+
 let compare_trel r1 r2 = compare r1.trel_id r2.trel_id
-  
+
 let eq_trel r1 r2 = r1.trel_id == r2.trel_id
 
 let dummy_trel = {
@@ -78,7 +78,7 @@ let dummy_trel = {
   termu_cle = "";
   termu_rhs_args = [];
   termu_pos = no_pos; }
-  
+
 let update_call_trel rel ilhs irhs = 
   { rel with
     termu_lhs = ilhs;  
@@ -110,11 +110,11 @@ let rec pr_tnt_case_spec (spec: tnt_case_spec) =
   match spec with
   | Cases cl ->
     pr_args (Some("V",1)) (Some "A") "case " "{" "}" "" 
-    (
-      fun (c, s) -> wrap_box ("B",0) (pr_op_adhoc 
-        (fun () -> pr_pure_formula c) " -> " )
-        (fun () -> pr_tnt_case_spec s; fmt_string ";")
-    ) cl 
+      (
+        fun (c, s) -> wrap_box ("B",0) (pr_op_adhoc 
+                                          (fun () -> pr_pure_formula c) " -> " )
+            (fun () -> pr_tnt_case_spec s; fmt_string ";")
+      ) cl 
   | Unknown cex -> 
     (* fmt_string "Unk" *) 
     (* fmt_string "requires MayLoop ensures true" *)
@@ -156,12 +156,12 @@ let eq_tnt_case_spec sp1 sp2 =
   | Sol (CP.MayLoop _, _), Unknown _ -> true
   | Sol (ann1, rnk1), Sol (ann2, rnk2) ->
     begin match ann1, ann2 with
-    | CP.Loop _, CP.Loop _ -> true
-    | CP.MayLoop _, CP.MayLoop _ -> true
-    (* | CP.Term, CP.Term ->                          *)
-    (*   (* is_base_rank rnk1 && is_base_rank rnk2 *) *)
-    (*   eq_base_rank rnk1 rnk2                       *)
-    | _ -> false
+      | CP.Loop _, CP.Loop _ -> true
+      | CP.MayLoop _, CP.MayLoop _ -> true
+      (* | CP.Term, CP.Term ->                          *)
+      (*   (* is_base_rank rnk1 && is_base_rank rnk2 *) *)
+      (*   eq_base_rank rnk1 rnk2                       *)
+      | _ -> false
     end
   | _ -> false
 
@@ -188,19 +188,19 @@ let path_of_formula f =
   let bvs = List.concat (List.map (fun f -> opt_to_list (CP.getBVar f)) ls) in
   let bvs = Gen.BList.remove_dups_eq (fun (v1, _) (v2, _) -> CP.eq_spec_var v1 v2) bvs in
   bvs
-  
+
 let eq_path_elem (v1, s1) (v2, s2) =
   (CP.eq_spec_var v1 v2) && (s1 == s2)  
 
- (* p1 and p2 are in the same sequence *)   
+(* p1 and p2 are in the same sequence *)   
 let eq_path p1 p2 =
   Gen.BList.list_setequal_eq eq_path_elem p1 p2
-  
+
 (* p1 is sub-path of p2 *)  
 let is_sub_path p1 p2 = 
   (Gen.BList.subset_eq eq_path_elem p2 p1) &&
   (List.length p1 > List.length p2)
-  
+
 let rec eq_path_formula f1 f2 =
   let p1 = path_of_formula f1 in
   let p2 = path_of_formula f2 in
@@ -219,7 +219,7 @@ let rec and_or_tree_of_path_traces path_traces =
     | [] -> and_or_tree_of_path_traces others
     | grp::[] -> and_tree_of_path_traces grp others
     | _ -> TPar (List.map (fun grp -> and_tree_of_path_traces grp others) eq_path_grps)
-      
+
 and and_tree_of_path_traces same_path_grp other_traces = 
   match same_path_grp with
   | [] -> and_or_tree_of_path_traces other_traces
@@ -228,14 +228,14 @@ and and_tree_of_path_traces same_path_grp other_traces =
     let sgl_path_grp = List.map (fun p -> TSgl p) same_path_grp in
     match sub_path_traces with
     | [] -> begin match sgl_path_grp with
-      | [] -> TSgl []
-      | s::[] -> s
-      | _ -> TSeq sgl_path_grp end
+        | [] -> TSgl []
+        | s::[] -> s
+        | _ -> TSeq sgl_path_grp end
     | _ -> TSeq (sgl_path_grp @ [and_or_tree_of_path_traces sub_path_traces])
 
 let and_or_tree_of_path_traces path_traces =
   let sorted_path_traces = List.sort (fun p1 p2 -> 
-    compare (List.length p1) (List.length p2)) path_traces in
+      compare (List.length p1) (List.length p2)) path_traces in
   and_or_tree_of_path_traces sorted_path_traces
 
 (* Specification-related stuffs *)  
@@ -250,7 +250,7 @@ let is_infer_term sf =
 
 let is_infer_term_scc scc =
   List.exists (fun proc -> is_infer_term (proc.proc_stk_of_static_specs # top)) scc
-  
+
 let add_term_relation_proc prog proc spec = 
   let is_primitive = not (proc.proc_is_main) in
   if is_primitive then spec
@@ -260,28 +260,28 @@ let add_term_relation_proc prog proc spec =
     let imp_spec_vars = CF.collect_important_vars_in_spec true spec in
     let params = imp_spec_vars @ params  in
     let params = List.filter (fun sv -> 
-      match sv with
-      | CP.SpecVar(t, _, _) -> (match t with
-        | Int | Bool -> true
-        | _ -> false)) params in
+        match sv with
+        | CP.SpecVar(t, _, _) -> (match t with
+            | Int | Bool -> true
+            | _ -> false)) params in
     let pos = proc.proc_loc in
-  
+
     let utpre_name = fname ^ "pre" in
     let utpost_name = fname ^ "post" in
-  
+
     let utpre_decl = {
       ut_name = utpre_name;
       ut_params = params;
       ut_is_pre = true;
       ut_pos = pos } in
     let utpost_decl = { utpre_decl with
-      ut_name = utpost_name;
-      ut_is_pre = false; } in
-  
+                        ut_name = utpost_name;
+                        ut_is_pre = false; } in
+
     let () = Debug.ninfo_hprint (add_str "added to UT_decls" (pr_list pr_id)) [utpre_name; utpost_name] no_pos in
     (* let () = ut_decls # push_list [utpre_decl; utpost_decl] in *)
     let () = prog.prog_ut_decls <- ([utpre_decl; utpost_decl] @ prog.prog_ut_decls) in
-  
+
     let uid = {
       CP.tu_id = 0;
       CP.tu_sid = fname;
@@ -293,10 +293,10 @@ let add_term_relation_proc prog proc spec =
       CP.tu_sol = None;
       CP.tu_pos = pos; } in
     CF.norm_struc_with_lexvar is_primitive true (Some uid) spec
-  
+
 let add_term_relation_scc prog scc =
   List.iter (fun proc ->
-    let spec = proc.proc_stk_of_static_specs # top in
-    let new_spec = add_term_relation_proc prog proc spec in
-    proc.proc_stk_of_static_specs # push new_spec) scc
-  
+      let spec = proc.proc_stk_of_static_specs # top in
+      let new_spec = add_term_relation_proc prog proc spec in
+      proc.proc_stk_of_static_specs # push new_spec) scc
+
