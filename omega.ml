@@ -170,13 +170,14 @@ and omega_of_b_formula b =
     "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
     ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
   (* | VarPerm _ -> illegal_format ("Omega.omega_of_exp: VarPerm constraint") *)
-  (* | RelForm _ -> "0=0" *)
-  | RelForm _ -> illegal_format ("Omega.omega_of_exp: RelForm")
+  | RelForm _ -> 
+    if !Globals.oc_weaken_rel_flag then "0=0"
+    else illegal_format ("Omega.omega_of_exp: RelForm")
   | LexVar _ -> illegal_format ("Omega.omega_of_exp: LexVar 3")
   | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
 
 and omega_of_formula_x pr_w pr_s f  =
-  let rec helper f = 
+  let rec helper f =
     match f with
     | BForm ((b,_) as bf,_) ->
       begin
@@ -191,13 +192,13 @@ and omega_of_formula_x pr_w pr_s f  =
       end
     | And (p1, p2, _) -> "(" ^ (helper p1) ^ " & " ^ (helper p2 ) ^ ")"
     | Or (p1, p2,_ , _) -> let () = is_complex_form:= true in	"(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")"
-    | Not (p,_ , _) ->       " (not (" ^ (omega_of_formula_x pr_s pr_w p) ^ ")) "	
+    | Not (p,_ , _) ->       " (not (" ^ (omega_of_formula_x pr_s pr_w p) ^ ")) "
     | Forall (sv, p,_ , _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
     | Exists (sv, p,_ , _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
-  in 
+  in
   try
     helper f
-  with _ as e -> 
+  with _ as e ->
     let s = Printexc.to_string e in
     let () = print_string_quiet ("Omega Error Exp:"^s^"\n Formula:"^(!print_formula f)^"\n") in
     (* let () = x_tinfo_hp (add_str "Omega Error format:" !print_formula) f in *)
@@ -206,7 +207,7 @@ and omega_of_formula_x pr_w pr_s f  =
 
 let omega_of_formula i pr_w pr_s f  =
   let () = set_prover_type () in
-  let pr = !print_formula in 
+  let pr = !print_formula in
   (*let () = print_string ("source:"^(string_of_int i)^": "^(pr f)^"\n"); flush_all in*)
   Debug.no_1_num i "omega_of_formula" 
     pr pr_id (fun _ -> omega_of_formula_x pr_w pr_s f) f

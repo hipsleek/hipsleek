@@ -1,0 +1,17 @@
+P2:={[a___5___] -> [PRIa___5___,res] -> []: PRIa___5___=a___5___ && PRIa___5___=a___5___ && (PRIa=a && res=a___5___+6 && PRIa___5___=a___5___ &&
+5<=a___5___ ||  (exists (fc_1255: (exists (a_1252___5___: (exists (fc_a_1254:P2(fc_a_1254,fc_1255,res) && fc_a_1254=a_1252___5___))  && a_1252___5___=a___5___+1))  &&
+fc_1255=PRIa___5___))  && a___5___<=4)
+};
+bottomupgen([P2], [2], SimHeur);
+
+         When it is put in as the input of fixcalc, its result is
+           (PRIa___5___ >= 5 && PRIa___5___ = a___5___ && a = PRIa && PRIa___5___ + 6 = res), in which it seems that in the input, the exist quantified part is not
+having any effect in the fix point calculator. Intuitively the input is correct though the nested exists quantifiers look very complicated.
+
+         And when I degenerate it into a normal variable formula, for example, 
+
+        P:={[a] -> [PRIa,res] -> []: (((res=PRIa+6 && a=PRIa) && 5<=PRIa) || ( (exists (fc_a_1199:(P(fc_a_1199,PRIa,res) && fc_a_1199=1+a)))  && a<=4))
+        }; 
+        bottomupgen([P], [2], SimHeur);
+
+ 

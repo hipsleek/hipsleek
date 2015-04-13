@@ -2851,10 +2851,10 @@ let generate_error_constraints_x prog es lhs rhs_hf lhs_hps es_cond_path pos=
     None
   else
     (* to transform heap to pure formula, use baga *)
-    let old_baga_flag = !baga_xpure in
-    let () = baga_xpure := true in
+    let old_baga_flag = !use_baga (* !baga_xpure *) in
+    let () = use_baga (* baga_xpure *) := true in
     let prhs_guard,_,_ = x_add Cvutil.xpure_heap_symbolic 10 prog rhs_hf (Mcpure.mkMTrue pos) 0 in
-    let () = baga_xpure := old_baga_flag in
+    let () = use_baga (* baga_xpure *) := old_baga_flag in
     let prhs_guard1 =  MCP.pure_of_mix prhs_guard in
     (* tranform pointers: x>0, x=1 -> x!=null *)
     let prhs_guard2 = Cputil.hloc_enum_to_symb prhs_guard1 in
@@ -2862,9 +2862,9 @@ let generate_error_constraints_x prog es lhs rhs_hf lhs_hps es_cond_path pos=
       (******************************************)
       let neg_prhs0 = (CP.neg_eq_neq prhs_guard2) in
       (* contradict with LHS? *)
-      let () = baga_xpure := true in
-      let lhs_p,_,_=(x_add Cvutil.xpure_symbolic 10 prog es.es_formula) in
-      let () = baga_xpure := old_baga_flag in
+      let () = use_baga (* baga_xpure *) := true in
+      let lhs_p,_,_ = (x_add Cvutil.xpure_symbolic 10 prog es.es_formula) in
+      let () = use_baga (* baga_xpure *) := old_baga_flag in
       let lhs_extra = CP.mkAnd (MCP.pure_of_mix lhs_p) neg_prhs0 no_pos in
       if not( TP.is_sat_raw (MCP.mix_of_pure lhs_extra)) then None else
         (******************************************)
