@@ -2697,20 +2697,20 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
       )lst vs in
     let l = List.map (fun (l,_,f)-> (l,f)) lst1 in
     let () = x_ninfo_hp (add_str "l0" (pr_list (pr_pair Label_only.LOne.string_of !print_formula))) l no_pos in
-    let l = if !Globals.gen_baga_inv
-      then
-        List.map (fun ((a,ls) as lbl,f) ->
-            let new_lbl =
-              if string_compare a "" then
-                match ls with
-                | [(x,ann)] -> if ann = Label_only.LA_Both then (x,[]) else lbl
-                | _ -> lbl
-              else lbl
-            in
-            (new_lbl,f)) l
-      else
-        l
-    in
+    (* let l = if !Globals.use_baga (\* !Globals.gen_baga_inv *\) *)
+    (*   then *)
+    (*     List.map (fun ((a,ls) as lbl,f) -> *)
+    (*         let new_lbl = *)
+    (*           if string_compare a "" then *)
+    (*             match ls with *)
+    (*             | [(x,ann)] -> if ann = Label_only.LA_Both then (x,[]) else lbl *)
+    (*             | _ -> lbl *)
+    (*           else lbl *)
+    (*         in *)
+    (*         (new_lbl,f)) l *)
+    (*   else *)
+    (*     l *)
+    (* in *)
     let () = x_ninfo_hp (add_str "l1" (pr_list (pr_pair Label_only.LOne.string_of !print_formula))) l no_pos in
     AndList (Label_Pure.norm l)
   | Or (f1,f2,lbl,pos) ->

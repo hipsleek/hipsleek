@@ -1567,7 +1567,7 @@ let use_baga = ref false
 let prove_invalid = ref false
 let gen_baga_inv_threshold = 7 (* number of preds <=6, set gen_baga_inv = false*)
 let do_under_baga_approx = ref false (* flag to choose under_baga *)
-let baga_xpure = ref true (* change to true later *)
+(* let baga_xpure = ref true (\* change to true later *\) *)
 let baga_imm = ref false                 (* wen on true, ignore @L nodes while building baga --  this is forced into true when computing baga for vdef*)
 
 (* get counter example *)
