@@ -685,7 +685,7 @@ let consistent_formula f : bool =
 let must_consistent_formula (s:string) (l:formula) : unit =
   if !consistency_checking then
     let b = consistent_formula l in
-    if b then  print_endline ("\nSuccessfully Tested Consistency at "^s)
+    if b then  print_endline_quiet ("\nSuccessfully Tested Consistency at "^s)
     else report_error no_pos ("ERROR at "^s^": formula inconsistent")
 
 let extr_formula_base e = match e with
@@ -10936,7 +10936,7 @@ let add_infer_pre f_ctx ctx =
   if (ch!=[]) then
     if(!Globals.pa) then add_infer_heap_to_ctx ch ctx
     else 
-      let () = print_endline "ERROR : non-pure heap inferred for false" in
+      let () = print_endline_quiet "ERROR : non-pure heap inferred for false" in
       report_error no_pos ("add_infer_pre: non-pure inferred heap :"^(!print_context f_ctx))
   else
     let cp = collect_pre_pure f_ctx in

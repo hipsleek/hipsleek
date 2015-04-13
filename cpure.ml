@@ -4581,12 +4581,10 @@ and find_bound v f0 =
   | BForm (bf,_) -> find_bound_b_formula v bf
   | _ -> None, None
 
-(*
-  and find_bound_b_formula_redlog v f0 =
-  let cmd = "rlopt({" ^ (Redlog.rl_of_b_formula f0) ^ "}, " ^ (Redlog.rl_of_spec_var v) ^ ");\n" in
-  let res = Redlog.send_and_receive cmd in
-  print_endline res
-*)
+  (* and find_bound_b_formula_redlog v f0 = *)
+  (* let cmd = "rlopt({" ^ (Redlog.rl_of_b_formula f0) ^ "}, " ^ (Redlog.rl_of_spec_var v) ^ ");\n" in *)
+  (* let res = Redlog.send_and_receive cmd in *)
+  (* print_endline res *)
 
 and find_bound_b_formula v f0 =
   let val_for_max e included =

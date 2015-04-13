@@ -83,22 +83,21 @@ let report_warning e =
   )
 
 exception Malformed_barrier of string
-(*
-let process_exct e=
-  begin
-      (match !proving_loc with
-        | Some p ->
-            Printf.printf "\nLast Proving Location: File \"%s\", line %d, col %d "
-                p.start_pos.Lexing.pos_fname
-                p.start_pos.Lexing.pos_lnum
-                (p.start_pos.Lexing.pos_cnum - p.start_pos.Lexing.pos_bol)
-        | None -> ());
-      (match e with
-        | Theorem_prover (prover_name, msg) ->
-            Printf.printf "\nException:\"%s\",\n message: \"%s\" \n"
-                ("theorem prover: " ^ prover_name) msg
-        | _ -> print_endline (Printexc.to_string e)
-      );
-      dummy_exception() ;
-  end
-*)
+
+(* let process_exct e= *)
+(*   begin *)
+(*       (match !proving_loc with *)
+(*         | Some p -> *)
+(*             Printf.printf "\nLast Proving Location: File \"%s\", line %d, col %d " *)
+(*                 p.start_pos.Lexing.pos_fname *)
+(*                 p.start_pos.Lexing.pos_lnum *)
+(*                 (p.start_pos.Lexing.pos_cnum - p.start_pos.Lexing.pos_bol) *)
+(*         | None -> ()); *)
+(*       (match e with *)
+(*         | Theorem_prover (prover_name, msg) -> *)
+(*             Printf.printf "\nException:\"%s\",\n message: \"%s\" \n" *)
+(*                 ("theorem prover: " ^ prover_name) msg *)
+(*         | _ -> print_endline (Printexc.to_string e) *)
+(*       ); *)
+(*       dummy_exception() ; *)
+(*   end *)
