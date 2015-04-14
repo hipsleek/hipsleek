@@ -1,0 +1,11 @@
+#heap_entail_struc_list_failesc_context_init
+#heap_entail_struc_list_failesc_context
+#heap_entail_struc_failesc_context
+#heap_entail_one_context_struc
+#heap_entail_empty_rhs_heap
+update_with_td_fp
+pre_rel_fixpoint
+strengthen_preoblg
+check_defn
+pre_calculate
+#simplify_relation
