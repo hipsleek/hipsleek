@@ -1280,11 +1280,17 @@ struct
 
 end
 
+
 module DebugEmpty  =
 struct
+
   let z_debug_file = ref ""
   (* let z_debug_regexp = ref None *)
-  let z_debug_flag = ref false
+  (* let z_debug_flag = ref false *)
+  (* let z_debug_regexp = ref None *)
+  let mk_debug_arg s =
+    let re = Str.regexp s in
+    z_debug_arg := Some re
 
   let read_main() = ()
   let no_1 s p1 p0 f = f
