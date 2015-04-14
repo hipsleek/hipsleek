@@ -356,6 +356,15 @@ let filter_disj (p:CP.formula) (t:CP.formula list) =
 let pre_calculate_x fp_func input_fml pre_vars proc_spec
     pre pure_oblg_to_check (rel_posts,pre_rel)
     pre_fmls pre_rel_vars pre_rel_df reloblgs=
+
+  let exist_pre_cal rec_inv quan_vars=
+    let fml = rec_inv in
+    let fml = CP.mkExists quan_vars fml None no_pos in
+    let pre_rec = x_add_1 TP.simplify fml in
+    let () = Debug.info_hprint (add_str "pre_rec" !CP.print_formula) pre_rec no_pos in
+    pre_rec
+  in
+
   let pr = Cprinter.string_of_pure_formula in
   let constTrue = CP.mkTrue no_pos in
 
@@ -367,7 +376,7 @@ let pre_calculate_x fp_func input_fml pre_vars proc_spec
     let args = List.map (fun a -> (a,CP.add_prefix_to_spec_var "REC" a)) pre_rel_vars in
     let to_check = CP.subst args pure_oblg_to_check in
     let () = Debug.info_hprint (add_str "to check" !CP.print_formula) to_check no_pos in
-    let () = Debug.info_hprint (add_str "to check" !CP.print_formula) to_check no_pos in
+    let rec_inv_bk = rec_inv in
     let fml = CP.mkOr (CP.mkNot_s rec_inv) to_check None no_pos in
     let quan_vars = CP.diff_svl (CP.fv fml) pre_rel_vars in
     let fml = CP.mkForall quan_vars fml None no_pos in
@@ -397,9 +406,17 @@ let pre_calculate_x fp_func input_fml pre_vars proc_spec
     let () = Debug.ninfo_hprint (add_str "final_pre4b" !CP.print_formula) final_pre4b no_pos in
     (* let () = x_dinfo_hp (add_str "final_pre" !CP.print_formula) final_pre no_pos in *)
     let checkpoint2 = check_defn pre_rel final_pre pre_rel_df in
+    if CP.isConstTrue final_pre then
+      let pre_final = exist_pre_cal rec_inv_bk quan_vars in
+      List.map (fun (rel,post) -> (rel,post,pre_rel,pre_final  (* constTrue *))) rel_posts 
+    else
     if checkpoint2 then
       List.map (fun (rel,post) -> (rel,post,pre_rel,final_pre)) rel_posts
-    else List.map (fun (rel,post) -> (rel,post,pre_rel (* constTrue *),constTrue)) rel_posts (* need to recheck, why constTrue *)
+    else
+      (* if exist *)
+      (* to add new relation for exist vars --> abduction step *)
+      let pre_final = exist_pre_cal rec_inv_bk quan_vars in
+      List.map (fun (rel,post) -> (rel,post,pre_rel,pre_final  (* constTrue *))) rel_posts (* need to recheck, why constTrue *)
   | [] -> let exist_post = List.exists (fun (_,post) -> not (CP.isConstTrue post)) rel_posts in
     if rel_posts != [] && exist_post then
       List.map (fun (rel,post) -> (rel,post,constTrue,constTrue)) rel_posts
