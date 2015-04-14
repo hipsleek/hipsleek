@@ -121,9 +121,21 @@ omega_of_formula#8@225 EXIT ExceptionGlobals.Illegal_Prover_Format("Omega.omega_
 Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: RelForm")
  Formula: exists(nondet_int__:exists(tmp_1608:nondet_int__(tmp_1608)) & 
 nondet_int__(0))
-
-
 ==================================================================
+Below is examples with exceptions:
+
+Unexpected exception : Parsing.Parse_error
+termination-crafted-lit/ChenFlurMukhopadhyay-SAS2012-Ex2.05_false-termination
+
+malfunction: inner or has not been converted to a CtxOr!
+termination-memory-alloca/c.01_assume-alloca_true-termination
+    termination-memory-alloca/c.01-no-inv-alloca_true-termination
+    termination-memory-alloca/gcd1-alloca_true-termination
+
+unsound
+    termination-numeric/rec_counter1_true-termination
+    termination-numeric/rec_counter3_true-termination
+
 ==================================================================
 ==================================================================
 ==================================================================

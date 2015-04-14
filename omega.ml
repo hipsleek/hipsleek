@@ -900,8 +900,9 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
               begin
                 let exs = Printexc.to_string exc in
                 let () = set_proof_result ("EXCEPTION :"^exs) in
-                Printf.eprintf "Unexpected exception : %s" exs;
-                restart ("Unexpected exception when checking #simplify\n ");
+                (* WN : 2 statements below disabled for TermInfer *)
+                (* Printf.eprintf "Unexpected exception : %s" exs; *) 
+                (* restart ("Unexpected exception when checking #simplify "^exs^"\n "); *)  
                 (* Cpure.subst ss2 *) pe
               end
           in
