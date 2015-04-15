@@ -3738,7 +3738,6 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
     (*   else *)
     let () = Debug.ninfo_hprint (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
     let result, prf = x_add heap_entail_after_sat_struc 1 prog is_folding has_post ctx conseq tid delayed_f join_id pos pid []  in
-    let () = Debug.info_hprint (add_str "to add disj constraint for post proving here" pr_id) "todo" no_pos in
     let inf_rels = Infer.norm_rel_disj result in
     if inf_rels != [] then
       begin

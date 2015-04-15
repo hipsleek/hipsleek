@@ -1850,10 +1850,83 @@ let detect_lhs_rhs_contra2 ivs lhs_c rhs_mix pos =
 
 
 let norm_rel_disj_x rs=
+  (**********INTERNAL************)
+  let rec lookup_same_rhs_x ((_,_,rhs) as a) rest same_res rems=
+    match rest with
+      | [] -> (same_res, rems)
+      | xs::ss -> begin
+            let same_rhs,xs_rest = List.partition (fun (_,_,rhs1) ->
+                let b = CP.equalFormula rhs rhs1 in
+                b
+            ) xs in
+            let fst_same_rhs, tl_same_rhs = match same_rhs with
+              | [] -> [],[]
+              | x::ys -> [x],ys
+            in
+            lookup_same_rhs_x a ss (same_res@fst_same_rhs) (rems@[(xs_rest@tl_same_rhs)])
+        end
+  in
+  let lookup_same_rhs a rest same_res rems=
+    let pr1 = print_lhs_rhs in
+    let pr2 = pr_list_ln pr1 in
+    let pr3 = (pr_list_ln pr2) in
+    Debug.no_2 "norm_rel_disj.lookup_same_rhs" pr1 pr3 (pr_pair pr2 pr3)
+        (fun _ _ -> lookup_same_rhs_x a rest same_res rems)
+        a rest
+  in
+  let rec partition_same lhs_ps rest_lhs_ps res_same rest=
+    match lhs_ps with
+      | [] -> let rest_lhs_ps1 = if rest=[] then rest_lhs_ps else
+          rest::rest_lhs_ps
+        in
+        (res_same, rest_lhs_ps1)
+      | p::ps ->
+            let same_ls,rest_lhs_ps1 = List.fold_left (fun (r1,r2) ps ->
+                let same_ps, diff_ps = List.partition (fun p1 ->
+                    let b = CP.equalFormula p p1 in
+                    b
+                ) ps in
+            (r1@[same_ps], r2@[diff_ps])
+            ) ([],[]) rest_lhs_ps in
+            let n_res_name, n_rest = if List.for_all (fun ps -> ps != []) same_ls
+            then (res_same@[p]), rest
+            else (res_same,rest@[p])
+            in
+            partition_same ps rest_lhs_ps1 n_res_name n_rest
+  in
+  let comb_disj (rcat,lhs,rhs) x_rels=
+    let lhs_ps = CP.list_of_conjs lhs in
+    let rest_lhs_ps = List.map (fun (_,lhs,_) -> CP.list_of_conjs lhs) x_rels in
+    let same_ps, diff_ps_ls = partition_same lhs_ps rest_lhs_ps [] [] in
+    let same_p = CP.conj_of_list same_ps no_pos in
+    let diff_ps = List.map (fun ps -> CP.conj_of_list ps no_pos) diff_ps_ls in
+    let cmb_p = match diff_ps with
+      | [] -> (CP.mkTrue no_pos)
+      | fst_p::tl_ps -> List.fold_left (fun acc p -> CP.mkOr acc p None no_pos) fst_p tl_ps in
+    (rcat,CP.mkAnd same_p cmb_p no_pos ,rhs)
+  in
+  let rec collect_rel_Octx ctx res=
+    match ctx with
+      | Ctx c -> res@[(collect_rel ctx)]
+      | OCtx (c1,c2) -> let res1 = (collect_rel_Octx c1 res) in
+        (collect_rel_Octx c2 res1)
+  in
+  (**********END INTERNAL*********)
   match rs with
-    | SuccCtx cl -> let rels=  List.map (collect_rel) cl in
-      (*for each at the begin, find all same rhs, mk or*)
-      List.concat rels
+    | SuccCtx cl -> begin let rels= List.map (fun ctx -> collect_rel_Octx ctx []) cl in
+      match rels with
+        | [] -> []
+        | [xs::rest] -> begin
+            match xs with
+              | [] -> List.concat rest
+              | x::xxs ->
+                    (*for each at the begin, find all same rhs, mk or*)
+                    let x_rels, rest_rems = lookup_same_rhs x rest [] [] in
+                    let x_cmb = comb_disj x x_rels in
+                    x_cmb::xxs@(List.concat rest_rems)
+          end
+        | _ -> List.concat (List.concat rels)
+      end
     | FailCtx _ -> []
 
 let norm_rel_disj rs=
