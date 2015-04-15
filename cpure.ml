@@ -2509,7 +2509,7 @@ and mkStupid_Or_x f1 f2 lbl pos=
           let l2 = List.assoc branch l2 in
           (branch, mkOr l1 l2 lbl pos)
         with Not_found -> (branch, mkTrue pos)
-      with Not_found -> (branch, mkTrue pos )
+        with Not_found -> (branch, mkTrue pos )
     in
     Label_Pure.norm  (List.map map_fun branches) in
   if (isConstFalse f1) then f2
@@ -8166,8 +8166,8 @@ module ArithNormalizer = struct
       | Add _ | Subtract _ -> true
       | _ -> false
     in let wrap e =
-         if need_parentheses e then "(" ^ (string_of_exp e) ^ ")"
-         else (string_of_exp e)
+      if need_parentheses e then "(" ^ (string_of_exp e) ^ ")"
+      else (string_of_exp e)
     in
     match e0 with
     | Null _ -> "null"

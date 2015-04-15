@@ -368,12 +368,12 @@ and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
     then
       (let rec append_no_duplicates (l1 : (ident * primed) list)
           (l2 : (ident * primed) list) : (ident * primed) list =
-         match l1 with
-         | h :: rest ->
-           if List.mem h l2
-           then append_no_duplicates rest l2
-           else h :: (append_no_duplicates rest l2)
-         | [] -> l2
+        match l1 with
+        | h :: rest ->
+          if List.mem h l2
+          then append_no_duplicates rest l2
+          else h :: (append_no_duplicates rest l2)
+        | [] -> l2
        in
        IF.Exists
          {
@@ -1697,15 +1697,15 @@ and add_pre_to_cprog_one cprog c =
 
 and add_pre_to_cprog cprog = 
   { cprog with C.new_proc_decls = C.proc_decls_map (fun c -> 
-        (* let ns = add_pre cprog c.C.proc_static_specs in *)
-        (* (\*to handle @C. should handle copy on prim types?*\) *)
-        (* let ns_caller = if c.C.proc_by_copy_params = [] then ns else *)
-        (*   trans_copy_spec_4caller c.C.proc_by_copy_params ns *)
-        (* in *)
-        (* let () = c.C.proc_stk_of_static_specs # push ns_caller in *)
-        (* c *)
-        add_pre_to_cprog_one cprog c
-      ) cprog.C.new_proc_decls; }   
+       (* let ns = add_pre cprog c.C.proc_static_specs in *)
+       (* (\*to handle @C. should handle copy on prim types?*\) *)
+       (* let ns_caller = if c.C.proc_by_copy_params = [] then ns else *)
+       (*   trans_copy_spec_4caller c.C.proc_by_copy_params ns *)
+       (* in *)
+       (* let () = c.C.proc_stk_of_static_specs # push ns_caller in *)
+       (* c *)
+       add_pre_to_cprog_one cprog c
+     ) cprog.C.new_proc_decls; }   
 
 and sat_warnings cprog = 
   let sat_warnings_op () =
@@ -2134,29 +2134,29 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       (* let () = print_endline (string_of_bool (not(CF.isFailCtx baga_rs2))) in *)
       let () =
         if not(CF.isFailCtx rs) && not(CF.isFailCtx baga_rs1) && not(CF.isFailCtx baga_rs2) &&
-          not(over_fail) && not(under_fail) then
-            begin
-              let () = match under_f with
-                | None -> ()
-                | _ -> x_binfo_pp ("View defn for " ^ vn ^ " has precise invariant\n") no_pos
-              in
-              let pf = pure_of_mix vdef.C.view_user_inv in
-              let (disj_form,disj_f) = CP.split_disjunctions_deep_sp pf in
-              let do_not_recompute_flag = disj_form (* (List.length disj_f>1) *) && not(!Globals.disj_compute_flag) in
-              if n>0 then helper n do_not_recompute_flag;
-              if vdef.C.view_xpure_flag then
-                begin
-                  let pr = Cprinter.string_of_mix_formula in
-                  let sf = remove_disj_clauses vdef.C.view_user_inv in
-                  (* Debug.info_hprint (add_str "disj_form" string_of_bool) disj_form no_pos; *)
-                  if disj_form && !Globals.compute_xpure_0 then
-                    (vdef.C.view_user_inv <- sf; vdef.C.view_xpure_flag <- false);
-                  x_tinfo_zp (lazy (("Using a simpler inv for xpure0 of "^vdef.C.view_name))) pos;
-                  x_tinfo_hp (add_str "inv(xpure0)" pr) vdef.C.view_user_inv pos;
-                  x_tinfo_hp (add_str "inv_lock" (pr_option Cprinter.string_of_formula)) vdef.C.view_inv_lock pos;
-                  x_tinfo_hp (add_str "inv(xpure1)" pr) vdef.C.view_x_formula pos
-                end
-            end
+           not(over_fail) && not(under_fail) then
+          begin
+            let () = match under_f with
+              | None -> ()
+              | _ -> x_binfo_pp ("View defn for " ^ vn ^ " has precise invariant\n") no_pos
+            in
+            let pf = pure_of_mix vdef.C.view_user_inv in
+            let (disj_form,disj_f) = CP.split_disjunctions_deep_sp pf in
+            let do_not_recompute_flag = disj_form (* (List.length disj_f>1) *) && not(!Globals.disj_compute_flag) in
+            if n>0 then helper n do_not_recompute_flag;
+            if vdef.C.view_xpure_flag then
+              begin
+                let pr = Cprinter.string_of_mix_formula in
+                let sf = remove_disj_clauses vdef.C.view_user_inv in
+                (* Debug.info_hprint (add_str "disj_form" string_of_bool) disj_form no_pos; *)
+                if disj_form && !Globals.compute_xpure_0 then
+                  (vdef.C.view_user_inv <- sf; vdef.C.view_xpure_flag <- false);
+                x_tinfo_zp (lazy (("Using a simpler inv for xpure0 of "^vdef.C.view_name))) pos;
+                x_tinfo_hp (add_str "inv(xpure0)" pr) vdef.C.view_user_inv pos;
+                x_tinfo_hp (add_str "inv_lock" (pr_option Cprinter.string_of_formula)) vdef.C.view_inv_lock pos;
+                x_tinfo_hp (add_str "inv(xpure1)" pr) vdef.C.view_x_formula pos
+              end
+          end
         else
           let s1 = if over_fail then "-- incorrect over-approx inv : "^(pr_d over_f)^"\n" else "" in
           let s2 = if under_fail then "-- incorrect under-approx inv : "^(pr_d under_f)^"\n" else "" in
@@ -2669,7 +2669,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                 let is_precise_num = if Tpdispatcher.imply_raw fixc body then
                     let () = x_binfo_pp ("Predicate " ^ vd.Cast.view_name ^ " has precise invariant\n") no_pos in
                     (true,fixc)
-                else
+                  else
                     let idx = CP.mk_typed_spec_var Int "idx" in
                     let alter_num_inv =
                       let f1 = CF.project_body_num vd.Cast.view_un_struc_formula (CP.mkFalse no_pos) vd.Cast.view_vars in
@@ -4175,11 +4175,11 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
             | CF.ViewNode vn -> vn.CF.h_formula_view_name
             | CF.DataNode dn -> dn.CF.h_formula_data_name
             | _ -> let ()= let b = 
-                             match coer.I.coercion_kind with
-                             | RLEM -> true | _ -> false in 
-                     if b
-                     then () 
-                     else print_string ("[astimp] Warning: head node of ramification is neither a view node nor a data node "^(Cprinter.string_of_h_formula head)^" \n") in "")
+              match coer.I.coercion_kind with
+              | RLEM -> true | _ -> false in 
+              if b
+              then () 
+              else print_string ("[astimp] Warning: head node of ramification is neither a view node nor a data node "^(Cprinter.string_of_h_formula head)^" \n") in "")
         | _ -> 
           let () = print_string "[astsimp] Warning: lhs head node of a coercion is neither a view node nor a data node\n" in 
           ""
@@ -4818,7 +4818,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             if flag1 && flag2 then get_binop_call b_op
             else get_binop_call_safe_int b_op
            )
-            else get_binop_call b_op in
+           else get_binop_call b_op in
          let new_e = I.CallNRecv {
              I.exp_call_nrecv_method = b_call;
              I.exp_call_nrecv_lock = None;
@@ -4847,14 +4847,14 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
               else
                 (E.push_scope ();
                  (let todo_unk = List.map2 
-                      (fun vi ti -> let alpha = E.alpha_name vi in
-                        E.add vi (E.VarInfo{
-                            E.var_name = vi;
-                            E.var_alpha = alpha;
-                            E.var_type = ti;})) 
-                      vs
-                      (* An Hoa [22/08/2011] : Convert hard code of data fields typ extraction into *)
-                      (List.map I.get_field_typ ddef.I.data_fields) in
+                     (fun vi ti -> let alpha = E.alpha_name vi in
+                       E.add vi (E.VarInfo{
+                           E.var_name = vi;
+                           E.var_alpha = alpha;
+                           E.var_type = ti;})) 
+                     vs
+                     (* An Hoa [22/08/2011] : Convert hard code of data fields typ extraction into *)
+                     (List.map I.get_field_typ ddef.I.data_fields) in
                   let vs_types = List.map (fun fld -> trans_type prog (I.get_field_typ fld) (I.get_field_pos fld)) ddef.I.data_fields in
                   let vt = trans_type prog vi.E.var_type pos in
                   let (ce, te) = helper e in
@@ -5050,9 +5050,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
            with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = "trans_exp :: case CallNRecv :: forked procedure " ^ (mingled_forked_mn ^ " is not found");})
         (*======== <<<<FORK ==========*)
       else if (mn=Globals.init_name) 
-              || (mn=Globals.finalize_name) 
-              || (mn=Globals.acquire_name)
-              || (mn=Globals.release_name) then
+           || (mn=Globals.finalize_name) 
+           || (mn=Globals.acquire_name)
+           || (mn=Globals.release_name) then
         (*=====================================*)
         (*========== INIT/FINALIZE >>>=========*)
         (*=====================================*)
@@ -9515,9 +9515,9 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
       let lr = hull_invs v_l lr in
       (*let () = print_string ("after hull: "^(String.concat " - " (List.map Cprinter.string_of_pure_formula lr))^"\n") in*)
       let lr = let rec r f = match f with
-          | CP.BForm (l, _) -> [l]
-          | CP.And (f1,f2,_) -> (r f1)@(r f2)
-          | _ -> [] in 
+        | CP.BForm (l, _) -> [l]
+        | CP.And (f1,f2,_) -> (r f1)@(r f2)
+        | _ -> [] in 
         List.concat (List.map r lr) in  
       to_be_added @ (Gen.BList.remove_dups_eq CP.eq_b_formula_no_aset lr) in      
     let l = List.length pure_list in
@@ -9997,8 +9997,8 @@ and irf_traverse_proc (cp: C.prog_decl) (proc: C.proc_decl) (scc: C.IG.V.t list)
       let body, cl = irf_traverse_exp cp b scc in
       Some body, cl
   in let is_rec =
-       if (List.length scc) > 1 then true (* Mutual recursive function *)
-       else List.exists (fun mn -> mn = proc.C.proc_name) call_list
+    if (List.length scc) > 1 then true (* Mutual recursive function *)
+    else List.exists (fun mn -> mn = proc.C.proc_name) call_list
   in { proc with
        C.proc_body = marked_rec_body;
        C.proc_is_recursive = is_rec }
@@ -10393,8 +10393,8 @@ and trans_bdecl_x prog bd =
   ) in
   let (n_tl,l) = aux2 n_tl bd.I.barrier_tr_list in
   let bdef = let fct a l = match l with 
-      | CF.EList l -> a@l 
-      | _ -> (empty_spec_label_def, l)::a in
+    | CF.EList l -> a@l 
+    | _ -> (empty_spec_label_def, l)::a in
     CF.mkEList_no_flatten (List.fold_left (fun a (_,_,l)-> List.fold_left fct a l) [] l) in
   { C.barrier_thc = bd.I.barrier_thc;
     C.barrier_name = bd.I.barrier_name;

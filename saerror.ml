@@ -127,10 +127,10 @@ let partition_constrs_4_paths link_hpargs_w_path constrs0 prog proc_name =
   (* let todo_unk = List.map (fun (_, cl) -> let () = print_endline "call list: " in List.map (fun cl -> print_endline (Cprinter.string_of_exp (Cast.SCall cl))) cl) cpl in *)
   (* let todo_unk = List.map (fun (il, _) -> let () = print_endline "il: " in List.map (fun i -> print_string (string_of_int i)) il) link_hpargs_w_path in *)
   let a = List.map (fun (cps, _) -> let filted_hprel = 
-                                      List.filter (fun hprel -> 
-                                          let cp_hprel = string_of_cond_path hprel.Cformula.hprel_path in
-                                          List.fold_left (fun b hprel1 -> b or (contains (string_of_cond_path hprel1) cp_hprel)) false cps
-                                        ) constrs0 in
+                     List.filter (fun hprel -> 
+                         let cp_hprel = string_of_cond_path hprel.Cformula.hprel_path in
+                         List.fold_left (fun b hprel1 -> b or (contains (string_of_cond_path hprel1) cp_hprel)) false cps
+                       ) constrs0 in
                      (List.hd cps, [], filted_hprel)) cpl in
   let () = print_endline_quiet "\n*************************************" in
   let todo_unk = List.map (fun (_, _, hprel_list) -> let () = print_endline_quiet "hprel group:" in List.map (fun hprel -> print_endline (Cprinter.string_of_hprel_short hprel)) hprel_list) a in

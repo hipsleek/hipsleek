@@ -263,8 +263,8 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
       | IConst _ ->
         compute_fo_exp e2 order var_map
       | _ -> let rr = match e2 with
-          | IConst _ -> compute_fo_exp e1 order var_map
-          | _ -> failwith "[monaset.ml]: nonlinear arithmetic is not suportted."
+        | IConst _ -> compute_fo_exp e1 order var_map
+        | _ -> failwith "[monaset.ml]: nonlinear arithmetic is not suportted."
         in rr
     in r
   | Div (e1, e2, _) -> failwith "[setmona.ml]: divide is not suported."

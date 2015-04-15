@@ -2230,8 +2230,8 @@ let merge_alias_nodes_h_formula_helper prog p lst emap quantif xpure unfold_fun 
       let updated_head, updated_tail, eqs_lst, subs_lst, struc_lst = merge_list_w_node h t emap prog quantif unfold_fun qvars in
       let (fixpoint, emap) = List.fold_left 
           ( fun (fixpoint,emap) (a,b) -> 
-              if CP.EMapSV.is_equiv emap a b then (fixpoint&&true,emap)
-              else (fixpoint&&false, CP.EMapSV.add_equiv emap a b) 
+             if CP.EMapSV.is_equiv emap a b then (fixpoint&&true,emap)
+             else (fixpoint&&false, CP.EMapSV.add_equiv emap a b) 
           ) (true, emap) eqs_lst in
       let fixpoint = fixpoint && (is_empty subs_lst) in
       let merged_tail, eqs_lst_tail, subs_lst_tail, fixpoint_tail, struc_tail = helper updated_tail emap  in
