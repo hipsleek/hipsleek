@@ -601,19 +601,21 @@ let prover_process = ref {
   }
 
 
-let smtsolver_path = if !compete_mode then ref "./z3" (* "./z3-4.3.2" *) else ref (* "z3-4.3.2" *) "z3"
+(* let smtsolver_path = if !compete_mode then ref "./z3" (\* "./z3-4.3.2" *\) else ref (\* "z3-4.3.2" *\) "z3" *)
+(* let local_oc = "./z3" (\* "./z3-4.3.2" *\) *)
+(* let global_oc = "z3" (\* "/usr/bin/z3" *\) (\* "/usr/bin/z3-4.3.2" *\) *)
+(* let smtsolver_path = if !compete_mode then ref "./z3-4.3.2" else ref "z3-4.3.2" (\* "z3" *\) *)
 
-
-let local_oc = "./z3" (* "./z3-4.3.2" *)
-let global_oc = "z3" (* "/usr/bin/z3" *) (* "/usr/bin/z3-4.3.2" *)
+let local_oc = "./z3-4.3.2"
+let global_oc = "/usr/bin/z3-4.3.2"
 
 let smtsolver_path = 
   if (Sys.file_exists local_oc) then ref local_oc
-  else if true (* (Sys.file_exists global_oc) *)  then ref global_oc
-  else 
-    begin
-      print_endline_quiet ("ERROR : "^global_oc^" cannot be found!!"); ref (global_oc^"_cannot_be_found":string)
-    end
+  else if (Sys.file_exists global_oc)  then ref global_oc
+  else ref "z3"
+    (* begin *)
+    (*   print_endline_quiet ("ERROR : "^global_oc^" cannot be found!!"); ref (global_oc^"_cannot_be_found":string) *)
+    (* end *)
 
 (***********)
 let test_number = ref 0
@@ -927,7 +929,7 @@ let process_stdout_print ante conseq input output res =
         flush stdout;
       );
       if (!(outconfig.print_implication) || !(Globals.print_original_solver_input) || !(Globals.print_original_solver_output)) then
-        print_string "\n";
+        print_string_quiet "\n";
     end
 
 (**************************************************************

@@ -1541,7 +1541,7 @@ let norm_var_name (e: CP.formula) : CP.formula =
     (*     ("(" ^ (pr_id  d1) ^ "; " ^ (pr_id d2) ^ ")\n")) h "" in *)
     Debug.no_1 "simplify-syn" pr (* pr_hashtbl *) pr (fun _ -> simplify f0 vnames) f0 (* vnames *)
   in
-  let simplify f0 =  x_add simplify f0  (Hashtbl.create 100) in
+  let simplify f0 = x_add simplify f0  (Hashtbl.create 100) in
   let simplify f0 = wrap_pre_post norm_pure_input norm_pure_result simplify f0 in
   simplify e (* (Hashtbl.create 100) *)
 

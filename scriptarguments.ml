@@ -371,6 +371,10 @@ let common_arguments = [
    "Disable LHS Case Analysis");
   ("--en-lhs-case", Arg.Set Globals.lhs_case_flag,
    "Enable LHS Case Analysis");
+  ("--en-infer-case-as-or", Arg.Set Globals.infer_case_as_or_flag,
+   "Enable inferring CASE as OR");
+  ("--dis-infer-case-as-or", Arg.Clear Globals.infer_case_as_or_flag,
+   "Disable inferring CASE as OR");
   ("--en-lhs-case-search", Arg.Set Globals.lhs_case_search_flag,
    "Replace Cond_action by Search for LHS Case Analysis");
   ("-nxpure", Arg.Set_int Globals.n_xpure,
@@ -592,6 +596,8 @@ let common_arguments = [
   ("--dis-post-flow", Arg.Clear Globals.post_infer_flow, "add exception flow as a post-cond parameter for inference");
   ("--dis-assert-check", Arg.Set Globals.dis_ass_chk, "turn off the assertion checking");
   ("--dis-log-filter", Arg.Clear Globals.log_filter, "turn off the log initial filtering");
+  ("--en-weaken-rel", Arg.Set Globals.oc_weaken_rel_flag, "Enable weakening of relation");
+  ("--dis-weaken-rel", Arg.Clear Globals.oc_weaken_rel_flag, "Disable weakening of relation");
 
   (* TermInf: Options for Termination Inference *)
   ("--en-gen-templ-slk", Arg.Set Globals.gen_templ_slk, "Generate sleek file for template inference");

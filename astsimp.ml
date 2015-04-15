@@ -1782,10 +1782,10 @@ and trans_data_x (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
     let n_ann = if ann = [] then [gen_field_ann t] else ann in
     (((trans_type prog t pos), c),(* trans_field_ann *) n_ann)
   in
-  (* let () = print_endline ("[trans_data] translate data type { " ^ ddef.I.data_name ^ " }") in
-     let temp = expand_inline_fields ddef.I.data_fields in
-     let () = print_endline "[trans_data] expand inline fields result :" in
-     let () = print_endline (Iprinter.string_of_decl_list temp "\n") in *)
+  (* let () = print_endline ("[trans_data] translate data type { " ^ ddef.I.data_name ^ " }") in *)
+  (*    let temp = expand_inline_fields ddef.I.data_fields in *)
+  (*    let () = print_endline "[trans_data] expand inline fields result :" in *)
+  (*    let () = print_endline (Iprinter.string_of_decl_list temp "\n") in *)
   (* let pr1 ((t, c), pos, il, ann) = (pr_triple string_of_typ pr_id (pr_list pr_id)) (t,c,ann) in *)
   (* let () = Debug.info_hprint (add_str "    ddef.I.data_fields:" (pr_list pr1)) ddef.I.data_fields no_pos in *)
   let fields = 

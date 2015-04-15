@@ -986,6 +986,7 @@ let disj_compute_flag = ref false
 let compute_xpure_0 = ref true
 let inv_wrap_flag = ref true
 let lhs_case_flag = ref false
+let infer_case_as_or_flag = ref false
 let lhs_case_search_flag = ref false
 let smart_xpure = ref true
 let super_smart_xpure = ref false
@@ -1314,6 +1315,7 @@ let post_add_eres = ref false
 let post_infer_flow = ref false
 let dis_ass_chk = ref false
 let log_filter = ref true
+let oc_weaken_rel_flag = ref true
 let phase_infer_ind = ref false
 
 let infer_const_num = 0
