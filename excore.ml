@@ -712,6 +712,13 @@ module EPURE =
           ) efpd in
 *)
 
+    let get_baga (epd : epure_disj) =
+      if List.length epd = 0 then []
+      else
+        List.fold_left (fun acc (baga,_) ->
+            Gen.BList.intersect_eq Elt.eq acc baga
+        ) (fst (List.hd epd)) (List.tl epd)
+
     let mk_epure (pf:formula) =
       [([], (* subs_null *) pf)]
 
@@ -1547,6 +1554,13 @@ module EPUREN =
 
     (* let to_cpure_disj (epd : epure_disj) = *)
     (*   List.map (fun ep -> to_cpure ep) epd *)
+
+    let get_baga (epd : epure_disj) =
+      if List.length epd = 0 then []
+      else
+        List.fold_left (fun acc (baga,_,_) ->
+            Gen.BList.intersect_eq Elt.eq acc baga
+        ) ((fun (a,_,_) -> a) (List.hd epd)) (List.tl epd)
 
     let to_cpure (ep : epure) = ep
 

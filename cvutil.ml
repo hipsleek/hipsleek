@@ -718,9 +718,8 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
            (match lbl_lst with
             |None ->
               if List.mem p evars then CP.BagaSV.mkEmpty
-              else ba 
-            | Some ls -> 
-
+              else ba
+            | Some ls ->
               lookup_view_baga_with_subs ls vdef from_svs to_svs))
       in
       {mem_formula_mset = CP.DisjSetSV.one_list_dset new_mset;} 
@@ -1058,8 +1057,8 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
              | 0 -> vdef.view_user_inv
              | _ ->  (* if !force_verbose_xpure &&  not(vdef.view_xpure_flag) then vdef.view_x_formula else *) xp1
            in
-           let () = Debug.ninfo_hprint (add_str "xp1" Cprinter.string_of_mix_formula) xp1 no_pos in
-           let () = Debug.ninfo_hprint (add_str "vinv" Cprinter.string_of_mix_formula) vinv no_pos in
+           let () = x_tinfo_hp (add_str "xp1" Cprinter.string_of_mix_formula) xp1 no_pos in
+           let () = x_tinfo_hp (add_str "vinv" Cprinter.string_of_mix_formula) vinv no_pos in
            (* let () = if !smt_compete_mode then xpure_spec_view_inv vdef p vs p0 vinv else vinv in *)
            (* let vinv = if ( which_xpure=1 && diff_flag) then vdef.view_x_formula else vdef.view_user_inv in *)
            (*LDK: ??? be careful to handle frac var properly. 
@@ -1145,6 +1144,9 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
   in
   (* to build a subs here *)
   let memset = h_formula_2_mem h0 p0 [] prog in
+  (* let () = x_binfo_hp (add_str "h0" Cprinter.string_of_h_formula) h0 no_pos in *)
+  (* let () = x_binfo_hp (add_str "p0" Cprinter.string_of_mix_formula) p0 no_pos in *)
+  (* let () = x_binfo_hp (add_str "memset" Cprinter.string_of_mem_formula) memset no_pos in *)
   if (is_sat_mem_formula memset) then (x_add xpure_heap_helper prog h0 which_xpure memset, memset)
   else
     (MCP.mkMFalse no_pos, memset)
@@ -1154,7 +1156,7 @@ and xpure_symbolic_slicing (prog : prog_decl) (f0 : formula) : (formula * CP.spe
   let pr2 (a,b,c) = pr_pair pr1 Cprinter.string_of_mem_formula (a,c) in
   Debug.no_1 "xpure_symbolic_slicing" pr1 pr2 (xpure_symbolic_slicing_x prog) f0
 
-(* Return a CF.formula instead of a flatten MCP formula, the heap parts is not complex *)	
+(* Return a CF.formula instead of a flatten MCP formula, the heap parts is not complex *)
 (* this method is only called by compute_view *)
 and xpure_symbolic_slicing_x (prog : prog_decl) (f0 : formula) : (formula * CP.spec_var list * CF.mem_formula) =
   let rec xpure_symbolic_helper (prog : prog_decl) (f0 : formula) : (formula * CP.spec_var list) =
@@ -1449,7 +1451,7 @@ and xpure_symbolic_new_orig (prog : prog_decl) (f0 : formula) =
     (* let ans = xpure_symbolic_orig prog f0 in *)
     (* if !Globals.do_under_baga_approx then *)
     let nb = x_add xpure_symbolic_baga prog f0 in
-    let () = Debug.ninfo_hprint (add_str "f(using under)" Excore.EPureI.string_of_disj) nb no_pos in
+    (* let () = x_binfo_hp (add_str "f(using under)" Excore.EPureI.string_of_disj) nb no_pos in *)
     (* let () = Debug.ninfo_hprint (add_str "old" (pr_triple Cprinter.string_of_mix_formula  Cprinter.string_of_spec_var_list Cprinter.string_of_mem_formula)) ans no_pos in *)
     (* Long : to perform conversion here *)
     let f = Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj nb) in

@@ -2827,6 +2827,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             if precise then
               match cv.Cast.view_baga_inv with
               | None -> {cv with
+                         C.view_baga = Excore.EPureI.get_baga inv;
                          C.view_baga_inv = Some inv;
                          C.view_baga_over_inv = Some inv;
                          C.view_baga_under_inv = Some inv;
@@ -2836,22 +2837,24 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                         }
               | Some inv0 ->
                 if Excore.EPureI.imply_disj (Excore.EPureI.from_cpure_disj inv) inv0 then {cv with
-                                                                                           C.view_baga_inv = Some inv;
-                                                                                           C.view_baga_over_inv = Some inv;
-                                                                                           C.view_baga_under_inv = Some inv;
-                                                                                           C.view_baga_x_over_inv = Some inv;
-                                                                                           C.view_user_inv = x_add_1 Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj inv);
-                                                                                           C.view_x_formula = x_add_1 Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj inv);
-                                                                                          }
+                    C.view_baga = Excore.EPureI.get_baga inv;
+                    C.view_baga_inv = Some inv;
+                    C.view_baga_over_inv = Some inv;
+                    C.view_baga_under_inv = Some inv;
+                    C.view_baga_x_over_inv = Some inv;
+                    C.view_user_inv = x_add_1 Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj inv);
+                    C.view_x_formula = x_add_1 Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj inv);
+                }
                 else cv
             else
               let inf_inv = Excore.EPureI.ef_conv_disj inv in
               if (Tpdispatcher.imply_raw inf_inv user_inv) || (not is_sound) then
                 {cv with
-                 C.view_baga_over_inv = Some inv;
-                 C.view_baga_x_over_inv = Some inv;
-                 C.view_user_inv = x_add_1 Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj inv);
-                 C.view_x_formula = x_add_1 Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj inv);
+                    C.view_baga = Excore.EPureI.get_baga inv;
+                    C.view_baga_over_inv = Some inv;
+                    C.view_baga_x_over_inv = Some inv;
+                    C.view_user_inv = x_add_1 Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj inv);
+                    C.view_x_formula = x_add_1 Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj inv);
                 }
               else cv
           ) cviews0

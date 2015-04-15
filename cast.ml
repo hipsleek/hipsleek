@@ -1284,7 +1284,7 @@ let self_param vdef = P.SpecVar (Named vdef.view_data_name, self, Unprimed)
 let look_up_view_baga prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
   let vdef = look_up_view_def no_pos prog.prog_view_decls c in
   let ba = vdef.view_baga in
-  (* let () = print_endline_quiet(" look_up_view_baga: baga= " ^ (!print_svl ba)) in *)
+  (* let () = x_binfo_hp (add_str "look_up_view_baga: baga= " !print_svl) ba no_pos in *)
   let from_svs = (self_param vdef) :: vdef.view_vars in
   let to_svs = root :: args in
   P.subst_var_list_avoid_capture from_svs to_svs ba

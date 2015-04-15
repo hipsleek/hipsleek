@@ -2723,7 +2723,7 @@ and find_unsat prog f =
 
 and unsat_base_x prog (sat_subno:  int ref) f  : bool=
   let tp_call_wrapper npf =
-    (* let () = print_endline (Cprinter.string_of_mix_formula npf) in *)
+    (* let () = x_binfo_hp (add_str "npf" Cprinter.string_of_mix_formula) npf no_pos in *)
     (* if !Globals.gen_baga_inv then *)
     (*   Excore.EPureI.unsat (Excore.EPureI.mk_epure (MCP.pure_of_mix npf)) *)
     (* else  *)if !Globals.simpl_unfold2 then
@@ -2764,7 +2764,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
     let p = MCP.translate_level_mix_formula p in
     let ph,_,_ = x_add xpure_heap 1 prog h p 1 in
     let npf = MCP.merge_mems p ph true in
-    tp_call_wrapper npf 
+    tp_call_wrapper npf
   in
   match f with
   | Or _ -> report_error no_pos ("unsat_xpure : encountered a disjunctive formula \n")

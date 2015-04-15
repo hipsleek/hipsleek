@@ -183,7 +183,6 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
   else
 
   if (!Globals.prove_invalid && not(!Globals.use_baga (* !Globals.baga_xpure *))) && CF.isAnyConstFalse_struc conseq && Cfutil.is_view_f ante then
-
     (* TODO : new unsat checking for LHS from Loc *)
     (* need to document; and generalize? *)
     let () = Globals.smt_is_must_failure := None in
