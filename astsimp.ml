@@ -2570,7 +2570,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
     if !Globals.gen_baga_inv then
       let () = x_binfo_pp "Generate baga inv\n" no_pos in
       let cviews0 = List.filter (fun cv ->
-          not cv.Cast.view_is_prim
+          (not cv.Cast.view_is_prim)
         ) cviews0 in
       let () = List.iter (fun cv ->
           Hashtbl.add Excore.map_baga_invs cv.C.view_name Excore.EPureI.mk_false_disj;
@@ -2814,6 +2814,11 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
         ) ls_mut_rec_views1 in
       let cviews1 = (* if !Globals.gen_baga_inv then *)
         List.map (fun cv ->
+            if (List.exists (fun (f,_) ->
+                 let _,p,_,_,_,_ = Cformula.split_components f in
+                 (is_AndList (Mcpure.pure_of_mix p))
+              ) cv.Cast.view_un_struc_formula)
+            then cv else
             let inv = Hashtbl.find Excore.map_baga_invs cv.C.view_name in
             let precise = Hashtbl.find Excore.map_precise_invs cv.C.view_name in
             let () = x_binfo_hp (add_str ("infered baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv (* (Excore.EPureI.pairwisecheck_disj inv) *) no_pos in
