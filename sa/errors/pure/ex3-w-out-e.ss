@@ -17,9 +17,9 @@ infer [P] requires P(x) ensures true & flow __Error;
     x<=10 ->  ensures x'=10;
   }
     {
-    x++;
+    x = x + 1;
   }
-    assert (x' != 10);
     dprint;
-    __error();
+    assert (x' != 10);
+   __error();
 }

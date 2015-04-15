@@ -1985,7 +1985,7 @@ and infer_shapes_core iprog prog proc_name cond_path (constrs0: CF.hprel list) c
 
 and infer_shapes_divide iprog prog proc_name (constrs0: CF.hprel list) callee_hps sel_hps sel_post_hps
     hp_rel_unkmap unk_hpargs0 link_hpargs0 need_preprocess detect_dang:
-  ((CF.cond_path_type * CF.hp_rel_def list *
+  ((cond_path_type * CF.hp_rel_def list *
     (CP.spec_var * CP.spec_var list) list * (CP.spec_var * CP.spec_var list) list * (CP.spec_var * CP.spec_var) list ) list) =
   let process_one_path (cond_path, link_hpargs, constrs1)=
     let constr, hp_defs, unk_hpargs2, link_hpargs2, equivs = infer_shapes_core iprog prog proc_name cond_path constrs1

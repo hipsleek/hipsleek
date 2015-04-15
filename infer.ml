@@ -249,6 +249,13 @@ let collect_rel_list_partial_context (ctx:list_partial_context) =
   Debug.no_1 "collect_rel_list_partial_context"  pr1 pr2
     collect_rel_list_partial_context ctx
 
+let collect_rel_list_failesc_context (ctx:list_failesc_context) =
+  let r = List.fold_left (fun acc (_,cl,brs) ->
+      let in_r = List.concat (List.map (fun (_,c,_) -> (collect_rel c) ) brs) in
+      acc@in_r
+  ) []  ctx in
+  r
+
 let collect_hp_rel_list_partial_context (ctx:list_partial_context) =
   let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c,_) -> collect_hp_rel c) cl))  ctx in
   List.concat r
@@ -272,6 +279,8 @@ let collect_hp_rel_list_failesc_context (ctx:list_failesc_context) =
   let r = List.map (fun (bfs,_,cl) -> (List.concat (List.map collect_hp_rel_branch_fail bfs))@
                                       (List.concat (List.map (fun (_,c,_) -> collect_hp_rel c) cl)))  ctx in
   List.concat r
+
+
 
 (* let collect_hp_rel_list_partial_context (ctx:list_partial_context) = *)
 (*   let pr1 = !CF.print_list_partial_context in *)
@@ -1839,6 +1848,20 @@ let detect_lhs_rhs_contra2 ivs lhs_c rhs_mix pos =
     (add_str "(res,new_rhs)" pr)
     (fun _ _ _ -> detect_lhs_rhs_contra2 ivs lhs_c rhs_mix pos) ivs lhs_c rhs_mix
 
+
+let norm_rel_disj_x rs=
+  match rs with
+    | SuccCtx cl -> let rels=  List.map (collect_rel) cl in
+      (*for each at the begin, find all same rhs, mk or*)
+      List.concat rels
+    | FailCtx _ -> []
+
+let norm_rel_disj rs=
+  let pr1 = Cprinter.string_of_list_context in
+  let pr2 = pr_list_ln print_lhs_rhs in
+  Debug.no_1 "norm_rel_disj" pr1 pr2
+      (fun _ -> norm_rel_disj_x rs) rs
+
 let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
 
   (* TODO : need to handle pure_branches in future ? *)
@@ -1920,8 +1943,8 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
       let l1 = (rel_cat, CP.remove_redundant lhs_p_better,rhs_p) in
       (* DD.info_hprint (add_str "todo: Rel Inferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos; *)
       let inf_rel_ls = [l1] in
-      infer_rel_stk # push_list inf_rel_ls;
-      Log.current_infer_rel_stk # push_list inf_rel_ls;
+      (* infer_rel_stk # push_list inf_rel_ls; *)
+      (* Log.current_infer_rel_stk # push_list inf_rel_ls; *)
       let estate = { estate with es_infer_rel = estate.es_infer_rel@inf_rel_ls;} in
       if inf_rel_ls != [] then
         begin

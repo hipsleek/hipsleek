@@ -1410,7 +1410,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     end;
                   if CF.isSuccessListFailescCtx_new rs then 
                     begin
-                      Debug.print_info "assert" (s ^(if (CF.isNonFalseListFailescCtx ts) then " : ok\n" else ": unreachable\n")) pos;
+                      let rels = Infer.collect_rel_list_failesc_context rs in
+                      Infer.infer_rel_stk # push_list rels;
+                      Log.current_infer_rel_stk # push_list rels;
+                      let hp_rels = Infer.collect_hp_rel_list_failesc_context rs in
+                      let cond_msg = if (hp_rels=[]) && (rels)=[] then "" else " (conditional)" in
+                      Debug.print_info "assert" (s ^(if (CF.isNonFalseListFailescCtx ts) then " : ok" ^ cond_msg ^ "\n" else ": unreachable\n")) pos;
                       x_dinfo_pp (*print_info "assert"*) ("Residual:\n" ^ (Cprinter.string_of_list_failesc_context rs)) pos; 
                       (* WN_2_Loc: put xpure of asserted by fn below  *)
                       let xp = get_xpure_of_formula c1_o in
