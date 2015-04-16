@@ -25,7 +25,7 @@ module TP = Tpdispatcher
 
 let get_inv_x prog sel_vars vnode=
   let inv = look_up_view_inv prog.prog_view_decls (vnode.CF.h_formula_view_node::vnode.CF.h_formula_view_arguments)
-      vnode.CF.h_formula_view_name Fixcalc.compute_inv in
+      vnode.CF.h_formula_view_name (x_add_3 Fixcalc.compute_inv) in
   CP.filter_var inv sel_vars
 
 let get_inv prog sel_vars vnode=

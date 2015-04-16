@@ -2636,7 +2636,7 @@ let tp_imply_preprocess_x (ante: CP.formula) (conseq: CP.formula) : (bool option
 let tp_imply_preprocess (ante: CP.formula) (conseq: CP.formula) : (bool option * CP.formula * CP.formula) = 
   let pr = Cprinter.string_of_pure_formula in
   let pr_out = pr_triple (pr_option string_of_bool) pr pr in
-  Debug.no_2 "tp_imply_preprocess" pr pr pr_out
+  Debug.no_2 "tp_imply_preprocess" (add_str "ante" pr) (add_str "conseq" pr) pr_out
     tp_imply_preprocess_x ante conseq
 
 
@@ -3037,7 +3037,7 @@ let tp_imply ante conseq old_imp_no timeout process =
   x_dinfo_zp (lazy ("imply_timeout: conseq: " ^ (!print_pure conseq))) no_pos;
   let cmd = PT_IMPLY(ante,conseq) in
   let () = Log.last_proof_command # set cmd in
-  let fn () = tp_imply ante conseq imp_no timeout process in
+  let fn () = x_add tp_imply ante conseq imp_no timeout process in
   let logger fr tt timeout = 
     let tp = (string_of_prover !pure_tp) in
     let () =  add_proof_logging timeout !cache_status old_imp_no imp_num (string_of_prover !pure_tp) cmd tt 
@@ -4073,6 +4073,7 @@ let imply_raw_mix ante conseq =
   let pr = Cprinter.string_of_mix_formula in
   Debug.no_2 "imply_raw_mix" pr pr string_of_bool imply_raw_mix ante conseq
 
+(* pre : xp1 --> xp0 *)
 let check_diff xp0 xp1 =
   let (x,_,_) = x_add mix_imply xp0 xp1 "check_diff" in x
 
