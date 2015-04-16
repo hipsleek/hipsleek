@@ -2566,12 +2566,15 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
   (*     Globals.dis_inv_baga () *)
   (*   end *)
   (* else () in *)
+  let cviews0, prim_cviews0 = List.partition (fun cv ->
+      not cv.Cast.view_is_prim
+  ) cviews0 in
   let cviews0 =
     if !Globals.gen_baga_inv then
       let () = x_binfo_pp "Generate baga inv\n" no_pos in
-      let cviews0 = List.filter (fun cv ->
-          (not cv.Cast.view_is_prim)
-        ) cviews0 in
+      (* let cviews0 = List.filter (fun cv -> *)
+      (*     (not cv.Cast.view_is_prim) *)
+      (*   ) cviews0 in *)
       let () = List.iter (fun cv ->
           Hashtbl.add Excore.map_baga_invs cv.C.view_name Excore.EPureI.mk_false_disj;
           Hashtbl.add Excore.map_precise_invs cv.C.view_name true
@@ -2874,7 +2877,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
     else
       cviews0
   in
-  cviews0
+  cviews0@prim_cviews0
 
 and fill_one_base_case prog vd = Debug.no_1 "fill_one_base_case" Cprinter.string_of_view_decl Cprinter.string_of_view_decl (fun vd -> fill_one_base_case_x prog vd) vd
 
@@ -9909,7 +9912,7 @@ and pr_proc_call_order p =
   let c = p.Cast.proc_call_order in
   pr_pair pr_id string_of_int (n,c)
 
-(* Termination *)             
+(* Termination *)
 (* Recursive call and call order detection *)
 (* irf = is_rec_field *)
 and mark_rec_and_call_order_x (cp: C.prog_decl) : C.prog_decl =
