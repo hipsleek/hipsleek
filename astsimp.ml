@@ -2001,34 +2001,45 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let () = x_tinfo_hp (add_str "formula1_under" Cprinter.string_of_formula) formula1_under no_pos in
       let () = x_tinfo_hp (add_str "context" Cprinter.string_of_context) ctx no_pos in
       let () = x_tinfo_hp (add_str "formula" Cprinter.string_of_formula) formula no_pos in
+
+
       let (rs, _) = x_add Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
-      let (baga_formula, baga_enum_formula) = match vdef.C.view_baga_inv with
+
+
+      let (exist_baga_inv, baga_formula, baga_enum_formula) = match vdef.C.view_baga_inv with
         | None ->
           let f1 = CF.mkTrue (CF.mkTrueFlow ()) pos in
           let f2 = CF.mkFalse (CF.mkTrueFlow ()) pos in
-          (f1, f2)
+          (false, f1, f2)
         | Some disj ->
           let f1 = CF.formula_of_pure_formula (Excore.EPureI.ef_conv_disj disj) pos in
           let f2 = CF.formula_of_pure_formula (Excore.EPureI.ef_conv_enum_disj disj) pos in
           (* let f2 = CF.mkFalse (CF.mkTrueFlow ()) pos in *)
-          (f1, f2)
+          (true, f1, f2)
       in
-      let (baga_rs1, _) = x_add Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) baga_formula pos in
-      let ctx1 = CF.build_context (CF.true_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled pos) baga_enum_formula pos in
-      (* TODO:WN:under Why do we need formula1_under in RHS here? *)
-      let (baga_rs2, _) = x_add Solver.heap_entail_init prog false (CF.SuccCtx [ ctx1 ]) formula1_under pos in
+      let is_not_failed_baga_rs1, is_not_failed_baga_rs2= if not exist_baga_inv then true,true else
+        let (baga_rs1, _) = x_add Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) baga_formula pos in
+
+        let ctx1 = CF.build_context (CF.true_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled pos) baga_enum_formula pos in
+
+        (* TODO:WN:under Why do we need formula1_under in RHS here? *)
+        let (baga_rs2, _) = x_add Solver.heap_entail_init prog false (CF.SuccCtx [ ctx1 ]) formula1_under pos in
+        (CF.isFailCtx baga_rs1, CF.isFailCtx baga_rs2)
+      in
       (* let () = x_tinfo_hprint (add_str "context1" Cprinter.string_of_context) ctx1 no_pos in *)
       let () = x_tinfo_hp (add_str "formula1" Cprinter.string_of_formula) formula1 no_pos in
       let pr_d = pr_opt Cprinter.string_of_ef_pure_disj in
       let over_f = vdef.C.view_baga_over_inv in
       x_tinfo_hp (add_str "over(baga)" pr_d) over_f no_pos;
-      let baga_over_formula = match over_f with
-        | None -> CF.mkTrue (CF.mkTrueFlow ()) pos
-        | Some disj -> CF.formula_of_pure_formula (Excore.EPureI.ef_conv_disj disj) pos
+      let exist_baga_over,baga_over_formula = match over_f with
+        | None -> false,CF.mkTrue (CF.mkTrueFlow ()) pos
+        | Some disj -> true,CF.formula_of_pure_formula (Excore.EPureI.ef_conv_disj disj) pos
       in
       let () = x_tinfo_hp (add_str "baga_over_formula" Cprinter.string_of_formula) baga_over_formula no_pos in
       let () = x_tinfo_hp (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
+
       let (baga_over_rs, _) = x_add Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) baga_over_formula pos in
+
       let under_f = vdef.C.view_baga_under_inv in
       (* WN : this is an update on under-approx to false if absent*)
       (* let new_under = match under_f with *)
@@ -2133,7 +2144,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       (* let () = print_endline (string_of_bool (not(CF.isFailCtx baga_rs1))) in *)
       (* let () = print_endline (string_of_bool (not(CF.isFailCtx baga_rs2))) in *)
       let () =
-        if not(CF.isFailCtx rs) && not(CF.isFailCtx baga_rs1) && not(CF.isFailCtx baga_rs2) &&
+        if not(CF.isFailCtx rs) && is_not_failed_baga_rs1 && is_not_failed_baga_rs2 (* not(CF.isFailCtx baga_rs1) && not(CF.isFailCtx baga_rs2) *) &&
           not(over_fail) && not(under_fail) then
             begin
               let () = match under_f with
