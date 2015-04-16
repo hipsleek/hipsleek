@@ -17,6 +17,9 @@ print residue.
 /*
 # ll-simple.ss
 
+../sleek ll-simple.slk -dre "tp_imply\|imply_cache" -tp oc > 1
+
+
 --dis-use-baga
 Stop z3... 18 invocations Stop Omega... 16 invocations 
 SAT Count   : 21

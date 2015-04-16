@@ -2659,7 +2659,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let ante = n_ante in
   let conseq = n_conseq in 
   (**************************************)
-  let res,ante,conseq = tp_imply_preprocess ante conseq in
+  let res,ante,conseq = x_add tp_imply_preprocess ante conseq in
   match res with | Some ret -> ret | None -> (*continue normally*)
     (**************************************)
     (* ============================================================== *)
@@ -2886,22 +2886,22 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   if !Globals.allow_inf && !Globals.allow_inf_qe
   then
     (* the following is not complete as it does not expand the conseq quantifiers over PAInf *)
-    (* let exists_inf f = 
-       let alist  = Infinity.quantifier_elim f in
-       let rec aux al = match al with
-         | [] -> false
-         | x::xs -> let f = tp_imply_no_cache x conseq imp_no timeout process in
-                    (*let _ = print_endline ("Ante :"^(Cprinter.string_of_pure_formula x)) in*)
-                    if f then true else aux xs
-       in aux alist in
-       let forall_lst = Infinity.get_inst_forall ante in 
-       let forall_lst = ante::forall_lst in
-       let f = List.for_all (fun c -> exists_inf c) forall_lst in f
-       let expand_quantifier f  = 
-       let forall_lst = Infinity.get_inst_forall f in
-       let forall_lst = ante::forall_lst in
-       conj_of_list 
-        (List.map (fun c -> disj_of_list (Infinity.quantifier_elim c) no_pos) forall_lst) no_pos in*)
+     (* let exists_inf f =  *)
+     (*   let alist  = Infinity.quantifier_elim f in *)
+     (*   let rec aux al = match al with *)
+     (*     | [] -> false *)
+     (*     | x::xs -> let f = tp_imply_no_cache x conseq imp_no timeout process in *)
+     (*                (\*let _ = print_endline ("Ante :"^(Cprinter.string_of_pure_formula x)) in*\) *)
+     (*                if f then true else aux xs *)
+     (*   in aux alist in *)
+     (*   let forall_lst = Infinity.get_inst_forall ante in  *)
+     (*   let forall_lst = ante::forall_lst in *)
+     (*   let f = List.for_all (fun c -> exists_inf c) forall_lst in f *)
+     (*   let expand_quantifier f  =  *)
+     (*   let forall_lst = Infinity.get_inst_forall f in *)
+     (*   let forall_lst = ante::forall_lst in *)
+     (*   conj_of_list  *)
+     (*    (List.map (fun c -> disj_of_list (Infinity.quantifier_elim c) no_pos) forall_lst) no_pos in *)
     let expand_quantifier = Infinity.elim_forall_exists in
     tp_imply_no_cache (expand_quantifier ante) (expand_quantifier conseq) imp_no timeout process
   else if !Globals.allow_inf && !Globals.allow_inf_qe_coq then
@@ -2948,21 +2948,21 @@ let tp_imply_perm ante conseq imp_no timeout process =
     let r_cons = CP.has_tscons conseq in 
     let l_cons = CP.has_tscons ante in
     if r_cons = No_cons then
-      if l_cons = No_cons then  tp_imply_no_cache ante conseq imp_no timeout process
-      else tp_imply_no_cache (tpd_drop_all_perm ante) conseq imp_no timeout process
+      if l_cons = No_cons then  x_add tp_imply_no_cache ante conseq imp_no timeout process
+      else x_add tp_imply_no_cache (tpd_drop_all_perm ante) conseq imp_no timeout process
     else match join_res l_cons r_cons with
-      | No_cons -> tp_imply_no_cache ante conseq imp_no timeout process
+      | No_cons -> x_add tp_imply_no_cache ante conseq imp_no timeout process
       | No_split -> false
       | Can_split -> 
         let ante_lex, antes= CP.dnf_to_list ante in
         let conseq_lex, conseqs= CP.dnf_to_list conseq in
         let antes = List.map (fun a-> CP.tpd_drop_perm a, (ante_lex,CP.tpd_drop_nperm a)) antes in
         let conseqs = List.map (fun c-> CP.mkExists conseq_lex (CP.tpd_drop_perm c) None no_pos, (conseq_lex,CP.tpd_drop_nperm c)) conseqs in
-        let tp_wrap fa fc = if CP.isConstTrue fc then true else tp_imply_no_cache fa fc imp_no timeout process in
+        let tp_wrap fa fc = if CP.isConstTrue fc then true else x_add tp_imply_no_cache fa fc imp_no timeout process in
         let tp_wrap fa fc = Debug.no_2(* _loop *) "tp_wrap"  Cprinter.string_of_pure_formula  Cprinter.string_of_pure_formula string_of_bool tp_wrap fa fc in
         let ss_wrap (ea,fa) (ec,fc) = if fc=[] then true else Share_prover_w2.sleek_imply_wrapper (ea,fa) (ec,fc) in
         List.for_all( fun (npa,pa) -> List.exists (fun (npc,pc) -> tp_wrap npa npc && ss_wrap pa pc ) conseqs) antes
-  else tp_imply_no_cache ante conseq imp_no timeout process
+  else x_add tp_imply_no_cache ante conseq imp_no timeout process
 
 let tp_imply_perm ante conseq imp_no timeout process =  
   let pr =  Cprinter.string_of_pure_formula in
@@ -2999,11 +2999,16 @@ let tp_imply ante conseq imp_no timeout process =
   (* TODO WN : can below remove duplicate constraints? *)
   (* let ante = CP.elim_idents ante in *)
   (* let conseq = CP.elim_idents conseq in *)
-  let fn_imply a c = tp_imply_perm a c imp_no timeout process in
+  let fn_imply a c = x_add_3 tp_imply_perm a c imp_no timeout process in
+  (* let () = x_binfo_hp (add_str "no-cache" string_of_bool) !Globals.no_cache_formula no_pos in *)
   if !Globals.no_cache_formula then
     fn_imply ante conseq
   else
-    imply_cache fn_imply ante conseq
+    begin
+      (* let () = x_binfo_pp "prior to imply_cache"  no_pos in *)
+      x_add_3 imply_cache fn_imply ante conseq
+    end
+
 (* (\*let () = Gen.Profiling.push_time "cache overhead" in*\) *)
 (* let f = CP.mkOr conseq (CP.mkNot ante None no_pos) None no_pos in *)
 (* let sf = norm_var_name f in *)
