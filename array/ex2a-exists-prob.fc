@@ -1,0 +1,42 @@
+P2:={[a___5___] -> [PRIa___5___,res] -> []: PRIa___5___=a___5___ && 
+PRIa___5___=a___5___ && (PRIa=a && res=a___5___+6 && PRIa___5___=a___5___ &&
+5<=a___5___ ||  (exists (fc_1255: (exists (a_1252___5___: 
+(exists (fc_a_1254:P2(fc_a_1254,fc_1255,res) && fc_a_1254=a_1252___5___))  && a_1252___5___=a___5___+1))  &&
+fc_1255=PRIa___5___))  && a___5___<=4)
+};
+bottomupgen([P2], [2], SimHeur);
+
+P:={[a] -> [PRIa,res] -> []: (((res=PRIa+6 && a=PRIa) && 5<=PRIa) || ( (exists (fc_a_1199:(P(fc_a_1199,PRIa,res) && fc_a_1199=1+a)))  && a<=4))
+        }; 
+bottomupgen([P], [2], SimHeur);
+
+P2:={[a] -> [PRIa,res] -> []: PRIa=a && 
+PRIa=a && (res=a+6 && PRIa=a &&
+5<=a ||  (exists (fc_1255: (exists (a_1252_5: 
+(exists (fc_a_1254:P2(fc_a_1254,fc_1255,res) && fc_a_1254=a_1252_5))  && a_1252_5=a+1))  &&
+fc_1255=PRIa))  && a<=4)
+};
+bottomupgen([P2], [2], SimHeur);
+# P2:={ ... }; (PRIa >= 5 && PRIa = a && PRIa + 6 = res)
+
+
+P2:={[a] -> [PRIa,res] -> []: PRIa=a && 
+PRIa=a && res=a+6 && PRIa=a &&
+5<=a ||  (exists (fc_1255: (exists (a_1252_5: 
+P2(a_1252_5,fc_1255,res)  && a_1252_5=a+1)  &&
+fc_1255=PRIa)  && a<=4))
+};
+bottomupgen([P2], [2], SimHeur);
+# P2:={ ... };((4 >= a && 5 = PRIa && 11 = res) || (PRIa >= 5 && PRIa = a && PRIa + 6 = res))
+
+
+P2:={[a_5] -> [PRIa_5,res] -> []: 
+#PRIa_5=a_5 && PRIa_5=a_5 && 
+(PRIa=a && res=a_5+6 && PRIa_5=a_5 && 5<=a_5 
+||  (exists (fc_1255: (exists (a_1252_5: 
+(exists (fc_a_1254:P2(fc_a_1254,fc_1255,res) && fc_a_1254=a_1252_5))  && a_1252_5=a_5+1))  &&
+fc_1255=PRIa_5 && a_5<=4))  )
+};
+bottomupgen([P2], [2], SimHeur);
+#((4 >= a_5 && 11 = res && a = PRIa && 5 = PRIa_5) || (PRIa_5 >= 5 && PRIa_5 = a_5 && PRIa_5 + 6 = res && a = PRIa))
+

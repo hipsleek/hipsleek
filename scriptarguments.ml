@@ -371,6 +371,10 @@ let common_arguments = [
    "Disable LHS Case Analysis");
   ("--en-lhs-case", Arg.Set Globals.lhs_case_flag,
    "Enable LHS Case Analysis");
+  ("--en-infer-case-as-or", Arg.Set Globals.infer_case_as_or_flag,
+   "Enable inferring CASE as OR");
+  ("--dis-infer-case-as-or", Arg.Clear Globals.infer_case_as_or_flag,
+   "Disable inferring CASE as OR");
   ("--en-lhs-case-search", Arg.Set Globals.lhs_case_search_flag,
    "Replace Cond_action by Search for LHS Case Analysis");
   ("-nxpure", Arg.Set_int Globals.n_xpure,
@@ -530,6 +534,7 @@ let common_arguments = [
   ("--en-failure-analysis", Arg.Clear Globals.disable_failure_explaining,"enable failure explanation analysis");
   ("--efa", Arg.Clear Globals.disable_failure_explaining,"shorthand for --en-failure-analysis");
   ("--efa-exc", Arg.Set Globals.enable_error_as_exc,"enable to transform error as exception");
+  ("--dis-efa-exc", Arg.Clear Globals.enable_error_as_exc,"disable to transform error as exception");
   ("--dfa", Arg.Set Globals.disable_failure_explaining,"shorthand for --dis-failure-analysis");
   ("--refine-error", Arg.Set Globals.simplify_error,
    "Simplify the error");
@@ -591,6 +596,8 @@ let common_arguments = [
   ("--dis-post-flow", Arg.Clear Globals.post_infer_flow, "add exception flow as a post-cond parameter for inference");
   ("--dis-assert-check", Arg.Set Globals.dis_ass_chk, "turn off the assertion checking");
   ("--dis-log-filter", Arg.Clear Globals.log_filter, "turn off the log initial filtering");
+  ("--en-weaken-rel", Arg.Set Globals.oc_weaken_rel_flag, "Enable weakening of relation");
+  ("--dis-weaken-rel", Arg.Clear Globals.oc_weaken_rel_flag, "Disable weakening of relation");
 
   (* TermInf: Options for Termination Inference *)
   ("--en-gen-templ-slk", Arg.Set Globals.gen_templ_slk, "Generate sleek file for template inference");
@@ -687,8 +694,8 @@ let common_arguments = [
   ("--inv-baga",Arg.Unit (fun _ ->  Globals.use_baga := true; Globals.gen_baga_inv := true),"generate baga inv from view");
   ("--dis-inv-baga",Arg.Clear Globals.gen_baga_inv,"disable baga inv from view");
   ("--pred-sat", Arg.Unit Globals.en_pred_sat ," turn off oc-simp for pred sat checking");
-  ("--baga-xpure",Arg.Set Globals.baga_xpure,"use baga for xpure");
-  ("--dis-baga-xpure",Arg.Clear Globals.baga_xpure,"do not use baga for xpure");
+  ("--baga-xpure",Arg.Set Globals.use_baga (* Globals.baga_xpure *),"use baga for xpure");
+  ("--dis-baga-xpure",Arg.Clear Globals.use_baga (* Globals.baga_xpure *),"do not use baga for xpure");
   (* ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view"); *)
   ("--dis-imm-baga",Arg.Clear Globals.baga_imm,"disable baga inv from view");
   ("--en-imm-baga",Arg.Clear Globals.baga_imm,"disable baga inv from view");

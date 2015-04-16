@@ -658,10 +658,10 @@ let rec case_struc_formula_trans_x prog dang_hps to_unfold_hps pre_hps post_hps 
                   let sf2 = CF.EBase {b with CF.formula_struc_base = f2;} in
                   let n_parts = if CF.equal_flow_interval fl2 !norm_flow_int then parts else parts2 in
                   let sf3 = recf n_parts fl2 sf2 in
-                  let old_baga_flag = !baga_xpure in
-                  let () = baga_xpure := true in
+                  let old_baga_flag = !use_baga (* !baga_xpure *) in
+                  let () = use_baga (* baga_xpure *) := true in
                   let guard,_,_=(x_add Cvutil.xpure_symbolic 11 prog f2) in
-                  let () = baga_xpure := old_baga_flag in
+                  let () = use_baga (* baga_xpure *) := old_baga_flag in
                   let p_guard = CP.remove_redundant (MCP.pure_of_mix guard) in
                   let sf4 = elim_dup_with_guard p_guard sf3 in
                   (p_guard, sf4)

@@ -2380,8 +2380,8 @@ let parse_hip (filename: string) : Iast.prog_decl =
   let prep_filename = filename ^ ".prep" in
   let cmd = "gcc " ^ "-I ../ " ^ " -I /usr/lib/x86_64-linux-gnu/glib-2.0/include/  "^ " -C -E " ^ filename ^ " -o " ^ prep_filename in
   if not !compete_mode then (
-    print_endline ("GCC Preprocessing...");
-    print_endline cmd;
+    print_endline_quiet ("GCC Preprocessing...");
+    print_endline_quiet cmd;
   );
   let exit_code = Sys.command cmd in
   if (exit_code != 0) then

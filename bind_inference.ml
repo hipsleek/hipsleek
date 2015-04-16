@@ -98,7 +98,7 @@ let print_environment envi =
       print_typ typ;
       print_string ",";    
       print_environmentR rest
-  in print_string "\nEnvirnoment = {";
+  in print_string "\nEnvironment = {";
   print_environmentR envi
 ;;
 
