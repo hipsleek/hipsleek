@@ -1560,9 +1560,10 @@ let merge_imm_ann ann1 ann2 =
     let poly_ann = CP.mkPolyAnn fresh_sv in
           (* let constr1 = CP.mkSubAnn (CP.mkExpAnnSymb ann no_pos) fresh_var in *)
           (* let constr2 = CP.mkSubAnn (CP.Var(sv, no_pos)) fresh_var in *)
-          let constr = CP.mkEqMin fresh_var  (CP.mkExpAnnSymb ann no_pos)  (CP.Var(sv, no_pos)) no_pos in
+          (* (poly_ann, (constr1)::[constr2], [(fresh_v, Unprimed)]) *)
+          let constr = CP.mkEqMin fresh_var  (CP.mkExpAnnSymb ann no_pos) (CP.Var(sv, no_pos)) no_pos in
           let constr = CP.BForm ((constr, None), None) in
-          (poly_ann, [constr](* 1::[constr2] *), [(fresh_v, Unprimed)])
+          (poly_ann, [constr], [(fresh_v, Unprimed)])
   | ann_n, _ -> let ann = if (subtype_ann 2  ann_n  ann2 ) then ann2 else  ann1 in
     (ann, [], [])
 
@@ -1954,6 +1955,9 @@ let icollect_imm f vparam data_name ddefs =
   Debug.no_3 "icollect_imm" Iprinter.string_of_struc_formula 
     (pr_list pr_id) pr_id (pr_list (pr_pair Iprinter.string_of_imm string_of_int)) (fun _ _ _ -> icollect_imm f vparam data_name ddefs) f vparam data_name
 
+let pr_label = (fun l -> if LO.is_common l then "" else (LO.string_of l)^":")
+let pr_labels = (pr_list pr_label) 
+
 let split_view_args view_args vdef:  CP.spec_var list * 'a list * (CP.annot_arg * int) list * (CP.view_arg * int) list  =
   (* TODO: normalize the unused ann consts  *)
   (* retrieve imm_map from I.view_decl *)
@@ -1961,9 +1965,11 @@ let split_view_args view_args vdef:  CP.spec_var list * 'a list * (CP.annot_arg 
   let view_arg_lbl =  try (List.combine view_args (fst vdef.I.view_labels))
     with  Invalid_argument _ -> failwith "Immutable.ml, split_view_args: error while combining view args with labels 1" in
   let ann_map_pos = vdef.I.view_imm_map in
-  let () = x_tinfo_hp (add_str "imm_map:" (pr_list (pr_pair Iprinter.string_of_imm string_of_int))) ann_map_pos no_pos in
+  (* let () = x_binfo_hp (add_str "imm_map:" (pr_list (pr_pair Iprinter.string_of_imm string_of_int))) ann_map_pos no_pos in *)
+  (* let () = x_binfo_hp (add_str " view_arg_lbl:" (pr_list (pr_pair pr_none pr_label))) view_arg_lbl no_pos in *)
   (* create list of view_arg*pos  *)
   let vp_pos = CP.initialize_positions_for_view_params view_arg_lbl in
+  (* let () = x_binfo_hp (add_str " vp_pos:" (pr_list (pr_pair (pr_pair pr_none pr_label) string_of_int))) vp_pos no_pos in *)
   let view_args_pos = List.map (fun ((va,_),pos) -> (va,pos)) vp_pos in
   let annot_arg, vp_pos = List.partition (fun (vp,pos) -> List.exists (fun (_,p) -> p == pos ) ann_map_pos) vp_pos in
   let vp_lbl, _ = List.split vp_pos in  (* get rid of positions *)
@@ -1990,7 +1996,7 @@ let split_view_args view_args vdef:  CP.spec_var list * 'a list * (CP.annot_arg 
   svp, lbl, annot_args_pos, view_args_pos
 
 let split_view_args view_args vdef:  CP.spec_var list * 'a list * (CP.annot_arg * int) list * (CP.view_arg * int) list  =
-  let pr = pr_quad  Cprinter.string_of_spec_var_list pr_none (pr_list (pr_pair Cprinter.string_of_annot_arg string_of_int)) (pr_list (pr_pair Cprinter.string_of_view_arg string_of_int)) in 
+  let pr = pr_quad  Cprinter.string_of_spec_var_list pr_labels (pr_list (pr_pair Cprinter.string_of_annot_arg string_of_int)) (pr_list (pr_pair Cprinter.string_of_view_arg string_of_int)) in 
   Debug.no_1 "split_view_args" Cprinter.string_of_view_arg_list pr (fun _ -> split_view_args view_args vdef) view_args
 
 let split_sv sv vdef:  CP.spec_var list * 'a list * (CP.annot_arg * int) list * (CP.view_arg * int) list  =
@@ -2053,9 +2059,13 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
   let comp, ret_h, unfold_f =
     match h1, h2 with
     | DataNode dn1, DataNode dn2 ->
-      let p1 = List.combine dn1.h_formula_data_arguments dn1.h_formula_data_param_imm in
-      let p2 = List.combine dn2.h_formula_data_arguments dn2.h_formula_data_param_imm in
-      let imm = List.combine p1 p2 in
+      let p1, p2, imm = 
+        try
+          let p1 = List.combine dn1.h_formula_data_arguments dn1.h_formula_data_param_imm in
+          let p2 = List.combine dn2.h_formula_data_arguments dn2.h_formula_data_param_imm in
+          let imm = List.combine p1 p2 in
+          (p1,p2,imm)
+        with Invalid_argument _ -> failwith "Immutable.ml, compatible_at_field_lvl" in
       let (comp, updated_elements) = List.fold_left (fun (comp,lst) ((a1,i1), (a2,i2)) ->
           match i1, i2 with
           | CP.ConstAnn(Accs), a -> (true && comp, lst@[(a2,i2)])
@@ -2071,7 +2081,9 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
     | ViewNode vn1, ViewNode vn2 -> (* Debug.print_info "Warning: " "combining two views not yet implemented" no_pos; *)
       let imm1 = get_node_param_imm h1 in
       let imm2 = get_node_param_imm h2 in
-      let imm  = List.combine imm1 imm2 in
+      let imm  = 
+        try List.combine imm1 imm2 
+        with Invalid_argument _ -> failwith "Immutable.ml, compatible_at_field_lvl" in
       let comp = List.fold_left (fun comp (i1,i2) -> 
           match i1, i2 with
             | CP.ConstAnn(Accs), a -> true && comp
@@ -2087,8 +2099,10 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
       let () = x_tinfo_hp (add_str "imm:" (pr_list Cprinter.string_of_imm)) pimm no_pos in
       let comp = 
         if (List.length dn.h_formula_data_param_imm == List.length (pimm) ) then 
-          let imm = List.combine dn.h_formula_data_param_imm pimm in
-                let () = x_tinfo_hp (add_str "imm:" (pr_list (pr_pair Cprinter.string_of_imm Cprinter.string_of_imm))) imm no_pos in
+          let imm = 
+            try List.combine dn.h_formula_data_param_imm pimm 
+            with Invalid_argument _ -> failwith "Immutable.ml, compatible_at_field_lvl" in
+          let () = x_tinfo_hp (add_str "imm:" (pr_list (pr_pair Cprinter.string_of_imm Cprinter.string_of_imm))) imm no_pos in
           let comp = List.fold_left (fun acc (i1,i2) -> 
               match i1, i2 with
               | CP.ConstAnn(Accs), a -> true && acc
@@ -2144,7 +2158,9 @@ let compatible_nodes prog imm1 imm2 h1 h2 unfold_fun qvars emap =
   Debug.no_2 "compatible_nodes" pr pr (pr_triple string_of_bool pr pr_out3) (fun _ _ ->  compatible_nodes prog imm1 imm2 h1 h2 unfold_fun qvars emap ) h1 h2
 
 let partition_eqs_subs lst1 lst2 quantif =
-  let eqs_lst = List.combine lst1 lst2 in
+  let eqs_lst = 
+    try List.combine lst1 lst2 
+    with Invalid_argument _ -> failwith "Immutable.ml, compatible_at_field_lvl" in
   let eqs_lst = List.map (fun (a,b) -> 
       if Gen.BList.mem_eq CP.eq_spec_var a quantif then (a,b)
       else if Gen.BList.mem_eq CP.eq_spec_var b quantif then (b,a)

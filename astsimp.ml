@@ -2263,7 +2263,8 @@ and add_param_ann_constraints_struc (cf: CF.struc_formula) : CF.struc_formula = 
 
 and trans_view (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef : I.view_decl): C.view_decl =
   let pr = Iprinter.string_of_view_decl in
-  let pr_r = Cprinter.string_of_view_decl in
+  let pr_r = Cprinter.string_of_view_decl_short in
+  (* let pr_r = pr_none in  *)
   Debug.no_1 "trans_view" pr pr_r  (fun _ -> trans_view_x prog  mutrec_vnames
                                        transed_views ann_typs vdef) vdef
 
@@ -2280,7 +2281,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
    let tlist = ([(self,{ sv_info_kind = (Named data_name);id = fresh_int () })]@tlist) in
    let (n_tl,cf) = trans_I2C_struc_formula 1 prog false true (self :: vdef.I.view_vars) vdef.I.view_formula (ann_typs@tlist) false
        true (*check_pre*) in
-   let () = Debug.ninfo_hprint (add_str "cf 3" Cprinter.string_of_struc_formula) cf no_pos in
+   let () = Debug.tinfo_hprint (add_str "cf 3" Cprinter.string_of_struc_formula) cf no_pos in
    (* let () = print_string ("cf: "^(Cprinter.string_of_struc_formula cf)^"\n") in *)
    let inv_lock = vdef.I.view_inv_lock in
    let (n_tl,inv_lock) =
@@ -2310,7 +2311,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
        let (n_tl,_) = gather_type_info_exp prog a.IF.mem_formula_exp n_tl new_typ_mem in 
        (n_tl,trans_view_mem vdef.I.view_mem n_tl)
      | None -> (n_tl,None)
-   ) in 
+   ) in
    let inv = if(!Globals.allow_mem) then Mem.add_mem_invariant inv vdef.I.view_mem else inv in
    let n_tl = gather_type_info_pure prog inv n_tl in 
    let inv_pf = x_add trans_pure_formula inv n_tl in   
@@ -2510,8 +2511,8 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
        C.view_prune_conditions_baga = [];
        C.view_ef_pure_disj = None;
        C.view_prune_invariants = []} in
-     (x_dinfo_zp (lazy ("\n" ^ (Cprinter.string_of_view_decl cvdef))) (CF.pos_of_struc_formula cf);
-      cvdef)
+     ( x_dinfo_zp (lazy ("\n" ^ (Cprinter.string_of_view_decl cvdef))) (CF.pos_of_struc_formula cf);
+     cvdef)
    )
   )
 
@@ -7687,11 +7688,11 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     let pos = base.IF.formula_base_pos in
     let (new_h, type_f, newvars1, n_tl) = linearize_heap h pos tl in
     let new_h, new_constr, new_vars = x_add_1 Immutable.normalize_field_ann_heap_node new_h in
-    let newvars = newvars1@new_vars in
+    let newvars1 = newvars1@new_vars in
     let new_vp = trans_vperm_sets vp n_tl pos in
     let new_p = x_add trans_pure_formula p n_tl in
     (* let () = print_string("\nForm: "^(Cprinter.string_of_pure_formula new_p)) in *)
-    let new_p = CP.join_disjunctions (new_p::new_constr) in
+    let new_p = CP.conj_of_list (new_p::new_constr) pos in
     (* let () = print_string("\nForm: "^(Cprinter.string_of_pure_formula new_p)) in *)
     let new_p = x_add Cpure.arith_simplify 5 new_p in
     (* let () = print_string("\nSimpleForm: "^(Cprinter.string_of_pure_formula new_p)) in *)

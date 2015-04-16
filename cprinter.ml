@@ -1302,12 +1302,14 @@ let rec pr_h_formula h =
         (* pr_formula_label_opt pid; *)
         (* An Hoa : Replace the spec-vars at holes with the symbol '-' *)
         pr_spec_var sv; fmt_string "::";
-        (if not(!Globals.allow_field_ann) ||(List.length svs != List.length ann_param)  then pr_angle (c^perm_str) (fun x ->  pr_spec_var x) svs 
-         else pr_angle (c^perm_str) (fun (x,y) -> 
-             (* prints absent field as "#" *)
-             (* if is_absent y then fmt_string "#" *)
-             (* else  *)(pr_spec_var x; pr_imm y)) (List.combine svs ann_param) );
-        (* if (!Globals.allow_imm) then *) pr_imm imm;
+        try
+          (if not(!Globals.allow_field_ann) ||(List.length svs != List.length ann_param)  then pr_angle (c^perm_str) (fun x ->  pr_spec_var x) svs 
+          else pr_angle (c^perm_str) (fun (x,y) -> 
+              (* prints absent field as "#" *)
+              (* if is_absent y then fmt_string "#" *)
+              (* else  *)(pr_spec_var x; pr_imm y)) (List.combine svs ann_param) );
+              (* if (!Globals.allow_imm) then *) pr_imm imm;
+        with Invalid_argument _ -> failwith "Cprinter.ml, List.combine svs ann_param in printing view_def";
         pr_derv dr;
         pr_split split;
         if (hs!=[]) then (fmt_string "("; fmt_string (pr_list string_of_int hs); fmt_string ")");
@@ -1768,7 +1770,9 @@ and prtt_pr_h_formula_inst prog h =
   | HRel (r, args, l) ->
     let hp_name= CP.name_of_spec_var r in
     let hprel = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls hp_name in
-    let ss = List.combine args hprel.Cast.hp_vars_inst in
+    let ss = try List.combine args hprel.Cast.hp_vars_inst 
+    with Invalid_argument _ -> failwith "Cprinter.ml, prtt_pr_h_formula_inst, List.combine args hprel.Cast.hp_vars_inst"
+    in
     let args_inst = List.map (fun (sv,(_,i)) -> (sv,i)) ss in
     if (!Globals.texify) then
       begin
@@ -1939,7 +1943,9 @@ and prtt_pr_h_formula_inst_html prog post_hps h =
     fmt_string s_color;
     let hp_name= CP.name_of_spec_var r in
     let hprel = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls hp_name in
-    let ss = List.combine args hprel.Cast.hp_vars_inst in
+    let ss = try List.combine args hprel.Cast.hp_vars_inst 
+    with Invalid_argument _ -> failwith "Cprinter.ml, prtt_pr_h_formula_inst_html List.combine args hprel.Cast.hp_vars_inst"
+    in
     let args_inst = List.map (fun (sv,(_,i)) -> (sv,i)) ss in
     if (!Globals.texify) then
       begin
@@ -4182,7 +4188,7 @@ let pr_view_decl v =
   pr_mem:=true
 
 
-let pr_view_decl_short v =
+let pr_view_decl_short v = 
   pr_mem:=false;
   (* let f bc = *)
   (*   match bc with *)
@@ -4190,17 +4196,26 @@ let pr_view_decl_short v =
   (*     | Some (s1,s2) -> pr_vwrap "base case: " (fun () -> pr_pure_formula s1;fmt_string "->"; pr_mix_formula s2) () *)
   (* in *)
   fmt_open_vbox 1;
-  (* wrap_box ("B",0) (fun ()-> pr_angle  ("view"^v.view_name) pr_typed_spec_var_lbl  *)
-  (*     (List.combine v.view_labels v.view_vars); fmt_string "= ") (); *)
-  wrap_box ("B",0) (fun ()-> pr_angle  ("view"^v.view_name) pr_typed_view_arg_lbl 
+  (* (\* wrap_box ("B",0) (fun ()-> pr_angle  ("view"^v.view_name) pr_typed_spec_var_lbl  *\) *)
+  (* (\*     (List.combine v.view_labels v.view_vars); fmt_string "= ") (); *\) *)
+  try
+  x_binfo_hp (add_str "view_labels" (pr_list (fun l ->     if LO.is_common l then ""
+    else (LO.string_of l)^":"))) v.view_labels  no_pos;
+  x_binfo_hp (add_str "v.view_params_orig" (pr_list 
+     (pr_pair string_of_typed_view_arg string_of_int)
+      ))
+ v.view_params_orig no_pos;
+
+  wrap_box ("B",0) (fun ()-> pr_angle  ("view"^v.view_name) pr_typed_view_arg_lbl
                        (List.combine v.view_labels (List.map fst v.view_params_orig)); fmt_string "= ") ();
-  fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
-  pr_vwrap  "cont vars: "  pr_list_of_spec_var v.view_cont_vars;
-  pr_vwrap  "inv: "  pr_mix_formula v.view_user_inv;
-  pr_vwrap  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_un_struc_formula;
-  pr_vwrap  "xform: " pr_mix_formula v.view_x_formula;
-  pr_vwrap  "is_recursive?: " fmt_string (string_of_bool v.view_is_rec);
-  pr_vwrap  "view_data_name: " fmt_string v.view_data_name;
+  with Invalid_argument _ -> failwith "Cprinter.ml, pr_view_decl_short, List.combine v.view_labels... ";
+  (* fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula;  *)
+  (* pr_vwrap  "cont vars: "  pr_list_of_spec_var v.view_cont_vars; *)
+  (* pr_vwrap  "inv: "  pr_mix_formula v.view_user_inv; *)
+  (* pr_vwrap  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_un_struc_formula; *)
+  (* pr_vwrap  "xform: " pr_mix_formula v.view_x_formula; *)
+  (* pr_vwrap  "is_recursive?: " fmt_string (string_of_bool v.view_is_rec); *)
+  (* pr_vwrap  "view_data_name: " fmt_string v.view_data_name; *)
   fmt_close_box ();
   pr_mem:=true
 
@@ -4208,8 +4223,10 @@ let pr_view_decl_short v =
 let slk_view_decl v =
   pr_mem := false;
   fmt_open_vbox 1;
+  try
   wrap_box ("B", 0) (fun () -> pr_angle ("pred " ^ v.view_name) pr_typed_spec_var_lbl
                         (List.combine v.view_labels v.view_vars); fmt_string " == ") ();
+  with Invalid_argument _ -> failwith "Cprinter.ml, slk_view_decl - List.combine";
   fmt_cut (); wrap_box ("B", 0) slk_struc_formula_view v.view_formula; 
   pr_vwrap  "inv "  pr_mix_formula v.view_user_inv;
   fmt_string ".";
@@ -4224,8 +4241,10 @@ let pr_view_decl_clean v =
     | Some (s1,s2) -> pr_vwrap "base case: " (fun () -> pr_pure_formula s1;fmt_string "->"; pr_mix_formula s2) ()
   in
   fmt_open_vbox 1;
+  try
   wrap_box ("B",0) (fun ()-> pr_angle  ("view "^v.view_name) pr_typed_spec_var_lbl
                        (List.combine v.view_labels v.view_vars); fmt_string " = ") ();
+  with Invalid_argument _ -> failwith "Cprinter.ml, pr_view_decl_clean - List.combine";
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula;
   pr_vwrap  "inv: "  pr_mix_formula v.view_user_inv;
   fmt_close_box ();
