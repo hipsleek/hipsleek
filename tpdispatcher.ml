@@ -3268,11 +3268,11 @@ let imply_timeout_helper ante conseq process ante_inner conseq_inner imp_no time
        (* let ante = CP.drop_varperm_formula ante in     *)
        let res1 =
          if (not (CP.is_formula_arith ante))&& (CP.is_formula_arith conseq) then
-           let res1 = tp_imply(*_debug*) (CP.drop_bag_formula ante) conseq imp_no timeout process in
+           let res1 = x_add tp_imply(*_debug*) (CP.drop_bag_formula ante) conseq imp_no timeout process in
            if res1 then res1
-           else tp_imply(*_debug*) ante conseq imp_no timeout process
+           else x_add tp_imply(*_debug*) ante conseq imp_no timeout process
          else 
-           tp_imply(*_debug*) ante conseq imp_no timeout process 
+           x_add tp_imply(*_debug*) ante conseq imp_no timeout process 
        in
        let () = x_dinfo_hp (add_str "res: " string_of_bool) res1 no_pos in
        let l1 = CP.get_pure_label ante in
@@ -3343,7 +3343,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
           if (CP.rhs_needs_or_split conseq)&& not (no_andl ante) && !label_split_conseq then
             let conseq_disj = CP.split_disjunctions conseq in
             List.fold_left (fun (r1,r2,r3) d -> 
-                if not r1 then imply_timeout_helper ante d process ante_inner conseq_inner imp_no timeout
+                if not r1 then x_add imply_timeout_helper ante d process ante_inner conseq_inner imp_no timeout
                 else (r1,r2,r3) ) (false,[],None) conseq_disj 
           else imply_timeout_helper ante conseq process ante_inner conseq_inner imp_no timeout
     end;
@@ -3504,7 +3504,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 let imply_timeout ante0 conseq0 imp_no timeout do_cache process =
   let s = "imply" in
   let () = Gen.Profiling.push_time s in
-  let (res1,res2,res3) = imply_timeout ante0 conseq0 imp_no timeout do_cache process in
+  let (res1,res2,res3) = x_add imply_timeout ante0 conseq0 imp_no timeout do_cache process in
   let () = Gen.Profiling.pop_time s in
   if res1  then Gen.Profiling.inc_counter "true_imply_count" else Gen.Profiling.inc_counter "false_imply_count" ; 
   (res1,res2,res3)
@@ -3522,7 +3522,7 @@ let memo_imply_timeout ante0 conseq0 imp_no timeout =
         let l = List.filter (fun d -> (List.length (Gen.BList.intersect_eq CP.eq_spec_var c.memo_group_fv d.memo_group_fv))>0) ante0 in
         let ant = MCP.fold_mem_lst_m (CP.mkTrue no_pos) true (*!no_LHS_prop_drop*) true l in
         let con = MCP.fold_mem_lst_m (CP.mkTrue no_pos) !no_RHS_prop_drop false [c] in
-        let r1',r2',r3' = imply_timeout ant con imp_no timeout false None in 
+        let r1',r2',r3' = x_add imply_timeout ant con imp_no timeout false None in 
         (r1',r2@r2',r3')) (true, [], None) conseq0 in
   let () = Gen.Profiling.pop_time "memo_imply" in
   r
@@ -3552,7 +3552,7 @@ let rec imply_one i ante0 conseq0 imp_no do_cache process =
     (fun (r, _, _) -> string_of_bool r)
     (fun ante0 conseq0 -> imply_x ante0 conseq0 imp_no do_cache process) ante0 conseq0
 
-and imply_x ante0 conseq0 imp_no do_cache process = imply_timeout ante0 conseq0 imp_no !imply_timeout_limit do_cache process ;;
+and imply_x ante0 conseq0 imp_no do_cache process = x_add imply_timeout ante0 conseq0 imp_no !imply_timeout_limit do_cache process ;;
 
 let simpl_imply_raw_x ante conseq =
   let (r,_,_)= imply_one 0 ante conseq "0" false None in
@@ -3562,9 +3562,16 @@ let simpl_imply_raw ante conseq =
   Debug.no_2 "simpl_imply_raw" (Cprinter.string_of_pure_formula)(Cprinter.string_of_pure_formula) string_of_bool
     simpl_imply_raw_x ante conseq
 
-let memo_imply ante0 conseq0 imp_no = memo_imply_timeout ante0 conseq0 imp_no !imply_timeout_limit ;;
+let memo_imply ante0 conseq0 imp_no = x_add memo_imply_timeout ante0 conseq0 imp_no !imply_timeout_limit ;;
 
-let mix_imply ante0 conseq0 imp_no = mix_imply_timeout ante0 conseq0 imp_no !imply_timeout_limit ;;
+let mix_imply ante0 conseq0 imp_no = x_add mix_imply_timeout ante0 conseq0 imp_no !imply_timeout_limit ;;
+
+let mix_imply ante0 conseq0 imp_no =
+  Debug.no_3 "mix_imply"
+    (Cprinter.string_of_mix_formula)
+    (Cprinter.string_of_mix_formula) pr_id
+    (fun (r,_,_) -> string_of_bool r)
+    mix_imply ante0 conseq0 imp_no
 
 (* CP.formula -> string -> 'a -> bool *)
 let is_sat f sat_no do_cache =
@@ -4051,7 +4058,7 @@ let is_sat_raw (f: MCP.mix_formula) =
   is_sat_mix_sub_no f (ref 9) true true
 
 let imply_raw ante conseq =
-  let (res,_,_) = mix_imply (MCP.mix_of_pure ante) (MCP.mix_of_pure conseq) "999" in
+  let (res,_,_) = x_add mix_imply (MCP.mix_of_pure ante) (MCP.mix_of_pure conseq) "999" in
   res
 
 let imply_raw ante conseq =
@@ -4059,11 +4066,15 @@ let imply_raw ante conseq =
   Debug.no_2 "imply_raw" pr pr string_of_bool imply_raw ante conseq
 
 let imply_raw_mix ante conseq =
-  let (res,_,_) = mix_imply ante conseq "99" in
+  let (res,_,_) = x_add mix_imply ante conseq "99" in
   res
 
+let imply_raw_mix ante conseq =
+  let pr = Cprinter.string_of_mix_formula in
+  Debug.no_2 "imply_raw_mix" pr pr string_of_bool imply_raw_mix ante conseq
+
 let check_diff xp0 xp1 =
-  let (x,_,_) = mix_imply xp0 xp1 "check_diff" in x
+  let (x,_,_) = x_add mix_imply xp0 xp1 "check_diff" in x
 
 let check_diff xp0 xp1 =
   let pr1 = Cprinter.string_of_mix_formula in

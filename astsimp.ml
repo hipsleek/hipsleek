@@ -1905,7 +1905,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
              x_tinfo_hp (add_str "baga_over(unfolded)" (pr_option Excore.EPureI.string_of_disj)) u_b pos;
              vdef.C.view_baga_x_over_inv <- u_b ;
              vdef.C.view_x_formula <- xform2;
-             vdef.C.view_xpure_flag <- TP.check_diff vdef.C.view_user_inv xform2
+             vdef.C.view_xpure_flag <- x_add TP.check_diff vdef.C.view_user_inv xform2
            end
          ;
          vdef.C.view_addr_vars <- addr_vars;
@@ -2405,7 +2405,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
      x_dinfo_hp (add_str "new_pf" Cprinter.string_of_pure_formula) new_pf no_pos;
      let memo_pf_P = MCP.memoise_add_pure_P (MCP.mkMTrue pos) new_pf in
      let memo_pf_N = MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_pf in
-     let xpure_flag = TP.check_diff memo_pf_N memo_pf_P in
+     let xpure_flag = x_add TP.check_diff memo_pf_N memo_pf_P in
      let view_kind = trans_view_kind vdef.I.view_kind in
      let vn = vdef.I.view_name in
      let () = if view_kind = Cast.View_PRIM then CF.view_prim_lst # push vn  in

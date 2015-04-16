@@ -14193,7 +14193,7 @@ and prop_w_coers_x prog (estate: CF.entail_state) (coers: coercion_decl list)
           let mg = List.find (fun m -> Gen.BList.subset_eq CP.eq_spec_var [v1; v2] m.memo_group_fv) mp in
           let eset = mg.memo_group_aset in
           if (CP.EMapSV.is_equiv eset v1 v2) then true
-          else TP.imply_raw_mix (MCP.mix_of_memo [mg]) (MCP.mix_of_pure (CP.mkEqVar v1 v2 no_pos))
+          else x_add TP.imply_raw_mix (MCP.mix_of_memo [mg]) (MCP.mix_of_pure (CP.mkEqVar v1 v2 no_pos))
         with _ -> false
     in
     let m_lhs_p = MCP.memo_of_mix lhs_p in 
@@ -14219,7 +14219,7 @@ and prop_w_coers_x prog (estate: CF.entail_state) (coers: coercion_decl list)
       let diff = Gen.BList.difference_eq CP.eq_spec_var in
       let evars = diff (CF.fv rhs) inst_vars in
       let rhs_p = MCP.memo_pure_push_exists evars coer_guard in
-      let r = TP.imply_raw_mix e_lhs_p rhs_p in
+      let r = x_add TP.imply_raw_mix e_lhs_p rhs_p in
       if r then Some (inst_vars, lhs_h_rest, e_lhs_p, lhs_fl)
       else None
   (* let lhs_new = mkBase lhs_h e_lhs_p TypeTrue lhs_fl [] no_pos in                           *)

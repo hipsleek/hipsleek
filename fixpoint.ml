@@ -50,7 +50,7 @@ let rev_imply_formula f1 f2 = match (f1,f2) with
     (*    let p1 = MCP.pure_of_mix p1 in*)
     (*    let p2 = MCP.pure_of_mix p2 in*)
     let res = eqHeap h1 h2 && fl1=fl2 && b1=b2 && t1=t2 in
-    let res1 = TP.imply_raw_mix p1 p2 in
+    let res1 = x_add TP.imply_raw_mix p1 p2 in
     if res then
       if res1 then true
       else false
