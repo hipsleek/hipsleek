@@ -509,7 +509,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       let () = x_dinfo_zp (lazy ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n")) pos_spec in
       let new_base = match pre with
         | [] -> b.CF.formula_struc_base
-        | [p] -> (pre_ctr # inc; Fixpoint.simplify_pre (x_add CF.normalize 1 b.CF.formula_struc_base p pos_spec) [])
+        | [p] -> (pre_ctr # inc; Fixpoint.simplify_pre (x_add CF.normalize 1 b.CF.formula_struc_base p pos_spec) [] [])
         | _ -> report_error pos_spec ("Spec has more than 2 pres but only 1 post") in
       x_tinfo_hp (add_str "Base" !CF.print_formula) b.CF.formula_struc_base no_pos;
       x_tinfo_hp (add_str "New Base" !CF.print_formula) new_base no_pos;
@@ -1410,7 +1410,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     end;
                   if CF.isSuccessListFailescCtx_new rs then 
                     begin
-                      Debug.print_info "assert" (s ^(if (CF.isNonFalseListFailescCtx ts) then " : ok\n" else ": unreachable\n")) pos;
+                      let rels = Infer.collect_rel_list_failesc_context rs in
+                      Infer.infer_rel_stk # push_list rels;
+                      Log.current_infer_rel_stk # push_list rels;
+                      let hp_rels = Infer.collect_hp_rel_list_failesc_context rs in
+                      let cond_msg = if (hp_rels=[]) && (rels)=[] then "" else " (conditional)" in
+                      Debug.print_info "assert" (s ^(if (CF.isNonFalseListFailescCtx ts) then " : ok" ^ cond_msg ^ "\n" else ": unreachable\n")) pos;
                       x_dinfo_pp (*print_info "assert"*) ("Residual:\n" ^ (Cprinter.string_of_list_failesc_context rs)) pos; 
                       (* WN_2_Loc: put xpure of asserted by fn below  *)
                       let xp = get_xpure_of_formula c1_o in

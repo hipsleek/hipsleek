@@ -3738,6 +3738,14 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
     (*   else *)
     let () = Debug.ninfo_hprint (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
     let result, prf = x_add heap_entail_after_sat_struc 1 prog is_folding has_post ctx conseq tid delayed_f join_id pos pid []  in
+    let inf_rels = Infer.norm_rel_disj result in
+    if inf_rels != [] then
+      begin
+        Infer.infer_rel_stk # push_list inf_rels;
+        Log.current_infer_rel_stk # push_list inf_rels;
+        x_dinfo_pp ">>>>>> norm disj rels <<<<<<" pos;
+        x_dinfo_hp (add_str "Rel Inferred:" (pr_list CP.print_lhs_rhs)) inf_rels pos;
+      end;
     let result = subs_crt_holes_list_ctx result in
     let result = if !Globals.en_norm_ctx then Norm.merge_contexts result else result in
     let () = Debug.ninfo_hprint (add_str "result" Cprinter.string_of_list_context) result no_pos in

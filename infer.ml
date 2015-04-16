@@ -249,6 +249,13 @@ let collect_rel_list_partial_context (ctx:list_partial_context) =
   Debug.no_1 "collect_rel_list_partial_context"  pr1 pr2
     collect_rel_list_partial_context ctx
 
+let collect_rel_list_failesc_context (ctx:list_failesc_context) =
+  let r = List.fold_left (fun acc (_,cl,brs) ->
+      let in_r = List.concat (List.map (fun (_,c,_) -> (collect_rel c) ) brs) in
+      acc@in_r
+  ) []  ctx in
+  r
+
 let collect_hp_rel_list_partial_context (ctx:list_partial_context) =
   let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c,_) -> collect_hp_rel c) cl))  ctx in
   List.concat r
@@ -272,6 +279,8 @@ let collect_hp_rel_list_failesc_context (ctx:list_failesc_context) =
   let r = List.map (fun (bfs,_,cl) -> (List.concat (List.map collect_hp_rel_branch_fail bfs))@
                                       (List.concat (List.map (fun (_,c,_) -> collect_hp_rel c) cl)))  ctx in
   List.concat r
+
+
 
 (* let collect_hp_rel_list_partial_context (ctx:list_partial_context) = *)
 (*   let pr1 = !CF.print_list_partial_context in *)
@@ -1839,7 +1848,95 @@ let detect_lhs_rhs_contra2 ivs lhs_c rhs_mix pos =
     (add_str "(res,new_rhs)" pr)
     (fun _ _ _ -> detect_lhs_rhs_contra2 ivs lhs_c rhs_mix pos) ivs lhs_c rhs_mix
 
+
+let norm_rel_disj_x rs=
+  (**********INTERNAL************)
+  let rec lookup_same_rhs_x ((_,_,rhs) as a) rest same_res rems=
+    match rest with
+      | [] -> (same_res, rems)
+      | xs::ss -> begin
+            let same_rhs,xs_rest = List.partition (fun (_,_,rhs1) ->
+                let b = CP.equalFormula rhs rhs1 in
+                b
+            ) xs in
+            let fst_same_rhs, tl_same_rhs = match same_rhs with
+              | [] -> [],[]
+              | x::ys -> [x],ys
+            in
+            lookup_same_rhs_x a ss (same_res@fst_same_rhs) (rems@[(xs_rest@tl_same_rhs)])
+        end
+  in
+  let lookup_same_rhs a rest same_res rems=
+    let pr1 = print_lhs_rhs in
+    let pr2 = pr_list_ln pr1 in
+    let pr3 = (pr_list_ln pr2) in
+    Debug.no_2 "norm_rel_disj.lookup_same_rhs" pr1 pr3 (pr_pair pr2 pr3)
+        (fun _ _ -> lookup_same_rhs_x a rest same_res rems)
+        a rest
+  in
+  let rec partition_same lhs_ps rest_lhs_ps res_same rest=
+    match lhs_ps with
+      | [] -> let rest_lhs_ps1 = if rest=[] then rest_lhs_ps else
+          rest::rest_lhs_ps
+        in
+        (res_same, rest_lhs_ps1)
+      | p::ps ->
+            let same_ls,rest_lhs_ps1 = List.fold_left (fun (r1,r2) ps ->
+                let same_ps, diff_ps = List.partition (fun p1 ->
+                    let b = CP.equalFormula p p1 in
+                    b
+                ) ps in
+            (r1@[same_ps], r2@[diff_ps])
+            ) ([],[]) rest_lhs_ps in
+            let n_res_name, n_rest = if List.for_all (fun ps -> ps != []) same_ls
+            then (res_same@[p]), rest
+            else (res_same,rest@[p])
+            in
+            partition_same ps rest_lhs_ps1 n_res_name n_rest
+  in
+  let comb_disj (rcat,lhs,rhs) x_rels=
+    let lhs_ps = CP.list_of_conjs lhs in
+    let rest_lhs_ps = List.map (fun (_,lhs,_) -> CP.list_of_conjs lhs) x_rels in
+    let same_ps, diff_ps_ls = partition_same lhs_ps rest_lhs_ps [] [] in
+    let same_p = CP.conj_of_list same_ps no_pos in
+    let diff_ps = List.map (fun ps -> CP.conj_of_list ps no_pos) diff_ps_ls in
+    let cmb_p = match diff_ps with
+      | [] -> (CP.mkTrue no_pos)
+      | fst_p::tl_ps -> List.fold_left (fun acc p -> CP.mkOr acc p None no_pos) fst_p tl_ps in
+    (rcat,CP.mkAnd same_p cmb_p no_pos ,rhs)
+  in
+  let rec collect_rel_Octx ctx res=
+    match ctx with
+      | Ctx c -> res@[(collect_rel ctx)]
+      | OCtx (c1,c2) -> let res1 = (collect_rel_Octx c1 res) in
+        (collect_rel_Octx c2 res1)
+  in
+  (**********END INTERNAL*********)
+  match rs with
+    | SuccCtx cl -> begin let rels= List.map (fun ctx -> collect_rel_Octx ctx []) cl in
+      match rels with
+        | [] -> []
+        | [xs::rest] -> begin
+            match xs with
+              | [] -> List.concat rest
+              | x::xxs ->
+                    (*for each at the begin, find all same rhs, mk or*)
+                    let x_rels, rest_rems = lookup_same_rhs x rest [] [] in
+                    let x_cmb = comb_disj x x_rels in
+                    x_cmb::xxs@(List.concat rest_rems)
+          end
+        | _ -> List.concat (List.concat rels)
+      end
+    | FailCtx _ -> []
+
+let norm_rel_disj rs=
+  let pr1 = Cprinter.string_of_list_context in
+  let pr2 = pr_list_ln print_lhs_rhs in
+  Debug.no_1 "norm_rel_disj" pr1 pr2
+      (fun _ -> norm_rel_disj_x rs) rs
+
 let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
+
   (* TODO : need to handle pure_branches in future ? *)
   (* if no_infer_rel estate (\* && no_infer_hp_rel estate *\) then (estate,lhs_mix,rhs_mix,None,[]) *)
   (* else *)
@@ -1883,15 +1980,55 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
   let rel_rhs = List.concat rel_rhs_ls in
   let other_rhs = List.concat other_rhs_ls in
   let pr = Cprinter.string_of_pure_formula_list in
-  x_tinfo_hp (add_str "rel_rhs" pr) rel_rhs pos;
-  x_tinfo_hp (add_str "other_rhs" pr) other_rhs pos;
+  x_ninfo_hp (add_str "rel_rhs" pr) rel_rhs pos;
+  x_ninfo_hp (add_str "other_rhs" pr) other_rhs pos;
   if rel_rhs==[] then (
     x_tinfo_pp ">>>>>> infer_collect_rel <<<<<<" pos;
     x_tinfo_pp "no relation in rhs" pos;
     (* let _ = print_endline("if rhs_mix:"^(Cprinter.string_of_mix_formula rhs_mix)) in *)
     (* let _ = print_endline("output 3 rhs_mix_new "^(Cprinter.string_of_mix_formula rhs_mix)) in *)
     (* let _ = print_endline("output  3 lhs_mix "^(Cprinter.string_of_mix_formula lhs_mix)) in *)
-    (estate,lhs_mix,rhs_mix,None,[])
+
+    (* \pure_l /\ rel(v) |- emp & true *)
+    (* filter (\pure_l, v) ==> rel(v) *)
+    let pk = try if proving_kind # is_empty then PK_Unknown else proving_kind#top with _ -> PK_Unknown in
+    if CP.isTrivTerm rhs_p || pk != PK_POST then  (estate,lhs_mix,rhs_mix,None,[])
+    else
+      let _ = DD.ninfo_hprint (add_str "todo" pr_id) "add constraint" pos in
+      let lhs_p0 = MCP.pure_of_mix lhs_mix in
+      let (lhs_p_memo,subs,bvars) = CP.memoise_rel_formula ivs lhs_p0 in
+      let _,rel_lhs = List.split subs in
+      let rel_lhs_n, rel_args = List.fold_left (fun (r1,r2) rel ->
+          let rel_args = CP.get_list_rel_args rel in
+          List.fold_left (fun (l_r1,l_r2) (rel, args) -> l_r1@[rel], l_r2@args) (r1,r2) rel_args
+      ) ([],[]) rel_lhs
+      in
+      let rel_cat =  (CP.RelAssume rel_lhs_n) in
+      let leqs = (MCP.ptr_equations_without_null lhs_mix) in
+      let lhs_p = CP.filter_var lhs_p0 rel_args in
+      let may_drop_svl = CP.diff_svl (CP.fv lhs_p) rel_args in
+      let () = Debug.ninfo_hprint (add_str "rel_args" Cprinter.string_of_spec_var_list) rel_args no_pos in
+      let filter_lhs_p = Cputil.sel_subst lhs_p leqs may_drop_svl in
+      let ex_vars = CP.diff_svl (CP.fv filter_lhs_p) rel_args in
+      let lhs_p_better = x_add_1 TP.simplify_raw
+        (CP.mkExists ex_vars filter_lhs_p None pos) in
+      let _ = DD.ninfo_hprint (add_str "lhs_p_better" !CP.print_formula) lhs_p_better pos in
+      let l1 = (rel_cat, CP.remove_redundant lhs_p_better,rhs_p) in
+      (* DD.info_hprint (add_str "todo: Rel Inferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos; *)
+      let inf_rel_ls = [l1] in
+      (* infer_rel_stk # push_list inf_rel_ls; *)
+      (* Log.current_infer_rel_stk # push_list inf_rel_ls; *)
+      let estate = { estate with es_infer_rel = estate.es_infer_rel@inf_rel_ls;} in
+      if inf_rel_ls != [] then
+        begin
+          x_dinfo_pp ">>>>>> infer_collect_rel <<<<<<" pos;
+          x_tinfo_hp (add_str "Infer Rel Ids" !print_svl) ivs pos;
+          x_tinfo_hp (add_str "LHS pure" !CP.print_formula) lhs_p pos;
+          x_tinfo_hp (add_str "RHS pure" !CP.print_formula) rhs_p pos;
+          x_dinfo_hp (add_str "Rel Inferred:" (pr_list print_lhs_rhs)) inf_rel_ls pos;
+          x_tinfo_hp (add_str "RHS Rel List" (pr_list !CP.print_formula)) rel_rhs pos;
+        end;
+      (estate,lhs_mix,rhs_mix,None,[])
   )
   else
     (* let rhs_p_new = CP.disj_of_list  *)
@@ -1962,16 +2099,16 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
 
       (* Begin - Auxiliary function *)
       let is_bag_cnt = TP.is_bag_constraint lhs in
-      let filter_ass lhs rhs = 
+      let filter_ass lhs rhs =
         let is_sat = if is_bag_cnt then (fun x -> true) else is_sat in
         let (lhs,rhs) = rel_filter_assumption is_sat lhs rhs in
-        (simplify_disj_new lhs,rhs) 
+        (simplify_disj_new lhs,rhs)
       in
       let pairwise_proc lhs =
         let lst = CP.split_conjunctions lhs in
         (* perform pairwise only for disjuncts *)
-        let lst = List.map (fun e -> 
-            if CP.is_disjunct e then TP.pairwisecheck e else e) lst 
+        let lst = List.map (fun e ->
+            if CP.is_disjunct e then TP.pairwisecheck e else e) lst
         in CP.join_conjunctions lst
       in
       let wrap_exists (lhs,rhs) =
