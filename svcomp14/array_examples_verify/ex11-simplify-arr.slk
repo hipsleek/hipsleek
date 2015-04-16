@@ -1,0 +1,7 @@
+//slk_simplify x=1 | x=2. // 1<=x<=2
+
+slk_simplify x=1 & x>0.
+
+slk_simplify a[i]=1 & a[i]>0.
+
+

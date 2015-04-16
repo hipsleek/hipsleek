@@ -200,7 +200,7 @@ let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
           let hp_name = CP.name_of_spec_var hp in
           try
             let () =  Debug.ninfo_pprint (" hp: " ^ (!CP.print_sv hp)) no_pos in
-            let view = C.look_up_view_def_raw 33 cprog.C.prog_view_decls hp_name in
+            let view = x_add C.look_up_view_def_raw 33 cprog.C.prog_view_decls hp_name in
             (ls1,ls2, ls3@[view])
           with _ -> (ls1@[hp], ls2@[def], ls3)
         end
@@ -286,7 +286,7 @@ let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs view_equ
     match rest with
     | [] -> res
     | sv1::rest ->let n_res=
-      if Gen.BList.mem_eq (=) n  inter_pos then res@[sv1] else res
+                    if Gen.BList.mem_eq (=) n  inter_pos then res@[sv1] else res
       in
       retreive_svl_of_inter_svl rest (n+1) inter_pos n_res
   in
@@ -658,10 +658,10 @@ let rec case_struc_formula_trans_x prog dang_hps to_unfold_hps pre_hps post_hps 
                   let sf2 = CF.EBase {b with CF.formula_struc_base = f2;} in
                   let n_parts = if CF.equal_flow_interval fl2 !norm_flow_int then parts else parts2 in
                   let sf3 = recf n_parts fl2 sf2 in
-                  let old_baga_flag = !baga_xpure in
-                  let () = baga_xpure := true in
-                  let guard,_,_=(Cvutil.xpure_symbolic 11 prog f2) in
-                  let () = baga_xpure := old_baga_flag in
+                  let old_baga_flag = !use_baga (* !baga_xpure *) in
+                  let () = use_baga (* baga_xpure *) := true in
+                  let guard,_,_=(x_add Cvutil.xpure_symbolic 11 prog f2) in
+                  let () = use_baga (* baga_xpure *) := old_baga_flag in
                   let p_guard = CP.remove_redundant (MCP.pure_of_mix guard) in
                   let sf4 = elim_dup_with_guard p_guard sf3 in
                   (p_guard, sf4)
@@ -944,7 +944,7 @@ let plug_shape_into_specs_x cprog iprog dang_hps proc_names pre_hps post_hps hp_
             let f = CF.disj_of_list (List.map fst hp_def.CF.def_rhs) no_pos in
             let simp_hps = if not (CF.is_disj f) then r_simp_hps@[hp] else r_simp_hps in
             try
-              let todo_unk = Cast.look_up_view_def_raw 33 cprog.Cast.prog_view_decls
+              let todo_unk = x_add Cast.look_up_view_def_raw 33 cprog.Cast.prog_view_decls
                   (Cpure.name_of_spec_var hp)
               in
               (r_hp_defs, r_unk_hps, simp_hps)

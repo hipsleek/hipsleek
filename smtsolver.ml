@@ -142,7 +142,8 @@ let rec smt_of_exp a =
   | CP.Bptriple _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (Bptriple should not appear here)")
   | CP.ArrayAt (a, idx, l) -> 
     List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
-  | CP.InfConst _ -> Error.report_no_pattern ()
+  | CP.NegInfConst _ 
+  | CP.InfConst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (infconst should not appear here)")
   | CP.Template t -> smt_of_exp (CP.exp_of_template t)
 
 let rec smt_of_b_formula b =
@@ -213,13 +214,13 @@ let rec smt_of_b_formula b =
 (* | CP.XPure _ -> Error.report_no_pattern () *)
 
 let rec smt_of_formula pr_w pr_s f =
-  let () = Debug.devel_hprint (add_str "f(smt)" !CP.print_formula) f no_pos in
+  let () = x_dinfo_hp (add_str "f(smt)" !CP.print_formula) f no_pos in
   let rec helper f= (
     match f with
     | CP.BForm ((b,_) as bf,_) -> (
         match (pr_w b) with
-        | None -> let () = Debug.devel_pprint ("NONE #") no_pos in (smt_of_b_formula bf)
-        | Some f -> let () = Debug.devel_pprint ("SOME #") no_pos in helper f
+        | None -> let () = x_dinfo_pp ("NONE #") no_pos in (smt_of_b_formula bf)
+        | Some f -> let () = x_dinfo_pp ("SOME #") no_pos in helper f
       )
     | CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
     | CP.And (p1, p2, _) -> "(and " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
@@ -295,7 +296,7 @@ and collect_bformula_info b = match b with
 
 and combine_formula_info if1 if2 =
   { relations = List.append if1.relations if2.relations;
-    axioms = List.append if1.axioms if2.axioms; }
+    axioms = Gen.BList.remove_dups_eq (=) (List.append if1.axioms if2.axioms); }
 
 and compact_formula_info info =
   { relations = Gen.BList.remove_dups_eq (=) info.relations;
@@ -322,7 +323,7 @@ let add_axiom h dir c =
        2)   Add all other relations (appearing in h and c) to the list of related relations *)
     global_rel_defs := List.map (fun x ->
         if (List.mem x.rel_name related_relations) then
-          let rs = Gen.BList.remove_dups_eq (=) (x.related_rels @ related_relations) in
+          let rs = Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 =0) (x.related_rels @ related_relations) in
           { x with 
             related_rels = rs;
             related_axioms = x.related_axioms @ [aindex]; }
@@ -330,8 +331,10 @@ let add_axiom h dir c =
       ) !global_rel_defs;
     (* Cache the SMT input for 'h dir c' so that we do not have to generate this over and over again *)
     let params = List.append (CP.fv h) (CP.fv c) in
+    (* let _ = print_endline ("params : " ^ (!CP.print_svl params) ^ "\n") in *)
     let rel_ids = List.map (fun r -> CP.SpecVar(RelT[],r.rel_name,Unprimed)) !global_rel_defs in
     let params = Gen.BList.difference_eq CP.eq_spec_var params rel_ids in
+    (* let _ = print_endline ("params : " ^ (!CP.print_svl params) ^ "\n") in *)
     let params = Gen.BList.remove_dups_eq CP.eq_spec_var params in
     let smt_params = String.concat " " (List.map smt_of_typed_spec_var params) in
     let op = match dir with 
@@ -346,6 +349,7 @@ let add_axiom h dir c =
       (if params = [] then "" else ")") (* close the forall if added *) ^ ")\n" (* close the assert *) 
     ) in
     (* Add 'h dir c' to the global axioms *)
+    (* let _ = print_endline ("cache_smt_input : " ^ cache_smt_input ^ "\n") in *)
     let new_axiom = {
       axiom_direction = dir;
       axiom_hypothesis = h;
@@ -490,8 +494,8 @@ let rec collect_output chn accumulated_output : string list =
   output
 
 let sat_type_from_string r input =
-  if (r = "sat") then Sat
-  else if (r = "unsat") then UnSat
+  if (String.compare r "sat" == 0) then Sat
+  else if (String.compare r "unsat" == 0) then UnSat
   else
     try
       let todo_var_unknown:int = Str.search_forward (Str.regexp "unexpected") r 0 in
@@ -523,16 +527,16 @@ let parse_model_to_pure_formula model =
       helper new_acc (List.tl (List.tl model))
   in
   let pf = helper (Cpure.mkTrue no_pos) (List.tl model) in
-  let () = Debug.binfo_pprint ("counter example: " ^ (!print_pure pf)) no_pos in
+  let () = x_binfo_pp ("counter example: " ^ (!print_pure pf)) no_pos in
   pf
 
 let iget_answer2 chn input =
   let output = icollect_output2 chn [] in
   let solver_sat_result = List.hd output (* List.nth output (List.length output - 1) *) in
-  let () = Debug.binfo_pprint ("solver_sat_result: " ^ solver_sat_result) no_pos in
+  let () = x_binfo_pp ("solver_sat_result: " ^ solver_sat_result) no_pos in
   let model = List.tl output in
-  let () = Debug.binfo_pprint "model:" no_pos in
-  let unknown = List.map (fun s -> Debug.binfo_pprint s no_pos) model in
+  let () = x_binfo_pp "model:" no_pos in
+  let unknown = List.map (fun s -> x_binfo_pp s no_pos) model in
   let _ =
     if solver_sat_result = "sat" then
       parse_model_to_pure_formula model
@@ -543,10 +547,26 @@ let iget_answer2 chn input =
     sat_result = sat_type_from_string solver_sat_result input; }
 
 let iget_answer chn input =
+  let check_error_msg s=
+    try
+      (* let _ = print_endline ("s : " ^ s) in *)
+      let _ = Str.search_forward (Str.regexp "error ") s 0 in
+      let _ = Error.report_warning { Error.error_loc = no_pos; Error.error_text =("Z3 error message: "^s)} in
+      true
+    with _ -> false
+  in
   let output = icollect_output chn [] in
   let solver_sat_result = List.nth output (List.length output - 1) in
+  let last_z3_sat_type = sat_type_from_string solver_sat_result input in
+  let st = if List.length output > 1 then
+      try
+        let b = List.fold_left (fun old_b s -> old_b || (check_error_msg s)) false output in
+        (* if b then Sat else *) last_z3_sat_type
+      with _ -> last_z3_sat_type
+    else last_z3_sat_type
+  in
   { original_output_text = output;
-    sat_result = sat_type_from_string solver_sat_result input; }
+    sat_result =  st; }
 
 let get_answer chn input =
   let output = collect_output chn [] in
@@ -581,8 +601,10 @@ let prover_process = ref {
   }
 
 
-let smtsolver_path = if !compete_mode then ref "./z3-4.3.2" else ref "z3-4.3.2" (* "z3" *)
-
+(* let smtsolver_path = if !compete_mode then ref "./z3" (\* "./z3-4.3.2" *\) else ref (\* "z3-4.3.2" *\) "z3" *)
+(* let local_oc = "./z3" (\* "./z3-4.3.2" *\) *)
+(* let global_oc = "z3" (\* "/usr/bin/z3" *\) (\* "/usr/bin/z3-4.3.2" *\) *)
+(* let smtsolver_path = if !compete_mode then ref "./z3-4.3.2" else ref "z3-4.3.2" (\* "z3" *\) *)
 
 let local_oc = "./z3-4.3.2"
 let global_oc = "/usr/bin/z3-4.3.2"
@@ -590,10 +612,10 @@ let global_oc = "/usr/bin/z3-4.3.2"
 let smtsolver_path = 
   if (Sys.file_exists local_oc) then ref local_oc
   else if (Sys.file_exists global_oc)  then ref global_oc
-  else 
-    begin
-      print_endline_quiet ("ERROR : "^global_oc^" cannot be found!!"); ref (global_oc^"_cannot_be_found":string)
-    end
+  else ref "z3"
+    (* begin *)
+    (*   print_endline_quiet ("ERROR : "^global_oc^" cannot be found!!"); ref (global_oc^"_cannot_be_found":string) *)
+    (* end *)
 
 (***********)
 let test_number = ref 0
@@ -757,8 +779,10 @@ let string_of_logic logic =
   | UFNIA -> "UFNIA"
 
 (* output for smt-lib v2.0 format *)
-let to_smt_v2 pr_weak pr_strong ante conseq fvars info =
+let to_smt_v2 pr_weak pr_strong ante conseq fvars0 info =
   (* Variable declarations *)
+  (*let _ = List.map (fun c -> print_string(" "^(!print_ty_sv c))) fvars in*)
+  let fvars = List.filter (fun sv -> not (Cpure.is_rel_typ sv)) (Cpure.remove_dups_svl fvars0) in
   let smt_var_decls = List.map (fun v ->
       let tp = (CP.type_of_spec_var v)in
       let t = smt_of_typ tp in
@@ -769,11 +793,15 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars info =
   let smt_var_decls = String.concat "" smt_var_decls in
   (* Relations that appears in the ante and conseq *)
   let used_rels = info.relations in
-  (* let rel_decls = String.concat "" (List.map (fun x -> x.rel_cache_smt_declare_fun) !global_rel_defs) in *)
+  let rel_decls = String.concat "" (List.map (fun x -> x.rel_cache_smt_declare_fun) !global_rel_defs) in
+  (* let _ = Debug.info_hprint (add_str "rel_decls" (pr_id)) rel_decls no_pos in *)
   let rel_decls = String.concat "" (List.map (fun x -> if (List.mem x.rel_name used_rels) then x.rel_cache_smt_declare_fun else "") !global_rel_defs) in
   (* Necessary axioms *)
   (* let axiom_asserts = String.concat "" (List.map (fun x -> x.axiom_cache_smt_assert) !global_axiom_defs) in *) (* Add all axioms; in case there are bugs! *)
-  let axiom_asserts = String.concat "" (List.map (fun ax_id -> let ax = List.nth !global_axiom_defs ax_id in ax.axiom_cache_smt_assert) info.axioms) in
+  let axiom_asserts = String.concat "" (List.map (fun ax_id ->
+      (* let _ = Debug.info_hprint (add_str " ax_id" (string_of_int))  ax_id no_pos in *)
+      let ax = List.nth !global_axiom_defs ax_id in
+      ax.axiom_cache_smt_assert) info.axioms) in
   (* Antecedent and consequence : split /\ into small asserts for easier management *)
   let ante_clauses = CP.split_conjunctions ante in
   let ante_clauses = Gen.BList.remove_dups_eq CP.equalFormula ante_clauses in
@@ -843,6 +871,7 @@ let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (p
           | _ -> false
         ) ante 
     else ante in
+  let _ = Debug.ninfo_hprint (add_str "ante" !CP.print_formula) ante no_pos in
   let ante_info = collect_formula_info ante in
   let info = combine_formula_info ante_info conseq_info in
   let ante_fv = CP.fv ante in
@@ -900,7 +929,7 @@ let process_stdout_print ante conseq input output res =
         flush stdout;
       );
       if (!(outconfig.print_implication) || !(Globals.print_original_solver_input) || !(Globals.print_original_solver_output)) then
-        print_string "\n";
+        print_string_quiet "\n";
     end
 
 (**************************************************************
@@ -1091,21 +1120,41 @@ and has_exists conseq =
   | CP.Exists _ -> true
   | _ -> false
 
+
+let instantiate_array_vars_before_imply pr_w pr_s ante conseq prover timeout =
+  let c_arr_vars = List.filter CP.is_arr_typ (CP.fv conseq) in
+  let a_arr_vars = List.filter CP.is_arr_typ (CP.fv ante) in
+  let rec helper l1 l2 = match l1 with
+    | [] -> []
+    | x::xs -> (List.map (fun c -> (x,c)) l2)@(helper xs l2) in
+  let all_pairs = helper a_arr_vars c_arr_vars in
+  let all_insts = List.map (fun (a,c) -> CP.mkEqVar a c no_pos) all_pairs in 
+  (*let () = print_endline ("Ante1 : "^ !print_pure ante) in*)
+  List.exists (fun p -> smt_imply pr_w pr_s (CP.mkAnd ante p no_pos) conseq prover timeout) all_insts
+
 (* For backward compatibility, use Z3 as default *
  * Probably, a better way is modify the tpdispatcher.ml to call imply with a
  * specific smt-prover argument as well *)
 let imply ante conseq timeout =
   let (pr_w,pr_s) = CP.drop_complex_ops in
-  smt_imply pr_w pr_s ante conseq Z3 timeout
+  let f  = smt_imply pr_w pr_s ante conseq Z3 timeout in
+  (*let () = print_endline ("Ante3 : "^ !print_pure ante) in*)
+  if (not f && !Globals.allow_array_inst) then instantiate_array_vars_before_imply pr_w pr_s ante conseq Z3 timeout
+  else f
 
 let imply ante conseq timeout =
   Gen.Profiling.no_3 "smt_imply" imply ante conseq timeout
 
-let imply_ops pr_weak pr_strong ante conseq timeout = smt_imply pr_weak pr_strong ante conseq Z3 timeout
+let imply_ops pr_weak pr_strong ante conseq timeout = 
+  let f = smt_imply pr_weak pr_strong ante conseq Z3 timeout in
+  (*let () = print_endline ("Ante2 : "^ !print_pure ante) in*)
+  if (not f && !Globals.allow_array_inst) then instantiate_array_vars_before_imply pr_weak pr_strong ante conseq Z3 timeout
+  else f
 
+(*
 let imply_ops pr_weak pr_strong ante conseq timeout = 
   Gen.Profiling.do_6 "smt_imply_ops" smt_imply pr_weak pr_strong ante conseq Z3 timeout
-
+*)
 let imply_with_check (ante : CP.formula) (conseq : CP.formula) (imp_no : string) timeout: bool option =
   CP.do_with_check2 "" (fun a c -> imply a c timeout) ante conseq
 
@@ -1168,13 +1217,18 @@ let smt_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) (prover: 
     res
 
 (*let default_is_sat_timeout = 2.0*)
-let is_sat_ops pr_weak pr_strong f sat_no = 
+let is_sat_ops_x pr_weak pr_strong f sat_no = 
   smt_is_sat pr_weak pr_strong f sat_no Z3 z3_sat_timeout_limit
 
 (* see imply *)
 let is_sat f sat_no =
   let (pr_w,pr_s) = CP.drop_complex_ops in
   smt_is_sat pr_w pr_s f sat_no Z3 z3_sat_timeout_limit
+
+let is_sat_ops pr_weak pr_strong f sat_no =
+  let pr1 = !CP.print_formula in
+  Debug.no_1 "z3.is_sat_ops" pr1 string_of_bool
+    (fun _ -> is_sat_ops_x pr_weak pr_strong f sat_no) f
 
 let is_sat_with_check (pe : CP.formula) sat_no : bool option = CP.do_with_check "" (fun x -> is_sat x sat_no) pe 
 
@@ -1187,7 +1241,7 @@ let is_sat (pe : CP.formula) sat_no : bool =
     flush stdout;
     failwith s
 
-let is_sat f sat_no = Debug.no_2(* _loop *) "is_sat" (!print_pure) (fun x->x) string_of_bool is_sat f sat_no
+let is_sat f sat_no = Debug.no_2(* _loop *) "z3.is_sat" (!print_pure) (fun x->x) string_of_bool is_sat f sat_no
 
 
 (**

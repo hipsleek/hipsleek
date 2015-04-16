@@ -59,8 +59,10 @@ let set_frontend fe_str = match fe_str  with
 (* arguments/flags that might be used both by sleek and hip *)
 let common_arguments = [
   ("--sctx", Arg.Set Typechecker.simplify_context, "Simplify the context before each execution in symbolic execution."); (* An Hoa *)
-  (*("--sdp", Arg.Set Cprinter.simplify_dprint,
-    "Simplify the entail state before printing the dprint state."); (* An Hoa *) *)
+  ("--sdp", Arg.Set Globals.simplify_dprint,
+   "Simplify the entail state before printing the dprint state."); (* An Hoa *)
+  ("--dis-sdp", Arg.Clear Globals.simplify_dprint,
+   "Disable Simplify the entail state before printing the dprint state."); (* An Hoa *)
   ("-wpf", Arg.Set Globals.print_proof,
    "Print all the verification conditions, the input to external prover and its output.");
   (* ("--ufdp", Arg.Set Solver.unfold_duplicated_pointers, *)
@@ -99,13 +101,13 @@ let common_arguments = [
        Globals.label_aggressive_sat := true ),
    "Shorthand for --lbl-en-aggr.");
   (* UNSAT("":cf,"a":af,"b":bf) 
-         --> UNSAT(cf&af) | UNSAT(cf & bf) *)
+     --> UNSAT(cf&af) | UNSAT(cf & bf) *)
   (* aggressive UNSAT("":cf,"a":af,"b":bf) 
-          --> UNSAT(cd) | UNSAT(af) & UNSAT(bf) *)
+     --> UNSAT(cd) | UNSAT(af) & UNSAT(bf) *)
   (* IMPLY("":cf,"a":af,"b":bf --> "a":ta,"b":tb) 
-          --> IMPLY(cf&af -->ta) & IMPLY (cf&bf-->tb) *)
+     --> IMPLY(cf&af -->ta) & IMPLY (cf&bf-->tb) *)
   (* aggressive IMPLY("":cf,"a":af,"b":bf --> "a":ta,"b":tb) 
-          --> IMPLY(af -->ta) & IMPLY (bf-->tb) *)
+     --> IMPLY(af -->ta) & IMPLY (bf-->tb) *)
   (* ("--en-label-aggr-sat", Arg.Set Globals.label_aggressive_sat, "enable aggressive splitting of labels during unsat"); *)
   (* ("--dis-label-aggr-sat", Arg.Clear Globals.label_aggressive_sat, "disable aggressive splitting of labels during unsat"); *)
   (* ("--en-label-aggr", Arg.Set Globals.label_aggressive_flag, "enable aggressive splitting of labels"); *)
@@ -149,6 +151,10 @@ let common_arguments = [
   ("--constr-filter", Arg.Set Globals.enable_constraint_based_filtering, "Enable assumption filtering based on contraint type");
   ("--no-split-rhs", Arg.Clear Globals.split_rhs_flag,
    "No Splitting of RHS(conseq).");
+  ("--array-expansion", Arg.Set Globals.array_expansion, "Use expansion strategy to deal with array, in code level");
+  ("--array-translate-out",Arg.Set Globals.array_translate, "Translate out array in formula");
+  ("--dis-array-translate-out",Arg.Clear Globals.array_translate, "Disable Translate out array in formula");
+  ("--ato",Arg.Set Globals.array_translate, "shorthand for --array-translate-out");
   ("--dlp", Arg.Clear Globals.check_coercions,
    "Disable Lemma Proving");
   ("--dis-auto-num", Arg.Clear Globals.auto_number,
@@ -263,6 +269,7 @@ let common_arguments = [
   ("--field-imm", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
   ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
   ("--dis-field-imm", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
+  ("--allow-array-inst", Arg.Set Globals.allow_array_inst,"Allow instantiation of existential arrays");
   ("--imm-remove-abs", Arg.Set Globals.remove_abs,"remove @A nodes from formula (incl nodes with all fields ann with @A)");
   ("--en-imm-merge", Arg.Set Globals.imm_merge,"try to merge aliased nodes");
   ("--dis-imm-merge", Arg.Clear Globals.imm_merge,"don't merge aliased nodes");
@@ -272,6 +279,11 @@ let common_arguments = [
    "Enable the use of Memory Specifications");
   ("--dis-mem", Arg.Clear Globals.allow_mem,"Disable the use of Memory Specifications");
   ("--ramify", Arg.Clear Solver.unfold_duplicated_pointers,"Use Ramification (turns off unfold on dup pointers)");
+  ("--gen-coq-file", Arg.Set Globals.gen_coq_file, "Generate a Coq file with all axioms and lemmas to prove for certified reasoning");
+  ("--allow-ramify", Arg.Unit (fun _ -> 
+       Globals.allow_ramify := true; 
+       Solver.unfold_duplicated_pointers := false;)
+  , "Enable Coq based Ramification for Shared Structures");
   ("--infer-mem",Arg.Set Globals.infer_mem,"Enable inference of memory specifications");
   ("--infer-en-raw",Arg.Set Globals.infer_raw_flag,"Enable simplify_raw during pure inference");
   ("--infer-dis-raw",Arg.Clear Globals.infer_raw_flag,"Disable simplify_raw during pure inference");
@@ -293,6 +305,47 @@ let common_arguments = [
        Globals.allow_inf:=true;
        Globals.deep_split_disjuncts:=true
      ),"enable support for infinity (tgt with --dsd) ");
+  ("--en-inf-qe", Arg.Unit( fun _ ->
+       Globals.allow_inf := true;
+       Globals.allow_inf_qe := true;
+       (*Globals.early_contra_flag := false;
+         Globals.simpl_unfold2 := true;
+         Globals.simpl_unfold3 := true;*)
+       (*Globals.elim_exists_flag := false;
+         	Globals.simplify_imply := false;
+         	Globals.filtering_flag := false;*)
+       Globals.ann_vp := false;),
+   "enable support for quantifier elimination in PAinfinity ");
+  ("--en-inf-qe-coq", Arg.Unit( fun _ ->
+       Globals.allow_inf := true;
+       Globals.allow_norm := false;
+       Globals.allow_inf_qe_coq := true;
+       Globals.early_contra_flag := false;
+       (*Globals.simpl_unfold2 := true;
+         Globals.simpl_unfold3 := true;*)
+       (*Globals.elim_exists_flag := false;*)
+       (*Globals.simplify_imply := false;*)
+       (*Globals.filtering_flag := false;*)
+       Globals.ann_vp := false;),
+   "use the quantifier elimination procedure implemented in coq for PAinfinity ");
+  ("--en-inf-qe-coq-simp", Arg.Unit( fun _ ->
+       Globals.allow_inf := true;
+       Globals.allow_norm := false;
+       Globals.allow_inf_qe_coq := true;
+       Globals.allow_inf_qe_coq_simp := true;
+       Globals.early_contra_flag := false;
+       (*Globals.simpl_unfold2 := true;
+         Globals.simpl_unfold3 := true;*)
+       (*Globals.elim_exists_flag := false;*)
+       (*Globals.simplify_imply := false;*)
+       (*Globals.filtering_flag := false;*)
+       Globals.ann_vp := false;),
+   "use the quantifier elimination procedure with simplification implemented in coq for PAinfinity ");
+  ("--en-qe-fix", Arg.Unit( fun _ ->
+       Globals.allow_inf := true;
+       Globals.allow_inf_qe := true;
+       Globals.allow_qe_fix := true;),
+   "use the quantifier elimination procedure for inference ");
   ("--dsd", Arg.Set Globals.deep_split_disjuncts,"enable deep splitting of disjunctions");
   ("--en-disj-conseq", Arg.Set Globals.preprocess_disjunctive_consequence,"enable handle disjunctive consequence");
   ("--ioc", Arg.Set Globals.check_integer_overflow,"Enable Integer Overflow Checker");
@@ -390,20 +443,20 @@ let common_arguments = [
   ("-infer", Arg.String (fun s ->
        Globals.infer_const_obj # set_init_arr s),"Infer constants e.g. @term@pre@post@imm@shape");  (* some processing to check @term,@post *)
   ("-debug", Arg.String (fun s ->
-       Debug.z_debug_file:=s; Debug.z_debug_flag:=true),
+       Debug.z_debug_file:=s; z_debug_flag:=true),
    "Read from a debug log file");
   ("-prelude", Arg.String (fun s ->
        Globals.prelude_file:=Some s),
    "Read from a specified prelude file");
   ("-debug-regexp", Arg.String (fun s ->
-       Debug.z_debug_file:=("$"^s); Debug.z_debug_flag:=true),
+       Debug.z_debug_file:=("$"^s); z_debug_flag:=true),
    "Match logged methods from a regular expression");
   ("-dre", Arg.String (fun s ->
        let _ = print_endline ("!!!-dre "^s) in
-       Debug.z_debug_file:=("$"^s); Debug.z_debug_flag:=true),
+       Debug.z_debug_file:=("$"^s); z_debug_flag:=true),
    "Shorthand for -debug-regexp");
   ("-drea", Arg.String (fun s ->
-       Debug.z_debug_file:=("$.*"); Debug.z_debug_flag:=true;
+       Debug.z_debug_file:=("$.*"); z_debug_flag:=true;
        Debug.mk_debug_arg s),
    "Matched input/output with reg-exp");
   ("-v", Arg.Set Debug.debug_on,
@@ -481,6 +534,7 @@ let common_arguments = [
   ("--en-failure-analysis", Arg.Clear Globals.disable_failure_explaining,"enable failure explanation analysis");
   ("--efa", Arg.Clear Globals.disable_failure_explaining,"shorthand for --en-failure-analysis");
   ("--efa-exc", Arg.Set Globals.enable_error_as_exc,"enable to transform error as exception");
+  ("--dis-efa-exc", Arg.Clear Globals.enable_error_as_exc,"disable to transform error as exception");
   ("--dfa", Arg.Set Globals.disable_failure_explaining,"shorthand for --dis-failure-analysis");
   ("--refine-error", Arg.Set Globals.simplify_error,
    "Simplify the error");
@@ -542,6 +596,8 @@ let common_arguments = [
   ("--dis-post-flow", Arg.Clear Globals.post_infer_flow, "add exception flow as a post-cond parameter for inference");
   ("--dis-assert-check", Arg.Set Globals.dis_ass_chk, "turn off the assertion checking");
   ("--dis-log-filter", Arg.Clear Globals.log_filter, "turn off the log initial filtering");
+  ("--en-weaken-rel", Arg.Set Globals.oc_weaken_rel_flag, "Enable weakening of relation");
+  ("--dis-weaken-rel", Arg.Clear Globals.oc_weaken_rel_flag, "Disable weakening of relation");
 
   (* TermInf: Options for Termination Inference *)
   ("--en-gen-templ-slk", Arg.Set Globals.gen_templ_slk, "Generate sleek file for template inference");
@@ -632,11 +688,14 @@ let common_arguments = [
   ("--dis-unexpected",Arg.Clear Globals.show_unexpected_ents,"do not show unexpected results");
   ("--double-check",Arg.Set Globals.double_check,"double checking new syn baga");
   ("--dis-double-check",Arg.Clear Globals.double_check,"disable double-checking new syn baga");
-  ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view");
+  ("--use-baga",Arg.Set Globals.use_baga,"use baga only (no inv infer)");
+  ("--dis-use-baga",Arg.Clear Globals.use_baga,"disable use baga only (no inv infer)");
+  (* ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view"); *)
+  ("--inv-baga",Arg.Unit (fun _ ->  Globals.use_baga := true; Globals.gen_baga_inv := true),"generate baga inv from view");
   ("--dis-inv-baga",Arg.Clear Globals.gen_baga_inv,"disable baga inv from view");
   ("--pred-sat", Arg.Unit Globals.en_pred_sat ," turn off oc-simp for pred sat checking");
-  ("--baga-xpure",Arg.Set Globals.baga_xpure,"use baga for xpure");
-  ("--dis-baga-xpure",Arg.Clear Globals.baga_xpure,"do not use baga for xpure");
+  ("--baga-xpure",Arg.Set Globals.use_baga (* Globals.baga_xpure *),"use baga for xpure");
+  ("--dis-baga-xpure",Arg.Clear Globals.use_baga (* Globals.baga_xpure *),"do not use baga for xpure");
   (* ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view"); *)
   ("--dis-imm-baga",Arg.Clear Globals.baga_imm,"disable baga inv from view");
   ("--en-imm-baga",Arg.Clear Globals.baga_imm,"disable baga inv from view");

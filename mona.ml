@@ -315,11 +315,11 @@ let solve_constraints_x (cons: order_atom list) (sv_lst: CP.spec_var list)=
     let var1_lst0 = List.map get_lhs_order_atom var1_constr in
     let var1_lst = var1_lst@var1_lst0 in
     (* let pr = pr_list string_of_order_atom in *)
-    (* let () = Debug.tinfo_hprint (add_str "cons" pr) cons no_pos in *)
-    (* let () = Debug.tinfo_hprint (add_str "mo_var_constr" pr) mo_var_constr no_pos in *)
-    (* let () = Debug.tinfo_hprint (add_str "var1_constr" pr) var1_constr no_pos in *)
+    (* let () = x_tinfo_hp (add_str "cons" pr) cons no_pos in *)
+    (* let () = x_tinfo_hp (add_str "mo_var_constr" pr) mo_var_constr no_pos in *)
+    (* let () = x_tinfo_hp (add_str "var1_constr" pr) var1_constr no_pos in *)
     (* let pr = pr_list Cprinter.string_of_spec_var in *)
-    (* let () = Debug.tinfo_hprint (add_str "var1_lst" pr) var1_lst no_pos in *)
+    (* let () = x_tinfo_hp (add_str "var1_lst" pr) var1_lst no_pos in *)
     let var2_lst0 = List.map get_lhs_order_atom var2_constr in
     let var2_lst = var2_lst@var2_lst0 in
     let new_unk_lst = Gen.BList.difference_eq CP.eq_spec_var unk_lst (var1_lst@var2_lst) in
@@ -1389,7 +1389,7 @@ let maybe_restart_mona () : unit =
   end
 
 let prepare_formula_for_mona pr_w pr_s (f: CP.formula) (test_no: int): CP.spec_var list * CP.formula =
-  let simp_f = CP.arith_simplify 8 f in
+  let simp_f =  x_add CP.arith_simplify 8 f in
   let simp_f = (preprocess_formula pr_w pr_s simp_f) in
   let f_fv = CP.fv simp_f in
   let rename_spec_vars_fnct sv = 

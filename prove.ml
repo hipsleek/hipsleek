@@ -215,7 +215,7 @@ module Worker = struct
       try
         Tpdispatcher.set_tp prover;
         match formula with
-        | Tpdispatcher.Sat f -> encode (Tpdispatcher.is_sat f)
+        | Tpdispatcher.Sat f -> encode (x_add Tpdispatcher.is_sat f)
         | Tpdispatcher.Imply (f, g) -> encode (Tpdispatcher.imply f g)
         | Tpdispatcher.Simplify f -> encode (Tpdispatcher.simplify f)
       with e ->

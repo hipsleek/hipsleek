@@ -6,6 +6,7 @@ open Globals
 open VarGen
 open GlobProver
 open Cpure
+open Gen.Basic
 
 let infilename = ref (!tmp_files_path ^ "input.mona." ^ (string_of_int (Unix.getpid ())))
 let resultfilename = ref (!tmp_files_path ^ "result.mona." ^ (string_of_int (Unix.getpid())))
@@ -247,6 +248,8 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
   | Tsconst _ -> failwith ("[setmona.ml]: ERROR in constraints (tsconst should not appear here)")
   | Bptriple _ -> failwith ("[setmona.ml]: ERROR in constraints (Bptriple should not appear here)")
   | Tup2 _ -> failwith ("[setmona.ml]: ERROR in constraints (Tup2 should not appear here)")
+  | NegInfConst _ 
+  | InfConst _ -> failwith ("[setmona.ml]: ERROR in constraints (infconst should not appear here)")
   | Var (sv, _) -> compute_fo_var sv order var_map
   | Level _ -> failwith "[setmona.ml]: level should not appear here"
   | Add (e1, e2, _)
@@ -261,8 +264,8 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
       | IConst _ ->
         compute_fo_exp e2 order var_map
       | _ -> let rr = match e2 with
-        | IConst _ -> compute_fo_exp e1 order var_map
-        | _ -> failwith "[monaset.ml]: nonlinear arithmetic is not suportted."
+          | IConst _ -> compute_fo_exp e1 order var_map
+          | _ -> failwith "[monaset.ml]: nonlinear arithmetic is not suportted."
         in rr
     in r
   | Div (e1, e2, _) -> failwith "[setmona.ml]: divide is not suported."
@@ -296,7 +299,6 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
   | ListReverse _ -> failwith ("Lists are not supported in Mona")
   | Func _ -> failwith ("Functions are not supported in Mona") 
   | ArrayAt _ -> failwith ("Arrays are not supported in Mona") 
-  | InfConst _ -> Error.report_no_pattern()
   | Template t -> 
     let e = exp_of_template t in
     compute_fo_exp e order var_map
@@ -626,9 +628,9 @@ and forall_quant_of_spec_var (sv : spec_var) : string =
 
 and print_var_map var_map =
   let p k i = print_string (k ^ " --> " ^ ((if i = FO then "FO" else "SO")) ^ "\n") in
-  print_string "\n";
+  print_string_quiet "\n";
   H.iter p var_map;
-  print_string "\n"
+  print_string_quiet "\n"
 
 
 and mona_of_formula f0 = mona_of_formula_helper f0

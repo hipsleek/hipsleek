@@ -47,6 +47,8 @@ let rec spass_dfg_of_exp (e0 : Cpure.exp) : (string * string list * string list)
   | Cpure.FConst _    -> illegal_format "SPASS don't support FConst expresion"
   | Cpure.AConst _    -> illegal_format "SPASS don't support AConst expresion"
   | Cpure.Tsconst _   -> illegal_format "SPASS don't support Tsconst expresion"
+  | Cpure.NegInfConst _
+  | Cpure.InfConst _ -> illegal_format "SPASS don't support infconst expresion"
   | Cpure.Bptriple _   -> illegal_format "SPASS don't support Bptriple expresion"
   | Cpure.Tup2 _   -> illegal_format "SPASS don't support Tup2 expresion"
   | Cpure.Add _       -> illegal_format "SPASS don't support Add expresion"
@@ -75,7 +77,6 @@ let rec spass_dfg_of_exp (e0 : Cpure.exp) : (string * string list * string list)
   (* other *)
   | Cpure.Func _      -> illegal_format "SPASS don't support Func expresion"
   | Cpure.Template _      -> illegal_format "SPASS don't support Template expresion"
-  | Cpure.InfConst _ -> Error.report_no_pattern()
 
 (* return b_formula in string * list of functions in string * list of predicates in string *)
 and spass_dfg_of_b_formula (bf : Cpure.b_formula) : (string * string list * string list) =
@@ -194,6 +195,8 @@ let rec spass_tptp_of_exp (e0 : Cpure.exp) : string =
   | Cpure.FConst _    -> illegal_format "SPASS don't support FConst expresion"
   | Cpure.AConst _    -> illegal_format "SPASS don't support AConst expresion"
   | Cpure.Tsconst _   -> illegal_format "SPASS don't support Tsconst expresion"
+  | Cpure.NegInfConst _
+  | Cpure.InfConst _ -> illegal_format "SPASS don't support infconst expresion"
   | Cpure.Bptriple _   -> illegal_format "SPASS don't support Bptriple expresion"
   | Cpure.Tup2 _   -> illegal_format "SPASS don't support Tup2 expresion"
   | Cpure.Add _       -> illegal_format "SPASS don't support Add expresion"
@@ -221,7 +224,7 @@ let rec spass_tptp_of_exp (e0 : Cpure.exp) : string =
   (* other *)
   | Cpure.Func _       -> illegal_format "SPASS don't support Func expresion"
   | Cpure.Template _       -> illegal_format "SPASS don't support Template expresion"
-  | Cpure.Level _ | Cpure.InfConst _ -> Error.report_no_pattern()
+  | Cpure.Level _ -> Error.report_no_pattern()
 
 and spass_tptp_of_b_formula (bf : Cpure.b_formula) : string =
   match bf with
@@ -280,6 +283,8 @@ let rec can_spass_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.FConst _       -> false
   | Cpure.AConst _       -> false
   | Cpure.Tsconst _      -> false
+  | Cpure.NegInfConst _
+  | Cpure.InfConst _ -> false
   (* arithmetic expressions *)
   | Cpure.Add _
   | Cpure.Subtract _
@@ -305,7 +310,7 @@ let rec can_spass_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.ArrayAt _      -> false
   | Cpure.Template _ -> false
   | Cpure.Func (sv, exp_list, _) -> List.for_all (fun e -> can_spass_handle_expression e) exp_list
-  | Cpure.Level _ | Cpure.InfConst _ -> Error.report_no_pattern();
+  | Cpure.Level _
   | Cpure.Tup2 _      -> Error.report_no_pattern();
   | Cpure.Bptriple _      -> Error.report_no_pattern();
 
@@ -662,12 +667,12 @@ let to_spass (ante : Cpure.formula) (conseq : Cpure.formula option) : string =
 
   (* use for debug: print formula in Omega format *)
   (* let omega_temp_f = Cpure.mkOr (mkNot ante None no_pos) conseq None no_pos in
-     let omega_ante = Omega.omega_of_formula ante in
-     let omega_conseq = Omega.omega_of_formula conseq in
+     let omega_ante = x_add Omega.omega_of_formula ante in
+     let omega_conseq = x_add Omega.omega_of_formula conseq in
      let omega_pvars = Omega.get_vars_formula omega_temp_f in
      let omega_vstr = Omega.omega_of_var_list (Gen.BList.remove_dups_eq (=) omega_pvars) in
      let omega_formula  =  "complement {[" ^ omega_vstr ^ "] : (" ^ omega_ante ^ "  ==>  " ^ omega_conseq ^ ")}" ^ ";" ^ Gen.new_line_str in
-     let omega_temp_str = Omega.omega_of_formula omega_temp_f in
+     let omega_temp_str = x_add Omega.omega_of_formula omega_temp_f in
      let omega_temp_formula  =  "complement {[" ^ omega_vstr ^ "] : (" ^ omega_temp_str ^ ")}" ^ ";" ^ Gen.new_line_str in
      let () = print_endline ("-- Input problem in Omega format - omega_temp_str:\n" ^ omega_formula) in
      let () = print_endline ("-- Input problem in Omega format - omega_temp_formula:\n" ^ omega_temp_formula) in *)
@@ -703,10 +708,10 @@ and spass_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool
   let res, should_run_spass =
     if not ((can_spass_handle_formula ante) && (can_spass_handle_formula conseq)) then
       (* for debug *)
-      (* let fomega_ante = Omega.omega_of_formula ante in
+      (* let fomega_ante = x_add Omega.omega_of_formula ante in
          let () = print_endline ("can_spass_handle_formula ante:" ^ fomega_ante ^ ": " ^ 
               (if (can_spass_handle_formula ante) then "true" else "false")) in
-         let fomega_conseq = Omega.omega_of_formula conseq in
+         let fomega_conseq = x_add Omega.omega_of_formula conseq in
          let () = print_endline ("can_spass_handle_formula conseq:" ^ fomega_conseq^ ": " ^ 
               (if (can_spass_handle_formula conseq) then "true" else "false")) in *)
       try
@@ -783,7 +788,7 @@ let spass_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
   let res, should_run_spass =
     if not (can_spass_handle_formula f) then
       (* for debug *)
-      (* let fomega = Omega.omega_of_formula f in
+      (* let fomega = x_add Omega.omega_of_formula f in
          let () = print_endline ("can_spass_handle_formula f: " ^ fomega ^ ": " ^ 
               (if (can_spass_handle_formula f) then "true" else "false")) in
          let () = print_endline "-- use Omega.is_sat..." in *)

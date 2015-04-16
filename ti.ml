@@ -107,14 +107,14 @@ let solve_base_trrels params base_trrels turels =
   let base_cond = simplify_disj base_cond in
   let base_cond = if is_sat base_cond then [Base base_cond] else [] in
   base_cond  
-  (* if !Globals.tnt_infer_lex then base_cond                                *)
-  (* else                                                                    *)
-  (*   let may_cond = List.fold_left (fun ac bctx ->                         *)
-  (*     mkOr ac (mkAnd bctx not_term_cond)) (CP.mkFalse no_pos) base_ctx in *)
-  (*   (* let may_conds = simplify_and_slit_disj may_cond in *)              *)
-  (*   let may_cond = simplify_disj may_cond in                              *)
-  (*   let may_cond = if is_sat may_cond then [MayTerm may_cond] else [] in  *)
-  (*   base_cond @ may_cond                                                  *)
+(* if !Globals.tnt_infer_lex then base_cond                                *)
+(* else                                                                    *)
+(*   let may_cond = List.fold_left (fun ac bctx ->                         *)
+(*     mkOr ac (mkAnd bctx not_term_cond)) (CP.mkFalse no_pos) base_ctx in *)
+(*   (* let may_conds = simplify_and_slit_disj may_cond in *)              *)
+(*   let may_cond = simplify_disj may_cond in                              *)
+(*   let may_cond = if is_sat may_cond then [MayTerm may_cond] else [] in  *)
+(*   base_cond @ may_cond                                                  *)
 
 let solve_base_trrels params base_trrels turels =
   Debug.no_1 "solve_base_trrels" (!CP.print_svl) (pr_list print_trrel_sol)
@@ -185,9 +185,9 @@ let solve_trrel_list params trrels turels =
   (if is_sat unk_cond then [Rec unk_cond] else []) @
   (if is_sat may_cond then [Rec may_cond] else [])
 
-  (* let conds = List.map simplify_trrel_sol conds in                 *)
-  (* let conds = List.concat (List.map split_disj_trrel_sol conds) in *)
-  (* conds                                                            *)
+(* let conds = List.map simplify_trrel_sol conds in                 *)
+(* let conds = List.concat (List.map split_disj_trrel_sol conds) in *)
+(* conds                                                            *)
 
 let case_split_init prog trrels turels = 
   let fn_rels = partition_trels_by_proc trrels turels in
@@ -440,9 +440,9 @@ let solve no_verification_errors should_infer_tnt prog =
   (* If turels is empty then there is no *)
   (* unknown termination behaviors       *)
   if turels = [] && trrels = [] then 
-    Debug.tinfo_pprint ("\n\n!!! Termination Inference is not performed due to empty set of relational assumptions.\n\n") no_pos
+    x_tinfo_pp ("\n\n!!! Termination Inference is not performed due to empty set of relational assumptions.\n\n") no_pos
   else if not no_verification_errors then
-    let () = Debug.tinfo_pprint ("\n\n!!! Termination Inference is not performed due to errors in verification process.\n\n") no_pos in
+    let () = x_tinfo_pp ("\n\n!!! Termination Inference is not performed due to errors in verification process.\n\n") no_pos in
     ()
   else if not should_infer_tnt then ()
   else

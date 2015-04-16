@@ -1,0 +1,583 @@
+!!!-dre xpure\|heap_entail_.*init
+
+!!!Full processing file "ex0-append.ss"
+Parsing file "ex0-append.ss" by default parser...
+
+
+!!! processing primitives "["prelude.ss"]
+
+Starting Omega.../usr/local/bin/oc
+
+!!! **astsimp.ml#2566:Generate baga inv
+
+!!! Predicate ll has precise invariant
+
+!!! **astsimp.ml#2814:infered baga inv(ll):[([], self=null & n=0),
+([self], 1<=n)]
+
+(==cvutil.ml#972==)
+xpure_heap_enum_baga@4@3@2@1
+xpure_heap_enum_baga inp1 : emp
+xpure_heap_enum_baga inp2 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_enum_baga@4 EXIT:[([], true)]
+
+(==cvutil.ml#1632==)
+xpure_heap_mem_enum#6@3@2@1
+xpure_heap_mem_enum#6 inp1 : emp
+xpure_heap_mem_enum#6 inp2 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_mem_enum#6 inp3 :1
+xpure_heap_mem_enum#6@3 EXIT: true #  [[]]
+
+(==solver.ml#7977==)
+xpure_heap_i#9@2@1
+xpure_heap_i#9 inp1 : emp
+xpure_heap_i#9 inp2 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_i#9 inp3 :1
+xpure_heap_i#9@2 EXIT:( true,[], [])#true
+
+(==cvutil.ml#1511==)
+xpure_heap_symbolic_i@7@6@5@1
+xpure_heap_symbolic_i inp1 :1
+xpure_heap_symbolic_i inp2 : emp
+xpure_heap_symbolic_i@7 EXIT:( true,[],true)
+
+(==cvutil.ml#1630==)
+xpure_heap_symbolic#1@6@5@1
+xpure_heap_symbolic#1 inp1 :1
+xpure_heap_symbolic#1 inp2 : emp
+xpure_heap_symbolic#1 inp3 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_symbolic#1@6 EXIT: true## []true
+
+(==solver.ml#7978==)
+xpure_heap_sym_i#19@5@1
+xpure_heap_sym_i#19 inp1 : emp
+xpure_heap_sym_i#19 inp2 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_sym_i#19 inp3 :1
+xpure_heap_sym_i#19@5 EXIT:( true,[], [])#true
+
+(==cvutil.ml#972==)
+xpure_heap_enum_baga@10@9@8@1
+xpure_heap_enum_baga inp1 : emp
+xpure_heap_enum_baga inp2 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_enum_baga@10 EXIT:[([], true)]
+
+(==cvutil.ml#1632==)
+xpure_heap_mem_enum#6@9@8@1
+xpure_heap_mem_enum#6 inp1 : emp
+xpure_heap_mem_enum#6 inp2 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_mem_enum#6 inp3 :0
+xpure_heap_mem_enum#6@9 EXIT: true #  [[]]
+
+(==solver.ml#7983==)
+xpure_heap_i#10@8@1
+xpure_heap_i#10 inp1 : emp
+xpure_heap_i#10 inp2 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_i#10 inp3 :0
+xpure_heap_i#10@8 EXIT:( true,[], [])#true
+
+(==cvutil.ml#1511==)
+xpure_heap_symbolic_i@13@12@11@1
+xpure_heap_symbolic_i inp1 :0
+xpure_heap_symbolic_i inp2 : emp
+xpure_heap_symbolic_i@13 EXIT:( true,[],true)
+
+(==cvutil.ml#1630==)
+xpure_heap_symbolic#1@12@11@1
+xpure_heap_symbolic#1 inp1 :0
+xpure_heap_symbolic#1 inp2 : emp
+xpure_heap_symbolic#1 inp3 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_symbolic#1@12 EXIT: true## []true
+
+(==solver.ml#7984==)
+xpure_heap_sym_i#20@11@1
+xpure_heap_sym_i#20 inp1 : emp
+xpure_heap_sym_i#20 inp2 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_sym_i#20 inp3 :0
+xpure_heap_sym_i#20@11 EXIT:( true,[], [])#true
+
+(==solver.ml#7977==)
+xpure_heap_i#9@2@1
+(==solver.ml#7978==)
+xpure_heap_sym_i#19@5@1
+(==solver.ml#7983==)
+xpure_heap_i#10@8@1
+(==solver.ml#7984==)
+xpure_heap_sym_i#20@11@1
+
+(==astsimp.ml#2003==)
+heap_entail_init@1
+heap_entail_init inp1 : 
+Good Context: length= 1 [es_formula: 
+                          emp&((self=null & n=0) | (self=1 & n=1) | 
+                          (self=1 & 2<=n))&{FLOW,(1,28)=__flow#E}[]
+                         es_infer_vars_rel: []
+                         es_unsat_flag: false] <1>emp&((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))&{FLOW,(1,28)=__flow#E}[]
+[[empty]]
+
+
+
+heap_entail_init inp2 : emp&((self=null & n=0) | (self!=null & 1<=n))&{FLOW,(1,28)=__flow#E}[]
+heap_entail_init@1 EXIT: 
+Good Context: length= 1 [es_formula: 
+                          emp&((self=null & n=0) | (self=1 & n=1) | 
+                          (self=1 & 2<=n))&{FLOW,(1,28)=__flow#E}[]
+                         es_infer_vars_rel: []] <1>emp&((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))&{FLOW,(1,28)=__flow#E}[]
+[[empty]]
+
+
+
+
+(==cvutil.ml#972==)
+xpure_heap_enum_baga@17@16@15@14
+xpure_heap_enum_baga inp1 : emp
+xpure_heap_enum_baga inp2 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_enum_baga@17 EXIT:[([], true)]
+
+(==cvutil.ml#1632==)
+xpure_heap_mem_enum#6@16@15@14
+xpure_heap_mem_enum#6 inp1 : emp
+xpure_heap_mem_enum#6 inp2 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_mem_enum#6 inp3 :1
+xpure_heap_mem_enum#6@16 EXIT: true #  [[]]
+
+(==solver.ml#7977==)
+xpure_heap_i#9@15@14
+xpure_heap_i#9 inp1 : emp
+xpure_heap_i#9 inp2 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_i#9 inp3 :1
+xpure_heap_i#9@15 EXIT:( true,[], [])#true
+
+(==cvutil.ml#1511==)
+xpure_heap_symbolic_i@20@19@18@14
+xpure_heap_symbolic_i inp1 :1
+xpure_heap_symbolic_i inp2 : emp
+xpure_heap_symbolic_i@20 EXIT:( true,[],true)
+
+(==cvutil.ml#1630==)
+xpure_heap_symbolic#1@19@18@14
+xpure_heap_symbolic#1 inp1 :1
+xpure_heap_symbolic#1 inp2 : emp
+xpure_heap_symbolic#1 inp3 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_symbolic#1@19 EXIT: true## []true
+
+(==solver.ml#7978==)
+xpure_heap_sym_i#19@18@14
+xpure_heap_sym_i#19 inp1 : emp
+xpure_heap_sym_i#19 inp2 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_sym_i#19 inp3 :1
+xpure_heap_sym_i#19@18 EXIT:( true,[], [])#true
+
+(==cvutil.ml#972==)
+xpure_heap_enum_baga@23@22@21@14
+xpure_heap_enum_baga inp1 : emp
+xpure_heap_enum_baga inp2 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_enum_baga@23 EXIT:[([], true)]
+
+(==cvutil.ml#1632==)
+xpure_heap_mem_enum#6@22@21@14
+xpure_heap_mem_enum#6 inp1 : emp
+xpure_heap_mem_enum#6 inp2 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_mem_enum#6 inp3 :0
+xpure_heap_mem_enum#6@22 EXIT: true #  [[]]
+
+(==solver.ml#7983==)
+xpure_heap_i#10@21@14
+xpure_heap_i#10 inp1 : emp
+xpure_heap_i#10 inp2 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_i#10 inp3 :0
+xpure_heap_i#10@21 EXIT:( true,[], [])#true
+
+(==cvutil.ml#1511==)
+xpure_heap_symbolic_i@26@25@24@14
+xpure_heap_symbolic_i inp1 :0
+xpure_heap_symbolic_i inp2 : emp
+xpure_heap_symbolic_i@26 EXIT:( true,[],true)
+
+(==cvutil.ml#1630==)
+xpure_heap_symbolic#1@25@24@14
+xpure_heap_symbolic#1 inp1 :0
+xpure_heap_symbolic#1 inp2 : emp
+xpure_heap_symbolic#1 inp3 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_symbolic#1@25 EXIT: true## []true
+
+(==solver.ml#7984==)
+xpure_heap_sym_i#20@24@14
+xpure_heap_sym_i#20 inp1 : emp
+xpure_heap_sym_i#20 inp2 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_sym_i#20 inp3 :0
+xpure_heap_sym_i#20@24 EXIT:( true,[], [])#true
+
+(==astsimp.ml#2015==)
+heap_entail_init@14
+heap_entail_init inp1 : 
+Good Context: length= 1 [es_formula: 
+                          emp&((self=null & n=0) | (self=1 & n=1) | 
+                          (self=1 & 2<=n))&{FLOW,(1,28)=__flow#E}[]
+                         es_infer_vars_rel: []
+                         es_unsat_flag: false] <1>emp&((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))&{FLOW,(1,28)=__flow#E}[]
+[[empty]]
+
+
+
+heap_entail_init inp2 : emp&((self=null & n=0) | (self!=null & 1<=n))&{FLOW,(1,28)=__flow#E}[]
+heap_entail_init@14 EXIT: 
+Good Context: length= 1 [es_formula: 
+                          emp&((self=null & n=0) | (self=1 & n=1) | 
+                          (self=1 & 2<=n))&{FLOW,(1,28)=__flow#E}[]
+                         es_infer_vars_rel: []] <1>emp&((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))&{FLOW,(1,28)=__flow#E}[]
+[[empty]]
+
+
+
+
+(==cvutil.ml#972==)
+xpure_heap_enum_baga@30@29@28@27
+xpure_heap_enum_baga inp1 : emp
+xpure_heap_enum_baga inp2 : ((self=null & n=0) | (self=1 & 1<=n))
+xpure_heap_enum_baga@30 EXIT:[([], true)]
+
+(==cvutil.ml#1632==)
+xpure_heap_mem_enum#6@29@28@27
+xpure_heap_mem_enum#6 inp1 : emp
+xpure_heap_mem_enum#6 inp2 : ((self=null & n=0) | (self=1 & 1<=n))
+xpure_heap_mem_enum#6 inp3 :1
+xpure_heap_mem_enum#6@29 EXIT: true #  [[]]
+
+(==solver.ml#7977==)
+xpure_heap_i#9@28@27
+xpure_heap_i#9 inp1 : emp
+xpure_heap_i#9 inp2 : ((self=null & n=0) | (self=1 & 1<=n))
+xpure_heap_i#9 inp3 :1
+xpure_heap_i#9@28 EXIT:( true,[], [])#true
+
+(==cvutil.ml#1511==)
+xpure_heap_symbolic_i@33@32@31@27
+xpure_heap_symbolic_i inp1 :1
+xpure_heap_symbolic_i inp2 : emp
+xpure_heap_symbolic_i@33 EXIT:( true,[],true)
+
+(==cvutil.ml#1630==)
+xpure_heap_symbolic#1@32@31@27
+xpure_heap_symbolic#1 inp1 :1
+xpure_heap_symbolic#1 inp2 : emp
+xpure_heap_symbolic#1 inp3 : ((self=null & n=0) | (self=1 & 1<=n))
+xpure_heap_symbolic#1@32 EXIT: true## []true
+
+(==solver.ml#7978==)
+xpure_heap_sym_i#19@31@27
+xpure_heap_sym_i#19 inp1 : emp
+xpure_heap_sym_i#19 inp2 : ((self=null & n=0) | (self=1 & 1<=n))
+xpure_heap_sym_i#19 inp3 :1
+xpure_heap_sym_i#19@31 EXIT:( true,[], [])#true
+
+(==cvutil.ml#972==)
+xpure_heap_enum_baga@36@35@34@27
+xpure_heap_enum_baga inp1 : emp
+xpure_heap_enum_baga inp2 : ((self=null & n=0) | (self=1 & 1<=n))
+xpure_heap_enum_baga@36 EXIT:[([], true)]
+
+(==cvutil.ml#1632==)
+xpure_heap_mem_enum#6@35@34@27
+xpure_heap_mem_enum#6 inp1 : emp
+xpure_heap_mem_enum#6 inp2 : ((self=null & n=0) | (self=1 & 1<=n))
+xpure_heap_mem_enum#6 inp3 :0
+xpure_heap_mem_enum#6@35 EXIT: true #  [[]]
+
+(==solver.ml#7983==)
+xpure_heap_i#10@34@27
+xpure_heap_i#10 inp1 : emp
+xpure_heap_i#10 inp2 : ((self=null & n=0) | (self=1 & 1<=n))
+xpure_heap_i#10 inp3 :0
+xpure_heap_i#10@34 EXIT:( true,[], [])#true
+
+(==cvutil.ml#1511==)
+xpure_heap_symbolic_i@39@38@37@27
+xpure_heap_symbolic_i inp1 :0
+xpure_heap_symbolic_i inp2 : emp
+xpure_heap_symbolic_i@39 EXIT:( true,[],true)
+
+(==cvutil.ml#1630==)
+xpure_heap_symbolic#1@38@37@27
+xpure_heap_symbolic#1 inp1 :0
+xpure_heap_symbolic#1 inp2 : emp
+xpure_heap_symbolic#1 inp3 : ((self=null & n=0) | (self=1 & 1<=n))
+xpure_heap_symbolic#1@38 EXIT: true## []true
+
+(==solver.ml#7984==)
+xpure_heap_sym_i#20@37@27
+xpure_heap_sym_i#20 inp1 : emp
+xpure_heap_sym_i#20 inp2 : ((self=null & n=0) | (self=1 & 1<=n))
+xpure_heap_sym_i#20 inp3 :0
+xpure_heap_sym_i#20@37 EXIT:( true,[], [])#true
+
+(==astsimp.ml#2018==)
+heap_entail_init@27
+heap_entail_init inp1 : 
+Good Context: length= 1 [es_formula: emp&((self=null & n=0) | (self=1 & 1<=n))&{FLOW,(1,28)=__flow#E}[]
+                         es_infer_vars_rel: []
+                         es_unsat_flag: false] <1>emp&((self=null & n=0) | (self=1 & 1<=n))&{FLOW,(1,28)=__flow#E}[]
+[[empty]]
+
+
+
+heap_entail_init inp2 : emp&((self=null & n=0) | (self!=null & n=1) | (self!=null & 2<=n))&
+{FLOW,(1,28)=__flow#E}[]
+heap_entail_init@27 EXIT: 
+Good Context: length= 1 [es_formula: emp&((self=null & n=0) | (self=1 & 1<=n))&{FLOW,(1,28)=__flow#E}[]
+                         es_infer_vars_rel: []] <1>emp&((self=null & n=0) | (self=1 & 1<=n))&{FLOW,(1,28)=__flow#E}[]
+[[empty]]
+
+
+
+
+(==cvutil.ml#972==)
+xpure_heap_enum_baga@43@42@41@40
+xpure_heap_enum_baga inp1 : emp
+xpure_heap_enum_baga inp2 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_enum_baga@43 EXIT:[([], true)]
+
+(==cvutil.ml#1632==)
+xpure_heap_mem_enum#6@42@41@40
+xpure_heap_mem_enum#6 inp1 : emp
+xpure_heap_mem_enum#6 inp2 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_mem_enum#6 inp3 :1
+xpure_heap_mem_enum#6@42 EXIT: true #  [[]]
+
+(==solver.ml#7977==)
+xpure_heap_i#9@41@40
+xpure_heap_i#9 inp1 : emp
+xpure_heap_i#9 inp2 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_i#9 inp3 :1
+xpure_heap_i#9@41 EXIT:( true,[], [])#true
+
+(==cvutil.ml#1511==)
+xpure_heap_symbolic_i@46@45@44@40
+xpure_heap_symbolic_i inp1 :1
+xpure_heap_symbolic_i inp2 : emp
+xpure_heap_symbolic_i@46 EXIT:( true,[],true)
+
+(==cvutil.ml#1630==)
+xpure_heap_symbolic#1@45@44@40
+xpure_heap_symbolic#1 inp1 :1
+xpure_heap_symbolic#1 inp2 : emp
+xpure_heap_symbolic#1 inp3 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_symbolic#1@45 EXIT: true## []true
+
+(==solver.ml#7978==)
+xpure_heap_sym_i#19@44@40
+xpure_heap_sym_i#19 inp1 : emp
+xpure_heap_sym_i#19 inp2 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_sym_i#19 inp3 :1
+xpure_heap_sym_i#19@44 EXIT:( true,[], [])#true
+
+(==cvutil.ml#972==)
+xpure_heap_enum_baga@49@48@47@40
+xpure_heap_enum_baga inp1 : emp
+xpure_heap_enum_baga inp2 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_enum_baga@49 EXIT:[([], true)]
+
+(==cvutil.ml#1632==)
+xpure_heap_mem_enum#6@48@47@40
+xpure_heap_mem_enum#6 inp1 : emp
+xpure_heap_mem_enum#6 inp2 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_mem_enum#6 inp3 :0
+xpure_heap_mem_enum#6@48 EXIT: true #  [[]]
+
+(==solver.ml#7983==)
+xpure_heap_i#10@47@40
+xpure_heap_i#10 inp1 : emp
+xpure_heap_i#10 inp2 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_i#10 inp3 :0
+xpure_heap_i#10@47 EXIT:( true,[], [])#true
+
+(==cvutil.ml#1511==)
+xpure_heap_symbolic_i@52@51@50@40
+xpure_heap_symbolic_i inp1 :0
+xpure_heap_symbolic_i inp2 : emp
+xpure_heap_symbolic_i@52 EXIT:( true,[],true)
+
+(==cvutil.ml#1630==)
+xpure_heap_symbolic#1@51@50@40
+xpure_heap_symbolic#1 inp1 :0
+xpure_heap_symbolic#1 inp2 : emp
+xpure_heap_symbolic#1 inp3 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_symbolic#1@51 EXIT: true## []true
+
+(==solver.ml#7984==)
+xpure_heap_sym_i#20@50@40
+xpure_heap_sym_i#20 inp1 : emp
+xpure_heap_sym_i#20 inp2 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))
+xpure_heap_sym_i#20 inp3 :0
+xpure_heap_sym_i#20@50 EXIT:( true,[], [])#true
+
+(==astsimp.ml#2030==)
+heap_entail_init@40
+heap_entail_init inp1 : 
+Good Context: length= 1 [es_formula: 
+                          emp&((self=null & n=0) | (self=1 & n=1) | 
+                          (self=1 & 2<=n))&{FLOW,(1,28)=__flow#E}[]
+                         es_infer_vars_rel: []
+                         es_unsat_flag: false] <1>emp&((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))&{FLOW,(1,28)=__flow#E}[]
+[[empty]]
+
+
+
+heap_entail_init inp2 : emp&((self=null & n=0) | (self!=null & 1<=n))&{FLOW,(1,28)=__flow#E}[]
+heap_entail_init@40 EXIT: 
+Good Context: length= 1 [es_formula: 
+                          emp&((self=null & n=0) | (self=1 & n=1) | 
+                          (self=1 & 2<=n))&{FLOW,(1,28)=__flow#E}[]
+                         es_infer_vars_rel: []] <1>emp&((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n))&{FLOW,(1,28)=__flow#E}[]
+[[empty]]
+
+
+
+
+(==cvutil.ml#1511==)
+xpure_heap_symbolic_i@55@54@53
+xpure_heap_symbolic_i inp1 :1
+xpure_heap_symbolic_i inp2 : emp
+xpure_heap_symbolic_i@55 EXIT:( true,[],true)
+
+(==cvutil.ml#1479==)
+xpure_heap_symbolic#5@54@53
+xpure_heap_symbolic#5 inp1 :1
+xpure_heap_symbolic#5 inp2 : emp
+xpure_heap_symbolic#5 inp3 : self=null & n=0
+xpure_heap_symbolic#5@54 EXIT: true## []true
+
+(==cvutil.ml#1511==)
+xpure_heap_symbolic_i@57@56@53
+xpure_heap_symbolic_i inp1 :1
+xpure_heap_symbolic_i inp2 : self::node<Anon_12,q> * q::ll{}<flted_7_23>
+xpure_heap_symbolic_i@57 EXIT:( self!=null & (((q=null & flted_7_23=0) | (q!=null & 1<=flted_7_23))),[self],true)
+
+(==cvutil.ml#1466==)
+xpure_heap_symbolic#4@56@53
+xpure_heap_symbolic#4 inp1 :1
+xpure_heap_symbolic#4 inp2 : self::node<Anon_12,q> * q::ll{}<flted_7_23>
+xpure_heap_symbolic#4 inp3 : flted_7_23+1=n
+xpure_heap_symbolic#4@56 EXIT: self!=null & (((q=null & flted_7_23=0) | (q!=null & 1<=flted_7_23)))#self# [[self]]true
+
+(==astsimp.ml#1861==)
+xpure_symbolic#1@53
+xpure_symbolic#1 inp1 : 
+ (* lbl: *){216}->emp&self=null & n=0&{FLOW,(1,28)=__flow#E}[]
+ or (* lbl: *){217}->(exists flted_7_23,Anon_12,
+    q: (* lbl: *){217}->self::node<Anon_12,q> * q::ll{}<flted_7_23>&
+    flted_7_23+1=n&{FLOW,(1,28)=__flow#E}[]
+ 
+xpure_symbolic#1@53 EXIT: ((self=null & n=0) | (exists(q:exists(flted_7_23:flted_7_23+1=n & 
+(((q=null & flted_7_23=0) | (q!=null & 1<=flted_7_23))))) & self!=null))#[self]#
+ []
+
+(==cvutil.ml#1511==)
+xpure_heap_symbolic_i@60@59@58
+xpure_heap_symbolic_i inp1 :1
+xpure_heap_symbolic_i inp2 : self::node<Anon_12,q> * q::ll{}<flted_7_23>
+xpure_heap_symbolic_i@60 EXIT:( self!=null & (((q=null & flted_7_23=0) | (q!=null & 1<=flted_7_23))),[self],false)
+
+(==cvutil.ml#1466==)
+xpure_heap_symbolic#4@59@58
+xpure_heap_symbolic#4 inp1 :1
+xpure_heap_symbolic#4 inp2 : self::node<Anon_12,q> * q::ll{}<flted_7_23>
+xpure_heap_symbolic#4 inp3 : flted_7_23+1=n
+xpure_heap_symbolic#4@59 EXIT: self!=null & (((q=null & flted_7_23=0) | (q!=null & 1<=flted_7_23)))#self# [[self]]true
+
+(==astsimp.ml#3008==)
+xpure_symbolic#3@58
+xpure_symbolic#3 inp1 : (* lbl: *){217}->(exists flted_7_23,Anon_12,
+q: (* lbl: *){217}->self::node<Anon_12,q> * q::ll{}<flted_7_23>&flted_7_23+
+1=n&{FLOW,(1,28)=__flow#E}[]
+xpure_symbolic#3@58 EXIT: exists(q:exists(flted_7_23:flted_7_23+1=n & (((q=null & flted_7_23=0) | 
+(q!=null & 1<=flted_7_23))))) & self!=null#[self]#
+ [[self]]
+
+(==cvutil.ml#972==)
+xpure_heap_enum_baga@64@63@62@61
+xpure_heap_enum_baga inp1 : self::node<Anon_12,q> * q::ll{}<flted_7_23>
+xpure_heap_enum_baga inp2 : flted_7_23+1=n
+xpure_heap_enum_baga@64 EXIT:[([self], q=null & flted_7_23=0),
+([q,self], 1<=flted_7_23)]
+
+(==cvutil.ml#920==)
+xpure_heap_mem_enum#3@63@62@61
+xpure_heap_mem_enum#3 inp1 : self::node<Anon_12,q> * q::ll{}<flted_7_23>
+xpure_heap_mem_enum#3 inp2 : flted_7_23+1=n
+xpure_heap_mem_enum#3 inp3 :1
+xpure_heap_mem_enum#3@63 EXIT: ((self=1 & q=null & flted_7_23=0) | (q=1 & self=2 & 1<=flted_7_23)) #  [[]]
+
+(==cvutil.ml#1667==)
+xpure_mem_enum#2@62@61
+xpure_mem_enum#2 inp1 : (* lbl: *){217}->(exists flted_7_23,Anon_12,
+q: (* lbl: *){217}->self::node<Anon_12,q> * q::ll{}<flted_7_23>&flted_7_23+
+1=n&{FLOW,(1,28)=__flow#E}[]
+xpure_mem_enum#2@62 EXIT: exists(q:exists(flted_7_23:flted_7_23+1=n & (((self=1 & q=null & 
+flted_7_23=0) | (q=1 & self=2 & 1<=flted_7_23))))) #  [[self]]
+
+(==solver.ml#2701==)
+xpure#1@61
+xpure#1 inp1 : (* lbl: *){217}->(exists flted_7_23,Anon_12,
+q: (* lbl: *){217}->self::node<Anon_12,q> * q::ll{}<flted_7_23>&flted_7_23+
+1=n&{FLOW,(1,28)=__flow#E}[]
+xpure#1@61 EXIT: exists(q:exists(flted_7_23:flted_7_23+1=n & (((self=1 & q=null & 
+flted_7_23=0) | (q=1 & self=2 & 1<=flted_7_23)))))# [[self]]
+
+(==cvutil.ml#972==)
+xpure_heap_enum_baga@68@67@66@65
+xpure_heap_enum_baga inp1 : emp
+xpure_heap_enum_baga inp2 : self=null & n=0
+xpure_heap_enum_baga@68 EXIT:[([], true)]
+
+(==cvutil.ml#914==)
+xpure_heap_mem_enum#2@67@66@65
+xpure_heap_mem_enum#2 inp1 : emp
+xpure_heap_mem_enum#2 inp2 : self=null & n=0
+xpure_heap_mem_enum#2 inp3 :1
+xpure_heap_mem_enum#2@67 EXIT: true #  [[]]
+
+(==cvutil.ml#1667==)
+xpure_mem_enum#2@66@65
+xpure_mem_enum#2 inp1 : (* lbl: *){216}->emp&self=null & n=0&{FLOW,(1,28)=__flow#E}[]
+xpure_mem_enum#2@66 EXIT: self=null & n=0 #  []
+
+(==solver.ml#2701==)
+xpure#1@65
+xpure#1 inp1 : (* lbl: *){216}->emp&self=null & n=0&{FLOW,(1,28)=__flow#E}[]
+xpure#1@65 EXIT: self=null & n=0# []
+
+(==cvutil.ml#972==)
+xpure_heap_enum_baga@72@71@70@69
+xpure_heap_enum_baga inp1 : self::node<Anon_12,q> * q::ll{}<flted_7_23>
+xpure_heap_enum_baga inp2 : flted_7_23+1=n
+xpure_heap_enum_baga@72 EXIT:[([self], q=null & flted_7_23=0),
+([q,self], 1<=flted_7_23)]
+
+(==cvutil.ml#920==)
+xpure_heap_mem_enum#3@71@70@69
+xpure_heap_mem_enum#3 inp1 : self::node<Anon_12,q> * q::ll{}<flted_7_23>
+xpure_heap_mem_enum#3 inp2 : flted_7_23+1=n
+xpure_heap_mem_enum#3 inp3 :1
+xpure_heap_mem_enum#3@71 EXIT: ((self=1 & q=null & flted_7_23=0) | (q=1 & self=2 & 1<=flted_7_23)) #  [[]]
+
+(==cvutil.ml#1667==)
+xpure_mem_enum#2@70@69
+xpure_mem_enum#2 inp1 : (* lbl: *){217}->(exists flted_7_23: (* lbl: *){217}->self::node<Anon_12,q> * 
+q::ll{}<flted_7_23>&flted_7_23+1=n&{FLOW,(1,28)=__flow#E}[]
+xpure_mem_enum#2@70 EXIT: exists(flted_7_23:flted_7_23+1=n & (((self=1 & q=null & flted_7_23=0) | 
+(q=1 & self=2 & 1<=flted_7_23)))) #  [[self]]
+
+(==solver.ml#2701==)
+xpure#1@69
+xpure#1 inp1 : (* lbl: *){217}->(exists flted_7_23: (* lbl: *){217}->self::node<Anon_12,q> * 
+q::ll{}<flted_7_23>&flted_7_23+1=n&{FLOW,(1,28)=__flow#E}[]
+xpure#1@69 EXIT: exists(flted_7_23:flted_7_23+1=n & (((self=1 & q=null & flted_7_23=0) | 
+(q=1 & self=2 & 1<=flted_7_23))))# [[self]]
+Stop Omega... 109 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.150463,395)
+Total verification time: 0.506032 second(s)
+	Time spent in main process: 0.451275 second(s)
+	Time spent in child processes: 0.054757 second(s)
+

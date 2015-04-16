@@ -1,0 +1,17 @@
+ 
+ id: 1<-1; prover: Z3; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:no proof raw result:no result
+ Sat:  a[5]=x
+ res: SAT
+ -------------------- 
+ id: 2<0; prover: Z3; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:no proof raw result:no result
+ Imply: ante: a[5]=x
+	     conseq:  a[5]=x
+ res: true
+ -------------------- 
+ id: 3<0; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:no proof raw result:no result
+ Sat:  a[5]=x
+ res: SAT
+ --------------------

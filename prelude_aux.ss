@@ -357,9 +357,10 @@ void delete_ptr(int_ptr_ptr@R x)
 /* Pointer translation  */
 /* ************************/
 
-int[] update___1d(int v, int[] a, int i)
+int[] update___1d(int v, ref int[] a, int i)
   requires true
-  ensures update_array_1d(a,res,v,i);
+//ensures a'[i]=v;
+ensures update_array_1d(a,res,v,i);
 //void update___(ref int[] a, int i, int v) 
 	/* requires [ahalb,ahaub]
 				dom(a,ahalb,ahaub) 

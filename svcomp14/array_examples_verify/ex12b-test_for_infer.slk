@@ -1,0 +1,52 @@
+/*infer [a]
+  i=8
+  |- a[i] > 10.
+print residue.
+// forall i. i=8 -> a[i]>=11
+// a[8]>=11
+
+
+infer [a]
+  0<=i<=5
+  |- a[i] > 10.
+print residue.
+// forall i. (not(0<i<5) |a[i]>=11)
+// a[8]>=11
+
+
+infer [a,i]
+  0<=i<=5
+  |- a[i] > 10.
+print residue.
+// not(0<=i<=5) | a[i]>=11
+// a[8]>=11
+
+infer [a]
+  i=8
+  |- a___i___ > 10.
+print residue.
+// forall i. i=8 -> a[i]>=11
+// a[8]>=11
+
+
+infer [i]
+  0<=i<=5
+  |- a[i] > 10.
+print residue.
+*/
+
+infer [j]
+  0<=j<=5
+  |- a[i] > 10.
+print residue.
+
+infer [a]
+  i=8
+  |- a___i___ > 10.
+print residue.
+
+infer [j]
+  0<=j<=5
+  |- j=8.
+print residue.
+

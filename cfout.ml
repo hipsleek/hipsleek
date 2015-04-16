@@ -4,9 +4,11 @@ this module contains funtions relating to output of cformula
 *)
 
 open Globals
+open Global_var
 open VarGen
 open Gen
 open Exc.GTable
+open VarGen
 open Perm
 open Label_only
 open Label
@@ -17,6 +19,12 @@ module MCP = Mcpure
 
 let n_tbl = Hashtbl.create 1
 let id_tbl = Hashtbl.create 1
+
+let print_list_failesc_context = ref (fun (c:Cformula.list_failesc_context) -> "list failesc context printer has not been initialized")
+let print_formula = ref (fun (c:Cformula.formula) -> "formula printer has not been initialized")
+let print_pure_formula = ref (fun (c:Cpure.formula) -> "pure formula printer has not been initialized")
+let print_sv = ref (fun (c:Cpure.spec_var) -> "spec_var printer has not been initialized")
+let simplify_raw = ref(fun (c:Cpure.formula) -> Cpure.mkTrue no_pos)
 
 let shorten_svl fv =
   (* let n_tbl = Hashtbl.create 1 in *)
@@ -254,9 +262,6 @@ let rearrange_hp_def def=
   {def with def_rhs = new_body2;
             def_lhs = new_hrel;}
 
-
-
-
 let rearrange_rel (rel: hprel) =
   let lfv = List.filter (fun sv -> not (CP.is_hprel_typ sv)) (CP.remove_dups_svl (fv rel.hprel_lhs)) in
   let gfv = (match rel.hprel_guard with
@@ -400,6 +405,66 @@ let rec shorten_formula f =
 
 (* let rearrange_failesc_context_list fcl = *)
 (*   List.map rearrange_failesc_context fcl *)
+
+let simplify_branch_context (pt, ctx, fail_type) =
+  let rec helper ctx =
+    match ctx with
+    | Ctx en -> Ctx {en with
+                     es_formula =
+                       let () = x_tinfo_hp (add_str "formula" !print_formula) en.es_formula no_pos in
+                       let () = x_tinfo_hp (add_str "renamed_vars" pr_id) (stk_renamed_vars # string_of_no_ln) no_pos in
+                       let h,mf,vp,fl,t,a = split_components en.es_formula in
+                       let exists_svl = match en.es_formula with
+                         | Exists ef -> ef.formula_exists_qvars
+                         | _ -> []
+                       in
+                       let free_svl = fv en.es_formula in
+                       let curr_svl = stk_vars # get_stk in
+                       let heap_svl = h_fv h in
+                       let () = x_tinfo_hp (add_str "exists variables" (pr_list !print_sv)) exists_svl no_pos in
+                       let () = x_tinfo_hp (add_str "free variables" (pr_list !print_sv)) free_svl no_pos in
+                       let () = x_tinfo_hp (add_str "curr variables" (pr_list !print_sv)) curr_svl no_pos in
+                       let () = x_tinfo_hp (add_str "heap variables" (pr_list !print_sv)) heap_svl no_pos in
+                       let all_svl = exists_svl@free_svl in
+                       let imp_svl = curr_svl@heap_svl in
+                       let elim_svl = List.filter (fun sv ->
+                           not (Gen.BList.mem_eq Cpure.eq_spec_var_unp sv imp_svl)
+                         ) all_svl in
+                       let () = x_tinfo_hp (add_str "elim variables" (pr_list !print_sv)) elim_svl no_pos in
+                       let elim_svl, bag_exists_svl = List.partition (fun sv ->
+                           (Cpure.type_of_spec_var sv = Int) || (Cpure.type_of_spec_var sv = Bool)
+                         ) elim_svl in
+                       let () = x_tinfo_hp (add_str "elim variables" (pr_list !print_sv)) elim_svl no_pos in
+                       let () = x_tinfo_hp (add_str "bag exists variables" (pr_list !print_sv)) bag_exists_svl no_pos in
+                       if (List.length elim_svl = 0)
+                       then
+                         en.es_formula
+                       else
+                         let pf0 = Mcpure.pure_of_mix mf in
+                         let pf1 = Cpure.mkExists elim_svl pf0 None no_pos in
+                         let pf2 = !simplify_raw pf1 in
+                         let pf3 = Cpure.mkExists bag_exists_svl pf2 None no_pos in
+                         let pf_simp = Cpure.elim_exists pf3 in
+                         let mf_simp = Mcpure.mix_of_pure pf_simp in
+                         let new_f0 = mkExists exists_svl h mf_simp vp t fl a no_pos in
+                         let () = x_tinfo_hp (add_str "new_f0" !print_formula) new_f0 no_pos in
+                         let new_f = elim_exists new_f0 in
+                         let () = x_tinfo_hp (add_str "new_f" !print_formula) new_f no_pos in
+                         new_f
+                    }
+    | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
+  in (pt, helper ctx, fail_type)
+
+let simplify_failesc_context fc =
+  match fc with
+  | (bfl, esc, bcl) -> (bfl, esc, List.map simplify_branch_context bcl)
+
+let simplify_failesc_context_list ctx =
+  List.map (fun x -> simplify_failesc_context x) ctx
+
+let simplify_failesc_context_list ctx =
+  let pr = !print_list_failesc_context in
+  Debug.no_1 "simplify_failesc_context_list" pr pr simplify_failesc_context_list ctx
 
 let inline_print e =
   if (!Globals.print_en_inline) then elim_imm_vars_f e

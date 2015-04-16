@@ -1236,8 +1236,114 @@ Also, below for loris23:
 ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 smtsolver.ml:      print_endline ("ERROR : "^global_oc^" cannot be found!!"); ref (global_oc^"_cannot_be_found":string)
 ====================================================================
+8Apr15 : Need to look into these failures:
+
+Total number of errors: 4 in files:
+  label-dll.slk({E1#Fail}) infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) imm/norm/norm4.slk({E4#Fail},{E5#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' s
 ====================================================================
+10Apr15 : --inv-baga
+
+inflem.slk is due to false being inferred and
+<== not being proven
+
+Total number of errors: 5 in files:
+  label-basic.slk({E3#Valid}) infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) imm/norm/norm4.slk({E4#Fail},{E5#Fail}) inflem.slk({E1#Fail},{E2#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
 ====================================================================
+15Apr15 sleek test
+
+--dis-use-baga (default -U TRACE, DebugEmpty)
+Total number of errors: 4 in files:
+  baga-test.slk({E15#Valid}) infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) imm/norm/norm4.slk({E4#Fail},{E5#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 61.67 second
+        Time spent in main process: 38.44 second
+        Time spent in child processes: 23.23 second
+        Number of false contexts: 0
+c
+--dis-use-baga (default -U TRACE)
+
+Total number of errors: 4 in files:
+  baga-test.slk({E15#Valid}) infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) imm/norm/norm4.slk({E4#Fail},{E5#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 66.13 second
+        Time spent in main process: 43.07 second
+        Time spent in child processes: 23.07 second
+        Number of false contexts: 0
+
+--dis-use-baga (default)
+
+Total number of errors: 4 in files:
+  baga-test.slk({E15#Valid}) infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) imm/norm/norm4.slk({E4#Fail},{E5#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 66.91 second
+        Time spent in main process: 43.52 second
+        Time spent in child processes: 23.40 second
+        Number of false contexts: 0
+
+--use-baga (default)
+
+Total number of errors: 3 in files:
+  infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) imm/norm/norm4.slk({E4#Fail},{E5#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 78.10 second
+        Time spent in main process: 54.31 second
+        Time spent in child processes: 23.78 second
+        Number of false contexts: 0
+
+--inv-baga (default)
+
+Total number of errors: 5 in files:
+  label-dll.slk({E3#Valid},{E4#Valid}) baga-test-2.slk({E10#Valid},{E6#Valid}) infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) imm/norm/norm4.slk({E4#Fail},{E5#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 154.80 second
+        Time spent in main process: 69.38 second
+        Time spent in child processes: 85.42 second
+        Number of false contexts: 0
+
+--baga-xpure (ti_plus)
+
+Starting hip-sleek tests:
+Total number of errors: 4 in files:
+  label-dll.slk({E1#Fail}) infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) imm/norm/norm4.slk({E4#Fail},{E5#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 74.78 second
+        Time spent in main process: 53.13 second
+        Time spent in child processes: 21.65 second
+        Number of false contexts: 0
+
+--dis-baga-xpure (ti_plus)
+
+Total number of errors: 5 in files:
+  label-dll.slk({E1#Fail}) baga-test.slk({E15#Valid}) infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) imm/norm/norm4.slk({E4#Fail},{E5#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 64.22 second
+        Time spent in main process: 42.68 second
+        Time spent in child processes: 21.54 second
+        Number of false contexts: 0
+
+--baga-xpure (ti_plus_stable)
+
+Total number of errors: 3 in files:
+  label-dll.slk({E1#Fail}) infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 67.74 second
+        Time spent in main process: 45.50 second
+        Time spent in child processes: 22.25 second
+        Number of false contexts: 0
+
+--dis-baga-xpure (ti_plus_stable)
+
+Starting hip-sleek tests:
+Total number of errors: 4 in files:
+  label-dll.slk({E1#Fail}) baga-test.slk({E15#Valid}) infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 59.02 second
+        Time spent in main process: 37.15 second
+        Time spent in child processes: 21.88 second
+        Number of false contexts: 0
+
 ====================================================================
 ====================================================================
 ====================================================================

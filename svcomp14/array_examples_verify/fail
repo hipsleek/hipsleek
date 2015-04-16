@@ -1,0 +1,200 @@
+
+!!!Full processing file "array_simeple3.ss"
+Parsing file "array_simeple3.ss" by default parser...
+
+!!! processing primitives "["prelude_aux.ss"]
+Starting Omega.../usr/local/bin/oc
+
+tp_imply_no_cache@1
+tp_imply_no_cache inp1 : 0<size
+tp_imply_no_cache inp2 : 0<size
+tp_imply_no_cache inp3 :1
+tp_imply_no_cache inp4 :OM
+tp_imply_no_cache@1 EXIT:true
+
+Checking procedure foo2$int[]... Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a[5]")
+ Formula: (((0<(a_1212[5]) & a'[5]=0) | ((a_1212[5])<=0 & a'[5]=a_1212[5]))) & 
+update_array_1d(a,a_1212,0,5) & 0<(a[5]) & v_bool_6_1169'
+
+tp_imply_no_cache@5@4@3@2
+tp_imply_no_cache inp1 : 1<=a_5 & (((a_primed_5'=0 & 1<=a_1212_5) | (a_1212_5=a_primed_5' & 
+a_primed_5'<=0)))
+tp_imply_no_cache inp2 : ((0<a_5 & a_primed_5'=0) | (a_5<=0 & a_primed_5'=a_5))
+tp_imply_no_cache inp3 :173
+tp_imply_no_cache inp4 :OM
+tp_imply_no_cache@5 EXIT:false
+
+imply_one#29@4@3@2
+imply_one#29 inp1 : v_bool_6_1169' & 1<=a_5 & (((a_primed_5'=0 & 1<=a_1212_5) | 
+(a_1212_5=a_primed_5' & a_primed_5'<=0)))
+imply_one#29 inp2 : ((0<a_5 & a_primed_5'=0) | (a_5<=0 & a_primed_5'=a_5))
+imply_one#29@4 EXIT:false
+
+imply_one_conj_orig@3@2
+imply_one_conj_orig inp1 :[ v_bool_6_1169' & 1<=a_5 & (((a_primed_5'=0 & 1<=a_1212_5) | 
+(a_1212_5=a_primed_5' & a_primed_5'<=0)))]
+imply_one_conj_orig inp2 :[ (((0<(a_1212[5]) & a'[5]=0) | ((a_1212[5])<=0 & a'[5]=a_1212[5]))) & 
+update_array_1d(a,a_1212,0,5) & 0<(a[5]) & v_bool_6_1169']
+imply_one_conj_orig inp3 : ((0<a_5 & a_primed_5'=0) | (a_5<=0 & a_primed_5'=a_5))
+imply_one_conj_orig@3 EXIT:false
+
+imply_mix_formula#1@2
+imply_mix_formula#1 inp1 : (((0<(a_1212[5]) & a'[5]=0) | ((a_1212[5])<=0 & a'[5]=a_1212[5]))) & 
+update_array_1d(a,a_1212,0,5) & 0<(a[5]) & v_bool_6_1169'
+imply_mix_formula#1 inp2 :Some( (((0<(a_1212[5]) & a'[5]=0) | ((a_1212[5])<=0 & a'[5]=a_1212[5]))) & 
+update_array_1d(a,a_1212,0,5) & 0<(a[5]) & v_bool_6_1169')
+imply_mix_formula#1 inp3 : ((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))
+imply_mix_formula#1 inp4 : []
+imply_mix_formula#1@2 EXIT:(false,None)
+
+imply_one#29@8@7@6
+imply_one#29 inp1 : v_bool_6_1169' & 1<=a_5 & (((a_primed_5'=0 & 1<=a_1212_5) | 
+(a_1212_5=a_primed_5' & a_primed_5'<=0)))
+imply_one#29 inp2 : ((0<a_5 & a_primed_5'=0) | (a_5<=0 & a_primed_5'=a_5))
+imply_one#29@8 EXIT:false
+
+imply_one_conj_orig@7@6
+imply_one_conj_orig inp1 :[ v_bool_6_1169' & 1<=a_5 & (((a_primed_5'=0 & 1<=a_1212_5) | 
+(a_1212_5=a_primed_5' & a_primed_5'<=0)))]
+imply_one_conj_orig inp2 :[]
+imply_one_conj_orig inp3 : ((0<a_5 & a_primed_5'=0) | (a_5<=0 & a_primed_5'=a_5))
+imply_one_conj_orig@7 EXIT:false
+
+imply_mix_formula#0@6
+imply_mix_formula#0 inp1 : (((0<(a_1212[5]) & a'[5]=0) | ((a_1212[5])<=0 & a'[5]=a_1212[5]))) & 
+update_array_1d(a,a_1212,0,5) & 0<(a[5]) & v_bool_6_1169'
+imply_mix_formula#0 inp2 :None
+imply_mix_formula#0 inp3 : ((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))
+imply_mix_formula#0 inp4 : []
+imply_mix_formula#0@6 EXIT:(false,None)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a'[5]")
+ Formula: !(v_bool_6_1169') & (a'[5])<=0 & a'=a
+
+tp_imply_no_cache@12@11@10@9
+tp_imply_no_cache inp1 : a_primed_5'=a_5 & a_5<=0
+tp_imply_no_cache inp2 : ((0<a_5 & a_primed_5'=0) | (a_5<=0 & a_primed_5'=a_5))
+tp_imply_no_cache inp3 :181
+tp_imply_no_cache inp4 :OM
+tp_imply_no_cache@12 EXIT:true
+
+imply_one#29@11@10@9
+imply_one#29 inp1 : a_primed_5'=a_5 & a=a' & a_5<=0 & !(v_bool_6_1169')
+imply_one#29 inp2 : ((0<a_5 & a_primed_5'=0) | (a_5<=0 & a_primed_5'=a_5))
+imply_one#29@11 EXIT:true
+
+imply_one_conj_orig@10@9
+imply_one_conj_orig inp1 :[ a_primed_5'=a_5 & a=a' & a_5<=0 & !(v_bool_6_1169')]
+imply_one_conj_orig inp2 :[ !(v_bool_6_1169') & (a'[5])<=0 & a'=a]
+imply_one_conj_orig inp3 : ((0<a_5 & a_primed_5'=0) | (a_5<=0 & a_primed_5'=a_5))
+imply_one_conj_orig@10 EXIT:true
+
+imply_mix_formula#1@9
+imply_mix_formula#1 inp1 : !(v_bool_6_1169') & (a'[5])<=0 & a'=a
+imply_mix_formula#1 inp2 :Some( !(v_bool_6_1169') & (a'[5])<=0 & a'=a)
+imply_mix_formula#1 inp3 : ((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))
+imply_mix_formula#1 inp4 : []
+imply_mix_formula#1@9 EXIT:(true,None)
+
+Post condition cannot be derived:
+  (may) cause:  0<(a[5]) & update_array_1d(a,a_1212,0,5) & (((0<(a_1212[5]) & a'[5]=0) | 
+((a_1212[5])<=0 & a'[5]=a_1212[5]))) |-  ((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5])). LOCS:[6;8;9;4] (may-bug)
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "array_simeple3.ss",Line:9,Col:4
+
+ERROR: at _0:0_0:0
+Message: Post condition cannot be derived.
+
+Procedure foo2$int[] FAIL.(2)
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+
+Error(s) detected when checking procedure foo2$int[]
+
+Checking procedure foo2$int[]... Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a_1240[5]")
+ Formula: v_bool_6_1169' & 0<(a[5]) & update_array_1d(a,a_1240,0,5) & 
+(((0<(a_1240[5]) & a'[5]=0) | ((a_1240[5])<=0 & a'[5]=a_1240[5])))
+
+imply_one#29@15@14@13
+imply_one#29 inp1 : v_bool_6_1169' & 1<=a_5 & (((a_primed_5'=0 & 1<=a_1240_5) | 
+(a_1240_5=a_primed_5' & a_primed_5'<=0)))
+imply_one#29 inp2 : ((0<a_5 & a_primed_5'=0) | (a_5<=0 & a_primed_5'=a_5))
+imply_one#29@15 EXIT:false
+
+imply_one_conj_orig@14@13
+imply_one_conj_orig inp1 :[ v_bool_6_1169' & 1<=a_5 & (((a_primed_5'=0 & 1<=a_1240_5) | 
+(a_1240_5=a_primed_5' & a_primed_5'<=0)))]
+imply_one_conj_orig inp2 :[ v_bool_6_1169' & 0<(a[5]) & update_array_1d(a,a_1240,0,5) & 
+(((0<(a_1240[5]) & a'[5]=0) | ((a_1240[5])<=0 & a'[5]=a_1240[5])))]
+imply_one_conj_orig inp3 : ((0<a_5 & a_primed_5'=0) | (a_5<=0 & a_primed_5'=a_5))
+imply_one_conj_orig@14 EXIT:false
+
+imply_mix_formula#1@13
+imply_mix_formula#1 inp1 : v_bool_6_1169' & 0<(a[5]) & update_array_1d(a,a_1240,0,5) & 
+(((0<(a_1240[5]) & a'[5]=0) | ((a_1240[5])<=0 & a'[5]=a_1240[5])))
+imply_mix_formula#1 inp2 :Some( v_bool_6_1169' & 0<(a[5]) & update_array_1d(a,a_1240,0,5) & 
+(((0<(a_1240[5]) & a'[5]=0) | ((a_1240[5])<=0 & a'[5]=a_1240[5]))))
+imply_mix_formula#1 inp3 : ((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))
+imply_mix_formula#1 inp4 : []
+imply_mix_formula#1@13 EXIT:(false,None)
+
+imply_one#29@18@17@16
+imply_one#29 inp1 : v_bool_6_1169' & 1<=a_5 & (((a_primed_5'=0 & 1<=a_1240_5) | 
+(a_1240_5=a_primed_5' & a_primed_5'<=0)))
+imply_one#29 inp2 : ((0<a_5 & a_primed_5'=0) | (a_5<=0 & a_primed_5'=a_5))
+imply_one#29@18 EXIT:false
+
+imply_one_conj_orig@17@16
+imply_one_conj_orig inp1 :[ v_bool_6_1169' & 1<=a_5 & (((a_primed_5'=0 & 1<=a_1240_5) | 
+(a_1240_5=a_primed_5' & a_primed_5'<=0)))]
+imply_one_conj_orig inp2 :[]
+imply_one_conj_orig inp3 : ((0<a_5 & a_primed_5'=0) | (a_5<=0 & a_primed_5'=a_5))
+imply_one_conj_orig@17 EXIT:false
+
+imply_mix_formula#0@16
+imply_mix_formula#0 inp1 : v_bool_6_1169' & 0<(a[5]) & update_array_1d(a,a_1240,0,5) & 
+(((0<(a_1240[5]) & a'[5]=0) | ((a_1240[5])<=0 & a'[5]=a_1240[5])))
+imply_mix_formula#0 inp2 :None
+imply_mix_formula#0 inp3 : ((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))
+imply_mix_formula#0 inp4 : []
+imply_mix_formula#0@16 EXIT:(false,None)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a'[5]")
+ Formula: !(v_bool_6_1169') & (a'[5])<=0 & a'=a
+
+imply_one#29@21@20@19
+imply_one#29 inp1 : a_primed_5'=a_5 & a=a' & a_5<=0 & !(v_bool_6_1169')
+imply_one#29 inp2 : ((0<a_5 & a_primed_5'=0) | (a_5<=0 & a_primed_5'=a_5))
+imply_one#29@21 EXIT:true
+
+imply_one_conj_orig@20@19
+imply_one_conj_orig inp1 :[ a_primed_5'=a_5 & a=a' & a_5<=0 & !(v_bool_6_1169')]
+imply_one_conj_orig inp2 :[ !(v_bool_6_1169') & (a'[5])<=0 & a'=a]
+imply_one_conj_orig inp3 : ((0<a_5 & a_primed_5'=0) | (a_5<=0 & a_primed_5'=a_5))
+imply_one_conj_orig@20 EXIT:true
+
+imply_mix_formula#1@19
+imply_mix_formula#1 inp1 : !(v_bool_6_1169') & (a'[5])<=0 & a'=a
+imply_mix_formula#1 inp2 :Some( !(v_bool_6_1169') & (a'[5])<=0 & a'=a)
+imply_mix_formula#1 inp3 : ((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))
+imply_mix_formula#1 inp4 : []
+imply_mix_formula#1@19 EXIT:(true,None)
+
+Post condition cannot be derived:
+  (may) cause:  (((0<(a_1240[5]) & a'[5]=0) | ((a_1240[5])<=0 & a'[5]=a_1240[5]))) & 
+update_array_1d(a,a_1240,0,5) & 0<(a[5]) |-  ((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5])). LOCS:[9;8;6;4] (may-bug)
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "array_simeple3.ss",Line:9,Col:4
+
+ERROR: at _0:0_0:0
+Message: Post condition cannot be derived.
+
+ExceptionFailure("Post condition cannot be derived.")Occurred!
+
+Error1(s) detected at main 
+Stop Omega... 52 invocations caught
+
+Exception occurred: Failure("Post condition cannot be derived.")
+Error3(s) detected at main 

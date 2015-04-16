@@ -142,6 +142,7 @@ let rec smt_of_exp a =
   | CP.Bptriple _ -> ""
   | CP.ArrayAt (a, idx, l) -> 
     List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
+  | CP.NegInfConst _
   | CP.InfConst _ -> Error.report_no_pattern ()
   | CP.Template t -> smt_of_exp (CP.exp_of_template t)
 
@@ -213,13 +214,13 @@ let rec smt_of_b_formula b =
 (* | CP.XPure _ -> Error.report_no_pattern () *)
 
 let rec smt_of_formula pr_w pr_s f =
-  let () = Debug.devel_hprint (add_str "f(z3)" !CP.print_formula) f no_pos in
+  let () = x_dinfo_hp (add_str "f(z3)" !CP.print_formula) f no_pos in
   let rec helper f= (
     match f with
     | CP.BForm ((b,_) as bf,_) -> (
         match (pr_w b) with
-        | None -> let () = Debug.devel_pprint ("NONE #") no_pos in (smt_of_b_formula bf)
-        | Some f -> let () = Debug.devel_pprint ("SOME #") no_pos in helper f
+        | None -> let () = x_dinfo_pp ("NONE #") no_pos in (smt_of_b_formula bf)
+        | Some f -> let () = x_dinfo_pp ("SOME #") no_pos in helper f
       )
     | CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
     | CP.And (p1, p2, _) -> "(and " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"

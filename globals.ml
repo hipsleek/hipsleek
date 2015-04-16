@@ -11,6 +11,7 @@ let total_entailments = ref 0
 
 let epure_disj_limit = ref 100 (* 0 means unlimited *)
 
+let trailer_num_list = ref []
 
 let change_flow = ref false
 
@@ -43,7 +44,7 @@ let ineq_opt_flag = ref false
 
 let illegal_format s = raise (Illegal_Prover_Format s)
 
-type lemma_kind = LEM_PROP| LEM_SPLIT | LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER | LEM_INFER_PRED
+type lemma_kind = LEM_PROP| LEM_SPLIT | LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER | LEM_INFER_PRED | RLEM
 
 type lemma_origin =
   | LEM_USER          (* user-given lemma *)
@@ -830,6 +831,8 @@ let simpl_unfold2 = ref false
 let simpl_unfold1 = ref false
 let simpl_memset = ref false
 
+let simplify_dprint = ref true
+
 let print_heap_pred_decl = ref true
 
 
@@ -1019,6 +1022,7 @@ let allow_imm_subs_rhs = ref true (*imm rhs subs from do_match*)
 let allow_field_ann = ref false
 
 let remove_abs = ref true
+let allow_array_inst = ref false
 
 let imm_merge = ref false
 
@@ -1027,9 +1031,11 @@ let imm_merge = ref false
 (* let allow_field_ann = ref false  *)
 (* disabled by default as it is unstable and
    other features, such as shape analysis are affected by it *)
-
+let allow_ramify = ref false
 let allow_mem = ref false
 (*enabling allow_mem will turn on field ann as well *)
+
+let gen_coq_file = ref false
 
 let infer_mem = ref false
 let infer_raw_flag = ref true
@@ -1037,6 +1043,13 @@ let infer_raw_flag = ref true
 let pa = ref false
 
 let allow_inf = ref false (*enable support to use infinity (\inf and -\inf) in formulas *)
+let allow_inf_qe = ref false (*enable support to use quantifier elimination with infinity (\inf and -\inf) in formulas *)
+
+let allow_inf_qe_coq = ref false
+let allow_inf_qe_coq_simp = ref false
+(* enable support to use quantifier elimination procedure
+   implemented in coq and extracted as infsolver.ml *)
+let allow_qe_fix = ref false
 
 let ann_derv = ref false
 
@@ -1165,7 +1178,8 @@ let dump_lemmas_med = ref false
 let dump_lem_proc = ref false
 
 let num_self_fold_search = ref 0
-
+let array_expansion = ref false;;
+let array_translate = ref false;;
 let self_fold_search_flag = ref false
 
 let show_gist = ref false
@@ -1222,7 +1236,7 @@ let print_cil_input = ref false
 
 let disable_failure_explaining = ref false
 
-let enable_error_as_exc = ref false
+let enable_error_as_exc = ref true
 
 let bug_detect = ref false
 
@@ -1301,6 +1315,7 @@ let post_add_eres = ref false
 let post_infer_flow = ref false
 let dis_ass_chk = ref false
 let log_filter = ref true
+let oc_weaken_rel_flag = ref true
 let phase_infer_ind = ref false
 
 let infer_const_num = 0
@@ -1553,7 +1568,7 @@ let use_baga = ref false
 let prove_invalid = ref false
 let gen_baga_inv_threshold = 7 (* number of preds <=6, set gen_baga_inv = false*)
 let do_under_baga_approx = ref false (* flag to choose under_baga *)
-let baga_xpure = ref true (* change to true later *)
+(* let baga_xpure = ref true (\* change to true later *\) *)
 let baga_imm = ref false                 (* wen on true, ignore @L nodes while building baga --  this is forced into true when computing baga for vdef*)
 
 (* get counter example *)
@@ -1715,15 +1730,35 @@ let fresh_formula_label (s:string) :formula_label =
 let fresh_branch_point_id (s:string) : control_path_id = Some (fresh_formula_label s)
 let fresh_strict_branch_point_id (s:string) : control_path_id_strict = (fresh_formula_label s)
 
-let mk_strict_branch_point (id:control_path_id) (s:string) : control_path_id_strict = 
-  match id with 
+let mk_strict_branch_point (id:control_path_id) (s:string) : control_path_id_strict =
+  match id with
   | Some i -> i
   | None -> fresh_formula_label s
 
 let eq_formula_label (l1:formula_label) (l2:formula_label) : bool = fst(l1)=fst(l2)
 
 let fresh_int () =
-  seq_number := !seq_number + 1;
+  let rec find i lst = match lst with
+    | [] -> false,[]
+    | hd::tl ->
+      try
+        let hd_int = int_of_string hd in
+        if i = hd_int then true,tl
+        else if i < hd_int then false,lst
+        else find i tl
+      with _ -> find i tl
+  and helper i =
+    let is_mem,trailer_num_list_tail = find i !trailer_num_list in
+    let () = trailer_num_list := trailer_num_list_tail in
+    if is_mem then helper (i+1) else i
+    (* let rec helper i = *)
+    (*   if List.mem (string_of_int i) !trailer_num_list *)
+    (*   then *)
+    (*     let () = trailer_num_list := List.tl !trailer_num_list in *)
+    (*     helper (i+1) *)
+    (*   else i *)
+  in
+  seq_number := helper (!seq_number + 1);
   !seq_number
 
 let seq_number2 = ref 0
@@ -2053,4 +2088,5 @@ let string_of_lemma_kind (l: lemma_kind) =
   | LEM_SAFE      -> "LEM_SAFE"
   | LEM_INFER     -> "LEM_INFER"
   | LEM_INFER_PRED   -> "LEM_INFER_PRED"
+  | RLEM -> "RLEM"
 

@@ -1768,8 +1768,8 @@ let check_equiv_def_x hvars (def1: (CF.formula * CF.formula)) (def2: (CF.formula
   let rec find_ovars spairs = match spairs with
     | [] -> []
     | (v,o)::y -> let h = match o with
-      | None -> []
-      | Some x -> [CP.string_of_spec_var x] 
+        | None -> []
+        | Some x -> [CP.string_of_spec_var x] 
       in
       h@(find_ovars y)
   in

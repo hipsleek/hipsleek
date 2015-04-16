@@ -87,7 +87,7 @@ module LO = Label_only.LOne
 let check_maymust_failure_x (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list))=
   if not !disable_failure_explaining then
     let r = ref (-9999) in
-    let is_sat f = TP.is_sat_sub_no 9 f r in
+    let is_sat f = x_add TP.is_sat_sub_no 9 f r in
     let find_all_failures a c = CP.find_all_failures is_sat a c in
     let find_all_failures a c =
       let pr1 = Cprinter.string_of_pure_formula in

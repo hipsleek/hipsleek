@@ -1,0 +1,292 @@
+ 
+ id: 1<-1; prover: Z3; loc: _0:0_0:0; kind: UNKNOWN
+ raw proof:no proof raw result:no result
+ Imply: ante: 0<size
+	     conseq:  0<size
+ res: true
+ -------------------- 
+ id: 197<-1; prover: Z3; loc: arr_sum_ss_99:5_99:10; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  a'=a & i'=i & j'=j & MayLoop[] & j'<i'
+ res: SAT
+ -------------------- 
+ id: 198<0; prover: Z3; loc: arr_sum_ss_99:5_99:10; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  j'<i' & j'=j & i'=i & a'=a
+ res: SAT
+ -------------------- 
+ id: 199<-1; prover: Z3; loc: arr_sum_ss_99:5_99:10; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  a'=a & i'=i & j'=j & MayLoop[] & i'<=j'
+ res: SAT
+ -------------------- 
+ id: 200<1; prover: Z3; loc: arr_sum_ss_99:5_99:10; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  i'<=j' & j'=j & i'=i & a'=a
+ res: SAT
+ -------------------- 
+ id: 201<-1; prover: Z3; loc: arr_sum_ss_99:1_102:34; kind: If_Stmt
+ raw proof:no proof raw result:no result
+ Sat:  i'<=j' & j'=j & i'=i & a'=a & !(v_bool_99_1432') & i'<=j' & v_bool_99_1432'
+ res: UNSAT
+ -------------------- 
+ id: 202<-1; prover: Z3; loc: arr_sum_ss_99:1_102:34; kind: If_Stmt
+ raw proof:no proof raw result:no result
+ Sat:  j'<i' & j'=j & i'=i & a'=a & v_bool_99_1432' & j'<i' & v_bool_99_1432'
+ res: SAT
+ -------------------- 
+ id: 203<-1; prover: Z3; loc: arr_sum_ss_99:1_102:34; kind: If_Stmt
+ raw proof:no proof raw result:no result
+ Sat:  i'<=j' & j'=j & i'=i & a'=a & !(v_bool_99_1432') & i'<=j' & 
+!(v_bool_99_1432')
+ res: SAT
+ -------------------- 
+ id: 204<-1; prover: Z3; loc: arr_sum_ss_99:1_102:34; kind: If_Stmt
+ raw proof:no proof raw result:no result
+ Sat:  j'<i' & j'=j & i'=i & a'=a & v_bool_99_1432' & j'<i' & !(v_bool_99_1432')
+ res: UNSAT
+ -------------------- 
+ id: 205<2; prover: Z3; loc: arr_sum_ss_102:22_102:25; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  i'<=j' & j'=j & i'=i & a'=a & !(v_bool_99_1432') & i'<=j' & 
+!(v_bool_99_1432') & v_int_102_1428'=1
+ res: SAT
+ -------------------- 
+ id: 206<3; prover : CACHED ; loc: arr_sum_ss_102:22_102:25; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  i'<=j' & j'=j & i'=i & a'=a & !(v_bool_99_1432') & i'<=j' & 
+!(v_bool_99_1432') & v_int_102_1428'=1
+ res: SAT
+ -------------------- 
+ id: 207<4; prover: Z3; loc: arr_sum_ss_102:6_102:26; kind: PRE_REC
+ raw proof:no proof raw result:no result
+ Sat:  i'<=j' & j'=j & i'=i & a'=a & !(v_bool_99_1432') & i'<=j' & 
+!(v_bool_99_1432') & v_int_102_1429'+1=j'
+ res: SAT
+ -------------------- 
+ id: 208<5; prover : CACHED ; loc: arr_sum_ss_102:6_102:26; kind: PRE_REC
+ raw proof:no proof raw result:no result
+ Sat:  i'<=j' & j'=j & i'=i & a'=a & !(v_bool_99_1432') & i'<=j' & 
+!(v_bool_99_1432') & v_int_102_1429'+1=j'
+ res: SAT
+ -------------------- 
+ id: 209<6; prover: Z3; loc: arr_sum_ss_102:29_102:33; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  i'<=j' & j'=j & i'=i & a'=a & !(v_bool_99_1432') & i'<=j' & 
+!(v_bool_99_1432') & v_int_102_1487+1=j' & 
+sumarrayL(a',i',v_int_102_1487,v_int_102_1431')
+ res: SAT
+ -------------------- 
+ id: 210<7; prover : CACHED ; loc: arr_sum_ss_102:29_102:33; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  i'<=j' & j'=j & i'=i & a'=a & !(v_bool_99_1432') & i'<=j' & 
+!(v_bool_99_1432') & v_int_102_1487+1=j' & 
+sumarrayL(a',i',v_int_102_1487,v_int_102_1431')
+ res: SAT
+ -------------------- 
+ id: 211<8; prover: Z3; loc: arr_sum_ss_102:6_102:33; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  i'<=j' & j'=j & i'=i & a'=a & !(v_bool_99_1432') & i'<=j' & 
+!(v_bool_99_1432') & v_int_102_1487+1=j' & 
+sumarrayL(a',i',v_int_102_1487,v_int_102_1431') & v_int_102_1430'=a'[j']
+ res: SAT
+ -------------------- 
+ id: 212<9; prover : CACHED ; loc: arr_sum_ss_102:6_102:33; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  i'<=j' & j'=j & i'=i & a'=a & !(v_bool_99_1432') & i'<=j' & 
+!(v_bool_99_1432') & v_int_102_1487+1=j' & 
+sumarrayL(a',i',v_int_102_1487,v_int_102_1431') & v_int_102_1430'=a'[j']
+ res: SAT
+ -------------------- 
+ id: 213<10; prover: Z3; loc: arr_sum_ss_103:1_103:9; kind: POST
+ raw proof:no proof raw result:no result
+ Imply: ante: j'=j & i'=i & a'=a & j'<i' & res=0
+	     conseq:  sumarrayL(a,i,j,res)
+ res: true
+ -------------------- 
+ id: 214<10; prover: Z3; loc: arr_sum_ss_103:1_103:9; kind: POST
+ raw proof:no proof raw result:no result
+ Sat:  j'<i' & j'=j & i'=i & a'=a & v_bool_99_1432' & j'<i' & v_bool_99_1432' & 
+res=0
+ res: SAT
+ -------------------- 
+ id: 215<-1; prover: Z3; loc: arr_sum_ss_103:1_103:9; kind: POST
+ raw proof:no proof raw result:no result
+ Sat:  i'<=j' & j'=j & i'=i & a'=a & !(v_bool_99_1432') & i'<=j' & 
+!(v_bool_99_1432') & v_int_102_1487+1=j' & 
+sumarrayL(a',i',v_int_102_1487,v_int_102_1431') & res=(a'[j'])+
+v_int_102_1431'
+ res: SAT
+ -------------------- 
+ id: 216<11; prover: Z3; loc: arr_sum_ss_103:1_103:9; kind: POST
+ raw proof:no proof raw result:no result
+ Imply: ante: j'=j & i'=i & a'=a & i'<=j' & v_int_102_1487+1=j' & 
+sumarrayL(a',i',v_int_102_1487,v_int_102_1496) & res=(a'[j'])+v_int_102_1496
+	     conseq:  sumarrayL(a,i,j,res)
+ res: true
+ -------------------- 
+ id: 217<11; prover: Z3; loc: arr_sum_ss_103:1_103:9; kind: POST
+ raw proof:no proof raw result:no result
+ Sat:  i'<=j' & j'=j & i'=i & a'=a & !(v_bool_99_1432') & i'<=j' & 
+!(v_bool_99_1432') & v_int_102_1487+1=j' & 
+sumarrayL(a',i',v_int_102_1487,v_int_102_1496) & res=(a'[j'])+v_int_102_1496
+ res: SAT
+ -------------------- 
+ id: 218<-1; prover : CACHED ; loc: arr_sum_ss_33:5_33:10; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  a'=a & i'=i & j'=j & MayLoop[] & j'<i'
+ res: SAT
+ -------------------- 
+ id: 219<12; prover : CACHED ; loc: arr_sum_ss_33:5_33:10; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  j'<i' & j'=j & i'=i & a'=a
+ res: SAT
+ -------------------- 
+ id: 220<-1; prover : CACHED ; loc: arr_sum_ss_33:5_33:10; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  a'=a & i'=i & j'=j & MayLoop[] & i'<=j'
+ res: SAT
+ -------------------- 
+ id: 221<13; prover : CACHED ; loc: arr_sum_ss_33:5_33:10; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  i'<=j' & j'=j & i'=i & a'=a
+ res: SAT
+ -------------------- 
+ id: 222<-1; prover : CACHED ; loc: arr_sum_ss_33:1_36:35; kind: If_Stmt
+ raw proof:no proof raw result:no result
+ Sat:  i'<=j' & j'=j & i'=i & a'=a & !(v_bool_33_1446') & i'<=j' & v_bool_33_1446'
+ res: UNSAT
+ -------------------- 
+ id: 223<-1; prover : CACHED ; loc: arr_sum_ss_33:1_36:35; kind: If_Stmt
+ raw proof:no proof raw result:no result
+ Sat:  j'<i' & j'=j & i'=i & a'=a & v_bool_33_1446' & j'<i' & v_bool_33_1446'
+ res: SAT
+ -------------------- 
+ id: 224<-1; prover : CACHED ; loc: arr_sum_ss_33:1_36:35; kind: If_Stmt
+ raw proof:no proof raw result:no result
+ Sat:  i'<=j' & j'=j & i'=i & a'=a & !(v_bool_33_1446') & i'<=j' & 
+!(v_bool_33_1446')
+ res: SAT
+ -------------------- 
+ id: 225<-1; prover : CACHED ; loc: arr_sum_ss_33:1_36:35; kind: If_Stmt
+ raw proof:no proof raw result:no result
+ Sat:  j'<i' & j'=j & i'=i & a'=a & v_bool_33_1446' & j'<i' & !(v_bool_33_1446')
+ res: UNSAT
+ -------------------- 
+ id: 226<14; prover : CACHED ; loc: arr_sum_ss_36:6_36:10; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  i'<=j' & j'=j & i'=i & a'=a & !(v_bool_33_1446') & i'<=j' & 
+!(v_bool_33_1446')
+ res: SAT
+ -------------------- 
+ id: 227<15; prover : CACHED ; loc: arr_sum_ss_36:6_36:10; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  i'<=j' & j'=j & i'=i & a'=a & !(v_bool_33_1446') & i'<=j' & 
+!(v_bool_33_1446')
+ res: SAT
+ -------------------- 
+ id: 228<16; prover: Z3; loc: arr_sum_ss_36:27_36:30; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  i'<=j' & j'=j & i'=i & a'=a & !(v_bool_33_1446') & i'<=j' & 
+!(v_bool_33_1446') & v_int_36_1445'=a'[i'] & v_int_36_1442'=1
+ res: SAT
+ -------------------- 
+ id: 229<17; prover : CACHED ; loc: arr_sum_ss_36:27_36:30; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  i'<=j' & j'=j & i'=i & a'=a & !(v_bool_33_1446') & i'<=j' & 
+!(v_bool_33_1446') & v_int_36_1445'=a'[i'] & v_int_36_1442'=1
+ res: SAT
+ -------------------- 
+ id: 230<18; prover: Z3; loc: arr_sum_ss_36:13_36:34; kind: PRE_REC
+ raw proof:no proof raw result:no result
+ Sat:  i'<=j' & j'=j & i'=i & a'=a & !(v_bool_33_1446') & i'<=j' & 
+!(v_bool_33_1446') & v_int_36_1445'=a'[i'] & v_int_36_1443'=1+i'
+ res: SAT
+ -------------------- 
+ id: 231<19; prover : CACHED ; loc: arr_sum_ss_36:13_36:34; kind: PRE_REC
+ raw proof:no proof raw result:no result
+ Sat:  i'<=j' & j'=j & i'=i & a'=a & !(v_bool_33_1446') & i'<=j' & 
+!(v_bool_33_1446') & v_int_36_1445'=a'[i'] & v_int_36_1443'=1+i'
+ res: SAT
+ -------------------- 
+ id: 232<20; prover: Z3; loc: arr_sum_ss_36:6_36:34; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  i'<=j' & j'=j & i'=i & a'=a & !(v_bool_33_1446') & i'<=j' & 
+!(v_bool_33_1446') & v_int_36_1445'=a'[i'] & sumarray(a',1+
+i',j',v_int_36_1444')
+ res: SAT
+ -------------------- 
+ id: 233<21; prover : CACHED ; loc: arr_sum_ss_36:6_36:34; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  i'<=j' & j'=j & i'=i & a'=a & !(v_bool_33_1446') & i'<=j' & 
+!(v_bool_33_1446') & v_int_36_1445'=a'[i'] & sumarray(a',1+
+i',j',v_int_36_1444')
+ res: SAT
+ -------------------- 
+ id: 234<22; prover: Z3; loc: arr_sum_ss_37:1_37:9; kind: POST
+ raw proof:no proof raw result:no result
+ Imply: ante: j'=j & i'=i & a'=a & j'<i' & res=0
+	     conseq:  sumarray(a,i,j,res)
+ res: true
+ -------------------- 
+ id: 235<22; prover : CACHED ; loc: arr_sum_ss_37:1_37:9; kind: POST
+ raw proof:no proof raw result:no result
+ Sat:  j'<i' & j'=j & i'=i & a'=a & v_bool_33_1446' & j'<i' & v_bool_33_1446' & 
+res=0
+ res: SAT
+ -------------------- 
+ id: 236<-1; prover: Z3; loc: arr_sum_ss_37:1_37:9; kind: POST
+ raw proof:no proof raw result:no result
+ Sat:  i'<=j' & j'=j & i'=i & a'=a & !(v_bool_33_1446') & i'<=j' & 
+!(v_bool_33_1446') & sumarray(a',1+i',j',v_int_36_1444') & 
+res=v_int_36_1444'+(a'[i'])
+ res: SAT
+ -------------------- 
+ id: 237<23; prover: Z3; loc: arr_sum_ss_37:1_37:9; kind: POST
+ raw proof:no proof raw result:no result
+ Imply: ante: j'=j & i'=i & a'=a & i'<=j' & sumarray(a',1+i',j',v_int_36_1529) & 
+res=v_int_36_1529+(a'[i'])
+	     conseq:  sumarray(a,i,j,res)
+ res: false
+ -------------------- 
+ id: 238<23; prover : CACHED ; loc: arr_sum_ss_37:1_37:9; kind: POST
+ raw proof:no proof raw result:no result
+ Imply: ante: j'=j & i'=i & a'=a & i'<=j' & sumarray(a',1+i',j',v_int_36_1529) & 
+res=v_int_36_1529+(a'[i'])
+	     conseq:  sumarray(a,i,j,res)
+ res: false
+ -------------------- 
+ id: 239<23; prover: Z3; loc: arr_sum_ss_37:1_37:9; kind: POST
+ raw proof:no proof raw result:no result
+ Sat:  sumarray(a,i,j,res)
+ res: SAT
+ -------------------- 
+ id: 240<23; prover: Z3; loc: arr_sum_ss_37:1_37:9; kind: POST
+ raw proof:no proof raw result:no result
+ Sat:  res=v_int_36_1529+(a'[i']) & sumarray(a',1+i',j',v_int_36_1529) & i'<=j' & 
+a'=a & i'=i & j'=j & sumarray(a,i,j,res)
+ res: SAT
+ -------------------- 
+ id: 241<23; prover: Z3; loc: arr_sum_ss_37:1_37:9; kind: POST
+ raw proof:no proof raw result:no result
+ Sat:  res=v_int_36_1529+(a'[i']) & sumarray(a',1+i',j',v_int_36_1529) & i'<=j' & 
+a'=a & i'=i & j'=j & !(sumarray(a,i,j,res))
+ res: SAT
+ -------------------- 
+ id: 242<23; prover : CACHED ; loc: arr_sum_ss_37:1_37:9; kind: POST
+ raw proof:no proof raw result:no result
+ Sat:  sumarray(a,i,j,res)
+ res: SAT
+ -------------------- 
+ id: 243<23; prover : CACHED ; loc: arr_sum_ss_37:1_37:9; kind: POST
+ raw proof:no proof raw result:no result
+ Sat:  res=v_int_36_1529+(a'[i']) & sumarray(a',1+i',j',v_int_36_1529) & i'<=j' & 
+a'=a & i'=i & j'=j & sumarray(a,i,j,res)
+ res: SAT
+ -------------------- 
+ id: 244<23; prover : CACHED ; loc: arr_sum_ss_37:1_37:9; kind: POST
+ raw proof:no proof raw result:no result
+ Sat:  res=v_int_36_1529+(a'[i']) & sumarray(a',1+i',j',v_int_36_1529) & i'<=j' & 
+a'=a & i'=i & j'=j & !(sumarray(a,i,j,res))
+ res: SAT
+ --------------------

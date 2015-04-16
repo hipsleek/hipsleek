@@ -248,7 +248,7 @@ let combine_vperm_sets vps_list =
     let zero_vars = comb_vps.vperm_zero_vars in
     let msg = "Combination of vperm sets causes contradiction" in
     let err = ({ Error.error_loc = proving_loc # get; Error.error_text = msg }) in
-    (* let () = Debug.binfo_pprint "inside combine_vperm_sets" no_pos in *)
+    (* let () = x_binfo_pp "inside combine_vperm_sets" no_pos in *)
     if (check_dups full_vars) (* || (overlap full_vars lend_vars) *)
     then Error.report_error err
     else

@@ -1,0 +1,14 @@
+checkentail v<\inf & a=5 & v+a=\inf |- false. // fail but shd be valid
+checkentail a+b<\inf |- a < \inf & b <\inf.// fail but valid*/
+checkentail -\inf<a+b|- -\inf<a & -\inf<b . 
+checkentail true|- -\inf<=a+b. // fail but valid
+checkentail v=a+b|- a+b<=\inf. // fail but valid
+checkentail a+v<\inf |- v<\inf. // fail but valid
+checkentail a<\inf & a+v<\inf |- v<\inf. // fail but valid
+checkentail v<\inf & a=5 & (a=\inf | v=\inf) |- false. // valid
+checkentail v<\inf & a=5 & v+a=\inf |- false. // fail but shd be valid
+checkentail v<\inf & a=5 & v+a>=\inf |- false. // fail but shd be valid
+checkentail v<\inf & v+5>=\inf |- false. // valid
+checkentail v<\inf & w=v+5 |- w<\inf. // valid
+checkentail v<\inf |- w+5<\inf. // valid
+checkentail v<\inf & a=5 |- v+a<\inf. // fail but shd be valid*/

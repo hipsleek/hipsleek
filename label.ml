@@ -118,7 +118,7 @@ struct
   let rec comb_tgt l x ys =
     match ys with
     | [] -> (l,x)
-    | (ly,y)::ys1 -> comb_tgt (Lbl.comb_norm 3 l ly) (Exp.comb x y) ys1
+    | (ly,y)::ys1 -> comb_tgt (x_add Lbl.comb_norm 3 l ly) (Exp.comb x y) ys1
 
   (* ac are disjoint *)
   (* add each item from xs into ac *)

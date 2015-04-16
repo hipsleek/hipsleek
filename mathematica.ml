@@ -178,14 +178,14 @@ let check_formula (f: string) : bool option =
     else if (result = "False") then
       Some false
     else
-      let () = Debug.dinfo_pprint ("Mathematica unexpected anser 1: ") no_pos in
-      let () = Debug.dinfo_zprint (lazy (("   Input : " ^ f))) no_pos in
-      let () = Debug.dinfo_zprint (lazy (("   Output: " ^ output))) no_pos in
+      let () = x_dinfo_pp ("Mathematica unexpected anser 1: ") no_pos in
+      let () = x_dinfo_zp (lazy (("   Input : " ^ f))) no_pos in
+      let () = x_dinfo_zp (lazy (("   Output: " ^ output))) no_pos in
       failwith "Mathematica: Unexpected answer!"
   with _ ->
-    let () = Debug.dinfo_pprint ("Mathematica unexpected anser 2: ") no_pos in
-    let () = Debug.dinfo_zprint (lazy (("   Input : " ^ f))) no_pos in
-    let () = Debug.dinfo_zprint (lazy (("   Output: " ^ output))) no_pos in
+    let () = x_dinfo_pp ("Mathematica unexpected anser 2: ") no_pos in
+    let () = x_dinfo_zp (lazy (("   Input : " ^ f))) no_pos in
+    let () = x_dinfo_zp (lazy (("   Output: " ^ output))) no_pos in
     failwith "Mathematica: Unexpected answer!"
 
 let check_formula f =
@@ -330,6 +330,7 @@ let rec math_of_exp e0 : string=
   | CP.ArrayAt _ -> failwith ("mathematica.math_of_exp: cannot handle array operator")
   | CP.Func _ -> failwith ("mathematica.math_of_exp: cannot handle func operator")
   | CP.Level _  -> failwith ("mathematica.math_of_exp: cannot handle Level operator")
+  | CP.NegInfConst _ 
   | CP.InfConst _  -> failwith ("mathematica.math_of_exp: cannot handle InfConst operator")
   | CP.Template t -> math_of_exp (CP.exp_of_template t)
 
@@ -821,7 +822,7 @@ let imply ante conseq imp_no =
 
 (* unimplemented *)
 let simplify (f: CP.formula) : CP.formula =
-  if is_linear_formula f then Omega.simplify f 
+  if is_linear_formula f then x_add_1 Omega.simplify f 
   else f
 
 let hull (f: CP.formula) : CP.formula = 

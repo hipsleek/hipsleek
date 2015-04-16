@@ -276,6 +276,7 @@ and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         (*added to support fractional splitting of data nodes*)
                         h_formula_data_origins : ident list;
                         h_formula_data_original : bool;
+                        (*h_formula_data_abstract_type : CP.spec_var option;  asankhs: keep track of the mathematical object that is associated with this points to *)
                         h_formula_data_arguments : CP.spec_var list;
                         h_formula_data_holes : int list; (* An Hoa : list of fields not to be considered for partial structures *) (*store positions*)
                         h_formula_data_label : formula_label option;
@@ -476,10 +477,10 @@ let isAnyConstFalse f = match f with
       formula_exists_pure = p;
       formula_exists_flow = fl; })
   | Base ({
-      formula_base_heap = h;
-      formula_base_vperm = vp;
-      formula_base_pure = p;
-      formula_base_flow = fl; }) -> 
+        formula_base_heap = h;
+        formula_base_vperm = vp;
+        formula_base_pure = p;
+        formula_base_flow = fl; }) -> 
     h = HFalse || MCP.isConstMFalse p || 
     is_false_flow fl.formula_flow_interval || CVP.is_false_vperm_sets vp
   | _ -> false
@@ -684,7 +685,7 @@ let consistent_formula f : bool =
 let must_consistent_formula (s:string) (l:formula) : unit =
   if !consistency_checking then
     let b = consistent_formula l in
-    if b then  print_endline ("\nSuccessfully Tested Consistency at "^s)
+    if b then  print_endline_quiet ("\nSuccessfully Tested Consistency at "^s)
     else report_error no_pos ("ERROR at "^s^": formula inconsistent")
 
 let extr_formula_base e = match e with
@@ -3934,7 +3935,7 @@ and split_components_x (f : formula) =
         formula_exists_and = a; (* TO CHECK: omit at the moment *)
         formula_exists_type = t }) -> (h, p, vp, fl, t, a)
     | Or ({ formula_or_pos = pos }) ->
-      let () = DD.tinfo_hprint (add_str "f" !print_formula) f no_pos in
+      let () = x_tinfo_hp (add_str "f" !print_formula) f no_pos in
       Err.report_error {
         Err.error_loc = pos;
         Err.error_text = "split_components: don't expect OR" }
@@ -4181,9 +4182,9 @@ and simplify_pure_f_x (f0:formula) =
   let simp f =
     let r1 = CP.remove_redundant f in
     let r2 = Wrapper.wrap_exception f simplify_aux r1 in
-    let () = Debug.tinfo_hprint (add_str "simp(f)" !print_pure_f) f no_pos in
-    let () = Debug.tinfo_hprint (add_str "simp(syn)" !print_pure_f) r1 no_pos in
-    let () = Debug.tinfo_hprint (add_str "simp(oc)" !print_pure_f) r2 no_pos in r2 in
+    let () = x_tinfo_hp (add_str "simp(f)" !print_pure_f) f no_pos in
+    let () = x_tinfo_hp (add_str "simp(syn)" !print_pure_f) r1 no_pos in
+    let () = x_tinfo_hp (add_str "simp(oc)" !print_pure_f) r2 no_pos in r2 in
   let rec helper f=
     match f with
     | Base b-> Base {b with formula_base_pure = MCP.mix_of_pure (simp (* CP.remove_redundant *) (MCP.pure_of_mix b.formula_base_pure));}
@@ -4385,7 +4386,7 @@ and rename_struc_bound_vars (f:struc_formula):struc_formula = match f with
 and rename_bound_vars (f : formula) =
   let pr = !print_formula in
   let pr_out (f,_) = pr f in
-  let res = Debug.no_1 "rename_bound_vars" pr pr_out
+  let res = Debug.no_1 "CF.rename_bound_vars" pr pr_out
       (fun _ -> rename_bound_vars_x f) f in
   fst res
 
@@ -5377,7 +5378,7 @@ and look_up_ptr_args_data_node hd=
 
 (* let loop_up_ptr_args_view_node prog hv= *)
 (*   (\*view node*\) *)
-(*   let view_def =  Cast.look_up_view_def no_pos prog.Cast.prog_view_decls hv.CF.h_formula_view_name in *)
+(*   let view_def = x_add Cast.look_up_view_def no_pos prog.Cast.prog_view_decls hv.CF.h_formula_view_name in *)
 (*   (\*get prototype of a node declaration*\) *)
 (*   let args = List.map (fun (t,_) -> t) view_def.Cast.view_fields in *)
 (*   (\*combine with actual areg*\) *)
@@ -5843,7 +5844,7 @@ let check_imm_mis rhs_mis rhs0 =
   let pr = !print_h_formula in
   Debug.no_2 "check_imm_mis" pr pr pr check_imm_mis rhs_mis rhs0
 
-
+(* asankhs : what is this method supported to do ? *)
 let rec heap_trans_heap_node fct f0 =
   let recf = heap_trans_heap_node fct in
   let rec helper f=
@@ -5872,7 +5873,8 @@ let rec heap_trans_heap_node fct f0 =
         | _ ->
           Star {b with h_formula_star_h2 = hf2; h_formula_star_h1 = hf1}
       end
-    | ConjStar _|ConjConj _|StarMinus _ -> report_error no_pos "CF.heap_trans_heap_node: not handle yet"
+    | ConjStar _|ConjConj _|StarMinus _ -> f
+    (*report_error no_pos "CF.heap_trans_heap_node: not handle yet"*)
   in
   helper f0
 
@@ -7161,8 +7163,8 @@ let generate_xpure_view_x drop_hpargs total_unk_map=
       let xpvs = lookup_xpure_view hp total_unk_map in
       match xpvs with
       | [xp] -> let xp_r, xp_args = match xp.CP.xpure_view_node with
-        | None -> None, xp.CP.xpure_view_arguments
-        |Some _ -> Some (List.hd args), (List.tl args)
+          | None -> None, xp.CP.xpure_view_arguments
+          |Some _ -> Some (List.hd args), (List.tl args)
         in
         let new_xpv = {xp with CP.xpure_view_node =  xp_r;
                                xpure_view_arguments =  xp_args
@@ -7759,7 +7761,7 @@ let remove_neqNull_redundant_hnodes_f_x f0=
       ( Or {orf with formula_or_f1 = nf1;
                      formula_or_f2 = nf2;})
     | Exists fe -> let np = remove_neqNull_redundant_hnodes_hf fe.formula_exists_heap
-        (MCP.pure_of_mix fe.formula_exists_pure) in
+                       (MCP.pure_of_mix fe.formula_exists_pure) in
       (Exists {fe with formula_exists_pure = MCP.mix_of_pure np;})
   in
   helper f0
@@ -7780,7 +7782,7 @@ let remove_neqNull_redundant_hnodes_f_wg (f0,og)=
       ( Or {orf with formula_or_f1 = nf1;
                      formula_or_f2 = nf2;})
     | Exists fe -> let np = remove_neqNull_redundant_hnodes_hf fe.formula_exists_heap
-        (MCP.pure_of_mix fe.formula_exists_pure) in
+                       (MCP.pure_of_mix fe.formula_exists_pure) in
       (Exists {fe with formula_exists_pure = MCP.mix_of_pure np;})
   in
   let nf = helper f0 in
@@ -10078,17 +10080,17 @@ let get_may_error_from_ctx cs =
 (*   Debug.no_1 "get_may_error_from_ctx" pr1 (pr_option pr2) *)
 (*       (fun _ -> get_may_error_from_ctx cs) cs *)
 
+let rec is_ctx_error ctx=
+  match ctx with
+  | Ctx es -> not (es.es_final_error = None)
+  | OCtx (c1, c2) -> is_ctx_error c1 || is_ctx_error c2
+
 let isFailCtx_gen cl =
-  let rec get_final_error ctx=
-    match ctx with
-    | Ctx es -> not (es.es_final_error = None)
-    | OCtx (c1, c2) -> get_final_error c1 || get_final_error c2
-  in
   match cl with
   | FailCtx _ -> true
   | SuccCtx cs -> if cs = [] then true else
       (* ((get_must_error_from_ctx cs) !=None) || ((get_may_error_from_ctx cs) !=None) *)
-      List.exists (fun ctx -> get_final_error ctx) cs
+      List.exists (fun ctx -> is_ctx_error ctx) cs
 
 let get_final_error cl=
   let rec get_final_error ctx=
@@ -10319,10 +10321,10 @@ and combine_helper op los rs=
   match los with
   | [] -> rs
   | [os] -> let tmp=
-    ( match os with
-      | None -> rs
-      | Some s -> rs ^ s
-    ) in tmp
+              ( match os with
+                | None -> rs
+                | Some s -> rs ^ s
+              ) in tmp
   | os::ss ->
     (*os contains all failed of 1 path trace*)
     let tmp=
@@ -10637,7 +10639,7 @@ let remove_dupl_false (sl:branch_ctx list) =
       (isAnyFalseCtx oc && not(is_inferred_pre_ctx oc)) ) sl) in
   let pr = pr_list (fun (_,oc,_) -> !print_context_short oc) in
   if not(fl==[]) && not(nl==[]) then
-    Debug.tinfo_hprint (add_str "false ctx removed" pr) fl no_pos; 
+    x_tinfo_hp (add_str "false ctx removed" pr) fl no_pos; 
   if nl==[] then 
     if (fl==[]) then []
     else [List.hd(fl)]
@@ -10870,7 +10872,7 @@ let add_infer_pure_to_estate cp es =
   let new_cp = List.concat (List.map CP.split_conjunctions cp) in
   let new_cp = List.fold_left (fun a n -> 
       (* let n = CP.norm_form n in *)
-      let n = CP.arith_simplify_new n in
+      let n =  CP.arith_simplify_new n in
       if List.exists (CP.equalFormula_f CP.eq_spec_var n) a then a else n::a) old_cp new_cp in
   let () = Debug.ninfo_hprint (add_str "cp" (pr_list !print_pure_f)) cp no_pos in
   let () = Debug.ninfo_hprint (add_str "es_infer_pure" (pr_list !print_pure_f)) new_cp no_pos in
@@ -10910,7 +10912,7 @@ let add_infer_heap_to_ctx cp ctx =
 let add_infer_pure_to_list_context cp (l : list_context) : list_context  = 
   match l with
   | FailCtx _-> l
-  | SuccCtx sc -> SuccCtx (List.map (add_infer_pure_to_ctx cp) sc)
+  | SuccCtx sc -> SuccCtx (List.map (x_add add_infer_pure_to_ctx cp) sc)
 
 let add_infer_pure_to_list_context cp (l : list_context) : list_context  = 
   let pr = !print_list_context_short in
@@ -10934,11 +10936,11 @@ let add_infer_pre f_ctx ctx =
   if (ch!=[]) then
     if(!Globals.pa) then add_infer_heap_to_ctx ch ctx
     else 
-      let () = print_endline "ERROR : non-pure heap inferred for false" in
+      let () = print_endline_quiet "ERROR : non-pure heap inferred for false" in
       report_error no_pos ("add_infer_pre: non-pure inferred heap :"^(!print_context f_ctx))
   else
     let cp = collect_pre_pure f_ctx in
-    if (cp!=[]) then add_infer_pure_to_ctx cp ctx
+    if (cp!=[]) then x_add add_infer_pure_to_ctx cp ctx
     else 
       let cr = collect_rel f_ctx in
       if (cr!=[]) then add_infer_rel_to_ctx cr ctx
@@ -11313,8 +11315,8 @@ let proc_left t1 t2 =
         match t2 with
         | [c2] ->
           if isAnyFalseCtx c2
-          && is_inferred_pre_ctx c2
-          (* both t1 and t2 are FalseCtx with Pre *)
+             && is_inferred_pre_ctx c2
+             (* both t1 and t2 are FalseCtx with Pre *)
           then Some [merge_false_ctx c1 c2]
           else Some t2 (* drop FalseCtx t1 with Pre *)
         | _ -> Some t1 (* only t1 is FalseCtx with Pre *)
@@ -11513,7 +11515,9 @@ let isSuccessPartialCtx_new (fs,succ_brs) =
   let is_succ = List.for_all isSuccessBranchFail fs in
   if not !Globals.enable_error_as_exc || not is_succ then is_succ else
     (* all succ branch should not subsume must, may flows *)
-    List.for_all (fun (_,_, oft) -> oft = None) succ_brs
+    succ_brs != [] && List.for_all (fun (_, _, oft) ->
+        oft = None
+      ) succ_brs
 
 let isSuccessFailescCtx (fs,_,_) =
   if (Gen.is_empty fs) then true else false
@@ -12062,13 +12066,13 @@ and formula_trace_of_context_x ctx0 = match ctx0 with
       | None -> mix_f
       | Some (ta,l1,l2) ->
         let m = CP.mkPure (CP.mkLexVar ta l1 l2 no_pos) in
-        Debug.trace_hprint (add_str "es_var_measures:" !CP.print_formula) m no_pos;
+        x_tinfo_hp (add_str "es_var_measures:" !CP.print_formula) m no_pos;
         MCP.merge_mems mix_f (MCP.mix_of_pure m) true in
     (*TO CHECK*)
     let f = add_mix_formula_to_formula mix_f orig_f in
     let trace = es.es_trace in
-    Debug.trace_hprint (add_str "es_formula:" !print_formula) orig_f no_pos;
-    DD.trace_hprint (add_str "es_pure:" !print_mix_formula) es.es_pure no_pos;
+    x_tinfo_hp (add_str "es_formula:" !print_formula) orig_f no_pos;
+    x_tinfo_hp (add_str "es_pure:" !print_mix_formula) es.es_pure no_pos;
     (f,trace)
 
 and formula_trace_of_context ctx0 = 
@@ -12321,6 +12325,20 @@ let join_star_conjunctions_opt (hs : h_formula list) : (h_formula option)  =
   Debug.no_1 "join_star_conjunctions_opt" pr1 pr2
     join_star_conjunctions_opt_x hs
 
+let split_all_conjunctions (f:h_formula) : (h_formula list) =
+  let rec helper f = 
+    match f with
+    | Star({h_formula_star_h1 = h1;
+            h_formula_star_h2 = h2;}) 
+    | StarMinus({h_formula_starminus_h1 = h1;
+                 h_formula_starminus_h2 = h2;})
+    | Conj({h_formula_conj_h1 = h1;
+            h_formula_conj_h2 = h2;}) ->
+      let res1 = helper h1 in
+      let res2 = helper h2 in
+      (res1@res2)
+    | _ -> [f]
+  in helper f
 
 let split_star_conjunctions (f:h_formula): (h_formula list) =
   let rec helper f = 
@@ -12847,8 +12865,8 @@ let extract_single_hvar_f (f0:formula) : CP.spec_var option =
     | Base ({ formula_base_heap = h1; formula_base_vperm=vp; formula_base_pure =pf;})
     | Exists ({formula_exists_heap = h1; formula_exists_vperm=vp; formula_exists_pure =pf;}) 
       -> 
-      let () = Debug.tinfo_hprint (add_str "residue:vp" !print_vperm_sets) vp no_pos in
-      let () = Debug.tinfo_hprint (add_str "residue:pure" !print_mix_formula) pf no_pos in
+      let () = x_tinfo_hp (add_str "residue:vp" !print_vperm_sets) vp no_pos in
+      let () = x_tinfo_hp (add_str "residue:pure" !print_mix_formula) pf no_pos in
       if CVP.is_empty_vperm_sets vp then 
         extract_single_hvar h1
       else None
@@ -15041,12 +15059,12 @@ let get_pre_rels pure =
 let rec get_pre_pure_fml xpure_heap prog fml = match fml with
   | Base b -> 
     let pure = b.formula_base_pure in
-    let xpured,_,_ = xpure_heap 11 prog (b.formula_base_heap) pure 1 in 
+    let xpured,_,_ = x_add xpure_heap 11 prog (b.formula_base_heap) pure 1 in 
     [MCP.pure_of_mix (MCP.merge_mems pure xpured true)]
   | Or o -> (get_pre_pure_fml xpure_heap prog o.formula_or_f1) @ (get_pre_pure_fml xpure_heap prog o.formula_or_f2)
   | Exists e -> 
     let pure = e.formula_exists_pure in
-    let xpured,_,_ = xpure_heap 12 prog (e.formula_exists_heap) pure 1 in 
+    let xpured,_,_ = x_add xpure_heap 12 prog (e.formula_exists_heap) pure 1 in 
     [MCP.pure_of_mix (MCP.merge_mems pure xpured true)]
 
 let rec get_grp_post_rel_flag fml = match fml with
@@ -17359,7 +17377,9 @@ let elim_prm e =
     | CP.Tsconst _
     | CP.FConst _ 
     | CP.Func _
+    | CP.InfConst _
     | CP.Template _
+    | CP.NegInfConst _
     | CP.ArrayAt _ -> Some e 
     | CP.Var (v,p)-> Some (CP.Var (nv v, p))
     | CP.Bptriple ((c,t,a),p) -> Some (CP.Bptriple ((nv c,nv t,nv a),p))
@@ -17382,7 +17402,7 @@ let elim_prm e =
     | CP.ListLength _
     | CP.ListAppend _
     | CP.ListReverse _ -> None
-    | CP.Level _| CP.InfConst _ -> report_error no_pos "CF.elim_prm: not handle yet"
+    | CP.Level _ -> report_error no_pos "CF.elim_prm: not handle yet"
   in
   let rec f_h_f e = match e with 
     | Star s -> None
@@ -17939,6 +17959,29 @@ let elim_e_var to_keep (f0 : formula) : formula =
 
 (* let rearrange_failesc_context_list fcl = *)
 (*   List.map rearrange_failesc_context fcl *)
+
+let rec contains_starminus (f:h_formula) : bool = 
+  (*let _ = print_string ("Checking StarMinus = "^ (string_of_h_formula f) ^ "\n") in *)
+  match f with
+  | DataNode (h1) -> false
+  | ViewNode (h1) -> false
+  | Star ({h_formula_star_h1 = h1;
+           h_formula_star_h2 = h2;
+           h_formula_star_pos = pos}) 
+  | Phase ({h_formula_phase_rd = h1;
+            h_formula_phase_rw = h2;
+            h_formula_phase_pos = pos})
+  | Conj({h_formula_conj_h1 = h1;
+          h_formula_conj_h2 = h2;
+          h_formula_conj_pos = pos})
+  | ConjStar({h_formula_conjstar_h1 = h1;
+              h_formula_conjstar_h2 = h2;
+              h_formula_conjstar_pos = pos})
+  | ConjConj({h_formula_conjconj_h1 = h1;
+              h_formula_conjconj_h2 = h2;
+              h_formula_conjconj_pos = pos})-> (contains_starminus h1) || (contains_starminus h2)
+  | StarMinus _ -> true
+  | _ -> false
 
 let rec is_inf_tnt_struc_formula f =
   match f with 

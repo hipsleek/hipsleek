@@ -1,11 +1,9 @@
-/*
 pred_prim nondet<>
   inv true;
-*/
 
 int nondeterm()
   requires true
-  ensures nondet_int__(res);
+  ensures res::nondet<>;
 
 void foo(int i) 
   case {
@@ -29,5 +27,7 @@ Termination checking result:
 
 There is no sleek checking here.
 Can we convert this into a sleek proof!
+
+*/
 
 */

@@ -541,7 +541,7 @@ and normalize_h_formula_phase (h : IF.h_formula) (wr_phase : bool) : IF.h_formul
                    IF.h_formula_conjconj_h2 = h2;
                    IF.h_formula_conjconj_pos = pos
                   })               ->
-      if (wr_phase) && ((!Globals.allow_mem) || (!Globals.allow_field_ann)) then h else
+      if (wr_phase) && ((!Globals.allow_mem) || (!Globals.allow_field_ann) || (!Globals.allow_ramify)) then h else
         normalize_h_formula_rd_phase h
     | IF.HeapNode2 hf -> 
       (let annv = get_imm h in
@@ -1067,11 +1067,11 @@ and collect_ann_info_from_formula_x (a: CP.ann) (conjs: CP.formula list) (pure: 
     | CP.PolyAnn sv -> CP.find_closure_pure_formula sv pure 
     | _ -> []
   in
-  Debug.tinfo_hprint (add_str "conjs bef:" (pr_list Cprinter.string_of_pure_formula)) conjs no_pos;
+  x_tinfo_hp (add_str "conjs bef:" (pr_list Cprinter.string_of_pure_formula)) conjs no_pos;
   (* keep only Eq formulae of form var = AConst, where var is in lst *)
   let conjs = List.filter (fun f -> 
       (CP.is_eq_with_aconst f) && not(CP.disjoint (CP.fv f) lst )) conjs in
-  Debug.tinfo_hprint (add_str "conjs:" (pr_list Cprinter.string_of_pure_formula)) conjs no_pos;
+  x_tinfo_hp (add_str "conjs:" (pr_list Cprinter.string_of_pure_formula)) conjs no_pos;
   let ann = merge_ann_formula_list conjs in
   ann
 
@@ -1088,14 +1088,14 @@ and collect_ann_info_from_formula (a: CP.ann) (conjs: CP.formula list) (pure: CP
 and restore_tmp_res_ann_x (annl: CP.ann) (annr: CP.ann) (pure0: MCP.mix_formula) impl_vars evars: CP.ann =
   let pure = MCP.pure_of_mix pure0 in
   (* let pairs = CP.pure_ptr_equations pure in *)
-  Debug.tinfo_hprint (add_str "pure:" (Cprinter.string_of_pure_formula)) pure no_pos;
-  (* Debug.tinfo_hprint (add_str "pairs:" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) pairs no_pos; *)
+  x_tinfo_hp (add_str "pure:" (Cprinter.string_of_pure_formula)) pure no_pos;
+  (* x_tinfo_hp (add_str "pairs:" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) pairs no_pos; *)
   let conjs = CP.split_conjunctions pure in
-  Debug.tinfo_hprint (add_str "conjs:" (pr_list Cprinter.string_of_pure_formula)) conjs no_pos;
+  x_tinfo_hp (add_str "conjs:" (pr_list Cprinter.string_of_pure_formula)) conjs no_pos;
   let ann_r0 = collect_ann_info_from_formula annr conjs pure in
   let ann_l0 = collect_ann_info_from_formula annl conjs pure in
-  Debug.tinfo_hprint (add_str "annr:" (pr_opt string_of_heap_ann)) ann_r0 no_pos;
-  Debug.tinfo_hprint (add_str "annl:" (pr_opt string_of_heap_ann)) ann_l0 no_pos;
+  x_tinfo_hp (add_str "annr:" (pr_opt string_of_heap_ann)) ann_r0 no_pos;
+  x_tinfo_hp (add_str "annl:" (pr_opt string_of_heap_ann)) ann_l0 no_pos;
   let ann_subst ann def_ann = match ann with
     | Some a -> CP.ConstAnn(a)
     | None   -> def_ann in
@@ -1175,8 +1175,8 @@ and restore_tmp_ann_x_old (ann_lst: CP.ann list) (pure0: MCP.mix_formula): CP.an
         let ann_l = restore_tmp_res_ann t (CP.ConstAnn(Accs))(* t *) pure0 [] [] in
         ann_l :: (restore_tmp_ann_x tl pure0)
       | CP.TempRes(al,ar) ->  
-        (* Debug.tinfo_hprint (add_str "CP.TempRes:" (Cprinter.string_of_imm)) ann_l no_pos; *)
-        (* Debug.tinfo_hprint (add_str "pure0:" (Cprinter.string_of_mix_formula)) pure0 no_pos; *)
+        (* x_tinfo_hp (add_str "CP.TempRes:" (Cprinter.string_of_imm)) ann_l no_pos; *)
+        (* x_tinfo_hp (add_str "pure0:" (Cprinter.string_of_mix_formula)) pure0 no_pos; *)
         (* let ann_l = restore_tmp_res_ann al ar pure0 [] [] in *)
         ann_l :: (restore_tmp_ann_x tl pure0)
       | _        -> ann_l :: (restore_tmp_ann_x tl pure0)
@@ -1948,7 +1948,7 @@ let split_view_args view_args vdef:  CP.spec_var list * 'a list * (CP.annot_arg 
   let view_arg_lbl =  try (List.combine view_args (fst vdef.I.view_labels))
     with  Invalid_argument _ -> failwith "Immutable.ml, split_view_args: error while combining view args with labels 1" in
   let ann_map_pos = vdef.I.view_imm_map in
-  let () = Debug.tinfo_hprint (add_str "imm_map:" (pr_list (pr_pair Iprinter.string_of_imm string_of_int))) ann_map_pos no_pos in
+  let () = x_tinfo_hp (add_str "imm_map:" (pr_list (pr_pair Iprinter.string_of_imm string_of_int))) ann_map_pos no_pos in
   (* create list of view_arg*pos  *)
   let vp_pos = CP.initialize_positions_for_view_params view_arg_lbl in
   let view_args_pos = List.map (fun ((va,_),pos) -> (va,pos)) vp_pos in
@@ -2132,7 +2132,7 @@ let partition_eqs_subs lst1 lst2 quantif =
 
 let norm_abs_node h p xpure =
   if (isAccs (get_imm h)) then
-    let xpured, _, _ = xpure h p 0 in (* 0 or 1? *)(* !!!! add the xpure to pure *)
+    let xpured, _, _ = x_add xpure h p 0 in (* 0 or 1? *)(* !!!! add the xpure to pure *)
     (HEmp, Some (MCP.pure_of_mix xpured))
   else
     (h, None)  
@@ -2230,8 +2230,8 @@ let merge_alias_nodes_h_formula_helper prog p lst emap quantif xpure unfold_fun 
       let updated_head, updated_tail, eqs_lst, subs_lst, struc_lst = merge_list_w_node h t emap prog quantif unfold_fun qvars in
       let (fixpoint, emap) = List.fold_left 
           ( fun (fixpoint,emap) (a,b) -> 
-             if CP.EMapSV.is_equiv emap a b then (fixpoint&&true,emap)
-             else (fixpoint&&false, CP.EMapSV.add_equiv emap a b) 
+              if CP.EMapSV.is_equiv emap a b then (fixpoint&&true,emap)
+              else (fixpoint&&false, CP.EMapSV.add_equiv emap a b) 
           ) (true, emap) eqs_lst in
       let fixpoint = fixpoint && (is_empty subs_lst) in
       let merged_tail, eqs_lst_tail, subs_lst_tail, fixpoint_tail, struc_tail = helper updated_tail emap  in

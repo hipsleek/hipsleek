@@ -89,7 +89,7 @@ let devel_zprint msg (pos:loc) =
 let catch_exc m f x = 
   try 
     f x
-  with e -> (print_endline m; flush stdout; raise e)
+  with e -> (print_endline_quiet m; flush stdout; raise e)
 
 let dinfo_zprint m p = devel_zprint m p
 let dinfo_hprint pr m p  = devel_hprint pr m p
@@ -303,13 +303,12 @@ let pick_front n ss =
 module DebugCore  =
 struct
   let ho_aux ?(arg_rgx=None) df lz (loop_d:bool) (test:'z -> bool) (g:('a->'z) option) (s:string) (args:string list) (pr_o:'z->string) (f:'a->'z) (e:'a) :'z =
-    let pre_str = 
-      let s = !VarGen.last_posn in
-      match s with 
-      | None -> ""
-      | Some s -> 
-        let () = VarGen.last_posn := None in
-        "("^s^")" in
+    let pre_str = "(=="^(VarGen.last_posn # get_rm)^"==)" in
+    (* if s=="" thenmatch s with  *)
+    (*   | None -> "" *)
+    (*   | Some s ->  *)
+    (*         (\* let () = VarGen.last_posn := None in *\) *)
+    (*         "("^s^")" in *)
     let pr_args xs =
       let rec helper (i:int) args = match args with
         | [] -> ()
@@ -395,6 +394,7 @@ struct
 
   let ho_aux_no (f:'a -> 'z) (last:'a) : 'z =
     push_no_call ();
+    (* VarGen.last_posn # reset; *)
     pop_aft_apply_with_exc_no f last
 
 
@@ -505,7 +505,6 @@ struct
 
   let z_debug_file = ref ""
   (* let z_debug_regexp = ref None *)
-  let z_debug_flag = ref false
   let mk_debug_arg s =
     let re = Str.regexp s in
     z_debug_arg := Some re
@@ -613,8 +612,8 @@ struct
             | true,false -> DO_Trace
             | true,true -> DO_Both
           in
-          let () = print_endline (m) in
-          let () = print_endline (split) in
+          let () = print_endline_quiet (m) in
+          let () = print_endline_quiet (split) in
           (* let kind = if String.compare split "Trace" == 0 then DO_Trace else *)
           (*   if String.compare split "Loop" == 0 then DO_Loop else *)
           (*     DO_Normal *)
@@ -1281,11 +1280,17 @@ struct
 
 end
 
+
 module DebugEmpty  =
 struct
+
   let z_debug_file = ref ""
   (* let z_debug_regexp = ref None *)
-  let z_debug_flag = ref false
+  (* let z_debug_flag = ref false *)
+  (* let z_debug_regexp = ref None *)
+  let mk_debug_arg s =
+    let re = Str.regexp s in
+    z_debug_arg := Some re
 
   let read_main() = ()
   let no_1 s p1 p0 f = f

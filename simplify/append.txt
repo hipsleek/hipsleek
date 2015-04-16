@@ -1,0 +1,58 @@
+Checking procedure append$node~node... 
+!!! **typechecker.ml#2008:Dprint:[fl_45,tmp_44,nnn,mmm,xxx,yyyy]
+!!! **cfout.ml#414:formula: (exists eee_1538: xxx'::node<Anon_1520,q_1521> * q_1521::ll{}<eee_1538>&
+0<=mmm_1533 & 0<=nnn_1532 & eee_1538=mmm_1533+nnn_1532 & 0<=flted_7_1519 & 
+0<=mmm & mmm_1533=mmm & nnn_1532=flted_7_1519 & tmp_44'=q_1521 & 
+flted_7_1519+1=nnn & xxx'=xxx & yyyy'=yyyy & 0<nnn & tmp_44'!=null & fl_45'&
+{FLOW,(4,5)=__norm#E}[]
+!!! **cfout.ml#416:all variables:[Anon_1520,mmm_1533,mmm,nnn_1532,q_1521,flted_7_1519,xxx',xxx,yyyy',yyyy,nnn,tmp_44',fl_45']
+!!! **cfout.ml#419:curr variables:[fl_45,tmp_44,nnn,mmm,xxx,yyyy]
+!!! **cfout.ml#421:bind variables:[xxx',Anon_1520,q_1521,eee_1538]
+!!! **cfout.ml#426:important variables:[Anon_1520,mmm,q_1521,xxx',xxx,yyyy',yyyy,nnn,tmp_44',fl_45']
+!!! **cfout.ml#428:exists variables:[mmm_1533,nnn_1532,flted_7_1519]
+dprint before: append.ss:19: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+
+Successful States:
+[
+ Label: [(,0 ); (,1 )]
+ State:(exists eee_1538: xxx'::node<Anon_1520,q_1521> * q_1521::ll{}<eee_1538>&0<=mmm_1533 & 0<=nnn_1532 & eee_1538=mmm_1533+nnn_1532 & 0<=flted_7_1519 & 0<=mmm & mmm_1533=mmm & nnn_1532=flted_7_1519 & tmp_44'=q_1521 & flted_7_1519+1=nnn & xxx'=xxx & yyyy'=yyyy & 0<nnn & tmp_44'!=null & fl_45'&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint after: append.ss:19: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+
+Successful States:
+[
+ Label: [(,0 ); (,1 )]
+ State:xxx'::node<Anon_1520,q_1521> * q_1521::ll{}<eee_1538>&xxx=xxx' & yyyy=yyyy' & nnn+mmm=1+eee_1538 & tmp_44'=q_1521 & 0<=mmm & mmm<=eee_1538 & q_1521!=null & fl_45'&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+!!! **typechecker.ml#2008:Dprint:[fl_45,tmp_44,nnn,mmm,xxx,yyyy]
+!!! **cfout.ml#414:formula: q_1521::ll{}<flted_7_1519> * yyyy::ll{}<mmm> * xxx'::node<Anon_1520,yyyy'>&
+!(fl_45') & tmp_44'=null & 0<nnn & yyyy'=yyyy & xxx'=xxx & flted_7_1519+
+1=nnn & tmp_44'=q_1521 & next_23_1541=q_1521&{FLOW,(4,5)=__norm#E}[]
+!!! **cfout.ml#416:all variables:[mmm,Anon_1520,fl_45',yyyy',yyyy,xxx',xxx,flted_7_1519,nnn,tmp_44',next_23_1541,q_1521]
+!!! **cfout.ml#419:curr variables:[fl_45,tmp_44,nnn,mmm,xxx,yyyy]
+!!! **cfout.ml#421:bind variables:[q_1521,flted_7_1519,yyyy,mmm,xxx',Anon_1520,yyyy']
+!!! **cfout.ml#426:important variables:[mmm,Anon_1520,fl_45',yyyy',yyyy,xxx',xxx,flted_7_1519,nnn,tmp_44',q_1521]
+!!! **cfout.ml#428:exists variables:[next_23_1541]
+dprint before: append.ss:24: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,1 ); (,2 )])]
+
+Successful States:
+[
+ Label: [(,1 ); (,2 )]
+ State:q_1521::ll{}<flted_7_1519> * yyyy::ll{}<mmm> * xxx'::node<Anon_1520,yyyy'>&!(fl_45') & tmp_44'=null & 0<nnn & yyyy'=yyyy & xxx'=xxx & flted_7_1519+1=nnn & tmp_44'=q_1521 & next_23_1541=q_1521&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint after: append.ss:24: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,1 ); (,2 )])]
+
+Successful States:
+[
+ Label: [(,1 ); (,2 )]
+ State:q_1521::ll{}<flted_7_1519> * yyyy::ll{}<mmm> * xxx'::node<Anon_1520,yyyy'>&yyyy=yyyy' & xxx=xxx' & nnn=1+flted_7_1519 & tmp_44'=null & q_1521=null & !(fl_45') & 0<=flted_7_1519&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+Procedure append$node~node SUCCESS.
