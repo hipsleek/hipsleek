@@ -18445,3 +18445,14 @@ let write_vperm_set f vp =
     | Exists b -> Exists { b with formula_exists_vperm = vp;}
     | _ -> failwith "write_vperm_set:not expecting OR formula"
   in helper f
+
+
+let exist_reachable_states_x (rs:list_partial_context)=
+  List.for_all (fun (_,brs) -> not (isFalseBranchCtxL brs)
+  ) rs
+
+
+let exist_reachable_states (rs:list_partial_context)=
+  let pr1 = !print_list_partial_context in
+  Debug.no_1 "exist_reachable_states" pr1 string_of_bool
+      (fun _ -> exist_reachable_states_x rs) rs
