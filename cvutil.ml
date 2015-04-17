@@ -1520,7 +1520,7 @@ and smart_same_flag = ref true
    are semantically the same *)
 
 and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula) p0  xp_no: (MCP.mix_formula * CP.spec_var list) = 
-  (* let () = smart_same_flag := true in *)
+  let () = smart_same_flag := true in (* WN:enabled now-why? *)
   let pr (a,b) = pr_triple Cprinter.string_of_mix_formula Cprinter.string_of_spec_var_list string_of_bool (a,b,!smart_same_flag) in
   Debug.no_2 "xpure_heap_symbolic_i" string_of_int 
     Cprinter.string_of_h_formula pr
