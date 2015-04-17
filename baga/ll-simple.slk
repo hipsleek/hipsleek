@@ -17,6 +17,9 @@ print residue.
 /*
 # ll-simple.ss
 
+../sleek ll-simple.slk -dre "tp_imply\|imply_cache" -tp oc > 1
+
+
 --dis-use-baga
 Stop z3... 18 invocations Stop Omega... 16 invocations 
 SAT Count   : 21
@@ -24,6 +27,17 @@ SAT % Hit   : 47.61%
 IMPLY Count : 10
 IMPLY % Hit : 30.%
 Time(cache overhead) : 0.002914 (seconds)
+
+----
+astsimpl.ml 2004
+
+Stop z3... 15 invocations Stop Omega... 16 invocations
+SAT Count   : 19
+SAT % Hit   : 47.36%
+IMPLY Count : 8
+IMPLY % Hit : 37.5%
+Time(cache overhead) : 0.001037 (seconds)
+
 
 --use-baga
 Stop z3... 24 invocations Stop Omega... 16 invocations 

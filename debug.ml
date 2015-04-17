@@ -393,8 +393,11 @@ struct
     hp bs xs
 
   let ho_aux_no (f:'a -> 'z) (last:'a) : 'z =
+    (* WN : why was his clearing done traced debug function? *)                   
+    (* let ff z =  *)
+    (*     let () = VarGen.last_posn # reset in *)
+    (*     f z in *)
     push_no_call ();
-    (* VarGen.last_posn # reset; *)
     pop_aft_apply_with_exc_no f last
 
 
@@ -727,14 +730,20 @@ struct
   (* let ho_7_loop s = ho_7_opt_aux false [] true (fun _ -> true) None s *)
 
   let splitter s f_none f_gen f_norm =
+    (* let _ = print_endline ("splitter:"^s) in *)
     if !z_debug_flag then
       match (in_debug s) with
       | DO_Normal -> f_gen (f_norm false false)
       | DO_Trace -> f_gen (f_norm true false) 
       | DO_Loop -> f_gen (f_norm false true)
       | DO_Both -> f_gen (f_norm true true)
-      | DO_None -> f_none
-    else f_none
+      | DO_None -> 
+        (* let _ = print_endline ("splitter(none):"^s) in  *)
+        f_none
+    else         
+      (* let _ = print_endline ("splitter(none):"^s) in  *)
+      f_none
+
 
   let no_1 s p1 p0 f =
     let code_gen fn = fn s p1 p0 f in

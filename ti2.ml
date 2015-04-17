@@ -64,6 +64,9 @@ let fp_imply f p =
   let (res, _, _) = Tpdispatcher.mix_imply pf (MCP.mix_of_pure p) "999" in
   res
 
+let fp_imply f p =
+  Debug.no_2 "fp_imply" Cprinter.string_of_formula Cprinter.string_of_pure_formula string_of_bool fp_imply f p
+
 let unsat_base_nth = ref (fun _ _ _ _ -> true) (* Solver.unsat_base_nth *)
 
 let f_is_sat prog f =
@@ -497,7 +500,7 @@ and merge_tnt_case_spec_into_assume prog ctx spec af =
   | Unknown cex -> struc_formula_of_ann_w_assume af (CP.MayLoop cex, [])
   | Cases cases -> 
     try (* Sub-case of current context; all other cases are excluded *)
-      let sub_case = List.find (fun (c, _) -> fp_imply ctx c) cases in
+      let sub_case = List.find (fun (c, _) -> x_add fp_imply ctx c) cases in
       merge_tnt_case_spec_into_assume prog ctx (snd sub_case) af
     with _ -> 
       CF.ECase {

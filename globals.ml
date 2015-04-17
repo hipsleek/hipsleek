@@ -784,6 +784,7 @@ let omega_simpl = ref true
 
 let no_simpl = ref false
 
+
 let no_float_simpl = ref true (*do not simplify fractional constraints to avoid losing precision, such as 1/3 *)
 
 let source_files = ref ([] : string list)

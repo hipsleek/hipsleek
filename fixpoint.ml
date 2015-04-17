@@ -25,7 +25,7 @@ module TP = Tpdispatcher
 
 let get_inv_x prog sel_vars vnode=
   let inv = look_up_view_inv prog.prog_view_decls (vnode.CF.h_formula_view_node::vnode.CF.h_formula_view_arguments)
-      vnode.CF.h_formula_view_name Fixcalc.compute_inv in
+      vnode.CF.h_formula_view_name (x_add_3 Fixcalc.compute_inv) in
   CP.filter_var inv sel_vars
 
 let get_inv prog sel_vars vnode=
@@ -50,7 +50,7 @@ let rev_imply_formula f1 f2 = match (f1,f2) with
     (*    let p1 = MCP.pure_of_mix p1 in*)
     (*    let p2 = MCP.pure_of_mix p2 in*)
     let res = eqHeap h1 h2 && fl1=fl2 && b1=b2 && t1=t2 in
-    let res1 = TP.imply_raw_mix p1 p2 in
+    let res1 = x_add TP.imply_raw_mix p1 p2 in
     if res then
       if res1 then true
       else false
