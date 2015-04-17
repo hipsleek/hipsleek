@@ -8128,17 +8128,17 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
             match lhs_baga with
             | Some lhs ->
               let rhs = x_add_1 Expure.build_ef_pure_formula (Mcpure.pure_of_mix rhs_p) in
-              let flag = Excore.EPureI.imply_disj lhs rhs in
+              (* let flag = Excore.EPureI.imply_disj lhs rhs in *)
               let ((flag2,_,_),_) as r = imply_mix_formula 1 split_ante0 split_ante1 split_conseq imp_no memset in
-              let () = if flag2!=flag then
-                  let pr = Cprinter.string_of_ef_pure_disj in
-                  begin
-                    x_tinfo_hp (add_str "rhs pf" Cprinter.string_of_pure_formula) (Mcpure.pure_of_mix rhs_p) no_pos;
-                    x_tinfo_hp (add_str "expected" string_of_bool) flag2 no_pos;
-                    x_tinfo_hp (add_str "lhs" pr) lhs no_pos;
-                    x_tinfo_hp (add_str "rhs" pr) rhs no_pos
-                  end
-              in
+              (* let () = if flag2!=flag then *)
+              (*     let pr = Cprinter.string_of_ef_pure_disj in *)
+              (*     begin *)
+              (*       x_tinfo_hp (add_str "rhs pf" Cprinter.string_of_pure_formula) (Mcpure.pure_of_mix rhs_p) no_pos; *)
+              (*       x_tinfo_hp (add_str "expected" string_of_bool) flag2 no_pos; *)
+              (*       x_tinfo_hp (add_str "lhs" pr) lhs no_pos; *)
+              (*       x_tinfo_hp (add_str "rhs" pr) rhs no_pos *)
+              (*     end *)
+              (* in *)
               r
             (* ((flag,[],None),None) *)
             | None ->

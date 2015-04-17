@@ -285,7 +285,7 @@ let ef_elim_exists_1 (svl : spec_var list) epf  =
   let new_pure = remove_redundant_for_expure (elim_clause pure1 svl) in
   let () = Debug.ninfo_hprint (add_str "pure" !print_pure_formula) pure no_pos in
   let () = Debug.ninfo_hprint (add_str "pure1" !print_pure_formula) pure1 no_pos in
-  let () = Debug.ninfo_hprint (add_str "new pure" !print_pure_formula) new_pure no_pos in
+  let () = x_tinfo_hp (add_str "new pure" !print_pure_formula) new_pure no_pos in
   (List.sort compare_sv new_baga, new_pure)
 
 let ef_elim_exists_1 (svl : spec_var list) epf =
@@ -303,13 +303,13 @@ let calc_fix_pure (svl : spec_var list) pf =
   let pf_fix = x_add_1 Omega.simplify (mkOr pf_base pf_indu None no_pos) in
   pf_fix
 
-let ef_elim_exists_2 (svl : spec_var list) epf =
-  let (baga, pf) = epf in
-  let svl1 = List.filter (fun sv -> not(is_node_typ sv)) svl in
-  let svl2 = List.filter (fun sv -> is_node_typ sv) svl in
-  let pf1 = calc_fix_pure svl1 (filter_var pf svl1) in
-  let (baga, pf2) = ef_elim_exists_1 svl2 (baga, (filter_var pf svl2)) in
-  (baga, mkAnd pf1 pf2 no_pos)
+(* let ef_elim_exists_2 (svl : spec_var list) epf = *)
+(*   let (baga, pf) = epf in *)
+(*   let svl1 = List.filter (fun sv -> not(is_node_typ sv)) svl in *)
+(*   let svl2 = List.filter (fun sv -> is_node_typ sv) svl in *)
+(*   let pf1 = calc_fix_pure svl1 (filter_var pf svl1) in *)
+(*   let (baga, pf2) = ef_elim_exists_1 svl2 (baga, (filter_var pf svl2)) in *)
+(*   (baga, mkAnd pf1 pf2 no_pos) *)
 
 (* substitute baga *)
 (* [self,y] -> [x,y] -> [self] -> [x] *)
@@ -610,13 +610,13 @@ module EPURE =
       let (b,f) = ef_elim_exists_1 svl (Elt.conv_var b,f) in
       (Elt.from_var b, f)
 
-    let elim_exists (svl:spec_var list) (b,f) : epure =
+    let elim_exists_1 (svl:spec_var list) (b,f) : epure =
       let pr = string_of_typed_spec_var_list in
       Debug.no_2 "ef_elim_exists" pr string_of string_of elim_exists svl (b,f) 
 
     (* TODO-WN : why ins't elem used instead of spec_var *)
     let elim_exists_disj (svl : spec_var list) (lst : epure_disj) : epure_disj =
-      let r = List.map (fun e -> elim_exists svl e) lst in
+      let r = List.map (fun e -> elim_exists_1 svl e) lst in
       r
 
     (* ef_imply : ante:ef_pure -> conseq:ef_pure -> bool *)
