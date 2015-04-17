@@ -286,7 +286,7 @@ let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs view_equ
     match rest with
     | [] -> res
     | sv1::rest ->let n_res=
-                    if Gen.BList.mem_eq (=) n  inter_pos then res@[sv1] else res
+      if Gen.BList.mem_eq (=) n  inter_pos then res@[sv1] else res
       in
       retreive_svl_of_inter_svl rest (n+1) inter_pos n_res
   in
@@ -597,7 +597,7 @@ let rec case_struc_formula_trans_x prog dang_hps to_unfold_hps pre_hps post_hps 
             let f1,_ = CF.drop_hrel_f f0 [hp] in
             let f2 = CF.substitute_flow_into_f iflow f1 in
             f2
-    with _ -> f0
+          with _ -> f0
   in
   let elim_dup_with_guard_x g sf=
     match sf with
@@ -852,6 +852,7 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps
           CF.struc_formula_trans_heap_node [] (CF.formula_map (hn_hprel_subst_trans sst_hps)) s_spec2
       in
       let hn_trans_formula = trans_formula_hp_2_view iprog cprog name chprels_decl proc.C.proc_hpdefs sel_view_equivs in
+      let () =  Debug.ninfo_hprint (add_str "s_spec3" (Cprinter.string_of_struc_formula)) s_spec3 no_pos in
       let n_static_spec = CF.struc_formula_trans_heap_node [] hn_trans_formula s_spec3 in
       let () =  Debug.ninfo_hprint (add_str "trans static spec" (Cprinter.string_of_struc_formula)) n_static_spec no_pos in
       (* stack specs *)
@@ -936,6 +937,10 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps
 (*******************************)
 
 let plug_shape_into_specs_x cprog iprog dang_hps proc_names pre_hps post_hps hp_defs=
+  let is_rec_f hp f=
+    let hps = CF.get_hp_rel_name_formula f in
+    (CP.mem_svl hp hps)
+  in
   (*subst simple precondition*)
   let need_trans_hprels0, unk_hps, simpl_hps =
     List.fold_left (fun (r_hp_defs, r_unk_hps, r_simp_hps) hp_def ->

@@ -368,10 +368,10 @@ let convert_starminus ls =
                        h_formula_starminus_aliasing = al;
                        h_formula_starminus_pos = pos}) ->
            (let h1 =  match al with
-               | Not_Aliased -> mkStarH h2 h1 pos 
-               | May_Aliased -> mkConjH h2 h1 pos
-               | Must_Aliased -> mkConjConjH h2 h1 pos
-               | Partial_Aliased -> mkConjStarH h2 h1 pos in 
+              | Not_Aliased -> mkStarH h2 h1 pos 
+              | May_Aliased -> mkConjH h2 h1 pos
+              | Must_Aliased -> mkConjConjH h2 h1 pos
+              | Partial_Aliased -> mkConjStarH h2 h1 pos in 
             (mkStarMinusH h1 h2 al pos 111))
          | Star({h_formula_star_h1 = h1;
                  h_formula_star_h2 = h2;
@@ -1802,7 +1802,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                acts
              else
                (* fold to activate/change  *)
-               if (vr_is_prim) then [] else
+             if (vr_is_prim) then [] else
                [(1,M_fold m_res)]
            else []
          ) in
@@ -2371,10 +2371,10 @@ and group_equal_actions_x (ys: action_wt list) (running:action_wt list) (running
   (action_wt list)=
   match ys with
   | [] -> let new_rs =
-            match running with
-            | [] -> rs
-            | [a] -> rs @ [a]
-            | _ -> rs @ [(running_w, Cond_action running)]
+    match running with
+    | [] -> rs
+    | [a] -> rs @ [a]
+    | _ -> rs @ [(running_w, Cond_action running)]
     in new_rs
   | (w, act)::ss ->
     if (w > running_w) then

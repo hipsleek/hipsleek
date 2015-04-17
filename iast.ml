@@ -1270,36 +1270,50 @@ let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 infer_type infer_lst 
   let cur_pre = F.transform_formula_simp F.drop_htrue cur_pre0 in
   let cur_post = F.transform_formula_simp F.drop_htrue cur_post0 in
   (*keep pointers only*)
-  let args = List.filter (fun p -> match p.param_type with
-      | Named _ -> true
-      | _ -> false
-    ) args0 in
+  let args = if !sa_pred_case then args0
+    else
+      List.filter (fun p -> match p.param_type with
+          | Named _ -> true
+          | _ -> false
+        ) args0 in
   (*generate one HeapPred for args and one HeapPred for ret*)
-  (* ANNTEMP: change below condition to prvious value *)
-  if not(!Globals.sa_syn) || (args = [] && ret = Void)  then
-    (* if true then *)
+  if args = [] && not (is_node_typ ret) (* ret = Void *) then
     F.mkETrueTrueF (),[],[]
   else
     let mut_vars = match body_opt with
       | Some body_exp -> get_mut_vars body_exp
       | None -> []
     in
-    let hp_pre_decl = {
-      hp_name = Globals.hp_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
-      hp_typed_inst_vars = List.map (fun arg ->
-          let in_info =
-            if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0)
-                arg.param_name mut_vars then Globals.I else Globals.NI
-          in
-          (arg.param_type, arg.param_name, in_info)
-        ) args;
-      hp_part_vars = [];
-      hp_root_pos = 0;
-      hp_is_pre = true;
-      hp_formula = F.mkBase F.HEmp (P.mkTrue pos) VP.empty_vperm_sets top_flow [] pos;
-    }
+    let hp_pre_decls, pre_tis,pre_hps,ipre_simpl = if args = [] then
+        (* let ipre_simpl0 = (F.formula_of_heap_with_flow F.HTrue n_flow pos) in *)
+        (* let ipre_simpl = F.mkStar_formula cur_pre ipre_simpl0 pos in *)
+        [],[],[],cur_pre
+      else
+        let hp_pre_decl = {
+          hp_name = Globals.hp_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
+          hp_typed_inst_vars = List.map (fun arg ->
+              let in_info =
+                if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0)
+                    arg.param_name mut_vars then Globals.I else Globals.NI
+              in
+              (arg.param_type, arg.param_name, in_info)
+            ) args;
+          hp_part_vars = [];
+          hp_root_pos = 0;
+          hp_is_pre = true;
+          hp_formula = F.mkBase F.HEmp (P.mkTrue pos) VP.empty_vperm_sets top_flow [] pos;
+        }
+        in
+        let () = Debug.info_hprint (add_str ("generate unknown predicate for Pre synthesis of " ^ pname ^ ": ") pr_id)
+            hp_pre_decl.hp_name no_pos in
+        let pre_eargs = List.map (fun p -> P.Var ((p.param_name, Unprimed),pos)) args in
+        let ipre_simpl0 = (F.formula_of_heap_with_flow (F.HRel (hp_pre_decl.hp_name, pre_eargs, pos)) n_flow pos) in
+        let ipre_simpl = F.mkStar_formula cur_pre ipre_simpl0 pos in
+        [hp_pre_decl], List.map (fun (_,id,ni) -> (id,ni)) hp_pre_decl.hp_typed_inst_vars,
+        [(hp_pre_decl.hp_name, Unprimed)],ipre_simpl
     in
-    let () = Debug.info_hprint (add_str ("generate unknown predicate for Pre synthesis of " ^ pname ^ ": ") pr_id) hp_pre_decl.hp_name no_pos in
+    let post_args = if !sa_pred_case then args0 else args in
+    let () = Debug.ninfo_hprint (add_str "post_args" !print_param_list) post_args no_pos in
     let hp_post_decl = {
       hp_name = Globals.hppost_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
       hp_typed_inst_vars = (List.fold_left (fun r arg ->
@@ -1315,7 +1329,7 @@ let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 infer_type infer_lst 
             else [hp_arg]
           in
           r@ref_args
-        ) [] args)@
+        ) [] post_args)@
                            (if is_infer_ret ret then [(ret, res_name, Globals.I)] else []
                            (* match ret with *)
                            (* | Globals.Void | Bool -> [] *)
@@ -1326,8 +1340,7 @@ let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 infer_type infer_lst 
       hp_is_pre = false;
       hp_formula = F.mkBase F.HEmp (P.mkTrue pos) VP.empty_vperm_sets top_flow [] pos;}
     in
-    let () = Debug.info_hprint (add_str ("generate unknown predicate for Post synthesis of " ^ pname ^ ": ") pr_id) hp_post_decl.hp_name no_pos in
-    let pre_eargs = List.map (fun p -> P.Var ((p.param_name, Unprimed),pos)) args in
+    let () = Debug.ninfo_hprint (add_str ("generate unknown predicate for Post synthesis of " ^ pname ^ ": ") pr_id) hp_post_decl.hp_name no_pos in
     (*todo: care ref args*)
     let post_eargs0 = List.fold_left (fun r p ->
         let up_arg = P.Var ((p.param_name, Unprimed),pos) in
@@ -1336,18 +1349,18 @@ let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 infer_type infer_lst 
           else [up_arg]
         in
         r@hp_args
-      ) [] args in
+      ) [] post_args in
     let post_eargs = if is_infer_ret ret then post_eargs0@[P.Var ((res_name, Unprimed),pos)] else post_eargs0
     (* match ret with *)
     (* | Void | Bool -> post_eargs0 *)
     (* | _ -> post_eargs0@[P.Var ((res_name, Unprimed),pos)] *)
     in
-    let () = Debug.ninfo_hprint (add_str "post_eargs" (pr_list !Ipure.print_formula_exp)) post_eargs no_pos in
+    let () = Debug.info_hprint (add_str "post_eargs" (pr_list !Ipure.print_formula_exp)) post_eargs no_pos in
     let ipost_simpl0 = (F.formula_of_heap_with_flow (F.HRel (hp_post_decl.hp_name, post_eargs, pos)) n_flow pos) in
     let ipost_simpl = F.mkStar_formula cur_post ipost_simpl0 pos in
     let ipost = F.mkEAssume ipost_simpl ( F.mkEBase [] [] [] ipost_simpl None pos) (fresh_formula_label "") None in
-    let ipre_simpl0 = (F.formula_of_heap_with_flow (F.HRel (hp_pre_decl.hp_name, pre_eargs, pos)) n_flow pos) in
-    let ipre_simpl = F.mkStar_formula cur_pre ipre_simpl0 pos in
+    (* let ipre_simpl0 = (F.formula_of_heap_with_flow (F.HRel (hp_pre_decl.hp_name, pre_eargs, pos)) n_flow pos) in *)
+    (* let ipre_simpl = F.mkStar_formula cur_pre ipre_simpl0 pos in *)
     let ipre = F.mkEBase [] [] [] ipre_simpl (Some ipost) pos in
     (* generate Iformula.struc_infer_formula*)
     let inf_obj = Globals.infer_const_obj # clone in
@@ -1359,10 +1372,10 @@ let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 infer_type infer_lst 
         F.formula_inf_post = true;
         F.formula_inf_xpost = None;
         F.formula_inf_transpec = None;
-        F.formula_inf_vars = [(hp_pre_decl.hp_name, Unprimed); (hp_post_decl.hp_name, Unprimed)];
+        F.formula_inf_vars = pre_hps@[(hp_post_decl.hp_name, Unprimed)];
         F.formula_inf_continuation = ipre;
         F.formula_inf_pos = pos;
-      }, [hp_pre_decl;hp_post_decl], List.map (fun (_,id,ni) -> (id,ni)) hp_pre_decl.hp_typed_inst_vars)
+      }, hp_pre_decls@[hp_post_decl], pre_tis)
 
 let genESpec pname body_opt args ret cur_pre cur_post infer_type  infer_lst pos=
   let pr1 = !print_param_list in

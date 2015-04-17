@@ -1081,7 +1081,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
           let () = x_tinfo_hp (add_str "lhs_heap_xpure1" !CP.print_formula) lhs_heap_xpure1_pure pos in
           let () = x_tinfo_hp (add_str "new_p 1" !CP.print_formula) new_p pos in
           let new_p_better = x_add_1 TP.simplify_raw (CP.mkExists ex_vars
-                                                (CP.mkAnd lhs_heap_xpure1_pure new_p pos) None pos) in
+                                                        (CP.mkAnd lhs_heap_xpure1_pure new_p pos) None pos) in
           let () = x_tinfo_hp (add_str "new_p_better" !CP.print_formula) new_p_better pos in
           let new_p = new_p_better in
           let _ = x_tinfo_hp (add_str "new_p 1a" !CP.print_formula) new_p pos in
@@ -3461,8 +3461,8 @@ let infer_collect_hp_rel_empty_rhs_x prog (es0:entail_state) mix_rf pos =
           (* let pr = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
           let () = DD.ninfo_zprint (lazy (("  es0.CF.es_evars: " ^ (!CP.print_svl  es0.CF.es_evars)))) no_pos in
           (*which pointers are defined and which arguments of data nodes are pointer*)let lhs_b0 = match lhs0 with
-              | Base fb -> fb
-              | _ -> report_error pos "Infer.infer_collect_hp_rel_empty_rhs: imposs"
+            | Base fb -> fb
+            | _ -> report_error pos "Infer.infer_collect_hp_rel_empty_rhs: imposs"
           in
           let ( _,mix_lf,_,_,_,_) = CF.split_components lhs0 in
           let l_emap0 = get_eqset (MCP.pure_of_mix mix_lf) in

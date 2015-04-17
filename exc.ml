@@ -1154,6 +1154,8 @@ struct
     match t1,t2 with
     | UNK, _ -> true
     | Named c1, Named c2 ->
+      let () = Debug.ninfo_hprint (add_str  "t1 " (string_of_typ)) t1 no_pos in
+      let () = Debug.ninfo_hprint (add_str  "t2 " (string_of_typ)) t2 no_pos in
       if c1=c2 then true
       else if c1="" then true
       else exlist # sub_type_obj c1 c2

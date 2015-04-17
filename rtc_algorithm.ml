@@ -121,8 +121,8 @@ class graphFindBCC =
                               let _= if(e.ver1=temp_edge.ver1 && e.ver2=temp_edge.ver2) then 
                                   (let  
                                     _= if(Stack.is_empty stack & (List.length !led)>1) then
-                                       let _= List.map (fun e-> G.add_edge bcc e.ver1 e.ver2 ) !led in()
-                                       (* else print_endline ("stack not empty")		 *)
+                                      let _= List.map (fun e-> G.add_edge bcc e.ver1 e.ver2 ) !led in()
+                                      (* else print_endline ("stack not empty")		 *)
                                    in break := true)
                               in ()
                             end

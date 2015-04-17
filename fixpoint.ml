@@ -283,14 +283,21 @@ and simplify_relation sp subst_fml pre_vars post_vars prog inf_post evars lst_as
 (*    List.map (fun f -> (f,f2)) fs*)
 (*  else [(f1,f2)]*)
 
-let subst_rel pre_rel pre rel = match rel,pre_rel with
+let subst_rel_x pre_rel pre rel = match rel,pre_rel with
   | CP.BForm ((CP.RelForm (name1,args1,_),_),_), CP.BForm ((CP.RelForm (name2,args2,_),_),_) ->
     if name1 = name2 then
-      let subst_args = List.combine (List.map CP.exp_to_spec_var args2)
-          (List.map CP.exp_to_spec_var args1) in
+      (* args1 may have extra flow arg at the end *)
+      let subst_args = (* List.combine *) CF.combine_length_leq (List.map CP.exp_to_spec_var args2)
+          (List.map CP.exp_to_spec_var args1) [] in
       CP.subst subst_args pre
     else rel
   | _ -> report_error no_pos "subst_rel: Expecting a relation"
+
+let subst_rel pre_rel pre rel =
+  let pr1 = !CP.print_formula in
+  Debug.no_3 "subst_rel" pr1 pr1 pr1 pr1
+    (fun _ _ _ -> subst_rel_x pre_rel pre rel)
+    pre_rel pre rel
 
 let subst_fml pre_rel pre fml =
   let conjs = CP.list_of_conjs fml in
