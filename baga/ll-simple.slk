@@ -17,6 +17,23 @@ print residue.
 /*
 # ll-simple.ss
 
+
+# why imply_sub_no did not print?
+
+let imply_sub_no ante0 conseq0 imp_no do_cache =
+  x_dinfo_zp (lazy ("IMP #" ^ imp_no ^ "\n")) no_pos;
+  (* imp_no := !imp_no+1;*)
+  x_add imply_one 2 ante0 conseq0 imp_no do_cache
+
+pls2nus@loris-laptop:~/hg/sl_default/baga$ ../sleek ll-simple.slk -dre ".*imply\|imply_sub_no" > 1
+
+(==tpdispatcher.ml#4021==)
+imply_one#2@75
+imply_one#2 inp1 : self=null & n=0
+imply_one#2 inp2 : n=0
+imply_one#2@75 EXIT:true
+
+
 ../sleek ll-simple.slk -dre "tp_imply\|imply_cache" -tp oc > 1
 
 

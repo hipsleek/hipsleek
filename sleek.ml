@@ -402,6 +402,7 @@ let main () =
 (*   Debug.loop_1_no "main" (fun () -> "?") (fun () -> "?") main () *)
 
 let sleek_epilogue () =
+  if !Debug.dump_calls then Debug.debug_calls # dump;
   (* ------------------ lemma dumping ------------------ *)
   if (!Globals.dump_lemmas) then
     Lem_store.all_lemma # dump

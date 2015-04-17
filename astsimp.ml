@@ -3075,7 +3075,7 @@ and compute_base_case_x prog vn cf vars = (*flatten_base_case cf s self_c_var *)
       let bcg = List.fold_left (fun a p -> a@(CP.split_conjunctions (x_add TP.simplify_a (-1) p))) [] guards in
       let bcg = Gen.BList.remove_dups_eq (CP.equalFormula_f CP.eq_spec_var) bcg in
       let one_bc = List.fold_left (fun a c -> CP.mkOr a c None no_pos) (CP.mkFalse no_pos) guards in
-      let bc_impl c = let r,_,_ = TP.imply_sub_no one_bc c "0" false None in r in
+      let bc_impl c = let r,_,_ = x_add TP.imply_sub_no one_bc c "0" false None in r in
       let sat_subno  = ref 0 in
       let bcg = List.filter (fun c->(not (CP.isConstTrue c))&& (bc_impl c)&& List.for_all 
                                       (fun d-> not (x_add TP.is_sat_sub_no 10 (CP.mkAnd c d no_pos) sat_subno)) co ) bcg in
@@ -9519,7 +9519,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
         | _,_ ->
           let f1r = List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l1r in
           let f2r = List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l2r in
-          let tpi = fun f1 f2 -> TP.imply_one 7 f1 f2 "" false None in
+          let tpi = fun f1 f2 -> x_add TP.imply_one 7 f1 f2 "" false None in
           if ((fun (c,_,_)-> c) (tpi f1r f2r)) then f2r
           else if ((fun (c,_,_)-> c) (tpi f2r f1r)) then f1r
           else  CP.mkOr f1r f2r None no_pos in

@@ -188,6 +188,17 @@ let common_arguments = [
    "Turn on devel_debug");
   ("--dd-trace", Arg.Set Gen.debug_precise_trace,
    "Turn on more precise tracing");
+  ("--dd-calls", Arg.Unit
+     (fun _ -> 
+        Debug.dump_calls:=true;
+        Gen.debug_precise_trace:=true;),
+   "Dump summary of debugged calls");
+  ("--dd-calls-all", Arg.Unit
+     (fun _ -> 
+        Debug.dump_calls:=true;
+        Debug.dump_calls_all:=true;
+        Gen.debug_precise_trace:=true;),
+   "Dump all debugged calls");
   ("--dis-ddb", Arg.Clear Debug.trace_on,
    "Turn off experimental trace_on");
   ("--en-ddb", Arg.Set Debug.trace_on,

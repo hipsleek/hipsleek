@@ -1594,7 +1594,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let f = CP.concretize_bag_pure f in
   let f = CP.translate_waitS_pure f in (*waitS before acyclic*)
   let f = CP.translate_acyclic_pure f in
-  let f,_ = CP.translate_tup2_imply f (CP.mkTrue no_pos)in
+  let f,_ = x_add CP.translate_tup2_imply f (CP.mkTrue no_pos)in
   let f = if (!Globals.allow_locklevel) then
       (*should translate waitlevel before level*)
       let f = CP.infer_level_pure f in (*add l.mu>0*)
@@ -2611,7 +2611,7 @@ let tp_imply_preprocess_x (ante: CP.formula) (conseq: CP.formula) : (bool option
     let ante,conseq = if (is_waitS_rel conseq) then tp_imply_translate_waitS ante conseq else (ante,conseq) in
     let ante,conseq = if (is_cyclic_rel conseq) then tp_imply_translate_cyclic ante conseq else (ante,conseq) in
     let ante = if (has_acyclic_rel_pure ante) then CP.translate_acyclic_pure ante else ante in
-    let ante, conseq = CP.translate_tup2_imply ante conseq in
+    let ante, conseq = x_add CP.translate_tup2_imply ante conseq in
     let ante,conseq =
       if (!Globals.allow_locklevel) then
         (*should translate waitlevel before level*)
@@ -3237,7 +3237,7 @@ let is_sat (f : CP.formula) (sat_no : string): bool =
 let imply_timeout_helper ante conseq process ante_inner conseq_inner imp_no timeout =  
   (* let ante0 = CP.infer_level_pure ante in *) (*add l.mu>0*) (*MERGE CHECK*)
   (* let conseq0 = CP.infer_level_pure conseq in *) (*add l.mu>0*) (*MERGE CHECK*)
-  let acpairs = imply_label_filter ante conseq in
+  let acpairs = x_add imply_label_filter ante conseq in
   let pairs = List.map (fun (ante,conseq) -> 
       let () = x_dinfo_hp (add_str "ante 1: " Cprinter.string_of_pure_formula) ante no_pos in
       (* RHS split already done outside *)
@@ -3490,7 +3490,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
   (* imply_timeout_slicing ante0 conseq0 imp_no timeout process *)
   (* else                                                       *)
   (* imply_timeout ante0 conseq0 imp_no timeout process         *)
-  imply_timeout ante0 conseq0 imp_no timeout process
+  x_add imply_timeout ante0 conseq0 imp_no timeout process
 
 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout do_cache process
@@ -3537,7 +3537,7 @@ let memo_imply_timeout ante0 conseq0 imp_no timeout =
 let mix_imply_timeout ante0 conseq0 imp_no timeout =
   match ante0,conseq0 with
   | MCP.MemoF a, MCP.MemoF c -> memo_imply_timeout a c imp_no timeout
-  | MCP.OnePF a, MCP.OnePF c -> imply_timeout a c imp_no timeout false None
+  | MCP.OnePF a, MCP.OnePF c -> x_add imply_timeout a c imp_no timeout false None
   | _ -> report_error no_pos ("mix_imply_timeout: mismatched mix formulas ")
 
 let mix_imply_timeout ante0 conseq0 imp_no timeout =
@@ -4018,7 +4018,7 @@ let is_sat_msg_no_no prof_lbl (f:CP.formula) do_cache :bool =
 let imply_sub_no ante0 conseq0 imp_no do_cache =
   x_dinfo_zp (lazy ("IMP #" ^ imp_no ^ "\n")) no_pos;
   (* imp_no := !imp_no+1;*)
-  imply_one 2 ante0 conseq0 imp_no do_cache
+  x_add imply_one 2 ante0 conseq0 imp_no do_cache
 
 let imply_sub_no ante0 conseq0 imp_no do_cache =
   let pr = !CP.print_formula in
@@ -4027,7 +4027,7 @@ let imply_sub_no ante0 conseq0 imp_no do_cache =
 
 let imply_msg_no_no ante0 conseq0 imp_no prof_lbl do_cache =
   let () = Gen.Profiling.push_time prof_lbl in  
-  let r = imply_sub_no ante0 conseq0 imp_no do_cache in
+  let r = x_add imply_sub_no ante0 conseq0 imp_no do_cache in
   let () = Gen.Profiling.pop_time prof_lbl in
   r
 

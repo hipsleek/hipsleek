@@ -729,8 +729,67 @@ struct
   (* let ho_6_loop s = ho_6_opt_aux false [] true (fun _ -> true) None s *)
   (* let ho_7_loop s = ho_7_opt_aux false [] true (fun _ -> true) None s *)
 
+  let dump_calls = ref false
+  let dump_calls_all = ref false
+
+  let debug_calls  =
+    let len = 41 in
+    let threshold = 20 in (* print calls above this threshold *)
+    let prefix = "%%%" in
+    object (self)
+      val len_act = len -1
+      val arr =  Array.make (len+1) prefix
+      val hcalls = Hashtbl.create 20
+      val rec_calls = Hashtbl.create 10
+      val calls =  Array.make (len+1) ""
+      val overflow = prefix^"****************************************"
+      method dump =
+        let cnt = hash_to_list hcalls in
+        let rcnt = hash_to_list rec_calls in
+        let cnt = List.filter (fun (_,a) -> a>=threshold) cnt in
+        let cnt = list_cnt_sort_dec cnt in
+        let rcnt = list_cnt_sort_dec rcnt in
+        let pr = pr_list (fun e -> "\n"^((pr_pair pr_id string_of_int) e)) in
+        print_endline "\nDEBUGGED CALLS";
+        print_endline "==============";
+        print_endline (pr cnt);
+        print_endline "DEBUGGED REC CALLS";
+        print_endline "==================";
+        print_endline (pr rcnt)
+      method init =
+        for i = 1 to len_act do
+          arr.(i) <- arr.(i-1)^" "
+        done
+      method add_to_hash ht s =
+        try 
+          let c = Hashtbl.find ht s in
+          Hashtbl.replace ht s (c+1)
+        with _ -> Hashtbl.add ht s 1
+      method get n s =
+        (* pre : n>=0 *)
+        if (n>len_act) then overflow
+        else 
+          begin
+            calls.(n)<-s;
+            if n>0 && s==calls.(n-1) then 
+              begin
+                self # add_to_hash rec_calls s;
+                (* print_endline "REC" *)
+              end;
+            self # add_to_hash hcalls s;
+            arr.(n)
+          end
+      method print_call s =
+        begin
+          let deb_len = debug_stk # len in
+          let len = self # get (deb_len) s in
+          if !dump_calls_all then (print_string len; print_endline s)
+        end
+    end
+  let () = debug_calls # init
+
   let splitter s f_none f_gen f_norm =
-    (* let _ = print_endline ("splitter:"^s) in *)
+    let () = if !dump_calls then debug_calls # print_call s in
     if !z_debug_flag then
       match (in_debug s) with
       | DO_Normal -> f_gen (f_norm false false)

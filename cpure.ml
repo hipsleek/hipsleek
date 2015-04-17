@@ -2460,7 +2460,10 @@ and mkAnd_x f1 f2 (*b*) pos =
 
   and mkAnd_x f1 f2 pos = mkAnd_dups f1 f2 true pos*)
 
-and mkAnd f1 f2 pos = Debug.no_2(* _loop *) "pure_mkAnd" !print_formula !print_formula !print_formula (fun _ _-> mkAnd_x f1 f2 pos) f1 f2
+(* and mkAnd f1 f2 pos = Debug.DebugEmpty.no_2(\* _loop *\) "pure_mkAnd" !print_formula !print_formula !print_formula (fun _ _-> mkAnd_x f1 f2 pos) f1 f2 *)
+
+and mkAnd f1 f2 pos = mkAnd_x f1 f2 pos
+
 
 and mkAndList_x b = 
   if (exists_l_snd isConstFalse b) then mkFalse no_pos
@@ -2778,7 +2781,7 @@ and split_conjunctions_x =  function
 
 and split_conjunctions f =  
   let pr = !print_formula in
-  Debug.no_1 "split_conjunctions" pr (pr_list pr) split_conjunctions_x f 
+  Debug.DebugEmpty.no_1 "split_conjunctions" pr (pr_list pr) split_conjunctions_x f 
 
 
 and join_conjunctions fl = conj_of_list fl no_pos
@@ -4443,7 +4446,7 @@ and prune_perm_bounds f =
 and list_of_conjs_x (f0 : formula) : formula list = split_conjunctions f0
 
 and list_of_conjs (f0 : formula) : formula list =
-  Debug.no_1 "list_of_conjs"  !print_formula (pr_list !print_formula) split_conjunctions f0
+  Debug.DebugEmpty.no_1 "list_of_conjs"  !print_formula (pr_list !print_formula) split_conjunctions f0
 (*let rec helper f conjs = match f with
   | And (f1, f2, pos) ->
   let tmp1 = helper f2 conjs in

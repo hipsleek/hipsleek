@@ -38,6 +38,15 @@ struct
   exception Bad_string
   exception Bail
 
+  let hash_to_list ht =
+    Hashtbl.fold (fun a b c -> (a,b)::c) ht []
+
+  let list_cnt_sort_dec l = 
+    List.sort (fun (_,a) (_,b) -> 
+        if a=b then 0
+        else if a>b then -1
+        else 1) l
+
   let silenced_print f s = if !silence_output then () else f s 
 
   let rec restart f arg =
