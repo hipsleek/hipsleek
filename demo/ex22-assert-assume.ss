@@ -1,10 +1,10 @@
 void foo(int x)
   requires true
-  ensures x>0;
+  ensures true;
 {
   //assert false assume true;
     assert false;
-    assert x'<0;
+    assert x'<0;XF
 }
 
 /*
