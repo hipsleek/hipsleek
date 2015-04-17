@@ -10,6 +10,10 @@ checkentail x::ll<n>@A * x::node<_,_> |- n>0.
 print residue.
 expect Valid.
 
+checkentail x::ll<n> * x::node<_,_>@A |- n>0.
+print residue.
+expect Valid.
+
 /*
 # ex3a 
 

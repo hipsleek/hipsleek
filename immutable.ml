@@ -2071,7 +2071,7 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
           | CP.ConstAnn(Accs), a -> (true && comp, lst@[(a2,i2)])
           | a, CP.ConstAnn(Accs) -> (true && comp, lst@[(a1,i1)])
           | _, _ ->
-            Debug.print_info "Warning: " "possible unsoundess (* between overlapping heaps) " no_pos;
+            (* Debug.print_info "Warning: " "possible unsoundess (\* between overlapping heaps) " no_pos; *)
             (false && comp, lst)
         ) (true,[]) imm in
       let args, pimm = List.split updated_elements in
@@ -2089,7 +2089,7 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
             | CP.ConstAnn(Accs), a -> true && comp
             | a, CP.ConstAnn(Accs) -> true && comp
             | _, _ ->
-                Debug.print_info "Warning: " "possible unsoundess (* between overlapping heaps) " no_pos;
+                (* Debug.print_info "Warning: " "possible unsoundess (\* between overlapping heaps) " no_pos; *)
                 false && comp
       ) true imm in 
       (comp, h1, None)
