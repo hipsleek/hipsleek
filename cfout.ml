@@ -470,11 +470,11 @@ let inline_print e =
   if (!Globals.print_en_inline) then elim_imm_vars_f e
   else e
 
-let tidy_print_x e =
+let tidy_print e =
   if (!Globals.print_en_tidy) then inline_print (shorten_formula e)
   else e
 
-let tidy_print e =
-  let pr1 = !print_formula in
-  Debug.no_1 "tidy_print" pr1 pr1
-    (fun _ -> tidy_print_x e) e
+(* let tidy_print e = *)
+(*   let pr1 = !print_formula in *)
+(*   Debug.no_1 "tidy_print" pr1 pr1 *)
+(*     (fun _ -> tidy_print e) e *)

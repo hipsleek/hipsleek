@@ -2405,7 +2405,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
      x_dinfo_hp (add_str "new_pf" Cprinter.string_of_pure_formula) new_pf no_pos;
      let memo_pf_P = MCP.memoise_add_pure_P (MCP.mkMTrue pos) new_pf in
      let memo_pf_N = MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_pf in
-     let () = x_binfo_hp (add_str "should elim this check diff. the result always overwritten by line 1908" (pr_id)) "" pos in
+     (* let () = x_binfo_hp (add_str "should elim this check diff. the result always overwritten by line 1908" (pr_id)) "" pos in *)
      let xpure_flag = false (* x_add TP.check_diff memo_pf_N memo_pf_P *) in
      let view_kind = trans_view_kind vdef.I.view_kind in
      let vn = vdef.I.view_name in
@@ -8683,7 +8683,7 @@ and simpl_case_normalize_struc_formula id prog (h_vars:(ident*primed) list)(f:IF
     | IF.EAssume _
     | IF.EInfer _ -> Gen.report_error pos "View defs should not have postconditions or infer stages"  
     | IF.ECase b-> IF.ECase {b with IF.formula_case_branches = 
-                                      map_l_snd (helper hv) b.IF.formula_case_branches}
+                                      map_l_snd (helper_x hv) b.IF.formula_case_branches}
     | IF.EBase {
         IF.formula_struc_explicit_inst = init_expl;
         IF.formula_struc_is_requires = ir;
@@ -8716,9 +8716,9 @@ and simpl_case_normalize_struc_formula id prog (h_vars:(ident*primed) list)(f:IF
           IF.formula_struc_explicit_inst = all_expl;
           IF.formula_struc_exists = [];
           IF.formula_struc_is_requires = ir;
-          IF.formula_struc_continuation = map_opt (helper new_v_no_inst) cont;
+          IF.formula_struc_continuation = map_opt (helper_x new_v_no_inst) cont;
           IF.formula_struc_pos = pos}
-    | IF.EList b -> IF.EList (map_l_snd (helper hv) b)
+    | IF.EList b -> IF.EList (map_l_snd (helper_x hv) b)
   and	 helper (h_vars:(ident*primed) list)(nf:IF.struc_formula) =   
     let pr l= "h_vars: "^(pr_list !IP.print_id l) in
     let pr2 = Iprinter.string_of_struc_formula in

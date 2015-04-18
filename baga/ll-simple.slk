@@ -20,6 +20,34 @@ print residue.
 
 # why imply_sub_no did not print?
 
+The calling hierarchy is not correct.
+
+-dre "imply_one\|imply_sub_no\|compute_base"
+
+(==astsimp.ml#3078==)
+imply_sub_no@8@7
+imply_sub_no inp1 : self=null & n=0
+imply_sub_no inp2 : self=null
+imply_sub_no@8 EXIT:?
+inside imply_one
+
+(==tpdispatcher.ml#4022==)
+imply_one@9@7
+imply_one inp1 : self=null & n=0
+imply_one inp2 : self=null
+imply_one@9 EXIT:true
+inside imply_sub_no
+
+compute_base_case@7
+compute_base_case inp1 :ll
+compute_base_case inp2 : (* lbl: *){1}->emp&self=null & n=0&{FLOW,(1,26)=__flow#E}[]
+ (* lbl: *){2}->(exists flted_5_15,Anon_13,
+ r: (* lbl: *){2}->self::node<Anon_13,r> * r::ll{}<flted_5_15>&flted_5_15+
+ 1=n&{FLOW,(1,26)=__flow#E}[]
+compute_base_case inp3 :[self,n]
+compute_base_case@7 EXIT:Some( (n=0 | self=null))
+
+
 let imply_sub_no ante0 conseq0 imp_no do_cache =
   x_dinfo_zp (lazy ("IMP #" ^ imp_no ^ "\n")) no_pos;
   (* imp_no := !imp_no+1;*)

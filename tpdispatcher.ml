@@ -3548,14 +3548,16 @@ let mix_imply_timeout ante0 conseq0 imp_no timeout =
     (fun a c -> mix_imply_timeout a c imp_no timeout) ante0 conseq0
 
 let rec imply_one i ante0 conseq0 imp_no do_cache process =
-  Debug.no_2_num i "imply_one" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula)
+  (* let () = print_endline "inside imply_one" in *)
+  Debug.no_2(* _num i *) "imply_one" (Cprinter.string_of_pure_formula) 
+    (Cprinter.string_of_pure_formula)
     (fun (r, _, _) -> string_of_bool r)
     (fun ante0 conseq0 -> imply_x ante0 conseq0 imp_no do_cache process) ante0 conseq0
 
 and imply_x ante0 conseq0 imp_no do_cache process = x_add imply_timeout ante0 conseq0 imp_no !imply_timeout_limit do_cache process ;;
 
 let simpl_imply_raw_x ante conseq =
-  let (r,_,_)= imply_one 0 ante conseq "0" false None in
+  let (r,_,_)= x_add imply_one 0 ante conseq "0" false None in
   r
 
 let simpl_imply_raw ante conseq =
@@ -4015,14 +4017,19 @@ let is_sat_msg_no_no prof_lbl (f:CP.formula) do_cache :bool =
   let () = Gen.Profiling.pop_time prof_lbl in
   sat
 
-let imply_sub_no ante0 conseq0 imp_no do_cache =
-  x_dinfo_zp (lazy ("IMP #" ^ imp_no ^ "\n")) no_pos;
-  (* imp_no := !imp_no+1;*)
-  x_add imply_one 2 ante0 conseq0 imp_no do_cache
+(* let imply_one_xx k = imply_one k *)
 
 let imply_sub_no ante0 conseq0 imp_no do_cache =
+  let () = x_dinfo_zp (lazy ("IMP #" ^ imp_no ^ "\n")) no_pos in
+  (* imp_no := !imp_no+1;*)
+  let r = x_add imply_one 2 ante0 conseq0 imp_no do_cache in
+  (* let () = print_endline "test" in *)
+  r
+
+let imply_sub_no ante0 conseq0 imp_no do_cache =
+  (* let () = print_endline "inside imply_sub_no" in *)
   let pr = !CP.print_formula in
-  Debug.no_2 "imply_sub_no" pr pr (fun _ -> "")
+  Debug.no_2 "imply_sub_no" pr pr pr_none
     (fun _ _ -> imply_sub_no ante0 conseq0 imp_no do_cache) ante0 conseq0
 
 let imply_msg_no_no ante0 conseq0 imp_no prof_lbl do_cache =
