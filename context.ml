@@ -1802,7 +1802,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                acts
              else
                (* fold to activate/change  *)
-               if (vr_is_prim) then [] else
+             if (vr_is_prim) then [] else
                [(1,M_fold m_res)]
            else []
          ) in

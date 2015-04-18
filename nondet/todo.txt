@@ -57,7 +57,38 @@ at the post-condition?
 Termination checking result: 
 (0) (ERR: unexpected unsound Loop at return)
 ==================================================================
+# nondet/ex12-nd-loop.slk
+
+Why did we ger inferred pre? and moreover with
+MayLoop scenario?
+
+Residue:
+ <1>emp&Loop[] & i<0&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [i<=-1]
+<2>emp&MayLoop[] & 0<=i&{FLOW,(4,5)=__norm#E}[]
+inferred pure: [0<=i]
+
 ==================================================================
+# ex12b -debug z.log
+
+ below seems to be from 7664 (sa_logging, WN) 24May2013 4:27am
+
+infer[i] true |- case { 
+                     i<222 -> [] true;
+                     i>=222 -> [] true;
+                    }.
+
+Wrong code in solver.ml to fix
+                 if (d==[] && case_vs!=[]) then
+                   begin
+                     let () = x_binfo_pp "WARNING (WN) : inferring case wrongly " no_pos in
+                     (* WN : why do we add case LHS to infer_pure?? *)
+                     (* WN : why do we combine result as union? it should be OR *)
+                     (* place to add case LHS to infer_pure *)
+                     (* for each (c1,c2) from case_brs
+                        (i) add c1 into ctx11 & also infer_pure & perform unsat filter away those that are false
+                        perform entail against each c2 combine result as union *)
+
 ==================================================================
 ==================================================================
 ==================================================================

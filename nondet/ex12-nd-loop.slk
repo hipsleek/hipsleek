@@ -1,0 +1,75 @@
+
+infer [i] i<0 & Loop |- Term.
+print residue.
+
+infer [i] i>=0 & Loop |- Loop.
+print residue.
+
+infer [i] i<0 & Loop |- false.
+print residue.
+
+
+infer[i] true |- case { 
+                     i<0 -> [] true;
+                     i>=0 -> [] true;
+                    }.
+print residue.
+/*
+Residue:
+ <1>htrue&0<=i&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [0<=i]
+<2>htrue&i<0&{FLOW,(4,5)=__norm#E}[]
+inferred pure: [i<=-1]
+
+Why is it set of states and not disj?
+Is this correct? Why is MayLoop missing?
+
+Residue:
+ <1>htrue&0<=i&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [0<=i]
+<2>htrue&i<0&{FLOW,(4,5)=__norm#E}[]
+inferred pure: [i<=-1]
+*/
+
+infer[i] true |- i<0 or i>=0.
+print residue.
+/*
+  seems to be too eager..
+Residue:
+ <1>htrue&i<=(0-1)&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [i<=-1]
+<2>htrue&0<=i&{FLOW,(4,5)=__norm#E}[]
+inferred pure: [0<=i]
+
+*/
+
+infer[i]  i<0 or i>=0 |- true.
+print residue.
+/*
+ <1>
+    emp&i<0&{FLOW,(4,5)=__norm#E}[]
+    or emp&0<=i&{FLOW,(4,5)=__norm#E}[]
+*/
+
+//(4)
+infer [i] Loop |- case {i>=0 -> [] Loop;
+                     i<0 -> [] Term;}.
+print residue.
+
+/*
+# nondet/ex12-nd-loop.slk
+
+Why did we get inferred pre? and moreover with
+MayLoop scenario?
+
+Residue:
+ <1>emp&Loop[] & i<0&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [i<=-1]
+<2>emp&MayLoop[] & 0<=i&{FLOW,(4,5)=__norm#E}[]
+inferred pure: [0<=i]
+
+Expecting:
+
+
+*/
+

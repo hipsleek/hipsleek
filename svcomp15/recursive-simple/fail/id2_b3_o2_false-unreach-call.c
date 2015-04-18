@@ -51,6 +51,7 @@ void main()
 {
   int input = __nondet_int();
   int result = id(input);
+  //@ dprint;
   if (result == 2) {
     __error();
   }

@@ -47,9 +47,9 @@ let sort_result () =
 let rec print_result n0 =
   let rec helper n r =
     if (n > 0) then begin
-      print_string (string_of_float (fst (List.hd r)));
-      print_string "\n";
-      print_string (snd (List.hd r));
+      print_string_quiet (string_of_float (fst (List.hd r)));
+      print_string_quiet "\n";
+      print_string_quiet (snd (List.hd r));
       helper (n-1) (List.tl r)
     end
   in

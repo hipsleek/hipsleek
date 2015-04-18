@@ -1119,7 +1119,7 @@ let substitute_inf (f: CP.formula) : CP.formula =
   let after_sub = List.map (fun (pf,kv) -> 
       let svneglist = (find_equiv_all_x (SpecVar(Int,constinfinity,Primed)) kv) in  
       let new_pf = sub_inf_list pf svneglist true true in
-       x_add arith_simplify 10 new_pf) (List.combine after_sub negboundlist) in 
+      x_add arith_simplify 10 new_pf) (List.combine after_sub negboundlist) in 
   (* let () = print_string("bound > "^(string_of_pure_formula (join_disjunctions after_sub))^"\n") in*)
   join_disjunctions after_sub
 

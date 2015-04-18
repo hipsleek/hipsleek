@@ -1408,7 +1408,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       x_tinfo_hp (add_str "assert(inp-formula)" Cprinter.string_of_struc_formula) c1 pos;
                       x_tinfo_hp (add_str "assert(res-failesc)" Cprinter.string_of_list_failesc_context) rs pos
                     end;
-                  if CF.isSuccessListFailescCtx rs then 
+                  if CF.isSuccessListFailescCtx_new rs then 
                     begin
                       Debug.print_info "assert" (s ^(if (CF.isNonFalseListFailescCtx ts) then " : ok\n" else ": unreachable\n")) pos;
                       x_dinfo_pp (*print_info "assert"*) ("Residual:\n" ^ (Cprinter.string_of_list_failesc_context rs)) pos; 
@@ -2975,7 +2975,14 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
           Prooftracer.pop_div ();
           (* print_endline "DONE!" *)
         end in
-    if (CF.isSuccessListPartialCtx_new rs) then
+    let is_succ = CF.isSuccessListPartialCtx_new rs in
+    let is_reachable_succ = if not f1 then
+        is_succ
+      else
+        (*if error post, check reachable *)
+        is_succ && (CF.exist_reachable_states rs)
+    in
+    if ((* CF.isSuccessListPartialCtx_new rs *) is_reachable_succ) then
       rs
     else begin
       (* get source code position of failed branches *)
