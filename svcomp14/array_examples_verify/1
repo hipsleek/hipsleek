@@ -3,187 +3,100 @@
 !!!-dre .*simplify
 Starting z3... 
 
-(==cpure.ml#6294==)
+(==cpure.ml#6295==)
 b_form_simplify @2@1
 b_form_simplify  inp1 : a[i]=3
 b_form_simplify @2 EXIT: a[i]=3
 
-(==cpure.ml#6294==)
+(==cpure.ml#6295==)
 b_form_simplify @3@1
 b_form_simplify  inp1 : i<=5
 b_form_simplify @3 EXIT: i<=5
 
-(==cpure.ml#6294==)
+(==cpure.ml#6295==)
 b_form_simplify @4@1
 b_form_simplify  inp1 : 2<=i
 b_form_simplify @4 EXIT: 2<=i
 
-(==astsimp.ml#7694==)
+(==astsimp.ml#7708==)
 arith_simplify LHS@1
 arith_simplify LHS inp1 : forall(i:(!((2<=i & i<=5)) | a[i]=3))
 arith_simplify LHS@1 EXIT: forall(i:(!((2<=i & i<=5)) | a[i]=3))
 
-(==cpure.ml#6294==)
+(==cpure.ml#6295==)
 b_form_simplify @6@5
-b_form_simplify  inp1 : a[6]=3
-b_form_simplify @6 EXIT: a[6]=3
+b_form_simplify  inp1 : a[5]=3
+b_form_simplify @6 EXIT: a[5]=3
 
-(==astsimp.ml#7694==)
+(==astsimp.ml#7708==)
 arith_simplify LHS@5
-arith_simplify LHS inp1 : a[6]=3
-arith_simplify LHS@5 EXIT: a[6]=3
-Starting Omega.../usr/local/bin/oc
-
-(==omega.ml#933==)
-Omega.simplify_ops@12@11@10@9@8@7
-Omega.simplify_ops inp1 : exists(i:!((2<=i & i<=5)))
-Omega.simplify_ops@12 EXIT: true
-
-(====)
-Omega.simplify@11@10@9@8@7
-Omega.simplify inp1 : exists(i:!((2<=i & i<=5)))
-Omega.simplify@11 EXIT: true
-
-(====)
-simplify@10@9@8@7
-simplify inp1 : exists(i:!((2<=i & i<=5)))
-simplify@10 EXIT: true
-
-(==cpure.ml#6294==)
-b_form_simplify @14@13@9@8@7
-b_form_simplify  inp1 : true
-b_form_simplify @14 EXIT: true
-
-(==tpdispatcher.ml#1968==)
-arith_simplify LHS@13@9@8@7
-arith_simplify LHS inp1 : true
-arith_simplify LHS@13 EXIT: true
-
-(====)
-TP.simplify@9@8@7
-TP.simplify inp1 : exists(i:!((2<=i & i<=5)))
-TP.simplify@9 EXIT: true
-
-(====)
-simplify_raw@8@7
-simplify_raw inp1 : exists(i:!((2<=i & i<=5)))
-simplify_raw@8 EXIT: true
-
-(==solver.ml#2748==)
-simplify_with_label_omega@7
-simplify_with_label_omega inp1 : exists(i:!((2<=i & i<=5)))
-simplify_with_label_omega@7 EXIT: true
-Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a[i]")
- Formula: exists(i:a[i]=3)
-
-(====)
-TP.simplify@17@16@15
-TP.simplify inp1 : exists(i:a[i]=3)
-TP.simplify@17 EXIT: exists(i:a[i]=3)
-
-(====)
-simplify_raw@16@15
-simplify_raw inp1 : exists(i:a[i]=3)
-simplify_raw@16 EXIT: exists(i:a[i]=3)
-
-(====)
-simplify_with_label_omega@15
-simplify_with_label_omega inp1 : exists(i:a[i]=3)
-simplify_with_label_omega@15 EXIT: exists(i:a[i]=3)
+arith_simplify LHS inp1 : a[5]=3
+arith_simplify LHS@5 EXIT: a[5]=3
 
 (==tpdispatcher.ml#1544==)
-simplify-syn@18
-simplify-syn inp1 : exists(i:a[i]=3)
-simplify-syn@18 EXIT: exists(v0:a[v0]=3)
+simplify-syn@7
+simplify-syn inp1 : forall(i:(!((2<=i & i<=5)) | a[i]=3))
+simplify-syn@7 EXIT: forall(v0:(!((2<=v0 & v0<=5)) | a[v0]=3))
 
-(====)
-simplify_pure_f_old@19
+(==solver.ml#2849==)
+simplify_pure_f_old@8
 simplify_pure_f_old inp1 : emp&forall(i:(!((2<=i & i<=5)) | a[i]=3))&{FLOW,(4,5)=__norm#E}[]
-simplify_pure_f_old@19 EXIT: emp&forall(i:(!((2<=i & i<=5)) | a[i]=3))&{FLOW,(4,5)=__norm#E}[]
+simplify_pure_f_old@8 EXIT: emp&forall(i:(!((2<=i & i<=5)) | a[i]=3))&{FLOW,(4,5)=__norm#E}[]
 
-(==solver.ml#7302==)
-simplify_htrue@20
+(==solver.ml#7305==)
+simplify_htrue@9
 simplify_htrue inp1 : emp
-simplify_htrue@20 EXIT: emp
+simplify_htrue@9 EXIT: emp
 
-(==cpure.ml#6294==)
-b_form_simplify @23@22@21
-b_form_simplify  inp1 : a[6]=3
-b_form_simplify @23 EXIT: a[6]=3
+!!! **solver.ml#8025:xpure_lhs_h1: true
+!!! **solver.ml#8026:xpure_lhs_h0_sym (wo pure): true
+!!! **solver.ml#8027:xpure_lhs_h1_sym (wo pure): true
+(==cpure.ml#6295==)
+b_form_simplify @12@11@10
+b_form_simplify  inp1 : a[5]=3
+b_form_simplify @12 EXIT: a[5]=3
 
 (==mcpure.ml#2345==)
-arith_simplify LHS@22@21
-arith_simplify LHS inp1 : a[6]=3
-arith_simplify LHS@22 EXIT: a[6]=3
+arith_simplify LHS@11@10
+arith_simplify LHS inp1 : a[5]=3
+arith_simplify LHS@11 EXIT: a[5]=3
 
-(==solver.ml#8096==)
-memo_arith_simplify@21
-memo_arith_simplify inp1 : a[6]=3
-memo_arith_simplify@21 EXIT: a[6]=3
-
-(==tpdispatcher.ml#1544==)
-simplify-syn@24
-simplify-syn inp1 : (a[6]=3 | !(forall(i_20:(!((2<=i_20 & i_20<=5)) | a[i_20]=3))))
-simplify-syn@24 EXIT: (a[6]=3 | !(forall(v0:(!((2<=v0 & v0<=5)) | a[v0]=3))))
+(==solver.ml#8099==)
+memo_arith_simplify@10
+memo_arith_simplify inp1 : a[5]=3
+memo_arith_simplify@10 EXIT: a[5]=3
 
 (==tpdispatcher.ml#1544==)
-simplify-syn@25
-simplify-syn inp1 : (a[6]=3 | !(forall(i_21:(!((2<=i_21 & i_21<=5)) | a[i_21]=3))))
-simplify-syn@25 EXIT: (a[6]=3 | !(forall(v0:(!((2<=v0 & v0<=5)) | a[v0]=3))))
+simplify-syn@13
+simplify-syn inp1 : (a[5]=3 | !(forall(i_20:(!((2<=i_20 & i_20<=5)) | a[i_20]=3))))
+simplify-syn@13 EXIT: (a[5]=3 | !(forall(v0:(!((2<=v0 & v0<=5)) | a[v0]=3))))
 
-(==solver.ml#8290==)
-simplify_filter_ante@26
-simplify_filter_ante inp1 : forall(i:(!((2<=i & i<=5)) | a[i]=3))
-simplify_filter_ante inp2 : a[6]=3
-simplify_filter_ante@26 EXIT: forall(i:(!((2<=i & i<=5)) | a[i]=3))
-
-(==tpdispatcher.ml#1544==)
-simplify-syn@27
-simplify-syn inp1 : a[6]=3
-simplify-syn@27 EXIT: a[6]=3
+(==solver.ml#8380==)
+simplify_pure_f_old@14
+simplify_pure_f_old inp1 : emp&forall(i:(!((2<=i & i<=5)) | a[i]=3))&{FLOW,(4,5)=__norm#E}[]
+simplify_pure_f_old@14 EXIT: emp&forall(i:(!((2<=i & i<=5)) | a[i]=3))&{FLOW,(4,5)=__norm#E}[]
 
 (==tpdispatcher.ml#1544==)
-simplify-syn@28
-simplify-syn inp1 : forall(i:(!((2<=i & i<=5)) | a[i]=3)) & a[6]=3
-simplify-syn@28 EXIT: forall(v0:(!((2<=v0 & v0<=5)) | a[v0]=3)) & a[6]=3
+simplify-syn@15
+simplify-syn inp1 : forall(i:(!((2<=i & i<=5)) | a[i]=3))
+simplify-syn@15 EXIT: forall(v0:(!((2<=v0 & v0<=5)) | a[v0]=3))
 
-(==tpdispatcher.ml#1544==)
-simplify-syn@29
-simplify-syn inp1 : forall(i:(!((2<=i & i<=5)) | a[i]=3)) & (a[6])!=3
-simplify-syn@29 EXIT: forall(v0:(!((2<=v0 & v0<=5)) | a[v0]=3)) & (a[6])!=3
+(==solver.ml#2849==)
+simplify_pure_f_old@16
+simplify_pure_f_old inp1 : emp&forall(i:(!((2<=i & i<=5)) | a[i]=3))&{FLOW,(4,5)=__norm#E}[]
+simplify_pure_f_old@16 EXIT: emp&forall(i:(!((2<=i & i<=5)) | a[i]=3))&{FLOW,(4,5)=__norm#E}[]
 
-(====)
-simplify_filter_ante@30
-simplify_filter_ante inp1 : forall(i:(!((2<=i & i<=5)) | a[i]=3))
-simplify_filter_ante inp2 : a[6]=3
-simplify_filter_ante@30 EXIT: forall(i:(!((2<=i & i<=5)) | a[i]=3))
+Entail 1: Valid. 
 
-(==tpdispatcher.ml#1544==)
-simplify-syn@31
-simplify-syn inp1 : a[6]=3
-simplify-syn@31 EXIT: a[6]=3
+Stop z3... 2 invocations 
+SAT Count   : 2
+SAT % Hit   : 50.%
+IMPLY Count : 1
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.001002 (seconds)
 
-(==tpdispatcher.ml#1544==)
-simplify-syn@32
-simplify-syn inp1 : forall(i:(!((2<=i & i<=5)) | a[i]=3)) & a[6]=3
-simplify-syn@32 EXIT: forall(v0:(!((2<=v0 & v0<=5)) | a[v0]=3)) & a[6]=3
-
-(==tpdispatcher.ml#1544==)
-simplify-syn@33
-simplify-syn inp1 : forall(i:(!((2<=i & i<=5)) | a[i]=3)) & (a[6])!=3
-simplify-syn@33 EXIT: forall(v0:(!((2<=v0 & v0<=5)) | a[v0]=3)) & (a[6])!=3
-
-Entail 1: Fail.(may) cause: forall(i:(!((2<=i & i<=5)) | a[i]=3)) |-  a[6]=3. LOCS:[2;3] (may-bug)
-
-Stop z3... 5 invocations Stop Omega... 2 invocations 
-SAT Count   : 7
-SAT % Hit   : 42.85%
-IMPLY Count : 2
-IMPLY % Hit : 50.%
-Time(cache overhead) : 0.002515 (seconds)
-
-!!! log(small):(0.028577,14)
-Total verification time: 0.096546 second(s)
-	Time spent in main process: 0.070245 second(s)
-	Time spent in child processes: 0.026301 second(s)
+!!! log(small):(0.017618,4)
+Total verification time: 0.056113 second(s)
+	Time spent in main process: 0.047522 second(s)
+	Time spent in child processes: 0.008591 second(s)
 

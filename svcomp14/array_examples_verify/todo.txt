@@ -24,7 +24,9 @@ Entail 3: EXCast. Failure("replace_exp: Invalid index form a[a[i]]")
 Entail 4: EXCast. Failure("replace_exp: Invalid index form a[a[i] + 0]")
 : no residue 
 ======================================================================
-# test_forall2.slk
+# test_forall2.slk (solved)
+
+// solved after merging
 
 checkentail
   forall(i: !(2<=i<=5) | a[i]=3)
