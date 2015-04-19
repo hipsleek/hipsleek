@@ -1338,7 +1338,7 @@ let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up =
         let p_aset = CP.pure_ptr_equations pf in
         let () = DD.ninfo_hprint (add_str "p_aset" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) p_aset no_pos in
         let pf = CP.wrap_exists_svl pf (Gen.BList.difference_eq CP.eq_spec_var (CP.fv pf) ante_vars) in
-        let pf = Omega.simplify pf in
+        let pf = x_add_1 Omega.simplify pf in
         let pfs = CP.split_conjunctions pf in
         let () = DD.ninfo_hprint (add_str "pf" pr) pf no_pos in
         acc@pfs
@@ -1364,7 +1364,7 @@ let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up =
           | (pf3,pf4)::tl ->
             if (CP.equalFormula pf1 pf3)
             then
-              let pf5 = Omega.simplify (CP.mkOr pf2 pf4 None no_pos) in
+              let pf5 = x_add_1 Omega.simplify (CP.mkOr pf2 pf4 None no_pos) in
               let () = DD.ninfo_hprint (add_str "pf2" pr) pf2 no_pos in
               let () = DD.ninfo_hprint (add_str "pf4" pr) pf4 no_pos in
               let () = DD.ninfo_hprint (add_str "pf5" pr) pf5 no_pos in

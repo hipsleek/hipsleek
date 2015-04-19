@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+
 open Cpure
 open Globals
 open Debug
@@ -574,7 +576,7 @@ let rec can_be_simplify
   | Or _->
     failwith ("can_be_simplify:"^(!print_pure f)^" Invalid Input")
   | Not (not_f,fl,loc)->
-    (can_be_simplify not_f) || (not (contain_array not_f))
+    (x_add_1 can_be_simplify not_f) || (not (contain_array not_f))
   | Forall (sv,f1,fl,loc) ->
     (is_valid_forall f1 sv) || (not (contain_array f1))
   | Exists (sv,f1,fl,loc) ->
@@ -1626,7 +1628,7 @@ let mk_array_free_formula
 
 let mk_array_free_formula_split
     (f:formula):formula=
-  split_and_process f can_be_simplify mk_array_free_formula
+  split_and_process f (x_add_1 can_be_simplify) mk_array_free_formula
 ;;
 
 
@@ -2054,8 +2056,8 @@ let new_translate_out_array_in_imply_split
 
 let new_translate_out_array_in_imply_split
     (ante:formula) (conseq:formula):(formula * formula) =
-  let (keep_ante,sv2f_ante) = split_formula ante can_be_simplify in
-  let (keep_conseq,sv2f_conseq) = split_formula conseq can_be_simplify in
+  let (keep_ante,sv2f_ante) = split_formula ante (x_add_1 can_be_simplify) in
+  let (keep_conseq,sv2f_conseq) = split_formula conseq (x_add_1 can_be_simplify) in
   let (nante,nconseq) = new_translate_out_array_in_imply_split keep_ante keep_conseq in
   (combine_formula nante sv2f_ante,combine_formula nconseq sv2f_conseq)
 ;;
@@ -2128,7 +2130,7 @@ let new_translate_out_array_in_one_formula_full
 
 let new_translate_out_array_in_one_formula_split
     (f:formula):formula =
-  split_and_combine new_translate_out_array_in_one_formula_full can_be_simplify (process_quantifier (translate_array_relation f))
+  split_and_combine new_translate_out_array_in_one_formula_full (x_add_1 can_be_simplify) (process_quantifier (translate_array_relation f))
 ;;
 
 let new_translate_out_array_in_one_formula_split

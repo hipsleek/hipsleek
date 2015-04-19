@@ -1843,7 +1843,7 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
     let hf1 = CF.drop_hnodes_hf f.CF.formula_base_heap args in
     let p = MCP.pure_of_mix f.CF.formula_base_pure in
     let diff_svl = CP.diff_svl (CP.fv p) args in
-    let p_w_quan = CP.mkExists_with_simpl TP.simplify diff_svl p None no_pos in
+    let p_w_quan = CP.mkExists_with_simpl (x_add_1 TP.simplify) diff_svl p None no_pos in
     let f1 = {f with CF.formula_base_pure = MCP.mix_of_pure p_w_quan;
                      CF.formula_base_heap = hf1;} in
     let leqs = (MCP.ptr_equations_without_null f1.CF.formula_base_pure) in
@@ -2050,7 +2050,7 @@ let split_base_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_ptrs lhsb=
     let f1 = {f with CF.formula_base_heap = hf1;} in
     let p = MCP.pure_of_mix f1.CF.formula_base_pure in
     let diff_svl = CP.diff_svl (CP.fv p) args in
-    let p_w_quan = CP.mkExists_with_simpl TP.simplify (*Omega.simplify*) diff_svl p None no_pos in
+    let p_w_quan = CP.mkExists_with_simpl (x_add_1 TP.simplify) (*Omega.simplify*) diff_svl p None no_pos in
     let f3 = {f1 with CF.formula_base_pure = MCP.mix_of_pure p_w_quan} in
     (* let leqs = (MCP.ptr_equations_without_null f1.CF.formula_base_pure) in *)
     (* let f3 = if leqs =[] then f1 else *)

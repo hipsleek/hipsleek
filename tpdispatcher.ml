@@ -1911,14 +1911,14 @@ let norm_pure_input f =
 let om_simplify f =
   (* wrap_pre_post cnv_ptr_to_int norm_pure_result *)
   wrap_pre_post norm_pure_input norm_pure_result
-    Omega.simplify f
+    (x_add_1 Omega.simplify) f
 (* let f = cnv_ptr_to_int f in *)
 (* let r = Omega.simplify f in *)
 (* cnv_int_to_ptr r *)
 
 (* Take out formulas that omega cannot handle*)
 let om_simplify f=
-  Trans_arr.split_and_combine om_simplify Trans_arr.can_be_simplify f
+  Trans_arr.split_and_combine om_simplify (x_add_1 Trans_arr.can_be_simplify) f
 ;;
 
 let om_simplify f =

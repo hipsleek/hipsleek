@@ -1311,7 +1311,7 @@ let simplify_with_redlog (f: CP.formula) : CP.formula  =
 *)
 let simplify (f: CP.formula) : CP.formula =
   if (is_linear_formula f && not (CP.is_float_formula f)) then
-    Omega.simplify f
+    x_add_1 Omega.simplify f
   else
   if (!no_simplify) then
     f
@@ -1320,7 +1320,7 @@ let simplify (f: CP.formula) : CP.formula =
       let simpler_f = simplify_with_redlog f in
       let simpler_f =
         if ( (is_linear_formula simpler_f) && not (CP.is_float_formula f)) then
-          Omega.simplify simpler_f
+          x_add_1 Omega.simplify simpler_f
         else
           simpler_f
       in
