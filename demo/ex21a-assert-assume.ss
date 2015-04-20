@@ -4,10 +4,11 @@ void foo(int x)
 {
   if (x>0) {
     assert x'>=5 assume true;
-    dprint;
+   // dprint;
     assert x'>=0;
     assert x'<0;
   }
+dprint;
 }
 
 /*

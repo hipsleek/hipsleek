@@ -12012,7 +12012,8 @@ and normalize_es_x (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_s
 
 and normalize_es_combine (f : formula) (result_is_sat:bool)(pos : loc) (es : entail_state): context =
   (* let () = print_string ("\nCformula.ml: normalize_es_combine") in *)
-  Ctx {es with es_formula = normalize_combine es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat;} 
+  Ctx {es with es_formula = normalize_combine es.es_formula f pos;
+      es_unsat_flag = es.es_unsat_flag&&result_is_sat;} 
 
 and combine_and (f1:formula) (f2:MCP.mix_formula) :formula*bool = match f1 with
   | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = pos}) ->
@@ -12064,7 +12065,14 @@ and normalize_clash_es_x (f : formula) (pos : loc) (result_is_sat:bool)(es:entai
     let new_c2 = normalize_clash_es phi2 pos result_is_sat es in
     let res = (mkOCtx new_c1 new_c2 pos) in
     res
-  | _ -> Ctx {es with es_formula = normalize_only_clash_rename es.es_formula f pos; es_unsat_flag =es.es_unsat_flag&&result_is_sat}
+  | _ ->
+        let n_es_formula =
+          if !Globals.enable_error_as_exc && is_error_flow es.es_formula then
+            es.es_formula
+          else
+            normalize_only_clash_rename es.es_formula f pos
+        in
+        Ctx {es with es_formula = n_es_formula (* normalize_only_clash_rename es.es_formula f pos *); es_unsat_flag =es.es_unsat_flag&&result_is_sat}
 
 (* 17.05.2008 -- *)
 
