@@ -20,6 +20,7 @@ let get_error_type_str ie=
   match ie with
   | 0 -> "bind failure exception"
   | 1 -> "Proving precond failed"
+  | 2 -> "Proving assert/assume failed"
   | _ -> ""
 
 (*

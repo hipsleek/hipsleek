@@ -1381,8 +1381,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             if (String.length s)>0 (* && (String.length s1)>0 *) && (String.compare s s1 <> 0) then ctx
             else
               let (ts,ps) = List.partition (fun (fl,el,sl)-> (List.length fl) = 0) ctx in
-              let new_ctx,pure_info = match c1_o with
-                | None -> ts,None
+              let new_ctx,pure_info,assert_failed_msg = match c1_o with
+                | None -> ts,None, None
                 | Some c1 ->
                   let c1 = x_add Cvutil.prune_pred_struc prog true c1 in (* specialise asserted formula *)
                   let c1 = match c2 with
@@ -1414,11 +1414,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       x_dinfo_pp (*print_info "assert"*) ("Residual:\n" ^ (Cprinter.string_of_list_failesc_context rs)) pos; 
                       (* WN_2_Loc: put xpure of asserted by fn below  *)
                       let xp = get_xpure_of_formula c1_o in
-                      (rs,Some xp)
+                      (rs,Some xp,None)
                     end
                   else
                     (*L2: todo: should not warning if post is must error*)
-                    (Debug.print_info "assert/assume" (s ^" : failed\n") pos ; (rs,None))
+                    let msg =  (s ^" : failed\n") in
+                    (Debug.print_info  "assert/assume" (*(s ^" : failed\n") *) msg pos ; (rs,None, Some msg))
               in 
               let () = if !print_proof  && (match c1_o with | None -> false | Some _ -> true) then 
                   begin
@@ -1451,8 +1452,35 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let r =if !Globals.disable_assume_cmd_sat then assumed_ctx 
                     else 
                       CF.transform_list_failesc_context (idf,idf,(elim_unsat_es 4 prog (ref 1))) assumed_ctx in
-                  List.map CF.remove_dupl_false_fe r
+                  let res = List.map CF.remove_dupl_false_fe r in
+                  match assert_failed_msg with
+                    | None -> res
+                    | Some s -> begin
+                        if not !Globals.disable_failure_explaining then
+                          let s,fk,_= CF.get_failure_list_failesc_context new_ctx in
+                          raise (Err.Ppf ({
+                              Err.error_loc = pos;
+                              Err.error_text = s
+                          },(match fk with
+                            | CF.Failure_Bot _ -> 0
+                            | CF.Failure_Must _ -> 1
+                            | CF.Failure_Valid -> 2
+                            | CF.Failure_May _ -> 3), 2))
+                        else
+                          begin
+                            Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context  new_ctx)^") ") 
+                                ("Proving assert/assume in method failed\n") pos;
+                            Debug.print_info ("(Cause of Assert Failure)")
+                                (Cprinter.string_of_failure_list_failesc_context  new_ctx) pos;
+                            Err.report_error {
+                                Err.error_loc = pos;
+                                Err.error_text = Printf.sprintf
+                                    "Proving Assert/Assume in method failed."
+                            }
+                          end
+                      end
               in
+              let () = Debug.ninfo_hprint (add_str "res" Cprinter.string_of_list_failesc_context) res pos in
               (ps@res)
         end
       in
