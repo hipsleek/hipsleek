@@ -1445,9 +1445,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     else c
                   in
                   let c = x_add Cvutil.prune_preds prog false c in (* specialise assumed formula *)
-                  let () = Debug.info_hprint (add_str "new_ctx" Cprinter.string_of_list_failesc_context) new_ctx pos in
+                  let () = Debug.ninfo_hprint (add_str "new_ctx" Cprinter.string_of_list_failesc_context) new_ctx pos in
                   let assumed_ctx = CF.normalize_max_renaming_list_failesc_context c pos false new_ctx in
-                  let () = Debug.info_hprint (add_str "assumed_ctx" Cprinter.string_of_list_failesc_context) assumed_ctx pos in
+                  let () = Debug.ninfo_hprint (add_str "assumed_ctx" Cprinter.string_of_list_failesc_context) assumed_ctx pos in
                   let r =if !Globals.disable_assume_cmd_sat then assumed_ctx 
                     else 
                       CF.transform_list_failesc_context (idf,idf,(elim_unsat_es 4 prog (ref 1))) assumed_ctx in
