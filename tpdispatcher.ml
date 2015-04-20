@@ -2206,6 +2206,11 @@ let simplify (f:CP.formula):CP.formula =
     (* | AndList b -> mkAndList (map_l_snd simplify b) *)
     | _ -> Trans_arr.translate_back_array_in_one_formula (tp_pairwisecheck (simplify f)) in
   helper f
+;;
+
+let simplify f =
+  Debug.no_1 "simplify##" !CP.print_formula !CP.print_formula simplify f
+;;
 
 let simplify_tp (f:CP.formula):CP.formula =
   let pr = !CP.print_formula in
@@ -2256,6 +2261,8 @@ let simplify_raw f =
 
 let simplify_exists_raw exist_vars (f: CP.formula) = 
   let is_bag_cnt = is_bag_constraint f in
+  (* let () = *)
+    (* if is_bag_cnt then print_endline ("is_bag_cnt:true") else print_endline ("is_bag_cnt:false") in *)
   if is_bag_cnt then
     let _,new_f = trans_dnf f in
     let disjs = list_of_disjs new_f in
@@ -2268,6 +2275,12 @@ let simplify_exists_raw exist_vars (f: CP.formula) =
     List.fold_left (fun p1 p2 -> mkOr p1 p2 None no_pos) (mkFalse no_pos) disjs
   else
     simplify (CP.mkExists exist_vars f None no_pos)
+;;
+
+let simplify_exists_raw exist_vars (f:CP.formula) =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_2 "simplify_exists_raw" string_of_spec_var_list pr pr (fun e f-> simplify_exists_raw e f) exist_vars f
+;;
 
 (* always simplify directly with the help of prover *)
 let simplify_always (f:CP.formula): CP.formula = 

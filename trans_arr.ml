@@ -48,15 +48,22 @@ let get_array_at_index
 
 let is_same_sv
     (sv1:spec_var) (sv2:spec_var):bool=
+  (* let () = print_endline ((string_of_spec_var sv1)^" and "^(string_of_spec_var sv2)) in *)
   match sv1,sv2 with
   | SpecVar (t1,i1,p1), SpecVar (t2,i2,p2)->
     begin
       match p1,p2 with
       | Primed,Primed
       | Unprimed,Unprimed ->
-        if (cmp_typ t1 t2) && (i1=i2) then true else false
+            
+            (* if (cmp_typ t1 t2) && (i1=i2) then true else false *)
+            if (i1=i2) then true else false
       | _,_-> false
     end
+;;
+
+let is_same_sv sv1 sv2 =
+  Debug.no_2 "is_same_sv" string_of_spec_var string_of_spec_var string_of_bool is_same_sv sv1 sv2
 ;;
 
 let is_same_var
@@ -496,7 +503,7 @@ let rec can_be_simplify
       match e with
       | ArrayAt (arr,[index],loc) ->
         if is_same_sv arr sv
-        then false
+        then true
         else
           begin
             match index with
@@ -1186,13 +1193,71 @@ let translate_array_equality
     | Exists (sv,f,fl,loc)->
       []
   in
-  match helper f scheme with
+   match helper f scheme with
   | [] -> None
   | lst -> Some (mk_and_list lst)
 ;;
 
 let translate_array_equality
-    (f:formula) (scheme: ((spec_var * (exp list)) list)):(formula option) =
+    (f:formula) (scheme:((spec_var * (exp list)) list)):(formula)=
+  let produce_equality (* produce *)
+      (sv1:spec_var) (sv2:spec_var) (indexlst: (exp list)):(formula list) =
+    List.map (fun index -> BForm ((Eq (mk_array_new_name sv1 index,mk_array_new_name sv2 index,no_pos),None),None) ) indexlst
+  in
+  let rec find_match
+      (scheme:((spec_var * (exp list)) list)) (sv:spec_var) : ((exp list) option) =
+    match scheme with
+    | (nsv,elst)::rest ->
+      if is_same_sv nsv sv
+      then Some elst
+      else
+        find_match rest sv
+    | [] -> None
+  in
+  let helper_b_formula
+        ((p,ba):b_formula) (scheme:((spec_var * (exp list)) list)):formula =
+    match p with
+      | Eq (Var (sv1,_), Var (sv2,_),loc) ->
+            if is_same_sv sv1 sv2
+            then BForm ((p,ba),None)
+            else
+              begin
+                match find_match scheme sv1, find_match scheme sv2 with
+                  | Some indexlst1, Some indexlst2 ->
+                        mk_and_list ((produce_equality sv1 sv2 indexlst1)@(produce_equality sv1 sv2 indexlst2))
+                  | Some indexlst,_
+                  | _,Some indexlst ->
+                        mk_and_list (produce_equality sv1 sv2 indexlst)
+                  | _,_ -> BForm ((p,ba),None)
+              end
+      | _ ->
+            BForm ((p,ba),None)
+  in
+  let rec helper
+      (f:formula) (scheme:((spec_var * (exp list)) list)):formula=
+    match f with
+    | BForm (b,fl)->
+      helper_b_formula b scheme
+    | And (f1,f2,loc)->
+          And ((helper f1 scheme) , (helper f2 scheme),loc)
+    | AndList lst->
+      failwith "translate_array_equality: AndList To Be Implemented"
+    | Or (f1,f2,fl,loc)->
+          f
+          (*Or (helper f1 scheme,helper f2 scheme,fl,loc)*)
+          (*failwith "translate_array_equality: To Be Normalized!"*)
+    | Not (f,fl,loc)->
+          Not (helper f scheme,fl,loc)
+    | Forall _->
+          f
+    | Exists _->
+          f
+  in
+  helper f scheme
+;;
+
+let translate_array_equality
+    (f:formula) (scheme: ((spec_var * (exp list)) list)):(formula) =
   let string_of_translate_scheme
       (ts:((spec_var * (exp list)) list)):string=
     let string_of_item
@@ -1206,7 +1271,7 @@ let translate_array_equality
     | Some f -> !print_pure f
     | None -> "None"
   in
-  Debug.no_2 "translate_array_equality" !print_pure string_of_translate_scheme pfo (fun f scheme -> translate_array_equality f scheme) f scheme
+  Debug.no_2 "translate_array_equality" !print_pure string_of_translate_scheme !print_pure (fun f scheme -> translate_array_equality f scheme) f scheme
 ;;
 (* ------------------------------------------------------------------- *)
 
@@ -1715,6 +1780,11 @@ let rec get_array_element_in_f
     get_array_element_in_f nf sv
 ;;
 
+let get_array_element_in_f
+      (f:formula) (sv:spec_var):(exp list) =
+  Debug.no_2 "get_array_element_in_f" !print_pure string_of_spec_var (pr_list ArithNormalizer.string_of_exp) (fun f sv -> get_array_element_in_f f sv) f sv
+;;
+
 let get_array_element_as_spec_var_list
     (f:formula) (sv:spec_var) :(spec_var list) =
   let elst = get_array_element_in_f f sv in
@@ -1742,6 +1812,7 @@ let rec expand_array_variable
   remove_dupl_spec_var_list (helper f svlst)
 ;;
 
+(* The input formula for this process must be normalized *)
 let rec process_exists_array
     (f:formula):formula =
   match f with
@@ -1767,7 +1838,10 @@ let rec process_exists_array
       end
     in
     if List.length nqlst == 0
-    then f
+    then
+      (* let _ = print_endline "process_exists_array: Nothing changed" in *)
+      let new_nf = process_exists_array nf in
+      Exists (sv,new_nf,fl,l)
     else
       let mk_new_name_helper
           (e:exp) : spec_var =
@@ -1787,7 +1861,8 @@ let rec process_exists_array
           end
         | _ -> failwith "mk_new_name_helper: Invalid input"
       in
-      List.fold_left (fun r nq -> Exists(mk_new_name_helper nq,r,None,no_pos)) nf nqlst
+      let new_nf = process_exists_array nf in
+      List.fold_left (fun r nq -> Exists(mk_new_name_helper nq,r,None,no_pos)) new_nf nqlst
 ;;
 
 let process_exists_array
@@ -2042,11 +2117,13 @@ let new_translate_out_array_in_imply_split
     | Some aux_f -> And (mk_array_free_formula_split ante,aux_f,no_pos)
     | None -> mk_array_free_formula_split ante
   in
+  (* let n_ante_with_eq = *)
+  (*   match translate_array_equality ante translate_scheme with *)
+  (*   | None   -> n_ante *)
+  (*   | Some eq -> And (eq,n_ante,no_pos) *)
+  (* in *)
   let n_ante_with_eq =
-    match translate_array_equality ante translate_scheme with
-    | None   -> n_ante
-    | Some eq -> And (eq,n_ante,no_pos)
-  in
+    translate_array_equality n_ante translate_scheme in
   (*let _ = mk_array_free_formula_split ante in*)
   let n_conseq = mk_array_free_formula_split conseq in
   (n_ante_with_eq,n_conseq)
@@ -2102,9 +2179,10 @@ let new_translate_out_array_in_one_formula
     | None -> array_free_formula
     | Some af -> And (array_free_formula,af,no_pos)
   in
-  match translate_array_equality f scheme with
-  | None -> new_f
-  | Some ef -> And (ef,new_f,no_pos)
+  translate_array_equality new_f scheme
+  (* match translate_array_equality f scheme with *)
+  (* | None -> new_f *)
+  (* | Some ef -> And (ef,new_f,no_pos) *)
 ;;
 
 let new_translate_out_array_in_one_formula
@@ -2112,13 +2190,21 @@ let new_translate_out_array_in_one_formula
   Debug.no_1 "new_translate_out_array_in_one_formula" !print_pure !print_pure (fun f -> new_translate_out_array_in_one_formula f) f
 ;;
 
-let new_translate_out_array_in_one_formula_full
+let new_translate_out_array_in_one_formula_full 
     (f:formula):formula=
   let f = translate_array_relation f in
   let nf = process_quantifier f in
   (*let _ = mk_array_free_formula_split nf in*)
   let sf = standarize_one_formula nf in
   new_translate_out_array_in_one_formula sf
+;;
+
+let new_translate_out_array_in_one_formula_full
+      (f:formula):formula =
+  match f with
+    | Or(f1,f2,fl,loc) ->
+          Or(new_translate_out_array_in_one_formula_full f1,new_translate_out_array_in_one_formula_full f2,fl,loc)
+    | _ -> new_translate_out_array_in_one_formula_full f
 ;;
 
 (* let new_translate_out_array_in_one_formula_split *)

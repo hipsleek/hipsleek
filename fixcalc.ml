@@ -171,6 +171,10 @@ let rec fixcalc_of_pure_formula f = match f with
 ;;
 
 let fixcalc_of_pure_formula f=
+  DD.no_1 "fixcalc_of_pure_formula(really called)" !CP.print_formula (fun s->s) (fun f-> fixcalc_of_pure_formula f) f
+;;
+
+let fixcalc_of_pure_formula f=
   let nf = Trans_arr.new_translate_out_array_in_one_formula_split f in
   fixcalc_of_pure_formula nf
 ;;

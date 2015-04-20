@@ -1,25 +1,29 @@
-relation P(int a,int r).
+relation P(int a,int b,int r).
+relation P1(int a,int b).
 
 int loop(ref int[] a)
-  infer[@post_n]
+//infer[@post_n]
+  infer[P]
   requires true
-  ensures true;
+  ensures P(a[5],a'[5],res);
 //requires a[5] > 0
 //ensures a'[5] = 0;
 {
   //foo2(a);
   int i = 0;
-  a[5] = 10;
+  //a[5] = 10;
   while(a[5]>0)
     //requires true
     //ensures (a[5]>0 & a'[5]=0) | (a[5]<=0 & a'[5]=a[5]);
-    infer[@post_n]
-      requires true
-      ensures P(a[5],a'[5]);
+    //infer[@post_n]
+    infer[P1]
+    requires true
+    // ensures (((a[5])>=1 & 0=a'[5]) | (0>=(a'[5]) & a'[5]=a[5]));
+      ensures P1(a[5],a'[5]);
   {
     a[5] = a[5] -1;
   }
-  return a[5]-2;
+  return a[5];
 
 }
 
