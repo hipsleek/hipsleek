@@ -10094,7 +10094,12 @@ let get_must_error_from_ctx cs =
   match cs with
   | [] -> (Some ("empty residual state", mk_cex false))
   | [Ctx es] -> (match es.es_must_error with
-      | None -> None
+      | None ->  begin if !Globals.enable_error_as_exc then
+          match es.es_final_error with
+            | Some (s1, fk) -> Some (s1, mk_cex true)
+            | None -> None
+        else None
+        end
       | Some (msg,_,cex) -> Some (msg,cex))
   | cl -> combine_ctx_list_err cl
 
@@ -10114,7 +10119,7 @@ let get_may_error_from_ctx cs =
 
 let rec is_ctx_error ctx=
   match ctx with
-  | Ctx es -> not (es.es_final_error = None)
+  | Ctx es -> not (es.es_final_error = None) || is_error_flow es.es_formula
   | OCtx (c1, c2) -> is_ctx_error c1 || is_ctx_error c2
 
 let isFailCtx_gen cl =

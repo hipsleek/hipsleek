@@ -2449,6 +2449,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         ) *)
                       (*should check bot with is_bot_status*)
                       in
+                      let () = Debug.ninfo_hprint (add_str "res" Cprinter.string_of_list_failesc_context) res no_pos in
+                      let () = Debug.ninfo_hprint (add_str "s" pr_id) s no_pos in
                       if (String.length s) >  0 then
                         (* let () = print_string_quiet (to_print ^s^"\n") in *)
                         (* Err.report_error { *)
