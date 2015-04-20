@@ -3764,8 +3764,8 @@ let pr_list_context (ctx:list_context) =
     pr_failure_cex cex;
     fmt_cut ()
   | SuccCtx sc -> let str = 
-    if (get_must_error_from_ctx sc)==None then "Good Context: "
-    else "Error Context: " in
+                    if (get_must_error_from_ctx sc)==None then "Good Context: "
+                    else "Error Context: " in
     fmt_cut (); fmt_string str; fmt_int (List.length sc); pr_context_list sc; fmt_cut ()
 
 let pr_context_short (ctx : context) = 
@@ -3880,8 +3880,8 @@ let pr_list_context (ctx:list_context) =
     (*     | _ -> fmt_string ""); *)
     pr_fail_type ft; pr_failure_cex cex; fmt_cut ()
   | SuccCtx sc -> let str = 
-    if (get_must_error_from_ctx sc)==None then "Good Context: "
-    else "Error Context: " in
+                    if (get_must_error_from_ctx sc)==None then "Good Context: "
+                    else "Error Context: " in
     fmt_cut (); fmt_string str; fmt_string "length= ";fmt_int (List.length sc);fmt_string " "; pr_context_list sc;
     fmt_string (string_of_numbered_list_formula_trace (list_formula_trace_of_list_context ctx));
     fmt_cut ()

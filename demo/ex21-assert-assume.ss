@@ -3,9 +3,9 @@ void foo(int x)
   ensures true;
 {
   if (x>0) {
-    assert false assume true;
+    //assert false assume true;
     dprint;
-    assert false;
+    //assert false;
     assert x'<0;
   }
 }

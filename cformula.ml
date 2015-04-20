@@ -477,10 +477,10 @@ let isAnyConstFalse f = match f with
       formula_exists_pure = p;
       formula_exists_flow = fl; })
   | Base ({
-      formula_base_heap = h;
-      formula_base_vperm = vp;
-      formula_base_pure = p;
-      formula_base_flow = fl; }) -> 
+        formula_base_heap = h;
+        formula_base_vperm = vp;
+        formula_base_pure = p;
+        formula_base_flow = fl; }) -> 
     h = HFalse || MCP.isConstMFalse p || 
     is_false_flow fl.formula_flow_interval || CVP.is_false_vperm_sets vp
   | _ -> false
@@ -4989,7 +4989,7 @@ let hp_def_cmp (d1:hp_rel_def) (d2:hp_rel_def) =
       let hp2 = get_hpdef_name d2.def_cat in
       String.compare (CP.name_of_spec_var hp1) (CP.name_of_spec_var hp2)
     with _ -> 1
-    with _ -> -1
+  with _ -> -1
 
 let hpdef_cmp d1 d2 =
   try
@@ -4998,7 +4998,7 @@ let hpdef_cmp d1 d2 =
       let hp2 = get_hpdef_name d2.hprel_def_kind in
       String.compare (CP.name_of_spec_var hp1) (CP.name_of_spec_var hp2)
     with _ -> 1
-    with _ -> -1
+  with _ -> -1
 
 let mk_hp_rel_def hp (args, r, paras) (g: formula option) f ofl pos=
   let hf = HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, pos) in
@@ -7189,8 +7189,8 @@ let generate_xpure_view_x drop_hpargs total_unk_map=
       let xpvs = lookup_xpure_view hp total_unk_map in
       match xpvs with
       | [xp] -> let xp_r, xp_args = match xp.CP.xpure_view_node with
-        | None -> None, xp.CP.xpure_view_arguments
-        |Some _ -> Some (List.hd args), (List.tl args)
+          | None -> None, xp.CP.xpure_view_arguments
+          |Some _ -> Some (List.hd args), (List.tl args)
         in
         let new_xpv = {xp with CP.xpure_view_node =  xp_r;
                                xpure_view_arguments =  xp_args
@@ -7780,14 +7780,14 @@ let remove_neqNull_redundant_hnodes_f_x f0=
   let rec helper f=
     match f with
     | Base fb -> let np = remove_neqNull_redundant_hnodes_hf fb.formula_base_heap
-        (MCP.pure_of_mix fb.formula_base_pure) in
+                     (MCP.pure_of_mix fb.formula_base_pure) in
       (Base {fb with formula_base_pure = MCP.mix_of_pure np})
     | Or orf -> let nf1 = helper orf.formula_or_f1 in
       let nf2 = helper orf.formula_or_f2 in
       ( Or {orf with formula_or_f1 = nf1;
                      formula_or_f2 = nf2;})
     | Exists fe -> let np = remove_neqNull_redundant_hnodes_hf fe.formula_exists_heap
-        (MCP.pure_of_mix fe.formula_exists_pure) in
+                       (MCP.pure_of_mix fe.formula_exists_pure) in
       (Exists {fe with formula_exists_pure = MCP.mix_of_pure np;})
   in
   helper f0
@@ -7801,14 +7801,14 @@ let remove_neqNull_redundant_hnodes_f_wg (f0,og)=
   let rec helper f=
     match f with
     | Base fb -> let np = remove_neqNull_redundant_hnodes_hf fb.formula_base_heap
-        (MCP.pure_of_mix fb.formula_base_pure) in
+                     (MCP.pure_of_mix fb.formula_base_pure) in
       (Base {fb with formula_base_pure = MCP.mix_of_pure np})
     | Or orf -> let nf1 = helper orf.formula_or_f1 in
       let nf2 = helper orf.formula_or_f2 in
       ( Or {orf with formula_or_f1 = nf1;
                      formula_or_f2 = nf2;})
     | Exists fe -> let np = remove_neqNull_redundant_hnodes_hf fe.formula_exists_heap
-        (MCP.pure_of_mix fe.formula_exists_pure) in
+                       (MCP.pure_of_mix fe.formula_exists_pure) in
       (Exists {fe with formula_exists_pure = MCP.mix_of_pure np;})
   in
   let nf = helper f0 in
@@ -10353,10 +10353,10 @@ and combine_helper op los rs=
   match los with
   | [] -> rs
   | [os] -> let tmp=
-    ( match os with
-      | None -> rs
-      | Some s -> rs ^ s
-    ) in tmp
+              ( match os with
+                | None -> rs
+                | Some s -> rs ^ s
+              ) in tmp
   | os::ss ->
     (*os contains all failed of 1 path trace*)
     let tmp=
@@ -11347,8 +11347,8 @@ let proc_left t1 t2 =
         match t2 with
         | [c2] ->
           if isAnyFalseCtx c2
-          && is_inferred_pre_ctx c2
-          (* both t1 and t2 are FalseCtx with Pre *)
+             && is_inferred_pre_ctx c2
+             (* both t1 and t2 are FalseCtx with Pre *)
           then Some [merge_false_ctx c1 c2]
           else Some t2 (* drop FalseCtx t1 with Pre *)
         | _ -> Some t1 (* only t1 is FalseCtx with Pre *)
@@ -12012,7 +12012,8 @@ and normalize_es_x (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_s
 
 and normalize_es_combine (f : formula) (result_is_sat:bool)(pos : loc) (es : entail_state): context =
   (* let () = print_string ("\nCformula.ml: normalize_es_combine") in *)
-  Ctx {es with es_formula = normalize_combine es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat;} 
+  Ctx {es with es_formula = normalize_combine es.es_formula f pos;
+      es_unsat_flag = es.es_unsat_flag&&result_is_sat;} 
 
 and combine_and (f1:formula) (f2:MCP.mix_formula) :formula*bool = match f1 with
   | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = pos}) ->
@@ -12064,7 +12065,14 @@ and normalize_clash_es_x (f : formula) (pos : loc) (result_is_sat:bool)(es:entai
     let new_c2 = normalize_clash_es phi2 pos result_is_sat es in
     let res = (mkOCtx new_c1 new_c2 pos) in
     res
-  | _ -> Ctx {es with es_formula = normalize_only_clash_rename es.es_formula f pos; es_unsat_flag =es.es_unsat_flag&&result_is_sat}
+  | _ ->
+        let n_es_formula =
+          if !Globals.enable_error_as_exc && is_error_flow es.es_formula then
+            es.es_formula
+          else
+            normalize_only_clash_rename es.es_formula f pos
+        in
+        Ctx {es with es_formula = n_es_formula (* normalize_only_clash_rename es.es_formula f pos *); es_unsat_flag =es.es_unsat_flag&&result_is_sat}
 
 (* 17.05.2008 -- *)
 
@@ -18449,10 +18457,10 @@ let write_vperm_set f vp =
 
 let exist_reachable_states_x (rs:list_partial_context)=
   List.for_all (fun (_,brs) -> not (isFalseBranchCtxL brs)
-  ) rs
+               ) rs
 
 
 let exist_reachable_states (rs:list_partial_context)=
   let pr1 = !print_list_partial_context in
   Debug.no_1 "exist_reachable_states" pr1 string_of_bool
-      (fun _ -> exist_reachable_states_x rs) rs
+    (fun _ -> exist_reachable_states_x rs) rs

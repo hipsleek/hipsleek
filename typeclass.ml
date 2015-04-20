@@ -122,7 +122,7 @@ module SHOW (M : SHOW_B) = struct
   (* type "s" imported from M but abstract! *)
   include M
   include SHOW_E(M)
-  (* let show (x:s) : string  = shows x "" *)
+    (* let show (x:s) : string  = shows x "" *)
 end
 
 (* module SHOW_E (S : SHOW_B) = struct *)

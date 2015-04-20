@@ -2512,7 +2512,7 @@ and mkStupid_Or_x f1 f2 lbl pos=
           let l2 = List.assoc branch l2 in
           (branch, mkOr l1 l2 lbl pos)
         with Not_found -> (branch, mkTrue pos)
-        with Not_found -> (branch, mkTrue pos )
+      with Not_found -> (branch, mkTrue pos )
     in
     Label_Pure.norm  (List.map map_fun branches) in
   if (isConstFalse f1) then f2
@@ -4584,10 +4584,10 @@ and find_bound v f0 =
   | BForm (bf,_) -> find_bound_b_formula v bf
   | _ -> None, None
 
-  (* and find_bound_b_formula_redlog v f0 = *)
-  (* let cmd = "rlopt({" ^ (Redlog.rl_of_b_formula f0) ^ "}, " ^ (Redlog.rl_of_spec_var v) ^ ");\n" in *)
-  (* let res = Redlog.send_and_receive cmd in *)
-  (* print_endline res *)
+(* and find_bound_b_formula_redlog v f0 = *)
+(* let cmd = "rlopt({" ^ (Redlog.rl_of_b_formula f0) ^ "}, " ^ (Redlog.rl_of_spec_var v) ^ ");\n" in *)
+(* let res = Redlog.send_and_receive cmd in *)
+(* print_endline res *)
 
 and find_bound_b_formula v f0 =
   let val_for_max e included =
@@ -8167,8 +8167,8 @@ module ArithNormalizer = struct
       | Add _ | Subtract _ -> true
       | _ -> false
     in let wrap e =
-      if need_parentheses e then "(" ^ (string_of_exp e) ^ ")"
-      else (string_of_exp e)
+         if need_parentheses e then "(" ^ (string_of_exp e) ^ ")"
+         else (string_of_exp e)
     in
     match e0 with
     | Null _ -> "null"

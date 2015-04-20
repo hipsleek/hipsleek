@@ -548,12 +548,12 @@ struct
               lastline <- ("\n"^len^s)
             end
         end
-     method add_id id =
+      method add_id id =
         begin
           if !dump_calls_all then 
             lastline <- lastline^id
         end
-     end
+    end
   let () = debug_calls # init
 
   let ho_aux ?(arg_rgx=None) df lz (loop_d:bool) (test:'z -> bool) (g:('a->'z) option) (s:string) (args:string list) (pr_o:'z->string) (f:'a->'z) (e:'a) :'z =

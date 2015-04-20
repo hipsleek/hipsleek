@@ -742,7 +742,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       (* Debug.info_hprint (add_str "fv post" !CP.print_svl) ovars no_pos; *)
       (* Debug.info_hprint (add_str "out vars" !CP.print_svl) ov no_pos; *)
       if ((Immutable.is_lend post_cond) && not(!Globals.allow_field_ann))
-      || (!Globals.allow_field_ann && Mem.is_lend post_cond) then
+         || (!Globals.allow_field_ann && Mem.is_lend post_cond) then
         Error.report_error {Error.error_loc = pos_spec; Error.error_text =  ("The postcondition cannot contain @L heap predicates/data nodes/field annotations\n")}
       else
         let () = post_pos#set (CF.pos_of_formula post_cond) in
@@ -1445,7 +1445,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     else c
                   in
                   let c = x_add Cvutil.prune_preds prog false c in (* specialise assumed formula *)
+                  let () = Debug.ninfo_hprint (add_str "new_ctx" Cprinter.string_of_list_failesc_context) new_ctx pos in
                   let assumed_ctx = CF.normalize_max_renaming_list_failesc_context c pos false new_ctx in
+                  let () = Debug.ninfo_hprint (add_str "assumed_ctx" Cprinter.string_of_list_failesc_context) assumed_ctx pos in
                   let r =if !Globals.disable_assume_cmd_sat then assumed_ctx 
                     else 
                       CF.transform_list_failesc_context (idf,idf,(elim_unsat_es 4 prog (ref 1))) assumed_ctx in
@@ -2977,10 +2979,10 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         end in
     let is_succ = CF.isSuccessListPartialCtx_new rs in
     let is_reachable_succ = if not f1 then
-      is_succ
-    else
-      (*if error post, check reachable *)
-      is_succ && (CF.exist_reachable_states rs)
+        is_succ
+      else
+        (*if error post, check reachable *)
+        is_succ && (CF.exist_reachable_states rs)
     in
     if ((* CF.isSuccessListPartialCtx_new rs *) is_reachable_succ) then
       rs

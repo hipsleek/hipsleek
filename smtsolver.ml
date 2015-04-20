@@ -613,9 +613,9 @@ let smtsolver_path =
   if (Sys.file_exists local_oc) then ref local_oc
   else if (Sys.file_exists global_oc)  then ref global_oc
   else ref "z3"
-    (* begin *)
-    (*   print_endline_quiet ("ERROR : "^global_oc^" cannot be found!!"); ref (global_oc^"_cannot_be_found":string) *)
-    (* end *)
+(* begin *)
+(*   print_endline_quiet ("ERROR : "^global_oc^" cannot be found!!"); ref (global_oc^"_cannot_be_found":string) *)
+(* end *)
 
 (***********)
 let test_number = ref 0
@@ -1250,7 +1250,7 @@ let is_sat f sat_no = Debug.no_2(* _loop *) "z3.is_sat" (!print_pure) (fun x->x)
 let simplify (f: CP.formula) : CP.formula = 
   (* let () = print_endline "locle: simplify" in *)
   try
-    (Omega.simplify f)
+    (x_add_1 Omega.simplify f)
   with
   | _ -> f
 

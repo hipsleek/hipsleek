@@ -1911,14 +1911,14 @@ let norm_pure_input f =
 let om_simplify f =
   (* wrap_pre_post cnv_ptr_to_int norm_pure_result *)
   wrap_pre_post norm_pure_input norm_pure_result
-    Omega.simplify f
+    (x_add_1 Omega.simplify) f
 (* let f = cnv_ptr_to_int f in *)
 (* let r = Omega.simplify f in *)
 (* cnv_int_to_ptr r *)
 
 (* Take out formulas that omega cannot handle*)
 let om_simplify f=
-  Trans_arr.split_and_combine om_simplify Trans_arr.can_be_simplify f
+  Trans_arr.split_and_combine om_simplify (x_add_1 Trans_arr.can_be_simplify) f
 ;;
 
 let om_simplify f =
@@ -2886,22 +2886,22 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   if !Globals.allow_inf && !Globals.allow_inf_qe
   then
     (* the following is not complete as it does not expand the conseq quantifiers over PAInf *)
-     (* let exists_inf f =  *)
-     (*   let alist  = Infinity.quantifier_elim f in *)
-     (*   let rec aux al = match al with *)
-     (*     | [] -> false *)
-     (*     | x::xs -> let f = tp_imply_no_cache x conseq imp_no timeout process in *)
-     (*                (\*let _ = print_endline ("Ante :"^(Cprinter.string_of_pure_formula x)) in*\) *)
-     (*                if f then true else aux xs *)
-     (*   in aux alist in *)
-     (*   let forall_lst = Infinity.get_inst_forall ante in  *)
-     (*   let forall_lst = ante::forall_lst in *)
-     (*   let f = List.for_all (fun c -> exists_inf c) forall_lst in f *)
-     (*   let expand_quantifier f  =  *)
-     (*   let forall_lst = Infinity.get_inst_forall f in *)
-     (*   let forall_lst = ante::forall_lst in *)
-     (*   conj_of_list  *)
-     (*    (List.map (fun c -> disj_of_list (Infinity.quantifier_elim c) no_pos) forall_lst) no_pos in *)
+    (* let exists_inf f =  *)
+    (*   let alist  = Infinity.quantifier_elim f in *)
+    (*   let rec aux al = match al with *)
+    (*     | [] -> false *)
+    (*     | x::xs -> let f = tp_imply_no_cache x conseq imp_no timeout process in *)
+    (*                (\*let _ = print_endline ("Ante :"^(Cprinter.string_of_pure_formula x)) in*\) *)
+    (*                if f then true else aux xs *)
+    (*   in aux alist in *)
+    (*   let forall_lst = Infinity.get_inst_forall ante in  *)
+    (*   let forall_lst = ante::forall_lst in *)
+    (*   let f = List.for_all (fun c -> exists_inf c) forall_lst in f *)
+    (*   let expand_quantifier f  =  *)
+    (*   let forall_lst = Infinity.get_inst_forall f in *)
+    (*   let forall_lst = ante::forall_lst in *)
+    (*   conj_of_list  *)
+    (*    (List.map (fun c -> disj_of_list (Infinity.quantifier_elim c) no_pos) forall_lst) no_pos in *)
     let expand_quantifier = Infinity.elim_forall_exists in
     tp_imply_no_cache (expand_quantifier ante) (expand_quantifier conseq) imp_no timeout process
   else if !Globals.allow_inf && !Globals.allow_inf_qe_coq then
