@@ -1,6 +1,8 @@
 void failmeth (int x)
- requires x<0
- ensures true;
+ case {
+  x<0 -> ensures true;
+  x>=0 -> ensures true & flow __MayError;
+ }
 
 void foo(int x)
   requires true
@@ -13,7 +15,7 @@ void foo(int x)
     //assert false;
     //assert x'<0;
   }
-  dprint;
+  //dprint;
 }
 
 /*

@@ -976,7 +976,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
           | Err.Ppf (e, ifk, error_type) ->
             (match ifk with
              | 1 -> (* let () = DD.info_hprint (add_str "must excp" (pr_id)) "xxx" no_pos in *)
-               if CF.is_error_flow post_cond  then
+               if x_add_1 CF.is_error_flow post_cond  then
                  (spec, [],[],[],[],[], [], true) else
                  let () = Gen.Profiling.pop_time ("method "^proc.proc_name) in
                  (Err.report_error1 e (Err.get_error_type_str error_type) (*"bind failure exception"*))
@@ -1587,7 +1587,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let pr1 c = Cprinter.string_of_context (CF.Ctx c) in
               let pr2 f = Cprinter.string_of_struc_formula f in
               Debug.no_2(* _loop *) "barrier entail" pr1 pr2 (fun c-> "") 
-                (fun _ _ -> heap_entail_struc_init prog false true (CF.SuccCtx [CF.Ctx c]) bd_spec pos None) c bd_spec (*r,proof*) 
+                (fun _ _ -> x_add heap_entail_struc_init prog false true (CF.SuccCtx [CF.Ctx c]) bd_spec pos None) c bd_spec (*r,proof*) 
             in 
             helper c bd_spec in
 

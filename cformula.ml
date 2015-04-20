@@ -10059,7 +10059,7 @@ let get_top_flow f = flow_formula_of_formula f
 
 let combine_ctx_list_err ctxs=
   let extract_failure_kind es=
-    if is_error_flow es.es_formula then
+    if x_add_1 is_error_flow es.es_formula then
       let msg = !print_formula es.es_formula in
       Failure_Must (msg ), msg
     else if is_mayerror_flow es.es_formula  then
@@ -10119,7 +10119,7 @@ let get_may_error_from_ctx cs =
 
 let rec is_ctx_error ctx=
   match ctx with
-  | Ctx es -> not (es.es_final_error = None) || is_error_flow es.es_formula
+  | Ctx es -> not (es.es_final_error = None) || x_add_1 is_error_flow es.es_formula
   | OCtx (c1, c2) -> is_ctx_error c1 || is_ctx_error c2
 
 let isFailCtx_gen cl =
@@ -11475,7 +11475,7 @@ and or_list_context_x_new c1 c2 =
     else
       let t = mk_not_a_failure (get_first_es t1) in
       FailCtx (Or_Reason (t,t2),c2, cex2)
-  | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
+  | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (x_add or_context_list t1 t2)
 
 and or_list_context_x c1 c2 = match c1,c2 with
   | FailCtx (t1,c1,cex1) ,FailCtx (t2, c2,cex2) -> FailCtx (Or_Reason (t1,t2), OCtx(c1,c2),cex_lor cex1 cex2)
@@ -11487,7 +11487,7 @@ and or_list_context_x c1 c2 = match c1,c2 with
     let t = mk_not_a_failure (get_first_es t1)
     in
     FailCtx (Or_Reason (t,t2), c2, cex2)
-  | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
+  | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (x_add or_context_list t1 t2)
 
 and and_list_context c1 c2= match c1,c2 with
   | FailCtx (t1, c1, cex1) ,FailCtx (t2, c2, cex2) -> FailCtx (And_Reason (t1,t2),OCtx(c1, c2) ,cex_land cex1 cex2)
@@ -11495,7 +11495,7 @@ and and_list_context c1 c2= match c1,c2 with
     c1
   | SuccCtx t1 ,FailCtx _ ->
     c2
-  | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
+  | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (x_add or_context_list t1 t2)
 
 and or_list_context c1 c2 = 
   let pr = !print_list_context_short in
@@ -12072,7 +12072,7 @@ and normalize_clash_es_x (f : formula) (pos : loc) (result_is_sat:bool)(es:entai
     res
   | _ ->
         let n_es_formula =
-          if !Globals.enable_error_as_exc && is_error_flow es.es_formula then
+          if !Globals.enable_error_as_exc && x_add_1 is_error_flow es.es_formula then
             es.es_formula
           else
             normalize_only_clash_rename es.es_formula f pos

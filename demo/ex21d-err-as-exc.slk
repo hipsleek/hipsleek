@@ -1,2 +1,9 @@
 checkentail x>0 |- x<0.
+// must error
+
+checkentail x>0 |- x<5.
+// may error
+
+//checkentail x>0 |- false.
 print residue.
+// must error?

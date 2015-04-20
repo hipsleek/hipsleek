@@ -3549,7 +3549,7 @@ and heap_entail_struc_failesc_context_x (prog : prog_decl) (is_folding : bool)
 (*   (CF.convert_must_failure_to_value ans ante_flow conseq post_check, prf) *)
 
 and heap_entail_struc_init_bug_orig (prog : prog_decl) (is_folding : bool)  (has_post: bool) (cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) =
-  let (ans,prf) = heap_entail_struc_init prog is_folding has_post cl conseq pos pid in
+  let (ans,prf) = x_add heap_entail_struc_init prog is_folding has_post cl conseq pos pid in
   (CF.convert_maymust_failure_to_value_orig ans, prf)
 
 and heap_entail_struc_init_bug_inv_x (prog : prog_decl) (is_folding : bool)  (has_post: bool) (cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) =
@@ -3586,7 +3586,7 @@ and heap_entail_struc_init_x (prog : prog_decl) (is_folding : bool)  (has_post: 
                               (* es_orig_ante   = es.es_formula; *)
                               es_orig_conseq = conseq ;}in
     let cl_new = transform_list_context ( (fun es-> Ctx(prepare_ctx (rename_es es))),(fun c->c)) cl in
-    let entail_fct = fun c-> heap_entail_struc prog is_folding has_post c conseq None None None pos pid in
+    let entail_fct = fun c-> x_add heap_entail_struc prog is_folding has_post c conseq None None None pos pid in
     let (ans,prf) = heap_entail_agressive_prunning entail_fct (prune_list_ctx prog) (fun (c,_)-> not (isFailCtx c)) cl_new in
     (ans,prf)
 
@@ -4349,7 +4349,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                         | SuccCtx _ ->
                           let () = x_tinfo_hp (add_str "n_ctx_list: " (Cprinter.string_of_list_context)) n_ctx_list no_pos in
                           let res_ctx, res_prf = match formula_cont with
-                            | Some l -> heap_entail_struc prog is_folding has_post n_ctx_list l tid new_delayed_f join_id pos pid (*also propagate tid*)
+                            | Some l -> x_add heap_entail_struc prog is_folding has_post n_ctx_list l tid new_delayed_f join_id pos pid (*also propagate tid*)
                             | None -> (n_ctx_list, prf) in
                           x_tinfo_hp (add_str "after pre 0: " (Cprinter.string_of_list_context)) res_ctx no_pos;
                           let res_ctx = if !wrap_exists_implicit_explicit then push_exists_list_context (expl_inst@impl_inst) res_ctx else res_ctx in
@@ -4584,7 +4584,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                                          fc_orig_conseq = f ;
                                                          fc_current_conseq = post;
                                                          fc_failure_pts =  [];}, fe, es.es_trace)), Ctx ({es with es_formula = CF.substitute_flow_into_f !top_flow_int es.es_formula}),(mk_cex false))
-                              else if CF.is_error_flow postcond then
+                              else if x_add_1 CF.is_error_flow postcond then
                                 let es, ll = helper ctx postcond in
                                 let fl = CF.get_error_flow postcond in
                                 let err_name = (exlist # get_closest fl.CF.formula_flow_interval) in
@@ -5220,7 +5220,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
   if (Perm.allow_perm ()) then (true,false, None) else
     (* if there is no hp inf, post pone contra detection *)
     (* if (List.length estate.es_infer_vars_hp_rel == 0 ) then  (false, None) *)
-  if (Infer.no_infer_all_all estate) || not (!Globals.early_contra_flag) || is_error_flow estate.es_formula
+  if (Infer.no_infer_all_all estate) || not (!Globals.early_contra_flag) || x_add_1 is_error_flow estate.es_formula
   then
     let () = pr_hdebug (add_str "early_hp_contra_detection : " pr_id) "1" pos in
     (true,false, None)
