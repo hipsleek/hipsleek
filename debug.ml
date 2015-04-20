@@ -484,9 +484,12 @@ struct
   let dump_calls = ref false
   let dump_calls_all = ref false
 
+  let call_threshold = ref 20
+  (* let threshold = 20 in (\* print calls above this threshold *\) *)
+  let call_str = ref ""
+
   let debug_calls  =
     let len = 41 in
-    let threshold = 20 in (* print calls above this threshold *)
     let prefix = "%%%" in
     object (self)
       val len_act = len -1
@@ -496,11 +499,12 @@ struct
       val calls =  Array.make (len+1) ""
       val overflow = prefix^"****************************************"
       val mutable lastline = "\n"
+      val mutable rgx = None
       val stk = new Gen.stack_pr pr_id (==)
       method dump =
         let cnt = hash_to_list hcalls in
         let rcnt = hash_to_list rec_calls in
-        let cnt = List.filter (fun (_,a) -> a>=threshold) cnt in
+        let cnt = List.filter (fun (_,a) -> a>=(!call_threshold)) cnt in
         let cnt = list_cnt_sort_dec cnt in
         let rcnt = list_cnt_sort_dec rcnt in
         let pr = pr_list_brk_sep "" "" "\n" (pr_pair pr_id string_of_int) in
@@ -518,7 +522,13 @@ struct
       method init =
         for i = 1 to len_act do
           arr.(i) <- arr.(i-1)^" "
-        done
+        done;
+        if !call_str!="" then rgx <- Some (Str.regexp !call_str)
+        else ()
+      method str_match s =
+        match rgx with
+        | None -> true
+        | Some rgx -> Str.string_match rgx s 0
       method add_to_hash ht s =
         try 
           let c = Hashtbl.find ht s in

@@ -10,6 +10,7 @@ print residue.
 print residue.
 // must error?
 
+
 /*
 # ex21d --dis-efa-exc
 
@@ -27,5 +28,18 @@ Residue:
 
 Residue:
  <1>emp&0<x&{FLOW,(4,5)=__norm#E}[]
+
+
+infer [] x>0 |- x<0 .
+// failctx must_err
+
+infer [@err_must] x>0 |- x<0 .
+// x>0 & flow __ERROR
+
+infer [@err_may] x>0 |- x<0 .
+// x>0 & flow __MayERROR
+
+infer [@err_must] x>0 |- x<3 .
+// x>0 & flow __MayERROR
 
 */

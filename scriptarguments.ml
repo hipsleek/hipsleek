@@ -188,6 +188,14 @@ let common_arguments = [
    "Turn on devel_debug");
   ("--dd-trace", Arg.Set Gen.debug_precise_trace,
    "Turn on more precise tracing");
+  ("-dd-threshold", Arg.Set_int Debug.call_threshold,
+   "--dd-calls threshold number before printing");
+  ("-dd-calls", Arg.String
+     (fun s -> 
+        Debug.dump_calls:=true;
+        Debug.call_str:=s;
+        Gen.debug_precise_trace:=true;),
+   "Dump summary of debugged calls");
   ("--dd-calls", Arg.Unit
      (fun _ -> 
         Debug.dump_calls:=true;
