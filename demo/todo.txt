@@ -139,7 +139,7 @@ Residue:
 Residue:
  <1>emp&0<x&{FLOW,(4,5)=__norm#E}[]
 ==========================================================================
-# ex21j --dis-efa-exc
+# ex21j --dis-efa-exc: DONE for pure implication
 
 Need to support @err_may and @err_must for
 local infer error as exception..
