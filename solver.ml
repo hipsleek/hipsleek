@@ -8545,9 +8545,9 @@ type: bool *
             estate with es_formula =
                           match fc_kind with
                           | CF.Failure_Must _ -> CF.substitute_flow_into_f !error_flow_int estate.es_formula
-                          | CF.Failure_May _ -> if is_sat then
-                              CF.substitute_flow_into_f !error_flow_int estate.es_formula
-                            else CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula
+                          | CF.Failure_May _ -> (* if is_sat then *)
+                            (*   CF.substitute_flow_into_f !error_flow_int estate.es_formula *)
+                            (* else *) CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula
                           (* this denotes a maybe error *)
                           | CF.Failure_Bot _ -> estate.es_formula
                           | CF.Failure_Valid -> estate.es_formula

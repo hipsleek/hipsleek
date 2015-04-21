@@ -10514,22 +10514,22 @@ let convert_may_failure_4_fail_type_new  (s:string) (ft:fail_type) cex : context
 
 (* TRUNG WHY: purpose when converting a list_context from FailCtx type to SuccCtx type? *)
 let convert_maymust_failure_to_value_orig (l:list_context) : list_context =
-  match l with 
-  | FailCtx (ft, c, cex) -> (* Loc: to check cex here*)
-    (* (match (get_must_es_msg_ft ft) with *)
-    (*   | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ]  *)
-    (*   | _ ->  l) *)
-    begin
-      match (convert_must_failure_4_fail_type_new "" ft cex) with
-      | Some ctx -> SuccCtx [ctx]
-      | None -> begin
-          match (convert_may_failure_4_fail_type_new "" ft cex) with
-          | Some ctx -> SuccCtx [ctx]
-          | None -> l
-        end
-    end
-  | SuccCtx _ ->
-    l
+  if not !Globals.enable_error_as_exc then l else
+    match l with 
+      | FailCtx (ft, c, cex) -> (* Loc: to check cex here*)
+            (* (match (get_must_es_msg_ft ft) with *)
+            (*   | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ]  *)
+            (*   | _ ->  l) *)
+            begin
+              match (convert_must_failure_4_fail_type_new "" ft cex) with
+                | Some ctx -> SuccCtx [ctx]
+                | None -> begin
+                    match (convert_may_failure_4_fail_type_new "" ft cex) with
+                      | Some ctx -> SuccCtx [ctx]
+                      | None -> l
+                  end
+            end
+      | SuccCtx _ -> l
 
 let convert_maymust_failure_to_value_orig (l:list_context) : list_context =
   let pr = !print_list_context_short in
