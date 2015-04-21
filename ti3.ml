@@ -270,7 +270,7 @@ let and_or_tree_of_path_traces path_traces =
 
 (* Specification-related stuffs *)  
 let rec is_infer_term sf = match sf with
-  | CF.EList el -> List.exists (fun (lbl, sf) -> is_infer_term sf) el
+  | CF.EList el -> List.exists (fun (lbl, sf) -> x_add_1 is_infer_term sf) el
   | CF.EInfer ei -> ei.CF.formula_inf_obj # is_term
   | _ -> false
 
@@ -279,7 +279,7 @@ let is_infer_term sf =
   Debug.no_1 "is_infer_term" pr string_of_bool is_infer_term sf
 
 let is_infer_term_scc scc =
-  List.exists (fun proc -> is_infer_term (proc.proc_stk_of_static_specs # top)) scc
+  List.exists (fun proc -> x_add_1 is_infer_term (proc.proc_stk_of_static_specs # top)) scc
 
 let add_term_relation_proc prog proc spec = 
   let is_primitive = not (proc.proc_is_main) in

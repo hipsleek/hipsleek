@@ -347,7 +347,7 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
   (* let pr4 = Cprinter.string_of_spec_var_list in *)
   (* let pr5 = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_xpure_view) in *)
   (* let pr3 = pr_hepta pr1 pr2a  pr2 pr2b pr4 pr5 string_of_bool in *)
-  let f = wrap_proving_kind PK_Check_Specs (check_specs_infer_a0 prog proc ctx e0 do_infer) in
+  let f = wrap_proving_kind PK_Check_Specs (x_add check_specs_infer_a0 prog proc ctx e0 do_infer) in
   (fun _ -> f spec_list) spec_list
 
 
@@ -4183,7 +4183,7 @@ let rec check_prog iprog (prog : prog_decl) =
       Da.find_rel_args_groups_scc prog scc
     in
 
-    let has_infer_shape_proc = Pi.is_infer_shape_scc scc in
+    let has_infer_shape_proc = x_add_1 Pi.is_infer_shape_scc scc in
 
     let has_infer_pre_proc = Pi.is_infer_pre_scc scc in
     let () = if (not(has_infer_shape_proc) && has_infer_pre_proc) then Pi.add_pre_relation_scc prog scc in
@@ -4297,7 +4297,7 @@ let rec check_prog iprog (prog : prog_decl) =
     (* Reverify *)
     (* let has_infer_others_proc = (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) && Pi.is_infer_others_scc scc in *)
     (* let () = if has_infer_others_proc then wrap_reverify_scc reverify_scc prog scc false in                                           *)
-    let has_infer_term_scc = Ti3.is_infer_term_scc scc in
+    let has_infer_term_scc = x_add_1 Ti3.is_infer_term_scc scc in
     let _ =
       if has_infer_term_scc then
         let () = Ti3.add_term_relation_scc prog scc in

@@ -10673,7 +10673,7 @@ let is_inferred_pre_ctx ctx =
 
 let remove_dupl_false (sl:branch_ctx list) = 
   let (fl,nl) = (List.partition (fun (_,oc,_) -> 
-      (isAnyFalseCtx oc && not(is_inferred_pre_ctx oc)) ) sl) in
+      (isAnyFalseCtx oc && not(x_add_1 is_inferred_pre_ctx oc)) ) sl) in
   let pr = pr_list (fun (_,oc,_) -> !print_context_short oc) in
   if not(fl==[]) && not(nl==[]) then
     x_tinfo_hp (add_str "false ctx removed" pr) fl no_pos; 
@@ -11348,11 +11348,11 @@ let proc_left t1 t2 =
   | [] -> Some t2
   | [c1] ->
     if isAnyFalseCtx c1 then
-      if is_inferred_pre_ctx c1 then
+      if x_add_1 is_inferred_pre_ctx c1 then
         match t2 with
         | [c2] ->
           if isAnyFalseCtx c2
-             && is_inferred_pre_ctx c2
+             && x_add_1 is_inferred_pre_ctx c2
              (* both t1 and t2 are FalseCtx with Pre *)
           then Some [merge_false_ctx c1 c2]
           else Some t2 (* drop FalseCtx t1 with Pre *)

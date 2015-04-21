@@ -153,6 +153,11 @@ let rec add_infer_vars_ctx iv ctx =
       Ctx {estate with es_infer_vars = iv @ estate.es_infer_vars;}
     | OCtx (ctx1, ctx2) -> OCtx (add_infer_vars_ctx iv ctx1, add_infer_vars_ctx iv ctx2)
 
+let add_infer_vars_ctx iv ctx =
+  let pr1 = Cprinter.string_of_spec_var_list in
+  let pr2 = Cprinter.string_of_context in
+  Debug.no_2 "add_infer_vars_ctx" pr1 pr2 pr2 add_infer_vars_ctx iv ctx
+
 let add_impl_expl_vars_ctx iv ev ctx =
   let rec helper ctx = 
     match ctx with
@@ -183,7 +188,7 @@ let rec get_all_args alias_of_root heap = match heap with
 let is_inferred_pre_list_context ctx = 
   match ctx with
   | FailCtx _ -> false
-  | SuccCtx lst -> List.exists CF.is_inferred_pre_ctx lst
+  | SuccCtx lst -> List.exists (x_add_1 CF.is_inferred_pre_ctx) lst
 
 let is_inferred_pre_list_context ctx = 
   Debug.no_1 "is_inferred_pre_list_context"
@@ -192,7 +197,7 @@ let is_inferred_pre_list_context ctx =
 
 (* let rec is_inferred_pre_list_context = match ctx with *)
 (*   | Ctx estate -> is_inferred_pre estate  *)
-(*   | OCtx (ctx1, ctx2) -> (is_inferred_pre_ctx ctx1) || (is_inferred_pre_ctx ctx2) *)
+(*   | OCtx (ctx1, ctx2) -> (x_add_1 is_inferred_pre_ctx ctx1) || (x_add_1 is_inferred_pre_ctx ctx2) *)
 
 let collect_pre_heap_list_context ctx = 
   match ctx with
@@ -1842,12 +1847,17 @@ let detect_lhs_rhs_contra2 ivs lhs_c rhs_mix pos =
 
 let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
   (* TODO : need to handle pure_branches in future ? *)
-  (* if no_infer_rel estate (\* && no_infer_hp_rel estate *\) then (estate,lhs_mix,rhs_mix,None,[]) *)
-  (* else *)
+  (* unfixed 13008 that was for rb.ss -p del *)
+  (* relation to infer need to be made explicit *)
+  if no_infer_rel estate (* && no_infer_hp_rel estate *) then (estate,lhs_mix,rhs_mix,None,[])
+  else
 
   (*let _ = print_endline("input rhs_mix "^(Cprinter.string_of_mix_formula rhs_mix)) in*)
   let ivs = estate.es_infer_vars_rel(* @estate.es_infer_vars_hp_rel *)  in
-  Debug.ninfo_hprint (add_str "ivs" Cprinter.string_of_spec_var_list) ivs no_pos;
+  x_binfo_hp (add_str "infer_vars_rel" Cprinter.string_of_spec_var_list) ivs no_pos;
+  x_binfo_hp (add_str "infer_vars" Cprinter.string_of_spec_var_list) estate.es_infer_vars no_pos;
+  x_binfo_hp (add_str "infer_vars_sel_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_hp_rel no_pos;
+  x_binfo_hp (add_str "infer_vars_sel_post_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_post_hp_rel no_pos;
   (*add instance of relational s0-pred*)
   (* let new_es_infer_vars_rel = find_close_infer_vars_rel lhs_mix estate.CF.es_infer_vars_rel in *)
   (* let estate = { estate with CF.es_infer_vars_rel = new_es_infer_vars_rel} in *)
