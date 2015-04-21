@@ -287,19 +287,19 @@ let rec send_formula (f : string) (nr : int) : bool =
       let result = ref false in
       let finished = ref false in  
       while not !finished do 
-      let line = input_line (fst !coq_channels) in
-      if !log_all_flag==true then output_string log_file ("[coq.ml]: >>"^line^"\n");
-      if line = "test" ^ string_of_int !coq_file_number ^ " is defined" then begin
-        result := true;
-        finished := true;
-        if !log_all_flag==true then output_string log_file ("[coq.ml]: --> SUCCESS\n");
-      end else if String.length line > 5 && String.sub line 0 5 = "Error" then begin
-        result := false;
-        finished := true;
-        output_string (snd !coq_channels) ("Abort.\n");
-        flush (snd !coq_channels);
-        if !log_all_flag==true then output_string log_file ("[coq.ml]: --> FAIL\n");
-      end;
+        let line = input_line (fst !coq_channels) in
+        if !log_all_flag==true then output_string log_file ("[coq.ml]: >>"^line^"\n");
+        if line = "test" ^ string_of_int !coq_file_number ^ " is defined" then begin
+          result := true;
+          finished := true;
+          if !log_all_flag==true then output_string log_file ("[coq.ml]: --> SUCCESS\n");
+        end else if String.length line > 5 && String.sub line 0 5 = "Error" then begin
+          result := false;
+          finished := true;
+          output_string (snd !coq_channels) ("Abort.\n");
+          flush (snd !coq_channels);
+          if !log_all_flag==true then output_string log_file ("[coq.ml]: --> FAIL\n");
+        end;
       done;
       !result
     in

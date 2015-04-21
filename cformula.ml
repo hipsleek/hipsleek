@@ -4989,7 +4989,7 @@ let hp_def_cmp (d1:hp_rel_def) (d2:hp_rel_def) =
       let hp2 = get_hpdef_name d2.def_cat in
       String.compare (CP.name_of_spec_var hp1) (CP.name_of_spec_var hp2)
     with _ -> 1
-    with _ -> -1
+  with _ -> -1
 
 let hpdef_cmp d1 d2 =
   try
@@ -4998,7 +4998,7 @@ let hpdef_cmp d1 d2 =
       let hp2 = get_hpdef_name d2.hprel_def_kind in
       String.compare (CP.name_of_spec_var hp1) (CP.name_of_spec_var hp2)
     with _ -> 1
-    with _ -> -1
+  with _ -> -1
 
 let mk_hp_rel_def hp (args, r, paras) (g: formula option) f ofl pos=
   let hf = HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, pos) in
@@ -7780,7 +7780,7 @@ let remove_neqNull_redundant_hnodes_f_x f0=
   let rec helper f=
     match f with
     | Base fb -> let np = remove_neqNull_redundant_hnodes_hf fb.formula_base_heap
-        (MCP.pure_of_mix fb.formula_base_pure) in
+                     (MCP.pure_of_mix fb.formula_base_pure) in
       (Base {fb with formula_base_pure = MCP.mix_of_pure np})
     | Or orf -> let nf1 = helper orf.formula_or_f1 in
       let nf2 = helper orf.formula_or_f2 in
@@ -7801,7 +7801,7 @@ let remove_neqNull_redundant_hnodes_f_wg (f0,og)=
   let rec helper f=
     match f with
     | Base fb -> let np = remove_neqNull_redundant_hnodes_hf fb.formula_base_heap
-        (MCP.pure_of_mix fb.formula_base_pure) in
+                     (MCP.pure_of_mix fb.formula_base_pure) in
       (Base {fb with formula_base_pure = MCP.mix_of_pure np})
     | Or orf -> let nf1 = helper orf.formula_or_f1 in
       let nf2 = helper orf.formula_or_f2 in
@@ -10095,10 +10095,10 @@ let get_must_error_from_ctx cs =
   | [] -> (Some ("empty residual state", mk_cex false))
   | [Ctx es] -> (match es.es_must_error with
       | None ->  begin if !Globals.enable_error_as_exc then
-          match es.es_final_error with
+            match es.es_final_error with
             | Some (s1, fk) -> Some (s1, mk_cex true)
             | None -> None
-        else None
+          else None
         end
       | Some (msg,_,cex) -> Some (msg,cex))
   | cl -> combine_ctx_list_err cl
@@ -10516,20 +10516,20 @@ let convert_may_failure_4_fail_type_new  (s:string) (ft:fail_type) cex : context
 let convert_maymust_failure_to_value_orig (l:list_context) : list_context =
   if not !Globals.enable_error_as_exc then l else
     match l with 
-      | FailCtx (ft, c, cex) -> (* Loc: to check cex here*)
-            (* (match (get_must_es_msg_ft ft) with *)
-            (*   | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ]  *)
-            (*   | _ ->  l) *)
-            begin
-              match (convert_must_failure_4_fail_type_new "" ft cex) with
-                | Some ctx -> SuccCtx [ctx]
-                | None -> begin
-                    match (convert_may_failure_4_fail_type_new "" ft cex) with
-                      | Some ctx -> SuccCtx [ctx]
-                      | None -> l
-                  end
-            end
-      | SuccCtx _ -> l
+    | FailCtx (ft, c, cex) -> (* Loc: to check cex here*)
+      (* (match (get_must_es_msg_ft ft) with *)
+      (*   | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ]  *)
+      (*   | _ ->  l) *)
+      begin
+        match (convert_must_failure_4_fail_type_new "" ft cex) with
+        | Some ctx -> SuccCtx [ctx]
+        | None -> begin
+            match (convert_may_failure_4_fail_type_new "" ft cex) with
+            | Some ctx -> SuccCtx [ctx]
+            | None -> l
+          end
+      end
+    | SuccCtx _ -> l
 
 let convert_maymust_failure_to_value_orig (l:list_context) : list_context =
   let pr = !print_list_context_short in
@@ -12018,7 +12018,7 @@ and normalize_es_x (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_s
 and normalize_es_combine (f : formula) (result_is_sat:bool)(pos : loc) (es : entail_state): context =
   (* let () = print_string ("\nCformula.ml: normalize_es_combine") in *)
   Ctx {es with es_formula = normalize_combine es.es_formula f pos;
-      es_unsat_flag = es.es_unsat_flag&&result_is_sat;} 
+               es_unsat_flag = es.es_unsat_flag&&result_is_sat;} 
 
 and combine_and (f1:formula) (f2:MCP.mix_formula) :formula*bool = match f1 with
   | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = pos}) ->
@@ -12071,13 +12071,13 @@ and normalize_clash_es_x (f : formula) (pos : loc) (result_is_sat:bool)(es:entai
     let res = (mkOCtx new_c1 new_c2 pos) in
     res
   | _ ->
-        let n_es_formula =
-          if !Globals.enable_error_as_exc && x_add_1 is_error_flow es.es_formula then
-            es.es_formula
-          else
-            normalize_only_clash_rename es.es_formula f pos
-        in
-        Ctx {es with es_formula = n_es_formula (* normalize_only_clash_rename es.es_formula f pos *); es_unsat_flag =es.es_unsat_flag&&result_is_sat}
+    let n_es_formula =
+      if !Globals.enable_error_as_exc && x_add_1 is_error_flow es.es_formula then
+        es.es_formula
+      else
+        normalize_only_clash_rename es.es_formula f pos
+    in
+    Ctx {es with es_formula = n_es_formula (* normalize_only_clash_rename es.es_formula f pos *); es_unsat_flag =es.es_unsat_flag&&result_is_sat}
 
 (* 17.05.2008 -- *)
 

@@ -2595,16 +2595,16 @@ and mkNot_dumb f lbl1 pos0:formula =
     | BForm (bf,lbl) -> begin
         let (pf,il) = bf in
         match pf with
-      | BConst (b, pos) -> BForm ((BConst ((not b), pos), il),lbl)
-      | Lt (e1, e2, pos) -> BForm ((Gte (e1, e2, pos), il),lbl)
-      | Lte (e1, e2, pos) -> BForm ((Gt (e1, e2, pos), il),lbl)
-      | Gt (e1, e2, pos) -> BForm ((Lte (e1, e2, pos), il),lbl)
-      | Gte (e1, e2, pos) -> BForm ((Lt (e1, e2, pos), il),lbl)
-      | Eq (e1, e2, pos) -> BForm ((Neq (e1, e2, pos), il),lbl)
-      | Neq (e1, e2, pos) -> BForm ((Eq (e1, e2, pos), il),lbl)
+        | BConst (b, pos) -> BForm ((BConst ((not b), pos), il),lbl)
+        | Lt (e1, e2, pos) -> BForm ((Gte (e1, e2, pos), il),lbl)
+        | Lte (e1, e2, pos) -> BForm ((Gt (e1, e2, pos), il),lbl)
+        | Gt (e1, e2, pos) -> BForm ((Lte (e1, e2, pos), il),lbl)
+        | Gte (e1, e2, pos) -> BForm ((Lt (e1, e2, pos), il),lbl)
+        | Eq (e1, e2, pos) -> BForm ((Neq (e1, e2, pos), il),lbl)
+        | Neq (e1, e2, pos) -> BForm ((Eq (e1, e2, pos), il),lbl)
         | BagIn e -> BForm (((BagNotIn e), il),lbl)
         | BagNotIn e -> BForm (((BagIn e), il),lbl)
-      | _ -> Not (f, lbl, pos0)
+        | _ -> Not (f, lbl, pos0)
       end
     | _ -> Not (f, lbl1,pos0)
 
@@ -14150,8 +14150,8 @@ let check_non_determinism_x (var_name: ident) (f: formula) =
     let fb bf = (match (fst bf) with
         | RelForm (sv, args, _) -> (
             if (is_nondet_sv sv) then (
-                let args_svs = List.concat (List.map afv args) in
-                nondet_svs := remove_dups_svl (!nondet_svs @ args_svs);
+              let args_svs = List.concat (List.map afv args) in
+              nondet_svs := remove_dups_svl (!nondet_svs @ args_svs);
             );
             (* let name = name_of_sv sv in                                 *)
             (* if (String.length name >= 6) then (                         *)

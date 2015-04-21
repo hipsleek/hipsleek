@@ -971,7 +971,7 @@ let merge_branches l1 l2 =
         let l2 = List.assoc branch l2 in
         (branch, mkAnd l1 l2 no_pos)
       with Not_found -> (branch, l1)
-      with Not_found -> (branch, List.assoc branch l2)
+    with Not_found -> (branch, List.assoc branch l2)
   in
   List.map map_fun branches
 

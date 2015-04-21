@@ -4340,11 +4340,11 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                        (match n_ctx_list with
                         | FailCtx _ -> (* let () = print_endline ("###: 1") in *)
                           if not is_requires then (n_ctx_list, prf) else
-                            if !Globals.enable_error_as_exc then
-                              let err_ctx_list = Musterr.convert_list_context prog n_ctx_list in
-                              let () = x_ninfo_hp (add_str "err_ctx_list" (Cprinter.string_of_list_context)) err_ctx_list no_pos in
+                          if !Globals.enable_error_as_exc then
+                            let err_ctx_list = Musterr.convert_list_context prog n_ctx_list in
+                            let () = x_ninfo_hp (add_str "err_ctx_list" (Cprinter.string_of_list_context)) err_ctx_list no_pos in
                             ((* SuccCtx [] *) err_ctx_list, prf)
-                            else (n_ctx_list, prf)
+                          else (n_ctx_list, prf)
                         (* (Musterr.convert_list_context prog n_ctx_list, prf) *)
                         | SuccCtx _ ->
                           let () = x_tinfo_hp (add_str "n_ctx_list: " (Cprinter.string_of_list_context)) n_ctx_list no_pos in
@@ -7037,8 +7037,8 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
             match m with 
             | None -> []
             | Some (ann, rnk, _) -> [CP.mkLexVar_pure ann rnk []]
-              (* if CP.is_MayLoop ann then []       *)
-              (* else [CP.mkLexVar_pure ann rnk []] *)
+            (* if CP.is_MayLoop ann then []       *)
+            (* else [CP.mkLexVar_pure ann rnk []] *)
           in 
           match proving_kind with
           | PK_POST -> 

@@ -3419,8 +3419,8 @@ let check_split_global_x iprog prog cands =
       ) [] ls_eqs in
     ( List.fold_left (fun r aset ->
           match aset with
-         | sv::rest -> CP.diff_svl r rest
-         | _ -> r
+          | sv::rest -> CP.diff_svl r rest
+          | _ -> r
         ) args ls_eq1)
   in
   (*for each grp*)

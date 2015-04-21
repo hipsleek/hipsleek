@@ -5093,9 +5093,9 @@ let mk_orig_hprel_def prog is_pre cdefs unk_hps hp r other_args args sh_ldns eqN
     (* let n_hprel,n_hp =  add_raw_hp_rel prog n_args_inst no_pos in *)
     let n_hprels,ls_n_hpargs = List.fold_left
         ( fun (r_hprels,r_hpargs) (n_args_inst, r) ->
-           let is_pre = Cast.check_pre_post_hp prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
-           let n_hprel,n_hp =  add_raw_hp_rel prog is_pre false n_args_inst no_pos in
-           (r_hprels@[n_hprel], r_hpargs@[(n_hp,(List.map fst n_args_inst, r, other_args))])
+            let is_pre = Cast.check_pre_post_hp prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
+            let n_hprel,n_hp =  add_raw_hp_rel prog is_pre false n_args_inst no_pos in
+            (r_hprels@[n_hprel], r_hpargs@[(n_hp,(List.map fst n_args_inst, r, other_args))])
         ) ([],[]) ls_n_args_inst
     in
     (*synthesize the common*)
