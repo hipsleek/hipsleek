@@ -1,25 +1,42 @@
 
+//1
 infer [@dis_err] x>0 |- x<0 .
 // failctx must_err
 print residue.
 
-//infer [] x>0 |- x<0 .
+//2
+infer [] x>0 |- x<0 .
 // failctx must_err
-//print residue.
+print residue.
 
-
+//3
 infer [@err_must] x>0 |- x<0 .
 // x>0 & flow __ERROR
 print residue.
 
-
-
+//4
 infer [@err_may] x>0 |- x<0 .
 // x>0 & flow __MayERROR
 print residue.
 
+//5
 infer [@err_must] x>0 |- x<3 .
 // x>0 & flow __MayERROR
+print residue.
+
+//6
+infer [@err_must] x>3 |- x>0 .
+// x>3 & flow __norm
+print residue.
+
+//7
+infer [@dis_err] x>3 |- x>0 .
+// x>3 & flow __norm
+print residue.
+
+//7
+infer [] x>3 |- x>0 .
+// x>3 & flow __norm
 print residue.
 
 
