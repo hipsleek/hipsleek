@@ -1361,9 +1361,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
     (* for code *)
     | Assert ({ exp_assert_asserted_formula = c1_o;
                 exp_assert_assumed_formula = c2;
+                exp_assert_infer_vars = ivars;
                 exp_assert_path_id = (pidi,s);
                 exp_assert_type = atype;
                 exp_assert_pos = pos}) ->
+      let () = if ivars!=[] then x_binfo_hp (add_str "infer_assume" Cprinter.string_of_spec_var_list) ivars pos in
       let assert_op ()=
         let () = if !print_proof && (match c1_o with | None -> false | Some _ -> true) then
             begin
@@ -1396,7 +1398,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     | Some _ -> c1
                   in
                   let to_print = "Proving assert/assume in method " ^ proc.proc_name ^ " for spec: \n" ^ !log_spec ^ "\n" in
-                  x_dinfo_pp (*print_info "assert"*) to_print pos;
+                  x_binfo_pp (*print_info "assert"*) to_print pos;
                   (* let () = Log.update_sleek_proving_kind Log.ASSERTION in *)
                   let rs,prf = x_add heap_entail_struc_list_failesc_context_init 4 prog false false ts c1 None None None pos None in
                   let () = PTracer.log_proof prf in

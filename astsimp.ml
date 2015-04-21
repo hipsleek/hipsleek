@@ -4533,6 +4533,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
     | I.Assert { 
         I.exp_assert_asserted_formula = assert_f_o;
         I.exp_assert_assumed_formula = assume_f_o;
+        I.exp_assert_infer_vars = assume_infer_vars;
         I.exp_assert_path_id = pi;
         I.exp_assert_type = atype;
         I.exp_assert_pos = pos } ->
@@ -4552,6 +4553,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
           (n_tl,Some cf) in
       let assert_e = C.Assert { C.exp_assert_asserted_formula = assert_cf_o;
                                 C.exp_assert_assumed_formula = assume_cf_o;
+                                (* WN : to look up type of i *)
+                                C.exp_assert_infer_vars = List.map (fun i -> CP.SpecVar (UNK, i, Primed)) assume_infer_vars;
                                 C.exp_assert_path_id = pi;
                                 C.exp_assert_type = atype;
                                 C.exp_assert_pos = pos; } in 
@@ -6895,7 +6898,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (prepost_flag:bool) (quantify
         let (n_tl,n_cl) = aux tl b in
         (n_tl,CF.mkEList_no_flatten2 n_cl)
   ) in
-  let n_tl =gather_type_info_struc_f prog f0 tlist in
+  let n_tl = gather_type_info_struc_f prog f0 tlist in
   let (n_tl,r) = trans_struc_formula fvars n_tl f0 in
   let () = x_tinfo_hp (add_str "fvars" (pr_list pr_id)) fvars no_pos in
   let cfvhp1 = List.map (fun c-> trans_var_safe (c,Primed) UNK n_tl (IF.pos_of_struc_formula f0)) fvars in
@@ -8786,6 +8789,7 @@ and rename_exp_x (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
         | Some f -> Some (IF.subst subst_list f) in
       (*let r =*) Iast.Assert{
         Iast.exp_assert_asserted_formula = assert_formula;
+        Iast.exp_assert_infer_vars = List.map (subid ren) b.Iast.exp_assert_infer_vars;
         Iast.exp_assert_assumed_formula = assume_formula;
         Iast.exp_assert_pos = b.Iast.exp_assert_pos;
         Iast.exp_assert_type = b.I.exp_assert_type;
@@ -9096,6 +9100,7 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
         Some r in
     let rez_assert = Iast.Assert { Iast.exp_assert_asserted_formula = asrt_nf;
                                    Iast.exp_assert_assumed_formula = assm_nf;
+                                   Iast.exp_assert_infer_vars = b.Iast.exp_assert_infer_vars;
                                    Iast.exp_assert_pos = b.Iast.exp_assert_pos;
                                    Iast.exp_assert_type = b.I.exp_assert_type;
                                    Iast.exp_assert_path_id = b.Iast.exp_assert_path_id;} in

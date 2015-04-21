@@ -14,7 +14,7 @@ void foo(int i)
   if (i>=0) {
     i = nondeterm();
     //assume i'>=0;
-    infer_assume[i'];
+    infer_assume [i];
     foo(i);
   }
 }

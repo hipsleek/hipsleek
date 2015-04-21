@@ -480,7 +480,7 @@ struct
   (* let threshold = 20 in (\* print calls above this threshold *\) *)
 
   let debug_calls  =
-    let len = 41 in
+    let len = 61 in
     let prefix = "%%%" in
     object (self)
       val len_act = len -1

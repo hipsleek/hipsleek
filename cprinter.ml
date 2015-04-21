@@ -4369,7 +4369,7 @@ let rec string_of_exp = function
   | Label l-> "LABEL! "^( (string_of_int_label_opt (fst  l.exp_label_path_id) (","^((string_of_int (snd l.exp_label_path_id))^": "^(string_of_exp l.exp_label_exp)))))
   | Java ({exp_java_code = code}) -> code
   | CheckRef _ -> ""
-  | Assert ({exp_assert_asserted_formula = f1o; exp_assert_assumed_formula = f2o; exp_assert_pos = l; exp_assert_type = t; exp_assert_path_id = pid}) -> 
+  | Assert ({exp_assert_asserted_formula = f1o; exp_assert_infer_vars = ivars; exp_assert_assumed_formula = f2o; exp_assert_pos = l; exp_assert_type = t; exp_assert_path_id = pid}) -> 
     let s = ( 
       let str1 = match (f1o, t) with
         | None, _ -> ""
@@ -4377,7 +4377,7 @@ let rec string_of_exp = function
         | Some f1, Some true -> "assert_exact " ^(string_of_control_path_id pid (":"^(string_of_struc_formula f1)))
         | Some f1, Some false -> "assert_inexact " ^(string_of_control_path_id pid (":"^(string_of_struc_formula f1))) in
       let str2 = match f2o with
-        | None -> ""
+        | None -> "infer_assume "^(string_of_spec_var_list ivars)
         | Some f2 -> "assume " ^ (string_of_formula f2) in
       str1 ^ " " ^ str2
     ) in
