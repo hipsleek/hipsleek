@@ -477,10 +477,10 @@ let isAnyConstFalse f = match f with
       formula_exists_pure = p;
       formula_exists_flow = fl; })
   | Base ({
-      formula_base_heap = h;
-      formula_base_vperm = vp;
-      formula_base_pure = p;
-      formula_base_flow = fl; }) -> 
+        formula_base_heap = h;
+        formula_base_vperm = vp;
+        formula_base_pure = p;
+        formula_base_flow = fl; }) -> 
     h = HFalse || MCP.isConstMFalse p || 
     is_false_flow fl.formula_flow_interval || CVP.is_false_vperm_sets vp
   | _ -> false
@@ -4989,7 +4989,7 @@ let hp_def_cmp (d1:hp_rel_def) (d2:hp_rel_def) =
       let hp2 = get_hpdef_name d2.def_cat in
       String.compare (CP.name_of_spec_var hp1) (CP.name_of_spec_var hp2)
     with _ -> 1
-    with _ -> -1
+  with _ -> -1
 
 let hpdef_cmp d1 d2 =
   try
@@ -4998,7 +4998,7 @@ let hpdef_cmp d1 d2 =
       let hp2 = get_hpdef_name d2.hprel_def_kind in
       String.compare (CP.name_of_spec_var hp1) (CP.name_of_spec_var hp2)
     with _ -> 1
-    with _ -> -1
+  with _ -> -1
 
 let mk_hp_rel_def hp (args, r, paras) (g: formula option) f ofl pos=
   let hf = HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, pos) in
@@ -7189,8 +7189,8 @@ let generate_xpure_view_x drop_hpargs total_unk_map=
       let xpvs = lookup_xpure_view hp total_unk_map in
       match xpvs with
       | [xp] -> let xp_r, xp_args = match xp.CP.xpure_view_node with
-        | None -> None, xp.CP.xpure_view_arguments
-        |Some _ -> Some (List.hd args), (List.tl args)
+          | None -> None, xp.CP.xpure_view_arguments
+          |Some _ -> Some (List.hd args), (List.tl args)
         in
         let new_xpv = {xp with CP.xpure_view_node =  xp_r;
                                xpure_view_arguments =  xp_args
@@ -7780,14 +7780,14 @@ let remove_neqNull_redundant_hnodes_f_x f0=
   let rec helper f=
     match f with
     | Base fb -> let np = remove_neqNull_redundant_hnodes_hf fb.formula_base_heap
-        (MCP.pure_of_mix fb.formula_base_pure) in
+                     (MCP.pure_of_mix fb.formula_base_pure) in
       (Base {fb with formula_base_pure = MCP.mix_of_pure np})
     | Or orf -> let nf1 = helper orf.formula_or_f1 in
       let nf2 = helper orf.formula_or_f2 in
       ( Or {orf with formula_or_f1 = nf1;
                      formula_or_f2 = nf2;})
     | Exists fe -> let np = remove_neqNull_redundant_hnodes_hf fe.formula_exists_heap
-        (MCP.pure_of_mix fe.formula_exists_pure) in
+                       (MCP.pure_of_mix fe.formula_exists_pure) in
       (Exists {fe with formula_exists_pure = MCP.mix_of_pure np;})
   in
   helper f0
@@ -7801,14 +7801,14 @@ let remove_neqNull_redundant_hnodes_f_wg (f0,og)=
   let rec helper f=
     match f with
     | Base fb -> let np = remove_neqNull_redundant_hnodes_hf fb.formula_base_heap
-        (MCP.pure_of_mix fb.formula_base_pure) in
+                     (MCP.pure_of_mix fb.formula_base_pure) in
       (Base {fb with formula_base_pure = MCP.mix_of_pure np})
     | Or orf -> let nf1 = helper orf.formula_or_f1 in
       let nf2 = helper orf.formula_or_f2 in
       ( Or {orf with formula_or_f1 = nf1;
                      formula_or_f2 = nf2;})
     | Exists fe -> let np = remove_neqNull_redundant_hnodes_hf fe.formula_exists_heap
-        (MCP.pure_of_mix fe.formula_exists_pure) in
+                       (MCP.pure_of_mix fe.formula_exists_pure) in
       (Exists {fe with formula_exists_pure = MCP.mix_of_pure np;})
   in
   let nf = helper f0 in
@@ -9372,6 +9372,14 @@ let print_failesc_context = ref(fun (c:failesc_context) -> "printer not initiali
 let print_failure_kind_full = ref(fun (c:failure_kind) -> "printer not initialized")
 let print_fail_type = ref(fun (c:fail_type) -> "printer not initialized")
 
+
+let is_en_error_exc es=
+    es.es_infer_obj # is_err_must || es.es_infer_obj # is_err_may
+
+let rec is_en_error_exc_ctx c=
+  match c with
+    | Ctx es -> is_en_error_exc es
+    | OCtx (c1,c2) -> is_en_error_exc_ctx c1 || is_en_error_exc_ctx c2
 (****************************************************)
 (********************CEX**********************)
 (****************************************************)
@@ -10059,7 +10067,7 @@ let get_top_flow f = flow_formula_of_formula f
 
 let combine_ctx_list_err ctxs=
   let extract_failure_kind es=
-    if is_error_flow es.es_formula then
+    if x_add_1 is_error_flow es.es_formula then
       let msg = !print_formula es.es_formula in
       Failure_Must (msg ), msg
     else if is_mayerror_flow es.es_formula  then
@@ -10094,7 +10102,12 @@ let get_must_error_from_ctx cs =
   match cs with
   | [] -> (Some ("empty residual state", mk_cex false))
   | [Ctx es] -> (match es.es_must_error with
-      | None -> None
+      | None ->  begin if !Globals.enable_error_as_exc || es.es_infer_obj # is_err_must || es.es_infer_obj # is_err_may then
+          match es.es_final_error with
+            | Some (s1, fk) -> Some (s1, mk_cex true)
+            | None -> None
+        else None
+        end
       | Some (msg,_,cex) -> Some (msg,cex))
   | cl -> combine_ctx_list_err cl
 
@@ -10114,7 +10127,7 @@ let get_may_error_from_ctx cs =
 
 let rec is_ctx_error ctx=
   match ctx with
-  | Ctx es -> not (es.es_final_error = None)
+  | Ctx es -> not (es.es_final_error = None) || x_add_1 is_error_flow es.es_formula
   | OCtx (c1, c2) -> is_ctx_error c1 || is_ctx_error c2
 
 let isFailCtx_gen cl =
@@ -10353,10 +10366,10 @@ and combine_helper op los rs=
   match los with
   | [] -> rs
   | [os] -> let tmp=
-    ( match os with
-      | None -> rs
-      | Some s -> rs ^ s
-    ) in tmp
+              ( match os with
+                | None -> rs
+                | Some s -> rs ^ s
+              ) in tmp
   | os::ss ->
     (*os contains all failed of 1 path trace*)
     let tmp=
@@ -10510,21 +10523,21 @@ let convert_may_failure_4_fail_type_new  (s:string) (ft:fail_type) cex : context
 (* TRUNG WHY: purpose when converting a list_context from FailCtx type to SuccCtx type? *)
 let convert_maymust_failure_to_value_orig (l:list_context) : list_context =
   match l with 
-  | FailCtx (ft, c, cex) -> (* Loc: to check cex here*)
-    (* (match (get_must_es_msg_ft ft) with *)
-    (*   | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ]  *)
-    (*   | _ ->  l) *)
-    begin
-      match (convert_must_failure_4_fail_type_new "" ft cex) with
-      | Some ctx -> SuccCtx [ctx]
-      | None -> begin
-          match (convert_may_failure_4_fail_type_new "" ft cex) with
-          | Some ctx -> SuccCtx [ctx]
-          | None -> l
-        end
-    end
-  | SuccCtx _ ->
-    l
+    | FailCtx (ft, c, cex) -> (* Loc: to check cex here*)
+          if not !Globals.enable_error_as_exc && not (is_en_error_exc_ctx c) then l else
+            (* (match (get_must_es_msg_ft ft) with *)
+            (*   | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ]  *)
+            (*   | _ ->  l) *)
+            begin
+              match (convert_must_failure_4_fail_type_new "" ft cex) with
+                | Some ctx -> SuccCtx [ctx]
+                | None -> begin
+                    match (convert_may_failure_4_fail_type_new "" ft cex) with
+                      | Some ctx -> SuccCtx [ctx]
+                      | None -> l
+                  end
+            end
+    | SuccCtx _ -> l
 
 let convert_maymust_failure_to_value_orig (l:list_context) : list_context =
   let pr = !print_list_context_short in
@@ -11347,8 +11360,8 @@ let proc_left t1 t2 =
         match t2 with
         | [c2] ->
           if isAnyFalseCtx c2
-          && is_inferred_pre_ctx c2
-          (* both t1 and t2 are FalseCtx with Pre *)
+             && is_inferred_pre_ctx c2
+             (* both t1 and t2 are FalseCtx with Pre *)
           then Some [merge_false_ctx c1 c2]
           else Some t2 (* drop FalseCtx t1 with Pre *)
         | _ -> Some t1 (* only t1 is FalseCtx with Pre *)
@@ -11470,7 +11483,7 @@ and or_list_context_x_new c1 c2 =
     else
       let t = mk_not_a_failure (get_first_es t1) in
       FailCtx (Or_Reason (t,t2),c2, cex2)
-  | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
+  | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (x_add or_context_list t1 t2)
 
 and or_list_context_x c1 c2 = match c1,c2 with
   | FailCtx (t1,c1,cex1) ,FailCtx (t2, c2,cex2) -> FailCtx (Or_Reason (t1,t2), OCtx(c1,c2),cex_lor cex1 cex2)
@@ -11482,7 +11495,7 @@ and or_list_context_x c1 c2 = match c1,c2 with
     let t = mk_not_a_failure (get_first_es t1)
     in
     FailCtx (Or_Reason (t,t2), c2, cex2)
-  | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
+  | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (x_add or_context_list t1 t2)
 
 and and_list_context c1 c2= match c1,c2 with
   | FailCtx (t1, c1, cex1) ,FailCtx (t2, c2, cex2) -> FailCtx (And_Reason (t1,t2),OCtx(c1, c2) ,cex_land cex1 cex2)
@@ -11490,7 +11503,7 @@ and and_list_context c1 c2= match c1,c2 with
     c1
   | SuccCtx t1 ,FailCtx _ ->
     c2
-  | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
+  | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (x_add or_context_list t1 t2)
 
 and or_list_context c1 c2 = 
   let pr = !print_list_context_short in
@@ -12012,7 +12025,8 @@ and normalize_es_x (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_s
 
 and normalize_es_combine (f : formula) (result_is_sat:bool)(pos : loc) (es : entail_state): context =
   (* let () = print_string ("\nCformula.ml: normalize_es_combine") in *)
-  Ctx {es with es_formula = normalize_combine es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat;} 
+  Ctx {es with es_formula = normalize_combine es.es_formula f pos;
+      es_unsat_flag = es.es_unsat_flag&&result_is_sat;} 
 
 and combine_and (f1:formula) (f2:MCP.mix_formula) :formula*bool = match f1 with
   | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = pos}) ->
@@ -12064,7 +12078,14 @@ and normalize_clash_es_x (f : formula) (pos : loc) (result_is_sat:bool)(es:entai
     let new_c2 = normalize_clash_es phi2 pos result_is_sat es in
     let res = (mkOCtx new_c1 new_c2 pos) in
     res
-  | _ -> Ctx {es with es_formula = normalize_only_clash_rename es.es_formula f pos; es_unsat_flag =es.es_unsat_flag&&result_is_sat}
+  | _ ->
+        let n_es_formula =
+          if (* !Globals.enable_error_as_exc && *) x_add_1 is_error_flow es.es_formula then
+            es.es_formula
+          else
+            normalize_only_clash_rename es.es_formula f pos
+        in
+        Ctx {es with es_formula = n_es_formula (* normalize_only_clash_rename es.es_formula f pos *); es_unsat_flag =es.es_unsat_flag&&result_is_sat}
 
 (* 17.05.2008 -- *)
 
@@ -17726,18 +17747,18 @@ let is_no_heap_struc_formula (e : struc_formula) : bool =
   let pr = !print_struc_formula in
   Debug.no_1 "is_no_heap_struc_formula" pr string_of_bool is_no_heap_struc_formula e
 
-let residues =  ref (None : (list_context * bool * bool ) option)   
-(* parameter 'bool' is used for printing *)
+let residues =  ref (None : (list_context * bool * bool * bool * bool) option)   
+(* the second parameter 'bool' is used for printing *)
 
-let set_residue b lc ldfa =
-  residues := Some (lc,b,ldfa)
+let set_residue b lc ldfa dis_lerr_exc en_lerr_exc  =
+  residues := Some (lc,b,ldfa,dis_lerr_exc,en_lerr_exc)
 
 let clear_residue () =
   residues := None
 
 let get_res_residue () =
   match !residues with
-  | Some (_, res,_) -> res
+  | Some (_, res,_,_,_) -> res
   | None -> false
 
 (*eliminates a fv that is otherwise to be existentially quantified, it does so only if the substitution is not
@@ -18449,10 +18470,10 @@ let write_vperm_set f vp =
 
 let exist_reachable_states_x (rs:list_partial_context)=
   List.for_all (fun (_,brs) -> not (isFalseBranchCtxL brs)
-  ) rs
+               ) rs
 
 
 let exist_reachable_states (rs:list_partial_context)=
   let pr1 = !print_list_partial_context in
   Debug.no_1 "exist_reachable_states" pr1 string_of_bool
-      (fun _ -> exist_reachable_states_x rs) rs
+    (fun _ -> exist_reachable_states_x rs) rs

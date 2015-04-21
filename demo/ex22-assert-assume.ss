@@ -1,6 +1,6 @@
 void foo(int x)
   requires true
-  ensures x>0;
+  ensures true;
 {
   //assert false assume true;
     assert false;

@@ -1244,7 +1244,7 @@ let print_cil_input = ref false
 
 let disable_failure_explaining = ref false
 
-let enable_error_as_exc = ref true
+let enable_error_as_exc = ref false (* true *)
 
 let bug_detect = ref false
 
@@ -1343,6 +1343,9 @@ type infer_type =
   | INF_PRE (* For infer[@pre] *)
   | INF_SHAPE (* For infer[@shape] *)
   | INF_ERROR (* For infer[@error] *)
+  | INF_DE_EXC (* For infer[@dis_err] *)
+  | INF_ERR_MUST (* For infer[@err_must] *)
+  | INF_ERR_MAY (* For infer[@err_may] *)
   | INF_SIZE (* For infer[@size] *)
   | INF_IMM (* For infer[@imm] *)
   | INF_EFA (* For infer[@efa] *)
@@ -1368,6 +1371,9 @@ let string_of_inf_const x =
   | INF_PRE -> "@pre"
   | INF_SHAPE -> "@shape"
   | INF_ERROR -> "@error"
+  | INF_DE_EXC -> "@dis_err"
+  | INF_ERR_MUST -> "@err_must"
+  | INF_ERR_MAY -> "@err_may"
   | INF_SIZE -> "@size"
   | INF_IMM -> "@imm"
   | INF_EFA -> "@efa"
@@ -1469,6 +1475,9 @@ class inf_obj  =
         helper "@imm"           INF_IMM;
         helper "@shape"         INF_SHAPE;
         helper "@error"         INF_ERROR;
+        helper "@dis_err"       INF_DE_EXC;
+        helper "@err_may"       INF_ERR_MAY;
+        helper "@err_must"      INF_ERR_MUST;
         helper "@size"          INF_SIZE;
         helper "@efa"           INF_EFA;
         helper "@dfa"           INF_DFA;
@@ -1498,6 +1507,9 @@ class inf_obj  =
     method is_imm  = self # get INF_IMM
     method is_shape  = self # get INF_SHAPE
     method is_error  = self # get INF_ERROR
+    method is_dis_err  = self # get INF_DE_EXC
+    method is_err_must  = self # get INF_ERR_MUST
+    method is_err_may  = self # get INF_ERR_MAY
     method is_size  = self # get INF_SIZE
     method is_efa  = self # get INF_EFA
     method is_dfa  = self # get INF_DFA

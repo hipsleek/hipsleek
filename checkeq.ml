@@ -1444,10 +1444,10 @@ let check_equiv_2f_x hvars (def1: CF.formula * CF.formula) (def2: CF.formula * C
   let f11,f12 = def1 in
   let f21, f22 = def2 in
   (*should be removed when 0<0 is eliminated*)
-  let f11 = CF.simplify_pure_f_old f11 in
-  let f12 = CF.simplify_pure_f_old f12 in
-  let f21 = CF.simplify_pure_f_old f21 in
-  let f22 = CF.simplify_pure_f_old f22 in
+  let f11 = x_add_1 CF.simplify_pure_f_old f11 in
+  let f12 = x_add_1 CF.simplify_pure_f_old f12 in
+  let f21 = x_add_1 CF.simplify_pure_f_old f21 in
+  let f22 = x_add_1 CF.simplify_pure_f_old f22 in
   (**END**)
   let mtl = [[]] in
   let rvars1,rvars2 = if(def) then CF.get_hp_rel_vars_formula f11, CF.get_hp_rel_vars_formula f21 else [],[] in
@@ -1768,8 +1768,8 @@ let check_equiv_def_x hvars (def1: (CF.formula * CF.formula)) (def2: (CF.formula
   let rec find_ovars spairs = match spairs with
     | [] -> []
     | (v,o)::y -> let h = match o with
-      | None -> []
-      | Some x -> [CP.string_of_spec_var x] 
+        | None -> []
+        | Some x -> [CP.string_of_spec_var x] 
       in
       h@(find_ovars y)
   in

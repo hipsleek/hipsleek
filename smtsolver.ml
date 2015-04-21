@@ -613,9 +613,9 @@ let smtsolver_path =
   if (Sys.file_exists local_oc) then ref local_oc
   else if (Sys.file_exists global_oc)  then ref global_oc
   else ref "z3"
-    (* begin *)
-    (*   print_endline_quiet ("ERROR : "^global_oc^" cannot be found!!"); ref (global_oc^"_cannot_be_found":string) *)
-    (* end *)
+(* begin *)
+(*   print_endline_quiet ("ERROR : "^global_oc^" cannot be found!!"); ref (global_oc^"_cannot_be_found":string) *)
+(* end *)
 
 (***********)
 let test_number = ref 0
@@ -1041,12 +1041,12 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
     let c0 = snd bc in
     (* check the base case first *)
     let (pr_w,pr_s) = Cpure.drop_complex_ops in
-    let bcv = smt_imply pr_w pr_s a0 c0 prover 15.0 in
+    let bcv = x_add smt_imply pr_w pr_s a0 c0 prover 15.0 in
     if bcv then (* base case is valid *)
       let a1 = fst ic in
       let c1 = snd ic in
       let (pr_w,pr_s) = CP.drop_complex_ops in
-      smt_imply pr_w pr_s a1 c1 prover 15.0 (* check induction case *)
+      x_add smt_imply pr_w pr_s a1 c1 prover 15.0 (* check induction case *)
     else 
       false
   )
@@ -1130,14 +1130,14 @@ let instantiate_array_vars_before_imply pr_w pr_s ante conseq prover timeout =
   let all_pairs = helper a_arr_vars c_arr_vars in
   let all_insts = List.map (fun (a,c) -> CP.mkEqVar a c no_pos) all_pairs in 
   (*let () = print_endline ("Ante1 : "^ !print_pure ante) in*)
-  List.exists (fun p -> smt_imply pr_w pr_s (CP.mkAnd ante p no_pos) conseq prover timeout) all_insts
+  List.exists (fun p -> x_add smt_imply pr_w pr_s (CP.mkAnd ante p no_pos) conseq prover timeout) all_insts
 
 (* For backward compatibility, use Z3 as default *
  * Probably, a better way is modify the tpdispatcher.ml to call imply with a
  * specific smt-prover argument as well *)
 let imply ante conseq timeout =
   let (pr_w,pr_s) = CP.drop_complex_ops in
-  let f  = smt_imply pr_w pr_s ante conseq Z3 timeout in
+  let f  = x_add smt_imply pr_w pr_s ante conseq Z3 timeout in
   (*let () = print_endline ("Ante3 : "^ !print_pure ante) in*)
   if (not f && !Globals.allow_array_inst) then instantiate_array_vars_before_imply pr_w pr_s ante conseq Z3 timeout
   else f
@@ -1146,7 +1146,7 @@ let imply ante conseq timeout =
   Gen.Profiling.no_3 "smt_imply" imply ante conseq timeout
 
 let imply_ops pr_weak pr_strong ante conseq timeout = 
-  let f = smt_imply pr_weak pr_strong ante conseq Z3 timeout in
+  let f = x_add smt_imply pr_weak pr_strong ante conseq Z3 timeout in
   (*let () = print_endline ("Ante2 : "^ !print_pure ante) in*)
   if (not f && !Globals.allow_array_inst) then instantiate_array_vars_before_imply pr_weak pr_strong ante conseq Z3 timeout
   else f
@@ -1250,7 +1250,7 @@ let is_sat f sat_no = Debug.no_2(* _loop *) "z3.is_sat" (!print_pure) (fun x->x)
 let simplify (f: CP.formula) : CP.formula = 
   (* let () = print_endline "locle: simplify" in *)
   try
-    (Omega.simplify f)
+    (x_add_1 Omega.simplify f)
   with
   | _ -> f
 

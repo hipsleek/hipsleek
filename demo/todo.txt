@@ -71,10 +71,102 @@ Stop Omega... 122 invocations
 0 false contexts at: ()
 
 ==========================================================================
+# ex21
+
+incorrect to have false in post-state; do we
+need to turn on a flag? it is incorrect!
+Once assert/assume fail, the method should fail.
+
+!!! **typechecker.ml#2010:Dprint:[x]
+dprint(simpl): ex21-assert-assume.ss:7: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+
+Successful States:
+[
+ Label: [(,0 ); (,1 )]
+ State:hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+Procedure foo$int SUCCESS.
+
 ==========================================================================
+# ex21a (default)
+
+{
+  if (x>0) {
+    assert x'>=5 assume true;
+    dprint;
+    assert x'>=0;
+    assert x'<0;
+  }
+}
+
+incorrect to have false in post-state; do we
+need to turn on a flag? it is incorrect!
+Once assert/assume fail, the method should fail.
+
+assert/assume:ex21a-assert-assume.ss:6: 4:  : failed
+
+
+!!! **typechecker.ml#2010:Dprint:[x]
+dprint(simpl): ex21a-assert-assume.ss:7: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+
+Successful States:
+[
+ Label: [(,0 ); (,1 )]
+ State:hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+
+Procedure foo$int SUCCESS.
+
 ==========================================================================
+# ex21d --dis-efa-exc (FIXED)
+
+How come we still have exception even though they
+are disabled. I expect FailCtx to be shown when
+residue is being printed; not exceptions.
+
+Entail 1: Fail.(must) cause: 0<x |-  x<0. LOCS:[1] (must-bug)
+Residue:
+ <1>emp&0<x&{FLOW,(4,5)=__norm#E}[]
+
+Entail 2: Fail.(may) cause: 0<x |-  x<5. LOCS:[5] (may-bug)
+Residue:
+ <1>emp&0<x&{FLOW,(4,5)=__norm#E}[]
+
+Residue:
+ <1>emp&0<x&{FLOW,(4,5)=__norm#E}[]
 ==========================================================================
+# ex21j --dis-efa-exc: DONE for pure implication
+
+Need to support @err_may and @err_must for
+local infer error as exception..
 ==========================================================================
+# e21j --efa-exc
+
+infer [@dis_err] x>0 |- x<0 .
+// failctx must_err
+print residue.
+
+Got: What does { } mean?
+I believe empty context is either
+undefined or false.
+
+Entail (1) : Fail.(must) cause: 0<x |-  x<0. LOCS:[2] (must-bug)
+Residue:
+ { }
+
+I would expect instead:
+
+MaybeErr Context: 
+                   fe_kind: MUST
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message:  0<x |-  x<0. LOCS:[2] (must-bug)
+                             fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}}
+[[empty]]false
 ==========================================================================
 ==========================================================================
 ==========================================================================

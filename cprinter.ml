@@ -206,12 +206,12 @@ let pr_list_open_sep (f_open:unit -> unit)
   | [] -> f_empty()
   | xs -> f_open(); (helper xs); f_close()
 
-let pr_list_open_sep (f_open:unit -> unit)
-    (f_close:unit -> unit) (f_sep:unit->unit) (f_empty:unit->unit)
-    (f_elem:'a -> unit) (xs:'a list) : unit =
-  Debug.no_1 "pr_list_open_sep" string_of_int (fun _ -> "?") (fun _ -> pr_list_open_sep  (f_open:unit -> unit)
-                                                                 (f_close:unit -> unit) (f_sep:unit->unit) (f_empty:unit->unit)
-                                                                 (f_elem:'a -> unit) xs) (List.length xs)
+(* let pr_list_open_sep (f_open:unit -> unit) *)
+(*     (f_close:unit -> unit) (f_sep:unit->unit) (f_empty:unit->unit) *)
+(*     (f_elem:'a -> unit) (xs:'a list) : unit = *)
+(*   Debug.no_1 "pr_list_open_sep" string_of_int (fun _ -> "?") (fun _ -> pr_list_open_sep  (f_open:unit -> unit) *)
+(*                                                                  (f_close:unit -> unit) (f_sep:unit->unit) (f_empty:unit->unit) *)
+(*                                                                  (f_elem:'a -> unit) xs) (List.length xs) *)
 
 (** @param sep = "SAB"-space-cut-after-before,"SA"-space cut-after,"SB" -space-before 
     "AB"-cut-after-before,"A"-cut-after,"B"-cut-before, "S"-space, "" no-cut, no-space*)
@@ -3764,8 +3764,8 @@ let pr_list_context (ctx:list_context) =
     pr_failure_cex cex;
     fmt_cut ()
   | SuccCtx sc -> let str = 
-    if (get_must_error_from_ctx sc)==None then "Good Context: "
-    else "Error Context: " in
+                    if (get_must_error_from_ctx sc)==None then "Good Context: "
+                    else "Error Context: " in
     fmt_cut (); fmt_string str; fmt_int (List.length sc); pr_context_list sc; fmt_cut ()
 
 let pr_context_short (ctx : context) = 
@@ -3880,8 +3880,8 @@ let pr_list_context (ctx:list_context) =
     (*     | _ -> fmt_string ""); *)
     pr_fail_type ft; pr_failure_cex cex; fmt_cut ()
   | SuccCtx sc -> let str = 
-    if (get_must_error_from_ctx sc)==None then "Good Context: "
-    else "Error Context: " in
+                    if (get_must_error_from_ctx sc)==None then "Good Context: "
+                    else "Error Context: " in
     fmt_cut (); fmt_string str; fmt_string "length= ";fmt_int (List.length sc);fmt_string " "; pr_context_list sc;
     fmt_string (string_of_numbered_list_formula_trace (list_formula_trace_of_list_context ctx));
     fmt_cut ()
