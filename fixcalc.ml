@@ -807,7 +807,7 @@ let rec get_other_branches or_fml args = match or_fml with
     let conjs = CP.list_of_conjs (MCP.pure_of_mix p) in
     List.filter (fun pure -> CP.subset args (CP.fv pure)) conjs
 
-let process_base_rec pfs rel specs = match CP.get_rel_id rel with
+let process_base_rec pfs rel specs = match x_add_1 CP.get_rel_id rel with
   | None -> report_error no_pos "process_base_rec: Expected a relation"
   | Some ivs ->
     let (rcases, bcases) = List.partition is_rec pfs in

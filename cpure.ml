@@ -10071,7 +10071,7 @@ let get_rel_args (f:formula) = match f with
 
 let is_rel_in_vars (vl:spec_var list) (f:formula) =
   (* let () = x_binfo_hp (add_str "2formula" !print_formula) f no_pos in *)
-  match (get_rel_id f) with
+  match (x_add_1 get_rel_id f) with
   | Some n ->
     if mem n vl then true else false
   | _ ->

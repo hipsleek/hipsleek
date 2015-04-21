@@ -1807,7 +1807,7 @@ let detect_lhs_rhs_contra2 ivs lhs_c rhs_mix pos =
   let pairs = List.map
       (fun pure -> let rhs_ls = CP.split_conjunctions pure in
         let rels, others = List.partition
-            (fun p -> CP.is_rel_in_vars ivs p(* || CP.has_func p*)) rhs_ls in
+            (fun p -> x_add CP.is_rel_in_vars ivs p(* || CP.has_func p*)) rhs_ls in
         (rels, others))
       (CP.list_of_disjs rhs_p)
   in
@@ -1876,7 +1876,7 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
   (*    (* x_dinfo_hp (add_str "RHS Disj List" (pr_list !CP.print_formula)) rhs_disjs pos; *)*)
   (*    let pairs = List.map (fun pure ->*)
   (*      let rhs_ls = CP.split_conjunctions pure in*)
-  (*      let rels, others = List.partition (fun p -> CP.is_rel_in_vars ivs p || CP.has_func p) rhs_ls in*)
+  (*      let rels, others = List.partition (fun p -> x_add CP.is_rel_in_vars ivs p || CP.has_func p) rhs_ls in*)
   (*      let rels = if List.exists (fun p -> CP.is_Rank_Const p) rels then [CP.conj_of_list rels no_pos] else rels in*)
   (*      rels, others)*)
   (*      (rhs_disjs_rel @ rhs_disjs_wo_rel_new) in*)
@@ -1885,7 +1885,7 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
   let pairs = List.map
       (fun pure -> let rhs_ls = CP.split_conjunctions pure in
         let rels, others = List.partition
-            (fun p -> CP.is_rel_in_vars ivs p(* || CP.has_func p*)) rhs_ls in
+            (fun p -> x_add CP.is_rel_in_vars ivs p(* || CP.has_func p*)) rhs_ls in
         (rels, others))
       (CP.list_of_disjs rhs_p)
   in

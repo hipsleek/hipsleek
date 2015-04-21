@@ -153,6 +153,14 @@ Why i' added from infer_vars to infer_vars_rel?
 
 xxx' added below..
 
+xxx' should not be a relation id!
+
+(==infer.ml#1888==)
+is_rel_in_vars@10@9
+is_rel_in_vars inp1 :[3,xxx']
+is_rel_in_vars inp2 : xxx'<0
+is_rel_in_vars@10 EXIT:false
+
 (==solver.ml#14797==)
 heap_entail_one_context_struc#2@30@29@28@27@26
 heap_entail_one_context_struc#2 inp1 : ECase case {
@@ -191,6 +199,14 @@ Good Context: length= 1 [es_formula: hfalse&false&{FLOW,(4,5)=__norm#E}[]
 
 ==================================================================
 ../hip ex1d-local-infer-loop.ss -dre ".*infer" > 1
+
+Why do we need history for sa? It sounds rather
+imperative.
+
+  es_history : h_formula list; (* for sa *)
+  {es with es_history = es.es_history@[es.es_heap];
+  {es with es_history = es.es_history@(get_hdnodes_hrel_hf es.es_heap);
+  let old_history =  if (*is_data*) is_empty_heap hf then es.es_history else es.es_history@(get_hdnodes_hrel_hf hf) in
 
 No need for "emp" in es_history
 
