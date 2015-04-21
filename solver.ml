@@ -2846,7 +2846,7 @@ and elim_unsat_es_now_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_st
   let f = es.es_formula in
   x_tinfo_hp (add_str "es_formula" Cprinter.string_of_formula) f no_pos;
   (* Slicing: Set the flag memo_group_unsat to false *)
-  let f = (* Wrapper.wrap_exception f *) CF.simplify_pure_f_old f in
+  let f = (* Wrapper.wrap_exception f *) x_add_1 CF.simplify_pure_f_old f in
   x_tinfo_hp (add_str "es_formula" Cprinter.string_of_formula) f no_pos;
   let f = reset_unsat_flag_formula f in
   x_tinfo_hp (add_str "es_formula(2)" Cprinter.string_of_formula) f no_pos;
@@ -3549,7 +3549,7 @@ and heap_entail_struc_failesc_context_x (prog : prog_decl) (is_folding : bool)
 (*   (CF.convert_must_failure_to_value ans ante_flow conseq post_check, prf) *)
 
 and heap_entail_struc_init_bug_orig (prog : prog_decl) (is_folding : bool)  (has_post: bool) (cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) =
-  let (ans,prf) = heap_entail_struc_init prog is_folding has_post cl conseq pos pid in
+  let (ans,prf) = x_add heap_entail_struc_init prog is_folding has_post cl conseq pos pid in
   (CF.convert_maymust_failure_to_value_orig ans, prf)
 
 and heap_entail_struc_init_bug_inv_x (prog : prog_decl) (is_folding : bool)  (has_post: bool) (cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) =
@@ -3586,7 +3586,7 @@ and heap_entail_struc_init_x (prog : prog_decl) (is_folding : bool)  (has_post: 
                               (* es_orig_ante   = es.es_formula; *)
                               es_orig_conseq = conseq ;}in
     let cl_new = transform_list_context ( (fun es-> Ctx(prepare_ctx (rename_es es))),(fun c->c)) cl in
-    let entail_fct = fun c-> heap_entail_struc prog is_folding has_post c conseq None None None pos pid in
+    let entail_fct = fun c-> x_add heap_entail_struc prog is_folding has_post c conseq None None None pos pid in
     let (ans,prf) = heap_entail_agressive_prunning entail_fct (prune_list_ctx prog) (fun (c,_)-> not (isFailCtx c)) cl_new in
     (ans,prf)
 
@@ -4339,12 +4339,17 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                        (*END debugging ctx11 *)
                        (match n_ctx_list with
                         | FailCtx _ -> (* let () = print_endline ("###: 1") in *)
-                          if not is_requires then (n_ctx_list, prf) else (SuccCtx [], prf)
+                          if not is_requires then (n_ctx_list, prf) else
+                            if !Globals.enable_error_as_exc then
+                              let err_ctx_list = Musterr.convert_list_context prog n_ctx_list in
+                              let () = x_ninfo_hp (add_str "err_ctx_list" (Cprinter.string_of_list_context)) err_ctx_list no_pos in
+                            ((* SuccCtx [] *) err_ctx_list, prf)
+                            else (n_ctx_list, prf)
                         (* (Musterr.convert_list_context prog n_ctx_list, prf) *)
                         | SuccCtx _ ->
                           let () = x_tinfo_hp (add_str "n_ctx_list: " (Cprinter.string_of_list_context)) n_ctx_list no_pos in
                           let res_ctx, res_prf = match formula_cont with
-                            | Some l -> heap_entail_struc prog is_folding has_post n_ctx_list l tid new_delayed_f join_id pos pid (*also propagate tid*)
+                            | Some l -> x_add heap_entail_struc prog is_folding has_post n_ctx_list l tid new_delayed_f join_id pos pid (*also propagate tid*)
                             | None -> (n_ctx_list, prf) in
                           x_tinfo_hp (add_str "after pre 0: " (Cprinter.string_of_list_context)) res_ctx no_pos;
                           let res_ctx = if !wrap_exists_implicit_explicit then push_exists_list_context (expl_inst@impl_inst) res_ctx else res_ctx in
@@ -4579,7 +4584,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                                          fc_orig_conseq = f ;
                                                          fc_current_conseq = post;
                                                          fc_failure_pts =  [];}, fe, es.es_trace)), Ctx ({es with es_formula = CF.substitute_flow_into_f !top_flow_int es.es_formula}),(mk_cex false))
-                              else if CF.is_error_flow postcond then
+                              else if x_add_1 CF.is_error_flow postcond then
                                 let es, ll = helper ctx postcond in
                                 let fl = CF.get_error_flow postcond in
                                 let err_name = (exlist # get_closest fl.CF.formula_flow_interval) in
@@ -5215,7 +5220,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
   if (Perm.allow_perm ()) then (true,false, None) else
     (* if there is no hp inf, post pone contra detection *)
     (* if (List.length estate.es_infer_vars_hp_rel == 0 ) then  (false, None) *)
-  if (Infer.no_infer_all_all estate) || not (!Globals.early_contra_flag) || is_error_flow estate.es_formula
+  if (Infer.no_infer_all_all estate) || not (!Globals.early_contra_flag) || x_add_1 is_error_flow estate.es_formula
   then
     let () = pr_hdebug (add_str "early_hp_contra_detection : " pr_id) "1" pos in
     (true,false, None)
@@ -8181,7 +8186,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
               let estate = Gen.unsome_safe !smart_unsat_estate estate in
               let () = x_tinfo_hp (add_str "xpure_lhs_h1_sym (b4 infer_pure)" Cprinter.string_of_mix_formula) xpure_lhs_h1_sym no_pos in
               let lhs_heap_xpure1 = xpure_lhs_h1_sym in
-              let res = 
+              let res =
+                (* let (split_ante1_sym, _) as xx = x_add heap_entail_build_mix_formula_check 2 exist_vars tmp3_sym rhs_p pos in *)
                 Infer.infer_pure_top_level estate unk_heaps lhs_heap_xpure1 split_ante1_sym split_ante0_sym (*sym?*) m_lhs split_conseq pos
               in
               let or_option (o1,o2) = (match o1,o2 with
@@ -8383,7 +8389,7 @@ type: bool *
       let to_add = MCP.mix_of_pure (CP.join_conjunctions (inf_p@to_add_rel_ass)) in
       let lhs_p = MCP.merge_mems lhs_new to_add true in
       let res_delta = mkBase lhs_h lhs_p lhs_vp lhs_t lhs_fl lhs_a no_pos in (* TODO: res_vp *)
-      let res_delta = CF.simplify_pure_f_old res_delta in
+      let res_delta = x_add_1 CF.simplify_pure_f_old res_delta in
       let estate = { estate with es_formula = res_delta; } in
 
       (* Termination *)
@@ -8546,9 +8552,9 @@ type: bool *
             estate with es_formula =
                           match fc_kind with
                           | CF.Failure_Must _ -> CF.substitute_flow_into_f !error_flow_int estate.es_formula
-                          | CF.Failure_May _ -> if is_sat then
-                              CF.substitute_flow_into_f !error_flow_int estate.es_formula
-                            else CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula
+                          | CF.Failure_May _ -> (* if is_sat then *)
+                            (*   CF.substitute_flow_into_f !error_flow_int estate.es_formula *)
+                            (* else *) CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula
                           (* this denotes a maybe error *)
                           | CF.Failure_Bot _ -> estate.es_formula
                           | CF.Failure_Valid -> estate.es_formula
@@ -8848,7 +8854,7 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
       x_tinfo_hp (add_str "ante-a1l" (pr_list pr)) a1l no_pos;
       let new_rhs = if !Globals.split_rhs_flag then (CP.split_conjunctions c) else [c] in
       let () = CP.store_tp_is_sat := (fun f -> TP.is_sat 77 f "store_tp_is_sat" true) in
-      (CP.imply_conj_orig (ante_m1==None) a0l a1l new_rhs (x_add TP.imply_one 29) imp_no, extra_step)
+      (x_add CP.imply_conj_orig (ante_m1==None) a0l a1l new_rhs (x_add TP.imply_one 29) imp_no, extra_step)
       (* original code	        
          	               CP.imply_conj_orig
          (CP.split_disjunctions a0) 
@@ -11498,7 +11504,7 @@ and solver_infer_lhs_contra_list_x prog estate lhs_xpure pos msg =
           let () = x_tinfo_hp (add_str "f: " (!CP.print_formula)) f pos in
           if (CP.is_cmp_form f (* && List.length diff = List.length fv *)) || TP.is_sat_raw (MCP.mix_of_pure p) then
             let () = x_tinfo_hp (add_str "p1: " (!CP.print_formula)) p pos in
-            let np = (TP.simplify (CP.arith_simplify_new p)) in
+            let np = (x_add_1 TP.simplify (CP.arith_simplify_new p)) in
             let () = x_tinfo_hp (add_str "lhs_xpure" !CP.print_formula) (MCP.pure_of_mix lhs_xpure) no_pos in
             let () = x_tinfo_hp (add_str "np" !CP.print_formula) np no_pos in
             let ps1, redun_neqNulls= List.partition (fun p->not(CP.is_neq_null_exp p)) (CP.split_conjunctions np) in
@@ -14199,7 +14205,7 @@ and prop_w_coers_x prog (estate: CF.entail_state) (coers: coercion_decl list)
           let mg = List.find (fun m -> Gen.BList.subset_eq CP.eq_spec_var [v1; v2] m.memo_group_fv) mp in
           let eset = mg.memo_group_aset in
           if (CP.EMapSV.is_equiv eset v1 v2) then true
-          else TP.imply_raw_mix (MCP.mix_of_memo [mg]) (MCP.mix_of_pure (CP.mkEqVar v1 v2 no_pos))
+          else x_add TP.imply_raw_mix (MCP.mix_of_memo [mg]) (MCP.mix_of_pure (CP.mkEqVar v1 v2 no_pos))
         with _ -> false
     in
     let m_lhs_p = MCP.memo_of_mix lhs_p in 
@@ -14225,7 +14231,7 @@ and prop_w_coers_x prog (estate: CF.entail_state) (coers: coercion_decl list)
       let diff = Gen.BList.difference_eq CP.eq_spec_var in
       let evars = diff (CF.fv rhs) inst_vars in
       let rhs_p = MCP.memo_pure_push_exists evars coer_guard in
-      let r = TP.imply_raw_mix e_lhs_p rhs_p in
+      let r = x_add TP.imply_raw_mix e_lhs_p rhs_p in
       if r then Some (inst_vars, lhs_h_rest, e_lhs_p, lhs_fl)
       else None
   (* let lhs_new = mkBase lhs_h e_lhs_p TypeTrue lhs_fl [] no_pos in                           *)

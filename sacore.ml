@@ -2991,7 +2991,7 @@ let elim_diverg_paras_x prog pdefs=
         | false,true -> r@[(sv2,sv1)]
         | _ -> r
       ) [] eqs in
-    (hp,args, CF.simplify_pure_f_old (CF.subst diver_eqs f))
+    (hp,args, x_add_1 CF.simplify_pure_f_old (CF.subst diver_eqs f))
   in
   (*******END INTERNAL*******)
   let diverg_pos = List.fold_left (fun acc pdef -> acc@(find_diverg_paras pdef)) [] pdefs in

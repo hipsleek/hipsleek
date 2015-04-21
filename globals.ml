@@ -782,6 +782,7 @@ let omega_simpl = ref true
 
 let no_simpl = ref false
 
+
 let no_float_simpl = ref true (*do not simplify fractional constraints to avoid losing precision, such as 1/3 *)
 
 let source_files = ref ([] : string list)
@@ -819,6 +820,8 @@ let fo_iheap = ref true
 
 let sae = ref false
 let sac = ref false
+(* transform a predicate to case formula *)
+let sa_pred_case = ref true
 
 let sags = ref true
 
@@ -1236,7 +1239,7 @@ let print_cil_input = ref false
 
 let disable_failure_explaining = ref false
 
-let enable_error_as_exc = ref true
+let enable_error_as_exc = ref false (* true *)
 
 let bug_detect = ref false
 

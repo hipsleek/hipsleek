@@ -831,7 +831,10 @@ let rec string_of_exp = function
      | None -> (" assume: ")
      | Some f-> (string_of_struc_formula (fst f))^"\n assume: ") ^
     (match l.exp_assert_assumed_formula with
-     | None -> ""
+     | None ->  
+       let vs = l.exp_assert_infer_vars in
+       if vs==[] then ""
+       else ("infer:"^(pr_list pr_id vs))
      | Some f -> (string_of_formula f))^"\n"
   | Dprint l                       -> "dprint" 
   | Debug ({exp_debug_flag = f})   -> "debug " ^ (if f then "on" else "off")

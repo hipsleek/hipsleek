@@ -1081,7 +1081,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
           let () = x_tinfo_hp (add_str "lhs_heap_xpure1" !CP.print_formula) lhs_heap_xpure1_pure pos in
           let () = x_tinfo_hp (add_str "new_p 1" !CP.print_formula) new_p pos in
           let new_p_better = x_add_1 TP.simplify_raw (CP.mkExists ex_vars
-                                                (CP.mkAnd lhs_heap_xpure1_pure new_p pos) None pos) in
+                                                        (CP.mkAnd lhs_heap_xpure1_pure new_p pos) None pos) in
           let () = x_tinfo_hp (add_str "new_p_better" !CP.print_formula) new_p_better pos in
           let new_p = new_p_better in
           let _ = x_tinfo_hp (add_str "new_p 1a" !CP.print_formula) new_p pos in

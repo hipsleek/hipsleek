@@ -220,8 +220,13 @@ let convert_list_context prog ctxs=
     match ft with
     | Basic_Reason (fc, fe, _) -> begin
         let es = match fe.fe_kind with
-          | Failure_Must msg -> {fc.fc_current_lhs with es_must_error = Some (msg, ft, cex)}
-          | Failure_May msg -> {fc.fc_current_lhs with es_may_error = Some (msg, ft, cex)}
+          | Failure_Must msg -> {fc.fc_current_lhs with
+                es_must_error = Some (msg, ft, cex);
+                es_final_error = Some (msg, Failure_Must msg)
+            }
+          | Failure_May msg -> {fc.fc_current_lhs with es_may_error = Some (msg, ft, cex);
+                es_final_error = Some (msg, Failure_May msg)
+            }
           | _ -> fc.fc_current_lhs
         in
         Ctx es

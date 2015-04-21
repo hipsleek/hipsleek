@@ -313,6 +313,7 @@ and sharp_val =
 
 and exp_assert = {
   exp_assert_asserted_formula : F.struc_formula option;
+  exp_assert_infer_vars : P.spec_var list;
   exp_assert_assumed_formula : F.formula option;
   exp_assert_path_id : formula_label;
   exp_assert_type : assert_type;

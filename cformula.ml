@@ -6760,23 +6760,38 @@ let do_unfold_view_hf cprog pr_views hf0 =
 (*     | EInfer b -> EInfer {b with formula_inf_continuation = recf b.formula_inf_continuation} *)
 (*     | EList l -> EList (Gen.map_l_snd recf l) *)
 
-let fresh_data_v f=
-  let quans, f0 = split_quantifiers f in
-  let hds, hvs, hrs = get_hp_rel_formula f0 in
-  let v_sps1 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_data_arguments)) [] hds in
-  let v_sps2 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_view_arguments)) v_sps1 hvs in
-  let fr_v_sps2 = CP.diff_svl (CP.remove_dups_svl v_sps2) quans in
-  fr_v_sps2
+let fresh_data_v f0=
+  let rec helper f= match f with
+    | Base _
+    | Exists _ ->
+      let quans, f0 = split_quantifiers f in
+      let hds, hvs, hrs = get_hp_rel_formula f0 in
+      let v_sps1 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_data_arguments)) [] hds in
+      let v_sps2 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_view_arguments)) v_sps1 hvs in
+      let fr_v_sps2 = CP.diff_svl (CP.remove_dups_svl v_sps2) quans in
+      fr_v_sps2
+    | Or orf ->
+      CP.remove_dups_svl ((helper orf.formula_or_f1)@(helper orf.formula_or_f2))
+  in
+  helper f0
 
 let fresh_data_v_no_change f= []
 
 let rec struc_formula_trans_heap_node pre_quans formula_fct f=
   let recf pre_quans1 = struc_formula_trans_heap_node pre_quans1 formula_fct in
+  let process_post_disj f0=
+    let cur_quans, f1_bare = split_quantifiers f0 in
+    let quans0 = CP.diff_svl (cur_quans@(fresh_data_v f0)) pre_quans in
+    let quans = List.filter (fun (CP.SpecVar (_,id,_)) -> not(string_compare id res_name)) quans0 in
+    add_quantifiers quans f1_bare
+  in
   match f with
   | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd (recf pre_quans) b.formula_case_branches}
   | EBase b ->
     let f1= formula_fct b.formula_struc_base in
+    let () =  Debug.ninfo_hprint (add_str " b.formula_struc_base pre" (!print_formula)) b.formula_struc_base no_pos in
     let () =  Debug.ninfo_hprint (add_str "f1 pre" (!print_formula)) f1 no_pos in
+    (* Loc: to split into case spec *)
     let new_pre_quans = fresh_data_v  b.formula_struc_base in
     let pre_cur_quans = CP.remove_dups_svl (b.formula_struc_implicit_inst@(new_pre_quans)) in
     let pre_quans1 = CP.remove_dups_svl (pre_quans@pre_cur_quans) in
@@ -6786,15 +6801,26 @@ let rec struc_formula_trans_heap_node pre_quans formula_fct f=
            formula_struc_implicit_inst =  pre_cur_quans ;
            formula_struc_base=(* formula_trans_heap_node fct *)f1;
           }
-  | EAssume ea->
-    let f1 = formula_fct ea.formula_assume_simpl in
-    let () =  Debug.ninfo_hprint (add_str "f1 post" (!print_formula)) f1 no_pos in
-    let () =  Debug.ninfo_hprint (add_str "pre_quans:post" (!CP.print_svl)) pre_quans no_pos in
-    let cur_quans, f1_bare = split_quantifiers f1 in
-    let quans = CP.diff_svl (cur_quans@(fresh_data_v f1)) pre_quans in
-    EAssume {ea with  formula_assume_simpl = (* formula_trans_heap_node fct *) (* formula_fct ea.formula_assume_simpl *) add_quantifiers quans f1_bare;
-                      formula_assume_struc = (recf pre_quans) ea.formula_assume_struc}
-  (* (formula_trans_heap_node fct f, fl, et) *)
+  | EAssume ea-> begin
+      let f1 = formula_fct ea.formula_assume_simpl in
+      let () =  Debug.ninfo_hprint (add_str "f1 post" (!print_formula)) f1 no_pos in
+      let () =  Debug.ninfo_hprint (add_str "pre_quans:post" (!CP.print_svl)) pre_quans no_pos in
+      let fs = list_of_disjs f1 in
+      let ass_sf =  (recf pre_quans) ea.formula_assume_struc in
+      let sfs1 = List.map (fun f ->
+          EAssume {ea with  formula_assume_simpl = process_post_disj f;
+                            formula_assume_struc =ass_sf  }
+        ) fs in
+      match sfs1 with
+      | [] -> report_error no_pos "Cformula. struc_formula_trans_heap_node"
+      | [sf] -> sf
+      | _ -> EList (List.map (fun sf -> (empty_spec_label_def, sf)) sfs1)
+      (* let cur_quans, f1_bare = split_quantifiers f1 in *)
+      (* let quans = CP.diff_svl (cur_quans@(fresh_data_v f1)) pre_quans in *)
+      (* EAssume {ea with  formula_assume_simpl = (\* formula_trans_heap_node fct *\) (\* formula_fct ea.formula_assume_simpl *\) add_quantifiers quans f1_bare; *)
+      (* formula_assume_struc = (recf pre_quans) ea.formula_assume_struc} *)
+      (* (formula_trans_heap_node fct f, fl, et) *)
+    end
   | EInfer b -> EInfer {b with formula_inf_continuation = (recf pre_quans) b.formula_inf_continuation}
   | EList l -> EList (Gen.map_l_snd (recf pre_quans) l)
 
@@ -8526,6 +8552,12 @@ and mkAnd_fb_hf fb hf pos=
               } in
   {fb with formula_base_heap = new_hf}
 
+let rec combine_length_leq ls1 ls2 res=
+  match ls1,ls2 with
+  | [],_ -> res
+  | sv1::tl1,sv2::tl2 -> combine_length_leq tl1 tl2 (res@[sv1,sv2])
+  | _ -> report_error no_pos "sau.combine_length_leq"
+
 (*List.combine but ls1 >= ls2*)
 let rec combine_length_geq_x ls1 ls2 res=
   match ls1,ls2 with
@@ -10027,7 +10059,7 @@ let get_top_flow f = flow_formula_of_formula f
 
 let combine_ctx_list_err ctxs=
   let extract_failure_kind es=
-    if is_error_flow es.es_formula then
+    if x_add_1 is_error_flow es.es_formula then
       let msg = !print_formula es.es_formula in
       Failure_Must (msg ), msg
     else if is_mayerror_flow es.es_formula  then
@@ -10062,7 +10094,12 @@ let get_must_error_from_ctx cs =
   match cs with
   | [] -> (Some ("empty residual state", mk_cex false))
   | [Ctx es] -> (match es.es_must_error with
-      | None -> None
+      | None ->  begin if !Globals.enable_error_as_exc then
+          match es.es_final_error with
+            | Some (s1, fk) -> Some (s1, mk_cex true)
+            | None -> None
+        else None
+        end
       | Some (msg,_,cex) -> Some (msg,cex))
   | cl -> combine_ctx_list_err cl
 
@@ -10082,7 +10119,7 @@ let get_may_error_from_ctx cs =
 
 let rec is_ctx_error ctx=
   match ctx with
-  | Ctx es -> not (es.es_final_error = None)
+  | Ctx es -> not (es.es_final_error = None) || x_add_1 is_error_flow es.es_formula
   | OCtx (c1, c2) -> is_ctx_error c1 || is_ctx_error c2
 
 let isFailCtx_gen cl =
@@ -10477,22 +10514,22 @@ let convert_may_failure_4_fail_type_new  (s:string) (ft:fail_type) cex : context
 
 (* TRUNG WHY: purpose when converting a list_context from FailCtx type to SuccCtx type? *)
 let convert_maymust_failure_to_value_orig (l:list_context) : list_context =
-  match l with 
-  | FailCtx (ft, c, cex) -> (* Loc: to check cex here*)
-    (* (match (get_must_es_msg_ft ft) with *)
-    (*   | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ]  *)
-    (*   | _ ->  l) *)
-    begin
-      match (convert_must_failure_4_fail_type_new "" ft cex) with
-      | Some ctx -> SuccCtx [ctx]
-      | None -> begin
-          match (convert_may_failure_4_fail_type_new "" ft cex) with
-          | Some ctx -> SuccCtx [ctx]
-          | None -> l
-        end
-    end
-  | SuccCtx _ ->
-    l
+  if not !Globals.enable_error_as_exc then l else
+    match l with 
+      | FailCtx (ft, c, cex) -> (* Loc: to check cex here*)
+            (* (match (get_must_es_msg_ft ft) with *)
+            (*   | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ]  *)
+            (*   | _ ->  l) *)
+            begin
+              match (convert_must_failure_4_fail_type_new "" ft cex) with
+                | Some ctx -> SuccCtx [ctx]
+                | None -> begin
+                    match (convert_may_failure_4_fail_type_new "" ft cex) with
+                      | Some ctx -> SuccCtx [ctx]
+                      | None -> l
+                  end
+            end
+      | SuccCtx _ -> l
 
 let convert_maymust_failure_to_value_orig (l:list_context) : list_context =
   let pr = !print_list_context_short in
@@ -11438,7 +11475,7 @@ and or_list_context_x_new c1 c2 =
     else
       let t = mk_not_a_failure (get_first_es t1) in
       FailCtx (Or_Reason (t,t2),c2, cex2)
-  | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
+  | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (x_add or_context_list t1 t2)
 
 and or_list_context_x c1 c2 = match c1,c2 with
   | FailCtx (t1,c1,cex1) ,FailCtx (t2, c2,cex2) -> FailCtx (Or_Reason (t1,t2), OCtx(c1,c2),cex_lor cex1 cex2)
@@ -11450,7 +11487,7 @@ and or_list_context_x c1 c2 = match c1,c2 with
     let t = mk_not_a_failure (get_first_es t1)
     in
     FailCtx (Or_Reason (t,t2), c2, cex2)
-  | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
+  | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (x_add or_context_list t1 t2)
 
 and and_list_context c1 c2= match c1,c2 with
   | FailCtx (t1, c1, cex1) ,FailCtx (t2, c2, cex2) -> FailCtx (And_Reason (t1,t2),OCtx(c1, c2) ,cex_land cex1 cex2)
@@ -11458,7 +11495,7 @@ and and_list_context c1 c2= match c1,c2 with
     c1
   | SuccCtx t1 ,FailCtx _ ->
     c2
-  | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
+  | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (x_add or_context_list t1 t2)
 
 and or_list_context c1 c2 = 
   let pr = !print_list_context_short in
@@ -11511,19 +11548,30 @@ let isSuccessBranchFail (_,ft) =
   | Failure_Valid -> true
   | Failure_Bot _ -> true
 
+let isSuccBranches succ_brs=
+  (* all succ branch should not subsume must, may flows *)
+  succ_brs != [] && List.for_all (fun (_, _, oft) ->
+      oft = None
+    ) succ_brs
+
 let isSuccessPartialCtx_new (fs,succ_brs) =
   let is_succ = List.for_all isSuccessBranchFail fs in
   if not !Globals.enable_error_as_exc || not is_succ then is_succ else
     (* all succ branch should not subsume must, may flows *)
-    succ_brs != [] && List.for_all (fun (_, _, oft) ->
-        oft = None
-      ) succ_brs
+    (* succ_brs != [] && List.for_all (fun (_, _, oft) -> *)
+    (*     oft = None *)
+    (* ) succ_brs *)
+    isSuccBranches succ_brs
 
 let isSuccessFailescCtx (fs,_,_) =
   if (Gen.is_empty fs) then true else false
 
-let isSuccessFailescCtx_new (fs,_,_) =
-  List.for_all isSuccessBranchFail fs
+let isSuccessFailescCtx_new (fs,esc,succ_brs) =
+  let is_succ = List.for_all isSuccessBranchFail fs in
+  if not !Globals.enable_error_as_exc || not is_succ then is_succ else
+    isSuccBranches succ_brs (* && List.for_all (fun (_,brs) -> *)
+(*     isSuccBranches brs *)
+(* ) esc *)
 
 (* [] denotes failure *)
 let isSuccessListPartialCtx cl =
@@ -11969,7 +12017,8 @@ and normalize_es_x (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_s
 
 and normalize_es_combine (f : formula) (result_is_sat:bool)(pos : loc) (es : entail_state): context =
   (* let () = print_string ("\nCformula.ml: normalize_es_combine") in *)
-  Ctx {es with es_formula = normalize_combine es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat;} 
+  Ctx {es with es_formula = normalize_combine es.es_formula f pos;
+      es_unsat_flag = es.es_unsat_flag&&result_is_sat;} 
 
 and combine_and (f1:formula) (f2:MCP.mix_formula) :formula*bool = match f1 with
   | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = pos}) ->
@@ -12021,7 +12070,14 @@ and normalize_clash_es_x (f : formula) (pos : loc) (result_is_sat:bool)(es:entai
     let new_c2 = normalize_clash_es phi2 pos result_is_sat es in
     let res = (mkOCtx new_c1 new_c2 pos) in
     res
-  | _ -> Ctx {es with es_formula = normalize_only_clash_rename es.es_formula f pos; es_unsat_flag =es.es_unsat_flag&&result_is_sat}
+  | _ ->
+        let n_es_formula =
+          if !Globals.enable_error_as_exc && x_add_1 is_error_flow es.es_formula then
+            es.es_formula
+          else
+            normalize_only_clash_rename es.es_formula f pos
+        in
+        Ctx {es with es_formula = n_es_formula (* normalize_only_clash_rename es.es_formula f pos *); es_unsat_flag =es.es_unsat_flag&&result_is_sat}
 
 (* 17.05.2008 -- *)
 
@@ -16505,12 +16561,20 @@ and transform_spec (sp:struc_formula) pairs = match sp with
                                (match b.formula_struc_continuation with
                                 | None -> None
                                 | Some f -> Some (transform_spec f pairs))}
-  | EAssume b -> (match pairs with
+  | EAssume b -> begin match pairs with
       | [([],p2)] ->
         EAssume{b with
                 formula_assume_simpl = p2;
                 formula_assume_struc = mkEBase p2 None no_pos;}
-      | _ -> report_error no_pos "Error in transforming spec")
+      | ([],p2)::_ ->(*  EList (List.map (fun (_, p2) -> (empty_spec_label_def, EAssume{b with *)
+        (*         formula_assume_simpl = p2; *)
+        (*         formula_assume_struc = mkEBase p2 None no_pos;}) *)
+        (* ) pairs) *)
+        EAssume{b with
+                formula_assume_simpl = p2;
+                formula_assume_struc = mkEBase p2 None no_pos;}
+      | _ -> report_error no_pos "Error in transforming spec"
+    end
   | EInfer b -> EInfer {b with formula_inf_continuation = transform_spec b.formula_inf_continuation pairs}
   | EList b -> EList (List.map (fun (l,e) ->(l,transform_spec e pairs)) b)
 
@@ -18394,3 +18458,14 @@ let write_vperm_set f vp =
     | Exists b -> Exists { b with formula_exists_vperm = vp;}
     | _ -> failwith "write_vperm_set:not expecting OR formula"
   in helper f
+
+
+let exist_reachable_states_x (rs:list_partial_context)=
+  List.for_all (fun (_,brs) -> not (isFalseBranchCtxL brs)
+               ) rs
+
+
+let exist_reachable_states (rs:list_partial_context)=
+  let pr1 = !print_list_partial_context in
+  Debug.no_1 "exist_reachable_states" pr1 string_of_bool
+    (fun _ -> exist_reachable_states_x rs) rs

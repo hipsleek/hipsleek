@@ -418,7 +418,7 @@ let process_rel_def rdef =
         let n_crdef = {n_crdef with 
             Cast.view_formula =  Solver.prune_pred_struc cprog true n_crdef.Cast.view_formula ;
             Cast.view_un_struc_formula = List.map (fun (c1,c2) -> (Solver.prune_preds cprog true c1,c2)) n_crdef.Cast.view_un_struc_formula;}in
-        		let _ = if !Globals.print_core || !Globals.print_core_all then print_string (Cprinter.string_of_view_decl n_crdef ^"\n") else () in
+        		let  ()= if !Globals.print_core || !Globals.print_core_all then print_string (Cprinter.string_of_view_decl n_crdef ^"\n") else () in
         		cprog.Cast.prog_view_decls <- (n_crdef :: old_vdec) *)
       iprog.I.prog_rel_decls <- ( rdef :: iprog.I.prog_rel_decls);
       let crdef = Astsimp.trans_rel iprog rdef in !cprog.Cast.prog_rel_decls <- (crdef :: !cprog.Cast.prog_rel_decls);
@@ -522,24 +522,27 @@ let print_residue residue =
         (*print all posible outcomes and their traces with numbering*)
       end
     | Some (ls_ctx, print, local_dfa) -> begin
-        let _ = print_string "Residue:\n" in
+        let () = print_string "Residue:\n" in
         (* let is_empty_states = match ls_ctx with *)
         (*   | CF.SuccCtx ls -> List.length ls = 0 *)
         (*   | _ -> false *)
         (* in *)
         if not local_dfa (*!Globals.disable_failure_explaining *) then
-          (* let _ = Debug.info_pprint "a" no_pos in *)
-          (* let _ = print_endline (Cprinter.string_of_list_context ls_ctx) in *)
-          print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
-                           (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
+          (* let () = Debug.info_pprint "a" no_pos in *)
+          let () = if not !Globals.enable_error_as_exc then
+            print_endline (Cprinter.string_of_list_context ls_ctx)
+          else
+            print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
+                (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
+          in ()
         else
-          (* let _ = Debug.info_pprint "b" no_pos in *)
-        if print then
-          (* let _ = print_string ((pr_list pr_none (CF.list_formula_trace_of_list_context ls_ctx))^ *)
+          (* let () = Debug.info_pprint "b" no_pos in *)
+          if print then
+          (* let () = print_string ((pr_list pr_none (CF.list_formula_trace_of_list_context ls_ctx))^ *)
           (*   (Cprinter.string_of_list_context ls_ctx)^"\n") in () *)
           print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
                            (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
-        else let _ =  print_string "{ }\n" in ()
+          else let () =  print_string "{ }\n" in ()
       end
 
 let process_list_lemma ldef_lst  =
@@ -989,10 +992,10 @@ let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:T
     let h = List.map (fun c-> (c,Unprimed)) fv_idents in
     let wf = Astsimp.case_normalize_formula_not_rename iprog h mf in
     let n_tl = Typeinfer.gather_type_info_formula iprog wf tlist false in
-    (*let _ = print_endline ("WF: " ^ Iprinter.string_of_formula wf ) in *)
+    (*let () = print_endline ("WF: " ^ Iprinter.string_of_formula wf ) in *)
     let (n_tl,r) = Astsimp.trans_formula iprog quant fv_idents false wf n_tl false in
-    (* let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
-    (* let _ = print_string (" after sf: " ^(Cprinter.string_of_formula r)^"\n") in *)
+    (* let () = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
+    (* let () = print_string (" after sf: " ^(Cprinter.string_of_formula r)^"\n") in *)
     (n_tl,r)
   | MetaVar mvar -> begin
       try 
@@ -1994,15 +1997,23 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
     begin
       let s =
         if not !Globals.disable_failure_explaining then
-          let final_error_opt = CF.get_final_error residue in
-          match final_error_opt with
-          | Some (s, fk) -> begin
-              match fk with
-              | CF.Failure_May _ -> "(may) cause:"^s
-              | CF.Failure_Must _ -> "(must) cause:"^s
-              | _ -> "INCONSISTENCY : expected failure but success instead"
-            end
-          | None -> "INCONSISTENCY : expected failure but success instead"
+          if !Globals.enable_error_as_exc then
+            let final_error_opt = CF.get_final_error residue in
+            match final_error_opt with
+              | Some (s, fk) -> begin
+                  match fk with
+                    | CF.Failure_May _ -> "(may) cause:"^s
+                    | CF.Failure_Must _ -> "(must) cause:"^s
+                    | _ -> "INCONSISTENCY : expected failure but success instead"
+                end
+              | None -> "INCONSISTENCY : expected failure but success instead"
+          else
+            match CF.get_must_failure residue with
+                 | Some (s, _) -> "(must) cause:"^s
+                 | _ -> (match CF.get_may_failure residue with
+                     | Some (s, _) -> "(may) cause:"^s
+                     | _ -> "INCONSISTENCY : expected failure but success instead"
+                   )
           (* match CF.get_must_failure residue with *)
           (*   | Some (s, cex) -> *)
           (*         (\* let reg1 = Str.regexp "base case unfold failed" in *\) *)
