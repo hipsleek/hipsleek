@@ -1,15 +1,16 @@
-/*
-infer [] x>0 |- x<0 .
+
+infer [@dis_err] x>0 |- x<0 .
 // failctx must_err
 print residue.
 
-*/
+
 
 infer [@err_must] x>0 |- x<0 .
 // x>0 & flow __ERROR
 print residue.
 
-/*
+
+
 infer [@err_may] x>0 |- x<0 .
 // x>0 & flow __MayERROR
 print residue.
@@ -17,7 +18,7 @@ print residue.
 infer [@err_must] x>0 |- x<3 .
 // x>0 & flow __MayERROR
 print residue.
-*/
+
 
 /*
 # ex21j --dis-efa-exc

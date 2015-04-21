@@ -1471,6 +1471,8 @@ class inf_obj  =
         helper "@shape"         INF_SHAPE;
         helper "@error"         INF_ERROR;
         helper "@dis_err"       INF_DE_EXC;
+        helper "@err_may"       INF_ERR_MAY;
+        helper "@err_must"      INF_ERR_MUST;
         helper "@size"          INF_SIZE;
         helper "@efa"           INF_EFA;
         helper "@dfa"           INF_DFA;

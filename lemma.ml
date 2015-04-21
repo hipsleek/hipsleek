@@ -649,8 +649,8 @@ let process_list_lemma_helper_x ldef_lst iprog cprog lem_infer_fnct =
   (* let () = if enable_printing then Debug.ninfo_pprint "=============== Processing lemmas ===============" no_pos else () in *)
   let ctx = match !CF.residues with
     | None            ->  CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos]
-    | Some (CF.SuccCtx ctx, _,_) -> CF.SuccCtx ctx 
-    | Some (CF.FailCtx ctx, _,_) -> CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos] in 
+    | Some (CF.SuccCtx ctx, _,_,_) -> CF.SuccCtx ctx 
+    | Some (CF.FailCtx ctx, _,_,_) -> CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos] in 
   (* andreeac: to check if it should skip lemma proving *)
   let res = 
     match ldef_lst.Iast.coercion_list_kind with
@@ -670,7 +670,7 @@ let process_list_lemma_helper_x ldef_lst iprog cprog lem_infer_fnct =
   (* let () = if enable_printing then Debug.ninfo_pprint "============ end - Processing lemmas ============\n" no_pos else () in *)
   match res with
   | None | Some [] -> CF.clear_residue ()
-  | Some(c::_) -> CF.set_residue true c !Globals.disable_failure_explaining
+  | Some(c::_) -> CF.set_residue true c !Globals.disable_failure_explaining false
 
 let process_list_lemma_helper ldef_lst iprog cprog lem_infer_fnct  =
   Debug.no_1 "process_list_lemma" !I.print_coerc_decl_list pr_none (fun _ -> process_list_lemma_helper_x ldef_lst iprog cprog lem_infer_fnct )  ldef_lst

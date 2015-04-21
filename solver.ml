@@ -4340,9 +4340,9 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                        (match n_ctx_list with
                         | FailCtx _ -> (* let () = print_endline ("###: 1") in *)
                           if not is_requires then (n_ctx_list, prf) else
-                            if !Globals.enable_error_as_exc then
+                            if !Globals.enable_error_as_exc || is_en_error_exc_ctx n_ctx then
                               let err_ctx_list = Musterr.convert_list_context prog n_ctx_list in
-                              let () = x_ninfo_hp (add_str "err_ctx_list" (Cprinter.string_of_list_context)) err_ctx_list no_pos in
+                              let () = x_tinfo_hp (add_str "err_ctx_list" (Cprinter.string_of_list_context)) err_ctx_list no_pos in
                             ((* SuccCtx [] *) err_ctx_list, prf)
                             else (n_ctx_list, prf)
                         (* (Musterr.convert_list_context prog n_ctx_list, prf) *)
@@ -8542,7 +8542,7 @@ type: bool *
       let is_sat = CF.is_sat_fail cex in
       if not !disable_failure_explaining then
         let new_estate = if !Globals.enable_error_as_exc ||
-          estate.es_infer_obj # is_err_must || estate.es_infer_obj # is_err_may  then {
+          CF.is_en_error_exc estate then {
             estate with es_formula =
                           match fc_kind with
                           | CF.Failure_Must _ -> if estate.es_infer_obj # is_err_may then

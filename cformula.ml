@@ -9372,6 +9372,14 @@ let print_failesc_context = ref(fun (c:failesc_context) -> "printer not initiali
 let print_failure_kind_full = ref(fun (c:failure_kind) -> "printer not initialized")
 let print_fail_type = ref(fun (c:fail_type) -> "printer not initialized")
 
+
+let is_en_error_exc es=
+    es.es_infer_obj # is_err_must || es.es_infer_obj # is_err_may
+
+let rec is_en_error_exc_ctx c=
+  match c with
+    | Ctx es -> is_en_error_exc es
+    | OCtx (c1,c2) -> is_en_error_exc_ctx c1 || is_en_error_exc_ctx c2
 (****************************************************)
 (********************CEX**********************)
 (****************************************************)
@@ -10094,7 +10102,7 @@ let get_must_error_from_ctx cs =
   match cs with
   | [] -> (Some ("empty residual state", mk_cex false))
   | [Ctx es] -> (match es.es_must_error with
-      | None ->  begin if !Globals.enable_error_as_exc then
+      | None ->  begin if !Globals.enable_error_as_exc || es.es_infer_obj # is_err_must || es.es_infer_obj # is_err_may then
           match es.es_final_error with
             | Some (s1, fk) -> Some (s1, mk_cex true)
             | None -> None
@@ -10514,9 +10522,9 @@ let convert_may_failure_4_fail_type_new  (s:string) (ft:fail_type) cex : context
 
 (* TRUNG WHY: purpose when converting a list_context from FailCtx type to SuccCtx type? *)
 let convert_maymust_failure_to_value_orig (l:list_context) : list_context =
-  if not !Globals.enable_error_as_exc then l else
-    match l with 
-      | FailCtx (ft, c, cex) -> (* Loc: to check cex here*)
+  match l with 
+    | FailCtx (ft, c, cex) -> (* Loc: to check cex here*)
+          if not !Globals.enable_error_as_exc && not (is_en_error_exc_ctx c) then l else
             (* (match (get_must_es_msg_ft ft) with *)
             (*   | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ]  *)
             (*   | _ ->  l) *)
@@ -10529,7 +10537,7 @@ let convert_maymust_failure_to_value_orig (l:list_context) : list_context =
                       | None -> l
                   end
             end
-      | SuccCtx _ -> l
+    | SuccCtx _ -> l
 
 let convert_maymust_failure_to_value_orig (l:list_context) : list_context =
   let pr = !print_list_context_short in
@@ -12072,7 +12080,7 @@ and normalize_clash_es_x (f : formula) (pos : loc) (result_is_sat:bool)(es:entai
     res
   | _ ->
         let n_es_formula =
-          if !Globals.enable_error_as_exc && x_add_1 is_error_flow es.es_formula then
+          if (* !Globals.enable_error_as_exc && *) x_add_1 is_error_flow es.es_formula then
             es.es_formula
           else
             normalize_only_clash_rename es.es_formula f pos
@@ -17739,18 +17747,18 @@ let is_no_heap_struc_formula (e : struc_formula) : bool =
   let pr = !print_struc_formula in
   Debug.no_1 "is_no_heap_struc_formula" pr string_of_bool is_no_heap_struc_formula e
 
-let residues =  ref (None : (list_context * bool * bool ) option)   
-(* parameter 'bool' is used for printing *)
+let residues =  ref (None : (list_context * bool * bool * bool) option)   
+(* the second parameter 'bool' is used for printing *)
 
-let set_residue b lc ldfa =
-  residues := Some (lc,b,ldfa)
+let set_residue b lc ldfa lerr_exc =
+  residues := Some (lc,b,ldfa,lerr_exc)
 
 let clear_residue () =
   residues := None
 
 let get_res_residue () =
   match !residues with
-  | Some (_, res,_) -> res
+  | Some (_, res,_,_) -> res
   | None -> false
 
 (*eliminates a fv that is otherwise to be existentially quantified, it does so only if the substitution is not
