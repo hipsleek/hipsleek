@@ -1437,7 +1437,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     | None -> 
                       let () = x_binfo_pp ("WN : place to act on infer_assume") no_pos in
                       let () = if ivars!=[] then x_binfo_hp (add_str "infer_assume" Cprinter.string_of_spec_var_list) ivars pos in
-                      ts
+                      if ivars==[] then ts
+                      else (* failwith "to impl" *)
+                          List.map (fun (bf,es,bl) ->
+                            (bf,es,List.map (fun (pt,c,fopt) -> 
+                                 (pt,Infer.add_infer_vars_ctx ivars c,fopt)) bl)) ts 
                     | Some p ->
                       (* WN_2_Loc: add p to ts; add new_infer from new_ctx into ts *)
                       CF.add_pure_and_infer_from_asserted p new_ctx ts

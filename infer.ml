@@ -146,11 +146,12 @@ let restore_infer_vars_ctx iv ivr ctx =
   in helper ctx
 
 let rec add_infer_vars_ctx iv ctx = 
-  match ctx with
-  | Ctx estate -> 
-    if iv==[] then ctx
-    else Ctx {estate with es_infer_vars = iv @ estate.es_infer_vars;}
-  | OCtx (ctx1, ctx2) -> OCtx (add_infer_vars_ctx iv ctx1, add_infer_vars_ctx iv ctx2)
+  if iv==[] then ctx
+  else
+    match ctx with
+    | Ctx estate -> 
+      Ctx {estate with es_infer_vars = iv @ estate.es_infer_vars;}
+    | OCtx (ctx1, ctx2) -> OCtx (add_infer_vars_ctx iv ctx1, add_infer_vars_ctx iv ctx2)
 
 let add_impl_expl_vars_ctx iv ev ctx =
   let rec helper ctx = 
