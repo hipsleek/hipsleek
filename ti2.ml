@@ -15,7 +15,7 @@ let diff = Gen.BList.difference_eq CP.eq_spec_var
 let subset = Gen.BList.subset_eq CP.eq_spec_var
 
 let om_simplify f = (* Omega.simplify *) (* Tpdispatcher.simplify_raw *)
-  if CP.is_linear_formula f then Omega.simplify f
+  if CP.is_linear_formula f then x_add_1 Omega.simplify f
   else Redlog.simplify f
 
 let eq_str s1 s2 = String.compare s1 s2 = 0

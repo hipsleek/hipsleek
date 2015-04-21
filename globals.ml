@@ -1239,7 +1239,7 @@ let print_cil_input = ref false
 
 let disable_failure_explaining = ref false
 
-let enable_error_as_exc = ref true
+let enable_error_as_exc = ref false (* true *)
 
 let bug_detect = ref false
 

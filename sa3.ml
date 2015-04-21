@@ -720,7 +720,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
       let n_cond = CP.remove_redundant cond in
       let nf = (Cformula.mkAnd_pure rhs (MCP.mix_of_pure n_cond) (Cformula.pos_of_formula rhs)) in
       if not b_acc_unsat && Sautil.is_unsat nf then [] else
-        [(hp,args,unk_svl, n_cond, lhs, og, Some (Cformula.simplify_pure_f_old nf))]
+        [(hp,args,unk_svl, n_cond, lhs, og, Some (x_add_1 Cformula.simplify_pure_f_old nf))]
     | None -> report_error no_pos "sa2.combine_pdefs_pre: should not None 1"
   in
   let mkAnd_w_opt hp args (* ss *) of1 of2=

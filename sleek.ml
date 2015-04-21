@@ -371,12 +371,12 @@ let main () =
                   (* Log.last_proof_command # dump; *)
                   Buffer.clear buffer;
                   if !inter then prompt := "SLEEK> "
-                with
-                | SLEEK_Exception
-                | Not_found -> dummy_exception();
-                  Buffer.add_string buffer input;
-                  Buffer.add_char buffer '\n';
-                  if !inter then prompt := "- "
+            with
+            | SLEEK_Exception
+            | Not_found -> dummy_exception();
+              Buffer.add_string buffer input;
+              Buffer.add_char buffer '\n';
+              if !inter then prompt := "- "
         done
       end
     else
@@ -402,6 +402,7 @@ let main () =
 (*   Debug.loop_1_no "main" (fun () -> "?") (fun () -> "?") main () *)
 
 let sleek_epilogue () =
+  if !Debug.dump_calls then Debug.dump_debug_calls ();
   (* ------------------ lemma dumping ------------------ *)
   if (!Globals.dump_lemmas) then
     Lem_store.all_lemma # dump
