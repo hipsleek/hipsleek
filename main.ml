@@ -368,7 +368,7 @@ let reverify_with_hp_rel old_cprog iprog =
   ignore (Typechecker.check_prog iprog cprog)
 
 let hip_epilogue () = 
-  if !Debug.dump_calls then Debug.debug_calls # dump;
+  if !Debug.dump_calls then Debug.dump_debug_calls ();
   (* ------------------ lemma dumping ------------------ *)
   if (!Globals.dump_lemmas) then 
     Lem_store.all_lemma # dump

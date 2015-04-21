@@ -2133,16 +2133,18 @@ let new_translate_out_array_in_one_formula_split
   split_and_combine new_translate_out_array_in_one_formula_full (x_add_1 can_be_simplify) (process_quantifier (translate_array_relation f))
 ;;
 
-let new_translate_out_array_in_one_formula_split
-    (f:formula):formula =
-  if !Globals.array_translate
-  then new_translate_out_array_in_one_formula_split f
-  else f
-;;
+(* let new_translate_out_array_in_one_formula_split *)
+(*     (f:formula):formula = *)
+(*   if !Globals.array_translate *)
+(*   then new_translate_out_array_in_one_formula_split f *)
+(*   else f *)
+(* ;; *)
 
 let new_translate_out_array_in_one_formula_split
     (f:formula):formula =
-  Debug.no_1 "new_translate_out_array_in_one_formula_split" !print_pure !print_pure (fun f -> new_translate_out_array_in_one_formula_split f) f
+  if !Globals.array_translate
+  then Debug.no_1 "new_translate_out_array_in_one_formula_split" !print_pure !print_pure (fun f -> new_translate_out_array_in_one_formula_split f) f
+  else f
 ;;
 
 

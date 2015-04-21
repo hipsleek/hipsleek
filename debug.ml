@@ -6,6 +6,10 @@ let debug_on = ref false
 let devel_debug_on = ref false
 let devel_debug_print_orig_conseq = ref false
 let trace_on = ref true
+let call_threshold = ref 15
+let dump_calls = ref false
+let dump_calls_all = ref false
+let call_str = ref ""
 
 let z_debug_arg = ref (None:Str.regexp option)
 
@@ -472,12 +476,8 @@ struct
         with _ -> DO_None
       end
 
-  let dump_calls = ref false
-  let dump_calls_all = ref false
 
-  let call_threshold = ref 15
   (* let threshold = 20 in (\* print calls above this threshold *\) *)
-  let call_str = ref ""
 
   let debug_calls  =
     let len = 41 in
@@ -575,9 +575,11 @@ struct
       method add_id id =
         begin
           if !dump_calls_all then 
-            lastline <- lastline^id
+            lastline <- lastline^id^"."
         end
     end
+
+  let dump_debug_calls () = debug_calls # dump
 
   let read_main () =
     let () = debug_calls # init in
@@ -1415,6 +1417,7 @@ struct
     z_debug_arg := Some re
 
   let read_main() = ()
+  let dump_debug_calls () = ()
   let no_1 s p1 p0 f = f
   let no_2 s p1 p2 p0 f = f
   let no_3 s p1 p2 p3 p0 f = f
