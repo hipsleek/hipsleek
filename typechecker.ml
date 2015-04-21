@@ -742,7 +742,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       (* Debug.info_hprint (add_str "fv post" !CP.print_svl) ovars no_pos; *)
       (* Debug.info_hprint (add_str "out vars" !CP.print_svl) ov no_pos; *)
       if ((Immutable.is_lend post_cond) && not(!Globals.allow_field_ann))
-      || (!Globals.allow_field_ann && Mem.is_lend post_cond) then
+         || (!Globals.allow_field_ann && Mem.is_lend post_cond) then
         Error.report_error {Error.error_loc = pos_spec; Error.error_text =  ("The postcondition cannot contain @L heap predicates/data nodes/field annotations\n")}
       else
         let () = post_pos#set (CF.pos_of_formula post_cond) in
@@ -976,7 +976,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
           | Err.Ppf (e, ifk, error_type) ->
             (match ifk with
              | 1 -> (* let () = DD.info_hprint (add_str "must excp" (pr_id)) "xxx" no_pos in *)
-               if CF.is_error_flow post_cond  then
+               if x_add_1 CF.is_error_flow post_cond  then
                  (spec, [],[],[],[],[], [], true) else
                  let () = Gen.Profiling.pop_time ("method "^proc.proc_name) in
                  (Err.report_error1 e (Err.get_error_type_str error_type) (*"bind failure exception"*))
@@ -1381,8 +1381,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             if (String.length s)>0 (* && (String.length s1)>0 *) && (String.compare s s1 <> 0) then ctx
             else
               let (ts,ps) = List.partition (fun (fl,el,sl)-> (List.length fl) = 0) ctx in
-              let new_ctx,pure_info = match c1_o with
-                | None -> ts,None
+              let new_ctx,pure_info,assert_failed_msg = match c1_o with
+                | None -> ts,None, None
                 | Some c1 ->
                   let c1 = x_add Cvutil.prune_pred_struc prog true c1 in (* specialise asserted formula *)
                   let c1 = match c2 with
@@ -1419,11 +1419,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       x_dinfo_pp (*print_info "assert"*) ("Residual:\n" ^ (Cprinter.string_of_list_failesc_context rs)) pos; 
                       (* WN_2_Loc: put xpure of asserted by fn below  *)
                       let xp = get_xpure_of_formula c1_o in
-                      (rs,Some xp)
+                      (rs,Some xp,None)
                     end
                   else
                     (*L2: todo: should not warning if post is must error*)
-                    (Debug.print_info "assert/assume" (s ^" : failed\n") pos ; (rs,None))
+                    let msg =  (s ^" : failed\n") in
+                    (Debug.print_info  "assert/assume" (*(s ^" : failed\n") *) msg pos ; (rs,None, Some msg))
               in 
               let () = if !print_proof  && (match c1_o with | None -> false | Some _ -> true) then 
                   begin
@@ -1450,12 +1451,41 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     else c
                   in
                   let c = x_add Cvutil.prune_preds prog false c in (* specialise assumed formula *)
+                  let () = Debug.ninfo_hprint (add_str "new_ctx" Cprinter.string_of_list_failesc_context) new_ctx pos in
                   let assumed_ctx = CF.normalize_max_renaming_list_failesc_context c pos false new_ctx in
+                  let () = Debug.ninfo_hprint (add_str "assumed_ctx" Cprinter.string_of_list_failesc_context) assumed_ctx pos in
                   let r =if !Globals.disable_assume_cmd_sat then assumed_ctx 
                     else 
                       CF.transform_list_failesc_context (idf,idf,(elim_unsat_es 4 prog (ref 1))) assumed_ctx in
-                  List.map CF.remove_dupl_false_fe r
+                  let res = List.map CF.remove_dupl_false_fe r in
+                  match assert_failed_msg with
+                    | None -> res
+                    | Some s -> begin
+                        if not !Globals.disable_failure_explaining then
+                          let s,fk,_= CF.get_failure_list_failesc_context new_ctx in
+                          raise (Err.Ppf ({
+                              Err.error_loc = pos;
+                              Err.error_text = s
+                          },(match fk with
+                            | CF.Failure_Bot _ -> 0
+                            | CF.Failure_Must _ -> 1
+                            | CF.Failure_Valid -> 2
+                            | CF.Failure_May _ -> 3), 2))
+                        else
+                          begin
+                            Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context  new_ctx)^") ") 
+                                ("Proving assert/assume in method failed\n") pos;
+                            Debug.print_info ("(Cause of Assert Failure)")
+                                (Cprinter.string_of_failure_list_failesc_context  new_ctx) pos;
+                            Err.report_error {
+                                Err.error_loc = pos;
+                                Err.error_text = Printf.sprintf
+                                    "Proving Assert/Assume in method failed."
+                            }
+                          end
+                      end
               in
+              let () = Debug.ninfo_hprint (add_str "res" Cprinter.string_of_list_failesc_context) res pos in
               (ps@res)
         end
       in
@@ -1590,7 +1620,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let pr1 c = Cprinter.string_of_context (CF.Ctx c) in
               let pr2 f = Cprinter.string_of_struc_formula f in
               Debug.no_2(* _loop *) "barrier entail" pr1 pr2 (fun c-> "") 
-                (fun _ _ -> heap_entail_struc_init prog false true (CF.SuccCtx [CF.Ctx c]) bd_spec pos None) c bd_spec (*r,proof*) 
+                (fun _ _ -> x_add heap_entail_struc_init prog false true (CF.SuccCtx [CF.Ctx c]) bd_spec pos None) c bd_spec (*r,proof*) 
             in 
             helper c bd_spec in
 
@@ -2452,6 +2482,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         ) *)
                       (*should check bot with is_bot_status*)
                       in
+                      let () = Debug.ninfo_hprint (add_str "res" Cprinter.string_of_list_failesc_context) res no_pos in
+                      let () = Debug.ninfo_hprint (add_str "s" pr_id) s no_pos in
                       if (String.length s) >  0 then
                         (* let () = print_string_quiet (to_print ^s^"\n") in *)
                         (* Err.report_error { *)
@@ -2982,10 +3014,10 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         end in
     let is_succ = CF.isSuccessListPartialCtx_new rs in
     let is_reachable_succ = if not f1 then
-      is_succ
-    else
-      (*if error post, check reachable *)
-      is_succ && (CF.exist_reachable_states rs)
+        is_succ
+      else
+        (*if error post, check reachable *)
+        is_succ && (CF.exist_reachable_states rs)
     in
     if ((* CF.isSuccessListPartialCtx_new rs *) is_reachable_succ) then
       rs

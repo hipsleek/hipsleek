@@ -529,17 +529,20 @@ let print_residue residue =
         (* in *)
         if not local_dfa (*!Globals.disable_failure_explaining *) then
           (* let () = Debug.info_pprint "a" no_pos in *)
-          (* let () = print_endline (Cprinter.string_of_list_context ls_ctx) in *)
-          print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
-                           (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
+          let () = if not !Globals.enable_error_as_exc then
+            print_endline (Cprinter.string_of_list_context ls_ctx)
+          else
+            print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
+                (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
+          in ()
         else
           (* let () = Debug.info_pprint "b" no_pos in *)
-        if print then
+          if print then
           (* let () = print_string ((pr_list pr_none (CF.list_formula_trace_of_list_context ls_ctx))^ *)
           (*   (Cprinter.string_of_list_context ls_ctx)^"\n") in () *)
           print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
                            (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
-        else let () =  print_string "{ }\n" in ()
+          else let () =  print_string "{ }\n" in ()
       end
 
 let process_list_lemma ldef_lst  =
@@ -1994,15 +1997,23 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
     begin
       let s =
         if not !Globals.disable_failure_explaining then
-          let final_error_opt = CF.get_final_error residue in
-          match final_error_opt with
-          | Some (s, fk) -> begin
-              match fk with
-              | CF.Failure_May _ -> "(may) cause:"^s
-              | CF.Failure_Must _ -> "(must) cause:"^s
-              | _ -> "INCONSISTENCY : expected failure but success instead"
-            end
-          | None -> "INCONSISTENCY : expected failure but success instead"
+          if !Globals.enable_error_as_exc then
+            let final_error_opt = CF.get_final_error residue in
+            match final_error_opt with
+              | Some (s, fk) -> begin
+                  match fk with
+                    | CF.Failure_May _ -> "(may) cause:"^s
+                    | CF.Failure_Must _ -> "(must) cause:"^s
+                    | _ -> "INCONSISTENCY : expected failure but success instead"
+                end
+              | None -> "INCONSISTENCY : expected failure but success instead"
+          else
+            match CF.get_must_failure residue with
+                 | Some (s, _) -> "(must) cause:"^s
+                 | _ -> (match CF.get_may_failure residue with
+                     | Some (s, _) -> "(may) cause:"^s
+                     | _ -> "INCONSISTENCY : expected failure but success instead"
+                   )
           (* match CF.get_must_failure residue with *)
           (*   | Some (s, cex) -> *)
           (*         (\* let reg1 = Str.regexp "base case unfold failed" in *\) *)

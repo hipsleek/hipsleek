@@ -6,6 +6,10 @@ let debug_on = ref false
 let devel_debug_on = ref false
 let devel_debug_print_orig_conseq = ref false
 let trace_on = ref true
+let call_threshold = ref 15
+let dump_calls = ref false
+let dump_calls_all = ref false
+let call_str = ref ""
 
 let z_debug_arg = ref (None:Str.regexp option)
 
@@ -302,6 +306,292 @@ let pick_front n ss =
 
 module DebugCore  =
 struct
+  type debug_option =
+    | DO_None
+    | DO_Trace
+    | DO_Loop
+    | DO_Both
+    | DO_Normal
+
+  let debug_map = Hashtbl.create 50
+
+  let regexp_line = ref []
+  let regexp_line_str = ref []
+
+  let z_debug_file = ref ""
+  (* let z_debug_regexp = ref None *)
+  let mk_debug_arg s =
+    let re = Str.regexp s in
+    z_debug_arg := Some re
+
+  (*let debug_file = open_in_gen [Open_creat] 0o666 ("z-debug.log")*)
+  let debug_file ()=
+    let get_path s = 
+      if String.contains s '/' then
+        let i = String.rindex s '/' in
+        String.sub s 0 (i+1)
+      else ""
+    in
+    let fname = !z_debug_file in
+    (* print_endline ("Debug File : "^fname); *)
+    let n = String.length fname in
+    if n>1 && fname.[0]='$' then
+      begin
+        (* z_debug_regexp := Some fname; *)
+        let re = String.sub fname 1 (n-1) in
+        regexp_line_str := [re];
+        None
+      end
+    else
+      begin
+        let debug_conf = "./" ^ fname in
+        (* let () = print_endline (debug_conf) in *)
+        let global_debug_conf =
+          if (Sys.file_exists debug_conf) then
+            debug_conf
+          else (get_path Sys.executable_name) ^ (String.sub debug_conf 2 ((String.length debug_conf) -2))
+        in
+        (* let () = print_endline global_debug_conf in *)
+        try
+          Some(open_in (global_debug_conf))
+        with _ ->
+          begin
+            print_endline_quiet ("WARNING : cannot find debug file "^fname); 
+            z_debug_flag:=false;
+            None
+          end
+      end
+
+  let read_from_debug_file chn : string list =
+    let line = ref [] in
+    (* let quitloop = ref false in *)
+    (try
+       while true do
+         let xs = (input_line chn) in
+         let xs = String.trim xs in
+         let n = String.length xs in
+         (* let s = String.sub xs 0 1 in *)
+         if n > 0 && xs.[0]!='#' (* String.compare s "#" !=0 *) then begin
+           line := xs::!line;
+         end;
+         if n > 1 && xs.[0]=='$' (* String.compare s "#" !=0 *) then begin
+           let xs = String.sub xs 1 (n-1) in
+           (* regexp_line := (Str.regexp_case_fold xs)::!regexp_line; *)
+           regexp_line_str := xs::!regexp_line_str;
+         end;
+       done;
+     with _ -> ());
+    !line
+
+  (* let read_from_debug_file chn : string list = *)
+  (*  ho_1 "read_from_debug_file" (fun _ -> "?") (pr_list (fun x -> x))read_from_debug_file chn *)
+
+  let proc_option str =
+    let rec aux str tr_flag lp_flag =
+      match str with
+      | [] -> (tr_flag,lp_flag)
+      | s::str ->
+        begin
+          if String.compare s "Trace" == 0 then aux str true lp_flag 
+          else if String.compare s "Loop" == 0 then aux str tr_flag true 
+          else 
+            let () = (print_endline ("Warning - wrong debug command :"^s)) 
+            in aux str tr_flag lp_flag
+        end
+    in aux str false false
+
+  let rec get_words str =
+    let len = String.length str in
+    try
+      let l = String.index str ',' in
+      let m = String.sub str 0 l in
+      let rest = String.sub str (l+1) ((len) -l -1) in
+      m::(get_words rest)
+    with _ -> if len<4 then [] else [str] 
+
+  (* let get_words str = *)
+  (*   let pr_id x = x in *)
+  (*   ho_1 "get_words" pr_id (pr_list pr_id) get_words str *)
+
+  let add_entry_with_options entry_fn xs =
+    List.iter (fun x ->
+        try
+          let l = String.index x ',' in
+          let m = String.sub x 0 l in
+          let split = String.sub x (l+1) ((String.length x) -l -1) in
+          let opts = get_words split in
+          (* let (tr_flag,lp_flag) = proc_option opts in *)
+          let kind = match proc_option opts with
+            | false,false -> DO_Normal
+            | false,true -> DO_Loop
+            | true,false -> DO_Trace
+            | true,true -> DO_Both
+          in
+          let () = print_endline_quiet (m) in
+          let () = print_endline_quiet (split) in
+          (* let kind = if String.compare split "Trace" == 0 then DO_Trace else *)
+          (*   if String.compare split "Loop" == 0 then DO_Loop else *)
+          (*     DO_Normal *)
+          entry_fn m kind
+        with _ ->
+          entry_fn x DO_Normal
+      ) xs
+
+  (* (\* let () = print_endline ((pr_list (fun x -> x)) xs) in *\) *)
+  (* List.iter (fun x -> *)
+  (*     try *)
+  (*       let l = String.index x ',' in *)
+  (*       let m = String.sub x 0 l in *)
+  (*       let split = String.sub x (l+1) ((String.length x) -l -1) in *)
+  (*       let opts = get_words split in *)
+  (*       (\* let (tr_flag,lp_flag) = proc_option opts in *\) *)
+  (*       let kind = match proc_option opts with *)
+  (*         | false,false -> DO_Normal *)
+  (*         | false,true -> DO_Loop *)
+  (*         | true,false -> DO_Trace *)
+  (*         | true,true -> DO_Both *)
+  (*       (\* let () = print_endline (m) in *\) *)
+  (*       (\* let () = print_endline (split) in *\) *)
+  (*       (\* let kind = if String.compare split "Trace" == 0 then DO_Trace else *\) *)
+  (*       (\*   if String.compare split "Loop" == 0 then DO_Loop else *\) *)
+  (*       (\*     DO_Normal *\) *)
+  (*       in *)
+  (*       Hashtbl.add debug_map m kind *)
+  (*     with _ -> *)
+  (*     Hashtbl.add debug_map x DO_Normal *)
+  (* ) xs *)
+
+  let in_debug x =
+    let x = String.trim x in
+    let opt_k = 
+      try
+        Some(List.find (fun (re,k) -> Str.string_match re x 0) !regexp_line)
+      with _ -> None in
+    match opt_k with
+    | Some (_,k) -> k
+    | None ->
+      begin
+        try
+          Hashtbl.find debug_map x
+        with _ -> DO_None
+      end
+
+
+  (* let threshold = 20 in (\* print calls above this threshold *\) *)
+
+  let debug_calls  =
+    let len = 41 in
+    let prefix = "%%%" in
+    object (self)
+      val len_act = len -1
+      val arr =  Array.make (len+1) prefix
+      val hcalls = Hashtbl.create 20
+      val rec_calls = Hashtbl.create 10
+      val calls =  Array.make (len+1) ""
+      (* debug calls in the run-time state *)
+      val overflow = prefix^"****************************************"
+      val mutable lastline = "\n"
+      val mutable rgx = None
+      val stk = new Gen.stack_pr pr_id (==)
+      val mutable offset = -1
+      method dump =
+        let cnt = hash_to_list hcalls in
+        let rcnt = hash_to_list rec_calls in
+        let cnt = List.filter (fun (_,a) -> a>=(!call_threshold)) cnt in
+        let cnt = list_cnt_sort_dec cnt in
+        let rcnt = list_cnt_sort_dec rcnt in
+        let pr = pr_list_brk_sep "" "" "\n" (pr_pair pr_id string_of_int) in
+        if !dump_calls_all then 
+          begin
+            stk # push (lastline^"\n");
+            (stk # dump_no_ln) 
+          end;
+        print_endline "\nDEBUGGED CALLS";
+        print_endline "==============";
+        print_endline (pr cnt);
+        if rcnt!=[] then
+          begin
+            print_endline "\nDEBUGGED SELF-REC CALLS";
+            print_endline "========================";
+            print_endline (pr rcnt)
+          end
+      method init =
+        for i = 1 to len_act do
+          arr.(i) <- arr.(i-1)^" "
+        done;
+        let cs = !call_str in
+        if not(cs="") 
+        then 
+          begin
+            (* print_endline ("rgx:"^(cs)); *)
+            rgx <- Some (Str.regexp cs)
+          end
+        else 
+          begin
+            (* print_endline ("rgx(N):"^(cs)); *)
+            ()
+          end
+      method str_match s =
+        match rgx with
+        | None -> true
+        | Some rgx -> Str.string_match rgx s 0
+      method add_to_hash ht s =
+        try 
+          let c = Hashtbl.find ht s in
+          Hashtbl.replace ht s (c+1)
+        with _ -> Hashtbl.add ht s 1
+      method get dd_n s =
+        (* pre : n>=0 *)
+        let n = match rgx with
+          | None -> dd_n
+          | Some rgx -> 
+            if offset>=0 && dd_n>offset then dd_n-offset
+            else if Str.string_match rgx s 0 then (offset<-dd_n; 0)
+            else (offset<-(-1); failwith "skipped") in
+        if (n>len_act) then overflow
+        else 
+          begin
+            calls.(n)<-s;
+            if n>0 && s=calls.(n-1) then 
+              begin
+                self # add_to_hash rec_calls s;
+                (* print_endline ("REC "^s) *)
+              end;
+            self # add_to_hash hcalls s;
+            arr.(n)
+          end
+      method print_call s =
+        begin
+          try
+            let deb_len = debug_stk # len in
+            let len = self # get (deb_len) s in
+            if !dump_calls_all then 
+              begin
+                stk # push lastline;
+                lastline <- ("\n"^len^s)
+              end
+          with _ -> ()
+        end
+      method add_id id =
+        begin
+          if !dump_calls_all then 
+            lastline <- lastline^id^"."
+        end
+    end
+
+  let dump_debug_calls () = debug_calls # dump
+
+  let read_main () =
+    let () = debug_calls # init in
+    let xs = match debug_file() with
+      | Some c -> read_from_debug_file c
+      | _ -> [] in
+    let () = add_entry_with_options (fun x k -> Hashtbl.add debug_map x k) xs in
+    let () = add_entry_with_options (fun x k -> 
+        let re = Str.regexp_case_fold x 
+        in regexp_line := (re,k)::!regexp_line) !regexp_line_str in
+    ()
+
   let ho_aux ?(arg_rgx=None) df lz (loop_d:bool) (test:'z -> bool) (g:('a->'z) option) (s:string) (args:string list) (pr_o:'z->string) (f:'a->'z) (e:'a) :'z =
     let pre_str = "(=="^(VarGen.last_posn # get_rm)^"==)" in
     (* if s=="" thenmatch s with  *)
@@ -351,6 +641,8 @@ struct
                          ("\n NOW :"^(pr_o x)))) in
         (new_test, new_pr_o) in
     let s,h = push_call_gen s df in
+    let lc = (Gen.StackTrace.ctr # get_last_call) in
+    let () = debug_calls # add_id lc in
     let h = pre_str^"\n"^h in
     (if loop_d then print_string ("\n"^h^" ENTRY :"^(String.concat "  " (pick_front 80 args))^"\n"));
     flush stdout;
@@ -494,184 +786,6 @@ struct
   let ho_1_loop s = ho_1_pre true s 
 
 
-  type debug_option =
-    | DO_None
-    | DO_Trace
-    | DO_Loop
-    | DO_Both
-    | DO_Normal
-
-  let debug_map = Hashtbl.create 50
-
-  let regexp_line = ref []
-  let regexp_line_str = ref []
-
-  let z_debug_file = ref ""
-  (* let z_debug_regexp = ref None *)
-  let mk_debug_arg s =
-    let re = Str.regexp s in
-    z_debug_arg := Some re
-
-  (*let debug_file = open_in_gen [Open_creat] 0o666 ("z-debug.log")*)
-  let debug_file ()=
-    let get_path s = 
-      if String.contains s '/' then
-        let i = String.rindex s '/' in
-        String.sub s 0 (i+1)
-      else ""
-    in
-    let fname = !z_debug_file in
-    (* print_endline ("Debug File : "^fname); *)
-    let n = String.length fname in
-    if n>1 && fname.[0]='$' then
-      begin
-        (* z_debug_regexp := Some fname; *)
-        let re = String.sub fname 1 (n-1) in
-        regexp_line_str := [re];
-        None
-      end
-    else
-      begin
-        let debug_conf = "./" ^ fname in
-        (* let () = print_endline (debug_conf) in *)
-        let global_debug_conf =
-          if (Sys.file_exists debug_conf) then
-            debug_conf
-          else (get_path Sys.executable_name) ^ (String.sub debug_conf 2 ((String.length debug_conf) -2))
-        in
-        (* let () = print_endline global_debug_conf in *)
-        try
-          Some(open_in (global_debug_conf))
-        with _ ->
-          begin
-            print_endline_quiet ("WARNING : cannot find debug file "^fname); 
-            z_debug_flag:=false;
-            None
-          end
-      end
-
-  let read_from_debug_file chn : string list =
-    let line = ref [] in
-    (* let quitloop = ref false in *)
-    (try
-       while true do
-         let xs = (input_line chn) in
-         let xs = String.trim xs in
-         let n = String.length xs in
-         (* let s = String.sub xs 0 1 in *)
-         if n > 0 && xs.[0]!='#' (* String.compare s "#" !=0 *) then begin
-           line := xs::!line;
-         end;
-         if n > 1 && xs.[0]=='$' (* String.compare s "#" !=0 *) then begin
-           let xs = String.sub xs 1 (n-1) in
-           (* regexp_line := (Str.regexp_case_fold xs)::!regexp_line; *)
-           regexp_line_str := xs::!regexp_line_str;
-         end;
-       done;
-     with _ -> ());
-    !line
-
-  (* let read_from_debug_file chn : string list = *)
-  (*  ho_1 "read_from_debug_file" (fun _ -> "?") (pr_list (fun x -> x))read_from_debug_file chn *)
-
-  let proc_option str =
-    let rec aux str tr_flag lp_flag =
-      match str with
-      | [] -> (tr_flag,lp_flag)
-      | s::str ->
-        begin
-          if String.compare s "Trace" == 0 then aux str true lp_flag 
-          else if String.compare s "Loop" == 0 then aux str tr_flag true 
-          else 
-            let () = (print_endline ("Warning - wrong debug command :"^s)) 
-            in aux str tr_flag lp_flag
-        end
-    in aux str false false
-
-  let rec get_words str =
-    let len = String.length str in
-    try
-      let l = String.index str ',' in
-      let m = String.sub str 0 l in
-      let rest = String.sub str (l+1) ((len) -l -1) in
-      m::(get_words rest)
-    with _ -> if len<4 then [] else [str] 
-
-  (* let get_words str = *)
-  (*   let pr_id x = x in *)
-  (*   ho_1 "get_words" pr_id (pr_list pr_id) get_words str *)
-
-  let add_entry_with_options entry_fn xs =
-    List.iter (fun x ->
-        try
-          let l = String.index x ',' in
-          let m = String.sub x 0 l in
-          let split = String.sub x (l+1) ((String.length x) -l -1) in
-          let opts = get_words split in
-          (* let (tr_flag,lp_flag) = proc_option opts in *)
-          let kind = match proc_option opts with
-            | false,false -> DO_Normal
-            | false,true -> DO_Loop
-            | true,false -> DO_Trace
-            | true,true -> DO_Both
-          in
-          let () = print_endline_quiet (m) in
-          let () = print_endline_quiet (split) in
-          (* let kind = if String.compare split "Trace" == 0 then DO_Trace else *)
-          (*   if String.compare split "Loop" == 0 then DO_Loop else *)
-          (*     DO_Normal *)
-          entry_fn m kind
-        with _ ->
-          entry_fn x DO_Normal
-      ) xs
-
-  let read_main () =
-    let xs = match debug_file() with
-      | Some c -> read_from_debug_file c
-      | _ -> [] in
-    let () = add_entry_with_options (fun x k -> Hashtbl.add debug_map x k) xs in
-    let () = add_entry_with_options (fun x k -> 
-        let re = Str.regexp_case_fold x 
-        in regexp_line := (re,k)::!regexp_line) !regexp_line_str in
-    ()
-  (* (\* let () = print_endline ((pr_list (fun x -> x)) xs) in *\) *)
-  (* List.iter (fun x -> *)
-  (*     try *)
-  (*       let l = String.index x ',' in *)
-  (*       let m = String.sub x 0 l in *)
-  (*       let split = String.sub x (l+1) ((String.length x) -l -1) in *)
-  (*       let opts = get_words split in *)
-  (*       (\* let (tr_flag,lp_flag) = proc_option opts in *\) *)
-  (*       let kind = match proc_option opts with *)
-  (*         | false,false -> DO_Normal *)
-  (*         | false,true -> DO_Loop *)
-  (*         | true,false -> DO_Trace *)
-  (*         | true,true -> DO_Both *)
-  (*       (\* let () = print_endline (m) in *\) *)
-  (*       (\* let () = print_endline (split) in *\) *)
-  (*       (\* let kind = if String.compare split "Trace" == 0 then DO_Trace else *\) *)
-  (*       (\*   if String.compare split "Loop" == 0 then DO_Loop else *\) *)
-  (*       (\*     DO_Normal *\) *)
-  (*       in *)
-  (*       Hashtbl.add debug_map m kind *)
-  (*     with _ -> *)
-  (*     Hashtbl.add debug_map x DO_Normal *)
-  (* ) xs *)
-
-  let in_debug x =
-    let x = String.trim x in
-    let opt_k = 
-      try
-        Some(List.find (fun (re,k) -> Str.string_match re x 0) !regexp_line)
-      with _ -> None in
-    match opt_k with
-    | Some (_,k) -> k
-    | None ->
-      begin
-        try
-          Hashtbl.find debug_map x
-        with _ -> DO_None
-      end
 
   let go_1 t_flag l_flag s = ho_1_opt_aux t_flag [] l_flag (fun _ -> true) None s
   let go_2 t_flag l_flag s = ho_2_opt_aux t_flag [] l_flag (fun _ -> true) None s
@@ -729,8 +843,9 @@ struct
   (* let ho_6_loop s = ho_6_opt_aux false [] true (fun _ -> true) None s *)
   (* let ho_7_loop s = ho_7_opt_aux false [] true (fun _ -> true) None s *)
 
+
   let splitter s f_none f_gen f_norm =
-    (* let _ = print_endline ("splitter:"^s) in *)
+    let () = if !dump_calls then debug_calls # print_call s in
     if !z_debug_flag then
       match (in_debug s) with
       | DO_Normal -> f_gen (f_norm false false)
@@ -1302,6 +1417,7 @@ struct
     z_debug_arg := Some re
 
   let read_main() = ()
+  let dump_debug_calls () = ()
   let no_1 s p1 p0 f = f
   let no_2 s p1 p2 p0 f = f
   let no_3 s p1 p2 p3 p0 f = f

@@ -3598,8 +3598,8 @@ let infer_collect_hp_rel_empty_rhs_x prog (es0:entail_state) mix_rf pos =
           (* let pr = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
           let () = DD.ninfo_zprint (lazy (("  es0.CF.es_evars: " ^ (!CP.print_svl  es0.CF.es_evars)))) no_pos in
           (*which pointers are defined and which arguments of data nodes are pointer*)let lhs_b0 = match lhs0 with
-            | Base fb -> fb
-            | _ -> report_error pos "Infer.infer_collect_hp_rel_empty_rhs: imposs"
+              | Base fb -> fb
+              | _ -> report_error pos "Infer.infer_collect_hp_rel_empty_rhs: imposs"
           in
           let ( _,mix_lf,_,_,_,_) = CF.split_components lhs0 in
           let l_emap0 = get_eqset (MCP.pure_of_mix mix_lf) in
