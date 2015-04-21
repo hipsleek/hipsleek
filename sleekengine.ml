@@ -2316,6 +2316,12 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
   in
   let old_dfa = !Globals.disable_failure_explaining in
   let _ = Globals.disable_failure_explaining := dfailure_anlysis in
+  (* backup flag *)
+  let gl_efa_exc= !Globals.enable_error_as_exc in
+      let () =
+        if List.mem INF_DE_EXC itype then
+          Globals.enable_error_as_exc := false
+      in
   let num_id = "\nEntail "^nn in
   let r=  try
       let (valid, rs, sel_hps),_ = wrap_classic etype (run_infer_one_pass_set_states itype ivars [iante0]) iconseq0 in
@@ -2337,6 +2343,7 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
       false
   in
   let _ = Globals.disable_failure_explaining := old_dfa in
+  let () = Globals.enable_error_as_exc := gl_efa_exc in
   r
 
 let process_capture_residue (lvar : ident) =

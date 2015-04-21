@@ -54,7 +54,7 @@ type sleek_token =
   | TERM_INFER 
   (* | TREL_INFER  change to  INFER_AT_TERM *)
   | TREL_ASSUME
-  | INFER_AT_EFA | INFER_AT_DFA | INFER_AT_CLASSIC | INFER_AT_PAR | INFER_AT_ERRMUST | INFER_AT_ERRMAY
+  | INFER_AT_EFA | INFER_AT_DFA | INFER_AT_CLASSIC | INFER_AT_PAR | INFER_AT_ERRMUST | INFER_AT_ERRMAY | INFER_AT_DE_EXC
   | INFER_AT_VER_POST
   | INFER_AT_TERM | INFER_AT_TERM_WO_POST 
   | INFER_AT_PRE | INFER_AT_POST | INFER_AT_IMM | INFER_AT_SHAPE | INFER_AT_ERROR | INFER_AT_FLOW
@@ -191,6 +191,7 @@ module Token = struct
     | INFER_AT_DFA -> "@dfa"
     | INFER_AT_TERM -> "@term"
     | INFER_AT_ERRMUST -> "@err_must"
+    | INFER_AT_DE_EXC -> "@dis_err"
     | INFER_AT_ERRMAY -> "@err_may"
     | INFER_AT_TERM_WO_POST -> "@term_wo_post"
     | INFER_AT_PRE -> "@pre_n"
@@ -212,7 +213,6 @@ module Token = struct
     | ARGOPTION arg -> "##OPTION "^arg
   (* | SKIP -> "skip" *)
   (* | IN_RFLOW -> "-%" | OUT_RFLOW -> "+%" *)
-
 
   let print ppf x = pp_print_string ppf (to_string x)
 

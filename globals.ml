@@ -1338,6 +1338,7 @@ type infer_type =
   | INF_PRE (* For infer[@pre] *)
   | INF_SHAPE (* For infer[@shape] *)
   | INF_ERROR (* For infer[@error] *)
+  | INF_DE_EXC (* For infer[@dis_err] *)
   | INF_ERR_MUST (* For infer[@err_must] *)
   | INF_ERR_MAY (* For infer[@err_may] *)
   | INF_SIZE (* For infer[@size] *)
@@ -1365,6 +1366,7 @@ let string_of_inf_const x =
   | INF_PRE -> "@pre"
   | INF_SHAPE -> "@shape"
   | INF_ERROR -> "@error"
+  | INF_DE_EXC -> "@dis_err"
   | INF_ERR_MUST -> "@err_must"
   | INF_ERR_MAY -> "@err_may"
   | INF_SIZE -> "@size"
@@ -1468,6 +1470,7 @@ class inf_obj  =
         helper "@imm"           INF_IMM;
         helper "@shape"         INF_SHAPE;
         helper "@error"         INF_ERROR;
+        helper "@dis_err"       INF_DE_EXC;
         helper "@size"          INF_SIZE;
         helper "@efa"           INF_EFA;
         helper "@dfa"           INF_DFA;
@@ -1497,6 +1500,7 @@ class inf_obj  =
     method is_imm  = self # get INF_IMM
     method is_shape  = self # get INF_SHAPE
     method is_error  = self # get INF_ERROR
+    method is_dis_err  = self # get INF_DE_EXC
     method is_err_must  = self # get INF_ERR_MUST
     method is_err_may  = self # get INF_ERR_MAY
     method is_size  = self # get INF_SIZE
