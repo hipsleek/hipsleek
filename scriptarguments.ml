@@ -195,7 +195,7 @@ let common_arguments = [
         Debug.dump_calls:=true;
         Debug.call_str:=s;
         Gen.debug_precise_trace:=true;),
-   "Dump summary of debugged calls");
+   "Dump summary of debugged calls (related to rgx)");
   ("--dd-calls", Arg.Unit
      (fun _ -> 
         Debug.dump_calls:=true;
@@ -205,8 +205,17 @@ let common_arguments = [
      (fun _ -> 
         Debug.dump_calls:=true;
         Debug.dump_calls_all:=true;
-        Gen.debug_precise_trace:=true;),
+        Gen.debug_precise_trace:=true;
+     ),
    "Dump all debugged calls");
+  ("-dd-calls-all", Arg.String
+     (fun s -> 
+        Debug.dump_calls:=true;
+        Debug.dump_calls_all:=true;
+        Gen.debug_precise_trace:=true;
+        Debug.call_str:=s;
+     ),
+   "Dump all debugged calls (related to rgx)");
   ("--dis-ddb", Arg.Clear Debug.trace_on,
    "Turn off experimental trace_on");
   ("--en-ddb", Arg.Set Debug.trace_on,
