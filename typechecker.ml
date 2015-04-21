@@ -1359,15 +1359,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                exp_unfold_pos = pos}) ->
       unfold_failesc_context (prog,None) ctx sv true pos
     (* for code *)
-    | Assert ({ exp_assert_asserted_formula = c1_o;
-                exp_assert_assumed_formula = c2;
+    | Assert ({ exp_assert_asserted_formula = c_assert_opt;
+                exp_assert_assumed_formula = c_assume_opt;
                 exp_assert_infer_vars = ivars;
                 exp_assert_path_id = (pidi,s);
                 exp_assert_type = atype;
                 exp_assert_pos = pos}) ->
-      let () = if ivars!=[] then x_binfo_hp (add_str "infer_assume" Cprinter.string_of_spec_var_list) ivars pos in
       let assert_op ()=
-        let () = if !print_proof && (match c1_o with | None -> false | Some _ -> true) then
+        let () = if !print_proof && (match c_assert_opt with | None -> false | Some _ -> true) then
             begin
               Prooftracer.push_assert_assume e0;
               Prooftracer.add_assert_assume e0;
@@ -1383,11 +1382,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             if (String.length s)>0 (* && (String.length s1)>0 *) && (String.compare s s1 <> 0) then ctx
             else
               let (ts,ps) = List.partition (fun (fl,el,sl)-> (List.length fl) = 0) ctx in
-              let new_ctx,pure_info,assert_failed_msg = match c1_o with
+              let new_ctx,pure_info,assert_failed_msg = match c_assert_opt with
                 | None -> ts,None, None
                 | Some c1 ->
                   let c1 = x_add Cvutil.prune_pred_struc prog true c1 in (* specialise asserted formula *)
-                  let c1 = match c2 with
+                  let c1 = match c_assume_opt with
                     | None -> 
                       (* WN_2_Loc: clear c1 of inferred info first *)
                       let pr2 = Cprinter.string_of_struc_formula in
@@ -1415,7 +1414,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       Debug.print_info "assert" (s ^(if (CF.isNonFalseListFailescCtx ts) then " : ok\n" else ": unreachable\n")) pos;
                       x_dinfo_pp (*print_info "assert"*) ("Residual:\n" ^ (Cprinter.string_of_list_failesc_context rs)) pos; 
                       (* WN_2_Loc: put xpure of asserted by fn below  *)
-                      let xp = get_xpure_of_formula c1_o in
+                      let xp = get_xpure_of_formula c_assert_opt in
                       (rs,Some xp,None)
                     end
                   else
@@ -1423,7 +1422,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let msg =  (s ^" : failed\n") in
                     (Debug.print_info  "assert/assume" (*(s ^" : failed\n") *) msg pos ; (rs,None, Some msg))
               in 
-              let () = if !print_proof  && (match c1_o with | None -> false | Some _ -> true) then 
+              let () = if !print_proof  && (match c_assert_opt with | None -> false | Some _ -> true) then 
                   begin
                     Prooftracer.add_assert_assume e0;
                     (* Prooftracer.end_object (); *)
@@ -1431,11 +1430,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     Prooftracer.pop_div ();
                     Tpdispatcher.restore_suppress_imply_output_state ();
                   end in
-              let res = match c2 with
+              let res = match c_assume_opt with
                 | None -> 
                   begin
                     match pure_info with
-                    | None -> ts
+                    | None -> 
+                      let () = x_binfo_pp ("WN : place to act on infer_assume") no_pos in
+                      let () = if ivars!=[] then x_binfo_hp (add_str "infer_assume" Cprinter.string_of_spec_var_list) ivars pos in
+                      ts
                     | Some p ->
                       (* WN_2_Loc: add p to ts; add new_infer from new_ctx into ts *)
                       CF.add_pure_and_infer_from_asserted p new_ctx ts
@@ -1487,8 +1489,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         end
       in
       (* why is wrap classic needed for assert/assume? *)
+      (* Ans : classic or not is based on atype *)
       (wrap_proving_kind 
-         (match c2 with None -> PK_Assert | _ -> PK_Assert_Assume)
+         (match c_assume_opt with 
+            None -> if ivars==[] then PK_Assert else PK_Infer_Assume
+          | _ -> PK_Assert_Assume)
          (wrap_classic atype assert_op)) ()
     | Assign ({ 
         exp_assign_lhs = v;
