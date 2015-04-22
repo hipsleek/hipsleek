@@ -527,6 +527,12 @@ let print_residue residue =
         (*   | CF.SuccCtx ls -> List.length ls = 0 *)
         (*   | _ -> false *)
         (* in *)
+        let () = x_binfo_hp (add_str "print" string_of_bool) print no_pos in
+        let () = x_binfo_hp (add_str "local_dfa?" string_of_bool) local_dfa no_pos in
+        let () = x_binfo_hp (add_str "dis_lerr_exc?" string_of_bool) dis_lerr_exc no_pos in
+        let () = x_binfo_hp (add_str "en_lerr_exc?" string_of_bool) dis_lerr_exc no_pos in
+
+       let () = x_binfo_hp (Cprinter.string_of_list_context) ls_ctx no_pos in
         if not local_dfa (*!Globals.disable_failure_explaining *) then
           let () = if print then
             print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
