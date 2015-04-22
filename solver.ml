@@ -8413,62 +8413,28 @@ type: bool *
           begin
             let () = Debug.ninfo_hprint (add_str "conseq1" pr_no) conseq no_pos in
             match (heap_infer_decreasing_wf prog conseq estate rank is_folding lhs pos) with
-            | None -> (try
-                         let t_ann, ml, il = Term.find_lexvar_es estate in
-                         let term_pos, t_ann_trans, orig_ante, _ = Term.term_res_stk # top in
-                         let term_measures, term_res, term_err_msg =
-                           Some (CP.Fail CP.TermErr_May, ml, il),
-                           (term_pos, t_ann_trans, orig_ante,
-                            Term.MayTerm_S (Term.Not_Decreasing_Measure t_ann_trans)),
-                           Some (Term.string_of_term_res (term_pos, t_ann_trans, None, Term.TermErr (Term.Not_Decreasing_Measure t_ann_trans)))
-                         in
-                         let term_stack = match term_err_msg with
-                           | None -> estate.CF.es_var_stack
-                           | Some msg -> msg::estate.CF.es_var_stack
-                         in
-                         Term.term_res_stk # pop;
-                         Term.term_res_stk # push term_res;
-                         { estate with
-                           CF.es_var_measures = term_measures;
-                           CF.es_var_stack = term_stack;
-                           CF.es_term_err = term_err_msg;
-                         }
-                       with _ -> estate)
-            | Some es -> es
-          end
-      in
-
-      (* Termination: Try to prove rhs_wf with inference *)
-      (* rhs_wf = None --> measure succeeded or no striggered inference *)
-      (* lctx = Fail --> well-founded termination failure - No need to update term_res_stk *)
-      (* lctx = Succ --> termination succeeded with inference *)
-      let estate = match rhs_wf with
-        | None -> estate
-        | Some rank ->
-          begin
-            let () = Debug.ninfo_hprint (add_str "conseq1" pr_no) conseq no_pos in
-            match (heap_infer_decreasing_wf prog conseq estate rank is_folding lhs pos) with
-            | None -> (try
-                         let t_ann, ml, il = Term.find_lexvar_es estate in
-                         let term_pos, t_ann_trans, orig_ante, _ = Term.term_res_stk # top in
-                         let term_measures, term_res, term_err_msg =
-                           Some (CP.Fail CP.TermErr_May, ml, il),
-                           (term_pos, t_ann_trans, orig_ante,
-                            Term.MayTerm_S (Term.Not_Decreasing_Measure t_ann_trans)),
-                           Some (Term.string_of_term_res (term_pos, t_ann_trans, None, Term.TermErr (Term.Not_Decreasing_Measure t_ann_trans)))
-                         in
-                         let term_stack = match term_err_msg with
-                           | None -> estate.CF.es_var_stack
-                           | Some msg -> msg::estate.CF.es_var_stack
-                         in
-                         Term.term_res_stk # pop;
-                         Term.term_res_stk # push term_res;
-                         { estate with
-                           CF.es_var_measures = term_measures;
-                           CF.es_var_stack = term_stack;
-                           CF.es_term_err = term_err_msg;
-                         }
-                       with _ -> estate)
+            | None -> 
+              (try
+                let t_ann, ml, il = Term.find_lexvar_es estate in
+                let term_pos, t_ann_trans, orig_ante, _ = Term.term_res_stk # top in
+                let term_measures, term_res, term_err_msg =
+                  Some (CP.Fail CP.TermErr_May, ml, il),
+                  (term_pos, t_ann_trans, orig_ante,
+                   Term.MayTerm_S (Term.Not_Decreasing_Measure t_ann_trans)),
+                  Some (Term.string_of_term_res (term_pos, t_ann_trans, None, Term.TermErr (Term.Not_Decreasing_Measure t_ann_trans)))
+                in
+                let term_stack = match term_err_msg with
+                  | None -> estate.CF.es_var_stack
+                  | Some msg -> msg::estate.CF.es_var_stack
+                in
+                Term.term_res_stk # pop;
+                Term.term_res_stk # push term_res;
+                { estate with
+                  CF.es_var_measures = term_measures;
+                  CF.es_var_stack = term_stack;
+                  CF.es_term_err = term_err_msg;
+                }
+              with _ -> estate)
             | Some es -> es
           end
       in

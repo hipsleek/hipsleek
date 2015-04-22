@@ -1309,7 +1309,7 @@ let add_unsound_ctx (es: entail_state) pos =
   add_term_err_stk (string_of_term_res term_res)
 
 (* if Loop, check that ctx is false *)
-let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) 
+let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) check_falsify
     (ctx : list_partial_context) post pos (pid:formula_label) : bool  =
   x_tinfo_hp (add_str "proc name" pr_id) proc.Cast.proc_name pos;
   let good_ls = List.filter (fun (fl,sl) -> fl==[]) ctx in (* Not a fail context *)
@@ -1323,18 +1323,25 @@ let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl)
       (* TODO: must check that each entail_state from loop_es implies false *)
       (* let unsound_ctx = List.find_all (fun es -> not (isAnyConstFalse es.es_formula)) loop_es in *)
       let unsound_ctx = List.find_all (fun es -> 
-          (is_Loop_es es) && not (isAnyConstFalse es.es_formula)) loop_es in
+          (* (is_Loop_es es) && not (isAnyConstFalse es.es_formula) *)
+          if (is_Loop_es es) then
+            let rs, _ = wrap_proving_kind PK_NonTerm_Falsify check_falsify (Ctx es) in
+            let () = x_tinfo_hp (add_str "Check falsity res" Cprinter.string_of_list_context) rs pos in
+            (isFailCtx rs)
+          else false
+        ) loop_es in
       if unsound_ctx == [] then true
       else
         begin
-          x_dinfo_hp (add_str "unsound Loop" (pr_list Cprinter.string_of_entail_state_short)) unsound_ctx pos;
+          x_tinfo_hp (add_str "unsound Loop" (pr_list Cprinter.string_of_entail_state_short)) unsound_ctx pos;
           List.iter (fun es -> add_unsound_ctx es pos) unsound_ctx;
           false
         end;
     end
 
-let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) (ctx : list_partial_context) post pos (pid:formula_label) : bool  =
+let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) check_falsify
+  (ctx : list_partial_context) post pos (pid:formula_label) : bool  =
   let pr = !print_list_partial_context in
   Debug.no_2 "check_loop_safety" 
-    pr_id pr string_of_bool (fun _ _ -> check_loop_safety prog proc ctx post pos pid) proc.Cast.proc_name ctx
+    pr_id pr string_of_bool (fun _ _ -> check_loop_safety prog proc check_falsify ctx post pos pid) proc.Cast.proc_name ctx
 

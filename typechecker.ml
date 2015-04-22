@@ -374,8 +374,7 @@ and check_bounded_term_x prog ctx post_pos =
       let bnd_formula = CF.formula_of_pure_formula
           (CP.join_conjunctions bnd_formula_l) m_pos in
       let rs, _ = heap_entail_one_context 12 prog false ctx bnd_formula None None None post_pos in
-      let () = x_tinfo_hp (add_str "Result context" 
-                             !CF.print_list_context) rs no_pos in
+      let () = x_tinfo_hp (add_str "Result context" !CF.print_list_context) rs no_pos in
       let term_pos = (m_pos, no_pos) in
       let term_res, n_es =
         let f_ctx = CF.formula_of_context ctx in
@@ -2921,8 +2920,11 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
           (* print_endline "VERIFYING POST-CONDITION" *)
         end in
     (* Termination: Poststate of Loop must be unreachable (soundness) *)
-    let todo_unk = if !Globals.dis_term_chk || !Globals.dis_post_chk then true 
-      else Term.check_loop_safety prog proc ctx (fst posts) pos pid 
+    let todo_unk = 
+      if !Globals.dis_term_chk || !Globals.dis_post_chk then true 
+      else
+        let check_falsify ctx = heap_entail_one_context 17 prog false ctx (CF.mkFalse_nf pos) None None None pos in 
+        Term.check_loop_safety prog proc check_falsify ctx (fst posts) pos pid 
     in
 
     (* Rho: print conc err, if any *)
