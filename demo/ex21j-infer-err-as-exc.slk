@@ -34,7 +34,7 @@ infer [@dis_err] x>3 |- x>0 .
 // x>3 & flow __norm
 print residue.
 
-//7
+//8
 infer [] x>3 |- x>0 .
 // x>3 & flow __norm
 print residue.

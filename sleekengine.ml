@@ -521,19 +521,22 @@ let print_residue residue =
         (*       (CF.list_formula_of_list_context s))^"\n") *)
         (*print all posible outcomes and their traces with numbering*)
       end
-    | Some (ls_ctx, print, local_dfa, dis_lerr_exc, en_lerr_exc) -> begin
+    | Some (ls_ctx, print(* , local_dfa, dis_lerr_exc, en_lerr_exc *)) -> begin
         let () = print_string "Residue:\n" in
         (* let is_empty_states = match ls_ctx with *)
         (*   | CF.SuccCtx ls -> List.length ls = 0 *)
         (*   | _ -> false *)
         (* in *)
-        let () = x_binfo_hp (add_str "print" string_of_bool) print no_pos in
-        let () = x_binfo_hp (add_str "local_dfa?" string_of_bool) local_dfa no_pos in
-        let () = x_binfo_hp (add_str "dis_lerr_exc?" string_of_bool) dis_lerr_exc no_pos in
-        let () = x_binfo_hp (add_str "en_lerr_exc?" string_of_bool) dis_lerr_exc no_pos in
+        let local_dfa = CF.is_dfa_ctx_list ls_ctx in
+        let () = x_tinfo_hp (add_str "print" string_of_bool) print no_pos in
+        let () = x_tinfo_hp (add_str "local_dfa?" string_of_bool) local_dfa no_pos in
 
-       let () = x_binfo_hp (Cprinter.string_of_list_context) ls_ctx no_pos in
+        let () = x_ninfo_hp (Cprinter.string_of_list_context) ls_ctx no_pos in
         if not local_dfa (*!Globals.disable_failure_explaining *) then
+          let dis_lerr_exc = CF.is_dis_error_exc_ctx_list ls_ctx in
+          let en_lerr_exc = CF.is_en_error_exc_ctx_list ls_ctx in
+          let () = x_tinfo_hp (add_str "dis_lerr_exc?" string_of_bool) dis_lerr_exc no_pos in
+          let () = x_tinfo_hp (add_str "en_lerr_exc?" string_of_bool) dis_lerr_exc no_pos in
           let () = if print then
             print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
                            (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
@@ -1184,7 +1187,7 @@ let run_infer_one_pass_set_states itype (ivars: ident list) (iante0s : meta_form
     in
     let comb_rs = CF.union_context_left list_rs in
     (* let _ = print_endline ("comb_rs: "^(Cprinter.string_of_list_context comb_rs)) in *)
-    let _ = CF.residues := Some (comb_rs, r, !Globals.disable_failure_explaining, List.mem INF_DE_EXC itype, (List.mem INF_ERR_MUST itype || List.mem INF_ERR_MAY itype)) in
+    let _ = CF.residues := Some (comb_rs, r(* , !Globals.disable_failure_explaining, List.mem INF_DE_EXC itype, (List.mem INF_ERR_MUST itype || List.mem INF_ERR_MAY itype) *)) in
     ((r, comb_rs, v0), pr0)
 
 
@@ -1581,7 +1584,7 @@ let process_validate exp_res opt_fl ils_es =
         (* in *)
         (**res = Fail*)
         false, [], []
-      | Some (lc, res, ldfa, lerrexc,_) -> 
+      | Some (lc, res) -> 
         begin (*res*)
           let res, fls = proc_sleek_result_validate res lc in
           let unexp =
@@ -2360,7 +2363,7 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
 let process_capture_residue (lvar : ident) =
   let flist = match !CF.residues with
     | None -> [(CF.mkTrue (CF.mkTrueFlow()) no_pos)]
-    | Some (ls_ctx, print, _,_,_) -> CF.list_formula_of_list_context ls_ctx in
+    | Some (ls_ctx, print) -> CF.list_formula_of_list_context ls_ctx in
   put_var lvar (Sleekcommons.MetaFormLCF flist)
 
 let process_print_command pcmd0 =
@@ -2396,7 +2399,7 @@ let process_cmp_command (input: ident list * ident * meta_formula list) =
   if var = "residue" then
     match !CF.residues with
     | None -> print_string ": no residue \n"
-    | Some (ls_ctx, print, _,_,_) -> begin
+    | Some (ls_ctx, print) -> begin
         if (print) then begin
           if(List.length fl = 1) then (
             let f = List.hd fl in
@@ -2413,7 +2416,7 @@ let process_cmp_command (input: ident list * ident * meta_formula list) =
   else if (var = "assumption") then(
     match !CF.residues with
     | None -> print_string ": no residue \n"
-    | Some (ls_ctx, print, _,_,_) ->(
+    | Some (ls_ctx, print) ->(
         if (print) then (
           if(List.length fl = 2) then (
             let f1,f2 = (List.hd fl, List.hd (List.tl fl)) in	    
