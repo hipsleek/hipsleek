@@ -4299,17 +4299,17 @@ and elim_exists_preserve (f0 : formula) rvars : formula = match f0 with
     in r
   | Exists _ -> report_error no_pos ("Solver.elim_exists: Exists with an empty list of quantified variables")
 
-and elim_exists_es_his_x (f0 : formula) (his:h_formula list) : formula*h_formula list =
-  let rec helper f0 hfs (* ss_ref *)=
+and elim_exists_es_his_x (f0 : formula) (* (his:h_formula list) *) : formula(* *h_formula list *) =
+  let rec helper f0 (* hfs *) (* ss_ref *)=
     match f0 with
     | Or ({ 
         formula_or_f1 = f1;
         formula_or_f2 = f2;
         formula_or_pos = pos }) ->
-      let ef1, hfs1(* ,ss_ref1 *) = helper f1 hfs (* ss_ref *) in
-      let ef2,hfs2 (* ,ss_ref2 *) = helper f2 hfs1 (* ss_ref1 *) in
-      (mkOr ef1 ef2 pos, hfs2(* ,ss_ref2 *))
-    | Base _ -> (f0, hfs)
+      let ef1(* , hfs1 *)(* ,ss_ref1 *) = helper f1 (* hfs *) (* ss_ref *) in
+      let ef2(* ,hfs2 *) (* ,ss_ref2 *) = helper f2 (* hfs1 *) (* ss_ref1 *) in
+      (mkOr ef1 ef2 pos (*, hfs2 *)(* ,ss_ref2 *))
+    | Base _ -> (f0(* , hfs *))
     | Exists ({ 
         formula_exists_qvars = qvar :: rest_qvars;
         formula_exists_heap = h;
@@ -4320,33 +4320,33 @@ and elim_exists_es_his_x (f0 : formula) (his:h_formula list) : formula*h_formula
         formula_exists_and = a;
         formula_exists_pos = pos }) ->
       let st, pp1 = MCP.get_subst_equation_memo_formula_vv p qvar in
-      let r,n_hfs = 
+      let r(* ,n_hfs *) = 
         if List.length st = 1 then
           let tmp = mkBase h pp1 vp t fl a pos in (*TO CHECK*)
           let new_baref = subst st tmp in
-          let new_hfs = List.map (h_subst st) hfs in
+          (* let new_hfs = List.map (h_subst st) hfs in *)
           (* let n_ss_ref = List.map (fun (sv1,sv2) -> (sv1, CP.subs_one st sv2)) ss_ref in *)
           let tmp2 = add_quantifiers rest_qvars new_baref in
-          let tmp3,new_hfs1(* ,n_ss_ref1 *) = helper tmp2 new_hfs (* n_ss_ref *) in
-          (tmp3,new_hfs1(* ,n_ss_ref1 *))
+          let tmp3(* ,new_hfs1 *)(* ,n_ss_ref1 *) = helper tmp2 (* new_hfs *) (* n_ss_ref *) in
+          (tmp3(* ,new_hfs1 *)(* ,n_ss_ref1 *))
         else (* if qvar is not equated to any variables, try the next one *)
           let tmp1 = mkExists rest_qvars h p vp t fl a pos in (*TO CHECK*)
-          let tmp2,hfs1(* ,ss_ref1 *) = helper tmp1 hfs (* ss_ref *) in
+          let tmp2(* ,hfs1 *)(* ,ss_ref1 *) = helper tmp1 (* hfs *) (* ss_ref *) in
           let tmp3 = add_quantifiers [qvar] tmp2 in
-          (tmp3,hfs1(* ,ss_ref1 *))
+          (tmp3(* ,hfs1 *)(* ,ss_ref1 *))
       in
-      (r,n_hfs(* ,n_ss_ref *))
+      (r(* ,n_hfs *)(* ,n_ss_ref *))
     | Exists _ -> report_error no_pos ("Solver.elim_exists: Exists with an empty list of quantified variables")
   in
-  helper f0 his (* subst_ref *)
+  helper f0 (* his *) (* subst_ref *)
 
-and elim_exists_es_his (f0 : formula) (his:h_formula list) (* ss_ref *) : formula*h_formula list =
+and elim_exists_es_his (f0 : formula) (* (his:h_formula list) *) (* ss_ref *) : formula(* *h_formula list *) =
   let pr1 = pr_list !print_h_formula in
   (* let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
-  let pr_out = (pr_pair !print_formula pr1) in
-  Debug.no_2 "elim_exists_es_his"
-    !print_formula pr1 pr_out
-    elim_exists_es_his_x f0 his
+  let pr_out = (* (pr_pair !print_formula pr1) *) !print_formula in
+  Debug.no_1 "elim_exists_es_his"
+    !print_formula  pr_out
+    elim_exists_es_his_x f0
 
 and formula_of_disjuncts (f:formula list) : formula=
   match f with
@@ -4569,7 +4569,7 @@ and check_name_clash (v : CP.spec_var) (f : formula) : bool =
 (* x+x' o[x'->fx] x'=x+1 --> x+fx & x'=fx+1 *)
 
 (*transform history also*)
-and compose_formula_new (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr history (pos : loc) =
+and compose_formula_new (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr (* history *) (pos : loc) =
   let rs = CP.fresh_spec_vars x in
   (*--- 09.05.2000 *)
   (*let () = (print_string ("\n[cformula.ml, line 533]: fresh name = " ^ (string_of_spec_var_list rs) ^ "!!!!!!!!!!!\n")) in*)
@@ -4578,12 +4578,12 @@ and compose_formula_new (delta : formula) (phi : formula) (x : CP.spec_var list)
   let rho2 = List.combine (List.map CP.to_primed x) rs in
   let new_delta = subst rho2 delta in
   let new_phi = subst rho1 phi in
-  let new_history = List.map (h_subst rho2) history in
+  (* let new_history = List.map (h_subst rho2) history in *)
   let new_f = normalize_keep_flow new_delta new_phi flow_tr pos in
   let () = must_consistent_formula "compose_formula 1" new_f in
   let resform = push_exists rs new_f in
   let () = must_consistent_formula "compose_formula 2" resform in
-  resform,new_history,rho2
+  resform,(* new_history, *)rho2
 
 and compose_formula_x (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) =
   let rs = CP.fresh_spec_vars x in
@@ -9140,7 +9140,7 @@ type entail_state = {
   es_conseq_pure_lemma : CP.formula; (*conseq of entailment before rhs_plit. for lemmasyn*)
   (* heaps that have been replaced by lemma rewriting *)
   (* to be used for xpure conversion *)
-  es_history : h_formula list; (* for sa *)
+  (* es_history : h_formula list;  *)(* for sa: no longer used *)
   es_evars : CP.spec_var list; (* existential variables on RHS *)
 
   (* WN : What is es_pure for? *)
@@ -9580,7 +9580,7 @@ let empty_es flowt grp_lbl pos =
     es_ho_vars_map = [];
     es_heap_lemma = [];
     es_conseq_pure_lemma = CP.mkTrue pos;
-    es_history = [];
+    (* es_history = []; *)
     es_pure = MCP.mkMTrue pos;
     es_evars = [];
     (* es_must_match = false; *)
@@ -12018,9 +12018,9 @@ and compose_context_formula_x (ctx : context) (phi : formula) (x : CP.spec_var l
         let new_c2 = compose_context_formula_x ctx phi2 x force_sat flow_tr pos in
         let res = (mkOCtx new_c1 new_c2 pos ) in
         res
-      | _ -> let new_es_f,new_history,rho2 = compose_formula_new es.es_formula phi x flow_tr es.es_history pos in
+      | _ -> let new_es_f,(* new_history, *)rho2 = compose_formula_new es.es_formula phi x flow_tr (* es.es_history *) pos in
         Ctx {es with es_formula = new_es_f;
-                     es_history = new_history;
+                     (* es_history = new_history; *)
                      (* es_subst_ref = rho2; *)
                      es_unsat_flag = (not force_sat) && es.es_unsat_flag;}
     end
@@ -13907,7 +13907,7 @@ let clear_entailment_es_pure (es :entail_state) = {es with es_pure = MCP.mkMTrue
 *)
 
 let clear_entailment_vars (es :entail_state) : entail_state = 
-  {es with es_history = es.es_history@[es.es_heap];
+  {es with (* es_history = es.es_history@[es.es_heap]; *)
            es_heap = HEmp;
            es_evars = [];
            es_ivars = [];
@@ -13917,7 +13917,7 @@ let clear_entailment_vars (es :entail_state) : entail_state =
   }
 
 let clear_entailment_history_es_es (es :entail_state) : entail_state = 
-  {es with es_history = es.es_history@(get_hdnodes_hrel_hf es.es_heap);
+  {es with (* es_history = es.es_history@(get_hdnodes_hrel_hf es.es_heap); *)
            es_heap = HEmp;
   }
 
@@ -13926,7 +13926,7 @@ let clear_entailment_history_es2 xp (es :entail_state) :entail_state =
   (* TODO : this is clearing more than es_heap since qsort-tail.ss fails otherwise *)
   let hf = es.es_heap in
   (* let old_history =  if is_data hf then es.es_history@[hf] else es.es_history in *)
-  let old_history =  [] in
+  (* let old_history =  [] in *)
   (* adding xpure0 of es_heap into es_formula *)
   let es_f = match xp hf with
     | None -> es.es_formula
@@ -13934,7 +13934,7 @@ let clear_entailment_history_es2 xp (es :entail_state) :entail_state =
   in 
   {(empty_es (mkTrueFlow ()) es.es_group_lbl no_pos) with
    es_formula = es_f;
-   es_history = old_history;
+   (* es_history = old_history; *)
    es_path_label = es.es_path_label;
    es_prior_steps = es.es_prior_steps;
    es_var_measures = es.es_var_measures;
@@ -13973,7 +13973,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
   (* TODO : this is clearing more than es_heap since qsort-tail.ss fails otherwise *)
   let hf = es.es_heap in
   (* let old_history =  if is_data hf then es.es_history@[hf] else es.es_history in *)
-  let old_history =  if (*is_data*) is_empty_heap hf then es.es_history else es.es_history@(get_hdnodes_hrel_hf hf) in
+  (* let old_history =  if (\*is_data*\) is_empty_heap hf then es.es_history else es.es_history@(get_hdnodes_hrel_hf hf) in *)
   (* adding xpure0 of es_heap into es_formula *)
   let es_f = match xp hf with
     | None -> es.es_formula
@@ -13985,7 +13985,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
     (empty_es (mkTrueFlow ()) es.es_group_lbl no_pos) with
     es_formula = es_f;
     (* es_heap = hf; *)
-    es_history = old_history;
+    (* es_history = old_history; *)
     es_path_label = es.es_path_label;
     es_cond_path = es.es_cond_path ;
     es_prior_steps = es.es_prior_steps;

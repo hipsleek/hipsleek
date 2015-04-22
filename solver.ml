@@ -2616,7 +2616,7 @@ and entail_state_elim_exists_x es =
   let pr_h = Cprinter.string_of_h_formula in
   let ff = es.es_formula in
   x_tinfo_hp (add_str "f(b4 elim_exists_es_his)" pr_f) ff no_pos;
-  let f_prim,new_his  = elim_exists_es_his ff es.es_history in
+  let f_prim(* ,new_his *)  = elim_exists_es_his ff (* es.es_history *) in
   (* 05.06.08 *)
   (* we also try to eliminate exist vars for which a find a substitution of the form v = exp from the pure part *)
   (* let () = print_string("[solver.ml, elim_exists_ctx]: Formula before exp exist elim: " ^ Cprinter.string_of_formula f_prim ^ "\n") in *)
@@ -2626,7 +2626,7 @@ and entail_state_elim_exists_x es =
      @5! f(b4 elim_exists_es_his): 
      x::cell<v>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
   *)
-  x_tinfo_hp (add_str "new_his(after elim_exists_es_his)" (pr_list pr_h)) new_his no_pos;
+  (* x_tinfo_hp (add_str "new_his(after elim_exists_es_his)" (pr_list pr_h)) new_his no_pos; *)
   x_tinfo_hp (add_str "f(after elim_exists_es_his)" pr_f) f_prim no_pos;
   let f =
     (* TNT: Do not eliminate exists when doing TNT inference *)
@@ -2648,7 +2648,7 @@ and entail_state_elim_exists_x es =
   let simpl_fl = fl (*flows have nothing to simplify to*)in
   let simpl_f = CF.mkExists qvar h simpl_p vp t simpl_fl (CF.formula_and_of_formula base) (CF.pos_of_formula base) in (*TO CHECK*)
   Ctx{es with es_formula = simpl_f;
-              es_history = new_his;
+              (* es_history = new_his; *)
               (* es_subst_ref = n_ss_ref; *)
      }   (*assuming no change in cache formula*)
 

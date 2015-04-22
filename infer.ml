@@ -2855,7 +2855,7 @@ let generate_error_constraints prog es lhs rhs_hf lhs_hps es_cond_path pos=
     es lhs rhs_hf
 
 let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
-    ls_unknown_ptrs unk_pure unk_svl no_es_history lselected_hpargs rselected_hpargs  hds hvs lhras lhrs rhras rhrs leqs reqs eqNull prog_vars lvi_ni_svl classic_nodes pos =
+    ls_unknown_ptrs unk_pure unk_svl (* no_es_history *) lselected_hpargs rselected_hpargs  hds hvs lhras lhrs rhras rhrs leqs reqs eqNull prog_vars lvi_ni_svl classic_nodes pos =
   (*****************INTERNAL********************)
   let update_fb (fb,r_hprels,post_hps, hps,hfs) (is_pre, unknown_ptrs) =
     match unknown_ptrs with
@@ -2977,10 +2977,11 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
   (*add roots from history*)
   let matched_svl = CF.get_ptrs (*es.CF.es_heap*) lhs_b.CF.formula_base_heap in
   let matched_svl1 = (List.fold_left Sautil.close_def matched_svl (leqs@reqs)) in
-  let sel_his = List.concat (List.map (fun hf -> match hf with
-      | CF.DataNode hd -> if CP.mem_svl hd.CF.h_formula_data_node matched_svl1 then [] else [hf]
-      | _ -> [hf]
-    ) no_es_history) in
+  (* let sel_his = List.concat (List.map (fun hf -> match hf with *)
+  (*     | CF.DataNode hd -> if CP.mem_svl hd.CF.h_formula_data_node matched_svl1 then [] else [hf] *)
+  (*     | _ -> [hf] *)
+  (*   ) no_es_history) in *)
+  let sel_his = [] in
   DD.ninfo_hprint (add_str  "  new_rhs_b" Cprinter.string_of_formula_base) new_rhs_b pos;
   let lhs_b0 = CF.mkAnd_base_pure lhs_b (MCP.mix_of_pure unk_pure) pos in
   let group_unk_svl = List.concat (List.map (fun ass -> ass.CF.unk_svl) Log.current_hprel_ass_stk # get_stk) in
@@ -2992,7 +2993,7 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
                                               new_hrels)) es.CF.es_crt_holes ((* es.CF.es_heap:: *)(*no_es_history*) sel_his)
       total_unk_svl prog_vars lvi_ni_svl classic_nodes in
   (*simply add constraints: *)
-  let hprel_def = List.concat (List.map CF.get_ptrs (no_es_history@(CF.get_hnodes lhs_b.CF.formula_base_heap
+  let hprel_def = List.concat (List.map CF.get_ptrs ((* no_es_history@ *)(CF.get_hnodes lhs_b.CF.formula_base_heap
   (* es.CF.es_heap *))))
   in
   (*split the constraints relating between pre- andxs post-preds*)
@@ -3339,7 +3340,7 @@ let infer_collect_hp_rel_x prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_
             end
           else
             (*********TODO: REMOVE HIS*****************)
-            let no_es_history =  [] (* replacing es.CF.es_history *) in
+            (* let no_es_history =  [] *) (* replacing es.CF.es_history *) (* in *)
             (* let no_es_history = es.CF.es_history in *)
             (* let his_ptrs = List.concat (List.map Sautil.get_ptrs no_es_history) in *)
             (************** END HIS **************)
@@ -3368,7 +3369,7 @@ let infer_collect_hp_rel_x prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_
               let r_new_hfs,ass_lhs_b, m,rvhp_rels, r_post_hps,hp_rel_list,n_es_heap_opt, ass_lhs =
                 generate_constraints prog es rhs n_lhs_b1 ass_guard rhs_b1
                   defined_hps1 ls_unknown_ptrs unk_pure unk_svl
-                  no_es_history lselected_hpargs2 rselected_hpargs
+                  (* no_es_history *) lselected_hpargs2 rselected_hpargs
                   hds hvs lhras lhrs rhras rhrs leqs1 reqs1 eqNull subst_prog_vars lvi_ni_svl classic_nodes pos in
               (* generate assumption for memory error *)
               let oerror_es = generate_error_constraints prog es ass_lhs rhs
