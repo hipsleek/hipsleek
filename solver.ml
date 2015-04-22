@@ -3685,16 +3685,16 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
         CP.mkOr acc new_f None no_pos
       ) (CP.mkFalse no_pos) ec.CF.formula_case_branches
   in
-  let is_not_infer_false_unknown =
-    let () = Debug.ninfo_hprint (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
-    let ctx_infer_vars_rel = CF.collect_infer_vars_rel ctx in
-    let () = Debug.ninfo_hprint (add_str "ctx_infer_vars_rel" !CP.print_svl) ctx_infer_vars_rel no_pos in
-    let conseq_vars = CF.struc_fv conseq in
-    let () = Debug.ninfo_hprint (add_str "conseq_vars" !CP.print_svl) conseq_vars no_pos in
-    not (List.exists (fun v -> List.mem v ctx_infer_vars_rel) conseq_vars)
-  in
-  let () = Debug.ninfo_hprint (add_str "is_not_infer_false_unknown" (string_of_bool)) is_not_infer_false_unknown no_pos in
-  if (isAnyFalseCtx ctx) (* && is_not_infer_false_unknown *) then
+  (* let is_not_infer_false_unknown = *)
+  (*   let () = Debug.ninfo_hprint (add_str "ctx" Cprinter.string_of_context) ctx no_pos in *)
+  (*   let ctx_infer_vars_rel = CF.collect_infer_vars_rel ctx in *)
+  (*   let () = Debug.ninfo_hprint (add_str "ctx_infer_vars_rel" !CP.print_svl) ctx_infer_vars_rel no_pos in *)
+  (*   let conseq_vars = CF.struc_fv conseq in *)
+  (*   let () = Debug.ninfo_hprint (add_str "conseq_vars" !CP.print_svl) conseq_vars no_pos in *)
+  (*   not (List.exists (fun v -> List.mem v ctx_infer_vars_rel) conseq_vars) *)
+  (* in *)
+  (* let () = Debug.ninfo_hprint (add_str "is_not_infer_false_unknown" (string_of_bool)) is_not_infer_false_unknown no_pos in *)
+  if (isAnyFalseCtx ctx) && !Globals.infer_false_imply_unknown (* && is_not_infer_false_unknown *) then
     (* let to_add = (List.map (fun ut -> CP.mk_typed_spec_var (RelT [Int]) (ut.ut_name)) prog.prog_ut_decls) in *)
     let pr_svl = Cprinter.string_of_typed_spec_var_list in
     (* let () = x_binfo_hp (add_str "UT added to false?" pr_svl) to_add no_pos in *)
@@ -3703,12 +3703,13 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
     let false_iv = false_es.CF.es_infer_vars in
     let rhs = get_pure_conseq_from_struc conseq in
     let rel_id_conseq = CP.get_rel_id_list rhs in
-    let () = Debug.ninfo_hprint (add_str "false_iv_rel" pr_svl) false_iv_rel no_pos in
-    let () = Debug.ninfo_hprint (add_str "false_iv" pr_svl) false_iv no_pos in
-    let () = Debug.ninfo_hprint (add_str "rel_id_conseq" pr_svl) rel_id_conseq no_pos in
-    let false_es = { false_es with
-                     CF.es_infer_vars_rel = CP.remove_dups_svl (false_iv_rel@false_iv@rel_id_conseq) }
-    in
+    let () = x_binfo_hp (add_str "false_iv_rel" pr_svl) false_iv_rel no_pos in
+    let () = x_binfo_hp (add_str "false_iv" pr_svl) false_iv no_pos in
+    let () = x_binfo_hp (add_str "rel_id_conseq" pr_svl) rel_id_conseq no_pos in
+    (* WN : why do we combine iv,iv_rel and also rel_id_conseq? *)
+    (* let false_es = { false_es with *)
+    (*                  CF.es_infer_vars_rel = CP.remove_dups_svl (false_iv_rel@false_iv@rel_id_conseq) } *)
+    (* in *)
     let () = Debug.ninfo_hprint (add_str "rhs" Cprinter.string_of_pure_formula) rhs no_pos in
     let () = Debug.ninfo_hprint (add_str "conseq" Cprinter.string_of_struc_formula) conseq no_pos in
     (* let conseq_flow = !Exc.GTable.norm_flow_int in *)

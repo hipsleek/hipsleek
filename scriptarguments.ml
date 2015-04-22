@@ -281,6 +281,8 @@ let common_arguments = [
   ("--dis-locklevel", Arg.Clear Globals.allow_locklevel,"disable locklevels during verification");
   ("--dis-lsmu-infer", Arg.Clear Globals.allow_lsmu_infer,"disable simple inference of lsmu");
   ("--en-lsmu-infer", Arg.Set Globals.allow_lsmu_infer,"enable simple inference of lsmu");
+  ("--en-false-unk-infer", Arg.Set Globals.infer_false_imply_unknown,"Enable false -> unknown to be inferred");
+  ("--dis-false-unk-infer", Arg.Clear Globals.infer_false_imply_unknown,"Disable false -> unknown to be inferred");
   ("--dis-para", Arg.Unit Perm.disable_para,"disable concurrency verification");
   ("--en-para", Arg.Unit Perm.enable_para,"enable concurrency verification");
   ("--dis-change-flow", Arg.Clear Globals.change_flow,"disable change spec flow");

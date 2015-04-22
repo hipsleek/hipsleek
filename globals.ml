@@ -1085,6 +1085,7 @@ let web_compile_flag = ref false (*enable compilation flag for website*)
 *)
 
 let allow_lsmu_infer = ref false
+let infer_false_imply_unknown = ref false
 
 let allow_norm = ref true
 
