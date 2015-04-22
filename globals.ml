@@ -181,7 +181,7 @@ type typ =
   | HpT (* heap predicate relation type *)
   | Tree_sh
   | FuncT of typ * typ
-  | UtT (* unknown temporal type *)
+  | UtT of bool (* unknown temporal type - pre(false)/post(true)*)
   | Bptyp
   | Pointer of typ (* base type and dimension *)
 (* | SLTyp (* type of ho formula *) *)
@@ -519,7 +519,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
   | FuncT (t1, t2) -> (string_of_typ t1) ^ "->" ^ (string_of_typ t2)
-  | UtT        -> "UtT"
+  | UtT b        -> "UtT("^(string_of_bool b)^")"
   | HpT        -> "HpT"
   (* | SLTyp -> "SLTyp" *)
   | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
@@ -565,7 +565,7 @@ let rec string_of_typ_alpha = function
   | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
   | FuncT (t1, t2) -> (string_of_typ t1) ^ "_" ^ (string_of_typ t2)
-  | UtT -> "UtT"
+  | UtT b        -> "UtT("^(string_of_bool b)^")"
   | HpT        -> "HpT"
   (* | SLTyp -> "SLTyp" *)
   | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
@@ -1085,7 +1085,7 @@ let web_compile_flag = ref false (*enable compilation flag for website*)
 *)
 
 let allow_lsmu_infer = ref false
-let infer_false_imply_unknown = ref false
+let infer_false_imply_unknown = ref true (* to support strongest post infer *)
 
 let allow_norm = ref true
 

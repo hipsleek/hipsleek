@@ -86,7 +86,7 @@ let rec new_string_of_typ (x:typ) : string = match x with
   | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
   | FuncT (t1, t2) -> (string_of_typ t1) ^ "->" ^ (string_of_typ t2)
-  | UtT        -> "UtT"
+  | UtT b        -> "UtT("^(string_of_bool b)^")"
   | HpT        -> "HpT"
   (* | SLTyp -> "SLTyp" *)
   | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
@@ -4044,8 +4044,8 @@ and ident_to_spec_var id n_tl p prog =
               CP.SpecVar (ftyp, id, pr)
             with _ -> 
               try
-                let todo_unk = I.look_up_ut_def_raw prog.I.prog_ut_decls id in
-                CP.SpecVar(UtT, id, pr)
+                let ut_id = I.look_up_ut_def_raw prog.I.prog_ut_decls id in
+                CP.SpecVar(UtT (not(ut_id.ut_is_pre)), id, pr)
               with _ -> v
     else v
 
@@ -6225,7 +6225,7 @@ and default_value (t :typ) pos : C.exp =
     failwith "default_value: RelT can only be used for constraints"
   | FuncT _ ->
     failwith "default_value: FuncT can only be used for constraints"
-  | UtT ->
+  | UtT _ ->
     failwith "default_value: UtT can only be used for constraints"
   | HpT ->
     failwith "default_value: HpT can only be used for constraints"

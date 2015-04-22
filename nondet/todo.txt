@@ -228,6 +228,45 @@ add_infer_vars_ctx@35 EXIT: es_formula:
  es_infer_vars_rel: []
  es_unsat_flag: false
 ==================================================================
+#ex13.slk --print-type
+
+infer [PP] false |- PP(x).
+print residue.
+
+PP:RelT([])
+INPUT 0: [][fpostXXX:void] 
+Could we not infer UtT(true) to indicate that it
+is a unknown temporal post-condition?
+UtT(false) is unknown temporal pre-condition
+
+We should later add to es-infer_vars_rel rather than es_infer_vars.
+                         es_infer_vars: [fpostXXX]
+                         es_infer_vars_rel: []] <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+=============================================
+
+<1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELDEFN PP: ( false) -->  PP(x)]
+[[empty]]
+*/
+
+infer [fpostXXX] false |- fpostXXX(x).
+print residue.
+/*
+                         es_infer_vars: [fpostXXX]
+                         es_infer_vars_rel: []] <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+# [fpostXXX] should be in es_infer_vars_rel
+*/
+
+infer [@term] false |- fpostXXX(x).
+print residue.
+
+/*
+Need to pick up fpostXXX based on @term..
+
+                         es_infer_obj: [@term]
+                         es_infer_vars_rel: []] <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
 ==================================================================
 ==================================================================
 ==================================================================
