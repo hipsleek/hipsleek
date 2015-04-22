@@ -27,9 +27,24 @@ We should later add to es-infer_vars_rel rather than es_infer_vars.
 [[empty]]
 */
 
-infer [fpostXXX] false |- fpostXXX(x).
+//(2)
+infer [fpostXXX] false |- kkk>0 & fpostXXX(x).
 print residue.
 /*
+# ex13.slk
+
+Why do fpostXXX get changed to TermR@f[0,true]?
+However, --pcp still shows as:
+run_infer:
+ hfalse&false&{FLOW,(4,5)=__norm#E}[] [fpostXXX] |-  EBase emp&0<kkk & fpostXXX_0(x)[]&{FLOW,(4,5)=__norm#E}[]
+[Warning] False ctx
+
+gather_type_info_pure@22@20@19
+gather_type_info_pure inp1 :(kkk > 0) & (TermR@f[0, true])
+gather_type_info_pure inp2 :[(Anon_full_perm:17:float)]
+gather_type_info_pure@22 EXIT:[(kkk:18:int)(TVar__18:18:int)(Anon_full_perm:17:float)]
+
+
                          es_infer_vars: [fpostXXX]
                          es_infer_vars_rel: []] <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
 

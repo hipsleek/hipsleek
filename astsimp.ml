@@ -2318,12 +2318,12 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
      | Some a -> 
        let () = Mem.check_mem_formula vdef prog.I.prog_data_decls in 
        let (new_typ_mem,n_tl) = fresh_tvar n_tl in 
-       let (n_tl,_) = gather_type_info_exp prog a.IF.mem_formula_exp n_tl new_typ_mem in 
+       let (n_tl,_) = x_add gather_type_info_exp prog a.IF.mem_formula_exp n_tl new_typ_mem in 
        (n_tl,trans_view_mem vdef.I.view_mem n_tl)
      | None -> (n_tl,None)
    ) in 
    let inv = if(!Globals.allow_mem) then Mem.add_mem_invariant inv vdef.I.view_mem else inv in
-   let n_tl = gather_type_info_pure prog inv n_tl in 
+   let n_tl = x_add gather_type_info_pure prog inv n_tl in 
    let inv_pf = x_add trans_pure_formula inv n_tl in   
    (* Thai : pf - user given invariant in core form *) 
    let inv_pf = x_add Cpure.arith_simplify 1 inv_pf in
@@ -2903,7 +2903,7 @@ and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
   let rel_sv_vars = List.map (fun (var_type, var_name) -> CP.SpecVar (trans_type prog var_type pos, var_name, Unprimed)) rdef.I.rel_typed_vars in
   let n_tl = List.map (fun (var_type, var_name) -> (var_name,{ sv_info_kind = (trans_type prog var_type pos);id = fresh_int () })) rdef.I.rel_typed_vars in
   (* Need to collect the type information before translating the formula *)
-  let n_tl = gather_type_info_pure prog rdef.I.rel_formula n_tl in
+  let n_tl = x_add gather_type_info_pure prog rdef.I.rel_formula n_tl in
   let crf = x_add trans_pure_formula rdef.I.rel_formula n_tl in
   let crdef = {C.rel_name = rdef.I.rel_name; 
                C.rel_vars = rel_sv_vars;
@@ -2931,7 +2931,7 @@ and trans_templ (prog: I.prog_decl) (tdef: I.templ_decl): C.templ_decl =
           (List.hd unk_exps) (List.combine (List.tl unk_exps) c_params) in
       Some body
     | Some bd -> 
-      let n_tl = gather_type_info_exp prog bd n_tl tdef.I.templ_ret_typ in
+      let n_tl = x_add gather_type_info_exp prog bd n_tl tdef.I.templ_ret_typ in
       Some (trans_pure_exp bd (fst n_tl))
   in
   let c_templ = {
@@ -2961,7 +2961,7 @@ and trans_hp_x (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_dec
       hpdef.I.hp_typed_inst_vars in
   let n_tl = List.map (fun (var_type, var_name, i) -> (var_name,{ sv_info_kind = (trans_type prog var_type pos);id = fresh_int () })) hpdef.I.hp_typed_inst_vars in
   (* Need to collect the type information before translating the formula *)
-  let n_tl = gather_type_info_formula prog hpdef.I.hp_formula n_tl false in
+  let n_tl = x_add gather_type_info_formula prog hpdef.I.hp_formula n_tl false in
   let (n_tl,crf) = trans_formula  prog false [] false hpdef.I.hp_formula n_tl false in
   (*non-ptrs are @NI by default*)
   let hp_sv_vars1 = List.map (fun (sv, i_kind) ->
@@ -2994,8 +2994,8 @@ and trans_axiom (prog : I.prog_decl) (adef : I.axiom_decl) : C.axiom_decl =
 *)
 and trans_axiom_x (prog : I.prog_decl) (adef : I.axiom_decl) : C.axiom_decl =
   (* Collect types of variables in the formula *)
-  let n_tl = gather_type_info_pure prog adef.I.axiom_hypothesis [] in
-  let n_tl = gather_type_info_pure prog adef.I.axiom_conclusion n_tl in
+  let n_tl = x_add gather_type_info_pure prog adef.I.axiom_hypothesis [] in
+  let n_tl = x_add gather_type_info_pure prog adef.I.axiom_conclusion n_tl in
   (* Translate the hypothesis and conclusion *)
   let chyp = x_add trans_pure_formula adef.I.axiom_hypothesis n_tl in
   let ccln = x_add trans_pure_formula adef.I.axiom_conclusion n_tl in
@@ -6898,7 +6898,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (prepost_flag:bool) (quantify
         let (n_tl,n_cl) = aux tl b in
         (n_tl,CF.mkEList_no_flatten2 n_cl)
   ) in
-  let n_tl = gather_type_info_struc_f prog f0 tlist in
+  let n_tl = x_add gather_type_info_struc_f prog f0 tlist in
   let (n_tl,r) = trans_struc_formula fvars n_tl f0 in
   let () = x_tinfo_hp (add_str "fvars" (pr_list pr_id)) fvars no_pos in
   let cfvhp1 = List.map (fun c-> trans_var_safe (c,Primed) UNK n_tl (IF.pos_of_struc_formula f0)) fvars in
@@ -7052,8 +7052,8 @@ and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) se
 and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect (f0 : IF.formula) tlist (clean_res:bool) : (spec_var_type_list*CF.formula) =
   let helper_one_formula (f:IF.one_formula) tl =
     if sep_collect then 
-      let n_tl = gather_type_info_pure prog f.IF.formula_pure tl in
-      gather_type_info_heap prog f.IF.formula_heap n_tl
+      let n_tl = x_add gather_type_info_pure prog f.IF.formula_pure tl in
+      x_add gather_type_info_heap prog f.IF.formula_heap n_tl
     else tl in
   let rec helper f0 tl =
     match f0 with
@@ -7071,8 +7071,8 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
         let (n_tl,rl) = res_retrieve tl clean_res fl in
         let n_tl = 
           if sep_collect then
-            let n_tl = gather_type_info_pure prog p n_tl in
-            gather_type_info_heap prog hh n_tl
+            let n_tl = x_add gather_type_info_pure prog p n_tl in
+            x_add gather_type_info_heap prog hh n_tl
           else n_tl in
         let todo_unk = List.map (fun x -> helper_one_formula x tl) a in
         (* transform bexpr *)
@@ -7109,7 +7109,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
         let n_tl = (
           if sep_collect then 
             let n_tl = gather_type_info_pure prog p n_tl in
-            gather_type_info_heap prog h n_tl
+            x_add gather_type_info_heap prog h n_tl
           else n_tl 
         ) in 
         let n_tl = List.fold_right helper_one_formula a n_tl in
@@ -7350,7 +7350,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
         let ho_args = List.rev ho_args in
         if (deref > 0) then (
           let (f1, newvars1) = expand_dereference_node f pos in
-          let n_tl = gather_type_info_heap prog f1 tl in
+          let n_tl = x_add gather_type_info_heap prog f1 tl in
           let hf, tf, newvars2, n_tl = linearize_heap f1 pos n_tl in
           (hf, tf, newvars1 @ newvars2, n_tl)
         )
@@ -10514,10 +10514,10 @@ and trans_expected_ass prog ass =
   let trans_constr prog constr = 
     let if1, if2 = constr in
     let if1 = case_normalize_formula prog [] if1 in
-    let n_tl = gather_type_info_formula prog if1 [] false in
+    let n_tl = x_add gather_type_info_formula prog if1 [] false in
     let (n_tl,f1) = trans_formula prog false [] false if1 n_tl false in
     let if2 = case_normalize_formula prog [] if2 in
-    let n_tl = gather_type_info_formula prog if2 n_tl false in
+    let n_tl = x_add gather_type_info_formula prog if2 n_tl false in
     let (n_tl,f2) = trans_formula prog false [] false if2 n_tl false in
     (f1,f2)
   in
