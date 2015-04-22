@@ -144,7 +144,7 @@ Residue:
 Need to support @err_may and @err_must for
 local infer error as exception..
 ==========================================================================
-# e21j --efa-exc
+# ex21j --efa-exc
 
 infer [@dis_err] x>0 |- x<0 .
 // failctx must_err

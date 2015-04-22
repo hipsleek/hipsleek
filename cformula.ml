@@ -9380,6 +9380,38 @@ let rec is_en_error_exc_ctx c=
   match c with
     | Ctx es -> is_en_error_exc es
     | OCtx (c1,c2) -> is_en_error_exc_ctx c1 || is_en_error_exc_ctx c2
+
+let is_en_error_exc_ctx_list lc=
+  match lc with
+    | FailCtx (_,c,_) -> is_en_error_exc_ctx c
+    | SuccCtx cs -> List.exists is_en_error_exc_ctx cs
+
+let is_dis_error_exc es=
+    es.es_infer_obj # is_dis_err
+
+let rec is_dis_error_exc_ctx c=
+  match c with
+    | Ctx es -> is_dis_error_exc es
+    | OCtx (c1,c2) -> is_dis_error_exc_ctx c1 || is_dis_error_exc_ctx c2
+
+let is_dis_error_exc_ctx_list lc=
+  match lc with
+    | FailCtx (_,c,_) -> is_dis_error_exc_ctx c
+    | SuccCtx cs -> List.exists is_dis_error_exc_ctx cs
+
+let is_dfa es=
+    es.es_infer_obj # is_dfa
+
+let rec is_dfa_ctx c=
+  match c with
+    | Ctx es -> is_dfa es
+    | OCtx (c1,c2) -> is_dfa_ctx c1 || is_dfa_ctx c2
+
+let is_dfa_ctx_list lc=
+  match lc with
+    | FailCtx (_,c,_) -> is_dfa_ctx c
+    | SuccCtx cs -> List.exists is_dfa_ctx cs
+
 (****************************************************)
 (********************CEX**********************)
 (****************************************************)
@@ -17747,18 +17779,18 @@ let is_no_heap_struc_formula (e : struc_formula) : bool =
   let pr = !print_struc_formula in
   Debug.no_1 "is_no_heap_struc_formula" pr string_of_bool is_no_heap_struc_formula e
 
-let residues =  ref (None : (list_context * bool * bool * bool * bool) option)   
+let residues =  ref (None : (list_context * bool (* * bool * bool * bool *)) option)   
 (* the second parameter 'bool' is used for printing *)
 
-let set_residue b lc ldfa dis_lerr_exc en_lerr_exc  =
-  residues := Some (lc,b,ldfa,dis_lerr_exc,en_lerr_exc)
+let set_residue b lc (* ldfa dis_lerr_exc en_lerr_exc *)  =
+  residues := Some (lc,b(* ,ldfa,dis_lerr_exc,en_lerr_exc *))
 
 let clear_residue () =
   residues := None
 
 let get_res_residue () =
   match !residues with
-  | Some (_, res,_,_,_) -> res
+  | Some (_, res) -> res
   | None -> false
 
 (*eliminates a fv that is otherwise to be existentially quantified, it does so only if the substitution is not
