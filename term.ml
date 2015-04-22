@@ -1326,7 +1326,9 @@ let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) check_fals
           (* (is_Loop_es es) && not (isAnyConstFalse es.es_formula) *)
           if (is_Loop_es es) then
             let rs, _ = wrap_proving_kind PK_NonTerm_Falsify check_falsify (Ctx es) in
+            let infer_assume_conds = Infer.collect_pre_pure_list_context rs in
             let () = x_tinfo_hp (add_str "Check falsity res" Cprinter.string_of_list_context) rs pos in
+            let () = x_binfo_hp (add_str "Inferred assume" (pr_list Cprinter.string_of_pure_formula)) infer_assume_conds pos in
             (isFailCtx rs)
           else false
         ) loop_es in

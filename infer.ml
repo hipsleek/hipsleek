@@ -1854,10 +1854,10 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
 
   (*let _ = print_endline("input rhs_mix "^(Cprinter.string_of_mix_formula rhs_mix)) in*)
   let ivs = estate.es_infer_vars_rel(* @estate.es_infer_vars_hp_rel *)  in
-  x_binfo_hp (add_str "infer_vars_rel" Cprinter.string_of_spec_var_list) ivs no_pos;
-  x_binfo_hp (add_str "infer_vars" Cprinter.string_of_spec_var_list) estate.es_infer_vars no_pos;
-  x_binfo_hp (add_str "infer_vars_sel_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_hp_rel no_pos;
-  x_binfo_hp (add_str "infer_vars_sel_post_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_post_hp_rel no_pos;
+  x_tinfo_hp (add_str "infer_vars_rel" Cprinter.string_of_spec_var_list) ivs no_pos;
+  x_tinfo_hp (add_str "infer_vars" Cprinter.string_of_spec_var_list) estate.es_infer_vars no_pos;
+  x_tinfo_hp (add_str "infer_vars_sel_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_hp_rel no_pos;
+  x_tinfo_hp (add_str "infer_vars_sel_post_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_post_hp_rel no_pos;
   (*add instance of relational s0-pred*)
   (* let new_es_infer_vars_rel = find_close_infer_vars_rel lhs_mix estate.CF.es_infer_vars_rel in *)
   (* let estate = { estate with CF.es_infer_vars_rel = new_es_infer_vars_rel} in *)

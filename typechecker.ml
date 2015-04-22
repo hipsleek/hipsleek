@@ -1434,8 +1434,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   begin
                     match pure_info with
                     | None -> 
-                      let () = x_binfo_pp ("WN : place to act on infer_assume") no_pos in
-                      let () = if ivars!=[] then x_binfo_hp (add_str "infer_assume" Cprinter.string_of_spec_var_list) ivars pos in
+                      let () = x_tinfo_pp ("WN : place to act on infer_assume") no_pos in
+                      let () = if ivars!=[] then x_tinfo_hp (add_str "infer_assume" Cprinter.string_of_spec_var_list) ivars pos in
                       if ivars==[] then ts
                       else (* failwith "to impl" *)
                           List.map (fun (bf,es,bl) ->
