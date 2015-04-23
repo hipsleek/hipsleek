@@ -76,19 +76,60 @@ let wrap_classic et f a =
     (do_classic_frame_rule := flag;
      raise e)
 
-let wrap_efa_exc et f a =
-  let flag = !enable_error_as_exc in
-  enable_error_as_exc := (match et with
-      | None -> infer_const_obj # get INF_DE_EXC  (* !opt_efa *)
-      | Some b -> b);
+(* let wrap_efa_exc et f a = *)
+(*   let flag = !enable_error_as_exc in *)
+(*   enable_error_as_exc := (match et with *)
+(*       | None -> infer_const_obj # get INF_DE_EXC  (\* !opt_efa *\) *)
+(*       | Some b -> b); *)
+(*   try *)
+(*     let res = f a in *)
+(*     (\* restore flag enable_error_as_exc  *\) *)
+(*     enable_error_as_exc := flag; *)
+(*     res *)
+(*   with _ as e -> *)
+(*     (enable_error_as_exc := flag; *)
+(*      raise e) *)
+
+let wrap_inf_obj iobj f a =
+  let flag = not(infer_const_obj # get iobj) in
+  if flag then infer_const_obj # set iobj;
   try
     let res = f a in
-    (* restore flag enable_error_as_exc  *)
-    enable_error_as_exc := flag;
+    if flag then infer_const_obj # reset iobj;
     res
   with _ as e ->
-    (enable_error_as_exc := flag;
-     raise e)
+    begin
+      if flag then infer_const_obj # reset iobj;
+      raise e
+    end
+
+let wrap_err_dis f a =
+  wrap_inf_obj INF_DE_EXC f a
+
+let wrap_err_may f a =
+  wrap_inf_obj INF_ERR_MAY f a
+
+let wrap_err_must f a =
+  wrap_inf_obj INF_ERR_MUST f a
+
+let wrap_err_bind f a =
+  if infer_const_obj # is_dis_err then wrap_err_dis f a
+  else wrap_err_must f a
+
+let wrap_err_assert_assume f a =
+  wrap_err_bind f a
+  (* if infer_const_obj # is_dis_err then wrap_err_dis f a *)
+  (* else wrap_err_must f a *)
+
+let wrap_err_pre f a =
+  if infer_const_obj # is_dis_err then wrap_err_dis f a
+  else if infer_const_obj # is_err_may then wrap_err_may f a
+  else wrap_err_must f a
+
+let wrap_err_post f a =
+  wrap_err_bind f a
+  (* if infer_const_obj # is_dis_err then wrap_err_dis f a *)
+  (* else wrap_err_must f a *)
 
 let wrap_par_case_check f c =
   let flag = !ho_always_split in

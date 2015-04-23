@@ -9181,7 +9181,7 @@ type entail_state = {
   es_var_measures : (CP.term_ann * CP.exp list * CP.exp list) option;
   (* For TNT inference: List of unknown returned context *)
   (* es_infer_tnt: bool; *)
-  es_infer_obj: Globals.inf_obj;
+  es_infer_obj: Globals.inf_obj_sub; (* includes Global.infer_const_obj *)
   (* es_infer_consts: array of 1..n of bool; *)
   es_term_res_lhs: CP.term_ann list;
   es_term_res_rhs: CP.term_ann option;

@@ -1492,7 +1492,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       let assert_op_wrapper ()=
         (match c2 with
           | Some _ -> 
-                wrap_efa_exc (Some true) assert_op ()
+                wrap_err_assert_assume (* efa_exc (Some true) *) assert_op ()
           | None -> (assert_op ())
         )
       in
@@ -1938,7 +1938,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       in
       (* bind, efa-exc is turned on by default*)
       let bind_op_wrapper () =
-        wrap_efa_exc (Some true) bind_op ()
+        wrap_err_bind bind_op ()
       in
       wrap_proving_kind PK_BIND bind_op_wrapper ()
 
@@ -2415,7 +2415,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let pr3 = Cprinter.string_of_struc_formula in
               (* let () = Log.update_sleek_proving_kind Log.PRE in *)
               let pre_post_op_wrapper a =
-                wrap_efa_exc (Some false) (check_pre_post_orig) a
+                wrap_err_pre (* (Some false) *) (check_pre_post_orig) a
               in
               let pk = if ir then PK_PRE_REC else PK_PRE in
               let f = wrap_proving_kind pk  ((* check_pre_post_orig *) pre_post_op_wrapper org_spec sctx) in
@@ -2904,7 +2904,7 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
   (* let () = Debug.info_pprint "CG dont trust" pos; flush(stdout) in *)
   (* WN : why do we have wrap_ad_flow here *)
   let post_op_wrapper f a =
-    wrap_efa_exc (Some false) f a
+    wrap_err_post (* efa_exc (Some false) *) f a
   in
   let f = wrap_ver_post (wrap_add_flow (wrap_proving_kind PK_POST ((* check_post_x *) post_op_wrapper check_post_x prog proc ctx posts pos pid) )) in
   Debug.no_2(* _loop *) "check_post" pr pr1 pr (fun _ _ -> f etype) ctx posts 

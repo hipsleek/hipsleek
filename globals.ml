@@ -1541,16 +1541,25 @@ let infer_const_obj = new inf_obj;;
 (*      dis_err & err_must --> dis_err *)
 (*      err_may & err_must --> err_may *)
 
-let global_is_dis_err ()  = infer_const_obj # is_dis_err
-let global_is_err_may ()  = not(infer_const_obj # is_dis_err) 
-                            && infer_const_obj # is_err_may
-let global_is_err_must ()  = not(infer_const_obj # is_dis_err) 
-                             && not(infer_const_obj # is_err_may) 
-                             && infer_const_obj # is_err_must
+(* let global_is_dis_err ()  = infer_const_obj # is_dis_err *)
+(* let global_is_err_may ()  = not(infer_const_obj # is_dis_err)  *)
+(*                             && infer_const_obj # is_err_may *)
+(* let global_is_err_must ()  = not(infer_const_obj # is_dis_err)  *)
+(*                              && not(infer_const_obj # is_err_may)  *)
+(*                              && infer_const_obj # is_err_must *)
 
-let local_is_dis_err obj  = obj # is_dis_err || global_is_dis_err ()
-let local_is_err_may obj  = obj # is_err_may || global_is_err_may ()
-let local_is_err_must obj  = obj # is_err_must || global_is_err_must ()
+(* let local_is_dis_err obj  = obj # is_dis_err  *)
+(*                             || infer_const_obj # is_dis_err *)
+(* let local_is_err_may obj  = obj # is_err_may || global_is_err_may () *)
+(* let local_is_err_must obj  = obj # is_err_must || global_is_err_must () *)
+
+class inf_obj_sub  =
+  object (self)
+    inherit inf_obj as super
+    method is_dis_err  = super # is_dis_err || infer_const_obj # is_dis_err
+    method is_err_must  = super # is_err_must || infer_const_obj # is_err_must
+    method is_err_may  = super # is_err_may || infer_const_obj # is_err_may
+  end;;
 
 (* let set_infer_const s = *)
 

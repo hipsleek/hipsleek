@@ -17,6 +17,9 @@ CEX:false
 infer [@err_must] x'=x |- x'<=6.
 print residue.
 
+infer [] x'=x |- x'<=6.
+print residue.
+
   /*
 Entail (2) : Fail.(may) cause: true |-  x'<=5. LOCS:[5] (may-bug)
   */
