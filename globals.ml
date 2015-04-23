@@ -1506,9 +1506,11 @@ class inf_obj  =
     method is_shape  = self # get INF_SHAPE
     method is_error  = self # get INF_ERROR
     method is_dis_err  = self # get INF_DE_EXC
-    method is_err_must  = not(self # is_dis_err) && not(self # is_err_may) 
+    method is_err_must  = not(self # is_dis_err) 
+                          && not(self # is_err_may) 
                           && self # get INF_ERR_MUST
-    method is_err_may  = not(self # is_dis_err) && self # get INF_ERR_MAY
+    method is_err_may  = not(self # is_dis_err) 
+                         && self # get INF_ERR_MAY
     method is_size  = self # get INF_SIZE
     method is_efa  = self # get INF_EFA
     method is_dfa  = self # get INF_DFA

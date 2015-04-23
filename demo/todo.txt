@@ -266,6 +266,16 @@ local setting takes precedence over global setting
      err_may & err_must --> err_may
 
 ==========================================================================
+
+Why did we have @err_must for global?
+
+--exc-efa
+id: 0; caller: []; line: 6; classic: false; kind: Assert/Assume; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [@err_must] globals: [@err_must]
+
+--dis-exc-efa
+others: [] globals: [@err_must]
+
+
 ==========================================================================
 ==========================================================================
 ==========================================================================

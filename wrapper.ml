@@ -114,7 +114,8 @@ let wrap_err_must f a =
 
 let wrap_err_bind f a =
   if infer_const_obj # is_dis_err then wrap_err_dis f a
-  else wrap_err_must f a
+  else if infer_const_obj # is_err_must then wrap_err_must f a
+  else wrap_err_dis f a
 
 let wrap_err_assert_assume f a =
   wrap_err_bind f a
@@ -124,7 +125,8 @@ let wrap_err_assert_assume f a =
 let wrap_err_pre f a =
   if infer_const_obj # is_dis_err then wrap_err_dis f a
   else if infer_const_obj # is_err_may then wrap_err_may f a
-  else wrap_err_must f a
+  else if infer_const_obj # is_err_must then wrap_err_must f a
+  else  wrap_err_dis f a
 
 let wrap_err_post f a =
   wrap_err_bind f a
