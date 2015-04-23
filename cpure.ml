@@ -9898,7 +9898,10 @@ let id_of_term_ann ann =
   | TermR uid -> uid.tu_id
 
 let sid_of_term_ann ann = 
-  string_of_int (id_of_term_ann ann)
+  (* string_of_int (id_of_term_ann ann) *)
+  match ann with 
+  | TermU uid | TermR uid -> uid.tu_sid
+  | _ -> ""
 
 (* = match f with *)
 (*   | BForm (bf,_) -> *)
