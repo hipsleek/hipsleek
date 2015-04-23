@@ -2511,7 +2511,7 @@ infer_type_list:
 
 infer_cmd:
   [[ `INFER; il_w_itype = cid_list_w_itype; t=meta_constr; `DERIVE; b=extended_meta_constr ->
-      let inf_o = Globals.infer_const_obj # clone in
+      let inf_o = new Globals.inf_obj_sub (* Globals.clone_sub_infer_const_obj () *) (* Globals.infer_const_obj # clone *) in
       let (i_consts,ivl) = List.fold_left 
         (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r) 
           | SndAns r -> (lst_l,r::lst_r)) ([],[]) il_w_itype in
@@ -3157,7 +3157,7 @@ spec:
     `INFER; transpec = opt_transpec; postxf = opt_infer_xpost; postf= opt_infer_post; ivl_w_itype = cid_list_w_itype; s = SELF ->
     (* WN : need to use a list of @sym *)
      (* let inf_o = Globals.infer_const_obj # clone in *)
-     let inf_o = new inf_obj in
+     let inf_o = new Globals.inf_obj_sub in
      let (i_consts,ivl) = List.fold_left
        (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r)
          | SndAns r -> (lst_l,r::lst_r)) ([],[]) ivl_w_itype in

@@ -1363,7 +1363,7 @@ let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 infer_type infer_lst 
     (* let ipre_simpl = F.mkStar_formula cur_pre ipre_simpl0 pos in *)
     let ipre = F.mkEBase [] [] [] ipre_simpl (Some ipost) pos in
     (* generate Iformula.struc_infer_formula*)
-    let inf_obj = Globals.infer_const_obj # clone in
+    let inf_obj = Globals.clone_sub_infer_const_obj () (* Globals.infer_const_obj # clone *) in 
     let () = inf_obj#set_list infer_lst in
     let () =  Debug.ninfo_hprint (add_str "inf_obj" (pr_id)) (inf_obj#string_of) no_pos in
     (F.EInfer {
@@ -1438,7 +1438,7 @@ let genESpec_wNI body_header body_opt args ret pos=
             (* let () = print_gen_spec ss hps in *)
             let ss = match ss with
               | F.EInfer i_sf2 -> F.EInfer {i_sf2 with
-                                            F.formula_inf_obj = i_sf.F.formula_inf_obj # mk_or i_sf2.F.formula_inf_obj;}
+                                            F.formula_inf_obj = i_sf.F.formula_inf_obj # mk_or_lst (i_sf2.F.formula_inf_obj # get_lst);}
               | _ -> ss
             in
             let () = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in

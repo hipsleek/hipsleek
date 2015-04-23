@@ -107,7 +107,7 @@ and assume_formula =
 and struc_infer_formula =
   {
     (* formula_inf_tnt: bool; (\* true if termination to be inferred *\) *)
-    formula_inf_obj: Globals.inf_obj; (* local infer object *)
+    formula_inf_obj: Globals.inf_obj_sub; (* local infer object *)
     formula_inf_post : bool; (* true if post to be inferred *)
     formula_inf_xpost : bool option; (* None -> no auto-var; Some _ -> true if post to be inferred *)
     formula_inf_transpec : (ident * ident) option;
@@ -15689,7 +15689,8 @@ let rec add_inf_cmd_struc is_primitive f =
                             formula_inf_obj = ei.formula_inf_obj # mk_or Globals.infer_const_obj; }
     | EList el -> EList (List.map (fun (sld, s) -> (sld, add_inf_cmd_struc is_primitive s)) el)
     | _ -> EInfer {
-        formula_inf_obj = Globals.infer_const_obj # clone;
+        formula_inf_obj = Globals.clone_sub_infer_const_obj ();
+        (* Globals.infer_const_obj # clone; *)
         formula_inf_post = true (* Globals.infer_const_obj # is_post *);
         formula_inf_xpost = None;
         formula_inf_transpec = None;
@@ -15709,7 +15710,7 @@ let rec add_inf_post_struc f =
     EInfer ei
   | EList el -> EList (List.map (fun (sld, s) -> (sld, add_inf_post_struc s)) el)
   | _ -> 
-    let new_inf_obj = new Globals.inf_obj in
+    let new_inf_obj = new Globals.inf_obj_sub in
     let () = new_inf_obj # set INF_POST in
     EInfer {
       formula_inf_obj = new_inf_obj;

@@ -655,7 +655,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                           CF.es_infer_vars_rel = es.CF.es_infer_vars_rel@vars_rel;
                           CF.es_infer_vars_templ = es.CF.es_infer_vars_templ@vars_templ;
                           (* CF.es_infer_tnt = es.CF.es_infer_tnt || itnt; *)
-                          CF.es_infer_obj = es.CF.es_infer_obj # mk_or inf_o;
+                          CF.es_infer_obj = es.CF.es_infer_obj # mk_or_lst (inf_o # get_lst);
                           CF.es_infer_vars_hp_rel = es.CF.es_infer_vars_hp_rel@vars_hp_rel;
                           CF.es_infer_vars_sel_hp_rel = es.CF.es_infer_vars_sel_hp_rel@vars_hp_rel;
                           CF.es_infer_vars_sel_post_hp_rel = es.CF.es_infer_vars_sel_post_hp_rel;

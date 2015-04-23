@@ -1526,26 +1526,26 @@ class inf_obj  =
     method set c  = if self#get c then () else arr <- c::arr
     method set_list l  = List.iter (fun c -> self # set c) l
     method reset c  = arr <- List.filter (fun x-> not(c==x)) arr
-    method mk_or (o2:inf_obj) = 
-      let o1 = o2 # clone in
-      let l = self # get_lst in
-      let () = o1 # set_list l in
-      o1
-    method clone = 
-      let no = new inf_obj in
-      let () = no # set_list arr in
-      (* let () = print_endline ("Cloning :"^(no #string_of)) in *)
-      no
+    (* method mk_or (o2:inf_obj) =  *)
+    (*   let o1 = o2 # clone in *)
+    (*   let l = self # get_lst in *)
+    (*   let () = o1 # set_list l in *)
+    (*   o1 *)
+    (* method clone =  *)
+    (*   let no = new inf_obj in *)
+    (*   let () = no # set_list arr in *)
+    (*   (\* let () = print_endline ("Cloning :"^(no #string_of)) in *\) *)
+    (*   no *)
     (* method is__all  = super # is_ || infer_const_obj # is_ *)
-    method is_classic_all  = 
-      print_endline "WARNING:invoking super#is_classic_all";
-      self # is_classic 
-    method is_ver_post_all  = 
-      print_endline "WARNING:invoking super#is_verify_post_all";
-      self # is_ver_post 
-    method is_par_all  = 
-      print_endline "WARNING:invoking super#is_par_all";
-      self # is_par 
+    (* method is_classic_all  = *)
+    (*   print_endline "WARNING:invoking super#is_classic_all"; *)
+    (*   self # is_classic *)
+    (* method is_ver_post_all  = *)
+    (*   print_endline "WARNING:invoking super#is_verify_post_all"; *)
+    (*   self # is_ver_post *)
+    (* method is_par_all  = *)
+    (*   print_endline "WARNING:invoking super#is_par_all"; *)
+    (*   self # is_par *)
   end;;
 
 let infer_const_obj = new inf_obj;;
@@ -1583,7 +1583,25 @@ class inf_obj_sub  =
     (* method is__all  = super # is_ || infer_const_obj # is_ *)
     method is_ver_post_all  = super # is_ver_post || infer_const_obj # is_ver_post
     method is_par_all  = super # is_par || infer_const_obj # is_par
+    method mk_or (o2:inf_obj) =
+      let o1 = self # clone in
+      let l = o2 # get_lst in
+      let () = o1 # set_list l in
+      o1
+    method mk_or_lst (l) =
+      let o1 = self # clone in
+      let () = o1 # set_list l in
+      o1
+    method clone =
+      let no = new inf_obj_sub in
+      let () = no # set_list arr in
+      (* let () = print_endline ("Cloning :"^(no #string_of)) in *)
+      no
   end;;
+
+let clone_sub_infer_const_obj () =
+  let obj = new inf_obj_sub in
+  obj # mk_or infer_const_obj
 
 (* let set_infer_const s = *)
 
