@@ -203,9 +203,10 @@ res:  failctx
 ==========================================================================
 # ex21a2.slk
 
-# Can we log the @err_must etc below?
-# Can we move exception to a lower-level?
+# Can we log the @err_must etc below? (DONE)
 
+# Can we move exception to a lower-level?
+ 
 infer [@dis_err] x'=x |- x'<=5.
 print residue.
   /*
@@ -230,7 +231,7 @@ Entail (2) : Fail.(may) cause: true |-  x'<=5. LOCS:[5] (may-bug)
 
 # --esl
 
-id: 0; caller: []; line: 0; classic: false; kind: Sleek_Entail(1); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+id: 0; caller: []; line: 0; classic: false; kind: Sleek_Entail(1); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [@dis_err]
  checkentail emp&x'=x&{FLOW,(4,5)=__norm#E}[]
  |-  emp&x'<=5&{FLOW,(4,5)=__norm#E}[]. 
 ho_vars: nothing?
@@ -242,7 +243,7 @@ res:  failctx
                    fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}}
 [[empty]]false
  
-id: 1; caller: []; line: 0; classic: false; kind: Sleek_Entail(2); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+id: 1; caller: []; line: 0; classic: false; kind: Sleek_Entail(2); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [@err_must]
  checkentail emp&x'=x&{FLOW,(4,5)=__norm#E}[]
  |-  emp&x'<=6&{FLOW,(4,5)=__norm#E}[]. 
 ho_vars: nothing?
@@ -253,7 +254,17 @@ res:  failctx
                    fc_message:  true |-  x'<=6. LOCS:[17] (may-bug)
                    fc_current_lhs_flow: {FLOW,(4,8)=__MayError#E}}
 [[empty]]false
+
 ==========================================================================
+id: 0; caller: []; line: 0; classic: false; kind: Sleek_Entail(1); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [] globals: [@err_must]
+
+
+local setting takes precedence over global setting
+   dis_err > err_may > err_must
+     dis_err & err_may --> dis_err
+     dis_err & err_must --> dis_err
+     err_may & err_must --> err_may
+
 ==========================================================================
 ==========================================================================
 ==========================================================================

@@ -367,6 +367,10 @@ let reverify_with_hp_rel old_cprog iprog =
       [] [] need_trans_hprels1 chprels_decl in
   ignore (Typechecker.check_prog iprog cprog)
 
+(* after scriptaguments are read *)
+let hip_prologue () = 
+  Globals.infer_const_obj # init
+
 let hip_epilogue () = 
   if !Debug.dump_calls then Debug.dump_debug_calls ();
   (* ------------------ lemma dumping ------------------ *)
@@ -1104,6 +1108,7 @@ let main1 () =
   process_cmd_line ();
   let () = Debug.read_main () in
   Scriptarguments.check_option_consistency ();
+  hip_prologue ();
   if !Globals.print_version_flag then begin
     print_version ()
   end else

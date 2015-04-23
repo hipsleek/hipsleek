@@ -1450,6 +1450,9 @@ let string_of_inf_const x =
 class inf_obj  =
   object (self)
     val mutable arr = []
+    method init =
+      if !enable_error_as_exc then self # set INF_ERR_MUST
+      else ()
     method set_init_arr s = 
       let helper r c =
         let reg = Str.regexp r in
@@ -1503,8 +1506,9 @@ class inf_obj  =
     method is_shape  = self # get INF_SHAPE
     method is_error  = self # get INF_ERROR
     method is_dis_err  = self # get INF_DE_EXC
-    method is_err_must  = self # get INF_ERR_MUST
-    method is_err_may  = self # get INF_ERR_MAY
+    method is_err_must  = not(self # is_dis_err) && not(self # is_err_may) 
+                          && self # get INF_ERR_MUST
+    method is_err_may  = not(self # is_dis_err) && self # get INF_ERR_MAY
     method is_size  = self # get INF_SIZE
     method is_efa  = self # get INF_EFA
     method is_dfa  = self # get INF_DFA
@@ -1515,7 +1519,6 @@ class inf_obj  =
     method is_infer_type t  = self # get t
     method get_lst = arr
     method set c  = if self#get c then () else arr <- c::arr
-    (* method set_ind i  = Array.set arr i true *)
     method set_list l  = List.iter (fun c -> self # set c) l
     method reset c  = arr <- List.filter (fun x-> not(c==x)) arr
     method mk_or (o2:inf_obj) = 
@@ -1531,6 +1534,23 @@ class inf_obj  =
   end;;
 
 let infer_const_obj = new inf_obj;;
+
+(* local setting takes precedence over global setting *)
+(*    dis_err > err_may > err_must *)
+(*      dis_err & err_may --> dis_err *)
+(*      dis_err & err_must --> dis_err *)
+(*      err_may & err_must --> err_may *)
+
+let global_is_dis_err ()  = infer_const_obj # is_dis_err
+let global_is_err_may ()  = not(infer_const_obj # is_dis_err) 
+                            && infer_const_obj # is_err_may
+let global_is_err_must ()  = not(infer_const_obj # is_dis_err) 
+                             && not(infer_const_obj # is_err_may) 
+                             && infer_const_obj # is_err_must
+
+let local_is_dis_err obj  = obj # is_dis_err || global_is_dis_err ()
+let local_is_err_may obj  = obj # is_err_may || global_is_err_may ()
+let local_is_err_must obj  = obj # is_err_must || global_is_err_must ()
 
 (* let set_infer_const s = *)
 
