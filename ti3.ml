@@ -5,6 +5,7 @@ module MCP = Mcpure
 
 open Globals
 open VarGen
+open Tid
 open Cast
 open Cprinter
 open Gen
@@ -36,37 +37,8 @@ let is_nondet_cond f =
 let is_nondet_var sv = 
   Gen.BList.mem_eq CP.eq_spec_var sv (nondet_vars_stk # get_stk)
 
-(* Temporal Relation at Return *)
-type ret_trel = {
-  ret_ctx: CP.formula;
-  termr_fname: ident; (* Collect from RHS *)
-  termr_lhs: CP.term_ann list;
-  termr_rhs: CP.term_ann;
-  termr_rhs_params: CP.spec_var list; (* For simplification on condition *)
-  termr_pos: loc;
-}
-
-let ret_trel_stk: ret_trel Gen.stack = new Gen.stack
-
 let print_ret_trel rel = 
   string_of_trrel_assume (rel.ret_ctx, rel.termr_lhs, rel.termr_rhs)
-
-(* Temporal Relation at Call *)
-type call_trel = {
-  trel_id: int;
-  call_ctx: CP.formula;
-  termu_fname: ident; (* Collect from LHS *)
-  termu_lhs: CP.term_ann;
-  termu_rhs: CP.term_ann;
-  (* For TermU/TermR *)
-  termu_rhs_params: CP.spec_var list; (* For substitution on condition *)
-  (* For other term_ann *)
-  termu_cle: ident; (* callee *)
-  termu_rhs_args: CP.exp list;
-  termu_pos: loc;
-}
-
-let call_trel_stk: call_trel Gen.stack = new Gen.stack
 
 let print_call_trel_debug rel = 
   string_of_turel_debug (rel.call_ctx, rel.termu_lhs, rel.termu_rhs)
@@ -78,29 +50,14 @@ let compare_trel r1 r2 = compare r1.trel_id r2.trel_id
 
 let eq_trel r1 r2 = r1.trel_id == r2.trel_id
 
-let dummy_trel = {
-  trel_id = -1;
-  call_ctx = CP.mkTrue no_pos;
-  termu_fname = "";
-  termu_lhs = CP.MayLoop None;
-  termu_rhs = CP.MayLoop None; 
-  termu_rhs_params = []; 
-  termu_cle = "";
-  termu_rhs_args = [];
-  termu_pos = no_pos; }
-
 let update_call_trel rel ilhs irhs = 
   { rel with
     termu_lhs = ilhs;  
     termu_rhs = irhs; }
 
-type tntrel =
-  | Ret of ret_trel
-  | Call of call_trel
-
-let string_of_tntrel = function
-  | Ret rrel -> "@Return: " ^ (print_ret_trel rrel)
-  | Call crel -> "@Call: " ^ (print_call_trel crel)
+(* let string_of_tntrel = function                     *)
+(*   | Ret rrel -> "@Return: " ^ (print_ret_trel rrel) *)
+(*   | Call crel -> "@Call: " ^ (print_call_trel crel) *)
 
 let subst_cond_with_ann params ann cond =
   match ann with

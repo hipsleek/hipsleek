@@ -542,11 +542,11 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
         let ctx = MCP.merge_mems lhs_p xpure_lhs_h1 true in
         let es = if es.es_infer_obj # is_term (* es.es_infer_tnt *) then
             if is_ret then 
-              let () = Ti.add_ret_trel_stk prog ctx es.es_term_res_lhs t_ann_d c_pos in
-              { es with es_term_res_rhs = Some t_ann_d }
+              let trel = Ti.add_ret_trel_stk prog ctx es.es_term_res_lhs t_ann_d c_pos in
+              { es with es_term_res_rhs = Some t_ann_d; es_infer_term_rel = es.es_infer_term_rel @ [Ret trel]; }
             else
-              let () = Ti.add_call_trel_stk prog ctx t_ann_s t_ann_d dst_tinfo.lex_fid dst_il c_pos in
-              { es with es_term_call_rhs =  Some t_ann_d; }
+              let trel = Ti.add_call_trel_stk prog ctx t_ann_s t_ann_d dst_tinfo.lex_fid dst_il c_pos in
+              { es with es_term_call_rhs =  Some t_ann_d; es_infer_term_rel = es.es_infer_term_rel @ [Call trel]; }
           else es 
         in es
       in
@@ -640,7 +640,7 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
     pr2 pr pr (fun (es, lhs, (* rhs, *) _) -> pr_pair pr2 pr (* pr *) (es, lhs (*, rhs *)))  
     (fun _ _ _ -> f pos) estate lhs_p rhs_p
 
-(* For temination assumption (termAssume) checking *)        
+(* For temination assumption (termAssume) checking *)
 let check_term_assume prog lhs rhs = 
   let pos = proving_loc # get in
   let lhs_p, lhs_lex, lhs_termr = strip_lexvar_formula_for_termAssume lhs in
@@ -653,16 +653,16 @@ let check_term_assume prog lhs rhs =
     let t_ann_d, dst_il = (dst_tinfo.lex_ann, dst_tinfo.lex_tmp) in
 
     begin match t_ann_d with
-      | TermR _ -> Ti.add_ret_trel_stk prog lhs_p lhs_termr t_ann_d pos
+      | TermR _ -> let trel = Ti.add_ret_trel_stk prog lhs_p lhs_termr t_ann_d pos in ()
       | _ -> 
         let t_ann_s, _, _ = match lhs_lex with 
           | Some (t_ann, el, il) -> (t_ann, el, il)
           | None -> raise LexVar_Not_found in
         begin match t_ann_s with
-          | TermU _ -> Ti.add_call_trel_stk prog lhs_p t_ann_s t_ann_d dst_tinfo.lex_fid dst_il pos
+          | TermU _ -> let trel = Ti.add_call_trel_stk prog lhs_p t_ann_s t_ann_d dst_tinfo.lex_fid dst_il pos in ()
           | Term -> 
             begin match t_ann_d with
-              | TermU _ -> Ti.add_call_trel_stk prog lhs_p t_ann_s t_ann_d dst_tinfo.lex_fid dst_il pos
+              | TermU _ -> let trel = Ti.add_call_trel_stk prog lhs_p t_ann_s t_ann_d dst_tinfo.lex_fid dst_il pos in ()
               | _ -> () 
             end
           | _ -> () 

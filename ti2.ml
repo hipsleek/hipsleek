@@ -8,6 +8,7 @@ open Cprinter
 open Globals
 open Gen
 open Tlutils
+open Tid
 open Ti3
 
 (* Auxiliary methods *)

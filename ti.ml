@@ -7,6 +7,7 @@ open VarGen
 open Cprinter
 open Globals
 open Gen
+open Tid
 open Ti2
 open Ti3
 
@@ -26,7 +27,8 @@ let add_ret_trel_stk prog ctx lhs rhs pos =
     termr_pos = pos; } in 
   (* let () = print_endline_quiet (print_ret_trel trel) in *)
   Log.current_tntrel_ass_stk # push (Ret trel);
-  ret_trel_stk # push trel
+  ret_trel_stk # push trel;
+  trel
 
 (* Only merge relations split by post *)
 let merge_trrels rec_trrels = 
@@ -221,7 +223,8 @@ let add_call_trel_stk prog ctx lhs rhs callee args pos =
     termu_pos = pos; } in 
   (* let () = print_endline_quiet (print_call_trel trel) in *)
   Log.current_tntrel_ass_stk # push (Call trel);
-  call_trel_stk # push trel
+  call_trel_stk # push trel;
+  trel
 
 (* Initial instantiation of temporal relation *)      
 let inst_lhs_trel_base rel fn_cond_w_ids =  
