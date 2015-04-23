@@ -980,6 +980,10 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                  (spec, [],[],[],[],[], [], true) else
                  let () = Gen.Profiling.pop_time ("method "^proc.proc_name) in
                  (Err.report_error1 e (Err.get_error_type_str error_type) (*"bind failure exception"*))
+             | 2 -> if x_add_1 CF.is_error_flow post_cond  then
+                 (spec, [],[],[],[],[], [], true) else
+                 let () = Gen.Profiling.pop_time ("method "^proc.proc_name) in
+                 (Err.report_error1 e (Err.get_error_type_str error_type) (*"assert/assume failure exception"*))
              | 3 ->
                if CF.is_top_flow post_cond then
                  (spec, [],[],[],[],[],[], true) else
@@ -1484,10 +1488,18 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               (ps@res)
         end
       in
+      (* assert/assume, efa-exc is turned on by default*)
+      let assert_op_wrapper ()=
+        (match c2 with
+          | Some _ -> 
+                wrap_efa_exc (Some true) assert_op ()
+          | None -> (assert_op ())
+        )
+      in
       (* why is wrap classic needed for assert/assume? *)
       (wrap_proving_kind 
          (match c2 with None -> PK_Assert | _ -> PK_Assert_Assume)
-         (wrap_classic atype assert_op)) ()
+         (wrap_classic atype (assert_op_wrapper))) ()
     | Assign ({ 
         exp_assign_lhs = v;
         exp_assign_rhs = rhs;
@@ -2402,8 +2414,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let pr2 = Cprinter.string_of_list_failesc_context in
               let pr3 = Cprinter.string_of_struc_formula in
               (* let () = Log.update_sleek_proving_kind Log.PRE in *)
+              let pre_post_op_wrapper a =
+                wrap_efa_exc (Some false) (check_pre_post_orig) a
+              in
               let pk = if ir then PK_PRE_REC else PK_PRE in
-              let f = wrap_proving_kind pk (check_pre_post_orig org_spec sctx) in
+              let f = wrap_proving_kind pk  ((* check_pre_post_orig *) pre_post_op_wrapper org_spec sctx) in
               Debug.no_2(* _loop *) "check_pre_post(2)" pr3 pr2 pr2 (fun _ _ ->  f should_output_html) org_spec sctx in
 
             let check_pre_post ir org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
@@ -2888,7 +2903,10 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
   (* let () = Log.update_sleek_proving_kind Log.POST in *)
   (* let () = Debug.info_pprint "CG dont trust" pos; flush(stdout) in *)
   (* WN : why do we have wrap_ad_flow here *)
-  let f = wrap_ver_post (wrap_add_flow (wrap_proving_kind PK_POST (check_post_x prog proc ctx posts pos pid))) in
+  let post_op_wrapper f a =
+    wrap_efa_exc (Some false) f a
+  in
+  let f = wrap_ver_post (wrap_add_flow (wrap_proving_kind PK_POST ((* check_post_x *) post_op_wrapper check_post_x prog proc ctx posts pos pid) )) in
   Debug.no_2(* _loop *) "check_post" pr pr1 pr (fun _ _ -> f etype) ctx posts 
 
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (posts : CF.formula*CF.struc_formula) pos (pid:formula_label) (etype: ensures_type) : CF.list_partial_context  =

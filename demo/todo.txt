@@ -170,11 +170,11 @@ MaybeErr Context:
 ==========================================================================
 --efa-exc
 
-   bind --> efa-exc: ex1-exc-bind.ss
-   assert-assume --> efa-exc
+   bind --> efa-exc: errors/infer/ex1-exc-bind.ss
+   assert-assume --> efa-exc: errors/infer/ex2-exc-assert.ss
 
-   pre-cond --dis-efa-exc
-   post --dis-efa-exc
+   pre-cond --dis-efa-exc: errors/infer/ex3-exc-pred.ss
+   post --dis-efa-exc: : errors/infer/ex4-exc-post.ss
 
 ==========================================================================
 ==========================================================================
