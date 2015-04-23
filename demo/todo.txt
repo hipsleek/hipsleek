@@ -452,6 +452,19 @@ infer [@err_may] y=null |- y::node<_>.
 print residue.
 // expects __ErrorMay but got __Error
 ==========================================================================
+# ex21f2.slk
+
+# 5 & 7 has problem above
+
+//5
+infer [@dis_err] x'=8 |- x'<=5.
+print residue.
+//expects MustErr Context but got MaybeErr Context
+
+//7
+infer [] x'=8 |- x'<=6.
+print residue.
+// expects MustErr Context but got MaybeErr Context
 ==========================================================================
 ==========================================================================
 ==========================================================================
