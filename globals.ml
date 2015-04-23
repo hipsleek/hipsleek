@@ -1539,6 +1539,8 @@ class inf_obj  =
 
 let infer_const_obj = new inf_obj;;
 
+let global_efa_exc ()  = not(infer_const_obj # is_dis_err)
+
 (* local setting takes precedence over global setting *)
 (*    dis_err > err_may > err_must *)
 (*      dis_err & err_may --> dis_err *)

@@ -1637,7 +1637,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let list_context_res,prf =process_ctx c2 in
             match list_context_res with
             | CF.FailCtx (t,c,_) -> begin
-                let lc = if !Globals.enable_error_as_exc then
+                let lc = if Globals.global_efa_exc () then
                     ([([],esc_skeletal, [((lbl, c ,Some t))])])
                   else [([(lbl,t)],esc_skeletal,[])]
                 in
@@ -1877,7 +1877,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let () = CF.must_consistent_list_failesc_context "bind 4" rs  in
             if (CF.isSuccessListFailescCtx_new unfolded) && (not(CF.isSuccessListFailescCtx_new rs))then
               begin
-                if not !Globals.enable_error_as_exc then
+                if not(Globals.global_efa_exc ()) then
                   let () = Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context rs)^") ")
                       ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^ " cannot be derived from context\n") pos in (* add branch info *)
                 (* add branch info *)
@@ -2457,7 +2457,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             (* let () = print_endline (("\ncheck_exp: SCall: res : ") ^ (Cprinter.string_of_list_failesc_context res)) in *)
             (*Loc: error as exception *)
             (* move must, may flow into esc_stack *)
-            if (!Globals.enable_error_as_exc || (CF.isSuccessListFailescCtx_new res)) then
+            if (Globals.global_efa_exc () || (CF.isSuccessListFailescCtx_new res)) then
               (* let () = print_endline ("\nlocle1:" ^ proc.proc_name) in*)
               let res = 
                 (* let () = Debug.info_zprint (lazy (("   callee:" ^ mn))) no_pos in *)
@@ -2997,7 +2997,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
     (* let f2 = CF.list_context_is_eq_flow cl !norm_flow_int in *)
     (* let () = print_string_quiet ("\n WN 4 : "^(Cprinter.string_of_list_partial_context (\*ctx*\) fn_state)) in *)
     let rs, prf =
-      if not !Globals.enable_error_as_exc && f1 then
+      if not(Globals.global_efa_exc ()) && f1 then
         begin
           let flat_post = (CF.formula_subst_flow (fst posts) (CF.mkNormalFlow())) in
           let (*struc_post*)_ = (CF.struc_formula_subst_flow (snd posts) (CF.mkNormalFlow())) in
@@ -3050,7 +3050,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         in*)
       let _ =
         if not !Globals.disable_failure_explaining then
-          let rs = if !Globals.enable_error_as_exc then
+          let rs = if Globals.global_efa_exc () then
               (* convert brs with error flow -> Fail *)
               List.fold_left (fun acc (fs, brs) ->
                   let ex_fs, rest = List.fold_left (fun (acc_fs, acc_rest) ((lbl,c, oft) as br) ->
