@@ -1064,7 +1064,7 @@ and pr_term_id pr_short uid =
   pr_pure_formula uid.P.tu_cond; 
   fmt_string ","; pr_pure_formula uid.P.tu_icond; 
   fmt_string "}";
-  pr_args "" pr_formula_exp uid.P.tu_args;
+  let () = pr_args "" pr_formula_exp uid.P.tu_args in
   if pr_short then () 
   else 
     pr_wrap_test "#" Gen.is_None (pr_opt_silent (fun (s, ls) ->

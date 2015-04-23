@@ -274,6 +274,7 @@ and string_of_term_id uid =
   "@" ^ uid.P.tu_fname ^ 
   "[" ^ (string_of_int uid.P.tu_id) ^ ", " ^ 
   (!P.print_formula uid.P.tu_cond) ^ "]"
+  ^ (pr_list string_of_formula_exp uid.P.tu_args)
 
 and string_of_p_formula pf =
   match pf with 
