@@ -531,32 +531,32 @@ let print_residue residue =
         let () = x_tinfo_hp (add_str "print" string_of_bool) print no_pos in
         let () = x_tinfo_hp (add_str "local_dfa?" string_of_bool) local_dfa no_pos in
 
-        let () = x_ninfo_hp (Cprinter.string_of_list_context) ls_ctx no_pos in
+        let () = x_tinfo_hp (Cprinter.string_of_list_context) ls_ctx no_pos in
         if not local_dfa (*!Globals.disable_failure_explaining *) then
           let dis_lerr_exc = CF.is_dis_error_exc_ctx_list ls_ctx in
           let en_lerr_exc = CF.is_en_error_exc_ctx_list ls_ctx in
           let () = x_tinfo_hp (add_str "dis_lerr_exc?" string_of_bool) dis_lerr_exc no_pos in
           let () = x_tinfo_hp (add_str "en_lerr_exc?" string_of_bool) dis_lerr_exc no_pos in
           let () = if print then
-            print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
-                           (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
-          else if dis_lerr_exc then
-            print_endline (Cprinter.string_of_list_context ls_ctx)
-          else
+              print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
+                               (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
+            else if dis_lerr_exc then
+              print_endline (Cprinter.string_of_list_context ls_ctx)
+            else
             if not !Globals.enable_error_as_exc && not en_lerr_exc then
               print_endline (Cprinter.string_of_list_context ls_ctx)
             else
               print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
-                  (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
+                               (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
           in ()
         else
           (* let () = Debug.info_pprint "b" no_pos in *)
-          if print then
+        if print then
           (* let () = print_string ((pr_list pr_none (CF.list_formula_trace_of_list_context ls_ctx))^ *)
           (*   (Cprinter.string_of_list_context ls_ctx)^"\n") in () *)
           print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
                            (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
-          else let () =  print_string "{ }\n" in ()
+        else let () =  print_string "{ }\n" in ()
       end
 
 let process_list_lemma ldef_lst  =
