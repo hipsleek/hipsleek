@@ -1865,22 +1865,24 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let () = CF.must_consistent_list_failesc_context "bind 4" rs  in
             if (CF.isSuccessListFailescCtx_new unfolded) && (not(CF.isSuccessListFailescCtx_new rs))then
               begin
-                (* Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context rs)^") ")  *)
-                (*     ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^ " cannot be derived from context\n") pos; (\* add branch info *\) *)
-                (* (\* add branch info *\) *)
-                (* Debug.print_info ("(Cause of Bind Failure)") *)
-                (*     (Cprinter.string_of_failure_list_failesc_context rs) pos; *)
-                (* rs *)
-                (*delay pritinting to check post*)
-                let s =  ("\n("^(Cprinter.string_of_label_list_failesc_context rs)^") ")^ 
-                         ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^
-                          " cannot be derived from context\n") ^ (string_of_loc pos) ^"\n\n" (* add branch info *)
-                         (* add branch info *)
-                         ^ ("(Cause of Bind Failure)") ^
-                         (Cprinter.string_of_failure_list_failesc_context rs ) ^ (string_of_loc pos) in
-                raise (Err.Ppf ({
-                    Err.error_loc = pos;
-                    Err.error_text = (to_print ^ s (* ^ "\n" ^ (pr hprel_assumptions) *))
+                if not !Globals.enable_error_as_exc then
+                  let () = Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context rs)^") ")
+                      ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^ " cannot be derived from context\n") pos in (* add branch info *)
+                (* add branch info *)
+                  let () = Debug.print_info ("(Cause of Bind Failure)")
+                    (Cprinter.string_of_failure_list_failesc_context rs) pos in
+                  rs
+                else
+                  (*delay pritinting to check post*)
+                  let s =  ("\n("^(Cprinter.string_of_label_list_failesc_context rs)^") ")^ 
+                    ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^
+                        " cannot be derived from context\n") ^ (string_of_loc pos) ^"\n\n" (* add branch info *)
+                    (* add branch info *)
+                    ^ ("(Cause of Bind Failure)") ^
+                    (Cprinter.string_of_failure_list_failesc_context rs ) ^ (string_of_loc pos) in
+                  raise (Err.Ppf ({
+                      Err.error_loc = pos;
+                      Err.error_text = (to_print ^ s (* ^ "\n" ^ (pr hprel_assumptions) *))
                   }, (*Failure_Must*) 1, 0))
               end
             else
@@ -1922,7 +1924,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               end
         end  (*end Bind*)
       in
-      wrap_proving_kind PK_BIND bind_op ()
+      (* bind, efa-exc is turned on by default*)
+      let bind_op_wrapper () =
+        wrap_efa_exc (Some true) bind_op ()
+      in
+      wrap_proving_kind PK_BIND bind_op_wrapper ()
 
     | Block ({
         exp_block_type = t;

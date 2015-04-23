@@ -170,7 +170,7 @@ MaybeErr Context:
 ==========================================================================
 --efa-exc
 
-   bind --> efa-exc
+   bind --> efa-exc: ex1-exc-bind.ss
    assert-assume --> efa-exc
 
    pre-cond --dis-efa-exc

@@ -76,6 +76,20 @@ let wrap_classic et f a =
     (do_classic_frame_rule := flag;
      raise e)
 
+let wrap_efa_exc et f a =
+  let flag = !enable_error_as_exc in
+  enable_error_as_exc := (match et with
+      | None -> infer_const_obj # get INF_DE_EXC  (* !opt_efa *)
+      | Some b -> b);
+  try
+    let res = f a in
+    (* restore flag enable_error_as_exc  *)
+    enable_error_as_exc := flag;
+    res
+  with _ as e ->
+    (enable_error_as_exc := flag;
+     raise e)
+
 let wrap_par_case_check f c =
   let flag = !ho_always_split in
   ho_always_split := true;
