@@ -70,14 +70,14 @@ struct
     in aux xs
 
   let print_endline_quiet s =
-    let flag = !compete_mode in
+    let flag = !silence_output(* compete_mode *) in
     (* print_endline ("compete mode : "^(string_of_bool flag)); *)
     if flag then () 
     else print_endline s 
   let print_endline_if b s = if b then print_endline s else ()
   let print_string_if b s = if b then print_string s else ()
   let print_string_quiet s = 
-    if !compete_mode then () 
+    if !silence_output (* compete_mode *) then () 
     else print_string s 
 
   let print_web_mode s = 

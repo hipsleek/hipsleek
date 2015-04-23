@@ -22,8 +22,14 @@ module NM = Auxnorm
 (* module LO = Label_only.Lab_List *)
 module LO = Label_only.LOne
 
-let wrap_redlog = Wrapper.wrap_redlog_only
-let wrap_ocredlog = Wrapper.wrap_oc_redlog
+(* let wrap_redlog_only f a = *)
+(*   wrap_one_bool Redlog.dis_omega true f a *)
+
+(* let wrap_oc_redlog f a = *)
+(*   wrap_one_bool Redlog.dis_omega false f a *)
+
+let wrap_redlog = Wrapper.wrap_one_bool Redlog.dis_omega true
+let wrap_ocredlog = Wrapper.wrap_one_bool Redlog.dis_omega false
 
 let test_db = false
 

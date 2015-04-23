@@ -1096,9 +1096,11 @@ let pairwisecheck (pe : formula) : formula =
   if count_disj r > count_disj pe then pe
   else r
 
+let wrap f = Wrapper.wrap_silence_output f
+
 let pairwisecheck (pe : formula) : formula =
   let pf = !print_pure in
-  Debug.no_1 "Omega.pairwisecheck" pf pf pairwisecheck pe
+  Debug.no_1 "Omega.pairwisecheck" pf pf (Wrapper.wrap_silence_output pairwisecheck) pe
 
 let hull (pe : formula) : formula =
   (*print_endline "LOCLE: hull";*)

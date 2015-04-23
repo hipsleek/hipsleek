@@ -1763,7 +1763,7 @@ and remove_ptr_equations f is_or = match f with
   | Exists (v,f,o,p) -> Exists (v,remove_ptr_equations f false,o,p)
 
 and pure_ptr_equations (f:formula) : (spec_var * spec_var) list = 
-  pure_ptr_equations_aux true f
+  x_add pure_ptr_equations_aux true f
 
 and pure_ptr_equations_aux_x with_null (f:formula) : (spec_var * spec_var) list = 
   let rec prep_f f = match f with
@@ -1778,6 +1778,15 @@ and pure_ptr_equations_aux with_null (f:formula) : (spec_var * spec_var) list =
   let pr2 = !print_formula in
   let pr3 = pr_list (pr_pair !print_sv !print_sv) in
   Debug.no_2 "pure_ptr_equations_aux" pr1 pr2 pr3 pure_ptr_equations_aux_x with_null f 
+
+and get_int_equality_aux f = []
+
+and get_int_equality (f:formula) : (spec_var * spec_var) list = 
+  (* let pr1 = string_of_bool in *)
+  let pr2 = !print_formula in
+  let pr3 = pr_list (pr_pair !print_sv !print_sv) in
+  Debug.no_1 "get_int_equality" pr2 pr3 get_int_equality_aux f 
+
 
 and get_alias (e : exp) : spec_var =
   match e with
