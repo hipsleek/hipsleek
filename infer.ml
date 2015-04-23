@@ -290,7 +290,7 @@ let collect_hp_unk_map_list_partial_context (ctx:list_partial_context) =
   List.concat r
 
 let init_vars ctx infer_vars iv_rel iv_templ v_hp_rel orig_vars =
-  let () = x_binfo_hp Cprinter.string_of_spec_var_list iv_rel no_pos in
+  (* let () = x_binfo_hp Cprinter.string_of_spec_var_list iv_rel no_pos in *)
   let rec helper ctx = 
     match ctx with
     | Ctx estate -> Ctx { estate with 
