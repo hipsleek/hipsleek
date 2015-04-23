@@ -7015,7 +7015,14 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
   (* Trung: TODO remove it later *)
   (* let () = Solver_dp.prove_entailment conseq conseq in *)
-  let hec is_folding ctx0 c = heap_entail_conjunct_x prog is_folding ctx0 c rhs_h_matched_set pos in
+  let hec is_folding ctx0 c =
+    let res, prf = heap_entail_conjunct_x prog is_folding ctx0 c rhs_h_matched_set pos in
+    let res1 = if (!Globals.enable_error_as_exc || CF.is_en_error_exc_ctx ctx0) && not (CF.is_dis_error_exc_ctx ctx0) then
+           CF.convert_maymust_failure_to_value_orig res
+        else res
+    in
+    (res1,prf)
+  in
   (* let _, rhs_pure, _, _, _  = CF.split_components conseq in *)
   (* let () = x_tinfo_hp (add_str "rhs_pure" Cprinter.string_of_mix_formula) rhs_pure no_pos in *)
   (* let eqns = (MCP.ptr_equations_without_null rhs_pure) in *)
@@ -8570,7 +8577,8 @@ type: bool *
           else
             (must_list, may_list, contra_list)
         in
-        (x_add Musterr.build_and_failures 1 "213" Globals.logical_error (contra_list1, must_list1, may_list1) fc_template cex new_estate.es_trace, prf)
+        let lc0 = x_add Musterr.build_and_failures 1 "213" Globals.logical_error (contra_list1, must_list1, may_list1) fc_template cex new_estate.es_trace in
+        (lc0, prf)
       else
         (* let () = Globals. smt_return_must_on_error () in *)
         (CF.mkFailCtx_in (Basic_Reason ({
