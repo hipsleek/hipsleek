@@ -86,7 +86,7 @@ let rec new_string_of_typ (x:typ) : string = match x with
   | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
   | FuncT (t1, t2) -> (string_of_typ t1) ^ "->" ^ (string_of_typ t2)
-  | UtT b        -> "UtT("^(string_of_bool b)^")"
+  | UtT b        -> "UtT("^(if b then "pre" else "post")^")"
   | HpT        -> "HpT"
   (* | SLTyp -> "SLTyp" *)
   | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
@@ -4045,7 +4045,7 @@ and ident_to_spec_var id n_tl p prog =
             with _ -> 
               try
                 let ut_id = I.look_up_ut_def_raw prog.I.prog_ut_decls id in
-                CP.SpecVar(UtT (not(ut_id.ut_is_pre)), id, pr)
+                CP.SpecVar(UtT (ut_id.ut_is_pre), id, pr)
               with _ -> v
     else v
 

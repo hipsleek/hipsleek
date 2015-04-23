@@ -181,7 +181,7 @@ type typ =
   | HpT (* heap predicate relation type *)
   | Tree_sh
   | FuncT of typ * typ
-  | UtT of bool (* unknown temporal type - pre(false)/post(true)*)
+  | UtT of bool (* unknown temporal type - pre(true)/post(false)*)
   | Bptyp
   | Pointer of typ (* base type and dimension *)
 (* | SLTyp (* type of ho formula *) *)
@@ -519,7 +519,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
   | FuncT (t1, t2) -> (string_of_typ t1) ^ "->" ^ (string_of_typ t2)
-  | UtT b        -> "UtT("^(string_of_bool b)^")"
+  | UtT b        -> "UtT("^(if b then "pre" else "post")^")"
   | HpT        -> "HpT"
   (* | SLTyp -> "SLTyp" *)
   | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
@@ -565,7 +565,7 @@ let rec string_of_typ_alpha = function
   | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
   | FuncT (t1, t2) -> (string_of_typ t1) ^ "_" ^ (string_of_typ t2)
-  | UtT b        -> "UtT("^(string_of_bool b)^")"
+  | UtT b        -> "UtT("^(if b then "pre" else "post")^")"
   | HpT        -> "HpT"
   (* | SLTyp -> "SLTyp" *)
   | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
