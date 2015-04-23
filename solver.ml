@@ -12389,9 +12389,9 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
         let lhs_vp_set = CF.get_vperm_set estate.es_formula in
         let () = x_tinfo_hp (add_str "lhs_vp_set" Cprinter.string_of_vperm_sets) lhs_vp_set no_pos in
         let () = x_tinfo_hp (add_str "vp_set" Cprinter.string_of_vperm_sets) vp_set no_pos in
-        let par_flag = estate.CF.es_infer_obj # is_par || infer_const_obj # is_par in
-        let ver_post_flag = estate.CF.es_infer_obj # is_ver_post || infer_const_obj # is_ver_post in
-        let classic_flag = estate.CF.es_infer_obj # is_classic || infer_const_obj # is_classic in
+        let par_flag = estate.CF.es_infer_obj # is_par_all (* || infer_const_obj # is_par *) in
+        let ver_post_flag = estate.CF.es_infer_obj # is_ver_post_all (* || infer_const_obj # is_ver_post *) in
+        let classic_flag = estate.CF.es_infer_obj # is_classic_all (* || infer_const_obj # is_classic *) in
         let resopt,res_vps = Vperm.vperm_entail_set ~par_flag:par_flag ~ver_post_flag:ver_post_flag ~classic_flag:classic_flag lhs_vp_set vp_set in
         match resopt with
         | Some msg ->

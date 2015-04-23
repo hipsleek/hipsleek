@@ -1536,6 +1536,16 @@ class inf_obj  =
       let () = no # set_list arr in
       (* let () = print_endline ("Cloning :"^(no #string_of)) in *)
       no
+    (* method is__all  = super # is_ || infer_const_obj # is_ *)
+    method is_classic_all  = 
+      print_endline "WARNING:invoking super#is_classic_all";
+      self # is_classic 
+    method is_ver_post_all  = 
+      print_endline "WARNING:invoking super#is_verify_post_all";
+      self # is_ver_post 
+    method is_par_all  = 
+      print_endline "WARNING:invoking super#is_par_all";
+      self # is_par 
   end;;
 
 let infer_const_obj = new inf_obj;;
@@ -1569,6 +1579,10 @@ class inf_obj_sub  =
     method is_dis_err  = super # is_dis_err || infer_const_obj # is_dis_err
     method is_err_must  = super # is_err_must || infer_const_obj # is_err_must
     method is_err_may  = super # is_err_may || infer_const_obj # is_err_may
+    method is_classic_all  = super # is_classic || infer_const_obj # is_classic
+    (* method is__all  = super # is_ || infer_const_obj # is_ *)
+    method is_ver_post_all  = super # is_ver_post || infer_const_obj # is_ver_post
+    method is_par_all  = super # is_par || infer_const_obj # is_par
   end;;
 
 (* let set_infer_const s = *)

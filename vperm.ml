@@ -395,9 +395,9 @@ let vperm_entail_set ?(par_flag=false) ?(ver_post_flag=false) ?(classic_flag=fal
       (fun _ _ -> vperm_entail_set  ~par_flag ~ver_post_flag ~classic_flag lhs_vperm_sets rhs_vperm_sets) lhs_vperm_sets rhs_vperm_sets
 
 let vperm_entail_rhs estate conseq pos =
-  let par_flag = estate.CF.es_infer_obj # is_par || infer_const_obj # is_par in
-  let ver_post_flag = estate.CF.es_infer_obj # is_ver_post || infer_const_obj # is_ver_post in
-  let classic_flag = estate.CF.es_infer_obj # is_classic || infer_const_obj # is_classic in
+  let par_flag = estate.CF.es_infer_obj # is_par_all (* || infer_const_obj # is_par *) in
+  let ver_post_flag = estate.CF.es_infer_obj # is_ver_post_all (* || infer_const_obj # is_ver_post *) in
+  let classic_flag = estate.CF.es_infer_obj # is_classic_all (* || infer_const_obj # is_classic *) in
   if not (!Globals.ann_vp) then Succ estate
   else
     let lhs_vperm_sets = collect_vperm_sets estate.es_formula in
