@@ -3454,7 +3454,7 @@ and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool)
     let list_context_res,prf = f (*heap_entail_one_context_struc*) prog is_folding has_post c20 conseq tid delayed_f join_id pos pid in
     (* print_string ("\nOutcome ==> "^(Cprinter.string_of_list_context list_context_res)) ; *)
     let res,new_unk_map = match list_context_res with
-      | FailCtx (t,c,_) ->  begin if !Globals.enable_error_as_exc then
+      | FailCtx (t,c,_) ->  begin if !Globals.enable_error_as_exc || CF.is_en_error_exc_ctx c || is_en_efa_exc () then
             ([([],[(lbl, c,Some t)])],[])
           else
             ([([(lbl,t)],[])],[])
@@ -3525,7 +3525,7 @@ and heap_entail_struc_failesc_context_x (prog : prog_decl) (is_folding : bool)
       (*WN :fixing incorrect handling of esc_stack by adding a skeletal structure*)
       let esc_skeletal = List.map (fun (l,_) -> (l,[])) esc_branches in
       let res = match list_context_res with
-        | FailCtx (t,c,_) -> begin if !Globals.enable_error_as_exc then
+        | FailCtx (t,c,_) -> begin if !Globals.enable_error_as_exc || CF.is_en_error_exc_ctx c ||  (is_en_efa_exc ()) then
               ([([],esc_skeletal, [((lbl, c ,Some t))])])
             else [([(lbl,t)],esc_skeletal,[])]
           end
@@ -4613,7 +4613,8 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                           in
                           (******************************************************)
                           (* let () = print_endline ("### rs4 (2) = "^(Cprinter.string_of_context rs4)) in *)
-                          if not !Globals.disable_failure_explaining && not !Globals.enable_error_as_exc then
+                          if not !Globals.disable_failure_explaining && not !Globals.enable_error_as_exc && not (CF.is_dis_error_exc_ctx rs4) &&
+                            not (infer_const_obj # is_dis_err) then
                             let tmp_lctx = invert_ctx rs4 new_post in
                             (* let () = print_endline ("### tmp_lctx = "^(Cprinter.string_of_list_context tmp_lctx)) in *)
                             (tmp_lctx ,TrueConseq)
@@ -14878,7 +14879,8 @@ let heap_entail_list_failesc_context_init_x (prog : prog_decl) (is_folding : boo
                       ^ "after normalizing"
                       ^"\n")) pos;
     let (lfc,prf) = x_add heap_entail_failesc_prefix_init 2 prog is_folding  false norm_cl conseq tid delayed_f join_id pos pid (rename_labels_formula ,Cprinter.string_of_formula,heap_entail_one_context_new) in
-    let lfc1 = if !Globals.enable_error_as_exc then
+    let lfc1 = if !Globals.enable_error_as_exc ||
+      (infer_const_obj # is_err_must || infer_const_obj # is_err_may) then
         (* List.map (fun ((lbl, ft), esc, brok) -> *)
         (* ) *)
         lfc
