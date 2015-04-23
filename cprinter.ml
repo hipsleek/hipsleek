@@ -1055,8 +1055,8 @@ and pr_term_ann_debug pr_short ann =
   | P.Term -> fmt_string "Term"
   | P.Loop cex -> fmt_string "Loop"; pr_term_cex cex
   | P.MayLoop cex -> fmt_string "MayLoop"; pr_term_cex cex
-  | P.TermU uid -> fmt_string "TermU"; pr_term_id pr_short uid
-  | P.TermR uid -> fmt_string "TermR"; pr_term_id pr_short uid
+  | P.TermU uid -> fmt_string ("TermU["^uid.P.tu_sid^"]"); pr_term_id pr_short uid
+  | P.TermR uid -> fmt_string ("TermR["^uid.P.tu_sid^"]"); pr_term_id pr_short uid
   | P.Fail f -> match f with
     | P.TermErr_May -> fmt_string "TermErr_May"
     | P.TermErr_Must -> fmt_string "TermErr_Must"
@@ -1067,7 +1067,7 @@ and pr_term_id pr_short uid =
   pr_pure_formula uid.P.tu_cond; 
   fmt_string ","; pr_pure_formula uid.P.tu_icond; 
   fmt_string "}";
-  let () = pr_args "ARG" pr_formula_exp uid.P.tu_args in
+  let () = pr_args "" pr_formula_exp uid.P.tu_args in
   if pr_short then () 
   else 
     pr_wrap_test "#" Gen.is_None (pr_opt_silent (fun (s, ls) ->
@@ -1081,7 +1081,7 @@ and pr_term_ann_assume ann =
   | P.TermU uid 
   | P.TermR uid ->
     let pr_args op f xs = pr_args None None op "(" ")" "," f xs in
-    fmt_string (uid.P.tu_sid ^ "_" ^ (string_of_int uid.P.tu_id));
+    fmt_string (uid.P.tu_sid ^ "{" ^ (string_of_int uid.P.tu_id)^"}");
     pr_args "" pr_formula_exp uid.P.tu_args
   | P.Fail f -> match f with
     | P.TermErr_May -> fmt_string "TermErr_May"
@@ -1097,7 +1097,7 @@ and pr_tcex_cmd cmd =
   | P.TCall pos -> fmt_string ("call" ^ (string_of_pos pos))
 
 and pr_term_ann debug ann =
-  if debug then pr_term_ann_debug false ann
+  if !Debug.debug_print then pr_term_ann_debug false ann
   else pr_term_ann_assume ann
 
 and pr_var_measures (t_ann, ls1, ls2) = 
