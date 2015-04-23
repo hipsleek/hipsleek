@@ -534,6 +534,11 @@ let is_RelT x =
   | _ -> false
 ;;
 
+let is_UtT x =
+  match x with
+  | UtT _ -> true
+  | _ -> false
+
 let is_FuncT = function
   | FuncT _ -> true
   | _ -> false

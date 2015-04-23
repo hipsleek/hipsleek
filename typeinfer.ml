@@ -849,7 +849,7 @@ and gather_type_info_term_ann prog tann tlist =
         let pos = tid.IP.tu_pos in
         let sid = tid.IP.tu_sid in
         let utdef = I.look_up_ut_def_raw prog.I.prog_ut_decls sid in
-        let (n_tl, n_typ) = x_add gather_type_info_var sid tlist (UtT (not utdef.I.ut_is_pre)) pos in
+        let (n_tl, n_typ) = x_add gather_type_info_var sid tlist (UtT (utdef.I.ut_is_pre)) pos in
         let param_types = List.map (fun (t, _) -> trans_type prog t pos) utdef.I.ut_typed_params in
         let exp_et_list = List.combine tid.IP.tu_args param_types in
         let n_tl = List.fold_left (fun tl (arg, et) -> 
@@ -1310,10 +1310,9 @@ and get_spec_var_type_list (v : ident) tlist pos =
                                     Err.error_text = v ^ " is undefined"; }
 
 and get_spec_var_type_list_infer (v : ident * primed) fvs pos =
-  (* let pr_sv = Cprinter.string_of_spec_var in *)
-  Debug.no_2 "get_spec_var_type_list_infer" 
-    pr_none (* (pr_list pr_sv) *) pr_none pr_none
-    (fun _ _ -> get_spec_var_type_list_infer_x v fvs pos) v fvs
+  let pr_sv = Cprinter.string_of_spec_var in
+  Debug.no_1 "get_spec_var_type_list_infer" (fun v -> pr_id (fst v)) pr_sv
+    (fun _ -> get_spec_var_type_list_infer_x v fvs pos) v
 
 and get_spec_var_type_list_infer_x ((v, p) : ident * primed) fvs pos =
   let get_var_type v fv_list: (typ * bool) = 
