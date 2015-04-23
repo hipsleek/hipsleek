@@ -563,6 +563,10 @@ let common_arguments = [
   ("--efa", Arg.Clear Globals.disable_failure_explaining,"shorthand for --en-failure-analysis");
   ("--efa-exc", Arg.Set Globals.enable_error_as_exc,"enable to transform error as exception");
   ("--dis-efa-exc", Arg.Clear Globals.enable_error_as_exc,"disable to transform error as exception");
+  ("--efa-may", Arg.Unit 
+     (fun _ ->
+       Globals.infer_const_obj # set INF_ERR_MAY
+     ),"set may error scenrio as default");
   ("--dfa", Arg.Set Globals.disable_failure_explaining,"shorthand for --dis-failure-analysis");
   ("--refine-error", Arg.Set Globals.simplify_error,
    "Simplify the error");
