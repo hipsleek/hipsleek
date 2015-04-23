@@ -383,7 +383,7 @@ class last_commands =
           last_sleek_fail <- cmd
       | None -> last_sleek_fail <- cmd
     method dumping no =
-      if  !proof_logging_txt (*|| !sleek_logging_txt *) then
+      if  !proof_logging_txt && !is_hip_running (*|| !sleek_logging_txt *) then
         begin
           match last_proof_fail with
           | Some e -> 
@@ -391,7 +391,7 @@ class last_commands =
             Debug.info_hprint string_of_proof_log_entry e no_pos 
           | _ -> Debug.info_pprint ("Cannot find imply proof failure for "^no) no_pos
         end;
-      if !sleek_logging_txt then
+      if !sleek_logging_txt && !is_hip_running then
         match last_sleek_fail with
         | Some e -> 
           let () = Debug.info_zprint  (lazy  ("dumping for "^no)) no_pos in

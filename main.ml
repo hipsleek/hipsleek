@@ -368,7 +368,8 @@ let reverify_with_hp_rel old_cprog iprog =
   ignore (Typechecker.check_prog iprog cprog)
 
 (* after scriptaguments are read *)
-let hip_prologue () = 
+let hip_prologue () =
+  Globals.is_hip_running := true;
   Globals.infer_const_obj # init
 
 let hip_epilogue () = 

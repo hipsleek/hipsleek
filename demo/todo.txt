@@ -466,6 +466,31 @@ infer [] x'=8 |- x'<=6.
 print residue.
 // expects MustErr Context but got MaybeErr Context
 ==========================================================================
+# ex21f2.slk --esl (FIXED)
+
+Can we suppress sleek_dump during sleek_invocation?
+
+!!!dumping for sleek_dump(fail)
+!!!  
+ id: 2<0; prover: Z3; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:no proof raw result:no result
+ Imply: ante: x'=x
+             conseq:  x'<=5
+ res: false
+ --------------------
+!!!dumping for sleek_dump(fail)
+!!!  
+id: 0; caller: []; line: 0; classic: false; kind: Sleek_Entail(1); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [@dis_err] globals: []
+ checkentail emp&x'=x&{FLOW,(20,21)=__norm#E}[]
+ |-  emp&x'<=5&{FLOW,(20,21)=__norm#E}[]. 
+ho_vars: nothing?
+res:  failctx
+         fe_kind: MAY
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message:  true |-  x'<=5. LOCS:[4] (may-bug)
+                   fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}}
+[[empty]]false
 ==========================================================================
 ==========================================================================
 ==========================================================================
