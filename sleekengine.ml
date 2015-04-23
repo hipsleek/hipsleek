@@ -1108,6 +1108,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   (* need to make ivars be global *)
   (* let conseq = if (!Globals.allow_field_ann) then meta_to_struc_formula iconseq0 false fv_idents None stab  *)
   let (n_tl,conseq) = meta_to_struc_formula iconseq0 false fv_idents  n_tl in
+  let () = x_binfo_hp (add_str "type-table" Typeinfer.string_of_tlist) n_tl no_pos in
   (* let _ = print_endline ("conseq: " ^ (Cprinter.string_of_struc_formula conseq)) in *)
   (* let ante,conseq = transfrom_bexpr ante conseq n_tl in *)
   (* let conseq1 = meta_to_struc_formula iconseq0 false fv_idents stab in *)
@@ -1134,7 +1135,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
         let _ = Cast.look_up_hp_def_raw !cprog.Cast.prog_hp_decls v in
         CP.SpecVar (HpT, v, Unprimed)
       with _ ->
-        Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos
+        Typeinfer.get_spec_var_type_list_infer ~d_tt:n_tl (v, Unprimed) orig_vars no_pos
     ) ivars in
   (* let ante,conseq = Cfutil.normalize_ex_quans_conseq !cprog ante conseq in *)
   let (res, rs,v_hp_rel) = x_add Sleekcore.sleek_entail_check 8 itype vars !cprog [] ante conseq in

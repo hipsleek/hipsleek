@@ -530,7 +530,7 @@ let rec string_of_typ (x:typ) : string = match x with
 
 let is_RelT x =
   match x with
-  | RelT _ -> true
+  | RelT _ | UtT _ -> true
   | _ -> false
 ;;
 
