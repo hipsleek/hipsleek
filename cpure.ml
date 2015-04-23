@@ -9879,14 +9879,26 @@ let loop_id = 2
 let mayLoop_id = 3 
 let termErr_id = 4
 
-let sid_of_term_ann ann = 
+(* let sid_of_term_ann ann =  *)
+(*   match ann with *)
+(*   | Term -> string_of_int term_id *)
+(*   | Loop _ -> string_of_int loop_id *)
+(*   | MayLoop _ -> string_of_int mayLoop_id *)
+(*   | Fail _ -> string_of_int termErr_id *)
+(*   | TermU uid -> uid.tu_sid *)
+(*   | TermR uid -> uid.tu_sid *)
+
+let id_of_term_ann ann = 
   match ann with
-  | Term -> string_of_int term_id
-  | Loop _ -> string_of_int loop_id
-  | MayLoop _ -> string_of_int mayLoop_id
-  | Fail _ -> string_of_int termErr_id
-  | TermU uid -> uid.tu_sid
-  | TermR uid -> uid.tu_sid
+  | Term -> term_id
+  | Loop _ -> loop_id
+  | MayLoop _ -> mayLoop_id
+  | Fail _ -> termErr_id
+  | TermU uid -> uid.tu_id
+  | TermR uid -> uid.tu_id
+
+let sid_of_term_ann ann = 
+  string_of_int (id_of_term_ann ann)
 
 (* = match f with *)
 (*   | BForm (bf,_) -> *)
@@ -14025,23 +14037,6 @@ let is_unknown_term_ann ann =
   | _ -> false
 
 
-let id_of_term_ann ann = 
-  match ann with
-  | Term -> term_id
-  | Loop _ -> loop_id
-  | MayLoop _ -> mayLoop_id
-  | Fail _ -> termErr_id
-  | TermU uid -> uid.tu_id
-  | TermR uid -> uid.tu_id
-
-let sid_of_term_ann ann = 
-  match ann with
-  | Term -> string_of_int term_id
-  | Loop _ -> string_of_int loop_id
-  | MayLoop _ -> string_of_int mayLoop_id
-  | Fail _ -> string_of_int termErr_id
-  | TermU uid -> uid.tu_sid
-  | TermR uid -> uid.tu_sid
 
 let cond_of_term_ann ann =
   match ann with
