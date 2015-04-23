@@ -7842,43 +7842,43 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b
         CP.lex_tmp = clt;
         CP.lex_loc = pos; }
     | IP.Lt (e1, e2, pos) ->
-      let pe1 = trans_pure_exp e1 tlist in
-      let pe2 = trans_pure_exp e2 tlist in CP.mkLt pe1 pe2 pos
+      let pe1 = x_add trans_pure_exp e1 tlist in
+      let pe2 = x_add trans_pure_exp e2 tlist in CP.mkLt pe1 pe2 pos
     | IP.Lte (e1, e2, pos) ->
-      let pe1 = trans_pure_exp e1 tlist in
-      let pe2 = trans_pure_exp e2 tlist in CP.mkLte pe1 pe2 pos
+      let pe1 = x_add trans_pure_exp e1 tlist in
+      let pe2 = x_add trans_pure_exp e2 tlist in CP.mkLte pe1 pe2 pos
     | IP.SubAnn (e1, e2, pos) ->
-      let pe1 = trans_pure_exp e1 tlist in
-      let pe2 = trans_pure_exp e2 tlist in CP.SubAnn(pe1,pe2,pos)
+      let pe1 = x_add trans_pure_exp e1 tlist in
+      let pe2 = x_add trans_pure_exp e2 tlist in CP.SubAnn(pe1,pe2,pos)
     | IP.Gt (e1, e2, pos) ->
-      let pe1 = trans_pure_exp e1 tlist in
-      let pe2 = trans_pure_exp e2 tlist in CP.mkGt pe1 pe2 pos
+      let pe1 = x_add trans_pure_exp e1 tlist in
+      let pe2 = x_add trans_pure_exp e2 tlist in CP.mkGt pe1 pe2 pos
     | IP.Gte (e1, e2, pos) ->
-      let pe1 = trans_pure_exp e1 tlist in
-      let pe2 = trans_pure_exp e2 tlist in CP.mkGte pe1 pe2 pos
+      let pe1 = x_add trans_pure_exp e1 tlist in
+      let pe2 = x_add trans_pure_exp e2 tlist in CP.mkGte pe1 pe2 pos
     | IP.Eq (e1, e2, pos) ->
-      let pe1 = trans_pure_exp e1 tlist in
-      let pe2 = trans_pure_exp e2 tlist in 
+      let pe1 = x_add trans_pure_exp e1 tlist in
+      let pe2 = x_add trans_pure_exp e2 tlist in 
       (check_dfrac_wf pe1 pe2 pos; CP.mkEq pe1 pe2 pos)
     | IP.Neq (e1, e2, pos) ->
-      let pe1 = trans_pure_exp e1 tlist in
-      let pe2 = trans_pure_exp e2 tlist in CP.mkNeq pe1 pe2 pos
+      let pe1 = x_add trans_pure_exp e1 tlist in
+      let pe2 = x_add trans_pure_exp e2 tlist in CP.mkNeq pe1 pe2 pos
     | IP.EqMax (e1, e2, e3, pos) ->
-      let pe1 = trans_pure_exp e1 tlist in
-      let pe2 = trans_pure_exp e2 tlist in
-      let pe3 = trans_pure_exp e3 tlist in CP.EqMax (pe1, pe2, pe3, pos)
+      let pe1 = x_add trans_pure_exp e1 tlist in
+      let pe2 = x_add trans_pure_exp e2 tlist in
+      let pe3 = x_add trans_pure_exp e3 tlist in CP.EqMax (pe1, pe2, pe3, pos)
     | IP.EqMin (e1, e2, e3, pos) ->
-      let pe1 = trans_pure_exp e1 tlist in
-      let pe2 = trans_pure_exp e2 tlist in
-      let pe3 = trans_pure_exp e3 tlist in CP.EqMin (pe1, pe2, pe3, pos)
+      let pe1 = x_add trans_pure_exp e1 tlist in
+      let pe2 = x_add trans_pure_exp e2 tlist in
+      let pe3 = x_add trans_pure_exp e3 tlist in CP.EqMin (pe1, pe2, pe3, pos)
     | IP.BagIn ((v, p), e, pos) ->
-      let pe = trans_pure_exp e tlist in CP.BagIn ((trans_var (v,p) tlist pos), pe, pos)
+      let pe = x_add trans_pure_exp e tlist in CP.BagIn ((trans_var (v,p) tlist pos), pe, pos)
     | IP.BagNotIn ((v, p), e, pos) ->
-      let pe = trans_pure_exp e tlist in
+      let pe = x_add trans_pure_exp e tlist in
       CP.BagNotIn ((trans_var (v,p) tlist pos), pe, pos)
     | IP.BagSub (e1, e2, pos) ->
-      let pe1 = trans_pure_exp e1 tlist in
-      let pe2 = trans_pure_exp e2 tlist in CP.BagSub (pe1, pe2, pos)
+      let pe1 = x_add trans_pure_exp e1 tlist in
+      let pe2 = x_add trans_pure_exp e2 tlist in CP.BagSub (pe1, pe2, pos)
     | IP.BagMax ((v1, p1), (v2, p2), pos) ->
       CP.BagMax (CP.SpecVar (C.int_type, v1, p1),CP.SpecVar (C.bag_type, v2, p2), pos)
     | IP.BagMin ((v1, p1), (v2, p2), pos) ->
@@ -7890,21 +7890,21 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b
     (*       let ls1 = List.map func ls in                         *)
     (*       CP.VarPerm (ct,ls1,pos)                               *)
     | IP.ListIn (e1, e2, pos) ->
-      let pe1 = trans_pure_exp e1 tlist in
-      let pe2 = trans_pure_exp e2 tlist in CP.ListIn (pe1, pe2, pos)
+      let pe1 = x_add trans_pure_exp e1 tlist in
+      let pe2 = x_add trans_pure_exp e2 tlist in CP.ListIn (pe1, pe2, pos)
     | IP.ListNotIn (e1, e2, pos) ->
-      let pe1 = trans_pure_exp e1 tlist in
-      let pe2 = trans_pure_exp e2 tlist in CP.ListNotIn (pe1, pe2, pos)
+      let pe1 = x_add trans_pure_exp e1 tlist in
+      let pe2 = x_add trans_pure_exp e2 tlist in CP.ListNotIn (pe1, pe2, pos)
     | IP.ListAllN (e1, e2, pos) ->
-      let pe1 = trans_pure_exp e1 tlist in
-      let pe2 = trans_pure_exp e2 tlist in CP.ListAllN (pe1, pe2, pos)
+      let pe1 = x_add trans_pure_exp e1 tlist in
+      let pe2 = x_add trans_pure_exp e2 tlist in CP.ListAllN (pe1, pe2, pos)
     | IP.ListPerm (e1, e2, pos) ->
-      let pe1 = trans_pure_exp e1 tlist in
-      let pe2 = trans_pure_exp e2 tlist in CP.ListPerm (pe1, pe2, pos)
+      let pe1 = x_add trans_pure_exp e1 tlist in
+      let pe2 = x_add trans_pure_exp e2 tlist in CP.ListPerm (pe1, pe2, pos)
     | IP.RelForm (r, args, pos) ->    
       let nv = trans_var_safe (r,Unprimed) (RelT[]) tlist pos in
       (* Match types of arguments with relation signature *)
-      let cpargs = trans_pure_exp_list args tlist in
+      let cpargs = x_add trans_pure_exp_list args tlist in
       CP.RelForm (nv, cpargs, pos) (* An Hoa : Translate IP.RelForm to CP.RelForm *)
     | IP.XPure ({IP.xpure_view_node = vn ;
                  IP.xpure_view_name = r;
@@ -7933,7 +7933,7 @@ and trans_term_ann (ann: IP.term_ann) (tlist:spec_var_type_list): CP.term_ann =
     CP.tu_sid = uid.IP.tu_sid;
     CP.tu_fname = uid.IP.tu_fname;
     CP.tu_call_num = 0;
-    CP.tu_args = List.map (fun e -> trans_pure_exp e tlist) uid.IP.tu_args;
+    CP.tu_args = List.map (fun e -> x_add trans_pure_exp e tlist) uid.IP.tu_args;
     CP.tu_cond = x_add trans_pure_formula uid.IP.tu_cond tlist; 
     CP.tu_icond = CP.mkTrue no_pos;
     CP.tu_sol = None; 
@@ -7964,7 +7964,7 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
        let pa = trans_var va tlist posa in
        CP.Bptriple ((pc,pt,pa),pos)
      | _ -> report_error pos ("trans_pure_exp: Bptriple error at location "^(string_of_full_loc pos)))
-  | IP.Tup2 ((e1, e2), pos) -> CP.Tup2 ((trans_pure_exp e1 tlist, trans_pure_exp e2 tlist), pos)
+  | IP.Tup2 ((e1, e2), pos) -> CP.Tup2 ((trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist), pos)
   | IP.AConst(a,pos) -> CP.AConst(a,pos)
   | IP.InfConst(a,pos) -> CP.InfConst(a,pos)
   | IP.NegInfConst(a,pos) -> CP.NegInfConst(a,pos)
@@ -7972,29 +7972,29 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
     CP.Var ((trans_var (v,p) tlist pos),pos)
   | IP.Level ((v, p), pos) -> 
     CP.Level ((trans_var (v,p) tlist pos),pos)
-  | IP.Ann_Exp (e, t, pos) -> trans_pure_exp e tlist
+  | IP.Ann_Exp (e, t, pos) -> trans_pure_exp_x e tlist
   | IP.IConst (c, pos) -> CP.IConst (c, pos)
   | IP.FConst (c, pos) -> CP.FConst (c, pos)
-  | IP.Add (e1, e2, pos) -> CP.Add (trans_pure_exp e1 tlist, trans_pure_exp e2 tlist, pos)
-  | IP.Subtract (e1, e2, pos) -> CP.Subtract (trans_pure_exp e1 tlist, trans_pure_exp e2 tlist, pos)
-  | IP.Mult (e1, e2, pos) -> CP.Mult (trans_pure_exp e1 tlist, trans_pure_exp e2 tlist, pos)
-  | IP.Div (e1, e2, pos) -> CP.Div (trans_pure_exp e1 tlist, trans_pure_exp e2 tlist, pos)
-  | IP.Max (e1, e2, pos) -> CP.Max (trans_pure_exp e1 tlist, trans_pure_exp e2 tlist, pos)
-  | IP.Min (e1, e2, pos) -> CP.Min (trans_pure_exp e1 tlist, trans_pure_exp e2 tlist, pos)
-  | IP.TypeCast (ty, e1, pos) -> CP.TypeCast (ty, trans_pure_exp e1 tlist, pos)
+  | IP.Add (e1, e2, pos) -> CP.Add (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
+  | IP.Subtract (e1, e2, pos) -> CP.Subtract (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
+  | IP.Mult (e1, e2, pos) -> CP.Mult (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
+  | IP.Div (e1, e2, pos) -> CP.Div (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
+  | IP.Max (e1, e2, pos) -> CP.Max (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
+  | IP.Min (e1, e2, pos) -> CP.Min (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
+  | IP.TypeCast (ty, e1, pos) -> CP.TypeCast (ty, trans_pure_exp_x e1 tlist, pos)
   | IP.Bag (elist, pos) -> CP.Bag (trans_pure_exp_list elist tlist, pos)
   | IP.BagUnion (elist, pos) -> CP.BagUnion (trans_pure_exp_list elist tlist, pos)
   | IP.BagIntersect (elist, pos) -> CP.BagIntersect (trans_pure_exp_list elist tlist, pos)
-  | IP.BagDiff (e1, e2, pos) -> CP.BagDiff (trans_pure_exp e1 tlist, trans_pure_exp e2 tlist, pos)
+  | IP.BagDiff (e1, e2, pos) -> CP.BagDiff (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
   | IP.List (elist, pos) -> CP.List (trans_pure_exp_list elist tlist, pos)
   | IP.ListAppend (elist, pos) -> CP.ListAppend (trans_pure_exp_list elist tlist, pos)
-  | IP.ListCons (e1, e2, pos) -> CP.ListCons (trans_pure_exp e1 tlist, trans_pure_exp e2 tlist, pos)
-  | IP.ListHead (e, pos) -> CP.ListHead (trans_pure_exp e tlist, pos)
-  | IP.ListTail (e, pos) -> CP.ListTail (trans_pure_exp e tlist, pos)
-  | IP.ListLength (e, pos) -> CP.ListLength (trans_pure_exp e tlist, pos)
-  | IP.ListReverse (e, pos) -> CP.ListReverse (trans_pure_exp e tlist, pos)
+  | IP.ListCons (e1, e2, pos) -> CP.ListCons (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
+  | IP.ListHead (e, pos) -> CP.ListHead (trans_pure_exp_x e tlist, pos)
+  | IP.ListTail (e, pos) -> CP.ListTail (trans_pure_exp_x e tlist, pos)
+  | IP.ListLength (e, pos) -> CP.ListLength (trans_pure_exp_x e tlist, pos)
+  | IP.ListReverse (e, pos) -> CP.ListReverse (trans_pure_exp_x e tlist, pos)
   | IP.Func (id, es, pos) ->
-    let es = List.map (fun e -> trans_pure_exp e tlist) es in
+    let es = List.map (fun e -> trans_pure_exp_x e tlist) es in
     CP.Func (CP.SpecVar (RelT[], id, Unprimed), es, pos)
   | IP.Template t ->
     let pos = t.IP.templ_pos in
@@ -8003,7 +8003,7 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
     let tparams = tdef.C.templ_params in
     let tbody = tdef.C.templ_body in
 
-    let templ_args = List.map (fun a -> trans_pure_exp a tlist) t.IP.templ_args in
+    let templ_args = List.map (fun a -> trans_pure_exp_x a tlist) t.IP.templ_args in
     let sst = List.combine tparams templ_args in
     let templ_unks, templ_body = match tbody with
       | Some cb -> 
@@ -8020,7 +8020,7 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
       CP.templ_body = templ_body;
       CP.templ_pos = pos; }
   | IP.ArrayAt ((a, p), ind, pos) ->
-    let cpind = List.map (fun i -> trans_pure_exp i tlist) ind in
+    let cpind = List.map (fun i -> trans_pure_exp_x i tlist) ind in
     let dim = List.length ind in (* currently only support int type array *)
     CP.ArrayAt (CP.SpecVar ((Array (C.int_type, dim)), a, p), cpind, pos)
   | IP.BExpr f1 -> report_error no_pos "trans_pure_exp BExpr"
@@ -8030,7 +8030,7 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
 and trans_pure_exp_list (elist : IP.exp list) (tlist:spec_var_type_list) : CP.exp list =
   match elist with
   | [] -> []
-  | e :: rest -> (trans_pure_exp e tlist) :: (trans_pure_exp_list rest tlist)
+  | e :: rest -> (x_add trans_pure_exp e tlist) :: (trans_pure_exp_list rest tlist)
 
 
 (*MERGE CHECK*)
@@ -10432,7 +10432,7 @@ and trans_bdecl prog bd =
 and trans_field_layout (iann : IP.ann list) : CP.ann list = List.map Immutable.iformula_ann_to_cformula_ann iann
 
 and trans_mem_formula (imem : IF.mem_formula) (tlist:spec_var_type_list) : CF.mem_perm_formula = 
-  let mem_exp = trans_pure_exp imem.IF.mem_formula_exp tlist in 
+  let mem_exp = x_add trans_pure_exp imem.IF.mem_formula_exp tlist in 
   let helpl1, helpl2 = List.split imem.IF.mem_formula_field_layout in
   let helpl2 = List.map trans_field_layout helpl2 in
   let guards = List.map (fun c -> x_add trans_pure_formula c tlist) imem.IF.mem_formula_guards in 
