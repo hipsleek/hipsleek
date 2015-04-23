@@ -177,6 +177,101 @@ MaybeErr Context:
    post --dis-efa-exc: : errors/infer/ex4-exc-post.ss
 
 ==========================================================================
+# ex21a1.ss --efa-exc
+
+Context of Verification Failure: _0:0_0:0
+Last Proving Location: ex21a1-assert-assume.ss_6:4_6:28
+Procedure foo$int FAIL.(2)
+Exception Failure("Proving assert/assume failed") Occurred!
+
+Why isn't dprint working?
+I expect MayError exception to be printed.
+How come --efa not working?
+
+id: 0; caller: []; line: 6; classic: false; kind: Assert/Assume; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail htrue&x'=x&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&5<=x'&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  failctx
+         fe_kind: MAY
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message:  true |-  5<=x'. LOCS:[2;6] (may-bug)
+                   fc_current_lhs_flow: {FLOW,(4,11)=__MayError#E}}
+[[empty]]false
+
+==========================================================================
+# ex21a2.slk
+
+# Can we log the @err_must etc below?
+# Can we move exception to a lower-level?
+
+infer [@dis_err] x'=x |- x'<=5.
+print residue.
+  /*
+Residue:
+ 
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message:  true |-  x'<=5. LOCS:[2] (may-bug)
+                             fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}}
+[[empty]]
+CEX:false
+  */
+
+infer [@err_must] x'=x |- x'<=6.
+print residue.
+
+  /*
+Entail (2) : Fail.(may) cause: true |-  x'<=5. LOCS:[5] (may-bug)
+  */
+
+# --esl
+
+id: 0; caller: []; line: 0; classic: false; kind: Sleek_Entail(1); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&x'=x&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&x'<=5&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  failctx
+         fe_kind: MAY
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message:  true |-  x'<=5. LOCS:[2] (may-bug)
+                   fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}}
+[[empty]]false
+ 
+id: 1; caller: []; line: 0; classic: false; kind: Sleek_Entail(2); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&x'=x&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&x'<=6&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  failctx
+         fe_kind: MAY
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message:  true |-  x'<=6. LOCS:[17] (may-bug)
+                   fc_current_lhs_flow: {FLOW,(4,8)=__MayError#E}}
+[[empty]]false
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
 ==========================================================================
 ==========================================================================
 ==========================================================================
