@@ -16,6 +16,14 @@ void goo(int x)
     dprint;
 }
 
+void foo2(int x)
+  requires true
+  ensures true ;
+{
+    assert x'>=5;
+    dprint;
+}
+
 /*
 # ex21a1 --efa-exc -dre "heap_entail"
 
