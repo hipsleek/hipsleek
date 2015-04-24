@@ -15,10 +15,12 @@ Residue:
 [[ COND ==>  UnmatchedRHSData ==> ]]
 */
 
+//2
 infer [] x'=x |- y::node<_>.
 print residue.
 // expects MaybeErr Context
 
+//3
 infer [] y!=null |- y::node<_>.
 print residue.
 // GOT MaybeErr Context, but expects MustErrCtx

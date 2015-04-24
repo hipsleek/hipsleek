@@ -1462,7 +1462,7 @@ and mkAndFlow_x (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula =  l
                               ;}
       | Flow_combine ->
         if (overlapping int1 int2) then 
-          {	formula_flow_interval = intersect_flow int1 int2;
+          {	formula_flow_interval = intersect_flow (* union_flow *) int1 int2;
             formula_flow_link = match (fl1.formula_flow_link,fl2.formula_flow_link)with
               | None,None -> None
               | Some s,None-> Some s

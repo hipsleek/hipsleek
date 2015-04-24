@@ -4438,7 +4438,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                         let rs = clear_entailment_history (fun x -> Some (x_add xpure_heap_symbolic 6 prog x (MCP.mkMTrue no_pos) 0)) ctx11 in (* andreeac: why also clear hole info? *)
                         x_tinfo_pp ("rs: " ^ (Cprinter.string_of_context rs)) pos; 
                         (* print_endline ("CTX11: " ^ (!print_context ctx11)); *)
-                        (* print_endline ("RS CTX: " ^ (!print_context rs));   *)
+                        (* print_endline ("RS CTX: " ^ (!print_context rs)); *)
                         (*************Compose variable permissions >>> ******************)
                         if (!Globals.ann_vp) then
                           x_dinfo_zp (lazy ("\nheap_entail_conjunct_lhs_struc: before checking VarPerm in EAssume:"^ "\n ###rs =" ^ (Cprinter.string_of_context rs)^ "\n ###f =" ^ (Cprinter.string_of_struc_formula f)^"\n")) pos;
@@ -4498,7 +4498,8 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                           else (*if not -> do not consider ls_var as a ref-vars*)
                             ref_vars,new_post
                         in
-                        let rs1 =CF.compose_context_formula rs new_post new_ref_vars true Flow_replace pos in
+                        let rs1 =CF.compose_context_formula rs new_post new_ref_vars true Flow_replace(* Flow_combine *) pos in
+                        (* print_endline ("RS1 CTX: " ^ (!print_context rs1)); *)
                         let rs1 = CF.transform_context (fun es -> CF.subst_hvar_es es es.CF.es_ho_vars_map) rs1 in
                         let f_waitS_rel es = {es with CF.es_formula = CF.translate_waitS_rel es.CF.es_formula;} in
                         let rel_sv = CP.mk_spec_var Globals.waitS_name in
@@ -5177,26 +5178,32 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
         (* in *)
         let osubsumed_es, non_subsume_es = if (* !Globals.enable_error_as_exc || *)
           (not(Cfutil.is_empty_heap_f es.CF.es_formula) && (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) (CF.flow_formula_of_formula conseq)))
-          then (Some es), None
-          else Cfutil.obtain_subsume_es es conseq
+        then (Some es), None
+        else Cfutil.obtain_subsume_es es conseq
         in
         let tmp0, prf = match osubsumed_es with
           | Some es1 ->
-            let () = Debug.ninfo_hprint (add_str "heap_entail_conjunct_lhs:conseq rel_ass_stk end 1" ( pr_list_ln Cprinter.string_of_hprel_short)) (Infer.rel_ass_stk# get_stk)  no_pos in
-            let rs,prf = x_add heap_entail_conjunct_lhs 1 prog is_folding  (Ctx es1) conseq pos in
-            (* let res = *)
-            (*   if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs))) *)
-            (*   else ((not (CF.isFailCtx rs))) *)
-            (* in *)
-            (* let () = if res then *)
-            (*   let hprels = Infer.collect_hp_rel_list_context rs in *)
-            (*   let new_hprels = Gen.BList.difference_eq Sautil.constr_cmp hprels (Infer.rel_ass_stk # get_stk) in *)
-            (*   let () = Infer.rel_ass_stk# push_list (Cfutil.update_hprel_flow new_hprels conseq) in *)
-            (*   () *)
-            (* else () in *)
-            rs,prf
-          | None -> (SuccCtx [], UnsatAnte)
+                let () = Debug.ninfo_hprint (add_str "heap_entail_conjunct_lhs:conseq rel_ass_stk end 1" ( pr_list_ln Cprinter.string_of_hprel_short)) (Infer.rel_ass_stk# get_stk)  no_pos in
+                let rs,prf = x_add heap_entail_conjunct_lhs 1 prog is_folding  (Ctx es1) conseq pos in
+                (* let res = *)
+                (*   if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs))) *)
+                (*   else ((not (CF.isFailCtx rs))) *)
+                (* in *)
+                (* let () = if res then *)
+                (*   let hprels = Infer.collect_hp_rel_list_context rs in *)
+                (*   let new_hprels = Gen.BList.difference_eq Sautil.constr_cmp hprels (Infer.rel_ass_stk # get_stk) in *)
+                (*   let () = Infer.rel_ass_stk# push_list (Cfutil.update_hprel_flow new_hprels conseq) in *)
+                (*   () *)
+                (* else () in *)
+                rs,prf
+          | None ->  (let ls = match non_subsume_es with
+              | None -> []
+              | Some es -> [Ctx es]
+            in
+              (SuccCtx ls (* [] *), UnsatAnte)
+            )
         in
+        (* let tmp0,prf = x_add heap_entail_conjunct_lhs 1 prog is_folding  (Ctx es) conseq pos in *)
         let tmp = tmp0 in
         (* let tmp = match oerr_es with *)
         (*   | None -> tmp0 *)
@@ -12483,13 +12490,17 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                       | None -> 
                         begin match rhs with
                           | DataNode _ | ViewNode _ ->
+                                (*demo/ex21e2*)
                             let lhs_null_ptrs = Cformula.get_null_svl estate.es_formula in
-                            (* let () =  Debug.info_hprint (add_str "rhs" Cprinter.string_of_h_formula) rhs pos in *)
+                            let () =  Debug.ninfo_hprint (add_str "rhs" Cprinter.string_of_h_formula) rhs pos in
                             let root = Cformula.get_ptr_from_data rhs in
-                            if (Cfutil.is_empty_heap_f estate.es_formula) || CP.mem_svl root lhs_null_ptrs then
+                            let () =  Debug.ninfo_hprint (add_str "lhs_null_ptrs" !CP.print_svl) lhs_null_ptrs pos in
+                            if (not (CF.is_unknown_f estate.es_formula)) && (CP.mem_svl root (CF.fv estate.es_formula)) &&
+                              not ( estate.es_infer_obj # is_err_may) &&
+                              ((Cfutil.is_empty_heap_f estate.es_formula) || CP.mem_svl root lhs_null_ptrs) then
                               let must_estate = {estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.es_formula} in
                               (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg must_estate (Base rhs_b) None pos,
-                                                              CF.mk_failure_must (msg) sl_error, estate.es_trace)) (Ctx (convert_to_must_es estate)) (mk_cex true), NoAlias)
+                              CF.mk_failure_must (msg) sl_error, estate.es_trace)) (Ctx (convert_to_must_es estate)) (mk_cex true), NoAlias)
                             else
                               (*/sa/error/ex2.slk: unmatch rhs: may failure *)
                               let may_estate = {estate with es_formula = CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula} in
