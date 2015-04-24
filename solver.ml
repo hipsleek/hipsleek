@@ -224,6 +224,7 @@ let clear_entailment_history_es (es :entail_state) :context =
     es_infer_pure = es.es_infer_pure;
     es_infer_vars_rel = es.es_infer_vars_rel;
     es_infer_vars_templ = es.es_infer_vars_templ;
+    es_infer_term_rel = es.es_infer_term_rel;
     es_infer_rel = es.es_infer_rel;
     es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
     es_infer_vars_sel_hp_rel = es.es_infer_vars_sel_hp_rel;
@@ -2487,6 +2488,7 @@ and process_fold_result_x (ivars,ivars_rel) prog is_folding estate
                                  es_infer_templ_assume = fold_es.es_infer_templ_assume;
                                  es_infer_pure = fold_es.es_infer_pure;
                                  es_infer_pure_thus = fold_es.es_infer_pure_thus;
+                                 es_infer_term_rel = fold_es.es_infer_term_rel;
                                  es_infer_rel = fold_es.es_infer_rel;
                                  es_infer_hp_rel = fold_es.es_infer_hp_rel;
                                  es_imm_last_phase = fold_es.es_imm_last_phase;
@@ -3685,16 +3687,16 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
         CP.mkOr acc new_f None no_pos
       ) (CP.mkFalse no_pos) ec.CF.formula_case_branches
   in
-  let is_not_infer_false_unknown =
-    let () = Debug.ninfo_hprint (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
-    let ctx_infer_vars_rel = CF.collect_infer_vars_rel ctx in
-    let () = Debug.ninfo_hprint (add_str "ctx_infer_vars_rel" !CP.print_svl) ctx_infer_vars_rel no_pos in
-    let conseq_vars = CF.struc_fv conseq in
-    let () = Debug.ninfo_hprint (add_str "conseq_vars" !CP.print_svl) conseq_vars no_pos in
-    not (List.exists (fun v -> List.mem v ctx_infer_vars_rel) conseq_vars)
-  in
-  let () = Debug.ninfo_hprint (add_str "is_not_infer_false_unknown" (string_of_bool)) is_not_infer_false_unknown no_pos in
-  if (isAnyFalseCtx ctx) (* && is_not_infer_false_unknown *) then
+  (* let is_not_infer_false_unknown = *)
+  (*   let () = Debug.ninfo_hprint (add_str "ctx" Cprinter.string_of_context) ctx no_pos in *)
+  (*   let ctx_infer_vars_rel = CF.collect_infer_vars_rel ctx in *)
+  (*   let () = Debug.ninfo_hprint (add_str "ctx_infer_vars_rel" !CP.print_svl) ctx_infer_vars_rel no_pos in *)
+  (*   let conseq_vars = CF.struc_fv conseq in *)
+  (*   let () = Debug.ninfo_hprint (add_str "conseq_vars" !CP.print_svl) conseq_vars no_pos in *)
+  (*   not (List.exists (fun v -> List.mem v ctx_infer_vars_rel) conseq_vars) *)
+  (* in *)
+  (* let () = Debug.ninfo_hprint (add_str "is_not_infer_false_unknown" (string_of_bool)) is_not_infer_false_unknown no_pos in *)
+  if (isAnyFalseCtx ctx) && !Globals.infer_false_imply_unknown (* && is_not_infer_false_unknown *) then
     (* let to_add = (List.map (fun ut -> CP.mk_typed_spec_var (RelT [Int]) (ut.ut_name)) prog.prog_ut_decls) in *)
     let pr_svl = Cprinter.string_of_typed_spec_var_list in
     (* let () = x_binfo_hp (add_str "UT added to false?" pr_svl) to_add no_pos in *)
@@ -3703,12 +3705,13 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
     let false_iv = false_es.CF.es_infer_vars in
     let rhs = get_pure_conseq_from_struc conseq in
     let rel_id_conseq = CP.get_rel_id_list rhs in
-    let () = Debug.ninfo_hprint (add_str "false_iv_rel" pr_svl) false_iv_rel no_pos in
-    let () = Debug.ninfo_hprint (add_str "false_iv" pr_svl) false_iv no_pos in
-    let () = Debug.ninfo_hprint (add_str "rel_id_conseq" pr_svl) rel_id_conseq no_pos in
-    let false_es = { false_es with
-                     CF.es_infer_vars_rel = CP.remove_dups_svl (false_iv_rel@false_iv@rel_id_conseq) }
-    in
+    let () = x_binfo_hp (add_str "false_iv_rel" pr_svl) false_iv_rel no_pos in
+    let () = x_binfo_hp (add_str "false_iv" pr_svl) false_iv no_pos in
+    let () = x_binfo_hp (add_str "rel_id_conseq" pr_svl) rel_id_conseq no_pos in
+    (* WN : why do we combine iv,iv_rel and also rel_id_conseq? *)
+    (* let false_es = { false_es with *)
+    (*                  CF.es_infer_vars_rel = CP.remove_dups_svl (false_iv_rel@false_iv@rel_id_conseq) } *)
+    (* in *)
     let () = Debug.ninfo_hprint (add_str "rhs" Cprinter.string_of_pure_formula) rhs no_pos in
     let () = Debug.ninfo_hprint (add_str "conseq" Cprinter.string_of_struc_formula) conseq no_pos in
     (* let conseq_flow = !Exc.GTable.norm_flow_int in *)
@@ -7032,13 +7035,20 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
                    CF.HEmp, [], None, [])
       | Ctx estate ->
         let proving_kind = find_impt_proving_kind () in
-        let lex_lhs = match proving_kind with
-          | PK_POST -> List.map (fun ann -> CP.mkLexVar_pure ann [] []) estate.es_term_res_lhs
-          | _ -> match estate.es_var_measures with
+        let lex_lhs =
+          let collect_lexvar m = 
+            match m with 
             | None -> []
-            | Some (ann, rnk, _) -> 
-              if CP.is_MayLoop ann then []
-              else [CP.mkLexVar_pure ann rnk []]
+            | Some (ann, rnk, _) -> [CP.mkLexVar_pure ann rnk []]
+            (* if CP.is_MayLoop ann then []       *)
+            (* else [CP.mkLexVar_pure ann rnk []] *)
+          in 
+          match proving_kind with
+          | PK_POST -> 
+            if estate.es_term_res_lhs != [] then
+              List.map (fun ann -> CP.mkLexVar_pure ann [] []) estate.es_term_res_lhs
+            else collect_lexvar estate.es_var_measures
+          | _ -> collect_lexvar estate.es_var_measures
         in
         let es = List.fold_left (fun es lv -> fst
                                     (CF.combine_and es (MCP.mix_of_pure lv))) estate.es_formula lex_lhs in
@@ -8406,62 +8416,28 @@ type: bool *
           begin
             let () = Debug.ninfo_hprint (add_str "conseq1" pr_no) conseq no_pos in
             match (heap_infer_decreasing_wf prog conseq estate rank is_folding lhs pos) with
-            | None -> (try
-                         let t_ann, ml, il = Term.find_lexvar_es estate in
-                         let term_pos, t_ann_trans, orig_ante, _ = Term.term_res_stk # top in
-                         let term_measures, term_res, term_err_msg =
-                           Some (CP.Fail CP.TermErr_May, ml, il),
-                           (term_pos, t_ann_trans, orig_ante,
-                            Term.MayTerm_S (Term.Not_Decreasing_Measure t_ann_trans)),
-                           Some (Term.string_of_term_res (term_pos, t_ann_trans, None, Term.TermErr (Term.Not_Decreasing_Measure t_ann_trans)))
-                         in
-                         let term_stack = match term_err_msg with
-                           | None -> estate.CF.es_var_stack
-                           | Some msg -> msg::estate.CF.es_var_stack
-                         in
-                         Term.term_res_stk # pop;
-                         Term.term_res_stk # push term_res;
-                         { estate with
-                           CF.es_var_measures = term_measures;
-                           CF.es_var_stack = term_stack;
-                           CF.es_term_err = term_err_msg;
-                         }
-                       with _ -> estate)
-            | Some es -> es
-          end
-      in
-
-      (* Termination: Try to prove rhs_wf with inference *)
-      (* rhs_wf = None --> measure succeeded or no striggered inference *)
-      (* lctx = Fail --> well-founded termination failure - No need to update term_res_stk *)
-      (* lctx = Succ --> termination succeeded with inference *)
-      let estate = match rhs_wf with
-        | None -> estate
-        | Some rank ->
-          begin
-            let () = Debug.ninfo_hprint (add_str "conseq1" pr_no) conseq no_pos in
-            match (heap_infer_decreasing_wf prog conseq estate rank is_folding lhs pos) with
-            | None -> (try
-                         let t_ann, ml, il = Term.find_lexvar_es estate in
-                         let term_pos, t_ann_trans, orig_ante, _ = Term.term_res_stk # top in
-                         let term_measures, term_res, term_err_msg =
-                           Some (CP.Fail CP.TermErr_May, ml, il),
-                           (term_pos, t_ann_trans, orig_ante,
-                            Term.MayTerm_S (Term.Not_Decreasing_Measure t_ann_trans)),
-                           Some (Term.string_of_term_res (term_pos, t_ann_trans, None, Term.TermErr (Term.Not_Decreasing_Measure t_ann_trans)))
-                         in
-                         let term_stack = match term_err_msg with
-                           | None -> estate.CF.es_var_stack
-                           | Some msg -> msg::estate.CF.es_var_stack
-                         in
-                         Term.term_res_stk # pop;
-                         Term.term_res_stk # push term_res;
-                         { estate with
-                           CF.es_var_measures = term_measures;
-                           CF.es_var_stack = term_stack;
-                           CF.es_term_err = term_err_msg;
-                         }
-                       with _ -> estate)
+            | None -> 
+              (try
+                 let t_ann, ml, il = Term.find_lexvar_es estate in
+                 let term_pos, t_ann_trans, orig_ante, _ = Term.term_res_stk # top in
+                 let term_measures, term_res, term_err_msg =
+                   Some (CP.Fail CP.TermErr_May, ml, il),
+                   (term_pos, t_ann_trans, orig_ante,
+                    Term.MayTerm_S (Term.Not_Decreasing_Measure t_ann_trans)),
+                   Some (Term.string_of_term_res (term_pos, t_ann_trans, None, Term.TermErr (Term.Not_Decreasing_Measure t_ann_trans)))
+                 in
+                 let term_stack = match term_err_msg with
+                   | None -> estate.CF.es_var_stack
+                   | Some msg -> msg::estate.CF.es_var_stack
+                 in
+                 Term.term_res_stk # pop;
+                 Term.term_res_stk # push term_res;
+                 { estate with
+                   CF.es_var_measures = term_measures;
+                   CF.es_var_stack = term_stack;
+                   CF.es_term_err = term_err_msg;
+                 }
+               with _ -> estate)
             | Some es -> es
           end
       in
@@ -8964,6 +8940,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
                         es_infer_templ_assume = estate.es_infer_templ_assume;
                         es_infer_pure = estate.es_infer_pure;
                         es_infer_pure_thus = estate.es_infer_pure_thus;
+                        es_infer_term_rel = estate.es_infer_term_rel;
                         es_infer_rel = estate.es_infer_rel;
                         es_infer_hp_rel = estate.es_infer_hp_rel;
                         es_group_lbl = estate.es_group_lbl;
@@ -9144,6 +9121,7 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
                                                                                    es_infer_heap = estate.es_infer_heap;
                                                                                    es_infer_templ = estate.es_infer_templ;
                                                                                    es_infer_templ_assume = estate.es_infer_templ_assume;
+                                                                                   es_infer_term_rel = estate.es_infer_term_rel;
                                                                                    (* es_infer_tnt = estate.es_infer_tnt; *)
                                                                                    es_infer_obj = estate.es_infer_obj;
                                                                                    es_infer_pure = estate.es_infer_pure;

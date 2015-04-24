@@ -347,7 +347,7 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
   (* let pr4 = Cprinter.string_of_spec_var_list in *)
   (* let pr5 = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_xpure_view) in *)
   (* let pr3 = pr_hepta pr1 pr2a  pr2 pr2b pr4 pr5 string_of_bool in *)
-  let f = wrap_proving_kind PK_Check_Specs (check_specs_infer_a0 prog proc ctx e0 do_infer) in
+  let f = wrap_proving_kind PK_Check_Specs (x_add check_specs_infer_a0 prog proc ctx e0 do_infer) in
   (fun _ -> f spec_list) spec_list
 
 
@@ -374,8 +374,7 @@ and check_bounded_term_x prog ctx post_pos =
       let bnd_formula = CF.formula_of_pure_formula
           (CP.join_conjunctions bnd_formula_l) m_pos in
       let rs, _ = heap_entail_one_context 12 prog false ctx bnd_formula None None None post_pos in
-      let () = x_tinfo_hp (add_str "Result context" 
-                             !CF.print_list_context) rs no_pos in
+      let () = x_tinfo_hp (add_str "Result context" !CF.print_list_context) rs no_pos in
       let term_pos = (m_pos, no_pos) in
       let term_res, n_es =
         let f_ctx = CF.formula_of_context ctx in
@@ -598,6 +597,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       let vars_rel, vars_templ, vars_inf = List.fold_left (fun (vr, vt, vi) v -> 
           let typ = CP.type_of_spec_var v in
           if is_RelT typ then (vr@[v], vt, vi)
+          else if is_UtT typ then (vr@[v], vt, vi)
           else if is_FuncT typ then (vr, vt@[v], vi)
           else (vr, vt, vi@[v])) ([], [], []) vars in
       let () = Debug.ninfo_hprint (add_str "vars_rel" !print_svl) vars_rel no_pos in
@@ -1435,9 +1435,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   begin
                     match pure_info with
                     | None -> 
-                      let () = x_binfo_pp ("WN : place to act on infer_assume") no_pos in
-                      let () = if ivars!=[] then x_binfo_hp (add_str "infer_assume" Cprinter.string_of_spec_var_list) ivars pos in
-                      ts
+                      let () = x_tinfo_pp ("WN : place to act on infer_assume") no_pos in
+                      let () = if ivars!=[] then x_tinfo_hp (add_str "infer_assume" Cprinter.string_of_spec_var_list) ivars pos in
+                      if ivars==[] then ts
+                      else (* failwith "to impl" *)
+                        List.map (fun (bf,es,bl) ->
+                            (bf,es,List.map (fun (pt,c,fopt) -> 
+                                 (pt,Infer.add_infer_vars_ctx ivars c,fopt)) bl)) ts 
                     | Some p ->
                       (* WN_2_Loc: add p to ts; add new_infer from new_ctx into ts *)
                       CF.add_pure_and_infer_from_asserted p new_ctx ts
@@ -2917,8 +2921,11 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
           (* print_endline "VERIFYING POST-CONDITION" *)
         end in
     (* Termination: Poststate of Loop must be unreachable (soundness) *)
-    let todo_unk = if !Globals.dis_term_chk || !Globals.dis_post_chk then true 
-      else Term.check_loop_safety prog proc ctx (fst posts) pos pid 
+    let todo_unk = 
+      if !Globals.dis_term_chk || !Globals.dis_post_chk then true 
+      else
+        let check_falsify ctx = heap_entail_one_context 17 prog false ctx (CF.mkFalse_nf pos) None None None pos in 
+        Term.check_loop_safety prog proc check_falsify ctx (fst posts) pos pid 
     in
 
     (* Rho: print conc err, if any *)
@@ -4179,7 +4186,7 @@ let rec check_prog iprog (prog : prog_decl) =
       Da.find_rel_args_groups_scc prog scc
     in
 
-    let has_infer_shape_proc = Pi.is_infer_shape_scc scc in
+    let has_infer_shape_proc = x_add_1 Pi.is_infer_shape_scc scc in
 
     let has_infer_pre_proc = Pi.is_infer_pre_scc scc in
     let () = if (not(has_infer_shape_proc) && has_infer_pre_proc) then Pi.add_pre_relation_scc prog scc in
@@ -4293,7 +4300,7 @@ let rec check_prog iprog (prog : prog_decl) =
     (* Reverify *)
     (* let has_infer_others_proc = (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) && Pi.is_infer_others_scc scc in *)
     (* let () = if has_infer_others_proc then wrap_reverify_scc reverify_scc prog scc false in                                           *)
-    let has_infer_term_scc = Ti3.is_infer_term_scc scc in
+    let has_infer_term_scc = x_add_1 Ti3.is_infer_term_scc scc in
     let _ =
       if has_infer_term_scc then
         let () = Ti3.add_term_relation_scc prog scc in

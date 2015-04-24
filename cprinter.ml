@@ -1011,10 +1011,13 @@ let rec pr_b_formula (e:P.b_formula) =
   | P.ListNotIn (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <Lnotin> "  (fun ()-> pr_formula_exp e2)
   | P.ListAllN (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <allN> "  (fun ()-> pr_formula_exp e2)
   | P.ListPerm (e1, e2, l) -> pr_op_adhoc (fun ()->pr_formula_exp e1) " <perm> "  (fun ()-> pr_formula_exp e2)
-  | P.RelForm (r, args, l) -> fmt_string ((string_of_spec_var r) ^ "("); match args with
+  | P.RelForm (r, args, l) -> fmt_string ((string_of_spec_var r) ^ "(");
+    match args with
     | [] -> fmt_string ")"
-    | arg_first::arg_rest -> let () = pr_formula_exp arg_first in 
-      let todo_unk = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")" (* An Hoa *) 
+    | arg_first::arg_rest -> 
+      let () = pr_formula_exp arg_first in 
+      let todo_unk = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in 
+      fmt_string ")" (* An Hoa *) 
 
 (** print a pure formula to formatter *)
 and pr_pure_formula  (e:P.formula) = 
@@ -1052,8 +1055,8 @@ and pr_term_ann_debug pr_short ann =
   | P.Term -> fmt_string "Term"
   | P.Loop cex -> fmt_string "Loop"; pr_term_cex cex
   | P.MayLoop cex -> fmt_string "MayLoop"; pr_term_cex cex
-  | P.TermU uid -> fmt_string "TermU"; pr_term_id pr_short uid
-  | P.TermR uid -> fmt_string "TermR"; pr_term_id pr_short uid
+  | P.TermU uid -> fmt_string ("TermU["^uid.P.tu_sid^"]"); pr_term_id pr_short uid
+  | P.TermR uid -> fmt_string ("TermR["^uid.P.tu_sid^"]"); pr_term_id pr_short uid
   | P.Fail f -> match f with
     | P.TermErr_May -> fmt_string "TermErr_May"
     | P.TermErr_Must -> fmt_string "TermErr_Must"
@@ -1064,7 +1067,7 @@ and pr_term_id pr_short uid =
   pr_pure_formula uid.P.tu_cond; 
   fmt_string ","; pr_pure_formula uid.P.tu_icond; 
   fmt_string "}";
-  pr_args "" pr_formula_exp uid.P.tu_args;
+  let () = pr_args "" pr_formula_exp uid.P.tu_args in
   if pr_short then () 
   else 
     pr_wrap_test "#" Gen.is_None (pr_opt_silent (fun (s, ls) ->
@@ -1078,7 +1081,7 @@ and pr_term_ann_assume ann =
   | P.TermU uid 
   | P.TermR uid ->
     let pr_args op f xs = pr_args None None op "(" ")" "," f xs in
-    fmt_string (uid.P.tu_sid ^ "_" ^ (string_of_int uid.P.tu_id));
+    fmt_string (uid.P.tu_sid ^ "{" ^ (string_of_int uid.P.tu_id)^"}");
     pr_args "" pr_formula_exp uid.P.tu_args
   | P.Fail f -> match f with
     | P.TermErr_May -> fmt_string "TermErr_May"
@@ -1086,10 +1089,15 @@ and pr_term_ann_assume ann =
 
 and pr_term_cex cex = 
   pr_wrap_test "" Gen.is_None (pr_opt_silent (fun cex ->
-      pr_set (fun pos -> fmt_string (string_of_pos pos)) cex.P.tcex_trace)) cex
+      pr_set (fun cmd -> pr_tcex_cmd cmd) cex.P.tcex_trace)) cex
+
+and pr_tcex_cmd cmd = 
+  match cmd with
+  | P.TAssume c -> (fmt_string "assume "; pr_pure_formula c)
+  | P.TCall pos -> fmt_string ("call" ^ (string_of_pos pos))
 
 and pr_term_ann debug ann =
-  if debug then pr_term_ann_debug false ann
+  if !Debug.debug_print then pr_term_ann_debug false ann
   else pr_term_ann_assume ann
 
 and pr_var_measures (t_ann, ls1, ls2) = 
@@ -2663,6 +2671,17 @@ let string_of_rel_decl reldecl =
   let args = pr_lst ", " pr_arg reldecl.Cast.rel_vars in
   decl_kind ^ name ^ "(" ^ args ^ ").\n"
 
+let string_of_ut_decl ut_decl =
+  let name = ut_decl.Cast.ut_name in
+  let pr_arg arg =
+    let t = CP.type_of_spec_var arg in
+    let arg_name = string_of_spec_var arg in
+    (CP.name_of_type t)  ^ " " ^ arg_name
+  in
+  let decl_kind = (" UT" ^ (if ut_decl.ut_is_pre then "Pre" else "Post") ^ " ") in
+  let args = pr_lst ", " pr_arg ut_decl.Cast.ut_params in
+  decl_kind ^ name ^ "(" ^ args ^ ").\n"
+
 let string_of_hp_rels (e) : string =
   (* CP.print_only_lhs_rhs e *)
   poly_string_of_pr pr_hp_rel e
@@ -2850,6 +2869,12 @@ let pr_turel_debug (ctx, lhs_turel, rhs_turel) =
   fmt_close ()
 
 let string_of_turel_debug = poly_string_of_pr pr_turel_debug
+
+let print_tntrel = function
+  | Tid.Ret rrel -> fmt_string "@Return: "; pr_trrel_assume (rrel.ret_ctx, rrel.termr_lhs, rrel.termr_rhs)
+  | Tid.Call crel -> fmt_string "@Call: "; pr_turel_assume (crel.call_ctx, crel.termu_lhs, crel.termu_rhs)
+
+let string_of_tntrel = poly_string_of_pr print_tntrel
 
 let pr_path_of (path, off, oflow)=
   (* fmt_string "PATH format"; *)
@@ -3608,6 +3633,7 @@ let pr_estate (es : entail_state) =
   (*  pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;*)
   pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) es.es_infer_heap;
   pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) es.es_infer_templ_assume;
+  pr_wrap_test "es_infer_term_rel: " Gen.is_empty  (pr_seq "" print_tntrel) es.es_infer_term_rel; 
   pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pure; 
   pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es.es_infer_hp_rel; 
   pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) es.es_infer_rel; 
@@ -3626,6 +3652,7 @@ let pr_estate_infer_hp (es : entail_state) =
   pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars;
   pr_wrap_test "es_infer_vars_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars_rel;
   pr_wrap_test "es_infer_templ: " Gen.is_empty  (pr_seq "" pr_formula_exp) es.es_infer_templ;
+  pr_wrap_test "es_infer_term_rel: " Gen.is_empty  (pr_seq "" print_tntrel) es.es_infer_term_rel; 
   pr_wrap_test "es_infer_vars_hp_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars_hp_rel;
   (*  pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;*)
   pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) es.es_infer_heap;
@@ -3822,9 +3849,9 @@ let pr_formula_vperm_wrap t =
 
 let pr_context_list_short (ctx : context list) = 
   let rec f xs = match xs with
-    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel@e.es_infer_vars_templ,e.es_infer_templ_assume,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,e.es_var_zero_perm)]
+    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel@e.es_infer_vars_templ,e.es_infer_templ_assume,e.es_infer_term_rel,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,e.es_var_zero_perm)]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
-  let pr (f,(* ac, *)iv,ta,ih,ip,ir,vperms) =
+  let pr (f,(* ac, *)iv,ta,tr,ih,ip,ir,vperms) =
     fmt_open_vbox 0;
     pr_formula_wrap f;
     pr_wrap_test "es_var_zero_perm: " Gen.is_empty  (pr_seq "" pr_spec_var) vperms;
@@ -3834,6 +3861,7 @@ let pr_context_list_short (ctx : context list) =
     pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih; 
     pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip;
     pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) ta;
+    pr_wrap_test "es_infer_term_rel: " Gen.is_empty  (pr_seq "" print_tntrel) tr; 
     pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) ir;
     fmt_close_box();
   in 
@@ -3863,6 +3891,7 @@ let pr_entail_state_short e =
   pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) e.es_infer_heap; 
   pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) e.es_infer_pure;
   pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) e.es_infer_templ_assume; 
+  pr_wrap_test "es_infer_term_rel: " Gen.is_empty  (pr_seq "" print_tntrel) e.es_infer_term_rel; 
   pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) e.es_infer_rel; 
   (* pr_wrap_test "es_subst_ref: " Gen.is_empty  (pr_seq "a" (pr_pair_aux pr_spec_var pr_spec_var)) e.es_subst_ref;  *)
   pr_wrap_test "es_cond_path: " Gen.is_empty (pr_seq "" (fun s -> fmt_int s)) e.es_cond_path;
@@ -4697,6 +4726,8 @@ let string_of_rel_decl_list rdecls =
   String.concat "\n" (List.map string_of_rel_decl rdecls)
 (* String.concat "\n" (List.map (fun r -> "relation " ^ r.rel_name) rdecls) *)
 
+let string_of_ut_decl_list ut_decls =
+  String.concat "\n" (List.map string_of_ut_decl ut_decls)
 
 (* An Hoa : print axioms *)
 let string_of_axiom_decl_list adecls = 
@@ -4721,6 +4752,7 @@ let string_of_prog_or_branches ((prg,br):prog_or_branches) =
 let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^
                           (string_of_view_decl_list p.prog_view_decls) ^ "\n\n" ^
                           (string_of_barrier_decl_list p.prog_barrier_decls) ^ "\n\n" ^
+                          (string_of_ut_decl_list p.prog_ut_decls) ^ "\n\n" ^
                           (string_of_rel_decl_list p.prog_rel_decls) ^ "\n\n" ^
                           (string_of_axiom_decl_list p.prog_axiom_decls) ^ "\n\n" ^
                           (* WN_all_lemma - override usage? *)

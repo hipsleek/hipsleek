@@ -89,7 +89,7 @@ let rec smt_of_typ t =
   | FuncT (t1, t2) -> "(" ^ (smt_of_typ t1) ^ ") " ^ (smt_of_typ t2) 
   (* TODO *)
   | RelT _ -> "Int"
-  | UtT -> "Int"
+  | UtT _ -> "Int"
   | HpT -> "Int"
   (* | SLTyp *)
   | INFInt 

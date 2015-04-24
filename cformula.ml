@@ -9186,6 +9186,7 @@ type entail_state = {
   es_term_res_lhs: CP.term_ann list;
   es_term_res_rhs: CP.term_ann option;
   es_term_call_rhs: CP.term_ann option;
+  es_infer_term_rel: Tid.tntrel list;
   es_var_stack :  string list;
   (* this should store first termination error detected *)
   (* in case an error has already been detected *)
@@ -9568,6 +9569,7 @@ let empty_es flowt grp_lbl pos =
     es_term_res_lhs = [];
     es_term_res_rhs = None;
     es_term_call_rhs = None;
+    es_infer_term_rel = [];
     es_var_stack = [];
     (*es_cache_no_list = [];*)
     es_cont = [];
@@ -10673,7 +10675,7 @@ let is_inferred_pre_ctx ctx =
 
 let remove_dupl_false (sl:branch_ctx list) = 
   let (fl,nl) = (List.partition (fun (_,oc,_) -> 
-      (isAnyFalseCtx oc && not(is_inferred_pre_ctx oc)) ) sl) in
+      (isAnyFalseCtx oc && not(x_add_1 is_inferred_pre_ctx oc)) ) sl) in
   let pr = pr_list (fun (_,oc,_) -> !print_context_short oc) in
   if not(fl==[]) && not(nl==[]) then
     x_tinfo_hp (add_str "false ctx removed" pr) fl no_pos; 
@@ -11120,6 +11122,7 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
    es_infer_templ_assume = es.es_infer_templ_assume;
    es_infer_pure = es.es_infer_pure;
    es_infer_rel = es.es_infer_rel;
+   es_infer_term_rel = es.es_infer_term_rel;
    es_infer_hp_rel = es.es_infer_hp_rel;
    es_infer_pure_thus = es.es_infer_pure_thus;
    es_var_measures = es.es_var_measures;
@@ -11348,11 +11351,11 @@ let proc_left t1 t2 =
   | [] -> Some t2
   | [c1] ->
     if isAnyFalseCtx c1 then
-      if is_inferred_pre_ctx c1 then
+      if x_add_1 is_inferred_pre_ctx c1 then
         match t2 with
         | [c2] ->
           if isAnyFalseCtx c2
-             && is_inferred_pre_ctx c2
+             && x_add_1 is_inferred_pre_ctx c2
              (* both t1 and t2 are FalseCtx with Pre *)
           then Some [merge_false_ctx c1 c2]
           else Some t2 (* drop FalseCtx t1 with Pre *)
@@ -13917,6 +13920,7 @@ let clear_entailment_history_es2 xp (es :entail_state) :entail_state =
    es_infer_heap = es.es_infer_heap;
    es_infer_pure = es.es_infer_pure;
    es_infer_rel = es.es_infer_rel;
+   es_infer_term_rel = es.es_infer_term_rel;
    es_infer_templ_assume = es.es_infer_templ_assume;
    es_infer_hp_rel = es.es_infer_hp_rel;
    es_group_lbl = es.es_group_lbl;
@@ -13971,6 +13975,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
     es_infer_templ = es.es_infer_templ;
     es_infer_pure = es.es_infer_pure;
     es_infer_rel = es.es_infer_rel;
+    es_infer_term_rel = es.es_infer_term_rel;
     es_infer_templ_assume = es.es_infer_templ_assume;
     es_infer_hp_rel = es.es_infer_hp_rel;
     es_group_lbl = es.es_group_lbl;

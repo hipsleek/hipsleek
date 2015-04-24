@@ -22,6 +22,7 @@ type proving_kind =
   | PK_Lemma_Prop
   | PK_Term_Dec
   | PK_Term_Bnd
+  | PK_NonTerm_Falsify
   | PK_Sleek_Entail of int
   | PK_Early_Contra_Detect
   | PK_Contra_Detect_Pure
@@ -54,6 +55,7 @@ let string_of_proving_kind pk =
   | PK_Lemma_Prop -> "Lemma_Prop"
   | PK_Term_Dec -> "Term_Dec"
   | PK_Term_Bnd -> "Term_Bnd"
+  | PK_NonTerm_Falsify -> "NonTerm_Falsify"
   | PK_Sleek_Entail(n) -> "Sleek_Entail("^(string_of_int n)^")"
   | PK_Early_Contra_Detect -> "Early_Contra_Detect"
   | PK_Contra_Detect_Pure -> "Contra_Detect_Pure"

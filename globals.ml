@@ -181,7 +181,7 @@ type typ =
   | HpT (* heap predicate relation type *)
   | Tree_sh
   | FuncT of typ * typ
-  | UtT (* unknown temporal type *)
+  | UtT of bool (* unknown temporal type - pre(true)/post(false)*)
   | Bptyp
   | Pointer of typ (* base type and dimension *)
 (* | SLTyp (* type of ho formula *) *)
@@ -519,7 +519,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
   | FuncT (t1, t2) -> (string_of_typ t1) ^ "->" ^ (string_of_typ t2)
-  | UtT        -> "UtT"
+  | UtT b        -> "UtT("^(if b then "pre" else "post")^")"
   | HpT        -> "HpT"
   (* | SLTyp -> "SLTyp" *)
   | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
@@ -530,9 +530,14 @@ let rec string_of_typ (x:typ) : string = match x with
 
 let is_RelT x =
   match x with
-  | RelT _ -> true
+  | RelT _ | UtT _ -> true
   | _ -> false
 ;;
+
+let is_UtT x =
+  match x with
+  | UtT _ -> true
+  | _ -> false
 
 let is_FuncT = function
   | FuncT _ -> true
@@ -565,7 +570,7 @@ let rec string_of_typ_alpha = function
   | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
   | FuncT (t1, t2) -> (string_of_typ t1) ^ "_" ^ (string_of_typ t2)
-  | UtT -> "UtT"
+  | UtT b        -> "UtT("^(if b then "pre" else "post")^")"
   | HpT        -> "HpT"
   (* | SLTyp -> "SLTyp" *)
   | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
@@ -940,7 +945,7 @@ let pred_disj_unify = ref false
 
 let pred_seg_unify = ref false
 
-let pred_equiv = ref true
+let pred_equiv = ref false
 
 let pred_equiv_one = ref true
 
@@ -1085,6 +1090,7 @@ let web_compile_flag = ref false (*enable compilation flag for website*)
 *)
 
 let allow_lsmu_infer = ref false
+let infer_false_imply_unknown = ref true (* to support strongest post infer *)
 
 let allow_norm = ref true
 
@@ -1167,7 +1173,7 @@ let split_rhs_flag = ref true
 let n_xpure = ref 1
 
 
-let fixcalc_disj = ref 2 (* should be n+1 where n is the base-case *)
+let fixcalc_disj = ref 1 (* should be n+1 where n is the base-case *)
 
 let pre_residue_lvl = ref 0
 (* Lvl 0 - add conjunctive pre to residue only *)
