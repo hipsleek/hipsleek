@@ -1,0 +1,12 @@
+checkentail x=1 & flow __norm |- x>4 & flow __Exc
+                                 or x>4 & flow __norm.
+print residue.
+// wrong - should fail
+
+/*
+# bisect - default
+
+71274168a4f4 12776
+
+*/
+
