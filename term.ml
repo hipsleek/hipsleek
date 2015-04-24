@@ -1342,7 +1342,7 @@ let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) check_fals
     end
 
 let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) check_falsify
-  (ctx : list_partial_context) post pos (pid:formula_label) : bool  =
+    (ctx : list_partial_context) post pos (pid:formula_label) : bool  =
   let pr = !print_list_partial_context in
   Debug.no_2 "check_loop_safety" 
     pr_id pr string_of_bool (fun _ _ -> check_loop_safety prog proc check_falsify ctx post pos pid) proc.Cast.proc_name ctx

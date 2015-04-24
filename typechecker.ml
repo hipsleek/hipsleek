@@ -1439,7 +1439,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       let () = if ivars!=[] then x_tinfo_hp (add_str "infer_assume" Cprinter.string_of_spec_var_list) ivars pos in
                       if ivars==[] then ts
                       else (* failwith "to impl" *)
-                          List.map (fun (bf,es,bl) ->
+                        List.map (fun (bf,es,bl) ->
                             (bf,es,List.map (fun (pt,c,fopt) -> 
                                  (pt,Infer.add_infer_vars_ctx ivars c,fopt)) bl)) ts 
                     | Some p ->
