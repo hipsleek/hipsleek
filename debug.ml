@@ -6,7 +6,7 @@ let debug_on = ref false
 let devel_debug_on = ref false
 let devel_debug_print_orig_conseq = ref false
 let trace_on = ref true
-let call_threshold = ref 15
+let call_threshold = ref 10
 let dump_calls = ref false
 let dump_calls_all = ref false
 let call_str = ref ""
@@ -508,6 +508,7 @@ struct
           end;
         print_endline "\nDEBUGGED CALLS";
         print_endline "==============";
+        print_endline (string_of_int (List.length cnt));
         print_endline (pr cnt);
         if rcnt!=[] then
           begin

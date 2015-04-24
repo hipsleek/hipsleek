@@ -3659,7 +3659,7 @@ and heap_entail_one_context_struc_nth n p i1 hp cl cs (tid: CP.spec_var option) 
 
 and heap_entail_one_context_struc i p i1 hp cl cs (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid =
   Debug.no_4_num i "heap_entail_one_context_struc"
-    Cprinter.string_of_struc_formula
+    (add_str "conseq" Cprinter.string_of_struc_formula)
     Cprinter.string_of_context
     (add_str "is_folding" string_of_bool)
     (add_str "has_post" string_of_bool)

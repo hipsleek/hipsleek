@@ -518,7 +518,186 @@ heap_entail_after_sat inp2 : emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
 heap_entail_after_sat@19 EXIT: []
 
 ==========================================================================
+# ex21a51 --efa-exc -dre "heap_entail"
+
+# why is it a wrongq post-condition failure?
+     (may) cause:  true |-  5<=x'. LOCS:[2;6] (may-bug)
+
+# It should be:
+      x=x' & flow __MayError |- true & flow __norm.
+
+Or at least:
+      x=x' & flow __MayError |- false.
+
+I think the current failure here is from assert failure.
+
 ==========================================================================
+# ex21a8.ss
+
+void pre_call3(cell x)
+  requires true
+  ensures true & flow __Error;
+
+int foo2(cell x)
+  requires true /*x=null*/
+  ensures true ;
+{
+  pre_call3(x);
+  dprint;
+  return 3;
+
+}
+
+Gave:
+ Procedure foo2$cell SUCCESS.
+
+This is incorrect. It should fail because
+
+  State:htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+  |- true & flow __norm
+
+do not hold..
+
+# ../hip ex21a8-pre.ss -dre "check_post\|heap_entail_struc_list_partial_context_init" > 1
+
+
+(==solver.ml#2849==)
+heap_entail_after_sat@52@51@50@49@48@47@46
+heap_entail_after_sat inp1 : es_formula: htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+ es_cond_path: [0]
+ es_var_measures 1: Some(MayLoop[]{})
+ es_infer_vars_rel: []
+ es_final_error: None
+heap_entail_after_sat inp2 : htrue&{FLOW,(4,5)=__norm#E}[]
+heap_entail_after_sat@52 EXIT: [
+  htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+  es_final_error: None
+  ]
+
+Below is incorrect..
+
+(==solver.ml#4320==)
+heap_entail_one_context#13@51@50@49@48@47@46
+heap_entail_one_context#13 inp1 : es_formula: htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+ es_cond_path: [0]
+ es_var_measures 1: Some(MayLoop[]{})
+ es_infer_vars_rel: []
+ es_unsat_flag: false
+ es_final_error: None
+heap_entail_one_context#13 inp2 : htrue&{FLOW,(4,5)=__norm#E}[]
+heap_entail_one_context#13@51 EXIT: [
+  htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+  es_final_error: None
+  ]
+
+(==solver.ml#3847==)
+heap_entail_conjunct_lhs_struc@50@49@48@47@46
+heap_entail_conjunct_lhs_struc inp1 :Ctx  es_formula: htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+ es_cond_path: [0]
+ es_var_measures 1: Some(MayLoop[]{})
+ es_infer_vars_rel: []
+ es_unsat_flag: false
+ es_final_error: None
+heap_entail_conjunct_lhs_struc inp2 : EBase htrue&{FLOW,(4,5)=__norm#E}[]
+heap_entail_conjunct_lhs_struc@50 EXIT: [
+  htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+  es_final_error: None
+  ]
+
+(==solver.ml#3754==)
+heap_entail_after_sat_struc#1@49@48@47@46
+heap_entail_after_sat_struc#1 inp1 : es_formula: htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+ es_cond_path: [0]
+ es_var_measures 1: Some(MayLoop[]{})
+ es_infer_vars_rel: []
+ es_unsat_flag: false
+ es_final_error: None
+heap_entail_after_sat_struc#1 inp2 : EBase htrue&{FLOW,(4,5)=__norm#E}[]
+heap_entail_after_sat_struc#1@49 EXIT: [
+  htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+  es_final_error: None
+  ]
+
+(==solver.ml#14815==)
+heap_entail_one_context_struc#111@48@47@46
+heap_entail_one_context_struc#111 inp1 :conseq: EBase htrue&{FLOW,(4,5)=__norm#E}[]
+heap_entail_one_context_struc#111 inp2 : es_formula: htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+ es_cond_path: [0]
+ es_var_measures 1: Some(MayLoop[]{})
+ es_infer_vars_rel: []
+ es_unsat_flag: false
+ es_final_error: None
+heap_entail_one_context_struc#111 inp3 :is_folding:false
+heap_entail_one_context_struc#111 inp4 :has_post:false
+heap_entail_one_context_struc#111@48 EXIT: [
+  htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+  es_final_error: None
+  ]
+
+(==typechecker.ml#3029==)
+heap_entail_struc_list_partial_context_init@47@46
+heap_entail_struc_list_partial_context_init inp1 : List of Partial Context: [PC(0, 1)]
+Failed States:
+[]
+Successful States:
+[
+ Label: []
+ State:es_formula: htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+       es_cond_path: [0]
+       es_var_measures 1: Some(MayLoop[]{})
+       es_infer_vars_rel: []
+       es_unsat_flag: false
+       es_final_error: None
+ Exc:None
+ ]
+heap_entail_struc_list_partial_context_init inp2 : EBase htrue&{FLOW,(4,5)=__norm#E}[]
+heap_entail_struc_list_partial_context_init@47 EXIT: List of Partial Context: [PC(0, 1)]
+Failed States:
+[]
+Successful States:
+[
+ Label: []
+ State:es_formula: htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+       es_cond_path: [0]
+       es_var_measures 1: Some(MayLoop[]{})
+       es_infer_vars_rel: []
+       es_final_error: None
+ Exc:None
+ ]
+
+(==typechecker.ml#861==)
+check_post@46
+check_post inp1 : List of Partial Context: [PC(0, 1)]
+Failed States:
+[]
+Successful States:
+[
+ Label: []
+ State:es_formula: htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+       es_cond_path: [0]
+       es_var_measures 1: Some(MayLoop[]{})
+       es_infer_vars_rel: []
+       es_unsat_flag: false
+       es_final_error: None
+ Exc:None
+ ]
+check_post inp2 :( htrue&{FLOW,(4,5)=__norm#E}[], EBase htrue&{FLOW,(4,5)=__norm#E}[])
+check_post@46 EXIT: List of Partial Context: [PC(0, 1)]
+Failed States:
+[]
+Successful States:
+[
+ Label: []
+ State:es_formula: htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+       es_cond_path: [0]
+       es_var_measures 1: Some(MayLoop[]{})
+       es_infer_vars_rel: []
+       es_final_error: None
+ Exc:None
+ ]
+
+
+
 ==========================================================================
 ==========================================================================
 ==========================================================================

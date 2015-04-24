@@ -3912,7 +3912,7 @@ and normalize_only_clash_rename_x (f1 : formula) (f2 : formula) (pos : loc) = ma
 (* split a conjunction into heap constraints, pure pointer constraints, *)
 (* and Presburger constraints *)
 and split_components (f: formula) =
-  Debug.no_1 "split_components" !print_formula (fun _ -> "")
+  (* Debug.no_1 "split_components" !print_formula (fun _ -> "") *)
     split_components_x f
 
 and split_components_x (f : formula) =

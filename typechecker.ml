@@ -2755,7 +2755,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       (* let () = print_endline ("WN:ESCAPE ctx3 :"^(Cprinter.string_of_list_failesc_context ctx3)) in *)
       (*Decide which to escape, and which to be caught.
         Caught exceptions become normal flows*)
-      let ctx4 = CF.splitter_failesc_context (cc.exp_catch_flow_type) (cc.exp_catch_var) 
+      let ctx4 = x_add CF.splitter_failesc_context (cc.exp_catch_flow_type) (cc.exp_catch_var) 
           (fun c -> CF.add_path_id c (Some pid,0) (-1)) elim_exists_ctx ctx3 in
       (* let () = print_endline ("WN:ESCAPE ctx4:"^(Cprinter.string_of_list_failesc_context ctx4)) in *)
       let ctx5 = x_add check_exp prog proc ctx4 cc.exp_catch_body post_start_label in
@@ -2814,11 +2814,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
   (*let () = print_endline ("WN:CURRENT:"^(Cprinter.string_of_list_failesc_context cl)) in *)
   (* if (Gen.is_empty cl) then fl
      else *)
-  let failesc = CF.splitter_failesc_context !norm_flow_int None (fun x->x)(fun x -> x) cl in
-  Debug.ninfo_hprint (add_str "check_exp1:into:"Cprinter.string_of_list_failesc_context) failesc no_pos;
-  if fl!=[] then
-    Debug.ninfo_hprint (add_str "check_exp1:failed?:"Cprinter.string_of_list_failesc_context) fl no_pos;
-  (* Debug.info_hprint (add_str "check_exp1:CURRENT:"Cprinter.string_of_list_failesc_context) cl no_pos; *)
+  let failesc = x_add CF.splitter_failesc_context !norm_flow_int None (fun x->x)(fun x -> x) cl in
+  Debug.binfo_hprint (add_str "check_exp1:failed?(fl):"Cprinter.string_of_list_failesc_context) fl no_pos;
+  Debug.binfo_hprint (add_str "check_exp1:inp(cl):"Cprinter.string_of_list_failesc_context) cl no_pos;
+  Debug.binfo_hprint (add_str "check_exp1:out(failesc):"Cprinter.string_of_list_failesc_context_short) failesc no_pos;
+  (* if fl!=[] then *)
   (* Debug.info_hprint (add_str "check_exp1:into:"Cprinter.string_of_list_failesc_context) failesc no_pos; *)
   ((check_exp1_x failesc) @ fl)
 
@@ -3026,7 +3026,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         end
       else
         (* let () = print_string_quiet "start struct checking \n" in *)
-        let rs_struc , prf = heap_entail_struc_list_partial_context_init prog false false fn_state (snd posts) None None None pos (Some pid) in
+        let rs_struc , prf = x_add heap_entail_struc_list_partial_context_init prog false false fn_state (snd posts) None None None pos (Some pid) in
         rs_struc, prf
         (*let () = print_string_quiet "stop struct checking \n" in*)
         (*let rs_flat, prf = heap_entail_list_partial_context_init prog false fn_state (fst posts) None None None pos (Some pid) in	  *)

@@ -10,10 +10,18 @@ void foo(int x)
 /*
 # ex21a51 --efa-exc -dre "heap_entail"
 
-# why is it __norm??: FIXED
-     State:htrue&x'=x&{FLOW,(4,5)=__norm#E}[]
 # why is it a wrong post-condition failure?
      (may) cause:  true |-  5<=x'. LOCS:[2;6] (may-bug)
+
+# It should be:
+      x=x' & flow __MayError |- true & flow __norm.
+
+Or at least:
+      x=x' & flow __MayError |- false.
+
+I think the current failure here is from assert failure.
+
+
 
 !!! **typechecker.ml#2071:Dprint:[x]
 dprint(simpl): ex21a51-assert-assume.ss:7: ctx:  List of Failesc Context: [FEC(0
