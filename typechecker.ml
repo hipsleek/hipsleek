@@ -1458,31 +1458,31 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       CF.transform_list_failesc_context (idf,idf,(elim_unsat_es 4 prog (ref 1))) assumed_ctx in
                   let res = List.map CF.remove_dupl_false_fe r in
                   match assert_failed_msg with
-                    | None -> res
-                    | Some s -> begin
-                        if not !Globals.disable_failure_explaining then
-                          let s,fk,_= CF.get_failure_list_failesc_context new_ctx in
-                          raise (Err.Ppf ({
-                              Err.error_loc = pos;
-                              Err.error_text = s
+                  | None -> res
+                  | Some s -> begin
+                      if not !Globals.disable_failure_explaining then
+                        let s,fk,_= CF.get_failure_list_failesc_context new_ctx in
+                        raise (Err.Ppf ({
+                            Err.error_loc = pos;
+                            Err.error_text = s
                           },(match fk with
                             | CF.Failure_Bot _ -> 0
                             | CF.Failure_Must _ -> 1
                             | CF.Failure_Valid -> 2
                             | CF.Failure_May _ -> 3), 2))
-                        else
-                          begin
-                            Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context  new_ctx)^") ") 
-                                ("Proving assert/assume in method failed\n") pos;
-                            Debug.print_info ("(Cause of Assert Failure)")
-                                (Cprinter.string_of_failure_list_failesc_context  new_ctx) pos;
-                            Err.report_error {
-                                Err.error_loc = pos;
-                                Err.error_text = Printf.sprintf
-                                    "Proving Assert/Assume in method failed."
-                            }
-                          end
-                      end
+                      else
+                        begin
+                          Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context  new_ctx)^") ") 
+                            ("Proving assert/assume in method failed\n") pos;
+                          Debug.print_info ("(Cause of Assert Failure)")
+                            (Cprinter.string_of_failure_list_failesc_context  new_ctx) pos;
+                          Err.report_error {
+                            Err.error_loc = pos;
+                            Err.error_text = Printf.sprintf
+                                "Proving Assert/Assume in method failed."
+                          }
+                        end
+                    end
               in
               let () = Debug.ninfo_hprint (add_str "res" Cprinter.string_of_list_failesc_context) res pos in
               (ps@res)
