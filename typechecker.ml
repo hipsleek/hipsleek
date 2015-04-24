@@ -988,9 +988,9 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                if CF.is_top_flow post_cond then
                  (spec, [],[],[],[],[],[], true) else
                  let () = Gen.Profiling.pop_time ("method "^proc.proc_name) in
-                 (Err.report_error1 e "Proving precond failed")
+                 (Err.report_error1 e (Err.get_error_type_str error_type))
              | _ -> let () = Gen.Profiling.pop_time ("method "^proc.proc_name) in
-               (Err.report_error1 e "Proving precond failed")
+               (Err.report_error1 e (Err.get_error_type_str error_type))
             )
           |_ as e ->
             let () = Gen.Profiling.pop_time ("method "^proc.proc_name) in raise e

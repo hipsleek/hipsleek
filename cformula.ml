@@ -12162,7 +12162,7 @@ and normalize_clash_es_x (f : formula) (pos : loc) (result_is_sat:bool)(es:entai
     res
   | _ ->
         let n_es_formula =
-          if (* !Globals.enable_error_as_exc && *) x_add_1 is_error_flow es.es_formula then
+          if (* !Globals.enable_error_as_exc && *) is_en_error_exc es && (x_add_1 is_error_flow es.es_formula || x_add_1 is_mayerror_flow es.es_formula) then
             es.es_formula
           else
             normalize_only_clash_rename es.es_formula f pos

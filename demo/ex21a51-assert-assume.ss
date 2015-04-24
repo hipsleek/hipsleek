@@ -10,7 +10,7 @@ void foo(int x)
 /*
 # ex21a51 --efa-exc -dre "heap_entail"
 
-# why is it __norm??
+# why is it __norm??: FIXED
      State:htrue&x'=x&{FLOW,(4,5)=__norm#E}[]
 # why is it a wrong post-condition failure?
      (may) cause:  true |-  5<=x'. LOCS:[2;6] (may-bug)
