@@ -492,6 +492,31 @@ res:  failctx
                    fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}}
 [[empty]]false
 ==========================================================================
+# ex21a8
+
+(==solver.ml#4318==)
+heap_entail_one_context#13@8@7@6@5@4@3@2@1
+heap_entail_one_context#13 inp1 : es_formula: htrue&x'=x & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ es_infer_obj: [@err_must]
+ es_gen_impl_vars: [Anon_11]
+ es_cond_path: [0]
+ es_infer_vars_rel: []
+heap_entail_one_context#13 inp2 : x'::cell<Anon_11>&{FLOW,(4,5)=__norm#E}[]
+heap_entail_one_context#13@8 EXIT: [
+  htrue&x'=x&{FLOW,(4,11)=__MayError#E}[]
+  ]
+
+(==norm.ml#1054==)
+heap_entail_after_sat@19@18@17@16@15@14@7@6@5@4@3@2@1
+heap_entail_after_sat inp1 : es_formula: htrue&x'=x&{FLOW,(4,11)=__MayError#E}[]
+ es_infer_obj: [@err_must]
+ es_cond_path: [0]
+ es_var_measures 1: Some(MayLoop[]{})
+ es_trace:  COND ==>  UnmatchedRHSData ==> 
+ es_infer_vars_rel: []
+heap_entail_after_sat inp2 : emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+heap_entail_after_sat@19 EXIT: []
+
 ==========================================================================
 ==========================================================================
 ==========================================================================
