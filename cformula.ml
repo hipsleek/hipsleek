@@ -202,6 +202,7 @@ and one_formula = {
 and flow_treatment =
   | Flow_combine
   | Flow_replace
+  | Flow_merge
 
 and h_formula = (* heap formula *)
   | Star of h_formula_star
@@ -1441,7 +1442,7 @@ and change_spec_flow spec =
 
 and mkAndFlow (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula =
   let pr = !print_flow_formula in
-  let pr2 x = match x with Flow_combine -> "Combine" | Flow_replace -> "Replace" in
+  let pr2 x = match x with Flow_combine -> "Combine" | Flow_replace -> "Replace" | Flow_merge -> "merge" in
   Debug.no_3 "mkAndFlow" pr pr pr2 pr (fun _ _ _ -> mkAndFlow_x fl1 fl2 flow_tr) fl1 fl2 flow_tr
 
 (*this is used for adding formulas, links will be ignored since the only place where links can appear is in the context, the first one will be kept*)
@@ -1470,7 +1471,19 @@ and mkAndFlow_x (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula =  l
               | Some s1, Some s2 -> Some (s1^"AND"^s2)
                                   (* | _ ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "mkAndFlow: cannot and two flows with two links"} *)
                                   ;}
-        else {formula_flow_interval = false_flow_int; formula_flow_link = None} in
+        else {formula_flow_interval = false_flow_int; formula_flow_link = None}
+      | Flow_merge ->
+        if (overlapping int1 int2) then 
+          {	formula_flow_interval = union_flow int1 int2;
+            formula_flow_link = match (fl1.formula_flow_link,fl2.formula_flow_link)with
+              | None,None -> None
+              | Some s,None-> Some s
+              | None, Some s -> Some s
+              | Some s1, Some s2 -> Some (s1^"AND"^s2)
+                                  (* | _ ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "mkAndFlow: cannot and two flows with two links"} *)
+                                  ;}
+        else {formula_flow_interval = !top_flow_int; formula_flow_link = None}
+  in
   r
 
 and get_case_guard_list lbl (lst:(Cpure.b_formula * formula_label list) list) :  CP.b_formula list= 

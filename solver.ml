@@ -3843,7 +3843,9 @@ and heap_entail_after_sat_struc_x prog is_folding has_post
           let es = (CF.add_to_estate_with_steps es ss) in
           let () = x_tinfo_hp (add_str "es(3)" Cprinter.string_of_entail_state(* _short *)) es no_pos in
           let () = flush(stdout) in
-          let tmp, prf = x_add heap_entail_conjunct_lhs_struc prog is_folding has_post (Ctx es) conseq tid delayed_f join_id pos pid in
+          let tmp, prf = (* if CF.is_en_error_exc es && not (is_dis_error_exc es) then *)
+            x_add heap_entail_conjunct_lhs_struc prog is_folding has_post (Ctx es) conseq tid delayed_f join_id pos pid
+          in
           (filter_set tmp, prf)
       end
     in wrap_trace es.es_path_label exec ()
@@ -4498,8 +4500,9 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                           else (*if not -> do not consider ls_var as a ref-vars*)
                             ref_vars,new_post
                         in
-                        let rs1 =CF.compose_context_formula rs new_post new_ref_vars true Flow_replace(* Flow_combine *) pos in
-                        (* print_endline ("RS1 CTX: " ^ (!print_context rs1)); *)
+                        let fl = if CF.is_en_error_exc es && not (is_dis_error_exc es) then Flow_merge else Flow_replace in
+                        let rs1 =CF.compose_context_formula rs new_post new_ref_vars true (* Flow_replace *) fl pos in
+                        print_endline ("RS1 CTX: " ^ (!print_context rs1));
                         let rs1 = CF.transform_context (fun es -> CF.subst_hvar_es es es.CF.es_ho_vars_map) rs1 in
                         let f_waitS_rel es = {es with CF.es_formula = CF.translate_waitS_rel es.CF.es_formula;} in
                         let rel_sv = CP.mk_spec_var Globals.waitS_name in
