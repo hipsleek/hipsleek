@@ -1499,12 +1499,18 @@ class inf_obj  =
     method get c  = List.mem c arr
     (* method get_int i  = Array.get arr i *)
     method is_term = (self # get INF_TERM) || (self # get INF_TERM_WO_POST)
+        (* termination inference *)
     method is_term_wo_post = self # get INF_TERM_WO_POST
+        (* termination inference wo post-condition *)
     method is_pre  = self # get INF_PRE
+        (* pre-condition inference *)
     method is_post  = self # get INF_POST
+        (* post-condition inference *)
     method is_ver_post  = self # get INF_VER_POST
     method is_imm  = self # get INF_IMM
+        (* immutability inference *)
     method is_shape  = self # get INF_SHAPE
+        (* shape inference *)
     method is_error  = self # get INF_ERROR
     method is_dis_err  = self # get INF_DE_EXC
                          || (not(self # get INF_ERR_MUST) 
@@ -1548,6 +1554,16 @@ class inf_obj  =
     (*   self # is_par *)
   end;;
 
+(* class inf_w_lst = *)
+(*   object (self) *)
+(*     val mutable arr = [] *)
+(*     method string_of_raw =  *)
+(*       let lst_a = List.map string_of_inf_const arr in *)
+(*       String.concat "," lst_a *)
+(*     method string_of = "["^(self #string_of_raw)^"]" *)
+(*     method get_lst = arr *)
+(*   end *)
+
 let infer_const_obj = new inf_obj;;
 
 let global_efa_exc ()  = not(infer_const_obj # is_dis_err)
@@ -1572,6 +1588,7 @@ let is_en_efa_exc ()=
 (*                             || infer_const_obj # is_dis_err *)
 (* let local_is_err_may obj  = obj # is_err_may || global_is_err_may () *)
 (* let local_is_err_must obj  = obj # is_err_must || global_is_err_must () *)
+
 
 class inf_obj_sub  =
   object (self)
