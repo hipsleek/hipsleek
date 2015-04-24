@@ -1,4 +1,5 @@
 
+/*
 void foo(int x)
   requires true
   ensures true ;
@@ -15,6 +16,7 @@ void goo(int x)
     assert x'>=5 assume true;
     dprint;
 }
+*/
 
 void foo2(int x)
   requires true

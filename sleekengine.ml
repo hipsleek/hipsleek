@@ -37,7 +37,7 @@ let proc_sleek_result_validate is_valid lc =
   let eres = if not is_valid then
       let final_error_opt = CF.get_final_error lc in
       match final_error_opt with
-      | Some (_, fk) -> begin
+      | Some (_, _, fk) -> begin
           match fk with
           | CF.Failure_May _ -> VR_Fail 1
           | CF.Failure_Must _ -> VR_Fail 1
@@ -2014,7 +2014,7 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
           if !Globals.enable_error_as_exc || lerr_exc then
             let final_error_opt = CF.get_final_error residue in
             match final_error_opt with
-              | Some (s, fk) -> begin
+              | Some (s, _, fk) -> begin
                   match fk with
                     | CF.Failure_May _ -> "(may) cause:"^s
                     | CF.Failure_Must _ -> "(must) cause:"^s

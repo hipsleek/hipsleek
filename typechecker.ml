@@ -1422,7 +1422,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     end
                   else
                     (*L2: todo: should not warning if post is must error*)
-                    let msg =  (s ^" : failed\n") in
+                    (* L2: to transform exc -> Fail before compute the err msg (--efa-exc only)*)
+                    let _,fk,_= CF.get_failure_list_failesc_context rs in
+                    let fk_msg = match fk with
+                      | CF.Failure_Must _ -> " (must)"
+                      | CF.Failure_May _ -> " (may)"
+                      | _ -> ""
+                    in
+                    let msg =  (s ^" : failed"^fk_msg ^ "\n") in
                     (Debug.print_info  "assert/assume" (*(s ^" : failed\n") *) msg pos ; (rs,None, Some msg))
               in 
               let () = if !print_proof  && (match c1_o with | None -> false | Some _ -> true) then 
@@ -1884,7 +1891,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let () = CF.must_consistent_list_failesc_context "bind 4" rs  in
             if (CF.isSuccessListFailescCtx_new unfolded) && (not(CF.isSuccessListFailescCtx_new rs))then
               begin
-                if not(Globals.global_efa_exc ()) then
+                if not (Globals.global_efa_exc ()) then
                   let () = Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context rs)^") ")
                       ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^ " cannot be derived from context\n") pos in (* add branch info *)
                 (* add branch info *)

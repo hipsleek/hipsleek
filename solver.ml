@@ -3459,8 +3459,15 @@ and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool)
           else
             ([([(lbl,t)],[])],[])
         end
-      | SuccCtx ls -> (List.map ( fun c-> ([],[(lbl,c,None)])) ls,
-                       List.concat (List.map CF.collect_hp_unk_map ls) )
+      | SuccCtx ls -> (List.map ( fun c-> begin
+          if !Globals.enable_error_as_exc || CF.is_en_error_exc_ctx c || is_en_efa_exc () then
+            match CF.get_final_error_ctx c with
+              | None -> ([],[(lbl,c,None)])
+              | Some (_,ft,_) -> ([],[(lbl,c,Some ft)])
+          else  ([],[(lbl,c,None)])
+        end
+        ) ls,
+        List.concat (List.map CF.collect_hp_unk_map ls) )
     in
     (res, prf, new_unk_map)
   in
@@ -3529,7 +3536,14 @@ and heap_entail_struc_failesc_context_x (prog : prog_decl) (is_folding : bool)
               ([([],esc_skeletal, [((lbl, c ,Some t))])])
             else [([(lbl,t)],esc_skeletal,[])]
           end
-        | SuccCtx ls -> List.map ( fun c-> ([],esc_skeletal,[(lbl,c, None)])) ls in
+        | SuccCtx ls -> List.map ( fun c-> begin
+              if !Globals.enable_error_as_exc || CF.is_en_error_exc_ctx c || is_en_efa_exc () then
+                match CF.get_final_error_ctx c with
+                  | None -> ([],esc_skeletal,[(lbl,c,None)])
+                  | Some (_,ft,_) -> ([],esc_skeletal,[(lbl,c,Some ft)])
+              else ([],esc_skeletal,[(lbl,c, None)])
+          end
+          ) ls in
       (res, prf)) succ_branches in
   let res_l,prf_l = List.split res in
   (*print_string ("\nCombining ==> :"^(Cprinter.string_of_list_list_partial_context res_l)); *)
@@ -10192,7 +10206,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   in
                   begin match res_ctx with
                     | FailCtx (ft,_,_) ->
-                      let ex_msg = match get_final_error res_ctx with Some (s,_) -> s | None -> "None??"in
+                      let ex_msg = match get_final_error res_ctx with Some (s,_,_) -> s | None -> "None??"in
                       let err_str = "matching of ho_args failed ("^ex_msg^")" in
                       let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext err_str new_es new_conseq None pos,
                                                                CF.mk_failure_must err_str Globals.sl_error, new_es.es_trace)) (Ctx (convert_to_must_es new_es)) (mk_cex true), NoAlias) 

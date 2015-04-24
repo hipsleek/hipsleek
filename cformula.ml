@@ -9212,7 +9212,7 @@ type entail_state = {
   (* es_imm_pure_stk : MCP.mix_formula list; *)
   es_must_error : (string * fail_type * failure_cex) option;
   es_may_error : (string * fail_type * failure_cex) option;
-  es_final_error: (string * failure_kind) option;
+  es_final_error: (string * fail_type * failure_kind) option;
   (* es_must_error : string option *)
   es_trace : formula_trace; (*LDK: to keep track of past operations: match,fold...*)
   (*for cyclic proof*)
@@ -10136,7 +10136,7 @@ let get_must_error_from_ctx cs =
   | [Ctx es] -> (match es.es_must_error with
       | None ->  begin if !Globals.enable_error_as_exc || es.es_infer_obj # is_err_must || es.es_infer_obj # is_err_may then
           match es.es_final_error with
-            | Some (s1, fk) -> Some (s1, mk_cex true)
+            | Some (s1, ft, fk) -> Some (s1, mk_cex true)
             | None -> None
         else None
         end
@@ -10159,7 +10159,7 @@ let get_may_error_from_ctx cs =
 
 let rec is_ctx_error ctx=
   match ctx with
-  | Ctx es -> not (es.es_final_error = None) || x_add_1 is_error_flow es.es_formula
+  | Ctx es -> not (es.es_final_error = None) || x_add_1 is_error_flow es.es_formula || is_mayerror_flow es.es_formula
   | OCtx (c1, c2) -> is_ctx_error c1 || is_ctx_error c2
 
 let isFailCtx_gen cl =
@@ -10169,28 +10169,30 @@ let isFailCtx_gen cl =
       (* ((get_must_error_from_ctx cs) !=None) || ((get_may_error_from_ctx cs) !=None) *)
       List.exists (fun ctx -> is_ctx_error ctx) cs
 
-let get_final_error cl=
-  let rec get_final_error ctx=
-    match ctx with
+let rec get_final_error_ctx ctx=
+  match ctx with
     | Ctx es -> es.es_final_error
     | OCtx (c1, c2) -> begin
-        let e1 = get_final_error c1 in
+        let e1 = get_final_error_ctx c1 in
         if e1 = None then
-          get_final_error c2
+          get_final_error_ctx c2
         else e1
       end
-  in
+
+let get_final_error cl=
   let rec get_failure_ctx_list cs=
     match cs with
     | ctx::rest -> begin
-        let r = get_final_error ctx in
+        let r = get_final_error_ctx ctx in
         if r = None then get_failure_ctx_list rest else r
       end
     | [] -> None
   in
   match cl with
-  | FailCtx (ft,_,_) -> Some (get_short_str_fail_type ft, Failure_Must "??")
-  | SuccCtx cs -> if cs = [] then Some ("empty states", Failure_Must "empty states") else
+  | FailCtx (ft,_,_) -> Some (get_short_str_fail_type ft, ft, Failure_Must "??")
+  | SuccCtx cs -> if cs = [] then Some ("empty states",
+    Trivial_Reason ({fe_kind = Failure_Must  "empty states"; fe_name = "empty states"; fe_locs=[]}, []),
+    Failure_Must "empty states") else
       (* ((get_must_error_from_ctx cs) !=None) || ((get_may_error_from_ctx cs) !=None) *)
       get_failure_ctx_list cs
 
@@ -10535,21 +10537,21 @@ let convert_may_failure_4_fail_type  (s:string) (ft:fail_type) cex : context opt
 
 
 let convert_must_failure_4_fail_type_new  (s:string) (ft:fail_type) cex : context option =
-  let rec update_err ctx (s1,fk)= match ctx with
-    | Ctx es -> Ctx {es with es_final_error = Some (s1, fk)}
-    | OCtx (es1, es2) -> OCtx (update_err es1 (s1,fk), update_err es2 (s1,fk))
+  let rec update_err ctx (s1,ft, fk)= match ctx with
+    | Ctx es -> Ctx {es with es_final_error = Some (s1, ft, fk)}
+    | OCtx (es1, es2) -> OCtx (update_err es1 (s1, ft, fk), update_err es2 (s1, ft, fk))
   in
   match (get_must_ctx_msg_ft ft) with
-  | Some (ctx, msg) -> Some (update_err ctx (s^msg, Failure_Must msg))
+  | Some (ctx, msg) -> Some (update_err ctx (s^msg, ft, Failure_Must msg))
   | _ -> None
 
 let convert_may_failure_4_fail_type_new  (s:string) (ft:fail_type) cex : context option =
-  let rec update_err ctx (s1,fk)= match ctx with
-    | Ctx es -> Ctx {es with es_final_error = Some (s1, fk)}
-    | OCtx (es1, es2) -> OCtx (update_err es1 (s1,fk), update_err es2 (s1,fk))
+  let rec update_err ctx (s1,ft,fk)= match ctx with
+    | Ctx es -> Ctx {es with es_final_error = Some (s1, ft, fk)}
+    | OCtx (es1, es2) -> OCtx (update_err es1 (s1,ft, fk), update_err es2 (s1,ft,fk))
   in
   match (get_may_ctx_msg_ft ft)with
-  | Some (ctx, msg) -> Some (update_err ctx (s^msg, Failure_May msg))
+  | Some (ctx, msg) -> Some (update_err ctx (s^msg,ft,  Failure_May msg))
   | _ -> None
 
 (* TRUNG WHY: purpose when converting a list_context from FailCtx type to SuccCtx type? *)
