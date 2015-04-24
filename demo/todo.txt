@@ -277,7 +277,7 @@ others: [] globals: [@err_must]
 
 
 ==========================================================================
-# ex21a1 --efa-exc -dre "heap_entail"
+# ex21a1 --efa-exc -dre "heap_entail": FIXED
 
 Why @err_must still result in MaybeErr context
 and not __ErrorMay exception?
@@ -313,7 +313,7 @@ Can we have failed (MAY ERROR)
 for assert wo assume.
 
 ==========================================================================
-# ex21a6
+# ex21a6 :FIXED
  --efa-exc -dre "heap_entail"
 
 # Why is there empty_context?
@@ -362,7 +362,7 @@ Checking procedure foo2$int...
 assert/assume:ex21a5-assert-assume.ss:23: 4:  : failed
 
 ==========================================================================
-# ex21a8 --efa-exc -dre "heap_entail"
+# ex21a8 --efa-exc -dre "heap_entail": FIXED
 
 --efa-exc triggers must-err exception for pre-condition checking
 # Why is there a verification failure 
@@ -419,7 +419,7 @@ res:  1[
 dprint:ex21a8-pre.ss:14 empty context
 Procedure foo2$cell result FAIL.(1)
 ==========================================================================
-# ex21e2
+# ex21e2: FIXED
 
 //1
 infer [@err_must] x'=x |- y::node<_>.
@@ -492,7 +492,7 @@ res:  failctx
                    fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}}
 [[empty]]false
 ==========================================================================
-# ex21a8
+# ex21a8: FIXED
 
 (==solver.ml#4318==)
 heap_entail_one_context#13@8@7@6@5@4@3@2@1

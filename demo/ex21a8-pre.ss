@@ -15,7 +15,7 @@ void pre_call3(cell x)
   ensures true;
 
 int foo2(cell x)
-  requires true /* x=null */
+  requires true /*x=null*/
   ensures true ;
 {
   pre_call(x);

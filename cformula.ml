@@ -11295,7 +11295,8 @@ let rec is_empty_esc_stack (e:esc_stack) : bool = match e with
   | (_,[])::t -> is_empty_esc_stack t
   | (_,h::t)::_ -> false
 
-let colapse_esc_stack (e:esc_stack) : branch_ctx list = List.fold_left (fun a (_,c)-> a@c) [] e
+let colapse_esc_stack (e:esc_stack) : branch_ctx list =
+  List.fold_left (fun a (_,c)-> a@c) [] e
 
 let push_esc_elem  (e:esc_stack) (b:branch_ctx list): esc_stack = 
   match b with 
@@ -11605,10 +11606,17 @@ let isSuccessBranchFail (_,ft) =
   | Failure_Valid -> true
   | Failure_Bot _ -> true
 
+
+let rec is_error_exc_ctx c=
+  match c with
+    | Ctx es -> is_en_error_exc es && (is_error_flow es.es_formula || is_mayerror_flow es.es_formula)
+    | OCtx (c1,c2) -> is_en_error_exc_ctx c1 || is_en_error_exc_ctx c2
+
+
 let isSuccBranches succ_brs=
   (* all succ branch should not subsume must, may flows *)
-  succ_brs != [] && List.for_all (fun (_, _, oft) ->
-      oft = None
+  succ_brs != [] && List.for_all (fun (_, c, oft) ->
+      (oft = None) && not (is_error_exc_ctx c)
     ) succ_brs
 
 let isSuccessPartialCtx_new (fs,succ_brs) =
@@ -14033,6 +14041,9 @@ let clear_entailment_history_es xp (es :entail_state) :context =
     es_prior_steps = es.es_prior_steps;
     es_var_measures = es.es_var_measures;
     (* es_infer_tnt = es.es_infer_tnt; *)
+    es_must_error = es.es_must_error;
+    es_may_error = es.es_may_error;
+    es_final_error = es.es_final_error;
     es_infer_obj = es.es_infer_obj;
     es_term_res_lhs = es.es_term_res_lhs;
     es_crt_holes = es.es_crt_holes;

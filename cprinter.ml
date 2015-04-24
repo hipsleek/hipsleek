@@ -3618,6 +3618,7 @@ let pr_estate (es : entail_state) =
   (* pr_vwrap "es_infer_invs:  " pr_list_pure_formula es.es_infer_invs; *)
   pr_wrap_test "es_unsat_flag: " (fun x-> x) (fun c-> fmt_string (string_of_bool c)) es.es_unsat_flag;  
   pr_wrap_test "es_proof_traces: " Gen.is_empty  (pr_seq "" (pr_pair_aux prtt_pr_formula pr_formula)) es.es_proof_traces;
+   pr_vwrap "es_final_error: " fmt_string  (match es.es_final_error with | Some _ -> "Some" | None -> "None");
   fmt_close ()
 
 let pr_estate_infer_hp (es : entail_state) =
@@ -3828,9 +3829,9 @@ let pr_formula_vperm_wrap t =
 
 let pr_context_list_short (ctx : context list) = 
   let rec f xs = match xs with
-    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel@e.es_infer_vars_templ,e.es_infer_templ_assume,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,e.es_var_zero_perm)]
+    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel@e.es_infer_vars_templ,e.es_infer_templ_assume,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,e.es_var_zero_perm,e.es_final_error)]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
-  let pr (f,(* ac, *)iv,ta,ih,ip,ir,vperms) =
+  let pr (f,(* ac, *)iv,ta,ih,ip,ir,vperms,exc) =
     fmt_open_vbox 0;
     pr_formula_wrap f;
     pr_wrap_test "es_var_zero_perm: " Gen.is_empty  (pr_seq "" pr_spec_var) vperms;
@@ -3841,6 +3842,7 @@ let pr_context_list_short (ctx : context list) =
     pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip;
     pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) ta;
     pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) ir;
+    pr_vwrap "es_final_error: " fmt_string  (match exc with | Some _ -> "Some" | None -> "None");
     fmt_close_box();
   in 
   let lls = List.map f ctx in
@@ -3932,8 +3934,11 @@ let pr_esc_stack_lvl ((i,s),e) =
     begin
       fmt_open_vbox 0;
       pr_vwrap_naive ("Try-Block:"^(string_of_int i)^":"^s^":")
-        (pr_seq_vbox "" (fun (lbl,fs,_)-> pr_vwrap_nocut "Path: " pr_path_trace lbl;
-                          pr_vwrap "State:" pr_context_short fs)) e;
+        (pr_seq_vbox "" (fun (lbl,fs,oft)-> pr_vwrap_nocut "Path: " pr_path_trace lbl;
+                          pr_vwrap "State:" pr_context_short fs;
+                          (* Loc: print exc *)
+                          pr_vwrap "Exc:" fmt_string (match oft with | Some _ -> "Some" | _ -> "None")
+        )) e;
       fmt_close_box ()
     end
 
@@ -3950,8 +3955,11 @@ let pr_successful_states e = match e with
   | [] -> ()
   | _ ->   
     pr_vwrap_naive "Successful States:"
-      (pr_seq_vbox "" (fun (lbl,fs,_)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
-                        pr_vwrap "State:" pr_context_short fs)) e
+      (pr_seq_vbox "" (fun (lbl,fs,oft)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
+                        pr_vwrap "State:" pr_context_short fs;
+                         (* Loc: print exc *)
+                        pr_vwrap "Exc:" fmt_string (match oft with | Some _ -> "Some" | _ -> "None")
+      )) e
 
 let is_empty_esc_state e =
   List.for_all (fun (_,lst) -> lst==[]) e
@@ -3986,8 +3994,10 @@ let pr_partial_context ((l1,l2): partial_context) =
     (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
                       pr_vwrap "State:" pr_fail_type fs)) l1;
   pr_vwrap_naive "Successful States:"
-    (pr_seq_vbox "" (fun (lbl,fs,_)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
-                      pr_vwrap "State:" pr_context fs)) l2;
+    (pr_seq_vbox "" (fun (lbl,fs,oft)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
+                      pr_vwrap "State:" pr_context fs;
+                      pr_vwrap "Exc:" fmt_string (match oft with | Some _ -> "Some" | _ -> "None")
+    )) l2;
   fmt_close_box ()
 
 let pr_partial_context_short ((l1,l2): partial_context) =

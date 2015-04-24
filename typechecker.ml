@@ -1890,12 +1890,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let () = CF.must_consistent_list_failesc_context "bind 4" rs  in
             if (CF.isSuccessListFailescCtx_new unfolded) && (not(CF.isSuccessListFailescCtx_new rs))then
               begin
-                if not (Globals.global_efa_exc ()) then
-                  let () = Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context rs)^") ")
-                      ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^ " cannot be derived from context\n") pos in (* add branch info *)
-                (* add branch info *)
-                  let () = Debug.print_info ("(Cause of Bind Failure)")
-                    (Cprinter.string_of_failure_list_failesc_context rs) pos in
+                if Globals.is_en_efa_exc () && (Globals.global_efa_exc ()) then
+                 (*  let () = Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context rs)^") ") *)
+                (*       ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^ " cannot be derived from context\n") pos in (\* add branch info *\) *)
+                (* (\* add branch info *\) *)
+                (*   let () = Debug.print_info ("(Cause of Bind Failure)") *)
+                (*     (Cprinter.string_of_failure_list_failesc_context rs) pos in *)
                   rs
                 else
                   (*delay pritinting to check post*)
@@ -3052,6 +3052,8 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         (*if error post, check reachable *)
         is_succ && (CF.exist_reachable_states rs)
     in
+    let () =  DD.ninfo_hprint (add_str "is_succ" string_of_bool) is_succ no_pos in
+    let () =  DD.ninfo_hprint (add_str "is_reachable_succ" string_of_bool) is_reachable_succ no_pos in
     if ((* CF.isSuccessListPartialCtx_new rs *) is_reachable_succ) then
       rs
     else begin
