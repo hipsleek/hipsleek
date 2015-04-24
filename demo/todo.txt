@@ -303,7 +303,7 @@ MaybeErr Context:
 CEX:false
 
 ==========================================================================
-# ex21a5 --efa-exc -dre "heap_entail"
+# ex21a5 --efa-exc -dre "heap_entail": DONE
 
 Checking procedure foo2$int... 
 assert/assume:ex21a5-assert-assume.ss:23: 4:  : failed
@@ -452,7 +452,7 @@ infer [@err_may] y=null |- y::node<_>.
 print residue.
 // expects __ErrorMay but got __Error
 ==========================================================================
-# ex21f2.slk
+# ex21f2.slk: FIXED
 
 # 5 & 7 has problem above
 
