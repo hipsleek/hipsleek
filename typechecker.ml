@@ -2814,7 +2814,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
   (*let () = print_endline ("WN:CURRENT:"^(Cprinter.string_of_list_failesc_context cl)) in *)
   (* if (Gen.is_empty cl) then fl
      else *)
-  Debug.info_hprint (add_str "to debug:" pr_id) "splitter_failesc_context"  no_pos;
   let failesc = CF.splitter_failesc_context !norm_flow_int None (fun x->x)(fun x -> x) cl in
   Debug.ninfo_hprint (add_str "check_exp1:into:"Cprinter.string_of_list_failesc_context) failesc no_pos;
   if fl!=[] then

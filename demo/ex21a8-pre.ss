@@ -10,8 +10,12 @@ void pre_call2(cell x)
   requires true
   ensures true & flow __Error;
 
+void pre_call3(cell x)
+  requires x::cell<_>
+  ensures true;
+
 int foo2(cell x)
-  requires true
+  requires true /* x=null */
   ensures true ;
 {
   pre_call(x);

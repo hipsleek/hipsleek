@@ -4500,9 +4500,9 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                           else (*if not -> do not consider ls_var as a ref-vars*)
                             ref_vars,new_post
                         in
-                        let fl = if CF.is_en_error_exc es && not (is_dis_error_exc es) then Flow_merge else Flow_replace in
-                        let rs1 =CF.compose_context_formula rs new_post new_ref_vars true (* Flow_replace *) fl pos in
-                        print_endline ("RS1 CTX: " ^ (!print_context rs1));
+                        let compose_context_formula_fnc= if CF.is_en_error_exc es && not (is_dis_error_exc es) then compose_context_formula_norm_flow else compose_context_formula in
+                        let rs1 = compose_context_formula_fnc rs new_post new_ref_vars true Flow_replace pos in
+                        (* print_endline ("RS1 CTX: " ^ (!print_context rs1)); *)
                         let rs1 = CF.transform_context (fun es -> CF.subst_hvar_es es es.CF.es_ho_vars_map) rs1 in
                         let f_waitS_rel es = {es with CF.es_formula = CF.translate_waitS_rel es.CF.es_formula;} in
                         let rel_sv = CP.mk_spec_var Globals.waitS_name in

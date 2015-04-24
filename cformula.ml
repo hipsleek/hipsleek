@@ -202,7 +202,6 @@ and one_formula = {
 and flow_treatment =
   | Flow_combine
   | Flow_replace
-  | Flow_merge
 
 and h_formula = (* heap formula *)
   | Star of h_formula_star
@@ -1442,7 +1441,7 @@ and change_spec_flow spec =
 
 and mkAndFlow (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula =
   let pr = !print_flow_formula in
-  let pr2 x = match x with Flow_combine -> "Combine" | Flow_replace -> "Replace" | Flow_merge -> "merge" in
+  let pr2 x = match x with Flow_combine -> "Combine" | Flow_replace -> "Replace"  in
   Debug.no_3 "mkAndFlow" pr pr pr2 pr (fun _ _ _ -> mkAndFlow_x fl1 fl2 flow_tr) fl1 fl2 flow_tr
 
 (*this is used for adding formulas, links will be ignored since the only place where links can appear is in the context, the first one will be kept*)
@@ -1472,17 +1471,6 @@ and mkAndFlow_x (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula =  l
                                   (* | _ ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "mkAndFlow: cannot and two flows with two links"} *)
                                   ;}
         else {formula_flow_interval = false_flow_int; formula_flow_link = None}
-      | Flow_merge ->
-        if (overlapping int1 int2) then 
-          {	formula_flow_interval = union_flow int1 int2;
-            formula_flow_link = match (fl1.formula_flow_link,fl2.formula_flow_link)with
-              | None,None -> None
-              | Some s,None-> Some s
-              | None, Some s -> Some s
-              | Some s1, Some s2 -> Some (s1^"AND"^s2)
-                                  (* | _ ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "mkAndFlow: cannot and two flows with two links"} *)
-                                  ;}
-        else {formula_flow_interval = !top_flow_int; formula_flow_link = None}
   in
   r
 
@@ -12037,6 +12025,30 @@ and convert_must_failure_to_value (l:list_context) ante_flow conseq (bug_verifie
       end
 (*23.10.2008*)
 
+and compose_context_formula_norm_flow (ctx : context) (phi : formula) (x : CP.spec_var list) 
+    (force_sat:bool) flow_tr (pos : loc) : context = 
+  match ctx with
+  | Ctx es -> begin
+      if is_error_flow es.es_formula || is_mayerror_flow es.es_formula then ctx
+      else
+        match phi with
+          | Or ({formula_or_f1 = phi1; formula_or_f2 =  phi2; formula_or_pos = _}) ->
+                let new_c1 = compose_context_formula_norm_flow ctx phi1 x force_sat flow_tr pos in
+                let new_c2 = compose_context_formula_norm_flow ctx phi2 x force_sat flow_tr pos in
+                let res = (mkOCtx new_c1 new_c2 pos ) in
+                res
+          | _ -> let new_es_f,(* new_history, *)rho2 = compose_formula_new es.es_formula phi x flow_tr (* es.es_history *) pos in
+        Ctx {es with es_formula = new_es_f;
+                     (* es_history = new_history; *)
+                     (* es_subst_ref = rho2; *)
+                     es_unsat_flag = (not force_sat) && es.es_unsat_flag;}
+    end
+  | OCtx (c1, c2) -> 
+        let new_c1 = compose_context_formula_norm_flow c1 phi x force_sat flow_tr pos in
+        let new_c2 = compose_context_formula_norm_flow c2 phi x force_sat flow_tr pos in
+        let res = (mkOCtx new_c1 new_c2 pos) in
+        res
+
 and compose_context_formula_x (ctx : context) (phi : formula) (x : CP.spec_var list) 
     (force_sat:bool) flow_tr (pos : loc) : context = 
   match ctx with
@@ -12058,6 +12070,7 @@ and compose_context_formula_x (ctx : context) (phi : formula) (x : CP.spec_var l
     let new_c2 = compose_context_formula_x c2 phi x force_sat flow_tr pos in
     let res = (mkOCtx new_c1 new_c2 pos) in
     res
+
 
 and compose_context_formula_d (ctx : context) (phi : formula) (x : CP.spec_var list) (force_sat:bool) flow_tr (pos : loc) : context = 
   let pr1 = !print_context(*_short*) in
@@ -14133,7 +14146,10 @@ let rec splitter (c:context)
       (* if (is_eq_flow nf !c_flow_int) then (None,Some c) else *)
       if (subsume_flow nf ff.formula_flow_interval) then  (Some
                                                              (conv_elim_res cvar b elim_ex_fn),None) (* change caught item to normal flow *)
-      else if not(overlapping nf ff.formula_flow_interval) then (None,Some c)
+      else if not(overlapping nf ff.formula_flow_interval) ||
+        equal_flow_interval !error_flow_int ff.formula_flow_interval ||
+        equal_flow_interval !mayerror_flow_int ff.formula_flow_interval
+      then (None,Some c)
       else (* let t_caught = intersect_flow nf
               ff.formula_flow_interval in *)
         let t_escape_lst = subtract_flow_list ff.formula_flow_interval nf in
