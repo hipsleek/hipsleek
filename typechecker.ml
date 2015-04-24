@@ -1423,7 +1423,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   else
                     (*L2: todo: should not warning if post is must error*)
                     (* L2: to transform exc -> Fail before compute the err msg (--efa-exc only)*)
-                    let _,fk,_= CF.get_failure_list_failesc_context rs in
+                    let _,fk,_= CF.get_failure_list_failesc_context_ext rs in
                     let fk_msg = match fk with
                       | CF.Failure_Must _ -> " (must)"
                       | CF.Failure_May _ -> " (may)"

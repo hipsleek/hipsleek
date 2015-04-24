@@ -10495,6 +10495,20 @@ let rec get_failure_list_failesc_context (ls:list_failesc_context): (string* fai
     (*return failure of 1 lemma is enough*)
     (combine_helper "UNIONR\n" [(List.hd los)] "", List.hd fks, List.concat ets)
 
+and get_failure_list_failesc_context_ext (rs:list_failesc_context): (string* failure_kind*error_type list)=
+  let rs1 = if !Globals.enable_error_as_exc && Globals.global_efa_exc () then
+    (* convert brs with error flow -> Fail *)
+    List.fold_left (fun acc (fs, esc, brs) ->
+        let ex_fs, rest = List.fold_left (fun (acc_fs, acc_rest) ((lbl,c, oft) as br) ->
+            match oft with
+              | Some ft -> (acc_fs@[(lbl, ft)], acc_rest)
+              | None -> (acc_fs, acc_rest@[br])
+        ) ([],[]) brs in
+        acc@[(fs@ex_fs, esc,rest)]
+    ) [] rs
+  else rs in
+  get_failure_list_failesc_context rs1
+
 and get_failure_failesc_context ((bfl:branch_fail list), _, _): (string option*failure_kind*error_type list)=
   get_failure_branch bfl
 
