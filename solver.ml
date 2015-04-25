@@ -7057,14 +7057,15 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
   let hec is_folding ctx0 c =
     let res, prf = heap_entail_conjunct_x prog is_folding ctx0 c rhs_h_matched_set pos in
     let res1 = 
-      if CF.is_en_error_exc_ctx ctx0
-        (* !Globals.enable_error_as_exc || CF.is_en_error_exc_ctx ctx0)  *)
-        (*           && not (CF.is_dis_error_exc_ctx ctx0)  *)
+      if false
+        (* CF.is_en_error_exc_ctx ctx0 *)
+        (* (!Globals.enable_error_as_exc || CF.is_en_error_exc_ctx ctx0) *)
+        (*           && not (CF.is_dis_error_exc_ctx ctx0) *)
       then
-        let () = x_binfo_pp "convert_maymust" no_pos in
+        (* let () = x_binfo_pp "convert_maymust" no_pos in *)
         CF.convert_maymust_failure_to_value_orig res
       else 
-        let () = x_binfo_pp "no convert_maymust" no_pos in
+        (* let () = x_binfo_pp "no convert_maymust" no_pos in *)
         res
     in
     (res1,prf)
