@@ -10150,7 +10150,9 @@ let get_must_error_from_ctx cs =
   match cs with
   | [] -> (Some ("empty residual state", mk_cex false))
   | [Ctx es] -> (match es.es_must_error with
-      | None ->  begin if !Globals.enable_error_as_exc || es.es_infer_obj # is_err_must || es.es_infer_obj # is_err_may then
+      | None ->  begin if is_en_error_exc es
+          (* !Globals.enable_error_as_exc || es.es_infer_obj # is_err_must || es.es_infer_obj # is_err_may  *)
+        then
             match es.es_final_error with
             | Some (s1, ft, fk) -> Some (s1, mk_cex true)
             | None -> None
@@ -10593,7 +10595,10 @@ let convert_may_failure_4_fail_type_new  (s:string) (ft:fail_type) cex : context
 let convert_maymust_failure_to_value_orig (l:list_context) : list_context =
   match l with 
   | FailCtx (ft, c, cex) -> (* Loc: to check cex here*)
-    if not !Globals.enable_error_as_exc && not (is_en_error_exc_ctx c) then l else
+    if (* not (is_en_error_exc_ctx c) *)
+      not !Globals.enable_error_as_exc && not (is_en_error_exc_ctx c) 
+    then l 
+    else
       (* (match (get_must_es_msg_ft ft) with *)
       (*   | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ]  *)
       (*   | _ ->  l) *)
@@ -11597,9 +11602,10 @@ let isFailBranchFail (_,ft) =
 
 let isFailFailescCtx_new (fs,_,brs) =
   let is_fail = List.exists isFailBranchFail fs in
-  if not !Globals.enable_error_as_exc then is_fail else
-  if is_fail then is_fail else
-    List.exists (fun (_,_,oft) -> oft != None) brs
+  if not !Globals.enable_error_as_exc then is_fail 
+  else
+    if is_fail then is_fail else
+      List.exists (fun (_,_,oft) -> oft != None) brs
 
 let isFailPartialCtx_new (fs,ss) =
   List.exists isFailBranchFail fs
@@ -12182,7 +12188,7 @@ and normalize_clash_es_x (f : formula) (pos : loc) (result_is_sat:bool)(es:entai
     res
   | _ ->
     let n_es_formula =
-      if (* !Globals.enable_error_as_exc && *) is_en_error_exc es && (x_add_1 is_error_flow es.es_formula || x_add_1 is_mayerror_flow es.es_formula) then
+      if !Globals.enable_error_as_exc && is_en_error_exc es && (x_add_1 is_error_flow es.es_formula || x_add_1 is_mayerror_flow es.es_formula) then
         es.es_formula
       else
         normalize_only_clash_rename es.es_formula f pos
