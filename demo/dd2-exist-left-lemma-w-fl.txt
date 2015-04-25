@@ -1,0 +1,82 @@
+=====================================
+The first bad revision is:
+changeset:   14195:507a40cb2260
+branch:      error-infer
+parent:      14190:b87932e95414
+user:        locle
+date:        Thu Feb 12 14:44:11 2015 +0800
+summary:     fixed error-as-exc of run-fast-test
+=======================================================
+hg id -i -n -b
+grep "exist_left_lemma_w_fl" solver.ml
+echo "====================================="
+
+              let osubsumed_es, non_subsume_es = if (* !Globals.enable_error_as_exc || *)
+               (not(Cfutil.is_empty_heap_f es.CF.es_formula) && (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) (CF.flow_formula_of_formula conseq)))
+
+                      if (not(is_false_flow fl2.formula_flow_interval)) && not(CF.subsume_flow_ff fl2 fl1) && not !Globals.enable_error_as_exc && (h1 = HEmp || not (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) fl2)) then (
+
+=====================================
+71274168a4f4 12776 default
+=====================================
+=====================================
+833a615d15d4 13876 svcomp14
+=====================================
+=====================================
+0405a74081e1 14455 arr_infer
+=====================================
+=====================================
+2d27cacbe911 14544 default
+               (not(Cfutil.is_empty_heap_f es.CF.es_formula) && (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) (CF.flow_formula_of_formula conseq)))
+                      if (not(is_false_flow fl2.formula_flow_interval)) && not(CF.subsume_flow_ff fl2 fl1) && not !Globals.enable_error_as_exc && (h1 = HEmp || not (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) fl2)) then (
+=====================================
+=====================================
+910d907e21e8 14460 default
+               (not(Cfutil.is_empty_heap_f es.CF.es_formula) && (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) (CF.flow_formula_of_formula conseq)))
+                      if (not(is_false_flow fl2.formula_flow_interval)) && not(CF.subsume_flow_ff fl2 fl1) && not !Globals.enable_error_as_exc && (h1 = HEmp || not (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) fl2)) then (
+=====================================
+=====================================
+14b9638f39d9 14367 error-infer
+               (not(Cfutil.is_empty_heap_f es.CF.es_formula) && (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) (CF.flow_formula_of_formula conseq)))
+                      if (not(is_false_flow fl2.formula_flow_interval)) && not(CF.subsume_flow_ff fl2 fl1) && not !Globals.enable_error_as_exc && (h1 = HEmp || not (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) fl2)) then (
+=====================================
+=====================================
+2804de7c18cf 14311 error-infer
+               (not(Cfutil.is_empty_heap_f es.CF.es_formula) && (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) (CF.flow_formula_of_formula conseq)))
+                      if (not(is_false_flow fl2.formula_flow_interval)) && not(CF.subsume_flow_ff fl2 fl1) && not !Globals.enable_error_as_exc && (h1 = HEmp || not (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) fl2)) then (
+=====================================
+=====================================
+793b175f94cf 14189 error-infer
+=====================================
+=====================================
+8ffb9eb8f275 14205 error-infer
+               (not(Cfutil.is_empty_heap_f es.CF.es_formula) && (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) (CF.flow_formula_of_formula conseq)))
+                      if (not(is_false_flow fl2.formula_flow_interval)) && not(CF.subsume_flow_ff fl2 fl1) && not !Globals.enable_error_as_exc && (h1 = HEmp || not (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) fl2)) then (
+=====================================
+=====================================
+3fa1db66b797 14196 error-infer
+               (not(Cfutil.is_empty_heap_f es.CF.es_formula) && (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) (CF.flow_formula_of_formula conseq)))
+                      if (not(is_false_flow fl2.formula_flow_interval)) && not(CF.subsume_flow_ff fl2 fl1) && not !Globals.enable_error_as_exc && (h1 = HEmp || not (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) fl2)) then (
+=====================================
+b87932e95414 14190 error-infer
+=====================================
+507a40cb2260 14195 error-infer
+               (not(Cfutil.is_empty_heap_f es.CF.es_formula) && (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) (CF.flow_formula_of_formula conseq)))
+                      if (not(is_false_flow fl2.formula_flow_interval)) && not(CF.subsume_flow_ff fl2 fl1) && not !Globals.enable_error_as_exc && (h1 = HEmp || not (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) fl2)) then (
+=====================================
+The first bad revision is:
+changeset:   14195:507a40cb2260
+branch:      error-infer
+parent:      14190:b87932e95414
+user:        locle
+date:        Thu Feb 12 14:44:11 2015 +0800
+summary:     fixed error-as-exc of run-fast-test
+=======================================================
+hg id -i -n -b
+grep "exist_left_lemma_w_fl" solver.ml
+echo "====================================="
+
+              let osubsumed_es, non_subsume_es = if (* !Globals.enable_error_as_exc || *)
+               (not(Cfutil.is_empty_heap_f es.CF.es_formula) && (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) (CF.flow_formula_of_formula conseq)))
+
+                      if (not(is_false_flow fl2.formula_flow_interval)) && not(CF.subsume_flow_ff fl2 fl1) && not !Globals.enable_error_as_exc && (h1 = HEmp || not (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) fl2)) then (
