@@ -1190,9 +1190,20 @@ and subsume_flow_f t1 f :bool = subsume_flow t1 f.formula_flow_interval
 
 and subsume_flow_ff f1 f2 :bool = subsume_flow f1.formula_flow_interval f2.formula_flow_interval
 
-(* and subsume_flow_ff i f1 f2 :bool =  *)
+(* (==solver.ml#7135==) *)
+(* subsume_flow_ff@2 *)
+(* subsume_flow_ff inp1 :{FLOW,(1,26)=__flow#E} *)
+(* subsume_flow_ff inp2 :{FLOW,(4,5)=__norm#E} *)
+(* subsume_flow_ff@2 EXIT:true *)
+
+(* subsume_flow_ff@3 *)
+(* subsume_flow_ff inp1 :{FLOW,(4,5)=__norm#E} *)
+(* subsume_flow_ff inp2 :{FLOW,(1,26)=__flow#E} *)
+(* subsume_flow_ff@3 EXIT:false *)
+
+(* and subsume_flow_ff f1 f2 :bool = *)
 (*   let pr = !print_flow_formula in *)
-(*   Debug.no_2_num i "subsume_flow_ff" pr pr string_of_bool subsume_flow_ff_x f1 f2 *)
+(*   Debug.no_2 "subsume_flow_ff" pr pr string_of_bool subsume_flow_ff_x f1 f2 *)
 
 and overlap_flow_ff f1 f2 :bool = overlap_flow f1.formula_flow_interval f2.formula_flow_interval
 
@@ -10560,6 +10571,11 @@ let convert_must_failure_4_fail_type_new  (s:string) (ft:fail_type) cex : contex
   | Some (ctx, msg) -> Some (update_err ctx (s^msg, ft, Failure_Must msg))
   | _ -> None
 
+let convert_must_failure_4_fail_type_new (s:string) (ft:fail_type) cex : context option =
+  let pr = pr_option !print_context_short in
+  Debug.no_2 "convert_must_failure_4_fail_type_new" pr_id pr_none pr
+    (fun _ _ -> convert_must_failure_4_fail_type_new s ft cex) s ft
+
 let convert_may_failure_4_fail_type_new  (s:string) (ft:fail_type) cex : context option =
   let rec update_err ctx (s1,ft,fk)= match ctx with
     | Ctx es -> Ctx {es with es_final_error = Some (s1, ft, fk)}
@@ -10578,10 +10594,10 @@ let convert_maymust_failure_to_value_orig (l:list_context) : list_context =
       (*   | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ]  *)
       (*   | _ ->  l) *)
       begin
-        match (convert_must_failure_4_fail_type_new "" ft cex) with
+        match (x_add convert_must_failure_4_fail_type_new "" ft cex) with
         | Some ctx -> SuccCtx [ctx]
         | None -> begin
-            match (convert_may_failure_4_fail_type_new "" ft cex) with
+            match (x_add convert_may_failure_4_fail_type_new "" ft cex) with
             | Some ctx -> SuccCtx [ctx]
             | None -> l
           end

@@ -1,5 +1,5 @@
 
-infer[@err_must] x=1 & flow __norm |- x>4 & flow __norm.
+infer[@err_must] x=1 & flow __Exc |- x>4 & flow __Exc.
 print residue.
 expect Fail.
 

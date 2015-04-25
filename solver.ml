@@ -3302,6 +3302,7 @@ and check_consistency_context_x prog ctx pos =
       if (CF.formula_is_eq_flow f !bfail_flow_int)
       then
         (*if detecting inconsistency (i.e. flow __Fail)*)
+        let () = x_tinfo_pp "detecting inconsistency" no_pos in
         let err_msg = "__Fail: inconsistencies detected" in
         let fe = mk_failure_must err_msg "__Fail: inconsistencies detected" in
         let res = 
@@ -7050,9 +7051,15 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
   (* let () = Solver_dp.prove_entailment conseq conseq in *)
   let hec is_folding ctx0 c =
     let res, prf = heap_entail_conjunct_x prog is_folding ctx0 c rhs_h_matched_set pos in
-    let res1 = if (!Globals.enable_error_as_exc || CF.is_en_error_exc_ctx ctx0) && not (CF.is_dis_error_exc_ctx ctx0) then
+    let res1 = 
+      if (!Globals.enable_error_as_exc || CF.is_en_error_exc_ctx ctx0) 
+                  && not (CF.is_dis_error_exc_ctx ctx0) 
+      then
+        let () = x_binfo_pp "convert_maymust" no_pos in
         CF.convert_maymust_failure_to_value_orig res
-      else res
+      else 
+        let () = x_binfo_pp "no convert_maymust" no_pos in
+        res
     in
     (res1,prf)
   in
@@ -7111,8 +7118,8 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     let () = hec_stack # pop in
     let (lc,_) = r in
     (* let () = x_add Log.add_sleek_logging false ttime infer_vars !Globals.do_classic_frame_rule caller avoid hec_num slk_no ante conseq consumed_heap evars lc pos in *)
-    let () = Debug.ninfo_hprint (add_str "avoid" string_of_bool) avoid no_pos in
-    let () = Debug.ninfo_hprint (add_str "slk no" string_of_int) slk_no no_pos in
+    let () = x_tinfo_hp (add_str "avoid" string_of_bool) avoid no_pos in
+    let () = x_tinfo_hp (add_str "slk no" string_of_int) slk_no no_pos in
     (* let () = Debug.ninfo_hprint (add_str "lc" Cprinter.string_of_list_context) lc no_pos in *)
     r
   in
@@ -7271,12 +7278,12 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                       let es1 = (ctx_with_rhs estate) in
                       {es1 with CF.es_conseq_pure_lemma = CP.mkAnd es1.CF.es_conseq_pure_lemma null_p pos;}
                 in
-                Debug.ninfo_hprint (add_str "estate" (Cprinter.string_of_entail_state)) estate no_pos;
+                x_dinfo_hp (add_str "estate" (Cprinter.string_of_entail_state)) estate no_pos;
                 (*ADD inequality constraints on heap nodes due to fractional permissions to ante
                   For example: x::node(0.6)<> * y::node(0.6)<>
                   then we have a constraint x!=y
                 *)
-                let () = Debug.ninfo_hprint (add_str "p1" Cprinter.string_of_mix_formula) p1 no_pos in
+                let () = x_dinfo_hp (add_str "p1" Cprinter.string_of_mix_formula) p1 no_pos in
                 let p1 =
                   (*This could introduce UNSAT*)
                   if (Perm.allow_perm ()) then
@@ -7293,18 +7300,24 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                 (* else *)
                 if (not(is_false_flow fl2.formula_flow_interval)) && not(CF.subsume_flow_ff fl2 fl1) 
                    (* WN:Exc condition below is complex & differs from Good Trace  439edea803e6 13050 *)
-                   && not !Globals.enable_error_as_exc 
-                   && (h1 = HEmp || not (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) fl2)) 
+                   (* && not !Globals.enable_error_as_exc  *)
+                   (* && (h1 = HEmp || not (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) fl2))  *)
                 then (
-                  x_dinfo_zp (lazy ("heap_entail_conjunct_helper: conseq has an incompatible flow type\ncontext:\n"
+                  x_binfo_zp (lazy ("heap_entail_conjunct_helper: conseq has an incompatible flow type\ncontext:\n"
                                     ^ (Cprinter.string_of_context ctx0) ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
                   (* TODO : change to meaningful msg *)
                   (* what if must failure on the ante -> conseq *)
+                  let f1_exc = (exlist # get_closest fl1.CF.formula_flow_interval) in
+                  let f2_exc = (exlist # get_closest fl2.CF.formula_flow_interval) in
+                  let () = x_binfo_hp (add_str "fl1_exc" pr_id) f1_exc no_pos in
+                  let () = x_binfo_hp (add_str "fl2_exc" pr_id) f2_exc no_pos in
                   if (CF.overlap_flow_ff fl2 fl1) then (
+                    let () = x_tinfo_pp "(overlap_flow):then" no_pos in
+                    
                     let err_msg =
                       if (CF.subsume_flow_f !error_flow_int fl1) then
-                        ("1.2: " ^ (exlist # get_closest fl1.CF.formula_flow_interval))
-                      else "1.2: conseq has an incompatible flow type" in
+                        ("1.2: " ^ (f1_exc (* exlist # get_closest fl1.CF.formula_flow_interval *)))
+                      else "1.2: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types" in
                     let fe = mk_failure_may err_msg undefined_error in
                     let may_flow_failure =
                       FailCtx ((Basic_Reason ({fc_message = err_msg;
@@ -7319,18 +7332,23 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                     (and_list_context may_flow_failure res, prf)
                   )
                   else (
-                    let err_msg,fe =
-                      if CF.subsume_flow_f !error_flow_int fl1 then
-                        (* let () = print_endline ("\ntodo:" ^ (Cprinter.string_of_flow_formula "" fl1)) in*)
-                        let err_name = (exlist # get_closest fl1.CF.formula_flow_interval) in
-                        let err_msg = "1.1: " ^ err_name in
-                        (err_msg, mk_failure_must err_msg err_name)
-                      else
-                        let err_name = "conseq has an incompatible flow type: got "^(exlist # get_closest fl1.CF.formula_flow_interval)^" expecting error" in
-                        let err_msg = "1.1: " ^ err_name in
-                        (err_msg, mk_failure_must err_msg undefined_error) in
+                    let () = x_tinfo_pp "not(overlap_flow)_ff:else" no_pos in
+                    let err_msg="1.2: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types" in
+                    let fe = mk_failure_must err_msg "incompatible types" in
+                      (* if CF.subsume_flow_f !error_flow_int fl1 then *)
+                      (*   (\* let () = print_endline ("\ntodo:" ^ (Cprinter.string_of_flow_formula "" fl1)) in*\) *)
+                      (*   let () = x_tinfo_pp "subsume_flow_ff(!err<:fl1):then" no_pos in *)
+                      (*   let err_name = (f1_exc (\* exlist # get_closest fl1.CF.formula_flow_interval *\)) in *)
+                      (*   let err_msg = "1.1: " ^ err_name in *)
+                      (*   (err_msg, mk_failure_must err_msg err_name) *)
+                      (* else *)
+                      (*   let () = x_tinfo_pp "subsume_flow_ff:else" no_pos in *)
+                      (*   let err_name = "conseq has an incompatible flow type: got "^(f1_exc (\* exlist # get_closest fl1.CF.formula_flow_interval *\))^" expecting error" in *)
+                      (*   let err_msg = "1.1: " ^ err_name in *)
+                      (*   (err_msg, mk_failure_must err_msg undefined_error) in *)
+                    let err_f = CF.substitute_flow_into_f !error_flow_int estate.CF.es_formula in
                     (CF.mkFailCtx_in (Basic_Reason ({fc_message =err_msg;
-                                                     fc_current_lhs = estate;
+                                                     fc_current_lhs = { estate with CF.es_formula = err_f};
                                                      fc_orig_conseq = struc_formula_of_formula conseq pos;
                                                      fc_prior_steps = estate.es_prior_steps;
                                                      fc_current_conseq = CF.formula_of_heap HFalse pos;
