@@ -477,10 +477,10 @@ let isAnyConstFalse f = match f with
       formula_exists_pure = p;
       formula_exists_flow = fl; })
   | Base ({
-        formula_base_heap = h;
-        formula_base_vperm = vp;
-        formula_base_pure = p;
-        formula_base_flow = fl; }) -> 
+      formula_base_heap = h;
+      formula_base_vperm = vp;
+      formula_base_pure = p;
+      formula_base_flow = fl; }) -> 
     h = HFalse || MCP.isConstMFalse p || 
     is_false_flow fl.formula_flow_interval || CVP.is_false_vperm_sets vp
   | _ -> false
@@ -3913,7 +3913,7 @@ and normalize_only_clash_rename_x (f1 : formula) (f2 : formula) (pos : loc) = ma
 (* and Presburger constraints *)
 and split_components (f: formula) =
   (* Debug.no_1 "split_components" !print_formula (fun _ -> "") *)
-    split_components_x f
+  split_components_x f
 
 and split_components_x (f : formula) =
   if (isAnyConstFalse f) then 
@@ -4990,7 +4990,7 @@ let hp_def_cmp (d1:hp_rel_def) (d2:hp_rel_def) =
       let hp2 = get_hpdef_name d2.def_cat in
       String.compare (CP.name_of_spec_var hp1) (CP.name_of_spec_var hp2)
     with _ -> 1
-  with _ -> -1
+    with _ -> -1
 
 let hpdef_cmp d1 d2 =
   try
@@ -4999,7 +4999,7 @@ let hpdef_cmp d1 d2 =
       let hp2 = get_hpdef_name d2.hprel_def_kind in
       String.compare (CP.name_of_spec_var hp1) (CP.name_of_spec_var hp2)
     with _ -> 1
-  with _ -> -1
+    with _ -> -1
 
 let mk_hp_rel_def hp (args, r, paras) (g: formula option) f ofl pos=
   let hf = HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, pos) in
@@ -7190,8 +7190,8 @@ let generate_xpure_view_x drop_hpargs total_unk_map=
       let xpvs = lookup_xpure_view hp total_unk_map in
       match xpvs with
       | [xp] -> let xp_r, xp_args = match xp.CP.xpure_view_node with
-          | None -> None, xp.CP.xpure_view_arguments
-          |Some _ -> Some (List.hd args), (List.tl args)
+        | None -> None, xp.CP.xpure_view_arguments
+        |Some _ -> Some (List.hd args), (List.tl args)
         in
         let new_xpv = {xp with CP.xpure_view_node =  xp_r;
                                xpure_view_arguments =  xp_args
@@ -7781,14 +7781,14 @@ let remove_neqNull_redundant_hnodes_f_x f0=
   let rec helper f=
     match f with
     | Base fb -> let np = remove_neqNull_redundant_hnodes_hf fb.formula_base_heap
-                     (MCP.pure_of_mix fb.formula_base_pure) in
+        (MCP.pure_of_mix fb.formula_base_pure) in
       (Base {fb with formula_base_pure = MCP.mix_of_pure np})
     | Or orf -> let nf1 = helper orf.formula_or_f1 in
       let nf2 = helper orf.formula_or_f2 in
       ( Or {orf with formula_or_f1 = nf1;
                      formula_or_f2 = nf2;})
     | Exists fe -> let np = remove_neqNull_redundant_hnodes_hf fe.formula_exists_heap
-                       (MCP.pure_of_mix fe.formula_exists_pure) in
+        (MCP.pure_of_mix fe.formula_exists_pure) in
       (Exists {fe with formula_exists_pure = MCP.mix_of_pure np;})
   in
   helper f0
@@ -7802,14 +7802,14 @@ let remove_neqNull_redundant_hnodes_f_wg (f0,og)=
   let rec helper f=
     match f with
     | Base fb -> let np = remove_neqNull_redundant_hnodes_hf fb.formula_base_heap
-                     (MCP.pure_of_mix fb.formula_base_pure) in
+        (MCP.pure_of_mix fb.formula_base_pure) in
       (Base {fb with formula_base_pure = MCP.mix_of_pure np})
     | Or orf -> let nf1 = helper orf.formula_or_f1 in
       let nf2 = helper orf.formula_or_f2 in
       ( Or {orf with formula_or_f1 = nf1;
                      formula_or_f2 = nf2;})
     | Exists fe -> let np = remove_neqNull_redundant_hnodes_hf fe.formula_exists_heap
-                       (MCP.pure_of_mix fe.formula_exists_pure) in
+        (MCP.pure_of_mix fe.formula_exists_pure) in
       (Exists {fe with formula_exists_pure = MCP.mix_of_pure np;})
   in
   let nf = helper f0 in
@@ -9375,43 +9375,43 @@ let print_fail_type = ref(fun (c:fail_type) -> "printer not initialized")
 
 
 let is_en_error_exc es=
-    es.es_infer_obj # is_err_must || es.es_infer_obj # is_err_may
+  es.es_infer_obj # is_err_must || es.es_infer_obj # is_err_may
 
 let rec is_en_error_exc_ctx c=
   match c with
-    | Ctx es -> is_en_error_exc es
-    | OCtx (c1,c2) -> is_en_error_exc_ctx c1 || is_en_error_exc_ctx c2
+  | Ctx es -> is_en_error_exc es
+  | OCtx (c1,c2) -> is_en_error_exc_ctx c1 || is_en_error_exc_ctx c2
 
 let is_en_error_exc_ctx_list lc=
   match lc with
-    | FailCtx (_,c,_) -> is_en_error_exc_ctx c
-    | SuccCtx cs -> List.exists is_en_error_exc_ctx cs
+  | FailCtx (_,c,_) -> is_en_error_exc_ctx c
+  | SuccCtx cs -> List.exists is_en_error_exc_ctx cs
 
 let is_dis_error_exc es=
-    es.es_infer_obj # is_dis_err
+  es.es_infer_obj # is_dis_err
 
 let rec is_dis_error_exc_ctx c=
   match c with
-    | Ctx es -> is_dis_error_exc es
-    | OCtx (c1,c2) -> is_dis_error_exc_ctx c1 || is_dis_error_exc_ctx c2
+  | Ctx es -> is_dis_error_exc es
+  | OCtx (c1,c2) -> is_dis_error_exc_ctx c1 || is_dis_error_exc_ctx c2
 
 let is_dis_error_exc_ctx_list lc=
   match lc with
-    | FailCtx (_,c,_) -> is_dis_error_exc_ctx c
-    | SuccCtx cs -> List.exists is_dis_error_exc_ctx cs
+  | FailCtx (_,c,_) -> is_dis_error_exc_ctx c
+  | SuccCtx cs -> List.exists is_dis_error_exc_ctx cs
 
 let is_dfa es=
-    es.es_infer_obj # is_dfa
+  es.es_infer_obj # is_dfa
 
 let rec is_dfa_ctx c=
   match c with
-    | Ctx es -> is_dfa es
-    | OCtx (c1,c2) -> is_dfa_ctx c1 || is_dfa_ctx c2
+  | Ctx es -> is_dfa es
+  | OCtx (c1,c2) -> is_dfa_ctx c1 || is_dfa_ctx c2
 
 let is_dfa_ctx_list lc=
   match lc with
-    | FailCtx (_,c,_) -> is_dfa_ctx c
-    | SuccCtx cs -> List.exists is_dfa_ctx cs
+  | FailCtx (_,c,_) -> is_dfa_ctx c
+  | SuccCtx cs -> List.exists is_dfa_ctx cs
 
 (****************************************************)
 (********************CEX**********************)
@@ -10136,10 +10136,10 @@ let get_must_error_from_ctx cs =
   | [] -> (Some ("empty residual state", mk_cex false))
   | [Ctx es] -> (match es.es_must_error with
       | None ->  begin if !Globals.enable_error_as_exc || es.es_infer_obj # is_err_must || es.es_infer_obj # is_err_may then
-          match es.es_final_error with
+            match es.es_final_error with
             | Some (s1, ft, fk) -> Some (s1, mk_cex true)
             | None -> None
-        else None
+          else None
         end
       | Some (msg,_,cex) -> Some (msg,cex))
   | cl -> combine_ctx_list_err cl
@@ -10172,13 +10172,13 @@ let isFailCtx_gen cl =
 
 let rec get_final_error_ctx ctx=
   match ctx with
-    | Ctx es -> es.es_final_error
-    | OCtx (c1, c2) -> begin
-        let e1 = get_final_error_ctx c1 in
-        if e1 = None then
-          get_final_error_ctx c2
-        else e1
-      end
+  | Ctx es -> es.es_final_error
+  | OCtx (c1, c2) -> begin
+      let e1 = get_final_error_ctx c1 in
+      if e1 = None then
+        get_final_error_ctx c2
+      else e1
+    end
 
 let get_final_error cl=
   let rec get_failure_ctx_list cs=
@@ -10192,8 +10192,8 @@ let get_final_error cl=
   match cl with
   | FailCtx (ft,_,_) -> Some (get_short_str_fail_type ft, ft, Failure_Must "??")
   | SuccCtx cs -> if cs = [] then Some ("empty states",
-    Trivial_Reason ({fe_kind = Failure_Must  "empty states"; fe_name = "empty states"; fe_locs=[]}, []),
-    Failure_Must "empty states") else
+                                        Trivial_Reason ({fe_kind = Failure_Must  "empty states"; fe_name = "empty states"; fe_locs=[]}, []),
+                                        Failure_Must "empty states") else
       (* ((get_must_error_from_ctx cs) !=None) || ((get_may_error_from_ctx cs) !=None) *)
       get_failure_ctx_list cs
 
@@ -10401,10 +10401,10 @@ and combine_helper op los rs=
   match los with
   | [] -> rs
   | [os] -> let tmp=
-              ( match os with
-                | None -> rs
-                | Some s -> rs ^ s
-              ) in tmp
+    ( match os with
+      | None -> rs
+      | Some s -> rs ^ s
+    ) in tmp
   | os::ss ->
     (*os contains all failed of 1 path trace*)
     let tmp=
@@ -10498,16 +10498,16 @@ let rec get_failure_list_failesc_context (ls:list_failesc_context): (string* fai
 
 and get_failure_list_failesc_context_ext (rs:list_failesc_context): (string* failure_kind*error_type list)=
   let rs1 = if !Globals.enable_error_as_exc && Globals.global_efa_exc () then
-    (* convert brs with error flow -> Fail *)
-    List.fold_left (fun acc (fs, esc, brs) ->
-        let ex_fs, rest = List.fold_left (fun (acc_fs, acc_rest) ((lbl,c, oft) as br) ->
-            match oft with
+      (* convert brs with error flow -> Fail *)
+      List.fold_left (fun acc (fs, esc, brs) ->
+          let ex_fs, rest = List.fold_left (fun (acc_fs, acc_rest) ((lbl,c, oft) as br) ->
+              match oft with
               | Some ft -> (acc_fs@[(lbl, ft)], acc_rest)
               | None -> (acc_fs, acc_rest@[br])
-        ) ([],[]) brs in
-        acc@[(fs@ex_fs, esc,rest)]
-    ) [] rs
-  else rs in
+            ) ([],[]) brs in
+          acc@[(fs@ex_fs, esc,rest)]
+        ) [] rs
+    else rs in
   get_failure_list_failesc_context rs1
 
 and get_failure_failesc_context ((bfl:branch_fail list), _, _): (string option*failure_kind*error_type list)=
@@ -10572,21 +10572,21 @@ let convert_may_failure_4_fail_type_new  (s:string) (ft:fail_type) cex : context
 (* TRUNG WHY: purpose when converting a list_context from FailCtx type to SuccCtx type? *)
 let convert_maymust_failure_to_value_orig (l:list_context) : list_context =
   match l with 
-    | FailCtx (ft, c, cex) -> (* Loc: to check cex here*)
-          if not !Globals.enable_error_as_exc && not (is_en_error_exc_ctx c) then l else
-            (* (match (get_must_es_msg_ft ft) with *)
-            (*   | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ]  *)
-            (*   | _ ->  l) *)
-            begin
-              match (convert_must_failure_4_fail_type_new "" ft cex) with
-                | Some ctx -> SuccCtx [ctx]
-                | None -> begin
-                    match (convert_may_failure_4_fail_type_new "" ft cex) with
-                      | Some ctx -> SuccCtx [ctx]
-                      | None -> l
-                  end
-            end
-    | SuccCtx _ -> l
+  | FailCtx (ft, c, cex) -> (* Loc: to check cex here*)
+    if not !Globals.enable_error_as_exc && not (is_en_error_exc_ctx c) then l else
+      (* (match (get_must_es_msg_ft ft) with *)
+      (*   | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ]  *)
+      (*   | _ ->  l) *)
+      begin
+        match (convert_must_failure_4_fail_type_new "" ft cex) with
+        | Some ctx -> SuccCtx [ctx]
+        | None -> begin
+            match (convert_may_failure_4_fail_type_new "" ft cex) with
+            | Some ctx -> SuccCtx [ctx]
+            | None -> l
+          end
+      end
+  | SuccCtx _ -> l
 
 let convert_maymust_failure_to_value_orig (l:list_context) : list_context =
   let pr = !print_list_context_short in
@@ -11410,8 +11410,8 @@ let proc_left t1 t2 =
         match t2 with
         | [c2] ->
           if isAnyFalseCtx c2
-             && is_inferred_pre_ctx c2
-             (* both t1 and t2 are FalseCtx with Pre *)
+          && is_inferred_pre_ctx c2
+          (* both t1 and t2 are FalseCtx with Pre *)
           then Some [merge_false_ctx c1 c2]
           else Some t2 (* drop FalseCtx t1 with Pre *)
         | _ -> Some t1 (* only t1 is FalseCtx with Pre *)
@@ -11609,8 +11609,8 @@ let isSuccessBranchFail (_,ft) =
 
 let rec is_error_exc_ctx c=
   match c with
-    | Ctx es -> is_en_error_exc es && (is_error_flow es.es_formula || is_mayerror_flow es.es_formula)
-    | OCtx (c1,c2) -> is_en_error_exc_ctx c1 || is_en_error_exc_ctx c2
+  | Ctx es -> is_en_error_exc es && (is_error_flow es.es_formula || is_mayerror_flow es.es_formula)
+  | OCtx (c1,c2) -> is_en_error_exc_ctx c1 || is_en_error_exc_ctx c2
 
 
 let isSuccBranches succ_brs=
@@ -12040,22 +12040,22 @@ and compose_context_formula_norm_flow (ctx : context) (phi : formula) (x : CP.sp
       if is_error_flow es.es_formula || is_mayerror_flow es.es_formula then ctx
       else
         match phi with
-          | Or ({formula_or_f1 = phi1; formula_or_f2 =  phi2; formula_or_pos = _}) ->
-                let new_c1 = compose_context_formula_norm_flow ctx phi1 x force_sat flow_tr pos in
-                let new_c2 = compose_context_formula_norm_flow ctx phi2 x force_sat flow_tr pos in
-                let res = (mkOCtx new_c1 new_c2 pos ) in
-                res
-          | _ -> let new_es_f,(* new_history, *)rho2 = compose_formula_new es.es_formula phi x flow_tr (* es.es_history *) pos in
-        Ctx {es with es_formula = new_es_f;
-                     (* es_history = new_history; *)
-                     (* es_subst_ref = rho2; *)
-                     es_unsat_flag = (not force_sat) && es.es_unsat_flag;}
+        | Or ({formula_or_f1 = phi1; formula_or_f2 =  phi2; formula_or_pos = _}) ->
+          let new_c1 = compose_context_formula_norm_flow ctx phi1 x force_sat flow_tr pos in
+          let new_c2 = compose_context_formula_norm_flow ctx phi2 x force_sat flow_tr pos in
+          let res = (mkOCtx new_c1 new_c2 pos ) in
+          res
+        | _ -> let new_es_f,(* new_history, *)rho2 = compose_formula_new es.es_formula phi x flow_tr (* es.es_history *) pos in
+          Ctx {es with es_formula = new_es_f;
+                       (* es_history = new_history; *)
+                       (* es_subst_ref = rho2; *)
+                       es_unsat_flag = (not force_sat) && es.es_unsat_flag;}
     end
   | OCtx (c1, c2) -> 
-        let new_c1 = compose_context_formula_norm_flow c1 phi x force_sat flow_tr pos in
-        let new_c2 = compose_context_formula_norm_flow c2 phi x force_sat flow_tr pos in
-        let res = (mkOCtx new_c1 new_c2 pos) in
-        res
+    let new_c1 = compose_context_formula_norm_flow c1 phi x force_sat flow_tr pos in
+    let new_c2 = compose_context_formula_norm_flow c2 phi x force_sat flow_tr pos in
+    let res = (mkOCtx new_c1 new_c2 pos) in
+    res
 
 and compose_context_formula_x (ctx : context) (phi : formula) (x : CP.spec_var list) 
     (force_sat:bool) flow_tr (pos : loc) : context = 
@@ -12108,7 +12108,7 @@ and normalize_es_x (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_s
 and normalize_es_combine (f : formula) (result_is_sat:bool)(pos : loc) (es : entail_state): context =
   (* let () = print_string ("\nCformula.ml: normalize_es_combine") in *)
   Ctx {es with es_formula = normalize_combine es.es_formula f pos;
-      es_unsat_flag = es.es_unsat_flag&&result_is_sat;} 
+               es_unsat_flag = es.es_unsat_flag&&result_is_sat;} 
 
 and combine_and (f1:formula) (f2:MCP.mix_formula) :formula*bool = match f1 with
   | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = pos}) ->
@@ -12161,13 +12161,13 @@ and normalize_clash_es_x (f : formula) (pos : loc) (result_is_sat:bool)(es:entai
     let res = (mkOCtx new_c1 new_c2 pos) in
     res
   | _ ->
-        let n_es_formula =
-          if (* !Globals.enable_error_as_exc && *) is_en_error_exc es && (x_add_1 is_error_flow es.es_formula || x_add_1 is_mayerror_flow es.es_formula) then
-            es.es_formula
-          else
-            normalize_only_clash_rename es.es_formula f pos
-        in
-        Ctx {es with es_formula = n_es_formula (* normalize_only_clash_rename es.es_formula f pos *); es_unsat_flag =es.es_unsat_flag&&result_is_sat}
+    let n_es_formula =
+      if (* !Globals.enable_error_as_exc && *) is_en_error_exc es && (x_add_1 is_error_flow es.es_formula || x_add_1 is_mayerror_flow es.es_formula) then
+        es.es_formula
+      else
+        normalize_only_clash_rename es.es_formula f pos
+    in
+    Ctx {es with es_formula = n_es_formula (* normalize_only_clash_rename es.es_formula f pos *); es_unsat_flag =es.es_unsat_flag&&result_is_sat}
 
 (* 17.05.2008 -- *)
 
@@ -13958,17 +13958,17 @@ let clear_entailment_es_pure (es :entail_state) = {es with es_pure = MCP.mkMTrue
 
 let clear_entailment_vars (es :entail_state) : entail_state = 
   {es with (* es_history = es.es_history@[es.es_heap]; *)
-           es_heap = HEmp;
-           es_evars = [];
-           es_ivars = [];
-           es_gen_expl_vars = [];
-           es_gen_impl_vars = [];
-           es_subst = ([],[]);
+   es_heap = HEmp;
+   es_evars = [];
+   es_ivars = [];
+   es_gen_expl_vars = [];
+   es_gen_impl_vars = [];
+   es_subst = ([],[]);
   }
 
 let clear_entailment_history_es_es (es :entail_state) : entail_state = 
   {es with (* es_history = es.es_history@(get_hdnodes_hrel_hf es.es_heap); *)
-           es_heap = HEmp;
+   es_heap = HEmp;
   }
 
 
@@ -14158,8 +14158,8 @@ let rec splitter (c:context)
       if (subsume_flow nf ff.formula_flow_interval) then  (Some
                                                              (conv_elim_res cvar b elim_ex_fn),None) (* change caught item to normal flow *)
       else if not(overlapping nf ff.formula_flow_interval) ||
-        equal_flow_interval !error_flow_int ff.formula_flow_interval ||
-        equal_flow_interval !mayerror_flow_int ff.formula_flow_interval
+              equal_flow_interval !error_flow_int ff.formula_flow_interval ||
+              equal_flow_interval !mayerror_flow_int ff.formula_flow_interval
       then (None,Some c)
       else (* let t_caught = intersect_flow nf
               ff.formula_flow_interval in *)

@@ -3620,7 +3620,7 @@ let pr_estate (es : entail_state) =
   (* pr_vwrap "es_infer_invs:  " pr_list_pure_formula es.es_infer_invs; *)
   pr_wrap_test "es_unsat_flag: " (fun x-> x) (fun c-> fmt_string (string_of_bool c)) es.es_unsat_flag;  
   pr_wrap_test "es_proof_traces: " Gen.is_empty  (pr_seq "" (pr_pair_aux prtt_pr_formula pr_formula)) es.es_proof_traces;
-   pr_vwrap "es_final_error: " fmt_string  (match es.es_final_error with | Some _ -> "Some" | None -> "None");
+  pr_vwrap "es_final_error: " fmt_string  (match es.es_final_error with | Some _ -> "Some" | None -> "None");
   fmt_close ()
 
 let pr_estate_infer_hp (es : entail_state) =
@@ -3803,23 +3803,23 @@ let printer_of_fail_type (fmt: Format.formatter) (e:fail_type) : unit =
 let pr_list_context (ctx:list_context) =
   match ctx with
   | FailCtx (ft ,_,cex) -> (
-        let err_header = match get_must_failure_ft ft with
-          | Some _ -> "MustErr Context: "
-          | None -> "MaybeErr Context: "
-        in
-        fmt_cut ();fmt_string err_header (* "MaybeErr Context: " *); 
-    (* (match ft with *)
-    (*     | Basic_Reason (_, fe) -> (string_of_fail_explaining fe) (\*useful: MUST - OK*\) *)
-    (*     (\* TODO : to output must errors first *\) *)
-    (*     (\* | And_Reason (_, _, fe) -> (string_of_fail_explaining fe) *\) *)
-    (*     | _ -> fmt_string ""); *)
-    pr_fail_type ft;
-    pr_failure_cex cex;
-    fmt_cut ()
+      let err_header = match get_must_failure_ft ft with
+        | Some _ -> "MustErr Context: "
+        | None -> "MaybeErr Context: "
+      in
+      fmt_cut ();fmt_string err_header (* "MaybeErr Context: " *); 
+      (* (match ft with *)
+      (*     | Basic_Reason (_, fe) -> (string_of_fail_explaining fe) (\*useful: MUST - OK*\) *)
+      (*     (\* TODO : to output must errors first *\) *)
+      (*     (\* | And_Reason (_, _, fe) -> (string_of_fail_explaining fe) *\) *)
+      (*     | _ -> fmt_string ""); *)
+      pr_fail_type ft;
+      pr_failure_cex cex;
+      fmt_cut ()
     )
   | SuccCtx sc -> let str = 
-                    if (get_must_error_from_ctx sc)==None then "Good Context: "
-                    else "Error Context: " in
+    if (get_must_error_from_ctx sc)==None then "Good Context: "
+    else "Error Context: " in
     fmt_cut (); fmt_string str; fmt_int (List.length sc); pr_context_list sc; fmt_cut ()
 
 
@@ -3886,21 +3886,21 @@ let pr_entail_state_short e =
 let pr_list_context (ctx:list_context) =
   match ctx with
   | FailCtx (ft,_,cex) -> (
-        let err_header = match get_must_failure_ft ft with
-          | Some _ -> "MustErr Context: "
-          | None -> "MaybeErr Context: "
-        in
-        fmt_cut ();fmt_string err_header (* "MaybeErr Context: " *); 
-    (* (match ft with *)
-    (*     | Basic_Reason (_, fe) -> (string_of_fail_explaining fe) (\*useful: MUST - OK*\) *)
-    (*     (\* TODO : to output must errors first *\) *)
-    (*     (\* | And_Reason (_, _, fe) -> (string_of_fail_explaining fe) *\) *)
-    (*     | _ -> fmt_string ""); *)
-    pr_fail_type ft; fmt_string "\nCEX:"; pr_failure_cex cex; fmt_cut ()
+      let err_header = match get_must_failure_ft ft with
+        | Some _ -> "MustErr Context: "
+        | None -> "MaybeErr Context: "
+      in
+      fmt_cut ();fmt_string err_header (* "MaybeErr Context: " *); 
+      (* (match ft with *)
+      (*     | Basic_Reason (_, fe) -> (string_of_fail_explaining fe) (\*useful: MUST - OK*\) *)
+      (*     (\* TODO : to output must errors first *\) *)
+      (*     (\* | And_Reason (_, _, fe) -> (string_of_fail_explaining fe) *\) *)
+      (*     | _ -> fmt_string ""); *)
+      pr_fail_type ft; fmt_string "\nCEX:"; pr_failure_cex cex; fmt_cut ()
     )
   | SuccCtx sc -> let str = "" in
-                    (* if (get_must_error_from_ctx sc)==None then "Good Context: " *)
-                    (* else "Error Context: " in *)
+    (* if (get_must_error_from_ctx sc)==None then "Good Context: " *)
+    (* else "Error Context: " in *)
     (* fmt_cut (); fmt_string str; fmt_string "length= ";fmt_int (List.length sc);fmt_string " ";  *)
     fmt_cut ();
     pr_context_list_short sc;
@@ -3944,7 +3944,7 @@ let pr_esc_stack_lvl ?(nshort=true) ((i,s),e) =
              pr_vwrap "State:" pr_context_short fs;
              (* Loc: print exc *)
              if nshort then (pr_vwrap "Exc:" fmt_string (match oft with | Some _ -> "Some" | _ -> "None"))
-        )) e;
+           )) e;
       fmt_close_box ()
     end
 
@@ -3967,7 +3967,7 @@ let pr_successful_states ?(nshort=true) e = match e with
            (if nshort then pr_vwrap else pr_vwrap_nocut) "State:" (pr_context ~nshort:nshort) fs;
            (* Loc: print exc *)
            if nshort then (pr_vwrap "Exc:" fmt_string (match oft with | Some _ -> "Some" | _ -> "None"))
-      )) e
+         )) e
 
 let is_empty_esc_state e =
   List.for_all (fun (_,lst) -> lst==[]) e
@@ -3996,14 +3996,14 @@ let pr_failesc_context ?(nshort=true) ((l1,l2,l3): failesc_context) =
 let pr_partial_context ?(nshort=true) ((l1,l2): partial_context) =
   fmt_open_vbox 0;
   if nshort then (pr_vwrap_naive_nocut "Failed States:"
-    (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
-                      pr_vwrap "State:" pr_fail_type fs)) l1);
+                    (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
+                                      pr_vwrap "State:" pr_fail_type fs)) l1);
   pr_vwrap_naive "Successful States:"
     (pr_seq_vbox "" (fun (lbl,fs,oft)-> 
-      if nshort then (pr_vwrap_nocut "Label: " pr_path_trace lbl);
-      pr_vwrap "State:" (pr_context ~nshort:nshort) fs;
-      if nshort then (pr_vwrap "Exc:" fmt_string (match oft with | Some _ -> "Some" | _ -> "None"))
-    )) l2;
+         if nshort then (pr_vwrap_nocut "Label: " pr_path_trace lbl);
+         pr_vwrap "State:" (pr_context ~nshort:nshort) fs;
+         if nshort then (pr_vwrap "Exc:" fmt_string (match oft with | Some _ -> "Some" | _ -> "None"))
+       )) l2;
   fmt_close_box ()
 
 (* let pr_partial_context_short ((l1,l2): partial_context) = *)

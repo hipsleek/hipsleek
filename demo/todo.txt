@@ -696,9 +696,32 @@ Successful States:
  Exc:None
  ]
 
-
-
 ==========================================================================
+# ex21e5a
+
+# ex21e6 and ex21e5 working but not ex21e5a
+
+infer[@err_must] x=1 & flow __norm |- x>0 & flow __Exc.
+print residue.
+expect Fail.
+
+Got Fail but residue is:
+
+Residue:
+ <1>emp&x=1&{FLOW,(4,5)=__norm#E}[]
+
+
+Partially fixed by using exec_old (from Sept14  439edea803e6 13050) 
+in heap_entail_after_sat
+
+    let exec_old () = 
+      begin
+        let pr = Cprinter.string_of_entail_state_short in
+        Debug.devel_zprint (lazy ("heap_entail_after_sat: invoking heap_entail_conjunct_lhs"^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
+        let es = (CF.add_to_estate_with_steps es ss) in
+        let tmp, prf = heap_entail_conjunct_lhs 1 prog is_folding  (Ctx es) conseq pos in  
+        (filter_set tmp, prf)
+      end in
 ==========================================================================
 ==========================================================================
 ==========================================================================

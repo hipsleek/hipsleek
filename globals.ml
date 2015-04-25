@@ -1499,22 +1499,22 @@ class inf_obj  =
     method get c  = List.mem c arr
     (* method get_int i  = Array.get arr i *)
     method is_term = (self # get INF_TERM) || (self # get INF_TERM_WO_POST)
-        (* termination inference *)
+    (* termination inference *)
     method is_term_wo_post = self # get INF_TERM_WO_POST
-        (* termination inference wo post-condition *)
+    (* termination inference wo post-condition *)
     method is_pre  = self # get INF_PRE
-        (* pre-condition inference *)
+    (* pre-condition inference *)
     method is_post  = self # get INF_POST
-        (* post-condition inference *)
+    (* post-condition inference *)
     method is_ver_post  = self # get INF_VER_POST
     method is_imm  = self # get INF_IMM
-        (* immutability inference *)
+    (* immutability inference *)
     method is_shape  = self # get INF_SHAPE
-        (* shape inference *)
+    (* shape inference *)
     method is_error  = self # get INF_ERROR
     method is_dis_err  = self # get INF_DE_EXC
                          || (not(self # get INF_ERR_MUST) 
-                            && not(self # get INF_ERR_MAY))
+                             && not(self # get INF_ERR_MAY))
     method is_err_must  = not(self # get INF_DE_EXC)
                           && not(self # get INF_ERR_MAY) 
                           && self # get INF_ERR_MUST
@@ -1600,8 +1600,8 @@ class inf_obj_sub  =
                          || (not(self # get INF_ERR_MUST) && not(self # get INF_DE_EXC) 
                              && infer_const_obj # is_err_may)
     method is_err_must  = self # get INF_ERR_MUST 
-                         || (not(self # get INF_ERR_MAY) && not(self # get INF_DE_EXC) 
-                             && infer_const_obj # is_err_must)
+                          || (not(self # get INF_ERR_MAY) && not(self # get INF_DE_EXC) 
+                              && infer_const_obj # is_err_must)
     method is_classic_all  = super # is_classic || infer_const_obj # is_classic
     (* method is__all  = super # is_ || infer_const_obj # is_ *)
     method is_ver_post_all  = super # is_ver_post || infer_const_obj # is_ver_post

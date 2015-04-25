@@ -1,7 +1,18 @@
 checkentail x=1 & flow __norm |- x>4 & flow __Exc
+                                 or x>0 & flow __norm.
+print residue.
+expect Valid.
+
+checkentail x=1 & flow __norm |- x>4 & flow __Exc
                                  or x>4 & flow __norm.
 print residue.
-// wrong - should fail
+expect Fail.
+// wrong 
+
+
+checkentail x=1 & flow __norm |- x>0 & flow __Exc.
+print residue.
+expect Fail.
 
 /*
 # ex21e5 (bisect - default)
@@ -61,6 +72,21 @@ parent:      12808:a9fc4ca8a6f9
 user:        locle
 date:        Thu Sep 11 17:44:26 2014 +0800
 summary:     m
+
+default before merging with sa_logging
+439edea803e6 13050
+
+Entail 1: Fail.(cex)(must) cause:UnionR[ x=1 |-  4<x. LOCS:[1] (must-bug), x=1 |-  4<x. LOCS:[1;2] (must-bug)]
+
+
+Fail Trace?:[?] 
+Error Context: length= 1 [es_formula: emp&x=1&{FLOW,(3,4)=__Error}[]
+                          es_must_error: Some(UnionR[ x=1 |-  4<x. LOCS:[1] (must-bug), x=1 |-  4<x. LOCS:[1;2] (must-bug)]; true)
+                          es_infer_vars_rel: []] <1>emp&x=1&{FLOW,(3,4)=__Error}[]
+[[empty]]
+
+
+6139131392ab 13055 sa_logging (bad) 
 
 
 */

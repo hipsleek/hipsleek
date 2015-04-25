@@ -45,9 +45,9 @@ let rec build_unk_locs args n unk_svl res=
   match args with
   | [] -> res
   | sv::rest -> let new_res=
-                  if CP.mem_svl sv unk_svl then
-                    (res@[n])
-                  else res
+    if CP.mem_svl sv unk_svl then
+      (res@[n])
+    else res
     in
     build_unk_locs rest (n+1) unk_svl new_res
 
@@ -3418,10 +3418,10 @@ let check_split_global_x iprog prog cands =
         if List.length inter > 1 then r@[inter] else r
       ) [] ls_eqs in
     ( List.fold_left (fun r aset ->
-          match aset with
-          | sv::rest -> CP.diff_svl r rest
-          | _ -> r
-        ) args ls_eq1)
+         match aset with
+         | sv::rest -> CP.diff_svl r rest
+         | _ -> r
+       ) args ls_eq1)
   in
   (*for each grp*)
   let intersect_cand_one_hp grp=

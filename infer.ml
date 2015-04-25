@@ -3369,7 +3369,7 @@ let infer_collect_hp_rel_x prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_
               let r_new_hfs,ass_lhs_b, m,rvhp_rels, r_post_hps,hp_rel_list,n_es_heap_opt, ass_lhs =
                 generate_constraints prog es rhs n_lhs_b1 ass_guard rhs_b1
                   defined_hps1 ls_unknown_ptrs unk_pure unk_svl
-                  (* no_es_history *) lselected_hpargs2 rselected_hpargs
+                (* no_es_history *) lselected_hpargs2 rselected_hpargs
                   hds hvs lhras lhrs rhras rhrs leqs1 reqs1 eqNull subst_prog_vars lvi_ni_svl classic_nodes pos in
               (* generate assumption for memory error *)
               let oerror_es = generate_error_constraints prog es ass_lhs rhs
@@ -3462,8 +3462,8 @@ let infer_collect_hp_rel_empty_rhs_x prog (es0:entail_state) mix_rf pos =
           (* let pr = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
           let () = DD.ninfo_zprint (lazy (("  es0.CF.es_evars: " ^ (!CP.print_svl  es0.CF.es_evars)))) no_pos in
           (*which pointers are defined and which arguments of data nodes are pointer*)let lhs_b0 = match lhs0 with
-              | Base fb -> fb
-              | _ -> report_error pos "Infer.infer_collect_hp_rel_empty_rhs: imposs"
+            | Base fb -> fb
+            | _ -> report_error pos "Infer.infer_collect_hp_rel_empty_rhs: imposs"
           in
           let ( _,mix_lf,_,_,_,_) = CF.split_components lhs0 in
           let l_emap0 = get_eqset (MCP.pure_of_mix mix_lf) in

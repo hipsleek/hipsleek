@@ -120,8 +120,8 @@ let wrap_err_bind f a =
 
 let wrap_err_assert_assume f a =
   wrap_err_bind f a
-  (* if infer_const_obj # is_dis_err then wrap_err_dis f a *)
-  (* else wrap_err_must f a *)
+(* if infer_const_obj # is_dis_err then wrap_err_dis f a *)
+(* else wrap_err_must f a *)
 
 let wrap_err_pre f a =
   if infer_const_obj # is_dis_err then wrap_err_dis f a
@@ -131,8 +131,8 @@ let wrap_err_pre f a =
 
 let wrap_err_post f a =
   wrap_err_bind f a
-  (* if infer_const_obj # is_dis_err then wrap_err_dis f a *)
-  (* else wrap_err_must f a *)
+(* if infer_const_obj # is_dis_err then wrap_err_dis f a *)
+(* else wrap_err_must f a *)
 
 let wrap_par_case_check f c =
   let flag = !ho_always_split in
