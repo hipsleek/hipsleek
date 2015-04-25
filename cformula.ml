@@ -9385,8 +9385,12 @@ let print_failure_kind_full = ref(fun (c:failure_kind) -> "printer not initializ
 let print_fail_type = ref(fun (c:fail_type) -> "printer not initialized")
 
 
-let is_en_error_exc es=
-  es.es_infer_obj # is_err_must || es.es_infer_obj # is_err_may
+let is_dis_err_exc es = 
+  es.es_infer_obj # is_dis_err_all
+
+let is_en_error_exc es =
+  not(is_dis_err_exc es)
+  (* es.es_infer_obj # is_err_must || es.es_infer_obj # is_err_may *)
 
 let rec is_en_error_exc_ctx c=
   match c with

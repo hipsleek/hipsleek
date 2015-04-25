@@ -1593,13 +1593,13 @@ let is_en_efa_exc ()=
 class inf_obj_sub  =
   object (self)
     inherit inf_obj as super
-    method is_dis_err  = self # get INF_DE_EXC
+    method is_dis_err_all  = self # get INF_DE_EXC
                          || (not(self # get INF_ERR_MUST) && not(self # get INF_ERR_MAY) 
                              && infer_const_obj # is_dis_err)
-    method is_err_may  = self # get INF_ERR_MAY 
+    method is_err_may_all  = self # get INF_ERR_MAY 
                          || (not(self # get INF_ERR_MUST) && not(self # get INF_DE_EXC) 
                              && infer_const_obj # is_err_may)
-    method is_err_must  = self # get INF_ERR_MUST 
+    method is_err_must_all  = self # get INF_ERR_MUST 
                           || (not(self # get INF_ERR_MAY) && not(self # get INF_DE_EXC) 
                               && infer_const_obj # is_err_must)
     method is_classic_all  = super # is_classic || infer_const_obj # is_classic

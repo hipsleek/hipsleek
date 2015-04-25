@@ -3455,13 +3455,18 @@ and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool)
     let list_context_res,prf = f (*heap_entail_one_context_struc*) prog is_folding has_post c20 conseq tid delayed_f join_id pos pid in
     (* print_string ("\nOutcome ==> "^(Cprinter.string_of_list_context list_context_res)) ; *)
     let res,new_unk_map = match list_context_res with
-      | FailCtx (t,c,_) ->  begin if !Globals.enable_error_as_exc || CF.is_en_error_exc_ctx c || is_en_efa_exc () then
+      | FailCtx (t,c,_) ->  begin 
+          if CF.is_en_error_exc_ctx c (* built-in local & global test *)
+          (* !Globals.enable_error_as_exc || CF.is_en_error_exc_ctx c || is_en_efa_exc () *)
+        then
             ([([],[(lbl, c,Some t)])],[])
           else
             ([([(lbl,t)],[])],[])
         end
       | SuccCtx ls -> (List.map ( fun c-> begin
-            if !Globals.enable_error_as_exc || CF.is_en_error_exc_ctx c || is_en_efa_exc () then
+            if CF.is_en_error_exc_ctx c
+              (* !Globals.enable_error_as_exc || CF.is_en_error_exc_ctx c || is_en_efa_exc ()  *)
+            then
               match CF.get_final_error_ctx c with
               | None -> ([],[(lbl,c,None)])
               | Some (_,ft,_) -> ([],[(lbl,c,Some ft)])
@@ -4357,7 +4362,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                        (match n_ctx_list with
                         | FailCtx _ -> (* let () = print_endline ("###: 1") in *)
                           if not is_requires then (n_ctx_list, prf) else
-                          if !Globals.enable_error_as_exc || is_en_error_exc_ctx n_ctx then
+                          if (* !Globals.enable_error_as_exc || *) is_en_error_exc_ctx n_ctx then
                             let err_ctx_list = Musterr.convert_list_context prog n_ctx_list in
                             let () = x_tinfo_hp (add_str "err_ctx_list" (Cprinter.string_of_list_context)) err_ctx_list no_pos in
                             ((* SuccCtx [] *) err_ctx_list, prf)
@@ -4501,7 +4506,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                           else (*if not -> do not consider ls_var as a ref-vars*)
                             ref_vars,new_post
                         in
-                        let compose_context_formula_fnc= if CF.is_en_error_exc es && not (is_dis_error_exc es) then compose_context_formula_norm_flow else compose_context_formula in
+                        let compose_context_formula_fnc= if (* CF.is_en_error_exc es && *) not (is_dis_error_exc es) then compose_context_formula_norm_flow else compose_context_formula in
                         let rs1 = compose_context_formula_fnc rs new_post new_ref_vars true Flow_replace pos in
                         (* print_endline ("RS CTX: " ^ (!print_context rs)); *)
                         (* print_endline ("RS1 CTX: " ^ (!print_context rs1)); *)
@@ -7052,8 +7057,9 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
   let hec is_folding ctx0 c =
     let res, prf = heap_entail_conjunct_x prog is_folding ctx0 c rhs_h_matched_set pos in
     let res1 = 
-      if (!Globals.enable_error_as_exc || CF.is_en_error_exc_ctx ctx0) 
-                  && not (CF.is_dis_error_exc_ctx ctx0) 
+      if CF.is_en_error_exc_ctx ctx0
+        (* !Globals.enable_error_as_exc || CF.is_en_error_exc_ctx ctx0)  *)
+        (*           && not (CF.is_dis_error_exc_ctx ctx0)  *)
       then
         let () = x_binfo_pp "convert_maymust" no_pos in
         CF.convert_maymust_failure_to_value_orig res
@@ -8604,7 +8610,7 @@ type: bool *
       let cex = x_add Slsat.check_sat_empty_rhs_with_uo estate_orig lhs (MCP.pure_of_mix rhs_p) rhs_matched_set in
       let is_sat = CF.is_sat_fail cex in
       if not !disable_failure_explaining then
-        let new_estate = if !Globals.enable_error_as_exc ||
+        let new_estate = if (* !Globals.enable_error_as_exc || *)
                             CF.is_en_error_exc estate then {
             estate with es_formula =
                           match fc_kind with
