@@ -15,12 +15,34 @@ print residue.
 /*
 # ex21e7d.slk
 
+--temp-opt (source of problem?)
+(==solver.ml#7154==)
+heap_entail_conjunct_helper#3@81@80@79@78@77@34@33@32@31@30@29@28@27@26@25@24@23
+heap_entail_conjunct_helper#3 inp1 : es_formula: 
+  x::node<Anon_12,flted_8_35>&flted_8_35=null&{FLOW,(18,19)=__Error#E}[]
+ es_infer_obj: [@err_must]
+ es_gen_impl_vars: [m]
+ es_trace:  Fold ==> 
+ es_infer_vars_rel: []
+ es_proof_traces: [x::node<Anon_12,flted_8_35>&flted_8_35=null:x::ll{}<m>&
+                   1<m&{FLOW,(20,21)=__norm#E}[]]
+ es_final_error: None
+heap_entail_conjunct_helper#3 inp2 : emp&1<m&{FLOW,(20,21)=__norm#E}[]
+heap_entail_conjunct_helper#3@81 EXIT: 
+MustErr Context: 
+                  fe_kind: MUST
+                  fe_name: incompatible types
+                  fe_locs: {
+                            fc_message: 
+                             1.2: ante flow:__Error#E conseq flow: __norm#E are incompatible flow types
+                            fc_current_lhs_flow: {FLOW,(18,19)=__Error#E}}
+
+
 Earlier conversion would allow better --esl logging.
 Can we keep the info from FailCtx into exception form
 and have that __Error printed.
 
 Sleek printing should be based on this outcome..
-
 
     let res1 = 
       (* WN : test below is needed for ex21a51.ss *)
@@ -32,7 +54,7 @@ Sleek printing should be based on this outcome..
         (* (!Globals.enable_error_as_exc || CF.is_en_error_exc_ctx ctx0) *)
         (*           && not (CF.is_dis_error_exc_ctx ctx0) *)
 
---no early conversion
+without --temp_opt (working)
 
 id: 2; caller: []; line: 0; classic: false; kind: Sleek_Entail(1); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [@err_must] globals: []
  checkentail x::node<Anon_12,flted_8_39>&flted_8_39=null&{FLOW,(20,21)=__norm#E}[]
@@ -46,7 +68,9 @@ res:  failctx
                    fc_current_lhs_flow: {FLOW,(18,19)=__Error#E}}
 [[ Fold ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  BaseCaseFold ==> ]]false
  
---early conversion
+--early conversion (problem)
+--with --temp_opt
+
 
 id: 2; caller: []; line: 0; classic: false; kind: Sleek_Entail(1); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [@err_must] globals: []
  checkentail x::node<Anon_12,flted_8_39>&flted_8_39=null&{FLOW,(20,21)=__norm#E}[]
