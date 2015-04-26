@@ -2815,9 +2815,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
   (* if (Gen.is_empty cl) then fl
      else *)
   let failesc = x_add CF.splitter_failesc_context !norm_flow_int None (fun x->x)(fun x -> x) cl in
-  Debug.binfo_hprint (add_str "check_exp1:failed?(fl):"Cprinter.string_of_list_failesc_context) fl no_pos;
-  Debug.binfo_hprint (add_str "check_exp1:inp(cl):"Cprinter.string_of_list_failesc_context) cl no_pos;
-  Debug.binfo_hprint (add_str "check_exp1:out(failesc):"Cprinter.string_of_list_failesc_context_short) failesc no_pos;
+  x_tinfo_hp (add_str "check_exp1:failed?(fl):"Cprinter.string_of_list_failesc_context) fl no_pos;
+  x_tinfo_hp (add_str "check_exp1:inp(cl):"Cprinter.string_of_list_failesc_context) cl no_pos;
+  x_tinfo_hp (add_str "check_exp1:out(failesc):"Cprinter.string_of_list_failesc_context_short) failesc no_pos;
   (* if fl!=[] then *)
   (* Debug.info_hprint (add_str "check_exp1:into:"Cprinter.string_of_list_failesc_context) failesc no_pos; *)
   ((check_exp1_x failesc) @ fl)

@@ -534,6 +534,19 @@ I think the current failure here is from assert failure.
 ==========================================================================
 # ex21a8.ss
 
+
+# can fix the warnings?
+
+WARNING: ex21a8-pre.ss_15:10_15:29:the result type __Error#E is not covered by t
+he throw list[__norm#E]
+
+WARNING: ex21a8-pre.ss_11:10_11:27:the result type __Exc#E is not covered by the
+ throw list[__norm#E]
+
+==========================================================================
+# ex21a8.ss  FIXED
+
+
 void pre_call3(cell x)
   requires true
   ensures true & flow __Error;
@@ -547,6 +560,8 @@ int foo2(cell x)
   return 3;
 
 }
+
+# FIXED 
 
 Gave:
  Procedure foo2$cell SUCCESS.
@@ -723,7 +738,7 @@ in heap_entail_after_sat
         (filter_set tmp, prf)
       end in
 ==========================================================================
-# ex21e7a
+# ex21e7a (FIXED)
 
 infer[@err_must] x=1 & flow __norm |- x>4 & flow __Exc.
 print residue.
@@ -766,8 +781,47 @@ heap_entail_conjunct#1@10 EXIT: [
   ]
 
 ==========================================================================
+# ./runfasttest sleek -flags "--efa-exc"
+
+Total number of errors: 3 in files:
+  infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) imm/norm/norm4.slk({E4#Fail},{E5#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 75.44 second
+	Time spent in main process: 50.04 second
+	Time spent in child processes: 25.40 second
+	Number of false contexts: 0
+
+Total number of errors: 3 in files:
+  infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) imm/norm/norm4.slk({E4#Fail},{E5#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 75.12 second
+	Time spent in main process: 49.75 second
+	Time spent in child processes: 25.37 second
+	Number of false contexts: 0
+
 ==========================================================================
-==========================================================================
+# ex21a51.ss --efa-exc
+
+A failed (may) was detected, but how did it change to __Error
+when it should be __MayError?
+
+----
+
+Checking procedure foo$int... 
+assert/assume:ex21a51-assert-assume.ss:6: 4:  : failed (may)
+
+
+!!! **typechecker.ml#2071:Dprint:[x]
+dprint(simpl): ex21a51-assert-assume.ss:7: ctx:  List of Failesc Context: [FEC(0, 1, 0 )]
+Escaped States:
+[
+ 
+ Try-Block:0::
+ [
+  Path: []
+  State:htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+
+ ==========================================================================
 ==========================================================================
 ==========================================================================
 ==========================================================================

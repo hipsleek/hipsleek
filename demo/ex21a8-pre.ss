@@ -19,6 +19,7 @@ int foo2(cell x)
   ensures true ;
 {
   pre_call3(x);
+  //pre_call(x);
   dprint;
   return 3;
 

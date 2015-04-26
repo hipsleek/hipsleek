@@ -7062,7 +7062,7 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
         (* (!Globals.enable_error_as_exc || CF.is_en_error_exc_ctx ctx0) *)
         (*           && not (CF.is_dis_error_exc_ctx ctx0) *)
       then
-        (* let () = x_binfo_pp "convert_maymust" no_pos in *)
+        let () = x_binfo_pp "convert_maymust" no_pos in
         CF.convert_maymust_failure_to_value_orig res
       else 
         (* let () = x_binfo_pp "no convert_maymust" no_pos in *)
@@ -7310,14 +7310,14 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                    (* && not !Globals.enable_error_as_exc  *)
                    (* && (h1 = HEmp || not (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) fl2))  *)
                 then (
-                  x_binfo_zp (lazy ("heap_entail_conjunct_helper: conseq has an incompatible flow type\ncontext:\n"
+                  x_tinfo_zp (lazy ("heap_entail_conjunct_helper: conseq has an incompatible flow type\ncontext:\n"
                                     ^ (Cprinter.string_of_context ctx0) ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
                   (* TODO : change to meaningful msg *)
                   (* what if must failure on the ante -> conseq *)
                   let f1_exc = (exlist # get_closest fl1.CF.formula_flow_interval) in
                   let f2_exc = (exlist # get_closest fl2.CF.formula_flow_interval) in
-                  let () = x_binfo_hp (add_str "fl1_exc" pr_id) f1_exc no_pos in
-                  let () = x_binfo_hp (add_str "fl2_exc" pr_id) f2_exc no_pos in
+                  let () = x_tinfo_hp (add_str "fl1_exc" pr_id) f1_exc no_pos in
+                  let () = x_tinfo_hp (add_str "fl2_exc" pr_id) f2_exc no_pos in
                   if (CF.overlap_flow_ff fl2 fl1) then (
                     let () = x_tinfo_pp "(overlap_flow):then" no_pos in
                     
