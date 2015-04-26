@@ -766,6 +766,8 @@ let ptr_to_int_exact = ref false
 let is_sleek_running = ref false
 let is_hip_running = ref false
 
+let temp_opt_flag = ref false
+
 let remove_label_flag = ref false
 let label_split_conseq = ref true
 let label_split_ante = ref true

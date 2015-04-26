@@ -6,7 +6,7 @@ pred ll<n> == self = null & n = 0
 
 //1
 infer [@err_must] x::node<_, null> |- x::ll<m> & m > 1.
-//expect valid
+expect Fail.
 print residue.
 // --exa
 //Entail 1: Fail.(must) cause:1.2: ante flow:__Error#E conseq flow: __norm#E are incompatible flow types
@@ -66,14 +66,14 @@ res:  2[
 //2
 //checkentail x::node<_, r> * r::node<_, r2> * r2::ll<n> |- x::ll<n + 2>.
 //expect valid
-print residue.
+//print residue.
 
-checkentail x::node<_, null> |- x::ll<m>.
-print residue.
+//checkentail x::node<_, null> |- x::ll<m>.
+//print residue.
 
-infer [@err_must] x::node<_, y>*y::ll<n> |- x::ll<m> & m=0.
+//infer [@err_must] x::node<_, y>*y::ll<n> |- x::ll<m> & m=0.
 //expect valid
-print residue.
-expect Fail.
-expect Fail_Must.
+//print residue.
+//expect Fail.
+//expect Fail_Must.
 //expect Fail_May.
