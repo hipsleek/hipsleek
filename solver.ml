@@ -7061,12 +7061,15 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
       (*      but fails for ex21e7d.slk *)
       (* How was conversion to __Error done for ex21a51.ss without
          this conversion? *) 
-      if false
-        (* CF.is_en_error_exc_ctx ctx0 *)
+      if (* false *)
+        CF.is_en_error_exc_ctx ctx0
         (* (!Globals.enable_error_as_exc || CF.is_en_error_exc_ctx ctx0) *)
         (*           && not (CF.is_dis_error_exc_ctx ctx0) *)
-      then        let () = x_binfo_pp "convert_maymust" no_pos in
-        CF.convert_maymust_failure_to_value_orig res
+      then        
+        if !Globals.temp_opt_flag then
+          let () = x_binfo_pp "temp_opt:convert_maymust" no_pos in
+          CF.convert_maymust_failure_to_value_orig res
+        else res
       else 
         (* let () = x_binfo_pp "no convert_maymust" no_pos in *)
         res
