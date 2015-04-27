@@ -1,3 +1,7 @@
+
+void fc(int x)
+ requires x<0 ensures true;
+
 void foo(int x)
   requires true
   ensures true;

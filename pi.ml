@@ -166,7 +166,7 @@ let is_infer_shape sf =
   Debug.no_1 "is_infer_shape" pr string_of_bool is_infer_shape sf
 
 let is_infer_shape_scc scc =
-  List.exists (fun proc -> is_infer_shape (proc.proc_stk_of_static_specs # top)) scc
+  List.exists (fun proc -> x_add_1 is_infer_shape (proc.proc_stk_of_static_specs # top)) scc
 
 let rec is_infer_error sf = match sf with
   | CF.EList el -> List.exists (fun (lbl,sf) ->
@@ -195,11 +195,11 @@ let is_infer_post sf =
   Debug.no_1 "is_infer_post" pr string_of_bool is_infer_post sf
 
 let is_infer_post_scc scc =
-  List.exists (fun proc -> is_infer_post (proc.proc_stk_of_static_specs # top)) scc
+  List.exists (fun proc -> x_add_1 is_infer_post (proc.proc_stk_of_static_specs # top)) scc
 
 let rec is_infer_pre sf = match sf with
   | CF.EList el -> List.exists (fun (lbl,sf) ->
-      is_infer_post sf) el
+      x_add_1 is_infer_post sf) el
   | CF.EInfer ei ->
     let inf_obj = ei.CF.formula_inf_obj in
     let inf_vars = ei.CF.formula_inf_vars in
@@ -211,11 +211,11 @@ let is_infer_pre sf =
   Debug.no_1 "is_infer_pre" pr string_of_bool is_infer_pre sf
 
 let is_infer_pre_scc scc =
-  List.exists (fun proc -> is_infer_pre (proc.proc_stk_of_static_specs # top)) scc
+  List.exists (fun proc -> x_add_1 is_infer_pre (proc.proc_stk_of_static_specs # top)) scc
 
 let rec is_infer_others sf = match sf with
   | CF.EList el -> List.exists (fun (lbl,sf) ->
-      is_infer_post sf) el
+      x_add_1 is_infer_post sf) el
   | CF.EInfer ei ->
     let inf_obj = ei.CF.formula_inf_obj in
     let inf_vars = ei.CF.formula_inf_vars in

@@ -125,7 +125,12 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
   let lem = Lem_store.all_lemma # get_left_coercion in
   let ante = x_add Solver.normalize_formula_w_coers 11 cprog es ante lem (* cprog.C.prog_left_coercions *) in
   let inf_str = (pr_list string_of_inf_const itype)^(Cprinter.string_of_spec_var_list isvl) in
-  let () = if (!Globals.print_core || !Globals.print_core_all) then print_endline_quiet ("INPUT 0: "^inf_str^" \n ### ante = " ^ (Cprinter.string_of_formula ante) ^"\n ### conseq = " ^ (Cprinter.string_of_struc_formula conseq)) else () in
+  let fvs = CF.struc_fv conseq in
+  let () = x_binfo_hp (add_str "conseq" (Cprinter.string_of_struc_formula)) conseq no_pos in
+  let () = x_binfo_hp (add_str "fvs(conseq)" (Cprinter.string_of_spec_var_list)) fvs no_pos in
+  let () = x_binfo_hp (add_str "itype" (pr_list string_of_inf_const)) itype no_pos in
+  let () = x_binfo_hp (add_str "isvl" (Cprinter.string_of_spec_var_list)) isvl no_pos in
+  let () = if (!Globals.print_core || !Globals.print_core_all) then print_endline_quiet ("\nINPUT 0: "^inf_str^" \n ### ante = " ^ (Cprinter.string_of_formula ante) ^"\n ### conseq = " ^ (Cprinter.string_of_struc_formula conseq)) else () in
   let () = x_dinfo_zp (lazy ("\nrun_entail_check 3: after normalization"
                              ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
                              ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
@@ -228,10 +233,10 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
     let rs1, _ =
       if  not !Globals.disable_failure_explaining then
         (* let () = sleek_entail cprog ctx conseq no_pos in *)
-        Solver.heap_entail_struc_init_bug_inv cprog false (* false *) true
+        x_add Solver.heap_entail_struc_init_bug_inv cprog false (* false *) true
           (CF.SuccCtx[ctx]) conseq no_pos None
       else
-        Solver.heap_entail_struc_init cprog false (* false *) true
+        x_add Solver.heap_entail_struc_init cprog false (* false *) true
           (CF.SuccCtx[ctx]) conseq no_pos None
     in
     (* let () = print_endline ("WN# 1:"^(Cprinter.string_of_list_context rs1)) in *)

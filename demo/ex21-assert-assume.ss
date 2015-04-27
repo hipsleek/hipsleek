@@ -1,11 +1,15 @@
+void failmeth()
+ requires false
+ ensures true;
+
 void foo(int x)
   requires true
   ensures true;
 {
   if (x>0) {
-    assert false assume true;
+    failmeth(); //assert false assume true;
     dprint;
-    assert false;
+    //assert false;
     assert x'<0;
   }
 }

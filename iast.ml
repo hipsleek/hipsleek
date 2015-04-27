@@ -351,6 +351,7 @@ and exp_aalloc = { exp_aalloc_etype_name : ident; (* Name of the base element *)
                    exp_aalloc_pos : loc; }
 
 and exp_assert = { exp_assert_asserted_formula : (F.struc_formula*bool) option;
+                   exp_assert_infer_vars : ident list;
                    exp_assert_assumed_formula : F.formula option;
                    exp_assert_path_id : formula_label;
                    exp_assert_type : assert_type;
@@ -1363,7 +1364,7 @@ let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 infer_type infer_lst 
     (* let ipre_simpl = F.mkStar_formula cur_pre ipre_simpl0 pos in *)
     let ipre = F.mkEBase [] [] [] ipre_simpl (Some ipost) pos in
     (* generate Iformula.struc_infer_formula*)
-    let inf_obj = Globals.infer_const_obj # clone in
+    let inf_obj = Globals.clone_sub_infer_const_obj () (* Globals.infer_const_obj # clone *) in 
     let () = inf_obj#set_list infer_lst in
     let () =  Debug.ninfo_hprint (add_str "inf_obj" (pr_id)) (inf_obj#string_of) no_pos in
     (F.EInfer {
@@ -1438,7 +1439,7 @@ let genESpec_wNI body_header body_opt args ret pos=
             (* let () = print_gen_spec ss hps in *)
             let ss = match ss with
               | F.EInfer i_sf2 -> F.EInfer {i_sf2 with
-                                            F.formula_inf_obj = i_sf.F.formula_inf_obj # mk_or i_sf2.F.formula_inf_obj;}
+                                            F.formula_inf_obj = i_sf.F.formula_inf_obj # mk_or_lst (i_sf2.F.formula_inf_obj # get_lst);}
               | _ -> ss
             in
             let () = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
@@ -1503,8 +1504,9 @@ let mkProc sfile id flgs n dd c ot ags r ho_param ss ds pos bd =
     proc_body = bd;
     proc_test_comps = None}
 
-let mkAssert asrtf assmf pid atype pos =
+let mkAssert ?(inf_vars = []) asrtf assmf pid atype pos =
   Assert { exp_assert_asserted_formula = asrtf;
+           exp_assert_infer_vars = inf_vars;
            exp_assert_assumed_formula = assmf;
            exp_assert_path_id = pid;
            exp_assert_type = atype;

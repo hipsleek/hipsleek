@@ -177,7 +177,7 @@ let build_and_failures_x (failure_code:string) (failure_name:string) ((contra_li
       let () = print_endline ("locle may:" ^ (pr may_fail_type)) in
     *)
     let oft = List.fold_left CF.mkAnd_Reason contra_fail_type [must_fail_type; may_fail_type] in
-    let es = {fail_ctx_template.fc_current_lhs  with es_formula = CF.substitute_flow_into_f !error_flow_int fail_ctx_template.fc_current_lhs.es_formula} in
+    let es = {fail_ctx_template.fc_current_lhs  with es_formula = (* CF.substitute_flow_into_f !error_flow_int *) fail_ctx_template.fc_current_lhs.es_formula} in
     match oft with
     | Some ft -> FailCtx (ft, (Ctx es) ,cex)
     | None -> (*report_error no_pos "Solver.build_and_failures: should be a failure here"*)
@@ -220,8 +220,13 @@ let convert_list_context prog ctxs=
     match ft with
     | Basic_Reason (fc, fe, _) -> begin
         let es = match fe.fe_kind with
-          | Failure_Must msg -> {fc.fc_current_lhs with es_must_error = Some (msg, ft, cex)}
-          | Failure_May msg -> {fc.fc_current_lhs with es_may_error = Some (msg, ft, cex)}
+          | Failure_Must msg -> {fc.fc_current_lhs with
+                                 es_must_error = Some (msg, ft, cex);
+                                 es_final_error = Some (msg, ft,Failure_Must msg)
+                                }
+          | Failure_May msg -> {fc.fc_current_lhs with es_may_error = Some (msg, ft, cex);
+                                                       es_final_error = Some (msg, ft, Failure_May msg)
+                               }
           | _ -> fc.fc_current_lhs
         in
         Ctx es

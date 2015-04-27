@@ -373,7 +373,7 @@ let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs view_equ
   (* let if2 = IF.formula_trans_heap_node hn_trans if1 in *)
   (* (\*trans iformula to cformula*\) *)
   (* let if3 = Astsimp.case_normalize_formula iprog [] if2 None in *)
-  (* let n_tl = Typeinfer.gather_type_info_formula iprog if3 [] false in *)
+  (* let n_tl = x_add Typeinfer.gather_type_info_formula iprog if3 [] false in *)
   (* let _, f2 = Astsimp.trans_formula iprog false [] false if3 n_tl false in *)
   (* CF.elim_exists f2 *)
   CF.formula_trans_heap_node hn_c_trans f

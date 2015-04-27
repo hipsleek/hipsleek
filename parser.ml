@@ -2136,7 +2136,7 @@ cexp_w:
             Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
           end
     | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN ->
-             (* AnHoa: relation constraint, for instance, given the relation 
+      (* AnHoa: relation constraint, for instance, given the relation 
        * s(a,b,c) == c = a + b.
        * After this definition, we can have the relation constraint like
        * s(x,1,x+1), s(x,y,x+y), ...
@@ -2487,6 +2487,9 @@ infer_type:
    | `INFER_AT_SIZE -> INF_SIZE
    | `INFER_AT_EFA -> INF_EFA
    | `INFER_AT_DFA -> INF_DFA
+   | `INFER_AT_DE_EXC -> INF_DE_EXC
+   | `INFER_AT_ERRMUST -> INF_ERR_MUST
+   | `INFER_AT_ERRMAY -> INF_ERR_MAY
    | `INFER_AT_FLOW -> INF_FLOW
    ]];
 
@@ -2508,7 +2511,7 @@ infer_type_list:
 
 infer_cmd:
   [[ `INFER; il_w_itype = cid_list_w_itype; t=meta_constr; `DERIVE; b=extended_meta_constr ->
-      let inf_o = Globals.infer_const_obj # clone in
+      let inf_o = new Globals.inf_obj_sub (* Globals.clone_sub_infer_const_obj () *) (* Globals.infer_const_obj # clone *) in
       let (i_consts,ivl) = List.fold_left 
         (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r) 
           | SndAns r -> (lst_l,r::lst_r)) ([],[]) il_w_itype in
@@ -3154,7 +3157,7 @@ spec:
     `INFER; transpec = opt_transpec; postxf = opt_infer_xpost; postf= opt_infer_post; ivl_w_itype = cid_list_w_itype; s = SELF ->
     (* WN : need to use a list of @sym *)
      (* let inf_o = Globals.infer_const_obj # clone in *)
-     let inf_o = new inf_obj in
+     let inf_o = new Globals.inf_obj_sub in
      let (i_consts,ivl) = List.fold_left
        (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r)
          | SndAns r -> (lst_l,r::lst_r)) ([],[]) ivl_w_itype in
@@ -3407,6 +3410,8 @@ assert_statement:
        mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) (Some true) (get_pos_camlp4 _loc 1)
    | `ASSERT_INEXACT; ol= opt_label; f=formulas -> 
        mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) (Some false) (get_pos_camlp4 _loc 1)
+   | `INFER_ASSUME; `OSQUARE;il1=OPT id_list;`CSQUARE ->
+       mkAssert ~inf_vars:(un_option il1 []) None None (fresh_formula_label "") None (get_pos_camlp4 _loc 1)
    | `ASSUME; ol=opt_label; dc=disjunctive_constr ->
        mkAssert None (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) None (get_pos_camlp4 _loc 1)
    | `ASSERT; ol=opt_label; f=formulas; `ASSUME; dc=disjunctive_constr ->  

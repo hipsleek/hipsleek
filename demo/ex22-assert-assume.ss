@@ -4,7 +4,7 @@ void foo(int x)
 {
   //assert false assume true;
     assert false;
-    assert x'<0;XF
+    assert x'<0;
 }
 
 /*

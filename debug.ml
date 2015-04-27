@@ -4,8 +4,13 @@ open VarGen
 
 let debug_on = ref false
 let devel_debug_on = ref false
+let debug_print = ref false (* to support more printing for debugging *)
 let devel_debug_print_orig_conseq = ref false
 let trace_on = ref true
+let call_threshold = ref 10
+let dump_calls = ref false
+let dump_calls_all = ref false
+let call_str = ref ""
 
 let z_debug_arg = ref (None:Str.regexp option)
 
@@ -433,15 +438,6 @@ struct
           entry_fn x DO_Normal
       ) xs
 
-  let read_main () =
-    let xs = match debug_file() with
-      | Some c -> read_from_debug_file c
-      | _ -> [] in
-    let () = add_entry_with_options (fun x k -> Hashtbl.add debug_map x k) xs in
-    let () = add_entry_with_options (fun x k -> 
-        let re = Str.regexp_case_fold x 
-        in regexp_line := (re,k)::!regexp_line) !regexp_line_str in
-    ()
   (* (\* let () = print_endline ((pr_list (fun x -> x)) xs) in *\) *)
   (* List.iter (fun x -> *)
   (*     try *)
@@ -481,12 +477,11 @@ struct
         with _ -> DO_None
       end
 
-  let dump_calls = ref false
-  let dump_calls_all = ref false
+
+  (* let threshold = 20 in (\* print calls above this threshold *\) *)
 
   let debug_calls  =
-    let len = 41 in
-    let threshold = 20 in (* print calls above this threshold *)
+    let len = 61 in
     let prefix = "%%%" in
     object (self)
       val len_act = len -1
@@ -494,13 +489,16 @@ struct
       val hcalls = Hashtbl.create 20
       val rec_calls = Hashtbl.create 10
       val calls =  Array.make (len+1) ""
+      (* debug calls in the run-time state *)
       val overflow = prefix^"****************************************"
       val mutable lastline = "\n"
+      val mutable rgx = None
       val stk = new Gen.stack_pr pr_id (==)
+      val mutable offset = -1
       method dump =
         let cnt = hash_to_list hcalls in
         let rcnt = hash_to_list rec_calls in
-        let cnt = List.filter (fun (_,a) -> a>=threshold) cnt in
+        let cnt = List.filter (fun (_,a) -> a>=(!call_threshold)) cnt in
         let cnt = list_cnt_sort_dec cnt in
         let rcnt = list_cnt_sort_dec rcnt in
         let pr = pr_list_brk_sep "" "" "\n" (pr_pair pr_id string_of_int) in
@@ -511,26 +509,52 @@ struct
           end;
         print_endline "\nDEBUGGED CALLS";
         print_endline "==============";
+        print_endline (string_of_int (List.length cnt));
         print_endline (pr cnt);
-        print_endline "DEBUGGED REC CALLS";
-        print_endline "==================";
-        print_endline (pr rcnt)
+        if rcnt!=[] then
+          begin
+            print_endline "\nDEBUGGED SELF-REC CALLS";
+            print_endline "========================";
+            print_endline (pr rcnt)
+          end
       method init =
         for i = 1 to len_act do
           arr.(i) <- arr.(i-1)^" "
-        done
+        done;
+        let cs = !call_str in
+        if not(cs="") 
+        then 
+          begin
+            (* print_endline ("rgx:"^(cs)); *)
+            rgx <- Some (Str.regexp cs)
+          end
+        else 
+          begin
+            (* print_endline ("rgx(N):"^(cs)); *)
+            ()
+          end
+      method str_match s =
+        match rgx with
+        | None -> true
+        | Some rgx -> Str.string_match rgx s 0
       method add_to_hash ht s =
         try 
           let c = Hashtbl.find ht s in
           Hashtbl.replace ht s (c+1)
         with _ -> Hashtbl.add ht s 1
-      method get n s =
+      method get dd_n s =
         (* pre : n>=0 *)
+        let n = match rgx with
+          | None -> dd_n
+          | Some rgx -> 
+            if offset>=0 && dd_n>offset then dd_n-offset
+            else if Str.string_match rgx s 0 then (offset<-dd_n; 0)
+            else (offset<-(-1); failwith "skipped") in
         if (n>len_act) then overflow
         else 
           begin
             calls.(n)<-s;
-            if n>0 && s==calls.(n-1) then 
+            if n>0 && s=calls.(n-1) then 
               begin
                 self # add_to_hash rec_calls s;
                 (* print_endline ("REC "^s) *)
@@ -540,21 +564,35 @@ struct
           end
       method print_call s =
         begin
-          let deb_len = debug_stk # len in
-          let len = self # get (deb_len) s in
-          if !dump_calls_all then 
-            begin
-              stk # push lastline;
-              lastline <- ("\n"^len^s)
-            end
+          try
+            let deb_len = debug_stk # len in
+            let len = self # get (deb_len) s in
+            if !dump_calls_all then 
+              begin
+                stk # push lastline;
+                lastline <- ("\n"^len^s)
+              end
+          with _ -> ()
         end
       method add_id id =
         begin
           if !dump_calls_all then 
-            lastline <- lastline^id
+            lastline <- lastline^id^"."
         end
     end
-  let () = debug_calls # init
+
+  let dump_debug_calls () = debug_calls # dump
+
+  let read_main () =
+    let () = debug_calls # init in
+    let xs = match debug_file() with
+      | Some c -> read_from_debug_file c
+      | _ -> [] in
+    let () = add_entry_with_options (fun x k -> Hashtbl.add debug_map x k) xs in
+    let () = add_entry_with_options (fun x k -> 
+        let re = Str.regexp_case_fold x 
+        in regexp_line := (re,k)::!regexp_line) !regexp_line_str in
+    ()
 
   let ho_aux ?(arg_rgx=None) df lz (loop_d:bool) (test:'z -> bool) (g:('a->'z) option) (s:string) (args:string list) (pr_o:'z->string) (f:'a->'z) (e:'a) :'z =
     let pre_str = "(=="^(VarGen.last_posn # get_rm)^"==)" in
@@ -1381,6 +1419,7 @@ struct
     z_debug_arg := Some re
 
   let read_main() = ()
+  let dump_debug_calls () = ()
   let no_1 s p1 p0 f = f
   let no_2 s p1 p2 p0 f = f
   let no_3 s p1 p2 p3 p0 f = f

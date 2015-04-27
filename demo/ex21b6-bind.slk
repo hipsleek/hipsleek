@@ -1,0 +1,15 @@
+data cell {
+  int val;
+}.
+
+infer [@dis_err] true |- x::cell<_>@L.
+print residue.
+
+infer [@err_must] true |- x::cell<_>@L.
+print residue.
+
+infer [@err_must] x=null |- x::cell<_>@L.
+print residue.
+
+  infer [@err_must] x::cell<3> |- x::cell<a>@L.
+print residue.
