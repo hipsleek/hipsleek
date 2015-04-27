@@ -1,0 +1,91 @@
+infer[@dis_err] x=1 & flow __norm |- x>0 & flow __Exc.
+print residue.
+expect Fail.
+
+infer[@err_must] x=1 & flow __norm |- x>0 & flow __Exc.
+print residue.
+expect Fail.
+
+infer[@err_must] x=1 & flow __norm |- x>4 & flow __norm.
+print residue.
+expect Fail.
+
+
+
+/*
+# ex21e5 (bisect - default)
+
+4b58a9d0b1ff 14807 (bad)
+
+71274168a4f4 12776 (good)
+Entail 1: Fail.(cex)(must) cause:UnionR[ x=1 |-  4<x. LOCS:[1] (must-bug), x=1 |-  4<x. LOCS:[1;2] (must-bug)]
+
+Fail Trace?:[?] 
+Error Context: length= 1 [es_formula: emp&x=1&{FLOW,(3,4)=__Error}[]
+                          es_must_error: Some(UnionR[ x=1 |-  4<x. LOCS:[1] (must-bug), x=1 |-  4<x. LOCS:[1;2] (must-bug)]; true)
+                          es_infer_vars_rel: []] <1>emp&x=1&{FLOW,(3,4)=__Error}[]
+[[empty]]
+
+Testing changeset 13875:4b259007f3cf  (bad)
+(1817 changesets remaining, ~10 tests)
+Entail 1: Fail.(must) cause:empty states
+Residue:
+ { }
+
+Testing changeset 13391:ad5691d8ecd5 (BAD)
+(909 changesets remaining, ~9 tests)
+
+Testing changeset 13088:22bab71a69d8 (GOOD) 
+(417 changesets remaining, ~8 tests)
+
+Testing changeset 13157:90bf4eeb8fcd (BAD)
+(209 changesets remaining, ~7 tests)
+
+Testing changeset 13072:e689ddea1264 (BAD)
+(104 changesets remaining, ~6 tests)
+
+Testing changeset 13010:1c8941c691b8 (BAD)
+(56 changesets remaining, ~5 tests)
+
+Testing changeset 12976:10bf0324ba40 (BAD)
+(28 changesets remaining, ~4 tests)
+Entail 1: Fail.(must) cause:empty states
+
+Testing changeset 12867:26717619e011 (BAD)
+(14 changesets remaining, ~3 tests)
+
+Testing changeset 12845:41f0b5248ac1 (BAD)
+(7 changesets remaining, ~2 tests)
+Entail 1: Fail.(no cex)(must) cause:empty residual state
+
+Testing changeset 12819:35f69c0e01a7 
+(3 changesets remaining, ~1 tests)
+
+chinwn@loris-7:~/hg/sl_rho$ hg bisect -b
+The first bad revision is:
+changeset:   12819:35f69c0e01a7
+branch:      sa_logging
+parent:      12818:48dc44b1665c
+parent:      12808:a9fc4ca8a6f9
+user:        locle
+date:        Thu Sep 11 17:44:26 2014 +0800
+summary:     m
+
+default before merging with sa_logging
+439edea803e6 13050
+
+Entail 1: Fail.(cex)(must) cause:UnionR[ x=1 |-  4<x. LOCS:[1] (must-bug), x=1 |-  4<x. LOCS:[1;2] (must-bug)]
+
+
+Fail Trace?:[?] 
+Error Context: length= 1 [es_formula: emp&x=1&{FLOW,(3,4)=__Error}[]
+                          es_must_error: Some(UnionR[ x=1 |-  4<x. LOCS:[1] (must-bug), x=1 |-  4<x. LOCS:[1;2] (must-bug)]; true)
+                          es_infer_vars_rel: []] <1>emp&x=1&{FLOW,(3,4)=__Error}[]
+[[empty]]
+
+
+6139131392ab 13055 sa_logging (bad) 
+
+
+*/
+

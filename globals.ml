@@ -769,6 +769,9 @@ let split_fixcalc = ref false (* present split is unsound *)
 let ptr_to_int_exact = ref false
 
 let is_sleek_running = ref false
+let is_hip_running = ref false
+
+let temp_opt_flag = ref false
 
 let remove_label_flag = ref false
 let label_split_conseq = ref true
@@ -1344,6 +1347,9 @@ type infer_type =
   | INF_PRE (* For infer[@pre] *)
   | INF_SHAPE (* For infer[@shape] *)
   | INF_ERROR (* For infer[@error] *)
+  | INF_DE_EXC (* For infer[@dis_err] *)
+  | INF_ERR_MUST (* For infer[@err_must] *)
+  | INF_ERR_MAY (* For infer[@err_may] *)
   | INF_SIZE (* For infer[@size] *)
   | INF_IMM (* For infer[@imm] *)
   | INF_EFA (* For infer[@efa] *)
@@ -1369,6 +1375,9 @@ let string_of_inf_const x =
   | INF_PRE -> "@pre"
   | INF_SHAPE -> "@shape"
   | INF_ERROR -> "@error"
+  | INF_DE_EXC -> "@dis_err"
+  | INF_ERR_MUST -> "@err_must"
+  | INF_ERR_MAY -> "@err_may"
   | INF_SIZE -> "@size"
   | INF_IMM -> "@imm"
   | INF_EFA -> "@efa"
@@ -1450,6 +1459,9 @@ let string_of_inf_const x =
 class inf_obj  =
   object (self)
     val mutable arr = []
+    method init =
+      if !enable_error_as_exc then self # set INF_ERR_MUST
+      else ()
     method set_init_arr s = 
       let helper r c =
         let reg = Str.regexp r in
@@ -1470,6 +1482,9 @@ class inf_obj  =
         helper "@imm"           INF_IMM;
         helper "@shape"         INF_SHAPE;
         helper "@error"         INF_ERROR;
+        helper "@dis_err"       INF_DE_EXC;
+        helper "@err_may"       INF_ERR_MAY;
+        helper "@err_must"      INF_ERR_MUST;
         helper "@size"          INF_SIZE;
         helper "@efa"           INF_EFA;
         helper "@dfa"           INF_DFA;
@@ -1492,13 +1507,27 @@ class inf_obj  =
     method get c  = List.mem c arr
     (* method get_int i  = Array.get arr i *)
     method is_term = (self # get INF_TERM) || (self # get INF_TERM_WO_POST)
+    (* termination inference *)
     method is_term_wo_post = self # get INF_TERM_WO_POST
+    (* termination inference wo post-condition *)
     method is_pre  = self # get INF_PRE
+    (* pre-condition inference *)
     method is_post  = self # get INF_POST
+    (* post-condition inference *)
     method is_ver_post  = self # get INF_VER_POST
     method is_imm  = self # get INF_IMM
+    (* immutability inference *)
     method is_shape  = self # get INF_SHAPE
+    (* shape inference *)
     method is_error  = self # get INF_ERROR
+    method is_dis_err  = self # get INF_DE_EXC
+                         || (not(self # get INF_ERR_MUST) 
+                             && not(self # get INF_ERR_MAY))
+    method is_err_must  = not(self # get INF_DE_EXC)
+                          && not(self # get INF_ERR_MAY) 
+                          && self # get INF_ERR_MUST
+    method is_err_may  = not(self # get INF_DE_EXC) 
+                         && self # get INF_ERR_MAY
     method is_size  = self # get INF_SIZE
     method is_efa  = self # get INF_EFA
     method is_dfa  = self # get INF_DFA
@@ -1509,22 +1538,101 @@ class inf_obj  =
     method is_infer_type t  = self # get t
     method get_lst = arr
     method set c  = if self#get c then () else arr <- c::arr
-    (* method set_ind i  = Array.set arr i true *)
     method set_list l  = List.iter (fun c -> self # set c) l
     method reset c  = arr <- List.filter (fun x-> not(c==x)) arr
-    method mk_or (o2:inf_obj) = 
-      let o1 = o2 # clone in
-      let l = self # get_lst in
+    (* method mk_or (o2:inf_obj) =  *)
+    (*   let o1 = o2 # clone in *)
+    (*   let l = self # get_lst in *)
+    (*   let () = o1 # set_list l in *)
+    (*   o1 *)
+    (* method clone =  *)
+    (*   let no = new inf_obj in *)
+    (*   let () = no # set_list arr in *)
+    (*   (\* let () = print_endline ("Cloning :"^(no #string_of)) in *\) *)
+    (*   no *)
+    (* method is__all  = super # is_ || infer_const_obj # is_ *)
+    (* method is_classic_all  = *)
+    (*   print_endline "WARNING:invoking super#is_classic_all"; *)
+    (*   self # is_classic *)
+    (* method is_ver_post_all  = *)
+    (*   print_endline "WARNING:invoking super#is_verify_post_all"; *)
+    (*   self # is_ver_post *)
+    (* method is_par_all  = *)
+    (*   print_endline "WARNING:invoking super#is_par_all"; *)
+    (*   self # is_par *)
+  end;;
+
+(* class inf_w_lst = *)
+(*   object (self) *)
+(*     val mutable arr = [] *)
+(*     method string_of_raw =  *)
+(*       let lst_a = List.map string_of_inf_const arr in *)
+(*       String.concat "," lst_a *)
+(*     method string_of = "["^(self #string_of_raw)^"]" *)
+(*     method get_lst = arr *)
+(*   end *)
+
+let infer_const_obj = new inf_obj;;
+
+let global_efa_exc ()  = not(infer_const_obj # is_dis_err)
+
+let is_en_efa_exc ()=
+  infer_const_obj # is_err_must || infer_const_obj # is_err_may
+
+(* local setting takes precedence over global setting *)
+(*    dis_err > err_may > err_must *)
+(*      dis_err & err_may --> dis_err *)
+(*      dis_err & err_must --> dis_err *)
+(*      err_may & err_must --> err_may *)
+
+(* let global_is_dis_err ()  = infer_const_obj # is_dis_err *)
+(* let global_is_err_may ()  = not(infer_const_obj # is_dis_err)  *)
+(*                             && infer_const_obj # is_err_may *)
+(* let global_is_err_must ()  = not(infer_const_obj # is_dis_err)  *)
+(*                              && not(infer_const_obj # is_err_may)  *)
+(*                              && infer_const_obj # is_err_must *)
+
+(* let local_is_dis_err obj  = obj # is_dis_err  *)
+(*                             || infer_const_obj # is_dis_err *)
+(* let local_is_err_may obj  = obj # is_err_may || global_is_err_may () *)
+(* let local_is_err_must obj  = obj # is_err_must || global_is_err_must () *)
+
+
+class inf_obj_sub  =
+  object (self)
+    inherit inf_obj as super
+    method is_dis_err_all  = self # get INF_DE_EXC
+                             || (not(self # get INF_ERR_MUST) && not(self # get INF_ERR_MAY) 
+                                 && infer_const_obj # is_dis_err)
+    method is_err_may_all  = self # get INF_ERR_MAY 
+                             || (not(self # get INF_ERR_MUST) && not(self # get INF_DE_EXC) 
+                                 && infer_const_obj # is_err_may)
+    method is_err_must_all  = self # get INF_ERR_MUST 
+                              || (not(self # get INF_ERR_MAY) && not(self # get INF_DE_EXC) 
+                                  && infer_const_obj # is_err_must)
+    method is_classic_all  = super # is_classic || infer_const_obj # is_classic
+    (* method is__all  = super # is_ || infer_const_obj # is_ *)
+    method is_ver_post_all  = super # is_ver_post || infer_const_obj # is_ver_post
+    method is_par_all  = super # is_par || infer_const_obj # is_par
+    method mk_or (o2:inf_obj) =
+      let o1 = self # clone in
+      let l = o2 # get_lst in
       let () = o1 # set_list l in
       o1
-    method clone = 
-      let no = new inf_obj in
+    method mk_or_lst (l) =
+      let o1 = self # clone in
+      let () = o1 # set_list l in
+      o1
+    method clone =
+      let no = new inf_obj_sub in
       let () = no # set_list arr in
       (* let () = print_endline ("Cloning :"^(no #string_of)) in *)
       no
   end;;
 
-let infer_const_obj = new inf_obj;;
+let clone_sub_infer_const_obj () =
+  let obj = new inf_obj_sub in
+  obj # mk_or infer_const_obj
 
 (* let set_infer_const s = *)
 

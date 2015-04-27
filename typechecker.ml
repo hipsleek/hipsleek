@@ -655,7 +655,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                           CF.es_infer_vars_rel = es.CF.es_infer_vars_rel@vars_rel;
                           CF.es_infer_vars_templ = es.CF.es_infer_vars_templ@vars_templ;
                           (* CF.es_infer_tnt = es.CF.es_infer_tnt || itnt; *)
-                          CF.es_infer_obj = es.CF.es_infer_obj # mk_or inf_o;
+                          CF.es_infer_obj = es.CF.es_infer_obj # mk_or_lst (inf_o # get_lst);
                           CF.es_infer_vars_hp_rel = es.CF.es_infer_vars_hp_rel@vars_hp_rel;
                           CF.es_infer_vars_sel_hp_rel = es.CF.es_infer_vars_sel_hp_rel@vars_hp_rel;
                           CF.es_infer_vars_sel_post_hp_rel = es.CF.es_infer_vars_sel_post_hp_rel;
@@ -980,13 +980,17 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                  (spec, [],[],[],[],[], [], true) else
                  let () = Gen.Profiling.pop_time ("method "^proc.proc_name) in
                  (Err.report_error1 e (Err.get_error_type_str error_type) (*"bind failure exception"*))
+             | 2 -> if x_add_1 CF.is_error_flow post_cond  then
+                 (spec, [],[],[],[],[], [], true) else
+                 let () = Gen.Profiling.pop_time ("method "^proc.proc_name) in
+                 (Err.report_error1 e (Err.get_error_type_str error_type) (*"assert/assume failure exception"*))
              | 3 ->
                if CF.is_top_flow post_cond then
                  (spec, [],[],[],[],[],[], true) else
                  let () = Gen.Profiling.pop_time ("method "^proc.proc_name) in
-                 (Err.report_error1 e "Proving precond failed")
+                 (Err.report_error1 e (Err.get_error_type_str error_type))
              | _ -> let () = Gen.Profiling.pop_time ("method "^proc.proc_name) in
-               (Err.report_error1 e "Proving precond failed")
+               (Err.report_error1 e (Err.get_error_type_str error_type))
             )
           |_ as e ->
             let () = Gen.Profiling.pop_time ("method "^proc.proc_name) in raise e
@@ -1419,7 +1423,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     end
                   else
                     (*L2: todo: should not warning if post is must error*)
-                    let msg =  (s ^" : failed\n") in
+                    let _,fk,_= CF.get_failure_list_failesc_context_ext rs in
+                    let fk_msg = match fk with
+                      | CF.Failure_Must _ -> " (must)"
+                      | CF.Failure_May _ -> " (may)"
+                      | _ -> ""
+                    in
+                    let msg =  (s ^" : failed"^fk_msg ^ "\n") in
                     (Debug.print_info  "assert/assume" (*(s ^" : failed\n") *) msg pos ; (rs,None, Some msg))
               in 
               let () = if !print_proof  && (match c_assert_opt with | None -> false | Some _ -> true) then 
@@ -1464,27 +1474,34 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   match assert_failed_msg with
                   | None -> res
                   | Some s -> begin
-                      if not !Globals.disable_failure_explaining then
-                        let s,fk,_= CF.get_failure_list_failesc_context new_ctx in
-                        raise (Err.Ppf ({
-                            Err.error_loc = pos;
-                            Err.error_text = s
-                          },(match fk with
-                            | CF.Failure_Bot _ -> 0
-                            | CF.Failure_Must _ -> 1
-                            | CF.Failure_Valid -> 2
-                            | CF.Failure_May _ -> 3), 2))
+                      let () = Debug.ninfo_hprint (add_str "!Globals.enable_error_as_exc" string_of_bool) !Globals.enable_error_as_exc pos in
+                      if (infer_const_obj # is_err_must || !Globals.enable_error_as_exc || (CF.isSuccessListFailescCtx_new res)) then
+                        res
                       else
                         begin
-                          Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context  new_ctx)^") ") 
-                            ("Proving assert/assume in method failed\n") pos;
-                          Debug.print_info ("(Cause of Assert Failure)")
-                            (Cprinter.string_of_failure_list_failesc_context  new_ctx) pos;
-                          Err.report_error {
-                            Err.error_loc = pos;
-                            Err.error_text = Printf.sprintf
-                                "Proving Assert/Assume in method failed."
-                          }
+                          (*L2: this code fragment may never be reached since we set is_err_must in the wrapper*)
+                          if not !Globals.disable_failure_explaining then
+                            let s,fk,_= CF.get_failure_list_failesc_context new_ctx in
+                            raise (Err.Ppf ({
+                                Err.error_loc = pos;
+                                Err.error_text = s
+                              },(match fk with
+                                | CF.Failure_Bot _ -> 0
+                                | CF.Failure_Must _ -> 1
+                                | CF.Failure_Valid -> 2
+                                | CF.Failure_May _ -> 3), 2))
+                          else
+                            begin
+                              Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context  new_ctx)^") ") 
+                                ("Proving assert/assume in method failed\n") pos;
+                              Debug.print_info ("(Cause of Assert Failure)")
+                                (Cprinter.string_of_failure_list_failesc_context  new_ctx) pos;
+                              Err.report_error {
+                                Err.error_loc = pos;
+                                Err.error_text = Printf.sprintf
+                                    "Proving Assert/Assume in method failed."
+                              }
+                            end
                         end
                     end
               in
@@ -1492,13 +1509,22 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               (ps@res)
         end
       in
+      (* assert/assume, efa-exc is turned on by default*)
+      let assert_op_wrapper ()=
+        (match c_assume_opt with
+         | Some _ -> 
+           wrap_err_assert_assume (* efa_exc (Some true) *) assert_op ()
+         | None -> (assert_op ())
+        )
+      in
       (* why is wrap classic needed for assert/assume? *)
       (* Ans : classic or not is based on atype *)
       (wrap_proving_kind 
          (match c_assume_opt with 
             None -> if ivars==[] then PK_Assert else PK_Infer_Assume
           | _ -> PK_Assert_Assume)
-         (wrap_classic atype assert_op)) ()
+         (wrap_classic atype (assert_op_wrapper))) ()
+
     | Assign ({ 
         exp_assign_lhs = v;
         exp_assign_rhs = rhs;
@@ -1636,7 +1662,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let list_context_res,prf =process_ctx c2 in
             match list_context_res with
             | CF.FailCtx (t,c,_) -> begin
-                let lc = if !Globals.enable_error_as_exc then
+                let lc = if Globals.global_efa_exc () then
                     ([([],esc_skeletal, [((lbl, c ,Some t))])])
                   else [([(lbl,t)],esc_skeletal,[])]
                 in
@@ -1876,23 +1902,30 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let () = CF.must_consistent_list_failesc_context "bind 4" rs  in
             if (CF.isSuccessListFailescCtx_new unfolded) && (not(CF.isSuccessListFailescCtx_new rs))then
               begin
-                (* Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context rs)^") ")  *)
-                (*     ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^ " cannot be derived from context\n") pos; (\* add branch info *\) *)
-                (* (\* add branch info *\) *)
-                (* Debug.print_info ("(Cause of Bind Failure)") *)
-                (*     (Cprinter.string_of_failure_list_failesc_context rs) pos; *)
-                (* rs *)
-                (*delay pritinting to check post*)
-                let s =  ("\n("^(Cprinter.string_of_label_list_failesc_context rs)^") ")^ 
-                         ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^
-                          " cannot be derived from context\n") ^ (string_of_loc pos) ^"\n\n" (* add branch info *)
-                         (* add branch info *)
-                         ^ ("(Cause of Bind Failure)") ^
-                         (Cprinter.string_of_failure_list_failesc_context rs ) ^ (string_of_loc pos) in
-                raise (Err.Ppf ({
-                    Err.error_loc = pos;
-                    Err.error_text = (to_print ^ s (* ^ "\n" ^ (pr hprel_assumptions) *))
-                  }, (*Failure_Must*) 1, 0))
+                if Globals.is_en_efa_exc () && (Globals.global_efa_exc ()) then
+                  (*  let () = Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context rs)^") ") *)
+                  (*       ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^ " cannot be derived from context\n") pos in (\* add branch info *\) *)
+                  (* (\* add branch info *\) *)
+                  (*   let () = Debug.print_info ("(Cause of Bind Failure)") *)
+                  (*     (Cprinter.string_of_failure_list_failesc_context rs) pos in *)
+                  let to_print = ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^
+                                  " cannot be derived from context (") ^ (string_of_loc pos) ^ ")" in
+                  let idf = (fun c -> c) in
+                  CF.transform_list_failesc_context (idf,idf,
+                                                     (fun es -> CF.Ctx{es with CF.es_final_error = CF.acc_error_msg es.CF.es_final_error to_print}))
+                    rs
+                else
+                  (*delay pritinting to check post*)
+                  let s =  ("\n("^(Cprinter.string_of_label_list_failesc_context rs)^") ")^ 
+                           ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^
+                            " cannot be derived from context\n") ^ (string_of_loc pos) ^"\n\n" (* add branch info *)
+                           (* add branch info *)
+                           ^ ("(Cause of Bind Failure)") ^
+                           (Cprinter.string_of_failure_list_failesc_context rs ) ^ (string_of_loc pos) in
+                  raise (Err.Ppf ({
+                      Err.error_loc = pos;
+                      Err.error_text = (to_print ^ s (* ^ "\n" ^ (pr hprel_assumptions) *))
+                    }, (*Failure_Must*) 1, 0))
               end
             else
               begin
@@ -1933,7 +1966,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               end
         end  (*end Bind*)
       in
-      wrap_proving_kind PK_BIND bind_op ()
+      (* bind, efa-exc is turned on by default*)
+      let bind_op_wrapper () =
+        wrap_err_bind bind_op ()
+      in
+      wrap_proving_kind PK_BIND bind_op_wrapper ()
 
     | Block ({
         exp_block_type = t;
@@ -2407,8 +2444,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let pr2 = Cprinter.string_of_list_failesc_context in
               let pr3 = Cprinter.string_of_struc_formula in
               (* let () = Log.update_sleek_proving_kind Log.PRE in *)
+              let pre_post_op_wrapper a =
+                wrap_err_pre (* (Some false) *) (check_pre_post_orig) a
+              in
               let pk = if ir then PK_PRE_REC else PK_PRE in
-              let f = wrap_proving_kind pk (check_pre_post_orig org_spec sctx) in
+              let f = wrap_proving_kind pk  ((* check_pre_post_orig *) pre_post_op_wrapper org_spec sctx) in
               Debug.no_2(* _loop *) "check_pre_post(2)" pr3 pr2 pr2 (fun _ _ ->  f should_output_html) org_spec sctx in
 
             let check_pre_post ir org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
@@ -2447,16 +2487,18 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             (* let () = print_endline (("\ncheck_exp: SCall: res : ") ^ (Cprinter.string_of_list_failesc_context res)) in *)
             (*Loc: error as exception *)
             (* move must, may flow into esc_stack *)
-            if (!Globals.enable_error_as_exc || (CF.isSuccessListFailescCtx_new res)) then
-              (* let () = print_endline ("\nlocle1:" ^ proc.proc_name) in*)
+            if (Globals.global_efa_exc () || (CF.isSuccessListFailescCtx_new res)) then
+              (* let () = print_endline ("\nlocle1:" ^ proc.proc_name) in *)
               let res = 
                 (* let () = Debug.info_zprint (lazy (("   callee:" ^ mn))) no_pos in *)
                 (* let () = Debug.info_zprint (lazy (("   caller:" ^ proc0.proc_name))) no_pos in *)
                 let () = update_callee_hpdefs_proc prog.Cast.new_proc_decls proc0.proc_name mn in
                 let idf = (fun c -> c) in
+                let to_print = "Proving precondition in method " ^ proc.proc_name ^ "(" ^ (string_of_loc pos) ^ ") Failed " in
                 CF.transform_list_failesc_context (idf,idf,
                                                    (fun es -> CF.Ctx{es with CF.es_formula = 
-                                                                               Norm.imm_norm_formula prog es.CF.es_formula Solver.unfold_for_abs_merge pos;})) res
+                                                                               Norm.imm_norm_formula prog es.CF.es_formula Solver.unfold_for_abs_merge pos;
+                                                                             CF.es_final_error = CF.acc_error_msg es.CF.es_final_error to_print})) res
               in
               (*Exhausively apply normalization lemma after each SCall.
                 Need to devise a smart way since
@@ -2732,7 +2774,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       (* let () = print_endline ("WN:ESCAPE ctx3 :"^(Cprinter.string_of_list_failesc_context ctx3)) in *)
       (*Decide which to escape, and which to be caught.
         Caught exceptions become normal flows*)
-      let ctx4 = CF.splitter_failesc_context (cc.exp_catch_flow_type) (cc.exp_catch_var) 
+      let ctx4 = x_add CF.splitter_failesc_context (cc.exp_catch_flow_type) (cc.exp_catch_var) 
           (fun c -> CF.add_path_id c (Some pid,0) (-1)) elim_exists_ctx ctx3 in
       (* let () = print_endline ("WN:ESCAPE ctx4:"^(Cprinter.string_of_list_failesc_context ctx4)) in *)
       let ctx5 = x_add check_exp prog proc ctx4 cc.exp_catch_body post_start_label in
@@ -2791,10 +2833,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
   (*let () = print_endline ("WN:CURRENT:"^(Cprinter.string_of_list_failesc_context cl)) in *)
   (* if (Gen.is_empty cl) then fl
      else *)
-  let failesc = CF.splitter_failesc_context !norm_flow_int None (fun x->x)(fun x -> x) cl in
-  if fl!=[] then
-    Debug.ninfo_hprint (add_str "check_exp1:failed?:"Cprinter.string_of_list_failesc_context) fl no_pos;
-  (* Debug.info_hprint (add_str "check_exp1:CURRENT:"Cprinter.string_of_list_failesc_context) cl no_pos; *)
+  let failesc = x_add CF.splitter_failesc_context !norm_flow_int None (fun x->x)(fun x -> x) cl in
+  x_tinfo_hp (add_str "check_exp1:failed?(fl):"Cprinter.string_of_list_failesc_context) fl no_pos;
+  x_tinfo_hp (add_str "check_exp1:inp(cl):"Cprinter.string_of_list_failesc_context) cl no_pos;
+  x_tinfo_hp (add_str "check_exp1:out(failesc):"Cprinter.string_of_list_failesc_context_short) failesc no_pos;
+  (* if fl!=[] then *)
   (* Debug.info_hprint (add_str "check_exp1:into:"Cprinter.string_of_list_failesc_context) failesc no_pos; *)
   ((check_exp1_x failesc) @ fl)
 
@@ -2893,7 +2936,10 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
   (* let () = Log.update_sleek_proving_kind Log.POST in *)
   (* let () = Debug.info_pprint "CG dont trust" pos; flush(stdout) in *)
   (* WN : why do we have wrap_ad_flow here *)
-  let f = wrap_ver_post (wrap_add_flow (wrap_proving_kind PK_POST (check_post_x prog proc ctx posts pos pid))) in
+  let post_op_wrapper f a =
+    wrap_err_post (* efa_exc (Some false) *) f a
+  in
+  let f = wrap_ver_post (wrap_add_flow (wrap_proving_kind PK_POST ((* check_post_x *) post_op_wrapper check_post_x prog proc ctx posts pos pid) )) in
   Debug.no_2(* _loop *) "check_post" pr pr1 pr (fun _ _ -> f etype) ctx posts 
 
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (posts : CF.formula*CF.struc_formula) pos (pid:formula_label) (etype: ensures_type) : CF.list_partial_context  =
@@ -2987,7 +3033,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
     (* let f2 = CF.list_context_is_eq_flow cl !norm_flow_int in *)
     (* let () = print_string_quiet ("\n WN 4 : "^(Cprinter.string_of_list_partial_context (\*ctx*\) fn_state)) in *)
     let rs, prf =
-      if not !Globals.enable_error_as_exc && f1 then
+      if not(Globals.global_efa_exc ()) && f1 then
         begin
           let flat_post = (CF.formula_subst_flow (fst posts) (CF.mkNormalFlow())) in
           let (*struc_post*)_ = (CF.struc_formula_subst_flow (snd posts) (CF.mkNormalFlow())) in
@@ -3002,7 +3048,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         end
       else
         (* let () = print_string_quiet "start struct checking \n" in *)
-        let rs_struc , prf = heap_entail_struc_list_partial_context_init prog false false fn_state (snd posts) None None None pos (Some pid) in
+        let rs_struc , prf = x_add heap_entail_struc_list_partial_context_init prog false false fn_state (snd posts) None None None pos (Some pid) in
         rs_struc, prf
         (*let () = print_string_quiet "stop struct checking \n" in*)
         (*let rs_flat, prf = heap_entail_list_partial_context_init prog false fn_state (fst posts) None None None pos (Some pid) in	  *)
@@ -3028,6 +3074,8 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         (*if error post, check reachable *)
         is_succ && (CF.exist_reachable_states rs)
     in
+    let () =  DD.ninfo_hprint (add_str "is_succ" string_of_bool) is_succ no_pos in
+    let () =  DD.ninfo_hprint (add_str "is_reachable_succ" string_of_bool) is_reachable_succ no_pos in
     if ((* CF.isSuccessListPartialCtx_new rs *) is_reachable_succ) then
       rs
     else begin
@@ -3040,7 +3088,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         in*)
       let _ =
         if not !Globals.disable_failure_explaining then
-          let rs = if !Globals.enable_error_as_exc then
+          let rs = if Globals.global_efa_exc () then
               (* convert brs with error flow -> Fail *)
               List.fold_left (fun acc (fs, brs) ->
                   let ex_fs, rest = List.fold_left (fun (acc_fs, acc_rest) ((lbl,c, oft) as br) ->

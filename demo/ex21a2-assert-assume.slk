@@ -1,0 +1,65 @@
+data node {node next;}.
+
+//1
+infer [@dis_err] x'=x |- x'<=5.
+print residue.
+
+  /*
+Residue:
+ 
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message:  true |-  x'<=5. LOCS:[2] (may-bug)
+                             fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}}
+[[empty]]
+CEX:false
+  */
+
+
+//2
+infer [@err_must] x'=x |- x'<=6.
+print residue.
+
+//3
+infer [] x'=x |- x'<=6.
+print residue.
+
+//4
+infer [@err_must] x'=x |- y::node<_> & x'<=6.
+print residue.
+
+  /*
+Entail (2) : Fail.(may) cause: true |-  x'<=5. LOCS:[5] (may-bug)
+  */
+
+  /*
+#
+# Can we log the @err_must etc below
+# can we move exception to a lower-level
+
+id: 0; caller: []; line: 0; classic: false; kind: Sleek_Entail(1); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&x'=x&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&x'<=5&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  failctx
+         fe_kind: MAY
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message:  true |-  x'<=5. LOCS:[2] (may-bug)
+                   fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}}
+[[empty]]false
+ 
+id: 1; caller: []; line: 0; classic: false; kind: Sleek_Entail(2); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&x'=x&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&x'<=6&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  failctx
+         fe_kind: MAY
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message:  true |-  x'<=6. LOCS:[17] (may-bug)
+                   fc_current_lhs_flow: {FLOW,(4,8)=__MayError#E}}
+[[empty]]false
+  */

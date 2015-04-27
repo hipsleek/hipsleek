@@ -402,6 +402,9 @@ rule tokenizer file_name = parse
   | "@imm" { INFER_AT_IMM }
   | "@shape" { INFER_AT_SHAPE }
   | "@error" { INFER_AT_ERROR }
+  | "@dis_err" { INFER_AT_DE_EXC }
+  | "@err_must" { INFER_AT_ERRMUST }
+  | "@err_may" { INFER_AT_ERRMAY }
   | "@flow" { INFER_AT_FLOW }
   | "@size" { INFER_AT_SIZE }
   | "@efa" { INFER_AT_EFA }
