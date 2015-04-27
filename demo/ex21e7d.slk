@@ -8,6 +8,9 @@ pred ll<n> == self = null & n = 0
 infer [@err_must] x::node<_, null> |- x::ll<m> & m > 1.
 expect Fail.
 print residue.
+
+
+
 // --exa
 //Entail 1: Fail.(must) cause:1.2: ante flow:__Error#E conseq flow: __norm#E are incompatible flow types
 // wrong error message!

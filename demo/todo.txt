@@ -800,7 +800,7 @@ Total verification time: 75.12 second
 	Number of false contexts: 0
 
 ==========================================================================
-# ex21a51.ss --efa-exc
+# ex21a51.ss --efa-exc (OK)
 
 A failed (may) was detected, but how did it change to __Error
 when it should be __MayError?
