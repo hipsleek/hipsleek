@@ -853,6 +853,8 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
        We need only to compare names and primedness *)
     (String.compare v1 v2 = 0) && (p1 = p2)
 
+
+
 let eq_spec_var_unp (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (_, v1, p1), SpecVar (_, v2, p2)) ->
     (* translation has ensured well-typedness.
@@ -5121,11 +5123,12 @@ let filter_var_new_x (f : formula) (keep_slv : spec_var list) : formula =
     | [] -> (res_rele_fs,res_unk_fs,old_keep_svl,incr_keep)
     | f::fs ->
       begin
-        let () = Debug.tinfo_hprint (add_str "svl: "  (!print_svl)) old_keep_svl no_pos in
-        let () = Debug.tinfo_hprint ( add_str "f: "   (!print_formula )) f no_pos in
+        let () = Debug.binfo_hprint (add_str "svl: "  (!print_svl)) old_keep_svl no_pos in
+        let () = Debug.binfo_hprint ( add_str "f: "   (!print_formula )) f no_pos in
         let svl = fv f in
-        let () = Debug.tinfo_hprint (add_str "svl f: "  !print_svl ) svl no_pos in
+        let () = Debug.binfo_hprint (add_str "svl f: "  !print_svl ) svl no_pos in
         let inters = intersect svl old_keep_svl in
+        let () = Debug.binfo_hprint (add_str "inters: "  !print_svl)  inters no_pos in
         if inters = [] then
           get_new_rele_svl fs old_keep_svl res_rele_fs (res_unk_fs@[f]) incr_keep
         else

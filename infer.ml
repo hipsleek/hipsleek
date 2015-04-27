@@ -549,7 +549,10 @@ let rec filter_var f vars =
   match f with
   | CP.Or (f1,f2,l,p) -> 
     CP.Or (filter_var f1 vars, filter_var f2 vars, l, p)
-  | _ -> if TP.is_sat_raw (MCP.mix_of_pure f) && CP.get_Neg_RelForm f = [] then CP.filter_var_new (CP.drop_rel_formula f) vars else CP.mkFalse no_pos
+  | _ ->
+        if TP.is_sat_raw (MCP.mix_of_pure f) && CP.get_Neg_RelForm f = []
+        then CP.filter_var_new (CP.drop_rel_formula f) vars
+        else CP.mkFalse no_pos
 (*        let flag = TP.is_sat_raw f                                 *)
 (*          try                                                      *)
 (*            Omega.is_sat_weaken f "0"                              *)
@@ -929,12 +932,14 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
   if (iv_orig)==[] && unk_heaps==[] && ((no_infer_all_all estate) || (lhs_rels==None)) 
   then
     (* let () = Debug.info_pprint "exit" no_pos in *)
+    let () = print_endline "#####infer_pure_m_x 1" in
     (None,None,[])
   else
   if not (TP.is_sat_raw rhs_xpure_orig) then 
     (* (x_dinfo_pp "Cannot infer a precondition: RHS contradiction" pos; *)
     (* (None,None,[])) *)
     let p, rel_ass = infer_lhs_contra_estate 1 estate lhs_xpure0 pos "rhs contradiction" in
+    let () = print_endline "infer_pure_m_x 2" in
     (p,None,rel_ass)
   else
     let () = Debug.ninfo_hprint (add_str "iv_orig" (!CP.print_svl)) iv_orig no_pos in
@@ -1008,6 +1013,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
       (* let lhs_xpure0 = CP.filter_ante lhs_xpure0 rhs_xpure in *)
       (* let () = x_tinfo_hp (add_str "lhs0 (after filter_ante): " !CP.print_formula) lhs_xpure0 pos in *)
       let p, rel_ass = infer_lhs_contra_estate 2 estate lhs_xpure0 pos "ante contradict with conseq" in
+      let () = print_endline "infer_pure_m_x 3" in
       (p,None,rel_ass)
     else
       (*let invariants = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) estate.es_infer_invs in*)
@@ -1107,6 +1113,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
       in
       (* TODO WN : Is below really needed?? *)
       (*      let args = CP.fv new_p in*)
+      let () = x_binfo_hp (add_str "new_p: before simplify" !CP.print_formula) new_p pos in
       let new_p =
         (* if CP.intersect args iv == [] && quan_var != [] then *)
         (*   let new_p = if CP.isConstFalse new_p then fml else CP.mkAnd fml new_p pos in *)
@@ -1120,8 +1127,8 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
         (* else *)
         simplify new_p iv
       in
-      let () = x_tinfo_hp (add_str "new_p" !CP.print_formula) new_p pos in
-      let () = x_tinfo_hp (add_str "new_p_ass" !CP.print_formula) new_p_ass pos in
+      let () = x_binfo_hp (add_str "new_p" !CP.print_formula) new_p pos in
+      let () = x_binfo_hp (add_str "new_p_ass" !CP.print_formula) new_p_ass pos in
       (* abstract common terms from disj into conjunctive form *)
       if (CP.isConstTrue new_p || CP.isConstFalse new_p) then 
         begin
@@ -1140,6 +1147,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
               (* x_dinfo_hp (add_str "new pure: " !CP.print_formula) new_p pos; *)
               x_dinfo_hp (add_str "new_p_ass: " !CP.print_formula) new_p_ass pos;
               x_dinfo_hp (add_str "new pure: " !CP.print_formula) new_p pos;
+              let () = print_endline "#####infer_pure_m_x 5" in
               (None,None,[])
             end
           else 
@@ -1149,7 +1157,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
               then (None,None,[])
               else 
                 begin
-                  DD.info_pprint ">>>>>> infer_pure_m <<<<<<" pos;
+                  DD.binfo_pprint ">>>>>> infer_pure_m <<<<<<" pos;
                   DD.ninfo_pprint "Adding heap assumption?" pos;
                   DD.ninfo_hprint (add_str "unk_heaps" (pr_list !CF.print_h_formula)) unk_heaps pos;
                   DD.ninfo_hprint (add_str "lhs_xpure" (!CP.print_formula)) lhs_xpure pos;
@@ -1418,6 +1426,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
         if pre_list==[] then (
           x_dinfo_pp ">>>>>> infer_pure_m <<<<<<" pos;
           x_dinfo_pp "Inferred pure is already in lhs" pos;
+          let () = print_endline "infer_pure_m_x 4" in
           (None,None,[]))
         else 
           let new_p_good = CP.join_conjunctions pre_list in

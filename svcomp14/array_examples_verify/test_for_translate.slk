@@ -2,7 +2,7 @@ checkentail
    x'=x
    & a[5] = x
    & res=1+x'
-  |-   a[5]=x & res=1+x.
+   |- a[5]=x & res=1+x.
 
 checkentail
   a[i] = x
@@ -43,11 +43,16 @@ checkentail
   & b[i] = 5
   |- a[5]=3 & b[5]=5.
 
-/*
+
+checkentail
+  a[i] = 3
+  & i>5
+    |- a[6]=3 .
+
 checkentail
    a[2+5]=5
    |-a[1+6]=5.
-*/
+
 
 checkentail
    a[t1]=5 & t1=2+5 & t2=1+6
@@ -55,12 +60,30 @@ checkentail
 
 
 checkentail
-   a[a[1]]=5 & a[1]=5
-   |- a[5]=5.
+  a[a[1]]=5 & a[1]=5
+  |- a[5]=5.
 
 checkentail
   a[t1]=6 & t1=a[1] & a[1]=5
   |-  a[5]=6.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /*
