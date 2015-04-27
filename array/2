@@ -1,844 +1,100 @@
-
-!!!Full processing file "s_arr_tmp.ss"
-Parsing file "s_arr_tmp.ss" by default parser...
-
-!!! processing primitives "["prelude.ss"]
+!!! init_tp by default: 
+!!! Using z3
 Starting z3... 
-#### ante =  0<size
-#### conseq =  0<size
- ### res = 
- ;Variables declarations
-(declare-fun size () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (< 0 size))
-;Negation of Consequence
-(assert (not (< 0 size)))
-(check-sat)
-#### ante =  a=0 & a>0
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun a () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (= a 0))
-(assert (> a 0))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  !(((a<=0 | a!=0)))
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun a () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (not (or (<= a 0) (not (= a 0)))))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  a=b & a!=b
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun a () Int)
-(declare-fun b () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (= a b))
-(assert (not (= a b)))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  !(((a=b | a!=b)))
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun a () Int)
-(declare-fun b () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (not (or (= a b) (not (= a b)))))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  a & !(a)
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun a () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (> a 0))
-(assert (not (> a 0)))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  !(((a | !(a))))
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun a () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (not (or (> a 0) (not (> a 0)))))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  !(a) & !(((b | !(b))))
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun a () Int)
-(declare-fun b () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (not (> a 0)))
-(assert (not (or (> b 0) (not (> b 0)))))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  a & !(((b | !(b))))
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun a () Int)
-(declare-fun b () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (> a 0))
-(assert (not (or (> b 0) (not (> b 0)))))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  b<=a & a<b
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun a () Int)
-(declare-fun b () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (<= b a))
-(assert (< a b))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  !(((b<=a | a<b)))
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun a () Int)
-(declare-fun b () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (not (or (<= b a) (< a b))))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  b<a & a<=b
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun a () Int)
-(declare-fun b () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (< b a))
-(assert (<= a b))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  !(((b<a | a<=b)))
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun a () Int)
-(declare-fun b () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (not (or (< b a) (<= a b))))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  0<=a & a<0
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun a () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (<= 0 a))
-(assert (< a 0))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  !(((0<=a | a<0)))
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun a () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (not (or (<= 0 a) (< a 0))))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  1<=b & (b+1)<=0
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun b () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (<= 1 b))
-(assert (<= (+ b 1) 0))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  1<=b & 0<(b+1) & b<1
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun b () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (<= 1 b))
-(assert (< 0 (+ b 1)))
-(assert (< b 1))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  (b+1)<=0 & 0<(b+1) & b<1
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun b () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (<= (+ b 1) 0))
-(assert (< 0 (+ b 1)))
-(assert (< b 1))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  0<=a & !(((1<=b | (b+1)<=0 | (0<(b+1) & b<1))))
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun a () Int)
-(declare-fun b () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (<= 0 a))
-(assert (not (or (or (<= 1 b) (<= (+ b 1) 0)) (and (< 0 (+ b 1)) (< b 1)))))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  1<=b & 0<=a & !(((a<b | b<=a)))
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun b () Int)
-(declare-fun a () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (<= 1 b))
-(assert (<= 0 a))
-(assert (not (or (< a b) (<= b a))))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  a<(b+b) & (b+b)<=a
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun b () Int)
-(declare-fun a () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (< a (+ b b)))
-(assert (<= (+ b b) a))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  b<=a & 1<=b & 0<=a & !(((a<(b+b) | (b+b)<=a)))
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun b () Int)
-(declare-fun a () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (<= b a))
-(assert (<= 1 b))
-(assert (<= 0 a))
-(assert (not (or (< a (+ b b)) (<= (+ b b) a))))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  a<0 & !(((1<=b | (b+1)<=0 | (0<(b+1) & b<1))))
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun a () Int)
-(declare-fun b () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (< a 0))
-(assert (not (or (or (<= 1 b) (<= (+ b 1) 0)) (and (< 0 (+ b 1)) (< b 1)))))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  b=0 & b!=0
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun b () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (= b 0))
-(assert (not (= b 0)))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  !(((b=0 | b!=0)))
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun b () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (not (or (= b 0) (not (= b 0)))))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  b!=0 & b=0
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun b () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (not (= b 0)))
-(assert (= b 0))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  !(((b!=0 | b=0)))
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun b () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (not (or (not (= b 0)) (= b 0))))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  b=1 & 1<b
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun b () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (= b 1))
-(assert (< 1 b))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  b=1 & (b+1)<=0
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun b () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (= b 1))
-(assert (<= (+ b 1) 0))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  b=1 & 0<(b+1) & b<1
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun b () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (= b 1))
-(assert (< 0 (+ b 1)))
-(assert (< b 1))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  1<b & (b+1)<=0
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun b () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (< 1 b))
-(assert (<= (+ b 1) 0))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  1<b & 0<(b+1) & b<1
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun b () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (< 1 b))
-(assert (< 0 (+ b 1)))
-(assert (< b 1))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  0<=a & !(((b=1 | 1<b | (b+1)<=0 | (0<(b+1) & b<1))))
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun a () Int)
-(declare-fun b () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (<= 0 a))
-(assert (not (or (or (or (= b 1) (< 1 b)) (<= (+ b 1) 0)) (and (< 0 (+ b 1)) (< b 1)))))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  a=0 & 0<a
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun a () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (= a 0))
-(assert (< 0 a))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  a=0 & a<0
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun a () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (= a 0))
-(assert (< a 0))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  0<a & a<0
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun a () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (< 0 a))
-(assert (< a 0))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  !(((a=0 | 0<a | a<0)))
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun a () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (not (or (or (= a 0) (< 0 a)) (< a 0))))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  b<0 & 0<b
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun b () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (< b 0))
-(assert (< 0 b))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  0<a & !(((b=0 | b<0 | 0<b)))
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun a () Int)
-(declare-fun b () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (< 0 a))
-(assert (not (or (or (= b 0) (< b 0)) (< 0 b))))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  a<0 & !(((b=0 | b<0 | 0<b)))
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun a () Int)
-(declare-fun b () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (< a 0))
-(assert (not (or (or (= b 0) (< b 0)) (< 0 b))))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
 
-data __Exc {
-;
-}
-data __Error {
-;
-}
-data __MayError {
-;
-}
-data __Fail {
-;
-}
+!!! **sleekengine.ml#1125:type-table:[(i:11:int)(a:16:int[])(TVar__14:14:int)(Anon_full_perm:13:float)(TVar__12:12:int)(TVar__11:11:int)]
+!!! **sleekcore.ml#129:conseq: EBase emp&3<(5+(a[i]))&{FLOW,(4,5)=__norm#E}[]
+!!! **sleekcore.ml#130:fvs(conseq):[a,i]
+!!! **sleekcore.ml#131:itype:[]
+!!! **sleekcore.ml#132:isvl:[a]Starting Omega.../usr/local/bin/oc
 
- view_prim WAITS{}[]<G:bag(tup2(Object,Object)),S:bag(Object),d:Object>= 
-  view_domains: view_prim WAITS<G:bag(tup2(Object,Object)),S:bag(Object),
-                d:Object>= 
-  EBase (* lbl: *){218}->emp&{FLOW,(1,31)=__flow}[]
-  view vars: G,S,d
-  ann vars (0 - not a posn): 
-  cont vars: 
-  inv: true
-  baga over inv: [([], true)]
-  baga over inv (unfolded): [([], true)]
-  inv_lock: None
-  unstructured formula: (* lbl: *){218}->emp&{FLOW,(1,31)=__flow}[]
-  xform: true
-  is_recursive?: false
-  is_primitive?: true
-  is_touching?: false
-  is_segmented?: false
-  is_tail_recursive?: false
-  residents: 
-  forward_ptrs: 
-  backward_ptrs: 
-  forward_fields: 
-  backward_fields: 
-  same_xpure?: YES
-  view_data_name: WAITS
-  self preds: []
-  materialized vars: []
-  addr vars: 
-  uni_vars: []
-  bag of addr: 
-  view_complex_inv: None
-  prune branches: ,[]
-  prune conditions: {
-[]}
-  prune baga conditions: 
-  prune invs:0:,[]
- view_prim WAIT{}[]<b:bag(tup2(Object,Object))>= 
-  view_domains: view_prim WAIT<b:bag(tup2(Object,Object))>= 
-  EBase (* lbl: *){219}->emp&{FLOW,(1,31)=__flow}[]
-  view vars: b
-  ann vars (0 - not a posn): 
-  cont vars: 
-  inv: true
-  baga over inv: [([], true)]
-  baga over inv (unfolded): [([], true)]
-  inv_lock: None
-  unstructured formula: (* lbl: *){219}->emp&{FLOW,(1,31)=__flow}[]
-  xform: true
-  is_recursive?: false
-  is_primitive?: true
-  is_touching?: false
-  is_segmented?: false
-  is_tail_recursive?: false
-  residents: 
-  forward_ptrs: 
-  backward_ptrs: 
-  forward_fields: 
-  backward_fields: 
-  same_xpure?: YES
-  view_data_name: WAIT
-  self preds: []
-  materialized vars: []
-  addr vars: 
-  uni_vars: []
-  bag of addr: 
-  view_complex_inv: None
-  prune branches: ,[]
-  prune conditions: {
-[]}
-  prune baga conditions: 
-  prune invs:0:,[]
- view_prim memLoc{}[]<heap:boolean,size:int>= 
-  view_domains: view_prim memLoc<heap:boolean,size:int>= 
-  EBase (* lbl: *){220}->emp&{FLOW,(1,31)=__flow}[]
-  view vars: heap,size
-  ann vars (0 - not a posn): 
-  cont vars: 
-  inv: 0<size
-  baga over inv: [([], 0<size)]
-  baga over inv (unfolded): [([], 0<size)]
-  inv_lock: None
-  unstructured formula: (* lbl: *){220}->emp&{FLOW,(1,31)=__flow}[]
-  xform: 0<size
-  is_recursive?: false
-  is_primitive?: true
-  is_touching?: false
-  is_segmented?: false
-  is_tail_recursive?: false
-  residents: 
-  forward_ptrs: 
-  backward_ptrs: 
-  forward_fields: 
-  backward_fields: 
-  same_xpure?: YES
-  view_data_name: memLoc
-  self preds: []
-  materialized vars: []
-  addr vars: 
-  uni_vars: []
-  bag of addr: 
-  view_complex_inv: None
-  prune branches: ,[]
-  prune conditions: {
-[]}
-  prune baga conditions: 
-  prune invs:0:,[]
+!!! **infer.ml#1123:new_p: before simplify: forall(i:(i!=2 | 3<((a[i])+5)))
+!!! svl: :[a]
+!!! f: : forall(i:(i!=2 | 3<((a[i])+5)))
+!!! svl f: :[a]
+!!! inters: :[a]
+!!! **infer.ml#1137:new_p: forall(i:(i!=2 | 3<((a[i])+5)))
+!!! **infer.ml#1138:new_p_ass: forall(i:(i!=2 | 3<((a[i])+5)))
+Entail (1) : Valid. 
 
- relation update_array(int[] a, int[] r, int v, int i).
+Residue:
+ <1>emp&i=2 & forall(i:(i!=2 | 3<((a[i])+5)))&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [forall(i:(i!=2 | -1<=(a[i])))]
 
 
-int array_get$int[]~int(  int[] a,  int i)
-static  EBase emp&{FLOW,(4,5)=__norm}[]
-         EBase emp&MayLoop[]&{FLOW,(4,5)=__norm}[]
-                 EAssume 
-                   emp&res=a[i]&{FLOW,(4,5)=__norm}[]
-                   
-dynamic  EBase hfalse&false&{FLOW,(4,5)=__norm}[]
-{(8,0),(10,22)}
+!!! **sleekengine.ml#1125:type-table:[(a:24:int[])(TVar__22:22:int)(Anon_full_perm:21:float)(TVar__20:20:int)(i:19:int)(TVar__19:19:int)]
+!!! **sleekcore.ml#129:conseq: EBase emp&3<(5+(a[2]))&{FLOW,(4,5)=__norm#E}[]
+!!! **sleekcore.ml#130:fvs(conseq):[a]
+!!! **sleekcore.ml#131:itype:[]
+!!! **sleekcore.ml#132:isvl:[a]
+!!! **infer.ml#1123:new_p: before simplify: 0<=(1+(a[2]))
+!!! svl: :[a]
+!!! f: : 0<=(1+(a[2]))
+!!! svl f: :[a]
+!!! inters: :[a]
+!!! **infer.ml#1137:new_p: 0<=(1+(a[2]))
+!!! **infer.ml#1138:new_p_ass: 0<=(1+(a[2]))
+Entail (2) : Valid. 
 
-int[] update_arr$int[]~int~int(  int[] a,  int i,  int v)
-static  EBase emp&{FLOW,(4,5)=__norm}[]
-         EBase emp&MayLoop[]&{FLOW,(4,5)=__norm}[]
-                 EAssume 
-                   emp&update_array(a,res,v,i)&{FLOW,(4,5)=__norm}[]
-                   
-dynamic  EBase hfalse&false&{FLOW,(4,5)=__norm}[]
-{(4,0),(6,34)}
-
-int foo$int(  int x)
-static  EBase emp&{FLOW,(4,5)=__norm}[]
-         EBase emp&MayLoop[]&{FLOW,(4,5)=__norm}[]
-                 EAssume 
-                   emp&res=1+x&{FLOW,(4,5)=__norm}[]
-                   
-dynamic  EBase hfalse&false&{FLOW,(4,5)=__norm}[]
-try 
-{((((int[] a_37;
-a_37 = {((int v_int_21_1399;
-(v_int_21_1399 = 5;
-(int v_int_21_1398;
-v_int_21_1398 = {((int v_int_21_1397;
-v_int_21_1397 = 1);
-add___$int~int(x,v_int_21_1397))})));
-update_arr$int[]~int~int(a_37,v_int_21_1399,v_int_21_1398))});
-(int r_38;
-r_38 = {((int v_int_25_1400;
-v_int_25_1400 = 5);
-array_get_elm_at___1d$int[]~int(a_37,v_int_25_1400))}));
-dprint);
-ret# r_38)}
- catch (23,24)=ret_int ret_int:f_r_1394 ) 
-	(int v_int_19_1396;
-(v_int_19_1396 = bind f_r_1394 to (val_19_1395) [read] in 
-val_19_1395;
-ret# v_int_19_1396))
-
-{(16,0),(0,-1)}
+Residue:
+ <1>emp&i=2 & 0<=(1+(a[2]))&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [-1<=(a[2])]
 
 
+!!! **sleekengine.ml#1125:type-table:[(i:25:int)(a:30:int[])(TVar__28:28:int)(Anon_full_perm:27:float)(TVar__26:26:int)(TVar__25:25:int)]
+!!! **sleekcore.ml#129:conseq: EBase emp&3<(5+(a[i]))&{FLOW,(4,5)=__norm#E}[]
+!!! **sleekcore.ml#130:fvs(conseq):[a,i]
+!!! **sleekcore.ml#131:itype:[]
+!!! **sleekcore.ml#132:isvl:[a,i]
+!!! **infer.ml#1123:new_p: before simplify: (0<=((a[i])+1) | i!=2)
+!!! svl: :[a,i]
+!!! f: : i!=2
+!!! svl f: :[i]
+!!! inters: :[i]
+!!! svl: :[a,i]
+!!! f: : 0<=((a[i])+1)
+!!! svl f: :[a,i]
+!!! inters: :[a,i]
+!!! **infer.ml#1137:new_p: (0<=((a[i])+1) | i!=2)
+!!! **infer.ml#1138:new_p_ass: (0<=((a[i])+1) | i!=2)
+Entail (3) : Valid. 
+
+Residue:
+ <1>emp&i=2 & ((i!=2 | 0<=((a[i])+1)))&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [(i!=2 | -1<=(a[i]))]
 
 
-Checking procedure foo$int... #### ante =  v_int_21_1397'=1 & v_int_21_1399'=5 & x'=x
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun v_int_21_1397_primed () Int)
-(declare-fun v_int_21_1399_primed () Int)
-(declare-fun x_primed () Int)
-(declare-fun x () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (= v_int_21_1397_primed 1))
-(assert (= v_int_21_1399_primed 5))
-(assert (= x_primed x))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  v_int_21_1399'=5 & x'=x & v_int_21_1398'=1+x'
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun v_int_21_1399_primed () Int)
-(declare-fun x () Int)
-(declare-fun v_int_21_1398_primed () Int)
-(declare-fun x_primed () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (= v_int_21_1399_primed 5))
-(assert (= x_primed x))
-(assert (= v_int_21_1398_primed (+ 1 x_primed)))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  x'=x & update_array(a_1446,a_37',1+x',5) & v_int_25_1400'=5
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun x () Int)
-(declare-fun update_array () Int)
-(declare-fun a_1446 () (Array Int Int))
-(declare-fun a_37_primed () (Array Int Int))
-(declare-fun x_primed () Int)
-(declare-fun v_int_25_1400_primed () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (= x_primed x))
-(assert (= a_37_primed (store a_1446 5 (+ 1 x_primed))))
-(assert (= v_int_25_1400_primed 5))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
-#### ante =  x'=x & update_array(a_1446,a_37',1+x',5) & r_38'=a_37'[5]
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun x () Int)
-(declare-fun update_array () Int)
-(declare-fun a_1446 () (Array Int Int))
-(declare-fun x_primed () Int)
-(declare-fun r_38_primed () Int)
-(declare-fun a_37_primed () (Array Int Int))
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (= x_primed x))
-(assert (= a_37_primed (store a_1446 5 (+ 1 x_primed))))
-(assert (= r_38_primed (select a_37_primed 5)))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
+!!! **sleekengine.ml#1125:type-table:[(a:36:int[])(TVar__34:34:int)(Anon_full_perm:33:float)(TVar__32:32:int)(i:31:int)(TVar__31:31:int)]
+!!! **sleekcore.ml#129:conseq: EBase emp&3<(5+(a[2]))&{FLOW,(4,5)=__norm#E}[]
+!!! **sleekcore.ml#130:fvs(conseq):[a]
+!!! **sleekcore.ml#131:itype:[]
+!!! **sleekcore.ml#132:isvl:[a,i]
+!!! **infer.ml#1123:new_p: before simplify: (0<=((a[2])+1) | i!=2)
+!!! svl: :[a,i]
+!!! f: : i!=2
+!!! svl f: :[i]
+!!! inters: :[i]
+!!! svl: :[a,i]
+!!! f: : 0<=((a[2])+1)
+!!! svl f: :[a]
+!!! inters: :[a]
+!!! **infer.ml#1137:new_p: (0<=((a[2])+1) | i!=2)
+!!! **infer.ml#1138:new_p_ass: (0<=((a[2])+1) | i!=2)
+Entail (4) : Valid. 
 
-dprint: s_arr_tmp.ss:26: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+Residue:
+ <1>emp&i=2 & ((i!=2 | 0<=((a[2])+1)))&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [(i!=2 | -1<=(a[2]))]
 
-Successful States:
-[
- Label: []
- State:emp&x'=x & update_array(a_1446,a_37',1+x',5) & r_38'=a_37'[5]&{FLOW,(4,5)=__norm}[]
-       es_ho_vars_map: []emp&x'=x & update_array(a_1446,a_37',1+x',5) & r_38'=a_37'[5]
+Stop z3... 24 invocations Stop Omega... 43 invocations 
+SAT Count   : 26
+SAT % Hit   : 53.84%
+IMPLY Count : 20
+IMPLY % Hit : 40.%
+Time(cache overhead) : 0.004308 (seconds)
 
- ]
-#### ante =  x'=x & update_array(a_1446,a_1455,1+x',5) & res=a_1455[5]
-#### conseq =  res=x+1
- ### res = 
- ;Variables declarations
-(declare-fun update_array () Int)
-(declare-fun a_1446 () (Array Int Int))
-(declare-fun x_primed () Int)
-(declare-fun a_1455 () (Array Int Int))
-(declare-fun res () Int)
-(declare-fun x () Int)
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (= x_primed x))
-(assert (= a_1455 (store a_1446 5 (+ 1 x_primed))))
-(assert (= res (select a_1455 5)))
-;Negation of Consequence
-(assert (not (= res (+ x 1))))
-(check-sat)
-#### ante =  x'=x & update_array(a_1446,a_1455,1+x',5) & res=a_1455[5]
-#### conseq =  false
- ### res = 
- ;Variables declarations
-(declare-fun x () Int)
-(declare-fun update_array () Int)
-(declare-fun a_1446 () (Array Int Int))
-(declare-fun x_primed () Int)
-(declare-fun res () Int)
-(declare-fun a_1455 () (Array Int Int))
-;Relations declarations
-;Axioms assertions
-;Antecedent
-(assert (= x_primed x))
-(assert (= a_1455 (store a_1446 5 (+ 1 x_primed))))
-(assert (= res (select a_1455 5)))
-;Negation of Consequence
-(assert (not false))
-(check-sat)
+!!! log(small):(0.193652,102)
+Total verification time: 0.298088 second(s)
+	Time spent in main process: 0.223011 second(s)
+	Time spent in child processes: 0.075077 second(s)
 
-Procedure foo$int SUCCESS.
-Stop z3... 46 invocations 
-1 false contexts at: ( (19,0) )
-
-!!! log(small):(0.018263,212)
-Total verification time: 0.322975 second(s)
-	Time spent in main process: 0.313803 second(s)
-	Time spent in child processes: 0.009172 second(s)
-	Z3 Prover Time: 0.001239 second(s)

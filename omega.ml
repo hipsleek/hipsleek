@@ -494,7 +494,8 @@ let is_sat_ops_x pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
     (*  Lash.write pe; *)
     (* let pe0 = drop_varperm_formula pe in *)
     let pe =
-      if !Globals.array_translate
+      if Globals.infer_const_obj # is_arr_as_var 
+        (* !Globals.array_translate *)
       then Trans_arr.drop_array_formula pe
       else pe
     in
