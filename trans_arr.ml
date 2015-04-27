@@ -1313,7 +1313,8 @@ let split_and_combine
 
 let split_and_combine
     (processor:formula -> formula) (cond:formula->bool) (f:formula):formula =
-  if !Globals.array_translate
+  if Globals.infer_const_obj # is_arr_as_var
+    (* !Globals.array_translate *)
   then split_and_combine processor cond f
   else processor f
 ;;
@@ -1862,7 +1863,8 @@ let rec drop_array_formula
 
 let drop_array_formula
     (f:formula):formula =
-  if !Globals.array_translate
+  if Globals.infer_const_obj # is_arr_as_var
+    (* !Globals.array_translate *)
   then drop_array_formula f
   else f
 
@@ -2063,14 +2065,14 @@ let new_translate_out_array_in_imply_split_full
 
 let new_translate_out_array_in_imply_split_full
     (ante:formula) (conseq:formula):(formula * formula) =
-  if !Globals.array_translate
+  if Globals.infer_const_obj # is_arr_as_var
   then new_translate_out_array_in_imply_split_full ante conseq
   else (ante,conseq)
 ;;
 
 (* let new_translate_out_array_in_imply_split_full *)
 (*       (ante:formula) (conseq:formula):(formula * formula) = *)
-(*   if !Globals.array_translate *)
+(*   if Globals.infer_const_obj # is_arr_as_var *)
 (*   then new_translate_out_array_in_imply_split_full ante conseq *)
 (*   else (ante,conseq) *)
 (* ;; *)
@@ -2159,14 +2161,14 @@ let new_translate_out_array_in_one_formula_split
 
 (* let new_translate_out_array_in_one_formula_split *)
 (*     (f:formula):formula = *)
-(*   if !Globals.array_translate *)
+(*   if Globals.infer_const_obj # is_arr_as_var *)
 (*   then new_translate_out_array_in_one_formula_split f *)
 (*   else f *)
 (* ;; *)
 
 let new_translate_out_array_in_one_formula_split
     (f:formula):formula =
-  if !Globals.array_translate
+  if Globals.infer_const_obj # is_arr_as_var
   then Debug.no_1 "new_translate_out_array_in_one_formula_split" !print_pure !print_pure (fun f -> new_translate_out_array_in_one_formula_split f) f
   else f
 ;;
@@ -3230,7 +3232,7 @@ let rec translate_back_array_in_one_formula
 
 let translate_back_array_in_one_formula
     (f:formula):formula =
-  if (!Globals.array_translate)
+  if (Globals.infer_const_obj # is_arr_as_var)
   then translate_back_array_in_one_formula f
   else f
 ;;
@@ -3246,12 +3248,12 @@ let translate_back_array_in_one_formula
 (* Controlled by Globals.array_translate *)
 (* let translate_out_array_in_imply *)
 (*       (ante:formula)(conseq:formula):(formula*formula)= *)
-(*   if !Globals.array_translate then translate_out_array_in_imply ante conseq *)
+(*   if Globals.infer_const_obj # is_arr_as_var then translate_out_array_in_imply ante conseq *)
 (*   else (ante,conseq) *)
 
 (* let drop_array_formula *)
 (*       (f:formula):formula= *)
-(*   if !Globals.array_translate then drop_array_formula f *)
+(*   if Globals.infer_const_obj # is_arr_as_var then drop_array_formula f *)
 (*   else f *)
 (* ;; *)
 
@@ -3281,7 +3283,7 @@ let translate_back_array_in_one_formula
 
 (* let translate_out_array_in_one_formula_full *)
 (*       (f:formula):formula= *)
-(*   if !Globals.array_translate then translate_out_array_in_one_formula_full f *)
+(*   if Globals.infer_const_obj # is_arr_as_var then translate_out_array_in_one_formula_full f *)
 (*   else f *)
 (* ;; *)
 

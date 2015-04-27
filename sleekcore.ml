@@ -218,7 +218,8 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
     let () = if (CF.isAnyFalseCtx ctx) then
         print_endline_quiet ("[Warning] False ctx")
     in
-
+    let is_arrvar_flag = CF.is_arr_as_var_ctx ctx in
+    let () = x_binfo_hp (add_str "arrvar_flag" string_of_bool) is_arrvar_flag no_pos in
     let conseq = Cfutil.elim_null_vnodes cprog conseq in
     (*****************)
     (* let is_base_conseq,conseq_f = CF.base_formula_of_struc_formula conseq in *)
@@ -230,13 +231,16 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
     (* else ctx *)
     (* in *)
     (* let () = print_endline ("ctx: "^(Cprinter.string_of_context ctx)) in *)
+    let wrap = 
+      if is_arrvar_flag then Wrapper.wrap_arr_as_var
+      else fun f a -> f a in
     let rs1, _ =
       if  not !Globals.disable_failure_explaining then
         (* let () = sleek_entail cprog ctx conseq no_pos in *)
-        x_add Solver.heap_entail_struc_init_bug_inv cprog false (* false *) true
+        x_add (wrap Solver.heap_entail_struc_init_bug_inv) cprog false (* false *) true
           (CF.SuccCtx[ctx]) conseq no_pos None
       else
-        x_add Solver.heap_entail_struc_init cprog false (* false *) true
+        x_add (wrap Solver.heap_entail_struc_init) cprog false (* false *) true
           (CF.SuccCtx[ctx]) conseq no_pos None
     in
     (* let () = print_endline ("WN# 1:"^(Cprinter.string_of_list_context rs1)) in *)

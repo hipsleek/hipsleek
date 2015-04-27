@@ -179,7 +179,9 @@ let wrap_gen save_fn set_fn restore_fn flags f a =
 
 let wrap_ver_post f a = wrap_set_infer_type INF_VER_POST f a
 
-let wrap_arr_as_var f a = wrap_set_infer_type INF_ARR_AS_VAR f a
+let wrap_arr_as_var f a = 
+  let () = x_binfo_pp "inside wrap_as_var" no_pos in 
+  wrap_set_infer_type INF_ARR_AS_VAR f a
 
 (* let wrap_ver_post f a = *)
 (*   let save_fn () = infer_const_obj # is_ver_post in *)

@@ -1,100 +1,119 @@
 !!! init_tp by default: 
 !!! Using z3
+!!!-dre .*pairwise
 Starting z3... 
 
-!!! **sleekengine.ml#1125:type-table:[(i:11:int)(a:16:int[])(TVar__14:14:int)(Anon_full_perm:13:float)(TVar__12:12:int)(TVar__11:11:int)]
-!!! **sleekcore.ml#129:conseq: EBase emp&3<(5+(a[i]))&{FLOW,(4,5)=__norm#E}[]
+!!! **sleekengine.ml#1125:type-table:[(i:11:int)(a:15:NUM[])(TVar__14:14:NUM)(Anon_full_perm:13:float)(TVar__12:12:int)(TVar__11:11:int)]
+!!! **sleekcore.ml#129:conseq: EBase emp&(a[i-1])<(a[i])&{FLOW,(4,5)=__norm#E}[]
 !!! **sleekcore.ml#130:fvs(conseq):[a,i]
-!!! **sleekcore.ml#131:itype:[]
-!!! **sleekcore.ml#132:isvl:[a]Starting Omega.../usr/local/bin/oc
-
-!!! **infer.ml#1123:new_p: before simplify: forall(i:(i!=2 | 3<((a[i])+5)))
-!!! svl: :[a]
-!!! f: : forall(i:(i!=2 | 3<((a[i])+5)))
-!!! svl f: :[a]
-!!! inters: :[a]
-!!! **infer.ml#1137:new_p: forall(i:(i!=2 | 3<((a[i])+5)))
-!!! **infer.ml#1138:new_p_ass: forall(i:(i!=2 | 3<((a[i])+5)))
-Entail (1) : Valid. 
-
-Residue:
- <1>emp&i=2 & forall(i:(i!=2 | 3<((a[i])+5)))&{FLOW,(4,5)=__norm#E}[]
- inferred pure: [forall(i:(i!=2 | -1<=(a[i])))]
-
-
-!!! **sleekengine.ml#1125:type-table:[(a:24:int[])(TVar__22:22:int)(Anon_full_perm:21:float)(TVar__20:20:int)(i:19:int)(TVar__19:19:int)]
-!!! **sleekcore.ml#129:conseq: EBase emp&3<(5+(a[2]))&{FLOW,(4,5)=__norm#E}[]
-!!! **sleekcore.ml#130:fvs(conseq):[a]
 !!! **sleekcore.ml#131:itype:[]
 !!! **sleekcore.ml#132:isvl:[a]
-!!! **infer.ml#1123:new_p: before simplify: 0<=(1+(a[2]))
-!!! svl: :[a]
-!!! f: : 0<=(1+(a[2]))
-!!! svl f: :[a]
-!!! inters: :[a]
-!!! **infer.ml#1137:new_p: 0<=(1+(a[2]))
-!!! **infer.ml#1138:new_p_ass: 0<=(1+(a[2]))
-Entail (2) : Valid. 
+!!! **sleekcore.ml#222:arrvar_flag:false
+(====)
+Omega.pairwisecheck@2@1
+Omega.pairwisecheck inp1 : f___hole_1
+Omega.pairwisecheck@2 EXIT: 1<=f___hole_1
+
+(==trans_arr.ml#2159==)
+om_pairwisecheck@1
+om_pairwisecheck inp1 : forall(i:(i!=3 | (a[i-1])<(a[i])))
+om_pairwisecheck@1 EXIT: forall(i:(i!=3 | (a[i-1])<(a[i])))
+
+(====)
+Omega.pairwisecheck@4@3
+Omega.pairwisecheck inp1 : f___hole_3 & i=3
+Omega.pairwisecheck@4 EXIT: i=3 & 1<=f___hole_3
+
+(==trans_arr.ml#2159==)
+om_pairwisecheck@3
+om_pairwisecheck inp1 : forall(i:(i!=3 | (a[i-1])<(a[i]))) & i=3
+om_pairwisecheck@3 EXIT: i=3 & forall(i:(i!=3 | (a[i-1])<(a[i])))
+
+(====)
+Omega.pairwisecheck@6@5
+Omega.pairwisecheck inp1 : f___hole_5
+Omega.pairwisecheck@6 EXIT: 1<=f___hole_5
+
+(==trans_arr.ml#2159==)
+om_pairwisecheck@5
+om_pairwisecheck inp1 : forall(i:(i!=3 | (a[i-1])<(a[i])))
+om_pairwisecheck@5 EXIT: forall(i:(i!=3 | (a[i-1])<(a[i])))
+
+(====)
+Omega.pairwisecheck@8@7
+Omega.pairwisecheck inp1 : f___hole_7
+Omega.pairwisecheck@8 EXIT: 1<=f___hole_7
+
+(==trans_arr.ml#2159==)
+om_pairwisecheck@7
+om_pairwisecheck inp1 : forall(i:(i!=3 | (a[i-1])<(a[i])))
+om_pairwisecheck@7 EXIT: forall(i:(i!=3 | (a[i-1])<(a[i])))
+
+(====)
+Omega.pairwisecheck@12@11@10@9
+Omega.pairwisecheck inp1 : forall(i:(i!=3 | (a[i-1])<(a[i])))
+Omega.pairwisecheck@12 EXIT: forall(i:(i!=3 | (a[i-1])<(a[i])))
+
+(====)
+om_pairwisecheck@11@10@9
+om_pairwisecheck inp1 : forall(i:(i!=3 | (a[i-1])<(a[i])))
+om_pairwisecheck@11 EXIT: forall(i:(i!=3 | (a[i-1])<(a[i])))
+
+(====)
+pairwisecheck@10@9
+pairwisecheck inp1 : forall(i:(i!=3 | (a[i-1])<(a[i])))
+pairwisecheck@10 EXIT: forall(i:(i!=3 | (a[i-1])<(a[i])))
+
+(==omega.ml#1092==)
+pairwisecheck_raw@9
+pairwisecheck_raw inp1 : forall(i:(i!=3 | (a[i-1])<(a[i])))
+pairwisecheck_raw@9 EXIT: forall(i:(i!=3 | (a[i-1])<(a[i])))
+
+!!! **infer.ml#1123:new_p: before simplify: forall(i:(i!=3 | (a[i-1])<(a[i])))
+(====)
+Omega.pairwisecheck@14@13
+Omega.pairwisecheck inp1 : f___hole_10
+Omega.pairwisecheck@14 EXIT: 1<=f___hole_10
+
+(==trans_arr.ml#2159==)
+om_pairwisecheck@13
+om_pairwisecheck inp1 : forall(i:(i!=3 | (a[i-1])<(a[i])))
+om_pairwisecheck@13 EXIT: forall(i:(i!=3 | (a[i-1])<(a[i])))
+
+(====)
+Omega.pairwisecheck@16@15
+Omega.pairwisecheck inp1 : f___hole_13
+Omega.pairwisecheck@16 EXIT: 1<=f___hole_13
+
+(==trans_arr.ml#2159==)
+om_pairwisecheck@15
+om_pairwisecheck inp1 : forall(i:(i!=3 | (a[i-1])<(a[i])))
+om_pairwisecheck@15 EXIT: forall(i:(i!=3 | (a[i-1])<(a[i])))
+
+!!! **infer.ml#1137:new_p: forall(i:(i!=3 | (a[i-1])<(a[i])))
+!!! **infer.ml#1138:new_p_ass: forall(i:(i!=3 | (a[i-1])<(a[i])))
+Entail (1) : Fail.(may) cause: i=3 |-  (a[i-1])<(a[i]). LOCS:[1] (may-bug)
 
 Residue:
- <1>emp&i=2 & 0<=(1+(a[2]))&{FLOW,(4,5)=__norm#E}[]
- inferred pure: [-1<=(a[2])]
+ 
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message:  i=3 |-  (a[i-1])<(a[i]). LOCS:[1] (may-bug)
+                             fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}}
+[[empty]]
+CEX:false
 
-
-!!! **sleekengine.ml#1125:type-table:[(i:25:int)(a:30:int[])(TVar__28:28:int)(Anon_full_perm:27:float)(TVar__26:26:int)(TVar__25:25:int)]
-!!! **sleekcore.ml#129:conseq: EBase emp&3<(5+(a[i]))&{FLOW,(4,5)=__norm#E}[]
-!!! **sleekcore.ml#130:fvs(conseq):[a,i]
-!!! **sleekcore.ml#131:itype:[]
-!!! **sleekcore.ml#132:isvl:[a,i]
-!!! **infer.ml#1123:new_p: before simplify: (0<=((a[i])+1) | i!=2)
-!!! svl: :[a,i]
-!!! f: : i!=2
-!!! svl f: :[i]
-!!! inters: :[i]
-!!! svl: :[a,i]
-!!! f: : 0<=((a[i])+1)
-!!! svl f: :[a,i]
-!!! inters: :[a,i]
-!!! **infer.ml#1137:new_p: (0<=((a[i])+1) | i!=2)
-!!! **infer.ml#1138:new_p_ass: (0<=((a[i])+1) | i!=2)
-Entail (3) : Valid. 
-
-Residue:
- <1>emp&i=2 & ((i!=2 | 0<=((a[i])+1)))&{FLOW,(4,5)=__norm#E}[]
- inferred pure: [(i!=2 | -1<=(a[i]))]
-
-
-!!! **sleekengine.ml#1125:type-table:[(a:36:int[])(TVar__34:34:int)(Anon_full_perm:33:float)(TVar__32:32:int)(i:31:int)(TVar__31:31:int)]
-!!! **sleekcore.ml#129:conseq: EBase emp&3<(5+(a[2]))&{FLOW,(4,5)=__norm#E}[]
-!!! **sleekcore.ml#130:fvs(conseq):[a]
-!!! **sleekcore.ml#131:itype:[]
-!!! **sleekcore.ml#132:isvl:[a,i]
-!!! **infer.ml#1123:new_p: before simplify: (0<=((a[2])+1) | i!=2)
-!!! svl: :[a,i]
-!!! f: : i!=2
-!!! svl f: :[i]
-!!! inters: :[i]
-!!! svl: :[a,i]
-!!! f: : 0<=((a[2])+1)
-!!! svl f: :[a]
-!!! inters: :[a]
-!!! **infer.ml#1137:new_p: (0<=((a[2])+1) | i!=2)
-!!! **infer.ml#1138:new_p_ass: (0<=((a[2])+1) | i!=2)
-Entail (4) : Valid. 
-
-Residue:
- <1>emp&i=2 & ((i!=2 | 0<=((a[2])+1)))&{FLOW,(4,5)=__norm#E}[]
- inferred pure: [(i!=2 | -1<=(a[2]))]
-
-Stop z3... 24 invocations Stop Omega... 43 invocations 
-SAT Count   : 26
-SAT % Hit   : 53.84%
-IMPLY Count : 20
+Stop z3... 8 invocations Stop Omega... 7 invocations 
+SAT Count   : 11
+SAT % Hit   : 54.54%
+IMPLY Count : 5
 IMPLY % Hit : 40.%
-Time(cache overhead) : 0.004308 (seconds)
+Time(cache overhead) : 0.002195 (seconds)
 
-!!! log(small):(0.193652,102)
-Total verification time: 0.298088 second(s)
-	Time spent in main process: 0.223011 second(s)
-	Time spent in child processes: 0.075077 second(s)
+!!! log(small):(0.056301,30)
+Total verification time: 0.114393 second(s)
+	Time spent in main process: 0.087863 second(s)
+	Time spent in child processes: 0.02653 second(s)
 

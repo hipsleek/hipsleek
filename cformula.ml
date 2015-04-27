@@ -9393,12 +9393,13 @@ let is_en_error_exc es =
   not(is_dis_err_exc es)
 (* es.es_infer_obj # is_err_must || es.es_infer_obj # is_err_may *)
 
-let rec is_en_error_exc_ctx c=
+
+let rec is_en_error_exc_ctx c =
   match c with
   | Ctx es -> is_en_error_exc es
   | OCtx (c1,c2) -> is_en_error_exc_ctx c1 || is_en_error_exc_ctx c2
 
-let is_en_error_exc_ctx_list lc=
+let is_en_error_exc_ctx_list lc =
   match lc with
   | FailCtx (_,c,_) -> is_en_error_exc_ctx c
   | SuccCtx cs -> List.exists is_en_error_exc_ctx cs
@@ -9429,6 +9430,18 @@ let is_dfa_ctx_list lc=
   | FailCtx (_,c,_) -> is_dfa_ctx c
   | SuccCtx cs -> List.exists is_dfa_ctx cs
 
+let is_infer_type_es it es = 
+  es.es_infer_obj # is_infer_type it
+
+let is_infer_type_ctx it c =
+  let rec aux c =
+    match c with
+      | Ctx es -> is_infer_type_es it es
+      | OCtx (c1,c2) -> aux c1 || aux c2
+  in aux c
+
+let is_arr_as_var_ctx c =
+  is_infer_type_ctx Globals.INF_ARR_AS_VAR c
 
 let acc_error_msg final_error_opt add_msg=
   match final_error_opt with
