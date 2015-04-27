@@ -347,7 +347,7 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
   (* let pr4 = Cprinter.string_of_spec_var_list in *)
   (* let pr5 = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_xpure_view) in *)
   (* let pr3 = pr_hepta pr1 pr2a  pr2 pr2b pr4 pr5 string_of_bool in *)
-  let f = wrap_proving_kind PK_Check_Specs (check_specs_infer_a0 prog proc ctx e0 do_infer) in
+  let f = wrap_proving_kind PK_Check_Specs (x_add check_specs_infer_a0 prog proc ctx e0 do_infer) in
   (fun _ -> f spec_list) spec_list
 
 
@@ -374,8 +374,7 @@ and check_bounded_term_x prog ctx post_pos =
       let bnd_formula = CF.formula_of_pure_formula
           (CP.join_conjunctions bnd_formula_l) m_pos in
       let rs, _ = heap_entail_one_context 12 prog false ctx bnd_formula None None None post_pos in
-      let () = x_tinfo_hp (add_str "Result context" 
-                             !CF.print_list_context) rs no_pos in
+      let () = x_tinfo_hp (add_str "Result context" !CF.print_list_context) rs no_pos in
       let term_pos = (m_pos, no_pos) in
       let term_res, n_es =
         let f_ctx = CF.formula_of_context ctx in
@@ -598,6 +597,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       let vars_rel, vars_templ, vars_inf = List.fold_left (fun (vr, vt, vi) v -> 
           let typ = CP.type_of_spec_var v in
           if is_RelT typ then (vr@[v], vt, vi)
+          else if is_UtT typ then (vr@[v], vt, vi)
           else if is_FuncT typ then (vr, vt@[v], vi)
           else (vr, vt, vi@[v])) ([], [], []) vars in
       let () = Debug.ninfo_hprint (add_str "vars_rel" !print_svl) vars_rel no_pos in
@@ -1363,13 +1363,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                exp_unfold_pos = pos}) ->
       unfold_failesc_context (prog,None) ctx sv true pos
     (* for code *)
-    | Assert ({ exp_assert_asserted_formula = c1_o;
-                exp_assert_assumed_formula = c2;
+    | Assert ({ exp_assert_asserted_formula = c_assert_opt;
+                exp_assert_assumed_formula = c_assume_opt;
+                exp_assert_infer_vars = ivars;
                 exp_assert_path_id = (pidi,s);
                 exp_assert_type = atype;
                 exp_assert_pos = pos}) ->
       let assert_op ()=
-        let () = if !print_proof && (match c1_o with | None -> false | Some _ -> true) then
+        let () = if !print_proof && (match c_assert_opt with | None -> false | Some _ -> true) then
             begin
               Prooftracer.push_assert_assume e0;
               Prooftracer.add_assert_assume e0;
@@ -1385,11 +1386,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             if (String.length s)>0 (* && (String.length s1)>0 *) && (String.compare s s1 <> 0) then ctx
             else
               let (ts,ps) = List.partition (fun (fl,el,sl)-> (List.length fl) = 0) ctx in
-              let new_ctx,pure_info,assert_failed_msg = match c1_o with
+              let new_ctx,pure_info,assert_failed_msg = match c_assert_opt with
                 | None -> ts,None, None
                 | Some c1 ->
                   let c1 = x_add Cvutil.prune_pred_struc prog true c1 in (* specialise asserted formula *)
-                  let c1 = match c2 with
+                  let c1 = match c_assume_opt with
                     | None -> 
                       (* WN_2_Loc: clear c1 of inferred info first *)
                       let pr2 = Cprinter.string_of_struc_formula in
@@ -1400,7 +1401,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     | Some _ -> c1
                   in
                   let to_print = "Proving assert/assume in method " ^ proc.proc_name ^ " for spec: \n" ^ !log_spec ^ "\n" in
-                  x_dinfo_pp (*print_info "assert"*) to_print pos;
+                  x_binfo_pp (*print_info "assert"*) to_print pos;
                   (* let () = Log.update_sleek_proving_kind Log.ASSERTION in *)
                   let rs,prf = x_add heap_entail_struc_list_failesc_context_init 4 prog false false ts c1 None None None pos None in
                   let () = PTracer.log_proof prf in
@@ -1417,7 +1418,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       Debug.print_info "assert" (s ^(if (CF.isNonFalseListFailescCtx ts) then " : ok\n" else ": unreachable\n")) pos;
                       x_dinfo_pp (*print_info "assert"*) ("Residual:\n" ^ (Cprinter.string_of_list_failesc_context rs)) pos; 
                       (* WN_2_Loc: put xpure of asserted by fn below  *)
-                      let xp = get_xpure_of_formula c1_o in
+                      let xp = get_xpure_of_formula c_assert_opt in
                       (rs,Some xp,None)
                     end
                   else
@@ -1431,7 +1432,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let msg =  (s ^" : failed"^fk_msg ^ "\n") in
                     (Debug.print_info  "assert/assume" (*(s ^" : failed\n") *) msg pos ; (rs,None, Some msg))
               in 
-              let () = if !print_proof  && (match c1_o with | None -> false | Some _ -> true) then 
+              let () = if !print_proof  && (match c_assert_opt with | None -> false | Some _ -> true) then 
                   begin
                     Prooftracer.add_assert_assume e0;
                     (* Prooftracer.end_object (); *)
@@ -1439,11 +1440,18 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     Prooftracer.pop_div ();
                     Tpdispatcher.restore_suppress_imply_output_state ();
                   end in
-              let res = match c2 with
+              let res = match c_assume_opt with
                 | None -> 
                   begin
                     match pure_info with
-                    | None -> ts
+                    | None -> 
+                      let () = x_tinfo_pp ("WN : place to act on infer_assume") no_pos in
+                      let () = if ivars!=[] then x_tinfo_hp (add_str "infer_assume" Cprinter.string_of_spec_var_list) ivars pos in
+                      if ivars==[] then ts
+                      else (* failwith "to impl" *)
+                        List.map (fun (bf,es,bl) ->
+                            (bf,es,List.map (fun (pt,c,fopt) -> 
+                                 (pt,Infer.add_infer_vars_ctx ivars c,fopt)) bl)) ts 
                     | Some p ->
                       (* WN_2_Loc: add p to ts; add new_infer from new_ctx into ts *)
                       CF.add_pure_and_infer_from_asserted p new_ctx ts
@@ -1503,16 +1511,20 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       in
       (* assert/assume, efa-exc is turned on by default*)
       let assert_op_wrapper ()=
-        (match c2 with
+        (match c_assume_opt with
          | Some _ -> 
            wrap_err_assert_assume (* efa_exc (Some true) *) assert_op ()
          | None -> (assert_op ())
         )
       in
       (* why is wrap classic needed for assert/assume? *)
+      (* Ans : classic or not is based on atype *)
       (wrap_proving_kind 
-         (match c2 with None -> PK_Assert | _ -> PK_Assert_Assume)
+         (match c_assume_opt with 
+            None -> if ivars==[] then PK_Assert else PK_Infer_Assume
+          | _ -> PK_Assert_Assume)
          (wrap_classic atype (assert_op_wrapper))) ()
+
     | Assign ({ 
         exp_assign_lhs = v;
         exp_assign_rhs = rhs;
@@ -2955,8 +2967,11 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
           (* print_endline "VERIFYING POST-CONDITION" *)
         end in
     (* Termination: Poststate of Loop must be unreachable (soundness) *)
-    let todo_unk = if !Globals.dis_term_chk || !Globals.dis_post_chk then true 
-      else Term.check_loop_safety prog proc ctx (fst posts) pos pid 
+    let todo_unk = 
+      if !Globals.dis_term_chk || !Globals.dis_post_chk then true 
+      else
+        let check_falsify ctx = heap_entail_one_context 17 prog false ctx (CF.mkFalse_nf pos) None None None pos in 
+        Term.check_loop_safety prog proc check_falsify ctx (fst posts) pos pid 
     in
 
     (* Rho: print conc err, if any *)
@@ -4219,7 +4234,7 @@ let rec check_prog iprog (prog : prog_decl) =
       Da.find_rel_args_groups_scc prog scc
     in
 
-    let has_infer_shape_proc = Pi.is_infer_shape_scc scc in
+    let has_infer_shape_proc = x_add_1 Pi.is_infer_shape_scc scc in
 
     let has_infer_pre_proc = Pi.is_infer_pre_scc scc in
     let () = if (not(has_infer_shape_proc) && has_infer_pre_proc) then Pi.add_pre_relation_scc prog scc in
@@ -4333,7 +4348,7 @@ let rec check_prog iprog (prog : prog_decl) =
     (* Reverify *)
     (* let has_infer_others_proc = (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) && Pi.is_infer_others_scc scc in *)
     (* let () = if has_infer_others_proc then wrap_reverify_scc reverify_scc prog scc false in                                           *)
-    let has_infer_term_scc = Ti3.is_infer_term_scc scc in
+    let has_infer_term_scc = x_add_1 Ti3.is_infer_term_scc scc in
     let _ =
       if has_infer_term_scc then
         let () = Ti3.add_term_relation_scc prog scc in

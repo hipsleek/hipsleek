@@ -260,12 +260,15 @@ let rec string_of_formula_exp = function
   | P.BExpr f1 -> "BExpr(" ^ string_of_pure_formula f1 ^ ")"
 
 and string_of_term_ann a =
+  let pr s uid = 
+    if !Debug.debug_print then  s^(string_of_term_id uid)
+    else uid.P.tu_sid^(pr_list_round string_of_formula_exp uid.P.tu_args) in
   match a with
   | P.Term -> "Term"
   | P.Loop -> "Loop"
   | P.MayLoop -> "MayLoop"
-  | P.TermU uid -> "TermU" ^ (string_of_term_id uid)
-  | P.TermR uid -> "TermR" ^ (string_of_term_id uid)
+  | P.TermU uid -> pr "TermU" uid
+  | P.TermR uid -> pr "TermR" uid
   | P.Fail f -> match f with
     | P.TermErr_May -> "TermErr_May"
     | P.TermErr_Must -> "TermErr_Must"
@@ -274,7 +277,7 @@ and string_of_term_id uid =
   "@" ^ uid.P.tu_fname ^ 
   "[" ^ (string_of_int uid.P.tu_id) ^ ", " ^ 
   (!P.print_formula uid.P.tu_cond) ^ "]"
-  ^ (pr_list string_of_formula_exp uid.P.tu_args)
+  ^ (pr_list_round string_of_formula_exp uid.P.tu_args)
 
 and string_of_p_formula pf =
   match pf with 
@@ -832,7 +835,10 @@ let rec string_of_exp = function
      | None -> (" assume: ")
      | Some f-> (string_of_struc_formula (fst f))^"\n assume: ") ^
     (match l.exp_assert_assumed_formula with
-     | None -> ""
+     | None ->  
+       let vs = l.exp_assert_infer_vars in
+       if vs==[] then ""
+       else ("infer:"^(pr_list pr_id vs))
      | Some f -> (string_of_formula f))^"\n"
   | Dprint l                       -> "dprint" 
   | Debug ({exp_debug_flag = f})   -> "debug " ^ (if f then "on" else "off")

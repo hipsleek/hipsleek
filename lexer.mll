@@ -112,6 +112,7 @@ module Make (Token : SleekTokenS)
    ("at", ATPOS);
    ("assert_inexact", ASSERT_INEXACT);
    ("assume", ASSUME);
+   ("infer_assume", INFER_ASSUME);
    ("axiom", AXIOM); (* [4/10/2011] An Hoa : new keyword *)
    ("alln", ALLN);
    ("app", APPEND);

@@ -69,7 +69,7 @@ type sleek_log_entry = {
   sleek_proving_evars: CP.spec_var list;
   sleek_proving_infer_vars: CP.spec_var list;
   sleek_proving_infer_type: infer_type option;
-  sleek_proving_tntrel_ass: Ti3.tntrel list;
+  sleek_proving_tntrel_ass: Tid.tntrel list;
   sleek_proving_hprel_ass: CF.hprel list;
   sleek_proving_rel_ass: CP.infer_rel_type list;
   (* TODO:WN:HVar *)
@@ -217,7 +217,7 @@ let pr_sleek_log_entry e =
    else ());
   (match e.sleek_proving_tntrel_ass with
    | [] -> ()
-   | _  -> let pr = pr_list_ln Ti3.string_of_tntrel in
+   | _  -> let pr = pr_list_ln string_of_tntrel in
      fmt_string ("tntrel_ass: " ^ (pr e.sleek_proving_tntrel_ass)^"\n")
   );
   (match e.sleek_proving_hprel_ass with
@@ -433,8 +433,8 @@ let current_infer_rel_stk : CP.infer_rel_type Gen.stack_pr = new Gen.stack_pr
 let current_hprel_ass_stk : CF.hprel  Gen.stack_pr 
   = new Gen.stack_pr Cprinter.string_of_hprel_short (==) 
 
-let current_tntrel_ass_stk : Ti3.tntrel Gen.stack_pr = 
-  new Gen.stack_pr Ti3.string_of_tntrel (==) 
+let current_tntrel_ass_stk : Tid.tntrel Gen.stack_pr = 
+  new Gen.stack_pr string_of_tntrel (==) 
 
 (* let get_sleek_proving_id () = *)
 (*   let r = !sleek_proving_id in *)

@@ -351,6 +351,7 @@ and exp_aalloc = { exp_aalloc_etype_name : ident; (* Name of the base element *)
                    exp_aalloc_pos : loc; }
 
 and exp_assert = { exp_assert_asserted_formula : (F.struc_formula*bool) option;
+                   exp_assert_infer_vars : ident list;
                    exp_assert_assumed_formula : F.formula option;
                    exp_assert_path_id : formula_label;
                    exp_assert_type : assert_type;
@@ -1503,8 +1504,9 @@ let mkProc sfile id flgs n dd c ot ags r ho_param ss ds pos bd =
     proc_body = bd;
     proc_test_comps = None}
 
-let mkAssert asrtf assmf pid atype pos =
+let mkAssert ?(inf_vars = []) asrtf assmf pid atype pos =
   Assert { exp_assert_asserted_formula = asrtf;
+           exp_assert_infer_vars = inf_vars;
            exp_assert_assumed_formula = assmf;
            exp_assert_path_id = pid;
            exp_assert_type = atype;
