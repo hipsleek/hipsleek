@@ -76,3 +76,11 @@ local infer error as exception..
 
 
 */
+
+infer [x] x>0 |- x<0 .
+// failctx must_err
+print residue.
+
+infer [x] true |- x<0 .
+// failctx must_err
+print residue.

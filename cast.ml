@@ -314,6 +314,7 @@ and sharp_val =
 
 and exp_assert = {
   exp_assert_asserted_formula : F.struc_formula option;
+  exp_assert_infer_vars : P.spec_var list;
   exp_assert_assumed_formula : F.formula option;
   exp_assert_path_id : formula_label;
   exp_assert_type : assert_type;
@@ -3537,6 +3538,23 @@ let eq_str s1 s2 = String.compare s1 s2 == 0
 
 let remove_dups_id = Gen.BList.remove_dups_eq eq_str
 
+let data_dependency_graph_of_call_exp prog ddg src mn args = 
+  let ddg, dst =
+    if is_prim_proc prog mn then ddg, src
+    else
+      let ddg = IG.add_edge ddg src mn in
+      (* The method call depends on its pass-by-name arguments *)
+      let mn_decl = look_up_proc_def_raw prog.new_proc_decls mn in
+      let by_name_params = mn_decl.proc_by_name_params in
+      let ddg = List.fold_left (fun g (arg, par) ->
+          if List.exists (fun sv -> eq_str (P.name_of_spec_var sv) (snd arg)) by_name_params then
+            IG.add_edge g par mn
+          else g) ddg (List.combine mn_decl.proc_args args) 
+      in
+      ddg, mn
+  in
+  List.fold_left (fun g i -> IG.add_edge g dst i) ddg args
+
 (* src depends on exp *)
 let data_dependency_graph_of_exp prog src exp =
   let rec helper ddg src exp = 
@@ -3559,25 +3577,9 @@ let data_dependency_graph_of_exp prog src exp =
     | Cast e -> helper ddg src e.exp_cast_body 
     | Catch e -> helper ddg src e.exp_catch_body 
     | ICall e -> 
-      let ddg, dst =
-        let mn = e.exp_icall_method_name in
-        if is_prim_proc prog mn then ddg, src
-        else
-          let ddg = IG.add_edge ddg src mn in  
-          ddg, mn
-      in
-      List.fold_left (fun g i -> 
-          IG.add_edge g dst i) ddg e.exp_icall_arguments
+      data_dependency_graph_of_call_exp prog ddg src e.exp_icall_method_name e.exp_icall_arguments
     | SCall e -> 
-      let ddg, dst =
-        let mn = e.exp_scall_method_name in
-        if is_prim_proc prog mn then ddg, src
-        else
-          let ddg = IG.add_edge ddg src mn in  
-          ddg, mn
-      in
-      List.fold_left (fun g i -> 
-          IG.add_edge g dst i) ddg e.exp_scall_arguments
+      data_dependency_graph_of_call_exp prog ddg src e.exp_scall_method_name e.exp_scall_arguments
     | Seq e ->
       let ddg = helper ddg src e.exp_seq_exp1 in
       helper ddg src e.exp_seq_exp2

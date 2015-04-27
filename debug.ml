@@ -4,9 +4,10 @@ open VarGen
 
 let debug_on = ref false
 let devel_debug_on = ref false
+let debug_print = ref false (* to support more printing for debugging *)
 let devel_debug_print_orig_conseq = ref false
 let trace_on = ref true
-let call_threshold = ref 15
+let call_threshold = ref 10
 let dump_calls = ref false
 let dump_calls_all = ref false
 let call_str = ref ""
@@ -480,7 +481,7 @@ struct
   (* let threshold = 20 in (\* print calls above this threshold *\) *)
 
   let debug_calls  =
-    let len = 41 in
+    let len = 61 in
     let prefix = "%%%" in
     object (self)
       val len_act = len -1
@@ -508,6 +509,7 @@ struct
           end;
         print_endline "\nDEBUGGED CALLS";
         print_endline "==============";
+        print_endline (string_of_int (List.length cnt));
         print_endline (pr cnt);
         if rcnt!=[] then
           begin

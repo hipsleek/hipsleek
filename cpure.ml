@@ -227,8 +227,12 @@ and uid = {
 }
 
 and term_cex = {
-  tcex_trace: loc list; 
+  tcex_trace: tcex_cmd list; 
 }
+
+and tcex_cmd = 
+  | TAssume of formula
+  | TCall of loc
 
 and term_fail =
   | TermErr_May
@@ -407,6 +411,15 @@ let is_unknown_term_ann ann =
       | _ -> false
     end
   | _ -> false
+
+let add_args_uid uid args = 
+  {uid with tu_args = uid.tu_args @ args; }
+
+let add_args_term_ann ann args = 
+  match ann with
+  | TermU uid -> TermU (add_args_uid uid args)
+  | TermR uid -> TermR (add_args_uid uid args)
+  | _ -> ann
 
 let rec map_term_ann f_f f_e ann = 
   match ann with
@@ -9866,14 +9879,29 @@ let loop_id = 2
 let mayLoop_id = 3 
 let termErr_id = 4
 
-let sid_of_term_ann ann = 
+(* let sid_of_term_ann ann =  *)
+(*   match ann with *)
+(*   | Term -> string_of_int term_id *)
+(*   | Loop _ -> string_of_int loop_id *)
+(*   | MayLoop _ -> string_of_int mayLoop_id *)
+(*   | Fail _ -> string_of_int termErr_id *)
+(*   | TermU uid -> uid.tu_sid *)
+(*   | TermR uid -> uid.tu_sid *)
+
+let id_of_term_ann ann = 
   match ann with
-  | Term -> string_of_int term_id
-  | Loop _ -> string_of_int loop_id
-  | MayLoop _ -> string_of_int mayLoop_id
-  | Fail _ -> string_of_int termErr_id
-  | TermU uid -> uid.tu_sid
-  | TermR uid -> uid.tu_sid
+  | Term -> term_id
+  | Loop _ -> loop_id
+  | MayLoop _ -> mayLoop_id
+  | Fail _ -> termErr_id
+  | TermU uid -> uid.tu_id
+  | TermR uid -> uid.tu_id
+
+let sid_of_term_ann ann = 
+  (* string_of_int (id_of_term_ann ann) *)
+  match ann with 
+  | TermU uid | TermR uid -> uid.tu_sid
+  | _ -> ""
 
 (* = match f with *)
 (*   | BForm (bf,_) -> *)
@@ -10058,7 +10086,7 @@ let get_rel_args (f:formula) = match f with
 
 let is_rel_in_vars (vl:spec_var list) (f:formula) =
   (* let () = x_binfo_hp (add_str "2formula" !print_formula) f no_pos in *)
-  match (get_rel_id f) with
+  match (x_add_1 get_rel_id f) with
   | Some n ->
     if mem n vl then true else false
   | _ ->
@@ -14012,23 +14040,6 @@ let is_unknown_term_ann ann =
   | _ -> false
 
 
-let id_of_term_ann ann = 
-  match ann with
-  | Term -> term_id
-  | Loop _ -> loop_id
-  | MayLoop _ -> mayLoop_id
-  | Fail _ -> termErr_id
-  | TermU uid -> uid.tu_id
-  | TermR uid -> uid.tu_id
-
-let sid_of_term_ann ann = 
-  match ann with
-  | Term -> string_of_int term_id
-  | Loop _ -> string_of_int loop_id
-  | MayLoop _ -> string_of_int mayLoop_id
-  | Fail _ -> string_of_int termErr_id
-  | TermU uid -> uid.tu_sid
-  | TermR uid -> uid.tu_sid
 
 let cond_of_term_ann ann =
   match ann with
@@ -14114,6 +14125,20 @@ let collect_term_ann_fv_pure f =
  *        with f = (v_bool) & nondet_Bool(b) & c=b.
  * Then b is given as non-deterministic var.
  *)
+let nondet_prefix = "nondet"
+
+let is_nondet_sv sv = 
+  let name = name_of_sv sv in
+  if (String.length name >= 6) then
+    let prefix = String.lowercase (String.sub name 0 6) in
+    eq_str prefix nondet_prefix
+  else false
+
+let is_nondet_rel bf = 
+  match (fst bf) with
+  | RelForm (sv, _, _) -> is_nondet_sv sv
+  | _ -> false
+
 let check_non_determinism_x (var_name: ident) (f: formula) =
   (* collect nondet variables *)
   let collect_nondet_vars f = (
@@ -14122,14 +14147,18 @@ let check_non_determinism_x (var_name: ident) (f: formula) =
     let (ff, fe) = (fun _ -> None), (fun e -> Some e) in
     let fb bf = (match (fst bf) with
         | RelForm (sv, args, _) -> (
-            let name = name_of_sv sv in
-            if (String.length name >= 6) then (
-              let prefix = String.lowercase (String.sub name 0 6) in
-              if (eq_str prefix "nondet") then (
-                let args_svs = List.concat (List.map afv args) in
-                nondet_svs := remove_dups_svl (!nondet_svs @ args_svs);
-              )
+            if (is_nondet_sv sv) then (
+              let args_svs = List.concat (List.map afv args) in
+              nondet_svs := remove_dups_svl (!nondet_svs @ args_svs);
             );
+            (* let name = name_of_sv sv in                                 *)
+            (* if (String.length name >= 6) then (                         *)
+            (*   let prefix = String.lowercase (String.sub name 0 6) in    *)
+            (*   if (eq_str prefix nondet_prefix) then (                   *)
+            (*     let args_svs = List.concat (List.map afv args) in       *)
+            (*     nondet_svs := remove_dups_svl (!nondet_svs @ args_svs); *)
+            (*   )                                                         *)
+            (* );                                                          *)
             Some bf
           )
         | _ -> Some bf
@@ -14202,4 +14231,18 @@ let has_nondet_cond f =
   let or_list = List.fold_left (||) false in
   fold_formula f (nonef, f_b, nonef) or_list  
 
+let eq_nondet_rel r1 r2 = 
+  match r1, r2 with
+  | RelForm (sv1, _, p1), RelForm (sv2, _, p2) ->
+    if (is_nondet_sv sv1) && (is_nondet_sv sv2) then
+      eq_loc p1 p2
+    else false
+  | _ -> false
+
+let collect_nondet_rel f = 
+  let f_bf bf =
+    if is_nondet_rel bf then Some [(fst bf)]
+    else None
+  in
+  fold_formula f (nonef, f_bf, nonef) List.concat
 

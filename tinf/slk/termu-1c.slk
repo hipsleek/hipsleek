@@ -2,7 +2,7 @@ UTPre fpre(int x).
 UTPost fpost(int x).
 
 infer [@term] x <= 0 & fpre(x) |- fpost(x).
-//print residue.
+print residue.
 
 infer [@term] x > 0 & x' = x - 1 & x' > 0 & fpre(x) & fpost(x') |- fpost(x).
 //print residue.
@@ -11,7 +11,7 @@ infer [@term] x > 0 & x' = x - 1 & x' <= 0 & fpre(x) & fpost(x') |- fpost(x).
 //print residue.
 
 infer [@term] x > 0 & x' = x - 1 & x' > 0 & fpre(x) |- fpre(x').
-//print residue.
+print residue.
 
 infer [@term] x > 0 & x' = x - 1 & x' <= 0 & fpre(x) |- Term.
 //print residue.

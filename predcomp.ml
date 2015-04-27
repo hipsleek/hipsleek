@@ -118,7 +118,7 @@ and aug_class_name (t : typ) = match t with
   | AnnT -> "AnnAug"
   | RelT _ -> "RelAug"
   | FuncT _ -> "FuncAug"
-  | UtT -> "UtTAug"
+  | UtT b        -> "UtTAug("^(if b then "pre" else "post")^")"
   | Bool -> "BoolAug"
   | Float -> "FloatAug"
   | NUM -> "NUMAug"

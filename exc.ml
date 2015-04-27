@@ -513,6 +513,7 @@ sig
   val string_of_list_flow : nflow list -> string
   val subtract_flow : nflow -> nflow -> nflow
   val intersect_flow : nflow -> nflow -> nflow
+  val union_flow : nflow -> nflow -> nflow
   val subtract_flow_l : nflow -> nflow -> nflow list
   val sub_type : typ -> typ -> bool
   class exc :
@@ -642,6 +643,7 @@ struct
     | [x] -> x
     | _ -> f1
   let intersect_flow (n1,n2)(p1,p2) : (int*int)= ((if (n1<p1) then p1 else n1),(if (n2<p2) then n2 else p2))
+  let union_flow (n1,n2)(p1,p2) : (int*int)= ((if (n1<p1) then n1 else p1),(if (n2<p2) then p2 else n2))
   let remove_dups1 (n:flow_entry list) = Gen.BList.remove_dups_eq (fun (a,b,_) (c,d,_) -> a=c) n
   let compute_hierarchy_aux_x cnt elist =
     let rec lrr (f1:string)(f2:string):(((string*string*nflow) list)*nflow) =
@@ -986,6 +988,7 @@ struct
         let first = List.hd ls in
         let last = List.nth ls (len-1) in
         ((first,last),(list_pair_of_set s3))
+  let union_flow  ((((s1,b1),lst1):dflow) as f1) ((((s2,b2),lst2):dflow) as f2) : dflow = f2 (*for testing*)
   let remove_dups1 (n:flow_entry list) = Gen.BList.remove_dups_eq (fun (a,b,_) (c,d,_) -> a=c) n
   let compute_hierarchy_aux cnt elist =
     let rec lrr (f1:string)(f2:string):(((string*string*dflow) list)*dflow) =

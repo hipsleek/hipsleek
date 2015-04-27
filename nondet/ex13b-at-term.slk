@@ -1,0 +1,36 @@
+relation PP(int x).
+UTPre@f fpreXXX(int x).
+UTPost@f fpostXXX(int x).
+
+infer [@term] false |- fpostXXX(x).
+print residue.
+
+/*
+# ex13b.slk
+
+Got:
+!!! **sleekengine.ml#1111:type-table:[(x:16:int)(fpostXXX:15:UtT(post))(Anon_full_perm:14:float)]
+!!! **sleekcore.ml#129:conseq: EBase emp&fpostXXX{0}(x:int)[]&{FLOW,(4,5)=__norm#E}[]
+!!! **sleekcore.ml#130:fvs(conseq):[]
+!!! **sleekcore.ml#131:itype:[@term]
+!!! **sleekcore.ml#132:isvl:[]
+INPUT 0: [@term][] 
+ ### ante =  hfalse&false&{FLOW,(4,5)=__norm#E}[]
+ ### conseq =  EBase emp&fpostXXX{0}(x:int)[]&{FLOW,(4,5)=__norm#E}[]
+
+
+On cue from @term, can we picj up all unknown lex
+var from both LHS and RHS, e.g. fpostXXX
+
+
+*/
+
+infer [fpostXXX] false |- fpostXXX(x).
+print residue.
+
+/*
+!!! **infer.ml#293:[fpostXXX]
+run_infer:
+ hfalse&false&{FLOW,(4,5)=__norm#E}[] [fpostXXX] |-  EBase emp&fpostXXX{0}(x)[]&{FLOW,(4,5)=__norm#E}[]
+[Warning] False ctx
+*/

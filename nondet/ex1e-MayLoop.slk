@@ -1,0 +1,17 @@
+ checkentail emp&!(v_bool_14_1401') & i'<0 & i<0 & i'=i & Term[34]
+ |-  htrue&i<0 & MayLoop.
+print residue.
+
+/*
+id: 1; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&!(v_bool_14_1401') & i'<0 & i<0 & i'=i & Term[34]&
+{FLOW,(4,5)=__norm#E}[]
+ |-  htrue&i<0&{FLOW,(4,5)=__norm#E}[]. 
+pure rel_ass: [RELDEFN 3: ( false) -->  MayLoop[],
+RELDEFN 3: ( false) -->  MayLoop[]]
+ho_vars: nothing?
+res:  1[
+   emp&!(v_bool_14_1401') & i'<0 & i<0 & i'=i&{FLOW,(4,5)=__norm#E}[]
+   ]
+
+*/

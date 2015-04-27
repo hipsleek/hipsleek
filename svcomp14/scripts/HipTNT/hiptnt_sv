@@ -1,0 +1,11 @@
+#!/bin/bash
+
+out="out.txt"
+C_INCLUDE_PATH=. timeout 50 ./hip --svcomp-compete -infer "@shape,@term" $1 > $out
+read line < $out
+#echo $line
+if [ "$line" != "TRUE" ] && [[ "$line" != "FALSE"* ]] ;
+ then
+   C_INCLUDE_PATH=. ./hip --svcomp-compete -infer "@shape,@term" --infer-lex $1 > $out
+fi
+cat out.txt
