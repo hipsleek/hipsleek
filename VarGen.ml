@@ -80,11 +80,25 @@ class ['a] store (x_init:'a) (epr:'a->string) =
     method reset = lc <- None
     method get_rm :'a = match lc with
       | None -> emp_val
-      | Some p -> (self#reset; p)
+      | Some p -> (lc <- None; p)
     method string_of : string = match lc with
       | None -> "Why None?"
       | Some l -> (epr l)
     method dump = print_endline ("\n store dump :"^(self#string_of))
+  end;;
+
+class ['a] store_debug (x_init:'a) (epr:'a->string) =
+  object (self)
+    inherit ['a] store x_init epr as super
+    method reset = 
+      if super # is_avail then
+        begin
+          print_endline ("reset:"^self#get);
+          super # reset
+        end
+    method get_rm :'a = 
+      print_endline ("get_rm:"^self#get);
+      super # get_rm
   end;;
 
 (* this will be set to true when we are in error explanation module *)
@@ -101,7 +115,7 @@ class prog_loc =
       | Some l -> (string_of_pos l.start_pos)
   end;;
 
-let last_posn = new store "" (fun x -> "("^x^")")
+let last_posn = new store(* _debug *) "" (fun x -> "("^x^")")
 
 (*Some global vars for logging*)
 let proving_loc  = new prog_loc

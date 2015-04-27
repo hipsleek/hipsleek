@@ -1,0 +1,47 @@
+// 7(1)
+infer [a] i=2  |- a[i] + 5 > 3.
+print residue.
+// why fail when 7(2) does not?
+
+// 7(2)
+infer [a] i=2  |- a[2] + 5 > 3.
+print residue.
+// inferred pure: [-1<=(a[2])]
+
+// 7(3)
+infer [a,i] i=2  |- a[i] + 5 > 3.
+print residue.
+//inferred pure: [(i!=2 | -1<=(a[i]))]
+
+// 7(4)
+infer [a,i] i=2  |- a[2] + 5 > 3.
+print residue.
+//inferred pure: [(i!=2 | -1<=(a[2]))]
+
+/* 
+# err2
+
+// 7(1)
+infer [a] i=2  |- a[i] + 5 > 3.
+print residue.
+// why fail when 7(2) does not?
+
+// 7(2)
+infer [a] i=2  |- a[2] + 5 > 3.
+print residue.
+// inferred pure: [-1<=(a[2])]
+
+// 7(3)
+infer [a,i] i=2  |- a[i] + 5 > 3.
+print residue.
+//inferred pure: [(i!=2 | -1<=(a[i]))]
+
+// 7(4)
+infer [a,i] i=2  |- a[2] + 5 > 3.
+print residue.
+//inferred pure: [(i!=2 | -1<=(a[2]))]
+
+Can we fix 7(1) to give same result as 7(2),
+and similarly for 7(3) which can be simplified to 7(4).
+
+*/

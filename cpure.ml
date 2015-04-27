@@ -1765,7 +1765,7 @@ and remove_ptr_equations f is_or = match f with
   | Exists (v,f,o,p) -> Exists (v,remove_ptr_equations f false,o,p)
 
 and pure_ptr_equations (f:formula) : (spec_var * spec_var) list = 
-  pure_ptr_equations_aux true f
+  x_add pure_ptr_equations_aux true f
 
 and pure_ptr_equations_aux_x with_null (f:formula) : (spec_var * spec_var) list = 
   let rec prep_f f = match f with
@@ -1780,6 +1780,15 @@ and pure_ptr_equations_aux with_null (f:formula) : (spec_var * spec_var) list =
   let pr2 = !print_formula in
   let pr3 = pr_list (pr_pair !print_sv !print_sv) in
   Debug.no_2 "pure_ptr_equations_aux" pr1 pr2 pr3 pure_ptr_equations_aux_x with_null f 
+
+and get_int_equality_aux f = []
+
+and get_int_equality (f:formula) : (spec_var * spec_var) list = 
+  (* let pr1 = string_of_bool in *)
+  let pr2 = !print_formula in
+  let pr3 = pr_list (pr_pair !print_sv !print_sv) in
+  Debug.no_1 "get_int_equality" pr2 pr3 get_int_equality_aux f 
+
 
 and get_alias (e : exp) : spec_var =
   match e with
@@ -2462,7 +2471,10 @@ and mkAnd_x f1 f2 (*b*) pos =
 
   and mkAnd_x f1 f2 pos = mkAnd_dups f1 f2 true pos*)
 
-and mkAnd f1 f2 pos = Debug.no_2(* _loop *) "pure_mkAnd" !print_formula !print_formula !print_formula (fun _ _-> mkAnd_x f1 f2 pos) f1 f2
+(* and mkAnd f1 f2 pos = Debug.DebugEmpty.no_2(\* _loop *\) "pure_mkAnd" !print_formula !print_formula !print_formula (fun _ _-> mkAnd_x f1 f2 pos) f1 f2 *)
+
+and mkAnd f1 f2 pos = mkAnd_x f1 f2 pos
+
 
 and mkAndList_x b = 
   if (exists_l_snd isConstFalse b) then mkFalse no_pos
@@ -2678,13 +2690,13 @@ and mkExists_with_simpl_x simpl (vs : spec_var list) (f : formula) lbl pos =
 
 and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
   | AndList b ->
-    let pusher v lf lrest= 	
+    let pusher v lf lrest=
       let rl,vl,rf = List.fold_left (fun (al,avs,af) (cl,cvs,cf)-> (x_add LO.comb_norm 2 al cl,avs@cvs, mkAnd af cf pos)) (List.hd lf) (List.tl lf) in
       (rl,vl, Exists (v,rf,lbel,pos))::lrest in
     let lst = List.map (fun (l,c)-> (l,fv c,c)) b in
-    let lst1 = List.fold_left (fun lbl v-> 
-        let l1,l2 = List.partition (fun (_,vl,_)-> List.mem v vl) lbl in 
-        if l1=[] then l2 
+    let lst1 = List.fold_left (fun lbl v->
+        let l1,l2 = List.partition (fun (_,vl,_)-> List.mem v vl) lbl in
+        if l1=[] then l2
         else  pusher v l1 l2
         (*let lul, ll = List.partition (fun (lb,_,_)-> LO.is_unlabelled lb) l1 in
           		if lul=[] || ll=[] then pusher v l1 l2
@@ -2698,33 +2710,33 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
           		pusher v (lrel::ll) (lunrel::l2) *)
       )lst vs in
     let l = List.map (fun (l,_,f)-> (l,f)) lst1 in
-    let () = Debug.ninfo_hprint (add_str "l0" (pr_list (pr_pair Label_only.LOne.string_of !print_formula))) l no_pos in
-    let l = if !Globals.gen_baga_inv
-      then
-        List.map (fun ((a,ls) as lbl,f) ->
-            let new_lbl =
-              if string_compare a "" then
-                match ls with
-                | [(x,ann)] -> if ann = Label_only.LA_Both then (x,[]) else lbl
-                | _ -> lbl
-              else lbl
-            in
-            (new_lbl,f)) l
-      else
-        l
-    in
-    let () = x_binfo_hp (add_str "l1" (pr_list (pr_pair Label_only.LOne.string_of !print_formula))) l no_pos in
+    let () = x_ninfo_hp (add_str "l0" (pr_list (pr_pair Label_only.LOne.string_of !print_formula))) l no_pos in
+    (* let l = if !Globals.use_baga (\* !Globals.gen_baga_inv *\) *)
+    (*   then *)
+    (*     List.map (fun ((a,ls) as lbl,f) -> *)
+    (*         let new_lbl = *)
+    (*           if string_compare a "" then *)
+    (*             match ls with *)
+    (*             | [(x,ann)] -> if ann = Label_only.LA_Both then (x,[]) else lbl *)
+    (*             | _ -> lbl *)
+    (*           else lbl *)
+    (*         in *)
+    (*         (new_lbl,f)) l *)
+    (*   else *)
+    (*     l *)
+    (* in *)
+    let () = x_ninfo_hp (add_str "l1" (pr_list (pr_pair Label_only.LOne.string_of !print_formula))) l no_pos in
     AndList (Label_Pure.norm l)
-  | Or (f1,f2,lbl,pos) -> 
+  | Or (f1,f2,lbl,pos) ->
     Or (mkExists_x vs f1 lbel pos, mkExists_x vs f2 lbel pos, lbl, pos)
   (*| And(f1,f2,pos) ->
     	      let lconj = split_conjunctions f in
     	      let lrel,lunrel = List.partition (fun c->List.exists (fun v-> List.mem v (fv c)) vs) lconj in
-    	      if lrel=[] then f 
-    	      else 
+    	      if lrel=[] then f
+    	      else
     	      let lrelf = join_conjunctions lrel in
     	      let lunrelf = join_conjunctions lunrel in
-    	      let lrelf = 	
+    	      let lrelf =
     	      let fvs = fv lrelf in
     	      let to_push = List.filter (fun c-> mem c fvs) vs in
     	      List.fold_left (fun a v-> Exists (v,a,lbel,pos)) lrelf to_push in
@@ -2780,7 +2792,7 @@ and split_conjunctions_x =  function
 
 and split_conjunctions f =  
   let pr = !print_formula in
-  Debug.no_1 "split_conjunctions" pr (pr_list pr) split_conjunctions_x f 
+  Debug.DebugEmpty.no_1 "split_conjunctions" pr (pr_list pr) split_conjunctions_x f 
 
 
 and join_conjunctions fl = conj_of_list fl no_pos
@@ -4445,7 +4457,7 @@ and prune_perm_bounds f =
 and list_of_conjs_x (f0 : formula) : formula list = split_conjunctions f0
 
 and list_of_conjs (f0 : formula) : formula list =
-  Debug.no_1 "list_of_conjs"  !print_formula (pr_list !print_formula) split_conjunctions f0
+  Debug.DebugEmpty.no_1 "list_of_conjs"  !print_formula (pr_list !print_formula) split_conjunctions f0
 (*let rec helper f conjs = match f with
   | And (f1, f2, pos) ->
   let tmp1 = helper f2 conjs in
@@ -4583,12 +4595,10 @@ and find_bound v f0 =
   | BForm (bf,_) -> find_bound_b_formula v bf
   | _ -> None, None
 
-(*
-  and find_bound_b_formula_redlog v f0 =
-  let cmd = "rlopt({" ^ (Redlog.rl_of_b_formula f0) ^ "}, " ^ (Redlog.rl_of_spec_var v) ^ ");\n" in
-  let res = Redlog.send_and_receive cmd in
-  print_endline res
-*)
+(* and find_bound_b_formula_redlog v f0 = *)
+(* let cmd = "rlopt({" ^ (Redlog.rl_of_b_formula f0) ^ "}, " ^ (Redlog.rl_of_spec_var v) ^ ");\n" in *)
+(* let res = Redlog.send_and_receive cmd in *)
+(* print_endline res *)
 
 and find_bound_b_formula v f0 =
   let val_for_max e included =

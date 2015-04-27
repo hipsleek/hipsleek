@@ -402,6 +402,7 @@ let main () =
 (*   Debug.loop_1_no "main" (fun () -> "?") (fun () -> "?") main () *)
 
 let sleek_epilogue () =
+  if !Debug.dump_calls then Debug.debug_calls # dump;
   (* ------------------ lemma dumping ------------------ *)
   if (!Globals.dump_lemmas) then
     Lem_store.all_lemma # dump
@@ -457,8 +458,8 @@ let _ =
       then (
         let () = print_string "Unexpected: " in
         let () = List.iter (fun id_cmd ->
-            print_string ((string_of_int id_cmd) ^ " ")) !unexpected_cmd in
-        print_string "\n\n"
+            print_string_quiet ((string_of_int id_cmd) ^ " ")) !unexpected_cmd in
+        print_string_quiet "\n\n"
       ) else
         ()
     in

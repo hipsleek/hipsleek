@@ -1,3 +1,39 @@
+Heap Manipulation / Dynamic Data Structures
+Descriptions: heap-manipulation, list-properties, ldv-regression, ddv-machzwd
+
+heap-manipulation/*_false-unreach-call*.i
+heap-manipulation/*_true-unreach-call*.i
+list-properties/*_false-unreach-call*.i
+list-properties/*_true-unreach-call*.i
+
+ldv-regression/*_false-unreach-call*.i
+ldv-regression/*_true-unreach-call*.i
+ddv-machzwd/*_false-unreach-call*.i
+ddv-machzwd/*_true-unreach-call*.i
+
+ Memory Safety
+memsafety, memsafety-ext
+
+memsafety/*_false-valid-deref*.i
+memsafety/*_false-valid-free*.i
+memsafety/*_false-valid-memtrack*.i
+memsafety/*_true-valid-memsafety*.i
+memsafety-ext/*_true-valid-memsafety*.i
+list-ext-properties/*_false-valid-deref*.i
+list-ext-properties/*_false-valid-free*.i
+list-ext-properties/*_false-valid-memtrack*.i
+list-ext-properties/*_true-valid-memsafety*.i
+memory-alloca/*_false-valid-deref*.i
+memory-alloca/*_false-valid-free*.i
+memory-alloca/*_false-valid-memtrack*.i
+memory-alloca/*_true-valid-memsafety*.i
+memory-unsafe/*_false-valid-deref*.i
+memory-unsafe/*_false-valid-free*.i
+memory-unsafe/*_false-valid-memtrack*.i
+memory-unsafe/*_true-valid-memsafety*.i
+
+
+
 #ex1-200204.c (false-memtrack)
 
 
@@ -48,7 +84,7 @@ ERROR: at ex1-200204.c_40:19_-1:-1: FIXED
 Message: lhs and rhs do not match 1
 
 ------------------------------------
-#ex1-h1:
+#ex1-h1: FIXED
 
 Checking procedure main$... Proving binding in method main$ for spec  EAssume
    htrue&{FLOW,(4,5)=__norm#E}[]
@@ -72,6 +108,73 @@ Failed States:
  ]ex1-h1.c_54:19_-1:-1
 
 
+------------------------------------
+#ex1-h2: now use EList
+
+to infer case shape spec
+
+
+/*
+*********************************************************
+GOT
+*********************************************************
+[ GP_25(res_2136) ::=
+ res_2136::DUPFFstruct_star<deref_f_r_2055,o_2141> *
+ deref_f_r_2055::DUPFFstruct<maxdeg_2137,v_int_44_2138,v_int_star_42_2110>&
+ v_int_star_42_2110=null
+ or res_2136::DUPFFstruct_star<deref_f_r_2055,o_2141> *
+    v_int_star_42_2110::int_star<Anon_2139,o_2140> *
+    deref_f_r_2055::DUPFFstruct<maxdeg_2137,v_int_44_2138,v_int_star_42_2110>
+ (4,5)]
+*************************************
+
+
+!!!  post_2174(maxdeg,flow) = ( (maxdeg+1)<=0) \/ ( 0<=maxdeg)
+!!! n_base:3
+!!! bottom_up_fp:[( post_2174(maxdeg,flow), ((maxdeg+1)<=0 | 0<=maxdeg))]
+!!! fixpoint:[( post_2174(maxdeg,flow), ((maxdeg+1)<=0 | 0<=maxdeg), true, true)]
+!!! REL POST :  post_2174(maxdeg,flow)
+!!! POST:  ((maxdeg+1)<=0 | 0<=maxdeg)
+!!! REL PRE :  true
+!!! PRE :  true
+
+EXPECTED:?
+ GP_25(res_2136, maxdeg) ::=
+ res_2136::DUPFFstruct_star<deref_f_r_2055,o_2141> *
+ deref_f_r_2055::DUPFFstruct<maxdeg_2137,v_int_44_2138,v_int_star_42_2110>
+  case {
+   maxdeg<0 -> v_int_star_42_2110=null;
+   maxdeg>=0
+     v_int_star_42_2110::int_star<Anon_2139,o_2140> *
+    deref_f_r_2055::DUPFFstruct<maxdeg,v_int_44_2138,v_int_star_42_2110>;
+  }
+ */
+
+------------------------------------
+#ex1-h2a: FIXED
+
+GOT
+----
+G(res_1409,a_1410) ::=
+ res_1409::node<v_int_20_1411,v_null_type_20_1408>&0<=a_1410 &
+ v_null_type_20_1408=null
+ or emp&a_1410<0 & res_1409=null
+
+EXPECTED:
+G(res,m) ::=
+case { m>=0 -> [] res::node<0,null>;
+        m<0 -> [] res = null;
+};
+
+------------------------------------
+#ex1-ia:
+
+*********************************************************
+*******relational definition ********
+*********************************************************
+[ HP_12(x_1399,a_1400) ::= emp&0<=a_1400(4,5),
+                           ^^^^
+ GP_13(x_1401,a_1402) ::= x_1401::node<val_22_1403,DP_DP_HP_1396>&0<=a_1402(4,5)]
 
 ==============================================================
 
@@ -190,6 +293,36 @@ Exception occurred: Failure("create_pointer_casting_proc: expect pointer types b
 
 
 ==============================================================
+#todo/ex12-bug-assert.ss
+
+To implement binding for assert
+
+
+(==typechecker.ml#1401==)
+heap_entail_struc_list_failesc_context_init#4@3
+heap_entail_struc_list_failesc_context_init#4 inp1 : List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+
+Successful States:
+[
+ Label: [(,0 ); (,1 )]
+ State:x'::node<d_1515,r_1516> * r_1516::ll{}<flted_9_1514>&flted_9_1514+1=n & 0<=d_1515 & v_bool_15_1475' & x'!=null & x'=x & d'=d_1515&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+heap_entail_struc_list_failesc_context_init#4 inp2 : EBase emp&0<=x.val&{FLOW,(4,5)=__norm#E}[]
+heap_entail_struc_list_failesc_context_init#4@3 EXIT: List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: [(,0 ); (,1 )]
+ State:
+        fe_kind: MAY
+        fe_name: logical bug
+        fe_locs: {
+                  fc_message:  true |-  0<=x.val. LOCS:[0;18] (may-bug)
+                  fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}}
+[[empty]]
+ ]
+
+assert/assume:ex1-check.ss:18: 4:  : failed
 
 
 ==============================================================

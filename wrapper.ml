@@ -158,11 +158,14 @@ let wrap_two_bools flag1 flag2 new_value f a =
 let wrap_no_filtering f a =
   wrap_one_bool filtering_flag false f a
 
-let wrap_redlog_only f a =
-  wrap_one_bool Redlog.dis_omega true f a
+let wrap_silence_output f a =
+  wrap_one_bool Gen.silence_output true f a
 
-let wrap_oc_redlog f a =
-  wrap_one_bool Redlog.dis_omega false f a
+(* let wrap_redlog_only f a = *)
+(*   wrap_one_bool Redlog.dis_omega true f a *)
+
+(* let wrap_oc_redlog f a = *)
+(*   wrap_one_bool Redlog.dis_omega false f a *)
 
 let wrap_lbl_dis_aggr f a =
   if !Globals.inv_wrap_flag

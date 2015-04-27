@@ -284,8 +284,8 @@ let rearrange_rel (rel: hprel) =
 print_tidy for verification condition + entailment
 *)
 let rearrange_entailment_x prog lhs0 rhs0=
-  let lhs = simplify_pure_f_old lhs0 in
-  let rhs = simplify_pure_f_old rhs0 in
+  let lhs = x_add_1 simplify_pure_f_old lhs0 in
+  let rhs = x_add_1 simplify_pure_f_old rhs0 in
   let l_quans, l_bare =  split_quantifiers lhs in
   let r_quans, r_bare =  split_quantifiers rhs in
   let l_svl = (CP.remove_dups_svl (fv l_bare)) in
@@ -356,7 +356,7 @@ let rec elim_imm_vars_f f =
 
 let rec shorten_formula f =
   let helper f =
-    let f0 = simplify_pure_f_old f in
+    let f0 = x_add_1 simplify_pure_f_old f in
     let f0 = elim_imm_vars_f f0 in
     let fvars = fv f0 in
     let qvars,_ = split_quantifiers f0 in
@@ -470,11 +470,11 @@ let inline_print e =
   if (!Globals.print_en_inline) then elim_imm_vars_f e
   else e
 
-let tidy_print_x e =
+let tidy_print e =
   if (!Globals.print_en_tidy) then inline_print (shorten_formula e)
   else e
 
-let tidy_print e =
-  let pr1 = !print_formula in
-  Debug.no_1 "tidy_print" pr1 pr1
-    (fun _ -> tidy_print_x e) e
+(* let tidy_print e = *)
+(*   let pr1 = !print_formula in *)
+(*   Debug.no_1 "tidy_print" pr1 pr1 *)
+(*     (fun _ -> tidy_print e) e *)

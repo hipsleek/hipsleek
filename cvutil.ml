@@ -968,7 +968,8 @@ and conv_from_ef_disj disj =
 and xpure_heap_mem_enum_new
     (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CF.mem_formula)
   =
-  if !Globals.baga_xpure && not(!Globals.en_slc_ps) && (not (Perm.allow_perm ())) then
+  (* if !Globals.baga_xpure && not(!Globals.en_slc_ps) && (not (Perm.allow_perm ())) then *)
+  if !Globals.use_baga && not(!Globals.en_slc_ps) && (not (Perm.allow_perm ())) then
     let disj = x_add xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) in
     let ans = conv_from_ef_disj disj in
     ans
@@ -1442,7 +1443,8 @@ and xpure_symbolic i (prog : prog_decl) (h0 : formula) : (MCP.mix_formula  * CP.
     (fun h0 -> xpure_symbolic_new_orig prog h0) h0
 
 and xpure_symbolic_new_orig (prog : prog_decl) (f0 : formula) =
-  if !Globals.baga_xpure && !Globals.do_under_baga_approx then
+  (* if !Globals.baga_xpure && !Globals.do_under_baga_approx then *)
+  if !Globals.use_baga (* && !Globals.do_under_baga_approx *) then
     (* let nb = xpure_symbolic_baga prog f0 in *)
     (* let ans = xpure_symbolic_orig prog f0 in *)
     (* if !Globals.do_under_baga_approx then *)
@@ -1518,7 +1520,7 @@ and smart_same_flag = ref true
    are semantically the same *)
 
 and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula) p0  xp_no: (MCP.mix_formula * CP.spec_var list) = 
-  (* let () = smart_same_flag := true in *)
+  let () = smart_same_flag := true in (* WN:enabled now-why? *)
   let pr (a,b) = pr_triple Cprinter.string_of_mix_formula Cprinter.string_of_spec_var_list string_of_bool (a,b,!smart_same_flag) in
   Debug.no_2 "xpure_heap_symbolic_i" string_of_int 
     Cprinter.string_of_h_formula pr

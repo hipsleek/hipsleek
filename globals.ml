@@ -782,6 +782,7 @@ let omega_simpl = ref true
 
 let no_simpl = ref false
 
+
 let no_float_simpl = ref true (*do not simplify fractional constraints to avoid losing precision, such as 1/3 *)
 
 let source_files = ref ([] : string list)
@@ -819,6 +820,8 @@ let fo_iheap = ref true
 
 let sae = ref false
 let sac = ref false
+(* transform a predicate to case formula *)
+let sa_pred_case = ref true
 
 let sags = ref true
 
@@ -986,6 +989,7 @@ let disj_compute_flag = ref false
 let compute_xpure_0 = ref true
 let inv_wrap_flag = ref true
 let lhs_case_flag = ref false
+let infer_case_as_or_flag = ref false
 let lhs_case_search_flag = ref false
 let smart_xpure = ref true
 let super_smart_xpure = ref false
@@ -1314,6 +1318,7 @@ let post_add_eres = ref false
 let post_infer_flow = ref false
 let dis_ass_chk = ref false
 let log_filter = ref true
+let oc_weaken_rel_flag = ref true
 let phase_infer_ind = ref false
 
 let infer_const_num = 0
@@ -1566,7 +1571,7 @@ let use_baga = ref false
 let prove_invalid = ref false
 let gen_baga_inv_threshold = 7 (* number of preds <=6, set gen_baga_inv = false*)
 let do_under_baga_approx = ref false (* flag to choose under_baga *)
-let baga_xpure = ref true (* change to true later *)
+(* let baga_xpure = ref true (\* change to true later *\) *)
 let baga_imm = ref false                 (* wen on true, ignore @L nodes while building baga --  this is forced into true when computing baga for vdef*)
 
 (* get counter example *)
