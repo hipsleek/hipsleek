@@ -7332,7 +7332,11 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                     let err_msg =
                       if (CF.subsume_flow_f !error_flow_int fl1) then
                         ("1.2: " ^ (f1_exc (* exlist # get_closest fl1.CF.formula_flow_interval *)))
-                      else "1.2: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types" in
+                      else
+                        match estate.es_final_error with
+                          | Some (s,_,_) -> "1.2a. (ante flow:"^f1_exc^") caused: " ^ s
+                          | None -> "1.2b: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types"
+                    in
                     let fe = mk_failure_may err_msg undefined_error in
                     let may_flow_failure =
                       FailCtx ((Basic_Reason ({fc_message = err_msg;
@@ -7363,7 +7367,8 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                       (*   (err_msg, mk_failure_must err_msg undefined_error) in *)
                     let err_f = CF.substitute_flow_into_f !error_flow_int estate.CF.es_formula in
                     (CF.mkFailCtx_in (Basic_Reason ({fc_message =err_msg;
-                                                     fc_current_lhs = { estate with CF.es_formula = err_f};
+                                                     fc_current_lhs = if !Globals.temp_opt_flag then
+                                                       { estate with CF.es_formula = err_f} else estate;
                                                      fc_orig_conseq = struc_formula_of_formula conseq pos;
                                                      fc_prior_steps = estate.es_prior_steps;
                                                      fc_current_conseq = CF.formula_of_heap HFalse pos;

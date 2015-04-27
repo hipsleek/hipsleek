@@ -18,8 +18,8 @@ int foo2(cell x)
   requires true /*x=null*/
   ensures true ;
 {
+  //pre_call3(x);
   pre_call(x);
-  //pre_call(x);
   dprint;
   return 3;
 
