@@ -2268,7 +2268,7 @@ let simplify_raw f =
 let simplify_exists_raw exist_vars (f: CP.formula) = 
   let is_bag_cnt = is_bag_constraint f in
   (* let () = *)
-    (* if is_bag_cnt then print_endline ("is_bag_cnt:true") else print_endline ("is_bag_cnt:false") in *)
+  (* if is_bag_cnt then print_endline ("is_bag_cnt:true") else print_endline ("is_bag_cnt:false") in *)
   if is_bag_cnt then
     let _,new_f = trans_dnf f in
     let disjs = list_of_disjs new_f in

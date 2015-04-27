@@ -563,14 +563,14 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                 print_endline_quiet "*************************************";
               end;
             let () = if !Globals.sa_gen_slk then
-              try
-                let pre_rel_ids = List.filter (fun sv -> CP.is_rel_typ sv
-                    && not(CP.mem_svl sv post_vars)) pre_vars in
-                let post_rel_ids = List.filter (fun sv -> CP.is_rel_typ sv) post_vars in
-                Fixpoint.gen_slk_file_4fix prog (List.hd !Globals.source_files)
+                try
+                  let pre_rel_ids = List.filter (fun sv -> CP.is_rel_typ sv
+                                                           && not(CP.mem_svl sv post_vars)) pre_vars in
+                  let post_rel_ids = List.filter (fun sv -> CP.is_rel_typ sv) post_vars in
+                  Fixpoint.gen_slk_file_4fix prog (List.hd !Globals.source_files)
                     pre_rel_ids post_rel_ids rels
-              with _ -> ()
-            else ()
+                with _ -> ()
+              else ()
             in
             let reloblgs, reldefns = List.partition (fun (rt,_,_) -> CP.is_rel_assume rt) rels in
             let is_infer_flow = is_infer_flow reldefns in
@@ -578,7 +578,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             (* let reldefns = List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in *)
             let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in
             let pre_rel_ids = List.filter (fun x -> CP.is_rel_typ x
-                && not(Gen.BList.mem_eq CP.eq_spec_var x post_vars)) pre_vars in
+                                                    && not(Gen.BList.mem_eq CP.eq_spec_var x post_vars)) pre_vars in
             let post_rel_ids = List.filter (fun sv -> CP.is_rel_typ sv) post_vars in
             let post_rel_df_new =
               if pre_rel_ids=[] then post_rel_df
@@ -586,16 +586,16 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                   if Tpdispatcher.is_bag_constraint f1 then [(CP.remove_cnts pre_rel_ids f1,f2)]
                   else
                     let tmp = List.filter (fun x -> CP.intersect
-                        (CP.get_rel_id_list x) pre_rel_ids=[]) (CP.list_of_conjs f1) in
+                                              (CP.get_rel_id_list x) pre_rel_ids=[]) (CP.list_of_conjs f1) in
                     if tmp=[] then [] else [(CP.conj_of_list tmp no_pos,f2)]
-              ) post_rel_df)
+                ) post_rel_df)
             in
             let pre_invs,post_invs =
               List.fold_left (fun (pre_invs,post_invs) proc ->
                   let new_pre_invs,new_post_invs =
                     CF.get_pre_post_invs pre_rel_ids post_rel_ids (Fixpoint.get_inv prog) (proc.proc_stk_of_static_specs # top) in
                   (pre_invs@new_pre_invs,post_invs@new_post_invs)
-              ) ([],[]) scc
+                ) ([],[]) scc
             in
             let post_inv = CP.join_disjunctions post_invs in
             let pr = Cprinter.string_of_pure_formula in
@@ -606,7 +606,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                 let tl = List.tl post_rel_df_new in
                 List.fold_left (fun (s1,s2) (pf1,_) ->
                     (s1 ^ " \/ (" ^ (pr pf1) ^ ")",s2)
-                ) ("(" ^ (pr pf1) ^")",(pr pf2) ^ " = ") tl in
+                  ) ("(" ^ (pr pf1) ^")",(pr pf2) ^ " = ") tl in
             let () = x_binfo_pp (s2 ^ s1) no_pos in
             (* let () = x_binfo_hp (add_str "constraints" (pr_list (pr_pair pr (fun _ -> "")))) post_rel_df_new no_pos in *)
             let _ = print_endline ("Pi.infer_pure") in
@@ -647,7 +647,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
               x_binfo_zp (lazy (("1>POST: "^Cprinter.string_of_pure_formula post))) no_pos;
               x_binfo_zp (lazy (("1>REL PRE : "^Cprinter.string_of_pure_formula rel_pre))) no_pos;
               x_binfo_zp (lazy (("1>PRE : "^Cprinter.string_of_pure_formula pre))) no_pos
-          ) tuples in
+            ) tuples in
           let tuples = List.map (fun (rel_post,post,rel_pre,pre) ->
               let pre_new =
                 if CP.isConstTrue rel_pre then

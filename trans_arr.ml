@@ -57,9 +57,9 @@ let is_same_sv
       match p1,p2 with
       | Primed,Primed
       | Unprimed,Unprimed ->
-            
-            (* if (cmp_typ t1 t2) && (i1=i2) then true else false *)
-            if (i1=i2) then true else false
+
+        (* if (cmp_typ t1 t2) && (i1=i2) then true else false *)
+        if (i1=i2) then true else false
       | _,_-> false
     end
 ;;
@@ -683,13 +683,13 @@ let rec process_quantifier
       | ArrayAt _ ->
         failwith "replace_exp: cannot handle multi-dimensional array"
       | Add (e1,e2,loc)->
-            Add (replace_exp e1 ctx,replace_exp e2 ctx,loc)
+        Add (replace_exp e1 ctx,replace_exp e2 ctx,loc)
       | Subtract (e1,e2,loc)->
-            Subtract (replace_exp e1 ctx,replace_exp e2 ctx,loc)
+        Subtract (replace_exp e1 ctx,replace_exp e2 ctx,loc)
       | Mult (e1,e2,loc)->
-            Mult (replace_exp e1 ctx,replace_exp e2 ctx,loc)
+        Mult (replace_exp e1 ctx,replace_exp e2 ctx,loc)
       | Div (e1,e2,loc)->
-            Div (replace_exp e1 ctx,replace_exp e2 ctx,loc)
+        Div (replace_exp e1 ctx,replace_exp e2 ctx,loc)
       | _ ->
         e
     in
@@ -721,7 +721,7 @@ let rec process_quantifier
       (f:formula) (ctx:((spec_var * exp) list)) :(formula)=
     match f with
     | BForm (b,fl)->
-          BForm (replace b ctx,fl)
+      BForm (replace b ctx,fl)
     | And (f1,f2,loc)->
       And (process_helper f1 ctx, process_helper f2 ctx,loc)
     | AndList lst->
@@ -1100,7 +1100,7 @@ let translate_array_equality
     | Exists (sv,f,fl,loc)->
       []
   in
-   match helper f scheme with
+  match helper f scheme with
   | [] -> None
   | lst -> Some (mk_and_list lst)
 ;;
@@ -1122,23 +1122,23 @@ let translate_array_equality
     | [] -> None
   in
   let helper_b_formula
-        ((p,ba):b_formula) (scheme:((spec_var * (exp list)) list)):formula =
+      ((p,ba):b_formula) (scheme:((spec_var * (exp list)) list)):formula =
     match p with
-      | Eq (Var (sv1,_), Var (sv2,_),loc) ->
-            if is_same_sv sv1 sv2
-            then BForm ((p,ba),None)
-            else
-              begin
-                match find_match scheme sv1, find_match scheme sv2 with
-                  | Some indexlst1, Some indexlst2 ->
-                        mk_and_list ((produce_equality sv1 sv2 indexlst1)@(produce_equality sv1 sv2 indexlst2))
-                  | Some indexlst,_
-                  | _,Some indexlst ->
-                        mk_and_list (produce_equality sv1 sv2 indexlst)
-                  | _,_ -> BForm ((p,ba),None)
-              end
-      | _ ->
-            BForm ((p,ba),None)
+    | Eq (Var (sv1,_), Var (sv2,_),loc) ->
+      if is_same_sv sv1 sv2
+      then BForm ((p,ba),None)
+      else
+        begin
+          match find_match scheme sv1, find_match scheme sv2 with
+          | Some indexlst1, Some indexlst2 ->
+            mk_and_list ((produce_equality sv1 sv2 indexlst1)@(produce_equality sv1 sv2 indexlst2))
+          | Some indexlst,_
+          | _,Some indexlst ->
+            mk_and_list (produce_equality sv1 sv2 indexlst)
+          | _,_ -> BForm ((p,ba),None)
+        end
+    | _ ->
+      BForm ((p,ba),None)
   in
   let rec helper
       (f:formula) (scheme:((spec_var * (exp list)) list)):formula=
@@ -1146,19 +1146,19 @@ let translate_array_equality
     | BForm (b,fl)->
       helper_b_formula b scheme
     | And (f1,f2,loc)->
-          And ((helper f1 scheme) , (helper f2 scheme),loc)
+      And ((helper f1 scheme) , (helper f2 scheme),loc)
     | AndList lst->
       failwith "translate_array_equality: AndList To Be Implemented"
     | Or (f1,f2,fl,loc)->
-          f
-          (*Or (helper f1 scheme,helper f2 scheme,fl,loc)*)
-          (*failwith "translate_array_equality: To Be Normalized!"*)
+      f
+    (*Or (helper f1 scheme,helper f2 scheme,fl,loc)*)
+    (*failwith "translate_array_equality: To Be Normalized!"*)
     | Not (f,fl,loc)->
-          Not (helper f scheme,fl,loc)
+      Not (helper f scheme,fl,loc)
     | Forall _->
-          f
+      f
     | Exists _->
-          f
+      f
   in
   helper f scheme
 ;;
@@ -1688,7 +1688,7 @@ let rec get_array_element_in_f
 ;;
 
 let get_array_element_in_f
-      (f:formula) (sv:spec_var):(exp list) =
+    (f:formula) (sv:spec_var):(exp list) =
   Debug.no_2 "get_array_element_in_f" !print_pure string_of_spec_var (pr_list ArithNormalizer.string_of_exp) (fun f sv -> get_array_element_in_f f sv) f sv
 ;;
 
@@ -2076,7 +2076,7 @@ let new_translate_out_array_in_imply_split_full
 (* ;; *)
 
 let translate_preprocess
-      (f:formula):formula =
+    (f:formula):formula =
   let f = translate_array_relation f in
   let f = standarize_one_formula f in
   let f = process_quantifier f in
@@ -2140,11 +2140,11 @@ let new_translate_out_array_in_one_formula_full
 (* ;; *)
 
 let new_translate_out_array_in_one_formula_full
-      (f:formula):formula =
+    (f:formula):formula =
   match f with
-    | Or(f1,f2,fl,loc) ->
-          Or(new_translate_out_array_in_one_formula_full f1,new_translate_out_array_in_one_formula_full f2,fl,loc)
-    | _ -> new_translate_out_array_in_one_formula_full f
+  | Or(f1,f2,fl,loc) ->
+    Or(new_translate_out_array_in_one_formula_full f1,new_translate_out_array_in_one_formula_full f2,fl,loc)
+  | _ -> new_translate_out_array_in_one_formula_full f
 ;;
 
 (* let new_translate_out_array_in_one_formula_split *)
