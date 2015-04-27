@@ -3802,7 +3802,7 @@ let printer_of_fail_type (fmt: Format.formatter) (e:fail_type) : unit =
 
 let pr_list_context (ctx:list_context) =
   match ctx with
-  | FailCtx (ft ,_,cex) -> (
+  | FailCtx (ft ,c,cex) -> (
       let err_header = match get_must_failure_ft ft with
         | Some _ -> "MustErr Context: "
         | None -> "MaybeErr Context: "
@@ -3814,6 +3814,7 @@ let pr_list_context (ctx:list_context) =
       (*     (\* | And_Reason (_, _, fe) -> (string_of_fail_explaining fe) *\) *)
       (*     | _ -> fmt_string ""); *)
       pr_fail_type ft;
+      (* pr_context_short c; *)
       pr_failure_cex cex;
       fmt_cut ()
     )
@@ -3859,7 +3860,7 @@ let pr_context_list_short (ctx : context list) =
 
 let pr_list_context_short (ctx:list_context) =
   match ctx with
-  | FailCtx (ft,_,cex) -> (fmt_string "failctx"; pr_fail_type ft; pr_failure_cex cex)
+  | FailCtx (ft,c,cex) -> (fmt_string "failctx"; pr_fail_type ft; (* fmt_string "\nectx:"; pr_context_short c; *)pr_failure_cex cex)
   | SuccCtx sc -> (fmt_int (List.length sc); pr_context_list_short sc)
 
 let pr_entail_state_short e =
@@ -3885,7 +3886,7 @@ let pr_entail_state_short e =
 
 let pr_list_context (ctx:list_context) =
   match ctx with
-  | FailCtx (ft,_,cex) -> (
+  | FailCtx (ft,c,cex) -> (
       let err_header = match get_must_failure_ft ft with
         | Some _ -> "MustErr Context: "
         | None -> "MaybeErr Context: "
@@ -3896,7 +3897,7 @@ let pr_list_context (ctx:list_context) =
       (*     (\* TODO : to output must errors first *\) *)
       (*     (\* | And_Reason (_, _, fe) -> (string_of_fail_explaining fe) *\) *)
       (*     | _ -> fmt_string ""); *)
-      pr_fail_type ft; fmt_string "\nCEX:"; pr_failure_cex cex; fmt_cut ()
+      pr_fail_type ft; (* fmt_string "\nectx:"; pr_context_short c; *) fmt_string "\nCEX:"; pr_failure_cex cex; fmt_cut ()
     )
   | SuccCtx sc -> let str = "" in
     (* if (get_must_error_from_ctx sc)==None then "Good Context: " *)
