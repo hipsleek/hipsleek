@@ -661,7 +661,7 @@ let rec process_quantifier
       | [] ->
         None
     in
-    let replace_exp
+    let rec replace_exp
         (e:exp) (ctx:((spec_var * exp) list)):exp =
       match e with
       | ArrayAt (arr,[index],loc) ->
@@ -682,6 +682,14 @@ let rec process_quantifier
         end
       | ArrayAt _ ->
         failwith "replace_exp: cannot handle multi-dimensional array"
+      | Add (e1,e2,loc)->
+            Add (replace_exp e1 ctx,replace_exp e2 ctx,loc)
+      | Subtract (e1,e2,loc)->
+            Subtract (replace_exp e1 ctx,replace_exp e2 ctx,loc)
+      | Mult (e1,e2,loc)->
+            Mult (replace_exp e1 ctx,replace_exp e2 ctx,loc)
+      | Div (e1,e2,loc)->
+            Div (replace_exp e1 ctx,replace_exp e2 ctx,loc)
       | _ ->
         e
     in
@@ -2146,7 +2154,7 @@ let new_translate_out_array_in_one_formula_full
 
 let new_translate_out_array_in_one_formula_split
     (f:formula):formula =
-  split_and_combine new_translate_out_array_in_one_formula_full (x_add_1 can_be_simplify) (process_quantifier (translate_array_relation f))
+  split_and_combine new_translate_out_array_in_one_formula_full (x_add_1 can_be_simplify) (translate_array_relation f)
 ;;
 
 let new_translate_out_array_in_one_formula_split
