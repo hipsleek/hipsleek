@@ -1476,7 +1476,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   | Some s -> begin
                       let () = Debug.ninfo_hprint (add_str "!Globals.enable_error_as_exc" string_of_bool) !Globals.enable_error_as_exc pos in
                       if (infer_const_obj # is_err_must || !Globals.enable_error_as_exc || (CF.isSuccessListFailescCtx_new res)) then
-                        res
+                        let idf = (fun c -> c) in
+                        let to_print = "Proving assert/assume in method " ^ proc.proc_name ^ " (" ^ (string_of_loc pos) ^ ") Failed." in
+                        CF.transform_list_failesc_context (idf,idf,
+                        (fun es -> CF.Ctx{es with CF.es_final_error = CF.acc_error_msg es.CF.es_final_error to_print}))
+                            res
                       else
                         begin
                           (*L2: this code fragment may never be reached since we set is_err_must in the wrapper*)

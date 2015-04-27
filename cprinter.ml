@@ -3646,7 +3646,7 @@ let pr_estate (es : entail_state) =
   (* pr_vwrap "es_infer_invs:  " pr_list_pure_formula es.es_infer_invs; *)
   pr_wrap_test "es_unsat_flag: " (fun x-> x) (fun c-> fmt_string (string_of_bool c)) es.es_unsat_flag;  
   pr_wrap_test "es_proof_traces: " Gen.is_empty  (pr_seq "" (pr_pair_aux prtt_pr_formula pr_formula)) es.es_proof_traces;
-  pr_vwrap "es_final_error: " fmt_string  (match es.es_final_error with | Some _ -> "Some" | None -> "None");
+  (* pr_vwrap "es_final_error: " fmt_string  (match es.es_final_error with | Some (s,_,_) -> "Some " ^ s | None -> "None"); *)
   fmt_close ()
 
 let pr_estate_infer_hp (es : entail_state) =
@@ -3724,9 +3724,9 @@ let ctx_assoc_op (e:context) : (string * context list) option =
 let pr_context_short (ctx : context) = 
   let rec f xs = match xs with
     | Ctx e -> [(e.es_conc_err,e.es_ho_vars_map,e.es_formula,e.es_heap,e.es_pure,e.es_infer_vars@e.es_infer_vars_rel@e.es_infer_vars_templ,e.es_infer_templ_assume,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,
-                 e.es_var_measures,e.es_var_zero_perm,e.es_trace,e.es_cond_path, e.es_proof_traces, e.es_ante_evars(* , e.es_subst_ref *))]
+                 e.es_var_measures,e.es_var_zero_perm,e.es_trace,e.es_cond_path, e.es_proof_traces, e.es_ante_evars(* , e.es_subst_ref *), e.es_final_error)]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
-  let pr (conc_err, ho_map,f,eh,ep,(* ac, *)iv,ta,ih,ip,ir,vm,vperms,trace,ecp, ptraces,evars(* , vars_ref *)) =
+  let pr (conc_err, ho_map,f,eh,ep,(* ac, *)iv,ta,ih,ip,ir,vm,vperms,trace,ecp, ptraces,evars(* , vars_ref *),exc) =
     begin
       fmt_open_vbox 0;
       let f1 = Cfout.tidy_print f in
@@ -3755,6 +3755,7 @@ let pr_context_short (ctx : context) =
       (* prtt_pr_formula_wrap f1 ; *)
       (* pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es_infer_hp_rel; *)
       (* end *)
+      (* pr_vwrap "\nes_final_error: " fmt_string  (match exc with | Some (c,_,_) -> "Some " ^ c | None -> "None"); *)
       fmt_string "\n";
       fmt_close_box();
     end
@@ -3841,7 +3842,7 @@ let pr_list_context (ctx:list_context) =
       (*     (\* | And_Reason (_, _, fe) -> (string_of_fail_explaining fe) *\) *)
       (*     | _ -> fmt_string ""); *)
       pr_fail_type ft;
-      (* pr_context_short c; *)
+      pr_context_short c;
       pr_failure_cex cex;
       fmt_cut ()
     )
@@ -3863,10 +3864,10 @@ let pr_formula_vperm_wrap t =
 let pr_context_list_short (ctx : context list) = 
   let rec f xs = match xs with
     (*    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel@e.es_infer_vars_templ,e.es_infer_templ_assume,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,e.es_var_zero_perm,e.es_final_error)]*)
-    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel@e.es_infer_vars_templ,e.es_infer_templ_assume,e.es_infer_term_rel,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,e.es_var_zero_perm)]
+    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel@e.es_infer_vars_templ,e.es_infer_templ_assume,e.es_infer_term_rel,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,e.es_var_zero_perm,e.es_final_error)]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
   (*  let pr (f,(* ac, *)iv,ta,ih,ip,ir,vperms,exc) = *)
-  let pr (f,(* ac, *)iv,ta,tr,ih,ip,ir,vperms) =
+  let pr (f,(* ac, *)iv,ta,tr,ih,ip,ir,vperms,exc) =
     fmt_open_vbox 0;
     pr_formula_wrap f;
     pr_wrap_test "es_var_zero_perm: " Gen.is_empty  (pr_seq "" pr_spec_var) vperms;
@@ -3878,7 +3879,7 @@ let pr_context_list_short (ctx : context list) =
     pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) ta;
     pr_wrap_test "es_infer_term_rel: " Gen.is_empty  (pr_seq "" print_tntrel) tr; 
     pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) ir;
-    (* pr_vwrap "es_final_error: " fmt_string  (match exc with | Some _ -> "Some" | None -> "None"); *)
+    (* pr_vwrap "es_final_error: " fmt_string  (match exc with | Some (c,_,_) -> "Some " ^ c | None -> "None"); *)
     fmt_close_box();
   in 
   let lls = List.map f ctx in

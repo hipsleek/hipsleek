@@ -5735,7 +5735,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
               } in
               let fc_template = mkFailContext "" new_estate conseq None pos in
               (* let () = Globals. smt_return_must_on_error () in *)
-              let lc = x_add Musterr.build_and_failures 5 "early contra detect: "
+              let lc = x_add Musterr.build_and_failures 5 "early contra detect: " fc
                   Globals.logical_error (contra_list, must_list, may_list) fc_template cex new_estate.es_trace in
               let () = Debug.ninfo_hprint  (add_str "lc" Cprinter.string_of_list_context) lc no_pos  in
               (lc,prf)
@@ -8628,7 +8628,7 @@ type: bool *
           else
             (must_list, may_list, contra_list)
         in
-        let lc0 = x_add Musterr.build_and_failures 1 "213" Globals.logical_error (contra_list1, must_list1, may_list1) fc_template cex new_estate.es_trace in
+        let lc0 = x_add Musterr.build_and_failures 1 "213" fc_kind Globals.logical_error (contra_list1, must_list1, may_list1) fc_template cex new_estate.es_trace in
         (lc0, prf)
       else
         (* let () = Globals. smt_return_must_on_error () in *)
@@ -11271,7 +11271,7 @@ and do_unmatched_rhs_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs
                             | CF.Failure_Valid -> estate.es_formula
             } in
             let fc_template = mkFailContext "" new_estate (Base rhs_b) None pos in
-            let olc = x_add Musterr.build_and_failures 3 "15.3 no match for rhs data node: "
+            let olc = x_add Musterr.build_and_failures 3 "15.3 no match for rhs data node: " fc
                 Globals.logical_error (contra_list, must_list, may_list) fc_template cex new_estate.es_trace in
             let lc =
               ( match olc with
