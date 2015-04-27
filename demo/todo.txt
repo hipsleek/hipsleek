@@ -824,6 +824,98 @@ Escaped States:
 ==========================================================================
 # ex21e7d.slk
 
+At lower levels, it seem like these methods need to be
+changed to support __Error ad FailCtx
+
+with --temp-opt
+---------------
+(==solver.ml#10450==)
+union_context_left@17@11@10@9@8@7@6@5@4@3
+union_context_left inp1 :[ 
+[
+ x::node<Anon_12,flted_8_35>&flted_8_35=null&{FLOW,(18,19)=__Error#E}[]
+ es_final_error: Some
+ ]
+, 
+[
+ emp&flted_8_35=null & Anon_45=Anon_12 & r_46=flted_8_35&{FLOW,(20,21)=__norm#E}[]
+ es_final_error: None
+ ]
+]
+union_context_left@17 EXIT: 
+[
+ x::node<Anon_12,flted_8_35>&flted_8_35=null&{FLOW,(18,19)=__Error#E}[]
+ es_final_error: Some;
+ emp&flted_8_35=null & Anon_45=Anon_12 & r_46=flted_8_35&{FLOW,(20,21)=__norm#E}[]
+ es_final_error: None
+ ]
+
+without --temp-opt
+------------------
+(==solver.ml#10450==)
+union_context_left@4
+union_context_left inp1 :[ 
+MustErr Context: 
+                  fe_kind: MUST
+                  fe_name: logical bug
+                  fe_locs: {
+                            fc_message:  x!=null |-  x=null. LOCS:[8;3] (must-bug)
+                            fc_current_lhs_flow: {FLOW,(18,19)=__Error#E}}
+[[ Fold ==> ]]
+CEX:false
+, 
+[
+ emp&flted_8_35=null & Anon_45=Anon_12 & r_46=flted_8_35&{FLOW,(20,21)=__norm#E}[]
+ es_final_error: None
+ ]
+]
+union_context_left@4 EXIT: 
+[
+ emp&flted_8_35=null & Anon_45=Anon_12 & r_46=flted_8_35&{FLOW,(20,21)=__norm#E}[]
+ es_final_error: None
+ ]
+
+------------------------
+
+(*context set union*)
+let list_context_union_x c1 c2 = 
+  let simplify x = (* context_list_simplify *) x in
+  match c1,c2 with
+  | FailCtx (t1, c1, cex1), FailCtx (t2, c2, cex2) -> (*FailCtx (Or_Reason (t1,t2))*)
+    if ((is_cont t1) && not(is_cont t2)) then FailCtx (t1,c1 ,cex1)
+    else if ((is_cont t2) && not(is_cont t1)) then FailCtx (t2, c2,cex2)
+    else if (is_cont t1) && (is_cont t2) then FailCtx (Or_Continuation (t1,t2), OCtx (c1,c2), cex_union cex1 cex2 )  
+    else FailCtx (Union_Reason (t1,t2), OCtx (c1,c2), cex_union cex1 cex2)  (* for UNION, we need to priorities MAY bug *)
+  (*FailCtx (And_Reason (t1,t2))   *)
+  | FailCtx t1 ,SuccCtx t2 -> SuccCtx (simplify t2)
+  | SuccCtx t1 ,FailCtx t2 -> SuccCtx (simplify t1)
+  | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (simplify_ctx_elim_false_dupl t1 t2)
+
+let list_context_union c1 c2 =
+  let pr = !print_list_context(* _short *) in
+  Debug.no_2_opt (fun _ -> not(isFailCtx c1 ||  isFailCtx c2) )  "list_context_union" 
+    pr pr pr
+    list_context_union_x c1 c2
+
+let rec union_context_left_x c_l: list_context = (* match (List.length c_l) with *) match c_l with
+  | [] ->  (* Err.report_error {Err.error_loc = no_pos;   *)
+    (*    Err.error_text = "union_context_left: folding empty context list \n"} *)
+    (SuccCtx []: list_context)
+  | [a] -> a (* (List.hd c_l) *)
+  | a::rest -> (* List.fold_left list_context_union (List.hd c_l) (List.tl c_l) *)
+    List.fold_left list_context_union a rest
+
+and union_context_left c_l =
+  let pr = !print_list_context in
+  Debug.no_1 "union_context_left" (pr_list pr) pr union_context_left_x c_l
+
+(*should use union_context_left directly*)
+and fold_context_left_x c_l = union_context_left c_l 
+
+
+===============================================
+
+
 --temp-opt (source of problem?)
 (==solver.ml#7154==)
 heap_entail_conjunct_helper#3@81@80@79@78@77@34@33@32@31@30@29@28@27@26@25@24@23
