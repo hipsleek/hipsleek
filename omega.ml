@@ -80,15 +80,15 @@ let rec omega_of_exp e0 = match e0 with
     let r = match a1 with
       | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a2) ^ ")"
       | _ -> let rr = match a2 with
-        | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a1) ^ ")"
-        | _ -> 
-          let () = report_warning no_pos "[omega.ml] Non-linear arithmetic is not supported by Omega." in
-          "0=0"
-          (* illegal_format "[omega.ml] Non-linear arithmetic is not supported by Omega." *)
-          (* Error.report_error { *)
-          (*   Error.error_loc = l; *)
-          (*   Error.error_text = "[omega.ml] Non-linear arithmetic is not supported by Omega." *)
-          (* } *)
+          | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a1) ^ ")"
+          | _ -> 
+            let () = report_warning no_pos "[omega.ml] Non-linear arithmetic is not supported by Omega." in
+            "0=0"
+            (* illegal_format "[omega.ml] Non-linear arithmetic is not supported by Omega." *)
+            (* Error.report_error { *)
+            (*   Error.error_loc = l; *)
+            (*   Error.error_text = "[omega.ml] Non-linear arithmetic is not supported by Omega." *)
+            (* } *)
         in rr
     in r
   | Template t -> omega_of_exp (exp_of_template t)

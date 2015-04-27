@@ -742,7 +742,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       (* Debug.info_hprint (add_str "fv post" !CP.print_svl) ovars no_pos; *)
       (* Debug.info_hprint (add_str "out vars" !CP.print_svl) ov no_pos; *)
       if ((Immutable.is_lend post_cond) && not(!Globals.allow_field_ann))
-      || (!Globals.allow_field_ann && Mem.is_lend post_cond) then
+         || (!Globals.allow_field_ann && Mem.is_lend post_cond) then
         Error.report_error {Error.error_loc = pos_spec; Error.error_text =  ("The postcondition cannot contain @L heap predicates/data nodes/field annotations\n")}
       else
         let () = post_pos#set (CF.pos_of_formula post_cond) in
@@ -1897,11 +1897,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (*   let () = Debug.print_info ("(Cause of Bind Failure)") *)
                   (*     (Cprinter.string_of_failure_list_failesc_context rs) pos in *)
                   let to_print = ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^
-                            " cannot be derived from context (") ^ (string_of_loc pos) ^ ")" in
-                   let idf = (fun c -> c) in
+                                  " cannot be derived from context (") ^ (string_of_loc pos) ^ ")" in
+                  let idf = (fun c -> c) in
                   CF.transform_list_failesc_context (idf,idf,
                                                      (fun es -> CF.Ctx{es with CF.es_final_error = CF.acc_error_msg es.CF.es_final_error to_print}))
-                  rs
+                    rs
                 else
                   (*delay pritinting to check post*)
                   let s =  ("\n("^(Cprinter.string_of_label_list_failesc_context rs)^") ")^ 
@@ -2486,7 +2486,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 CF.transform_list_failesc_context (idf,idf,
                                                    (fun es -> CF.Ctx{es with CF.es_formula = 
                                                                                Norm.imm_norm_formula prog es.CF.es_formula Solver.unfold_for_abs_merge pos;
-                                                   CF.es_final_error = CF.acc_error_msg es.CF.es_final_error to_print})) res
+                                                                             CF.es_final_error = CF.acc_error_msg es.CF.es_final_error to_print})) res
               in
               (*Exhausively apply normalization lemma after each SCall.
                 Need to devise a smart way since

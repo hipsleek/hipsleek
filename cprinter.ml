@@ -3819,8 +3819,8 @@ let pr_list_context (ctx:list_context) =
       fmt_cut ()
     )
   | SuccCtx sc -> let str = 
-    if (get_must_error_from_ctx sc)==None then "Good Context: "
-    else "Error Context: " in
+                    if (get_must_error_from_ctx sc)==None then "Good Context: "
+                    else "Error Context: " in
     fmt_cut (); fmt_string str; fmt_int (List.length sc); pr_context_list sc; fmt_cut ()
 
 

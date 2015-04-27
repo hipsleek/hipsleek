@@ -477,10 +477,10 @@ let isAnyConstFalse f = match f with
       formula_exists_pure = p;
       formula_exists_flow = fl; })
   | Base ({
-      formula_base_heap = h;
-      formula_base_vperm = vp;
-      formula_base_pure = p;
-      formula_base_flow = fl; }) -> 
+        formula_base_heap = h;
+        formula_base_vperm = vp;
+        formula_base_pure = p;
+        formula_base_flow = fl; }) -> 
     h = HFalse || MCP.isConstMFalse p || 
     is_false_flow fl.formula_flow_interval || CVP.is_false_vperm_sets vp
   | _ -> false
@@ -5001,7 +5001,7 @@ let hp_def_cmp (d1:hp_rel_def) (d2:hp_rel_def) =
       let hp2 = get_hpdef_name d2.def_cat in
       String.compare (CP.name_of_spec_var hp1) (CP.name_of_spec_var hp2)
     with _ -> 1
-    with _ -> -1
+  with _ -> -1
 
 let hpdef_cmp d1 d2 =
   try
@@ -5010,7 +5010,7 @@ let hpdef_cmp d1 d2 =
       let hp2 = get_hpdef_name d2.hprel_def_kind in
       String.compare (CP.name_of_spec_var hp1) (CP.name_of_spec_var hp2)
     with _ -> 1
-    with _ -> -1
+  with _ -> -1
 
 let mk_hp_rel_def hp (args, r, paras) (g: formula option) f ofl pos=
   let hf = HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, pos) in
@@ -7201,8 +7201,8 @@ let generate_xpure_view_x drop_hpargs total_unk_map=
       let xpvs = lookup_xpure_view hp total_unk_map in
       match xpvs with
       | [xp] -> let xp_r, xp_args = match xp.CP.xpure_view_node with
-        | None -> None, xp.CP.xpure_view_arguments
-        |Some _ -> Some (List.hd args), (List.tl args)
+          | None -> None, xp.CP.xpure_view_arguments
+          |Some _ -> Some (List.hd args), (List.tl args)
         in
         let new_xpv = {xp with CP.xpure_view_node =  xp_r;
                                xpure_view_arguments =  xp_args
@@ -7792,14 +7792,14 @@ let remove_neqNull_redundant_hnodes_f_x f0=
   let rec helper f=
     match f with
     | Base fb -> let np = remove_neqNull_redundant_hnodes_hf fb.formula_base_heap
-        (MCP.pure_of_mix fb.formula_base_pure) in
+                     (MCP.pure_of_mix fb.formula_base_pure) in
       (Base {fb with formula_base_pure = MCP.mix_of_pure np})
     | Or orf -> let nf1 = helper orf.formula_or_f1 in
       let nf2 = helper orf.formula_or_f2 in
       ( Or {orf with formula_or_f1 = nf1;
                      formula_or_f2 = nf2;})
     | Exists fe -> let np = remove_neqNull_redundant_hnodes_hf fe.formula_exists_heap
-        (MCP.pure_of_mix fe.formula_exists_pure) in
+                       (MCP.pure_of_mix fe.formula_exists_pure) in
       (Exists {fe with formula_exists_pure = MCP.mix_of_pure np;})
   in
   helper f0
@@ -7813,14 +7813,14 @@ let remove_neqNull_redundant_hnodes_f_wg (f0,og)=
   let rec helper f=
     match f with
     | Base fb -> let np = remove_neqNull_redundant_hnodes_hf fb.formula_base_heap
-        (MCP.pure_of_mix fb.formula_base_pure) in
+                     (MCP.pure_of_mix fb.formula_base_pure) in
       (Base {fb with formula_base_pure = MCP.mix_of_pure np})
     | Or orf -> let nf1 = helper orf.formula_or_f1 in
       let nf2 = helper orf.formula_or_f2 in
       ( Or {orf with formula_or_f1 = nf1;
                      formula_or_f2 = nf2;})
     | Exists fe -> let np = remove_neqNull_redundant_hnodes_hf fe.formula_exists_heap
-        (MCP.pure_of_mix fe.formula_exists_pure) in
+                       (MCP.pure_of_mix fe.formula_exists_pure) in
       (Exists {fe with formula_exists_pure = MCP.mix_of_pure np;})
   in
   let nf = helper f0 in
@@ -9390,7 +9390,7 @@ let is_dis_err_exc es =
 
 let is_en_error_exc es =
   not(is_dis_err_exc es)
-  (* es.es_infer_obj # is_err_must || es.es_infer_obj # is_err_may *)
+(* es.es_infer_obj # is_err_must || es.es_infer_obj # is_err_may *)
 
 let rec is_en_error_exc_ctx c=
   match c with
@@ -9431,8 +9431,8 @@ let is_dfa_ctx_list lc=
 
 let acc_error_msg final_error_opt add_msg=
   match final_error_opt with
-    | None -> None
-    | Some (s,c,ft) -> Some ("(" ^ add_msg ^ ") " ^ s,c,ft)
+  | None -> None
+  | Some (s,c,ft) -> Some ("(" ^ add_msg ^ ") " ^ s,c,ft)
 
 (****************************************************)
 (********************CEX**********************)
@@ -10172,8 +10172,8 @@ let get_must_error_from_ctx cs =
   | [] -> (Some ("empty residual state", mk_cex false))
   | [Ctx es] -> (match es.es_must_error with
       | None ->  begin if is_en_error_exc es
-          (* !Globals.enable_error_as_exc || es.es_infer_obj # is_err_must || es.es_infer_obj # is_err_may  *)
-        then
+      (* !Globals.enable_error_as_exc || es.es_infer_obj # is_err_must || es.es_infer_obj # is_err_may  *)
+          then
             match es.es_final_error with
             | Some (s1, ft, fk) -> Some (s1, mk_cex true)
             | None -> None
@@ -10439,10 +10439,10 @@ and combine_helper op los rs=
   match los with
   | [] -> rs
   | [os] -> let tmp=
-    ( match os with
-      | None -> rs
-      | Some s -> rs ^ s
-    ) in tmp
+              ( match os with
+                | None -> rs
+                | Some s -> rs ^ s
+              ) in tmp
   | os::ss ->
     (*os contains all failed of 1 path trace*)
     let tmp=
@@ -11456,8 +11456,8 @@ let proc_left t1 t2 =
         match t2 with
         | [c2] ->
           if isAnyFalseCtx c2
-          && is_inferred_pre_ctx c2
-          (* both t1 and t2 are FalseCtx with Pre *)
+             && is_inferred_pre_ctx c2
+             (* both t1 and t2 are FalseCtx with Pre *)
           then Some [merge_false_ctx c1 c2]
           else Some t2 (* drop FalseCtx t1 with Pre *)
         | _ -> Some t1 (* only t1 is FalseCtx with Pre *)
@@ -11498,8 +11498,8 @@ let list_context_union_x c1 c2 =
       then failwith "to implement union_error"
       else SuccCtx (simplify t2)
     else
-      if contains_error_flow_ctx_list t2 then SuccCtx (simplify t2)
-      else 
+    if contains_error_flow_ctx_list t2 then SuccCtx (simplify t2)
+    else 
       SuccCtx (simplify_ctx_elim_false_dupl t1 t2)
 
 let list_context_union c1 c2 =
@@ -11633,8 +11633,8 @@ let isFailFailescCtx_new (fs,_,brs) =
   let is_fail = List.exists isFailBranchFail fs in
   if not !Globals.enable_error_as_exc then is_fail 
   else
-    if is_fail then is_fail else
-      List.exists (fun (_,_,oft) -> oft != None) brs
+  if is_fail then is_fail else
+    List.exists (fun (_,_,oft) -> oft != None) brs
 
 let isFailPartialCtx_new (fs,ss) =
   List.exists isFailBranchFail fs

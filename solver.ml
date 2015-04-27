@@ -3458,14 +3458,14 @@ and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool)
       | FailCtx (t,c,_) ->  begin 
           if CF.is_en_error_exc_ctx c (* built-in local & global test *)
           (* !Globals.enable_error_as_exc || CF.is_en_error_exc_ctx c || is_en_efa_exc () *)
-        then
+          then
             ([([],[(lbl, c,Some t)])],[])
           else
             ([([(lbl,t)],[])],[])
         end
       | SuccCtx ls -> (List.map ( fun c-> begin
             if CF.is_en_error_exc_ctx c
-              (* !Globals.enable_error_as_exc || CF.is_en_error_exc_ctx c || is_en_efa_exc ()  *)
+            (* !Globals.enable_error_as_exc || CF.is_en_error_exc_ctx c || is_en_efa_exc ()  *)
             then
               match CF.get_final_error_ctx c with
               | None -> ([],[(lbl,c,None)])
@@ -4767,16 +4767,16 @@ and heap_entail_split_rhs_x (prog : prog_decl) (is_folding : bool) (ctx_0 : cont
         match after_h1_ctx with
         | FailCtx _ -> (after_h1_ctx,after_h1_prfs) 
         | SuccCtx (cl) -> let (ctx,prf) = 
-          (match h2 with
-           | HTrue -> (after_h1_ctx,after_h1_prfs)
-           | _ -> let res = (* h2 may contain nested conjs *)
-             List.map 
-               (fun c -> heap_entail_split_rhs prog is_folding c (func h2 p) rhs_h_matched_set pos) cl
-             in
-             let res_ctx,res_prf = List.split res in
-             let res_prf = mkContextList cl (Cformula.struc_formula_of_formula conseq pos) res_prf in
-             let res_ctx = fold_context_left 2 res_ctx in
-             (res_ctx,res_prf))
+                            (match h2 with
+                             | HTrue -> (after_h1_ctx,after_h1_prfs)
+                             | _ -> let res = (* h2 may contain nested conjs *)
+                                      List.map 
+                                        (fun c -> heap_entail_split_rhs prog is_folding c (func h2 p) rhs_h_matched_set pos) cl
+                               in
+                               let res_ctx,res_prf = List.split res in
+                               let res_prf = mkContextList cl (Cformula.struc_formula_of_formula conseq pos) res_prf in
+                               let res_ctx = fold_context_left 2 res_ctx in
+                               (res_ctx,res_prf))
           in ctx,prf
   in
 
@@ -4863,7 +4863,7 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
     let h1, h2 = x_add_1 Mem.split_heap h in
     if (is_empty_heap h1) && not (Mem.contains_conj h2) 
     then let final_ctx, final_prf = 
-      x_add heap_entail_conjunct 14 prog is_folding (CF.set_context_formula ctx0 (func h2)) conseq rhs_h_matched_set pos in
+           x_add heap_entail_conjunct 14 prog is_folding (CF.set_context_formula ctx0 (func h2)) conseq rhs_h_matched_set pos in
       match final_ctx with
       | SuccCtx(cl) ->
         (* substitute the holes due to the temporary removal of matched immutable nodes *) 
@@ -4874,7 +4874,7 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
     else
     if(is_empty_heap h1) && (Mem.contains_conj h2) 
     then let final_ctx, final_prf = 
-      heap_entail_split_lhs prog is_folding (CF.set_context_formula ctx0 (func h2)) conseq rhs_h_matched_set pos in
+           heap_entail_split_lhs prog is_folding (CF.set_context_formula ctx0 (func h2)) conseq rhs_h_matched_set pos in
       match final_ctx with
       | SuccCtx(cl) ->
         (* substitute the holes due to the temporary removal of matched immutable nodes *) 
@@ -7314,9 +7314,9 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                 (*   (SuccCtx [false_ctx_with_flow_and_orig_ante estate fl1 ante pos], UnsatAnte) *)
                 (* else *)
                 if (not(is_false_flow fl2.formula_flow_interval)) && not(CF.subsume_flow_ff fl2 fl1) 
-                   (* WN:Exc condition below is complex & differs from Good Trace  439edea803e6 13050 *)
-                   (* && not !Globals.enable_error_as_exc  *)
-                   (* && (h1 = HEmp || not (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) fl2))  *)
+                (* WN:Exc condition below is complex & differs from Good Trace  439edea803e6 13050 *)
+                (* && not !Globals.enable_error_as_exc  *)
+                (* && (h1 = HEmp || not (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) fl2))  *)
                 then (
                   x_tinfo_zp (lazy ("heap_entail_conjunct_helper: conseq has an incompatible flow type\ncontext:\n"
                                     ^ (Cprinter.string_of_context ctx0) ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
@@ -7328,14 +7328,14 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                   let () = x_tinfo_hp (add_str "fl2_exc" pr_id) f2_exc no_pos in
                   if (CF.overlap_flow_ff fl2 fl1) then (
                     let () = x_tinfo_pp "(overlap_flow):then" no_pos in
-                    
+
                     let err_msg =
                       if (CF.subsume_flow_f !error_flow_int fl1) then
                         ("1.2: " ^ (f1_exc (* exlist # get_closest fl1.CF.formula_flow_interval *)))
                       else
                         match estate.es_final_error with
-                          | Some (s,_,_) -> s
-                          | None -> "1.2b: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types"
+                        | Some (s,_,_) -> s
+                        | None -> "1.2b: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types"
                     in
                     let fe = mk_failure_may err_msg undefined_error in
                     let may_flow_failure =
@@ -7354,21 +7354,21 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                     let () = x_tinfo_pp "not(overlap_flow)_ff:else" no_pos in
                     let err_msg="1.2: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types" in
                     let fe = mk_failure_must err_msg "incompatible types" in
-                      (* if CF.subsume_flow_f !error_flow_int fl1 then *)
-                      (*   (\* let () = print_endline ("\ntodo:" ^ (Cprinter.string_of_flow_formula "" fl1)) in*\) *)
-                      (*   let () = x_tinfo_pp "subsume_flow_ff(!err<:fl1):then" no_pos in *)
-                      (*   let err_name = (f1_exc (\* exlist # get_closest fl1.CF.formula_flow_interval *\)) in *)
-                      (*   let err_msg = "1.1: " ^ err_name in *)
-                      (*   (err_msg, mk_failure_must err_msg err_name) *)
-                      (* else *)
-                      (*   let () = x_tinfo_pp "subsume_flow_ff:else" no_pos in *)
-                      (*   let err_name = "conseq has an incompatible flow type: got "^(f1_exc (\* exlist # get_closest fl1.CF.formula_flow_interval *\))^" expecting error" in *)
-                      (*   let err_msg = "1.1: " ^ err_name in *)
-                      (*   (err_msg, mk_failure_must err_msg undefined_error) in *)
+                    (* if CF.subsume_flow_f !error_flow_int fl1 then *)
+                    (*   (\* let () = print_endline ("\ntodo:" ^ (Cprinter.string_of_flow_formula "" fl1)) in*\) *)
+                    (*   let () = x_tinfo_pp "subsume_flow_ff(!err<:fl1):then" no_pos in *)
+                    (*   let err_name = (f1_exc (\* exlist # get_closest fl1.CF.formula_flow_interval *\)) in *)
+                    (*   let err_msg = "1.1: " ^ err_name in *)
+                    (*   (err_msg, mk_failure_must err_msg err_name) *)
+                    (* else *)
+                    (*   let () = x_tinfo_pp "subsume_flow_ff:else" no_pos in *)
+                    (*   let err_name = "conseq has an incompatible flow type: got "^(f1_exc (\* exlist # get_closest fl1.CF.formula_flow_interval *\))^" expecting error" in *)
+                    (*   let err_msg = "1.1: " ^ err_name in *)
+                    (*   (err_msg, mk_failure_must err_msg undefined_error) in *)
                     let err_f = CF.substitute_flow_into_f !error_flow_int estate.CF.es_formula in
                     (CF.mkFailCtx_in (Basic_Reason ({fc_message =err_msg;
                                                      fc_current_lhs = if !Globals.temp_opt_flag then
-                                                       { estate with CF.es_formula = err_f} else estate;
+                                                         { estate with CF.es_formula = err_f} else estate;
                                                      fc_orig_conseq = struc_formula_of_formula conseq pos;
                                                      fc_prior_steps = estate.es_prior_steps;
                                                      fc_current_conseq = CF.formula_of_heap HFalse pos;
@@ -8625,7 +8625,7 @@ type: bool *
       let is_sat = CF.is_sat_fail cex in
       if not !disable_failure_explaining then
         let new_estate = if (* !Globals.enable_error_as_exc || *)
-                            CF.is_en_error_exc estate then {
+          CF.is_en_error_exc estate then {
             estate with es_formula =
                           match fc_kind with
                           | CF.Failure_Must _ -> if estate.es_infer_obj # is_err_may then
@@ -12493,7 +12493,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
           let () = x_tinfo_hp (add_str "rhs_als" Cprinter.string_of_spec_var_list) rhs_als no_pos in
           let r, relass = 
             if CP.intersect rhs_als estate.es_infer_vars = []
-            && List.exists CP.is_node_typ estate.es_infer_vars then None,[]
+               && List.exists CP.is_node_typ estate.es_infer_vars then None,[]
             else if (!Globals.pa) then None,[]  
             else 
               let lhs_rhs_contra_flag = 
@@ -13309,7 +13309,7 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
       | _ -> report_error no_pos ("Iast.Equiv detected - astsimpl should have eliminated it ")
   in 
   if ((List.length coers1)=0 && (List.length coers2)=0  && (List.length univ_coers)=0 )
-  || not(is_original_match anode ln2)
+     || not(is_original_match anode ln2)
   then (CF.mkFailCtx_in(Trivial_Reason (CF.mk_failure_must "no lemma found in both LHS and RHS nodes (do coercion)" 
                                           Globals.sl_error, estate.es_trace)) (Ctx (convert_to_must_es estate)) (mk_cex true), [])
   else begin 

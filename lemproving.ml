@@ -396,20 +396,20 @@ let print_lemma_entail_result (valid: bool) (ctx: CF.list_context) (num_id: stri
       else if !Globals.enable_error_as_exc then
         let final_error_opt = CF.get_final_error ctx in
         match final_error_opt with
-          | Some (s, _, fk) -> begin
-              match fk with
-                | CF.Failure_May _ -> "(may) cause:"^s
-                | CF.Failure_Must _ -> "(must) cause:"^s
-                | _ -> "INCONSISTENCY : expected failure but success instead"
-            end
-          | None -> "INCONSISTENCY : expected failure but success instead"
+        | Some (s, _, fk) -> begin
+            match fk with
+            | CF.Failure_May _ -> "(may) cause:"^s
+            | CF.Failure_Must _ -> "(must) cause:"^s
+            | _ -> "INCONSISTENCY : expected failure but success instead"
+          end
+        | None -> "INCONSISTENCY : expected failure but success instead"
       else
         match CF.get_must_failure ctx with
-          | Some (s,cex) -> let _, ns = Cformula.cmb_fail_msg ("(must) cause: " ^ s) cex in ns
-          | _ -> (match CF.get_may_failure ctx with
-              | Some (s,cex) -> let _, ns =  Cformula.cmb_fail_msg ("(may) cause: " ^ s) cex in ns
-              | None -> "INCONSISTENCY : expected failure but success instead"
-            )
+        | Some (s,cex) -> let _, ns = Cformula.cmb_fail_msg ("(must) cause: " ^ s) cex in ns
+        | _ -> (match CF.get_may_failure ctx with
+            | Some (s,cex) -> let _, ns =  Cformula.cmb_fail_msg ("(may) cause: " ^ s) cex in ns
+            | None -> "INCONSISTENCY : expected failure but success instead"
+          )
     in if !Globals.lemma_ep then print_string_quiet (num_id ^ ": Fail. " ^ s ^ "\n")
     else ()
 
