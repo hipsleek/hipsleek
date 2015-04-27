@@ -3218,7 +3218,7 @@ let rec translate_back_array_in_one_formula
 
 let translate_back_array_in_one_formula
     (f:formula):formula =
-  if false&&(!Globals.array_translate)
+  if (!Globals.array_translate)
   then translate_back_array_in_one_formula f
   else f
 ;;
