@@ -1470,7 +1470,7 @@ class inf_obj  =
         helper "@flow"          INF_FLOW;
         helper "@leak"          INF_CLASSIC;
         helper "@par"           INF_PAR;
-        helper "@ver_post"      INF_VER_POST;
+        helper "@ver_post"      INF_VER_POST; (* @ato, @arr_to_var *)
         (* let x = Array.fold_right (fun x r -> x || r) arr false in *)
         if arr==[] then failwith  ("empty -infer option :"^s) 
       end

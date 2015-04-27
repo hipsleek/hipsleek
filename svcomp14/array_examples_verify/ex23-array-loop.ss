@@ -1,5 +1,6 @@
 relation P(int a,int b,int r).
 relation P1(int a,int b).
+relation P2(int[] a,int[] b).
 
 int loop(ref int[] a)
 //infer[@post_n]
@@ -23,6 +24,13 @@ int loop(ref int[] a)
   {
     a[5] = a[5] -1;
   }
+/*
+Post Inference result:
+while_16_2$int[]
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume ref [a]
+           emp&0>=(a'[5])&{FLOW,(4,5)=__norm#E}[]
+*/
   return a[5];
 
 }
