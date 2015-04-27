@@ -10083,6 +10083,21 @@ let gen_ror_ctx (m1, n1, e1) (m2, n2, e2) = match m1,m2 with
   | Failure_May _,  _ -> (m1,n1,e1)
   | _, Failure_May _ -> (m2,n2,e2)
 
+(* and subsume_flow_f t1 f :bool = subsume_flow t1 f.formula_flow_interval *)
+
+let rec contains_error_flow f =  match f with
+  | Base b-> subsume_flow b.formula_base_flow.formula_flow_interval !error_flow_int 
+  | Exists b-> subsume_flow b.formula_exists_flow.formula_flow_interval !error_flow_int 
+  | Or b ->  contains_error_flow b.formula_or_f1 && contains_error_flow b.formula_or_f2
+
+let rec contains_error_flow_es e =  contains_error_flow e.es_formula
+
+let rec contains_error_flow_ctx c =  match c with
+  | Ctx es -> contains_error_flow_es es
+  | OCtx (c1,c2) -> contains_error_flow_ctx c1 || contains_error_flow_ctx c2
+
+let rec contains_error_flow_ctx_list cl =  
+  List.exists contains_error_flow_ctx cl
 
 let rec is_error_flow_x f =  match f with
   | Base b-> subsume_flow_f !error_flow_int b.formula_base_flow
@@ -11471,7 +11486,15 @@ let list_context_union_x c1 c2 =
   (*FailCtx (And_Reason (t1,t2))   *)
   | FailCtx t1 ,SuccCtx t2 -> SuccCtx (simplify t2)
   | SuccCtx t1 ,FailCtx t2 -> SuccCtx (simplify t1)
-  | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (simplify_ctx_elim_false_dupl t1 t2)
+  | SuccCtx t1 ,SuccCtx t2 -> 
+    if contains_error_flow_ctx_list t1 then
+      if contains_error_flow_ctx_list t2 
+      then failwith "to implement union_error"
+      else SuccCtx (simplify t2)
+    else
+      if contains_error_flow_ctx_list t2 then SuccCtx (simplify t2)
+      else 
+      SuccCtx (simplify_ctx_elim_false_dupl t1 t2)
 
 let list_context_union c1 c2 =
   let pr = !print_list_context(* _short *) in
