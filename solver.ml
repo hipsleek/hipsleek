@@ -7066,10 +7066,12 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
         (* (!Globals.enable_error_as_exc || CF.is_en_error_exc_ctx ctx0) *)
         (*           && not (CF.is_dis_error_exc_ctx ctx0) *)
       then        
-        if !Globals.temp_opt_flag then
-          let () = x_binfo_pp "temp_opt:convert_maymust" no_pos in
+        if not(!Globals.temp_opt_flag) then
+          (* let () = x_binfo_pp "temp_opt:convert_maymust" no_pos in *)
           CF.convert_maymust_failure_to_value_orig res
-        else res
+        else 
+          let () = x_binfo_pp "temp_opt:no convert_maymust" no_pos in
+          res
       else 
         (* let () = x_binfo_pp "no convert_maymust" no_pos in *)
         res
