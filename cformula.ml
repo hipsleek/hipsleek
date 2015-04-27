@@ -9428,6 +9428,12 @@ let is_dfa_ctx_list lc=
   | FailCtx (_,c,_) -> is_dfa_ctx c
   | SuccCtx cs -> List.exists is_dfa_ctx cs
 
+
+let acc_error_msg final_error_opt add_msg=
+  match final_error_opt with
+    | None -> None
+    | Some (s,c,ft) -> Some ("(" ^ add_msg ^ ") " ^ s,c,ft)
+
 (****************************************************)
 (********************CEX**********************)
 (****************************************************)

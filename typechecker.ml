@@ -1896,6 +1896,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* (\* add branch info *\) *)
                   (*   let () = Debug.print_info ("(Cause of Bind Failure)") *)
                   (*     (Cprinter.string_of_failure_list_failesc_context rs) pos in *)
+                  let to_print = ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^
+                            " cannot be derived from context (") ^ (string_of_loc pos) ^ ")" in
+                   let idf = (fun c -> c) in
+                  CF.transform_list_failesc_context (idf,idf,
+                                                     (fun es -> CF.Ctx{es with CF.es_final_error = CF.acc_error_msg es.CF.es_final_error to_print}))
                   rs
                 else
                   (*delay pritinting to check post*)
@@ -2477,9 +2482,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 (* let () = Debug.info_zprint (lazy (("   caller:" ^ proc0.proc_name))) no_pos in *)
                 let () = update_callee_hpdefs_proc prog.Cast.new_proc_decls proc0.proc_name mn in
                 let idf = (fun c -> c) in
+                let to_print = "Proving precondition in method " ^ proc.proc_name ^ "(" ^ (string_of_loc pos) ^ ") Failed " in
                 CF.transform_list_failesc_context (idf,idf,
                                                    (fun es -> CF.Ctx{es with CF.es_formula = 
-                                                                               Norm.imm_norm_formula prog es.CF.es_formula Solver.unfold_for_abs_merge pos;})) res
+                                                                               Norm.imm_norm_formula prog es.CF.es_formula Solver.unfold_for_abs_merge pos;
+                                                   CF.es_final_error = CF.acc_error_msg es.CF.es_final_error to_print})) res
               in
               (*Exhausively apply normalization lemma after each SCall.
                 Need to devise a smart way since

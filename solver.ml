@@ -7334,7 +7334,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                         ("1.2: " ^ (f1_exc (* exlist # get_closest fl1.CF.formula_flow_interval *)))
                       else
                         match estate.es_final_error with
-                          | Some (s,_,_) -> "1.2a. (ante flow:"^f1_exc^") caused: " ^ s
+                          | Some (s,_,_) -> s
                           | None -> "1.2b: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types"
                     in
                     let fe = mk_failure_may err_msg undefined_error in
