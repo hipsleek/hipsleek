@@ -1369,6 +1369,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 exp_assert_path_id = (pidi,s);
                 exp_assert_type = atype;
                 exp_assert_pos = pos}) ->
+       let assert_assume_msg = match c_assert_opt with
+         | None -> ""
+         | Some f -> (
+               match c_assume_opt with
+                 | None -> !CF.print_struc_formula f
+                 | Some post -> !CF.print_struc_formula (CF.add_post (CF.mkE_ensures_f post (CF. mkTrueFlow ()) no_pos) f)
+           )
+       in
       let assert_op ()=
         let () = if !print_proof && (match c_assert_opt with | None -> false | Some _ -> true) then
             begin
@@ -1400,7 +1408,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       c1a
                     | Some _ -> c1
                   in
-                  let to_print = "Proving assert/assume in method " ^ proc.proc_name ^ " for spec: \n" ^ !log_spec ^ "\n" in
+                  let to_print = "Proving assert/assume in method " ^ proc.proc_name ^ " for spec: \n" ^ assert_assume_msg ^ "\n" in
                   x_binfo_pp (*print_info "assert"*) to_print pos;
                   (* let () = Log.update_sleek_proving_kind Log.ASSERTION in *)
                   let rs,prf = x_add heap_entail_struc_list_failesc_context_init 4 prog false false ts c1 None None None pos None in

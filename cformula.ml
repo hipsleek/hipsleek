@@ -444,6 +444,15 @@ let mkE_ensures_True flowt pos = EAssume {
     formula_assume_vars = [];
   }
 
+let mkE_ensures_f f flowt pos = EAssume {
+    formula_assume_simpl = f;
+    formula_assume_struc = mkETrue flowt pos;
+    formula_assume_lbl = (0,"no label");
+    formula_assume_ensures_type = None;
+    formula_assume_vars = [];
+  }
+
+
 let mkETrue_ensures_True flowt pos = EBase({
     formula_struc_explicit_inst = [];
     formula_struc_implicit_inst = [];
@@ -14338,17 +14347,30 @@ let add_to_estate_with_steps (es:entail_state) (ss:steps) =
   let pr = !print_entail_state_short in
   Debug.no_1 "add_to_estate_with_steps" pr pr
     (fun _ -> add_to_estate_with_steps es ss) es
-(*let rec add_post post f = match f with*)
+
+(* let rec add_post post f = match f with *)
 (*  | EBase b -> *)
 (*      let fec = match b.formula_struc_continuation with *)
-(* 				| Some b-> add_post post b*)
-(* 				| _ -> let (svs,pf,(i_lbl,s_lbl)) = post in*)
+(* 				| Some b-> add_post post b *)
+(* 				| _ -> let (svs,pf,(i_lbl,s_lbl)) = post in *)
 (*       EAssume (svs,pf,(fresh_formula_label s_lbl),None) in *)
-(*     EBase{b with formula_struc_continuation = Some fec}*)
-(*   | ECase b -> ECase {b with formula_case_branches  = List.map (fun (c1,c2)-> (c1,(add_post post c2))) b.formula_case_branches;}*)
-(*   | EAssume _ -> Err.report_error {Err.error_loc = no_pos; Err.error_text = "add post found an existing post\n"}*)
-(*   | EInfer b ->  EInfer {b with formula_inf_continuation = add_post post b.formula_inf_continuation}*)
-(*   | EList b -> EList (map_l_snd (add_post post) b)*)
+(*     EBase{b with formula_struc_continuation = Some fec} *)
+(*   | ECase b -> ECase {b with formula_case_branches  = List.map (fun (c1,c2)-> (c1,(add_post post c2))) b.formula_case_branches;} *)
+(*   | EAssume _ -> Err.report_error {Err.error_loc = no_pos; Err.error_text = "add post found an existing post\n"} *)
+(*   | EInfer b ->  EInfer {b with formula_inf_continuation = add_post post b.formula_inf_continuation} *)
+(*   | EList b -> EList (map_l_snd (add_post post) b) *)
+
+let rec add_post post f = match f with
+ | EBase b ->
+     let fec = match b.formula_struc_continuation with
+				| Some b-> add_post post b
+				| _ -> post
+     in
+     EBase{b with formula_struc_continuation = Some fec}
+  | ECase b -> ECase {b with formula_case_branches  = List.map (fun (c1,c2)-> (c1,(add_post post c2))) b.formula_case_branches;}
+  | EAssume _ -> Err.report_error {Err.error_loc = no_pos; Err.error_text = "add post found an existing post\n"}
+  | EInfer b ->  EInfer {b with formula_inf_continuation = add_post post b.formula_inf_continuation}
+  | EList b -> EList (map_l_snd (add_post post) b)
 
 (* TODO *)
 let rec string_of_list_of_pair_formula ls =
