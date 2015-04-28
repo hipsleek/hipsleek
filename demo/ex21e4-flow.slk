@@ -21,3 +21,4 @@ print residue.
 checkentail x=1 & flow __flow |-  x>4 & flow __norm.
 print residue.
 // wrong - should fail
+expect Fail_Must.

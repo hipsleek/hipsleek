@@ -444,6 +444,15 @@ let mkE_ensures_True flowt pos = EAssume {
     formula_assume_vars = [];
   }
 
+let mkE_ensures_f f flowt pos = EAssume {
+    formula_assume_simpl = f;
+    formula_assume_struc = mkETrue flowt pos;
+    formula_assume_lbl = (0,"no label");
+    formula_assume_ensures_type = None;
+    formula_assume_vars = [];
+  }
+
+
 let mkETrue_ensures_True flowt pos = EBase({
     formula_struc_explicit_inst = [];
     formula_struc_implicit_inst = [];
@@ -10614,6 +10623,7 @@ let convert_may_failure_4_fail_type_new  (s:string) (ft:fail_type) cex : context
   | Some (ctx, msg) -> Some (update_err ctx (s^msg,ft,  Failure_May msg))
   | _ -> None
 
+
 (* TRUNG WHY: purpose when converting a list_context from FailCtx type to SuccCtx type? *)
 let convert_maymust_failure_to_value_orig (l:list_context) : list_context =
   match l with 
@@ -10626,13 +10636,18 @@ let convert_maymust_failure_to_value_orig (l:list_context) : list_context =
       (*   | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ]  *)
       (*   | _ ->  l) *)
       begin
-        match (x_add convert_must_failure_4_fail_type_new "" ft cex) with
-        | Some ctx -> SuccCtx [ctx]
-        | None -> begin
-            match (x_add convert_may_failure_4_fail_type_new "" ft cex) with
-            | Some ctx -> SuccCtx [ctx]
-            | None -> l
-          end
+        let () = Debug.ninfo_hprint (add_str "c" !print_context_short) c no_pos in
+        match get_final_error_ctx c with
+          | Some _ -> SuccCtx [c]
+          | None -> (
+                match (x_add convert_must_failure_4_fail_type_new "" ft cex) with
+                  | Some ctx -> SuccCtx [ctx]
+                  | None -> begin
+                      match (x_add convert_may_failure_4_fail_type_new "" ft cex) with
+                        | Some ctx -> SuccCtx [ctx]
+                        | None -> l
+                    end
+            )
       end
   | SuccCtx _ -> l
 
@@ -14338,17 +14353,30 @@ let add_to_estate_with_steps (es:entail_state) (ss:steps) =
   let pr = !print_entail_state_short in
   Debug.no_1 "add_to_estate_with_steps" pr pr
     (fun _ -> add_to_estate_with_steps es ss) es
-(*let rec add_post post f = match f with*)
+
+(* let rec add_post post f = match f with *)
 (*  | EBase b -> *)
 (*      let fec = match b.formula_struc_continuation with *)
-(* 				| Some b-> add_post post b*)
-(* 				| _ -> let (svs,pf,(i_lbl,s_lbl)) = post in*)
+(* 				| Some b-> add_post post b *)
+(* 				| _ -> let (svs,pf,(i_lbl,s_lbl)) = post in *)
 (*       EAssume (svs,pf,(fresh_formula_label s_lbl),None) in *)
-(*     EBase{b with formula_struc_continuation = Some fec}*)
-(*   | ECase b -> ECase {b with formula_case_branches  = List.map (fun (c1,c2)-> (c1,(add_post post c2))) b.formula_case_branches;}*)
-(*   | EAssume _ -> Err.report_error {Err.error_loc = no_pos; Err.error_text = "add post found an existing post\n"}*)
-(*   | EInfer b ->  EInfer {b with formula_inf_continuation = add_post post b.formula_inf_continuation}*)
-(*   | EList b -> EList (map_l_snd (add_post post) b)*)
+(*     EBase{b with formula_struc_continuation = Some fec} *)
+(*   | ECase b -> ECase {b with formula_case_branches  = List.map (fun (c1,c2)-> (c1,(add_post post c2))) b.formula_case_branches;} *)
+(*   | EAssume _ -> Err.report_error {Err.error_loc = no_pos; Err.error_text = "add post found an existing post\n"} *)
+(*   | EInfer b ->  EInfer {b with formula_inf_continuation = add_post post b.formula_inf_continuation} *)
+(*   | EList b -> EList (map_l_snd (add_post post) b) *)
+
+let rec add_post post f = match f with
+ | EBase b ->
+     let fec = match b.formula_struc_continuation with
+				| Some b-> add_post post b
+				| _ -> post
+     in
+     EBase{b with formula_struc_continuation = Some fec}
+  | ECase b -> ECase {b with formula_case_branches  = List.map (fun (c1,c2)-> (c1,(add_post post c2))) b.formula_case_branches;}
+  | EAssume _ -> Err.report_error {Err.error_loc = no_pos; Err.error_text = "add post found an existing post\n"}
+  | EInfer b ->  EInfer {b with formula_inf_continuation = add_post post b.formula_inf_continuation}
+  | EList b -> EList (map_l_snd (add_post post) b)
 
 (* TODO *)
 let rec string_of_list_of_pair_formula ls =
