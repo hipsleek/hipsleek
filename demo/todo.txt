@@ -1009,6 +1009,38 @@ Post condition cannot be derived:
 ==========================================================================
 ==========================================================================
 ==========================================================================
+# ex21a52.slk
+
+3 different methods to accumulate error messages!
+
+!!!-dre build_and_failures\|add_error\|acc_err\|repl_msg
+
+(==solver.ml#8633==)
+build_and_failures#1@1
+build_and_failures#1 inp1 :([],[( x=0 & x'=x, 5<=x')],[])
+build_and_failures#1@1 EXIT: failctx
+         fe_kind: MUST
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message:  x'=0 |-  5<=x'. LOCS:[3;2;6] (must-bug)
+                   fc_current_lhs_flow: {FLOW,(6,10)=__Error#E}}
+[[empty]]false
+
+assert/assume:ex21a52-assert-assume.ss:6: 4:  : failed (must)
+
+
+(==solver.ml#2851==)
+acc_error_msg@2
+acc_error_msg inp1 :[ x'=0 |-  5<=x'. LOCS:[3;2;6] (must-bug)]
+acc_error_msg inp2 :Proving assert/assume in method foo$int (1 File "ex21a52-assert-assume.ss",Line:6,Col:4) Failed.
+acc_error_msg@2 EXIT:[(Proving assert/assume in method foo$int (1 File "ex21a52-assert-assume.ss",Line:6,Col:4) Failed.)  x'=0 |-  5<=x'. LOCS:[3;2;6] (must-bug)]
+
+(==solver.ml#7369==)
+repl_msg_final_error@3
+repl_msg_final_error inp1 :1.2c: ante flow:__Error#E conseq flow: __norm#E are incompatible flow types
+repl_msg_final_error inp2 :[(Proving assert/assume in method foo$int (1 File "ex21a52-assert-assume.ss",Line:6,Col:4) Failed.)  x'=0 |-  5<=x'. LOCS:[3;2;6] (must-bug)]
+repl_msg_final_error@3 EXIT:(Proving assert/assume in method foo$int (1 File "ex21a52-assert-assume.ss",Line:6,Col:4) Failed.)  x'=0 |-  5<=x'. LOCS:[3;2;6] (must-bug)
+
 ==========================================================================
 ==========================================================================
 ==========================================================================

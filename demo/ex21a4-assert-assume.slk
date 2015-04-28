@@ -25,3 +25,4 @@ print residue.
 infer [@err_must] x<0 |- x>5.
 print residue.
 // expect MustError
+
