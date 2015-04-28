@@ -595,7 +595,7 @@ let is_sat (pe : formula) sat_no : bool =
       failwith s
     end
 
-let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
+let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
   (*print_endline "LOCLE: is_valid";*)
   begin
     (* let pe0 = drop_varperm_formula pe in *)
@@ -655,6 +655,15 @@ let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
     end
   end
 
+let is_valid_ops p e pe tm =
+  try
+    is_valid_ops p e pe tm
+  with _ -> 
+    begin
+      let () = x_binfo_pp "WARNING: exception from Omega.is_valid" no_pos in
+      false
+    end
+
 (* let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool = *)
 (* 	Debug.no_1 "Omega:is_valid_ops " !print_formula string_of_bool (fun _ -> is_valid_ops pr_weak pr_strong pe timeout) pe *)
 (* (\* let is_valid (pe : formula) timeout: bool = *\) *)
@@ -663,7 +672,7 @@ let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
 
 let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
   let pf = !print_pure in
-  Debug.no_1 "Omega.is_valid" pf (string_of_bool) (fun _ -> is_valid_ops_x pr_weak pr_strong pe timeout) pe
+  Debug.no_1 "Omega.is_valid" pf (string_of_bool) (fun _ -> is_valid_ops pr_weak pr_strong pe timeout) pe
 
 let is_valid_with_check (pe : formula) timeout : bool option =
   do_with_check "" (fun x -> is_valid_ops (fun _ -> None) (fun _ -> None) x timeout) pe
