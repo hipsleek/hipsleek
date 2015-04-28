@@ -191,7 +191,7 @@ let build_and_failures_x (failure_code:string) gfk(failure_name:string) ((contra
         | _ -> None
       )
       in
-      FailCtx (ft, Ctx (add_opt_to_estate final_error es),cex)
+      FailCtx (ft, Ctx (x_add add_opt_to_estate final_error es),cex)
     | None -> (*report_error no_pos "Solver.build_and_failures: should be a failure here"*)
       let msg =  "use different strategies in proof searching (slicing)" in
       let fe =  mk_failure_may msg failure_name in

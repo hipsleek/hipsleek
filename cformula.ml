@@ -9445,9 +9445,12 @@ let acc_error_msg final_error_opt add_msg =
   let rec aux ferr = 
     match ferr with
       | [] -> []
-      | (s,c,ft)::rest -> (("(" ^ add_msg ^ ") " ^ s),c,ft)::(aux rest)
+      | (s,c,ft)::rest -> ((add_msg ^";\n"^s),c,ft)::(aux rest)
   in aux final_error_opt
 
+let acc_error_msg final_error_opt add_msg =
+  let pr1 = pr_list (fun (s,_,_) -> s) in
+  Debug.no_2 "acc_error_msg" pr1 pr_id pr1 acc_error_msg final_error_opt add_msg
 (****************************************************)
 (********************CEX**********************)
 (****************************************************)
@@ -10612,6 +10615,21 @@ let convert_may_failure_4_fail_type  (s:string) (ft:fail_type) cex : context opt
 let add_err_to_estate err es =
   {es with es_final_error = err::es.es_final_error}
 
+let add_err_to_estate err es =
+  let pr1 (m,_,_) = m in
+  let pr2 e = (pr_list_brk "[" "]" pr1) e.es_final_error in
+  Debug.no_2 "add_err_to_estate" pr1 pr2 pr2 add_err_to_estate err es
+
+let repl_msg_final_error msg es =
+  match (List.rev es.es_final_error) with
+    | (s,_,_)::_ -> msg^";\n"^s
+    | [] -> msg
+
+let repl_msg_final_error msg es =
+  let pr1 (m,_,_) = m in
+  let pr2 e = (pr_list_brk "[" "]" pr1) e.es_final_error in
+  Debug.no_2 "repl_msg_final_error" pr_id pr2 pr_id repl_msg_final_error msg es
+
 let add_opt_to_estate err es =
   match err with
     | None -> es
@@ -10619,7 +10637,7 @@ let add_opt_to_estate err es =
 
 let convert_must_failure_4_fail_type_new  (s:string) (ft:fail_type) cex : context option =
   let rec update_err ctx ((s1,ft,fk) as err) = match ctx with
-    | Ctx es -> Ctx (add_err_to_estate err es)
+    | Ctx es -> Ctx (x_add add_err_to_estate err es)
     | OCtx (es1, es2) -> OCtx (update_err es1 err, update_err es2 err)
   in
   match (get_must_ctx_msg_ft ft) with
@@ -10633,7 +10651,7 @@ let convert_must_failure_4_fail_type_new (s:string) (ft:fail_type) cex : context
 
 let convert_may_failure_4_fail_type_new  (s:string) (ft:fail_type) cex : context option =
   let rec update_err ctx ((s1,ft,fk) as err) = match ctx with
-    | Ctx es -> Ctx (add_err_to_estate err es)
+    | Ctx es -> Ctx (x_add add_err_to_estate err es)
     | OCtx (es1, es2) -> OCtx (update_err es1 err, update_err es2 err)
   in
   match (get_may_ctx_msg_ft ft)with
