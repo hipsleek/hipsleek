@@ -1,4 +1,4 @@
-infer [a] i=3  |- a[i]>a[i-1].
+infer [a,@arrvar] i=3  |- a[i]>a[i-1].
 print residue.
 
 /*

@@ -1567,7 +1567,7 @@ and infer_pure_m unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig lhs_x
     estate lhs_xpure_orig lhs_xpure0 rhs_xpure_orig iv_orig
 
 let infer_pure_m unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_orig rhs_xpure_orig iv_orig pos =
-  let (nes,nc,nlst) = infer_pure_m  unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_orig rhs_xpure_orig iv_orig pos in
+  let (nes,nc,nlst) = x_add infer_pure_m  unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_orig rhs_xpure_orig iv_orig pos in
   match nc with
   | Some f ->
     let nf = Trans_arr.translate_back_array_in_one_formula f in
@@ -1643,7 +1643,7 @@ let infer_pure_top_level_aux estate unk_heaps lhs_heap_xpure1
     ante1 ante0 m_lhs split_conseq pos =
   let () = DD.ninfo_hprint (add_str "ante1 1" !print_mix_formula) ante1 pos  in
   let () = DD.ninfo_hprint (add_str "m_lhs 1" !print_mix_formula) m_lhs pos  in
-  let r1,r2,r3 = infer_pure_m 1 unk_heaps estate lhs_heap_xpure1 ante1 ante0 m_lhs (*m_lhs=lhs_wo_heap*) split_conseq pos in
+  let r1,r2,r3 = x_add infer_pure_m 1 unk_heaps estate lhs_heap_xpure1 ante1 ante0 m_lhs (*m_lhs=lhs_wo_heap*) split_conseq pos in
   let res = (match r1,r3 with
       | None,[] -> None,r2,[],[],false,ante1
       | None,[(h1,h2,h3)] -> None,r2,h2,[h1],h3,ante1
@@ -1680,7 +1680,7 @@ let infer_pure_top_level estate unk_heaps lhs_heap_xpure1
       let res = List.map (fun lhs_xp -> 
           (* TODO: lhs_wo_heap *)
           let lhs_wo_heap = lhs_xp in
-          let r1,r2,r3 = infer_pure_m 2 unk_heaps estate lhs_heap_xpure1 lhs_xp lhs_xp lhs_wo_heap split_conseq pos in
+          let r1,r2,r3 = x_add infer_pure_m 2 unk_heaps estate lhs_heap_xpure1 lhs_xp lhs_xp lhs_wo_heap split_conseq pos in
           let estate_f = 
             {estate with 
              es_formula = (match estate.es_formula with

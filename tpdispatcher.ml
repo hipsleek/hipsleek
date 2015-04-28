@@ -2086,11 +2086,12 @@ let simplify (f : CP.formula) : CP.formula =
 let om_pairwisecheck f =
   wrap_pre_post norm_pure_input norm_pure_result
     (* wrap_pre_post cnv_ptr_to_int norm_pure_result *)
-    Omega.pairwisecheck f 
+    (x_add_1 Omega.pairwisecheck) f
 
 (* ZH: Take out the array part *)
 let om_pairwisecheck f =
-  Trans_arr.split_and_combine om_pairwisecheck (fun f-> not (Trans_arr.contain_array f)) f
+  (* let () = x_binfo_pp "take out array part" no_pos in *)
+  Trans_arr.split_and_combine (x_add_1 om_pairwisecheck) (fun f-> not (Trans_arr.contain_array f)) f
 ;;
 
 let om_pairwisecheck f =
@@ -2137,15 +2138,15 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
     | Mona 
     | OM ->
       if (is_bag_constraint f) then (Mona.pairwisecheck f)
-      else (om_pairwisecheck f)
+      else (x_add_1 om_pairwisecheck f)
     | OI ->
       if (is_bag_constraint f) then (Isabelle.pairwisecheck f)
-      else (om_pairwisecheck f)
+      else (x_add_1 om_pairwisecheck f)
     | SetMONA -> Mona.pairwisecheck f
     | CM ->
       if is_bag_constraint f then Mona.pairwisecheck f
-      else om_pairwisecheck f
-    | Z3 -> (* Smtsolver.pairwisecheck f *) om_pairwisecheck f
+      else x_add_1 om_pairwisecheck f
+    | Z3 -> (* Smtsolver.pairwisecheck f *) x_add_1 om_pairwisecheck f
     | Z3N -> Z3.pairwisecheck f
     | Redlog -> Redlog.pairwisecheck f
     | OCRed -> Redlog.pairwisecheck f
@@ -2159,7 +2160,7 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
     | PARAHIP -> (*TOCHECK: what is it for? *)
       if is_bag_constraint f then Mona.pairwisecheck f
       else Redlog.pairwisecheck f
-    | _ -> (om_pairwisecheck f) in
+    | _ -> (x_add_1 om_pairwisecheck f) in
   let logger fr tt timeout = 
     let tp = (string_of_prover !pure_tp) in
     let _ = add_proof_logging timeout !cache_status simpl_no simpl_num tp cmd tt 
@@ -2384,11 +2385,11 @@ let hull (f : CP.formula) : CP.formula =
 let om_pairwisecheck f =
   wrap_pre_post norm_pure_input norm_pure_result
     (* wrap_pre_post cnv_ptr_to_int norm_pure_result *)
-    Omega.pairwisecheck f 
+    (x_add_1 Omega.pairwisecheck) f 
 
 let om_pairwisecheck f =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "om_pairwisecheck" pr pr om_pairwisecheck f
+  Debug.no_1 "om_pairwisecheck(2)" pr pr om_pairwisecheck f
 
 let tp_pairwisecheck2_x (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
   if not !tp_batch_mode then Omega.start ();
@@ -2430,14 +2431,14 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
     | Mona 
     | OM ->
       if (is_bag_constraint f) then (Mona.pairwisecheck f)
-      else (om_pairwisecheck f)
+      else (x_add_1 om_pairwisecheck f)
     | OI ->
       if (is_bag_constraint f) then (Isabelle.pairwisecheck f)
-      else (om_pairwisecheck f)
+      else (x_add_1 om_pairwisecheck f)
     | SetMONA -> Mona.pairwisecheck f
     | CM ->
       if is_bag_constraint f then Mona.pairwisecheck f
-      else om_pairwisecheck f
+      else x_add_1 om_pairwisecheck f
     | Z3 -> (* Smtsolver.pairwisecheck f *) om_pairwisecheck f
     | Z3N -> Z3.pairwisecheck f
     | Redlog -> Redlog.pairwisecheck f
@@ -2452,7 +2453,7 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
     | PARAHIP -> (*TOCHECK: what is it for? *)
       if is_bag_constraint f then Mona.pairwisecheck f
       else Redlog.pairwisecheck f
-    | _ -> (om_pairwisecheck f) in
+    | _ -> (x_add_1 om_pairwisecheck f) in
   (* let fn f = wrap_pre_post norm_pure_input norm_pure_result fn f in *)
   let logger fr tt timeout = 
     let tp = (string_of_prover !pure_tp) in

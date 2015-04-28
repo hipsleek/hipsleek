@@ -11039,7 +11039,7 @@ let add_infer_pure_to_estate cp es =
 let add_infer_rel_to_ctx cp ctx =
   let rec helper ctx =
     match ctx with
-    | Ctx es -> Ctx (add_infer_rel_to_estate cp es)
+    | Ctx es -> Ctx (x_add add_infer_rel_to_estate cp es)
     | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
   in helper ctx
 
