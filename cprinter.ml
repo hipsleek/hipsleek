@@ -3583,7 +3583,8 @@ let pr_estate ?(nshort=true) (es : entail_state) =
   pr_wrap_test "es_conc_err: " Gen.is_empty (pr_seq "" (fun (msg, pos) -> fmt_string (msg ^ ":" ^ (string_of_pos pos)))) es.es_conc_err;
   pr_wrap_test "es_must_error: "  Gen.is_None (pr_opt (fun (s,_,cex) -> fmt_string (s ^";" ^ (string_of_failure_cex cex) ))) (es.es_must_error); 
   pr_wrap_test "es_may_error: "  Gen.is_None (pr_opt (fun (s,_,cex) -> fmt_string (s ^";" ^ (string_of_failure_cex cex) ))) (es.es_may_error); 
-  pr_wrap_test "es_final_error:" Gen.is_None (fun x -> match x with Some (c,_,_) -> fmt_string c | None -> ()) es.es_final_error;
+  pr_wrap_test "es_final_error:" Gen.is_empty 
+      (pr_seq "" (fun (c,_,_) -> fmt_string c)) es.es_final_error;
   if nshort then
     begin
       pr_wrap_test "es_pure: " MCP.isConstMTrue pr_mix_formula es.es_pure;
@@ -3761,7 +3762,9 @@ let pr_context_short (ctx : context) =
       (* prtt_pr_formula_wrap f1 ; *)
       (* pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es_infer_hp_rel; *)
       (* end *)
-      pr_wrap_test "es_final_error:" (fun x -> x==None) (fun x -> match x with Some (c,_,_) -> fmt_string c | None -> ()) exc;
+      pr_wrap_test "es_final_error:" Gen.is_empty 
+          (pr_seq "" (fun (c,_,_) -> fmt_string c)) exc;
+      (* pr_wrap_test "es_final_error:" (fun x -> x==None) (fun x -> match x with Some (c,_,_) -> fmt_string c | None -> ()) exc; *)
       fmt_string "\n";
       fmt_close_box();
     end
@@ -3922,6 +3925,9 @@ let pr_entail_state_short e =
   pr_wrap_opt "es_var_measures 3: " pr_var_measures e.es_var_measures;
   (* fmt_cut(); *)
   fmt_close_box()
+
+(* let pr_entail_state_short e = *)
+(*   pr_estate ~nshort:false e *)
 
 let pr_list_context (ctx:list_context) =
   match ctx with

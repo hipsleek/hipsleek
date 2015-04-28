@@ -7343,9 +7343,9 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                       if (CF.subsume_flow_f !error_flow_int fl1) then
                         ("1.2: " ^ (f1_exc (* exlist # get_closest fl1.CF.formula_flow_interval *)))
                       else
-                        match estate.es_final_error with
-                        | Some (s,_,_) -> s
-                        | None -> "1.2b: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types"
+                        match (List.rev estate.es_final_error) with
+                        | (s,_,_)::_ -> s
+                        | [] -> "1.2b: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types"
                     in
                     let fe = mk_failure_may err_msg undefined_error in
                     let may_flow_failure =
@@ -12533,7 +12533,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                                 let must_estate = {estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.es_formula} in
                                 let ft = (Basic_Reason (mkFailContext msg must_estate (Base rhs_b) None pos,
                                 CF.mk_failure_must (msg) sl_error, estate.es_trace)) in
-                                let must_estate = {must_estate with es_final_error = Some (msg, ft, CF.Failure_Must msg)} in
+                                let must_estate = add_err_to_estate (msg, ft, CF.Failure_Must msg) must_estate in
                               (CF.mkFailCtx_in ft (* (Basic_Reason (mkFailContext msg must_estate (Base rhs_b) None pos, *)
                                                (*                CF.mk_failure_must (msg) sl_error, estate.es_trace)) *) (Ctx (convert_to_must_es must_estate)) (mk_cex true), NoAlias)
                             else
@@ -12541,7 +12541,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                               let may_estate = {estate with es_formula = CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula} in
                               let ft = (Basic_Reason (mkFailContext msg may_estate (Base rhs_b) None pos,
                                                               CF.mk_failure_may (msg) sl_error, estate.es_trace)) in
-                               let may_estate = {may_estate with es_final_error = Some (msg, ft, CF.Failure_May msg)} in
+                              let may_estate = add_err_to_estate (msg, ft, CF.Failure_May msg) may_estate in
+                               (* let may_estate = {may_estate with es_final_error = Some (msg, ft, CF.Failure_May msg)} in *)
                               (CF.mkFailCtx_in ft (* (Basic_Reason (mkFailContext msg may_estate (Base rhs_b) None pos, *)
                                                (*                CF.mk_failure_may (msg) sl_error, estate.es_trace)) *) (Ctx (convert_to_may_es may_estate)) (mk_cex false), NoAlias)
                           (* TODO:WN:HVar *)

@@ -9234,7 +9234,8 @@ type entail_state = {
   (* es_imm_pure_stk : MCP.mix_formula list; *)
   es_must_error : (string * fail_type * failure_cex) option;
   es_may_error : (string * fail_type * failure_cex) option;
-  es_final_error: (string * fail_type * failure_kind) option;
+  (* accumulated erors *)
+  es_final_error: (string * fail_type * failure_kind) list; 
   (* es_must_error : string option *)
   es_trace : formula_trace; (*LDK: to keep track of past operations: match,fold...*)
   (*for cyclic proof*)
@@ -9440,10 +9441,12 @@ let is_dfa_ctx_list lc=
   | SuccCtx cs -> List.exists is_dfa_ctx cs
 
 
-let acc_error_msg final_error_opt add_msg=
-  match final_error_opt with
-  | None -> None
-  | Some (s,c,ft) -> Some ("(" ^ add_msg ^ ") " ^ s,c,ft)
+let acc_error_msg final_error_opt add_msg =
+  let rec aux ferr = 
+    match ferr with
+      | [] -> []
+      | (s,c,ft)::rest -> (("(" ^ add_msg ^ ") " ^ s),c,ft)::(aux rest)
+  in aux final_error_opt
 
 (****************************************************)
 (********************CEX**********************)
@@ -9656,7 +9659,7 @@ let empty_es flowt grp_lbl pos =
     (* es_imm_pure_stk = []; *)
     es_must_error = None;
     es_may_error = None;
-    es_final_error = None;
+    es_final_error = [];
     es_trace = [];
     es_proof_traces = [];
     es_is_normalizing = false;
@@ -10187,9 +10190,9 @@ let get_must_error_from_ctx cs =
       | None ->  begin if is_en_error_exc es
       (* !Globals.enable_error_as_exc || es.es_infer_obj # is_err_must || es.es_infer_obj # is_err_may  *)
           then
-            match es.es_final_error with
-            | Some (s1, ft, fk) -> Some (s1, mk_cex true)
-            | None -> None
+            match List.rev es.es_final_error with
+            | (s1, ft, fk)::_ -> Some (s1, mk_cex true)
+            | [] -> None
           else None
         end
       | Some (msg,_,cex) -> Some (msg,cex))
@@ -10211,7 +10214,7 @@ let get_may_error_from_ctx cs =
 
 let rec is_ctx_error ctx=
   match ctx with
-  | Ctx es -> not (es.es_final_error = None) || x_add_1 is_error_flow es.es_formula || is_mayerror_flow es.es_formula
+  | Ctx es -> not (es.es_final_error == []) || x_add_1 is_error_flow es.es_formula || is_mayerror_flow es.es_formula
   | OCtx (c1, c2) -> is_ctx_error c1 || is_ctx_error c2
 
 let isFailCtx_gen cl =
@@ -10221,9 +10224,14 @@ let isFailCtx_gen cl =
       (* ((get_must_error_from_ctx cs) !=None) || ((get_may_error_from_ctx cs) !=None) *)
       List.exists (fun ctx -> is_ctx_error ctx) cs
 
+let lst_to_opt lst =
+  match List.rev lst with
+    | [] -> None
+    | x::_ -> Some x
+
 let rec get_final_error_ctx ctx=
   match ctx with
-  | Ctx es -> es.es_final_error
+  | Ctx es -> lst_to_opt es.es_final_error
   | OCtx (c1, c2) -> begin
       let e1 = get_final_error_ctx c1 in
       if e1 = None then
@@ -10601,11 +10609,18 @@ let convert_may_failure_4_fail_type  (s:string) (ft:fail_type) cex : context opt
   | Some (es,msg) -> Some (Ctx {es with es_may_error = Some (s^msg,ft,cex) } ) 
   | _ -> None
 
+let add_err_to_estate err es =
+  {es with es_final_error = err::es.es_final_error}
+
+let add_opt_to_estate err es =
+  match err with
+    | None -> es
+    | Some e -> add_err_to_estate e es
 
 let convert_must_failure_4_fail_type_new  (s:string) (ft:fail_type) cex : context option =
-  let rec update_err ctx (s1,ft, fk)= match ctx with
-    | Ctx es -> Ctx {es with es_final_error = Some (s1, ft, fk)}
-    | OCtx (es1, es2) -> OCtx (update_err es1 (s1, ft, fk), update_err es2 (s1, ft, fk))
+  let rec update_err ctx ((s1,ft,fk) as err) = match ctx with
+    | Ctx es -> Ctx (add_err_to_estate err es)
+    | OCtx (es1, es2) -> OCtx (update_err es1 err, update_err es2 err)
   in
   match (get_must_ctx_msg_ft ft) with
   | Some (ctx, msg) -> Some (update_err ctx (s^msg, ft, Failure_Must msg))
@@ -10617,9 +10632,9 @@ let convert_must_failure_4_fail_type_new (s:string) (ft:fail_type) cex : context
     (fun _ _ -> convert_must_failure_4_fail_type_new s ft cex) s ft
 
 let convert_may_failure_4_fail_type_new  (s:string) (ft:fail_type) cex : context option =
-  let rec update_err ctx (s1,ft,fk)= match ctx with
-    | Ctx es -> Ctx {es with es_final_error = Some (s1, ft, fk)}
-    | OCtx (es1, es2) -> OCtx (update_err es1 (s1,ft, fk), update_err es2 (s1,ft,fk))
+  let rec update_err ctx ((s1,ft,fk) as err) = match ctx with
+    | Ctx es -> Ctx (add_err_to_estate err es)
+    | OCtx (es1, es2) -> OCtx (update_err es1 err, update_err es2 err)
   in
   match (get_may_ctx_msg_ft ft)with
   | Some (ctx, msg) -> Some (update_err ctx (s^msg,ft,  Failure_May msg))
