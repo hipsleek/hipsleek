@@ -3578,15 +3578,15 @@ let string_of_failure_cex cex=  poly_string_of_pr pr_failure_cex cex
 
 let pr_estate ?(nshort=true) (es : entail_state) =
   fmt_open_vbox 0;
-  pr_vwrap_nocut "es_formula: " pr_formula  es.es_formula; 
+  pr_vwrap_nocut (* "es_formula: " *) "" pr_formula  es.es_formula; 
   pr_wrap_test "es_ho_vars_map: " Gen.is_empty  (pr_seq "" (pr_map_aux pr_spec_var pr_formula)) (es.es_ho_vars_map);
   pr_wrap_test "es_conc_err: " Gen.is_empty (pr_seq "" (fun (msg, pos) -> fmt_string (msg ^ ":" ^ (string_of_pos pos)))) es.es_conc_err;
-  pr_wrap_test "es_must_error: "  Gen.is_None (pr_opt (fun (s,_,cex) -> fmt_string (s ^";" ^ (string_of_failure_cex cex) ))) (es.es_must_error); 
-  pr_wrap_test "es_may_error: "  Gen.is_None (pr_opt (fun (s,_,cex) -> fmt_string (s ^";" ^ (string_of_failure_cex cex) ))) (es.es_may_error); 
   pr_wrap_test "es_final_error:" Gen.is_empty 
       (pr_seq "" (fun (c,_,_) -> fmt_string c)) es.es_final_error;
   if nshort then
     begin
+      pr_wrap_test "es_must_error: "  Gen.is_None (pr_opt (fun (s,_,cex) -> fmt_string (s ^";" ^ (string_of_failure_cex cex) ))) (es.es_must_error); 
+      pr_wrap_test "es_may_error: "  Gen.is_None (pr_opt (fun (s,_,cex) -> fmt_string (s ^";" ^ (string_of_failure_cex cex) ))) (es.es_may_error); 
       pr_wrap_test "es_pure: " MCP.isConstMTrue pr_mix_formula es.es_pure;
       pr_wrap_test "es_orig_ante: " Gen.is_None (pr_opt pr_formula) es.es_orig_ante; 
       (*pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq;  *)
@@ -3874,7 +3874,8 @@ let pr_formula_vperm_wrap t =
 let pr_context_list_short (ctx : context list) = 
   let rec f xs = match xs with
     (*    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel@e.es_infer_vars_templ,e.es_infer_templ_assume,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,e.es_var_zero_perm,e.es_final_error)]*)
-    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel@e.es_infer_vars_templ,e.es_infer_templ_assume,e.es_infer_term_rel,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,e.es_var_zero_perm,e.es_final_error)]
+    | Ctx e -> [e]
+(* (e.es_formula,e.es_infer_vars@e.es_infer_vars_rel@e.es_infer_vars_templ,e.es_infer_templ_assume,e.es_infer_term_rel,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,e.es_var_zero_perm,e.es_final_error)] *)
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
   (*  let pr (f,(* ac, *)iv,ta,ih,ip,ir,vperms,exc) = *)
   let pr (f,(* ac, *)iv,ta,tr,ih,ip,ir,vperms,exc) =
@@ -3892,6 +3893,7 @@ let pr_context_list_short (ctx : context list) =
     (* pr_vwrap "es_final_error: " fmt_string  (match exc with | Some (c,_,_) -> "Some " ^ c | None -> "None"); *)
     fmt_close_box();
   in 
+  let pr e = pr_estate ~nshort:false e in
   let lls = List.map f ctx in
   let pr_disj ls = 
     if (List.length ls == 1) then pr (List.hd ls)
@@ -3906,6 +3908,7 @@ let pr_list_context_short (ctx:list_context) =
 
 let pr_entail_state_short e =
   fmt_open_vbox 1;
+  fmt_string "pr_entail_state_short";
   pr_formula_wrap e.es_formula;
   pr_wrap_test "es_heap:" (fun _ -> false)  (pr_h_formula) e.es_heap;
   pr_wrap_test "@zero:" Gen.is_empty (pr_seq "" pr_spec_var) e.es_var_zero_perm;
