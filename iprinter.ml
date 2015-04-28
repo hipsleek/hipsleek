@@ -326,6 +326,7 @@ and string_of_p_formula pf =
   (* | P.HRelForm (r, args, _) -> *)
   (*     r ^ "(" ^ (String.concat "," (List.map string_of_formula_exp args)) ^ ")" *)
   (* | P.VarPerm (t,ls,l) -> (string_of_vp_ann t) ^ "[" ^ (pr_list string_of_id ls)^"]" *)
+  | P.ImmRel (r, cond, _) -> string_of_p_formula r
   | P.BagIn (i, e , l) -> "BagIn("^(string_of_id i)^","^(string_of_formula_exp e)^")"
   | P.BagNotIn (i, e , l) -> "BagNotIn("^(string_of_id i)^","^(string_of_formula_exp e)^")"
   | P.BagMin (i1, i2 , l) -> "BagMin("^(string_of_id i1)^","^(string_of_id i2)^")"

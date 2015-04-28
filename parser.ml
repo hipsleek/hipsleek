@@ -58,6 +58,7 @@ type decl =
   | Include of string
   | Template of templ_decl
   | Ut of ut_decl
+  | Ui of ui_decl
 
 
 type member = 
@@ -122,6 +123,7 @@ let func_names = new Gen.stack (* list of names of ranking functions *)
 let rel_names = new Gen.stack (* list of names of relations declared *)
 let templ_names = new Gen.stack (* List of declared templates' names *)
 let ut_names = new Gen.stack (* List of declared unknown temporal' names *)
+let ui_names = new Gen.stack (* List of declared unknown imm rel *)
 let view_names = new Gen.stack (* list of names of views declared *)
 let hp_names = new Gen.stack (* list of names of heap preds declared *)
 (* let g_rel_defs = new Gen.stack (\* list of relations decl in views *\) *)
@@ -993,6 +995,7 @@ non_empty_command:
       | t=print_cmd           -> PrintCmd t
       | t=cmp_cmd           ->  CmpCmd t
       | t=time_cmd            -> t 
+      | t = ui_decl         -> UiDef t
       (* TermInf: Command for Termination Inference *)
       | t = templ_decl -> TemplDef t
       | t = templ_solve_cmd -> TemplSolv t
@@ -2147,6 +2150,13 @@ cexp_w:
           Pure_c (P.mkTemplate id cl (get_pos_camlp4 _loc 1))
         else if hp_names # mem id then (* Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None)) *)
           report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
+        else if ui_names # mem_eq (fun (id1, _) (id2, _) ->  id1 = id2 ) (id, true) then 
+          begin
+            let _, is_pre = ui_names # find (fun (name,  _) -> name = id) in
+            let pos = get_pos_camlp4 _loc 1 in
+            let rel = P.RelForm (id, cl, pos) in
+            Pure_f (P.BForm ((P.ImmRel (rel, P.mkUimmAnn is_pre  (BConst (true, pos)), pos), None), None))
+          end
         else begin
           try
             let _, fname, is_pre = ut_names # find (fun (name, _, _) -> name = id) in
@@ -2156,7 +2166,7 @@ cexp_w:
             let ann = P.mkUtAnn 0 id is_pre fname (P.mkTrue pos) cl pos in
             Pure_f (P.BForm ((P.LexVar (ann, [], [], pos), None), None))
           with Not_found -> 
-            if not (rel_names # mem id) then 
+            if not (rel_names # mem id ) then 
               if not !Globals.web_compile_flag then 
                 print_endline_quiet ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
             Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
@@ -2869,6 +2879,30 @@ ut_decl:
       in utdef 
   ]];
 
+(* Unknown Imm Definition *)
+ui_decl: 
+  [[ `UIPRE; `IDENTIFIER id; `OPAREN; tl= typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+      let () = ui_names # push (id, true) in
+      let () = rel_names # push id in
+      let rel = { rel_name = id; rel_typed_vars = tl;
+      rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *) } in
+      let uimmdef = { 
+        ui_rel = rel;
+        ui_is_pre = true;
+        ui_pos = get_pos_camlp4 _loc 1; } 
+      in uimmdef 
+  | `UIPOST; `IDENTIFIER id; `OPAREN; tl= typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+      let () = ui_names # push (id, false) in
+      let () = rel_names # push id in
+      let rel = { rel_name = id; rel_typed_vars = tl;
+      rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *) } in
+      let uimmdef = { 
+        ui_rel = rel;
+        ui_is_pre = false;
+        ui_pos = get_pos_camlp4 _loc 1; } 
+      in uimmdef 
+  ]];
+
 axiom_decl:[[
 	`AXIOM; lhs=pure_constr; `ESCAPE; rhs=pure_constr ->
 		{ axiom_id = fresh_int ();
@@ -2921,6 +2955,7 @@ hprogn:
       let rel_defs = new Gen.stack in(* list of relations *)
       let templ_defs = new Gen.stack in (* List of template definitions *)
       let ut_defs = new Gen.stack in (* List of unknown temporal definitions *)
+      let ui_defs = new Gen.stack in (* List of unknown temporal definitions *)
       let hp_defs = new Gen.stack in(* list of heap predicate relations *)
       let axiom_defs = ref ([] : axiom_decl list) in (* [4/10/2011] An Hoa *)
       let proc_defs = ref ([] : proc_decl list) in
@@ -2940,6 +2975,7 @@ hprogn:
         | Rel rdef -> rel_defs # push rdef
         | Template tdef -> templ_defs # push tdef
         | Ut utdef -> ut_defs # push utdef
+        | Ui uidef -> ui_defs # push uidef
         | Hp hpdef -> hp_defs # push hpdef 
         | Axm adef -> axiom_defs := adef :: !axiom_defs (* An Hoa *)
         | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs
@@ -2967,7 +3003,9 @@ hprogn:
     let rel_lst = ((rel_defs # get_stk)(* @(g_rel_lst) *)) in
     let templ_lst = templ_defs # get_stk in
     let ut_lst = ut_defs # get_stk in
+    let ui_lst = ui_defs # get_stk in
     let hp_lst = hp_defs # get_stk in
+    let extra_rels = List.map (fun u -> u.Iast.ui_rel) ui_lst in 
     (* WN : how come not executed for loop2.slk? *)
     (* PURE_RELATION_OF_HEAP_PRED *)
     (* to create __pure_of_relation from hp_lst to add to rel_lst *)
@@ -2980,10 +3018,11 @@ hprogn:
     (* prog_rel_decls = [];  TODO : new field for array parsing *)
     prog_view_decls = !view_defs;
     prog_func_decls = func_defs # get_stk ;
-    prog_rel_decls = rel_lst; (* An Hoa *)
+    prog_ui_decls = ui_lst;
+    prog_rel_decls = rel_lst@extra_rels; (* An Hoa *)
     prog_rel_ids = List.map (fun x ->
         let tl,_ = List.split x.rel_typed_vars in
-        (RelT tl,x.rel_name)) (rel_lst); (* WN *)
+        (RelT tl,x.rel_name)) (rel_lst@extra_rels); (* WN *)
     prog_templ_decls = templ_lst;
     prog_ut_decls = ut_lst;
     prog_hp_decls = hp_lst ;
@@ -3009,6 +3048,7 @@ decl:
   |  r=rel_decl; `DOT -> Rel r (* An Hoa *)
   |  r=templ_decl; `DOT -> Template r
   |  r=ut_decl; `DOT -> Ut r
+  |  r=ui_decl; `DOT -> Ui r
   |  r=hp_decl; `DOT -> Hp r
   |  a=axiom_decl; `DOT -> Axm a (* [4/10/2011] An Hoa *)
   |  g=global_var_decl            -> Global_var g

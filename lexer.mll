@@ -257,6 +257,8 @@ module Make (Token : SleekTokenS)
    ("split", SPLIT);
    ("LexVar", LEXVAR);
    ("template", TEMPL);
+   ("UIPre", UIPRE);
+   ("UIPost", UIPOST);
    ("UTPre", UTPRE);
    ("UTPost", UTPOST);
    ("Term", TERM);

@@ -7,8 +7,8 @@ relation P2(ann v1).
 
 int foo(cell c)
   infer [P1]
-  requires c::cell<v>@a & P1(a,b)
-  ensures c::cell<v>@b & v=res ;
+  requires c::cell<v>@a & P1(a,b) 
+  ensures c::cell<v>@b & v=res;
 {
   return c.fst;
 }

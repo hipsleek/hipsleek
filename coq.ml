@@ -192,6 +192,7 @@ and coq_of_b_formula b =
   | CP.RelForm _ -> 
     (* failwith ("No relations in Coq yet") (\* An Hoa *\) *)
     illegal_format "coq_of_exp : relation cannot be handled"
+  | CP.ImmRel _ -> illegal_format "coq_of_exp : ImmRel cannot be handled"
   | CP.LexVar _ -> illegal_format "coq_of_exp : lexvar cannot be handled"
                      (* | CP.VarPerm _ -> *)
                      illegal_format "coq_of_exp : VarPerm cannot be handled"

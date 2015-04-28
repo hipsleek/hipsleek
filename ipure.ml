@@ -225,6 +225,7 @@ and pfv (pf: p_formula)=
   | RelForm (_,args,_) -> (* An Hoa *)
     let args_fv = List.concat (List.map afv args) in
     Gen.BList.remove_dups_eq (=) args_fv
+  | ImmRel (rel, _ , _) -> pfv rel
   | LexVar (_, args1, args2, _) ->
     let args_fv = List.concat (List.map afv (args1@args2)) in
     Gen.BList.remove_dups_eq (=) args_fv
@@ -373,6 +374,10 @@ and mkUtAnn nid sid is_pre fname cond args pos =
   } in
   if is_pre then TermU uid
   else TermR uid 
+
+and mkUimmAnn is_pre cond = 
+  if is_pre then PreImm cond
+  else PostImm cond
 
 and mkBVar (v, p) pos = BVar ((v, p), pos)
 
@@ -590,7 +595,7 @@ and pos_of_pf pf=
     | EqMax (_,_,_,p) | EqMin (_,_,_,p) 
     | BagIn (_,_,p) | BagNotIn (_,_,p) | BagSub (_,_,p) | BagMin (_,_,p) | BagMax (_,_,p)	
     | ListIn (_,_,p) | ListNotIn (_,_,p) | ListAllN (_,_,p) | ListPerm (_,_,p)
-    | RelForm (_,_,p)  | LexVar (_,_,_,p) -> p
+    | RelForm (_,_,p)  | LexVar (_,_,_,p) | ImmRel (_,_,p) -> p
     (* | VarPerm (_,_,p) -> p *)
     | XPure xp ->  xp.xpure_view_pos
   end
@@ -817,6 +822,9 @@ and p_apply_one ((fr, t) as p) pf =
   | RelForm (r, args, pos) -> 
     (* An Hoa : apply to every arguments, alternatively, use e_apply_one_list *)
     RelForm (r, (List.map (fun x -> e_apply_one (fr, t) x) args), pos)
+  | ImmRel (r, cond, pos) -> 
+    (* An Hoa : apply to every arguments, alternatively, use e_apply_one_list *)
+    ImmRel (p_apply_one p r, cond, pos)
   | LexVar (t_ann, args1, args2, pos) -> 
     let args1 = List.map (fun x -> e_apply_one (fr, t) x) args1 in
     let args2 = List.map (fun x -> e_apply_one (fr, t) x) args2 in
@@ -929,7 +937,7 @@ and look_for_anonymous_pure_formula (f : formula) : (ident * primed) list = matc
 
 
 and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
-  let (pf,_) = f in
+  let (pf,il) = f in
   match pf with
   | XPure _ -> [] (*TO CHECK*)
   | BConst _ -> []
@@ -957,10 +965,10 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
   | LexVar (_,args1, args2, _) -> 
     let vs = List.concat (List.map look_for_anonymous_exp (args1@args2)) in
     vs
-  | RelForm (_,args,_) -> 
+  | RelForm (_,args,_) ->
     let vs = List.concat (List.map look_for_anonymous_exp (args)) in
     vs
-
+  | ImmRel (r, _, _) -> look_for_anonymous_b_formula (r,il)
 
 let merge_branches l1 l2 =
   let branches = Gen.BList.remove_dups_eq (=) (fst (List.split l1) @ (fst (List.split l2))) in
@@ -1034,6 +1042,7 @@ and find_lexp_p_formula (pf: p_formula) ls =
   | ListAllN (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
   | ListPerm (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
   | RelForm (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
+  | ImmRel (r, _, _) -> find_lexp_p_formula r ls 
   | LexVar (_,e1, e2, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] (e1@e2)
 
 (* WN : what does this method do? *)
@@ -1183,7 +1192,8 @@ and p_contain_vars_exp (pf) : bool = match pf with
   | ListNotIn (exp1, exp2,_) 
   | ListAllN (exp1, exp2,_) 
   | ListPerm (exp1, exp2,_)  -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
-  | RelForm _ -> false
+  | RelForm _ 
+  | ImmRel  _ -> false
 
 and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = match e with 
   | Null _ 
@@ -1565,7 +1575,7 @@ and float_out_pure_min_max (p : formula) : formula =
     let (pf,il) = b in
     match pf with
     | BConst _ | Frm _ | BVar _ |XPure _
-    | LexVar _ -> BForm (b,lbl)
+    | LexVar _ | ImmRel _ -> BForm (b,lbl)
     | Lt (e1, e2, l) ->
       let ne1, np1 = float_out_exp_min_max e1 in
       let ne2, np2 = float_out_exp_min_max e2 in
@@ -1718,6 +1728,7 @@ and float_out_pure_min_max (p : formula) : formula =
       let nargse = List.map fst nargs in
       let t = BForm ((RelForm (r, nargse, l), il), lbl) in
       t
+      
   in
   match p with
   | BForm (b,lbl) -> (float_out_b_formula_min_max b lbl)
@@ -1986,7 +1997,6 @@ let args_of_term_ann ann =
   | TermR uid -> uid.tu_args
   | _ -> []
 
-
 (* (* Expression *)                                                                                                                                         *)
 (* and exp =                                                                                                                                                *)
 (*   | Ann_Exp of (exp * typ * loc)                                                                                                                         *)
@@ -2100,7 +2110,8 @@ let transform_b_formula_x f (e : b_formula) : b_formula =
   | Some e1 -> e1
   | None -> (
       let (pf,il) = e in
-      let npf = (match pf with
+      let npf = ( let rec helper pf = 
+          match pf with
           | Frm _ | BConst _ | XPure _
           (* | VarPerm _ *)
           | BVar _ | BagMin _ | SubAnn _ | BagMax _ -> pf
@@ -2167,11 +2178,14 @@ let transform_b_formula_x f (e : b_formula) : b_formula =
           | RelForm (r, args, l) ->
             let nargs = List.map (transform_exp f_exp) args in
             RelForm (r,nargs,l)
+          | ImmRel (r, cond, l) ->
+            let r = helper r in
+            ImmRel (r,cond,l)
           | LexVar (t,es1,es2,l) -> 
             let nes1 = List.map (transform_exp f_exp) es1 in
             let nes2 = List.map (transform_exp f_exp) es2 in
             LexVar (t,nes1,nes2,l)
-        ) in
+      in helper pf) in
       (npf,il)
     )
 

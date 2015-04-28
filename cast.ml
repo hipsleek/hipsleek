@@ -33,6 +33,7 @@ and prog_decl = {
   mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
   mutable prog_templ_decls: templ_decl list;
   mutable prog_ut_decls: ut_decl list;
+  mutable prog_ui_decls: ui_decl list;
   mutable prog_hp_decls : hp_decl list; (*only used to compare against some expected output????*)
   mutable prog_view_equiv : (ident * ident) list; (*inferred with --pred-en-equiv*)
   mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
@@ -175,6 +176,12 @@ and ut_decl = {
   ut_pos: loc;
 }
 
+(* Unknown Imm Declaration *)
+and ui_decl = {
+  ui_rel: rel_decl;
+  ui_is_pre: bool;
+  ui_pos: loc;
+}
 
 and hp_decl = {
   hp_name : ident;
@@ -542,6 +549,8 @@ let templ_decls: templ_decl Gen.stack = new Gen.stack
 
 (* Stack of Unknown Temporal Declarations *)
 let ut_decls: ut_decl Gen.stack = new Gen.stack
+
+let ui_decls: ui_decl Gen.stack = new Gen.stack
 
 let get_sharp_flow sf = match sf with
   | Sharp_ct ff -> ff.F.formula_flow_interval

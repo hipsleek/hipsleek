@@ -113,6 +113,8 @@ let rec process_p_formula pre_fix_var pf =
     ";(xpure)"
   | Ipure.RelForm (id, el, _) ->
     "(" ^ id ^ ")"
+  | Ipure.ImmRel _ ->
+    ";immrel"
 
 let rec process_pure_formula pre_fix_var pf =
   let recf = process_pure_formula pre_fix_var in

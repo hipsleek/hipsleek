@@ -1539,6 +1539,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
          let ctempls = List.map (trans_templ prog) prog.I.prog_templ_decls in
          let tmp_views,ls_mut_rec_views = order_views prog.I.prog_view_decls in
          let cuts = List.map (trans_ut prog) prog.I.prog_ut_decls in
+         let cuis = List.map (trans_ui prog) prog.I.prog_ui_decls in
          (* let () = x_add Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in *)
          (* let () = print_string "trans_prog :: going to trans_view \n" in *)
          x_tinfo_hp (add_str "trans_prog 1 (views)" (pr_list Iprinter.string_of_view_decl))  prog.I.prog_view_decls  no_pos;
@@ -1618,15 +1619,18 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
          let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
          let bdecls = List.map (trans_bdecl prog) prog.I.prog_barrier_decls in
          let ut_vs = cuts @ C.ut_decls # get_stk in
+         let ui_vs = cuis @ C.ui_decls # get_stk in
+         let extra_rels = List.map (fun ui -> ui.Cast.ui_rel) ui_vs in
          let () = Debug.ninfo_hprint (add_str "ut_vs added" (pr_list (fun ut -> ut.C.ut_name))) ut_vs no_pos in
          let cprog = {
            C.prog_data_decls = cdata;
            C.prog_view_decls = cviews2;
            C.prog_barrier_decls = bdecls;
            C.prog_logical_vars = log_vars;
-           C.prog_rel_decls = crels; (* An Hoa *)
+           C.prog_rel_decls = crels@extra_rels; (* An Hoa *)
            C.prog_templ_decls = ctempls;
            C.prog_ut_decls = (ut_vs);
+           C.prog_ui_decls = (ui_vs);
            C.prog_hp_decls = chps;
            C.prog_view_equiv = []; (*to update if views equiv is allowed to checking at beginning*)
            C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
@@ -2943,6 +2947,15 @@ and trans_ut (prog: I.prog_decl) (utdef: I.ut_decl): C.ut_decl =
     C.ut_is_pre = utdef.I.ut_is_pre;
     C.ut_pos = pos; } in
   c_ut
+
+and trans_ui (prog: I.prog_decl) (uidef: I.ui_decl): C.ui_decl =
+  let pos = uidef.I.ui_pos in
+  let rel = trans_rel prog uidef.I.ui_rel in
+  let c_ui = {
+    C.ui_rel = rel;
+    C.ui_is_pre = uidef.I.ui_is_pre;
+    C.ui_pos = pos; } in
+  c_ui
 
 and trans_hp_x (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_decl) =
   let pos = IF.pos_of_formula hpdef.I.hp_formula in
@@ -7812,7 +7825,8 @@ and trans_pure_b_formula (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b_f
 
 and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b_formula =
   let (pf, sl) = b0 in
-  let npf =  match pf with
+  let npf =  let rec helper pf = 
+    match pf with
     | IP.Frm ((v,p),pos) ->
       let v_type = Cpure.type_of_spec_var (trans_var (v,Unprimed) tlist pos) in
       let sv = CP.SpecVar (v_type, v, p) in
@@ -7828,6 +7842,7 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b
         CP.lex_fid = "";
         CP.lex_tmp = clt;
         CP.lex_loc = pos; }
+    | IP.ImmRel (r, cond, pos) -> CP.ImmRel(helper r, trans_imm_ann cond tlist, pos)
     | IP.Lt (e1, e2, pos) ->
       let pe1 = trans_pure_exp e1 tlist in
       let pe2 = trans_pure_exp e2 tlist in CP.mkLt pe1 pe2 pos
@@ -7905,7 +7920,7 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b
                 CP.xpure_view_remaining_branches = brs;
                 CP.xpure_view_pos = pos
                }
-  in
+  in helper pf in
   (*let () = print_string("\nC_B_Form: "^(Cprinter.string_of_b_formula (npf,None))) in*)
   match sl with
   | None -> (npf, None)
@@ -7932,6 +7947,14 @@ and trans_term_ann (ann: IP.term_ann) (tlist:spec_var_type_list): CP.term_ann =
   | IP.TermU uid -> CP.TermU (trans_term_id uid tlist)
   | IP.TermR uid -> CP.TermR (trans_term_id uid tlist)
   | IP.Fail f -> CP.Fail (trans_term_fail f)
+
+and trans_imm_ann (ann: IP.imm_ann) (tlist:spec_var_type_list): CP.imm_ann =
+  let helper p_f = 
+    let (p,_) = x_add trans_pure_b_formula (p_f, None) tlist in
+    p in
+  match ann with
+  | IP.PreImm  uid -> CP.PreImm (helper uid)
+  | IP.PostImm uid -> CP.PostImm (helper uid)
 
 and trans_pure_exp (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
   Debug.no_1 "trans_pure_exp" 

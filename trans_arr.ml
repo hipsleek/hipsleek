@@ -966,6 +966,7 @@ let rec standarize_array_formula
     | Frm _
     | XPure _
     | LexVar _
+    | ImmRel _
     | RelForm _->
       (p,[],[])
     | BagSub _
@@ -1465,6 +1466,7 @@ let extract_translate_scheme
       end
     | RelForm (sv,elst,loc) ->
       List.iter (fun re -> helper_exp re nfsv) elst
+    | ImmRel _
     | BConst _
     | XPure _
     | BVar _
@@ -1589,6 +1591,7 @@ let rec mk_array_free_formula
       | BConst _
       | Frm _
       | LexVar _
+      | ImmRel _
       | BVar _
       | XPure _ ->
         p
@@ -1687,6 +1690,7 @@ let rec get_array_element_in_f
     | XPure _
     | BVar _
     | LexVar _
+    | ImmRel _
     | Frm _->
       []
     | EqMax _
@@ -1834,6 +1838,7 @@ let rec drop_array_formula
     | Frm _
     | XPure _
     | LexVar _
+    | ImmRel _
     | BConst _
     | BVar _
     | BagMin _
@@ -3141,6 +3146,7 @@ let rec translate_back_array_in_one_formula
       | Frm _
       | XPure _
       | LexVar _
+      | ImmRel _
       | BConst _
       | BVar _
       | BagMin _

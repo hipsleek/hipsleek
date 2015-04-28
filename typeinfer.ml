@@ -738,6 +738,7 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
       let n_tl = List.fold_left (fun tl e-> fst(gather_type_info_exp prog e tl (Int))) n_tl ls2 in
       let n_tl = List.fold_left (fun tl e -> fst(gather_type_info_exp prog e tl (Int))) n_tl ls2 in
       n_tl
+  | IP.ImmRel(r, cond, pos) ->  gather_type_info_p_formula prog r tlist
   | IP.Lt (a1, a2, pos) | IP.Lte (a1, a2, pos) | IP.Gt (a1, a2, pos) | IP.Gte (a1, a2, pos) ->
       let (new_et,n_tl) = fresh_tvar tlist in
       let (n_tl,t1) = gather_type_info_exp prog a1 n_tl new_et in (* tvar, Int, Float *)
@@ -807,15 +808,19 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
       let (n_tl,_) = must_unify t1 t2 n_tl pos in
       n_tl
   | IP.RelForm (r, args, pos) -> 
-      (try
-        let rdef = I.look_up_rel_def_raw prog.I.prog_rel_decls r in
-        let args_ctypes = List.map (fun (t,n) -> trans_type prog t pos) rdef.I.rel_typed_vars in
-        let args_exp_types = List.map (fun t -> (t)) args_ctypes in
-        let (n_tl,n_typ) = gather_type_info_var r tlist (RelT []) pos in (*Need to consider about pos*)
-        let tmp_list = List.combine args args_exp_types in
-        let n_tlist = List.fold_left (fun tl (arg,et) ->
-          fst(gather_type_info_exp prog arg tl et )) n_tl tmp_list in
-        n_tlist             
+      (
+        let helper rdef = 
+          let args_ctypes = List.map (fun (t,n) -> trans_type prog t pos) rdef.I.rel_typed_vars in
+          let args_exp_types = List.map (fun t -> (t)) args_ctypes in
+          let (n_tl,n_typ) = gather_type_info_var r tlist (RelT []) pos in (*Need to consider about pos*)
+          let tmp_list = List.combine args args_exp_types in
+          let n_tlist = List.fold_left (fun tl (arg,et) ->
+              fst(gather_type_info_exp prog arg tl et )) n_tl tmp_list in
+          n_tlist   
+        in
+        try
+          let rdef = I.look_up_rel_def_raw prog.I.prog_rel_decls r in
+          helper rdef
       with
         | Not_found ->    failwith ("gather_type_info_b_formula: relation "^r^" cannot be found")
         | Invalid_argument _ -> failwith ("number of arguments for relation " ^ r ^ " does not match")

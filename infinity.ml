@@ -626,6 +626,7 @@ let rec contains_inf_eq_b_formula (bf: CP.b_formula) : bool =
   | CP.Frm _
   | CP.XPure _
   | CP.LexVar _
+  | CP.ImmRel _
   | CP.BConst _
   | CP.BVar _ -> false
   | CP.Lt (e1,e2,pos) 
@@ -998,6 +999,7 @@ let rec sub_inf_list_b_formula (bf:CP.b_formula) (vl: CP.spec_var list) (is_neg:
        | CP.Frm _
        | CP.XPure _
        | CP.LexVar _
+       | CP.ImmRel _
        | CP.BConst _
        | CP.BVar _ -> p_f,tbf
        | CP.Lt (e1,e2,pos) -> 

@@ -396,6 +396,7 @@ let rec math_of_b_formula b : string =
   | CP.ListNotIn _
   | CP.ListAllN _
   | CP.ListPerm _
+  | CP.ImmRel _
   | CP.RelForm _ -> failwith ("math_of_b_formula: cannot handle bag, list, rel, perm formula")
 
 let rec math_of_formula pr_w pr_s f0 : string =

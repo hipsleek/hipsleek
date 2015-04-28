@@ -974,6 +974,8 @@ let rec pr_b_formula (e:P.b_formula) =
   | P.LexVar t_info -> 
     pr_term_ann false t_info.CP.lex_ann;
     pr_s "" pr_formula_exp t_info.CP.lex_exp
+  | P.ImmRel (r,cond,l) -> 
+    pr_b_formula (r,il);
   | P.Frm  (x, l) -> fmt_string ((string_of_spec_var x) ^ "@F")
   | P.BConst (b,l) -> fmt_bool b 
   | P.XPure v ->  fmt_string (string_of_xpure_view v)
@@ -5016,6 +5018,8 @@ let rec html_of_pure_b_formula f = match f with
   | P.ListAllN (e1, e2, l) ->  (html_of_formula_exp e1) ^ " <allN> " ^ (html_of_formula_exp e2)
   | P.ListPerm (e1, e2, l) -> (html_of_formula_exp e1) ^ " <perm> " ^ (html_of_formula_exp e2)
   | P.RelForm (r, args, l) -> (html_of_spec_var r) ^ "(" ^ (String.concat "," (List.map html_of_formula_exp args)) ^ ")"
+  | P.ImmRel (r, args, l) -> "ImmRel (to be implemented)"
+(* (html_of_imm_ann r) ^ "(" ^ (String.concat "," (List.map html_of_formula_exp args)) ^ ")" *)
 
 let rec html_of_pure_formula f =
   match f with

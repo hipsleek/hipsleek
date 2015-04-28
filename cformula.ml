@@ -14921,7 +14921,7 @@ let rec simp_ann_x heap pures = match heap with
       let p,res = List.partition (fun p -> CP.fv p = ann_var) pures in
       begin
         match p with
-        | [] -> (DataNode {data with h_formula_data_imm = CP.mkConstAnn 2},res)
+        | [] -> (DataNode {data with h_formula_data_imm = CP.mkConstAnn 2},res) (* andreeac: why do we replace an imm var by the lend constant?  *)
         | [hd] -> 
           let is = CP.getAnn hd in
           if is = [] then (heap,pures)

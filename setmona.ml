@@ -170,6 +170,7 @@ and compute_fo_b_formula (bf0 : b_formula list) var_map : unit =
           | ListNotIn _
           | ListAllN _
           | ListPerm _ -> failwith ("Lists are not supported in Mona")
+          | ImmRel _ 
           | RelForm _ -> failwith ("Relations are not supported in Mona")
           | LexVar _ -> failwith ("LexVar are not supported in Mona")
           | XPure _ -> Error.report_no_pattern()
@@ -381,6 +382,7 @@ and normalize_b_formula (bf0 : b_formula) lbl: formula =
   | ListNotIn _
   | ListAllN _
   | ListPerm _ -> failwith ("Lists are not supported in Mona")
+  | ImmRel _
   | LexVar _ -> failwith ("LexVar are not supported in Mona")
   | RelForm _ -> failwith ("Lists are not supported in Mona") (* An Hoa *)
   | XPure _ -> Error.report_no_pattern()

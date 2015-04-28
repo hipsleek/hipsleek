@@ -2785,6 +2785,7 @@ let remove_level_mix_formula_x (mf : mix_formula) : mix_formula =
           mkTrue_p no_pos
         else pf
       | RelForm (r, args, l) -> pf (*TOCHECK*)
+      | ImmRel (r, args, l) -> pf (*TOCHECK*)
       | LexVar t_info -> pf (*TOCHECK*)
     in Some (npf,il)
   in

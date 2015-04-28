@@ -139,6 +139,7 @@ let iprog = { I.prog_include_decls =[];
               I.prog_rel_ids = [];
               I.prog_templ_decls = [];
               I.prog_ut_decls = [];
+              I.prog_ui_decls = [];
               I.prog_hp_decls = [];
               I.prog_hp_ids = [];
               I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
@@ -163,6 +164,7 @@ let cprog = ref {
     (*	Cast.prog_func_decls = [];*)
     Cast.prog_rel_decls = []; (* An Hoa *)
     Cast.prog_templ_decls = [];
+    Cast.prog_ui_decls = [];
     Cast.prog_ut_decls = [];
     Cast.prog_hp_decls = [];
     Cast.prog_view_equiv = [];
@@ -447,6 +449,18 @@ let process_ut_def utdef =
       !cprog.Cast.prog_ut_decls <- (Astsimp.trans_ut iprog utdef)::!cprog.Cast.prog_ut_decls
     with _ -> dummy_exception (); iprog.I.prog_ut_decls <- tmp 
   else print_endline_quiet (utdef.I.ut_name ^ " is already defined.")
+
+let process_ui_def uidef =
+  if Astsimp.check_data_pred_name iprog uidef.I.ui_rel.rel_name then
+   let tmp = iprog.I.prog_ui_decls in
+    try
+      iprog.I.prog_ui_decls <- (uidef::iprog.I.prog_ui_decls);
+      iprog.I.prog_rel_decls <- (uidef.Iast.ui_rel::iprog.I.prog_rel_decls);
+      let cuidef = Astsimp.trans_ui iprog uidef in
+      !cprog.Cast.prog_ui_decls <- cuidef::!cprog.Cast.prog_ui_decls;
+      !cprog.Cast.prog_rel_decls <- cuidef.Cast.ui_rel::!cprog.Cast.prog_rel_decls;
+    with _ -> dummy_exception (); iprog.I.prog_ui_decls <- tmp 
+  else print_endline_quiet (uidef.I.ui_rel.rel_name ^ " is already defined.")
 
 let process_hp_def hpdef =
   let _ = print_string (hpdef.I.hp_name ^ " is defined.\n") in

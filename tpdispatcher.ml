@@ -795,6 +795,7 @@ let is_array_b_formula (pf,_) = match pf with
   | CP.ListNotIn _
   | CP.ListAllN _ 
   | CP.ListPerm _
+  | CP.ImmRel _ 
     -> Some false
   | CP.RelForm _ -> Some true
 (* | CP.VarPerm _ -> Some false *)
@@ -838,6 +839,7 @@ let is_array_constraint (e: CP.formula) : bool =
   CP.fold_formula e (nonef, is_array_b_formula, is_array_exp) or_list
 
 let is_relation_b_formula (pf,_) = match pf with
+  | CP.ImmRel _
   | CP.RelForm _ -> Some true
   | _ -> Some false
 

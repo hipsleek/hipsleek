@@ -60,6 +60,7 @@ type sleek_token =
   | INFER_AT_PRE | INFER_AT_POST | INFER_AT_IMM | INFER_AT_SHAPE | INFER_AT_ERROR | INFER_AT_FLOW
   | INFER_AT_SIZE
   | UTPRE | UTPOST
+  | UIPRE | UIPOST
   | UNFOLD | UNION
   | VOID 
   | WHILE | FLOW of string
@@ -186,6 +187,8 @@ module Token = struct
     (* | TERMR -> "TermR" *)
     | UTPRE -> "UTPre"
     | UTPOST -> "UTPost"
+    | UIPRE -> "UImmPre"
+    | UIPOST -> "UImmPost"
     (* | TREL_INFER -> "@term" *)
     | INFER_AT_EFA -> "@efa"
     | INFER_AT_DFA -> "@dfa"

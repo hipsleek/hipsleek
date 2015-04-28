@@ -170,6 +170,7 @@ and cvcl_of_b_formula b =
   | CP.ListNotIn _
   | CP.ListAllN _
   | CP.ListPerm _ -> failwith ("Lists are not supported in cvclite")
+  | CP.ImmRel _
   | CP.RelForm _ -> failwith ("Relations are not supported in cvclite") 
   | CP.LexVar _ -> failwith ("LexVar are not supported in cvclite") 
   | CP.SubAnn _ -> failwith ("SubAnn are not supported in cvclite") 

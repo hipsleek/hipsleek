@@ -34,6 +34,7 @@ type prog_decl = {
   mutable prog_rel_decls : rel_decl list; 
   mutable prog_templ_decls: templ_decl list;
   mutable prog_ut_decls: ut_decl list;
+  mutable prog_ui_decls: ui_decl list;
   mutable prog_hp_decls : hp_decl list; 
   mutable prog_rel_ids : (typ * ident) list; 
   mutable prog_hp_ids : (typ * ident) list; 
@@ -143,6 +144,12 @@ and ut_decl = {
   ut_pos: loc;
 }
 
+(* Unknown Imm Declaration *)
+and ui_decl = {
+  ui_rel: rel_decl;
+  ui_is_pre: bool;
+  ui_pos: loc;
+}
 
 and hp_decl = { hp_name : ident; 
                 (* rel_vars : ident list; *)
@@ -2004,7 +2011,7 @@ and collect_data_view_from_pure_bformula_x (bf : P.b_formula) (data_decls: data_
   | P.EqMax _ | P.EqMin _ | P.LexVar _ -> ([], [], henv)
   | P.BagIn _ | P.BagNotIn _ | P.BagSub _ | P.BagMin _ | P.BagMax _ -> ([], [], henv)
   | P.ListIn _ | P.ListNotIn _ | P.ListAllN _ | P.ListPerm _ -> ([], [], henv)
-  (* | P.VarPerm _ *) | P.RelForm _ -> ([], [], henv)
+  (* | P.VarPerm _ *) | P.RelForm _ | P.ImmRel _ -> ([], [], henv)
 
 and collect_data_view_from_pure_bformula (bf : P.b_formula) (data_decls: data_decl list)
     (henv: (ident * typ) list)
@@ -2834,6 +2841,7 @@ let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) :
       prog_rel_ids = hd.prog_rel_ids @ iprims.prog_rel_ids; (* An Hoa *)
       prog_templ_decls = hd.prog_templ_decls @ iprims.prog_templ_decls;
       prog_ut_decls = hd.prog_ut_decls @ iprims.prog_ut_decls;
+      prog_ui_decls = hd.prog_ui_decls @ iprims.prog_ui_decls;
       prog_hp_decls = hd.prog_hp_decls @ iprims.prog_hp_decls;
       prog_hp_ids = hd.prog_hp_ids @ iprims.prog_hp_ids; 
       prog_axiom_decls = hd.prog_axiom_decls @ iprims.prog_axiom_decls; (* [4/10/2011] An Hoa *)
@@ -2860,6 +2868,7 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
       prog_rel_ids = [];
       prog_templ_decls = [];
       prog_ut_decls = [];
+      prog_ui_decls = [];
       prog_hp_decls = [];
       prog_hp_ids = [];
       prog_axiom_decls = [];
