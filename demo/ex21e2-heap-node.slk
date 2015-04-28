@@ -1,0 +1,51 @@
+data node {node next;}.
+
+//1
+infer [@err_must] x'=x & y=null |- y::node<_>.
+print residue.
+// Expects __Error_Must 
+
+//2
+infer [@err_must] x'=x |- y::node<_>.
+print residue.
+// Expects __Error_May 
+
+//3
+infer [@err_may] x'=x & y=null |- y::node<_>.
+print residue.
+// Expects __Error_May 
+
+//4
+infer [@err_may] x'=x & y=null |- y::node<_>.
+print residue.
+// Expects __Error_May 
+
+/*
+# ex21e2
+
+Entail (1) : Fail.(must) cause:do_unmatched_rhs : y::node<Anon_11>
+
+Residue:
+ <1>emp&x'=x&{FLOW,(18,19)=__Error#E}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+*/
+
+//5
+infer [] x'=x & y=null |- y::node<_>.
+print residue.
+// expects MaybeErr Context
+
+//6
+infer [] y!=null |- y::node<_>.
+print residue.
+// GOT MaybeErr Context, but expects MustErrCtx
+
+//7
+infer [@err_may] x'=x |- y::node<_>.
+print residue.
+// expects __ErrorMay but got __Error
+
+//(8)
+infer [@err_may] y=null |- y::node<_>.
+print residue.
+// expects __ErrorMay but got __Error

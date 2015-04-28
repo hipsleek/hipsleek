@@ -8,6 +8,7 @@ open Cprinter
 open Globals
 open Gen
 open Tlutils
+open Tid
 open Ti3
 
 (* Auxiliary methods *)
@@ -15,7 +16,7 @@ let diff = Gen.BList.difference_eq CP.eq_spec_var
 let subset = Gen.BList.subset_eq CP.eq_spec_var
 
 let om_simplify f = (* Omega.simplify *) (* Tpdispatcher.simplify_raw *)
-  if CP.is_linear_formula f then Omega.simplify f
+  if CP.is_linear_formula f then x_add_1 Omega.simplify f
   else Redlog.simplify f
 
 let eq_str s1 s2 = String.compare s1 s2 = 0
@@ -63,6 +64,9 @@ let fp_imply f p =
   let _, pf, _, _, _, _ = CF.split_components f in
   let (res, _, _) = Tpdispatcher.mix_imply pf (MCP.mix_of_pure p) "999" in
   res
+
+let fp_imply f p =
+  Debug.no_2 "fp_imply" Cprinter.string_of_formula Cprinter.string_of_pure_formula string_of_bool fp_imply f p
 
 let unsat_base_nth = ref (fun _ _ _ _ -> true) (* Solver.unsat_base_nth *)
 
@@ -304,6 +308,84 @@ let merge_cases_tnt_case_spec spec =
   Debug.no_1 "merge_cases_tnt_case_spec" pr pr
     merge_cases_tnt_case_spec spec
 
+let rec merge_cond_tnt_case_spec spec = 
+  match spec with
+  | Cases cases ->
+    List.concat (List.map (fun (c, sp) ->
+        let flatten_sp = merge_cond_tnt_case_spec sp in
+        List.map (fun (cond_lst, sp) -> (c::cond_lst, sp)) flatten_sp) cases)
+  | _ -> [([], spec)]
+
+let add_conds_to_cex conds cex =
+  let assume_conds = List.map (fun c -> CP.TAssume c) conds in
+  match cex with
+  | None -> Some ({ CP.tcex_trace = assume_conds })
+  | Some cex -> Some ({ cex with CP.tcex_trace = assume_conds @ cex.CP.tcex_trace })
+
+let elim_nondet_vars f = 
+  let fv_f = CP.fv f in
+  let nondet_vars = List.find_all is_nondet_var fv_f in 
+  let params = diff fv_f nondet_vars in
+  simplify 12 f params, nondet_vars
+
+let remove_nondet_vars svl = 
+  List.filter (fun v -> not (is_nondet_var v)) svl
+
+let merge_nondet_cases cases =
+  let flatten_cases = merge_cond_tnt_case_spec (Cases cases) in 
+  match flatten_cases with
+  | [] -> []
+  | (conds, sp)::_ ->
+    if (List.for_all (fun (_, sp) -> is_Loop sp) flatten_cases) then
+      match sp with
+      | Sol (CP.Loop cex, []) -> 
+        let loop_cond = pairwisecheck (CP.join_disjunctions (List.concat (List.map fst flatten_cases))) in
+        let loop_cond, _ = elim_nondet_vars loop_cond in
+        [(loop_cond, Sol (CP.Loop (add_conds_to_cex conds cex), []))]
+      | _ -> report_error no_pos "[TNT Inference] merge_nondet_cases expects a Loop TNT spec"
+    else if (List.for_all (fun (_, sp) -> is_Term sp) flatten_cases) then
+      (* List.map (fun (c, sp) -> (elim_nondet_vars c, sp)) cases *)
+      cases
+    else (* MayLoop *)
+      try
+        let conds, loop_sp = List.find (fun (_, sp) -> is_Loop sp) flatten_cases in
+        (match loop_sp with
+         | Sol (CP.Loop cex, []) ->
+           let cond = pairwisecheck (CP.join_disjunctions conds) in
+           let mayloop_cond, _ = elim_nondet_vars cond in
+           [(mayloop_cond, Sol (CP.MayLoop (add_conds_to_cex conds cex), []))]
+         | _ -> report_error no_pos "[TNT Inference] merge_nondet_cases expects a Loop TNT spec"
+        ) 
+      with _ ->
+        try
+          let conds, mayloop_sp = List.find (fun (_, sp) -> is_cex_MayLoop sp) flatten_cases in
+          (match mayloop_sp with
+           | Sol (CP.MayLoop cex, []) ->
+             let cond = pairwisecheck (CP.join_disjunctions conds) in
+             let mayloop_cond, _ = elim_nondet_vars cond in
+             [(mayloop_cond, Sol (CP.MayLoop (add_conds_to_cex conds cex), []))]
+           | _ -> report_error no_pos "[TNT Inference] merge_nondet_cases expects a MayLoop TNT spec"
+          )
+        with _ ->
+          let mayloop_cond = pairwisecheck (CP.join_disjunctions (List.concat (List.map fst flatten_cases))) in
+          let mayloop_cond, _ = elim_nondet_vars mayloop_cond in
+          [(mayloop_cond, Sol (CP.MayLoop None, []))]
+
+let rec norm_nondet_tnt_case_spec spec = 
+  match spec with
+  | Cases cases ->
+    let normed_cases = List.map (fun (c, sp) -> (c, norm_nondet_tnt_case_spec sp)) cases in
+    let nondet_cases, normal_cases = List.partition (fun (c, _) -> is_nondet_cond c) normed_cases in
+    let merged_nondet_cases = merge_nondet_cases nondet_cases in
+    (match merged_nondet_cases with
+     | [] -> Cases normal_cases
+     | (c, sp)::[] ->
+       if (is_empty normal_cases) then sp 
+       else Cases (normal_cases @ [(c, sp)])
+     | _ -> Cases (normal_cases @ merged_nondet_cases)
+    )
+  | _ -> spec
+
 let rec flatten_one_case_tnt_spec c f = 
   match f with
   | Cases cases ->
@@ -328,10 +410,15 @@ let rec flatten_case_tnt_spec f =
     Cases ncases
   | _ -> f
 
-let add_cex_by_cond for_loop turels c cex = 
+let add_cex_by_cond for_loop turels c cex =
   let rec has_feasible_cex c turel =
+    (* Due to over-approximation, the context call_ctx of turel *)
+    (* might not be reachable from c though SAT(c /\ call_ctx)  *)
     (is_sat (mkAnd c turel.call_ctx)) &&
-    not (is_None (CP.cex_of_term_ann turel.termu_rhs)) 
+    not (is_None (CP.cex_of_term_ann turel.termu_rhs)) &&
+    (if not for_loop && CP.is_Loop turel.termu_rhs then
+       (is_nondet_cond c) || (is_nondet_cond turel.call_ctx) 
+     else true)
   in
   try
     let turel = List.find (has_feasible_cex c) turels in
@@ -339,18 +426,18 @@ let add_cex_by_cond for_loop turels c cex =
     let acex = CP.cex_of_term_ann turel.termu_rhs in
     let mcex = CP.merge_term_cex cex acex in
     begin match mcex with
-      | None -> if for_loop then Some ({ CP.tcex_trace = [cpos] }) else mcex
-      | Some t -> Some ({ t with CP.tcex_trace = cpos::t.CP.tcex_trace })
+      | None -> if for_loop then Some ({ CP.tcex_trace = [CP.TCall cpos] }) else mcex
+      | Some t -> Some ({ t with CP.tcex_trace = (CP.TCall cpos)::t.CP.tcex_trace })
     end
-  with Not_found -> 
+  with Not_found ->
     if for_loop then
       try
         let turel = List.find (fun tur -> is_sat (mkAnd c tur.call_ctx)) turels in
         let cpos = turel.termu_pos in
         begin match cex with
-          | None -> Some ({ CP.tcex_trace = [cpos] })
-          | Some t -> Some ({ t with CP.tcex_trace = cpos::t.CP.tcex_trace })
-        end 
+          | None -> Some ({ CP.tcex_trace = [CP.TCall cpos] })
+          | Some t -> Some ({ t with CP.tcex_trace = (CP.TCall cpos)::t.CP.tcex_trace })
+        end
       with Not_found -> cex
     else cex
 
@@ -497,7 +584,7 @@ and merge_tnt_case_spec_into_assume prog ctx spec af =
   | Unknown cex -> struc_formula_of_ann_w_assume af (CP.MayLoop cex, [])
   | Cases cases -> 
     try (* Sub-case of current context; all other cases are excluded *)
-      let sub_case = List.find (fun (c, _) -> fp_imply ctx c) cases in
+      let sub_case = List.find (fun (c, _) -> x_add fp_imply ctx c) cases in
       merge_tnt_case_spec_into_assume prog ctx (snd sub_case) af
     with _ -> 
       CF.ECase {
@@ -565,9 +652,12 @@ let rec norm_struc struc_f =
   | CF.EList el -> CF.mkEList_no_flatten (map_l_snd norm_struc el)
 
 let tnt_spec_of_proc prog proc ispec =
-  let ispec = merge_cases_tnt_case_spec
-      (flatten_case_tnt_spec ispec) in
   let ispec = add_cex_tnt_case_spec ispec in
+  let ispec = 
+    merge_cases_tnt_case_spec
+      (flatten_case_tnt_spec 
+         (norm_nondet_tnt_case_spec ispec)) 
+  in
   (* let spec = proc.Cast.proc_static_specs in *)
   let spec = proc.Cast.proc_stk_of_static_specs # top in
   let spec = merge_tnt_case_spec_into_struc_formula prog
@@ -575,6 +665,12 @@ let tnt_spec_of_proc prog proc ispec =
   let spec = flatten_case_struc spec in
   let spec = norm_struc spec in
   spec
+
+let tnt_spec_of_proc prog proc ispec =
+  let pr1 = print_tnt_case_spec in
+  let pr2 = string_of_struc_formula_for_spec in
+  Debug.no_1 "tnt_spec_of_proc" pr1 pr2 
+    (fun _ -> tnt_spec_of_proc prog proc ispec) ispec
 
 let print_svcomp2015_result term_anns =
   let unknown_ans = "UNKNOWN" in
@@ -1645,9 +1741,10 @@ let rec proving_non_termination_scc prog trrels tg scc =
         then subst (CP.Loop None, []) ann
         else 
           begin try
-              let _, nd_pos = List.find (fun (nd_uid, _) -> 
-                  uid.CP.tu_id == nd_uid.CP.tu_id) nd_nonterm_uids in
+              (* let _, nd_pos = List.find (fun (nd_uid, _) ->                  *)
+              (*   uid.CP.tu_id == nd_uid.CP.tu_id) nd_nonterm_uids in          *)
               (* subst (CP.MayLoop (Some { CP.tcex_trace = [nd_pos] }), []) ann *)
+              (* termination-crafted-lit/GulwaniJainKoskinen-PLDI2009-Fig1_true-termination.c *)
               subst (CP.MayLoop None, []) ann
             with Not_found -> ann end
       | _ -> ann

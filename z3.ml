@@ -89,7 +89,7 @@ let rec smt_of_typ t =
   | FuncT (t1, t2) -> "(" ^ (smt_of_typ t1) ^ ") " ^ (smt_of_typ t2) 
   (* TODO *)
   | RelT _ -> "Int"
-  | UtT -> "Int"
+  | UtT _ -> "Int"
   | HpT -> "Int"
   (* | SLTyp *)
   | INFInt 
@@ -1169,7 +1169,7 @@ let is_sat f sat_no = Debug.no_2(* _loop *) "is_sat" (!print_pure) (fun x->x) st
 let simplify (f: CP.formula) : CP.formula = 
   (* let () = print_endline "locle: simplify" in *)
   try
-    (Omega.simplify f)
+    (x_add_1 Omega.simplify f)
   with
   | _ -> f
 

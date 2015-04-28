@@ -1,0 +1,86 @@
+
+//1
+infer [@dis_err] x>0 |- x<0 .
+// failctx must_err
+print residue.
+
+//2
+infer [] x>0 |- x<0 .
+// failctx must_err
+print residue.
+
+//3
+infer [@err_must] x>0 |- x<0 .
+// x>0 & flow __ERROR
+print residue.
+
+//4
+infer [@err_may] x>0 |- x<0 .
+// x>0 & flow __MayERROR
+print residue.
+
+//5
+infer [@err_must] x>0 |- x<3 .
+// x>0 & flow __MayERROR
+print residue.
+
+//6
+infer [@err_must] x>3 |- x>0 .
+// x>3 & flow __norm
+print residue.
+
+//7
+infer [@dis_err] x>3 |- x>0 .
+// x>3 & flow __norm
+print residue.
+
+//8
+infer [] x>3 |- x>0 .
+// x>3 & flow __norm
+print residue.
+
+
+/*
+# e21j --efa-exc
+
+infer [@dis_err] x>0 |- x<0 .
+// failctx must_err
+print residue.
+
+Got: What does { } mean?
+I believe empty context is either
+undefined or false.
+
+Entail (1) : Fail.(must) cause: 0<x |-  x<0. LOCS:[2] (must-bug)
+Residue:
+ { }
+
+I would expect instead:
+
+MaybeErr Context: 
+                   fe_kind: MUST
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message:  0<x |-  x<0. LOCS:[2] (must-bug)
+                             fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}}
+[[empty]]false
+
+====================================
+
+
+
+# ex21j --dis-efa-exc
+
+Need to support @err_may and @err_must for
+local infer error as exception..
+
+
+*/
+
+infer [x] x>0 |- x<0 .
+// failctx must_err
+print residue.
+
+infer [x] true |- x<0 .
+// failctx must_err
+print residue.

@@ -68,6 +68,8 @@ let common_arguments = [
   (* ("--ufdp", Arg.Set Solver.unfold_duplicated_pointers, *)
   (* "Do unfolding of predicates with duplicated pointers."); (\* An Hoa *\) *)
   (* Labelling Options *)
+  ("--temp-opt", Arg.Set Globals.temp_opt_flag,
+   "Temporary option flag.");
   ("--dis-lbl", Arg.Set Globals.remove_label_flag,
    "Disable Labelling of Formula by removing AndList."); 
   ("--lbl-dis-split-conseq", Arg.Clear Globals.label_split_conseq,
@@ -186,8 +188,42 @@ let common_arguments = [
    "Turn off brief tracing");
   ("-dd", Arg.Set Debug.devel_debug_on,
    "Turn on devel_debug");
-  ("--dd-trace", Arg.Set Gen.debug_precise_trace,
-   "Turn on more precise tracing");
+  ("--dd-debug",  Arg.Unit
+     (fun _ -> 
+        Debug.debug_print:=true;
+        Globals.print_type:=true;
+     ),
+   "Use it for more precise printing to support debugging");
+  ("-dd-threshold", Arg.Set_int Debug.call_threshold,
+   "--dd-calls threshold number before printing");
+  ("-dd-debug", Arg.Set Debug.devel_debug_on,
+   "Turn on devel_debug");
+  ("-dd-calls", Arg.String
+     (fun s -> 
+        Debug.dump_calls:=true;
+        Debug.call_str:=s;
+        Gen.debug_precise_trace:=true;),
+   "Dump summary of debugged calls (related to rgx)");
+  ("--dd-calls", Arg.Unit
+     (fun _ -> 
+        Debug.dump_calls:=true;
+        Gen.debug_precise_trace:=true;),
+   "Dump summary of debugged calls");
+  ("--dd-calls-all", Arg.Unit
+     (fun _ -> 
+        Debug.dump_calls:=true;
+        Debug.dump_calls_all:=true;
+        Gen.debug_precise_trace:=true;
+     ),
+   "Dump all debugged calls");
+  ("-dd-calls-all", Arg.String
+     (fun s -> 
+        Debug.dump_calls:=true;
+        Debug.dump_calls_all:=true;
+        Gen.debug_precise_trace:=true;
+        Debug.call_str:=s;
+     ),
+   "Dump all debugged calls (related to rgx)");
   ("--dis-ddb", Arg.Clear Debug.trace_on,
    "Turn off experimental trace_on");
   ("--en-ddb", Arg.Set Debug.trace_on,
@@ -253,6 +289,8 @@ let common_arguments = [
   ("--dis-locklevel", Arg.Clear Globals.allow_locklevel,"disable locklevels during verification");
   ("--dis-lsmu-infer", Arg.Clear Globals.allow_lsmu_infer,"disable simple inference of lsmu");
   ("--en-lsmu-infer", Arg.Set Globals.allow_lsmu_infer,"enable simple inference of lsmu");
+  ("--en-false-unk-infer", Arg.Set Globals.infer_false_imply_unknown,"Enable false -> unknown to be inferred");
+  ("--dis-false-unk-infer", Arg.Clear Globals.infer_false_imply_unknown,"Disable false -> unknown to be inferred");
   ("--dis-para", Arg.Unit Perm.disable_para,"disable concurrency verification");
   ("--en-para", Arg.Unit Perm.enable_para,"enable concurrency verification");
   ("--dis-change-flow", Arg.Clear Globals.change_flow,"disable change spec flow");
@@ -371,6 +409,10 @@ let common_arguments = [
    "Disable LHS Case Analysis");
   ("--en-lhs-case", Arg.Set Globals.lhs_case_flag,
    "Enable LHS Case Analysis");
+  ("--en-infer-case-as-or", Arg.Set Globals.infer_case_as_or_flag,
+   "Enable inferring CASE as OR");
+  ("--dis-infer-case-as-or", Arg.Clear Globals.infer_case_as_or_flag,
+   "Disable inferring CASE as OR");
   ("--en-lhs-case-search", Arg.Set Globals.lhs_case_search_flag,
    "Replace Cond_action by Search for LHS Case Analysis");
   ("-nxpure", Arg.Set_int Globals.n_xpure,
@@ -531,6 +573,10 @@ let common_arguments = [
   ("--efa", Arg.Clear Globals.disable_failure_explaining,"shorthand for --en-failure-analysis");
   ("--efa-exc", Arg.Set Globals.enable_error_as_exc,"enable to transform error as exception");
   ("--dis-efa-exc", Arg.Clear Globals.enable_error_as_exc,"disable to transform error as exception");
+  ("--efa-may", Arg.Unit 
+     (fun _ ->
+        Globals.infer_const_obj # set INF_ERR_MAY
+     ),"set may error scenrio as default");
   ("--dfa", Arg.Set Globals.disable_failure_explaining,"shorthand for --dis-failure-analysis");
   ("--refine-error", Arg.Set Globals.simplify_error,
    "Simplify the error");
@@ -592,6 +638,8 @@ let common_arguments = [
   ("--dis-post-flow", Arg.Clear Globals.post_infer_flow, "add exception flow as a post-cond parameter for inference");
   ("--dis-assert-check", Arg.Set Globals.dis_ass_chk, "turn off the assertion checking");
   ("--dis-log-filter", Arg.Clear Globals.log_filter, "turn off the log initial filtering");
+  ("--en-weaken-rel", Arg.Set Globals.oc_weaken_rel_flag, "Enable weakening of relation");
+  ("--dis-weaken-rel", Arg.Clear Globals.oc_weaken_rel_flag, "Disable weakening of relation");
 
   (* TermInf: Options for Termination Inference *)
   ("--en-gen-templ-slk", Arg.Set Globals.gen_templ_slk, "Generate sleek file for template inference");
@@ -688,8 +736,8 @@ let common_arguments = [
   ("--inv-baga",Arg.Unit (fun _ ->  Globals.use_baga := true; Globals.gen_baga_inv := true),"generate baga inv from view");
   ("--dis-inv-baga",Arg.Clear Globals.gen_baga_inv,"disable baga inv from view");
   ("--pred-sat", Arg.Unit Globals.en_pred_sat ," turn off oc-simp for pred sat checking");
-  ("--baga-xpure",Arg.Set Globals.baga_xpure,"use baga for xpure");
-  ("--dis-baga-xpure",Arg.Clear Globals.baga_xpure,"do not use baga for xpure");
+  ("--baga-xpure",Arg.Set Globals.use_baga (* Globals.baga_xpure *),"use baga for xpure");
+  ("--dis-baga-xpure",Arg.Clear Globals.use_baga (* Globals.baga_xpure *),"do not use baga for xpure");
   (* ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view"); *)
   ("--dis-imm-baga",Arg.Clear Globals.baga_imm,"disable baga inv from view");
   ("--en-imm-baga",Arg.Clear Globals.baga_imm,"disable baga inv from view");

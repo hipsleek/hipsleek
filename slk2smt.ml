@@ -250,7 +250,7 @@ let process_pred_vars pre_fix_var self_sv self_typ pred_vars pred_formula spl =
 let process_pred_def subst_self pdef iprog =
   let pred_name = pdef.I.view_name in
   let pred_vars = pdef.I.view_vars in
-  let spl = Typeinfer.gather_type_info_struc_f iprog pdef.I.view_formula [] in
+  let spl = x_add Typeinfer.gather_type_info_struc_f iprog pdef.I.view_formula [] in
   let self_typ = find_typ spl self in
   let pred_formula, self_sv = if subst_self then
       let sst = [((self, Unprimed),(smt_self, Unprimed))] in
@@ -287,10 +287,10 @@ let process_iante iante iprog all_view_names start_pred_abs_num=
   let s2, n2 = match iante with
     | MetaVar id -> "(?" ^ id ^ ")",start_pred_abs_num
     | MetaForm f ->
-      let spl = Typeinfer.gather_type_info_formula iprog f [] true in
+      let spl = x_add Typeinfer.gather_type_info_formula iprog f [] true in
       process_formula "" f spl all_view_names start_pred_abs_num
     | MetaEForm ef ->
-      let spl = Typeinfer.gather_type_info_struc_f iprog ef [] in
+      let spl = x_add Typeinfer.gather_type_info_struc_f iprog ef [] in
       process_struct_formula "" ef spl all_view_names start_pred_abs_num
     | _ -> "",start_pred_abs_num
   in
@@ -302,10 +302,10 @@ let process_iconseq iconseq iprog all_view_names start_pred_abs_num =
   let s2,n2 = match iconseq with
     | MetaVar id -> "(?" ^ id ^ ")",start_pred_abs_num
     | MetaForm f ->
-      let spl = Typeinfer.gather_type_info_formula iprog f [] true in
+      let spl = x_add Typeinfer.gather_type_info_formula iprog f [] true in
       process_formula "" f spl all_view_names start_pred_abs_num
     | MetaEForm ef ->
-      let spl = Typeinfer.gather_type_info_struc_f iprog ef [] in
+      let spl = x_add Typeinfer.gather_type_info_struc_f iprog ef [] in
       process_struct_formula "" ef spl all_view_names start_pred_abs_num
     | _ -> "",start_pred_abs_num
   in
@@ -315,12 +315,12 @@ let process_iconseq iconseq iprog all_view_names start_pred_abs_num =
 let process_entail (iante, iconseq, etype) iprog cprog =
   let spl1 = match iante with
     | MetaForm f ->
-      Typeinfer.gather_type_info_formula iprog f [] true
+      x_add Typeinfer.gather_type_info_formula iprog f [] true
     | _ -> []
   in
   let spl2 = match iconseq with
     | MetaForm f ->
-      Typeinfer.gather_type_info_formula iprog f [] true
+      x_add Typeinfer.gather_type_info_formula iprog f [] true
     | _ -> []
   in
   let spl = spl1@spl2 in
@@ -337,12 +337,12 @@ let process_entail_new cprog iprog start_pred_abs_num
   let iante = List.hd iantes in
   let spl1 = match iante with
     | MetaForm f ->
-      Typeinfer.gather_type_info_formula iprog f [] true
+      x_add Typeinfer.gather_type_info_formula iprog f [] true
     | _ -> []
   in
   let spl2 = match iconseq with
     | MetaForm f ->
-      Typeinfer.gather_type_info_formula iprog f [] true
+      x_add Typeinfer.gather_type_info_formula iprog f [] true
     | _ -> []
   in
   (* let spl = spl1@spl2 in *)

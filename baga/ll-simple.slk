@@ -1,0 +1,124 @@
+//Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+
+/*
+checkentail x::ll<n> & x!=null |- n>0.
+print residue.
+
+checkentail x::ll<n> & x=null |- n=0.
+print residue.
+*/
+
+/*
+# ll-simple.ss
+
+
+# why imply_sub_no did not print?
+
+The calling hierarchy is not correct.
+
+-dre "imply_one\|imply_sub_no\|compute_base"
+
+(==astsimp.ml#3078==)
+imply_sub_no@8@7
+imply_sub_no inp1 : self=null & n=0
+imply_sub_no inp2 : self=null
+imply_sub_no@8 EXIT:?
+inside imply_one
+
+(==tpdispatcher.ml#4022==)
+imply_one@9@7
+imply_one inp1 : self=null & n=0
+imply_one inp2 : self=null
+imply_one@9 EXIT:true
+inside imply_sub_no
+
+compute_base_case@7
+compute_base_case inp1 :ll
+compute_base_case inp2 : (* lbl: *){1}->emp&self=null & n=0&{FLOW,(1,26)=__flow#E}[]
+ (* lbl: *){2}->(exists flted_5_15,Anon_13,
+ r: (* lbl: *){2}->self::node<Anon_13,r> * r::ll{}<flted_5_15>&flted_5_15+
+ 1=n&{FLOW,(1,26)=__flow#E}[]
+compute_base_case inp3 :[self,n]
+compute_base_case@7 EXIT:Some( (n=0 | self=null))
+
+
+let imply_sub_no ante0 conseq0 imp_no do_cache =
+  x_dinfo_zp (lazy ("IMP #" ^ imp_no ^ "\n")) no_pos;
+  (* imp_no := !imp_no+1;*)
+  x_add imply_one 2 ante0 conseq0 imp_no do_cache
+
+pls2nus@loris-laptop:~/hg/sl_default/baga$ ../sleek ll-simple.slk -dre ".*imply\|imply_sub_no" > 1
+
+(==tpdispatcher.ml#4021==)
+imply_one#2@75
+imply_one#2 inp1 : self=null & n=0
+imply_one#2 inp2 : n=0
+imply_one#2@75 EXIT:true
+
+
+../sleek ll-simple.slk -dre "tp_imply\|imply_cache" -tp oc > 1
+
+(==astsimp.ml#2403==)
+ compute_inv@1
+ compute_inv inp1 :ll
+ compute_inv inp2 :[n]
+ compute_inv inp3 :[ (* lbl: *){1}->emp&self=null & n=0,
+ (* lbl: *){2}->EXISTS(flted_5_15,Anon_13,r: self::node<Anon_13,r> * 
+r::ll<flted_5_15>&flted_5_15+1=n)[]]
+ compute_inv inp4 : 0<=n
+ compute_inv@1 EXIT: 0<=n
+
+--inv invoke below instead
+
+(==fixcalc.ml#606==)
+compute_heap_pure_inv@2@1
+compute_heap_pure_inv inp1 :[ (* lbl: *){1}->emp&self=null & n=0&{FLOW,(1,26)=__flow#E}[],
+ (* lbl: *){2}->(exists flted_5_15,Anon_13,
+r: (* lbl: *){2}->self::node<Anon_13,r> * r::ll{}<flted_5_15>&flted_5_15+1=n&
+{FLOW,(1,26)=__flow#E}[]]
+compute_heap_pure_inv inp2 :ll
+compute_heap_pure_inv inp3 :[n]
+compute_heap_pure_inv@2 EXIT: n>=0
+
+
+--dis-use-baga
+Stop z3... 18 invocations Stop Omega... 16 invocations 
+SAT Count   : 21
+SAT % Hit   : 47.61%
+IMPLY Count : 10
+IMPLY % Hit : 30.%
+Time(cache overhead) : 0.002914 (seconds)
+
+----
+astsimpl.ml 2004
+
+Stop z3... 15 invocations Stop Omega... 16 invocations
+SAT Count   : 19
+SAT % Hit   : 47.36%
+IMPLY Count : 8
+IMPLY % Hit : 37.5%
+Time(cache overhead) : 0.001037 (seconds)
+
+
+--use-baga
+Stop z3... 24 invocations Stop Omega... 16 invocations 
+SAT Count   : 69
+SAT % Hit   : 73.91%
+IMPLY Count : 9
+IMPLY % Hit : 33.33%
+Time(cache overhead) : 0.003191 (seconds)
+
+--inv-baga
+Stop z3... 44 invocations Stop Omega... 45 invocations 
+SAT Count   : 174
+SAT % Hit   : 82.18%
+IMPLY Count : 20
+IMPLY % Hit : 35.%
+Time(cache overhead) : 0.018248 (seconds)
+*/

@@ -298,7 +298,6 @@ let parse_file (parse) (source_file : string) =
   List.iter proc_one_cmd cmds
 
 let main () =
-  let () = Globals.is_sleek_running := true in
   let () = record_backtrace_quite () in
   let iprog = { I.prog_include_decls =[];
                 I.prog_data_decls = [iobj_def;ithrd_def];
@@ -404,7 +403,12 @@ let main () =
 (* let main () =  *)
 (*   Debug.loop_1_no "main" (fun () -> "?") (fun () -> "?") main () *)
 
+let sleek_prologue () = 
+  let () = Globals.is_sleek_running := true in
+  Globals.infer_const_obj # init
+
 let sleek_epilogue () =
+  if !Debug.dump_calls then Debug.dump_debug_calls ();
   (* ------------------ lemma dumping ------------------ *)
   if (!Globals.dump_lemmas) then
     Lem_store.all_lemma # dump
@@ -447,6 +451,7 @@ let _ =
   process_cmd_line ();
   let () = Debug.read_main () in
   Scriptarguments.check_option_consistency ();
+  sleek_prologue ();
   if !Globals.print_version_flag then begin
     print_version ()
   end else (
@@ -460,8 +465,8 @@ let _ =
       then (
         let () = print_string "Unexpected: " in
         let () = List.iter (fun id_cmd ->
-            print_string ((string_of_int id_cmd) ^ " ")) !unexpected_cmd in
-        print_string "\n\n"
+            print_string_quiet ((string_of_int id_cmd) ^ " ")) !unexpected_cmd in
+        print_string_quiet "\n\n"
       ) else
         ()
     in

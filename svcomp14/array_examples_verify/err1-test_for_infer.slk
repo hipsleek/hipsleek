@@ -1,0 +1,33 @@
+
+// 4
+infer [a]
+   true
+   |- emp& a[5]>0.
+print residue.
+
+/*
+# err1-  --ato -tp oc
+
+Why below? Can we suppress the message?
+
+Starting Omega...oc
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a[5]")
+ Formula: 1<=(a[5])
+
+Entail (1) : Valid. 
+
+Residue:
+ <1>htrue&1<=(a[5])&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [1<=(a[5])]
+
+(====)
+can_be_simplify@55
+can_be_simplify inp1 : 1<=(a[5])
+can_be_simplify@55 EXIT:true
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a[5]")
+ Formula: 1<=(a[5])
+
+What is this function doing?
+
+*/
+

@@ -6,6 +6,7 @@ open Globals
 open VarGen
 open GlobProver
 open Cpure
+open Gen.Basic
 
 let infilename = ref (!tmp_files_path ^ "input.mona." ^ (string_of_int (Unix.getpid ())))
 let resultfilename = ref (!tmp_files_path ^ "result.mona." ^ (string_of_int (Unix.getpid())))
@@ -629,9 +630,9 @@ and forall_quant_of_spec_var (sv : spec_var) : string =
 
 and print_var_map var_map =
   let p k i = print_string (k ^ " --> " ^ ((if i = FO then "FO" else "SO")) ^ "\n") in
-  print_string "\n";
+  print_string_quiet "\n";
   H.iter p var_map;
-  print_string "\n"
+  print_string_quiet "\n"
 
 
 and mona_of_formula f0 = mona_of_formula_helper f0

@@ -181,7 +181,7 @@ type typ =
   | HpT (* heap predicate relation type *)
   | Tree_sh
   | FuncT of typ * typ
-  | UtT (* unknown temporal type *)
+  | UtT of bool (* unknown temporal type - pre(true)/post(false)*)
   | Bptyp
   | Pointer of typ (* base type and dimension *)
 (* | SLTyp (* type of ho formula *) *)
@@ -519,7 +519,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
   | FuncT (t1, t2) -> (string_of_typ t1) ^ "->" ^ (string_of_typ t2)
-  | UtT        -> "UtT"
+  | UtT b        -> "UtT("^(if b then "pre" else "post")^")"
   | HpT        -> "HpT"
   (* | SLTyp -> "SLTyp" *)
   | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
@@ -530,9 +530,14 @@ let rec string_of_typ (x:typ) : string = match x with
 
 let is_RelT x =
   match x with
-  | RelT _ -> true
+  | RelT _ | UtT _ -> true
   | _ -> false
 ;;
+
+let is_UtT x =
+  match x with
+  | UtT _ -> true
+  | _ -> false
 
 let is_FuncT = function
   | FuncT _ -> true
@@ -565,7 +570,7 @@ let rec string_of_typ_alpha = function
   | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
   | FuncT (t1, t2) -> (string_of_typ t1) ^ "_" ^ (string_of_typ t2)
-  | UtT -> "UtT"
+  | UtT b        -> "UtT("^(if b then "pre" else "post")^")"
   | HpT        -> "HpT"
   (* | SLTyp -> "SLTyp" *)
   | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
@@ -764,6 +769,9 @@ let split_fixcalc = ref false (* present split is unsound *)
 let ptr_to_int_exact = ref false
 
 let is_sleek_running = ref false
+let is_hip_running = ref false
+
+let temp_opt_flag = ref false
 
 let remove_label_flag = ref false
 let label_split_conseq = ref true
@@ -781,6 +789,7 @@ let instantiation_variants = ref 0
 let omega_simpl = ref true
 
 let no_simpl = ref false
+
 
 let no_float_simpl = ref true (*do not simplify fractional constraints to avoid losing precision, such as 1/3 *)
 
@@ -819,6 +828,8 @@ let fo_iheap = ref true
 
 let sae = ref false
 let sac = ref false
+(* transform a predicate to case formula *)
+let sa_pred_case = ref true
 
 let sags = ref true
 
@@ -937,7 +948,7 @@ let pred_disj_unify = ref false
 
 let pred_seg_unify = ref false
 
-let pred_equiv = ref true
+let pred_equiv = ref false
 
 let pred_equiv_one = ref true
 
@@ -986,6 +997,7 @@ let disj_compute_flag = ref false
 let compute_xpure_0 = ref true
 let inv_wrap_flag = ref true
 let lhs_case_flag = ref false
+let infer_case_as_or_flag = ref false
 let lhs_case_search_flag = ref false
 let smart_xpure = ref true
 let super_smart_xpure = ref false
@@ -1081,6 +1093,7 @@ let web_compile_flag = ref false (*enable compilation flag for website*)
 *)
 
 let allow_lsmu_infer = ref false
+let infer_false_imply_unknown = ref true (* to support strongest post infer *)
 
 let allow_norm = ref true
 
@@ -1163,7 +1176,7 @@ let split_rhs_flag = ref true
 let n_xpure = ref 1
 
 
-let fixcalc_disj = ref 2 (* should be n+1 where n is the base-case *)
+let fixcalc_disj = ref 1 (* should be n+1 where n is the base-case *)
 
 let pre_residue_lvl = ref 0
 (* Lvl 0 - add conjunctive pre to residue only *)
@@ -1235,7 +1248,7 @@ let print_cil_input = ref false
 
 let disable_failure_explaining = ref false
 
-let enable_error_as_exc = ref true
+let enable_error_as_exc = ref false (* true *)
 
 let bug_detect = ref false
 
@@ -1314,6 +1327,7 @@ let post_add_eres = ref false
 let post_infer_flow = ref false
 let dis_ass_chk = ref false
 let log_filter = ref true
+let oc_weaken_rel_flag = ref true
 let phase_infer_ind = ref false
 
 let infer_const_num = 0
@@ -1333,6 +1347,9 @@ type infer_type =
   | INF_PRE (* For infer[@pre] *)
   | INF_SHAPE (* For infer[@shape] *)
   | INF_ERROR (* For infer[@error] *)
+  | INF_DE_EXC (* For infer[@dis_err] *)
+  | INF_ERR_MUST (* For infer[@err_must] *)
+  | INF_ERR_MAY (* For infer[@err_may] *)
   | INF_SIZE (* For infer[@size] *)
   | INF_IMM (* For infer[@imm] *)
   | INF_EFA (* For infer[@efa] *)
@@ -1358,6 +1375,9 @@ let string_of_inf_const x =
   | INF_PRE -> "@pre"
   | INF_SHAPE -> "@shape"
   | INF_ERROR -> "@error"
+  | INF_DE_EXC -> "@dis_err"
+  | INF_ERR_MUST -> "@err_must"
+  | INF_ERR_MAY -> "@err_may"
   | INF_SIZE -> "@size"
   | INF_IMM -> "@imm"
   | INF_EFA -> "@efa"
@@ -1439,6 +1459,9 @@ let string_of_inf_const x =
 class inf_obj  =
   object (self)
     val mutable arr = []
+    method init =
+      if !enable_error_as_exc then self # set INF_ERR_MUST
+      else ()
     method set_init_arr s = 
       let helper r c =
         let reg = Str.regexp r in
@@ -1459,6 +1482,9 @@ class inf_obj  =
         helper "@imm"           INF_IMM;
         helper "@shape"         INF_SHAPE;
         helper "@error"         INF_ERROR;
+        helper "@dis_err"       INF_DE_EXC;
+        helper "@err_may"       INF_ERR_MAY;
+        helper "@err_must"      INF_ERR_MUST;
         helper "@size"          INF_SIZE;
         helper "@efa"           INF_EFA;
         helper "@dfa"           INF_DFA;
@@ -1481,13 +1507,27 @@ class inf_obj  =
     method get c  = List.mem c arr
     (* method get_int i  = Array.get arr i *)
     method is_term = (self # get INF_TERM) || (self # get INF_TERM_WO_POST)
+    (* termination inference *)
     method is_term_wo_post = self # get INF_TERM_WO_POST
+    (* termination inference wo post-condition *)
     method is_pre  = self # get INF_PRE
+    (* pre-condition inference *)
     method is_post  = self # get INF_POST
+    (* post-condition inference *)
     method is_ver_post  = self # get INF_VER_POST
     method is_imm  = self # get INF_IMM
+    (* immutability inference *)
     method is_shape  = self # get INF_SHAPE
+    (* shape inference *)
     method is_error  = self # get INF_ERROR
+    method is_dis_err  = self # get INF_DE_EXC
+                         || (not(self # get INF_ERR_MUST) 
+                             && not(self # get INF_ERR_MAY))
+    method is_err_must  = not(self # get INF_DE_EXC)
+                          && not(self # get INF_ERR_MAY) 
+                          && self # get INF_ERR_MUST
+    method is_err_may  = not(self # get INF_DE_EXC) 
+                         && self # get INF_ERR_MAY
     method is_size  = self # get INF_SIZE
     method is_efa  = self # get INF_EFA
     method is_dfa  = self # get INF_DFA
@@ -1498,22 +1538,101 @@ class inf_obj  =
     method is_infer_type t  = self # get t
     method get_lst = arr
     method set c  = if self#get c then () else arr <- c::arr
-    (* method set_ind i  = Array.set arr i true *)
     method set_list l  = List.iter (fun c -> self # set c) l
     method reset c  = arr <- List.filter (fun x-> not(c==x)) arr
-    method mk_or (o2:inf_obj) = 
-      let o1 = o2 # clone in
-      let l = self # get_lst in
+    (* method mk_or (o2:inf_obj) =  *)
+    (*   let o1 = o2 # clone in *)
+    (*   let l = self # get_lst in *)
+    (*   let () = o1 # set_list l in *)
+    (*   o1 *)
+    (* method clone =  *)
+    (*   let no = new inf_obj in *)
+    (*   let () = no # set_list arr in *)
+    (*   (\* let () = print_endline ("Cloning :"^(no #string_of)) in *\) *)
+    (*   no *)
+    (* method is__all  = super # is_ || infer_const_obj # is_ *)
+    (* method is_classic_all  = *)
+    (*   print_endline "WARNING:invoking super#is_classic_all"; *)
+    (*   self # is_classic *)
+    (* method is_ver_post_all  = *)
+    (*   print_endline "WARNING:invoking super#is_verify_post_all"; *)
+    (*   self # is_ver_post *)
+    (* method is_par_all  = *)
+    (*   print_endline "WARNING:invoking super#is_par_all"; *)
+    (*   self # is_par *)
+  end;;
+
+(* class inf_w_lst = *)
+(*   object (self) *)
+(*     val mutable arr = [] *)
+(*     method string_of_raw =  *)
+(*       let lst_a = List.map string_of_inf_const arr in *)
+(*       String.concat "," lst_a *)
+(*     method string_of = "["^(self #string_of_raw)^"]" *)
+(*     method get_lst = arr *)
+(*   end *)
+
+let infer_const_obj = new inf_obj;;
+
+let global_efa_exc ()  = not(infer_const_obj # is_dis_err)
+
+let is_en_efa_exc ()=
+  infer_const_obj # is_err_must || infer_const_obj # is_err_may
+
+(* local setting takes precedence over global setting *)
+(*    dis_err > err_may > err_must *)
+(*      dis_err & err_may --> dis_err *)
+(*      dis_err & err_must --> dis_err *)
+(*      err_may & err_must --> err_may *)
+
+(* let global_is_dis_err ()  = infer_const_obj # is_dis_err *)
+(* let global_is_err_may ()  = not(infer_const_obj # is_dis_err)  *)
+(*                             && infer_const_obj # is_err_may *)
+(* let global_is_err_must ()  = not(infer_const_obj # is_dis_err)  *)
+(*                              && not(infer_const_obj # is_err_may)  *)
+(*                              && infer_const_obj # is_err_must *)
+
+(* let local_is_dis_err obj  = obj # is_dis_err  *)
+(*                             || infer_const_obj # is_dis_err *)
+(* let local_is_err_may obj  = obj # is_err_may || global_is_err_may () *)
+(* let local_is_err_must obj  = obj # is_err_must || global_is_err_must () *)
+
+
+class inf_obj_sub  =
+  object (self)
+    inherit inf_obj as super
+    method is_dis_err_all  = self # get INF_DE_EXC
+                             || (not(self # get INF_ERR_MUST) && not(self # get INF_ERR_MAY) 
+                                 && infer_const_obj # is_dis_err)
+    method is_err_may_all  = self # get INF_ERR_MAY 
+                             || (not(self # get INF_ERR_MUST) && not(self # get INF_DE_EXC) 
+                                 && infer_const_obj # is_err_may)
+    method is_err_must_all  = self # get INF_ERR_MUST 
+                              || (not(self # get INF_ERR_MAY) && not(self # get INF_DE_EXC) 
+                                  && infer_const_obj # is_err_must)
+    method is_classic_all  = super # is_classic || infer_const_obj # is_classic
+    (* method is__all  = super # is_ || infer_const_obj # is_ *)
+    method is_ver_post_all  = super # is_ver_post || infer_const_obj # is_ver_post
+    method is_par_all  = super # is_par || infer_const_obj # is_par
+    method mk_or (o2:inf_obj) =
+      let o1 = self # clone in
+      let l = o2 # get_lst in
       let () = o1 # set_list l in
       o1
-    method clone = 
-      let no = new inf_obj in
+    method mk_or_lst (l) =
+      let o1 = self # clone in
+      let () = o1 # set_list l in
+      o1
+    method clone =
+      let no = new inf_obj_sub in
       let () = no # set_list arr in
       (* let () = print_endline ("Cloning :"^(no #string_of)) in *)
       no
   end;;
 
-let infer_const_obj = new inf_obj;;
+let clone_sub_infer_const_obj () =
+  let obj = new inf_obj_sub in
+  obj # mk_or infer_const_obj
 
 (* let set_infer_const s = *)
 
@@ -1566,7 +1685,7 @@ let use_baga = ref false
 let prove_invalid = ref false
 let gen_baga_inv_threshold = 7 (* number of preds <=6, set gen_baga_inv = false*)
 let do_under_baga_approx = ref false (* flag to choose under_baga *)
-let baga_xpure = ref true (* change to true later *)
+(* let baga_xpure = ref true (\* change to true later *\) *)
 let baga_imm = ref false                 (* wen on true, ignore @L nodes while building baga --  this is forced into true when computing baga for vdef*)
 
 (* get counter example *)

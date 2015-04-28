@@ -373,7 +373,7 @@ let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs view_equ
   (* let if2 = IF.formula_trans_heap_node hn_trans if1 in *)
   (* (\*trans iformula to cformula*\) *)
   (* let if3 = Astsimp.case_normalize_formula iprog [] if2 None in *)
-  (* let n_tl = Typeinfer.gather_type_info_formula iprog if3 [] false in *)
+  (* let n_tl = x_add Typeinfer.gather_type_info_formula iprog if3 [] false in *)
   (* let _, f2 = Astsimp.trans_formula iprog false [] false if3 n_tl false in *)
   (* CF.elim_exists f2 *)
   CF.formula_trans_heap_node hn_c_trans f
@@ -658,10 +658,10 @@ let rec case_struc_formula_trans_x prog dang_hps to_unfold_hps pre_hps post_hps 
                   let sf2 = CF.EBase {b with CF.formula_struc_base = f2;} in
                   let n_parts = if CF.equal_flow_interval fl2 !norm_flow_int then parts else parts2 in
                   let sf3 = recf n_parts fl2 sf2 in
-                  let old_baga_flag = !baga_xpure in
-                  let () = baga_xpure := true in
+                  let old_baga_flag = !use_baga (* !baga_xpure *) in
+                  let () = use_baga (* baga_xpure *) := true in
                   let guard,_,_=(x_add Cvutil.xpure_symbolic 11 prog f2) in
-                  let () = baga_xpure := old_baga_flag in
+                  let () = use_baga (* baga_xpure *) := old_baga_flag in
                   let p_guard = CP.remove_redundant (MCP.pure_of_mix guard) in
                   let sf4 = elim_dup_with_guard p_guard sf3 in
                   (p_guard, sf4)
@@ -852,6 +852,7 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps
           CF.struc_formula_trans_heap_node [] (CF.formula_map (hn_hprel_subst_trans sst_hps)) s_spec2
       in
       let hn_trans_formula = trans_formula_hp_2_view iprog cprog name chprels_decl proc.C.proc_hpdefs sel_view_equivs in
+      let () =  Debug.ninfo_hprint (add_str "s_spec3" (Cprinter.string_of_struc_formula)) s_spec3 no_pos in
       let n_static_spec = CF.struc_formula_trans_heap_node [] hn_trans_formula s_spec3 in
       let () =  Debug.ninfo_hprint (add_str "trans static spec" (Cprinter.string_of_struc_formula)) n_static_spec no_pos in
       (* stack specs *)
@@ -936,6 +937,10 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps
 (*******************************)
 
 let plug_shape_into_specs_x cprog iprog dang_hps proc_names pre_hps post_hps hp_defs=
+  let is_rec_f hp f=
+    let hps = CF.get_hp_rel_name_formula f in
+    (CP.mem_svl hp hps)
+  in
   (*subst simple precondition*)
   let need_trans_hprels0, unk_hps, simpl_hps =
     List.fold_left (fun (r_hp_defs, r_unk_hps, r_simp_hps) hp_def ->

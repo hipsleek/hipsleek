@@ -1,6 +1,5 @@
 <{parser,parse_fix,parse_fixbag,parse_shape,parse_cmd}.ml>: pp(camlp4of)
 not(<{parser,parse_fix,parse_fixbag,parse_shape,parse_cmd}.ml> or <cil/ocamlutil/errormsg.ml>): pp(cppo -I ../ -D TRACE)
-<ppx/*.ml>: package(ppx_deriving.std)
 "joust": include
 <xml/*.*>: not_hygienic
 <ppx/*.*>: not_hygienic

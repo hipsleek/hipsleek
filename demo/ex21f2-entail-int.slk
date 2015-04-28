@@ -1,0 +1,86 @@
+data node {node next;}.
+
+//1
+infer [@dis_err] x'=x |- x'<=5.
+print residue.
+// expects MaybeErr Context:
+
+  /*
+Residue:
+ 
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message:  true |-  x'<=5. LOCS:[2] (may-bug)
+                             fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}}
+[[empty]]
+CEX:false
+  */
+
+
+//2
+infer [@err_must] x'=x |- x'<=6.
+print residue.
+// expects __MayError
+
+//3
+infer [] x'=x |- x'<=6.
+print residue.
+// expects MaybeErr Context
+
+//4
+infer [@err_may] x'=x |- x'<=6.
+print residue.
+// expects __MayError
+
+//5
+infer [@dis_err] x'=8 |- x'<=5.
+print residue.
+//expects MustErr Context but got MaybeErr Context
+
+  /*
+Residue:
+ 
+MaybeErr Context: 
+                   fe_kind: MUST
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message:  x'=8 |-  x'<=5. LOCS:[37] (must-bug)
+                             fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}}
+
+
+  */
+
+
+//6
+infer [@err_must] x'=8 |- x'<=6.
+print residue.
+// expects __Error
+
+//7
+infer [] x'=8 |- x'<=6.
+print residue.
+// expects MustErr Context but got MaybeErr Context
+
+//8
+infer [@err_may] x'=8 |- x'<=6.
+print residue.
+// expects __MayError
+ 
+/*
+# ex21f2.slk
+
+# 5 & 7 has problem above
+
+//5
+infer [@dis_err] x'=8 |- x'<=5.
+print residue.
+//expects MustErr Context but got MaybeErr Context
+
+//7
+infer [] x'=8 |- x'<=6.
+print residue.
+// expects MustErr Context but got MaybeErr Context
+
+*/

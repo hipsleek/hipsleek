@@ -1,0 +1,17 @@
+
+infer[@err_must] x=1 & flow __norm |- x>4 & flow __norm.
+print residue.
+expect Fail.
+
+//infer[@err_must] x=1 & flow __norm |- x>4 & flow __flow.
+//infer[@err_must] x=1 & flow __flow |- x>4 & flow __norm.
+
+
+
+/*
+# ex21e7b
+
+
+
+*/
+

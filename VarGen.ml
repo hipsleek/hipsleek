@@ -65,6 +65,13 @@ let string_of_loc_by_char_num (l : loc) =
     l.start_pos.Lexing.pos_cnum
     l.end_pos.Lexing.pos_cnum
 
+let eq_pos p1 p2 = 
+  (p1.Lexing.pos_lnum == p2.Lexing.pos_lnum) &&
+  (p1.Lexing.pos_cnum - p1.Lexing.pos_bol) == (p2.Lexing.pos_cnum - p2.Lexing.pos_bol)
+
+let eq_loc l1 l2 = 
+  eq_pos l1.start_pos l2.start_pos
+
 (*Proof logging facilities*)
 class ['a] store (x_init:'a) (epr:'a->string) =
   object (self)
@@ -80,11 +87,25 @@ class ['a] store (x_init:'a) (epr:'a->string) =
     method reset = lc <- None
     method get_rm :'a = match lc with
       | None -> emp_val
-      | Some p -> (self#reset; p)
+      | Some p -> (lc <- None; p)
     method string_of : string = match lc with
       | None -> "Why None?"
       | Some l -> (epr l)
     method dump = print_endline ("\n store dump :"^(self#string_of))
+  end;;
+
+class ['a] store_debug (x_init:'a) (epr:'a->string) =
+  object (self)
+    inherit ['a] store x_init epr as super
+    method reset = 
+      if super # is_avail then
+        begin
+          print_endline ("reset:"^self#get);
+          super # reset
+        end
+    method get_rm :'a = 
+      print_endline ("get_rm:"^self#get);
+      super # get_rm
   end;;
 
 (* this will be set to true when we are in error explanation module *)
@@ -101,7 +122,7 @@ class prog_loc =
       | Some l -> (string_of_pos l.start_pos)
   end;;
 
-let last_posn = new store "" (fun x -> "("^x^")")
+let last_posn = new store(* _debug *) "" (fun x -> "("^x^")")
 
 (*Some global vars for logging*)
 let proving_loc  = new prog_loc

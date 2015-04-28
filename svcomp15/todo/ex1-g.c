@@ -12,6 +12,7 @@ extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 typedef unsigned int FFelem;
 
 FFelem FFmul(const FFelem x, const FFelem y)
+//@ infer[@shape,@pre_n,@post_n] requires true ensures true;
 {
   return x;
 }
@@ -28,7 +29,7 @@ typedef struct DUPFFstruct *DUPFF;
 
 //  ../../hip ex1-g.c -infer "@shape,@post_n" 
 int DUPFFdeg(const DUPFF f)
-//@ infer[@shape,@post_n] requires true ensures true;
+//@ infer[@shape,@pre_n,@post_n] requires true ensures true;
 {
   return f->deg;
 }
@@ -42,7 +43,7 @@ void DUPFFshift_add(DUPFF f, const DUPFF g, int deg, const FFelem coeff)
 
 
 DUPFF DUPFFexgcd(DUPFF u)
-//@ infer[@shape,@post_n] requires true ensures true;
+//@ infer[@shape,@pre_n,@post_n] requires true ensures true;
 {
   DUPFF  v, uf, ug, vf, vg;
   FFelem q, lcu, lcvrecip, p;
@@ -50,7 +51,7 @@ DUPFF DUPFFexgcd(DUPFF u)
 
   
     while ( DUPFFdeg(u) >= dv)
-      //@ infer[@shape,@post_n] requires emp&true ensures emp&true;
+      //@ infer[@shape,@pre_n,@post_n] requires emp&true ensures emp&true;
     {
       du = DUPFFdeg(u);
       lcu = u->coeffs[du];
