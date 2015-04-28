@@ -7341,7 +7341,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
 
                     let err_msg =
                       if (CF.subsume_flow_f !error_flow_int fl1) then
-                        ("1.2: " ^ (f1_exc (* exlist # get_closest fl1.CF.formula_flow_interval *)))
+                        ("1.2a: " ^ (f1_exc (* exlist # get_closest fl1.CF.formula_flow_interval *)))
                       else
                         match (List.rev estate.es_final_error) with
                         | (s,_,_)::_ -> s
@@ -7362,7 +7362,9 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                   )
                   else (
                     let () = x_tinfo_pp "not(overlap_flow)_ff:else" no_pos in
-                    let err_msg="1.2: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types" in
+                    let err_msg= match (List.rev estate.es_final_error) with
+                        | (s,_,_)::_ -> s
+                        | [] -> "1.2c: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types" in
                     let fe = mk_failure_must err_msg "incompatible types" in
                     (* if CF.subsume_flow_f !error_flow_int fl1 then *)
                     (*   (\* let () = print_endline ("\ntodo:" ^ (Cprinter.string_of_flow_formula "" fl1)) in*\) *)

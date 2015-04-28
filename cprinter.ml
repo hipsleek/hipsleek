@@ -3989,7 +3989,7 @@ let pr_esc_stack_lvl ?(nshort=true) ((i,s),e) =
              if nshort then pr_vwrap_nocut "Path: " pr_path_trace lbl;
              pr_vwrap "State:" pr_context_short fs;
              (* Loc: print exc *)
-             if nshort then (pr_vwrap "Exc:" fmt_string (match oft with | Some _ -> "Some" | _ -> "None"))
+             (* if nshort then (pr_vwrap "Exc:" fmt_string (match oft with | Some _ -> "Some" | _ -> "None")) *)
            )) e;
       fmt_close_box ()
     end
