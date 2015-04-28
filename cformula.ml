@@ -10623,6 +10623,7 @@ let convert_may_failure_4_fail_type_new  (s:string) (ft:fail_type) cex : context
   | Some (ctx, msg) -> Some (update_err ctx (s^msg,ft,  Failure_May msg))
   | _ -> None
 
+
 (* TRUNG WHY: purpose when converting a list_context from FailCtx type to SuccCtx type? *)
 let convert_maymust_failure_to_value_orig (l:list_context) : list_context =
   match l with 
@@ -10635,13 +10636,18 @@ let convert_maymust_failure_to_value_orig (l:list_context) : list_context =
       (*   | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ]  *)
       (*   | _ ->  l) *)
       begin
-        match (x_add convert_must_failure_4_fail_type_new "" ft cex) with
-        | Some ctx -> SuccCtx [ctx]
-        | None -> begin
-            match (x_add convert_may_failure_4_fail_type_new "" ft cex) with
-            | Some ctx -> SuccCtx [ctx]
-            | None -> l
-          end
+        let () = Debug.ninfo_hprint (add_str "c" !print_context_short) c no_pos in
+        match get_final_error_ctx c with
+          | Some _ -> SuccCtx [c]
+          | None -> (
+                match (x_add convert_must_failure_4_fail_type_new "" ft cex) with
+                  | Some ctx -> SuccCtx [ctx]
+                  | None -> begin
+                      match (x_add convert_may_failure_4_fail_type_new "" ft cex) with
+                        | Some ctx -> SuccCtx [ctx]
+                        | None -> l
+                    end
+            )
       end
   | SuccCtx _ -> l
 
