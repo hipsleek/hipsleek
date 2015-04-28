@@ -9321,6 +9321,7 @@ and failure_kind =
 
 and failure_cex = {
   cex_sat: bool;
+  cex_processed_mark: bool;
 }
 
 and fail_explaining = {
@@ -9461,6 +9462,7 @@ let rec get_false_entail_state ctx =
 
 let mk_cex is_sat=
   {cex_sat = is_sat;
+  cex_processed_mark=false;
   }
 
 let is_sat_fail cex=
@@ -10625,12 +10627,12 @@ let convert_may_failure_4_fail_type_new  (s:string) (ft:fail_type) cex : context
 
 
 (* TRUNG WHY: purpose when converting a list_context from FailCtx type to SuccCtx type? *)
-let convert_maymust_failure_to_value_orig (l:list_context) : list_context =
+let convert_maymust_failure_to_value_orig ?(mark=true) (l:list_context) : list_context =
   match l with 
   | FailCtx (ft, c, cex) -> (* Loc: to check cex here*)
     if (* not (is_en_error_exc_ctx c) *)
-      not !Globals.enable_error_as_exc && not (is_en_error_exc_ctx c) 
-    then l 
+      not !Globals.enable_error_as_exc && not (is_en_error_exc_ctx c)
+    then l
     else
       (* (match (get_must_es_msg_ft ft) with *)
       (*   | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ]  *)
@@ -10651,10 +10653,31 @@ let convert_maymust_failure_to_value_orig (l:list_context) : list_context =
       end
   | SuccCtx _ -> l
 
-let convert_maymust_failure_to_value_orig (l:list_context) : list_context =
+let convert_maymust_failure_to_value_orig ?(mark=true) (l:list_context) : list_context =
+  match l with
+    | FailCtx (ft, c, cex) ->
+          if (* not (is_en_error_exc_ctx c) *)
+            not !Globals.enable_error_as_exc && not (is_en_error_exc_ctx c)
+          then
+            l
+          else
+            if mark then
+              let r = convert_maymust_failure_to_value_orig l in
+              match r with
+                | SuccCtx [cc] -> FailCtx (ft, cc, { cex with cex_processed_mark=true})
+                | _ -> r
+            else
+              if cex.cex_processed_mark (* already processed *)
+              then SuccCtx [c]
+              else convert_maymust_failure_to_value_orig l
+
+    | _ -> l
+ 
+
+let convert_maymust_failure_to_value_orig ?(mark=true) (l:list_context) : list_context =
   let pr = !print_list_context_short in
   Debug.no_1 "convert_maymust_failure_to_value_orig" pr pr
-    (fun _ -> convert_maymust_failure_to_value_orig l) l
+    (fun _ -> convert_maymust_failure_to_value_orig ~mark:mark l) l
 
 (* let add_must_err (s:string) (fme:branch_ctx list) (e:esc_stack) : esc_stack = *)
 (*   ((-1,"Must Err @"^s),fme) :: e *)
@@ -11511,13 +11534,13 @@ let list_context_union_x c1 c2 =
   | FailCtx t1 ,SuccCtx t2 -> SuccCtx (simplify t2)
   | SuccCtx t1 ,FailCtx t2 -> SuccCtx (simplify t1)
   | SuccCtx t1 ,SuccCtx t2 -> 
-    if contains_error_flow_ctx_list t1 then
-      if contains_error_flow_ctx_list t2 
-      then failwith "to implement union_error"
-      else SuccCtx (simplify t2)
-    else
-    if contains_error_flow_ctx_list t2 then SuccCtx (simplify t2)
-    else 
+    (* if contains_error_flow_ctx_list t1 then *)
+    (*   if contains_error_flow_ctx_list t2  *)
+    (*   then failwith "to implement union_error" *)
+    (*   else SuccCtx (simplify t2) *)
+    (* else *)
+    (* if contains_error_flow_ctx_list t2 then SuccCtx (simplify t2) *)
+    (* else  *)
       SuccCtx (simplify_ctx_elim_false_dupl t1 t2)
 
 let list_context_union c1 c2 =
