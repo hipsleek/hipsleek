@@ -10622,7 +10622,7 @@ let add_err_to_estate err es =
 
 let repl_msg_final_error msg es =
   match (List.rev es.es_final_error) with
-    | (s,_,_)::_ -> (* msg^";\n"^ *)s
+    | (s,_,_)::_ -> msg^";\n"^s
     | [] -> msg
 
 let repl_msg_final_error msg es =

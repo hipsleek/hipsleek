@@ -2951,7 +2951,8 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
   let post_op_wrapper f a =
     wrap_err_post (* efa_exc (Some false) *) f a
   in
-  let f = wrap_ver_post (wrap_add_flow (wrap_proving_kind PK_POST ((* check_post_x *) post_op_wrapper check_post_x prog proc ctx posts pos pid) )) in
+  let f = wrap_ver_post (wrap_add_flow (wrap_proving_kind PK_POST ((* check_post_x *) 
+      post_op_wrapper (check_post_x prog proc ctx posts pos) pid) )) in
   Debug.no_2(* _loop *) "check_post" pr pr1 pr (fun _ _ -> f etype) ctx posts 
 
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (posts : CF.formula*CF.struc_formula) pos (pid:formula_label) (etype: ensures_type) : CF.list_partial_context  =
