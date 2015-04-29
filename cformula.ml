@@ -9425,7 +9425,7 @@ let rec is_dis_error_exc_ctx c=
 let is_dis_error_exc_ctx_list lc=
   match lc with
   | FailCtx (_,c,_) -> is_dis_error_exc_ctx c
-  | SuccCtx cs -> List.forall is_dis_error_exc_ctx cs
+  | SuccCtx cs -> List.for_all is_dis_error_exc_ctx cs
 
 let is_dfa es=
   es.es_infer_obj # is_dfa
@@ -10622,7 +10622,7 @@ let add_err_to_estate err es =
 
 let repl_msg_final_error msg es =
   match (List.rev es.es_final_error) with
-    | (s,_,_)::_ -> msg^";\n"^s
+    | (s,_,_)::_ -> (* msg^";\n"^ *)s
     | [] -> msg
 
 let repl_msg_final_error msg es =
