@@ -499,7 +499,7 @@ let pr_list_op_none sep f xs = pr_args None (Some "B") "" "" "" sep f xs
 let pr_list_vbox_wrap sep f xs =
   if (String.length sep > 3) then
     pr_args (Some ("V",0)) (Some "AB") "" "" "" sep
-      (fun x -> fmt_string " "; wrap_box ("B",0) f x) xs
+        (fun x -> fmt_string " "; wrap_box ("B",0) f x) xs
   else   pr_args (Some ("V",0)) (Some "B") "" "" "" sep (wrap_box ("B",0) f) xs
 
 (**print f_1 op  f_2 and a space *)   
@@ -3583,6 +3583,7 @@ let pr_estate ?(nshort=true) (es : entail_state) =
   pr_wrap_test "es_conc_err: " Gen.is_empty (pr_seq "" (fun (msg, pos) -> fmt_string (msg ^ ":" ^ (string_of_pos pos)))) es.es_conc_err;
   pr_wrap_test "es_final_error:" Gen.is_empty 
       (pr_seq "" (fun (c,_,_) -> fmt_string c)) es.es_final_error;
+      (* (fun x -> fmt_string (pr_list_num (fun (c,_,_) -> c) x)) es.es_final_error; *)
   if nshort then
     begin
       pr_wrap_test "es_must_error: "  Gen.is_None (pr_opt (fun (s,_,cex) -> fmt_string (s ^";" ^ (string_of_failure_cex cex) ))) (es.es_must_error); 
