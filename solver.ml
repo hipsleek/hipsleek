@@ -8611,7 +8611,7 @@ type: bool *
           CF.is_en_error_exc estate then {
             estate with es_formula =
                           match fc_kind with
-                          | CF.Failure_Must _ -> if estate.es_infer_obj # is_err_may then
+                          | CF.Failure_Must _ -> if estate.es_infer_obj # is_err_may_all then
                               CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula
                             else
                               CF.substitute_flow_into_f !error_flow_int estate.es_formula
@@ -8631,7 +8631,7 @@ type: bool *
           fc_failure_pts = match r_fail_match with | Some s -> [s]| None-> [];} in
         let must_list1, may_list1,contra_list1 = (* if is_sat then (must_list@may_list, []) else *)
           (* if annotate err_may: no must error at the end*)
-          if estate.es_infer_obj # is_err_may then ([],must_list@may_list@contra_list, [])
+          if estate.es_infer_obj # is_err_may_all then ([],must_list@may_list@contra_list, [])
           else
             (must_list, may_list, contra_list)
         in
@@ -12535,7 +12535,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                             let root = Cformula.get_ptr_from_data rhs in
                             let () =  Debug.ninfo_hprint (add_str "lhs_null_ptrs" !CP.print_svl) lhs_null_ptrs pos in
                             if (not (CF.is_unknown_f estate.es_formula)) && (CP.mem_svl root (CF.fv estate.es_formula)) &&
-                               not ( estate.es_infer_obj # is_err_may) &&
+                               not ( estate.es_infer_obj # is_err_may_all) &&
                                ((Cfutil.is_empty_heap_f estate.es_formula) || CP.mem_svl root lhs_null_ptrs) then
                                 let must_estate = {estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.es_formula} in
                                 let ft = (Basic_Reason (mkFailContext msg must_estate (Base rhs_b) None pos,
@@ -14958,6 +14958,7 @@ let heap_entail_list_failesc_context_init_x (prog : prog_decl) (is_folding : boo
                       ^ "after normalizing"
                       ^"\n")) pos;
     let (lfc,prf) = x_add heap_entail_failesc_prefix_init 2 prog is_folding  false norm_cl conseq tid delayed_f join_id pos pid (rename_labels_formula ,Cprinter.string_of_formula,heap_entail_one_context_new) in
+    (* WN:TODO: need to consider local option in list_failesc? *)
     let lfc1 = if !Globals.enable_error_as_exc ||
                   (infer_const_obj # is_err_must || infer_const_obj # is_err_may) then
         (* List.map (fun ((lbl, ft), esc, brok) -> *)

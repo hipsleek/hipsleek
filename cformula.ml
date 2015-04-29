@@ -9425,7 +9425,7 @@ let rec is_dis_error_exc_ctx c=
 let is_dis_error_exc_ctx_list lc=
   match lc with
   | FailCtx (_,c,_) -> is_dis_error_exc_ctx c
-  | SuccCtx cs -> List.forall is_dis_error_exc_ctx cs
+  | SuccCtx cs -> List.for_all is_dis_error_exc_ctx cs
 
 let is_dfa es=
   es.es_infer_obj # is_dfa
@@ -15886,10 +15886,10 @@ let rec add_inf_cmd_struc is_primitive f =
   else
     match f with
     | EInfer ei -> EInfer { ei with 
-                            formula_inf_obj = ei.formula_inf_obj # mk_or Globals.infer_const_obj; }
+                            formula_inf_obj = ei.formula_inf_obj # mk_or_sel Globals.infer_const_obj; }
     | EList el -> EList (List.map (fun (sld, s) -> (sld, add_inf_cmd_struc is_primitive s)) el)
     | _ -> EInfer {
-        formula_inf_obj = Globals.clone_sub_infer_const_obj ();
+        formula_inf_obj = Globals.clone_sub_infer_const_obj_sel ();
         (* Globals.infer_const_obj # clone; *)
         formula_inf_post = true (* Globals.infer_const_obj # is_post *);
         formula_inf_xpost = None;

@@ -2456,8 +2456,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let pr2 = Cprinter.string_of_list_failesc_context in
               let pr3 = Cprinter.string_of_struc_formula in
               (* let () = Log.update_sleek_proving_kind Log.PRE in *)
-              let pre_post_op_wrapper a =
-                wrap_err_pre (* (Some false) *) (check_pre_post_orig) a
+              let pre_post_op_wrapper a b c =
+                wrap_err_pre (* (Some false) *) (check_pre_post_orig a b) c
               in
               let pk = if ir then PK_PRE_REC else PK_PRE in
               let f = wrap_proving_kind pk  ((* check_pre_post_orig *) pre_post_op_wrapper org_spec sctx) in

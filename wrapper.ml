@@ -90,6 +90,19 @@ let wrap_classic et f a =
 (*     (enable_error_as_exc := flag; *)
 (*      raise e) *)
 
+(* !!! **wrapper.ml#134:Calling wrap_err_pre *)
+(* !!! **wrapper.ml#94:wrap_inf_obj:@dis_err *)
+(* !!! **wrapper.ml#95:BEFORE:[] *)
+(* !!! **wrapper.ml#98:AFTER:[@dis_err] *)
+(* !!! **wrapper.ml#102:RESTORE:[] *)
+
+
+(* !!! **wrapper.ml#134:Calling wrap_err_pre *)
+(* !!! **wrapper.ml#94:wrap_inf_obj:@err_may *)
+(* !!! **wrapper.ml#95:BEFORE:[@err_must] *)
+(* !!! **wrapper.ml#98:AFTER:[@err_may,@err_must] *)
+(* !!! **wrapper.ml#102:RESTORE:[@err_must] *)
+
 let wrap_inf_obj iobj f a =
   let () = x_binfo_hp (add_str "wrap_inf_obj" string_of_inf_const) iobj no_pos in
   let () = x_binfo_hp (add_str "BEFORE" pr_id) infer_const_obj#string_of no_pos in
@@ -108,13 +121,14 @@ let wrap_inf_obj iobj f a =
         raise e
       end
 
-
 let wrap_err_dis f a =
   wrap_inf_obj INF_DE_EXC f a
 
 let wrap_err_may f a =
   wrap_inf_obj INF_ERR_MAY f a
 
+let wrap_err_may f a =
+  Debug.no_1 "wrap_err_may" pr_none pr_none (wrap_err_may f) a
 let wrap_err_must f a =
   wrap_inf_obj INF_ERR_MUST f a
 
