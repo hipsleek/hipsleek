@@ -145,7 +145,7 @@ let wrap_err_assert_assume f a =
 
 (* not called? *)
 let wrap_err_pre f a =
-  let () = x_binfo_pp "Calling wrap_err_pre" no_pos in
+  (* let () = x_binfo_pp "Calling wrap_err_pre" no_pos in *)
   if infer_const_obj # is_dis_err then wrap_err_dis f a
   else if infer_const_obj # is_err_may then wrap_err_may f a
   else if infer_const_obj # is_err_must then wrap_err_may f a

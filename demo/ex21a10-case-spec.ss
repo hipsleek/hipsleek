@@ -23,9 +23,17 @@ bool foo2(cell x)
 # ex21a10.ss
 
 Post condition cannot be derived:
-  (may) cause: OrL[AndR[1.2b: ante flow:__MayError#E conseq flow: __norm#E are incompatible flow types;
-Proving precondition in method pre_call$cell(1 File "ex21a10-case-spec.ss",Line:17,Col:2) Failed ;
-do_unmatched_rhs : x'::cell<Anon_11>, true |-  res. LOCS:[0;15] (may-bug)], true |-  res. LOCS:[19;15] (may-bug)]
+  (may) cause: OrL
+ [AndR[
+1.2b: ante flow:__MayError#E conseq flow: __norm#E are incompatible flow types(may);
+Proving precondition in method pre_call$cell(1 File "ex21a10-case-spec.ss",Line:17,Col:2) Failed (may);
+do_unmatched_rhs : x'::cell<Anon_11> (must), 
+
+true |-  res. LOCS:[0;15] (may-bug)], 
+
+true |-  res. LOCS:[19;15] (may-bug)]
+
+
 Context of Verification Failure: _0:0_0:0
 Last Proving Location: ex21a10-case-spec.ss_19:2_19:16
 ERROR: at _0:0_0:0
