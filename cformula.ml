@@ -9404,7 +9404,7 @@ let is_en_error_exc es =
   not(is_dis_err_exc es)
 (* es.es_infer_obj # is_err_must || es.es_infer_obj # is_err_may *)
 
-let rec is_en_error_exc_ctx c=
+let rec is_en_error_exc_ctx c =
   match c with
   | Ctx es -> is_en_error_exc es
   | OCtx (c1,c2) -> is_en_error_exc_ctx c1 || is_en_error_exc_ctx c2
@@ -9420,12 +9420,12 @@ let is_dis_error_exc es=
 let rec is_dis_error_exc_ctx c=
   match c with
   | Ctx es -> is_dis_error_exc es
-  | OCtx (c1,c2) -> is_dis_error_exc_ctx c1 || is_dis_error_exc_ctx c2
+  | OCtx (c1,c2) -> is_dis_error_exc_ctx c1 && is_dis_error_exc_ctx c2
 
 let is_dis_error_exc_ctx_list lc=
   match lc with
   | FailCtx (_,c,_) -> is_dis_error_exc_ctx c
-  | SuccCtx cs -> List.exists is_dis_error_exc_ctx cs
+  | SuccCtx cs -> List.for_all is_dis_error_exc_ctx cs
 
 let is_dfa es=
   es.es_infer_obj # is_dfa
@@ -9939,14 +9939,14 @@ let gen_land (m1,n1,e1) (m2,n2,e2) = match m1,m2 with
   (*report_error no_pos "Failure_None not expected in gen_and"*)
   | _, Failure_Bot _ -> m2, n2, e2
   (*report_error no_pos "Failure_None not expected in gen_and"*)
-  | Failure_May m1, Failure_May m2 -> (Failure_May ("LAndR["^m1^","^m2^"]"),n1,None)
+  | Failure_May m1, Failure_May m2 -> (Failure_May ("LAndR[\n"^m1^",\n"^m2^"\n]"),n1,None)
   | Failure_May m1, _ -> m2, n2, e2
   | _ , Failure_May m2 -> m1,n1, e1
   | Failure_Must m1, Failure_Must m2 ->
     if (n1==sl_error) then (Failure_Must m2, n2, e2)
     else if (n2==sl_error) then (Failure_Must m1, n1, e1)
-    else Failure_Must ("LAndR["^m1^","^m2^"]"), n1, e1 (*combine state here?*)
-  | Failure_Must m1, Failure_Valid -> Failure_May ("LAndR["^m1^",Valid]"), n1, None (*combine state here?*)
+    else Failure_Must ("LAndR[\n"^m1^",\n"^m2^"\n]"), n1, e1 (*combine state here?*)
+  | Failure_Must m1, Failure_Valid -> Failure_May ("LAndR[\n"^m1^",\nValid\n]"), n1, None (*combine state here?*)
   | Failure_Valid, x  -> (m2, n2, e2)
 
 (*gen_rand*)
@@ -9958,10 +9958,10 @@ let gen_rand_x (m1,n1,e1) (m2,n2,e2) = match m1,m2 with
   | Failure_Must m1, Failure_Must m2 ->
     if (n1=sl_error) then (Failure_Must m2, n2, e2)
     else if (n2= sl_error) then (Failure_Must m1, n1, e1)
-    else Failure_Must ("AndR["^m1^","^m2^"]"), n1, e1 (*combine state here?*)
+    else Failure_Must ("AndR[\n"^m1^",\n"^m2^"\n]"), n1, e1 (*combine state here?*)
   | Failure_Must m, _ -> Failure_Must m, n1, e1
   | _, Failure_Must m -> Failure_Must m, n2, e2
-  | Failure_May m1, Failure_May m2 -> (Failure_May ("AndR["^m1^","^m2^"]"),n1,None)
+  | Failure_May m1, Failure_May m2 -> (Failure_May ("AndR[\n"^m1^",\n"^m2^"\n]"),n1,None)
   | Failure_May m, _ -> Failure_May m,n1,None
   | _, Failure_May m -> Failure_May m,n2,None
   | Failure_Valid, x  -> (m2,n2,e2)
@@ -9984,10 +9984,10 @@ let gen_rand_ctx (m1,n1,e1) (m2,n2,e2) = match m1,m2 with
   | Failure_Must m1, Failure_Must m2 ->
     if (n1=sl_error) then (Failure_Must m2, n2, e2)
     else if (n2= sl_error) then (Failure_Must m1, n1, e1)
-    else Failure_Must ("AndR["^m1^","^m2^"]"), n1, e1 (*combine state here?*)
+    else Failure_Must ("AndR[\n"^m1^",\n"^m2^"]"), n1, e1 (*combine state here?*)
   | Failure_Must m, _ -> Failure_Must m, n1, e1
   | _, Failure_Must m -> Failure_Must m, n2, e2
-  | Failure_May m1, Failure_May m2 -> (Failure_May ("AndR["^m1^","^m2^"]"),n1,None)
+  | Failure_May m1, Failure_May m2 -> (Failure_May ("AndR[\n"^m1^",\n"^m2^"\n]"),n1,None)
   | Failure_May m, _ -> Failure_May m,n1,None
   | _, Failure_May m -> Failure_May m,n2,None
   | Failure_Valid, x  -> (m2,n2,e2)
@@ -9996,21 +9996,21 @@ let gen_rand_ctx (m1,n1,e1) (m2,n2,e2) = match m1,m2 with
 (* state to be refined to accurate one for must-bug *)
 (*gen_lor*)
 let gen_lor_x (m1,n1,e1) (m2,n2,e2) : (failure_kind * string * (entail_state option)) = match m1,m2 with
-  | Failure_Bot m1,  Failure_Bot m2 ->  Failure_Bot ("OrL["^m1^","^m2^"]"), n1, e1 (*combine state here?*)
+  | Failure_Bot m1,  Failure_Bot m2 ->  Failure_Bot ("OrL[\n"^m1^",\n"^m2^"\n]"), n1, e1 (*combine state here?*)
   (* report_error no_pos "Failure_None not expected in gen_or" *)
   | Failure_Bot _, _ ->  m2, n2,e2
   (* report_error no_pos "Failure_None not expected in gen_or" *)
   | _, Failure_Bot _ -> m1,n1,e1
   (*report_error no_pos "Failure_None not expected in gen_or"*)
-  | Failure_May m1, Failure_May m2 -> Failure_May ("OrL["^m1^","^m2^"]"),n1, None
+  | Failure_May m1, Failure_May m2 -> Failure_May ("OrL[\n"^m1^",\n"^m2^"\n]"),n1, None
   | Failure_May m, _ -> Failure_May m, n1,None
   | _, Failure_May m -> Failure_May m,n2,None
   | Failure_Must m1, Failure_Must m2 ->
     if (n1=sl_error) then (Failure_Must m2, n2, e2)
     else if (n2= sl_error) then (Failure_Must m1, n1, e1)
-    else (Failure_Must ("lor["^m1^","^m2^"]"), n1, e1)
-  | Failure_Must m, Failure_Valid -> (Failure_May ("OrL["^m^",valid]"),n1,None)
-  | Failure_Valid, Failure_Must m -> (Failure_May ("OrL["^m^",valid]"),n2,None)
+    else (Failure_Must ("OrL[\n"^m1^",\n"^m2^"\n]"), n1, e1)
+  | Failure_Must m, Failure_Valid -> (Failure_May ("OrL[\n"^m^",\nvalid\n]"),n1,None)
+  | Failure_Valid, Failure_Must m -> (Failure_May ("OrL[\n"^m^",\nvalid\n]"),n2,None)
   (* | _, Failure_Must m -> Failure_May ("or["^m^",unknown]") *)
   (* | Failure_Must m,_ -> Failure_May ("or["^m^",unknown]") *)
   | Failure_Valid, x  -> (m2,n2,e2)
@@ -10033,18 +10033,18 @@ let gen_lor_ctx (m1,n1, (e1:context option)) (m2,n2,(e2: context option)) : (fai
     | _ -> None
   in
   match m1,m2 with
-  | Failure_Bot m1,  Failure_Bot m2 ->  Failure_Bot ("OrL["^m1^","^m2^"]"), n1,  ctx
+  | Failure_Bot m1,  Failure_Bot m2 ->  Failure_Bot ("OrL[\n"^m1^",\n"^m2^"\n]"), n1,  ctx
   | Failure_Bot _, _ ->  m2, n2, ctx
   | _, Failure_Bot _ -> m1,n1, ctx
-  | Failure_May m1, Failure_May m2 -> Failure_May ("OrL["^m1^","^m2^"]"),n1,  ctx
+  | Failure_May m1, Failure_May m2 -> Failure_May ("OrL[\n"^m1^",\n"^m2^"\n]"),n1,  ctx
   | Failure_May m, _ -> Failure_May m, n1,  ctx
   | _, Failure_May m -> Failure_May m,n2,  ctx
   | Failure_Must m1, Failure_Must m2 ->
     if (n1=sl_error) then (Failure_Must m2, n2, ctx)
     else if (n2= sl_error) then (Failure_Must m1, n1, ctx)
-    else (Failure_Must ("lor["^m1^","^m2^"]"), n1, ctx)
-  | Failure_Must m, Failure_Valid -> (Failure_May ("OrL["^m^",valid]"),n1,  ctx)
-  | Failure_Valid, Failure_Must m -> (Failure_May ("OrL["^m^",valid]"),n2,  ctx)
+    else (Failure_Must ("OrL[\n"^m1^",\n"^m2^"\n]"), n1, ctx)
+  | Failure_Must m, Failure_Valid -> (Failure_May ("OrL[\n"^m^",\nvalid\n]"),n1,  ctx)
+  | Failure_Valid, Failure_Must m -> (Failure_May ("OrL[\n"^m^",\nvalid\n]"),n2,  ctx)
   | Failure_Valid, x  -> (m2,n2,  ctx)
 
 
@@ -10057,8 +10057,8 @@ let cmb_lor_x m1 m2: failure_kind = match m1,m2 with
   | _, Failure_May m -> Failure_May m
   | Failure_Must m1, Failure_Must m2 ->
     Failure_Must ("lor["^m1^","^m2^"]")
-  | Failure_Must m, Failure_Valid -> (Failure_May ("lor["^m^",valid]"))
-  | Failure_Valid, Failure_Must m -> (Failure_May ("lor["^m^",valid]"))
+  | Failure_Must m, Failure_Valid -> (Failure_May ("OrL["^m^",valid]"))
+  | Failure_Valid, Failure_Must m -> (Failure_May ("OrL["^m^",valid]"))
   | Failure_Valid, x  -> m2
 
 let cmb_lor m1 m2=
@@ -10459,22 +10459,32 @@ let rec get_must_failure_list_partial_context (ls:list_partial_context): (string
     | s -> Some s
   )
 
-and combine_helper op los rs=
+and combine_helper_x op los rs=
   match los with
-  | [] -> rs
+  | [] -> op ^ "[\n" ^ rs ^ "\n]"
   | [os] -> let tmp=
               ( match os with
                 | None -> rs
                 | Some s -> rs ^ s
-              ) in tmp
+              ) in op ^ "[\n" ^ tmp ^ "\n]"
   | os::ss ->
     (*os contains all failed of 1 path trace*)
     let tmp=
       ( match os with
         | None -> rs
-        | Some s -> rs ^ s ^ "\n" ^ op
+        | Some s -> rs ^ s ^ ",\n" (* ^ op *)
       ) in
-    combine_helper op ss tmp
+    combine_helper_x op ss tmp
+
+and combine_helper op los rs=
+  match los with
+    | [os] -> (match os with
+            | None -> ""
+            | Some s -> s
+      )
+    | _ -> (
+          combine_helper_x op los rs
+      )
 
 and get_must_failure_partial_context ((bfl:branch_fail list), (bctxl: branch_ctx list)): (string option)=
   let helper (pt, ft)=
@@ -10487,7 +10497,7 @@ and get_must_failure_partial_context ((bfl:branch_fail list), (bctxl: branch_ctx
   match bfl with
   | [] -> None
   | fl -> let los= List.map helper fl in
-    ( match (combine_helper "OrR\n" los "") with
+    ( match (combine_helper "OrR" los "") with
       | "" -> None
       | s -> Some s
     )
@@ -10501,7 +10511,7 @@ let rec get_failure_list_partial_context_x (ls:list_partial_context): (string*fa
   else
     let (los, fk, ls_ets)= split3 (List.map get_failure_partial_context [(List.hd ls)]) in
     (*los contains path traces*)
-    (combine_helper "UNIONR\n" [List.hd los] "", List.hd fk, List.concat ls_ets)
+    (combine_helper "UnionR" [List.hd los] "", List.hd fk, List.concat ls_ets)
 
 and get_failure_list_partial_context (ls:list_partial_context): (string*failure_kind*error_type list)=
   let pr1 = !print_list_partial_context in
@@ -10525,7 +10535,7 @@ and get_failure_branch bfl=
   match bfl with
   | [] -> (None, Failure_Valid,[])
   | fl -> let los, fks, ets= split3 (List.map helper fl) in
-    ( match (combine_helper "OrL\n" los "") with
+    ( match (combine_helper "OrL" los "") with
       | "" -> None, Failure_Valid, []
       | s -> Some s, List.fold_left cmb_lor (List.hd fks) (List.tl fks), ets
     )
@@ -10689,8 +10699,8 @@ let convert_maymust_failure_to_value_orig ?(mark=true) (l:list_context) : list_c
 let convert_maymust_failure_to_value_orig ?(mark=true) (l:list_context) : list_context =
   match l with
     | FailCtx (ft, c, cex) ->
-          if (* not (is_en_error_exc_ctx c) *)
-            not !Globals.enable_error_as_exc && not (is_en_error_exc_ctx c)
+          if not (is_en_error_exc_ctx c)
+            (* not !Globals.enable_error_as_exc && not (is_en_error_exc_ctx c) *)
           then
             l
           else
@@ -15886,10 +15896,10 @@ let rec add_inf_cmd_struc is_primitive f =
   else
     match f with
     | EInfer ei -> EInfer { ei with 
-                            formula_inf_obj = ei.formula_inf_obj # mk_or Globals.infer_const_obj; }
+                            formula_inf_obj = ei.formula_inf_obj # mk_or_sel Globals.infer_const_obj; }
     | EList el -> EList (List.map (fun (sld, s) -> (sld, add_inf_cmd_struc is_primitive s)) el)
     | _ -> EInfer {
-        formula_inf_obj = Globals.clone_sub_infer_const_obj ();
+        formula_inf_obj = Globals.clone_sub_infer_const_obj_sel ();
         (* Globals.infer_const_obj # clone; *)
         formula_inf_post = true (* Globals.infer_const_obj # is_post *);
         formula_inf_xpost = None;
