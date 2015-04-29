@@ -378,7 +378,7 @@ class last_commands =
       let res = entry.sleek_proving_res in
       match res with
       | Some res -> 
-        let f = if (!Globals.enable_error_as_exc || CF.is_en_error_exc_ctx_list res) && not (CF.is_dis_error_exc_ctx_list res) then CF.isFailCtx_gen else CF.isFailCtx in
+        let f = if (* (!Globals.enable_error_as_exc || CF.is_en_error_exc_ctx_list res) && *) not (CF.is_dis_error_exc_ctx_list res) then CF.isFailCtx_gen else CF.isFailCtx in
         if (* CF.isFailCtx *) f (res) then
           last_sleek_fail <- cmd
       | None -> last_sleek_fail <- cmd

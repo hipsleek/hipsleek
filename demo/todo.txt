@@ -1123,6 +1123,20 @@ res:  1[
    ]
 
 ==========================================================================
+# ex21a8.ss
+
+Wrapper not setting MayErr!!
+
+!!! **wrapper.ml#128:Calling wrap_err_pre
+
+id: 0; caller: []; line: 21; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [@err_must] globals: [@err_must]
+ checkentail emp&x=null & x'=x & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  x'::cell<Anon_11>&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+   emp&x=null & x'=x&{FLOW,(6,10)=__Error#E}[]
+   es_final_error:[do_unmatched_rhs : x'::cell<Anon_11>]
+   ]
 ==========================================================================
 ==========================================================================
 ==========================================================================

@@ -91,17 +91,23 @@ let wrap_classic et f a =
 (*      raise e) *)
 
 let wrap_inf_obj iobj f a =
+  let () = x_binfo_hp (add_str "wrap_inf_obj" string_of_inf_const) iobj no_pos in
+  let () = x_binfo_hp (add_str "BEFORE" pr_id) infer_const_obj#string_of no_pos in
   let flag = not(infer_const_obj # get iobj) in
-  if flag then infer_const_obj # set iobj;
+  let () = if flag then infer_const_obj # set iobj in
+  let () = x_binfo_hp (add_str "AFTER" pr_id) infer_const_obj#string_of no_pos in
   try
     let res = f a in
     if flag then infer_const_obj # reset iobj;
+    let () = x_binfo_hp (add_str "RESTORE" pr_id) infer_const_obj#string_of no_pos in
     res
   with _ as e ->
-    begin
-      if flag then infer_const_obj # reset iobj;
-      raise e
-    end
+      begin
+        if flag then infer_const_obj # reset iobj;
+        let () = x_binfo_hp (add_str "RESTORE" pr_id) infer_const_obj#string_of no_pos in
+        raise e
+      end
+
 
 let wrap_err_dis f a =
   wrap_inf_obj INF_DE_EXC f a
@@ -123,10 +129,12 @@ let wrap_err_assert_assume f a =
 (* if infer_const_obj # is_dis_err then wrap_err_dis f a *)
 (* else wrap_err_must f a *)
 
+(* not called? *)
 let wrap_err_pre f a =
+  let () = x_binfo_pp "Calling wrap_err_pre" no_pos in
   if infer_const_obj # is_dis_err then wrap_err_dis f a
   else if infer_const_obj # is_err_may then wrap_err_may f a
-  else if infer_const_obj # is_err_must then wrap_err_must f a
+  else if infer_const_obj # is_err_must then wrap_err_may f a
   else  wrap_err_dis f a
 
 let wrap_err_post f a =
