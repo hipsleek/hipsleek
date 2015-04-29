@@ -104,20 +104,20 @@ let wrap_classic et f a =
 (* !!! **wrapper.ml#102:RESTORE:[@err_must] *)
 
 let wrap_inf_obj iobj f a =
-  let () = x_binfo_hp (add_str "wrap_inf_obj" string_of_inf_const) iobj no_pos in
-  let () = x_binfo_hp (add_str "BEFORE" pr_id) infer_const_obj#string_of no_pos in
+  (* let () = x_binfo_hp (add_str "wrap_inf_obj" string_of_inf_const) iobj no_pos in *)
+  (* let () = x_binfo_hp (add_str "BEFORE" pr_id) infer_const_obj#string_of no_pos in *)
   let flag = not(infer_const_obj # get iobj) in
   let () = if flag then infer_const_obj # set iobj in
-  let () = x_binfo_hp (add_str "AFTER" pr_id) infer_const_obj#string_of no_pos in
+  (* let () = x_binfo_hp (add_str "AFTER" pr_id) infer_const_obj#string_of no_pos in *)
   try
     let res = f a in
     if flag then infer_const_obj # reset iobj;
-    let () = x_binfo_hp (add_str "RESTORE" pr_id) infer_const_obj#string_of no_pos in
+    (* let () = x_binfo_hp (add_str "RESTORE" pr_id) infer_const_obj#string_of no_pos in *)
     res
   with _ as e ->
       begin
         if flag then infer_const_obj # reset iobj;
-        let () = x_binfo_hp (add_str "RESTORE" pr_id) infer_const_obj#string_of no_pos in
+        (* let () = x_binfo_hp (add_str "RESTORE" pr_id) infer_const_obj#string_of no_pos in *)
         raise e
       end
 
