@@ -15,6 +15,16 @@ bool foo2(cell x)
   return x==null;
 }
 
+bool foo3(cell x)
+  requires true
+  ensures res ;
+{
+  if (true) pre_call(x);
+
+  dprint;
+  return x==null;
+}
+
 
 /*
 

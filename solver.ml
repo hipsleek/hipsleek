@@ -12534,16 +12534,19 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                             let () =  Debug.ninfo_hprint (add_str "rhs" Cprinter.string_of_h_formula) rhs pos in
                             let root = Cformula.get_ptr_from_data rhs in
                             let () =  Debug.ninfo_hprint (add_str "lhs_null_ptrs" !CP.print_svl) lhs_null_ptrs pos in
-                            if (not (CF.is_unknown_f estate.es_formula)) && (CP.mem_svl root (CF.fv estate.es_formula)) &&
-                               not ( estate.es_infer_obj # is_err_may_all) &&
-                               ((Cfutil.is_empty_heap_f estate.es_formula) || CP.mem_svl root lhs_null_ptrs) then
-                                let must_estate = {estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.es_formula} in
+                            let flag1 =  (not (CF.is_unknown_f estate.es_formula)) && (CP.mem_svl root (CF.fv estate.es_formula)) &&
+                              ((Cfutil.is_empty_heap_f estate.es_formula) || CP.mem_svl root lhs_null_ptrs) in
+                            let flag2 = not ( estate.es_infer_obj # is_err_may_all) in
+                            if flag1 && flag2 then
+                                 let msg = msg ^ "(must)" in
+                                 let must_estate = {estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.es_formula} in
                                 let ft = (Basic_Reason (mkFailContext msg must_estate (Base rhs_b) None pos,
                                 CF.mk_failure_must (msg) sl_error, estate.es_trace)) in
                                 let must_estate = x_add add_err_to_estate (msg, ft, CF.Failure_Must msg) must_estate in
                               (CF.mkFailCtx_in ft (* (Basic_Reason (mkFailContext msg must_estate (Base rhs_b) None pos, *)
                                                (*                CF.mk_failure_must (msg) sl_error, estate.es_trace)) *) (Ctx (convert_to_must_es must_estate)) (mk_cex true), NoAlias)
                             else
+                              let msg = if flag1 && not flag2 then msg ^ "(must)" else msg ^ "(may)" in
                               (*/sa/error/ex2.slk: unmatch rhs: may failure *)
                               let may_estate = {estate with es_formula = CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula} in
                               let ft = (Basic_Reason (mkFailContext msg may_estate (Base rhs_b) None pos,

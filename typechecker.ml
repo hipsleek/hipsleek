@@ -1438,7 +1438,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       | _ -> ""
                     in
                     let msg =  (s ^" : failed"^fk_msg ^ "\n") in
-                    (Debug.print_info  "assert/assume" (*(s ^" : failed\n") *) msg pos ; (rs,None, Some msg))
+                    (Debug.print_info  "assert/assume" (*(s ^" : failed\n") *) msg pos ; (rs,None, Some (msg,fk_msg)))
               in 
               let () = if !print_proof  && (match c_assert_opt with | None -> false | Some _ -> true) then 
                   begin
@@ -1481,11 +1481,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let res = List.map CF.remove_dupl_false_fe r in
                   match assert_failed_msg with
                   | None -> res
-                  | Some s -> begin
+                  | Some (s,fk_msg) -> begin
                       let () = Debug.ninfo_hprint (add_str "!Globals.enable_error_as_exc" string_of_bool) !Globals.enable_error_as_exc pos in
                       if (infer_const_obj # is_err_must || !Globals.enable_error_as_exc || (CF.isSuccessListFailescCtx_new res)) then
                         let idf = (fun c -> c) in
-                        let to_print = "Proving assert/assume in method " ^ proc.proc_name ^ " (" ^ (string_of_loc pos) ^ ") Failed." in
+                        let to_print = "Proving assert/assume in method " ^ proc.proc_name ^ " (" ^ (string_of_loc pos) ^ ") Failed" ^ fk_msg in
                         CF.transform_list_failesc_context (idf,idf,
                         (fun es -> CF.Ctx{es with CF.es_final_error = CF.acc_error_msg es.CF.es_final_error to_print}))
                             res
@@ -2506,7 +2506,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 (* let () = Debug.info_zprint (lazy (("   caller:" ^ proc0.proc_name))) no_pos in *)
                 let () = update_callee_hpdefs_proc prog.Cast.new_proc_decls proc0.proc_name mn in
                 let idf = (fun c -> c) in
-                let to_print = "Proving precondition in method " ^ proc.proc_name ^ "(" ^ (string_of_loc pos) ^ ") Failed " in
+                let to_print = "Proving precondition in method " ^ proc.proc_name ^ "(" ^ (string_of_loc pos) ^ ") Failed (may)" in
                 CF.transform_list_failesc_context (idf,idf,
                                                    (fun es -> CF.Ctx{es with CF.es_formula = 
                                                                                Norm.imm_norm_formula prog es.CF.es_formula Solver.unfold_for_abs_merge pos;
