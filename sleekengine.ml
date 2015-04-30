@@ -33,18 +33,31 @@ let string_of_vres t =
 (*       lhs rhs tl *)
 
 
-let proc_sleek_result_validate is_valid lc =
+let proc_sleek_result_validate is_valid lc lerr_exc=
   let eres = if not is_valid then
-      let final_error_opt = CF.get_final_error lc in
-      match final_error_opt with
-      | Some (_, _, fk) -> begin
-          match fk with
-          | CF.Failure_May _ -> VR_Fail 1
-          | CF.Failure_Must _ -> VR_Fail 1
-          | _ -> VR_Fail (-1) (* INCONSISTENCY *)
+    if not !Globals.disable_failure_explaining then
+      if !Globals.enable_error_as_exc || lerr_exc then
+        begin
+          let final_error_opt = CF.get_final_error lc in
+          match final_error_opt with
+            | Some (_, _, fk) -> begin
+                match fk with
+                  | CF.Failure_May _ -> (VR_Fail (-1))
+                  | CF.Failure_Must _ -> VR_Fail 1
+                  | _ -> VR_Fail (-1) (* INCONSISTENCY *)
+              end
+            | None -> VR_Fail (-1) (* INCONSISTENCY *)
         end
-      | None -> VR_Fail (-1) (* INCONSISTENCY *)
-    else VR_Valid
+      else begin
+        match CF.get_must_failure lc with
+          | Some (s, _) -> VR_Fail 1
+          | _ -> (match CF.get_may_failure lc with
+              | Some (s, _) -> VR_Fail (-1)
+              | _ -> VR_Valid
+            )
+      end
+    else VR_Fail 1
+  else VR_Valid
   in
   (eres, CF.flow_formula_of_list_context lc)
 (* match lc with *)
@@ -67,10 +80,10 @@ let proc_sleek_result_validate is_valid lc =
 (* TODO : why do we need two diff kinds of must-errors? *)
 (* Is there any difference between the two? *)
 
-let proc_sleek_result_validate b lc =
+let proc_sleek_result_validate b lc lerr_exc=
   Debug.no_1 "proc_sleek_result_validate" 
     Cprinter.string_of_list_context_short (fun (er,_) -> string_of_vres er)
-    (fun _ -> proc_sleek_result_validate b lc) lc
+    (fun _ -> proc_sleek_result_validate b lc lerr_exc) lc
 
 module H = Hashtbl
 module I = Iast
@@ -1140,7 +1153,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   (* need to make ivars be global *)
   (* let conseq = if (!Globals.allow_field_ann) then meta_to_struc_formula iconseq0 false fv_idents None stab  *)
   let (n_tl,conseq) = meta_to_struc_formula iconseq0 false fv_idents  n_tl in
-  let () = x_binfo_hp (add_str "type-table" Typeinfer.string_of_tlist) n_tl no_pos in
+  let () = x_tinfo_hp (add_str "type-table" Typeinfer.string_of_tlist) n_tl no_pos in
   (* let _ = print_endline ("conseq: " ^ (Cprinter.string_of_struc_formula conseq)) in *)
   (* let ante,conseq = transfrom_bexpr ante conseq n_tl in *)
   (* let conseq1 = meta_to_struc_formula iconseq0 false fv_idents stab in *)
@@ -1560,7 +1573,7 @@ let process_shape_rec sel_hps=
   let _ = print_endline_quiet "*************************************" in
   ()
 
-let process_validate exp_res opt_fl ils_es =
+let process_validate exp_res opt_fl ils_es=
   if not !Globals.show_unexpected_ents then () else
     (**********INTERNAL**********)
     let preprocess_constr act_idents act_ti (ilhs, irhs)=
@@ -1605,7 +1618,8 @@ let process_validate exp_res opt_fl ils_es =
         false, [], []
       | Some (lc, res) -> 
         begin (*res*)
-          let res, fls = proc_sleek_result_validate res lc in
+          let lerr_exc = CF.is_en_error_exc_ctx_list lc in
+          let res, fls = proc_sleek_result_validate res lc lerr_exc in
           let unexp =
             match res, exp_res with
             | VR_Valid, VR_Valid -> None

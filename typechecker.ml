@@ -1369,6 +1369,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 exp_assert_path_id = (pidi,s);
                 exp_assert_type = atype;
                 exp_assert_pos = pos}) ->
+       let assert_assume_msg = match c_assert_opt with
+         | None -> ""
+         | Some f -> (
+               match c_assume_opt with
+                 | None -> !CF.print_struc_formula f
+                 | Some post -> !CF.print_struc_formula (CF.add_post (CF.mkE_ensures_f post (CF. mkTrueFlow ()) no_pos) f)
+           )
+       in
       let assert_op ()=
         let () = if !print_proof && (match c_assert_opt with | None -> false | Some _ -> true) then
             begin
@@ -1400,7 +1408,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       c1a
                     | Some _ -> c1
                   in
-                  let to_print = "Proving assert/assume in method " ^ proc.proc_name ^ " for spec: \n" ^ !log_spec ^ "\n" in
+                  let to_print = "Proving assert/assume in method " ^ proc.proc_name ^ " for spec: \n" ^ assert_assume_msg ^ "\n" in
                   x_binfo_pp (*print_info "assert"*) to_print pos;
                   (* let () = Log.update_sleek_proving_kind Log.ASSERTION in *)
                   let rs,prf = x_add heap_entail_struc_list_failesc_context_init 4 prog false false ts c1 None None None pos None in
@@ -1430,7 +1438,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       | _ -> ""
                     in
                     let msg =  (s ^" : failed"^fk_msg ^ "\n") in
-                    (Debug.print_info  "assert/assume" (*(s ^" : failed\n") *) msg pos ; (rs,None, Some msg))
+                    (Debug.print_info  "assert/assume" (*(s ^" : failed\n") *) msg pos ; (rs,None, Some (msg,fk_msg)))
               in 
               let () = if !print_proof  && (match c_assert_opt with | None -> false | Some _ -> true) then 
                   begin
@@ -1473,10 +1481,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let res = List.map CF.remove_dupl_false_fe r in
                   match assert_failed_msg with
                   | None -> res
-                  | Some s -> begin
+                  | Some (s,fk_msg) -> begin
                       let () = Debug.ninfo_hprint (add_str "!Globals.enable_error_as_exc" string_of_bool) !Globals.enable_error_as_exc pos in
                       if (infer_const_obj # is_err_must || !Globals.enable_error_as_exc || (CF.isSuccessListFailescCtx_new res)) then
-                        res
+                        let idf = (fun c -> c) in
+                        let to_print = "Proving assert/assume in method " ^ proc.proc_name ^ " (" ^ (string_of_loc pos) ^ ") Failed" ^ fk_msg in
+                        CF.transform_list_failesc_context (idf,idf,
+                        (fun es -> CF.Ctx{es with CF.es_final_error = CF.acc_error_msg es.CF.es_final_error to_print}))
+                            res
                       else
                         begin
                           (*L2: this code fragment may never be reached since we set is_err_must in the wrapper*)
@@ -2444,8 +2456,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let pr2 = Cprinter.string_of_list_failesc_context in
               let pr3 = Cprinter.string_of_struc_formula in
               (* let () = Log.update_sleek_proving_kind Log.PRE in *)
-              let pre_post_op_wrapper a =
-                wrap_err_pre (* (Some false) *) (check_pre_post_orig) a
+              let pre_post_op_wrapper a b c =
+                wrap_err_pre (* (Some false) *) (check_pre_post_orig a b) c
               in
               let pk = if ir then PK_PRE_REC else PK_PRE in
               let f = wrap_proving_kind pk  ((* check_pre_post_orig *) pre_post_op_wrapper org_spec sctx) in
@@ -2494,7 +2506,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 (* let () = Debug.info_zprint (lazy (("   caller:" ^ proc0.proc_name))) no_pos in *)
                 let () = update_callee_hpdefs_proc prog.Cast.new_proc_decls proc0.proc_name mn in
                 let idf = (fun c -> c) in
-                let to_print = "Proving precondition in method " ^ proc.proc_name ^ "(" ^ (string_of_loc pos) ^ ") Failed " in
+                let to_print = "Proving precondition in method " ^ proc.proc_name ^ "(" ^ (string_of_loc pos) ^ ") Failed (may)" in
                 CF.transform_list_failesc_context (idf,idf,
                                                    (fun es -> CF.Ctx{es with CF.es_formula = 
                                                                                Norm.imm_norm_formula prog es.CF.es_formula Solver.unfold_for_abs_merge pos;
@@ -2939,7 +2951,8 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
   let post_op_wrapper f a =
     wrap_err_post (* efa_exc (Some false) *) f a
   in
-  let f = wrap_ver_post (wrap_add_flow (wrap_proving_kind PK_POST ((* check_post_x *) post_op_wrapper check_post_x prog proc ctx posts pos pid) )) in
+  let f = wrap_ver_post (wrap_add_flow (wrap_proving_kind PK_POST ((* check_post_x *) 
+      post_op_wrapper (check_post_x prog proc ctx posts pos) pid) )) in
   Debug.no_2(* _loop *) "check_post" pr pr1 pr (fun _ _ -> f etype) ctx posts 
 
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (posts : CF.formula*CF.struc_formula) pos (pid:formula_label) (etype: ensures_type) : CF.list_partial_context  =

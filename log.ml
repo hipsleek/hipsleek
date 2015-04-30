@@ -378,7 +378,7 @@ class last_commands =
       let res = entry.sleek_proving_res in
       match res with
       | Some res -> 
-        let f = if (!Globals.enable_error_as_exc || CF.is_en_error_exc_ctx_list res) && not (CF.is_dis_error_exc_ctx_list res) then CF.isFailCtx_gen else CF.isFailCtx in
+        let f = if (* (!Globals.enable_error_as_exc || CF.is_en_error_exc_ctx_list res) && *) not (CF.is_dis_error_exc_ctx_list res) then CF.isFailCtx_gen else CF.isFailCtx in
         if (* CF.isFailCtx *) f (res) then
           last_sleek_fail <- cmd
       | None -> last_sleek_fail <- cmd
@@ -462,6 +462,16 @@ let add_sleek_logging (es_opt:Cformula.entail_state option) timeout_flag stime i
   (* let () = x_binfo_hp (add_str "es_opt" (pr_option Cprinter.string_of_entail_state)) es_opt no_pos in *)
   (* es_infer_obj: Globals.inf_obj; *)
   if !Globals.sleek_logging_txt then
+    let result = match result with
+      | Some c -> 
+            begin 
+              match c with
+                | CF.FailCtx (_,c,cex) -> 
+                      if cex.CF.cex_processed_mark then Some (CF.SuccCtx [c])
+                      else result
+                | _ -> result
+            end
+      | _ -> None in
     (* let () = Debug.info_pprint "logging .." no_pos in *)
     let (ho_vars_map,str) = match es_opt with
       | None -> ([],""); 
