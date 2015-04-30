@@ -1998,7 +1998,7 @@ let run_entail_check (iante0 : meta_formula list) (iconseq0 : meta_formula) (ety
 let run_entail_check (iante0 : meta_formula list) (iconseq0 : meta_formula) (etype: entail_type) =
   let with_timeout =
     let fctx = CF.mkFailCtx_in (CF.Trivial_Reason
-                                  (CF.mk_failure_may "timeout" Globals.timeout_error, [])) (CF.Ctx (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled  no_pos)) (CF.mk_cex false) in
+                                  (CF.mk_failure_may "timeout" Globals.timeout_error, [])) ((CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled  no_pos), "timeout", Failure_May "timeout") (CF.mk_cex false) in
     (false, fctx,[]) in
   (*let _ = print_endline "run_entail_check_1" in*)
   Procutils.PrvComms.maybe_raise_and_catch_timeout_sleek
