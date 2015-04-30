@@ -3572,7 +3572,7 @@ and heap_entail_struc_failesc_context_x (prog : prog_decl) (is_folding : bool)
 
 and heap_entail_struc_init_bug_orig (prog : prog_decl) (is_folding : bool)  (has_post: bool) (cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) =
   let (ans,prf) = x_add heap_entail_struc_init prog is_folding has_post cl conseq pos pid in
-  (CF.convert_maymust_failure_to_value_orig ans, prf)
+  (CF.convert_maymust_failure_to_value_orig ~mark:false ans, prf)
 
 and heap_entail_struc_init_bug_inv_x (prog : prog_decl) (is_folding : bool)  (has_post: bool) (cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) =
   (* let f1 = CF.struc_formula_is_eq_flow conseq !error_flow_int in *)
@@ -7077,12 +7077,12 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
         (* (!Globals.enable_error_as_exc || CF.is_en_error_exc_ctx ctx0) *)
         (*           && not (CF.is_dis_error_exc_ctx ctx0) *)
       then        
-        if not(!Globals.temp_opt_flag) then
+        (* if not(!Globals.temp_opt_flag) then *)
           (* let () = x_binfo_pp "temp_opt:convert_maymust" no_pos in *)
-          CF.convert_maymust_failure_to_value_orig res
-        else 
-          let () = x_binfo_pp "temp_opt:no convert_maymust" no_pos in
-          res
+          CF.convert_maymust_failure_to_value_orig ~mark:true res
+        (* else  *)
+        (*   let () = x_binfo_pp "temp_opt:no convert_maymust" no_pos in *)
+        (*   res *)
       else 
         (* let () = x_binfo_pp "no convert_maymust" no_pos in *)
         res
@@ -7349,11 +7349,13 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
 
                     let err_msg =
                       if (CF.subsume_flow_f !error_flow_int fl1) then
-                        ("1.2: " ^ (f1_exc (* exlist # get_closest fl1.CF.formula_flow_interval *)))
+                        ("1.2a: " ^ (f1_exc (* exlist # get_closest fl1.CF.formula_flow_interval *)))
                       else
-                        match estate.es_final_error with
-                        | Some (s,_,_) -> s
-                        | None -> "1.2b: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types"
+                        let msg = "1.2b: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types" in
+                        x_add repl_msg_final_error msg estate
+                        (* match (List.rev estate.es_final_error) with *)
+                        (* | (s,_,_)::_ -> s *)
+                        (* | [] -> "1.2b: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types" *)
                     in
                     let fe = mk_failure_may err_msg undefined_error in
                     let may_flow_failure =
@@ -7370,7 +7372,12 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                   )
                   else (
                     let () = x_tinfo_pp "not(overlap_flow)_ff:else" no_pos in
-                    let err_msg="1.2: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types" in
+                    let err_msg= 
+                        let msg = "1.2c: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types" in
+                        x_add repl_msg_final_error msg estate in
+                      (* match (List.rev estate.es_final_error) with *)
+                      (*   | (s,_,_)::_ -> s *)
+                      (*   | [] -> "1.2c: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types" in *)
                     let fe = mk_failure_must err_msg "incompatible types" in
                     (* if CF.subsume_flow_f !error_flow_int fl1 then *)
                     (*   (\* let () = print_endline ("\ntodo:" ^ (Cprinter.string_of_flow_formula "" fl1)) in*\) *)
@@ -8612,7 +8619,7 @@ type: bool *
           CF.is_en_error_exc estate then {
             estate with es_formula =
                           match fc_kind with
-                          | CF.Failure_Must _ -> if estate.es_infer_obj # is_err_may then
+                          | CF.Failure_Must _ -> if estate.es_infer_obj # is_err_may_all then
                               CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula
                             else
                               CF.substitute_flow_into_f !error_flow_int estate.es_formula
@@ -8632,7 +8639,7 @@ type: bool *
           fc_failure_pts = match r_fail_match with | Some s -> [s]| None-> [];} in
         let must_list1, may_list1,contra_list1 = (* if is_sat then (must_list@may_list, []) else *)
           (* if annotate err_may: no must error at the end*)
-          if estate.es_infer_obj # is_err_may then ([],must_list@may_list@contra_list, [])
+          if estate.es_infer_obj # is_err_may_all then ([],must_list@may_list@contra_list, [])
           else
             (must_list, may_list, contra_list)
         in
@@ -12535,21 +12542,25 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                             let () =  Debug.ninfo_hprint (add_str "rhs" Cprinter.string_of_h_formula) rhs pos in
                             let root = Cformula.get_ptr_from_data rhs in
                             let () =  Debug.ninfo_hprint (add_str "lhs_null_ptrs" !CP.print_svl) lhs_null_ptrs pos in
-                            if (not (CF.is_unknown_f estate.es_formula)) && (CP.mem_svl root (CF.fv estate.es_formula)) &&
-                               not ( estate.es_infer_obj # is_err_may) &&
-                               ((Cfutil.is_empty_heap_f estate.es_formula) || CP.mem_svl root lhs_null_ptrs) then
-                                let must_estate = {estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.es_formula} in
+                            let flag1 =  (not (CF.is_unknown_f estate.es_formula)) && (CP.mem_svl root (CF.fv estate.es_formula)) &&
+                              ((Cfutil.is_empty_heap_f estate.es_formula) || CP.mem_svl root lhs_null_ptrs) in
+                            let flag2 = not ( estate.es_infer_obj # is_err_may_all) in
+                            if flag1 && flag2 then
+                                 let msg = msg ^ "(must)" in
+                                 let must_estate = {estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.es_formula} in
                                 let ft = (Basic_Reason (mkFailContext msg must_estate (Base rhs_b) None pos,
                                 CF.mk_failure_must (msg) sl_error, estate.es_trace)) in
-                                let must_estate = {must_estate with es_final_error = Some (msg, ft, CF.Failure_Must msg)} in
+                                let must_estate = x_add add_err_to_estate (msg, ft, CF.Failure_Must msg) must_estate in
                               (CF.mkFailCtx_in ft (* (Basic_Reason (mkFailContext msg must_estate (Base rhs_b) None pos, *)
                                                (*                CF.mk_failure_must (msg) sl_error, estate.es_trace)) *) (Ctx (convert_to_must_es must_estate)) (mk_cex true), NoAlias)
                             else
+                              let msg = if flag1 && not flag2 then msg ^ "(must)" else msg ^ "(may)" in
                               (*/sa/error/ex2.slk: unmatch rhs: may failure *)
                               let may_estate = {estate with es_formula = CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula} in
                               let ft = (Basic_Reason (mkFailContext msg may_estate (Base rhs_b) None pos,
                                                               CF.mk_failure_may (msg) sl_error, estate.es_trace)) in
-                               let may_estate = {may_estate with es_final_error = Some (msg, ft, CF.Failure_May msg)} in
+                              let may_estate = x_add add_err_to_estate (msg, ft, CF.Failure_May msg) may_estate in
+                               (* let may_estate = {may_estate with es_final_error = Some (msg, ft, CF.Failure_May msg)} in *)
                               (CF.mkFailCtx_in ft (* (Basic_Reason (mkFailContext msg may_estate (Base rhs_b) None pos, *)
                                                (*                CF.mk_failure_may (msg) sl_error, estate.es_trace)) *) (Ctx (convert_to_may_es may_estate)) (mk_cex false), NoAlias)
                           (* TODO:WN:HVar *)
@@ -14958,6 +14969,7 @@ let heap_entail_list_failesc_context_init_x (prog : prog_decl) (is_folding : boo
                       ^ "after normalizing"
                       ^"\n")) pos;
     let (lfc,prf) = x_add heap_entail_failesc_prefix_init 2 prog is_folding  false norm_cl conseq tid delayed_f join_id pos pid (rename_labels_formula ,Cprinter.string_of_formula,heap_entail_one_context_new) in
+    (* WN:TODO: need to consider local option in list_failesc? *)
     let lfc1 = if !Globals.enable_error_as_exc ||
                   (infer_const_obj # is_err_must || infer_const_obj # is_err_may) then
         (* List.map (fun ((lbl, ft), esc, brok) -> *)

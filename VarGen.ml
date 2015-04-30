@@ -1,3 +1,20 @@
+type print_level =
+  (* | P_Quiet *)
+  (* | P_VShort *)
+  | P_Short
+  | P_Norm  (* default *)
+  | P_Detail
+  (* | P_Debug *)
+
+type print_set =
+  | PS_Debug (* to assist with debugging *)
+  | PS_Type (* to print type *)
+  | PS_Quiet (* quiet printing *)
+  | PS_Orig_Conseq (* quiet printing *)
+  | PS_Tidy (* quiet printing *)
+  | PS_IParams (* quiet printing *)
+  | PS_HTML (* quiet printing *)
+
 let compete_mode = ref false
 let trace_failure = ref false
 let verbose_num = ref 0

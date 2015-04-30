@@ -191,7 +191,7 @@ let build_and_failures_x (failure_code:string) gfk(failure_name:string) ((contra
         | _ -> None
       )
       in
-      FailCtx (ft, (Ctx {es with es_final_error = final_error;}) ,cex)
+      FailCtx (ft, Ctx (x_add add_opt_to_estate final_error es),cex)
     | None -> (*report_error no_pos "Solver.build_and_failures: should be a failure here"*)
       let msg =  "use different strategies in proof searching (slicing)" in
       let fe =  mk_failure_may msg failure_name in
@@ -234,10 +234,10 @@ let convert_list_context prog ctxs=
         let es = match fe.fe_kind with
           | Failure_Must msg -> {fc.fc_current_lhs with
                                  es_must_error = Some (msg, ft, cex);
-                                 es_final_error = Some (msg, ft,Failure_Must msg)
+                                 es_final_error = (msg, ft,Failure_Must msg)::fc.fc_current_lhs.es_final_error
                                 }
           | Failure_May msg -> {fc.fc_current_lhs with es_may_error = Some (msg, ft, cex);
-                                                       es_final_error = Some (msg, ft, Failure_May msg)
+                                                       es_final_error = (msg, ft, Failure_May msg)::fc.fc_current_lhs.es_final_error
                                }
           | _ -> fc.fc_current_lhs
         in

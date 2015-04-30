@@ -1542,6 +1542,12 @@ class inf_obj  =
     (* method get_arr  = arr *)
     method is_infer_type t  = self # get t
     method get_lst = arr
+    method get_lst_sel = 
+      let  is_selected e = 
+        match e with
+        | INF_TERM | INF_TERM_WO_POST | INF_PRE | INF_POST -> true
+        | _ -> false in
+      List.filter is_selected arr
     method set c  = if self#get c then () else arr <- c::arr
     method set_list l  = List.iter (fun c -> self # set c) l
     method reset c  = arr <- List.filter (fun x-> not(c==x)) arr
@@ -1619,7 +1625,13 @@ class inf_obj_sub  =
     (* method is__all  = super # is_ || infer_const_obj # is_ *)
     method is_ver_post_all  = super # is_ver_post || infer_const_obj # is_ver_post
     method is_par_all  = super # is_par || infer_const_obj # is_par
-    method mk_or (o2:inf_obj) =
+    (* to pick selected items to propagate from global to local *)
+    method mk_or_sel (o2:inf_obj) =
+      let o1 = self # clone in
+      let l = o2 # get_lst_sel in
+      let () = o1 # set_list l in
+      o1
+    method mk_or_all (o2:inf_obj) =
       let o1 = self # clone in
       let l = o2 # get_lst in
       let () = o1 # set_list l in
@@ -1635,9 +1647,13 @@ class inf_obj_sub  =
       no
   end;;
 
-let clone_sub_infer_const_obj () =
+let clone_sub_infer_const_obj_all () =
   let obj = new inf_obj_sub in
-  obj # mk_or infer_const_obj
+  obj # mk_or_all infer_const_obj
+
+let clone_sub_infer_const_obj_sel () =
+  let obj = new inf_obj_sub in
+  obj # mk_or_sel infer_const_obj
 
 (* let set_infer_const s = *)
 
