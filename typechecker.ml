@@ -3567,7 +3567,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
               (* let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx (proc.proc_static_specs (\* @ proc.proc_dynamic_specs *\)) body true in *)
               x_tinfo_hp (add_str "SPECS (after specs_infer)" pr_spec) new_spec no_pos;
               x_tinfo_hp (add_str "fm formula " (pr_list !CF.print_formula)) fm no_pos;
-              let new_spec = CF.simplify_ann new_spec in
+              (* let new_spec = x_add_1 CF.simplify_ann new_spec in *)
               let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels) in
               let (lst_assume,lst_rank) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) rest) in
               let (hprels,hp_rest) = (List.partition (fun hp -> match hp.CF.hprel_kind with | CP.RelDefn _ -> true | _ -> false) hprels) in

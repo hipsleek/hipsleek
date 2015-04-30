@@ -15254,7 +15254,8 @@ let rec simp_ann_x heap pures = match heap with
       end
   | _ -> (heap,pures)
 
-and simp_ann heap pures =
+and simp_ann heap pures = 
+  (* simp_ann_x heap pures *)
   let pr1 = !print_h_formula in
   let pr2 = pr_list !print_pure_f in
   let pr3 = pr_pair pr1 pr2 in
@@ -15268,13 +15269,13 @@ let rec simplify_fml_ann fml = match fml with
     mkOr (simplify_fml_ann f1) (simplify_fml_ann f2) pos
   | Base b -> 
     let sub_ann, pures = List.partition CP.isSubAnn (CP.list_of_conjs (MCP.pure_of_mix b.formula_base_pure)) in
-    let (h,ps) = simp_ann b.formula_base_heap sub_ann in
+    let (h,ps) = x_add simp_ann b.formula_base_heap sub_ann in
     let p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos) (ps@pures) in
     Base {b with formula_base_heap = h; formula_base_pure = MCP.mix_of_pure p}
   | Exists e ->
     let exists_p = MCP.pure_of_mix e.formula_exists_pure in
     let sub_ann, pures = List.partition CP.isSubAnn (CP.list_of_conjs exists_p) in
-    let (h,ps) = simp_ann e.formula_exists_heap sub_ann in
+    let (h,ps) = x_add simp_ann e.formula_exists_heap sub_ann in
     let p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos) (ps@pures) in
     let rm_vars = CP.diff_svl (CP.fv exists_p) (CP.fv p) in
     Exists {e with formula_exists_qvars = CP.diff_svl e.formula_exists_qvars rm_vars;
@@ -15306,6 +15307,11 @@ let rec get_vars_without_rel pre_vars f = match f with
     let aset = CP.EMapSV.build_eset alias in
     let evars_to_del = List.concat (List.map (fun a -> if CP.intersect (CP.EMapSV.find_equiv_all a aset) pre_vars = [] then [] else [a]) e.formula_exists_qvars) in
     CP.diff_svl res evars_to_del
+
+let simplify_ann (sp:struc_formula) : struc_formula = 
+  let pr = !print_struc_formula in
+  Debug.no_1 "simplify_ann" pr pr simplify_ann sp
+
 
 (* let normalize_varperm_formula_x (f:formula) : formula =                     *)
 (*   let rec helper f = match f with                                           *)
