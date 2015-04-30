@@ -13,14 +13,31 @@ int foo(cell c)
   return c.fst;
 }
 /*
+# cell-2.ss
 
-# cell-1.ss
+int foo(cell c)
+  infer [P1]
+  requires c::cell<v>@a & P1(a,b) 
+  ensures c::cell<v>@b & v=res;
+{
+  return c.fst;
+}
 
-Why is the a failure?
+GOT
+===
+[RELASS [P1]: ( P1(a,b)) -->  a<:@L]
 
+Post Inference result:
+foo$cell
+ EBase exists (Expl)[](Impl)[a; v](ex)[]c::cell<v>@L&a<:@L & MayLoop[]&
+       {FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           (exists v_1460: emp&v=res & v_1460=v&{FLOW,(4,5)=__norm#E}[]
+
+# Why b is free?
+# What happen to Cell in post
+
+!!!WARNING : uninterpreted free variables [b] in specification.
 Checking procedure foo$cell... check 1 fail
 
-!!! >>>>>> HIP gather infer pre <<<<<<
-!!!Inferred Heap: []
-!!!Inferred Pure: [ w<:@L, w<:@L]
 */
