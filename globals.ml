@@ -1352,6 +1352,7 @@ type infer_type =
   | INF_ERR_MAY (* For infer[@err_may] *)
   | INF_SIZE (* For infer[@size] *)
   | INF_IMM (* For infer[@imm] *)
+  | INF_FIELD_IMM (* For infer[@field_imm] *)
   | INF_EFA (* For infer[@efa] *)
   | INF_DFA (* For infer[@dfa] *)
   | INF_FLOW (* For infer[@flow] *)
@@ -1380,6 +1381,7 @@ let string_of_inf_const x =
   | INF_ERR_MAY -> "@err_may"
   | INF_SIZE -> "@size"
   | INF_IMM -> "@imm"
+  | INF_FIELD_IMM -> "@field_imm"
   | INF_EFA -> "@efa"
   | INF_DFA -> "@dfa"
   | INF_FLOW -> "@flow"
@@ -1461,6 +1463,7 @@ class inf_obj  =
     val mutable arr = []
     method init =
       if !enable_error_as_exc then self # set INF_ERR_MUST
+      else if self # is_field_imm then allow_field_ann:=true
       else ()
     method set_init_arr s = 
       let helper r c =
@@ -1480,6 +1483,7 @@ class inf_obj  =
         helper "@pre"           INF_PRE;
         helper "@post"          INF_POST;
         helper "@imm"           INF_IMM;
+        helper "@field_imm"     INF_FIELD_IMM;
         helper "@shape"         INF_SHAPE;
         helper "@error"         INF_ERROR;
         helper "@dis_err"       INF_DE_EXC;
@@ -1508,6 +1512,7 @@ class inf_obj  =
     (* method get_int i  = Array.get arr i *)
     method is_term = (self # get INF_TERM) || (self # get INF_TERM_WO_POST)
     (* termination inference *)
+    (* termination inference *)
     method is_term_wo_post = self # get INF_TERM_WO_POST
     (* termination inference wo post-condition *)
     method is_pre  = self # get INF_PRE
@@ -1515,8 +1520,10 @@ class inf_obj  =
     method is_post  = self # get INF_POST
     (* post-condition inference *)
     method is_ver_post  = self # get INF_VER_POST
+    method is_field_imm = self # get INF_FIELD_IMM
     method is_imm  = self # get INF_IMM
     (* immutability inference *)
+    method is_field = (self # get INF_FIELD_IMM)
     method is_shape  = self # get INF_SHAPE
     (* shape inference *)
     method is_error  = self # get INF_ERROR

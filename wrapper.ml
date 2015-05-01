@@ -76,6 +76,23 @@ let wrap_classic et f a =
     (do_classic_frame_rule := flag;
      raise e)
 
+(* Some f - set allow_field_imm t f *)
+(* None - use the default option *)
+let wrap_field_imm et f a =
+  let flag = !allow_field_ann in
+  allow_field_ann := (match et with
+      | None -> infer_const_obj # get INF_FIELD_IMM  (* !opt_classic *)
+      | Some b -> b);
+  try
+    let res = f a in
+    allow_field_ann := flag;
+    res
+  with _ as e ->
+    (allow_field_ann := flag;
+     raise e)
+
+
+    
 (* let wrap_efa_exc et f a = *)
 (*   let flag = !enable_error_as_exc in *)
 (*   enable_error_as_exc := (match et with *)

@@ -1,0 +1,28 @@
+data pair{
+ int fst;
+ int snd;
+}.
+
+infer [@field_imm,a] p::pair<f,s@a> |- p::pair<a,b@L>.
+print residue.
+
+infer [@field_imm,a] p::pair<f,s@a> |- p::pair<a,b@M>.
+print residue.
+
+infer [@field_imm,a] p::pair<f,s@a> |- p::pair<a,b@A>.
+print residue.
+
+/*
+# ex4a.slk
+
+infer [@field_imm,a] p::pair<f,s@a> |- p::pair<a,b@L>.
+print residue.
+
+Need to fix type error
+
+ERROR: at ex4a-infer-field-imm.slk_6:47_6:48
+Message: UNIFICATION ERROR : at location {(Line:6,Col:47),(Line:6,Col:48)} types
+ int and AnnT are inconsistent
+
+
+*/

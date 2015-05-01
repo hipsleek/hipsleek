@@ -156,7 +156,30 @@ foo$cell
 
 !!!WARNING : uninterpreted free variables [b] in specification.
 Checking procedure foo$cell... check 1 fail
-2=======================================================
+=======================================================
+# ex4.slk
+
+Verification works but inference fails for ex4a.slk
+
+infer [@field_imm] p::pair<f,s@L> |- p::pair<a,b@M>.
+print residue.
+expect Fail.
+
+infer [@field_imm] p::pair<f,s@M> |- p::pair<a,b@L>.
+print residue.
+expect Valid.
+
+# ex4a.slk
+
+infer [@field_imm,a] p::pair<f,s@a> |- p::pair<a,b@L>.
+print residue.
+
+Need to fix type error
+
+ERROR: at ex4a-infer-field-imm.slk_6:47_6:48
+Message: UNIFICATION ERROR : at location {(Line:6,Col:47),(Line:6,Col:48)} types
+ int and AnnT are inconsistent
+
 =======================================================
 =======================================================
 =======================================================

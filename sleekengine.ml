@@ -2357,6 +2357,7 @@ let process_pairwise (f : meta_formula) =
 let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) etype =
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let is_tnt_flag = List.mem INF_TERM itype in
+  let is_field_imm_flag = List.mem INF_FIELD_IMM itype in
   (* combine local vs. global of failure explaining *)
   let dfailure_anlysis = if List.mem INF_EFA itype then false else
     if List.mem INF_DFA itype then true else !Globals.disable_failure_explaining
@@ -2369,9 +2370,13 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
   let () = if l_err_exc then
       Globals.enable_error_as_exc := false
   in
+  let run_infer x = wrap_classic etype (run_infer_one_pass_set_states itype ivars [iante0]) x in
+  let run_infer x = 
+    if is_field_imm_flag then wrap_field_imm (Some true) run_infer x
+    else run_infer x in
   let num_id = "\nEntail "^nn in
   let r=  try
-      let (valid, rs, sel_hps),_ = wrap_classic etype (run_infer_one_pass_set_states itype ivars [iante0]) iconseq0 in
+      let (valid, rs, sel_hps),_ = run_infer iconseq0 in
       let res = print_entail_result sel_hps valid rs num_id (List.mem INF_ERR_MUST itype || List.mem INF_ERR_MAY itype) in
       let _ = if is_tnt_flag then should_infer_tnt := !should_infer_tnt && res in
       (*   match itype with *)

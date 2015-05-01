@@ -336,7 +336,7 @@ let common_arguments = [
      ),"disable the use of immutability annotations");
   ("--imm-en-subs-rhs", Arg.Set Globals.allow_imm_subs_rhs,"enable the substitution of rhs eq for immutability");
   ("--imm-dis-subs-rhs", Arg.Clear Globals.allow_imm_subs_rhs,"disable the substitution of rhs eq for immutability");
-  ("--en-imm-inv", Arg.Set Globals.allow_imm_inv,"enable the additionof of immutability invariant for implication");
+  ("--en-imm-inv", Arg.Set Globals.allow_imm_inv,"enable the addition of immutability invariant for implication");
   ("--dis-imm-inv", Arg.Clear Globals.allow_imm_inv,"disable the additionof of immutability invariant for implication");
   ("--dis-inf", Arg.Clear Globals.allow_inf,"disable support for infinity ");
   ("--en-inf", Arg.Unit (fun _ ->
