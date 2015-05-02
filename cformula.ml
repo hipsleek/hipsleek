@@ -10682,9 +10682,10 @@ let convert_maymust_failure_to_value_orig ?(mark=true) (l:list_context) : list_c
           (*   | _ ->  l) *)
           begin
             let () = Debug.ninfo_hprint (add_str "c" !print_context_short) c no_pos in
-            match get_final_error_ctx c with
-              | Some _ -> SuccCtx [c]
-              | None -> (
+            (* should combined FailCtx \/ ValidCtx. demo/ex22-lor *)
+            (* match get_final_error_ctx c with *)
+            (*   | Some _ -> SuccCtx [c] *)
+            (*   | None -> *) (
                     match (x_add convert_must_failure_4_fail_type_new "" ft cex) with
                       | Some ctx -> SuccCtx [ctx]
                       | None -> begin
