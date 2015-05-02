@@ -76,7 +76,7 @@ let subtype_ann_pair (imm1 : CP.ann) (imm2 : CP.ann) : bool * ((CP.exp * CP.exp)
 (* return true if imm1 <: imm2 *)	
 (* M <: I <: L <: A*)
 let subtype_ann_x (imm1 : CP.ann) (imm2 : CP.ann) : bool =
-  let (r,op) = subtype_ann_pair imm1 imm2 in r
+  let (r,op) = x_add subtype_ann_pair imm1 imm2 in r
 
 (* return true if imm1 <: imm2 *)	
 (* M <: I <: L <: A*)
@@ -87,7 +87,7 @@ let subtype_ann caller (imm1 : CP.ann) (imm2 : CP.ann) : bool =
 
 let subtype_ann_gen_x impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann): 
   bool * (CP.formula list) * (CP.formula list) * (CP.formula list) =
-  let (f,op) = subtype_ann_pair imm1 imm2 in
+  let (f,op) = x_add subtype_ann_pair imm1 imm2 in
   match op with
   | None -> (f,[],[],[])
   | Some (l,r) -> 
@@ -909,10 +909,10 @@ and subtype_ann_list impl_vars evars (ann1 : CP.ann list) (ann2 : CP.ann list) :
   match (ann1, ann2) with
   | ([], [])         -> (true, [], [], [])
   | (a1::[], a2::[]) -> 
-    let (r, f1, f2, f3) = subtype_ann_gen impl_vars evars a1 a2 in
+    let (r, f1, f2, f3) = x_add subtype_ann_gen impl_vars evars a1 a2 in
     (r, f1, f2, f3)
   | (a1::t1, a2::t2) -> 
-    let (r, ann_lhs_new, ann_rhs_new, ann_rhs_new_ex) = subtype_ann_gen impl_vars evars a1 a2 in
+    let (r, ann_lhs_new, ann_rhs_new, ann_rhs_new_ex) = x_add subtype_ann_gen impl_vars evars a1 a2 in
     let (res, ann_lhs, ann_rhs,  ann_rhs_ex) = subtype_ann_list impl_vars evars t1 t2 in
     (r&&res, ann_lhs_new@ann_lhs, ann_rhs_new@ann_rhs, ann_rhs_new_ex@ann_rhs_ex)
   (* (r&&res, mkAndOpt ann_lhs ann_lhs_new, mkAndOpt ann_rhs ann_rhs_new) *)

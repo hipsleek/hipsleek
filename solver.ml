@@ -7522,7 +7522,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                               let () = x_tinfo_pp "\n" no_pos in
                               (* let () = x_binfo_hp (add_str "" pr_id) ("\n") no_pos in *)
                               let () = x_tinfo_hp (add_str "conseq" pr_no) conseq no_pos in 
-                              let ctx, proof = heap_entail_empty_rhs_heap 1 prog conseq is_folding  estate b1 p2 rhs_h_matched_set pos in
+                              let ctx, proof = x_add heap_entail_empty_rhs_heap 1 prog conseq is_folding  estate b1 p2 rhs_h_matched_set pos in
                               (* let () = x_binfo_hp (add_str "!Globals.do_classic_frame_rule 2" string_of_bool) (!Globals.do_classic_frame_rule) no_pos in *)
                               (* let p2 = MCP.drop_varperm_mix_formula p2 in *)
                               let new_ctx =
@@ -7936,7 +7936,7 @@ and pure_match (vars : CP.spec_var list) (lhs : MCP.mix_formula) (rhs : MCP.mix_
 (* lctx = Fail --> well-founded termination failure *)
 (* lctx = Succ --> termination succeeded with inference *)
 and heap_infer_decreasing_wf_x prog conseq estate rank is_folding lhs pos =
-  let lctx, _ = heap_entail_empty_rhs_heap 2 prog conseq is_folding estate lhs (MCP.mix_of_pure rank) [] pos 
+  let lctx, _ = x_add heap_entail_empty_rhs_heap 2 prog conseq is_folding estate lhs (MCP.mix_of_pure rank) [] pos 
   in CF.estate_opt_of_list_context lctx
 
 and heap_infer_decreasing_wf prog conseq estate rank is_folding lhs pos =
@@ -9730,11 +9730,11 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     (*   subtype_ann_gen es_impl_vars es_evars l_ann r_ann *)
     (* else (true, [], [],[])  (\*ignore node ann is field ann enable*\) in *)
     if not es_at_par then
-      subtype_ann_gen es_impl_vars es_evars l_ann r_ann
+      x_add subtype_ann_gen es_impl_vars es_evars l_ann r_ann
     else
       match l_ann, r_ann with
       | CP.ConstAnn Mutable, CP.ConstAnn Lend -> (false, [], [], [])
-      | _ -> subtype_ann_gen es_impl_vars es_evars l_ann r_ann
+      | _ -> x_add subtype_ann_gen es_impl_vars es_evars l_ann r_ann
   in
   x_tinfo_hp (add_str "add_to_lhs" (pr_list Cprinter.string_of_pure_formula)) add_to_lhs pos;
   x_tinfo_hp (add_str "add_to_rhs" (pr_list Cprinter.string_of_pure_formula)) add_to_rhs pos;
@@ -9770,9 +9770,10 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
   let (rvl, view_param_ann_lhs, view_param_ann_rhs, view_param_ann_rhs_ex) =  if (!allow_field_ann) 
     then Mem.subtype_sv_ann_gen_list es_impl_vars l_args_ann r_args_ann 
     else (true, None, None, None) in  (* andreeac: add ann view for ex *)
-  x_tinfo_hp (add_str "view_param_ann_lhs" (pr_opt Cprinter.string_of_pure_formula)) view_param_ann_lhs pos;
-  x_tinfo_hp (add_str "view_param_ann_rhs" (pr_opt Cprinter.string_of_pure_formula)) view_param_ann_rhs pos;
-  x_tinfo_hp (add_str "Imm annotation mismatch (view param)" (string_of_bool)) (not(rvl)) pos;
+  x_binfo_hp (add_str "view_param_ann_lhs" (pr_opt Cprinter.string_of_pure_formula)) view_param_ann_lhs pos;
+  x_binfo_hp (add_str "view_param_ann_rhs" (pr_opt Cprinter.string_of_pure_formula)) view_param_ann_rhs pos;
+  x_binfo_hp (add_str "Imm annotation mismatch (view param)" (string_of_bool)) (not(rvl)) pos;
+  x_binfo_hp (add_str "r,rvl" (pr_pair string_of_bool string_of_bool)) (r,rvl) no_pos;
   let (r, ann_lhs, ann_rhs, ann_rhs_ex) = (
     r && rvl,
     Immutable.mkAndOpt ann_lhs view_param_ann_lhs, 

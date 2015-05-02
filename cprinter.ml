@@ -584,7 +584,7 @@ let string_of_subst stt = pr_list (pr_pair string_of_spec_var string_of_spec_var
 
 let rec string_of_imm_helper imm = 
   match imm with
-  | CP.NoAnn -> "@[]"
+  | CP.NoAnn -> ""
   | CP.ConstAnn(Accs) -> "@A"
   | CP.ConstAnn(Imm) -> "@I"
   | CP.ConstAnn(Lend) -> "@L"
@@ -593,9 +593,10 @@ let rec string_of_imm_helper imm =
   | CP.TempRes(l,r) -> "@[" ^ (string_of_imm_helper l) ^ ", " ^ (string_of_imm_helper r) ^ "]"
   | CP.PolyAnn(v) -> "@" ^ (string_of_spec_var v)
 
+(* WN :why not just print all the time? *)
 let rec string_of_imm imm = 
-  if not !print_ann then ""
-  else string_of_imm_helper imm
+  (* if not !print_ann then "" *)
+  (* else *) string_of_imm_helper imm
 
 let rec string_of_imm_ann imm = 
   match imm with
@@ -4619,8 +4620,11 @@ let rec string_of_exp = function
     "{\n" ^ (String.concat "\n|| " (List.map string_of_par_case cl)) ^ " }" 
 ;;
 
+(*  WN: why not just print ann? Is it too verbose?
+    Can't we use None inside fields to control it?
+*)
 let string_of_field_ann ann =
-  if not !print_ann || !Globals.sleek_gen_vc || !Globals.sleek_gen_vc_exact then ""
+  if (* not !print_ann || *) !Globals.sleek_gen_vc || !Globals.sleek_gen_vc_exact then ""
   else (* match ann with *)
     (* | VAL -> "@VAL" *)
     (* | REC -> "@REC" *)
