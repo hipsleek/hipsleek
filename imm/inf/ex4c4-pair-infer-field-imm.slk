@@ -15,6 +15,8 @@ infer [@field_imm] p::pair<_,s@x> |- p::pair<_,b@L>.
 print residue.
 expect Fail.
 
+//infer [@field_imm] p::pair<_@A,s@x> |- p::pair<_@A,b@L>.
+
 /*
 # ex4c4
 
