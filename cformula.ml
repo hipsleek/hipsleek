@@ -1675,6 +1675,7 @@ and is_simple_formula (f:formula) =
   | _ -> false
 
 (*TO CHECK: formula_*_and *)
+(* WN : free var should not need to depend on flags *)
 and fv_simple_formula (f:formula) = 
   let h, _, _, _, _, _ = split_components f in
   match h with
@@ -1684,7 +1685,7 @@ and fv_simple_formula (f:formula) =
     let perm = h.h_formula_data_perm in
     let perm_vars = fv_cperm perm in
     let ann_vars = (* if (!Globals.allow_imm) || (!Globals.allow_field_ann) then ( *) CP.fv_ann (h.h_formula_data_imm) (* ) else []  *) in
-    let ann_vars = if (!Globals. allow_field_ann) then ann_vars @ (CP.fv_ann_lst h.h_formula_data_param_imm) else ann_vars  in
+    let ann_vars = if true (* (!Globals.allow_field_ann) *) then ann_vars @ (CP.fv_ann_lst h.h_formula_data_param_imm) else ann_vars  in
     perm_vars@ann_vars@(h.h_formula_data_node::h.h_formula_data_arguments)
   | ViewNode h -> 
     let perm = h.h_formula_view_perm in
@@ -2903,7 +2904,8 @@ and h_fv_node v perm ann param_ann vs ho_vs =
 and h_fv_node_x v perm ann param_ann vs ho_vs =
   let pvars = fv_cperm perm in
   let avars = (CP.fv_ann ann) in
-  let avars = if (!Globals.allow_field_ann) then avars @ (CP.fv_ann_lst param_ann)  else avars in
+  (* WN : free var should not need to depend on flags *)
+  let avars = if true (* (!Globals.allow_field_ann) *) then avars @ (CP.fv_ann_lst param_ann)  else avars in
   let pvars =
     if pvars==[] then
       pvars
@@ -5681,7 +5683,7 @@ and get_all_sv (f: h_formula): CP.spec_var list = match f with
               h_formula_data_param_imm = param_imm;
              } ->  
     let fv_ann_list = (* if (!Globals.allow_imm) then *) CP.fv_ann imm (* else [] *) in
-    let fv_ann_list = if (!Globals.allow_field_ann) then fv_ann_list@(CP.fv_ann_lst param_imm) else fv_ann_list in
+    let fv_ann_list = if true (* (!Globals.allow_field_ann)y *) then fv_ann_list@(CP.fv_ann_lst param_imm) else fv_ann_list in
     [c]@(List.filter CP.is_node_typ args)@fv_ann_list
   | ViewNode {h_formula_view_node = c;
               h_formula_view_arguments = args;

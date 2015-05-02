@@ -6952,104 +6952,104 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (prepost_flag:bool) (quantify
 (*     | CF.Star -> false *)
 (*     | _ -> false *)
 (*
-  and compact_nodes_with_same_name_in_h_formula_x (f: CF.h_formula) (aset: CP.spec_var list list) : CF.h_formula = 
-  if not (!Globals.allow_field_ann) then f else
-  match f with
-  | CF.Star {CF.h_formula_star_h1 = h1;
-  CF.h_formula_star_h2 = h2;
-  CF.h_formula_star_pos = pos } ->
-  let rec helper h1 h2 = 
-  match h1 with
-  | CF.DataNode { CF.h_formula_data_name = name1;
-  CF.h_formula_data_node = v1;
-  CF.h_formula_data_param_imm = param_ann1;
-  } ->
-  let aset_sv = Context.get_aset aset v1 in
-  let res_h1, res_h2 = 
-  match h2 with
-  | CF.DataNode { CF.h_formula_data_name = name2;
-  CF.h_formula_data_node = v2;
-  CF.h_formula_data_param_imm = param_ann2; } ->
-(* h1, h2 nodes; check if they can be join into a single node. If so, h1 will contain the updated annotations, while 
-  h2 will be replaced by "true". Otherwise both data nodes will remain unchanged *)
-  if (String.compare name1 name2 == 0) && ((CP.mem v2 aset_sv) || (CP.eq_spec_var v1 v2)) then
-  let compatible, new_param_imm = join_ann param_ann1 param_ann2 in
-  match h1 with (* this match is to avoid the rewriting of all h1 parameters*)
-  | CF.DataNode h -> 
-  if (compatible == true) then 
-  (CF.DataNode {h with CF.h_formula_data_param_imm = new_param_imm}, CF.HTrue)
-  else (h1, h2)
-  | _ -> (h1, h2) (* will never reach this branch *)
-  else (h1, h2) (* h2 is not an alias of h1 *) 
-  | CF.Star {CF.h_formula_star_h1 = h21;
-  CF.h_formula_star_h2 = h22;
-  CF.h_formula_star_pos = pos2 } ->
-(* h1 node, h2 star formula. Try to unify h1 with nodes on the left hand side of h2 star-formula, resulting in a new h1
-  which will be checked against the right side of h2 star-formula. This will result in updated part of h2 right and left hand side of '*'.
-  Rejoin h2 star fomula, and apply compact_nodes_with_same_name_in_h_formula_x on the updated h2 to check for other groups of aliases.
-*)
-  let h31, h32 = helper h1 h21 in
-  let h41, h42 = helper h31 h22 in
-  let new_h2 = CF.mkStarH h32 h42 pos2 10 in
-  let new_h2 = compact_nodes_with_same_name_in_h_formula_x new_h2 aset in 
-  (h41, new_h2)
-  | _ -> (h1,h2) in
-  (res_h1, res_h2)
-  | CF.Star {CF.h_formula_star_h1 = h11;
-  CF.h_formula_star_h2 = h12;
-  CF.h_formula_star_pos = pos1 } ->
-  let new_h2 = CF.mkStarH h12 h2 pos1 11 in
-  let h31, h32 = helper h11 new_h2 in
-  let new_h2 = compact_nodes_with_same_name_in_h_formula_x h32 aset in 
-  (h31, new_h2)
-  | _ ->    (h1, h2)
-  in
-  let h1,h2 = helper h1 h2 in
-  let res = CF.mkStarH h1 h2 pos 12 in
-  res
-  | CF.Conj h  -> CF.Conj {h with CF.h_formula_conj_h1 = compact_nodes_with_same_name_in_h_formula_x h.CF.h_formula_conj_h1 aset;
-  CF.h_formula_conj_h2 = compact_nodes_with_same_name_in_h_formula_x h.CF.h_formula_conj_h2 aset}
-  | CF.Phase h ->  CF.Phase {h with CF.h_formula_phase_rd = compact_nodes_with_same_name_in_h_formula_x h.CF.h_formula_phase_rd aset;
-  CF.h_formula_phase_rw = compact_nodes_with_same_name_in_h_formula_x h.CF.h_formula_phase_rw aset}
-  | _ -> f
+(*   and compact_nodes_with_same_name_in_h_formula_x (f: CF.h_formula) (aset: CP.spec_var list list) : CF.h_formula =  *)
+(*   if not (!Globals.allow_field_ann) then f else *)
+(*   match f with *)
+(*   | CF.Star {CF.h_formula_star_h1 = h1; *)
+(*   CF.h_formula_star_h2 = h2; *)
+(*   CF.h_formula_star_pos = pos } -> *)
+(*   let rec helper h1 h2 =  *)
+(*   match h1 with *)
+(*   | CF.DataNode { CF.h_formula_data_name = name1; *)
+(*   CF.h_formula_data_node = v1; *)
+(*   CF.h_formula_data_param_imm = param_ann1; *)
+(*   } -> *)
+(*   let aset_sv = Context.get_aset aset v1 in *)
+(*   let res_h1, res_h2 =  *)
+(*   match h2 with *)
+(*   | CF.DataNode { CF.h_formula_data_name = name2; *)
+(*   CF.h_formula_data_node = v2; *)
+(*   CF.h_formula_data_param_imm = param_ann2; } -> *)
+(* (\* h1, h2 nodes; check if they can be join into a single node. If so, h1 will contain the updated annotations, while  *)
+(*   h2 will be replaced by "true". Otherwise both data nodes will remain unchanged *\) *)
+(*   if (String.compare name1 name2 == 0) && ((CP.mem v2 aset_sv) || (CP.eq_spec_var v1 v2)) then *)
+(*   let compatible, new_param_imm = join_ann param_ann1 param_ann2 in *)
+(*   match h1 with (\* this match is to avoid the rewriting of all h1 parameters*\) *)
+(*   | CF.DataNode h ->  *)
+(*   if (compatible == true) then  *)
+(*   (CF.DataNode {h with CF.h_formula_data_param_imm = new_param_imm}, CF.HTrue) *)
+(*   else (h1, h2) *)
+(*   | _ -> (h1, h2) (\* will never reach this branch *\) *)
+(*   else (h1, h2) (\* h2 is not an alias of h1 *\)  *)
+(*   | CF.Star {CF.h_formula_star_h1 = h21; *)
+(*   CF.h_formula_star_h2 = h22; *)
+(*   CF.h_formula_star_pos = pos2 } -> *)
+(* (\* h1 node, h2 star formula. Try to unify h1 with nodes on the left hand side of h2 star-formula, resulting in a new h1 *)
+(*   which will be checked against the right side of h2 star-formula. This will result in updated part of h2 right and left hand side of '*'. *)
+(*   Rejoin h2 star fomula, and apply compact_nodes_with_same_name_in_h_formula_x on the updated h2 to check for other groups of aliases. *)
+(* *\) *)
+(*   let h31, h32 = helper h1 h21 in *)
+(*   let h41, h42 = helper h31 h22 in *)
+(*   let new_h2 = CF.mkStarH h32 h42 pos2 10 in *)
+(*   let new_h2 = compact_nodes_with_same_name_in_h_formula_x new_h2 aset in  *)
+(*   (h41, new_h2) *)
+(*   | _ -> (h1,h2) in *)
+(*   (res_h1, res_h2) *)
+(*   | CF.Star {CF.h_formula_star_h1 = h11; *)
+(*   CF.h_formula_star_h2 = h12; *)
+(*   CF.h_formula_star_pos = pos1 } -> *)
+(*   let new_h2 = CF.mkStarH h12 h2 pos1 11 in *)
+(*   let h31, h32 = helper h11 new_h2 in *)
+(*   let new_h2 = compact_nodes_with_same_name_in_h_formula_x h32 aset in  *)
+(*   (h31, new_h2) *)
+(*   | _ ->    (h1, h2) *)
+(*   in *)
+(*   let h1,h2 = helper h1 h2 in *)
+(*   let res = CF.mkStarH h1 h2 pos 12 in *)
+(*   res *)
+(*   | CF.Conj h  -> CF.Conj {h with CF.h_formula_conj_h1 = compact_nodes_with_same_name_in_h_formula_x h.CF.h_formula_conj_h1 aset; *)
+(*   CF.h_formula_conj_h2 = compact_nodes_with_same_name_in_h_formula_x h.CF.h_formula_conj_h2 aset} *)
+(*   | CF.Phase h ->  CF.Phase {h with CF.h_formula_phase_rd = compact_nodes_with_same_name_in_h_formula_x h.CF.h_formula_phase_rd aset; *)
+(*   CF.h_formula_phase_rw = compact_nodes_with_same_name_in_h_formula_x h.CF.h_formula_phase_rw aset} *)
+(*   | _ -> f *)
 
-  and compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.spec_var list list) : CF.h_formula =
-  let pr = Cprinter.string_of_h_formula in 
-  let pr_sv = pr_list Cprinter.string_of_spec_var_list in
-  Debug.no_2 "compact_nodes_with_same_name_in_h_formula" pr pr_sv pr (fun _ _ -> compact_nodes_with_same_name_in_h_formula_x f aset) f aset
+(*   and compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.spec_var list list) : CF.h_formula = *)
+(*   let pr = Cprinter.string_of_h_formula in  *)
+(*   let pr_sv = pr_list Cprinter.string_of_spec_var_list in *)
+(*   Debug.no_2 "compact_nodes_with_same_name_in_h_formula" pr pr_sv pr (fun _ _ -> compact_nodes_with_same_name_in_h_formula_x f aset) f aset *)
 
 
-  and compact_nodes_with_same_name_in_formula (cf: CF.formula): CF.formula =
-  match cf with
-  | CF.Base f   -> CF.Base { f with
-  CF.formula_base_heap = compact_nodes_with_same_name_in_h_formula f.CF.formula_base_heap
-(* (Context.comp_aliases f.CF.formula_base_pure); *)
-  (Csvutil.comp_aliases f.CF.formula_base_pure);
-  }
-  | CF.Or f     -> CF.Or { f with 
-  CF.formula_or_f1 = compact_nodes_with_same_name_in_formula f.CF.formula_or_f1; 
-  CF.formula_or_f2 = compact_nodes_with_same_name_in_formula f.CF.formula_or_f2; }
-  | CF.Exists f -> CF.Exists { f with
-  CF.formula_exists_heap = compact_nodes_with_same_name_in_h_formula f.CF.formula_exists_heap (Context.comp_aliases f.CF.formula_exists_pure); }
+(*   and compact_nodes_with_same_name_in_formula (cf: CF.formula): CF.formula = *)
+(*   match cf with *)
+(*   | CF.Base f   -> CF.Base { f with *)
+(*   CF.formula_base_heap = compact_nodes_with_same_name_in_h_formula f.CF.formula_base_heap *)
+(* (\* (Context.comp_aliases f.CF.formula_base_pure); *\) *)
+(*   (Csvutil.comp_aliases f.CF.formula_base_pure); *)
+(*   } *)
+(*   | CF.Or f     -> CF.Or { f with  *)
+(*   CF.formula_or_f1 = compact_nodes_with_same_name_in_formula f.CF.formula_or_f1;  *)
+(*   CF.formula_or_f2 = compact_nodes_with_same_name_in_formula f.CF.formula_or_f2; } *)
+(*   | CF.Exists f -> CF.Exists { f with *)
+(*   CF.formula_exists_heap = compact_nodes_with_same_name_in_h_formula f.CF.formula_exists_heap (Context.comp_aliases f.CF.formula_exists_pure); } *)
 
-  and compact_nodes_with_same_name_in_struc_x (f: CF.struc_formula): CF.struc_formula = (* f *)
-  if not (!Globals.allow_field_ann ) then f
-  else
-  match f with
-  | CF.EOr sf            -> CF.EOr { sf with 
-  CF.formula_struc_or_f1 = compact_nodes_with_same_name_in_struc_x sf.CF.formula_struc_or_f1;
-  CF.formula_struc_or_f2 = compact_nodes_with_same_name_in_struc_x  sf.CF.formula_struc_or_f2;} 
-  | CF.EList sf          -> CF.EList  (map_l_snd compact_nodes_with_same_name_in_struc_x sf) 
-  | CF.ECase sf          -> CF.ECase {sf with CF.formula_case_branches = map_l_snd compact_nodes_with_same_name_in_struc_x sf.CF.formula_case_branches;} 
-  | CF.EBase sf          -> CF.EBase {sf with
-  CF.formula_struc_base = x_add_1 Mem.compact_nodes_with_same_name_in_formula sf.CF.formula_struc_base;
-  CF.formula_struc_continuation = map_opt compact_nodes_with_same_name_in_struc_x sf.CF.formula_struc_continuation; }
-  | CF.EAssume (x, f, y)-> CF.EAssume (x,(Mem.compact_nodes_with_same_name_in_formula f),y)
-  | CF.EInfer sf         -> CF.EInfer {sf with CF.formula_inf_continuation = compact_nodes_with_same_name_in_struc_x sf.CF.formula_inf_continuation} (* (andreeac) ?? *)
+(*   and compact_nodes_with_same_name_in_struc_x (f: CF.struc_formula): CF.struc_formula = (\* f *\) *)
+(*   if not (!Globals.allow_field_ann ) then f *)
+(*   else *)
+(*   match f with *)
+(*   | CF.EOr sf            -> CF.EOr { sf with  *)
+(*   CF.formula_struc_or_f1 = compact_nodes_with_same_name_in_struc_x sf.CF.formula_struc_or_f1; *)
+(*   CF.formula_struc_or_f2 = compact_nodes_with_same_name_in_struc_x  sf.CF.formula_struc_or_f2;}  *)
+(*   | CF.EList sf          -> CF.EList  (map_l_snd compact_nodes_with_same_name_in_struc_x sf)  *)
+(*   | CF.ECase sf          -> CF.ECase {sf with CF.formula_case_branches = map_l_snd compact_nodes_with_same_name_in_struc_x sf.CF.formula_case_branches;}  *)
+(*   | CF.EBase sf          -> CF.EBase {sf with *)
+(*   CF.formula_struc_base = x_add_1 Mem.compact_nodes_with_same_name_in_formula sf.CF.formula_struc_base; *)
+(*   CF.formula_struc_continuation = map_opt compact_nodes_with_same_name_in_struc_x sf.CF.formula_struc_continuation; } *)
+(*   | CF.EAssume (x, f, y)-> CF.EAssume (x,(Mem.compact_nodes_with_same_name_in_formula f),y) *)
+(*   | CF.EInfer sf         -> CF.EInfer {sf with CF.formula_inf_continuation = compact_nodes_with_same_name_in_struc_x sf.CF.formula_inf_continuation} (\* (andreeac) ?? *\) *)
 
-  and compact_nodes_with_same_name_in_struc (f: CF.struc_formula): CF.struc_formula = 
-  let pr = Cprinter.string_of_struc_formula in
-  Debug.no_1 "compact_nodes_with_same_name_in_struc" pr pr (fun _ -> compact_nodes_with_same_name_in_struc_x f ) f
+(*   and compact_nodes_with_same_name_in_struc (f: CF.struc_formula): CF.struc_formula =  *)
+(*   let pr = Cprinter.string_of_struc_formula in *)
+(*   Debug.no_1 "compact_nodes_with_same_name_in_struc" pr pr (fun _ -> compact_nodes_with_same_name_in_struc_x f ) f *)
 *)
 and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect
     (f0 : IF.formula) tlist (clean_res:bool) : (spec_var_type_list*CF.formula) =
