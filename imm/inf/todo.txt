@@ -224,7 +224,7 @@ heap_entail_empty_rhs_heap#1@4 EXIT: [
   p::pair<Anon_28@A,s@[@x]>&Anon_13=Anon_12 & b=s&{FLOW,(4,5)=__norm#E}[]
   ]
 =======================================================
-#  ex4c5.slk -debug x.log
+#  ex4c5.slk -debug x.log (OK)
 
 infer [@field_imm] p::pair<_,s@x> |- p::pair<_,b@L>.
 
@@ -238,7 +238,7 @@ Need to trace how unsound "false" appear below
 @1! **solver.ml#8131:xpure_lhs_h0_sym (wo pure): false
 @1! **solver.ml#8132:xpure_lhs_h1_sym (wo pure): false
 =======================================================
-# ex5.slk
+# ex5.slk (OK after changing --etcsu1 and --en-imm-merge with --field-imm
 
 # Normalization is not working here..
 

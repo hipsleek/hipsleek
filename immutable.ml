@@ -2345,7 +2345,7 @@ let merge_alias_nodes_formula prog f quantif xpure unfold_fun =
     | Or orf -> 
       Or {orf with formula_or_f1 = helper orf.formula_or_f1;  formula_or_f2 = helper orf.formula_or_f2;}
   in
-  if not (!Globals.imm_merge) then f
+  if not (!Globals.allow_field_ann (* !Globals.imm_merge *)) then f
   else helper f
 
 let merge_alias_nodes_formula prog f quantif xpure unfold_fun =
@@ -2367,7 +2367,7 @@ let rec merge_alias_nodes_struc_formula prog f xpure conseq unfold_fun =
                formula_assume_simpl = merge_alias_nodes_formula prog f.formula_assume_simpl [] xpure unfold_fun;
                formula_assume_struc = merge_alias_nodes_struc_formula prog f.formula_assume_struc xpure conseq unfold_fun;}
     | EInfer f  -> EInfer {f with formula_inf_continuation = merge_alias_nodes_struc_formula prog f.formula_inf_continuation xpure conseq unfold_fun }
-  in if not (!Globals.imm_merge) then f
+  in if not (!Globals.allow_field_ann (* Globals.imm_merge *)) then f
   else res
 
 let merge_alias_nodes_struc_formula prog f xpure conseq  unfold_fun =

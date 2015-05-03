@@ -3,9 +3,9 @@ data pair{
  int snd;
 }.
 
-infer [@field_imm] p::pair<_,s@x> |- p::pair<_,b@M>.
-//print residue.
-//expect Fail.
+infer [@field_imm,x] p::pair<_,s@x> |- p::pair<_,b@L>.
+print residue.
+expect Valid.
 
 /*
 #  ex4c5.slk -debug x.log
