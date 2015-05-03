@@ -1345,6 +1345,11 @@ Total verification time: 59.02 second
         Number of false contexts: 0
 
 ====================================================================
+# with merge_partial_heaps on
+
+Total number of errors: 11 in files:
+  infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) imm/norm/norm1.slk({E12#Valid}) imm/norm/norm3.slk({E11#Fail},{E4#Valid},{E7#Valid},{E9#Valid}) imm/norm/norm5.slk({E1#Valid},{E2#Valid}) imm/norm/norm6.slk({E3#Fail}) imm/norm/field.slk({E11#Valid}) fracperm/split-combine.slk(no result  for {E}) veribsync/bperm-split-combine.slk(no result  for {E}) veribsync/barrier-static.slk(no result  for {E}) veribsync/barrier-dynamic2.slk(no result  for {E}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
 ====================================================================
 ====================================================================
 ====================================================================
