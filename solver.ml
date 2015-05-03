@@ -7948,7 +7948,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
   (* TODO-EXPURE lhs heap here *)
   let curr_lhs_h = (mkStarH lhs_h estate_orig.es_heap pos) in
   let lhs_baga =
-    if !Globals.gen_baga_inv then
+    if !Globals.use_baga (* !Globals.gen_baga_inv *) then
       let views = prog.Cast.prog_view_decls in
       let t1 = x_add_1 Expure.build_ef_heap_formula curr_lhs_h views in
       let () = Debug.ninfo_hprint (add_str "hf" (Cprinter.string_of_h_formula)) curr_lhs_h no_pos in

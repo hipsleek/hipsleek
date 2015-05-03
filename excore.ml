@@ -610,13 +610,13 @@ module EPURE =
       let (b,f) = ef_elim_exists_1 svl (Elt.conv_var b,f) in
       (Elt.from_var b, f)
 
-    let elim_exists_1 (svl:spec_var list) (b,f) : epure =
+    let elim_exists (svl:spec_var list) (b,f) : epure =
       let pr = string_of_typed_spec_var_list in
       Debug.no_2 "ef_elim_exists" pr string_of string_of elim_exists svl (b,f) 
 
     (* TODO-WN : why ins't elem used instead of spec_var *)
     let elim_exists_disj (svl : spec_var list) (lst : epure_disj) : epure_disj =
-      let r = List.map (fun e -> elim_exists_1 svl e) lst in
+      let r = List.map (fun e -> elim_exists svl e) lst in
       r
 
     (* ef_imply : ante:ef_pure -> conseq:ef_pure -> bool *)

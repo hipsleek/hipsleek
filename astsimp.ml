@@ -2629,7 +2629,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
               let new_pf = if List.mem idx pf_svl then CP.wrap_exists_svl pf [idx] else pf in
               Excore.simplify_with_label Tpdispatcher.simplify new_pf
             ) fixcalc_invs_inv in
-          let () = Debug.ninfo_hprint (add_str "fixcalc_invs_inv" (pr_list Cprinter.string_of_mix_formula)) fixcalc_invs_inv no_pos in
+          let () = x_tinfo_hp (add_str "fixcalc_invs_inv" (pr_list Cprinter.string_of_mix_formula)) fixcalc_invs_inv no_pos in
           (* WN : Need to check if supplied inv is a fixpoint! *)
           let infer_vs_user = List.combine view_list_num_with_inv num_invs_wrap_index in
           let num_invs = List.map (fun (vd,fixc) ->
@@ -2657,6 +2657,12 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                     fixc
               in better
             )  infer_vs_user in
+          let check_under_num_inv inv body =
+            if CP.isConstTrue inv then
+              let disjs = CP.split_disjunctions body in
+              List.for_all (fun disj -> CP.isConstTrue disj) disjs
+            else Tpdispatcher.imply_raw inv body
+          in
           let precise_num_invs = List.map (fun (vd,fixc) ->
               (* if not(CP.isConstTrue (MCP.pure_of_mix vd.Cast.view_user_inv)) then *)
               (*   vd.Cast.view_user_inv *)
@@ -2669,7 +2675,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                 let body = CP.wrap_exists_svl body (* [root] *) ptrs_vars in
                 let () = x_ninfo_hp (add_str "body" Cprinter.string_of_pure_formula) body no_pos in
                 let () = x_ninfo_hp (add_str "num_inv" Cprinter.string_of_pure_formula) fixc no_pos in
-                let is_precise_num = if Tpdispatcher.imply_raw fixc body then
+                let is_precise_num = if check_under_num_inv fixc body then
                     let () = x_binfo_pp ("Predicate " ^ vd.Cast.view_name ^ " has precise invariant\n") no_pos in
                     (true,fixc)
                   else

@@ -306,11 +306,11 @@ let rec build_ef_formula_x (cf : Cformula.formula) (all_views : Cast.view_decl l
     let efpd = build_ef_heap_formula_with_pure eh efpd_p all_views in
     (* let efpd_e = List.map (fun efp -> *)
     (*     (EPureI.elim_exists ef.Cformula.formula_exists_qvars efp)) efpd in *)
-    let () = Debug.ninfo_hprint (add_str "efpd" (EPureI.string_of_disj)) efpd no_pos in
+    let () = x_tinfo_hp (add_str "efpd" (EPureI.string_of_disj)) efpd no_pos in
     let efpd_e = EPureI.elim_exists_disj ef.Cformula.formula_exists_qvars efpd in
-    let () = Debug.ninfo_hprint (add_str "efpd_e" (EPureI.string_of_disj)) efpd_e no_pos in
+    let () = x_tinfo_hp (add_str "efpd_e" (EPureI.string_of_disj)) efpd_e no_pos in
     let efpd_n = EPureI.norm_disj efpd_e in
-    let () = Debug.ninfo_hprint (add_str "efpd_n3" (EPureI.string_of_disj)) efpd_n no_pos in
+    let () = x_tinfo_hp (add_str "efpd_n3" (EPureI.string_of_disj)) efpd_n no_pos in
     efpd_n
 
 and build_ef_formula (cf : Cformula.formula) (all_views : Cast.view_decl list) : ef_pure_disj =
