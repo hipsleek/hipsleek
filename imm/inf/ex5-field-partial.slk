@@ -8,6 +8,10 @@ infer [@field_imm] p::pair<f,s@A> * p::pair<a@A,2> |- false.
 print residue.
 expect Fail.
 
+infer [@field_imm] p::pair<f,s@A> * p::pair<a@A,2> |- s=2 & f=a.
+print residue.
+expect Valid.
+
 /*
 # ex5.slk
 
