@@ -1624,6 +1624,7 @@ class inf_obj_sub  =
                               || (not(self # get INF_ERR_MAY) && not(self # get INF_DE_EXC) 
                                   && infer_const_obj # is_err_must)
     method is_classic_all  = super # is_classic || infer_const_obj # is_classic
+    method is_imm_all  = super # is_imm || infer_const_obj # is_imm
     (* method is__all  = super # is_ || infer_const_obj # is_ *)
     method is_ver_post_all  = super # is_ver_post || infer_const_obj # is_ver_post
     method is_par_all  = super # is_par || infer_const_obj # is_par
