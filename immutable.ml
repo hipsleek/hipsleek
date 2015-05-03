@@ -2308,7 +2308,7 @@ let merge_alias_nodes_formula_helper prog heapf puref quantif xpure unfold_fun q
   let rec helper heapf puref = 
     let (subs,_) = CP.get_all_vv_eqs (MCP.pure_of_mix puref) in
     let emap = CP.EMapSV.build_eset subs in
-    let new_f, new_p, fixpoint, struc = merge_alias_nodes_h_formula prog heapf puref emap quantif xpure unfold_fun qvars in
+    let new_f, new_p, fixpoint, struc = x_add merge_alias_nodes_h_formula prog heapf puref emap quantif xpure unfold_fun qvars in
     (* let new_p = *)
     (*   match new_p with *)
     (*     | Some p -> MCP.memoise_add_pure puref p *)
@@ -2359,12 +2359,12 @@ let rec merge_alias_nodes_struc_formula prog f xpure conseq unfold_fun =
       let (ee, ei) = (f.formula_struc_exists, f.formula_struc_explicit_inst) in
       let quantif = if conseq then ee@ei@f.formula_struc_implicit_inst else [] in
       EBase {f with
-             formula_struc_base =  merge_alias_nodes_formula prog f.formula_struc_base quantif xpure unfold_fun}
+             formula_struc_base =  x_add merge_alias_nodes_formula prog f.formula_struc_base quantif xpure unfold_fun}
     | EList l   -> EList  (map_l_snd (fun c-> merge_alias_nodes_struc_formula prog c xpure conseq unfold_fun) l)
     | ECase f   -> ECase {f with formula_case_branches = map_l_snd (fun c-> merge_alias_nodes_struc_formula prog c xpure conseq unfold_fun) f.formula_case_branches;}
     | EAssume f -> 
       EAssume {f with
-               formula_assume_simpl = merge_alias_nodes_formula prog f.formula_assume_simpl [] xpure unfold_fun;
+               formula_assume_simpl = x_add merge_alias_nodes_formula prog f.formula_assume_simpl [] xpure unfold_fun;
                formula_assume_struc = merge_alias_nodes_struc_formula prog f.formula_assume_struc xpure conseq unfold_fun;}
     | EInfer f  -> EInfer {f with formula_inf_continuation = merge_alias_nodes_struc_formula prog f.formula_inf_continuation xpure conseq unfold_fun }
   in if not (!Globals.allow_field_ann (* Globals.imm_merge *)) then f

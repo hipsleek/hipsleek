@@ -3,7 +3,7 @@ data pair{
  int snd;
 }.
 
-
+/*
 infer [@field_imm] p::pair<f,s@A> * p::pair<a@A,2> |- false.
 print residue.
 expect Fail.
@@ -11,11 +11,65 @@ expect Fail.
 infer [@field_imm] p::pair<f,s@A> * p::pair<a@A,2> |- s=2 & f=a.
 print residue.
 expect Valid.
+*/
+
+infer [@field_imm] p::pair<f,s@A> * p::pair<_,2> |- false.
+print residue.
+expect Valid.
+
+//infer [@field_imm] p::pair<f@I,s@A> * p::pair<_@I,2> |- true.
+//print residue.
+// why is this false?
+// should @I * @I --> @I if it is existential permission
+
+//infer [@field_imm] p::pair<f@L,s@A> * p::pair<_@L,2> |- true.
+//print residue.
+// why is it false?
+// why is this false?
+// should @L * @L --> @I if it is existential permission
+
+infer [] ppp::pair<f,s>@A * ppp::pair<_,2>@I |- s=2.
+print residue.
+// what happen to s=2? where is merge
+
+/*
+# ex5.slk
+
+infer [@field_imm] p::pair<f,s@A> * p::pair<_,2> |- false.
+
+# Why not return false at this point of heap merging?
+# maybe can avoid --etcsu1 if you had done this?
+
+(==norm.ml#1054==)
+merge_alias_nodes_formula@1
+merge_alias_nodes_formula inp1 : p::pair<f,s@A> * p::pair<Anon_12,flted_16_15>&f
+lted_16_15=2&
+{FLOW,(20,21)=__norm#E}[]
+merge_alias_nodes_formula@1 EXIT: p::pair<f,s@A> * p::pair<Anon_12,flted_16_15>&
+flted_16_15=2&
+{FLOW,(20,21)=__norm#E}[]
+
+infer [] ppp::pair<f,s>@A * ppp::pair<_,2>@I |- s=2.
+// fails
+// what happen to s=2? where is merge
+
+should do a merge rather than a removal 
+
+(==sleekengine.ml#1186==)
+remove_imm_from_formula@1
+remove_imm_from_formula inp1 : ppp::pair<f,s>@A * ppp::pair<Anon_15,flted_31_48>@I&flted_31_48=2&
+{FLOW,(20,21)=__norm#E}[]
+remove_imm_from_formula@1 EXIT: (emp) * ppp::pair<Anon_15,flted_31_48>@I&ppp!=null & flted_31_48=2&
+{FLOW,(20,21)=__norm#E}[]
+
+*/
 
 /*
 # ex5.slk
 
 ../../sleek ex5-field-partial.slk --field-imm --etcsu1 --en-imm-merge
+
+infer [@field_imm] p::pair<f,s@A> * p::pair<_,2> |- false.
 
 Residue:
  <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]

@@ -1707,7 +1707,7 @@ and mkStar (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   let h1, p1, vp1, fl1, t1, a1 = split_components f1 in
   let h2, p2, vp2, fl2, t2, a2 = split_components f2 in
   let h = mkStarH h1 h2 pos in
-  let p = MCP.merge_mems p1 p2 true in
+  let p = x_add MCP.merge_mems p1 p2 true in
   let vp = CVP.merge_vperm_sets [vp1; vp2] in
   let vp = CVP.norm_vperm_sets vp in
   let t = mkAndType t1 t2 in
@@ -1721,7 +1721,7 @@ and combine_and_pure (f1:formula) (p:MCP.mix_formula) (f2:MCP.mix_formula): MCP.
   if (isAnyConstFalse f1) then (MCP.mkMFalse no_pos, false)
   else if (isAnyConstTrue f1) then (f2, true)
   else 
-    let r = Gen.Profiling.no_1 "6_combine_mm" (MCP.merge_mems p f2) true in
+    let r = Gen.Profiling.no_1 "6_combine_mm" (x_add MCP.merge_mems p f2) true in
     if (MCP.isConstMFalse r) then (r, false)
     else if (MCP.isConstMTrue r) then (r, false)
     else (r, true)     
@@ -1866,9 +1866,9 @@ and mkAnd_pure_x (f1: formula) (p2: MCP.mix_formula) (pos: loc): formula =
   else
     match f1 with
     | Base ({ formula_base_pure = p; } as b) ->
-      Base { b with formula_base_pure = MCP.merge_mems p p2 true; }
+      Base { b with formula_base_pure = x_add MCP.merge_mems p p2 true; }
     | Exists ({ formula_exists_pure = p; } as e) ->
-      Exists { e with formula_exists_pure = MCP.merge_mems p p2 true; }
+      Exists { e with formula_exists_pure = x_add MCP.merge_mems p p2 true; }
     | Or ({ formula_or_f1 = f1; formula_or_f2 = f2; } as o) ->
       Or { o with 
            formula_or_f1 = mkAnd_pure f1 p2 pos;
@@ -14953,12 +14953,12 @@ let string_of_set so s = "{ " ^ (String.concat " ; " (List.map so s)) ^ " }"
  * TODO implement
  **)
 let rec merge_partial_heaps f = match f with
-  | Base fb -> let nh = merge_partial_h_formula fb.formula_base_heap in
+  | Base fb -> let nh = x_add_1 merge_partial_h_formula fb.formula_base_heap in
     Base { fb with formula_base_heap = nh }
   | Or fo -> 	let nf1 = merge_partial_heaps fo.formula_or_f1 in
     let nf2 = merge_partial_heaps fo.formula_or_f2 in
     Or { fo with formula_or_f1 = nf1; formula_or_f2 = nf2; }
-  | Exists fe -> let nh = merge_partial_h_formula fe.formula_exists_heap in
+  | Exists fe -> let nh = x_add_1 merge_partial_h_formula fe.formula_exists_heap in
     Exists { fe with formula_exists_heap = nh }
 
 and merge_partial_h_formula f = 

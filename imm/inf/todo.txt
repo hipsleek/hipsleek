@@ -224,7 +224,7 @@ heap_entail_empty_rhs_heap#1@4 EXIT: [
   p::pair<Anon_28@A,s@[@x]>&Anon_13=Anon_12 & b=s&{FLOW,(4,5)=__norm#E}[]
   ]
 =======================================================
-#  ex4c5.slk -debug x.log (OK)
+#  ex4c5.slk -debug x.log (needed --etcsu1 & --en-imm-merge)
 
 infer [@field_imm] p::pair<_,s@x> |- p::pair<_,b@L>.
 
