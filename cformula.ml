@@ -15048,6 +15048,8 @@ and merge_two_nodes dn1 dn2 =
         (* TO DO: ??? Can not use spec_var name to tell whether it is a hole
            or not. It also depends on the positions stored in
            h_formula_data_holes *)
+            let () = x_binfo_hp (add_str "holes1" (pr_list string_of_int)) holes1 no_pos in
+            let () = x_binfo_hp (add_str "holes2" (pr_list string_of_int)) holes2 no_pos in
         let is_hole_specvar sv = 
           let svname = CP.name_of_spec_var sv in
           svname.[0] = '#' in
@@ -15061,11 +15063,15 @@ and merge_two_nodes dn1 dn2 =
         let args, not_clashes = List.split (List.map2 combine_vars args1 args2) in
         let not_clashed = List.for_all (fun x -> x) not_clashes in
         let combine_param_ann ann_p1 ann_p2 =  (*(andreeac) TOTDO: check how to combine args annotations*)
+          let () = x_binfo_pp "inside combine_param_ann" no_pos in
           match (ann_p1, ann_p2) with
           | ([], [])     -> []
           | ([], ann2)   -> ann2
           | (ann1, [])   -> ann1
           | (ann1, ann2) -> ann1 in
+        let combine_param_ann ann_p1 ann_p2 =
+          let pr = string_of_ann_list in
+          Debug.no_2 "combine_param_ann" pr pr pr combine_param_ann ann_p1 ann_p2 in
         (* let () = print_endline ("merge_two_nodes" ^ (string_of_bool not_clashed)) in *)
         let res = DataNode { h_formula_data_node = dnsv1;
                              h_formula_data_name = n1;

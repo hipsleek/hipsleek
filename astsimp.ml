@@ -7168,7 +7168,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
   let () = x_tinfo_hp (add_str "cf" pr) cf no_pos in
   (*let cf = x_add_1 Mem.compact_nodes_with_same_name_in_formula cf in*)
   (*TO CHECK: temporarily disabled*) 
-  (* let cf = CF.merge_partial_heaps cf in (\*ENABLE THIS for partial fields*\) *)
+  let cf = CF.merge_partial_heaps cf in (*ENABLE THIS for partial fields*)
   (* let () = print_string ("\nbefore ann: "^ Cprinter.string_of_formula cf) in *)
   let cf = if (!Globals.allow_field_ann) then add_param_ann_constraints_formula cf else cf in
   (* let () = print_string ("\nafter ann: "^ Cprinter.string_of_formula cf) in *)

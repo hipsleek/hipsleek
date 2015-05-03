@@ -249,6 +249,17 @@ normalize_field_ann_heap_node@5
 normalize_field_ann_heap_node inp1 : p::pair<f,s@A> * p::pair<a@A,flted_7_14>
 normalize_field_ann_heap_node@5 EXIT:( p::pair<f,s@A> * p::pair<a@A,flted_7_14>,?,?)
 =======================================================
+# Normalization is not working here..
+
+!!! **cformula.ml#15051:holes1:[]
+!!! **cformula.ml#15052:holes2:[]
+!!! **cformula.ml#15066:inside combine_param_ann
+(==astsimp.ml#7726==)
+combine_param_ann@1
+combine_param_ann inp1 :[@M,@A]
+combine_param_ann inp2 :[@A,@M]
+combine_param_ann@1 EXIT:[@M,@A]
+[Warning] False ctx
 =======================================================
 =======================================================
 =======================================================

@@ -11,7 +11,25 @@ expect Fail.
 /*
 # ex5.slk
 
+../../sleek ex5-field-partial.slk --field-imm --etcsu1 --en-imm-merge
+
+Residue:
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+
+Validate 1: Expecting 3 Fail BUT got : Valid
+
+
 # Normalization is not working here..
+
+!!! **cformula.ml#15051:holes1:[]
+!!! **cformula.ml#15052:holes2:[]
+!!! **cformula.ml#15066:inside combine_param_ann
+(==astsimp.ml#7726==)
+combine_param_ann@1
+combine_param_ann inp1 :[@M,@A]
+combine_param_ann inp2 :[@A,@M]
+combine_param_ann@1 EXIT:[@M,@A]
+[Warning] False ctx
 
 infer [@field_imm] p::pair<f,s@A> * p::pair<a@A,2> |- false.
 
@@ -19,5 +37,7 @@ infer [@field_imm] p::pair<f,s@A> * p::pair<a@A,2> |- false.
 normalize_field_ann_heap_node@5
 normalize_field_ann_heap_node inp1 : p::pair<f,s@A> * p::pair<a@A,flted_7_14>
 normalize_field_ann_heap_node@5 EXIT:( p::pair<f,s@A> * p::pair<a@A,flted_7_14>,?,?)
+
+
 
 */
