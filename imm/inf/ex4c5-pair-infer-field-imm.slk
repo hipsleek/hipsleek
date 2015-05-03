@@ -3,7 +3,7 @@ data pair{
  int snd;
 }.
 
-infer [@field_imm] p::pair<_,s@x> |- p::pair<_,b@L>.
+infer [@field_imm] p::pair<_,s@x> |- p::pair<_,b@M>.
 //print residue.
 //expect Fail.
 

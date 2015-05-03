@@ -238,6 +238,16 @@ Need to trace how unsound "false" appear below
 @1! **solver.ml#8131:xpure_lhs_h0_sym (wo pure): false
 @1! **solver.ml#8132:xpure_lhs_h1_sym (wo pure): false
 =======================================================
+# ex5.slk
+
+# Normalization is not working here..
+
+infer [@field_imm] p::pair<f,s@A> * p::pair<a@A,2> |- false.
+
+(==astsimp.ml#7717==)
+normalize_field_ann_heap_node@5
+normalize_field_ann_heap_node inp1 : p::pair<f,s@A> * p::pair<a@A,flted_7_14>
+normalize_field_ann_heap_node@5 EXIT:( p::pair<f,s@A> * p::pair<a@A,flted_7_14>,?,?)
 =======================================================
 =======================================================
 =======================================================

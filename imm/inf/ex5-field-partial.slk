@@ -1,0 +1,23 @@
+data pair{
+ int fst;
+ int snd;
+}.
+
+
+infer [@field_imm] p::pair<f,s@A> * p::pair<a@A,2> |- false.
+print residue.
+expect Fail.
+
+/*
+# ex5.slk
+
+# Normalization is not working here..
+
+infer [@field_imm] p::pair<f,s@A> * p::pair<a@A,2> |- false.
+
+(==astsimp.ml#7717==)
+normalize_field_ann_heap_node@5
+normalize_field_ann_heap_node inp1 : p::pair<f,s@A> * p::pair<a@A,flted_7_14>
+normalize_field_ann_heap_node@5 EXIT:( p::pair<f,s@A> * p::pair<a@A,flted_7_14>,?,?)
+
+*/
