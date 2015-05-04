@@ -1349,6 +1349,7 @@ type infer_type =
   | INF_ERROR (* For infer[@error] *)
   | INF_DE_EXC (* For infer[@dis_err] *)
   | INF_ERR_MUST (* For infer[@err_must] *)
+  | INF_ERR_MUST_ONLY (* For infer[@err_must_only] *)
   | INF_ERR_MAY (* For infer[@err_may] *)
   | INF_SIZE (* For infer[@size] *)
   | INF_IMM (* For infer[@imm] *)
@@ -1377,6 +1378,7 @@ let string_of_inf_const x =
   | INF_ERROR -> "@error"
   | INF_DE_EXC -> "@dis_err"
   | INF_ERR_MUST -> "@err_must"
+  | INF_ERR_MUST_ONLY -> "@err_must_only"
   | INF_ERR_MAY -> "@err_may"
   | INF_SIZE -> "@size"
   | INF_IMM -> "@imm"
@@ -1485,6 +1487,7 @@ class inf_obj  =
         helper "@dis_err"       INF_DE_EXC;
         helper "@err_may"       INF_ERR_MAY;
         helper "@err_must"      INF_ERR_MUST;
+        helper "@err_must_only" INF_ERR_MUST_ONLY;
         helper "@size"          INF_SIZE;
         helper "@efa"           INF_EFA;
         helper "@dfa"           INF_DFA;
@@ -1521,11 +1524,15 @@ class inf_obj  =
     (* shape inference *)
     method is_error  = self # get INF_ERROR
     method is_dis_err  = self # get INF_DE_EXC
-                         || (not(self # get INF_ERR_MUST) 
+                         || (not(self # get INF_ERR_MUST)
                              && not(self # get INF_ERR_MAY))
     method is_err_must  = not(self # get INF_DE_EXC)
                           && not(self # get INF_ERR_MAY) 
                           && self # get INF_ERR_MUST
+    method is_err_must_only  = not(self # get INF_DE_EXC)
+                          && not(self # get INF_ERR_MAY) 
+                          && not(self # get INF_ERR_MUST)
+                          && self # get INF_ERR_MUST_ONLY
     method is_err_may  = not(self # get INF_DE_EXC) 
                          && self # get INF_ERR_MAY
     method is_size  = self # get INF_SIZE

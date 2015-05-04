@@ -404,6 +404,7 @@ rule tokenizer file_name = parse
   | "@error" { INFER_AT_ERROR }
   | "@dis_err" { INFER_AT_DE_EXC }
   | "@err_must" { INFER_AT_ERRMUST }
+  | "@err_must_only" { INFER_AT_ERRMUST_ONLY }
   | "@err_may" { INFER_AT_ERRMAY }
   | "@flow" { INFER_AT_FLOW }
   | "@size" { INFER_AT_SIZE }

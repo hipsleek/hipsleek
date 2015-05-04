@@ -9403,6 +9403,9 @@ let is_dis_err_exc es =
 let is_err_must_exc es = 
   es.es_infer_obj # is_err_must_all
 
+let is_err_must_only_exc es = 
+  es.es_infer_obj # is_err_must_only
+
 let is_en_error_exc es =
   not(is_dis_err_exc es)
 (* es.es_infer_obj # is_err_must || es.es_infer_obj # is_err_may *)
@@ -9411,6 +9414,11 @@ let rec is_en_error_exc_ctx c =
   match c with
   | Ctx es -> is_en_error_exc es
   | OCtx (c1,c2) -> is_en_error_exc_ctx c1 || is_en_error_exc_ctx c2
+
+let rec is_err_must_exc_ctx c =
+  match c with
+  | Ctx es -> is_err_must_only_exc es
+  | OCtx (c1,c2) -> is_err_must_exc_ctx c1 || is_err_must_exc_ctx c2
 
 let is_en_error_exc_ctx_list lc=
   match lc with
@@ -10705,7 +10713,7 @@ let convert_maymust_failure_to_value_orig ?(mark=true) (l:list_context) : list_c
 let convert_maymust_failure_to_value_orig ?(mark=true) (l:list_context) : list_context =
   match l with
     | FailCtx (ft, c, cex) ->
-          if not (is_en_error_exc_ctx c)
+          if not (is_en_error_exc_ctx c) && not (is_err_must_exc_ctx c)
             (* not !Globals.enable_error_as_exc && not (is_en_error_exc_ctx c) *)
           then
             l

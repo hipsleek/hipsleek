@@ -8026,23 +8026,24 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
         CF.add_quantifiers quans neg_f
       | CF.Or orf -> report_error pos "heap_entail_empty_rhs_heap: conseq must not contain or"
   in
+  let safe_exc () = heap_entail_empty_rhs_heap_one_flow prog conseq is_folding  estate_orig lhs rhs_p rhs_matched_set pos in
   (**** END INTERNAL****)
 
-  let safe_lc, safe_prf = heap_entail_empty_rhs_heap_one_flow prog conseq is_folding  estate_orig lhs rhs_p rhs_matched_set pos in
-
   (* if must_error, and need to infer *)
-  let res = if CF.is_en_error_exc estate_orig && not (Infer.no_infer_pure estate_orig) then
+  let res = if (CF.is_en_error_exc estate_orig || CF.is_err_must_only_exc estate_orig) && not (Infer.no_infer_pure estate_orig) then
     (* negation of rhs *)
     let neg_conseq = neg_empty_heap_formula conseq in
-    let err_conseq = if CF.is_err_must_exc  estate_orig then
+    let err_conseq = if CF.is_err_must_exc estate_orig || CF.is_err_must_only_exc  estate_orig then
       CF.substitute_flow_into_f !error_flow_int neg_conseq
     else neg_conseq
     in
     let neg_rhs_p = neg_mcp rhs_p in
     let error_lc, error_prf = heap_entail_empty_rhs_heap_one_flow prog err_conseq is_folding  estate_orig lhs neg_rhs_p rhs_matched_set pos in
     (* to add proof for error-infer *)
-    (list_context_union safe_lc error_lc, safe_prf)
-  else safe_lc, safe_prf
+    if CF.is_err_must_only_exc estate_orig then (error_lc, error_prf) else
+      let safe_lc, safe_prf = (safe_exc ()) in
+      (list_context_union safe_lc error_lc, safe_prf)
+  else (safe_exc ())
   in res
 
 and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) rhs_matched_set pos : (list_context * proof) =
@@ -8628,10 +8629,31 @@ type: bool *
         end
         else
           begin
-            let estate1 = if CF.contains_error_flow conseq then
-              {estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.CF.es_formula }
-            else estate in
-            let res_ctx = Ctx {estate1 with (* es_formula = res_delta; *)
+            (* let estate1 = *) if CF.contains_error_flow conseq then
+              let err_msg = "error-infer" in
+              let estate = {estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.CF.es_formula;
+              } in
+              let fc_template = {
+                  fc_message = err_msg;  fc_current_lhs  = estate;
+                  fc_prior_steps = estate.es_prior_steps;
+                  fc_orig_conseq  = struc_formula_of_formula (formula_of_mix_formula rhs_p pos) pos;
+                  fc_current_conseq = CF.formula_of_heap HFalse pos;
+                  fc_failure_pts = match r_fail_match with | Some s -> [s]| None-> [];} in
+              let lc0 = x_add Musterr.build_and_failures 1 "214" fc_kind Globals.logical_error ([], [(CF.get_pure estate.CF.es_formula, MCP.pure_of_mix rhs_p)], []) fc_template (CF.mk_cex true) estate.es_trace in
+        (CF.convert_maymust_failure_to_value_orig ~mark:false lc0, prf)
+               (* let fc_kind = Failure_Must err_msg in *)
+             (*   let ft = (Basic_Reason ({ *)
+             (* fc_message = err_msg; fc_current_lhs  = estate; *)
+             (* fc_prior_steps = estate.es_prior_steps; *)
+             (* fc_orig_conseq  = struc_formula_of_formula (formula_of_mix_formula rhs_p pos) pos; *)
+             (* fc_current_conseq = CF.formula_of_heap HFalse pos; *)
+             (* fc_failure_pts = match r_fail_match with | Some s -> [s]| None-> [];}, *)
+             (* {fe_kind = fc_kind; fe_name = Globals.logical_error ;fe_locs=[]}, estate.es_trace)) in *)
+             (*  {estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.CF.es_formula; *)
+             (*      es_final_error = estate.CF.es_final_error@[(err_msg,ft,fc_kind)]; *)
+             (*  } *)
+            else (* estate  *)
+            let res_ctx = Ctx {estate with (* es_formula = res_delta; *)
                                es_unsat_flag = false; (*the new context could be unsat*)
                                (*LDK: ??? add rhs_p into residue( EMP rule in p78). Similar to the above
                                  		  Currently, we do not add the whole rhs_p into the residue.We only instatiate ivars and expl_vars in heap_entail_conjunct_helper *)
