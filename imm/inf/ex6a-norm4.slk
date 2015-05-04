@@ -1,0 +1,63 @@
+data node{int val; node next;}. 
+
+pred ls<p> == self=p or
+     self::node<_, q> * q::ls<p>
+   inv true.
+
+/*
+//1
+checkentail x::ls<p> |- x::ls<p>@A.
+print residue.
+expect Valid.
+
+//2
+checkentail x::ls<p> |- x::ls<p>.
+print residue.
+expect Valid.
+
+//3
+checkentail x::ls<p> * x::ls<p>@A |- x::ls<p>.
+print residue.
+expect Valid.
+*/
+
+//4
+checkentail x::ls<p> * x::ls<q>@A |- x::ls<q>.
+print residue.
+expect Fail.
+
+//5
+checkentail x::ls<p> * x::ls<q>@A |- p=q.
+print residue.
+expect Fail.
+
+/*
+
+Entail 1: Fail.(may) cause: ((p=x | x!=null)) & ((q=x | x!=null)) |-  p=q. LOCS:[0;1;25] (may-bug)
+Residue:
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message: 
+                               ((p=x | x!=null)) & ((q=x | x!=null)) |-  p=q. LOCS:[0;1;25] (may-bug)
+                             fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}}
+[[ COND ==>  Match(x,x) ==> ]]
+CEX:false
+
+
+Entail 2: Fail.(may) cause: ((p=x | x!=null)) & ((q=x | x!=null)) |-  p=q. LOCS:[0;1;30] (may-bug)
+Residue:
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message: 
+                               ((p=x | x!=null)) & ((q=x | x!=null)) |-  p=q. LOCS:[0;1;30] (may-bug)
+                             fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}}
+[[empty]]
+CEX:false
+Validate 2: OK
+
+
+*/
