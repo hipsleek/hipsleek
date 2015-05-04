@@ -555,7 +555,7 @@ let is_sat_ops_x pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
 
 let is_sat_ops_x pw ps pe sat_no =
   try
-    is_sat_ops_x pw ps pe sat_no
+    Wrapper.wrap_silence_output (is_sat_ops_x pw ps pe) sat_no
   with _ ->
     begin
       let () = x_binfo_pp "WARNING: exception from Omega.is_sat_ops" no_pos in
@@ -667,7 +667,7 @@ let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
 
 let is_valid_ops p e pe tm =
   try
-    is_valid_ops p e pe tm
+    Wrapper.wrap_silence_output (is_valid_ops p e pe) tm
   with _ -> 
     begin
       let () = x_binfo_pp "WARNING: exception from Omega.is_valid" no_pos in

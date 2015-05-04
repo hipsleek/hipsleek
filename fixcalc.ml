@@ -181,7 +181,7 @@ let fixcalc_of_pure_formula f=
 ;;
 
 let fixcalc_of_pure_formula f=
-  let nf = Trans_arr.new_translate_out_array_in_one_formula_split f in
+  let nf = x_add_1 Trans_arr.new_translate_out_array_in_one_formula_split f in
   fixcalc_of_pure_formula nf
 ;;
 

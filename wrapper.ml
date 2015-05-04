@@ -179,12 +179,12 @@ let wrap_gen save_fn set_fn restore_fn flags f a =
 
 let wrap_ver_post f a = wrap_set_infer_type INF_VER_POST f a
 
-let wrap_arr_as_var f a = 
-  let () = x_binfo_pp "inside wrap_as_var" no_pos in 
-  wrap_set_infer_type INF_ARR_AS_VAR f a
+(* let wrap_arr_as_var f a =  *)
+(*   let () = x_binfo_pp "inside wrap_as_var" no_pos in  *)
+(*   wrap_set_infer_type INF_ARR_AS_VAR f a *)
 
-let wrap_arr_as_var f a = 
-  Debug.no_1 "wrap_arr_as_var" pr_none pr_none (wrap_arr_as_var f) a
+(* let wrap_arr_as_var f a =  *)
+(*   Debug.no_1 "wrap_arr_as_var" pr_none pr_none (wrap_arr_as_var f) a *)
 
 (* let wrap_ver_post f a = *)
 (*   let save_fn () = infer_const_obj # is_ver_post in *)
@@ -267,16 +267,18 @@ let wrap_lemma_unsafe f a =
 (*   sleek_proof_no := !sleek_proof_no + 1;  *)
 (*   (!sleek_proof_no) *)
 
-(* let wrap_arr_as_var f a = *)
-(*   let () = x_binfo_pp "Calling wrap_arr_as_var" no_pos in *)
-(*   let flag = !array_translate in *)
-(*   array_translate := true; *)
-(*   try *)
-(*     let res = f a in *)
-(*     array_translate := flag; *)
-(*     res *)
-(*   with _ as e -> *)
-(*     (array_translate := flag; *)
-(*      raise e) *)
+let wrap_arr_as_var f a =
+  let () = x_binfo_pp "Calling wrap_arr_as_var" no_pos in
+  let flag = !Globals.array_translate in
+  Globals.array_translate := true;
+  try
+    let res = f a in
+    Globals.array_translate := flag;
+    res
+  with _ as e ->
+    (Globals.array_translate := flag;
+     raise e)
 
+let wrap_arr_as_var f a =
+  Debug.no_1 "wrap_arr_as_var" pr_none pr_none (wrap_arr_as_var f) a
 

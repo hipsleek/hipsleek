@@ -1847,12 +1847,14 @@ let sat_cache is_sat (f:CP.formula) : bool  =
       Hashtbl.find !sat_cache fstring
     with Not_found ->
       let r = is_sat f in
-      let () = Gen.Profiling.push_time_always "cache overhead" in
-      let () = cache_status := false in
-      let () = cache_sat_miss := !cache_sat_miss+1 in
-      let () = Hashtbl.add !sat_cache fstring r in
-      let () = Gen.Profiling.pop_time_always "cache overhead" in
-      r
+      if r then r
+      else
+        let () = Gen.Profiling.push_time_always "cache overhead" in
+        let () = cache_status := false in
+        let () = cache_sat_miss := !cache_sat_miss+1 in
+        let () = Hashtbl.add !sat_cache fstring r in
+        let () = Gen.Profiling.pop_time_always "cache overhead" in
+        r
   in res
 
 let sat_cache is_sat (f:CP.formula) : bool = 
@@ -1865,7 +1867,7 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
   (* TODO WN : can below remove duplicate constraints? *)
   (* let f = CP.elim_idents f in *)
   (* this reduces x>=x to true; x>x to false *)
-  let f = Trans_arr.new_translate_out_array_in_one_formula_split f in
+  (* let f = x_add_1 Trans_arr.new_translate_out_array_in_one_formula_split f in *)
   (*let f = drop_array_formula f in*)
   (* let _ = print_endline ("tp_is_sat After drop: "^(Cprinter.string_of_pure_formula f)) in *)
 
@@ -1951,7 +1953,7 @@ let simplify_omega (f:CP.formula): CP.formula =
 let simplify (f : CP.formula) : CP.formula =
   (* proof_no := !proof_no + 1; *)
   (* let _ = Trans_arr.new_translate_out_array_in_one_formula_split f in *)
-  let f = Trans_arr.new_translate_out_array_in_one_formula_split f in
+  let f = x_add_1 Trans_arr.new_translate_out_array_in_one_formula_split f in
 
   let simpl_num = next_proof_no () in
   let simpl_no = (string_of_int simpl_num) in
@@ -3001,12 +3003,16 @@ let imply_cache fn_imply ante conseq : bool  =
       Hashtbl.find !imply_cache fstring
     with Not_found ->
       let r = fn_imply ante conseq in
-      let () = Gen.Profiling.push_time "cache overhead" in
-      let () = cache_status := false in
-      let () = cache_imply_miss := !cache_imply_miss+1 in
-      let () = Hashtbl.add !imply_cache fstring r in
-      let () = Gen.Profiling.pop_time "cache overhead" in
-      r
+      if r then (* cache only sound outcomes *)
+        begin
+          let () = Gen.Profiling.push_time "cache overhead" in
+          let () = cache_status := false in
+          let () = cache_imply_miss := !cache_imply_miss+1 in
+          let () = Hashtbl.add !imply_cache fstring r in
+          let () = Gen.Profiling.pop_time "cache overhead" in
+          r
+        end
+      else r
   in res
 
 let imply_cache fn_imply ante conseq : bool  = 

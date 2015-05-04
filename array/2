@@ -1,68 +1,35 @@
 !!! init_tp by default: 
 !!! Using z3
-!!!-dre infer_
-Starting z3... 
+!!! init_tp by user: 
+!!! Using oc
+!!!-dre Omega.is_valid\|wrap_arr
 
-!!! **wrapper.ml#183:inside wrap_as_var
-!!! **sleekengine.ml#1125:type-table:[(i:11:int)(a:15:NUM[])(TVar__14:14:NUM)(Anon_full_perm:13:float)(TVar__12:12:int)(TVar__11:11:int)]
-!!! **sleekcore.ml#129:conseq: EBase emp&(a[i-1])<(a[i])&{FLOW,(4,5)=__norm#E}[]
+Starting Omega...oc
+
+!!! **sleekengine.ml#1125:type-table:[(TVar__18:18:int)(i:14:int)(a:12:int[])(TVar__17:17:int)(Anon_full_perm:16:float)(TVar__15:15:int)(TVar__14:14:int)(TVar__13:13:int)(TVar__11:11:int)]
+!!! **sleekcore.ml#129:conseq: EBase emp&a[i]=3&{FLOW,(4,5)=__norm#E}[]
 !!! **sleekcore.ml#130:fvs(conseq):[a,i]
-!!! **sleekcore.ml#131:itype:[@arrvar]
-!!! **sleekcore.ml#132:isvl:[a]
-!!! **sleekcore.ml#222:arrvar_flag:true
-(==solver.ml#7493==)
-infer_collect_hp_rel_empty_rhs#1@1
-infer_collect_hp_rel_empty_rhs#1 inp1 : emp&i=3&{FLOW,(4,5)=__norm#E}[]
-infer_collect_hp_rel_empty_rhs#1 inp2 : (a[i-1])<(a[i])
-infer_collect_hp_rel_empty_rhs#1@1 EXIT:(false, es_formula: emp&i=3&{FLOW,(4,5)=__norm#E}[]
- es_infer_vars: [a])
-
-!!! **infer.ml#1123:new_p: before simplify: forall(i:(i!=3 | (a[i-1])<(a[i])))
-!!! **infer.ml#1137:new_p: forall(i:(i!=3 | (a[i-1])<(a[i])))
-!!! **infer.ml#1138:new_p_ass: forall(i:(i!=3 | (a[i-1])<(a[i])))
-(==infer.ml#1570==)
-infer_pure_m_1@4@3@2
-infer_pure_m_1 inp1 :estate :( emp&i=3&{FLOW,(4,5)=__norm#E}[]
-  es_heap:emp
-  es_infer_vars: [a],[a])
-infer_pure_m_1 inp2 :lhs xpure : i=3
-infer_pure_m_1 inp3 :lhs xpure0 : i=3
-infer_pure_m_1 inp4 :rhs xpure : (a[i-1])<(a[i])
-infer_pure_m_1 inp5 :inf vars :[a]
-infer_pure_m_1@4 EXIT:(new es,inf pure,rel_ass) :(None,Some( forall(i:(i!=3 | (a[i-1])<(a[i])))),[])
-
-(==infer.ml#1646==)
-infer_pure_m_2#1@3@2
-infer_pure_m_2#1 inp1 :estate :( es_formula: emp&i=3&{FLOW,(4,5)=__norm#E}[]
- es_infer_obj: [@arrvar]
- es_infer_vars: [a]
- es_infer_vars_rel: []
- es_final_error: None,[a])
-infer_pure_m_2#1 inp2 :lhs xpure : i=3
-infer_pure_m_2#1 inp3 :lhs xpure0 : i=3
-infer_pure_m_2#1 inp4 :rhs xpure : (a[i-1])<(a[i])
-infer_pure_m_2#1@3 EXIT:(new es,inf pure,rel_ass) :(None,Some( forall(i:(i!=3 | (a[i-1])<(a[i])))),[])
-
-(==tpdispatcher.ml#1550==)
-infer_pure_top_level@2
-infer_pure_top_level inp1 : i=3
-infer_pure_top_level@2 EXIT:[(None,Some( forall(i:(i!=3 | (a[i-1])<(a[i])))), i=3)]
+!!! **sleekcore.ml#131:itype:[]
+!!! **sleekcore.ml#132:isvl:[]
+(==tpdispatcher.ml#2634==)
+Omega.is_valid@1
+Omega.is_valid inp1 : (!((i=2 & a___2___=3 & ((!(i=2) | a___i___=a___2___)))) | a___i___=3)
+Omega.is_valid@1 EXIT:true
 
 Entail (1) : Valid. 
 
 Residue:
- <1>emp&i=3 & forall(i:(i!=3 | (a[i-1])<(a[i])))&{FLOW,(4,5)=__norm#E}[]
- inferred pure: [forall(i:(i!=3 | (1+(a[i-1]))<=(a[i])))]
+ <1>emp&i=2 & a[2]=3&{FLOW,(4,5)=__norm#E}[]
 
-Stop z3... 8 invocations Stop Omega... 7 invocations 
-SAT Count   : 6
-SAT % Hit   : 16.66%
-IMPLY Count : 5
-IMPLY % Hit : 40.%
-Time(cache overhead) : 0.004 (seconds)
+Stop Omega... 2 invocations 
+SAT Count   : 2
+SAT % Hit   : 50.%
+IMPLY Count : 1
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0. (seconds)
 
-!!! log(small):(0.055514,25)
-Total verification time: 0.116005 second(s)
-	Time spent in main process: 0.088004 second(s)
-	Time spent in child processes: 0.028001 second(s)
+!!! log(small):(0.005361,4)
+Total verification time: 0.068003 second(s)
+	Time spent in main process: 0.056003 second(s)
+	Time spent in child processes: 0.012 second(s)
 

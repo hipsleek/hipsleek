@@ -538,6 +538,8 @@ let common_arguments = [
   (* ("--dis-cache", Arg.Set Globals.no_cache_formula, *)
   (* "Do not cache result of satisfiability and validity checking"); *)
   ("--dis-cache", Arg.Set Globals.no_cache_formula,
+   "Disable Caching result of satisfiability and validity checking");
+  ("--en-cache", Arg.Clear Globals.no_cache_formula,
    "Cache result of satisfiability and validity checking");
   ("--dis-simplify-imply", Arg.Clear Globals.simplify_imply,
    "Simplification of existential for imply calls");
