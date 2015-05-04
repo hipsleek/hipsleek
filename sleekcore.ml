@@ -232,8 +232,8 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
     (* in *)
     (* let () = print_endline ("ctx: "^(Cprinter.string_of_context ctx)) in *)
     let wrap = 
-      if is_arrvar_flag then Wrapper.wrap_arr_as_var
-      else fun f a -> f a in
+      (* if is_arrvar_flag then Wrapper.wrap_arr_as_var *)
+      (* else *) fun f a -> f a in
     let rs1, _ =
       if  not !Globals.disable_failure_explaining then
         (* let () = sleek_entail cprog ctx conseq no_pos in *)

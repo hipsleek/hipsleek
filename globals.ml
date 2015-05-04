@@ -1463,7 +1463,7 @@ class inf_obj  =
     val mutable arr = []
     method init =
       if !enable_error_as_exc then self # set INF_ERR_MUST;
-      if !array_translate then self # set INF_ARR_AS_VAR
+      if self # get INF_ARR_AS_VAR then array_translate :=true
     method set_init_arr s = 
       let helper r c =
         let reg = Str.regexp r in

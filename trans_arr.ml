@@ -1317,8 +1317,8 @@ let split_and_combine
 
 let split_and_combine
     (processor:formula -> formula) (cond:formula->bool) (f:formula):formula =
-  if Globals.infer_const_obj # is_arr_as_var
-    (* !Globals.array_translate *)
+  if (* Globals.infer_const_obj # is_arr_as_var *)
+    !Globals.array_translate
   then split_and_combine processor cond f
   else processor f
 ;;
@@ -1867,8 +1867,8 @@ let rec drop_array_formula
 
 let drop_array_formula
     (f:formula):formula =
-  if Globals.infer_const_obj # is_arr_as_var
-    (* !Globals.array_translate *)
+  if (* Globals.infer_const_obj # is_arr_as_var *)
+    !Globals.array_translate
   then drop_array_formula f
   else f
 
