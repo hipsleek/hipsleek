@@ -80,15 +80,19 @@ let wrap_classic et f a =
 (* None - use the default option *)
 let wrap_field_imm et f a =
   let flag = !allow_field_ann in
+  let flag2 = !imm_merge in
   allow_field_ann := (match et with
       | None -> infer_const_obj # get INF_FIELD_IMM  (* !opt_classic *)
       | Some b -> b);
+  if !allow_field_ann then imm_merge :=true;
   try
     let res = f a in
     allow_field_ann := flag;
+    imm_merge := flag2;
     res
   with _ as e ->
     (allow_field_ann := flag;
+    imm_merge := flag2;
      raise e)
 
 
