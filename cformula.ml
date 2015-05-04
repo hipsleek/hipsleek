@@ -9440,8 +9440,8 @@ let is_infer_type_ctx it c =
       | OCtx (c1,c2) -> aux c1 || aux c2
   in aux c
 
-let is_arr_as_var_ctx c =
-  is_infer_type_ctx Globals.INF_ARR_AS_VAR c
+(* let is_arr_as_var_ctx c = *)
+(*   is_infer_type_ctx Globals.INF_ARR_AS_VAR c *)
 
 let acc_error_msg final_error_opt add_msg=
   match final_error_opt with

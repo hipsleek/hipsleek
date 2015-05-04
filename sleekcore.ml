@@ -218,8 +218,8 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
     let () = if (CF.isAnyFalseCtx ctx) then
         print_endline_quiet ("[Warning] False ctx")
     in
-    let is_arrvar_flag = CF.is_arr_as_var_ctx ctx in
-    let () = x_binfo_hp (add_str "arrvar_flag" string_of_bool) is_arrvar_flag no_pos in
+    (* let is_arrvar_flag = CF.is_arr_as_var_ctx ctx in *)
+    (* let () = x_binfo_hp (add_str "arrvar_flag" string_of_bool) is_arrvar_flag no_pos in *)
     let conseq = Cfutil.elim_null_vnodes cprog conseq in
     (*****************)
     (* let is_base_conseq,conseq_f = CF.base_formula_of_struc_formula conseq in *)
