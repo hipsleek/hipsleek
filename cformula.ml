@@ -9400,6 +9400,9 @@ let print_fail_type = ref(fun (c:fail_type) -> "printer not initialized")
 let is_dis_err_exc es = 
   es.es_infer_obj # is_dis_err_all
 
+let is_err_must_exc es = 
+  es.es_infer_obj # is_err_must_all
+
 let is_en_error_exc es =
   not(is_dis_err_exc es)
 (* es.es_infer_obj # is_err_must || es.es_infer_obj # is_err_may *)
@@ -10225,7 +10228,9 @@ let isFailCtx_gen cl =
   | FailCtx _ -> true
   | SuccCtx cs -> if cs = [] then true else
       (* ((get_must_error_from_ctx cs) !=None) || ((get_may_error_from_ctx cs) !=None) *)
-      List.exists (fun ctx -> is_ctx_error ctx) cs
+      (* L2: in case error-infer, we return both error and succ context. temporally return valid with all (einf/ex11) *)
+      (* List.exists (fun ctx -> is_ctx_error ctx) cs *)
+       List.for_all (fun ctx -> is_ctx_error ctx) cs
 
 let lst_to_opt lst =
   match List.rev lst with

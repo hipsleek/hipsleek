@@ -10,7 +10,7 @@ Residue:
  <1>htrue&x<=0&{FLOW,(4,5)=__Error#E}[]
  inferred pure: [x<=0]
 ======================================================================
-# ex11-infer.slk
+# ex11-infer.slk: DONE
 
 infer [x,@err_must] true |- x>0.
 

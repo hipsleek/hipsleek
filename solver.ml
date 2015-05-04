@@ -8003,6 +8003,49 @@ and heap_entail_empty_rhs_heap i p conseq i_f es lhs rhs rhs_matched_set pos =
     (fun _ _ _ _ -> heap_entail_empty_rhs_heap_x p conseq i_f es lhs rhs rhs_matched_set pos) es lhs rhs i_f
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) rhs_matched_set pos : (list_context * proof) =
+  (**** INTERNAL****)
+  let neg_mcp_x mf=
+    let p = MCP.pure_of_mix mf in
+    match p with
+      | CP.BForm (pf,lbl) -> MCP.mix_of_pure (CP.BForm (MCP.memo_f_neg1 pf, lbl))
+      | _ -> report_error pos "heap_entail_empty_rhs_heap: to handle"
+  in
+  let neg_mcp mf=
+    let pr1 = Cprinter.string_of_mix_formula in
+    Debug.no_1 "neg_mcp" pr1 pr1
+        (fun _ -> neg_mcp_x mf) mf
+  in
+  let rec neg_empty_heap_formula f=
+    match f with
+      | CF.Base fb -> if CF.is_empty_heap fb.CF.formula_base_heap then
+          let neg_mf = neg_mcp fb.CF.formula_base_pure in
+          CF.Base {fb with CF.formula_base_pure = neg_mf; }
+        else report_error pos "heap_entail_empty_rhs_heap: conseq must have empty heap"
+      | CF.Exists _ -> let quans, base_f = CF.split_quantifiers f in
+        let neg_f = neg_empty_heap_formula base_f in
+        CF.add_quantifiers quans neg_f
+      | CF.Or orf -> report_error pos "heap_entail_empty_rhs_heap: conseq must not contain or"
+  in
+  (**** END INTERNAL****)
+
+  let safe_lc, safe_prf = heap_entail_empty_rhs_heap_one_flow prog conseq is_folding  estate_orig lhs rhs_p rhs_matched_set pos in
+
+  (* if must_error, and need to infer *)
+  let res = if CF.is_en_error_exc estate_orig && not (Infer.no_infer_pure estate_orig) then
+    (* negation of rhs *)
+    let neg_conseq = neg_empty_heap_formula conseq in
+    let err_conseq = if CF.is_err_must_exc  estate_orig then
+      CF.substitute_flow_into_f !error_flow_int neg_conseq
+    else neg_conseq
+    in
+    let neg_rhs_p = neg_mcp rhs_p in
+    let error_lc, error_prf = heap_entail_empty_rhs_heap_one_flow prog err_conseq is_folding  estate_orig lhs neg_rhs_p rhs_matched_set pos in
+    (* to add proof for error-infer *)
+    (list_context_union safe_lc error_lc, safe_prf)
+  else safe_lc, safe_prf
+  in res
+
+and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) rhs_matched_set pos : (list_context * proof) =
   (* An Hoa note: RHS has no heap so that we only have to consider whether "pure of LHS" |- RHS *)
   let rel_w_defs = List.filter (fun rel -> not (CP.isConstTrue rel.Cast.rel_formula)) prog.Cast.prog_rel_decls in
   (* Changed for merge.ss on 9/3/2013 *)
@@ -8053,6 +8096,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
      else try 1
   *)
   let () = reset_int2 () in
+  x_tinfo_hp (add_str "rhs_p" (Cprinter.string_of_mix_formula)) rhs_p pos;
   x_tinfo_hp (add_str "lhs_h" (Cprinter.string_of_h_formula)) lhs_h pos;
   x_tinfo_hp (add_str "estate_orig.es_heap" (Cprinter.string_of_h_formula)) estate_orig.es_heap pos;
   (* TODO-EXPURE lhs heap here *)
@@ -8284,10 +8328,11 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
               let estate = Gen.unsome_safe !smart_unsat_estate estate in
               let () = x_tinfo_hp (add_str "xpure_lhs_h1_sym (b4 infer_pure)" Cprinter.string_of_mix_formula) xpure_lhs_h1_sym no_pos in
               let lhs_heap_xpure1 = xpure_lhs_h1_sym in
-              let res =
+              let res_safe =
                 (* let (split_ante1_sym, _) as xx = x_add heap_entail_build_mix_formula_check 2 exist_vars tmp3_sym rhs_p pos in *)
                 Infer.infer_pure_top_level estate unk_heaps lhs_heap_xpure1 split_ante1_sym split_ante0_sym (*sym?*) m_lhs split_conseq pos
               in
+              let res = res_safe in
               let or_option (o1,o2) = (match o1,o2 with
                   | None,_ -> o2
                   | _,None -> o1
@@ -8583,7 +8628,10 @@ type: bool *
         end
         else
           begin
-            let res_ctx = Ctx {estate with (* es_formula = res_delta; *)
+            let estate1 = if CF.contains_error_flow conseq then
+              {estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.CF.es_formula }
+            else estate in
+            let res_ctx = Ctx {estate1 with (* es_formula = res_delta; *)
                                es_unsat_flag = false; (*the new context could be unsat*)
                                (*LDK: ??? add rhs_p into residue( EMP rule in p78). Similar to the above
                                  		  Currently, we do not add the whole rhs_p into the residue.We only instatiate ivars and expl_vars in heap_entail_conjunct_helper *)
