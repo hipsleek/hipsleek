@@ -1,0 +1,19 @@
+data pair{
+ int snd;
+}.
+
+infer [] p::pair<f>@L * p::pair<2>@L |- false.
+print residue.
+
+
+infer [] p::pair<f>@I * p::pair<2>@I |- false.
+print residue.
+
+
+infer [] p::pair<f>@L & p::pair<2>@L |- false.
+print residue.
+
+
+infer [] p::pair<f>@I & p::pair<2>@I |- false.
+print residue.
+

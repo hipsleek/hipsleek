@@ -852,7 +852,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
     let r = List.fold_left (fun a c-> CP.DisjSetSV.star_disj_set a (mapper c).mem_formula_mset) CP.DisjSetSV.mkEmpty node_lst in
     {mem_formula_mset = r} in
   (* let mf = (helper f) in *)
-  let mf = if !allow_field_ann (* !simpl_memset *) then helper(*_simpl2*) f else helper_simpl f in
+  let mf = if !allow_field_ann || !simpl_memset then helper(*_simpl2*) f else helper_simpl f in
   {mem_formula_mset = (CP.DisjSetSV.remove_dups_disj_set mf.mem_formula_mset)}
 
 

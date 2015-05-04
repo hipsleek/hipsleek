@@ -7170,7 +7170,10 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
   (*TO CHECK: temporarily disabled*) 
   (* let cf = CF.merge_partial_heaps cf in (\*ENABLE THIS for partial fields*\) *)
   (* let () = print_string ("\nbefore ann: "^ Cprinter.string_of_formula cf) in *)
-  let cf = if (!Globals.allow_field_ann) then add_param_ann_constraints_formula cf else (* CF.merge_partial_heaps *) cf in
+  let cf = 
+    if (!Globals.allow_field_ann) then add_param_ann_constraints_formula cf 
+    else if (!Globals.temp_opt_flag2) then CF.merge_partial_heaps cf 
+    else cf in
   (* let () = print_string ("\nafter ann: "^ Cprinter.string_of_formula cf) in *)
   (n_tl,cf)
 

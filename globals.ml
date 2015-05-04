@@ -772,6 +772,7 @@ let is_sleek_running = ref false
 let is_hip_running = ref false
 
 let temp_opt_flag = ref false
+let temp_opt_flag2 = ref false
 
 let remove_label_flag = ref false
 let label_split_conseq = ref true

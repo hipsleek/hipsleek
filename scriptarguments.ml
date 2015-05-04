@@ -70,6 +70,8 @@ let common_arguments = [
   (* Labelling Options *)
   ("--temp-opt", Arg.Set Globals.temp_opt_flag,
    "Temporary option flag.");
+  ("--temp-opt2", Arg.Set Globals.temp_opt_flag2,
+   "Temporary option flag2.");
   ("--dis-lbl", Arg.Set Globals.remove_label_flag,
    "Disable Labelling of Formula by removing AndList."); 
   ("--lbl-dis-split-conseq", Arg.Clear Globals.label_split_conseq,

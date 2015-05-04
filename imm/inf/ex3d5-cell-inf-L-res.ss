@@ -12,8 +12,7 @@ int foo(cell c)
 */
   infer [P1,P2]
   requires c::cell<v>@a & P1(a)
-     ensures c::cell<v>@b & P2(a,b,v,res)  ;
-
+  ensures c::cell<v>@b & P2(a,b,v,res)  ;
 {
  int x = c.fst;
  return x;
