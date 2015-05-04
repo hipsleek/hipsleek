@@ -974,9 +974,13 @@ let standarize_one_formula
 
 let standarize_array_imply
     (ante:formula) (conseq:formula):(formula * formula)=
-  let (n_ante,flst1,_) = standarize_array_formula ante in
+  (* let (n_ante,flst1,_) = standarize_array_formula ante in *)
+  (* let (n_conseq,flst2,_) = standarize_array_formula conseq in *)
+  (* let n_ante = mk_and_list (n_ante::(flst1@flst2)) in *)
+  (* (n_ante,n_conseq) *)
+  let n_ante = standarize_one_formula ante in
   let (n_conseq,flst2,_) = standarize_array_formula conseq in
-  let n_ante = mk_and_list (n_ante::(flst1@flst2)) in
+  let n_ante = mk_and_list (n_ante::(flst2)) in
   (n_ante,n_conseq)
 ;;
 
@@ -2062,6 +2066,16 @@ let new_translate_out_array_in_imply_split_full
   let (an,con) = (process_quantifier an,process_quantifier con) in
   new_translate_out_array_in_imply_split an con
 ;;
+
+let new_translate_out_array_in_imply_split_full
+    (ante:formula) (conseq:formula):(formula * formula) =
+  let pr = !print_pure in
+  let pr_pair = function
+    | (a,b) -> "("^(pr a)^","^(pr b)^")"
+  in
+  Debug.no_2 "new_translate_out_array_in_imply_split_full" pr pr pr_pair (fun ante conseq -> new_translate_out_array_in_imply_split_full ante conseq) ante conseq
+;;
+
 
 let new_translate_out_array_in_imply_split_full
     (ante:formula) (conseq:formula):(formula * formula) =

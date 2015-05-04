@@ -553,6 +553,16 @@ let is_sat_ops_x pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
     end
   end
 
+let is_sat_ops_x pw ps pe sat_no =
+  try
+    is_sat_ops_x pw ps pe sat_no
+  with _ ->
+    begin
+      let () = x_binfo_pp "WARNING: exception from Omega.is_sat_ops" no_pos in
+      true
+    end
+
+
 let is_sat_ops pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
   Debug.no_1 "Omega.is_sat_ops" !print_formula (string_of_bool) (fun _ -> is_sat_ops_x pr_weak pr_strong pe sat_no) pe
 

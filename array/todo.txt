@@ -1,6 +1,12 @@
 # ex3a-ato-err.slk
 
+fixing log:
+1. tp_imply_no_cache
+
+
 Difference below seems to be due to starting Omega?
+
+
 
 Why does --ato trigger these pairwisecheck?
 
