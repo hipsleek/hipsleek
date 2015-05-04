@@ -261,6 +261,39 @@ combine_param_ann inp2 :[@A,@M]
 combine_param_ann@1 EXIT:[@M,@A]
 [Warning] False ctx
 =======================================================
+# ex5.slk
+
+infer [@field_imm] p::pair<f,s@A> * p::pair<_,2> |- false.
+
+# Why not return false at this point of heap merging?
+# maybe can avoid --etcsu1 if you had done this?
+  ("--etcsu1",Arg.Set Globals.simpl_memset,"use the old,complicated memset calculator");
+# We should avoid this old calculator since it is likely to be obsolete.
+# We should focus on improving the merging operation
+
+
+(==norm.ml#1054==)
+merge_alias_nodes_formula@1
+merge_alias_nodes_formula inp1 : p::pair<f,s@A> * p::pair<Anon_12,flted_16_15>&f
+lted_16_15=2&
+{FLOW,(20,21)=__norm#E}[]
+merge_alias_nodes_formula@1 EXIT: p::pair<f,s@A> * p::pair<Anon_12,flted_16_15>&
+flted_16_15=2&
+{FLOW,(20,21)=__norm#E}[]
+
+infer [] ppp::pair<f,s>@A * ppp::pair<_,2>@I |- s=2.
+// fails
+// what happen to s=2? where is merge
+// when @field_imm is added, it succeeds.
+
+should do a merge rather than a removal 
+
+(==sleekengine.ml#1186==)
+remove_imm_from_formula@1
+remove_imm_from_formula inp1 : ppp::pair<f,s>@A * ppp::pair<Anon_15,flted_31_48>@I&flted_31_48=2&
+{FLOW,(20,21)=__norm#E}[]
+remove_imm_from_formula@1 EXIT: (emp) * ppp::pair<Anon_15,flted_31_48>@I&ppp!=null & flted_31_48=2&
+{FLOW,(20,21)=__norm#E}[]
 =======================================================
 =======================================================
 =======================================================

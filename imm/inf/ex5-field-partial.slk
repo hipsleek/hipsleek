@@ -32,6 +32,9 @@ infer [] ppp::pair<f,s>@A * ppp::pair<_,2>@I |- s=2.
 print residue.
 // what happen to s=2? where is merge
 
+//infer [@field_imm] ppp::pair<f,s>@A * ppp::pair<_,2>@I |- s=2.
+//print residue.
+
 /*
 # ex5.slk
 
