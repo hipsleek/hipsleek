@@ -382,8 +382,9 @@ let process_source_full source =
            let j = (String.rindex filename '/') in
            let oc = open_out file in
            let moduletypename = (String.sub filename (j+1) (i-j)) in
-           let imports = "Require Import ZArith.\n" in
-           let moduletype = "\nModule Type M"^moduletypename^"\n" in
+           (*let imports = "Require Import ZArith.\n" in*)
+	   let imports = "" in
+           let moduletype = "Module Type M"^moduletypename^"\n" in
            let endmoduletype = "End M"^moduletypename^"\n" in
            let parameter_formula = "  Parameter formula : Type.\n" in
            let parameter_valid = "  Parameter valid : formula -> Prop.\n" in
@@ -397,7 +398,7 @@ let process_source_full source =
              let param_ptto = "  Parameter ptto_"^dd.C.data_name
                ^" : "^dd.C.data_name^" -> " in
              let types_list = List.map (fun ((t,_),_) -> match t with
-               | Int -> "Z"
+               | Int -> "nat"
                | Named i -> i
                | _ -> "Unknown"
              ) dd.C.data_fields in
@@ -417,7 +418,7 @@ let process_source_full source =
                let view_params_arrow = String.concat " -> " (List.map (fun sv ->
                 match (CP.type_of_spec_var sv) with
                   | Void -> "A"
-                  | Int -> "Z"
+                  | Int -> "nat"
                   | Named i -> i
                   | _ -> "Uknown"
                ) vd.C.view_vars) in
@@ -431,13 +432,13 @@ let process_source_full source =
              "  Parameter star : formula -> formula -> formula.\n"^
              "  Parameter and : formula -> formula -> formula.\n"^
              "  Parameter imp : formula -> formula -> formula.\n"^
-             "  Parameter ext : (node -> formula) -> formula.\n"^
+             "  Parameter ext : (nat -> formula) -> formula.\n"^
              "  Parameter not : formula -> formula.\n"^
              "  Parameter eq : node -> node -> formula.\n"^
                (if !Globals.allow_ramify then 
                    "  Parameter mwand : formula -> formula -> formula.\n"^
                    "  Parameter union : formula -> formula -> formula.\n"^
-                   "  Parameter neq : Z -> Z -> formula.\n"
+                   "  Parameter neq : nat -> nat -> formula.\n"
                 else "") in
            let relation_list = List.map (fun rd ->
              if (ExtString.String.starts_with rd.C.rel_name "dom") ||
@@ -449,9 +450,9 @@ let process_source_full source =
              let rel_params_arrow = String.concat " -> " (List.map (fun sv ->
                 match (CP.type_of_spec_var sv) with
                   | Void -> "A"
-                  | Int -> "Z"
+                  | Int -> "nat"
                   | Named i -> i
-                  | _ -> "Uknown"
+                  | _ -> "Unknown"
              ) rd.C.rel_vars) in "  Parameter "^rd.C.rel_name^" : "^rel_params_arrow^
                              " -> formula.\n"
            ) c.C.prog_rel_decls in

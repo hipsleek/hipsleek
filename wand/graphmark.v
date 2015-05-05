@@ -1,27 +1,25 @@
-Require Import ZArith.
-
 Module Type Mgraphmark.
   Parameter formula : Type.
   Parameter valid : formula -> Prop.
   Parameter node : Type.
   Parameter null_node : node.
-  Parameter ptto_node : node -> Z -> node -> node -> formula.
+  Parameter ptto_node : node -> nat -> node -> node -> formula.
   Parameter A : Type.
   Parameter graph : node -> A -> formula.
   Parameter star : formula -> formula -> formula.
   Parameter and : formula -> formula -> formula.
   Parameter imp : formula -> formula -> formula.
-  Parameter ext : (node -> formula) -> formula.
+  Parameter ext : (nat -> formula) -> formula.
   Parameter not : formula -> formula.
   Parameter eq : node -> node -> formula.
   Parameter mwand : formula -> formula -> formula.
   Parameter union : formula -> formula -> formula.
-  Parameter neq : Z -> Z -> formula.
+  Parameter neq : nat -> nat -> formula.
   Parameter mark : A -> node -> A -> formula.
   Parameter eq_notreach : A -> node -> A -> formula.
   Parameter subset_reach : A -> node -> A -> formula.
-  Parameter lookup : A -> node -> Z -> node -> node -> formula.
-  Parameter update : A -> node -> Z -> node -> node -> A -> formula.
+  Parameter lookup : A -> node -> nat -> node -> node -> formula.
+  Parameter update : A -> node -> nat -> node -> node -> A -> formula.
   Axiom axiom_1 : forall v G1 G2 G G3 x l r, valid (imp (and (lookup G x v l r) (and (mark G r G1) (and (neq v 1) (and (mark G2 l G3) (update G1 x 1 l r G2))))) (and (mark G x G3) (lookup G3 x 1 l r))).
   Axiom axiom_2 : forall v G1 G2 G G3 x l r, valid (imp (and (lookup G x v l r) (and (mark G l G1) (and (neq v 1) (and (mark G2 r G3) (update G1 x 1 l r G2))))) (and (mark G x G3) (lookup G3 x 1 l r))).
   Axiom axiom_3 : forall v G1 G2 G G3 x l r, valid (imp (and (lookup G x v l r) (and (mark G r G1) (and (neq v 1) (and (mark G1 l G2) (update G2 x 1 l r G3))))) (and (mark G x G3) (lookup G3 x 1 l r))).
