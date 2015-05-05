@@ -45,6 +45,11 @@ let tp = ref Redlog
 (* let tp = ref PARAHIP *)
 (* let tp = ref Z3 *)
 
+let get_tp_code () = 
+  let pr = !tp in
+  string_of_prover_code pr
+
+
 let provers_process = ref None
 
 type prove_type = Sat of CP.formula | Simplify of CP.formula | Imply of CP.formula * CP.formula

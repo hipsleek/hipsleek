@@ -611,7 +611,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             (* let () = x_binfo_hp (add_str "constraints" (pr_list (pr_pair pr (fun _ -> "")))) post_rel_df_new no_pos in *)
             let _ = print_endline ("Pi.infer_pure") in
             let bottom_up_fp0 = x_add Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars (List.hd proc_specs) in
-            let () = DD.binfo_hprint (add_str "bottom_up_fp0" (pr_list (pr_pair pr pr))) bottom_up_fp0 no_pos in
+            let () = x_binfo_hp (add_str "bottom_up_fp0" (pr_list (pr_pair pr pr))) bottom_up_fp0 no_pos in
             (* let bottom_up_fp0 = List.fold_left (fun acc proc_spec -> acc@(x_add Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars proc_spec)) [] proc_specs in *)
             (* temporarily remove gist because tut/ex2/bugs-ex20.ss example *)
             (* let bottom_up_fp = List.map (fun (r,p) -> *)
@@ -621,10 +621,10 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             (* ) bottom_up_fp0 in *)
             let bottom_up_fp = bottom_up_fp0 in
             let proc_spec = List.hd proc_specs in
-            let () = x_binfo_hp (add_str "bottom_up_fp" (pr_list (pr_pair pr pr))) bottom_up_fp no_pos in
-            let () = DD.binfo_hprint (add_str "pre_rel_fmls" (pr_list pr)) pre_rel_fmls no_pos in
-            let () = DD.binfo_hprint (add_str "pre_fmls" (pr_list pr)) pre_fmls no_pos in
-            let () = DD.binfo_hprint (add_str "pre_invs" (pr_list pr)) pre_invs no_pos in
+            (* let () = x_binfo_hp (add_str "bottom_up_fp(after gist)" (pr_list (pr_pair pr pr))) bottom_up_fp no_pos in *)
+            (* let () = DD.binfo_hprint (add_str "pre_rel_fmls" (pr_list pr)) pre_rel_fmls no_pos in *)
+            (* let () = DD.binfo_hprint (add_str "pre_fmls" (pr_list pr)) pre_fmls no_pos in *)
+            (* let () = DD.binfo_hprint (add_str "pre_invs" (pr_list pr)) pre_invs no_pos in *)
             let res = Fixpoint.update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs
                 Fixcalc.compute_fixpoint_td
                 Fixcalc.fixc_preprocess reloblgs pre_rel_df post_rel_df_new post_rel_df pre_vars proc_spec grp_post_rel_flag
@@ -643,10 +643,10 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
           (*   end; *)
           Infer.fixcalc_rel_stk # reset;
           let () = List.iter (fun (rel_post,post,rel_pre,pre) ->
-              x_binfo_zp (lazy (("1>REL POST : "^Cprinter.string_of_pure_formula rel_post))) no_pos;
-              x_binfo_zp (lazy (("1>POST: "^Cprinter.string_of_pure_formula post))) no_pos;
-              x_binfo_zp (lazy (("1>REL PRE : "^Cprinter.string_of_pure_formula rel_pre))) no_pos;
-              x_binfo_zp (lazy (("1>PRE : "^Cprinter.string_of_pure_formula pre))) no_pos
+              x_binfo_zp (lazy ((">>REL POST : "^Cprinter.string_of_pure_formula rel_post))) no_pos;
+              x_binfo_zp (lazy ((">>POST: "^Cprinter.string_of_pure_formula post))) no_pos;
+              x_binfo_zp (lazy ((">>REL PRE : "^Cprinter.string_of_pure_formula rel_pre))) no_pos;
+              x_binfo_zp (lazy ((">>PRE : "^Cprinter.string_of_pure_formula pre))) no_pos
             ) tuples in
           let tuples = List.map (fun (rel_post,post,rel_pre,pre) ->
               let pre_new =
