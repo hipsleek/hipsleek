@@ -18,7 +18,20 @@ int foo2(cell x)
 }
 
 /*
-# ex21a9 --efa-exc -dre "heap_entail"
+# ex21a9b.ss --efa-exc 
+
+Message below is incorrect since error flow and
+__norm flow are incompatible!.
+
+Post condition cannot be derived:
+  (must) cause:  res=3 |-  res=4. LOCS:[16;12] (must-bug)
+
+Context of Verification Failure: _0:0_0:0
+
+Last Proving Location: ex21a9-multi-pre.ss_16:9_16:10
+
+=================================
+# ex21a9.ss --efa-exc
 
 // where is incompatible flow message?
 

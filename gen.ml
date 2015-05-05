@@ -31,6 +31,20 @@ sig
   val string_of : t -> string
 end;;
 
+module PLevel =
+struct
+  type t = int
+  let short = 100
+  let norm = 200
+  let long = 300
+  let is_short x = x>=short
+  let is_norm x = x>=norm
+  let is_long x = x>=long
+  let is_short_only x = x==short
+  let is_norm_only x = x==norm
+  let is_long_only x = x==long
+end;;
+
 module Basic =
 (* basic utilities that can be opened *)
 struct
