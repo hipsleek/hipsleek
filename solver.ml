@@ -3725,9 +3725,9 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
     let false_iv = false_es.CF.es_infer_vars in
     let rhs = get_pure_conseq_from_struc conseq in
     let rel_id_conseq = CP.get_rel_id_list rhs in
-    let () = x_binfo_hp (add_str "false_iv_rel" pr_svl) false_iv_rel no_pos in
-    let () = x_binfo_hp (add_str "false_iv" pr_svl) false_iv no_pos in
-    let () = x_binfo_hp (add_str "rel_id_conseq" pr_svl) rel_id_conseq no_pos in
+    let () = x_tinfo_hp (add_str "false_iv_rel" pr_svl) false_iv_rel no_pos in
+    let () = x_tinfo_hp (add_str "false_iv" pr_svl) false_iv no_pos in
+    let () = x_tinfo_hp (add_str "rel_id_conseq" pr_svl) rel_id_conseq no_pos in
     (* WN : why do we combine iv,iv_rel and also rel_id_conseq? *)
     (* let false_es = { false_es with *)
     (*                  CF.es_infer_vars_rel = CP.remove_dups_svl (false_iv_rel@false_iv@rel_id_conseq) } *)
@@ -8030,7 +8030,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
   (**** END INTERNAL****)
 
   (* if must_error, and need to infer *)
-  let res = if (CF.is_en_error_exc estate_orig || CF.is_err_must_only_exc estate_orig) && not (Infer.no_infer_pure estate_orig) then
+  let res = if (CF.is_en_error_exc estate_orig || CF.is_err_must_only_exc estate_orig) && not (Infer.no_infer_pure estate_orig) && not (CF.is_emp_term conseq) then
     (* negation of rhs *)
     let neg_conseq = neg_empty_heap_formula conseq in
     let err_conseq = if CF.is_err_must_exc estate_orig || CF.is_err_must_only_exc  estate_orig then
