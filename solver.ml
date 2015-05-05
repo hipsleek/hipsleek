@@ -2771,7 +2771,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
   | Base ({ formula_base_heap = h;
             formula_base_pure = p;
             formula_base_pos = pos}) ->
-    if !Globals.use_baga (* !Globals.baga_xpure *) (* !Globals.gen_baga_inv *) then tp_syn h p
+    if !Globals.use_baga then tp_syn h p
     else tp_sem h p
   (* let p = MCP.translate_level_mix_formula p in *)
   (* let ph,_,_ = x_add xpure_heap 1 prog h p 1 in *)
@@ -2781,7 +2781,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
               formula_exists_heap = qh;
               formula_exists_pure = qp;
               formula_exists_pos = pos}) ->
-    if !Globals.use_baga (* !Globals.baga_xpure *) then tp_syn qh qp
+    if !Globals.use_baga then tp_syn qh qp
     else tp_sem qh qp
 (* let qp = MCP.translate_level_mix_formula qp in *)
 (* let ph,_,_ = x_add xpure_heap 1 prog qh qp 1 in *)
@@ -7947,8 +7947,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
   x_tinfo_hp (add_str "estate_orig.es_heap" (Cprinter.string_of_h_formula)) estate_orig.es_heap pos;
   (* TODO-EXPURE lhs heap here *)
   let curr_lhs_h = (mkStarH lhs_h estate_orig.es_heap pos) in
-  let lhs_baga =
-    if !Globals.use_baga (* !Globals.gen_baga_inv *) then
+  let lhs_baga = (* Long : why we need lhs_baga *)
+    if false (* !Globals.use_baga *) (* !Globals.gen_baga_inv *) then
       let views = prog.Cast.prog_view_decls in
       let t1 = x_add_1 Expure.build_ef_heap_formula curr_lhs_h views in
       let () = Debug.ninfo_hprint (add_str "hf" (Cprinter.string_of_h_formula)) curr_lhs_h no_pos in
