@@ -181,9 +181,11 @@ and must_unify_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
   let (n_tlist,k) = unify_type k1 k2 tlist in
   match k with
   | Some r -> (n_tlist,r)
-  | None -> report_error pos ("UNIFICATION ERROR : at location "^(string_of_full_loc pos)
-                              ^" types "^(string_of_typ (get_type_entire tlist k1))
-                              ^" and "^(string_of_typ (get_type_entire tlist k2))^" are inconsistent")
+  | None -> let msg = ("UNIFICATION ERROR : at location "^(string_of_full_loc pos)
+                       ^" types "^(string_of_typ (get_type_entire tlist k1))
+                       ^" and "^(string_of_typ (get_type_entire tlist k2))^" are inconsistent") in
+    if !Globals.enforce_type_error then report_error pos msg
+    else (report_warning pos msg; (n_tlist, UNK))
 
 and must_unify_expect (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ)  =
   (* let pr = (\* string_of_typ *\) pr_none in *)
@@ -775,7 +777,7 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
   | IP.Eq (a1, a2, pos) | IP.Neq (a1, a2, pos) -> (*Need consider*) (
       (* allow comparision btw 2 pointers having different types *)
       let (new_et1,n_tl) = fresh_tvar tlist in
-      let (n_tl,t1) = gather_type_info_exp prog a1 n_tl new_et1 in (* tvar, Int, Float *)
+      let (n_tl,t1) = x_add gather_type_info_exp prog a1 n_tl new_et1 in (* tvar, Int, Float *)
       let (new_et2,n_tl) = fresh_tvar n_tl in
       let (n_tl,t2) = x_add gather_type_info_exp prog a2 n_tl new_et2 in
       match t1, t2 with
@@ -818,7 +820,9 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
      with
      | Not_found ->    failwith ("gather_type_info_b_formula: relation "^r^" cannot be found")
      | Invalid_argument _ -> failwith ("number of arguments for relation " ^ r ^ " does not match")
-     | _ -> print_endline_quiet ("gather_type_info_b_formula: relation " ^ r);tlist       
+     | e -> raise e;
+       (* WN : error due to mismatched types here *)
+       (* print_endline_quiet ("gather_type_info_b_formula: relation " ^ r);tlist        *)
     )
   | IP.XPure({IP.xpure_view_node = vn ;
               IP.xpure_view_name = r;

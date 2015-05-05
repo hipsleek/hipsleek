@@ -1203,6 +1203,7 @@ let trace_all = ref false
 let print_mvars = ref false
 
 let print_type = ref false
+let enforce_type_error = ref true (* strictly enforce type error *)
 
 let print_en_tidy = ref false
 (* print tidy is not working properly *)
@@ -1353,6 +1354,7 @@ type infer_type =
   | INF_ERR_MAY (* For infer[@err_may] *)
   | INF_SIZE (* For infer[@size] *)
   | INF_IMM (* For infer[@imm] *)
+  | INF_ARR_AS_VAR (* For infer[@arrvar] *)
   | INF_EFA (* For infer[@efa] *)
   | INF_DFA (* For infer[@dfa] *)
   | INF_FLOW (* For infer[@flow] *)
@@ -1382,6 +1384,7 @@ let string_of_inf_const x =
   | INF_ERR_MAY -> "@err_may"
   | INF_SIZE -> "@size"
   | INF_IMM -> "@imm"
+  | INF_ARR_AS_VAR -> "@arrvar"
   | INF_EFA -> "@efa"
   | INF_DFA -> "@dfa"
   | INF_FLOW -> "@flow"
@@ -1462,8 +1465,8 @@ class inf_obj  =
   object (self)
     val mutable arr = []
     method init =
-      if !enable_error_as_exc then self # set INF_ERR_MUST
-      else ()
+      if !enable_error_as_exc then self # set INF_ERR_MUST;
+      if self # get INF_ARR_AS_VAR then array_translate :=true
     method set_init_arr s = 
       let helper r c =
         let reg = Str.regexp r in
@@ -1482,6 +1485,7 @@ class inf_obj  =
         helper "@pre"           INF_PRE;
         helper "@post"          INF_POST;
         helper "@imm"           INF_IMM;
+        helper "@arrvar"        INF_ARR_AS_VAR;
         helper "@shape"         INF_SHAPE;
         helper "@error"         INF_ERROR;
         helper "@dis_err"       INF_DE_EXC;
@@ -1494,7 +1498,7 @@ class inf_obj  =
         helper "@flow"          INF_FLOW;
         helper "@leak"          INF_CLASSIC;
         helper "@par"           INF_PAR;
-        helper "@ver_post"      INF_VER_POST;
+        helper "@ver_post"      INF_VER_POST; (* @ato, @arr_to_var *)
         (* let x = Array.fold_right (fun x r -> x || r) arr false in *)
         if arr==[] then failwith  ("empty -infer option :"^s) 
       end
@@ -1518,6 +1522,7 @@ class inf_obj  =
     method is_post  = self # get INF_POST
     (* post-condition inference *)
     method is_ver_post  = self # get INF_VER_POST
+    method is_arr_as_var  = self # get INF_ARR_AS_VAR
     method is_imm  = self # get INF_IMM
     (* immutability inference *)
     method is_shape  = self # get INF_SHAPE
@@ -1614,6 +1619,9 @@ let is_en_efa_exc ()=
 class inf_obj_sub  =
   object (self)
     inherit inf_obj as super
+    method is_arr_as_var_all  = 
+      self # get INF_ARR_AS_VAR
+      || infer_const_obj # is_arr_as_var
     method is_dis_err_all  = self # get INF_DE_EXC
                              || (not(self # get INF_ERR_MUST) && not(self # get INF_ERR_MAY) 
                                  && infer_const_obj # is_dis_err)

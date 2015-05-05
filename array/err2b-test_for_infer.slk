@@ -1,0 +1,48 @@
+// 7(1)
+infer [a] i=2  |- a[i] + 5 > 3.
+print residue.
+
+// 7(2)
+infer [a] i=2  |- a[2] + 5 > 3.
+print residue.
+
+// 7(3)
+infer [a,i] i=2  |- a[i] + 5 > 3.
+print residue.
+
+// 7(4)
+infer [a,i] i=2  |- a[2] + 5 > 3.
+print residue.
+
+// 7(5)
+infer [a,i] true  |- a[i] + 5 > 3.
+print residue.
+
+// 7(6)
+infer [a] true  |- a[i] + 5 > 3.
+print residue.
+
+
+/* 
+# err2
+
+Why did the first fail but the 2nd one succeed?
+
+WARNING : Illegal_Prover_Format for :Omega.omega_of_exp: array, bag or list constraint  a[i_16]
+Apply Omega.imply on ante Formula : true
+and conseq Formula : forall(i_16:3<((a[i_16])+5))
+
+!!! WARNING logtime exception:0.001904
+!!! WARNING logtime exception:0.01883
+Entail (1) : Failure("Omega.omega_of_exp: array, bag or list constraint  a[i_16]")
+: no residue 
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a[3]")
+ Formula: 1<=(a[3])
+
+Entail (2) : Valid. 
+
+Residue:
+ <1>htrue&1<=(a[3])&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [1<=(a[3])]
+
+*/

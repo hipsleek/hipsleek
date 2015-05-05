@@ -2343,6 +2343,7 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
   let dfailure_anlysis = if List.mem INF_EFA itype then false else
     if List.mem INF_DFA itype then true else !Globals.disable_failure_explaining
   in
+  let is_arr_as_var_flag = List.mem INF_ARR_AS_VAR itype in
   let old_dfa = !Globals.disable_failure_explaining in
   let _ = Globals.disable_failure_explaining := dfailure_anlysis in
   (* backup flag *)
@@ -2352,9 +2353,18 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
       Globals.enable_error_as_exc := false
   in
   let num_id = "\nEntail "^nn in
+  let run_infer x = wrap_classic etype (run_infer_one_pass_set_states itype ivars [iante0]) x in
+  (* let run_infer x =  *)
+  (*   if is_field_imm_flag then wrap_field_imm (Some true) run_infer x *)
+  (*   else run_infer x in *)
+  let run_infer x = 
+    if is_arr_as_var_flag then wrap_arr_as_var run_infer x
+    else run_infer x in
   let r=  try
-      let (valid, rs, sel_hps),_ = wrap_classic etype (run_infer_one_pass_set_states itype ivars [iante0]) iconseq0 in
+      let (valid, rs, sel_hps),_ = run_infer iconseq0 in
       let res = print_entail_result sel_hps valid rs num_id (List.mem INF_ERR_MUST itype || List.mem INF_ERR_MUST_ONLY itype || List.mem INF_ERR_MAY itype) in
+      (* let res = print_entail_result sel_hps valid rs num_id (List.mem INF_ERR_MUST itype || List.mem INF_ERR_MAY itype) in*)
+      (* let (valid, rs, sel_hps),_ = wrap_classic etype (run_infer_one_pass_set_states itype ivars [iante0]) iconseq0 in *)
       let _ = if is_tnt_flag then should_infer_tnt := !should_infer_tnt && res in
       (*   match itype with *)
       (* | Some INF_TERM -> should_infer_tnt := !should_infer_tnt && res *)

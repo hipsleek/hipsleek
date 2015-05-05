@@ -400,6 +400,7 @@ rule tokenizer file_name = parse
   | "@post_n" { INFER_AT_POST }
   | "@ver_post" { INFER_AT_VER_POST }
   | "@imm" { INFER_AT_IMM }
+  | "@arrvar" { INFER_AT_ARR_AS_VAR }
   | "@shape" { INFER_AT_SHAPE }
   | "@error" { INFER_AT_ERROR }
   | "@dis_err" { INFER_AT_DE_EXC }

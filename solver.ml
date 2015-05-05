@@ -5382,7 +5382,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
               | Some res_es0 ->
                 let res_es =
                   match relass with
-                  | [(_,h,_)] -> add_infer_rel_to_estate h res_es0
+                  | [(_,h,_)] -> x_add add_infer_rel_to_estate h res_es0
                   | _ -> res_es0 in
                 res_es
               | None -> new_estate (* andreeac to check this one --- cand it ever get here? *)
@@ -5393,7 +5393,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
         match relass with
         | [(es,h,_)] -> 
           let new_estate = { es with es_infer_vars = orig_inf_vars; es_orig_ante = Some orig_ante } in
-          let new_estate = add_infer_rel_to_estate h new_estate in
+          let new_estate = x_add add_infer_rel_to_estate h new_estate in
           let () = x_tinfo_hp (add_str "new_estate(with inf rel)" Cprinter.string_of_entail_state) new_estate pos in
           (* let () = new_slk_log r1 new_estate in *)
           (real_c,true, Some new_estate)
@@ -7527,7 +7527,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                               let () = x_tinfo_pp "\n" no_pos in
                               (* let () = x_binfo_hp (add_str "" pr_id) ("\n") no_pos in *)
                               let () = x_tinfo_hp (add_str "conseq" pr_no) conseq no_pos in 
-                              let ctx, proof = heap_entail_empty_rhs_heap 1 prog conseq is_folding  estate b1 p2 rhs_h_matched_set pos in
+                              let ctx, proof = x_add heap_entail_empty_rhs_heap 1 prog conseq is_folding  estate b1 p2 rhs_h_matched_set pos in
                               (* let () = x_binfo_hp (add_str "!Globals.do_classic_frame_rule 2" string_of_bool) (!Globals.do_classic_frame_rule) no_pos in *)
                               (* let p2 = MCP.drop_varperm_mix_formula p2 in *)
                               let new_ctx =
@@ -7941,7 +7941,7 @@ and pure_match (vars : CP.spec_var list) (lhs : MCP.mix_formula) (rhs : MCP.mix_
 (* lctx = Fail --> well-founded termination failure *)
 (* lctx = Succ --> termination succeeded with inference *)
 and heap_infer_decreasing_wf_x prog conseq estate rank is_folding lhs pos =
-  let lctx, _ = heap_entail_empty_rhs_heap 2 prog conseq is_folding estate lhs (MCP.mix_of_pure rank) [] pos 
+  let lctx, _ = x_add heap_entail_empty_rhs_heap 2 prog conseq is_folding estate lhs (MCP.mix_of_pure rank) [] pos 
   in CF.estate_opt_of_list_context lctx
 
 and heap_infer_decreasing_wf prog conseq estate rank is_folding lhs pos =
@@ -8521,7 +8521,7 @@ type: bool *
       let inf_relass = stk_rel_ass # get_stk in
       (* let inf_heap_ass = stk_rel_ass # get_stk in *)
       let estate = add_infer_pure_to_estate inf_p estate in
-      let estate = add_infer_rel_to_estate inf_relass estate in
+      let estate = x_add add_infer_rel_to_estate inf_relass estate in
       let to_add_rel_ass = 
         (match !Globals.pre_residue_lvl with
          | 0 -> let x = List.map (fun (_,_,a) -> a) inf_relass in 

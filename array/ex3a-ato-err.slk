@@ -1,0 +1,28 @@
+infer [a,@arrvar] i=3  |- a[i]>a[i-1].
+print residue.
+
+
+/*
+# ex3a-ato-err.slk
+
+!!! **infer.ml#1123:new_p: before simplify: tarrvar5=2 & (a[tarrvar5])<(a[3])
+!!! **infer.ml#1137:new_p: tarrvar5=2 & (a[tarrvar5])<(a[3])
+!!! **infer.ml#1138:new_p_ass: tarrvar5=2 & (a[tarrvar5])<(a[3])
+Entail (1) : Valid. 
+
+Residue:
+ <1>emp&i=3 & tarrvar5=2 & (a[tarrvar5])<(a[3])&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [(1+(a[tarrvar5]))<=(a[3]); tarrvar5=2]
+
+--ato
+
+!!! **infer.ml#1123:new_p: before simplify: forall(i:(i!=3 | (a[i-1])<(a[i])))
+!!! **infer.ml#1137:new_p: forall(i:(i!=3 | (a[i-1])<(a[i])))
+!!! **infer.ml#1138:new_p_ass: forall(i:(i!=3 | (a[i-1])<(a[i])))
+Entail (1) : Valid. 
+
+Residue:
+ <1>emp&i=3 & forall(i:(i!=3 | (a[i-1])<(a[i])))&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [forall(i:(i!=3 | (1+(a[i-1]))<=(a[i])))]
+
+*/
