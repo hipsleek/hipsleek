@@ -449,6 +449,8 @@ let common_arguments = [
   ("--dis-print-inline", Arg.Clear Globals.print_en_inline,"disable printing (with fewer intermediates)");
   ("--print-html", Arg.Set Globals.print_html,"enable html printing");
   ("--print-type", Arg.Set Globals.print_type,"Print type info");
+  ("--dis-type-err", Arg.Clear Globals.enforce_type_error,"Give just warning for type errors");
+  ("--en-type-err", Arg.Set Globals.enforce_type_error,"Stricly enforce type errors");
   ("--print-x-inv", Arg.Set Globals.print_x_inv,
    "Print computed view invariants");
   ("--print-en-relassume", Arg.Set Globals.print_relassume,
@@ -929,6 +931,7 @@ let common_arguments = [
      (fun _ ->
         (* print_endline "inside svcomp-compete setting"; *)
         compete_mode:=true; (* main flag *)
+        Globals.enforce_type_error:=false;
         Globals.svcomp_compete_mode:=true; (* main flag *)
         (* Globals.show_unexpected_ents := false; *)
         (* diable printing *)
@@ -1012,6 +1015,7 @@ let common_arguments = [
      (fun _ ->
         compete_mode:=true; (* main flag *)
         Globals.smt_compete_mode:=true;
+        Globals.enforce_type_error:=false;
         Globals.show_unexpected_ents := false;
         Debug.trace_on := false;
         Debug.devel_debug_on:= false;

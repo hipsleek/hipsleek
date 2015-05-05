@@ -3725,9 +3725,9 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
     let false_iv = false_es.CF.es_infer_vars in
     let rhs = get_pure_conseq_from_struc conseq in
     let rel_id_conseq = CP.get_rel_id_list rhs in
-    let () = x_binfo_hp (add_str "false_iv_rel" pr_svl) false_iv_rel no_pos in
-    let () = x_binfo_hp (add_str "false_iv" pr_svl) false_iv no_pos in
-    let () = x_binfo_hp (add_str "rel_id_conseq" pr_svl) rel_id_conseq no_pos in
+    let () = x_tinfo_hp (add_str "false_iv_rel" pr_svl) false_iv_rel no_pos in
+    let () = x_tinfo_hp (add_str "false_iv" pr_svl) false_iv no_pos in
+    let () = x_tinfo_hp (add_str "rel_id_conseq" pr_svl) rel_id_conseq no_pos in
     (* WN : why do we combine iv,iv_rel and also rel_id_conseq? *)
     (* let false_es = { false_es with *)
     (*                  CF.es_infer_vars_rel = CP.remove_dups_svl (false_iv_rel@false_iv@rel_id_conseq) } *)

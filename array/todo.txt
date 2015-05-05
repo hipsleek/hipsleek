@@ -41,7 +41,43 @@ MaybeErr Context:
 [[empty]]
 CEX:false
 ===================================================================
+# ex11a0.ss 
+
+Add a flag --ignore-type-err for this. Otherwise should fail
+by default.
+
+ERROR: at ex11a0-infer-pre-post-arr-get.ss_8:33_8:34
+Message: UNIFICATION ERROR : at location {(Line:8,Col:33),(Line:8,Col:34)} types int[] and int are inconsistent
+
 ===================================================================
+# ex11a2.ss -tp z3
+
+Why did we generate P twice?
+
+WARNING: _0:0_0:0:Z3 error message: 
+(error "line 304 column 25: invalid declaration, function 'P' (whith the given signature) already declared")
+
+Checking procedure foo$int[]... 
+!!! **wrapper.ml#271:Calling wrap_arr_as_var
+WARNING: _0:0_0:0:Z3 error message: 
+(error "line 304 column 25: invalid declaration, function 'P' (whith the given signature) already declared")
+>>> GENERATED SMT INPUT:
+
+;Variables declarations
+(declare-fun a_primed () (Array Int Int))
+(declare-fun a () (Array Int Int))
+(declare-fun v_int_11_1152_primed () Int)
+;Relations declarations
+(declare-fun P (Int) Bool)
+(declare-fun P (Int) Bool)
+;Axioms assertions
+;Antecedent
+(assert (= a_primed a))
+(assert (P (select a 5)))
+(assert (= v_int_11_1152_primed 5))
+;Negation of Consequence
+(assert (not false))
+(check-sat)
 ===================================================================
 ===================================================================
 ===================================================================

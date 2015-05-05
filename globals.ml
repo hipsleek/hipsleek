@@ -1203,6 +1203,7 @@ let trace_all = ref false
 let print_mvars = ref false
 
 let print_type = ref false
+let enforce_type_error = ref true (* strictly enforce type error *)
 
 let print_en_tidy = ref false
 (* print tidy is not working properly *)

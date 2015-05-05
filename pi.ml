@@ -609,7 +609,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                   ) ("(" ^ (pr pf1) ^")",(pr pf2) ^ " = ") tl in
             let () = x_binfo_pp (s2 ^ s1) no_pos in
             (* let () = x_binfo_hp (add_str "constraints" (pr_list (pr_pair pr (fun _ -> "")))) post_rel_df_new no_pos in *)
-            let _ = print_endline ("Pi.infer_pure") in
+            (* let _ = x_binfo_pp ("Pi.infer_pure") no_pos in *)
             let bottom_up_fp0 = x_add Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars (List.hd proc_specs) in
             let () = x_binfo_hp (add_str "bottom_up_fp0" (pr_list (pr_pair pr pr))) bottom_up_fp0 no_pos in
             (* let bottom_up_fp0 = List.fold_left (fun acc proc_spec -> acc@(x_add Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars proc_spec)) [] proc_specs in *)
@@ -648,22 +648,24 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
               x_binfo_zp (lazy ((">>REL PRE : "^Cprinter.string_of_pure_formula rel_pre))) no_pos;
               x_binfo_zp (lazy ((">>PRE : "^Cprinter.string_of_pure_formula pre))) no_pos
             ) tuples in
-          let tuples = List.map (fun (rel_post,post,rel_pre,pre) ->
-              let pre_new =
-                if CP.isConstTrue rel_pre then
-                  let exist_vars = CP.diff_svl (CP.fv_wo_rel rel_post) inf_vars in
-                  TP.simplify_exists_raw exist_vars post
-                else
-                  pre
-              in
-              (rel_post,post,rel_pre,pre_new)) tuples in
+          (* WN : Why add post into pre if rel_pre is true ? *)
+          (* removed pre inf unless explicitly requested *)
+          (* let tuples = List.map (fun (rel_post,post,rel_pre,pre) -> *)
+          (*     let pre_new = *)
+          (*       if CP.isConstTrue rel_pre then *)
+          (*         let exist_vars = CP.diff_svl (CP.fv_wo_rel rel_post) inf_vars in *)
+          (*         TP.simplify_exists_raw exist_vars post *)
+          (*       else *)
+          (*         pre *)
+          (*     in *)
+          (*     (rel_post,post,rel_pre,pre_new)) tuples in *)
           let evars = stk_evars # get_stk in
-          let () = List.iter (fun (rel_post,post,rel_pre,pre) ->
-              x_binfo_zp (lazy (("REL POST : "^Cprinter.string_of_pure_formula rel_post))) no_pos;
-              x_binfo_zp (lazy (("POST: "^Cprinter.string_of_pure_formula post))) no_pos;
-              x_binfo_zp (lazy (("REL PRE : "^Cprinter.string_of_pure_formula rel_pre))) no_pos;
-              x_binfo_zp (lazy (("PRE : "^Cprinter.string_of_pure_formula pre))) no_pos
-            ) tuples in
+          (* let () = List.iter (fun (rel_post,post,rel_pre,pre) -> *)
+          (*     x_binfo_zp (lazy (("REL POST : "^Cprinter.string_of_pure_formula rel_post))) no_pos; *)
+          (*     x_binfo_zp (lazy (("POST: "^Cprinter.string_of_pure_formula post))) no_pos; *)
+          (*     x_binfo_zp (lazy (("REL PRE : "^Cprinter.string_of_pure_formula rel_pre))) no_pos; *)
+          (*     x_binfo_zp (lazy (("PRE : "^Cprinter.string_of_pure_formula pre))) no_pos *)
+          (*   ) tuples in *)
           let triples = List.map (fun (a,b,c,d) -> (a,b,d)) tuples in
           let new_specs = if triples = [] then
               List.map (fun old_spec -> fst (Fixpoint.simplify_relation old_spec None
