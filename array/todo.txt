@@ -79,6 +79,28 @@ WARNING: _0:0_0:0:Z3 error message:
 (assert (not false))
 (check-sat)
 ===================================================================
+# ex11d.ss 
+
+int foo(ref int[] a)
+  infer [@arrvar,P,Q,update_array_1d] requires P(a) ensures Q(a,a',res);
+{
+  a[5]=10;
+  return a[4];
+}
+
+Correct RElDEFN:
+[RELDEFN Q: ( a'[4]=res & update_array_1d(a,a',10,5) & P(a)) 
+     -->  Q(a,a',res)]
+
+# However, it seems we cannot handle update_array_Id subsequently..
+
+ERROR: at _0:0_0:0
+Message: compute_def:Error in translating the input for fixcalc
+!!! PROBLEM with fix-point calculation
+ExceptionFailure("compute_def:Error in translating the input for fixcalc")Occurred!
+Error1(s) detected at main 
+Stop Omega... 46 invocations caught
+
 ===================================================================
 ===================================================================
 ===================================================================

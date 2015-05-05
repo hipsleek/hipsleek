@@ -5,7 +5,8 @@ relation P(int[] a).
 
 int foo(ref int[] a)
  //infer [@arrvar] requires true ensures res=a[5];
-  infer [@arrvar,P,Q] requires P(a) ensures Q(a,a',res);
+//  infer [@arrvar,P,Q] requires P(a) ensures Q(a,a',res);
+  infer [@arrvar,P,Q,update_array_1d] requires P(a) ensures Q(a,a',res);
 // requires true ensures update(a,a',10,5) & res=a[4];
 // requires true ensures a'[5]=10 & res=a[4];
 {
@@ -16,11 +17,25 @@ int foo(ref int[] a)
 /*
 # ex11d.ss 
 
-id: 4; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ P,Q]; c_heap: emp; others: [@arrvar] globals: [@flow,@ver_post]
- checkentail emp&res=v_int_12_1157' & v_int_12_1157'=a'[4] & 
-update_array_1d(a,a',10,5) & P(a) & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
- |-  emp&Q(a,a',res)&{FLOW,(4,5)=__norm#E}[]. 
+int foo(ref int[] a)
+  infer [@arrvar,P,Q,update_array_1d] requires P(a) ensures Q(a,a',res);
+{
+  a[5]=10;
+  return a[4];
+}
 
+Correct RElDEFN:
+[RELDEFN Q: ( a'[4]=res & update_array_1d(a,a',10,5) & P(a)) 
+     -->  Q(a,a',res)]
+
+# However, it seems we cannot handle update_array_Id subsequently..
+
+ERROR: at _0:0_0:0
+Message: compute_def:Error in translating the input for fixcalc
+!!! PROBLEM with fix-point calculation
+ExceptionFailure("compute_def:Error in translating the input for fixcalc")Occurred!
+Error1(s) detected at main 
+Stop Omega... 46 invocations caught
 
 
 */
