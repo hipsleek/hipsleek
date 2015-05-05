@@ -37,6 +37,7 @@ axiom mark(G,x,G1) & lookup(G,y,v,l,r) ==> subset_reach(G,x,G1) & eq_notreach(G,
 axiom lookup(G,x,v,l,r) & update(G,x,1,l,r,G1) & v != 1 & //v is unmarked skipped in paper
 mark(G1,l,G2) & mark(G2,r,G3) ==> mark(G,x,G3) & lookup(G3,x,1,l,r).
 
+/*
 axiom lookup(G,x,v,l,r) & update(G,x,1,l,r,G1) & v != 1 & //v is unmarked skipped in paper
 mark(G1,r,G2) & mark(G2,l,G3) ==> mark(G,x,G3) & lookup(G3,x,1,l,r).
 
@@ -51,6 +52,7 @@ axiom lookup(G,x,v,l,r) & mark(G,l,G1) & v != 1
 
 axiom lookup(G,x,v,l,r) & mark(G,r,G1) & v != 1
 & mark(G2,l,G3) & update(G1,x,1,l,r,G2) ==> mark(G,x,G3) & lookup(G3,x,1,l,r).
+*/
 
 void mark(node x)
 requires x::graph<G>
