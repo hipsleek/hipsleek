@@ -8629,7 +8629,7 @@ type: bool *
         end
         else
           begin
-            let estate1 = if CF.contains_error_flow conseq then
+            let estate1 = if CF.is_error_flow conseq then
               let err_msg = "error-infer" in
               let estate = {estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.CF.es_formula;
               } in
