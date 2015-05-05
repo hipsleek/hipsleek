@@ -18639,3 +18639,16 @@ let exist_reachable_states (rs:list_partial_context)=
   let pr1 = !print_list_partial_context in
   Debug.no_1 "exist_reachable_states" pr1 string_of_bool
     (fun _ -> exist_reachable_states_x rs) rs
+
+
+let determine_infer_type sp t  = match sp with
+  | EInfer b ->
+    let inf_o = b.formula_inf_obj in
+    inf_o # get t
+  | _ -> false 
+
+let determine_infer_classic sp  = 
+  determine_infer_type sp INF_CLASSIC
+
+let determine_arr_as_var sp  = 
+  determine_infer_type sp INF_ARR_AS_VAR

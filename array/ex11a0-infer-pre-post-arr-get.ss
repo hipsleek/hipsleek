@@ -26,4 +26,4 @@ ERROR: at ex11a0-infer-pre-post-arr-get.ss_8:33_8:34
 Message: UNIFICATION ERROR : at location {(Line:8,Col:33),(Line:8,Col:34)} types int[] and int are inconsistent
 
 
- */
+*/

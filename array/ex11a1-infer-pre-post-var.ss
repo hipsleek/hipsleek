@@ -21,14 +21,14 @@ int foo(int a)
 Should fail when there is a type error;
 unless we have ignore-type-error flag.
 
-ERROR: at ex11a-infer-pre-post-arr-get.ss_8:33_8:34
-Message: UNIFICATION ERROR : at location {(Line:8,Col:33),(Line:8,Col:34)} types int[] and int are inconsistent
+[RELDEFN Q: ( a=res & 11<=res & P(a)) -->  Q(res,a)]
 
-Last Proving Location: ex11a-infer-pre-post-arr-get.ss_6:0_0:-1
-
-ERROR: at ex11a-infer-pre-post-arr-get.ss_8:33_8:34
-Message: gather_type_info_var : unexpected exception Failure("UNIFICATION ERROR : at location {(Line:8,Col:33),(Line:8,Col:34)} types int[] and int are inconsistent")
-gather_type_info_b_formula: relation P
+Post Inference result:
+foo$int
+ EBase emp&11<=a & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           emp&a=res & 11<=res&{FLOW,(4,5)=__norm#E}[]
+           
 
 
  */

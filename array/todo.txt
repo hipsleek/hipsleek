@@ -41,7 +41,7 @@ MaybeErr Context:
 [[empty]]
 CEX:false
 ===================================================================
-# ex11a0.ss 
+# ex11a0.ss (FIXED with --dis-type-err flag)
 
 Add a flag --ignore-type-err for this. Otherwise should fail
 by default.
@@ -50,7 +50,7 @@ ERROR: at ex11a0-infer-pre-post-arr-get.ss_8:33_8:34
 Message: UNIFICATION ERROR : at location {(Line:8,Col:33),(Line:8,Col:34)} types int[] and int are inconsistent
 
 ===================================================================
-# ex11a2.ss -tp z3
+# ex11a2.ss -tp z3 --smtinp (FIXED by Loc in error_inf)
 
 Why did we generate P twice?
 

@@ -268,7 +268,7 @@ let wrap_lemma_unsafe f a =
 (*   (!sleek_proof_no) *)
 
 let wrap_arr_as_var f a =
-  let () = x_binfo_pp "Calling wrap_arr_as_var" no_pos in
+  let () = x_tinfo_pp "Calling wrap_arr_as_var" no_pos in
   let flag = !Globals.array_translate in
   Globals.array_translate := true;
   try

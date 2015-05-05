@@ -1,0 +1,44 @@
+//hip_include '../prelude_aux.ss'
+//#option --ato
+relation P(int[] a).
+relation Q(int[] a,int[] b,int r).
+relation update_array_1d(int[] a,int[] a',int b,int c).
+
+
+infer [P,Q,update_array_1d]  res=k & k=a'[4] & update_array_1d(a,a',10,5) & P(a) 
+ |-  emp&Q(a,a',res) . 
+print residue.
+
+
+                         /*
+infer [@arrvar,P,Q]  emp&res=v_int_12_1157' & v_int_12_1157'=a'[4] & 
+ update_array_1d(a,a',10,5) & P(a) 
+ |-  emp&Q(a,a',res) . 
+print residue.
+                         */
+
+
+/*
+# ex11d1.slk
+
+infer [P,Q,update_array_1d]  res=k & k=a'[4] 
+ & update_array_1d(a,a',10,5) & P(a) 
+  |-  emp&Q(a,a',res) . 
+print residue.
+
+intermediate k not being picked up..
+
+(==cvutil.ml#1513==)
+infer_collect_rel@2
+infer_collect_rel inp1 : es_formula: 
+  emp&P(a) & update_array_1d(a,a',10,5) & k=a'[4] & res=k&
+  {FLOW,(4,5)=__norm#E}[]
+ es_infer_vars_rel: [P; Q; update_array_1d]
+ es_final_error: None
+infer_collect_rel inp2 :[P,Q,update_array_1d]
+infer_collect_rel inp3 : true
+infer_collect_rel inp4 : P(a) & update_array_1d(a,a',10,5) & k=a'[4] & res=k
+infer_collect_rel inp5 : Q(a,a',res)
+infer_collect_rel@2 EXIT:( P(a) & update_array_1d(a,a',10,5) & k=a'[4] & res=k,2: true,3:[RELDEFN Q: ( true & P(a) & update_array_1d(a,a',10,5)) -->  Q(a,a',res)],4:None,5:[])
+
+*/
