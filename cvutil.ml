@@ -926,9 +926,9 @@ and xpure_mem_enum_x (prog : prog_decl) (f0 : formula) : (mix_formula * CF.mem_f
 and xpure_heap_enum_baga_a (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : Excore.ef_pure_disj =
   (* let baga_map = CP.map_baga_invs in *)
   (* let arg_map = CP.view_args_map in *)
-  let bp = (Mcpure.pure_of_mix p0) in
-  let p_aset = CP.pure_ptr_equations bp in
-  let p_aset = CP.EMapSV.build_eset p_aset in
+  (* let bp = (Mcpure.pure_of_mix p0) in *)
+  (* let p_aset = CP.pure_ptr_equations bp in *)
+  (* let p_aset = CP.EMapSV.build_eset p_aset in *)
   let efpd1 = Expure.build_ef_heap_formula h0 (* [([], p_aset, [])] *) (prog.Cast.prog_view_decls) in
   (* let efpd2 = Expure.build_ef_pure_formula bp in *)
   (* let efpd = Excore.EPureI.norm_disj (Excore.EPureI.mk_star_disj efpd1 efpd2) in *)
@@ -967,14 +967,14 @@ and conv_from_ef_disj disj =
 and xpure_heap_mem_enum_new
     (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CF.mem_formula)
   =
-  if !Globals.use_baga && not(!Globals.en_slc_ps) && (not (Perm.allow_perm ())) then
-    let disj = x_add xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) in
-    let ans = conv_from_ef_disj disj in
-    ans
-  (* else if !Globals.en_slc_ps || not(!Globals.gen_baga_inv) then *)
-  (*   (\* using mcpure slicing - to fix *\) *)
-  (*   xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) *)
-  else
+  (* if !Globals.use_baga && not(!Globals.en_slc_ps) && (not (Perm.allow_perm ())) then *)
+  (*   let disj = x_add xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) in *)
+  (*   let ans = conv_from_ef_disj disj in *)
+  (*   ans *)
+  (*       (\* else if !Globals.en_slc_ps || not(!Globals.gen_baga_inv) then *\) *)
+  (*       (\*   (\\* using mcpure slicing - to fix *\\) *\) *)
+  (*       (\*   xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) *\) *)
+  (* else *)
     (* to call xpure_heap_enum_baga *)
     (* if !Globals.baga_xpure then *)
     (*   let disj = x_add xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) in *)
