@@ -866,6 +866,8 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
        We need only to compare names and primedness *)
     (String.compare v1 v2 = 0) && (p1 = p2)
 
+
+
 let eq_spec_var_unp (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (_, v1, p1), SpecVar (_, v2, p2)) ->
     (* translation has ensured well-typedness.
@@ -1776,7 +1778,7 @@ and remove_ptr_equations f is_or = match f with
   | Exists (v,f,o,p) -> Exists (v,remove_ptr_equations f false,o,p)
 
 and pure_ptr_equations (f:formula) : (spec_var * spec_var) list = 
-  pure_ptr_equations_aux true f
+  x_add pure_ptr_equations_aux true f
 
 and pure_ptr_equations_aux_x with_null (f:formula) : (spec_var * spec_var) list = 
   let rec prep_f f = match f with
@@ -1791,6 +1793,15 @@ and pure_ptr_equations_aux with_null (f:formula) : (spec_var * spec_var) list =
   let pr2 = !print_formula in
   let pr3 = pr_list (pr_pair !print_sv !print_sv) in
   Debug.no_2 "pure_ptr_equations_aux" pr1 pr2 pr3 pure_ptr_equations_aux_x with_null f 
+
+and get_int_equality_aux f = []
+
+and get_int_equality (f:formula) : (spec_var * spec_var) list = 
+  (* let pr1 = string_of_bool in *)
+  let pr2 = !print_formula in
+  let pr3 = pr_list (pr_pair !print_sv !print_sv) in
+  Debug.no_1 "get_int_equality" pr2 pr3 get_int_equality_aux f 
+
 
 and get_alias (e : exp) : spec_var =
   match e with
@@ -5107,8 +5118,8 @@ let rec filter_var (f0 : formula) (rele_vars0 : spec_var list) : formula =
     begin
       let rele_conjs = (* Gen.BList.remove_dups_eq equalFormula *) (List.map fst !reles) in
       let filtered_f = conj_of_list rele_conjs no_pos in
-      let () = Debug.ninfo_hprint (add_str "rele_conjs" (pr_list !print_formula)) rele_conjs no_pos in
-      let () = Debug.ninfo_hprint (add_str "filtered_f" (!print_formula)) filtered_f no_pos in
+      let () = x_ninfo_hp (add_str "rele_conjs" (pr_list !print_formula)) rele_conjs no_pos in
+      let () = x_ninfo_hp (add_str "filtered_f" (!print_formula)) filtered_f no_pos in
       (* WN : why this affected under_approx? *)
       if (is_False f0) && !Globals.filtering_false_flag then f0
       else filtered_f
@@ -5135,11 +5146,12 @@ let filter_var_new_x (f : formula) (keep_slv : spec_var list) : formula =
     | [] -> (res_rele_fs,res_unk_fs,old_keep_svl,incr_keep)
     | f::fs ->
       begin
-        let () = Debug.tinfo_hprint (add_str "svl: "  (!print_svl)) old_keep_svl no_pos in
-        let () = Debug.tinfo_hprint ( add_str "f: "   (!print_formula )) f no_pos in
+        let () = x_ninfo_hp (add_str "svl: "  (!print_svl)) old_keep_svl no_pos in
+        let () = x_ninfo_hp ( add_str "f: "   (!print_formula )) f no_pos in
         let svl = fv f in
-        let () = Debug.tinfo_hprint (add_str "svl f: "  !print_svl ) svl no_pos in
+        let () = x_ninfo_hp (add_str "svl f: "  !print_svl ) svl no_pos in
         let inters = intersect svl old_keep_svl in
+        let () = x_ninfo_hp (add_str "inters: "  !print_svl)  inters no_pos in
         if inters = [] then
           get_new_rele_svl fs old_keep_svl res_rele_fs (res_unk_fs@[f]) incr_keep
         else
@@ -8813,8 +8825,8 @@ let elim_equi_ante_x ante cons=
   let cv = fv cons in
   let eav_all = get_equi_vars ante in
   let eav = List.filter (fun v -> not(mem_svl v cv)) eav_all in
-  let () = Debug.ninfo_hprint (add_str "cv" !print_svl) cv no_pos in
-  let () = Debug.ninfo_hprint (add_str "eav" !print_svl) eav no_pos in
+  let () = x_ninfo_hp (add_str "cv" !print_svl) cv no_pos in
+  let () = x_ninfo_hp (add_str "eav" !print_svl) eav no_pos in
   if eav =[] then ante else
     List.fold_left elim_equi_var ante eav
 
@@ -13828,7 +13840,7 @@ let nonlinear_var_list_formula (f: formula) =
 let overapp_ptrs_x f0=
   let detect_ptr_xpure_form f sv1 sv2 a b c=
     match sv1 with
-    | Var (sv ,pos) -> let () = Debug.ninfo_hprint (add_str "xx" pr_id) "2" no_pos in
+    | Var (sv ,pos) -> let () = x_ninfo_hp (add_str "xx" pr_id) "2" no_pos in
       (* let t = type_of_spec_var sv in *)
       (* let () = Debug.info_hprint (add_str "t" string_of_typ) t no_pos in *)
       if is_node_typ sv && is_num sv2 then
@@ -13839,7 +13851,7 @@ let overapp_ptrs_x f0=
   in
   let rec helper f= match f with
     | BForm (bf,a) ->
-      let () = Debug.ninfo_hprint (add_str "f" !print_formula) f no_pos in
+      let () = x_ninfo_hp (add_str "f" !print_formula) f no_pos in
       (match bf with
        | (Eq (sv1,sv2,b),c) ->
          let detected, new_f = detect_ptr_xpure_form f sv1 sv2 a b c in
@@ -13847,7 +13859,7 @@ let overapp_ptrs_x f0=
            snd (detect_ptr_xpure_form f sv2 sv1 a b c)
        (* begin *)
        (* match sv1 with *)
-       (*     | Var (sv ,pos) -> let () = Debug.ninfo_hprint (add_str "xx" pr_id) "2" no_pos in *)
+       (*     | Var (sv ,pos) -> let () = x_ninfo_hp (add_str "xx" pr_id) "2" no_pos in *)
        (*           let t = type_of_spec_var sv in *)
        (*           let () = Debug.info_hprint (add_str "t" string_of_typ) t no_pos in *)
        (*             if is_node_typ sv && is_num sv2 then *)
@@ -13856,17 +13868,17 @@ let overapp_ptrs_x f0=
        (*             else f *)
        (*     | _ -> begin *)
        (*         match sv2 with *)
-       (*           | Var (sv ,pos) -> let () = Debug.ninfo_hprint (add_str "xx" pr_id) "3" no_pos in *)
+       (*           | Var (sv ,pos) -> let () = x_ninfo_hp (add_str "xx" pr_id) "3" no_pos in *)
        (*             let t = type_of_spec_var sv in *)
-       (*             let () = Debug.ninfo_hprint (add_str "t" string_of_typ) t no_pos in *)
+       (*             let () = x_ninfo_hp (add_str "t" string_of_typ) t no_pos in *)
        (*             if is_node_typ sv && is_num sv1 then *)
        (*               let zero = IConst (0, pos) in *)
        (*               BForm ((Neq (sv2, zero, b), c), a) *)
        (*             else f *)
-       (*           | _ -> let () = Debug.ninfo_hprint (add_str "xx" pr_id) "4" no_pos in f *)
+       (*           | _ -> let () = x_ninfo_hp (add_str "xx" pr_id) "4" no_pos in f *)
        (*       end *)
        (* end *)
-       | _ -> let () = Debug.ninfo_hprint (add_str "xx" pr_id) "1" no_pos in
+       | _ -> let () = x_ninfo_hp (add_str "xx" pr_id) "1" no_pos in
          f
       )
     | Not _ -> f

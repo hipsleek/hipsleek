@@ -195,6 +195,38 @@ let string_of_prover prover = match prover with
   | MINISAT -> "MINISAT"
   | LOG -> "LOG"
 
+let string_of_ato () =
+  if !Globals.array_translate then "(ato)"
+  else ""
+
+let string_of_prover_code prover = match prover with
+  | OmegaCalc -> "1"^(string_of_ato ())
+  | CvcLite -> "2"
+  | Cvc3 -> "3"
+  | CO  -> "4"
+  | Isabelle -> "5"
+  | Mona -> "6"
+  | MonaH -> "7"
+  | OM -> "8"^(string_of_ato ())
+  | OI -> "9"
+  | SetMONA -> "10"
+  | CM  -> "11"
+  | Coq -> "12"
+  | Z3 -> "13"
+  | Z3N -> "14"
+  | OCRed -> "15"
+  | Redlog -> "16"
+  | RM -> "17"
+  | Mathematica -> "18"
+  | PARAHIP -> "19" (*This option is used on ParaHIP website*)
+  | ZM -> "20"
+  | OZ -> "21"^(string_of_ato ())
+  | AUTO -> "22"
+  | DP -> "23"
+  | SPASS -> "24"
+  | MINISAT -> "25"
+  | LOG -> "26"
+
 let last_tp_used = new VarGen.store LOG string_of_prover
 
 let last_proof_string = new VarGen.store "no proof" pr_id

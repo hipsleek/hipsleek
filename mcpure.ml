@@ -385,7 +385,7 @@ and pure_bag_equations_aux with_emp (f:formula) : (spec_var * spec_var) list =
 and ptr_equations_aux_mp_x with_null (f : memo_pure) : (spec_var * spec_var) list =  
   let helper f = 
     let r = List.fold_left (fun a c -> (a @ b_f_ptr_equations c.memo_formula)) [] f.memo_group_cons in
-    let r = List.fold_left (fun a c -> a @ (pure_ptr_equations_aux with_null c)) r f.memo_group_slice in
+    let r = List.fold_left (fun a c -> a @ (x_add pure_ptr_equations_aux with_null c)) r f.memo_group_slice in
     let eqs = (if !enulalias(*with_null*) then get_equiv_eq_with_null else get_equiv_eq) f.memo_group_aset in
     r @ eqs in
   List.concat (List.map helper f)
@@ -2261,7 +2261,9 @@ let memo_pure_push_exists_lhs qv f = match f with
 
 let ptr_equations_aux with_null f = match f with
   | MemoF f -> ptr_equations_aux_mp with_null f
-  | OnePF f -> pure_ptr_equations_aux with_null f
+  | OnePF f -> 
+    let _ = x_add_1 get_int_equality f in
+    x_add pure_ptr_equations_aux with_null f
 
 let bag_equations_aux with_emp f = match f with
   | MemoF f -> bag_equations_aux_mp with_emp f
