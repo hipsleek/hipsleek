@@ -1,4 +1,5 @@
 
+//1
 infer [@err_must] x<=0 |- x>0.
 print residue.
 expect Fail_Must.
@@ -6,6 +7,8 @@ expect Fail_Must.
 //Residue:
 // <1>emp&x<=0&{FLOW,(6,7)=__Error#E}[]
 
+
+//2
 infer [x,@err_must] true |- x>0.
 print residue.
 expect Valid.
@@ -16,8 +19,8 @@ Residue:
  inferred pure: [1<=x]
 */
 
-
-infer [x,@err_must] true |- x>0.
+//3
+infer [x,@err_must_only] true |- x>0.
 print residue.
 
 /*

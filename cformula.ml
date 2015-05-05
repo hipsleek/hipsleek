@@ -10228,7 +10228,11 @@ let get_may_error_from_ctx cs =
 
 let rec is_ctx_error ctx=
   match ctx with
-  | Ctx es -> not (es.es_final_error == []) || x_add_1 is_error_flow es.es_formula || is_mayerror_flow es.es_formula
+  | Ctx es ->
+        (*L2: determining failure is based only on es_final_error*)
+        not (es.es_final_error == [])
+        (* es_formula: may be exception *)
+        (* || x_add_1 is_error_flow es.es_formula || is_mayerror_flow es.es_formula *)
   | OCtx (c1, c2) -> is_ctx_error c1 || is_ctx_error c2
 
 let isFailCtx_gen cl =

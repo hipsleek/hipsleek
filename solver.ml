@@ -8629,39 +8629,39 @@ type: bool *
         end
         else
           begin
-            (* let estate1 = *) if CF.contains_error_flow conseq then
+            let estate1 = if CF.contains_error_flow conseq then
               let err_msg = "error-infer" in
               let estate = {estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.CF.es_formula;
               } in
-              let fc_template = {
-                  fc_message = err_msg;  fc_current_lhs  = estate;
-                  fc_prior_steps = estate.es_prior_steps;
-                  fc_orig_conseq  = struc_formula_of_formula (formula_of_mix_formula rhs_p pos) pos;
-                  fc_current_conseq = CF.formula_of_heap HFalse pos;
-                  fc_failure_pts = match r_fail_match with | Some s -> [s]| None-> [];} in
-              let lc0 = x_add Musterr.build_and_failures 1 "214" fc_kind Globals.logical_error ([], [(CF.get_pure estate.CF.es_formula, MCP.pure_of_mix rhs_p)], []) fc_template (CF.mk_cex true) estate.es_trace in
-        (CF.convert_maymust_failure_to_value_orig ~mark:false lc0, prf)
-               (* let fc_kind = Failure_Must err_msg in *)
-             (*   let ft = (Basic_Reason ({ *)
-             (* fc_message = err_msg; fc_current_lhs  = estate; *)
-             (* fc_prior_steps = estate.es_prior_steps; *)
-             (* fc_orig_conseq  = struc_formula_of_formula (formula_of_mix_formula rhs_p pos) pos; *)
-             (* fc_current_conseq = CF.formula_of_heap HFalse pos; *)
-             (* fc_failure_pts = match r_fail_match with | Some s -> [s]| None-> [];}, *)
-             (* {fe_kind = fc_kind; fe_name = Globals.logical_error ;fe_locs=[]}, estate.es_trace)) in *)
-             (*  {estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.CF.es_formula; *)
-             (*      es_final_error = estate.CF.es_final_error@[(err_msg,ft,fc_kind)]; *)
-             (*  } *)
-            else (* estate  *)
-            let res_ctx = Ctx {estate with (* es_formula = res_delta; *)
-                               es_unsat_flag = false; (*the new context could be unsat*)
-                               (*LDK: ??? add rhs_p into residue( EMP rule in p78). Similar to the above
-                                 		  Currently, we do not add the whole rhs_p into the residue.We only instatiate ivars and expl_vars in heap_entail_conjunct_helper *)
-                               (*TO CHECK: important to instantiate ivars*)
-                               es_success_pts = (List.fold_left (fun a (c1,c2)->
-                                   match (c1,c2) with
-                                   | Some s1,Some s2 -> (s1,s2)::a
-                                   | _ -> a) [] r_succ_match)@estate.es_success_pts;} in
+              (* let fc_template = { *)
+        (*           fc_message = err_msg;  fc_current_lhs  = estate; *)
+        (*           fc_prior_steps = estate.es_prior_steps; *)
+        (*           fc_orig_conseq  = struc_formula_of_formula (formula_of_mix_formula rhs_p pos) pos; *)
+        (*           fc_current_conseq = CF.formula_of_heap HFalse pos; *)
+        (*           fc_failure_pts = match r_fail_match with | Some s -> [s]| None-> [];} in *)
+        (*       let lc0 = x_add Musterr.build_and_failures 1 "214" fc_kind Globals.logical_error ([], [(CF.get_pure estate.CF.es_formula, MCP.pure_of_mix rhs_p)], []) fc_template (CF.mk_cex true) estate.es_trace in *)
+        (* (CF.convert_maymust_failure_to_value_orig ~mark:false lc0, prf) *)
+              let fc_kind = Failure_Must err_msg in
+              (* let ft = (Basic_Reason ({ *)
+              (*     fc_message = err_msg; fc_current_lhs  = estate; *)
+              (*     fc_prior_steps = estate.es_prior_steps; *)
+              (*     fc_orig_conseq  = struc_formula_of_formula (formula_of_mix_formula rhs_p pos) pos; *)
+              (*     fc_current_conseq = CF.formula_of_heap HFalse pos; *)
+              (*     fc_failure_pts = match r_fail_match with | Some s -> [s]| None-> [];}, *)
+              (* {fe_kind = fc_kind; fe_name = Globals.logical_error ;fe_locs=[]}, estate.es_trace)) in *)
+              {estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.CF.es_formula;
+                  (* es_final_error = estate.CF.es_final_error@[(err_msg,ft,fc_kind)]; *)
+              }
+            else estate in
+            let res_ctx = Ctx {estate1 with (* es_formula = res_delta; *)
+                es_unsat_flag = false; (*the new context could be unsat*)
+                (*LDK: ??? add rhs_p into residue( EMP rule in p78). Similar to the above
+                  Currently, we do not add the whole rhs_p into the residue.We only instatiate ivars and expl_vars in heap_entail_conjunct_helper *)
+                (*TO CHECK: important to instantiate ivars*)
+                es_success_pts = (List.fold_left (fun a (c1,c2)->
+                    match (c1,c2) with
+                      | Some s1,Some s2 -> (s1,s2)::a
+                      | _ -> a) [] r_succ_match)@estate.es_success_pts;} in
             (* TODO-WN why is there another elim_unsat_ctx? *)
             let res_ctx = elim_unsat_ctx prog (ref 1) res_ctx in
             x_dinfo_zp (lazy ("heap_entail_empty_heap: formula is valid")) pos;
