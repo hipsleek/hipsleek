@@ -466,8 +466,8 @@ rule tokenizer file_name = parse
   | "|-" { (* (print_string "der\n"; *)DERIVE }
   | "-|-" { EQV }
   | "-->" { CONSTR }
-  | "<#" { TOPAREN }
-  | "#>" { TCPAREN } (*Open and close paren for thread heap*)
+  (* | "<#" { TOPAREN } *) (* replaced by `LT;`HASH. inline\data-holes.lsk. examples/fracperm/thread/thrd1.slk*)
+  (* | "#>" { TCPAREN } (\*Open and close paren for thread heap*\) *) (* replaced by `HASH;`GT*)
   (* | "-%" { IN_RFLOW }  *)
   (* | "+%" { OUT_RFLOW } *)
   | '[' { OSQUARE }

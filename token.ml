@@ -73,7 +73,7 @@ type sleek_token =
   | DOT | DOUBLEQUOTE | EQ | EQEQ | RIGHTARROW | EQUIV | GT | GTE | HASH | REL_GUARD | HEAD | INLIST | LEFTARROW | LENGTH
   | LT | LTE | MINUS | MEM | MEME | NEQ | NOT | NOTINLIST | OBRACE |OLIST | OPAREN | OP_ADD_ASSIGN | OP_DEC | OP_DIV_ASSIGN 
   | OP_INC | OP_MOD_ASSIGN | OP_MULT_ASSIGN | OP_SUB_ASSIGN | OR | OROR | PERM | DERIVE | EQV | CONSTR | OSQUARE  | REVERSE | SET | TAIL 
-  | TOPAREN | TCPAREN
+  (* | TOPAREN | TCPAREN *)
   | PERCENT | PMACRO 
   | PZERO | PFULL | PVALUE | PLEND | PCONST of Frac.frac |PFRAC (* | PREF *)
   | SPLITANN
@@ -208,8 +208,8 @@ module Token = struct
     | TREL_ASSUME -> "termAssume"
     | TERM_INFER -> "term_infer"
     | XPURE -> "XPURE"
-    | TOPAREN -> "<#" 
-    | TCPAREN -> "#>" (*Open and close paren for thread heap*)
+    (* | "<#" { TOPAREN } *) (* replaced by `LT;`HASH. inline\data-holes.lsk. examples/fracperm/thread/thrd1.slk*)
+  (* | "#>" { TCPAREN } (\*Open and close paren for thread heap*\) *) (* replaced by `HASH;`GT*)
     | PAR -> "par"
     | ARGOPTION arg -> "##OPTION "^arg
   (* | SKIP -> "skip" *)

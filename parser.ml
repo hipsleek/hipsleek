@@ -1787,7 +1787,7 @@ simple_heap_constr_imm:
 
 (*LDK: add frac for fractional permission*)
 simple_heap_constr:
-    [[ peek_heap; c=cid; `COLONCOLON;  hid = heap_id; opt1 = OPT rflow_form_list ; (* simple2 ; *) frac= opt_perm; `TOPAREN; dl = opt_delayed_constr; rsr = disjunctive_constr; `TCPAREN ; ofl = opt_formula_label ->
+    [[ peek_heap; c=cid; `COLONCOLON;  hid = heap_id; opt1 = OPT rflow_form_list ; (* simple2 ; *) frac= opt_perm; (* `TOPAREN *)`LT; `HASH ; dl = opt_delayed_constr; rsr = disjunctive_constr; (* `TCPAREN *) `HASH; `GT ; ofl = opt_formula_label ->
      (*For threads as resource*)
      let (c, hid, deref) = get_heap_id_info c hid in
      F.mkThreadNode c hid (F.subst_stub_flow n_flow rsr) dl frac ofl (get_pos_camlp4 _loc 2)
