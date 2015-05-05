@@ -804,6 +804,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
               if (CF.isFailListPartialCtx_new res_ctx)
               then (spec, [], [],[], [],[],[], false)
               else
+                (* let res_ctx = x_add_1 CF.map_list_partial_context res_ctx Immutable.weaken_infer_rel_in_es in *)
                 let lh = Infer.collect_pre_heap_list_partial_context res_ctx in
                 let lp = Infer.collect_pre_pure_list_partial_context res_ctx in
                 let lr = x_add_1 Infer.collect_rel_list_partial_context res_ctx in

@@ -554,11 +554,11 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
           let () = DD.ninfo_pprint ">>>>>> do_compute_fixpoint <<<<<<" no_pos in
           let tuples =
             let rels = Gen.Basic.remove_dups rels in
-            let rels = List.filter (fun (_,pf,_) -> not(CP.is_False pf)) rels in
+            let rels = List.filter (fun (_,pf,_) -> not(CP.is_False pf)) rels in           
             if rels !=[] then
               begin
                 print_endline_quiet "\n*************************************";
-                print_endline_quiet "******pure relation assumption*******";
+                print_endline_quiet "******pure relation assumption 1 *******";
                 print_endline_quiet "*************************************";
                 print_endline_quiet (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels));
                 print_endline_quiet "*************************************";
@@ -647,6 +647,8 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                   let exist_vars = CP.diff_svl (CP.fv_wo_rel rel_post) inf_vars in
                   TP.simplify_exists_raw exist_vars post
                 else pre in
+                let pre_new = Immutable.norm_rel_formula pre_new in 
+                (* andreeac TODOIMM for post: (pre imm vars, a<:@L ---> a=@L) (post imm vars, a=@L ---> a=@A + remove eq with pre vars) *)
               (rel_post,post,rel_pre,pre_new)) tuples in
           let evars = stk_evars # get_stk in
           let () = List.iter (fun (rel_post,post,rel_pre,pre) ->

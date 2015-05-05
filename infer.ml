@@ -1352,7 +1352,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                       else
                         (rel_ass, [],new_estate)
                     in
-                    let () =  DD.ninfo_hprint (add_str "New estate 1: " !print_entail_state) new_estate pos in
+                    let () =  x_dinfo_hp (add_str "New estate 1: " !print_entail_state) new_estate pos in
                     if rel_ass = [] 
                     then (Some (new_estate, CP.mkTrue pos),None,[]) 
                     else
@@ -2126,7 +2126,7 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
         (* -------------------------------------------------------------- *)
         (* below causes non-linear LHS for relation *)
         (* let inf_rel_ls = List.map (simp_lhs_rhs vars) inf_rel_ls in *)
-        DD.ninfo_hprint (add_str "Rel Inferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos;
+        x_dinfo_hp (add_str "Rel Inferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos;
         infer_rel_stk # push_list inf_rel_ls;
         Log.current_infer_rel_stk # push_list inf_rel_ls;
         let estate = { estate with es_infer_rel = estate.es_infer_rel@inf_rel_ls;} in

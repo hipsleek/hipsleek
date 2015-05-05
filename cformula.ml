@@ -11172,6 +11172,25 @@ let add_infer_pre f_ctx ctx =
       if (cr!=[]) then add_infer_rel_to_ctx cr ctx
       else ctx
 
+let map_ctx (ctx: context) f_es: context =
+  let rec helper ctx = 
+    match ctx with
+      | Ctx es -> let es = f_es es in Ctx es
+      | OCtx (es1,es2) -> OCtx (helper es1, helper es2)
+  in helper ctx 
+
+let map_branch_ctx_list (ctx_lst: branch_ctx list) f_es: branch_ctx list =
+  List.map ( fun (pt, ctx0, ft) ->
+      let ctx0 = map_ctx ctx0 f_es in
+      (pt,ctx0,ft)
+  ) ctx_lst
+
+let map_list_partial_context (ctx: list_partial_context) f_es =
+  List.map (fun (lst1, lst2) ->
+      let lst2 = map_branch_ctx_list lst2 f_es in
+      (lst1,lst2)
+  ) ctx
+
 let mkOCtx ctx1 ctx2 pos =
   (*if (isFailCtx ctx1) || (isFailCtx ctx2) then or_fail_ctx ctx1 ctx2
     else*)  (* if isStrictTrueCtx ctx1 || isStrictTrueCtx ctx2 then *)

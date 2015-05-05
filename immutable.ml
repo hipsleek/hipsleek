@@ -2375,3 +2375,51 @@ let merge_alias_nodes_struc_formula prog f xpure conseq  unfold_fun =
   Debug.no_1 "merge_alias_nodes_struc_formula" pr pr (fun _ -> merge_alias_nodes_struc_formula prog f xpure conseq  unfold_fun) f
 
 (* ===============================  end - merging aliased nodes ================================= *)
+
+(* a<:@L ---> a=@L *)
+let norm_rel_formula (rel:CP.formula): CP.formula  =
+  let f_f f = None in
+  let f_e e = None in
+  let fixpt = ref true in
+  let f_b aset b = 
+    let (p_f, bf_ann) = b in
+    let p_f = 
+      match p_f with
+        | CP.SubAnn (e1,e2,l) -> 
+              begin
+                match e2 with
+                  | CP.AConst (Lend, loc) -> fixpt := false; CP.mkEq e1 e2 l 
+                  | CP.Var (sv, loc) ->
+                        let lend_const = CP.mkAnnSVar Lend in
+                        let rhs_is_lend = CP.EMapSV.is_equiv aset sv lend_const in
+                        fixpt := false; 
+                        CP.mkEq e1 e2 l
+                  | _ -> p_f
+              end
+        | _ -> p_f in
+    Some (p_f, bf_ann) in
+
+  (* systematically transform formula until all a<:@L ---> a=@L *)
+  let rec helper rel = 
+    let p_aset = build_eset_of_conj_formula rel(* CP.pure_ptr_equations rel in *) in
+    (* let p_aset = CP.EMapSV.build_eset p_aset in *)
+    let rel = CP.map_formula rel (f_f, (f_b p_aset), f_e) in
+    if not(!fixpt) then begin fixpt := true; helper rel end
+    else rel in
+  helper  rel
+
+let norm_rel_formula (rel:CP.formula): CP.formula  =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "norm_rel_formula" pr pr norm_rel_formula rel
+
+let norm_rel_list lst =
+  List.map (fun (rel_ct,rel1,rel2) ->
+      match rel_ct with
+        | CP.RelAssume _ -> 
+              let rel2 = x_add_1 norm_rel_formula rel2 in
+              (rel_ct, rel1, rel2)
+        | _ -> (rel_ct,rel1,rel2) 
+  ) lst
+
+let weaken_infer_rel_in_es es =
+  {es with es_infer_rel =  norm_rel_list es.es_infer_rel}
