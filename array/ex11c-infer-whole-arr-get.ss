@@ -6,7 +6,7 @@ relation Q(int[] a,int r).
 int foo(int[] a)
  //infer [@arrvar] requires true ensures res=a[5];
   infer [@arrvar,P,Q] requires P(a) ensures Q(a,res);
-//  infer [@arrvar,P] requires true ensures P(res,a[4]);
+// requires a[5]>0 ensures res=a[5];
 {
   if (a[5]>10) {
     return a[5];

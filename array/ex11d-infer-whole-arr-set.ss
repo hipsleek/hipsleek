@@ -6,7 +6,8 @@ relation P(int[] a).
 int foo(ref int[] a)
  //infer [@arrvar] requires true ensures res=a[5];
   infer [@arrvar,P,Q] requires P(a) ensures Q(a,a',res);
-//  infer [@arrvar,P] requires true ensures P(res,a[4]);
+// requires true ensures update(a,a',10,5) & res=a[4];
+// requires true ensures a'[5]=10 & res=a[4];
 {
   a[5]=10;
   return a[4];
