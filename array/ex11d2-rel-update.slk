@@ -4,7 +4,6 @@ relation P(int a).
 relation Q(int a,int b,int r).
 relation R(int a,int[] b,int r).
 
-
 infer [P,Q]  res=k & k=a' & P(a) |-  emp&Q(a,a',res) . 
 print residue.
 
