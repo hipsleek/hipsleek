@@ -738,10 +738,11 @@ let process_source_full source =
   (* let () = print_string ("Translating to core language...\n"); flush stdout in *)
   (*let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in*)
   (* Forward axioms and relations declarations to SMT solver module *)
-  let todo_unk = List.map (fun crdef -> 
-      let () = Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula in
-      Z3.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula
-    ) (List.rev cprog.Cast.prog_rel_decls) in
+  (* L2: these relations were added at Astsimp.trans_rel *)
+  (* let todo_unk = List.map (fun crdef ->  *)
+  (*     let () = Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula in *)
+  (*     Z3.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula *)
+  (*   ) (List.rev cprog.Cast.prog_rel_decls) in *)
   let todo_unk = List.map (fun cadef ->
       let () = Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion in
       Z3.add_axiom cadef.Cast.axiom_hypothesis Z3.IMPLIES cadef.Cast.axiom_conclusion
@@ -992,6 +993,7 @@ let process_source_full_after_parser source (prog, prims_list) =
   (* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
 
   (* Forward axioms and relations declarations to SMT solver module *)
+  (* L2: not-in-used *)
   let todo_unk = List.map (fun crdef -> 
       let () = Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula in
       Z3.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula

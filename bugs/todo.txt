@@ -1488,7 +1488,7 @@ Residue:
 [[ Fold ==> ]]
 
 ===================================================================
-# ex11a2.ss -tp z3 --smtinp
+# ex11a2.ss -tp z3 --smtinp: FIXED
 
 Why did we generate P twice?
 
