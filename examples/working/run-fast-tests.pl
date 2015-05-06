@@ -1870,6 +1870,7 @@ my $dis = '--dis-inv-baga';
                       ["sleek-err-exc-bind.slk", "", (), "Fail.Fail.Fail.Valid"],
                       ["sleek-err-exc-flow.slk", "--efa-exc", (), "Fail.Fail.Fail.Fail.Fail.Fail.Valid.Fail.Fail.Fail"],
                       ["lst-under2.slk", "--inv-test", ([$dis,"Fail.Valid"]), "Valid.Fail."],
+                      ["data-holes.slk", "", (), "Fail.Valid.Valid"],
               ["ll-under1a.slk", " --inv-test --use-baga ", ([$dis,"Valid.Valid."]), ""],
               ["ll-under1b.slk", " --inv-test --use-baga ", ([$dis,"Fail.Valid."]), ""],
               ["ll-under1c.slk", " --inv-test --use-baga ", ([$dis,"Valid.Fail."]), ""],

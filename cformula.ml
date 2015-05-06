@@ -9400,6 +9400,12 @@ let print_fail_type = ref(fun (c:fail_type) -> "printer not initialized")
 let is_dis_err_exc es = 
   es.es_infer_obj # is_dis_err_all
 
+let is_err_must_exc es = 
+  es.es_infer_obj # is_err_must_all
+
+let is_err_must_only_exc es = 
+  es.es_infer_obj # is_err_must_only
+
 let is_en_error_exc es =
   not(is_dis_err_exc es)
 (* es.es_infer_obj # is_err_must || es.es_infer_obj # is_err_may *)
@@ -9409,6 +9415,11 @@ let rec is_en_error_exc_ctx c =
   match c with
   | Ctx es -> is_en_error_exc es
   | OCtx (c1,c2) -> is_en_error_exc_ctx c1 || is_en_error_exc_ctx c2
+
+let rec is_err_must_exc_ctx c =
+  match c with
+  | Ctx es -> is_err_must_only_exc es
+  | OCtx (c1,c2) -> is_err_must_exc_ctx c1 || is_err_must_exc_ctx c2
 
 let is_en_error_exc_ctx_list lc =
   match lc with
@@ -10230,7 +10241,11 @@ let get_may_error_from_ctx cs =
 
 let rec is_ctx_error ctx=
   match ctx with
-  | Ctx es -> not (es.es_final_error == []) || x_add_1 is_error_flow es.es_formula || is_mayerror_flow es.es_formula
+  | Ctx es ->
+        (*L2: determining failure is based only on es_final_error*)
+        not (es.es_final_error == [])
+        (* es_formula: may be exception *)
+        (* || x_add_1 is_error_flow es.es_formula || is_mayerror_flow es.es_formula *)
   | OCtx (c1, c2) -> is_ctx_error c1 || is_ctx_error c2
 
 let isFailCtx_gen cl =
@@ -10238,7 +10253,9 @@ let isFailCtx_gen cl =
   | FailCtx _ -> true
   | SuccCtx cs -> if cs = [] then true else
       (* ((get_must_error_from_ctx cs) !=None) || ((get_may_error_from_ctx cs) !=None) *)
-      List.exists (fun ctx -> is_ctx_error ctx) cs
+      (* L2: in case error-infer, we return both error and succ context. temporally return valid with all (einf/ex11) *)
+      (* List.exists (fun ctx -> is_ctx_error ctx) cs *)
+       List.for_all (fun ctx -> is_ctx_error ctx) cs
 
 let lst_to_opt lst =
   match List.rev lst with
@@ -10695,9 +10712,10 @@ let convert_maymust_failure_to_value_orig ?(mark=true) (l:list_context) : list_c
           (*   | _ ->  l) *)
           begin
             let () = Debug.ninfo_hprint (add_str "c" !print_context_short) c no_pos in
-            match get_final_error_ctx c with
-              | Some _ -> SuccCtx [c]
-              | None -> (
+            (* should combined FailCtx \/ ValidCtx. demo/ex22-lor *)
+            (* match get_final_error_ctx c with *)
+            (*   | Some _ -> SuccCtx [c] *)
+            (*   | None -> *) (
                     match (x_add convert_must_failure_4_fail_type_new "" ft cex) with
                       | Some ctx -> SuccCtx [ctx]
                       | None -> begin
@@ -10712,7 +10730,7 @@ let convert_maymust_failure_to_value_orig ?(mark=true) (l:list_context) : list_c
 let convert_maymust_failure_to_value_orig ?(mark=true) (l:list_context) : list_context =
   match l with
     | FailCtx (ft, c, cex) ->
-          if not (is_en_error_exc_ctx c)
+          if not (is_en_error_exc_ctx c) && not (is_err_must_exc_ctx c)
             (* not !Globals.enable_error_as_exc && not (is_en_error_exc_ctx c) *)
           then
             l
@@ -11398,7 +11416,8 @@ let mkFailContext msg estate conseq pid pos = {
   fc_current_conseq = conseq;
 }
 
-let mkFailCtx_in (ft:fail_type) c cex = FailCtx (ft, c, cex)
+let mkFailCtx_in (ft:fail_type) (es, msg,fk) cex =
+  FailCtx (ft, Ctx {es with es_final_error = es.es_final_error@[(msg, ft, fk)]}, cex)
 
 (*simple concurrency*)
 let mkFailCtx_simple msg estate conseq cex pos = 
@@ -11412,13 +11431,13 @@ let mkFailCtx_simple msg estate conseq cex pos =
   in
   let fail_ex = {fe_kind = Failure_Must msg; fe_name = Globals.logical_error ;fe_locs=[]} in
   (*temporary no failure explaining*)
-  mkFailCtx_in (Basic_Reason (fail_ctx,fail_ex, estate.es_trace)) (Ctx {estate with es_formula = substitute_flow_into_f !error_flow_int estate.es_formula}) cex
+  mkFailCtx_in (Basic_Reason (fail_ctx,fail_ex, estate.es_trace)) ({estate with es_formula = substitute_flow_into_f !error_flow_int estate.es_formula}, msg, Failure_Must msg) cex
 
 let mkFailCtx_vperm msg rhs_b estate conseq cex pos = 
   let s = "variable permission mismatch "^msg in
   let new_estate = {estate  with es_formula = substitute_flow_into_f
                                      !top_flow_int estate.es_formula} in
-  mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,mk_failure_may s logical_error, estate.es_trace)) (Ctx new_estate) cex
+  mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,mk_failure_may s logical_error, estate.es_trace)) (new_estate, s, Failure_May s) cex
 
 let mk_fail_partial_context_label (ft:fail_type) (lab:path_trace) : (partial_context) = ([(lab,ft)], []) 
 

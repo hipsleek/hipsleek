@@ -2910,7 +2910,9 @@ and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
                C.rel_formula = crf; }
   in
   (* Forward the relation to the smt solver. *)
+  (* in-used *)
   let _ = Smtsolver.add_relation crdef.Cast.rel_name rel_sv_vars crf in
+  let _ = Z3.add_relation crdef.Cast.rel_name rel_sv_vars crf in
   crdef
 
 and trans_templ (prog: I.prog_decl) (tdef: I.templ_decl): C.templ_decl =
