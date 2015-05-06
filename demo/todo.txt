@@ -1197,7 +1197,7 @@ res:  1[
    es_final_error:[ true |-  res. LOCS:[19;15] (may-bug)]
    ]
 ==========================================================================
-# ex21a11
+# ex21a11 (OK)
 
 
 !!! **wrapper.ml#148:Calling wrap_err_pre
@@ -1241,6 +1241,19 @@ valid
 
 
 ==========================================================================
+  # ex21a12.ss
+
+void pre_call(cell x)
+  infer [@pre_must]
+  requires x::cell<_> 
+  ensures x::cell<3>;
+
+   this @pre_must tag indicates a pre-condition that must be
+   be satisfied. When tag is present, we must ensure
+   must failure if there is contradiction with the
+   pre-condition. This is we must use wrap_must_err for
+   such pre-condition. This may be for primitives with
+   must rather than may pre-conditions
 ==========================================================================
 ==========================================================================
 ==========================================================================

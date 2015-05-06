@@ -53,9 +53,9 @@ expect Fail.
 // 4
 checkentail  x::node<m,n,#,#,#> *
   x::node<#,#,a,b,c> 
-  |- x::node<m,n,a,b,c>.
+  |- false. //x::node<m,n,a,b,c>.
 print residue.
-expect Valid.
+expect Fail.
 
 /*
 # data-holes.slk
