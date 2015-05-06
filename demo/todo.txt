@@ -1282,6 +1282,30 @@ MaybeErr Context:
 [[empty]]
 CEX:false
 ==========================================================================
+# ex22g13.slk
+
+The 2nd message is unnecessary on flow conflicts..
+
+infer[@err_must] emp&x!=null & x'=x & flow __MayError
+ |-  emp&res=3& flow __norm. 
+
+MaybeErr Context: 
+                   
+                    fe_kind: MAY
+                    fe_name: undefined
+                    fe_locs: {
+                              fc_message: 
+                               1.2b: ante flow:__MayError#E conseq flow: __norm#E are incompatible flow types
+                              fc_current_lhs_flow: {FLOW,(4,8)=__MayError#E}}
+[[empty]]
+                  FAIL_AND 
+                   
+                    fe_kind: MAY
+                    fe_name: logical bug
+                    fe_locs: {
+                              fc_message:  true |-  res=3. LOCS:[0;3] (may-bug)
+                              fc_current_lhs_flow: {FLOW,(4,8)=__MayError#E}}
+[[empty]]
 ==========================================================================
 ==========================================================================
 ==========================================================================
