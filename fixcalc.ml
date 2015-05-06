@@ -94,7 +94,9 @@ and fixcalc_of_exp e = match e with
       | _ -> illegal_format ("Fixcalc.fixcalc_of_exp: Not supported expression")
     end
   | CP.InfConst _ -> "inf"
-  | _ -> illegal_format ("Fixcalc.fixcalc_of_exp: Not supported expression")
+  | _ ->
+        let () = x_binfo_hp (add_str "fixcalc_of_exp error :" (fun _ -> "" )) e no_pos in
+        illegal_format ("Fixcalc.fixcalc_of_exp: Not supported expression")
 
 let fixcalc_of_bool b =
   match b with
@@ -137,13 +139,14 @@ let rec fixcalc_of_b_formula b =
     let e3str = fixcalc_of_exp e3 in
     "((" ^ e2str ^ " <= " ^ e3str ^ " && " ^ e1str ^ " = " ^ e2str ^ ") || ("
     ^ e3str ^ " < " ^ e2str ^ " && " ^ e1str ^ " = " ^ e3str ^ "))"
-  | CP.RelForm (id,args,_) -> 
-    if List.exists 
-        (fun x -> match x with | CP.IConst _ -> true | _ -> false) args 
-    then "0=0"
-    else
-      (fixcalc_of_spec_var id) ^ "(" ^ 
-      (string_of_elems args fixcalc_of_exp ",") ^ ")"
+  | CP.RelForm (id,args,_) ->
+        let () = x_binfo_hp (add_str "fixcalc_of_b_formula RelForm: " Cprinter.string_of_b_formula) b no_pos in
+        if List.exists
+          (fun x -> match x with | CP.IConst _ -> true | _ -> false) args
+        then "0=0"
+        else
+          (fixcalc_of_spec_var id) ^ "(" ^
+              (string_of_elems args fixcalc_of_exp ",") ^ ")"
   | _ -> 
     let () = x_binfo_hp (add_str "fixcalc trans error :" Cprinter.string_of_b_formula) b no_pos in
     illegal_format ("Fixcalc.fixcalc_of_b_formula: Do not support bag, list")
@@ -181,7 +184,7 @@ let fixcalc_of_pure_formula f=
 ;;
 
 let fixcalc_of_pure_formula f=
-  let nf = x_add_1 Trans_arr.new_translate_out_array_in_one_formula_split f in
+  let nf = x_add_1 Trans_arr.new_translate_out_array_in_one_formula_split_keep_relation f in
   fixcalc_of_pure_formula nf
 ;;
 
