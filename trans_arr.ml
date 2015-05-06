@@ -1724,6 +1724,13 @@ let rec expand_array_variable
   remove_dupl_spec_var_list (helper f svlst)
 ;;
 
+let expand_array_variable
+      (f:formula) (svlst:spec_var list): (spec_var list) =
+  if !Globals.array_translate
+  then expand_array_variable f svlst
+  else svlst
+;;
+
 (* The input formula for this process must be normalized *)
 let rec process_exists_array
     (f:formula):formula =

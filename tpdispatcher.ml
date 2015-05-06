@@ -844,9 +844,13 @@ let is_list_b_formula (pf,_) = match pf with
   | _ -> Some false
 
 let is_array_constraint (e: CP.formula) : bool =
-
   let or_list = List.fold_left (||) false in
   CP.fold_formula e (nonef, is_array_b_formula, is_array_exp) or_list
+
+let is_array_constraint e =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "is_array_constraint" pr string_of_bool is_array_constraint e
+;;
 
 let is_relation_b_formula (pf,_) = match pf with
   | CP.RelForm _ -> Some true
@@ -1963,8 +1967,8 @@ let simplify (f : CP.formula) : CP.formula =
   let simpl_num = next_proof_no () in
   let simpl_no = (string_of_int simpl_num) in
   if !Globals.no_simpl then f else
-  if !perm=Dperm && CP.has_tscons f<>CP.No_cons then f 
-  else 
+  if !perm=Dperm && CP.has_tscons f<>CP.No_cons then f
+  else
     let cmd = PT_SIMPLIFY f in
     let () = Log.last_proof_command # set cmd in
     (* if !Globals.allow_inf_qe_coq then f else *)
@@ -2089,6 +2093,11 @@ let simplify (f : CP.formula) : CP.formula =
               (0.0) (PR_exception) in
           f
       end
+
+let simplify f =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "(inner most) simplify" pr pr simplify f
+;;
 
 let om_pairwisecheck f =
   wrap_pre_post norm_pure_input norm_pure_result
@@ -2673,7 +2682,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 
   (* let n_ante,n_conseq = new_translate_out_array_in_imply_full ante conseq in *)
   let n_ante,n_conseq = Trans_arr.new_translate_out_array_in_imply_split_full ante conseq in
-  let n_ante = Trans_arr.drop_array_formula n_ante in
+  (* let n_ante = Trans_arr.drop_array_formula n_ante in *)
   (* let _ = print_endline ("##After process: ante: "^(Cprinter.string_of_pure_formula n_ante)^"\n conseq: "^(Cprinter.string_of_pure_formula n_conseq)) in *)
   (* let _ = print_endline ("tp_imply_no_cache n_ante: "^(Cprinter.string_of_pure_formula n_ante)) in *)
   (* let _ = print_endline ("tp_imply_no_cache n_conseq: "^(Cprinter.string_of_pure_formula n_conseq)) in *)

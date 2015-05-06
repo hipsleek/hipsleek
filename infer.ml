@@ -1998,6 +1998,8 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
         let wrap_exists (lhs,rhs) =
           let vs_r = CP.fv rhs in
           let vs_l = CP.fv lhs in
+          x_tinfo_hp (add_str "lhs fv(inside wrap_exists)" !print_svl) vs_l pos;
+          x_tinfo_hp (add_str "rhs fv(inside wrap_exists)" !print_svl) vs_r pos;
           (* To keep vars of RelForm _ that come from lhs *)
           let diff_vs = diff_svl vs_l (vs_r@rel_vars) in
           x_tinfo_hp (add_str "diff_vs" !print_svl) diff_vs pos;
@@ -2015,7 +2017,7 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
               DD.ninfo_hprint (add_str "rel_lhs(af):" (pr_list !CP.print_formula)) rel_lhs_new pos;
               CP.conj_of_list (new_lhs_drop_rel::rel_lhs_new) no_pos,rel_lhs_new
           in
-          DD.ninfo_hprint (add_str "new_lhs (aft elim_exists)" !CP.print_formula) new_lhs pos;
+          x_tinfo_hp (add_str "new_lhs (aft elim_exists)" !CP.print_formula) new_lhs pos;
           (* Simplification steps *)
           let lhs_list = CP.split_disjunctions_deep new_lhs in
           let new_lhs_list = List.map (fun new_lhs_local ->

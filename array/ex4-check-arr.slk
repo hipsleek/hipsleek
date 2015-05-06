@@ -1,6 +1,6 @@
 // 7(1)
 
-infer [] a[2]=3 & i=2  |- a[i]=3.
+// print residue.
 //print residue.
 
 
