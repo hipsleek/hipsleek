@@ -17,12 +17,15 @@ int foo(ref int[] a)
 /*
 # ex11d.ss 
 
-int foo(ref int[] a)
-  infer [@arrvar,P,Q,update_array_1d] requires P(a) ensures Q(a,a',res);
-{
-  a[5]=10;
-  return a[4];
-}
+infer [@arrvar,P,Q,update_array_1d] requires P(a) ensures Q(a,a',res);
+
+# why is there exception despite @arrvar?
+
+!!! **omega.ml#673:WARNING: exception from Omega.is_valid
+!!! **omega.ml#673:WARNING: exception from Omega.is_valid
+
+# need to fix fixcalc
+
 
 Correct RElDEFN:
 [RELDEFN Q: ( a'[4]=res & update_array_1d(a,a',10,5) & P(a)) 

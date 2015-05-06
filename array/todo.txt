@@ -102,8 +102,59 @@ Error1(s) detected at main
 Stop Omega... 46 invocations caught
 
 ===================================================================
+# ex11d6.ss 
+
+int foo(ref int[] a)
+  infer [P,Q//,update_array_1d
+    ] requires P(a) ensures Q(a,a',res);
+
+# without arrvar, without explicit update_arr.
+
+[RELDEFN Q: ( exists(v_int_11_1157':res=v_int_11_1157' & v_int_11_1157'=a'[4]) & P(a)) -->  Q(a,a',res)]
+
+We may need to distinguish unknown relation from interpreted relation
+like update_arr by adding such interpreted relation into system.
 ===================================================================
+# ex11d5.ss 
+
+  infer [P,Q,update_array_1d] requires P(a) ensures Q(a,a',res);
+
+# without arrvar, more exceptions.
+
+!!! **omega.ml#561:WARNING: exception from Omega.is_sat_ops
+!!! **omega.ml#561:WARNING: exception from Omega.is_sat_ops
+!!! **omega.ml#673:WARNING: exception from Omega.is_valid
+!!! **omega.ml#561:WARNING: exception from Omega.is_sat_ops
+!!! **omega.ml#561:WARNING: exception from Omega.is_sat_opsOmega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a'[4]")
+
+!!! **infer.ml#2153:Rel Inferred::[RELDEFN Q: ( exists(v_int_14_1405':res=v_int_14_1405' & v_int_14_1405'=a'[4]) & 
+update_array_1d(a,a',10,5) & P(a)) -->  Q(a,a',res)]
+
 ===================================================================
+# ex11d.ss 
+
+infer [@arrvar,P,Q,update_array_1d] requires P(a) ensures Q(a,a',res);
+
+# why is there exception despite @arrvar?
+
+!!! **omega.ml#673:WARNING: exception from Omega.is_valid
+!!! **omega.ml#673:WARNING: exception from Omega.is_valid
+
+# need to fix fixcalc
+
+Correct RElDEFN:
+[RELDEFN Q: ( a'[4]=res & update_array_1d(a,a',10,5) & P(a)) 
+     -->  Q(a,a',res)]
+
+# However, it seems we cannot handle update_array_Id subsequently..
+
+ERROR: at _0:0_0:0
+Message: compute_def:Error in translating the input for fixcalc
+!!! PROBLEM with fix-point calculation
+ExceptionFailure("compute_def:Error in translating the input for fixcalc")Occurred!
+Error1(s) detected at main 
+Stop Omega... 46 invocations caught
+
 ===================================================================
 ===================================================================
 ===================================================================
