@@ -600,7 +600,9 @@ module EPURE =
     let elim_unsat_disj disj =
       List.filter (fun f -> not(unsat f)) disj
 
-    let is_false_disj disj = disj==[]
+    let is_false_disj disj =
+      List.for_all (fun epf -> unsat epf) disj
+      (* disj==[] *)
 
     let mk_false_disj = []
 
@@ -995,7 +997,9 @@ module EPUREN =
     let elim_unsat_disj disj =
       List.filter (fun f -> not(unsat f)) disj
 
-    let is_false_disj disj = disj==[]
+    let is_false_disj disj =
+      List.for_all (fun epf -> unsat epf) disj
+      (* disj==[] *)
 
     let mk_false_disj = []
 

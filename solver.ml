@@ -2747,7 +2747,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
     let t1 = x_add_1 Expure.build_ef_heap_formula h views in
     let t2 = x_add_1 Expure.build_ef_pure_formula (Mcpure.pure_of_mix p) in
     let d = Excore.EPureI.mk_star_disj t1 t2 in
-    let d = Excore.EPureI.elim_unsat_disj d in
+    (* let d = Excore.EPureI.elim_unsat_disj d in *)
     (Excore.EPureI.is_false_disj d)
     (* let p = MCP.translate_level_mix_formula p in *)
     (* let ph,_,_ = x_add xpure_heap 1 prog h p 1 in *)
