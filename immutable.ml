@@ -2393,11 +2393,29 @@ let norm_post_formula_helper (sv1,l1) (sv2,l2) vars_post aset =
   let sv1 = if abs_candidate sv1 aset vars_post then Some (f_norm_post_imm_var (CP.Var (sv1,l1)) l1) else None in
   let sv2 = if abs_candidate sv2 aset vars_post then Some (f_norm_post_imm_var (CP.Var (sv2,l2)) l2) else None in
   let res = match sv1,sv2 with 
-    | Some e, None
-    | None, Some e     -> [e]
-    | None, None       -> []
-    | Some e1, Some e2 -> [e1;e2]
+    | Some e, _
+    | _, Some e  -> Some e
+    | None, None -> None
+    (* | Some e1, Some e2 -> Some e1 (\*TODOIMM loosing e2?*\) *)
   in res
+
+let norm_subann sv1 e1 e2 loc vars_post aset =
+  match e2 with
+    | CP.AConst (Lend, _) ->
+          let pos_var = CP.EMapSV.mem sv1 vars_post in
+          let res_ex = if pos_var then f_norm_post_imm_var e1 loc else f_norm_pre_imm_var e1 loc in
+          (Some res_ex, false)
+    | CP.Var (sv, _) ->
+          if (CP.is_lend_sv ~emap:aset sv) then (Some (f_norm_pre_imm_var e1 loc), false)
+          else (None, true)
+    | _ -> (None, true)
+
+let norm_eq e1 e2 loc vars_post aset =
+  match e1,e2 with
+    | CP.Var (sv1, loc1), CP.Var (sv2, loc2) ->
+          let res = norm_post_formula_helper (sv1,loc1) (sv2,loc2) vars_post aset in
+          map_opt_def (None,true) (fun x -> (Some x,false)) res
+    | _ -> (None, true)
 
 (* a<:@L ---> a=@L *)
 let norm_imm_rel_formula vars_post (rel:CP.formula): CP.formula  =
@@ -2409,26 +2427,14 @@ let norm_imm_rel_formula vars_post (rel:CP.formula): CP.formula  =
     let (p_f, bf_ann) = b in
     let p_f = 
       match p_f with
-        | CP.SubAnn (CP.Var(sv1,l1) as e1,e2,l) -> begin
-                match e2 with
-                  | CP.AConst (Lend, loc) -> fixpt := false;
-                        let pos_var = CP.EMapSV.mem sv1 vars_post in
-                        if pos_var then f_norm_post_imm_var e1 loc else f_norm_pre_imm_var e1 loc 
-                  | CP.Var (sv, loc) ->
-                        if (CP.is_lend_sv ~emap:aset sv) then begin fixpt := false; f_norm_pre_imm_var e1 loc end
-                        else p_f
-                  | _ -> p_f
-              end
-        | CP.Eq (e2,e1,l)->  begin
-                match e1,e2 with
-                  | CP.Var (sv1, loc1), CP.Var (sv2, loc2) ->
-                        let lst = norm_post_formula_helper (sv1,loc1) (sv2,loc2) vars_post aset in
-                        let res_ex = match lst with
-                          | []   -> p_f
-                          | h::t -> fixpt := false; h (* TODOIMM: this is incomplete - i'm losing t *)
-                        in res_ex
-                  | _ -> p_f
-              end
+        | CP.SubAnn (CP.Var(sv1,l1) as e1,e2,l) -> 
+              let res_ex, fix = norm_subann sv1 e1 e2 l vars_post aset in
+              let () = if not fix then fixpt := false else () in
+              map_opt_def p_f (fun x -> x) res_ex
+        | CP.Eq (e2,e1,l)-> 
+              let res_ex, fix = norm_eq e1 e2 l vars_post aset in
+              let () = if not fix then fixpt := false else () in
+              map_opt_def p_f (fun x -> x) res_ex
         | _ -> p_f in
     Some (p_f, bf_ann) in
 
