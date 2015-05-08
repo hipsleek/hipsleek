@@ -1724,6 +1724,13 @@ let rec expand_array_variable
   remove_dupl_spec_var_list (helper f svlst)
 ;;
 
+let expand_array_variable
+      (f:formula) (svlst:spec_var list): (spec_var list) =
+  if !Globals.array_translate
+  then expand_array_variable f svlst
+  else svlst
+;;
+
 (* The input formula for this process must be normalized *)
 let rec process_exists_array
     (f:formula):formula =
@@ -2091,14 +2098,23 @@ let new_translate_out_array_in_imply_split_full
 (*   else (ante,conseq) *)
 (* ;; *)
 
-let translate_preprocess
-    (f:formula):formula =
-  let f = translate_array_relation f in
+let translate_preprocess_helper
+     (translate_relation:bool) (f:formula):formula =
+  let f =
+    if translate_relation then
+      translate_array_relation f
+    else
+      f
+  in
   let f = standarize_one_formula f in
   let f = process_quantifier f in
   let f = process_exists_array f in
   f
 ;;
+
+let translate_preprocess = translate_preprocess_helper true;;
+
+let translate_preprocess_keep_relation = translate_preprocess_helper false;;
 
 let translate_preprocess f =
   Debug.no_1 "translate_preprocess" !print_pure !print_pure translate_preprocess f
@@ -2146,6 +2162,20 @@ let new_translate_out_array_in_one_formula_full
   new_translate_out_array_in_one_formula f
 ;;
 
+let new_translate_out_array_in_one_formula_full_keep_relation
+    (f:formula):formula=
+  let f = translate_preprocess_keep_relation f in
+  new_translate_out_array_in_one_formula f
+;;
+
+let new_translate_out_array_in_one_formula_full_keep_relation
+    (f:formula):formula =
+  match f with
+  | Or(f1,f2,fl,loc) ->
+        Or(new_translate_out_array_in_one_formula_full_keep_relation f1,new_translate_out_array_in_one_formula_full_keep_relation f2,fl,loc)
+  | _ -> new_translate_out_array_in_one_formula_full_keep_relation f
+;;
+
 (* let new_translate_out_array_in_one_formula_full  *)
 (*     (f:formula):formula= *)
 (*   let f = translate_array_relation f in *)
@@ -2159,7 +2189,7 @@ let new_translate_out_array_in_one_formula_full
     (f:formula):formula =
   match f with
   | Or(f1,f2,fl,loc) ->
-    Or(new_translate_out_array_in_one_formula_full f1,new_translate_out_array_in_one_formula_full f2,fl,loc)
+        Or(new_translate_out_array_in_one_formula_full f1,new_translate_out_array_in_one_formula_full f2,fl,loc)
   | _ -> new_translate_out_array_in_one_formula_full f
 ;;
 
@@ -2168,9 +2198,14 @@ let new_translate_out_array_in_one_formula_full
 (*   split_and_process (process_quantifier f) can_be_simplify new_translate_out_array_in_one_formula_full *)
 (* ;; *)
 
+let new_translate_out_array_in_one_formula_split_keep_relation
+    (f:formula):formula =
+  split_and_combine new_translate_out_array_in_one_formula_full_keep_relation (x_add_1 can_be_simplify) (f)
+;;
+
 let new_translate_out_array_in_one_formula_split
     (f:formula):formula =
-  split_and_combine new_translate_out_array_in_one_formula_full (x_add_1 can_be_simplify) (translate_array_relation f)
+  split_and_combine new_translate_out_array_in_one_formula_full (x_add_1 can_be_simplify) (f)
 ;;
 
 (* let new_translate_out_array_in_one_formula_split *)
@@ -2179,6 +2214,13 @@ let new_translate_out_array_in_one_formula_split
 (*   then new_translate_out_array_in_one_formula_split f *)
 (*   else f *)
 (* ;; *)
+
+let new_translate_out_array_in_one_formula_split_keep_relation
+    (f:formula):formula =
+  if !Globals.array_translate  (* Globals.infer_const_obj # is_arr_as_var *)
+  then Debug.no_1 "new_translate_out_array_in_one_formula_split" !print_pure !print_pure (fun f -> new_translate_out_array_in_one_formula_split_keep_relation f) f
+  else f
+;;
 
 let new_translate_out_array_in_one_formula_split
     (f:formula):formula =

@@ -1,18 +1,22 @@
 //hip_include '../prelude_aux.ss'
 //#option --ato
 relation P(int a).
-//relation Q(int a,int b,int r).
+relation Q(int a,int b,int r).
 relation R(int a,int[] b,int r).
 
-//infer [P,Q]  res=k & k=a' & P(a) |-  emp&Q(a,a',res) . 
-//print residue.
+infer [P,Q]  res=k & k=a' & P(a) |-  emp&Q(a,a',res).
+print residue.
 
-infer [P,R]  res=k & k=aa[4] & P(a) |-  emp&R(a,aa,res) . 
-//print residue.
+infer [P,R]  res=k & k=aa[4] & P(a) |-  emp&R(a,aa,res).
+print residue.
 
 /*
 # ex11d2.slk
 
+
+@2! **infer.ml#1907:rel_rhs:[ R(a,aa,res)] ### differece. For normal case, the variable can just be collected, but for array, not the array element, but the array itself is picked up.
+
+=====================================
 
 intermediate k not being picked up for aa[4]?
 

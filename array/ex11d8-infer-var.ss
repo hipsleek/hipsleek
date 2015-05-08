@@ -1,17 +1,13 @@
 //hip_include '../prelude_aux.ss'
 //#option --ato
-relation P(int[] a).
-  relation Q(int[] a,int[] b,int r).
+relation P(int a,int b).
+  relation Q(int a,int b,int c,int r, int q).
 
-int foo(ref int[] a)
- //infer [@arrvar] requires true ensures res=a[5];
-//  infer [@arrvar,P,Q] requires P(a) ensures Q(a,a',res);
-  infer [@arrvar,P,Q,update_array_1d] requires P(a) ensures Q(a,a',res);
-// requires true ensures update(a,a',10,5) & res=a[4];
-// requires true ensures a'[5]=10 & res=a[4];
+  int foo(ref int a_5, ref int a_4)
+  infer [P,Q] requires P(a_4,a_5) ensures Q(a_4,a_4',a_5,a_5',res);
 {
-  a[5]=10;
-  return a[4];
+  a_5=10;
+  return a_4;
 }
 
 /*
@@ -43,7 +39,27 @@ Stop Omega... 46 invocations caught
 
 [RELDEFN Q: ( 
 a'[4]=res & update_array_1d(a,a',10,5) & P(a)) -->  Q(a,a',res)
-]
+
+
+// unchanged(a,a',fun i->i!=5)
+
+
+a'[4]=res & a'[5]=10 & forall(i!=5->a'[i]=a[i]) & P(a) 
+    -->  Q(a,a',res)
+
+a'[4]=res & a'[5]=10 & P(a) & a'[4]=a[4]
+    -->  Q(a,a',res)
+
+[RELDEFN Q: 
+ ( a_5'=10 & res=a_4' & a_4'=a_4 & P(a_4,a_5)) 
+    -->  Q(a_4,a_4',a_5,a_5',res)]
+
+a[4],a[5];a'[4],a'[5]
+
+
+[RELDEFN Q: ( a_5'=10 & a_4=res & P(a_4,a_5)) -->  Q(a_4,a_5,a_5',res)]
+
+// forall(i:i!=5->a'[i]=a[i])
 
 
 */
