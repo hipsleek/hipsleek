@@ -459,6 +459,11 @@ let build_eset_of_conj_formula f =
       | _ -> acc
     ) CP.EMapSV.mkEmpty lst in emap
 
+let build_eset_of_conj_formula f =
+  let pr = Cprinter.string_of_pure_formula in
+  let pr_out = CP.EMapSV.string_of in
+  Debug.no_1 "build_eset_of_conj_formula" pr pr_out build_eset_of_conj_formula f
+
 (* and contains_phase_debug (f : h_formula) : bool =   *)
 (*   Debug.no_1 "contains_phase" *)
 (*       (!print_h_formula)  *)
@@ -1561,7 +1566,7 @@ let merge_imm_ann ann1 ann2 =
           (* let constr1 = CP.mkSubAnn (CP.mkExpAnnSymb ann no_pos) fresh_var in *)
           (* let constr2 = CP.mkSubAnn (CP.Var(sv, no_pos)) fresh_var in *)
           (* (poly_ann, (constr1)::[constr2], [(fresh_v, Unprimed)]) *)
-          let constr = CP.mkEqMin fresh_var  (CP.mkExpAnnSymb ann no_pos) (CP.Var(sv, no_pos)) no_pos in
+          let constr = CP.mkEqMax fresh_var  (CP.mkExpAnnSymb ann no_pos) (CP.Var(sv, no_pos)) no_pos in
           let constr = CP.BForm ((constr, None), None) in
           (poly_ann, [constr], [(fresh_v, Unprimed)])
   | ann_n, _ -> let ann = if (subtype_ann 2  ann_n  ann2 ) then ann2 else  ann1 in
@@ -2376,24 +2381,52 @@ let merge_alias_nodes_struc_formula prog f xpure conseq  unfold_fun =
 
 (* ===============================  end - merging aliased nodes ================================= *)
 
+
+let f_norm_pre_imm_var e l = CP.mkEq e (CP.AConst (Lend, l)) l
+
+let f_norm_post_imm_var e l = CP.mkEq e (CP.AConst (Accs, l)) l
+
+let abs_candidate sv aset vars = (CP.is_ann_typ sv) && (CP.EMapSV.mem sv vars) && (CP.is_lend_sv ~emap:aset sv) 
+
+let norm_post_formula_helper (sv1,l1) (sv2,l2) vars_post aset =
+  (* check if var type is ann *)  (* check if is post var *)  (* check if var is equiv to @L *)
+  let sv1 = if abs_candidate sv1 aset vars_post then Some (f_norm_post_imm_var (CP.Var (sv1,l1)) l1) else None in
+  let sv2 = if abs_candidate sv2 aset vars_post then Some (f_norm_post_imm_var (CP.Var (sv2,l2)) l2) else None in
+  let res = match sv1,sv2 with 
+    | Some e, None
+    | None, Some e     -> [e]
+    | None, None       -> []
+    | Some e1, Some e2 -> [e1;e2]
+  in res
+
 (* a<:@L ---> a=@L *)
-let norm_rel_formula (rel:CP.formula): CP.formula  =
+let norm_imm_rel_formula vars_post (rel:CP.formula): CP.formula  =
   let f_f f = None in
   let f_e e = None in
   let fixpt = ref true in
+
   let f_b aset b = 
     let (p_f, bf_ann) = b in
     let p_f = 
       match p_f with
-        | CP.SubAnn (e1,e2,l) -> 
-              begin
+        | CP.SubAnn (CP.Var(sv1,l1) as e1,e2,l) -> begin
                 match e2 with
-                  | CP.AConst (Lend, loc) -> fixpt := false; CP.mkEq e1 e2 l 
+                  | CP.AConst (Lend, loc) -> fixpt := false;
+                        let pos_var = CP.EMapSV.mem sv1 vars_post in
+                        if pos_var then f_norm_post_imm_var e1 loc else f_norm_pre_imm_var e1 loc 
                   | CP.Var (sv, loc) ->
-                        let lend_const = CP.mkAnnSVar Lend in
-                        let rhs_is_lend = CP.EMapSV.is_equiv aset sv lend_const in
-                        fixpt := false; 
-                        CP.mkEq e1 e2 l
+                        if (CP.is_lend_sv ~emap:aset sv) then begin fixpt := false; f_norm_pre_imm_var e1 loc end
+                        else p_f
+                  | _ -> p_f
+              end
+        | CP.Eq (e2,e1,l)->  begin
+                match e1,e2 with
+                  | CP.Var (sv1, loc1), CP.Var (sv2, loc2) ->
+                        let lst = norm_post_formula_helper (sv1,loc1) (sv2,loc2) vars_post aset in
+                        let res_ex = match lst with
+                          | []   -> p_f
+                          | h::t -> fixpt := false; h (* TODOIMM: this is incomplete - i'm losing t *)
+                        in res_ex
                   | _ -> p_f
               end
         | _ -> p_f in
@@ -2408,15 +2441,16 @@ let norm_rel_formula (rel:CP.formula): CP.formula  =
     else rel in
   helper  rel
 
-let norm_rel_formula (rel:CP.formula): CP.formula  =
+let norm_imm_rel_formula ?post_vars:(vars_post=[]) (rel:CP.formula) : CP.formula  =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "norm_rel_formula" pr pr norm_rel_formula rel
+  let pr_lst = Cprinter.string_of_spec_var_list in
+  Debug.no_2 "norm_imm_rel_formula" pr_lst pr pr  norm_imm_rel_formula vars_post rel
 
 let norm_rel_list lst =
   List.map (fun (rel_ct,rel1,rel2) ->
       match rel_ct with
         | CP.RelAssume _ -> 
-              let rel2 = x_add_1 norm_rel_formula rel2 in
+              let rel2 = (* x_add_1 *) norm_imm_rel_formula rel2 in
               (rel_ct, rel1, rel2)
         | _ -> (rel_ct,rel1,rel2) 
   ) lst

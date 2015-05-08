@@ -13560,9 +13560,14 @@ let is_imm_sv sv =
   if not (is_ann_typ sv) then false
   else eq_spec_var sv (mkAnnSVar Imm)
 
-let is_lend_sv sv = 
+let is_lend_sv ?emap:(em=[]) sv = 
   if not (is_ann_typ sv) then false
-  else eq_spec_var sv (mkAnnSVar Lend)
+  else 
+    if eq_spec_var sv (mkAnnSVar Lend) then true
+    else
+      let lend_const = mk_sv_aconst Lend in
+      let is_lend = EMapSV.is_equiv em sv lend_const in
+      is_lend
 
 let is_accs_sv sv = 
   if not (is_ann_typ sv) then false
