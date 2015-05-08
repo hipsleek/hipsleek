@@ -7558,7 +7558,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                            )  c)) cl in
                                   SuccCtx(new_cl) in
                               (* let () = print_string("\nNEW Ctx: "^(Cprinter.string_of_list_context new_ctx)^"\n") in *)
-                              x_tinfo_hp (add_str "new_ctx" (Cprinter.string_of_list_context)) new_ctx no_pos;
+                              x_binfo_hp (add_str "new_ctx" (Cprinter.string_of_list_context)) new_ctx no_pos;
                               (new_ctx, proof)
                             )
                         )

@@ -1,0 +1,32 @@
+# pprint/ex22g9*.ss
+
+hg update pprint
+make
+cd pprint
+../hip ex22g9-multi-pre.ss 
+
+
+Improve the indentation to two spaces per level
+
+INSTEAD OF
+----------
+!!! **solver.ml#7561:new_ctx: 
+MustErr Context: 
+                  fe_kind: MUST
+                  fe_name: logical bug
+                  fe_locs: {
+                            fc_message:  x'!=null |-  x'=null. LOCS:[9;10;13] (must-bug)
+                            fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}}
+[[empty]]
+CEX:false
+
+EXPECTS:
+-------
+MustErr Context: 
+  fe_kind: MUST
+  fe_name: logical bug
+  fe_locs: {
+    fc_message:  x'!=null |-  x'=null. LOCS:[9;10;13] (must-bug)
+    fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}}
+[[empty]]
+CEX:false
