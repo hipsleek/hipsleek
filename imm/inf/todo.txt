@@ -386,6 +386,23 @@ We need below, as highlighted in:
   requires c::cell<v>@L
   ensures c::cell<v>@A & res=v  ;
 =======================================================
+# ex3d7c.slk
+
+checkentail x::cell<a>@L |- x::cell<b>@v & v=@A.
+print residue.
+
+Entail 2: Fail.(must) cause: @L=v |-  v=@A. LOCS:[0;9] (must-bug)
+
+Solution : either (i) substitute (ii) use explicit
+instantation (iii) post-process
+*/
+
+checkentail x::cell<a>@L |- (exists v: x::cell<b>@v & v=@A).
+print residue.
+/*
+Residue:
+ <1>x::cell<a>@L&b=a&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
 =======================================================
 =======================================================
 =======================================================
