@@ -365,6 +365,26 @@ To:
 !!! **pi.ml#657:REL PRE :  P1(a)
 !!! **pi.ml#658:PRE :  a=@L
 =======================================================
+# ex3d7.ss --reverify
+
+  infer [P1,P2]
+  requires c::cell<v>@a & P1(a)
+     ensures  c::cell<v>@b & P2(a,b,v,res)  ;
+
+The above failed, as follows:
+
+Post condition cannot be derived:
+  (must) cause:  @L=@L & @L<:b_1458 & @L=b_1458 |-  b_1458=@A. LOCS:[1;0] (must-bug)
+
+despite inferring:
+
+  requires c::cell<v>@a & a=@L
+  ensures c::cell<v>@b & res=v & a=@A  ;
+
+We need below, as highlighted in:
+
+  requires c::cell<v>@L
+  ensures c::cell<v>@A & res=v  ;
 =======================================================
 =======================================================
 =======================================================

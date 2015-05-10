@@ -12,19 +12,36 @@ int foo(cell c)
 */
   infer [P1,P2]
   requires c::cell<v>@a & P1(a)
-     ensures c::cell<v>@b & P2(a,b,v,res)  ;
+  ensures c::cell<v>@b & P2(a,b,v,res)  ;
 
 {
  int x = c.fst;
  return x;
 }
 /*
-# ex3d7.ss
+# ex3d7.ss --reverify
 
   infer [P1,P2]
   requires c::cell<v>@a & P1(a)
-     ensures c::cell<v>@b & P2(a,b,v,res)  ;
+     ensures  c::cell<v>@b & P2(a,b,v,res)  ;
 
+The above failed, as follows:
+
+Post condition cannot be derived:
+  (must) cause:  @L=@L & @L<:b_1458 & @L=b_1458 |-  b_1458=@A. LOCS:[1;0] (must-bug)
+
+despite inferring:
+
+  requires c::cell<v>@a & a=@L
+  ensures c::cell<v>@b & res=v & a=@A  ;
+
+We need below, as highlighted in:
+
+  requires c::cell<v>@L
+  ensures c::cell<v>@A & res=v  ;
+
+
+==================================
 
 [RELASS [P1]: ( P1(a)) -->  a<:@L,
 RELDEFN P2: ( res=v & b_1458=a & a<:@L & P1(a)) -->  P2(a,b_1458,v,res)]
