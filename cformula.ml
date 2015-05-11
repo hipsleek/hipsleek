@@ -10036,7 +10036,10 @@ let gen_lor_x (m1,n1,e1) (m2,n2,e2) : (failure_kind * string * (entail_state opt
   | _, Failure_Bot _ -> m1,n1,e1
   (*report_error no_pos "Failure_None not expected in gen_or"*)
   | Failure_May m1, Failure_May m2 -> Failure_May ("OrL[\n"^m1^",\n"^m2^"\n]"),n1, None
+  | Failure_May m1, Failure_Must m2 -> Failure_May ("OrL[\n"^m1^",\n"^m2^"\n]"),n1, None
   | Failure_May m, _ -> Failure_May m, n1,None
+  (* demo/ex21a10-case *)
+  | Failure_Must m1, Failure_May m2 -> Failure_May ("OrL[\n"^m1^",\n"^m2^"\n]"),n2, None
   | _, Failure_May m -> Failure_May m,n2,None
   | Failure_Must m1, Failure_Must m2 ->
     if (n1=sl_error) then (Failure_Must m2, n2, e2)
