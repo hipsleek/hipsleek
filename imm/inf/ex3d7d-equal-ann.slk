@@ -2,6 +2,20 @@ data cell {
   int val;
 }.
 
+
+checkentail x::cell<a>@u & u=@L |- x::cell<b>@v & v=@A.
+print residue.
+
+checkentail x::cell<a>@u & u=@L |- x::cell<b>@v & v=@M.
+print residue.
+
+checkentail x::cell<a>@u & u=@L |- x::cell<b>@v & v=@L.
+print residue.
+
+checkentail x::cell<a>@u & u=@L |- x::cell<b>@v.
+print residue.
+
+
 checkentail x::cell<a>@L |- x::cell<b>@A.
 print residue.
 //succeed
