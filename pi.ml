@@ -670,6 +670,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
           (*     x_binfo_zp (lazy (("REL PRE : "^Cprinter.string_of_pure_formula rel_pre))) no_pos; *)
           (*     x_binfo_zp (lazy (("PRE : "^Cprinter.string_of_pure_formula pre))) no_pos *)
           (*   ) tuples in *)
+          let triples = List.map (fun (a,b,c,d) -> (a,b,c,d)) tuples in
           let new_specs = if triples = [] then
               List.map (fun old_spec -> fst (Fixpoint.simplify_relation old_spec None
                                                pre_vars post_vars_wo_rel prog true (* inf_post_flag *) evars lst_assume)) proc_specs
