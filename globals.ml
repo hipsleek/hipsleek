@@ -1350,6 +1350,7 @@ type infer_type =
   | INF_ERROR (* For infer[@error] *)
   | INF_DE_EXC (* For infer[@dis_err] *)
   | INF_ERR_MUST (* For infer[@err_must] *)
+  | INF_PRE_MUST (* For infer[@pre_must] *)
   | INF_ERR_MUST_ONLY (* For infer[@err_must_only] *)
   | INF_ERR_MAY (* For infer[@err_may] *)
   | INF_SIZE (* For infer[@size] *)
@@ -1380,6 +1381,7 @@ let string_of_inf_const x =
   | INF_ERROR -> "@error"
   | INF_DE_EXC -> "@dis_err"
   | INF_ERR_MUST -> "@err_must"
+  | INF_PRE_MUST -> "@pre_must"
   | INF_ERR_MUST_ONLY -> "@err_must_only"
   | INF_ERR_MAY -> "@err_may"
   | INF_SIZE -> "@size"
@@ -1534,6 +1536,8 @@ class inf_obj  =
     method is_err_must  = not(self # get INF_DE_EXC)
                           && not(self # get INF_ERR_MAY) 
                           && self # get INF_ERR_MUST
+    method is_pre_must  = not(self # get INF_DE_EXC)
+                          && self # get INF_PRE_MUST
     method is_err_must_only  = not(self # get INF_DE_EXC)
                           && not(self # get INF_ERR_MAY) 
                           && not(self # get INF_ERR_MUST)

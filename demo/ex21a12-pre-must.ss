@@ -34,6 +34,7 @@ bool foo2(cell x)
   return x==null;
 }
 
+
 bool foo3(cell x)
   requires true
   ensures res ;
@@ -43,6 +44,7 @@ bool foo3(cell x)
   dprint;
   return x==null;
 }
+
 
 
 /*

@@ -9397,6 +9397,15 @@ let print_failure_kind_full = ref(fun (c:failure_kind) -> "printer not initializ
 let print_fail_type = ref(fun (c:fail_type) -> "printer not initialized")
 
 
+
+let rec is_infer_pre_must sf = match sf with
+  | EList el -> List.exists (fun (lbl,sf) ->
+      is_infer_pre_must sf) el
+  | EInfer ei ->
+    let inf_obj = ei.formula_inf_obj in
+    (inf_obj # is_pre_must)
+  | _ -> false
+
 let is_dis_err_exc es = 
   es.es_infer_obj # is_dis_err_all
 

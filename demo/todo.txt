@@ -1241,7 +1241,7 @@ valid
 
 
 ==========================================================================
-  # ex21a12.ss
+  # ex21a12.ss: DONE
 
 void pre_call(cell x)
   infer [@pre_must]
@@ -1255,7 +1255,7 @@ void pre_call(cell x)
    such pre-condition. This may be for primitives with
    must rather than may pre-conditions
 ==========================================================================
-# ex22g9.ss --efa-exc 
+# ex22g9.ss --efa-exc : FIXED
 
 How come there is a 
  true |-  res=3. LOCS:[0;11] (may-bug)

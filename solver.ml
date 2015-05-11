@@ -12656,15 +12656,19 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                               (CF.mkFailCtx_in ft (* (Basic_Reason (mkFailContext msg must_estate (Base rhs_b) None pos, *)
                                                (*                CF.mk_failure_must (msg) sl_error, estate.es_trace)) *) ( (convert_to_must_es must_estate), msg, Failure_Must msg) (mk_cex true), NoAlias)
                             else
-                              let msg = if flag1 && not flag2 then msg ^ "(must)" else msg ^ "(may)" in
                               (*/sa/error/ex2.slk: unmatch rhs: may failure *)
-                              let may_estate = {estate with es_formula = CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula} in
-                              let ft = (Basic_Reason (mkFailContext msg may_estate (Base rhs_b) None pos,
-                                                              CF.mk_failure_may (msg) sl_error, estate.es_trace)) in
-                              (* let may_estate = x_add add_err_to_estate (msg, ft, CF.Failure_May msg) may_estate in *)
-                               (* let may_estate = {may_estate with es_final_error = Some (msg, ft, CF.Failure_May msg)} in *)
-                              (CF.mkFailCtx_in ft (* (Basic_Reason (mkFailContext msg may_estate (Base rhs_b) None pos, *)
-                                               (*                CF.mk_failure_may (msg) sl_error, estate.es_trace)) *) ((convert_to_may_es may_estate), msg, Failure_May msg) (mk_cex false), NoAlias)
+                              if flag1 && not flag2 then
+                                let msg = msg ^ "(must)" in
+                                let must_estate = {estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.es_formula} in
+                              let ft = (Basic_Reason (mkFailContext msg must_estate (Base rhs_b) None pos,
+                                                              CF.mk_failure_must (msg) sl_error, estate.es_trace)) in
+                              (CF.mkFailCtx_in ft ((convert_to_must_es must_estate), msg, Failure_Must msg) (mk_cex false), NoAlias)
+                              else
+                                let msg = msg ^ "(may)" in
+                                let may_estate = {estate with es_formula = CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula} in
+                                let ft = (Basic_Reason (mkFailContext msg may_estate (Base rhs_b) None pos,
+                                                        CF.mk_failure_may (msg) sl_error, estate.es_trace)) in
+                                (CF.mkFailCtx_in ft ((convert_to_may_es may_estate), msg, Failure_May msg) (mk_cex false), NoAlias)
                           (* TODO:WN:HVar *)
                           | HVar (v,hvar_vs) -> (* Do the instantiation for the HVar v *)
                             let succ_estate =
