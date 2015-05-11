@@ -83,3 +83,9 @@ infer [a]
   |- 6 + (a[3]) > 1.
 print residue.
 
+// 16
+infer [a]
+  i=2
+  |- a[i] = 5.
+print residue.
+

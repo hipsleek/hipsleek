@@ -437,17 +437,28 @@ and check_specs_infer_a0 (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
   let pr5 = pr_list (pr_pair (pr_pair Cprinter.string_of_spec_var (pr_list string_of_int)) Cprinter.string_of_xpure_view) in
   let pr3 = pr_octa pr1 pr2a  pr2 pr2b pr4 pr4 pr5 string_of_bool in
   let pr_exp = Cprinter.string_of_exp in
-  let classic_flag = determine_infer_classic sp in
-  let ck_sp = (check_specs_infer_a prog proc ctx e0 do_infer) in
+  let arr_as_var_flag = CF.determine_infer_type sp INF_ARR_AS_VAR in
+  let classic_flag = CF.determine_infer_classic sp in
+  let ck_sp x = (check_specs_infer_a prog proc ctx e0 do_infer) x in
   let fn x = if classic_flag then wrap_classic (Some true) ck_sp x else ck_sp x in
+  (* let fn x =  *)
+  (*   if field_imm_flag then wrap_field_imm (Some true) fn x  *)
+  (*   else fn x in *)
+  let fn x = 
+    if arr_as_var_flag then wrap_arr_as_var fn x 
+    else fn x in
   Debug.no_2 "check_specs_infer" pr1 pr_exp pr3
     (fun _ _ -> fn sp) sp e0
 
-and determine_infer_classic sp = match sp with
-  | CF.EInfer b ->
-    let inf_o = b.CF.formula_inf_obj in
-    inf_o # is_classic
-  | _ -> false 
+(* move to cformula *)
+(* and determine_infer_type sp t  = match sp with *)
+(*   | CF.EInfer b -> *)
+(*     let inf_o = b.CF.formula_inf_obj in *)
+(*     inf_o # get t *)
+(*   | _ -> false  *)
+
+(* and determine_infer_classic sp  =  *)
+(*   determine_infer_type sp INF_CLASSIC *)
 
 and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (e0:exp) (do_infer:bool) (spec: CF.struc_formula)
   : CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *(CF.hprel list) * (CP.spec_var list)* (CP.spec_var list) * ((CP.spec_var * int list)  *CP.xpure_view ) list * bool =
@@ -2461,8 +2472,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let pr2 = Cprinter.string_of_list_failesc_context in
               let pr3 = Cprinter.string_of_struc_formula in
               (* let () = Log.update_sleek_proving_kind Log.PRE in *)
+              let wrap_fnc = if CF.is_infer_pre_must org_spec then wrap_err_must else wrap_err_pre in
               let pre_post_op_wrapper a b c =
-                wrap_err_pre (* (Some false) *) (check_pre_post_orig a b) c
+                (* wrap_err_pre *) wrap_fnc (* (Some false) *) (check_pre_post_orig a b) c
               in
               let pk = if ir then PK_PRE_REC else PK_PRE in
               let f = wrap_proving_kind pk  ((* check_pre_post_orig *) pre_post_op_wrapper org_spec sctx) in
@@ -2511,7 +2523,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 (* let () = Debug.info_zprint (lazy (("   caller:" ^ proc0.proc_name))) no_pos in *)
                 let () = update_callee_hpdefs_proc prog.Cast.new_proc_decls proc0.proc_name mn in
                 let idf = (fun c -> c) in
-                let to_print = "Proving precondition in method " ^ proc.proc_name ^ "(" ^ (string_of_loc pos) ^ ") Failed (may)" in
+                let err_kind_msg = if CF.is_infer_pre_must (proc.proc_stk_of_static_specs#top) then "must" else "may" in
+                let to_print = "Proving precondition in method " ^ proc.proc_name ^ "(" ^ (string_of_loc pos) ^
+                  ") Failed (" ^  err_kind_msg ^ ")" in
                 CF.transform_list_failesc_context (idf,idf,
                                                    (fun es -> CF.Ctx{es with CF.es_formula = 
                                                                                Norm.imm_norm_formula prog es.CF.es_formula Solver.unfold_for_abs_merge pos;
@@ -3758,7 +3772,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                   (*         in *)
                   (*         let () = x_dinfo_hp (add_str "post_rel_df_new" (pr_list (pr_pair pr pr))) post_rel_df_new no_pos in *)
                   (*         let pre_invs,post_invs = *)
-                  (*           CF.get_pre_post_invs pre_rel_ids post_rel_ids (Fixpoint.get_inv prog) (proc.proc_stk_of_static_specs # top) in *)
+                  (*           x_add CF.get_pre_post_invs pre_rel_ids post_rel_ids (Fixpoint.get_inv prog) (proc.proc_stk_of_static_specs # top) in *)
                   (*         let post_inv = CP.join_disjunctions post_invs in *)
                   (*         let () = Debug.ninfo_hprint (add_str "post_inv" pr ) post_inv no_pos in *)
                   (*         let bottom_up_fp0 = x_add Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars proc_spec in *)

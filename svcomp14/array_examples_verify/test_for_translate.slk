@@ -2,7 +2,7 @@ checkentail
    x'=x
    & a[5] = x
    & res=1+x'
-  |-   a[5]=x & res=1+x.
+   |- a[5]=x & res=1+x.
 
 //(2)
 checkentail
@@ -46,11 +46,16 @@ checkentail
   & b[i] = 5
   |- a[5]=3 & b[5]=5.
 
-/*
+
+checkentail
+  a[i] = 3
+  & i>5
+    |- a[6]=3 .
+
 checkentail
    a[2+5]=5
    |-a[1+6]=5.
-*/
+
 
 //(8)
 checkentail
@@ -60,13 +65,31 @@ checkentail
 
 //(9)
 checkentail
-   a[a[1]]=5 & a[1]=5
-   |- a[5]=5.
+  a[a[1]]=5 & a[1]=5
+  |- a[5]=5.
 // --ato cannot handle..
 
 checkentail
   a[t1]=6 & t1=a[1] & a[1]=5
   |-  a[5]=6.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /*

@@ -49,7 +49,7 @@ let parse (input : string) : command =
 	  | _ -> failwith ("Unsupported command: " ^ cmd)
 *)
 
-let parse_slk (input : string) : command =  Parser.parse_sleek_int "sleek string" input
+let parse_slk (input : string) : command =  x_add_1 Parser.parse_sleek_int "sleek string" input
 
 (* let parse (input : string) : command =   *)
 (*   Debug.loop_1_no "parse" (fun x -> x) (fun _ -> "?") parse input *)
@@ -57,7 +57,7 @@ let parse_slk (input : string) : command =  Parser.parse_sleek_int "sleek string
 let list_parse (input_file) : command list =
   let org_in_chnl = open_in input_file in
   Globals.input_file_name:= input_file;
-  let cmd = Parser.parse_sleek input_file (Stream.of_channel org_in_chnl) in
+  let cmd = x_add_1 Parser.parse_sleek input_file (Stream.of_channel org_in_chnl) in
   close_in org_in_chnl;
   cmd
 

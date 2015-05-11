@@ -1,0 +1,6 @@
+
+// --temp-opt
+infer [@err_must] n<0 or n>3 |- n>1.
+print residue.
+
+//expect may.

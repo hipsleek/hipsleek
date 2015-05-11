@@ -1197,7 +1197,7 @@ res:  1[
    es_final_error:[ true |-  res. LOCS:[19;15] (may-bug)]
    ]
 ==========================================================================
-# ex21a11
+# ex21a11 (OK)
 
 
 !!! **wrapper.ml#148:Calling wrap_err_pre
@@ -1226,9 +1226,86 @@ res:  1[
    es_final_error:[ !(res) |-  res. LOCS:[15;10] (must-bug)]
    ]
 ==========================================================================
+#ex22-lor.slk: FIXED
+
+GOT:
+Entail 1: Fail.(must) cause: n<0 |-  1<n. LOCS:[3] (must-bug)
+
+---------
+EXPECTED
+
+Entail 1: Fail.(may) cause:OrL[
+ n<0 |-  1<n. LOCS:[3] (must-bug),
+valid
+]
+
+
 ==========================================================================
+  # ex21a12.ss: DONE
+
+void pre_call(cell x)
+  infer [@pre_must]
+  requires x::cell<_> 
+  ensures x::cell<3>;
+
+   this @pre_must tag indicates a pre-condition that must be
+   be satisfied. When tag is present, we must ensure
+   must failure if there is contradiction with the
+   pre-condition. This is we must use wrap_must_err for
+   such pre-condition. This may be for primitives with
+   must rather than may pre-conditions
 ==========================================================================
+# ex22g9.ss --efa-exc : FIXED
+
+How come there is a 
+ true |-  res=3. LOCS:[0;11] (may-bug)
+
+This should not have arisen..
+
+Post condition cannot be derived:
+  (may) cause: AndR[
+1.2b: ante flow:__MayError#E conseq flow: __norm#E are incompatible flow types;
+Proving precondition in method pre_call$cell(1 File "ex22g9-multi-pre.ss",Line:13,Col:2) Failed (may);
+ x'!=null |-  x'=null. LOCS:[9;10;13] (may-bug),
+ true |-  res=3. LOCS:[0;11] (may-bug)
+]
+
+-dd
+
+!!! **solver.ml#7561:new_ctx: 
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message:  true |-  res=3. LOCS:[0;11] (may-bug)
+                             fc_current_lhs_flow: {FLOW,(4,11)=__MayError#E}}
+[[empty]]
+CEX:false
 ==========================================================================
+# ex22g13.slk: FIXED
+
+The 2nd message is unnecessary on flow conflicts..
+
+infer[@err_must] emp&x!=null & x'=x & flow __MayError
+ |-  emp&res=3& flow __norm. 
+
+MaybeErr Context: 
+                   
+                    fe_kind: MAY
+                    fe_name: undefined
+                    fe_locs: {
+                              fc_message: 
+                               1.2b: ante flow:__MayError#E conseq flow: __norm#E are incompatible flow types
+                              fc_current_lhs_flow: {FLOW,(4,8)=__MayError#E}}
+[[empty]]
+                  FAIL_AND 
+                   
+                    fe_kind: MAY
+                    fe_name: logical bug
+                    fe_locs: {
+                              fc_message:  true |-  res=3. LOCS:[0;3] (may-bug)
+                              fc_current_lhs_flow: {FLOW,(4,8)=__MayError#E}}
+[[empty]]
 ==========================================================================
 ==========================================================================
 ==========================================================================

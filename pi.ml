@@ -550,6 +550,9 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
       let post_vars = CP.remove_dups_svl all_posts in
       try
         begin
+          let proc_spec = List.hd proc_specs in
+          let flag = CF.determine_arr_as_var proc_spec in
+          let wrap f x = if flag then Wrapper.wrap_arr_as_var f x else f x in
           let () = DD.ninfo_pprint ">>>>>> do_compute_fixpoint <<<<<<" no_pos in
           let tuples =
             let rels = Gen.Basic.remove_dups rels in
@@ -593,7 +596,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let pre_invs,post_invs =
               List.fold_left (fun (pre_invs,post_invs) proc ->
                   let new_pre_invs,new_post_invs =
-                    CF.get_pre_post_invs pre_rel_ids post_rel_ids (Fixpoint.get_inv prog) (proc.proc_stk_of_static_specs # top) in
+                    x_add CF.get_pre_post_invs pre_rel_ids post_rel_ids (Fixpoint.get_inv prog) (proc.proc_stk_of_static_specs # top) in
                   (pre_invs@new_pre_invs,post_invs@new_post_invs)
                 ) ([],[]) scc
             in
@@ -609,9 +612,11 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                   ) ("(" ^ (pr pf1) ^")",(pr pf2) ^ " = ") tl in
             let () = x_binfo_pp (s2 ^ s1) no_pos in
             (* let () = x_binfo_hp (add_str "constraints" (pr_list (pr_pair pr (fun _ -> "")))) post_rel_df_new no_pos in *)
-            let _ = print_endline ("Pi.infer_pure") in
-            let bottom_up_fp0 = x_add Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars (List.hd proc_specs) in
-            let () = DD.ninfo_hprint (add_str "bottom_up_fp0" (pr_list (pr_pair pr pr))) bottom_up_fp0 no_pos in
+            (* let _ = x_binfo_pp ("Pi.infer_pure") no_pos in *)
+            let () = x_binfo_hp (add_str "sp:compute_fixpoint" Cprinter.string_of_struc_formula) proc_spec no_pos in
+            let fn x = x_add_1 (Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars) x in
+            let bottom_up_fp0 = wrap fn proc_spec in
+            let () = x_binfo_hp (add_str "bottom_up_fp0" (pr_list (pr_pair pr pr))) bottom_up_fp0 no_pos in
             (* let bottom_up_fp0 = List.fold_left (fun acc proc_spec -> acc@(x_add Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars proc_spec)) [] proc_specs in *)
             (* temporarily remove gist because tut/ex2/bugs-ex20.ss example *)
             (* let bottom_up_fp = List.map (fun (r,p) -> *)
@@ -620,13 +625,13 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             (*     (r,p2) *)
             (* ) bottom_up_fp0 in *)
             let bottom_up_fp = bottom_up_fp0 in
-            let proc_spec = List.hd proc_specs in
-            let () = x_binfo_hp (add_str "bottom_up_fp" (pr_list (pr_pair pr pr))) bottom_up_fp no_pos in
-            let () = DD.ninfo_hprint (add_str "pre_rel_fmls" (pr_list pr)) pre_rel_fmls no_pos in
-            let () = DD.ninfo_hprint (add_str "pre_fmls" (pr_list pr)) pre_fmls no_pos in
-            let res = Fixpoint.update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs
+            (* let () = x_binfo_hp (add_str "bottom_up_fp(after gist)" (pr_list (pr_pair pr pr))) bottom_up_fp no_pos in *)
+            (* let () = DD.binfo_hprint (add_str "pre_rel_fmls" (pr_list pr)) pre_rel_fmls no_pos in *)
+            (* let () = DD.binfo_hprint (add_str "pre_fmls" (pr_list pr)) pre_fmls no_pos in *)
+            (* let () = DD.binfo_hprint (add_str "pre_invs" (pr_list pr)) pre_invs no_pos in *)
+            let res = wrap (Fixpoint.update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs
                 Fixcalc.compute_fixpoint_td
-                Fixcalc.fixc_preprocess reloblgs pre_rel_df post_rel_df_new post_rel_df pre_vars proc_spec grp_post_rel_flag
+                Fixcalc.fixc_preprocess reloblgs pre_rel_df post_rel_df_new post_rel_df pre_vars proc_spec) grp_post_rel_flag
             in
             let () = x_binfo_hp (add_str "fixpoint" (pr_list (pr_quad pr pr pr pr))) res no_pos in
             res
@@ -641,20 +646,30 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
           (*     print_endline_quiet "*************************************" *)
           (*   end; *)
           Infer.fixcalc_rel_stk # reset;
-          let tuples = List.map (fun (rel_post,post,rel_pre,pre) ->
-              let pre_new = if CP.isConstTrue rel_pre then
-                  let exist_vars = CP.diff_svl (CP.fv_wo_rel rel_post) inf_vars in
-                  TP.simplify_exists_raw exist_vars post
-                else pre in
-              (rel_post,post,rel_pre,pre_new)) tuples in
-          let evars = stk_evars # get_stk in
           let () = List.iter (fun (rel_post,post,rel_pre,pre) ->
-              x_binfo_zp (lazy (("REL POST : "^Cprinter.string_of_pure_formula rel_post))) no_pos;
-              x_binfo_zp (lazy (("POST: "^Cprinter.string_of_pure_formula post))) no_pos;
-              x_binfo_zp (lazy (("REL PRE : "^Cprinter.string_of_pure_formula rel_pre))) no_pos;
-              x_binfo_zp (lazy (("PRE : "^Cprinter.string_of_pure_formula pre))) no_pos
+              x_binfo_zp (lazy ((">>REL POST : "^Cprinter.string_of_pure_formula rel_post))) no_pos;
+              x_binfo_zp (lazy ((">>POST: "^Cprinter.string_of_pure_formula post))) no_pos;
+              x_binfo_zp (lazy ((">>REL PRE : "^Cprinter.string_of_pure_formula rel_pre))) no_pos;
+              x_binfo_zp (lazy ((">>PRE : "^Cprinter.string_of_pure_formula pre))) no_pos
             ) tuples in
-          let triples = List.map (fun (a,b,c,d) -> (a,b,c,d)) tuples in
+          (* WN : Why add post into pre if rel_pre is true ? *)
+          (* removed pre inf unless explicitly requested *)
+          (* let tuples = List.map (fun (rel_post,post,rel_pre,pre) -> *)
+          (*     let pre_new = *)
+          (*       if CP.isConstTrue rel_pre then *)
+          (*         let exist_vars = CP.diff_svl (CP.fv_wo_rel rel_post) inf_vars in *)
+          (*         TP.simplify_exists_raw exist_vars post *)
+          (*       else *)
+          (*         pre *)
+          (*     in *)
+          (*     (rel_post,post,rel_pre,pre_new)) tuples in *)
+          let evars = stk_evars # get_stk in
+          (* let () = List.iter (fun (rel_post,post,rel_pre,pre) -> *)
+          (*     x_binfo_zp (lazy (("REL POST : "^Cprinter.string_of_pure_formula rel_post))) no_pos; *)
+          (*     x_binfo_zp (lazy (("POST: "^Cprinter.string_of_pure_formula post))) no_pos; *)
+          (*     x_binfo_zp (lazy (("REL PRE : "^Cprinter.string_of_pure_formula rel_pre))) no_pos; *)
+          (*     x_binfo_zp (lazy (("PRE : "^Cprinter.string_of_pure_formula pre))) no_pos *)
+          (*   ) tuples in *)
           let new_specs = if triples = [] then
               List.map (fun old_spec -> fst (Fixpoint.simplify_relation old_spec None
                                                pre_vars post_vars_wo_rel prog true (* inf_post_flag *) evars lst_assume)) proc_specs
@@ -662,8 +677,8 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
               let _ = Debug.info_hprint (add_str "proc_specs" (pr_list Cprinter.string_of_struc_formula)) proc_specs no_pos in
               let new_specs1 = List.map (fun proc_spec -> CF.transform_spec proc_spec (CF.list_of_posts proc_spec)) proc_specs in
               let _ = Debug.info_hprint (add_str "new_specs1" (pr_list Cprinter.string_of_struc_formula)) new_specs1 no_pos in
-              let new_specs2 = List.map (fun new_spec1 -> fst (Fixpoint.simplify_relation new_spec1
-                                                                 (Some triples) pre_vars post_vars_wo_rel prog true (* inf_post_flag *) evars lst_assume)) new_specs1 in
+              let new_specs2 = List.map (fun new_spec1 -> fst (x_add_1 wrap (Fixpoint.simplify_relation new_spec1
+                                                                 (Some triples) pre_vars post_vars_wo_rel prog true (* inf_post_flag *) evars) lst_assume)) new_specs1 in
               let _ = Debug.info_hprint (add_str "new_specs2" (pr_list Cprinter.string_of_struc_formula)) new_specs2 no_pos in
               new_specs2
           in new_specs

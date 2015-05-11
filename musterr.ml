@@ -199,7 +199,7 @@ let build_and_failures_x (failure_code:string) gfk(failure_name:string) ((contra
   else
     let msg = "failed in entailing pure formula(s) in conseq" in
     CF.mkFailCtx_in (Basic_Reason ({fail_ctx_template with fc_message = msg }, mk_failure_may msg failure_name, ft))
-      (Ctx (CF.convert_to_may_es fail_ctx_template.fc_current_lhs)) cex
+      ((CF.convert_to_may_es fail_ctx_template.fc_current_lhs), msg, Failure_May msg) cex
 
 
 let build_and_failures i (failure_code:string) fk (failure_name:string) ((contra_list, must_list, may_list)

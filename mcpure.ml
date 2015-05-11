@@ -385,7 +385,7 @@ and pure_bag_equations_aux with_emp (f:formula) : (spec_var * spec_var) list =
 and ptr_equations_aux_mp_x with_null (f : memo_pure) : (spec_var * spec_var) list =  
   let helper f = 
     let r = List.fold_left (fun a c -> (a @ b_f_ptr_equations c.memo_formula)) [] f.memo_group_cons in
-    let r = List.fold_left (fun a c -> a @ (pure_ptr_equations_aux with_null c)) r f.memo_group_slice in
+    let r = List.fold_left (fun a c -> a @ (x_add pure_ptr_equations_aux with_null c)) r f.memo_group_slice in
     let eqs = (if !enulalias(*with_null*) then get_equiv_eq_with_null else get_equiv_eq) f.memo_group_aset in
     r @ eqs in
   List.concat (List.map helper f)
@@ -539,8 +539,24 @@ and memo_apply_one_exp_x (s:spec_var * exp) (mem:memoised_group list) : memo_pur
 and memo_f_neg (f: b_formula): b_formula =
   let (pf,il) = f in
   let npf = match pf with
-    | Lt (e1,e2,l) -> Gte (e2,e1,l)
-    | Lte (e1,e2,l) -> Gt (e2,e1,l)
+    | Lt (e1,e2,l) -> Gte (e2,e1,l) (*L2: why exchange e1, e2 ?*)
+    | Lte (e1,e2,l) -> Gt (e2,e1,l) (*L2: why exchange e1, e2 ?*)
+    | Gt (e1,e2,l) -> Lte (e1,e2,l)
+    | Gte (e1,e2,l) -> Lt (e1,e2,l)
+    | Eq (e1,e2,l) -> Neq (e1,e2,l)
+    | Neq (e1,e2,l) -> Eq (e1,e2,l)
+    | BagIn (e1,e2,l) -> BagNotIn(e1,e2,l)
+    | BagNotIn  (e1,e2,l) -> BagIn(e1,e2,l)
+    | ListIn (e1,e2,l) -> ListNotIn(e1,e2,l)
+    | ListNotIn (e1,e2,l) -> ListIn(e1,e2,l)
+    | _ -> Error.report_error {Error.error_loc = no_pos; Error.error_text = "memoized negation: unexpected constraint type"}
+  in (npf,il)
+
+and memo_f_neg1 (f: b_formula): b_formula =
+  let (pf,il) = f in
+  let npf = match pf with
+    | Lt (e1,e2,l) -> Gte (e1,e2,l)
+    | Lte (e1,e2,l) -> Gt (e1,e2,l)
     | Gt (e1,e2,l) -> Lte (e1,e2,l)
     | Gte (e1,e2,l) -> Lt (e1,e2,l)
     | Eq (e1,e2,l) -> Neq (e1,e2,l)
@@ -2261,7 +2277,9 @@ let memo_pure_push_exists_lhs qv f = match f with
 
 let ptr_equations_aux with_null f = match f with
   | MemoF f -> ptr_equations_aux_mp with_null f
-  | OnePF f -> pure_ptr_equations_aux with_null f
+  | OnePF f -> 
+    let _ = x_add_1 get_int_equality f in
+    x_add pure_ptr_equations_aux with_null f
 
 let bag_equations_aux with_emp f = match f with
   | MemoF f -> bag_equations_aux_mp with_emp f

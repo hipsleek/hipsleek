@@ -177,7 +177,11 @@ let rec fixcalc_of_pure_formula f = match f with
 ;;
 
 let fixcalc_of_pure_formula f=
-  let nf = Trans_arr.new_translate_out_array_in_one_formula_split f in
+  DD.no_1 "fixcalc_of_pure_formula(really called)" !CP.print_formula (fun s->s) (fun f-> fixcalc_of_pure_formula f) f
+;;
+
+let fixcalc_of_pure_formula f=
+  let nf = x_add_1 Trans_arr.new_translate_out_array_in_one_formula_split f in
   fixcalc_of_pure_formula nf
 ;;
 
@@ -1389,7 +1393,7 @@ let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up =
           | _ -> acc
         in new_acc
       ) 1 input_pairs in
-    let () = x_binfo_hp (add_str "n_base" string_of_int) n_base no_pos in
+    let () = x_tinfo_hp (add_str "n_base" string_of_int) n_base no_pos in
     (* Wrapper.wrap_num_disj compute_fixpoint_x n_base input_pairs ante_vars specs bottom_up *)
     compute_fixpoint_x input_pairs ante_vars specs bottom_up
 

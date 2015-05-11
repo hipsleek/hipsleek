@@ -22,8 +22,14 @@ module NM = Auxnorm
 (* module LO = Label_only.Lab_List *)
 module LO = Label_only.LOne
 
-let wrap_redlog = Wrapper.wrap_redlog_only
-let wrap_ocredlog = Wrapper.wrap_oc_redlog
+(* let wrap_redlog_only f a = *)
+(*   wrap_one_bool Redlog.dis_omega true f a *)
+
+(* let wrap_oc_redlog f a = *)
+(*   wrap_one_bool Redlog.dis_omega false f a *)
+
+let wrap_redlog = Wrapper.wrap_one_bool Redlog.dis_omega true
+let wrap_ocredlog = Wrapper.wrap_one_bool Redlog.dis_omega false
 
 let test_db = false
 
@@ -38,6 +44,11 @@ let tp = ref Redlog
 (*For conc-r, z3 for relations, mona for bags, redlog for fractions *)
 (* let tp = ref PARAHIP *)
 (* let tp = ref Z3 *)
+
+let get_tp_code () = 
+  let pr = !tp in
+  string_of_prover_code pr
+
 
 let provers_process = ref None
 
@@ -1841,12 +1852,14 @@ let sat_cache is_sat (f:CP.formula) : bool  =
       Hashtbl.find !sat_cache fstring
     with Not_found ->
       let r = is_sat f in
-      let () = Gen.Profiling.push_time_always "cache overhead" in
-      let () = cache_status := false in
-      let () = cache_sat_miss := !cache_sat_miss+1 in
-      let () = Hashtbl.add !sat_cache fstring r in
-      let () = Gen.Profiling.pop_time_always "cache overhead" in
-      r
+      if r then r
+      else
+        let () = Gen.Profiling.push_time_always "cache overhead" in
+        let () = cache_status := false in
+        let () = cache_sat_miss := !cache_sat_miss+1 in
+        let () = Hashtbl.add !sat_cache fstring r in
+        let () = Gen.Profiling.pop_time_always "cache overhead" in
+        r
   in res
 
 let sat_cache is_sat (f:CP.formula) : bool = 
@@ -1859,7 +1872,7 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
   (* TODO WN : can below remove duplicate constraints? *)
   (* let f = CP.elim_idents f in *)
   (* this reduces x>=x to true; x>x to false *)
-  let f = Trans_arr.new_translate_out_array_in_one_formula_split f in
+  (* let f = x_add_1 Trans_arr.new_translate_out_array_in_one_formula_split f in *)
   (*let f = drop_array_formula f in*)
   (* let _ = print_endline ("tp_is_sat After drop: "^(Cprinter.string_of_pure_formula f)) in *)
 
@@ -1945,7 +1958,7 @@ let simplify_omega (f:CP.formula): CP.formula =
 let simplify (f : CP.formula) : CP.formula =
   (* proof_no := !proof_no + 1; *)
   (* let _ = Trans_arr.new_translate_out_array_in_one_formula_split f in *)
-  let f = Trans_arr.new_translate_out_array_in_one_formula_split f in
+  let f = x_add_1 Trans_arr.new_translate_out_array_in_one_formula_split f in
 
   let simpl_num = next_proof_no () in
   let simpl_no = (string_of_int simpl_num) in
@@ -2080,11 +2093,12 @@ let simplify (f : CP.formula) : CP.formula =
 let om_pairwisecheck f =
   wrap_pre_post norm_pure_input norm_pure_result
     (* wrap_pre_post cnv_ptr_to_int norm_pure_result *)
-    Omega.pairwisecheck f 
+    (x_add_1 Omega.pairwisecheck) f
 
 (* ZH: Take out the array part *)
 let om_pairwisecheck f =
-  Trans_arr.split_and_combine om_pairwisecheck (fun f-> not (Trans_arr.contain_array f)) f
+  (* let () = x_binfo_pp "take out array part" no_pos in *)
+  Trans_arr.split_and_combine (x_add_1 om_pairwisecheck) (fun f-> not (Trans_arr.contain_array f)) f
 ;;
 
 let om_pairwisecheck f =
@@ -2131,15 +2145,15 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
     | Mona 
     | OM ->
       if (is_bag_constraint f) then (Mona.pairwisecheck f)
-      else (om_pairwisecheck f)
+      else (x_add_1 om_pairwisecheck f)
     | OI ->
       if (is_bag_constraint f) then (Isabelle.pairwisecheck f)
-      else (om_pairwisecheck f)
+      else (x_add_1 om_pairwisecheck f)
     | SetMONA -> Mona.pairwisecheck f
     | CM ->
       if is_bag_constraint f then Mona.pairwisecheck f
-      else om_pairwisecheck f
-    | Z3 -> (* Smtsolver.pairwisecheck f *) om_pairwisecheck f
+      else x_add_1 om_pairwisecheck f
+    | Z3 -> (* Smtsolver.pairwisecheck f *) x_add_1 om_pairwisecheck f
     | Z3N -> Z3.pairwisecheck f
     | Redlog -> Redlog.pairwisecheck f
     | OCRed -> Redlog.pairwisecheck f
@@ -2153,7 +2167,7 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
     | PARAHIP -> (*TOCHECK: what is it for? *)
       if is_bag_constraint f then Mona.pairwisecheck f
       else Redlog.pairwisecheck f
-    | _ -> (om_pairwisecheck f) in
+    | _ -> (x_add_1 om_pairwisecheck f) in
   let logger fr tt timeout = 
     let tp = (string_of_prover !pure_tp) in
     let _ = add_proof_logging timeout !cache_status simpl_no simpl_num tp cmd tt 
@@ -2206,6 +2220,11 @@ let simplify (f:CP.formula):CP.formula =
     (* | AndList b -> mkAndList (map_l_snd simplify b) *)
     | _ -> Trans_arr.translate_back_array_in_one_formula (tp_pairwisecheck (simplify f)) in
   helper f
+;;
+
+let simplify f =
+  Debug.no_1 "simplify##" !CP.print_formula !CP.print_formula simplify f
+;;
 
 let simplify_tp (f:CP.formula):CP.formula =
   let pr = !CP.print_formula in
@@ -2256,6 +2275,8 @@ let simplify_raw f =
 
 let simplify_exists_raw exist_vars (f: CP.formula) = 
   let is_bag_cnt = is_bag_constraint f in
+  (* let () = *)
+  (* if is_bag_cnt then print_endline ("is_bag_cnt:true") else print_endline ("is_bag_cnt:false") in *)
   if is_bag_cnt then
     let _,new_f = trans_dnf f in
     let disjs = list_of_disjs new_f in
@@ -2268,6 +2289,12 @@ let simplify_exists_raw exist_vars (f: CP.formula) =
     List.fold_left (fun p1 p2 -> mkOr p1 p2 None no_pos) (mkFalse no_pos) disjs
   else
     simplify (CP.mkExists exist_vars f None no_pos)
+;;
+
+let simplify_exists_raw exist_vars (f:CP.formula) =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_2 "simplify_exists_raw" string_of_spec_var_list pr pr (fun e f-> simplify_exists_raw e f) exist_vars f
+;;
 
 (* always simplify directly with the help of prover *)
 let simplify_always (f:CP.formula): CP.formula = 
@@ -2365,11 +2392,11 @@ let hull (f : CP.formula) : CP.formula =
 let om_pairwisecheck f =
   wrap_pre_post norm_pure_input norm_pure_result
     (* wrap_pre_post cnv_ptr_to_int norm_pure_result *)
-    Omega.pairwisecheck f 
+    (x_add_1 Omega.pairwisecheck) f 
 
 let om_pairwisecheck f =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "om_pairwisecheck" pr pr om_pairwisecheck f
+  Debug.no_1 "om_pairwisecheck(2)" pr pr om_pairwisecheck f
 
 let tp_pairwisecheck2_x (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
   if not !tp_batch_mode then Omega.start ();
@@ -2411,14 +2438,14 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
     | Mona 
     | OM ->
       if (is_bag_constraint f) then (Mona.pairwisecheck f)
-      else (om_pairwisecheck f)
+      else (x_add_1 om_pairwisecheck f)
     | OI ->
       if (is_bag_constraint f) then (Isabelle.pairwisecheck f)
-      else (om_pairwisecheck f)
+      else (x_add_1 om_pairwisecheck f)
     | SetMONA -> Mona.pairwisecheck f
     | CM ->
       if is_bag_constraint f then Mona.pairwisecheck f
-      else om_pairwisecheck f
+      else x_add_1 om_pairwisecheck f
     | Z3 -> (* Smtsolver.pairwisecheck f *) om_pairwisecheck f
     | Z3N -> Z3.pairwisecheck f
     | Redlog -> Redlog.pairwisecheck f
@@ -2433,7 +2460,7 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
     | PARAHIP -> (*TOCHECK: what is it for? *)
       if is_bag_constraint f then Mona.pairwisecheck f
       else Redlog.pairwisecheck f
-    | _ -> (om_pairwisecheck f) in
+    | _ -> (x_add_1 om_pairwisecheck f) in
   (* let fn f = wrap_pre_post norm_pure_input norm_pure_result fn f in *)
   let logger fr tt timeout = 
     let tp = (string_of_prover !pure_tp) in
@@ -2981,12 +3008,16 @@ let imply_cache fn_imply ante conseq : bool  =
       Hashtbl.find !imply_cache fstring
     with Not_found ->
       let r = fn_imply ante conseq in
-      let () = Gen.Profiling.push_time "cache overhead" in
-      let () = cache_status := false in
-      let () = cache_imply_miss := !cache_imply_miss+1 in
-      let () = Hashtbl.add !imply_cache fstring r in
-      let () = Gen.Profiling.pop_time "cache overhead" in
-      r
+      if r then (* cache only sound outcomes *)
+        begin
+          let () = Gen.Profiling.push_time "cache overhead" in
+          let () = cache_status := false in
+          let () = cache_imply_miss := !cache_imply_miss+1 in
+          let () = Hashtbl.add !imply_cache fstring r in
+          let () = Gen.Profiling.pop_time "cache overhead" in
+          r
+        end
+      else r
   in res
 
 let imply_cache fn_imply ante conseq : bool  = 
