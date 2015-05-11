@@ -3,7 +3,8 @@ data cell {
 }
 
 void pre_call(cell x)
-  infer [@pre_must]
+  infer [@pre_must
+  ]
   requires x::cell<_> 
   ensures x::cell<3>;
 /* 
@@ -21,6 +22,23 @@ void pre_call(cell x)
    such pre-condition. This may be for primitives with
    must rather than may pre-conditions
 
+../hip ex21a12-pre-must.ss --efa-exc -p foo2
+
+# without assume false
+Post condition cannot be derived:
+OrL[
+  (must) cause: 1.2c: ante flow:__Error#E conseq flow: __norm#E are incompatible flow types;
+Proving precondition in method pre_call$cell(1 File "ex21a12-pre-must.ss",Line:32,Col:15) Failed (must);
+do_unmatched_rhs : x'::cell<Anon_11>(must),
+  (must) cause:  !(res) |-  res. LOCS:[35;30] (must-bug)
+]
+
+# with assume false
+Post condition cannot be derived:
+  (must) cause: 1.2c: ante flow:__Error#E conseq flow: __norm#E are incompatible flow types;
+Proving precondition in method pre_call$cell(1 File "ex21a12-pre-must.ss",Line:42,Col:15) Failed (must);
+do_unmatched_rhs : x'::cell<Anon_11>(must)
+
 */
 
 
@@ -29,7 +47,7 @@ bool foo2(cell x)
   ensures res ;
 {
   if (x==null) pre_call(x);
-
+  //assume false;
   dprint;
   return x==null;
 }
