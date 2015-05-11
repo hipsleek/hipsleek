@@ -7362,9 +7362,11 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                                fc_current_conseq = CF.formula_of_heap HFalse pos;
                                                fc_failure_pts =[];}, fe, estate.es_trace)), Ctx (convert_to_must_es estate), mk_cex true) in
                     (*set conseq with top flow, top flow is the highest flow.*)
-                    let new_conseq = CF.substitute_flow_into_f !top_flow_int conseq in
-                    let res,prf = x_add heap_entail_conjunct 10 prog is_folding ctx0 new_conseq rhs_h_matched_set pos in
-                    (and_list_context may_flow_failure res, prf)
+                    (* L2: demo/ex22g13.slk: The 2nd message is unnecessary on flow conflicts *)
+                    (* let new_conseq = CF.substitute_flow_into_f !top_flow_int conseq in *)
+                    (* let res,prf = x_add heap_entail_conjunct 10 prog is_folding ctx0 new_conseq rhs_h_matched_set pos in *)
+                    (* ( and_list_context may_flow_failure res, prf) *)
+                    (may_flow_failure, UnsatConseq)
                   )
                   else (
                     let () = x_tinfo_pp "not(overlap_flow)_ff:else" no_pos in
