@@ -1282,7 +1282,7 @@ MaybeErr Context:
 [[empty]]
 CEX:false
 ==========================================================================
-# ex22g13.slk
+# ex22g13.slk: FIXED
 
 The 2nd message is unnecessary on flow conflicts..
 
