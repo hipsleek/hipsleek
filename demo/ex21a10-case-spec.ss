@@ -4,10 +4,10 @@ data cell {
 
 void pre_call(cell x)
  case {
-   x=null -> requires x::cell<_>
+   x!=null -> requires x::cell<_>
              ensures true;
-  x!=null -> requires true
-             ensures x::cell<_>;
+  x=null -> requires true
+    ensures x=null; //x::cell<_>;
 }
 
 bool foo2(cell x)
