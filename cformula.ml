@@ -10698,10 +10698,10 @@ let convert_must_failure_4_fail_type_new  (s:string) (ft:fail_type) cex : contex
 
 let convert_must_failure_4_fail_type_new (s:string) (ft:fail_type) cex : context option =
   let pr = pr_option !print_context_short in
-  Debug.no_2 "convert_must_failure_4_fail_type_new" pr_id pr_none pr
+  Debug.no_2 "convert_must_failure_4_fail_type_new" pr_id !print_fail_type pr
     (fun _ _ -> convert_must_failure_4_fail_type_new s ft cex) s ft
 
-let convert_may_failure_4_fail_type_new  (s:string) (ft:fail_type) cex : context option =
+let convert_may_failure_4_fail_type_new_x  (s:string) (ft:fail_type) cex : context option =
   let rec update_err ctx ((s1,ft,fk) as err) = match ctx with
     | Ctx es -> Ctx (x_add add_err_to_estate err es)
     | OCtx (es1, es2) -> OCtx (update_err es1 err, update_err es2 err)
@@ -10709,6 +10709,11 @@ let convert_may_failure_4_fail_type_new  (s:string) (ft:fail_type) cex : context
   match (get_may_ctx_msg_ft ft)with
   | Some (ctx, msg) -> Some (update_err ctx (s^msg,ft,  Failure_May msg))
   | _ -> None
+
+let convert_may_failure_4_fail_type_new (s:string) (ft:fail_type) cex : context option =
+  let pr = pr_option !print_context_short in
+  Debug.no_2 "convert_may_failure_4_fail_type_new" pr_id !print_fail_type pr
+    (fun _ _ -> convert_may_failure_4_fail_type_new_x s ft cex) s ft
 
 
 (* TRUNG WHY: purpose when converting a list_context from FailCtx type to SuccCtx type? *)
