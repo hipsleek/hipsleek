@@ -11,6 +11,8 @@ WARNING: _0:0_0:0:Z3 error message: (error "line 100 column 29: invalid declarat
 =========================================================================
 # ex5.slk
 
+test
+
 !Why relAssume do't work? Is it because it
 is not being pushed into stack?
 
