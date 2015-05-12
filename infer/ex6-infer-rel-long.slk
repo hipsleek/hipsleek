@@ -1,0 +1,10 @@
+relation Q(int a, int b).
+
+infer [Q]   n=0 & m=0 |-  Q(m,n).
+print residue.
+
+//infer [Q]   m1=m-1 & r'=r1+2 & Q(m1,r1) |-  Q(m,r').
+infer [Q]   m1=m-1 & r=r1+2 & Q(m1,r1) |-  Q(m,r).
+print residue.
+
+relation_infer [][Q].

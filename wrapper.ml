@@ -129,6 +129,7 @@ let wrap_err_may f a =
 
 let wrap_err_may f a =
   Debug.no_1 "wrap_err_may" pr_none pr_none (wrap_err_may f) a
+
 let wrap_err_must f a =
   wrap_inf_obj INF_ERR_MUST f a
 
@@ -147,6 +148,7 @@ let wrap_err_assert_assume f a =
 let wrap_err_pre f a =
   (* let () = x_binfo_pp "Calling wrap_err_pre" no_pos in *)
   if infer_const_obj # is_dis_err then wrap_err_dis f a
+  (* else if infer_const_obj # is_pre_must then wrap_err_must f a *)
   else if infer_const_obj # is_err_may then wrap_err_may f a
   else if infer_const_obj # is_err_must then wrap_err_may f a
   else  wrap_err_dis f a

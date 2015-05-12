@@ -9397,6 +9397,15 @@ let print_failure_kind_full = ref(fun (c:failure_kind) -> "printer not initializ
 let print_fail_type = ref(fun (c:fail_type) -> "printer not initialized")
 
 
+
+let rec is_infer_pre_must sf = match sf with
+  | EList el -> List.exists (fun (lbl,sf) ->
+      is_infer_pre_must sf) el
+  | EInfer ei ->
+    let inf_obj = ei.formula_inf_obj in
+    (inf_obj # is_pre_must)
+  | _ -> false
+
 let is_dis_err_exc es = 
   es.es_infer_obj # is_dis_err_all
 
@@ -10027,7 +10036,10 @@ let gen_lor_x (m1,n1,e1) (m2,n2,e2) : (failure_kind * string * (entail_state opt
   | _, Failure_Bot _ -> m1,n1,e1
   (*report_error no_pos "Failure_None not expected in gen_or"*)
   | Failure_May m1, Failure_May m2 -> Failure_May ("OrL[\n"^m1^",\n"^m2^"\n]"),n1, None
+  | Failure_May m1, Failure_Must m2 -> Failure_May ("OrL[\n"^m1^",\n"^m2^"\n]"),n1, None
   | Failure_May m, _ -> Failure_May m, n1,None
+  (* demo/ex21a10-case *)
+  | Failure_Must m1, Failure_May m2 -> Failure_May ("OrL[\n"^m1^",\n"^m2^"\n]"),n2, None
   | _, Failure_May m -> Failure_May m,n2,None
   | Failure_Must m1, Failure_Must m2 ->
     if (n1=sl_error) then (Failure_Must m2, n2, e2)
@@ -10686,10 +10698,10 @@ let convert_must_failure_4_fail_type_new  (s:string) (ft:fail_type) cex : contex
 
 let convert_must_failure_4_fail_type_new (s:string) (ft:fail_type) cex : context option =
   let pr = pr_option !print_context_short in
-  Debug.no_2 "convert_must_failure_4_fail_type_new" pr_id pr_none pr
+  Debug.no_2 "convert_must_failure_4_fail_type_new" pr_id !print_fail_type pr
     (fun _ _ -> convert_must_failure_4_fail_type_new s ft cex) s ft
 
-let convert_may_failure_4_fail_type_new  (s:string) (ft:fail_type) cex : context option =
+let convert_may_failure_4_fail_type_new_x  (s:string) (ft:fail_type) cex : context option =
   let rec update_err ctx ((s1,ft,fk) as err) = match ctx with
     | Ctx es -> Ctx (x_add add_err_to_estate err es)
     | OCtx (es1, es2) -> OCtx (update_err es1 err, update_err es2 err)
@@ -10698,9 +10710,14 @@ let convert_may_failure_4_fail_type_new  (s:string) (ft:fail_type) cex : context
   | Some (ctx, msg) -> Some (update_err ctx (s^msg,ft,  Failure_May msg))
   | _ -> None
 
+let convert_may_failure_4_fail_type_new (s:string) (ft:fail_type) cex : context option =
+  let pr = pr_option !print_context_short in
+  Debug.no_2 "convert_may_failure_4_fail_type_new" pr_id !print_fail_type pr
+    (fun _ _ -> convert_may_failure_4_fail_type_new_x s ft cex) s ft
+
 
 (* TRUNG WHY: purpose when converting a list_context from FailCtx type to SuccCtx type? *)
-let convert_maymust_failure_to_value_orig ?(mark=true) (l:list_context) : list_context =
+let convert_maymust_failure_to_value_orig_a_x ?(mark=true) (l:list_context) : list_context =
   match l with 
     | FailCtx (ft, c, cex) -> (* Loc: to check cex here*)
           (* if (\* not (is_en_error_exc_ctx c) *\) *)
@@ -10727,6 +10744,11 @@ let convert_maymust_failure_to_value_orig ?(mark=true) (l:list_context) : list_c
           end
     | SuccCtx _ -> l
 
+let convert_maymust_failure_to_value_orig_a ?(mark=true) (l:list_context) : list_context =
+  let pr = !print_list_context_short in
+  Debug.no_2 "convert_maymust_failure_to_value_orig_a" string_of_bool pr pr
+    (fun _ _ -> convert_maymust_failure_to_value_orig_a_x ~mark:mark l) mark l
+
 let convert_maymust_failure_to_value_orig ?(mark=true) (l:list_context) : list_context =
   match l with
     | FailCtx (ft, c, cex) ->
@@ -10736,22 +10758,22 @@ let convert_maymust_failure_to_value_orig ?(mark=true) (l:list_context) : list_c
             l
           else
             if mark then
-              let r = convert_maymust_failure_to_value_orig l in
+              let r = convert_maymust_failure_to_value_orig_a l in
               match r with
                 | SuccCtx [cc] -> FailCtx (ft, cc, { cex with cex_processed_mark=true})
                 | _ -> r
             else
               if cex.cex_processed_mark (* already processed *)
               then SuccCtx [c]
-              else convert_maymust_failure_to_value_orig l
+              else convert_maymust_failure_to_value_orig_a l
 
     | _ -> l
  
 
 let convert_maymust_failure_to_value_orig ?(mark=true) (l:list_context) : list_context =
   let pr = !print_list_context_short in
-  Debug.no_1 "convert_maymust_failure_to_value_orig" pr pr
-    (fun _ -> convert_maymust_failure_to_value_orig ~mark:mark l) l
+  Debug.no_2 "convert_maymust_failure_to_value_orig" string_of_bool pr pr
+    (fun _ _ -> convert_maymust_failure_to_value_orig ~mark:mark l) mark l
 
 (* let add_must_err (s:string) (fme:branch_ctx list) (e:esc_stack) : esc_stack = *)
 (*   ((-1,"Must Err @"^s),fme) :: e *)
@@ -11696,13 +11718,13 @@ and or_list_context_x_new c1 c2 =
       (c2 )
     else
       let t = mk_not_a_failure (get_first_es  t2) in
-      FailCtx (Or_Reason (t1,t), c1 ,cex1)
+      FailCtx (Or_Reason (t1,t), c1 ,{cex1 with cex_processed_mark = false;})
   | SuccCtx t1 ,FailCtx (t2,c2, cex2) ->
     if is_bot_failure_ft t2 then
       c1
     else
       let t = mk_not_a_failure (get_first_es t1) in
-      FailCtx (Or_Reason (t,t2),c2, cex2)
+      FailCtx (Or_Reason (t,t2),c2, {cex2 with cex_processed_mark = false;})
   | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (x_add or_context_list t1 t2)
 
 and or_list_context_x c1 c2 = match c1,c2 with
