@@ -246,7 +246,7 @@ let build_ef_heap_formula_with_pure_x (cf : Cformula.h_formula) (efpd_p : ef_pur
     let efpd_s = EPureI.mk_star_disj efpd_p efpd_h in
     let efpd_n = EPureI.norm_disj efpd_s in
     efpd_n
-  | _ -> efpd_p
+  | _ -> EPureI.norm_disj efpd_p
 
 let build_ef_heap_formula_with_pure (cf : Cformula.h_formula) (efpd_p : ef_pure_disj) (all_views : Cast.view_decl list) : ef_pure_disj =
   Debug.no_1 "build_ef_heap_formula_with_pure" string_of_h_formula
