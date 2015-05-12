@@ -1,7 +1,7 @@
 //hip_include '../prelude_aux.ss'
 //#option --ato
 relation P(int[] a).
-  relation Q(int[] a,int[] b,int r).
+relation Q(int[] a,int[] b,int r).
 
 int foo(ref int[] a)
  //infer [@arrvar] requires true ensures res=a[5];

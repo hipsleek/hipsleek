@@ -539,8 +539,24 @@ and memo_apply_one_exp_x (s:spec_var * exp) (mem:memoised_group list) : memo_pur
 and memo_f_neg (f: b_formula): b_formula =
   let (pf,il) = f in
   let npf = match pf with
-    | Lt (e1,e2,l) -> Gte (e2,e1,l)
-    | Lte (e1,e2,l) -> Gt (e2,e1,l)
+    | Lt (e1,e2,l) -> Gte (e2,e1,l) (*L2: why exchange e1, e2 ?*)
+    | Lte (e1,e2,l) -> Gt (e2,e1,l) (*L2: why exchange e1, e2 ?*)
+    | Gt (e1,e2,l) -> Lte (e1,e2,l)
+    | Gte (e1,e2,l) -> Lt (e1,e2,l)
+    | Eq (e1,e2,l) -> Neq (e1,e2,l)
+    | Neq (e1,e2,l) -> Eq (e1,e2,l)
+    | BagIn (e1,e2,l) -> BagNotIn(e1,e2,l)
+    | BagNotIn  (e1,e2,l) -> BagIn(e1,e2,l)
+    | ListIn (e1,e2,l) -> ListNotIn(e1,e2,l)
+    | ListNotIn (e1,e2,l) -> ListIn(e1,e2,l)
+    | _ -> Error.report_error {Error.error_loc = no_pos; Error.error_text = "memoized negation: unexpected constraint type"}
+  in (npf,il)
+
+and memo_f_neg1 (f: b_formula): b_formula =
+  let (pf,il) = f in
+  let npf = match pf with
+    | Lt (e1,e2,l) -> Gte (e1,e2,l)
+    | Lte (e1,e2,l) -> Gt (e1,e2,l)
     | Gt (e1,e2,l) -> Lte (e1,e2,l)
     | Gte (e1,e2,l) -> Lt (e1,e2,l)
     | Eq (e1,e2,l) -> Neq (e1,e2,l)
