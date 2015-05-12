@@ -2886,6 +2886,13 @@ let new_translate_out_array_in_one_formula_split
 (*   else f *)
 (* ;; *)
 
+(* let new_translate_out_array_in_one_formula_split_keep_relation *)
+(*     (f:formula):formula = *)
+(*   if !Globals.array_translate  (\* Globals.infer_const_obj # is_arr_as_var *\) *)
+(*   then Debug.no_1 "new_translate_out_array_in_one_formula_split" !print_pure !print_pure (fun f -> new_translate_out_array_in_one_formula_split_keep_relation f) f *)
+(*   else f *)
+(* ;; *)
+
 let new_translate_out_array_in_one_formula_split
     (f:formula):formula =
   if !Globals.array_translate  (* Globals.infer_const_obj # is_arr_as_var *)

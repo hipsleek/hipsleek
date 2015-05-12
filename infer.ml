@@ -2153,8 +2153,8 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
             x_tinfo_pp ">>>>>> infer_collect_rel <<<<<<" pos;
             x_tinfo_hp (add_str "Infer Rel Ids" !print_svl) ivs pos;
             (* x_dinfo_hp (add_str "LHS heap Xpure1:" !print_mix_formula) lhs_h_mix pos; *)
-            x_tinfo_hp (add_str "LHS pure" !CP.print_formula) lhs_p pos;
-            x_tinfo_hp (add_str "RHS pure" !CP.print_formula) rhs_p pos;
+            x_binfo_hp (add_str "LHS pure" !CP.print_formula) lhs_p pos;
+            x_binfo_hp (add_str "RHS pure" !CP.print_formula) rhs_p pos;
             (* x_tinfo_hp (add_str "RHS pure" !CP.print_formula) rhs_p_n pos; *)
             x_tinfo_hp (add_str "Rel Inferred:" (pr_list print_lhs_rhs)) inf_rel_ls pos;
             x_tinfo_hp (add_str "RHS Rel List" (pr_list !CP.print_formula)) rel_rhs pos;
