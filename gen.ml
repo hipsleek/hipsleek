@@ -625,6 +625,10 @@ class ['a] stack_pr (epr:'a->string) (eq:'a->'a->bool)  =
     inherit ['a] stack as super
     val elem_pr = epr 
     val elem_eq = eq 
+    method push_list_pr (ls:'a list) =  
+      (* WN : below is to be removed later *)
+      let () = print_endline ("push_list:"^(Basic.pr_list epr ls)) in
+      super # push_list ls 
     method string_of = Basic.pr_list_ln elem_pr stk
     method string_of_no_ln = Basic.pr_list elem_pr stk
     method string_of_no_ln_rev = 

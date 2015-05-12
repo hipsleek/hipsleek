@@ -1254,9 +1254,12 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
   (*     hprel_proving_kind = Others.proving_kind # top_no_exc; *)
   (* } in *)
   (*hp_assumes*)
-  let _ = Debug.ninfo_zprint  (lazy  (Cprinter.string_of_hprel_short new_rel_ass)) no_pos in
+  let _ = x_binfo_zp  (lazy  (Cprinter.string_of_hprel_short new_rel_ass)) no_pos in
   let _ = sleek_hprel_assumes := !sleek_hprel_assumes@[new_rel_ass] in
   ()
+
+let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formula option) (irhs: meta_formula)=
+  Debug.no_2 "process_rel_assume"  pr_none pr_none pr_none (fun _ _ -> process_rel_assume  cond_path ilhs  igurad_opt irhs) ilhs irhs
 
 let process_rel_defn cond_path (ilhs : meta_formula) (irhs: meta_formula) extn_info=
   (* let _ = Debug.info_pprint "process_rel_assume" no_pos in *)
