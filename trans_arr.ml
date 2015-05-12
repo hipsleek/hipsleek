@@ -87,7 +87,7 @@ let rec is_same_exp
   | Level (sv1,_),Level (sv2,_) ->
     is_same_sv sv1 sv2
   | IConst (i1,_), IConst (i2,_)->
-    i1=i2
+        i1=i2
   | FConst (i1,_), FConst (i2,_)->
     i1 = i2
   | ListHead (e1,_), ListHead (e2,_)
@@ -610,33 +610,33 @@ let rec process_quantifier
     let rec get_array_index_replacement_helper (* only pick up forms like !(i=c) *)
         (flst:formula list) (sv:spec_var):(exp option) =
       match flst with
-      | h::rest ->
-        begin
-          match h with
-          | Not (BForm ((Eq(e1,e2,_),_),_),_,_)
-          | BForm((Neq (e1,e2,_),_),_)->
-            begin
-              match e1,e2 with
-              | Var (sv1,_),Var (sv2,_) ->
-                if is_same_sv sv1 sv
-                then Some (Var (sv2,no_pos))
-                else
-                if is_same_sv sv2 sv
-                then Some (Var (sv1,no_pos))
-                else
-                  get_array_index_replacement_helper rest sv
-              | Var (sv1,_), IConst i
-              | IConst i, Var (sv1,_) ->
-                if is_same_sv sv1 sv
-                then Some (IConst i)
-                else get_array_index_replacement_helper rest sv
-              | _, _ ->
-                get_array_index_replacement_helper rest sv
-            end
-          | _ -> get_array_index_replacement_helper rest sv
-        end
-      | [] ->
-        None
+        | h::rest ->
+             begin
+               match h with
+                 | Not (BForm ((Eq(e1,e2,_),_),_),_,_)
+                 | BForm((Neq (e1,e2,_),_),_)->
+                       begin
+                         match e1,e2 with
+                           | Var (sv1,_),Var (sv2,_) ->
+                                 if is_same_sv sv1 sv
+                                 then Some (Var (sv2,no_pos))
+                                 else
+                                   if is_same_sv sv2 sv
+                                   then Some (Var (sv1,no_pos))
+                                   else
+                                     get_array_index_replacement_helper rest sv
+                           | Var (sv1,_), IConst i
+                           | IConst i, Var (sv1,_) ->
+                                 if is_same_sv sv1 sv
+                                 then Some (IConst i)
+                                 else get_array_index_replacement_helper rest sv
+                           | _, _ ->
+                                 get_array_index_replacement_helper rest sv
+                       end
+                 | _ -> get_array_index_replacement_helper rest sv
+             end
+        | [] ->
+              None
     in
     let flst = normalize_or (normalize_not f) in
     get_array_index_replacement_helper flst sv
@@ -746,7 +746,7 @@ let rec process_quantifier
         | Some re ->
           Exists (sv,process_helper f1 ((sv,re)::ctx),fl,loc)
         | None ->
-          Exists (sv,f1,fl,loc)
+          Exists (sv,process_helper f1 ctx,fl,loc)
       end
   in
   process_helper f []
@@ -761,6 +761,168 @@ let process_quantifier
   Debug.no_1 "process_quantifier" !print_pure !print_pure (fun f -> process_quantifier f) f
 ;;
 
+
+(* This is actually problematic if there is disjunction inside *)
+let constantize_ex_q f=
+  let  get_array_index_replacement (* The input can be any form *)
+        (f:formula) (sv:spec_var):(exp option) =
+    let rec get_array_index_replacement_helper (* only pick up forms like (i=c) and !(i!=c) *)
+          (f:formula) (sv:spec_var):(exp option) =
+      (* let () = x_binfo_pp ("get_array_index_replacement_helper: "^(!print_pure f)) no_pos in *)
+      match f with
+        | Not (BForm ((Neq(e1,e2,_),_),_),_,_)
+        | BForm((Eq (e1,e2,_),_),_)->
+              begin
+                match e1,e2 with
+                  | Var (sv1,_),Var (sv2,_) ->
+                        if is_same_sv sv1 sv
+                        then Some (Var (sv2,no_pos))
+                        else
+                          if is_same_sv sv2 sv
+                          then Some (Var (sv1,no_pos))
+                          else
+                            None
+                  | Var (sv1,_), IConst i
+                  | IConst i, Var (sv1,_) ->
+                        if is_same_sv sv1 sv
+                        then Some (IConst i)
+                        else None
+                  | _, _ ->
+                        None
+              end
+        | And (f1,f2,loc)
+        | Or (f1,f2,_,loc)->
+              begin
+                match get_array_index_replacement_helper f1 sv,get_array_index_replacement_helper f2 sv with
+                  | None,None -> None
+                  | Some r,_
+                  | _,Some r ->
+                        Some r
+              end
+        | Not (not_f,fl,loc)->
+              get_array_index_replacement_helper not_f sv
+        | AndList lst ->
+              failwith ("process_helper: "^(!print_pure f)^" To Be Implemented")
+        | _ ->
+              None
+    in
+    (* let () = x_binfo_pp ("flst"^((pr_list !print_pure) flst)) no_pos in *)
+    get_array_index_replacement_helper f sv
+  in
+  let get_array_index_replacement
+        (f:formula) (sv:spec_var):(exp option) =
+    let peo = function
+      | Some e -> ArithNormalizer.string_of_exp e
+      | None -> "None"
+    in
+    Debug.no_2 "exists:get_array_index_replacement" !print_pure string_of_spec_var peo (fun f sv -> get_array_index_replacement f sv) f sv
+  in
+  let replace
+        ((p,ba):b_formula) (ctx:((spec_var * exp) list)):b_formula =
+    let rec find_replace
+          (sv:spec_var) (ctx:((spec_var * exp) list)): (exp option) =
+      match ctx with
+        | (nsv,ne)::rest ->
+              if is_same_sv nsv sv
+            then Some ne
+            else find_replace sv rest
+      | [] ->
+            None
+    in
+    let rec replace_exp
+          (e:exp) (ctx:((spec_var * exp) list)):exp =
+      match e with
+        | ArrayAt (arr,[index],loc) ->
+              begin
+                match index with
+                  | Var (sv,_)->
+                        begin
+                          match find_replace sv ctx with
+                            | Some rep ->
+                                  ArrayAt (arr, [rep], loc)
+                            | None ->
+                                  e
+                        end
+                  | IConst _ ->
+                        e
+                  | _ ->
+                        failwith ("replace_exp: Invalid index form "^(ArithNormalizer.string_of_exp e))
+              end
+        | ArrayAt _ ->
+              failwith "replace_exp: cannot handle multi-dimensional array"
+        | Add (e1,e2,loc)->
+              Add (replace_exp e1 ctx,replace_exp e2 ctx,loc)
+        | Subtract (e1,e2,loc)->
+              Subtract (replace_exp e1 ctx,replace_exp e2 ctx,loc)
+        | Mult (e1,e2,loc)->
+              Mult (replace_exp e1 ctx,replace_exp e2 ctx,loc)
+        | Div (e1,e2,loc)->
+              Div (replace_exp e1 ctx,replace_exp e2 ctx,loc)
+        | _ ->
+              e
+    in
+    match p with
+      | Lt (e1, e2, loc)->
+            (Lt (replace_exp e1 ctx, replace_exp e2 ctx, loc),ba)
+      | Lte (e1, e2, loc)->
+            (Lte (replace_exp e1 ctx, replace_exp e2 ctx, loc),ba)
+      | Gt (e1, e2, loc)->
+            (Gt (replace_exp e1 ctx, replace_exp e2 ctx, loc),ba)
+      | Gte (e1, e2, loc)->
+            (Gte (replace_exp e1 ctx, replace_exp e2 ctx, loc),ba)
+      | SubAnn (e1, e2, loc)->
+            (SubAnn (replace_exp e1 ctx, replace_exp e2 ctx, loc),ba)
+      | Eq (e1, e2, loc)->
+            (Eq (replace_exp e1 ctx, replace_exp e2 ctx, loc),ba)
+      | Neq (e1, e2, loc)->
+            (Neq (replace_exp e1 ctx, replace_exp e2 ctx, loc),ba)
+      | BConst _
+      | BVar _
+      | Frm _
+      | XPure _
+      | LexVar _
+      | RelForm _->
+            (p,ba)
+      | _ -> failwith ("replace: "^(!print_p_formula p)^" To Be Implemented")
+  in
+  let rec process_helper
+        (f:formula) (ctx:((spec_var * exp) list)) :(formula)=
+    match f with
+      | BForm (b,fl)->
+            BForm (replace b ctx,fl)
+      | And (f1,f2,loc)->
+            And (process_helper f1 ctx, process_helper f2 ctx,loc)
+      | AndList lst->
+            failwith ("process_helper: "^(!print_pure f)^" To Be Implemented")
+      | Or (f1,f2,fl,loc)->
+            Or (process_helper f1 ctx,process_helper f2 ctx,fl,loc)
+      | Not (not_f,fl,loc)->
+            Not (process_helper not_f ctx,fl,loc)
+      | Forall (sv,f1,fl,loc)->
+            Forall (sv,process_helper f1 ctx,fl,loc)
+      | Exists (sv,f1,fl,loc)->
+            let r = get_array_index_replacement f1 sv in
+            begin
+              match r with
+                | Some re ->
+                      Exists (sv,process_helper f1 ((sv,re)::ctx),fl,loc)
+                | None ->
+                      Exists (sv,process_helper f1 ctx,fl,loc)
+            end
+  in
+  process_helper f []
+;;
+
+(* ---------------------------------------------------------------------------------------------------- *)
+(* Assuming that only one point of the array is accessed *)
+(* And you need to append the result just inside the conjunction. Be careful to A\/B\/C...*)
+(* let instantiate_forall *)
+(*       (f:formula) : formula = *)
+(*   let can_be_instantiated *)
+(*         (f:formula):bool = *)
+(*     true *)
+(*   in *)
+(*   let  *)
 
 (* ---------------------------------------------------------------------------------------------------- *)
 
@@ -1010,11 +1172,11 @@ let rec translate_array_relation
           begin
             match (List.nth elst 0), (List.nth elst 1) with
             | Var (SpecVar (t0,id0,p0) as old_array_sv,_), Var (SpecVar (t1,id1,p1) as new_array_sv,_) ->
-              let new_array_at = ArrayAt (SpecVar (Array (t1,1000),id1,p1),[List.nth elst 3],no_pos) in
+              let new_array_at = ArrayAt (SpecVar (t1,id1,p1),[List.nth elst 3],no_pos) in
               let new_eq = BForm ((Eq (new_array_at,List.nth elst 2,no_pos),None),None )in
               let new_q = mk_spec_var "i" in
               let new_ante = BForm((Neq (Var (new_q,no_pos), List.nth elst 3,no_pos),None),None) in
-              let new_conseq = BForm((Eq (ArrayAt (SpecVar (Array (t1,1000),id1,p1),[Var (new_q,no_pos)],no_pos), ArrayAt (SpecVar (Array (t0,1000),id0,p0),[Var (new_q,no_pos)],no_pos),no_pos),None),None) in
+              let new_conseq = BForm((Eq (ArrayAt (SpecVar (t1,id1,p1),[Var (new_q,no_pos)],no_pos), ArrayAt (SpecVar (t0,id0,p0),[Var (new_q,no_pos)],no_pos),no_pos),None),None) in
               let new_forall = Forall(new_q,mk_imply new_ante new_conseq,None,no_pos) in
               Some (And (new_eq,new_forall,no_pos))
             | _ -> failwith "translate_array_relation: Not Var"
@@ -1368,6 +1530,8 @@ struct
 end
 ;;
 
+
+
 module IndexSet = Set.Make(Index);;
 
 let extract_translate_scheme
@@ -1395,7 +1559,7 @@ let extract_translate_scheme
           begin
             match index, nfsv with
             | Var (indexsv,_), Some nnfsv ->
-              if is_same_sv indexsv nnfsv
+              if is_same_sv indexsv nnfsv (* Just to avoid quantified variable *)
               then ()
               else
                 let indexset =
@@ -1403,8 +1567,10 @@ let extract_translate_scheme
                     Hashtbl.find translate_scheme sv
                   with
                     Not_found ->
-                    IndexSet.empty
+                        let () = x_binfo_pp ("Not found, now insert "^(string_of_spec_var sv)) no_pos in
+                        IndexSet.empty
                 in
+                
                 Hashtbl.replace translate_scheme sv (IndexSet.add index indexset)
             | _,_ ->
               let indexset =
@@ -1412,7 +1578,8 @@ let extract_translate_scheme
                   Hashtbl.find translate_scheme sv
                 with
                   Not_found ->
-                  IndexSet.empty
+                      let () = x_binfo_pp ("Not found, now insert "^(string_of_spec_var sv)) no_pos in
+                      IndexSet.empty
               in
               Hashtbl.replace translate_scheme sv (IndexSet.add index indexset)
           end
@@ -1482,7 +1649,7 @@ let extract_translate_scheme
       helper f (Some sv)
   in
   (* Very Dangerous!!! *)
-  let _ = helper f None in (* create and fullfil the hashtbl *)
+  let () = helper f None in (* create and fullfil the hashtbl *)
   Hashtbl.fold
     (fun arr indexset result ->
        let indexlst = IndexSet.fold (fun i ilst -> i::ilst) indexset [] in
@@ -1504,7 +1671,7 @@ let extract_translate_scheme
 ;;
 
 
-
+(* Turn all the array element in f into normal variables *)
 let rec mk_array_free_formula
     (f:formula):formula=
   let rec mk_array_free_exp
@@ -1613,11 +1780,27 @@ let mk_array_free_formula_split
   Debug.no_1 "mk_array_free_formula_split" pr pr (fun f-> mk_array_free_formula_split f) f
 ;;
 
+(* The result will be index1=index2 -> arr_index1=arr_index2 *)
 let mk_aux_formula
     (index1:exp) (index2:exp) (arr:spec_var):formula=
   let ante = BForm ((Eq (index1, index2, no_pos),None),None) in
   let conseq = BForm ((Eq (mk_array_new_name arr index1, mk_array_new_name arr index2, no_pos),None),None) in
   mk_imply ante conseq
+;;
+
+let mk_aux_formula_from_one_to_many
+      (new_index:exp) (old_index_lst:exp list) (arr:spec_var):formula option =
+  let rec helper n olst =
+    match olst with
+      | h::rest ->
+            (mk_aux_formula new_index h arr)::(helper new_index rest)
+      | [] ->
+            []
+  in
+  let af = helper new_index old_index_lst in
+  match af with
+    | [] -> None
+    | _ -> Some (mk_and_list af)
 ;;
 
 (* ------------------------------------------- *)
@@ -1886,33 +2069,33 @@ let drop_array_formula
 ;;
 (* --------------------------------------------------------- *)
 
-let rec drop_array_quantifier
-    (f:formula):formula =
-  match f with
-  | BForm (b,fl)->
-    f
-  | And (f1,f2,loc)->
-    And(drop_array_quantifier f1,drop_array_quantifier f2,loc)
-  | AndList lst->
-    failwith "drop_array_quantifier: AndList To Be Implemented"
-  | Or (f1,f2,fl,loc)->
-    Or (drop_array_quantifier f1,drop_array_quantifier f2,fl,loc)
-  | Not (f,fl,loc)->
-    Not (drop_array_quantifier f,fl,loc)
-  | Forall (sv,f,fl,loc)->
-    if contain_array f
-    then mkTrue no_pos
-    else Forall (sv,drop_array_quantifier f,fl,loc)
-  | Exists (sv,f,fl,loc)->
-    if contain_array f
-    then mkTrue no_pos
-    else Exists (sv,drop_array_quantifier f,fl,loc)
-;;
+(* let rec drop_array_quantifier *)
+(*     (f:formula):formula = *)
+(*   match f with *)
+(*   | BForm (b,fl)-> *)
+(*     f *)
+(*   | And (f1,f2,loc)-> *)
+(*     And(drop_array_quantifier f1,drop_array_quantifier f2,loc) *)
+(*   | AndList lst-> *)
+(*     failwith "drop_array_quantifier: AndList To Be Implemented" *)
+(*   | Or (f1,f2,fl,loc)-> *)
+(*     Or (drop_array_quantifier f1,drop_array_quantifier f2,fl,loc) *)
+(*   | Not (f,fl,loc)-> *)
+(*     Not (drop_array_quantifier f,fl,loc) *)
+(*   | Forall (sv,f,fl,loc)-> *)
+(*     if contain_array f *)
+(*     then mkTrue no_pos *)
+(*     else Forall (sv,drop_array_quantifier f,fl,loc) *)
+(*   | Exists (sv,f,fl,loc)-> *)
+(*     if contain_array f *)
+(*     then mkTrue no_pos *)
+(*     else Exists (sv,drop_array_quantifier f,fl,loc) *)
+(* ;; *)
 
-let drop_array_quantifier
-    (f:formula):formula =
-  Debug.no_1 "drop_array_quantifier" !print_pure !print_pure (fun f -> drop_array_quantifier f) f
-;;
+(* let drop_array_quantifier *)
+(*     (f:formula):formula = *)
+(*   Debug.no_1 "drop_array_quantifier" !print_pure !print_pure (fun f -> drop_array_quantifier f) f *)
+(* ;; *)
 
 let rec produce_aux_formula
     (translate_scheme:((spec_var * (exp list)) list)):(formula option)=
@@ -1921,7 +2104,7 @@ let rec produce_aux_formula
     match h,e with
     | IConst _, IConst _ -> false
     | Var (sv1,_), Var (sv2,_)->
-      not (is_same_sv sv1 sv2)
+          not (is_same_sv sv1 sv2)
     | IConst _, Var _
     | Var _, IConst _->
       true
@@ -1984,6 +2167,482 @@ let produce_aux_formula
   in
   Debug.no_1 "produce_aux_formula" string_of_translate_scheme pr_option (fun ts -> produce_aux_formula ts) translate_scheme
 ;;
+
+let rec contain_array_element f arr_sv index_sv:bool =
+  let rec helper_e e arr_sv index:bool =
+    match e with
+      | ArrayAt (arr,[index],loc) ->
+            if is_same_sv arr arr_sv
+            then
+              begin
+                match index with
+                  | IConst _ ->
+                        false
+                  | Var (sv,_) ->
+                        if is_same_sv sv index_sv
+                        then true
+                        else false
+                  | _ ->
+                        failwith "contain_array_element: Invalid index"
+              end
+            else
+              false
+      | ArrayAt _ ->
+            failwith "contain_array_element: Invalid array format"
+      | Add (e1,e2,loc)
+      | Subtract (e1,e2,loc)
+      | Mult (e1,e2,loc)
+      | Div (e1,e2,loc)->
+            (helper_e e1 arr_sv index)||(helper_e e2 arr_sv index)
+      | Var _
+      | IConst _ ->
+            false
+      | _ -> failwith "is_valid_forall_helper_exp: To Be Implemented"
+  in
+  let helper_b ((p,ba):b_formula) arr_sv index =
+    match p with
+      | BConst _
+      | BVar _
+      | Frm _
+      | XPure _
+      | LexVar _
+      | RelForm _ ->
+            false
+      | Lt (e1,e2,loc)
+      | Lte (e1,e2,loc)
+      | Gt (e1,e2,loc)
+      | Gte (e1,e2,loc)
+      | Eq (e1,e2,loc)
+      | Neq (e1,e2,loc) ->
+            (helper_e e1 arr_sv index)||(helper_e e2 arr_sv index)
+      | _ ->
+            failwith "extend_env_b: To Be Implemented"
+  in
+  match f with
+    | BForm (b,fl)->
+          helper_b b arr_sv index_sv
+    | And (f1,f2,_)
+    | Or (f1,f2,_,_) ->
+          (contain_array_element f1 arr_sv index_sv)||(contain_array_element f2 arr_sv index_sv)
+    | AndList lst->
+          failwith "extend_env: AndList To Be Implemented"
+    | Not (sub_f,fl,loc)->
+          contain_array_element sub_f arr_sv index_sv
+    | Forall (sv,sub_f,fl,loc)
+    | Exists (sv,sub_f,fl,loc)->
+          contain_array_element sub_f arr_sv index_sv
+;;
+
+(* For a formula and an index sv, produce the auxiliary formula that contains the information between the index sv to the other indexes *)
+let produce_aux_formula_from_env f index_sv env =
+  let new_index = Var (index_sv,no_pos) in
+  let rec helper env =
+    match env with
+      | (arr_sv,indexlst)::rest ->
+            if contain_array_element f arr_sv index_sv
+            then
+              begin
+                let aux_1 = mk_aux_formula_from_one_to_many new_index indexlst arr_sv in
+                match aux_1 with
+                  | Some a ->
+                        a::(helper rest)
+                  | None -> helper rest
+              end
+            else
+              helper rest
+      | [] ->
+            []
+  in
+  let aflst = helper env in
+  match aflst with
+    | [] -> None
+    | _ -> Some (mk_and_list aflst)
+;;
+
+
+
+(* Assuming that the quantified variable can only be index or the array itself *)
+type not_free_var = (spec_var list)
+;;
+
+let string_of_sv_lst = pr_list string_of_spec_var;;
+
+let add_v  nfv sv:not_free_var =
+  (sv::nfv)
+;;
+
+
+
+let not_free nfv sv =
+  List.exists (fun ele -> is_same_sv ele sv) nfv
+;;
+
+(* (arr -> {sv list}) list *)
+type arr2index_env = ((spec_var * (exp list)) list)
+;;
+
+let string_of_env env:string =
+  let string_of_item
+        ((arr,indexlst):(spec_var * (exp list))):string=
+    let string_of_indexlst = List.fold_left (fun s e -> s^" "^(ArithNormalizer.string_of_exp e)^" ") "" indexlst in
+    "array: "^(string_of_spec_var arr)^" { "^(string_of_indexlst)^"}"
+  in
+  (pr_list string_of_item) env
+;;
+
+let produce_aux_formula_from_env f index_sv env =
+  let pro = function
+    | Some f -> !print_pure f
+    | None -> "None"
+  in
+  Debug.no_3 "produce_aux_formula_from_env" !print_pure string_of_spec_var string_of_env pro produce_aux_formula_from_env f index_sv env
+;;
+
+let add_env (env:arr2index_env) (arr:spec_var) (index:exp) =
+  let rec helper
+        env arr index =
+    match env with
+      | (array,elst)::rest ->
+            if is_same_sv array arr
+            then
+              if List.exists (fun ele -> is_same_exp ele index) elst
+              then env
+              else
+                (array,index::elst)::rest
+            else
+              (array,elst)::(helper rest arr index)
+      | [] ->
+            [(arr,[index])]
+  in
+  match index with
+    | IConst _
+    | Var _ ->
+            helper env arr index
+    | _ -> failwith "add_env: Invalid format of array index"
+;;
+
+(* Collect all the free array element in f *)
+let rec extend_env old_env (nfv:not_free_var) f:arr2index_env =
+  let rec extend_env_e old_env nfv e =
+    match e with
+      | ArrayAt (arr,[index],loc) ->
+            begin
+              match index with
+                | IConst _ ->
+                      if (not_free nfv arr)
+                      then
+                        old_env
+                      else
+                        add_env old_env arr index
+                | Var (sv,_) ->
+                      if (not_free nfv arr) || (not_free nfv sv)
+                      then
+                        old_env
+                      else
+                        add_env old_env arr index
+                | _ ->
+                      failwith "extend_env: Invalid input"
+            end
+      | ArrayAt _ ->
+            failwith "extend_env_e: Invalid array format"
+      | Add (e1,e2,loc)
+      | Subtract (e1,e2,loc)
+      | Mult (e1,e2,loc)
+      | Div (e1,e2,loc)->
+            let new_env1 = extend_env_e old_env nfv e1 in
+            let new_env2 = extend_env_e new_env1 nfv e2 in
+            new_env2
+      | Var _
+      | IConst _ ->
+            old_env
+      | _ -> failwith "is_valid_forall_helper_exp: To Be Implemented"
+  in
+  let extend_env_b old_env nfv ((p,ba):b_formula) =
+    match p with
+      | BConst _
+      | BVar _
+      | Frm _
+      | XPure _
+      | LexVar _
+      | RelForm _ ->
+            old_env
+      | Lt (e1,e2,loc)
+      | Lte (e1,e2,loc)
+      | Gt (e1,e2,loc)
+      | Gte (e1,e2,loc)
+      | Eq (e1,e2,loc)
+      | Neq (e1,e2,loc) ->
+            let new_env1 = extend_env_e old_env nfv e1 in
+            let new_env2 = extend_env_e new_env1 nfv e2 in
+            new_env2
+      | _ ->
+            failwith "extend_env_b: To Be Implemented"
+  in
+  match f with
+    | BForm (b,fl)->
+          extend_env_b old_env nfv b
+    | And (f1,f2,_)
+    | Or (f1,f2,_,_) ->
+          let new_env1 = extend_env old_env nfv f1 in
+          let new_env2 = extend_env new_env1 nfv f2 in
+          new_env2
+    | AndList lst->
+          failwith "extend_env: AndList To Be Implemented"
+    | Not (sub_f,fl,loc)->
+          extend_env old_env nfv sub_f
+    | Forall (sv,sub_f,fl,loc)
+    | Exists (sv,sub_f,fl,loc)->
+          let new_env = extend_env old_env (add_v nfv sv) sub_f in
+          new_env
+;;
+
+let extend_env old_env nfv f =
+  Debug.no_3 "extend_env" string_of_env (pr_list string_of_spec_var) !print_pure string_of_env extend_env old_env nfv f
+;;
+
+
+
+(* The returned formula must be forall-free *)
+let instantiate_forall
+      (f:formula) old_env:formula =
+
+  (* replace sv in the formula with information from env *)
+  let instantiate_with_one_sv
+        (f:formula) sv env:formula =
+    (* replace sv with index in the expression exp *)
+    let rec replace_helper_e (e:exp) (sv:spec_var) (index:exp) =
+      match e with
+        | ArrayAt (arr,[nindex],loc) ->
+              ArrayAt (arr,[replace_helper_e nindex sv index],loc)
+        | ArrayAt _ ->
+              failwith "extend_env_e: Invalid array format"
+        | Add (e1,e2,loc)->
+              Add (replace_helper_e e1 sv index, replace_helper_e e2 sv index,loc)
+        | Subtract (e1,e2,loc)->
+              Subtract (replace_helper_e e1 sv index, replace_helper_e e2 sv index,loc)
+        | Mult (e1,e2,loc)->
+              Mult (replace_helper_e e1 sv index, replace_helper_e e2 sv index,loc)
+        | Div (e1,e2,loc)->
+              Div (replace_helper_e e1 sv index, replace_helper_e e2 sv index,loc)
+        | Var (nsv,_) ->
+              if is_same_sv nsv sv
+              then index
+              else
+                e
+        | IConst _ ->
+              e
+        | _ -> failwith "is_valid_forall_helper_exp: To Be Implemented"
+    in
+    let replace_helper_b ((p,ba):b_formula) (sv:spec_var) (index:exp)=
+      match p with
+        | BConst _
+        | BVar _
+        | Frm _
+        | XPure _
+        | LexVar _
+        | RelForm _ ->
+              (p,ba)
+        | Lt (e1,e2,loc)->
+              (Lt (replace_helper_e e1 sv index,replace_helper_e e2 sv index,loc),ba)
+        | Lte (e1,e2,loc)->
+              (Lte (replace_helper_e e1 sv index,replace_helper_e e2 sv index,loc),ba)
+        | Gt (e1,e2,loc)->
+              (Gt (replace_helper_e e1 sv index,replace_helper_e e2 sv index,loc),ba)
+        | Gte (e1,e2,loc)->
+              (Gte (replace_helper_e e1 sv index,replace_helper_e e2 sv index,loc),ba)
+        | Eq (e1,e2,loc)->
+              (Eq (replace_helper_e e1 sv index,replace_helper_e e2 sv index,loc),ba)
+        | Neq (e1,e2,loc) ->
+              (Neq (replace_helper_e e1 sv index,replace_helper_e e2 sv index,loc),ba)
+        | _ ->
+              failwith "replace_helper: To Be Implemented"
+    in
+    (* replace sv in the formula f with index *)
+    let rec instantiate_with_one_sv_helper
+          (f:formula) (sv:spec_var) (index:exp) :formula =
+      match f with
+        | BForm (b,fl)->
+              BForm (replace_helper_b b sv index,fl)
+        | And (f1,f2,loc)->
+              And (instantiate_with_one_sv_helper f1 sv index,instantiate_with_one_sv_helper f2 sv index,loc)
+        | AndList lst->
+              failwith "instantiate_forall: AndList To Be Implemented"
+        | Or (f1,f2,fl,loc)->
+              Or (instantiate_with_one_sv_helper f1 sv index,instantiate_with_one_sv_helper f2 sv index,fl,loc)
+        | Not (f,fl,loc)->
+              Not (instantiate_with_one_sv_helper f sv index,fl,loc)
+        | Forall (n_sv,sub_f,fl,loc)->
+              Forall (n_sv,instantiate_with_one_sv_helper sub_f sv index,fl,loc)
+        | Exists (n_sv,sub_f,fl,loc)->
+              Exists(n_sv,instantiate_with_one_sv_helper sub_f sv index,fl,loc)
+    in
+    let contains_arr f arr=
+      (* To Be Implemented *)
+      true
+    in
+    mk_and_list (List.fold_left (fun result (arr,index) -> (if contains_arr f arr then (List.fold_left (fun r index -> (instantiate_with_one_sv_helper f sv index)::r) [] index) else [])@result) [] env)
+  in
+  let instantiate_with_one_sv f sv env =
+    Debug.no_3 "instantiate_with_one_sv" !print_pure string_of_spec_var string_of_env !print_pure instantiate_with_one_sv f sv env
+  in
+  let rec instantiate_forall_helper
+        (f:formula) (nfv:not_free_var) env :formula =
+    let env = extend_env env nfv f in
+    match f with
+      | BForm (b,fl)->
+            f
+      | And (f1,f2,loc)->
+            And (instantiate_forall_helper f1 nfv env,instantiate_forall_helper f2 nfv env,loc)
+      | AndList lst->
+            failwith "instantiate_forall: AndList To Be Implemented"
+      | Or (f1,f2,fl,loc)->
+            Or (instantiate_forall_helper f1 nfv env,instantiate_forall_helper f2 nfv env,fl,loc)
+      | Not (f,fl,loc)->
+            Not (instantiate_forall_helper f nfv env,fl,loc)
+      | Forall (sv,sub_f,fl,loc)->
+            let new_nfv = add_v nfv sv in
+            let new_env = extend_env env nfv sub_f in
+            let new_sub_f = instantiate_forall_helper sub_f new_nfv new_env in
+            (try
+              let instantiated_sub_f = instantiate_with_one_sv new_sub_f sv env in
+              (* And (instantiated_sub_f, f,loc) *)
+              instantiated_sub_f
+            with _ ->
+                f
+            )
+      | Exists (sv,sub_f,fl,loc)->
+            let new_nfv = add_v nfv sv in
+            let new_env = extend_env env nfv sub_f in
+            let new_sub_f = instantiate_forall_helper sub_f new_nfv new_env in
+            Exists (sv,new_sub_f,fl,loc)
+  in
+  let instantiate_forall_helper f nfv env =
+    Debug.no_3 "instantiate_forall_helper" !print_pure (pr_list string_of_spec_var) string_of_env !print_pure instantiate_forall_helper f nfv env
+  in
+  instantiate_forall_helper f [] old_env
+
+;;
+
+let instantiate_forall f old_env=
+  let pr = !print_pure in
+  Debug.no_2 "instantiate_forall" pr string_of_env pr instantiate_forall f old_env
+;;
+
+let rec instantiate_exists f =
+  match f with
+    | BForm (b,fl)->
+          f
+    | And (f1,f2,loc)->
+          And (instantiate_exists f1,instantiate_exists f2,loc)
+    | AndList lst->
+          failwith "instantiate_forall: AndList To Be Implemented"
+    | Or (f1,f2,fl,loc)->
+          Or (instantiate_exists f1,instantiate_exists f2,fl,loc)
+    | Not (f,fl,loc)->
+          Not (instantiate_exists f,fl,loc)
+    | Forall (sv,sub_f,fl,loc)->
+          Forall (sv,instantiate_exists sub_f,fl,loc)
+    | Exists (sv,sub_f,fl,loc)->
+          begin
+            match sv with
+              | SpecVar (Array _,_,_) ->
+                    Exists (sv,instantiate_exists sub_f,fl,loc)
+              | _ -> instantiate_exists sub_f
+          end
+;;
+
+let instantiate_exists f=
+  Debug.no_1 "instantiate_exists" !print_pure !print_pure instantiate_exists f
+;;
+
+let rec produce_aux_formula_for_exists
+      (f:formula) env:formula =
+  match f with
+    | Exists (nsv,sub_f,fl,l) ->
+          let af = produce_aux_formula_from_env sub_f nsv env in
+          let new_env = extend_env env [] sub_f in
+          let new_sub_f = produce_aux_formula_for_exists sub_f new_env in
+          begin
+            match af with
+              | Some new_f ->
+                    let new_sub_f = And (new_f,new_sub_f,no_pos) in
+                      Exists (nsv,new_sub_f,fl,l)
+              | None ->
+                    Exists (nsv,new_sub_f,fl,l)
+          end
+    | And (f1,f2,loc) ->
+          And (produce_aux_formula_for_exists f1 env,produce_aux_formula_for_exists f2 env,loc)
+    | Or (f1,f2,fl,loc) ->
+          Or (produce_aux_formula_for_exists f1 env,produce_aux_formula_for_exists f2 env,fl,loc)
+    | AndList lst->
+          failwith "produce_aux_formula_for_exists: AndList To Be Implemented"
+    | Not (sub_f,fl,loc)->
+          Not (produce_aux_formula_for_exists sub_f env,fl,loc)
+    | Forall (sv,sub_f,fl,loc)->
+          let new_env = extend_env env [] sub_f in
+          let new_sub_f = produce_aux_formula_for_exists sub_f new_env in
+          Forall (sv,new_sub_f,fl,loc)
+    | BForm (b,fl) ->
+          f
+;;
+
+let produce_aux_formula_for_exists f env =
+  Debug.no_2 "produce_aux_formula_for_exists" !print_pure string_of_env !print_pure produce_aux_formula_for_exists f env
+;;
+
+let translate_array_one_formula
+      (f:formula):formula =
+
+  let f = translate_array_relation f in
+  let f = constantize_ex_q f in
+  let f = process_exists_array f in
+
+  let global_env = extend_env [] [] f in
+  let f = instantiate_forall f global_env in
+  let f = produce_aux_formula_for_exists f global_env in
+  let array_free_formula = mk_array_free_formula f in
+  let aux_formula = produce_aux_formula global_env in
+  let new_f =
+    match aux_formula with
+      | None -> array_free_formula
+      | Some af -> And (array_free_formula,af,no_pos)
+  in
+  new_f
+;;
+
+let translate_array_one_formula f =
+      Debug.no_1 "#1translate_array_one_formula" !print_pure !print_pure translate_array_one_formula f
+;;
+
+let translate_array_imply ante conseq=
+
+  let ante = translate_array_relation ante in
+  let ante = constantize_ex_q ante in
+  let ante = process_exists_array ante in
+
+  let global_env = x_add extend_env [] [] conseq in
+  let global_env = x_add extend_env global_env [] ante in
+  let ante = instantiate_forall ante global_env in
+  let ante = produce_aux_formula_for_exists ante global_env in
+  let ante = mk_array_free_formula ante in
+  let aux_formula = produce_aux_formula global_env in
+  let ante =
+    match aux_formula with
+      | None -> ante
+      | Some af -> And (ante,af,no_pos)
+  in
+  let conseq = mk_array_free_formula conseq in
+  (ante,conseq)
+;;
+
+let translate_array_imply ante conseq =
+  let pr = !print_pure in
+  let pr_pair = function
+    | (a,b) -> "("^(pr a)^","^(pr b)^")"
+  in
+  Debug.no_2 "#1translate_array_imply" pr pr pr_pair (fun ante conseq -> translate_array_imply ante conseq) ante conseq
+;;
+
 
 (* let new_translate_out_array_in_formula *)
 (*       (f:formula):formula= *)
@@ -2051,6 +2710,8 @@ let new_translate_out_array_in_imply_split
 
 let new_translate_out_array_in_imply_split
     (ante:formula) (conseq:formula):(formula * formula) =
+  (* let old_env = extend_env [] [] conseq in *)
+  (* let ante= instantiate_forall ante old_env in *)
   let (keep_ante,sv2f_ante) = split_formula ante (x_add_1 can_be_simplify) in
   let (keep_conseq,sv2f_conseq) = split_formula conseq (x_add_1 can_be_simplify) in
   let (nante,nconseq) = new_translate_out_array_in_imply_split keep_ante keep_conseq in
@@ -2137,9 +2798,12 @@ let translate_preprocess f =
 (*   (\* | Some ef -> And (ef,new_f,no_pos) *\) *)
 (* ;; *)
 
+
+
 (* After pre-process *)
 let new_translate_out_array_in_one_formula
     (f:formula):formula=
+  let _ = instantiate_forall f in
   let array_free_formula = mk_array_free_formula f in
   let scheme = extract_translate_scheme f in
   let aux_formula = produce_aux_formula scheme in
@@ -2162,19 +2826,19 @@ let new_translate_out_array_in_one_formula_full
   new_translate_out_array_in_one_formula f
 ;;
 
-let new_translate_out_array_in_one_formula_full_keep_relation
-    (f:formula):formula=
-  let f = translate_preprocess_keep_relation f in
-  new_translate_out_array_in_one_formula f
-;;
+(* let new_translate_out_array_in_one_formula_full_keep_relation *)
+(*     (f:formula):formula= *)
+(*   let f = translate_preprocess_keep_relation f in *)
+(*   new_translate_out_array_in_one_formula f *)
+(* ;; *)
 
-let new_translate_out_array_in_one_formula_full_keep_relation
-    (f:formula):formula =
-  match f with
-  | Or(f1,f2,fl,loc) ->
-        Or(new_translate_out_array_in_one_formula_full_keep_relation f1,new_translate_out_array_in_one_formula_full_keep_relation f2,fl,loc)
-  | _ -> new_translate_out_array_in_one_formula_full_keep_relation f
-;;
+(* let new_translate_out_array_in_one_formula_full_keep_relation *)
+(*     (f:formula):formula = *)
+(*   match f with *)
+(*   | Or(f1,f2,fl,loc) -> *)
+(*         Or(new_translate_out_array_in_one_formula_full_keep_relation f1,new_translate_out_array_in_one_formula_full_keep_relation f2,fl,loc) *)
+(*   | _ -> new_translate_out_array_in_one_formula_full_keep_relation f *)
+(* ;; *)
 
 (* let new_translate_out_array_in_one_formula_full  *)
 (*     (f:formula):formula= *)
@@ -2198,10 +2862,10 @@ let new_translate_out_array_in_one_formula_full
 (*   split_and_process (process_quantifier f) can_be_simplify new_translate_out_array_in_one_formula_full *)
 (* ;; *)
 
-let new_translate_out_array_in_one_formula_split_keep_relation
-    (f:formula):formula =
-  split_and_combine new_translate_out_array_in_one_formula_full_keep_relation (x_add_1 can_be_simplify) (f)
-;;
+(* let new_translate_out_array_in_one_formula_split_keep_relation *)
+(*     (f:formula):formula = *)
+(*   split_and_combine new_translate_out_array_in_one_formula_full_keep_relation (x_add_1 can_be_simplify) (f) *)
+(* ;; *)
 
 let new_translate_out_array_in_one_formula_split
     (f:formula):formula =
@@ -2215,12 +2879,12 @@ let new_translate_out_array_in_one_formula_split
 (*   else f *)
 (* ;; *)
 
-let new_translate_out_array_in_one_formula_split_keep_relation
-    (f:formula):formula =
-  if !Globals.array_translate  (* Globals.infer_const_obj # is_arr_as_var *)
-  then Debug.no_1 "new_translate_out_array_in_one_formula_split" !print_pure !print_pure (fun f -> new_translate_out_array_in_one_formula_split_keep_relation f) f
-  else f
-;;
+(* let new_translate_out_array_in_one_formula_split_keep_relation *)
+(*     (f:formula):formula = *)
+(*   if !Globals.array_translate  (\* Globals.infer_const_obj # is_arr_as_var *\) *)
+(*   then Debug.no_1 "new_translate_out_array_in_one_formula_split" !print_pure !print_pure (fun f -> new_translate_out_array_in_one_formula_split_keep_relation f) f *)
+(*   else f *)
+(* ;; *)
 
 let new_translate_out_array_in_one_formula_split
     (f:formula):formula =
@@ -3288,7 +3952,7 @@ let rec translate_back_array_in_one_formula
 
 let translate_back_array_in_one_formula
     (f:formula):formula =
-  if !Globals.array_translate  (* (Globals.infer_const_obj # is_arr_as_var) *)
+  if true||(!Globals.array_translate)  (* (Globals.infer_const_obj # is_arr_as_var) *)
   then translate_back_array_in_one_formula f
   else f
 ;;
@@ -3348,3 +4012,5 @@ let translate_back_array_in_one_formula
 (*   let pf = !print_pure in *)
 (*   Debug.no_1 "translate_out_array_in_one_formula_full" pf pf (fun f -> translate_out_array_in_one_formula_full f) f *)
 (* ;; *)
+
+

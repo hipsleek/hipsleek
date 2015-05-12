@@ -497,12 +497,12 @@ let update_with_td_fp_x bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
         let pre = x_add_1 TP.simplify pre in
         let pre = filter_disj pre pre_fmls in
         let pre = TP.pairwisecheck_raw pre in
-        let () = x_dinfo_hp (add_str "pre" !CP.print_formula) pre no_pos in
+        let () = x_binfo_hp (add_str "update_with_td_fp pre" !CP.print_formula) pre no_pos in
         List.map (fun (rel,post) -> (rel,post,pre_rel,pre)) rel_posts
       else
         let input_fml = List.map (fun (f1,f2) -> (CP.mkAnd f1 pre no_pos,f2)) post_rel_df_new in
         pre_calculate fp_func input_fml pre_vars proc_spec
-          pre pure_oblg_to_check (rel_posts,pre_rel) pre_fmls pre_rel_vars pre_rel_df
+            pre pure_oblg_to_check (rel_posts,pre_rel) pre_fmls pre_rel_vars pre_rel_df
   | [(rel,post)],[] ->
     let rels_in_pred = List.filter CP.is_rel_var pre_vars in
     let () = x_tinfo_hp (add_str "rels_in_pred" !print_svl) rels_in_pred no_pos in

@@ -38,3 +38,12 @@ i. tpdispatcher.ml 2110: as same f.
 j. tpdispatcher.ml 2230: Translate back the result.
 k. tpdispatcher.ml 2684: translate out array part in an implication.
 
+4. What can be handled?
+a. array element with constant or free variable as index. For example, a[5], b[i].
+b. exists a. a is an array.
+c. forall about array in the form that the formula itself will not cause any contradiction, which means that only one point of an array can be used. EX. forall i i>5->a[i]=5 is fine. But forall i.i>5->a[i]>0&a[i+1]<0 may be false itself and reducing it may lose such information.
+
+5. Problem
+1. Split and combine is problematic in that the update relation translation happens after the split and hence the forall formula will not be filtered out.
+2. How to deal with exists?????
+exists(fc_1193: exists(fc_1192: a'[fc_1193]=fc_1192 & fc_1192=10) & fc_1193=5) & a'[4]=res. This is now temporarily safe in a way that the scope of the exists quantifiers are over the whole formula.

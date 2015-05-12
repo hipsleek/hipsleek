@@ -168,8 +168,13 @@ let rec fixcalc_of_pure_formula f = match f with
     begin
       match p with
       | CP.BForm ((CP.BVar (x,_),_),_) -> fixcalc_of_spec_var x ^ op_lte ^ "0"
-      | _ -> illegal_format ("Fixcalc.fixcalc_of_pure_formula: 
-                            Not supported Not-formula")
+      | CP.BForm ((CP.Eq (e1,e2,loc),ba),fl) ->
+            let new_f = CP.BForm ((CP.Neq (e1,e2,loc),ba),fl) in
+            fixcalc_of_pure_formula new_f
+      | CP.BForm ((CP.Neq (e1,e2,loc),ba),fl) ->
+            let new_f = CP.BForm ((CP.Eq (e1,e2,loc),ba),fl) in
+            fixcalc_of_pure_formula new_f
+      | _ -> illegal_format ("Fixcalc.fixcalc_of_pure_formula: Not supported Not-formula ::"^(!CP.print_formula f))
     end
   | CP.Forall (sv, p,_ , _) ->
     " (forall (" ^ fixcalc_of_spec_var sv ^ ":" ^
@@ -180,12 +185,15 @@ let rec fixcalc_of_pure_formula f = match f with
 ;;
 
 let fixcalc_of_pure_formula f=
+  (* let f = Omega.simplify f in *)
   DD.no_1 "fixcalc_of_pure_formula(really called)" !CP.print_formula (fun s->s) (fun f-> fixcalc_of_pure_formula f) f
 ;;
 
 let fixcalc_of_pure_formula f=
-  let nf = x_add_1 Trans_arr.new_translate_out_array_in_one_formula_split_keep_relation f in
-  fixcalc_of_pure_formula nf
+  (* let f = Trans_arr.instantiate_exists f in *)
+  let f = x_add_1 Trans_arr.translate_array_one_formula f in
+  (* let f = x_add_1 Trans_arr.new_translate_out_array_in_one_formula_split f in *)
+  fixcalc_of_pure_formula f
 ;;
 
 let fixcalc_of_pure_formula f=

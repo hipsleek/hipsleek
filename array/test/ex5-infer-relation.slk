@@ -1,0 +1,13 @@
+
+relation Q(int a, int b).
+
+//post
+relAssume
+  n=0 & m=0 -->  Q(m,n).
+
+relAssume
+  m1=m-1 & r=r1+2 & Q(m1,r1) -->  Q(m,r).
+
+relation_infer [][Q].
+
+

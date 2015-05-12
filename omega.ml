@@ -204,6 +204,9 @@ and omega_of_formula_x pr_w pr_s f  =
     (* let () = x_tinfo_hp (add_str "Omega Error format:" !print_formula) f in *)
     raise e
 
+let omega_of_formula_x pr_w pr_s f =
+  omega_of_formula_x pr_w pr_s (Trans_arr.translate_array_one_formula f)
+;;
 
 let omega_of_formula i pr_w pr_s f  =
   let () = set_prover_type () in
@@ -363,8 +366,9 @@ let read_last_line_from_in_channel chn : string =
 
 (* send formula to omega and receive result -true/false*)
 let check_formula f timeout =
-  (*  try*)
+(*  try*)
   begin
+    (* let () = x_binfo_pp f no_pos in *)
     if not !is_omega_running then start ()
     else if (!omega_call_count = !omega_restart_interval) then
       begin
@@ -463,6 +467,8 @@ let rec omega_of_var_list (vars : ident list) : string = match vars with
 
 let get_vars_formula (p : formula):(string list) =
   let svars = fv p in
+  (* let () = x_binfo_pp ("formula "^(!print_formula p)) no_pos in *)
+  (* let () = x_binfo_pp ((pr_list string_of_spec_var) svars) no_pos in *)
   (*if List.length svars >= !oc_maxVars then (false, []) else*)
   List.map omega_of_spec_var svars
 
@@ -494,11 +500,12 @@ let is_sat_ops_x pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
     (*  Lash.write pe; *)
     (* let pe0 = drop_varperm_formula pe in *)
     let pe =
-      if (* Globals.infer_const_obj # is_arr_as_var *) 
-        !Globals.array_translate
+      if (* Globals.infer_const_obj # is_arr_as_var *)
+        false && !Globals.array_translate
       then Trans_arr.drop_array_formula pe
       else pe
     in
+    let pe = Trans_arr.translate_array_one_formula pe in
     let svl0 = Cpure.fv pe in
     let svl,fr_svl = mkSpecVarList 0 svl0 in
     let ss = List.combine svl fr_svl in
@@ -508,6 +515,7 @@ let is_sat_ops_x pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
     begin
       omega_subst_lst := [];
       let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) pvars) in
+      (* let () = x_binfo_pp vstr no_pos in *)
       let fstr = omega_of_formula 1 pr_weak pr_strong pe in
       let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
 
@@ -613,6 +621,7 @@ let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
     let svl,fr_svl = mkSpecVarList 0 svl0 in
     let ss = List.combine svl fr_svl in
     let pe = Cpure.subst ss pe in
+    let pe = Trans_arr.translate_array_one_formula pe in
     let pvars = get_vars_formula pe in
     (*if not safe then true else*)
     begin
@@ -849,6 +858,8 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
   (* print_endline "LOCLE: simplify";*)
   (* let () = print_string ("\nomega_simplify: f
      before"^(!print_formula pe)) in *)
+  let pe = Trans_arr.translate_array_one_formula pe in
+  (* let () = x_binfo_hp (add_str "simplify_ops_x(after trans_arr):" !print_formula) pe no_pos in *)
   begin
 
     (* let pe = Trans_arr.translate_out_array_in_one_formula_full pe in *)
@@ -958,7 +969,8 @@ let simplify (pe : formula) : formula =
 
 let simplify (pe : formula) : formula =
   let pf = !print_pure in
-  Debug.no_1 "Omega.simplify" pf pf simplify pe
+  Debug.no_1 "Omega.simplify" pf pf (fun pe ->Trans_arr.translate_back_array_in_one_formula (simplify pe)) pe
+;;
 
 (* let simplify_ho is_complex (orig_pe : formula) : formula = *)
 (*  (\* print_endline "LOCLE: simplify";*\) *)
@@ -1108,7 +1120,8 @@ let pairwisecheck (pe : formula) : formula =
 
 (* ZH *)
 let pairwisecheck (pe:formula) : formula =
-  Trans_arr.split_and_combine pairwisecheck (x_add_1 Trans_arr.can_be_simplify) pe
+  (* Trans_arr.split_and_combine pairwisecheck (x_add_1 Trans_arr.can_be_simplify) pe *)
+  (Trans_arr.translate_back_array_in_one_formula (pairwisecheck (x_add_1 Trans_arr.translate_array_one_formula pe)))
 ;;
 
 let pairwisecheck (pe : formula) : formula =

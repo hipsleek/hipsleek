@@ -1962,6 +1962,7 @@ let simplify_omega (f:CP.formula): CP.formula =
 let simplify (f : CP.formula) : CP.formula =
   (* proof_no := !proof_no + 1; *)
   (* let _ = Trans_arr.new_translate_out_array_in_one_formula_split f in *)
+  let _ = x_add_1 Trans_arr.translate_array_one_formula f in
   let f = x_add_1 Trans_arr.new_translate_out_array_in_one_formula_split f in
 
   let simpl_num = next_proof_no () in
@@ -2681,6 +2682,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   (* let ante = translate_array_relation ante in *)
 
   (* let n_ante,n_conseq = new_translate_out_array_in_imply_full ante conseq in *)
+  let _ = Trans_arr.translate_array_imply ante conseq in
   let n_ante,n_conseq = Trans_arr.new_translate_out_array_in_imply_split_full ante conseq in
   (* let n_ante = Trans_arr.drop_array_formula n_ante in *)
   (* let _ = print_endline ("##After process: ante: "^(Cprinter.string_of_pure_formula n_ante)^"\n conseq: "^(Cprinter.string_of_pure_formula n_conseq)) in *)
