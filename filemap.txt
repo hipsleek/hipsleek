@@ -24,6 +24,7 @@ exclude "examples/csharp.1/csharp_examples/applications/blackjack_game/blackjack
 exclude "examples/csharp/csharp_examples/classes_impl/system.zip"
 exclude "examples/csharp.1/csharp_examples/classes_impl/system.zip"
 exclude "decide.vo"
+exclude "decidez.vo"
 exclude "slice/related-works"
 exclude "examples/bperm/benchmark/splash2"
 exclude "omega_modified"
