@@ -1120,7 +1120,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
       in
       (* TODO WN : Is below really needed?? *)
       (*      let args = CP.fv new_p in*)
-      let () = x_binfo_hp (add_str "new_p: before simplify" !CP.print_formula) new_p pos in
+      let () = x_tinfo_hp (add_str "new_p: before simplify" !CP.print_formula) new_p pos in
       let new_p =
         (* if CP.intersect args iv == [] && quan_var != [] then *)
         (*   let new_p = if CP.isConstFalse new_p then fml else CP.mkAnd fml new_p pos in *)
@@ -1134,8 +1134,8 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
         (* else *)
         simplify new_p iv
       in
-      let () = x_binfo_hp (add_str "new_p" !CP.print_formula) new_p pos in
-      let () = x_binfo_hp (add_str "new_p_ass" !CP.print_formula) new_p_ass pos in
+      let () = x_tinfo_hp (add_str "new_p" !CP.print_formula) new_p pos in
+      let () = x_tinfo_hp (add_str "new_p_ass" !CP.print_formula) new_p_ass pos in
       (* abstract common terms from disj into conjunctive form *)
       if (CP.isConstTrue new_p || CP.isConstFalse new_p) then 
         begin
@@ -1164,7 +1164,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
               then (None,None,[])
               else 
                 begin
-                  DD.binfo_pprint ">>>>>> infer_pure_m <<<<<<" pos;
+                  x_binfo_pp ">>>>>> infer_pure_m <<<<<<" pos;
                   DD.ninfo_pprint "Adding heap assumption?" pos;
                   DD.ninfo_hprint (add_str "unk_heaps" (pr_list !CF.print_h_formula)) unk_heaps pos;
                   DD.ninfo_hprint (add_str "lhs_xpure" (!CP.print_formula)) lhs_xpure pos;

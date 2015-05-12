@@ -1126,6 +1126,9 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   (* let _ = print_endline ("ivars"^(Cprinter.string_of_spec_var_list ivars_fvs)) in *)
   (* let _ = print_endline ("ante vars"^(Cprinter.string_of_spec_var_list fvs)) in *)
   (* Disable putting implicit existentials on unbound heap variables *)
+  let () = x_binfo_hp (add_str "ivars" (pr_list pr_id)) ivars no_pos in
+  (* WN : ivars - these are idents rather than spec_var *)
+  (* TODO : shouldn't we be transforming to spec_vars instead ?? *)
   let fv_idents = (List.map CP.name_of_spec_var fvs)@ivars in
   let fv_idents =
     if !Globals.dis_impl_var then
@@ -1158,17 +1161,20 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   let _ = x_tinfo_hp (add_str "conseq(after meta-)" pr) conseq no_pos in
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in
   (* List of vars needed for abduction process *)
+  (* WN:TODO isn't code below already present elsewhere ? try reuse *)
   let vars = List.map (fun v ->
       let v_len = String.length v in
-      let v, prime = if (String.get v (v_len-1)) = '\'' then (String.sub v 0 (v_len-1), Primed)
-      else (v, Unprimed)
+      let (v, prime) as v_pair = 
+        if (String.get v (v_len-1)) = '\'' then (String.sub v 0 (v_len-1), Primed)
+        else (v, Unprimed)
       in
       try
         let _ = Cast.look_up_hp_def_raw !cprog.Cast.prog_hp_decls v in
         CP.SpecVar (HpT, v, prime(* Unprimed *))
       with _ ->
-          let sp = Typeinfer.get_spec_var_type_list_infer ~d_tt:n_tl (v, Unprimed) orig_vars no_pos in
-          if prime = Primed then CP.sp_add_prime sp else sp
+          let sp = (x_add_0 Typeinfer.get_spec_var_type_list_infer) ~d_tt:n_tl v_pair orig_vars no_pos in
+          (* if prime = Primed then CP.sp_add_prime sp else  *)
+          sp
     ) ivars in
   (* let ante,conseq = Cfutil.normalize_ex_quans_conseq !cprog ante conseq in *)
   let (res, rs,v_hp_rel) = x_add Sleekcore.sleek_entail_check 8 itype vars !cprog [] ante conseq in
@@ -1349,8 +1355,8 @@ let shape_infer_pre_process constrs pre_hps post_hps=
   let link_hpargs = !sleek_hprel_unknown in
   (*** BEGIN PRE/POST ***)
   let orig_vars = List.fold_left (fun ls cs-> ls@(CF.fv cs.CF.hprel_lhs)@(CF.fv cs.CF.hprel_rhs)) [] !sleek_hprel_assumes in
-  let pre_vars = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (pre_hps) in
-  let post_vars = List.map (fun v ->  Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (post_hps) in
+  let pre_vars = List.map (fun v -> (x_add_0 Typeinfer.get_spec_var_type_list_infer) (v, Unprimed) orig_vars no_pos) (pre_hps) in
+  let post_vars = List.map (fun v -> (x_add_0 Typeinfer.get_spec_var_type_list_infer) (v, Unprimed) orig_vars no_pos) (post_hps) in
   let pre_vars1 = (CP.remove_dups_svl pre_vars) in
   let post_vars1 = (CP.remove_dups_svl post_vars) in
   let infer_pre_vars,pre_hp_rels  = List.partition (fun sv ->
@@ -1423,8 +1429,8 @@ let process_shape_infer pre_hps post_hps=
 let relation_pre_process constrs pre_hps post_hps=
   (*** BEGIN PRE/POST ***)
   let orig_vars = List.fold_left (fun ls cs-> ls@(CF.fv cs.CF.hprel_lhs)@(CF.fv cs.CF.hprel_rhs)) [] constrs in
-  let pre_vars = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (pre_hps) in
-  let post_vars = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (post_hps) in
+  let pre_vars = List.map (fun v -> x_add_0 Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (pre_hps) in
+  let post_vars = List.map (fun v -> x_add_0 Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (post_hps) in
   let pre_vars1 = (CP.remove_dups_svl pre_vars) in
   let post_vars1 = (CP.remove_dups_svl post_vars) in
   let infer_pre_vars,pre_hp_rels  = List.partition (fun sv ->
@@ -1599,7 +1605,7 @@ let process_validate exp_res opt_fl ils_es=
         ) [] act_vars in
       let (n_tl,es_formula) = meta_to_formula ief false (act_idents) act_ti in
       let orig_vars = CF.fv es_formula in
-      let guide_vars = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) (orig_vars@act_vars) no_pos)
+      let guide_vars = List.map (fun v -> x_add_0 Typeinfer.get_spec_var_type_list_infer (v, Unprimed) (orig_vars@act_vars) no_pos)
           iguide_vars in
       let constrs = List.map (preprocess_constr act_idents act_ti) iconstrs in
       (guide_vars, es_formula, constrs)
@@ -1765,7 +1771,7 @@ let process_shape_conquer sel_ids cond_paths=
   let (* defs *) _ =
     (* if not (!Globals.pred_syn_modular) then *)
     let orig_vars = List.fold_left (fun ls (_,d)-> ls@(CF.h_fv d.CF.def_lhs)) [] ls_pr_defs in
-    let sel_hps = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (sel_ids) in
+    let sel_hps = List.map (fun v -> x_add_0 Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (sel_ids) in
     let sel_hps  = List.filter (fun sv ->
         let t = CP.type_of_spec_var sv in
         ((* is_RelT t || *) is_HpT t )) sel_hps in
@@ -1957,8 +1963,8 @@ let process_shape_split pre_hps post_hps=
   (* let _, sel_post_hps = Sautil.get_pre_post pre_hps post_hps !sleek_hprel_assumes in *)
   (*get infer_vars*)
   let orig_vars = List.fold_left (fun ls cs-> ls@(CF.fv cs.CF.hprel_lhs)@(CF.fv cs.CF.hprel_rhs)) [] !sleek_hprel_assumes in
-  let pre_vars = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (pre_hps) in
-  let post_vars = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (post_hps) in
+  let pre_vars = List.map (fun v -> x_add_0 Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (pre_hps) in
+  let post_vars = List.map (fun v -> x_add_0 Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (post_hps) in
   let pre_vars1 = (CP.remove_dups_svl pre_vars) in
   let post_vars1 = (CP.remove_dups_svl post_vars) in
   let infer_pre_vars,pre_hp_rels  = List.partition (fun sv ->

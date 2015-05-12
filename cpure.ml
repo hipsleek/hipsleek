@@ -20,8 +20,8 @@ type spec_var =
 let sp_rm_prime v = match v with
     SpecVar (a,b,_) -> SpecVar(a,b,Unprimed)
 
-let sp_add_prime v = match v with
-    SpecVar (a,b,_) -> SpecVar(a,b,Primed)
+let sp_add_prime v p = match v with
+    SpecVar (a,b,_) -> SpecVar(a,b,p)
 
 let mk_spec_var id = SpecVar (UNK,id,Unprimed)
 

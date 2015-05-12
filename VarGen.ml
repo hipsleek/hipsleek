@@ -36,6 +36,11 @@ type primed =
   | Primed
   | Unprimed
 
+let string_of_primed p =
+  match p with
+  | Primed -> "Primed"
+  | Unprimed -> "Unprimed"
+
 let no_pos = 
   let no_pos1 = { Lexing.pos_fname = "";
                   Lexing.pos_lnum = 0;

@@ -613,9 +613,14 @@ let string_of_primed p =
   | Unprimed -> ""
 
 let string_of_primed_ident (id,p) =
-  id ^ string_of_primed p
+  "("^id^","^(string_of_primed p)^")"
 
-let pr_ident_list = pr_list (fun (i,p) -> i^(string_of_primed p))
+(* let string_of_primed_ident ( = *)
+(*   id ^ string_of_primed p *)
+
+(* let pr_ident_list = pr_list (fun (i,p) -> i^(string_of_primed p)) *)
+
+let pr_ident_list = pr_list string_of_primed_ident
 
 let rec s_p_i_list l c = match l with 
   | [] -> ""
