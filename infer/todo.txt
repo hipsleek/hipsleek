@@ -1,4 +1,4 @@
-# infer/ex6.slk  --smtinp
+# infer/ex6.slk  --smtinp: FIXED
 
 Why is this z3 problem still there?
 

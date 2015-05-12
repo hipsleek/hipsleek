@@ -1207,6 +1207,9 @@ let run_infer_one_pass_set_states itype (ivars: ident list) (iante0s : meta_form
 
 
 let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formula option) (irhs: meta_formula)=
+  let is_pure_rel rel=
+    false
+  in
   (* let _ = Debug.info_pprint "process_rel_assume" no_pos in *)
   (* let stab = H.create 103 in *)
   let stab = [] in
@@ -1241,21 +1244,34 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
   (* let _ =  print_endline ("RHS = " ^ (Cprinter.string_of_formula rhs)) in *)
   (*TODO: LOC: hp_id should be cond_path*)
   (* why not using mkHprel? *)
-  let knd = CP.RelAssume (CP.remove_dups_svl (lhps@rhps)) in
-  let new_rel_ass = CF.mkHprel_1 knd lhs guard rhs cond_path in
-  (*     CF.hprel_kind = CP.RelAssume (CP.remove_dups_svl (lhps@rhps)); *)
-  (*     unk_svl = [];(\*inferred from norm*\) *)
-  (*     unk_hps = []; *)
-  (*     predef_svl = []; *)
-  (*     hprel_lhs = lhs; *)
-  (*     hprel_guard = guard; *)
-  (*     hprel_rhs = rhs; *)
-  (*     hprel_path = cond_path; *)
-  (*     hprel_proving_kind = Others.proving_kind # top_no_exc; *)
-  (* } in *)
-  (*hp_assumes*)
-  let _ = x_binfo_zp  (lazy  (Cprinter.string_of_hprel_short new_rel_ass)) no_pos in
-  let _ = sleek_hprel_assumes := !sleek_hprel_assumes@[new_rel_ass] in
+  let total_heap_rel_ids = lhps@rhps in
+  let _ = if total_heap_rel_ids != [] then
+    let knd = CP.RelAssume (CP.remove_dups_svl (lhps@rhps)) in
+    let new_rel_ass = CF.mkHprel_1 knd lhs guard rhs cond_path in
+    (*     CF.hprel_kind = CP.RelAssume (CP.remove_dups_svl (lhps@rhps)); *)
+    (*     unk_svl = [];(\*inferred from norm*\) *)
+    (*     unk_hps = []; *)
+    (*     predef_svl = []; *)
+    (*     hprel_lhs = lhs; *)
+    (*     hprel_guard = guard; *)
+    (*     hprel_rhs = rhs; *)
+    (*     hprel_path = cond_path; *)
+    (*     hprel_proving_kind = Others.proving_kind # top_no_exc; *)
+    (* } in *)
+    (*hp_assumes*)
+    let _ = x_binfo_zp  (lazy  (Cprinter.string_of_hprel_short new_rel_ass)) no_pos in
+    let _ = sleek_hprel_assumes := !sleek_hprel_assumes@[new_rel_ass] in
+    ()
+  else
+    let lhs_p = CF.get_pure lhs in
+    let rhs_p = CF.get_pure rhs in
+    let lrels = CP.get_rel_id_list lhs_p in
+    let rrels = CP.get_rel_id_list rhs_p in
+    let rel_ids = CP.remove_dups_svl (lrels@rrels) in
+    let new_rel_ass =  (CP.RelDefn (List.hd rel_ids, None), lhs_p, rhs_p)  in
+    let _ = Infer.infer_rel_stk # push_list_pr [new_rel_ass] in
+    ()
+  in
   ()
 
 let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formula option) (irhs: meta_formula)=
@@ -1456,6 +1472,7 @@ let process_rel_infer pre_rels post_rels =
   let proc_spec = CF.mkETrue_nf no_pos in
   (* let pre_invs0, pre_rel_constrs, post_rel_constrs, pre_rel_ids, post_rels = relation_pre_process hp_lst_assume pre_rels post_rels in *)
   let rels = Infer.infer_rel_stk # get_stk in
+  let _ = Debug.ninfo_hprint (add_str "rels" (pr_list CP.print_lhs_rhs)) rels no_pos in
   let reloblgs, reldefns = List.partition (fun (rt,_,_) -> CP.is_rel_assume rt) rels in
   let is_infer_flow = Pi.is_infer_flow reldefns in
   let reldefns = if is_infer_flow then Pi.add_flow reldefns else List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in
