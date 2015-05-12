@@ -6688,7 +6688,7 @@ and trans_var_x (ve, pe) (tlist: spec_var_type_list) pos =
        (*               Err.error_loc = pos; *)
        (*               Err.error_text = "couldn't infer type for " ^ ve^(match pe with |Unprimed->""|Primed -> "'")^" in "^(string_of_tlist tlist)^"\n"; *)
        (*           } *)
-       | t -> CP.SpecVar (t, ve, pe)
+        | t -> CP.SpecVar (t, ve, pe)
 
       )
     with Not_found ->   
@@ -6800,7 +6800,7 @@ and trans_copy_spec_4caller copy_params sf=
 and trans_I2C_struc_formula i (prog : I.prog_decl) (prepost_flag:bool) (quantify : bool) (fvars : ident list) (f0 : IF.struc_formula) 
     (tlist:spec_var_type_list) (check_self_sp:bool) (*disallow self in sp*) (check_pre:bool) : (spec_var_type_list*CF.struc_formula) = 
   let prb = string_of_bool in
-  let pr_out (_, f) = Cprinter.string_of_struc_formula f in
+  let pr_out  = pr_pair Typeinfer.string_of_tlist Cprinter.string_of_struc_formula in
   (* Debug.no_5_loop    *)
   Debug.no_eff_5_num  i
     "trans_I2C_struc_formula" [true] string_of_tlist prb (add_str "check_pre" prb) Cprinter.str_ident_list 
