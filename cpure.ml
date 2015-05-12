@@ -623,11 +623,18 @@ let is_int_str_aux (n:int) (s:string) : bool =
 let ident_of_spec_var (sv: spec_var) = match sv with
   | SpecVar (t, v, _) -> v 
 
-let string_of_spec_var (sv: spec_var) = match sv with
-  | SpecVar (t, v, _) -> v ^ (if is_primed sv then "'" else "")
+let string_of_spec_var ?(print_typ=false) (sv: spec_var) = match sv with
+  | SpecVar (t, v, p) -> 
+    if print_typ then
+      if p==Primed then (v^"#':"^(string_of_typ t)) 
+      else (v^":"^(string_of_typ t))
+    else if p==Primed then (v^"'") else v
 
-let string_of_typed_spec_var (sv: spec_var) = match sv with
-  | SpecVar (t, v, _) -> v ^ (if is_primed sv then "'" else "")^":"^(string_of_typ t)
+let string_of_typed_spec_var (sv: spec_var) = 
+  string_of_spec_var ~print_typ:true sv
+
+(* match sv with *)
+(*   | SpecVar (t, v, _) -> v ^ (if is_primed sv then "#'" else "")^":"^(string_of_typ t) *)
 
 (* let string_of_typed_spec_var x =  string_of_spec_var_type x *)
 
@@ -865,6 +872,10 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
     (* translation has ensured well-typedness.
        We need only to compare names and primedness *)
     (String.compare v1 v2 = 0) && (p1 = p2)
+
+let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = 
+  let pr = !print_sv in
+  Debug.no_2 "eq_spec_var" pr pr string_of_bool eq_spec_var (sv1 : spec_var) (sv2 : spec_var)
 
 
 
@@ -3186,7 +3197,7 @@ and diff_svl_x (svs1 : spec_var list) (svs2 : spec_var list) =
   List.filter (fun sv -> not(mem sv svs2)) svs1
 
 and diff_svl (svs1 : spec_var list) (svs2 : spec_var list) =
-  Debug.no_2 "diff svl" !print_svl !print_svl !print_svl diff_svl_x svs1 svs2
+  Debug.no_2 "diff_svl" !print_svl !print_svl !print_svl diff_svl_x svs1 svs2
 
 
 and are_same_types (t1 : typ) (t2 : typ) = match t1 with

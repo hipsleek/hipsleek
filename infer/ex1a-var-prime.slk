@@ -2,7 +2,19 @@ infer [aaa,aaa'] true |- aaa=aaa'.
 print residue.
 
 /*
-# ex1a.slk --esl
+# ex1a.slk --print-type --pcp
+
+It seems primed inferred var passed as 
+    SpecVar("aaa'",Unprimed)
+rather than  SpecVar("aaa",Primed)
+
+INPUT 0: [][aaa:TVar[13],aaa':void] 
+ ### ante =  htrue&{FLOW,(4,5)=__norm#E}[]
+ ### conseq =  EBase emp&aaa:TVar[13]=aaa#':TVar[13]&{FLOW,(4,5)=__norm#E}[]
+
+
+====================================================================
+
 
 infer [aaa,aaa'] true |- aaa=aaa'.
 print residue.
