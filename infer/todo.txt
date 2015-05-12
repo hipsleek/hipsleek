@@ -9,7 +9,7 @@ WARNING: _0:0_0:0:Z3 error message: (error "line 83 column 29: invalid declarati
 WARNING: _0:0_0:0:Z3 error message: (error "line 100 column 29: invalid declaration, function 'Q' (whith the given signature) already declared")
 
 =========================================================================
-# ex5.slk
+# ex5.slk: FIXED
 
 test
 

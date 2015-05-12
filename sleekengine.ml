@@ -920,7 +920,7 @@ let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.
     string_of_bool
     string_of_ident_list
     Typeinfer.string_of_tlist
-    (pr_pair pr_none Cprinter.string_of_struc_formula)
+    (pr_pair Typeinfer.string_of_tlist Cprinter.string_of_struc_formula)
     (fun _ _ _ _  ->  meta_to_struc_formula mf0 quant fv_idents tlist )mf0 quant fv_idents tlist
 
 (* An Hoa : DETECT THAT EITHER OF 
@@ -1159,11 +1159,16 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in
   (* List of vars needed for abduction process *)
   let vars = List.map (fun v ->
+      let v_len = String.length v in
+      let v, prime = if (String.get v (v_len-1)) = '\'' then (String.sub v 0 (v_len-1), Primed)
+      else (v, Unprimed)
+      in
       try
         let _ = Cast.look_up_hp_def_raw !cprog.Cast.prog_hp_decls v in
-        CP.SpecVar (HpT, v, Unprimed)
+        CP.SpecVar (HpT, v, prime(* Unprimed *))
       with _ ->
-        Typeinfer.get_spec_var_type_list_infer ~d_tt:n_tl (v, Unprimed) orig_vars no_pos
+          let sp = Typeinfer.get_spec_var_type_list_infer ~d_tt:n_tl (v, Unprimed) orig_vars no_pos in
+          if prime = Primed then CP.sp_add_prime sp else sp
     ) ivars in
   (* let ante,conseq = Cfutil.normalize_ex_quans_conseq !cprog ante conseq in *)
   let (res, rs,v_hp_rel) = x_add Sleekcore.sleek_entail_check 8 itype vars !cprog [] ante conseq in
@@ -1345,7 +1350,7 @@ let shape_infer_pre_process constrs pre_hps post_hps=
   (*** BEGIN PRE/POST ***)
   let orig_vars = List.fold_left (fun ls cs-> ls@(CF.fv cs.CF.hprel_lhs)@(CF.fv cs.CF.hprel_rhs)) [] !sleek_hprel_assumes in
   let pre_vars = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (pre_hps) in
-  let post_vars = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (post_hps) in
+  let post_vars = List.map (fun v ->  Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (post_hps) in
   let pre_vars1 = (CP.remove_dups_svl pre_vars) in
   let post_vars1 = (CP.remove_dups_svl post_vars) in
   let infer_pre_vars,pre_hp_rels  = List.partition (fun sv ->

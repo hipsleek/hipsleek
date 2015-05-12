@@ -1315,8 +1315,8 @@ and get_spec_var_type_list (v : ident) tlist pos =
 
 and get_spec_var_type_list_infer ?(d_tt = []) (v : ident * primed) fvs pos =
   let pr_sv = Cprinter.string_of_spec_var in
-  Debug.no_1 "get_spec_var_type_list_infer" (fun v -> pr_id (fst v)) pr_sv
-    (fun _ -> get_spec_var_type_list_infer_x d_tt v fvs pos) v
+  Debug.no_2 "get_spec_var_type_list_infer" (fun v -> pr_id (fst v)) string_of_tlist ( pr_sv)
+    (fun _ _ -> get_spec_var_type_list_infer_x d_tt v fvs pos) v  d_tt
 
 and get_spec_var_type_list_infer_x d_tt ((v, p) : ident * primed) fvs pos =
   let get_var_type v fv_list: (typ * bool) = 
@@ -1325,7 +1325,7 @@ and get_spec_var_type_list_infer_x d_tt ((v, p) : ident * primed) fvs pos =
           fun c -> (v = CP.name_of_spec_var c) && (p = CP.primed_of_spec_var c)
         ) fv_list ) in
     match res_list with
-    | [] -> (Void,false)
+    | [] -> (Void ,false)
     | [sv] -> (CP.type_of_spec_var sv,true)
     | _ -> Err.report_error {
         Err.error_loc = pos;
@@ -1333,7 +1333,7 @@ and get_spec_var_type_list_infer_x d_tt ((v, p) : ident * primed) fvs pos =
       }
   in
   try 
-    get_spec_var_type_list v d_tt pos 
+    (get_spec_var_type_list v d_tt pos )
   with _ ->
     let vtyp, check = get_var_type v fvs in
     (* WN TODO : this is a quick patch to type infer problem *)
