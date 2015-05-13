@@ -182,6 +182,10 @@ struct
     | None -> def
     | Some v -> f v
 
+  let map_list_def def f x = match x with
+    | [] -> def
+    | _  -> f x
+
   let map_l_snd f x = List.map (fun (l,c)-> (l,f c)) x
   let map_l_fst f x = List.map (fun (l,c)-> (f l,c)) x
   let map_snd_only f x = List.map (fun (l,c)-> f c) x

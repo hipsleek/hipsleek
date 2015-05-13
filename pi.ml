@@ -547,10 +547,14 @@ let infer_specs_imm_post_process (spec: CF.struc_formula) : CF.struc_formula =
       | CF.EAssume f -> 
             (* from here onwards is the post spec formula *)
             let post_vars = Gen.BList.difference_eq (CP.eq_spec_var) (CF.struc_all_vars sf) (CF.struc_fv sf) in
+            (* below is needed so that we first normalize everything to @L, before distinguishing between pre and post vars *)
+            let simpl_f = CF.transform_formula fncs f.CF.formula_assume_simpl in
+            let struc_f = helper fncs f.CF.formula_assume_struc in
+
             let fncs = (f_none, f_f, f_h_f, (f_p_post post_vars)) in
             CF.EAssume {f with 
-                CF.formula_assume_simpl = CF.transform_formula fncs f.CF.formula_assume_simpl;
-                CF.formula_assume_struc = helper fncs f.formula_assume_struc;}
+                CF.formula_assume_simpl = CF.transform_formula fncs simpl_f;
+                CF.formula_assume_struc = helper fncs struc_f;}
       | CF.EInfer f  -> 
             CF.EInfer {f with formula_inf_continuation = helper fncs f.CF.formula_inf_continuation;}
       | CF.EList f   -> CF.EList (map_l_snd (helper fncs) f)

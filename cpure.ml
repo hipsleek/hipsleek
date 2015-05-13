@@ -616,7 +616,7 @@ let to_int_var (sv : spec_var) : spec_var = match sv with
 (* name prefix for int const *)
 let const_prefix = "__CONST_Int_"
 
-let aconst_prefix = "__CONST_Ann_"
+let imm_const_prefix = "__CONST_Imm_"
 
 let const_prefix_len = String.length(const_prefix)
 
@@ -2299,6 +2299,12 @@ and mkEqMax a1 a2 a3 pos = EqMax (a1, a2, a3,pos)
 and mkEqMin a1 a2 a3 pos = EqMin (a1, a2, a3,pos)
 
 and mkVar sv pos = Var (sv, pos)
+
+(* dedicated name for imm sv ecoding the constant ann a *)
+and name_for_imm_sv a = imm_const_prefix ^ (string_of_heap_ann a)
+
+(* special spec var denoting ann constant *)
+and mkAnnSVar a =  SpecVar (AnnT, name_for_imm_sv a, Unprimed)
 
 and exp_of_template t = match t.templ_body with
   | None ->
@@ -7209,7 +7215,7 @@ let mk_sp_const (i:int) =
   in SpecVar ((Int), n , Unprimed) 
 
 let mk_sv_aconst (a:heap_ann) =
-  let ann = aconst_prefix^(string_of_heap_ann a)
+  let ann = imm_const_prefix^(string_of_heap_ann a)
   in SpecVar ((AnnT), ann , Unprimed)
 
 let conv_exp_to_var (e:exp) : (spec_var * loc) option = 
@@ -7220,7 +7226,7 @@ let conv_exp_to_var (e:exp) : (spec_var * loc) option =
 
 let conv_ann_exp_to_var (e:exp) : (spec_var * loc) option = 
   match e with
-  | AConst(a,loc) -> Some (mk_sv_aconst a,loc)
+  | AConst(a,loc) -> Some (mkAnnSVar a,loc)
   | Var(v,loc)    -> Some (v, loc)
   | _ -> None
 
@@ -13528,16 +13534,10 @@ let mkExpAnnSymb ann pos =
   | PolyAnn v  -> Var(v, pos)  
   | NoAnn  -> AConst(Accs, pos)
 
-(* dedicated name for imm sv ecoding the constant ann a *)
-let name_for_imm_sv a = (string_of_heap_ann a) ^ ann_var_sufix
-
-(* special spec var denoting ann constant *)
-let mkAnnSVar a =  SpecVar(AnnT, name_for_imm_sv a, Unprimed)
-
 let imm_to_sv ann = 
   match ann with 
   | PolyAnn ann  -> Some ann
-  | ConstAnn ann -> Some (mk_sv_aconst ann)
+  | ConstAnn ann -> Some (mkAnnSVar ann)
   | _ -> None 
 
 let imm_to_sv_list ann = 
@@ -13552,26 +13552,43 @@ let is_ann_const_sv sv =
   | SpecVar(AnnT,a,_) -> List.exists (fun an -> an = a ) ann_sv_lst
   | _                 -> false
 
-let is_mut_sv sv = 
+let is_mut_sv ?emap:(em=[])  sv = 
   if not (is_ann_typ sv) then false
-  else eq_spec_var sv (mkAnnSVar Mutable)
+  else if eq_spec_var sv (mkAnnSVar Mutable) then true
+  else 
+    let mut_const = mkAnnSVar Mutable in
+    let is_mut = EMapSV.is_equiv em sv mut_const in
+    is_mut
 
-let is_imm_sv sv = 
+let is_imm_sv ?emap:(em=[])  sv = 
   if not (is_ann_typ sv) then false
-  else eq_spec_var sv (mkAnnSVar Imm)
+  else
+    if eq_spec_var sv (mkAnnSVar Imm) then true
+    else
+      let imm_const = mkAnnSVar Imm in
+      let is_imm = EMapSV.is_equiv em sv imm_const in
+      is_imm
 
 let is_lend_sv ?emap:(em=[]) sv = 
   if not (is_ann_typ sv) then false
-  else 
-    if eq_spec_var sv (mkAnnSVar Lend) then true
-    else
-      let lend_const = mk_sv_aconst Lend in
-      let is_lend = EMapSV.is_equiv em sv lend_const in
-      is_lend
+  (* else  *)
+  (*   match em with *)
+  (*   | []  -> eq_spec_var sv (mkAnnSVar Lend) *)
+  (*   | _   -> *)
+  else if eq_spec_var sv (mkAnnSVar Lend) then true
+  else
+    let lend_const = mkAnnSVar Lend in
+    let is_lend = EMapSV.is_equiv em sv lend_const in
+    is_lend
 
-let is_accs_sv sv = 
+let is_accs_sv ?emap:(em=[]) sv = 
   if not (is_ann_typ sv) then false
-  else eq_spec_var sv (mkAnnSVar Accs)
+  else 
+    if eq_spec_var sv (mkAnnSVar Accs) then true
+    else
+      let abs_const = mkAnnSVar Accs in
+      let is_abs = EMapSV.is_equiv em sv abs_const in
+      is_abs
 
 (* end imm utilities *)
 

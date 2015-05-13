@@ -43,6 +43,31 @@ let isMutList (al : CP.ann list) : bool = List.for_all isMutable al
 let isExistsLendList (al : CP.ann list) : bool = List.exists isLend al
 let isExistsMutList (al : CP.ann list) : bool = List.exists isMutable al
 
+let build_eset_of_conj_formula f =
+  let lst = CP.split_conjunctions f in
+  let emap = List.fold_left (fun acc f -> match f with
+      | CP.BForm (bf,_) ->
+        (match bf with
+         | (CP.Eq (CP.Var (v1,_), CP.Var (v2,_), _),_) -> 
+           if (CP.is_bag_typ v1) then acc
+           else CP.EMapSV.add_equiv acc v1 v2
+         | (CP.Eq (ex, CP.Var (v1,_), _),_) 
+         | (CP.Eq (CP.Var (v1,_), ex, _),_) -> 
+           (match CP.conv_ann_exp_to_var ex with
+            | Some (v2,_) -> CP.EMapSV.add_equiv acc v1 v2
+            | None -> acc)
+         | (CP.SubAnn (CP.Var (v1,_), (CP.AConst(Mutable,_) as exp), _),_) -> (* bot *)
+           let v2 = CP.mkAnnSVar Mutable in CP.EMapSV.add_equiv acc v1 v2
+         | (CP.SubAnn(CP.AConst(Accs,_) as exp, CP.Var (v1,_), _),_) -> (* top *)
+           let v2 = CP.mkAnnSVar Accs in CP.EMapSV.add_equiv acc v1 v2
+         | _ -> acc)
+      | _ -> acc
+    ) CP.EMapSV.mkEmpty lst in emap
+
+let build_eset_of_conj_formula f =
+  let pr = Cprinter.string_of_pure_formula in
+  let pr_out = CP.EMapSV.string_of in
+  Debug.no_1 "build_eset_of_conj_formula" pr pr_out build_eset_of_conj_formula f
 
 (* result: res:bool * (ann constraint = relation between lhs_ann and rhs_ann) *)
 let rec subtype_ann_pair_x (imm1 : CP.ann) (imm2 : CP.ann) : bool * ((CP.exp * CP.exp) option) =
@@ -85,7 +110,13 @@ let subtype_ann caller (imm1 : CP.ann) (imm2 : CP.ann) : bool =
   let pr1 (imm1,imm2) =  (pr_imm imm1) ^ " <: " ^ (pr_imm imm2) ^ "?" in
   Debug.no_1_num caller "subtype_ann"  pr1 string_of_bool (fun _ -> subtype_ann_x imm1 imm2) (imm1,imm2)
 
-let subtype_ann_gen_x impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann): 
+(* let get_strongest_instantiation sv f = *)
+(*   let pure = CF.get_pure f in  *)
+(*   let p_aset = build_eset_of_conj_formula pure in *)
+(*   let is_mut =  *)
+  
+
+let subtype_ann_gen_x ?rhs:rhs_f impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann): 
   bool * (CP.formula list) * (CP.formula list) * (CP.formula list) =
   let (f,op) = x_add subtype_ann_pair imm1 imm2 in
   match op with
@@ -437,32 +468,6 @@ let apply_f_to_annot_arg f_imm (args: CP.annot_arg list) : CP.annot_arg list=
   let args =  f_imm args in
   let args = CP.imm_ann_to_annot_arg_list args in
   args
-
-let build_eset_of_conj_formula f =
-  let lst = CP.split_conjunctions f in
-  let emap = List.fold_left (fun acc f -> match f with
-      | CP.BForm (bf,_) ->
-        (match bf with
-         | (CP.Eq (CP.Var (v1,_), CP.Var (v2,_), _),_) -> 
-           if (CP.is_bag_typ v1) then acc
-           else CP.EMapSV.add_equiv acc v1 v2
-         | (CP.Eq (ex, CP.Var (v1,_), _),_) 
-         | (CP.Eq (CP.Var (v1,_), ex, _),_) -> 
-           (match CP.conv_ann_exp_to_var ex with
-            | Some (v2,_) -> CP.EMapSV.add_equiv acc v1 v2
-            | None -> acc)
-         | (CP.SubAnn (CP.Var (v1,_), (CP.AConst(Mutable,_) as exp), _),_) -> (* bot *)
-           let v2 = CP.mk_sv_aconst Mutable in CP.EMapSV.add_equiv acc v1 v2
-         | (CP.SubAnn(CP.AConst(Accs,_) as exp, CP.Var (v1,_), _),_) -> (* top *)
-           let v2 = CP.mk_sv_aconst Accs in CP.EMapSV.add_equiv acc v1 v2
-         | _ -> acc)
-      | _ -> acc
-    ) CP.EMapSV.mkEmpty lst in emap
-
-let build_eset_of_conj_formula f =
-  let pr = Cprinter.string_of_pure_formula in
-  let pr_out = CP.EMapSV.string_of in
-  Debug.no_1 "build_eset_of_conj_formula" pr pr_out build_eset_of_conj_formula f
 
 (* and contains_phase_debug (f : h_formula) : bool =   *)
 (*   Debug.no_1 "contains_phase" *)
@@ -962,7 +967,7 @@ and remaining_ann (ann_l: CP.ann) (ann_r: CP.ann) impl_vars evars(* : ann  *)=
   Debug.no_2 "remaining_ann" pr pr pr (fun _ _-> remaining_ann_x ann_l ann_r impl_vars evars) ann_l ann_r
 
 (* residue * consumed *)
-and subtract_ann (ann_l: CP.ann) (ann_r: CP.ann)  impl_vars expl_vars evars norm (* : ann *) =
+and subtract_ann_x (ann_l: CP.ann) (ann_r: CP.ann)  impl_vars expl_vars evars norm (* : ann *) =
   match ann_r with
   | CP.ConstAnn(Mutable)
   | CP.ConstAnn(Imm)     -> ((CP.ConstAnn(Accs), ann_r), [],(([],[],[]),[]))
@@ -982,6 +987,14 @@ and subtract_ann (ann_l: CP.ann) (ann_r: CP.ann)  impl_vars expl_vars evars norm
     (* TempRes(ann_l, ann_r) *)
     | _          -> ((ann_l, CP.ConstAnn(Accs)), [],(([],[],[]),[]))
 
+and subtract_ann (ann_l: CP.ann) (ann_r: CP.ann)  impl_vars expl_vars evars norm (* : ann *) =
+  let  pr_imm = Cprinter.string_of_imm in
+  let pr1 = pr_pair (add_str "left" pr_imm) (add_str "right" pr_imm) in
+  let pr_sv_list =  Cprinter.string_of_spec_var_list in
+  let pr2 = pr_triple (add_str "impl" pr_sv_list) (add_str "expl" pr_sv_list) (add_str "evars" pr_sv_list) in
+  let pr_pure_list = pr_list Cprinter.string_of_pure_formula in
+  let pr_out = pr_triple pr1 pr_sv_list (pr_pair (pr_triple pr_pure_list pr_pure_list pr_pure_list) (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) in
+  Debug.no_3 "subtract_ann" pr1 pr2 (add_str "norm" string_of_bool) pr_out (fun _ _ _ -> subtract_ann_x (ann_l: CP.ann) (ann_r: CP.ann)  impl_vars expl_vars evars norm) (ann_l,ann_r) (impl_vars, expl_vars,evars) norm
 
 (* during matching - for residue*)
 and replace_list_ann_x (ann_lst_l: CP.ann list) (ann_lst_r: CP.ann list) es =
@@ -989,7 +1002,7 @@ and replace_list_ann_x (ann_lst_l: CP.ann list) (ann_lst_r: CP.ann list) es =
   let expl_vars = es.es_gen_expl_vars in
   let evars     = es.es_evars in
   let n_ann_lst, niv, constr = List.fold_left (fun ((res_ann_acc,cons_ann_acc), n_iv, ((to_lhsl, to_rhsl, to_rhs_exl),substl)) (ann_l,ann_r) -> 
-      let (resid_ann, cons_ann), niv, ((to_lhs, to_rhs, to_rhs_ex),subst) = subtract_ann ann_l ann_r impl_vars expl_vars evars true in 
+      let (resid_ann, cons_ann), niv, ((to_lhs, to_rhs, to_rhs_ex),subst) = subtract_ann ann_l ann_r impl_vars expl_vars evars (* true *)false in 
       ((res_ann_acc@[resid_ann], cons_ann_acc@[cons_ann]), niv@n_iv, ((to_lhs@to_lhsl, to_rhs@to_rhsl, to_rhs_ex@to_rhs_exl),subst@substl))
     ) (([],[]), [], (([],[],[]),[])) (List.combine ann_lst_l ann_lst_r ) in
   n_ann_lst, niv, constr 
@@ -1002,7 +1015,7 @@ and replace_list_ann i (ann_lst_l: CP.ann list) (ann_lst_r: CP.ann list) es =
 
 and replace_list_ann_mem (ann_lst_l: CP.ann list) (ann_lst_r: CP.ann list) impl_vars expl_vars evars =
   let n_ann_lst, niv, constr = List.fold_left (fun ((res_ann_acc,cons_ann_acc), n_iv, (to_lhsl, to_rhsl, to_rhs_exl)) (ann_l,ann_r) -> 
-      let (resid_ann, cons_ann), niv, ((to_lhs, to_rhs, to_rhs_ex),_) = subtract_ann ann_l ann_r impl_vars expl_vars evars true in 
+      let (resid_ann, cons_ann), niv, ((to_lhs, to_rhs, to_rhs_ex),_) = subtract_ann ann_l ann_r impl_vars expl_vars evars (* true  *)false in 
       ((res_ann_acc@[resid_ann], cons_ann_acc@[cons_ann]), niv@n_iv, (to_lhs@to_lhsl, to_rhs@to_rhsl, to_rhs_ex@to_rhs_exl))
     ) (([],[]), [], ([],[],[])) (List.combine ann_lst_l ann_lst_r ) in
   n_ann_lst, niv, constr 
@@ -1114,7 +1127,7 @@ and restore_tmp_res_ann (annl: CP.ann) (annr: CP.ann) (pure0: MCP.mix_formula) i
   Debug.no_3 "restore_tmp_res_ann" pr pr Cprinter.string_of_mix_formula pr (fun _ _ _ -> restore_tmp_res_ann_x annl annr pure0 impl_vars evars) annl annr pure0 
 
 and remaining_ann_new_x (annl: CP.ann) emap: CP.ann=
-  let elem_const = (CP.mk_sv_aconst Mutable)::(CP.mk_sv_aconst Imm)::(CP.mk_sv_aconst Lend)::[(CP.mk_sv_aconst Accs)] in
+  let elem_const = (CP.mkAnnSVar Mutable)::(CP.mkAnnSVar Imm)::(CP.mkAnnSVar Lend)::[(CP.mkAnnSVar Accs)] in
   let anns =  (CP.ConstAnn(Mutable))::(CP.ConstAnn(Imm))::(CP.ConstAnn(Lend))::[(CP.ConstAnn(Accs))] in
   let anns = List.combine elem_const anns in
   let getAnn aconst = snd (List.find (fun (a,_) -> CP.eq_spec_var a aconst)  anns) in    
@@ -2386,38 +2399,46 @@ let f_norm_pre_imm_var e l = CP.mkEq e (CP.AConst (Lend, l)) l
 
 let f_norm_post_imm_var e l = CP.mkEq e (CP.AConst (Accs, l)) l
 
-let abs_candidate sv aset vars = (CP.is_ann_typ sv) && (CP.EMapSV.mem sv vars) && (CP.is_lend_sv ~emap:aset sv) 
+let norm_candidate sv aset vars = (CP.is_ann_typ sv) (* && (CP.EMapSV.mem sv vars) *) && (CP.is_lend_sv ~emap:aset sv) 
+                                                                                         
+let is_post sv post_vars = CP.EMapSV.mem sv post_vars
 
 let norm_post_formula_helper (sv1,l1) (sv2,l2) vars_post aset =
   (* check if var type is ann *)  (* check if is post var *)  (* check if var is equiv to @L *)
-  let sv1 = if abs_candidate sv1 aset vars_post then Some (f_norm_post_imm_var (CP.Var (sv1,l1)) l1) else None in
-  let sv2 = if abs_candidate sv2 aset vars_post then Some (f_norm_post_imm_var (CP.Var (sv2,l2)) l2) else None in
-  let res = match sv1,sv2 with 
-    | Some e, _
-    | _, Some e  -> Some e
-    | None, None -> None
-    (* | Some e1, Some e2 -> Some e1 (\*TODOIMM loosing e2?*\) *)
-  in res
+  let helper sv l =
+    if norm_candidate sv aset vars_post then 
+      if is_post sv vars_post then  [f_norm_post_imm_var (CP.Var (sv,l)) l]  (* post var ---> sv=@A *)
+      else [f_norm_pre_imm_var (CP.Var (sv,l)) l]                            (* pre var  ---> sv=@L *)
+    else [] in
+  let sv1 = helper sv1 l1  in
+  let sv2 = helper sv2 l2 in
+  sv1@sv2
 
 let norm_subann sv1 e1 e2 loc vars_post aset =
   match e2 with
     | CP.AConst (Lend, _) ->
           let pos_var = CP.EMapSV.mem sv1 vars_post in
           let res_ex = if pos_var then f_norm_post_imm_var e1 loc else f_norm_pre_imm_var e1 loc in
-          (Some res_ex, false)
+          ([res_ex], false)
     | CP.Var (sv, _) ->
-          if (CP.is_lend_sv ~emap:aset sv) then (Some (f_norm_pre_imm_var e1 loc), false)
-          else (None, true)
-    | _ -> (None, true)
+          if (CP.is_lend_sv ~emap:aset sv) then ([f_norm_pre_imm_var e1 loc], false)
+          else ([], true)
+    | _ -> ([], true)
 
 let norm_eq e1 e2 loc vars_post aset =
   match e1,e2 with
     | CP.Var (sv1, loc1), CP.Var (sv2, loc2) ->
-          let res = norm_post_formula_helper (sv1,loc1) (sv2,loc2) vars_post aset in
-          map_opt_def (None,true) (fun x -> (Some x,false)) res
-    | _ -> (None, true)
+      let res = norm_post_formula_helper (sv1,loc1) (sv2,loc2) vars_post aset in
+      map_list_def ([],true) (fun x -> (x,false)) res
+    | (CP.Var (sv, loc) as e), CP.AConst (Lend, _) 
+    | CP.AConst (Lend, _), (CP.Var (sv, loc) as e)->
+      let pos_var = CP.EMapSV.mem sv vars_post in
+      let res_ex, fix = if pos_var then (f_norm_post_imm_var e loc, false) 
+        else (f_norm_pre_imm_var e loc, true) in
+      ([res_ex], fix)
+    | _ -> ([], true)
 
-(* a<:@L ---> a=@L *)
+(* a<:@L ---> a=@L (for pre vars) / a=@A (for post vars) *)
 let norm_imm_rel_formula vars_post (rel:CP.formula): CP.formula  =
   let f_f f = None in
   let f_e e = None in
@@ -2430,19 +2451,54 @@ let norm_imm_rel_formula vars_post (rel:CP.formula): CP.formula  =
         | CP.SubAnn (CP.Var(sv1,l1) as e1,e2,l) -> 
               let res_ex, fix = norm_subann sv1 e1 e2 l vars_post aset in
               let () = if not fix then fixpt := false else () in
-              map_opt_def p_f (fun x -> x) res_ex
+              map_list_def [p_f] (fun x -> x) res_ex
         | CP.Eq (e2,e1,l)-> 
               let res_ex, fix = norm_eq e1 e2 l vars_post aset in
               let () = if not fix then fixpt := false else () in
-              map_opt_def p_f (fun x -> x) res_ex
-        | _ -> p_f in
-    Some (p_f, bf_ann) in
+              map_list_def [p_f] (fun x -> x) res_ex
+        | _ -> [p_f]
+    in
+    (p_f, bf_ann) in
+
+  let f_f aset f =
+    let rec f_f_helper f = 
+      match f with
+      | CP.BForm (b1,b2) -> 
+        (* below is needed in case we need to transform [a=b] --> [a=@A & b=@L] *)
+        let res_lst, bf_ann = f_b aset b1 in (* TODOIMM revise this *)
+        begin
+          match res_lst with
+          | []   -> f
+          | [b1] -> CP.BForm ((b1,bf_ann) ,b2)
+          | h::t -> List.fold_left (fun acc b -> CP.And (acc, CP.BForm ((b,bf_ann), b2), no_pos )) (CP.BForm ((h,bf_ann),b2)) t
+        end
+      | CP.And (e1,e2,l) -> 
+        let ne1 = f_f_helper e1 in
+        let ne2 = f_f_helper e2 in
+        CP.mkAnd ne1 ne2 l
+      | CP.AndList b -> CP.AndList (map_l_snd f_f_helper b) 
+      | CP.Or (e1,e2,fl, l) -> 
+        let ne1 = f_f_helper e1 in
+        let ne2 = f_f_helper e2 in
+        CP.Or (ne1,ne2,fl,l)		  
+      | CP.Not (e,fl,l) ->
+        let ne1 = f_f_helper e in
+        CP.Not (ne1,fl,l)
+      | CP.Forall (v,e,fl,l) ->
+        let ne = f_f_helper e in
+        CP.Forall(v,ne,fl,l)
+      | CP.Exists (v,e,fl,l) ->
+        let ne = f_f_helper e in
+        CP.Exists(v,ne,fl,l)
+    in
+    Some (f_f_helper f)
+  in
 
   (* systematically transform formula until all a<:@L ---> a=@L *)
   let rec helper rel = 
     let p_aset = build_eset_of_conj_formula rel(* CP.pure_ptr_equations rel in *) in
     (* let p_aset = CP.EMapSV.build_eset p_aset in *)
-    let rel = CP.map_formula rel (f_f, (f_b p_aset), f_e) in
+    let rel = CP.map_formula rel ((f_f p_aset), (* (f_b p_aset) *) (fun x -> None) , f_e) in
     if not(!fixpt) then begin fixpt := true; helper rel end
     else rel in
   helper  rel
