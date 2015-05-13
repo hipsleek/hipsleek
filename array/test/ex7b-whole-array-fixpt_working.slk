@@ -6,9 +6,9 @@ relation Q(int[] a,int[] b,int r).
 infer [Q]   res=0-3 & a'=a & a'[5]<=4 & P(a) |-  Q(a,a',res).
 print residue.
 
-infer [Q]   a'[4]=res & 5<=a[5] 
+infer [Q,update_array_1d]   a'[4]=res & 5<=a[5] 
   & update_array_1d(a,a',10,5) 
-  & P(a) 
+  & P(a)
     |-  Q(a,a',res).
 print residue.
 
