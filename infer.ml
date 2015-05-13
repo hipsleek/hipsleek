@@ -2139,8 +2139,6 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
         let inf_rel_ls = List.concat (List.map wrap_exists inf_rel_ls) in
         let () = x_binfo_hp (add_str "Rel Inferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos in
         (* -------------------------------------------------------------- *)
-        (* ZH: Drop formulas with array inside quantifiers *)
-        (* let inf_rel_ls = List.map (fun (fr,f1,f2) -> (fr,Trans_arr.drop_array_quantifier f1,Trans_arr.drop_array_quantifier f2)) inf_rel_ls in *)
         (* let () = x_binfo_hp (add_str "Rel Inferred (after drop_array)" (pr_list print_lhs_rhs)) inf_rel_ls pos in *)
         (* -------------------------------------------------------------- *)
         (* below causes non-linear LHS for relation *)

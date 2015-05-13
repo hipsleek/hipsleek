@@ -1570,7 +1570,6 @@ let extract_translate_scheme
                         let () = x_binfo_pp ("Not found, now insert "^(string_of_spec_var sv)) no_pos in
                         IndexSet.empty
                 in
-                
                 Hashtbl.replace translate_scheme sv (IndexSet.add index indexset)
             | _,_ ->
               let indexset =
@@ -2616,6 +2615,12 @@ let translate_array_one_formula f =
       Debug.no_1 "#1translate_array_one_formula" !print_pure !print_pure translate_array_one_formula f
 ;;
 
+let translate_array_one_formula f=
+  if !Globals.array_translate
+  then translate_array_one_formula f
+  else f
+;;
+
 let translate_array_one_formula_for_validity
       (f:formula):formula =
 
@@ -2634,6 +2639,16 @@ let translate_array_one_formula_for_validity
       | Some af -> Or (array_free_formula,Not (af,None,no_pos),None,no_pos)
   in
   new_f
+;;
+
+let translate_array_one_formula_for_validity f =
+      Debug.no_1 "#1translate_array_one_formula_for_validity" !print_pure !print_pure translate_array_one_formula_for_validity f
+;;
+
+let translate_array_one_formula_for_validity f=
+  if !Globals.array_translate
+  then translate_array_one_formula_for_validity f
+  else f
 ;;
 
 let translate_array_imply ante conseq=
@@ -3981,15 +3996,15 @@ let rec translate_back_array_in_one_formula
 
 let translate_back_array_in_one_formula
     (f:formula):formula =
-  if true||(!Globals.array_translate)  (* (Globals.infer_const_obj # is_arr_as_var) *)
-  then translate_back_array_in_one_formula f
-  else f
+  let pf = !print_pure in
+  Debug.no_1 "translate_back_array_in_one_formula" pf pf (fun f -> translate_back_array_in_one_formula f) f
 ;;
 
 let translate_back_array_in_one_formula
     (f:formula):formula =
-  let pf = !print_pure in
-  Debug.no_1 "translate_back_array_in_one_formula" pf pf (fun f -> translate_back_array_in_one_formula f) f
+  if (!Globals.array_translate)  (* (Globals.infer_const_obj # is_arr_as_var) *)
+  then translate_back_array_in_one_formula f
+  else f
 ;;
 (* END of translating back the array to a formula *)
 
@@ -4041,5 +4056,3 @@ let translate_back_array_in_one_formula
 (*   let pf = !print_pure in *)
 (*   Debug.no_1 "translate_out_array_in_one_formula_full" pf pf (fun f -> translate_out_array_in_one_formula_full f) f *)
 (* ;; *)
-
-

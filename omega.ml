@@ -499,12 +499,6 @@ let is_sat_ops_x pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
     (*  Cvclite.write_CVCLite pe; *)
     (*  Lash.write pe; *)
     (* let pe0 = drop_varperm_formula pe in *)
-    (* let pe = *)
-    (*   if (\* Globals.infer_const_obj # is_arr_as_var *\) *)
-    (*     false && !Globals.array_translate *)
-    (*   then Trans_arr.drop_array_formula pe *)
-    (*   else pe *)
-    (* in *)
     let pe = Trans_arr.translate_array_one_formula pe in
     let svl0 = Cpure.fv pe in
     let svl,fr_svl = mkSpecVarList 0 svl0 in
@@ -861,8 +855,6 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
   let pe = Trans_arr.translate_array_one_formula pe in
   (* let () = x_binfo_hp (add_str "simplify_ops_x(after trans_arr):" !print_formula) pe no_pos in *)
   begin
-
-    (* let pe = Trans_arr.translate_out_array_in_one_formula_full pe in *)
     let svl0 = Cpure.fv pe in	
     let svl,fr_svl = mkSpecVarList 0 svl0 in
     let ss1 = List.combine svl fr_svl in
@@ -1096,8 +1088,6 @@ let pairwisecheck (pe : formula) : formula =
     omega_subst_lst := [];
     (* let pe = drop_varperm_formula pe in *)
 
-    (* translate out and drop array *)
-    (* let pe = Trans_arr.new_translate_out_array_in_one_formula_split pe in *)
 
     match (omega_of_formula_old 21 pe) with
     | None -> pe

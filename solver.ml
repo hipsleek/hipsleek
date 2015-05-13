@@ -8952,13 +8952,6 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
     end
   | MCP.OnePF a0, MCP.OnePF c ->
     begin
-      (* let (a0,c) = *)
-      (*   (Trans_arr.drop_array_formula a0, Trans_arr.drop_array_formula c) in *)
-      (* let _ = Trans_arr.new_translate_out_array_in_imply_split_full a0 c in *)
-      (* (function *)
-      (*     | (n_a,n_c) -> (Trans_arr.drop_array_formula n_a, Trans_arr.drop_array_formula n_c)) *)
-      (*       (Trans_arr.new_translate_out_array_in_imply_split_full a0 c) *)
-      (* in *)
       x_dinfo_pp ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;
       let f a0 =
         (* WN : what if Omega cannot handle?  *)

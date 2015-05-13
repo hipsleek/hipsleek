@@ -2,7 +2,7 @@
 
 
 
-/*
+
 infer []
    true
    |- a[5]>0.
@@ -12,9 +12,9 @@ print residue.
 
 infer []
   a[5]>1
-  |- a[6]>0.
+  |- a[5]>0.
 print residue.
-*/
+
 
 
 /*
@@ -27,12 +27,12 @@ Because there is only one index, no aux formula produced.
 #1translate_array_imply@55 EXIT:( 1<=a___5___, 0<a___5___)
 */
 
-/*
+
 infer []
    a[i]>0 & i=5
    |- a[5]>0.
 print residue.
-*/
+
 /*
 There are i and 5 indexing a, so i=5->a_i=a_5 is produced.
 
@@ -70,12 +70,12 @@ produce_aux_formula@5 EXIT: (!(i=5) | a___i___=a___5___)
 #1translate_array_imply@1 EXIT:( i=5 & 0<a___i___ & ((!(i=5) | a___i___=a___5___)), 0<a___5___)
 
 */
-/*
+
 infer []
    a[i]=5 & i=5+2
    |- a[7]=5.
 print residue.
-*/
+
 
 /*
 infer [@arrvar]
@@ -85,12 +85,12 @@ print residue.
 */
 
 // 2. With more than one array involved
-/*
+
 infer [@arrvar]
    a[i]=5 & i=5+2 & b[i]=3
-   |- a[7]=5 & b[7]>0.
+   |- a[7]=5 & b[7]>2.
 print residue.
-*/
+
 /*
 The formula is some split but in a correct manner...
 
@@ -110,11 +110,12 @@ The formula is some split but in a correct manner...
 
 // 3. With forall
 
-/*
+
 infer [@arrvar]
      forall (i:!(i>5)|a[i]=10)
-     |- a[8]=10.
-*/
+     |- a[10]=10.
+print residue.
+
 /*
 Result:
 
@@ -127,12 +128,12 @@ Result:
 ( I don't like the renaming part. To be improved later...)
 */
 
-/*
-infer []
-     j=6 & forall (i:!(i>5)|a[i]=10)
+
+infer [a,j]
+     j=1 & forall (i:!(i>5)|a[i]=10)
      |- a[j]=10.
 print residue.
-*/
+
 /*
 (==tpdispatcher.ml#3003==)
 #1translate_array_imply@45
@@ -165,8 +166,8 @@ print residue.
 
 // This example is working fine, but will introduce some duplicate things...
 /*
-infer []
-      forall (i:!(i<5)| a[i]=0)
+infer [a]
+      forall (i:!(i<5)| a[i]>0)
       |- a[3] = 0.
 print residue.
 */
@@ -208,30 +209,6 @@ exists(fc_1193:exists(fc_1192:a'[fc_1193]=fc_1192 & ((!(fc_1193!=fc_1193) | a'[f
 
 
 /*
-Something is gone since here...
-
-!!! **omega.ml#470:formula  res=a___4___' & memo_rel_hole_1194
-!!! **omega.ml#471:[res,a___4___',memo_rel_hole_1194]
-(==fixcalc.ml#193==)
-#1translate_array_one_formula@98
-#1translate_array_one_formula inp1 : exists(fc_1193:exists(fc_1192:update_array_1d(a,a',fc_1192,fc_1193) & 
-fc_1192=10) & fc_1193=5) & a'[4]=res
-#1translate_array_one_formula@98 EXIT: exists(fc_1193:((!(fc_1193=4) | a___fc_1193___'=a___4___')) & 
-exists(fc_1192:a___fc_1193___'=fc_1192 & ((!(4!=fc_1193) | 
-a___4___'=a___4___)) & ((!(fc_1193!=fc_1193) | 
-a___fc_1193___'=a___fc_1193___)) & fc_1192=10) & fc_1193=5) & a___4___'=res
-
-!!! **fixcalc.ml#906:bottom up
-!!! fixcalc file name: logs/fixcalc.inf
-!!! **pi.ml#619:bottom_up_fp0:[( Q(a,a',res), 10=a'[fc_1193] & a[4]=a'[4] & a[4]=res)]
-(==tpdispatcher.ml#1965==)
-#1translate_array_one_formula@99
-#1translate_array_one_formula inp1 : exists(res:a[4]=res) & exists(a':10=a'[fc_1193] & a[4]=a'[4])
-#1translate_array_one_formula@99 EXIT: exists(res:a___4___=res) & 
-exists(a___4___':exists(a___fc_1193___':10=a___fc_1193___' & 
-a___4___=a___4___')) & ((!(4=fc_1193) | a___4___'=a___fc_1193___'))
-
-
 */
 
 //infer [] (!((res=v_int_15_1162' & v_int_15_1162'=a'[4] & a'[5]=10 & forall(i:(!(i!=5) | a'[i]=a[i])) & 4<(a[5])))) |- res=3.
