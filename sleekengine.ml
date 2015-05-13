@@ -1279,7 +1279,9 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
     let lrels = List.fold_left (fun acc p -> acc@(CP.get_rel_id_list p)) [] (CP.list_of_conjs lhs_p) in
     let rrels = List.fold_left (fun acc p -> acc@(CP.get_rel_id_list p)) [] (CP.list_of_conjs rhs_p) in
     let rel_ids = CP.remove_dups_svl (lrels@rrels) in
-    let new_rel_ass =  (CP.RelDefn (List.hd rel_ids, None), lhs_p, rhs_p)  in
+    let new_rel_ass =  if rrels !=[] then (CP.RelDefn (List.hd rel_ids, None), lhs_p, rhs_p)
+    else (CP.RelAssume rel_ids, lhs_p, rhs_p)
+    in
     let _ = Infer.infer_rel_stk # push_list_pr [new_rel_ass] in
     ()
   in

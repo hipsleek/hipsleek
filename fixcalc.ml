@@ -1226,7 +1226,7 @@ let fixc_preprocess_x pairs0 =
     | [] -> res
     | r::rs ->
       let rel = snd r in
-      let name = CP.name_of_rel_form rel in (* Long: here *)
+      let name = CP.name_of_rel_form rel in
       let same_rels, diff_rels =
         List.partition (fun r0 ->
             CP.eq_spec_var (CP.name_of_rel_form (snd r0)) name) rs in
