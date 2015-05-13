@@ -1276,8 +1276,8 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
   else
     let lhs_p = CF.get_pure lhs in
     let rhs_p = CF.get_pure rhs in
-    let lrels = CP.get_rel_id_list lhs_p in
-    let rrels = CP.get_rel_id_list rhs_p in
+    let lrels = List.fold_left (fun acc p -> acc@(CP.get_rel_id_list p)) [] (CP.list_of_conjs lhs_p) in
+    let rrels = List.fold_left (fun acc p -> acc@(CP.get_rel_id_list p)) [] (CP.list_of_conjs rhs_p) in
     let rel_ids = CP.remove_dups_svl (lrels@rrels) in
     let new_rel_ass =  (CP.RelDefn (List.hd rel_ids, None), lhs_p, rhs_p)  in
     let _ = Infer.infer_rel_stk # push_list_pr [new_rel_ass] in

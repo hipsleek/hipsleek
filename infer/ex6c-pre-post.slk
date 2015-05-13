@@ -6,7 +6,7 @@ relation Q(int a, int b, int c).
 //pre
 relAssume
    P(m,n) & (((1<=n & x!=null) | (n=0 & x=null))) & (((1<=m & y!=null) | 
-(m=0 & y=null))) -->  true.
+(m=0 & y=null))) -->  emp & true.
 
 relAssume
    P(m,n) & 1<=n & 1<=m & m2=m-1 & n2=n-1 -->  P(m2,n2).
