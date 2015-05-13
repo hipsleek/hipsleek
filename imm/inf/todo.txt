@@ -62,7 +62,7 @@ relation R(int v,
 Why is the R relation not being printed
 by --pcp
 =======================================================
-# cell-3b.ss
+# cell-3b.ss  (DONE)
 
 [RELASS [P1]: ( P1(a)) -->  a=@M,
 RELDEFN P2: ( b=@M) -->  P2(b)]
@@ -97,7 +97,7 @@ Two problems:
 [( P2(b), b=0, P1(a), false)]
 
 =======================================================
-# cell-3c.ss
+# cell-3c.ss (DONE)
 
 Why is there a check 1 fail?
 
@@ -130,7 +130,7 @@ Entail (2) : Valid.
  inferred rel: [RELASS [P1]: ( P1(a)) -->  a>2]
 [[empty]]
 =======================================================
-# cell-2.ss
+# cell-2.ss  (DONE)
 
 int foo(cell c)
   infer [P1]
@@ -404,7 +404,7 @@ Residue:
  <1>x::cell<a>@L&b=a&{FLOW,(20,21)=__norm#E}[]
 [[ SEARCH ==>  Match(x,x) ==> ]]
 =======================================================
-# ex3d7e.slk 
+# ex3d7e.slk  (DONE)
 
 # remove double annotation as it seems redundant
 checkentail x::cell<a>@u & u=@L & v=@A  |- x::cell<b>@v & v=@A.

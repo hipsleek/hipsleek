@@ -9730,11 +9730,11 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     (*   subtype_ann_gen es_impl_vars es_evars l_ann r_ann *)
     (* else (true, [], [],[])  (\*ignore node ann is field ann enable*\) in *)
     if not es_at_par then
-      x_add subtype_ann_gen es_impl_vars es_evars l_ann r_ann
+      x_add (subtype_ann_gen ~rhs:rhs) es_impl_vars es_evars l_ann r_ann
     else
       match l_ann, r_ann with
       | CP.ConstAnn Mutable, CP.ConstAnn Lend -> (false, [], [], [])
-      | _ -> x_add subtype_ann_gen es_impl_vars es_evars l_ann r_ann
+      | _ -> x_add (subtype_ann_gen ~rhs:rhs) es_impl_vars es_evars l_ann r_ann
   in
   x_tinfo_hp (add_str "add_to_lhs" (pr_list Cprinter.string_of_pure_formula)) add_to_lhs pos;
   x_tinfo_hp (add_str "add_to_rhs" (pr_list Cprinter.string_of_pure_formula)) add_to_rhs pos;
@@ -9742,7 +9742,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
   (* check imm subtyping between lhs and rhs node fields, and collect info between vars and consts - makes sense only for data nodes *)
   let (rl, param_ann_lhs, param_ann_rhs, param_ann_rhs_ex) = 
     if (!allow_field_ann) then 
-      subtype_ann_list es_impl_vars es_evars l_param_ann r_param_ann 
+      subtype_ann_list ~rhs:rhs es_impl_vars es_evars l_param_ann r_param_ann 
     else (true, [], [], []) 
   in
   x_tinfo_hp (add_str "param_ann_lhs" (pr_list ( Cprinter.string_of_pure_formula))) param_ann_lhs pos;

@@ -110,13 +110,25 @@ let subtype_ann caller (imm1 : CP.ann) (imm2 : CP.ann) : bool =
   let pr1 (imm1,imm2) =  (pr_imm imm1) ^ " <: " ^ (pr_imm imm2) ^ "?" in
   Debug.no_1_num caller "subtype_ann"  pr1 string_of_bool (fun _ -> subtype_ann_x imm1 imm2) (imm1,imm2)
 
-(* let get_strongest_instantiation sv f = *)
-(*   let pure = CF.get_pure f in  *)
-(*   let p_aset = build_eset_of_conj_formula pure in *)
-(*   let is_mut =  *)
-  
+let get_imm ?loc:(l=no_pos) list =
+  let elem_const = (CP.mkAnnSVar Mutable)::(CP.mkAnnSVar Imm)::(CP.mkAnnSVar Lend)::[(CP.mkAnnSVar Accs)] in
+  (* let anns =  (CP.ConstAnn(Mutable))::(CP.ConstAnn(Imm))::(CP.ConstAnn(Lend))::[(CP.ConstAnn(Accs))] in *)
+  let anns =  (CP.AConst(Mutable,l))::(CP.AConst(Imm,l))::(CP.AConst(Lend,l))::[(CP.AConst(Accs,l))] in
+  let anns = List.combine elem_const anns in
+  let imm = 
+    try
+      Some (snd (List.find (fun (a,_) -> CP.EMapSV.mem a list  ) anns ) )
+    with Not_found -> None
+  in imm
 
-let subtype_ann_gen_x ?rhs:rhs_f impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann): 
+let pick_strongest_instantiation sv loc f =
+  let pure = CF.get_pure f in
+  let p_aset = build_eset_of_conj_formula pure in
+  let aliases = CP.EMapSV.find_equiv_all sv p_aset in
+  let imm = get_imm aliases in
+  map_opt (fun a ->  CP.BForm ((CP.Eq(CP.Var (sv, loc), a, no_pos), None), None)) imm
+
+let subtype_ann_gen_x rhs_f impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann): 
   bool * (CP.formula list) * (CP.formula list) * (CP.formula list) =
   let (f,op) = x_add subtype_ann_pair imm1 imm2 in
   match op with
@@ -131,16 +143,20 @@ let subtype_ann_gen_x ?rhs:rhs_f impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann)
     (* let lhs = c in *)
     begin
       match r with
-      | CP.Var(v,_) -> 
+      | CP.Var(v,l) -> 
         (* implicit var annotation on rhs *)
-        if CP.mem v impl_vars then (f,[to_lhs],[],[])
+        if CP.mem v impl_vars then 
+          let inst = pick_strongest_instantiation v l rhs_f in
+          let to_lhs = map_opt_def to_lhs (fun x -> x) inst in
+          (f,[to_lhs],[],[])
         else if CP.mem v evars then
           (f,[], [to_rhs], [to_rhs])
         else (f,[],[to_rhs], [])
       | _ -> (f,[],[to_rhs], [])
     end
 
-let subtype_ann_gen impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann): 
+let subtype_ann_gen ?rhs:(rhs_f = CF.mkTrue (mkTrueFlow ()) no_pos )
+    impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann): 
   bool * (CP.formula list) * (CP.formula list) * (CP.formula list) =
   let pr1 = !CP.print_svl in
   let pr2 = (Cprinter.string_of_imm)  in
@@ -148,7 +164,7 @@ let subtype_ann_gen impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann):
   let prlst =  (pr_pair (pr_list Cprinter.string_of_spec_var) (pr_list Cprinter.string_of_spec_var)) in
   let pr3 = pr_quad string_of_bool pr2a pr2a pr2a  in
   Debug.no_4 "subtype_ann_gen" pr1 pr1 pr2 pr2 pr3 
-    subtype_ann_gen_x impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann) 
+    (fun _ _ _ _ -> subtype_ann_gen_x rhs_f impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann) )  impl_vars evars imm1 imm2
 
 let get_strongest_imm  (ann_lst: CP.ann list): CP.ann = 
   let rec helper ann ann_lst = 
@@ -915,15 +931,16 @@ and mkAndOpt (old_f: CP.formula option) (to_add: CP.formula option): CP.formula 
 (*     | ([], f::[])     -> Some f  *)
 (*     | (f1::[], f2::[]) -> Some (CP.mkAnd f1 f2 no_pos) *)
 
-and subtype_ann_list impl_vars evars (ann1 : CP.ann list) (ann2 : CP.ann list) : bool * (CP.formula  list) * (CP.formula  list) * (CP.formula  list) =
+and subtype_ann_list ?rhs:(rhs_f = CF.mkTrue (mkTrueFlow ()) no_pos )
+    impl_vars evars (ann1 : CP.ann list) (ann2 : CP.ann list) : bool * (CP.formula  list) * (CP.formula  list) * (CP.formula  list) =
   match (ann1, ann2) with
   | ([], [])         -> (true, [], [], [])
   | (a1::[], a2::[]) -> 
-    let (r, f1, f2, f3) = x_add subtype_ann_gen impl_vars evars a1 a2 in
+    let (r, f1, f2, f3) = x_add (subtype_ann_gen ~rhs:rhs_f) impl_vars evars a1 a2 in
     (r, f1, f2, f3)
   | (a1::t1, a2::t2) -> 
-    let (r, ann_lhs_new, ann_rhs_new, ann_rhs_new_ex) = x_add subtype_ann_gen impl_vars evars a1 a2 in
-    let (res, ann_lhs, ann_rhs,  ann_rhs_ex) = subtype_ann_list impl_vars evars t1 t2 in
+    let (r, ann_lhs_new, ann_rhs_new, ann_rhs_new_ex) = x_add (subtype_ann_gen ~rhs:rhs_f) impl_vars evars a1 a2 in
+    let (res, ann_lhs, ann_rhs,  ann_rhs_ex) = subtype_ann_list ~rhs:rhs_f impl_vars evars t1 t2 in
     (r&&res, ann_lhs_new@ann_lhs, ann_rhs_new@ann_rhs, ann_rhs_new_ex@ann_rhs_ex)
   (* (r&&res, mkAndOpt ann_lhs ann_lhs_new, mkAndOpt ann_rhs ann_rhs_new) *)
   | _ ->      (false, [], [], [])                        (* different lengths *)
@@ -2440,8 +2457,6 @@ let norm_eq e1 e2 loc vars_post aset =
 
 (* a<:@L ---> a=@L (for pre vars) / a=@A (for post vars) *)
 let norm_imm_rel_formula vars_post (rel:CP.formula): CP.formula  =
-  let f_f f = None in
-  let f_e e = None in
   let fixpt = ref true in
 
   let f_b aset b = 
@@ -2498,7 +2513,9 @@ let norm_imm_rel_formula vars_post (rel:CP.formula): CP.formula  =
   let rec helper rel = 
     let p_aset = build_eset_of_conj_formula rel(* CP.pure_ptr_equations rel in *) in
     (* let p_aset = CP.EMapSV.build_eset p_aset in *)
-    let rel = CP.map_formula rel ((f_f p_aset), (* (f_b p_aset) *) (fun x -> None) , f_e) in
+    let f_e e = None in
+    let f_b e = None in
+    let rel = CP.map_formula rel ((f_f p_aset), f_b , f_e) in
     if not(!fixpt) then begin fixpt := true; helper rel end
     else rel in
   helper  rel

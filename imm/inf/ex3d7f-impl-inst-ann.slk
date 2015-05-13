@@ -7,6 +7,8 @@ print residue.
 
 
 checkentail x::cell<a>@u & u=@L  |- x::cell<b>@v & v=@A.
+print residue. 
+
 /*
 # ex3d7e.slk 
 
@@ -28,3 +30,16 @@ proceeding to prove u<:v
 
 */
 
+checkentail x::cell<a>@u & u=@M & v=@M  |- x::cell<b>@v & v=@M.
+print residue.
+
+
+checkentail x::cell<a>@u & u=@M  |- x::cell<b>@v & v<:@L.
+print residue.
+
+checkentail x::cell<a>@u & u=@M & v<:@L  |- x::cell<b>@v & v<:@L.
+print residue.
+
+
+checkentail x::cell<a>@u & u=@M & v=@L  |- x::cell<b>@v & v<:@L.
+print residue.
