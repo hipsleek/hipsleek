@@ -870,8 +870,8 @@ let compute_def (rel_fml, pf, no) ante_vars =
   (* let _ = print_endline ("compute_def vars: "^(Cprinter.string_of_typed_spec_var_list vars)) in *)
   let pre_vars, post_vars =
     List.partition (fun v -> List.mem v ante_vars) vars in
-  let pre_vars = Trans_arr.expand_array_variable pf pre_vars in
-  let post_vars = Trans_arr.expand_array_variable pf post_vars in
+  (* let pre_vars = Trans_arr.expand_array_variable pf pre_vars in *)
+  (* let post_vars = Trans_arr.expand_array_variable pf post_vars in *)
   try
     let rhs = fixcalc_of_pure_formula pf in
     let input_fixcalc =
@@ -1412,10 +1412,10 @@ let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up =
     compute_fixpoint_x input_pairs ante_vars specs bottom_up
 
 (* Wrapper to translate back array *)
-let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up =
-  let resultlst = compute_fixpoint_x2 input_pairs ante_vars specs bottom_up in
-  List.map (fun (a,b) -> (Trans_arr.translate_back_array_in_one_formula a,Trans_arr.translate_back_array_in_one_formula b)) resultlst
-;;
+(* let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up = *)
+(*   let resultlst = compute_fixpoint_x2 input_pairs ante_vars specs bottom_up in *)
+(*   List.map (fun (a,b) -> (Trans_arr.translate_back_array_in_one_formula a,Trans_arr.translate_back_array_in_one_formula b)) resultlst *)
+(* ;; *)
 
 let compute_fixpoint (i:int) input_pairs ante_vars specs =
   let pr0 = !CP.print_formula in

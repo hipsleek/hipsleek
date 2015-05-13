@@ -1,0 +1,101 @@
+ex7b.slk
+
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+!!! **sleekengine.ml#1129:ivars:[Q]
+!!! **infer.ml#2011:new_lhs (b4 elim_exists): exists(P:P(a)) & (a'[5])<=4 & a'=a & res+3=0
+!!! **infer.ml#2140:Rel Inferred (simplified):[RELDEFN Q: ( (a'[5])<=4 & a'=a & res+3=0) -->  Q(a,a',res)]
+!!! **infer.ml#2154:LHS pure: P(a) & (a'[5])<=4 & a'=a & res+3=0
+!!! **infer.ml#2155:RHS pure: Q(a,a',res)
+Entail (1) : Valid. 
+
+Residue:
+ <1>emp&P(a) & (a'[5])<=4 & a'=a & res+3=0&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELDEFN Q: ( (a'[5])<=4 & a'=a & res+3=0) -->  Q(a,a',res)]
+
+
+!!! **sleekengine.ml#1129:ivars:[Q]
+!!! **infer.ml#2011:new_lhs (b4 elim_exists): exists(update_array_1d:update_array_1d(a,a',10,5)) & exists(P:P(a)) & 
+5<=(a[5]) & a'[4]=res
+!!! **infer.ml#2140:Rel Inferred (simplified):[RELDEFN Q: ( 5<=(a[5]) & a'[4]=res) -->  Q(a,a',res)]
+!!! **infer.ml#2154:LHS pure: P(a) & update_array_1d(a,a',10,5) & 5<=(a[5]) & a'[4]=res
+!!! **infer.ml#2155:RHS pure: Q(a,a',res)
+Entail (2) : Valid. 
+
+Residue:
+ <1>emp&P(a) & update_array_1d(a,a',10,5) & 5<=(a[5]) & a'[4]=res&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELDEFN Q: ( 5<=(a[5]) & a'[4]=res) -->  Q(a,a',res)]
+
+
+!!! fixpoint2:[( Q(a,a',res), ((5<=(a[5]) & a'[4]=res) | ((a'[5])<=4 & a'=a & res+3=0)))]
+Stop z3... 12 invocations 
+SAT Count   : 10
+SAT % Hit   : 100.%
+IMPLY Count : 2
+IMPLY % Hit : 100.%
+Time(cache overhead) : 0.00053 (seconds)
+
+!!! log(small):(0.010157,26)
+Total verification time: 0.052305 second(s)
+	Time spent in main process: 0.044589 second(s)
+	Time spent in child processes: 0.007716 second(s)
+
+ex6.slk
+
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+!!! **sleekengine.ml#1129:ivars:[Q]
+!!! **infer.ml#2011:new_lhs (b4 elim_exists): m=0 & n=0
+!!! **infer.ml#2140:Rel Inferred (simplified):[RELDEFN Q: ( m=0 & n=0) -->  Q(m,n)]
+!!! **infer.ml#2154:LHS pure: P(n) & m=0 & n=0
+!!! **infer.ml#2155:RHS pure: Q(m,n)
+Entail (1) : Valid. 
+
+Residue:
+ <1>emp&P(n) & m=0 & n=0&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELDEFN Q: ( m=0 & n=0) -->  Q(m,n)]
+
+
+!!! **sleekengine.ml#1129:ivars:[Q]
+!!! **infer.ml#2011:new_lhs (b4 elim_exists): Q(m1,r1) & r1=r'-2 & m=m1+1
+!!! **infer.ml#2140:Rel Inferred (simplified):[RELDEFN Q: ( Q(m1,r1) & r1=r'-2 & m=m1+1) -->  Q(m,r')]
+!!! **infer.ml#2154:LHS pure: P(m1) & Q(m1,r1) & r'=2+r1 & m1+1=m
+!!! **infer.ml#2155:RHS pure: Q(m,r')
+Entail (2) : Valid. 
+
+Residue:
+ <1>emp&P(m1) & Q(m1,r1) & r'=2+r1 & m1+1=m&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELDEFN Q: ( Q(m1,r1) & r1=r'-2 & m=m1+1) -->  Q(m,r')]
+
+
+!!! **fixcalc.ml#143:fixcalc_of_b_formula RelForm: : Q(m1,r1)
+!!! **fixcalc.ml#904:rel_defs:[( Q(m,r'), ((m=0 & r'=0) | exists(r1:exists(m1:m=m1+1 & Q(m1,r1)) & r1=r'-2)),1)]
+!!! **fixcalc.ml#905:No of disjs:1
+!!! **fixcalc.ml#910:bottom up
+!!! fixcalc file name: logs/fixcalc.inf
+!!! fixpoint2:[( Q(m,r'), m>=0 & 2*m=r')]
+Stop z3... 12 invocations Stop Omega... 12 invocations 
+SAT Count   : 10
+SAT % Hit   : 100.%
+IMPLY Count : 2
+IMPLY % Hit : 100.%
+Time(cache overhead) : 0.000523 (seconds)
+
+!!! log(small):(0.013654,28)
+Total verification time: 0.079331 second(s)
+	Time spent in main process: 0.046091 second(s)
+	Time spent in child processes: 0.03324 second(s)
+
+
+(==sleekengine.ml#1500==)
+compute_fixpoint#2@2
+compute_fixpoint#2 inp1 :[( 5<=(a[5]) & a'[4]=res, Q(a,a',res)),
+( (a'[5])<=4 & a'=a & res+3=0, Q(a,a',res))]
+compute_fixpoint#2 inp2 :[Q]
+compute_fixpoint#2@2 EXIT:[( Q(a,a',res), ((5<=(a[5]) & a'[4]=res) | ((a'[5])<=4 & a'=a & res+3=0)))]
+
+!!! fixpoint2:[( Q(a,a',res), ((5<=(a[5]) & a'[4]=res) | ((a'[5])<=4 & a'=a & res+3=0)))]
