@@ -915,6 +915,10 @@ let compute_cmd rel_defs bottom_up =
     let () = x_binfo_pp "top down" no_pos in
     "\nTD:=topdown(" ^ names ^ ", " ^ nos ^ ", SimHeur);\nTD;"
 
+
+let compute_cmd rel_defs bottom_up =
+  Debug.no_2 "compute_cmd" pr_none pr_none pr_none compute_cmd rel_defs bottom_up
+
 let compute_fixpoint_aux rel_defs ante_vars bottom_up =
   (* Prepare the input for the fixpoint calculation *)
   let def = List.fold_left (fun x y -> x ^ (compute_def y ante_vars)) "" rel_defs in
@@ -989,6 +993,9 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
     DD.no_2 "compute_fixpoint_aux" pr1 pr2 pr_res
       (fun _ _ -> compute_fixpoint_aux rel_defs ante_vars bottom_up) 
       rel_defs ante_vars
+
+let compute_fixpoint_aux rel_defs ante_vars bottom_up = 
+  Debug.no_2 "compute_fixpoint_aux" pr_none pr_none pr_none (compute_fixpoint_aux rel_defs) ante_vars bottom_up 
 
 let extract_inv_helper_x (rel, pfs) ante_vars specs =
   (* Remove bag constraints *)
@@ -1333,7 +1340,7 @@ let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
   let non_rec_defs = List.map (fun (rel_fml,pf,_) -> (rel_fml,pf)) non_rec_defs in
   if rec_rel_defs=[] then true_const @ non_rec_defs
   else
-    true_const @ (* non_rec_defs @ *) (compute_fixpoint_aux rel_defs ante_vars bottom_up)
+    true_const @ (* non_rec_defs @ *) (x_add compute_fixpoint_aux rel_defs ante_vars bottom_up)
 
 let compute_fixpoint_x input_pairs ante_vars specs bottom_up =
   DD.ninfo_pprint ("input_pairs: " ^ (pr_list
