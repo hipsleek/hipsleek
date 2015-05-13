@@ -1934,9 +1934,9 @@ let om_simplify f =
 (* cnv_int_to_ptr r *)
 
 (* Take out formulas that omega cannot handle*)
-let om_simplify f=
-  Trans_arr.split_and_combine om_simplify (x_add_1 Trans_arr.can_be_simplify) f
-;;
+(* let om_simplify f= *)
+(*   Trans_arr.split_and_combine om_simplify (x_add_1 Trans_arr.can_be_simplify) f *)
+(* ;; *)
 
 let om_simplify f =
   let pr = Cprinter.string_of_pure_formula in
@@ -1962,8 +1962,8 @@ let simplify_omega (f:CP.formula): CP.formula =
 let simplify (f : CP.formula) : CP.formula =
   (* proof_no := !proof_no + 1; *)
   (* let _ = Trans_arr.new_translate_out_array_in_one_formula_split f in *)
-  let _ = x_add_1 Trans_arr.translate_array_one_formula f in
-  let f = x_add_1 Trans_arr.new_translate_out_array_in_one_formula_split f in
+  (* let _ = x_add_1 Trans_arr.`translate_array_one_formula f in *)
+  (* let f = x_add_1 Trans_arr.new_translate_out_array_in_one_formula_split f in *)
 
   let simpl_num = next_proof_no () in
   let simpl_no = (string_of_int simpl_num) in
@@ -2106,10 +2106,10 @@ let om_pairwisecheck f =
     (x_add_1 Omega.pairwisecheck) f
 
 (* ZH: Take out the array part *)
-let om_pairwisecheck f =
-  (* let () = x_binfo_pp "take out array part" no_pos in *)
-  Trans_arr.split_and_combine (x_add_1 om_pairwisecheck) (fun f-> not (Trans_arr.contain_array f)) f
-;;
+(* let om_pairwisecheck f = *)
+(*   (\* let () = x_binfo_pp "take out array part" no_pos in *\) *)
+(*   Trans_arr.split_and_combine (x_add_1 om_pairwisecheck) (fun f-> not (Trans_arr.contain_array f)) f *)
+(* ;; *)
 
 let om_pairwisecheck f =
   let pr = Cprinter.string_of_pure_formula in
@@ -2682,8 +2682,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   (* let ante = translate_array_relation ante in *)
 
   (* let n_ante,n_conseq = new_translate_out_array_in_imply_full ante conseq in *)
-  let _ = Trans_arr.translate_array_imply ante conseq in
-  let n_ante,n_conseq = Trans_arr.new_translate_out_array_in_imply_split_full ante conseq in
+  (* let _ = Trans_arr.translate_array_imply ante conseq in *)
+  (* let n_ante,n_conseq = Trans_arr.new_translate_out_array_in_imply_split_full ante conseq in *)
   (* let n_ante = Trans_arr.drop_array_formula n_ante in *)
   (* let _ = print_endline ("##After process: ante: "^(Cprinter.string_of_pure_formula n_ante)^"\n conseq: "^(Cprinter.string_of_pure_formula n_conseq)) in *)
   (* let _ = print_endline ("tp_imply_no_cache n_ante: "^(Cprinter.string_of_pure_formula n_ante)) in *)
@@ -2694,8 +2694,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   (*let _ = print_endline ("After Drop ante: "^(Cprinter.string_of_pure_formula d_ante)^" conseq: "^(Cprinter.string_of_pure_formula d_conseq)) in*)
   (* let _ = print_endline ("tp_imply_no_cache ante (after drop): "^(Cprinter.string_of_pure_formula ante)) in *)
   (* let _ = print_endline ("tp_imply_no_cache conseq (after drop): "^(Cprinter.string_of_pure_formula conseq)) in *)
-  let ante = n_ante in
-  let conseq = n_conseq in 
+  let ante = ante in
+  let conseq = conseq in 
   (**************************************)
   let res,ante,conseq = x_add tp_imply_preprocess ante conseq in
   match res with | Some ret -> ret | None -> (*continue normally*)

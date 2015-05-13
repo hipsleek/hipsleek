@@ -190,9 +190,7 @@ let fixcalc_of_pure_formula f=
 ;;
 
 let fixcalc_of_pure_formula f=
-  (* let f = Trans_arr.instantiate_exists f in *)
   let f = x_add_1 Trans_arr.translate_array_one_formula f in
-  (* let f = x_add_1 Trans_arr.new_translate_out_array_in_one_formula_split f in *)
   fixcalc_of_pure_formula f
 ;;
 

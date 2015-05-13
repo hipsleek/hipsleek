@@ -204,9 +204,9 @@ and omega_of_formula_x pr_w pr_s f  =
     (* let () = x_tinfo_hp (add_str "Omega Error format:" !print_formula) f in *)
     raise e
 
-let omega_of_formula_x pr_w pr_s f =
-  omega_of_formula_x pr_w pr_s (Trans_arr.translate_array_one_formula f)
-;;
+(* let omega_of_formula_x pr_w pr_s f = *)
+(*   omega_of_formula_x pr_w pr_s (Trans_arr.translate_array_one_formula f) *)
+(* ;; *)
 
 let omega_of_formula i pr_w pr_s f  =
   let () = set_prover_type () in
@@ -499,12 +499,12 @@ let is_sat_ops_x pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
     (*  Cvclite.write_CVCLite pe; *)
     (*  Lash.write pe; *)
     (* let pe0 = drop_varperm_formula pe in *)
-    let pe =
-      if (* Globals.infer_const_obj # is_arr_as_var *)
-        false && !Globals.array_translate
-      then Trans_arr.drop_array_formula pe
-      else pe
-    in
+    (* let pe = *)
+    (*   if (\* Globals.infer_const_obj # is_arr_as_var *\) *)
+    (*     false && !Globals.array_translate *)
+    (*   then Trans_arr.drop_array_formula pe *)
+    (*   else pe *)
+    (* in *)
     let pe = Trans_arr.translate_array_one_formula pe in
     let svl0 = Cpure.fv pe in
     let svl,fr_svl = mkSpecVarList 0 svl0 in
@@ -621,7 +621,7 @@ let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
     let svl,fr_svl = mkSpecVarList 0 svl0 in
     let ss = List.combine svl fr_svl in
     let pe = Cpure.subst ss pe in
-    let pe = Trans_arr.translate_array_one_formula pe in
+    let pe = Trans_arr.translate_array_one_formula_for_validity pe in
     let pvars = get_vars_formula pe in
     (*if not safe then true else*)
     begin

@@ -2610,8 +2610,30 @@ let translate_array_one_formula
   new_f
 ;;
 
+
+
 let translate_array_one_formula f =
       Debug.no_1 "#1translate_array_one_formula" !print_pure !print_pure translate_array_one_formula f
+;;
+
+let translate_array_one_formula_for_validity
+      (f:formula):formula =
+
+  let f = translate_array_relation f in
+  let f = constantize_ex_q f in
+  let f = process_exists_array f in
+
+  let global_env = extend_env [] [] f in
+  let f = instantiate_forall f global_env in
+  let f = produce_aux_formula_for_exists f global_env in
+  let array_free_formula = mk_array_free_formula f in
+  let aux_formula = produce_aux_formula global_env in
+  let new_f =
+    match aux_formula with
+      | None -> array_free_formula
+      | Some af -> Or (array_free_formula,Not (af,None,no_pos),None,no_pos)
+  in
+  new_f
 ;;
 
 let translate_array_imply ante conseq=
