@@ -10758,14 +10758,14 @@ let convert_maymust_failure_to_value_orig ?(mark=true) (l:list_context) : list_c
             l
           else
             if mark then
-              let r = convert_maymust_failure_to_value_orig_a l in
+              let r = x_add_1 convert_maymust_failure_to_value_orig_a l in
               match r with
                 | SuccCtx [cc] -> FailCtx (ft, cc, { cex with cex_processed_mark=true})
                 | _ -> r
             else
               if cex.cex_processed_mark (* already processed *)
               then SuccCtx [c]
-              else convert_maymust_failure_to_value_orig_a l
+              else x_add_1 convert_maymust_failure_to_value_orig_a l
 
     | _ -> l
  
