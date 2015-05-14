@@ -8047,6 +8047,12 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
   (* if smart_xpure then try 0, then 1
      else try 1
   *)
+
+  (* ========== Immutability normalization ======== *)
+  let lhs_h = x_add_1 Immutable.restore_lend_h_formula lhs_h in
+  let estate_orig = x_add_1 Immutable.restore_lend_entail_state estate_orig in
+  (* ========== end - Immutability normalization ======== *)
+
   let () = reset_int2 () in
   x_tinfo_hp (add_str "lhs_h" (Cprinter.string_of_h_formula)) lhs_h pos;
   x_tinfo_hp (add_str "estate_orig.es_heap" (Cprinter.string_of_h_formula)) estate_orig.es_heap pos;
@@ -10436,6 +10442,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
             x_dinfo_zp (lazy ("do_match (after): LHS: "^ (Cprinter.string_of_context new_ctx))) pos;
             x_dinfo_zp (lazy ("do_match (after): RHS:" ^ (Cprinter.string_of_formula new_conseq))) pos;
             (* let () = print_string("cris: new_conseq = " ^ (Cprinter.string_of_formula new_conseq) ^ "\n") in *)
+            let new_ctx = Immutable.restore_tmp_ann_ctx new_ctx in
             let res_es1, prf1 = 
               if (!Globals.allow_mem) then 
                 heap_entail_split_rhs prog is_folding new_ctx new_conseq (rhs_matched_set @ [r_var]) pos

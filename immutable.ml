@@ -479,12 +479,6 @@ let mkTempRes ann_l ann_r  impl_vars expl_vars evars =
       (add_str "\n\tconstraints: " pr3) in 
   Debug.no_2 "mkTempRes"  pr pr pr_out (fun _ _ -> mkTempRes_x ann_l ann_r  impl_vars expl_vars evars ) ann_l ann_r
 
-let apply_f_to_annot_arg f_imm (args: CP.annot_arg list) : CP.annot_arg list=
-  let args = CP.annot_arg_to_imm_ann_list args in
-  let args =  f_imm args in
-  let args = CP.imm_ann_to_annot_arg_list args in
-  args
-
 (* and contains_phase_debug (f : h_formula) : bool =   *)
 (*   Debug.no_1 "contains_phase" *)
 (*       (!print_h_formula)  *)
@@ -1162,7 +1156,7 @@ and remaining_ann_new_x (annl: CP.ann) emap: CP.ann=
     | _ -> ann                        (* should never reach this branch *)
   in
   let res = match annl with
-    | CP.TempAnn ann -> normalize_imm ann
+    (* | CP.TempAnn ann -> normalize_imm ann *)
     | CP.TempRes (ann_l,ann_r) -> (* ann_l *)
       let ann_l = normalize_imm ann_l in
       let ann_r = normalize_imm ann_r in
@@ -1335,7 +1329,7 @@ and restore_tmp_ann_h_formula (f: h_formula) pure0: h_formula =
     new_f
   | CF.ViewNode h -> 
     let f args = restore_tmp_ann args pure0 in
-    let new_pimm = apply_f_to_annot_arg f (List.map fst h.CF.h_formula_view_annot_arg) in 
+    let new_pimm = CP.apply_f_to_annot_arg f (List.map fst h.CF.h_formula_view_annot_arg) in 
     let new_f = CF.ViewNode {h with h_formula_view_imm = List.hd (restore_tmp_ann [h.CF.h_formula_view_imm] pure0);
                                     h_formula_view_annot_arg = CP.update_positions_for_annot_view_params new_pimm h.CF.h_formula_view_annot_arg} in
     let new_f = maybe_replace_w_empty new_f in
@@ -1495,13 +1489,47 @@ and compute_ann_list_x all_fields (diff_fields : ident list) (default_ann : CP.a
   | [] -> []
 ;; 
 
+(* should we allow nested TempAnn? if so, then we should recursively restore @L *)
+let restore_lend a = 
+  match a with
+  | CP.TempAnn ann -> ann
+  | _ -> a
+
+let restore_lend_list lst = List.map restore_lend lst
+
+(* @[a] ---> @a *)
+let restore_lend_h_formula_helper h =
+  match h with
+  | CF.DataNode dn -> 
+    let h = CF.DataNode {dn with CF.h_formula_data_param_imm = restore_lend_list dn.CF.h_formula_data_param_imm;
+                         CF.h_formula_data_imm = restore_lend dn.CF.h_formula_data_imm; } in
+    Some h
+  | ViewNode vn -> 
+    let h = CF.ViewNode {vn with h_formula_view_imm = restore_lend vn.CF.h_formula_view_imm;
+                         h_formula_view_annot_arg = CP.update_imm_args_in_view restore_lend_list vn.CF.h_formula_view_annot_arg} in
+    Some h
+  | _ -> None
+
+let restore_lend_h_formula h =
+  let f h = restore_lend_h_formula_helper h in
+  let h = CF.transform_h_formula f h in
+  h
+
+let restore_lend_h_formula h =
+  let pr =  Cprinter.string_of_h_formula in 
+  Debug.no_1 "restore_lend_h_formula" pr pr restore_lend_h_formula h
+
 (* @[a] ---> @a *)
 let restore_lend_entail_state es =
   let f_none = fun _ -> None in
-  let fncs = (f_none, f_none, f_none, (f_none,f_none,f_none,f_none,f_none)) in
+  let fncs = (f_none, f_none, restore_lend_h_formula_helper, (f_none,f_none,f_none,f_none,f_none)) in
   {es with 
    CF.es_formula = CF.transform_formula fncs es.CF.es_formula;
   }
+
+let restore_lend_entail_state es =
+  let pr = Cprinter.string_of_entail_state in
+  Debug.no_1 "restore_lend_entail_state" pr pr restore_lend_entail_state es
 
 (* @[a] ---> @a *)
 let restore_lend_list_context ctx = 
@@ -1509,6 +1537,14 @@ let restore_lend_list_context ctx =
   let f = (scc_f, fun x -> x) in
   let ctx = CF.transform_list_context f ctx in
   ctx
+
+(* let restore_lend_base_formula base_f =  *)
+(*   let f_none = fun _ -> None in *)
+(*   let fncs = (f_none, f_none, restore_lend_h_formula_helper, (f_none,f_none,f_none,f_none,f_none)) in *)
+(*   let new_base_f =  CF.transform_formula fncs (CF.Base base_f) in *)
+(*   match new_base_f with *)
+(*   | CF.Base bf ->  bf *)
+(*   | _          -> base_f *)
 
 let rec normalize_h_formula_dn auxf (h : CF.h_formula) : CF.h_formula * (CP.formula list) * ((Globals.ident * VarGen.primed) list) = 
   match h with

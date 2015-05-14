@@ -13838,6 +13838,16 @@ let update_positions_for_annot_view_params (aa: annot_arg list) (old_lst: (annot
   Debug.no_2 "update_positions_for_annot_view_params" pr1 pr2
     pr2 update_positions_for_annot_view_params aa old_lst
 
+let apply_f_to_annot_arg f_imm (args: annot_arg list) : annot_arg list=
+  let args = annot_arg_to_imm_ann_list args in
+  let args = f_imm args in
+  let args = imm_ann_to_annot_arg_list args in
+  args
+
+let update_imm_args_in_view f (aa: (annot_arg * int) list): (annot_arg * int) list = 
+  let new_pimm = apply_f_to_annot_arg f (List.map fst aa) in 
+  update_positions_for_annot_view_params new_pimm aa
+
 (* end utilities for allowing annotations as view arguments *)
 
 (*x=null /\ x!=null*)
