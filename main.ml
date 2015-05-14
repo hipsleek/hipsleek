@@ -56,8 +56,11 @@ let parse_file_full file_name (primitive: bool) =
       else if (!Parser.parser_name = "cil") then
         (* cil parser is indicated in command line parameter *)
         "cil"
+      else if (!Parser.parser_name = "ints") then
+        (* ints parser is indicated in command line parameter *)
+        "ints"
       else (
-        (* no parser is indicated, decide to use which ones by file name extension  *)
+        (* no parser is indicated, decide to use which ones by file name extension *)
         (* let index = try String.rindex file_name '.' with _ -> 0 in              *)
         (* let length = (String.length file_name) - index in                       *)
         (* let ext = String.lowercase(String.sub file_name index length) in        *)
@@ -86,7 +89,7 @@ let parse_file_full file_name (primitive: bool) =
         (* if parser_to_use = "joust" then                                                        *)
         (*   let ss_file_name = file_name ^ ".ss" in                                              *)
         (*   let result_str = Pretty_ss.print_out_str_from_files_new [file_name] ss_file_name in  *)
-        (*   (* let () = print_endline_quiet "using jparser" in *)                                       *)
+        (*   (* let () = print_endline_quiet "using jparser" in *)                                *)
         (*   let input_channel = open_in ss_file_name in                                          *)
         (*   let parseresult = Parser.parse_hip ss_file_name (Stream.of_channel input_channel) in *)
         (*   close_in input_channel;                                                              *)

@@ -302,7 +302,7 @@ module Make (Token : SleekTokenS)
   let alpha = ['a'-'z' 'A'-'Z' '\223'-'\246' '\248'-'\255' '_']
   let identchar = ['A'-'Z' 'a'-'z' '_' '\192'-'\214' '\216'-'\246' '\248'-'\255' '0'-'9']
   let identseq = alpha identchar* (* An Hoa : a single identifier *)
-    let ident = (identseq | identseq ''') ('.' identseq)* (* An Hoa : a {possibly} extended quantifier *)
+  let ident = (identseq | identseq ''') ('.' identseq)* (* An Hoa : a {possibly} extended quantifier *)
   let locname = ident
   let not_star_symbolchar = ['$' '!' '%' '&' '+' '-' '.' '/' ':' '<' '=' '>' '?' '@' '^' '|' '~' '\\']
   let symbolchar = '*' | not_star_symbolchar
