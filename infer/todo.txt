@@ -80,7 +80,7 @@ infer_pure_m_1@4 EXIT:(new es,inf pure,rel_ass) :(None,Some( bbbp=bbb),[])
 
 =========================================================================
 =========================================================================
-#ex6b-pre-post-2a.slk
+#ex6c-pre-post-2a.slk: FIXED
 
 
 error at:

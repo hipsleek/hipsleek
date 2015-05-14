@@ -10028,25 +10028,37 @@ let gen_rand_ctx (m1,n1,e1) (m2,n2,e2) = match m1,m2 with
 
 (* state to be refined to accurate one for must-bug *)
 (*gen_lor*)
-let gen_lor_x (m1,n1,e1) (m2,n2,e2) : (failure_kind * string * (entail_state option)) = match m1,m2 with
-  | Failure_Bot m1,  Failure_Bot m2 ->  Failure_Bot ("OrL[\n"^m1^",\n"^m2^"\n]"), n1, e1 (*combine state here?*)
+let gen_lor_x (m1,n1,e1) (m2,n2,e2) : (failure_kind * string * (entail_state option)) =
+   match m1,m2 with
+  | Failure_Bot m1,  Failure_Bot m2 ->
+        let s = ("OrL[\n"^m1^",\n"^m2^"\n]") in
+        Failure_Bot s (* ("OrL[\n"^m1^",\n"^m2^"\n]") *), s, e1 (*combine state here?*)
   (* report_error no_pos "Failure_None not expected in gen_or" *)
   | Failure_Bot _, _ ->  m2, n2,e2
   (* report_error no_pos "Failure_None not expected in gen_or" *)
   | _, Failure_Bot _ -> m1,n1,e1
   (*report_error no_pos "Failure_None not expected in gen_or"*)
-  | Failure_May m1, Failure_May m2 -> Failure_May ("OrL[\n"^m1^",\n"^m2^"\n]"),n1, None
-  | Failure_May m1, Failure_Must m2 -> Failure_May ("OrL[\n"^m1^",\n"^m2^"\n]"),n1, None
+  | Failure_May m1, Failure_May m2 ->
+        let s = ("OrL[\n"^m1^",\n"^m2^"\n]") in
+        Failure_May s(* ("OrL[\n"^m1^",\n"^m2^"\n]") *),s, None
+  | Failure_May m1, Failure_Must m2 -> let s = ("OrL[\n"^m1^",\n"^m2^"\n]") in
+    Failure_May s (* ("OrL[\n"^m1^",\n"^m2^"\n]") *), s, None
   | Failure_May m, _ -> Failure_May m, n1,None
   (* demo/ex21a10-case *)
-  | Failure_Must m1, Failure_May m2 -> Failure_May ("OrL[\n"^m1^",\n"^m2^"\n]"),n2, None
+  | Failure_Must m1, Failure_May m2 ->
+        let s = ("OrL[\n"^m1^",\n"^m2^"\n]") in
+        Failure_May s (* ("OrL[\n"^m1^",\n"^m2^"\n]") *),s, None
   | _, Failure_May m -> Failure_May m,n2,None
   | Failure_Must m1, Failure_Must m2 ->
     if (n1=sl_error) then (Failure_Must m2, n2, e2)
     else if (n2= sl_error) then (Failure_Must m1, n1, e1)
-    else (Failure_Must ("OrL[\n"^m1^",\n"^m2^"\n]"), n1, e1)
-  | Failure_Must m, Failure_Valid -> (Failure_May ("OrL[\n"^m^",\nvalid\n]"),n1,None)
-  | Failure_Valid, Failure_Must m -> (Failure_May ("OrL[\n"^m^",\nvalid\n]"),n2,None)
+    else
+      let s = ("OrL[\n"^m1^",\n"^m2^"\n]") in
+      (Failure_Must s (* ("OrL[\n"^m1^",\n"^m2^"\n]") *), s, e1)
+  | Failure_Must m, Failure_Valid -> let s = ("OrL[\n"^m^",\nvalid\n]") in
+        (Failure_May s(* ("OrL[\n"^m^",\nvalid\n]") *), s,None)
+  | Failure_Valid, Failure_Must m -> let s = ("OrL[\n"^m^",\nvalid\n]") in
+        (Failure_May s (* ("OrL[\n"^m^",\nvalid\n]") *),s,None)
   (* | _, Failure_Must m -> Failure_May ("or["^m^",unknown]") *)
   (* | Failure_Must m,_ -> Failure_May ("or["^m^",unknown]") *)
   | Failure_Valid, x  -> (m2,n2,e2)
@@ -10069,18 +10081,28 @@ let gen_lor_ctx (m1,n1, (e1:context option)) (m2,n2,(e2: context option)) : (fai
     | _ -> None
   in
   match m1,m2 with
-  | Failure_Bot m1,  Failure_Bot m2 ->  Failure_Bot ("OrL[\n"^m1^",\n"^m2^"\n]"), n1,  ctx
+  | Failure_Bot m1,  Failure_Bot m2 ->
+        let s = ("OrL[\n"^m1^",\n"^m2^"\n]") in
+        Failure_Bot s (* ("OrL[\n"^m1^",\n"^m2^"\n]") *), s,  ctx
   | Failure_Bot _, _ ->  m2, n2, ctx
   | _, Failure_Bot _ -> m1,n1, ctx
-  | Failure_May m1, Failure_May m2 -> Failure_May ("OrL[\n"^m1^",\n"^m2^"\n]"),n1,  ctx
+  | Failure_May m1, Failure_May m2 -> let s = ("OrL[\n"^m1^",\n"^m2^"\n]") in
+    Failure_May s (* ("OrL[\n"^m1^",\n"^m2^"\n]") *),s ,  ctx
+  | Failure_May m1, Failure_Must m2 -> let s = ("OrL[\n"^m1^",\n"^m2^"\n]") in
+        Failure_May s(* ("OrL[\n"^m1^",\n"^m2^"\n]") *), s,  ctx
   | Failure_May m, _ -> Failure_May m, n1,  ctx
+  | Failure_Must m1, Failure_May m2 -> let s = ("OrL[\n"^m1^",\n"^m2^"\n]") in
+    Failure_May s (* ("OrL[\n"^m1^",\n"^m2^"\n]") *), s,  ctx
   | _, Failure_May m -> Failure_May m,n2,  ctx
   | Failure_Must m1, Failure_Must m2 ->
     if (n1=sl_error) then (Failure_Must m2, n2, ctx)
     else if (n2= sl_error) then (Failure_Must m1, n1, ctx)
-    else (Failure_Must ("OrL[\n"^m1^",\n"^m2^"\n]"), n1, ctx)
-  | Failure_Must m, Failure_Valid -> (Failure_May ("OrL[\n"^m^",\nvalid\n]"),n1,  ctx)
-  | Failure_Valid, Failure_Must m -> (Failure_May ("OrL[\n"^m^",\nvalid\n]"),n2,  ctx)
+    else let s = ("OrL[\n"^m1^",\n"^m2^"\n]") in
+    (Failure_Must s (* ("OrL[\n"^m1^",\n"^m2^"\n]") *), s, ctx)
+  | Failure_Must m, Failure_Valid -> let s = ("OrL[\n"^m^",\nvalid\n]") in
+    (Failure_May s (* ("OrL[\n"^m^",\nvalid\n]") *),s,  ctx)
+  | Failure_Valid, Failure_Must m -> let s = ("OrL[\n"^m^",\nvalid\n]") in
+    (Failure_May s (* ("OrL[\n"^m^",\nvalid\n]") *),s,  ctx)
   | Failure_Valid, x  -> (m2,n2,  ctx)
 
 
@@ -10278,10 +10300,17 @@ let rec get_final_error_ctx ctx=
   match ctx with
   | Ctx es -> lst_to_opt es.es_final_error
   | OCtx (c1, c2) -> begin
-      let e1 = get_final_error_ctx c1 in
-      if e1 = None then
-        get_final_error_ctx c2
-      else e1
+      let e1_opt = get_final_error_ctx c1 in
+      let e2_opt = get_final_error_ctx c2 in
+      match e1_opt,e2_opt with
+        | _, None -> e1_opt
+        | None, _ -> e2_opt
+        | Some (s1,ft1,fk1), Some (s2,ft2,fk2) ->
+              let fk,s,_ = gen_lor (fk1,s1, None) (fk2,s2, None) in
+              Some (s, Or_Reason (ft1, ft2), fk)
+      (* if e1 = None then *)
+      (*   get_final_error_ctx c2 *)
+      (* else e1 *)
     end
 
 let get_final_error cl=
