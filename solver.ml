@@ -6136,15 +6136,15 @@ and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0
     else(* only h2!=true *)
     if ((is_empty_heap h1) && (is_empty_heap h3)) then
       let () = x_tinfo_hp (add_str "BRANCH2" pr_none) () no_pos in
-      heap_n_pure_entail 1 prog is_folding  ctx_00 conseq h2 p func true pos
+      x_add heap_n_pure_entail 1 prog is_folding  ctx_00 conseq h2 p func true pos
     else(* only h1!=true *)
     if ((is_empty_heap h2) && (is_empty_heap h3)) then
-      heap_n_pure_entail 2 prog is_folding  ctx_00 conseq h1 p func false pos
+      x_add heap_n_pure_entail 2 prog is_folding  ctx_00 conseq h1 p func false pos
     else(* only h3!=true *)
     if ((is_empty_heap h1) && (is_empty_heap h2)) then
       let new_conseq = func h3 p in
       if not(Cformula.contains_phase h3) then (* h3 does not contain any nested phases *)
-        heap_n_pure_entail 3 prog is_folding  ctx_00  conseq (choose_not_empty_heap h1 h2 h3) p func (consume_heap new_conseq) (*drop_read_phase*) pos
+        x_add heap_n_pure_entail 3 prog is_folding  ctx_00  conseq (choose_not_empty_heap h1 h2 h3) p func (consume_heap new_conseq) (*drop_read_phase*) pos
       else (* h3 contains nested phases *)
         heap_entail_split_rhs_phases prog is_folding ctx_00 new_conseq (consume_heap new_conseq) pos
     else
@@ -6305,7 +6305,7 @@ and heap_n_pure_entail_2 prog is_folding  ctx0 conseq h p func drop_read_phase p
 and heap_n_pure_entail_x (prog : prog_decl) (is_folding : bool) (ctx0 : context) (conseq : formula) (h : h_formula) rhs_pure func (drop_read_phase : bool)
     pos : (list_context * proof) =
   let ctx0 = disable_imm_last_phase_ctx ctx0 in
-  let entail_h_ctx, entail_h_prf = heap_entail_split_lhs_phases prog is_folding  ctx0 (func h (MCP.mkMTrue pos)) (consume_heap_h_formula h) pos in
+  let entail_h_ctx, entail_h_prf = x_add heap_entail_split_lhs_phases prog is_folding  ctx0 (func h (MCP.mkMTrue pos)) (consume_heap_h_formula h) pos in
   let entail_h_ctx = enable_imm_last_phase entail_h_ctx in
   match entail_h_ctx with
   | FailCtx _ -> (entail_h_ctx, entail_h_prf)
@@ -6361,7 +6361,7 @@ and heap_entail_rhs_read_phase prog is_folding  ctx0 h1 h2 h3 func pos =
     if (is_empty_heap h2 && is_empty_heap h3) then func h1 (MCP.mkMTrue pos) 
     else func h1 (MCP.mkMTrue pos) in
   let (after_rd_ctx, after_rd_prf) = 
-    heap_entail_split_lhs_phases prog is_folding  ctx0 new_conseq false pos 
+    x_add heap_entail_split_lhs_phases prog is_folding  ctx0 new_conseq false pos 
   in (after_rd_ctx, after_rd_prf)
 
 and heap_entail_rhs_write_phase prog is_folding  after_rd_ctx after_rd_prf conseq h1 h2 h3 func pos = 
@@ -6374,7 +6374,7 @@ and heap_entail_rhs_write_phase prog is_folding  after_rd_ctx after_rd_prf conse
       else (func h2 (MCP.mkMTrue pos)) in
     let after_wr_ctx, after_wr_prfs =
       if not(is_empty_heap h2) then
-        let after_wr = List.map (fun c -> heap_entail_split_lhs_phases prog is_folding  c new_conseq true pos) cl in
+        let after_wr = List.map (fun c -> x_add heap_entail_split_lhs_phases prog is_folding  c new_conseq true pos) cl in
         let after_wr_ctx, after_wr_prfs = List.split after_wr in
         let after_wr_prfs = mkContextList cl (Cformula.struc_formula_of_formula conseq pos) after_wr_prfs in
         let after_wr_ctx = fold_context_left 7 after_wr_ctx in 
@@ -6405,7 +6405,7 @@ and heap_entail_rhs_nested_phase_x prog is_folding  after_wr_ctx after_wr_prfs c
            let after_nested_phase_ctx = fold_context_left 8 after_nested_phase_ctx in
            (after_nested_phase_ctx, after_nested_phase_prfs)
          else
-           let after_nested_phase = List.map (fun c -> heap_entail_split_lhs_phases prog is_folding  c (func h3 (MCP.mkMTrue pos)) drop_read_phase pos) cl in
+           let after_nested_phase = List.map (fun c -> x_add heap_entail_split_lhs_phases prog is_folding  c (func h3 (MCP.mkMTrue pos)) drop_read_phase pos) cl in
            let after_nested_phase_ctx, after_nested_phase_prfs = List.split after_nested_phase in
            let after_nested_phase_prfs = mkContextList cl (Cformula.struc_formula_of_formula conseq pos) after_nested_phase_prfs in
            let after_nested_phase_ctx = fold_context_left 9 after_nested_phase_ctx in
@@ -6479,7 +6479,7 @@ and swap_heap (f : formula) (new_h : h_formula) pos : (formula * h_formula) =
 
 
 and heap_entail_split_lhs_phases p is_folding  ctx0 conseq d pos : (list_context * proof) =
-  Debug.no_2 "heap_entail_split_lhs_phases" Cprinter.string_of_context (fun _ -> "RHS") (fun (c,_) -> Cprinter.string_of_list_context c)
+  Debug.no_2 "heap_entail_split_lhs_phases" Cprinter.string_of_context (add_str "RHS" Cprinter.string_of_formula) (fun (c,_) -> Cprinter.string_of_list_context c)
     (fun ctx0 conseq -> heap_entail_split_lhs_phases_x p is_folding  ctx0 conseq d pos) ctx0 conseq
 
 (* entailment method for splitting the antecedent *)
@@ -6528,7 +6528,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
         else
           (* we need to recursively split the phases nested in h3 *)
           (* let () = print_string("\n\nRecursive call to heap_entail_split_lhs_phases\n") in *)
-          heap_entail_split_lhs_phases prog is_folding  new_ctx conseq drop_read_phase pos
+          x_add heap_entail_split_lhs_phases prog is_folding  new_ctx conseq drop_read_phase pos
       in
       match final_ctx with
       | SuccCtx(cl) ->
@@ -6656,7 +6656,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
           let after_wr_ctx, after_wr_prf =
             if (CF.contains_phase h3) then
               (x_dinfo_zp (lazy ("heap_entail_split_lhs_phases: \ncall heap_entail_split_lhs_phase for the continuation\n")) pos;
-               heap_entail_split_lhs_phases prog is_folding  cont_ctx conseq drop_read_phase pos)
+               x_add heap_entail_split_lhs_phases prog is_folding  cont_ctx conseq drop_read_phase pos)
             else
               (x_dinfo_zp (lazy ("heap_entail_split_lhs_phases: \ncall heap_entail_conjunct for the continuation\n")) pos;
                x_add heap_entail_conjunct 9 prog is_folding  cont_ctx conseq [] pos)
@@ -6706,7 +6706,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
       (* create the new ctx *)
       let lhs_wr = func h3 in
       let wr_ctx = CF.set_context_formula ctx0 lhs_wr in
-      let (with_wr_ctx, with_wr_prf) = heap_entail_split_lhs_phases prog is_folding  wr_ctx conseq drop_read_phase pos in
+      let (with_wr_ctx, with_wr_prf) = x_add heap_entail_split_lhs_phases prog is_folding  wr_ctx conseq drop_read_phase pos in
       let (with_wr_ctx, with_wr_prf) = 
         (match with_wr_ctx with
          | FailCtx _ -> (with_wr_ctx, with_wr_prf)
@@ -7196,6 +7196,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
     (*print_string ("\nAN HOA CHECKPOINT :: Antecedent: " ^ (Cprinter.string_of_formula ante))*)
     let ante = if(!Globals.allow_mem) then Mem.ramify_starminus_in_formula ante0 prog.prog_view_decls else ante0 in
     (*let ante = if(!Globals.allow_field_ann) then Mem.compact_nodes_with_same_name_in_formula ante else ante in *)
+    x_tinfo_hp (add_str "heap_entail_conjunct_helper conseq" (Cprinter.string_of_formula)) conseq no_pos;
     let conseq = if(!Globals.allow_mem) then Mem.remove_accs_from_formula conseq else conseq in (* Make x::node<_,_>@A to x!= null on RHS *)
     (*let conseq  = if(!Globals.allow_field_ann) then Mem.compact_nodes_with_same_name_in_formula conseq else conseq in *)
     let ctx0 = Ctx{estate with es_formula = ante;} in
@@ -7288,10 +7289,11 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
             | _ -> (
                 let h1, p1, vp1, fl1, t1, a1 = split_components ante in
                 let h2, p2, vp2, fl2, t2, a2 = split_components conseq in
-                Debug.ninfo_hprint (add_str "h1" (Cprinter.string_of_h_formula)) h1 no_pos;
-                Debug.ninfo_hprint (add_str "h2" (Cprinter.string_of_h_formula)) h2 no_pos;
-                Debug.ninfo_hprint (add_str "p1" (Cprinter.string_of_mix_formula)) p1 no_pos;
-                Debug.ninfo_hprint (add_str "p2" (Cprinter.string_of_mix_formula)) p2 no_pos;
+                let () = x_dinfo_hp  (add_str "entail_conjunct h1" (Cprinter.string_of_h_formula)) h1 no_pos in
+                let () = x_dinfo_hp  (add_str "entail_conjunct h2" (Cprinter.string_of_h_formula)) h2 no_pos in
+                let () = x_dinfo_hp  (add_str "entail_conjunct p1" (Cprinter.string_of_mix_formula)) p1 no_pos in
+                let () = x_dinfo_hp  (add_str "entail_conjunct p2" (Cprinter.string_of_mix_formula)) p2 no_pos in
+
                 let estate = if !Globals.allow_imm || (!Globals.allow_field_ann) then estate else
                     let null_p = CP.get_null_formula (MCP.pure_of_mix p2) in
                     let ctx_with_rhs es=
@@ -11608,6 +11610,7 @@ and solver_infer_lhs_contra_list prog estate lhs_xpure pos msg =
 
 and process_before_do_match prog estate conseq lhs_b rhs_b rhs_h_matched_set is_folding pos
     lhs_node lhs_rest rhs_node rhs_rest holes=
+  let () = x_dinfo_zp (lazy ("before_do_match rhs_b" ^ (Cprinter.string_of_formula_base rhs_b))) pos in
   let subsumes, to_be_proven = prune_branches_subsume(*_debug*) prog lhs_node rhs_node in
   if not subsumes then 
     (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos, 
@@ -11623,9 +11626,10 @@ and process_before_do_match prog estate conseq lhs_b rhs_b rhs_h_matched_set is_
     let rhs_p = match to_be_proven with
       | None -> rhs_b.formula_base_pure
       | Some (p,_) -> MCP.memoise_add_pure rhs_b.formula_base_pure p in
+    let () = x_dinfo_zp (lazy ("before_do_match rhs_p" ^ (Cprinter.string_of_mix_formula rhs_p))) pos in
     let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest;formula_base_pure = rhs_p} in
     x_tinfo_hp (add_str "new_estate(M_match)" (Cprinter.string_of_entail_state)) new_estate pos;
-    let res_es0, prf0 = do_match prog new_estate lhs_node rhs_node n_rhs_b rhs_h_matched_set is_folding pos in
+    let res_es0, prf0 = x_add do_match prog new_estate lhs_node rhs_node n_rhs_b rhs_h_matched_set is_folding pos in
     (* let () = Debug.info_zprint  (lazy  ("M_match 2: " ^ (Cprinter.string_of_list_context res_es0))) no_pos in *)
     (res_es0,prf0)
 
@@ -11923,7 +11927,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
           let n_lhs_node = set_node_perm lhs_node (Some (Cpure.Var (v_consumed,no_pos))) in
           x_dinfo_zp (lazy "do_match_split") pos;
           x_tinfo_hp (add_str "new_estate(M_split_match)" (Cprinter.string_of_entail_state)) new_estate pos;
-          let res_es0, prf0 = do_match prog new_estate n_lhs_node rhs_node n_rhs_b rhs_h_matched_set is_folding pos in
+          let res_es0, prf0 = x_add do_match prog new_estate n_lhs_node rhs_node n_rhs_b rhs_h_matched_set is_folding pos in
           (res_es0,prf0)			  
     | Context.M_fold {
         Context.match_res_rhs_node = rhs_node;
@@ -12420,7 +12424,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               let n_rhs_b =  (Base {rhs_b with formula_base_heap = rhs_rest}) in
               (* Debug.info_hprint (add_str "DD: new_estate 1" (Cprinter.string_of_entail_state)) new_estate pos; *)
               let res_es0, prf0 = match n_es_heap_opt with
-                | None -> do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos
+                | None -> x_add do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos
                 | Some hf -> let new_es = {new_estate with CF.es_heap = hf} in
                   let new_ctx = Ctx (CF.add_to_estate new_es "infer: rhs: unkown pred") in
                   x_add heap_entail_conjunct 28 prog is_folding new_ctx n_rhs_b (rhs_h_matched_set) pos
@@ -12646,7 +12650,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                           let () = x_tinfo_hp (add_str "new_estate(M_unmatched_rhs_data_node)" (Cprinter.string_of_entail_state)) new_estate pos in
                           let res_es0, prf0 = match n_es_heap_opt with
                             | None ->
-                              do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos
+                              x_add do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos
                             | Some hf -> let new_es = {new_estate with CF.es_heap = hf} in
                               let new_ctx = Ctx (CF.add_to_estate new_es "infer: rhs: unkown pred") in
                               x_add heap_entail_conjunct 28 prog is_folding new_ctx n_rhs_b (rhs_h_matched_set) pos
