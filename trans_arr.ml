@@ -57,7 +57,6 @@ let is_same_sv
       match p1,p2 with
       | Primed,Primed
       | Unprimed,Unprimed ->
-
         (* if (cmp_typ t1 t2) && (i1=i2) then true else false *)
         if (i1=i2) then true else false
       | _,_-> false
@@ -1213,6 +1212,13 @@ let translate_array_relation
   let pf = !print_pure in
   Debug.no_1 "translate_array_relation" pf pf (fun f-> translate_array_relation f) f
 ;;
+
+let translate_array_relation f=
+  if !Globals.array_translate
+  then translate_array_relation f
+  else f
+;;
+
 (* ------------------------------------------------------------------- *)
 let translate_array_equality
     (f:formula) (scheme:((spec_var * (exp list)) list)):(formula option)=
