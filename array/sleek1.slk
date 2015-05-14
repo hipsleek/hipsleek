@@ -1,0 +1,62 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+checkentail x::node<_,q> * q::ll<n> & n > 1 
+  |- (exists m: x::ll<m> & m > 3).
+
+
+//print residue.
+
+/*
+# array/sleek1.slk
+
+Expects (from default):
+
+Starting Omega...oc
+!!! **sleekengine.ml#1129:ivars:[]
+Entail 1: Fail.(may) cause: (((q=null & n=0) | (1<=n & q!=null))) & 1<n |-  3<(1+n). LOCS:[4;0;1;7;8] (may-bug)
+
+GOT. How come when we did not invoke --ato ??
+---
+error at: 
+SLEEK FAILURE (END)
+Stop Omega... 16 invocations 
+SAT Count   : 8
+SAT % Hit   : 100.%
+IMPLY Count : 4
+IMPLY % Hit : 50.%
+
+!!! **solver.ml#7150:avoid:false
+!!! **solver.ml#7151:slk no:1
+!!! **cvutil.ml#757:f:#DN# self::node<Anon_14,r>
+!!! **cvutil.ml#789:f:#VN# r::ll{}<flted_4_16>
+!!! **cvutil.ml#757:f:#DN# self::node<Anon_14,r>
+!!! **cvutil.ml#789:f:#VN# r::ll{}<flted_4_16>error at: 
+
+--dd-calls-all (failure due to translate_array_one_formula
+  from simplify)
+
+%%%     TP.simplify
+%%%      simplify##
+%%%       (inner most) simplify
+%%%        #1translate_array_one_formula
+%%%         translate_array_relation
+%%%         process_exists_array
+%%%         extend_env
+
+(==tpdispatcher.ml#1965==)
+#1translate_array_one_formula@169
+#1translate_array_one_formula inp1 : self=null & n=0
+#1translate_array_one_formula@169 EXIT ExceptionFailure("is_valid_forall_helper_exp: To Be Implemented")Occurred!
+error at: 
+
+Two questions:
+ (i) why was this translate array called when --ato not
+     activated?
+(ii) Can we finish the to be implemented?
+
+Later perform a /example/working/run-fast-test.pl sleek
+*/
