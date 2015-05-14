@@ -4871,7 +4871,7 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
       | SuccCtx(cl) ->
         (* substitute the holes due to the temporary removal of matched immutable nodes *) 
         let cl1 = List.map (subs_crt_holes_ctx 1) cl in
-        let cl1 = List.map restore_tmp_ann_ctx cl1 in
+        let cl1 = List.map (x_add_1 restore_tmp_ann_ctx) cl1 in
         (SuccCtx(cl1), final_prf)
       | FailCtx _ -> (final_ctx, final_prf)
     else
@@ -4882,7 +4882,7 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
       | SuccCtx(cl) ->
         (* substitute the holes due to the temporary removal of matched immutable nodes *) 
         let cl1 = List.map (subs_crt_holes_ctx 2) cl in
-        let cl1 = List.map restore_tmp_ann_ctx cl1 in
+        let cl1 = List.map (x_add_1 restore_tmp_ann_ctx) cl1 in
         (SuccCtx(cl1), final_prf)
       | FailCtx _ -> (final_ctx, final_prf)
     else
@@ -4896,7 +4896,7 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
       | SuccCtx(cl) ->
         (* substitute the holes due to the temporary removal of matched immutable nodes *) 
         let cl1 = List.map (subs_crt_holes_ctx 3) cl in
-        let cl1 = List.map restore_tmp_ann_ctx cl1 in
+        let cl1 = List.map (x_add_1 restore_tmp_ann_ctx) cl1 in
         (SuccCtx(cl1), final_prf)
       | FailCtx _ -> (final_ctx, final_prf)
     else
@@ -4919,7 +4919,7 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
           (* substitute the holes due to the temporary removal of matched immutable nodes *) 
           (* let () = print_string("Substitute the holes \n") in *)
           let cl = List.map (subs_crt_holes_ctx 4) cl in
-          let cl =  List.map restore_tmp_ann_ctx cl in
+          let cl =  List.map (x_add_1 restore_tmp_ann_ctx) cl in
           (* put back the frame consisting of h2 *)
           let cl = List.map (fun c -> insert_ho_frame c (fun f -> CF.mkConjH h2 f pos)) cl  
           in 
@@ -4948,7 +4948,7 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
                 (* substitute the holes due to the temporary removal of matched immutable nodes *)
                 (* let () = print_string("Substitute the holes \n") in *)
                 let cl = List.map (subs_crt_holes_ctx 5) cl in   
-                let cl =  List.map restore_tmp_ann_ctx cl in
+                let cl =  List.map (x_add_1 restore_tmp_ann_ctx) cl in
                 (* in case of success, put back the frame consisting of h1/\h2*[] *)
                 (* first add the frame h2*[] *)
                 let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkConjH h1 f pos)) cl in 
@@ -6511,7 +6511,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
         (* substitute the holes due to the temporary removal of matched immutable nodes *) 
         let cl1 = List.map (subs_crt_holes_ctx 6) cl in
         x_tinfo_hp (add_str "cl after subs" (pr_list (Cprinter.string_of_context))) cl no_pos;
-        let cl1 = List.map restore_tmp_ann_ctx cl1 in
+        let cl1 = List.map (x_add_1 restore_tmp_ann_ctx) cl1 in
         x_tinfo_hp (add_str "cl after restore" (pr_list (Cprinter.string_of_context))) cl no_pos;
         (SuccCtx(cl1), final_prf)
       | FailCtx _ -> (final_ctx, final_prf)
@@ -6535,7 +6535,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
         (* substitute the holes due to the temporary removal of matched immutable nodes *) 
         (* let () = print_string("Substitute the holes\n") in *)
         let cl1 = List.map (subs_crt_holes_ctx 7) cl in
-        let cl1 = List.map restore_tmp_ann_ctx cl1 in
+        let cl1 = List.map (x_add_1 restore_tmp_ann_ctx) cl1 in
         (SuccCtx(cl1), final_prf)
       | FailCtx _ -> (final_ctx, final_prf)
 
@@ -6555,7 +6555,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
            (* substitute the holes due to the temporary removal of matched immutable nodes *) 
            (* let () = print_string("Substitute the holes \n") in *)
            let cl1 = List.map (subs_crt_holes_ctx 8) cl in
-           let cl1 = List.map restore_tmp_ann_ctx cl1 in
+           let cl1 = List.map (x_add_1 restore_tmp_ann_ctx) cl1 in
            (* in case of success, put back the frame consisting of h2*h3 *)
            let cl2 = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkPhaseH f (CF.mkStarH h2 h3 pos) pos)) cl1 in
            SuccCtx(cl2))
@@ -6583,7 +6583,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
           (* substitute the holes due to the temporary removal of matched immutable nodes *) 
           (* let () = print_string("Substitute the holes \n") in *)
           let cl = List.map (subs_crt_holes_ctx 9) cl in
-          let cl =  List.map restore_tmp_ann_ctx cl in
+          let cl =  List.map (x_add_1 restore_tmp_ann_ctx) cl in
           (* put back the frame consisting of h1 and h3 *)
           (* first add the frame []*h3 *) 
           let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkStarH f h3 pos)) cl in
@@ -6667,7 +6667,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
              (* substitute the holes due to the temporary removal of matched immutable nodes *) 
              (* let () = print_string("Substitute the holes\n") in *)
              let cl = List.map (subs_crt_holes_ctx 10) cl in
-             let cl =  List.map restore_tmp_ann_ctx cl in
+             let cl =  List.map (x_add_1 restore_tmp_ann_ctx) cl in
              (* in case of success, put back the frame consisting of h1 and what's left of h2 *)
              (* first add the frame h2_rest*[] *) 
              let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkStarH h2_rest f pos)) cl in
@@ -6715,7 +6715,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
            (* let () = print_string("Substitute the holes \n") in *)
 
            let cl = List.map (subs_crt_holes_ctx 11) cl in   
-           let cl =  List.map restore_tmp_ann_ctx cl in
+           let cl =  List.map (x_add_1 restore_tmp_ann_ctx) cl in
            (* in case of success, put back the frame consisting of h1;h2*[] *)
            (* first add the frame h2*[] *) 
            let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkStarH h2 f pos)) cl in
@@ -10441,14 +10441,15 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 heap_entail_split_rhs prog is_folding new_ctx new_conseq (rhs_matched_set @ [r_var]) pos
               else x_add heap_entail_conjunct 11 prog is_folding new_ctx new_conseq (rhs_matched_set @ [r_var]) pos in
             let res_es1 = x_add Cformula.add_to_subst res_es1 r_subs l_subs in  
-            let res_es1 = Cformula.add_to_exists_pure res_es1 ann_rhs_ex pos 
+            let res_es1 = Cformula.add_to_exists_pure res_es1 ann_rhs_ex pos in
+            let res_es1 = Immutable.restore_tmp_ann_list_ctx res_es1
             in (res_es1, prf1) 
             (* match final_ctx with                                                                                             *)
             (* | SuccCtx(cl) ->                                                                                                 *)
             (*   (* substitute the holes due to the temporary removal of matched immutable nodes *)                             *)
             (*   let () = print_string("asankhs: new_context = " ^ (Cprinter.string_of_list_context final_ctx) ^ "\n") in        *)
             (*   let cl1 = List.map subs_crt_holes_ctx cl in                                                                    *)
-            (*   let cl1 = List.map restore_tmp_ann_ctx cl1 in                                                                  *)
+            (*   let cl1 = List.map (x_add_1 restore_tmp_ann_ctx) cl1 in                                                                  *)
             (*   let () = print_string("asankhs: after_context = " ^ (Cprinter.string_of_list_context (SuccCtx(cl1))) ^ "\n") in *)
             (*   (SuccCtx(cl1), final_prf)                                                                                      *)
             (* | FailCtx _ -> (final_ctx, final_prf)                                                                            *)
