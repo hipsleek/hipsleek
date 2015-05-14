@@ -1230,78 +1230,6 @@ and pop_holes_es (es : Cformula.entail_state) : Cformula.entail_state =
                   es_crt_holes = es.es_crt_holes @ c2;
                }
 
-(* restore temporarily removed annotations *)
-and restore_tmp_ann_list_ctx (ctx : list_context) : list_context = 
-  match ctx with
-  | FailCtx _ -> ctx
-  | SuccCtx(cl) ->
-    SuccCtx(List.map restore_tmp_ann_ctx cl)
-
-and restore_tmp_ann_ctx (ctx : context) : context = 
-  (* if (!Globals.allow_imm) || (!Globals.allow_field_ann) then *)
-  let rec helper ctx = 
-    match ctx with
-    | Ctx(es) -> Ctx(restore_tmp_ann_es es)
-    | OCtx(c1, c2) ->
-      let nc1 = helper c1 in
-      let nc2 = helper c2 in
-      OCtx(nc1, nc2)
-  in helper ctx
-(* else ctx *)
-
-and restore_tmp_ann_h_formula (f: h_formula) pure0: h_formula =
-  match f with
-  | CF.Star h  -> CF.Star {h with h_formula_star_h1 = restore_tmp_ann_h_formula h.CF.h_formula_star_h1 pure0; 
-                                  h_formula_star_h2 = restore_tmp_ann_h_formula h.CF.h_formula_star_h2 pure0;}
-  | CF.Conj h  -> CF.Conj {h with h_formula_conj_h1 = restore_tmp_ann_h_formula h.CF.h_formula_conj_h1 pure0; 
-                                  h_formula_conj_h2 = restore_tmp_ann_h_formula h.CF.h_formula_conj_h2 pure0;}
-  | CF.ConjStar h  -> CF.ConjStar {h with h_formula_conjstar_h1 = restore_tmp_ann_h_formula h.CF.h_formula_conjstar_h1 pure0; 
-                                          h_formula_conjstar_h2 = restore_tmp_ann_h_formula h.CF.h_formula_conjstar_h2 pure0;}
-  | CF.ConjConj h  -> CF.ConjConj {h with h_formula_conjconj_h1 = restore_tmp_ann_h_formula h.CF.h_formula_conjconj_h1 pure0; 
-                                          h_formula_conjconj_h2 = restore_tmp_ann_h_formula h.CF.h_formula_conjconj_h2 pure0; }
-  | CF.Phase h -> CF.Phase  {h with h_formula_phase_rd = restore_tmp_ann_h_formula h.CF.h_formula_phase_rd pure0; 
-                                    h_formula_phase_rw = restore_tmp_ann_h_formula h.CF.h_formula_phase_rw pure0;}
-  | CF.DataNode h -> 
-    let new_f = 
-      CF.DataNode {h with h_formula_data_param_imm = restore_tmp_ann h.CF.h_formula_data_param_imm pure0;
-                          h_formula_data_imm = List.hd (restore_tmp_ann [h.CF.h_formula_data_imm] pure0);
-                  } in
-    let new_f = maybe_replace_w_empty new_f in
-    new_f
-  | CF.ViewNode h -> 
-    let f args = restore_tmp_ann args pure0 in
-    let new_pimm = CP.apply_f_to_annot_arg f (List.map fst h.CF.h_formula_view_annot_arg) in 
-    let new_f = CF.ViewNode {h with h_formula_view_imm = List.hd (restore_tmp_ann [h.CF.h_formula_view_imm] pure0);
-                                    h_formula_view_annot_arg = CP.update_positions_for_annot_view_params new_pimm h.CF.h_formula_view_annot_arg} in
-    let new_f = maybe_replace_w_empty new_f in
-    new_f
-  | _          -> f
-
-and restore_tmp_ann_formula (f: formula): formula =
-  match f with
-  | Base(bf) -> Base{bf with formula_base_heap = restore_tmp_ann_h_formula bf.formula_base_heap  bf.formula_base_pure;}
-  | Exists(ef) -> Exists{ef with formula_exists_heap = restore_tmp_ann_h_formula ef.formula_exists_heap  ef.formula_exists_pure;}
-  | Or(orf) -> Or {orf with formula_or_f1 = restore_tmp_ann_formula orf.formula_or_f1; 
-                            formula_or_f2 = restore_tmp_ann_formula orf.formula_or_f2;}
-
-and restore_tmp_ann_es (es : Cformula.entail_state) : Cformula.entail_state = 
-  (* subs away current hole list *)
-  {  es with
-     es_formula = restore_tmp_ann_formula es.es_formula;
-  }
-
-and restore_tmp_ann_struc_formula sf = 
-  let rec helper sf  = 
-    match sf with
-    | EBase f   -> EBase {f with formula_struc_base = restore_tmp_ann_formula f.formula_struc_base }
-    | EList l   -> EList (map_l_snd helper l)
-    | ECase c   -> ECase {c with formula_case_branches = List.map (fun (c1,c2)-> (c1, helper c2)) c.formula_case_branches;}
-    | EAssume b -> EAssume {b with
-                            formula_assume_simpl = restore_tmp_ann_formula b.formula_assume_simpl;
-                            formula_assume_struc = helper b.formula_assume_struc;}
-    | EInfer b  -> EInfer {b with  formula_inf_continuation = helper b.formula_inf_continuation}
-  in helper sf
-
 (* substitute *)
 and subs_crt_holes_list_ctx (ctx : list_context) : list_context = 
   match ctx with
@@ -1430,7 +1358,7 @@ and compute_ann_list_x all_fields (diff_fields : ident list) (default_ann : CP.a
   | [] -> []
 ;; 
 
-(* should we allow nested TempAnn? if so, then we should recursively restore @L *)
+(* ========= functions for transforming imm ============ *)
 
 (* @a ---> f @a *)
 let imm_transform_h_formula_helper f h =
@@ -1439,10 +1367,12 @@ let imm_transform_h_formula_helper f h =
   | CF.DataNode dn -> 
     let h = CF.DataNode {dn with CF.h_formula_data_param_imm = f_list dn.CF.h_formula_data_param_imm;
                          CF.h_formula_data_imm = f_unit dn.CF.h_formula_data_imm; } in
+    (* let h = maybe_replace_w_empty h in *)
     Some h
   | ViewNode vn -> 
     let h = CF.ViewNode {vn with h_formula_view_imm = f_unit vn.CF.h_formula_view_imm;
                          h_formula_view_annot_arg = CP.update_imm_args_in_view f_list vn.CF.h_formula_view_annot_arg} in
+    (* let h = maybe_replace_w_empty h in *)
     Some h
   | _ -> None
 
@@ -1458,49 +1388,76 @@ let imm_transform_h_formula f h =
   Debug.no_1 "imm_transform_h_formula" pr pr (imm_transform_h_formula f) h
 
 (* @a ---> f @a *)
-let imm_transform_formula f formula =
+let imm_transform_struc_formula fncs sf =
+  CF.transform_struc_formula fncs sf
+
+(* @a ---> f @a *)
+let imm_transform_formula fncs f =
+   CF.transform_formula fncs f
+
+(* @a ---> f @a *)
+let imm_transform_entail_state fncs es =
+  {es with 
+   CF.es_formula = CF.transform_formula fncs es.CF.es_formula;
+  }
+
+(* @a ---> f @a *)
+let imm_transform_entail_state fncs es =
+  let pr = Cprinter.string_of_entail_state in
+  Debug.no_1 "imm_transform_entail_state" pr pr (imm_transform_entail_state fncs) es
+
+(* @a ---> f @a *)
+let imm_transform_context fncs ctx = 
+  let fnc es = Ctx (imm_transform_entail_state fncs es) in
+  let ctx = CF.transform_context fnc ctx in
+  ctx
+
+(* @a ---> f @a *)
+let imm_transform_list_context fncs ctx = 
+  let scc_f es = Ctx (imm_transform_entail_state fncs es) in
+  let fnc = (scc_f, fun x -> x) in
+  let ctx = CF.transform_list_context fnc ctx in
+  ctx
+
+(* ========= END functions for transforming imm ============ *)
+
+(* ========= restore temp ann functions ============ *)
+    
+let restore_tmp_res_unit p ann = restore_tmp_res_ann ann p
+
+let restore_tmp_res_list p ann = restore_tmp_ann ann p
+
+let f_restore_tmp_ann p = (restore_tmp_res_unit p, restore_tmp_res_list p)
+
+let imm_transform_formula_tmp f formula =
   let rec helper f formula =
     match formula with
     | CF.Base(bf)   ->  CF.Base {bf with CF.formula_base_heap = imm_transform_h_formula (f bf.CF.formula_base_pure) bf.CF.formula_base_heap ;}
     | CF.Exists(ef) -> CF.Exists {ef with CF.formula_exists_heap = imm_transform_h_formula (f ef.CF.formula_exists_pure) ef.CF.formula_exists_heap;}
     | CF.Or(orf)    -> CF.Or {orf with CF.formula_or_f1 = helper f orf.CF.formula_or_f1; 
                               CF.formula_or_f2 = helper f orf.CF.formula_or_f2;}
-  in helper f formula 
+  in Some (helper f formula)
 
-let imm_transform_struc_formula f sf =
-  let f_none = fun _ -> None in
-  let fncs = (f_none, f_none, (imm_transform_h_formula_helper f), (f_none,f_none,f_none,f_none,f_none)) in
-  CF.transform_struc_formula fncs sf
+let f1 = imm_transform_formula_tmp f_restore_tmp_ann 
 
-(* @a ---> f @a *)
-let imm_transform_entail_state f es =
-  let f_none = fun _ -> None in
-  let fncs = (f_none, f_none, (imm_transform_h_formula_helper f), (f_none,f_none,f_none,f_none,f_none)) in
-  {es with 
-   CF.es_formula = CF.transform_formula fncs es.CF.es_formula;
-  }
+let fncs = (nonef, f1, nonef, (nonef,nonef,nonef,nonef,nonef))
 
-(* @a ---> f @a *)
-let imm_transform_entail_state f es =
-  let pr = Cprinter.string_of_entail_state in
-  Debug.no_1 "imm_transform_entail_state" pr pr (imm_transform_entail_state f) es
+let restore_tmp_ann_h_formula h p = imm_transform_h_formula (f_restore_tmp_ann p) h
 
-(* @a ---> f @a *)
-let imm_transform_list_context f ctx = 
-  let scc_f es = Ctx (imm_transform_entail_state f es) in
-  let fnc = (scc_f, fun x -> x) in
-  let ctx = CF.transform_list_context fnc ctx in
-  ctx
+let restore_tmp_ann_formula f = f1 f
 
+let restore_tmp_ann_es es = imm_transform_entail_state fncs es
 
-(* ========= restore temp ann functions ============*)
+let restore_tmp_ann_list_ctx ctx = imm_transform_list_context fncs ctx
 
-let f_restore_tmp_ann = (restore_tmp_res_ann, restore_tmp_ann)
+let restore_tmp_ann_ctx ctx = imm_transform_context fncs ctx
+
 
 (* ========= END restore temp ann functions ============*)
 
 (* ========= restore @L functions ========== *)
 
+(* should we allow nested TempAnn? if so, then we should recursively restore @L *)
 let restore_lend a = 
   match a with
   | CP.TempAnn ann -> ann
@@ -1510,11 +1467,19 @@ let restore_lend_list lst = List.map restore_lend lst
 
 let f_restore_lend = (restore_lend, restore_lend_list)
 
+let f2 = imm_transform_h_formula_helper f_restore_lend
+
+let fncs = (nonef, nonef, f2, (nonef,nonef,nonef,nonef,nonef))
+
 let restore_lend_h_formula h = imm_transform_h_formula f_restore_lend h
 
-let restore_lend_entail_state es = imm_transform_entail_state f_restore_lend es
+let restore_lend_formula f = imm_transform_formula fncs f
 
-let restore_lend_list_context ctx = imm_transform_list_context f_restore_lend ctx
+let restore_lend_es es = imm_transform_entail_state fncs es
+
+let restore_lend_ctx ctx = imm_transform_context fncs ctx
+
+let restore_lend_list_ctx ctx = imm_transform_list_context fncs ctx
 
 (* ========= END restore @L functions ========== *)
 
@@ -2543,5 +2508,5 @@ let imm_norm_for_entail_empty_rhs lhs_h lhs_p es =
   let lhs_h = x_add_1 restore_tmp_ann_h_formula lhs_h lhs_p in
   let es    = x_add_1 restore_tmp_ann_es es in
   let lhs_h = x_add_1 restore_lend_h_formula lhs_h in
-  let es    = x_add_1 restore_lend_entail_state es in
+  let es    = x_add_1 restore_lend_es es in
   (lhs_h, es)
