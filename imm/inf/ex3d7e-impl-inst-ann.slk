@@ -5,15 +5,27 @@ data cell {
 
 checkentail x::cell<a>@u & u=@L |- x::cell<b>@v & v=@A.
 print residue.
+// <1>x::cell<a>@[@u, @v]&u=@L & v=@A & b=a&{FLOW,(20,21)=__norm#E}[]
+// should normalize to @L
 
 checkentail x::cell<a>@u & u=@L |- x::cell<b>@v & v=@M.
 print residue.
+// <1>x::cell<a>@[@u, @v]&u=@L & v=@M & b=a&{FLOW,(20,21)=__norm#E}[]
+// should fail
+
 
 checkentail x::cell<a>@u & u=@L |- x::cell<b>@v & v=@L.
 print residue.
+// <1>x::cell<a>@[@u, @v]&u=@L & v=@L & b=a&{FLOW,(20,21)=__norm#E}[]
+// should normalize to @A
 
+//(4)
 checkentail x::cell<a>@u & u=@L |- x::cell<b>@v.
 print residue.
+// <1>x::cell<a>@[@u, @v]&u=@L & u=v & b=a&{FLOW,(20,21)=__norm#E}[]
+// inst to v=@L
+// better to instantiate to @L
+
 /*
 # ex3d7e.slk
 
@@ -22,14 +34,26 @@ Residue:
 [[ SEARCH ==>  Match(x,x) ==> ]]
 */
 
-checkentail x::cell<a>@u & u=@L |- x::cell<b>@v.
+//(5)
+checkentail x::cell<a>@u & u=@M |- x::cell<b>@v.
 print residue.
 /* inst (i) u=v (ii) u<:v
 (i) is a stronger instantiation that may be helpful
 subsequently.
 */
 
+//(5)
+checkentail x::cell<a>@u & u=@M |- x::cell<b>@v & v=@A.
+print residue.
+// <1>x::cell<a>@[@u, @v]&u=@L & u=v & b=a&{FLOW,(20,21)=__norm#E}[]
+// should normalize to @L
+
+//(6)
 checkentail x::cell<a>@u & u=@L  |- x::cell<b>@v & v=@A.
+print residue.
+// <1>x::cell<a>@[@u, @v]&u=@M & v=@A & b=a&{FLOW,(20,21)=__norm#E}[]
+
+
 /*
 # ex3d7e.slk 
 
