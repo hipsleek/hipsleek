@@ -942,41 +942,6 @@ and subtype_ann_list ?rhs:(rhs_f = CF.mkTrue (mkTrueFlow ()) no_pos )
 and param_ann_equals_node_ann (ann_lst : CP.ann list) (node_ann: CP.ann): bool =
   List.fold_left (fun res x -> res && (CP.eq_ann x node_ann)) true ann_lst
 
-(* and remaining_ann_x (ann_l: ann) (ann_r: ann) impl_vars evars(\* : ann *\) = *)
-(*   match ann_r with *)
-(*     | CP.ConstAnn(Mutable) *)
-(*     | CP.ConstAnn(Imm)     -> ((CP.ConstAnn(Accs)), [],([],[],[])) *)
-(*     | CP.ConstAnn(Lend)    -> (CP.TempAnn(ann_l), [],([],[],[])) *)
-(*     | CP.TempAnn _ *)
-(*     | CP.TempRes _   *)
-(*     | CP.ConstAnn(Accs)    -> (ann_l, [],([],[],[])) *)
-(*     | CP.PolyAnn(_)        -> *)
-(*           (\* must check ann_l (probl cases: @M,@I,@v), decide between retruning a Accs or CP.TempRes*\) *)
-(*           match ann_l with *)
-(*               (\*must check ann_l (probl cases: @M,@I,@v), decide between returning Accs or TempCons*\) *)
-(*             | CP.ConstAnn(Mutable) *)
-(*             | CP.ConstAnn(Imm) *)
-(*             | CP.PolyAnn(_) ->  *)
-(*                   let (new_ann,_), fv, (to_lhs, to_rhs, to_rhs_ex) = mkCP.TempRes ann_l ann_r impl_vars evars in *)
-(*                   (new_ann,fv, (to_lhs, to_rhs, to_rhs_ex)) *)
-(*                   (\* CP.TempRes(ann_l, ann_r) *\) *)
-(*             | _          -> (ann_l, [],([],[],[])) *)
-
-(* and remaining_ann (ann_l: ann) (ann_r: ann) impl_vars evars(\* : ann  *\)= *)
-(*   let pr = Cprinter.string_of_imm in *)
-(*   let pr_out  = pr_triple  pr pr_none pr_none in *)
-(*   Debug.no_2 "remaining_ann" pr pr pr_out (fun _ _-> remaining_ann_x ann_l ann_r impl_vars evars) ann_l ann_r *)
-
-and remaining_ann_x (ann_l: CP.ann) (ann_r: CP.ann) impl_vars evars(* : ann *) =
-  match ann_l with
-  | CP.TempAnn ann -> ann
-  | _ -> ann_l
-
-and remaining_ann (ann_l: CP.ann) (ann_r: CP.ann) impl_vars evars(* : ann  *)=
-  let pr = Cprinter.string_of_imm in
-  let pr_out  = pr_triple  pr pr_none pr_none in
-  Debug.no_2 "remaining_ann" pr pr pr (fun _ _-> remaining_ann_x ann_l ann_r impl_vars evars) ann_l ann_r
-
 (* residue * consumed *)
 and subtract_ann_x (ann_l: CP.ann) (ann_r: CP.ann)  impl_vars expl_vars evars norm (* : ann *) =
   match ann_r with
@@ -1113,31 +1078,7 @@ and collect_ann_info_from_formula (a: CP.ann) (conjs: CP.formula list) (pure: CP
     (pr_opt string_of_heap_ann)
     collect_ann_info_from_formula_x a conjs pure 
 
-(* restore ann for residue * consumed *)
-and restore_tmp_res_ann_x (annl: CP.ann) (annr: CP.ann) (pure0: MCP.mix_formula) impl_vars evars: CP.ann =
-  let pure = MCP.pure_of_mix pure0 in
-  (* let pairs = CP.pure_ptr_equations pure in *)
-  x_tinfo_hp (add_str "pure:" (Cprinter.string_of_pure_formula)) pure no_pos;
-  (* x_tinfo_hp (add_str "pairs:" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) pairs no_pos; *)
-  let conjs = CP.split_conjunctions pure in
-  x_tinfo_hp (add_str "conjs:" (pr_list Cprinter.string_of_pure_formula)) conjs no_pos;
-  let ann_r0 = collect_ann_info_from_formula annr conjs pure in
-  let ann_l0 = collect_ann_info_from_formula annl conjs pure in
-  x_tinfo_hp (add_str "annr:" (pr_opt string_of_heap_ann)) ann_r0 no_pos;
-  x_tinfo_hp (add_str "annl:" (pr_opt string_of_heap_ann)) ann_l0 no_pos;
-  let ann_subst ann def_ann = match ann with
-    | Some a -> CP.ConstAnn(a)
-    | None   -> def_ann in
-  let annl = ann_subst ann_l0 annl in
-  let annr = ann_subst ann_r0 annr in
-  let res = remaining_ann annl annr impl_vars evars in
-  res
-
-and restore_tmp_res_ann (annl: CP.ann) (annr: CP.ann) (pure0: MCP.mix_formula) impl_vars evars: CP.ann =
-  let pr = Cprinter.string_of_imm in
-  Debug.no_3 "restore_tmp_res_ann" pr pr Cprinter.string_of_mix_formula pr (fun _ _ _ -> restore_tmp_res_ann_x annl annr pure0 impl_vars evars) annl annr pure0 
-
-and remaining_ann_new_x (annl: CP.ann) emap: CP.ann=
+and remaining_ann_x (annl: CP.ann) emap: CP.ann=
   let elem_const = (CP.mkAnnSVar Mutable)::(CP.mkAnnSVar Imm)::(CP.mkAnnSVar Lend)::[(CP.mkAnnSVar Accs)] in
   let anns =  (CP.ConstAnn(Mutable))::(CP.ConstAnn(Imm))::(CP.ConstAnn(Lend))::[(CP.ConstAnn(Accs))] in
   let anns = List.combine elem_const anns in
@@ -1166,27 +1107,27 @@ and remaining_ann_new_x (annl: CP.ann) emap: CP.ann=
     | _ -> annl in
   res
 
-and remaining_ann_new (ann_l: CP.ann) emap(* : ann  *)=
+and remaining_ann (ann_l: CP.ann) emap(* : ann  *)=
   let pr = Cprinter.string_of_imm in
   let pr_out  = pr_triple  pr pr_none pr_none in
-  Debug.no_1 "remaining_ann" pr pr (fun _-> remaining_ann_new_x ann_l emap) ann_l
+  Debug.no_1 "remaining_ann" pr pr (fun _-> remaining_ann_x ann_l emap) ann_l
 
 (* restore ann for residue * consumed *)
-and restore_tmp_res_ann_new_x (annl: CP.ann) (pure0: MCP.mix_formula): CP.ann =
+and restore_tmp_res_ann_x (annl: CP.ann) (pure0: MCP.mix_formula): CP.ann =
   let pure = MCP.pure_of_mix pure0 in
   let emap = build_eset_of_conj_formula pure in 
-  let res = remaining_ann_new annl emap  in
+  let res = remaining_ann annl emap  in
   res 
 
-and restore_tmp_res_ann_new (annl: CP.ann)(pure0: MCP.mix_formula): CP.ann =
+and restore_tmp_res_ann (annl: CP.ann)(pure0: MCP.mix_formula): CP.ann =
   let pr = Cprinter.string_of_imm in
-  Debug.no_2 "restore_tmp_res_ann" pr  Cprinter.string_of_mix_formula pr (fun _ _ -> restore_tmp_res_ann_new_x annl pure0 ) annl  pure0 
+  Debug.no_2 "restore_tmp_res_ann" pr  Cprinter.string_of_mix_formula pr (fun _ _ -> restore_tmp_res_ann_x annl pure0 ) annl  pure0 
 
 and restore_tmp_ann_x (ann_lst: CP.ann list) (pure0: MCP.mix_formula): CP.ann list =
   match ann_lst with
   | [] -> []
   | ann_l::tl ->
-    let ann_l = restore_tmp_res_ann_new ann_l pure0 in
+    let ann_l = restore_tmp_res_ann ann_l pure0 in
     ann_l :: (restore_tmp_ann_x tl pure0)
 
 and restore_tmp_ann (ann_lst: CP.ann list) (pure0: MCP.mix_formula): CP.ann list =
@@ -1490,6 +1431,76 @@ and compute_ann_list_x all_fields (diff_fields : ident list) (default_ann : CP.a
 ;; 
 
 (* should we allow nested TempAnn? if so, then we should recursively restore @L *)
+
+(* @a ---> f @a *)
+let imm_transform_h_formula_helper f h =
+  let f_unit, f_list = f in
+  match h with
+  | CF.DataNode dn -> 
+    let h = CF.DataNode {dn with CF.h_formula_data_param_imm = f_list dn.CF.h_formula_data_param_imm;
+                         CF.h_formula_data_imm = f_unit dn.CF.h_formula_data_imm; } in
+    Some h
+  | ViewNode vn -> 
+    let h = CF.ViewNode {vn with h_formula_view_imm = f_unit vn.CF.h_formula_view_imm;
+                         h_formula_view_annot_arg = CP.update_imm_args_in_view f_list vn.CF.h_formula_view_annot_arg} in
+    Some h
+  | _ -> None
+
+(* @a ---> f @a *)
+let imm_transform_h_formula f h =
+  let fnct h = imm_transform_h_formula_helper f h in
+  let h = CF.transform_h_formula fnct h in
+  h
+
+(* @a ---> f @a *)
+let imm_transform_h_formula f h =
+  let pr =  Cprinter.string_of_h_formula in 
+  Debug.no_1 "imm_transform_h_formula" pr pr (imm_transform_h_formula f) h
+
+(* @a ---> f @a *)
+let imm_transform_formula f formula =
+  let rec helper f formula =
+    match formula with
+    | CF.Base(bf)   ->  CF.Base {bf with CF.formula_base_heap = imm_transform_h_formula (f bf.CF.formula_base_pure) bf.CF.formula_base_heap ;}
+    | CF.Exists(ef) -> CF.Exists {ef with CF.formula_exists_heap = imm_transform_h_formula (f ef.CF.formula_exists_pure) ef.CF.formula_exists_heap;}
+    | CF.Or(orf)    -> CF.Or {orf with CF.formula_or_f1 = helper f orf.CF.formula_or_f1; 
+                              CF.formula_or_f2 = helper f orf.CF.formula_or_f2;}
+  in helper f formula 
+
+let imm_transform_struc_formula f sf =
+  let f_none = fun _ -> None in
+  let fncs = (f_none, f_none, (imm_transform_h_formula_helper f), (f_none,f_none,f_none,f_none,f_none)) in
+  CF.transform_struc_formula fncs sf
+
+(* @a ---> f @a *)
+let imm_transform_entail_state f es =
+  let f_none = fun _ -> None in
+  let fncs = (f_none, f_none, (imm_transform_h_formula_helper f), (f_none,f_none,f_none,f_none,f_none)) in
+  {es with 
+   CF.es_formula = CF.transform_formula fncs es.CF.es_formula;
+  }
+
+(* @a ---> f @a *)
+let imm_transform_entail_state f es =
+  let pr = Cprinter.string_of_entail_state in
+  Debug.no_1 "imm_transform_entail_state" pr pr (imm_transform_entail_state f) es
+
+(* @a ---> f @a *)
+let imm_transform_list_context f ctx = 
+  let scc_f es = Ctx (imm_transform_entail_state f es) in
+  let fnc = (scc_f, fun x -> x) in
+  let ctx = CF.transform_list_context fnc ctx in
+  ctx
+
+
+(* ========= restore temp ann functions ============*)
+
+let f_restore_tmp_ann = (restore_tmp_res_ann, restore_tmp_ann)
+
+(* ========= END restore temp ann functions ============*)
+
+(* ========= restore @L functions ========== *)
+
 let restore_lend a = 
   match a with
   | CP.TempAnn ann -> ann
@@ -1497,54 +1508,15 @@ let restore_lend a =
 
 let restore_lend_list lst = List.map restore_lend lst
 
-(* @[a] ---> @a *)
-let restore_lend_h_formula_helper h =
-  match h with
-  | CF.DataNode dn -> 
-    let h = CF.DataNode {dn with CF.h_formula_data_param_imm = restore_lend_list dn.CF.h_formula_data_param_imm;
-                         CF.h_formula_data_imm = restore_lend dn.CF.h_formula_data_imm; } in
-    Some h
-  | ViewNode vn -> 
-    let h = CF.ViewNode {vn with h_formula_view_imm = restore_lend vn.CF.h_formula_view_imm;
-                         h_formula_view_annot_arg = CP.update_imm_args_in_view restore_lend_list vn.CF.h_formula_view_annot_arg} in
-    Some h
-  | _ -> None
+let f_restore_lend = (restore_lend, restore_lend_list)
 
-let restore_lend_h_formula h =
-  let f h = restore_lend_h_formula_helper h in
-  let h = CF.transform_h_formula f h in
-  h
+let restore_lend_h_formula h = imm_transform_h_formula f_restore_lend h
 
-let restore_lend_h_formula h =
-  let pr =  Cprinter.string_of_h_formula in 
-  Debug.no_1 "restore_lend_h_formula" pr pr restore_lend_h_formula h
+let restore_lend_entail_state es = imm_transform_entail_state f_restore_lend es
 
-(* @[a] ---> @a *)
-let restore_lend_entail_state es =
-  let f_none = fun _ -> None in
-  let fncs = (f_none, f_none, restore_lend_h_formula_helper, (f_none,f_none,f_none,f_none,f_none)) in
-  {es with 
-   CF.es_formula = CF.transform_formula fncs es.CF.es_formula;
-  }
+let restore_lend_list_context ctx = imm_transform_list_context f_restore_lend ctx
 
-let restore_lend_entail_state es =
-  let pr = Cprinter.string_of_entail_state in
-  Debug.no_1 "restore_lend_entail_state" pr pr restore_lend_entail_state es
-
-(* @[a] ---> @a *)
-let restore_lend_list_context ctx = 
-  let scc_f es = Ctx (restore_lend_entail_state es) in
-  let f = (scc_f, fun x -> x) in
-  let ctx = CF.transform_list_context f ctx in
-  ctx
-
-(* let restore_lend_base_formula base_f =  *)
-(*   let f_none = fun _ -> None in *)
-(*   let fncs = (f_none, f_none, restore_lend_h_formula_helper, (f_none,f_none,f_none,f_none,f_none)) in *)
-(*   let new_base_f =  CF.transform_formula fncs (CF.Base base_f) in *)
-(*   match new_base_f with *)
-(*   | CF.Base bf ->  bf *)
-(*   | _          -> base_f *)
+(* ========= END restore @L functions ========== *)
 
 let rec normalize_h_formula_dn auxf (h : CF.h_formula) : CF.h_formula * (CP.formula list) * ((Globals.ident * VarGen.primed) list) = 
   match h with
@@ -2565,3 +2537,11 @@ let norm_rel_list lst =
 
 let weaken_infer_rel_in_es es =
   {es with es_infer_rel =  norm_rel_list es.es_infer_rel}
+
+(* imm related normalization before enatiling an empty heap rhs *)
+let imm_norm_for_entail_empty_rhs lhs_h lhs_p es = 
+  let lhs_h = x_add_1 restore_tmp_ann_h_formula lhs_h lhs_p in
+  let es    = x_add_1 restore_tmp_ann_es es in
+  let lhs_h = x_add_1 restore_lend_h_formula lhs_h in
+  let es    = x_add_1 restore_lend_entail_state es in
+  (lhs_h, es)

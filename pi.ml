@@ -562,16 +562,6 @@ let infer_specs_imm_post_process (spec: CF.struc_formula) : CF.struc_formula =
   let spec = helper fncs spec in
   spec
 
-let infer_imm_post_process_tuple tuples =
-  let tuples = List.map (fun (rel_post,post,rel_pre,pre) ->
-      let vars_pre = CP.fv pre in
-      let vars_post = CP.fv post in
-      let pre_new  = Immutable.norm_imm_rel_formula pre in
-      let post_new = Immutable.norm_imm_rel_formula post in
-      (* andreeac TODOIMM for post: (pre imm vars, a<:@L ---> a=@L) (post imm vars, a=@L ---> a=@A + remove eq with pre vars) *)
-      (rel_post,post_new,rel_pre,pre_new)) tuples in
-  tuples
-
 let infer_pure (prog : prog_decl) (scc : proc_decl list) =
   (* WN: simplify_ann is unsound *)
   let proc_specs = List.fold_left (fun acc proc -> acc@[(* x_add_1 CF.simplify_ann *) (proc.proc_stk_of_static_specs # top)]) [] scc in

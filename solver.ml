@@ -8049,8 +8049,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
   *)
 
   (* ========== Immutability normalization ======== *)
-  let lhs_h = x_add_1 Immutable.restore_lend_h_formula lhs_h in
-  let estate_orig = x_add_1 Immutable.restore_lend_entail_state estate_orig in
+  let lhs_h, estate_orig = Immutable.imm_norm_for_entail_empty_rhs lhs_h lhs_p  estate_orig in
   (* ========== end - Immutability normalization ======== *)
 
   let () = reset_int2 () in
