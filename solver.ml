@@ -9735,11 +9735,11 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     (*   subtype_ann_gen es_impl_vars es_evars l_ann r_ann *)
     (* else (true, [], [],[])  (\*ignore node ann is field ann enable*\) in *)
     if not es_at_par then
-      x_add (subtype_ann_gen ~rhs:rhs) es_impl_vars es_evars l_ann r_ann
+      x_add (subtype_ann_gen ~rhs:rhs ~lhs:estate.es_formula) es_impl_vars es_evars l_ann r_ann
     else
       match l_ann, r_ann with
       | CP.ConstAnn Mutable, CP.ConstAnn Lend -> (false, [], [], [])
-      | _ -> x_add (subtype_ann_gen ~rhs:rhs) es_impl_vars es_evars l_ann r_ann
+      | _ -> x_add (subtype_ann_gen ~rhs:rhs ~lhs:estate.es_formula) es_impl_vars es_evars l_ann r_ann
   in
   x_tinfo_hp (add_str "add_to_lhs" (pr_list Cprinter.string_of_pure_formula)) add_to_lhs pos;
   x_tinfo_hp (add_str "add_to_rhs" (pr_list Cprinter.string_of_pure_formula)) add_to_rhs pos;
@@ -9747,7 +9747,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
   (* check imm subtyping between lhs and rhs node fields, and collect info between vars and consts - makes sense only for data nodes *)
   let (rl, param_ann_lhs, param_ann_rhs, param_ann_rhs_ex) = 
     if (!allow_field_ann) then 
-      subtype_ann_list ~rhs:rhs es_impl_vars es_evars l_param_ann r_param_ann 
+      subtype_ann_list ~rhs:rhs ~lhs:estate.es_formula es_impl_vars es_evars l_param_ann r_param_ann 
     else (true, [], [], []) 
   in
   x_tinfo_hp (add_str "param_ann_lhs" (pr_list ( Cprinter.string_of_pure_formula))) param_ann_lhs pos;
@@ -10441,7 +10441,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
             x_dinfo_zp (lazy ("do_match (after): LHS: "^ (Cprinter.string_of_context new_ctx))) pos;
             x_dinfo_zp (lazy ("do_match (after): RHS:" ^ (Cprinter.string_of_formula new_conseq))) pos;
             (* let () = print_string("cris: new_conseq = " ^ (Cprinter.string_of_formula new_conseq) ^ "\n") in *)
-            let new_ctx = Immutable.restore_tmp_ann_ctx new_ctx in
+            let new_ctx = x_add_1 Immutable.restore_tmp_ann_ctx new_ctx in
             let res_es1, prf1 = 
               if (!Globals.allow_mem) then 
                 heap_entail_split_rhs prog is_folding new_ctx new_conseq (rhs_matched_set @ [r_var]) pos

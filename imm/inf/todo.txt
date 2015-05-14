@@ -423,12 +423,12 @@ instantiated: u=v which gave a wrong instantiation
 proceeding to prove u<:v
 
 =======================================================
-# ex3d7g.slk
+# ex3d7g.slk (DONE)
 
 checkentail x::cell<a>@u & u=@L |- x::cell<b>@v & v=@A.
 print residue.
 // <1>x::cell<a>@[@u, @v]&u=@L & v=@A & b=a&{FLOW,(20,21)=__norm#E}[]
-// should normalize to @L
+// should normalize to @L (DONE)
 
 //(2)
 checkentail x::cell<a>@u & u=@L |- x::cell<b>@v & v=@M.
@@ -449,7 +449,19 @@ print residue.
 // inst to v=@L
 // better to instantiate to @L
 =======================================================
+# ex3d7i.slk 
+//(2)
+
+checkentail x::cell<a>@u & u=@L |- x::cell<b>@v & v=@M.
+print residue.
+// <1>x::cell<a>@[@u, @v]&u=@L & v=@M & b=a&{FLOW,(20,21)=__norm#E}[]
+// should fail
+
+fails for node lvl imm but goes through with --field-imm
+
 =======================================================
+to add examples in run-fast-test
+
 =======================================================
 =======================================================
 =======================================================

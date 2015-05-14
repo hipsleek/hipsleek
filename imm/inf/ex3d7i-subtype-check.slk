@@ -1,0 +1,13 @@
+data cell {
+  int val;
+}.
+
+
+//(2)
+checkentail x::cell<a>@u & u=@L |- x::cell<b>@v & v=@M.
+print residue.
+// <1>x::cell<a>@[@u, @v]&u=@L & v=@M & b=a&{FLOW,(20,21)=__norm#E}[]
+// should fail
+expect Fail.
+
+//checkentail x::cell<a>@M |- x::cell<b>@L.

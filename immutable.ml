@@ -69,33 +69,77 @@ let build_eset_of_conj_formula f =
   let pr_out = CP.EMapSV.string_of in
   Debug.no_1 "build_eset_of_conj_formula" pr pr_out build_eset_of_conj_formula f
 
-(* result: res:bool * (ann constraint = relation between lhs_ann and rhs_ann) *)
-let rec subtype_ann_pair_x (imm1 : CP.ann) (imm2 : CP.ann) : bool * ((CP.exp * CP.exp) option) =
-  match imm1 with
-  | CP.PolyAnn v1 ->
-    (match imm2 with
-     | CP.PolyAnn v2 -> (true, Some (CP.Var(v1, no_pos), CP.Var(v2, no_pos)))
-     | CP.ConstAnn k2 -> 
-       (true, Some (CP.Var(v1,no_pos), CP.AConst(k2,no_pos)))
-     | CP.TempAnn _ | CP.NoAnn -> (subtype_ann_pair_x imm1 (CP.ConstAnn(Accs)))
-     | CP.TempRes (al,ar) -> (subtype_ann_pair_x imm1 ar)  (* andreeac should it be Accs? *)
-    )
-  | CP.ConstAnn k1 ->
-    (match imm2 with
-     | CP.PolyAnn v2 -> (true, Some (CP.AConst(k1,no_pos), CP.Var(v2,no_pos)))
-     | CP.ConstAnn k2 -> ((int_of_heap_ann k1)<=(int_of_heap_ann k2),None) 
-     | CP.TempAnn _ | CP.NoAnn -> (subtype_ann_pair_x imm1 (CP.ConstAnn(Accs)))
-     | CP.TempRes (al,ar) -> (subtype_ann_pair_x imm1 ar)  (* andreeac should it be Accs? *)
-    ) 
-  | CP.TempAnn _ | CP.NoAnn -> (subtype_ann_pair_x (CP.ConstAnn(Accs)) imm2) 
-  | CP.TempRes (l,ar) -> (subtype_ann_pair_x (CP.ConstAnn(Accs)) imm2)  (* andreeac should it be ar-al? or Accs? *)
+let get_imm_list ?loc:(l=no_pos) list =
+  let elem_const = (CP.mkAnnSVar Mutable)::(CP.mkAnnSVar Imm)::(CP.mkAnnSVar Lend)::[(CP.mkAnnSVar Accs)] in
+  let anns_ann =  (CP.ConstAnn(Mutable))::(CP.ConstAnn(Imm))::(CP.ConstAnn(Lend))::[(CP.ConstAnn(Accs))] in
+  let anns_exp =  (CP.AConst(Mutable,l))::(CP.AConst(Imm,l))::(CP.AConst(Lend,l))::[(CP.AConst(Accs,l))] in
+  let anns = List.combine anns_ann anns_exp in
+  let lst = List.combine elem_const anns in
+  let imm = 
+    try
+      Some (snd (List.find (fun (a,_) -> CP.EMapSV.mem a list  ) lst ) )
+    with Not_found -> None
+  in imm
 
-let subtype_ann_pair (imm1 : CP.ann) (imm2 : CP.ann) : bool * ((CP.exp * CP.exp) option) =
+let get_imm_emap ?loc:(l=no_pos) sv emap =
+  let aliases = CP.EMapSV.find_equiv_all sv emap in
+  get_imm_list ~loc:l aliases
+
+let get_imm_emap_exp  ?loc:(l=no_pos) sv emap = map_opt snd (get_imm_emap ~loc:l sv emap)
+let get_imm_emap_ann  ?loc:(l=no_pos) sv emap = map_opt fst (get_imm_emap ~loc:l sv emap)
+
+let pick_strongest_instantiation sv loc f =
+  let pure = CF.get_pure f in
+  let p_aset = build_eset_of_conj_formula pure in
+  let imm = get_imm_emap_exp sv p_aset in
+  map_opt (fun a ->  CP.BForm ((CP.Eq(CP.Var (sv, loc), a, no_pos), None), None)) imm
+
+let get_emaps lhs_f rhs_f elhs erhs =
+  match elhs, erhs with  
+  | [], [] -> 
+    let elhs = build_eset_of_conj_formula (CF.get_pure lhs_f) in
+    let erhs = build_eset_of_conj_formula (CF.get_pure rhs_f) in
+    elhs,erhs 
+  | _ -> elhs,erhs
+
+(* result: res:bool * (ann constraint = relation between lhs_ann and rhs_ann) *)
+let subtype_ann_pair_x  elhs erhs (imm1 : CP.ann) (imm2 : CP.ann) : bool * ((CP.exp * CP.exp) option) =
+  let rec helper imm1 imm2 = 
+    match imm1 with
+    | CP.PolyAnn v1 ->
+      let unk_sv () =
+        match imm2 with
+         | CP.PolyAnn v2 -> (true, Some (CP.Var(v1, no_pos), CP.Var(v2, no_pos)))
+         | CP.ConstAnn k2 -> 
+           (true, Some (CP.Var(v1,no_pos), CP.AConst(k2,no_pos)))
+         | CP.TempAnn _ | CP.NoAnn -> (helper imm1 (CP.ConstAnn(Accs)))
+         | CP.TempRes (al,ar) -> (helper imm1 ar)  (* andreeac should it be Accs? *) in
+      let imm_l = get_imm_emap_ann v1 elhs in
+      map_opt_def (unk_sv ()) (fun a -> helper a imm2) imm_l
+    | CP.ConstAnn k1 ->
+      (match imm2 with
+       | CP.PolyAnn v2 -> 
+         let unk_sv () =  (true, Some (CP.AConst(k1,no_pos), CP.Var(v2,no_pos))) in
+         let imm_r = get_imm_emap_ann v2 erhs in
+         map_opt_def (unk_sv ())  (fun a -> helper imm1 a) imm_r
+       | CP.ConstAnn k2 -> ((int_of_heap_ann k1)<=(int_of_heap_ann k2),None) 
+       | CP.TempAnn _ | CP.NoAnn -> (helper imm1 (CP.ConstAnn(Accs)))
+       | CP.TempRes (al,ar) -> (helper imm1 ar)  (* andreeac should it be Accs? *)
+      ) 
+    | CP.TempAnn _ | CP.NoAnn -> (helper (CP.ConstAnn(Accs)) imm2) 
+    | CP.TempRes (l,ar) -> (helper (CP.ConstAnn(Accs)) imm2)  (* andreeac should it be ar-al? or Accs? *)
+  in helper imm1 imm2
+
+let subtype_ann_pair 
+    ?emap_lhs:(elhs = CP.EMapSV.mkEmpty)
+    ?emap_rhs:(erhs = CP.EMapSV.mkEmpty)
+    (imm1 : CP.ann) (imm2 : CP.ann) : bool * ((CP.exp * CP.exp) option) =
   let pr_imm = Cprinter.string_of_imm in
   let pr1 (imm1,imm2) =  (pr_imm imm1) ^ " <: " ^ (pr_imm imm2) ^ "?" in
+  let pr2 = CP.EMapSV.string_of in
   let pr_exp = CP.ArithNormalizer.string_of_exp in
   let pr_out = pr_pair string_of_bool (pr_option (pr_pair (add_str "l(subtype)" pr_exp) (add_str "r(subtype_" pr_exp)) ) in
-  Debug.no_1 "subtype_ann_pair" pr1 pr_out (fun _ -> subtype_ann_pair_x imm1 imm2) (imm1,imm2)
+  Debug.no_3 "subtype_ann_pair" pr1 (add_str "emap_lhs" pr2) (add_str "emap_rhs" pr2) pr_out (fun _ _ _ -> subtype_ann_pair_x elhs erhs imm1 imm2) (imm1,imm2) elhs erhs
 
 (* bool denotes possible subyping *)
 (* return true if imm1 <: imm2 *)	
@@ -110,27 +154,10 @@ let subtype_ann caller (imm1 : CP.ann) (imm2 : CP.ann) : bool =
   let pr1 (imm1,imm2) =  (pr_imm imm1) ^ " <: " ^ (pr_imm imm2) ^ "?" in
   Debug.no_1_num caller "subtype_ann"  pr1 string_of_bool (fun _ -> subtype_ann_x imm1 imm2) (imm1,imm2)
 
-let get_imm ?loc:(l=no_pos) list =
-  let elem_const = (CP.mkAnnSVar Mutable)::(CP.mkAnnSVar Imm)::(CP.mkAnnSVar Lend)::[(CP.mkAnnSVar Accs)] in
-  (* let anns =  (CP.ConstAnn(Mutable))::(CP.ConstAnn(Imm))::(CP.ConstAnn(Lend))::[(CP.ConstAnn(Accs))] in *)
-  let anns =  (CP.AConst(Mutable,l))::(CP.AConst(Imm,l))::(CP.AConst(Lend,l))::[(CP.AConst(Accs,l))] in
-  let anns = List.combine elem_const anns in
-  let imm = 
-    try
-      Some (snd (List.find (fun (a,_) -> CP.EMapSV.mem a list  ) anns ) )
-    with Not_found -> None
-  in imm
-
-let pick_strongest_instantiation sv loc f =
-  let pure = CF.get_pure f in
-  let p_aset = build_eset_of_conj_formula pure in
-  let aliases = CP.EMapSV.find_equiv_all sv p_aset in
-  let imm = get_imm aliases in
-  map_opt (fun a ->  CP.BForm ((CP.Eq(CP.Var (sv, loc), a, no_pos), None), None)) imm
-
-let subtype_ann_gen_x rhs_f impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann): 
+let subtype_ann_gen_x rhs_f lhs_f elhs erhs impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann): 
   bool * (CP.formula list) * (CP.formula list) * (CP.formula list) =
-  let (f,op) = x_add subtype_ann_pair imm1 imm2 in
+  let elhs, erhs = get_emaps lhs_f rhs_f elhs erhs in
+  let (f,op) = x_add (subtype_ann_pair ~emap_lhs:elhs ~emap_rhs:erhs) imm1 imm2 in
   match op with
   | None -> (f,[],[],[])
   | Some (l,r) -> 
@@ -155,7 +182,11 @@ let subtype_ann_gen_x rhs_f impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann):
       | _ -> (f,[],[to_rhs], [])
     end
 
-let subtype_ann_gen ?rhs:(rhs_f = CF.mkTrue (mkTrueFlow ()) no_pos )
+let subtype_ann_gen 
+    ?rhs:(rhs_f = CF.mkTrue (mkTrueFlow ()) no_pos )
+    ?lhs:(lhs_f = CF.mkTrue (mkTrueFlow ()) no_pos )
+    ?emap_rhs:(erhs = CP.EMapSV.mkEmpty)
+    ?emap_lhs:(elhs = CP.EMapSV.mkEmpty)
     impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann): 
   bool * (CP.formula list) * (CP.formula list) * (CP.formula list) =
   let pr1 = !CP.print_svl in
@@ -163,8 +194,44 @@ let subtype_ann_gen ?rhs:(rhs_f = CF.mkTrue (mkTrueFlow ()) no_pos )
   let pr2a = pr_list !CP.print_formula in
   let prlst =  (pr_pair (pr_list Cprinter.string_of_spec_var) (pr_list Cprinter.string_of_spec_var)) in
   let pr3 = pr_quad string_of_bool pr2a pr2a pr2a  in
-  Debug.no_4 "subtype_ann_gen" pr1 pr1 pr2 pr2 pr3 
-    (fun _ _ _ _ -> subtype_ann_gen_x rhs_f impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann) )  impl_vars evars imm1 imm2
+  let pr_f =  Cprinter.string_of_formula in
+  Debug.no_6 "subtype_ann_gen" (add_str "impl" pr1) (add_str "evars" pr1) pr2 pr2 
+    (add_str "lhs_f" pr_f) (add_str "rhs_f" pr_f) pr3 
+    (fun _ _ _ _ _ _ -> subtype_ann_gen_x rhs_f lhs_f erhs elhs impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann) )  impl_vars evars imm1 imm2 lhs_f rhs_f
+
+let subtype_ann_list_x 
+    ?rhs:(rhs_f = CF.mkTrue (mkTrueFlow ()) no_pos )
+    ?lhs:(lhs_f = CF.mkTrue (mkTrueFlow ()) no_pos )
+    impl_vars evars (ann1 : CP.ann list) (ann2 : CP.ann list) : bool * (CP.formula  list) * (CP.formula  list) * (CP.formula  list) =
+  let elhs,erhs = get_emaps lhs_f rhs_f [] [] in
+  let rec helper impl_vars evars (ann1 : CP.ann list) (ann2 : CP.ann list) =
+    match (ann1, ann2) with
+    | ([], [])         -> (true, [], [], [])
+    | (a1::[], a2::[]) -> 
+      let (r, f1, f2, f3) = x_add (subtype_ann_gen ~rhs:rhs_f ~emap_lhs:elhs ~emap_rhs:erhs) impl_vars evars a1 a2 in
+      (r, f1, f2, f3)
+    | (a1::t1, a2::t2) -> 
+      let (r, ann_lhs_new, ann_rhs_new, ann_rhs_new_ex) = x_add (subtype_ann_gen ~rhs:rhs_f ~emap_lhs:elhs ~emap_rhs:erhs) impl_vars evars a1 a2 in
+      let (res, ann_lhs, ann_rhs,  ann_rhs_ex) = helper impl_vars evars t1 t2 in
+      (r&&res, ann_lhs_new@ann_lhs, ann_rhs_new@ann_rhs, ann_rhs_new_ex@ann_rhs_ex)
+    (* (r&&res, mkAndOpt ann_lhs ann_lhs_new, mkAndOpt ann_rhs ann_rhs_new) *)
+    | _ ->      (false, [], [], [])                        (* different lengths *)
+  in helper impl_vars evars ann1 ann2
+
+let subtype_ann_list 
+    ?rhs:(rhs_f = CF.mkTrue (mkTrueFlow ()) no_pos )
+    ?lhs:(lhs_f = CF.mkTrue (mkTrueFlow ()) no_pos )
+    impl_vars evars (ann1 : CP.ann list) (ann2 : CP.ann list) : bool * (CP.formula  list) * (CP.formula  list) * (CP.formula  list) =
+  let pr1 = !CP.print_svl in
+  let pr2 = pr_list (Cprinter.string_of_imm)  in
+  let pr2a = pr_list !CP.print_formula in
+  let prlst =  (pr_pair (pr_list Cprinter.string_of_spec_var) (pr_list Cprinter.string_of_spec_var)) in
+  let pr3 = pr_quad string_of_bool pr2a pr2a pr2a  in
+  let pr_f =  Cprinter.string_of_formula in
+  Debug.no_6 "subtype_ann_list" (add_str "impl" pr1) (add_str "evars" pr1) pr2 pr2
+    (add_str "lhs_f" pr_f) (add_str "rhs_f" pr_f) pr3 
+    (fun _ _ _ _ _ _ -> subtype_ann_list_x ~rhs:rhs_f ~lhs:lhs_f impl_vars evars (ann1 : CP.ann list) (ann2 : CP.ann list) )  impl_vars evars ann1 ann2 lhs_f rhs_f
+
 
 let get_strongest_imm  (ann_lst: CP.ann list): CP.ann = 
   let rec helper ann ann_lst = 
@@ -925,20 +992,6 @@ and mkAndOpt (old_f: CP.formula option) (to_add: CP.formula option): CP.formula 
 (*     | ([], f::[])     -> Some f  *)
 (*     | (f1::[], f2::[]) -> Some (CP.mkAnd f1 f2 no_pos) *)
 
-and subtype_ann_list ?rhs:(rhs_f = CF.mkTrue (mkTrueFlow ()) no_pos )
-    impl_vars evars (ann1 : CP.ann list) (ann2 : CP.ann list) : bool * (CP.formula  list) * (CP.formula  list) * (CP.formula  list) =
-  match (ann1, ann2) with
-  | ([], [])         -> (true, [], [], [])
-  | (a1::[], a2::[]) -> 
-    let (r, f1, f2, f3) = x_add (subtype_ann_gen ~rhs:rhs_f) impl_vars evars a1 a2 in
-    (r, f1, f2, f3)
-  | (a1::t1, a2::t2) -> 
-    let (r, ann_lhs_new, ann_rhs_new, ann_rhs_new_ex) = x_add (subtype_ann_gen ~rhs:rhs_f) impl_vars evars a1 a2 in
-    let (res, ann_lhs, ann_rhs,  ann_rhs_ex) = subtype_ann_list ~rhs:rhs_f impl_vars evars t1 t2 in
-    (r&&res, ann_lhs_new@ann_lhs, ann_rhs_new@ann_rhs, ann_rhs_new_ex@ann_rhs_ex)
-  (* (r&&res, mkAndOpt ann_lhs ann_lhs_new, mkAndOpt ann_rhs ann_rhs_new) *)
-  | _ ->      (false, [], [], [])                        (* different lengths *)
-
 and param_ann_equals_node_ann (ann_lst : CP.ann list) (node_ann: CP.ann): bool =
   List.fold_left (fun res x -> res && (CP.eq_ann x node_ann)) true ann_lst
 
@@ -1337,8 +1390,6 @@ and consumes (a: CP.ann): bool =
   if isMutable a || isImm a then true
   else false
 
-
-
 and compute_ann_list all_fields (diff_fields : ident list) (default_ann : CP.ann) : CP.ann list =
   let pr1 ls =
     let helper i = match i with
@@ -1444,7 +1495,7 @@ let fncs = (nonef, f1, nonef, (nonef,nonef,nonef,nonef,nonef))
 
 let restore_tmp_ann_h_formula h p = imm_transform_h_formula (f_restore_tmp_ann p) h
 
-let restore_tmp_ann_formula f = f1 f
+let restore_tmp_ann_formula f = CF.transform_formula fncs f
 
 let restore_tmp_ann_es es = imm_transform_entail_state fncs es
 
@@ -1452,6 +1503,13 @@ let restore_tmp_ann_list_ctx ctx = imm_transform_list_context fncs ctx
 
 let restore_tmp_ann_ctx ctx = imm_transform_context fncs ctx
 
+let restore_tmp_ann_formula f = 
+  let pr = Cprinter.string_of_formula in 
+  Debug.no_1 "restore_tmp_ann_formula" pr pr restore_tmp_ann_formula f
+
+let restore_tmp_ann_ctx ctx = 
+  let pr = Cprinter.string_of_context_short in 
+  Debug.no_1 "restore_tmp_ann_ctx" pr pr restore_tmp_ann_ctx ctx 
 
 (* ========= END restore temp ann functions ============*)
 
@@ -1480,6 +1538,14 @@ let restore_lend_es es = imm_transform_entail_state fncs es
 let restore_lend_ctx ctx = imm_transform_context fncs ctx
 
 let restore_lend_list_ctx ctx = imm_transform_list_context fncs ctx
+
+let restore_lend_h_formula h =
+  let pr = Cprinter.string_of_h_formula in 
+  Debug.no_1 "restore_lend_h_formula" pr pr restore_lend_h_formula h
+
+let restore_lend_es es =
+  let pr = Cprinter.string_of_entail_state_short in 
+  Debug.no_1 "restore_lend_es" pr pr restore_lend_es es
 
 (* ========= END restore @L functions ========== *)
 
