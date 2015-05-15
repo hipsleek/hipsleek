@@ -1181,7 +1181,7 @@ let split_rhs_flag = ref true
 let n_xpure = ref 1
 
 
-let fixcalc_disj = ref 1 (* should be n+1 where n is the base-case *)
+let fixcalc_disj = ref 2 (* should be n+1 where n is the base-case *)
 
 let pre_residue_lvl = ref 0
 (* Lvl 0 - add conjunctive pre to residue only *)

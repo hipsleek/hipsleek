@@ -1,4 +1,4 @@
-#include "xdebug.cppo"
+ #include "xdebug.cppo"
 
 open Cpure
 open Globals
@@ -57,9 +57,11 @@ let is_same_sv
       match p1,p2 with
       | Primed,Primed
       | Unprimed,Unprimed ->
-        if (cmp_typ t1 t2) && (i1=i2) then true else false
-        (*if (i1=i2) then true else false *)
-      | _,_-> false
+        (* if (cmp_typ t1 t2) && (i1=i2) then true else false *)
+        if (i1=i2) then true else false
+      | _,_->
+        (* let () = x_binfo_pp ("is_same_sv:different primed") no_pos in *)
+        false
     end
 ;;
 
@@ -1991,13 +1993,13 @@ let rec process_exists_array
       begin
         match typ with
         | Array _ ->
-          get_array_element_in_f f sv
+          get_array_element_in_f nf sv
         | _ -> []
       end
     in
     if List.length nqlst == 0
     then
-      (* let _ = print_endline "process_exists_array: Nothing changed" in *)
+      let () = x_binfo_pp ("process_exists_array: Nothing changed: "^(!print_pure f)) no_pos in
       let new_nf = process_exists_array nf in
       Exists (sv,new_nf,fl,l)
     else
@@ -2653,6 +2655,7 @@ let produce_aux_formula_for_exists f env =
 let translate_array_one_formula
       (f:formula):formula =
 
+  let f = translate_array_equality_to_forall f in
   let f = translate_array_relation f in
   let f = constantize_ex_q f in
   let f = process_exists_array f in

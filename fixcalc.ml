@@ -1322,10 +1322,10 @@ let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
   DD.ninfo_hprint (add_str "input_pairs(af): "  (pr_list
                                                    (pr_pair !CP.print_formula (pr_list !CP.print_formula)) )) pairs no_pos;
   
-  (* let rel_defs = List.concat *)
-  (*     (List.map (fun pair -> extract_inv_helper pair ante_vars specs) pairs) in *)
   let rel_defs = List.concat
-      (List.map (fun (a,b) -> let pair = (Trans_arr.tmp_pre_processing a,List.map (Trans_arr.tmp_pre_processing) b) in  extract_inv_helper pair ante_vars specs) pairs) in
+      (List.map (fun pair -> extract_inv_helper pair ante_vars specs) pairs) in
+  (* let rel_defs = List.concat *)
+  (*     (List.map (fun (a,b) -> let pair = (Trans_arr.tmp_pre_processing a,List.map (Trans_arr.tmp_pre_processing) b) in  extract_inv_helper pair ante_vars specs) pairs) in *)
 
   x_tinfo_hp (add_str "rel_defs "  (pr_list
                                            (pr_triple !CP.print_formula !CP.print_formula string_of_int)) ) rel_defs no_pos;
