@@ -36,6 +36,12 @@ print residue.
 
 checkentail x::cell<a>@u & u=@M  |- x::cell<b>@v & v<:@L.
 print residue.
+/*
+Residue:
+ <1>x::cell<a>@A&u=@M & u=v & b=a&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+*/
+
 
 checkentail x::cell<a>@u & u=@M & v<:@L  |- x::cell<b>@v & v<:@L.
 print residue.

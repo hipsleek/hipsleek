@@ -1,0 +1,14 @@
+data cell {
+  int val;
+}.
+
+//11 
+checkentail x::cell<a>@u & u=@L & u=v |- x::cell<b>@v & v=@A.
+print residue.
+expect Fail.
+
+
+/*
+../../sleek ex3d7j.slk --field-imm
+Valid but it should fail
+*/
