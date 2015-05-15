@@ -5679,7 +5679,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
           (* x_binfo_hp (add_str "conseq" Cprinter.string_of_formula) conseq no_pos; *)
           (* DD.binfo_end "LHS CONTRA check"; *)
           let heap_entail () = 
-            if (!Globals.allow_imm) || (!Globals.allow_field_ann) then
+            if (!Globals.allow_imm) (* || (!Globals.allow_field_ann) *) then
               begin
                 x_dinfo_zp (lazy ("heap_entail_conjunct_lhs: invoking heap_entail_split_rhs_phases")) pos;
                 (* TO CHECK: ignore this --imm at the moment*)
@@ -12707,7 +12707,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
       (* let cur_rhs_rest_emp = !rhs_rest_emp in *)
       let r = List.map (fun (_,a1) ->
           (* let () = rhs_rest_emp := cur_rhs_rest_emp in *)
-          process_action 4 14 prog estate conseq lhs_b rhs_b a1 rhs_h_matched_set is_folding pos
+          x_add process_action 4 14 prog estate conseq lhs_b rhs_b a1 rhs_h_matched_set is_folding pos
         ) l in
       Debug.ninfo_hprint (add_str "Search action context list" (pr_list (fun x -> Cprinter.string_of_list_context (fst x)))) r no_pos;
       if r = [] then
