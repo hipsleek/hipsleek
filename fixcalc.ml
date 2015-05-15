@@ -1325,19 +1325,19 @@ let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
   (* let rel_defs = List.concat *)
   (*     (List.map (fun pair -> extract_inv_helper pair ante_vars specs) pairs) in *)
   let rel_defs = List.concat
-      (List.map (fun (a,b) -> let pair = (Trans_arr.translate_array_relation a,List.map Trans_arr.translate_array_relation b) in  extract_inv_helper pair ante_vars specs) pairs) in
+      (List.map (fun (a,b) -> let pair = (Trans_arr.tmp_pre_processing a,List.map (Trans_arr.tmp_pre_processing) b) in  extract_inv_helper pair ante_vars specs) pairs) in
 
-  x_binfo_hp (add_str "rel_defs "  (pr_list
+  x_tinfo_hp (add_str "rel_defs "  (pr_list
                                            (pr_triple !CP.print_formula !CP.print_formula string_of_int)) ) rel_defs no_pos;
 
   let true_const,rel_defs = List.partition (fun (_,pf,_) -> CP.isConstTrue pf) rel_defs in
   let non_rec_defs, rec_rel_defs = List.partition (fun (_,pf,_) -> is_not_rec pf) rel_defs in
 
-  x_binfo_hp (add_str "true_rel_defs "  (pr_list
+  x_tinfo_hp (add_str "true_rel_defs "  (pr_list
                                                (pr_triple !CP.print_formula !CP.print_formula string_of_int)) ) true_const no_pos;
-  x_binfo_hp (add_str "rec_rel_defs "  (pr_list
+  x_tinfo_hp (add_str "rec_rel_defs "  (pr_list
                                                (pr_triple !CP.print_formula !CP.print_formula string_of_int)) ) rec_rel_defs no_pos;
-  x_binfo_hp (add_str "non_rec_defs "  (pr_list
+  x_tinfo_hp (add_str "non_rec_defs "  (pr_list
                                            (pr_triple !CP.print_formula !CP.print_formula string_of_int)) ) non_rec_defs no_pos;
 
 

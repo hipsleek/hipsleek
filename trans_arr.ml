@@ -57,8 +57,8 @@ let is_same_sv
       match p1,p2 with
       | Primed,Primed
       | Unprimed,Unprimed ->
-        (* if (cmp_typ t1 t2) && (i1=i2) then true else false *)
-        if (i1=i2) then true else false
+        if (cmp_typ t1 t2) && (i1=i2) then true else false
+        (*if (i1=i2) then true else false *)
       | _,_-> false
     end
 ;;
@@ -67,16 +67,16 @@ let is_same_sv sv1 sv2 =
   Debug.no_2 "is_same_sv" string_of_spec_var string_of_spec_var string_of_bool is_same_sv sv1 sv2
 ;;
 
-let is_same_var
-    (v1:exp) (v2:exp):bool =
-  match v1, v2 with
-  | Var (sv1,_), Var (sv2,_)->
-    is_same_sv sv1 sv2
-  | Var _, IConst _
-  | IConst _, Var _ ->
-    false
-  | _ -> failwith ("is_same_var:"^(ArithNormalizer.string_of_exp v1)^" "^(ArithNormalizer.string_of_exp v2)^" Invalid input")
-;;
+(* let is_same_var *)
+(*     (v1:exp) (v2:exp):bool = *)
+(*   match v1, v2 with *)
+(*   | Var (sv1,_), Var (sv2,_)-> *)
+(*     is_same_sv sv1 sv2 *)
+(*   | Var _, IConst _ *)
+(*   | IConst _, Var _ -> *)
+(*     false *)
+(*   | _ -> failwith ("is_same_var:"^(ArithNormalizer.string_of_exp v1)^" "^(ArithNormalizer.string_of_exp v2)^" Invalid input") *)
+(* ;; *)
 
 let rec is_same_exp
     (e1:exp) (e2:exp):bool=
@@ -1157,7 +1157,8 @@ let standarize_array_imply
 
 
 (* ------------------------------------------------------------------- *)
-(* For update_array_1d *)
+(* For update_array_1d(a,a',v,i), translate it into forall(k:k!=i-->a[k]=a'[k]. *)
+
 let rec translate_array_relation
     (f:formula):formula=
   let translate_array_relation_in_b_formula
@@ -1220,6 +1221,9 @@ let translate_array_relation f=
 ;;
 
 (* ------------------------------------------------------------------- *)
+
+(* For a=a'*)
+
 let translate_array_equality
     (f:formula) (scheme:((spec_var * (exp list)) list)):(formula option)=
   let produce_equality
@@ -1351,6 +1355,52 @@ let translate_array_equality
     | None -> "None"
   in
   Debug.no_2 "translate_array_equality" !print_pure string_of_translate_scheme !print_pure (fun f scheme -> translate_array_equality f scheme) f scheme
+;;
+
+(* ------------------------------------------------------------------- *)
+let translate_array_equality_to_forall
+    (f:formula) :(formula)=
+  let helper_b_formula
+      ((p,ba):b_formula):formula =
+    match p with
+    | Eq ((Var (SpecVar (Array _,arr1,_) as sv1,_)), (Var (SpecVar (Array _,arr2,_) as sv2,_)),_) ->
+      if is_same_sv sv1 sv2
+      then BForm ((p,ba),None)
+      else
+        let q = SpecVar (Int,"tmp_q",Unprimed) in
+        let index = Var (q,no_pos) in
+        let equation = BForm((Eq (ArrayAt (sv1,[index],no_pos),ArrayAt (sv2,[index],no_pos),no_pos),None),None) in
+        let forall = Forall (q,equation,None,no_pos) in
+        And (forall,BForm ((p,ba),None),no_pos)
+    | _ ->
+      BForm ((p,ba),None)
+  in
+  let rec helper
+      (f:formula):formula=
+    match f with
+    | BForm (b,fl)->
+      helper_b_formula b
+    | And (f1,f2,loc)->
+      And ((helper f1) , (helper f2),loc)
+    | AndList lst->
+      failwith "translate_array_equality: AndList To Be Implemented"
+    | Or (f1,f2,fl,loc)->
+      f
+    (*Or (helper f1 scheme,helper f2 scheme,fl,loc)*)
+    (*failwith "translate_array_equality: To Be Normalized!"*)
+    | Not (f,fl,loc)->
+      Not (helper f,fl,loc)
+    | Forall _->
+      f
+    | Exists _->
+      f
+  in
+  helper f
+;;
+
+let translate_array_equality_to_forall
+    (f:formula) :(formula) =
+  Debug.no_1 "translate_array_equality_to_forall" !print_pure !print_pure translate_array_equality_to_forall f
 ;;
 (* ------------------------------------------------------------------- *)
 
@@ -1519,6 +1569,7 @@ let split_and_combine
 
 
 (* ------------------------------------------------------------------- *)
+
 module Index=
 struct
   type t = exp
@@ -1968,7 +2019,7 @@ let rec process_exists_array
           end
         | _ -> failwith "mk_new_name_helper: Invalid input"
       in
-      let new_nf = process_exists_array nf in
+      let new_nf = Exists (sv,process_exists_array nf,fl,l) in
       List.fold_left (fun r nq -> Exists(mk_new_name_helper nq,r,None,no_pos)) new_nf nqlst
 ;;
 
@@ -2410,12 +2461,15 @@ let extend_env old_env nfv f =
 (* The returned formula must be forall-free *)
 let instantiate_forall
       (f:formula) old_env:formula =
-
-  (* replace sv in the formula with information from env *)
   let instantiate_with_one_sv
         (f:formula) sv env:formula =
-    (* replace sv with index in the expression exp *)
+    (* replace sv in the formula with information from env *)
+    (* env is a mapping from array name to index, ex. [a--{1,2,i};b-->{1,2,k}...] *)
+    (* if a formula contains array a, then enumerate the index of array a, that means replace sv with 1, 2 and i... *)
+
+
     let rec replace_helper_e (e:exp) (sv:spec_var) (index:exp) =
+      (* replace sv with index in the expression exp *)
       match e with
         | ArrayAt (arr,[nindex],loc) ->
               ArrayAt (arr,[replace_helper_e nindex sv index],loc)
@@ -2434,9 +2488,10 @@ let instantiate_forall
               then index
               else
                 e
-        | IConst _ ->
-              e
-        | _ -> failwith "is_valid_forall_helper_exp: To Be Implemented"
+        | IConst _
+        | Null _ ->
+          e
+        | _ -> failwith "instantiate_forall: To Be Implemented"
     in
     let replace_helper_b ((p,ba):b_formula) (sv:spec_var) (index:exp)=
       match p with
@@ -4062,3 +4117,11 @@ let translate_back_array_in_one_formula
 (*   let pf = !print_pure in *)
 (*   Debug.no_1 "translate_out_array_in_one_formula_full" pf pf (fun f -> translate_out_array_in_one_formula_full f) f *)
 (* ;; *)
+
+let tmp_pre_processing f=
+  if !Globals.array_translate
+  then
+    instantiate_forall (translate_array_equality_to_forall (translate_array_relation f)) []
+  else
+    f
+;;

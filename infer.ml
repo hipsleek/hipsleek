@@ -1566,12 +1566,13 @@ and infer_pure_m unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig lhs_x
     (fun _ _ _ _ _ -> infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_orig rhs_xpure_orig iv_orig pos)
     estate lhs_xpure_orig lhs_xpure0 rhs_xpure_orig iv_orig
 
+(* A wrapper to translate back the array result, but it seems unnecessary now... *)
 let infer_pure_m unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_orig rhs_xpure_orig iv_orig pos =
   let (nes,nc,nlst) = x_add infer_pure_m  unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_orig rhs_xpure_orig iv_orig pos in
   match nc with
   | Some f ->
-    let nf = Trans_arr.translate_back_array_in_one_formula f in
-    (nes,Some nf,nlst)
+    (* let f = Trans_arr.translate_back_array_in_one_formula f in *)
+    (nes,Some f,nlst)
   | None -> (nes,nc,nlst)
 ;;
 
