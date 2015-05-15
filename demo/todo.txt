@@ -1406,8 +1406,32 @@ Entail (1) : Fail.(may)
    r=0 |- r!=0 (must failure)
   ]
 
+
+May or Must --> May
+
+Or or Must --> May
+Or or May  --> May
+
+ requires true
+ ensures  x>0 & __norm \/ x<=0 & __Error;
+
+ if x>0 then Ok
+ else assert false;
 ==========================================================================
+# ex23.ss
+
+WARNING: ex23-or-simple.ss_3:10_3:30:the result type __Error#E is not covered by the throw list[__norm#E]
+
+# post-cond should succeed
+
+Post condition cannot be derived:
+  (must) cause:  true |-  false. LOCS:[0] (RHS: contradiction)
 ==========================================================================
+# ex23a-with-conditional.ss
+
+ if x>0 then Ok
+ else assert false;
+
 ==========================================================================
 ==========================================================================
 ==========================================================================
