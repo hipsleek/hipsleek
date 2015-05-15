@@ -1,6 +1,6 @@
 %{
 (* Modified from https://github.com/mmjb/T2/blob/master/src/absparse.fsy *)
-(* //                                                                              *)
+
 (* // Copyright (c) Microsoft Corporation                                          *)
 (* //                                                                              *)
 (* // All rights reserved.                                                         *)
@@ -35,8 +35,9 @@ type parsedLoc =
 
 %}
 
-%token <string> ID
-%token <int> NUM
+%token <string> Id
+%token <string> String
+%token <int> Num
 %token AT
 %token SEMICOLON COLON COMMA
 %token EOF
@@ -46,11 +47,9 @@ type parsedLoc =
 %token AND_OP OR_OP
 %token ASSUME ASSIGN NONDET SHADOW
 %token TO FROM CUTPOINT START
-(* %token AF AG AW AX EF EG EU EX *)
 
 %start program
-(* %start CTL_formula         *)
-(* %start Fairness_constraint *)
+%type <Iast.prog_decl option> program
 
 %left OR_OP
 %left AND_OP
@@ -87,8 +86,8 @@ commands:
   | command SEMICOLON commands { $1::$3 }
 
 loc:
-    NUM { NumLoc $1 }
-  | ID { NameLoc $1 }
+    Num { NumLoc $1 }
+  | Id { NameLoc $1 }
 
 command: 
     AT LPAREN Num COMMA String RPAREN Id ASSIGN term
@@ -97,7 +96,7 @@ command:
     { None }
   | AT LPAREN Num COMMA String RPAREN ASSUME LPAREN term RPAREN
     { None }
-  | ID ASSIGN term
+  | Id ASSIGN term
     { None }
   | ASSUME LPAREN formula RPAREN
     { None }
@@ -106,9 +105,9 @@ command:
   ;
 
 term: 
-    NUM { None }
+    Num { None }
   | MINUS term %prec UMINUS { None }
-  | ID { None }
+  | Id { None }
   | LPAREN term RPAREN { None }
   | term PLUS term { None }
   | term MINUS term { None }

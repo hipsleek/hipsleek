@@ -85,6 +85,10 @@ let parse_file_full file_name (primitive: bool) =
         let cil_prog = Cilparser.parse_prep file_name in
         let stdlib_procs = Parser.create_tnt_stdlib_proc () in
         { cil_prog with Iast.prog_proc_decls = cil_prog.Iast.prog_proc_decls @ stdlib_procs; }
+      else if parser_to_use = "ints" then
+        let _ = Intsparser.parse_ints file_name in
+        let () = x_binfo_pp ("Parsing INTS successfully") no_pos in
+        Cilparser.parse_hip file_name
       else
         (* if parser_to_use = "joust" then                                                        *)
         (*   let ss_file_name = file_name ^ ".ss" in                                              *)
@@ -893,6 +897,7 @@ let process_source_list source_files =
         if (ext = ".c") || (ext = ".cc") || (ext = ".cpp") || (ext = ".h") then
           "cil"
         else if (ext = ".i") then "cil-i"
+        else if (ext = ".t2") then "ints"
         else (* "default" *) !Parser.parser_name
       in 
       let () = Parser.parser_name := parser in
