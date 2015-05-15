@@ -2589,3 +2589,10 @@ let imm_norm_for_entail_empty_rhs lhs_h lhs_p es =
   let lhs_h = x_add_1 restore_lend_h_formula lhs_h in
   let es    = x_add_1 restore_lend_es es in
   (lhs_h, es)
+
+let imm_norm_for_entail_empty_rhs lhs_h lhs_p es = 
+  let pr1 = Cprinter.string_of_h_formula in
+  let pr2 = Cprinter.string_of_mix_formula in
+  let pr3 = Cprinter.string_of_entail_state_short in
+  let pr_out = pr_pair (add_str "lhs_h" pr1) (add_str "lhs_p" pr3) in
+  Debug.no_3 "imm_norm_for_entail_empty_rhs" (add_str "lhs_h" pr1) (add_str "lhs_p" pr2) (add_str "es" pr3) pr_out imm_norm_for_entail_empty_rhs lhs_h lhs_p es 

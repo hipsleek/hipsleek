@@ -8000,7 +8000,11 @@ and subst_rel_by_def_mix rel_w_defs mf =
 
 and heap_entail_empty_rhs_heap i p conseq i_f es lhs rhs rhs_matched_set pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Debug.no_4_num i "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula string_of_bool pr
+  Debug.no_4_num i "heap_entail_empty_rhs_heap" 
+    (add_str "es" Cprinter.string_of_entail_state)
+    (add_str "lhs" (fun c-> Cprinter.string_of_formula(Base c)))
+    (add_str "rhs" Cprinter.string_of_mix_formula)
+    (add_str "is_folding" string_of_bool) pr
     (fun _ _ _ _ -> heap_entail_empty_rhs_heap_x p conseq i_f es lhs rhs rhs_matched_set pos) es lhs rhs i_f
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) rhs_matched_set pos : (list_context * proof) =
@@ -8053,9 +8057,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
   (* if smart_xpure then try 0, then 1
      else try 1
   *)
-
+  x_dinfo_hp (add_str "rhs_p : " Cprinter.string_of_mix_formula) rhs_p pos;
   (* ========== Immutability normalization ======== *)
-  let lhs_h, estate_orig = Immutable.imm_norm_for_entail_empty_rhs lhs_h lhs_p  estate_orig in
+  (* let lhs_h, estate_orig = Immutable.imm_norm_for_entail_empty_rhs lhs_h lhs_p  estate_orig in *)
   (* ========== end - Immutability normalization ======== *)
 
   let () = reset_int2 () in
@@ -8168,7 +8172,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
   (* Delay term checking until we have the entailment checking result *)
   let rhs_p_lexvar = rhs_p in
   let _, rhs_p = x_add_1 TermUtils.strip_lexvar_mix_formula rhs_p in
-
+  x_dinfo_hp (add_str "rhs_p : " Cprinter.string_of_mix_formula) rhs_p pos;
   x_dinfo_zp (lazy ("heap_entail_empty_heap: ctx:\n" ^ (Cprinter.string_of_estate estate))) pos;
   x_dinfo_zp (lazy ("heap_entail_empty_heap: rhs:\n" ^ (Cprinter.string_of_mix_formula rhs_p))) pos;
   (* TO DOCUMENT : Loc : What are result types here? *)
@@ -8441,6 +8445,9 @@ type: bool *
     fold_fun_impt  (true,[],None, (Failure_Valid, ([],[],[]))) rhs_p in
 
   if r_rez then begin (* Entailment is valid *)
+    (* ========== Immutability normalization ======== *)
+    let lhs_h, estate_orig = Immutable.imm_norm_for_entail_empty_rhs lhs_h lhs_p  estate_orig in
+    (* ========== end - Immutability normalization ======== *)
     (*let lhs_p = MCP.remove_dupl_conj_mix_formula lhs_p in*)
     if not(stk_estate # is_empty) then
       let pr = Cprinter.string_of_entail_state_short in
