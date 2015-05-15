@@ -23,6 +23,13 @@ infer[@err_must] x!=null & x'=x & flow __Error
  |- res & flow __norm.
 print residue.
 
+
+//4
+infer[@err_must] x!=null & x'=x & flow __Error 
+  or x=null & x'=x & (x'!=null & res | x'=null & !res) & flow __norm 
+ |- res & flow __norm or !res & flow __norm .
+print residue.
+
 /*
 # ex21a10a.slk
 

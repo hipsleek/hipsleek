@@ -9991,10 +9991,14 @@ let gen_rand_x (m1,n1,e1) (m2,n2,e2) = match m1,m2 with
   | Failure_Must m1, Failure_Must m2 ->
     if (n1=sl_error) then (Failure_Must m2, n2, e2)
     else if (n2= sl_error) then (Failure_Must m1, n1, e1)
-    else Failure_Must ("AndR[\n"^m1^",\n"^m2^"\n]"), n1, e1 (*combine state here?*)
+    else
+      let s = ("AndR[\n"^m1^",\n"^m2^"\n]") in
+      Failure_Must s(* ("AndR[\n"^m1^",\n"^m2^"\n]") *), s, e1 (*combine state here?*)
   | Failure_Must m, _ -> Failure_Must m, n1, e1
   | _, Failure_Must m -> Failure_Must m, n2, e2
-  | Failure_May m1, Failure_May m2 -> (Failure_May ("AndR[\n"^m1^",\n"^m2^"\n]"),n1,None)
+  | Failure_May m1, Failure_May m2 ->
+        let s = ("AndR[\n"^m1^",\n"^m2^"\n]") in
+        (Failure_May s(* ("AndR[\n"^m1^",\n"^m2^"\n]") *),s,None)
   | Failure_May m, _ -> Failure_May m,n1,None
   | _, Failure_May m -> Failure_May m,n2,None
   | Failure_Valid, x  -> (m2,n2,e2)
@@ -10017,10 +10021,14 @@ let gen_rand_ctx (m1,n1,e1) (m2,n2,e2) = match m1,m2 with
   | Failure_Must m1, Failure_Must m2 ->
     if (n1=sl_error) then (Failure_Must m2, n2, e2)
     else if (n2= sl_error) then (Failure_Must m1, n1, e1)
-    else Failure_Must ("AndR[\n"^m1^",\n"^m2^"]"), n1, e1 (*combine state here?*)
+    else
+      let s = ("AndR[\n"^m1^",\n"^m2^"]") in
+      Failure_Must s (* ("AndR[\n"^m1^",\n"^m2^"]") *), s, e1 (*combine state here?*)
   | Failure_Must m, _ -> Failure_Must m, n1, e1
   | _, Failure_Must m -> Failure_Must m, n2, e2
-  | Failure_May m1, Failure_May m2 -> (Failure_May ("AndR[\n"^m1^",\n"^m2^"\n]"),n1,None)
+  | Failure_May m1, Failure_May m2 ->
+        let s = ("AndR[\n"^m1^",\n"^m2^"\n]") in
+        (Failure_May s (* ("AndR[\n"^m1^",\n"^m2^"\n]") *),s,None)
   | Failure_May m, _ -> Failure_May m,n1,None
   | _, Failure_May m -> Failure_May m,n2,None
   | Failure_Valid, x  -> (m2,n2,e2)
@@ -10130,7 +10138,9 @@ let cmb_lor m1 m2=
   - e: current entailment
 *)
 let gen_ror_x (m1, n1, e1) (m2, n2, e2) = match m1,m2 with
-  | Failure_Bot m1,  Failure_Bot m2 ->  Failure_Bot ("UnionR["^m1^","^m2^"]"), n1,e1 (*combine state here?*)
+  | Failure_Bot m1,  Failure_Bot m2 ->
+        let s = ("UnionR["^m1^","^m2^"]") in
+        Failure_Bot s (* ("UnionR["^m1^","^m2^"]") *), s,e1 (*combine state here?*)
   | Failure_Bot _, x -> m1,n1,e1 (* (m2,e2) *)
   | x, Failure_Bot _ -> m2,n2,e2 (*(m1,e1)*)
   | Failure_Valid, _ -> (Failure_Valid,"",None)
@@ -10138,8 +10148,12 @@ let gen_ror_x (m1, n1, e1) (m2, n2, e2) = match m1,m2 with
   | Failure_Must m1, Failure_Must m2 ->
     if (n1=sl_error && e2 != None) then (Failure_Must m2, n2, e2)
     else if (n2 =sl_error && e1 != None) then(Failure_Must m1, n1, e1)
-    else (Failure_Must ("UnionR["^m1^","^m2^"]"),n1, e1)
-  | Failure_May m1, Failure_May m2 -> (Failure_May ("UnionR["^m1^","^m2^"]"),n1,None)
+    else
+      let s = ("UnionR["^m1^","^m2^"]") in
+      (Failure_Must s(* ("UnionR["^m1^","^m2^"]") *),s, e1)
+  | Failure_May m1, Failure_May m2 ->
+        let s = ("UnionR["^m1^","^m2^"]") in
+        (Failure_May s (* ("UnionR["^m1^","^m2^"]") *),s,None)
   | Failure_May _,  _ -> (m1,n1,e1)
   | _, Failure_May _ -> (m2,n2,e2)
 
@@ -10153,7 +10167,9 @@ let gen_ror (m1,n1,e1) (m2,n2,e2)=
   Debug.no_2 "gen_ror" pr pr pr1 (fun x y -> gen_ror_x x y) (m1,n1,e1) (m2,n2,e2)
 
 let gen_ror_ctx (m1, n1, e1) (m2, n2, e2) = match m1,m2 with
-  | Failure_Bot m1,  Failure_Bot m2 ->  Failure_Bot ("UnionR["^m1^","^m2^"]"), n1,e1 (*combine state here?*)
+  | Failure_Bot m1,  Failure_Bot m2 ->
+        let s = ("UnionR["^m1^","^m2^"]") in
+        Failure_Bot s (* ("UnionR["^m1^","^m2^"]") *), s,e1 (*combine state here?*)
   | Failure_Bot _, x -> m1,n1,e1 (* (m2,e2) *)
   | x, Failure_Bot _ -> m2,n2,e2 (*(m1,e1)*)
   | Failure_Valid, _ -> (Failure_Valid,"",None)
@@ -10161,8 +10177,12 @@ let gen_ror_ctx (m1, n1, e1) (m2, n2, e2) = match m1,m2 with
   | Failure_Must m1, Failure_Must m2 ->
     if (n1=sl_error && e2 != None) then (Failure_Must m2, n2, e2)
     else if (n2 =sl_error && e1 != None) then(Failure_Must m1, n1, e1)
-    else (Failure_Must ("UnionR["^m1^","^m2^"]"),n1, e1)
-  | Failure_May m1, Failure_May m2 -> (Failure_May ("UnionR["^m1^","^m2^"]"),n1,None)
+    else
+      let s = ("UnionR["^m1^","^m2^"]")in
+      (Failure_Must s (* ("UnionR["^m1^","^m2^"]") *),s, e1)
+  | Failure_May m1, Failure_May m2 ->
+        let s = ("UnionR["^m1^","^m2^"]") in
+        (Failure_May s (* ("UnionR["^m1^","^m2^"]") *),s,None)
   | Failure_May _,  _ -> (m1,n1,e1)
   | _, Failure_May _ -> (m2,n2,e2)
 
