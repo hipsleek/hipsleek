@@ -3395,11 +3395,23 @@ let get_return_exp e0=
   Debug.no_1 "get_return_exp" pr1 pr2
     (fun _ -> get_return_exp_x e0) e0
 
-let trans_to_exp_form exp0=
-  let rec helper exp=
+let trans_to_exp_form exp0 =
+  let rec helper exp =
     match exp with
     | Var v -> P.Var ((v.exp_var_name, Primed), v.exp_var_pos)
     | IntLit i -> P.IConst (i.exp_int_lit_val, i.exp_int_lit_pos)
+    | Binary b -> 
+      (begin
+        let oper1 = b.exp_binary_oper1 in
+        let oper2 = b.exp_binary_oper2 in
+        let pos = b.exp_binary_pos in
+        match b.exp_binary_op with
+        | OpPlus -> P.mkAdd (helper oper1) (helper oper2) pos
+        | OpMinus -> P.mkSubtract (helper oper1) (helper oper2) pos
+        | OpMult -> P.mkMult (helper oper1) (helper oper2) pos
+        | OpDiv -> P.mkDiv (helper oper1) (helper oper2) pos
+        | _ -> report_error no_pos "iast.trans_exp_to_form: unexpected exp"
+      end)
     | _ -> report_error no_pos "iast.trans_exp_to_form: not handle yet"
   in
   helper exp0

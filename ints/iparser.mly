@@ -23,15 +23,27 @@
 (* // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER          *)
 (* // DEALINGS IN THE SOFTWARE.                                                    *)
 
+open VarGen
 open Globals
 open Iast
+open Iexp
 
 (* ///                                                    *)
 (* /// Location in a T2 file (either numerical or a name) *)
 (* ///                                                    *)
-type parsedLoc =
-  | NumLoc of int
-  | NameLoc of string
+
+let get_pos x =
+  try
+    let sp = Parsing.symbol_start_pos () in
+    let ep = Parsing. symbol_end_pos () in
+    let mp = Parsing.rhs_start_pos x in
+    { start_pos = sp;
+      end_pos = ep;
+      mid_pos = mp; }
+  with _ -> 
+    { start_pos = Lexing.dummy_pos;
+      end_pos = Lexing.dummy_pos;
+      mid_pos = Lexing.dummy_pos; }
 
 %}
 
@@ -72,7 +84,8 @@ blocks:
   | block SEMICOLON blocks { $1::$3 }
 
 block: 
-  FROM COLON loc SEMICOLON commands TO COLON loc { None }
+  FROM COLON loc SEMICOLON commands TO COLON loc 
+  { mkBlock $3 $8 $5 (get_pos 1) }
 
 shadows: 
     { [] }
@@ -91,41 +104,62 @@ loc:
 
 command: 
     AT LPAREN Num COMMA String RPAREN Id ASSIGN term
-    { None }
+    { mkAssign (mkVar $7 (get_pos 7)) $9 (get_pos 8) }
   | AT LPAREN Num COMMA String RPAREN ASSUME LPAREN formula RPAREN
-    { None }
+    { mkAssume $9 (get_pos 7) }
   | AT LPAREN Num COMMA String RPAREN ASSUME LPAREN term RPAREN
-    { None }
+    { mkAssume $9 (get_pos 7) }
   | Id ASSIGN term
-    { None }
+    { mkAssign (mkVar $1 (get_pos 1)) $3 (get_pos 2) }
   | ASSUME LPAREN formula RPAREN
-    { None }
+    { mkAssume $3 (get_pos 1) }
   | ASSUME LPAREN term RPAREN
-    { None}
+    { mkAssume $3 (get_pos 1) }
   ;
 
 term: 
-    Num { None }
-  | MINUS term %prec UMINUS { None }
-  | Id { None }
-  | LPAREN term RPAREN { None }
-  | term PLUS term { None }
-  | term MINUS term { None }
-  | term STAR term { None }
-  | term REM term { None }
-  | term DIV term { None }
-  | NONDET LPAREN RPAREN { None }
+    Num 
+    { mkIntLit $1 (get_pos 1) }
+  | MINUS term %prec UMINUS 
+    {
+      let zero = mkIntLit 0 (get_pos 1) in
+      mkBinary OpMinus zero $2 (fresh_branch_point_id "") (get_pos 1)
+    }
+  | Id 
+    { mkVar $1 (get_pos 1) }
+  | LPAREN term RPAREN { $2 }
+  | term PLUS term 
+    { mkBinary OpPlus $1 $3 (fresh_branch_point_id "") (get_pos 2) }
+  | term MINUS term 
+    { mkBinary OpMinus $1 $3 (fresh_branch_point_id "") (get_pos 2) }
+  | term STAR term 
+    { mkBinary OpMult $1 $3 (fresh_branch_point_id "") (get_pos 2) }
+  | term REM term
+    { mkBinary OpMod $1 $3 (fresh_branch_point_id "") (get_pos 2) }
+  | term DIV term 
+    { mkBinary OpDiv $1 $3 (fresh_branch_point_id "") (get_pos 2) }
+  | NONDET LPAREN RPAREN 
+    { mkCallNRecv nondet_int_proc_name None [] None (fresh_branch_point_id "") (get_pos 1) }
   ;
 
 formula: 
-    term LT term { None }
-  | term GT term { None }
-  | term LE term { None }
-  | term GE term { None }
-  | term EQ term { None }
-  | term NE term { None }
-  | NOT formula { None }
-  | formula AND_OP formula { None }
-  | formula OR_OP formula { None }
-  | LPAREN formula RPAREN { None }
+    term LT term 
+    { mkBinary OpLt $1 $3 (fresh_branch_point_id "") (get_pos 2) }
+  | term GT term
+    { mkBinary OpGt $1 $3 (fresh_branch_point_id "") (get_pos 2) }
+  | term LE term 
+    { mkBinary OpLte $1 $3 (fresh_branch_point_id "") (get_pos 2) }
+  | term GE term 
+    { mkBinary OpGte $1 $3 (fresh_branch_point_id "") (get_pos 2) }
+  | term EQ term 
+    { mkBinary OpEq $1 $3 (fresh_branch_point_id "") (get_pos 2) }
+  | term NE term 
+    { mkBinary OpNeq $1 $3 (fresh_branch_point_id "") (get_pos 2) }
+  | NOT formula 
+    { mkUnary OpNot $2 (fresh_branch_point_id "") (get_pos 1) }
+  | formula AND_OP formula 
+    { mkBinary OpLogicalAnd $1 $3 (fresh_branch_point_id "") (get_pos 2) }
+  | formula OR_OP formula
+    { mkBinary OpLogicalOr $1 $3 (fresh_branch_point_id "") (get_pos 2) }
+  | LPAREN formula RPAREN { $2 }
   ;
