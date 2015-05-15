@@ -89,10 +89,17 @@ let get_imm_emap_exp  ?loc:(l=no_pos) sv emap = map_opt snd (get_imm_emap ~loc:l
 let get_imm_emap_ann  ?loc:(l=no_pos) sv emap = map_opt fst (get_imm_emap ~loc:l sv emap)
 
 let pick_strongest_instantiation sv loc f =
+  print_string "HERERE" ;
   let pure = CF.get_pure f in
   let p_aset = build_eset_of_conj_formula pure in
   let imm = get_imm_emap_exp sv p_aset in
   map_opt (fun a ->  CP.BForm ((CP.Eq(CP.Var (sv, loc), a, no_pos), None), None)) imm
+
+let pick_strongest_instantiation sv loc f =
+  let pr1 = Cprinter.string_of_spec_var in
+  let pr2 = Cprinter.string_of_formula in
+  let pr3 = pr_opt Cprinter.string_of_pure_formula in 
+  Debug.no_2 "pick_strongest_instantiation" pr1 pr2 pr3 (fun _ _ -> pick_strongest_instantiation sv loc f) sv f
 
 let get_emaps lhs_f rhs_f elhs erhs =
   match elhs, erhs with  
@@ -102,6 +109,14 @@ let get_emaps lhs_f rhs_f elhs erhs =
     elhs,erhs 
   | _ -> elhs,erhs
 
+let post_process_subtype_answer v emap unk_fnc rec_fnc =
+  let imm_l = get_imm_emap_ann v emap in
+  map_opt_def (unk_fnc ()) (fun a -> 
+      let _, rel = unk_fnc () in 
+      let subtype, _ = rec_fnc a in
+      (subtype,rel)
+    ) imm_l  
+
 (* result: res:bool * (ann constraint = relation between lhs_ann and rhs_ann) *)
 let subtype_ann_pair_x  elhs erhs (imm1 : CP.ann) (imm2 : CP.ann) : bool * ((CP.exp * CP.exp) option) =
   let rec helper imm1 imm2 = 
@@ -109,19 +124,17 @@ let subtype_ann_pair_x  elhs erhs (imm1 : CP.ann) (imm2 : CP.ann) : bool * ((CP.
     | CP.PolyAnn v1 ->
       let unk_sv () =
         match imm2 with
-         | CP.PolyAnn v2 -> (true, Some (CP.Var(v1, no_pos), CP.Var(v2, no_pos)))
-         | CP.ConstAnn k2 -> 
-           (true, Some (CP.Var(v1,no_pos), CP.AConst(k2,no_pos)))
-         | CP.TempAnn _ | CP.NoAnn -> (helper imm1 (CP.ConstAnn(Accs)))
-         | CP.TempRes (al,ar) -> (helper imm1 ar)  (* andreeac should it be Accs? *) in
-      let imm_l = get_imm_emap_ann v1 elhs in
-      map_opt_def (unk_sv ()) (fun a -> helper a imm2) imm_l
+        | CP.PolyAnn v2 -> (true, Some (CP.Var(v1, no_pos), CP.Var(v2, no_pos)))
+        | CP.ConstAnn k2 -> 
+          (true, Some (CP.Var(v1,no_pos), CP.AConst(k2,no_pos)))
+        | CP.TempAnn _ | CP.NoAnn -> (helper imm1 (CP.ConstAnn(Accs)))
+        | CP.TempRes (al,ar) -> (helper imm1 ar)  (* andreeac should it be Accs? *) in
+      post_process_subtype_answer v1 elhs unk_sv (fun imm -> helper imm imm2 )
     | CP.ConstAnn k1 ->
       (match imm2 with
        | CP.PolyAnn v2 -> 
          let unk_sv () =  (true, Some (CP.AConst(k1,no_pos), CP.Var(v2,no_pos))) in
-         let imm_r = get_imm_emap_ann v2 erhs in
-         map_opt_def (unk_sv ())  (fun a -> helper imm1 a) imm_r
+         post_process_subtype_answer v2 erhs unk_sv (fun imm -> helper imm1 imm )
        | CP.ConstAnn k2 -> ((int_of_heap_ann k1)<=(int_of_heap_ann k2),None) 
        | CP.TempAnn _ | CP.NoAnn -> (helper imm1 (CP.ConstAnn(Accs)))
        | CP.TempRes (al,ar) -> (helper imm1 ar)  (* andreeac should it be Accs? *)
@@ -173,7 +186,7 @@ let subtype_ann_gen_x lhs_f rhs_f elhs erhs impl_vars evars (imm1 : CP.ann) (imm
       | CP.Var(v,l) -> 
         (* implicit var annotation on rhs *)
         if CP.mem v impl_vars then 
-          let inst = pick_strongest_instantiation v l rhs_f in
+          let inst = x_add pick_strongest_instantiation v l rhs_f in
           let to_lhs = map_opt_def to_lhs (fun x -> x) inst in
           (f,[to_lhs],[],[])
         else if CP.mem v evars then

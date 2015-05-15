@@ -5679,7 +5679,11 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
           (* x_binfo_hp (add_str "conseq" Cprinter.string_of_formula) conseq no_pos; *)
           (* DD.binfo_end "LHS CONTRA check"; *)
           let heap_entail () = 
-            if (!Globals.allow_imm) (* || (!Globals.allow_field_ann) *) then
+            (* TODOIMM phases split messes up with the early imm mismatch detection ie. 
+               x::cell<>@u & u=@L |- x::cell<>@v & v=@M. 
+               with phases: x::cell<>@u & u=@L |- x::cell<>@v ---> x::cell<>@[@u,@v] & u=@L & v=u |- x::cell<>@v
+            *)
+            if (!Globals.allow_imm) (* || (!Globals.allow_field_ann) *) then 
               begin
                 x_dinfo_zp (lazy ("heap_entail_conjunct_lhs: invoking heap_entail_split_rhs_phases")) pos;
                 (* TO CHECK: ignore this --imm at the moment*)
