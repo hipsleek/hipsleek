@@ -1,0 +1,60 @@
+
+
+/*
+# ex23.ss
+
+void foo()
+  requires true
+  ensures true & flow __Error;
+{
+  assert false assume true;
+  dprint;
+}
+
+WARNING: ex23-or-simple.ss_3:10_3:30:the result type __Error#E is not covered by the throw list[__norm#E]
+
+*/
+
+checkentail true & flow __Error |- true & flow __Error.
+expect Valid.
+
+checkentail true & flow __MayError |- true & flow __Error.
+expect Fail_May.
+
+checkentail true & flow __norm |- true & flow __Error.
+expect Fail_Must.
+
+checkentail true & flow __Error |- true & flow __MayError.
+expect Valid.
+
+checkentail x=3 & flow __Error |- x>0 & flow __MayError.
+expect Valid.
+
+//(6)
+checkentail x>0 & flow __Error |- x=3 & flow __MayError.
+expect Fail_May.
+
+//(7)
+checkentail x<0 & flow __Error |- x=3 & flow __MayError.
+expect Fail_Must.
+
+//(8)
+checkentail x<0 & flow __MayError |- x=3 & flow __Error.
+expect Fail_Must.
+/*
+ex23a.slk
+
+checkentail x<0 & flow __MayError |- x=3 & flow __Error.
+expect Fail_Must.
+
+Validate 8: ExpectingFail_Must BUT got : Fail_May
+Unexpected: 8 
+
+ This should be a must error as the state
+ are in must contradiction.
+
+Thus flow and error must both be checked if flow is just a may error
+to determine if must error is caused by the heap state itself.
+
+
+*/
