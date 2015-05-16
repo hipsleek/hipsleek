@@ -61,7 +61,7 @@ let get_pos x =
 %token TO FROM CUTPOINT START
 
 %start program
-%type <Iast.prog_decl option> program
+%type <Iexp.ints_prog> program
 
 %left OR_OP
 %left AND_OP
@@ -75,9 +75,9 @@ let get_pos x =
 
 program:
     START COLON loc SEMICOLON CUTPOINT COLON loc SEMICOLON shadows blocks 
-    { None }
+    { mkProg $3 $10 }
   | START COLON loc SEMICOLON shadows blocks 
-    { None }
+    { mkProg $3 $6 }
 
 blocks: 
     { [] }
@@ -99,8 +99,8 @@ commands:
   | command SEMICOLON commands { $1::$3 }
 
 loc:
-    Num { NumLoc $1 }
-  | Id { NameLoc $1 }
+    Num { NumLoc ($1, get_pos 1) }
+  | Id { NameLoc ($1, get_pos 1) }
 
 command: 
     AT LPAREN Num COMMA String RPAREN Id ASSIGN term

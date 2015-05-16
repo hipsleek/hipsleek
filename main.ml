@@ -86,9 +86,11 @@ let parse_file_full file_name (primitive: bool) =
         let stdlib_procs = Parser.create_tnt_stdlib_proc () in
         { cil_prog with Iast.prog_proc_decls = cil_prog.Iast.prog_proc_decls @ stdlib_procs; }
       else if parser_to_use = "ints" then
-        let _ = Intsparser.parse_ints file_name in
-        let () = x_binfo_pp ("Parsing INTS successfully") no_pos in
-        Cilparser.parse_hip file_name
+        let ints_prog = Intsparser.parse_ints file_name in
+        let stdlib_procs = Parser.create_tnt_stdlib_proc () in
+        let prog = { ints_prog with Iast.prog_proc_decls = ints_prog.Iast.prog_proc_decls @ stdlib_procs; } in
+        let () = x_binfo_hp (add_str "ints_prog" Iprinter.string_of_program) prog no_pos in
+        prog
       else
         (* if parser_to_use = "joust" then                                                        *)
         (*   let ss_file_name = file_name ^ ".ss" in                                              *)
