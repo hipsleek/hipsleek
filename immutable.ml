@@ -85,11 +85,10 @@ let get_imm_emap ?loc:(l=no_pos) sv emap =
   let aliases = CP.EMapSV.find_equiv_all sv emap in
   get_imm_list ~loc:l aliases
 
-let get_imm_emap_exp  ?loc:(l=no_pos) sv emap = map_opt snd (get_imm_emap ~loc:l sv emap)
-let get_imm_emap_ann  ?loc:(l=no_pos) sv emap = map_opt fst (get_imm_emap ~loc:l sv emap)
-
+let get_imm_emap_exp  ?loc:(l=no_pos) sv emap : CP.exp option = map_opt snd (get_imm_emap ~loc:l sv emap)
+let get_imm_emap_ann  ?loc:(l=no_pos) sv emap : CP.ann option = map_opt fst (get_imm_emap ~loc:l sv emap)
+    
 let pick_strongest_instantiation sv loc f =
-  print_string "HERERE" ;
   let pure = CF.get_pure f in
   let p_aset = build_eset_of_conj_formula pure in
   let imm = get_imm_emap_exp sv p_aset in
@@ -2596,3 +2595,8 @@ let imm_norm_for_entail_empty_rhs lhs_h lhs_p es =
   let pr3 = Cprinter.string_of_entail_state_short in
   let pr_out = pr_pair (add_str "lhs_h" pr1) (add_str "lhs_p" pr3) in
   Debug.no_3 "imm_norm_for_entail_empty_rhs" (add_str "lhs_h" pr1) (add_str "lhs_p" pr2) (add_str "es" pr3) pr_out imm_norm_for_entail_empty_rhs lhs_h lhs_p es 
+
+let imm_post_process_for_entail_empty_rhs ctx = 
+  let ctx = x_add_1 restore_tmp_ann_list_ctx ctx in
+  let ctx = x_add_1 restore_lend_list_ctx ctx in
+  ctx

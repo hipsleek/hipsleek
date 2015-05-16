@@ -7235,6 +7235,12 @@ let conv_exp_with_const e = match conv_exp_to_var e with
   | Some (v,loc) -> Var(v,loc)
   | _ -> e
 
+let ann_to_spec_var ann = 
+  match ann with
+  | ConstAnn a  -> mkAnnSVar a
+  | PolyAnn  sv -> sv
+  | _ -> failwith "Cpure.ml currently we do not provide support for nested TempAnn/TempRes"
+
 (* get arguments of bformula and allowing constants *)
 let get_bform_eq_args_with_const (bf:b_formula) =
   get_bform_eq_args_aux conv_exp_with_const bf

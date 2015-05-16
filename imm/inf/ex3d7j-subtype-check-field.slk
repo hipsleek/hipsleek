@@ -8,7 +8,10 @@ print residue.
 expect Fail.
 
 
+
 /*
+FIXED but need to test further
+
 ../../sleek ex3d7j.slk --field-imm
 Valid but it should fail
 

@@ -10,11 +10,11 @@ int foo(cell c)
   requires c::cell<v>@L
   ensures res=v;
 */
-//infer [P1,P2]
-//  requires c::cell<v>@a & a=@L
-//  ensures c::cell<v>@b & res=v & a=@A  ;
-  requires c::cell<v>@L
-  ensures c::cell<v>@A & res=v  ;
+  infer [P1,P2]
+  requires c::cell<v>@a & P1(a)
+     ensures c::cell<v>@b & res=v & P2(a,b,v,res)  ;
+//  requires c::cell<v>@L
+//  ensures c::cell<v>@A & res=v  ;
 
 /*
 Post Inference result:

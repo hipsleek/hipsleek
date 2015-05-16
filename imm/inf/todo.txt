@@ -386,7 +386,7 @@ We need below, as highlighted in:
   requires c::cell<v>@L
   ensures c::cell<v>@A & res=v  ;
 =======================================================
-# ex3d7c.slk
+# ex3d7c.slk (DONE)
 
 checkentail x::cell<a>@L |- x::cell<b>@v & v=@A.
 print residue.
@@ -449,7 +449,7 @@ print residue.
 // inst to v=@L
 // better to instantiate to @L
 =======================================================
-# ex3d7i.slk 
+# ex3d7i.slk  (DONE)
 //(2)
 
 checkentail x::cell<a>@u & u=@L |- x::cell<b>@v & v=@M.
@@ -460,9 +460,12 @@ print residue.
 fails for node lvl imm but goes through with --field-imm
 
 =======================================================
-to add examples in run-fast-test
+to add examples in run-fast-test (DONE)
 
 =======================================================
+
+phases with field-imm broken
+
 =======================================================
 =======================================================
 =======================================================

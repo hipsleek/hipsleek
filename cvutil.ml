@@ -142,8 +142,9 @@ let compute_subs_mem puref evars =
   Debug.no_2 "compute_subs_mem" pr (add_str "evars" !CP.print_svl) (pr_list (pr_pair !CP.print_sv !CP.print_sv)) compute_subs_mem  puref evars  
 
 
-(* andreeac: to add equality info *)
-let compatible_ann (ann1: CP.ann list) (ann2: CP.ann list) : bool =
+(* TODOIMM andreeac: to add equality info and emap *)
+let compatible_ann (ann1: CP.ann list) (ann2: CP.ann list) emap : bool =
+  let compatible_helper a1 a2 = CP.EMapSV.is_equiv emap (CP.ann_to_spec_var a1)  (CP.ann_to_spec_var a1) in
   if not(!Globals.allow_field_ann) then false else 
     let rec helper ann1 ann2 = 
       match ann1, ann2 with
@@ -153,13 +154,18 @@ let compatible_ann (ann1: CP.ann list) (ann2: CP.ann list) : bool =
         true && compatible
       | (CP.TempRes(a1,a2))::t1, a::t2 
       | a::t1, (CP.TempRes(a1,a2))::t2 -> let compatible = helper t1 t2 in
-        (CP.eq_ann a a2) && compatible
+        (* (CP.eq_ann a a2) && compatible *)
+        (compatible_helper a a2) && compatible
+      | (CP.TempAnn(a1))::t1, a2::t2 
+      | a2::t1, (CP.TempAnn(a1))::t2 -> let compatible = helper t1 t2 in
+        (* (CP.eq_ann a1 a2) && compatible *)
+        (compatible_helper a1 a2) && compatible
       | _ -> false
     in helper ann1 ann2
 
-let compatible_ann (ann1: CP.ann list) (ann2: CP.ann list) : bool =
+let compatible_ann (ann1: CP.ann list) (ann2: CP.ann list) emap : bool =
   let pr = pr_list CP.string_of_ann in
-  Debug.no_2 "compatible_ann" pr pr string_of_bool compatible_ann ann1 ann2
+  Debug.no_2 "compatible_ann" pr pr string_of_bool (fun _ _  -> compatible_ann ann1 ann2 emap) ann1 ann2
 
 (****************************************************************************)
 (****************************************************************************)
@@ -505,6 +511,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
   let  baga_helper imm sv = 
     if ((Immutable.isLend imm) && !Globals.baga_imm) then CP.DisjSetSV.mkEmpty
     else CP.DisjSetSV.singleton_dset sv in
+  let emap = build_eset_of_conj_formula (MCP.pure_of_mix p0) in
   let rec helper f =
     (* for h_formula *)
     match f with
@@ -540,7 +547,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
                   CF.h_formula_data_imm  = imm2;
                   CF.h_formula_data_param_imm = param_ann2; }  -> 
                 x_tinfo_hp (add_str "h2" (fun f -> "#DN#" ^ Cprinter.string_of_h_formula f)) h2 pos;
-                let compatible = compatible_ann param_ann1 param_ann2 in
+                let compatible = compatible_ann param_ann1 param_ann2 emap in
                 let sg1 = baga_helper imm1 v1 in
                 let sg2 = baga_helper imm2 v2 in
                 let mset = if compatible then CP.DisjSetSV.merge_disj_set sg1 sg2
