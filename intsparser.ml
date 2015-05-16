@@ -62,8 +62,14 @@ let trans_ints_block_lst fn (fr_lbl: ints_loc) (blks: ints_block list): I.proc_d
   I.mkProc fn proc_name [] "" None false [] [] I.void_type None (IF.EList []) (IF.mkEFalseF ()) pos (Some proc_body)
 
 let trans_ints_prog fn (iprog: ints_prog): I.prog_decl =
+  let main_proc =
+    let start_lbl = iprog.ints_prog_start in
+    let pos = pos_of_ints_loc start_lbl in
+    let start_exp = I.mkCallNRecv (name_of_ints_loc start_lbl) None [] None (fresh_branch_point_id "") pos in
+    I.mkProc fn "main" [] "" None false [] [] I.void_type None (IF.EList []) (IF.mkEFalseF ()) pos (Some start_exp)
+  in
   let proc_blks = partition_by_key (fun blk -> blk.ints_block_from) eq_ints_loc iprog.ints_prog_blocks in
-  let proc_decls = List.map (fun (fr, blks) -> trans_ints_block_lst fn fr blks) proc_blks in
+  let proc_decls = main_proc::(List.map (fun (fr, blks) -> trans_ints_block_lst fn fr blks) proc_blks) in
   let global_vars =
     let f e =
       match e with

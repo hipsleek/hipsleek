@@ -86,11 +86,7 @@ let parse_file_full file_name (primitive: bool) =
         let stdlib_procs = Parser.create_tnt_stdlib_proc () in
         { cil_prog with Iast.prog_proc_decls = cil_prog.Iast.prog_proc_decls @ stdlib_procs; }
       else if parser_to_use = "ints" then
-        let ints_prog = Intsparser.parse_ints file_name in
-        let stdlib_procs = Parser.create_tnt_stdlib_proc () in
-        let prog = { ints_prog with Iast.prog_proc_decls = ints_prog.Iast.prog_proc_decls @ stdlib_procs; } in
-        let () = x_binfo_hp (add_str "ints_prog" Iprinter.string_of_program) prog no_pos in
-        prog
+        Intsparser.parse_ints file_name
       else
         (* if parser_to_use = "joust" then                                                        *)
         (*   let ss_file_name = file_name ^ ".ss" in                                              *)
@@ -436,6 +432,7 @@ let process_source_full source =
   let prims_incls = process_include_files prog.Iast.prog_include_decls source in
   let () = Debug.ninfo_hprint (add_str "prims_incls.proc_decl" (pr_list ((fun prog -> pr_list (fun proc -> match proc.Iast.proc_body with Some b -> Iprinter.string_of_proc_decl proc | None -> "None") prog.Iast.prog_proc_decls)))) prims_incls no_pos in
   let prims_list = replace_with_user_include prims_list prims_incls in
+
   let () = Debug.ninfo_hprint (add_str "new_prims_lists.proc_decl" (pr_list ((fun prog -> pr_list (fun proc -> Iprinter.string_of_proc_decl proc) prog.Iast.prog_proc_decls)))) prims_list no_pos in
   if !to_java then begin
     print_string ("Converting to Java..."); flush stdout;
@@ -482,14 +479,13 @@ let process_source_full source =
   let prog = Iast.append_iprims_list_head ([prog]@prims_incls) in
 
   (*let () = print_string (Iprinter.string_of_program prog^"haha") in*)
-
   let tnt_prim_proc_decls = Hashtbl.fold (fun id _ acc ->
       if List.exists (fun (p, _) -> String.compare p id == 0) acc then acc
       else 
         match (Parser.create_tnt_prim_proc id) with
         | None -> acc | Some pd -> acc @ [(id, pd)]) Iast.tnt_prim_proc_tbl [] in
   let tnt_prim_proc_decls = snd (List.split tnt_prim_proc_decls) in
-  let prog = { prog with Iast.prog_proc_decls = prog.Iast.prog_proc_decls @ tnt_prim_proc_decls; } in
+  let prog = { prog with Iast.prog_proc_decls = tnt_prim_proc_decls @ prog.Iast.prog_proc_decls; } in
   let intermediate_prog = x_add_1 Globalvars.trans_global_to_param prog in
   let tnl = Iast.find_all_num_trailer prog in
   let tnl = Gen.BList.remove_dups_eq (fun a b -> a = b) tnl in
