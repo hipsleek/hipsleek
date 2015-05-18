@@ -8,4 +8,4 @@ expect Valid.
 
 checkentail x::cell<_>@u & u=@M & w=@L |- x::cell<_>@v & v=w.
 print residue.
-expect Valid.
+expect Fail.

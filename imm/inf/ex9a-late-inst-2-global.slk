@@ -36,5 +36,7 @@ expect Valid.
 
 slk_simplify u=@M & v<:@L & u<:v.
 
+slk_simplify u=@M & v<:@L & u<:v & @A<:v.
+
 //Simplify  (7): u=@M & v<:@L
 

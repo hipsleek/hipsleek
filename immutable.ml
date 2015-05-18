@@ -88,17 +88,108 @@ let get_imm_emap ?loc:(l=no_pos) sv emap =
 let get_imm_emap_exp  ?loc:(l=no_pos) sv emap : CP.exp option = map_opt snd (get_imm_emap ~loc:l sv emap)
 let get_imm_emap_ann  ?loc:(l=no_pos) sv emap : CP.ann option = map_opt fst (get_imm_emap ~loc:l sv emap)
     
-let pick_strongest_instantiation sv loc f =
-  let pure = CF.get_pure f in
+(* if f contains sv=AConst, then instantiate to AConst *)
+let pick_strongest_instantiation sv loc pure =
   let p_aset = build_eset_of_conj_formula pure in
   let imm = get_imm_emap_exp sv p_aset in
   map_opt (fun a ->  CP.BForm ((CP.Eq(CP.Var (sv, loc), a, no_pos), None), None)) imm
 
-let pick_strongest_instantiation sv loc f =
+let pick_strongest_instantiation_formula sv loc f =
+  let pure = CF.get_pure f in
+  pick_strongest_instantiation sv loc pure
+
+let pick_strongest_instantiation_formula sv loc f =
   let pr1 = Cprinter.string_of_spec_var in
   let pr2 = Cprinter.string_of_formula in
   let pr3 = pr_opt Cprinter.string_of_pure_formula in 
-  Debug.no_2 "pick_strongest_instantiation" pr1 pr2 pr3 (fun _ _ -> pick_strongest_instantiation sv loc f) sv f
+  Debug.no_2 "pick_strongest_instantiation_formula" pr1 pr2 pr3 (fun _ _ -> pick_strongest_instantiation_formula sv loc f) sv f
+
+let upper_bounds aliases pure =
+  let f_b_bormula f =
+    let (p_f, _) = f in
+    let res =
+      match p_f with
+      | CP.SubAnn(e1,e2,l) -> 
+        if CP.EMapSV.mem (CP.ann_to_spec_var (CP.exp_to_ann e1)) aliases then [CP.exp_to_ann e2]
+        else []
+      | _ -> []
+    in Some res
+  in
+  let fncs = (nonef,f_b_bormula,nonef) in
+  let f_comb lst = List.flatten lst  in
+  CP.fold_formula pure fncs f_comb
+
+let is_global a quantif =
+  match a with 
+  | CP.ConstAnn _ -> true
+  | CP.PolyAnn sv -> not (CP.EMapSV.mem sv quantif)
+  | _ -> 
+    failwith "TempRes/TempAnn not yet supported for instantiations"
+
+let weakest_rels v a1 a2 loc = CP.mkEqMax v a1 a2 loc
+let weakest_rel v a loc = CP.mkEq v a loc
+
+let conj_of_bounds rhs_sv ann1 ann2 lst loc =
+  let rhs_exp = CP.Var (rhs_sv, loc) in
+  let freshsv = CP.fresh_spec_var rhs_sv in
+  let inst1 = [ (CP.Var(freshsv,loc), (CP.ann_to_exp ann1 loc, CP.ann_to_exp ann2 loc)) ] in
+  let maxs = List.fold_right  (fun a acc -> 
+      match acc with
+      | [] -> acc
+      | (v, (a1, a2))::_ -> 
+        let freshv = CP.Var (CP.fresh_spec_var rhs_sv, loc) in
+        (freshv, (v, CP.ann_to_exp a loc))::acc
+    ) lst inst1 in
+  let maxs = match maxs with
+    | [] -> []
+    | (h,(a1,a2))::tail -> (rhs_exp, (a1,a2))::tail in
+  let conjs = List.map ( fun (v,(a1,a2)) -> CP.BForm ((weakest_rels v a1 a2 loc, None), None) ) maxs in
+  CP.conj_of_list conjs loc
+
+  (* check for sv = AConst a
+     if found inst(sv,rhs) = [sv = AConst a]
+     else simplify pure(rhs) and check for sv = AConst a
+        if found then inst(sv,simplif_rhs) = [sv = AConst a]
+        else search for weakest inst aka sv<:[AConst a] in simplif_rhs
+         if found (sv,simplif_rhs) = [AConst a]
+         else add the eq with corresponding ann from lhs
+  *)
+let pick_wekeast_instatiation lhs rhs_sv loc rhs_f ivars evars =
+  let pure = CF.get_pure rhs_f in
+  let rhs_exp = CP.Var(rhs_sv,loc) in
+  let qvars = ivars@evars in
+  let weakest_inst_helper pure =
+    let aset = build_eset_of_conj_formula pure in
+    let aliases = CP.EMapSV.find_equiv_all rhs_sv aset in
+    let max_candidates = upper_bounds (rhs_sv::aliases) pure in
+    (* filter out quantif *)
+    let max_bounds = List.filter (fun a -> is_global a qvars) max_candidates in 
+    let inst = 
+      match max_bounds with
+      | []    -> None
+      | a::[] -> Some (CP.BForm ((weakest_rel rhs_exp (CP.ann_to_exp a loc) loc, None), None))
+      | a1::a2::tail ->  
+        let guards = conj_of_bounds rhs_sv a1 a2 tail loc in
+        Some guards
+    in
+    inst
+  in
+  let pick_eq p1 = pick_strongest_instantiation rhs_sv loc p1 in
+  let simplify_pick_eq f1 =
+    let constr = CP.BForm ((CP.SubAnn(lhs, CP.mkVar rhs_sv loc,loc),None), None) in
+    let form = CP.mkExists evars (CP.mkAnd pure constr loc) None loc in
+    let simplif = x_add_1 TP.simplify form in
+    if CP.is_False simplif then None
+    else
+      let inst = pick_eq simplif in
+      map_opt_w_def (weakest_inst_helper simplif)  (fun x -> x) inst
+  in
+  map_opt_w_def (simplify_pick_eq pure) (fun x -> x) (pick_eq pure)
+
+let pick_wekeast_instatiation lhs rhs loc f ivars evars=
+  let pr2 = Cprinter.string_of_formula in
+  let pr3 = pr_opt Cprinter.string_of_pure_formula in
+  Debug.no_1 "pick_wekeast_instatiation" pr2 pr3 (fun  _  -> pick_wekeast_instatiation lhs rhs loc f ivars evars) f
 
 let get_emaps lhs_f rhs_f elhs erhs =
   match elhs, erhs with  
@@ -177,15 +268,16 @@ let subtype_ann_gen_x lhs_f rhs_f elhs erhs impl_vars evars (imm1 : CP.ann) (imm
     (* implicit instantiation of @v made stronger into an equality *)
     (* two examples in ann1.slk fail otherwise; unsound when we have *)
     (* multiple implicit being instantiated ; use explicit if needed *)
-    let to_lhs = CP.BForm ((CP.Eq(l,r,no_pos),None), None) in
-    (* let to_lhs = CP.BForm ((CP.SubAnn(l,r,no_pos),None), None) in *)
+    (* let to_lhs = CP.BForm ((CP.Eq(l,r,no_pos),None), None) in *)
+    let to_lhs = CP.BForm ((CP.SubAnn(l,r,no_pos),None), None) in
     (* let lhs = c in *)
     begin
       match r with
-      | CP.Var(v,l) -> 
+      | CP.Var(v,loc) -> 
         (* implicit var annotation on rhs *)
         if CP.mem v impl_vars then 
-          let inst = x_add pick_strongest_instantiation v l rhs_f in
+          (* let inst = x_add pick_strongest_instantiation_formula v loc rhs_f in *)
+          let inst = x_add pick_wekeast_instatiation l v loc rhs_f impl_vars evars in
           let to_lhs = map_opt_def to_lhs (fun x -> x) inst in
           (f,[to_lhs],[],[])
         else if CP.mem v evars then
@@ -1559,6 +1651,10 @@ let restore_lend_es es =
   let pr = Cprinter.string_of_entail_state_short in 
   Debug.no_1 "restore_lend_es" pr pr restore_lend_es es
 
+let restore_lend_list_ctx ctx =
+  let pr = Cprinter.string_of_list_context_short in 
+  Debug.no_1 "restore_lend_list_ctx" pr pr restore_lend_list_ctx ctx
+
 (* ========= END restore @L functions ========== *)
 
 let rec normalize_h_formula_dn auxf (h : CF.h_formula) : CF.h_formula * (CP.formula list) * ((Globals.ident * VarGen.primed) list) = 
@@ -2600,3 +2696,7 @@ let imm_post_process_for_entail_empty_rhs ctx =
   let ctx = x_add_1 restore_tmp_ann_list_ctx ctx in
   let ctx = x_add_1 restore_lend_list_ctx ctx in
   ctx
+
+let imm_post_process_for_entail_empty_rhs ctx = 
+  let pr = Cprinter.string_of_list_context_short in 
+  Debug.no_1 "imm_post_process_for_entail_empty_rhs" pr pr imm_post_process_for_entail_empty_rhs ctx

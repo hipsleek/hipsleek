@@ -38,6 +38,7 @@ infer [] true |- @L<:@I.
 
 // (11) Fail (due to incompleteness)
 infer [] y::node<_,_>@M |- y::node<a,b>@v & v<:@M.
+expect Valid.
 
 // (12)
 infer [] y::node<_,_>@v & v<:@M |- y::node<a,b>@M.

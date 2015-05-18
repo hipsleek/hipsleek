@@ -182,6 +182,10 @@ struct
     | None -> def
     | Some v -> f v
 
+  let map_opt_w_def f_none f_some x = match x with
+    | None -> f_none
+    | Some v -> Some (f_some v)
+
   let map_list_def def f x = match x with
     | [] -> def
     | _  -> f x

@@ -7168,6 +7168,7 @@ and heap_entail_conjunct_x (prog : prog_decl) (is_folding : bool)  (ctx0 : conte
   (* let () = DD.info_zprint  (lazy  ("       sleek-logging: Line " ^ (line_number_of_pos pos) ^ "\n" ^ (Cprinter.prtt_string_of_formula ante) ^ " |- " ^ *)
   (*                                  (Cprinter.prtt_string_of_formula conseq))) pos in *)
   let ls, prf = x_add heap_entail_conjunct_helper 3 prog is_folding  ctx0 conseq rhs_matched_set pos in
+  let ls, prf = post_process_result ls prf in
   (* to convert failure -> normal with corr. error flows *)
   let ls1 = (* if not !disable_failure_explaining then Musterr.convert_list_context prog ls *)
     (* else *) ls
@@ -8667,7 +8668,7 @@ type: bool *
              fc_failure_pts = match r_fail_match with | Some s -> [s]| None-> [];},
              {fe_kind = fc_kind; fe_name = Globals.logical_error ;fe_locs=[]}, estate.es_trace)) (Ctx (convert_to_may_es estate)) cex, prf)
     end in
-  let ctx,prf = post_process_result ctx prf in
+  (* let ctx,prf = post_process_result ctx prf in *)
   (ctx, prf)
 (****************************************************************)  
 (* utilities for splitting the disjunctions in the antecedent and the conjunctions in the consequent *)
