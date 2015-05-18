@@ -1,0 +1,13 @@
+For explicit inst,
+  checkentail x::cell<_>@[@M,@v] |- (exists v: v=@M).
+
+Can we do the following:
+  checkentail x::cell<_>@[@M,@v'] |- (exists v: v=@M).
+
+but add to_inst(v,v') in the RHS to remind us to
+instantiate:
+  checkentail x::cell<_>@[@M,@v'] |- (exists v: v=@M & to_inst(v,v')).
+
+Residue:
+  x::cell<_>@[@M,@v'] & v=@M & v'=v 
+
