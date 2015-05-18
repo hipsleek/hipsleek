@@ -1,0 +1,16 @@
+data cell {
+  int val;
+}.
+
+checkentail x::cell<a>@L |- x::cell<b>@A.
+print residue.
+
+
+checkentail x::cell<a>@L |- x::cell<b>@v & v=@A.
+print residue.
+
+checkentail x::cell<a>@L |- exists(v: x::cell<b>@v & v=@A).
+print residue.
+
+//checkentail x::cell<a>@w  & w=@L |- x::cell<b>@v & v=@A.
+//print residue.

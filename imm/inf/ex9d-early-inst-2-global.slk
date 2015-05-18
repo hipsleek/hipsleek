@@ -1,0 +1,60 @@
+data cell{
+ int fst;
+}.
+
+
+checkentail x::cell<_>@u & u=@M  |- x::cell<_>@v & v<:@L.
+print residue.
+expect Valid.
+
+checkentail x::cell<_>@u & u=@M  |- x::cell<_>@v & v=@L.
+print residue.
+expect Valid.
+
+checkentail x::cell<_>@u & u=@M  |- x::cell<_>@v & v=@A.
+print residue.
+expect Valid.
+
+checkentail x::cell<_>@u & u=@M  |- x::cell<_>@v & v<:@A.
+print residue.
+expect Valid.
+
+checkentail x::cell<_>@u & u=@M  |- x::cell<_>@v & @A<:v.
+print residue.
+expect Valid.
+
+checkentail x::cell<_>@u & u=@M  |- x::cell<_>@v .
+print residue.
+expect Valid.
+/*
+# ex9d.slk
+
+GOT
+Residue:
+ <1>x::cell<Anon_21>@[@M, @v]&u=@M & u<:v & Anon_22=Anon_21&{FLOW,(20,21)=__norm#E}[]
+
+It may be better to instantiate to v=@A in such scenario,
+and thus allow normalization.
+
+*/
+
+/*
+checkentail x::cell<_>@u & u=@M  |- (exists w: x::cell<_>@v & v<:w & w=@L).
+print residue.
+expect Valid.
+
+
+checkentail x::cell<_>@u & u=@L  |- x::cell<_>@v & v<:w & w=@M.
+print residue.
+expect Fail.
+
+checkentail x::cell<_>@u & u=@L  |- x::cell<_>@v & v<:u.
+print residue.
+expect Valid.
+
+checkentail x::cell<_>@u & u=@M  |- x::cell<_>@v & v<:u.
+print residue.
+expect Valid.
+*/
+
+
