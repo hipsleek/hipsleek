@@ -24,6 +24,8 @@
 (* // DEALINGS IN THE SOFTWARE.                                                    *)
 
   open Iparser
+  
+  let comment_level = ref 0
 }
 
 let digit = ['0'-'9']
@@ -36,6 +38,7 @@ let newline = ('\010' | '\013' | "\013\010")
 rule tokenizer = parse
   | newline { tokenizer lexbuf }
   | "//" { line_comment lexbuf }
+  | "/*" { comment_level := 0; comment lexbuf }
   | whitespace { tokenizer lexbuf }
 
   | "TO" { TO }
@@ -78,3 +81,19 @@ and line_comment = parse
   | newline 
   | eof { tokenizer lexbuf }
   | _ { line_comment lexbuf }
+
+and comment = parse
+  | "*/" 
+    { 
+      if !comment_level = 0 then
+        tokenizer lexbuf 
+      else begin
+        comment_level := !comment_level - 1;
+        comment lexbuf end
+    }
+  | "/*" 
+    {
+      comment_level := !comment_level + 1;
+      comment lexbuf
+    }
+  | _  { comment lexbuf }
