@@ -2829,6 +2829,10 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
               ) cv.Cast.view_un_struc_formula)
             then cv else
             let inv = Hashtbl.find Excore.map_baga_invs cv.C.view_name in
+            let inv = List.fold_left (fun acc (b,f) ->
+                let fl = CP.split_disjunctions f in
+                acc@(List.map (fun f -> (b,f)) fl)
+            ) [] inv in
             let precise = Hashtbl.find Excore.map_precise_invs cv.C.view_name in
             let () = x_binfo_hp (add_str ("infered baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv (* (Excore.EPureI.pairwisecheck_disj inv) *) no_pos in
             let () = print_string_quiet "\n" in
