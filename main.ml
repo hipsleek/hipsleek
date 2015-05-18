@@ -485,7 +485,7 @@ let process_source_full source =
         match (Parser.create_tnt_prim_proc id) with
         | None -> acc | Some pd -> acc @ [(id, pd)]) Iast.tnt_prim_proc_tbl [] in
   let tnt_prim_proc_decls = snd (List.split tnt_prim_proc_decls) in
-  let prog = { prog with Iast.prog_proc_decls = tnt_prim_proc_decls @ prog.Iast.prog_proc_decls; } in
+  let prog = { prog with Iast.prog_proc_decls = prog.Iast.prog_proc_decls @ tnt_prim_proc_decls; } in
   let intermediate_prog = x_add_1 Globalvars.trans_global_to_param prog in
   let tnl = Iast.find_all_num_trailer prog in
   let tnl = Gen.BList.remove_dups_eq (fun a b -> a = b) tnl in

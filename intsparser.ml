@@ -68,8 +68,21 @@ let trans_ints_prog fn (iprog: ints_prog): I.prog_decl =
     let start_exp = I.mkCallNRecv (name_of_ints_loc start_lbl) None [] None (fresh_branch_point_id "") pos in
     I.mkProc fn "main" [] "" None false [] [] I.void_type None (IF.EList []) (IF.mkEFalseF ()) pos (Some start_exp)
   in
+  let from_lbls = List.map (fun blk -> blk.ints_block_from) iprog.ints_prog_blocks in
+  let to_lbls = List.map (fun blk -> blk.ints_block_to) iprog.ints_prog_blocks in
+  let abandoned_to_lbls = Gen.BList.remove_dups_eq eq_ints_loc (Gen.BList.difference_eq eq_ints_loc to_lbls from_lbls) in
+  let abandoned_procs = List.map (fun lbl ->
+      let pos = pos_of_ints_loc lbl in
+      let ret_exp = I.mkReturn None None pos in
+      I.mkProc fn (name_of_ints_loc lbl) [] "" None false [] [] I.void_type None (IF.EList []) (IF.mkEFalseF ()) pos (Some ret_exp)
+    ) abandoned_to_lbls in
+  
   let proc_blks = partition_by_key (fun blk -> blk.ints_block_from) eq_ints_loc iprog.ints_prog_blocks in
-  let proc_decls = main_proc::(List.map (fun (fr, blks) -> trans_ints_block_lst fn fr blks) proc_blks) in
+  let proc_decls = 
+    [main_proc] @ 
+    (List.map (fun (fr, blks) -> trans_ints_block_lst fn fr blks) proc_blks) @
+    abandoned_procs 
+  in
   let global_vars =
     let f e =
       match e with

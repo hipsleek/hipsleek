@@ -139,7 +139,11 @@ term:
   | term DIV term 
     { mkBinary OpDiv $1 $3 (fresh_branch_point_id "") (get_pos 2) }
   | NONDET LPAREN RPAREN 
-    { mkCallNRecv nondet_int_proc_name None [] None (fresh_branch_point_id "") (get_pos 1) }
+    {
+      let pn = nondet_int_proc_name in
+      let () = Hashtbl.add tnt_prim_proc_tbl pn pn in 
+      mkCallNRecv pn None [] None (fresh_branch_point_id "") (get_pos 1) 
+    }
   ;
 
 formula: 

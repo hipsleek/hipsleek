@@ -246,6 +246,8 @@ let rec find_read_write_global_var
         find_read_write_global_var global_vars local_vars (List.hd e.I.exp_call_nrecv_arguments)
       with _ ->
         Error.report_error {Error.error_loc = no_pos; Error.error_text = ("expecting join has only 1 argument: thread id")}
+    else if (Globals.is_prim_method e.I.exp_call_nrecv_method) then
+      (IdentSet.empty, IdentSet.empty)
     else
       begin
         ignore (NG.add_edge g (NG.V.create !curr_proc) (NG.V.create e.I.exp_call_nrecv_method));
@@ -519,7 +521,9 @@ let merge_scc (scc : NG.V.t list ) : unit =
     let func_id = List.hd scc in
     if ((func_id = Globals.fork_name) || (func_id = Globals.join_name)
         || (func_id = Globals.acquire_name) || (func_id = Globals.release_name)
-        || (func_id = Globals.init_name) || (func_id = Globals.finalize_name)) then
+        || (func_id = Globals.init_name) || (func_id = Globals.finalize_name)
+        || (Globals.is_prim_method func_id)) 
+    then
       let () = print_endline_quiet ("[Warning] merge_scc: method names " ^ (string_of_ident_list scc) ^ " not found") in
       ()
     else
@@ -724,6 +728,7 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
              || e.I.exp_call_nrecv_method=Globals.release_name) then
       (*no need for join, init ...*)
       exp
+    else if (Globals.is_prim_method e.I.exp_call_nrecv_method) then exp
     else
       begin
         let new_meth_decl = find_method temp_procs e.I.exp_call_nrecv_method in
