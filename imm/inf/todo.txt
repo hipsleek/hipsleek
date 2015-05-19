@@ -487,7 +487,7 @@ expect Valid.
   Can we have v_33=@M in the instantiation?
 
 =======================================================
-# ex9d.slk
+# ex9d.slk (FIXED)
 
 checkentail x::cell<_>@u & u=@M  |- x::cell<_>@v .
 print residue.
@@ -500,7 +500,33 @@ Residue:
 It may be better to instantiate to v=@A in such scenario,
 and thus allow normalization.
 =======================================================
+# ex9d.slk
+
+checkentail x::cell<_>@u  |- x::cell<_>@v & v=@L.
+
+Entail 7: Valid. 
+Residue:
+ <1>x::cell<Anon_23>@u&v=@L & Anon_24=Anon_23&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+This is unsound, as we have not yet proven u<:v. I think
+after instantiation, we need to add u<:v to the RHS for it to
+be proven.
 =======================================================
+# ex9e.slk
+
+infer[R] x::cell<_>@u & u=@M  |- x::cell<_>@v & R(v).
+
+Residue:
+ <1>x::cell<Anon_23>@A&u=@M & u=v & Anon_24=Anon_23&{FLOW,(20,21)=__norm#E}[]
+ inferred rel: [RELDEFN R: ( v=@M) -->  R(v)]
+
+# I think it is better to instantiate u<:v rather than u=v
+
+We will later obtain:
+     u=@M & u<:v --> R(v)
+For strongest R(v), we would derive v=@M.
+For weakest R(v), we would later derive v=@A.
 =======================================================
 =======================================================
 =======================================================
