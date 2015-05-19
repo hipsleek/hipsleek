@@ -1418,7 +1418,7 @@ Or or May  --> May
  if x>0 then Ok
  else assert false;
 ==========================================================================
-# ex23.ss
+# ex23.ss: FIXED
 
 WARNING: ex23-or-simple.ss_3:10_3:30:the result type __Error#E is not covered by the throw list[__norm#E]
 

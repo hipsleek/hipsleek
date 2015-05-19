@@ -11517,6 +11517,12 @@ let mk_fail_partial_context_label (ft:fail_type) (lab:path_trace) : (partial_con
 let mk_partial_context (c:context) (lab:path_trace) : (partial_context) = ([], [ (lab, c, None) ] ) 
 let mk_failesc_context (c:context) (lab:path_trace) esc : (failesc_context) = ([], esc,[ (lab, c, None) ] ) 
 
+let rec is_error_exc_ctx c=
+  match c with
+  | Ctx es -> is_en_error_exc es && (is_error_flow es.es_formula || is_mayerror_flow es.es_formula) &&
+        es.es_final_error != []
+  | OCtx (c1,c2) -> is_en_error_exc_ctx c1 || is_en_error_exc_ctx c2
+
 (* WN : this seems weird *)
 (* let rec is_empty_esc_stack (e:esc_stack) : bool = match e with *)
 (*   | [] -> false *)
@@ -11528,8 +11534,22 @@ let rec is_empty_esc_stack (e:esc_stack) : bool = match e with
   | (_,[])::t -> is_empty_esc_stack t
   | (_,h::t)::_ -> false
 
-let colapse_esc_stack (e:esc_stack) : branch_ctx list =
-  List.fold_left (fun a (_,c)-> a@c) [] e
+let colapse_esc_stack ?(is_err_fl=false) (e:esc_stack): branch_ctx list =
+  let rec elim_final_err_ctx ctx=
+    match ctx with
+      | Ctx es -> Ctx {es with es_final_error = [];
+            es_may_error = None;
+            es_must_error = None;
+        }
+      | OCtx (c1, c2) -> OCtx (elim_final_err_ctx c1, elim_final_err_ctx c2)
+  in
+  (* convert failure to error flow. diff is at final_error_ctx *)
+  let error_to_exc ((pt,c, opt) as brc)=
+    if is_err_fl &&  is_en_error_exc_ctx c then
+      (pt,elim_final_err_ctx c, None)
+    else brc
+  in
+  List.fold_left (fun a (_,c)-> a@(List.map error_to_exc c)) [] e
 
 let push_esc_elem  (e:esc_stack) (b:branch_ctx list): esc_stack = 
   match b with 
@@ -11821,7 +11841,7 @@ let isFailFailescCtx_new (fs,_,brs) =
   if not !Globals.enable_error_as_exc then is_fail 
   else
   if is_fail then is_fail else
-    List.exists (fun (_,_,oft) -> oft != None) brs
+    List.exists (fun (_,c,oft) -> oft != None && is_error_exc_ctx c) brs
 
 let isFailPartialCtx_new (fs,ss) =
   List.exists isFailBranchFail fs
@@ -11847,12 +11867,6 @@ let isSuccessBranchFail (_,ft) =
   | Failure_May _ -> false
   | Failure_Valid -> true
   | Failure_Bot _ -> true
-
-
-let rec is_error_exc_ctx c=
-  match c with
-  | Ctx es -> is_en_error_exc es && (is_error_flow es.es_formula || is_mayerror_flow es.es_formula)
-  | OCtx (c1,c2) -> is_en_error_exc_ctx c1 || is_en_error_exc_ctx c2
 
 
 let isSuccBranches succ_brs=
@@ -11890,6 +11904,10 @@ let isSuccessListPartialCtx cl =
 
 let isSuccessListPartialCtx_new cl =
   (* cl==[] || *) List.exists isSuccessPartialCtx_new cl
+
+let isSuccessListPartialCtx_new cl =
+  let pr = !print_list_partial_context in
+  Debug.no_1 "isSuccessListPartialCtx_new" pr string_of_bool isSuccessListPartialCtx_new cl
 
 let isSuccessListFailescCtx cl =
   (* cl==[] || *) List.exists isSuccessFailescCtx cl 
@@ -13863,8 +13881,15 @@ let push_esc_level_list (l:list_failesc_context) idf lbl : list_failesc_context 
   transform_list_failesc_context (idf,(fun c-> push_esc_level c lbl),(fun x-> Ctx x)) l
 
 (*use with care, it destroyes the information about exception stacks , preferably do not use except in check specs*)
-let list_failesc_to_partial (c:list_failesc_context): list_partial_context =
-  List.map (fun (fl,el,sl) -> (fl,(colapse_esc_stack el)@sl)) c 
+let list_failesc_to_partial (c:list_failesc_context) post: list_partial_context =
+  let is_err = is_error_flow post || is_mayerror_flow post in
+  List.map (fun (fl,el,sl) -> (fl,(colapse_esc_stack ~is_err_fl:is_err el)@sl)) c
+
+let list_failesc_to_partial (c:list_failesc_context) opost: list_partial_context =
+  let pr1 = !print_list_failesc_context in
+  let pr2 = !print_list_partial_context in
+  Debug.no_1 "list_failesc_to_partial" pr1 pr2
+      (fun _ -> list_failesc_to_partial c opost) c
 
 let rec fold_fail_context f (c:fail_type) = 
   (*let f_br,f_or,f_and = f in*)

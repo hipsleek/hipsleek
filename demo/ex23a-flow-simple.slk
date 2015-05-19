@@ -15,6 +15,7 @@ WARNING: ex23-or-simple.ss_3:10_3:30:the result type __Error#E is not covered by
 
 */
 
+
 checkentail true & flow __Error |- true & flow __Error.
 expect Valid.
 
@@ -38,9 +39,12 @@ expect Fail_May.
 checkentail x<0 & flow __Error |- x=3 & flow __MayError.
 expect Fail_Must.
 
+
 //(8)
 checkentail x<0 & flow __MayError |- x=3 & flow __Error.
 expect Fail_Must.
+
+
 /*
 ex23a.slk
 
