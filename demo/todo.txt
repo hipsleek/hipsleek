@@ -1433,7 +1433,7 @@ Post condition cannot be derived:
  else assert false;
 
 ==========================================================================
-# ex23a.slk
+# ex23a.slk: FIXED
 
 checkentail x<0 & flow __MayError |- x=3 & flow __Error.
 expect Fail_Must.
@@ -1447,6 +1447,15 @@ Unexpected: 8
 Thus flow and error must both be checked if flow is just a may error
 to determine if must error is caused by the heap state itself.
 ==========================================================================
+#ex23b.slk
+
+/*
+why x!=null in rhs??
+
+
+Entail (1) : Fail.(must) cause: x<0 |-  x!=null. LOCS:[4] (must-bug)
+*/
+
 ==========================================================================
 ==========================================================================
 ==========================================================================

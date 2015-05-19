@@ -40,6 +40,7 @@ checkentail x<0 & flow __Error |- x=3 & flow __MayError.
 expect Fail_Must.
 
 
+
 //(8)
 checkentail x<0 & flow __MayError |- x=3 & flow __Error.
 expect Fail_Must.

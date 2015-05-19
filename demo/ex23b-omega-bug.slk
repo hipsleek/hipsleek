@@ -1,0 +1,7 @@
+
+
+//(1)
+infer [must_err] x<0 |- x=3 .
+expect Fail_Must.
+
+print residue.
