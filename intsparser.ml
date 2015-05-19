@@ -115,15 +115,17 @@ let trans_ints_prog fn (iprog: ints_prog): I.prog_decl =
         | _ -> pd) in
       (List.map (fun pd -> inline_body pd []) proc_decls) in
   let called_proc_names =
-    let f e =
+    let f caller_name e =
       match e with
-      | I.CallNRecv { exp_call_nrecv_method = cnr_method } -> Some [cnr_method]
+      (* Don't consider calls where the proc name is the caller name. *)
+      | I.CallNRecv { exp_call_nrecv_method = cnr_method } when cnr_method <> caller_name ->
+        Some [cnr_method]
       | _ -> None
     in
     let all_calls = "main" :: List.concat (List.map (fun pd ->
         match pd.I.proc_body with
         | None -> []
-        | Some b -> I.fold_exp b f (List.concat) [])
+        | Some b -> I.fold_exp b (f pd.I.proc_name) (List.concat) [])
     proc_decls) in
     Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 == 0) all_calls
   in
