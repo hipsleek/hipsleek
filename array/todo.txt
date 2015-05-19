@@ -164,7 +164,7 @@ Total number of errors: 78 in files:
   sleek.slk(no result  for {E}) cll-d.slk(no result  for {E}) label-dll.slk(no result  for {E}) sleek1.slk(no result  for {E}) sleek10.slk(no result  for {E}) sleek2.slk(no result  for {E}) sleek3.slk(no result  for {E}) sleek4.slk(no result  for {E}) sleek6.slk(no result  for {E}) sleek7.slk(no result  for {E}) sleek8.slk(no result  for {E}) sleek8.slk(no result  for {E}) sleek9.slk(no result  for {E}) sleek12-lend.slk(no result  for {E}) sleek13-lend.slk(no result  for {E}) sleek13-lend.slk(no result  for {E}) sleek-err-exc-flow.slk(no result  for {E}) baga-test-eps.slk(no result  for {E}) baga-test.slk(no result  for {E}) baga-test-2.slk(no result  for {E}) baga-test-2.slk(no result  for {E}) infer/app-inv.slk(no result  for {E}) infer/app-inv2.slk(no result  for {E}) infer/infer1.slk(no result  for {E}) infer/infer2.slk(no result  for {E}) infer/infer4.slk(no resul
 
 ===================================================================
-# array/sleek1.slk
+# array/sleek1.slk (OLD version)
 
 Expects (from default):
 
@@ -213,8 +213,50 @@ Two questions:
 
 Later perform a /example/working/run-fast-test.pl sleek
 ===================================================================
+# ex12.ss 
+
+[RELDEFN Q: ( update_array_1d(a_1252,a_1261,1+(a_1252[4]),4) & v_int_14_1233=(a[5])-1 & 
+1<=(a[5]) & Q(a_1261,a',res) & update_array_1d(a,a_1252,v_int_14_1233,5)) -->  Q(a,a',res),
+RELDEFN Q: ( a[4]=res & a'[4]=res & a'=a & a[5]=a'[5] & (a'[5])<=0) -->  Q(a,a',res)]
+
+I think the 2nd relation assumption contains extra ctr that need not be 
+there. It seems to have occurred at an earlier point, as the dprint 
+below showed.
+
+State:htrue&a[4]=tmp' & a'[4]=tmp' & a'=a & a[5]=a'[5] & (a'[5])<=0&
+         {FLOW,(4,5)=__norm#E}[]
+
+I think it is sufficient to have:
+
+  a'[4]=tmp' & a'=a  & a'[5]<=0&
+
+This is because a'=a --> a'[4]=a[4] & a[5]=a'[5]
+Do you really need to propagate such implicit ctr in
+an eager manner? Where is it being done?
 ===================================================================
+# ex12b.ss 
+
+We currently used:
+  infer [@arrvar,Q,update_array_1d] requires true ensures Q(a,a',res);
+
+We really need to use:
+  infer [@arrvar,Q] requires true ensures Q(a,a',res);
+
+We need to classify update_array_id as an interpreted
+relation, rather than an unknown relation. Perhaps, we can
+try some sleek examples first to make this work.
 ===================================================================
+# ex12b1.slk
+
+What is the best way to handle known relation
+automatically?
+
+#1 Use a special function to identify update_rel.
+
+#2 When inferring, add them automatically into infer.
+
+#3 After that, check if certain RHS known relations are provable.
+   If so, they can be dropped. If not, we must keep them.
 ===================================================================
 ===================================================================
 ===================================================================
