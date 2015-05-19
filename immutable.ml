@@ -179,7 +179,11 @@ let pick_wekeast_instatiation lhs rhs_sv loc rhs_f ivars evars =
     let max_candidates = upper_bounds (rhs_sv::aliases) pure in
     let inst = 
       match max_candidates with
-      | [] -> Some (CP.mkPure (default_rel rhs_exp loc))  (* no upper bound, instantiate to top *)
+      | [] -> 
+        let rel_args = List.fold_left (fun acc (_, lst) -> lst@acc) [] (CP.get_list_rel_args pure) in
+        if CP.EMapSV.mem rhs_sv rel_args then None
+            (* if sv in rel then return None *)
+        else Some (CP.mkPure (default_rel rhs_exp loc))  (* no upper bound, instantiate to top *)
       | _  ->   pick_bounds max_candidates rhs_exp rhs_sv qvars loc
     in inst
   in
@@ -277,8 +281,8 @@ let subtype_ann_gen_x lhs_f rhs_f elhs erhs impl_vars evars (imm1 : CP.ann) (imm
     (* implicit instantiation of @v made stronger into an equality *)
     (* two examples in ann1.slk fail otherwise; unsound when we have *)
     (* multiple implicit being instantiated ; use explicit if needed *)
-    (* let to_lhs = CP.BForm ((CP.Eq(l,r,no_pos),None), None) in *)
-    let to_lhs = CP.BForm ((CP.SubAnn(l,r,no_pos),None), None) in
+    let to_lhs = CP.BForm ((CP.Eq(l,r,no_pos),None), None) in (* i need equality for inference *)
+    (* let to_lhs = CP.BForm ((CP.SubAnn(l,r,no_pos),None), None) in *)
     (* let lhs = c in *)
     begin
       match r with
