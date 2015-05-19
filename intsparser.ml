@@ -98,6 +98,16 @@ let trans_ints_prog fn (iprog: ints_prog): I.prog_decl =
   in
   let () = x_binfo_hp (add_str "global_vars" (pr_list fst)) global_vars no_pos in
   let global_var_decls = List.map (fun (d, p) -> I.mkGlobalVarDecl Int [(d, None, p)] p) global_vars in 
+  (* Inline Iast procedure if body is only a call to another procedure *)
+  let inlined_proc_decls = (List.map (fun pd ->
+      match pd.I.proc_body with
+      | Some (CallNRecv { exp_call_nrecv_method = cnr_method }) ->
+              let called_proc = (List.find
+                (fun pd -> cnr_method = pd.I.proc_name)
+                proc_decls) in
+              { pd with I.proc_body = called_proc.I.proc_body }
+      | _ -> pd)
+    proc_decls) in
   { prog_include_decls = [];
     prog_data_decls = [];
     prog_global_var_decls = global_var_decls;
@@ -112,7 +122,7 @@ let trans_ints_prog fn (iprog: ints_prog): I.prog_decl =
     prog_hp_decls = [];
     prog_hp_ids = [];
     prog_axiom_decls = [];
-    prog_proc_decls = proc_decls;
+    prog_proc_decls = inlined_proc_decls;
     prog_coercion_decls = [];
     prog_hopred_decls = [];
     prog_barrier_decls = [];
