@@ -495,10 +495,10 @@ let isAnyConstFalse f = match f with
   | _ -> false
 (* TODO:WN : could we ensure vperm is normalized *)
 
-let isAnyConstFalse f =
-  let pr1 = !print_formula in
-  Debug.no_1 "isAnyConstFalse" pr1 string_of_bool
-    (fun _ -> isAnyConstFalse f) f
+(* let isAnyConstFalse f = *)
+(*   let pr1 = !print_formula in *)
+(*   Debug.no_1 "isAnyConstFalse" pr1 string_of_bool *)
+(*     (fun _ -> isAnyConstFalse f) f *)
 
 let isAnyConstFalse_struc sf= match sf with
   | EBase {formula_struc_base = f} -> isAnyConstFalse f

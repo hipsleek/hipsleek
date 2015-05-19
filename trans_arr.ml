@@ -65,9 +65,27 @@ let is_same_sv
     end
 ;;
 
-let is_same_sv sv1 sv2 =
-  Debug.no_2 "is_same_sv" string_of_spec_var string_of_spec_var string_of_bool is_same_sv sv1 sv2
+let rec remove_dupl equal lst =
+  let rec helper item lst =
+    match lst with
+    | h::rest ->
+      if equal item h then true
+      else helper item rest
+    | [] -> false
+  in
+  match lst with
+  | h::rest ->
+    if helper h rest
+    then
+      remove_dupl equal rest
+    else
+      h::(remove_dupl equal rest)
+  | [] -> []
 ;;
+
+(* let is_same_sv sv1 sv2 = *)
+(*   Debug.no_2 "is_same_sv" string_of_spec_var string_of_spec_var string_of_bool is_same_sv sv1 sv2 *)
+(* ;; *)
 
 (* let is_same_var *)
 (*     (v1:exp) (v2:exp):bool = *)
@@ -1899,7 +1917,8 @@ let rec get_array_element_in_f
     | ListAllN (e1, e2, loc)
     | ListPerm (e1, e2, loc)->
       (get_array_element_in_exp e1 sv) @ (get_array_element_in_exp e2 sv)
-    | RelForm (sv,elst,loc) ->
+    | RelForm (nsv,elst,loc) ->
+      (* let () = x_binfo_pp ("get_array_element_in_b_formula: RelForm") no_pos in *)
       List.fold_left (fun r e -> (get_array_element_in_exp e sv)@r) [] elst
     | BConst _
     | XPure _
@@ -1953,9 +1972,10 @@ let rec expand_array_variable
     (f:formula) (svlst:spec_var list) :(spec_var list) =
   let expand f sv =
     let array_element = get_array_element_as_spec_var_list f sv in
-    match array_element with
-    | [] -> [sv]
-    | _ -> array_element
+    array_element@[sv]
+    (* match array_element with *)
+    (* | [] -> [sv] *)
+    (* | _ -> array_element *)
   in
   let helper f svlst =
     match svlst with
@@ -1971,6 +1991,8 @@ let expand_array_variable
   then expand_array_variable f svlst
   else svlst
 ;;
+
+
 
 (* The input formula for this process must be normalized *)
 let rec process_exists_array
@@ -1999,7 +2021,7 @@ let rec process_exists_array
     in
     if List.length nqlst == 0
     then
-      let () = x_binfo_pp ("process_exists_array: Nothing changed: "^(!print_pure f)) no_pos in
+      (* let () = x_binfo_pp ("process_exists_array: Nothing changed: "^(!print_pure f)) no_pos in *)
       let new_nf = process_exists_array nf in
       Exists (sv,new_nf,fl,l)
     else
@@ -2021,6 +2043,7 @@ let rec process_exists_array
           end
         | _ -> failwith "mk_new_name_helper: Invalid input"
       in
+      let () = x_binfo_pp ("nqlst: "^((pr_list ArithNormalizer.string_of_exp) nqlst)) no_pos in
       let new_nf = Exists (sv,process_exists_array nf,fl,l) in
       List.fold_left (fun r nq -> Exists(mk_new_name_helper nq,r,None,no_pos)) new_nf nqlst
 ;;
@@ -2458,6 +2481,88 @@ let extend_env old_env nfv f =
   Debug.no_3 "extend_env" string_of_env (pr_list string_of_spec_var) !print_pure string_of_env extend_env old_env nfv f
 ;;
 
+let expand_relation f =
+   let string_of_replace replace =
+      (* let string_of_item r = *)
+      (*   match r with *)
+      (*   | (arr,indexlst) -> *)
+      (*     "("^(string_of_spec_var arr)^","^((pr_list ArithNormalizer.string_of_exp) indexlst) *)
+      (* in *)
+      (pr_list ArithNormalizer.string_of_exp) replace
+   in
+   let find_replace index_exp replace:exp list =
+     (* given the name of an array, return the list of the array elements as replacement *)
+     match index_exp with
+      | Var (sv,_)->
+        begin
+          match sv with
+          | SpecVar (Array _,id,_) ->
+            List.fold_left (fun nlst i -> (ArrayAt (sv,[i],no_pos))::nlst) [] replace
+          | _ ->
+            []
+        end
+      | _ -> []
+   in
+   let find_replace index_exp replace =
+     Debug.no_2 "find_replace" ArithNormalizer.string_of_exp string_of_replace (pr_list ArithNormalizer.string_of_exp)  find_replace index_exp replace
+   in
+   let replace_helper explst replace =
+     let () = x_binfo_pp ("replace: "^(string_of_replace replace)) no_pos in
+     List.fold_left (fun nlst exp ->nlst@((find_replace exp replace)@[exp])) [] explst
+   in
+   let rec helper f replace =
+     let helper_b ((p,ba):b_formula) replace =
+       match p with
+       | RelForm (SpecVar (_,id,_) as rel_name,explst,loc) ->
+         if id = "update_array_1d"
+         then
+           (p,ba)
+         else
+           let new_explst = replace_helper explst replace in
+           (RelForm (rel_name,new_explst,loc),ba)
+       | _ ->
+        (p,ba)
+     in
+     match f with
+     | BForm (b,fl)->
+       BForm (helper_b b replace,fl)
+     | And (f1,f2,loc)->
+       And (helper f1 replace,helper f2 replace,loc)
+     | AndList lst->
+       AndList (List.map (fun (t,f)-> (t,drop_array_formula f)) lst)
+     | Or (f1,f2,fl,loc)->
+       Or (helper f1 replace,helper f2 replace,fl,loc)
+     | Not (f,fl,loc)->
+       Not (helper f replace,fl,loc)
+     | Forall (sv,nf,fl,loc)->
+       Forall (sv,helper nf replace,fl,loc)
+     | Exists (sv,nf,fl,loc)->
+       Exists (sv,helper nf replace,fl,loc)
+   in
+   (* let replace = *)
+   (*   let env = extend_env [] [] f in *)
+   (*   let transform (arr,indexlst) = *)
+   (*     (arr,List.map (fun index -> ArrayAt (arr,[index],no_pos)) indexlst) *)
+   (*    in *)
+   (*    (List.map transform env) *)
+   (* in *)
+   let replace =
+     let env = extend_env [] [] f in
+     let collect = List.fold_left (fun r (arr,ilst) -> ilst@r) [] env in
+     remove_dupl is_same_exp collect
+   in
+   helper f replace
+;;
+
+let expand_relation f =
+  Debug.no_1 "expand_relation" !print_pure !print_pure expand_relation f
+;;
+
+let expand_relation f =
+  if !Globals.array_translate
+  then expand_relation f
+  else f
+;;
 
 
 (* The returned formula must be forall-free *)
@@ -4128,3 +4233,4 @@ let tmp_pre_processing f=
   else
     f
 ;;
+

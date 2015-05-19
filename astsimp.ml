@@ -1673,7 +1673,10 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 and trans_prog (prog : I.prog_decl) : C.prog_decl * I.prog_decl=
   let pr_in = Iprinter.string_of_program in
   let pr_out (cprog,iprog) = Cprinter.string_of_program cprog in
-  Debug.no_1 "trans_prog" pr_in pr_out (fun x -> trans_prog_x prog) prog
+  let tp p = let (cp,_) as res = trans_prog_x p in
+    let () = Cast.global_prog := Some cp in
+    res in
+  Debug.no_1 "trans_prog" pr_in pr_out (fun x -> tp prog) prog
 
 (* Replaced to use new_proc_decls *)
 (*  

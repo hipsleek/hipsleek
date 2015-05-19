@@ -783,20 +783,38 @@ let rec is_not_rec pf = match pf with
   | CP.Exists (_,f,_,_) -> is_not_rec f
 
 let substitute_args_x a_rel = match a_rel with
-  | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->
-    let new_args, subs = List.split 
-        (List.map (fun e ->
+  | CP.BForm ((CP.RelForm (SpecVar (_,id,_) as name,args,o1),o2),o3) ->
+    let new_args, subs =
+      let prog =
+        match !Cast.global_prog with
+        | Some p -> p
+        | None -> failwith "substitute_args: Initialize globas_prog first!"
+      in
+      let typed_args = List.combine (Cast.look_up_rel_args_type_from_prog prog id) args in
+      List.split
+        (List.map (fun (t,e) ->
              match e with
              | CP.Var _ -> (e, [])
-             | _ -> 
-               (try 
+             | _ ->
+               (try
+                  (* Must refine the renaming method. It is really awkward now... *)
                   let fvs = CP.afv e in
-                  let arb = if List.length fvs > 0 then List.hd (CP.afv e) else (CP.mk_typed_spec_var Int "c") in 
+                  let arb =
+                    if List.length fvs > 0 then
+                      begin
+                        match (List.hd (CP.afv e)) with
+                        | SpecVar (_,new_name,_) ->
+                          new_name
+                      end
+                    else
+                      "c"
+                  in
+                  let arb = CP.mk_typed_spec_var t arb in
                   let var = CP.fresh_spec_var_prefix "fc" arb in
                   let var = CP.mkVar var no_pos in
                   (var, [CP.mkEqExp var e no_pos])
                 with _ -> (e,[]))
-           ) args)
+           ) typed_args)
     in
     (CP.BForm ((CP.RelForm (name,new_args,o1),o2),o3), List.concat subs)
   | _ -> report_error no_pos "substitute_args_x Expected a relation"
@@ -809,6 +827,10 @@ let substitute_args rcase =
   let res = [rcase_wo_rel]@rels@(List.concat subs) in
   CP.conj_of_list res no_pos
 
+let substitute_args rcase =
+  let pr = !CP.print_formula in
+  Debug.no_1 "substitute_args" pr pr substitute_args rcase
+
 (* TODO: Need to handle computed relation in the future *)
 let rec get_other_branches or_fml args = match or_fml with
   | Or fml -> 
@@ -820,14 +842,15 @@ let rec get_other_branches or_fml args = match or_fml with
     let conjs = CP.list_of_conjs (MCP.pure_of_mix p) in
     List.filter (fun pure -> CP.subset args (CP.fv pure)) conjs
 
-let process_base_rec pfs rel specs = match x_add_1 CP.get_rel_id rel with
+let process_base_rec pfs rel specs =
+  match x_add_1 CP.get_rel_id rel with
   | None -> report_error no_pos "process_base_rec: Expected a relation"
   | Some ivs ->
     let (rcases, bcases) = List.partition is_rec pfs in
 
     (* TODO *)
     let or_post = get_or_post specs (CP.get_rel_id_list rel) in
-    let bcases = 
+    let bcases =
       begin
         match or_post with
         | [] -> bcases
@@ -840,7 +863,8 @@ let process_base_rec pfs rel specs = match x_add_1 CP.get_rel_id rel with
         | _ -> bcases
       end
     in
-
+    let () = x_binfo_pp ("bcases:"^((pr_list !CP.print_formula) bcases)) no_pos in
+    let () = x_binfo_pp ("rcases:"^((pr_list !CP.print_formula) rcases)) no_pos in
     let no_of_disjs = 
       List.map (fun b -> 
           let disjs = CP.list_of_disjs b in 
@@ -856,7 +880,7 @@ let process_base_rec pfs rel specs = match x_add_1 CP.get_rel_id rel with
 
     (* Normalize each relation *)
     let rcases = List.map (fun x -> substitute_args x) rcases in
-
+    let () = x_binfo_pp ("rcases:"^((pr_list !CP.print_formula) rcases)) no_pos in
     bcases @ rcases, no_of_disjs
 
 let compute_def (rel_fml, pf, no) ante_vars =
@@ -872,6 +896,7 @@ let compute_def (rel_fml, pf, no) ante_vars =
     List.partition (fun v -> List.mem v ante_vars) vars in
   let pre_vars = Trans_arr.expand_array_variable pf pre_vars in
   let post_vars = Trans_arr.expand_array_variable pf post_vars in
+  let pf = Trans_arr.expand_relation pf in
   try
     let rhs = fixcalc_of_pure_formula pf in
     let input_fixcalc =
@@ -917,8 +942,12 @@ let compute_cmd rel_defs bottom_up =
 let compute_cmd rel_defs bottom_up =
   Debug.no_2 "compute_cmd" pr_none pr_none pr_none compute_cmd rel_defs bottom_up
 
+
+
 let compute_fixpoint_aux rel_defs ante_vars bottom_up =
   (* Prepare the input for the fixpoint calculation *)
+
+  let () = Parse_fix.initialize_tlist_from_fpairlist rel_defs in
   let def = List.fold_left (fun x y -> x ^ (compute_def y ante_vars)) "" rel_defs in
   (* let _ = print_endline ("### compute_fixpoint_aux def:"^def) in *)
   let cmd = compute_cmd rel_defs bottom_up in
@@ -1005,11 +1034,11 @@ let extract_inv_helper_x (rel, pfs) ante_vars specs =
         CP.remove_cnts bag_vars p
     ) pfs
   in
-  Debug.ninfo_hprint (add_str "pfs(af):" (pr_list !CP.print_formula)) pfs no_pos;
+  
 
   (* Some other processes *)
   let pfs,no = process_base_rec pfs rel specs in
-
+  Debug.binfo_hprint (add_str "pfs(before existential):" (pr_list !CP.print_formula)) pfs no_pos;
   (* Make existence *)
   let pfs = List.concat (List.map (fun p ->
       let exists_vars = CP.diff_svl (CP.fv_wo_rel p) (CP.fv rel) in
@@ -1018,7 +1047,7 @@ let extract_inv_helper_x (rel, pfs) ante_vars specs =
       else [res]) pfs)
   in
 
-  Debug.ninfo_hprint (add_str "pfs(af):" (pr_list !CP.print_formula)) pfs no_pos;
+  Debug.tinfo_hprint (add_str "pfs(after existential):" (pr_list !CP.print_formula)) pfs no_pos;
 
   (* Disjunctive defintion for each relation *)
   let def = List.fold_left
@@ -1303,12 +1332,12 @@ let fixc_preprocess pairs0 =
 
 let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
   (* TODO: Handle non-recursive ones separately *)
-  DD.ninfo_pprint ("input_pairs_num: " ^ (pr_list
+  DD.tinfo_pprint ("input_pairs_num: " ^ (pr_list
                                             (pr_pair !CP.print_formula !CP.print_formula) input_pairs_num)) no_pos;
 
   let pairs = fixc_preprocess input_pairs_num in
 
-  DD.ninfo_hprint (add_str "input_pairs(b4): " (pr_list
+  DD.tinfo_hprint (add_str "input_pairs(b4): " (pr_list
                                                   (pr_pair !CP.print_formula (pr_list !CP.print_formula)) )) pairs no_pos;
 
   (*  let pairs, subs = if bottom_up then arrange_para_new pairs ante_vars,[] *)
@@ -1319,7 +1348,7 @@ let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
     else arrange_para_td pairs ante_vars
   in
 
-  DD.ninfo_hprint (add_str "input_pairs(af): "  (pr_list
+  DD.binfo_hprint (add_str "input_pairs(af): "  (pr_list
                                                    (pr_pair !CP.print_formula (pr_list !CP.print_formula)) )) pairs no_pos;
   
   let rel_defs = List.concat
@@ -1327,7 +1356,7 @@ let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
   (* let rel_defs = List.concat *)
   (*     (List.map (fun (a,b) -> let pair = (Trans_arr.tmp_pre_processing a,List.map (Trans_arr.tmp_pre_processing) b) in  extract_inv_helper pair ante_vars specs) pairs) in *)
 
-  x_tinfo_hp (add_str "rel_defs "  (pr_list
+  x_binfo_hp (add_str "rel_defs "  (pr_list
                                            (pr_triple !CP.print_formula !CP.print_formula string_of_int)) ) rel_defs no_pos;
 
   let true_const,rel_defs = List.partition (fun (_,pf,_) -> CP.isConstTrue pf) rel_defs in
@@ -1369,30 +1398,30 @@ let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up =
   if !Globals.split_fixcalc then
     let () = x_binfo_hp (add_str "input_pairs" (pr_list (pr_pair pr pr))) input_pairs no_pos in
     let constrs = List.fold_left (fun acc (pf,_) ->
-        let () = DD.ninfo_hprint (add_str "pf" pr) pf no_pos in
+        let () = DD.tinfo_hprint (add_str "pf" pr) pf no_pos in
         let p_aset = CP.pure_ptr_equations pf in
-        let () = DD.ninfo_hprint (add_str "p_aset" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) p_aset no_pos in
+        let () = DD.tinfo_hprint (add_str "p_aset" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) p_aset no_pos in
         let pf = CP.wrap_exists_svl pf (Gen.BList.difference_eq CP.eq_spec_var (CP.fv pf) ante_vars) in
         let pf = x_add_1 Omega.simplify pf in
         let pfs = CP.split_conjunctions pf in
-        let () = DD.ninfo_hprint (add_str "pf" pr) pf no_pos in
+        let () = DD.tinfo_hprint (add_str "pf" pr) pf no_pos in
         acc@pfs
       ) [] input_pairs in
     let constrs = Gen.BList.remove_dups_eq CP.equalFormula constrs in
-    let () = DD.ninfo_hprint (add_str "constrs" (pr_list pr)) constrs no_pos in
+    let () = DD.tinfo_hprint (add_str "constrs" (pr_list pr)) constrs no_pos in
     let res = List.fold_left (fun acc constr ->
         let input_pairs1, input_pairs2 = List.partition (fun (pf,_) -> TP.imply_raw pf constr) input_pairs  in
-        let () = DD.ninfo_hprint (add_str "constr" pr) constr no_pos in
-        let () = DD.ninfo_hprint (add_str "input_pairs1" (pr_list (pr_pair pr pr))) input_pairs1 no_pos in
-        let () = DD.ninfo_hprint (add_str "input_pairs2" (pr_list (pr_pair pr pr))) input_pairs2 no_pos in
+        let () = DD.tinfo_hprint (add_str "constr" pr) constr no_pos in
+        let () = DD.tinfo_hprint (add_str "input_pairs1" (pr_list (pr_pair pr pr))) input_pairs1 no_pos in
+        let () = DD.tinfo_hprint (add_str "input_pairs2" (pr_list (pr_pair pr pr))) input_pairs2 no_pos in
         let res1 = compute_fixpoint_x input_pairs1 ante_vars specs bottom_up in
-        let () = DD.ninfo_hprint (add_str "res1" (pr_list (pr_pair pr pr))) res1 no_pos in
+        let () = DD.tinfo_hprint (add_str "res1" (pr_list (pr_pair pr pr))) res1 no_pos in
         let res1 = List.map (fun (pf1,pf2) -> (pf1,CP.mkAnd pf2 constr no_pos)) res1 in
-        let () = DD.ninfo_hprint (add_str "res1" (pr_list (pr_pair pr pr))) res1 no_pos in
+        let () = DD.tinfo_hprint (add_str "res1" (pr_list (pr_pair pr pr))) res1 no_pos in
         let res2 = compute_fixpoint_x input_pairs2 ante_vars specs bottom_up in
-        let () = DD.ninfo_hprint (add_str "res2" (pr_list (pr_pair pr pr))) res2 no_pos in
+        let () = DD.tinfo_hprint (add_str "res2" (pr_list (pr_pair pr pr))) res2 no_pos in
         let res2 = List.map (fun (pf1,pf2) -> (pf1,CP.mkAnd pf2 (CP.mkNot constr None no_pos) no_pos)) res2 in
-        let () = DD.ninfo_hprint (add_str "res2" (pr_list (pr_pair pr pr))) res2 no_pos in
+        let () = DD.tinfo_hprint (add_str "res2" (pr_list (pr_pair pr pr))) res2 no_pos in
         let rec helper acc (pf1,pf2) =
           match acc with
           | [] -> [(pf1,pf2)]
@@ -1400,19 +1429,19 @@ let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up =
             if (CP.equalFormula pf1 pf3)
             then
               let pf5 = x_add_1 Omega.simplify (CP.mkOr pf2 pf4 None no_pos) in
-              let () = DD.ninfo_hprint (add_str "pf2" pr) pf2 no_pos in
-              let () = DD.ninfo_hprint (add_str "pf4" pr) pf4 no_pos in
-              let () = DD.ninfo_hprint (add_str "pf5" pr) pf5 no_pos in
+              let () = DD.tinfo_hprint (add_str "pf2" pr) pf2 no_pos in
+              let () = DD.tinfo_hprint (add_str "pf4" pr) pf4 no_pos in
+              let () = DD.tinfo_hprint (add_str "pf5" pr) pf5 no_pos in
               (pf1,pf5)::tl
             else (pf3,pf4)::(helper tl (pf1,pf2))
         in
         let acc = List.fold_left (fun acc pf ->
             helper acc pf
           ) acc (res1@res2) in
-        let () = DD.ninfo_hprint (add_str "acc" (pr_list (pr_pair pr pr))) acc no_pos in
+        let () = DD.tinfo_hprint (add_str "acc" (pr_list (pr_pair pr pr))) acc no_pos in
         acc
       ) [] constrs in
-    let () = DD.ninfo_hprint (add_str "res" (pr_list (pr_pair pr pr))) res no_pos in
+    let () = DD.tinfo_hprint (add_str "res" (pr_list (pr_pair pr pr))) res no_pos in
     res
   else
     (* compute_fixpoint_x input_pairs ante_vars specs bottom_up *)
@@ -1439,7 +1468,7 @@ let compute_fixpoint (i:int) input_pairs ante_vars specs =
   let pr1 = pr_list_ln (pr_pair pr0 pr0) in
   let pr2 = !CP.print_svl in
   let pr_res = pr_list (pr_pair pr0 pr0) in
-  DD.no_2_num i "compute_fixpoint (really called)" pr1 pr2 pr_res
+  DD.no_2_num i "compute_fixpoint_2" pr1 pr2 pr_res
     (fun _ _ -> compute_fixpoint_x2 input_pairs ante_vars specs true)
     input_pairs ante_vars
 

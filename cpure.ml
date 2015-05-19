@@ -876,9 +876,9 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
        We need only to compare names and primedness *)
     (String.compare v1 v2 = 0) && (p1 = p2)
 
-let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = 
-  let pr = !print_sv in
-  Debug.no_2 "eq_spec_var" pr pr string_of_bool eq_spec_var (sv1 : spec_var) (sv2 : spec_var)
+(* let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) =  *)
+(*   let pr = !print_sv in *)
+(*   Debug.no_2 "eq_spec_var" pr pr string_of_bool eq_spec_var (sv1 : spec_var) (sv2 : spec_var) *)
 
 
 
