@@ -99,7 +99,7 @@ let trans_ints_prog fn (iprog: ints_prog): I.prog_decl =
   let () = x_binfo_hp (add_str "global_vars" (pr_list fst)) global_vars no_pos in
   let global_var_decls = List.map (fun (d, p) -> I.mkGlobalVarDecl Int [(d, None, p)] p) global_vars in 
   (* Inline Iast procedure if body is only a call to another procedure *)
-  let inlined_proc_decls = (List.map (fun pd ->
+  let proc_decls = (List.map (fun pd ->
       match pd.I.proc_body with
       | Some (CallNRecv { exp_call_nrecv_method = cnr_method }) ->
               let called_proc = (List.find
@@ -108,6 +108,24 @@ let trans_ints_prog fn (iprog: ints_prog): I.prog_decl =
               { pd with I.proc_body = called_proc.I.proc_body }
       | _ -> pd)
     proc_decls) in
+  let called_proc_names =
+    let f e =
+      match e with
+      | I.CallNRecv { exp_call_nrecv_method = cnr_method } -> Some [cnr_method]
+      | _ -> None
+    in
+    let all_calls = "main" :: List.concat (List.map (fun pd ->
+        match pd.I.proc_body with
+        | None -> []
+        | Some b -> I.fold_exp b f (List.concat) [])
+    proc_decls) in
+    Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 == 0) all_calls
+  in
+  let () = x_binfo_hp (add_str "called_proc_names" (pr_list (fun x->x))) called_proc_names no_pos in
+  (* remove procedures which aren't called *)
+  let proc_decls =
+    List.filter (fun pd -> List.mem pd.I.proc_name called_proc_names) proc_decls
+  in
   { prog_include_decls = [];
     prog_data_decls = [];
     prog_global_var_decls = global_var_decls;
@@ -122,7 +140,7 @@ let trans_ints_prog fn (iprog: ints_prog): I.prog_decl =
     prog_hp_decls = [];
     prog_hp_ids = [];
     prog_axiom_decls = [];
-    prog_proc_decls = inlined_proc_decls;
+    prog_proc_decls = proc_decls;
     prog_coercion_decls = [];
     prog_hopred_decls = [];
     prog_barrier_decls = [];
