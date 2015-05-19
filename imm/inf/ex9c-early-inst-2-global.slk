@@ -48,3 +48,5 @@ slk_simplify v<:u & u<:@L.
 
 
 slk_simplify v<:u & u=@L.
+
+slk_simplify (exists w: v<:w & w<:@L).
