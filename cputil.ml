@@ -17,7 +17,7 @@ let hloc_enum_to_symb_pf pf0=
   let rec recf pf = match pf with
     | Gt (e1, e2,l) -> begin
         match e1,e2 with
-        | Var _, IConst (i, l1) -> if i>=0 then
+        | Var (sv,_), IConst (i, l1) -> if i>=0 && is_node_typ sv then
             let n_e2 = Null l1 in
             Neq (e1, n_e2, l)
           else pf
@@ -25,7 +25,7 @@ let hloc_enum_to_symb_pf pf0=
       end
     | Eq (e1, e2,l) -> begin
         match e1,e2 with
-        | Var _, IConst (i, l1) -> if i!=0 then
+        | Var (sv,_), IConst (i, l1) -> if i!=0 && is_node_typ sv then
             let n_e2 = Null l1 in
             Neq (e1, n_e2, l)
           else pf

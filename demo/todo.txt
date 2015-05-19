@@ -1447,7 +1447,7 @@ Unexpected: 8
 Thus flow and error must both be checked if flow is just a may error
 to determine if must error is caused by the heap state itself.
 ==========================================================================
-#ex23b.slk
+#ex23b.slk: FIXED
 
 /*
 why x!=null in rhs??

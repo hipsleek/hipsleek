@@ -1,7 +1,25 @@
 
 
 //(1)
-infer [must_err] x<0 |- x=3 .
+infer [err_must] x<0 |- x=3 .
+expect Fail_Must.
+
+print residue.
+
+/*
+why x!=null in rhs??
+
+
+Entail (1) : Fail.(must) cause: x<0 |-  x!=null. LOCS:[4] (must-bug)
+*/
+
+//(2)
+infer [@err_must] x<0 |- x=3 .
+expect Fail_Must.
+
+
+//(3)
+infer [@err_must] x<0 & flow __MayError |- x=3 & flow __Error.
 expect Fail_Must.
 
 print residue.
