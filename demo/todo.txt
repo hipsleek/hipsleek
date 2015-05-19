@@ -1457,6 +1457,35 @@ Entail (1) : Fail.(must) cause: x<0 |-  x!=null. LOCS:[4] (must-bug)
 */
 
 ==========================================================================
+# ex23c.slk
+
+infer [@err_must] x<0 & flow __MayError |- x=3 & flow __Error.
+
+# Why a must-bug still have  MayError flow?
+# what did "expect" check?
+
+Entail (3) : Fail.(must) cause:AND[
+1.2b: ante flow:__MayError#E conseq flow: __Error#E are incompatible flow types, x<0 |-  x=3. LOCS:[9] (must-bug)
+]
+
+Validate 3: OK
+Residue:
+ <1>emp&x<0&{FLOW,(4,8)=__MayError#E}[]
+
+
+# below is supposed to be a MayError. Why is it a MustError?
+  This is unsound
+
+infer [@err_must] true & flow __MayError |- x=3 & flow __Error.
+expect Fail_May.
+
+Entail (4) : Fail.(must) cause:AND[
+1.2b: ante flow:__MayError#E conseq flow: __Error#E are incompatible flow
+ types,
+ true |-  x=3. LOCS:[0;20] (may-bug)
+]
+
+Validate 4: ExpectingFail_May BUT got : Fail_Must
 ==========================================================================
 ==========================================================================
 ==========================================================================

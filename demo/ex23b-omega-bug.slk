@@ -1,7 +1,7 @@
 
 
 //(1)
-infer [err_must] x<0 |- x=3 .
+infer [] x<0 |- x=3 .
 expect Fail_Must.
 
 print residue.
