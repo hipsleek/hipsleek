@@ -4,7 +4,18 @@ data cell{
 
 
 relation R(ann v).
+
+relation P(int v).
+
 infer[R] x::cell<_>@u & u=@M  |- x::cell<_>@v & R(v).
+print residue.
+expect Valid.
+
+infer[R] x::cell<_>@u & u=@L  |- x::cell<_>@v & R(v).
+print residue.
+expect Valid.
+
+infer[R] x::cell<_>@u & u=@A  |- x::cell<_>@v & R(v).
 print residue.
 expect Valid.
 

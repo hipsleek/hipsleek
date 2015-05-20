@@ -517,6 +517,20 @@ be proven.
 
 infer[R] x::cell<_>@u & u=@M  |- x::cell<_>@v & R(v).
 
+GOT:
+---
+Residue:
+ <1>x::cell<Anon_11>@[@M, @v]&u=@M & u<:v & Anon_12=Anon_11&{FLOW,(20,21)=__norm#E}[]
+ inferred rel: [RELDEFN R: ( true) -->  R(v)]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+infer[R] u=@M & u<:v  |- R(v).
+print residue.
+
+--------------------------------
+
+
 Residue:
  <1>x::cell<Anon_23>@A&u=@M & u=v & Anon_24=Anon_23&{FLOW,(20,21)=__norm#E}[]
  inferred rel: [RELDEFN R: ( v=@M) -->  R(v)]
@@ -527,7 +541,15 @@ We will later obtain:
      u=@M & u<:v --> R(v)
 For strongest R(v), we would derive v=@M.
 For weakest R(v), we would later derive v=@A.
+
 =======================================================
+
+# ex8a1.slk 
+
+# need to convert aaa<=bbb to aaa<:bbb during simplification
+
+ inferred rel: [RELDEFN P2: ( w_1454=res & vvv=res & aaa<:@L & aaa<=bbb & P1(aaa)) -->  P2(aaa,bbb,vvv,res,w_1454)]
+
 =======================================================
 =======================================================
 =======================================================
