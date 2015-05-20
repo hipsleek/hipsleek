@@ -13,6 +13,10 @@ int foo(cell c)
  int x = c.fst;
  return x;
 }
+/********************
+inferred pre:    c::cell<v>@a&a<:@L 
+inferred post   (exists b_1464,w_1465: c::cell<w_1465>@b_1464&w_1465=res & v=res & a<:@L & a<:b_1464)
+*********************/
 
 
 int goo(cell c)
@@ -21,6 +25,9 @@ int goo(cell c)
   ensures c::cell<w>@b & P2(a,b,v,res,w)  ;
 {
   int x = foo(c);
+/*********************
+ctx:   c::cell<v>@[@a, @a_1495] * c'::cell<w_1503>@b_1502  & a_1495=@L & a_1495<:b_1502 & a<:@L & w_1503=res & v_1496=res  & v_1496=v & P1(a) & c'=c
+*********************/
   dprint;
   return x;
 }
