@@ -1012,13 +1012,6 @@ let is_ptr_ctr a1 a2 =
   let pb = string_of_bool in
   Debug.no_2 "is_ptr_ctr" pr pr (pr_pair pb pb) is_ptr_ctr a1 a2
 
-(* pre 0<=v<=3 *)
-(* let int_to_ann v =  *)
-(*   if v=0 then const_ann_mut *)
-(*   else if v=1 then const_ann_imm *)
-(*   else if v=2 then const_ann_lend *)
-(*   else const_ann_abs *)
-
 let is_valid_ann v = (int_of_heap_ann imm_bot)<=v && v<=(int_of_heap_ann imm_top)
 
 let is_null a1 a2 =

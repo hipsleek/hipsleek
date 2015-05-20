@@ -2566,6 +2566,7 @@ let merge_alias_nodes_struc_formula prog f xpure conseq  unfold_fun =
 
 (* ===============================  end - merging aliased nodes ================================= *)
 
+(* ==================== norm inferred pre/post ======================== *)
 
 let f_norm_pre_imm_var e l = CP.mkEq e (CP.AConst (Lend, l)) l
 
@@ -2675,10 +2676,17 @@ let norm_imm_rel_formula vars_post (rel:CP.formula): CP.formula  =
     else rel in
   helper  rel
 
-let norm_imm_rel_formula ?post_vars:(vars_post=[]) (rel:CP.formula) : CP.formula  =
+let norm_imm_rel_formula vars_post (rel:CP.formula) : CP.formula  = rel
+
+let norm_imm_rel_formula ?post_vars:(vars_post=[]) (rel:CP.formula) : CP.formula  = 
   let pr = Cprinter.string_of_pure_formula in
   let pr_lst = Cprinter.string_of_spec_var_list in
   Debug.no_2 "norm_imm_rel_formula" pr_lst pr pr  norm_imm_rel_formula vars_post rel
+
+(* let weaken_imm_rel_formula ?post_vars:(vars_post=[]) (rel:CP.formula) : CP.formula  = *)
+(*   let pr = Cprinter.string_of_pure_formula in *)
+(*   let pr_lst = Cprinter.string_of_spec_var_list in *)
+(*   Debug.no_2 "weaken_imm_rel_formula" pr_lst pr pr  weaken_imm_rel_formula vars_post rel *)
 
 let norm_rel_list lst =
   List.map (fun (rel_ct,rel1,rel2) ->
@@ -2691,6 +2699,8 @@ let norm_rel_list lst =
 
 let weaken_infer_rel_in_es es =
   {es with es_infer_rel =  norm_rel_list es.es_infer_rel}
+
+(* ==================== END norm inferred pre/post ======================== *)
 
 (* imm related normalization before enatiling an empty heap rhs *)
 let imm_norm_for_entail_empty_rhs lhs_h lhs_p es = 
