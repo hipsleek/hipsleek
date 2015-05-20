@@ -614,10 +614,10 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let () = x_binfo_pp (s2 ^ s1) no_pos in
             (* let () = x_binfo_hp (add_str "constraints" (pr_list (pr_pair pr (fun _ -> "")))) post_rel_df_new no_pos in *)
             (* let _ = x_binfo_pp ("Pi.infer_pure") no_pos in *)
-            let () = x_binfo_hp (add_str "sp:compute_fixpoint" Cprinter.string_of_struc_formula) proc_spec no_pos in
+            let () = x_tinfo_hp (add_str "sp:compute_fixpoint" Cprinter.string_of_struc_formula) proc_spec no_pos in
             let fn x = x_add_1 (Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars) x in
             let bottom_up_fp0 = wrap fn proc_spec in
-            let () = x_binfo_hp (add_str "bottom_up_fp0" (pr_list (pr_pair pr pr))) bottom_up_fp0 no_pos in
+            let () = x_tinfo_hp (add_str "bottom_up_fp0" (pr_list (pr_pair pr pr))) bottom_up_fp0 no_pos in
             (* let bottom_up_fp0 = List.fold_left (fun acc proc_spec -> acc@(x_add Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars proc_spec)) [] proc_specs in *)
             (* temporarily remove gist because tut/ex2/bugs-ex20.ss example *)
             (* let bottom_up_fp = List.map (fun (r,p) -> *)
@@ -634,7 +634,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                 Fixcalc.compute_fixpoint_td
                 Fixcalc.fixc_preprocess reloblgs pre_rel_df post_rel_df_new post_rel_df pre_vars proc_spec) grp_post_rel_flag
             in
-            let () = x_binfo_hp (add_str "fixpoint" (pr_list (pr_quad pr pr pr pr))) res no_pos in
+            let () = x_tinfo_hp (add_str "fixpoint" (pr_list (pr_quad pr pr pr pr))) res no_pos in
             res
           in
           Infer.fixcalc_rel_stk # push_list tuples;
@@ -648,10 +648,10 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
           (*   end; *)
           Infer.fixcalc_rel_stk # reset;
           let () = List.iter (fun (rel_post,post,rel_pre,pre) ->
-              x_binfo_zp (lazy ((">>REL POST : "^Cprinter.string_of_pure_formula rel_post))) no_pos;
-              x_binfo_zp (lazy ((">>POST: "^Cprinter.string_of_pure_formula post))) no_pos;
-              x_binfo_zp (lazy ((">>REL PRE : "^Cprinter.string_of_pure_formula rel_pre))) no_pos;
-              x_binfo_zp (lazy ((">>PRE : "^Cprinter.string_of_pure_formula pre))) no_pos
+              x_tinfo_zp (lazy ((">>REL POST : "^Cprinter.string_of_pure_formula rel_post))) no_pos;
+              x_tinfo_zp (lazy ((">>POST: "^Cprinter.string_of_pure_formula post))) no_pos;
+              x_tinfo_zp (lazy ((">>REL PRE : "^Cprinter.string_of_pure_formula rel_pre))) no_pos;
+              x_tinfo_zp (lazy ((">>PRE : "^Cprinter.string_of_pure_formula pre))) no_pos
             ) tuples in
           (* WN : Why add post into pre if rel_pre is true ? *)
           (* removed pre inf unless explicitly requested *)

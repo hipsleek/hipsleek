@@ -2008,8 +2008,9 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
           (* To keep vars of RelForm _ that come from lhs *)
           let diff_vs = diff_svl vs_l (vs_r@rel_vars) in
           x_tinfo_hp (add_str "diff_vs" !print_svl) diff_vs pos;
+          x_tinfo_hp (add_str "new_lhs (b4 wrap_exists)" !CP.print_formula) lhs pos;
           let new_lhs = CP.wrap_exists_svl lhs diff_vs in
-          x_binfo_hp (add_str "new_lhs (b4 elim_exists)" !CP.print_formula) new_lhs pos;
+          x_tinfo_hp (add_str "new_lhs (b4 elim_exists)" !CP.print_formula) new_lhs pos;
           let new_lhs,lhs_rel_list =
             if is_bag_cnt then
               (* TODO: The better is to avoid generating redundant primed vars *)
@@ -2126,8 +2127,8 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
               List.map (fun x -> (rel_cat,x,rhs)) new_lhs_list
         in
         (* End - Auxiliary function *)
-        (* let () = x_binfo_hp (add_str "rel_rhs:" (pr_list Cprinter.string_of_pure_formula)) rel_rhs no_pos in *)
-        (* let () = x_binfo_hp (add_str "lhs_p_new:" (Cprinter.string_of_pure_formula)) lhs_p_new no_pos in *)
+        let () = x_tinfo_hp (add_str "rel_rhs:" (pr_list Cprinter.string_of_pure_formula)) rel_rhs no_pos in
+        let () = x_tinfo_hp (add_str "lhs_p_new:" (Cprinter.string_of_pure_formula)) lhs_p_new no_pos in
         let inf_rel_ls = List.map (filter_ass lhs_p_new) rel_rhs in
         (* let _ = print_endline (List.fold_left (fun s f -> s^" "^(Cprinter.string_of_pure_formula f)) "rel_rhs" rel_rhs) in *)
         (* let _ = print_endline (List.fold_left (fun s (a,b) -> s^" ("^(Cprinter.string_of_pure_formula a)^" "^(Cprinter.string_of_pure_formula b)^")") "inf_rel_ls " inf_rel_ls) in *)
@@ -2138,7 +2139,7 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
           else inf_rel_ls in
         (* let () = x_binfo_hp (add_str "Rel Inferred (b4 wrap_exists):" (pr_list print_only_lhs_rhs)) inf_rel_ls pos in *)
         let inf_rel_ls = List.concat (List.map wrap_exists inf_rel_ls) in
-        let () = x_binfo_hp (add_str "Rel Inferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos in
+        let () = x_tinfo_hp (add_str "Rel Inferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos in
         (* -------------------------------------------------------------- *)
         (* let () = x_binfo_hp (add_str "Rel Inferred (after drop_array)" (pr_list print_lhs_rhs)) inf_rel_ls pos in *)
         (* -------------------------------------------------------------- *)
@@ -2152,8 +2153,8 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
             x_tinfo_pp ">>>>>> infer_collect_rel <<<<<<" pos;
             x_tinfo_hp (add_str "Infer Rel Ids" !print_svl) ivs pos;
             (* x_dinfo_hp (add_str "LHS heap Xpure1:" !print_mix_formula) lhs_h_mix pos; *)
-            x_binfo_hp (add_str "LHS pure" !CP.print_formula) lhs_p pos;
-            x_binfo_hp (add_str "RHS pure" !CP.print_formula) rhs_p pos;
+            x_tinfo_hp (add_str "LHS pure" !CP.print_formula) lhs_p pos;
+            x_tinfo_hp (add_str "RHS pure" !CP.print_formula) rhs_p pos;
             (* x_tinfo_hp (add_str "RHS pure" !CP.print_formula) rhs_p_n pos; *)
             x_tinfo_hp (add_str "Rel Inferred:" (pr_list print_lhs_rhs)) inf_rel_ls pos;
             x_tinfo_hp (add_str "RHS Rel List" (pr_list !CP.print_formula)) rel_rhs pos;

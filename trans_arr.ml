@@ -1968,29 +1968,7 @@ let get_array_element_as_spec_var_list
   Debug.no_2 "get_array_element_as_spec_var_list" !print_pure string_of_spec_var (pr_list string_of_spec_var) (fun f sv -> get_array_element_as_spec_var_list f sv) f sv
 ;;
 
-let rec expand_array_variable
-    (f:formula) (svlst:spec_var list) :(spec_var list) =
-  let expand f sv =
-    let array_element = get_array_element_as_spec_var_list f sv in
-    array_element@[sv]
-    (* match array_element with *)
-    (* | [] -> [sv] *)
-    (* | _ -> array_element *)
-  in
-  let helper f svlst =
-    match svlst with
-    | h::rest -> (expand f h)@(expand_array_variable f rest)
-    | [] -> []
-  in
-  remove_dupl_spec_var_list (helper f svlst)
-;;
 
-let expand_array_variable
-      (f:formula) (svlst:spec_var list): (spec_var list) =
-  if !Globals.array_translate
-  then expand_array_variable f svlst
-  else svlst
-;;
 
 
 
@@ -2043,7 +2021,8 @@ let rec process_exists_array
           end
         | _ -> failwith "mk_new_name_helper: Invalid input"
       in
-      let () = x_binfo_pp ("nqlst: "^((pr_list ArithNormalizer.string_of_exp) nqlst)) no_pos in
+      (* let () = x_binfo_pp ("f:"^(!print_pure f)) no_pos in *)
+      (* let () = x_binfo_pp ("nqlst: "^((pr_list ArithNormalizer.string_of_exp) nqlst)) no_pos in *)
       let new_nf = Exists (sv,process_exists_array nf,fl,l) in
       List.fold_left (fun r nq -> Exists(mk_new_name_helper nq,r,None,no_pos)) new_nf nqlst
 ;;
@@ -2481,6 +2460,64 @@ let extend_env old_env nfv f =
   Debug.no_3 "extend_env" string_of_env (pr_list string_of_spec_var) !print_pure string_of_env extend_env old_env nfv f
 ;;
 
+(* let rec expand_array_variable *)
+(*     (f:formula) (svlst:spec_var list) :(spec_var list) = *)
+(*   let expand f sv = *)
+(*     let array_element = get_array_element_as_spec_var_list f sv in *)
+(*     array_element@[sv] *)
+(*     (\* match array_element with *\) *)
+(*     (\* | [] -> [sv] *\) *)
+(*     (\* | _ -> array_element *\) *)
+(*   in *)
+(*   let helper f svlst = *)
+(*     match svlst with *)
+(*     | h::rest -> (expand f h)@(expand_array_variable f rest) *)
+(*     | [] -> [] *)
+(*   in *)
+(*   remove_dupl_spec_var_list (helper f svlst) *)
+(* ;; *)
+
+let rec expand_array_variable
+    (f:formula) (svlst:spec_var list) :(spec_var list) =
+  let expand sv replace=
+    match sv with
+    | SpecVar (Array _,_,_) ->
+      (List.map (
+        fun i ->
+          match mk_array_new_name sv i with
+          | Var (nsv,_) ->
+            nsv
+          | _ -> sv
+        ) replace)@[sv]
+    | _ ->
+      [sv]
+  in
+  let rec helper svlst replace=
+    match svlst with
+    | h::rest -> (expand h replace)@(helper rest replace)
+    | [] -> []
+  in
+  let replace =
+    let env = extend_env [] [] f in
+    let collect = List.fold_left (fun r (arr,ilst) -> ilst@r) [] env in
+    remove_dupl is_same_exp collect
+  in
+  let () = x_binfo_pp ("expand_array_variable: replace "^((pr_list ArithNormalizer.string_of_exp) replace)) no_pos in
+  remove_dupl_spec_var_list (helper svlst replace)
+;;
+
+let expand_array_variable f svlst =
+  Debug.no_2 "expand_array_variable" !print_pure (pr_list string_of_spec_var) (pr_list string_of_spec_var) expand_array_variable f svlst
+;;
+
+let expand_array_variable
+      (f:formula) (svlst:spec_var list): (spec_var list) =
+  if !Globals.array_translate
+  then expand_array_variable f svlst
+  else svlst
+;;
+
+
 let expand_relation f =
    let string_of_replace replace =
       (* let string_of_item r = *)
@@ -2497,7 +2534,7 @@ let expand_relation f =
         begin
           match sv with
           | SpecVar (Array _,id,_) ->
-            List.fold_left (fun nlst i -> (ArrayAt (sv,[i],no_pos))::nlst) [] replace
+            List.map (fun i -> (ArrayAt (sv,[i],no_pos))) replace
           | _ ->
             []
         end
@@ -2507,7 +2544,7 @@ let expand_relation f =
      Debug.no_2 "find_replace" ArithNormalizer.string_of_exp string_of_replace (pr_list ArithNormalizer.string_of_exp)  find_replace index_exp replace
    in
    let replace_helper explst replace =
-     let () = x_binfo_pp ("replace: "^(string_of_replace replace)) no_pos in
+     let () = x_tinfo_pp ("replace: "^(string_of_replace replace)) no_pos in
      List.fold_left (fun nlst exp ->nlst@((find_replace exp replace)@[exp])) [] explst
    in
    let rec helper f replace =
@@ -2551,6 +2588,7 @@ let expand_relation f =
      let collect = List.fold_left (fun r (arr,ilst) -> ilst@r) [] env in
      remove_dupl is_same_exp collect
    in
+   let () = x_binfo_pp ("expand_relation: replace "^((pr_list ArithNormalizer.string_of_exp) replace)) no_pos in
    helper f replace
 ;;
 
@@ -2563,6 +2601,9 @@ let expand_relation f =
   then expand_relation f
   else f
 ;;
+
+(* let expand_for_fixcalc f pre_vars post_vars = *)
+(*   let replace =  *)
 
 
 (* The returned formula must be forall-free *)
@@ -2763,10 +2804,11 @@ let translate_array_one_formula
   let f = translate_array_equality_to_forall f in
   let f = translate_array_relation f in
   let f = constantize_ex_q f in
-  let f = process_exists_array f in
 
   let global_env = extend_env [] [] f in
   let f = instantiate_forall f global_env in
+  let f = process_exists_array f in
+
   let f = produce_aux_formula_for_exists f global_env in
   let array_free_formula = mk_array_free_formula f in
   let aux_formula = produce_aux_formula global_env in

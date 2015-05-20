@@ -140,7 +140,7 @@ let rec fixcalc_of_b_formula b =
     "((" ^ e2str ^ " <= " ^ e3str ^ " && " ^ e1str ^ " = " ^ e2str ^ ") || ("
     ^ e3str ^ " < " ^ e2str ^ " && " ^ e1str ^ " = " ^ e3str ^ "))"
   | CP.RelForm (id,args,_) ->
-        let () = x_binfo_hp (add_str "fixcalc_of_b_formula RelForm: " Cprinter.string_of_b_formula) b no_pos in
+        let () = x_tinfo_hp (add_str "fixcalc_of_b_formula RelForm: " Cprinter.string_of_b_formula) b no_pos in
         if List.exists
           (fun x -> match x with | CP.IConst _ -> true | _ -> false) args
         then "0=0"
@@ -863,8 +863,8 @@ let process_base_rec pfs rel specs =
         | _ -> bcases
       end
     in
-    let () = x_binfo_pp ("bcases:"^((pr_list !CP.print_formula) bcases)) no_pos in
-    let () = x_binfo_pp ("rcases:"^((pr_list !CP.print_formula) rcases)) no_pos in
+    (* let () = x_binfo_pp ("bcases:"^((pr_list !CP.print_formula) bcases)) no_pos in *)
+    (* let () = x_binfo_pp ("rcases:"^((pr_list !CP.print_formula) rcases)) no_pos in *)
     let no_of_disjs = 
       List.map (fun b -> 
           let disjs = CP.list_of_disjs b in 
@@ -880,7 +880,7 @@ let process_base_rec pfs rel specs =
 
     (* Normalize each relation *)
     let rcases = List.map (fun x -> substitute_args x) rcases in
-    let () = x_binfo_pp ("rcases:"^((pr_list !CP.print_formula) rcases)) no_pos in
+    let () = x_tinfo_pp ("rcases:"^((pr_list !CP.print_formula) rcases)) no_pos in
     bcases @ rcases, no_of_disjs
 
 let compute_def (rel_fml, pf, no) ante_vars =
@@ -897,6 +897,13 @@ let compute_def (rel_fml, pf, no) ante_vars =
   let pre_vars = Trans_arr.expand_array_variable pf pre_vars in
   let post_vars = Trans_arr.expand_array_variable pf post_vars in
   let pf = Trans_arr.expand_relation pf in
+  begin
+    print_endline_quiet "\n*************************************";
+    print_endline_quiet "****** After array expansion    *******";
+    print_endline_quiet "*************************************";
+    print_endline_quiet (!CP.print_formula pf);
+    print_endline_quiet "*************************************";
+  end;
   try
     let rhs = fixcalc_of_pure_formula pf in
     let input_fixcalc =
@@ -926,13 +933,13 @@ let compute_cmd rel_defs bottom_up =
   (* let nos = string_of_elems nos string_of_int "," in *)
   let nos = string_of_elems nos (fun _ ->
       string_of_int !Globals.fixcalc_disj) "," in
-  let () = x_binfo_hp (add_str "rel_defs" string_of_rel_defs) rel_defs no_pos in
-  let () = x_binfo_hp (add_str "No of disjs" (fun x -> x)) nos no_pos in
+  (* let () = x_binfo_hp (add_str "rel_defs" string_of_rel_defs) rel_defs no_pos in *)
+  (* let () = x_binfo_hp (add_str "No of disjs" (fun x -> x)) nos no_pos in *)
   let rels = List.map (fun (a,_,_) ->
       CP.name_of_spec_var (CP.name_of_rel_form a)) rel_defs in
   let names = string_of_elems rels (fun x -> x) "," in
   if bottom_up then
-    let () = x_binfo_pp "bottom up" no_pos in
+    (* let () = x_binfo_pp "bottom up" no_pos in *)
     "\nbottomupgen([" ^ names ^ "], [" ^ nos ^ "], SimHeur);"
   else
     let () = x_binfo_pp "top down" no_pos in
@@ -1038,7 +1045,7 @@ let extract_inv_helper_x (rel, pfs) ante_vars specs =
 
   (* Some other processes *)
   let pfs,no = process_base_rec pfs rel specs in
-  Debug.binfo_hprint (add_str "pfs(before existential):" (pr_list !CP.print_formula)) pfs no_pos;
+  Debug.tinfo_hprint (add_str "pfs(before existential):" (pr_list !CP.print_formula)) pfs no_pos;
   (* Make existence *)
   let pfs = List.concat (List.map (fun p ->
       let exists_vars = CP.diff_svl (CP.fv_wo_rel p) (CP.fv rel) in
@@ -1348,7 +1355,7 @@ let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
     else arrange_para_td pairs ante_vars
   in
 
-  DD.binfo_hprint (add_str "input_pairs(af): "  (pr_list
+  DD.tinfo_hprint (add_str "input_pairs(af): "  (pr_list
                                                    (pr_pair !CP.print_formula (pr_list !CP.print_formula)) )) pairs no_pos;
   
   let rel_defs = List.concat
@@ -1356,7 +1363,7 @@ let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
   (* let rel_defs = List.concat *)
   (*     (List.map (fun (a,b) -> let pair = (Trans_arr.tmp_pre_processing a,List.map (Trans_arr.tmp_pre_processing) b) in  extract_inv_helper pair ante_vars specs) pairs) in *)
 
-  x_binfo_hp (add_str "rel_defs "  (pr_list
+  x_tinfo_hp (add_str "rel_defs "  (pr_list
                                            (pr_triple !CP.print_formula !CP.print_formula string_of_int)) ) rel_defs no_pos;
 
   let true_const,rel_defs = List.partition (fun (_,pf,_) -> CP.isConstTrue pf) rel_defs in

@@ -1298,7 +1298,7 @@ and get_spec_var_ident (tlist:spec_var_type_list) (var : ident) p =
   try
     let k = snd(List.find (fun (v,en)->v=var) tlist) in
     CP.SpecVar(k.sv_info_kind,var,p)
-  with 
+  with
   | Not_found -> CP.SpecVar(UNK,var,p)
 
 
