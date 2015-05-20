@@ -1,0 +1,34 @@
+data cell {
+ int val;
+}.
+
+infer[@err_must] x!=null & x'=x & flow __MayError 
+  or x=null & x'=x & (x'!=null & res | x'=null & !res) & flow __norm 
+ |- res & flow __norm.
+print residue.
+
+infer[@err_must] x!=null & x'=x & flow __MayError 
+  or x=null & x'=x & x'=null & !res & flow __norm 
+ |- res & flow __norm.
+print residue.
+
+/*
+# ex21a10a.slk
+
+infer[@err_must] x!=null & x'=x & flow __MayError 
+  or x=null & x'=x & x'=null & !res & flow __norm 
+ |- res & flow __norm.
+print residue.
+
+# how come msg from only one branch.
+What about the other branch with mush Error. WHy is
+it not in the may failure message?
+
+Entail (2) : Fail.(may) cause:1.2b: ante flow:__MayError#E conseq flow: __norm#E are incompatible flow types
+Residue:
+ <1>
+    emp&x'=x & x!=null&{FLOW,(18,22)=__MayError#E}[]
+    or emp&!(res) & x'=null & x'=x & x=null&{FLOW,(18,19)=__Error#E}[]
+
+
+*/

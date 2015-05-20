@@ -307,10 +307,10 @@ let common_arguments = [
   ("--oc-en-adv-simp", Arg.Set Globals.oc_adv_simplify,"enable oc advanced simplification");
   ("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
   ("--field-imm", Arg.Unit ( fun _ ->
-      Globals.allow_field_ann := true;
-      Globals.imm_merge := true;
-      Globals.simpl_memset := true;
-  ),"enable the use of immutability annotations for data fields");
+       Globals.allow_field_ann := true;
+       Globals.imm_merge := true;
+       Globals.simpl_memset := true;
+     ),"enable the use of immutability annotations for data fields");
   ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
   ("--dis-field-imm", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
   ("--allow-array-inst", Arg.Set Globals.allow_array_inst,"Allow instantiation of existential arrays");
@@ -457,6 +457,8 @@ let common_arguments = [
   ("--dis-print-inline", Arg.Clear Globals.print_en_inline,"disable printing (with fewer intermediates)");
   ("--print-html", Arg.Set Globals.print_html,"enable html printing");
   ("--print-type", Arg.Set Globals.print_type,"Print type info");
+  ("--dis-type-err", Arg.Clear Globals.enforce_type_error,"Give just warning for type errors");
+  ("--en-type-err", Arg.Set Globals.enforce_type_error,"Stricly enforce type errors");
   ("--print-x-inv", Arg.Set Globals.print_x_inv,
    "Print computed view invariants");
   ("--print-en-relassume", Arg.Set Globals.print_relassume,
@@ -546,6 +548,8 @@ let common_arguments = [
   (* ("--dis-cache", Arg.Set Globals.no_cache_formula, *)
   (* "Do not cache result of satisfiability and validity checking"); *)
   ("--dis-cache", Arg.Set Globals.no_cache_formula,
+   "Disable Caching result of satisfiability and validity checking");
+  ("--en-cache", Arg.Clear Globals.no_cache_formula,
    "Cache result of satisfiability and validity checking");
   ("--dis-simplify-imply", Arg.Clear Globals.simplify_imply,
    "Simplification of existential for imply calls");
@@ -935,6 +939,7 @@ let common_arguments = [
      (fun _ ->
         (* print_endline "inside svcomp-compete setting"; *)
         compete_mode:=true; (* main flag *)
+        Globals.enforce_type_error:=false;
         Globals.svcomp_compete_mode:=true; (* main flag *)
         (* Globals.show_unexpected_ents := false; *)
         (* diable printing *)
@@ -1018,6 +1023,7 @@ let common_arguments = [
      (fun _ ->
         compete_mode:=true; (* main flag *)
         Globals.smt_compete_mode:=true;
+        Globals.enforce_type_error:=false;
         Globals.show_unexpected_ents := false;
         Debug.trace_on := false;
         Debug.devel_debug_on:= false;

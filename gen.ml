@@ -84,14 +84,14 @@ struct
     in aux xs
 
   let print_endline_quiet s =
-    let flag = !compete_mode in
+    let flag = !silence_output(* compete_mode *) in
     (* print_endline ("compete mode : "^(string_of_bool flag)); *)
     if flag then () 
     else print_endline s 
   let print_endline_if b s = if b then print_endline s else ()
   let print_string_if b s = if b then print_string s else ()
   let print_string_quiet s = 
-    if !compete_mode then () 
+    if !silence_output (* compete_mode *) then () 
     else print_string s 
 
   let print_web_mode s = 
@@ -633,6 +633,10 @@ class ['a] stack_pr (epr:'a->string) (eq:'a->'a->bool)  =
     inherit ['a] stack as super
     val elem_pr = epr 
     val elem_eq = eq 
+    method push_list_pr (ls:'a list) =  
+      (* WN : below is to be removed later *)
+      (* let () = print_endline ("push_list:"^(Basic.pr_list epr ls)) in *)
+      super # push_list ls 
     method string_of = Basic.pr_list_ln elem_pr stk
     method string_of_no_ln = Basic.pr_list elem_pr stk
     method string_of_no_ln_rev = 

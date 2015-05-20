@@ -50,15 +50,22 @@ let get_array_at_index
 
 let is_same_sv
     (sv1:spec_var) (sv2:spec_var):bool=
+  (* let () = print_endline ((string_of_spec_var sv1)^" and "^(string_of_spec_var sv2)) in *)
   match sv1,sv2 with
   | SpecVar (t1,i1,p1), SpecVar (t2,i2,p2)->
     begin
       match p1,p2 with
       | Primed,Primed
       | Unprimed,Unprimed ->
-        if (cmp_typ t1 t2) && (i1=i2) then true else false
+
+        (* if (cmp_typ t1 t2) && (i1=i2) then true else false *)
+        if (i1=i2) then true else false
       | _,_-> false
     end
+;;
+
+let is_same_sv sv1 sv2 =
+  Debug.no_2 "is_same_sv" string_of_spec_var string_of_spec_var string_of_bool is_same_sv sv1 sv2
 ;;
 
 let is_same_var
@@ -498,7 +505,7 @@ let rec can_be_simplify
       match e with
       | ArrayAt (arr,[index],loc) ->
         if is_same_sv arr sv
-        then false
+        then true
         else
           begin
             match index with
@@ -642,109 +649,6 @@ let rec process_quantifier
     in
     Debug.no_2 "get_array_index_replacement" !print_pure string_of_spec_var peo (fun f sv -> get_array_index_replacement f sv) f sv
   in
-  (* let rec replace_index *)
-  (*       (f:formula) (sv:spec_var) (r:exp option):(formula) = *)
-  (*   let rec replace_helper *)
-  (*         ((p,ba):b_formula) (sv:spec_var) (r:exp option):(b_formula) = *)
-  (*     let rec replace_helper_exp *)
-  (*           (e:exp) (sv:spec_var) (r:exp option):(exp) = *)
-  (*       match e with *)
-  (*         | ArrayAt (arr,[index],loc) -> *)
-  (*               begin *)
-  (*                 match index with *)
-  (*                   | Var (i_sv,_) -> *)
-  (*                         if is_same_sv i_sv sv *)
-  (*                         then *)
-  (*                           begin *)
-  (*                             match r with *)
-  (*                               | Some n_index -> ArrayAt (arr,[n_index],loc) *)
-  (*                               | None -> e *)
-  (*                           end *)
-  (*                         else *)
-  (*                           e *)
-  (*                   | _ -> e *)
-  (*               end *)
-  (*         | ArrayAt _ -> *)
-  (*               failwith "replace_helper_exp: Fail to handle multi-dimension array" *)
-  (*         | Add (e1,e2,loc) *)
-  (*         | Subtract (e1,e2,loc) *)
-  (*         | Mult (e1,e2,loc) *)
-  (*         | Div (e1,e2,loc)-> *)
-  (*               let (ne1,ne2) = (replace_helper_exp e1 sv r, replace_helper_exp e2 sv r) in *)
-  (*               begin *)
-  (*                 match e with *)
-  (*                   | Add _ -> Add (ne1,ne2,loc) *)
-  (*                   | Subtract _ -> Subtract (ne1,ne2,loc) *)
-  (*                   | Mult _ -> Mult (ne1,ne2,loc) *)
-  (*                   | Div _ -> Div (ne1,ne2,loc) *)
-  (*                   | _ -> failwith "replace_helper_exp: Invalid Input" *)
-  (*               end *)
-  (*         | Var _ *)
-  (*         | IConst _ -> *)
-  (*               e *)
-  (*         | _ -> failwith "replace_helper_exp: To Be Implemented" *)
-  (*     in *)
-  (*     let replace_helper_p *)
-  (*           (p:p_formula) (sv:spec_var) (r:exp option): (p_formula) = *)
-  (*       match p with *)
-  (*         | BConst _ *)
-  (*         | BVar _ -> *)
-  (*               p *)
-  (*         | Lt (e1,e2,loc) *)
-  (*         | Lte (e1,e2,loc) *)
-  (*         | Gt (e1,e2,loc) *)
-  (*         | Gte (e1,e2,loc) *)
-  (*         | Eq (e1,e2,loc) *)
-  (*         | Neq (e1,e2,loc) -> *)
-  (*               let (ne1,ne2) = ( replace_helper_exp e1 sv r, replace_helper_exp e2 sv r ) in *)
-  (*               begin *)
-  (*                 match p with *)
-  (*                   | Lt _ -> *)
-  (*                         Lt (ne1,ne2,loc) *)
-  (*                   | Lte _ -> *)
-  (*                         Lte (ne1,ne2,loc) *)
-  (*                   | Gt _ -> *)
-  (*                         Gt (ne1,ne2,loc) *)
-  (*                   | Gte _ -> *)
-  (*                         Gte (ne1,ne2,loc) *)
-  (*                   | Eq _ -> *)
-  (*                         Eq (ne1,ne2,loc) *)
-  (*                   | Neq _ -> *)
-  (*                         Neq (ne1,ne2,loc) *)
-  (*                   | _ -> failwith "replace_helper_p: Invalid Input" *)
-  (*               end *)
-  (*         | _ -> *)
-  (*               failwith "replace_helper_p: To Be Implemented" *)
-  (*     in *)
-  (*     (replace_helper_p p sv r,None) *)
-  (*   in *)
-  (*   match f with *)
-  (*     | BForm (b,fl)-> *)
-  (*           BForm (replace_helper b sv r,fl) *)
-  (*     | And (f1,f2,loc)-> *)
-  (*           And (replace_index f1 sv r, replace_index f2 sv r,loc) *)
-  (*     | AndList lst-> *)
-  (*           failwith "replace_index: To Be Implemented" *)
-  (*     | Or (f1,f2,fl,loc)-> *)
-  (*           Or (replace_index f1 sv r, replace_index f2 sv r,fl,loc) *)
-  (*     | Not (not_f,fl,loc)-> *)
-  (*           Not (replace_index not_f sv r,fl,loc) *)
-  (*     | Forall _ *)
-  (*     | Exists _ -> *)
-  (*           failwith "replace_index: nested quantifiers" *)
-  (* in *)
-  (* let replace_index *)
-  (*       (f:formula) (sv:spec_var) (r:exp option):(formula) = *)
-  (*   let peo = function *)
-  (*     | Some e -> ArithNormalizer.string_of_exp e *)
-  (*     | None -> "None" *)
-  (*   in *)
-  (*   let pfo = function *)
-  (*     | Some f -> !print_pure f *)
-  (*     | None -> "None" *)
-  (*   in *)
-  (*   Debug.no_3 "replace_index" !print_pure string_of_spec_var peo !print_pure (fun f sv r -> replace_index f sv r) f sv r *)
-  (* in *)
   let replace
       ((p,ba):b_formula) (ctx:((spec_var * exp) list)):b_formula =
     let rec find_replace
@@ -757,7 +661,7 @@ let rec process_quantifier
       | [] ->
         None
     in
-    let replace_exp
+    let rec replace_exp
         (e:exp) (ctx:((spec_var * exp) list)):exp =
       match e with
       | ArrayAt (arr,[index],loc) ->
@@ -778,6 +682,14 @@ let rec process_quantifier
         end
       | ArrayAt _ ->
         failwith "replace_exp: cannot handle multi-dimensional array"
+      | Add (e1,e2,loc)->
+        Add (replace_exp e1 ctx,replace_exp e2 ctx,loc)
+      | Subtract (e1,e2,loc)->
+        Subtract (replace_exp e1 ctx,replace_exp e2 ctx,loc)
+      | Mult (e1,e2,loc)->
+        Mult (replace_exp e1 ctx,replace_exp e2 ctx,loc)
+      | Div (e1,e2,loc)->
+        Div (replace_exp e1 ctx,replace_exp e2 ctx,loc)
       | _ ->
         e
     in
@@ -1063,9 +975,13 @@ let standarize_one_formula
 
 let standarize_array_imply
     (ante:formula) (conseq:formula):(formula * formula)=
-  let (n_ante,flst1,_) = standarize_array_formula ante in
+  (* let (n_ante,flst1,_) = standarize_array_formula ante in *)
+  (* let (n_conseq,flst2,_) = standarize_array_formula conseq in *)
+  (* let n_ante = mk_and_list (n_ante::(flst1@flst2)) in *)
+  (* (n_ante,n_conseq) *)
+  let n_ante = standarize_one_formula ante in
   let (n_conseq,flst2,_) = standarize_array_formula conseq in
-  let n_ante = mk_and_list (n_ante::(flst1@flst2)) in
+  let n_ante = mk_and_list (n_ante::(flst2)) in
   (n_ante,n_conseq)
 ;;
 
@@ -1195,7 +1111,65 @@ let translate_array_equality
 ;;
 
 let translate_array_equality
-    (f:formula) (scheme: ((spec_var * (exp list)) list)):(formula option) =
+    (f:formula) (scheme:((spec_var * (exp list)) list)):(formula)=
+  let produce_equality (* produce *)
+      (sv1:spec_var) (sv2:spec_var) (indexlst: (exp list)):(formula list) =
+    List.map (fun index -> BForm ((Eq (mk_array_new_name sv1 index,mk_array_new_name sv2 index,no_pos),None),None) ) indexlst
+  in
+  let rec find_match
+      (scheme:((spec_var * (exp list)) list)) (sv:spec_var) : ((exp list) option) =
+    match scheme with
+    | (nsv,elst)::rest ->
+      if is_same_sv nsv sv
+      then Some elst
+      else
+        find_match rest sv
+    | [] -> None
+  in
+  let helper_b_formula
+      ((p,ba):b_formula) (scheme:((spec_var * (exp list)) list)):formula =
+    match p with
+    | Eq (Var (sv1,_), Var (sv2,_),loc) ->
+      if is_same_sv sv1 sv2
+      then BForm ((p,ba),None)
+      else
+        begin
+          match find_match scheme sv1, find_match scheme sv2 with
+          | Some indexlst1, Some indexlst2 ->
+            mk_and_list ((produce_equality sv1 sv2 indexlst1)@(produce_equality sv1 sv2 indexlst2))
+          | Some indexlst,_
+          | _,Some indexlst ->
+            mk_and_list (produce_equality sv1 sv2 indexlst)
+          | _,_ -> BForm ((p,ba),None)
+        end
+    | _ ->
+      BForm ((p,ba),None)
+  in
+  let rec helper
+      (f:formula) (scheme:((spec_var * (exp list)) list)):formula=
+    match f with
+    | BForm (b,fl)->
+      helper_b_formula b scheme
+    | And (f1,f2,loc)->
+      And ((helper f1 scheme) , (helper f2 scheme),loc)
+    | AndList lst->
+      failwith "translate_array_equality: AndList To Be Implemented"
+    | Or (f1,f2,fl,loc)->
+      f
+    (*Or (helper f1 scheme,helper f2 scheme,fl,loc)*)
+    (*failwith "translate_array_equality: To Be Normalized!"*)
+    | Not (f,fl,loc)->
+      Not (helper f scheme,fl,loc)
+    | Forall _->
+      f
+    | Exists _->
+      f
+  in
+  helper f scheme
+;;
+
+let translate_array_equality
+    (f:formula) (scheme: ((spec_var * (exp list)) list)):(formula) =
   let string_of_translate_scheme
       (ts:((spec_var * (exp list)) list)):string=
     let string_of_item
@@ -1209,7 +1183,7 @@ let translate_array_equality
     | Some f -> !print_pure f
     | None -> "None"
   in
-  Debug.no_2 "translate_array_equality" !print_pure string_of_translate_scheme pfo (fun f scheme -> translate_array_equality f scheme) f scheme
+  Debug.no_2 "translate_array_equality" !print_pure string_of_translate_scheme !print_pure (fun f scheme -> translate_array_equality f scheme) f scheme
 ;;
 (* ------------------------------------------------------------------- *)
 
@@ -1344,7 +1318,8 @@ let split_and_combine
 
 let split_and_combine
     (processor:formula -> formula) (cond:formula->bool) (f:formula):formula =
-  if !Globals.array_translate
+  if (* Globals.infer_const_obj # is_arr_as_var *)
+    !Globals.array_translate
   then split_and_combine processor cond f
   else processor f
 ;;
@@ -1721,6 +1696,11 @@ let rec get_array_element_in_f
     get_array_element_in_f nf sv
 ;;
 
+let get_array_element_in_f
+    (f:formula) (sv:spec_var):(exp list) =
+  Debug.no_2 "get_array_element_in_f" !print_pure string_of_spec_var (pr_list ArithNormalizer.string_of_exp) (fun f sv -> get_array_element_in_f f sv) f sv
+;;
+
 let get_array_element_as_spec_var_list
     (f:formula) (sv:spec_var) :(spec_var list) =
   let elst = get_array_element_in_f f sv in
@@ -1748,6 +1728,7 @@ let rec expand_array_variable
   remove_dupl_spec_var_list (helper f svlst)
 ;;
 
+(* The input formula for this process must be normalized *)
 let rec process_exists_array
     (f:formula):formula =
   match f with
@@ -1773,7 +1754,10 @@ let rec process_exists_array
       end
     in
     if List.length nqlst == 0
-    then f
+    then
+      (* let _ = print_endline "process_exists_array: Nothing changed" in *)
+      let new_nf = process_exists_array nf in
+      Exists (sv,new_nf,fl,l)
     else
       let mk_new_name_helper
           (e:exp) : spec_var =
@@ -1793,7 +1777,8 @@ let rec process_exists_array
           end
         | _ -> failwith "mk_new_name_helper: Invalid input"
       in
-      List.fold_left (fun r nq -> Exists(mk_new_name_helper nq,r,None,no_pos)) nf nqlst
+      let new_nf = process_exists_array nf in
+      List.fold_left (fun r nq -> Exists(mk_new_name_helper nq,r,None,no_pos)) new_nf nqlst
 ;;
 
 let process_exists_array
@@ -1887,7 +1872,8 @@ let rec drop_array_formula
 
 let drop_array_formula
     (f:formula):formula =
-  if !Globals.array_translate
+  if (* Globals.infer_const_obj # is_arr_as_var *)
+    !Globals.array_translate
   then drop_array_formula f
   else f
 
@@ -2049,11 +2035,13 @@ let new_translate_out_array_in_imply_split
     | Some aux_f -> And (mk_array_free_formula_split ante,aux_f,no_pos)
     | None -> mk_array_free_formula_split ante
   in
+  (* let n_ante_with_eq = *)
+  (*   match translate_array_equality ante translate_scheme with *)
+  (*   | None   -> n_ante *)
+  (*   | Some eq -> And (eq,n_ante,no_pos) *)
+  (* in *)
   let n_ante_with_eq =
-    match translate_array_equality ante translate_scheme with
-    | None   -> n_ante
-    | Some eq -> And (eq,n_ante,no_pos)
-  in
+    translate_array_equality n_ante translate_scheme in
   (*let _ = mk_array_free_formula_split ante in*)
   let n_conseq = mk_array_free_formula_split conseq in
   (n_ante_with_eq,n_conseq)
@@ -2079,28 +2067,68 @@ let new_translate_out_array_in_imply_split
 let new_translate_out_array_in_imply_split_full
     (ante:formula) (conseq:formula):(formula * formula) =
   let (an,con) = (translate_array_relation ante,translate_array_relation conseq) in
+  let (an,con) = standarize_array_imply an con in
   let (an,con) = (process_quantifier an,process_quantifier con) in
-  let (s_ante,s_conseq) = standarize_array_imply an con in
-  new_translate_out_array_in_imply_split s_ante s_conseq
+  new_translate_out_array_in_imply_split an con
 ;;
 
 let new_translate_out_array_in_imply_split_full
     (ante:formula) (conseq:formula):(formula * formula) =
-  if !Globals.array_translate
+  let pr = !print_pure in
+  let pr_pair = function
+    | (a,b) -> "("^(pr a)^","^(pr b)^")"
+  in
+  Debug.no_2 "new_translate_out_array_in_imply_split_full" pr pr pr_pair (fun ante conseq -> new_translate_out_array_in_imply_split_full ante conseq) ante conseq
+;;
+
+
+let new_translate_out_array_in_imply_split_full
+    (ante:formula) (conseq:formula):(formula * formula) =
+  if !Globals.array_translate (* Globals.infer_const_obj # is_arr_as_var *)
   then new_translate_out_array_in_imply_split_full ante conseq
   else (ante,conseq)
 ;;
 
 (* let new_translate_out_array_in_imply_split_full *)
 (*       (ante:formula) (conseq:formula):(formula * formula) = *)
-(*   if !Globals.array_translate *)
+(*   if Globals.infer_const_obj # is_arr_as_var *)
 (*   then new_translate_out_array_in_imply_split_full ante conseq *)
 (*   else (ante,conseq) *)
 (* ;; *)
 
+let translate_preprocess
+    (f:formula):formula =
+  let f = translate_array_relation f in
+  let f = standarize_one_formula f in
+  let f = process_quantifier f in
+  let f = process_exists_array f in
+  f
+;;
+
+let translate_preprocess f =
+  Debug.no_1 "translate_preprocess" !print_pure !print_pure translate_preprocess f
+;;
+
+(* let new_translate_out_array_in_one_formula *)
+(*     (f:formula):formula= *)
+(*   let f = process_exists_array f in *)
+(*   let array_free_formula = mk_array_free_formula f in *)
+(*   let scheme = extract_translate_scheme f in *)
+(*   let aux_formula = produce_aux_formula scheme in *)
+(*   let new_f = *)
+(*     match aux_formula with *)
+(*     | None -> array_free_formula *)
+(*     | Some af -> And (array_free_formula,af,no_pos) *)
+(*   in *)
+(*   translate_array_equality new_f scheme *)
+(*   (\* match translate_array_equality f scheme with *\) *)
+(*   (\* | None -> new_f *\) *)
+(*   (\* | Some ef -> And (ef,new_f,no_pos) *\) *)
+(* ;; *)
+
+(* After pre-process *)
 let new_translate_out_array_in_one_formula
     (f:formula):formula=
-  let f = process_exists_array f in
   let array_free_formula = mk_array_free_formula f in
   let scheme = extract_translate_scheme f in
   let aux_formula = produce_aux_formula scheme in
@@ -2109,9 +2137,7 @@ let new_translate_out_array_in_one_formula
     | None -> array_free_formula
     | Some af -> And (array_free_formula,af,no_pos)
   in
-  match translate_array_equality f scheme with
-  | None -> new_f
-  | Some ef -> And (ef,new_f,no_pos)
+  translate_array_equality new_f scheme
 ;;
 
 let new_translate_out_array_in_one_formula
@@ -2119,13 +2145,27 @@ let new_translate_out_array_in_one_formula
   Debug.no_1 "new_translate_out_array_in_one_formula" !print_pure !print_pure (fun f -> new_translate_out_array_in_one_formula f) f
 ;;
 
-let new_translate_out_array_in_one_formula_full
+let new_translate_out_array_in_one_formula_full 
     (f:formula):formula=
-  let f = translate_array_relation f in
-  let nf = process_quantifier f in
-  (*let _ = mk_array_free_formula_split nf in*)
-  let sf = standarize_one_formula nf in
-  new_translate_out_array_in_one_formula sf
+  let f = translate_preprocess f in
+  new_translate_out_array_in_one_formula f
+;;
+
+(* let new_translate_out_array_in_one_formula_full  *)
+(*     (f:formula):formula= *)
+(*   let f = translate_array_relation f in *)
+(*   let nf = process_quantifier f in *)
+(*   (\*let _ = mk_array_free_formula_split nf in*\) *)
+(*   let sf = standarize_one_formula nf in *)
+(*   new_translate_out_array_in_one_formula sf *)
+(* ;; *)
+
+let new_translate_out_array_in_one_formula_full
+    (f:formula):formula =
+  match f with
+  | Or(f1,f2,fl,loc) ->
+    Or(new_translate_out_array_in_one_formula_full f1,new_translate_out_array_in_one_formula_full f2,fl,loc)
+  | _ -> new_translate_out_array_in_one_formula_full f
 ;;
 
 (* let new_translate_out_array_in_one_formula_split *)
@@ -2135,19 +2175,19 @@ let new_translate_out_array_in_one_formula_full
 
 let new_translate_out_array_in_one_formula_split
     (f:formula):formula =
-  split_and_combine new_translate_out_array_in_one_formula_full (x_add_1 can_be_simplify) (process_quantifier (translate_array_relation f))
+  split_and_combine new_translate_out_array_in_one_formula_full (x_add_1 can_be_simplify) (translate_array_relation f)
 ;;
 
 (* let new_translate_out_array_in_one_formula_split *)
 (*     (f:formula):formula = *)
-(*   if !Globals.array_translate *)
+(*   if Globals.infer_const_obj # is_arr_as_var *)
 (*   then new_translate_out_array_in_one_formula_split f *)
 (*   else f *)
 (* ;; *)
 
 let new_translate_out_array_in_one_formula_split
     (f:formula):formula =
-  if !Globals.array_translate
+  if !Globals.array_translate  (* Globals.infer_const_obj # is_arr_as_var *)
   then Debug.no_1 "new_translate_out_array_in_one_formula_split" !print_pure !print_pure (fun f -> new_translate_out_array_in_one_formula_split f) f
   else f
 ;;
@@ -3212,7 +3252,7 @@ let rec translate_back_array_in_one_formula
 
 let translate_back_array_in_one_formula
     (f:formula):formula =
-  if (!Globals.array_translate)
+  if !Globals.array_translate  (* (Globals.infer_const_obj # is_arr_as_var) *)
   then translate_back_array_in_one_formula f
   else f
 ;;
@@ -3228,12 +3268,12 @@ let translate_back_array_in_one_formula
 (* Controlled by Globals.array_translate *)
 (* let translate_out_array_in_imply *)
 (*       (ante:formula)(conseq:formula):(formula*formula)= *)
-(*   if !Globals.array_translate then translate_out_array_in_imply ante conseq *)
+(*   if Globals.infer_const_obj # is_arr_as_var then translate_out_array_in_imply ante conseq *)
 (*   else (ante,conseq) *)
 
 (* let drop_array_formula *)
 (*       (f:formula):formula= *)
-(*   if !Globals.array_translate then drop_array_formula f *)
+(*   if Globals.infer_const_obj # is_arr_as_var then drop_array_formula f *)
 (*   else f *)
 (* ;; *)
 
@@ -3263,7 +3303,7 @@ let translate_back_array_in_one_formula
 
 (* let translate_out_array_in_one_formula_full *)
 (*       (f:formula):formula= *)
-(*   if !Globals.array_translate then translate_out_array_in_one_formula_full f *)
+(*   if Globals.infer_const_obj # is_arr_as_var then translate_out_array_in_one_formula_full f *)
 (*   else f *)
 (* ;; *)
 

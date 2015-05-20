@@ -1138,7 +1138,7 @@ res:  1[
    es_final_error:[do_unmatched_rhs : x'::cell<Anon_11>]
    ]
 ==========================================================================
-# ex21a10.ss
+# ex21a10.ss (WN :see below)
 
 Post condition cannot be derived:
   (may) cause: OrL[AndR[1.2b: ante flow:__MayError#E conseq flow: __norm#E are incompatible flow types;
@@ -1197,7 +1197,7 @@ res:  1[
    es_final_error:[ true |-  res. LOCS:[19;15] (may-bug)]
    ]
 ==========================================================================
-# ex21a11
+# ex21a11 (OK) (WN: seems OK now)
 
 
 !!! **wrapper.ml#148:Calling wrap_err_pre
@@ -1225,6 +1225,200 @@ res:  1[
      !(v_bool_12_1437')&{FLOW,(6,10)=__Error#E}[]
    es_final_error:[ !(res) |-  res. LOCS:[15;10] (must-bug)]
    ]
+==========================================================================
+#ex22-lor.slk: FIXED
+
+GOT:
+Entail 1: Fail.(must) cause: n<0 |-  1<n. LOCS:[3] (must-bug)
+
+---------
+EXPECTED
+
+Entail 1: Fail.(may) cause:OrL[
+ n<0 |-  1<n. LOCS:[3] (must-bug),
+valid
+]
+
+
+==========================================================================
+  # ex21a12.ss: DONE
+
+void pre_call(cell x)
+  infer [@pre_must]
+  requires x::cell<_> 
+  ensures x::cell<3>;
+
+   this @pre_must tag indicates a pre-condition that must be
+   be satisfied. When tag is present, we must ensure
+   must failure if there is contradiction with the
+   pre-condition. This is we must use wrap_must_err for
+   such pre-condition. This may be for primitives with
+   must rather than may pre-conditions
+==========================================================================
+# ex22g9.ss --efa-exc : FIXED
+
+How come there is a 
+ true |-  res=3. LOCS:[0;11] (may-bug)
+
+This should not have arisen..
+
+Post condition cannot be derived:
+  (may) cause: AndR[
+1.2b: ante flow:__MayError#E conseq flow: __norm#E are incompatible flow types;
+Proving precondition in method pre_call$cell(1 File "ex22g9-multi-pre.ss",Line:13,Col:2) Failed (may);
+ x'!=null |-  x'=null. LOCS:[9;10;13] (may-bug),
+ true |-  res=3. LOCS:[0;11] (may-bug)
+]
+
+-dd
+
+!!! **solver.ml#7561:new_ctx: 
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message:  true |-  res=3. LOCS:[0;11] (may-bug)
+                             fc_current_lhs_flow: {FLOW,(4,11)=__MayError#E}}
+[[empty]]
+CEX:false
+==========================================================================
+# ex22g13.slk: FIXED
+
+The 2nd message is unnecessary on flow conflicts..
+
+infer[@err_must] emp&x!=null & x'=x & flow __MayError
+ |-  emp&res=3& flow __norm. 
+
+MaybeErr Context: 
+                   
+                    fe_kind: MAY
+                    fe_name: undefined
+                    fe_locs: {
+                              fc_message: 
+                               1.2b: ante flow:__MayError#E conseq flow: __norm#E are incompatible flow types
+                              fc_current_lhs_flow: {FLOW,(4,8)=__MayError#E}}
+[[empty]]
+                  FAIL_AND 
+                   
+                    fe_kind: MAY
+                    fe_name: logical bug
+                    fe_locs: {
+                              fc_message:  true |-  res=3. LOCS:[0;3] (may-bug)
+                              fc_current_lhs_flow: {FLOW,(4,8)=__MayError#E}}
+[[empty]]
+==========================================================================
+# ex21a10.ss --efa-exc
+
+# Seems to be a wrong post-cond error
+
+Post condition cannot be derived:
+  (may) cause:  true |-  res. LOCS:[19;15] (may-bug)
+
+dprint(simpl): ex21a10-case-spec.ss:18: ctx:  List of Failesc Context: [FEC(0, 1, 1  [])]
+Escaped States:
+[
+ 
+ Try-Block:0::
+ [
+  Path: []
+  State:htrue&x'=x & x'=null&{FLOW,(6,10)=__Error#E}[]
+        es_final_error:[Proving precondition in method pre_call$cell(1 File "ex21a10-case-spec.ss",Line:17,Col:2) Failed (may);
+do_unmatched_rhs : x'::cell<Anon_11>(must)]
+  ]
+ ]
+Successful States:
+[
+ Label: []
+ State:(exists Anon_1470: (htrue) * x'::cell<Anon_1470>&x'!=null & x'=x&
+         {FLOW,(4,5)=__norm#E}[]
+       es_cond_path: [0]
+       es_var_measures 1: Some(MayLoop[]{})
+       es_infer_vars_rel: []
+ Exc:Some
+ ]
+
+--esl
+
+# OK but not captured by post-cond failure message
+
+id: 3; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [] globals: [@flow,@ver_post,@err_must]
+ checkentail htrue&x'=x & x'=null & MayLoop[]&{FLOW,(6,10)=__Error#E}[]
+ |-  emp&res&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+   htrue&x'=x & x'=null&{FLOW,(6,10)=__Error#E}[]
+   es_final_error:[1.2c: ante flow:__Error#E conseq flow: __norm#E are incompatible flow types;
+Proving precondition in method pre_call$cell(1 File "ex21a10-case-spec.ss",Line:17,Col:2) Failed (may);
+do_unmatched_rhs : x'::cell<Anon_11>(must); 
+                   Proving precondition in method pre_call$cell(1 File "ex21a10-case-spec.ss",Line:17,Col:2) Failed (may);
+do_unmatched_rhs : x'::cell<Anon_11>(must)]
+   ]
+
+# why is res=x'!=null not captured?
+ 
+id: 4; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [] globals: [@flow,@ver_post,@err_must]
+ checkentail (exists Anon_1470: (htrue) * x'::cell<Anon_1470>&x'!=null & x'=x & 
+res=v_boolean_19_1434' & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&res&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+   (htrue) * x'::cell<Anon_1472>&x'!=null & x'=x & res=v_boolean_19_1434'&
+     {FLOW,(4,11)=__MayError#E}[]
+   es_final_error:[ true |-  res. LOCS:[19;15] (may-bug)]
+   ]
+==========================================================================
+# ex21a10a.slk
+
+infer[@err_must] x!=null & x'=x & flow __MayError 
+  or x=null & x'=x & x'=null & !res & flow __norm 
+ |- res & flow __norm.
+print residue.
+
+# how come msg from only one branch.
+What about the other branch with mush Error. WHy is
+it not in the may failure message?
+
+Entail (2) : Fail.(may) cause:1.2b: ante flow:__MayError#E conseq flow: __norm#E are incompatible flow types
+Residue:
+ <1>
+    emp&x'=x & x!=null&{FLOW,(18,22)=__MayError#E}[]
+    or emp&!(res) & x'=null & x'=x & x=null&{FLOW,(18,19)=__Error#E}[]
+
+==========================================================================
+# ex21a10b.slk
+
+infer[@err_must] x>0 & flow __MayError 
+  or x<0 & r=0 & flow __norm 
+ |- r!=0 & flow __norm.
+
+GOT:
+
+Entail (1) : Fail.(may) cause:1.2b: ante flow:__MayError#E conseq flow: __norm#E are incompatible flow types
+Residue:
+ <1>
+    emp&0<x&{FLOW,(4,8)=__MayError#E}[]
+    or emp&r=0 & x<0&{FLOW,(6,7)=__Error#E}[]
+
+Residue is correct but error message is wrong, expects:
+
+Entail (1) : Fail.(may) 
+  Or[cause:1.2b: ante flow:__MayError#E conseq flow: __norm#E are incompatible flow types,
+   r=0 |- r!=0 (must failure)
+  ]
+
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
 ==========================================================================
 ==========================================================================
 ==========================================================================

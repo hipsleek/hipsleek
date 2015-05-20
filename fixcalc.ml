@@ -177,7 +177,11 @@ let rec fixcalc_of_pure_formula f = match f with
 ;;
 
 let fixcalc_of_pure_formula f=
-  let nf = Trans_arr.new_translate_out_array_in_one_formula_split f in
+  DD.no_1 "fixcalc_of_pure_formula(really called)" !CP.print_formula (fun s->s) (fun f-> fixcalc_of_pure_formula f) f
+;;
+
+let fixcalc_of_pure_formula f=
+  let nf = x_add_1 Trans_arr.new_translate_out_array_in_one_formula_split f in
   fixcalc_of_pure_formula nf
 ;;
 
@@ -878,13 +882,18 @@ let compute_def (rel_fml, pf, no) ante_vars =
   Debug.no_2 "compute_def" pr1 (pr_list !CP.print_sv) (fun x -> x) (fun one two -> compute_def one two) (rel_fml, pf, no) ante_vars
 ;;
 
+let string_of_rel_defs = 
+  let pr0 = !CP.print_formula in
+  let pr1 = pr_list (pr_triple pr0 pr0 string_of_int) in
+  pr1
 
 let compute_cmd rel_defs bottom_up =
   let nos = List.map (fun (_,_,a) -> a) rel_defs in
   (* let nos = string_of_elems nos string_of_int "," in *)
   let nos = string_of_elems nos (fun _ ->
       string_of_int !Globals.fixcalc_disj) "," in
-  let () = DD.ninfo_hprint (add_str "No of disjs" (fun x -> x)) nos no_pos in
+  let () = x_binfo_hp (add_str "rel_defs" string_of_rel_defs) rel_defs no_pos in
+  let () = x_binfo_hp (add_str "No of disjs" (fun x -> x)) nos no_pos in
   let rels = List.map (fun (a,_,_) ->
       CP.name_of_spec_var (CP.name_of_rel_form a)) rel_defs in
   let names = string_of_elems rels (fun x -> x) "," in
@@ -1313,7 +1322,7 @@ let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
   let non_rec_defs = List.map (fun (rel_fml,pf,_) -> (rel_fml,pf)) non_rec_defs in
   if rec_rel_defs=[] then true_const @ non_rec_defs
   else
-    true_const @ (* non_rec_defs @ *) (compute_fixpoint_aux rel_defs ante_vars bottom_up)
+    true_const @ (* non_rec_defs @ *) (x_add compute_fixpoint_aux rel_defs ante_vars bottom_up)
 
 let compute_fixpoint_x input_pairs ante_vars specs bottom_up =
   DD.ninfo_pprint ("input_pairs: " ^ (pr_list
@@ -1389,7 +1398,7 @@ let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up =
           | _ -> acc
         in new_acc
       ) 1 input_pairs in
-    let () = x_binfo_hp (add_str "n_base" string_of_int) n_base no_pos in
+    let () = x_tinfo_hp (add_str "n_base" string_of_int) n_base no_pos in
     (* Wrapper.wrap_num_disj compute_fixpoint_x n_base input_pairs ante_vars specs bottom_up *)
     compute_fixpoint_x input_pairs ante_vars specs bottom_up
 

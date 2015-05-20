@@ -9400,19 +9400,40 @@ let print_failure_kind_full = ref(fun (c:failure_kind) -> "printer not initializ
 let print_fail_type = ref(fun (c:fail_type) -> "printer not initialized")
 
 
+
+let rec is_infer_pre_must sf = match sf with
+  | EList el -> List.exists (fun (lbl,sf) ->
+      is_infer_pre_must sf) el
+  | EInfer ei ->
+    let inf_obj = ei.formula_inf_obj in
+    (inf_obj # is_pre_must)
+  | _ -> false
+
 let is_dis_err_exc es = 
   es.es_infer_obj # is_dis_err_all
+
+let is_err_must_exc es = 
+  es.es_infer_obj # is_err_must_all
+
+let is_err_must_only_exc es = 
+  es.es_infer_obj # is_err_must_only
 
 let is_en_error_exc es =
   not(is_dis_err_exc es)
 (* es.es_infer_obj # is_err_must || es.es_infer_obj # is_err_may *)
+
 
 let rec is_en_error_exc_ctx c =
   match c with
   | Ctx es -> is_en_error_exc es
   | OCtx (c1,c2) -> is_en_error_exc_ctx c1 || is_en_error_exc_ctx c2
 
-let is_en_error_exc_ctx_list lc=
+let rec is_err_must_exc_ctx c =
+  match c with
+  | Ctx es -> is_err_must_only_exc es
+  | OCtx (c1,c2) -> is_err_must_exc_ctx c1 || is_err_must_exc_ctx c2
+
+let is_en_error_exc_ctx_list lc =
   match lc with
   | FailCtx (_,c,_) -> is_en_error_exc_ctx c
   | SuccCtx cs -> List.exists is_en_error_exc_ctx cs
@@ -9443,12 +9464,24 @@ let is_dfa_ctx_list lc=
   | FailCtx (_,c,_) -> is_dfa_ctx c
   | SuccCtx cs -> List.exists is_dfa_ctx cs
 
+let is_infer_type_es it es = 
+  es.es_infer_obj # is_infer_type it
+
+let is_infer_type_ctx it c =
+  let rec aux c =
+    match c with
+    | Ctx es -> is_infer_type_es it es
+    | OCtx (c1,c2) -> aux c1 || aux c2
+  in aux c
+
+(* let is_arr_as_var_ctx c = *)
+(*   is_infer_type_ctx Globals.INF_ARR_AS_VAR c *)
 
 let acc_error_msg final_error_opt add_msg =
   let rec aux ferr = 
     match ferr with
-      | [] -> []
-      | (s,c,ft)::rest -> ((add_msg ^";\n"^s),c,ft)::(aux rest)
+    | [] -> []
+    | (s,c,ft)::rest -> ((add_msg ^";\n"^s),c,ft)::(aux rest)
   in aux final_error_opt
 
 let acc_error_msg final_error_opt add_msg =
@@ -9471,7 +9504,7 @@ let rec get_false_entail_state ctx =
 
 let mk_cex is_sat=
   {cex_sat = is_sat;
-  cex_processed_mark=false;
+   cex_processed_mark=false;
   }
 
 let is_sat_fail cex=
@@ -10006,7 +10039,10 @@ let gen_lor_x (m1,n1,e1) (m2,n2,e2) : (failure_kind * string * (entail_state opt
   | _, Failure_Bot _ -> m1,n1,e1
   (*report_error no_pos "Failure_None not expected in gen_or"*)
   | Failure_May m1, Failure_May m2 -> Failure_May ("OrL[\n"^m1^",\n"^m2^"\n]"),n1, None
+  | Failure_May m1, Failure_Must m2 -> Failure_May ("OrL[\n"^m1^",\n"^m2^"\n]"),n1, None
   | Failure_May m, _ -> Failure_May m, n1,None
+  (* demo/ex21a10-case *)
+  | Failure_Must m1, Failure_May m2 -> Failure_May ("OrL[\n"^m1^",\n"^m2^"\n]"),n2, None
   | _, Failure_May m -> Failure_May m,n2,None
   | Failure_Must m1, Failure_Must m2 ->
     if (n1=sl_error) then (Failure_Must m2, n2, e2)
@@ -10220,7 +10256,11 @@ let get_may_error_from_ctx cs =
 
 let rec is_ctx_error ctx=
   match ctx with
-  | Ctx es -> not (es.es_final_error == []) || x_add_1 is_error_flow es.es_formula || is_mayerror_flow es.es_formula
+  | Ctx es ->
+    (*L2: determining failure is based only on es_final_error*)
+    not (es.es_final_error == [])
+  (* es_formula: may be exception *)
+  (* || x_add_1 is_error_flow es.es_formula || is_mayerror_flow es.es_formula *)
   | OCtx (c1, c2) -> is_ctx_error c1 || is_ctx_error c2
 
 let isFailCtx_gen cl =
@@ -10228,12 +10268,14 @@ let isFailCtx_gen cl =
   | FailCtx _ -> true
   | SuccCtx cs -> if cs = [] then true else
       (* ((get_must_error_from_ctx cs) !=None) || ((get_may_error_from_ctx cs) !=None) *)
-      List.exists (fun ctx -> is_ctx_error ctx) cs
+      (* L2: in case error-infer, we return both error and succ context. temporally return valid with all (einf/ex11) *)
+      (* List.exists (fun ctx -> is_ctx_error ctx) cs *)
+      List.for_all (fun ctx -> is_ctx_error ctx) cs
 
 let lst_to_opt lst =
   match List.rev lst with
-    | [] -> None
-    | x::_ -> Some x
+  | [] -> None
+  | x::_ -> Some x
 
 let rec get_final_error_ctx ctx=
   match ctx with
@@ -10481,13 +10523,13 @@ and combine_helper_x op los rs=
 
 and combine_helper op los rs=
   match los with
-    | [os] -> (match os with
-            | None -> ""
-            | Some s -> s
-      )
-    | _ -> (
-          combine_helper_x op los rs
-      )
+  | [os] -> (match os with
+      | None -> ""
+      | Some s -> s
+    )
+  | _ -> (
+      combine_helper_x op los rs
+    )
 
 and get_must_failure_partial_context ((bfl:branch_fail list), (bctxl: branch_ctx list)): (string option)=
   let helper (pt, ft)=
@@ -10635,8 +10677,8 @@ let add_err_to_estate err es =
 
 let repl_msg_final_error msg es =
   match (List.rev es.es_final_error) with
-    | (s,_,_)::_ -> msg^";\n"^s
-    | [] -> msg
+  | (s,_,_)::_ -> msg^";\n"^s
+  | [] -> msg
 
 let repl_msg_final_error msg es =
   let pr1 (m,_,_) = m in
@@ -10645,8 +10687,8 @@ let repl_msg_final_error msg es =
 
 let add_opt_to_estate err es =
   match err with
-    | None -> es
-    | Some e -> add_err_to_estate e es
+  | None -> es
+  | Some e -> add_err_to_estate e es
 
 let convert_must_failure_4_fail_type_new  (s:string) (ft:fail_type) cex : context option =
   let rec update_err ctx ((s1,ft,fk) as err) = match ctx with
@@ -10659,10 +10701,10 @@ let convert_must_failure_4_fail_type_new  (s:string) (ft:fail_type) cex : contex
 
 let convert_must_failure_4_fail_type_new (s:string) (ft:fail_type) cex : context option =
   let pr = pr_option !print_context_short in
-  Debug.no_2 "convert_must_failure_4_fail_type_new" pr_id pr_none pr
+  Debug.no_2 "convert_must_failure_4_fail_type_new" pr_id !print_fail_type pr
     (fun _ _ -> convert_must_failure_4_fail_type_new s ft cex) s ft
 
-let convert_may_failure_4_fail_type_new  (s:string) (ft:fail_type) cex : context option =
+let convert_may_failure_4_fail_type_new_x  (s:string) (ft:fail_type) cex : context option =
   let rec update_err ctx ((s1,ft,fk) as err) = match ctx with
     | Ctx es -> Ctx (x_add add_err_to_estate err es)
     | OCtx (es1, es2) -> OCtx (update_err es1 err, update_err es2 err)
@@ -10671,59 +10713,70 @@ let convert_may_failure_4_fail_type_new  (s:string) (ft:fail_type) cex : context
   | Some (ctx, msg) -> Some (update_err ctx (s^msg,ft,  Failure_May msg))
   | _ -> None
 
+let convert_may_failure_4_fail_type_new (s:string) (ft:fail_type) cex : context option =
+  let pr = pr_option !print_context_short in
+  Debug.no_2 "convert_may_failure_4_fail_type_new" pr_id !print_fail_type pr
+    (fun _ _ -> convert_may_failure_4_fail_type_new_x s ft cex) s ft
+
 
 (* TRUNG WHY: purpose when converting a list_context from FailCtx type to SuccCtx type? *)
-let convert_maymust_failure_to_value_orig ?(mark=true) (l:list_context) : list_context =
+let convert_maymust_failure_to_value_orig_a_x ?(mark=true) (l:list_context) : list_context =
   match l with 
-    | FailCtx (ft, c, cex) -> (* Loc: to check cex here*)
-          (* if (\* not (is_en_error_exc_ctx c) *\) *)
-          (*   not !Globals.enable_error_as_exc && not (is_en_error_exc_ctx c) *)
-          (* then l *)
-          (* else *)
-          (* (match (get_must_es_msg_ft ft) with *)
-          (*   | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ]  *)
-          (*   | _ ->  l) *)
-          begin
-            let () = Debug.ninfo_hprint (add_str "c" !print_context_short) c no_pos in
-            match get_final_error_ctx c with
-              | Some _ -> SuccCtx [c]
-              | None -> (
-                    match (x_add convert_must_failure_4_fail_type_new "" ft cex) with
-                      | Some ctx -> SuccCtx [ctx]
-                      | None -> begin
-                          match (x_add convert_may_failure_4_fail_type_new "" ft cex) with
-                            | Some ctx -> SuccCtx [ctx]
-                            | None -> l
-                        end
-                )
+  | FailCtx (ft, c, cex) -> (* Loc: to check cex here*)
+    (* if (\* not (is_en_error_exc_ctx c) *\) *)
+    (*   not !Globals.enable_error_as_exc && not (is_en_error_exc_ctx c) *)
+    (* then l *)
+    (* else *)
+    (* (match (get_must_es_msg_ft ft) with *)
+    (*   | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ]  *)
+    (*   | _ ->  l) *)
+    begin
+      let () = Debug.ninfo_hprint (add_str "c" !print_context_short) c no_pos in
+      (* should combined FailCtx \/ ValidCtx. demo/ex22-lor *)
+      (* match get_final_error_ctx c with *)
+      (*   | Some _ -> SuccCtx [c] *)
+      (*   | None -> *) (
+        match (x_add convert_must_failure_4_fail_type_new "" ft cex) with
+        | Some ctx -> SuccCtx [ctx]
+        | None -> begin
+            match (x_add convert_may_failure_4_fail_type_new "" ft cex) with
+            | Some ctx -> SuccCtx [ctx]
+            | None -> l
           end
-    | SuccCtx _ -> l
+      )
+    end
+  | SuccCtx _ -> l
+
+let convert_maymust_failure_to_value_orig_a ?(mark=true) (l:list_context) : list_context =
+  let pr = !print_list_context_short in
+  Debug.no_2 "convert_maymust_failure_to_value_orig_a" string_of_bool pr pr
+    (fun _ _ -> convert_maymust_failure_to_value_orig_a_x ~mark:mark l) mark l
 
 let convert_maymust_failure_to_value_orig ?(mark=true) (l:list_context) : list_context =
   match l with
-    | FailCtx (ft, c, cex) ->
-          if not (is_en_error_exc_ctx c)
-            (* not !Globals.enable_error_as_exc && not (is_en_error_exc_ctx c) *)
-          then
-            l
-          else
-            if mark then
-              let r = convert_maymust_failure_to_value_orig l in
-              match r with
-                | SuccCtx [cc] -> FailCtx (ft, cc, { cex with cex_processed_mark=true})
-                | _ -> r
-            else
-              if cex.cex_processed_mark (* already processed *)
-              then SuccCtx [c]
-              else convert_maymust_failure_to_value_orig l
+  | FailCtx (ft, c, cex) ->
+    if not (is_en_error_exc_ctx c) && not (is_err_must_exc_ctx c)
+    (* not !Globals.enable_error_as_exc && not (is_en_error_exc_ctx c) *)
+    then
+      l
+    else
+    if mark then
+      let r = convert_maymust_failure_to_value_orig_a l in
+      match r with
+      | SuccCtx [cc] -> FailCtx (ft, cc, { cex with cex_processed_mark=true})
+      | _ -> r
+    else
+    if cex.cex_processed_mark (* already processed *)
+    then SuccCtx [c]
+    else convert_maymust_failure_to_value_orig_a l
 
-    | _ -> l
- 
+  | _ -> l
+
 
 let convert_maymust_failure_to_value_orig ?(mark=true) (l:list_context) : list_context =
   let pr = !print_list_context_short in
-  Debug.no_1 "convert_maymust_failure_to_value_orig" pr pr
-    (fun _ -> convert_maymust_failure_to_value_orig ~mark:mark l) l
+  Debug.no_2 "convert_maymust_failure_to_value_orig" string_of_bool pr pr
+    (fun _ _ -> convert_maymust_failure_to_value_orig ~mark:mark l) mark l
 
 (* let add_must_err (s:string) (fme:branch_ctx list) (e:esc_stack) : esc_stack = *)
 (*   ((-1,"Must Err @"^s),fme) :: e *)
@@ -11110,7 +11163,7 @@ let add_infer_pure_to_estate cp es =
 let add_infer_rel_to_ctx cp ctx =
   let rec helper ctx =
     match ctx with
-    | Ctx es -> Ctx (add_infer_rel_to_estate cp es)
+    | Ctx es -> Ctx (x_add add_infer_rel_to_estate cp es)
     | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
   in helper ctx
 
@@ -11175,21 +11228,21 @@ let add_infer_pre f_ctx ctx =
 let map_ctx (ctx: context) f_es: context =
   let rec helper ctx = 
     match ctx with
-      | Ctx es -> let es = f_es es in Ctx es
-      | OCtx (es1,es2) -> OCtx (helper es1, helper es2)
+    | Ctx es -> let es = f_es es in Ctx es
+    | OCtx (es1,es2) -> OCtx (helper es1, helper es2)
   in helper ctx 
 
 let map_branch_ctx_list (ctx_lst: branch_ctx list) f_es: branch_ctx list =
   List.map ( fun (pt, ctx0, ft) ->
       let ctx0 = map_ctx ctx0 f_es in
       (pt,ctx0,ft)
-  ) ctx_lst
+    ) ctx_lst
 
 let map_list_partial_context (ctx: list_partial_context) f_es =
   List.map (fun (lst1, lst2) ->
       let lst2 = map_branch_ctx_list lst2 f_es in
       (lst1,lst2)
-  ) ctx
+    ) ctx
 
 let mkOCtx ctx1 ctx2 pos =
   (*if (isFailCtx ctx1) || (isFailCtx ctx2) then or_fail_ctx ctx1 ctx2
@@ -11407,7 +11460,8 @@ let mkFailContext msg estate conseq pid pos = {
   fc_current_conseq = conseq;
 }
 
-let mkFailCtx_in (ft:fail_type) c cex = FailCtx (ft, c, cex)
+let mkFailCtx_in (ft:fail_type) (es, msg,fk) cex =
+  FailCtx (ft, Ctx {es with es_final_error = es.es_final_error@[(msg, ft, fk)]}, cex)
 
 (*simple concurrency*)
 let mkFailCtx_simple msg estate conseq cex pos = 
@@ -11421,13 +11475,13 @@ let mkFailCtx_simple msg estate conseq cex pos =
   in
   let fail_ex = {fe_kind = Failure_Must msg; fe_name = Globals.logical_error ;fe_locs=[]} in
   (*temporary no failure explaining*)
-  mkFailCtx_in (Basic_Reason (fail_ctx,fail_ex, estate.es_trace)) (Ctx {estate with es_formula = substitute_flow_into_f !error_flow_int estate.es_formula}) cex
+  mkFailCtx_in (Basic_Reason (fail_ctx,fail_ex, estate.es_trace)) ({estate with es_formula = substitute_flow_into_f !error_flow_int estate.es_formula}, msg, Failure_Must msg) cex
 
 let mkFailCtx_vperm msg rhs_b estate conseq cex pos = 
   let s = "variable permission mismatch "^msg in
   let new_estate = {estate  with es_formula = substitute_flow_into_f
                                      !top_flow_int estate.es_formula} in
-  mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,mk_failure_may s logical_error, estate.es_trace)) (Ctx new_estate) cex
+  mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,mk_failure_may s logical_error, estate.es_trace)) (new_estate, s, Failure_May s) cex
 
 let mk_fail_partial_context_label (ft:fail_type) (lab:path_trace) : (partial_context) = ([(lab,ft)], []) 
 
@@ -11606,7 +11660,7 @@ let list_context_union_x c1 c2 =
     (* else *)
     (* if contains_error_flow_ctx_list t2 then SuccCtx (simplify t2) *)
     (* else  *)
-      SuccCtx (simplify_ctx_elim_false_dupl t1 t2)
+    SuccCtx (simplify_ctx_elim_false_dupl t1 t2)
 
 let list_context_union c1 c2 =
   let pr = !print_list_context(* _short *) in
@@ -11686,13 +11740,13 @@ and or_list_context_x_new c1 c2 =
       (c2 )
     else
       let t = mk_not_a_failure (get_first_es  t2) in
-      FailCtx (Or_Reason (t1,t), c1 ,cex1)
+      FailCtx (Or_Reason (t1,t), c1 ,{cex1 with cex_processed_mark = false;})
   | SuccCtx t1 ,FailCtx (t2,c2, cex2) ->
     if is_bot_failure_ft t2 then
       c1
     else
       let t = mk_not_a_failure (get_first_es t1) in
-      FailCtx (Or_Reason (t,t2),c2, cex2)
+      FailCtx (Or_Reason (t,t2),c2, {cex2 with cex_processed_mark = false;})
   | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (x_add or_context_list t1 t2)
 
 and or_list_context_x c1 c2 = match c1,c2 with
@@ -14455,12 +14509,12 @@ let add_to_estate_with_steps (es:entail_state) (ss:steps) =
 (*   | EList b -> EList (map_l_snd (add_post post) b) *)
 
 let rec add_post post f = match f with
- | EBase b ->
-     let fec = match b.formula_struc_continuation with
-				| Some b-> add_post post b
-				| _ -> post
-     in
-     EBase{b with formula_struc_continuation = Some fec}
+  | EBase b ->
+    let fec = match b.formula_struc_continuation with
+      | Some b-> add_post post b
+      | _ -> post
+    in
+    EBase{b with formula_struc_continuation = Some fec}
   | ECase b -> ECase {b with formula_case_branches  = List.map (fun (c1,c2)-> (c1,(add_post post c2))) b.formula_case_branches;}
   | EAssume _ -> Err.report_error {Err.error_loc = no_pos; Err.error_text = "add post found an existing post\n"}
   | EInfer b ->  EInfer {b with formula_inf_continuation = add_post post b.formula_inf_continuation}
@@ -15067,8 +15121,8 @@ and merge_two_nodes dn1 dn2 =
         (* TO DO: ??? Can not use spec_var name to tell whether it is a hole
            or not. It also depends on the positions stored in
            h_formula_data_holes *)
-            let () = x_binfo_hp (add_str "holes1" (pr_list string_of_int)) holes1 no_pos in
-            let () = x_binfo_hp (add_str "holes2" (pr_list string_of_int)) holes2 no_pos in
+        let () = x_binfo_hp (add_str "holes1" (pr_list string_of_int)) holes1 no_pos in
+        let () = x_binfo_hp (add_str "holes2" (pr_list string_of_int)) holes2 no_pos in
         let is_hole_specvar sv = 
           let svname = CP.name_of_spec_var sv in
           svname.[0] = '#' in
@@ -18754,3 +18808,16 @@ let exist_reachable_states (rs:list_partial_context)=
   let pr1 = !print_list_partial_context in
   Debug.no_1 "exist_reachable_states" pr1 string_of_bool
     (fun _ -> exist_reachable_states_x rs) rs
+
+
+let determine_infer_type sp t  = match sp with
+  | EInfer b ->
+    let inf_o = b.formula_inf_obj in
+    inf_o # get t
+  | _ -> false 
+
+let determine_infer_classic sp  = 
+  determine_infer_type sp INF_CLASSIC
+
+let determine_arr_as_var sp  = 
+  determine_infer_type sp INF_ARR_AS_VAR

@@ -1,0 +1,46 @@
+infer[@err_must
+] emp&x!=null & x'=x & flow __MayError
+ |-  emp&res=3& flow __norm. 
+
+print residue.
+/*
+# ex22g13.slk
+
+The 2nd message is unnecessary on flow conflicts..
+
+infer[@err_must] emp&x!=null & x'=x & flow __MayError
+ |-  emp&res=3& flow __norm. 
+
+MaybeErr Context: 
+                   
+                    fe_kind: MAY
+                    fe_name: undefined
+                    fe_locs: {
+                              fc_message: 
+                               1.2b: ante flow:__MayError#E conseq flow: __norm#E are incompatible flow types
+                              fc_current_lhs_flow: {FLOW,(4,8)=__MayError#E}}
+[[empty]]
+                  FAIL_AND 
+                   
+                    fe_kind: MAY
+                    fe_name: logical bug
+                    fe_locs: {
+                              fc_message:  true |-  res=3. LOCS:[0;3] (may-bug)
+                              fc_current_lhs_flow: {FLOW,(4,8)=__MayError#E}}
+[[empty]]
+
+
+
+id: 2; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [] globals: [@flow,@ver_post,@err_must]
+ checkentail emp&x!=null & x'=x & MayLoop[]&{FLOW,(4,11)=__MayError#E}[]
+ |-  emp&res=3&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+   emp&{FLOW,(1,28)=__flow#E}[]
+   es_final_error:[AndR[
+1.2b: ante flow:__MayError#E conseq flow: __norm#E are incompatible flow types;
+Proving precondition in method pre_call$cell(1 File "ex22g9-multi-pre.ss",Line:13,Col:2) Failed (may);
+ x'!=null |-  x'=null. LOCS:[9;10;13] (may-bug),
+ true |-  res=3. LOCS:[0;11] (may-bug)
+]]
+*/

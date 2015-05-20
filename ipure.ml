@@ -1728,7 +1728,7 @@ and float_out_pure_min_max (p : formula) : formula =
       let nargse = List.map fst nargs in
       let t = BForm ((RelForm (r, nargse, l), il), lbl) in
       t
-      
+
   in
   match p with
   | BForm (b,lbl) -> (float_out_b_formula_min_max b lbl)
@@ -2111,81 +2111,81 @@ let transform_b_formula_x f (e : b_formula) : b_formula =
   | None -> (
       let (pf,il) = e in
       let npf = ( let rec helper pf = 
-          match pf with
-          | Frm _ | BConst _ | XPure _
-          (* | VarPerm _ *)
-          | BVar _ | BagMin _ | SubAnn _ | BagMax _ -> pf
-          | Lt (e1,e2,l) ->
-            let ne1 = transform_exp f_exp e1 in
-            let ne2 = transform_exp f_exp e2 in
-            Lt (ne1,ne2,l)
-          | Lte (e1,e2,l) ->
-            let ne1 = transform_exp f_exp e1 in
-            let ne2 = transform_exp f_exp e2 in
-            Lte (ne1,ne2,l)
-          | Gt (e1,e2,l) ->
-            let ne1 = transform_exp f_exp e1 in
-            let ne2 = transform_exp f_exp e2 in
-            Gt (ne1,ne2,l)
-          | Gte (e1,e2,l) ->
-            let ne1 = transform_exp f_exp e1 in
-            let ne2 = transform_exp f_exp e2 in
-            Gte (ne1,ne2,l)
-          | Eq (e1,e2,l) ->
-            let ne1 = transform_exp f_exp e1 in
-            let ne2 = transform_exp f_exp e2 in
-            Eq (ne1,ne2,l)
-          | Neq (e1,e2,l) ->
-            let ne1 = transform_exp f_exp e1 in
-            let ne2 = transform_exp f_exp e2 in
-            Neq (ne1,ne2,l)
-          | EqMax (e1,e2,e3,l) ->
-            let ne1 = transform_exp f_exp e1 in
-            let ne2 = transform_exp f_exp e2 in
-            let ne3 = transform_exp f_exp e3 in
-            EqMax (ne1,ne2,ne3,l)   
-          | EqMin (e1,e2,e3,l) ->
-            let ne1 = transform_exp f_exp e1 in
-            let ne2 = transform_exp f_exp e2 in
-            let ne3 = transform_exp f_exp e3 in
-            EqMin (ne1,ne2,ne3,l)
-          | BagIn (v,e,l)->
-            let ne1 = transform_exp f_exp e in
-            BagIn (v,ne1,l)
-          | BagNotIn (v,e,l)->
-            let ne1 = transform_exp f_exp e in
-            BagNotIn (v,ne1,l)
-          | BagSub (e1,e2,l) ->
-            let ne1 = transform_exp f_exp e1 in
-            let ne2 = transform_exp f_exp e2 in
-            BagSub (ne1,ne2,l)
-          | ListIn (e1,e2,l) ->
-            let ne1 = transform_exp f_exp e1 in
-            let ne2 = transform_exp f_exp e2 in
-            ListIn (ne1,ne2,l)
-          | ListNotIn (e1,e2,l) ->
-            let ne1 = transform_exp f_exp e1 in
-            let ne2 = transform_exp f_exp e2 in
-            ListNotIn (ne1,ne2,l)
-          | ListAllN (e1,e2,l) ->
-            let ne1 = transform_exp f_exp e1 in
-            let ne2 = transform_exp f_exp e2 in
-            ListAllN (ne1,ne2,l)
-          | ListPerm (e1,e2,l) ->
-            let ne1 = transform_exp f_exp e1 in
-            let ne2 = transform_exp f_exp e2 in
-            ListPerm (ne1,ne2,l)
-          | RelForm (r, args, l) ->
-            let nargs = List.map (transform_exp f_exp) args in
-            RelForm (r,nargs,l)
-          | ImmRel (r, cond, l) ->
-            let r = helper r in
-            ImmRel (r,cond,l)
-          | LexVar (t,es1,es2,l) -> 
-            let nes1 = List.map (transform_exp f_exp) es1 in
-            let nes2 = List.map (transform_exp f_exp) es2 in
-            LexVar (t,nes1,nes2,l)
-      in helper pf) in
+                    match pf with
+                    | Frm _ | BConst _ | XPure _
+                    (* | VarPerm _ *)
+                    | BVar _ | BagMin _ | SubAnn _ | BagMax _ -> pf
+                    | Lt (e1,e2,l) ->
+                      let ne1 = transform_exp f_exp e1 in
+                      let ne2 = transform_exp f_exp e2 in
+                      Lt (ne1,ne2,l)
+                    | Lte (e1,e2,l) ->
+                      let ne1 = transform_exp f_exp e1 in
+                      let ne2 = transform_exp f_exp e2 in
+                      Lte (ne1,ne2,l)
+                    | Gt (e1,e2,l) ->
+                      let ne1 = transform_exp f_exp e1 in
+                      let ne2 = transform_exp f_exp e2 in
+                      Gt (ne1,ne2,l)
+                    | Gte (e1,e2,l) ->
+                      let ne1 = transform_exp f_exp e1 in
+                      let ne2 = transform_exp f_exp e2 in
+                      Gte (ne1,ne2,l)
+                    | Eq (e1,e2,l) ->
+                      let ne1 = transform_exp f_exp e1 in
+                      let ne2 = transform_exp f_exp e2 in
+                      Eq (ne1,ne2,l)
+                    | Neq (e1,e2,l) ->
+                      let ne1 = transform_exp f_exp e1 in
+                      let ne2 = transform_exp f_exp e2 in
+                      Neq (ne1,ne2,l)
+                    | EqMax (e1,e2,e3,l) ->
+                      let ne1 = transform_exp f_exp e1 in
+                      let ne2 = transform_exp f_exp e2 in
+                      let ne3 = transform_exp f_exp e3 in
+                      EqMax (ne1,ne2,ne3,l)   
+                    | EqMin (e1,e2,e3,l) ->
+                      let ne1 = transform_exp f_exp e1 in
+                      let ne2 = transform_exp f_exp e2 in
+                      let ne3 = transform_exp f_exp e3 in
+                      EqMin (ne1,ne2,ne3,l)
+                    | BagIn (v,e,l)->
+                      let ne1 = transform_exp f_exp e in
+                      BagIn (v,ne1,l)
+                    | BagNotIn (v,e,l)->
+                      let ne1 = transform_exp f_exp e in
+                      BagNotIn (v,ne1,l)
+                    | BagSub (e1,e2,l) ->
+                      let ne1 = transform_exp f_exp e1 in
+                      let ne2 = transform_exp f_exp e2 in
+                      BagSub (ne1,ne2,l)
+                    | ListIn (e1,e2,l) ->
+                      let ne1 = transform_exp f_exp e1 in
+                      let ne2 = transform_exp f_exp e2 in
+                      ListIn (ne1,ne2,l)
+                    | ListNotIn (e1,e2,l) ->
+                      let ne1 = transform_exp f_exp e1 in
+                      let ne2 = transform_exp f_exp e2 in
+                      ListNotIn (ne1,ne2,l)
+                    | ListAllN (e1,e2,l) ->
+                      let ne1 = transform_exp f_exp e1 in
+                      let ne2 = transform_exp f_exp e2 in
+                      ListAllN (ne1,ne2,l)
+                    | ListPerm (e1,e2,l) ->
+                      let ne1 = transform_exp f_exp e1 in
+                      let ne2 = transform_exp f_exp e2 in
+                      ListPerm (ne1,ne2,l)
+                    | RelForm (r, args, l) ->
+                      let nargs = List.map (transform_exp f_exp) args in
+                      RelForm (r,nargs,l)
+                    | ImmRel (r, cond, l) ->
+                      let r = helper r in
+                      ImmRel (r,cond,l)
+                    | LexVar (t,es1,es2,l) -> 
+                      let nes1 = List.map (transform_exp f_exp) es1 in
+                      let nes2 = List.map (transform_exp f_exp) es2 in
+                      LexVar (t,nes1,nes2,l)
+                  in helper pf) in
       (npf,il)
     )
 

@@ -20,6 +20,9 @@ type spec_var =
 let sp_rm_prime v = match v with
     SpecVar (a,b,_) -> SpecVar(a,b,Unprimed)
 
+let sp_add_prime v p = match v with
+    SpecVar (a,b,_) -> SpecVar(a,b,p)
+
 let mk_spec_var id = SpecVar (UNK,id,Unprimed)
 
 let mk_typed_spec_var t id = SpecVar (t,id,Unprimed)
@@ -631,11 +634,18 @@ let is_int_str_aux (n:int) (s:string) : bool =
 let ident_of_spec_var (sv: spec_var) = match sv with
   | SpecVar (t, v, _) -> v 
 
-let string_of_spec_var (sv: spec_var) = match sv with
-  | SpecVar (t, v, _) -> v ^ (if is_primed sv then "'" else "")
+let string_of_spec_var ?(print_typ=false) (sv: spec_var) = match sv with
+  | SpecVar (t, v, p) -> 
+    if print_typ then
+      if p==Primed then (v^"#':"^(string_of_typ t)) 
+      else (v^":"^(string_of_typ t))
+    else if p==Primed then (v^"'") else v
 
-let string_of_typed_spec_var (sv: spec_var) = match sv with
-  | SpecVar (t, v, _) -> v ^ (if is_primed sv then "'" else "")^":"^(string_of_typ t)
+let string_of_typed_spec_var (sv: spec_var) = 
+  string_of_spec_var ~print_typ:true sv
+
+(* match sv with *)
+(*   | SpecVar (t, v, _) -> v ^ (if is_primed sv then "#'" else "")^":"^(string_of_typ t) *)
 
 (* let string_of_typed_spec_var x =  string_of_spec_var_type x *)
 
@@ -873,6 +883,12 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
     (* translation has ensured well-typedness.
        We need only to compare names and primedness *)
     (String.compare v1 v2 = 0) && (p1 = p2)
+
+let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = 
+  let pr = !print_sv in
+  Debug.no_2 "eq_spec_var" pr pr string_of_bool eq_spec_var (sv1 : spec_var) (sv2 : spec_var)
+
+
 
 let eq_spec_var_unp (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (_, v1, p1), SpecVar (_, v2, p2)) ->
@@ -1417,8 +1433,8 @@ and bfv (bf : b_formula) =
     let vid = r in
     vid::remove_dups_svl (List.fold_left List.append [] (List.map afv args))
   | ImmRel (r, cond, _) -> 
-     let fvr = bfv (r, sl) in
-     fvr
+    let fvr = bfv (r, sl) in
+    fvr
   (* An Hoa *)
   (* | VarPerm (t,ls,_) -> ls *)
   | LexVar l_info ->
@@ -1787,7 +1803,7 @@ and remove_ptr_equations f is_or = match f with
   | Exists (v,f,o,p) -> Exists (v,remove_ptr_equations f false,o,p)
 
 and pure_ptr_equations (f:formula) : (spec_var * spec_var) list = 
-  pure_ptr_equations_aux true f
+  x_add pure_ptr_equations_aux true f
 
 and pure_ptr_equations_aux_x with_null (f:formula) : (spec_var * spec_var) list = 
   let rec prep_f f = match f with
@@ -1802,6 +1818,15 @@ and pure_ptr_equations_aux with_null (f:formula) : (spec_var * spec_var) list =
   let pr2 = !print_formula in
   let pr3 = pr_list (pr_pair !print_sv !print_sv) in
   Debug.no_2 "pure_ptr_equations_aux" pr1 pr2 pr3 pure_ptr_equations_aux_x with_null f 
+
+and get_int_equality_aux f = []
+
+and get_int_equality (f:formula) : (spec_var * spec_var) list = 
+  (* let pr1 = string_of_bool in *)
+  let pr2 = !print_formula in
+  let pr3 = pr_list (pr_pair !print_sv !print_sv) in
+  Debug.no_1 "get_int_equality" pr2 pr3 get_int_equality_aux f 
+
 
 and get_alias (e : exp) : spec_var =
   match e with
@@ -3192,7 +3217,7 @@ and diff_svl_x (svs1 : spec_var list) (svs2 : spec_var list) =
   List.filter (fun sv -> not(mem sv svs2)) svs1
 
 and diff_svl (svs1 : spec_var list) (svs2 : spec_var list) =
-  Debug.no_2 "diff svl" !print_svl !print_svl !print_svl diff_svl_x svs1 svs2
+  Debug.no_2 "diff_svl" !print_svl !print_svl !print_svl diff_svl_x svs1 svs2
 
 
 and are_same_types (t1 : typ) (t2 : typ) = match t1 with
@@ -3592,47 +3617,47 @@ and b_apply_subs sst bf =
 and b_apply_subs_x sst bf =
   let (pf,sl) = bf in
   let npf = let rec helper pf =
-    match pf with
-    | Frm (fv, pos) -> Frm (subs_one sst fv, pos)
-    | BConst _ -> pf
-    | BVar (bv, pos) -> BVar (subs_one sst bv, pos)
-    | XPure x -> XPure {x with 
-                        xpure_view_node=map_opt (subs_one sst) x.xpure_view_node;
-                        xpure_view_arguments=List.map (subs_one sst) x.xpure_view_arguments;
-                       } 
-    | Lt (a1, a2, pos) -> Lt (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-    | Lte (a1, a2, pos) -> Lte (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-    | Gt (a1, a2, pos) -> Gt (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-    | Gte (a1, a2, pos) -> Gte (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-    | SubAnn (a1, a2, pos) -> SubAnn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-    | Eq (a1, a2, pos) -> Eq (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-    | Neq (a1, a2, pos) -> Neq (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-    | EqMax (a1, a2, a3, pos) -> 
-      EqMax (e_apply_subs sst a1, e_apply_subs sst a2, e_apply_subs sst a3, pos)
-    | EqMin (a1, a2, a3, pos) -> 
-      EqMin (e_apply_subs sst a1, e_apply_subs sst a2, e_apply_subs sst a3, pos)
-    | BagIn (v, a1, pos) -> BagIn (subs_one sst v, e_apply_subs sst a1, pos)
-    | BagNotIn (v, a1, pos) -> BagNotIn (subs_one sst v, e_apply_subs sst a1, pos)
-    (* is it ok?... can i have a set of boolean values?... don't think so... *)
-    | BagSub (a1, a2, pos) -> BagSub (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-    | BagMax (v1, v2, pos) -> BagMax (subs_one sst v1, subs_one sst v2, pos)
-    | BagMin (v1, v2, pos) -> BagMin (subs_one sst v1, subs_one sst v2, pos)
-    (* | VarPerm (ct,ls,pos) ->                    *)
-    (*     let ls1 = List.map (subs_one sst) ls in *)
-    (*     VarPerm (ct,ls1,pos)                    *)
-    | ListIn (a1, a2, pos) -> ListIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-    | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-    | ListAllN (a1, a2, pos) -> ListAllN (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-    | ListPerm (a1, a2, pos) -> ListPerm (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-    | RelForm (r, args, pos) -> RelForm (subs_one sst r, e_apply_subs_list sst args, pos) (* An Hoa *)
-    | ImmRel (r, cond, pos) -> ImmRel (helper r, cond, pos) (* An Hoa *)
-    (* | RelForm (r, args, pos) -> RelForm (r, e_apply_subs_list sst args, pos) (\* An Hoa *\) *)
-    | LexVar t_info -> 
-      LexVar { t_info with
-               lex_ann = map_term_ann (apply_subs sst) (e_apply_subs sst) t_info.lex_ann;
-               lex_exp = e_apply_subs_list sst t_info.lex_exp;
-               lex_tmp = e_apply_subs_list sst t_info.lex_tmp; } 
-  in helper pf
+              match pf with
+              | Frm (fv, pos) -> Frm (subs_one sst fv, pos)
+              | BConst _ -> pf
+              | BVar (bv, pos) -> BVar (subs_one sst bv, pos)
+              | XPure x -> XPure {x with 
+                                  xpure_view_node=map_opt (subs_one sst) x.xpure_view_node;
+                                  xpure_view_arguments=List.map (subs_one sst) x.xpure_view_arguments;
+                                 } 
+              | Lt (a1, a2, pos) -> Lt (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+              | Lte (a1, a2, pos) -> Lte (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+              | Gt (a1, a2, pos) -> Gt (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+              | Gte (a1, a2, pos) -> Gte (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+              | SubAnn (a1, a2, pos) -> SubAnn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+              | Eq (a1, a2, pos) -> Eq (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+              | Neq (a1, a2, pos) -> Neq (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+              | EqMax (a1, a2, a3, pos) -> 
+                EqMax (e_apply_subs sst a1, e_apply_subs sst a2, e_apply_subs sst a3, pos)
+              | EqMin (a1, a2, a3, pos) -> 
+                EqMin (e_apply_subs sst a1, e_apply_subs sst a2, e_apply_subs sst a3, pos)
+              | BagIn (v, a1, pos) -> BagIn (subs_one sst v, e_apply_subs sst a1, pos)
+              | BagNotIn (v, a1, pos) -> BagNotIn (subs_one sst v, e_apply_subs sst a1, pos)
+              (* is it ok?... can i have a set of boolean values?... don't think so... *)
+              | BagSub (a1, a2, pos) -> BagSub (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+              | BagMax (v1, v2, pos) -> BagMax (subs_one sst v1, subs_one sst v2, pos)
+              | BagMin (v1, v2, pos) -> BagMin (subs_one sst v1, subs_one sst v2, pos)
+              (* | VarPerm (ct,ls,pos) ->                    *)
+              (*     let ls1 = List.map (subs_one sst) ls in *)
+              (*     VarPerm (ct,ls1,pos)                    *)
+              | ListIn (a1, a2, pos) -> ListIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+              | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+              | ListAllN (a1, a2, pos) -> ListAllN (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+              | ListPerm (a1, a2, pos) -> ListPerm (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+              | RelForm (r, args, pos) -> RelForm (subs_one sst r, e_apply_subs_list sst args, pos) (* An Hoa *)
+              | ImmRel (r, cond, pos) -> ImmRel (helper r, cond, pos) (* An Hoa *)
+              (* | RelForm (r, args, pos) -> RelForm (r, e_apply_subs_list sst args, pos) (\* An Hoa *\) *)
+              | LexVar t_info -> 
+                LexVar { t_info with
+                         lex_ann = map_term_ann (apply_subs sst) (e_apply_subs sst) t_info.lex_ann;
+                         lex_exp = e_apply_subs_list sst t_info.lex_exp;
+                         lex_tmp = e_apply_subs_list sst t_info.lex_tmp; } 
+    in helper pf
   in
   (* Slicing: Add the inferred linking variables into sl field *)
   (* We also restore the prior inferred information            *)
@@ -3859,49 +3884,49 @@ and is_member v t = let vl=afv t in List.fold_left (fun curr -> fun nv -> curr |
 and b_apply_par_term (sst : (spec_var * exp) list) bf =
   let (pf,il) = bf in
   let npf = let rec helper pf = 
-    match pf with
-    | Frm (fv, pos) ->
-      if List.exists (fun (fr,_) -> eq_spec_var fv fr) sst   then
-        failwith ("Presburger.b_apply_one_term: attempting to substitute arithmetic term for boolean var")
-      else
-        pf
-    | BConst _ -> pf
-    | XPure _ -> pf (* WN XPure : not possible *)
-    | BVar (bv, pos) ->
-      begin try
-          let _, e = List.find (fun (fr,_) -> eq_spec_var bv fr) sst in
-          let v = get_var_opt e in
-          match v with
-          | Some v -> BVar (v, pos)
-          | None -> failwith ("Presburger.b_apply_one_term: attempting to substitute arithmetic term for boolean var")
-        with Not_found -> pf end
-    | Lt (a1, a2, pos) -> Lt (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
-    | Lte (a1, a2, pos) -> Lte (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
-    | Gt (a1, a2, pos) -> Gt (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
-    | SubAnn (a1, a2, pos) -> SubAnn (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
-    | Gte (a1, a2, pos) -> Gte (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
-    | Eq (a1, a2, pos) -> Eq (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
-    | Neq (a1, a2, pos) -> Neq (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
-    | EqMax (a1, a2, a3, pos) -> EqMax (a_apply_par_term sst a1, a_apply_par_term sst a2, a_apply_par_term sst a3, pos)
-    | EqMin (a1, a2, a3, pos) -> EqMin (a_apply_par_term sst a1, a_apply_par_term sst a2, a_apply_par_term sst a3, pos)
-    | BagIn (v, a1, pos) -> BagIn (v, a_apply_par_term sst a1, pos)
-    | BagNotIn (v, a1, pos) -> BagNotIn (v, a_apply_par_term sst a1, pos)
-    | BagSub (a1, a2, pos) -> BagSub (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
-    | BagMax (v1, v2, pos) -> BagMax (v1, v2, pos)
-    | BagMin (v1, v2, pos) -> BagMin (v1, v2, pos)
-    (* | VarPerm (ct,ls,pos) -> VarPerm (ct,ls,pos) (*Do not substitute*) *)
-    | ListIn (a1, a2, pos) -> ListIn (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
-    | ListNotIn (a1, a2, pos) -> ListNotIn (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
-    | ListAllN (a1, a2, pos) -> ListAllN (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
-    | ListPerm (a1, a2, pos) -> ListPerm (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
-    | RelForm (r, args, pos) -> RelForm (r, a_apply_par_term_list sst args, pos) (* An Hoa *)
-    | ImmRel (r, cond, pos) -> ImmRel (helper r, cond, pos)
-    | LexVar t_info -> 
-      LexVar { t_info with 
-               lex_ann = map_term_ann (apply_par_term sst) (a_apply_par_term sst) t_info.lex_ann; 
-               lex_exp = a_apply_par_term_list sst t_info.lex_exp;
-               lex_tmp = a_apply_par_term_list sst t_info.lex_tmp; } 
-  in helper pf
+              match pf with
+              | Frm (fv, pos) ->
+                if List.exists (fun (fr,_) -> eq_spec_var fv fr) sst   then
+                  failwith ("Presburger.b_apply_one_term: attempting to substitute arithmetic term for boolean var")
+                else
+                  pf
+              | BConst _ -> pf
+              | XPure _ -> pf (* WN XPure : not possible *)
+              | BVar (bv, pos) ->
+                begin try
+                    let _, e = List.find (fun (fr,_) -> eq_spec_var bv fr) sst in
+                    let v = get_var_opt e in
+                    match v with
+                    | Some v -> BVar (v, pos)
+                    | None -> failwith ("Presburger.b_apply_one_term: attempting to substitute arithmetic term for boolean var")
+                  with Not_found -> pf end
+              | Lt (a1, a2, pos) -> Lt (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+              | Lte (a1, a2, pos) -> Lte (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+              | Gt (a1, a2, pos) -> Gt (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+              | SubAnn (a1, a2, pos) -> SubAnn (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+              | Gte (a1, a2, pos) -> Gte (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+              | Eq (a1, a2, pos) -> Eq (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+              | Neq (a1, a2, pos) -> Neq (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+              | EqMax (a1, a2, a3, pos) -> EqMax (a_apply_par_term sst a1, a_apply_par_term sst a2, a_apply_par_term sst a3, pos)
+              | EqMin (a1, a2, a3, pos) -> EqMin (a_apply_par_term sst a1, a_apply_par_term sst a2, a_apply_par_term sst a3, pos)
+              | BagIn (v, a1, pos) -> BagIn (v, a_apply_par_term sst a1, pos)
+              | BagNotIn (v, a1, pos) -> BagNotIn (v, a_apply_par_term sst a1, pos)
+              | BagSub (a1, a2, pos) -> BagSub (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+              | BagMax (v1, v2, pos) -> BagMax (v1, v2, pos)
+              | BagMin (v1, v2, pos) -> BagMin (v1, v2, pos)
+              (* | VarPerm (ct,ls,pos) -> VarPerm (ct,ls,pos) (*Do not substitute*) *)
+              | ListIn (a1, a2, pos) -> ListIn (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+              | ListNotIn (a1, a2, pos) -> ListNotIn (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+              | ListAllN (a1, a2, pos) -> ListAllN (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+              | ListPerm (a1, a2, pos) -> ListPerm (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+              | RelForm (r, args, pos) -> RelForm (r, a_apply_par_term_list sst args, pos) (* An Hoa *)
+              | ImmRel (r, cond, pos) -> ImmRel (helper r, cond, pos)
+              | LexVar t_info -> 
+                LexVar { t_info with 
+                         lex_ann = map_term_ann (apply_par_term sst) (a_apply_par_term sst) t_info.lex_ann; 
+                         lex_exp = a_apply_par_term_list sst t_info.lex_exp;
+                         lex_tmp = a_apply_par_term_list sst t_info.lex_tmp; } 
+    in helper pf
   in (npf,il)
 
 and subs_one_term sst v orig = List.fold_left (fun old  -> fun  (fr,t) -> if (eq_spec_var fr v) then t else old) orig sst 
@@ -3967,67 +3992,67 @@ and apply_one_term (fr, t) f = match f with
 and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
   let (pf,il) = bf in
   let npf = let rec helper pf =
-    match pf with
-    | Frm (fv, pos) -> if eq_spec_var fv fr then
-        match t with
-        | Var (t,_) -> Frm (t,pos)
-        | _ -> failwith ("Presburger.b_apply_one_term: attempting to substitute arithmetic term for boolean var")
-      else
-        pf
-    | BConst _ -> pf
-    | XPure _ -> pf
-    | BVar (bv, pos) ->
-      if eq_spec_var bv fr then
-        match t with 
-        | Var (t,_) -> BVar (t,pos)
-        | _ -> failwith ("Presburger.b_apply_one_term: attempting to substitute arithmetic term for boolean var")
-      else
-        pf
-    | Lt (a1, a2, pos) -> Lt (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
-    | Lte (a1, a2, pos) -> Lte (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
-    | Gt (a1, a2, pos) -> Gt (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
-    | Gte (a1, a2, pos) -> Gte (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
-    | SubAnn (a1, a2, pos) -> SubAnn (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
-    | Eq (a1, a2, pos) -> Eq (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
-    | Neq (a1, a2, pos) -> Neq (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
-    | EqMax (a1, a2, a3, pos) -> EqMax (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, a_apply_one_term (fr, t) a3, pos)
-    | EqMin (a1, a2, a3, pos) -> EqMin (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, a_apply_one_term (fr, t) a3, pos)
-    | BagIn (v, a1, pos) -> 
-      let new_v = if eq_spec_var v fr then
-          match t with
-          | Var (tv,pos) -> tv
-          | _ ->
-            let () = print_endline_quiet "[Warning] b_apply_one_term: cannot replace a bag variable with an expression" in
-            v
-        else v
-      in
-      BagIn (new_v, a_apply_one_term (fr, t) a1, pos)(*what if v is a variable that need to be applied ??? MAY need to expect v to expression as well*)
-    | BagNotIn (v, a1, pos) ->
-      let new_v = if eq_spec_var v fr then
-          match t with
-          | Var (tv,pos) -> tv
-          | _ ->
-            let () = print_endline_quiet "[Warning] b_apply_one_term: cannot replace a bag variable with an expression" in
-            v
-        else v
-      in
-      BagNotIn (new_v, a_apply_one_term (fr, t) a1, pos)
-    | BagSub (a1, a2, pos) -> BagSub (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
-    | BagMax (v1, v2, pos) -> BagMax (v1, v2, pos)
-    | BagMin (v1, v2, pos) -> BagMin (v1, v2, pos)
-    (* | VarPerm (ct,ls,pos) -> VarPerm (ct,ls,pos) (* Do not substitute, is is the list of variable names*) *)
-    | ListIn (a1, a2, pos) -> ListIn (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
-    | ListNotIn (a1, a2, pos) -> ListNotIn (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
-    | ListAllN (a1, a2, pos) -> ListAllN (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
-    | ListPerm (a1, a2, pos) -> ListPerm (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
-    | RelForm (r, args, pos) -> RelForm (r, List.map (a_apply_one_term (fr, t)) args, pos) (* An Hoa *)
-    | ImmRel (r, cond, pos) -> ImmRel (helper r, cond, pos)
-    | LexVar t_info -> 
-      LexVar { t_info with
-               lex_ann = map_term_ann (apply_one_term (fr, t)) (a_apply_one_term (fr, t)) t_info.lex_ann;
-               lex_exp = List.map (a_apply_one_term (fr, t)) t_info.lex_exp; 
-               lex_tmp = List.map (a_apply_one_term (fr, t)) t_info.lex_tmp; } 
-  in helper pf
+              match pf with
+              | Frm (fv, pos) -> if eq_spec_var fv fr then
+                  match t with
+                  | Var (t,_) -> Frm (t,pos)
+                  | _ -> failwith ("Presburger.b_apply_one_term: attempting to substitute arithmetic term for boolean var")
+                else
+                  pf
+              | BConst _ -> pf
+              | XPure _ -> pf
+              | BVar (bv, pos) ->
+                if eq_spec_var bv fr then
+                  match t with 
+                  | Var (t,_) -> BVar (t,pos)
+                  | _ -> failwith ("Presburger.b_apply_one_term: attempting to substitute arithmetic term for boolean var")
+                else
+                  pf
+              | Lt (a1, a2, pos) -> Lt (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
+              | Lte (a1, a2, pos) -> Lte (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
+              | Gt (a1, a2, pos) -> Gt (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
+              | Gte (a1, a2, pos) -> Gte (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
+              | SubAnn (a1, a2, pos) -> SubAnn (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
+              | Eq (a1, a2, pos) -> Eq (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
+              | Neq (a1, a2, pos) -> Neq (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
+              | EqMax (a1, a2, a3, pos) -> EqMax (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, a_apply_one_term (fr, t) a3, pos)
+              | EqMin (a1, a2, a3, pos) -> EqMin (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, a_apply_one_term (fr, t) a3, pos)
+              | BagIn (v, a1, pos) -> 
+                let new_v = if eq_spec_var v fr then
+                    match t with
+                    | Var (tv,pos) -> tv
+                    | _ ->
+                      let () = print_endline_quiet "[Warning] b_apply_one_term: cannot replace a bag variable with an expression" in
+                      v
+                  else v
+                in
+                BagIn (new_v, a_apply_one_term (fr, t) a1, pos)(*what if v is a variable that need to be applied ??? MAY need to expect v to expression as well*)
+              | BagNotIn (v, a1, pos) ->
+                let new_v = if eq_spec_var v fr then
+                    match t with
+                    | Var (tv,pos) -> tv
+                    | _ ->
+                      let () = print_endline_quiet "[Warning] b_apply_one_term: cannot replace a bag variable with an expression" in
+                      v
+                  else v
+                in
+                BagNotIn (new_v, a_apply_one_term (fr, t) a1, pos)
+              | BagSub (a1, a2, pos) -> BagSub (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
+              | BagMax (v1, v2, pos) -> BagMax (v1, v2, pos)
+              | BagMin (v1, v2, pos) -> BagMin (v1, v2, pos)
+              (* | VarPerm (ct,ls,pos) -> VarPerm (ct,ls,pos) (* Do not substitute, is is the list of variable names*) *)
+              | ListIn (a1, a2, pos) -> ListIn (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
+              | ListNotIn (a1, a2, pos) -> ListNotIn (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
+              | ListAllN (a1, a2, pos) -> ListAllN (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
+              | ListPerm (a1, a2, pos) -> ListPerm (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
+              | RelForm (r, args, pos) -> RelForm (r, List.map (a_apply_one_term (fr, t)) args, pos) (* An Hoa *)
+              | ImmRel (r, cond, pos) -> ImmRel (helper r, cond, pos)
+              | LexVar t_info -> 
+                LexVar { t_info with
+                         lex_ann = map_term_ann (apply_one_term (fr, t)) (a_apply_one_term (fr, t)) t_info.lex_ann;
+                         lex_exp = List.map (a_apply_one_term (fr, t)) t_info.lex_exp; 
+                         lex_tmp = List.map (a_apply_one_term (fr, t)) t_info.lex_tmp; } 
+    in helper pf
   in (npf,il)
 
 and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
@@ -5135,8 +5160,8 @@ let rec filter_var (f0 : formula) (rele_vars0 : spec_var list) : formula =
     begin
       let rele_conjs = (* Gen.BList.remove_dups_eq equalFormula *) (List.map fst !reles) in
       let filtered_f = conj_of_list rele_conjs no_pos in
-      let () = Debug.ninfo_hprint (add_str "rele_conjs" (pr_list !print_formula)) rele_conjs no_pos in
-      let () = Debug.ninfo_hprint (add_str "filtered_f" (!print_formula)) filtered_f no_pos in
+      let () = x_ninfo_hp (add_str "rele_conjs" (pr_list !print_formula)) rele_conjs no_pos in
+      let () = x_ninfo_hp (add_str "filtered_f" (!print_formula)) filtered_f no_pos in
       (* WN : why this affected under_approx? *)
       if (is_False f0) && !Globals.filtering_false_flag then f0
       else filtered_f
@@ -5163,11 +5188,12 @@ let filter_var_new_x (f : formula) (keep_slv : spec_var list) : formula =
     | [] -> (res_rele_fs,res_unk_fs,old_keep_svl,incr_keep)
     | f::fs ->
       begin
-        let () = Debug.tinfo_hprint (add_str "svl: "  (!print_svl)) old_keep_svl no_pos in
-        let () = Debug.tinfo_hprint ( add_str "f: "   (!print_formula )) f no_pos in
+        let () = x_ninfo_hp (add_str "svl: "  (!print_svl)) old_keep_svl no_pos in
+        let () = x_ninfo_hp ( add_str "f: "   (!print_formula )) f no_pos in
         let svl = fv f in
-        let () = Debug.tinfo_hprint (add_str "svl f: "  !print_svl ) svl no_pos in
+        let () = x_ninfo_hp (add_str "svl f: "  !print_svl ) svl no_pos in
         let inters = intersect svl old_keep_svl in
+        let () = x_ninfo_hp (add_str "inters: "  !print_svl)  inters no_pos in
         if inters = [] then
           get_new_rele_svl fs old_keep_svl res_rele_fs (res_unk_fs@[f]) incr_keep
         else
@@ -5364,58 +5390,58 @@ and apply_one_exp ((fr, t) : spec_var * exp) f =
 and b_apply_one_exp (fr, t) bf =
   let (pf,il) = bf in
   let npf = let rec helper pf = 
-    match pf with
-    | Frm (fv,p) -> if eq_spec_var fv fr then
-        match t with
-        | Var (t,_) -> Frm (t,p)
-        | _ -> failwith ("Presburger.b_apply_one_exp: attempting to substitute arithmetic term for boolean var")
-      else pf
-    | BConst _ -> pf
-    | XPure _ -> pf
-    | BVar (bv, pos) -> pf
-    | Lt (a1, a2, pos) -> Lt (e_apply_one_exp (fr, t) a1,
-                              e_apply_one_exp (fr, t) a2, pos)
-    | Lte (a1, a2, pos) -> Lte (e_apply_one_exp (fr, t) a1,
-                                e_apply_one_exp (fr, t) a2, pos)
-    | Gt (a1, a2, pos) -> Gt (e_apply_one_exp (fr, t) a1,
-                              e_apply_one_exp (fr, t) a2, pos)
-    | Gte (a1, a2, pos) -> Gte (e_apply_one_exp (fr, t) a1,
-                                e_apply_one_exp (fr, t) a2, pos)
-    | SubAnn (a1, a2, pos) -> SubAnn (e_apply_one_exp (fr, t) a1,
-                                      e_apply_one_exp (fr, t) a2, pos)
-    | Eq (a1, a2, pos) ->
+              match pf with
+              | Frm (fv,p) -> if eq_spec_var fv fr then
+                  match t with
+                  | Var (t,_) -> Frm (t,p)
+                  | _ -> failwith ("Presburger.b_apply_one_exp: attempting to substitute arithmetic term for boolean var")
+                else pf
+              | BConst _ -> pf
+              | XPure _ -> pf
+              | BVar (bv, pos) -> pf
+              | Lt (a1, a2, pos) -> Lt (e_apply_one_exp (fr, t) a1,
+                                        e_apply_one_exp (fr, t) a2, pos)
+              | Lte (a1, a2, pos) -> Lte (e_apply_one_exp (fr, t) a1,
+                                          e_apply_one_exp (fr, t) a2, pos)
+              | Gt (a1, a2, pos) -> Gt (e_apply_one_exp (fr, t) a1,
+                                        e_apply_one_exp (fr, t) a2, pos)
+              | Gte (a1, a2, pos) -> Gte (e_apply_one_exp (fr, t) a1,
+                                          e_apply_one_exp (fr, t) a2, pos)
+              | SubAnn (a1, a2, pos) -> SubAnn (e_apply_one_exp (fr, t) a1,
+                                                e_apply_one_exp (fr, t) a2, pos)
+              | Eq (a1, a2, pos) ->
     (*
   		if (eq_b_formula bf (mkEq (mkVar fr pos) t pos)) then
   			bf
   		else*)
-      Eq (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
-    | Neq (a1, a2, pos) -> Neq (e_apply_one_exp (fr, t) a1,
-                                e_apply_one_exp (fr, t) a2, pos)
-    | EqMax (a1, a2, a3, pos) -> EqMax (e_apply_one_exp (fr, t) a1,
-                                        e_apply_one_exp (fr, t) a2,
-                                        e_apply_one_exp (fr, t) a3, pos)
-    | EqMin (a1, a2, a3, pos) -> EqMin (e_apply_one_exp (fr, t) a1,
-                                        e_apply_one_exp (fr, t) a2,
-                                        e_apply_one_exp (fr, t) a3, pos)
-    | BagIn (v, a1, pos) -> pf
-    | BagNotIn (v, a1, pos) -> pf
-    (* is it ok?... can i have a set of boolean values?... don't think so... *)
-    | BagSub (a1, a2, pos) -> BagSub (a1, e_apply_one_exp (fr, t) a2, pos)
-    | BagMax (v1, v2, pos) -> pf
-    | BagMin (v1, v2, pos) -> pf
-    (* | VarPerm (ct,ls,pos) -> pf (*Do not substitute, ls is the list of variable names*) *)
-    | ListIn (a1, a2, pos) -> pf
-    | ListNotIn (a1, a2, pos) -> pf
-    | ListAllN (a1, a2, pos) -> pf
-    | ListPerm (a1, a2, pos) -> pf
-    | RelForm (r, args, pos) -> RelForm (r, e_apply_one_list_exp (fr, t) args, pos) (* An Hoa *)
-    | ImmRel (r, cond, pos) -> ImmRel (helper r, cond, pos)
-    | LexVar t_info -> 
-      LexVar { t_info with
-               lex_ann = map_term_ann (apply_one_exp (fr, t)) (e_apply_one_exp (fr, t)) t_info.lex_ann;
-               lex_exp = e_apply_one_list_exp (fr, t) t_info.lex_exp; 
-               lex_tmp = e_apply_one_list_exp (fr, t) t_info.lex_tmp; }
-  in helper pf
+                Eq (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
+              | Neq (a1, a2, pos) -> Neq (e_apply_one_exp (fr, t) a1,
+                                          e_apply_one_exp (fr, t) a2, pos)
+              | EqMax (a1, a2, a3, pos) -> EqMax (e_apply_one_exp (fr, t) a1,
+                                                  e_apply_one_exp (fr, t) a2,
+                                                  e_apply_one_exp (fr, t) a3, pos)
+              | EqMin (a1, a2, a3, pos) -> EqMin (e_apply_one_exp (fr, t) a1,
+                                                  e_apply_one_exp (fr, t) a2,
+                                                  e_apply_one_exp (fr, t) a3, pos)
+              | BagIn (v, a1, pos) -> pf
+              | BagNotIn (v, a1, pos) -> pf
+              (* is it ok?... can i have a set of boolean values?... don't think so... *)
+              | BagSub (a1, a2, pos) -> BagSub (a1, e_apply_one_exp (fr, t) a2, pos)
+              | BagMax (v1, v2, pos) -> pf
+              | BagMin (v1, v2, pos) -> pf
+              (* | VarPerm (ct,ls,pos) -> pf (*Do not substitute, ls is the list of variable names*) *)
+              | ListIn (a1, a2, pos) -> pf
+              | ListNotIn (a1, a2, pos) -> pf
+              | ListAllN (a1, a2, pos) -> pf
+              | ListPerm (a1, a2, pos) -> pf
+              | RelForm (r, args, pos) -> RelForm (r, e_apply_one_list_exp (fr, t) args, pos) (* An Hoa *)
+              | ImmRel (r, cond, pos) -> ImmRel (helper r, cond, pos)
+              | LexVar t_info -> 
+                LexVar { t_info with
+                         lex_ann = map_term_ann (apply_one_exp (fr, t)) (e_apply_one_exp (fr, t)) t_info.lex_ann;
+                         lex_exp = e_apply_one_list_exp (fr, t) t_info.lex_exp; 
+                         lex_tmp = e_apply_one_list_exp (fr, t) t_info.lex_tmp; }
+    in helper pf
   in (npf,il)
 
 and e_apply_one_exp (fr, t) e = match e with
@@ -6216,110 +6242,110 @@ and b_form_simplify_x (b:b_formula) :b_formula =
     (lh, rh, qh,flag) in
   let (pf,il) = b in
   let npf = let rec helper pf = 
-    match pf with
-    | Frm _
-    |  BConst _ 
-    |  SubAnn _ | LexVar _ | XPure _
-    |  BVar _ -> pf
-    |  Lt (e1, e2, l) ->
-      let lh, rh = do_all e1 e2 l in
-      Lt (lh, rh, l)
-    |  Lte (e1, e2, l) ->
-      let lh, rh = do_all e1 e2 l in
-      Lte (lh, rh, l)
-    |  Gt (e1, e2, l) ->
-      let lh, rh = do_all e1 e2 l in
-      Lt (rh, lh, l)
-    |  Gte (e1, e2, l) ->
-      let lh, rh = do_all e1 e2 l in
-      Lte (rh, lh, l)
-    |  Eq (e1, e2, l) ->
-      if !perm=Dperm && (perm_bounds e1 || perm_bounds e2) then  BConst (false, l)
-      else
-        let lh, rh = do_all e1 e2 l in
-        Eq (lh, rh, l)		
-    |  Neq (e1, e2, l) ->
-      let lh, rh = do_all e1 e2 l in
-      Neq (lh, rh, l)
-    |  EqMax (e1, e2, e3, l) ->
-      let lh,rh,qh,flag = do_all3 e1 e2 e3 l in
-      if flag then EqMax (lh,rh,qh,l)
-      else EqMin (lh,rh,qh,l)
-    (* let ne1 = simp_mult e1 in *)
-    (* let ne2 = simp_mult e2 in *)
-    (* let ne3 = simp_mult e3 in *)
-    (* let ne1 = purge_mult ne1 in *)
-    (* let ne2 = purge_mult ne2 in *)
-    (* let ne3 = purge_mult ne3 in *)
-    (* (\*if (!Tpdispatcher.tp == Tpdispatcher.Mona) then*\) *)
-    (*      let (s1, m1) = split_sums ne1 in *)
-    (*    	let (s2, m2) = split_sums ne2 in *)
-    (*    	let (s3, m3) = split_sums ne3 in *)
-    (*    	begin *)
-    (*    	match (s1, s2, s3, m1, m2, m3) with *)
-    (*    		| None, None, None, None, None, None ->  BConst (true, l) *)
-    (*    		| Some e11, Some e12, Some e13, None, None, None ->  *)
-    (*    			let e11 = purge_mult e11 in *)
-    (*    			let e12 = purge_mult e12 in *)
-    (*    			let e13 = purge_mult e13 in *)
-    (*    			 EqMax (e11, e12, e13, l) *)
-    (*    		| None, None, None, Some e11, Some e12, Some e13 ->  *)
-    (*    			let e11 = purge_mult e11 in *)
-    (*    			let e12 = purge_mult e12 in *)
-    (*    			let e13 = purge_mult e13 in *)
-    (*    			 EqMin (e11, e12, e13, l) *)
-    (*    		| _ ->  *)
-    (*    			  EqMax (ne1, ne2, ne3, l) *)
-    (*    	end *)
-    (*else 
-           	 EqMax (ne1, ne2, ne3, l)*)
-    |  EqMin (e1, e2, e3, l) ->
-      let lh,rh,qh,flag = do_all3 e1 e2 e3 l in
-      if flag then EqMin (lh,rh,qh,l)
-      else EqMax (lh,rh,qh,l)
-    (* let ne1 = simp_mult e1 in *)
-    (* let ne2 = simp_mult e2 in *)
-    (* let ne3 = simp_mult e3 in *)
-    (* let ne1 = purge_mult ne1 in *)
-    (* let ne2 = purge_mult ne2 in *)
-    (* let ne3 = purge_mult ne3 in *)
-    (* (\*if (!Tpdispatcher.tp == Tpdispatcher.Mona) then*\) *)
-    (*      let (s1, m1) = split_sums ne1 in *)
-    (*    	let (s2, m2) = split_sums ne2 in *)
-    (*    	let (s3, m3) = split_sums ne3 in *)
-    (*    	begin *)
-    (*    	match (s1, s2, s3, m1, m2, m3) with *)
-    (*    		| None, None, None, None, None, None ->  BConst (true, l) *)
-    (*    		| Some e11, Some e12, Some e13, None, None, None ->  *)
-    (*    				let e11 = purge_mult e11 in *)
-    (*    				let e12 = purge_mult e12 in *)
-    (*    				let e13 = purge_mult e13 in *)
-    (*    				 EqMin (e11, e12, e13, l) *)
-    (*    		| None, None, None, Some e11, Some e12, Some e13 ->  *)
-    (*    				let e11 = purge_mult e11 in *)
-    (*    				let e12 = purge_mult e12 in *)
-    (*    				let e13 = purge_mult e13 in *)
-    (*    				 EqMax (e11, e12, e13, l) *)
-    (*    		| _ ->  EqMin (ne1, ne2, ne3, l) *)
-    (*    	end *)
-    (*else
-           	 EqMin (ne1, ne2, ne3, l)*)
-    |  BagIn (v, e1, l) ->  BagIn (v, purge_mult (simp_mult e1), l)
-    |  BagNotIn (v, e1, l) ->  BagNotIn (v, purge_mult (simp_mult e1), l)
-    |  ListIn (e1, e2, l) -> ListIn (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
-    |  ListNotIn (e1, e2, l) -> ListNotIn (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
-    |  ListAllN (e1, e2, l) -> ListAllN (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
-    |  ListPerm (e1, e2, l) -> ListPerm (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
-    |  BagSub (e1, e2, l) ->
-      BagSub (simp_mult e1, simp_mult e2, l)
-    |  BagMin _ -> pf
-    |  BagMax _ -> pf
-    (* |  VarPerm _ -> pf *)
-    |  RelForm (v,exs,p) ->  
-      let new_exs = List.map (fun e -> purge_mult (simp_mult e)) exs in
-      RelForm (v,new_exs,p)
-    |  ImmRel (v,cond,p) ->  let new_v = helper v in ImmRel (new_v,cond,p)
-  in helper pf
+              match pf with
+              | Frm _
+              |  BConst _ 
+              |  SubAnn _ | LexVar _ | XPure _
+              |  BVar _ -> pf
+              |  Lt (e1, e2, l) ->
+                let lh, rh = do_all e1 e2 l in
+                Lt (lh, rh, l)
+              |  Lte (e1, e2, l) ->
+                let lh, rh = do_all e1 e2 l in
+                Lte (lh, rh, l)
+              |  Gt (e1, e2, l) ->
+                let lh, rh = do_all e1 e2 l in
+                Lt (rh, lh, l)
+              |  Gte (e1, e2, l) ->
+                let lh, rh = do_all e1 e2 l in
+                Lte (rh, lh, l)
+              |  Eq (e1, e2, l) ->
+                if !perm=Dperm && (perm_bounds e1 || perm_bounds e2) then  BConst (false, l)
+                else
+                  let lh, rh = do_all e1 e2 l in
+                  Eq (lh, rh, l)		
+              |  Neq (e1, e2, l) ->
+                let lh, rh = do_all e1 e2 l in
+                Neq (lh, rh, l)
+              |  EqMax (e1, e2, e3, l) ->
+                let lh,rh,qh,flag = do_all3 e1 e2 e3 l in
+                if flag then EqMax (lh,rh,qh,l)
+                else EqMin (lh,rh,qh,l)
+              (* let ne1 = simp_mult e1 in *)
+              (* let ne2 = simp_mult e2 in *)
+              (* let ne3 = simp_mult e3 in *)
+              (* let ne1 = purge_mult ne1 in *)
+              (* let ne2 = purge_mult ne2 in *)
+              (* let ne3 = purge_mult ne3 in *)
+              (* (\*if (!Tpdispatcher.tp == Tpdispatcher.Mona) then*\) *)
+              (*      let (s1, m1) = split_sums ne1 in *)
+              (*    	let (s2, m2) = split_sums ne2 in *)
+              (*    	let (s3, m3) = split_sums ne3 in *)
+              (*    	begin *)
+              (*    	match (s1, s2, s3, m1, m2, m3) with *)
+              (*    		| None, None, None, None, None, None ->  BConst (true, l) *)
+              (*    		| Some e11, Some e12, Some e13, None, None, None ->  *)
+              (*    			let e11 = purge_mult e11 in *)
+              (*    			let e12 = purge_mult e12 in *)
+              (*    			let e13 = purge_mult e13 in *)
+              (*    			 EqMax (e11, e12, e13, l) *)
+              (*    		| None, None, None, Some e11, Some e12, Some e13 ->  *)
+              (*    			let e11 = purge_mult e11 in *)
+              (*    			let e12 = purge_mult e12 in *)
+              (*    			let e13 = purge_mult e13 in *)
+              (*    			 EqMin (e11, e12, e13, l) *)
+              (*    		| _ ->  *)
+              (*    			  EqMax (ne1, ne2, ne3, l) *)
+              (*    	end *)
+              (*else 
+                     	 EqMax (ne1, ne2, ne3, l)*)
+              |  EqMin (e1, e2, e3, l) ->
+                let lh,rh,qh,flag = do_all3 e1 e2 e3 l in
+                if flag then EqMin (lh,rh,qh,l)
+                else EqMax (lh,rh,qh,l)
+              (* let ne1 = simp_mult e1 in *)
+              (* let ne2 = simp_mult e2 in *)
+              (* let ne3 = simp_mult e3 in *)
+              (* let ne1 = purge_mult ne1 in *)
+              (* let ne2 = purge_mult ne2 in *)
+              (* let ne3 = purge_mult ne3 in *)
+              (* (\*if (!Tpdispatcher.tp == Tpdispatcher.Mona) then*\) *)
+              (*      let (s1, m1) = split_sums ne1 in *)
+              (*    	let (s2, m2) = split_sums ne2 in *)
+              (*    	let (s3, m3) = split_sums ne3 in *)
+              (*    	begin *)
+              (*    	match (s1, s2, s3, m1, m2, m3) with *)
+              (*    		| None, None, None, None, None, None ->  BConst (true, l) *)
+              (*    		| Some e11, Some e12, Some e13, None, None, None ->  *)
+              (*    				let e11 = purge_mult e11 in *)
+              (*    				let e12 = purge_mult e12 in *)
+              (*    				let e13 = purge_mult e13 in *)
+              (*    				 EqMin (e11, e12, e13, l) *)
+              (*    		| None, None, None, Some e11, Some e12, Some e13 ->  *)
+              (*    				let e11 = purge_mult e11 in *)
+              (*    				let e12 = purge_mult e12 in *)
+              (*    				let e13 = purge_mult e13 in *)
+              (*    				 EqMax (e11, e12, e13, l) *)
+              (*    		| _ ->  EqMin (ne1, ne2, ne3, l) *)
+              (*    	end *)
+              (*else
+                     	 EqMin (ne1, ne2, ne3, l)*)
+              |  BagIn (v, e1, l) ->  BagIn (v, purge_mult (simp_mult e1), l)
+              |  BagNotIn (v, e1, l) ->  BagNotIn (v, purge_mult (simp_mult e1), l)
+              |  ListIn (e1, e2, l) -> ListIn (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
+              |  ListNotIn (e1, e2, l) -> ListNotIn (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
+              |  ListAllN (e1, e2, l) -> ListAllN (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
+              |  ListPerm (e1, e2, l) -> ListPerm (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
+              |  BagSub (e1, e2, l) ->
+                BagSub (simp_mult e1, simp_mult e2, l)
+              |  BagMin _ -> pf
+              |  BagMax _ -> pf
+              (* |  VarPerm _ -> pf *)
+              |  RelForm (v,exs,p) ->  
+                let new_exs = List.map (fun e -> purge_mult (simp_mult e)) exs in
+                RelForm (v,new_exs,p)
+              |  ImmRel (v,cond,p) ->  let new_v = helper v in ImmRel (new_v,cond,p)
+    in helper pf
   in (npf,il)
 
 (* a+a    --> 2*a
@@ -6569,94 +6595,94 @@ let foldr_b_formula (e:b_formula) (arg:'a) f f_args f_comb
           (Some (il, lb, nel), f_comb opt1)
       in
       let (npf, opt2) = let rec helper3 pf = 
-        match pf with
-        | Frm _
-        | BConst _
-        | BVar _ 
-        | XPure _ 
-        | BagMin _ 
-        | SubAnn _ 
-        (* | VarPerm _ (*TO CHECK*) *)
-        | BagMax _ -> (pf,f_comb [])
-        | Lt (e1,e2,l) ->
-          let (ne1,r1) = helper new_arg e1 in
-          let (ne2,r2) = helper new_arg e2 in
-          (Lt (ne1,ne2,l),f_comb[r1;r2])
-        | Lte (e1,e2,l) ->
-          let (ne1,r1) = helper new_arg e1 in
-          let (ne2,r2) = helper new_arg e2 in
-          (Lte (ne1,ne2,l),f_comb[r1;r2])
-        | Gt (e1,e2,l) ->
-          let (ne1,r1) = helper new_arg e1 in
-          let (ne2,r2) = helper new_arg e2 in
-          (Gt (ne1,ne2,l),f_comb[r1;r2])
-        | Gte (e1,e2,l) ->
-          let (ne1,r1) = helper new_arg e1 in
-          let (ne2,r2) = helper new_arg e2 in
-          (Gte (ne1,ne2,l),f_comb[r1;r2])
-        | Eq (e1,e2,l) ->
-          let (ne1,r1) = helper new_arg e1 in
-          let (ne2,r2) = helper new_arg e2 in
-          (Eq (ne1,ne2,l),f_comb[r1;r2])
-        | Neq (e1,e2,l) ->
-          let (ne1,r1) = helper new_arg e1 in
-          let (ne2,r2) = helper new_arg e2 in
-          (Neq (ne1,ne2,l),f_comb[r1;r2])
-        | EqMax (e1,e2,e3,l) ->
-          let (ne1,r1) = helper new_arg e1 in
-          let (ne2,r2) = helper new_arg e2 in
-          let (ne3,r3) = helper new_arg e3 in
-          (EqMax (ne1,ne2,ne3,l),f_comb[r1;r2;r3])	  
-        | EqMin (e1,e2,e3,l) ->
-          let (ne1,r1) = helper new_arg e1 in
-          let (ne2,r2) = helper new_arg e2 in
-          let (ne3,r3) = helper new_arg e3 in
-          (EqMin (ne1,ne2,ne3,l),f_comb[r1;r2;r3])
-        (* bag formulas *)
-        | BagIn (v,e,l)->
-          let (ne1,r1) = helper new_arg e in
-          (BagIn (v,ne1,l),f_comb [r1])
-        | BagNotIn (v,e,l)->
-          let (ne1,r1) = helper new_arg e in
-          (BagNotIn (v,ne1,l),f_comb [r1])
-        | BagSub (e1,e2,l) ->
-          let (ne1,r1) = helper new_arg e1 in
-          let (ne2,r2) = helper new_arg e2 in
-          (BagSub (ne1,ne2,l),f_comb[r1;r2])
-        | ListIn (e1,e2,l) ->
-          let (ne1,r1) = helper new_arg e1 in
-          let (ne2,r2) = helper new_arg e2 in
-          (ListIn (ne1,ne2,l),f_comb[r1;r2])
-        | ListNotIn (e1,e2,l) ->
-          let (ne1,r1) = helper new_arg e1 in
-          let (ne2,r2) = helper new_arg e2 in
-          (ListNotIn (ne1,ne2,l),f_comb[r1;r2])
-        | ListAllN (e1,e2,l) ->
-          let (ne1,r1) = helper new_arg e1 in
-          let (ne2,r2) = helper new_arg e2 in
-          (ListAllN (ne1,ne2,l),f_comb[r1;r2])
-        | ListPerm (e1,e2,l) ->
-          let (ne1,r1) = helper new_arg e1 in
-          let (ne2,r2) = helper new_arg e2 in
-          (ListPerm (ne1,ne2,l),f_comb[r1;r2])
-        | RelForm (r, args, l) -> (* An Hoa *)
-          let tmp = List.map (helper new_arg) args in
-          let nargs = List.map fst tmp in
-          let rs = List.map snd tmp in
-          (RelForm (r,nargs,l),f_comb rs)
-        | ImmRel (r, cond, l) -> 
-          let new_ir, rs = helper3 r in
-          (new_ir, rs)
-        | LexVar t_info ->
-          let tmp1 = List.map (helper new_arg) t_info.lex_exp in
-          let n_lex_exp = List.map fst tmp1 in
-          let tmp2 = List.map (helper new_arg) t_info.lex_tmp in
-          let n_lex_tmp = List.map fst tmp2 in
-          let rs = List.map snd (tmp1@tmp2) in
-          (LexVar { t_info with
-                    lex_exp = n_lex_exp; lex_tmp = n_lex_tmp;
-                  }, f_comb rs)
-      in helper3 pf 
+                          match pf with
+                          | Frm _
+                          | BConst _
+                          | BVar _ 
+                          | XPure _ 
+                          | BagMin _ 
+                          | SubAnn _ 
+                          (* | VarPerm _ (*TO CHECK*) *)
+                          | BagMax _ -> (pf,f_comb [])
+                          | Lt (e1,e2,l) ->
+                            let (ne1,r1) = helper new_arg e1 in
+                            let (ne2,r2) = helper new_arg e2 in
+                            (Lt (ne1,ne2,l),f_comb[r1;r2])
+                          | Lte (e1,e2,l) ->
+                            let (ne1,r1) = helper new_arg e1 in
+                            let (ne2,r2) = helper new_arg e2 in
+                            (Lte (ne1,ne2,l),f_comb[r1;r2])
+                          | Gt (e1,e2,l) ->
+                            let (ne1,r1) = helper new_arg e1 in
+                            let (ne2,r2) = helper new_arg e2 in
+                            (Gt (ne1,ne2,l),f_comb[r1;r2])
+                          | Gte (e1,e2,l) ->
+                            let (ne1,r1) = helper new_arg e1 in
+                            let (ne2,r2) = helper new_arg e2 in
+                            (Gte (ne1,ne2,l),f_comb[r1;r2])
+                          | Eq (e1,e2,l) ->
+                            let (ne1,r1) = helper new_arg e1 in
+                            let (ne2,r2) = helper new_arg e2 in
+                            (Eq (ne1,ne2,l),f_comb[r1;r2])
+                          | Neq (e1,e2,l) ->
+                            let (ne1,r1) = helper new_arg e1 in
+                            let (ne2,r2) = helper new_arg e2 in
+                            (Neq (ne1,ne2,l),f_comb[r1;r2])
+                          | EqMax (e1,e2,e3,l) ->
+                            let (ne1,r1) = helper new_arg e1 in
+                            let (ne2,r2) = helper new_arg e2 in
+                            let (ne3,r3) = helper new_arg e3 in
+                            (EqMax (ne1,ne2,ne3,l),f_comb[r1;r2;r3])	  
+                          | EqMin (e1,e2,e3,l) ->
+                            let (ne1,r1) = helper new_arg e1 in
+                            let (ne2,r2) = helper new_arg e2 in
+                            let (ne3,r3) = helper new_arg e3 in
+                            (EqMin (ne1,ne2,ne3,l),f_comb[r1;r2;r3])
+                          (* bag formulas *)
+                          | BagIn (v,e,l)->
+                            let (ne1,r1) = helper new_arg e in
+                            (BagIn (v,ne1,l),f_comb [r1])
+                          | BagNotIn (v,e,l)->
+                            let (ne1,r1) = helper new_arg e in
+                            (BagNotIn (v,ne1,l),f_comb [r1])
+                          | BagSub (e1,e2,l) ->
+                            let (ne1,r1) = helper new_arg e1 in
+                            let (ne2,r2) = helper new_arg e2 in
+                            (BagSub (ne1,ne2,l),f_comb[r1;r2])
+                          | ListIn (e1,e2,l) ->
+                            let (ne1,r1) = helper new_arg e1 in
+                            let (ne2,r2) = helper new_arg e2 in
+                            (ListIn (ne1,ne2,l),f_comb[r1;r2])
+                          | ListNotIn (e1,e2,l) ->
+                            let (ne1,r1) = helper new_arg e1 in
+                            let (ne2,r2) = helper new_arg e2 in
+                            (ListNotIn (ne1,ne2,l),f_comb[r1;r2])
+                          | ListAllN (e1,e2,l) ->
+                            let (ne1,r1) = helper new_arg e1 in
+                            let (ne2,r2) = helper new_arg e2 in
+                            (ListAllN (ne1,ne2,l),f_comb[r1;r2])
+                          | ListPerm (e1,e2,l) ->
+                            let (ne1,r1) = helper new_arg e1 in
+                            let (ne2,r2) = helper new_arg e2 in
+                            (ListPerm (ne1,ne2,l),f_comb[r1;r2])
+                          | RelForm (r, args, l) -> (* An Hoa *)
+                            let tmp = List.map (helper new_arg) args in
+                            let nargs = List.map fst tmp in
+                            let rs = List.map snd tmp in
+                            (RelForm (r,nargs,l),f_comb rs)
+                          | ImmRel (r, cond, l) -> 
+                            let new_ir, rs = helper3 r in
+                            (new_ir, rs)
+                          | LexVar t_info ->
+                            let tmp1 = List.map (helper new_arg) t_info.lex_exp in
+                            let n_lex_exp = List.map fst tmp1 in
+                            let tmp2 = List.map (helper new_arg) t_info.lex_tmp in
+                            let n_lex_tmp = List.map fst tmp2 in
+                            let rs = List.map snd (tmp1@tmp2) in
+                            (LexVar { t_info with
+                                      lex_exp = n_lex_exp; lex_tmp = n_lex_tmp;
+                                    }, f_comb rs)
+        in helper3 pf 
       in ((npf, nannot), f_comb [opt1; opt2])
   in (helper2 arg e)
 
@@ -6684,87 +6710,87 @@ let transform_b_formula f (e:b_formula) :b_formula =
   | None  ->
     let (pf,il) = e in
     let npf = let rec helper pf = 
-      match pf with
-      | Frm _
-      | BConst _
-      | XPure _ (* WN : xpure *)
-      | BVar _ 
-      | BagMin _ 
-      | SubAnn _
-      (* | VarPerm _(*TO CHECK*) *)
-      | BagMax _ -> pf
-      | Lt (e1,e2,l) ->
-        let ne1 = transform_exp f_exp e1 in
-        let ne2 = transform_exp f_exp e2 in
-        Lt (ne1,ne2,l)
-      | Lte (e1,e2,l) ->
-        let ne1 = transform_exp f_exp e1 in
-        let ne2 = transform_exp f_exp e2 in
-        Lte (ne1,ne2,l)
-      | Gt (e1,e2,l) ->
-        let ne1 = transform_exp f_exp e1 in
-        let ne2 = transform_exp f_exp e2 in
-        Gt (ne1,ne2,l)
-      | Gte (e1,e2,l) ->
-        let ne1 = transform_exp f_exp e1 in
-        let ne2 = transform_exp f_exp e2 in
-        Gte (ne1,ne2,l)
-      | Eq (e1,e2,l) ->
-        let ne1 = transform_exp f_exp e1 in
-        let ne2 = transform_exp f_exp e2 in
-        Eq (ne1,ne2,l)
-      | Neq (e1,e2,l) ->
-        let ne1 = transform_exp f_exp e1 in
-        let ne2 = transform_exp f_exp e2 in
-        Neq (ne1,ne2,l)
-      | EqMax (e1,e2,e3,l) ->
-        let ne1 = transform_exp f_exp e1 in
-        let ne2 = transform_exp f_exp e2 in
-        let ne3 = transform_exp f_exp e3 in
-        EqMax (ne1,ne2,ne3,l)	  
-      | EqMin (e1,e2,e3,l) ->
-        let ne1 = transform_exp f_exp e1 in
-        let ne2 = transform_exp f_exp e2 in
-        let ne3 = transform_exp f_exp e3 in
-        EqMin (ne1,ne2,ne3,l)
-      (* bag formulas *)
-      | BagIn (v,e,l)->
-        let ne1 = transform_exp f_exp e in
-        BagIn (v,ne1,l)
-      | BagNotIn (v,e,l)->
-        let ne1 = transform_exp f_exp e in
-        BagNotIn (v,ne1,l)
-      | BagSub (e1,e2,l) ->
-        let ne1 = transform_exp f_exp e1 in
-        let ne2 = transform_exp f_exp e2 in
-        BagSub (ne1,ne2,l)
-      | ListIn (e1,e2,l) ->
-        let ne1 = transform_exp f_exp e1 in
-        let ne2 = transform_exp f_exp e2 in
-        ListIn (ne1,ne2,l)
-      | ListNotIn (e1,e2,l) ->
-        let ne1 = transform_exp f_exp e1 in
-        let ne2 = transform_exp f_exp e2 in
-        ListNotIn (ne1,ne2,l)
-      | ListAllN (e1,e2,l) ->
-        let ne1 = transform_exp f_exp e1 in
-        let ne2 = transform_exp f_exp e2 in
-        ListAllN (ne1,ne2,l)
-      | ListPerm (e1,e2,l) ->
-        let ne1 = transform_exp f_exp e1 in
-        let ne2 = transform_exp f_exp e2 in
-        ListPerm (ne1,ne2,l)
-      | RelForm (r, args, l) -> (* An Hoa *)
-        let nargs = List.map (transform_exp f_exp) args in
-        RelForm (r,nargs,l)
-      | ImmRel (r, cond, l) -> (* An Hoa *)
-        let r = helper r in
-        ImmRel (r,cond,l)
-      | LexVar t_info -> 
-        let nle = List.map (transform_exp f_exp) t_info.lex_exp in
-        let nlt = List.map (transform_exp f_exp) t_info.lex_tmp in
-        LexVar { t_info with lex_exp = nle; lex_tmp = nlt; }
-    in helper pf
+                match pf with
+                | Frm _
+                | BConst _
+                | XPure _ (* WN : xpure *)
+                | BVar _ 
+                | BagMin _ 
+                | SubAnn _
+                (* | VarPerm _(*TO CHECK*) *)
+                | BagMax _ -> pf
+                | Lt (e1,e2,l) ->
+                  let ne1 = transform_exp f_exp e1 in
+                  let ne2 = transform_exp f_exp e2 in
+                  Lt (ne1,ne2,l)
+                | Lte (e1,e2,l) ->
+                  let ne1 = transform_exp f_exp e1 in
+                  let ne2 = transform_exp f_exp e2 in
+                  Lte (ne1,ne2,l)
+                | Gt (e1,e2,l) ->
+                  let ne1 = transform_exp f_exp e1 in
+                  let ne2 = transform_exp f_exp e2 in
+                  Gt (ne1,ne2,l)
+                | Gte (e1,e2,l) ->
+                  let ne1 = transform_exp f_exp e1 in
+                  let ne2 = transform_exp f_exp e2 in
+                  Gte (ne1,ne2,l)
+                | Eq (e1,e2,l) ->
+                  let ne1 = transform_exp f_exp e1 in
+                  let ne2 = transform_exp f_exp e2 in
+                  Eq (ne1,ne2,l)
+                | Neq (e1,e2,l) ->
+                  let ne1 = transform_exp f_exp e1 in
+                  let ne2 = transform_exp f_exp e2 in
+                  Neq (ne1,ne2,l)
+                | EqMax (e1,e2,e3,l) ->
+                  let ne1 = transform_exp f_exp e1 in
+                  let ne2 = transform_exp f_exp e2 in
+                  let ne3 = transform_exp f_exp e3 in
+                  EqMax (ne1,ne2,ne3,l)	  
+                | EqMin (e1,e2,e3,l) ->
+                  let ne1 = transform_exp f_exp e1 in
+                  let ne2 = transform_exp f_exp e2 in
+                  let ne3 = transform_exp f_exp e3 in
+                  EqMin (ne1,ne2,ne3,l)
+                (* bag formulas *)
+                | BagIn (v,e,l)->
+                  let ne1 = transform_exp f_exp e in
+                  BagIn (v,ne1,l)
+                | BagNotIn (v,e,l)->
+                  let ne1 = transform_exp f_exp e in
+                  BagNotIn (v,ne1,l)
+                | BagSub (e1,e2,l) ->
+                  let ne1 = transform_exp f_exp e1 in
+                  let ne2 = transform_exp f_exp e2 in
+                  BagSub (ne1,ne2,l)
+                | ListIn (e1,e2,l) ->
+                  let ne1 = transform_exp f_exp e1 in
+                  let ne2 = transform_exp f_exp e2 in
+                  ListIn (ne1,ne2,l)
+                | ListNotIn (e1,e2,l) ->
+                  let ne1 = transform_exp f_exp e1 in
+                  let ne2 = transform_exp f_exp e2 in
+                  ListNotIn (ne1,ne2,l)
+                | ListAllN (e1,e2,l) ->
+                  let ne1 = transform_exp f_exp e1 in
+                  let ne2 = transform_exp f_exp e2 in
+                  ListAllN (ne1,ne2,l)
+                | ListPerm (e1,e2,l) ->
+                  let ne1 = transform_exp f_exp e1 in
+                  let ne2 = transform_exp f_exp e2 in
+                  ListPerm (ne1,ne2,l)
+                | RelForm (r, args, l) -> (* An Hoa *)
+                  let nargs = List.map (transform_exp f_exp) args in
+                  RelForm (r,nargs,l)
+                | ImmRel (r, cond, l) -> (* An Hoa *)
+                  let r = helper r in
+                  ImmRel (r,cond,l)
+                | LexVar t_info -> 
+                  let nle = List.map (transform_exp f_exp) t_info.lex_exp in
+                  let nlt = List.map (transform_exp f_exp) t_info.lex_tmp in
+                  LexVar { t_info with lex_exp = nle; lex_tmp = nlt; }
+      in helper pf
     in (npf,il)
 
 (*
@@ -7106,32 +7132,32 @@ let norm_bform_a (bf:b_formula) : b_formula =
     else
       let (pf,il) = bf in	
       let npf = let rec helper pf =
-        match pf with 
-        | Lt  (e1,e2,l) -> if contains_inf e1 || contains_inf e2 then pf else
-            norm_bform_leq (Add(e1,IConst(1,no_pos),l)) e2 l
-        | Lte (e1,e2,l) -> norm_bform_leq e1 e2 l
-        | Gt  (e1,e2,l) ->  if contains_inf e1 || contains_inf e2 then pf else
-            norm_bform_leq (Add(e2,IConst(1,no_pos),l)) e1 l
-        | Gte (e1,e2,l) ->  norm_bform_leq e2 e1 l
-        | Eq  (e1,e2,l) -> norm_bform_eq e1 e2 l
-        | Neq (e1,e2,l) -> norm_bform_neq e1 e2 l 
-        | BagIn (v,e,l) -> BagIn (v, norm_exp e, l)
-        | BagNotIn (v,e,l) -> BagNotIn (v, norm_exp e, l)
-        | ListIn (e1,e2,l) -> ListIn (norm_exp e1,norm_exp e2,l)
-        | ListNotIn (e1,e2,l) -> ListNotIn (norm_exp e1,norm_exp e2,l)
-        | Frm _ | BConst _ | BVar _ | EqMax _  | XPure _ 
-        | EqMin _ |  BagSub _ | BagMin _ 
-        | BagMax _ | ListAllN _ | ListPerm _ | SubAnn _ -> pf
-        (* | VarPerm _ -> pf *)
-        | RelForm (id,exs,l) -> 
-          let exs = List.map norm_exp exs in
-          RelForm (id,exs,l)
-        | ImmRel (r, cond,l) -> ImmRel (helper r, cond,l)
-        | LexVar t_info -> 
-          let nle = List.map norm_exp t_info.lex_exp in
-          let nlt = List.map norm_exp t_info.lex_tmp in
-          LexVar { t_info with lex_exp = nle; lex_tmp = nlt; }
-      in helper pf
+                  match pf with 
+                  | Lt  (e1,e2,l) -> if contains_inf e1 || contains_inf e2 then pf else
+                      norm_bform_leq (Add(e1,IConst(1,no_pos),l)) e2 l
+                  | Lte (e1,e2,l) -> norm_bform_leq e1 e2 l
+                  | Gt  (e1,e2,l) ->  if contains_inf e1 || contains_inf e2 then pf else
+                      norm_bform_leq (Add(e2,IConst(1,no_pos),l)) e1 l
+                  | Gte (e1,e2,l) ->  norm_bform_leq e2 e1 l
+                  | Eq  (e1,e2,l) -> norm_bform_eq e1 e2 l
+                  | Neq (e1,e2,l) -> norm_bform_neq e1 e2 l 
+                  | BagIn (v,e,l) -> BagIn (v, norm_exp e, l)
+                  | BagNotIn (v,e,l) -> BagNotIn (v, norm_exp e, l)
+                  | ListIn (e1,e2,l) -> ListIn (norm_exp e1,norm_exp e2,l)
+                  | ListNotIn (e1,e2,l) -> ListNotIn (norm_exp e1,norm_exp e2,l)
+                  | Frm _ | BConst _ | BVar _ | EqMax _  | XPure _ 
+                  | EqMin _ |  BagSub _ | BagMin _ 
+                  | BagMax _ | ListAllN _ | ListPerm _ | SubAnn _ -> pf
+                  (* | VarPerm _ -> pf *)
+                  | RelForm (id,exs,l) -> 
+                    let exs = List.map norm_exp exs in
+                    RelForm (id,exs,l)
+                  | ImmRel (r, cond,l) -> ImmRel (helper r, cond,l)
+                  | LexVar t_info -> 
+                    let nle = List.map norm_exp t_info.lex_exp in
+                    let nlt = List.map norm_exp t_info.lex_tmp in
+                    LexVar { t_info with lex_exp = nle; lex_tmp = nlt; }
+        in helper pf
       in (npf, il)
 
 let norm_exp b =
@@ -8114,44 +8140,44 @@ let norm_bform_b (bf:b_formula) : b_formula =
   (*let bf = x_add_1 b_form_simplify bf in *)
   let (pf,il) = bf in
   let npf = let rec helper pf = 
-    match pf with 
-    | Lt  (e1,e2,l) -> 
-      if contains_inf e1 || contains_inf e2 then pf else
-        let e1= (Add(e1,IConst(1,no_pos),l)) in 
-        let (e1,e2) = normalise_two_sides e1 e2 in
-        norm_bform_leq e1 e2 l 
-    | Lte (e1,e2,l) -> 
-      let (e1,e2) = normalise_two_sides e1 e2 in
-      norm_bform_leq e1 e2 l 
-    | Gt  (e1,e2,l) -> 
-      if contains_inf e1 || contains_inf e2 then pf else
-        let e1,e2= (Add(e2,IConst(1,no_pos),l),e1) in 
-        let (e1,e2) = normalise_two_sides e1 e2 in
-        norm_bform_leq e1 e2 l 
-    | Gte (e1,e2,l) ->  
-      let (e1,e2) = normalise_two_sides e2 e1 in
-      norm_bform_leq e1 e2 l 
-    | Eq  (e1,e2,l) -> 
-      let (e1,e2) = normalise_two_sides e1 e2 in
-      norm_bform_eq e1 e2 l 
-    | Neq (e1,e2,l) -> 
-      let (e1,e2) = normalise_two_sides e1 e2 in
-      norm_bform_neq e1 e2 l  
-    | BagIn (v,e,l) -> BagIn (v, norm_exp e, l)
-    | BagNotIn (v,e,l) -> BagNotIn (v, norm_exp e, l)
-    | ListIn (e1,e2,l) -> ListIn (norm_exp e1,norm_exp e2,l)
-    | ListNotIn (e1,e2,l) -> ListNotIn (norm_exp e1,norm_exp e2,l)
-    | RelForm (v,es,l) -> RelForm (v, List.map norm_exp es, l)
-    | ImmRel  (r,cond,l) -> ImmRel (helper r, cond, l)
-    | LexVar t_info -> LexVar { t_info with
-                                lex_exp = List.map norm_exp t_info.lex_exp; 
-                                lex_tmp = List.map norm_exp t_info.lex_tmp; }
-    | SubAnn _
-    (* | VarPerm _ *)
-    | Frm _ | XPure _ | BConst _ | BVar _ | EqMax _ 
-    | EqMin _ |  BagSub _ | BagMin _ 
-    | BagMax _ | ListAllN _ | ListPerm _ -> pf
-  in helper pf
+              match pf with 
+              | Lt  (e1,e2,l) -> 
+                if contains_inf e1 || contains_inf e2 then pf else
+                  let e1= (Add(e1,IConst(1,no_pos),l)) in 
+                  let (e1,e2) = normalise_two_sides e1 e2 in
+                  norm_bform_leq e1 e2 l 
+              | Lte (e1,e2,l) -> 
+                let (e1,e2) = normalise_two_sides e1 e2 in
+                norm_bform_leq e1 e2 l 
+              | Gt  (e1,e2,l) -> 
+                if contains_inf e1 || contains_inf e2 then pf else
+                  let e1,e2= (Add(e2,IConst(1,no_pos),l),e1) in 
+                  let (e1,e2) = normalise_two_sides e1 e2 in
+                  norm_bform_leq e1 e2 l 
+              | Gte (e1,e2,l) ->  
+                let (e1,e2) = normalise_two_sides e2 e1 in
+                norm_bform_leq e1 e2 l 
+              | Eq  (e1,e2,l) -> 
+                let (e1,e2) = normalise_two_sides e1 e2 in
+                norm_bform_eq e1 e2 l 
+              | Neq (e1,e2,l) -> 
+                let (e1,e2) = normalise_two_sides e1 e2 in
+                norm_bform_neq e1 e2 l  
+              | BagIn (v,e,l) -> BagIn (v, norm_exp e, l)
+              | BagNotIn (v,e,l) -> BagNotIn (v, norm_exp e, l)
+              | ListIn (e1,e2,l) -> ListIn (norm_exp e1,norm_exp e2,l)
+              | ListNotIn (e1,e2,l) -> ListNotIn (norm_exp e1,norm_exp e2,l)
+              | RelForm (v,es,l) -> RelForm (v, List.map norm_exp es, l)
+              | ImmRel  (r,cond,l) -> ImmRel (helper r, cond, l)
+              | LexVar t_info -> LexVar { t_info with
+                                          lex_exp = List.map norm_exp t_info.lex_exp; 
+                                          lex_tmp = List.map norm_exp t_info.lex_tmp; }
+              | SubAnn _
+              (* | VarPerm _ *)
+              | Frm _ | XPure _ | BConst _ | BVar _ | EqMax _ 
+              | EqMin _ |  BagSub _ | BagMin _ 
+              | BagMax _ | ListAllN _ | ListPerm _ -> pf
+    in helper pf
   in (npf, il)
 
 let filter_disj_x disj_ps ps=
@@ -8880,8 +8906,8 @@ let elim_equi_ante_x ante cons=
   let cv = fv cons in
   let eav_all = get_equi_vars ante in
   let eav = List.filter (fun v -> not(mem_svl v cv)) eav_all in
-  let () = Debug.ninfo_hprint (add_str "cv" !print_svl) cv no_pos in
-  let () = Debug.ninfo_hprint (add_str "eav" !print_svl) eav no_pos in
+  let () = x_ninfo_hp (add_str "cv" !print_svl) cv no_pos in
+  let () = x_ninfo_hp (add_str "eav" !print_svl) eav no_pos in
   if eav =[] then ante else
     List.fold_left elim_equi_var ante eav
 
@@ -13581,11 +13607,11 @@ let is_mut_sv ?emap:(em=[])  sv =
 let is_imm_sv ?emap:(em=[])  sv = 
   if not (is_ann_typ sv) then false
   else
-    if eq_spec_var sv (mkAnnSVar Imm) then true
-    else
-      let imm_const = mkAnnSVar Imm in
-      let is_imm = EMapSV.is_equiv em sv imm_const in
-      is_imm
+  if eq_spec_var sv (mkAnnSVar Imm) then true
+  else
+    let imm_const = mkAnnSVar Imm in
+    let is_imm = EMapSV.is_equiv em sv imm_const in
+    is_imm
 
 let is_lend_sv ?emap:(em=[]) sv = 
   if not (is_ann_typ sv) then false
@@ -13602,11 +13628,11 @@ let is_lend_sv ?emap:(em=[]) sv =
 let is_accs_sv ?emap:(em=[]) sv = 
   if not (is_ann_typ sv) then false
   else 
-    if eq_spec_var sv (mkAnnSVar Accs) then true
-    else
-      let abs_const = mkAnnSVar Accs in
-      let is_abs = EMapSV.is_equiv em sv abs_const in
-      is_abs
+  if eq_spec_var sv (mkAnnSVar Accs) then true
+  else
+    let abs_const = mkAnnSVar Accs in
+    let is_abs = EMapSV.is_equiv em sv abs_const in
+    is_abs
 
 (* end imm utilities *)
 
@@ -13923,7 +13949,7 @@ let nonlinear_var_list_formula (f: formula) =
 let overapp_ptrs_x f0=
   let detect_ptr_xpure_form f sv1 sv2 a b c=
     match sv1 with
-    | Var (sv ,pos) -> let () = Debug.ninfo_hprint (add_str "xx" pr_id) "2" no_pos in
+    | Var (sv ,pos) -> let () = x_ninfo_hp (add_str "xx" pr_id) "2" no_pos in
       (* let t = type_of_spec_var sv in *)
       (* let () = Debug.info_hprint (add_str "t" string_of_typ) t no_pos in *)
       if is_node_typ sv && is_num sv2 then
@@ -13934,7 +13960,7 @@ let overapp_ptrs_x f0=
   in
   let rec helper f= match f with
     | BForm (bf,a) ->
-      let () = Debug.ninfo_hprint (add_str "f" !print_formula) f no_pos in
+      let () = x_ninfo_hp (add_str "f" !print_formula) f no_pos in
       (match bf with
        | (Eq (sv1,sv2,b),c) ->
          let detected, new_f = detect_ptr_xpure_form f sv1 sv2 a b c in
@@ -13942,7 +13968,7 @@ let overapp_ptrs_x f0=
            snd (detect_ptr_xpure_form f sv2 sv1 a b c)
        (* begin *)
        (* match sv1 with *)
-       (*     | Var (sv ,pos) -> let () = Debug.ninfo_hprint (add_str "xx" pr_id) "2" no_pos in *)
+       (*     | Var (sv ,pos) -> let () = x_ninfo_hp (add_str "xx" pr_id) "2" no_pos in *)
        (*           let t = type_of_spec_var sv in *)
        (*           let () = Debug.info_hprint (add_str "t" string_of_typ) t no_pos in *)
        (*             if is_node_typ sv && is_num sv2 then *)
@@ -13951,17 +13977,17 @@ let overapp_ptrs_x f0=
        (*             else f *)
        (*     | _ -> begin *)
        (*         match sv2 with *)
-       (*           | Var (sv ,pos) -> let () = Debug.ninfo_hprint (add_str "xx" pr_id) "3" no_pos in *)
+       (*           | Var (sv ,pos) -> let () = x_ninfo_hp (add_str "xx" pr_id) "3" no_pos in *)
        (*             let t = type_of_spec_var sv in *)
-       (*             let () = Debug.ninfo_hprint (add_str "t" string_of_typ) t no_pos in *)
+       (*             let () = x_ninfo_hp (add_str "t" string_of_typ) t no_pos in *)
        (*             if is_node_typ sv && is_num sv1 then *)
        (*               let zero = IConst (0, pos) in *)
        (*               BForm ((Neq (sv2, zero, b), c), a) *)
        (*             else f *)
-       (*           | _ -> let () = Debug.ninfo_hprint (add_str "xx" pr_id) "4" no_pos in f *)
+       (*           | _ -> let () = x_ninfo_hp (add_str "xx" pr_id) "4" no_pos in f *)
        (*       end *)
        (* end *)
-       | _ -> let () = Debug.ninfo_hprint (add_str "xx" pr_id) "1" no_pos in
+       | _ -> let () = x_ninfo_hp (add_str "xx" pr_id) "1" no_pos in
          f
       )
     | Not _ -> f

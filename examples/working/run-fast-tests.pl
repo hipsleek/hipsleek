@@ -1870,6 +1870,7 @@ my $dis = '--dis-inv-baga';
                       ["sleek-err-exc-bind.slk", "", (), "Fail.Fail.Fail.Valid"],
                       ["sleek-err-exc-flow.slk", "--efa-exc", (), "Fail.Fail.Fail.Fail.Fail.Fail.Valid.Fail.Fail.Fail"],
                       ["lst-under2.slk", "--inv-test", ([$dis,"Fail.Valid"]), "Valid.Fail."],
+                      ["data-holes.slk", "", (), "Fail.Valid.Valid"],
               ["ll-under1a.slk", " --inv-test --use-baga ", ([$dis,"Valid.Valid."]), ""],
               ["ll-under1b.slk", " --inv-test --use-baga ", ([$dis,"Fail.Valid."]), ""],
               ["ll-under1c.slk", " --inv-test --use-baga ", ([$dis,"Valid.Fail."]), ""],
@@ -2037,7 +2038,7 @@ my $dis = '--dis-inv-baga';
     # ],
     "musterr"=>[["err1.slk","",(),"must.may.must.must.may.must.may.must.must.Valid.may.must."],
                 ["err1-exc.slk","--efa-exc",(),"must.may.must.must.may.must.may.must.must.Valid.may.must."],
-               ["err2.slk","",(),"must.may.must.must.must.may.must.must.may.may.must.must.must.must.may.must.must.must.must.must.must.Valid.may.Valid.must.must.must.must.Valid.may.may.may.must.must."],
+               ["err2.slk","",(),"must.may.must.must.must.may.must.must.may.may.may.must.must.must.may.may.must.must.must.must.must.Valid.may.Valid.must.must.must.must.Valid.may.may.may.must.must."],
                 ["err3.slk","",(),"must.must.must.must.must.must.may.must.must."],
                 ["err4.slk","",(),"must.Valid.must.must.must.Valid.Valid.must.must.must.Valid.must.Valid.must.must.must.must.Valid."],
                 ["err5.slk","",(),"may.must.Valid.may.may.may.must.may.Valid.must.must.must.must.may.Valid.may.must.Valid.must.must."], #operators

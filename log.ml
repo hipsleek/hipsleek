@@ -464,13 +464,13 @@ let add_sleek_logging (es_opt:Cformula.entail_state option) timeout_flag stime i
   if !Globals.sleek_logging_txt then
     let result = match result with
       | Some c -> 
-            begin 
-              match c with
-                | CF.FailCtx (_,c,cex) -> 
-                      if cex.CF.cex_processed_mark then Some (CF.SuccCtx [c])
-                      else result
-                | _ -> result
-            end
+        begin 
+          match c with
+          | CF.FailCtx (_,c,cex) -> 
+            if cex.CF.cex_processed_mark then Some (CF.SuccCtx [c])
+            else result
+          | _ -> result
+        end
       | _ -> None in
     (* let () = Debug.info_pprint "logging .." no_pos in *)
     let (ho_vars_map,str) = match es_opt with

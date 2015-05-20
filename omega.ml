@@ -270,7 +270,7 @@ let start() =
   try (
     if not !is_omega_running then begin
       (* if (not !Globals.web_compile_flag) then  *)
-      print_endline_if (not !compete_mode)  ("Starting Omega..." ^ !omegacalc); flush stdout;
+      print_endline_quiet  ("\nStarting Omega..." ^ !omegacalc); flush stdout;
       last_test_number := !test_number;
       let () = Procutils.PrvComms.start !log_all_flag log_all ("omega", !omegacalc, [||]) set_process prelude in
       is_omega_running := true;
@@ -494,7 +494,8 @@ let is_sat_ops_x pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
     (*  Lash.write pe; *)
     (* let pe0 = drop_varperm_formula pe in *)
     let pe =
-      if !Globals.array_translate
+      if (* Globals.infer_const_obj # is_arr_as_var *) 
+        !Globals.array_translate
       then Trans_arr.drop_array_formula pe
       else pe
     in
@@ -552,6 +553,16 @@ let is_sat_ops_x pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
     end
   end
 
+let is_sat_ops_x pw ps pe sat_no =
+  try
+    Wrapper.wrap_silence_output (is_sat_ops_x pw ps pe) sat_no
+  with _ ->
+    begin
+      let () = x_binfo_pp "WARNING: exception from Omega.is_sat_ops" no_pos in
+      true
+    end
+
+
 let is_sat_ops pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
   Debug.no_1 "Omega.is_sat_ops" !print_formula (string_of_bool) (fun _ -> is_sat_ops_x pr_weak pr_strong pe sat_no) pe
 
@@ -594,7 +605,7 @@ let is_sat (pe : formula) sat_no : bool =
       failwith s
     end
 
-let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
+let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
   (*print_endline "LOCLE: is_valid";*)
   begin
     (* let pe0 = drop_varperm_formula pe in *)
@@ -654,6 +665,15 @@ let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
     end
   end
 
+let is_valid_ops p e pe tm =
+  try
+    Wrapper.wrap_silence_output (is_valid_ops p e pe) tm
+  with _ -> 
+    begin
+      let () = x_binfo_pp "WARNING: exception from Omega.is_valid" no_pos in
+      false
+    end
+
 (* let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool = *)
 (* 	Debug.no_1 "Omega:is_valid_ops " !print_formula string_of_bool (fun _ -> is_valid_ops pr_weak pr_strong pe timeout) pe *)
 (* (\* let is_valid (pe : formula) timeout: bool = *\) *)
@@ -662,7 +682,7 @@ let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
 
 let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
   let pf = !print_pure in
-  Debug.no_1 "Omega.is_valid" pf (string_of_bool) (fun _ -> is_valid_ops_x pr_weak pr_strong pe timeout) pe
+  Debug.no_1 "Omega.is_valid" pf (string_of_bool) (fun _ -> is_valid_ops pr_weak pr_strong pe timeout) pe
 
 let is_valid_with_check (pe : formula) timeout : bool option =
   do_with_check "" (fun x -> is_valid_ops (fun _ -> None) (fun _ -> None) x timeout) pe
@@ -1096,9 +1116,11 @@ let pairwisecheck (pe : formula) : formula =
   if count_disj r > count_disj pe then pe
   else r
 
+let wrap f = Wrapper.wrap_silence_output f
+
 let pairwisecheck (pe : formula) : formula =
   let pf = !print_pure in
-  Debug.no_1 "Omega.pairwisecheck" pf pf pairwisecheck pe
+  Debug.no_1 "Omega.pairwisecheck" pf pf (Wrapper.wrap_silence_output pairwisecheck) pe
 
 let hull (pe : formula) : formula =
   (*print_endline "LOCLE: hull";*)

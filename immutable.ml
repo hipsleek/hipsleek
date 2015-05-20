@@ -87,7 +87,7 @@ let get_imm_emap ?loc:(l=no_pos) sv emap =
 
 let get_imm_emap_exp  ?loc:(l=no_pos) sv emap : CP.exp option = map_opt snd (get_imm_emap ~loc:l sv emap)
 let get_imm_emap_ann  ?loc:(l=no_pos) sv emap : CP.ann option = map_opt fst (get_imm_emap ~loc:l sv emap)
-    
+
 (* if pure contains sv=AConst, then instantiate to AConst *)
 let pick_equality_instantiation sv loc pure =
   let p_aset = build_eset_of_conj_formula pure in
@@ -163,14 +163,14 @@ let pick_bounds max_bounds var_to_be_instantiated sv_to_be_instantiated qvars lo
       Some guards
   in inst
 
-  (* check for sv = AConst a
-     if found inst(sv,rhs) = [sv = AConst a]
-     else simplify pure(rhs) and check for sv = AConst a
-        if found then inst(sv,simplif_rhs) = [sv = AConst a]
-        else search for weakest inst aka sv<:[AConst a] in simplif_rhs
-         if found (sv,simplif_rhs) = [AConst a]
-         else add the eq with corresponding ann from lhs
-  *)
+(* check for sv = AConst a
+   if found inst(sv,rhs) = [sv = AConst a]
+   else simplify pure(rhs) and check for sv = AConst a
+      if found then inst(sv,simplif_rhs) = [sv = AConst a]
+      else search for weakest inst aka sv<:[AConst a] in simplif_rhs
+       if found (sv,simplif_rhs) = [AConst a]
+       else add the eq with corresponding ann from lhs
+*)
 let pick_wekeast_instatiation lhs rhs_sv loc rhs_f ivars evars =
   let pure = CF.get_pure rhs_f in
   let rhs_exp = CP.Var(rhs_sv,loc) in
@@ -184,7 +184,7 @@ let pick_wekeast_instatiation lhs rhs_sv loc rhs_f ivars evars =
       | [] -> 
         let rel_args = List.fold_left (fun acc (_, lst) -> lst@acc) [] (CP.get_list_rel_args pure) in
         if CP.EMapSV.mem rhs_sv rel_args then None
-            (* if sv in rel then return None *)
+        (* if sv in rel then return None *)
         else Some (CP.mkPure (def_rel rhs_exp loc))  (* no upper bound, instantiate to top *)
       | _  ->   pick_bounds max_candidates rhs_exp rhs_sv qvars loc
     in inst
@@ -284,7 +284,7 @@ let subtype_ann_gen_x lhs_f rhs_f elhs erhs impl_vars evars (imm1 : CP.ann) (imm
     (* two examples in ann1.slk fail otherwise; unsound when we have *)
     (* multiple implicit being instantiated ; use explicit if needed *)
     let to_lhs = if not (!Globals.imm_weak) then default_inst l r no_pos else weakest_inst l r no_pos in
-(* CP.BForm ((CP.Eq(l,r,no_pos),None), None) in (\* i need equality for inference *\) *)
+    (* CP.BForm ((CP.Eq(l,r,no_pos),None), None) in (\* i need equality for inference *\) *)
     (* let to_lhs = CP.BForm ((CP.SubAnn(l,r,no_pos),None), None) in *)
     (* let lhs = c in *)
     begin
@@ -1536,12 +1536,12 @@ let imm_transform_h_formula_helper f h =
   match h with
   | CF.DataNode dn -> 
     let h = CF.DataNode {dn with CF.h_formula_data_param_imm = f_list dn.CF.h_formula_data_param_imm;
-                         CF.h_formula_data_imm = f_unit dn.CF.h_formula_data_imm; } in
+                                 CF.h_formula_data_imm = f_unit dn.CF.h_formula_data_imm; } in
     (* let h = maybe_replace_w_empty h in *)
     Some h
   | ViewNode vn -> 
     let h = CF.ViewNode {vn with h_formula_view_imm = f_unit vn.CF.h_formula_view_imm;
-                         h_formula_view_annot_arg = CP.update_imm_args_in_view f_list vn.CF.h_formula_view_annot_arg} in
+                                 h_formula_view_annot_arg = CP.update_imm_args_in_view f_list vn.CF.h_formula_view_annot_arg} in
     (* let h = maybe_replace_w_empty h in *)
     Some h
   | _ -> None
@@ -1563,7 +1563,7 @@ let imm_transform_struc_formula fncs sf =
 
 (* @a ---> f @a *)
 let imm_transform_formula fncs f =
-   CF.transform_formula fncs f
+  CF.transform_formula fncs f
 
 (* @a ---> f @a *)
 let imm_transform_entail_state fncs es =
@@ -1592,7 +1592,7 @@ let imm_transform_list_context fncs ctx =
 (* ========= END functions for transforming imm ============ *)
 
 (* ========= restore temp ann functions ============ *)
-    
+
 let restore_tmp_res_unit p ann = restore_tmp_res_ann ann p
 
 let restore_tmp_res_list p ann = restore_tmp_ann ann p
@@ -1605,7 +1605,7 @@ let imm_transform_formula_tmp f formula =
     | CF.Base(bf)   ->  CF.Base {bf with CF.formula_base_heap = imm_transform_h_formula (f bf.CF.formula_base_pure) bf.CF.formula_base_heap ;}
     | CF.Exists(ef) -> CF.Exists {ef with CF.formula_exists_heap = imm_transform_h_formula (f ef.CF.formula_exists_pure) ef.CF.formula_exists_heap;}
     | CF.Or(orf)    -> CF.Or {orf with CF.formula_or_f1 = helper f orf.CF.formula_or_f1; 
-                              CF.formula_or_f2 = helper f orf.CF.formula_or_f2;}
+                                       CF.formula_or_f2 = helper f orf.CF.formula_or_f2;}
   in Some (helper f formula)
 
 let f1 = imm_transform_formula_tmp f_restore_tmp_ann 
@@ -1719,8 +1719,8 @@ let rec normalize_h_formula_dn auxf (h : CF.h_formula) : CF.h_formula * (CP.form
                       CF.h_formula_phase_rw = nh2;
                       CF.h_formula_phase_pos = pos}) in 
     (h, lc1@lc2, nv1@nv2)
-    | CF.DataNode dn -> auxf h 
-    | CF.ViewNode vn -> auxf h 
+  | CF.DataNode dn -> auxf h 
+  | CF.ViewNode vn -> auxf h 
   | _ -> (h,[],[])
 
 let rec normalize_formula_dn aux_f (f : formula): formula = match f with
@@ -1748,12 +1748,12 @@ let merge_imm_ann ann1 ann2 =
     let fresh_sv = (CP.SpecVar(AnnT, fresh_v, Unprimed)) in
     let fresh_var = CP.Var(fresh_sv, no_pos) in
     let poly_ann = CP.mkPolyAnn fresh_sv in
-          (* let constr1 = CP.mkSubAnn (CP.mkExpAnnSymb ann no_pos) fresh_var in *)
-          (* let constr2 = CP.mkSubAnn (CP.Var(sv, no_pos)) fresh_var in *)
-          (* (poly_ann, (constr1)::[constr2], [(fresh_v, Unprimed)]) *)
-          let constr = CP.mkEqMax fresh_var  (CP.mkExpAnnSymb ann no_pos) (CP.Var(sv, no_pos)) no_pos in
-          let constr = CP.BForm ((constr, None), None) in
-          (poly_ann, [constr], [(fresh_v, Unprimed)])
+    (* let constr1 = CP.mkSubAnn (CP.mkExpAnnSymb ann no_pos) fresh_var in *)
+    (* let constr2 = CP.mkSubAnn (CP.Var(sv, no_pos)) fresh_var in *)
+    (* (poly_ann, (constr1)::[constr2], [(fresh_v, Unprimed)]) *)
+    let constr = CP.mkEqMax fresh_var  (CP.mkExpAnnSymb ann no_pos) (CP.Var(sv, no_pos)) no_pos in
+    let constr = CP.BForm ((constr, None), None) in
+    (poly_ann, [constr], [(fresh_v, Unprimed)])
   | ann_n, _ -> let ann = if (subtype_ann 2  ann_n  ann2 ) then ann2 else  ann1 in
     (ann, [], [])
 
@@ -1776,16 +1776,16 @@ let push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula  * (CP.formula
     let n_dn = CF.DataNode{dn with  CF.h_formula_data_imm = new_ann_node;
                                     CF.h_formula_data_param_imm = new_ann_param;} in
     (n_dn, constr, new_vars)
-    | CF.ViewNode vn ->
-          let ann_node = vn.CF.h_formula_view_imm in
-          let pimm = CP.annot_arg_to_imm_ann_list_no_pos vn.CF.h_formula_view_annot_arg in
-          let new_imm, constr, new_vars = List.fold_left (fun (params, constr, vars) p_ann ->
-              let new_p_ann,nc,nv = merge_imm_ann ann_node p_ann in
-              (params@[new_p_ann], nc@constr, nv@vars)
-          ) ([],[],[]) pimm in
-          let new_vn = CF.ViewNode {vn with CF.h_formula_view_annot_arg = 
-                  CP.update_positions_for_imm_view_params  new_imm vn.h_formula_view_annot_arg;} in
-          (new_vn, constr, new_vars)
+  | CF.ViewNode vn ->
+    let ann_node = vn.CF.h_formula_view_imm in
+    let pimm = CP.annot_arg_to_imm_ann_list_no_pos vn.CF.h_formula_view_annot_arg in
+    let new_imm, constr, new_vars = List.fold_left (fun (params, constr, vars) p_ann ->
+        let new_p_ann,nc,nv = merge_imm_ann ann_node p_ann in
+        (params@[new_p_ann], nc@constr, nv@vars)
+      ) ([],[],[]) pimm in
+    let new_vn = CF.ViewNode {vn with CF.h_formula_view_annot_arg = 
+                                        CP.update_positions_for_imm_view_params  new_imm vn.h_formula_view_annot_arg;} in
+    (new_vn, constr, new_vars)
   | _ -> (h, [], [])
 
 let push_node_imm_to_field_imm caller (h:CF.h_formula) : CF.h_formula * (CP.formula list) * ((Globals.ident * VarGen.primed) list) =
@@ -2276,12 +2276,12 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
         with Invalid_argument _ -> failwith "Immutable.ml, compatible_at_field_lvl" in
       let comp = List.fold_left (fun comp (i1,i2) -> 
           match i1, i2 with
-            | CP.ConstAnn(Accs), a -> true && comp
-            | a, CP.ConstAnn(Accs) -> true && comp
-            | _, _ ->
-                (* Debug.print_info "Warning: " "possible unsoundess (\* between overlapping heaps) " no_pos; *)
-                false && comp
-      ) true imm in 
+          | CP.ConstAnn(Accs), a -> true && comp
+          | a, CP.ConstAnn(Accs) -> true && comp
+          | _, _ ->
+            (* Debug.print_info "Warning: " "possible unsoundess (\* between overlapping heaps) " no_pos; *)
+            false && comp
+        ) true imm in 
       (comp, h1, None)
     | DataNode dn, ((ViewNode vn) as vh)
     | ((ViewNode vn) as vh), DataNode dn ->
@@ -2305,7 +2305,7 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
       if comp then
         let ret_f = unfold_and_norm vn vh dn emap unfold_fun qvars emap in
         (comp, h1, ret_f)
-            (* incompatible for merging *)
+        (* incompatible for merging *)
       else (comp, h1, None)
     | _, _ -> 
       Debug.print_info "Warning: " "combining different kind of nodes not yet implemented" no_pos; 
@@ -2572,7 +2572,7 @@ let f_norm_pre_imm_var e l = CP.mkEq e (CP.AConst (Lend, l)) l
 let f_norm_post_imm_var e l = CP.mkEq e (CP.AConst (Accs, l)) l
 
 let norm_candidate sv aset vars = (CP.is_ann_typ sv) (* && (CP.EMapSV.mem sv vars) *) && (CP.is_lend_sv ~emap:aset sv) 
-                                                                                         
+
 let is_post sv post_vars = CP.EMapSV.mem sv post_vars
 
 let norm_post_formula_helper (sv1,l1) (sv2,l2) vars_post aset =
@@ -2588,27 +2588,27 @@ let norm_post_formula_helper (sv1,l1) (sv2,l2) vars_post aset =
 
 let norm_subann sv1 e1 e2 loc vars_post aset =
   match e2 with
-    | CP.AConst (Lend, _) ->
-          let pos_var = CP.EMapSV.mem sv1 vars_post in
-          let res_ex = if pos_var then f_norm_post_imm_var e1 loc else f_norm_pre_imm_var e1 loc in
-          ([res_ex], false)
-    | CP.Var (sv, _) ->
-          if (CP.is_lend_sv ~emap:aset sv) then ([f_norm_pre_imm_var e1 loc], false)
-          else ([], true)
-    | _ -> ([], true)
+  | CP.AConst (Lend, _) ->
+    let pos_var = CP.EMapSV.mem sv1 vars_post in
+    let res_ex = if pos_var then f_norm_post_imm_var e1 loc else f_norm_pre_imm_var e1 loc in
+    ([res_ex], false)
+  | CP.Var (sv, _) ->
+    if (CP.is_lend_sv ~emap:aset sv) then ([f_norm_pre_imm_var e1 loc], false)
+    else ([], true)
+  | _ -> ([], true)
 
 let norm_eq e1 e2 loc vars_post aset =
   match e1,e2 with
-    | CP.Var (sv1, loc1), CP.Var (sv2, loc2) ->
-      let res = norm_post_formula_helper (sv1,loc1) (sv2,loc2) vars_post aset in
-      map_list_def ([],true) (fun x -> (x,false)) res
-    | (CP.Var (sv, loc) as e), CP.AConst (Lend, _) 
-    | CP.AConst (Lend, _), (CP.Var (sv, loc) as e)->
-      let pos_var = CP.EMapSV.mem sv vars_post in
-      let res_ex, fix = if pos_var then (f_norm_post_imm_var e loc, false) 
-        else (f_norm_pre_imm_var e loc, true) in
-      ([res_ex], fix)
-    | _ -> ([], true)
+  | CP.Var (sv1, loc1), CP.Var (sv2, loc2) ->
+    let res = norm_post_formula_helper (sv1,loc1) (sv2,loc2) vars_post aset in
+    map_list_def ([],true) (fun x -> (x,false)) res
+  | (CP.Var (sv, loc) as e), CP.AConst (Lend, _) 
+  | CP.AConst (Lend, _), (CP.Var (sv, loc) as e)->
+    let pos_var = CP.EMapSV.mem sv vars_post in
+    let res_ex, fix = if pos_var then (f_norm_post_imm_var e loc, false) 
+      else (f_norm_pre_imm_var e loc, true) in
+    ([res_ex], fix)
+  | _ -> ([], true)
 
 (* a<:@L ---> a=@L (for pre vars) / a=@A (for post vars) *)
 let norm_imm_rel_formula vars_post (rel:CP.formula): CP.formula  =
@@ -2618,15 +2618,15 @@ let norm_imm_rel_formula vars_post (rel:CP.formula): CP.formula  =
     let (p_f, bf_ann) = b in
     let p_f = 
       match p_f with
-        | CP.SubAnn (CP.Var(sv1,l1) as e1,e2,l) -> 
-              let res_ex, fix = norm_subann sv1 e1 e2 l vars_post aset in
-              let () = if not fix then fixpt := false else () in
-              map_list_def [p_f] (fun x -> x) res_ex
-        | CP.Eq (e2,e1,l)-> 
-              let res_ex, fix = norm_eq e1 e2 l vars_post aset in
-              let () = if not fix then fixpt := false else () in
-              map_list_def [p_f] (fun x -> x) res_ex
-        | _ -> [p_f]
+      | CP.SubAnn (CP.Var(sv1,l1) as e1,e2,l) -> 
+        let res_ex, fix = norm_subann sv1 e1 e2 l vars_post aset in
+        let () = if not fix then fixpt := false else () in
+        map_list_def [p_f] (fun x -> x) res_ex
+      | CP.Eq (e2,e1,l)-> 
+        let res_ex, fix = norm_eq e1 e2 l vars_post aset in
+        let () = if not fix then fixpt := false else () in
+        map_list_def [p_f] (fun x -> x) res_ex
+      | _ -> [p_f]
     in
     (p_f, bf_ann) in
 
@@ -2683,11 +2683,11 @@ let norm_imm_rel_formula ?post_vars:(vars_post=[]) (rel:CP.formula) : CP.formula
 let norm_rel_list lst =
   List.map (fun (rel_ct,rel1,rel2) ->
       match rel_ct with
-        | CP.RelAssume _ -> 
-              let rel2 = (* x_add_1 *) norm_imm_rel_formula rel2 in
-              (rel_ct, rel1, rel2)
-        | _ -> (rel_ct,rel1,rel2) 
-  ) lst
+      | CP.RelAssume _ -> 
+        let rel2 = (* x_add_1 *) norm_imm_rel_formula rel2 in
+        (rel_ct, rel1, rel2)
+      | _ -> (rel_ct,rel1,rel2) 
+    ) lst
 
 let weaken_infer_rel_in_es es =
   {es with es_infer_rel =  norm_rel_list es.es_infer_rel}
