@@ -2502,7 +2502,7 @@ let rec expand_array_variable
     let collect = List.fold_left (fun r (arr,ilst) -> ilst@r) [] env in
     remove_dupl is_same_exp collect
   in
-  let () = x_binfo_pp ("expand_array_variable: replace "^((pr_list ArithNormalizer.string_of_exp) replace)) no_pos in
+  (* let () = x_binfo_pp ("expand_array_variable: replace "^((pr_list ArithNormalizer.string_of_exp) replace)) no_pos in *)
   remove_dupl_spec_var_list (helper svlst replace)
 ;;
 
@@ -2588,7 +2588,7 @@ let expand_relation f =
      let collect = List.fold_left (fun r (arr,ilst) -> ilst@r) [] env in
      remove_dupl is_same_exp collect
    in
-   let () = x_binfo_pp ("expand_relation: replace "^((pr_list ArithNormalizer.string_of_exp) replace)) no_pos in
+   (* let () = x_binfo_pp ("expand_relation: replace "^((pr_list ArithNormalizer.string_of_exp) replace)) no_pos in *)
    helper f replace
 ;;
 
@@ -4095,7 +4095,95 @@ let mk_array_equal_formula
 (*   nf *)
 (* ;; *)
 
+let simplify_array_equality f=
+  let is_equal_arr_full eqlst arr1 arr2 =
+    List.exists (fun (p1,p2) -> (is_same_sv p1 arr1 && is_same_sv p2 arr2)||(is_same_sv p1 arr2 && is_same_sv p2 arr1)) eqlst
+  in
+  let rec get_eqlst f =
+    let get_eqlst_b (p,ba)=
+      match p with
+      | Eq (Var (SpecVar (Array _,_,_) as sv1,_), Var (SpecVar (Array _,_,_) as sv2,_),_) ->
+        [(sv1,sv2)]
+      | _ -> []
+    in
+    match f with
+    | BForm (b,fl)->
+      get_eqlst_b b
+    | And (f1,f2,_)
+    | Or (f1,f2,_,_)->
+      (get_eqlst f1)@(get_eqlst f2)
+    | AndList lst->
+      failwith "get_eqlst: AndList To Be Implemented"
+    | Not (sub_f,_,_)
+    | Forall (_,sub_f,_,_)
+    | Exists (_,sub_f,_,_)->
+      get_eqlst sub_f
+  in
+  let is_equal_arr =
+    is_equal_arr_full (get_eqlst f)
+  in
+  let helper_b (p,ba) =
+    match p with
+    | Eq (ArrayAt (arr1,[index1],_), ArrayAt (arr2,[index2],_) ,_)->
+      if is_equal_arr arr1 arr2 && is_same_exp index1 index2
+      then None
+      else Some (p,ba)
+    | _ -> Some (p,ba)
+  in
+  let rec simplify_helper f:formula option =
+    match f with
+    | BForm (b,fl)->
+      begin
+        match helper_b b with
+        | Some new_b -> Some (BForm (new_b,fl))
+        | None -> None
+      end
+    | And (f1,f2,loc)->
+      begin
+        match simplify_helper f1, simplify_helper f2 with
+        | None,None -> None
+        | Some new_f1,Some new_f2 -> Some (And (new_f1,new_f2,loc))
+        | None, Some new_f2 -> Some new_f2
+        | Some new_f1,None -> Some new_f1
+      end
+    | AndList lst->
+      failwith "simplify_array_equality: AndList To Be Implemented"
+    | Or (f1,f2,fl,loc)->
+      begin
+        match simplify_helper f1, simplify_helper f2 with
+        | None,None -> None
+        | Some new_f1,Some new_f2 -> Some (Or (new_f1,new_f2,fl,loc))
+        | None, Some new_f2 -> Some new_f2
+        | Some new_f1,None -> Some new_f1
+      end
+    | Not (nf,fl,loc)->
+      begin
+        match simplify_helper nf with
+        | Some new_nf -> Some (Not (new_nf,fl,loc))
+        | None -> None
+      end
+    | Forall (sv,nf,fl,loc)->
+      begin
+        match simplify_helper nf with
+        | Some new_nf -> Some (Forall (sv,new_nf,fl,loc))
+        | None -> None
+      end
+    | Exists (sv,nf,fl,loc)->
+      begin
+        match simplify_helper nf with
+        | Some new_nf -> Some (Exists (sv,new_nf,fl,loc))
+        | None -> None
+      end
+  in
+  (* equal relation is a list of pairs *)
+  match simplify_helper f with
+  | Some new_f -> new_f
+  | None -> mkTrue no_pos
+;;
 
+let simplify_array_equality f =
+  Debug.no_1 "simplify_array_equality" !print_pure !print_pure simplify_array_equality f
+;;
 
 (* translate the array back to the formula *)
 let rec translate_back_array_in_one_formula
@@ -4204,6 +4292,11 @@ let rec translate_back_array_in_one_formula
     Exists (sv,translate_back_array_in_one_formula f,fl,loc)
 ;;
 
+let translate_back_array_in_one_formula f =
+  let res = translate_back_array_in_one_formula f in
+  let res = simplify_array_equality res in
+  res
+;;
 
 let translate_back_array_in_one_formula
     (f:formula):formula =
@@ -4267,6 +4360,7 @@ let translate_back_array_in_one_formula
 (*   let pf = !print_pure in *)
 (*   Debug.no_1 "translate_out_array_in_one_formula_full" pf pf (fun f -> translate_out_array_in_one_formula_full f) f *)
 (* ;; *)
+
 
 let tmp_pre_processing f=
   if !Globals.array_translate

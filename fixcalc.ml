@@ -899,9 +899,11 @@ let compute_def (rel_fml, pf, no) ante_vars =
   let pf = Trans_arr.expand_relation pf in
   begin
     print_endline_quiet "\n*************************************";
-    print_endline_quiet "****** After array expansion    *******";
+    print_endline_quiet "****** Before putting into fixcalc*******";
+    print_endline_quiet ("pre_vars: "^(string_of_spec_var_list pre_vars));
+    print_endline_quiet ("post_vars: "^(string_of_spec_var_list post_vars));
     print_endline_quiet "*************************************";
-    print_endline_quiet (!CP.print_formula pf);
+    print_endline_quiet ("formula: "^(!CP.print_formula pf));
     print_endline_quiet "*************************************";
   end;
   try

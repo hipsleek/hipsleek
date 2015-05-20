@@ -2223,7 +2223,8 @@ let simplify (f:CP.formula):CP.formula =
     (* | Or(f1,f2,lbl,pos) -> mkOr (helper f1) (helper f2) lbl pos *)
     (* | AndList b -> mkAndList (map_l_snd simplify b) *)
     (* | _ -> Trans_arr.translate_back_array_in_one_formula (tp_pairwisecheck (simplify f)) *)
-    | _ -> (tp_pairwisecheck (simplify f)) in
+    | _ ->
+      (tp_pairwisecheck (simplify f)) in
   helper f
 ;;
 

@@ -11,7 +11,7 @@ int foo(ref int[] a)
 // requires true ensures a'[5]=10 & res=a[4];
 {
   if (a[5]>0) {
-    //a[6] = a[6]+1;
+    a[6] = a[6]+1;
     a[5] = a[5]-1;
     a[4] = a[4]+1;
     return foo(a); } 
