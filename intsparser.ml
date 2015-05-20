@@ -100,18 +100,43 @@ let trans_ints_prog fn (iprog: ints_prog): I.prog_decl =
   let global_var_decls = List.map (fun (d, p) -> I.mkGlobalVarDecl Int [(d, None, p)] p) global_vars in 
   (* Inline Iast procedure if body is only a call to another procedure *)
   let proc_decls =
+      let called_proc pn =
+        try Some (List.find
+                   (fun pd -> pn = pd.I.proc_name)
+                   proc_decls)
+        with Not_found -> None in
+      let is_self_recursive proc =
+          let has_call_with_procname e =
+            (match e with
+             | I.CallNRecv { exp_call_nrecv_method = cnr_method } ->
+               Some (cnr_method = proc.I.proc_name)
+             | _ -> None) in
+          match proc.I.proc_body with
+          | Some bd -> let any = List.fold_left (||) false in
+             I.fold_exp bd has_call_with_procname any false
+          | None -> false in
       let rec inline_body pd proc_names =
         (match pd.I.proc_body with
-        | Some (CallNRecv { exp_call_nrecv_method = cnr_method }) ->
-                let called_proc = (List.find
-                  (fun pd -> cnr_method = pd.I.proc_name)
-                  proc_decls) in
-                (* If we're not trying to inline it, then recurse (+ this name) *)
-                if not (List.mem called_proc.I.proc_name proc_names) then
-                  let called_proc = inline_body called_proc (pd.I.proc_name::proc_names) in
-                  { pd with I.proc_body = called_proc.I.proc_body }
-                else
-                  pd
+        | Some bd ->
+          (* function to inline function calls. *)
+          let replace_all_proc_calls (e : I.exp) : I.exp option =
+            (match e with
+             | (I.CallNRecv ({ exp_call_nrecv_method = cnr_method } as cnr)) ->
+               let cp = called_proc cnr_method in
+               (match cp with
+                | Some cp ->
+                  if not (List.mem cp.I.proc_name proc_names) then
+                    (* cp isn't already being inlined, then recurse *)
+                    let inlined_proc = inline_body cp (pd.I.proc_name::proc_names) in
+                    if not (is_self_recursive inlined_proc)
+                    then inlined_proc.I.proc_body
+                    else None
+                  else
+                    (* The procedure call is to something we're already inlining. self-recursive. *)
+                    None
+                | None -> None)
+             | _ -> None) in
+            { pd with I.proc_body = Some (I.map_exp bd replace_all_proc_calls) }
         | _ -> pd) in
       (List.map (fun pd -> inline_body pd []) proc_decls) in
   let called_proc_names =
