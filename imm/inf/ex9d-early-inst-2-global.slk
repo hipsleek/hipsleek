@@ -29,6 +29,18 @@ expect Valid.
 
 checkentail x::cell<_>@u  |- x::cell<_>@v & v=@L.
 print residue.
+expect Fail.
+
+checkentail x::cell<_>@u & u=@L  |- x::cell<_>@v & v=@M.
+print residue.
+expect Fail.
+
+checkentail x::cell<_>@u & u=@L  |- x::cell<_>@v & v<:@M.
+print residue.
+expect Fail.
+
+checkentail x::cell<_>@u & u=@L  |- x::cell<_>@v & @M<:v.
+print residue.
 expect Valid.
 
 /*

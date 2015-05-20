@@ -317,6 +317,8 @@ let common_arguments = [
   ("--imm-remove-abs", Arg.Set Globals.remove_abs,"remove @A nodes from formula (incl nodes with all fields ann with @A)");
   ("--en-imm-merge", Arg.Set Globals.imm_merge,"try to merge aliased nodes");
   ("--dis-imm-merge", Arg.Clear Globals.imm_merge,"don't merge aliased nodes");
+  ("--en-weak-imm", Arg.Set Globals.imm_weak,"don't merge aliased nodes");
+  ("--dis-weak-imm", Arg.Clear Globals.imm_weak,"don't merge aliased nodes");
   ("--mem", Arg.Unit (fun _ -> 
        Globals.allow_mem := true; 
        Globals.allow_field_ann := true;),
