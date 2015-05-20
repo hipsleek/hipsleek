@@ -157,6 +157,21 @@ let trans_ints_prog fn (iprog: ints_prog): I.prog_decl =
 let parse_ints (file_name: string): I.prog_decl =
   let in_chnl = open_in file_name in
   let lexbuf = Lexing.from_channel in_chnl in
-  let iprog = Iparser.program Ilexer.tokenizer lexbuf in
-  let () = close_in in_chnl in
+  let iprog = 
+    try
+      let p = Iparser.program Ilexer.tokenizer lexbuf in
+      let () = close_in in_chnl in
+      p
+    with e ->
+      let () = close_in in_chnl in
+      match e with
+      | Parsing.Parse_error ->
+        let curr = lexbuf.Lexing.lex_curr_p in
+        let err_pos = { start_pos = curr; mid_pos = curr; end_pos = curr; } in
+        (* let line = curr.Lexing.pos_lnum in                       *)
+        (* let cnum = curr.Lexing.pos_cnum - curr.Lexing.pos_bol in *)
+        let token = Lexing.lexeme lexbuf in
+        Gen.report_error err_pos ("Intsparser: Unexpected token " ^ token)
+      | _ -> raise e
+  in 
   trans_ints_prog file_name iprog

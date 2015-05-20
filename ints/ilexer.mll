@@ -23,9 +23,17 @@
 (* // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER          *)
 (* // DEALINGS IN THE SOFTWARE.                                                    *)
 
-  open Iparser
+open Iparser
+open Lexing
   
-  let comment_level = ref 0
+let comment_level = ref 0
+
+let update_loc lexbuf line absolute chars =
+  let pos = lexbuf.lex_curr_p in
+  lexbuf.lex_curr_p <- { pos with
+    pos_lnum = if absolute then line else pos.pos_lnum + line;
+    pos_bol = pos.pos_cnum - chars;
+  }
 }
 
 let digit = ['0'-'9']
@@ -36,7 +44,7 @@ let whitespace = [' ' '\009' '\012']
 let newline = ('\010' | '\013' | "\013\010")
 
 rule tokenizer = parse
-  | newline { tokenizer lexbuf }
+  | newline { update_loc lexbuf 1 false 0; tokenizer lexbuf }
   | "//" { line_comment lexbuf }
   | "/*" { comment_level := 0; comment lexbuf }
   | whitespace { tokenizer lexbuf }
@@ -79,7 +87,7 @@ rule tokenizer = parse
 
 and line_comment = parse
   | newline 
-  | eof { tokenizer lexbuf }
+  | eof { update_loc lexbuf 1 false 0; tokenizer lexbuf }
   | _ { line_comment lexbuf }
 
 and comment = parse
@@ -96,4 +104,5 @@ and comment = parse
       comment_level := !comment_level + 1;
       comment lexbuf
     }
+  | newline { update_loc lexbuf 1 false 0; comment lexbuf }
   | _  { comment lexbuf }
