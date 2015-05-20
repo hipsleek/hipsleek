@@ -1013,19 +1013,40 @@ let is_ptr_ctr a1 a2 =
   Debug.no_2 "is_ptr_ctr" pr pr (pr_pair pb pb) is_ptr_ctr a1 a2
 
 (* pre 0<=v<=3 *)
-let int_to_ann v = 
-  if v=0 then const_ann_mut
-  else if v=1 then const_ann_imm
-  else if v=2 then const_ann_lend
-  else const_ann_abs
+(* let int_to_ann v =  *)
+(*   if v=0 then const_ann_mut *)
+(*   else if v=1 then const_ann_imm *)
+(*   else if v=2 then const_ann_lend *)
+(*   else const_ann_abs *)
 
-let is_valid_ann v = 0<=v && v<=3 
+let is_valid_ann v = (int_of_heap_ann imm_bot)<=v && v<=(int_of_heap_ann imm_top)
 
 let is_null a1 a2 =
   match a1,a2 with
   | Var(v,_),IConst(0,_) ->
     (is_otype (type_of_spec_var v),a1,a2)
   | _ -> (false,a1,a2)
+
+let change_to_imm_rel pf =
+  match pf with 
+  | Lte((Var(v,_) as a1), IConst(i,_),ll) -> 
+    if is_ann_type (type_of_spec_var v) then
+      if i<(int_of_heap_ann imm_bot)  then BConst(false, ll)
+      else if i>=(int_of_heap_ann imm_top) then BConst(true, ll)
+      else if i=(int_of_heap_ann imm_bot) then Eq(a1, CP.int_ann_to_exp i ll, ll)
+      else SubAnn(a1, CP.int_ann_to_exp i ll, ll)
+    else pf
+  | Lte(IConst(i,_),(Var(v,_) as a1),ll) -> 
+    if is_ann_type (type_of_spec_var v) then
+      if i<=(int_of_heap_ann imm_bot)  then BConst(true, ll)
+      else if i>(int_of_heap_ann imm_top) then BConst(false, ll)
+      else if i=(int_of_heap_ann imm_top) then Eq(a1, CP.int_ann_to_exp i ll, ll)
+      else SubAnn(CP.int_ann_to_exp i ll, a1, ll)
+    else pf
+  | Lte((Var(v1,_) as a1), (Var(v2,_) as a2), ll) ->  
+    if is_ann_type (type_of_spec_var v1) && is_ann_type(type_of_spec_var v2) then SubAnn(a1, a2, ll)
+    else pf
+  | _ -> pf
 
 (* s>0 -> 0<s -> 1<=s *)
 let to_ptr ptr_flag pf =
@@ -1044,20 +1065,13 @@ let to_ptr ptr_flag pf =
         if i<=(-1) then BConst(false,ll)   (* v<=0 --> v=M; v<=1 --> @L<:v *)
         else if i>0 then BConst(true,ll)
         else Eq(a1,Null ll,ll)
-      else (* ann_flag *)
-      if i<=(-1)  then BConst(false,ll)
-      else if i>2 then BConst(true,ll)
-      else if i=0 then Eq(a1,int_to_ann i,ll)
-      else SubAnn(a1,int_to_ann i,ll)
+      else (* ann_flag *)  change_to_imm_rel pf 
     | Lte(IConst(i,_),(Var(v,_) as a1),ll) ->
       if ptr_flag then
         if i>=1 then Neq(a1,Null ll,ll)
         else BConst(true,ll)
-      else (* ann_flag *)
-      if i<=(0)  then BConst(true,ll)
-      else if i>3 then BConst(false,ll)
-      else if i=3 then Eq(a1,int_to_ann i,ll)
-      else SubAnn(int_to_ann i,a1,ll)
+      else (* ann_flag *) change_to_imm_rel pf 
+    | Lte(Var(_,_),Var(_,_),ll) ->  change_to_imm_rel pf
     | _ -> pf
   in norm (norm0 pf)
 
@@ -1078,7 +1092,7 @@ let cnv_int_to_ptr f =
       else 
         let (is_ann_flag,a1,i) = comm_is_ann a1 a2 in
         if is_ann_flag then
-          if is_valid_ann i then Some(Eq(a1,int_to_ann i,ll),l)
+          if is_valid_ann i then Some(Eq(a1, CP.int_ann_to_exp i ll,ll),l)
           else  Some(BConst (false,ll),l) (* contradiction *)
           (*else if is_inf a1 then Some(Eq(a2,mkInfConst ll,ll),l)*)
         else Some bf
@@ -1090,7 +1104,7 @@ let cnv_int_to_ptr f =
         let (is_ann_flag,a1,i) = comm_is_ann a1 a2 in
         if is_ann_flag then
           if is_valid_ann i then
-            Some(Neq(a1,int_to_ann i,ll),l)
+            Some(Neq(a1, CP.int_ann_to_exp i ll,ll),l)
           else
             (*let () = print_endline_quiet "xxxxxx" in*)
             Some(BConst (true,ll),l) (* of course *)
@@ -2179,6 +2193,10 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
   let res = Timelog.log_wrapper "pairwise" logger fn f in
   if not !tp_batch_mode then stop_prover ();
   res
+
+let tp_pairwisecheck (f : CP.formula) : CP.formula = 
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "tp_pairwisecheck" pr pr tp_pairwisecheck f
 
 let rec pairwisecheck_x (f : CP.formula) : CP.formula = 
   if no_andl f then  tp_pairwisecheck f 

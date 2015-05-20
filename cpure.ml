@@ -13578,6 +13578,9 @@ let mkExpAnnSymb ann pos =
   | PolyAnn v  -> Var(v, pos)  
   | NoAnn  -> AConst(Accs, pos)
 
+let int_ann_to_exp i loc = 
+  mkExpAnnSymb (mkConstAnn i) loc
+
 let imm_to_sv ann = 
   match ann with 
   | PolyAnn ann  -> Some ann

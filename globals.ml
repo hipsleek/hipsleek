@@ -378,6 +378,12 @@ let int_of_heap_ann a =
   | Imm -> 1
   | Mutable -> 0
 
+let heap_ann_of_int i =
+  if i = 0 then Mutable
+  else if i = 1 then Imm
+  else if i = 2 then Lend
+  else Accs
+
 let string_of_vp_ann a =  
   (match a with
    | VP_Zero -> "@zero"
