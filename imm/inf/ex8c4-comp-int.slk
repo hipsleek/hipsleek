@@ -1,0 +1,23 @@
+
+relation P(ann v1).
+relation Q(int v1).
+
+infer [a] a<=4 |-  a<=0.
+print residue.
+
+infer [a] a<=3 |-  a<=0.
+print residue.
+
+/********************
+# ex8c3.slk --esl
+
+(==omega.ml#957==)
+Omega.simplify_ops@26@25@24@23@22@21
+Omega.simplify_ops inp1 : forall(a:(!(a<:@L) | a<:@M))
+Omega.simplify_ops@26 EXIT: false
+
+
+*/
+
+
+

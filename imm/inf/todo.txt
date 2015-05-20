@@ -543,14 +543,25 @@ For strongest R(v), we would derive v=@M.
 For weakest R(v), we would later derive v=@A.
 
 =======================================================
-
-# ex8a1.slk 
+# ex8a1.slk  (DONE)
 
 # need to convert aaa<=bbb to aaa<:bbb during simplification
 
  inferred rel: [RELDEFN P2: ( w_1454=res & vvv=res & aaa<:@L & aaa<=bbb & P1(aaa)) -->  P2(aaa,bbb,vvv,res,w_1454)]
 
 =======================================================
+# ex8c4.slk (minor)
+
+When is the 2nd enumeration done? Omega or sleek?
+
+infer [a] a<=4 |-  a<=0.
+Residue:
+ <1>emp&a<=4 & ((a<=0 | 5<=a))&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [(a<=0 | 5<=a)]
+
+infer [a] a<=3 |-  a<=0.
+ <1>emp&a<=3 & a!=1 & a!=2 & a!=3&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [a!=3; a!=2; a!=1]
 =======================================================
 =======================================================
 =======================================================
