@@ -1,0 +1,8 @@
+data cell{
+ int fst;
+}.
+
+
+checkentail x::cell<_>@u & u=@M  |- [v] x::cell<_>@v & v=@L.
+print residue.
+expect Valid.

@@ -759,9 +759,9 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
     let (n_tl,t1) = x_add gather_type_info_exp prog a1 n_tl new_et in (* tvar, Int, Float *)
     let (n_tl,t2) = x_add gather_type_info_exp prog a2 n_tl new_et in
     let (n_tl,t3) = x_add gather_type_info_exp prog a3 n_tl new_et in (* tvar, Int, Float *)
-    let (n_tl,t1) = must_unify_expect t1 NUM n_tl pos in
-    let (n_tl,t2) = must_unify_expect t2 NUM n_tl pos in
-    let (n_tl,t3) = must_unify_expect t3 NUM n_tl pos in
+    (* let (n_tl,t1) = must_unify_expect t1 NUM n_tl pos in *)
+    (* let (n_tl,t2) = must_unify_expect t2 NUM n_tl pos in *)
+    (* let (n_tl,t3) = must_unify_expect t3 NUM n_tl pos in *)
     let unif_t = if (t1 == AnnT || t2 == AnnT || t3 == AnnT) then AnnT else NUM in
     let (n_tl,t1) = must_unify_expect t1 unif_t n_tl pos in
     let (n_tl,t2) = must_unify_expect t2 unif_t n_tl pos in
