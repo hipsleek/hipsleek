@@ -519,7 +519,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       let () = x_dinfo_zp (lazy ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n")) pos_spec in
       let new_base = match pre with
         | [] -> b.CF.formula_struc_base
-        | [p] -> (pre_ctr # inc; Fixpoint.simplify_pre (x_add CF.normalize 1 b.CF.formula_struc_base p pos_spec) [])
+        | [p] -> (pre_ctr # inc; Fixpoint.simplify_pre (x_add CF.normalize 1 b.CF.formula_struc_base p pos_spec) [] [])
         | _ -> report_error pos_spec ("Spec has more than 2 pres but only 1 post") in
       x_tinfo_hp (add_str "Base" !CF.print_formula) b.CF.formula_struc_base no_pos;
       x_tinfo_hp (add_str "New Base" !CF.print_formula) new_base no_pos;
@@ -1434,7 +1434,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     end;
                   if CF.isSuccessListFailescCtx_new rs then 
                     begin
-                      Debug.print_info "assert" (s ^(if (CF.isNonFalseListFailescCtx ts) then " : ok\n" else ": unreachable\n")) pos;
+                      let rels = Infer.collect_rel_list_failesc_context rs in
+                      Infer.infer_rel_stk # push_list rels;
+                      Log.current_infer_rel_stk # push_list rels;
+                      let hp_rels = Infer.collect_hp_rel_list_failesc_context rs in
+                      let cond_msg = if (hp_rels=[]) && (rels)=[] then "" else " (conditional)" in
+                      Debug.print_info "assert" (s ^(if (CF.isNonFalseListFailescCtx ts) then " : ok" ^ cond_msg ^ "\n" else ": unreachable\n")) pos;
                       x_dinfo_pp (*print_info "assert"*) ("Residual:\n" ^ (Cprinter.string_of_list_failesc_context rs)) pos; 
                       (* WN_2_Loc: put xpure of asserted by fn below  *)
                       let xp = get_xpure_of_formula c_assert_opt in
@@ -2108,13 +2113,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                exp_dprint_visible_names = visib_names;
                exp_dprint_pos = pos}) -> begin
         let curr_svl = stk_vars # get_stk in
-        let () = x_binfo_hp (add_str "Dprint" !Cpure.print_svl) curr_svl no_pos in
+        let () = x_ninfo_hp (add_str "Dprint" !Cpure.print_svl) curr_svl no_pos in
         (* let () = print_endline ("check_exp: Dprint: ctx :" ^ (Cprinter.string_of_list_failesc_context ctx)) in *)
         (* let ctx0 = ctx in *)
         (* let ctx1 = prune_ctx_failesc_list prog ctx in *)
         let ctx2 = list_failesc_context_and_unsat_now prog ctx in
         let ctx = ctx2 in
-        let ctx_simp = x_add_1 Cfout.simplify_failesc_context_list ctx in
+        let ctx_simp = (* x_add_1 Cfout.simplify_failesc_context_list *) ctx in
         (* let ctx1 = if !Globals.print_en_tidy then CF.rearrange_failesc_context_list ctx else ctx in *)
         (* Debug.info_hprint (add_str "dprint ctx0:" Cprinter.string_of_list_failesc_context) ctx0 pos; *)
         (* Debug.info_hprint (add_str "dprint ctx1:" Cprinter.string_of_list_failesc_context) ctx1 pos; *)

@@ -30,7 +30,7 @@ let pre_subst_flag = ref false
 
 type ann = CP.ann
 
-type cond_path_type = int list
+(* type cond_path_type = int list *)
 
 (* let string_of_cond_path c = "(" ^(String.concat ", " (List.map string_of_int c)) ^ ")" *)
 let string_of_cond_path c = pr_list_round string_of_int c

@@ -149,7 +149,7 @@ type rel_cat =
   | RelDefn of spec_var * (string option) (* WN : extra global flow var in 2nd parameter; for non-normal flows *)
   | HPRelDefn of (spec_var * spec_var * spec_var list) (*hp name * root * arguments*)
   | HPRelLDefn of spec_var list
-  | RelAssume of spec_var list
+  | RelAssume of (spec_var list)
   | RankDecr of spec_var list
   | RankBnd of spec_var
 

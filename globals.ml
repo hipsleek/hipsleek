@@ -15,6 +15,8 @@ let trailer_num_list = ref []
 
 let change_flow = ref false
 
+type cond_path_type = int list
+
 type formula_type =
   | Simple
   | Complex
