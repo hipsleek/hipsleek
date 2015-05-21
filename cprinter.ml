@@ -3707,7 +3707,7 @@ let string_of_fail_explaining fe=
   fmt_close ()
 
 let pr_fail_estate (es:fail_context) =
-  fmt_open_vbox 1; fmt_string "{";
+  fmt_open_vbox 0; fmt_string "{";
   (*pr_wrap_test "es_prior_steps: "  Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.fc_prior_steps;*)
   (* pr_wrap_test_nocut "fc_prior_steps: " Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.fc_prior_steps; *)(* prior steps in reverse order *)
   pr_vwrap "fc_message: "  fmt_string es.fc_message;
@@ -3717,7 +3717,7 @@ let pr_fail_estate (es:fail_context) =
   (*   pr_vwrap "fc_orig_conseq: " pr_struc_formula es.fc_orig_conseq; (* RHS conseq at the point of failure *)*)
   (*   pr_vwrap "fc_current_conseq: " pr_formula es.fc_current_conseq; *)
   (*pr_wrap_test "fc_failure_pts: "Gen.is_empty (pr_seq "" pr_formula_label) es.fc_failure_pts; *)  (* failure points in conseq *)
-  fmt_string "}"; 
+  fmt_cut(); fmt_string "}";
   fmt_close ()
 
 let string_of_fail_estate (es:fail_context) : string =  poly_string_of_pr  pr_fail_estate es
@@ -3806,17 +3806,21 @@ let rec pr_fail_type (e:fail_type) =
   | Trivial_Reason (fe,ft) ->
     fmt_string (" Trivial fail : "^ (string_of_failure_kind_full fe.fe_kind));
     (* print trace *)
-    fmt_string "\n"; fmt_string "[["; pr_es_trace ft; fmt_string "]]"
+    fmt_print_newline ();
+    fmt_string "[["; pr_es_trace ft; fmt_string "]]"
   | Basic_Reason (br,fe,ft) -> 
     (string_of_fail_explaining fe);
-    if fe.fe_kind=Failure_Valid then fmt_string ("Failure_Valid") 
+    fmt_break 1 2;
+    if fe.fe_kind=Failure_Valid then fmt_string ("Failure_Valid")
     else (pr_fail_estate br);
     (* print trace *)
-    fmt_string "\n"; fmt_string "[["; pr_es_trace ft; fmt_string "]]"
+    fmt_print_newline ();
+    fmt_string "[["; pr_es_trace ft; fmt_string "]]"
   | ContinuationErr (br,ft) ->
     fmt_string ("ContinuationErr "); pr_fail_estate br;
     (* print trace *)
-    fmt_string "\n"; fmt_string "[["; pr_es_trace ft; fmt_string "]]"
+    fmt_print_newline ();
+    fmt_string "[["; pr_es_trace ft; fmt_string "]]"
   | Or_Reason _ ->
     let args = bin_op_to_list op_or_short ft_assoc_op e in
     if ((List.length args) < 2) then fmt_string ("Illegal pr_fail_type OR_Reason")
