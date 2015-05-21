@@ -1129,7 +1129,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
       in
       (* TODO WN : Is below really needed?? *)
       (*      let args = CP.fv new_p in*)
-      let () = x_binfo_hp (add_str "new_p: before simplify" !CP.print_formula) new_p pos in
+      let () = x_tinfo_hp (add_str "new_p: before simplify" !CP.print_formula) new_p pos in
       let new_p =
         (* if CP.intersect args iv == [] && quan_var != [] then *)
         (*   let new_p = if CP.isConstFalse new_p then fml else CP.mkAnd fml new_p pos in *)
@@ -1143,8 +1143,8 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
         (* else *)
         simplify new_p iv
       in
-      let () = x_binfo_hp (add_str "new_p" !CP.print_formula) new_p pos in
-      let () = x_binfo_hp (add_str "new_p_ass" !CP.print_formula) new_p_ass pos in
+      let () = x_tinfo_hp (add_str "new_p" !CP.print_formula) new_p pos in
+      let () = x_tinfo_hp (add_str "new_p_ass" !CP.print_formula) new_p_ass pos in
       (* abstract common terms from disj into conjunctive form *)
       if (CP.isConstTrue new_p || CP.isConstFalse new_p) then 
         begin
@@ -1173,7 +1173,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
               then (None,None,[])
               else 
                 begin
-                  DD.binfo_pprint ">>>>>> infer_pure_m <<<<<<" pos;
+                  x_binfo_pp ">>>>>> infer_pure_m <<<<<<" pos;
                   DD.ninfo_pprint "Adding heap assumption?" pos;
                   DD.ninfo_hprint (add_str "unk_heaps" (pr_list !CF.print_h_formula)) unk_heaps pos;
                   DD.ninfo_hprint (add_str "lhs_xpure" (!CP.print_formula)) lhs_xpure pos;
@@ -1373,7 +1373,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                     if rel_ass = [] 
                     then (Some (new_estate, CP.mkTrue pos),None,[]) 
                     else
-                      let () = infer_rel_stk # push_list rel_ass in
+                      let () = infer_rel_stk # push_list_pr rel_ass in
                       let () = Log.current_infer_rel_stk # push_list rel_ass in
                       (None,Some inferred_pure,[(new_estate,rel_ass,false)])
               end
@@ -2273,7 +2273,7 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
         (* below causes non-linear LHS for relation *)
         (* let inf_rel_ls = List.map (simp_lhs_rhs vars) inf_rel_ls in *)
         DD.ninfo_hprint (add_str "Rel Inferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos;
-        infer_rel_stk # push_list inf_rel_ls;
+        infer_rel_stk # push_list_pr inf_rel_ls;
         Log.current_infer_rel_stk # push_list inf_rel_ls;
         let estate = { estate with es_infer_rel = estate.es_infer_rel@inf_rel_ls;} in
         if inf_rel_ls != [] then

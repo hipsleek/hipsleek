@@ -1,4 +1,5 @@
-infer[@err_must] emp&x!=null & x'=x & flow __MayError
+infer[@err_must
+] emp&x!=null & x'=x & flow __MayError
  |-  emp&res=3& flow __norm. 
 
 print residue.

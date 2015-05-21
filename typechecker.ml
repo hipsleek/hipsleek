@@ -790,7 +790,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
               (* let () = Debug.info_zprint (lazy (("res_ctx 0: " ^ (Cprinter.string_of_list_failesc_context_short res_ctx) ^ "\n"))) no_pos in *)
               (*Clear es_pure before check_post*)
               let res_ctx =  CF.transform_list_failesc_context (idf,idf, (fun es -> CF.Ctx (CF.clear_entailment_es_pure es))) res_ctx in
-              let res_ctx = CF.list_failesc_to_partial res_ctx in
+              let res_ctx = CF.list_failesc_to_partial res_ctx post_cond in
               (* let () = Gen.Profiling.pop_time "typechecker : check_exp" in *)
               (* let () = print_string_quiet ("\n WN 1 :"^(Cprinter.string_of_list_partial_context res_ctx)) in *)
               let res_ctx = CF.change_ret_flow_partial_ctx res_ctx in
