@@ -3916,13 +3916,18 @@ let pr_list_context (ctx:list_context) =
         | Some _ -> "MustErr Context: "
         | None -> "MaybeErr Context: "
       in
-      fmt_cut ();fmt_string err_header (* "MaybeErr Context: " *); 
+      fmt_cut ();
+      fmt_open_vbox 0;
+      fmt_string err_header (* "MaybeErr Context: " *); fmt_cut ();
       (* (match ft with *)
       (*     | Basic_Reason (_, fe) -> (string_of_fail_explaining fe) (\*useful: MUST - OK*\) *)
       (*     (\* TODO : to output must errors first *\) *)
       (*     (\* | And_Reason (_, _, fe) -> (string_of_fail_explaining fe) *\) *)
       (*     | _ -> fmt_string ""); *)
-      pr_fail_type ft; (* fmt_string "\nectx:"; pr_context_short c; *) fmt_string "\nCEX:"; pr_failure_cex cex; fmt_cut ()
+      pr_fail_type ft; (* fmt_string "\nectx:"; pr_context_short c; *)
+      fmt_string "\nCEX:";
+      pr_failure_cex cex;
+      fmt_close ()
     )
   | SuccCtx sc -> let str = "" in
     (* if (get_must_error_from_ctx sc)==None then "Good Context: " *)
