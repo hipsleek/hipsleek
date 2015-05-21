@@ -5152,17 +5152,18 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
         (*       lc *)
         (*     end *)
         (* in *)
-        let osubsumed_es, non_subsume_es = if (* !Globals.enable_error_as_exc || *)
-          (not(Cfutil.is_empty_heap_f es.CF.es_formula) && (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) (CF.flow_formula_of_formula conseq)))
-          then (Some es), None
-          else Cfutil.obtain_subsume_es es conseq
+        let osubsumed_es, non_subsume_es = if not !Globals.enable_error_as_exc then
+          (Some es), None
+        else if (not(Cfutil.is_empty_heap_f es.CF.es_formula) && (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) (CF.flow_formula_of_formula conseq)))
+        then (Some es), None
+        else Cfutil.obtain_subsume_es es conseq
         in
         let tmp0, prf = match osubsumed_es with
           | Some es1 ->
             let () = Debug.ninfo_hprint (add_str "heap_entail_conjunct_lhs:conseq rel_ass_stk end 1" ( pr_list_ln Cprinter.string_of_hprel_short)) (Infer.rel_ass_stk# get_stk)  no_pos in
             let rs,prf = x_add heap_entail_conjunct_lhs 1 prog is_folding  (Ctx es1) conseq pos in
             (* let res = *)
-            (*   if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs))) *)
+            (*   if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_ge n rs))) *)
             (*   else ((not (CF.isFailCtx rs))) *)
             (* in *)
             (* let () = if res then *)
@@ -5172,7 +5173,8 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
             (*   () *)
             (* else () in *)
             rs,prf
-          | None -> (SuccCtx [], UnsatAnte)
+          | None -> (* RHS has not been catched. return an trivial error *)
+                (SuccCtx [], UnsatAnte)
         in
         let tmp = tmp0 in
         (* let tmp = match oerr_es with *)

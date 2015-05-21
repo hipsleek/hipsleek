@@ -3,8 +3,8 @@
 
 int __nondet_int()
 /*@
-  requires true
-  ensures true;
+  requires emp & true
+  ensures emp & true;
 */;
 
 void __error()
@@ -51,7 +51,9 @@ void main()
 {
   int input = __nondet_int();
   int result = id(input);
+
   if (result == 2) {
     __error();
   }
+   //@ dprint;
 }
