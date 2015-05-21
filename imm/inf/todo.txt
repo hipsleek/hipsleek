@@ -595,6 +595,24 @@ GOT:
  ww is unused.
 
 =======================================================
+ex10a3.slk
+../../sleek ex10a3-ann-rel.slk -dre "subtype"
+
+in this case we do not need to prove @M<:ww. Maybe when we instantiate
+to lhs<:rhs instead of eq or rhs-aware inst,
+we do not need to add this obligation to rhs 
+
+(==solver.ml#9842==)
+subtype_ann_gen@1
+subtype_ann_gen inp1 :impl:[ww,Anon_12]
+subtype_ann_gen inp2 :evars:[]
+subtype_ann_gen inp3 :@M
+subtype_ann_gen inp4 :@ww
+subtype_ann_gen inp5 :lhs_f: c::cell<Anon_11>@[@M, @ww]&{FLOW,(20,21)=__norm#E}[]
+subtype_ann_gen inp6 :rhs_f: emp&P1(ww)&{FLOW,(20,21)=__norm#E}[]
+subtype_ann_gen@1 EXIT:(true,[ @M<:ww],[ @M<:ww],[])
+
+
 =======================================================
 =======================================================
 =======================================================

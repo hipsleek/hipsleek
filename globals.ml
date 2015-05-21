@@ -1051,6 +1051,8 @@ let imm_merge = ref false
 
 let imm_weak = ref true
 
+let aggressive_imm_simpl = ref false
+
 (*Since this flag is disabled by default if you use this ensure that 
   run-fast-test mem test cases pass *)
 (* let allow_field_ann = ref false  *)

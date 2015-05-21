@@ -89,7 +89,7 @@ let get_imm_emap_exp  ?loc:(l=no_pos) sv emap : CP.exp option = map_opt snd (get
 let get_imm_emap_ann  ?loc:(l=no_pos) sv emap : CP.ann option = map_opt fst (get_imm_emap ~loc:l sv emap)
 
 (* if pure contains sv=AConst, then instantiate to AConst *)
-let pick_equality_instantiation sv loc pure =
+let pick_equality_instantiation sv loc pure : CP.formula option =
   let p_aset = build_eset_of_conj_formula pure in
   let imm = get_imm_emap_exp sv p_aset in
   map_opt (fun a ->  CP.BForm ((CP.Eq(CP.Var (sv, loc), a, no_pos), None), None)) imm
@@ -151,16 +151,18 @@ let conj_of_bounds rhs_sv ann1 ann2 lst loc =
   let conjs = List.map ( fun (v,(a1,a2)) -> CP.BForm ((weakest_rels v a1 a2 loc, None), None) ) maxs in
   CP.conj_of_list conjs loc
 
-let pick_bounds max_bounds var_to_be_instantiated sv_to_be_instantiated qvars loc =
+(* returns instantiation * proof obligation *)
+let pick_bounds max_bounds var_to_be_instantiated sv_to_be_instantiated 
+    qvars loc : CP.formula option * CP.formula list option = 
   (* filter out quantif *)
   let max_bounds = List.filter (fun a -> is_global a qvars) max_bounds in 
   let inst = 
     match max_bounds with
-    | []    -> None
-    | a::[] -> Some (CP.mkPure (weakest_rel var_to_be_instantiated (CP.ann_to_exp a loc) loc))
+    | []    -> None, None
+    | a::[] -> Some (CP.mkPure (weakest_rel var_to_be_instantiated (CP.ann_to_exp a loc) loc)), None
     | a1::a2::tail ->  
       let guards = conj_of_bounds sv_to_be_instantiated a1 a2 tail loc in
-      Some guards
+      Some guards, None
   in inst
 
 (* check for sv = AConst a
@@ -181,29 +183,40 @@ let pick_wekeast_instatiation lhs rhs_sv loc rhs_f ivars evars =
     let max_candidates = upper_bounds (rhs_sv::aliases) pure in
     let inst = 
       match max_candidates with
-      | [] -> 
+      | [] -> (* None *)
         let rel_args = List.fold_left (fun acc (_, lst) -> lst@acc) [] (CP.get_list_rel_args pure) in
-        if CP.EMapSV.mem rhs_sv rel_args then None
-        (* if sv in rel then return None *)
-        else Some (CP.mkPure (def_rel rhs_exp loc))  (* no upper bound, instantiate to top *)
+        if CP.EMapSV.mem rhs_sv rel_args then None, None
+        else 
+          let to_lhs, to_rhs = 
+          if not (!Globals.imm_weak) then 
+            Some (default_inst rhs_exp CP.const_ann_top no_pos),
+            Some [weakest_inst lhs rhs_exp no_pos]
+          else 
+            Some (weakest_inst lhs rhs_exp no_pos),
+            Some [] in
+          (to_lhs, to_rhs)
+          (* Some (CP.mkPure (def_rel rhs_exp loc))  *) (* no upper bound, instantiate to top *)
       | _  ->   pick_bounds max_candidates rhs_exp rhs_sv qvars loc
     in inst
   in
-  let pick_eq p1 = pick_equality_instantiation rhs_sv loc p1 in
+  let pick_eq p1 = (pick_equality_instantiation rhs_sv loc p1, None) in
   let simplify_pick_eq f1 =
-    let constr = CP.mkPure ( CP.SubAnn(lhs, CP.mkVar rhs_sv loc, loc) ) in
+    let constr = CP.mkSubAnn lhs (CP.mkVar rhs_sv loc) in
     let form = CP.mkExists evars (CP.mkAnd pure constr loc) None loc in
     let simplif = x_add_1 TP.simplify form in
-    if CP.is_False simplif then None
+    if CP.is_False simplif then None, None 
     else
-      let inst = pick_eq simplif in
-      map_opt_w_def (weakest_inst_helper simplif)  (fun x -> x) inst
+      let inst, to_rhs = pick_eq simplif in
+      (* match inst with *)
+      (* |Some x -> Some x,to_rhs *)
+      (* |None   -> weakest_inst_helper simplif *)
+      map_opt_def (weakest_inst_helper simplif)  (fun x -> Some x, to_rhs) inst
   in
-  map_opt_w_def (simplify_pick_eq pure) (fun x -> x) (pick_eq pure)
+  map_opt_def (simplify_pick_eq pure) (fun x -> Some x, snd ((pick_eq pure))) (fst (pick_eq pure))
 
 let pick_wekeast_instatiation lhs rhs loc f ivars evars=
   let pr2 = Cprinter.string_of_formula in
-  let pr3 = pr_opt Cprinter.string_of_pure_formula in
+  let pr3 = pr_pair (pr_opt Cprinter.string_of_pure_formula) (pr_opt (pr_list Cprinter.string_of_pure_formula) ) in
   Debug.no_1 "pick_wekeast_instatiation" pr2 pr3 (fun  _  -> pick_wekeast_instatiation lhs rhs loc f ivars evars) f
 
 let get_emaps lhs_f rhs_f elhs erhs =
@@ -283,7 +296,8 @@ let subtype_ann_gen_x lhs_f rhs_f elhs erhs impl_vars evars (imm1 : CP.ann) (imm
     (* implicit instantiation of @v made stronger into an equality *)
     (* two examples in ann1.slk fail otherwise; unsound when we have *)
     (* multiple implicit being instantiated ; use explicit if needed *)
-    let to_lhs = if not (!Globals.imm_weak) then default_inst l r no_pos else weakest_inst l r no_pos in
+    let to_lhs, to_rhs_impl  = if not (!Globals.imm_weak) then 
+        default_inst l r no_pos, [to_rhs] else weakest_inst l r no_pos, [] in
     (* CP.BForm ((CP.Eq(l,r,no_pos),None), None) in (\* i need equality for inference *\) *)
     (* let to_lhs = CP.BForm ((CP.SubAnn(l,r,no_pos),None), None) in *)
     (* let lhs = c in *)
@@ -292,9 +306,10 @@ let subtype_ann_gen_x lhs_f rhs_f elhs erhs impl_vars evars (imm1 : CP.ann) (imm
       | CP.Var(v,loc) -> 
         (* implicit var annotation on rhs *)
         if CP.mem v impl_vars then 
-          let inst = x_add pick_wekeast_instatiation l v loc rhs_f impl_vars evars in
+          let inst, to_rhs' = x_add pick_wekeast_instatiation l v loc rhs_f impl_vars evars in
           let to_lhs = map_opt_def to_lhs (fun x -> x) inst in
-          (f,[to_lhs],[to_rhs],[])
+          let to_rhs = map_opt_def to_rhs_impl (fun x ->  x) to_rhs' in
+          (f, [to_lhs], to_rhs, [])
         else if CP.mem v evars then
           (f,[], [to_rhs], [to_rhs])
         else (f,[],[to_rhs], [])

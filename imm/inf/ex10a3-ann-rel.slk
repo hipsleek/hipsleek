@@ -5,6 +5,9 @@ data cell{
 relation P1(ann v1).
 
 
+//infer [P1] true |-  P1(ww).
+//print residue.
+
 infer [P1] c::cell<_>@M |-  c::cell<_>@ww&P1(ww).
 
 //infer [P1] c::cell<_>@v & v=@M |-  c::cell<_>@ww&P1(ww).

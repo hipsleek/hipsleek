@@ -1020,18 +1020,19 @@ let is_null a1 a2 =
     (is_otype (type_of_spec_var v),a1,a2)
   | _ -> (false,a1,a2)
 
+(* Andreea : use a flag to determine aggressive simplification *)
 let change_to_imm_rel pf =
   match pf with 
   | Lte((Var(v,_) as a1), IConst(i,_),ll) -> 
     if is_ann_type (type_of_spec_var v) then
       if i<(int_of_heap_ann imm_bot)  then BConst(false, ll)
-      else if i>=(int_of_heap_ann imm_top) then BConst(true, ll)
+      else if (i>=(int_of_heap_ann imm_top) && !Globals.aggressive_imm_simpl) then BConst(true, ll)
       else if i=(int_of_heap_ann imm_bot) then Eq(a1, CP.int_ann_to_exp i ll, ll)
       else SubAnn(a1, CP.int_ann_to_exp i ll, ll)
     else pf
   | Lte(IConst(i,_),(Var(v,_) as a1),ll) -> 
     if is_ann_type (type_of_spec_var v) then
-      if i<=(int_of_heap_ann imm_bot)  then BConst(true, ll)
+      if (i<=(int_of_heap_ann imm_bot)&& !Globals.aggressive_imm_simpl)  then BConst(true, ll)
       else if i>(int_of_heap_ann imm_top) then BConst(false, ll)
       else if i=(int_of_heap_ann imm_top) then Eq(a1, CP.int_ann_to_exp i ll, ll)
       else SubAnn(CP.int_ann_to_exp i ll, a1, ll)
@@ -1104,12 +1105,12 @@ let cnv_int_to_ptr f =
         else Some bf
     | Gt(a2,a1,ll) | Lt(a1,a2,ll) ->
       let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
-      if ptr_flag || ann_flag then Some(to_ptr ptr_flag pf,l)
+      if ptr_flag || ann_flag then Some(x_add to_ptr ptr_flag pf,l)
       (*else if CP.is_inf a2 then Some(Neq(a1,mkInfConst ll,ll),l)*)
       else Some bf
     | Lte (a1, a2,_) | Gte(a1,a2,_) ->
       let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
-      if ptr_flag || ann_flag then Some(to_ptr ptr_flag pf,l)
+      if ptr_flag || ann_flag then Some(x_add to_ptr ptr_flag pf,l)
       else Some bf
     (* | Lte ((Var(v,_) as a1), IConst(0,_), ll) | Gte (IConst(0,_), (Var(v,_) as a1), ll)  *)
     (* | Lt ((Var(v,_) as a1), IConst(1,_), ll) | Gt (IConst(1,_), (Var(v,_) as a1), ll) ->  *)
@@ -1210,6 +1211,10 @@ let add_imm_inv f1 f2 =
   let () = x_tinfo_hp (add_str "Ann Vars" Cprinter.string_of_spec_var_list) vs no_pos in
   let () = x_tinfo_hp (add_str "Inv" Cprinter.string_of_pure_formula) f1_inv no_pos in
   f1_inv
+
+let add_imm_inv f1 f2 =
+  let pr = Cprinter.string_of_pure_formula in
+ Debug.no_2 "add_imm_inv" pr pr pr add_imm_inv f1 f2
 
 let cnv_ptr_to_int_weak f =
   wrap_pre_post_print "cnv_ptr_to_int_weak" (cnv_ptr_to_int (true,false)) f
@@ -1932,7 +1937,7 @@ let norm_pure_input f =
 
 let om_simplify f =
   (* wrap_pre_post cnv_ptr_to_int norm_pure_result *)
-  wrap_pre_post norm_pure_input norm_pure_result
+  wrap_pre_post norm_pure_input (x_add_1 norm_pure_result)
     (x_add_1 Omega.simplify) f
 (* let f = cnv_ptr_to_int f in *)
 (* let r = Omega.simplify f in *)
@@ -2962,6 +2967,17 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
     (* tp_imply_no_cache (Coqinf.check_sat_inf_formula  ante) 
        (Coqinf.check_sat_inf_formula conseq) imp_no timeout process*)
   else flag 
+
+let add_imm_inv_wrap f ante conseq = 
+  let ante = 
+    if !Globals.allow_imm_inv then add_imm_inv ante conseq
+    else ante in
+  (* enable aggressive im simplification only when imm guards are added *)
+  Wrapper.wrap_one_bool Globals.aggressive_imm_simpl !Globals.allow_imm_inv f ante
+
+let tp_imply_no_cache ante conseq imp_no timeout process =
+  add_imm_inv_wrap (fun ante -> tp_imply_no_cache ante conseq imp_no timeout process) ante conseq
+  
 
 (* let tp_imply_no_cache ante conseq imp_no timeout process = *)
 (* 	(\*wrapper for capturing equalities due to transitive equality with null*\) *)
