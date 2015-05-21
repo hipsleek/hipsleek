@@ -11,13 +11,14 @@ print residue.
 infer [P1] c::cell<_>@v & v=@L |-  c::cell<_>@ww&P1(ww).
 print residue.
 
+//(3)
 infer [P1] c::cell<_>@M |-  c::cell<_>@ww&P1(ww).
 print residue.
 
 infer [P1] c::cell<_>@v & v=@M |-  c::cell<_>@ww&P1(ww).
 print residue.
 
-infer [P1] c::cell<_>@M |-  c::cell<_>@ww.
+infer [] c::cell<_>@M |-  c::cell<_>@ww.
 print residue.
 
 /*

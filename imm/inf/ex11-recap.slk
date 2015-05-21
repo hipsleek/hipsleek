@@ -93,3 +93,5 @@ slk_hull (exists a,b,c: d=a & a<:b & b<:c & c<:@L).
 
 slk_pairwise (exists a,b,c: d=a & a<:b & b<:c & c<:@L).
 */
+
+slk_simplify emp & exists(b,c,g,d: a<:b & b<:c & c<:@L & g=d).
