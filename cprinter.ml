@@ -393,7 +393,7 @@ let pr_vwrap_nocut hdr (f: 'a -> unit) (x:'a) =
   else  begin
     fmt_string hdr;
     fmt_cut ();
-    wrap_box ("B",2) f  x
+    wrap_box ("B",0) f  x
   end
 
 (** call pr_wrap_nocut with a cut in front of*)    
@@ -3982,7 +3982,7 @@ let pr_esc_stack_lvl ?(nshort=true) ((i,s),e) =
     begin
       fmt_open_vbox 0;
       pr_vwrap_naive ("Try-Block:"^(string_of_int i)^":"^s^":")
-        (pr_seq_vbox ~nshort:nshort "" (fun (lbl,fs,oft)-> 
+        (pr_seq_vbox ~nshort "" (fun (lbl,fs,oft)-> 
              if nshort then pr_vwrap_nocut "Path: " pr_path_trace lbl;
              pr_vwrap "State:" pr_context_short fs;
              (* Loc: print exc *)
@@ -4007,7 +4007,7 @@ let pr_successful_states ?(nshort=true) e = match e with
     pr_vwrap_naive "Successful States:"
       (pr_seq_vbox "" (fun (lbl,fs,oft)-> 
            if nshort then (pr_hwrap "Label: " pr_path_trace lbl);
-           (if nshort then pr_vwrap else pr_vwrap_nocut) "State:" (pr_context ~nshort:nshort) fs;
+           (if nshort then pr_vwrap else pr_vwrap_nocut) "State:" (pr_context ~nshort) fs;
            (* Loc: print exc *)
            if nshort then (pr_hwrap "Exc:" fmt_string (match oft with | Some _ -> "Some" | _ -> "None"))
          )) e
@@ -4020,8 +4020,8 @@ let pr_esc_stack ?(nshort=true) e =
   else
     begin
       fmt_open_vbox 0;
-      pr_vwrap_naive_nocut ~nshort:nshort "Escaped States:"
-        (pr_seq_vbox ~nshort:nshort "" (pr_esc_stack_lvl ~nshort:nshort)) e;
+      pr_vwrap_naive_nocut ~nshort "Escaped States:"
+        (pr_seq_vbox ~nshort "" (pr_esc_stack_lvl ~nshort)) e;
       fmt_close_box ()
     end
 
@@ -4030,9 +4030,9 @@ let string_of_esc_stack e = poly_string_of_pr pr_esc_stack e
 
 let pr_failesc_context ?(nshort=true) ((l1,l2,l3): failesc_context) =
   fmt_open_vbox 0;
-  pr_failed_states ~nshort:nshort l1;
-  pr_esc_stack ~nshort:nshort l2;
-  pr_successful_states ~nshort:nshort l3;
+  pr_failed_states ~nshort l1;
+  pr_esc_stack ~nshort l2;
+  pr_successful_states ~nshort l3;
   fmt_close_box ()
 
 
@@ -4044,7 +4044,7 @@ let pr_partial_context ?(nshort=true) ((l1,l2): partial_context) =
   pr_vwrap_naive "Successful States:"
     (pr_seq_vbox "" (fun (lbl,fs,oft)-> 
          if nshort then (pr_hwrap "Label: " pr_path_trace lbl);
-         pr_vwrap "State:" (pr_context ~nshort:nshort) fs;
+         pr_vwrap "State:" (pr_context ~nshort) fs;
          if nshort then (pr_hwrap "Exc:" fmt_string (match oft with | Some _ -> "Some" | _ -> "None"))
        )) l2;
   fmt_close_box ()
@@ -4083,13 +4083,13 @@ let printer_of_failesc_context (fmt: Format.formatter) (ctx: failesc_context) : 
 
 let pr_list_failesc_context ?(nshort=true) (lc : list_failesc_context) =
   fmt_string ("List of Failesc Context: "^(summary_list_failesc_context lc));
-  fmt_cut (); pr_list_none (pr_failesc_context ~nshort:nshort) lc
+  fmt_cut (); pr_list_none (pr_failesc_context ~nshort) lc
 
 
 let pr_list_partial_context ?(nshort=true) (lc : list_partial_context) =
   (* fmt_string ("XXXX "^(string_of_int (List.length lc)));  *)
   if nshort then fmt_string ("List of Partial Context: " ^(summary_list_partial_context lc) );
-  fmt_cut (); pr_list_none (pr_partial_context ~nshort:nshort) lc
+  fmt_cut (); pr_list_none (pr_partial_context ~nshort) lc
 
 (* let pr_list_partial_context_short (lc : list_partial_context) = *)
 (*   (\* fmt_string ("XXXX "^(string_of_int (List.length lc)));  *\) *)
