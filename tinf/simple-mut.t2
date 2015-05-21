@@ -1,0 +1,69 @@
+///*** 1_main ***///
+START: 1;
+
+FROM: 1;
+TO: 2;
+
+FROM: 2;
+  x := nondet();
+TO: 3;
+
+FROM: 3;
+  assume(x >= 0);
+TO: 4;
+
+FROM: 3;
+  assume(x < 0);
+TO: exit;
+
+FROM: 4;
+  old_x := x;
+  x := old_x - 1;
+TO: 5;
+
+FROM: 5;
+  assume(x >= 1);
+TO: 6;
+
+FROM: 5;
+  assume(x < 1);
+TO: exit;
+
+FROM: 6;
+  old_x := x;
+  x := old_x + 2;
+TO: 3;
+
+/*
+void ints_method_3(int@R x_19, int@R old_x_18)[]
+static 
+dynamic EBase: [][](hfalse) * ([] & false)( FLOW __false) 
+{
+  (120, ):if (x_19 >= 0) { 
+    (120, ):old_x_18 = x_19
+    x_19 = old_x_18 - 1
+    (124, ):if (x_19 >= 1) { 
+      (124, ):old_x_18 = x_19
+      x_19 = old_x_18 + 2
+      (128, ):ints_method_3(x_19, old_x_18);
+    } else { 
+      (124, ):
+    };
+  } else { 
+    (120, ):
+  }
+  
+  (131, ):if (x_19 < 0) { 
+    (131, ):(132, ):return ;
+  } else { 
+    (131, ):
+  }
+
+  (134, ):if (x_19 < 1) { 
+    (134, ):(135, ):return ;
+  } else { 
+    (134, ):
+  }
+}
+
+*/

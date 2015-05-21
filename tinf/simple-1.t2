@@ -1,0 +1,67 @@
+///*** 1_main ***///
+START: 1;
+
+FROM: 1;
+TO: 2;
+
+FROM: 2;
+  x := nondet();
+  assume(y >= 0);
+TO: 3;
+
+FROM: 3;
+  assume(x >= 0);
+TO: 4;
+
+FROM: 3;
+  assume(x < 0);
+TO: 5;
+
+FROM: 4;
+  old_x := x;
+TO: 7;
+
+FROM: 7;
+  x := old_x - 1;
+TO: 8;
+
+FROM: 8;
+TO: 3;
+
+FROM: 5;
+TO: 6;
+
+FROM: 9;
+  x := 1;
+TO: 5;
+
+/*
+void main() {
+  int x = nondet();
+  while (x >= 0) {
+    x = x - 1;
+  }
+}
+*/
+
+/*
+void main() {
+  int x;
+  x = nondet();
+  f3(x);
+}
+
+void f3(ref int x) {
+  if (x >= 0) f4(x);
+  else f5(x);
+}
+
+void f4(ref int x) {
+  x = x - 1;
+  f3(x);
+}
+
+void f5(ref int x) {
+  return;
+}
+*/
