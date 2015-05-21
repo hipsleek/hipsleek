@@ -1359,7 +1359,6 @@ let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
 
   DD.tinfo_hprint (add_str "input_pairs(af): "  (pr_list
                                                    (pr_pair !CP.print_formula (pr_list !CP.print_formula)) )) pairs no_pos;
-  
   let rel_defs = List.concat
       (List.map (fun pair -> extract_inv_helper pair ante_vars specs) pairs) in
   (* let rel_defs = List.concat *)
@@ -1383,7 +1382,7 @@ let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
   let non_rec_defs = List.map (fun (rel_fml,pf,_) -> (rel_fml,pf)) non_rec_defs in
   if rec_rel_defs=[]
   then
-    let () = x_binfo_pp ("compute_fixpoint_xx:then branch") no_pos in
+    let () = x_tinfo_pp ("compute_fixpoint_xx:then branch") no_pos in
     true_const @ non_rec_defs
   else
     true_const @ (* non_rec_defs @ *) (x_add compute_fixpoint_aux rel_defs ante_vars bottom_up)

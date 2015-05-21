@@ -1,0 +1,45 @@
+/*
+infer [] forall(i:(!(i!=3) | ( (ai'=ai) & (!(i=5)|(a5=ai&a5'=ai')) ) ) ) |- a5=a5'.
+print residue.
+
+infer [a5,a5'] forall(i:(!(i!=3) |(ai'=ai)))  |- a5=a5'.
+print residue.
+// Why this one fails???
+
+infer [a5,a5'] true |- a5 = a5'.
+
+infer [a5,a6] true |- a5=a6.
+print residue.
+
+
+
+infer [a5,a6] exists fc: (forall(i:(!(i!=fc) | ( (ai'=ai) & (!(i=5)|(a5=ai&a6=ai')) ) ) ) & fc=10)  |- a5=a6.
+print residue.
+
+*/
+
+/*
+infer [] forall(i:(!(i!=10) |a_i=3 ) & (!(i=2)|a_i=a_5))  |- a_5=3.
+print residue.
+*/
+
+infer [@arrvar] forall (i:(!(i>10) | a[i]>5)) & a[5]=0 |- a[19]>5.
+print residue.
+
+infer [@arrvar] a[5]=0 & ((19<=10 | 5<(a[19]))) & ((5<=10 | 5<(a[5]))) |- a[19]>5.
+print residue.
+
+/*
+a[5]=3 |- a[2+3]=3
+-->
+a[5]=3 |- exists i.( a[i]=3 & i=2+3 )
+-->
+a_5=3 & ... Doesn't work..
+
+*/
+
+
+
+/*
+exists(fc_1193:exists(fc_1192:a'[fc_1193]=fc_1192 & forall(i:(!(i!=fc_1193) | a'[i]=a[i])) & fc_1192=10) & fc_1193=5) & a'[4]=res
+*/

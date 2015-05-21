@@ -1,0 +1,11 @@
+Our translation method is based on an axiom that within an array, elements with the same indexes will have the same value.
+forall i,j (i=j -> a[i]=a[j])
+
+We can further expand it into
+forall i,j ( i=j -> a[i]=a[j] & exists a_i(a[i]=a_i) & exists a_j(a[j]=a_j))
+
+Such axioms are introduced into an array-involved formula, which keep the information even the array part is dropped.
+
+First it is sound because everything introduced is true by itself.
+
+Second, we need to consider what to introduced so that we can still have the information we need. In our method, we introduce every index that exists in some of the array in the formula.
