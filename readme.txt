@@ -1,9 +1,16 @@
+Compilation
+===========
+
+make // to make bytecode for hip/sleek
+
+make native // to make native compiled code for hip/sleek
+
+
 Test Suite (to check prior to merging with default)
 ===================================================
 cd examples/working
 ./run-fast-tests.pl sleek
 ./run-fast-tests.pl hip -flags "--eps"
-
 
 Debugging
 =========

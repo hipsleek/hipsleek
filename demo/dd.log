@@ -1,2 +1,5 @@
-heap_entail_conjunct_helper
-heap_entail_conjunct,Trace
+#heap_entail_conjunct_helper,Loop
+#heap_entail_conjunct,Trace
+#translate_tup2_imply,Trace
+#heap_entail_empty_rhs,Trace
+heap_entail_non_empty_rhs_heap,Trace
