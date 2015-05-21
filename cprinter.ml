@@ -4009,7 +4009,7 @@ let pr_successful_states ?(nshort=true) e = match e with
            if nshort then (pr_hwrap "Label: " pr_path_trace lbl);
            (if nshort then pr_vwrap else pr_vwrap_nocut) "State:" (pr_context ~nshort:nshort) fs;
            (* Loc: print exc *)
-           if nshort then (pr_vwrap "Exc:" fmt_string (match oft with | Some _ -> "Some" | _ -> "None"))
+           if nshort then (pr_hwrap "Exc:" fmt_string (match oft with | Some _ -> "Some" | _ -> "None"))
          )) e
 
 let is_empty_esc_state e =
@@ -4045,7 +4045,7 @@ let pr_partial_context ?(nshort=true) ((l1,l2): partial_context) =
     (pr_seq_vbox "" (fun (lbl,fs,oft)-> 
          if nshort then (pr_hwrap "Label: " pr_path_trace lbl);
          pr_vwrap "State:" (pr_context ~nshort:nshort) fs;
-         if nshort then (pr_vwrap "Exc:" fmt_string (match oft with | Some _ -> "Some" | _ -> "None"))
+         if nshort then (pr_hwrap "Exc:" fmt_string (match oft with | Some _ -> "Some" | _ -> "None"))
        )) l2;
   fmt_close_box ()
 
