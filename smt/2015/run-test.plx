@@ -16,8 +16,8 @@ use POSIX qw(:sys_wait_h);
 use Time::HiRes qw(gettimeofday);
 
 my $cwd = Cwd::cwd();
-my $test_path = $cwd . "/latest";
-my $final_path = $cwd . "/final";
+my $test_path = $cwd . "/../bench/latest";
+# my $final_path = $cwd . "/final";
 my $sleek = "../../sleek";
 my $smt2slk = "smt2slk"; #"$cwd/bin/smt2slk"; #"../smt2slk/bin/smt2slk";
 
