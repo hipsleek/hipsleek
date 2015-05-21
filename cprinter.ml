@@ -3839,31 +3839,6 @@ let string_of_fail_type (e:fail_type) : string =  poly_string_of_pr  pr_fail_typ
 let printer_of_fail_type (fmt: Format.formatter) (e:fail_type) : unit =
   poly_printer_of_pr fmt pr_fail_type e
 
-
-let pr_list_context (ctx:list_context) =
-  match ctx with
-  | FailCtx (ft ,c,cex) -> (
-      let err_header = match get_must_failure_ft ft with
-        | Some _ -> "MustErr Context: "
-        | None -> "MaybeErr Context: "
-      in
-      fmt_cut ();fmt_string err_header (* "MaybeErr Context: " *); 
-      (* (match ft with *)
-      (*     | Basic_Reason (_, fe) -> (string_of_fail_explaining fe) (\*useful: MUST - OK*\) *)
-      (*     (\* TODO : to output must errors first *\) *)
-      (*     (\* | And_Reason (_, _, fe) -> (string_of_fail_explaining fe) *\) *)
-      (*     | _ -> fmt_string ""); *)
-      pr_fail_type ft;
-      pr_context_short c;
-      pr_failure_cex cex;
-      fmt_cut ()
-    )
-  | SuccCtx sc -> let str = 
-                    if (get_must_error_from_ctx sc)==None then "Good Context: "
-                    else "Error Context: " in
-    fmt_cut (); fmt_string str; fmt_int (List.length sc); pr_context_list sc; fmt_cut ()
-
-
 let pr_formula_vperm (f,vp) =
   fmt_open_vbox 1;
   pr_formula_wrap f;
