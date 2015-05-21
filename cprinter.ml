@@ -384,15 +384,15 @@ let pr_vwrap_nocut hdr (f: 'a -> unit) (x:'a) =
       if (String.length s) < 70 then (* to improve *)
         fmt_string (hdr^s)
       else begin
-        fmt_string hdr; 
+        fmt_string hdr;
         fmt_cut ();
         (* fmt_string s; *)
-        fmt_string " ";
         wrap_box ("B",0) f  x
       end
     end
-  else  begin 
-    fmt_string hdr; 
+  else  begin
+    fmt_string hdr;
+    fmt_cut ();
     wrap_box ("B",2) f  x
   end
 
@@ -418,6 +418,14 @@ let pr_vwrap_list hdr (f: 'a -> unit) (x:'a list) =
     | [] -> ()
     | _ -> pr_vwrap hdr (List.iter f) x
   end
+
+(* Print a header-value horizontally *)
+let pr_hwrap hdr (f: 'a -> unit) (x: 'a) =
+  fmt_open_hbox ();
+  fmt_string hdr;
+  fmt_cut ();
+  wrap_box ("H", 0) f x;
+  fmt_close ()
 
 (* let pr_args open_str close_str sep_str f xs =  *)
 (*   pr_list_open_sep  *)
@@ -3990,7 +3998,7 @@ let pr_failed_states ?(nshort=true) e = match e with
   | [] -> ()
   | _ ->   pr_vwrap_naive_nocut "Failed States:"
              (pr_seq_vbox "" (fun (lbl,fs)-> 
-                  if nshort then pr_vwrap_nocut "Label: " pr_path_trace lbl;
+                  if nshort then pr_hwrap "Label: " pr_path_trace lbl;
                   pr_vwrap "State:" pr_fail_type fs)) e
 
 let pr_successful_states ?(nshort=true) e = match e with
@@ -3998,7 +4006,7 @@ let pr_successful_states ?(nshort=true) e = match e with
   | _ ->   
     pr_vwrap_naive "Successful States:"
       (pr_seq_vbox "" (fun (lbl,fs,oft)-> 
-           if nshort then (pr_vwrap_nocut "Label: " pr_path_trace lbl);
+           if nshort then (pr_hwrap "Label: " pr_path_trace lbl);
            (if nshort then pr_vwrap else pr_vwrap_nocut) "State:" (pr_context ~nshort:nshort) fs;
            (* Loc: print exc *)
            if nshort then (pr_vwrap "Exc:" fmt_string (match oft with | Some _ -> "Some" | _ -> "None"))
@@ -4031,11 +4039,11 @@ let pr_failesc_context ?(nshort=true) ((l1,l2,l3): failesc_context) =
 let pr_partial_context ?(nshort=true) ((l1,l2): partial_context) =
   fmt_open_vbox 0;
   if nshort then (pr_vwrap_naive_nocut "Failed States:"
-                    (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
+                    (pr_seq_vbox "" (fun (lbl,fs)-> pr_hwrap "Label: " pr_path_trace lbl;
                                       pr_vwrap "State:" pr_fail_type fs)) l1);
   pr_vwrap_naive "Successful States:"
     (pr_seq_vbox "" (fun (lbl,fs,oft)-> 
-         if nshort then (pr_vwrap_nocut "Label: " pr_path_trace lbl);
+         if nshort then (pr_hwrap "Label: " pr_path_trace lbl);
          pr_vwrap "State:" (pr_context ~nshort:nshort) fs;
          if nshort then (pr_vwrap "Exc:" fmt_string (match oft with | Some _ -> "Some" | _ -> "None"))
        )) l2;
