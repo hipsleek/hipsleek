@@ -10333,22 +10333,6 @@ let rec get_final_error_ctx ctx=
       (* else e1 *)
     end
 
-let get_final_error cl=
-  let rec get_failure_ctx_list cs=
-    match cs with
-    | ctx::rest -> begin
-        let r = get_final_error_ctx ctx in
-        if r = None then get_failure_ctx_list rest else r
-      end
-    | [] -> None
-  in
-  match cl with
-  | FailCtx (ft,_,_) -> Some (get_short_str_fail_type ft, ft, Failure_Must "??")
-  | SuccCtx cs -> if cs = [] then Some ("empty states",
-                                        Trivial_Reason ({fe_kind = Failure_Must  "empty states"; fe_name = "empty states"; fe_locs=[]}, []),
-                                        Failure_Must "empty states") else
-      (* ((get_must_error_from_ctx cs) !=None) || ((get_may_error_from_ctx cs) !=None) *)
-      get_failure_ctx_list cs
 
 let rec get_failure_es_ft_x (ft:fail_type) : (failure_kind * (entail_state option)) =
   let rec helper ft = 
@@ -10826,6 +10810,34 @@ let convert_maymust_failure_to_value_orig ?(mark=true) (l:list_context) : list_c
 
 (* let add_must_err (s:string) (fme:branch_ctx list) (e:esc_stack) : esc_stack = *)
 (*   ((-1,"Must Err @"^s),fme) :: e *)
+
+let get_final_error cl=
+  let rec get_failure_ctx_list cs=
+    match cs with
+    | ctx::rest -> begin
+        let r = get_final_error_ctx ctx in
+        if r = None then get_failure_ctx_list rest else r
+      end
+    | [] -> None
+  in
+  match cl with
+  | FailCtx (ft,_,_) -> (
+        let fk = match get_must_ctx_msg_ft ft with
+          | Some (_, msg) -> Failure_Must msg
+          | None -> (
+                match get_may_ctx_msg_ft ft with
+                  | Some (_, msg) -> Failure_May msg
+                  | _ -> Failure_Valid
+            )
+        in
+        Some (get_short_str_fail_type ft, ft, fk(* Failure_Must "??" *))
+    )
+  | SuccCtx cs -> if cs = [] then Some ("empty states",
+                                        Trivial_Reason ({fe_kind = Failure_Must  "empty states"; fe_name = "empty states"; fe_locs=[]}, []),
+                                        Failure_Must "empty states") else
+      (* ((get_must_error_from_ctx cs) !=None) || ((get_may_error_from_ctx cs) !=None) *)
+      get_failure_ctx_list cs
+
 
 let add_must_err_to_pc (s:string) (fme:branch_ctx list) (e:branch_ctx list) : branch_ctx list =
   fme @ e

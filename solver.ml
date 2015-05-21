@@ -7076,13 +7076,15 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
       (*      but fails for ex21e7d.slk *)
       (* How was conversion to __Error done for ex21a51.ss without
          this conversion? *) 
+      let b = CF.is_en_error_exc_ctx ctx0 in
+      (* let () = x_binfo_pp ("is_en_error_exc_ctx: " ^ string_of_bool b) no_pos in *)
       if (* false *)
-        CF.is_en_error_exc_ctx ctx0
+        b
         (* (!Globals.enable_error_as_exc || CF.is_en_error_exc_ctx ctx0) *)
         (*           && not (CF.is_dis_error_exc_ctx ctx0) *)
       then        
         if not(!Globals.temp_opt_flag) then
-          (* let () = x_binfo_pp "temp_opt:convert_maymust" no_pos in *)
+          let () = x_tinfo_pp "temp_opt:convert_maymust" no_pos in
           (x_add_0 CF.convert_maymust_failure_to_value_orig) ~mark:true res
         else
         (*   let () = x_binfo_pp "temp_opt:no convert_maymust" no_pos in *)
@@ -7378,6 +7380,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                         (* | (s,_,_)::_ -> s *)
                         (* | [] -> "1.2b: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types" *)
                     in
+                    let () = x_tinfo_pp ("is_must: " ^ (string_of_bool is_must)) no_pos in
                     if is_must then
                       let fe = mk_failure_must err_msg undefined_error in
                       let must_flow_failure =
