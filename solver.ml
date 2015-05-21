@@ -10554,8 +10554,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 heap_entail_split_rhs prog is_folding new_ctx new_conseq (rhs_matched_set @ [r_var]) pos
               else x_add heap_entail_conjunct 11 prog is_folding new_ctx new_conseq (rhs_matched_set @ [r_var]) pos in
             let res_es1 = x_add Cformula.add_to_subst res_es1 r_subs l_subs in  
-            let res_es1 = Cformula.add_to_exists_pure res_es1 ann_rhs_ex pos in
-            let res_es1 = Immutable.restore_tmp_ann_list_ctx res_es1
+            let res_es1 = Cformula.add_to_exists_pure res_es1 ann_rhs_ex pos (* in *)
+            (* let res_es1 = Immutable.restore_tmp_ann_list_ctx res_es1 *)
             in (res_es1, prf1) 
             (* match final_ctx with                                                                                             *)
             (* | SuccCtx(cl) ->                                                                                                 *)

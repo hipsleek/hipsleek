@@ -1006,7 +1006,7 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
   | MetaVar mvar -> begin
       try
         let mf = get_var mvar in
-        meta_to_formula mf quant fv_idents tlist
+        x_add meta_to_formula mf quant fv_idents tlist
       with
       | Not_found ->
         dummy_exception() ;
@@ -1014,8 +1014,8 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
         raise SLEEK_Exception
     end
   | MetaCompose (vs, mf1, mf2) -> begin
-      let (n_tl,cf1) = meta_to_formula mf1 quant fv_idents tlist in
-      let (n_tl,cf2) = meta_to_formula mf2 quant fv_idents n_tl in
+      let (n_tl,cf1) = x_add meta_to_formula mf1 quant fv_idents tlist in
+      let (n_tl,cf2) = x_add meta_to_formula mf2 quant fv_idents n_tl in
       let svs = List.map (fun v -> Typeinfer.get_spec_var_type_list v n_tl no_pos) vs in
       let res = Cformula.compose_formula cf1 cf2 svs Cformula.Flow_combine no_pos in
       (n_tl,res)
@@ -1026,7 +1026,7 @@ let meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_v
   let pr_meta = string_of_meta_formula in
   let pr_f = Cprinter.string_of_formula in
   let pr2 (_,f) = pr_f f in
-  Debug.no_1 "Sleekengine.meta_to_formula" pr_meta pr2
+  Debug.no_1 "meta_to_formula" pr_meta pr2
     (fun mf -> meta_to_formula mf quant fv_idents tlist) mf0
 
 let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list)
@@ -1063,7 +1063,7 @@ let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:T
   | MetaEForm _ | MetaEFormCF _ -> report_error no_pos ("cannot have structured formula in antecedent")
 
 let run_simplify (iante0 : meta_formula) =
-  let (n_tl,ante) = meta_to_formula iante0 false [] [] in
+  let (n_tl,ante) = x_add meta_to_formula iante0 false [] [] in
   let ante = Cvutil.prune_preds !cprog true ante in
   let ante =
     if (Perm.allow_perm ()) then
@@ -1079,7 +1079,7 @@ let run_simplify (iante0 : meta_formula) =
   r
 
 let run_hull (iante0 : meta_formula) = 
-  let (n_tl,ante) = meta_to_formula iante0 false [] [] in
+  let (n_tl,ante) = x_add meta_to_formula iante0 false [] [] in
   let ante = Cvutil.prune_preds !cprog true ante in
   let ante =
     if (Perm.allow_perm ()) then
@@ -1096,7 +1096,7 @@ let run_hull (iante0 : meta_formula) =
 
 
 let run_pairwise (iante0 : meta_formula) = 
-  let (n_tl,ante) = meta_to_formula iante0 false [] [] in
+  let (n_tl,ante) = x_add meta_to_formula iante0 false [] [] in
   let ante = Cvutil.prune_preds !cprog true ante in
   let ante =
     if (Perm.allow_perm ()) then
@@ -1122,7 +1122,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
                       ^ "\n ### iante0 = "^(string_of_meta_formula iante0)
                       ^ "\n ### iconseq0 = "^(string_of_meta_formula iconseq0)
                       ^"\n\n") no_pos in
-  let (n_tl,ante) = meta_to_formula iante0 false [] [] in
+  let (n_tl,ante) = x_add meta_to_formula iante0 false [] [] in
   (*let ante = x_add Solver.normalize_formula_w_coers !cprog (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) ante !cprog.Cast.prog_left_coercions in*)
   let ante = Cvutil.prune_preds !cprog true ante in
   let ante = (*important for permissions*)
@@ -1136,7 +1136,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   let vk = Typeinfer.fresh_proc_var_kind n_tl Float in
   let n_tl = Typeinfer.type_list_add  (full_perm_name ()) vk n_tl in
   (*  let _ = flush stdout in*)
-  (* let csq_extra = meta_to_formula iconseq0 false [] stab in *)
+  (* let csq_extra = x_add meta_to_formula iconseq0 false [] stab in *)
   (* let conseq_fvs = CF.fv csq_extra in *)
   (* let _ = print_endline ("conseq vars"^(Cprinter.string_of_spec_var_list conseq_fvs)) in *)
   let fvs = CF.fv ante in
@@ -1209,10 +1209,10 @@ let run_infer_one_pass itype ivars (iante0 : meta_formula) (iconseq0 : meta_form
 
 let process_term_assume (iante: meta_formula) (iconseq: meta_formula) =
   let stab = [] in
-  let (stab, ante) = meta_to_formula iante false [] stab in
+  let (stab, ante) = x_add meta_to_formula iante false [] stab in
   let fvs = CF.fv ante in
   let fv_idents = List.map CP.name_of_spec_var fvs in
-  let (stab, conseq) = meta_to_formula iconseq false fv_idents stab in
+  let (stab, conseq) = x_add meta_to_formula iconseq false fv_idents stab in
   let _ = Term.check_term_assume !cprog ante conseq in
   ()
 
@@ -1242,18 +1242,18 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
   (* let _ = Debug.info_pprint "process_rel_assume" no_pos in *)
   (* let stab = H.create 103 in *)
   let stab = [] in
-  let (stab,lhs) = meta_to_formula ilhs false [] stab in
+  let (stab,lhs) = x_add meta_to_formula ilhs false [] stab in
   let fvs = CF.fv lhs in
   let fv_idents = (List.map CP.name_of_spec_var fvs) in
-  let (stab,rhs) = meta_to_formula irhs false fv_idents stab in
+  let (stab,rhs) = x_add meta_to_formula irhs false fv_idents stab in
   let rhs = CF.elim_exists rhs in
   let all_vs = fvs@(CF.fv rhs) in
   let fv_idents = (List.map CP.name_of_spec_var all_vs) in
-  let (stab,lhs) = meta_to_formula ilhs false fv_idents stab in
+  let (stab,lhs) = x_add meta_to_formula ilhs false fv_idents stab in
   let lhs = CF.elim_exists lhs in
   let guard = match igurad_opt with
     | None -> None
-    | Some iguard -> let (_,guard0) = meta_to_formula iguard false fv_idents stab in
+    | Some iguard -> let (_,guard0) = x_add meta_to_formula iguard false fv_idents stab in
       let guard1 = CF.elim_exists guard0 in
       let _, guard = CF.split_quantifiers guard1 in
       (* let _ = Debug.info_pprint (Cprinter.string_of_formula guard) no_pos in *)
@@ -1310,10 +1310,10 @@ let process_rel_defn cond_path (ilhs : meta_formula) (irhs: meta_formula) extn_i
   (* let _ = Debug.info_pprint "process_rel_assume" no_pos in *)
   (* let stab = H.create 103 in *)
   let stab = [] in
-  let (stab,lhs) = meta_to_formula ilhs false [] stab in
+  let (stab,lhs) = x_add meta_to_formula ilhs false [] stab in
   let fvs = CF.fv lhs in
   let fv_idents = (List.map CP.name_of_spec_var fvs) in
-  let (stab,rhs) = meta_to_formula irhs false fv_idents stab in
+  let (stab,rhs) = x_add meta_to_formula irhs false fv_idents stab in
   let rhs = CF.elim_exists rhs in
   let hfs = CF.heap_of lhs in
   let hf = match hfs with
@@ -1609,10 +1609,10 @@ let process_validate exp_res opt_fl ils_es=
   if not !Globals.show_unexpected_ents then () else
     (**********INTERNAL**********)
     let preprocess_constr act_idents act_ti (ilhs, irhs)=
-      let (n_tl,lhs) = meta_to_formula ilhs false act_idents act_ti in
+      let (n_tl,lhs) = x_add meta_to_formula ilhs false act_idents act_ti in
       let fvs = CF.fv lhs in
       let fv_idents = (List.map CP.name_of_spec_var fvs) in
-      let (_, rhs) = meta_to_formula irhs false (fv_idents@act_idents) n_tl in
+      let (_, rhs) = x_add meta_to_formula irhs false (fv_idents@act_idents) n_tl in
       (lhs,rhs)
     in
     let preprocess_iestate act_vars (iguide_vars, ief, iconstrs) =
@@ -1621,7 +1621,7 @@ let process_validate exp_res opt_fl ils_es=
           let vk = Typeinfer.fresh_proc_var_kind ls t in
           ls@[(sv,vk)]
         ) [] act_vars in
-      let (n_tl,es_formula) = meta_to_formula ief false (act_idents) act_ti in
+      let (n_tl,es_formula) = x_add meta_to_formula ief false (act_idents) act_ti in
       let orig_vars = CF.fv es_formula in
       let guide_vars = List.map (fun v -> x_add_0 Typeinfer.get_spec_var_type_list_infer (v, Unprimed) (orig_vars@act_vars) no_pos)
           iguide_vars in
@@ -2237,7 +2237,7 @@ let print_exc (check_id: string) =
 let process_sat_check_x (f : meta_formula) =
   let nn = (sleek_proof_counter#inc_and_get) in
   let num_id = "\nCheckSat "^(string_of_int nn) in
-  let (_,f) = meta_to_formula f false [] [] in
+  let (_,f) = x_add meta_to_formula f false [] [] in
   let f = Cvutil.prune_preds !cprog true f in
   let unsat_command f = not(x_add Solver.unsat_base_nth 7 !cprog (ref 0) f) in
   let res = x_add Solver.unsat_base_nth 1 !cprog (ref 0) f in
@@ -2254,7 +2254,7 @@ let process_nondet_check (v: ident) (mf: meta_formula) =
   if (!Globals.print_input || !Globals.print_input_all) then (
     print_endline_quiet ("Check_nondet:\n ### var = " ^ v ^"\n ### formula = " ^ (string_of_meta_formula mf));
   );
-  let (_,f) = meta_to_formula mf false [] [] in
+  let (_,f) = x_add meta_to_formula mf false [] [] in
   let pf = CF.get_pure f in
   let res = CP.check_non_determinism v pf in
   let nn = (sleek_proof_counter#inc_and_get) in
@@ -2310,7 +2310,7 @@ let process_check_norm_x (f : meta_formula) =
     else () 
   in
   let _ = x_dinfo_pp ("\nprocess_check_norm:" ^ "\n ### f = "^(string_of_meta_formula f)  ^"\n\n") no_pos in
-  let (n_tl, cf) = meta_to_formula f false [] []  in
+  let (n_tl, cf) = x_add meta_to_formula f false [] []  in
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline_quiet ("INPUT 8: \n ### cf = " ^ (Cprinter.string_of_formula cf)) else () in
   let estate = (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) in
   let newf = x_add Solver.prop_formula_w_coers 1 !cprog estate cf (Lem_store.all_lemma # get_left_coercion) in
@@ -2331,7 +2331,7 @@ let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula
                       ^ "\n ### f2 = "^(string_of_meta_formula if2)
                       ^"\n\n") no_pos in
 
-  let (n_tl,f1) = meta_to_formula_not_rename if1 false [] []  in
+  let (n_tl,f1) = x_add meta_to_formula_not_rename if1 false [] []  in
   let (n_tl,f2) = meta_to_formula_not_rename if2 false [] n_tl  in
 
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline_quiet ("INPUT 3: \n ### formula 1= " ^ (Cprinter.string_of_formula f1) ^"\n ### formula 2= " ^ (Cprinter.string_of_formula f2)) else () in

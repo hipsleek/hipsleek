@@ -1,0 +1,3 @@
+
+
+slk_simplify (exists b,c,g,d: a<:b & b<:c & c<:@L & g=d).

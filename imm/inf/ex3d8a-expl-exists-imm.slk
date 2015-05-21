@@ -41,3 +41,16 @@ ex3d8a.slk
 
 
 */
+
+checkentail x::cell<a> |- (exists b: x::cell<b>).
+print residue.
+expect Valid.
+
+
+checkentail x::cell<_>@M |- (exists v: x::cell<_>@v &v=@M).
+print residue.
+
+/*
+checkentail x::cell<_>@w |- (exists v: x::cell<_>@v & w=v & v=@M).
+print residue.
+*/
