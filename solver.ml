@@ -7373,12 +7373,13 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                     if is_must then
                       let fe = mk_failure_must err_msg undefined_error in
                       let must_flow_failure =
+                        let must_estate = convert_to_must_es estate in
                         FailCtx ((Basic_Reason ({fc_message = err_msg;
-                                               fc_current_lhs = estate;
+                                               fc_current_lhs = must_estate;
                                                fc_orig_conseq = struc_formula_of_formula conseq pos;
                                                fc_prior_steps = estate.es_prior_steps;
                                                fc_current_conseq = CF.formula_of_heap HFalse pos;
-                                               fc_failure_pts =[];}, fe, estate.es_trace)), Ctx (convert_to_must_es estate), mk_cex true) in
+                                               fc_failure_pts =[];}, fe, estate.es_trace)), Ctx (must_estate), mk_cex true) in
                       (must_flow_failure, UnsatConseq)
                     else
                       let fe = mk_failure_may err_msg undefined_error in
