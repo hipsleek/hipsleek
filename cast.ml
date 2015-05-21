@@ -224,6 +224,7 @@ and proc_decl = {
   (* Termination: Set of logical variables of the proc's scc group *)
   proc_logical_vars : P.spec_var list;
   proc_call_order : int;
+  proc_asserts: assert_info list;
   proc_is_main : bool;
   proc_is_invoked : bool;
   proc_is_recursive : bool;

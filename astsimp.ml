@@ -4012,6 +4012,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
            C.proc_logical_vars = [];
            C.proc_call_order = 0;
            C.proc_is_main = proc.I.proc_is_main;
+           C.proc_asserts = proc.I.proc_asserts;
            C.proc_is_invoked = proc.I.proc_is_invoked;
            C.proc_verified_domains = proc.I.proc_verified_domains;
            C.proc_is_recursive = false;
@@ -5857,6 +5858,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
         I.proc_is_while = true;
         I.proc_has_while_return = false;
         I.proc_is_invoked = true;
+        I.proc_asserts = [];
         I.proc_verified_domains = [];
         I.proc_file = proc.I.proc_file;
         I.proc_loc = pos; 

@@ -244,6 +244,7 @@ and proc_decl = {
   proc_exceptions : ident list;
   proc_body : exp option;
   proc_is_main : bool;
+  proc_asserts: assert_info list;
   proc_is_while : bool; (* true if the proc is translated from a while loop *)
   mutable proc_has_while_return: bool;
   mutable proc_is_invoked : bool;
@@ -1494,6 +1495,7 @@ let mkProc sfile id flgs n dd c ot ags r ho_param ss ds pos bd =
     (*  proc_important_vars = [];*)
     proc_static_specs = ss;
     proc_dynamic_specs = ds;
+    proc_asserts = [];
     proc_loc = pos;
     proc_verified_domains = [];
     proc_is_main = true;
@@ -3076,6 +3078,7 @@ let add_bar_inits prog =
         proc_dynamic_specs = F.mkEFalseF ();
         proc_exceptions = [];
         proc_body = None;
+        proc_asserts = [];
         proc_is_main = false;
         proc_is_while = false;
         proc_has_while_return = false;

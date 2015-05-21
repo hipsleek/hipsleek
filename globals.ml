@@ -61,6 +61,7 @@ type ho_flow_kind =
   | OUTFLOW
   | NEUTRAL
 
+
 (* type nflow = (int*int)(\*numeric representation of flow*\) *)
 type flags = 
     Flag_str of string
@@ -92,6 +93,7 @@ let gen_lemma_action_invalid = -1
 let eq_control_path_id ((p1,_):formula_label) ((p2,_):formula_label) = p1==p2
 
 let eq_str s1 s2 = String.compare s1 s2 = 0
+
 
 let empty_label = (0,"")
 let app_e_l c = (empty_label, c)
@@ -334,6 +336,7 @@ type mode =
   | ModeOut
 
 
+type assert_info= (loc * int)
 
 type perm_type =
   | NoPerm (*no permission at all*)
