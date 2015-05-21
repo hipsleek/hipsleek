@@ -563,7 +563,37 @@ infer [a] a<=3 |-  a<=0.
  <1>emp&a<=3 & a!=1 & a!=2 & a!=3&{FLOW,(4,5)=__norm#E}[]
  inferred pure: [a!=3; a!=2; a!=1]
 =======================================================
+# ex10a2.slk 
+
+infer [P1] c::cell<_>@M |-  c::cell<_>@ww.
+
+# I think we should inst @M<:ww rather than ww=@A
+
+Residue:
+ <1>c::cell<Anon_19>@M&ww=@A & Anon_20=Anon_19&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  Match(c,c) ==> ]]
+
 =======================================================
+# ex10a3.slk 
+
+infer [P1] c::cell<_>@M |-  c::cell<_>@ww&P1(ww).
+
+GOT:
+
+ <1>c::cell<Anon_11>@[@M, @ww]&@M<:ww & Anon_12=Anon_11&{FLOW,(20,21)=__norm#E}[]
+ inferred rel: [RELDEFN P1: ( true) -->  P1(ww)]
+
+# As relation can be pre or post, we may want to obtain:
+
+ inferred rel: [RELDEFN P1: @M<:ww -->  P1(ww)]
+
+ This would tell us that P1(ww) = ww=@M so that we can
+ have that as the strongest post-condition.
+
+ This at least tell us that ww is being used.
+ If we had just true --> P(ww), it could be that 
+ ww is unused.
+
 =======================================================
 =======================================================
 =======================================================
