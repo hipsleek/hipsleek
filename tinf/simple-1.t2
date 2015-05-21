@@ -4,6 +4,10 @@ START: 1;
 FROM: 1;
 TO: 2;
 
+FROM: 1;
+  x := 2;
+TO: 9;
+
 FROM: 2;
   x := nondet();
   assume(y >= 0);
@@ -34,6 +38,10 @@ TO: 6;
 FROM: 9;
   x := 1;
 TO: 5;
+
+FROM: 5;
+  x := 5;
+TO: 9;
 
 /*
 void main() {
