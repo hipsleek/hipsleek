@@ -1,0 +1,6 @@
+checkentail x[5]+3> 0 |- true.
+print residue.
+
+
+checkentail a=1+x[5] |- a>=0.
+print residue.
