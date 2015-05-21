@@ -7,6 +7,34 @@ open Iexp
 module I = Iast
 module IF = Iformula
 
+let init_conditions_of_block (b : ints_block) : ints_exp_assume list =
+  let vars_of_exp e =
+    let f e =
+      match e with
+      | I.Var { I.exp_var_name = id } -> Some [id]
+      | _ -> None in
+    I.fold_exp e f (List.concat) [] in
+  let vars_of_asg asg =
+    let lhs = asg.ints_exp_assign_lhs in
+    vars_of_exp lhs in
+  let vars_of_assume asm =
+    vars_of_exp asm.ints_exp_assume_formula in
+  let rec helper blk_cmds assigned =
+    match blk_cmds with
+    | [] -> []
+    | (Assume asm)::cmds ->
+      (* assumption is "inital" if all of the variables in its formula
+       * aren't used by any asg's lhs so far in the block. *)
+      if (List.exists
+           (fun i -> List.mem i assigned)
+           (vars_of_assume asm))
+      then helper cmds assigned
+      else asm::(helper cmds assigned)
+    | (Assign asg)::cmds ->
+      helper cmds ((vars_of_asg asg)@assigned)
+  in
+  helper b.ints_block_commands []
+
 let rec partition_by_key key_of key_eq ls = 
   match ls with
   | [] -> []
