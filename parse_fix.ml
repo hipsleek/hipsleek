@@ -136,176 +136,176 @@ let initialize_tlist_from_fpairlist fpairlst =
 (******************************************************************************)
 
 EXTEND Gram
-  GLOBAL: expression;
+    GLOBAL: expression;
 expression:
-  [ "expression" NONA
-      [ x = LIST1 or_formula -> x ]
-  ];
-
-or_formula:
-  [ "or_formula" LEFTA
-      [ x = SELF; "||"; y = SELF -> mkOr x y None loc
-                      | x = and_formula -> x ]
+    [ "expression" NONA
+        [ x = LIST1 or_formula -> x ]
     ];
 
-  and_formula:
+or_formula:
+    [ "or_formula" LEFTA
+        [ x = SELF; "||"; y = SELF -> mkOr x y None loc
+          | x = and_formula -> x ]
+    ];
+
+and_formula:
     [ "and_formula" LEFTA
         [ x = SELF; "&&"; y = SELF -> mkAnd x y loc
-                        | x = formula -> x ]
+          | x = formula -> x ]
     ];
 
 formula:
-  [ "formula" LEFTA
-      [ NATIVEINT; "="; exp        -> mkTrue loc
-                      | exp; "="; NATIVEINT        -> mkTrue loc
-                                | NATIVEINT; "<"; exp        -> mkTrue loc
-                                                | exp; "<"; NATIVEINT        -> mkTrue loc
-                                                          | NATIVEINT; ">"; exp        -> mkTrue loc
-                                                                            | exp; ">"; NATIVEINT        -> mkTrue loc
-                                                                                      | NATIVEINT; "<="; exp       -> mkTrue loc
-                                                                                                       | exp; "<="; NATIVEINT       -> mkTrue loc
-                                                                                                                  | NATIVEINT; ">="; exp       -> mkTrue loc
-                                                                                                                                   | exp; ">="; NATIVEINT       -> mkTrue loc
-                                                                                                                                              | NATIVEINT; "!="; exp       -> mkTrue loc
-                                                                                                                                                               | exp; "!="; NATIVEINT       -> mkTrue loc
-                                                                                                                                                                          | NATIVEINT; "="; NATIVEINT  -> mkTrue loc
-                                                                                                                                                                                          | NATIVEINT; "<"; NATIVEINT  -> mkTrue loc
-                                                                                                                                                                                                          | NATIVEINT; ">"; NATIVEINT  -> mkTrue loc
-                                                                                                                                                                                                                          | NATIVEINT; "<="; NATIVEINT -> mkTrue loc
-                                                                                                                                                                                                                                           | NATIVEINT; ">="; NATIVEINT -> mkTrue loc
-                                                                                                                                                                                                                                                            | NATIVEINT; "!="; NATIVEINT -> mkTrue loc
-                                                                                                                                                                                                                                                                             | x = INT; "="; y = INT ->
-          let tmp =
-            if int_of_string x = int_of_string y
-            then BConst (true,loc)
-            else BConst (false,loc)
-          in BForm ((tmp, None), None)
-     | x = exp; "<"; y = exp ->
-          (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) x no_pos in *)
-          (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) y no_pos in *)
-          if is_bool_res_var y && is_zero x then
-            BForm ((BVar (get_var "res" tlist, loc), None), None)
-          else if is_bool_res_var x && is_one y then
-            Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc) 
-          else
-            let tmp = 
-              if is_node y && is_zero x then 
-                Neq (Var(get_var (get_node y) tlist, loc), Null loc, loc)
-              else if is_node x && is_one y then 
-                Eq (Var(get_var (get_node x) tlist, loc), Null loc, loc)
-              else if is_self_var y then 
-                Neq (Var(get_var "self" tlist, loc), Null loc, loc)
-              else Lt (x, y, loc) 
-            in BForm ((tmp, None), None)
-     | x = exp; ">"; y = exp ->
-          (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) x no_pos in *)
-          (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) y no_pos in *)
-            if is_bool_res_var x && is_zero y then 
-              BForm ((BVar (get_var "res" tlist, loc), None), None) 
-            else if is_bool_res_var y && is_one x then 
-              Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc) 
-            else
-              let tmp = 
-                if is_node x && is_zero y then 
-                  Neq (Var(get_var (get_node x) tlist, loc), Null loc, loc)
-                else if is_node y && is_one x then 
-                  Eq (Var(get_var (get_node y) tlist, loc), Null loc, loc)
-                else if is_self_var x then 
-                  Neq (Var(get_var "self" tlist, loc), Null loc, loc)
-                else Gt (x, y, loc) 
-              in BForm ((tmp, None), None)
-     | x = exp; "<="; y = exp ->
-          (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) x no_pos in *)
-          (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) y no_pos in *)
-              if is_bool_res_var x && is_zero y then 
-                Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc) 
-              else if is_bool_res_var y && is_one x then 
-                BForm ((BVar (get_var "res" tlist, loc), None), None) 
-              else
-                let tmp = 
-                  if is_node x && is_zero y then 
-                    Eq (Var(get_var (get_node x) tlist, loc), Null loc, loc)
-                  else if is_node y && is_one x then 
-                    Neq (Var(get_var (get_node y) tlist, loc), Null loc, loc)
-                  else if is_self_var x then 
-                    Eq (Var(get_var "self" tlist, loc), Null loc, loc)
-                  else Lte (x, y, loc)
+    [ "formula" LEFTA
+        [ NATIVEINT; "="; exp        -> mkTrue loc
+          | exp; "="; NATIVEINT        -> mkTrue loc
+          | NATIVEINT; "<"; exp        -> mkTrue loc
+          | exp; "<"; NATIVEINT        -> mkTrue loc
+          | NATIVEINT; ">"; exp        -> mkTrue loc
+          | exp; ">"; NATIVEINT        -> mkTrue loc
+          | NATIVEINT; "<="; exp       -> mkTrue loc
+          | exp; "<="; NATIVEINT       -> mkTrue loc
+          | NATIVEINT; ">="; exp       -> mkTrue loc
+          | exp; ">="; NATIVEINT       -> mkTrue loc
+          | NATIVEINT; "!="; exp       -> mkTrue loc
+          | exp; "!="; NATIVEINT       -> mkTrue loc
+          | NATIVEINT; "="; NATIVEINT  -> mkTrue loc
+          | NATIVEINT; "<"; NATIVEINT  -> mkTrue loc
+          | NATIVEINT; ">"; NATIVEINT  -> mkTrue loc
+          | NATIVEINT; "<="; NATIVEINT -> mkTrue loc
+          | NATIVEINT; ">="; NATIVEINT -> mkTrue loc
+          | NATIVEINT; "!="; NATIVEINT -> mkTrue loc
+          | x = INT; "="; y = INT ->
+                let tmp =
+                  if int_of_string x = int_of_string y
+                  then BConst (true,loc)
+                  else BConst (false,loc)
                 in BForm ((tmp, None), None)
-     | x = exp; ">="; y = exp ->
-          (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) x no_pos in *)
-          (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) y no_pos in *)
-                if is_bool_res_var y && is_zero x then 
+          | x = exp; "<"; y = exp ->
+                (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) x no_pos in *)
+                (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) y no_pos in *)
+                if is_bool_res_var y && is_zero x then
+                  BForm ((BVar (get_var "res" tlist, loc), None), None)
+                else if is_bool_res_var x && is_one y then
                   Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc) 
-                else
-                if is_bool_res_var x && is_one y then 
-                  BForm ((BVar (get_var "res" tlist, loc), None), None) 
                 else
                   let tmp = 
                     if is_node y && is_zero x then 
-                      Eq (Var(get_var (get_node y) tlist, loc), Null loc, loc)
-                    else
-                    if is_node x && is_one y then 
-                      Neq (Var(get_var (get_node x) tlist, loc), Null loc, loc)
-                    else
-                    if is_self_var y then 
-                      Eq (Var(get_var "self" tlist, loc), Null loc, loc)
-                    else Gte (x, y, loc)
+                      Neq (Var(get_var (get_node y) tlist, loc), Null loc, loc)
+                    else if is_node x && is_one y then 
+                      Eq (Var(get_var (get_node x) tlist, loc), Null loc, loc)
+                    else if is_self_var y then 
+                      Neq (Var(get_var "self" tlist, loc), Null loc, loc)
+                    else Lt (x, y, loc) 
                   in BForm ((tmp, None), None)
-       | x = exp; "="; y = exp ->
-          (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) x no_pos in *)
-          (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) y no_pos in *)
+          | x = exp; ">"; y = exp ->
+                (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) x no_pos in *)
+                (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) y no_pos in *)
+                if is_bool_res_var x && is_zero y then 
+                  BForm ((BVar (get_var "res" tlist, loc), None), None) 
+                else if is_bool_res_var y && is_one x then 
+                  Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc) 
+                else
                   let tmp = 
-                    if is_node x && is_node y then 
-                      Eq (Var(get_var (get_node x) tlist, loc), 
-                          Var(get_var (get_node y) tlist, loc), loc)
-                    else
+                    if is_node x && is_zero y then 
+                      Neq (Var(get_var (get_node x) tlist, loc), Null loc, loc)
+                    else if is_node y && is_one x then 
+                      Eq (Var(get_var (get_node y) tlist, loc), Null loc, loc)
+                    else if is_self_var x then 
+                      Neq (Var(get_var "self" tlist, loc), Null loc, loc)
+                    else Gt (x, y, loc) 
+                  in BForm ((tmp, None), None)
+          | x = exp; "<="; y = exp ->
+                (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) x no_pos in *)
+                (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) y no_pos in *)
+                if is_bool_res_var x && is_zero y then 
+                  Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc) 
+                else if is_bool_res_var y && is_one x then 
+                  BForm ((BVar (get_var "res" tlist, loc), None), None) 
+                else
+                  let tmp = 
+                    if is_node x && is_zero y then 
+                      Eq (Var(get_var (get_node x) tlist, loc), Null loc, loc)
+                    else if is_node y && is_one x then 
+                      Neq (Var(get_var (get_node y) tlist, loc), Null loc, loc)
+                    else if is_self_var x then 
+                      Eq (Var(get_var "self" tlist, loc), Null loc, loc)
+                    else Lte (x, y, loc)
+                  in BForm ((tmp, None), None)
+          | x = exp; ">="; y = exp ->
+                (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) x no_pos in *)
+                (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) y no_pos in *)
+                if is_bool_res_var y && is_zero x then 
+                  Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc) 
+                else
+                  if is_bool_res_var x && is_one y then 
+                    BForm ((BVar (get_var "res" tlist, loc), None), None) 
+                  else
+                    let tmp = 
+                      if is_node y && is_zero x then 
+                        Eq (Var(get_var (get_node y) tlist, loc), Null loc, loc)
+                      else
+                        if is_node x && is_one y then 
+                          Neq (Var(get_var (get_node x) tlist, loc), Null loc, loc)
+                        else
+                          if is_self_var y then 
+                            Eq (Var(get_var "self" tlist, loc), Null loc, loc)
+                          else Gte (x, y, loc)
+                    in BForm ((tmp, None), None)
+          | x = exp; "="; y = exp ->
+                (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) x no_pos in *)
+                (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) y no_pos in *)
+                let tmp = 
+                  if is_node x && is_node y then 
+                    Eq (Var(get_var (get_node x) tlist, loc), 
+                    Var(get_var (get_node y) tlist, loc), loc)
+                  else
                     if is_node x && is_rec_node y then 
                       Eq (Var(get_var (get_node x) tlist, loc), 
-                          Var(add_prefix (get_var (get_rec_node y) tlist) "REC", loc), loc)
+                      Var(add_prefix (get_var (get_rec_node y) tlist) "REC", loc), loc)
                     else
-                    if is_node y && is_rec_node x then 
-                      Eq (Var(get_var (get_node y) tlist, loc), 
-                          Var(add_prefix (get_var (get_rec_node x) tlist) "REC", loc), loc)
-                    else
-                    if is_rec_node x && is_rec_node y then 
-                      Eq (Var(add_prefix (get_var (get_rec_node x) tlist) "REC", loc), 
+                      if is_node y && is_rec_node x then 
+                        Eq (Var(get_var (get_node y) tlist, loc), 
+                        Var(add_prefix (get_var (get_rec_node x) tlist) "REC", loc), loc)
+                      else
+                        if is_rec_node x && is_rec_node y then 
+                          Eq (Var(add_prefix (get_var (get_rec_node x) tlist) "REC", loc), 
                           Var(add_prefix (get_var (get_rec_node y) tlist) "REC", loc), loc)
-                    else Eq (x, y, loc)
-                  in BForm ((tmp, None), None)
-                   | x = exp; "!="; y = exp ->
-                  let tmp = Neq (x, y, loc) in
-                  BForm ((tmp, None), None)
+                        else Eq (x, y, loc)
+                in BForm ((tmp, None), None)
+          | x = exp; "!="; y = exp ->
+                let tmp = Neq (x, y, loc) in
+                BForm ((tmp, None), None)
         ]
     ];
 
-  exp:
+exp:
     [ "exp" LEFTA
         [ x = SELF; "+"; y = SELF -> Add (x, y, loc)
-                       | x = SELF; "-"; y = SELF -> Subtract (x, y, loc)
-                                      (* | x = INT; y = SELF -> *)
-                                      (*       let ni=IConst (int_of_string x, loc)  *)
-                                      (*       in Mult (ni, y, loc) *) (* bugs in post/t/ack3.ss : res >= 1 && m >= 0 && res >= 1 + m + n 0 >= res && 0 = m && res = n + 1 1 = 0 *)
-                                      | x = INT; "*"; y = SELF ->
-          let ni=IConst (int_of_string x, loc) 
-          in Mult (ni, y, loc)
-           | x = specvar             -> Var (x, loc)
-           | x = INT                 -> IConst (int_of_string x, loc) 
-           | NATIVEINT               -> Var (SpecVar(Named "abc", "abc", Unprimed),loc)
+          | x = SELF; "-"; y = SELF -> Subtract (x, y, loc)
+                (* | x = INT; y = SELF -> *)
+                (*       let ni=IConst (int_of_string x, loc)  *)
+                (*       in Mult (ni, y, loc) *) (* bugs in post/t/ack3.ss : res >= 1 && m >= 0 && res >= 1 + m + n 0 >= res && 0 = m && res = n + 1 1 = 0 *)
+          | x = INT; "*"; y = SELF ->
+                let ni=IConst (int_of_string x, loc) 
+                in Mult (ni, y, loc)
+          | x = specvar             -> Var (x, loc)
+          | x = INT                 -> IConst (int_of_string x, loc) 
+          | NATIVEINT               -> Var (SpecVar(Named "abc", "abc", Unprimed),loc)
         ]
     ];
 
-  specvar:
+specvar:
     [ "specvar" NONA
         [ x = LIDENT -> get_var x tlist
-        | x = UIDENT ->
-          if is_substr "REC" x
-          then
-            add_prefix (get_var (String.sub x 3 (String.length x - 3)) tlist) "REC"
-          else get_var x tlist
+          | x = UIDENT ->
+                if is_substr "REC" x
+                then
+                  add_prefix (get_var (String.sub x 3 (String.length x - 3)) tlist) "REC"
+                else get_var x tlist
         ]
     ];
 
-  END
+END
 
 (******************************************************************************)
 

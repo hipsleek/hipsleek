@@ -46,4 +46,7 @@ fc_1234=5) & 1<=(a[5])))
 
 Q(a,a',S) = a[5]<=0 & unchanged(a,a',S) & S={} 
              \/  a[5]>0 & Q(a,a',S1) & S=S1+{5}
+
+Q(a,a',S) = a[5]<=0 & unchanged(a,a',S) & S=(a,a' 
+             \/  a[5]>0 & Q(a,a',S1) & S=S1+{5}
 */
