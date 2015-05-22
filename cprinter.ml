@@ -320,15 +320,19 @@ let pr_wrap_opt hdr (f: 'a -> unit) (x:'a option) =
       fmt_close_box()
     end
 
-(** if f e  is not true print with a cut in front of  hdr*)    
-let pr_wrap_test hdr (e:'a -> bool) (f: 'a -> unit) (x:'a) =
+(** if f e  is not true print with a cut in front of  hdr
+   If below is set to true, the content will be printed below the header,
+   indented.
+ *)    
+let pr_wrap_test ?(below=false) hdr (e:'a -> bool) (f: 'a -> unit) (x:'a) =
   if (e x) then ()
-  else 
+  else
     begin
-      fmt_cut (); 
-      fmt_open_hbox ();
-      fmt_string hdr; 
+      fmt_cut ();
+      if below then fmt_open_vbox 0 else fmt_open_hbox ();
+      fmt_string hdr;
       (* f x; *)
+      if below then fmt_cut_and_indent ();
       wrap_box ("B",1) f x;
       fmt_close_box()
     end
@@ -3655,7 +3659,7 @@ let pr_estate ?(nshort=true) (es : entail_state) =
       (*  pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;*)
       pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) es.es_infer_heap;
       pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) es.es_infer_templ_assume;
-      pr_wrap_test "es_infer_term_rel: " Gen.is_empty  (pr_seq "" print_tntrel) es.es_infer_term_rel; 
+      pr_wrap_test ~below:true "es_infer_term_rel: " Gen.is_empty  (pr_seq "" print_tntrel) es.es_infer_term_rel; 
       pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pure; 
       pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es.es_infer_hp_rel; 
       pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) es.es_infer_rel; 
@@ -4018,6 +4022,7 @@ let pr_successful_states ?(nshort=true) e = match e with
            fmt_string "State:";
            fmt_cut_and_indent ();
            pr_context ~nshort fs;
+           fmt_cut ();
            (* Loc: print exc *)
            if nshort then (pr_hwrap "Exc:" fmt_string (match oft with | Some _ -> "Some" | _ -> "None"))
          )) e
@@ -4057,6 +4062,7 @@ let pr_partial_context ?(nshort=true) ((l1,l2): partial_context) =
          fmt_string "State:";
          fmt_cut_and_indent ();
          pr_context ~nshort fs;
+         fmt_cut ();
          if nshort then (pr_hwrap "Exc:" fmt_string (match oft with | Some _ -> "Some" | _ -> "None"))
        )) l2;
   fmt_close_box ()
