@@ -13,8 +13,9 @@ int foo(ref int[] a)
   int k=5;
   if (a[5]>0) {
     // a[6] = a[6]+1;
-    a[k] = a[5]-1;
-    a[5] = a[5]+1;
+    //    a[k] = a[5]-1;
+    a[4] = a[4]+1;
+    a[5] = a[5]-1;
     return foo(a); } 
   else {
     int tmp=a[4];
