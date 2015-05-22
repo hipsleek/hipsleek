@@ -1,4 +1,4 @@
- #include "xdebug.cppo"
+#include "xdebug.cppo"
 
 open Cpure
 open Globals
@@ -1405,15 +1405,15 @@ let translate_array_equality_to_forall
     | AndList lst->
       failwith "translate_array_equality: AndList To Be Implemented"
     | Or (f1,f2,fl,loc)->
-      f
+      Or (helper f1,helper f2,fl,loc)
     (*Or (helper f1 scheme,helper f2 scheme,fl,loc)*)
     (*failwith "translate_array_equality: To Be Normalized!"*)
     | Not (f,fl,loc)->
       Not (helper f,fl,loc)
-    | Forall _->
-      f
-    | Exists _->
-      f
+    | Forall (sv,nf,fl,loc)->
+      Forall (sv,helper nf,fl,loc)
+    | Exists (sv,nf,fl,loc)->
+      Exists (sv,helper nf,fl,loc)
   in
   helper f
 ;;

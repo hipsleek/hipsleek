@@ -15,6 +15,25 @@ relation P(int a,int b,int r).
 }
 
 /*
+
+This one works!!!
+
+P1:={[a___5___,a] -> [PRIa___5___,PRIa] -> []: (a___5___<=0 && a___5___=PRIa___5___||  ((exists (a_1224___5___: P1(a_1224___5___,a_1224,PRIa___5___,PRIa) && a_1224___5___=a___5___-(1) ))      && 1<=a___5___))
+};
+bottomupgen([P1], [2], SimHeur);
+
+This does not...
+
+P1:={[a___5___,a] -> [PRIa___5___,PRIa] -> []: (PRIa=a && a___5___<=0 ||  (exists (a_1224___5___: (exists (a_1224:P1(a_1224___5___,a_1224,PRIa___5___,PRIa) && a_1224___5___=a___5___-(1))) ))      && 1<=a___5___)
+};
+bottomupgen([P1], [3], SimHeur);
+
+Var version:
+
+P1:={[a] -> [PRIa] -> []: (PRIa=a && a<=0 ||  (exists (a_1193:a_1193=a-(1) && P1(a_1193,PRIa)))  && 1<=a)
+};
+bottomupgen([P1], [2], SimHeur);
+
 int loop(ref int[] a)
 //infer[@post_n]
   infer[P2]
