@@ -2460,6 +2460,74 @@ let extend_env old_env nfv f =
   Debug.no_3 "extend_env" string_of_env (pr_list string_of_spec_var) !print_pure string_of_env extend_env old_env nfv f
 ;;
 
+let collect_free_array_index f:exp list =
+  let rec helper_e e notfv =
+    match e with
+    | ArrayAt (arr,[index],loc) ->
+      begin
+        match index with
+        | IConst _ ->
+          [index]
+        | Var (sv,_) ->
+          if List.exists (fun s -> is_same_sv s sv) notfv
+          then []
+          else [index]
+        | _ ->
+          failwith "extend_env: Invalid input"
+      end
+    | ArrayAt _ ->
+      failwith "extend_env_e: Invalid array format"
+    | Add (e1,e2,loc)
+    | Subtract (e1,e2,loc)
+    | Mult (e1,e2,loc)
+    | Div (e1,e2,loc)->
+      (helper_e e1 notfv)@(helper_e e2 notfv)
+    | Var _
+    | IConst _ ->
+      []
+    | _ -> failwith "is_valid_forall_helper_exp: To Be Implemented"
+  in
+  let helper_b (p,ba) notfv =
+    match p with
+    | BConst _
+    | BVar _
+    | Frm _
+    | XPure _
+    | LexVar _
+    | RelForm _ ->
+      []
+    | Lt (e1,e2,loc)
+    | Lte (e1,e2,loc)
+    | Gt (e1,e2,loc)
+    | Gte (e1,e2,loc)
+    | Eq (e1,e2,loc)
+    | Neq (e1,e2,loc) ->
+      (helper_e e1 notfv)@(helper_e e2 notfv)
+    | _ ->
+      failwith "extend_env_b: To Be Implemented"
+  in
+  let rec helper f notfv =
+  match f with
+  | BForm (b,fl)->
+    helper_b b notfv
+  | And (f1,f2,_)
+  | Or (f1,f2,_,_) ->
+    (helper f1 notfv)@(helper f2 notfv)
+  | AndList lst->
+    failwith "extend_env: AndList To Be Implemented"
+  | Not (sub_f,fl,loc)->
+    helper sub_f notfv
+  | Forall (sv,sub_f,fl,loc)
+  | Exists (sv,sub_f,fl,loc)->
+    helper sub_f (sv::notfv)
+  in
+  remove_dupl is_same_exp (helper f [])
+;;
+
+let collect_free_array_index f =
+  Debug.no_1 "collect_free_array_index" !print_pure (pr_list ArithNormalizer.string_of_exp) collect_free_array_index f
+;;
+
 (* let rec expand_array_variable *)
 (*     (f:formula) (svlst:spec_var list) :(spec_var list) = *)
 (*   let expand f sv = *)
@@ -2497,11 +2565,12 @@ let rec expand_array_variable
     | h::rest -> (expand h replace)@(helper rest replace)
     | [] -> []
   in
-  let replace =
-    let env = extend_env [] [] f in
-    let collect = List.fold_left (fun r (arr,ilst) -> ilst@r) [] env in
-    remove_dupl is_same_exp collect
-  in
+  (* let replace = *)
+  (*   let env = extend_env [] [] f in *)
+  (*   let collect = List.fold_left (fun r (arr,ilst) -> ilst@r) [] env in *)
+  (*   remove_dupl is_same_exp collect *)
+  (* in *)
+  let replace = collect_free_array_index f in
   (* let () = x_binfo_pp ("expand_array_variable: replace "^((pr_list ArithNormalizer.string_of_exp) replace)) no_pos in *)
   remove_dupl_spec_var_list (helper svlst replace)
 ;;
@@ -2583,12 +2652,14 @@ let expand_relation f =
    (*    in *)
    (*    (List.map transform env) *)
    (* in *)
-   let replace =
-     let env = extend_env [] [] f in
-     let collect = List.fold_left (fun r (arr,ilst) -> ilst@r) [] env in
-     remove_dupl is_same_exp collect
-   in
-   (* let () = x_binfo_pp ("expand_relation: replace "^((pr_list ArithNormalizer.string_of_exp) replace)) no_pos in *)
+   (* This one does not work because it only takes variables from free ones *)
+   (* let replace = *)
+   (*   let env = extend_env [] [] f in *)
+   (*   let collect = List.fold_left (fun r (arr,ilst) -> ilst@r) [] env in *)
+   (*   remove_dupl is_same_exp collect *)
+   (* in *)
+   (* let () = x_binfo_pp ("expand_relation: replace "^((pr_list ArithNormalizer.string_of_exp) replace)) no_pos in*)
+   let replace = collect_free_array_index f in
    helper f replace
 ;;
 
@@ -2614,8 +2685,6 @@ let instantiate_forall
     (* replace sv in the formula with information from env *)
     (* env is a mapping from array name to index, ex. [a--{1,2,i};b-->{1,2,k}...] *)
     (* if a formula contains array a, then enumerate the index of array a, that means replace sv with 1, 2 and i... *)
-
-
     let rec replace_helper_e (e:exp) (sv:spec_var) (index:exp) =
       (* replace sv with index in the expression exp *)
       match e with
