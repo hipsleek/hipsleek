@@ -4,17 +4,7 @@ relation P(int[] a).
 relation Q(int[] a,int[] b,int r).
 
 relation update_arr(int[] a,int[] ap, int val, int i).
-/*
-  infer [@arrvar,Q,update_array_1d] requires true ensures Q(a,a',res);
-  if (a[5]>0) {
-    a[5] = a[5]-1;
-    a[4] = a[4]+1;
-    return foo(a); } 
-  else {
-    int tmp=a[4];
-    dprint;
-    return tmp;
-*/
+
   infer [Q] a=a' & a'[5]<=0 & res=a'[4]
    |- Q(a,a',res).
   print residue.

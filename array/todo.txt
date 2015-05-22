@@ -258,7 +258,36 @@ automatically?
 #3 After that, check if certain RHS known relations are provable.
    If so, they can be dropped. If not, we must keep them.
 ===================================================================
+# ex13a.ss 
+
+[RELDEFN Q: ( 1<=(a[5]) & Q(a_1230,a',res) & update_array_1d(a,a_1230,1+(a[5]),5)) -->  Q(a,a',res),
+RELDEFN Q: ( a'=a & res=a[5] & (a[5])<=0) -->  Q(a,a',res)]
+
+# below is wrong, as we should have at
+   least the condition a[5]<0 for base-case
+
+Post Inference result:
+foo$int[]
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume ref [a]
+           emp&!(res) & res=a[5] & a=a'&{FLOW,(4,5)=__norm#E}[]
+ 
 ===================================================================
+# ex13b.ss 
+
+[RELDEFN Q: ( 1<=(a[5]) & Q(a_1230,a',res) & update_array_1d(a,a_1230,1+(a[5]),5)) -->  Q(a,a',res),
+RELDEFN Q: ( a'=a & res=a[5] & (a[5])<=0) -->  Q(a,a',res)]
+
+# What happen to a[5]<0 for the unchanged scenario?
+
+Post Inference result:
+foo$int[]
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume ref [a]
+           emp&(((a[5])>=1 & 0=res) | (!(res) & res=a[5] & a=a'))&
+           {FLOW,(4,5)=__norm#E}[]
+
+ 
 ===================================================================
 ===================================================================
 ===================================================================

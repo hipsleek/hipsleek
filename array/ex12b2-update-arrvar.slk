@@ -1,0 +1,29 @@
+//hip_include '../prelude_aux.ss'
+//#option --ato
+relation P(int[] a).
+relation Q(int[] a,int[] b,int r).
+
+relation update_arr(int[] a,int[] ap, int val, int i).
+
+  infer [@arrvar,Q] a=a' & a'[5]<=0 & res=a'[4]
+   |- Q(a,a',res).
+  print residue.
+  //inferred rel: [RELDEFN Q: ( res=a'[4] & (a'[5])<=0 & a=a') -->  Q(a,a',res)]
+
+  infer [@arrvar,Q,update_arr] a=a' & a'[5]>0 & update_arr(a',b,a'[5]-1,5)
+  & update_arr(b,c,b[4]+1,4) & Q(c,d,res) |- Q(a,d,res).
+  print residue.
+
+  infer [@arrvar,Q] a=a' & a'[5]>0 & update_arr(a',b,a'[5]-1,5)
+  & update_arr(b,c,b[4]+1,4) & Q(c,d,res) |- Q(a,d,res).
+  print residue.
+
+
+/*
+# ex12b2.slk
+
+# small duplication of a[4]=res
+
+ inferred rel: [RELDEFN Q: ( a'[4]=res & a[4]=res & a=a' & (a'[5])<=0) -->  Q(a,a',res)]
+
+*/
