@@ -3713,24 +3713,28 @@ let string_of_list_int ls = String.concat ";" (List.map string_of_int ls)
 let string_of_fail_explaining fe=
   fmt_open_vbox 0;
   pr_vwrap_nocut "fe_kind: " fmt_string (string_of_failure_kind fe.fe_kind);
-  pr_vwrap "fe_name: " fmt_string (fe.fe_name);
-  pr_vwrap "fe_locs: " fmt_string (string_of_list_int(*_loc*) fe.fe_locs);
+  pr_vwrap "fe_name: " fmt_string (fe.fe_name); fmt_cut ();
+  fmt_string "fe_locs: ";
+  fmt_string (string_of_list_int(*_loc*) fe.fe_locs);
   (*  fe_sugg = struc_formula *)
   fmt_close ()
 
 let pr_fail_estate (es:fail_context) =
-  fmt_open_vbox 0; fmt_string "{";
+  fmt_string "{";
+  fmt_break 0 4;
+  fmt_open_vbox 0;
   (*pr_wrap_test "es_prior_steps: "  Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.fc_prior_steps;*)
   (* pr_wrap_test_nocut "fc_prior_steps: " Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.fc_prior_steps; *)(* prior steps in reverse order *)
-  pr_vwrap "fc_message: "  fmt_string es.fc_message;
+  pr_vwrap_nocut "fc_message: "  fmt_string es.fc_message;
   pr_vwrap "fc_current_lhs_flow: " fmt_string (string_of_flow_formula "FLOW"
                                                  (flow_formula_of_formula es.fc_current_lhs.es_formula)) ;
   (*pr_vwrap "fc_current_lhs: " pr_estate es.fc_current_lhs;  (* LHS context with success points *)*)
   (*   pr_vwrap "fc_orig_conseq: " pr_struc_formula es.fc_orig_conseq; (* RHS conseq at the point of failure *)*)
   (*   pr_vwrap "fc_current_conseq: " pr_formula es.fc_current_conseq; *)
   (*pr_wrap_test "fc_failure_pts: "Gen.is_empty (pr_seq "" pr_formula_label) es.fc_failure_pts; *)  (* failure points in conseq *)
-  fmt_cut(); fmt_string "}";
-  fmt_close ()
+  fmt_close ();
+  fmt_cut_and_indent ();
+  fmt_string "}"
 
 let string_of_fail_estate (es:fail_context) : string =  poly_string_of_pr  pr_fail_estate es
 let printer_of_fail_estate (fmt: Format.formatter) (es: fail_context) : unit =
