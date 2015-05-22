@@ -4053,8 +4053,10 @@ let pr_partial_context ?(nshort=true) ((l1,l2): partial_context) =
                                       pr_vwrap "State:" pr_fail_type fs)) l1);
   pr_vwrap_naive "Successful States:"
     (pr_seq_vbox "" (fun (lbl,fs,oft)-> 
-         if nshort then (pr_hwrap "Label: " pr_path_trace lbl);
-         pr_vwrap "State:" (pr_context ~nshort) fs;
+         if nshort then (pr_hwrap "Label: " pr_path_trace lbl; fmt_cut ());
+         fmt_string "State:";
+         fmt_cut_and_indent ();
+         pr_context ~nshort fs;
          if nshort then (pr_hwrap "Exc:" fmt_string (match oft with | Some _ -> "Some" | _ -> "None"))
        )) l2;
   fmt_close_box ()
