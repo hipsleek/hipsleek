@@ -3711,8 +3711,8 @@ let string_of_list_loc ls = String.concat ";" (List.map string_of_loc ls)
 let string_of_list_int ls = String.concat ";" (List.map string_of_int ls)
 
 let string_of_fail_explaining fe=
-  fmt_open_vbox 1;
-  pr_vwrap "fe_kind: " fmt_string (string_of_failure_kind fe.fe_kind);
+  fmt_open_vbox 0;
+  pr_vwrap_nocut "fe_kind: " fmt_string (string_of_failure_kind fe.fe_kind);
   pr_vwrap "fe_name: " fmt_string (fe.fe_name);
   pr_vwrap "fe_locs: " fmt_string (string_of_list_int(*_loc*) fe.fe_locs);
   (*  fe_sugg = struc_formula *)
@@ -3779,7 +3779,6 @@ let pr_context_short (ctx : context) =
       pr_wrap_test "es_final_error:" Gen.is_empty 
           (pr_seq "" (fun (c,_,_) -> fmt_string c)) exc;
       (* pr_wrap_test "es_final_error:" (fun x -> x==None) (fun x -> match x with Some (c,_,_) -> fmt_string c | None -> ()) exc; *)
-      fmt_string "\n";
       fmt_close_box();
     end
   in 
@@ -3818,20 +3817,19 @@ let rec pr_fail_type (e:fail_type) =
   | Trivial_Reason (fe,ft) ->
     fmt_string (" Trivial fail : "^ (string_of_failure_kind_full fe.fe_kind));
     (* print trace *)
-    fmt_print_newline ();
+    fmt_cut ();
     fmt_string "[["; pr_es_trace ft; fmt_string "]]"
-  | Basic_Reason (br,fe,ft) -> 
+  | Basic_Reason (br,fe,ft) ->
     (string_of_fail_explaining fe);
-    fmt_break 1 2;
     if fe.fe_kind=Failure_Valid then fmt_string ("Failure_Valid")
     else (pr_fail_estate br);
     (* print trace *)
-    fmt_print_newline ();
+    fmt_cut ();
     fmt_string "[["; pr_es_trace ft; fmt_string "]]"
   | ContinuationErr (br,ft) ->
     fmt_string ("ContinuationErr "); pr_fail_estate br;
     (* print trace *)
-    fmt_print_newline ();
+    fmt_cut ();
     fmt_string "[["; pr_es_trace ft; fmt_string "]]"
   | Or_Reason _ ->
     let args = bin_op_to_list op_or_short ft_assoc_op e in
@@ -3934,7 +3932,8 @@ let pr_list_context (ctx:list_context) =
       in
       fmt_cut ();
       fmt_open_vbox 0;
-      fmt_string err_header (* "MaybeErr Context: " *); fmt_cut ();
+      fmt_string err_header (* "MaybeErr Context: " *);
+      fmt_cut_and_indent ();
       (* (match ft with *)
       (*     | Basic_Reason (_, fe) -> (string_of_fail_explaining fe) (\*useful: MUST - OK*\) *)
       (*     (\* TODO : to output must errors first *\) *)
