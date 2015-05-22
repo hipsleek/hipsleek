@@ -55,6 +55,7 @@ let fmt_char x = pp_print_char (!fmt) x
 let fmt_space x = pp_print_space (!fmt) x
 let fmt_break nspaces offset = pp_print_break (!fmt) nspaces offset
 let fmt_cut x = pp_print_cut (!fmt) x
+let fmt_cut_and_indent () = pp_print_break (!fmt) 0 2
 let fmt_set_margin x = pp_set_margin (!fmt) x
 let fmt_print_newline x = pp_print_newline (!fmt) x
 let fmt_print_flush x = pp_print_flush (!fmt) x
@@ -3252,6 +3253,7 @@ let string_of_infer_list il vl =
 let rec pr_struc_formula  (e:struc_formula) = match e with
   | ECase { formula_case_branches  =  case_list ; formula_case_pos = _} ->
     fmt_string "ECase ";
+    fmt_cut_and_indent  ();
     (* fmt_string (string_of_pos p.start_pos);*)
     pr_args  (Some("V",1)) (Some "A") "case " "{" "}" ";"
       (fun (c1,c2) -> wrap_box ("B",0) (pr_op_adhoc (fun () -> pr_pure_formula c1) " -> " )
@@ -3259,6 +3261,7 @@ let rec pr_struc_formula  (e:struc_formula) = match e with
   | EBase { formula_struc_implicit_inst = ii; formula_struc_explicit_inst = ei; formula_struc_exists = ee; formula_struc_base = fb;
             formula_struc_continuation = cont; formula_struc_pos = _ } ->
     fmt_string "EBase ";
+    fmt_cut_and_indent ();
     (* fmt_string (string_of_pos p.start_pos);*)
     fmt_open_vbox 2;
     wrap_box ("B",0) (fun fb ->
@@ -3291,6 +3294,7 @@ let rec pr_struc_formula  (e:struc_formula) = match e with
            | Some true -> "EAssume_exact "
            | Some false -> "EAssume_inexact " in
          fmt_string assume_str;
+         fmt_cut_and_indent ();
          pr_formula_label (y1,y2);
          if not(Gen.is_empty(x)) then pr_seq_nocut "ref " pr_spec_var x;
          fmt_cut();
@@ -3313,7 +3317,7 @@ let rec pr_struc_formula  (e:struc_formula) = match e with
     let ps = (inf_o # string_of_raw) in
     fmt_open_vbox 2;
     fmt_string ("EInfer "^ps^string_of_spec_var_list lvars);
-    fmt_cut();
+    fmt_cut_and_indent ();
     wrap_box ("B",0) pr_struc_formula cont;
     fmt_close();
   | EList b ->
