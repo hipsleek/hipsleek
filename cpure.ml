@@ -562,6 +562,10 @@ let is_res_var = function
   | Var (x,_) -> is_res_spec_var x
   | _ -> false
 
+let is_bool_res_var = function
+  | Var (x,_) -> is_bool_typ x (* && is_res_spec_var x *)
+  | _ -> false
+
 let primed_of_spec_var (sv : spec_var) : primed = match sv with
   | SpecVar (_, _, p) -> p 
 

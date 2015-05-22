@@ -180,10 +180,12 @@ formula:
             then BConst (true,loc)
             else BConst (false,loc)
           in BForm ((tmp, None), None)
-           | x = exp; "<"; y = exp ->
-          if is_res_var y && is_zero x then
+     | x = exp; "<"; y = exp ->
+          (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) x no_pos in *)
+          (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) y no_pos in *)
+          if is_bool_res_var y && is_zero x then
             BForm ((BVar (get_var "res" tlist, loc), None), None)
-          else if is_res_var x && is_one y then
+          else if is_bool_res_var x && is_one y then
             Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc) 
           else
             let tmp = 
@@ -195,10 +197,12 @@ formula:
                 Neq (Var(get_var "self" tlist, loc), Null loc, loc)
               else Lt (x, y, loc) 
             in BForm ((tmp, None), None)
-             | x = exp; ">"; y = exp ->
-            if is_res_var x && is_zero y then 
+     | x = exp; ">"; y = exp ->
+          (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) x no_pos in *)
+          (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) y no_pos in *)
+            if is_bool_res_var x && is_zero y then 
               BForm ((BVar (get_var "res" tlist, loc), None), None) 
-            else if is_res_var y && is_one x then 
+            else if is_bool_res_var y && is_one x then 
               Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc) 
             else
               let tmp = 
@@ -210,10 +214,12 @@ formula:
                   Neq (Var(get_var "self" tlist, loc), Null loc, loc)
                 else Gt (x, y, loc) 
               in BForm ((tmp, None), None)
-               | x = exp; "<="; y = exp ->
-              if is_res_var x && is_zero y then 
+     | x = exp; "<="; y = exp ->
+          (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) x no_pos in *)
+          (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) y no_pos in *)
+              if is_bool_res_var x && is_zero y then 
                 Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc) 
-              else if is_res_var y && is_one x then 
+              else if is_bool_res_var y && is_one x then 
                 BForm ((BVar (get_var "res" tlist, loc), None), None) 
               else
                 let tmp = 
@@ -225,11 +231,13 @@ formula:
                     Eq (Var(get_var "self" tlist, loc), Null loc, loc)
                   else Lte (x, y, loc)
                 in BForm ((tmp, None), None)
-                 | x = exp; ">="; y = exp ->
-                if is_res_var y && is_zero x then 
+     | x = exp; ">="; y = exp ->
+          (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) x no_pos in *)
+          (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) y no_pos in *)
+                if is_bool_res_var y && is_zero x then 
                   Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc) 
                 else
-                if is_res_var x && is_one y then 
+                if is_bool_res_var x && is_one y then 
                   BForm ((BVar (get_var "res" tlist, loc), None), None) 
                 else
                   let tmp = 
@@ -243,7 +251,9 @@ formula:
                       Eq (Var(get_var "self" tlist, loc), Null loc, loc)
                     else Gte (x, y, loc)
                   in BForm ((tmp, None), None)
-                   | x = exp; "="; y = exp ->
+       | x = exp; "="; y = exp ->
+          (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) x no_pos in *)
+          (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) y no_pos in *)
                   let tmp = 
                     if is_node x && is_node y then 
                       Eq (Var(get_var (get_node x) tlist, loc), 
