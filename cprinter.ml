@@ -3294,10 +3294,11 @@ let rec pr_struc_formula  (e:struc_formula) = match e with
            | Some true -> "EAssume_exact "
            | Some false -> "EAssume_inexact " in
          fmt_string assume_str;
-         fmt_cut_and_indent ();
+         fmt_cut ();
          pr_formula_label (y1,y2);
-         if not(Gen.is_empty(x)) then pr_seq_nocut "ref " pr_spec_var x;
-         fmt_cut();
+         if not(Gen.is_empty(x)) then (
+           pr_seq_nocut "ref " pr_spec_var x;
+           fmt_cut ());
          wrap_box ("B",0) pr_formula b;
          fmt_cut();
          if !print_assume_struc then 
