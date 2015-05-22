@@ -3592,7 +3592,7 @@ let string_of_failure_cex cex=  poly_string_of_pr pr_failure_cex cex
 
 let pr_estate ?(nshort=true) (es : entail_state) =
   fmt_open_vbox 0;
-  pr_vwrap_nocut (* "es_formula: " *) "" pr_formula  es.es_formula; 
+  wrap_box ("H", 0) pr_formula es.es_formula;
   pr_wrap_test "es_ho_vars_map: " Gen.is_empty  (pr_seq "" (pr_map_aux pr_spec_var pr_formula)) (es.es_ho_vars_map);
   pr_wrap_test "es_conc_err: " Gen.is_empty (pr_seq "" (fun (msg, pos) -> fmt_string (msg ^ ":" ^ (string_of_pos pos)))) es.es_conc_err;
   pr_wrap_test "es_final_error:" Gen.is_empty 
@@ -3903,7 +3903,7 @@ let pr_list_context_short (ctx:list_context) =
   | SuccCtx sc -> (fmt_int (List.length sc); pr_context_list_short sc)
 
 let pr_entail_state_short e =
-  fmt_open_vbox 1;
+  fmt_open_vbox 0;
   fmt_string "pr_entail_state_short";
   pr_formula_wrap e.es_formula;
   pr_wrap_test "es_heap:" (fun _ -> false)  (pr_h_formula) e.es_heap;
@@ -4014,8 +4014,10 @@ let pr_successful_states ?(nshort=true) e = match e with
   | _ ->   
     pr_vwrap_naive "Successful States:"
       (pr_seq_vbox "" (fun (lbl,fs,oft)-> 
-           if nshort then (pr_hwrap "Label: " pr_path_trace lbl);
-           (if nshort then pr_vwrap else pr_vwrap_nocut) "State:" (pr_context ~nshort) fs;
+           if nshort then ((pr_hwrap "Label: " pr_path_trace lbl); fmt_cut ());
+           fmt_string "State:";
+           fmt_cut_and_indent ();
+           pr_context ~nshort fs;
            (* Loc: print exc *)
            if nshort then (pr_hwrap "Exc:" fmt_string (match oft with | Some _ -> "Some" | _ -> "None"))
          )) e
