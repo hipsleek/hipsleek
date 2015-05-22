@@ -3792,10 +3792,10 @@ let pr_context_short (ctx : context) =
     else pr_seq "or" pr ls in
   (pr_disj (f ctx))
 
-let rec pr_context ?(nshort=true) (ctx: context) =
+let pr_context ?(nshort=true) (ctx: context) =
   if nshort then
     let f_b e =  match e with
-      | Ctx es ->  wrap_box ("B",1) pr_estate es
+      | Ctx es -> wrap_box ("B",1) pr_estate es
       | _ -> failwith "cannot be an OCtx"
     in match ctx with
     | Ctx es -> f_b ctx
