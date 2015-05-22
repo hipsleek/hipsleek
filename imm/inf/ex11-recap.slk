@@ -95,3 +95,56 @@ slk_pairwise (exists a,b,c: d=a & a<:b & b<:c & c<:@L).
 */
 
 slk_simplify emp & exists(b,c,g,d: a<:b & b<:c & c<:@L & g=d).
+
+
+//15
+checkentail x::cell<a>@v |- x::cell<a>@v & @L<:v.
+print residue.
+expect Valid.
+
+//15
+ checkentail x::cell<a>@w |- x::cell<a>@v & @L<:v.
+print residue.
+expect Valid.
+
+//15
+checkentail x::cell<a>@w & w=@A |- x::cell<a>@v & @L<:v.
+print residue.
+expect Valid.
+
+//15
+checkentail x::cell<a>@w & w=@A |- x::cell<a>@v & v<:@L.
+print residue.
+expect Valid.
+
+/*
+        instantiate to R(w) & P(v) & w<:v
+        if false ---> w<:v
+
+*/
+
+checkentail w<:v & w=@A |-  v<:@L.
+
+infer[w,v] w=@A |- w<:v & v<:@L.
+print residue.
+
+infer[] w=@A & v=@A |- w<:v & v<:@L.
+print residue.
+
+
+infer[] w=@A & v=@L |- w<:v & v<:@L.
+print residue.
+
+infer[w,v] w=@A |- w<:v & @L<:v.
+print residue.
+
+infer[] w=@A & v=@A |- w<:v & @L<:v.
+print residue.
+
+/*
+ inferred pure: [(w<:@L | (@L<:v & w<:v))]
+
+ inferred pure: [(@L<:v & w<:v))]
+ weakest inst of v = @A
+
+*/

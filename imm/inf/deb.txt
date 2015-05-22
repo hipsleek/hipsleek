@@ -1,0 +1,11 @@
+#do_match,Trace
+#imm_split_lhs_node
+#heap_entail_empty_rhs_heap,Trace
+#heap_entail_non_empty_rhs_heap,Trace
+#heap_entail_conjunct
+#heap_entail_conjunct_lhs,Trace
+pick_wekeast_instatiation,Trace
+subtype_ann,Trace
+simplify
+simplify##
+pick_equality_instantiation

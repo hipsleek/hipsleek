@@ -1,3 +1,18 @@
 
 
-slk_simplify (exists b,c,g,d: a<:b & b<:c & c<:@L & g=d).
+slk_simplify emp & exists (b,c,g,d: a<:b & b<:c & c<:@L & g=d).
+
+slk_simplify emp & exists (g,d: @L<:a & @M<:a &  g=d).
+
+slk_simplify emp & exists (g,d: @A<:a & @M<:a &  g=d).
+
+slk_simplify emp & exists (g,d: w<:v & @L<:v &  g=d).
+
+slk_simplify emp & exists (g,d: w<:v & v<:@L &  g=d).
+
+slk_simplify emp & exists (g,d: w<:v & v<:@L & w=@A &  g=d).
+
+slk_simplify emp & exists (g,d: w<:v & @L<:v & w=@A &  g=d).
+
+infer [v,w] w=@A |- w<:v & @L<:v.
+print residue.

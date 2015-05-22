@@ -319,6 +319,8 @@ let common_arguments = [
   ("--dis-imm-merge", Arg.Clear Globals.imm_merge,"don't merge aliased nodes");
   ("--en-weak-imm", Arg.Set Globals.imm_weak,"don't merge aliased nodes");
   ("--dis-weak-imm", Arg.Clear Globals.imm_weak,"don't merge aliased nodes");
+  ("--en-imm-simplif-inst", Arg.Set Globals.imm_simplif_inst,"don't merge aliased nodes");
+  ("--dis-imm-simplif-inst", Arg.Clear Globals.imm_simplif_inst,"don't merge aliased nodes");
   ("--mem", Arg.Unit (fun _ -> 
        Globals.allow_mem := true; 
        Globals.allow_field_ann := true;),
