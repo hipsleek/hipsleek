@@ -10,7 +10,7 @@ print residue.
 
 infer [P1] c::cell<_>@M |-  c::cell<_>@ww&P1(ww).
 
-//infer [P1] c::cell<_>@v & v=@M |-  c::cell<_>@ww&P1(ww).
+infer [P1] c::cell<_>@v & v=@M |-  c::cell<_>@ww&P1(ww).
 
 print residue.
 

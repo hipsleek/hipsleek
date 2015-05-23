@@ -563,7 +563,7 @@ infer [a] a<=3 |-  a<=0.
  <1>emp&a<=3 & a!=1 & a!=2 & a!=3&{FLOW,(4,5)=__norm#E}[]
  inferred pure: [a!=3; a!=2; a!=1]
 =======================================================
-# ex10a2.slk 
+# ex10a2.slk (OK)
 
 infer [P1] c::cell<_>@M |-  c::cell<_>@ww.
 
@@ -574,7 +574,7 @@ Residue:
 [[ SEARCH ==>  Match(c,c) ==> ]]
 
 =======================================================
-# ex10a3.slk 
+# ex10a3.slk  (OK)
 
 infer [P1] c::cell<_>@M |-  c::cell<_>@ww&P1(ww).
 
