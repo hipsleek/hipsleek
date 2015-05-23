@@ -18,7 +18,18 @@ int foo(cell c)
 }
 
 /*
-../../hip ex8-node-inf-L-res.ss --reverify
+../../hip ex8-node-inf-L-res.ss 
+
+[RELASS [P1]: ( P1(a)) -->  a<:@L,
+RELASS [P1]: ( P1(a)) -->  (a=@M | a=@A),
+RELDEFN P2: ( v=res & w_1456=5 & a<:@L & @M<:b_1455 & P1(a)) -->  P2(a,b_1455,v,res,w_1456)]
+*************************************
+
+!!! **pi.ml#634:pre_rel_ids:[P1]
+!!! **pi.ml#635:post_rel_ids:[P2]
+!!! **pi.ml#636:pre_ref_df:[]
+!!! **pi.ml#637:post_ref_df:[( v=res & w_1456=5 & a<:@L & @M<:b_1455 & P1(a), P2(a,b_1455,v,res,w_1456))]
+!!! **pi.ml#638:WN: why is pre_rel_df empty? It should be P1(a) = a=@M
 
 ~~~~ before enabling the instantiating of v=@A
 

@@ -628,6 +628,14 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let pre_rel_ids = List.filter (fun x -> CP.is_rel_typ x
                                                     && not(Gen.BList.mem_eq CP.eq_spec_var x post_vars)) pre_vars in
             let post_rel_ids = List.filter (fun sv -> CP.is_rel_typ sv) post_vars in
+            let pr_svl = Cprinter.string_of_spec_var_list in
+            let pr = Cprinter.string_of_pure_formula in
+            let pr_def = pr_list (pr_pair pr pr) in
+            let () = x_binfo_hp (add_str "pre_rel_ids" pr_svl) pre_rel_ids no_pos in
+            let () = x_binfo_hp (add_str "post_rel_ids" pr_svl) post_rel_ids no_pos in
+            let () = x_binfo_hp (add_str "pre_ref_df" pr_def) pre_rel_df no_pos in
+            let () = x_binfo_hp (add_str "post_ref_df" pr_def) post_rel_df no_pos in
+            let () = x_binfo_pp "WN: why is pre_rel_df empty? It should be P1(a) = a=@M" no_pos in
             let post_rel_df_new =
               if pre_rel_ids=[] then post_rel_df
               else List.concat (List.map (fun (f1,f2) ->
@@ -646,7 +654,9 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                 ) ([],[]) scc
             in
             let post_inv = CP.join_disjunctions post_invs in
-            let pr = Cprinter.string_of_pure_formula in
+            let pre_inv = CP.join_disjunctions pre_invs in
+            let () = x_binfo_hp (add_str "pre_inv" pr) pre_inv no_pos in
+            let () = x_binfo_hp (add_str "post_inv" pr) post_inv no_pos in
             let (s1,s2) =
               if List.length post_rel_df_new = 0 then ("","")
               else
@@ -655,10 +665,11 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                 List.fold_left (fun (s1,s2) (pf1,_) ->
                     (s1 ^ " \/ (" ^ (pr pf1) ^ ")",s2)
                   ) ("(" ^ (pr pf1) ^")",(pr pf2) ^ " = ") tl in
+            let () = x_binfo_pp "WN: need to process pre first" no_pos in
+            let () = x_binfo_hp (add_str "sp:compute_fixpoint" (pr_list (pr_pair pr pr))) post_rel_df_new no_pos in
             let () = x_binfo_pp (s2 ^ s1) no_pos in
-            (* let () = x_binfo_hp (add_str "constraints" (pr_list (pr_pair pr (fun _ -> "")))) post_rel_df_new no_pos in *)
             (* let _ = x_binfo_pp ("Pi.infer_pure") no_pos in *)
-            let () = x_binfo_hp (add_str "sp:compute_fixpoint" Cprinter.string_of_struc_formula) proc_spec no_pos in
+            (* let () = x_binfo_hp (add_str "sp:compute_fixpoint" Cprinter.string_of_struc_formula) proc_spec no_pos in *)
             let fn x = x_add_1 (Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars) x in
             let bottom_up_fp0 = wrap fn proc_spec in
             let () = x_binfo_hp (add_str "bottom_up_fp0" (pr_list (pr_pair pr pr))) bottom_up_fp0 no_pos in
