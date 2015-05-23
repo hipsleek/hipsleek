@@ -337,6 +337,10 @@ let filter_disj (p:CP.formula) (t:CP.formula list) =
     ) ps) in
   CP.disj_of_list ps no_pos
 
+let filter_disj (p:CP.formula) (t:CP.formula list) =
+  let pr = !CP.print_formula in
+  Debug.no_2 "filter_disj" pr (pr_list pr) pr filter_disj p t 
+
 let pre_calculate_x fp_func input_fml pre_vars proc_spec
     pre pure_oblg_to_check (rel_posts,pre_rel)
     pre_fmls pre_rel_vars pre_rel_df =
@@ -364,11 +368,14 @@ let pre_calculate_x fp_func input_fml pre_vars proc_spec
     let final_pre1 = x_add_1 TP.simplify final_pre0 in
     let final_pre2 = filter_disj final_pre1 (pre_fmls) in
     (* NEW procedure# Form pre-condition given invariant:  D:=gist Pre given Inv;*)
-    let final_pre3 = TP.om_gist final_pre2 pre in
+    let final_pre3 = x_add TP.om_gist final_pre2 pre in
+    (* let final_pre3 = final_pre2 in (\* TODOIMM to remove this line *\) *)
+    (* let final_pre3a = CP.mkAnd final_pre2 pre no_pos in (\* TODOIMM to remove this line *\) *)
     let final_pre3a = CP.mkAnd final_pre3 pre no_pos in
     (* let final_pre4a = TP.pairwisecheck_raw final_pre3 in *)
     let final_pre4b = TP.pairwisecheck_raw final_pre3a in
-    let final_pre = TP.om_gist final_pre4b pre in
+    let final_pre = x_add TP.om_gist final_pre4b pre in
+    (* let final_pre = final_pre4b in (\* TODOIMM to remove this line *\) *)
 
     let () = x_dinfo_hp (add_str "final_pre0" !CP.print_formula) final_pre0 no_pos in
     let () = x_dinfo_hp (add_str "final_pre1" !CP.print_formula) final_pre1 no_pos in
@@ -491,6 +498,7 @@ let update_with_td_fp_x bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
       let rel_oblg_to_check = List.filter (fun (_,lhs,_) -> CP.equalFormula lhs pre_rel) reloblgs in
       let pure_oblg_to_check =
         List.fold_left (fun p (_,_,rhs) -> CP.mkAnd p rhs no_pos) constTrue rel_oblg_to_check in
+      (* let pure_oblg_to_check =  TP.simplify_tp pure_oblg_to_check in (\* TODOIMM this is just temp - TO REMOVE *\) *)
       let () = x_tinfo_hp (add_str "oblg to check" !CP.print_formula) pure_oblg_to_check no_pos in
       let checkpoint1 = check_oblg pre_rel pre pure_oblg_to_check pre_rel_df in
       if checkpoint1 then

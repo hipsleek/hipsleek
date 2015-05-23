@@ -4,6 +4,10 @@ data cell {
 
 
 
+checkentail x::cell<a>@u & u=@M |- x::cell<b>@v & v<:@A.
+print residue.
+expect Valid.
+
 checkentail x::cell<a>@u & u=@M |- (exists v: x::cell<b>@v & v<:@A).
 print residue.
 expect Valid.

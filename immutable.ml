@@ -138,6 +138,10 @@ let default_inst a1 a2 loc = CP.mkPure (CP.mkEq a1 a2 loc)
 let weakest_inst a1 a2 loc = CP.mkSubAnn a1 a2 
 let def_rel v loc = CP.mkEq v CP.const_ann_top loc
 
+let lhs_rhs_rel l r to_rhs = 
+  if not (!Globals.imm_weak) then default_inst l r no_pos, [to_rhs] 
+  else weakest_inst l r no_pos, []
+
 let conj_of_bounds rhs_sv ann1 ann2 lst loc =
   let rhs_exp = CP.Var (rhs_sv, loc) in
   let freshsv = CP.fresh_spec_var rhs_sv in
@@ -163,7 +167,7 @@ let pick_bounds max_bounds var_to_be_instantiated sv_to_be_instantiated
   let inst = 
     match max_bounds with
     | []    -> None, None
-    | a::[] -> Some (CP.mkPure (weakest_rel var_to_be_instantiated (CP.ann_to_exp a loc) loc)), None
+    | a::[] -> Some ( (* weakest_rel *) fst (lhs_rhs_rel var_to_be_instantiated (CP.ann_to_exp a loc) var_to_be_instantiated)), None
     | a1::a2::tail ->  
       let guards = conj_of_bounds sv_to_be_instantiated a1 a2 tail loc in
       Some guards, None
@@ -206,7 +210,7 @@ let pick_wekeast_instatiation lhs rhs_sv loc lhs_f rhs_f ivars evars =
             Some (default_inst rhs_exp CP.const_ann_top no_pos),
             Some [weakest_inst lhs rhs_exp no_pos]
           else 
-            let () =  x_tinfo_pp "instantiating to top lhs<:rhs - no need to add extra constr on rhs" no_pos in
+            let () =  x_tinfo_pp "instantiating to  lhs<:rhs - no need to add extra constr on rhs" no_pos in
             Some (weakest_inst lhs rhs_exp no_pos),
             Some [] in
           (to_lhs, to_rhs)
@@ -320,15 +324,18 @@ let subtype_ann_gen_x lhs_f rhs_f elhs erhs impl_vars evars (imm1 : CP.ann) (imm
     (* implicit instantiation of @v made stronger into an equality *)
     (* two examples in ann1.slk fail otherwise; unsound when we have *)
     (* multiple implicit being instantiated ; use explicit if needed *)
-    let to_lhs, to_rhs_impl  = if not (!Globals.imm_weak) then 
-        default_inst l r no_pos, [to_rhs] else 
-        weakest_inst l r no_pos, [] in
+    let to_lhs, to_rhs_impl  =  lhs_rhs_rel l r to_rhs in
+      (* if not (!Globals.imm_weak) then  *)
+      (* default_inst l r no_pos, [to_rhs] else  *)
+      (* weakest_inst l r no_pos, [] in *)
     (* CP.BForm ((CP.Eq(l,r,no_pos),None), None) in (\* i need equality for inference *\) *)
     (* let to_lhs = CP.BForm ((CP.SubAnn(l,r,no_pos),None), None) in *)
     (* let lhs = c in *)
     begin
       match r with
       | CP.Var(rhs_sv,loc) -> 
+        let inst, to_rhs' = x_add pick_wekeast_instatiation l rhs_sv loc lhs_f rhs_f impl_vars evars in
+        let to_lhs = map_opt_def to_lhs (fun x -> x) inst in
         (* implicit var annotation on rhs *)
         if CP.mem rhs_sv impl_vars then 
           let inst, to_rhs' = x_add pick_wekeast_instatiation l rhs_sv loc lhs_f rhs_f impl_vars evars in
@@ -336,7 +343,7 @@ let subtype_ann_gen_x lhs_f rhs_f elhs erhs impl_vars evars (imm1 : CP.ann) (imm
           let to_rhs = map_opt_def to_rhs_impl (fun x ->  x) to_rhs' in
           (f, [to_lhs], to_rhs, [])
         else if CP.mem rhs_sv evars then
-          (f,[], [to_rhs], [to_rhs])
+          (f,[to_lhs], [to_rhs], [to_rhs])
         else (f,[],[to_rhs], [])
       | _ -> (f,[],[to_rhs], [])
     end

@@ -2538,6 +2538,7 @@ let simplify_with_pairwise (s:int) (f:CP.formula): CP.formula =
   let pf = Cprinter.string_of_pure_formula in
   Debug.no_1_num s ("TP.simplify_with_pairwise") pf pf simplify_with_pairwise f
 
+(* Should f2 be normalized as well? *)
 let om_gist f1 f2 =
   wrap_pre_post norm_pure_input norm_pure_result
     (fun f1 -> Omega.gist f1 f2) f1

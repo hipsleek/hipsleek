@@ -57,3 +57,29 @@ Gives:
 *********************/
 
 
+/*
+
+To fix this a=In_1 resulting after gist
+
+(==tpdispatcher.ml#2323==)
+filter_disj@375
+filter_disj inp1 : forall(v:forall(res:forall(w_1452:forall(b_1451:forall(RECa:(!((v=res & 
+w_1452=5 & a<:@L & @M<:b_1451 & a<:@L)) | (((RECa=@M | RECa=@A)) & 
+RECa<:@L))))))) & ((a=@M | a=@A)) & a<:@L
+filter_disj inp2 :[ P1(a) & c=2, MayLoop[]]
+filter_disj@375 EXIT: true
+
+(====)
+gist@378@377
+gist inp1 : true
+gist inp2 : a<:@L
+gist@378 EXIT: a=In_1
+
+(==fixpoint.ml#371==)
+om_gist@377
+om_gist inp1 : true
+om_gist inp2 : a<:@L
+om_gist@377 EXIT: a=In_1
+
+
+*/
