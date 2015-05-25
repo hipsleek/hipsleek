@@ -4093,8 +4093,10 @@ let printer_of_failesc_context (fmt: Format.formatter) (ctx: failesc_context) : 
   poly_printer_of_pr fmt pr_failesc_context ctx 
 
 let pr_list_failesc_context ?(nshort=true) (lc : list_failesc_context) =
-  fmt_string ("List of Failesc Context: "^(summary_list_failesc_context lc));
-  fmt_cut (); pr_list_none (pr_failesc_context ~nshort) lc
+  fmt_open_vbox 0;
+  fmt_string_cut ("List of Failesc Context: "^(summary_list_failesc_context lc));
+  pr_list_none (pr_failesc_context ~nshort) lc;
+  fmt_close ()
 
 
 let pr_list_partial_context ?(nshort=true) (lc : list_partial_context) =
