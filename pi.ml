@@ -631,11 +631,13 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let pr_svl = Cprinter.string_of_spec_var_list in
             let pr = Cprinter.string_of_pure_formula in
             let pr_def = pr_list (pr_pair pr pr) in
-            let () = x_binfo_hp (add_str "pre_rel_ids" pr_svl) pre_rel_ids no_pos in
+            let pr_oblg = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in
             let () = x_binfo_hp (add_str "post_rel_ids" pr_svl) post_rel_ids no_pos in
             let () = x_binfo_hp (add_str "pre_ref_df" pr_def) pre_rel_df no_pos in
+            let () = x_binfo_hp (add_str "reloblgs" pr_oblg) reloblgs no_pos in
+            let () = x_binfo_pp "WN: Need to form initial pre from reloblgs, namely P1(a) = a=@M" no_pos in
+            let () = x_binfo_hp (add_str "pre_ref_df" pr_def) pre_rel_df no_pos in
             let () = x_binfo_hp (add_str "post_ref_df" pr_def) post_rel_df no_pos in
-            let () = x_binfo_pp "WN: why is pre_rel_df empty? It should be P1(a) = a=@M" no_pos in
             let post_rel_df_new =
               if pre_rel_ids=[] then post_rel_df
               else List.concat (List.map (fun (f1,f2) ->

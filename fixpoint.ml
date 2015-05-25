@@ -698,6 +698,14 @@ let rel_fixpoint_wrapper pre_invs0 pre_fmls0 pre_rel_constrs post_rel_constrs pr
   let pr1 = Cprinter.string_of_spec_var in
   Debug.no_7 "rel_fixpoint_wrapper" (pr_list pr) (pr_list pr) (pr_list (pr_pair pr pr)) (pr_list (pr_pair pr pr)) (pr_list pr1) (pr_list pr1) Cprinter.string_of_struc_formula (pr_list (pr_quad pr pr pr pr)) (fun _ _ _ _ _ _ _ -> rel_fixpoint_wrapper pre_invs0 pre_fmls0 pre_rel_constrs post_rel_constrs pre_rel_ids post_rels proc_spec grp_post_rel_flag) pre_invs0 pre_fmls0 pre_rel_constrs post_rel_constrs pre_rel_ids post_rels proc_spec
 
+(*
+val Fixpoint.gen_slk_file_4fix: Cast.prog_decl ->
+                                string ->
+                                CP.spec_var list ->
+                                CP.spec_var list ->
+                                ('a * CP.formula * CP.formula) list -> unit
+*)
+
 (*GEN SLEEK FILE --gsl*)
 let gen_slk_file_4fix prog file_name pre_rel_ids post_rel_ids rel_oblgs=
   (************INTERNAL************)

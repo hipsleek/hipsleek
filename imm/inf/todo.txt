@@ -614,6 +614,7 @@ subtype_ann_gen@1 EXIT:(true,[ @M<:ww],[ @M<:ww],[])
 =======================================================
 ../../hip ex8-node-inf-L-res.ss 
 
+
 [RELASS [P1]: ( P1(a)) -->  a<:@L,
 RELASS [P1]: ( P1(a)) -->  (a=@M | a=@A),
 RELDEFN P2: ( v=res & w_1456=5 & a<:@L & @M<:b_1455 & P1(a)) -->  P2(a,b_1455,v,res,w_1456)]
@@ -623,6 +624,12 @@ Expected algo:
   (i) process pre first
  (ii) use (i) to process post
  (iii) use post fixpt to add info to pre
+
+!!! **pi.ml#637:reloblgs:[( P1(a), (a=@M | a=@A)),( P1(a), a<:@L)]
+!!! **pi.ml#638:WN: Need to form initial pre from reloblgs, namely P1(a) = a=@M
+
+choose pre-obligation first:
+
 
 !!! **pi.ml#634:pre_rel_ids:[P1]
 !!! **pi.ml#635:post_rel_ids:[P2]
