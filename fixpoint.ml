@@ -354,13 +354,15 @@ let pre_calculate_x fp_func input_fml pre_vars proc_spec
   | [(_,rec_inv)] ->
     let args = List.map (fun a -> (a,CP.add_prefix_to_spec_var "REC" a)) pre_rel_vars in
     let to_check = CP.subst args pure_oblg_to_check in
-    let () = Debug.ninfo_hprint (add_str "to check" !CP.print_formula) to_check no_pos in
     let fml = CP.mkOr (CP.mkNot_s rec_inv) to_check None no_pos in
     let quan_vars = CP.diff_svl (CP.fv fml) pre_rel_vars in
+    (* let quan_vars = CP.diff_svl (CP.fv fml) (pre_rel_vars@(List.map (fun (_,x) -> x) args)) in *) (*TODOIMM remove this line*)
     let fml = CP.mkForall quan_vars fml None no_pos in
-    let () = Debug.ninfo_hprint (add_str "pre_rec_raw" !CP.print_formula) fml no_pos in
+    let () =  x_dinfo_hp (add_str "to check" !CP.print_formula) to_check no_pos in
+    let () =  x_dinfo_hp (add_str "rec_inv" !CP.print_formula) rec_inv no_pos in
+    let () =  x_dinfo_hp (add_str "pre_rec_raw (fml) " !CP.print_formula) fml no_pos in
     let pre_rec = x_add_1 TP.simplify fml in
-    let () = Debug.ninfo_hprint (add_str "pre_rec" !CP.print_formula) pre_rec no_pos in
+    let () = x_dinfo_hp (add_str "pre_rec" !CP.print_formula) pre_rec no_pos in
 
     (*NEW procedure: not add pre_inv at the begining*)
     let list_pre = [pre_rec;pure_oblg_to_check] in
@@ -368,6 +370,7 @@ let pre_calculate_x fp_func input_fml pre_vars proc_spec
     let final_pre1 = x_add_1 TP.simplify final_pre0 in
     let final_pre2 = filter_disj final_pre1 (pre_fmls) in
     (* NEW procedure# Form pre-condition given invariant:  D:=gist Pre given Inv;*)
+    (* let final_pre2 = pure_oblg_to_check in  *)(* TODOIMM to remove this line *)
     let final_pre3 = x_add TP.om_gist final_pre2 pre in
     (* let final_pre3 = final_pre2 in (\* TODOIMM to remove this line *\) *)
     (* let final_pre3a = CP.mkAnd final_pre2 pre no_pos in (\* TODOIMM to remove this line *\) *)
@@ -399,7 +402,14 @@ let pre_calculate fp_func input_fml pre_vars proc_spec
   let pr2 = pr_list_ln pr1 in
   let pr3 = pr_list_ln (pr_pair pr1 pr1) in
   let pr4 = pr_list_ln (pr_quad pr1 pr1 pr1 pr1) in
-  Debug.no_7 "pre_calculate" pr3 !CP.print_svl pr1 pr1 (pr_pair pr3 pr1) pr2 (pr_pair !CP.print_svl pr3) pr4
+  Debug.no_7 "pre_calculate" 
+    (add_str "input_fml" pr3)
+    (add_str "pre_vars" !CP.print_svl)
+    (add_str "pre" pr1)
+    (add_str "pure_oblg_to_check" pr1) 
+    (add_str "(rel_posts,pre_rel)" (pr_pair pr3 pr1))
+    (add_str "pre_fmls" pr2)
+    (pr_pair (add_str "pre_rel_vars" !CP.print_svl) (add_str "pre_rel_df" pr3)) pr4
     (fun _ _ _ _ _ _ _ -> pre_calculate_x fp_func input_fml pre_vars proc_spec
         pre pure_oblg_to_check (rel_posts,pre_rel)  pre_fmls pre_rel_vars pre_rel_df)
     input_fml pre_vars pre pure_oblg_to_check (rel_posts,pre_rel) pre_fmls (pre_rel_vars, pre_rel_df)
@@ -448,7 +458,7 @@ let pre_rel_fixpoint_x pre_rel pre_fmls pre_invs fp_func reloblgs pre_vars proc_
     let input_fml = compute_td_fml pre_rel_df pre_rel in
     let pr = Cprinter.string_of_pure_formula in
     let () = Debug.ninfo_hprint (add_str "input_fml" (pr_list (pr_pair pr pr))) input_fml no_pos in
-    pre_calculate fp_func input_fml pre_vars proc_spec
+    x_add pre_calculate fp_func input_fml pre_vars proc_spec
       pre_inv (* constTrue *) pure_oblg_to_check ([constTrue,constTrue],pre_rel) pre_fmls pre_rel_vars pre_rel_df
 
 let pre_rel_fixpoint pre_rel pre_fmls pre_invs fp_func reloblgs pre_vars proc_spec pre_rel_df=
@@ -509,7 +519,7 @@ let update_with_td_fp_x bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
         List.map (fun (rel,post) -> (rel,post,pre_rel,pre)) rel_posts
       else
         let input_fml = List.map (fun (f1,f2) -> (CP.mkAnd f1 pre no_pos,f2)) post_rel_df_new in
-        pre_calculate fp_func input_fml pre_vars proc_spec
+        x_add pre_calculate fp_func input_fml pre_vars proc_spec
           pre pure_oblg_to_check (rel_posts,pre_rel) pre_fmls pre_rel_vars pre_rel_df
   | [(rel,post)],[] ->
     let rels_in_pred = List.filter CP.is_rel_var pre_vars in

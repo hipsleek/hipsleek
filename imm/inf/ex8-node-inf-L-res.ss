@@ -2,13 +2,13 @@ data cell{
  int fst;
 }
 
-relation P1(ann v1).
+relation P1(ann v1, int v).
 relation P2(ann v1, ann v2,int v,int r, int s).
 relation P3(ann v1, int v,int r, int s).
 
 int foo(cell c)
   infer [P1,P2]
-  requires c::cell<v>@a & P1(a)
+  requires c::cell<v>@a & P1(a,v)
      /* ensures c::cell<w>@b & P3(b,v,res,w)  ; */
      ensures c::cell<w>@b & P2(a,b,v,res,w)  ;
 {
@@ -18,6 +18,30 @@ int foo(cell c)
 }
 
 /*
+
+must revise what i send to simplify
+
+simplify##@400
+simplify## inp1 : v=res & w_1457=5 & a=@M & @M<:b_1456
+simplify##@400 EXIT: v=res & w_1457=5 & a=@M & @M<:b_1456
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: LexVar 3")
+ Formula: a=@M & a=@M & MayLoop[]
+
+(==tpdispatcher.ml#1988==)
+simplify_omega@403@402
+simplify_omega inp1 : a=@M & a=@M & MayLoop[]
+simplify_omega@403 EXIT: a=@M & a=@M & MayLoop[]
+
+(==#0==)
+simplify##@402
+simplify## inp1 : a=@M & a=@M & MayLoop[]
+simplify##@402 EXIT: a=@M & a=@M & MayLoop[]
+
+
+
+
+
+
 ../../hip ex8-node-inf-L-res.ss 
 
 [RELASS [P1]: ( P1(a)) -->  a<:@L,

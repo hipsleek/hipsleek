@@ -9,3 +9,8 @@ subtype_ann,Trace
 #simplify
 #simplify##
 #pick_equality_instantiation
+pre_calculate,Trace
+filter_disj,Trace
+is_sat_mix_sub_no,Trace
+tp_is_sat,Trace
+compute_fixpoint,Trace

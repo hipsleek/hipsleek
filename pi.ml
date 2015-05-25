@@ -562,6 +562,60 @@ let infer_specs_imm_post_process (spec: CF.struc_formula) : CF.struc_formula =
   let spec = helper fncs spec in
   spec
 
+let norm_rel_oblgs reloblgs =
+  let is_rel_eq rel1 rel2 = 
+    (fun (_,a1,_) (_,a2,_) ->  
+       if not(CP.is_RelForm a1 && CP.is_RelForm a2) then false
+       else try
+           let get_ids f = map_opt_def [] (fun (id, args) -> id::args) (CP.get_relargs_opt f) in
+           let ids =  List.combine (get_ids a1) (get_ids a2) in 
+           List.fold_left (fun acc (sv1, sv2) -> acc && (CP.eq_spec_var sv1 sv2 )) true ids
+         with _ -> false
+    ) rel1 rel2 in
+  let rec update_acc ((a1,b1,c1) as rel) acc =
+    match acc with
+    | []   -> [rel]
+    | ((a2,b2,c2) as h)::t -> if is_rel_eq rel h then (a1,b1, CP.mkAnd c1 c2 no_pos)::t
+      else h::(update_acc rel t)
+  in
+  let rec helper lst acc = 
+    let fnc acc lst = 
+      let acc = update_acc (List.hd lst) acc in 
+      helper (List.tl lst) acc in
+    map_list_def acc (fnc acc) lst 
+  in 
+  let reloblgs_new = helper reloblgs [] in
+  let reloblgs_new = List.map (fun ((rel_c,rel_n,rel_d) as rel) -> 
+      if CP.contains_undef rel_d then rel 
+      else (rel_c,rel_n,TP.simplify_tp rel_d)) reloblgs_new  in
+  let reloblgs, reldefs = List.partition (fun (_,_,rel_d) -> CP.contains_undef rel_d) reloblgs_new in
+  let reldefs = List.map (fun (_,a,b) -> (b,a)) reldefs in
+  reloblgs_new, reldefs
+
+(* replaces the unk (rels) formulas with their definitions, provided they have one *)
+let norm_post_rel_def post_rel_df pre_rel_ids all_reldefns =
+  let replace_with_def id_x defs acc = 
+    let rec helper defs= 
+      match defs with
+      |[]    -> acc
+      |(def_h,id_h)::t -> 
+        if CP.EMapSV.mem id_x (CP.get_rel_id_list id_h) then acc@[def_h] (* replace the unk rel with its own def *)
+        else (helper t) 
+    in helper all_reldefns in
+  let replace_unk_with_known f = 
+    List.fold_left (fun acc x -> 
+        if CP.intersect (CP.get_rel_id_list x) pre_rel_ids = [] then acc@[x] (* if x is known add it back to the def *)
+        else map_opt_def acc (fun id_x -> replace_with_def id_x all_reldefns acc ) (CP.get_rel_id x)
+      ) [] (CP.list_of_conjs f) in
+  let helper pre_rel_ids =
+    List.concat (List.map (fun (f1,f2) ->
+        if Tpdispatcher.is_bag_constraint f1 then [(CP.remove_cnts pre_rel_ids f1, f2)]
+        else
+          let tmp = replace_unk_with_known f1 in
+          map_list_def [] (fun tmp -> [(CP.conj_of_list tmp no_pos, f2)]) tmp
+      ) post_rel_df) in
+  map_list_def post_rel_df helper pre_rel_ids
+
 let infer_pure (prog : prog_decl) (scc : proc_decl list) =
   (* WN: simplify_ann is unsound *)
   let proc_specs = List.fold_left (fun acc proc -> acc@[(* x_add_1 CF.simplify_ann *) (proc.proc_stk_of_static_specs # top)]) [] scc in
@@ -620,14 +674,17 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                 with _ -> ()
               else ()
             in
-            let reloblgs, reldefns = List.partition (fun (rt,_,_) -> CP.is_rel_assume rt) rels in
+            let reloblgs_init, reldefns = List.partition (fun (rt,_,_) -> CP.is_rel_assume rt) rels in
             let is_infer_flow = is_infer_flow reldefns in
             let reldefns = if is_infer_flow then add_flow reldefns else List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in
+            let reloblgs, reldefns_from_oblgs = norm_rel_oblgs reloblgs_init in
+            let reldefns = reldefns @ reldefns_from_oblgs in (* TODOIMM how abt that infer flow inside for reldefns_from_oblgs *)
             (* let reldefns = List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in *)
             let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in
             let pre_rel_ids = List.filter (fun x -> CP.is_rel_typ x
                                                     && not(Gen.BList.mem_eq CP.eq_spec_var x post_vars)) pre_vars in
             let post_rel_ids = List.filter (fun sv -> CP.is_rel_typ sv) post_vars in
+
             (**************** Debugging ****************)
             let pr_svl = Cprinter.string_of_spec_var_list in
             let pr = Cprinter.string_of_pure_formula in
@@ -635,6 +692,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let pr_oblg = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in
             let () = x_binfo_hp (add_str "post_rel_ids" pr_svl) post_rel_ids no_pos in
             let () = x_binfo_hp (add_str "reldefns" pr_def) reldefns no_pos in
+            let () = x_binfo_hp (add_str "initial reloblgs" pr_oblg) reloblgs_init no_pos in
             let () = x_binfo_hp (add_str "reloblgs" pr_oblg) reloblgs no_pos in
             let () = x_binfo_hp (add_str "lst_assume" pr_oblg) lst_assume no_pos in
             let () = x_binfo_hp (add_str "pre_rel_fmls" (pr_list pr)) pre_rel_fmls no_pos in
@@ -643,16 +701,19 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let () = x_binfo_hp (add_str "pre_ref_df" pr_def) pre_rel_df no_pos in
             let () = x_binfo_hp (add_str "post_ref_df" pr_def) post_rel_df no_pos in
             (**************** END Debugging ****************)
-            let post_rel_df_new =
-              if pre_rel_ids=[] then post_rel_df
-              else List.concat (List.map (fun (f1,f2) ->
-                  if Tpdispatcher.is_bag_constraint f1 then [(CP.remove_cnts pre_rel_ids f1,f2)]
-                  else
-                    let tmp = List.filter (fun x -> CP.intersect
-                                              (CP.get_rel_id_list x) pre_rel_ids=[]) (CP.list_of_conjs f1) in
-                    if tmp=[] then [] else [(CP.conj_of_list tmp no_pos,f2)]
-                ) post_rel_df)
-            in
+
+            let post_rel_df_new = norm_post_rel_def post_rel_df pre_rel_ids reldefns in
+            (* below has been modified and incorporated into norm_post_rel_def *)
+            (* let post_rel_df_new =  *)
+            (*   if pre_rel_ids=[] then post_rel_df *)
+            (*   else List.concat (List.map (fun (f1,f2) -> *)
+            (*       if Tpdispatcher.is_bag_constraint f1 then [(CP.remove_cnts pre_rel_ids f1,f2)] *)
+            (*       else *)
+            (*         let tmp = List.filter (fun x -> CP.intersect *)
+            (*                                   (CP.get_rel_id_list x) pre_rel_ids=[]) (CP.list_of_conjs f1) in *)
+            (*         if tmp=[] then [] else [(CP.conj_of_list tmp no_pos,f2)] *)
+            (*     ) post_rel_df) *)
+            (* in *)
             let () = x_binfo_hp (add_str "post_ref_df_new" pr_def) post_rel_df_new no_pos in
             let pre_invs,post_invs =
               List.fold_left (fun (pre_invs,post_invs) proc ->

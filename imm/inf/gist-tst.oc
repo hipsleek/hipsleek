@@ -22,3 +22,7 @@ gist Q given kn;
 
 Z:={[v]: 0=0};
 Z;
+
+P1:={[v]: (v=0 | v=3) & v<=2};
+kn1 := {[v]:v<=2};
+gist P1 given kn1;

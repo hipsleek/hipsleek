@@ -872,7 +872,6 @@ let rec exp_contains_spec_var (e : exp) : bool =
   | ArrayAt _ -> true
   | _ -> false
 
-
 let eq_spec_var1 (sv1: spec_var) (sv2: spec_var) = match (sv1, sv2) with
   | (SpecVar (_, v1, p1), SpecVar (_, v2, p2)) ->
     let reg = Str.regexp "_.*" in
@@ -887,8 +886,6 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
 let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = 
   let pr = !print_sv in
   Debug.no_2 "eq_spec_var" pr pr string_of_bool eq_spec_var (sv1 : spec_var) (sv2 : spec_var)
-
-
 
 let eq_spec_var_unp (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (_, v1, p1), SpecVar (_, v2, p2)) ->
@@ -14370,3 +14367,6 @@ let collect_nondet_rel f =
   in
   fold_formula f (nonef, f_bf, nonef) List.concat
 
+let contains_undef (f:formula) =
+  let afv = fv f in
+  List.fold_left (fun acc sv -> acc || (is_undef_typ (type_of_spec_var sv)) ) false afv 
