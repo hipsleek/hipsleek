@@ -3912,8 +3912,7 @@ let pr_list_context_short (ctx:list_context) =
 
 let pr_entail_state_short e =
   fmt_open_vbox 0;
-  fmt_string "pr_entail_state_short";
-  pr_formula_wrap e.es_formula;
+  pr_hwrap "pr_entail_state_short : " pr_formula_wrap e.es_formula;
   pr_wrap_test "es_heap:" (fun _ -> false)  (pr_h_formula) e.es_heap;
   pr_wrap_test "@zero:" Gen.is_empty (pr_seq "" pr_spec_var) e.es_var_zero_perm;
   pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) e.es_infer_vars;
