@@ -2569,6 +2569,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
   let cviews0, prim_cviews0 = List.partition (fun cv ->
       not cv.Cast.view_is_prim
   ) cviews0 in
+  let () = x_binfo_pp ("Omega call before: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
   let cviews0 =
     if !Globals.gen_baga_inv then
       let () = x_binfo_pp "Generate baga inv\n" no_pos in
@@ -2887,6 +2888,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
     else
       cviews0
   in
+  let () = x_binfo_pp ("Omega call after: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
   cviews0@prim_cviews0
 
 and fill_one_base_case prog vd = Debug.no_1 "fill_one_base_case" Cprinter.string_of_view_decl Cprinter.string_of_view_decl (fun vd -> fill_one_base_case_x prog vd) vd
