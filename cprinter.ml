@@ -428,6 +428,7 @@ let pr_vwrap_list hdr (f: 'a -> unit) (x:'a list) =
 (* Print a header-value horizontally *)
 let pr_hwrap hdr (f: 'a -> unit) (x: 'a) =
   fmt_open_hbox ();
+  fmt_string_cut hdr;
   wrap_box ("H", 0) f x;
   fmt_close ()
 
