@@ -137,20 +137,20 @@ let pr_match_type (e:match_type):unit =
 
 
 let pr_match_res (c:match_res):unit =
-  fmt_open_vbox 1;
-  pr_vwrap "Type: " pr_match_type c.match_res_type;
-  pr_vwrap "LHS: " pr_h_formula c.match_res_lhs_node;
-  pr_vwrap "RHS: " pr_h_formula c.match_res_rhs_node;
-  fmt_string "\n lhs_rest: "; pr_h_formula c.match_res_lhs_rest;
-  fmt_string "\n rhs_rest: "; pr_h_formula c.match_res_rhs_rest;
+  fmt_open_vbox 0;
+  pr_hwrap "Type: " pr_match_type c.match_res_type; fmt_cut ();
+  pr_hwrap "LHS: " pr_h_formula c.match_res_lhs_node; fmt_cut ();
+  pr_hwrap "RHS: " pr_h_formula c.match_res_rhs_node; fmt_cut ();
+  fmt_string "lhs_rest: "; pr_h_formula c.match_res_lhs_rest; fmt_cut ();
+  fmt_string "rhs_rest: "; pr_h_formula c.match_res_rhs_rest;
   (* fmt_string "\n res_holes: "; pr_seq "" (Cprinter.pr_pair_aux  pr_h_formula pr_int) c.match_res_holes;   *)
   (* fmt_string "}" *)
   fmt_close ()
 
 let pr_simpl_match_res (c:match_res):unit = 
-  fmt_open_vbox 1;
-  pr_vwrap "LHS: " pr_h_formula c.match_res_lhs_node;
-  pr_vwrap "RHS: " pr_h_formula c.match_res_rhs_node;
+  fmt_open_vbox 0;
+  pr_hwrap "LHS: " pr_h_formula c.match_res_lhs_node; fmt_cut ();
+  pr_hwrap "RHS: " pr_h_formula c.match_res_rhs_node;
   fmt_close ()
 (* fmt_string "("; *)
 (*   fmt_string "\n LHS "; pr_h_formula c.match_res_lhs_node; *)
@@ -191,38 +191,44 @@ let rec pr_action_name a = match a with
   | M_lhs_case e -> fmt_string "LHSCaseAnalysis"
   | M_cyclic _ -> fmt_string "Match cyclic"
 
-let rec pr_action_res pr_mr a = match a with
-  | Undefined_action e -> fmt_string "Undefined_action =>"; pr_mr e
-  | M_match e -> fmt_string "Match =>"; pr_mr e
-  | M_split_match e -> fmt_string "SplitMatch =>"; pr_mr e
-  | M_fold e -> fmt_string "Fold =>"; pr_mr e
-  | M_unfold (e,i) -> fmt_string ("Unfold "^(string_of_int i)^" =>"); pr_mr e
-  | M_base_case_unfold e -> fmt_string "BaseCaseUnfold =>"; pr_mr e
-  | M_base_case_fold e -> fmt_string "BaseCaseFold =>"; pr_mr e
-  | M_seg_fold (e,_) -> fmt_string "SegFold =>"; pr_mr e
+let rec pr_action_res pr_mr a =
+  fmt_open_vbox 1;
+  match a with
+  | Undefined_action e -> fmt_string_cut "Undefined_action =>"; pr_mr e
+  | M_match e -> fmt_string_cut "Match =>"; pr_mr e
+  | M_split_match e -> fmt_string_cut "SplitMatch =>"; pr_mr e
+  | M_fold e -> fmt_string_cut "Fold =>"; pr_mr e
+  | M_unfold (e,i) -> fmt_string_cut ("Unfold "^(string_of_int i)^" =>"); pr_mr e
+  | M_base_case_unfold e -> fmt_string_cut "BaseCaseUnfold =>"; pr_mr e
+  | M_base_case_fold e -> fmt_string_cut "BaseCaseFold =>"; pr_mr e
+  | M_seg_fold (e,_) -> fmt_string_cut "SegFold =>"; pr_mr e
   | M_acc_fold (e,steps) ->
     let pr_steps s = fmt_string ("\n fold steps:" ^ (pr_list Acc_fold.print_fold_type s)) in
-    fmt_string "AccFold =>"; pr_mr e; pr_steps steps
-  | M_rd_lemma e -> fmt_string "RD_Lemma =>"; pr_mr e
-  | M_ramify_lemma e -> fmt_string "Ramify_Lemma =>"; pr_mr e
-  | M_lemma (e,s) -> fmt_string ((match s with | None -> "AnyLemma" | Some c-> "(Lemma "
+    fmt_string_cut "AccFold =>"; pr_mr e; pr_steps steps
+  | M_rd_lemma e -> fmt_string_cut "RD_Lemma =>"; pr_mr e
+  | M_ramify_lemma e -> fmt_string_cut "Ramify_Lemma =>"; pr_mr e
+  | M_lemma (e,s) -> fmt_string_cut ((match s with | None -> "AnyLemma" | Some c-> "(Lemma "
                                                                                ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name)^") =>"); pr_mr e
-  | M_Nothing_to_do s -> fmt_string ("NothingToDo => "^s)
+  | M_Nothing_to_do s -> fmt_string_cut ("NothingToDo => "^ s)
   | M_infer_heap p ->
     let pr = string_of_h_formula in
-    fmt_string ("InferHeap => "^(pr_pair pr pr p))
-  | M_unmatched_rhs_data_node (h,_,_) -> fmt_string ("UnmatchedRHSData => "^(string_of_h_formula h))
-  | Cond_action l -> pr_seq_nocut "COND =>" (pr_action_wt_res pr_mr) l
+    fmt_string_cut ("InferHeap => "^(pr_pair pr pr p))
+  | M_unmatched_rhs_data_node (h,_,_) -> fmt_string_cut ("UnmatchedRHSData => "^(string_of_h_formula h))
+  | Cond_action l -> pr_seq_vbox "COND =>" (pr_action_wt_res pr_mr) l
   | Seq_action l -> pr_seq_vbox "SEQ =>" (pr_action_wt_res pr_mr) l
-  | Search_action l -> 
+  | Search_action l ->
     fmt_open_vbox 1;
     pr_seq_vbox "SEARCH =>" (pr_action_wt_res pr_mr) l;
     fmt_close();
-  | M_lhs_case e -> fmt_string "LHSCaseAnalysis =>"; pr_mr e
-  | M_cyclic (e,_,_,_,_) -> fmt_string "Match cyclic =>"; pr_mr e
+  | M_lhs_case e -> fmt_string_cut "LHSCaseAnalysis =>"; pr_mr e
+  | M_cyclic (e,_,_,_,_) -> fmt_string_cut "Match cyclic =>"; pr_mr e;
+  fmt_close_box ();
 
-and pr_action_wt_res pr_mr (w,a) = 
-  fmt_string ("Prio:"^(string_of_int w)^" "); (pr_action_res pr_mr a)
+and pr_action_wt_res pr_mr (w,a) =
+  fmt_open_vbox 0;
+  fmt_string_cut ("Prio:"^(string_of_int w));
+  (pr_action_res pr_mr a);
+  fmt_close_box ()
 
 let string_of_action_name (e:action) = poly_string_of_pr pr_action_name e
 
@@ -2478,10 +2484,11 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
   | [] -> M_Nothing_to_do "no nodes on RHS"
   | xs -> 
     (*  imm/imm1.slk imm/imm3.slk fails if sort_wt not done *)
-    let () = x_tinfo_hp (add_str "weighted action" (pr_list_num 
-                                                      (string_of_action_wt_res_simpl))) r no_pos in
+    let () = x_tinfo_hp (add_str "weighted action"
+      (pr_list_num_vert (string_of_action_wt_res_simpl))) r no_pos in
     let ys = sort_wt_match opt r in
-    let () = x_tinfo_hp (add_str "sorted action" (pr_list_num string_of_action_wt_res_simpl)) ys no_pos in
+    let () = x_tinfo_hp (add_str "sorted action"
+      (pr_list_num_vert string_of_action_wt_res_simpl)) ys no_pos in
     let ys2 = drop_low ys in
     (* let ys2 = snd (List.split ys) in *)
     (*Cond_action  ys *)
