@@ -986,8 +986,9 @@ let add_templ_assume ctx constr inf_templs =
   Template.collect_templ_assume_init es ctx constr no_pos
 
 let solve_templ_assume prog templ_decls inf_templs =
-  let prog = { prog with Cast.prog_templ_decls = 
-                           Gen.BList.remove_dups_eq Cast.eq_templ_decl (prog.Cast.prog_templ_decls @ templ_decls) } in
+  let prog = { prog with 
+      Cast.prog_templ_decls = 
+        Gen.BList.remove_dups_eq Cast.eq_templ_decl (prog.Cast.prog_templ_decls @ templ_decls) } in
   let res, _, _ = Template.collect_and_solve_templ_assumes_common true prog 
       (List.map CP.name_of_spec_var inf_templs) in
   res
@@ -1039,9 +1040,10 @@ let infer_lex_ranking_function_scc prog g scc_edges =
   let inf_templs = Gen.BList.remove_dups_eq CP.eq_spec_var inf_templs in 
   let inf_templs = List.map CP.name_of_spec_var inf_templs in
 
-  let prog = { prog with Cast.prog_templ_decls = 
-                           Gen.BList.remove_dups_eq Cast.eq_templ_decl 
-                             (prog.Cast.prog_templ_decls @ templ_decls) } in
+  let prog = { prog with 
+      Cast.prog_templ_decls = 
+        Gen.BList.remove_dups_eq Cast.eq_templ_decl (prog.Cast.prog_templ_decls @ templ_decls) } 
+  in
   let res, templ_assumes, templ_unks = 
     Template.collect_and_solve_templ_assumes_common true prog inf_templs in
   match res with
