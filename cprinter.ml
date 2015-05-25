@@ -428,8 +428,6 @@ let pr_vwrap_list hdr (f: 'a -> unit) (x:'a list) =
 (* Print a header-value horizontally *)
 let pr_hwrap hdr (f: 'a -> unit) (x: 'a) =
   fmt_open_hbox ();
-  fmt_string hdr;
-  fmt_cut ();
   wrap_box ("H", 0) f x;
   fmt_close ()
 
@@ -3258,7 +3256,7 @@ let string_of_infer_list il vl =
 let rec pr_struc_formula  (e:struc_formula) = match e with
   | ECase { formula_case_branches  =  case_list ; formula_case_pos = _} ->
     fmt_string "ECase ";
-    fmt_cut_and_indent  ();
+    fmt_cut ();
     (* fmt_string (string_of_pos p.start_pos);*)
     pr_args  (Some("V",1)) (Some "A") "case " "{" "}" ";"
       (fun (c1,c2) -> wrap_box ("B",0) (pr_op_adhoc (fun () -> pr_pure_formula c1) " -> " )
@@ -3266,9 +3264,9 @@ let rec pr_struc_formula  (e:struc_formula) = match e with
   | EBase { formula_struc_implicit_inst = ii; formula_struc_explicit_inst = ei; formula_struc_exists = ee; formula_struc_base = fb;
             formula_struc_continuation = cont; formula_struc_pos = _ } ->
     fmt_string "EBase ";
-    fmt_cut_and_indent ();
+    fmt_cut ();
     (* fmt_string (string_of_pos p.start_pos);*)
-    fmt_open_vbox 2;
+    fmt_open_vbox 0;
     wrap_box ("B",0) (fun fb ->
         if not(Gen.is_empty(ee@ii@ei)) then
           begin
@@ -3323,7 +3321,7 @@ let rec pr_struc_formula  (e:struc_formula) = match e with
     let ps = (inf_o # string_of_raw) in
     fmt_open_vbox 2;
     fmt_string ("EInfer "^ps^string_of_spec_var_list lvars);
-    fmt_cut_and_indent ();
+    fmt_cut ();
     wrap_box ("B",0) pr_struc_formula cont;
     fmt_close();
   | EList b ->
