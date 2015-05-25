@@ -2748,6 +2748,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
               (* let () = x_binfo_hp (add_str "old_invs" (pr_list Excore.EPureI.string_of_disj)) old_invs no_pos in *)
               let new_invs = List.map (fun vd ->
                   let new_inv = Wrapper.wrap_infer_inv (x_add Cvutil.xpure_symbolic_baga3) cviews0 (Cast.formula_of_unstruc_view_f vd) in
+                  let () = x_binfo_pp ("Omega call inside1 checking inv: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
                   let new_inv = List.map (fun (svl,pf) ->
                       let idx = CP.mk_typed_spec_var Int "idx" in
                       let new_pf_svl = CP.fv pf in

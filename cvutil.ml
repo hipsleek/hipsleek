@@ -1414,7 +1414,9 @@ and xpure_perm (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) : MCP.mix_f
     (fun _ _ -> xpure_perm_x prog h0 p0) h0 p0
 
 and xpure_symbolic_baga3 (views : view_decl list) (h0 : formula) : Excore.EPureI.epure_disj =
+  let () = x_binfo_pp ("Omega call before build ef: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
   let new_baga = Expure.build_ef_formula h0 views in
+  let () = x_binfo_pp ("Omega call after build ef: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
   let () = Debug.ninfo_hprint (add_str "new_baga" (Excore.EPureI.string_of_disj)) new_baga no_pos in
   new_baga
 
