@@ -2620,7 +2620,10 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
               {vd with Cast.view_un_struc_formula = new_un_struc_formula}
             ) view_list_num0 in
           let todo_unk = Wrapper.wrap_infer_inv Expure.fix_ef view_list_baga cviews0 in
-          let view_list_num_with_inv = Fixcalc.compute_inv_mutrec (List.map (fun vd -> vd.Cast.view_name) view_list_num) view_list_num in
+          let () = x_binfo_pp ("Omega call after infer baga inv: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+
+
+         let view_list_num_with_inv = Fixcalc.compute_inv_mutrec (List.map (fun vd -> vd.Cast.view_name) view_list_num) view_list_num in
           let () = x_tinfo_hp (add_str "fixcalc (view with inv)" (pr_list (fun vd -> pr_option Cprinter.string_of_mix_formula vd.Cast.view_fixcalc))) view_list_num_with_inv no_pos in
           let fixcalc_invs_inv = List.map (fun vd -> match vd.Cast.view_fixcalc with Some f -> f | None -> MCP.mkMTrue no_pos) view_list_num_with_inv in
           let num_invs_wrap_index = List.map (fun mf ->
@@ -2710,6 +2713,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                 (false,fixc)
             )  (List.combine view_list_num_with_inv num_invs) in
           let precise_list,num_invs = List.split precise_num_invs in
+          let () = x_binfo_pp ("Omega call after infer num inv: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
           (* let baga_invs = List.map (fun vd -> Hashtbl.find Excore.map_baga_invs vd.Cast.view_name) view_list_baga in *)
           let baga_invs = List.map (fun vd -> Hashtbl.find Excore.map_baga_invs vd.Cast.view_name) view_list_num_with_inv in
           let fixcalc_invs = List.map (fun vd -> vd.Cast.view_fixcalc) view_list_baga in
@@ -2732,6 +2736,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
           let () = List.iter (fun (vd,inv) ->
               Hashtbl.replace Excore.map_baga_invs vd.Cast.view_name inv
             ) (List.combine view_list_baga0 combined_invs) in
+          let () = x_binfo_pp ("Omega call after combine inv: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
           let unfold_cnt = new Gen.change_flag in
           let rec unfold precise old_invs =
             if unfold_cnt # exceed 10 then
@@ -2792,6 +2797,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
           (* ) (List.combine view_list_baga0 num_invs) in *)
           (* WN : Looping at unfold with imprecise inv *)
           let new_invs = unfold (List.for_all (fun a -> a) precise_list) combined_invs in
+          let () = x_binfo_pp ("Omega call after checking inv: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
           let () = Debug.ninfo_hprint (add_str "new_invs" (pr_list Excore.EPureI.string_of_disj)) new_invs no_pos in
           ()
           (* let new_invs_list = x_add_1 Expure.fix_ef view_list cviews0 in *)
