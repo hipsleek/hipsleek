@@ -15,7 +15,10 @@ gist P given kno;
 
 gist kno given P;
 
-Q := {[v]: 0=v};
-kn := {[v]:v<=2};
+Q := {[v,w]: v=v};
+kn := {[v,w]:v<=2};
 
 gist Q given kn;
+
+Z:={[v]: 0=0};
+Z;

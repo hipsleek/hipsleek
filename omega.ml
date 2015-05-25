@@ -763,6 +763,13 @@ let is_valid (pe : formula) timeout : bool =
       failwith s
     end
 
+let filter_imm_var_eq sv e f f_imm f_def =
+  if is_True f && is_ann_typ sv then 
+    match e with
+    | Var (ev, _) -> if (Str.string_match (Str.regexp "In_[0-9]*") (name_of_sv ev) 0 ) then f_imm else f_def
+    | _ -> f_def
+  else f_def
+
 let is_valid (pe : formula) timeout : bool =
   Gen.Profiling.do_1 "omega.is_valid" is_valid pe timeout
 
@@ -783,6 +790,7 @@ let rec match_vars (vars_list0 : spec_var list) rel =
         let restf = match_helper restvars rest f in
         let tmp1 = mkEqExp (Var (v, no_pos)) ae no_pos in
         let tmp2 = mkAnd_dumb tmp1 restf no_pos in
+        let tmp2 = filter_imm_var_eq v ae f0 restf tmp2 in
         tmp2
     in
     if List.length aelist0 != List.length vars_list0 then

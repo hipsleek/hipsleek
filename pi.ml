@@ -628,16 +628,21 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let pre_rel_ids = List.filter (fun x -> CP.is_rel_typ x
                                                     && not(Gen.BList.mem_eq CP.eq_spec_var x post_vars)) pre_vars in
             let post_rel_ids = List.filter (fun sv -> CP.is_rel_typ sv) post_vars in
+            (**************** Debugging ****************)
             let pr_svl = Cprinter.string_of_spec_var_list in
             let pr = Cprinter.string_of_pure_formula in
             let pr_def = pr_list (pr_pair pr pr) in
             let pr_oblg = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in
             let () = x_binfo_hp (add_str "post_rel_ids" pr_svl) post_rel_ids no_pos in
-            let () = x_binfo_hp (add_str "pre_ref_df" pr_def) pre_rel_df no_pos in
+            let () = x_binfo_hp (add_str "reldefns" pr_def) reldefns no_pos in
             let () = x_binfo_hp (add_str "reloblgs" pr_oblg) reloblgs no_pos in
+            let () = x_binfo_hp (add_str "lst_assume" pr_oblg) lst_assume no_pos in
+            let () = x_binfo_hp (add_str "pre_rel_fmls" (pr_list pr)) pre_rel_fmls no_pos in
+            let () = x_binfo_hp (add_str "pre_ref_df" pr_def) pre_rel_df no_pos in
             let () = x_binfo_pp "WN: Need to form initial pre from reloblgs, namely P1(a) = a=@M" no_pos in
             let () = x_binfo_hp (add_str "pre_ref_df" pr_def) pre_rel_df no_pos in
             let () = x_binfo_hp (add_str "post_ref_df" pr_def) post_rel_df no_pos in
+            (**************** END Debugging ****************)
             let post_rel_df_new =
               if pre_rel_ids=[] then post_rel_df
               else List.concat (List.map (fun (f1,f2) ->
