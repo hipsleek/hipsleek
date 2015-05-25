@@ -248,7 +248,9 @@ let ef_elim_exists_1 (svl : spec_var list) epf  =
   let () = x_tinfo_hp (add_str "pure = " !print_pure_formula) pure no_pos in
   let pure = wrap_exists_svl pure svl in
   let () = x_tinfo_hp (add_str "pure1 = " !print_pure_formula) pure no_pos in
+  let () = x_binfo_pp ("Omega call before simplify: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
   let pure = simplify_with_label_omega (* x_add_1 Omega.simplify *) pure in
+  let () = x_binfo_pp ("Omega call after simplify: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
   let () = x_tinfo_hp (add_str "pure2 = " !print_pure_formula) pure no_pos in
   let () = x_tinfo_hp (add_str "pure_ptr_eq" (pr_list (pr_pair string_of_typed_spec_var string_of_typed_spec_var))) p_aset no_pos in
   let p_aset = EMapSV.build_eset p_aset in
