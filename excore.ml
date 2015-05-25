@@ -669,8 +669,11 @@ module EPURE =
       ef_imply_disj_x ante conseq
 
     let imply_disj (ante : epure_disj) (conseq : epure_disj) : bool =
+      let () = x_binfo_pp ("Omega call before imply disj: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
       let f = List.map (fun (b,f) -> (b,f)) in
-      ef_imply_disj_0 (f ante) (f conseq)
+      let r = ef_imply_disj_0 (f ante) (f conseq) in
+      let () = x_binfo_pp ("Omega call after imply disj: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+      r
 
     let pair_cmp (x1,x2) (y1,y2) =
       let c = Elt.compare x1 y1 in
