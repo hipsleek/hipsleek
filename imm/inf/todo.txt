@@ -636,6 +636,14 @@ choose pre-obligation first:
 !!! **pi.ml#636:pre_ref_df:[]
 !!! **pi.ml#637:post_ref_df:[( v=res & w_1456=5 & a<:@L & @M<:b_1455 & P1(a), P2(a,b_1455,v,res,w_1456))]
 !!! **pi.ml#638:WN: why is pre_rel_df empty? It should be P1(a) = a=@M
+
+    P2(a,b,v,w) ::= a=@M & @M<:b & v=res
+                ::= a=@M & @M=b & v=res
+
+
+RELDEFN P2: ( v=res & w_1456=5 & a<:@L & @M<:b_1455 & P1(a)) -->  P2(a,b_1455,v,res,w_1456)]
+RELDEFN P2: ( v=res & w_1456=5 & a=@M & @M<:b_1455 ) -->  P2(a,b_1455,v,res,w_1456)]
+
 =======================================================
 =======================================================
 =======================================================

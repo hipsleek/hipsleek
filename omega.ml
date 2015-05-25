@@ -1169,7 +1169,7 @@ let gist_x (pe1 : formula) (pe2 : formula) : formula =
         let fomega =  "gist {[" ^ vstr ^ "] : (" ^ fstr1
                       ^ ")} given {[" ^ vstr ^ "] : (" ^ fstr2 ^ ")};" ^ Gen.new_line_str in
         (* gist not properly logged *)
-        let () = Debug.ninfo_pprint ("fomega = " ^ fomega) no_pos in
+        let () = Debug.binfo_pprint ("fomega = " ^ fomega) no_pos in
         let () = set_proof_string ("GIST(not properly logged yet):"^fomega) in
         if !log_all_flag then begin
           output_string log_all ("#gist" ^ Gen.new_line_str ^ Gen.new_line_str);

@@ -648,6 +648,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                     if tmp=[] then [] else [(CP.conj_of_list tmp no_pos,f2)]
                 ) post_rel_df)
             in
+            let () = x_binfo_hp (add_str "post_ref_df_new" pr_def) post_rel_df_new no_pos in
             let pre_invs,post_invs =
               List.fold_left (fun (pre_invs,post_invs) proc ->
                   let new_pre_invs,new_post_invs =
@@ -672,7 +673,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let () = x_binfo_pp (s2 ^ s1) no_pos in
             (* let _ = x_binfo_pp ("Pi.infer_pure") no_pos in *)
             (* let () = x_binfo_hp (add_str "sp:compute_fixpoint" Cprinter.string_of_struc_formula) proc_spec no_pos in *)
-            let fn x = x_add_1 (Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars) x in
+            let fn x = x_add_1 (Fixcalc.compute_fixpoint 5 post_rel_df_new pre_vars) x in
             let bottom_up_fp0 = wrap fn proc_spec in
             let () = x_binfo_hp (add_str "bottom_up_fp0" (pr_list (pr_pair pr pr))) bottom_up_fp0 no_pos in
             (* let bottom_up_fp0 = List.fold_left (fun acc proc_spec -> acc@(x_add Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars proc_spec)) [] proc_specs in *)
