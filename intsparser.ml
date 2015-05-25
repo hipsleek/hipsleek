@@ -6,6 +6,7 @@ open Iexp
 
 module I = Iast
 module IF = Iformula
+module IP = Ipure
 
 let init_conditions_of_block (b : ints_block) : ints_exp_assume list =
   let vars_of_exp e =
@@ -34,6 +35,67 @@ let init_conditions_of_block (b : ints_block) : ints_exp_assume list =
       helper cmds ((vars_of_asg asg)@assigned)
   in
   helper b.ints_block_commands []
+
+let trans_pure_formula (ass : ints_exp_assume) : IP.formula =
+  let rec helper exp =
+    match exp with
+    | I.Binary op ->
+      let pos = op.I.exp_binary_pos in
+      let e1 = op.I.exp_binary_oper1 in
+      let e2 = op.I.exp_binary_oper2 in
+      (match op.I.exp_binary_op with
+       | I.OpEq ->
+         let pe1 = I.trans_to_exp_form e1 in
+         let pe2 = I.trans_to_exp_form e2 in
+         IP.BForm (((IP.Eq (pe1, pe2, pos)), None), None)
+       | I.OpNeq ->
+         let pe1 = I.trans_to_exp_form e1 in
+         let pe2 = I.trans_to_exp_form e2 in
+         IP.BForm (((IP.Neq (pe1, pe2, pos)), None), None)
+       | I.OpLt ->
+         let pe1 = I.trans_to_exp_form e1 in
+         let pe2 = I.trans_to_exp_form e2 in
+         IP.BForm (((IP.Lt (pe1, pe2, pos)), None), None)
+       | I.OpLte ->
+         let pe1 = I.trans_to_exp_form e1 in
+         let pe2 = I.trans_to_exp_form e2 in
+         IP.BForm (((IP.Lte (pe1, pe2, pos)), None), None)
+       | I.OpGt ->
+         let pe1 = I.trans_to_exp_form e1 in
+         let pe2 = I.trans_to_exp_form e2 in
+         IP.BForm (((IP.Gt (pe1, pe2, pos)), None), None)
+       | I.OpGte ->
+         let pe1 = I.trans_to_exp_form e1 in
+         let pe2 = I.trans_to_exp_form e2 in
+         IP.BForm (((IP.Gte (pe1, pe2, pos)), None), None)
+       | I.OpLogicalAnd ->
+         let pf1 = helper e1 in
+         let pf2 = helper e2 in
+         IP.And (pf1, pf2, pos)
+       | I.OpLogicalOr ->
+         let pf1 = helper e1 in
+         let pf2 = helper e2 in
+         IP.Or (pf1, pf2, None, pos)
+       | _ -> report_error no_pos "intsparser.trans_pure_formula: unexpected bin_op"
+      )
+    | _ -> report_error no_pos "intsparser.trans_pure_formula: unexpected exp"
+  in
+  helper ass.ints_exp_assume_formula
+
+let pure_formula_of_condition (cond : ints_exp_assume list) : IP.formula =
+  let true_formula = IP.BForm ((IP.BConst (true, no_pos), None), None) in
+  List.fold_right (fun a pf2 ->
+    let pos = a.ints_exp_assume_pos in
+    let pf1 = trans_pure_formula a in
+    IP.And (pf1, pf2, pos)) cond true_formula
+
+let is_equivalent_condition c1 c2 =
+  let pf1 = pure_formula_of_condition c1 in
+  let pf2 = pure_formula_of_condition c2 in
+  let cf1 = Astsimp.trans_pure_formula pf1 [] in
+  let cf2 = Astsimp.trans_pure_formula pf2 [] in
+  Tpdispatcher.simpl_imply_raw cf1 cf2 &&
+  Tpdispatcher.simpl_imply_raw cf2 cf1
 
 let rec partition_by_key key_of key_eq ls = 
   match ls with
@@ -86,7 +148,32 @@ let trans_ints_block (blk: ints_block): I.exp =
 let trans_ints_block_lst fn (fr_lbl: ints_loc) (blks: ints_block list): I.proc_decl =
   let pos = pos_of_ints_loc fr_lbl in
   let proc_name = name_of_ints_loc fr_lbl in
-  let proc_body = List.fold_left (fun acc blk -> I.mkSeq acc (trans_ints_block blk) (I.get_exp_pos acc)) (I.Empty pos) blks in
+  let blks = partition_by_key init_conditions_of_block is_equivalent_condition blks in
+  (* Take blocks with equivalent starting conditions
+   * and form into sequence of if/else with nondet() condition. *)
+  let nondet_seq_for_blocks cond blks =
+    let rec nondet_chain_for blks =
+      match blks with
+      | [] -> (I.Empty no_pos)
+      | blk::blks ->
+        let nondet_call = I.mkCallNRecv Globals.nondet_int_proc_name None [] None None no_pos in
+        let nondet_cond = I.mkBinary I.OpGt nondet_call (I.mkIntLit 0 no_pos) None no_pos in
+        I.mkCond nondet_cond (trans_ints_block blk) (nondet_chain_for blks) None blk.ints_block_pos in
+    let nondet_chain = nondet_chain_for blks in
+    let cond_exps = List.map (fun asm -> Assume asm) cond in
+    trans_ints_exp_lst cond_exps nondet_chain
+  in
+  let proc_body = List.fold_left (fun acc (cond, blks) ->
+      let blks_exp = match blks with
+        | [blk] ->
+          let () = x_binfo_pp "tmp: GAH! WHY???" no_pos in
+          trans_ints_block blk
+        | blks ->
+          (* Multiple blocks with the same condition; introduce nondet. *)
+          let () = x_binfo_pp "tmp: I SHOULD BE HAPPY IF I CAN SEE THIS." no_pos in
+          nondet_seq_for_blocks cond blks in
+      I.mkSeq acc blks_exp (I.get_exp_pos acc)
+    ) (I.Empty pos) blks in
   I.mkProc fn proc_name [] "" None false [] [] I.void_type None (IF.EList []) (IF.mkEFalseF ()) pos (Some proc_body)
 
 let trans_ints_prog fn (iprog: ints_prog): I.prog_decl =
@@ -109,7 +196,10 @@ let trans_ints_prog fn (iprog: ints_prog): I.prog_decl =
   let proc_decls = 
     [main_proc] @ 
     (List.map (fun (fr, blks) -> trans_ints_block_lst fn fr blks) proc_blks) @
-    abandoned_procs 
+    abandoned_procs @
+    (* ensure `nondet()` proc is in program *)
+    match (Parser.create_tnt_prim_proc Globals.nondet_int_proc_name) with
+    | None -> [] | Some pd -> [pd]
   in
   let global_vars =
     let f e =
