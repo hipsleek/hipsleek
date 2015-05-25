@@ -4053,18 +4053,8 @@ let pr_failesc_context ?(nshort=true) ((l1,l2,l3): failesc_context) =
 
 let pr_partial_context ?(nshort=true) ((l1,l2): partial_context) =
   fmt_open_vbox 0;
-  if nshort then (pr_vwrap_naive_nocut "Failed States:"
-                    (pr_seq_vbox "" (fun (lbl,fs)-> pr_hwrap "Label: " pr_path_trace lbl;
-                                      pr_vwrap "State:" pr_fail_type fs)) l1);
-  pr_vwrap_naive "Successful States:"
-    (pr_seq_vbox "" (fun (lbl,fs,oft)-> 
-         if nshort then (pr_hwrap "Label: " pr_path_trace lbl; fmt_cut ());
-         fmt_string "State:";
-         fmt_cut_and_indent ();
-         pr_context ~nshort fs;
-         fmt_cut ();
-         if nshort then (pr_hwrap "Exc:" fmt_string (match oft with | Some _ -> "Some" | _ -> "None"))
-       )) l2;
+  pr_failed_states ~nshort l1;
+  pr_successful_states ~nshort l2;
   fmt_close_box ()
 
 (* let pr_partial_context_short ((l1,l2): partial_context) = *)
