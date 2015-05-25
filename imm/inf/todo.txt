@@ -645,9 +645,106 @@ RELDEFN P2: ( v=res & w_1456=5 & a<:@L & @M<:b_1455 & P1(a)) -->  P2(a,b_1455,v,
 RELDEFN P2: ( v=res & w_1456=5 & a=@M & @M<:b_1455 ) -->  P2(a,b_1455,v,res,w_1456)]
 
 =======================================================
+../../hip ex8-node-inf-L-res.ss 
+
+!!! **pi.ml#776:>>REL POST :  P2(a,v,b_1456,res,w_1457)
+!!! **pi.ml#777:>>POST:  v=res & w_1457=5 & a<:@L & @M<:b_1456 & a=@M
+!!! **pi.ml#778:>>REL PRE :  P1(a,v)
+!!! **pi.ml#779:>>PRE :  a=@M
+
+post can be simplified to:
+!!! **pi.ml#777:>>POST:  v=res & w_1457=5 & @M<:b_1456 & a=@M
 =======================================================
+# ex8d1.ss
+
+ int x = c.fst;
+ return x;
+
+GOT:
+!!! **pi.ml#696:reloblgs:[( P1(a,v), a<:@L)]
+
+# I think can strengthen/simplify to:
+!!! **pi.ml#696:reloblgs:[( P1(a,v), a=@L)]
+
+!!! **pi.ml#776:>>REL POST :  P2(a,v,b_1450,res,w_1451)
+!!! **pi.ml#777:>>POST:  w_1451=res & v=res & a<:@L & a<:b_1450 & a<:@L
+!!! **pi.ml#778:>>REL PRE :  P1(a,v)
+!!! **pi.ml#779:>>PRE :  a<:@L
+
+Post can simplify to:
+!!! **pi.ml#777:>>POST:  w_1451=res & v=res & a<:@L & a<:b_1450 
+
+Derived spec:
+------------
+requires c::cell<v>@a & a<:@L
+ensures  c::cell<w>@b & w=res & v=res & a<:b 
+
+Improving spec: 
+---------------
+(i) use weakest pre:
+(ii) make strongest post:
+requires c::cell<v>@a & a=@L
+ensures  c::cell<w>@b & w=res & v=res & b=@L 
+(iii) drop @L in post
+requires c::cell<v>@a & a=@L
+ensures  v=res  
 =======================================================
+# ex8d2.ss
+
+ int x = c.fst;
+ if (x>0) c.fst = 5;
+ return x;
+
+GOT:
+!!! **pi.ml#696:reloblgs:[( P1(a,v), (a=@M | (v<=0 & a<:@L)))]
+
+
+# I think can strengthen/simplify to:
+
+!!! **pi.ml#696:reloblgs:[( P1(a,v), (a=@M | a<:@L))]
+!!! **pi.ml#696:reloblgs:[( P1(a,v), a=@M]
+
 =======================================================
+
+# ex8e1.ss
+
+How was post_ref_df_new derived from post_ref_df?
+
+!!! **pi.ml#696:reloblgs:[( P1(a,v), (a=@M | (v=0 & a<:@L)))]
+
+!!! **pi.ml#702:post_ref_df:[( 
+res=0 & w_1470=0 & v=0 & a<:@L & a<:b_1469 & P1(a,v), 
+P2(a,b_1469,v,res,w_1470))]
+!!! **pi.ml#717:post_ref_df_new:[( 
+res=0 & w_1470=0 & v=0 & a<:@L & a<:b_1469 
+& 1<=v & a<:@L & P1(a,v) & v_1517+1=v & @M<:a_1516, 
+P2(a,b_1469,v,res,w_1470))]
+=======================================================
+# ex8e2.ss
+
+# Fixcalc need not know @L
+
+!!! **pi.ml#738:sp:compute_fixpoint:[( res=0 & w_1463=0 & v=0 & a<:@L & a<:b_1462 & 1<=v_1495 & a<:@L & 
+P1(a,v_1495) & a<:a_1494, P2(a,b_1462,v,res,w_1463))]
+!!! **pi.ml#739: P2(a,b_1462,v,res,w_1463) = ( res=0 & w_1463=0 & v=0 & a<:@L & a<:b_1462 & 1<=v_1495 & a<:@L & 
+P1(a,v_1495) & a<:a_1494)
+!!! PROBLEM with fix-point calculation
+ExceptionFailure("Trans_arr.extract_translate_scheme: @L To Be Implemented")Occurred!
+
+=======================================================
+# ex8e3.ss
+
+{
+ int x = c.fst;
+ if (i!=0 && x>0) {
+   return 2+foo(c,i-1);
+ } else return 0;
+}
+
+# Fixcalc need not know @L
+
+!!! PROBLEM with fix-point calculation
+ExceptionFailure("Trans_arr.extract_translate_scheme: @L To Be Implemented")Occurred!
 =======================================================
 =======================================================
 =======================================================
