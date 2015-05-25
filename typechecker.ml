@@ -2415,9 +2415,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let st_lsmu = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) lsmu_var in
               let st_waitlevel = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) waitlevel_var in
               let st3= st2@st_ls@st_lsmu@st_waitlevel in
-              let () = x_tinfo_hp (add_str "renamed_spec" Cprinter.string_of_struc_formula) renamed_spec no_pos in
+              let () = x_tinfo_hp (add_strln "renamed_spec" Cprinter.string_of_struc_formula) renamed_spec no_pos in
               let pre2 = CF.subst_struc_pre st3 renamed_spec in
-              let () = x_binfo_hp (add_str "pre2:\n" Cprinter.string_of_struc_formula) pre2 no_pos in
+              let () = x_binfo_hp (add_strln "pre2:\n" Cprinter.string_of_struc_formula) pre2 no_pos in
               let new_spec = (Cprinter.string_of_struc_formula pre2) in
               (* Termination: Store unreachable state *)
               let _ =
@@ -3579,7 +3579,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
               (* let () = proc.proc_stk_of_static_specs # push new_spec in *)
               let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx spec body true in
               (* let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx (proc.proc_static_specs (\* @ proc.proc_dynamic_specs *\)) body true in *)
-              x_tinfo_hp (add_str "SPECS (after specs_infer)" pr_spec) new_spec no_pos;
+              x_tinfo_hp (add_strln "SPECS (after specs_infer)" pr_spec) new_spec no_pos;
               x_tinfo_hp (add_str "fm formula " (pr_list !CF.print_formula)) fm no_pos;
               let new_spec = CF.simplify_ann new_spec in
               let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels) in
@@ -3679,12 +3679,11 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
               (**************end cp_test _ gen_cpfile******************)
               let lst_rank = List.map (fun (_,a2,a3)-> (a2,a3)) lst_rank in
               (*let () = Ranking.do_nothing in*)
-              x_tinfo_hp (add_str "SPECS (after simplify_ann)" pr_spec) new_spec no_pos;
-
-              x_tinfo_hp (add_str "SPECS (before add_pre)" pr_spec) new_spec no_pos;
-              x_tinfo_hp (add_str "NEW SPECS(B4)" pr_spec) new_spec no_pos;
+              x_tinfo_hp (add_strln "SPECS (after simplify_ann)" pr_spec) new_spec no_pos;
+              x_tinfo_hp (add_strln "SPECS (before add_pre)" pr_spec) new_spec no_pos;
+              x_tinfo_hp (add_strln "NEW SPECS(B4)" pr_spec) new_spec no_pos;
               let new_spec = x_add_1 Astsimp.add_pre prog new_spec in
-              x_tinfo_hp (add_str "NEW SPECS(AF)" pr_spec) new_spec no_pos;
+              x_tinfo_hp (add_strln "NEW SPECS(AF)" pr_spec) new_spec no_pos;
 
               if (pre_ctr # get> 0)
               then
@@ -3867,7 +3866,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                       (* let subs = List.map (fun xs -> CP.simplify_subs xs vars []) ra in *)
                       (* Debug.info_hprint (add_str "alias" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_sv)))) ra no_pos; *)
                       (* Debug.info_hprint (add_str "subs" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_sv)))) subs no_pos; *)
-                      Debug.ninfo_hprint (add_str "OLD SPECS" pr_spec) proc.proc_static_specs no_pos;
+                      Debug.ninfo_hprint (add_strln "OLD SPECS" pr_spec) proc.proc_static_specs no_pos;
                       let () = if prepost_ctr # get > 0 then
                           Debug.info_ihprint (add_str "NEW SPECS" pr_spec) new_spec no_pos else () in
                       let () = prepost_ctr # reset in

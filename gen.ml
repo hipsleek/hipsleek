@@ -193,6 +193,7 @@ struct
   let all_l_snd f x = List.for_all (fun (_,c)-> f c) x
 
   let add_str s f xs = s^":"^(f xs)
+  let add_strln s f xs = s^":\n"^(f xs)
 
   let opt_to_list o = match o with
     | None -> []
