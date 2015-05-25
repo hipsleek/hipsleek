@@ -3264,7 +3264,7 @@ let rec pr_struc_formula  (e:struc_formula) = match e with
   | EBase { formula_struc_implicit_inst = ii; formula_struc_explicit_inst = ei; formula_struc_exists = ee; formula_struc_base = fb;
             formula_struc_continuation = cont; formula_struc_pos = _ } ->
     fmt_string "EBase ";
-    fmt_cut ();
+    fmt_cut_and_indent ();
     (* fmt_string (string_of_pos p.start_pos);*)
     fmt_open_vbox 0;
     wrap_box ("B",0) (fun fb ->
@@ -3325,10 +3325,14 @@ let rec pr_struc_formula  (e:struc_formula) = match e with
     wrap_box ("B",0) pr_struc_formula cont;
     fmt_close();
   | EList b ->
-    fmt_string "EList "; 
-    if b==[] then fmt_string "[]" 
-    else pr_list_op_none "|| " (wrap_box ("B",0) (pr_pair_aux pr_spec_label_def_opt pr_struc_formula)) b
-(*| EOr b -> 
+    fmt_open_vbox 2;
+    if b==[] then fmt_string_cut "[]"
+    else (
+     fmt_string_cut "EList";
+     pr_list_op_none "|| " (wrap_box ("B",0) (pr_pair_aux pr_spec_label_def_opt pr_struc_formula)) b
+    );
+    fmt_close_box ()
+(*| EOr b ->
   	      let arg1 = bin_op_to_list op_f_or_short struc_formula_assoc_op b.formula_struc_or_f1 in
          let arg2 = bin_op_to_list op_f_or_short struc_formula_assoc_op b.formula_struc_or_f2 in
   		  let f_b e =  pr_bracket struc_formula_wo_paren pr_struc_formula e in
