@@ -121,6 +121,35 @@ Total number of unknown results: 4 in files:
  latest/FDB_entl/dll-vc08.smt2
 
 ==========================================================================
+
+./run-test.plx --timeout=10 --test=file_name --flags=--seg-fold
+
+latest/UDB_entl/nll-vc03.smt2: 		Unexpected
+ latest/UDB_entl/nll-vc04.smt2:		Unexpected
+ latest/UDB_entl/nll-vc14.smt2:		Unexpected
+ latest/UDB_entl/skl2-vc04.smt2:	Unexpected
+ 
+ latest/FDB_entl/dll-vc07.smt2:		Unexpected (may)
+ latest/FDB_entl/dll-vc10.smt2:		Unexpected (may)
+ latest/FDB_entl/dll-vc11.smt2:		Unexpected (may)
+ latest/FDB_entl/nll-vc03.smt2:		Unexpected
+ latest/FDB_entl/nll-vc04.smt2:		Unexpected
+ latest/FDB_entl/nll-vc14.smt2:		Unexpected
+ latest/FDB_entl/skl2-vc04.smt2:	Unexpected
+ 
+ latest/UDB_entl/nll-vc15.smt2:		Timeout
+ latest/UDB_entl/nll-vc16.smt2:		Timeout
+ latest/UDB_entl/skl2-vc03.smt2:	Timeout
+ latest/UDB_entl/skl3-vc02.smt2:	Timeout
+ latest/UDB_entl/skl3-vc04.smt2:	Timeout
+ latest/UDB_entl/skl3-vc05.smt2:	Timeout
+ latest/UDB_entl/skl3-vc06.smt2:	Timeout
+ latest/UDB_entl/skl3-vc07.smt2:	Timeout
+ latest/UDB_entl/skl3-vc08.smt2:	Timeout
+ latest/UDB_entl/skl3-vc09.smt2:	Timeout
+ latest/UDB_entl/skl3-vc10.smt2:	Timeout
+
+
 ==========================================================================
 ==========================================================================
 ==========================================================================
