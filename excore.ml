@@ -611,8 +611,9 @@ module EPURE =
     (* let unsat_disj disj = is_false_disj (norm_disj disj) *)
 
     let elim_exists (svl:spec_var list) (b,f) : epure =
-      let (b,f) = ef_elim_exists_1 svl (Elt.conv_var b,f) in
-      (Elt.from_var b, f)
+      if !Globals.delay_eelim_baga_inv && Cpure.is_shape f then (b,f) else
+        let (b,f) = ef_elim_exists_1 svl (Elt.conv_var b,f) in
+        (Elt.from_var b, f)
 
     let elim_exists (svl:spec_var list) (b,f) : epure =
       let pr = string_of_typed_spec_var_list in
@@ -689,11 +690,13 @@ module EPURE =
           t
         with _ -> failwith ("subst_elem : cannot find elem "^Elt.string_of v)
 
-    let subst_epure sst ((baga,f) as ep) = 
-      let subs_fn = subst_elem sst in
-      let new_baga = List.map (subs_fn) baga in
-      let new_f = subst (Elt.conv_var_pairs sst) f in
-      (new_baga,new_f)
+    let subst_epure sst ((baga,f) as ep) =
+      try
+        let subs_fn = subst_elem sst in
+        let new_baga = List.map (subs_fn) baga in
+        let new_f = subst (Elt.conv_var_pairs sst) f in
+        (new_baga,new_f)
+      with _ -> ep
 
     let subst_epure_disj sst (lst:epure_disj) =
       List.map (subst_epure sst) lst

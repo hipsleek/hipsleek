@@ -2602,8 +2602,8 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
           let view_list_baga = List.map (fun vd ->
               let new_un_struc_formula = List.map (fun (cf,lbl) ->
                   let num_svl = List.filter CP.is_int_typ vd.Cast.view_vars in
-                  let new_cf = CF.wrap_exists num_svl cf in
-                  let () = Debug.ninfo_hprint (add_str "new_cf" Cprinter.string_of_formula) new_cf no_pos in
+                  let new_cf = (* CF.wrap_exists *) CF.shape_abs num_svl cf in
+                  let () = Debug.info_hprint (add_str "new_cf" Cprinter.string_of_formula) new_cf no_pos in
                   (new_cf,lbl)
                 ) vd.Cast.view_un_struc_formula in
               {vd with Cast.view_un_struc_formula = new_un_struc_formula}

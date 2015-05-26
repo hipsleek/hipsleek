@@ -14199,4 +14199,7 @@ let has_nondet_cond f =
   let or_list = List.fold_left (||) false in
   fold_formula f (nonef, f_b, nonef) or_list  
 
+let is_shape f=
+  let svl = fv f in
+  List.for_all (fun sv -> (is_node_typ sv)) svl
 

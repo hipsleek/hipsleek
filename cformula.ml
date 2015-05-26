@@ -15347,6 +15347,24 @@ let wrap_exists svl f =
       mkOr (helper f1) (helper f2) pos
   in helper f
 
+let shape_abs svl f0 =
+  let filter_non_shape p =
+    let ps = CP.list_of_conjs p in
+    let ptr_ps = List.filter (fun p -> CP.is_shape p ) ps in
+    CP.conj_of_list ptr_ps (CP.pos_of_formula p)
+  in
+  let rec helper f =
+    match f with
+    | Base b ->
+          Base {b with formula_base_pure = MCP.mix_of_pure (filter_non_shape (MCP.pure_of_mix b.formula_base_pure))}
+    | Exists e -> let quans, base_f = split_quantifiers f in
+      add_quantifiers quans (helper base_f)
+    | Or o ->
+      let f1 = o.formula_or_f1 in
+      let f2 = o.formula_or_f2 in
+      mkOr (helper f1) (helper f2) o.formula_or_pos
+  in helper f0
+
 let lax_impl_of_post f =
   let (evs,hvs,bf) = unwrap_exists f in
   let impl_vs = CP.intersect evs hvs in
