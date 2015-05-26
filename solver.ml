@@ -15003,7 +15003,7 @@ let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding :
   x_dinfo_zp (lazy ("heap_entail_init struc_list_failesc_context_init:"
                     ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
                     ^ "\ndelayed_f:" ^ (pr_opt Cprinter.string_of_mix_formula delayed_f)
-                    ^ "\nconseq:"^ (Cprinter.string_of_struc_formula conseq) 
+                    ^ "\nconseq:\n"^ (Cprinter.string_of_struc_formula conseq) 
                     ^ "\nctx:\n" ^ (Cprinter.string_of_list_failesc_context cl)
                     ^"\n")) pos; 
   let res,prf = x_add heap_entail_failesc_prefix_init 1 prog is_folding  has_post cl conseq tid delayed_f join_id pos pid (rename_labels_struc,Cprinter.string_of_struc_formula,(x_add heap_entail_one_context_struc_nth 2)) in
@@ -15024,7 +15024,7 @@ let heap_entail_list_partial_context_init_x (prog : prog_decl) (is_folding : boo
   x_dinfo_zp (lazy ("heap_entail_init list_partial_context_init:"
                     ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
                     ^ "\ndelayed_f:" ^ (pr_opt Cprinter.string_of_mix_formula delayed_f)
-                    ^ "\nconseq:"^ (Cprinter.string_of_formula conseq) 
+                    ^ "\nconseq:\n"^ (Cprinter.string_of_formula conseq) 
                     ^ "\nctx:\n" ^ (Cprinter.string_of_list_partial_context cl)
                     ^"\n")) pos; 
   Gen.Profiling.push_time "entail_prune";  
@@ -15072,7 +15072,7 @@ let heap_entail_list_failesc_context_init_x (prog : prog_decl) (is_folding : boo
   x_dinfo_zp (lazy ("heap_entail_init list_failesc_context_init:"
                     ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
                     ^ "\ndelayed_f:" ^ (pr_opt Cprinter.string_of_mix_formula delayed_f)
-                    ^ "\nconseq:"^ (Cprinter.string_of_formula conseq) 
+                    ^ "\nconseq:\n"^ (Cprinter.string_of_formula conseq) 
                     ^ "\nctx:\n" ^ (Cprinter.string_of_list_failesc_context cl)
                     ^"\n")) pos;
   if cl==[] then ([],UnsatAnte)
