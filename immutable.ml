@@ -2861,6 +2861,7 @@ let postprocess_pre pre =
   Debug.no_1 "postprocess_pre" !CP.print_formula !CP.print_formula postprocess_pre pre
 
 (* ======================= remove absent nodes ============================= *)
+(* TODOIMM need to investigate if removing an absent node means i need to add its xpure to the pure part *)
 let remove_abs_nodes_h_formula emap h =
   let helper h = if not (!Globals.remove_abs) then Some h 
     else

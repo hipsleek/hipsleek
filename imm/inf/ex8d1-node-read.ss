@@ -44,4 +44,16 @@ requires c::cell<v>@a & a=@L
 ensures  v=res  
 
 
+
+Post Inference result:
+foo$cell
+ EBase exists (Expl)[](Impl)[a; v](ex)[]c::cell<v>@a&a<:@L & a=@L & 
+       MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           (exists b_1450,w_1451: emp&res=v & w_1451=v & a=@L & b_1450=@A&
+           {FLOW,(4,5)=__norm#E}[]
+TODO:           
+1. check why pre has the extra a<:@L
+2. remove redundant info from post  w_1451=v & a=@L & b_1450=@A
+
 */
