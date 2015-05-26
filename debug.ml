@@ -649,7 +649,7 @@ struct
     (if loop_d then print_string ("\n"^h^" ENTRY :"^(String.concat "  " (pick_front 80 args))^"\n"));
     flush stdout;
     let r = (try
-               pop_aft_apply_with_exc f e
+               pop_aft_apply_with_exc s f e
              with ex -> 
                (
                  (* if not df then *) 

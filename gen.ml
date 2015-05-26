@@ -1308,12 +1308,21 @@ struct
     (* let () = force_dd_print() in *)
     ()
 
-  (* call f and pop its trace in call stack of ho debug *)
-  let pop_aft_apply_with_exc (f:'a->'b) (e:'a) : 'b =
-    let r = (try 
-               (f e)
-             with exc -> (pop_call(); raise exc))
+  let trace_exception s exc =
+    if !VarGen.trace_exc then Basic.print_endline_quiet ("Exception("^s^"):"^(Printexc.to_string exc))
+
+    (* call f and pop its trace in call stack of ho debug *)
+  let pop_aft_apply_with_exc s (f:'a->'b) (e:'a) : 'b =
+    let r = try 
+      (f e)
+    with exc -> 
+        begin 
+          trace_exception s exc;
+          pop_call(); 
+          raise exc
+        end
     in pop_call(); r
+
 
   (* call f and pop its trace in call stack of ho debug *)
   let pop_aft_apply_with_exc_no s (f:'a->'b) (e:'a) : 'b =
@@ -1323,7 +1332,7 @@ struct
       r
     with exc -> 
         begin
-          if !VarGen.trace_exc then Basic.print_endline_quiet ("Exception("^s^"):"^(Printexc.to_string exc));
+          trace_exception s exc;
           if !debug_precise_trace then debug_stk # pop; 
           raise exc
         end
