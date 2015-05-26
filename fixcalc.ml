@@ -77,24 +77,36 @@ let rec fixcalc_of_exp_list e op number = match number with
   | 1 -> fixcalc_of_exp e
   | n -> fixcalc_of_exp e ^ op ^ (fixcalc_of_exp_list e op (n-1))
 
-and fixcalc_of_exp e = match e with
+and fixcalc_of_exp_x e = match e with
   | CP.Null _ -> "null"
   | CP.Var (x, _) -> fixcalc_of_spec_var x
   | CP.IConst (i, _) -> string_of_int i
   | CP.FConst (f, _) -> string_of_float f
-  | CP.Add (e1, e2, _) -> fixcalc_of_exp e1 ^ op_add ^ fixcalc_of_exp e2 
+  | CP.Add (e1, e2, _) -> fixcalc_of_exp e1 ^ op_add ^ fixcalc_of_exp e2
   | CP.Subtract (e1, e2, _) -> 
     fixcalc_of_exp e1 ^ op_sub ^ "(" ^ fixcalc_of_exp e2 ^ ")"
   | CP.Mult (e1, e2, _) -> 
     begin
       match e1, e2 with
       | (CP.IConst (i,_), CP.IConst (j,_)) -> string_of_int (i*j)
-      | (CP.IConst (i,_),_) -> fixcalc_of_exp_list e2 op_add i
-      | (_,CP.IConst (i,_)) -> fixcalc_of_exp_list e1 op_add i
+      | (CP.IConst (i,_),_) ->
+            if i >= 0 then
+              fixcalc_of_exp_list e2 op_add i
+            else
+              "0 " ^ op_sub ^ (fixcalc_of_exp_list e2 op_sub (-i))
+      | (_,CP.IConst (i,_)) ->
+            if i >= 0 then
+              fixcalc_of_exp_list e1 op_add i
+            else
+              "0 " ^ op_sub ^ (fixcalc_of_exp_list e1 op_sub (-i))
       | _ -> illegal_format ("Fixcalc.fixcalc_of_exp: Not supported expression")
     end
   | CP.InfConst _ -> "inf"
   | _ -> illegal_format ("Fixcalc.fixcalc_of_exp: Not supported expression")
+
+and fixcalc_of_exp f=
+  DD.no_1 "fixcalc_of_exp" !CP.print_exp (fun s->s) (fun f-> fixcalc_of_exp_x f) f
+;;
 
 let fixcalc_of_bool b =
   match b with
@@ -148,12 +160,16 @@ let rec fixcalc_of_b_formula b =
     let () = x_binfo_hp (add_str "fixcalc trans error :" Cprinter.string_of_b_formula) b no_pos in
     illegal_format ("Fixcalc.fixcalc_of_b_formula: Do not support bag, list")
 
+let fixcalc_of_b_formula f=
+  DD.no_1 "fixcalc_of_b_formula" !CP.print_b_formula (fun s->s) (fun f-> fixcalc_of_b_formula f) f
+;;
+
 let rec fixcalc_of_pure_formula f = match f with
   | CP.BForm ((CP.BVar (x,_),_),_) -> fixcalc_of_spec_var x ^ op_gt ^ "0"
   | CP.BForm (b,_) -> fixcalc_of_b_formula b
   | CP.And (p1, p2, _) ->
     "" ^ fixcalc_of_pure_formula p1 ^ op_and ^ fixcalc_of_pure_formula p2 ^ "" (* baga/infer/btree.slk *)
-  | CP.AndList b -> 
+  | CP.AndList b ->
     (match b with 
      | [] -> fixcalc_of_pure_formula (CP.mkFalse no_pos) 
      | (_,x)::t -> fixcalc_of_pure_formula 
@@ -161,7 +177,7 @@ let rec fixcalc_of_pure_formula f = match f with
     )
   | CP.Or (p1, p2,_ , _) ->
     "(" ^ fixcalc_of_pure_formula p1 ^ op_or ^ fixcalc_of_pure_formula p2 ^ ")"
-  | CP.Not (p,_ , _) -> 
+  | CP.Not (p,_ , _) ->
     begin
       match p with
       | CP.BForm ((CP.BVar (x,_),_),_) -> fixcalc_of_spec_var x ^ op_lte ^ "0"
@@ -1383,7 +1399,7 @@ let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up =
           | _ -> acc
         in new_acc
       ) 1 input_pairs in
-    let () = x_binfo_hp (add_str "n_base" string_of_int) n_base no_pos in
+    let () = x_tinfo_hp (add_str "n_base" string_of_int) n_base no_pos in
     (* Wrapper.wrap_num_disj compute_fixpoint_x n_base input_pairs ante_vars specs bottom_up *)
     compute_fixpoint_x input_pairs ante_vars specs bottom_up
 
