@@ -2900,7 +2900,6 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
   let () = x_binfo_pp ("Omega call after: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
   let omega_call_count2 = !Omega.omega_call_count in
   let () = Omega.omega_call_count_for_infer := (omega_call_count2 - omega_call_count1) in
-  let () = x_binfo_pp ("Omega call for infer: " ^ (string_of_int !Omega.omega_call_count_for_infer) ^ " invocations") no_pos in
   cviews0@prim_cviews0
 
 and fill_one_base_case prog vd = Debug.no_1 "fill_one_base_case" Cprinter.string_of_view_decl Cprinter.string_of_view_decl (fun vd -> fill_one_base_case_x prog vd) vd
