@@ -4104,7 +4104,8 @@ let printer_of_failesc_context (fmt: Format.formatter) (ctx: failesc_context) : 
 
 let pr_list_failesc_context ?(nshort=true) (lc : list_failesc_context) =
   fmt_open_vbox 0;
-  fmt_string_cut ("List of Failesc Context: "^(summary_list_failesc_context lc));
+  fmt_string ("List of Failesc Context: "^(summary_list_failesc_context lc));
+  match lc with [] -> () | _ -> fmt_cut ();
   pr_list_none (pr_failesc_context ~nshort) lc;
   fmt_close ()
 
