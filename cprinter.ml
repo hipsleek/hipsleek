@@ -3256,18 +3256,26 @@ let string_of_infer_list il vl =
 
 let rec pr_struc_formula  (e:struc_formula) = match e with
   | ECase { formula_case_branches  =  case_list ; formula_case_pos = _} ->
-    fmt_string "ECase ";
-    fmt_cut ();
+    fmt_open_vbox 1;
+    fmt_string_cut "ECase";
     (* fmt_string (string_of_pos p.start_pos);*)
-    pr_args  (Some("V",1)) (Some "A") "case " "{" "}" ";"
-      (fun (c1,c2) -> wrap_box ("B",0) (pr_op_adhoc (fun () -> pr_pure_formula c1) " -> " )
-          (fun () -> pr_struc_formula c2)) case_list
+    fmt_open_vbox 1;
+    fmt_string_cut "case {";
+    List.iter (fun (c1,c2) ->
+      fmt_open_vbox 1;
+      pr_pure_formula c1;
+      fmt_string_cut " ->";
+      pr_struc_formula c2;
+      fmt_close_box ();
+      fmt_string_cut ";") case_list;
+    fmt_close_box ();
+    fmt_string_cut "}";
+    fmt_close_box ();
   | EBase { formula_struc_implicit_inst = ii; formula_struc_explicit_inst = ei; formula_struc_exists = ee; formula_struc_base = fb;
             formula_struc_continuation = cont; formula_struc_pos = _ } ->
-    fmt_string "EBase ";
-    fmt_cut_and_indent ();
+    fmt_open_vbox 2;
+    fmt_string_cut "EBase ";
     (* fmt_string (string_of_pos p.start_pos);*)
-    fmt_open_vbox 0;
     wrap_box ("B",0) (fun fb ->
         if not(Gen.is_empty(ee@ii@ei)) then
           begin
@@ -3284,31 +3292,29 @@ let rec pr_struc_formula  (e:struc_formula) = match e with
          fmt_cut();
          wrap_box ("B",0) pr_struc_formula l;
        end);
-    fmt_close();
+    fmt_close_box ();
   | EAssume {
       formula_assume_vars = x;
       formula_assume_simpl = b;
       formula_assume_lbl = (y1,y2);
       formula_assume_ensures_type = t;
       formula_assume_struc = s;}->
-    wrap_box ("V",2)
-      (fun b ->
-         let assume_str = match t with
-           | None -> "EAssume "
-           | Some true -> "EAssume_exact "
-           | Some false -> "EAssume_inexact " in
-         fmt_string assume_str;
-         fmt_cut ();
-         pr_formula_label (y1,y2);
-         if not(Gen.is_empty(x)) then (
-           pr_seq_nocut "ref " pr_spec_var x;
-           fmt_cut ());
-         wrap_box ("B",0) pr_formula b;
-         fmt_cut();
-         if !print_assume_struc then 
-           (fmt_string "struct:";
-            wrap_box ("B",0) pr_struc_formula s)
-         else ()) b
+    fmt_open_vbox 2;
+    let assume_str = match t with
+      | None -> "EAssume "
+      | Some true -> "EAssume_exact "
+      | Some false -> "EAssume_inexact " in
+    fmt_string_cut assume_str;
+    pr_formula_label (y1,y2);
+    if not(Gen.is_empty(x)) then (
+      pr_seq_nocut "ref " pr_spec_var x;
+      fmt_cut ());
+    wrap_box ("B",0) pr_formula b;
+    if !print_assume_struc then 
+      (fmt_cut (); fmt_string "struct:";
+       wrap_box ("B",0) pr_struc_formula s)
+    else ();
+    fmt_close_box ()
   | EInfer {
       (* formula_inf_tnt = itnt; *)
       formula_inf_obj = inf_o;
