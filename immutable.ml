@@ -2660,7 +2660,7 @@ let norm_eq e1 e2 loc vars_post aset =
 
 (* a<:@L ---> a=@L (for pre vars) / a=@A (for post vars) *)
 let norm_imm_rel_formula vars_post (rel:CP.formula): CP.formula  =
-  let rel = TP.simplify_tp rel in
+  (* let rel = TP.simplify_tp rel in *)
   let fixpt = ref true in
 
   let f_b aset b = 

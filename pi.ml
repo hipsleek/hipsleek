@@ -759,8 +759,12 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                               Fixcalc.fixc_preprocess reloblgs pre_rel_df post_rel_df_new post_rel_df pre_vars proc_spec) grp_post_rel_flag
             in
             let () = x_binfo_hp (add_str "fixpoint" (pr_list (pr_quad pr pr pr pr))) res no_pos in
+            let res = List.map (fun (rel_post,post,rel_pre,pre) -> 
+                (rel_post,TP.simplify_tp post,rel_pre,TP.simplify_tp pre)
+              ) res in
             res
           in
+
           Infer.fixcalc_rel_stk # push_list tuples;
           (* if not(Infer.fixcalc_rel_stk # is_empty || !Globals.print_min) then *)
           (*   begin *)
