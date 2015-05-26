@@ -4024,16 +4024,20 @@ let pr_failed_states ?(nshort=true) e = match e with
 
 let pr_successful_states ?(nshort=true) e = match e with
   | [] -> ()
-  | _ ->   
-    pr_vwrap_naive "Successful States:"
-      (pr_seq_vbox "" (fun (lbl,fs,oft)-> 
+  | _ ->
+    pr_vwrap_naive_nocut "Successful States:"
+      (pr_seq_vbox "" (fun (lbl,fs,oft)->
            if nshort then ((pr_hwrap "Label: " pr_path_trace lbl); fmt_cut ());
            fmt_string "State:";
            fmt_cut_and_indent ();
            pr_context ~nshort fs;
-           fmt_cut ();
            (* Loc: print exc *)
-           if nshort then (pr_hwrap "Exc:" fmt_string (match oft with | Some _ -> "Some" | _ -> "None"))
+           if nshort then (
+             fmt_cut();
+             pr_hwrap "Exc:" fmt_string
+               (match oft with
+                | Some _ -> "Some"
+                | _ -> "None"))
          )) e
 
 let is_empty_esc_state e =
