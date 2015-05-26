@@ -17,6 +17,7 @@ let set_proof_string str = Others.last_proof_string # set str
 let set_proof_result str = Others.last_proof_result # set str
 
 let omega_call_count: int ref = ref 0
+let omega_call_count_for_infer: int ref = ref 0
 let is_omega_running = ref false
 let in_timeout = ref 10.0 (* default timeout is 15 seconds *)
 let is_complex_form = ref false
