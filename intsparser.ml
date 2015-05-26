@@ -166,11 +166,9 @@ let trans_ints_block_lst fn (fr_lbl: ints_loc) (blks: ints_block list): I.proc_d
   let proc_body = List.fold_left (fun acc (cond, blks) ->
       let blks_exp = match blks with
         | [blk] ->
-          let () = x_binfo_pp "tmp: GAH! WHY???" no_pos in
           trans_ints_block blk
         | blks ->
           (* Multiple blocks with the same condition; introduce nondet. *)
-          let () = x_binfo_pp "tmp: I SHOULD BE HAPPY IF I CAN SEE THIS." no_pos in
           nondet_seq_for_blocks cond blks in
       I.mkSeq acc blks_exp (I.get_exp_pos acc)
     ) (I.Empty pos) blks in
