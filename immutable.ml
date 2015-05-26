@@ -2641,7 +2641,6 @@ let norm_subann sv1 e1 e2 loc vars_post aset =
     let res_ex = if pos_var then f_norm_post_imm_var e1 loc else f_norm_pre_imm_var e1 loc in
     ([res_ex], false)
   | CP.AConst _ ->
-    let pos_var = CP.EMapSV.mem sv1 vars_post in
     let res_ex = CP.mkEq e1 e2 loc in
     ([res_ex], true)
   | CP.Var (sv, _) ->
@@ -2860,3 +2859,51 @@ let postprocess_pre pre = norm_imm_rel_formula  pre
 
 let postprocess_pre pre =
   Debug.no_1 "postprocess_pre" !CP.print_formula !CP.print_formula postprocess_pre pre
+
+(* ======================= remove absent nodes ============================= *)
+let remove_abs_nodes_h_formula emap h =
+  let helper h = if not (!Globals.remove_abs) then Some h 
+    else
+      match h with
+      | CF.DataNode { CF.h_formula_data_imm = imm; CF.h_formula_data_param_imm = param_imm;} ->
+        let heap = if (not !Globals.allow_field_ann) && (CP.is_abs ~emap:emap imm) then HEmp 
+          else if (!Globals.allow_field_ann) && (CP.is_abs_list ~emap:emap param_imm) then HEmp else h
+        in Some heap
+      | CF.ViewNode { CF.h_formula_view_imm = imm; CF.h_formula_view_annot_arg = annot_arg; } ->
+        let pimm = (CP.annot_arg_to_imm_ann_list_no_pos annot_arg) in
+        let heap =  if (not !Globals.allow_field_ann) && (CP.is_abs ~emap:emap imm) then HEmp 
+          else if (!Globals.allow_field_ann) && (CP.is_abs_list ~emap:emap pimm) then HEmp else h
+        in Some heap
+      |_ -> None in
+  let h = CF.transform_h_formula helper h in h
+
+let remove_abs_nodes_h_formula emap h = 
+  let pr = Cprinter.string_of_h_formula in
+  let pr2 = CP.EMapSV.string_of in
+  Debug.no_2 "remove_abs_nodes_h_formula" pr2 pr pr remove_abs_nodes_h_formula emap h 
+
+let remove_abs_nodes_formula_helper form =
+  let transform_h form heap = 
+    let () = x_ninfo_hp (add_str "pure" (!CP.print_formula)) (CF.get_pure_ignore_exists form) no_pos in
+    let emap = build_eset_of_conj_formula (CF.get_pure_ignore_exists form) in
+    remove_abs_nodes_h_formula emap heap in
+  match form with
+  | CF.Base   b -> Some (CF.Base{ b with CF.formula_base_heap = transform_h form b.CF.formula_base_heap;})
+  | CF.Exists e -> 
+    let () = x_binfo_pp "inside_exists" no_pos in
+    Some (CF.Exists{ e with CF.formula_exists_heap = transform_h form e.CF.formula_exists_heap;})
+  | CF.Or _ -> None
+
+let remove_abs_nodes_formula formula =
+  let fnc = (nonef, remove_abs_nodes_formula_helper, nonef, (somef,somef,somef,somef,somef)) in
+  CF.transform_formula fnc formula
+
+let remove_abs_nodes_struc struc =
+  let fnc = (nonef, remove_abs_nodes_formula_helper, nonef, (somef,somef,somef,somef,somef)) in
+  CF.transform_struc_formula fnc struc 
+
+let remove_abs_nodes_struc struc = 
+  let pr = Cprinter.string_of_struc_formula in
+  Debug.no_1 "remove_abs_nodes_struc" pr pr remove_abs_nodes_struc struc
+
+(* ======================= END remove absent nodes ============================= *)

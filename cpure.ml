@@ -13596,44 +13596,28 @@ let is_ann_const_sv sv =
   | SpecVar(AnnT,a,_) -> List.exists (fun an -> an = a ) ann_sv_lst
   | _                 -> false
 
-let is_mut_sv ?emap:(em=[])  sv = 
+let helper_is_const_ann em sv test =
+  let imm_const_sv = mkAnnSVar test in
   if not (is_ann_typ sv) then false
-  else if eq_spec_var sv (mkAnnSVar Mutable) then true
-  else 
-    let mut_const = mkAnnSVar Mutable in
-    let is_mut = EMapSV.is_equiv em sv mut_const in
-    is_mut
+  else if eq_spec_var sv imm_const_sv then true
+  else EMapSV.is_equiv em sv imm_const_sv 
 
-let is_imm_sv ?emap:(em=[])  sv = 
-  if not (is_ann_typ sv) then false
-  else
-  if eq_spec_var sv (mkAnnSVar Imm) then true
-  else
-    let imm_const = mkAnnSVar Imm in
-    let is_imm = EMapSV.is_equiv em sv imm_const in
-    is_imm
+let is_mut_sv ?emap:(em=[])  sv = helper_is_const_ann em sv Mutable 
 
-let is_lend_sv ?emap:(em=[]) sv = 
-  if not (is_ann_typ sv) then false
-  (* else  *)
-  (*   match em with *)
-  (*   | []  -> eq_spec_var sv (mkAnnSVar Lend) *)
-  (*   | _   -> *)
-  else if eq_spec_var sv (mkAnnSVar Lend) then true
-  else
-    let lend_const = mkAnnSVar Lend in
-    let is_lend = EMapSV.is_equiv em sv lend_const in
-    is_lend
+let is_imm_sv ?emap:(em=[])  sv = helper_is_const_ann em sv Imm
 
-let is_accs_sv ?emap:(em=[]) sv = 
-  if not (is_ann_typ sv) then false
-  else 
-  if eq_spec_var sv (mkAnnSVar Accs) then true
-  else
-    let abs_const = mkAnnSVar Accs in
-    let is_abs = EMapSV.is_equiv em sv abs_const in
-    is_abs
+let is_lend_sv ?emap:(em=[]) sv = helper_is_const_ann em sv Lend
 
+let is_abs_sv ?emap:(em=[])  sv = helper_is_const_ann em sv Accs
+
+let is_abs ?emap:(em=[]) imm = 
+  match imm with
+  | ConstAnn Accs -> true
+  | PolyAnn sv    -> is_abs_sv ~emap:em sv
+  | _ -> false
+
+let is_abs_list ?emap:(em=[]) imm_list = 
+  List.for_all (is_abs ~emap:em) imm_list
 (* end imm utilities *)
 
 

@@ -797,6 +797,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
     let new_specs = List.map (fun new_spec -> CF.flatten_struc_formula new_spec) new_specs in
     let new_specs = List.map (fun new_spec -> CF.trans_flow_struc_formula new_spec) new_specs in
     let new_specs = List.map (fun new_spec -> trans_res_struc_formula prog new_spec) new_specs in
+    let new_specs = List.map (fun new_spec -> Immutable.remove_abs_nodes_struc new_spec) new_specs in
     (* let new_specs = List.map (fun new_spec -> Immutable.infer_specs_imm_post_process new_spec) new_specs in *)
     let () = List.iter (fun (proc,new_spec) ->
         let () = proc.proc_stk_of_static_specs # push new_spec in

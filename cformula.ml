@@ -5636,6 +5636,18 @@ and get_pure (f0: formula)=
   in
   helper f0
 
+and get_pure_ignore_exists (f0: formula)=
+  let rec helper f=
+    match f with
+    | Base fb   -> MCP.pure_of_mix fb.formula_base_pure
+    | Exists fe -> MCP.pure_of_mix fe.formula_exists_pure
+    | Or orf ->
+      let p1 = helper orf.formula_or_f1 in
+      let p2 = helper orf.formula_or_f2 in
+      CP.Or (p1, p2, None , orf.formula_or_pos)
+  in
+  helper f0
+
 and get_ptrs (f: h_formula): CP.spec_var list = match f with
   | DataNode {h_formula_data_node = c}
   | ViewNode {h_formula_view_node = c} -> [c]
