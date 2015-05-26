@@ -97,6 +97,19 @@ let is_equivalent_condition c1 c2 =
   Tpdispatcher.simpl_imply_raw cf1 cf2 &&
   Tpdispatcher.simpl_imply_raw cf2 cf1
 
+(* [p, q, r] ->? asm *)
+let is_implied_by c asm =
+  let af = trans_pure_formula asm in
+  let cf = pure_formula_of_condition c in
+  let acf = Astsimp.trans_pure_formula af [] in
+  let ccf = Astsimp.trans_pure_formula cf [] in
+  Tpdispatcher.simpl_imply_raw ccf acf
+
+(* Common factor / condition of two conditions.
+ * [p, q, r] [p, s] -> [p] *)
+let common_condition_of c1 c2 =
+  List.filter (is_implied_by c2) c1
+
 let rec partition_by_key key_of key_eq ls = 
   match ls with
   | [] -> []
@@ -148,30 +161,54 @@ let trans_ints_block (blk: ints_block): I.exp =
 let trans_ints_block_lst fn (fr_lbl: ints_loc) (blks: ints_block list): I.proc_decl =
   let pos = pos_of_ints_loc fr_lbl in
   let proc_name = name_of_ints_loc fr_lbl in
-  let blks = partition_by_key init_conditions_of_block is_equivalent_condition blks in
-  (* Take blocks with equivalent starting conditions
-   * and form into sequence of if/else with nondet() condition. *)
-  let nondet_seq_for_blocks cond blks =
-    let rec nondet_chain_for blks =
-      match blks with
+  let nondet_seq_for_blocks cond blk_exps =
+    let rec nondet_chain_for blk_exps =
+      match blk_exps with
       | [] -> (I.Empty no_pos)
-      | blk::blks ->
+      | blk::blk_exps ->
         let nondet_call = I.mkCallNRecv Globals.nondet_int_proc_name None [] None None no_pos in
         let nondet_cond = I.mkBinary I.OpGt nondet_call (I.mkIntLit 0 no_pos) None no_pos in
-        I.mkCond nondet_cond (trans_ints_block blk) (nondet_chain_for blks) None blk.ints_block_pos in
-    let nondet_chain = nondet_chain_for blks in
+        I.mkCond nondet_cond blk (nondet_chain_for blk_exps) None (I.get_exp_pos blk) in
+    let nondet_chain = nondet_chain_for blk_exps in
     let cond_exps = List.map (fun asm -> Assume asm) cond in
     trans_ints_exp_lst cond_exps nondet_chain
   in
-  let proc_body = List.fold_left (fun acc (cond, blks) ->
-      let blks_exp = match blks with
-        | [blk] ->
-          trans_ints_block blk
-        | blks ->
-          (* Multiple blocks with the same condition; introduce nondet. *)
-          nondet_seq_for_blocks cond blks in
-      I.mkSeq acc blks_exp (I.get_exp_pos acc)
-    ) (I.Empty pos) blks in
+  let rec helper blks factored =
+    match blks with
+    | [] -> []
+    | blk::blks ->
+      let init_cond = init_conditions_of_block blk in
+      (* filter out the conditions which are already considered *)
+      let (_, init_cond) = List.partition (is_implied_by factored) init_cond in
+      (* Build Iast cond-expressions with blocks which share common 'factor'
+       * in their conditions. *)
+      let rec try_to_factor_blocks cond =
+        (match cond with
+         | [] -> (* empty. No conditions could factor. *)
+           (trans_ints_block blk)::(helper blks factored)
+         | asm::asms ->
+           (* check if asm 'factors' anything. *)
+           let block_can_imply asm blk =
+             let c = init_conditions_of_block blk in
+             let af = trans_pure_formula asm in
+             let cf = pure_formula_of_condition c in
+             let acf = Astsimp.trans_pure_formula af [] in
+             let ccf = Astsimp.trans_pure_formula cf [] in
+             Tpdispatcher.simpl_imply_raw ccf acf
+           in
+           let (common, other) = List.partition (block_can_imply asm) blks in
+           (match common with
+            | [] -> (* No other blocks shared the assumption. *)
+              try_to_factor_blocks asms
+            | _ -> (* nonempty *)
+              let exps_with_factor = (helper (blk::common) (asm::factored)) in
+              let other_exps = (helper other factored) in
+              let nondet_exp = (nondet_seq_for_blocks [asm] exps_with_factor) in
+              nondet_exp::other_exps)) in
+      try_to_factor_blocks init_cond
+  in
+  let exps = helper blks [] in
+  let proc_body = List.fold_left (fun acc exp -> I.mkSeq acc exp (I.get_exp_pos acc)) (I.Empty pos) exps in
   I.mkProc fn proc_name [] "" None false [] [] I.void_type None (IF.EList []) (IF.mkEFalseF ()) pos (Some proc_body)
 
 let trans_ints_prog fn (iprog: ints_prog): I.prog_decl =
