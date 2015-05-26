@@ -2570,7 +2570,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
       not cv.Cast.view_is_prim
   ) cviews0 in
   let omega_call_count1 = !Omega.omega_call_count in
-  let () = x_binfo_pp ("Omega call before: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+  let () = x_tinfo_pp ("Omega call before: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
   let cviews0 =
     if !Globals.gen_baga_inv then
       let () = x_binfo_pp "Generate baga inv\n" no_pos in
@@ -2604,7 +2604,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                   let num_svl = List.filter CP.is_int_typ vd.Cast.view_vars in
                   let abs_fnc = if !Globals.delay_eelim_baga_inv then CF.shape_abs else CF.wrap_exists in
                   let new_cf = (* CF.wrap_exists *) abs_fnc  num_svl cf in
-                  let () = Debug.info_hprint (add_str "new_cf" Cprinter.string_of_formula) new_cf no_pos in
+                  let () = Debug.tinfo_hprint (add_str "new_cf" Cprinter.string_of_formula) new_cf no_pos in
                   (new_cf,lbl)
                 ) vd.Cast.view_un_struc_formula in
               {vd with Cast.view_un_struc_formula = new_un_struc_formula}
@@ -2622,7 +2622,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
               {vd with Cast.view_un_struc_formula = new_un_struc_formula}
             ) view_list_num0 in
           let todo_unk = Wrapper.wrap_infer_inv Expure.fix_ef view_list_baga cviews0 in
-          let () = x_binfo_pp ("Omega call after infer baga inv: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+          let () = x_tinfo_pp ("Omega call after infer baga inv: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
 
 
          let view_list_num_with_inv = Fixcalc.compute_inv_mutrec (List.map (fun vd -> vd.Cast.view_name) view_list_num) view_list_num in
@@ -2715,7 +2715,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                 (false,fixc)
             )  (List.combine view_list_num_with_inv num_invs) in
           let precise_list,num_invs = List.split precise_num_invs in
-          let () = x_binfo_pp ("Omega call after infer num inv: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+          let () = x_tinfo_pp ("Omega call after infer num inv: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
           (* let baga_invs = List.map (fun vd -> Hashtbl.find Excore.map_baga_invs vd.Cast.view_name) view_list_baga in *)
           let baga_invs = List.map (fun vd -> Hashtbl.find Excore.map_baga_invs vd.Cast.view_name) view_list_num_with_inv in
           let fixcalc_invs = List.map (fun vd -> vd.Cast.view_fixcalc) view_list_baga in
@@ -2738,10 +2738,10 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
           let () = List.iter (fun (vd,inv) ->
               Hashtbl.replace Excore.map_baga_invs vd.Cast.view_name inv
             ) (List.combine view_list_baga0 combined_invs) in
-          let () = x_binfo_pp ("Omega call after combine inv: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+          let () = x_tinfo_pp ("Omega call after combine inv: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
           let unfold_cnt = new Gen.change_flag in
           let rec unfold precise old_invs =
-            let () = x_binfo_pp ("Omega call inside checking inv: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+            let () = x_tinfo_pp ("Omega call inside checking inv: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
             if unfold_cnt # exceed 10 then
               let () = x_binfo_pp "WARNING : Unfolding for baga-inv exceeded 10" no_pos in
               old_invs
@@ -2752,7 +2752,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                   let new_inv = (* if !Globals.gen_baga_inv && vd.Cast.view_baga_inv != None then *)
                   (*   Gen.unsome vd.Cast.view_baga_inv *)
                   (* else *) Wrapper.wrap_infer_inv (x_add Cvutil.xpure_symbolic_baga3) cviews0 (Cast.formula_of_unstruc_view_f vd) in
-                  let () = x_binfo_pp ("Omega call inside1 checking inv: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+                  let () = x_tinfo_pp ("Omega call inside1 checking inv: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
                   let new_inv = List.map (fun (svl,pf) ->
                       let idx = CP.mk_typed_spec_var Int "idx" in
                       let new_pf_svl = CP.fv pf in
@@ -2803,7 +2803,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
           (* ) (List.combine view_list_baga0 num_invs) in *)
           (* WN : Looping at unfold with imprecise inv *)
           let new_invs = unfold (List.for_all (fun a -> a) precise_list) combined_invs in
-          let () = x_binfo_pp ("Omega call after checking inv: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+          let () = x_tinfo_pp ("Omega call after checking inv: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
           let () = Debug.ninfo_hprint (add_str "new_invs" (pr_list Excore.EPureI.string_of_disj)) new_invs no_pos in
           ()
           (* let new_invs_list = x_add_1 Expure.fix_ef view_list cviews0 in *)
@@ -2900,7 +2900,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
     else
       cviews0
   in
-  let () = x_binfo_pp ("Omega call after: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+  let () = x_tinfo_pp ("Omega call after: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
   let omega_call_count2 = !Omega.omega_call_count in
   let () = Omega.omega_call_count_for_infer := (omega_call_count2 - omega_call_count1) in
   cviews0@prim_cviews0
