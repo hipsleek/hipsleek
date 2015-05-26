@@ -2891,7 +2891,6 @@ let remove_abs_nodes_formula_helper form =
   match form with
   | CF.Base   b -> Some (CF.Base{ b with CF.formula_base_heap = transform_h form b.CF.formula_base_heap;})
   | CF.Exists e -> 
-    let () = x_binfo_pp "inside_exists" no_pos in
     Some (CF.Exists{ e with CF.formula_exists_heap = transform_h form e.CF.formula_exists_heap;})
   | CF.Or _ -> None
 

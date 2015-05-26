@@ -559,20 +559,28 @@ let norm_reloblgs_and_init_defs reloblgs =
   let reldefs = List.map (fun (_,a,b) -> (b,a)) reldefs in
   reloblgs, reldefs
 
+let norm_reloblgs_and_init_defs reloblgs =
+  let pr = Cprinter.string_of_pure_formula in
+  let pr_def = pr_list (pr_pair pr pr) in
+  let pr_oblg = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in
+  Debug.no_1 "norm_reloblgs_and_init_defs" pr_oblg 
+    (pr_pair (add_str "norm reloblgs:" pr_oblg) (add_str "new defs:" pr_def))
+    norm_reloblgs_and_init_defs reloblgs
+
 (* replaces the unk (rels) formulas with their definitions, provided they have one *)
 let norm_post_rel_def post_rel_df pre_rel_ids all_reldefns =
-  let replace_with_def id_x defs acc = 
+  let replace_with_def rel defs acc = 
     let rec helper defs= 
       match defs with
       |[]    -> acc
       |(def_h,id_h)::t -> 
-        if CP.EMapSV.mem id_x (CP.get_rel_id_list id_h) then acc@[def_h] (* replace the unk rel with its own def *)
+        if CP.equalFormula rel id_h then acc@[def_h] (* replace the unk rel with its own def *)
         else (helper t) 
     in helper all_reldefns in
   let replace_unk_with_known f = 
     List.fold_left (fun acc x -> 
         if CP.intersect (CP.get_rel_id_list x) pre_rel_ids = [] then acc@[x] (* if x is known add it back to the def *)
-        else map_opt_def acc (fun id_x -> replace_with_def id_x all_reldefns acc ) (CP.get_rel_id x)
+        else map_opt_def acc (fun id_x -> replace_with_def x all_reldefns acc ) (CP.get_rel_id x)
       ) [] (CP.list_of_conjs f) in
   let helper pre_rel_ids =
     List.concat (List.map (fun (f1,f2) ->
@@ -582,6 +590,15 @@ let norm_post_rel_def post_rel_df pre_rel_ids all_reldefns =
           map_list_def [] (fun tmp -> [(CP.conj_of_list tmp no_pos, f2)]) tmp
       ) post_rel_df) in
   map_list_def post_rel_df helper pre_rel_ids
+
+let norm_post_rel_def post_rel_df pre_rel_ids all_reldefns =
+  let pr = Cprinter.string_of_pure_formula in
+  let pr_def = pr_list (pr_pair pr pr) in
+  let pr_svl = Cprinter.string_of_spec_var_list in
+  Debug.no_3 "norm_post_rel_def" 
+    (add_str "post_rel_df" pr_def)
+    (add_str "pre_rel_ids "pr_svl)
+    (add_str "all_reldefns" pr_def) pr_def norm_post_rel_def post_rel_df pre_rel_ids all_reldefns
 
 let infer_pure (prog : prog_decl) (scc : proc_decl list) =
   (* WN: simplify_ann is unsound *)
@@ -644,7 +661,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let reloblgs_init, reldefns = List.partition (fun (rt,_,_) -> CP.is_rel_assume rt) rels in
             let is_infer_flow = is_infer_flow reldefns in
             let reldefns = if is_infer_flow then add_flow reldefns else List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in
-            let reloblgs, reldefns_from_oblgs = norm_reloblgs_and_init_defs reloblgs_init in
+            let reloblgs, reldefns_from_oblgs = x_add_1 norm_reloblgs_and_init_defs reloblgs_init in
             let reldefns = reldefns @ reldefns_from_oblgs in (* TODOIMM how abt that infer flow inside for reldefns_from_oblgs *)
             (* let reldefns = List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in *)
             let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in
@@ -659,6 +676,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let pr_oblg = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in
             let () = x_binfo_hp (add_str "post_rel_ids" pr_svl) post_rel_ids no_pos in
             let () = x_binfo_hp (add_str "reldefns" pr_def) reldefns no_pos in
+            let () = x_binfo_hp (add_str "reldefns_from_oblgs" pr_def) reldefns_from_oblgs no_pos in
             let () = x_binfo_hp (add_str "initial reloblgs" pr_oblg) reloblgs_init no_pos in
             let () = x_binfo_hp (add_str "reloblgs" pr_oblg) reloblgs no_pos in
             let () = x_binfo_hp (add_str "lst_assume" pr_oblg) lst_assume no_pos in
@@ -671,7 +689,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let () = x_binfo_hp (add_str "pre_vars" pr_svl) pre_vars no_pos in
             (**************** END Debugging ****************)
 
-            let post_rel_df_new = norm_post_rel_def post_rel_df pre_rel_ids reldefns in
+            let post_rel_df_new = x_add norm_post_rel_def post_rel_df pre_rel_ids reldefns in
             (* below has been modified and incorporated into norm_post_rel_def *)
             (* let post_rel_df_new =  *)
             (*   if pre_rel_ids=[] then post_rel_df *)
