@@ -249,7 +249,8 @@ let ef_elim_exists_1 (svl : spec_var list) epf  =
   let pure = wrap_exists_svl pure svl in
   let () = x_tinfo_hp (add_str "pure1 = " !print_pure_formula) pure no_pos in
   let () = x_binfo_pp ("Omega call before simplify: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
-  let pure = simplify_with_label_omega (* x_add_1 Omega.simplify *) pure in
+  let pure = if !Globals.delay_eelim_baga_inv && Cpure.is_shape pure then pure else
+    simplify_with_label_omega (* x_add_1 Omega.simplify *) pure in
   let () = x_binfo_pp ("Omega call after simplify: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
   let () = x_tinfo_hp (add_str "pure2 = " !print_pure_formula) pure no_pos in
   let () = x_tinfo_hp (add_str "pure_ptr_eq" (pr_list (pr_pair string_of_typed_spec_var string_of_typed_spec_var))) p_aset no_pos in
@@ -611,13 +612,12 @@ module EPURE =
     (* let unsat_disj disj = is_false_disj (norm_disj disj) *)
 
     let elim_exists (svl:spec_var list) (b,f) : epure =
-      if !Globals.delay_eelim_baga_inv && Cpure.is_shape f then (b,f) else
-        let (b,f) = ef_elim_exists_1 svl (Elt.conv_var b,f) in
-        (Elt.from_var b, f)
+      let (b,f) = ef_elim_exists_1 svl (Elt.conv_var b,f) in
+      (Elt.from_var b, f)
 
     let elim_exists (svl:spec_var list) (b,f) : epure =
       let pr = string_of_typed_spec_var_list in
-      Debug.no_2 "ef_elim_exists" pr string_of string_of elim_exists svl (b,f) 
+      Debug.no_2 "ef_elim_exists_a" pr string_of string_of elim_exists svl (b,f) 
 
     (* TODO-WN : why ins't elem used instead of spec_var *)
     let elim_exists_disj (svl : spec_var list) (lst : epure_disj) : epure_disj =

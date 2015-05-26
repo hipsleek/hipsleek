@@ -314,9 +314,9 @@ let rec build_ef_formula_x (cf : Cformula.formula) (all_views : Cast.view_decl l
     let () = x_binfo_pp ("Omega call after3b build ef: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
     let () = x_tinfo_hp (add_str "efpd_e" (EPureI.string_of_disj)) efpd_e no_pos in
     let efpd_n = EPureI.norm_disj efpd_e in
-        let () = x_binfo_pp ("Omega call after3c build ef: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+        (* let () = x_binfo_pp ("Omega call after3c build ef: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in *)
     let () = x_tinfo_hp (add_str "efpd_n3" (EPureI.string_of_disj)) efpd_n no_pos in
-    let () = x_binfo_pp ("Omega call after3d build ef: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+    (* let () = x_binfo_pp ("Omega call after3d build ef: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in *)
     efpd_n
 
 and build_ef_formula (cf : Cformula.formula) (all_views : Cast.view_decl list) : ef_pure_disj =

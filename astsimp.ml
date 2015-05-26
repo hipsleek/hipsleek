@@ -2602,7 +2602,8 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
           let view_list_baga = List.map (fun vd ->
               let new_un_struc_formula = List.map (fun (cf,lbl) ->
                   let num_svl = List.filter CP.is_int_typ vd.Cast.view_vars in
-                  let new_cf = (* CF.wrap_exists *) CF.shape_abs num_svl cf in
+                  let abs_fnc = if !Globals.delay_eelim_baga_inv then CF.shape_abs else CF.wrap_exists in
+                  let new_cf = (* CF.wrap_exists *) abs_fnc  num_svl cf in
                   let () = Debug.info_hprint (add_str "new_cf" Cprinter.string_of_formula) new_cf no_pos in
                   (new_cf,lbl)
                 ) vd.Cast.view_un_struc_formula in
@@ -2748,7 +2749,9 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
               let () = unfold_cnt # inc in
               (* let () = x_binfo_hp (add_str "old_invs" (pr_list Excore.EPureI.string_of_disj)) old_invs no_pos in *)
               let new_invs = List.map (fun vd ->
-                  let new_inv = Wrapper.wrap_infer_inv (x_add Cvutil.xpure_symbolic_baga3) cviews0 (Cast.formula_of_unstruc_view_f vd) in
+                  let new_inv = (* if !Globals.gen_baga_inv && vd.Cast.view_baga_inv != None then *)
+                  (*   Gen.unsome vd.Cast.view_baga_inv *)
+                  (* else *) Wrapper.wrap_infer_inv (x_add Cvutil.xpure_symbolic_baga3) cviews0 (Cast.formula_of_unstruc_view_f vd) in
                   let () = x_binfo_pp ("Omega call inside1 checking inv: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
                   let new_inv = List.map (fun (svl,pf) ->
                       let idx = CP.mk_typed_spec_var Int "idx" in
