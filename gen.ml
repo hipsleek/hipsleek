@@ -191,9 +191,22 @@ struct
   let map_l_snd_res f x = List.split (List.map (fun (l,c) -> let r1,r2 = f c in ((l,r1),r2)) x)
   let exists_l_snd f x = List.exists (fun (_,c)-> f c) x
   let all_l_snd f x = List.for_all (fun (_,c)-> f c) x
-
-  let add_str s f xs = s^":"^(f xs)
-  let add_strln s f xs = s^":\n"^(f xs)
+  let line_break_threshold = 60
+  let add_str ?(inline=false) hdr f s =
+    (* A string should break if comprises >2 lines or span more than 60 characters *)
+    let should_break s =
+      let nl = ref 0 in
+      let ln = String.length s in
+      ln > line_break_threshold ||
+        (for i = 0 to (ln - 1)  do
+           if (String.get s i = '\n') then incr nl else ()
+         done;
+         !nl >= 2) in
+    let str = f s in
+    if (not inline && should_break str) then
+      (hdr ^ ":\n" ^ str)
+    else
+      (hdr ^ ":" ^ str)
 
   let opt_to_list o = match o with
     | None -> []
