@@ -3816,7 +3816,7 @@ let pr_context ?(nshort=true) (ctx: context) =
     | Ctx es -> f_b ctx
     | OCtx (c1, c2) -> 
       let args = bin_op_to_list "|" ctx_assoc_op ctx in
-      pr_list_op_vbox "CtxOR" f_b args
+      pr_list_vbox_wrap "CtxOR" f_b args
   else pr_context_short ctx
 
 let string_of_context (ctx: context): string =  poly_string_of_pr  pr_context ctx
