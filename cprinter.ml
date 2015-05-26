@@ -4001,15 +4001,13 @@ let pr_esc_stack_lvl ?(nshort=true) ((i,s),e) =
     end
   else
     begin
-      fmt_open_vbox 0;
       pr_vwrap_naive ("Try-Block:"^(string_of_int i)^":"^s^":")
         (pr_seq_vbox ~nshort "" (fun (lbl,fs,oft)-> 
-             if nshort then pr_vwrap_nocut "Path: " pr_path_trace lbl;
-             pr_vwrap "State:" pr_context_short fs;
+             if nshort then (pr_hwrap "Path: " pr_path_trace lbl; fmt_cut ());
+             pr_hwrap "State: " pr_context_short fs;
              (* Loc: print exc *)
              (* if nshort then (pr_vwrap "Exc:" fmt_string (match oft with | Some _ -> "Some" | _ -> "None")) *)
            )) e;
-      fmt_close_box ()
     end
 
 let string_of_esc_stack_lvl e  = poly_string_of_pr pr_esc_stack_lvl e
