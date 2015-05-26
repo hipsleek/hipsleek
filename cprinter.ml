@@ -4111,8 +4111,11 @@ let pr_list_failesc_context ?(nshort=true) (lc : list_failesc_context) =
 
 let pr_list_partial_context ?(nshort=true) (lc : list_partial_context) =
   (* fmt_string ("XXXX "^(string_of_int (List.length lc)));  *)
-  if nshort then fmt_string ("List of Partial Context: " ^(summary_list_partial_context lc) );
-  fmt_cut (); pr_list_none (pr_partial_context ~nshort) lc
+  fmt_open_vbox 0;
+  if nshort then fmt_string_cut ("List of Partial Context: "
+                                 ^(summary_list_partial_context lc));
+  pr_list_none (pr_partial_context ~nshort) lc;
+  fmt_close_box ()
 
 (* let pr_list_partial_context_short (lc : list_partial_context) = *)
 (*   (\* fmt_string ("XXXX "^(string_of_int (List.length lc)));  *\) *)
