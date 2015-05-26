@@ -256,6 +256,8 @@ let common_arguments = [
    "Log (failed) proof to file");
   ("--trace-failure", Arg.Set VarGen.trace_failure,
    "Enable trace all failure (and exception). Use make gbyte");
+  ("--trace-exc", Arg.Set VarGen.trace_exc,
+   "Enable trace of exceptions invoked by methods");
   ("--trace-all", Arg.Set Globals.trace_all,
    "Trace all proof paths");
   ("--log-cvcl", Arg.String Cvclite.set_log_file,

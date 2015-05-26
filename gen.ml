@@ -1316,16 +1316,17 @@ struct
     in pop_call(); r
 
   (* call f and pop its trace in call stack of ho debug *)
-  let pop_aft_apply_with_exc_no (f:'a->'b) (e:'a) : 'b =
+  let pop_aft_apply_with_exc_no s (f:'a->'b) (e:'a) : 'b =
     try 
       let r = (f e) in
       if !debug_precise_trace then debug_stk # pop; 
       r
     with exc -> 
-      begin
-        if !debug_precise_trace then debug_stk # pop; 
-        raise exc
-      end
+        begin
+          if !VarGen.trace_exc then Basic.print_endline_quiet ("Exception("^s^"):"^(Printexc.to_string exc));
+          if !debug_precise_trace then debug_stk # pop; 
+          raise exc
+        end
 
   (* string representation of call stack of ho_debug *)
   let string_of () : string =
