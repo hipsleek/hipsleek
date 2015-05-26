@@ -1761,9 +1761,9 @@ let omega_err = ref false
 
 let seq_number = ref 10
 
-let sat_timeout_limit = ref 2.
+let sat_timeout_limit = ref 5.
 let user_sat_timeout = ref false
-let imply_timeout_limit = ref 3.
+let imply_timeout_limit = ref 10.
 
 let dis_provers_timeout = ref false
 let sleek_timeout_limit = ref 0.
@@ -1775,9 +1775,9 @@ let dis_inv_baga () =
 
 let dis_bk ()=
   let () = oc_simplify := true in
-  let () = sat_timeout_limit:= 2. in
+  let () = sat_timeout_limit:= 5. in
   let () = user_sat_timeout := false in
-  let () = imply_timeout_limit := 3. in
+  let () = imply_timeout_limit := 10. in
   (* let () = en_slc_ps := false in *)
   ()
 
