@@ -645,7 +645,7 @@ RELDEFN P2: ( v=res & w_1456=5 & a<:@L & @M<:b_1455 & P1(a)) -->  P2(a,b_1455,v,
 RELDEFN P2: ( v=res & w_1456=5 & a=@M & @M<:b_1455 ) -->  P2(a,b_1455,v,res,w_1456)]
 
 =======================================================
-../../hip ex8-node-inf-L-res.ss 
+../../hip ex8-node-inf-L-res.ss  \\done
 
 !!! **pi.ml#776:>>REL POST :  P2(a,v,b_1456,res,w_1457)
 !!! **pi.ml#777:>>POST:  v=res & w_1457=5 & a<:@L & @M<:b_1456 & a=@M
@@ -689,7 +689,7 @@ ensures  c::cell<w>@b & w=res & v=res & b=@L
 requires c::cell<v>@a & a=@L
 ensures  v=res  
 =======================================================
-# ex8d2.ss
+# ex8d2.ss \\done
 
  int x = c.fst;
  if (x>0) c.fst = 5;
@@ -746,6 +746,14 @@ ExceptionFailure("Trans_arr.extract_translate_scheme: @L To Be Implemented")Occu
 !!! PROBLEM with fix-point calculation
 ExceptionFailure("Trans_arr.extract_translate_scheme: @L To Be Implemented")Occurred!
 =======================================================
+          PRE         POST
+a<:@M     a=@M        a=@M 
+a<:@L     a=@L        a=@M
+a<:@A     a=@A        a=@A
+@M<:a     ?           ?
+@L<:a     ?           a=@A
+@A<:a     a=@A        a=@A
+
 =======================================================
 =======================================================
 =======================================================

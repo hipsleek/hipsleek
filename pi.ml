@@ -667,6 +667,8 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let () = x_binfo_pp "WN: Need to form initial pre from reloblgs, namely P1(a) = a=@M" no_pos in
             let () = x_binfo_hp (add_str "pre_ref_df" pr_def) pre_rel_df no_pos in
             let () = x_binfo_hp (add_str "post_ref_df" pr_def) post_rel_df no_pos in
+            let () = x_binfo_hp (add_str "post_vars" pr_svl) post_vars no_pos in
+            let () = x_binfo_hp (add_str "pre_vars" pr_svl) pre_vars no_pos in
             (**************** END Debugging ****************)
 
             let post_rel_df_new = norm_post_rel_def post_rel_df pre_rel_ids reldefns in
@@ -729,6 +731,8 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let res = List.map (fun (rel_post,post,rel_pre,pre) -> 
                 (rel_post,TP.simplify_tp post,rel_pre,TP.simplify_tp pre)
               ) res in
+            let res = List.map (fun (rel_post,post,rel_pre,pre) ->  
+                (rel_post,Immutable.postprocess_post post pre_vars,rel_pre,Immutable.postprocess_pre pre)) res in
             res
           in
 
@@ -793,7 +797,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
     let new_specs = List.map (fun new_spec -> CF.flatten_struc_formula new_spec) new_specs in
     let new_specs = List.map (fun new_spec -> CF.trans_flow_struc_formula new_spec) new_specs in
     let new_specs = List.map (fun new_spec -> trans_res_struc_formula prog new_spec) new_specs in
-    let new_specs = List.map (fun new_spec -> Immutable.infer_specs_imm_post_process new_spec) new_specs in
+    (* let new_specs = List.map (fun new_spec -> Immutable.infer_specs_imm_post_process new_spec) new_specs in *)
     let () = List.iter (fun (proc,new_spec) ->
         let () = proc.proc_stk_of_static_specs # push new_spec in
         print_endline_quiet "\nPost Inference result:";

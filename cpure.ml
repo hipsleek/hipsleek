@@ -14368,14 +14368,9 @@ let collect_nondet_rel f =
   fold_formula f (nonef, f_bf, nonef) List.concat
 
 let contains_undef (f:formula) =
-  let afv = fv f in
+  let afv = all_vars f in
   List.fold_left (fun acc sv -> acc || (is_undef_typ (type_of_spec_var sv)) ) false afv 
 
 let contains_imm (f:formula) =
-  let afv = fv f in
-  let contains_imm_sv =  List.fold_left (fun acc sv -> acc || (is_ann_typ  sv) ) false afv in
-  if contains_imm_sv then true
-  else
-    (* check for constants *)
-    let f_e e =  Some (is_ann_type (get_exp_type e)) in
-    fold_formula f (nonef,nonef, (* Some (is_ann_typ get_exp_type) *) f_e)  (List.exists (fun b -> b) )
+  let f_e e =  Some (is_ann_type (get_exp_type e)) in
+  fold_formula f (nonef,nonef, f_e)  (List.exists (fun b -> b) )

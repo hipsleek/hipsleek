@@ -2640,6 +2640,10 @@ let norm_subann sv1 e1 e2 loc vars_post aset =
     let pos_var = CP.EMapSV.mem sv1 vars_post in
     let res_ex = if pos_var then f_norm_post_imm_var e1 loc else f_norm_pre_imm_var e1 loc in
     ([res_ex], false)
+  | CP.AConst _ ->
+    let pos_var = CP.EMapSV.mem sv1 vars_post in
+    let res_ex = CP.mkEq e1 e2 loc in
+    ([res_ex], true)
   | CP.Var (sv, _) ->
     if (CP.is_lend_sv ~emap:aset sv) then ([f_norm_pre_imm_var e1 loc], false)
     else ([], true)
@@ -2658,7 +2662,7 @@ let norm_eq e1 e2 loc vars_post aset =
     ([res_ex], fix)
   | _ -> ([], true)
 
-(* a<:@L ---> a=@L (for pre vars) / a=@A (for post vars) *)
+(* a<:@L ---> a=@L (for pre vars) / @L<:a ---> a=@A (for post vars) *)
 let norm_imm_rel_formula vars_post (rel:CP.formula): CP.formula  =
   (* let rel = TP.simplify_tp rel in *)
   let fixpt = ref true in
@@ -2667,8 +2671,16 @@ let norm_imm_rel_formula vars_post (rel:CP.formula): CP.formula  =
     let (p_f, bf_ann) = b in
     let p_f = 
       match p_f with
-      | CP.SubAnn (CP.Var(sv1,l1) as e1,e2,l) -> 
+      | CP.SubAnn (((CP.Var(sv1,l1)) as e1),((CP.AConst _) as e2),l) 
+      | CP.SubAnn (((CP.AConst _) as e2),((CP.Var(sv1,l1)) as e1),l) ->
         let res_ex, fix = norm_subann sv1 e1 e2 l vars_post aset in
+        let () = if not fix then fixpt := false else () in
+        map_list_def [p_f] (fun x -> x) res_ex
+      | CP.SubAnn (((CP.Var(sv1,l1)) as e1),((CP.Var(sv2,l2)) as e2),l) ->
+        let res_ex, fix = if CP.EMapSV.mem sv1 vars_post then  norm_subann sv1 e1 e2 l2 vars_post aset 
+          else if CP.EMapSV.mem sv2 vars_post then  norm_subann sv2 e2 e1 l2 vars_post aset 
+          else [p_f], true
+        in
         let () = if not fix then fixpt := false else () in
         map_list_def [p_f] (fun x -> x) res_ex
       | CP.Eq (e2,e1,l)-> 
@@ -2835,3 +2847,16 @@ let imm_unify (form:CP.formula): CP.formula =
 let imm_unify (form:CP.formula): CP.formula = 
   let pr = !CP.print_formula in
   Debug.no_1 "imm_unify" pr pr imm_unify form
+
+let postprocess_post post pre_vars = 
+  let post_var = Gen.BList.difference_eq CP.eq_spec_var (CP.all_vars post) pre_vars in
+  norm_imm_rel_formula ~post_vars:post_var post
+
+let postprocess_post post pre_vars = 
+  let pr = !CP.print_formula in
+  Debug.no_2 "postprocess_post" pr Cprinter.string_of_spec_var_list pr postprocess_post post pre_vars
+
+let postprocess_pre pre = norm_imm_rel_formula  pre
+
+let postprocess_pre pre =
+  Debug.no_1 "postprocess_pre" !CP.print_formula !CP.print_formula postprocess_pre pre
