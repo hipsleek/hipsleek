@@ -842,7 +842,7 @@ struct
 
 end;;
 
-let add_str s f xs = s^":"^(f xs)
+let add_str = Basic.add_str
 
 type 'a keyt = int option
 

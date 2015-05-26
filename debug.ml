@@ -153,8 +153,6 @@ let ninfo_pprint m p = ()
   -- -v:-2..(exact tracing)
 *)
 
-let add_str s f xs = s^":"^(f xs)
-
 let gen_vv_flags d =
   let m = !VarGen.verbose_num in
   let (flag,str) =
