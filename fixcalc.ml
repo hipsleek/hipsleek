@@ -77,7 +77,7 @@ let rec fixcalc_of_exp_list e op number = match number with
   | 1 -> fixcalc_of_exp e
   | n -> fixcalc_of_exp e ^ op ^ (fixcalc_of_exp_list e op (n-1))
 
-and fixcalc_of_exp_x e = match e with
+and fixcalc_of_exp e = match e with
   | CP.Null _ -> "null"
   | CP.Var (x, _) -> fixcalc_of_spec_var x
   | CP.IConst (i, _) -> string_of_int i
@@ -104,8 +104,8 @@ and fixcalc_of_exp_x e = match e with
   | CP.InfConst _ -> "inf"
   | _ -> illegal_format ("Fixcalc.fixcalc_of_exp: Not supported expression")
 
-and fixcalc_of_exp f=
-  DD.no_1 "fixcalc_of_exp" !CP.print_exp (fun s->s) (fun f-> fixcalc_of_exp_x f) f
+let fixcalc_of_exp f=
+  DD.no_1 "fixcalc_of_exp" !CP.print_exp (fun s->s) (fun f-> fixcalc_of_exp f) f
 ;;
 
 let fixcalc_of_bool b =
