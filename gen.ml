@@ -250,7 +250,11 @@ struct
     if n <= 0 then []
     else v :: (repeat v (n-1))
 
-  let report_error pos msg = Error.report_error
+  let report_error ?(exc=None) pos msg = 
+    let msg = match exc with 
+      | None -> msg
+      | Some e -> (msg^">>from"^(Printexc.to_string e)) in
+    Error.report_error
       { Error.error_loc = pos; Error.error_text = msg}
 
   let report_warning pos msg = 
