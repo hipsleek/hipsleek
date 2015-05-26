@@ -165,6 +165,7 @@ let trans_ints_block_lst fn (fr_lbl: ints_loc) (blks: ints_block list): I.proc_d
     let rec nondet_chain_for blk_exps =
       match blk_exps with
       | [] -> (I.Empty no_pos)
+      | [exp] -> exp
       | blk::blk_exps ->
         let nondet_call = I.mkCallNRecv Globals.nondet_int_proc_name None [] None None no_pos in
         let nondet_cond = I.mkBinary I.OpGt nondet_call (I.mkIntLit 0 no_pos) None no_pos in
