@@ -2773,3 +2773,65 @@ let imm_post_process_for_entail_empty_rhs ctx =
 let imm_post_process_for_entail_empty_rhs ctx = 
   let pr = Cprinter.string_of_list_context_short in 
   Debug.no_1 "imm_post_process_for_entail_empty_rhs" pr pr imm_post_process_for_entail_empty_rhs ctx
+
+let infer_specs_imm_post_process (spec: CF.struc_formula) : CF.struc_formula =
+  (* define data struc functions *)
+
+  let f_pre rel = Some (norm_imm_rel_formula rel)  in
+  let f_post vars_post rel = Some (norm_imm_rel_formula ~post_vars:vars_post rel) in
+
+  let f_none = fun _ -> None in
+  let f_f = f_none in
+  let f_h_f = f_none in
+  let f_p_pre = (f_none, f_none, f_pre, f_none, f_none) in
+  let f_p_post vars_post = (f_none, f_none, (f_post vars_post), f_none, f_none) in
+  let fncs = (f_none, f_f, f_h_f, f_p_pre) in
+
+  let rec helper fncs sf =
+    match sf with 
+    | CF.ECase f   -> 
+      let br = List.map (fun (c1,c2)-> (c1, (helper fncs c2))) f.CF.formula_case_branches in
+      CF.ECase {f with CF.formula_case_branches = br;}
+    | CF.EBase f   -> 
+      CF.EBase {f with 
+                CF.formula_struc_base = CF.transform_formula fncs f.CF.formula_struc_base;
+                CF.formula_struc_continuation = map_opt (helper fncs) f.CF.formula_struc_continuation;}
+    | CF.EAssume f -> 
+      (* from here onwards is the post spec formula *)
+      let post_vars = Gen.BList.difference_eq (CP.eq_spec_var) (CF.struc_all_vars sf) (CF.struc_fv sf) in
+      (* below is needed so that we first normalize everything to @L, before distinguishing between pre and post vars *)
+      let simpl_f = CF.transform_formula fncs f.CF.formula_assume_simpl in
+      let struc_f = helper fncs f.CF.formula_assume_struc in
+
+      let fncs = (f_none, f_f, f_h_f, (f_p_post post_vars)) in
+      CF.EAssume {f with 
+                  CF.formula_assume_simpl = CF.transform_formula fncs simpl_f;
+                  CF.formula_assume_struc = helper fncs struc_f;}
+    | CF.EInfer f  -> 
+      CF.EInfer {f with formula_inf_continuation = helper fncs f.CF.formula_inf_continuation;}
+    | CF.EList f   -> CF.EList (map_l_snd (helper fncs) f)
+  in
+  let spec = helper fncs spec in
+  spec
+
+let split_imm_pure pf =
+  let conjs = CP.split_conjunctions pf in
+  let imm_f, pure_f = List.partition CP.contains_imm conjs in
+  (CP.conj_of_list imm_f no_pos), (CP.conj_of_list pure_f no_pos)
+
+let imm_unify (form:CP.formula): CP.formula = 
+  let disj = CP.split_disjunctions form in
+  let disj_part = List.map split_imm_pure disj in
+  let imms, pures = List.split disj_part in
+  let immf = CP.conj_of_list imms no_pos in
+  let simp_immf = (TP.simplify_tp immf) in (* strenghten imm formula *)
+  if not (CP.is_False simp_immf) then
+    let immf = simp_immf in
+    let pure = CP.disj_of_list pures no_pos in
+    let pure = TP.simplify_tp pure in
+    CP.mkAnd immf pure no_pos
+  else form (* if we cannot strenghten the imm formula, return the initial formula *)
+
+let imm_unify (form:CP.formula): CP.formula = 
+  let pr = !CP.print_formula in
+  Debug.no_1 "imm_unify" pr pr imm_unify form

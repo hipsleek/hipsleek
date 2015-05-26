@@ -522,46 +522,6 @@ let trans_res_struc_formula prog sf =
   if Gen.BList.mem_eq CP.eq_spec_var (CP.mk_spec_var "res") sfv then helper sf
   else sf
 
-let infer_specs_imm_post_process (spec: CF.struc_formula) : CF.struc_formula =
-  (* define data struc functions *)
-
-  let f_pre rel = Some (Immutable.norm_imm_rel_formula rel)  in
-  let f_post vars_post rel = Some (Immutable.norm_imm_rel_formula ~post_vars:vars_post rel) in
-
-  let f_none = fun _ -> None in
-  let f_f = f_none in
-  let f_h_f = f_none in
-  let f_p_pre = (f_none, f_none, f_pre, f_none, f_none) in
-  let f_p_post vars_post = (f_none, f_none, (f_post vars_post), f_none, f_none) in
-  let fncs = (f_none, f_f, f_h_f, f_p_pre) in
-
-  let rec helper fncs sf =
-    match sf with 
-    | CF.ECase f   -> 
-      let br = List.map (fun (c1,c2)-> (c1, (helper fncs c2))) f.CF.formula_case_branches in
-      CF.ECase {f with CF.formula_case_branches = br;}
-    | CF.EBase f   -> 
-      CF.EBase {f with 
-                CF.formula_struc_base = CF.transform_formula fncs f.CF.formula_struc_base;
-                CF.formula_struc_continuation = map_opt (helper fncs) f.CF.formula_struc_continuation;}
-    | CF.EAssume f -> 
-      (* from here onwards is the post spec formula *)
-      let post_vars = Gen.BList.difference_eq (CP.eq_spec_var) (CF.struc_all_vars sf) (CF.struc_fv sf) in
-      (* below is needed so that we first normalize everything to @L, before distinguishing between pre and post vars *)
-      let simpl_f = CF.transform_formula fncs f.CF.formula_assume_simpl in
-      let struc_f = helper fncs f.CF.formula_assume_struc in
-
-      let fncs = (f_none, f_f, f_h_f, (f_p_post post_vars)) in
-      CF.EAssume {f with 
-                  CF.formula_assume_simpl = CF.transform_formula fncs simpl_f;
-                  CF.formula_assume_struc = helper fncs struc_f;}
-    | CF.EInfer f  -> 
-      CF.EInfer {f with formula_inf_continuation = helper fncs f.CF.formula_inf_continuation;}
-    | CF.EList f   -> CF.EList (map_l_snd (helper fncs) f)
-  in
-  let spec = helper fncs spec in
-  spec
-
 let norm_rel_oblgs reloblgs =
   let is_rel_eq rel1 rel2 = 
     (fun (_,a1,_) (_,a2,_) ->  
@@ -582,15 +542,22 @@ let norm_rel_oblgs reloblgs =
     let fnc acc lst = 
       let acc = update_acc (List.hd lst) acc in 
       helper (List.tl lst) acc in
-    map_list_def acc (fnc acc) lst 
-  in 
+    map_list_def acc (fnc acc) lst
+  in
   let reloblgs_new = helper reloblgs [] in
   let reloblgs_new = List.map (fun ((rel_c,rel_n,rel_d) as rel) -> 
       if CP.contains_undef rel_d then rel 
-      else (rel_c,rel_n,TP.simplify_tp rel_d)) reloblgs_new  in
-  let reloblgs, reldefs = List.partition (fun (_,_,rel_d) -> CP.contains_undef rel_d) reloblgs_new in
+      else (rel_c, rel_n, Immutable.imm_unify (TP.simplify_tp rel_d))) reloblgs_new  in
+  reloblgs_new
+
+let norm_reloblgs_and_init_defs reloblgs =
+  (* norm *)
+  let reloblgs = norm_rel_oblgs reloblgs in
+  (* init defs *)
+  let reloblgs, reldefs = List.partition (fun (_,_,rel_d) -> CP.contains_undef rel_d) reloblgs in 
+(* TODODIMM should i also preserve the reloblgs? currently obligations without unk are transformed into definitions  *)
   let reldefs = List.map (fun (_,a,b) -> (b,a)) reldefs in
-  reloblgs_new, reldefs
+  reloblgs, reldefs
 
 (* replaces the unk (rels) formulas with their definitions, provided they have one *)
 let norm_post_rel_def post_rel_df pre_rel_ids all_reldefns =
@@ -677,7 +644,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let reloblgs_init, reldefns = List.partition (fun (rt,_,_) -> CP.is_rel_assume rt) rels in
             let is_infer_flow = is_infer_flow reldefns in
             let reldefns = if is_infer_flow then add_flow reldefns else List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in
-            let reloblgs, reldefns_from_oblgs = norm_rel_oblgs reloblgs_init in
+            let reloblgs, reldefns_from_oblgs = norm_reloblgs_and_init_defs reloblgs_init in
             let reldefns = reldefns @ reldefns_from_oblgs in (* TODOIMM how abt that infer flow inside for reldefns_from_oblgs *)
             (* let reldefns = List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in *)
             let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in
@@ -807,6 +774,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             else
               let new_specs1 = List.map (fun proc_spec -> CF.transform_spec proc_spec (CF.list_of_posts proc_spec)) proc_specs in
               let _ = x_binfo_hp (add_str "new_specs1" (pr_list Cprinter.string_of_struc_formula)) new_specs1 no_pos in
+              let lst_assume = norm_rel_oblgs lst_assume in (* TODOIMM should lst_assume be added back to the spec given that they are used to form initial pre definitions? *)
               let new_specs2 = List.map (fun new_spec1 -> fst (x_add_1 wrap (Fixpoint.simplify_relation new_spec1
                                                                                (Some triples) pre_vars post_vars_wo_rel prog true (* inf_post_flag *) evars) lst_assume)) new_specs1 in
               let _ = x_binfo_hp (add_str "new_specs2" (pr_list Cprinter.string_of_struc_formula)) new_specs2 no_pos in
@@ -825,7 +793,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
     let new_specs = List.map (fun new_spec -> CF.flatten_struc_formula new_spec) new_specs in
     let new_specs = List.map (fun new_spec -> CF.trans_flow_struc_formula new_spec) new_specs in
     let new_specs = List.map (fun new_spec -> trans_res_struc_formula prog new_spec) new_specs in
-    let new_specs = List.map (fun new_spec -> infer_specs_imm_post_process new_spec) new_specs in
+    let new_specs = List.map (fun new_spec -> Immutable.infer_specs_imm_post_process new_spec) new_specs in
     let () = List.iter (fun (proc,new_spec) ->
         let () = proc.proc_stk_of_static_specs # push new_spec in
         print_endline_quiet "\nPost Inference result:";

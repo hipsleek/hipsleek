@@ -25,7 +25,15 @@ int foo(cell c)
 Maybe can strengthen this to:
 
 !!! **pi.ml#696:reloblgs:[( P1(a,v), (a=@M | a<:@L))]
-!!! **pi.ml#696:reloblgs:[( P1(a,v), a=@M]
+!!! **pi.ml#696:reloblgs:[( P1(a,v), a=@M] [DONE]
+
+
+if SAT(a=@M & (v<=0 & a<:@L)) then strengthen  (a=@M | (v<=0 & a<:@L))
+strengthen  (a=@M | (v<=0 & a<:@L)) = 
+ = strengthen (imm(a=@M | (v<=0 & a<:@L)) & strengthen (pure(a=@M | (v<=0 & a<:@L))
+ = strengthen (a=@M | a<:@L) & strengthen (true | v<=0)
+ = a=@M & true
+
 
 
 */
