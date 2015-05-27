@@ -185,6 +185,8 @@ let trans_ints_block_lst fn (fr_lbl: ints_loc) (blks: ints_block list): I.proc_d
       let (init_cond, blk_other_exps) = init_conditions_of_block blk in
       (* filter out the conditions which are already considered *)
       let (_, init_cond) = List.partition (is_implied_by factored) init_cond in
+      let init_cond_exps = List.map (fun asm -> Assume asm) init_cond in
+      let blk = { blk with ints_block_commands = init_cond_exps@blk_other_exps } in
       (* Build Iast cond-expressions with blocks which share common 'factor'
        * in their conditions. *)
       let rec try_to_factor_blocks cond =
