@@ -20,6 +20,20 @@ int foo(cell c)
 /*
 # ex8d2.ss
 
+
+GOT
+---
+!!! **pi.ml#770:>>POST:  
+((a=@M & res=w_1457 & v=w_1457 & w_1457<=0 & b_1456=@M) 
+| (w_1457=5 & a=@M & v=res & b_1456=@M & 1<=res))
+
+Can normalize to:
+-----------------
+!!! **pi.ml#770:>>POST:  
+a=@M & b_1456=@M & ( res=w_1457 & v=w_1457 & w_1457<=0 ) 
+                    | (w_1457=5 & v=res & 1<=res)
+
+
 !!! **pi.ml#696:reloblgs:[( P1(a,v), (a=@M | (v<=0 & a<:@L)))]
 
 Maybe can strengthen this to:

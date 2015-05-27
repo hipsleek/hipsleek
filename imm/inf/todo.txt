@@ -811,6 +811,29 @@ Residue:
  inferred rel: [RELASS [P1]: ( P1(a,v)) -->  a<:@L]
 [[ SEARCH ==>  Match(c,c') ==> ]]
 =======================================================
+# ex8e4.ss
+
+# false post is not logged..
+
+!!!Number of sleek log entries 0
+!!!Logging logs/sleek_log_ex8e4-false-post_ss.txt
+
+# ex8e5.slk
+
+!!!Number of sleek log entries 0
+!!!Logging logs/sleek_log_ex8e5-false-lhs_slk.txt
+
+(==solver.ml#3648==)
+heap_entail_one_context_struc#4@4@3@2@1
+heap_entail_one_context_struc#4 inp1 :conseq: EBase emp&0<x&{FLOW,(4,5)=__norm#E}[]
+heap_entail_one_context_struc#4 inp2 : hfalse&false&{FLOW,(4,5)=__norm#E}[]
+ es_orig_ante: Some(hfalse&false&{FLOW,(4,5)=__norm#E}[])
+ es_infer_vars_rel: []
+heap_entail_one_context_struc#4 inp3 :is_folding:false
+heap_entail_one_context_struc#4 inp4 :has_post:true
+heap_entail_one_context_struc#4@4 EXIT: [
+  hfalse&false&{FLOW,(4,5)=__norm#E}[]
+  ]
 =======================================================
 =======================================================
 =======================================================
