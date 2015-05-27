@@ -20,6 +20,12 @@ module P = Cpure
 module MP = Mcpure
 module CVP = CvpermUtils
 
+type debug_lvl = Short | Normal | Long
+let score_of_lvl = function
+  | Short -> 3
+  | Normal -> 2
+  | Long -> 1
+let glob_lvl = ref Normal
 let is_short n = (n==2)
 let is_medium n = (n==1)
 let is_long n = (n==0)
@@ -63,7 +69,6 @@ let fmt_close_box x = pp_close_box (!fmt) x
 let fmt_open x = fmt_open_box x
 let fmt_close x = fmt_close_box x
 let fmt_string_cut x = fmt_string x; fmt_cut ()
-(* test cvs commit*)
 
 let texify l nl = if !Globals.texify then l else nl
 
