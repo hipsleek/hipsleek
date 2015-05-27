@@ -11739,10 +11739,10 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
   if not(Context.is_complex_action a) then
     begin
       x_dinfo_zp (lazy ("process_action :"
-                        ^ "\n ### action = " ^ (Context.string_of_action_res a)
-                        ^ "\n ### estate = " ^ ( Cprinter.string_of_entail_state_short estate)
-                        ^ "\n ### conseq = " ^ (Cprinter.string_of_formula conseq)
-                        ^ "\n\n"))  pos 
+                        ^ ((add_str "\n ### action " Context.string_of_action_res) a)
+                        ^ ((add_str "\n ### estate " Cprinter.string_of_entail_state_short) estate)
+                        ^ ((add_str "\n ### conseq " Cprinter.string_of_formula) conseq)
+                        ^ "\n"))  pos 
     end;
   (*add tracing into the entailment state*)
   let action_name:string = Context.string_of_action_name a in
