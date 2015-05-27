@@ -8,7 +8,7 @@ module I = Iast
 module IF = Iformula
 module IP = Ipure
 
-let init_conditions_of_block (b : ints_block) : ints_exp_assume list =
+let init_conditions_of_block (b : ints_block) : (ints_exp_assume list * ints_exp list) =
   let vars_of_exp e =
     let f e =
       match e with
@@ -22,17 +22,19 @@ let init_conditions_of_block (b : ints_block) : ints_exp_assume list =
     vars_of_exp asm.ints_exp_assume_formula in
   let rec helper blk_cmds assigned =
     match blk_cmds with
-    | [] -> []
-    | (Assume asm)::cmds ->
+    | [] -> ([], [])
+    | (Assume asm as e)::cmds ->
       (* assumption is "inital" if all of the variables in its formula
        * aren't used by any asg's lhs so far in the block. *)
+      let (ic, others) = helper cmds assigned in
       if (List.exists
            (fun i -> List.mem i assigned)
            (vars_of_assume asm))
-      then helper cmds assigned
-      else asm::(helper cmds assigned)
-    | (Assign asg)::cmds ->
-      helper cmds ((vars_of_asg asg)@assigned)
+      then (ic, e::others)
+      else (asm::ic, others)
+    | (Assign asg as e)::cmds ->
+      let (ic, others) = helper cmds ((vars_of_asg asg)@assigned) in
+      (ic, e::others)
   in
   helper b.ints_block_commands []
 
@@ -180,7 +182,7 @@ let trans_ints_block_lst fn (fr_lbl: ints_loc) (blks: ints_block list): I.proc_d
     match blks with
     | [] -> []
     | blk::blks ->
-      let init_cond = init_conditions_of_block blk in
+      let (init_cond, blk_other_exps) = init_conditions_of_block blk in
       (* filter out the conditions which are already considered *)
       let (_, init_cond) = List.partition (is_implied_by factored) init_cond in
       (* Build Iast cond-expressions with blocks which share common 'factor'
@@ -192,9 +194,9 @@ let trans_ints_block_lst fn (fr_lbl: ints_loc) (blks: ints_block list): I.proc_d
          | asm::asms ->
            (* check if asm 'factors' anything. *)
            let block_can_imply asm blk =
-             let c = init_conditions_of_block blk in
+             let (ic, _) = init_conditions_of_block blk in
              let af = trans_pure_formula asm in
-             let cf = pure_formula_of_condition c in
+             let cf = pure_formula_of_condition ic in
              let acf = Astsimp.trans_pure_formula af [] in
              let ccf = Astsimp.trans_pure_formula cf [] in
              Tpdispatcher.simpl_imply_raw ccf acf
