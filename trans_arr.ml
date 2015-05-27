@@ -4436,3 +4436,83 @@ let translate_back_array_in_one_formula
 (*     f *)
 (* ;; *)
 
+let get_unchanged_set f target=
+  let target_set = ref [Var (target,no_pos)] in
+  let index_set = ref [] in
+  let updated = ref false in
+  let add_index e =
+    if (List.exists (fun item -> is_same_exp e item) !index_set)
+    then
+      ()
+    else
+      (
+        updated := true;
+        index_set := e::(!index_set)
+      )
+  in
+  let add_target arr =
+    if (List.exists (fun item -> is_same_exp arr item) !target_set)
+    then
+      ()
+    else
+      (
+        updated := true;
+        target_set := arr::(!target_set)
+      )
+  in
+  let is_target old_arr =
+    List.exists (fun item -> is_same_exp old_arr item) !target_set
+  in
+  let helper_b (p,ba) =
+    match p with
+    | RelForm (SpecVar (_,id,_) as rel_name,explst,loc)->
+      if id = "update_array_1d"
+      then
+        let old_arr = List.nth explst 0 in
+        let new_arr = List.nth explst 1 in
+        if is_target old_arr
+        then
+          let () = add_index (List.nth explst 3) in
+          if (not (is_target new_arr))
+          then add_target new_arr
+          else ()
+        else
+          ()
+      else
+        ()
+    | _ -> ()
+  in
+  let rec helper f =
+    match f with
+    | BForm (b,fl)->
+      helper_b b
+    | And (f1,f2,_)
+    | Or (f1,f2,_,_)->
+      (
+        helper f1;
+        helper f2
+      )
+    | AndList lst->
+      failwith "get_unchanged_set: AndList To Be Implemented"
+    | Not (sub_f,fl,loc)->
+      helper sub_f
+    | Forall (sv,sub_f,fl,loc)
+    | Exists (sv,sub_f,fl,loc)->
+      helper sub_f
+  in
+  let rec iterator () =
+    let () = helper f in
+    if !updated
+    then
+      (
+        updated:=false;
+        iterator ()
+      )
+    else
+      ()
+  in
+  let () =
+    iterator ()
+  in
+  x_binfo_pp ("unchanged set"^((pr_list ArithNormalizer.string_of_exp) !index_set)) no_pos
+;;

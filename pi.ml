@@ -558,6 +558,9 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
           let tuples =
             let rels = Gen.Basic.remove_dups rels in
             let rels = List.filter (fun (_,pf,_) -> not(CP.is_False pf)) rels in
+            let () =
+              List.iter (fun (_,pf,_) -> Trans_arr.get_unchanged_set pf (List.hd pre_vars)) rels
+            in
             if rels !=[] then
               begin
                 print_endline_quiet "\n*************************************";
