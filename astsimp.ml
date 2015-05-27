@@ -2626,7 +2626,9 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             ) cviews0_with_index in
           let view_list_num = List.map (fun vd ->
               let new_un_struc_formula = List.map (fun (cf,lbl) ->
-                  let baga_svl = List.filter (fun sv -> not (CP.is_int_typ sv)) vd.Cast.view_vars in
+                  let baga_svl = List.filter (fun sv ->
+                      not ((CP.is_int_typ sv) || (CP.is_num_typ sv))
+                  ) vd.Cast.view_vars in
                   let baga_svl = [CP.mk_spec_var "self"]@baga_svl in
                   let new_cf = CF.wrap_exists baga_svl cf in
                   (new_cf,lbl)

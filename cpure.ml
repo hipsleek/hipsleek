@@ -127,6 +127,10 @@ let is_int_typ sv = match sv with
   | SpecVar (Int,_,_) -> true
   | _ -> false
 
+let is_num_typ sv = match sv with
+  | SpecVar (NUM,_,_) -> true
+  | _ -> false
+
 let is_ann_typ sv = match sv with
   | SpecVar (AnnT,_,_) -> true
   | _ -> false
@@ -1964,6 +1968,10 @@ and is_list_type (t : typ) = match t with
 
 and is_int_type (t : typ) = match t with
   | Int -> true
+  | _ -> false
+
+and is_num_type (t : typ) = match t with
+  | NUM -> true
   | _ -> false
 
 and is_ann_type (t : typ) = match t with
