@@ -4,14 +4,47 @@ UTPost@f fpostXXX(int x).
 
 infer [PP] false |- PP(x).
 print residue.
+/*
+--print-type
+
+PP:RelT([])
+INPUT 0: [][fpostXXX:void] 
+Could we not infer UtT(true) to indicate that it
+is a unknown temporal post-condition?
+
+We should later att to es-infer_vars_rel rather than es_infer_vars.
+                         es_infer_vars: [fpostXXX]
+                         es_infer_vars_rel: []] <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+=============================================
+
+<1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELDEFN PP: ( false) -->  PP(x)]
+[[empty]]
+*/
 
 infer [fpostXXX] false |- fpostXXX(x).
 print residue.
+/*
+                         es_infer_vars: [fpostXXX]
+                         es_infer_vars_rel: []] <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+# [fpostXXX] should be in es_infer_vars_rel
+*/
 
 infer [@term] false |- fpostXXX(x).
 print residue.
 
 /*
+Need to pick up fpostXXX based on @term..
+
+                         es_infer_obj: [@term]
+                         es_infer_vars_rel: []] <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+*/
+
+/*
+
+
 # loop2.slk
 
 !!! rhs: fpostXXX_0(x)[]

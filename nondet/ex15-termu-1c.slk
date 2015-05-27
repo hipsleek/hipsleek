@@ -1,0 +1,34 @@
+UTPre fpre(int x).
+UTPost fpost(int x).
+
+infer [@term] x <= 0 & y>4 & fpre(x) |- fpost(x).
+//print residue.
+
+infer [@term] x > 0 & x' = x - 1 & x' > 0 & fpre(x) & fpost(x') |- fpost(x).
+//print residue.
+
+infer [@term] x > 0 & x' = x - 1 & x' <= 0 & fpre(x) & fpost(x') |- fpost(x).
+//print residue.
+
+infer [@term] x > 0 & x' = x - 1 & x' > 0 & fpre(x) |- fpre(x').
+//print residue.
+
+infer [@term] x > 0 & x' = x - 1 & x' <= 0 & fpre(x) |- Term.
+print residue.
+
+term_infer.
+
+/*
+# ex15
+
+ termAssume 0<x & x'+1=x & x'<=0 & fpost{0}(x') --> fpost{0}(x).
+
+ termAssume 0<x & x'+1=x & 0<x' & fpost{0}(x') --> fpost{0}(x).
+
+ termAssume x<=0 & 4<y --> fpost{0}(x).
+
+ termAssume 0<x & x'+1=x & x'<=0 & fpre{0}(x) --> Term.
+
+ termAssume 0<x & x'+1=x & 0<x' & fpre{0}(x) --> fpre{0}(x').
+
+*/

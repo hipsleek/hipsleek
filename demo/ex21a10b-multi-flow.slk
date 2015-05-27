@@ -1,0 +1,31 @@
+infer[@err_must] x>0 & flow __MayError 
+  or x<0 & r=0 & flow __norm 
+ |- r!=0 & flow __norm.
+print residue.
+
+
+/*
+# ex21a10b.slk
+
+infer[@err_must] x>0 & flow __MayError 
+  or x<0 & r=0 & flow __norm 
+ |- r!=0 & flow __norm.
+
+GOT:
+
+Entail (1) : Fail.(may) cause:1.2b: ante flow:__MayError#E conseq flow: __norm#E are incompatible flow types
+Residue:
+ <1>
+    emp&0<x&{FLOW,(4,8)=__MayError#E}[]
+    or emp&r=0 & x<0&{FLOW,(6,7)=__Error#E}[]
+
+Residue is correct but error message is wrong, expects:
+
+Entail (1) : Fail.(may) 
+  Or[cause:1.2b: ante flow:__MayError#E conseq flow: __norm#E are incompatible flow types,
+   r=0 |- r!=0 (must failure)
+  ]
+
+# how come msg from only one branch.
+
+*/

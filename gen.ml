@@ -31,12 +31,35 @@ sig
   val string_of : t -> string
 end;;
 
+module PLevel =
+struct
+  type t = int
+  let short = 100
+  let norm = 200
+  let long = 300
+  let is_short x = x>=short
+  let is_norm x = x>=norm
+  let is_long x = x>=long
+  let is_short_only x = x==short
+  let is_norm_only x = x==norm
+  let is_long_only x = x==long
+end;;
+
 module Basic =
 (* basic utilities that can be opened *)
 struct
 
   exception Bad_string
   exception Bail
+
+  let hash_to_list ht =
+    Hashtbl.fold (fun a b c -> (a,b)::c) ht []
+
+  let list_cnt_sort_dec l = 
+    List.sort (fun (_,a) (_,b) -> 
+        if a=b then 0
+        else if a>b then -1
+        else 1) l
 
   let silenced_print f s = if !silence_output then () else f s 
 
@@ -61,14 +84,14 @@ struct
     in aux xs
 
   let print_endline_quiet s =
-    let flag = !compete_mode in
+    let flag = !silence_output(* compete_mode *) in
     (* print_endline ("compete mode : "^(string_of_bool flag)); *)
     if flag then () 
     else print_endline s 
   let print_endline_if b s = if b then print_endline s else ()
   let print_string_if b s = if b then print_string s else ()
   let print_string_quiet s = 
-    if !compete_mode then () 
+    if !silence_output (* compete_mode *) then () 
     else print_string s 
 
   let print_web_mode s = 
@@ -158,6 +181,14 @@ struct
   let map_opt_def def f x = match x with
     | None -> def
     | Some v -> f v
+
+  let map_opt_w_def f_none f_some x = match x with
+    | None -> f_none
+    | Some v -> Some (f_some v)
+
+  let map_list_def def f x = match x with
+    | [] -> def
+    | _  -> f x
 
   let map_l_snd f x = List.map (fun (l,c)-> (l,f c)) x
   let map_l_fst f x = List.map (fun (l,c)-> (f l,c)) x
@@ -602,6 +633,10 @@ class ['a] stack_pr (epr:'a->string) (eq:'a->'a->bool)  =
     inherit ['a] stack as super
     val elem_pr = epr 
     val elem_eq = eq 
+    method push_list_pr (ls:'a list) =  
+      (* WN : below is to be removed later *)
+      (* let () = print_endline ("push_list:"^(Basic.pr_list epr ls)) in *)
+      super # push_list ls 
     method string_of = Basic.pr_list_ln elem_pr stk
     method string_of_no_ln = Basic.pr_list elem_pr stk
     method string_of_no_ln_rev = 
@@ -613,6 +648,12 @@ class ['a] stack_pr (epr:'a->string) (eq:'a->'a->bool)  =
     method string_of_reverse_log = 
       let s = super#reverse_of  in
       Basic.pr_list_mln elem_pr s
+    method dump_no_ln =
+      begin
+        let s = super#reverse_of  in
+        List.iter (fun e -> print_string (elem_pr e)) s;
+        print_endline ""
+      end
     method mem (i:'a) = List.exists (elem_eq i) stk
     method overlap (ls:'a list) = 
       if (ls == []) then false
@@ -675,6 +716,19 @@ class counter x_init =
     method str_get_next : string 
       = ctr <- ctr + 1; string_of_int ctr
   end;;
+
+class ctr_call x_init =
+  object 
+    inherit counter x_init as super
+    val mutable last_call = ""
+    method next_call =
+      let c = super # inc_and_get in
+      let () = last_call <- "@"^(string_of_int c) in
+      c
+    method get_last_call =
+      last_call
+  end
+
 
 (* class ['a] stack2 xinit = *)
 (*    object  *)
@@ -1215,18 +1269,20 @@ type elem = int
 module StackTrace =
 struct 
   (* keep track of calls being traced by ho_debug *)
-  let ctr = new counter 0
+  let ctr = new ctr_call 0
 
   (* type stack = int list *)
   (* stack of calls being traced by ho_debug *)
   let debug_stk = new stack_noexc (-2) string_of_int (=)
 
   (* stack of calls with detailed tracing *)
-  let dd_stk = new stack
+  let dd_stk = new stack_pr string_of_int (=)
 
-  (* let force_dd_print () = *)
-  (*   let d = dd_stk # get_stk in *)
-  (*   debug_stk # overlap d *)
+  let force_dd_print () =
+    (* let d = dd_stk # get_stk in *)
+    (* debug_stk # overlap d *)
+    print_endline ("debug_stk"^(debug_stk # string_of_no_ln));
+    print_endline ("dd_stk"^(dd_stk # string_of_no_ln))
 
   let is_same_dd_get () =
     if dd_stk # is_empty then None
@@ -1247,26 +1303,39 @@ struct
   (* pop last element from call stack of ho debug *)
   let pop_call () = 
     if is_same_dd () then dd_stk # pop;
-    debug_stk # pop
+    let () = debug_stk # pop in
+    (* let () = print_string "after pop_call" in *)
+    (* let () = force_dd_print() in *)
+    ()
 
-  (* call f and pop its trace in call stack of ho debug *)
-  let pop_aft_apply_with_exc (f:'a->'b) (e:'a) : 'b =
-    let r = (try 
-               (f e)
-             with exc -> (pop_call(); raise exc))
+  let trace_exception s exc =
+    if !VarGen.trace_exc then Basic.print_endline_quiet ("Exception("^s^"):"^(Printexc.to_string exc))
+
+    (* call f and pop its trace in call stack of ho debug *)
+  let pop_aft_apply_with_exc s (f:'a->'b) (e:'a) : 'b =
+    let r = try 
+      (f e)
+    with exc -> 
+        begin 
+          trace_exception s exc;
+          pop_call(); 
+          raise exc
+        end
     in pop_call(); r
 
+
   (* call f and pop its trace in call stack of ho debug *)
-  let pop_aft_apply_with_exc_no (f:'a->'b) (e:'a) : 'b =
+  let pop_aft_apply_with_exc_no s (f:'a->'b) (e:'a) : 'b =
     try 
       let r = (f e) in
       if !debug_precise_trace then debug_stk # pop; 
       r
     with exc -> 
-      begin
-        if !debug_precise_trace then debug_stk # pop; 
-        raise exc
-      end
+        begin
+          trace_exception s exc;
+          if !debug_precise_trace then debug_stk # pop; 
+          raise exc
+        end
 
   (* string representation of call stack of ho_debug *)
   let string_of () : string =
@@ -1280,13 +1349,15 @@ struct
 
   (* returns @n and @n1;n2;.. for a new call being debugged *)
   let push_call_gen (os:string) (flag_detail:bool) : (string * string) = 
-    (* let () = print_endline ("\npush_call_gen:"^os^(string_of_bool flag_detail)) in *)
-    ctr#inc;
-    let v = ctr#get in
-    debug_stk#push v; 
+    (* let () = ctr#inc in *)
+    let v = ctr#next_call in
+    let () = debug_stk#push v in
     if flag_detail then dd_stk#push v;
-    let s = os^"@"^(string_of_int v) in
+    let lc = ctr # get_last_call in
+    let s = os^lc in
     let h = os^"@"^string_of() in
+    (* let () = print_endline ("\npush_call_gen:"^os^(string_of_bool flag_detail)^s) in *)
+    (* let () = force_dd_print() in *)
     s,h
 
   (* push call without detailed tracing *)

@@ -10,7 +10,12 @@ extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 
 extern int __VERIFIER_nondet_int(void);
 
-int addition(int m, int n) {
+int addition(int m, int n)
+/*@
+  infer[@pre_n,@post_n]
+  requires true ensures true;
+ */
+ {
     if (n == 0) {
         return m;
     }
@@ -20,6 +25,7 @@ int addition(int m, int n) {
     if (n < 0) {
         return addition(m-1, n+1);
     }
+     return 0;
 }
 
 
@@ -33,3 +39,4 @@ int main() {
         ERROR: __VERIFIER_error();
     }
 }
+

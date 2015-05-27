@@ -674,6 +674,14 @@ let peek_dc =
              | [IDENTIFIER n,_;EQ,_] ->  ()
              | _ -> raise Stream.Failure)
 
+let peek_hash_thread = 
+   SHGram.Entry.of_parser "peek_hash_thread"
+       (fun strm -> 
+           match Stream.npeek 3 strm with
+             | [_;_;COMMA,_] ->  raise Stream.Failure
+             | [_;_;GT,_] ->  raise Stream.Failure
+             | _ -> ())
+
  let peek_extended = 
    SHGram.Entry.of_parser "peek_extended"
        (fun strm -> 
@@ -1785,13 +1793,35 @@ simple_heap_constr_imm:
            F.mkHeapNode c hid ho_args deref dr split imm_opt false false false frac t1 t2 ofl (get_pos_camlp4 _loc 2)
   ]];
 
+(* the next three rules:
+    separate the parsing args of heap/data node for backtracking
+*)
+thread_args:
+   [[peek_hash_thread;(* `TOPAREN *)`LT; `HASH ; dl = opt_delayed_constr; rsr = disjunctive_constr; (* `TCPAREN *) `HASH; `GT -> (dl,rsr) ]];
+
+non_thread_args1:
+  [[
+    `LT; hl= opt_general_h_args; `GT -> hl
+  ]];
+
+non_thread_args2:
+  [[
+    `LT; hl= opt_data_h_args; `GT -> hl
+  ]];
+
 (*LDK: add frac for fractional permission*)
 simple_heap_constr:
-    [[ peek_heap; c=cid; `COLONCOLON;  hid = heap_id; opt1 = OPT rflow_form_list ; (* simple2 ; *) frac= opt_perm; `TOPAREN; dl = opt_delayed_constr; rsr = disjunctive_constr; `TCPAREN ; ofl = opt_formula_label ->
+    [[ peek_heap; c=cid; `COLONCOLON;  hid = heap_id; opt1 = OPT rflow_form_list ; (* simple2 ; *) frac= opt_perm;
+ (*  peek_hash_thread;(* `TOPAREN *)`LT; `HASH ; dl = opt_delayed_constr; rsr = disjunctive_constr; (* `TCPAREN *) `HASH; `GT ; *)
+    a=thread_args;
+ ofl = opt_formula_label ->
      (*For threads as resource*)
+     let (dl,rsr) = a in
      let (c, hid, deref) = get_heap_id_info c hid in
      F.mkThreadNode c hid (F.subst_stub_flow n_flow rsr) dl frac ofl (get_pos_camlp4 _loc 2)
-   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *); frac= opt_perm; `LT; hl= opt_general_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label -> (
+   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *); frac= opt_perm; (*`LT; hl= opt_general_h_args; `GT;*)
+     hl = non_thread_args1;
+     annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label -> (
        (*ignore permission if applicable*)
        let frac = if (Perm.allow_perm ())then frac else empty_iperm () in
        let imm_opt = get_heap_ann annl in
@@ -1804,7 +1834,10 @@ simple_heap_constr:
        | ([],t) -> F.mkHeapNode2 c hid ho_args deref dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
        | (t,_)  -> F.mkHeapNode c hid ho_args deref dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
-   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *); frac= opt_perm; `LT; hl= opt_data_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label -> (
+   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *); frac= opt_perm; 
+     (* `LT; hl= opt_data_h_args; `GT;*)
+     hl = non_thread_args2;
+     annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label -> (
         (*ignore permission if applicable*)
         let frac = if (Perm.allow_perm ())then frac else empty_iperm () in
         let imm_opt = get_heap_ann annl in
@@ -1821,7 +1854,10 @@ simple_heap_constr:
             let t1, t2 = List.split t in  
             F.mkHeapNode c hid ho_args deref dr split imm_opt false false false frac t1 t2 ofl (get_pos_camlp4 _loc 2)
      )
-   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *); frac= opt_perm;`LT; hal=opt_general_h_args; `GT; dr=opt_derv; split= opt_split; ofl = opt_formula_label -> (
+   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *); frac= opt_perm;
+     (* `LT; hal=opt_general_h_args; `GT; *)
+     hal = non_thread_args1;
+     dr=opt_derv; split= opt_split; ofl = opt_formula_label -> (
        let (c, hid, deref) = get_heap_id_info c hid in
        let ho_args = un_option opt1 [] in
        match hal with
@@ -1839,7 +1875,10 @@ simple_heap_constr:
        F.mkHeapNode ("",Primed) "" [] 0 false (*dr*) SPLIT0 (P.ConstAnn(Mutable)) false false false frac [] [] None  (get_pos_camlp4 _loc 1)
      )
      (* An Hoa : Abbreviated syntax. We translate into an empty type "" which will be filled up later. *)
-   | peek_heap; c=cid; `COLONCOLON;  opt1 = OPT rflow_form_list (* simple2*) ; frac= opt_perm; `LT; hl= opt_general_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label -> (
+   | peek_heap; c=cid; `COLONCOLON;  opt1 = OPT rflow_form_list (* simple2*) ; frac= opt_perm;
+         (* `LT; hl= opt_general_h_args; `GT;*)
+         hl = non_thread_args1;
+         annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label -> (
        let frac = if (Perm.allow_perm ()) then frac else empty_iperm () in
        let imm_opt = get_heap_ann annl in
        let ho_args = un_option opt1 [] in
@@ -1847,7 +1886,9 @@ simple_heap_constr:
        | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name ho_args 0 dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
        | (t,_)  -> F.mkHeapNode c generic_pointer_type_name ho_args 0 dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
-   | peek_heap; c=cid; `COLONCOLON; opt1 = OPT rflow_form_list  (*simple2*); frac= opt_perm; `LT; hal=opt_general_h_args; `GT; dr=opt_derv; split= opt_split; ofl = opt_formula_label -> (
+   | peek_heap; c=cid; `COLONCOLON; opt1 = OPT rflow_form_list  (*simple2*); frac= opt_perm; (* `LT; hal=opt_general_h_args; `GT; *)
+         hal = non_thread_args1;
+         dr=opt_derv; split= opt_split; ofl = opt_formula_label -> (
        let ho_args = un_option opt1 [] in
        match hal with
        | ([],[])  -> F.mkHeapNode c generic_pointer_type_name ho_args 0 dr split (P.ConstAnn(Mutable)) false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
@@ -2136,7 +2177,7 @@ cexp_w:
             Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
           end
     | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN ->
-             (* AnHoa: relation constraint, for instance, given the relation 
+      (* AnHoa: relation constraint, for instance, given the relation 
        * s(a,b,c) == c = a + b.
        * After this definition, we can have the relation constraint like
        * s(x,1,x+1), s(x,y,x+y), ...
@@ -2482,11 +2523,17 @@ infer_type:
    | `INFER_AT_PAR -> INF_PAR
    | `INFER_AT_VER_POST -> INF_VER_POST
    | `INFER_AT_IMM -> INF_IMM
+   | `INFER_AT_ARR_AS_VAR -> INF_ARR_AS_VAR
    | `INFER_AT_SHAPE -> INF_SHAPE
    | `INFER_AT_ERROR -> INF_ERROR
    | `INFER_AT_SIZE -> INF_SIZE
    | `INFER_AT_EFA -> INF_EFA
    | `INFER_AT_DFA -> INF_DFA
+   | `INFER_AT_DE_EXC -> INF_DE_EXC
+   | `INFER_AT_ERRMUST_ONLY -> INF_ERR_MUST_ONLY
+   | `INFER_AT_ERRMUST -> INF_ERR_MUST
+   | `INFER_AT_PREMUST -> INF_PRE_MUST
+   | `INFER_AT_ERRMAY -> INF_ERR_MAY
    | `INFER_AT_FLOW -> INF_FLOW
    ]];
 
@@ -2508,7 +2555,7 @@ infer_type_list:
 
 infer_cmd:
   [[ `INFER; il_w_itype = cid_list_w_itype; t=meta_constr; `DERIVE; b=extended_meta_constr ->
-      let inf_o = Globals.infer_const_obj # clone in
+      let inf_o = new Globals.inf_obj_sub (* Globals.clone_sub_infer_const_obj () *) (* Globals.infer_const_obj # clone *) in
       let (i_consts,ivl) = List.fold_left 
         (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r) 
           | SndAns r -> (lst_l,r::lst_r)) ([],[]) il_w_itype in
@@ -3154,7 +3201,7 @@ spec:
     `INFER; transpec = opt_transpec; postxf = opt_infer_xpost; postf= opt_infer_post; ivl_w_itype = cid_list_w_itype; s = SELF ->
     (* WN : need to use a list of @sym *)
      (* let inf_o = Globals.infer_const_obj # clone in *)
-     let inf_o = new inf_obj in
+     let inf_o = new Globals.inf_obj_sub in
      let (i_consts,ivl) = List.fold_left
        (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r)
          | SndAns r -> (lst_l,r::lst_r)) ([],[]) ivl_w_itype in
@@ -3407,6 +3454,8 @@ assert_statement:
        mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) (Some true) (get_pos_camlp4 _loc 1)
    | `ASSERT_INEXACT; ol= opt_label; f=formulas -> 
        mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) (Some false) (get_pos_camlp4 _loc 1)
+   | `INFER_ASSUME; `OSQUARE;il1=OPT id_list;`CSQUARE ->
+       mkAssert ~inf_vars:(un_option il1 []) None None (fresh_formula_label "") None (get_pos_camlp4 _loc 1)
    | `ASSUME; ol=opt_label; dc=disjunctive_constr ->
        mkAssert None (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) None (get_pos_camlp4 _loc 1)
    | `ASSERT; ol=opt_label; f=formulas; `ASSUME; dc=disjunctive_constr ->  

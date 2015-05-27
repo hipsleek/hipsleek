@@ -868,7 +868,7 @@ let is_sat (pe : Cpure.formula) (sat_no: string) : bool =
 let simplify (f: Cpure.formula) : Cpure.formula =
   (* debug *)
   (* let () = print_endline "** In function Spass.simplify" in *)
-  try (Omega.simplify f) with _ -> f
+  try (x_add_1 Omega.simplify f) with _ -> f
 
 let simplify (pe : Cpure.formula) : Cpure.formula =
   match (Cpure.do_with_check "" simplify pe) with

@@ -1,0 +1,106 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+//1
+infer [@err_must] x::node<_, null> |- x::ll<m> & m > 1.
+expect Fail.
+print residue.
+
+
+
+// --exa
+//Entail 1: Fail.(must) cause:1.2: ante flow:__Error#E conseq flow: __norm#E are incompatible flow types
+// wrong error message!
+
+/*
+# ex21e7d.slk
+
+--temp-opt (source of problem?)
+(==solver.ml#7154==)
+heap_entail_conjunct_helper#3@81@80@79@78@77@34@33@32@31@30@29@28@27@26@25@24@23
+heap_entail_conjunct_helper#3 inp1 : es_formula: 
+  x::node<Anon_12,flted_8_35>&flted_8_35=null&{FLOW,(18,19)=__Error#E}[]
+ es_infer_obj: [@err_must]
+ es_gen_impl_vars: [m]
+ es_trace:  Fold ==> 
+ es_infer_vars_rel: []
+ es_proof_traces: [x::node<Anon_12,flted_8_35>&flted_8_35=null:x::ll{}<m>&
+                   1<m&{FLOW,(20,21)=__norm#E}[]]
+ es_final_error: None
+heap_entail_conjunct_helper#3 inp2 : emp&1<m&{FLOW,(20,21)=__norm#E}[]
+heap_entail_conjunct_helper#3@81 EXIT: 
+MustErr Context: 
+                  fe_kind: MUST
+                  fe_name: incompatible types
+                  fe_locs: {
+                            fc_message: 
+                             1.2: ante flow:__Error#E conseq flow: __norm#E are incompatible flow types
+                            fc_current_lhs_flow: {FLOW,(18,19)=__Error#E}}
+
+
+Earlier conversion would allow better --esl logging.
+Can we keep the info from FailCtx into exception form
+and have that __Error printed.
+
+Sleek printing should be based on this outcome..
+
+    let res1 = 
+      (* WN : test below is needed for ex21a51.ss *)
+      (*      but fails for ex21e7d.slk *)
+      (* How was conversion to __Error done for ex21a51.ss without
+         this conversion? *) 
+      if false
+        (* CF.is_en_error_exc_ctx ctx0 *)
+        (* (!Globals.enable_error_as_exc || CF.is_en_error_exc_ctx ctx0) *)
+        (*           && not (CF.is_dis_error_exc_ctx ctx0) *)
+
+without --temp_opt (working)
+
+id: 2; caller: []; line: 0; classic: false; kind: Sleek_Entail(1); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [@err_must] globals: []
+ checkentail x::node<Anon_12,flted_8_39>&flted_8_39=null&{FLOW,(20,21)=__norm#E}[]
+ |-  x::ll{}<m>&1<m&{FLOW,(20,21)=__norm#E}[]. 
+ho_vars: nothing?
+res:  failctx
+         fe_kind: MUST
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message:  true |-  1<m & 1+0=m. LOCS:[0;8;4] (RHS: contradiction)
+                   fc_current_lhs_flow: {FLOW,(18,19)=__Error#E}}
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  BaseCaseFold ==> ]]false
+ 
+--early conversion (problem)
+--with --temp_opt
+
+
+id: 2; caller: []; line: 0; classic: false; kind: Sleek_Entail(1); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [@err_must] globals: []
+ checkentail x::node<Anon_12,flted_8_39>&flted_8_39=null&{FLOW,(20,21)=__norm#E}[]
+ |-  x::ll{}<m>&1<m&{FLOW,(20,21)=__norm#E}[]. 
+ho_vars: nothing?
+res:  2[
+   x::node<Anon_12,flted_8_39>&flted_8_39=null&{FLOW,(18,19)=__Error#E}[]
+   es_final_error: Some;
+   emp&0+1=m & r_50=flted_8_39 & Anon_49=Anon_12 & flted_8_39=null&{FLOW,(18,19)=__Error#E}[]
+   es_final_error: Some
+   ]
+
+*/
+
+
+
+//2
+//checkentail x::node<_, r> * r::node<_, r2> * r2::ll<n> |- x::ll<n + 2>.
+//expect valid
+//print residue.
+
+//checkentail x::node<_, null> |- x::ll<m>.
+//print residue.
+
+//infer [@err_must] x::node<_, y>*y::ll<n> |- x::ll<m> & m=0.
+//expect valid
+//print residue.
+//expect Fail.
+//expect Fail_Must.
+//expect Fail_May.

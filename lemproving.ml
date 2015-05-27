@@ -81,9 +81,9 @@ let run_entail_check_helper ctx (iante: lem_formula) (iconseq: lem_formula) (inf
   (* let ctx = CF.transform_list_context (x_add Solver.elim_unsat_es 10 cprog (ref 1)) ctx in *)
   let rs1, _ = 
     if not !Globals.disable_failure_explaining then
-      Solver.heap_entail_struc_init_bug_inv cprog false false ctx conseq no_pos None
+      x_add Solver.heap_entail_struc_init_bug_inv cprog false false ctx conseq no_pos None
     else
-      Solver.heap_entail_struc_init cprog false false ctx conseq no_pos None
+      x_add Solver.heap_entail_struc_init cprog false false ctx conseq no_pos None
   in
   let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
   flush stdout;
@@ -393,6 +393,16 @@ let print_lemma_entail_result (valid: bool) (ctx: CF.list_context) (num_id: stri
   | false ->
     let s = 
       if !Globals.disable_failure_explaining then ""
+      else if !Globals.enable_error_as_exc then
+        let final_error_opt = CF.get_final_error ctx in
+        match final_error_opt with
+        | Some (s, _, fk) -> begin
+            match fk with
+            | CF.Failure_May _ -> "(may) cause:"^s
+            | CF.Failure_Must _ -> "(must) cause:"^s
+            | _ -> "INCONSISTENCY : expected failure but success instead"
+          end
+        | None -> "INCONSISTENCY : expected failure but success instead"
       else
         match CF.get_must_failure ctx with
         | Some (s,cex) -> let _, ns = Cformula.cmb_fail_msg ("(must) cause: " ^ s) cex in ns

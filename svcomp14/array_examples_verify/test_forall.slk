@@ -2,6 +2,7 @@ checkentail
    forall(i: !(i=0) | y=3)
    |- y=3.
 
+//(2)
 checkentail
    forall(i:!(i=3 & i>5))
    |- true.
@@ -10,6 +11,7 @@ checkentail
    forall(i: !(i=0)|a[i]=3) & forall(i: !(i=1)|a[i]=5)
    |- a[0]=3 & a[1]=5.
 
+//(4)
 checkentail
    forall(i: !(i=j)|a[i]=3) & j=0
    |- a[0]=3.
@@ -19,6 +21,7 @@ checkentail
    |- a[0]=3.
 
 
+//(6)
 slk_simplify  forall (i: (i=0)|a[i]=3).
 
 slk_simplify (forall (i: (i=0)|a[i]=3)) & (forall (i: !(i=1)|a[i]=5)).
@@ -30,7 +33,7 @@ slk_simplify (forall (i: (i=0)|a[i]=3)) & (forall (i: !(i=1)|a[i]=5)).
 // And why there must be h__hole_1>=1???
 //slk_simplify h__hole_1 & x>4.
 
-
+//(8)
 slk_simplify (forall (i: (i=0)|a[i]=3)) & (forall (k: !(k=1)|a[k]=5)) & j=3 & a[j]=5.
 
 slk_simplify (forall (i: (i=0)|a[i]=3)) & (forall (k: !(k=1)|a[k]=5))& (forall (m: (m=0)|a[m]=5)) & j=3 & a[j]=5.

@@ -1,0 +1,48 @@
+// 7(1)
+
+infer [] a>3 & i=2  |- a=4.
+//print residue.
+
+/*
+# ex5.slk
+
+infer [] a[2]=3 & i=2  |- a[i]=3.
+
+Why so many is_sat calls?
+
+(==tpdispatcher.ml#1603==)
+Omega.is_sat_ops@1
+Omega.is_sat_ops inp1 : 3<a & i=2
+Omega.is_sat_ops@1 EXIT:true
+
+(==tpdispatcher.ml#1603==)
+Omega.is_sat_ops@2
+Omega.is_sat_ops inp1 : a=4
+Omega.is_sat_ops@2 EXIT:true
+
+(==tpdispatcher.ml#1603==)
+Omega.is_sat_ops@3
+Omega.is_sat_ops inp1 : 3<a & a=4
+Omega.is_sat_ops@3 EXIT:true
+
+(==tpdispatcher.ml#1603==)
+Omega.is_sat_ops@4
+Omega.is_sat_ops inp1 : 3<a & a!=4
+Omega.is_sat_ops@4 EXIT:true
+
+(==tpdispatcher.ml#1603==)
+Omega.is_sat_ops@5
+Omega.is_sat_ops inp1 : a=4
+Omega.is_sat_ops@5 EXIT:true
+
+(==tpdispatcher.ml#1603==)
+Omega.is_sat_ops@6
+Omega.is_sat_ops inp1 : 3<a & a=4
+Omega.is_sat_ops@6 EXIT:true
+
+(==tpdispatcher.ml#1603==)
+Omega.is_sat_ops@7
+Omega.is_sat_ops inp1 : 3<a & a!=4
+Omega.is_sat_ops@7 EXIT:true
+
+*/

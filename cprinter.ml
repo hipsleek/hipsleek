@@ -206,12 +206,12 @@ let pr_list_open_sep (f_open:unit -> unit)
   | [] -> f_empty()
   | xs -> f_open(); (helper xs); f_close()
 
-let pr_list_open_sep (f_open:unit -> unit)
-    (f_close:unit -> unit) (f_sep:unit->unit) (f_empty:unit->unit)
-    (f_elem:'a -> unit) (xs:'a list) : unit =
-  Debug.no_1 "pr_list_open_sep" string_of_int (fun _ -> "?") (fun _ -> pr_list_open_sep  (f_open:unit -> unit)
-                                                                 (f_close:unit -> unit) (f_sep:unit->unit) (f_empty:unit->unit)
-                                                                 (f_elem:'a -> unit) xs) (List.length xs)
+(* let pr_list_open_sep (f_open:unit -> unit) *)
+(*     (f_close:unit -> unit) (f_sep:unit->unit) (f_empty:unit->unit) *)
+(*     (f_elem:'a -> unit) (xs:'a list) : unit = *)
+(*   Debug.no_1 "pr_list_open_sep" string_of_int (fun _ -> "?") (fun _ -> pr_list_open_sep  (f_open:unit -> unit) *)
+(*                                                                  (f_close:unit -> unit) (f_sep:unit->unit) (f_empty:unit->unit) *)
+(*                                                                  (f_elem:'a -> unit) xs) (List.length xs) *)
 
 (** @param sep = "SAB"-space-cut-after-before,"SA"-space cut-after,"SB" -space-before 
     "AB"-cut-after-before,"A"-cut-after,"B"-cut-before, "S"-space, "" no-cut, no-space*)
@@ -360,9 +360,9 @@ let pr_wrap_test_nocut hdr (e:'a -> bool) (f: 'a -> unit) (x:'a) =
 
 
 (** print hdr , a cut and a boxed  f a  *)  
-let pr_vwrap_naive_nocut hdr (f: 'a -> unit) (x:'a) =
+let pr_vwrap_naive_nocut ?(nshort=true) hdr (f: 'a -> unit) (x:'a) =
   begin
-    fmt_string (hdr); fmt_cut();
+    if nshort then (fmt_string (hdr); fmt_cut());
     wrap_box ("B",2) f  x
   end
 
@@ -459,7 +459,9 @@ let pr_seq op f xs = pr_args None (Some "A") op "[" "]" "; " f xs
 let pr_seq_ln op f xs = pr_args None (Some "A") op "[" "]" ";\n " f xs
 
 (** print a sequence with cut after separator in a VBOX*)    
-let pr_seq_vbox op f xs = pr_args (Some ("V",1)) (Some "A") op "[" "]" ";" f xs
+let pr_seq_vbox ?(nshort=true) op f xs = 
+  if nshort then pr_args (Some ("V",1)) (Some "A") op "[" "]" ";" f xs
+  else pr_args (Some ("H",1)) None op "[" "]" ";" f xs
 
 (** print a sequence without cut and box *)    
 let pr_seq_nocut op f xs = pr_args None None op "[" "]" ";" f xs
@@ -497,7 +499,7 @@ let pr_list_op_none sep f xs = pr_args None (Some "B") "" "" "" sep f xs
 let pr_list_vbox_wrap sep f xs =
   if (String.length sep > 3) then
     pr_args (Some ("V",0)) (Some "AB") "" "" "" sep
-      (fun x -> fmt_string " "; wrap_box ("B",0) f x) xs
+        (fun x -> fmt_string " "; wrap_box ("B",0) f x) xs
   else   pr_args (Some ("V",0)) (Some "B") "" "" "" sep (wrap_box ("B",0) f) xs
 
 (**print f_1 op  f_2 and a space *)   
@@ -558,17 +560,18 @@ let string_of_ho_var (fk,x,sk) =
   match x with
   | P.SpecVar (t, id, p) -> (string_of_ho_flow_kind fk) ^ id ^ (match p with | Primed -> "'" | Unprimed -> "" ) ^ ":" ^ ((string_of_typ t)) ^ (string_of_ho_split_kind sk)
 
-let string_of_spec_var x = 
+let string_of_spec_var x =
+  CP.string_of_spec_var ~print_typ:!print_type x
   (* string_of_typed_spec_var x *)
-  match x with
-  | P.SpecVar (t, id, p) ->
-    (* An Hoa : handle printing of holes *)
-    let ts = if !print_type then ":"^(string_of_typ t) else "" in
-    (* let real_id = if (id.[0] = '#') then "#" else id *)
-    (* in  *)
-    (id ^(match p with
-         | Primed -> "'"
-         | Unprimed -> "" )^ts)
+  (* match x with *)
+  (* | P.SpecVar (t, id, p) -> *)
+  (*   (\* An Hoa : handle printing of holes *\) *)
+  (*   let ts = if !print_type then ":"^(string_of_typ t) else "" in *)
+  (*   (\* let real_id = if (id.[0] = '#') then "#" else id *\) *)
+  (*   (\* in  *\) *)
+  (*   (id ^(match p with *)
+  (*        | Primed -> "##'" *)
+  (*        | Unprimed -> "" )^ts) *)
 
 let string_of_spec_var_list xs =
   "["^(String.concat "," (List.map (string_of_spec_var) xs))^"]"
@@ -1011,10 +1014,13 @@ let rec pr_b_formula (e:P.b_formula) =
   | P.ListNotIn (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <Lnotin> "  (fun ()-> pr_formula_exp e2)
   | P.ListAllN (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <allN> "  (fun ()-> pr_formula_exp e2)
   | P.ListPerm (e1, e2, l) -> pr_op_adhoc (fun ()->pr_formula_exp e1) " <perm> "  (fun ()-> pr_formula_exp e2)
-  | P.RelForm (r, args, l) -> fmt_string ((string_of_spec_var r) ^ "("); match args with
+  | P.RelForm (r, args, l) -> fmt_string ((string_of_spec_var r) ^ "(");
+    match args with
     | [] -> fmt_string ")"
-    | arg_first::arg_rest -> let () = pr_formula_exp arg_first in 
-      let todo_unk = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")" (* An Hoa *) 
+    | arg_first::arg_rest -> 
+      let () = pr_formula_exp arg_first in 
+      let todo_unk = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in 
+      fmt_string ")" (* An Hoa *) 
 
 (** print a pure formula to formatter *)
 and pr_pure_formula  (e:P.formula) = 
@@ -1052,8 +1058,8 @@ and pr_term_ann_debug pr_short ann =
   | P.Term -> fmt_string "Term"
   | P.Loop cex -> fmt_string "Loop"; pr_term_cex cex
   | P.MayLoop cex -> fmt_string "MayLoop"; pr_term_cex cex
-  | P.TermU uid -> fmt_string "TermU"; pr_term_id pr_short uid
-  | P.TermR uid -> fmt_string "TermR"; pr_term_id pr_short uid
+  | P.TermU uid -> fmt_string ("TermU["^uid.P.tu_sid^"]"); pr_term_id pr_short uid
+  | P.TermR uid -> fmt_string ("TermR["^uid.P.tu_sid^"]"); pr_term_id pr_short uid
   | P.Fail f -> match f with
     | P.TermErr_May -> fmt_string "TermErr_May"
     | P.TermErr_Must -> fmt_string "TermErr_Must"
@@ -1064,7 +1070,7 @@ and pr_term_id pr_short uid =
   pr_pure_formula uid.P.tu_cond; 
   fmt_string ","; pr_pure_formula uid.P.tu_icond; 
   fmt_string "}";
-  pr_args "" pr_formula_exp uid.P.tu_args;
+  let () = pr_args "" pr_formula_exp uid.P.tu_args in
   if pr_short then () 
   else 
     pr_wrap_test "#" Gen.is_None (pr_opt_silent (fun (s, ls) ->
@@ -1078,7 +1084,7 @@ and pr_term_ann_assume ann =
   | P.TermU uid 
   | P.TermR uid ->
     let pr_args op f xs = pr_args None None op "(" ")" "," f xs in
-    fmt_string (uid.P.tu_sid ^ "_" ^ (string_of_int uid.P.tu_id));
+    fmt_string (uid.P.tu_sid ^ "{" ^ (string_of_int uid.P.tu_id)^"}");
     pr_args "" pr_formula_exp uid.P.tu_args
   | P.Fail f -> match f with
     | P.TermErr_May -> fmt_string "TermErr_May"
@@ -1086,10 +1092,15 @@ and pr_term_ann_assume ann =
 
 and pr_term_cex cex = 
   pr_wrap_test "" Gen.is_None (pr_opt_silent (fun cex ->
-      pr_set (fun pos -> fmt_string (string_of_pos pos)) cex.P.tcex_trace)) cex
+      pr_set (fun cmd -> pr_tcex_cmd cmd) cex.P.tcex_trace)) cex
+
+and pr_tcex_cmd cmd = 
+  match cmd with
+  | P.TAssume c -> (fmt_string "assume "; pr_pure_formula c)
+  | P.TCall pos -> fmt_string ("call" ^ (string_of_pos pos))
 
 and pr_term_ann debug ann =
-  if debug then pr_term_ann_debug false ann
+  if !Debug.debug_print then pr_term_ann_debug false ann
   else pr_term_ann_assume ann
 
 and pr_var_measures (t_ann, ls1, ls2) = 
@@ -2663,6 +2674,17 @@ let string_of_rel_decl reldecl =
   let args = pr_lst ", " pr_arg reldecl.Cast.rel_vars in
   decl_kind ^ name ^ "(" ^ args ^ ").\n"
 
+let string_of_ut_decl ut_decl =
+  let name = ut_decl.Cast.ut_name in
+  let pr_arg arg =
+    let t = CP.type_of_spec_var arg in
+    let arg_name = string_of_spec_var arg in
+    (CP.name_of_type t)  ^ " " ^ arg_name
+  in
+  let decl_kind = (" UT" ^ (if ut_decl.ut_is_pre then "Pre" else "Post") ^ " ") in
+  let args = pr_lst ", " pr_arg ut_decl.Cast.ut_params in
+  decl_kind ^ name ^ "(" ^ args ^ ").\n"
+
 let string_of_hp_rels (e) : string =
   (* CP.print_only_lhs_rhs e *)
   poly_string_of_pr pr_hp_rel e
@@ -2850,6 +2872,12 @@ let pr_turel_debug (ctx, lhs_turel, rhs_turel) =
   fmt_close ()
 
 let string_of_turel_debug = poly_string_of_pr pr_turel_debug
+
+let print_tntrel = function
+  | Tid.Ret rrel -> fmt_string "@Return: "; pr_trrel_assume (rrel.ret_ctx, rrel.termr_lhs, rrel.termr_rhs)
+  | Tid.Call crel -> fmt_string "@Call: "; pr_turel_assume (crel.call_ctx, crel.termu_lhs, crel.termu_rhs)
+
+let string_of_tntrel = poly_string_of_pr print_tntrel
 
 let pr_path_of (path, off, oflow)=
   (* fmt_string "PATH format"; *)
@@ -3549,75 +3577,84 @@ let pr_failure_cex cex=
 
 let string_of_failure_cex cex=  poly_string_of_pr pr_failure_cex cex
 
-let pr_estate (es : entail_state) =
+let pr_estate ?(nshort=true) (es : entail_state) =
   fmt_open_vbox 0;
-  pr_vwrap_nocut "es_formula: " pr_formula  es.es_formula; 
-  pr_wrap_test "es_pure: " MCP.isConstMTrue pr_mix_formula es.es_pure;
-  pr_wrap_test "es_orig_ante: " Gen.is_None (pr_opt pr_formula) es.es_orig_ante; 
-  (*pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq;  *)
-  if (!Debug.devel_debug_print_orig_conseq == true) then pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq  else ();
-  pr_wrap_test "es_heap: " is_empty_heap pr_h_formula es.es_heap;
-  pr_wrap_test "es_history: " Gen.is_empty (pr_seq "" pr_h_formula) es.es_history;
+  pr_vwrap_nocut (* "es_formula: " *) "" pr_formula  es.es_formula; 
   pr_wrap_test "es_ho_vars_map: " Gen.is_empty  (pr_seq "" (pr_map_aux pr_spec_var pr_formula)) (es.es_ho_vars_map);
-  (*pr_wrap_test "es_prior_steps: "  Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.es_prior_steps;*)
-  (* pr_wrap_test "es_ante_evars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_ante_evars; *)
-  pr_wrap_test "es_ivars: "  Gen.is_empty (pr_seq "" pr_spec_var) es.es_ivars;
-  pr_wrap_test "es_infer_obj: "  (fun o -> o # is_empty) (fun o -> fmt_string (o # string_of)) es.es_infer_obj;
-  (* pr_wrap_test "es_expl_vars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_expl_vars; *)
-  pr_wrap_test "es_evars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_evars;
-  pr_wrap_test "es_ante_evars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_ante_evars;
-  pr_wrap_test "es_gen_expl_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_gen_expl_vars;
-  pr_wrap_test "es_gen_impl_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_gen_impl_vars; 
-  pr_wrap_test "es_rhs_eqset: " Gen.is_empty  (pr_seq "" (pr_pair_aux pr_spec_var pr_spec_var)) (es.es_rhs_eqset); 
-  pr_wrap_test "es_crt_holes: " Gen.is_empty  (pr_seq "" (pr_pair_aux pr_h_formula fmt_int)) (es.es_crt_holes); 
-  pr_wrap_test "es_subst (from): " Gen.is_empty  (pr_seq "" pr_spec_var) (fst es.es_subst); 
-  pr_wrap_test "es_subst (to): " Gen.is_empty  (pr_seq "" pr_spec_var) (snd es.es_subst); 
-  pr_wrap_test "es_aux_conseq: "  CP.isConstTrue (pr_pure_formula) es.es_aux_conseq; 
-  (* pr_wrap_test "es_imm_pure_stk: " Gen.is_empty  (pr_seq "" pr_mix_formula) es.es_imm_pure_stk; *)
-  pr_wrap_test "es_must_error: "  Gen.is_None (pr_opt (fun (s,_,cex) -> fmt_string (s ^";" ^ (string_of_failure_cex cex) ))) (es.es_must_error); 
-  (* pr_wrap_test "es_success_pts: " Gen.is_empty (pr_seq "" (fun (c1,c2)-> fmt_string "(";(pr_op pr_formula_label c1 "," c2);fmt_string ")")) es.es_success_pts; *)
-  (* pr_wrap_test "es_residue_pts: " Gen.is_empty (pr_seq "" pr_formula_label) es.es_residue_pts; *)
-  (* pr_wrap_test "es_path_label: " Gen.is_empty pr_path_trace es.es_path_label; *)
-  pr_wrap_test "es_cond_path: " Gen.is_empty (pr_seq "" (fun s -> fmt_int s)) es.es_cond_path;
-  pr_wrap_test "es_var_measures 1: " Gen.is_None (pr_opt (fun (t_ann, l1, l2) ->
-      pr_term_ann false t_ann; pr_seq "" pr_formula_exp l1; 
-      pr_set pr_formula_exp l2;)) es.es_var_measures;
-  pr_wrap_test "es_term_res_lhs: " Gen.is_empty (pr_seq "" (pr_term_ann false)) es.es_term_res_lhs;
-  pr_wrap_test "es_var_stack: " Gen.is_empty (pr_seq "" (fun s -> fmt_string s)) es.es_var_stack;
-  pr_wrap_test "es_term_err: " Gen.is_None (pr_opt (fun msg -> fmt_string msg)) (es.es_term_err);
   pr_wrap_test "es_conc_err: " Gen.is_empty (pr_seq "" (fun (msg, pos) -> fmt_string (msg ^ ":" ^ (string_of_pos pos)))) es.es_conc_err;
-  (*
-  pr_vwrap "es_var_label: " (fun l -> fmt_string (match l with
-                                                    | None -> "None"
-                                                    | Some i -> string_of_int i)) es.es_var_label;
-  *)
-  if es.es_trace!=[] then
-    pr_vwrap "es_trace: " pr_es_trace es.es_trace;
-  if es.es_is_normalizing then
-    pr_vwrap "es_is_normalizing: " fmt_bool es.es_is_normalizing;
-  (*
-  pr_vwrap "es_var_ctx_lhs: " pr_pure_formula es.es_var_ctx_lhs;
-  pr_vwrap "es_var_ctx_rhs: " pr_pure_formula es.es_var_ctx_rhs;
-  pr_vwrap "es_var_loc: " (fun pos -> fmt_string (string_of_pos pos)) es.es_var_loc;
-  *)
-  pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars;
-  (* pr_wrap_test "es_infer_vars_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars_rel; *)
-  pr_vwrap "es_infer_vars_rel: "   (pr_seq "" pr_spec_var) es.es_infer_vars_rel;
-  pr_wrap_test "es_infer_vars_templ: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars_templ;
-  pr_wrap_test "es_infer_vars_hp_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars_hp_rel;
-  (*  pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;*)
-  pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) es.es_infer_heap;
-  pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) es.es_infer_templ_assume;
-  pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pure; 
-  pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es.es_infer_hp_rel; 
-  pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) es.es_infer_rel; 
-  (* pr_wrap_test "es_infer_pures: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pures;  *)
-  (* pr_wrap_test "es_infer_invs: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_invs;  *)
-  if (es.es_var_zero_perm!=[]) then
-    pr_wrap_test "es_var_zero_perm: " (fun _ -> false) (pr_seq "" pr_spec_var) es.es_var_zero_perm; (*always print*)
-  (* pr_vwrap "es_infer_invs:  " pr_list_pure_formula es.es_infer_invs; *)
-  pr_wrap_test "es_unsat_flag: " (fun x-> x) (fun c-> fmt_string (string_of_bool c)) es.es_unsat_flag;  
-  pr_wrap_test "es_proof_traces: " Gen.is_empty  (pr_seq "" (pr_pair_aux prtt_pr_formula pr_formula)) es.es_proof_traces;
+  pr_wrap_test "es_final_error:" Gen.is_empty 
+      (pr_seq "" (fun (c,_,_) -> fmt_string c)) es.es_final_error;
+      (* (fun x -> fmt_string (pr_list_num (fun (c,_,_) -> c) x)) es.es_final_error; *)
+  if nshort then
+    begin
+      pr_wrap_test "es_must_error: "  Gen.is_None (pr_opt (fun (s,_,cex) -> fmt_string (s ^";" ^ (string_of_failure_cex cex) ))) (es.es_must_error); 
+      pr_wrap_test "es_may_error: "  Gen.is_None (pr_opt (fun (s,_,cex) -> fmt_string (s ^";" ^ (string_of_failure_cex cex) ))) (es.es_may_error); 
+      pr_wrap_test "es_pure: " MCP.isConstMTrue pr_mix_formula es.es_pure;
+      pr_wrap_test "es_orig_ante: " Gen.is_None (pr_opt pr_formula) es.es_orig_ante; 
+      (*pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq;  *)
+      if (!Debug.devel_debug_print_orig_conseq == true) then pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq  else ();
+      pr_wrap_test "es_heap: " is_empty_heap pr_h_formula es.es_heap;
+      (* pr_wrap_test "es_history: " Gen.is_empty (pr_seq "" pr_h_formula) es.es_history; *)
+      (*pr_wrap_test "es_prior_steps: "  Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.es_prior_steps;*)
+      (* pr_wrap_test "es_ante_evars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_ante_evars; *)
+      pr_wrap_test "es_ivars: "  Gen.is_empty (pr_seq "" pr_spec_var) es.es_ivars;
+      pr_wrap_test "es_infer_obj: "  (fun o -> o # is_empty) (fun o -> fmt_string (o # string_of)) es.es_infer_obj;
+      (* pr_wrap_test "es_expl_vars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_expl_vars; *)
+      pr_wrap_test "es_evars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_evars;
+      pr_wrap_test "es_ante_evars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_ante_evars;
+      pr_wrap_test "es_gen_expl_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_gen_expl_vars;
+      pr_wrap_test "es_gen_impl_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_gen_impl_vars; 
+      pr_wrap_test "es_rhs_eqset: " Gen.is_empty  (pr_seq "" (pr_pair_aux pr_spec_var pr_spec_var)) (es.es_rhs_eqset); 
+      pr_wrap_test "es_crt_holes: " Gen.is_empty  (pr_seq "" (pr_pair_aux pr_h_formula fmt_int)) (es.es_crt_holes); 
+      pr_wrap_test "es_subst (from): " Gen.is_empty  (pr_seq "" pr_spec_var) (fst es.es_subst); 
+      pr_wrap_test "es_subst (to): " Gen.is_empty  (pr_seq "" pr_spec_var) (snd es.es_subst); 
+      pr_wrap_test "es_aux_conseq: "  CP.isConstTrue (pr_pure_formula) es.es_aux_conseq; 
+      (* pr_wrap_test "es_imm_pure_stk: " Gen.is_empty  (pr_seq "" pr_mix_formula) es.es_imm_pure_stk; *)
+      (* pr_wrap_test "es_success_pts: " Gen.is_empty (pr_seq "" (fun (c1,c2)-> fmt_string "(";(pr_op pr_formula_label c1 "," c2);fmt_string ")")) es.es_success_pts; *)
+      (* pr_wrap_test "es_residue_pts: " Gen.is_empty (pr_seq "" pr_formula_label) es.es_residue_pts; *)
+      (* pr_wrap_test "es_path_label: " Gen.is_empty pr_path_trace es.es_path_label; *)
+      pr_wrap_test "es_cond_path: " Gen.is_empty (pr_seq "" (fun s -> fmt_int s)) es.es_cond_path;
+      pr_wrap_test "es_var_measures 1: " Gen.is_None (pr_opt (fun (t_ann, l1, l2) ->
+          pr_term_ann false t_ann; pr_seq "" pr_formula_exp l1; 
+          pr_set pr_formula_exp l2;)) es.es_var_measures;
+      pr_wrap_test "es_term_res_lhs: " Gen.is_empty (pr_seq "" (pr_term_ann false)) es.es_term_res_lhs;
+      pr_wrap_test "es_var_stack: " Gen.is_empty (pr_seq "" (fun s -> fmt_string s)) es.es_var_stack;
+      pr_wrap_test "es_term_err: " Gen.is_None (pr_opt (fun msg -> fmt_string msg)) (es.es_term_err);
+      (*
+        pr_vwrap "es_var_label: " (fun l -> fmt_string (match l with
+        | None -> "None"
+        | Some i -> string_of_int i)) es.es_var_label;
+      *)
+      if es.es_trace!=[] then
+        pr_vwrap "es_trace: " pr_es_trace es.es_trace;
+      if es.es_is_normalizing then
+        pr_vwrap "es_is_normalizing: " fmt_bool es.es_is_normalizing;
+      (*
+        pr_vwrap "es_var_ctx_lhs: " pr_pure_formula es.es_var_ctx_lhs;
+        pr_vwrap "es_var_ctx_rhs: " pr_pure_formula es.es_var_ctx_rhs;
+        pr_vwrap "es_var_loc: " (fun pos -> fmt_string (string_of_pos pos)) es.es_var_loc;
+      *)
+      pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars;
+      (* pr_wrap_test "es_infer_vars_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars_rel; *)
+      pr_vwrap "es_infer_vars_rel: "   (pr_seq "" pr_spec_var) es.es_infer_vars_rel;
+      pr_wrap_test "es_infer_vars_templ: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars_templ;
+      pr_wrap_test "es_infer_vars_hp_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars_hp_rel;
+      (*  pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;*)
+      pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) es.es_infer_heap;
+      pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) es.es_infer_templ_assume;
+      pr_wrap_test "es_infer_term_rel: " Gen.is_empty  (pr_seq "" print_tntrel) es.es_infer_term_rel; 
+      pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pure; 
+      pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es.es_infer_hp_rel; 
+      pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) es.es_infer_rel; 
+      (* pr_wrap_test "es_infer_pures: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pures;  *)
+      (* pr_wrap_test "es_infer_invs: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_invs;  *)
+      if (es.es_var_zero_perm!=[]) then
+        pr_wrap_test "es_var_zero_perm: " (fun _ -> false) (pr_seq "" pr_spec_var) es.es_var_zero_perm; (*always print*)
+      (* pr_vwrap "es_infer_invs:  " pr_list_pure_formula es.es_infer_invs; *)
+      pr_wrap_test "es_unsat_flag: " (fun x-> x) (fun c-> fmt_string (string_of_bool c)) es.es_unsat_flag;  
+      pr_wrap_test "es_proof_traces: " Gen.is_empty  (pr_seq "" (pr_pair_aux prtt_pr_formula pr_formula)) es.es_proof_traces;
+      (* pr_vwrap "es_final_error: " fmt_string  (match es.es_final_error with | Some (s,_,_) -> "Some " ^ s | None -> "None"); *)
+    end;
   fmt_close ()
 
 let pr_estate_infer_hp (es : entail_state) =
@@ -3626,6 +3663,7 @@ let pr_estate_infer_hp (es : entail_state) =
   pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars;
   pr_wrap_test "es_infer_vars_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars_rel;
   pr_wrap_test "es_infer_templ: " Gen.is_empty  (pr_seq "" pr_formula_exp) es.es_infer_templ;
+  pr_wrap_test "es_infer_term_rel: " Gen.is_empty  (pr_seq "" print_tntrel) es.es_infer_term_rel; 
   pr_wrap_test "es_infer_vars_hp_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars_hp_rel;
   (*  pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;*)
   pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) es.es_infer_heap;
@@ -3691,15 +3729,65 @@ let ctx_assoc_op (e:context) : (string * context list) option =
   | OCtx (e1,e2) -> Some ("|",[e1;e2])
   | _ -> None
 
-let rec pr_context (ctx: context) =
-  let f_b e =  match e with
-    | Ctx es ->  wrap_box ("B",1) pr_estate es
-    | _ -> failwith "cannot be an OCtx"
-  in match ctx with
-  | Ctx es -> f_b ctx
-  | OCtx (c1, c2) -> 
-    let args = bin_op_to_list "|" ctx_assoc_op ctx in
-    pr_list_op_vbox "CtxOR" f_b args
+let pr_context_short (ctx : context) = 
+  let rec f xs = match xs with
+    | Ctx e -> [e]
+(* [(e.es_conc_err,e.es_ho_vars_map,e.es_formula,e.es_heap,e.es_pure,e.es_infer_vars@e.es_infer_vars_rel@e.es_infer_vars_templ,e.es_infer_templ_assume,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel, *)
+(*                  e.es_var_measures,e.es_var_zero_perm,e.es_trace,e.es_cond_path, e.es_proof_traces, e.es_ante_evars(\* , e.es_subst_ref *\), e.es_final_error)] *)
+    | OCtx (x1,x2) -> (f x1) @ (f x2) in
+  let pr (conc_err, ho_map,f,eh,ep,(* ac, *)iv,ta,ih,ip,ir,vm,vperms,trace,ecp, ptraces,evars(* , vars_ref *),exc) =
+    begin
+      fmt_open_vbox 0;
+      let f1 = Cfout.tidy_print f in
+      pr_formula_wrap f1;
+      (* if true then begin *)
+      (*     pr_formula_wrap f1; *)
+      (*     pr_wrap_test "es_heap: " (fun _ -> false)  (pr_h_formula) eh; *)
+      (*     pr_wrap_test "es_var_zero_perm: " Gen.is_empty  (pr_seq "" pr_spec_var) vperms; *)
+      (*     pr_wrap_test "es_infer_vars/rel: " Gen.is_empty  (pr_seq "" pr_spec_var) iv; *)
+      (*     (\*pr_wrap (fun _ -> fmt_string "es_aux_conseq: "; pr_pure_formula ac) ();*\) *)
+      (*     pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih;  *)
+      (*     pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip; *)
+      (*     pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) ir;   *)
+      (* pr_wrap_test "es_ho_vars_map: " (fun _ -> false) (* Gen.is_empty *)  (pr_seq "" (fun (sv,f) -> pr_spec_var sv; pr_formula f)) ho_map; *)
+      pr_wrap_test "es_ho_vars_map: " Gen.is_empty (pr_seq "" (pr_map_aux pr_spec_var pr_formula)) ho_map;
+      pr_wrap_test "es_conc_err: " Gen.is_empty (pr_seq "" (fun (msg, pos) -> fmt_string (msg ^ ":" ^ (string_of_pos pos)))) conc_err;
+      (* pr_wrap_test "vperm_sets:" (fun _ -> not (!Globals.ann_vp)) (fun vps -> pr_vperm_sets vps) vps; *)
+      (*     (\* pr_vwrap "es_trace: " pr_es_trace trace; *\) *)
+
+      (* pr_vwrap "es_trace: " pr_es_trace trace; *)
+      (*     pr_wrap_test "es_proof_traces: " Gen.is_empty (pr_seq "" (pr_pair_aux pr_formula pr_formula)) ptraces; *)
+      (* 	pr_wrap_test "es_ante_evars: " Gen.is_empty (pr_seq "" pr_spec_var) evars; *)
+      (*         pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es_infer_hp_rel; *)
+      (* end *)
+      (*   else begin *)
+      (* prtt_pr_formula_wrap f1 ; *)
+      (* pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es_infer_hp_rel; *)
+      (* end *)
+      pr_wrap_test "es_final_error:" Gen.is_empty 
+          (pr_seq "" (fun (c,_,_) -> fmt_string c)) exc;
+      (* pr_wrap_test "es_final_error:" (fun x -> x==None) (fun x -> match x with Some (c,_,_) -> fmt_string c | None -> ()) exc; *)
+      fmt_string "\n";
+      fmt_close_box();
+    end
+  in 
+  let pr e = pr_estate ~nshort:false e in
+  let pr_disj ls = 
+    if (List.length ls == 1) then pr (List.hd ls)
+    else pr_seq "or" pr ls in
+  (pr_disj (f ctx))
+
+let rec pr_context ?(nshort=true) (ctx: context) =
+  if nshort then
+    let f_b e =  match e with
+      | Ctx es ->  wrap_box ("B",1) pr_estate es
+      | _ -> failwith "cannot be an OCtx"
+    in match ctx with
+    | Ctx es -> f_b ctx
+    | OCtx (c1, c2) -> 
+      let args = bin_op_to_list "|" ctx_assoc_op ctx in
+      pr_list_op_vbox "CtxOR" f_b args
+  else pr_context_short ctx
 
 let string_of_context (ctx: context): string =  poly_string_of_pr  pr_context ctx
 let printer_of_context (fmt: Format.formatter) (ctx: context) : unit = poly_printer_of_pr fmt pr_context ctx
@@ -3754,62 +3842,27 @@ let printer_of_fail_type (fmt: Format.formatter) (e:fail_type) : unit =
 
 let pr_list_context (ctx:list_context) =
   match ctx with
-  | FailCtx (ft ,_,cex) -> fmt_cut ();fmt_string "MaybeErr Context: "; 
-    (* (match ft with *)
-    (*     | Basic_Reason (_, fe) -> (string_of_fail_explaining fe) (\*useful: MUST - OK*\) *)
-    (*     (\* TODO : to output must errors first *\) *)
-    (*     (\* | And_Reason (_, _, fe) -> (string_of_fail_explaining fe) *\) *)
-    (*     | _ -> fmt_string ""); *)
-    pr_fail_type ft;
-    pr_failure_cex cex;
-    fmt_cut ()
+  | FailCtx (ft ,c,cex) -> (
+      let err_header = match get_must_failure_ft ft with
+        | Some _ -> "MustErr Context: "
+        | None -> "MaybeErr Context: "
+      in
+      fmt_cut ();fmt_string err_header (* "MaybeErr Context: " *); 
+      (* (match ft with *)
+      (*     | Basic_Reason (_, fe) -> (string_of_fail_explaining fe) (\*useful: MUST - OK*\) *)
+      (*     (\* TODO : to output must errors first *\) *)
+      (*     (\* | And_Reason (_, _, fe) -> (string_of_fail_explaining fe) *\) *)
+      (*     | _ -> fmt_string ""); *)
+      pr_fail_type ft;
+      pr_context_short c;
+      pr_failure_cex cex;
+      fmt_cut ()
+    )
   | SuccCtx sc -> let str = 
     if (get_must_error_from_ctx sc)==None then "Good Context: "
     else "Error Context: " in
     fmt_cut (); fmt_string str; fmt_int (List.length sc); pr_context_list sc; fmt_cut ()
 
-let pr_context_short (ctx : context) = 
-  let rec f xs = match xs with
-    | Ctx e -> [(e.es_conc_err,e.es_ho_vars_map,e.es_formula,e.es_heap,e.es_pure,e.es_infer_vars@e.es_infer_vars_rel@e.es_infer_vars_templ,e.es_infer_templ_assume,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,
-                 e.es_var_measures,e.es_var_zero_perm,e.es_trace,e.es_cond_path, e.es_proof_traces, e.es_ante_evars(* , e.es_subst_ref *))]
-    | OCtx (x1,x2) -> (f x1) @ (f x2) in
-  let pr (conc_err, ho_map,f,eh,ep,(* ac, *)iv,ta,ih,ip,ir,vm,vperms,trace,ecp, ptraces,evars(* , vars_ref *)) =
-    begin
-      fmt_open_vbox 0;
-      let f1 = Cfout.tidy_print f in
-      pr_formula_wrap f1;
-      (* if true then begin *)
-      (*     pr_formula_wrap f1; *)
-      (*     pr_wrap_test "es_heap: " (fun _ -> false)  (pr_h_formula) eh; *)
-      (*     pr_wrap_test "es_var_zero_perm: " Gen.is_empty  (pr_seq "" pr_spec_var) vperms; *)
-      (*     pr_wrap_test "es_infer_vars/rel: " Gen.is_empty  (pr_seq "" pr_spec_var) iv; *)
-      (*     (\*pr_wrap (fun _ -> fmt_string "es_aux_conseq: "; pr_pure_formula ac) ();*\) *)
-      (*     pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih;  *)
-      (*     pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip; *)
-      (*     pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) ir;   *)
-      (* pr_wrap_test "es_ho_vars_map: " (fun _ -> false) (* Gen.is_empty *)  (pr_seq "" (fun (sv,f) -> pr_spec_var sv; pr_formula f)) ho_map; *)
-      pr_wrap_test "es_ho_vars_map: " Gen.is_empty (pr_seq "" (pr_map_aux pr_spec_var pr_formula)) ho_map;
-      pr_wrap_test "es_conc_err: " Gen.is_empty (pr_seq "" (fun (msg, pos) -> fmt_string (msg ^ ":" ^ (string_of_pos pos)))) conc_err;
-      (* pr_wrap_test "vperm_sets:" (fun _ -> not (!Globals.ann_vp)) (fun vps -> pr_vperm_sets vps) vps; *)
-      (*     (\* pr_vwrap "es_trace: " pr_es_trace trace; *\) *)
-
-      (* pr_vwrap "es_trace: " pr_es_trace trace; *)
-      (*     pr_wrap_test "es_proof_traces: " Gen.is_empty (pr_seq "" (pr_pair_aux pr_formula pr_formula)) ptraces; *)
-      (* 	pr_wrap_test "es_ante_evars: " Gen.is_empty (pr_seq "" pr_spec_var) evars; *)
-      (*         pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es_infer_hp_rel; *)
-      (* end *)
-      (*   else begin *)
-      (* prtt_pr_formula_wrap f1 ; *)
-      (* pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es_infer_hp_rel; *)
-      (* end *)
-      fmt_string "\n";
-      fmt_close_box();
-    end
-  in 
-  let pr_disj ls = 
-    if (List.length ls == 1) then pr (List.hd ls)
-    else pr_seq "or" pr ls in
-  (pr_disj (f ctx))
 
 let pr_formula_vperm (f,vp) =
   fmt_open_vbox 1;
@@ -3822,9 +3875,12 @@ let pr_formula_vperm_wrap t =
 
 let pr_context_list_short (ctx : context list) = 
   let rec f xs = match xs with
-    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel@e.es_infer_vars_templ,e.es_infer_templ_assume,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,e.es_var_zero_perm)]
+    (*    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel@e.es_infer_vars_templ,e.es_infer_templ_assume,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,e.es_var_zero_perm,e.es_final_error)]*)
+    | Ctx e -> [e]
+(* (e.es_formula,e.es_infer_vars@e.es_infer_vars_rel@e.es_infer_vars_templ,e.es_infer_templ_assume,e.es_infer_term_rel,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,e.es_var_zero_perm,e.es_final_error)] *)
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
-  let pr (f,(* ac, *)iv,ta,ih,ip,ir,vperms) =
+  (*  let pr (f,(* ac, *)iv,ta,ih,ip,ir,vperms,exc) = *)
+  let pr (f,(* ac, *)iv,ta,tr,ih,ip,ir,vperms,exc) =
     fmt_open_vbox 0;
     pr_formula_wrap f;
     pr_wrap_test "es_var_zero_perm: " Gen.is_empty  (pr_seq "" pr_spec_var) vperms;
@@ -3834,9 +3890,12 @@ let pr_context_list_short (ctx : context list) =
     pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih; 
     pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip;
     pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) ta;
+    pr_wrap_test "es_infer_term_rel: " Gen.is_empty  (pr_seq "" print_tntrel) tr; 
     pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) ir;
+    (* pr_vwrap "es_final_error: " fmt_string  (match exc with | Some (c,_,_) -> "Some " ^ c | None -> "None"); *)
     fmt_close_box();
   in 
+  let pr e = pr_estate ~nshort:false e in
   let lls = List.map f ctx in
   let pr_disj ls = 
     if (List.length ls == 1) then pr (List.hd ls)
@@ -3846,11 +3905,12 @@ let pr_context_list_short (ctx : context list) =
 
 let pr_list_context_short (ctx:list_context) =
   match ctx with
-  | FailCtx (ft,_,cex) -> (fmt_string "failctx"; pr_fail_type ft; pr_failure_cex cex)
+  | FailCtx (ft,c,cex) -> (fmt_string "failctx"; pr_fail_type ft; (* fmt_string "\nectx:"; pr_context_short c; *)pr_failure_cex cex)
   | SuccCtx sc -> (fmt_int (List.length sc); pr_context_list_short sc)
 
 let pr_entail_state_short e =
   fmt_open_vbox 1;
+  fmt_string "pr_entail_state_short";
   pr_formula_wrap e.es_formula;
   pr_wrap_test "es_heap:" (fun _ -> false)  (pr_h_formula) e.es_heap;
   pr_wrap_test "@zero:" Gen.is_empty (pr_seq "" pr_spec_var) e.es_var_zero_perm;
@@ -3863,6 +3923,7 @@ let pr_entail_state_short e =
   pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) e.es_infer_heap; 
   pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) e.es_infer_pure;
   pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) e.es_infer_templ_assume; 
+  pr_wrap_test "es_infer_term_rel: " Gen.is_empty  (pr_seq "" print_tntrel) e.es_infer_term_rel; 
   pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) e.es_infer_rel; 
   (* pr_wrap_test "es_subst_ref: " Gen.is_empty  (pr_seq "a" (pr_pair_aux pr_spec_var pr_spec_var)) e.es_subst_ref;  *)
   pr_wrap_test "es_cond_path: " Gen.is_empty (pr_seq "" (fun s -> fmt_int s)) e.es_cond_path;
@@ -3870,20 +3931,31 @@ let pr_entail_state_short e =
   (* fmt_cut(); *)
   fmt_close_box()
 
+(* let pr_entail_state_short e = *)
+(*   pr_estate ~nshort:false e *)
+
 let pr_list_context (ctx:list_context) =
   match ctx with
-  | FailCtx (ft,_,cex) -> fmt_cut ();fmt_string "MaybeErr Context: "; 
-    (* (match ft with *)
-    (*     | Basic_Reason (_, fe) -> (string_of_fail_explaining fe) (\*useful: MUST - OK*\) *)
-    (*     (\* TODO : to output must errors first *\) *)
-    (*     (\* | And_Reason (_, _, fe) -> (string_of_fail_explaining fe) *\) *)
-    (*     | _ -> fmt_string ""); *)
-    pr_fail_type ft; pr_failure_cex cex; fmt_cut ()
-  | SuccCtx sc -> let str = 
-    if (get_must_error_from_ctx sc)==None then "Good Context: "
-    else "Error Context: " in
-    fmt_cut (); fmt_string str; fmt_string "length= ";fmt_int (List.length sc);fmt_string " "; pr_context_list sc;
-    fmt_string (string_of_numbered_list_formula_trace (list_formula_trace_of_list_context ctx));
+  | FailCtx (ft,c,cex) -> (
+      let err_header = match get_must_failure_ft ft with
+        | Some _ -> "MustErr Context: "
+        | None -> "MaybeErr Context: "
+      in
+      fmt_cut ();fmt_string err_header (* "MaybeErr Context: " *); 
+      (* (match ft with *)
+      (*     | Basic_Reason (_, fe) -> (string_of_fail_explaining fe) (\*useful: MUST - OK*\) *)
+      (*     (\* TODO : to output must errors first *\) *)
+      (*     (\* | And_Reason (_, _, fe) -> (string_of_fail_explaining fe) *\) *)
+      (*     | _ -> fmt_string ""); *)
+      pr_fail_type ft; (* fmt_string "\nectx:"; pr_context_short c; *) fmt_string "\nCEX:"; pr_failure_cex cex; fmt_cut ()
+    )
+  | SuccCtx sc -> let str = "" in
+    (* if (get_must_error_from_ctx sc)==None then "Good Context: " *)
+    (* else "Error Context: " in *)
+    (* fmt_cut (); fmt_string str; fmt_string "length= ";fmt_int (List.length sc);fmt_string " ";  *)
+    fmt_cut ();
+    pr_context_list_short sc;
+    (* fmt_string (string_of_numbered_list_formula_trace (list_formula_trace_of_list_context ctx)); *)
     fmt_cut ()
 
 let string_of_context_short (ctx:context): string =  poly_string_of_pr pr_context_short ctx
@@ -3905,7 +3977,7 @@ let string_of_entail_state_short (e:entail_state):string = poly_string_of_pr pr_
 let printer_of_list_context (fmt: Format.formatter) (ctx: list_context) : unit =
   poly_printer_of_pr fmt pr_list_context ctx 
 
-let pr_esc_stack_lvl ((i,s),e) = 
+let pr_esc_stack_lvl ?(nshort=true) ((i,s),e) = 
   if (e==[]) 
   then
     begin
@@ -3918,70 +3990,79 @@ let pr_esc_stack_lvl ((i,s),e) =
     begin
       fmt_open_vbox 0;
       pr_vwrap_naive ("Try-Block:"^(string_of_int i)^":"^s^":")
-        (pr_seq_vbox "" (fun (lbl,fs,_)-> pr_vwrap_nocut "Path: " pr_path_trace lbl;
-                          pr_vwrap "State:" pr_context_short fs)) e;
+        (pr_seq_vbox ~nshort:nshort "" (fun (lbl,fs,oft)-> 
+             if nshort then pr_vwrap_nocut "Path: " pr_path_trace lbl;
+             pr_vwrap "State:" pr_context_short fs;
+             (* Loc: print exc *)
+             (* if nshort then (pr_vwrap "Exc:" fmt_string (match oft with | Some _ -> "Some" | _ -> "None")) *)
+           )) e;
       fmt_close_box ()
     end
 
 let string_of_esc_stack_lvl e  = poly_string_of_pr pr_esc_stack_lvl e
 
 (* should this include must failures? *)
-let pr_failed_states e = match e with
+let pr_failed_states ?(nshort=true) e = match e with
   | [] -> ()
   | _ ->   pr_vwrap_naive_nocut "Failed States:"
-             (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
-                               pr_vwrap "State:" pr_fail_type fs)) e
+             (pr_seq_vbox "" (fun (lbl,fs)-> 
+                  if nshort then pr_vwrap_nocut "Label: " pr_path_trace lbl;
+                  pr_vwrap "State:" pr_fail_type fs)) e
 
-let pr_successful_states e = match e with
+let pr_successful_states ?(nshort=true) e = match e with
   | [] -> ()
   | _ ->   
     pr_vwrap_naive "Successful States:"
-      (pr_seq_vbox "" (fun (lbl,fs,_)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
-                        pr_vwrap "State:" pr_context_short fs)) e
+      (pr_seq_vbox "" (fun (lbl,fs,oft)-> 
+           if nshort then (pr_vwrap_nocut "Label: " pr_path_trace lbl);
+           (if nshort then pr_vwrap else pr_vwrap_nocut) "State:" (pr_context ~nshort:nshort) fs;
+           (* Loc: print exc *)
+           if nshort then (pr_vwrap "Exc:" fmt_string (match oft with | Some _ -> "Some" | _ -> "None"))
+         )) e
 
 let is_empty_esc_state e =
   List.for_all (fun (_,lst) -> lst==[]) e
 
-let pr_esc_stack e = 
+let pr_esc_stack ?(nshort=true) e = 
   if is_empty_esc_state e then ()
   else
     begin
       fmt_open_vbox 0;
-      pr_vwrap_naive_nocut "Escaped States:"
-        (pr_seq_vbox "" pr_esc_stack_lvl) e;
+      pr_vwrap_naive_nocut ~nshort:nshort "Escaped States:"
+        (pr_seq_vbox ~nshort:nshort "" (pr_esc_stack_lvl ~nshort:nshort)) e;
       fmt_close_box ()
     end
 
+
 let string_of_esc_stack e = poly_string_of_pr pr_esc_stack e
 
-let pr_failesc_context ((l1,l2,l3): failesc_context) =
+let pr_failesc_context ?(nshort=true) ((l1,l2,l3): failesc_context) =
   fmt_open_vbox 0;
-  pr_failed_states l1;
-  pr_esc_stack l2;
-  pr_successful_states l3;
+  pr_failed_states ~nshort:nshort l1;
+  pr_esc_stack ~nshort:nshort l2;
+  pr_successful_states ~nshort:nshort l3;
   fmt_close_box ()
 
-let pr_failesc_context_short ((l1,l2,l3): failesc_context) =
-  fmt_open_vbox 0;
-  pr_successful_states l3;
-  fmt_close_box ()
 
-let pr_partial_context ((l1,l2): partial_context) =
+let pr_partial_context ?(nshort=true) ((l1,l2): partial_context) =
   fmt_open_vbox 0;
-  pr_vwrap_naive_nocut "Failed States:"
-    (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
-                      pr_vwrap "State:" pr_fail_type fs)) l1;
+  if nshort then (pr_vwrap_naive_nocut "Failed States:"
+                    (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
+                                      pr_vwrap "State:" pr_fail_type fs)) l1);
   pr_vwrap_naive "Successful States:"
-    (pr_seq_vbox "" (fun (lbl,fs,_)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
-                      pr_vwrap "State:" pr_context fs)) l2;
+    (pr_seq_vbox "" (fun (lbl,fs,oft)-> 
+         if nshort then (pr_vwrap_nocut "Label: " pr_path_trace lbl);
+         pr_vwrap "State:" (pr_context ~nshort:nshort) fs;
+         if nshort then (pr_vwrap "Exc:" fmt_string (match oft with | Some _ -> "Some" | _ -> "None"))
+       )) l2;
   fmt_close_box ()
 
-let pr_partial_context_short ((l1,l2): partial_context) =
-  fmt_open_vbox 0;
-  pr_vwrap_naive "Successful States:"
-    (pr_seq_vbox "" (fun (lbl,fs,_)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
-                      pr_vwrap "State:" pr_context_short fs)) l2;
-  fmt_close_box ()
+(* let pr_partial_context_short ((l1,l2): partial_context) = *)
+(*   fmt_open_vbox 0; *)
+(*   pr_vwrap_naive "Successful States:" *)
+(*     (pr_seq_vbox "" (fun (lbl,fs,_)-> pr_vwrap_nocut "Label: " pr_path_trace lbl; *)
+(*                       pr_vwrap "State:" pr_context_short fs)) l2; *)
+(*   fmt_close_box () *)
 
 (* let pr_partial_context ((l1,l2): partial_context) = *)
 (*   fmt_open_vbox 0; *)
@@ -3997,32 +4078,31 @@ let pr_partial_context_short ((l1,l2): partial_context) =
 
 let string_of_partial_context (ctx:partial_context): string =  poly_string_of_pr pr_partial_context ctx
 
-let string_of_partial_context_short (ctx:partial_context): string =  poly_string_of_pr pr_partial_context_short ctx
+let string_of_partial_context_short (ctx:partial_context): string =  poly_string_of_pr (pr_partial_context ~nshort:false) ctx
 
 let printer_of_partial_context (fmt: Format.formatter) (ctx: partial_context) : unit =  poly_printer_of_pr fmt pr_partial_context ctx 
 
 let string_of_failesc_context (ctx:failesc_context): string =  poly_string_of_pr pr_failesc_context ctx
 
+let string_of_failesc_context_short (ctx:failesc_context): string =  poly_string_of_pr (pr_failesc_context ~nshort:false) ctx
+
 let printer_of_failesc_context (fmt: Format.formatter) (ctx: failesc_context) : unit =
   poly_printer_of_pr fmt pr_failesc_context ctx 
 
-let pr_list_failesc_context (lc : list_failesc_context) =
+let pr_list_failesc_context ?(nshort=true) (lc : list_failesc_context) =
   fmt_string ("List of Failesc Context: "^(summary_list_failesc_context lc));
-  fmt_cut (); pr_list_none pr_failesc_context lc
+  fmt_cut (); pr_list_none (pr_failesc_context ~nshort:nshort) lc
 
-let pr_list_failesc_context_short (lc : list_failesc_context) =
-  (* fmt_string ("List of Failesc Context: "^(summary_list_failesc_context lc)); *)
-  fmt_cut (); pr_list_none pr_failesc_context_short lc
 
-let pr_list_partial_context (lc : list_partial_context) =
+let pr_list_partial_context ?(nshort=true) (lc : list_partial_context) =
   (* fmt_string ("XXXX "^(string_of_int (List.length lc)));  *)
-  fmt_string ("List of Partial Context: " ^(summary_list_partial_context lc) );
-  fmt_cut (); pr_list_none pr_partial_context lc
+  if nshort then fmt_string ("List of Partial Context: " ^(summary_list_partial_context lc) );
+  fmt_cut (); pr_list_none (pr_partial_context ~nshort:nshort) lc
 
-let pr_list_partial_context_short (lc : list_partial_context) =
-  (* fmt_string ("XXXX "^(string_of_int (List.length lc)));  *)
-  (* fmt_string ("List of Partial Context: " ^(summary_list_partial_context lc) ); *)
-  fmt_cut (); pr_list_none pr_partial_context_short lc
+(* let pr_list_partial_context_short (lc : list_partial_context) = *)
+(*   (\* fmt_string ("XXXX "^(string_of_int (List.length lc)));  *\) *)
+(*   (\* fmt_string ("List of Partial Context: " ^(summary_list_partial_context lc) ); *\) *)
+(*   fmt_cut (); pr_list_none (pr_partial_context ~nshort:false) lc *)
 
 (* let pr_list_partial_context_short (lc : list_partial_context) = *)
 (*     (\* fmt_string ("XXXX "^(string_of_int (List.length lc)));  *\) *)
@@ -4031,11 +4111,11 @@ let pr_list_partial_context_short (lc : list_partial_context) =
 
 let string_of_list_partial_context (lc: list_partial_context) =  poly_string_of_pr pr_list_partial_context lc
 
-let string_of_list_partial_context_short (lc: list_partial_context) =  poly_string_of_pr pr_list_partial_context_short lc
+let string_of_list_partial_context_short (lc: list_partial_context) =  poly_string_of_pr (pr_list_partial_context ~nshort:false) lc
 
 let string_of_list_failesc_context (lc: list_failesc_context) =  poly_string_of_pr pr_list_failesc_context lc
 
-let string_of_list_failesc_context_short (lc: list_failesc_context) =  poly_string_of_pr pr_list_failesc_context_short lc
+let string_of_list_failesc_context_short (lc: list_failesc_context) =  poly_string_of_pr (pr_list_failesc_context ~nshort:false) lc
 
 let printer_of_list_partial_context (fmt: Format.formatter) (ctx: list_partial_context) : unit =
   poly_printer_of_pr fmt pr_list_partial_context ctx 
@@ -4369,7 +4449,7 @@ let rec string_of_exp = function
   | Label l-> "LABEL! "^( (string_of_int_label_opt (fst  l.exp_label_path_id) (","^((string_of_int (snd l.exp_label_path_id))^": "^(string_of_exp l.exp_label_exp)))))
   | Java ({exp_java_code = code}) -> code
   | CheckRef _ -> ""
-  | Assert ({exp_assert_asserted_formula = f1o; exp_assert_assumed_formula = f2o; exp_assert_pos = l; exp_assert_type = t; exp_assert_path_id = pid}) -> 
+  | Assert ({exp_assert_asserted_formula = f1o; exp_assert_infer_vars = ivars; exp_assert_assumed_formula = f2o; exp_assert_pos = l; exp_assert_type = t; exp_assert_path_id = pid}) -> 
     let s = ( 
       let str1 = match (f1o, t) with
         | None, _ -> ""
@@ -4377,7 +4457,7 @@ let rec string_of_exp = function
         | Some f1, Some true -> "assert_exact " ^(string_of_control_path_id pid (":"^(string_of_struc_formula f1)))
         | Some f1, Some false -> "assert_inexact " ^(string_of_control_path_id pid (":"^(string_of_struc_formula f1))) in
       let str2 = match f2o with
-        | None -> ""
+        | None -> "infer_assume "^(string_of_spec_var_list ivars)
         | Some f2 -> "assume " ^ (string_of_formula f2) in
       str1 ^ " " ^ str2
     ) in
@@ -4697,6 +4777,8 @@ let string_of_rel_decl_list rdecls =
   String.concat "\n" (List.map string_of_rel_decl rdecls)
 (* String.concat "\n" (List.map (fun r -> "relation " ^ r.rel_name) rdecls) *)
 
+let string_of_ut_decl_list ut_decls =
+  String.concat "\n" (List.map string_of_ut_decl ut_decls)
 
 (* An Hoa : print axioms *)
 let string_of_axiom_decl_list adecls = 
@@ -4721,6 +4803,7 @@ let string_of_prog_or_branches ((prg,br):prog_or_branches) =
 let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^
                           (string_of_view_decl_list p.prog_view_decls) ^ "\n\n" ^
                           (string_of_barrier_decl_list p.prog_barrier_decls) ^ "\n\n" ^
+                          (string_of_ut_decl_list p.prog_ut_decls) ^ "\n\n" ^
                           (string_of_rel_decl_list p.prog_rel_decls) ^ "\n\n" ^
                           (string_of_axiom_decl_list p.prog_axiom_decls) ^ "\n\n" ^
                           (* WN_all_lemma - override usage? *)

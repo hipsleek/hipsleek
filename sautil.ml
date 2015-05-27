@@ -1843,7 +1843,7 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
     let hf1 = CF.drop_hnodes_hf f.CF.formula_base_heap args in
     let p = MCP.pure_of_mix f.CF.formula_base_pure in
     let diff_svl = CP.diff_svl (CP.fv p) args in
-    let p_w_quan = CP.mkExists_with_simpl TP.simplify diff_svl p None no_pos in
+    let p_w_quan = CP.mkExists_with_simpl (x_add_1 TP.simplify) diff_svl p None no_pos in
     let f1 = {f with CF.formula_base_pure = MCP.mix_of_pure p_w_quan;
                      CF.formula_base_heap = hf1;} in
     let leqs = (MCP.ptr_equations_without_null f1.CF.formula_base_pure) in
@@ -2050,7 +2050,7 @@ let split_base_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_ptrs lhsb=
     let f1 = {f with CF.formula_base_heap = hf1;} in
     let p = MCP.pure_of_mix f1.CF.formula_base_pure in
     let diff_svl = CP.diff_svl (CP.fv p) args in
-    let p_w_quan = CP.mkExists_with_simpl TP.simplify (*Omega.simplify*) diff_svl p None no_pos in
+    let p_w_quan = CP.mkExists_with_simpl (x_add_1 TP.simplify) (*Omega.simplify*) diff_svl p None no_pos in
     let f3 = {f1 with CF.formula_base_pure = MCP.mix_of_pure p_w_quan} in
     (* let leqs = (MCP.ptr_equations_without_null f1.CF.formula_base_pure) in *)
     (* let f3 = if leqs =[] then f1 else *)
@@ -2141,7 +2141,7 @@ let simp_matching_x prog lhs rhs=
         let lps = List.map (fun (sv1,sv2) -> CP.mkPtrEqn sv1 sv2 no_pos) leqs in
         let lnull_ps =  List.map (fun sv-> CP.mkNull sv no_pos) leqNulls in
         let p = CP.conj_of_list (lps@lnull_ps) no_pos in
-        let new_lhs = CF.mkAnd_pure (CF.simplify_pure_f_old (CF.Base l)) (MCP.mix_of_pure p) no_pos in
+        let new_lhs = CF.mkAnd_pure (x_add_1 CF.simplify_pure_f_old (CF.Base l)) (MCP.mix_of_pure p) no_pos in
         (true,new_lhs)
       else
         (false,lhs)
@@ -4904,7 +4904,7 @@ let norm_unfold_seg_x prog hp0 r other_args unk_hps ofl defs_wg=
     let rem_args = (CP.diff_svl other_args cont_args) in
     let seg_fs_wg,cont_fs  = List.fold_left (fun (segs, cont_fs) (base, og) ->
         let seg_f,cont_f = segmentation_on_base_cases rem_args cont_args fr_root (CF.subst sst base) in
-        let seg_f1 =  CF.simplify_pure_f_old (CF.mkAnd_pure seg_f (MCP.mix_of_pure link_p) no_pos) in
+        let seg_f1 =  x_add_1 CF.simplify_pure_f_old (CF.mkAnd_pure seg_f (MCP.mix_of_pure link_p) no_pos) in
         (segs@[((seg_f1,og))], cont_fs@[cont_f])
       ) ([],[]) base_fs_wg in
     if List.for_all (fun f -> not (CF.isConstTrueFormula f)) cont_fs then
@@ -5076,7 +5076,7 @@ let get_sharing_multiple new_h_preds dnss eqNulls eqPures hprels =
   (*common pure process*)
   let common_pures = CP.conj_of_list eqPures no_pos in
   let orig_def2 = CF.mkAnd_pure orig_def1 (MCP.mix_of_pure common_pures) no_pos in
-  let orig_def3 = CF.simplify_pure_f_old orig_def2 in
+  let orig_def3 = x_add_1 CF.simplify_pure_f_old orig_def2 in
   (orig_def3, orig_defs_h)
 
 let mk_orig_hprel_def prog is_pre cdefs unk_hps hp r other_args args sh_ldns eqNulls eqPures hprels unk_svl quans=

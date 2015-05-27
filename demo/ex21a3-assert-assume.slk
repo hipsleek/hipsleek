@@ -1,0 +1,15 @@
+
+infer [] x'=x |- x'<=5.
+print residue.
+  /*
+Residue:
+ 
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message:  true |-  x'<=5. LOCS:[2] (may-bug)
+                             fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}}
+[[empty]]
+CEX:false
+  */

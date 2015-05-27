@@ -1,0 +1,8 @@
+relation PP(int x).
+UTPre@f fpreXXX(int x).
+UTPost@f fpostXXX(int x).
+
+infer [@term] x>3 & y=4 & fpreXXX(x) |- fpostXXX(x).
+print residue.
+
+term_infer.

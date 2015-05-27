@@ -1,0 +1,73 @@
+
+
+slk_simplify x+1>0 & !b.
+
+/*
+# ex20.slk
+
+slk_simplify x+1>0 & !b.
+
+Simplify  (1): b:boolean<=0 & 0<=x:int
+
+# why is this not used?
+
+(==omega.ml#937==)
+Omega.trans_bool@1
+Omega.trans_bool inp1 : b:boolean<=0 & 0<=x:int
+Omega.trans_bool@1 EXIT: !(b:boolean) & 0<=x:int
+Simplify  (1): b:boolean<=0 & 0<=x:int
+
+# Type preservation done here:
+
+(==omega.ml#937==)
+Omega:send_and_receive@1
+Omega:send_and_receive inp1 :{[x, b] : (((0 < 1 + x) &  (not ((b > 0))) ))};
+
+Omega:send_and_receive inp2 :10.
+Omega:send_and_receive@1 EXIT:([ x:int, b:boolean], b:boolean<=0 & 0<=x:int)
+
+(==cpure.ml#6342==)
+Omega:send_and_receive@2
+Omega:send_and_receive inp1 :pairwisecheck {[b, x] : (( (not ((b > 0)))  & (0 <= x)))};
+
+Omega:send_and_receive inp2 :10.
+Omega:send_and_receive@2 EXIT:([ b:boolean, x:int], b:boolean<=0 & 0<=x:int)
+Simplify  (1): b:boolean<=0 & 0<=x:int
+
+
+
+(==omega.ml#937==)
+Omega.simplify_ops@7@6@5@4
+Omega.simplify_ops inp1 : 0<(1+x:int) & !(b:boolean)
+Omega.simplify_ops@7 EXIT: !(b:boolean) & 0<=x:int
+
+(==smtsolver.ml#1255==)
+Omega.simplify@6@5@4
+Omega.simplify inp1 : 0<(1+x:int) & !(b:boolean)
+Omega.simplify@6 EXIT: !(b:boolean) & 0<=x:int
+
+(====)
+simplify@5@4
+simplify inp1 : 0<(1+x:int) & !(b:boolean)
+simplify@5 EXIT: !(b:boolean) & 0<=x:int
+
+%%% simplify@5.
+%%%  Omega.simplify@6.
+%%%   memoise_rel_formula
+%%%    memoise_formula_ho
+%%%   Omega.simplify_ops@7.
+%%%    b_apply_subs
+%%%    b_apply_subs
+%%%    omega_of_formula
+%%%    Omega:send_and_receive
+%%%     maybe_raise_timeout
+%%%      build_relation
+%%%      build_relation
+%%%    match_vars
+%%%    b_apply_subs
+%%%    b_apply_subs
+%%%    Omega.trans_bool
+%%%     transform_formula
+%%%      mkNot
+
+*/

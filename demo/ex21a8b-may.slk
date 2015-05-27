@@ -1,0 +1,20 @@
+data cell {
+ int val;
+}.
+
+infer [@err_may] x=null |- x::cell<_>.
+print residue.
+expect Fail_May.
+
+infer [@err_must] x=null |- x::cell<_>.
+print residue.
+expect Fail_Must.
+
+
+infer [@err_must] true |- x::cell<_>.
+print residue.
+expect Fail_May.
+
+infer [@err_may] true |- x::cell<_>.
+print residue.
+expect Fail_May.

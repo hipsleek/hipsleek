@@ -1479,11 +1479,11 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
          let compatible_values2 = List.filter (fun (c,_) ->
              let after_sbst_guard = CP.subst sublist2 c in		
              let r,_,_ =  
-               TP.imply_one 101 pure_p after_sbst_guard "ramify_imply" false None in r) case_and_values2 in
+               x_add TP.imply_one 101 pure_p after_sbst_guard "ramify_imply" false None in r) case_and_values2 in
          let compatible_cases2 = List.filter (fun (c,_) ->
              let after_sbst_guard = CP.subst sublist2 c in		
              let r,_,_ =  
-               TP.imply_one 12 pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts2 in
+               x_add TP.imply_one 12 pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts2 in
          (match h1 with
           | CF.ViewNode {CF.h_formula_view_node = vn1;
                          CF.h_formula_view_arguments = vargs1} -> 
@@ -1493,11 +1493,11 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
             let compatible_values1 = List.filter (fun (c,_) ->
                 let after_sbst_guard = CP.subst sublist1 c in		
                 let r,_,_ =
-                  TP.imply_one 102 pure_p after_sbst_guard "ramify_imply" false None in r) case_and_values1 in
+                  x_add TP.imply_one 102 pure_p after_sbst_guard "ramify_imply" false None in r) case_and_values1 in
             let compatible_cases1 = List.filter (fun (c,_) ->
                 let after_sbst_guard = CP.subst sublist1 c in		
                 let r,_,_ =
-                  TP.imply_one 13 pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts1 in
+                  x_add TP.imply_one 13 pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts1 in
             let field_names = List.map (fun (_,(id,_)) -> id ) compatible_cases1 in
             let field_names_no_dup = remove_dups field_names in
             if List.exists (fun (_,(id,_)) -> (List.mem id field_names_no_dup)) compatible_cases2 
@@ -1593,11 +1593,11 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
             let compatible_values = List.filter (fun (c,_) ->
                 let after_sbst_guard = CP.subst sublist c in		
                 let r,_,_ =
-                  TP.imply_one 103 pure_p after_sbst_guard "ramify_imply" false None in r) case_and_values in
+                  x_add TP.imply_one 103 pure_p after_sbst_guard "ramify_imply" false None in r) case_and_values in
             let compatible_cases = List.filter (fun (c,_) ->
                 let after_sbst_guard = CP.subst sublist c in		
                 let r,_,_ =
-                  TP.imply_one 14 pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts in
+                  x_add TP.imply_one 14 pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts in
             if List.exists (fun (_,(id,_)) -> (String.compare id dn == 0)) compatible_cases
             then (if List.exists (fun (_,(id,al)) -> 
                 (is_same_field_layout paimm al)) compatible_cases
@@ -1683,13 +1683,13 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
             let r,_,_ =  
               (*let () = print_string("\nPure :"^(string_of_pure_formula pure_p)^"\n") in
                 		       	let () = print_string("Case :"^(string_of_pure_formula after_sbst_guard)^"\n") in*)
-              TP.imply_one 104 pure_p after_sbst_guard "ramify_imply" false None in r) case_and_values in
+              x_add TP.imply_one 104 pure_p after_sbst_guard "ramify_imply" false None in r) case_and_values in
         let compatible_cases = List.filter (fun (c,_) ->
             let after_sbst_guard = CP.subst sublist c in		
             let r,_,_ =  
               (*let () = print_string("\nPure :"^(string_of_pure_formula pure_p)^"\n") in
                 		       	let () = print_string("Case :"^(string_of_pure_formula after_sbst_guard)^"\n") in*)
-              TP.imply_one 15 pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts in
+              x_add TP.imply_one 15 pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts in
         (match h1 with
          | CF.DataNode { CF.h_formula_data_name = dn;
                          CF.h_formula_data_arguments = da;

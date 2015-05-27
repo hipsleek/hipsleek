@@ -25,15 +25,30 @@ int id(int x)
   return id(x-1) + 1;
 }
 
+/*
 void main()
-/*@
   requires true
   ensures true;
-*/
+
 {
   int input = __nondet_int();
   int result = id(input);
   if (result == 3) {
     __error();
   }
+}
+*/
+
+void main(int input)
+/*@
+  requires input=3
+  ensures true & flow __Error;
+*/
+{
+  // int input = __nondet_int();
+  int result = id(input);
+  if (result == 3) {
+    __error();
+  }
+  // dprint;
 }

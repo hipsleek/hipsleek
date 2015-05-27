@@ -5,9 +5,13 @@ void __error()
 */;
 
 int sum(int n, int m)
-/*@
+/*
   requires true
   ensures res=n+m;
+*/
+/*@ infer[@pre_n,@post_n]
+  requires true
+  ensures true;
 */
 {
     if (n <= 0) {

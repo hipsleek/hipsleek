@@ -815,7 +815,7 @@ let imply_with_check (ante : Cpure.formula) (conseq : Cpure.formula) (imp_no : s
 let simplify (f: Cpure.formula) : Cpure.formula =
   (* debug *)
   (* let () = print_endline "** In function minisat.simplify" in *)
-  try (Omega.simplify f) with _ -> f
+  try (x_add_1 Omega.simplify f) with _ -> f
 
 let simplify (pe : Cpure.formula) : Cpure.formula =
   match (Cpure.do_with_check "" simplify pe) with

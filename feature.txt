@@ -1,0 +1,93 @@
+--dd-calls
+
+This feature give you a summary of the debugged calls:
+ (i) number of times they are called
+ (ii) number of instances of recursive invocation
+
+DEBUGGED CALLS
+==============
+[(smt_of_formula,84),
+(purge_mult,72),
+(elim_exists,71),
+(cnv_ptr_to_int,62),
+(merge_mems ,60),
+(CP.norm_exp,50),
+(get_concrete_bag_pure,50),
+(b_apply_subs,48),
+(pure_mkOr,47),
+(is_ptr_ctr,42),
+(formula_of_tree,42),
+(norm_disj,42),
+(cnv_int_to_ptr,42),
+(norm_pure_input,42),
+(isAnyConstFalse,42),
+(norm_pure_result,42),
+(norm_disj_tree,42),
+(split_sums,36),
+(simp_mult,34),
+(h_formula_2_mem,34),
+(h_fv_node,34),
+(smt_of_typ,31),
+(apply_concrete_bag_pure,30),
+(mix_of_pure,30),
+(concretize_bag_pure,30),
+(translate_tup2_pure,30),
+(simplify-syn,26),
+(norm_var_name,26),
+(new_translate_out_array_in_one_formula_split,26),
+(is_sat_mem_formula,24),
+(sub_type,24),
+(get_hash2,24),
+(eqExp_f,24),
+(sat_label_filter_helper,23),
+(pure_mkExists,21),
+(h_fv,21),
+(extract_rel_pure,20)]
+
+DEBUGGED REC CALLS
+==================
+[(purge_mult,4),
+(sat_label_filter_helper,4),
+(collect_data_view_from_struc,2),
+(split_sums,2),
+(collect_data_view_from_h_formula,2),
+(trans_pure_exp,2),
+(build_ef_formula,2),
+(collect_data_view_from_pure_formula,2),
+(gather_type_info_pure,2),
+(case_normalize_helper,2),
+(trans_pure_formula,2),
+(look_up_all_fields,1)]
+
+--dd-calls-all
+
+This feature dumps calling hierarchy of the debugged calls
+upto a depth of 40 at the moment. The example below
+gives the hierarchy of debugged calls for xpure that was
+invoked from an find_unsat call
+
+%%% find_unsat
+%%%  xpure
+%%%   xpure_mem_enum
+%%%    formula_2_mem
+%%%     h_formula_2_mem
+%%%    xpure_heap_mem_enum
+%%%     h_formula_2_mem
+%%%     is_sat_mem_formula
+%%%    merge_mems 
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================

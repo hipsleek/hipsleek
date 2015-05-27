@@ -267,9 +267,7 @@ struct
       let cnz = List.map smt_of_anz cnz in
       let s = List.fold_left (fun a c-> "(and " ^ a ^ " " ^ c ^ ")") "true" (ccons@csub@ceq@cnz) in
       List.fold_left (fun a c -> "(exists ((" ^ (Sv.string_of c) ^ " Bool)) " ^ a ^ ")") s cex
-    (***************************************************************
-       INTERATION
-     **************************************************************)
+    (***************************************************************       INTERATION     **************************************************************)
     type sat_type =
       | Sat		(* solver returns sat *)
       | UnSat		(* solver returns unsat *)
@@ -430,9 +428,7 @@ struct
                                    PrvComms.outchannel = stdout;
                                    PrvComms.errchannel = stdin
                               }
-    (***************************************************************
-       INTERACTION
-     **************************************************************)
+    (***************************************************************       INTERACTION     **************************************************************)
     let rec collect_output (chn: in_channel)  : (string * bool) =
       try
         let line = input_line chn in
@@ -523,9 +519,7 @@ struct
       let () = PrvComms.stop !minisat_process 0 9  in
       remove_file infile;
       res
-    (**************************************************************
-       MAIN INTERFACE : CHECKING IMPLICATION AND SATISFIABILITY
-     *************************************************************)
+    (**************************************************************       MAIN INTERFACE : CHECKING IMPLICATION AND SATISFIABILITY     *************************************************************)
     (*******************zzzzzzzzzzzzzz****************)
     (*generate the CNF *)
     let cnf_to_string var_cnt f : string =

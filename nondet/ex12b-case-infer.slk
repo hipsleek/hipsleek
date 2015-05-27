@@ -5,6 +5,7 @@ infer[i] true |- case {
                     }.
 print residue.
 
+//(2)
 infer[i] true |- i<222 or i>=222.
 print residue.
 
@@ -14,6 +15,7 @@ infer[i] true |- case {
                     }.
 print residue.
 
+//(4)
 infer[i] true |- case { 
                      i<222 -> [] i<200;
                      i>=222 -> [] i>=300;

@@ -56,7 +56,7 @@ let rec mona_of_typ t = match t with
   | AnnT          -> "AnnT"
   | RelT _        -> "RelT"
   | FuncT _       -> "FuncT"
-  | UtT           -> "UtT"
+  | UtT b        -> "UtT("^(string_of_bool b)^")"
   | HpT           -> "HpT"
   | Void          -> "void" 	(* same as for float *)
   | BagT i		  -> "("^(mona_of_typ i)^") set"

@@ -33,18 +33,31 @@ let string_of_vres t =
 (*       lhs rhs tl *)
 
 
-let proc_sleek_result_validate is_valid lc =
+let proc_sleek_result_validate is_valid lc lerr_exc=
   let eres = if not is_valid then
-      let final_error_opt = CF.get_final_error lc in
-      match final_error_opt with
-      | Some (_, fk) -> begin
-          match fk with
-          | CF.Failure_May _ -> VR_Fail 1
-          | CF.Failure_Must _ -> VR_Fail 1
-          | _ -> VR_Fail (-1) (* INCONSISTENCY *)
+    if not !Globals.disable_failure_explaining then
+      if !Globals.enable_error_as_exc || lerr_exc then
+        begin
+          let final_error_opt = CF.get_final_error lc in
+          match final_error_opt with
+            | Some (_, _, fk) -> begin
+                match fk with
+                  | CF.Failure_May _ -> (VR_Fail (-1))
+                  | CF.Failure_Must _ -> VR_Fail 1
+                  | _ -> VR_Fail (-1) (* INCONSISTENCY *)
+              end
+            | None -> VR_Fail (-1) (* INCONSISTENCY *)
         end
-      | None -> VR_Fail (-1) (* INCONSISTENCY *)
-    else VR_Valid
+      else begin
+        match CF.get_must_failure lc with
+          | Some (s, _) -> VR_Fail 1
+          | _ -> (match CF.get_may_failure lc with
+              | Some (s, _) -> VR_Fail (-1)
+              | _ -> VR_Valid
+            )
+      end
+    else VR_Fail 1
+  else VR_Valid
   in
   (eres, CF.flow_formula_of_list_context lc)
 (* match lc with *)
@@ -67,10 +80,10 @@ let proc_sleek_result_validate is_valid lc =
 (* TODO : why do we need two diff kinds of must-errors? *)
 (* Is there any difference between the two? *)
 
-let proc_sleek_result_validate b lc =
+let proc_sleek_result_validate b lc lerr_exc=
   Debug.no_1 "proc_sleek_result_validate" 
     Cprinter.string_of_list_context_short (fun (er,_) -> string_of_vres er)
-    (fun _ -> proc_sleek_result_validate b lc) lc
+    (fun _ -> proc_sleek_result_validate b lc lerr_exc) lc
 
 module H = Hashtbl
 module I = Iast
@@ -418,13 +431,14 @@ let process_rel_def rdef =
         let n_crdef = {n_crdef with 
             Cast.view_formula =  Solver.prune_pred_struc cprog true n_crdef.Cast.view_formula ;
             Cast.view_un_struc_formula = List.map (fun (c1,c2) -> (Solver.prune_preds cprog true c1,c2)) n_crdef.Cast.view_un_struc_formula;}in
-        		let _ = if !Globals.print_core || !Globals.print_core_all then print_string (Cprinter.string_of_view_decl n_crdef ^"\n") else () in
+        		let  ()= if !Globals.print_core || !Globals.print_core_all then print_string (Cprinter.string_of_view_decl n_crdef ^"\n") else () in
         		cprog.Cast.prog_view_decls <- (n_crdef :: old_vdec) *)
       iprog.I.prog_rel_decls <- ( rdef :: iprog.I.prog_rel_decls);
       let crdef = Astsimp.trans_rel iprog rdef in !cprog.Cast.prog_rel_decls <- (crdef :: !cprog.Cast.prog_rel_decls);
+      (*L2: duplicate with trans_rel *)
       (* Forward the relation to the smt solver. *)
-      let _ = Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula in
-      Z3.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula;
+      (* let _ = Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula in *)
+      (* Z3.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula; *)
     with
     | _ ->  dummy_exception() ; iprog.I.prog_rel_decls <- tmp
   else
@@ -521,25 +535,42 @@ let print_residue residue =
         (*       (CF.list_formula_of_list_context s))^"\n") *)
         (*print all posible outcomes and their traces with numbering*)
       end
-    | Some (ls_ctx, print, local_dfa) -> begin
-        let _ = print_string "Residue:\n" in
+    | Some (ls_ctx, print(* , local_dfa, dis_lerr_exc, en_lerr_exc *)) -> begin
+        let () = print_string "Residue:\n" in
         (* let is_empty_states = match ls_ctx with *)
         (*   | CF.SuccCtx ls -> List.length ls = 0 *)
         (*   | _ -> false *)
         (* in *)
+        let local_dfa = CF.is_dfa_ctx_list ls_ctx in
+        let () = x_tinfo_hp (add_str "print" string_of_bool) print no_pos in
+        let () = x_tinfo_hp (add_str "local_dfa?" string_of_bool) local_dfa no_pos in
+
+        let () = x_tinfo_hp (Cprinter.string_of_list_context) ls_ctx no_pos in
         if not local_dfa (*!Globals.disable_failure_explaining *) then
-          (* let _ = Debug.info_pprint "a" no_pos in *)
-          (* let _ = print_endline (Cprinter.string_of_list_context ls_ctx) in *)
-          print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
-                           (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
+          let dis_lerr_exc = CF.is_dis_error_exc_ctx_list ls_ctx in
+          let en_lerr_exc = CF.is_en_error_exc_ctx_list ls_ctx in
+          let () = x_tinfo_hp (add_str "dis_lerr_exc?" string_of_bool) dis_lerr_exc no_pos in
+          let () = x_tinfo_hp (add_str "en_lerr_exc?" string_of_bool) dis_lerr_exc no_pos in
+          let () = if print then
+              print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
+                               (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
+            else if dis_lerr_exc then
+              print_endline (Cprinter.string_of_list_context ls_ctx)
+            else
+            if not !Globals.enable_error_as_exc && not en_lerr_exc then
+              print_endline (Cprinter.string_of_list_context ls_ctx)
+            else
+              print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
+                               (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
+          in ()
         else
-          (* let _ = Debug.info_pprint "b" no_pos in *)
+          (* let () = Debug.info_pprint "b" no_pos in *)
         if print then
-          (* let _ = print_string ((pr_list pr_none (CF.list_formula_trace_of_list_context ls_ctx))^ *)
+          (* let () = print_string ((pr_list pr_none (CF.list_formula_trace_of_list_context ls_ctx))^ *)
           (*   (Cprinter.string_of_list_context ls_ctx)^"\n") in () *)
           print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
                            (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
-        else let _ =  print_string "{ }\n" in ()
+        else let () =  print_string "{ }\n" in ()
       end
 
 let process_list_lemma ldef_lst  =
@@ -889,7 +920,7 @@ let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.
     string_of_bool
     string_of_ident_list
     Typeinfer.string_of_tlist
-    (pr_pair pr_none Cprinter.string_of_struc_formula)
+    (pr_pair Typeinfer.string_of_tlist Cprinter.string_of_struc_formula)
     (fun _ _ _ _  ->  meta_to_struc_formula mf0 quant fv_idents tlist )mf0 quant fv_idents tlist
 
 (* An Hoa : DETECT THAT EITHER OF 
@@ -927,7 +958,7 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
     let h = List.map (fun c-> (c,Unprimed)) fv_idents in
     (* let _ = print_string (" before norm: " ^(Iprinter.string_of_formula mf)^"\n") in *)
     let wf = x_add Astsimp.case_normalize_formula iprog h mf in
-    let n_tl = Typeinfer.gather_type_info_formula iprog wf tlist false in
+    let n_tl = x_add Typeinfer.gather_type_info_formula iprog wf tlist false in
     let (n_tl,r) = Astsimp.trans_formula iprog quant fv_idents false wf n_tl false in
     (* let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
     (* let _ = print_string (" after sf: " ^(Cprinter.string_of_formula r)^"\n") in *)
@@ -988,11 +1019,11 @@ let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:T
   | MetaForm mf ->
     let h = List.map (fun c-> (c,Unprimed)) fv_idents in
     let wf = Astsimp.case_normalize_formula_not_rename iprog h mf in
-    let n_tl = Typeinfer.gather_type_info_formula iprog wf tlist false in
-    (*let _ = print_endline ("WF: " ^ Iprinter.string_of_formula wf ) in *)
+    let n_tl = x_add Typeinfer.gather_type_info_formula iprog wf tlist false in
+    (*let () = print_endline ("WF: " ^ Iprinter.string_of_formula wf ) in *)
     let (n_tl,r) = Astsimp.trans_formula iprog quant fv_idents false wf n_tl false in
-    (* let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
-    (* let _ = print_string (" after sf: " ^(Cprinter.string_of_formula r)^"\n") in *)
+    (* let () = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
+    (* let () = print_string (" after sf: " ^(Cprinter.string_of_formula r)^"\n") in *)
     (n_tl,r)
   | MetaVar mvar -> begin
       try 
@@ -1095,6 +1126,9 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   (* let _ = print_endline ("ivars"^(Cprinter.string_of_spec_var_list ivars_fvs)) in *)
   (* let _ = print_endline ("ante vars"^(Cprinter.string_of_spec_var_list fvs)) in *)
   (* Disable putting implicit existentials on unbound heap variables *)
+  let () = x_binfo_hp (add_str "ivars" (pr_list pr_id)) ivars no_pos in
+  (* WN : ivars - these are idents rather than spec_var *)
+  (* TODO : shouldn't we be transforming to spec_vars instead ?? *)
   let fv_idents = (List.map CP.name_of_spec_var fvs)@ivars in
   let fv_idents =
     if !Globals.dis_impl_var then
@@ -1105,6 +1139,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   (* need to make ivars be global *)
   (* let conseq = if (!Globals.allow_field_ann) then meta_to_struc_formula iconseq0 false fv_idents None stab  *)
   let (n_tl,conseq) = meta_to_struc_formula iconseq0 false fv_idents  n_tl in
+  let () = x_tinfo_hp (add_str "type-table" Typeinfer.string_of_tlist) n_tl no_pos in
   (* let _ = print_endline ("conseq: " ^ (Cprinter.string_of_struc_formula conseq)) in *)
   (* let ante,conseq = transfrom_bexpr ante conseq n_tl in *)
   (* let conseq1 = meta_to_struc_formula iconseq0 false fv_idents stab in *)
@@ -1126,12 +1161,20 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   let _ = x_tinfo_hp (add_str "conseq(after meta-)" pr) conseq no_pos in
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in
   (* List of vars needed for abduction process *)
+  (* WN:TODO isn't code below already present elsewhere ? try reuse *)
   let vars = List.map (fun v ->
+      let v_len = String.length v in
+      let (v, prime) as v_pair = 
+        if (String.get v (v_len-1)) = '\'' then (String.sub v 0 (v_len-1), Primed)
+        else (v, Unprimed)
+      in
       try
         let _ = Cast.look_up_hp_def_raw !cprog.Cast.prog_hp_decls v in
-        CP.SpecVar (HpT, v, Unprimed)
+        CP.SpecVar (HpT, v, prime(* Unprimed *))
       with _ ->
-        Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos
+          let sp = (x_add_0 Typeinfer.get_spec_var_type_list_infer) ~d_tt:n_tl v_pair orig_vars no_pos in
+          (* if prime = Primed then CP.sp_add_prime sp else  *)
+          sp
     ) ivars in
   (* let ante,conseq = Cfutil.normalize_ex_quans_conseq !cprog ante conseq in *)
   let (res, rs,v_hp_rel) = x_add Sleekcore.sleek_entail_check 8 itype vars !cprog [] ante conseq in
@@ -1170,11 +1213,14 @@ let run_infer_one_pass_set_states itype (ivars: ident list) (iante0s : meta_form
     in
     let comb_rs = CF.union_context_left list_rs in
     (* let _ = print_endline ("comb_rs: "^(Cprinter.string_of_list_context comb_rs)) in *)
-    let _ = CF.residues := Some (comb_rs, r, !Globals.disable_failure_explaining) in
+    let _ = CF.residues := Some (comb_rs, r(* , !Globals.disable_failure_explaining, List.mem INF_DE_EXC itype, (List.mem INF_ERR_MUST itype || List.mem INF_ERR_MAY itype) *)) in
     ((r, comb_rs, v0), pr0)
 
 
 let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formula option) (irhs: meta_formula)=
+  let is_pure_rel rel=
+    false
+  in
   (* let _ = Debug.info_pprint "process_rel_assume" no_pos in *)
   (* let stab = H.create 103 in *)
   let stab = [] in
@@ -1209,22 +1255,38 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
   (* let _ =  print_endline ("RHS = " ^ (Cprinter.string_of_formula rhs)) in *)
   (*TODO: LOC: hp_id should be cond_path*)
   (* why not using mkHprel? *)
-  let knd = CP.RelAssume (CP.remove_dups_svl (lhps@rhps)) in
-  let new_rel_ass = CF.mkHprel_1 knd lhs guard rhs cond_path in
-  (*     CF.hprel_kind = CP.RelAssume (CP.remove_dups_svl (lhps@rhps)); *)
-  (*     unk_svl = [];(\*inferred from norm*\) *)
-  (*     unk_hps = []; *)
-  (*     predef_svl = []; *)
-  (*     hprel_lhs = lhs; *)
-  (*     hprel_guard = guard; *)
-  (*     hprel_rhs = rhs; *)
-  (*     hprel_path = cond_path; *)
-  (*     hprel_proving_kind = Others.proving_kind # top_no_exc; *)
-  (* } in *)
-  (*hp_assumes*)
-  let _ = Debug.ninfo_zprint  (lazy  (Cprinter.string_of_hprel_short new_rel_ass)) no_pos in
-  let _ = sleek_hprel_assumes := !sleek_hprel_assumes@[new_rel_ass] in
+  let total_heap_rel_ids = lhps@rhps in
+  let _ = if total_heap_rel_ids != [] then
+    let knd = CP.RelAssume (CP.remove_dups_svl (lhps@rhps)) in
+    let new_rel_ass = CF.mkHprel_1 knd lhs guard rhs cond_path in
+    (*     CF.hprel_kind = CP.RelAssume (CP.remove_dups_svl (lhps@rhps)); *)
+    (*     unk_svl = [];(\*inferred from norm*\) *)
+    (*     unk_hps = []; *)
+    (*     predef_svl = []; *)
+    (*     hprel_lhs = lhs; *)
+    (*     hprel_guard = guard; *)
+    (*     hprel_rhs = rhs; *)
+    (*     hprel_path = cond_path; *)
+    (*     hprel_proving_kind = Others.proving_kind # top_no_exc; *)
+    (* } in *)
+    (*hp_assumes*)
+    let _ = x_binfo_zp  (lazy  (Cprinter.string_of_hprel_short new_rel_ass)) no_pos in
+    let _ = sleek_hprel_assumes := !sleek_hprel_assumes@[new_rel_ass] in
+    ()
+  else
+    let lhs_p = CF.get_pure lhs in
+    let rhs_p = CF.get_pure rhs in
+    let lrels = CP.get_rel_id_list lhs_p in
+    let rrels = CP.get_rel_id_list rhs_p in
+    let rel_ids = CP.remove_dups_svl (lrels@rrels) in
+    let new_rel_ass =  (CP.RelDefn (List.hd rel_ids, None), lhs_p, rhs_p)  in
+    let _ = Infer.infer_rel_stk # push_list_pr [new_rel_ass] in
+    ()
+  in
   ()
+
+let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formula option) (irhs: meta_formula)=
+  Debug.no_2 "process_rel_assume"  pr_none pr_none pr_none (fun _ _ -> process_rel_assume  cond_path ilhs  igurad_opt irhs) ilhs irhs
 
 let process_rel_defn cond_path (ilhs : meta_formula) (irhs: meta_formula) extn_info=
   (* let _ = Debug.info_pprint "process_rel_assume" no_pos in *)
@@ -1293,8 +1355,8 @@ let shape_infer_pre_process constrs pre_hps post_hps=
   let link_hpargs = !sleek_hprel_unknown in
   (*** BEGIN PRE/POST ***)
   let orig_vars = List.fold_left (fun ls cs-> ls@(CF.fv cs.CF.hprel_lhs)@(CF.fv cs.CF.hprel_rhs)) [] !sleek_hprel_assumes in
-  let pre_vars = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (pre_hps) in
-  let post_vars = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (post_hps) in
+  let pre_vars = List.map (fun v -> (x_add_0 Typeinfer.get_spec_var_type_list_infer) (v, Unprimed) orig_vars no_pos) (pre_hps) in
+  let post_vars = List.map (fun v -> (x_add_0 Typeinfer.get_spec_var_type_list_infer) (v, Unprimed) orig_vars no_pos) (post_hps) in
   let pre_vars1 = (CP.remove_dups_svl pre_vars) in
   let post_vars1 = (CP.remove_dups_svl post_vars) in
   let infer_pre_vars,pre_hp_rels  = List.partition (fun sv ->
@@ -1367,8 +1429,8 @@ let process_shape_infer pre_hps post_hps=
 let relation_pre_process constrs pre_hps post_hps=
   (*** BEGIN PRE/POST ***)
   let orig_vars = List.fold_left (fun ls cs-> ls@(CF.fv cs.CF.hprel_lhs)@(CF.fv cs.CF.hprel_rhs)) [] constrs in
-  let pre_vars = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (pre_hps) in
-  let post_vars = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (post_hps) in
+  let pre_vars = List.map (fun v -> x_add_0 Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (pre_hps) in
+  let post_vars = List.map (fun v -> x_add_0 Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (post_hps) in
   let pre_vars1 = (CP.remove_dups_svl pre_vars) in
   let post_vars1 = (CP.remove_dups_svl post_vars) in
   let infer_pre_vars,pre_hp_rels  = List.partition (fun sv ->
@@ -1421,6 +1483,7 @@ let process_rel_infer pre_rels post_rels =
   let proc_spec = CF.mkETrue_nf no_pos in
   (* let pre_invs0, pre_rel_constrs, post_rel_constrs, pre_rel_ids, post_rels = relation_pre_process hp_lst_assume pre_rels post_rels in *)
   let rels = Infer.infer_rel_stk # get_stk in
+  let _ = Debug.ninfo_hprint (add_str "rels" (pr_list CP.print_lhs_rhs)) rels no_pos in
   let reloblgs, reldefns = List.partition (fun (rt,_,_) -> CP.is_rel_assume rt) rels in
   let is_infer_flow = Pi.is_infer_flow reldefns in
   let reldefns = if is_infer_flow then Pi.add_flow reldefns else List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in
@@ -1524,7 +1587,7 @@ let process_shape_rec sel_hps=
   let _ = print_endline_quiet "*************************************" in
   ()
 
-let process_validate exp_res opt_fl ils_es =
+let process_validate exp_res opt_fl ils_es=
   if not !Globals.show_unexpected_ents then () else
     (**********INTERNAL**********)
     let preprocess_constr act_idents act_ti (ilhs, irhs)=
@@ -1542,7 +1605,7 @@ let process_validate exp_res opt_fl ils_es =
         ) [] act_vars in
       let (n_tl,es_formula) = meta_to_formula ief false (act_idents) act_ti in
       let orig_vars = CF.fv es_formula in
-      let guide_vars = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) (orig_vars@act_vars) no_pos)
+      let guide_vars = List.map (fun v -> x_add_0 Typeinfer.get_spec_var_type_list_infer (v, Unprimed) (orig_vars@act_vars) no_pos)
           iguide_vars in
       let constrs = List.map (preprocess_constr act_idents act_ti) iconstrs in
       (guide_vars, es_formula, constrs)
@@ -1567,9 +1630,10 @@ let process_validate exp_res opt_fl ils_es =
         (* in *)
         (**res = Fail*)
         false, [], []
-      | Some (lc, res, ldfa) -> 
+      | Some (lc, res) -> 
         begin (*res*)
-          let res, fls = proc_sleek_result_validate res lc in
+          let lerr_exc = CF.is_en_error_exc_ctx_list lc in
+          let res, fls = proc_sleek_result_validate res lc lerr_exc in
           let unexp =
             match res, exp_res with
             | VR_Valid, VR_Valid -> None
@@ -1707,7 +1771,7 @@ let process_shape_conquer sel_ids cond_paths=
   let (* defs *) _ =
     (* if not (!Globals.pred_syn_modular) then *)
     let orig_vars = List.fold_left (fun ls (_,d)-> ls@(CF.h_fv d.CF.def_lhs)) [] ls_pr_defs in
-    let sel_hps = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (sel_ids) in
+    let sel_hps = List.map (fun v -> x_add_0 Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (sel_ids) in
     let sel_hps  = List.filter (fun sv ->
         let t = CP.type_of_spec_var sv in
         ((* is_RelT t || *) is_HpT t )) sel_hps in
@@ -1899,8 +1963,8 @@ let process_shape_split pre_hps post_hps=
   (* let _, sel_post_hps = Sautil.get_pre_post pre_hps post_hps !sleek_hprel_assumes in *)
   (*get infer_vars*)
   let orig_vars = List.fold_left (fun ls cs-> ls@(CF.fv cs.CF.hprel_lhs)@(CF.fv cs.CF.hprel_rhs)) [] !sleek_hprel_assumes in
-  let pre_vars = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (pre_hps) in
-  let post_vars = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (post_hps) in
+  let pre_vars = List.map (fun v -> x_add_0 Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (pre_hps) in
+  let post_vars = List.map (fun v -> x_add_0 Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (post_hps) in
   let pre_vars1 = (CP.remove_dups_svl pre_vars) in
   let post_vars1 = (CP.remove_dups_svl post_vars) in
   let infer_pre_vars,pre_hp_rels  = List.partition (fun sv ->
@@ -1966,7 +2030,7 @@ let run_entail_check (iante0 : meta_formula list) (iconseq0 : meta_formula) (ety
 let run_entail_check (iante0 : meta_formula list) (iconseq0 : meta_formula) (etype: entail_type) =
   let with_timeout =
     let fctx = CF.mkFailCtx_in (CF.Trivial_Reason
-                                  (CF.mk_failure_may "timeout" Globals.timeout_error, [])) (CF.Ctx (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled  no_pos)) (CF.mk_cex false) in
+                                  (CF.mk_failure_may "timeout" Globals.timeout_error, [])) ((CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled  no_pos), "timeout", Failure_May "timeout") (CF.mk_cex false) in
     (false, fctx,[]) in
   (*let _ = print_endline "run_entail_check_1" in*)
   Procutils.PrvComms.maybe_raise_and_catch_timeout_sleek
@@ -1977,7 +2041,7 @@ let run_entail_check (iante : meta_formula list) (iconseq : meta_formula) (etype
   let pr_2 = pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl in
   Debug.no_2 "run_entail_check" (pr_list pr) pr pr_2 (fun _ _ -> run_entail_check iante iconseq etype) iante iconseq
 
-let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id: string):bool =
+let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id: string) lerr_exc:bool =
   Debug.ninfo_hprint (add_str "residue: " !CF.print_list_context) residue no_pos;
   Debug.ninfo_hprint (add_str "valid: " string_of_bool) valid no_pos;
   (* Termination: SLEEK result printing *)
@@ -1994,50 +2058,58 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
     begin
       let s =
         if not !Globals.disable_failure_explaining then
-          let final_error_opt = CF.get_final_error residue in
-          match final_error_opt with
-          | Some (s, fk) -> begin
-              match fk with
-              | CF.Failure_May _ -> "(may) cause:"^s
-              | CF.Failure_Must _ -> "(must) cause:"^s
-              | _ -> "INCONSISTENCY : expected failure but success instead"
-            end
-          | None -> "INCONSISTENCY : expected failure but success instead"
-          (* match CF.get_must_failure residue with *)
-          (*   | Some (s, cex) -> *)
-          (*         (\* let reg1 = Str.regexp "base case unfold failed" in *\) *)
-          (*         (\* let _ = try *\) *)
-          (*         (\*   if Str.search_forward reg1 s 0 >=0 then *\) *)
-          (*         (\*     let _ = smt_is_must_failure := (Some false) in () *\) *)
-          (*         (\*   else let _ = smt_is_must_failure := (Some true) in *\) *)
-          (*         (\*   () *\) *)
-          (*         (\* with _ -> let _ = smt_is_must_failure := (Some true) in () *\) *)
-          (*         (\* in *\) *)
-          (*         let is_sat,ns = Cformula.cmb_fail_msg ( "(must) cause:"^s) cex in *)
-          (*         let _ = smt_is_must_failure := (Some is_sat) in *)
-          (*         ns *)
-          (*   | _ -> (match CF.get_may_failure residue with *)
-          (*       | Some (s, cex) -> begin *)
-          (*             (\* try *\) *)
-          (*             (\*   let reg1 = Str.regexp "Nothing_to_do" in *\) *)
-          (*             (\*   let _ = if Str.search_forward reg1 s 0 >=0 then *\) *)
-          (*             (\*     let _ = smt_is_must_failure := (Some false) in () *\) *)
-          (*             (\*   else *\) *)
-          (*             (\*     if is_lem_syn_reach_bound () then *\) *)
-          (*             (\*       let _ = smt_is_must_failure := (Some false) in () *\) *)
-          (*             (\*     else *\) *)
-          (*             (\*       () *\) *)
-          (*             (\*   in *\) *)
-          (*           let is_sat,ns = Cformula.cmb_fail_msg ( "(may) cause:"^s) cex in *)
-          (*           let _ = smt_is_must_failure := (Some is_sat) in *)
-          (*           ns *)
-          (*               (\* with _ -> *\) *)
-          (*             (\*     let _ = smt_is_must_failure := (Some false) in *\) *)
-          (*             (\*     "(may) cause:"^s *\) *)
-          (*         end *)
-          (*       | None -> "INCONSISTENCY : expected failure but success instead" *)
-          (*     ) *)
-          (*should check bot with is_bot_status*)
+          if !Globals.enable_error_as_exc || lerr_exc then
+            let final_error_opt = CF.get_final_error residue in
+            match final_error_opt with
+            | Some (s, _, fk) -> begin
+                match fk with
+                | CF.Failure_May _ -> "(may) cause:"^s
+                | CF.Failure_Must _ -> "(must) cause:"^s
+                | _ -> "INCONSISTENCY : expected failure but success instead"
+              end
+            | None -> "INCONSISTENCY : expected failure but success instead"
+          else
+            match CF.get_must_failure residue with
+            | Some (s, _) -> "(must) cause:"^s
+            | _ -> (match CF.get_may_failure residue with
+                | Some (s, _) -> "(may) cause:"^s
+                | _ -> "INCONSISTENCY : expected failure but success instead"
+              )
+            (* match CF.get_must_failure residue with *)
+            (*   | Some (s, cex) -> *)
+            (*         (\* let reg1 = Str.regexp "base case unfold failed" in *\) *)
+            (*         (\* let _ = try *\) *)
+            (*         (\*   if Str.search_forward reg1 s 0 >=0 then *\) *)
+            (*         (\*     let _ = smt_is_must_failure := (Some false) in () *\) *)
+            (*         (\*   else let _ = smt_is_must_failure := (Some true) in *\) *)
+            (*         (\*   () *\) *)
+            (*         (\* with _ -> let _ = smt_is_must_failure := (Some true) in () *\) *)
+            (*         (\* in *\) *)
+            (*         let is_sat,ns = Cformula.cmb_fail_msg ( "(must) cause:"^s) cex in *)
+            (*         let _ = smt_is_must_failure := (Some is_sat) in *)
+            (*         ns *)
+            (*   | _ -> (match CF.get_may_failure residue with *)
+            (*       | Some (s, cex) -> begin *)
+            (*             (\* try *\) *)
+            (*             (\*   let reg1 = Str.regexp "Nothing_to_do" in *\) *)
+            (*             (\*   let _ = if Str.search_forward reg1 s 0 >=0 then *\) *)
+            (*             (\*     let _ = smt_is_must_failure := (Some false) in () *\) *)
+            (*             (\*   else *\) *)
+            (*             (\*     if is_lem_syn_reach_bound () then *\) *)
+            (*             (\*       let _ = smt_is_must_failure := (Some false) in () *\) *)
+            (*             (\*     else *\) *)
+            (*             (\*       () *\) *)
+            (*             (\*   in *\) *)
+            (*           let is_sat,ns = Cformula.cmb_fail_msg ( "(may) cause:"^s) cex in *)
+            (*           let _ = smt_is_must_failure := (Some is_sat) in *)
+            (*           ns *)
+            (*               (\* with _ -> *\) *)
+            (*             (\*     let _ = smt_is_must_failure := (Some false) in *\) *)
+            (*             (\*     "(may) cause:"^s *\) *)
+            (*         end *)
+            (*       | None -> "INCONSISTENCY : expected failure but success instead" *)
+            (*     ) *)
+            (*should check bot with is_bot_status*)
         else ""
       in
       (* Get the timeout message *)
@@ -2133,11 +2205,11 @@ let print_sat_result (unsat: bool) (sat:bool) (num_id: string) =
     else "UNKNOWN\n\n"
   in silenced_print print_string (num_id^": "^res); flush stdout
 
-let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id: string):bool =
+let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id: string) lerr_exc:bool =
   let pr0 = string_of_bool in
   let pr = !CF.print_list_context in
   Debug.no_2 "print_entail_result" pr0 pr (fun _ -> "")
-    (fun _ _ -> print_entail_result sel_hps valid residue num_id) valid residue
+    (fun _ _ -> print_entail_result sel_hps valid residue num_id lerr_exc) valid residue
 
 let print_exc (check_id: string) =
   print_backtrace_quiet ();
@@ -2182,7 +2254,7 @@ let process_entail_check_x (iante : meta_formula list) (iconseq : meta_formula) 
   try
     let valid, rs, _(*sel_hps*) =
       wrap_proving_kind (PK_Sleek_Entail nn) (run_entail_check iante iconseq) etype in
-    print_entail_result [] (*sel_hps*) valid rs num_id
+    print_entail_result [] (*sel_hps*) valid rs num_id false
   with ex ->
     let exs = (Printexc.to_string ex) in
     let _ = print_exception_result exs (*sel_hps*) num_id in
@@ -2303,12 +2375,28 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
   let dfailure_anlysis = if List.mem INF_EFA itype then false else
     if List.mem INF_DFA itype then true else !Globals.disable_failure_explaining
   in
+  let is_arr_as_var_flag = List.mem INF_ARR_AS_VAR itype in
   let old_dfa = !Globals.disable_failure_explaining in
   let _ = Globals.disable_failure_explaining := dfailure_anlysis in
+  (* backup flag *)
+  let gl_efa_exc= !Globals.enable_error_as_exc in
+  let l_err_exc = List.mem INF_DE_EXC itype in
+  let () = if l_err_exc then
+      Globals.enable_error_as_exc := false
+  in
   let num_id = "\nEntail "^nn in
+  let run_infer x = wrap_classic etype (run_infer_one_pass_set_states itype ivars [iante0]) x in
+  (* let run_infer x =  *)
+  (*   if is_field_imm_flag then wrap_field_imm (Some true) run_infer x *)
+  (*   else run_infer x in *)
+  let run_infer x = 
+    if is_arr_as_var_flag then wrap_arr_as_var run_infer x
+    else run_infer x in
   let r=  try
-      let (valid, rs, sel_hps),_ = wrap_classic etype (run_infer_one_pass_set_states itype ivars [iante0]) iconseq0 in
-      let res = print_entail_result sel_hps valid rs num_id in
+      let (valid, rs, sel_hps),_ = run_infer iconseq0 in
+      let res = print_entail_result sel_hps valid rs num_id (List.mem INF_ERR_MUST itype || List.mem INF_ERR_MUST_ONLY itype || List.mem INF_ERR_MAY itype) in
+      (* let res = print_entail_result sel_hps valid rs num_id (List.mem INF_ERR_MUST itype || List.mem INF_ERR_MAY itype) in*)
+      (* let (valid, rs, sel_hps),_ = wrap_classic etype (run_infer_one_pass_set_states itype ivars [iante0]) iconseq0 in *)
       let _ = if is_tnt_flag then should_infer_tnt := !should_infer_tnt && res in
       (*   match itype with *)
       (* | Some INF_TERM -> should_infer_tnt := !should_infer_tnt && res *)
@@ -2326,12 +2414,13 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
       false
   in
   let _ = Globals.disable_failure_explaining := old_dfa in
+  let () = Globals.enable_error_as_exc := gl_efa_exc in
   r
 
 let process_capture_residue (lvar : ident) =
   let flist = match !CF.residues with
     | None -> [(CF.mkTrue (CF.mkTrueFlow()) no_pos)]
-    | Some (ls_ctx, print, _) -> CF.list_formula_of_list_context ls_ctx in
+    | Some (ls_ctx, print) -> CF.list_formula_of_list_context ls_ctx in
   put_var lvar (Sleekcommons.MetaFormLCF flist)
 
 let process_print_command pcmd0 =
@@ -2367,7 +2456,7 @@ let process_cmp_command (input: ident list * ident * meta_formula list) =
   if var = "residue" then
     match !CF.residues with
     | None -> print_string ": no residue \n"
-    | Some (ls_ctx, print, _) -> begin
+    | Some (ls_ctx, print) -> begin
         if (print) then begin
           if(List.length fl = 1) then (
             let f = List.hd fl in
@@ -2384,7 +2473,7 @@ let process_cmp_command (input: ident list * ident * meta_formula list) =
   else if (var = "assumption") then(
     match !CF.residues with
     | None -> print_string ": no residue \n"
-    | Some (ls_ctx, print, _) ->(
+    | Some (ls_ctx, print) ->(
         if (print) then (
           if(List.length fl = 2) then (
             let f1,f2 = (List.hd fl, List.hd (List.tl fl)) in	    

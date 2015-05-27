@@ -10,8 +10,9 @@
 (**      When a Worker returns a good result, it returns the result to clients             *)
 (**      and tell Workers to cancel unneccessary tasks.                                    *)
 
-let debug = ref false and debuginfo = false
-let trace f s = if !debug then (prerr_endline (f ^ ": "^s); flush stderr)
+(* let debug = ref false *)
+let debuginfo = false
+let trace f s = if !Debug.debug_print then (prerr_endline (f ^ ": "^s); flush stderr)
 let show_info s = if debuginfo then (prerr_string s; flush stderr)
 
 let is_slave = ref false  (* this flag set the program to work as a Worker or a Manager*)
@@ -560,14 +561,14 @@ let main () =
     "--pipe", Arg.String (fun s -> named_pipe := s), "<name>: use the named pipe";
     "--slave", Arg.Set is_slave, "Internal parameter, for slave only mode.";
     "--nocache", Arg.Clear use_cache, "Do not use cache.";
-    "--verbose", Arg.Set debug, "Print debug and progress information.";
+    "--verbose", Arg.Set Debug.debug_print, "Print debug and progress information.";
   ]
     (fun s -> ())
     ("Usage: " ^ Sys.executable_name ^ " <options>.");
 
   if !cluster_arg <> "" then remote_locations := Str.split (Str.regexp ";") !cluster_arg;
 
-  Net.debug := !debug;
+  (* Net.debug := !debug; *)
 
   (* daemonize the process *)
   if Unix.fork() > 0 then

@@ -1523,7 +1523,7 @@ and smart_same_flag = ref true
    are semantically the same *)
 
 and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula) p0  xp_no: (MCP.mix_formula * CP.spec_var list) = 
-  (* let () = smart_same_flag := true in *)
+  let () = smart_same_flag := true in (* WN:enabled now-why? *)
   let pr (a,b) = pr_triple Cprinter.string_of_mix_formula Cprinter.string_of_spec_var_list string_of_bool (a,b,!smart_same_flag) in
   Debug.no_2 "xpure_heap_symbolic_i" string_of_int 
     Cprinter.string_of_h_formula pr
@@ -1556,7 +1556,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) p0 xp_no: (MCP.m
         then let rel = List.hd update_rel in
           let rel_vars = rel.rel_vars in
           let p0_rels = CP.get_RelForm (MCP.pure_of_mix p0) in
-          let lookup_rel = List.filter (fun r -> match (CP.get_rel_id r) with
+          let lookup_rel = List.filter (fun r -> match (x_add_1 CP.get_rel_id r) with
               | Some SpecVar(_,id,_) -> 
                 (*let () = (print_endline id) in*)
                 if (String.compare id "lookup") = 0 then true else false

@@ -76,6 +76,88 @@ let wrap_classic et f a =
     (do_classic_frame_rule := flag;
      raise e)
 
+(* let wrap_efa_exc et f a = *)
+(*   let flag = !enable_error_as_exc in *)
+(*   enable_error_as_exc := (match et with *)
+(*       | None -> infer_const_obj # get INF_DE_EXC  (\* !opt_efa *\) *)
+(*       | Some b -> b); *)
+(*   try *)
+(*     let res = f a in *)
+(*     (\* restore flag enable_error_as_exc  *\) *)
+(*     enable_error_as_exc := flag; *)
+(*     res *)
+(*   with _ as e -> *)
+(*     (enable_error_as_exc := flag; *)
+(*      raise e) *)
+
+(* !!! **wrapper.ml#134:Calling wrap_err_pre *)
+(* !!! **wrapper.ml#94:wrap_inf_obj:@dis_err *)
+(* !!! **wrapper.ml#95:BEFORE:[] *)
+(* !!! **wrapper.ml#98:AFTER:[@dis_err] *)
+(* !!! **wrapper.ml#102:RESTORE:[] *)
+
+
+(* !!! **wrapper.ml#134:Calling wrap_err_pre *)
+(* !!! **wrapper.ml#94:wrap_inf_obj:@err_may *)
+(* !!! **wrapper.ml#95:BEFORE:[@err_must] *)
+(* !!! **wrapper.ml#98:AFTER:[@err_may,@err_must] *)
+(* !!! **wrapper.ml#102:RESTORE:[@err_must] *)
+
+let wrap_inf_obj iobj f a =
+  (* let () = x_binfo_hp (add_str "wrap_inf_obj" string_of_inf_const) iobj no_pos in *)
+  (* let () = x_binfo_hp (add_str "BEFORE" pr_id) infer_const_obj#string_of no_pos in *)
+  let flag = not(infer_const_obj # get iobj) in
+  let () = if flag then infer_const_obj # set iobj in
+  (* let () = x_binfo_hp (add_str "AFTER" pr_id) infer_const_obj#string_of no_pos in *)
+  try
+    let res = f a in
+    if flag then infer_const_obj # reset iobj;
+    (* let () = x_binfo_hp (add_str "RESTORE" pr_id) infer_const_obj#string_of no_pos in *)
+    res
+  with _ as e ->
+      begin
+        if flag then infer_const_obj # reset iobj;
+        (* let () = x_binfo_hp (add_str "RESTORE" pr_id) infer_const_obj#string_of no_pos in *)
+        raise e
+      end
+
+let wrap_err_dis f a =
+  wrap_inf_obj INF_DE_EXC f a
+
+let wrap_err_may f a =
+  wrap_inf_obj INF_ERR_MAY f a
+
+let wrap_err_may f a =
+  Debug.no_1 "wrap_err_may" pr_none pr_none (wrap_err_may f) a
+
+let wrap_err_must f a =
+  wrap_inf_obj INF_ERR_MUST f a
+
+let wrap_err_bind f a =
+  if infer_const_obj # is_dis_err then wrap_err_dis f a
+  else if infer_const_obj # is_err_must then
+    wrap_err_must f a
+  else wrap_err_dis f a
+
+let wrap_err_assert_assume f a =
+  wrap_err_bind f a
+(* if infer_const_obj # is_dis_err then wrap_err_dis f a *)
+(* else wrap_err_must f a *)
+
+(* not called? *)
+let wrap_err_pre f a =
+  (* let () = x_binfo_pp "Calling wrap_err_pre" no_pos in *)
+  if infer_const_obj # is_dis_err then wrap_err_dis f a
+  (* else if infer_const_obj # is_pre_must then wrap_err_must f a *)
+  else if infer_const_obj # is_err_may then wrap_err_may f a
+  else if infer_const_obj # is_err_must then wrap_err_may f a
+  else  wrap_err_dis f a
+
+let wrap_err_post f a =
+  wrap_err_bind f a
+(* if infer_const_obj # is_dis_err then wrap_err_dis f a *)
+(* else wrap_err_must f a *)
+
 let wrap_par_case_check f c =
   let flag = !ho_always_split in
   ho_always_split := true;
@@ -87,6 +169,7 @@ let wrap_par_case_check f c =
     (ho_always_split := flag;
      raise e)
       1
+
 let wrap_set_infer_type t f a =
   let flag = infer_const_obj # is_infer_type t in
   let () = Debug.ninfo_hprint (add_str "infer_type" string_of_inf_const) t no_pos in
@@ -119,6 +202,13 @@ let wrap_gen save_fn set_fn restore_fn flags f a =
      raise e)
 
 let wrap_ver_post f a = wrap_set_infer_type INF_VER_POST f a
+
+(* let wrap_arr_as_var f a =  *)
+(*   let () = x_binfo_pp "inside wrap_as_var" no_pos in  *)
+(*   wrap_set_infer_type INF_ARR_AS_VAR f a *)
+
+(* let wrap_arr_as_var f a =  *)
+(*   Debug.no_1 "wrap_arr_as_var" pr_none pr_none (wrap_arr_as_var f) a *)
 
 (* let wrap_ver_post f a = *)
 (*   let save_fn () = infer_const_obj # is_ver_post in *)
@@ -158,11 +248,14 @@ let wrap_two_bools flag1 flag2 new_value f a =
 let wrap_no_filtering f a =
   wrap_one_bool filtering_flag false f a
 
-let wrap_redlog_only f a =
-  wrap_one_bool Redlog.dis_omega true f a
+let wrap_silence_output f a =
+  wrap_one_bool Gen.silence_output true f a
 
-let wrap_oc_redlog f a =
-  wrap_one_bool Redlog.dis_omega false f a
+(* let wrap_redlog_only f a = *)
+(*   wrap_one_bool Redlog.dis_omega true f a *)
+
+(* let wrap_oc_redlog f a = *)
+(*   wrap_one_bool Redlog.dis_omega false f a *)
 
 let wrap_lbl_dis_aggr f a =
   if !Globals.inv_wrap_flag
@@ -197,3 +290,19 @@ let wrap_lemma_unsafe f a =
 (* let next_sleek_int () : int = *)
 (*   sleek_proof_no := !sleek_proof_no + 1;  *)
 (*   (!sleek_proof_no) *)
+
+let wrap_arr_as_var f a =
+  let () = x_tinfo_pp "Calling wrap_arr_as_var" no_pos in
+  let flag = !Globals.array_translate in
+  Globals.array_translate := true;
+  try
+    let res = f a in
+    Globals.array_translate := flag;
+    res
+  with _ as e ->
+    (Globals.array_translate := flag;
+     raise e)
+
+let wrap_arr_as_var f a =
+  Debug.no_1 "wrap_arr_as_var" pr_none pr_none (wrap_arr_as_var f) a
+

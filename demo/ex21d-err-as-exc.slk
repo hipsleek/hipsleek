@@ -1,0 +1,45 @@
+checkentail x>0 |- x<0.
+print residue.
+// must error
+
+checkentail x>1 |- x<5.
+print residue.
+// may error
+
+checkentail x>2 |- false.
+print residue.
+// must error?
+
+
+/*
+# ex21d --dis-efa-exc
+
+How come we still have exception even though they
+are disabled. I expect FailCtx to be shown when
+residue is being printed; not exceptions.
+
+Entail 1: Fail.(must) cause: 0<x |-  x<0. LOCS:[1] (must-bug)
+Residue:
+ <1>emp&0<x&{FLOW,(4,5)=__norm#E}[]
+
+Entail 2: Fail.(may) cause: 0<x |-  x<5. LOCS:[5] (may-bug)
+Residue:
+ <1>emp&0<x&{FLOW,(4,5)=__norm#E}[]
+
+Residue:
+ <1>emp&0<x&{FLOW,(4,5)=__norm#E}[]
+
+
+infer [] x>0 |- x<0 .
+// failctx must_err
+
+infer [@err_must] x>0 |- x<0 .
+// x>0 & flow __ERROR
+
+infer [@err_may] x>0 |- x<0 .
+// x>0 & flow __MayERROR
+
+infer [@err_must] x>0 |- x<3 .
+// x>0 & flow __MayERROR
+
+*/

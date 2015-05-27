@@ -830,5 +830,5 @@ let hull (f: CP.formula) : CP.formula =
   else f
 
 let pairwisecheck (f: CP.formula): CP.formula =
-  if is_linear_formula f then Omega.pairwisecheck f 
+  if is_linear_formula f then x_add_1 Omega.pairwisecheck f 
   else f

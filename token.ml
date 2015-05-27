@@ -17,7 +17,7 @@ type sleek_token =
   | RLEMMA
   (*keywords*)
   | ANDLIST| ABSTRACT
-  | ASSERT | ASSERT_EXACT | ASSERT_INEXACT | ASSUME | ALLN | APPEND | AXIOM (* [4/10/2011] An Hoa *)
+  | ASSERT | ASSERT_EXACT | ASSERT_INEXACT | ASSUME | INFER_ASSUME | ALLN | APPEND | AXIOM (* [4/10/2011] An Hoa *)
   | BIND | BOOL | BREAK | BAGMAX | BAGMIN | BAG | BARRIER 
   | PASS_COPY
   | SLK_HULL | SLK_PAIRWISE
@@ -54,11 +54,11 @@ type sleek_token =
   | TERM_INFER 
   (* | TREL_INFER  change to  INFER_AT_TERM *)
   | TREL_ASSUME
-  | INFER_AT_EFA | INFER_AT_DFA | INFER_AT_CLASSIC | INFER_AT_PAR
+  | INFER_AT_EFA | INFER_AT_DFA | INFER_AT_CLASSIC | INFER_AT_PAR | INFER_AT_ERRMUST | INFER_AT_ERRMUST_ONLY | INFER_AT_ERRMAY | INFER_AT_DE_EXC | INFER_AT_PREMUST
   | INFER_AT_VER_POST
   | INFER_AT_TERM | INFER_AT_TERM_WO_POST 
   | INFER_AT_PRE | INFER_AT_POST | INFER_AT_IMM | INFER_AT_SHAPE | INFER_AT_ERROR | INFER_AT_FLOW
-  | INFER_AT_SIZE
+  | INFER_AT_SIZE | INFER_AT_ARR_AS_VAR 
   | UTPRE | UTPOST
   | UNFOLD | UNION
   | VOID 
@@ -73,7 +73,7 @@ type sleek_token =
   | DOT | DOUBLEQUOTE | EQ | EQEQ | RIGHTARROW | EQUIV | GT | GTE | HASH | REL_GUARD | HEAD | INLIST | LEFTARROW | LENGTH
   | LT | LTE | MINUS | MEM | MEME | NEQ | NOT | NOTINLIST | OBRACE |OLIST | OPAREN | OP_ADD_ASSIGN | OP_DEC | OP_DIV_ASSIGN 
   | OP_INC | OP_MOD_ASSIGN | OP_MULT_ASSIGN | OP_SUB_ASSIGN | OR | OROR | PERM | DERIVE | EQV | CONSTR | OSQUARE  | REVERSE | SET | TAIL 
-  | TOPAREN | TCPAREN
+  (* | TOPAREN | TCPAREN *)
   | PERCENT | PMACRO 
   | PZERO | PFULL | PVALUE | PLEND | PCONST of Frac.frac |PFRAC (* | PREF *)
   | SPLITANN
@@ -116,7 +116,7 @@ module Token = struct
     | JAVA s-> s
     | AXIOM -> "axiom" (* [4/10/2011] An Hoa *)
     | ANDLIST -> "AndList" | ATPOS -> "at"
-    | ASSERT -> "assert" | ASSERT_EXACT -> "assert_exact" | ASSERT_INEXACT -> "assert_inexact" | ASSUME -> "assume" | ALLN-> "alln" | APPEND -> "app" | ABSTRACT -> "abstract"
+    | ASSERT -> "assert" | ASSERT_EXACT -> "assert_exact" | ASSERT_INEXACT -> "assert_inexact" | ASSUME -> "assume" | INFER_ASSUME -> "infer_assume" | ALLN-> "alln" | APPEND -> "app" | ABSTRACT -> "abstract"
     | BIND -> "bind"| BOOL -> "bool" | BREAK ->"break" | BAGMAX ->"bagmax" | BAGMIN->"bagmin" | BAG->"bag" | BARRIER ->"barrier"
     | CASE ->"case" | CHECKNORM -> "check_normalize" | CHECKEQ -> "checkeq" | CHECKENTAIL ->"checkentail" | CAPTURERESIDUE ->"capture_residue" | CLASS ->"class" | CLIST -> "|]" | PASS_COPY -> "@C"(* | COERCION ->"coercion" *)
     | CHECKENTAIL_EXACT -> "checkentail_exact" | CHECKENTAIL_INEXACT -> "checkentail_inexact"
@@ -190,6 +190,11 @@ module Token = struct
     | INFER_AT_EFA -> "@efa"
     | INFER_AT_DFA -> "@dfa"
     | INFER_AT_TERM -> "@term"
+    | INFER_AT_ERRMUST -> "@err_must"
+    | INFER_AT_PREMUST -> "@pre_must"
+    | INFER_AT_ERRMUST_ONLY -> "@err_must_only"
+    | INFER_AT_DE_EXC -> "@dis_err"
+    | INFER_AT_ERRMAY -> "@err_may"
     | INFER_AT_TERM_WO_POST -> "@term_wo_post"
     | INFER_AT_PRE -> "@pre_n"
     | INFER_AT_POST -> "@post_n"
@@ -197,6 +202,7 @@ module Token = struct
     | INFER_AT_CLASSIC -> "@leak"
     | INFER_AT_PAR -> "@par"
     | INFER_AT_IMM -> "@imm"
+    | INFER_AT_ARR_AS_VAR -> "@arrvar"
     | INFER_AT_SHAPE -> "@shape"
     | INFER_AT_ERROR -> "@error"
     | INFER_AT_FLOW -> "@flow"
@@ -204,13 +210,12 @@ module Token = struct
     | TREL_ASSUME -> "termAssume"
     | TERM_INFER -> "term_infer"
     | XPURE -> "XPURE"
-    | TOPAREN -> "<#" 
-    | TCPAREN -> "#>" (*Open and close paren for thread heap*)
+    (* | "<#" { TOPAREN } *) (* replaced by `LT;`HASH. inline\data-holes.lsk. examples/fracperm/thread/thrd1.slk*)
+  (* | "#>" { TCPAREN } (\*Open and close paren for thread heap*\) *) (* replaced by `HASH;`GT*)
     | PAR -> "par"
     | ARGOPTION arg -> "##OPTION "^arg
   (* | SKIP -> "skip" *)
   (* | IN_RFLOW -> "-%" | OUT_RFLOW -> "+%" *)
-
 
   let print ppf x = pp_print_string ppf (to_string x)
 

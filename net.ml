@@ -1,6 +1,6 @@
 #include "xdebug.cppo"
-let debug = ref false
-let trace f s = if !debug then (prerr_string (Printf.sprintf "\n%d: %s: %s" (Unix.getpid ()) f s); flush stderr) else ()
+(* let debug = ref false *)
+let trace f s = if !Debug.debug_print then (prerr_string (Printf.sprintf "\n%d: %s: %s" (Unix.getpid ()) f s); flush stderr) else ()
 let showinfo = true
 let show_info s = if showinfo then (prerr_string s; flush stderr)
 
