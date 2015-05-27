@@ -75,6 +75,8 @@ let texify l nl = if !Globals.texify then l else nl
 
 let wrap_pr_1 lvl pr a =
   if should_print lvl then pr a else ()
+let wrap_pr_2 lvl pr a b =
+  if should_print lvl then pr a b else ()
 let wrap_pr_pair lvl pr (a,b) =
   if should_print lvl then pr (a,b) else ()
 
@@ -94,13 +96,15 @@ let pr_map_aux ?(lvl=(!glob_lvl)) pr_1 pr_2 (a,b) =
   pr_2 b) (a,b)
 (* ; fmt_print_newline () *)
 
-let pr_opt ?(lvl=(!glob_lvl)) f x = match x with
+let pr_opt ?(lvl=(!glob_lvl)) f x = wrap_pr_1 lvl (fun x ->
+  match x with
   | None -> fmt_string "None"
-  | Some v -> (fmt_string "Some("; (f v); fmt_string ")")
+  | Some v -> (fmt_string "Some("; (f v); fmt_string ")")) x
 
-let pr_opt_silent ?(lvl=(!glob_lvl)) f x = match x with
+let pr_opt_silent ?(lvl=(!glob_lvl)) f x = wrap_pr_1 lvl (fun x ->
+  match x with
   | None -> ()
-  | Some v -> f v
+  | Some v -> f v) x
 
 (* let pr_opt lst (f:'a -> ()) x:'a = *)
 (*   if not(Gen.is_empty lst) then f a *)
@@ -139,7 +143,6 @@ let poly_printer_of_pr (crt_fmt: Format.formatter) (pr: 'a -> unit) (e:'a) : uni
     pr e;
     fmt := old_fmt;
   end
-
 
 (** shorter op code used internally *)
 let op_add_short = "+"
@@ -202,8 +205,9 @@ let op_comma = ","
    [ G(x_25) ::=  x_25::node<flted_13_14,right>@M&0<=flted_13_14 | flted_13_14=0]
 *)
 let pr_bracket ?(lvl=(!glob_lvl)) (isSimple:'a -> bool) (pr_elem:'a -> unit) (e:'a) : unit =
-  if (isSimple e) then pr_elem e
-  else (fmt_string "("; pr_elem e; fmt_string ")")
+  wrap_pr_1 lvl (fun e ->
+    if (isSimple e) then pr_elem e
+    else (fmt_string "("; pr_elem e; fmt_string ")")) e
 
 (** invoke f_open ; f_elem x1; f_sep .. f_sep; f_elem xn; f_close *)
 let pr_list_open_sep ?(lvl=(!glob_lvl)) (f_open:unit -> unit)
@@ -213,9 +217,9 @@ let pr_list_open_sep ?(lvl=(!glob_lvl)) (f_open:unit -> unit)
     | [] -> failwith "impossible to be [] in pr_list_open_sep"
     | [x] -> (f_elem x)
     | y::ys -> (f_elem y; f_sep(); helper ys)
-  in match xs with
+  in wrap_pr_1 lvl (fun xs -> match xs with
   | [] -> f_empty()
-  | xs -> f_open(); (helper xs); f_close()
+  | xs -> f_open(); (helper xs); f_close()) xs
 
 (* let pr_list_open_sep (f_open:unit -> unit) *)
 (*     (f_close:unit -> unit) (f_sep:unit->unit) (f_empty:unit->unit) *)
@@ -227,14 +231,15 @@ let pr_list_open_sep ?(lvl=(!glob_lvl)) (f_open:unit -> unit)
 (** @param sep = "SAB"-space-cut-after-before,"SA"-space cut-after,"SB" -space-before
     "AB"-cut-after-before,"A"-cut-after,"B"-cut-before, "S"-space, "" no-cut, no-space*)
 let pr_op_sep_gen ?(lvl=(!glob_lvl)) sep op =
-  if sep="A" then (fmt_string op; fmt_cut())
-  else if sep="B" then (fmt_cut();fmt_string op)
-  else if sep="AB" then (fmt_cut();fmt_string op;fmt_cut())
-  else if sep="SB" then (fmt_space();fmt_string op;fmt_string(" "))
-  else if sep="SA" then (fmt_string(" "); fmt_string op; fmt_space())
-  else if sep="SAB" then (fmt_space();fmt_string op; fmt_space())
-  else if sep="S" then fmt_string (" "^op^" ")
-  else fmt_string op (* assume sep="" *)
+  wrap_pr_1 lvl (fun op ->
+    if sep="A" then (fmt_string op; fmt_cut())
+    else if sep="B" then (fmt_cut();fmt_string op)
+    else if sep="AB" then (fmt_cut();fmt_string op;fmt_cut())
+    else if sep="SB" then (fmt_space();fmt_string op;fmt_string(" "))
+    else if sep="SA" then (fmt_string(" "); fmt_string op; fmt_space())
+    else if sep="SAB" then (fmt_space();fmt_string op; fmt_space())
+    else if sep="S" then fmt_string (" "^op^" ")
+    else fmt_string op (* assume sep="" *)) op
 
 (** print op and a break after *)
 let pr_cut_after ?(lvl=(!glob_lvl)) op = pr_op_sep_gen ~lvl "A" op
@@ -275,6 +280,7 @@ let pr_cut_before_no ?(lvl=(!glob_lvl)) op =  pr_op_sep_gen ~lvl "B" op
 (** @param box_opt Some(s,i) for boxing options "V" -vertical,"H"-horizontal,"B"-box
     @param sep_opt (Some s) for breaks at separator where "B"-before, "A"-after, "AB"-both  *)
 let pr_args_gen ?(lvl=(!glob_lvl)) f_empty box_opt sep_opt op open_str close_str sep_str f xs =
+  wrap_pr_1 lvl (fun xs ->
   let f_o x = match x with
     | Some(s,i) ->
       if s="V" then fmt_open_vbox i
@@ -298,7 +304,7 @@ let pr_args_gen ?(lvl=(!glob_lvl)) f_empty box_opt sep_opt op open_str close_str
     (fun () -> (f_o box_opt); fmt_string op; fmt_string open_str; opt_cut())
     (fun () -> opt_cut(); fmt_string close_str; (f_c box_opt))
     (fun () -> f_s sep_opt sep_str)
-    f_empty f xs
+    f_empty f xs) xs
 
 (** invoke pr_args_gen  *)
 let pr_args ?(lvl=(!glob_lvl)) box_opt sep_opt op open_str close_str sep_str f xs =
@@ -319,127 +325,139 @@ let wrap_box box_opt f x =
   f_o box_opt; f x; fmt_close()
 
 let pr_wrap_opt ?(lvl=(!glob_lvl)) hdr (f: 'a -> unit) (x:'a option) =
-  match x with
-  | None -> ()
-  | Some x ->
-    begin
-      fmt_cut();
-      fmt_open_hbox ();
-      fmt_string hdr;
-      f x;
-      fmt_close_box()
-    end
+  wrap_pr_1 lvl (fun x ->
+    match x with
+    | None -> ()
+    | Some x ->
+        begin
+        fmt_cut();
+        fmt_open_hbox ();
+        fmt_string hdr;
+        f x;
+        fmt_close_box()
+        end) x
 
 (** if f e  is not true print with a cut in front of  hdr
    If below is set to true, the content will be printed below the header,
    indented.
  *)
 let pr_wrap_test ?(lvl=(!glob_lvl)) ?(below=false) hdr (e:'a -> bool) (f: 'a -> unit) (x:'a) =
-  if (e x) then ()
-  else
-    begin
-      fmt_cut ();
-      if below then fmt_open_vbox 0 else fmt_open_hbox ();
-      fmt_string hdr;
-      (* f x; *)
-      if below then fmt_cut_and_indent ();
-      wrap_box ("B",1) f x;
-      fmt_close_box()
-    end
+  wrap_pr_1 lvl (fun x ->
+    if (e x) then ()
+    else
+        begin
+        fmt_cut ();
+        if below then fmt_open_vbox 0 else fmt_open_hbox ();
+        fmt_string hdr;
+        (* f x; *)
+        if below then fmt_cut_and_indent ();
+        wrap_box ("B",1) f x;
+        fmt_close_box()
+        end) x
 
 let pr_wrap_test_nocut ?(lvl=(!glob_lvl)) hdr (e:'a -> bool) (f: 'a -> unit) (x:'a) =
-  if (e x) then ()
-  else
-    begin
-      let ff a = f a; fmt_string " " in
-      fmt_open_hbox ();
-      fmt_string hdr;
-      (* f x; *)
-      wrap_box ("B",1) ff x;
-      fmt_close_box()
-    end
+  wrap_pr_1 lvl (fun x ->
+    if (e x) then ()
+    else
+        begin
+        let ff a = f a; fmt_string " " in
+        fmt_open_hbox ();
+        fmt_string hdr;
+        (* f x; *)
+        wrap_box ("B",1) ff x;
+        fmt_close_box()
+        end) x
 
 
 (** if f e  is not true print with a cut in front of  hdr*)
 let pr_wrap ?(lvl=(!glob_lvl)) (f: 'a -> unit) (x:'a) =
-  begin
-    fmt_open_hbox();
-    f x;
-    fmt_close_box()
-  end
+  wrap_pr_1 lvl (fun x ->
+    begin
+        fmt_open_hbox();
+        f x;
+        fmt_close_box()
+    end) x
 
 (** if f e  is not true print without cut in front of  hdr*)
 let pr_wrap_test_nocut ?(lvl=(!glob_lvl)) hdr (e:'a -> bool) (f: 'a -> unit) (x:'a) =
-  if (e x) then ()
-  else (fmt_string hdr; (wrap_box ("B",0) f x))
+  wrap_pr_1 lvl (fun x ->
+    if (e x) then ()
+    else (fmt_string hdr; (wrap_box ("B",0) f x))) x
 
 
 (** print hdr , a cut and a boxed  f a  *)
 let pr_vwrap_naive_nocut ?(lvl=(!glob_lvl)) ?(nshort=true) hdr (f: 'a -> unit) (x:'a) =
-  begin
-    if nshort then (fmt_string (hdr); fmt_cut());
-    wrap_box ("B",2) f  x
-  end
+  wrap_pr_1 lvl (fun x ->
+    begin
+        if nshort then (fmt_string (hdr); fmt_cut());
+        wrap_box ("B",2) f  x
+    end) x
 
 (** call pr_wrap_naive_nocut with a cut in front of *)
 let pr_vwrap_naive ?(lvl=(!glob_lvl)) hdr (f: 'a -> unit) (x:'a) =
-  begin
-    fmt_cut();
-    pr_vwrap_naive_nocut hdr f x;
-  end
+  wrap_pr_1 lvl (fun x ->
+    begin
+        fmt_cut();
+        pr_vwrap_naive_nocut hdr f x;
+    end) x
 
 (** this wrap is to be used in a vbox setting
     if hdr is big and the size of printing exceeds
     margin, it will do a cut and indent before continuing
 *)
 let pr_vwrap_nocut ?(lvl=(!glob_lvl)) hdr (f: 'a -> unit) (x:'a) =
-  if (String.length hdr)>7 then
-    begin
-      let s = poly_string_of_pr_gen 0 f x in
-      if (String.length s) < 70 then (* to improve *)
-        fmt_string (hdr^s)
-      else begin
+  wrap_pr_1 lvl (fun x ->
+    if (String.length hdr)>7 then
+        begin
+        let s = poly_string_of_pr_gen 0 f x in
+        if (String.length s) < 70 then (* to improve *)
+            fmt_string (hdr^s)
+        else begin
+            fmt_string hdr;
+            fmt_cut ();
+            (* fmt_string s; *)
+            wrap_box ("B",0) f  x
+        end
+        end
+    else  begin
         fmt_string hdr;
         fmt_cut ();
-        (* fmt_string s; *)
         wrap_box ("B",0) f  x
-      end
-    end
-  else  begin
-    fmt_string hdr;
-    fmt_cut ();
-    wrap_box ("B",0) f  x
-  end
+    end) x
 
 (** call pr_wrap_nocut with a cut in front of*)
 let pr_vwrap ?(lvl=(!glob_lvl)) hdr (f: 'a -> unit) (x:'a) =
-  begin
-    fmt_cut();
-    pr_vwrap_nocut ~lvl hdr f x
-  end
+  wrap_pr_1 lvl (fun x ->
+    begin
+        fmt_cut();
+        pr_vwrap_nocut ~lvl hdr f x
+    end) x
 
 (** call pr_wrap_op : suppress printing for None **)
 let pr_vwrap_opt ?(lvl=(!glob_lvl)) hdr (f: 'a -> unit) (x:'a option) =
-  begin
-    match x with
-    | None -> ()
-    | Some x -> pr_vwrap ~lvl hdr f x
-  end
+  wrap_pr_1 lvl (fun x ->
+    begin
+        match x with
+        | None -> ()
+        | Some x -> pr_vwrap ~lvl hdr f x
+    end) x
 
 (** call pr_vwrap : suppress printing for [] **)
 let pr_vwrap_list ?(lvl=(!glob_lvl)) hdr (f: 'a -> unit) (x:'a list) =
-  begin
-    match x with
-    | [] -> ()
-    | _ -> pr_vwrap ~lvl hdr (List.iter f) x
-  end
+  wrap_pr_1 lvl (fun x ->
+    begin
+        match x with
+        | [] -> ()
+        | _ -> pr_vwrap ~lvl hdr (List.iter f) x
+    end) x
 
 (* Print a header-value horizontally *)
 let pr_hwrap ?(lvl=(!glob_lvl)) hdr (f: 'a -> unit) (x: 'a) =
-  fmt_open_hbox ();
-  fmt_string_cut hdr;
-  wrap_box ("H", 0) f x;
-  fmt_close ()
+  wrap_pr_1 lvl (fun x ->
+    fmt_open_hbox ();
+    fmt_string_cut hdr;
+    wrap_box ("H", 0) f x;
+    fmt_close ()) x
 
 (* let pr_args open_str close_str sep_str f xs =  *)
 (*   pr_list_open_sep  *)
@@ -527,11 +545,11 @@ let pr_list_vbox_wrap ?(lvl=(!glob_lvl)) sep f xs =
 
 (**print f_1 op  f_2 and a space *)
 let pr_op_adhoc ?(lvl=(!glob_lvl)) (f_1:unit -> unit) (op:string) (f_2:unit -> unit) =
-  f_1(); fmt_string op ; f_2(); fmt_space()
+  wrap_pr_2 lvl (fun f_1 f_2 -> f_1(); fmt_string op ; f_2(); fmt_space()) f_1 f_2
 
 (**print  f e1  op f e2 and a space *)
 let pr_op ?(lvl=(!glob_lvl)) (f:'a -> unit) (e1:'a) (op:string) (e2:'a)  =
-  (f e1); fmt_string op ; (f e2); fmt_space()
+  wrap_pr_2 lvl (fun e1 e2 -> (f e1); fmt_string op ; (f e2); fmt_space()) e1 e2
 
 
 (* let pr_op_sep   *)
@@ -673,45 +691,45 @@ let smart_string_of_spec_var x =
       else string_of_spec_var x
     else string_of_spec_var x
 
-let pr_spec_var ?(lvl=(!glob_lvl)) x = fmt_string (smart_string_of_spec_var x)
+let pr_spec_var ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (smart_string_of_spec_var x)
 
-let pr_view_arg ?(lvl=(!glob_lvl)) x = fmt_string (string_of_view_arg x)
+let pr_view_arg ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (string_of_view_arg x)
 
-let pr_annot_arg ?(lvl=(!glob_lvl)) x = fmt_string (string_of_annot_arg x)
+let pr_annot_arg ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (string_of_annot_arg x)
 
-let pr_annot_arg_posn ?(lvl=(!glob_lvl)) x = fmt_string ((pr_pair string_of_annot_arg string_of_int) x)
+let pr_annot_arg_posn ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string ((pr_pair string_of_annot_arg string_of_int) x)
 
-let pr_typed_spec_var ?(lvl=(!glob_lvl)) x = fmt_string (* (string_of_spec_var x) *) (string_of_typed_spec_var x)
+let pr_typed_spec_var ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (* (string_of_spec_var x) *) (string_of_typed_spec_var x)
 
 let pr_typed_spec_var_lbl ?(lvl=(!glob_lvl)) (l,x) =
   let s =
     if LO.is_common l then ""
     else (LO.string_of l)^":"
-  in fmt_string (s^(string_of_typed_spec_var x))
+  in wrap_pr_1 lvl fmt_string (s^(string_of_typed_spec_var x))
 
 let pr_typed_view_arg_lbl ?(lvl=(!glob_lvl)) (l,x) =
   let s =
     if LO.is_common l then ""
     else (LO.string_of l)^":"
-  in fmt_string (s^(string_of_typed_view_arg x))
+  in wrap_pr_1 lvl fmt_string (s^(string_of_typed_view_arg x))
 
-let pr_list_of_spec_var ?(lvl=(!glob_lvl)) xs = pr_list_none pr_spec_var xs
+let pr_list_of_spec_var ?(lvl=(!glob_lvl)) xs = pr_list_none ~lvl pr_spec_var xs
 
-let pr_list_of_view_arg ?(lvl=(!glob_lvl)) xs = pr_list_none pr_view_arg xs
+let pr_list_of_view_arg ?(lvl=(!glob_lvl)) xs = pr_list_none ~lvl pr_view_arg xs
 
-let pr_list_of_annot_arg ?(lvl=(!glob_lvl)) xs = pr_list_none pr_annot_arg xs
+let pr_list_of_annot_arg ?(lvl=(!glob_lvl)) xs = pr_list_none ~lvl pr_annot_arg xs
 
-let pr_list_of_annot_arg_posn ?(lvl=(!glob_lvl)) xs = pr_list_none pr_annot_arg_posn xs
+let pr_list_of_annot_arg_posn ?(lvl=(!glob_lvl)) xs = pr_list_none ~lvl pr_annot_arg_posn xs
 
-let pr_imm ?(lvl=(!glob_lvl)) x = fmt_string (string_of_imm x)
+let pr_imm ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (string_of_imm x)
 
-let pr_derv ?(lvl=(!glob_lvl)) x = fmt_string (string_of_derv x)
+let pr_derv ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (string_of_derv x)
 
-let pr_split ?(lvl=(!glob_lvl)) x = fmt_string (string_of_split_ann x)
+let pr_split ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (string_of_split_ann x)
 
-let string_of_ident ?(lvl=(!glob_lvl)) x = x
+let string_of_ident x = x
 
-let pr_ident ?(lvl=(!glob_lvl)) x = fmt_string (string_of_ident x)
+let pr_ident ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (string_of_ident x)
 
 
 (** check if top operator of e is associative and
