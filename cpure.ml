@@ -1233,6 +1233,9 @@ let rec get_exp_type (e : exp) : typ =
     end
   | Template _ -> Int
 
+let get_exp_type (e : exp) : typ =
+  Debug.no_1 "get_exp_type" !print_exp string_of_typ get_exp_type e
+
 (* *GLOBAL_VAR* substitutions list, used by omega.ml and ocparser.mly
  * moved here from ocparser.mly *)
 let omega_subst_lst = ref ([]: (string*string*typ) list)
@@ -6598,9 +6601,12 @@ let foldr_b_formula (e:b_formula) (arg:'a) f f_args f_comb
                           | BVar _ 
                           | XPure _ 
                           | BagMin _ 
-                          | SubAnn _ 
                           (* | VarPerm _ (*TO CHECK*) *)
                           | BagMax _ -> (pf,f_comb [])
+                          | SubAnn (e1,e2,l) ->
+                            let (ne1,r1) = helper new_arg e1 in
+                            let (ne2,r2) = helper new_arg e2 in
+                            (SubAnn (ne1,ne2,l),f_comb[r1;r2])
                           | Lt (e1,e2,l) ->
                             let (ne1,r1) = helper new_arg e1 in
                             let (ne2,r2) = helper new_arg e2 in
@@ -6713,9 +6719,12 @@ let transform_b_formula f (e:b_formula) :b_formula =
                 | XPure _ (* WN : xpure *)
                 | BVar _ 
                 | BagMin _ 
-                | SubAnn _
                 (* | VarPerm _(*TO CHECK*) *)
                 | BagMax _ -> pf
+                | SubAnn  (e1,e2,l) ->
+                  let ne1 = transform_exp f_exp e1 in
+                  let ne2 = transform_exp f_exp e2 in
+                  SubAnn (ne1,ne2,l)
                 | Lt (e1,e2,l) ->
                   let ne1 = transform_exp f_exp e1 in
                   let ne2 = transform_exp f_exp e2 in
@@ -14358,3 +14367,6 @@ let contains_undef (f:formula) =
 let contains_imm (f:formula) =
   let f_e e =  Some (is_ann_type (get_exp_type e)) in
   fold_formula f (nonef,nonef, f_e)  (List.exists (fun b -> b) )
+
+let contains_imm (f:formula) =
+  Debug.no_1 "contains_imm" !print_formula string_of_bool contains_imm f

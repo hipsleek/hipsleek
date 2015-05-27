@@ -74,6 +74,10 @@ let split_imm_pure pf =
   let imm_f, pure_f = List.partition CP.contains_imm conjs in
   (CP.conj_of_list imm_f no_pos), (CP.conj_of_list pure_f no_pos)
 
+let split_imm_pure pf =
+  let pr = !CP.print_formula in
+  Debug.no_1 "split_imm_pure" pr (pr_pair pr pr) split_imm_pure pf
+
 let get_imm_list ?loc:(l=no_pos) list =
   let elem_const = (CP.mkAnnSVar Mutable)::(CP.mkAnnSVar Imm)::(CP.mkAnnSVar Lend)::[(CP.mkAnnSVar Accs)] in
   let anns_ann =  (CP.ConstAnn(Mutable))::(CP.ConstAnn(Imm))::(CP.ConstAnn(Lend))::[(CP.ConstAnn(Accs))] in

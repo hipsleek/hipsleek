@@ -35,4 +35,10 @@ res=0 & w_1470=0 & v=0 & a<:@L & a<:b_1469
 P2(a,b_1469,v,res,w_1470))]
 
 
+norm_post_rel_def@1
+norm_post_rel_def inp1 :post_rel_df:[( res=0 & w_1470=0 & v=0 & a<:@L & a<:b_1469 & P1(a,v), P2(a,b_1469,v,res,w_1470))]
+norm_post_rel_def inp2 :pre_rel_ids :[P1]
+norm_post_rel_def inp3 :all_reldefns:[( res=0 & w_1470=0 & v=0 & a<:@L & a<:b_1469 & P1(a,v), P2(a,b_1469,v,res,w_1470)),( 1<=v & a<:@L & P1(a,v) & v_1517+1=v & @M<:a_1516, P1(a_1516,v_1517)),( a<:@L & v<=(0-1) & P1(a,v) & v_1517+1=v & @M<:a_1516, P1(a_1516,v_1517)),( a=@M, P1(a,v))]
+norm_post_rel_def@1 EXIT:[( res=0 & w_1470=0 & v=0 & a<:@L & a<:b_1469 & a=@M, P2(a,b_1469,v,res,w_1470))]
+
 */
