@@ -695,6 +695,18 @@ ensures  v=res
  if (x>0) c.fst = 5;
  return x;
 
+GOT
+---
+!!! **pi.ml#770:>>POST:  
+((a=@M & res=w_1457 & v=w_1457 & w_1457<=0 & b_1456=@M) 
+| (w_1457=5 & a=@M & v=res & b_1456=@M & 1<=res))
+
+Can normalize to:
+-----------------
+!!! **pi.ml#770:>>POST:  
+a=@M & b_1456=@M & ( res=w_1457 & v=w_1457 & w_1457<=0 ) 
+                    | (w_1457=5 & v=res & 1<=res)
+
 GOT:
 !!! **pi.ml#696:reloblgs:[( P1(a,v), (a=@M | (v<=0 & a<:@L)))]
 
@@ -789,6 +801,15 @@ should I plug in def of P1(a,v) for the def of P1(a_1516,v_1517) as well?
 !!! **pi.ml#772:>>PRE :  true ----------> should it be a=@M?
 
 =======================================================
+# ex8e1b.slk
+
+Perhaps HOLE has not been substituted?
+Can we print HOLE in the sleek logging?
+
+Residue:
+ <1>c::cell<v>@a&c'=c & P1(a,v) & fst_15_1443'=v & a<:@L&{FLOW,(20,21)=__norm#E}[]
+ inferred rel: [RELASS [P1]: ( P1(a,v)) -->  a<:@L]
+[[ SEARCH ==>  Match(c,c') ==> ]]
 =======================================================
 =======================================================
 =======================================================
