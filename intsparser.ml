@@ -161,7 +161,7 @@ let trans_ints_block (blk: ints_block): I.exp =
 let trans_ints_block_lst fn (fr_lbl: ints_loc) (blks: ints_block list): I.proc_decl =
   let pos = pos_of_ints_loc fr_lbl in
   let proc_name = name_of_ints_loc fr_lbl in
-  let nondet_seq_for_blocks cond blk_exps =
+  let nondet_seq_for blk_exps =
     let rec nondet_chain_for blk_exps =
       match blk_exps with
       | [] -> (I.Empty no_pos)
@@ -170,9 +170,11 @@ let trans_ints_block_lst fn (fr_lbl: ints_loc) (blks: ints_block list): I.proc_d
         let nondet_call = I.mkCallNRecv Globals.nondet_int_proc_name None [] None None no_pos in
         let nondet_cond = I.mkBinary I.OpGt nondet_call (I.mkIntLit 0 no_pos) None no_pos in
         I.mkCond nondet_cond blk (nondet_chain_for blk_exps) None (I.get_exp_pos blk) in
-    let nondet_chain = nondet_chain_for blk_exps in
+    nondet_chain_for blk_exps
+  in
+  let wrap_with_cond cond exp =
     let cond_exps = List.map (fun asm -> Assume asm) cond in
-    trans_ints_exp_lst cond_exps nondet_chain
+    trans_ints_exp_lst cond_exps exp
   in
   let rec helper blks factored =
     match blks with
@@ -204,12 +206,13 @@ let trans_ints_block_lst fn (fr_lbl: ints_loc) (blks: ints_block list): I.proc_d
             | _ -> (* nonempty *)
               let exps_with_factor = (helper (blk::common) (asm::factored)) in
               let other_exps = (helper other factored) in
-              let nondet_exp = (nondet_seq_for_blocks [asm] exps_with_factor) in
+              let nondet_exp = (nondet_seq_for exps_with_factor) in
+              let nondet_exp = wrap_with_cond [asm] nondet_exp in
               nondet_exp::other_exps)) in
       try_to_factor_blocks init_cond
   in
   let exps = helper blks [] in
-  let proc_body = List.fold_left (fun acc exp -> I.mkSeq acc exp (I.get_exp_pos acc)) (I.Empty pos) exps in
+  let proc_body = nondet_seq_for exps in
   I.mkProc fn proc_name [] "" None false [] [] I.void_type None (IF.EList []) (IF.mkEFalseF ()) pos (Some proc_body)
 
 let trans_ints_prog fn (iprog: ints_prog): I.prog_decl =
