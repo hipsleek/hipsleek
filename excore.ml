@@ -647,11 +647,26 @@ module EPURE =
 
     let elim_exists (svl:spec_var list) (b,f) : epure =
       let pr = string_of_typed_spec_var_list in
-      Debug.no_2 "ef_elim_exists_a" pr string_of string_of elim_exists svl (b,f) 
+      Debug.no_2 "ef_elim_exists_a" pr string_of string_of elim_exists svl (b,f)
+
+     let wrap_exists (svl:spec_var list) l p (b,f) : epure =
+       let b_svl = Elt.conv_var b in
+       let new_svl = diff_svl b_svl svl in
+       let nf = let svl = intersect_svl svl (fv f) in
+       match svl with
+         | [] -> f
+         | sv::_ -> Exists (sv, f, l, p)
+       in
+       (Elt.from_var new_svl, nf)
 
     (* TODO-WN : why ins't elem used instead of spec_var *)
     let elim_exists_disj (svl : spec_var list) (lst : epure_disj) : epure_disj =
+       let () = x_binfo_pp ("Omega call elim_exists_disj-before: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
       let r = List.map (fun e -> elim_exists svl e) lst in
+      let () = x_binfo_pp ("Omega call elim_exists_disj-end: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+      r
+    let wrap_exists_disj (svl : spec_var list) l p (lst : epure_disj) : epure_disj =
+      let r = List.map (fun e -> wrap_exists svl l p e) lst in
       r
 
     (* ef_imply : ante:ef_pure -> conseq:ef_pure -> bool *)
@@ -688,14 +703,17 @@ module EPURE =
               not (is_eq_epure hd ep)) tl) in
           hd::new_tl
       in
-      remove_duplicate (List.filter (fun v -> not(is_false v)) (List.map norm disj))
+      let () = x_binfo_pp ("Omega call norm_disj-before: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+      let res = remove_duplicate (List.filter (fun v -> not(is_false v)) (List.map norm disj)) in
+      let () = x_binfo_pp ("Omega call norm_disj-after: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+      res
 
     let ef_imply_disj_x (ante : epure_disj) (conseq : epure_disj) : bool =
       let a_f = ef_conv_enum_disj ante in
       let c_f = ef_conv_disj conseq in
       (* a_f --> c_f *)
       let f = mkAnd a_f (mkNot_s c_f) no_pos in
-      not (!is_sat_raw (Mcpure.mix_of_pure f))
+      not (x_add_1 !is_sat_raw (Mcpure.mix_of_pure f))
 
     let ef_imply_disj_0 (ante : epure_disj) (conseq : epure_disj) : bool =
       (* Debug.no_2 "ef_imply_disj" string_of_ef_pure_disj string_of_ef_pure_disj string_of_bool *)
@@ -1418,7 +1436,7 @@ module EPUREN =
       let c_f = ef_conv_disj conseq in
       (* a_f --> c_f *)
       let f = mkAnd a_f (mkNot_s c_f) no_pos in
-      not (!is_sat_raw (Mcpure.mix_of_pure f))
+      not (x_add_1 !is_sat_raw (Mcpure.mix_of_pure f))
 
     let imply_disj (ante : epure_disj) (conseq : epure_disj) : bool =
       let r = epure_disj_syn_imply ante conseq in

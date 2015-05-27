@@ -7,5 +7,8 @@ data node2 {
 
 pred bst <sm, lg> == self = null & sm <= lg 
 	or (exists pl,qs: self::node2<v, p, q> * p::bst<sm, pl> * q::bst<qs, lg> & pl <= v & qs >= v)
-	inv sm <= lg.
+	inv true.// sm <= lg.
 
+/*
+inv(bst):[([], self=null & sm<=lg),([self], sm<=lg)]
+*/
