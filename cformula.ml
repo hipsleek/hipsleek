@@ -15680,7 +15680,7 @@ let unwrap_exists f =
     | Base b -> ([],[],f)
     | Exists b -> (b.formula_exists_qvars, 
                    h_fv b.formula_exists_heap, Exists {b with formula_exists_qvars=[]} )
-    | Or b -> 
+    | Or b ->
       let (e1,h1,f1) = helper b.formula_or_f1 in
       let (e2,h2,f2) = helper b.formula_or_f2 in
       (e1@e2,h1@h2,mkOr f1 f2 b.formula_or_pos)
