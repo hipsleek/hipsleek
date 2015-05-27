@@ -69,6 +69,11 @@ let build_eset_of_conj_formula f =
   let pr_out = CP.EMapSV.string_of in
   Debug.no_1 "build_eset_of_conj_formula" pr pr_out build_eset_of_conj_formula f
 
+let split_imm_pure pf =
+  let conjs = CP.split_conjunctions pf in
+  let imm_f, pure_f = List.partition CP.contains_imm conjs in
+  (CP.conj_of_list imm_f no_pos), (CP.conj_of_list pure_f no_pos)
+
 let get_imm_list ?loc:(l=no_pos) list =
   let elem_const = (CP.mkAnnSVar Mutable)::(CP.mkAnnSVar Imm)::(CP.mkAnnSVar Lend)::[(CP.mkAnnSVar Accs)] in
   let anns_ann =  (CP.ConstAnn(Mutable))::(CP.ConstAnn(Imm))::(CP.ConstAnn(Lend))::[(CP.ConstAnn(Accs))] in
@@ -225,12 +230,12 @@ let pick_wekeast_instatiation lhs rhs_sv loc lhs_f rhs_f ivars evars =
     let constr = CP.mkSubAnn lhs (CP.mkVar rhs_sv loc) in
     let form = 
       if not(!Globals.imm_simplif_inst) then 
-        CP.mkExists evars (CP.mkAnd f1 constr loc) None loc 
+        CP.mkExists evars (CP.mkAnd (fst (split_imm_pure f1)) constr loc) None loc 
       else
         let inst_args = rhs_sv::(CP.afv lhs) in
         let all_fv = (CP.fv f1) @ (CP.fv pure_lhs) in
         let new_evars = Gen.BList.difference_eq CP.eq_spec_var all_fv inst_args in
-        CP.mkExists new_evars (CP.conj_of_list [pure_lhs; pure_rhs; constr] loc) None loc 
+        CP.mkExists new_evars (CP.conj_of_list [fst (split_imm_pure pure_lhs); fst (split_imm_pure pure_rhs); constr] loc) None loc 
     in
     let simplif = x_add_1 TP.simplify_tp form in
     let () =  x_tinfo_hp (add_str "bef simplif       : " Cprinter.string_of_pure_formula) form no_pos in
@@ -2824,11 +2829,6 @@ let infer_specs_imm_post_process (spec: CF.struc_formula) : CF.struc_formula =
   in
   let spec = helper fncs spec in
   spec
-
-let split_imm_pure pf =
-  let conjs = CP.split_conjunctions pf in
-  let imm_f, pure_f = List.partition CP.contains_imm conjs in
-  (CP.conj_of_list imm_f no_pos), (CP.conj_of_list pure_f no_pos)
 
 let imm_unify (form:CP.formula): CP.formula = 
   let disj = CP.split_disjunctions form in

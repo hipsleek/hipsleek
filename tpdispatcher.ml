@@ -904,6 +904,16 @@ let comm_inf a1 a2 =
   else if f1 then (f1,a2,a1)
   else (f2,a1,a2)
 
+let cnv_imm_to_int_exp e =
+  match e with
+  | AConst (a,l) ->  IConst(int_of_heap_ann a, l)
+  | _ -> e
+
+let cnv_imm_to_int_p_formula pf =
+  match pf with
+  | SubAnn (a1, a2, ll)-> Lte (cnv_imm_to_int_exp a1, cnv_imm_to_int_exp a2, ll)
+  | _ -> pf
+
 (*
   strong
   ======
@@ -920,6 +930,7 @@ let cnv_ptr_to_int (ex_flag,st_flag) f =
   let f_f arg e = None in
   let f_bf (ex_flag,st_flag) bf = 
     let (pf, l) = bf in
+    let pf = cnv_imm_to_int_p_formula pf in
     match pf with
     | Eq (a1, a2, ll) -> 
       let (is_null_flag,a1,a2) = comm_null a1 a2 in
@@ -943,13 +954,14 @@ let cnv_ptr_to_int (ex_flag,st_flag) f =
           (*else  let (is_inf_flag,a1,a2) = comm_inf a1 a2 in
             if is_inf_flag then
               Some (Lt(a1,CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),ll),ll),l)*)
-      else Some(bf)
+      else None (* Some(bf) *)
     (* | Lte(a1,a2,ll) -> if is_inf a1 && not(is_inf a2) then Some(BConst(false,ll),l)  
        else if is_inf a2 && not(is_inf a1) then Some(BConst(true,ll),l) 
        else Some(bf)*)
-    | _ -> Some(bf)
+    | Lte _ -> Some (pf,l)
+    | _ -> None (* Some(bf) *)
   in
-  let f_e arg e = (Some e) in
+  let f_e arg e = (Some (cnv_imm_to_int_exp e)) in
   let a_f ((ex_flag,st_flag) as flag) f =
     match f with
     | Not _ -> (not(ex_flag),not(st_flag))
