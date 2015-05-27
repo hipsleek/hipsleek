@@ -2468,4 +2468,6 @@ let update_lib hpdefs hp_defs sel_hps=
   let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
   Debug.no_3 "update_lib" pr1 pr2 !CP.print_svl pr2
     (fun _ _ _ -> update_lib_x hpdefs hp_defs sel_hps)
-    hpdefs hp_defs sel_hps
+    hpdefs hp_defs sel_hps;;
+
+Cpure.syn_checkeq := checkeq_p_formula;

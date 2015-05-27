@@ -929,7 +929,7 @@ and xpure_heap_enum_baga_a (prog : prog_decl) (h0 : h_formula) (p0: mix_formula)
   (* let bp = (Mcpure.pure_of_mix p0) in *)
   (* let p_aset = CP.pure_ptr_equations bp in *)
   (* let p_aset = CP.EMapSV.build_eset p_aset in *)
-  let efpd1 = Expure.build_ef_heap_formula h0 (* [([], p_aset, [])] *) (prog.Cast.prog_view_decls) in
+  let efpd1 = Expure.build_ef_heap_formula ~syn:(!Globals.delay_eelim_baga_inv) h0 (* [([], p_aset, [])] *) (prog.Cast.prog_view_decls) in
   (* let efpd2 = Expure.build_ef_pure_formula bp in *)
   (* let efpd = Excore.EPureI.norm_disj (Excore.EPureI.mk_star_disj efpd1 efpd2) in *)
   Excore.EPureI.to_cpure_disj efpd1
@@ -1414,7 +1414,7 @@ and xpure_perm (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) : MCP.mix_f
     (fun _ _ -> xpure_perm_x prog h0 p0) h0 p0
 
 and xpure_symbolic_baga3 (views : view_decl list) (h0 : formula) : Excore.EPureI.epure_disj =
-  let new_baga = x_add Expure.build_ef_formula h0 views in
+  let new_baga =  Expure.build_ef_formula ~syn:false h0 views in
   let () = Debug.info_hprint (add_str "xpure_symbolic_baga3:new_baga" (Excore.EPureI.string_of_disj)) new_baga no_pos in
   new_baga
 
@@ -1426,7 +1426,7 @@ and xpure_symbolic_baga2_x (prog : prog_decl) (vn : string) uf (h0 : formula) : 
       else
         view_decl
     ) view_decls in
-  let new_baga = x_add Expure.build_ef_formula h0 view_decls in
+  let new_baga = Expure.build_ef_formula ~syn:(!Globals.delay_eelim_baga_inv) h0 view_decls in
   new_baga
 
 and xpure_symbolic_baga2 (prog : prog_decl) (vn : string) uf (h0 : formula) : Excore.EPureI.epure_disj =
@@ -1434,7 +1434,7 @@ and xpure_symbolic_baga2 (prog : prog_decl) (vn : string) uf (h0 : formula) : Ex
     (fun _ -> xpure_symbolic_baga2_x prog vn uf h0) h0
 
 and xpure_symbolic_baga (prog : prog_decl) (h0 : formula) : Excore.EPureI.epure_disj =
-  let new_baga = x_add Expure.build_ef_formula h0 prog.Cast.prog_view_decls in
+  let new_baga = (* x_add *) Expure.build_ef_formula ~syn:(!Globals.delay_eelim_baga_inv) h0 prog.Cast.prog_view_decls in
   new_baga
 
 and xpure_symbolic i (prog : prog_decl) (h0 : formula) : (MCP.mix_formula  * CP.spec_var list * CF.mem_formula) =

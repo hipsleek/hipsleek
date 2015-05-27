@@ -14283,3 +14283,4 @@ let collect_nondet_rel f =
   in
   fold_formula f (nonef, f_bf, nonef) List.concat
 
+let syn_checkeq = ref(fun (ls:ident list) (a:formula) (c:formula) (m: ((spec_var * spec_var) list) list) -> (true,([]: ((spec_var * spec_var) list) list)))

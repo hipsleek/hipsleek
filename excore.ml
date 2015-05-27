@@ -274,14 +274,14 @@ let ef_elim_exists_1 (svl : spec_var list) epf  =
   let () = x_tinfo_hp (add_str "pure = " !print_pure_formula) pure no_pos in
   let pure = wrap_exists_svl pure svl in
   let () = x_tinfo_hp (add_str "pure1 = " !print_pure_formula) pure no_pos in
-  let () = x_binfo_pp ("Omega call before simplify: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+  let () = x_tinfo_pp ("Omega call before simplify: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
   let pure = if !Globals.delay_eelim_baga_inv && Cpure.is_shape pure then
     let ps = Cpure.list_of_conjs pure in
     let ps1 = List.map (elim_quan_formula svl) ps in
     Cpure.conj_of_list ps1 (Cpure.pos_of_formula pure)
   else
     simplify_with_label_omega (* x_add_1 Omega.simplify *) pure in
-  let () = x_binfo_pp ("Omega call after simplify: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+  let () = x_tinfo_pp ("Omega call after simplify: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
   let () = x_tinfo_hp (add_str "pure2 = " !print_pure_formula) pure no_pos in
   let () = x_tinfo_hp (add_str "pure_ptr_eq" (pr_list (pr_pair string_of_typed_spec_var string_of_typed_spec_var))) p_aset no_pos in
   let p_aset = EMapSV.build_eset p_aset in
@@ -693,18 +693,26 @@ module EPURE =
         (imply ep1 ([],f2)) && (imply ep2 ([],f1))
       else false
 
+    let is_eq_epure_syn ((b1,f1) as ep1) ((b2,f2) as ep2) =
+      if Elt.is_eq_baga b1 b2 then
+        (* Cpure.checkeq (List.map Cpure.name_of_spec_var (Elt.conv_var b1))  f1 f2 [] *)
+        Cpure.equalFormula f1 f2
+      else false
+
     (* reducing duplicate? *)
-    let norm_disj disj =
+    let norm_disj ?(syn=false) disj =
+      let pure_cmp_fnc = if syn then is_eq_epure_syn else is_eq_epure in
       let rec remove_duplicate (disj : epure_disj) : epure_disj =
         match disj with
         | [] -> []
         | hd::tl ->
           let new_tl = remove_duplicate (List.filter (fun ep ->
-              not (is_eq_epure hd ep)) tl) in
+              not ((* is_eq_epure *)pure_cmp_fnc hd ep)) tl) in
           hd::new_tl
       in
       let () = x_binfo_pp ("Omega call norm_disj-before: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
-      let res = remove_duplicate (List.filter (fun v -> not(is_false v)) (List.map norm disj)) in
+      let sat_disj = if syn then disj else (List.filter (fun v -> not(is_false v)) (List.map norm disj)) in
+      let res = remove_duplicate sat_disj (* (List.filter (fun v -> not(is_false v)) (List.map norm disj)) *) in
       let () = x_binfo_pp ("Omega call norm_disj-after: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
       res
 

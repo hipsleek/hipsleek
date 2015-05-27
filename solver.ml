@@ -2746,8 +2746,8 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
   (* TODO-EXPURE : need to invoke EPureI.UNSAT for --inv-baga *)
   let views = prog.Cast.prog_view_decls in
   let tp_syn_x h p =
-    let t1 = x_add_1 Expure.build_ef_heap_formula h views in
-    let t2 = x_add_1 Expure.build_ef_pure_formula (Mcpure.pure_of_mix p) in
+    let t1 = Expure.build_ef_heap_formula ~syn:(!Globals.delay_eelim_baga_inv) h views in
+    let t2 = Expure.build_ef_pure_formula ~syn:(!Globals.delay_eelim_baga_inv) (Mcpure.pure_of_mix p) in
     let d = Excore.EPureI.mk_star_disj t1 t2 in
     (* let d = Excore.EPureI.elim_unsat_disj d in *)
     (Excore.EPureI.is_false_disj d)
@@ -8108,7 +8108,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
   let lhs_baga = (* Long : why we need lhs_baga *)
     if false (* !Globals.use_baga *) (* !Globals.gen_baga_inv *) then
       let views = prog.Cast.prog_view_decls in
-      let t1 = x_add_1 Expure.build_ef_heap_formula curr_lhs_h views in
+      let t1 = Expure.build_ef_heap_formula ~syn:(!Globals.delay_eelim_baga_inv) curr_lhs_h views in
       let () = Debug.ninfo_hprint (add_str "hf" (Cprinter.string_of_h_formula)) curr_lhs_h no_pos in
       let () = Debug.ninfo_hprint (add_str "t1" (Cprinter.string_of_ef_pure_disj)) t1 no_pos in
       let t2 = x_add_1 Expure.build_ef_pure_formula (Mcpure.pure_of_mix lhs_p) in
