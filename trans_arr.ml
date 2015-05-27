@@ -4463,7 +4463,7 @@ let get_unchanged_set f target=
   let is_target old_arr =
     List.exists (fun item -> is_same_exp old_arr item) !target_set
   in
-  let helper_b (p,ba) =
+  let helper_b (p,ba) env =
     match p with
     | RelForm (SpecVar (_,id,_) as rel_name,explst,loc)->
       if id = "update_array_1d"
@@ -4472,47 +4472,175 @@ let get_unchanged_set f target=
         let new_arr = List.nth explst 1 in
         if is_target old_arr
         then
-          let () = add_index (List.nth explst 3) in
-          if (not (is_target new_arr))
-          then add_target new_arr
-          else ()
+          let new_index = List.nth explst 3 in
+          begin
+            match new_index with
+            | Var (new_sv,_) ->
+              if List.exists (fun e -> is_same_sv new_sv e) env
+              then ()
+              else
+                let () = add_index (new_index) in
+                if (not (is_target new_arr))
+                then add_target new_arr
+                else ()
+            | _ -> ()
+          end
         else
           ()
       else
         ()
     | _ -> ()
   in
-  let rec helper f =
+  let rec helper f env=
     match f with
     | BForm (b,fl)->
-      helper_b b
+      helper_b b env
     | And (f1,f2,_)
     | Or (f1,f2,_,_)->
       (
-        helper f1;
-        helper f2
+        helper f1 env;
+        helper f2 env
       )
     | AndList lst->
       failwith "get_unchanged_set: AndList To Be Implemented"
     | Not (sub_f,fl,loc)->
-      helper sub_f
-    | Forall (sv,sub_f,fl,loc)
-    | Exists (sv,sub_f,fl,loc)->
-      helper sub_f
+      helper sub_f env
+    | Forall (nsv,sub_f,fl,loc)
+    | Exists (nsv,sub_f,fl,loc)->
+      helper sub_f (nsv::env)
   in
-  let rec iterator () =
-    let () = helper f in
+  let rec iterator env =
+    let () = helper f env in
     if !updated
     then
       (
         updated:=false;
-        iterator ()
+        iterator env
       )
     else
       ()
   in
   let () =
-    iterator ()
+    iterator []
   in
-  x_binfo_pp ("unchanged set"^((pr_list ArithNormalizer.string_of_exp) !index_set)) no_pos
+  !index_set
+  (*x_binfo_pp ("unchanged set"^((pr_list ArithNormalizer.string_of_exp) !index_set)) no_pos*)
+;;
+
+(* type unchanged_formula= *)
+(*   | Unchanged *)
+(*   | Pure_F of  Cpure.formula *)
+(* (\* ;; *\) *)
+(* let calculate_unchanged_fixpoint f = *)
+(*   let calculate_helper_b (p,ba) = *)
+(*     match p with *)
+(*     | RelForm (SpecVar (_,id,_),explst,loc) -> *)
+(*       find_result id *)
+(*     | _ -> None *)
+(*   in *)
+(*   let calculate_helper f = *)
+(*     (\* Expand the formula *\) *)
+(*     match f with *)
+(*     | BForm (b,fl)-> *)
+(*       begin *)
+(*         match calculate_helper_b b with *)
+(*         | Some new_f -> new_f *)
+(*         | None -> f *)
+(*       end *)
+(*     | And (f1,f2,loc)-> *)
+(*       And (calculate_helper f1,calculate_helper f2,loc) *)
+(*     | AndList lst-> *)
+(*       failwith "instantiate_forall: AndList To Be Implemented" *)
+(*     | Or (f1,f2,fl,loc)-> *)
+(*       Or (calculate_helper f1,calculate_helper f2,fl,loc) *)
+(*     | Not (f,fl,loc)-> *)
+(*       Not (calculate_helper f,fl,loc) *)
+(*     | Forall (sv,sub_f,fl,loc)-> *)
+(*       Forall (sv,calculate_helper sub_f,fl,loc) *)
+(*     | Exists (sv,sub_f,fl,loc)-> *)
+(*       Exists (sv,calculate_helper sub_f,fl,loc) *)
+(*   in *)
+(*   let iterator *)
+(* ;; *)
+
+let add_unchanged_var f =
+  let helper_b (p,ba) =
+    match p with
+    | RelForm (SpecVar (_,id,_) as relname,elst,loc) ->
+      if id="update_array_1d"
+      then
+        (p,ba)
+      else
+        let ind =  Var ((SpecVar (Int,"unchanged_ind",Unprimed)),no_pos) in
+        (RelForm (relname,elst@[ind],loc),ba)
+    | _ ->
+      (p,ba)
+  in
+  let rec helper f=
+    match f with
+    | BForm (b,fl)->
+      BForm (helper_b b,fl)
+    | And (f1,f2,loc)->
+      And (helper f1,helper f2,loc)
+    | AndList lst->
+      failwith "instantiate_forall: AndList To Be Implemented"
+    | Or (f1,f2,fl,loc)->
+      Or (helper f1,helper f2,fl,loc)
+    | Not (f,fl,loc)->
+      Not (helper f,fl,loc)
+    | Forall (n_sv,sub_f,fl,loc)->
+      Forall (n_sv,helper sub_f,fl,loc)
+    | Exists (n_sv,sub_f,fl,loc)->
+      Exists(n_sv,helper sub_f,fl,loc)
+  in
+  helper f
+;;
+
+let add_unchanged_info f target =
+  (* The input formula must not have disjunction *)
+  let add_helper f =
+    let index_set = get_unchanged_set f target in
+    if List.length index_set>0
+    then
+      let ind = Var ((SpecVar (Int,"unchanged_ind",Unprimed)),no_pos) in
+      let new_f =
+        if List.length index_set > 1
+        then
+          List.fold_left (fun r e -> Or (r,BForm ((Eq (ind,e,no_pos),None),None),None,no_pos)) (BForm ((Eq (ind,(List.hd index_set),no_pos),None),None)) (List.tl index_set)
+        else
+          (BForm ((Eq (ind,(List.hd index_set),no_pos),None),None))
+      in
+      And (f,new_f,no_pos)
+    else
+      f
+  in
+  let helper_b (p,ba) =
+    match p with
+    | RelForm (SpecVar (_,id,_),_,_) ->
+      if id = "update_array_1d"
+      then
+        ((p,ba),add
+  let rec helper f =
+    match f with
+    | BForm (b,fl)->
+      BForm (helper_b b,fl)
+    | And (f1,f2,loc)->
+      And (helper f1,helper f2,loc)
+    | AndList lst->
+      failwith "instantiate_forall: AndList To Be Implemented"
+    | Or (f1,f2,fl,loc)->
+      Or (helper f1,helper f2,fl,loc)
+    | Not (f,fl,loc)->
+      Not (helper f,fl,loc)
+    | Forall (n_sv,sub_f,fl,loc)->
+      Forall (n_sv,helper sub_f,fl,loc)
+    | Exists (n_sv,sub_f,fl,loc)->
+      Exists(n_sv,helper sub_f,fl,loc)
+  let f = helper f in
+  add_unchanged_var f
+;;
+
+let add_unchanged_pre_var prevar =
+  let ind_sv = SpecVar (Int,"unchanged_ind",Unprimed) in
+  prevar@[ind_sv]
 ;;

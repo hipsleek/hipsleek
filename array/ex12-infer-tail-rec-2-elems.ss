@@ -14,11 +14,11 @@ int foo(ref int[] a)
   if (a[5]>0) {
     // a[6] = a[6]+1;
     //    a[k] = a[5]-1;
-    a[4] = a[4]+1;
+    a[1] = a[1]+1;
     a[5] = a[5]-1;
     return foo(a); } 
   else {
-    int tmp=a[4];
+    int tmp=a[1];
     dprint;
     return tmp;
   }

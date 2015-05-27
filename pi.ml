@@ -546,9 +546,13 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
       let pre_rel_fmls = List.filter (fun x -> CP.intersect (CP.get_rel_id_list x) inf_vars != []) pre_rel_fmls in
       let pre_vars = CP.remove_dups_svl (List.fold_left (fun pres proc ->
           pres @ (List.map (fun (t,id) -> CP.SpecVar (t,id,Unprimed)) proc.proc_args)) pres scc) in
+
+
       (*let _ = print_endline ("pre_vars!!!"^(Cprinter.string_of_typed_spec_var_list pre_vars)) in*)
       let post_vars_wo_rel = CP.remove_dups_svl posts_wo_rel in
       let post_vars = CP.remove_dups_svl all_posts in
+      (* Add unchanged_ind into pre_vars in order to get fixpoint of unchanged part of an array *)
+      (* let post_vars = Trans_arr.add_unchanged_pre_var post_vars in *)
       try
         begin
           let proc_spec = List.hd proc_specs in
@@ -558,9 +562,11 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
           let tuples =
             let rels = Gen.Basic.remove_dups rels in
             let rels = List.filter (fun (_,pf,_) -> not(CP.is_False pf)) rels in
-            let () =
-              List.iter (fun (_,pf,_) -> Trans_arr.get_unchanged_set pf (List.hd pre_vars)) rels
-            in
+            (* let () = *)
+            (*   List.iter (fun (_,pf,rel) -> x_binfo_pp ((Cprinter.string_of_pure_formula (Trans_arr.add_unchanged_var rel))^" "^(Cprinter.string_of_pure_formula (Trans_arr.add_unchanged_info pf (List.hd pre_vars)))) no_pos) rels *)
+            (* in *)
+            (* let rels = *)
+            (*   List.map (fun (r,pf,rel) ->(r,Trans_arr.add_unchanged_info pf (List.hd pre_vars),rel)) rels in *)
             if rels !=[] then
               begin
                 print_endline_quiet "\n*************************************";
