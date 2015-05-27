@@ -459,6 +459,27 @@ let pr_hwrap ?(lvl=(!glob_lvl)) hdr (f: 'a -> unit) (x: 'a) =
     wrap_box ("H", 0) f x;
     fmt_close ()) x
 
+(** Syntactic Sugar For Printer Combinators *)
+let ss_cond lvl pred pr = fun v ->
+  wrap_pr_1 lvl (fun d -> if pred d then pr d else ()) v
+
+let ( ?: ) pred pr = ss_cond Short pred pr
+let ( ?:: ) pred pr = ss_cond Normal pred pr
+let ( ?::: ) pred pr = ss_cond Long pred pr
+
+let ss_label lvl lbl pr = fun d -> pr_hwrap ~lvl lbl pr d
+
+let ( =: ) lbl pr = ss_label Short lbl pr
+let ( =:: ) lbl pr = ss_label Normal lbl pr
+let ( =::: ) lbl pr = ss_label Long lbl pr
+
+let ss_vwrap lvl data pr = fun v ->
+  wrap_pr_1 lvl (fun d -> fmt_open_vbox 0; pr d; fmt_close ()) v
+
+let ( >: ) data pr = ss_vwrap Short data pr
+let ( >:: ) data pr = ss_vwrap Normal data pr
+let ( >::: ) data pr = ss_vwrap Long data pr
+
 (* let pr_args open_str close_str sep_str f xs =  *)
 (*   pr_list_open_sep  *)
 (*     (fun () -> (\* fmt_open 1; *\) fmt_string open_str) *)
