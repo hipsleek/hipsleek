@@ -26,6 +26,7 @@ let score_of_lvl = function
   | Normal -> 2
   | Long -> 1
 let glob_lvl = ref Normal
+let should_print lvl = score_of_lvl lvl >= score_of_lvl !glob_lvl
 let is_short n = (n==2)
 let is_medium n = (n==1)
 let is_long n = (n==0)
@@ -72,18 +73,25 @@ let fmt_string_cut x = fmt_string x; fmt_cut ()
 
 let texify l nl = if !Globals.texify then l else nl
 
-let pr_int i = fmt_int i
+let wrap_pr_1 lvl pr a =
+  if should_print lvl then pr a else ()
+let wrap_pr_pair lvl pr (a,b) =
+  if should_print lvl then pr (a,b) else ()
 
-let pr_pair_aux pr_1 pr_2 (a,b) =
+let pr_int ?(lvl=(!glob_lvl)) i = wrap_pr_1 lvl fmt_int i
+
+let pr_pair_aux ?(lvl=(!glob_lvl)) pr_1 pr_2 (a,b) =
+  wrap_pr_pair lvl (fun (a,b) ->
   (* fmt_string "("; *)
   pr_1 a; fmt_string ":";
-  pr_2 b
+  pr_2 b) (a,b)
 (* ;fmt_string ")" *)
 
-let pr_map_aux pr_1 pr_2 (a,b) =
+let pr_map_aux ?(lvl=(!glob_lvl)) pr_1 pr_2 (a,b) =
+  wrap_pr_pair lvl (fun (a,b) ->
   (* fmt_string "("; *)
   pr_1 a; fmt_string " --> ";
-  pr_2 b
+  pr_2 b) (a,b)
 (* ; fmt_print_newline () *)
 
 let pr_opt f x = match x with
