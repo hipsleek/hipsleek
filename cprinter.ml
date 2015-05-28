@@ -3681,7 +3681,7 @@ let pr_estate ?(nshort=true) (es : entail_state) =
       *)
       pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars;
       (* pr_wrap_test "es_infer_vars_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars_rel; *)
-      pr_vwrap "es_infer_vars_rel: "   (pr_seq "" pr_spec_var) es.es_infer_vars_rel;
+      pr_wrap_test "es_infer_vars_rel: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_infer_vars_rel;
       pr_wrap_test "es_infer_vars_templ: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars_templ;
       pr_wrap_test "es_infer_vars_hp_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars_hp_rel;
       (*  pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;*)
@@ -3745,10 +3745,9 @@ let string_of_list_int ls = String.concat ";" (List.map string_of_int ls)
 
 let string_of_fail_explaining fe=
   fmt_open_vbox 0;
-  pr_vwrap_nocut "fe_kind: " fmt_string (string_of_failure_kind fe.fe_kind);
-  pr_vwrap "fe_name: " fmt_string (fe.fe_name); fmt_cut ();
-  fmt_string "fe_locs: ";
-  fmt_string (string_of_list_int(*_loc*) fe.fe_locs);
+  pr_hwrap "fe_kind: " fmt_string (string_of_failure_kind fe.fe_kind); fmt_cut ();
+  pr_hwrap "fe_name: " fmt_string (fe.fe_name); fmt_cut ();
+  pr_hwrap "fe_locs: " fmt_string (string_of_list_int(*_loc*) fe.fe_locs);
   (*  fe_sugg = struc_formula *)
   fmt_close ()
 
@@ -3758,8 +3757,8 @@ let pr_fail_estate (es:fail_context) =
   fmt_open_vbox 0;
   (*pr_wrap_test "es_prior_steps: "  Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.fc_prior_steps;*)
   (* pr_wrap_test_nocut "fc_prior_steps: " Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.fc_prior_steps; *)(* prior steps in reverse order *)
-  pr_vwrap_nocut "fc_message: "  fmt_string es.fc_message;
-  pr_vwrap "fc_current_lhs_flow: " fmt_string (string_of_flow_formula "FLOW"
+  pr_hwrap "fc_message: "  fmt_string es.fc_message; fmt_cut ();
+  pr_vwrap_nocut ~indent:true "fc_current_lhs_flow: " fmt_string (string_of_flow_formula "FLOW"
                                                  (flow_formula_of_formula es.fc_current_lhs.es_formula)) ;
   (*pr_vwrap "fc_current_lhs: " pr_estate es.fc_current_lhs;  (* LHS context with success points *)*)
   (*   pr_vwrap "fc_orig_conseq: " pr_struc_formula es.fc_orig_conseq; (* RHS conseq at the point of failure *)*)
