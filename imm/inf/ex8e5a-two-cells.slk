@@ -25,5 +25,12 @@ Residue:
  <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
 Validate 1: Expecting 3 Fail BUT got : Valid
 
+ x::cell<v>@a*x::cell<w>@b |- x!=null.
+ x::cell<v>@c & v=w & c=a+b |- x!=null.
+
+   c=@M+@M --> false
 */
 
+
+//checkentail x::cell<_>@frac(1/2)*x::cell<_>@frac(1/2) |- x!=null.
+//print residue.
