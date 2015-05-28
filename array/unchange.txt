@@ -10,6 +10,21 @@ int foo(ref int[] a)
   }
 }
 
+ (i=4 | i=5)  <==> 4<=i<=5
+
+update(..) --> i>=0
+
+Q(a,a',ind) = 
+     a[5]<=0 & ind<0
+  \/ a[5]>0   & ind=5
+
+Q(a,a',ind) = 
+     a[5]<=0 & ind<0
+  \/ a[5]>0   & 4<=ind<=5
+
+
+
+===================================================
 Q(a,a',res) = 
    (a'=a & res=a[5] & (a[5])<=0) \/ 
     (v_int=(a[5])-1 & 1<=(a[5]) & Q(a_1231,a',res) & 
@@ -161,4 +176,52 @@ Another example:
      \/ i>=c &  forall(k:i<=k<=c -> a'[k]=a[d-k+i]) 
         & forall(k:not(i<=k<=c) -> a'[k]=a[k])
 
+======================================================
+The main idea is the following translation:
 
+Abstraction
+===========
+Q(a,a',res) =
+    (a'=a & res=a[5] & (a[5])<=0) \/
+     (v_int=(a[5])-1 & 1<=(a[5]) & Q(a_1231,a',res) &
+     update(a,a_1231,v_int,5))
+
+Extended with set of indexes
+============================
+
+S set of index that maybe changed from a->a'
+
+Q(a,a',res,S) =
+    (a'=a & res=a[5] & (a[5])<=0 & S={}) \/
+     (v_int=(a[5])-1 & 1<=(a[5]) & Q(a_1231,a',res,S1) &
+     update(a,a_1231,v_int,5) 
+     & S#a->a'={5}#a->a_1231 U S1#a_1231->a')
+
+Q(a,a',res,S) =
+    (a'=a & res=a[5] & (a[5])<=0 & S={}) \/
+     (v_int=(a[5])-1 & 1<=(a[5]) & Q(a_1231,a',res,S1) &
+     update(a,a_1231,v_int,5) & S={5}
+
+Q(a,a',res,S) =
+    (a[5])<=0  S={}) \/ (1<=(a[5] & S={5})
+
+Fixpoint:
+========
+  Q_set(S) = (S={}) \/ Q_set(S1) & S={5} U S1)
+       = S={5}
+
+  Q(..,S) ==> Q_set(S)
+
+   Q(a,a',S) = S={} & (a[5])<=0) \/
+                1<=(a[5]) &  S={5}
+
+=============================================================
+Q(a,a',res,S,i) =
+    (a'=a & res=a[i] & (a[i])<=0 & S={}) \/
+     (v_int=(a[i])-1 & 1<=(a[i]) & Q(a_1231,a',res,S1,i) &
+     update(a,a_1231,v_int,i) 
+     & S#a->a'={5}#a->a_1231 U S1#a_1231->a')
+
+  Q_set(S,i) 
+     = (S={}) \/ Q_set(S1,i) & S={i} U S1)
+     = S={i}
