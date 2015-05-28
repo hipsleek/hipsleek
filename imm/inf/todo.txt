@@ -811,7 +811,7 @@ Residue:
  inferred rel: [RELASS [P1]: ( P1(a,v)) -->  a<:@L]
 [[ SEARCH ==>  Match(c,c') ==> ]]
 =======================================================
-# ex8e4.ss
+# ex8e4.ss (DONE at heap_entail_one_context_struc)
 
 # false post is not logged..
 

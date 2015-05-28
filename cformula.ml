@@ -10881,6 +10881,14 @@ let isAnyFalseCtx (ctx:context) : bool =
   in helper ctx
 
 
+let get_estate_from_ctx (ctx:context) = 
+  let rec helper ctx =
+    match ctx with
+    | Ctx es -> es
+    | OCtx (ctx1,ctx2) -> (helper ctx1) 
+  in helper ctx
+
+
 (* let isAnyFalseBranchCtx (ctx:branch_ctx) : bool = match ctx with *)
 (*   | _,Ctx es -> isAnyConstFalse es.es_formula *)
 (*   | _ -> false *)

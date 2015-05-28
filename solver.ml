@@ -3707,6 +3707,8 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
         CP.mkOr acc new_f None no_pos
       ) (CP.mkFalse no_pos) ec.CF.formula_case_branches
   in
+  (* let rec get_conseq_from_struc sf = *)
+  (* in *)
   (* let is_not_infer_false_unknown = *)
   (*   let () = Debug.ninfo_hprint (add_str "ctx" Cprinter.string_of_context) ctx no_pos in *)
   (*   let ctx_infer_vars_rel = CF.collect_infer_vars_rel ctx in *)
@@ -3747,7 +3749,13 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
     let bot_ctx = CF.Ctx es in
     let () = Debug.ninfo_hprint (add_str "bot_ctx" Cprinter.string_of_context_short) bot_ctx no_pos in
     (* check this first so that false => false is true (with false residual) *)
-    ((SuccCtx [bot_ctx]), UnsatAnte)
+    (* ((SuccCtx [bot_ctx]), UnsatAnte) *)
+    let r = SuccCtx [bot_ctx] in
+    let es = get_estate_from_ctx bot_ctx in
+    let (_,cseq) = base_formula_of_struc_formula conseq in
+    (* WN: this may not log RHS conseq formula properly *)
+    let () = new_slk_log_g cseq 2 (* hec_num *) pos r es in
+    (r, UnsatAnte)
   else(* if isConstFalse conseq then
          (--[], UnsatConseq)
          else *)
@@ -5110,7 +5118,10 @@ and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool) (ctx : co
   in
   (* WN : this false has been already tested in heap_entail_one_context_struc and is thus redundant here *)
   if (isAnyFalseCtx ctx)  then (* check this first so that false => false is true (with false residual) *)
-    (SuccCtx [ctx], UnsatAnte)
+    let r = SuccCtx [ctx] in
+    let es = get_estate_from_ctx ctx in
+    let () = new_slk_log_g conseq 2 (* hec_num *) pos r es in
+    (r, UnsatAnte)
   else
   if (not !Globals.do_classic_frame_rule) && (isStrictConstTrue conseq) then (SuccCtx [ctx], TrueConseq)
   else 
@@ -5124,6 +5135,7 @@ and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool) (ctx : co
     in
     (* WN : this has been checked earlier! *)
     if isAnyFalseCtx ctx then
+      (* WN:log *)
       (SuccCtx [ctx], UnsatAnte)
     else
       heap_entail_after_sat prog is_folding ctx conseq pos ([])
@@ -5424,25 +5436,26 @@ and early_hp_contra_detection_add_to_list_context hec_num prog estate conseq pos
   Debug.no_2_num hec_num "early_hp_contra_detection_add_to_list_context" Cprinter.string_of_entail_state_short pr2 pr_res 
     (fun _ _ -> early_hp_contra_detection_add_to_list_context_x hec_num prog estate conseq pos) estate conseq
 
+
+
 and early_pure_contra_detection_x hec_num prog estate conseq pos msg is_folding = 
   (* andreeac: check if this step is redundant *)
   let (r_inf_contr,real_c),relass = solver_detect_lhs_rhs_contra 2 prog estate conseq pos msg  in
   let h_inf_args, hinf_args_map = get_heap_inf_args estate in
   let esv = estate.es_infer_vars in
-  let it = CF.infer_type_of_entail_state estate in
 
-  let new_slk_log slk_no result es = 
-    let avoid = CF.is_emp_term conseq in
-    let avoid = avoid || (not (hec_stack # is_empty)) in
-    let caller = hec_stack # string_of_no_ln in
-    (* let slk_no = (\* if avoid then 0 else *\) (next_sleek_int ()) in *)
-    (* let () = hec_stack # push slk_no in *)
-    (* let r = hec a b c in *)
-    (* let () = hec_stack # pop in *)
-    let () = x_add Log.add_sleek_logging (Some es) false 0. it esv !Globals.do_classic_frame_rule caller (* avoid *) false hec_num slk_no 
-        estate.es_formula conseq es.es_heap es.es_evars (Some result) pos in
-    () in
-
+  let new_slk_log result es = new_slk_log_g conseq hec_num pos result es in
+    (* let it = CF.infer_type_of_entail_state es in *)
+    (* let avoid = CF.is_emp_term conseq in *)
+    (* let avoid = avoid || (not (hec_stack # is_empty)) in *)
+    (* let caller = hec_stack # string_of_no_ln in *)
+    (* (\* let slk_no = (\\* if avoid then 0 else *\\) (next_sleek_int ()) in *\) *)
+    (* (\* let () = hec_stack # push slk_no in *\) *)
+    (* (\* let r = hec a b c in *\) *)
+    (* (\* let () = hec_stack # pop in *\) *)
+    (* let () = x_add Log.add_sleek_logging (Some es) false 0. it esv !Globals.do_classic_frame_rule caller (\* avoid *\) false hec_num slk_no  *)
+    (*     es.es_formula conseq es.es_heap es.es_evars (Some result) pos in *)
+    (* () in *)
 
   (* let () = Debug.info_pprint ("Andreea 3 : we need to add_new_sleek_logging_entry to do sleek_logging") no_pos in *)
   match r_inf_contr with
@@ -5470,7 +5483,7 @@ and early_pure_contra_detection_x hec_num prog estate conseq pos msg is_folding 
           let r1 = match relass with
             | [(_,h,_)] -> add_infer_rel_to_list_context h r1 
             | _ -> r1 in
-          let () = new_slk_log slk_no r1 new_estate in
+          let () = new_slk_log r1 new_estate in
           (true, None, Some r1, Some prf)
         | None -> (false, None, None, None)
       end
@@ -5827,12 +5840,13 @@ and handle_disjunctive_conseq (ctx:context) (conseq:CF.formula) : context * CF.f
     ) in 
   (new_ctx, new_conseq) 
 
-and log_contra_detect hec_num conseq result pos =
-  let new_slk_log result es =
+
+(* sleek logging procedure *)
+and new_slk_log_g (conseq:formula) hec_num pos result es  =
     let avoid = CF.is_emp_term conseq in
     let avoid = avoid || (not (hec_stack # is_empty)) in
     let caller = hec_stack # string_of_no_ln in
-    let slk_no = (* if avoid then 0 else *) Log.(last_cmd # start_sleek 2) in
+    let slk_no = (* if avoid then 0 else *) Log.(last_cmd # start_sleek 5) in
     (* let () = hec_stack # push slk_no in *)
     (* let r = hec a b c in *)
     (* let () = hec_stack # pop in *)
@@ -5840,9 +5854,29 @@ and log_contra_detect hec_num conseq result pos =
       | Some f -> f
       | None   -> es.es_formula in
     let it = CF.infer_type_of_entail_state es in
-    let () = x_add Log.add_sleek_logging (Some es) false 0. it es.es_infer_vars !Globals.do_classic_frame_rule caller 
-      (* avoid *) false hec_num slk_no orig_ante conseq es.es_heap es.es_evars (Some result) pos in
-    () in
+    let esv = es.es_infer_vars in
+    let () = x_add Log.add_sleek_logging (Some es) false 0. it esv !Globals.do_classic_frame_rule caller 
+      (* avoid *) false hec_num slk_no es.es_formula (* orig_ante *) conseq es.es_heap es.es_evars (Some result) pos in
+    ()
+
+
+and log_contra_detect hec_num conseq result pos =
+  let new_slk_log result es = new_slk_log_g conseq hec_num pos result es in
+  (*   let avoid = CF.is_emp_term conseq in *)
+  (*   let avoid = avoid || (not (hec_stack # is_empty)) in *)
+  (*   let caller = hec_stack # string_of_no_ln in *)
+  (*   let slk_no = (\* if avoid then 0 else *\) Log.(last_cmd # start_sleek 2) in *)
+  (*   (\* let () = hec_stack # push slk_no in *\) *)
+  (*   (\* let r = hec a b c in *\) *)
+  (*   (\* let () = hec_stack # pop in *\) *)
+  (*   let orig_ante = match es.es_orig_ante with *)
+  (*     | Some f -> f *)
+  (*     | None   -> es.es_formula in *)
+  (*   let it = CF.infer_type_of_entail_state es in *)
+  (*   let () = x_add Log.add_sleek_logging (Some es) false 0. it es.es_infer_vars !Globals.do_classic_frame_rule caller  *)
+  (*     (\* avoid *\) false hec_num slk_no orig_ante conseq es.es_heap es.es_evars (Some result) pos in *)
+  (*   () *)
+  (* in *)
   let f = wrap_proving_kind PK_Unknown (* Early_Contra_Detect *) (new_slk_log result) in
   let es_opt = estate_opt_of_list_context result in
   match es_opt with
@@ -7138,7 +7172,7 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     let () = hec_stack # push slk_no in
     let logger fr tt timeout =
       let () =
-        Log.add_sleek_logging es_opt timeout tt infer_type infer_vars !Globals.do_classic_frame_rule 
+        x_add Log.add_sleek_logging es_opt timeout tt infer_type infer_vars !Globals.do_classic_frame_rule 
           caller avoid hec_num slk_no ante conseq consumed_heap evars
           (match fr with Some (lc,_) -> Some lc | None -> None) pos in
       ("sleek",(string_of_int slk_no))
@@ -9033,7 +9067,7 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
          (CP.split_conjunctions c) 
          TP.imply
          imp_no
-         *)
+      *)
 
     end
   | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
@@ -13006,7 +13040,7 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
       (* the lemma application heuristic:
          - if the flag lemma_heuristic is true then we use both coerce& match - each lemma application must be followed by a match  - and history
          - if the flag is false, we only use coerce&distribute&match
-         *)
+      *)
       let apply_coer = (coer_target prog coer anode (CF.formula_of_base rhs_b)
                           (CF.formula_of_base lhs_b) estate.es_rhs_eqset) in
       if (not(apply_coer) || (is_cycle_coer coer origs))
