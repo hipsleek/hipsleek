@@ -219,7 +219,7 @@ let pr_list_open_sep ?(lvl=(!glob_lvl)) (f_open:unit -> unit)
     | y::ys -> (f_elem y; f_sep(); helper ys)
   in wrap_pr_1 lvl (fun xs -> match xs with
   | [] -> f_empty()
-  | xs -> f_open(); (helper xs); f_close()) xs
+  | xs -> f_open(); helper xs; f_close()) xs
 
 (* let pr_list_open_sep (f_open:unit -> unit) *)
 (*     (f_close:unit -> unit) (f_sep:unit->unit) (f_empty:unit->unit) *)
@@ -232,14 +232,15 @@ let pr_list_open_sep ?(lvl=(!glob_lvl)) (f_open:unit -> unit)
     "AB"-cut-after-before,"A"-cut-after,"B"-cut-before, "S"-space, "" no-cut, no-space*)
 let pr_op_sep_gen ?(lvl=(!glob_lvl)) sep op =
   wrap_pr_1 lvl (fun op ->
-    if sep="A" then (fmt_string op; fmt_cut())
-    else if sep="B" then (fmt_cut();fmt_string op)
-    else if sep="AB" then (fmt_cut();fmt_string op;fmt_cut())
-    else if sep="SB" then (fmt_space();fmt_string op;fmt_string(" "))
-    else if sep="SA" then (fmt_string(" "); fmt_string op; fmt_space())
-    else if sep="SAB" then (fmt_space();fmt_string op; fmt_space())
-    else if sep="S" then fmt_string (" "^op^" ")
-    else fmt_string op (* assume sep="" *)) op
+    match sep with
+      | "A" -> fmt_string op; fmt_cut()
+      | "B" -> fmt_cut(); fmt_string op
+      | "AB" -> fmt_cut(); fmt_string op; fmt_cut()
+      | "SB" -> fmt_space();fmt_string op;fmt_string(" ")
+      | "SA" -> fmt_string(" "); fmt_string op; fmt_space()
+      | "SAB" -> fmt_space(); fmt_string op; fmt_space()
+      | "S" -> fmt_string (" "^op^" ")
+      | _ -> fmt_string op (* assume sep="" *)) op
 
 (** print op and a break after *)
 let pr_cut_after ?(lvl=(!glob_lvl)) op = pr_op_sep_gen ~lvl "A" op
@@ -281,30 +282,27 @@ let pr_cut_before_no ?(lvl=(!glob_lvl)) op =  pr_op_sep_gen ~lvl "B" op
     @param sep_opt (Some s) for breaks at separator where "B"-before, "A"-after, "AB"-both  *)
 let pr_args_gen ?(lvl=(!glob_lvl)) f_empty box_opt sep_opt op open_str close_str sep_str f xs =
   wrap_pr_1 lvl (fun xs ->
-  let f_o x = match x with
-    | Some(s,i) ->
-      if s="V" then fmt_open_vbox i
-      else if s="H" then fmt_open_hbox ()
-      else  fmt_open_box i; (* must be B *)
-    | None -> () in
-  let f_c x = match x with
-    | Some(s,i) -> fmt_close();
-    | None -> () in
-  let opt_cut () = match box_opt with
-    | Some(s,i) ->
-      if s="V" then fmt_cut()
-      else  ()
-    | None -> () in
-  let f_s x sep = match x with
-    | Some s -> if s="A" then (fmt_string sep_str; fmt_cut())
-      else if s="AB" then (fmt_cut(); fmt_string sep_str; fmt_cut())
-      else (fmt_cut(); fmt_string sep_str)  (* must be Before *)
-    | None -> fmt_string sep_str in
-  pr_list_open_sep
-    (fun () -> (f_o box_opt); fmt_string op; fmt_string open_str; opt_cut())
-    (fun () -> opt_cut(); fmt_string close_str; (f_c box_opt))
-    (fun () -> f_s sep_opt sep_str)
-    f_empty f xs) xs
+    let f_o x = match x with
+        | Some("V", i) -> fmt_open_vbox i
+        | Some("H",_) -> fmt_open_hbox ()
+        | Some(_,i) -> fmt_open_box i
+        | None -> () in
+    let f_c x = match x with
+        | Some(_,_) -> fmt_close();
+        | None -> () in
+    let opt_cut () = match box_opt with
+        | Some("V", _) -> fmt_cut ()
+        | _ -> () in
+    let f_s x sep = match x with
+        | Some "A" -> fmt_string sep_str; fmt_cut()
+        | Some "AB" -> fmt_cut(); fmt_string sep_str; fmt_cut()
+        | Some _ -> fmt_cut(); fmt_string sep_str  (* must be Before *)
+        | None -> fmt_string sep_str in
+    pr_list_open_sep
+      (fun () -> (f_o box_opt); fmt_string op; fmt_string open_str; opt_cut())
+      (fun () -> opt_cut (); f_c box_opt; fmt_string close_str)
+      (fun () -> f_s sep_opt sep_str)
+      f_empty f xs) xs
 
 (** invoke pr_args_gen  *)
 let pr_args ?(lvl=(!glob_lvl)) box_opt sep_opt op open_str close_str sep_str f xs =
@@ -389,8 +387,8 @@ let pr_wrap_test_nocut ?(lvl=(!glob_lvl)) hdr (e:'a -> bool) (f: 'a -> unit) (x:
 let pr_vwrap_naive_nocut ?(lvl=(!glob_lvl)) ?(nshort=true) hdr (f: 'a -> unit) (x:'a) =
   wrap_pr_1 lvl (fun x ->
     begin
-        if nshort then (fmt_string (hdr); fmt_cut());
-        wrap_box ("B",2) f  x
+        if nshort then fmt_string_cut hdr;
+        wrap_box ("V",2) f  x
     end) x
 
 (** call pr_wrap_naive_nocut with a cut in front of *)
@@ -405,7 +403,7 @@ let pr_vwrap_naive ?(lvl=(!glob_lvl)) hdr (f: 'a -> unit) (x:'a) =
     if hdr is big and the size of printing exceeds
     margin, it will do a cut and indent before continuing
 *)
-let pr_vwrap_nocut ?(lvl=(!glob_lvl)) hdr (f: 'a -> unit) (x:'a) =
+let pr_vwrap_nocut ?(lvl=(!glob_lvl)) ?(indent=false) hdr (f: 'a -> unit) (x:'a) =
   wrap_pr_1 lvl (fun x ->
     if (String.length hdr)>7 then
         begin
@@ -421,16 +419,16 @@ let pr_vwrap_nocut ?(lvl=(!glob_lvl)) hdr (f: 'a -> unit) (x:'a) =
         end
     else  begin
         fmt_string hdr;
-        fmt_cut ();
+        if indent then fmt_cut_and_indent () else fmt_cut ();
         wrap_box ("B",0) f  x
     end) x
 
 (** call pr_wrap_nocut with a cut in front of*)
-let pr_vwrap ?(lvl=(!glob_lvl)) hdr (f: 'a -> unit) (x:'a) =
+let pr_vwrap ?(lvl=(!glob_lvl)) ?(indent=false) hdr (f: 'a -> unit) (x:'a) =
   wrap_pr_1 lvl (fun x ->
     begin
         fmt_cut();
-        pr_vwrap_nocut ~lvl hdr f x
+        pr_vwrap_nocut ~lvl ~indent hdr f x
     end) x
 
 (** call pr_wrap_op : suppress printing for None **)
@@ -4043,19 +4041,17 @@ let string_of_esc_stack_lvl e  = poly_string_of_pr pr_esc_stack_lvl e
 let pr_failed_states ?(nshort=true) e = match e with
   | [] -> ()
   | _ ->   pr_vwrap_naive_nocut "Failed States:"
-             (pr_seq_vbox "" (fun (lbl,fs)->
-                  if nshort then pr_hwrap "Label: " pr_path_trace lbl;
-                  pr_vwrap "State:" pr_fail_type fs)) e
+             (pr_seq_vbox ~nshort "" (fun (lbl,fs)->
+                  if nshort then (pr_hwrap "Label: " pr_path_trace lbl; fmt_cut ());
+                  pr_vwrap_nocut ~indent:true "State:" pr_fail_type fs)) e
 
 let pr_successful_states ?(nshort=true) e = match e with
   | [] -> ()
   | _ ->
     pr_vwrap_naive_nocut "Successful States:"
-      (pr_seq_vbox "" (fun (lbl,fs,oft)->
+      (pr_seq_vbox ~nshort "" (fun (lbl,fs,oft)->
            if nshort then ((pr_hwrap "Label: " pr_path_trace lbl); fmt_cut ());
-           fmt_string "State:";
-           fmt_cut_and_indent ();
-           pr_context ~nshort fs;
+           pr_vwrap_nocut ~indent:true "State:" (pr_context ~nshort) fs;
            (* Loc: print exc *)
            if nshort then (
              fmt_cut();
