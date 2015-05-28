@@ -48,9 +48,7 @@ let string_of_pos p =
 
 (** the formatter that fmt- commands will use *)
 let fmt = ref (std_formatter)
-let pr_mem = ref true
-
-(** primitive formatter comands *)
+let pr_mem = ref true(** primitive formatter comands *)
 let fmt_string x = pp_print_string (!fmt) x
 let fmt_bool x = pp_print_bool (!fmt) x
 let fmt_int x = pp_print_int (!fmt) x
@@ -143,9 +141,6 @@ let poly_printer_of_pr (crt_fmt: Format.formatter) (pr: 'a -> unit) (e:'a) : uni
     pr e;
     fmt := old_fmt;
   end
-
-(** add_str for printer *)
-let pr_add_str lbl pr = add_str lbl (poly_string_of_pr pr)
 
 (** shorter op code used internally *)
 let op_add_short = "+"
@@ -451,6 +446,19 @@ let pr_hwrap ?(lvl=(!glob_lvl)) hdr (f: 'a -> unit) (x: 'a) =
     wrap_box ("H", 0) f x;
     fmt_close ()) x
 
+(** Similar to add_str but for printer *)
+let pr_add_str ?(lvl=(!glob_lvl)) lbl pr x =
+  wrap_pr_1 lvl (fun x ->
+    (* A string should break if comprises >=2 lines or span more than 60 characters *)
+    let should_break s =
+      try
+        for i = 0 to line_break_threshold do
+          if (String.get s i = '\n') then raise Break_Found done;
+        false
+      with Break_Found -> true | _ -> false in
+    let str = poly_string_of_pr pr x in
+    if should_break str then pr_vwrap_nocut ~indent:true lbl pr x
+    else pr_hwrap lbl pr x) x
 (* let pr_args open_str close_str sep_str f xs =  *)
 (*   pr_list_open_sep  *)
 (*     (fun () -> (\* fmt_open 1; *\) fmt_string open_str) *)

@@ -194,34 +194,34 @@ let rec pr_action_name a = match a with
 let rec pr_action_res pr_mr a =
   fmt_open_vbox 1;
   match a with
-  | Undefined_action e -> fmt_string "Undefined_action =>"; pr_mr e
-  | M_match e -> fmt_string "Match =>"; pr_mr e
-  | M_split_match e -> fmt_string "SplitMatch =>"; pr_mr e
-  | M_fold e -> fmt_string "Fold =>"; pr_mr e
-  | M_unfold (e,i) -> fmt_string ("Unfold "^(string_of_int i)^" =>"); pr_mr e
-  | M_base_case_unfold e -> fmt_string "BaseCaseUnfold =>"; pr_mr e
-  | M_base_case_fold e -> fmt_string "BaseCaseFold =>"; pr_mr e
-  | M_seg_fold (e,_) -> fmt_string "SegFold =>"; pr_mr e
+  | Undefined_action e -> pr_add_str "Undefined_action =>" pr_mr e
+  | M_match e -> pr_add_str "Match =>" pr_mr e
+  | M_split_match e -> pr_add_str "SplitMatch =>" pr_mr e
+  | M_fold e -> pr_add_str "Fold =>" pr_mr e
+  | M_unfold (e,i) -> pr_add_str ("Unfold "^(string_of_int i)^" =>") pr_mr e
+  | M_base_case_unfold e -> pr_add_str "BaseCaseUnfold =>" pr_mr e
+  | M_base_case_fold e -> pr_add_str "BaseCaseFold =>" pr_mr e
+  | M_seg_fold (e,_) -> pr_add_str "SegFold =>" pr_mr e
   | M_acc_fold (e,steps) ->
     let pr_steps s = fmt_string ("\n fold steps:" ^ (pr_list Acc_fold.print_fold_type s)) in
-    fmt_string "AccFold =>"; pr_mr e; pr_steps steps
-  | M_rd_lemma e -> fmt_string "RD_Lemma =>"; pr_mr e
-  | M_ramify_lemma e -> fmt_string "Ramify_Lemma =>"; pr_mr e
-  | M_lemma (e,s) -> fmt_string ((match s with | None -> "AnyLemma" | Some c-> "(Lemma "
-                                                                               ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name)^") =>"); pr_mr e
-  | M_Nothing_to_do s -> fmt_string ("NothingToDo => "^ s)
+    pr_add_str "AccFold =>" pr_mr e; pr_steps steps
+  | M_rd_lemma e -> pr_add_str "RD_Lemma =>" pr_mr e
+  | M_ramify_lemma e -> pr_add_str "Ramify_Lemma =>" pr_mr e
+  | M_lemma (e,s) -> pr_add_str ((match s with | None -> "AnyLemma" | Some c-> "(Lemma "
+                                                                               ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name)^") =>") pr_mr e
+  | M_Nothing_to_do s -> pr_add_str "NothingToDo => " fmt_string s
   | M_infer_heap p ->
     let pr = string_of_h_formula in
     fmt_string_cut ("InferHeap => "^(pr_pair pr pr p))
-  | M_unmatched_rhs_data_node (h,_,_) -> fmt_string ("UnmatchedRHSData => "^(string_of_h_formula h))
+  | M_unmatched_rhs_data_node (h,_,_) -> pr_add_str "UnmatchedRHSData => " fmt_string (string_of_h_formula h)
   | Cond_action l -> pr_seq_vbox "COND =>" (pr_action_wt_res pr_mr) l
   | Seq_action l -> pr_seq_vbox "SEQ =>" (pr_action_wt_res pr_mr) l
   | Search_action l ->
     fmt_open_vbox 1;
     pr_seq_vbox "SEARCH =>" (pr_action_wt_res pr_mr) l;
     fmt_close();
-  | M_lhs_case e -> fmt_string "LHSCaseAnalysis =>"; pr_mr e
-  | M_cyclic (e,_,_,_,_) -> fmt_string "Match cyclic =>"; pr_mr e;
+  | M_lhs_case e -> pr_add_str "LHSCaseAnalysis =>" pr_mr e
+  | M_cyclic (e,_,_,_,_) -> pr_add_str "Match cyclic =>" pr_mr e;
   fmt_close_box ();
 
 and pr_action_wt_res pr_mr (w,a) =
