@@ -15,6 +15,11 @@ let trailer_num_list = ref []
 
 let change_flow = ref false
 
+let abs_int = ref 3
+let lend_int = ref 2
+let imm_int = ref 1
+let mut_int = ref 0
+
 type formula_type =
   | Simple
   | Complex
@@ -378,15 +383,15 @@ let string_of_heap_ann a =
 
 let int_of_heap_ann a =
   match a with
-  | Accs -> 3
-  | Lend -> 2
-  | Imm -> 1
-  | Mutable -> 0
+  | Accs -> !abs_int
+  | Lend -> !lend_int
+  | Imm -> !imm_int
+  | Mutable -> !mut_int
 
 let heap_ann_of_int i =
-  if i = 0 then Mutable
-  else if i = 1 then Imm
-  else if i = 2 then Lend
+  if i = !mut_int then Mutable
+  else if i = !imm_int then Imm
+  else if i = !lend_int then Lend
   else Accs
 
 let string_of_vp_ann a =  

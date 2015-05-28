@@ -13534,33 +13534,6 @@ let trans_formula_templ (i_templ_ids: spec_var list) (f: formula): formula * spe
 
 
 (* imm utilities *)
-
-let isAccs(a : ann) : bool = 
-  match a with
-  | ConstAnn(Accs) -> true
-  | _ -> false
-
-let isLend(a : ann) : bool = 
-  match a with
-  | ConstAnn(Lend) -> true
-  | _ -> false
-
-and isMutable(a : ann) : bool = 
-  match a with
-  | ConstAnn(Mutable) -> true
-  | _ -> false
-
-and isImm(a : ann) : bool = 
-  match a with
-  | ConstAnn(Imm) -> true
-  | _ -> false
-
-and isPoly(a : ann) : bool = 
-  match a with
-  | PolyAnn v -> true
-  | _ -> false
-
-
 let rec fv_ann (a: ann) = match a with
   | ConstAnn _ | NoAnn -> []
   | TempAnn v  -> fv_ann v
@@ -13571,12 +13544,14 @@ let rec fv_ann_lst (a:ann list) = match a with
   | [] -> []
   | h :: t -> (fv_ann h) @ (fv_ann_lst t)
 
-let mkConstAnn i = match i with 
-  | 0 -> ConstAnn Mutable
-  | 1 -> ConstAnn Imm
-  | 2 -> ConstAnn Lend
-  | 3 -> ConstAnn Accs
-  | _ -> report_error no_pos "Const Ann must be less than 3"  
+let mkConstAnn ann = ConstAnn ann
+
+(* match i with  *)
+(*   | 0 -> ConstAnn Mutable *)
+(*   | 1 -> ConstAnn Imm *)
+(*   | 2 -> ConstAnn Lend *)
+(*   | 3 -> ConstAnn Accs *)
+(*   | _ -> report_error no_pos "Const Ann must be less than 3"   *)
 
 let mkPolyAnn v = PolyAnn v
 
@@ -13596,7 +13571,7 @@ let mkExpAnnSymb ann pos =
   | NoAnn  -> AConst(Accs, pos)
 
 let int_imm_to_exp i loc = 
-  mkExpAnnSymb (mkConstAnn i) loc
+  mkExpAnnSymb (mkConstAnn (heap_ann_of_int i)) loc
 
 let ann_sv_lst  = (name_for_imm_sv Mutable):: (name_for_imm_sv Imm):: (name_for_imm_sv Lend)::[(name_for_imm_sv Accs)]
 
@@ -13605,28 +13580,64 @@ let is_ann_const_sv sv =
   | SpecVar(AnnT,a,_) -> List.exists (fun an -> an = a ) ann_sv_lst
   | _                 -> false
 
-let helper_is_const_ann em sv test =
+let helper_is_const_ann_sv em sv test =
   let imm_const_sv = mkAnnSVar test in
   if not (is_ann_typ sv) then false
   else if eq_spec_var sv imm_const_sv then true
   else EMapSV.is_equiv em sv imm_const_sv 
 
-let is_mut_sv ?emap:(em=[])  sv = helper_is_const_ann em sv Mutable 
+let is_mut_sv ?emap:(em=[])  sv = helper_is_const_ann_sv em sv Mutable 
 
-let is_imm_sv ?emap:(em=[])  sv = helper_is_const_ann em sv Imm
+let is_imm_sv ?emap:(em=[])  sv = helper_is_const_ann_sv em sv Imm
 
-let is_lend_sv ?emap:(em=[]) sv = helper_is_const_ann em sv Lend
+let is_lend_sv ?emap:(em=[]) sv = helper_is_const_ann_sv em sv Lend
 
-let is_abs_sv ?emap:(em=[])  sv = helper_is_const_ann em sv Accs
+let is_abs_sv ?emap:(em=[])  sv = helper_is_const_ann_sv em sv Accs
 
-let is_abs ?emap:(em=[]) imm = 
+let eq_const_ann const_imm em sv = 
+  match const_imm with
+  | Mutable -> is_mut_sv ~emap:em sv
+  | Imm     -> is_imm_sv ~emap:em sv
+  | Lend    -> is_lend_sv ~emap:em sv
+  | Accs    -> is_abs_sv ~emap:em sv
+
+let helper_is_const_imm em (imm:ann) const_imm = 
   match imm with
-  | ConstAnn Accs -> true
-  | PolyAnn sv    -> is_abs_sv ~emap:em sv
+  | ConstAnn a -> a == const_imm
+  | PolyAnn sv -> eq_const_ann const_imm em sv 
   | _ -> false
 
-let is_abs_list ?emap:(em=[]) imm_list = 
-  List.for_all (is_abs ~emap:em) imm_list
+(* below functions take into account the alias information while checking if imm is a certain const. *)
+let is_abs ?emap:(em=[]) (imm:ann) = helper_is_const_imm em imm Accs
+
+let is_abs_list ?emap:(em=[]) imm_list = List.for_all (is_abs ~emap:em) imm_list
+
+let is_mutable ?emap:(em=[]) (imm:ann) = helper_is_const_imm em imm Mutable 
+
+let is_mutable_list ?emap:(em=[]) imm_list =  List.for_all (is_mutable ~emap:em) imm_list
+
+let is_immutable ?emap:(em=[]) (imm:ann) = helper_is_const_imm em imm Imm
+
+let is_immutable_list ?emap:(em=[]) imm_list =  List.for_all (is_immutable ~emap:em) imm_list
+
+let is_lend ?emap:(em=[]) (imm:ann) = helper_is_const_imm em imm Lend
+
+let is_lend_list ?emap:(em=[]) imm_list =  List.for_all (is_lend ~emap:em) imm_list
+
+let isAccs (a : ann) : bool = is_abs a
+
+let isLend(a : ann) : bool = is_lend a
+
+and isMutable(a : ann) : bool = is_mutable a
+
+and isImm(a : ann) : bool = is_immutable a
+
+and isPoly(a : ann) : bool = 
+  match a with
+  | PolyAnn v -> true
+  | _ -> false
+
+
 (* end imm utilities *)
 
 

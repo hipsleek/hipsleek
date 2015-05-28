@@ -15328,12 +15328,12 @@ let rec simp_ann_x heap pures = match heap with
       let p,res = List.partition (fun p -> CP.fv p = ann_var) pures in
       begin
         match p with
-        | [] -> (DataNode {data with h_formula_data_imm = CP.mkConstAnn 2},res) (* andreeac: why do we replace an imm var by the lend constant?  *)
+        | [] -> (DataNode {data with h_formula_data_imm = CP.mkConstAnn Lend (* 2 *)},res) (* TODOIMM andreeac: why do we replace an imm var by the lend constant?  *)
         | [hd] -> 
           let is = CP.getAnn hd in
           if is = [] then (heap,pures)
           else
-            (DataNode {data with h_formula_data_imm = CP.mkConstAnn (List.hd is)},res)
+            (DataNode {data with h_formula_data_imm = CP.mkConstAnn (heap_ann_of_int (List.hd is))},res)
         | _ -> (heap,pures)
       end
   | ViewNode view ->
@@ -15344,13 +15344,13 @@ let rec simp_ann_x heap pures = match heap with
       let p,res = List.partition (fun p -> CP.fv p = ann_var) pures in
       begin
         match p with
-        | [] -> (ViewNode {view with h_formula_view_imm = CP.mkConstAnn 2},res)
+        | [] -> (ViewNode {view with h_formula_view_imm = CP.mkConstAnn Lend(* 2 *)},res) (* TODOIMM why Lend here? *)
         | [hd] ->
           let is = CP.getAnn hd in
           if is = [] then (heap,pures)
           else
             (* andreeac is it obsolete?  *)
-            (ViewNode {view with h_formula_view_imm = CP.mkConstAnn (List.hd is)},res)
+            (ViewNode {view with h_formula_view_imm = CP.mkConstAnn (heap_ann_of_int (List.hd is))},res)
         | _ -> (heap,pures)
       end
   | _ -> (heap,pures)

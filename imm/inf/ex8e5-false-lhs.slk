@@ -15,3 +15,7 @@ print residue.
 
 checkentail x::cell<_>@a *  x::cell<_>@b |- x!=null.
 print residue.
+
+/**
+make this normalization between unconstrained ann work at field level as well
+*/

@@ -384,8 +384,8 @@ let get_args_h_formula aset (h:h_formula) =
     (*   DataNode {h with h_formula_data_arguments=new_arg}) *)
     Some (root, arg,new_arg, [],
           DataNode {h with h_formula_data_arguments=new_arg;
-                           h_formula_data_imm =  CP.ConstAnn(Mutable); 
-                           h_formula_data_param_imm = List.map (fun c -> CP.mkConstAnn 0) h.h_formula_data_param_imm })
+                           h_formula_data_imm =  CP.mkConstAnn imm_bot; 
+                           h_formula_data_param_imm = List.map (fun c -> CP.mkConstAnn imm_bot) h.h_formula_data_param_imm })
 
   | ViewNode h -> 
     let h = to_unprimed_view_root aset h in
