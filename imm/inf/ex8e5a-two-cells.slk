@@ -34,3 +34,8 @@ Validate 1: Expecting 3 Fail BUT got : Valid
 
 //checkentail x::cell<_>@frac(1/2)*x::cell<_>@frac(1/2) |- x!=null.
 //print residue.
+
+
+checkentail x::cell<_>@a*x::cell<_>@b |- x!=null.
+print residue.
+expect Valid.
