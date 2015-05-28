@@ -2383,14 +2383,19 @@ let compatible_at_node_lvl prog imm1 imm2 h1 h2 unfold_fun qvars emap =
   let comp, ret_h, guards =
     if (CP.is_abs ~emap:emap imm2) then (true, h1, [])
     else  if (CP.is_abs ~emap:emap imm1) then (true, h2, [])
-    else 
-      let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"ann" () in
+    else  if (CP.is_const_imm_list ~emap:emap [imm1;imm2]) then 
+      (* imm1 & imm2 are imm constants, but none is @A *)
+      let pr = Cprinter.string_of_h_formula in
+      let () = report_warning no_pos ("* between overlapping heaps: " ^ (pr_pair pr pr (h1,h2)) ) in
+      (false, h1, []) 
+    else
+      let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"imm" () in
       let fresh_ann_var = CP.Var(fresh_ann_sv, no_pos) in
       let h = set_imm h1 (CP.mkPolyAnn fresh_ann_sv) in (* TODOIMM to add the constraint fresh_ann = ann1 + ann2 *)
       let guard = CP.mkEq fresh_ann_var (CP.mkAdd (CP.imm_to_exp imm1 no_pos) (CP.imm_to_exp imm2 no_pos) no_pos) no_pos in
       let guard = CP.mkPure guard in
-      (* (true, h, [guard]) in *)
-      (false, h1, [guard]) in
+      (true, h, [guard]) in
+      (* (false, h1, [guard]) in *)
   let compatible, keep_h, struc, guards =
     (match h1, h2 with
      | DataNode _, DataNode _
@@ -2852,14 +2857,17 @@ let infer_specs_imm_post_process (spec: CF.struc_formula) : CF.struc_formula =
   spec
 
 let imm_unify (form:CP.formula): CP.formula = 
-  let disj = CP.split_disjunctions form in
-  let disj_part = List.map split_imm_pure disj in
+  let disj = CP.split_disjunctions_deep form in
+  let disj_part = List.map split_imm_pure disj in (* split each disj in imm formula + pure formula *)
+  let disj_part = List.map (fun (ximm,ypure) -> (TP.simplify_tp ximm, ypure)) disj_part in (* simplify the imm formula of each disjunct *)
+  let disj_part = List.filter (fun (ximm,ypure) -> not (CP.is_False ximm)) disj_part in  (* remove unsat disjuncts *)
   let imms, pures = List.split disj_part in
-  let immf = CP.conj_of_list imms no_pos in
-  let simp_immf = (TP.simplify_tp immf) in (* strenghten imm formula *)
+  let simp_immf = TP.simplify_tp (CP.join_conjunctions imms) in (* strenghten imm formula *)
   if not (CP.is_False simp_immf) then
     let immf = simp_immf in
-    let pure = CP.disj_of_list pures no_pos in
+    let pure = CP.join_disjunctions pures in
+    let pr = !CP.print_formula in
+    let () = x_tinfo_hp (add_str " vp_pos:" (pr_triple (add_str "imm" pr) (add_str "pure" pr) ((pr_list pr)) )) (immf, pure, pures) no_pos in
     (* let pure = TP.simplify_tp pure in  *)  (* TODOIMM check if pure simplif is also mandatory? temp disabled*)
     CP.mkAnd immf pure no_pos 
   else form (* if we cannot strenghten the imm formula, return the initial formula *)

@@ -15,7 +15,7 @@ let trailer_num_list = ref []
 
 let change_flow = ref false
 
-let abs_int = ref 3
+let abs_int = ref 7
 let lend_int = ref 2
 let imm_int = ref 1
 let mut_int = ref 0

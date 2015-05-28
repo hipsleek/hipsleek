@@ -13628,15 +13628,23 @@ let isAccs (a : ann) : bool = is_abs a
 
 let isLend(a : ann) : bool = is_lend a
 
-and isMutable(a : ann) : bool = is_mutable a
+let isMutable(a : ann) : bool = is_mutable a
 
-and isImm(a : ann) : bool = is_immutable a
+let isImm(a : ann) : bool = is_immutable a
 
-and isPoly(a : ann) : bool = 
+let isPoly(a : ann) : bool = 
   match a with
   | PolyAnn v -> true
   | _ -> false
 
+let is_const_imm ?emap:(em=[]) (a:ann) : bool =
+  match a with
+  | ConstAnn _ -> true
+  | PolyAnn sv -> (is_mutable ~emap:em a) || (is_immutable ~emap:em a) || (is_lend ~emap:em a) || (is_abs ~emap:em a)
+  | _ -> false
+
+let is_const_imm_list ?emap:(em=[]) (alst:ann list) : bool =
+  List.for_all (is_const_imm ~emap:em) alst
 
 (* end imm utilities *)
 
