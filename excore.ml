@@ -275,12 +275,16 @@ let ef_elim_exists_1 (svl : spec_var list) epf  =
   let pure = wrap_exists_svl pure svl in
   let () = x_tinfo_hp (add_str "pure1 = " !print_pure_formula) pure no_pos in
   let () = x_tinfo_pp ("Omega call before simplify: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
-  let pure = if !Globals.delay_eelim_baga_inv && Cpure.is_shape pure then
-    let ps = Cpure.list_of_conjs pure in
-    let ps1 = List.map (elim_quan_formula svl) ps in
-    Cpure.conj_of_list ps1 (Cpure.pos_of_formula pure)
-  else
-    simplify_with_label_omega (* x_add_1 Omega.simplify *) pure in
+  let pure = match pure with
+    | Cpure.AndList _ -> simplify_with_label_omega (* x_add_1 Omega.simplify *) pure
+    | _ ->
+          if !Globals.delay_eelim_baga_inv && Cpure.is_shape pure then
+            let ps = Cpure.list_of_conjs pure in
+            let ps1 = List.map (elim_quan_formula svl) ps in
+            Cpure.conj_of_list ps1 (Cpure.pos_of_formula pure)
+          else
+            simplify_with_label_omega (* x_add_1 Omega.simplify *) pure
+  in
   let () = x_tinfo_pp ("Omega call after simplify: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
   let () = x_tinfo_hp (add_str "pure2 = " !print_pure_formula) pure no_pos in
   let () = x_tinfo_hp (add_str "pure_ptr_eq" (pr_list (pr_pair string_of_typed_spec_var string_of_typed_spec_var))) p_aset no_pos in
@@ -321,10 +325,10 @@ let ef_elim_exists_1 (svl : spec_var list) epf  =
   let () = x_tinfo_hp (add_str "new pure" !print_pure_formula) new_pure no_pos in
   (List.sort compare_sv new_baga, new_pure)
 
-let ef_elim_exists_1 (svl : spec_var list) epf =
-  (* let pr = string_of_ef_pure in *)
-  (* Debug.no_2 "ef_elim_exists" string_of_typed_spec_var_list pr pr *)
-  ef_elim_exists_1 svl epf
+(* let ef_elim_exists_1 (svl : spec_var list) epf = *)
+(*   (\* let pr = string_of_ef_pure in *\) *)
+(*   (\* Debug.no_2 "ef_elim_exists" string_of_typed_spec_var_list pr pr *\) *)
+(*   ef_elim_exists_1 svl epf *)
 
 let calc_fix_pure (svl : spec_var list) pf =
   let pf_base = x_add_1 Omega.simplify pf in
@@ -661,9 +665,10 @@ module EPURE =
 
     (* TODO-WN : why ins't elem used instead of spec_var *)
     let elim_exists_disj (svl : spec_var list) (lst : epure_disj) : epure_disj =
-       let () = x_binfo_pp ("Omega call elim_exists_disj-before: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+       let () = x_tinfo_pp ("Omega call elim_exists_disj-before: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
       let r = List.map (fun e -> elim_exists svl e) lst in
-      let () = x_binfo_pp ("Omega call elim_exists_disj-end: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+      let () = x_tinfo_pp ("Omega call elim_exists_disj-end: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+
       r
     let wrap_exists_disj (svl : spec_var list) l p (lst : epure_disj) : epure_disj =
       let r = List.map (fun e -> wrap_exists svl l p e) lst in

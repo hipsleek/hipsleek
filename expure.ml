@@ -263,10 +263,12 @@ let rec build_ef_pure_formula_x ?(syn=false) (pf : formula) : ef_pure_disj =
         EPureI.mk_or_disj efpd (build_ef_pure_formula pf)
       ) [] pf_list
   | Forall (sv, pf, lbl, p) (* wrong here: for_all and exists can not use the same elim_exists ???  *)
-  | Exists (sv, pf, lbl, p) ->
-    let efpd = build_ef_pure_formula pf in
-    (* EPureI.elim_exists_disj [sv] efpd *)
-    EPureI.wrap_exists_disj [sv] lbl p efpd
+  | Exists (sv, pf, lbl, p) -> (
+        let efpd = build_ef_pure_formula pf in
+        match pf with
+          | Cpure.AndList _ -> EPureI.elim_exists_disj [sv] efpd
+          | _ -> EPureI.wrap_exists_disj [sv] lbl p efpd
+    )
   (* | Not -> ??? *)
   | _ -> EPureI.mk_epure pf
 
@@ -300,15 +302,22 @@ let rec build_ef_formula_x ?(syn=false) (cf0 : Cformula.formula) (all_views : Ca
     let () = Debug.ninfo_hprint (add_str "efpd_n2" (EPureI.string_of_disj)) efpd_n no_pos in
     efpd_n
   | Cformula.Exists ef ->
-    (* let ep = (Mcpure.pure_of_mix ef.Cformula.formula_exists_pure) in *)
-    (* let eh = ef.Cformula.formula_exists_heap in *)
-    (* let efpd_p = build_ef_pure_formula ep in *)
-    (* let efpd = build_ef_heap_formula_with_pure eh efpd_p all_views in *)
-    let quans, base_f = Cformula.split_quantifiers cf in
-    let efpd = rec_fnc base_f in
-    let () = x_tinfo_hp (add_str "efpd" (EPureI.string_of_disj)) efpd no_pos in
-    let efpd_e = if syn then EPureI.wrap_exists_disj quans ef.Cformula.formula_exists_label ef.Cformula.formula_exists_pos efpd
-    else EPureI.elim_exists_disj quans (* ef.Cformula.formula_exists_qvars *) efpd in
+    let ep = (Mcpure.pure_of_mix ef.Cformula.formula_exists_pure) in
+    let efpd_e = match ep with
+      | Cpure.AndList _ ->
+            let eh = ef.Cformula.formula_exists_heap in
+            let efpd_p = build_ef_pure_formula ep in
+            let efpd = build_ef_heap_formula_with_pure eh efpd_p all_views in
+            EPureI.elim_exists_disj ef.Cformula.formula_exists_qvars efpd
+      | _ ->
+            let quans, base_f = Cformula.split_quantifiers cf in
+            let efpd = rec_fnc base_f in
+            let () = x_tinfo_hp (add_str "efpd" (EPureI.string_of_disj)) efpd no_pos in
+            let efpd_e =
+              if syn then EPureI.wrap_exists_disj quans ef.Cformula.formula_exists_label ef.Cformula.formula_exists_pos efpd
+              else EPureI.elim_exists_disj quans (* ef.Cformula.formula_exists_qvars *) efpd
+            in efpd_e
+    in
     let () = x_tinfo_hp (add_str "efpd_e" (EPureI.string_of_disj)) efpd_e no_pos in
     (* let efpd_n = EPureI.norm_disj efpd_e in *)
     let () = x_tinfo_hp (add_str "efpd_n3" (EPureI.string_of_disj)) efpd_e no_pos in
