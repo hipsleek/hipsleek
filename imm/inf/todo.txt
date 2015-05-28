@@ -846,6 +846,18 @@ Residue:
  <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
 Validate 1: Expecting 3 Fail BUT got : Valid
 
+(==cvutil.ml#1720==)
+xpure_heap_mem_enum#6@2@1
+xpure_heap_mem_enum#6 inp1 : x::cell<Anon_11>@a * x::cell<Anon_12>@b
+xpure_heap_mem_enum#6 inp2 : true
+xpure_heap_mem_enum#6 inp3 :1
+xpure_heap_mem_enum#6@2 EXIT: false #  [[x,x]]
+
+%%%       xpure_heap_mem_enum@2.
+%%%        h_formula_2_mem
+%%%         build_eset_of_conj_formula
+%%%        is_sat_mem_formula
+
 =======================================================
 =======================================================
 =======================================================
