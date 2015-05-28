@@ -158,6 +158,7 @@ struct
   let pr_list_round_sep sep f xs = pr_list_brk_sep "(" ")" sep f xs
   let pr_list_ln f xs = "["^(pr_lst ",\n" f xs)^"]"
   let pr_list_num f xs = "["^(pr_lst_num ",\n" f xs)^"]"
+  let pr_list_num_vert f xs = "[\n"^(pr_lst_num ",\n" f xs)^"]"
   let pr_arr_ln f arr = pr_list_ln f (Array.to_list arr)
 
   let pr_list_mln f xs = (pr_lst "\n--------------\n" f xs)
@@ -199,7 +200,19 @@ struct
   let exists_l_snd f x = List.exists (fun (_,c)-> f c) x
   let all_l_snd f x = List.for_all (fun (_,c)-> f c) x
 
-  let add_str s f xs = s^":"^(f xs)
+  let line_break_threshold = 60
+  exception Break_Found
+  let add_str ?(inline=false) hdr f s =
+    (* A string should break if comprises >=2 lines or span more than 60 characters *)
+    let should_break s =
+      try
+        for i = 0 to line_break_threshold do
+          if (String.get s i = '\n') then raise Break_Found done;
+        false
+      with Break_Found -> true | _ -> false in
+    let str = f s in
+    let sep = if (not inline && should_break str) then ":\n" else ":" in
+    hdr^sep^str
 
   let opt_to_list o = match o with
     | None -> []
@@ -837,7 +850,7 @@ struct
 
 end;;
 
-let add_str s f xs = s^":"^(f xs)
+let add_str = Basic.add_str
 
 type 'a keyt = int option
 
