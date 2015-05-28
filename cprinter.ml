@@ -285,6 +285,7 @@ let pr_cut_before_no ?(lvl=(!glob_lvl)) op =  pr_op_sep_gen ~lvl "B" op
     @param sep_opt (Some s) for breaks at separator where "B"-before, "A"-after, "AB"-both  *)
 let pr_args_gen ?(lvl=(!glob_lvl)) f_empty box_opt sep_opt op open_str close_str sep_str f xs =
   wrap_pr_1 lvl (fun xs ->
+    let no_handle = (open_str = "") && (close_str = "") in
     let f_o x = match x with
         | Some("V", i) -> fmt_open_vbox i
         | Some("H",_) -> fmt_open_hbox ()
@@ -302,7 +303,7 @@ let pr_args_gen ?(lvl=(!glob_lvl)) f_empty box_opt sep_opt op open_str close_str
         | Some _ -> fmt_cut(); fmt_string sep_str  (* must be Before *)
         | None -> fmt_string sep_str in
     pr_list_open_sep
-      (fun () -> (f_o box_opt); fmt_string op; fmt_string open_str; opt_cut())
+      (fun () -> (f_o box_opt); fmt_string op; fmt_string open_str; if not no_handle then opt_cut())
       (fun () -> opt_cut (); f_c box_opt; fmt_string close_str)
       (fun () -> f_s sep_opt sep_str)
       f_empty f xs) xs
@@ -541,7 +542,6 @@ let pr_op_adhoc ?(lvl=(!glob_lvl)) (f_1:unit -> unit) (op:string) (f_2:unit -> u
 (**print  f e1  op f e2 and a space *)
 let pr_op ?(lvl=(!glob_lvl)) (f:'a -> unit) (e1:'a) (op:string) (e2:'a)  =
   wrap_pr_2 lvl (fun e1 e2 -> (f e1); fmt_string op ; (f e2); fmt_space()) e1 e2
-
 
 (* let pr_op_sep   *)
 (*     (pr_sep: unit -> unit )  *)
@@ -3822,7 +3822,7 @@ let pr_context_short (ctx : context) =
   let pr e = pr_estate ~nshort:false e in
   let pr_disj ls =
     if (List.length ls == 1) then pr (List.hd ls)
-    else pr_seq "or" pr ls in
+    else pr_list_vbox_wrap "or " pr ls in
   (pr_disj (f ctx))
 
 let pr_context ?(nshort=true) (ctx: context) =
@@ -3925,7 +3925,7 @@ let pr_context_list_short (ctx : context list) =
   let lls = List.map f ctx in
   let pr_disj ls =
     if (List.length ls == 1) then pr (List.hd ls)
-    else pr_seq "or" pr ls
+    else pr_list_vbox_wrap "or " pr ls
   in
   pr_seq_vbox "" (wrap_box ("H",1) pr_disj) lls
 
