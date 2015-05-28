@@ -505,7 +505,8 @@ let update_with_td_fp_x bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
       let pre = TP.simplify_exists_raw exist_vars post in
       let () = Debug.ninfo_hprint (add_str "pure pre" !CP.print_formula) pre no_pos in
 
-      let rel_oblg_to_check = List.filter (fun (_,lhs,_) -> CP.equalFormula lhs pre_rel) reloblgs in
+      let rel_oblg_to_check = List.filter (fun (_,lhs,_) -> CP.equalFormula lhs pre_rel) reloblgs in (* TODOIMM uncomment this line *)
+      (* let rel_oblg_to_check = reloblgs in *) (* TODOIMM this is just temp - TO REMOVE *)
       let pure_oblg_to_check =
         List.fold_left (fun p (_,_,rhs) -> CP.mkAnd p rhs no_pos) constTrue rel_oblg_to_check in
       (* let pure_oblg_to_check =  TP.simplify_tp pure_oblg_to_check in (\* TODOIMM this is just temp - TO REMOVE *\) *)
@@ -697,7 +698,7 @@ let rel_fixpoint_wrapper pre_invs0 pre_fmls0 pre_rel_constrs post_rel_constrs pr
   let bottom_up_fp = x_add Fixcalc.compute_fixpoint 3 post_rel_df_new pre_vars proc_spec in
   let bottom_up_fp = List.map (fun (r,p) -> (r,TP.pairwisecheck_raw p)) bottom_up_fp in
   (****pre fixpoint***********)
-  let r= update_with_td_fp bottom_up_fp (pre_rel_fmls) pre_fmls pre_invs
+  let r= x_add update_with_td_fp bottom_up_fp (pre_rel_fmls) pre_fmls pre_invs
       Fixcalc.compute_fixpoint_td Fixcalc.fixc_preprocess
       reloblgs pre_rel_df post_rel_df_new post_rel_df (pre_vars@pre_rel_ids) proc_spec grp_post_rel_flag
   in

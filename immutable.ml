@@ -2377,8 +2377,8 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
 (* return (compatible_flag, to_keep_node) *)
 let compatible_at_node_lvl prog imm1 imm2 h1 h2 unfold_fun qvars emap =
   let comp, ret_h =
-    if (isAccs imm2) then (true, h1)
-    else  if (isAccs imm1) then (true, h2)
+    if (CP.is_abs ~emap:emap imm2) then (true, h1)
+    else  if (CP.is_abs ~emap:emap imm1) then (true, h2)
     else (false, h1) in
   let compatible, keep_h, struc =
     (match h1, h2 with
@@ -2418,8 +2418,8 @@ let partition_eqs_subs lst1 lst2 quantif =
   (* let eqs = List.map (fun (a,b) -> CP.mkEqVar a b no_pos) eqs_lst in *)
   (eqs_lst, subs)
 
-let norm_abs_node h p xpure =
-  if (isAccs (get_imm h)) then
+let norm_abs_node h p xpure em =
+  if (CP.is_abs ~emap:em (get_imm h)) then
     let xpured, _, _ = x_add xpure h p 0 in (* 0 or 1? *)(* !!!! add the xpure to pure *)
     (HEmp, Some (MCP.pure_of_mix xpured))
   else
@@ -2438,8 +2438,8 @@ let merge_two_view_nodes prog vn1 vn2 h1 h2 prog quantif unfold_fun qvars emap =
   else
     (* let xpure1 =  *)
     (* remove node annotated with @A if it's not compatible for merging *)
-  if (isAccs vn1.h_formula_view_imm) then  ([h2], [], [], [])
-  else if (isAccs vn2.h_formula_view_imm) then  ([h1], [], [], [])
+  if (CP.is_abs ~emap:emap vn1.h_formula_view_imm) then  ([h2], [], [], [])
+  else if (CP.is_abs ~emap:emap vn2.h_formula_view_imm) then  ([h1], [], [], [])
   else ([h1;h2], [], [], [])
 
 (* assume nodes are aliased *)
@@ -2452,8 +2452,8 @@ let merge_data_node_w_view_node prog dn1 vn2 h1 h2 quantif unfold_fun qvars emap
     | None   -> ([ret_h], [], [],[])  
     | Some s -> ([ret_h], [], [],[s])  
   else
-  if (isAccs dn1.h_formula_data_imm) then  ([h2], [], [], [])
-  else if (isAccs vn2.h_formula_view_imm) then  ([h1], [], [], [])
+  if (CP.is_abs ~emap:emap dn1.h_formula_data_imm) then  ([h2], [], [], [])
+  else if (CP.is_abs ~emap:emap vn2.h_formula_view_imm) then  ([h1], [], [], [])
   else ([h1;h2], [], [], [])
 
 let merge_data_node_w_view_node prog dn1 vn2 h1 h2 quantif unfold_fun qvars emap =
@@ -2471,8 +2471,8 @@ let merge_two_data_nodes prog dn1 dn2 h1 h2 quantif unfold_fun qvars emap =
     let (eqs, subs) = partition_eqs_subs dn1.h_formula_data_arguments dn2.h_formula_data_arguments quantif in
     ([ret_h], eqs, subs, [])
   else
-  if (isAccs dn1.h_formula_data_imm) then  ([h2], [], [], [])
-  else if (isAccs dn2.h_formula_data_imm) then  ([h1], [], [], [])
+  if (CP.is_abs ~emap:emap dn1.h_formula_data_imm) then  ([h2], [], [], [])
+  else if (CP.is_abs ~emap:emap dn2.h_formula_data_imm) then  ([h1], [], [], [])
   else ([h1;h2], [], [], [])
 
 (* merged two nodes and return merged node and resulted equalities. *)
@@ -2553,7 +2553,8 @@ let merge_alias_nodes_h_formula prog f p emap quantif xpure unfold_fun qvars =
 let merge_alias_nodes_formula_helper prog heapf puref quantif xpure unfold_fun qvars =
   let rec helper heapf puref = 
     let (subs,_) = CP.get_all_vv_eqs (MCP.pure_of_mix puref) in
-    let emap = CP.EMapSV.build_eset subs in
+    (* let emap = CP.EMapSV.build_eset subs in *)
+    let emap = build_eset_of_conj_formula (MCP.pure_of_mix puref) in
     let new_f, new_p, fixpoint, struc = x_add merge_alias_nodes_h_formula prog heapf puref emap quantif xpure unfold_fun qvars in
     (* let new_p = *)
     (*   match new_p with *)

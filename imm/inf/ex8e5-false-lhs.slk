@@ -1,3 +1,17 @@
+data cell{
+ int fst;
+}.
+
 
 checkentail false |- x>0.
+print residue.
+
+
+checkentail x::cell<_>@a |- (a=@A | b=@A).
+print residue.
+
+checkentail x::cell<_>@a *  x::cell<_>@b &a=@A & b=@M|- x::cell<_>@M.
+print residue.
+
+checkentail x::cell<_>@a *  x::cell<_>@b |- x::cell<_>@M.
 print residue.

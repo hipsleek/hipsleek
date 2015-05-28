@@ -554,7 +554,7 @@ let norm_reloblgs_and_init_defs reloblgs =
   (* norm *)
   let reloblgs = norm_rel_oblgs reloblgs in
   (* init defs *)
-  let reloblgs, reldefs = List.partition (fun (_,_,rel_d) -> CP.contains_undef rel_d) reloblgs in 
+  let reloblgs_new, reldefs = List.partition (fun (_,_,rel_d) -> CP.contains_undef rel_d) reloblgs in 
 (* TODODIMM should i also preserve the reloblgs? currently obligations without unk are transformed into definitions  *)
   let reldefs = List.map (fun (_,a,b) -> (b,a)) reldefs in
   reloblgs, reldefs
@@ -741,7 +741,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             (* let () = DD.binfo_hprint (add_str "pre_rel_fmls" (pr_list pr)) pre_rel_fmls no_pos in *)
             let () = x_binfo_hp (add_str "pre_rel_fmls" (pr_list pr)) pre_rel_fmls no_pos in
             let () = x_binfo_hp (add_str "pre_fmls" (pr_list pr)) pre_fmls no_pos in
-            let res = wrap (Fixpoint.update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs
+            let res = wrap (x_add Fixpoint.update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs
                               Fixcalc.compute_fixpoint_td
                               Fixcalc.fixc_preprocess reloblgs pre_rel_df post_rel_df_new post_rel_df pre_vars proc_spec) grp_post_rel_flag
             in

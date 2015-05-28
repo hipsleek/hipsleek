@@ -1052,7 +1052,7 @@ let allow_field_ann = ref false
 let remove_abs = ref true
 let allow_array_inst = ref false
 
-let imm_merge = ref false
+let imm_merge = ref true                (* false *) (*TODOIMM set default to false when merging to default branch *)
 
 let imm_weak = ref true
 
