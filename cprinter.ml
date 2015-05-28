@@ -3481,21 +3481,20 @@ let rec pr_struc_formula_for_spec (e:struc_formula) =
         formula_assume_lbl = (y1,y2);
         formula_assume_ensures_type = t;
         formula_assume_struc = s;} ->
-      wrap_box ("V",0);
-      (fun b ->
-         let ensures_str =
-           match t with
-           | None ->       "ensures "
-           | Some true ->  "ensures_exact "
-           | Some false -> "ensures_inexact " in
-         fmt_string ensures_str;
-         pr_formula_for_spec b;
-         fmt_string ";";
-         fmt_cut ();
-         if !print_assume_struc then
-           (fmt_string "struct:";
+      wrap_box ("V",0) (fun b ->
+        let ensures_str =
+        match t with
+        | None ->       "ensures "
+        | Some true ->  "ensures_exact "
+        | Some false -> "ensures_inexact " in
+        fmt_string ensures_str;
+        pr_formula_for_spec b;
+        fmt_string ";";
+        fmt_cut ();
+        if !print_assume_struc then
+        (fmt_string "struct:";
             wrap_box ("B",0) pr_struc_formula_for_spec s)
-         else ()) b
+        else ()) b
     | EInfer b ->
       (* let il = if b.formula_inf_tnt then [INF_TERM] else [] in *)
       let il = b.formula_inf_obj # get_lst in
