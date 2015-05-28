@@ -41,6 +41,15 @@ let init_conditions_of_block (b : ints_block) : (ints_exp_assume list * ints_exp
 let trans_pure_formula (ass : ints_exp_assume) : IP.formula =
   let rec helper exp =
     match exp with
+    | I.Unary op ->
+      let pos = op.I.exp_unary_pos in
+      let e = op.I.exp_unary_exp in
+      (match op.I.exp_unary_op with
+       | I.OpNot ->
+         let pf = helper e in
+         IP.Not (pf, None, pos)
+       | _ -> report_error no_pos "intsparser.trans_pure_formula: unexpected unary_op"
+      )
     | I.Binary op ->
       let pos = op.I.exp_binary_pos in
       let e1 = op.I.exp_binary_oper1 in
@@ -174,9 +183,9 @@ let trans_ints_block_lst fn (fr_lbl: ints_loc) (blks: ints_block list): I.proc_d
         I.mkCond nondet_cond blk (nondet_chain_for blk_exps) None (I.get_exp_pos blk) in
     nondet_chain_for blk_exps
   in
-  let wrap_with_cond cond exp =
-    let cond_exps = List.map (fun asm -> Assume asm) cond in
-    trans_ints_exp_lst cond_exps exp
+  let wrap_with_cond asm then_exp else_exp =
+    let asm_pos = asm.ints_exp_assume_pos in
+    I.mkCond asm.ints_exp_assume_formula then_exp else_exp None asm_pos
   in
   let rec helper blks factored =
     match blks with
@@ -194,25 +203,38 @@ let trans_ints_block_lst fn (fr_lbl: ints_loc) (blks: ints_block list): I.proc_d
          | [] -> (* empty. No conditions could factor. *)
            (trans_ints_block blk)::(helper blks factored)
          | asm::asms ->
-           (* check if asm 'factors' anything. *)
-           let block_can_imply asm blk =
+           let converse_asm asm =
+               let pos = asm.ints_exp_assume_pos in
+               let neg = I.mkUnary I.OpNot asm.ints_exp_assume_formula None pos in
+               { asm with ints_exp_assume_formula = neg } in
+           let is_equiv_asm asm1 asm2 =
+             let af1 = trans_pure_formula asm1 in
+             let af2 = trans_pure_formula asm2 in
+             let acf1 = Astsimp.trans_pure_formula af1 [] in
+             let acf2 = Astsimp.trans_pure_formula af2 [] in
+             Tpdispatcher.simpl_imply_raw acf1 acf2 &&
+             Tpdispatcher.simpl_imply_raw acf2 acf1 in
+           let block_has_equiv asm blk =
              let (ic, _) = init_conditions_of_block blk in
-             let af = trans_pure_formula asm in
-             let cf = pure_formula_of_condition ic in
-             let acf = Astsimp.trans_pure_formula af [] in
-             let ccf = Astsimp.trans_pure_formula cf [] in
-             Tpdispatcher.simpl_imply_raw ccf acf
-           in
-           let (common, other) = List.partition (block_can_imply asm) blks in
-           (match common with
-            | [] -> (* No other blocks shared the assumption. *)
+             List.exists (is_equiv_asm asm) ic in
+           let block_has_converse asm blk =
+             let (ic, _) = init_conditions_of_block blk in
+             List.exists (is_equiv_asm (converse_asm asm)) ic in
+           (* partition list of blocks into those which have this asm in common,
+            * those with the converse, and 'others'. *)
+           let (common, other) = List.partition (block_has_equiv asm) blks in
+           let (converse, other) = List.partition (block_has_converse asm) other in
+           if (List.length common == 0 && List.length converse == 0)
+           then (* No other blocks shared the assumption. *)
               try_to_factor_blocks asms
-            | _ -> (* nonempty *)
-              let exps_with_factor = (helper (blk::common) (asm::factored)) in
-              let other_exps = (helper other factored) in
-              let nondet_exp = (nondet_seq_for exps_with_factor) in
-              let nondet_exp = wrap_with_cond [asm] nondet_exp in
-              nondet_exp::other_exps)) in
+           else
+             let exps_with_factor = helper (blk::common) (asm::factored) in
+             let exps_with_converse = helper converse ((converse_asm asm)::factored) in
+             let other_exps = (helper other factored) in
+             let then_exp = (nondet_seq_for exps_with_factor) in
+             let else_exp = (nondet_seq_for exps_with_converse) in
+             let cond_exp = wrap_with_cond asm then_exp else_exp in
+             cond_exp::other_exps) in
       try_to_factor_blocks init_cond
   in
   let exps = helper blks [] in
