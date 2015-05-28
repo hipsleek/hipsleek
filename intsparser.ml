@@ -203,7 +203,7 @@ let trans_ints_block_lst fn (fr_lbl: ints_loc) (blks: ints_block list): I.proc_d
          | [] -> (* empty. No conditions could factor. *)
            (trans_ints_block blk)::(helper blks factored)
          | asm::asms ->
-           let converse_asm asm =
+           let negation_of_asm asm =
                let pos = asm.ints_exp_assume_pos in
                let neg = I.mkUnary I.OpNot asm.ints_exp_assume_formula None pos in
                { asm with ints_exp_assume_formula = neg } in
@@ -217,22 +217,22 @@ let trans_ints_block_lst fn (fr_lbl: ints_loc) (blks: ints_block list): I.proc_d
            let block_has_equiv asm blk =
              let (ic, _) = init_conditions_of_block blk in
              List.exists (is_equiv_asm asm) ic in
-           let block_has_converse asm blk =
+           let block_has_negation_of asm blk =
              let (ic, _) = init_conditions_of_block blk in
-             List.exists (is_equiv_asm (converse_asm asm)) ic in
+             List.exists (is_equiv_asm (negation_of_asm asm)) ic in
            (* partition list of blocks into those which have this asm in common,
-            * those with the converse, and 'others'. *)
+            * those with the negation_of, and 'others'. *)
            let (common, other) = List.partition (block_has_equiv asm) blks in
-           let (converse, other) = List.partition (block_has_converse asm) other in
-           if (List.length common == 0 && List.length converse == 0)
+           let (negative, other) = List.partition (block_has_negation_of asm) other in
+           if (List.length common == 0 && List.length negative == 0)
            then (* No other blocks shared the assumption. *)
               try_to_factor_blocks asms
            else
              let exps_with_factor = helper (blk::common) (asm::factored) in
-             let exps_with_converse = helper converse ((converse_asm asm)::factored) in
+             let exps_with_negation_of = helper negative ((negation_of_asm asm)::factored) in
              let other_exps = (helper other factored) in
              let then_exp = (nondet_seq_for exps_with_factor) in
-             let else_exp = (nondet_seq_for exps_with_converse) in
+             let else_exp = (nondet_seq_for exps_with_negation_of) in
              let cond_exp = wrap_with_cond asm then_exp else_exp in
              cond_exp::other_exps) in
       try_to_factor_blocks init_cond
