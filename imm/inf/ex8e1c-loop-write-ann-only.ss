@@ -2,15 +2,14 @@ data cell{
  int fst;
 }
 
-relation P1(ann v1, int v).
-relation P2(ann v1, ann v2,int v,int r, int s).
+relation P1(ann v1).
+relation P2(ann v1, ann v2).
 //relation P3(ann v1, int v,int r, int s).
 
 int foo(cell c)
   infer [P1,P2]
-  requires c::cell<v>@a & P1(a,v)
-     /* ensures c::cell<w>@b & P3(b,v,res,w)  ; */
-     ensures c::cell<w>@b & P2(a,b,v,res,w)  ;
+  requires c::cell<v>@a & P1(a)
+  ensures c::cell<w>@b & P2(a,b)  ;
 {
  int x = c.fst;
  if (x!=1) {
