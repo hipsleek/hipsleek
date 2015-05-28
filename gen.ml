@@ -183,6 +183,14 @@ struct
     | None -> def
     | Some v -> f v
 
+  let map_opt_w_def f_none f_some x = match x with
+    | None -> f_none
+    | Some v -> Some (f_some v)
+
+  let map_list_def def f x = match x with
+    | [] -> def
+    | _  -> f x
+
   let map_l_snd f x = List.map (fun (l,c)-> (l,f c)) x
   let map_l_fst f x = List.map (fun (l,c)-> (f l,c)) x
   let map_snd_only f x = List.map (fun (l,c)-> f c) x
@@ -1313,24 +1321,34 @@ struct
     (* let () = force_dd_print() in *)
     ()
 
-  (* call f and pop its trace in call stack of ho debug *)
-  let pop_aft_apply_with_exc (f:'a->'b) (e:'a) : 'b =
-    let r = (try 
-               (f e)
-             with exc -> (pop_call(); raise exc))
+  let trace_exception s exc =
+    if !VarGen.trace_exc then Basic.print_endline_quiet ("Exception("^s^"):"^(Printexc.to_string exc))
+
+    (* call f and pop its trace in call stack of ho debug *)
+  let pop_aft_apply_with_exc s (f:'a->'b) (e:'a) : 'b =
+    let r = try 
+      (f e)
+    with exc -> 
+        begin 
+          trace_exception s exc;
+          pop_call(); 
+          raise exc
+        end
     in pop_call(); r
 
+
   (* call f and pop its trace in call stack of ho debug *)
-  let pop_aft_apply_with_exc_no (f:'a->'b) (e:'a) : 'b =
+  let pop_aft_apply_with_exc_no s (f:'a->'b) (e:'a) : 'b =
     try 
       let r = (f e) in
       if !debug_precise_trace then debug_stk # pop; 
       r
     with exc -> 
-      begin
-        if !debug_precise_trace then debug_stk # pop; 
-        raise exc
-      end
+        begin
+          trace_exception s exc;
+          if !debug_precise_trace then debug_stk # pop; 
+          raise exc
+        end
 
   (* string representation of call stack of ho_debug *)
   let string_of () : string =
