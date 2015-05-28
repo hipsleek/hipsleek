@@ -13,5 +13,5 @@ print residue.
 checkentail x::cell<_>@a *  x::cell<_>@b &a=@A & b=@M|- x::cell<_>@M.
 print residue.
 
-checkentail x::cell<_>@a *  x::cell<_>@b |- x::cell<_>@M.
+checkentail x::cell<_>@a *  x::cell<_>@b |- x!=null.
 print residue.

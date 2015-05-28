@@ -144,7 +144,7 @@ let compute_subs_mem puref evars =
 
 (* TODOIMM andreeac: to add equality info and emap *)
 let compatible_ann (ann1: CP.ann list) (ann2: CP.ann list) emap : bool =
-  let compatible_helper a1 a2 = CP.EMapSV.is_equiv emap (CP.ann_to_spec_var a1)  (CP.ann_to_spec_var a1) in
+  let compatible_helper a1 a2 = CP.EMapSV.is_equiv emap (CP.imm_to_spec_var a1)  (CP.imm_to_spec_var a1) in
   if not(!Globals.allow_field_ann) then false else 
     let rec helper ann1 ann2 = 
       match ann1, ann2 with

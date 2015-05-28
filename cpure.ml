@@ -7267,19 +7267,30 @@ let conv_exp_with_const e = match conv_exp_to_var e with
   | Some (v,loc) -> Var(v,loc)
   | _ -> e
 
-let ann_to_spec_var ann = 
+let imm_to_spec_var ann = 
   match ann with
   | ConstAnn a  -> mkAnnSVar a
   | PolyAnn  sv -> sv
   | _ -> failwith "Cpure.ml currently we do not provide support for nested TempAnn/TempRes"
 
-let ann_to_exp ann loc = 
+let imm_to_spec_var_opt ann = 
+  match ann with 
+  | PolyAnn ann  -> Some ann
+  | ConstAnn ann -> Some (mkAnnSVar ann)
+  | _ -> None 
+
+let imm_to_sv_list ann = 
+  List.fold_left (fun acc a -> match a with
+      | Some ann -> acc@ann 
+      | None     -> acc) [] ann
+
+let imm_to_exp ann loc = 
   match ann with
   | ConstAnn a  -> AConst(a, loc)
   | PolyAnn  sv -> Var(sv, loc)
   | _ -> failwith "Cpure.ml currently we do not provide support for TempAnn/TempRes exp"
 
-let exp_to_ann (e:exp) : ann = 
+let exp_to_imm (e:exp) : ann = 
   match e with
   | AConst(a,loc) -> ConstAnn a
   | Var(v,loc)    -> PolyAnn v
@@ -13584,19 +13595,8 @@ let mkExpAnnSymb ann pos =
   | PolyAnn v  -> Var(v, pos)  
   | NoAnn  -> AConst(Accs, pos)
 
-let int_ann_to_exp i loc = 
+let int_imm_to_exp i loc = 
   mkExpAnnSymb (mkConstAnn i) loc
-
-let imm_to_sv ann = 
-  match ann with 
-  | PolyAnn ann  -> Some ann
-  | ConstAnn ann -> Some (mkAnnSVar ann)
-  | _ -> None 
-
-let imm_to_sv_list ann = 
-  List.fold_left (fun acc a -> match a with
-      | Some ann -> acc@ann 
-      | None     -> acc) [] ann
 
 let ann_sv_lst  = (name_for_imm_sv Mutable):: (name_for_imm_sv Imm):: (name_for_imm_sv Lend)::[(name_for_imm_sv Accs)]
 

@@ -1039,15 +1039,15 @@ let change_to_imm_rel pf =
     if is_ann_type (type_of_spec_var v) then
       if i<(int_of_heap_ann imm_bot)  then BConst(false, ll)
       else if (i>=(int_of_heap_ann imm_top) && !Globals.aggressive_imm_simpl) then BConst(true, ll)
-      else if i=(int_of_heap_ann imm_bot) then Eq(a1, CP.int_ann_to_exp i ll, ll)
-      else SubAnn(a1, CP.int_ann_to_exp i ll, ll)
+      else if i=(int_of_heap_ann imm_bot) then Eq(a1, CP.int_imm_to_exp i ll, ll)
+      else SubAnn(a1, CP.int_imm_to_exp i ll, ll)
     else pf
   | Lte(IConst(i,_),(Var(v,_) as a1),ll) -> 
     if is_ann_type (type_of_spec_var v) then
       if (i<=(int_of_heap_ann imm_bot)&& !Globals.aggressive_imm_simpl)  then BConst(true, ll)
       else if i>(int_of_heap_ann imm_top) then BConst(false, ll)
-      else if i=(int_of_heap_ann imm_top) then Eq(a1, CP.int_ann_to_exp i ll, ll)
-      else SubAnn(CP.int_ann_to_exp i ll, a1, ll)
+      else if i=(int_of_heap_ann imm_top) then Eq(a1, CP.int_imm_to_exp i ll, ll)
+      else SubAnn(CP.int_imm_to_exp i ll, a1, ll)
     else pf
   | Lte((Var(v1,_) as a1), (Var(v2,_) as a2), ll) ->  
     if is_ann_type (type_of_spec_var v1) && is_ann_type(type_of_spec_var v2) then SubAnn(a1, a2, ll)
@@ -1098,7 +1098,7 @@ let cnv_int_to_ptr f =
       else 
         let (is_ann_flag,a1,i) = comm_is_ann a1 a2 in
         if is_ann_flag then
-          if is_valid_ann i then Some(Eq(a1, CP.int_ann_to_exp i ll,ll),l)
+          if is_valid_ann i then Some(Eq(a1, CP.int_imm_to_exp i ll,ll),l)
           else  Some(BConst (false,ll),l) (* contradiction *)
           (*else if is_inf a1 then Some(Eq(a2,mkInfConst ll,ll),l)*)
         else Some bf
@@ -1110,7 +1110,7 @@ let cnv_int_to_ptr f =
         let (is_ann_flag,a1,i) = comm_is_ann a1 a2 in
         if is_ann_flag then
           if is_valid_ann i then
-            Some(Neq(a1, CP.int_ann_to_exp i ll,ll),l)
+            Some(Neq(a1, CP.int_imm_to_exp i ll,ll),l)
           else
             (*let () = print_endline_quiet "xxxxxx" in*)
             Some(BConst (true,ll),l) (* of course *)

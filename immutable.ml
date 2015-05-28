@@ -130,7 +130,7 @@ let upper_bounds aliases pure =
     let res =
       match p_f with
       | CP.SubAnn(e1,e2,l) -> 
-        if CP.EMapSV.mem (CP.ann_to_spec_var (CP.exp_to_ann e1)) aliases then [CP.exp_to_ann e2]
+        if CP.EMapSV.mem (CP.imm_to_spec_var (CP.exp_to_imm e1)) aliases then [CP.exp_to_imm e2]
         else []
       | _ -> []
     in Some res
@@ -159,13 +159,13 @@ let lhs_rhs_rel l r to_rhs =
 let conj_of_bounds rhs_sv ann1 ann2 lst loc =
   let rhs_exp = CP.Var (rhs_sv, loc) in
   let freshsv = CP.fresh_spec_var rhs_sv in
-  let inst1 = [ (CP.Var(freshsv,loc), (CP.ann_to_exp ann1 loc, CP.ann_to_exp ann2 loc)) ] in
+  let inst1 = [ (CP.Var(freshsv,loc), (CP.imm_to_exp ann1 loc, CP.imm_to_exp ann2 loc)) ] in
   let maxs = List.fold_right  (fun a acc -> 
       match acc with
       | [] -> acc
       | (v, (a1, a2))::_ -> 
         let freshv = CP.Var (CP.fresh_spec_var rhs_sv, loc) in
-        (freshv, (v, CP.ann_to_exp a loc))::acc
+        (freshv, (v, CP.imm_to_exp a loc))::acc
     ) lst inst1 in
   let maxs = match maxs with
     | [] -> []
@@ -181,7 +181,7 @@ let pick_bounds max_bounds var_to_be_instantiated sv_to_be_instantiated
   let inst = 
     match max_bounds with
     | []    -> None, None
-    | a::[] -> Some ( (* weakest_rel *) fst (lhs_rhs_rel var_to_be_instantiated (CP.ann_to_exp a loc) var_to_be_instantiated)), None
+    | a::[] -> Some ( (* weakest_rel *) fst (lhs_rhs_rel var_to_be_instantiated (CP.imm_to_exp a loc) var_to_be_instantiated)), None
     | a1::a2::tail ->  
       let guards = conj_of_bounds sv_to_be_instantiated a1 a2 tail loc in
       Some guards, None
@@ -1317,7 +1317,7 @@ and remaining_ann_x (annl: CP.ann) emap: CP.ann=
   let anns = List.combine elem_const anns in
   let getAnn aconst = snd (List.find (fun (a,_) -> CP.eq_spec_var a aconst)  anns) in    
   let normalize_imm ann = 
-    match (CP.imm_to_sv ann) with
+    match (CP.imm_to_spec_var_opt ann) with
     | Some v -> 
       begin
         let elst  =  CP.EMapSV.find_equiv_all v emap in
@@ -2383,10 +2383,12 @@ let compatible_at_node_lvl prog imm1 imm2 h1 h2 unfold_fun qvars emap =
     if (CP.is_abs ~emap:emap imm2) then (true, h1)
     else  if (CP.is_abs ~emap:emap imm1) then (true, h2)
     else 
-      let fresh_sv = CP.fresh_spec_var_ann ~old_name:"m_ann" () in
-      let fresh_var = CP.Var(fresh_sv, no_pos) in
-      let h = set_imm h1 (CP.mkPolyAnn fresh_sv) in (* TODOIMM to add the constraint fresh_ann = ann1 + ann2 *)
-      (true, h) in
+      let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"ann" () in
+      let fresh_ann_var = CP.Var(fresh_ann_sv, no_pos) in
+      let h = set_imm h1 (CP.mkPolyAnn fresh_ann_sv) in (* TODOIMM to add the constraint fresh_ann = ann1 + ann2 *)
+      (* let guard = CP.mkEq fresh_ann_var (CP.mkAdd ) no_pos in *)
+      (* (true, h) in *)
+      (false, h1) in
   let compatible, keep_h, struc =
     (match h1, h2 with
      | DataNode _, DataNode _
@@ -2547,7 +2549,7 @@ let merge_alias_nodes_h_formula prog f p emap quantif xpure unfold_fun qvars = (
     let fr, t = List.split subs in
     let updated_f = subst_avoid_capture_h fr t updated_f in
     let new_pure = MCP.memoise_add_pure p aux_pure in
-    let new_pure = MCP.memoise_add_pure p (CP.join_conjunctions pf) in
+    let new_pure = MCP.memoise_add_pure new_pure (CP.join_conjunctions pf) in
     let new_pure = MCP.subst_avoid_capture_memo fr t new_pure in
     (updated_f, new_pure, fixpoint, struc)
   (* | DataNode _ | ViewNode _ -> norm_abs_node f p xpure *) (* andreeac: uncommnet this line if you wnat to replace @A node with HEmp & xpure*)
@@ -2855,7 +2857,7 @@ let imm_unify (form:CP.formula): CP.formula =
   if not (CP.is_False simp_immf) then
     let immf = simp_immf in
     let pure = CP.disj_of_list pures no_pos in
-    (* let pure = TP.simplify_tp pure in  *)  (* is this mandatory? *)
+    (* let pure = TP.simplify_tp pure in  *)  (* TODOIMM check if pure simplif is also mandatory? temp disabled*)
     CP.mkAnd immf pure no_pos 
   else form (* if we cannot strenghten the imm formula, return the initial formula *)
 

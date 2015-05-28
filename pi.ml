@@ -547,7 +547,7 @@ let norm_rel_oblgs reloblgs =
   let reloblgs_new = helper reloblgs [] in
   let reloblgs_new = List.map (fun ((rel_c,rel_n,rel_d) as rel) -> 
       if CP.contains_undef rel_d then rel 
-      else (rel_c, rel_n, Immutable.imm_unify (TP.simplify_tp rel_d))) reloblgs_new  in
+      else (rel_c, rel_n, Immutable.imm_unify ((* TP.simplify_tp *) rel_d))) reloblgs_new  in
   reloblgs_new
 
 let norm_reloblgs_and_init_defs reloblgs =
@@ -746,9 +746,9 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                               Fixcalc.fixc_preprocess reloblgs pre_rel_df post_rel_df_new post_rel_df pre_vars proc_spec) grp_post_rel_flag
             in
             let () = x_binfo_hp (add_str "fixpoint" (pr_list (pr_quad pr pr pr pr))) res no_pos in
-            let res = List.map (fun (rel_post,post,rel_pre,pre) -> 
-                (rel_post,TP.simplify_tp post,rel_pre,TP.simplify_tp pre)
-              ) res in
+            (* let res = List.map (fun (rel_post,post,rel_pre,pre) ->  *)
+            (*     (rel_post,TP.simplify_tp post,rel_pre,TP.simplify_tp pre) *)
+            (*   ) res in     *)              (* TODOIMM : check if this simplification is needed  *)
             let res = List.map (fun (rel_post,post,rel_pre,pre) ->  
                 (rel_post,Immutable.postprocess_post post pre_vars,rel_pre,Immutable.postprocess_pre pre)) res in
             res
