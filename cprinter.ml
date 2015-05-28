@@ -3973,7 +3973,6 @@ let pr_list_context (ctx:list_context) =
         | Some _ -> "MustErr Context: "
         | None -> "MaybeErr Context: "
       in
-      fmt_cut ();
       fmt_open_vbox 0;
       fmt_string err_header (* "MaybeErr Context: " *);
       fmt_cut_and_indent ();
