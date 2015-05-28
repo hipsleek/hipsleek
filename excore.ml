@@ -14,6 +14,35 @@ open Cpure
 open VarGen
 (* open Cprinter *)
 
+module UnCa=
+   struct
+     let unsat_cache = Hashtbl.create 200
+     let hit_cache = ref (0:int)
+     let miss_cache = ref (0:int)
+
+     let init_cache () =
+       let () = Hashtbl.add unsat_cache "self.false" true in
+       Hashtbl.add unsat_cache "self.true" false
+
+     let reset_cache () =
+       let () =  Hashtbl.clear unsat_cache in
+       init_cache ()
+
+     let find f=
+       let str = !print_formula f in
+       Hashtbl.find unsat_cache str
+
+     let is_unsat_cache str_f f unsat_fnc=
+       try
+         let res = Hashtbl.find unsat_cache str_f in
+         let _ = hit_cache := !hit_cache + 1 in
+         res
+       with Not_found ->
+           let res = unsat_fnc f in
+           let () = Hashtbl.add unsat_cache str_f res in
+           let _ = miss_cache := !miss_cache + 1 in
+           res
+   end;;
 
 let is_sat_raw = ref(fun (c:Mcpure.mix_formula) -> true)
 let simplify_raw = ref(fun (c:Cpure.formula) -> mkTrue no_pos)
@@ -264,6 +293,7 @@ let ef_elim_exists_1 (svl : spec_var list) epf  =
         )
       | _ -> p
   in
+  let () = x_tinfo_pp ("Omega call before simplify: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
   let (baga,pure) = epf in
   (* let () = Debug.ninfo_pprint "ef_elim_exists" no_pos in *)
   (* let () = Debug.ninfo_pprint "==============" no_pos in *)
@@ -274,10 +304,9 @@ let ef_elim_exists_1 (svl : spec_var list) epf  =
   let () = x_tinfo_hp (add_str "pure = " !print_pure_formula) pure no_pos in
   let pure = wrap_exists_svl pure svl in
   let () = x_tinfo_hp (add_str "pure1 = " !print_pure_formula) pure no_pos in
-  let () = x_tinfo_pp ("Omega call before simplify: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
-  let pure = match pure with
-    | Cpure.AndList _ -> simplify_with_label_omega (* x_add_1 Omega.simplify *) pure
-    | _ ->
+  let pure = (* match pure with *)
+    (* | Cpure.AndList _ -> simplify_with_label_omega (\* x_add_1 Omega.simplify *\) pure *)
+    (* | _ -> *)
           if !Globals.delay_eelim_baga_inv && Cpure.is_shape pure then
             let ps = Cpure.list_of_conjs pure in
             let ps1 = List.map (elim_quan_formula svl) ps in
@@ -285,7 +314,6 @@ let ef_elim_exists_1 (svl : spec_var list) epf  =
           else
             simplify_with_label_omega (* x_add_1 Omega.simplify *) pure
   in
-  let () = x_tinfo_pp ("Omega call after simplify: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
   let () = x_tinfo_hp (add_str "pure2 = " !print_pure_formula) pure no_pos in
   let () = x_tinfo_hp (add_str "pure_ptr_eq" (pr_list (pr_pair string_of_typed_spec_var string_of_typed_spec_var))) p_aset no_pos in
   let p_aset = EMapSV.build_eset p_aset in
@@ -323,7 +351,9 @@ let ef_elim_exists_1 (svl : spec_var list) epf  =
   let () = Debug.ninfo_hprint (add_str "pure" !print_pure_formula) pure no_pos in
   let () = Debug.ninfo_hprint (add_str "pure1" !print_pure_formula) pure1 no_pos in
   let () = x_tinfo_hp (add_str "new pure" !print_pure_formula) new_pure no_pos in
-  (List.sort compare_sv new_baga, new_pure)
+  let res = (List.sort compare_sv new_baga, new_pure) in
+  let () = x_tinfo_pp ("Omega call after simplify: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+  res
 
 (* let ef_elim_exists_1 (svl : spec_var list) epf = *)
 (*   (\* let pr = string_of_ef_pure in *\) *)
@@ -576,7 +606,7 @@ module EPURE =
       (* Debug.no_1 "ef_conv_enum_disj" string_of_ef_pure_disj string_of_pure_formula *)
       ef_conv_enum_disj_x disj
 
-    let mk_star efp1 efp2 =
+    let mk_star_wrap efp1 efp2 =
       if (is_false efp1) || (is_false efp2) then mk_false
       else
         let (baga1, pure1) = efp1 in
@@ -588,10 +618,16 @@ module EPURE =
         (* (merge_baga baga1 baga2, mkAnd pure1 pure2 no_pos) *)
         with _ -> mk_false
 
+    let mk_star efp1 efp2 =
+      let res = mk_star_wrap efp1 efp2 in
+      res
+
     let mk_star_disj_x (efpd1:epure_disj) (efpd2:epure_disj)  =
+      let () = x_tinfo_pp ("Omega mk_star_disj:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
       let res =
         List.map (fun efp1 -> List.map (fun efp2 -> mk_star efp1 efp2) efpd2) efpd1 in
       let res = List.concat res in
+      let () = x_tinfo_pp ("Omega mk_star_disj:end " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
       res
     (* List.filter (fun v -> not(is_false v)) res *)
 
@@ -617,11 +653,22 @@ module EPURE =
     (* ef_unsat : ef_pure -> bool *)
     (* remove unsat terms *)
     (* convert unsat with ef_conv_enum *)
-    let ef_unsat_0 (f : epure) : bool =
+    let unsat_call p=
+      not (!is_sat_raw (Mcpure.mix_of_pure p))
+
+    let ef_unsat_0 ((b,p) as f : epure) : bool =
       (* use ef_conv_enum *)
       let cf = ef_conv_enum f in
-      (* if unsat(cf) return true *)
-      not (!is_sat_raw (Mcpure.mix_of_pure cf))
+      (* if !Globals.delay_eelim_baga_inv then *)
+      (*   (\* if unsat(cf) return true *\) *)
+      (*   let ps = list_of_conjs p in *)
+      (*   if List.length ps < 42 then *)
+      (*     let str_f = ((pr_list Elt.string_of) b) ^ "." ^ (!print_pure_formula p) in *)
+      (*     UnCa.is_unsat_cache str_f cf unsat_call *)
+      (*   else unsat_call cf *)
+      (* else *)
+      (* not (!is_sat_raw (Mcpure.mix_of_pure cf)) *)
+        unsat_call cf
 
     (* DO NOT CALL DIRECTLY *)
     let ef_unsat_0 (f : epure) : bool =
@@ -638,8 +685,11 @@ module EPURE =
       List.filter (fun f -> not(unsat f)) disj
 
     let is_false_disj disj =
-      List.for_all (fun epf -> unsat epf) disj
+      let () = x_tinfo_pp ("Omega is_false_disj:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+      let res = List.for_all (fun epf -> unsat epf) disj in
       (* disj==[] *)
+      let () = x_tinfo_pp ("Omega is_false_disj:end " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+      res
 
     let mk_false_disj = []
 
@@ -705,8 +755,8 @@ module EPURE =
       else false
 
     (* reducing duplicate? *)
-    let norm_disj ?(syn=false) disj =
-      let pure_cmp_fnc = if syn then is_eq_epure_syn else is_eq_epure in
+    let norm_disj (* ?(syn=false) *) disj =
+      let pure_cmp_fnc = (* if syn then is_eq_epure_syn else *) is_eq_epure in
       let rec remove_duplicate (disj : epure_disj) : epure_disj =
         match disj with
         | [] -> []
@@ -715,10 +765,10 @@ module EPURE =
               not ((* is_eq_epure *)pure_cmp_fnc hd ep)) tl) in
           hd::new_tl
       in
-      let () = x_binfo_pp ("Omega call norm_disj-before: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
-      let sat_disj = if syn then disj else (List.filter (fun v -> not(is_false v)) (List.map norm disj)) in
+      let () = x_tinfo_pp ("Omega call norm_disj-before: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+      let sat_disj = (* if syn then disj else *) (List.filter (fun v -> not(is_false v)) (List.map norm disj)) in
       let res = remove_duplicate sat_disj (* (List.filter (fun v -> not(is_false v)) (List.map norm disj)) *) in
-      let () = x_binfo_pp ("Omega call norm_disj-after: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+      let () = x_tinfo_pp ("Omega call norm_disj-after: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
       res
 
     let ef_imply_disj_x (ante : epure_disj) (conseq : epure_disj) : bool =
@@ -733,10 +783,10 @@ module EPURE =
       ef_imply_disj_x ante conseq
 
     let imply_disj (ante : epure_disj) (conseq : epure_disj) : bool =
-      let () = x_binfo_pp ("Omega call before imply disj: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+      let () = x_tinfo_pp ("Omega call before imply disj: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
       let f = List.map (fun (b,f) -> (b,f)) in
       let r = ef_imply_disj_0 (f ante) (f conseq) in
-      let () = x_binfo_pp ("Omega call after imply disj: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+      let () = x_tinfo_pp ("Omega call after imply disj: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
       r
 
     let pair_cmp (x1,x2) (y1,y2) =

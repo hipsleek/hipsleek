@@ -169,16 +169,16 @@ let widen_disj disj1 disj2 =
     pr (fun _ _ ->
         widen_disj_x disj1 disj2) disj1 disj2
 
-let rec build_ef_heap_formula_x ?(syn=false) (cf : Cformula.h_formula) (all_views : Cast.view_decl list) : ef_pure_disj =
-  match cf with
+let rec build_ef_heap_formula_x (cf0 : Cformula.h_formula) (all_views : Cast.view_decl list) : ef_pure_disj =
+  let rec recf cf= match cf with
   | Cformula.Star _ ->
     let hfl = Cformula.split_star_conjunctions cf in
     let efpd_n = List.fold_left (fun f hf ->
         let efpd_h = build_ef_heap_formula hf all_views in
         let efpd_s = EPureI.mk_star_disj f efpd_h in
-        let efpd_n = if !Globals.delay_eelim_baga_inv then efpd_s else EPureI.norm_disj ~syn:syn efpd_s in
+        let efpd_n = if !Globals.delay_eelim_baga_inv then efpd_s else EPureI.norm_disj efpd_s in
         efpd_n
-      ) (build_ef_heap_formula  ~syn:syn (List.hd hfl) all_views) (List.tl hfl) in
+      ) (build_ef_heap_formula (List.hd hfl) all_views) (List.tl hfl) in
     efpd_n
   | Cformula.DataNode dnf ->
     let sv = dnf.Cformula.h_formula_data_node in
@@ -213,17 +213,22 @@ let rec build_ef_heap_formula_x ?(syn=false) (cf : Cformula.h_formula) (all_view
     let sst = List.combine view_args svl in
     (* TODO : below should be done using EPureI : DONE *)
     let efpd_h = EPureI.subst_epure_disj sst efpd in
-    let efpd_n = if !Globals.delay_eelim_baga_inv then efpd_h else EPureI.norm_disj ~syn:syn efpd_h in
+    let efpd_n = if !Globals.delay_eelim_baga_inv then efpd_h else EPureI.norm_disj efpd_h in
     let () = Debug.ninfo_hprint (add_str "efpd_n" (EPureI.string_of_disj)) efpd_n no_pos in
     efpd_n
   | _ -> EPureI.mk_true
+  in
+  let () = x_tinfo_pp ("Omega build_ef_heap_formula:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+  let res = recf cf0 in
+  let () = x_tinfo_pp ("Omega build_ef_heap_formula:end " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+  res
 
-and build_ef_heap_formula ?(syn=false) (cf : Cformula.h_formula) (all_views : Cast.view_decl list) : ef_pure_disj =
+and build_ef_heap_formula  (cf : Cformula.h_formula) (all_views : Cast.view_decl list) : ef_pure_disj =
   Debug.no_1 "build_ef_heap_formula" string_of_h_formula
     EPureI.string_of_disj (fun _ ->
-        build_ef_heap_formula_x  ~syn:syn cf all_views) cf
+        build_ef_heap_formula_x  cf all_views) cf
 
-let build_ef_heap_formula_with_pure_x ?(syn=false) (cf : Cformula.h_formula) (efpd_p : ef_pure_disj) (all_views : Cast.view_decl list) : ef_pure_disj =
+let build_ef_heap_formula_with_pure_x  (cf : Cformula.h_formula) (efpd_p : ef_pure_disj) (all_views : Cast.view_decl list) : ef_pure_disj =
   match cf with
   | Cformula.Star _ ->
     let hfl = Cformula.split_star_conjunctions cf in
@@ -233,9 +238,9 @@ let build_ef_heap_formula_with_pure_x ?(syn=false) (cf : Cformula.h_formula) (ef
         (*   Globals.dis_inv_baga () *)
         (* in *)
         (* if (!Globals.gen_baga_inv) then *)
-        let efpd_h = build_ef_heap_formula  ~syn:syn hf all_views in
+        let efpd_h = build_ef_heap_formula hf all_views in
         let efpd_s = EPureI.mk_star_disj f efpd_h in
-        let efpd_n = if !Globals.delay_eelim_baga_inv then efpd_s else EPureI.norm_disj ~syn:syn efpd_s in
+        let efpd_n = if !Globals.delay_eelim_baga_inv then efpd_s else EPureI.norm_disj efpd_s in
         efpd_n
         (* else *)
         (*   f *)
@@ -243,20 +248,20 @@ let build_ef_heap_formula_with_pure_x ?(syn=false) (cf : Cformula.h_formula) (ef
     efpd_n
   | Cformula.DataNode _
   | Cformula.ViewNode _ ->
-    let efpd_h = build_ef_heap_formula  ~syn:syn cf all_views in
+    let efpd_h = build_ef_heap_formula cf all_views in
     let efpd_s = EPureI.mk_star_disj efpd_p efpd_h in
-    let efpd_n = if !Globals.delay_eelim_baga_inv then efpd_s else EPureI.norm_disj ~syn:syn efpd_s in
+    let efpd_n = if !Globals.delay_eelim_baga_inv then efpd_s else EPureI.norm_disj efpd_s in
     efpd_n
-  | _ -> if !Globals.delay_eelim_baga_inv then efpd_p else EPureI.norm_disj  ~syn:syn efpd_p
+  | _ -> if !Globals.delay_eelim_baga_inv then efpd_p else EPureI.norm_disj efpd_p
 
-let build_ef_heap_formula_with_pure ?(syn=false) (cf : Cformula.h_formula) (efpd_p : ef_pure_disj) (all_views : Cast.view_decl list) : ef_pure_disj =
+let build_ef_heap_formula_with_pure (cf : Cformula.h_formula) (efpd_p : ef_pure_disj) (all_views : Cast.view_decl list) : ef_pure_disj =
   Debug.no_1 "build_ef_heap_formula_with_pure" string_of_h_formula
     EPureI.string_of_disj (fun _ ->
-        build_ef_heap_formula_with_pure_x ~syn cf efpd_p all_views) cf
+        build_ef_heap_formula_with_pure_x cf efpd_p all_views) cf
 
 (* this need to be moved to EPURE module : DONE *)
-let rec build_ef_pure_formula_x ?(syn=false) (pf : formula) : ef_pure_disj =
-  match pf with
+let rec build_ef_pure_formula_x (pf0 : formula) : ef_pure_disj =
+  let rec recf pf = match pf with
   | Or _ ->
     let pf_list = split_disjunctions pf in
     List.fold_left (fun efpd pf ->
@@ -265,32 +270,37 @@ let rec build_ef_pure_formula_x ?(syn=false) (pf : formula) : ef_pure_disj =
   | Forall (sv, pf, lbl, p) (* wrong here: for_all and exists can not use the same elim_exists ???  *)
   | Exists (sv, pf, lbl, p) -> (
         let efpd = build_ef_pure_formula pf in
-        match pf with
-          | Cpure.AndList _ -> EPureI.elim_exists_disj [sv] efpd
-          | _ -> EPureI.wrap_exists_disj [sv] lbl p efpd
+        (* match pf with *)
+        (*   | Cpure.AndList _ -> EPureI.elim_exists_disj [sv] efpd *)
+        (*   | _ ->  *)EPureI.wrap_exists_disj [sv] lbl p efpd
     )
   (* | Not -> ??? *)
   | _ -> EPureI.mk_epure pf
+  in
+  let () = x_tinfo_pp ("Omega build_ef_pure_formula:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+  let res = recf pf0 in
+  let () = x_tinfo_pp ("Omega build_ef_pure_formula:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+  res
 
-and build_ef_pure_formula ?(syn=false) (pf : formula) : ef_pure_disj =
+and build_ef_pure_formula (pf : formula) : ef_pure_disj =
   Debug.no_1 "build_ef_pure_formula" string_of_pure_formula
     EPureI.string_of_disj (fun _ ->
-        build_ef_pure_formula_x ~syn pf) pf
+        build_ef_pure_formula_x pf) pf
 
 (* build_ef_formula : map -> cformula --> ef_pure_disj *)
 (* (b1,p1) * (b2,p2) --> (b1 U b2, p1/\p2) *)
 (* (b1,p1) & ([],p2) --> (b1, p1/\p2) *)
 (* x->node(..)       --> ([x],true) *)
 (* p(...)            --> inv(p(..)) *)
-let rec build_ef_formula_x ?(syn=false) (cf0 : Cformula.formula) (all_views : Cast.view_decl list) : ef_pure_disj =
+let rec build_ef_formula_x (cf0 : Cformula.formula) (all_views : Cast.view_decl list) : ef_pure_disj =
   let rec rec_fnc cf= match cf with
   | Cformula.Base bf ->
     let bp = (Mcpure.pure_of_mix bf.Cformula.formula_base_pure) in
     let bh = bf.Cformula.formula_base_heap in
-    let efpd_p = build_ef_pure_formula ~syn:syn bp in
+    let efpd_p = build_ef_pure_formula bp in
     (* let efpd_h = build_ef_heap_formula bh all_views in *)
     (* let efpd = EPureI.norm_disj (EPureI.mk_star_disj efpd_p efpd_h) in *)
-    let efpd = build_ef_heap_formula_with_pure ~syn:syn bh efpd_p all_views in
+    let efpd = build_ef_heap_formula_with_pure bh efpd_p all_views in
     let () = Debug.ninfo_hprint (add_str "efpd_n1" (EPureI.string_of_disj)) efpd no_pos in
     efpd
   | Cformula.Or orf ->
@@ -303,19 +313,20 @@ let rec build_ef_formula_x ?(syn=false) (cf0 : Cformula.formula) (all_views : Ca
     efpd_n
   | Cformula.Exists ef ->
     let ep = (Mcpure.pure_of_mix ef.Cformula.formula_exists_pure) in
-    let efpd_e = match ep with
-      | Cpure.AndList _ ->
-            let eh = ef.Cformula.formula_exists_heap in
-            let efpd_p = build_ef_pure_formula ep in
-            let efpd = build_ef_heap_formula_with_pure eh efpd_p all_views in
-            EPureI.elim_exists_disj ef.Cformula.formula_exists_qvars efpd
-      | _ ->
+    let efpd_e = (* match ep with *)
+      (* | Cpure.AndList _ -> *)
+      (*       let eh = ef.Cformula.formula_exists_heap in *)
+      (*       let efpd_p = build_ef_pure_formula ep in *)
+      (*       let efpd = build_ef_heap_formula_with_pure eh efpd_p all_views in *)
+      (*       EPureI.elim_exists_disj ef.Cformula.formula_exists_qvars efpd *)
+      (* | _ -> *)
             let quans, base_f = Cformula.split_quantifiers cf in
             let efpd = rec_fnc base_f in
             let () = x_tinfo_hp (add_str "efpd" (EPureI.string_of_disj)) efpd no_pos in
             let efpd_e =
-              if syn then EPureI.wrap_exists_disj quans ef.Cformula.formula_exists_label ef.Cformula.formula_exists_pos efpd
-              else EPureI.elim_exists_disj quans (* ef.Cformula.formula_exists_qvars *) efpd
+              (* if syn then EPureI.wrap_exists_disj quans ef.Cformula.formula_exists_label ef.Cformula.formula_exists_pos efpd *)
+              (* else *)
+              EPureI.elim_exists_disj quans (* ef.Cformula.formula_exists_qvars *) efpd
             in efpd_e
     in
     let () = x_tinfo_hp (add_str "efpd_e" (EPureI.string_of_disj)) efpd_e no_pos in
@@ -323,17 +334,17 @@ let rec build_ef_formula_x ?(syn=false) (cf0 : Cformula.formula) (all_views : Ca
     let () = x_tinfo_hp (add_str "efpd_n3" (EPureI.string_of_disj)) efpd_e no_pos in
     efpd_e
   in
-  let () = x_binfo_pp ("Omega call build_ef_formula-before: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
-  let () = x_tinfo_pp (" build_ef_formula-syn: " ^ (string_of_bool syn)) no_pos in
+  let () = x_tinfo_pp ("Omega call build_ef_formula-before: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+  (* let () = x_tinfo_pp (" build_ef_formula-syn: " ^ (string_of_bool syn)) no_pos in *)
   let res = rec_fnc cf0 in
-  let n_res = EPureI.norm_disj ~syn:syn res in
-  let () = x_binfo_pp ("Omega call build_ef_formula-after: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+  let n_res = EPureI.norm_disj res in
+  let () = x_tinfo_pp ("Omega call build_ef_formula-after: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
   n_res
 
-and build_ef_formula ?(syn=false) (cf : Cformula.formula) (all_views : Cast.view_decl list) : ef_pure_disj =
+and build_ef_formula (cf : Cformula.formula) (all_views : Cast.view_decl list) : ef_pure_disj =
   Debug.no_1 "build_ef_formula" string_of_formula
     EPureI.string_of_disj (fun _ ->
-        build_ef_formula_x ~syn:syn cf all_views) cf
+        build_ef_formula_x cf all_views) cf
 
 (* using Cast *)
 

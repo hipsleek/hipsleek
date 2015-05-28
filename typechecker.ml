@@ -3459,6 +3459,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
       | Some body ->
         begin
           stk_vars # reset;
+          let () = Excore.UnCa.reset_cache () in
           (* push proc.proc_args *)
           let args = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed) ) proc.proc_args in
           stk_vars # push_list args;

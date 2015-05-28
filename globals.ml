@@ -1723,6 +1723,10 @@ let gen_baga_inv = ref false
 let delay_eelim_baga_inv = ref false
 let is_inferring = ref false
 let use_baga = ref false
+
+(* let unsat_count_syn = ref (0:int) *)
+(* let unsat_count_sem = ref (0:int) *)
+
 let prove_invalid = ref false
 let gen_baga_inv_threshold = 7 (* number of preds <=6, set gen_baga_inv = false*)
 let do_under_baga_approx = ref false (* flag to choose under_baga *)

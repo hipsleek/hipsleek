@@ -2664,9 +2664,9 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                 else
                   (* to check view_form ==> usr_inv *)
                   let body = CF.project_body_num vd.Cast.view_un_struc_formula user_inv vd.Cast.view_vars in
-                  let () = x_binfo_hp (add_str "fixc" Cprinter.string_of_pure_formula) fixc no_pos in
-                  let () = x_binfo_hp (add_str "body" Cprinter.string_of_pure_formula) body no_pos in
-                  let () = x_binfo_hp (add_str "user_inv" Cprinter.string_of_pure_formula) user_inv no_pos in
+                  let () = x_tinfo_hp (add_str "fixc" Cprinter.string_of_pure_formula) fixc no_pos in
+                  let () = x_tinfo_hp (add_str "body" Cprinter.string_of_pure_formula) body no_pos in
+                  let () = x_tinfo_hp (add_str "user_inv" Cprinter.string_of_pure_formula) user_inv no_pos in
                   let () = x_binfo_pp "WARNING: TODO fixpt check" no_pos in
                   if ((* true *) Tpdispatcher.imply_raw body user_inv) then
                     let () = x_binfo_hp (add_str "User supplied is more precise" Cprinter.string_of_pure_formula) user_inv no_pos in
@@ -2752,7 +2752,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
           let () = List.iter (fun (vd,inv) ->
               Hashtbl.replace Excore.map_baga_invs vd.Cast.view_name inv
             ) (List.combine view_list_baga0 combined_invs) in
-          let () = x_binfo_pp ("Omega call after combine inv: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+          let () = x_tinfo_pp ("Omega call after combine inv: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
           let unfold_cnt = new Gen.change_flag in
           let rec unfold precise old_invs =
             if unfold_cnt # exceed 10 then
@@ -2817,9 +2817,9 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
           (*     in is_precise_num *)
           (* ) (List.combine view_list_baga0 num_invs) in *)
           (* WN : Looping at unfold with imprecise inv *)
-          let () = x_binfo_pp ("Omega call:unfold-start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+          let () = x_tinfo_pp ("Omega call:unfold-start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
           let new_invs = unfold (List.for_all (fun a -> a) precise_list) combined_invs in
-          let () = x_binfo_pp ("Omega call:unfold-end " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+          let () = x_tinfo_pp ("Omega call:unfold-end " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
           let () = Debug.ninfo_hprint (add_str "new_invs" (pr_list Excore.EPureI.string_of_disj)) new_invs no_pos in
           ()
           (* let new_invs_list = x_add_1 Expure.fix_ef view_list cviews0 in *)

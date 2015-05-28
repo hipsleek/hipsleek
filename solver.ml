@@ -2746,11 +2746,15 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
   (* TODO-EXPURE : need to invoke EPureI.UNSAT for --inv-baga *)
   let views = prog.Cast.prog_view_decls in
   let tp_syn_x h p =
-    let t1 = Expure.build_ef_heap_formula ~syn:(!Globals.delay_eelim_baga_inv) h views in
-    let t2 = Expure.build_ef_pure_formula ~syn:(!Globals.delay_eelim_baga_inv) (Mcpure.pure_of_mix p) in
+    let () = x_tinfo_pp ("Omega unsat:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+    (* let _ = unsat_count_syn := !unsat_count_syn + 1 in *)
+    let t1 = Expure.build_ef_heap_formula h views in
+    let t2 = Expure.build_ef_pure_formula (Mcpure.pure_of_mix p) in
     let d = Excore.EPureI.mk_star_disj t1 t2 in
     (* let d = Excore.EPureI.elim_unsat_disj d in *)
-    (Excore.EPureI.is_false_disj d)
+    let res = (Excore.EPureI.is_false_disj d) in
+    let () = x_tinfo_pp ("Omega unsat:end " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+    res
     (* let p = MCP.translate_level_mix_formula p in *)
     (* let ph,_,_ = x_add xpure_heap 1 prog h p 1 in *)
     (* let npf = MCP.merge_mems p ph true in *)
@@ -2763,14 +2767,17 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
       (fun _ _ -> tp_syn_x h p) h p
   in
   let tp_sem h p =
+    let () = x_tinfo_pp ("Omega unsat:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+    (* let _ = unsat_count_sem := !unsat_count_sem + 1 in *)
     let p = MCP.translate_level_mix_formula p in
     let ph,_,_ = x_add xpure_heap 1 prog h p 1 in
     let npf = MCP.merge_mems p ph true in
-    tp_call_wrapper npf
+    let res = tp_call_wrapper npf in
+    let () = x_tinfo_pp ("Omega unsat:end " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+    res
   in
   match f with
-  | Or _ -> report_error no_pos ("unsat_xpure : encountered a disjunctive formula \n")
-  | Base ({ formula_base_heap = h;
+    | Base ({ formula_base_heap = h;
             formula_base_pure = p;
             formula_base_pos = pos}) ->
     if !Globals.use_baga then tp_syn h p
@@ -2785,6 +2792,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
               formula_exists_pos = pos}) ->
     if !Globals.use_baga then tp_syn qh qp
     else tp_sem qh qp
+  | Or _ -> report_error no_pos ("unsat_xpure : encountered a disjunctive formula \n")
 (* let qp = MCP.translate_level_mix_formula qp in *)
 (* let ph,_,_ = x_add xpure_heap 1 prog qh qp 1 in *)
 (* let npf = MCP.merge_mems qp ph true in *)
@@ -8108,7 +8116,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
   let lhs_baga = (* Long : why we need lhs_baga *)
     if false (* !Globals.use_baga *) (* !Globals.gen_baga_inv *) then
       let views = prog.Cast.prog_view_decls in
-      let t1 = Expure.build_ef_heap_formula ~syn:(!Globals.delay_eelim_baga_inv) curr_lhs_h views in
+      let t1 = Expure.build_ef_heap_formula curr_lhs_h views in
       let () = Debug.ninfo_hprint (add_str "hf" (Cprinter.string_of_h_formula)) curr_lhs_h no_pos in
       let () = Debug.ninfo_hprint (add_str "t1" (Cprinter.string_of_ef_pure_disj)) t1 no_pos in
       let t2 = x_add_1 Expure.build_ef_pure_formula (Mcpure.pure_of_mix lhs_p) in
@@ -12642,7 +12650,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                           | DataNode _ | ViewNode _ ->
                             (*demo/ex21e2*)
                             let lhs_null_ptrs = Cformula.get_null_svl estate.es_formula in
-                            let () =  Debug.info_hprint (add_str "rhs" Cprinter.string_of_h_formula) rhs pos in
+                            let () =  Debug.ninfo_hprint (add_str "rhs" Cprinter.string_of_h_formula) rhs pos in
                             let root = Cformula.get_ptr_from_data rhs in
                             let () =  Debug.ninfo_hprint (add_str "lhs_null_ptrs" !CP.print_svl) lhs_null_ptrs pos in
                             let flag1 =  (not (CF.is_unknown_f estate.es_formula)) && (CP.mem_svl root (CF.fv estate.es_formula)) &&
