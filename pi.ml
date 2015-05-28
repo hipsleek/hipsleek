@@ -587,7 +587,7 @@ let norm_post_rel_def post_rel_df pre_rel_ids all_reldefns =
         if Tpdispatcher.is_bag_constraint f1 then [(CP.remove_cnts pre_rel_ids f1, f2)]
         else
           let tmp = replace_unk_with_known f1 in
-          map_list_def [] (fun tmp -> [(TP.simplify_tp (CP.conj_of_list tmp no_pos), f2)]) tmp
+          map_list_def [] (fun tmp -> [(Immutable.imm_unify (CP.conj_of_list tmp no_pos), f2)]) tmp
       ) post_rel_df) in
   map_list_def post_rel_df helper pre_rel_ids
 
@@ -691,7 +691,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
 
             let post_rel_df_new = x_add norm_post_rel_def post_rel_df pre_rel_ids reldefns in
             (* below has been modified and incorporated into norm_post_rel_def *)
-            (* let post_rel_df_new =  *)
+            (* let post_rel_df_new = *)
             (*   if pre_rel_ids=[] then post_rel_df *)
             (*   else List.concat (List.map (fun (f1,f2) -> *)
             (*       if Tpdispatcher.is_bag_constraint f1 then [(CP.remove_cnts pre_rel_ids f1,f2)] *)

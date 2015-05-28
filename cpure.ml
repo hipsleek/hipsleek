@@ -3426,8 +3426,8 @@ and fresh_spec_var_prefix s (sv : spec_var) =
   let t = type_of_spec_var sv in
   SpecVar (t, name, Unprimed) (* fresh names are unprimed *)
 
-and fresh_spec_var_ann () =
-  let old_name = "inf_ann_" in
+and fresh_spec_var_ann ?old_name:(on="inf_ann") () =
+  let old_name = on in
   let name = fresh_old_name old_name in
   let t = AnnT in
   SpecVar (t, name, Unprimed) (* fresh ann var *)
