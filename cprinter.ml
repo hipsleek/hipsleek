@@ -144,6 +144,9 @@ let poly_printer_of_pr (crt_fmt: Format.formatter) (pr: 'a -> unit) (e:'a) : uni
     fmt := old_fmt;
   end
 
+(** add_str for printer *)
+let pr_add_str lbl pr = add_str lbl (poly_string_of_pr pr)
+
 (** shorter op code used internally *)
 let op_add_short = "+"
 let op_sub_short = "-"
@@ -405,22 +408,12 @@ let pr_vwrap_naive ?(lvl=(!glob_lvl)) hdr (f: 'a -> unit) (x:'a) =
 *)
 let pr_vwrap_nocut ?(lvl=(!glob_lvl)) ?(indent=false) hdr (f: 'a -> unit) (x:'a) =
   wrap_pr_1 lvl (fun x ->
-    if (String.length hdr)>7 then
-        begin
-        let s = poly_string_of_pr_gen 0 f x in
-        if (String.length s) < 70 then (* to improve *)
-            fmt_string (hdr^s)
-        else begin
-            fmt_string hdr;
-            fmt_cut ();
-            (* fmt_string s; *)
-            wrap_box ("B",0) f  x
-        end
-        end
-    else  begin
-        fmt_string hdr;
-        if indent then fmt_cut_and_indent () else fmt_cut ();
-        wrap_box ("B",0) f  x
+    begin
+      fmt_open_vbox (if indent then 2 else 0);
+      fmt_string hdr;
+      fmt_cut ();
+      wrap_box ("B",0) f  x;
+      fmt_close ();
     end) x
 
 (** call pr_wrap_nocut with a cut in front of*)
@@ -3982,7 +3975,8 @@ let pr_list_context (ctx:list_context) =
       (*     (\* | And_Reason (_, _, fe) -> (string_of_fail_explaining fe) *\) *)
       (*     | _ -> fmt_string ""); *)
       pr_fail_type ft; (* fmt_string "\nectx:"; pr_context_short c; *)
-      fmt_string "\nCEX:";
+      fmt_cut ();
+      fmt_string "CEX:";
       pr_failure_cex cex;
       fmt_close ()
     )
@@ -4039,26 +4033,21 @@ let string_of_esc_stack_lvl e  = poly_string_of_pr pr_esc_stack_lvl e
 (* should this include must failures? *)
 let pr_failed_states ?(nshort=true) e = match e with
   | [] -> ()
-  | _ ->   pr_vwrap_naive_nocut "Failed States:"
+  | _ -> pr_vwrap_naive_nocut "Failed States:"
              (pr_seq_vbox ~nshort "" (fun (lbl,fs)->
-                  if nshort then (pr_hwrap "Label: " pr_path_trace lbl; fmt_cut ());
-                  pr_vwrap_nocut ~indent:true "State:" pr_fail_type fs)) e
+                  if nshort then pr_hwrap "Label: " pr_path_trace lbl;
+                  pr_vwrap ~indent:true "State:" pr_fail_type fs)) e
 
 let pr_successful_states ?(nshort=true) e = match e with
   | [] -> ()
   | _ ->
     pr_vwrap_naive_nocut "Successful States:"
       (pr_seq_vbox ~nshort "" (fun (lbl,fs,oft)->
-           if nshort then ((pr_hwrap "Label: " pr_path_trace lbl); fmt_cut ());
-           pr_vwrap_nocut ~indent:true "State:" (pr_context ~nshort) fs;
-           (* Loc: print exc *)
-           if nshort then (
-             fmt_cut();
-             pr_hwrap "Exc:" fmt_string
-               (match oft with
-                | Some _ -> "Some"
-                | _ -> "None"))
-         )) e
+         if nshort then
+           (pr_hwrap "Label: " pr_path_trace lbl;
+           pr_vwrap ~indent:true "State:" (pr_context ~nshort) fs; fmt_cut();
+           pr_hwrap "Exc:" fmt_string (match oft with | Some _ -> "Some" | _ -> "None"))
+         else pr_hwrap "State: " (pr_context ~nshort) fs)) e
 
 let is_empty_esc_state e =
   List.for_all (fun (_,lst) -> lst==[]) e
@@ -4072,7 +4061,6 @@ let pr_esc_stack ?(nshort=true) e =
         (pr_seq_vbox ~nshort "" (pr_esc_stack_lvl ~nshort)) e;
       fmt_close_box ()
     end
-
 
 let string_of_esc_stack e = poly_string_of_pr pr_esc_stack e
 
@@ -4133,8 +4121,8 @@ let pr_list_failesc_context ?(nshort=true) (lc : list_failesc_context) =
 let pr_list_partial_context ?(nshort=true) (lc : list_partial_context) =
   (* fmt_string ("XXXX "^(string_of_int (List.length lc)));  *)
   fmt_open_vbox 0;
-  if nshort then fmt_string_cut ("List of Partial Context: "
-                                 ^(summary_list_partial_context lc));
+  if nshort then fmt_string_cut ("List of Partial Context: " ^(summary_list_partial_context lc));
+  match lc with [] -> () | _ -> fmt_cut ();
   pr_list_none (pr_partial_context ~nshort) lc;
   fmt_close_box ()
 
