@@ -327,3 +327,8 @@ let wrap_arr_as_var f a =
 let wrap_arr_as_var f a =
   Debug.no_1 "wrap_arr_as_var" pr_none pr_none (wrap_arr_as_var f) a
 
+let wrap_pre_post_process f_pre f_post f a =
+  let a = f_pre a in
+  let res = f a in
+  let res = f_post res in
+  res

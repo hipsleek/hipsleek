@@ -2936,3 +2936,44 @@ let remove_abs_nodes_struc struc =
   Debug.no_1 "remove_abs_nodes_struc" pr pr remove_abs_nodes_struc struc
 
 (* ======================= END remove absent nodes ============================= *)
+
+(* ======================= prover pre/post-process  ============================= *)
+
+let f_bf bf =
+  let (pf, l) = bf in
+  TP.cnv_imm_to_int_p_formula pf l
+
+let f_e e = TP.cnv_imm_to_int_exp e
+
+let fnc_pure = (nonef,nonef,nonef,f_bf,f_e)
+
+let fnc = (nonef, nonef, nonef, fnc_pure )
+
+let map_imm_to_int_pure_formula form = CP.transform_formula fnc_pure form
+let map_imm_to_int_pure_formula form = 
+  let pr = !CP.print_formula in
+  Debug.no_1 "map_imm_to_int_pure_formula" pr pr map_imm_to_int_pure_formula form
+
+let map_imm_to_int_formula form = CF.transform_formula fnc form
+
+let map_imm_to_int_struc_formula form = CF.transform_struc_formula fnc form
+
+let f_bf bf =
+  let (pf, l) = bf in
+  TP.change_to_imm_rel_b_formula pf l
+
+let f_e e = Some e
+
+let fnc_pure = (nonef,nonef,nonef,f_bf,f_e)
+
+let fnc = (nonef, nonef, nonef, fnc_pure)
+
+let map_int_to_imm_pure_formula form = CP.transform_formula fnc_pure form
+
+let map_int_to_imm_formula form = CF.transform_formula fnc form
+
+let map_int_to_imm_struc_formula form = CF.transform_struc_formula fnc form
+
+
+(* ======================= END prover pre/post-process  ============================= *)
+

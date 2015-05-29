@@ -993,7 +993,7 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
 
 let extract_inv_helper_x (rel, pfs) ante_vars specs =
   (* Remove bag constraints *)
-  Debug.ninfo_hprint (add_str "pfs(b4):" (pr_list !CP.print_formula)) pfs no_pos;
+  let () = x_tinfo_hp (add_str "pfs(b4):" (pr_list !CP.print_formula)) pfs no_pos in
   let pfs = List.map (fun p ->
       let bag_vars = List.filter CP.is_bag_typ (CP.fv p) in
       if bag_vars == [] then p else
@@ -1001,7 +1001,7 @@ let extract_inv_helper_x (rel, pfs) ante_vars specs =
         CP.remove_cnts bag_vars p
     ) pfs
   in
-  Debug.ninfo_hprint (add_str "pfs(af):" (pr_list !CP.print_formula)) pfs no_pos;
+  let () = x_tinfo_hp (add_str "pfs(af):" (pr_list !CP.print_formula)) pfs no_pos in
 
   (* Some other processes *)
   let pfs,no = process_base_rec pfs rel specs in
@@ -1014,7 +1014,7 @@ let extract_inv_helper_x (rel, pfs) ante_vars specs =
       else [res]) pfs)
   in
 
-  Debug.ninfo_hprint (add_str "pfs(af):" (pr_list !CP.print_formula)) pfs no_pos;
+  let () = x_tinfo_hp (add_str "pfs(af):" (pr_list !CP.print_formula)) pfs no_pos in
 
   (* Disjunctive defintion for each relation *)
   let def = List.fold_left
@@ -1299,13 +1299,13 @@ let fixc_preprocess pairs0 =
 
 let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
   (* TODO: Handle non-recursive ones separately *)
-  DD.ninfo_pprint ("input_pairs_num: " ^ (pr_list
-                                            (pr_pair !CP.print_formula !CP.print_formula) input_pairs_num)) no_pos;
+  let () = x_tinfo_pp ("input_pairs_num: " ^ (pr_list
+                                            (pr_pair !CP.print_formula !CP.print_formula) input_pairs_num)) no_pos in
 
   let pairs = fixc_preprocess input_pairs_num in
 
-  DD.ninfo_hprint (add_str "input_pairs(b4): " (pr_list
-                                                  (pr_pair !CP.print_formula (pr_list !CP.print_formula)) )) pairs no_pos;
+  let () = x_tinfo_hp (add_str "input_pairs(b4): " (pr_list
+                                                  (pr_pair !CP.print_formula (pr_list !CP.print_formula)) )) pairs no_pos in
 
   (*  let pairs, subs = if bottom_up then arrange_para_new pairs ante_vars,[] *)
   (*    else arrange_para_td pairs ante_vars,[]*)
@@ -1315,20 +1315,20 @@ let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
     else arrange_para_td pairs ante_vars
   in
 
-  DD.ninfo_hprint (add_str "input_pairs(af): "  (pr_list
-                                                   (pr_pair !CP.print_formula (pr_list !CP.print_formula)) )) pairs no_pos;
+  let () = x_tinfo_hp (add_str "input_pairs(af): "  (pr_list
+                                                   (pr_pair !CP.print_formula (pr_list !CP.print_formula)) )) pairs no_pos in
 
   let rel_defs = List.concat
       (List.map (fun pair -> extract_inv_helper pair ante_vars specs) pairs) in
 
-  DD.ninfo_hprint (add_str "rel_defs "  (pr_list
-                                           (pr_triple !CP.print_formula !CP.print_formula string_of_int)) ) rel_defs no_pos;
+  let () = x_tinfo_hp (add_str "rel_defs "  (pr_list
+                                           (pr_triple !CP.print_formula !CP.print_formula string_of_int)) ) rel_defs no_pos in
 
   let true_const,rel_defs = List.partition (fun (_,pf,_) -> CP.isConstTrue pf) rel_defs in
   let non_rec_defs, rec_rel_defs = List.partition (fun (_,pf,_) -> is_not_rec pf) rel_defs in
 
-  DD.ninfo_hprint (add_str "rec_rel_defs "  (pr_list
-                                               (pr_triple !CP.print_formula !CP.print_formula string_of_int)) ) rec_rel_defs no_pos;
+  let () = x_tinfo_hp (add_str "rec_rel_defs "  (pr_list
+                                               (pr_triple !CP.print_formula !CP.print_formula string_of_int)) ) rec_rel_defs no_pos in
 
   let true_const = List.map (fun (rel_fml,pf,_) -> (rel_fml,pf)) true_const in
   let non_rec_defs = List.map (fun (rel_fml,pf,_) -> (rel_fml,pf)) non_rec_defs in
@@ -1337,8 +1337,9 @@ let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
     true_const @ (* non_rec_defs @ *) (x_add compute_fixpoint_aux rel_defs ante_vars bottom_up)
 
 let compute_fixpoint_x input_pairs ante_vars specs bottom_up =
-  DD.ninfo_pprint ("input_pairs: " ^ (pr_list
-                                        (pr_pair !CP.print_formula !CP.print_formula) input_pairs)) no_pos;
+  let () = x_tinfo_pp ("input_pairs: " ^ (pr_list
+                                        (pr_pair !CP.print_formula !CP.print_formula) input_pairs)) no_pos in
+  let () = x_tinfo_hp (add_str "specs: " (Cprinter.string_of_struc_formula)) specs no_pos in
   let is_bag_cnt rel = List.exists CP.is_bag_typ (CP.fv rel) in
   let input_pairs_bag, input_pairs_num =
     List.partition (fun (p,r) -> is_bag_cnt r) input_pairs
@@ -1416,8 +1417,12 @@ let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up =
 
 (* Wrapper to translate back array *)
 let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up =
-  let resultlst = compute_fixpoint_x2 input_pairs ante_vars specs bottom_up in
-  List.map (fun (a,b) -> (Trans_arr.translate_back_array_in_one_formula a,Trans_arr.translate_back_array_in_one_formula b)) resultlst
+  let fixpt specs = compute_fixpoint_x2 input_pairs ante_vars specs bottom_up in
+  let reslst = Wrapper.wrap_pre_post_process 
+      (x_add_1 Immutable.map_imm_to_int_struc_formula)
+      (List.map (fold_pair1f Immutable.map_int_to_imm_pure_formula))
+      fixpt specs  in
+  List.map (fun (a,b) -> (Trans_arr.translate_back_array_in_one_formula a,Trans_arr.translate_back_array_in_one_formula b)) reslst
 ;;
 
 let compute_fixpoint (i:int) input_pairs ante_vars specs =
@@ -1428,6 +1433,16 @@ let compute_fixpoint (i:int) input_pairs ante_vars specs =
   DD.no_2_num i "compute_fixpoint" pr1 pr2 pr_res
     (fun _ _ -> compute_fixpoint_x2 input_pairs ante_vars specs true)
     input_pairs ante_vars
+
+let compute_fixpoint_x input_pairs ante_vars specs bottom_up =
+  let fixpt (input_pairs,specs) = compute_fixpoint_x input_pairs ante_vars specs false in
+  let fst_pre = (List.map (fold_pair1f (x_add_1 Immutable.map_imm_to_int_pure_formula))) in
+  let snd_pre = Immutable.map_imm_to_int_struc_formula in
+  let fixpt (input_pairs,specs) = Wrapper.wrap_pre_post_process 
+    (fold_pair2f fst_pre snd_pre)
+    (List.map (fold_pair1f Immutable.map_int_to_imm_pure_formula))
+    fixpt (input_pairs,specs) in
+  Wrapper.wrap_one_bool Globals.int2imm_conv false fixpt (input_pairs,specs)
 
 let compute_fixpoint_td (i:int) input_pairs ante_vars specs =
   let pr0 = !CP.print_formula in

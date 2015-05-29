@@ -906,13 +906,16 @@ let comm_inf a1 a2 =
 
 let cnv_imm_to_int_exp e =
   match e with
-  | AConst (a,l) ->  IConst(int_of_heap_ann a, l)
-  | _ -> e
+  | AConst (a,l) ->  Some (IConst(int_of_heap_ann a, l))
+  | _ -> None
 
-let cnv_imm_to_int_p_formula pf =
+let transform_imm_to_int_exp_opt e =
+  CP.transform_exp cnv_imm_to_int_exp e
+
+let cnv_imm_to_int_p_formula pf lbl =
   match pf with
-  | SubAnn (a1, a2, ll)-> Lte (cnv_imm_to_int_exp a1, cnv_imm_to_int_exp a2, ll)
-  | _ -> pf
+  | SubAnn (a1, a2, ll)-> Some (Lte (transform_imm_to_int_exp_opt a1, transform_imm_to_int_exp_opt a2, ll), lbl)
+  | _ -> None
 
 (*
   strong
@@ -930,7 +933,7 @@ let cnv_ptr_to_int (ex_flag,st_flag) f =
   let f_f arg e = None in
   let f_bf (ex_flag,st_flag) bf = 
     let (pf, l) = bf in
-    let pf = cnv_imm_to_int_p_formula pf in
+    (* let pf = cnv_imm_to_int_p_formula pf in *)
     match pf with
     | Eq (a1, a2, ll) -> 
       let (is_null_flag,a1,a2) = comm_null a1 a2 in
@@ -958,10 +961,11 @@ let cnv_ptr_to_int (ex_flag,st_flag) f =
     (* | Lte(a1,a2,ll) -> if is_inf a1 && not(is_inf a2) then Some(BConst(false,ll),l)  
        else if is_inf a2 && not(is_inf a1) then Some(BConst(true,ll),l) 
        else Some(bf)*)
-    | Lte _ -> Some (pf,l)
-    | _ -> None (* Some(bf) *)
+    (* | Lte _ -> Some (pf,l) *)
+    | _ -> cnv_imm_to_int_p_formula pf l (* None *) (* Some(bf) *)
   in
-  let f_e arg e = (Some (cnv_imm_to_int_exp e)) in
+  (* let f_e arg e = (Some (cnv_imm_to_int_exp e)) in *)
+  let f_e arg e = (cnv_imm_to_int_exp e) in
   let a_f ((ex_flag,st_flag) as flag) f =
     match f with
     | Not _ -> (not(ex_flag),not(st_flag))
@@ -1033,26 +1037,47 @@ let is_null a1 a2 =
   | _ -> (false,a1,a2)
 
 (* Andreea : use a flag to determine aggressive simplification *)
-let change_to_imm_rel pf =
+let change_to_imm_rel_p_formula pf = 
   match pf with 
-  | Lte((Var(v,_) as a1), IConst(i,_),ll) -> 
+  | Lte((Var(v,_) as a1), IConst(i,_),ll)  
+  | Gte(IConst(i,_), (Var(v,_) as a1), ll) -> 
     if is_ann_type (type_of_spec_var v) then
-      if i<(int_of_heap_ann imm_bot)  then BConst(false, ll)
-      else if (i>=(int_of_heap_ann imm_top) && !Globals.aggressive_imm_simpl) then BConst(true, ll)
-      else if i=(int_of_heap_ann imm_bot) then Eq(a1, CP.int_imm_to_exp i ll, ll)
-      else SubAnn(a1, CP.int_imm_to_exp i ll, ll)
-    else pf
-  | Lte(IConst(i,_),(Var(v,_) as a1),ll) -> 
+      let new_f =
+        if i<(int_of_heap_ann imm_bot)  then BConst(false, ll)
+        else if (i>=(int_of_heap_ann imm_top) && !Globals.aggressive_imm_simpl) then BConst(true, ll)
+        else if i=(int_of_heap_ann imm_bot) then Eq(a1, CP.int_imm_to_exp i ll, ll)
+        else SubAnn(a1, CP.int_imm_to_exp i ll, ll)
+      in Some new_f
+    else None
+  | Lte(IConst(i,_),(Var(v,_) as a1),ll) 
+  | Gte((Var(v,_) as a1),IConst(i,_), ll) -> 
     if is_ann_type (type_of_spec_var v) then
-      if (i<=(int_of_heap_ann imm_bot)&& !Globals.aggressive_imm_simpl)  then BConst(true, ll)
-      else if i>(int_of_heap_ann imm_top) then BConst(false, ll)
-      else if i=(int_of_heap_ann imm_top) then Eq(a1, CP.int_imm_to_exp i ll, ll)
-      else SubAnn(CP.int_imm_to_exp i ll, a1, ll)
-    else pf
+      let new_f =
+        if (i<=(int_of_heap_ann imm_bot)&& !Globals.aggressive_imm_simpl)  then BConst(true, ll)
+        else if i>(int_of_heap_ann imm_top) then BConst(false, ll)
+        else if i=(int_of_heap_ann imm_top) then Eq(a1, CP.int_imm_to_exp i ll, ll)
+        else SubAnn(CP.int_imm_to_exp i ll, a1, ll)
+      in Some new_f
+    else None
   | Lte((Var(v1,_) as a1), (Var(v2,_) as a2), ll) ->  
-    if is_ann_type (type_of_spec_var v1) && is_ann_type(type_of_spec_var v2) then SubAnn(a1, a2, ll)
-    else pf
-  | _ -> pf
+    if is_ann_type (type_of_spec_var v1) && is_ann_type(type_of_spec_var v2) then Some (SubAnn(a1, a2, ll))
+    else None
+  | Eq (a1, a2, ll) -> 
+    let (is_imm,a1,i) = comm_is_ann a1 a2 in
+    if is_imm then
+      let new_f = 
+        if is_valid_ann i then Eq(a1, CP.int_imm_to_exp i ll,ll) else BConst (false,ll)
+      in Some new_f
+    else None
+  | _ -> None
+
+let change_to_imm_rel_p_formula pf = 
+  if not (!Globals.int2imm_conv) then None (* disable conversion of an arith formula back to one containing imm *) 
+  else change_to_imm_rel_p_formula pf 
+
+let change_to_imm_rel_b_formula pf l = map_opt_def None (fun x -> Some (x,l)) (change_to_imm_rel_p_formula pf)
+
+let change_to_imm_rel pf = map_opt_def pf (fun x -> x) (change_to_imm_rel_p_formula pf)
 
 (* s>0 -> 0<s -> 1<=s *)
 let to_ptr ptr_flag pf =
