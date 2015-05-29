@@ -2247,3 +2247,5 @@ let string_of_lemma_kind (l: lemma_kind) =
   | LEM_INFER_PRED   -> "LEM_INFER_PRED"
   | RLEM -> "RLEM"
 
+type debug_lvl = Short | Normal | Long
+let debug_level = ref Normal

@@ -20,13 +20,9 @@ module P = Cpure
 module MP = Mcpure
 module CVP = CvpermUtils
 
-type debug_lvl = Short | Normal | Long
-let score_of_lvl = function
-  | Short -> 3
-  | Normal -> 2
-  | Long -> 1
 let glob_lvl = ref Normal
-let should_print lvl = score_of_lvl lvl >= score_of_lvl !glob_lvl
+let score_of_lvl = function | Short -> 3 | Normal -> 2 | Long -> 1
+let should_print lvl = score_of_lvl lvl >= score_of_lvl !Globals.debug_level
 let is_short n = (n==2)
 let is_medium n = (n==1)
 let is_long n = (n==0)
@@ -42,10 +38,8 @@ let is_long n = (n==0)
 (*   | List          -> "list" *)
 (* ;; *)
 
-let string_of_pos p =
-  " " ^ (string_of_int p.start_pos.Lexing.pos_lnum) ^ ":" ^
+let string_of_pos p = " " ^ (string_of_int p.start_pos.Lexing.pos_lnum) ^ ":" ^
   (string_of_int (p.start_pos.Lexing.pos_cnum - p.start_pos.Lexing.pos_bol));;
-
 (** the formatter that fmt- commands will use *)
 let fmt = ref (std_formatter)
 let pr_mem = ref true(** primitive formatter comands *)
@@ -78,7 +72,8 @@ let wrap_pr_2 lvl pr a b =
 let wrap_pr_pair lvl pr (a,b) =
   if should_print lvl then pr (a,b) else ()
 
-let pr_int ?(lvl=(!glob_lvl)) i = wrap_pr_1 lvl fmt_int i
+let pr_int ?(lvl=(!glob_lvl)) i =
+  wrap_pr_1 lvl fmt_int i
 
 let pr_pair_aux ?(lvl=(!glob_lvl)) pr_1 pr_2 (a,b) =
   wrap_pr_pair lvl (fun (a,b) ->

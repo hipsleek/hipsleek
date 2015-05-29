@@ -187,7 +187,11 @@ let common_arguments = [
   ("--dis-trace", Arg.Clear Debug.trace_on,
    "Turn off brief tracing");
   ("-dd", Arg.Set Debug.devel_debug_on,
-   "Turn on devel_debug");
+   "Turn on devel_debug on short and normal output");
+  ("-dd-short", Arg.Unit (fun () -> Debug.devel_debug_on := true; Globals.debug_level := Globals.Short),
+   "Turn on devel_debug only short output");
+  ("-dd-long", Arg.Unit (fun () -> Debug.devel_debug_on := true; Globals.debug_level := Globals.Long),
+   "Turn on devel_debug on all outputs");
   ("--dd-debug",  Arg.Unit
      (fun _ -> 
         Debug.debug_print:=true;
