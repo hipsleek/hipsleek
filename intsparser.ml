@@ -38,7 +38,7 @@ let init_conditions_of_block (b : ints_block) : (ints_exp_assume list * ints_exp
   in
   helper b.ints_block_commands []
 
-let trans_pure_formula (ass : ints_exp_assume) : IP.formula =
+let formula_of_exp (exp : I.exp) : IP.formula =
   let rec helper exp =
     match exp with
     | I.Unary op ->
@@ -91,7 +91,10 @@ let trans_pure_formula (ass : ints_exp_assume) : IP.formula =
       )
     | _ -> report_error no_pos "intsparser.trans_pure_formula: unexpected exp"
   in
-  helper ass.ints_exp_assume_formula
+  helper exp
+
+let trans_pure_formula (ass : ints_exp_assume) : IP.formula =
+  formula_of_exp ass.ints_exp_assume_formula
 
 let pure_formula_of_condition (cond : ints_exp_assume list) : IP.formula =
   let true_formula = IP.BForm ((IP.BConst (true, no_pos), None), None) in
@@ -107,6 +110,55 @@ let is_equivalent_condition c1 c2 =
   let cf2 = Astsimp.trans_pure_formula pf2 [] in
   Tpdispatcher.simpl_imply_raw cf1 cf2 &&
   Tpdispatcher.simpl_imply_raw cf2 cf1
+
+(* Want to go from, e.g.
+ * [[x > 0], [x > 0, y > 0]] => [y > 0, x > 0]
+ * [[x > 0 & y > 0], [x <= 0]] => [y > 0, x > 0]
+ * i.e., find 'disjunct' set of assumption expressions from a list of blocks. *)
+let indepedent_exps_of_blocks (blocks : ints_block list) : I.exp list =
+  let rec normalise_exps exps : (I.exp list) =
+    (* Want to weed out OR, AND expressions, since these are more difficult
+     * to deal with. *)
+    match exps with
+    | [] -> []
+    | exp::exps ->
+      (match exp with
+       | I.Binary { I.exp_binary_op = op; I.exp_binary_oper1 = e1; I.exp_binary_oper2 = e2 } ->
+         (match op with
+          | I.OpLogicalAnd | I.OpLogicalOr -> normalise_exps (e1::(e2::exps))
+          | _ -> exp::(normalise_exps exps))
+       | _ -> exp::(normalise_exps exps))
+  in
+  (* Test whether the given expression can be 'derived' from some function
+   * of a set of expressions.*)
+  let is_indep_to (exps : I.exp list) (exp : I.exp) : bool =
+    let rec combinations_of exps =
+      match exps with
+      | [] -> [I.mkBoolLit true no_pos]
+      | e::es ->
+        let ne = I.mkUnary I.OpNot e None (I.get_exp_pos e) in
+        let res = combinations_of es in
+        res@(List.map (fun c -> (I.mkBinary I.OpLogicalAnd e c None no_pos)) res)
+           @(List.map (fun c -> (I.mkBinary I.OpLogicalAnd ne c None no_pos)) res) in
+    let formulae = combinations_of exps in
+    (* return whether the given exps are equivalent to the given exp *)
+    let exp_satisfies_cond (cond : I.exp) : bool =
+      let pf1 = formula_of_exp cond in
+      let pf2 = formula_of_exp exp in
+      let cf1 = Astsimp.trans_pure_formula pf1 [] in
+      let cf2 = Astsimp.trans_pure_formula pf2 [] in
+      Tpdispatcher.simpl_imply_raw cf1 cf2 &&
+      Tpdispatcher.simpl_imply_raw cf2 cf1
+      in
+    not (List.exists exp_satisfies_cond formulae)
+  in
+  let all_block_asms = List.concat (List.map (fun b -> fst (init_conditions_of_block b)) blocks) in
+  let norm_exps = normalise_exps (List.map (fun asm -> asm.ints_exp_assume_formula) all_block_asms) in
+  let op = (fun acc e ->
+              if (is_indep_to acc e)
+              then e::acc
+              else acc) in
+  List.fold_left op [] norm_exps
 
 (* [p, q, r] ->? asm *)
 let is_implied_by c asm =
