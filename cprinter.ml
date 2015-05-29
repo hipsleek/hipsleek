@@ -3766,7 +3766,7 @@ let pr_fail_estate (es:fail_context) =
   (*pr_wrap_test "es_prior_steps: "  Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.fc_prior_steps;*)
   (* pr_wrap_test_nocut "fc_prior_steps: " Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.fc_prior_steps; *)(* prior steps in reverse order *)
   pr_hwrap "fc_message: "  fmt_string es.fc_message; fmt_cut ();
-  pr_vwrap_nocut ~indent:true "fc_current_lhs_flow: " fmt_string (string_of_flow_formula "FLOW"
+  pr_add_str "fc_current_lhs_flow: " fmt_string (string_of_flow_formula "FLOW"
                                                  (flow_formula_of_formula es.fc_current_lhs.es_formula)) ;
   (*pr_vwrap "fc_current_lhs: " pr_estate es.fc_current_lhs;  (* LHS context with success points *)*)
   (*   pr_vwrap "fc_orig_conseq: " pr_struc_formula es.fc_orig_conseq; (* RHS conseq at the point of failure *)*)
