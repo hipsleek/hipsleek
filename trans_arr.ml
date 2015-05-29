@@ -1642,8 +1642,8 @@ let rec get_array_element_in_f
       if (is_same_sv nsv sv)
       then [e]
       else []
-    | _ ->
-      failwith ("Trans_arr.extract_translate_scheme: "^(ArithNormalizer.string_of_exp e)^" To Be Implemented")
+    | _ -> []
+      (* failwith ("Trans_arr.extract_translate_scheme: "^(ArithNormalizer.string_of_exp e)^" To Be Implemented") *)
   in
   let get_array_element_in_b_formula
       ((p,ba):b_formula) (sv:spec_var):(exp list) =

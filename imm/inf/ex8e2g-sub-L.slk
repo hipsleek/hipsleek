@@ -17,7 +17,7 @@ data cell{
 //(1)
 checkentail c::cell<v>@a & a<:@L |-  c::cell<_>@b &b<:@M.
 print residue.
-expect Fail.
+expect Fail_Must.
 
 //(2)
 checkentail c::cell<v>@a & a<:@L |-  c::cell<_>@b &b<:@L.

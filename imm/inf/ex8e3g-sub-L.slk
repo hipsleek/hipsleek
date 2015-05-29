@@ -18,7 +18,7 @@ checkentail c::cell<v>@a |-  c::cell<_>@L.
 print residue.
 expect Fail.
 
-//(3)
+//(4)
 checkentail c::cell<v>@a |-  c::cell<_>@b & b<:@L.
 print residue.
 expect Fail.
