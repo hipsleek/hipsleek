@@ -481,7 +481,7 @@ struct
   let debug_calls  =
     let len = 61 in
     let prefix = "%%%" in
-    let pr_cnt (s, cnt) = s ^ " (" ^ (string_of_int cnt) ^ ")" in
+    let pr_cnt (s, cnt) = s ^ (if cnt > 1 then " (" ^ (string_of_int cnt) ^ ")" else "") in
     let summarized_stack stk =
       let new_stk = new Gen.stack_pr pr_cnt (==) in
       match (List.rev stk#get_stk) with
