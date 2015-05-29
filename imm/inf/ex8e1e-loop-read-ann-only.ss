@@ -31,11 +31,12 @@ int foo(cell c)
 
 # @L exception failure.
 
-1:77:!!! **pi.ml#726: Q(b_1459) = ( @L<:b_1459) \/ ( Q(b_1500) & b_1500<=(b_1459-2))Exception(get_array_element_in_f):Failure("Trans_arr.extract_translate_scheme: @L To Be Implemented")
-1:78:Exception(get_array_element_as_spec_var_list):Failure("Trans_arr.extract_translate_scheme: @L To Be Implemented")
-1:79:Exception(compute_def):Failure("Trans_arr.extract_translate_scheme: @L To Be Implemented")
-1:80:Exception(compute_fixpoint_aux):Failure("Trans_arr.extract_translate_scheme: @L To Be Implemented")
-1:81:Exception(compute_fixpoint):Failure("Trans_arr.extract_translate_scheme: @L To Be Implemented")
+ERROR: at _0:0_0:0
+Message: compute_def:Error in translating the input for fixcalc
+Exception(compute_def):Failure("compute_def:Error in translating the input for fixcalc")
+Exception(compute_fixpoint_aux):Failure("compute_def:Error in translating the input for fixcalc")
+Exception(compute_fixpoint):Failure("compute_def:Error in translating the input for fixcalc")
+
 
 
 */

@@ -17,7 +17,7 @@ data cell{
 //(1)
 checkentail c::cell<v>@a & a<:@L |-  c::cell<_>@b &b<:@M.
 print residue.
-expect Fail_Must.
+expect Fail.
 
 //(2)
 checkentail c::cell<v>@a & a<:@L |-  c::cell<_>@b &b<:@L.
@@ -27,21 +27,15 @@ expect Valid. // with b inst to @L
 /*
 # ex8e2g.slk
 
-checkentail c::cell<v>@a & a<:@L |-  c::cell<_>@b &b<:@M.
-
-# expect Fail. unsound to succeed!.
-
-Residue:
- <1>c::cell<v>@A&a<:@L & b=@M & Anon_11=v&{FLOW,(20,21)=__norm#E}[]
-[[ SEARCH ==>  Match(c,c) ==> ]]
 
 //(2)
 checkentail c::cell<v>@a & a<:@L |-  c::cell<_>@b &b<:@L.
 
-# where is b=@L ?
+# expects Valid with b=@L inst
 
-Residue:
- <1>c::cell<v>@[@a, @b]&a<:@L & b<:@L & Anon_12=v&{FLOW,(20,21)=__norm#E}[]
-[[ SEARCH ==>  Match(c,c) ==> ]]
+GOT inst b<:@L. Can we change to b=@L
+
+Entail 2: Fail.(may) cause: b<:@L & a<:@L |-  a<:b. LOCS:[23;0] (may-bug)
+
 
 */

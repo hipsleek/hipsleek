@@ -25,7 +25,7 @@ expect Fail.
 
 
 /*
-# ex8e3g.slk
+# ex8e3g.slk (FIXED)
 
   checkentail c::cell<v>@a |-  c::cell<_>@b & b<:@L.
 
