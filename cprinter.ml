@@ -2657,9 +2657,8 @@ let rec pr_numbered_list_formula (count:int) (e:list_formula)  =
     end
 
 let pr_es_trace (trace:string list) : unit =
-  if (trace==[]) then fmt_string "empty" else
-    let s = List.fold_left (fun str x -> x ^ " ==> " ^ str) "" trace in
-    fmt_string s
+  if (trace==[]) then fmt_string "empty"
+  else pr_list_op " ==> " fmt_string trace
 
 let pr_hp_rel hp_rel =
   let pr2 = prtt_string_of_formula in
