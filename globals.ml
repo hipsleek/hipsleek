@@ -1721,6 +1721,8 @@ let show_unexpected_ents = ref true
 let double_check = ref false
 let gen_baga_inv = ref false
 let delay_eelim_baga_inv = ref false
+let dis_baga_inv_check = ref false
+
 let is_inferring = ref false
 let use_baga = ref false
 

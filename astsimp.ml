@@ -2179,7 +2179,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       in ()
     else ()
   in
-  check_and_compute ()
+  if !Globals.dis_baga_inv_check then () else
+    check_and_compute ()
 
 and find_pred_by_self vdef data_name = vdef.I.view_pt_by_self
 (* Gen.BList.difference_eq (=) vdef.I.view_pt_by_self [data_name] *)
@@ -2916,7 +2917,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
     else
       cviews0
   in
-  let () = x_binfo_pp ("Omega call before exit: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+  let () = x_tinfo_pp ("Omega call before exit: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
   let omega_call_count2 = !Omega.omega_call_count in
   let () = Omega.omega_call_count_for_infer := (omega_call_count2 - omega_call_count1) in
   cviews0@prim_cviews0
@@ -2932,6 +2933,7 @@ and fill_one_base_case_x prog vd =
       {vd with C.view_base_case = (* WN : smt-compete problem : can be large! *)
                  (* if !Globals.smt_compete_mode then None *)
                  (* else *)
+              if !Globals.dis_baga_inv_check then None else
                  compute_base_case prog vd.C.view_name vd.C.view_un_struc_formula (Cpure.SpecVar ((Named vd.C.view_data_name), self, Unprimed) ::vd.C.view_vars)
       }
     end

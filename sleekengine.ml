@@ -1126,7 +1126,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   (* let _ = print_endline ("ivars"^(Cprinter.string_of_spec_var_list ivars_fvs)) in *)
   (* let _ = print_endline ("ante vars"^(Cprinter.string_of_spec_var_list fvs)) in *)
   (* Disable putting implicit existentials on unbound heap variables *)
-  let () = x_binfo_hp (add_str "ivars" (pr_list pr_id)) ivars no_pos in
+  let () = x_tinfo_hp (add_str "ivars" (pr_list pr_id)) ivars no_pos in
   (* WN : ivars - these are idents rather than spec_var *)
   (* TODO : shouldn't we be transforming to spec_vars instead ?? *)
   let fv_idents = (List.map CP.name_of_spec_var fvs)@ivars in

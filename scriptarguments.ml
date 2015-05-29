@@ -746,6 +746,7 @@ let common_arguments = [
   ("--inv-baga",Arg.Unit (fun _ ->  Globals.use_baga := true; Globals.gen_baga_inv := true),"generate baga inv from view");
   ("--dis-inv-baga",Arg.Clear Globals.gen_baga_inv,"disable baga inv from view");
   ("--en-delay-eelim",Arg.Set Globals.delay_eelim_baga_inv,"delay simplification during inference of shape baga inv");
+  ("--dis-inv-check",Arg.Set Globals.dis_baga_inv_check,"disable dis_baga_inv_check");
   ("--pred-sat", Arg.Unit Globals.en_pred_sat ," turn off oc-simp for pred sat checking");
   ("--baga-xpure",Arg.Set Globals.use_baga (* Globals.baga_xpure *),"use baga for xpure");
   ("--dis-baga-xpure",Arg.Clear Globals.use_baga (* Globals.baga_xpure *),"do not use baga for xpure");

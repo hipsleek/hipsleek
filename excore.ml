@@ -574,11 +574,13 @@ module EPURE =
       match baga with
       | [] -> mkTrue no_pos
       | h::ts ->
-        let i = ref 1 in
-        List.fold_left (fun f sv ->
-            i := !i + 1;
-            mkAnd f (mkEqVarInt sv !i no_pos) no_pos
-          ) (mkEqVarInt (List.hd baga) !i no_pos) (List.tl baga)
+        (* let i = ref 1 in *)
+        let f,_= List.fold_left (fun (f,i) sv ->
+            (* i := !i + 1; *)
+            let i = i + 1 in
+            (mkAnd f (mkEqVarInt sv (* !i *)i no_pos) no_pos, i)
+          ) ((mkEqVarInt (List.hd baga) (* !i *)1 no_pos),1) (List.tl baga)
+        in f
 
     (* ef_conv_enum :  ef_pure -> formula *)
     (* provide an enumeration that can be used by ante *)
