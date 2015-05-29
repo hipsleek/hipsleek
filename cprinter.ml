@@ -3690,10 +3690,11 @@ let pr_estate ?(nshort=true) (es : entail_state) =
         | None -> "None"
         | Some i -> string_of_int i)) es.es_var_label;
       *)
+      fmt_cut ();
       if es.es_trace!=[] then
-        pr_vwrap "es_trace: " pr_es_trace es.es_trace;
+        pr_add_str "es_trace: " pr_es_trace es.es_trace;
       if es.es_is_normalizing then
-        pr_vwrap "es_is_normalizing: " fmt_bool es.es_is_normalizing;
+        pr_add_str "es_is_normalizing: " fmt_bool es.es_is_normalizing;
       (*
         pr_vwrap "es_var_ctx_lhs: " pr_pure_formula es.es_var_ctx_lhs;
         pr_vwrap "es_var_ctx_rhs: " pr_pure_formula es.es_var_ctx_rhs;
