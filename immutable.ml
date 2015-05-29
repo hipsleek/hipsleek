@@ -154,7 +154,7 @@ let def_rel v loc = CP.mkEq v CP.const_ann_top loc
 
 let lhs_rhs_rel l r to_rhs = 
   if not (!Globals.imm_weak) then default_inst l r no_pos, [to_rhs] 
-  else weakest_inst l r no_pos, []
+  else weakest_inst l r no_pos, [to_rhs]
 
 let conj_of_bounds rhs_sv ann1 ann2 lst loc =
   let rhs_exp = CP.Var (rhs_sv, loc) in
@@ -352,7 +352,7 @@ let subtype_ann_gen_x lhs_f rhs_f elhs erhs impl_vars evars (imm1 : CP.ann) (imm
         let to_lhs = map_opt_def to_lhs (fun x -> x) inst in
         (* implicit var annotation on rhs *)
         if CP.mem rhs_sv impl_vars then 
-          let inst, to_rhs' = x_add pick_wekeast_instatiation l rhs_sv loc lhs_f rhs_f impl_vars evars in
+          (* let inst, to_rhs' = x_add pick_wekeast_instatiation l rhs_sv loc lhs_f rhs_f impl_vars evars in *)
           let to_lhs = map_opt_def to_lhs (fun x -> x) inst in
           let to_rhs = map_opt_def to_rhs_impl (fun x ->  x) to_rhs' in
           (f, [to_lhs], to_rhs, [])

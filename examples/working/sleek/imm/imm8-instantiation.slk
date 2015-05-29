@@ -1,4 +1,4 @@
-//Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.
+//Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.
 data cell {
   int val;
 }.
@@ -116,5 +116,25 @@ expect Valid.
 
 //23
 checkentail x::cell<a>@u & u=@M & v=@L  |- x::cell<b>@v & v<:@L.
+print residue.
+expect Valid.
+
+//24
+checkentail c::cell<v>@a |-  c::cell<_>@b & b<:@L.
+print residue.
+expect Fail.
+
+//25
+checkentail c::cell<v>@a |-  c::cell<_>@L.
+print residue.
+expect Fail.
+
+//26
+checkentail c::cell<v>@a |-  c::cell<_>@b.
+print residue.
+expect Valid.
+
+//27
+checkentail c::cell<v>@a & a<:@L |-  c::cell<_>@b.
 print residue.
 expect Valid.
