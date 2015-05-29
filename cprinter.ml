@@ -459,6 +459,18 @@ let pr_add_str ?(lvl=(!glob_lvl)) lbl pr x =
     let str = poly_string_of_pr pr x in
     if should_break str then pr_vwrap_nocut ~indent:true lbl pr x
     else pr_hwrap lbl pr x) x
+
+let pr_add_str_cut ?(lvl=(!glob_lvl)) lbl pr x =
+  pr_add_str ~lvl lbl pr x;
+  wrap_pr_1 lvl (fun () -> fmt_cut()) ()
+
+let pr_add_str_opt ?(lvl=(!glob_lvl)) lbl pr = function
+  | None -> ()
+  | Some x -> pr_add_str ~lvl lbl pr x
+
+let pr_add_str_opt_cut ?(lvl=(!glob_lvl)) lbl pr x =
+  pr_add_str_opt ~lvl lbl pr x;
+  wrap_pr_1 lvl (fun () -> fmt_cut()) ()
 (* let pr_args open_str close_str sep_str f xs =  *)
 (*   pr_list_open_sep  *)
 (*     (fun () -> (\* fmt_open 1; *\) fmt_string open_str) *)
@@ -3363,7 +3375,7 @@ let rec pr_struc_formula  (e:struc_formula) = match e with
     if b==[] then fmt_string_cut "[]"
     else (
      fmt_string_cut "EList";
-     pr_list_op_none "|| " (wrap_box ("B",0) (pr_pair_aux pr_spec_label_def_opt pr_struc_formula)) b
+     pr_list_vbox_wrap "|| " (wrap_box ("B",0) (pr_pair_aux pr_spec_label_def_opt pr_struc_formula)) b
     );
     fmt_close_box ()
 (*| EOr b ->
@@ -4232,60 +4244,61 @@ let pr_view_decl v =
     | s -> "{"^String.concat "," (List.map string_of_ho_var  s)^"}" in
   wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name ^ho_str^
                                         "[" ^ (String.concat "," (List.map string_of_typed_spec_var v.view_prop_extns) ^ "]"))
-                       pr_typed_spec_var v.view_vars; fmt_string "= ") ();
-  pr_vwrap  "view_domains: "  fmt_string (String.concat ";" (List.map (fun (v,p1,p2) ->
+                       pr_typed_spec_var v.view_vars; fmt_string "= ") (); fmt_cut ();
+  pr_add_str_cut "view_domains: "  fmt_string (String.concat ";" (List.map (fun (v,p1,p2) ->
       "(" ^ v ^ "," ^ (string_of_int p1) ^ "," ^ (string_of_int p2) ^ ")" ) v.view_domains));
   (* wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_spec_var_lbl  *)
   (*     (List.combine v.view_labels v.view_vars); fmt_string "= ") (); *)
-  wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_view_arg_lbl
-                       (CP.combine_labels_w_view_arg v.view_labels  (List.map fst v.view_params_orig)); fmt_string "= ") ();
-  fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula;
-  pr_vwrap  "view vars: "  pr_list_of_spec_var v.view_vars;
+  pr_add_str_cut (poly_string_of_pr
+    (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_view_arg_lbl
+       (CP.combine_labels_w_view_arg v.view_labels  (List.map fst v.view_params_orig)); fmt_string "= ") ())
+  pr_struc_formula v.view_formula;
+  pr_add_str_cut  "view vars: "  pr_list_of_spec_var v.view_vars;
   (* pr_vwrap  "ann vars: "  pr_list_of_annot_arg (List.map fst v.view_ann_params); *)
-  pr_vwrap  "ann vars (0 - not a posn): "  pr_list_of_annot_arg_posn v.view_ann_params;
-  pr_vwrap  "cont vars: "  pr_list_of_spec_var v.view_cont_vars;
-  pr_vwrap  "inv: "  pr_mix_formula v.view_user_inv;
-  pr_vwrap_opt  "baga inv: "  pr_ef_pure_disj v.view_baga_inv;
-  pr_vwrap_opt  "baga over inv: " pr_ef_pure_disj v.view_baga_over_inv;
-  pr_vwrap_opt  "baga over inv (unfolded): " pr_ef_pure_disj v.view_baga_x_over_inv;
-  pr_vwrap_opt  "baga under inv: " pr_ef_pure_disj v.view_baga_under_inv;
-  pr_vwrap  "inv_lock: "  (pr_opt pr_formula) v.view_inv_lock;
-  pr_vwrap  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_un_struc_formula;
+  pr_add_str_cut  "ann vars (0 - not a posn): "  pr_list_of_annot_arg_posn v.view_ann_params;
+  pr_add_str_cut  "cont vars: "  pr_list_of_spec_var v.view_cont_vars;
+  pr_add_str_cut  "inv: "  pr_mix_formula v.view_user_inv;
+  pr_add_str_opt_cut  "baga inv: "  pr_ef_pure_disj v.view_baga_inv;
+  pr_add_str_opt_cut  "baga over inv: " pr_ef_pure_disj v.view_baga_over_inv;
+  pr_add_str_opt_cut  "baga over inv (unfolded): " pr_ef_pure_disj v.view_baga_x_over_inv;
+  pr_add_str_opt_cut  "baga under inv: " pr_ef_pure_disj v.view_baga_under_inv;
+  pr_add_str_cut  "inv_lock: "  (pr_opt pr_formula) v.view_inv_lock;
+  pr_add_str_cut  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_un_struc_formula;
   if (v.view_is_tail_recursive) then pr_vwrap  "linear formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_linear_formula ;
-  pr_vwrap  "xform: " pr_mix_formula v.view_x_formula;
-  pr_vwrap  "is_recursive?: " fmt_string (string_of_bool v.view_is_rec);
-  pr_vwrap  "is_primitive?: " fmt_string (string_of_bool v.view_is_prim);
-  pr_vwrap  "is_touching?: " fmt_string (string_of_bool v.view_is_touching);
-  pr_vwrap  "is_segmented?: " fmt_string (string_of_bool v.view_is_segmented);
-  pr_vwrap  "is_tail_recursive?: " fmt_string (string_of_bool v.view_is_tail_recursive);
-  pr_vwrap  "residents: " pr_list_of_spec_var v.view_residents;
-  pr_vwrap  "forward_ptrs: " pr_list_of_spec_var v.view_forward_ptrs;
-  pr_vwrap  "backward_ptrs: " pr_list_of_spec_var v.view_backward_ptrs;
-  pr_vwrap  "forward_fields: "
+  pr_add_str_cut "xform: " pr_mix_formula v.view_x_formula;
+  pr_add_str_cut  "is_recursive?: " fmt_string (string_of_bool v.view_is_rec);
+  pr_add_str_cut  "is_primitive?: " fmt_string (string_of_bool v.view_is_prim);
+  pr_add_str_cut  "is_touching?: " fmt_string (string_of_bool v.view_is_touching);
+  pr_add_str_cut  "is_segmented?: " fmt_string (string_of_bool v.view_is_segmented);
+  pr_add_str_cut  "is_tail_recursive?: " fmt_string (string_of_bool v.view_is_tail_recursive);
+  pr_add_str_cut  "residents: " pr_list_of_spec_var v.view_residents;
+  pr_add_str_cut  "forward_ptrs: " pr_list_of_spec_var v.view_forward_ptrs;
+  pr_add_str_cut  "backward_ptrs: " pr_list_of_spec_var v.view_backward_ptrs;
+  pr_add_str_cut  "forward_fields: "
     (pr_list_none (fun (d,f) -> fmt_string (d.data_name ^ "." ^ f))) v.view_forward_fields;
-  pr_vwrap  "backward_fields: "
+  pr_add_str_cut  "backward_fields: "
     (pr_list_none (fun (d,f) -> fmt_string (d.data_name ^ "." ^ f))) v.view_backward_fields;
-  pr_vwrap  "same_xpure?: " fmt_string
+  pr_add_str_cut  "same_xpure?: " fmt_string
     (if v.view_xpure_flag then "YES" else "NO");
-  pr_vwrap  "view_data_name: " fmt_string v.view_data_name;
+  pr_add_str_cut  "view_data_name: " fmt_string v.view_data_name;
   (* pr_vwrap  "view_type_of_self: " (pr_opt string_of_typ) v.view_type_of_self; *)
-  pr_vwrap  "self preds: " fmt_string (Gen.Basic.pr_list (fun x -> x) v.view_pt_by_self);
-  pr_vwrap  "materialized vars: " pr_mater_prop_list v.view_materialized_vars;
-  pr_vwrap  "addr vars: " pr_list_of_spec_var v.view_addr_vars;
-  pr_vwrap  "uni_vars: " fmt_string (string_of_spec_var_list v.view_uni_vars);
-  pr_vwrap  "bag of addr: " pr_list_of_spec_var v.view_baga;
+  pr_add_str_cut  "self preds: " fmt_string (Gen.Basic.pr_list (fun x -> x) v.view_pt_by_self);
+  pr_add_str_cut  "materialized vars: " pr_mater_prop_list v.view_materialized_vars;
+  pr_add_str_cut  "addr vars: " pr_list_of_spec_var v.view_addr_vars;
+  pr_add_str_cut  "uni_vars: " fmt_string (string_of_spec_var_list v.view_uni_vars);
+  pr_add_str_cut  "bag of addr: " pr_list_of_spec_var v.view_baga;
   (match v.view_raw_base_case with
    | None -> ()
    | Some s -> pr_vwrap  "raw base case: " pr_formula s);
   f_base_case v.view_base_case;
-  pr_vwrap  "view_complex_inv: " (pr_opt pr_mix_formula) v.view_complex_inv;
-  pr_vwrap  "prune branches: " (fun c-> pr_seq "," pr_formula_label_br c) v.view_prune_branches;
-  pr_vwrap  "prune conditions: " pr_case_guard v.view_prune_conditions;
-  pr_vwrap  "prune baga conditions: "
+  pr_add_str_cut  "view_complex_inv: " (pr_opt pr_mix_formula) v.view_complex_inv;
+  pr_add_str_cut  "prune branches: " (fun c-> pr_seq "," pr_formula_label_br c) v.view_prune_branches;
+  pr_add_str_cut  "prune conditions: " pr_case_guard v.view_prune_conditions;
+  pr_add_str_cut  "prune baga conditions: "
     (fun c-> fmt_string
         (String.concat "," (List.map (fun (bl,(lbl,_))-> "("^(string_of_spec_var_list bl)^")-"^(string_of_int lbl)) c))) v.view_prune_conditions_baga;
   let i = string_of_int(List.length v.view_prune_invariants) in
-  pr_vwrap  ("prune invs:"^i^":") (* (fun c-> pr_seq "," (fun (c1,(ba,c2))->  *)
+  pr_add_str_cut  ("prune invs:"^i^":") (* (fun c-> pr_seq "," (fun (c1,(ba,c2))->  *)
   (* let s = String.concat "," (List.map (fun d-> string_of_int_label d "") c1) in *)
   (* let b = string_of_spec_var_list ba in *)
   (* let d = String.concat ";" (List.map string_of_b_formula c2) in *)
