@@ -9461,6 +9461,16 @@ let is_dfa_ctx_list lc=
   | FailCtx (_,c,_) -> is_dfa_ctx c
   | SuccCtx cs -> List.exists is_dfa_ctx cs
 
+let is_infer_none_es es =
+  (es.es_infer_heap==[] && es.es_infer_templ_assume==[] && es.es_infer_pure==[] && es.es_infer_rel==[] && es.es_infer_hp_rel==[])
+
+let is_infer_none_ctx c =
+  let rec aux c =
+    match c with
+      | Ctx es -> is_infer_none_es es
+      | OCtx (c1,c2) -> aux c1 && aux c2
+  in aux c
+
 let is_infer_type_es it es = 
   es.es_infer_obj # is_infer_type it
 
