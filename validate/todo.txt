@@ -35,6 +35,13 @@ validate Valid:[
 // inferred hprel: [H1(y) --> y::node<a_1,b_2>@M * HP_35(b_2)]
 // or you could have renamed the existentially quantified vars.
 ==================================================================
+# ex4.slk
+
+If {} is empty, can be omit its printing.
+  q_122::ll{}<flted_7_126>(must)
+should be printed as:  
+  q_122::ll<flted_7_126>(must)
+
 ==================================================================
 ==================================================================
 ==================================================================
