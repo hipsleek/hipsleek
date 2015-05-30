@@ -1,0 +1,127 @@
+data cell{
+ int fst;
+}.
+
+
+//(1)
+checkentail c::cell<v>@a & a<:@L |-  c::cell<_>@b & b<:@L.
+print residue.
+expect Valid. // with b inst to @L
+
+//(2)
+checkentail c::cell<v>@a |-  c::cell<_>@b.
+print residue.
+expect Valid.
+
+//(3)
+checkentail c::cell<v>@a & @L<:a |-  c::cell<_>@b & @M<:b.
+print residue.
+expect Fail.
+
+//(4)
+checkentail c::cell<v>@a & @L<:a |-  c::cell<_>@b & @L<:b.
+print residue.
+expect Valid.
+
+
+slk_simplify emp & exists(a,b: a=b & v=c).
+slk_simplify emp & exists(a,b,c: a=b & v=c & c=@L).
+slk_simplify emp & exists(a,b,c: a=b & v<:c & c<:@L).
+slk_simplify emp & exists(a,b,c: a=b & v<:c & c=@L).
+
+slk_simplify a<:@L & a<:b & b<:@L.
+
+slk_simplify a<:@L & a<:b & b<:@M.
+
+slk_simplify a<:@A & a<:b & b<:@L.
+
+slk_simplify a<:@L & a<:b.
+
+slk_simplify b<:@L & a<:b.
+
+slk_simplify a=b & b<:@L.
+
+slk_simplify emp & exists (c: b<:c & c<:@L).
+
+checkentail x=@A |- x<:@L & x<:@A.
+expect Fail.
+
+checkentail x=@L |- x<:@L & x<:@A.
+expect Valid.
+
+slk_simplify v=@L & w<:v.
+
+slk_simplify v=@L & w<:v & w<:@L.
+
+/*
+Simplify  (18): v=@L & w<:@L
+
+Simplify  (19): v=@L & w<:@L
+*/
+
+//20
+checkentail c::cell<_>@w & w<:@L |-  c::cell<_>@v & v<:@L.
+expect Valid.
+//21
+slk_simplify w<:@L & v<:@L & w<:v.   //----> v<:@L ---> v=@L
+slk_simplify emp & exists(w: w<:@L & v<:@L & w<:v).   //----> v<:@L ---> v=@L
+
+//23
+checkentail c::cell<_>@w & @L<:w |-  c::cell<_>@v & @L<:v.
+expect Valid.
+slk_simplify @L<:w & @L<:v & w<:v.  //----> @L<:v ---> v=@L
+slk_simplify emp & exists(w: @L<:w & @L<:v & w<:v).  //----> @L<:v ---> v=@L
+
+//26
+checkentail c::cell<_>@w & @L<:w |-  c::cell<_>@v & v<:@M.
+expect Fail.
+slk_simplify @L<:w & v<:@M & w<:v.
+slk_simplify emp & exists(w: @L<:w & v<:@M & w<:v).
+
+//29
+checkentail c::cell<_>@w & w<:@M |-  c::cell<_>@v & @L<:v.
+expect Valid.
+slk_simplify w<:@M & @L<:v & w<:v. //----> @L<:v ---> v=@L
+slk_simplify emp & exists(w: w<:@M & @L<:v & w<:v). //----> @L<:v ---> v=@L
+
+//32
+checkentail c::cell<_>@w & w<:@L |-  c::cell<_>@v & @M<:v.
+expect Fail.
+print residue.
+slk_simplify w<:@L & @M<:v & w<:v. //----> @M<:v ---> v=@M.
+slk_simplify emp & exists(w: w<:@L & @M<:v & w<:v). //----> @M<:v ---> v=@M.
+
+//35
+checkentail c::cell<_>@w & w<:@L & u=@M|-  c::cell<_>@v & u<:v.
+expect Fail.
+print residue.
+slk_simplify w<:@L & u=@M & w<:v & u<:v. //----> @M<:v ---> v=@M.
+slk_simplify emp & exists(w,u:w<:@L & u=@M & w<:v & u<:v). //----> @M<:v ---> v=@M.
+
+//38
+checkentail c::cell<_>@w & u=ww |-  c::cell<_>@v & v=u.
+expect Valid.
+print residue.
+slk_simplify ww=u & u=v & w<:v. //---->  v=u & w<:u. (due to empty lhs(w))
+slk_simplify emp & exists(w,u,ww: ww=u & u=v & w<:v). //---->  v=u.
+
+//41
+checkentail c::cell<_>@w & w<:@L & u=ww |-  c::cell<_>@v & v=u.
+expect Fail.
+print residue.
+slk_simplify  w<:@L & ww=u & u=v & w<:v. //---->  v=u .
+slk_simplify emp & exists(w,u,ww:  w<:@L & ww=u & u=v & w<:v). //---->  v=u.
+
+//44
+checkentail c::cell<_>@w & w<:@L |-  c::cell<_>@v & v<:@A.
+expect Valid.
+print residue.
+slk_simplify w<:@L & v<:@A & w<:v. //----> v<:@A ---> v=@A.
+slk_simplify emp & exists(w: w<:@L & v<:@A & w<:v ). //----> v<:@A ---> v=@A.
+
+//47
+checkentail c::cell<_>@w & w<:@A |-  c::cell<_>@v & v<:@L.
+expect Fail.
+print residue.
+slk_simplify w<:@A & v<:@L & w<:v. //----> v<:@L ---> v=@L.
+slk_simplify emp & exists(w: w<:@A & v<:@L & w<:v ). //----> v<:@L ---> v=@L.

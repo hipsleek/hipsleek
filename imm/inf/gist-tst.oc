@@ -39,7 +39,14 @@ gist P given k;
 gist k given P;
 
 
-P:={[a,b]: a=a & b=b};
+P5:={[a,b]: a=a & b=b};
+k5 := {[a,b]:a<=b};
+gist P5 given k5;
+gist k5 given P5;
+
+
+P:={[a,b]: a<=2 & b<=2};
 k := {[a,b]:a<=b};
 gist P given k;
 gist k given P;
+

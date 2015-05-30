@@ -1434,6 +1434,9 @@ let compute_fixpoint (i:int) input_pairs ante_vars specs =
     (fun _ _ -> compute_fixpoint_x2 input_pairs ante_vars specs true)
     input_pairs ante_vars
 
+(*call the wrappers for:
+1. trasnform imm formula to imm-free formula and back
+2. disable fixcalc inner imm-free to imm transformation (eg. calling simpilfy, etc)  *)
 let compute_fixpoint_x input_pairs ante_vars specs bottom_up =
   let fixpt (input_pairs,specs) = compute_fixpoint_x input_pairs ante_vars specs false in
   let fst_pre = (List.map (fold_pair1f (x_add_1 Immutable.map_imm_to_int_pure_formula))) in
