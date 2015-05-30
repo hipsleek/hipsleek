@@ -1415,13 +1415,17 @@ let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up =
     (* Wrapper.wrap_num_disj compute_fixpoint_x n_base input_pairs ante_vars specs bottom_up *)
     compute_fixpoint_x input_pairs ante_vars specs bottom_up
 
-(* Wrapper to translate back array *)
+(* Wrapper to 
+1. translate back array
+2. trasnform imm formula to imm-free formula and back
+3. disable fixcalc inner imm-free to imm transformation (eg. calling simpilfy, etc) *)
 let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up =
-  let fixpt specs = compute_fixpoint_x2 input_pairs ante_vars specs bottom_up in
-  let reslst = Wrapper.wrap_pre_post_process 
-      (x_add_1 Immutable.map_imm_to_int_struc_formula)
-      (List.map (fold_pair1f Immutable.map_int_to_imm_pure_formula))
-      fixpt specs  in
+  let fixpt (input_pairs,specs) = compute_fixpoint_x2 input_pairs ante_vars specs bottom_up in
+  let fst_pre = (List.map (fold_pair1f (x_add_1 Immutable.map_imm_to_int_pure_formula))) in
+  let snd_pre = Immutable.map_imm_to_int_struc_formula in
+  let pre = fold_pair2f fst_pre snd_pre in
+  let post = List.map (fold_pair1f Immutable.map_int_to_imm_pure_formula) in
+  let reslst = Wrapper.wrap_pre_post_process pre post fixpt (input_pairs,specs) in
   List.map (fun (a,b) -> (Trans_arr.translate_back_array_in_one_formula a,Trans_arr.translate_back_array_in_one_formula b)) reslst
 ;;
 
@@ -1441,10 +1445,9 @@ let compute_fixpoint_x input_pairs ante_vars specs bottom_up =
   let fixpt (input_pairs,specs) = compute_fixpoint_x input_pairs ante_vars specs false in
   let fst_pre = (List.map (fold_pair1f (x_add_1 Immutable.map_imm_to_int_pure_formula))) in
   let snd_pre = Immutable.map_imm_to_int_struc_formula in
-  let fixpt (input_pairs,specs) = Wrapper.wrap_pre_post_process 
-    (fold_pair2f fst_pre snd_pre)
-    (List.map (fold_pair1f Immutable.map_int_to_imm_pure_formula))
-    fixpt (input_pairs,specs) in
+  let pre = fold_pair2f fst_pre snd_pre in
+  let post = List.map (fold_pair1f Immutable.map_int_to_imm_pure_formula) in
+  let fixpt (input_pairs,specs) = Wrapper.wrap_pre_post_process pre post fixpt (input_pairs,specs) in
   Wrapper.wrap_one_bool Globals.int2imm_conv false fixpt (input_pairs,specs)
 
 let compute_fixpoint_td (i:int) input_pairs ante_vars specs =
