@@ -187,7 +187,11 @@ let common_arguments = [
   ("--dis-trace", Arg.Clear Debug.trace_on,
    "Turn off brief tracing");
   ("-dd", Arg.Set Debug.devel_debug_on,
-   "Turn on devel_debug");
+   "Turn on devel_debug on short and normal output");
+  ("-dd-short", Arg.Unit (fun () -> Debug.devel_debug_on := true; Globals.debug_level := Globals.Short),
+   "Turn on devel_debug only short output");
+  ("-dd-long", Arg.Unit (fun () -> Debug.devel_debug_on := true; Globals.debug_level := Globals.Long),
+   "Turn on devel_debug on all outputs");
   ("--dd-debug",  Arg.Unit
      (fun _ -> 
         Debug.debug_print:=true;
@@ -254,10 +258,16 @@ let common_arguments = [
    "Log (failed) proof to file");
   ("--trace-failure", Arg.Set VarGen.trace_failure,
    "Enable trace all failure (and exception). Use make gbyte");
+  ("--trace-exc", Arg.Set VarGen.trace_exc,
+   "Enable trace of exceptions invoked by methods");
+  (* Exception(fixcalc_of_pure_formula):Stack overflow *)
+  (* Exception(compute_def@6):Failure("compute_def:Error in translating the input for fixcalc") *)
+  (* Exception(compute_fixpoint_aux@5):Failure("compute_def:Error in translating the input for fixcalc") *)
+  (* Exception(compute_fixpoint#5@4):Failure("compute_def:Error in translating the input for fixcalc") *)
   ("--trace-all", Arg.Set Globals.trace_all,
-   "Trace all proof paths");
+  "Trace all proof paths");
   ("--log-cvcl", Arg.String Cvclite.set_log_file,
-   "Log all CVC Lite formula to specified log file");
+  "Log all CVC Lite formula to specified log file");
   (* ("--log-cvc3", Arg.String Cvc3.set_log_file, *)
   ("--log-cvc3", Arg.Unit Cvc3.set_log_file,    "Log all formulae sent to CVC3 in file allinput.cvc3");
   ("--log-omega", Arg.Set Omega.log_all_flag,
