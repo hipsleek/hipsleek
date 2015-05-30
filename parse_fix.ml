@@ -11,7 +11,11 @@ module TI = Typeinfer
 
 let loc = no_pos
 
-let tlist = []
+let tlist_g = ref []
+let set_tlist vs = tlist_g := vs
+let clear_tlist () = tlist_g := []
+let add_tlist vs = tlist_g := !tlist_g @ vs
+
 (******************************************************************************)
 
 let expression = Gram.Entry.mk "expression"
@@ -104,84 +108,84 @@ let is_int c = '0' <= c && c <= '9'
           in BForm ((tmp, None), None)
            | x = exp; "<"; y = exp ->
           if is_res_var y && is_zero x then
-            BForm ((BVar (get_var "res" tlist, loc), None), None)
+            BForm ((BVar (get_var "res" !tlist_g, loc), None), None)
           else if is_res_var x && is_one y then
-            Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc) 
+            Not (BForm ((BVar (get_var "res" !tlist_g, loc), None), None), None, loc) 
           else
             let tmp = 
               if is_node y && is_zero x then 
-                Neq (Var(get_var (get_node y) tlist, loc), Null loc, loc)
+                Neq (Var(get_var (get_node y) !tlist_g, loc), Null loc, loc)
               else if is_node x && is_one y then 
-                Eq (Var(get_var (get_node x) tlist, loc), Null loc, loc)
+                Eq (Var(get_var (get_node x) !tlist_g, loc), Null loc, loc)
               else if is_self_var y then 
-                Neq (Var(get_var "self" tlist, loc), Null loc, loc)
+                Neq (Var(get_var "self" !tlist_g, loc), Null loc, loc)
               else Lt (x, y, loc) 
             in BForm ((tmp, None), None)
              | x = exp; ">"; y = exp ->
             if is_res_var x && is_zero y then 
-              BForm ((BVar (get_var "res" tlist, loc), None), None) 
+              BForm ((BVar (get_var "res" !tlist_g, loc), None), None) 
             else if is_res_var y && is_one x then 
-              Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc) 
+              Not (BForm ((BVar (get_var "res" !tlist_g, loc), None), None), None, loc) 
             else
               let tmp = 
                 if is_node x && is_zero y then 
-                  Neq (Var(get_var (get_node x) tlist, loc), Null loc, loc)
+                  Neq (Var(get_var (get_node x) !tlist_g, loc), Null loc, loc)
                 else if is_node y && is_one x then 
-                  Eq (Var(get_var (get_node y) tlist, loc), Null loc, loc)
+                  Eq (Var(get_var (get_node y) !tlist_g, loc), Null loc, loc)
                 else if is_self_var x then 
-                  Neq (Var(get_var "self" tlist, loc), Null loc, loc)
+                  Neq (Var(get_var "self" !tlist_g, loc), Null loc, loc)
                 else Gt (x, y, loc) 
               in BForm ((tmp, None), None)
                | x = exp; "<="; y = exp ->
               if is_res_var x && is_zero y then 
-                Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc) 
+                Not (BForm ((BVar (get_var "res" !tlist_g, loc), None), None), None, loc) 
               else if is_res_var y && is_one x then 
-                BForm ((BVar (get_var "res" tlist, loc), None), None) 
+                BForm ((BVar (get_var "res" !tlist_g, loc), None), None) 
               else
                 let tmp = 
                   if is_node x && is_zero y then 
-                    Eq (Var(get_var (get_node x) tlist, loc), Null loc, loc)
+                    Eq (Var(get_var (get_node x) !tlist_g, loc), Null loc, loc)
                   else if is_node y && is_one x then 
-                    Neq (Var(get_var (get_node y) tlist, loc), Null loc, loc)
+                    Neq (Var(get_var (get_node y) !tlist_g, loc), Null loc, loc)
                   else if is_self_var x then 
-                    Eq (Var(get_var "self" tlist, loc), Null loc, loc)
+                    Eq (Var(get_var "self" !tlist_g, loc), Null loc, loc)
                   else Lte (x, y, loc)
                 in BForm ((tmp, None), None)
                  | x = exp; ">="; y = exp ->
                 if is_res_var y && is_zero x then 
-                  Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc) 
+                  Not (BForm ((BVar (get_var "res" !tlist_g, loc), None), None), None, loc) 
                 else
                 if is_res_var x && is_one y then 
-                  BForm ((BVar (get_var "res" tlist, loc), None), None) 
+                  BForm ((BVar (get_var "res" !tlist_g, loc), None), None) 
                 else
                   let tmp = 
                     if is_node y && is_zero x then 
-                      Eq (Var(get_var (get_node y) tlist, loc), Null loc, loc)
+                      Eq (Var(get_var (get_node y) !tlist_g, loc), Null loc, loc)
                     else
                     if is_node x && is_one y then 
-                      Neq (Var(get_var (get_node x) tlist, loc), Null loc, loc)
+                      Neq (Var(get_var (get_node x) !tlist_g, loc), Null loc, loc)
                     else
                     if is_self_var y then 
-                      Eq (Var(get_var "self" tlist, loc), Null loc, loc)
+                      Eq (Var(get_var "self" !tlist_g, loc), Null loc, loc)
                     else Gte (x, y, loc)
                   in BForm ((tmp, None), None)
                    | x = exp; "="; y = exp ->
                   let tmp = 
                     if is_node x && is_node y then 
-                      Eq (Var(get_var (get_node x) tlist, loc), 
-                          Var(get_var (get_node y) tlist, loc), loc)
+                      Eq (Var(get_var (get_node x) !tlist_g, loc), 
+                          Var(get_var (get_node y) !tlist_g, loc), loc)
                     else
                     if is_node x && is_rec_node y then 
-                      Eq (Var(get_var (get_node x) tlist, loc), 
-                          Var(add_prefix (get_var (get_rec_node y) tlist) "REC", loc), loc)
+                      Eq (Var(get_var (get_node x) !tlist_g, loc), 
+                          Var(add_prefix (get_var (get_rec_node y) !tlist_g) "REC", loc), loc)
                     else
                     if is_node y && is_rec_node x then 
-                      Eq (Var(get_var (get_node y) tlist, loc), 
-                          Var(add_prefix (get_var (get_rec_node x) tlist) "REC", loc), loc)
+                      Eq (Var(get_var (get_node y) !tlist_g, loc), 
+                          Var(add_prefix (get_var (get_rec_node x) !tlist_g) "REC", loc), loc)
                     else
                     if is_rec_node x && is_rec_node y then 
-                      Eq (Var(add_prefix (get_var (get_rec_node x) tlist) "REC", loc), 
-                          Var(add_prefix (get_var (get_rec_node y) tlist) "REC", loc), loc)
+                      Eq (Var(add_prefix (get_var (get_rec_node x) !tlist_g) "REC", loc), 
+                          Var(add_prefix (get_var (get_rec_node y) !tlist_g) "REC", loc), loc)
                     else Eq (x, y, loc)
                   in BForm ((tmp, None), None)
                    | x = exp; "!="; y = exp ->
@@ -208,12 +212,12 @@ let is_int c = '0' <= c && c <= '9'
 
   specvar:
     [ "specvar" NONA
-        [ x = LIDENT -> get_var x tlist
+        [ x = LIDENT -> get_var x !tlist_g
         | x = UIDENT ->
           if is_substr "REC" x
           then
-            add_prefix (get_var (String.sub x 3 (String.length x - 3)) tlist) "REC"
-          else get_var x tlist
+            add_prefix (get_var (String.sub x 3 (String.length x - 3)) !tlist_g) "REC"
+          else get_var x !tlist_g
         ]
     ];
 

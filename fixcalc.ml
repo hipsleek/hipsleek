@@ -371,7 +371,7 @@ let syscall cmd =
   flush oc;
   close_out oc;
   let res = syscall (!fixcalc_exe ^ output_of_sleek ^ fixcalc_options) in
-  let new_pf = List.hd (Parse_fix.parse_fix res) in
+  let new_pf = List.hd (x_add_1 Parse_fix.parse_fix res) in
     (*let () = Pr.fmt_string("\nInv: "^(Pr.string_of_pure_formula new_pf)) in*)
   let check_imply = Omega.imply new_pf pf "1" 100.0 in
   if check_imply then (
@@ -430,7 +430,7 @@ let widen (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
   DD.ninfo_zprint (lazy (("res = " ^ res ^ "\n"))) no_pos;
 
   (* Parse result *)
-  let inv = List.hd (Parse_fix.parse_fix res) in
+  let inv = List.hd (x_add_1 Parse_fix.parse_fix res) in
   let () = DD.ninfo_hprint (add_str "result" Cprinter.string_of_pure_formula) inv no_pos in
   inv
 
@@ -458,7 +458,7 @@ let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var
 
   (* Call the fixpoint calculation *)
   let output_of_sleek = "logs/fixcalc"^(* (fix_num # str_get_next)^ *)".inp" in
-  let () = DD.ninfo_pprint ("fixcalc file name: " ^ output_of_sleek) no_pos in
+  let () = x_tinfo_pp ("fixcalc file name: " ^ output_of_sleek) no_pos in
   let oc = open_out output_of_sleek in
   Printf.fprintf oc "%s" input_fixcalc;
   flush oc;
@@ -470,7 +470,7 @@ let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var
   DD.ninfo_zprint (lazy (("res = " ^ res ^ "\n"))) no_pos;
 
   (* Parse result *)
-  let inv = List.hd (Parse_fix.parse_fix res) in
+  let inv = List.hd (x_add_1 Parse_fix.parse_fix res) in
   inv
 
 (******************************************************************************)
@@ -539,7 +539,7 @@ let compute_invs_fixcalc input_fixcalc=
   (* let () = print_endline ("res ="^ res) in *)
   let lines = get_lines res 0 [] in
   let () = DD.ninfo_hprint (add_str "lines" (pr_list_ln pr_id)) lines no_pos in
-  let invs = List.fold_left (fun r line -> r@(Parse_fix.parse_fix line)) [] lines in
+  let invs = List.fold_left (fun r line -> r@(x_add_1 Parse_fix.parse_fix line)) [] lines in
   let () = DD.ninfo_hprint (add_str "res(parsed)= " (pr_list !CP.print_formula)) invs no_pos in
   invs
 
@@ -756,7 +756,7 @@ let compute_pure_inv_x (fmls:CP.formula list) (name:ident) (para_names:CP.spec_v
   DD.ninfo_zprint (lazy (("res = " ^ res ^ "\n"))) no_pos;
 
   (* Parse result *)
-  let inv = List.hd (Parse_fix.parse_fix res) in
+  let inv = List.hd (x_add_1 Parse_fix.parse_fix res) in
   inv
 
 let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var list): CP.formula =
@@ -935,7 +935,7 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
   in
 
   let output_of_sleek = if bottom_up then ("logs/fixcalc"^(* (fix_num #str_get_next)^ *)".inf") else "fixcalc.td" in
-  let () = DD.info_pprint ("fixcalc file name: " ^ output_of_sleek) no_pos in
+  let () = x_tinfo_pp ("fixcalc file name: " ^ output_of_sleek) no_pos in
   let oc = open_out output_of_sleek in
   Printf.fprintf oc "%s" input_fixcalc;
   flush oc;
@@ -948,8 +948,8 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
 
   (* Parse result *)
   DD.ninfo_pprint ("Result of fixcalc: " ^ res) no_pos;
-  let fixpoints = Parse_fix.parse_fix res in
-  DD.ninfo_hprint (add_str "Result of fixcalc (parsed): "
+  let fixpoints = x_add_1 Parse_fix.parse_fix res in
+  x_binfo_hp (add_str "Result of fixcalc (parsed): "
                      (pr_list !CP.print_formula)) fixpoints no_pos;
 
   (* Pre-result *)

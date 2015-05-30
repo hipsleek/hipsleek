@@ -1024,7 +1024,7 @@ GOT inst b=@L.
 
 Entail 1: Fail.(may) cause: b=@L & @M<:a |-  a<:b. LOCS:[7;0] (may-bug)
 =======================================================
-# ex8e1f.ss  --print-type -debug fix.dd
+# imm/inf/ex8e1f.ss -dre "parse_fix\|compute_" --print-type > 1
 
 int foo(cell c)
   infer [Q]
@@ -1034,17 +1034,30 @@ int foo(cell c)
 # Losing type info after top-down fix-calc 
 # need to restore it aftre calling fixcalc.td
 
-@3! **fixcalc.ml#907:rel_defs:[( Q:RelT([])(a:AnnT,pa:AnnT), (a:AnnT<=2 | (exists(a_1491:AnnT:a:AnnT<=a_1491:AnnT & 
+# Solution : use a global tlist_g that will be set with the type of
+free variables before fixcalc, and use that to guide the correct
+typing.
+
+# We may want to write a more general typed_invoke_of_fixcalc
+that would set/reste tlist_g prior to fixcalc and parse_fix.
+
+let tlist_g = ref []
+let set_tlist vs = tlist_g := vs
+let clear_tlist () = tlist_g := []
+let add_tlist vs = tlist_g := !tlist_g @ vs
+
+!!! **fixcalc.ml#907:rel_defs:[( Q:RelT([])(a:AnnT,pa:AnnT), (a:AnnT<=2 | (exists(a_1491:AnnT:a:AnnT<=a_1491:AnnT & 
 Q:RelT([])(a_1491:AnnT,pa:AnnT)) & a:AnnT<=2)),1)]
-@3! **fixcalc.ml#908:No of disjs:1
-@3! **fixcalc.ml#916:top down
-@3! fixcalc file name: fixcalc.td
-(==fixcalc.ml#1337==)
-compute_fixpoint_aux@3@2@1
-compute_fixpoint_aux inp1 :[( Q:RelT([])(a:AnnT,pa:AnnT), (a:AnnT<=2 | (exists(a_1491:AnnT:a:AnnT<=a_1491:AnnT & 
-Q:RelT([])(a_1491:AnnT,pa:AnnT)) & a:AnnT<=2)),1)]
-compute_fixpoint_aux inp2 :[v:int,Q:RelT([]),a:AnnT,c:cell]
-compute_fixpoint_aux@3 EXIT:[( Q:RelT([])(a:AnnT,pa:AnnT), 2>=a:Unknown & RECa:Unknown>=a:Unknown)]
+!!! **fixcalc.ml#908:No of disjs:1
+!!! **fixcalc.ml#916:top down
+(==fixcalc.ml#196==)
+parse_fix@13@11@10
+parse_fix inp1 :
+2 >= a && RECa >= a
+
+parse_fix@13 EXIT:[ 2>=a:Unknown & RECa:Unknown>=a:Unknown]
+
+
 =======================================================
 =======================================================
 =======================================================
