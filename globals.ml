@@ -1067,6 +1067,8 @@ let imm_simplif_inst = ref true
 
 let int2imm_conv = ref true
 
+let aggresive_imm_inst = ref false 
+
 (*Since this flag is disabled by default if you use this ensure that 
   run-fast-test mem test cases pass *)
 (* let allow_field_ann = ref false  *)

@@ -398,7 +398,7 @@ let pick_wekeast_instatiation_new lhs_exp rhs_sv loc lhs_f rhs_f ivars evars =
   else 
     (* if the lhs relevant pure is empty, add lhs<:rhs to the  *)
     let lhs_rele = CP.filter_var_new lhs_p (CP.afv lhs_exp) in
-    if (CP.is_True lhs_rele) then 
+    if ((CP.is_True lhs_rele) && !Globals.aggresive_imm_inst) then 
       Some (CP.join_conjunctions ((lhs_rhs_rel lhs_exp rhs_exp)::to_lhs_lst)), Some []
     else to_lhs, to_rhs 
 
