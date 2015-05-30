@@ -1617,6 +1617,14 @@ let process_validate exp_res opt_fl ils_es=
     let res_str = ref "" in
     (*get current residue -> FAIL? VALID*)
     let rs = !CF.residues in
+    let pr = Cprinter.string_of_list_context in
+    let pr2 = Cprinter.string_of_numbered_list_formula_trace_inst !cprog in
+    let rs_nb = match rs with 
+        None -> None
+      | Some (cl,_) -> Some (CF.list_formula_trace_of_list_context cl) in
+    (* let () = x_binfo_hp (add_str "Evan : Validate" (pr_option (pr_pair pr string_of_bool))) rs no_pos in *)
+    let () = x_binfo_hp (add_str "Evan : Validate" (pr_option pr2)) rs no_pos in
+    (* let () = print_endline_quiet "\n" in *)
     let a_r, ls_a_es, act_vars = match !CF.residues with
       | None ->
         let _ = res_str := "Expecting "^(string_of_vres exp_res)^"BUT got no residue" in
@@ -1698,7 +1706,7 @@ let process_validate exp_res opt_fl ils_es=
           (*         (true, ls_a_es, CP.remove_dups_svl act_vars) *)
         end
     in
-    let _ = print_string (validate_id ^ !res_str) in
+    let _ = print_endline_quiet (validate_id ^ !res_str) in
     (*expect: r = FAIL? Valid*)
     (* let ex_r = if String.compare r "Valid" == 0 then true else *)
     (*   if String.compare r "FAIL" == 0 then false else *)
