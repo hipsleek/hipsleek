@@ -1008,10 +1008,14 @@ let comm_is_null a1 a2 =
 let comm_is_ann a1 a2 =
   match a1,a2 with
   | Var(v,_),IConst(i,_) ->
-    (is_ann_type (type_of_spec_var v),a1,i)
+    (is_ann_type (type_of_spec_var v),a1,i, a2)
   | IConst(i,_),Var(v,_) ->
-    (is_ann_type (type_of_spec_var v),a2,i)
-  | _ -> (false,a1,0)
+    (is_ann_type (type_of_spec_var v),a2,i, a1)
+  | Var(v,_), e  ->
+    (is_ann_type (type_of_spec_var v),a1,1, a2) 
+  | e, Var(v,_)->
+    (is_ann_type (type_of_spec_var v),a1,1, a1) 
+  | _ -> (false, a1, 0, a1)
 
 let is_ptr_ctr a1 a2 =
   match a1,a2 with
@@ -1036,6 +1040,13 @@ let is_null a1 a2 =
     (is_otype (type_of_spec_var v),a1,a2)
   | _ -> (false,a1,a2)
 
+let trans_int_to_imm_exp a = 
+  let f_e a = 
+    match a with 
+    | IConst (i,loc) -> Some (int_imm_to_exp i loc)
+    | _ -> None in
+  CP.transform_exp f_e a
+
 (* Andreea : use a flag to determine aggressive simplification *)
 let change_to_imm_rel_p_formula pf = 
   match pf with 
@@ -1051,25 +1062,29 @@ let change_to_imm_rel_p_formula pf =
     else None
   | Lte(IConst(i,_),(Var(v,_) as a1),ll) 
   | Gte((Var(v,_) as a1),IConst(i,_), ll) -> 
+    let () = x_binfo_hp (add_str " here 0" string_of_typ) (type_of_spec_var v) no_pos in
     if is_ann_type (type_of_spec_var v) then
       let new_f =
+        let () = x_binfo_pp " here 1" no_pos in
         if (i<=(int_of_heap_ann imm_bot)&& !Globals.aggressive_imm_simpl)  then BConst(true, ll)
         else if i>(int_of_heap_ann imm_top) then BConst(false, ll)
         else if i=(int_of_heap_ann imm_top) then Eq(a1, CP.int_imm_to_exp i ll, ll)
         else SubAnn(CP.int_imm_to_exp i ll, a1, ll)
       in Some new_f
     else None
-  | Lte((Var(v1,_) as a1), (Var(v2,_) as a2), ll) ->  
+  | Lte((Var(v1,_) as a1), (Var(v2,_) as a2), ll)
+  | Gte((Var(v2,_) as a2), (Var(v1,_) as a1), ll) ->
     if is_ann_type (type_of_spec_var v1) && is_ann_type(type_of_spec_var v2) then Some (SubAnn(a1, a2, ll))
     else None
   | Eq (a1, a2, ll) -> 
-    let (is_imm,a1,i) = comm_is_ann a1 a2 in
-    if is_imm then
-      let new_f = 
-        if is_valid_ann i then Eq(a1, CP.int_imm_to_exp i ll,ll) else BConst (false,ll)
-      in Some new_f
+    let (is_imm,a1,i,a2) = comm_is_ann a1 a2 in
+    if is_imm then Some (Eq (a1, (trans_int_to_imm_exp a2), ll))
     else None
   | _ -> None
+
+let change_to_imm_rel_p_formula pf = 
+  let pr = !CP.print_p_formula in
+  Debug.no_1 "change_to_imm_rel_p_formula" pr (pr_opt pr) change_to_imm_rel_p_formula pf
 
 let change_to_imm_rel_p_formula pf = 
   if not (!Globals.int2imm_conv) then None (* disable conversion of an arith formula back to one containing imm *) 
@@ -1121,7 +1136,7 @@ let cnv_int_to_ptr f =
       if is_null_flag then
         Some(Eq(a1,Null ll,ll),l)
       else 
-        let (is_ann_flag,a1,i) = comm_is_ann a1 a2 in
+        let (is_ann_flag,a1,i,_) = comm_is_ann a1 a2 in
         if is_ann_flag then
           if is_valid_ann i then Some(Eq(a1, CP.int_imm_to_exp i ll,ll),l)
           else  Some(BConst (false,ll),l) (* contradiction *)
@@ -1132,7 +1147,7 @@ let cnv_int_to_ptr f =
       if is_null_flag then
         Some(Neq(a1,Null ll,ll),l)
       else
-        let (is_ann_flag,a1,i) = comm_is_ann a1 a2 in
+        let (is_ann_flag,a1,i,_) = comm_is_ann a1 a2 in
         if is_ann_flag then
           if is_valid_ann i then
             Some(Neq(a1, CP.int_imm_to_exp i ll,ll),l)

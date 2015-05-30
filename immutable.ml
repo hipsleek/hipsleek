@@ -325,6 +325,7 @@ let pick_wekeast_instatiation_new lhs_exp rhs_sv loc lhs_f rhs_f ivars evars =
   let lrsubtype = lhs_rhs_rel lhs_exp rhs_exp in
   let pure_lhs = CF.get_pure lhs_f in
   let pure_rhs = CF.get_pure rhs_f in
+  let evars = Gen.BList.difference_eq CP.eq_spec_var evars [rhs_sv] in
 
   (* return lhs & rhs pures relevant to svl *)
   let get_relevant_lhs_rhs lhs rhs svl =
@@ -500,12 +501,12 @@ let subtype_ann_gen_x lhs_f rhs_f elhs erhs impl_vars evars (imm1 : CP.ann) (imm
         (* implicit var annotation on rhs *)
         if CP.mem rhs_sv impl_vars then 
           (* let inst, to_rhs' = x_add pick_wekeast_instatiation l rhs_sv loc lhs_f rhs_f impl_vars evars in *)
-          let to_lhs = map_opt_def to_lhs (fun x -> x) inst in
+          (* let to_lhs = map_opt_def to_lhs (fun x -> x) inst in *)
           let to_rhs = map_opt_def [to_rhs] (fun x ->  x) to_rhs' in
           (f, [to_lhs], to_rhs, [])
         else if CP.mem rhs_sv evars then
           (f,[to_lhs], [to_rhs], [to_rhs])
-        else (f,[],[to_rhs], [])
+        else (f,[to_lhs],[to_rhs], [])
       | _ -> (f,[],[to_rhs], [])
     end
 
