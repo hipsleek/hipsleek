@@ -24,6 +24,17 @@ checkentail c::cell<v>@a & a<:@L |-  c::cell<_>@b &b<:@L.
 print residue.
 expect Valid. // with b inst to @L
 
+//(3)
+checkentail c::cell<v>@a & a=@L |-  c::cell<_>@b &b<:@L.
+print residue.
+expect Valid. // with b inst to @L
+
+//(3)
+checkentail c::cell<v>@a & a<:@M |-  c::cell<_>@b & b<:@M.
+print residue.
+expect Valid. // with b inst to @L
+
+
 /*
 # ex8e2g.slk
 

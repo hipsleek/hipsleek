@@ -742,7 +742,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let () = x_binfo_hp (add_str "pre_rel_fmls" (pr_list pr)) pre_rel_fmls no_pos in
             let () = x_binfo_hp (add_str "pre_fmls" (pr_list pr)) pre_fmls no_pos in
             let res = wrap (x_add Fixpoint.update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs
-                              Fixcalc.compute_fixpoint_td
+                              (x_add Fixcalc.compute_fixpoint_td)
                               Fixcalc.fixc_preprocess reloblgs pre_rel_df post_rel_df_new post_rel_df pre_vars proc_spec) grp_post_rel_flag
             in
             let () = x_binfo_hp (add_str "fixpoint" (pr_list (pr_quad pr pr pr pr))) res no_pos in
