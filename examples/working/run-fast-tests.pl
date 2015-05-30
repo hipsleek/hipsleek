@@ -1913,6 +1913,8 @@ my $dis = '--dis-inv-baga';
                       ["imm/imm4.slk", " --imm --etcsu1 ", (), "Valid.Fail."],
                       ["imm/imm8-instantiation.slk", " --etcsu1 ", (), "Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid."],
                       ["imm/imm8-instantiation.slk", " --etcsu1 --field-imm ", (), "Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid."],
+                      ["imm/imm9-early-inst.slk", " --etcsu1 ", (), "Valid.Valid.Fail.Fail.Fail.Valid.Fail.Fail.Fail.Fail.Valid.Fail."],
+                      ["imm/imm9-early-inst.slk", " --etcsu1 ", (), "Valid.Valid.Fail.Fail.Fail.Valid.Fail.Fail.Fail.Fail.Valid.Fail."],
                       ["imm/imm-hard.slk", " --imm --eps", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
                       ["imm-field/sleek01.slk", " --field-imm --etcsu1 ", (), "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail."],
                       ["imm-field/sleek02.slk", " --field-imm --etcsu1 ", (), "Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail."],

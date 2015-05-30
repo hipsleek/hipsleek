@@ -324,7 +324,7 @@ let common_arguments = [
   ("--en-imm-merge", Arg.Set Globals.imm_merge,"try to merge aliased nodes");
   ("--dis-imm-merge", Arg.Clear Globals.imm_merge,"don't merge aliased nodes");
   ("--en-weak-imm", Arg.Set Globals.imm_weak,"enable weak instatiation (<:)");
-  ("--dis-weak-imm", Arg.Clear Globals.imm_weak,"enable weak instatiation (=)");
+  ("--dis-weak-imm", Arg.Clear Globals.imm_weak,"enable strong instatiation (=)");
   ("--en-imm-simplif-inst", Arg.Set Globals.imm_simplif_inst,"don't merge aliased nodes");
   ("--dis-imm-simplif-inst", Arg.Clear Globals.imm_simplif_inst,"don't merge aliased nodes");
   ("--en-aggresive-imm-inst", Arg.Set Globals.aggresive_imm_inst,"add lhs_imm<:rhs_imm to state (during matching), when lhs_imm is unrestricted");

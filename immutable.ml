@@ -287,6 +287,8 @@ let upper_bound_rel sv bound = CP.mkPure (CP.mkEq sv bound no_pos)
 let lower_bound_rel sv bound = CP.mkPure (CP.mkEq sv bound no_pos)
 let alias_rel sv1 sv2 = CP.mkEqVar sv1 sv2 no_pos
 
+let pr_out = pr_pair (pr_opt Cprinter.string_of_pure_formula) (pr_opt (pr_list Cprinter.string_of_pure_formula) )
+
 let get_bounds ~upper:upper aliases pure  =
   let f_b_bormula f =
     let (p_f, _) = f in
@@ -320,6 +322,7 @@ let pick_bounds ~upper:upper max_bounds var_to_be_instantiated sv_to_be_instanti
 
 let pick_wekeast_instatiation_new lhs_exp rhs_sv loc lhs_f rhs_f ivars evars =
   let rhs_exp = CP.Var(rhs_sv,loc) in
+  let lrsubtype = lhs_rhs_rel lhs_exp rhs_exp in
   let pure_lhs = CF.get_pure lhs_f in
   let pure_rhs = CF.get_pure rhs_f in
 
@@ -337,26 +340,24 @@ let pick_wekeast_instatiation_new lhs_exp rhs_sv loc lhs_f rhs_f ivars evars =
 
   let pick_eq p1 = (pick_equality_instantiation rhs_sv loc p1, None) in
 
-  (* check for constant upper bounds and instantiate to that *)
+  let instantiate_to_bounds_aux ~upper:upper pure aliases  =
+    let candidates = get_bounds ~upper:upper (rhs_sv::aliases) pure in
+    match candidates with
+    | [] -> None, None
+    | _  -> pick_bounds ~upper:upper candidates rhs_exp rhs_sv  in
+  
+  let instantiate_to_bounds_aux ~upper:upper candidates pure =
+    let pr1 b = ite b "seraching for upper bounds" "seraching for lower bounds" in
+    Debug.no_1 "instantiate_to_bounds_aux" pr1 pr_out (fun _ -> instantiate_to_bounds_aux ~upper:upper candidates pure) upper  in
+
+  (* check for upper/lower bounds and instantiate to that *)
   let instantiate_to_bounds pure =
     let aset = build_eset_of_conj_formula pure in
     let aliases = CP.EMapSV.find_equiv_all rhs_sv aset in
-    let max_candidates = get_bounds ~upper:true (rhs_sv::aliases) pure in
-    let inst = 
-      match max_candidates with
-      | [] -> begin
-          let () =  x_tinfo_pp  "no explicit upper bound found / searching for lower bound" no_pos in
-          let min_candidates = get_bounds ~upper:false (rhs_sv::aliases) pure in
-          match min_candidates with
-          | [] -> let () =  x_tinfo_pp  "no explicit lower bound found" no_pos in
-            None, None
-          | _ ->
-            let () =  x_tinfo_hp (add_str "choosing upper bounds: " (pr_list CP.string_of_imm)) max_candidates no_pos in
-            pick_bounds ~upper:false min_candidates rhs_exp rhs_sv 
-        end
-      | _  -> let () =  x_tinfo_hp (add_str "choosing upper bounds: " (pr_list CP.string_of_imm)) max_candidates no_pos in
-        pick_bounds ~upper:true max_candidates rhs_exp rhs_sv 
-   in inst in
+    let to_lhs, to_rhs = instantiate_to_bounds_aux ~upper:true pure aliases in
+    let inst_to_min = instantiate_to_bounds_aux ~upper:false pure aliases in
+    map_opt_def inst_to_min (fun x -> Some x, to_rhs) to_lhs in
+
 
   (* 3 find poly bounds and instantiate to global bound *)
   let pick_bounds_incl_global () =
@@ -377,7 +378,7 @@ let pick_wekeast_instatiation_new lhs_exp rhs_sv loc lhs_f rhs_f ivars evars =
   (*2. check if rhs_p_restricted is true and if so add lhs_imm<:rhs_imm *)
   let check4_empty rhs_p_restricted rhs_p = 
     let form = TP.simplify_tp (CP.wrap_exists_svl rhs_p_restricted evars) in
-    if (CP.is_True form) then Some (lhs_rhs_rel lhs_exp rhs_exp ), None
+    if (CP.is_True form) then Some lrsubtype, None
     else
       (* 3 find constant bounds and instantiate to bound *)
       let qvars3 = Gen.BList.difference_eq CP.eq_spec_var ((CP.all_vars lhs_p)@(CP.all_vars rhs_p)) [rhs_sv] in
@@ -393,13 +394,13 @@ let pick_wekeast_instatiation_new lhs_exp rhs_sv loc lhs_f rhs_f ivars evars =
   
   (* final check for sat and empty rhs_relevant *)
   let to_lhs_lst = map_opt_def [] (fun x -> [x]) to_lhs in
-  let to_chek_4_sat = CP.join_conjunctions ([lhs_p;(* rhs_p; *)(lhs_rhs_rel lhs_exp rhs_exp)]@to_lhs_lst) in
+  let to_chek_4_sat = CP.join_conjunctions ([lhs_p;(* rhs_p; *)lrsubtype]@to_lhs_lst) in
   if (CP.is_False (TP.simplify_tp to_chek_4_sat)) then Some (CP.mkTrue no_pos), None
   else 
     (* if the lhs relevant pure is empty, add lhs<:rhs to the  *)
     let lhs_rele = CP.filter_var_new lhs_p (CP.afv lhs_exp) in
     if ((CP.is_True lhs_rele) && !Globals.aggresive_imm_inst) then 
-      Some (CP.join_conjunctions ((lhs_rhs_rel lhs_exp rhs_exp)::to_lhs_lst)), Some []
+      Some (CP.join_conjunctions (lrsubtype::to_lhs_lst)), Some [] (* this is not very sound... *)
     else to_lhs, to_rhs 
 
 let pick_wekeast_instatiation lhs rhs loc lhs_f rhs_f ivars evars=

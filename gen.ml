@@ -199,6 +199,8 @@ struct
   let exists_l_snd f x = List.exists (fun (_,c)-> f c) x
   let all_l_snd f x = List.for_all (fun (_,c)-> f c) x
 
+  let ite cond f1 f2 =  if cond then f1 else f2
+
   let add_str s f xs = s^":"^(f xs)
 
   let opt_to_list o = match o with

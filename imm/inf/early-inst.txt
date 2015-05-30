@@ -54,7 +54,10 @@ P(w) <--- relevant(P(w))         Q(v) <--- relevant(Q(v))
 10. lower_bound = find the constant lower bound of v, given Q3(v) in
 11. if {no explicit lower bound candidate found} then GOTO13. Else GOTO 12
 12. inst(w,v) = [v=lower_bound] ?or <: ?, to_prove = [w<:v] END 
-13. repeat 4-12 searching for poly bound, where bound is global (qvars4 = qvars)
+13. let qvars4 = qvars in 
+14. let Q4(v,w) = simplify ( \exists qvars4  Q2(v) & P(w) & w<:v ) in
+15. if v has a global alias, given Q4(v) then inst=[v=global_alias_var]. END Else GOTO16
+16. repeat 4-12 searching for poly bound, in Q4(v,w)
 (g) x::cell<_>@w & w<:@L & u=ww |- x::cell<_>@v & v<:u --> inst(v,w)=[v=u] OK
 
 ALGO 2:
