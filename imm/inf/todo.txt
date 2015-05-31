@@ -1068,9 +1068,21 @@ eg:
 ex of input:  b=@A+c & c=@M ----> b=@M & c=@M
 ex of output: [c=b + @A ] & b=@M ---> c=@M & b=@M
 
+=====================================================
+#  imm/inf/ex8e1f.ss 
 
+  let post ls = (* Wrapper.wrap_with_int_to_imm *) (List.map (fold_pair1f Immutable.map_int_to_imm_pure_formula)) ls in
+ 
+Why did we get a stack underflow exception ?
 
-=======================================================
+T]ERROR : top of empty stackException(trans_int_to_imm_exp):Gen.Stack_Error
+Exception(change_to_imm_rel_p_formula):Gen.Stack_Error
+Exception(transform_formula):Gen.Stack_Error
+Exception(compute_fixpoint_td):Gen.Stack_Error
+Exception(pre_calculate):Gen.Stack_Error
+Exception(pre_rel_fixpoint):Gen.Stack_Error
+Exception(update_with_td_fp):Gen.Stack_Error
+
 =======================================================
 =======================================================
 =======================================================
