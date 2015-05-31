@@ -1095,7 +1095,9 @@ let change_to_imm_rel_p_formula pf =
   Debug.no_1 "change_to_imm_rel_p_formula" pr (pr_opt pr) change_to_imm_rel_p_formula pf
 
 let change_to_imm_rel_p_formula pf = 
-  if not (!Globals.int2imm_conv) then None (* disable conversion of an arith formula back to one containing imm *) 
+  if not (!Globals.int2imm_conv) then 
+    let () = x_binfo_pp  "conversion of int to imm is disabled"  no_pos in
+    None (* disable conversion of an arith formula back to one containing imm *) 
   else change_to_imm_rel_p_formula pf 
 
 let change_to_imm_rel_b_formula pf l = map_opt_def None (fun x -> Some (x,l)) (change_to_imm_rel_p_formula pf)
@@ -1144,17 +1146,22 @@ let cnv_int_to_ptr f =
       if is_null_flag then
         Some(Eq(a1,Null ll,ll),l)
       else 
-        let (is_ann_flag,_,_,_) = comm_is_ann a1 a2 in
-        if is_ann_flag then 
-          map_opt_def (Some bf) (fun x -> Some (x,l)) (change_to_imm_rel_p_formula pf)
+        let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
+        if (ptr_flag || ann_flag) then   Some(x_add to_ptr is_null_flag pf,l)
+        (* let (is_ann_flag,_,_,_) = comm_is_ann a1 a2 in *)
+        (* if is_ann_flag then  Some(x_add to_ptr is_null_flag pf,l) *)
+          (* map_opt_def (Some bf) (fun x -> Some (x,l)) (change_to_imm_rel_p_formula pf) *)
         else Some bf
     | Neq (a1, a2, ll) -> 
       let (is_null_flag,a1,a2) = comm_is_null a1 a2 in
       if is_null_flag then
         Some(Neq(a1,Null ll,ll),l)
       else
-        let (is_ann_flag,_,_,_) = comm_is_ann a1 a2 in
-        if is_ann_flag then map_opt_def (Some bf) (fun x -> Some (x,l)) (change_to_imm_rel_p_formula pf)
+        let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
+        if (ptr_flag || ann_flag) then   Some(x_add to_ptr is_null_flag pf,l)
+        (* let (is_ann_flag,_,_,_) = comm_is_ann a1 a2 in *)
+        (* if is_ann_flag then Some(x_add to_ptr is_null_flag pf,l) *)
+        (* map_opt_def (Some bf) (fun x -> Some (x,l)) (change_to_imm_rel_p_formula pf) *)
         else Some bf
     | Gt(a2,a1,ll) | Lt(a1,a2,ll) ->
       let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
