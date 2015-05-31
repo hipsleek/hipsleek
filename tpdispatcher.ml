@@ -69,8 +69,6 @@ let decr_priority = ref false
 let set_priority = ref false
 let prio_list = ref []
 
-
-
 let sat_cache = ref (Hashtbl.create 200)
 let imply_cache = ref (Hashtbl.create 200)
 
@@ -488,6 +486,8 @@ let init_tp () =
   set_tp !Smtsolver.smtsolver_name (* "z3" *)
 (* set_tp "parahip" *)
 
+let imm_stk = new Gen.stack
+
 let string_of_tp tp = match tp with
   | OmegaCalc -> "omega"
   | CvcLite -> "cvcl"
@@ -904,9 +904,29 @@ let comm_inf a1 a2 =
   else if f1 then (f1,a2,a1)
   else (f2,a1,a2)
 
+let stack_imm_add e l =
+  let fresh_sv = CP.fresh_spec_var_ann ~old_name:"imm_add" () in
+  let subs = (fresh_sv, e) in
+  let lst = imm_stk # pop_top in
+  let lst = subs::lst in
+  let _ = imm_stk # push lst in
+  CP.mkVar fresh_sv l
+
+let replace_imm_var_with_exp sv =
+  let lst = imm_stk # top in
+  try
+    let exp = snd ( List.find (fun (a,_) -> CP.eq_spec_var a sv) lst) in
+    Some exp
+  with Not_found -> None
+
 let cnv_imm_to_int_exp e =
   match e with
-  | AConst (a,l) ->  Some (IConst(int_of_heap_ann a, l))
+  | AConst (a,l)  -> Some (IConst(int_of_heap_ann a, l))
+  | Add (a1,a2,l) -> 
+    if CP.is_ann_type (CP.get_exp_type e) then 
+      let new_var = stack_imm_add e l in
+      Some new_var 
+    else None
   | _ -> None
 
 let transform_imm_to_int_exp_opt e =
@@ -1044,8 +1064,14 @@ let trans_int_to_imm_exp a =
   let f_e a = 
     match a with 
     | IConst (i,loc) -> Some (int_imm_to_exp i loc)
+    | Var (sv,loc)   -> replace_imm_var_with_exp sv
     | _ -> None in
   CP.transform_exp f_e a
+
+let f_e_trans_int_to_imm_exp a =
+  match a with 
+  | Var (sv,loc)   -> if (is_ann_type ((type_of_spec_var sv))) then replace_imm_var_with_exp sv else Some a
+  | _ -> None
 
 let trans_int_to_imm_exp a = 
   let pr = Cprinter.string_of_formula_exp in
@@ -1053,10 +1079,12 @@ let trans_int_to_imm_exp a =
 
 (* Andreea : use a flag to determine aggressive simplification *)
 let change_to_imm_rel_p_formula pf = 
+  let f_e e = trans_int_to_imm_exp e in 
   match pf with 
   | Lte((Var(v,_) as a1), IConst(i,_),ll)  
   | Gte(IConst(i,_), (Var(v,_) as a1), ll) -> 
     if is_ann_type (type_of_spec_var v) then
+      let a1 = f_e a1 in
       let new_f =
         if i<(int_of_heap_ann imm_bot)  then BConst(false, ll)
         else if (i>=(int_of_heap_ann imm_top) && !Globals.aggressive_imm_simpl) then BConst(true, ll)
@@ -1068,6 +1096,7 @@ let change_to_imm_rel_p_formula pf =
   | Gte((Var(v,_) as a1),IConst(i,_), ll) -> 
     let () = x_binfo_hp (add_str " here 0" string_of_typ) (type_of_spec_var v) no_pos in
     if is_ann_type (type_of_spec_var v) then
+      let a1 = f_e a1 in
       let new_f =
         let () = x_binfo_pp " here 1" no_pos in
         if (i<=(int_of_heap_ann imm_bot)&& !Globals.aggressive_imm_simpl)  then BConst(true, ll)
@@ -1078,15 +1107,17 @@ let change_to_imm_rel_p_formula pf =
     else None
   | Lte((Var(v1,_) as a1), (Var(v2,_) as a2), ll)
   | Gte((Var(v2,_) as a2), (Var(v1,_) as a1), ll) ->
-    if is_ann_type (type_of_spec_var v1) && is_ann_type(type_of_spec_var v2) then Some (SubAnn(a1, a2, ll))
+    if is_ann_type (type_of_spec_var v1) && is_ann_type(type_of_spec_var v2) then Some (SubAnn(f_e a1, f_e a2, ll))
     else None
   | Eq (a1, a2, ll) -> 
     let (is_imm,a1,i,a2) = comm_is_ann a1 a2 in
-    if is_imm then Some (Eq (a1, (trans_int_to_imm_exp a2), ll))
+    if is_imm then 
+      let a1,a2 = f_e a1, f_e a2 in Some (Eq (a1,a2, ll))
     else None
   | Neq (a1, a2, ll) -> 
     let (is_imm,a1,i,a2) = comm_is_ann a1 a2 in
-    if is_imm then Some (Neq (a1, (trans_int_to_imm_exp a2), ll))
+    if is_imm then 
+      let a1,a2 = f_e a1, f_e a2 in Some (Neq (a1, a2, ll))
     else None
   | _ -> None
 
@@ -1234,9 +1265,12 @@ let norm_pure_result f =
   Debug.no_1 "norm_pure_result" pr pr (fun _ -> norm_pure_result f) f
 
 let wrap_pre_post_gen pre post f a =
+  let () = imm_stk # push [] in
   let s1 = pre a in
   let r2 = f a in
-  post s1 r2
+  let res =  post s1 r2 in
+  let _ = imm_stk # pop in
+  res
 
 let wrap_pre_post_print s fn x =
   let pr = Cprinter.string_of_pure_formula in
@@ -1315,9 +1349,12 @@ let norm_pure_result f =
 (*   Debug.no_1 "cnv_int_to_ptr" pr pr cnv_int_to_ptr f *)
 
 let wrap_pre_post pre post f a =
+  let () = imm_stk # push [] in
   let a = pre a in
   let r = f a in
-  post r
+  let res = post r in
+  let _ = imm_stk # pop in
+  res
 
 (*  
    [["a","b"]:f1; "a":f2; "b":f3; "c":f4]

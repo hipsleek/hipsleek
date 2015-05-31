@@ -1223,6 +1223,7 @@ let rec get_exp_type (e : exp) : typ =
     begin
       match get_exp_type e1, get_exp_type e2 with
       | Int, Int -> Int
+      | AnnT, AnnT -> AnnT
       | _ -> Float
     end
   | Div _ -> Float
