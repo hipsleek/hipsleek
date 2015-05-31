@@ -1059,6 +1059,17 @@ parse_fix@13 EXIT:[ 2>=a:Unknown & RECa:Unknown>=a:Unknown]
 
 
 =======================================================
+
+to add wrapper for normalizing addition before sending 
+it to prover, and after receiving the  prover's answer
+
+eg:
+
+ex of input:  b=@A+c & c=@M ----> b=@M & c=@M
+ex of output: [c=b + @A ] & b=@M ---> c=@M & b=@M
+
+
+
 =======================================================
 =======================================================
 =======================================================
