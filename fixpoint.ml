@@ -565,7 +565,7 @@ let update_with_td_fp_x bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
        let final_pre = List.fold_left (fun f1 f2 -> CP.mkAnd f1 f2 no_pos) constTrue lst in
        let final_pre = x_add_1 TP.simplify_raw final_pre in
        let final_pre = filter_disj final_pre pre_fmls in
-       let final_pre = TP.pairwisecheck_raw final_pre in
+       let final_pre = x_add_1 TP.pairwisecheck_raw final_pre in
        let () = x_dinfo_hp (add_str "final_pre(pred)" !CP.print_formula) final_pre no_pos in
        let checkpoint1 = check_defn r final_pre new_pre_rel_df in
        if checkpoint1 then [(rel,post,r,final_pre)]
