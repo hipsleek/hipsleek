@@ -2681,7 +2681,10 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
           let check_under_num_inv inv body =
             if CP.isConstTrue inv then
               let disjs = CP.split_disjunctions body in
-              List.for_all (fun disj -> CP.isConstTrue disj) disjs
+              List.for_all (fun disj ->
+                  let disj = Tpdispatcher.simplify disj in
+                  CP.isConstTrue disj
+              ) disjs
             else Tpdispatcher.imply_raw inv body
           in
           let precise_num_invs = List.map (fun (vd,fixc) ->
@@ -2738,7 +2741,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
           let () = x_ninfo_hp (add_str "fixcalc_invs" (pr_list (pr_option Cprinter.string_of_mix_formula))) fixcalc_invs no_pos in
           (* let () = x_tinfo_hp (add_str "fixcalc_invs_inv" (pr_list (pr_option Cprinter.string_of_mix_formula))) fixcalc_invs_inv no_pos in *)
           let () = x_tinfo_hp (add_str "fixcalc_invs (cviews0)" (pr_list (pr_option Cprinter.string_of_mix_formula))) fixcalc_invs_cviews0 no_pos in
-          let () = x_tinfo_hp (add_str "num_invs" (pr_list Cprinter.string_of_pure_formula)) num_invs_wrap_index no_pos in
+          let () = x_tinfo_hp (add_str "num_invs" (pr_list Cprinter.string_of_pure_formula)) num_invs no_pos in
           let () = x_tinfo_hp (add_str "baga_invs" (pr_list Excore.EPureI.string_of_disj)) baga_invs no_pos in
           let () = List.iter (fun (vd,inv) ->
               Hashtbl.add Excore.map_num_invs vd.Cast.view_name ((CP.mk_self None)::vd.Cast.view_vars,inv)
@@ -2749,7 +2752,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
               let new_disj = List.map (fun disj2 -> Excore.EPureI.mk_star disj1 disj2) disj in
               new_disj
             ) baga_num_invs in
-          let () = x_ninfo_hp (add_str "combined_invs" (pr_list Excore.EPureI.string_of_disj)) combined_invs no_pos in
+          let () = x_tinfo_hp (add_str "combined_invs" (pr_list Excore.EPureI.string_of_disj)) combined_invs no_pos in
           let () = List.iter (fun (vd,inv) ->
               Hashtbl.replace Excore.map_baga_invs vd.Cast.view_name inv
             ) (List.combine view_list_baga0 combined_invs) in

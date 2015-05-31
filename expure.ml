@@ -359,10 +359,12 @@ let build_ef_view_x (view_decl : Cast.view_decl) (all_views : Cast.view_decl lis
     ) view_decl.Cast.view_un_struc_formula) in
   (* NOTE : should be already sorted/normalized! *)
   (* let disj = List.sort EPureI.epure_compare disj in *)
-  let () = Debug.ninfo_hprint (add_str "before norm" (EPureI.string_of_disj)) disj no_pos in
+  let () = x_tinfo_hp (add_str "before norm" (EPureI.string_of_disj)) disj no_pos in
   let disj_n = (* EPureI.norm_disj *) disj in
-  let () = Debug.ninfo_hprint (add_str "after norm" (EPureI.string_of_disj)) disj_n no_pos in
-  simplify disj_n
+  let () = x_tinfo_hp (add_str "after norm" (EPureI.string_of_disj)) disj_n no_pos in
+  let disj_s = (* simplify *) disj_n in
+  let () = x_tinfo_hp (add_str "after simplify" (EPureI.string_of_disj)) disj_s no_pos in
+  disj_s
 
 let build_ef_view (view_decl : Cast.view_decl) (all_views : Cast.view_decl list) : ef_pure_disj =
   let pr_view_name vd = vd.Cast.view_name in
