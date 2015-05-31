@@ -872,6 +872,12 @@ let rec exp_contains_spec_var (e : exp) : bool =
   | ArrayAt _ -> true
   | _ -> false
 
+let eq_spec_var_rec (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
+  | (SpecVar (_, v1, p1), SpecVar (_, v2, p2)) ->
+    (* translation has ensured well-typedness.
+       We need only to compare names and primedness *)
+    ((String.compare v1 v2 = 0) || (String.compare ("REC" ^ v1) v2 = 0)) && (p1 = p2)
+
 let eq_spec_var1 (sv1: spec_var) (sv2: spec_var) = match (sv1, sv2) with
   | (SpecVar (_, v1, p1), SpecVar (_, v2, p2)) ->
     let reg = Str.regexp "_.*" in

@@ -920,6 +920,7 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
   (* Prepare the input for the fixpoint calculation *)
   let def = List.fold_left (fun x y -> x ^ (compute_def y ante_vars)) "" rel_defs in
   (* let _ = print_endline ("### compute_fixpoint_aux def:"^def) in *)
+
   let cmd = compute_cmd rel_defs bottom_up in
   let input_fixcalc =  def ^ cmd  in
   DD.ninfo_pprint ">>>>>> compute_fixpoint <<<<<<" no_pos;
@@ -949,6 +950,26 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
   (* Parse result *)
   DD.ninfo_pprint ("Result of fixcalc: " ^ res) no_pos;
   let fixpoints = x_add_1 Parse_fix.parse_fix res in
+
+  let svl = List.fold_left (fun acc (pf1, pf2, _) ->
+      acc@(CP.fv pf1)@(CP.fv pf2)
+  ) [] rel_defs in
+  let svl = CP.remove_dups_svl svl in
+
+  let svl1 = List.fold_left (fun acc pf ->
+      acc@(CP.fv pf)
+  ) [] fixpoints in
+  let svl1 = CP.remove_dups_svl svl1 in
+  let svl2 = List.map (fun sv1 ->
+      match sv1 with CP.SpecVar(t1, id1, pr1) ->
+          let svl = (List.filter (fun sv -> CP.eq_spec_var_rec sv sv1) svl) in
+          match svl with
+            | [] -> sv1
+            | hd::tl -> CP.SpecVar(CP.type_of_spec_var hd, id1, pr1)
+  ) svl1 in
+
+  let sst = List.combine svl1 svl2 in
+  let fixpoints = List.map (fun fp -> CP.subst sst fp) fixpoints in
   x_binfo_hp (add_str "Result of fixcalc (parsed): "
                      (pr_list !CP.print_formula)) fixpoints no_pos;
 
