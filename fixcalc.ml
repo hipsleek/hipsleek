@@ -427,11 +427,11 @@ let widen (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
 
   (* Remove parentheses *)
   let res = remove_paren res (String.length res) in
-  DD.ninfo_zprint (lazy (("res = " ^ res ^ "\n"))) no_pos;
+  (* x_binfo_zp (lazy (("res = " ^ res ^ "\n"))) no_pos; *)
 
   (* Parse result *)
   let inv = List.hd (x_add_1 Parse_fix.parse_fix res) in
-  let () = DD.ninfo_hprint (add_str "result" Cprinter.string_of_pure_formula) inv no_pos in
+  let () = x_binfo_hp (add_str "result" Cprinter.string_of_pure_formula) inv no_pos in
   inv
 
 (******************************************************************************)
@@ -923,7 +923,7 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
   let cmd = compute_cmd rel_defs bottom_up in
   let input_fixcalc =  def ^ cmd  in
   DD.ninfo_pprint ">>>>>> compute_fixpoint <<<<<<" no_pos;
-  DD.ninfo_pprint ("Input of fixcalc: " ^ input_fixcalc) no_pos;
+  x_binfo_pp ("Input of fixcalc: " ^ input_fixcalc) no_pos;
   (* DD.info_hprint (add_str "def" pr_id) def no_pos; *)
   (* DD.info_hprint (add_str "cmd" pr_id) cmd no_pos; *)
   (* DD.info_zprint (lazy (("fixpoint input = " ^ input_fixcalc))) no_pos; *)
@@ -944,10 +944,10 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
 
   (* Remove parentheses *)
   let res = remove_paren res (String.length res) in
-  DD.ninfo_zprint (lazy (("res = " ^ res ^ "\n"))) no_pos;
+  DD.binfo_zprint (lazy (("res = " ^ res ^ "\n"))) no_pos;
 
   (* Parse result *)
-  DD.ninfo_pprint ("Result of fixcalc: " ^ res) no_pos;
+  (* x_binfo_pp ("Result of fixcalc: " ^ res) no_pos; *)
   let fixpoints = x_add_1 Parse_fix.parse_fix res in
   x_binfo_hp (add_str "Result of fixcalc (parsed): "
                      (pr_list !CP.print_formula)) fixpoints no_pos;
