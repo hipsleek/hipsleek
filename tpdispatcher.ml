@@ -1014,8 +1014,8 @@ let comm_is_ann a1 a2 =
   | Var(v,_), e  ->
     (is_ann_type (type_of_spec_var v),a1,1, a2) 
   | e, Var(v,_)->
-    (is_ann_type (type_of_spec_var v),a1,1, a1) 
-  | _ -> (false, a1, 0, a1)
+    (is_ann_type (type_of_spec_var v),a2,1, a1) 
+  | _ -> (false, a1, 0, a2)
 
 let is_ptr_ctr a1 a2 =
   match a1,a2 with
@@ -1046,6 +1046,10 @@ let trans_int_to_imm_exp a =
     | IConst (i,loc) -> Some (int_imm_to_exp i loc)
     | _ -> None in
   CP.transform_exp f_e a
+
+let trans_int_to_imm_exp a = 
+  let pr = Cprinter.string_of_formula_exp in
+  Debug.no_1 "trans_int_to_imm_exp"  pr pr trans_int_to_imm_exp a
 
 (* Andreea : use a flag to determine aggressive simplification *)
 let change_to_imm_rel_p_formula pf = 
@@ -1079,6 +1083,10 @@ let change_to_imm_rel_p_formula pf =
   | Eq (a1, a2, ll) -> 
     let (is_imm,a1,i,a2) = comm_is_ann a1 a2 in
     if is_imm then Some (Eq (a1, (trans_int_to_imm_exp a2), ll))
+    else None
+  | Neq (a1, a2, ll) -> 
+    let (is_imm,a1,i,a2) = comm_is_ann a1 a2 in
+    if is_imm then Some (Neq (a1, (trans_int_to_imm_exp a2), ll))
     else None
   | _ -> None
 
@@ -1118,7 +1126,7 @@ let to_ptr ptr_flag pf =
         else BConst(true,ll)
       else (* ann_flag *) change_to_imm_rel pf 
     | Lte(Var(_,_),Var(_,_),ll) ->  change_to_imm_rel pf
-    | _ -> pf
+    | _ -> change_to_imm_rel pf 
   in norm (norm0 pf)
 
 let to_ptr ptr_flag pf =
@@ -1136,24 +1144,17 @@ let cnv_int_to_ptr f =
       if is_null_flag then
         Some(Eq(a1,Null ll,ll),l)
       else 
-        let (is_ann_flag,a1,i,_) = comm_is_ann a1 a2 in
-        if is_ann_flag then
-          if is_valid_ann i then Some(Eq(a1, CP.int_imm_to_exp i ll,ll),l)
-          else  Some(BConst (false,ll),l) (* contradiction *)
-          (*else if is_inf a1 then Some(Eq(a2,mkInfConst ll,ll),l)*)
+        let (is_ann_flag,_,_,_) = comm_is_ann a1 a2 in
+        if is_ann_flag then 
+          map_opt_def (Some bf) (fun x -> Some (x,l)) (change_to_imm_rel_p_formula pf)
         else Some bf
     | Neq (a1, a2, ll) -> 
       let (is_null_flag,a1,a2) = comm_is_null a1 a2 in
       if is_null_flag then
         Some(Neq(a1,Null ll,ll),l)
       else
-        let (is_ann_flag,a1,i,_) = comm_is_ann a1 a2 in
-        if is_ann_flag then
-          if is_valid_ann i then
-            Some(Neq(a1, CP.int_imm_to_exp i ll,ll),l)
-          else
-            (*let () = print_endline_quiet "xxxxxx" in*)
-            Some(BConst (true,ll),l) (* of course *)
+        let (is_ann_flag,_,_,_) = comm_is_ann a1 a2 in
+        if is_ann_flag then map_opt_def (Some bf) (fun x -> Some (x,l)) (change_to_imm_rel_p_formula pf)
         else Some bf
     | Gt(a2,a1,ll) | Lt(a1,a2,ll) ->
       let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
