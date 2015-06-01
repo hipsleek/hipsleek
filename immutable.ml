@@ -20,6 +20,7 @@ module IF = Iformula
 module IP = Iprinter
 module C  = Cast
 module I  = Iast
+module Imm = Immutils
 
 
 (* let rec split_phase_debug_lhs h = Debug.no_1 "split_phase(lhs)" *)
@@ -51,7 +52,7 @@ let set_imm (f : h_formula) imm : h_formula =  match f with
 let split_imm_pure pf =
   let split_imm_pure_helper pf0 =
     let conjs = CP.split_conjunctions pf0 in
-    let imm_f, pure_f = List.partition CP.contains_imm conjs in
+    let imm_f, pure_f = List.partition Imm.contains_imm conjs in
     (CP.conj_of_list imm_f no_pos), (CP.conj_of_list pure_f no_pos) in
   let disj = CP.split_disjunctions_deep pf in
   let disj_part = List.map split_imm_pure_helper disj in (* split each disj in imm formula + pure formula *)
@@ -66,8 +67,8 @@ let split_imm_pure pf =
 
 (* if pure contains sv=AConst, then instantiate to AConst *)
 let pick_equality_instantiation sv loc pure : CP.formula option =
-  let p_aset = CP.build_eset_of_imm_formula pure in
-  let imm = CP.get_imm_emap_exp sv p_aset in
+  let p_aset = Imm.build_eset_of_imm_formula pure in
+  let imm = Imm.get_imm_emap_exp_opt sv p_aset in
   map_opt (fun a ->  CP.BForm ((CP.Eq(CP.Var (sv, loc), a, no_pos), None), None)) imm
 
 let pick_equality_instantiation sv loc pure : CP.formula option =
@@ -172,7 +173,7 @@ let pick_wekeast_instatiation lhs rhs_sv loc lhs_f rhs_f ivars evars =
   let rhs_exp = CP.Var(rhs_sv,loc) in
   let qvars = ivars@evars in
   let weakest_inst_helper pure =
-    let aset = CP.build_eset_of_imm_formula pure in
+    let aset = Imm.build_eset_of_imm_formula pure in
     let aliases = CP.EMapSV.find_equiv_all rhs_sv aset in
     let max_candidates = upper_bounds (rhs_sv::aliases) pure in
     let inst = 
@@ -308,7 +309,7 @@ let pick_wekeast_instatiation_new lhs_exp rhs_sv loc lhs_f rhs_f ivars evars =
 
   (* check for upper/lower bounds and instantiate to that *)
   let instantiate_to_bounds pure =
-    let aset = CP.build_eset_of_imm_formula pure in
+    let aset = Imm.build_eset_of_imm_formula pure in
     let aliases = CP.EMapSV.find_equiv_all rhs_sv aset in
     let to_lhs, to_rhs = instantiate_to_bounds_aux ~upper:true pure aliases in
     let inst_to_min = instantiate_to_bounds_aux ~upper:false pure aliases in
@@ -327,7 +328,7 @@ let pick_wekeast_instatiation_new lhs_exp rhs_sv loc lhs_f rhs_f ivars evars =
         let to_lhs, to_rhs = instantiate_to_bounds form4 in
         map_opt_def (None,None) (fun x -> (Some x, to_rhs)) to_lhs in
       (*4 check for poly eq first *)
-      let aset = CP.build_eset_of_imm_formula form4 in
+      let aset = Imm.build_eset_of_imm_formula form4 in
       let alias = CP.EMapSV.find_equiv rhs_sv aset in
       map_opt_def (helper () ) (fun x -> Some (alias_rel x rhs_sv), None) alias in
 
@@ -367,13 +368,13 @@ let pick_wekeast_instatiation lhs rhs loc lhs_f rhs_f ivars evars=
 let get_emaps lhs_f rhs_f elhs erhs =
   match elhs, erhs with  
   | [], [] -> 
-    let elhs = CP.build_eset_of_imm_formula (CF.get_pure lhs_f) in
-    let erhs = CP.build_eset_of_imm_formula (CF.get_pure rhs_f) in
+    let elhs = Imm.build_eset_of_imm_formula (CF.get_pure lhs_f) in
+    let erhs = Imm.build_eset_of_imm_formula (CF.get_pure rhs_f) in
     elhs,erhs 
   | _ -> elhs,erhs
 
 let post_process_subtype_answer v emap unk_fnc rec_fnc =
-  let imm_l = CP.get_imm_emap_ann v emap in
+  let imm_l = Imm.get_imm_emap_ann_opt v emap in
   map_opt_def (unk_fnc ()) (fun a -> 
       let _, rel = unk_fnc () in 
       let subtype, _ = rec_fnc a in
@@ -1144,11 +1145,11 @@ and propagate_imm_formula_x (f : formula) (view_name: ident) (imm : CP.ann) (imm
     let resform = mkOr rf1 rf2 pos in
     resform
   | Base f1 ->
-    let emap = CP.build_eset_of_imm_formula (MCP.pure_of_mix  f1.CF.formula_base_pure) in
+    let emap = Imm.build_eset_of_imm_formula (MCP.pure_of_mix  f1.CF.formula_base_pure) in
     let f1_heap = propagate_imm_h_formula f1.formula_base_heap view_name imm imm_p emap in
     Base({f1 with formula_base_heap = f1_heap})
   | Exists f1 ->
-    let emap = CP.build_eset_of_imm_formula (MCP.pure_of_mix  f1.CF.formula_exists_pure) in
+    let emap = Imm.build_eset_of_imm_formula (MCP.pure_of_mix  f1.CF.formula_exists_pure) in
     let f1_heap = propagate_imm_h_formula f1.formula_exists_heap view_name imm imm_p emap in
     Exists({f1 with formula_exists_heap = f1_heap})
 
@@ -1451,7 +1452,7 @@ and remaining_ann (ann_l: CP.ann) emap(* : ann  *)=
 (* restore ann for residue * consumed *)
 and restore_tmp_res_ann_x (annl: CP.ann) (pure0: MCP.mix_formula): CP.ann =
   let pure = MCP.pure_of_mix pure0 in
-  let emap = CP.build_eset_of_imm_formula pure in 
+  let emap = Imm.build_eset_of_imm_formula pure in 
   let res = remaining_ann annl emap  in
   res 
 
@@ -2121,7 +2122,7 @@ let collect_view_imm_from_formula f param_ann data_name = (* param_ann *)
       anns
     | Base   ({formula_base_heap   = h; formula_base_pure   = p})
     | Exists ({formula_exists_heap = h; formula_exists_pure = p}) ->
-      let emap = CP.build_eset_of_imm_formula (MCP.pure_of_mix p) in
+      let emap = Imm.build_eset_of_imm_formula (MCP.pure_of_mix p) in
       let anns = collect_view_imm_from_h_formula h param_ann data_name emap in
       anns
   in helper f param_ann data_name
@@ -2484,9 +2485,9 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
 (* return (compatible_flag, to_keep_node) *)
 let compatible_at_node_lvl prog imm1 imm2 h1 h2 unfold_fun qvars emap =
   let comp, ret_h, guards =
-    if (CP.is_abs ~emap:emap imm2) then (true, h1, [])
-    else  if (CP.is_abs ~emap:emap imm1) then (true, h2, [])
-    else  if (CP.is_const_imm_list ~emap:emap [imm1;imm2]) then 
+    if (Imm.is_abs ~emap:emap imm2) then (true, h1, [])
+    else  if (Imm.is_abs ~emap:emap imm1) then (true, h2, [])
+    else  if (Imm.is_const_imm_list ~emap:emap [imm1;imm2]) then 
       (* imm1 & imm2 are imm constants, but none is @A *)
       let pr = Cprinter.string_of_h_formula in
       let () = report_warning no_pos ("* between overlapping heaps: " ^ (pr_pair pr pr (h1,h2)) ) in
@@ -2539,7 +2540,7 @@ let partition_eqs_subs lst1 lst2 quantif =
   (eqs_lst, subs)
 
 let norm_abs_node h p xpure em =
-  if (CP.is_abs ~emap:em (get_imm h)) then
+  if (Imm.is_abs ~emap:em (get_imm h)) then
     let xpured, _, _ = x_add xpure h p 0 in (* 0 or 1? *)(* !!!! add the xpure to pure *)
     (HEmp, Some (MCP.pure_of_mix xpured))
   else
@@ -2558,8 +2559,8 @@ let merge_two_view_nodes prog vn1 vn2 h1 h2 prog quantif unfold_fun qvars emap =
   else
     (* let xpure1 =  *)
     (* remove node annotated with @A if it's not compatible for merging *)
-  if (CP.is_abs ~emap:emap vn1.h_formula_view_imm) then  ([h2], [], [], [], [])
-  else if (CP.is_abs ~emap:emap vn2.h_formula_view_imm) then  ([h1], [], [], [], [])
+  if (Imm.is_abs ~emap:emap vn1.h_formula_view_imm) then  ([h2], [], [], [], [])
+  else if (Imm.is_abs ~emap:emap vn2.h_formula_view_imm) then  ([h1], [], [], [], [])
   else ([h1;h2], [], [], [], [])
 
 (* assume nodes are aliased *)
@@ -2572,8 +2573,8 @@ let merge_data_node_w_view_node prog dn1 vn2 h1 h2 quantif unfold_fun qvars emap
     | None   -> ([ret_h], [], [],[], [])  
     | Some s -> ([ret_h], [], [],[s], [])  
   else
-  if (CP.is_abs ~emap:emap dn1.h_formula_data_imm) then  ([h2], [], [], [], [])
-  else if (CP.is_abs ~emap:emap vn2.h_formula_view_imm) then  ([h1], [], [], [], [])
+  if (Imm.is_abs ~emap:emap dn1.h_formula_data_imm) then  ([h2], [], [], [], [])
+  else if (Imm.is_abs ~emap:emap vn2.h_formula_view_imm) then  ([h1], [], [], [], [])
   else ([h1;h2], [], [], [], [])
 
 let merge_data_node_w_view_node prog dn1 vn2 h1 h2 quantif unfold_fun qvars emap =
@@ -2591,8 +2592,8 @@ let merge_two_data_nodes prog dn1 dn2 h1 h2 quantif unfold_fun qvars emap =
     let (eqs, subs) = partition_eqs_subs dn1.h_formula_data_arguments dn2.h_formula_data_arguments quantif in
     ([ret_h], eqs, subs, [], guards)
   else
-  if (CP.is_abs ~emap:emap dn1.h_formula_data_imm) then  ([h2], [], [], [], [])
-  else if (CP.is_abs ~emap:emap dn2.h_formula_data_imm) then  ([h1], [], [], [],[])
+  if (Imm.is_abs ~emap:emap dn1.h_formula_data_imm) then  ([h2], [], [], [], [])
+  else if (Imm.is_abs ~emap:emap dn2.h_formula_data_imm) then  ([h1], [], [], [],[])
   else ([h1;h2], [], [], [],[])
 
 (* merged two nodes and return merged node and resulted equalities. *)
@@ -2678,7 +2679,7 @@ let merge_alias_nodes_formula_helper prog heapf puref quantif xpure unfold_fun q
   let rec helper heapf puref = 
     let (subs,_) = CP.get_all_vv_eqs (MCP.pure_of_mix puref) in
     (* let emap = CP.EMapSV.build_eset subs in *)
-    let emap = CP.build_eset_of_imm_formula (MCP.pure_of_mix puref) in
+    let emap = Imm.build_eset_of_imm_formula (MCP.pure_of_mix puref) in
     let new_f, new_p, fixpoint, struc = x_add merge_alias_nodes_h_formula prog heapf puref emap quantif xpure unfold_fun qvars in
     (* let new_p = *)
     (*   match new_p with *)
@@ -2753,7 +2754,7 @@ let f_norm_pre_imm_var e l = CP.mkEq e (CP.AConst (Lend, l)) l
 
 let f_norm_post_imm_var e l = CP.mkEq e (CP.AConst (Accs, l)) l
 
-let norm_candidate sv aset vars = (CP.is_ann_typ sv) (* && (CP.EMapSV.mem sv vars) *) && (CP.is_lend_sv ~emap:aset sv) 
+let norm_candidate sv aset vars = (CP.is_ann_typ sv) (* && (CP.EMapSV.mem sv vars) *) && (Imm.is_lend_sv ~emap:aset sv) 
 
 let is_post sv post_vars = CP.EMapSV.mem sv post_vars
 
@@ -2778,7 +2779,7 @@ let norm_subann sv1 e1 e2 loc vars_post aset =
     let res_ex = CP.mkEq e1 e2 loc in
     ([res_ex], true)
   | CP.Var (sv, _) ->
-    if (CP.is_lend_sv ~emap:aset sv) then ([f_norm_pre_imm_var e1 loc], false)
+    if (Imm.is_lend_sv ~emap:aset sv) then ([f_norm_pre_imm_var e1 loc], false)
     else ([], true)
   | _ -> ([], true)
 
@@ -2860,7 +2861,7 @@ let norm_imm_rel_formula vars_post (rel:CP.formula): CP.formula  =
 
   (* systematically transform formula until all a<:@L ---> a=@L *)
   let rec helper rel = 
-    let p_aset = CP.build_eset_of_imm_formula rel(* CP.pure_ptr_equations rel in *) in
+    let p_aset = Imm.build_eset_of_imm_formula rel(* CP.pure_ptr_equations rel in *) in
     (* let p_aset = CP.EMapSV.build_eset p_aset in *)
     let f_e e = None in
     let f_b e = None in
@@ -3000,13 +3001,13 @@ let remove_abs_nodes_h_formula emap h =
     else
       match h with
       | CF.DataNode { CF.h_formula_data_imm = imm; CF.h_formula_data_param_imm = param_imm;} ->
-        let heap = if (not !Globals.allow_field_ann) && (CP.is_abs ~emap:emap imm) then HEmp 
-          else if (!Globals.allow_field_ann) && (CP.is_abs_list ~emap:emap param_imm) then HEmp else h
+        let heap = if (not !Globals.allow_field_ann) && (Imm.is_abs ~emap:emap imm) then HEmp 
+          else if (!Globals.allow_field_ann) && (Imm.is_abs_list ~emap:emap param_imm) then HEmp else h
         in Some heap
       | CF.ViewNode { CF.h_formula_view_imm = imm; CF.h_formula_view_annot_arg = annot_arg; } ->
         let pimm = (CP.annot_arg_to_imm_ann_list_no_pos annot_arg) in
-        let heap =  if (not !Globals.allow_field_ann) && (CP.is_abs ~emap:emap imm) then HEmp 
-          else if (!Globals.allow_field_ann) && (CP.is_abs_list ~emap:emap pimm) then HEmp else h
+        let heap =  if (not !Globals.allow_field_ann) && (Imm.is_abs ~emap:emap imm) then HEmp 
+          else if (!Globals.allow_field_ann) && (Imm.is_abs_list ~emap:emap pimm) then HEmp else h
         in Some heap
       |_ -> None in
   let h = CF.transform_h_formula helper h in h
@@ -3019,7 +3020,7 @@ let remove_abs_nodes_h_formula emap h =
 let remove_abs_nodes_formula_helper form =
   let transform_h form heap = 
     let () = x_ninfo_hp (add_str "pure" (!CP.print_formula)) (CF.get_pure_ignore_exists form) no_pos in
-    let emap = CP.build_eset_of_imm_formula (CF.get_pure_ignore_exists form) in
+    let emap = Imm.build_eset_of_imm_formula (CF.get_pure_ignore_exists form) in
     remove_abs_nodes_h_formula emap heap in
   match form with
   | CF.Base   b -> Some (CF.Base{ b with CF.formula_base_heap = transform_h form b.CF.formula_base_heap;})

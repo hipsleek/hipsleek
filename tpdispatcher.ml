@@ -1062,7 +1062,7 @@ let is_null a1 a2 =
 let trans_int_to_imm_exp a = 
   let f_e a = 
     match a with 
-    | IConst (i,loc) -> Some (int_imm_to_exp i loc)
+    | IConst (i,loc) -> Some (Immutils.int_imm_to_exp i loc)
     | Var (sv,loc)   -> replace_imm_var_with_exp sv
     | _ -> None in
   CP.transform_exp f_e a
@@ -1087,8 +1087,8 @@ let change_to_imm_rel_p_formula pf =
       let new_f =
         if i<(int_of_heap_ann imm_bot)  then BConst(false, ll)
         else if (i>=(int_of_heap_ann imm_top) && !Globals.aggressive_imm_simpl) then BConst(true, ll)
-        else if i=(int_of_heap_ann imm_bot) then Eq(a1, CP.int_imm_to_exp i ll, ll)
-        else SubAnn(a1, CP.int_imm_to_exp i ll, ll)
+        else if i=(int_of_heap_ann imm_bot) then Eq(a1, Immutils.int_imm_to_exp i ll, ll)
+        else SubAnn(a1, Immutils.int_imm_to_exp i ll, ll)
       in Some new_f
     else None
   | Lte(IConst(i,_),(Var(v,_) as a1),ll) 
@@ -1100,8 +1100,8 @@ let change_to_imm_rel_p_formula pf =
         let () = x_binfo_pp " here 1" no_pos in
         if (i<=(int_of_heap_ann imm_bot)&& !Globals.aggressive_imm_simpl)  then BConst(true, ll)
         else if i>(int_of_heap_ann imm_top) then BConst(false, ll)
-        else if i=(int_of_heap_ann imm_top) then Eq(a1, CP.int_imm_to_exp i ll, ll)
-        else SubAnn(CP.int_imm_to_exp i ll, a1, ll)
+        else if i=(int_of_heap_ann imm_top) then Eq(a1, Immutils.int_imm_to_exp i ll, ll)
+        else SubAnn(Immutils.int_imm_to_exp i ll, a1, ll)
       in Some new_f
     else None
   | Lte((Var(v1,_) as a1), (Var(v2,_) as a2), ll)
