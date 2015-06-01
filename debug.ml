@@ -577,13 +577,14 @@ struct
             arr.(n)
           end
       method print_call s =
+        let is_match s = Str.string_match !debug_pattern s 0 in
         let matched_call s =
-          let is_match = Str.string_match !debug_pattern s 0 in
           let is_callee = (debug_stk # len) > last_matched_len in
-          if is_match && !debug_pattern_on then
+          let is_match_s = is_match s in
+          if is_match_s && !debug_pattern_on then
             (lastline <- (lastline ^ "\n...");
             last_matched_len <- (debug_stk#len));
-          is_match || is_callee
+          is_match_s || is_callee
         in
         begin
           try
@@ -595,7 +596,10 @@ struct
               if !dump_calls_all then 
                 begin
                   stk # push lastline;
-                  lastline <- ("\n"^len^s)
+                  lastline <- ("\n"^len^
+                    (if is_match s
+                     then s ^ "@" ^ (string_of_int deb_len)
+                     else s))
               end)
           with _ -> ()
         end
