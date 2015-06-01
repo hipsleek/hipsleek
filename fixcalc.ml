@@ -1488,7 +1488,7 @@ let compute_fixpoint_x input_pairs ante_vars specs bottom_up =
   let fst_pre = (List.map (fold_pair1f (x_add_1 Immutable.map_imm_to_int_pure_formula))) in
   let snd_pre = Immutable.map_imm_to_int_struc_formula in
   let pre = fold_pair2f fst_pre snd_pre in
-  let post ls = (* Wrapper.wrap_with_int_to_imm *) (List.map (fold_pair1f Immutable.map_int_to_imm_pure_formula)) ls in
+  let post ls = Wrapper.wrap_with_int_to_imm (List.map (fold_pair1f Immutable.map_int_to_imm_pure_formula)) ls in
   (* let fixpt =  Wrapper.wrap_wo_int_to_imm fixpt in *)
   let fixpt (input_pairs,specs) = Wrapper.wrap_pre_post_process pre post fixpt (input_pairs,specs) in
   Wrapper.wrap_wo_int_to_imm fixpt (input_pairs,specs)

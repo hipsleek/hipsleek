@@ -486,7 +486,9 @@ let init_tp () =
   set_tp !Smtsolver.smtsolver_name (* "z3" *)
 (* set_tp "parahip" *)
 
-let imm_stk = new Gen.stack
+let pr_p = pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula_exp
+
+let imm_stk = new Gen.stack_noexc [] (pr_list pr_p) (fun x y -> x==y)
 
 let string_of_tp tp = match tp with
   | OmegaCalc -> "omega"
@@ -913,7 +915,7 @@ let stack_imm_add e l =
   CP.mkVar fresh_sv l
 
 let replace_imm_var_with_exp sv =
-  let lst = imm_stk # top in
+  let lst = imm_stk # top_no_exc in
   try
     let exp = snd ( List.find (fun (a,_) -> CP.eq_spec_var a sv) lst) in
     Some exp
