@@ -511,7 +511,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
   let  baga_helper imm sv = 
     if ((Immutable.isLend imm) && !Globals.baga_imm) then CP.DisjSetSV.mkEmpty
     else CP.DisjSetSV.singleton_dset sv in
-  let emap = build_eset_of_conj_formula (MCP.pure_of_mix p0) in
+  let emap = CP.build_eset_of_imm_formula (MCP.pure_of_mix p0) in
   let rec helper f =
     (* for h_formula *)
     match f with

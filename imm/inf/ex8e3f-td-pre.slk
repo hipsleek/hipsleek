@@ -37,6 +37,9 @@ slk_simplify x::cell<_>@a & a=@L.
 //(5)
 slk_simplify x::cell<_> * x::cell<2>.
 
+//(6)
+slk_simplify x::cell<v> & v=2.
+
 /*
 # ex9e3f.slk
 

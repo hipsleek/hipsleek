@@ -48,32 +48,6 @@ let set_imm (f : h_formula) imm : h_formula =  match f with
   | ViewNode h -> ViewNode {h with h_formula_view_imm = imm; }
   | _ -> f
 
-let build_eset_of_conj_formula f =
-  let lst = CP.split_conjunctions f in
-  let emap = List.fold_left (fun acc f -> match f with
-      | CP.BForm (bf,_) ->
-        (match bf with
-         | (CP.Eq (CP.Var (v1,_), CP.Var (v2,_), _),_) -> 
-           if (CP.is_bag_typ v1) then acc
-           else CP.EMapSV.add_equiv acc v1 v2
-         | (CP.Eq (ex, CP.Var (v1,_), _),_) 
-         | (CP.Eq (CP.Var (v1,_), ex, _),_) -> 
-           (match CP.conv_ann_exp_to_var ex with
-            | Some (v2,_) -> CP.EMapSV.add_equiv acc v1 v2
-            | None -> acc)
-         | (CP.SubAnn (CP.Var (v1,_), (CP.AConst(Mutable,_) as exp), _),_) -> (* bot *)
-           let v2 = CP.mkAnnSVar Mutable in CP.EMapSV.add_equiv acc v1 v2
-         | (CP.SubAnn(CP.AConst(Accs,_) as exp, CP.Var (v1,_), _),_) -> (* top *)
-           let v2 = CP.mkAnnSVar Accs in CP.EMapSV.add_equiv acc v1 v2
-         | _ -> acc)
-      | _ -> acc
-    ) CP.EMapSV.mkEmpty lst in emap
-
-let build_eset_of_conj_formula f =
-  let pr = Cprinter.string_of_pure_formula in
-  let pr_out = CP.EMapSV.string_of in
-  Debug.no_1 "build_eset_of_conj_formula" pr pr_out build_eset_of_conj_formula f
-
 let split_imm_pure pf =
   let split_imm_pure_helper pf0 =
     let conjs = CP.split_conjunctions pf0 in
@@ -90,29 +64,10 @@ let split_imm_pure pf =
   let pr = !CP.print_formula in
   Debug.no_1 "split_imm_pure" pr (pr_pair pr pr) split_imm_pure pf
 
-let get_imm_list ?loc:(l=no_pos) list =
-  let elem_const = (CP.mkAnnSVar Mutable)::(CP.mkAnnSVar Imm)::(CP.mkAnnSVar Lend)::[(CP.mkAnnSVar Accs)] in
-  let anns_ann =  (CP.ConstAnn(Mutable))::(CP.ConstAnn(Imm))::(CP.ConstAnn(Lend))::[(CP.ConstAnn(Accs))] in
-  let anns_exp =  (CP.AConst(Mutable,l))::(CP.AConst(Imm,l))::(CP.AConst(Lend,l))::[(CP.AConst(Accs,l))] in
-  let anns = List.combine anns_ann anns_exp in
-  let lst = List.combine elem_const anns in
-  let imm = 
-    try
-      Some (snd (List.find (fun (a,_) -> CP.EMapSV.mem a list  ) lst ) )
-    with Not_found -> None
-  in imm
-
-let get_imm_emap ?loc:(l=no_pos) sv emap =
-  let aliases = CP.EMapSV.find_equiv_all sv emap in
-  get_imm_list ~loc:l aliases
-
-let get_imm_emap_exp  ?loc:(l=no_pos) sv emap : CP.exp option = map_opt snd (get_imm_emap ~loc:l sv emap)
-let get_imm_emap_ann  ?loc:(l=no_pos) sv emap : CP.ann option = map_opt fst (get_imm_emap ~loc:l sv emap)
-
 (* if pure contains sv=AConst, then instantiate to AConst *)
 let pick_equality_instantiation sv loc pure : CP.formula option =
-  let p_aset = build_eset_of_conj_formula pure in
-  let imm = get_imm_emap_exp sv p_aset in
+  let p_aset = CP.build_eset_of_imm_formula pure in
+  let imm = CP.get_imm_emap_exp sv p_aset in
   map_opt (fun a ->  CP.BForm ((CP.Eq(CP.Var (sv, loc), a, no_pos), None), None)) imm
 
 let pick_equality_instantiation sv loc pure : CP.formula option =
@@ -217,7 +172,7 @@ let pick_wekeast_instatiation lhs rhs_sv loc lhs_f rhs_f ivars evars =
   let rhs_exp = CP.Var(rhs_sv,loc) in
   let qvars = ivars@evars in
   let weakest_inst_helper pure =
-    let aset = build_eset_of_conj_formula pure in
+    let aset = CP.build_eset_of_imm_formula pure in
     let aliases = CP.EMapSV.find_equiv_all rhs_sv aset in
     let max_candidates = upper_bounds (rhs_sv::aliases) pure in
     let inst = 
@@ -353,7 +308,7 @@ let pick_wekeast_instatiation_new lhs_exp rhs_sv loc lhs_f rhs_f ivars evars =
 
   (* check for upper/lower bounds and instantiate to that *)
   let instantiate_to_bounds pure =
-    let aset = build_eset_of_conj_formula pure in
+    let aset = CP.build_eset_of_imm_formula pure in
     let aliases = CP.EMapSV.find_equiv_all rhs_sv aset in
     let to_lhs, to_rhs = instantiate_to_bounds_aux ~upper:true pure aliases in
     let inst_to_min = instantiate_to_bounds_aux ~upper:false pure aliases in
@@ -372,7 +327,7 @@ let pick_wekeast_instatiation_new lhs_exp rhs_sv loc lhs_f rhs_f ivars evars =
         let to_lhs, to_rhs = instantiate_to_bounds form4 in
         map_opt_def (None,None) (fun x -> (Some x, to_rhs)) to_lhs in
       (*4 check for poly eq first *)
-      let aset = build_eset_of_conj_formula form4 in
+      let aset = CP.build_eset_of_imm_formula form4 in
       let alias = CP.EMapSV.find_equiv rhs_sv aset in
       map_opt_def (helper () ) (fun x -> Some (alias_rel x rhs_sv), None) alias in
 
@@ -412,13 +367,13 @@ let pick_wekeast_instatiation lhs rhs loc lhs_f rhs_f ivars evars=
 let get_emaps lhs_f rhs_f elhs erhs =
   match elhs, erhs with  
   | [], [] -> 
-    let elhs = build_eset_of_conj_formula (CF.get_pure lhs_f) in
-    let erhs = build_eset_of_conj_formula (CF.get_pure rhs_f) in
+    let elhs = CP.build_eset_of_imm_formula (CF.get_pure lhs_f) in
+    let erhs = CP.build_eset_of_imm_formula (CF.get_pure rhs_f) in
     elhs,erhs 
   | _ -> elhs,erhs
 
 let post_process_subtype_answer v emap unk_fnc rec_fnc =
-  let imm_l = get_imm_emap_ann v emap in
+  let imm_l = CP.get_imm_emap_ann v emap in
   map_opt_def (unk_fnc ()) (fun a -> 
       let _, rel = unk_fnc () in 
       let subtype, _ = rec_fnc a in
@@ -1189,11 +1144,11 @@ and propagate_imm_formula_x (f : formula) (view_name: ident) (imm : CP.ann) (imm
     let resform = mkOr rf1 rf2 pos in
     resform
   | Base f1 ->
-    let emap = build_eset_of_conj_formula (MCP.pure_of_mix  f1.CF.formula_base_pure) in
+    let emap = CP.build_eset_of_imm_formula (MCP.pure_of_mix  f1.CF.formula_base_pure) in
     let f1_heap = propagate_imm_h_formula f1.formula_base_heap view_name imm imm_p emap in
     Base({f1 with formula_base_heap = f1_heap})
   | Exists f1 ->
-    let emap = build_eset_of_conj_formula (MCP.pure_of_mix  f1.CF.formula_exists_pure) in
+    let emap = CP.build_eset_of_imm_formula (MCP.pure_of_mix  f1.CF.formula_exists_pure) in
     let f1_heap = propagate_imm_h_formula f1.formula_exists_heap view_name imm imm_p emap in
     Exists({f1 with formula_exists_heap = f1_heap})
 
@@ -1496,7 +1451,7 @@ and remaining_ann (ann_l: CP.ann) emap(* : ann  *)=
 (* restore ann for residue * consumed *)
 and restore_tmp_res_ann_x (annl: CP.ann) (pure0: MCP.mix_formula): CP.ann =
   let pure = MCP.pure_of_mix pure0 in
-  let emap = build_eset_of_conj_formula pure in 
+  let emap = CP.build_eset_of_imm_formula pure in 
   let res = remaining_ann annl emap  in
   res 
 
@@ -2166,7 +2121,7 @@ let collect_view_imm_from_formula f param_ann data_name = (* param_ann *)
       anns
     | Base   ({formula_base_heap   = h; formula_base_pure   = p})
     | Exists ({formula_exists_heap = h; formula_exists_pure = p}) ->
-      let emap = build_eset_of_conj_formula (MCP.pure_of_mix p) in
+      let emap = CP.build_eset_of_imm_formula (MCP.pure_of_mix p) in
       let anns = collect_view_imm_from_h_formula h param_ann data_name emap in
       anns
   in helper f param_ann data_name
@@ -2723,7 +2678,7 @@ let merge_alias_nodes_formula_helper prog heapf puref quantif xpure unfold_fun q
   let rec helper heapf puref = 
     let (subs,_) = CP.get_all_vv_eqs (MCP.pure_of_mix puref) in
     (* let emap = CP.EMapSV.build_eset subs in *)
-    let emap = build_eset_of_conj_formula (MCP.pure_of_mix puref) in
+    let emap = CP.build_eset_of_imm_formula (MCP.pure_of_mix puref) in
     let new_f, new_p, fixpoint, struc = x_add merge_alias_nodes_h_formula prog heapf puref emap quantif xpure unfold_fun qvars in
     (* let new_p = *)
     (*   match new_p with *)
@@ -2905,7 +2860,7 @@ let norm_imm_rel_formula vars_post (rel:CP.formula): CP.formula  =
 
   (* systematically transform formula until all a<:@L ---> a=@L *)
   let rec helper rel = 
-    let p_aset = build_eset_of_conj_formula rel(* CP.pure_ptr_equations rel in *) in
+    let p_aset = CP.build_eset_of_imm_formula rel(* CP.pure_ptr_equations rel in *) in
     (* let p_aset = CP.EMapSV.build_eset p_aset in *)
     let f_e e = None in
     let f_b e = None in
@@ -3064,7 +3019,7 @@ let remove_abs_nodes_h_formula emap h =
 let remove_abs_nodes_formula_helper form =
   let transform_h form heap = 
     let () = x_ninfo_hp (add_str "pure" (!CP.print_formula)) (CF.get_pure_ignore_exists form) no_pos in
-    let emap = build_eset_of_conj_formula (CF.get_pure_ignore_exists form) in
+    let emap = CP.build_eset_of_imm_formula (CF.get_pure_ignore_exists form) in
     remove_abs_nodes_h_formula emap heap in
   match form with
   | CF.Base   b -> Some (CF.Base{ b with CF.formula_base_heap = transform_h form b.CF.formula_base_heap;})

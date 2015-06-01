@@ -488,7 +488,7 @@ let init_tp () =
 
 let pr_p = pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula_exp
 
-let imm_stk = new Gen.stack_noexc [] (pr_list pr_p) (fun x y -> x==y)
+let imm_stk = new Gen.stack_pr pr_p (fun (x,_) (y,_) -> CP.eq_spec_var x y )
 
 let string_of_tp tp = match tp with
   | OmegaCalc -> "omega"
@@ -909,15 +909,12 @@ let comm_inf a1 a2 =
 let stack_imm_add e l =
   let fresh_sv = CP.fresh_spec_var_ann ~old_name:"imm_add" () in
   let subs = (fresh_sv, e) in
-  let lst = imm_stk # pop_top in
-  let lst = subs::lst in
-  let _ = imm_stk # push lst in
+  let _ = imm_stk # push subs in
   CP.mkVar fresh_sv l
 
 let replace_imm_var_with_exp sv =
-  let lst = imm_stk # top_no_exc in
   try
-    let exp = snd ( List.find (fun (a,_) -> CP.eq_spec_var a sv) lst) in
+    let exp = snd ( imm_stk # find (fun (a,b) -> CP.eq_spec_var a sv)) in (* (sv, dummy_exp) *)
     Some exp
   with Not_found -> None
 
@@ -1260,6 +1257,7 @@ let norm_pure_result f =
       Infinity.normalize_inf_formula f
     else f in 
   let f = if !Globals.allow_norm_disj then NM.norm_disj f else f in
+  let () = imm_stk # reset in
   f
 
 let norm_pure_result f =
@@ -1267,11 +1265,9 @@ let norm_pure_result f =
   Debug.no_1 "norm_pure_result" pr pr (fun _ -> norm_pure_result f) f
 
 let wrap_pre_post_gen pre post f a =
-  let () = imm_stk # push [] in
   let s1 = pre a in
   let r2 = f a in
   let res =  post s1 r2 in
-  let _ = imm_stk # pop in
   res
 
 let wrap_pre_post_print s fn x =
@@ -1351,11 +1347,9 @@ let norm_pure_result f =
 (*   Debug.no_1 "cnv_int_to_ptr" pr pr cnv_int_to_ptr f *)
 
 let wrap_pre_post pre post f a =
-  let () = imm_stk # push [] in
   let a = pre a in
   let r = f a in
   let res = post r in
-  let _ = imm_stk # pop in
   res
 
 (*  

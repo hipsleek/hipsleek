@@ -13601,6 +13601,28 @@ let is_lend_sv ?emap:(em=[]) sv = helper_is_const_ann_sv em sv Lend
 
 let is_abs_sv ?emap:(em=[])  sv = helper_is_const_ann_sv em sv Accs
 
+let is_imm_const_sv ?emap:(em=[])  sv = 
+  (is_abs_sv ~emap:em sv) ||   (is_mut_sv ~emap:em sv) ||   (is_lend_sv ~emap:em sv) ||   (is_imm_sv ~emap:em sv)
+
+let get_imm_list ?loc:(l=no_pos) list =
+  let elem_const = (mkAnnSVar Mutable)::(mkAnnSVar Imm)::(mkAnnSVar Lend)::[(mkAnnSVar Accs)] in
+  let anns_ann =  (ConstAnn(Mutable))::(ConstAnn(Imm))::(ConstAnn(Lend))::[(ConstAnn(Accs))] in
+  let anns_exp =  (AConst(Mutable,l))::(AConst(Imm,l))::(AConst(Lend,l))::[(AConst(Accs,l))] in
+  let anns = List.combine anns_ann anns_exp in
+  let lst = List.combine elem_const anns in
+  let imm = 
+    try
+      Some (snd (List.find (fun (a,_) -> EMapSV.mem a list  ) lst ) )
+    with Not_found -> None
+  in imm
+
+let get_imm_emap ?loc:(l=no_pos) sv emap =
+  let aliases = EMapSV.find_equiv_all sv emap in
+  get_imm_list ~loc:l aliases
+
+let get_imm_emap_exp  ?loc:(l=no_pos) sv emap : exp option = map_opt snd (get_imm_emap ~loc:l sv emap)
+let get_imm_emap_ann  ?loc:(l=no_pos) sv emap : ann option = map_opt fst (get_imm_emap ~loc:l sv emap)
+
 let eq_const_ann const_imm em sv = 
   match const_imm with
   | Mutable -> is_mut_sv ~emap:em sv
@@ -14390,9 +14412,66 @@ let contains_undef (f:formula) =
   let afv = all_vars f in
   List.fold_left (fun acc sv -> acc || (is_undef_typ (type_of_spec_var sv)) ) false afv 
 
+
 let contains_imm (f:formula) =
   let f_e e =  Some (is_ann_type (get_exp_type e)) in
   fold_formula f (nonef,nonef, f_e)  (List.exists (fun b -> b) )
 
 let contains_imm (f:formula) =
   Debug.no_1 "contains_imm" !print_formula string_of_bool contains_imm f
+
+(* assumption: f is in CNF *)
+let build_eset_of_imm_formula f =
+  let lst = split_conjunctions f in
+  let emap = List.fold_left (fun acc f -> match f with
+      | BForm (bf,_) ->
+        (match bf with
+         | (Eq (Var (v1,_), Var (v2,_), _),_) -> 
+           if (is_bag_typ v1) then acc
+           else EMapSV.add_equiv acc v1 v2
+         | (Eq (ex, Var (v1,_), _),_) 
+         | (Eq (Var (v1,_), ex, _),_) -> 
+           (match conv_ann_exp_to_var ex with
+            | Some (v2,_) -> EMapSV.add_equiv acc v1 v2
+            | None -> acc)
+         | (SubAnn (Var (v1,_), (AConst(Mutable,_) as exp), _),_) -> (* bot *)
+           let v2 = mkAnnSVar Mutable in EMapSV.add_equiv acc v1 v2
+         | (SubAnn(AConst(Accs,_) as exp, Var (v1,_), _),_) -> (* top *)
+           let v2 = mkAnnSVar Accs in EMapSV.add_equiv acc v1 v2
+         | _ -> acc)
+      | _ -> acc
+    ) EMapSV.mkEmpty lst in emap
+
+let build_eset_of_imm_formula f =
+  let pr = !print_formula in
+  let pr_out = EMapSV.string_of in
+  Debug.no_1 "build_eset_of_imm_formula" pr pr_out build_eset_of_imm_formula f
+
+(* pre norm *)
+(* let simplify_imm_adddition (f:formula) = *)
+(*   let f_e emap e = *)
+(*     match e with *)
+(*     | Var(sv,l) -> *)
+(*       if is_ann_typ sv then *)
+        
+(*   in *)
+(*   let f_b emap b = *)
+(*     let f_b_helper b = *)
+(*       let (p_f, lbl) = b in *)
+(*       match p_f with *)
+(*       | Eq (Var(sv,lv), Add(e1,e2,la), l) -> *)
+(*         if is_ann_typ sv then *)
+(*           () *)
+(*     in tranform_b_formula b *)
+(*   in *)
+
+(*   let f_f f = *)
+(*     match f with *)
+(*     | BForm (b1,b2) -> *)
+(*       let emap = build_eset_of_imm_formula f in *)
+(*       Some (BForm (f_b emap b1, b2)) *)
+(*     | _ -> None *)
+
+(*   let fncs = (nonef, nonef, f_f, somef, somef) in *)
+(*   transform fncs f *)
+
