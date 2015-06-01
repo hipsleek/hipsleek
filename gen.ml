@@ -1064,7 +1064,7 @@ module EqMap =
       let r =
         let (t1,t2) = order_two t1 t2 in
         List.fold_left (fun a (p1,p2) -> add_equiv a p1 p2) t2 (get_equiv t1) in
-      let pr = string_of_debug in
+      (* let pr = string_of_debug in *)
       (* let () = print_endline ("eset1 :"^ (pr t1)) in *)
       (* let () = print_endline ("eset2 :"^ (pr t2)) in *)
       (* let () = print_endline ("eset_out :"^ (pr r)) in *)

@@ -928,8 +928,12 @@ let cnv_imm_to_int_exp e =
     else None
   | _ -> None
 
+let cnv_imm_to_int_exp e =
+  let pr = !CP.print_exp in
+  Debug.no_1 "cnv_imm_to_int_exp" pr (pr_opt pr) cnv_imm_to_int_exp e
+
 let transform_imm_to_int_exp_opt e =
-  CP.transform_exp cnv_imm_to_int_exp e
+  CP.transform_exp (x_add_1 cnv_imm_to_int_exp) e
 
 let cnv_imm_to_int_p_formula pf lbl =
   match pf with
@@ -949,6 +953,7 @@ let cnv_imm_to_int_p_formula pf lbl =
 *)
 
 let cnv_ptr_to_int (ex_flag,st_flag) f = 
+  let f = Immutils.simplify_imm_addition f in
   let f_f arg e = None in
   let f_bf (ex_flag,st_flag) bf = 
     let (pf, l) = bf in
@@ -984,7 +989,7 @@ let cnv_ptr_to_int (ex_flag,st_flag) f =
     | _ -> cnv_imm_to_int_p_formula pf l (* None *) (* Some(bf) *)
   in
   (* let f_e arg e = (Some (cnv_imm_to_int_exp e)) in *)
-  let f_e arg e = (cnv_imm_to_int_exp e) in
+  let f_e arg e = (x_add_1 cnv_imm_to_int_exp e) in
   let a_f ((ex_flag,st_flag) as flag) f =
     match f with
     | Not _ -> (not(ex_flag),not(st_flag))
@@ -1309,10 +1314,14 @@ let add_imm_inv f1 f2 =
  Debug.no_2 "add_imm_inv" pr pr pr add_imm_inv f1 f2
 
 let cnv_ptr_to_int_weak f =
-  wrap_pre_post_print "cnv_ptr_to_int_weak" (cnv_ptr_to_int (true,false)) f
+  wrap_pre_post_print "cnv_ptr_to_int_weak" (x_add cnv_ptr_to_int (true,false)) f
 
 let cnv_ptr_to_int(* _strong *) f =
-  wrap_pre_post_print "cnv_ptr_to_int" (cnv_ptr_to_int (true,true)) f
+  wrap_pre_post_print "cnv_ptr_to_int" (x_add cnv_ptr_to_int (true,true)) f
+
+let cnv_ptr_to_int f = 
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "cnv_ptr_to_int#2" pr pr cnv_ptr_to_int f
 
 let norm_pure_result f =
   wrap_pre_post_print "norm_pure_result" norm_pure_result f
@@ -1592,7 +1601,7 @@ let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP
     assumption_filter ante cons
 
 let norm_pure_input f =
-  let f = cnv_ptr_to_int f in
+  let f = x_add_1 cnv_ptr_to_int f in
   let f = if !Globals.allow_inf 
     then let f = Infinity.convert_inf_to_var f
       in let add_inf_constr = BForm((mkLt (CP.Var(CP.SpecVar(Int,constinfinity,Primed),no_pos)) (CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),no_pos)) no_pos,None),None) in
@@ -1888,7 +1897,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   res
 
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
-  let f = cnv_ptr_to_int f in
+  let f = x_add_1 cnv_ptr_to_int f in
   let flag = tp_is_sat_no_cache f sat_no in 
   if !Globals.allow_inf && !Globals.allow_inf_qe
   then  
@@ -2017,7 +2026,7 @@ let tp_is_sat f sat_no =
 (* in let add_inf_constr = BForm((mkLt (CP.Var(CP.SpecVar(Int,constinfinity,Primed),no_pos)) (CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),no_pos)) no_pos,None),None) in *)
 
 let norm_pure_input f =
-  let f = cnv_ptr_to_int f in
+  let f = x_add_1 cnv_ptr_to_int f in
   let f = if !Globals.allow_inf (*&& not(!Globals.allow_inf_qe_coq)*)
     then let f = Infinity.convert_inf_to_var f
       in let add_inf_constr = BForm((mkLt (CP.Var(CP.SpecVar(Int,constinfinity,Primed),no_pos)) (CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),no_pos)) no_pos,None),None) in
@@ -2029,7 +2038,7 @@ let norm_pure_input f =
   Debug.no_1 "norm_pure_input" pr pr norm_pure_input f
 
 let om_simplify f =
-  (* wrap_pre_post cnv_ptr_to_int norm_pure_result *)
+  (* wrap_pre_post x_add cnv_ptr_to_int norm_pure_result *)
   wrap_pre_post norm_pure_input (x_add_1 norm_pure_result)
     (x_add_1 Omega.simplify) f
 (* let f = cnv_ptr_to_int f in *)
@@ -3018,7 +3027,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let ante = 
     if !Globals.allow_imm_inv then add_imm_inv ante conseq
     else ante in
-  let ante = cnv_ptr_to_int ante in
+  let ante = x_add_1 cnv_ptr_to_int ante in
   let conseq = cnv_ptr_to_int_weak conseq in
   let flag = tp_imply_no_cache ante conseq imp_no timeout process in
   if !Globals.allow_inf && !Globals.allow_inf_qe

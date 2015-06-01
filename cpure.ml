@@ -3014,6 +3014,7 @@ and eqExp_f_x (eq:spec_var -> spec_var -> bool) (e1:exp)(e2:exp):bool =
     | (Level(sv1, _), Level(sv2, _)) -> (eq sv1 sv2)
     | (IConst(i1, _), IConst(i2, _)) -> i1 = i2
     | (FConst(f1, _), FConst(f2, _)) -> f1 = f2
+    | (AConst(a1, _), AConst(a2, _)) -> a1 = a2
     | (Tsconst(t1,_), Tsconst(t2,_)) -> Tree_shares.Ts.eq t1 t2
     | (Subtract(e11, e12, _), Subtract(e21, e22, _))
     | (Tup2 ((e11,e12),_), Tup2  ((e21,e22),_))
@@ -13180,6 +13181,14 @@ let checkeq_p p1 p2 ss=
         (false, ss)
     end
   | _ -> (false, ss)
+
+let checkeq_p p1 p2 ss=
+  let pr1 = !print_p_formula in
+  let pr3 = pr_list (pr_pair !print_sv !print_sv) in
+  Debug.no_3 "checkeq_p" pr1 pr1 pr3 (pr_pair string_of_bool pr3)
+    (fun _ _ _ -> checkeq_p p1 p2 ss)
+    p1 p2 ss
+
 
 let checkeq_x p1 p2 ss=
   match p1, p2 with

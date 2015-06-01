@@ -670,6 +670,7 @@ let nonef2 e f = None
 let voidf e = ()
 let voidf2 e f = ()
 let somef v = Some v
+let somef2 v f = Some f
 let or_list = List.fold_left (||) false
 let and_list = List.fold_left (&&) true
 

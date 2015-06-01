@@ -1,0 +1,8 @@
+
+checkentail x=@A+b & b=@M |- x=@M.
+print residue.
+expect Valid.
+
+checkentail y=x+z & z=@A+d & x=@A+b & b=@M & d=@A+@A|- y=@M.
+print residue.
+expect Valid.
