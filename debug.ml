@@ -6,6 +6,7 @@ let debug_on = ref false
 let devel_debug_on = ref false
 let debug_print = ref false (* to support more printing for debugging *)
 let devel_debug_print_orig_conseq = ref false
+let debug_pattern = ref (Str.regexp ".*")
 let trace_on = ref true
 let call_threshold = ref 10
 let dump_calls = ref false
@@ -506,6 +507,7 @@ struct
       val mutable rgx = None
       val stk = new Gen.stack_pr pr_id (==)
       val mutable offset = -1
+      val mutable last_matched_len = max_int
       method dump =
         let cnt = hash_to_list hcalls in
         let rcnt = hash_to_list rec_calls in
@@ -574,15 +576,23 @@ struct
             arr.(n)
           end
       method print_call s =
+        let matched_call s =
+          let is_match = Str.string_match !debug_pattern s 0 in
+          let is_callee = (debug_stk # len) > last_matched_len in
+          if is_match then last_matched_len <- debug_stk#len;
+          is_match || is_callee
+        in
         begin
           try
-            let deb_len = debug_stk # len in
-            let len = self # get (deb_len) s in
-            if !dump_calls_all then 
-              begin
-                stk # push lastline;
-                lastline <- ("\n"^len^s)
-              end
+            if not (matched_call s) then last_matched_len <- max_int
+            else (
+              let deb_len = debug_stk # len in
+              let len = self # get (deb_len) s in
+              if !dump_calls_all then 
+                begin
+                  stk # push lastline;
+                  lastline <- ("\n"^len^s)
+              end)
           with _ -> ()
         end
       method add_id id =
