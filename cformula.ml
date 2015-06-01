@@ -18504,6 +18504,11 @@ let h_formula_contains_node h aset ident =
     | _ -> false
   in helper h
 
+let is_emp_h_formula h =
+    match h with
+    | HEmp | HTrue -> true
+    | _ -> false
+
 let star_elim_useless_emp h = 
   let rec helper h =
     match h with
@@ -18841,3 +18846,12 @@ let determine_infer_classic sp  =
 
 let determine_arr_as_var sp  = 
   determine_infer_type sp INF_ARR_AS_VAR
+
+let form_components (f : formula) hf pf =
+  if is_False pf then mkFalse mkFalseFlow  no_pos 
+  else 
+    let mpf = MCP.mix_of_pure pf in
+    match f with
+      | Base bf -> Base {bf with formula_base_heap=hf; formula_base_pure=mpf}
+      | Exists bf -> Exists {bf with formula_exists_heap=hf; formula_exists_pure=mpf}
+      | _ -> report_error no_pos "simplify cannot handle or"

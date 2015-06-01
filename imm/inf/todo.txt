@@ -1097,6 +1097,31 @@ Simplify  (4): a=@L
 Simplify  (5): flted_36_44=2
 
 =======================================================
+# ex8e4f.slk
+
+//(1)
+slk_simplify x::cell<_> * y::cell<_>.
+
+//(2)
+slk_simplify x::cell<_> * x::cell<_>.
+
+//(3)
+slk_simplify x::cell<_> * y::cell<_> & x=y.
+
+//(4)
+slk_simplify x::cell<_> * y::cell<_> & x!=y.
+
+It seems like heap part is just ignored.
+We need to use better simplify procedure that works
+over heap formula.
+
+Simplify  (1): true
+
+Simplify  (2): true
+
+Simplify  (3): x=y
+
+Simplify  (4): y!=x
 =======================================================
 =======================================================
 =======================================================

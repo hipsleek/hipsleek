@@ -2637,7 +2637,15 @@ let simplify_with_pairwise (s:int) (f:CP.formula): CP.formula =
   let pf = Cprinter.string_of_pure_formula in
   Debug.no_1_num s ("TP.simplify_with_pairwise") pf pf simplify_with_pairwise f
 
+(* syn gist to remove conj in f1 already in f2 *)
+let syn_gist f1 f2 =
+  let x1=split_conjunctions f1 in
+  let x2=split_conjunctions f2 in
+  let x3=List.filter (fun x -> not(List.exists (fun y -> equalFormula x y) x2)) x1 in
+  join_conjunctions x3
+
 let om_gist f1 f2 =
+  let f1 = syn_gist f1 f2 in
   wrap_pre_post (fun (a,b) -> (norm_pure_input a,norm_pure_input b)) norm_pure_result
     (fun (f1,f2) -> Omega.gist f1 f2) (f1,f2)
 
