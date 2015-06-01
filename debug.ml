@@ -6,12 +6,12 @@ let debug_on = ref false
 let devel_debug_on = ref false
 let debug_print = ref false (* to support more printing for debugging *)
 let devel_debug_print_orig_conseq = ref false
+let debug_pattern = ref ".*"
 let trace_on = ref true
 let call_threshold = ref 10
 let dump_calls = ref false
 let dump_calls_all = ref false
 let call_str = ref ""
-
 let z_debug_arg = ref (None:Str.regexp option)
 
 let () = if !compete_mode then
@@ -478,11 +478,11 @@ struct
 
   (* let threshold = 20 in (\* print calls above this threshold *\) *)
 
-  let debug_calls  =
+  let debug_calls =
     let len = 61 in
     let prefix = "%%%" in
     let pr_cnt (s, cnt) = s ^ (if cnt > 1 then " (" ^ (string_of_int cnt) ^ ")" else "") in
-    let summarized_stack stk =
+    let summarise_and_filter_stack stk =
       let new_stk = new Gen.stack_pr pr_cnt (==) in
       match (List.rev stk#get_stk) with
         | [] -> new_stk
@@ -491,7 +491,9 @@ struct
             let now = ref hd in
             List.iter (fun y ->
               if y = !now then incr ctr
-              else (new_stk#push (!now, !ctr); ctr := 1; now := y)) tl;
+              else (if (Str.string_match (Str.regexp !debug_pattern) y 0)
+                    then new_stk#push (!now, !ctr) else ();
+                    ctr := 1; now := y)) tl;
             new_stk
     in
     object (self)
@@ -516,7 +518,7 @@ struct
         if !dump_calls_all then
           begin
             stk # push (lastline^"\n");
-            (summarized_stack stk) # dump_no_ln
+            (summarise_and_filter_stack stk) # dump_no_ln
           end;
         print_endline "\nDEBUGGED CALLS";
         print_endline "==============";
