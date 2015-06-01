@@ -34,7 +34,7 @@ type sleek_token =
   | DTIME
   | ELSE_TT
   | EMPTY
-  | ENSURES | ENSURES_EXACT | ENSURES_INEXACT | ENUM | EXISTS | EXTENDS
+  | ENSURES | ENSURES_EXACT | ENSURES_INEXACT | ENUM | EXISTS | EXPECT_INFER | EXTENDS
   | FALSE | FLOAT | FORALL | FUNC
   | HP | HPPOST
   | HTRUE
@@ -214,6 +214,7 @@ module Token = struct
   (* | "#>" { TCPAREN } (\*Open and close paren for thread heap*\) *) (* replaced by `HASH;`GT*)
     | PAR -> "par"
     | ARGOPTION arg -> "##OPTION "^arg
+    | EXPECT_INFER -> "expect_infer"
   (* | SKIP -> "skip" *)
   (* | IN_RFLOW -> "-%" | OUT_RFLOW -> "+%" *)
 

@@ -177,6 +177,7 @@ module Make (Token : SleekTokenS)
    ("enum", ENUM);
    (* ("ex", EXISTS); *)
    ("exists", EXISTS);
+   ("expect_infer", EXPECT_INFER);
    ("extends", EXTENDS);
    ("false", FALSE);
    ("finalizes", FINALIZE);
