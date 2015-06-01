@@ -954,7 +954,7 @@ command: [[ t=OPT non_empty_command_dot-> un_option t EmptyCmd]];
     
 non_empty_command_dot: [[t=non_empty_command; `DOT -> t]];
 
-expect_infer: [[`EXPECT_INFER; t=id; `OBRACE; f = meta_constr; `CBRACE -> ExpectInfer ]];
+expect_infer: [[`EXPECT_INFER; t=id; `OBRACE; f = OPT meta_constr; `CBRACE -> ExpectInfer ]];
 
 non_empty_command:
     [[  t=data_decl           -> DataDef t
