@@ -30,6 +30,12 @@ int foo(cell c)
   requires c::cell<v>@a & Q(a)
   ensures c::cell<w>@b  ;
 
+!!! **fixcalc.ml#370:svls (orig):[Q,pa,a]
+!!! **fixcalc.ml#371:svls (from parse_fix):[RECa,a]
+!!! **fixcalc.ml#994:Result of fixcalc (parsed): :[ 2>=a & RECa>=a]
+!!! fomega = gist {[Q,a] : (((0=0)))} given {[Q,a] : ((0=0))};
+
+
 # @L exception failure.
 
 !!! **pi.ml#743:pre_fmls:[ Q(a) & c=2, MayLoop[]]Exception(get_array_element_in_f):Failure("Trans_arr.extract_translate_scheme: @L To Be Implemented")

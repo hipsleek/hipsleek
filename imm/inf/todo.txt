@@ -1084,6 +1084,18 @@ Exception(pre_rel_fixpoint):Gen.Stack_Error
 Exception(update_with_td_fp):Gen.Stack_Error
 
 =======================================================
+# ex9e3f.slk
+
+slk_simplify x::cell<_>@a & a=@L.
+
+slk_simplify x::cell<_> * x::cell<2>.
+
+why did slk_simplify remove heap nodes?
+
+Simplify  (4): a=@L
+
+Simplify  (5): flted_36_44=2
+
 =======================================================
 =======================================================
 =======================================================
