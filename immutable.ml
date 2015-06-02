@@ -2547,7 +2547,7 @@ let norm_abs_node h p xpure em =
     (h, None)  
 
 (* assume nodes are aliased *)
-let merge_two_view_nodes prog vn1 vn2 h1 h2 prog quantif unfold_fun qvars emap =
+let merge_two_view_nodes prog vn1 vn2 h1 h2 quantif unfold_fun qvars emap =
   let comp, ret_h, _, guards = compatible_nodes prog vn1.h_formula_view_imm vn2.h_formula_view_imm h1 h2 unfold_fun qvars emap in
   let same_view = (String.compare vn1.h_formula_view_name vn2.h_formula_view_name = 0) in
   let comp_view =  same_view &&  not(Cfutil.is_view_node_segmented vn1 prog) in
@@ -2602,7 +2602,7 @@ let merge_two_nodes h1 h2 prog quantif unfold_fun qvars emap =
   | [(DataNode dn1) as h1], DataNode dn2  -> merge_two_data_nodes prog dn1 dn2 h1 h2 quantif unfold_fun qvars emap
   | [(ViewNode vn) as h2], ((DataNode dn) as h1)
   | [(DataNode dn) as h1], ((ViewNode vn) as h2) ->  merge_data_node_w_view_node prog dn vn h1 h2 quantif unfold_fun qvars emap (* ([h1;h2], []) *)
-  | [(ViewNode vn1) as h1], ViewNode vn2 -> merge_two_view_nodes prog vn1 vn2 h1 h2 prog quantif unfold_fun qvars emap
+  | [(ViewNode vn1) as h1], ViewNode vn2 -> merge_two_view_nodes prog vn1 vn2 h1 h2 quantif unfold_fun qvars emap
   (* ([h1;h2], []) *)
   | _, _ -> (h1@[h2], [], [], [],[])
 
@@ -2700,7 +2700,6 @@ let merge_and_combine prog f heap pure quantif xpure unfold_fun qvars mk_new_f r
       let f = List.fold_left (fun acc f-> normalize_combine_star acc f pos) new_f unfold_f_lst in
       rec_fun f
   in ret_f 
-
 
 let merge_alias_nodes_formula prog f quantif xpure unfold_fun =
   let rec helper f =

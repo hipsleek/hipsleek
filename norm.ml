@@ -1049,7 +1049,6 @@ let convert_tail_vdefs_to_linear prog =
 
 (************* end CONVERT TAIL-REC to LINEAR vdef ***************)
 
-
 let imm_abs_norm_formula (f:CF.formula) prog unfold_fun : CF.formula  = 
   x_add Immutable.merge_alias_nodes_formula prog f [] (x_add Cvutil.xpure_heap_symbolic 13 prog) unfold_fun
 (* Cvutil.crop_h_formula f svl *)

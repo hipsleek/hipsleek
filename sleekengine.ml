@@ -1022,6 +1022,13 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
     end
   | MetaEForm _ | MetaEFormCF _ -> report_error no_pos ("cannot have structured formula in antecedent")
 
+(* let meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list) *)
+(*   : (Typeinfer.spec_var_type_list*CF.formula) = *)
+(*   let svtl, res_f =  meta_to_formula mf0 quant fv_idents tlist in *)
+(*   let res_f = x_add Norm.imm_abs_norm_formula res_f !cprog (Solver.unfold_for_abs_merge !cprog no_pos) in *)
+(*   svtl, res_f *)
+  
+
 let meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list) : (Typeinfer.spec_var_type_list*CF.formula) = 
   let pr_meta = string_of_meta_formula in
   let pr_f = Cprinter.string_of_formula in

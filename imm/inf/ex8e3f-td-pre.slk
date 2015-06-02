@@ -40,6 +40,10 @@ slk_simplify x::cell<_> * x::cell<2>.
 //(6)
 slk_simplify x::cell<v> & v=2.
 
+//(7)
+slk_simplify x::cell<v> * x::cell<w>@A & v=2.
+
+
 /*
 # ex9e3f.slk
 
