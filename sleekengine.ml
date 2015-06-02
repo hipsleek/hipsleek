@@ -1022,6 +1022,7 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
     end
   | MetaEForm _ | MetaEFormCF _ -> report_error no_pos ("cannot have structured formula in antecedent")
 
+(* i cannot perfom alias nodes merging here as the info abt segmented views might not be present yet.  *)
 (* let meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list) *)
 (*   : (Typeinfer.spec_var_type_list*CF.formula) = *)
 (*   let svtl, res_f =  meta_to_formula mf0 quant fv_idents tlist in *)
@@ -1082,6 +1083,7 @@ let run_simplify (iante0 : meta_formula) =
       CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) ante
     else ante
   in
+  let ante = x_add Norm.imm_abs_norm_formula ante !cprog (Solver.unfold_for_abs_merge !cprog no_pos) in
   let (heap_f,p,_,_,_,_) = CF.split_components ante in
   let pf = MCP.pure_of_mix p in
   let () = x_binfo_hp (add_str "simplify:ante" pr) ante no_pos in
@@ -1116,6 +1118,7 @@ let run_hull (iante0 : meta_formula) =
       CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) ante
     else ante
   in
+  let ante = x_add Norm.imm_abs_norm_formula ante !cprog (Solver.unfold_for_abs_merge !cprog no_pos) in
   let (h,p,_,_,_,_) = CF.split_components ante in
   let pf = MCP.pure_of_mix p in
   (* print_endline "calling tp_dispatcher?"; *)
@@ -1133,6 +1136,7 @@ let run_pairwise (iante0 : meta_formula) =
       CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) ante
     else ante
   in
+  let ante = x_add Norm.imm_abs_norm_formula ante !cprog (Solver.unfold_for_abs_merge !cprog no_pos) in
   let (h,p,_,_,_,_) = CF.split_components ante in
   let pf = MCP.pure_of_mix p in
   (* print_endline "calling tp_dispatcher?"; *)
