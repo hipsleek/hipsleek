@@ -94,6 +94,17 @@ Some(( [
   ],true))Stop z3... 39 invocations Stop Omega... 16 invocations 
 
 ==================================================================
+err4b.slk
+
+# Why isn't there a type error with the node<null> scenario?
+
+!!! **sleekengine.ml#1129:ivars:[]Exception(look_up_view_def_raw):Not_found
+Exception(do_match):Invalid_argument("List.combine")
+Exception(process_action):Invalid_argument("List.combine")
+Exception(process_action):Invalid_argument("List.combine")
+Exception(heap_entail_non_empty_rhs_heap):Invalid_argument("List.combine")
+Exception(heap_entail_conjunct_helper):Invalid_argument("List.combine")
+
 ==================================================================
 ==================================================================
 ==================================================================
