@@ -1593,7 +1593,10 @@ let process_validate_infer_residue residue =
   if (!Globals.print_core || !Globals.print_core_all) then
     print_endline ("Expected Residue : " ^
       Cprinter.string_of_formula (snd (meta_to_formula residue false [] [])));
-  print_endline "Processing residue validation"
+  let () = print_endline "Processing residue validation" in
+  (*  see process_validate. line 1617 *)
+  ()
+
 
 let process_validate_infer_inference inference =
   if (!Globals.print_input || !Globals.print_input_all) then
