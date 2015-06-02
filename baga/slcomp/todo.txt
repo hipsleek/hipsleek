@@ -15,6 +15,9 @@ EXPECTED:
 -------
 Valid
 
+!!! **expure.ml#325:efpd:[([self], null!=self & self_18=self & null!=self & null=self_18)]
+!!! **expure.ml#332:efpd_e:[([self], null!=self)]
+
 ===========================================================
 #ex2-rec02.slk
 
