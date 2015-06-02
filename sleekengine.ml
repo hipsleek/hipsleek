@@ -1590,11 +1590,17 @@ let process_shape_rec sel_hps=
 let process_validate_infer_residue residue =
   if (!Globals.print_input || !Globals.print_input_all) then
     print_endline ("Expected Residue : " ^ string_of_meta_formula residue);
+  if (!Globals.print_core || !Globals.print_core_all) then
+    print_endline ("Expected Residue : " ^
+      Cprinter.string_of_formula (snd (meta_to_formula residue false [] [])));
   print_endline "Processing residue validation"
 
 let process_validate_infer_inference inference =
   if (!Globals.print_input || !Globals.print_input_all) then
     print_endline ("Expected Inference : " ^ string_of_meta_formula inference);
+  if (!Globals.print_core || !Globals.print_core_all) then
+    print_endline ("Expected Inference : " ^
+      Cprinter.string_of_formula (snd (meta_to_formula inference false [] [])));
   print_endline "Processing inference validation"
 
 let process_validate_infer validation =
