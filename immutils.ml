@@ -173,9 +173,9 @@ let imm_summation emap e =
     | _ -> None
   in
   let new_e = fold_exp e f_e0 (fun lst -> 
-      let lst = List.filter (fun x -> not(is_abs_exp x)) lst in
+      let lst = List.filter (fun x -> not(is_abs_exp x)) lst in (* remove @A - constant or var *)
       let constants = List.filter (fun x -> is_const_imm ~emap:emap (exp_to_imm x)) lst in
-      if ((List.length constants == 1) || (List.length constants == 0)) then (* zero or only one non @A constant *)
+      if (List.length constants <= 1) then (* zero or only one non @A constant *)
          (mkAdd_list lst)
       else (Null no_pos)
     ) in
@@ -259,7 +259,9 @@ let simplify_imm_adddition (f:formula) =
     let () = fixpt:=(equalFormula form new_form) in
     if not(!fixpt) then helper new_form
     else new_form
-  in helper f
+  in 
+  if !Globals.imm_add  then helper f
+  else f
 
 let simplify_imm_addition (f:formula) =
   let pr = !print_formula in
