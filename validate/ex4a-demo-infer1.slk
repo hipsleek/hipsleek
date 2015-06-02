@@ -1,0 +1,30 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+//(4)
+checkentail x::node<_,null> |- x::ll<n>.
+print residue.
+expect Valid.
+expect_infer R{x!=null & n=1}.
+
+
+/*
+# ex4a.slk
+
+checkentail x::node<_,null> |- x::ll<n>.
+print residue.
+expect Valid.
+expect_infer R{x!=null & n=1}.
+
+Why is below not executed?
+
+  let () = x_binfo_pp "Evan: place to add expect_infer code" no_pos in
+  ()
+
+*/
