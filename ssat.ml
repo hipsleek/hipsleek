@@ -39,6 +39,62 @@ module SS=
          | [] -> res
 
 
+     let elim_exists quans0 p0=
+       (* subst quans by non-quans*)
+       let rec rearr_sst quans sst res=
+         match sst with
+           | [] -> res
+           | (sv1,sv2)::rest -> begin
+               let new_res =
+                 match mem_svl sv1 quans, mem_svl sv2 quans with
+                   | false,true -> res@[(sv2,sv1)]
+                   | true,false -> res@[(sv1,sv2)]
+                   | _ -> res
+                 in
+                 rearr_sst quans rest new_res
+                 end
+       in
+       let rec recf quans p= match p with
+         | Cpure.BForm _ ->
+               x_add Cpure.filter_var p (Cpure.diff_svl (Cpure.remove_dups_svl (Cpure.fv p)) quans)
+         | Cpure.Exists (sv, p1, l, pos) ->
+               let quans1 = CP.remove_dups_svl (sv::quans) in
+               let () = Debug.tinfo_hprint (add_str "p1" !Cpure.print_formula) p1 no_pos in
+               let sst0 = (Mcpure.ptr_equations_without_null (Mcpure.mix_of_pure p1)) in
+               let rearr_p = if sst0 = [] || quans1 = [] then p1 else
+                 let rearr_sst = rearr_sst quans1 sst0 [] in
+                 let () = Debug.tinfo_hprint (add_str "rearr_sst" (pr_list (pr_pair !Cpure.print_sv !Cpure.print_sv))) rearr_sst no_pos in
+                 CP.subst rearr_sst p1
+               in
+               let () = Debug.tinfo_hprint (add_str "rearr_p" !Cpure.print_formula) rearr_p no_pos in
+               let n_p1 = recf (quans1) rearr_p in
+               let () = Debug.tinfo_hprint (add_str "quans1" !Cpure.print_svl) quans1 no_pos in
+               let () = Debug.tinfo_hprint (add_str "n_p1" !Cpure.print_formula) n_p1 no_pos in
+               let res = if Cpure.intersect_svl (Cpure.fv n_p1) quans1 != [] then Cpure.mkTrue pos
+               else
+                 if Cpure.mem_svl sv (Cpure.fv n_p1) then
+                   Cpure.Exists (sv, n_p1, l, pos)
+                 else n_p1
+               in
+               let () = Debug.tinfo_hprint (add_str "res" !Cpure.print_formula) res no_pos in
+               res
+         | Cpure.And (p1,p2,pos) -> (
+               let n_p1 = recf quans p1 in
+               let n_p2 = recf quans p2 in
+               match Cpure.isConstTrue n_p1, Cpure.isConstTrue n_p2 with
+                 | false, false ->  (match CP.remove_redundant_helper [n_p1;n_p2] [] with
+                     | [] -> CP.mkTrue pos
+                     | [p] -> p
+                     | _ -> Cpure.And (n_p1,n_p2,pos)
+                   )
+                 | false,true -> n_p1
+                 | _ -> n_p2
+           )
+         | _ -> p
+       in
+       recf quans0 p0
+
+
      let is_inconsistent_x ptos eqs neqs cl_eqNulls cl_neqNulls=
        let rec is_intersect ls1 ls2 cmp_fn=
          match ls1 with

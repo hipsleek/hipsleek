@@ -17,7 +17,7 @@ Valid
 
 
 ===========================================================
-#ex2-rec02.slk
+#ex2-rec02.slk: FIXED
 
 ../../sleek ex2-rec02.slk --inv-baga  --en-delay-eelim --dis-inv-check
 

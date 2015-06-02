@@ -267,32 +267,6 @@ let subs_null f0 =
 *)
 (* remove unsat terms *)
 let ef_elim_exists_1 (svl : spec_var list) epf  =
-  let rec elim_quan_formula quans p=
-    match p with
-      | Cpure.BForm _ -> x_add Cpure.filter_var p (Cpure.diff_svl (Cpure.remove_dups_svl (Cpure.fv p)) quans)
-      | Cpure.Exists (sv, p1, l, pos) ->
-            let quans1 = (sv::quans) in
-            let n_p1 = elim_quan_formula (quans1) p1 in
-            let () = Debug.ninfo_hprint (add_str "quans1" !Cpure.print_svl) quans1 no_pos in
-            let () = Debug.ninfo_hprint (add_str "n_p1" !Cpure.print_formula) n_p1 no_pos in
-            let res = if Cpure.intersect_svl (Cpure.fv n_p1) quans1 != [] then Cpure.mkTrue pos
-            else
-              if Cpure.mem_svl sv (Cpure.fv n_p1) then
-                Cpure.Exists (sv, n_p1, l, pos)
-              else n_p1
-            in
-            let () = Debug.ninfo_hprint (add_str "res" !Cpure.print_formula) res no_pos in
-            res
-      | Cpure.And (p1,p2,pos) -> (
-            let n_p1 = elim_quan_formula quans p1 in
-            let n_p2 = elim_quan_formula quans p2 in
-            match Cpure.isConstTrue n_p1, Cpure.isConstTrue n_p2 with
-              | false, false ->  Cpure.And (n_p1,n_p2,pos)
-              | false,true -> n_p1
-              | _ -> n_p2
-        )
-      | _ -> p
-  in
   let () = x_tinfo_pp ("Omega call before simplify: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
   let (baga,pure0) = epf in
   (* let () = Debug.ninfo_pprint "ef_elim_exists" no_pos in *)
@@ -311,7 +285,7 @@ let ef_elim_exists_1 (svl : spec_var list) epf  =
             let is_unsat = Ssat.SS.is_s_unsat baga pure0 in
             if is_unsat then mkFalse (pos_of_formula pure0) else
             let ps = Cpure.list_of_conjs pure in
-            let ps1 = List.map (elim_quan_formula svl) ps in
+            let ps1 = List.map (Ssat.SS.elim_exists svl) ps in
             Cpure.conj_of_list ps1 (Cpure.pos_of_formula pure)
           else
             simplify_with_label_omega (* x_add_1 Omega.simplify *) pure

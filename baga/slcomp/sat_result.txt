@@ -19,21 +19,21 @@ Total number of timeout files: 33 in:
  latest/UDB_sat/succ-circuit18.defs.smt2
  latest/UDB_sat/succ-circuit19.defs.smt2
  latest/UDB_sat/succ-circuit20.defs.smt2
- latest/UDB_sat/succ-rec06.defs.smt2 
- latest/UDB_sat/succ-rec07.defs.smt2
- latest/UDB_sat/succ-rec08.defs.smt2
- latest/UDB_sat/succ-rec09.defs.smt2
- latest/UDB_sat/succ-rec10.defs.smt2
- latest/UDB_sat/succ-rec11.defs.smt2
- latest/UDB_sat/succ-rec12.defs.smt2
- latest/UDB_sat/succ-rec13.defs.smt2
- latest/UDB_sat/succ-rec14.defs.smt2
- latest/UDB_sat/succ-rec15.defs.smt2
- latest/UDB_sat/succ-rec16.defs.smt2
- latest/UDB_sat/succ-rec17.defs.smt2
- latest/UDB_sat/succ-rec18.defs.smt2
- latest/UDB_sat/succ-rec19.defs.smt2
- latest/UDB_sat/succ-rec20.defs.smt2
+ latest/UDB_sat/succ-rec06.defs.smt2 OK
+ latest/UDB_sat/succ-rec07.defs.smt2 OK
+ latest/UDB_sat/succ-rec08.defs.smt2 OK
+ latest/UDB_sat/succ-rec09.defs.smt2 OK
+ latest/UDB_sat/succ-rec10.defs.smt2 OK
+ latest/UDB_sat/succ-rec11.defs.smt2 OK
+ latest/UDB_sat/succ-rec12.defs.smt2 OK
+ latest/UDB_sat/succ-rec13.defs.smt2 OK
+ latest/UDB_sat/succ-rec14.defs.smt2 OK
+ latest/UDB_sat/succ-rec15.defs.smt2 OK
+ latest/UDB_sat/succ-rec16.defs.smt2 OK
+ latest/UDB_sat/succ-rec17.defs.smt2 OK
+ latest/UDB_sat/succ-rec18.defs.smt2 OK
+ latest/UDB_sat/succ-rec19.defs.smt2 OK
+ latest/UDB_sat/succ-rec20.defs.smt2 OK
 
 =======================================================================
 
