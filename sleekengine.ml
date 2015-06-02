@@ -1587,10 +1587,22 @@ let process_shape_rec sel_hps=
   let _ = print_endline_quiet "*************************************" in
   ()
 
+let process_validate_infer_residue residue =
+  if (!Globals.print_input || !Globals.print_input_all) then
+    print_endline ("Expected Residue : " ^ string_of_meta_formula residue);
+  print_endline "Processing residue validation"
+
+let process_validate_infer_inference inference =
+  if (!Globals.print_input || !Globals.print_input_all) then
+    print_endline ("Expected Inference : " ^ string_of_meta_formula inference);
+  print_endline "Processing inference validation"
+
 let process_validate_infer validation =
   match validation with
-  | V_Residue _ -> print_endline "Processing residue validation"
-  | V_Infer _ -> print_endline "Processing inference validation"
+  | V_Residue (Some residue) -> process_validate_infer_residue residue
+  | V_Residue None -> print_endline "No residue."
+  | V_Infer (Some inference) -> process_validate_infer_inference inference 
+  | V_Infer None -> print_endline "No inference."
   | _ -> print_endline "RA etc. not yet implemented"
 
 let process_validate exp_res opt_fl ils_es=
