@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+
 open Globals
 open VarGen
 open Gen.Basic
@@ -168,23 +170,28 @@ let mkAdd_list exp_lst =
 let imm_summation emap e =
   let f_e0 e0 =
     match e0 with
-    | AConst (Accs,_) -> None
-    | Var(sv,l) -> Some (get_imm_emap_exp ~loc:l sv emap)
-    | _ -> None
+    | AConst (Accs,_) -> Some ([], false)
+    | Var(sv,l) -> let ne = get_imm_emap_exp ~loc:l sv emap in Some ([ne], eq_exp_no_aset ne e0)
+    | _ -> None (* Some ([e0], true) *)
   in
-  let new_e = fold_exp e f_e0 (fun lst -> 
+  let new_e, fixpt = fold_exp e f_e0 (fun lst -> 
+      let lst, fixpt = List.split lst in
+      let fixpt = List.for_all (fun x -> x) fixpt in
+      let lst = List.flatten lst in
       let lst = List.filter (fun x -> not(is_abs_exp x)) lst in (* remove @A - constant or var *)
       let constants = List.filter (fun x -> is_const_imm ~emap:emap (exp_to_imm x)) lst in
       if (List.length constants <= 1) then (* zero or only one non @A constant *)
-         (mkAdd_list lst)
-      else (Null no_pos)
+        ([mkAdd_list lst],fixpt)
+      else ([],fixpt)
     ) in
-  if (is_null new_e) then None
-  else Some new_e
+  if ((List.length new_e) > 0) then (Some (List.hd new_e), fixpt)
+  else (None, false)
+  (* if (is_null new_e) then None *)
+  (* else Some new_e *)
 
 let imm_summation emap e =
   let pr = !print_exp in
-  Debug.no_1 "imm_summation" pr (pr_opt pr) (fun _ -> imm_summation emap e) e
+  Debug.no_1 "imm_summation" pr (pr_pair (pr_opt pr) string_of_bool) (fun _ -> imm_summation emap e) e
 
 (* let norm_eq_add lhs_sv lhs_l f_e  l = *)
 (*   (\* let new_var  = f_e emap (Var(sv,lv)) in *\) (\* without this we might have false ctx: eg b=@L  & b=@A+@M*\) *)
@@ -198,21 +205,15 @@ let imm_summation emap e =
 let norm_eq_add lhs_sv lhs_l emap e l =
   (* let new_var  = f_e emap (Var(sv,lv)) in *) (* without this we might have false ctx: eg b=@L  & b=@A+@M*)
   let new_var = Var(lhs_sv,lhs_l) in
-  let new_sum = imm_summation emap e in
+  let new_sum, fixpt = imm_summation emap e in
   let new_eq rhs = Eq (new_var, rhs, l) in 
   let new_pf = map_opt_def  (BConst (false, l)) (fun x -> new_eq x) new_sum in
-  new_pf
+  (new_pf, fixpt)
 
 
 (* pre norm *)
 let simplify_imm_adddition (f:formula) =
   let fixpt = ref true in
-  let rec f_e emap e =
-    match e with
-    | Var(sv,l) -> if is_ann_typ sv then get_imm_emap_exp ~loc:l sv emap else e
-    (* | Add(e1,e2,l) -> imm_summation new_e1 new_e2 la *)
-    | _ -> e
-  in
   let f_b emap fb =
     (* need a helper because of local var emap *)
     let f_b_helper bf =
@@ -220,7 +221,8 @@ let simplify_imm_adddition (f:formula) =
       match p_f with
       | Eq (Var(sv,lv), (Add(e1,e2,la) as ea), l) ->
         if is_ann_typ sv then 
-          let new_pf = norm_eq_add sv lv emap ea l in
+          let new_pf, fixpt0 = norm_eq_add sv lv emap ea l in
+          let () = if not(fixpt0) then fixpt:= false in
           Some (new_pf, lbl)
         else None
       | _ -> None
@@ -255,8 +257,10 @@ let simplify_imm_adddition (f:formula) =
   let rec helper form = 
     let () = fixpt := true in
     let emap = build_eset_of_imm_formula form in
+    let () =  x_binfo_hp (add_str "form" !print_formula) form no_pos in
+    let () =  x_binfo_hp (add_str "emap" EMapSV.string_of) emap no_pos in
     let new_form = map_formula_arg form emap fncs (idf2, idf2, idf2) in
-    let () = fixpt:=(equalFormula form new_form) in
+    (* let () = fixpt:=(equalFormula form new_form) in *)
     if not(!fixpt) then helper new_form
     else new_form
   in 
