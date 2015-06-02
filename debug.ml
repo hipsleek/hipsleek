@@ -532,9 +532,10 @@ struct
             print_endline (pr rcnt)
           end
       method init =
-        for i = 1 to len_act do
-          arr.(i) <- arr.(i-1)^" "
-        done;
+        if (not !debug_pattern_on) then
+            for i = 1 to len_act do
+                arr.(i) <- arr.(i-1)^" "
+            done;
         let cs = !call_str in
         if not(cs="") 
         then 
@@ -577,6 +578,7 @@ struct
             arr.(n)
           end
       method print_call s =
+        let spaces n = String.init n (fun _ -> ' ') in
         let is_match s = Str.string_match !debug_pattern s 0 in
         let matched_call s =
           let is_callee = (debug_stk # len) > last_matched_len in
@@ -592,7 +594,10 @@ struct
             then last_matched_len <- max_int
             else (
               let deb_len = debug_stk # len in
-              let len = self # get (deb_len) s in
+              let len = if !debug_pattern_on then
+                (self#get (deb_len) s) ^ (spaces (deb_len - last_matched_len))
+              else self # get (deb_len) s
+              in
               if !dump_calls_all then
                 begin
                   stk # push lastline;
