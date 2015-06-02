@@ -9,6 +9,17 @@ checkentail c::cell<v>@a & @M<:a //& b=@A
 print residue.
 expect Valid. // why not inst b=@A rather than b=@L
 
+
+checkentail c::cell<v>@a & @L<:a & b=@A 
+  |-  c::cell<_>@b & @M<:b.
+print residue.
+expect Valid. // why not inst b=@A rather than b=@L
+
+checkentail c::cell<v>@a & @L<:a //& b=@A 
+  |-  c::cell<_>@b & @M<:b.
+print residue.
+expect Valid. // why not inst b=@A rather than b=@L
+
 /*
 # ex8e5g.slk
 

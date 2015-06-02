@@ -1,0 +1,11 @@
+data cell{
+ int val;
+}.
+
+slk_simplify x::cell<_> * y::cell<_>.
+
+slk_simplify x::cell<_> * x::cell<_>.
+
+slk_simplify x::cell<_> * y::cell<_> & x=y.
+
+slk_simplify x::cell<_> * y::cell<_> & x!=y.

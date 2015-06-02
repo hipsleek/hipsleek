@@ -1,0 +1,26 @@
+data cell{
+ int fst;
+}.
+
+
+checkentail c::cell<v>@a & @L<:a //& b=@A 
+  |-  c::cell<_>@b & @M<:b.
+print residue.
+expect Valid. // why not inst b=@A rather than b=@L
+
+/*
+# ex8e6g.slk
+
+(==#0==)
+pick_bounds@10@7
+pick_bounds inp1 :[@M]
+pick_bounds@10 EXIT:(Some( b=@M),None)
+
+(==immutable.ml#455==)
+pick_wekeast_instatiation@7
+pick_wekeast_instatiation inp1 : c::cell<v>@[@a, @b]&@L<:a&{FLOW,(20,21)=__norm#E}[]
+pick_wekeast_instatiation inp2 : emp&@M<:b&{FLOW,(20,21)=__norm#E}[]
+pick_wekeast_instatiation@7 EXIT:(Some( true),None)
+
+
+*/
