@@ -2748,11 +2748,14 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
   let tp_syn_x h p =
     let () = x_tinfo_pp ("Omega unsat:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
     (* let _ = unsat_count_syn := !unsat_count_syn + 1 in *)
-    let t1 = Expure.build_ef_heap_formula h views in
-    let t2 = Expure.build_ef_pure_formula (Mcpure.pure_of_mix p) in
+    let p1 = (Mcpure.pure_of_mix p) in
+    let is_shape1 = List.for_all (CP.is_node_typ) (CP.fv p1) in
+    let is_shape2 = is_shape_h_formula h in
+    let t1 = Expure.build_ef_heap_formula is_shape2 h views in
+    let t2 = Expure.build_ef_pure_formula ~shape:is_shape1 p1 in
     let d = Excore.EPureI.mk_star_disj t1 t2 in
     (* let d = Excore.EPureI.elim_unsat_disj d in *)
-    let res = (Excore.EPureI.is_false_disj d) in
+    let res = (Excore.EPureI.is_false_disj (is_shape1 && is_shape2) d) in
     let () = x_tinfo_pp ("Omega unsat:end " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
     res
     (* let p = MCP.translate_level_mix_formula p in *)
@@ -8116,7 +8119,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
   let lhs_baga = (* Long : why we need lhs_baga *)
     if false (* !Globals.use_baga *) (* !Globals.gen_baga_inv *) then
       let views = prog.Cast.prog_view_decls in
-      let t1 = Expure.build_ef_heap_formula curr_lhs_h views in
+      let t1 = Expure.build_ef_heap_formula false curr_lhs_h views in
       let () = Debug.ninfo_hprint (add_str "hf" (Cprinter.string_of_h_formula)) curr_lhs_h no_pos in
       let () = Debug.ninfo_hprint (add_str "t1" (Cprinter.string_of_ef_pure_disj)) t1 no_pos in
       let t2 = x_add_1 Expure.build_ef_pure_formula (Mcpure.pure_of_mix lhs_p) in
@@ -8124,7 +8127,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
       let () = Debug.ninfo_hprint (add_str "t2" (Cprinter.string_of_ef_pure_disj)) t2 no_pos in
       let d = Excore.EPureI.mk_star_disj t1 t2 in
       let () = Debug.ninfo_hprint (add_str "d1" (Cprinter.string_of_ef_pure_disj)) d no_pos in
-      let d = Excore.EPureI.elim_unsat_disj d in
+      let d = Excore.EPureI.elim_unsat_disj false d in
       let () = Debug.ninfo_hprint (add_str "d2" (Cprinter.string_of_ef_pure_disj)) d no_pos in
       Some d
     else None in

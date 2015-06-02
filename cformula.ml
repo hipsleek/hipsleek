@@ -15707,6 +15707,10 @@ let wrap_exists svl f =
       mkOr (helper f1) (helper f2) pos
   in helper f
 
+let is_shape_h_formula hf =
+   let vnodes =  get_views (formula_of_heap hf no_pos) in
+   List.for_all (fun vd -> List.for_all CP.is_node_typ vd.h_formula_view_arguments) vnodes
+
 let shape_abs svl f0 =
   let filter_non_shape p =
     let ps = CP.list_of_conjs p in
@@ -15724,6 +15728,7 @@ let shape_abs svl f0 =
       let f2 = o.formula_or_f2 in
       mkOr (helper f1) (helper f2) o.formula_or_pos
   in helper f0
+
 
 let lax_impl_of_post f =
   let (evs,hvs,bf) = unwrap_exists f in

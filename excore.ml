@@ -635,8 +635,9 @@ module EPURE =
     let unsat_call p=
       not (!is_sat_raw (Mcpure.mix_of_pure p))
 
-    let ef_unsat_0 ((b,p) as f : epure) : bool =
+    let ef_unsat_0 ?(shape=false) ((b,p) as f : epure) : bool =
       (* use ef_conv_enum *)
+      if shape then Ssat.SS.is_s_unsat (Elt.conv_var b) p else
       let cf = ef_conv_enum f in
       (* if !Globals.delay_eelim_baga_inv then *)
       (*   (\* if unsat(cf) return true *\) *)
@@ -650,22 +651,22 @@ module EPURE =
         unsat_call cf
 
     (* DO NOT CALL DIRECTLY *)
-    let ef_unsat_0 (f : epure) : bool =
+    let ef_unsat_0 ?(shape=false) (f : epure) : bool =
       Debug.no_1 "ef_unsat" string_of(* _ef_pure *) string_of_bool
-        ef_unsat_0 f
+          (fun _ ->  ef_unsat_0 ~shape:shape f) f
 
-    let unsat (b,f) = ef_unsat_0 (b, f)
+    let unsat is_shape (b,f) = ef_unsat_0 ~shape:is_shape (b, f)
 
-    let norm (efp) =
-      if unsat efp then mk_false
+    let norm is_shape (efp) =
+      if unsat is_shape efp then mk_false
       else efp
 
-    let elim_unsat_disj disj =
-      List.filter (fun f -> not(unsat f)) disj
+    let elim_unsat_disj is_shape disj =
+      List.filter (fun f -> not(unsat is_shape f)) disj
 
-    let is_false_disj disj =
+    let is_false_disj is_shape disj =
       let () = x_tinfo_pp ("Omega is_false_disj:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
-      let res = List.for_all (fun epf -> unsat epf) disj in
+      let res = List.for_all (fun epf -> unsat is_shape epf) disj in
       (* disj==[] *)
       let () = x_tinfo_pp ("Omega is_false_disj:end " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
       res
@@ -734,7 +735,7 @@ module EPURE =
       else false
 
     (* reducing duplicate? *)
-    let norm_disj (* ?(syn=false) *) disj =
+    let norm_disj is_shape disj =
       let pure_cmp_fnc = (* if syn then is_eq_epure_syn else *) is_eq_epure in
       let rec remove_duplicate (disj : epure_disj) : epure_disj =
         match disj with
@@ -745,7 +746,7 @@ module EPURE =
           hd::new_tl
       in
       let () = x_tinfo_pp ("Omega call norm_disj-before: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
-      let sat_disj = (* if syn then disj else *) (List.filter (fun v -> not(is_false v)) (List.map norm disj)) in
+      let sat_disj = (* if syn then disj else *) (List.filter (fun v -> not(is_false v)) (List.map (norm is_shape) disj)) in
       let res = remove_duplicate sat_disj (* (List.filter (fun v -> not(is_false v)) (List.map norm disj)) *) in
       let () = x_tinfo_pp ("Omega call norm_disj-after: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
       res
