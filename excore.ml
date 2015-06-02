@@ -294,20 +294,22 @@ let ef_elim_exists_1 (svl : spec_var list) epf  =
       | _ -> p
   in
   let () = x_tinfo_pp ("Omega call before simplify: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
-  let (baga,pure) = epf in
+  let (baga,pure0) = epf in
   (* let () = Debug.ninfo_pprint "ef_elim_exists" no_pos in *)
   (* let () = Debug.ninfo_pprint "==============" no_pos in *)
   let () = x_dinfo_hp (add_str "svl" string_of_spec_var_list) svl no_pos in
   (* let () = Debug.ninfo_hprint (add_str "old baga" string_of_spec_var_list) baga no_pos in *)
   (* let () = Debug.ninfo_hprint (add_str "pure" !print_pure_formula) pure no_pos in *)
-  let p_aset = pure_ptr_equations pure in
-  let () = x_tinfo_hp (add_str "pure = " !print_pure_formula) pure no_pos in
-  let pure = wrap_exists_svl pure svl in
+  let p_aset = pure_ptr_equations pure0 in
+  let () = x_tinfo_hp (add_str "pure = " !print_pure_formula) pure0 no_pos in
+  let pure = wrap_exists_svl pure0 svl in
   let () = x_tinfo_hp (add_str "pure1 = " !print_pure_formula) pure no_pos in
   let pure = (* match pure with *)
     (* | Cpure.AndList _ -> simplify_with_label_omega (\* x_add_1 Omega.simplify *\) pure *)
     (* | _ -> *)
-          if !Globals.delay_eelim_baga_inv && Cpure.is_shape pure then
+          if !Globals.delay_eelim_baga_inv && Cpure.is_shape pure0 then
+            let is_unsat = Ssat.SS.is_s_unsat baga pure0 in
+            if is_unsat then mkFalse (pos_of_formula pure0) else
             let ps = Cpure.list_of_conjs pure in
             let ps1 = List.map (elim_quan_formula svl) ps in
             Cpure.conj_of_list ps1 (Cpure.pos_of_formula pure)
@@ -525,6 +527,7 @@ module EPURE =
     let merge_baga b1 b2 = Elt.merge_baga b1 b2
 
     let is_eq_baga (b1,_) (b2,_) = Elt.is_eq_baga b1 b2
+
 
     (* convert ptr to integer constraints *)
     (* ([a,a,b]  --> a!=a & a!=b & a!=b & a>0 & a>0 & b>0 *)

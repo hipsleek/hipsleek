@@ -322,14 +322,16 @@ let rec build_ef_formula_x (cf0 : Cformula.formula) (all_views : Cast.view_decl 
       (* | _ -> *)
             let quans, base_f = Cformula.split_quantifiers cf in
             let efpd = rec_fnc base_f in
-            let () = x_binfo_hp (add_str "efpd" (EPureI.string_of_disj)) efpd no_pos in
+            let () = x_tinfo_hp (add_str "efpd" (EPureI.string_of_disj)) efpd no_pos in
             let efpd_e =
               (* if syn then EPureI.wrap_exists_disj quans ef.Cformula.formula_exists_label ef.Cformula.formula_exists_pos efpd *)
               (* else *)
               EPureI.elim_exists_disj quans (* ef.Cformula.formula_exists_qvars *) efpd
-            in efpd_e
+            in
+            let () = x_tinfo_hp (add_str "efpd_e" (EPureI.string_of_disj)) efpd_e no_pos in
+            efpd_e
     in
-    let () = x_binfo_hp (add_str "efpd_e" (EPureI.string_of_disj)) efpd_e no_pos in
+    let () = x_tinfo_hp (add_str "efpd_e" (EPureI.string_of_disj)) efpd_e no_pos in
     (* let efpd_n = EPureI.norm_disj efpd_e in *)
     let () = x_tinfo_hp (add_str "efpd_n3" (EPureI.string_of_disj)) efpd_e no_pos in
     efpd_e

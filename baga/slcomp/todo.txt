@@ -1,5 +1,5 @@
 ===========================================================
-#ex1-incons.slk
+#ex1-incons.slk: FIXED
 
 ../../sleek ex1-incons.slk --inv-baga  --en-delay-eelim --dis-inv-check
 
@@ -15,8 +15,6 @@ EXPECTED:
 -------
 Valid
 
-!!! **expure.ml#325:efpd:[([self], null!=self & self_18=self & null!=self & null=self_18)]
-!!! **expure.ml#332:efpd_e:[([self], null!=self)]
 
 ===========================================================
 #ex2-rec02.slk

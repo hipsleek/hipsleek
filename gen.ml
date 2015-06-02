@@ -1078,7 +1078,13 @@ module EqMap =
     let find_equiv_all  (e:elem) (s:emap) : elist  =
       let r1 = find s e in
       if (r1==None) then []
+      else List.map fst (List.filter (fun (a,k) -> k==r1) s)
+
+    let find_equiv_all_new  (e:elem) (s:emap) : elist  =
+      let r1 = find s e in
+      if (r1==None) then [e]
       else List.map fst (List.filter (fun (a,k) -> k==r1) s) 
+  
 
     (* return a distinct element equal to e *)
     let find_equiv  (e:elem) (s:emap) : elem option  =
