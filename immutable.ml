@@ -462,7 +462,7 @@ let subtype_ann_gen_x lhs_f rhs_f elhs erhs impl_vars evars (imm1 : CP.ann) (imm
           (f, [to_lhs], to_rhs, [])
         else if CP.mem rhs_sv evars then
           (f,[to_lhs], [to_rhs], [to_rhs])
-        else (f,[to_lhs],[to_rhs], [])
+        else (f,[],[to_rhs], [])
       | _ -> (f,[],[to_rhs], [])
     end
 
