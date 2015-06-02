@@ -266,8 +266,18 @@ let trans_ints_block_lst fn (fr_lbl: ints_loc) (blks: ints_block list): I.proc_d
     | e::es ->
       let exp_and e1 e2 = I.mkBinary I.OpLogicalAnd e1 e2 None (I.get_exp_pos e1) in
       let not_e = I.mkUnary I.OpNot e None (I.get_exp_pos e) in
-      let then_exp = helper es (exp_and factored e) in
-      let else_exp = helper es (exp_and factored not_e) in
+      (* e ->? false *)
+      let implies_false e =
+        let ef = formula_of_exp e in
+        let ecf = Astsimp.trans_pure_formula ef [] in
+        let fcf = Cpure.BForm ((Cpure.BConst (false, no_pos), None), None) in
+        Tpdispatcher.simpl_imply_raw ecf fcf in
+      let then_exp = if (not (implies_false (exp_and factored e)))
+                     then helper es (exp_and factored e)
+                     else I.Empty no_pos in
+      let else_exp = if (not (implies_false (exp_and factored not_e)))
+                     then helper es (exp_and factored not_e)
+                     else I.Empty no_pos in
       if (then_exp = else_exp) (* the blocks don't depend on this condition. *)
       then then_exp (* just use the exp. *)
       else I.mkCond e then_exp else_exp None (I.get_exp_pos e)
