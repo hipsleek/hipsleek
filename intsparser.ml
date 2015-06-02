@@ -87,9 +87,12 @@ let formula_of_exp (exp : I.exp) : IP.formula =
          let pf1 = helper e1 in
          let pf2 = helper e2 in
          IP.Or (pf1, pf2, None, pos)
-       | _ -> report_error no_pos "intsparser.trans_pure_formula: unexpected bin_op"
+       | _ -> report_error no_pos "intsparser.formula_of_exp: unexpected bin_op"
       )
-    | _ -> report_error no_pos "intsparser.trans_pure_formula: unexpected exp"
+    | I.BoolLit { I.exp_bool_lit_val = b; I.exp_bool_lit_pos = pos } ->
+      IP.BForm ((IP.BConst (b, pos), None), None)
+    | _ -> report_error no_pos "intsparser.formula_of_exp: unexpected exp"
+      I.trans_to_exp_form exp
   in
   helper exp
 
@@ -239,58 +242,37 @@ let trans_ints_block_lst fn (fr_lbl: ints_loc) (blks: ints_block list): I.proc_d
     let asm_pos = asm.ints_exp_assume_pos in
     I.mkCond asm.ints_exp_assume_formula then_exp else_exp None asm_pos
   in
-  let rec helper blks factored =
-    match blks with
-    | [] -> []
-    | blk::blks ->
-      let (init_cond, blk_other_exps) = init_conditions_of_block blk in
-      (* filter out the conditions which are already considered *)
-      let (_, init_cond) = List.partition (is_implied_by factored) init_cond in
-      let init_cond_exps = List.map (fun asm -> Assume asm) init_cond in
-      let blk = { blk with ints_block_commands = init_cond_exps@blk_other_exps } in
-      (* Build Iast cond-expressions with blocks which share common 'factor'
-       * in their conditions. *)
-      let rec try_to_factor_blocks cond =
-        (match cond with
-         | [] -> (* empty. No conditions could factor. *)
-           (trans_ints_block blk)::(helper blks factored)
-         | asm::asms ->
-           let negation_of_asm asm =
-               let pos = asm.ints_exp_assume_pos in
-               let neg = I.mkUnary I.OpNot asm.ints_exp_assume_formula None pos in
-               { asm with ints_exp_assume_formula = neg } in
-           let is_equiv_asm asm1 asm2 =
-             let af1 = trans_pure_formula asm1 in
-             let af2 = trans_pure_formula asm2 in
-             let acf1 = Astsimp.trans_pure_formula af1 [] in
-             let acf2 = Astsimp.trans_pure_formula af2 [] in
-             Tpdispatcher.simpl_imply_raw acf1 acf2 &&
-             Tpdispatcher.simpl_imply_raw acf2 acf1 in
-           let block_has_equiv asm blk =
-             let (ic, _) = init_conditions_of_block blk in
-             List.exists (is_equiv_asm asm) ic in
-           let block_has_negation_of asm blk =
-             let (ic, _) = init_conditions_of_block blk in
-             List.exists (is_equiv_asm (negation_of_asm asm)) ic in
-           (* partition list of blocks into those which have this asm in common,
-            * those with the negation_of, and 'others'. *)
-           let (common, other) = List.partition (block_has_equiv asm) blks in
-           let (negative, other) = List.partition (block_has_negation_of asm) other in
-           if (List.length common == 0 && List.length negative == 0)
-           then (* No other blocks shared the assumption. *)
-              try_to_factor_blocks asms
-           else
-             let exps_with_factor = helper (blk::common) (asm::factored) in
-             let exps_with_negation_of = helper negative ((negation_of_asm asm)::factored) in
-             let other_exps = (helper other factored) in
-             let then_exp = (nondet_seq_for exps_with_factor) in
-             let else_exp = (nondet_seq_for exps_with_negation_of) in
-             let cond_exp = wrap_with_cond asm then_exp else_exp in
-             cond_exp::other_exps) in
-      try_to_factor_blocks init_cond
+  (* Get a disjunct/independent-ish set of assumptions from the initial
+   * conditions of the blocks. *)
+  let indep_exps = indepedent_exps_of_blocks blks in
+  (* Build I.Cond exp based on some list of conditions (indep_exps). *)
+  let rec helper (exps : I.exp list) (factored : I.exp) : I.exp =
+    match exps with
+    | [] -> (* filter through blks which satisfied by factored *)
+      let blks = List.filter (fun blk ->
+        let factored_formula = formula_of_exp factored in
+        let (blk_ic, _) = init_conditions_of_block blk in
+        let ic_formula = pure_formula_of_condition blk_ic in
+        let fcf = Astsimp.trans_pure_formula factored_formula [] in
+        let iccf = Astsimp.trans_pure_formula ic_formula [] in
+        Tpdispatcher.simpl_imply_raw fcf iccf) blks in
+      let exp_of_blk blk =
+        (* Take out the initial conditions from a block.
+         * If we use the block, we know these to be implied/true. *)
+        let (ic, others) = init_conditions_of_block blk in
+        let blk = { blk with ints_block_commands = others } in
+        trans_ints_block blk in
+      nondet_seq_for (List.map exp_of_blk blks)
+    | e::es ->
+      let exp_and e1 e2 = I.mkBinary I.OpLogicalAnd e1 e2 None (I.get_exp_pos e1) in
+      let not_e = I.mkUnary I.OpNot e None (I.get_exp_pos e) in
+      let then_exp = helper es (exp_and factored e) in
+      let else_exp = helper es (exp_and factored not_e) in
+      if (then_exp = else_exp) (* the blocks don't depend on this condition. *)
+      then then_exp (* just use the exp. *)
+      else I.mkCond e then_exp else_exp None (I.get_exp_pos e)
   in
-  let exps = helper blks [] in
-  let proc_body = nondet_seq_for exps in
+  let proc_body = helper indep_exps (I.mkBoolLit true no_pos) in
   I.mkProc fn proc_name [] "" None false [] [] I.void_type None (IF.EList []) (IF.mkEFalseF ()) pos (Some proc_body)
 
 let trans_ints_prog fn (iprog: ints_prog): I.prog_decl =
