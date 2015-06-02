@@ -84,7 +84,7 @@ type command =
   | TemplSolv of ident list
   | TermInfer
   | TermAssume of (meta_formula * meta_formula)
-  | ExpectInfer (* of (<pick a good type name>(Residue or Infer) * meta_formula) -- Is this correct? *)
+  | ExpectInfer of validation
   | EmptyCmd
 
 and print_cmd =
@@ -105,6 +105,13 @@ and validate_result =
   | VR_Fail of int (* 0 - any; -1 may; +1 must *) 
   | VR_Unknown of string
 
+and validation =
+  (* R{..} *)
+  | V_Residue of meta_formula option
+  (* I{..} *)
+  | V_Infer   of meta_formula option
+  (* RA{..} *)
+  | V_RelAssume  of (CF.cond_path_type * meta_formula * meta_formula option * meta_formula)
 (*
   The second component is IF.formula and not CF.formula since
   depending on how the formula is used (in negative or positive
@@ -166,7 +173,7 @@ let string_of_command c = match c with
   | TemplSolv _ -> "TemplSolv"
   | TermInfer -> "TermInfer"
   | TermAssume _ -> "TermAssume"
-  | ExpectInfer -> "ExpectInfer"
+  | ExpectInfer _ -> "ExpectInfer"
   | EmptyCmd -> "EmptyCmd"
 
 let put_var (v : ident) (info : meta_formula) = H.add var_tab v info

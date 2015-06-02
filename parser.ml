@@ -958,7 +958,14 @@ expect_infer_term : [[ f = meta_constr -> f
                      | f = meta_constr; `CONSTR; g = meta_constr -> f
                     ]];
 
-expect_infer: [[`EXPECT_INFER; t=id; `OBRACE; f = OPT expect_infer_term; `CBRACE -> ExpectInfer ]];
+expect_infer: [[`EXPECT_INFER; t=id; `OBRACE; f = OPT expect_infer_term; `CBRACE ->
+                   (match t with
+                    | "R" -> ExpectInfer (V_Residue f)
+                    | "I" -> ExpectInfer (V_Infer f)
+                    | _ -> failwith "todo"
+                 (* | "RA" -> ??? *)
+                 (* | "SA" -> ??? *)
+                    )]];
 
 non_empty_command:
     [[  t=data_decl           -> DataDef t
@@ -1013,7 +1020,7 @@ non_empty_command:
       | t = ut_decl -> UtDef t
       | t = term_infer_cmd -> TermInfer
       | t = term_assume_cmd -> TermAssume t
-      | t = expect_infer -> ExpectInfer
+      | t = expect_infer -> t
       | t=macro	-> EmptyCmd]];
   
 data_decl:
@@ -4210,5 +4217,4 @@ let create_tnt_prim_proc_list ids : Iast.proc_decl list =
   List.concat (List.map (fun id -> 
     match (create_tnt_prim_proc id) with
     | None -> [] | Some pd -> [pd]) ids)
-
 

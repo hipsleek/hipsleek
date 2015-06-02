@@ -153,8 +153,8 @@ module M = Lexer.Make(Token.Token)
     | TermInfer -> process_term_infer ()
     | TermAssume (iante, iconseq) -> process_term_assume iante iconseq
     | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ 
-    | TemplDef _ | UtDef _ 
-    | ExpectInfer -> process_validate_infer ()
+    | TemplDef _ | UtDef _  -> ()
+    | ExpectInfer e -> process_validate_infer e
     | EmptyCmd -> () 
 
 (* TODO : This is a repetition of proc_one_cmd *)

@@ -1587,12 +1587,13 @@ let process_shape_rec sel_hps=
   let _ = print_endline_quiet "*************************************" in
   ()
 
-let process_validate_infer () =
-  let () = x_binfo_pp "Evan: place to add expect_infer code" no_pos in
-  ()
+let process_validate_infer validation =
+  match validation with
+  | V_Residue _ -> print_endline "Processing residue validation"
+  | V_Infer _ -> print_endline "Processing inference validation"
+  | _ -> print_endline "RA etc. not yet implemented"
 
 let process_validate exp_res opt_fl ils_es=
-  let () = x_binfo_pp "Evan: executing process_validate" no_pos in
   if not !Globals.show_unexpected_ents then () else
     (**********INTERNAL**********)
     let preprocess_constr act_idents act_ti (ilhs, irhs)=
