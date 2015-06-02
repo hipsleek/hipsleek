@@ -3,7 +3,7 @@
 Total number of timeout files: 33 in:
  latest/UDB_sat/succ-circuit03.defs.smt2: OK (15306)
  latest/UDB_sat/succ-circuit04.defs.smt2: OK (15306)
- latest/UDB_sat/succ-circuit05.defs.smt2
+ latest/UDB_sat/succ-circuit05.defs.smt2 OK (15352- 17s)
  latest/UDB_sat/succ-circuit06.defs.smt2
  latest/UDB_sat/succ-circuit07.defs.smt2
  latest/UDB_sat/succ-circuit08.defs.smt2
@@ -19,8 +19,8 @@ Total number of timeout files: 33 in:
  latest/UDB_sat/succ-circuit18.defs.smt2
  latest/UDB_sat/succ-circuit19.defs.smt2
  latest/UDB_sat/succ-circuit20.defs.smt2
- latest/UDB_sat/succ-rec06.defs.smt2 OK (15306)
- latest/UDB_sat/succ-rec07.defs.smt2 OK (15306)
+ latest/UDB_sat/succ-rec06.defs.smt2 
+ latest/UDB_sat/succ-rec07.defs.smt2
  latest/UDB_sat/succ-rec08.defs.smt2
  latest/UDB_sat/succ-rec09.defs.smt2
  latest/UDB_sat/succ-rec10.defs.smt2
