@@ -109,6 +109,7 @@ let proc_gen_cmd cmd =
   | RelDefn (id, ilhs, irhs, extn_info) -> process_rel_defn id ilhs irhs extn_info
   | ShapeInfer (pre_hps, post_hps) -> process_shape_infer pre_hps post_hps
   | Validate (vr, opt_fl, lc) -> process_validate vr opt_fl lc
+  | ExpectInfer -> process_validate_infer ()
   | ShapeDivide (pre_hps, post_hps) -> process_shape_divide pre_hps post_hps
   | ShapeConquer (ids, paths) -> process_shape_conquer ids paths
   | ShapeLFP ids -> process_shape_lfp ids
@@ -144,7 +145,6 @@ let proc_gen_cmd cmd =
   | TemplSolv idl -> process_templ_solve idl
   | TermInfer -> process_term_infer ()
   | TermAssume (iante, iconseq) -> process_term_assume iante iconseq
-  | ExpectInfer -> ()
   | EmptyCmd  -> ()
 
 let parse_file (parse) (source_file : string) =

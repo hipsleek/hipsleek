@@ -1587,7 +1587,12 @@ let process_shape_rec sel_hps=
   let _ = print_endline_quiet "*************************************" in
   ()
 
+let process_validate_infer () =
+  let () = x_binfo_pp "Evan: place to add expect_infer code" no_pos in
+  ()
+
 let process_validate exp_res opt_fl ils_es=
+  let () = x_binfo_pp "Evan: executing process_validate" no_pos in
   if not !Globals.show_unexpected_ents then () else
     (**********INTERNAL**********)
     let preprocess_constr act_idents act_ti (ilhs, irhs)=
@@ -1807,6 +1812,7 @@ let process_shape_conquer sel_ids cond_paths=
   in
   ()
 
+  
 let process_shape_postObl pre_hps post_hps=
   let hp_lst_assume = !sleek_hprel_assumes in
   let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=

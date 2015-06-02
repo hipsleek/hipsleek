@@ -43,6 +43,18 @@ should be printed as:
   q_122::ll<flted_7_126>(must)
 
 ==================================================================
+# ex4a.slk
+
+checkentail x::node<_,null> |- x::ll<n>.
+print residue.
+expect Valid.
+expect_infer R{x!=null & n=1}.
+
+Why is below not executed?
+
+  let () = x_binfo_pp "Evan: place to add expect_infer code" no_pos in
+  ()
+
 ==================================================================
 ==================================================================
 ==================================================================

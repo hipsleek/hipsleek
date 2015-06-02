@@ -481,6 +481,19 @@ struct
   let debug_calls  =
     let len = 61 in
     let prefix = "%%%" in
+    let pr_cnt (s, cnt) = s ^ (if cnt > 1 then " (" ^ (string_of_int cnt) ^ ")" else "") in
+    let summarized_stack stk =
+      let new_stk = new Gen.stack_pr pr_cnt (==) in
+      match (List.rev stk#get_stk) with
+        | [] -> new_stk
+        | hd::tl ->
+            let ctr = ref 1 in
+            let now = ref hd in
+            List.iter (fun y ->
+              if y = !now then incr ctr
+              else (new_stk#push (!now, !ctr); ctr := 1; now := y)) tl;
+            new_stk
+    in
     object (self)
       val len_act = len -1
       val arr =  Array.make (len+1) prefix
@@ -500,10 +513,10 @@ struct
         let cnt = list_cnt_sort_dec cnt in
         let rcnt = list_cnt_sort_dec rcnt in
         let pr = pr_list_brk_sep "" "" "\n" (pr_pair pr_id string_of_int) in
-        if !dump_calls_all then 
+        if !dump_calls_all then
           begin
             stk # push (lastline^"\n");
-            (stk # dump_no_ln) 
+            (summarized_stack stk) # dump_no_ln
           end;
         print_endline "\nDEBUGGED CALLS";
         print_endline "==============";
