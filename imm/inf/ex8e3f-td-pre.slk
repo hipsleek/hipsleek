@@ -59,16 +59,3 @@ Simplify  (5): flted_36_44=2
 
 */
 
-
-
-data node{
- int val;
- node next;
-}.
-
-pred ll<p> == self=p or
-  self::node<_,q>*q::ll<p> //& self!=p
-  inv true.
-
-//8
-slk_simplify x::ll<u> * y::node<_, q>@A * q::ll<v>@A &x=y.

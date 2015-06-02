@@ -764,7 +764,7 @@ let is_valid (pe : formula) timeout : bool =
     end
 
 let filter_imm_var_eq sv e f f_imm f_def =
-  if is_True f && is_ann_typ sv then 
+  if is_True f (* && is_ann_typ sv  *)then 
     match e with
     | Var (ev, _) -> if (Str.string_match (Str.regexp "In_[0-9]*") (name_of_sv ev) 0 ) then f_imm else f_def
     | _ -> f_def

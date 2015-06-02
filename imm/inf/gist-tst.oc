@@ -50,3 +50,5 @@ k := {[a,b]:a<=b};
 gist P given k;
 gist k given P;
 
+
+gist {[flted_38_44] : ((flted_38_44 = 2))} given {[flted_38_44] : (((0>0)))};
