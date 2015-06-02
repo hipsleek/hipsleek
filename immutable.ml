@@ -3055,7 +3055,7 @@ let fnc_pure = (nonef,nonef,nonef,f_bf,f_e)
 let fnc = (nonef, nonef, nonef, fnc_pure )
 
 let map_imm_to_int_pure_formula form = 
-  let form = Immutils.simplify_imm_addition form in
+  let form = x_add_1 Immutils.simplify_imm_addition form in
   CP.transform_formula fnc_pure form
 
 let map_imm_to_int_pure_formula form = 

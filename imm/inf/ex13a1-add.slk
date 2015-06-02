@@ -8,3 +8,18 @@ expect Valid.
 checkentail y=x+z & z=@A+d & x=@A+b & b=@M & d=@A+@A|- y=@M.
 print residue.
 expect Valid.
+
+
+checkentail x=@M+b & b=@M |- x=@M.
+print residue.
+expect Valid.
+// expect_infer I{} R{hfalse&false}
+
+
+checkentail x=@A+b & b=@M |- x=@L.
+print residue.
+expect Fail.
+
+checkentail x=@A+b & b=@M |- x=@A.
+print residue.
+expect Fail.
