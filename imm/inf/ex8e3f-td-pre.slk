@@ -29,7 +29,6 @@ Residue:
 */
 
 slk_simplify x=1 | x=2.
-//x::cell<_>@a * x::cell<_>b.
 
 //(4)
 slk_simplify x::cell<_>@a & a=@L.
@@ -45,7 +44,7 @@ slk_simplify x::cell<v> * x::cell<w>@A & v=2.
 
 
 /*
-# ex9e3f.slk
+# ex8e3f.slk
 
 slk_simplify x::cell<_>@a & a=@L.
 

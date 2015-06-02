@@ -1101,7 +1101,7 @@ let run_simplify (iante0 : meta_formula) =
   let () = x_binfo_pp "Andreea: gist need to detect true modulo variable renaming" no_pos in
   let r2 = Tpdispatcher.om_gist r mf1 in
   (* let () = x_binfo_hp (add_str "simplify:after gist" pr_pf) r2 no_pos in *)
-  CF.form_components ante heap_f r2
+  CF.form_components ante heap_f r2 mf1
 
 let run_simplify (iante0 : meta_formula) =
   let pr = string_of_meta_formula in

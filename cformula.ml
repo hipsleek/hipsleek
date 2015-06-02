@@ -18847,8 +18847,8 @@ let determine_infer_classic sp  =
 let determine_arr_as_var sp  = 
   determine_infer_type sp INF_ARR_AS_VAR
 
-let form_components (f : formula) hf pf =
-  if is_False pf then mkFalse mkFalseFlow  no_pos 
+let form_components (f : formula) hf pf heap_pure =
+  if is_False pf || is_False heap_pure then mkFalse mkFalseFlow  no_pos 
   else 
     let mpf = MCP.mix_of_pure pf in
     match f with
