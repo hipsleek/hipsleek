@@ -461,6 +461,7 @@ let common_arguments = [
   ("--dis-print-inline", Arg.Clear Globals.print_en_inline,"disable printing (with fewer intermediates)");
   ("--print-html", Arg.Set Globals.print_html,"enable html printing");
   ("--print-type", Arg.Set Globals.print_type,"Print type info");
+  ("--print-extra", Arg.Set Globals.print_extra,"Print extra info");
   ("--dis-type-err", Arg.Clear Globals.enforce_type_error,"Give just warning for type errors");
   ("--en-type-err", Arg.Set Globals.enforce_type_error,"Stricly enforce type errors");
   ("--print-x-inv", Arg.Set Globals.print_x_inv,

@@ -83,8 +83,16 @@ expect_infer:
 Some(( [
   emp&0+1=n & q_45=flted_11_35 & Anon_44=Anon_13 & flted_11_35=null&{FLOW,(20,21)=__norm#E}[]
 
-
 ==================================================================
+
+# ex4a.slk --print-extra (to show consumed heap)
+
+Some(( [
+  emp&0+1=n & q_45=flted_11_35 & Anon_44=Anon_13 & flted_11_35=null&{FLOW,(20,21)=__norm#E}[]
+  es_heap(consumed):
+  x::node<Anon_13,flted_11_35>
+  ],true))Stop z3... 39 invocations Stop Omega... 16 invocations 
+
 ==================================================================
 ==================================================================
 ==================================================================
