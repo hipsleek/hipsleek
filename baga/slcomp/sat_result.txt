@@ -1,8 +1,8 @@
 ./test.plx --all --timeout=10
 
 Total number of timeout files: 33 in:
- latest/UDB_sat/succ-circuit03.defs.smt2
- latest/UDB_sat/succ-circuit04.defs.smt2
+ latest/UDB_sat/succ-circuit03.defs.smt2: OK (15306)
+ latest/UDB_sat/succ-circuit04.defs.smt2: OK (15306)
  latest/UDB_sat/succ-circuit05.defs.smt2
  latest/UDB_sat/succ-circuit06.defs.smt2
  latest/UDB_sat/succ-circuit07.defs.smt2
