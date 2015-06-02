@@ -265,7 +265,7 @@ let parse_file (parse) (source_file : string) =
     | TermAssume (iante, iconseq) -> process_term_assume iante iconseq
     | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ 
     | TemplDef _ | UtDef _ 
-    | ExpectInfer -> ()
+    | ExpectInfer -> process_validate_infer ()
     | EmptyCmd -> () in
   let cmds = parse_first [] in
   let () = Slk2smt.smt_cmds := cmds in
