@@ -20,6 +20,8 @@ checkentail c::cell<v>@a & @L<:a //& b=@A
 print residue.
 expect Valid. // why not inst b=@A rather than b=@L
 
+
+
 /*
 # ex8e5g.slk
 

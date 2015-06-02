@@ -196,7 +196,7 @@ let pick_wekeast_instatiation lhs rhs_sv loc lhs_f rhs_f ivars evars =
           (* Some (CP.mkPure (def_rel rhs_exp loc))  *) (* no upper bound, instantiate to top *)
       | _  ->   
         let () =  x_tinfo_hp (add_str "choosing upper bounds between: " (pr_list CP.string_of_imm)) max_candidates no_pos in
-        pick_bounds max_candidates rhs_exp rhs_sv qvars loc
+        x_add pick_bounds max_candidates rhs_exp rhs_sv qvars loc
     in inst
   in
   let pick_eq p1 = (pick_equality_instantiation rhs_sv loc p1, None) in
@@ -242,6 +242,7 @@ let lhs_rhs_rel l r  =
 let upper_bound_rel sv bound = CP.mkPure (CP.mkEq sv bound no_pos)
 let lower_bound_rel sv bound = CP.mkPure (CP.mkEq sv bound no_pos)
 let alias_rel sv1 sv2 = CP.mkEqVar sv1 sv2 no_pos
+let inst_to_top sv = upper_bound_rel sv CP.const_ann_top
 
 let pr_out = pr_pair (pr_opt Cprinter.string_of_pure_formula) (pr_opt (pr_list Cprinter.string_of_pure_formula) )
 
@@ -261,20 +262,20 @@ let get_bounds ~upper:upper aliases pure  =
   CP.fold_formula pure fncs f_comb
 
 (* returns instantiation * proof obligation *)
-let pick_bounds ~upper:upper max_bounds var_to_be_instantiated sv_to_be_instantiated: CP.formula option * CP.formula list option = 
+let pick_bounds ~upper:upper bounds var_to_be_instantiated sv_to_be_instantiated: CP.formula option * CP.formula list option = 
   let inst = 
-    match max_bounds with
+    match bounds with
     | []    -> None, None
     | a::_ ->
       if upper then Some ( upper_bound_rel var_to_be_instantiated (CP.imm_to_exp a no_pos)), None 
       else Some ( lower_bound_rel var_to_be_instantiated (CP.imm_to_exp a no_pos)), None 
   in inst
 
-let pick_bounds ~upper:upper max_bounds var_to_be_instantiated sv_to_be_instantiated : CP.formula option * CP.formula list option = 
+let pick_bounds ~upper:upper bounds var_to_be_instantiated sv_to_be_instantiated : CP.formula option * CP.formula list option = 
   let pr1 = pr_list Cprinter.string_of_imm in 
   let pr = Cprinter.string_of_pure_formula in 
   let pr_out = pr_pair (pr_opt pr) (pr_opt (pr_list pr)) in 
-  Debug.no_1 "pick_bounds" pr1 pr_out (fun _ -> pick_bounds upper max_bounds var_to_be_instantiated sv_to_be_instantiated) max_bounds 
+  Debug.no_1 "pick_bounds" pr1 pr_out (fun _ -> pick_bounds upper bounds var_to_be_instantiated sv_to_be_instantiated) bounds 
 
 let pick_wekeast_instatiation_new lhs_exp rhs_sv loc lhs_f rhs_f ivars evars =
   let rhs_exp = CP.Var(rhs_sv,loc) in
@@ -301,7 +302,7 @@ let pick_wekeast_instatiation_new lhs_exp rhs_sv loc lhs_f rhs_f ivars evars =
     let candidates = get_bounds ~upper:upper (rhs_sv::aliases) pure in
     match candidates with
     | [] -> None, None
-    | _  -> pick_bounds ~upper:upper candidates rhs_exp rhs_sv  in
+    | _  -> x_add (pick_bounds ~upper:upper) candidates rhs_exp rhs_sv  in
   
   let instantiate_to_bounds_aux ~upper:upper candidates pure =
     let pr1 b = ite b "seraching for upper bounds" "seraching for lower bounds" in
@@ -311,10 +312,14 @@ let pick_wekeast_instatiation_new lhs_exp rhs_sv loc lhs_f rhs_f ivars evars =
   let instantiate_to_bounds pure =
     let aset = Imm.build_eset_of_imm_formula pure in
     let aliases = CP.EMapSV.find_equiv_all rhs_sv aset in
-    let to_lhs, to_rhs = instantiate_to_bounds_aux ~upper:true pure aliases in
-    let inst_to_min = instantiate_to_bounds_aux ~upper:false pure aliases in
-    map_opt_def inst_to_min (fun x -> Some x, to_rhs) to_lhs in
+    let to_lhs_max_bound, to_rhs = instantiate_to_bounds_aux ~upper:true pure aliases in
+    to_lhs_max_bound, to_rhs in
+    (* avoid inst to lower bound *)
+    (* let inst_to_min = instantiate_to_bounds_aux ~upper:false pure aliases in *)
+    (* map_opt_def inst_to_min (fun x -> Some x, to_rhs) to_lhs_max_bound in *)
 
+  let instantiate_to_bounds pure =
+    Debug.no_1 "instantiate_to_bounds" !CP.print_formula pr_out instantiate_to_bounds pure in
 
   (* 3 find poly bounds and instantiate to global bound *)
   let pick_bounds_incl_global () =
@@ -325,23 +330,26 @@ let pick_wekeast_instatiation_new lhs_exp rhs_sv loc lhs_f rhs_f ivars evars =
     else
       let helper () = 
         (*5 pick poly bound *)
-        let to_lhs, to_rhs = instantiate_to_bounds form4 in
-        map_opt_def (None,None) (fun x -> (Some x, to_rhs)) to_lhs in
+        let to_lhs, to_rhs = x_add_1 instantiate_to_bounds form4 in
+        (* map_opt_def (None,None) (fun x -> (Some x, to_rhs)) to_lhs  *)
+        (* instantiate to top (@A) if no explicit upper bound (constant or poly) found *)
+        map_opt_def (Some (inst_to_top rhs_exp), to_rhs) (fun x -> (Some x, to_rhs)) to_lhs 
+      in
       (*4 check for poly eq first *)
       let aset = Imm.build_eset_of_imm_formula form4 in
       let alias = CP.EMapSV.find_equiv rhs_sv aset in
       map_opt_def (helper () ) (fun x -> Some (alias_rel x rhs_sv), None) alias in
 
-  (*2. check if rhs_p_restricted is true and if so add lhs_imm<:rhs_imm *)
+  (*2. check if rhs_p_restricted is true and if so add rhs_imm=top *)
   let check4_empty rhs_p_restricted rhs_p = 
     let form = TP.simplify_tp (CP.wrap_exists_svl rhs_p_restricted evars) in
-    if (CP.is_True form) then Some lrsubtype, None
+    if (CP.is_True form) then Some (inst_to_top rhs_exp), Some [lrsubtype]
     else
       (* 3 find constant bounds and instantiate to bound *)
       let qvars3 = Gen.BList.difference_eq CP.eq_spec_var ((CP.all_vars lhs_p)@(CP.all_vars rhs_p)) [rhs_sv] in
       let form3 = CP.join_conjunctions [lhs_p;rhs_p] in
       let form3 = TP.simplify_tp (CP.wrap_exists_svl form3 qvars3) in
-      let to_lhs, to_rhs = instantiate_to_bounds form3 in
+      let to_lhs, to_rhs = x_add_1 instantiate_to_bounds form3 in
       map_opt_def (pick_bounds_incl_global ()) (fun x -> (Some x, to_rhs)) to_lhs in
 
   (* 1. check the proof that v=IConst in lhsp & rhs_p;*)
