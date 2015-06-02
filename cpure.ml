@@ -889,9 +889,9 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
        We need only to compare names and primedness *)
     (String.compare v1 v2 = 0) && (p1 = p2)
 
-let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = 
-  let pr = !print_sv in
-  Debug.no_2 "eq_spec_var" pr pr string_of_bool eq_spec_var (sv1 : spec_var) (sv2 : spec_var)
+(* let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) =  *)
+(*   let pr = !print_sv in *)
+(*   Debug.no_2 "eq_spec_var" pr pr string_of_bool eq_spec_var (sv1 : spec_var) (sv2 : spec_var) *)
 
 let eq_spec_var_unp (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (_, v1, p1), SpecVar (_, v2, p2)) ->
@@ -3002,7 +3002,7 @@ and equalBFormula_f (eq:spec_var -> spec_var -> bool) (f1:b_formula)(f2:b_formul
           *)
 
 and eqExp_f (eq:spec_var -> spec_var -> bool) (e1:exp)(e2:exp):bool =
-  Debug.no_2 "eqExp_f" !print_exp !print_exp string_of_bool (eqExp_f_x eq) e1 e2 
+  (* Debug.no_2 "eqExp_f" !print_exp !print_exp string_of_bool *) (eqExp_f_x eq) e1 e2 
 
 and eqExp_f_x (eq:spec_var -> spec_var -> bool) (e1:exp)(e2:exp):bool =
   let rec helper e1 e2 =

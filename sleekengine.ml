@@ -1064,6 +1064,9 @@ let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:T
 
 let run_simplify (iante0 : meta_formula) =
   let (n_tl,ante) = x_add meta_to_formula iante0 false [] [] in
+  let pr = Cprinter.string_of_formula in
+  let pr_h = Cprinter.string_of_h_formula in
+  let pr_pf = Cprinter.string_of_pure_formula in
   let ante = Cvutil.prune_preds !cprog true ante in
   let ante =
     if (Perm.allow_perm ()) then
@@ -1072,11 +1075,29 @@ let run_simplify (iante0 : meta_formula) =
       CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) ante
     else ante
   in
-  let (h,p,_,_,_,_) = CF.split_components ante in
+  let (heap_f,p,_,_,_,_) = CF.split_components ante in
   let pf = MCP.pure_of_mix p in
+  let () = x_binfo_hp (add_str "simplify:ante" pr) ante no_pos in
+  let () = x_binfo_hp (add_str "simplify:heap" pr_h) heap_f no_pos in
+  let () = x_binfo_hp (add_str "simplify:pure" pr_pf) pf no_pos in
+  let p1 = MCP.mkMTrue no_pos in
+  let () = x_binfo_pp "Andreea: heap need to be normalized before xpure_heap_sym" no_pos in
+  let (mf1,_,_) as rr = Cvutil.xpure_heap_sym 11 !cprog heap_f p1 1 in
+  let mf1 = MCP.pure_of_mix mf1 in
+  let pr_r = fun (p1,p3,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(Cprinter.string_of_spec_var_list p3)^"#"^(Cprinter.string_of_mem_formula p4) in 
+  let () = x_binfo_hp (add_str "simplify:xpure_heap" pr_r) rr no_pos in
+
   (* print_endline "calling tp_dispatcher?"; *)
   let r = Tpdispatcher.simplify_tp pf in
-  r
+  let () = x_binfo_pp "Andreea: gist need to detect true modulo variable renaming" no_pos in
+  let r2 = Tpdispatcher.om_gist r mf1 in
+  (* let () = x_binfo_hp (add_str "simplify:after gist" pr_pf) r2 no_pos in *)
+  CF.form_components ante heap_f r2
+
+let run_simplify (iante0 : meta_formula) =
+  let pr = string_of_meta_formula in
+  let pr1 = Cprinter.string_of_formula in
+  Debug.no_1 "run_simplify" pr pr1 run_simplify iante0
 
 let run_hull (iante0 : meta_formula) = 
   let (n_tl,ante) = x_add meta_to_formula iante0 false [] [] in
@@ -2365,11 +2386,17 @@ let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula
 let print_result f m =
   print_endline_quiet (((add_str m Cprinter.string_of_pure_formula) f)^"\n")
 
+let print_cf_result f m =
+  print_endline_quiet (((add_str ("\n"^m) Cprinter.string_of_formula) f)^"\n")
+
 let process_simplify (f : meta_formula) =
   let num_id = "Simplify  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in  
   try 
     let rs = run_simplify f in
-    print_result rs num_id
+    let (hf,pf,_,_,_,_) = CF.split_components rs in
+    let () = x_tinfo_hp (add_str "heap" Cprinter.string_of_h_formula) hf no_pos in 
+    if CF.is_emp_h_formula hf then print_result (MCP.pure_of_mix pf) num_id
+    else print_cf_result rs num_id
   with _ -> print_exc num_id
 
 let process_hull (f : meta_formula) =
