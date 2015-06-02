@@ -174,7 +174,7 @@ let imm_summation emap e =
   in
   let new_e = fold_exp e f_e0 (fun lst -> 
       let lst = List.filter (fun x -> not(is_abs_exp x)) lst in
-      let constants = List.filter (fun x -> is_const_imm ~emap:emap(exp_to_imm x)) lst in
+      let constants = List.filter (fun x -> is_const_imm ~emap:emap (exp_to_imm x)) lst in
       if ((List.length constants == 1) || (List.length constants == 0)) then (* zero or only one non @A constant *)
          (mkAdd_list lst)
       else (Null no_pos)
