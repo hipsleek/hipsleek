@@ -1725,6 +1725,9 @@ let process_validate exp_res opt_fl ils_es=
     let _ = print_endline_quiet ("\n") in
     ()
 
+let process_validate exp_res opt_fl ils_es =
+  Debug.no_2 "process_validate" pr_none pr_none pr_none (process_validate exp_res) opt_fl ils_es
+
 let process_shape_divide pre_hps post_hps=
   (* let _ = Debug.info_pprint "process_shape_divide" no_pos in *)
   let hp_lst_assume = !sleek_hprel_assumes in

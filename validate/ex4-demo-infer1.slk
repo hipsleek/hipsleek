@@ -13,12 +13,14 @@ expect Fail.
 checkentail x::ll<n> & n>0 |- x!=null.
 expect Valid.
 
+
 checkentail x::ll<n> & x!=null |- n>0.
 expect Valid.
 
+//(4)
 checkentail x::node<_,null> |- x::ll<n>.
 print residue.
-expect Valid.
+//expect Valid.
 expect_infer R{x!=null & n=1}.
 
 //(5)
