@@ -56,6 +56,34 @@ Why is below not executed?
   ()
 
 ==================================================================
+# ex4a.slk
+
+--pcp
+
+GOT:
+Expected Residue :  emp&x!=null & n=1&{FLOW,(20,21)=__norm#E}[]
+
+Can we have:
+
+expect_infer: 
+ R{emp&x!=null & n=1&{FLOW,(20,21)=__norm#E}[]}
+ ..
+
+====================================================
+
+# ex4a.slk
+
+# Need to check
+   current residue |- expected residue
+
+# It seems that consumed heap is missing
+
+!!! **sleekengine.ml#1599:expected residue: emp&x!=null & n=1&{FLOW,(20,21)=__norm#E}[]
+!!! **sleekengine.ml#1602:current residue:
+Some(( [
+  emp&0+1=n & q_45=flted_11_35 & Anon_44=Anon_13 & flted_11_35=null&{FLOW,(20,21)=__norm#E}[]
+
+
 ==================================================================
 ==================================================================
 ==================================================================

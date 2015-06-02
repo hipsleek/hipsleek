@@ -1588,12 +1588,18 @@ let process_shape_rec sel_hps=
   ()
 
 let process_validate_infer_residue residue =
+  let pr_f = Cprinter.string_of_formula in
+  let res_f = snd (meta_to_formula residue false [] []) in
   if (!Globals.print_input || !Globals.print_input_all) then
     print_endline ("Expected Residue : " ^ string_of_meta_formula residue);
   if (!Globals.print_core || !Globals.print_core_all) then
     print_endline ("Expected Residue : " ^
-      Cprinter.string_of_formula (snd (meta_to_formula residue false [] [])));
+      Cprinter.string_of_formula (res_f));
   let () = print_endline "Processing residue validation" in
+  let () = x_binfo_hp (add_str "expected residue" pr_f) res_f no_pos in
+  let pr_lc = Cprinter.string_of_list_context in
+  let pr_r = pr_option (pr_pair pr_lc string_of_bool) in
+  let () = x_binfo_hp (add_str "current residue" pr_r) !CF.residues no_pos in 
   (*  see process_validate. line 1617 *)
   ()
 
