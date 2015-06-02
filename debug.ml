@@ -504,7 +504,6 @@ struct
       val calls =  Array.make (len+1) ""
       (* debug calls in the run-time state *)
       val overflow = prefix^"****************************************"
-      val mutable match_counter = 0
       val mutable lastline = "\n"
       val mutable rgx = None
       val stk = new Gen.stack_pr pr_id (==)
@@ -594,20 +593,16 @@ struct
             else (
               let deb_len = debug_stk # len in
               let len = self # get (deb_len) s in
-              if !dump_calls_all then 
+              if !dump_calls_all then
                 begin
                   stk # push lastline;
-                  lastline <- ("\n"^len^
-                    (if is_match s
-                     then (match_counter <- match_counter + 1;
-                          s ^ "@" ^ (string_of_int match_counter))
-                     else s))
+                  lastline <- "\n"^len^s
               end)
           with _ -> ()
         end
       method add_id id =
         begin
-          if !dump_calls_all then 
+          if !dump_calls_all then
             lastline <- lastline^id^"."
         end
     end

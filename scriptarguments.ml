@@ -510,6 +510,8 @@ let common_arguments = [
        Debug.mk_debug_arg s),
    "Matched input/output with reg-exp");
   ("-dre-trace", Arg.String (fun s ->
+       let _ = print_endline ("!!!-dre "^s) in
+       Debug.z_debug_file:=("$"^s); z_debug_flag:=true;
        Debug.debug_pattern_on := true;
        Debug.dump_calls:=true;
        Debug.dump_calls_all:=true;
