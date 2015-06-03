@@ -2489,6 +2489,14 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
   let pr_guards = pr_list !CP.print_formula in
   Debug.no_2 "compatible_at_field_lvl" pr pr (pr_quad string_of_bool pr pr_out3 pr_guards) (fun _ _ -> compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap) h1 h2 
 
+let get_simpler_imm imm =
+  match imm with
+  | CP.TempRes (a1,a2) ->
+    let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"imm" () in
+    let fresh_ann_var = CP.Var(fresh_ann_sv, no_pos) in
+    let guard = CP.mkEq (CP.imm_to_exp a1 no_pos) (CP.mkAdd fresh_ann_var (CP.imm_to_exp a2 no_pos) no_pos) no_pos in
+    (CP.mkPolyAnn fresh_ann_sv), [CP.mkPure guard]
+  | _ -> imm, []
 
 (* return (compatible_flag, to_keep_node) *)
 let compatible_at_node_lvl prog imm1 imm2 h1 h2 unfold_fun qvars emap =
@@ -2504,9 +2512,11 @@ let compatible_at_node_lvl prog imm1 imm2 h1 h2 unfold_fun qvars emap =
       let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"imm" () in
       let fresh_ann_var = CP.Var(fresh_ann_sv, no_pos) in
       let h = set_imm h1 (CP.mkPolyAnn fresh_ann_sv) in (* TODOIMM to add the constraint fresh_ann = ann1 + ann2 *)
+      let imm1, guard1 = get_simpler_imm imm1 in
+      let imm2, guard2 = get_simpler_imm imm2 in
       let guard = CP.mkEq fresh_ann_var (CP.mkAdd (CP.imm_to_exp imm1 no_pos) (CP.imm_to_exp imm2 no_pos) no_pos) no_pos in
       let guard = CP.mkPure guard in
-      (true, h, [guard]) in
+      (true, h, [guard]@guard1@guard2) in
       (* (false, h1, [guard]) in *)
   let compatible, keep_h, struc, guards =
     (match h1, h2 with
