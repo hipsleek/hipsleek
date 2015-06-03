@@ -42,13 +42,9 @@ astsimp.ml (compute_view_x_formula_x - helper):
 vdef.C.view_x_formula <- xform2;
 
 ===========================================================
-#ex3a-baga.slk
+#ex3a-baga.slk: FIXED
 
 fixcalc: Parse error on line 2 rest of line:
-
-astsimp.ml
-
-let view_list_num_with_inv = x_add Fixcalc.compute_inv_mutrec (List.map (fun vd -> vd.Cast.view_name) view_list_num) view_list_num in
 
 ===========================================================
 
