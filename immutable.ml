@@ -116,7 +116,6 @@ let weakest_rels v a1 a2 loc = CP.mkEqMax v a1 a2 loc
 let weakest_rel a1 a2 loc = CP.mkEq a1 a2 loc
 let default_inst a1 a2 loc = CP.mkPure (CP.mkEq a1 a2 loc)
 let weakest_inst a1 a2 loc = CP.mkSubAnn a1 a2 
-let def_rel v loc = CP.mkEq v CP.const_ann_top loc
 
 let lhs_rhs_rel l r to_rhs = 
   if not (!Globals.imm_weak) then default_inst l r no_pos, [to_rhs] 
@@ -162,80 +161,6 @@ let pick_bounds max_bounds var_to_be_instantiated sv_to_be_instantiated
   let pr = Cprinter.string_of_pure_formula in 
   let pr_out = pr_pair (pr_opt pr) (pr_opt (pr_list pr)) in 
   Debug.no_1 "pick_bounds" pr1 pr_out (fun _ -> pick_bounds max_bounds var_to_be_instantiated sv_to_be_instantiated qvars loc) max_bounds 
-
-(* check for sv = AConst a
-   if found inst(sv,rhs) = [sv = AConst a]
-   else simplify pure(rhs) and check for sv = AConst a
-      if found then inst(sv,simplif_rhs) = [sv = AConst a]
-      else search for weakest inst aka sv<:[AConst a] in simplif_rhs
-       if found (sv,simplif_rhs) = [AConst a]
-       else add the eq with corresponding ann from lhs
-*)
-let pick_wekeast_instatiation lhs rhs_sv loc lhs_f rhs_f ivars evars =
-  let pure_rhs = CF.get_pure rhs_f in
-  let pure_lhs = CF.get_pure lhs_f in
-  let rhs_exp = CP.Var(rhs_sv,loc) in
-  let qvars = ivars@evars in
-  let weakest_inst_helper pure =
-    let aset = Imm.build_eset_of_imm_formula pure in
-    let aliases = CP.EMapSV.find_equiv_all rhs_sv aset in
-    let max_candidates = upper_bounds (rhs_sv::aliases) pure in
-    let inst = 
-      match max_candidates with
-      | [] -> (* None *)
-        let () =  x_tinfo_pp  "no explicit max bounds found" no_pos in
-        let rel_args = List.fold_left (fun acc (_, lst) -> lst@acc) [] (CP.get_list_rel_args pure) in
-        if CP.EMapSV.mem rhs_sv rel_args then None, None
-        else 
-          let to_lhs, to_rhs = 
-          if not (!Globals.imm_weak) then 
-            let () =  x_tinfo_pp "instantiating to top (@A) - must prove lhs<:rhs" no_pos in
-            Some (default_inst rhs_exp CP.const_ann_top no_pos),
-            Some [weakest_inst lhs rhs_exp no_pos]
-          else 
-            let () =  x_tinfo_pp "instantiating to  lhs<:rhs - no need to add extra constr on rhs" no_pos in
-            Some (weakest_inst lhs rhs_exp no_pos),
-            Some [] in
-          (to_lhs, to_rhs)
-          (* Some (CP.mkPure (def_rel rhs_exp loc))  *) (* no upper bound, instantiate to top *)
-      | _  ->   
-        let () =  x_tinfo_hp (add_str "choosing upper bounds between: " (pr_list CP.string_of_imm)) max_candidates no_pos in
-        x_add pick_bounds max_candidates rhs_exp rhs_sv qvars loc
-    in inst
-  in
-  let pick_eq p1 = (pick_equality_instantiation rhs_sv loc p1, None) in
-  let simplify_pick_eq f1 =
-    let constr = CP.mkSubAnn lhs rhs_exp in
-    let form = 
-      if not(!Globals.imm_simplif_inst) then 
-        CP.mkExists evars (CP.mkAnd (fst (split_imm_pure f1)) constr loc) None loc 
-      else
-        let inst_args = rhs_sv::(CP.afv lhs) in
-        let all_fv = (CP.fv f1) @ (CP.fv pure_lhs) in
-        let new_evars = Gen.BList.difference_eq CP.eq_spec_var all_fv inst_args in
-        CP.mkExists new_evars (CP.conj_of_list [fst (split_imm_pure pure_lhs); fst (split_imm_pure pure_rhs); constr] loc) None loc 
-    in
-    let simplif = x_add_1 TP.simplify_tp form in
-    let () =  x_tinfo_hp (add_str "bef simplif       : " Cprinter.string_of_pure_formula) form no_pos in
-    let () =  x_tinfo_hp (add_str "simplified formula: " Cprinter.string_of_pure_formula) simplif no_pos in
-    if CP.is_False simplif then None, None 
-    else
-      let inst, to_rhs = pick_eq simplif in
-      map_opt_def (weakest_inst_helper simplif)  (fun x -> Some x, to_rhs) inst
-  in
-  (* let simplify_pick_eq_0 rhs_p = *)
-  (*   let qvars = Gen.BList.difference_eq CP.eq_spec_var (CP.all_vars rhs_p) [rhs_sv] in *)
-  (*   let rhs_p0 = CP.wrap_exists_svl rhs_p qvars in *)
-  (*   let rhs_simplif = x_add_1 TP.simplify_tp rhs_p0 in *)
-  (*   if (CP.is_True rhs_simplif) then Some (lhs_rhs_rel lhs rhs_exp ), None *)
-  (*   else simplify_pick_eq rhs_p in *)
-  map_opt_def (simplify_pick_eq pure_rhs) (fun x -> Some x, snd ((pick_eq pure_rhs))) (fst (pick_eq pure_rhs))
-
-let pick_wekeast_instatiation lhs rhs loc lhs_f rhs_f ivars evars=
-  let pr2 = Cprinter.string_of_formula in
-  let pr3 = pr_pair (pr_opt Cprinter.string_of_pure_formula) (pr_opt (pr_list Cprinter.string_of_pure_formula) ) in
-  Debug.no_2 "pick_wekeast_instatiation" pr2 pr2 pr3 (fun _ _ -> pick_wekeast_instatiation lhs rhs loc lhs_f rhs_f ivars evars) lhs_f rhs_f
-
 
 (* ################# new algo ################### *)
 
@@ -290,6 +215,10 @@ let pick_wekeast_instatiation_new lhs_exp rhs_sv loc lhs_f rhs_f ivars evars =
 
   (* return lhs & rhs pures relevant to svl *)
   let get_relevant_lhs_rhs lhs rhs svl =
+    (* TODOIMM to check if we need the rel for subsequent steps *)
+    (* filter out rels *)
+    let lhs = CP.drop_rel_formula lhs in
+    let rhs = CP.drop_rel_formula rhs in
     let relevant_constr = CP.filter_var_new (CP.join_conjunctions [lhs;rhs]) svl in
     let relevant_vars = CP.fv relevant_constr in
     let lhs_p = CP.filter_var_new pure_lhs relevant_vars in
@@ -299,6 +228,11 @@ let pick_wekeast_instatiation_new lhs_exp rhs_sv loc lhs_f rhs_f ivars evars =
   (* crop only the relevant constraints from both lhs and rhs pures *)
   let lhs_p, rhs_p = get_relevant_lhs_rhs pure_lhs pure_rhs (rhs_sv::(CP.afv lhs_exp)) in
   let lhs_p_restricted, rhs_p_restricted = get_relevant_lhs_rhs pure_lhs pure_rhs [rhs_sv] in
+
+  let () = x_ninfo_hp (add_str "lhs_p:" !CP.print_formula) lhs_p no_pos in
+  let () = x_ninfo_hp (add_str "lhs_restricted:" !CP.print_formula) lhs_p_restricted no_pos in
+  let () = x_ninfo_hp (add_str "rhs_p:" !CP.print_formula) rhs_p no_pos in
+  let () = x_ninfo_hp (add_str "rhs_p_restricted:" !CP.print_formula) lhs_p_restricted no_pos in
 
   let pick_eq p1 = (pick_equality_instantiation rhs_sv loc p1, None) in
 
@@ -347,6 +281,7 @@ let pick_wekeast_instatiation_new lhs_exp rhs_sv loc lhs_f rhs_f ivars evars =
   (*2. check if rhs_p_restricted is true and if so, inst to lhs_imm<:rhs_imm *)
   let check4_empty rhs_p_restricted rhs_p = 
     let form = TP.simplify_tp (CP.wrap_exists_svl rhs_p_restricted evars) in
+    let () = x_ninfo_hp (add_str "rhs simplified:" !CP.print_formula) form no_pos in
     if (CP.is_True form) then (* Some (inst_to_top rhs_exp) *) Some lrsubtype, None
     else
       (* 3 find constant bounds and instantiate to bound *)
@@ -2981,12 +2916,6 @@ let infer_specs_imm_post_process (spec: CF.struc_formula) : CF.struc_formula =
   spec
 
 let imm_unify (form:CP.formula): CP.formula = 
-  (* let disj = CP.split_disjunctions_deep form in *)
-  (* let disj_part = List.map split_imm_pure disj in (\* split each disj in imm formula + pure formula *\) *)
-  (* let disj_part = List.map (fun (ximm,ypure) -> (TP.simplify_tp ximm, ypure)) disj_part in (\* simplify the imm formula of each disjunct *\) *)
-  (* let disj_part = List.filter (fun (ximm,ypure) -> not (CP.is_False ximm)) disj_part in  (\* remove unsat disjuncts *\) *)
-  (* let imms, pures = List.split disj_part in *)
-  (* let simp_immf = TP.simplify_tp (CP.join_conjunctions imms) in (\* strenghten imm formula *\) *)
   let simp_immf, pure = split_imm_pure form in
   if not (CP.is_False simp_immf) then
     let immf = simp_immf in

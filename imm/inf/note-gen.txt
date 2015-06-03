@@ -1,0 +1,8 @@
+key operations: 
+
+1. normalization [ok]
+
+2. instantiation - need to add inst rel
+
+3. addition rules - need to test more
+
