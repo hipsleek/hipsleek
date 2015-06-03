@@ -2489,6 +2489,7 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
   let pr_guards = pr_list !CP.print_formula in
   Debug.no_2 "compatible_at_field_lvl" pr pr (pr_quad string_of_bool pr pr_out3 pr_guards) (fun _ _ -> compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap) h1 h2 
 
+(* tranform @[@a,@b] to @c, where a=b+c *)
 let get_simpler_imm imm =
   match imm with
   | CP.TempRes (a1,a2) ->

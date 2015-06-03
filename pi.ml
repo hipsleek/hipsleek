@@ -550,6 +550,11 @@ let norm_rel_oblgs reloblgs =
       else (rel_c, rel_n, Immutable.imm_unify ((* TP.simplify_tp *) rel_d))) reloblgs_new  in
   reloblgs_new
 
+let norm_rel_oblgs reloblgs =
+  let pr = Cprinter.string_of_pure_formula in
+  let pr_oblg = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in
+  Debug.no_1 "norm_rel_oblgs" pr_oblg pr_oblg norm_rel_oblgs reloblgs
+
 let norm_reloblgs_and_init_defs reloblgs =
   (* norm *)
   let reloblgs = norm_rel_oblgs reloblgs in
@@ -665,6 +670,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let reldefns = reldefns @ reldefns_from_oblgs in (* TODOIMM how abt that infer flow inside for reldefns_from_oblgs *)
             (* let reldefns = List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in *)
             let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in
+            let pre_rel_df = List.map (fun (x,y) -> (Immutable.postprocess_pre x,y)) pre_rel_df in
             let pre_rel_ids = List.filter (fun x -> CP.is_rel_typ x
                                                     && not(Gen.BList.mem_eq CP.eq_spec_var x post_vars)) pre_vars in
             let post_rel_ids = List.filter (fun sv -> CP.is_rel_typ sv) post_vars in
@@ -796,7 +802,10 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             else
               let new_specs1 = List.map (fun proc_spec -> CF.transform_spec proc_spec (CF.list_of_posts proc_spec)) proc_specs in
               let _ = x_binfo_hp (add_str "new_specs1" (pr_list Cprinter.string_of_struc_formula)) new_specs1 no_pos in
-              let lst_assume = norm_rel_oblgs lst_assume in (* TODOIMM should lst_assume be added back to the spec given that they are used to form initial pre definitions? *)
+              (* =============== imm rel norm ================== *)
+              let lst_assume = norm_rel_oblgs lst_assume in (* TODOIMM - to check if this can be done at an earlier point *)
+              let lst_assume = List.map (fun (a,b,c) -> (a,b,Immutable.postprocess_pre c)) lst_assume in
+              (* =============== END imm rel norm ================== *)
               let new_specs2 = List.map (fun new_spec1 -> fst (x_add_1 wrap (Fixpoint.simplify_relation new_spec1
                                                                                (Some triples) pre_vars post_vars_wo_rel prog true (* inf_post_flag *) evars) lst_assume)) new_specs1 in
               let _ = x_binfo_hp (add_str "new_specs2" (pr_list Cprinter.string_of_struc_formula)) new_specs2 no_pos in
