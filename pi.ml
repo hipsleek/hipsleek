@@ -756,6 +756,13 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             (* let res = List.map (fun (rel_post,post,rel_pre,pre) ->  *)
             (*     (rel_post,TP.simplify_tp post,rel_pre,TP.simplify_tp pre) *)
             (*   ) res in     *)              (* TODOIMM : check if this simplification is needed  *)
+            let () = List.iter (fun (rel_post,post,rel_pre,pre) ->
+                x_binfo_zp (lazy ((">>>>>>>>>>> (bef postprocess): <<<<<<<<<"))) no_pos;
+                x_binfo_zp (lazy ((">>REL POST: "^Cprinter.string_of_pure_formula rel_post))) no_pos;
+                x_binfo_zp (lazy ((">>POST: "^Cprinter.string_of_pure_formula post))) no_pos;
+                x_binfo_zp (lazy ((">>REL PRE : "^Cprinter.string_of_pure_formula rel_pre))) no_pos;
+                x_binfo_zp (lazy ((">>PRE : "^Cprinter.string_of_pure_formula pre))) no_pos
+              ) res in
             let res = List.map (fun (rel_post,post,rel_pre,pre) ->  
                 (rel_post,Immutable.postprocess_post post pre_vars,rel_pre,Immutable.postprocess_pre pre)) res in
             res
@@ -773,6 +780,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
           Infer.fixcalc_rel_stk # reset;
           (* let tuples = infer_imm_post_process_tuple tuples in *)
           let () = List.iter (fun (rel_post,post,rel_pre,pre) ->
+              x_binfo_zp (lazy ((">>>>>>>>>>> (after postprocess): <<<<<<<<<"))) no_pos;
               x_binfo_zp (lazy ((">>REL POST : "^Cprinter.string_of_pure_formula rel_post))) no_pos;
               x_binfo_zp (lazy ((">>POST: "^Cprinter.string_of_pure_formula post))) no_pos;
               x_binfo_zp (lazy ((">>REL PRE : "^Cprinter.string_of_pure_formula rel_pre))) no_pos;
