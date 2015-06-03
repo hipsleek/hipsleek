@@ -1,0 +1,27 @@
+data cell{
+ int fst;
+}.
+
+relation P(ann v).
+
+infer[P] c::cell<_>@M |- c::cell<_>@b & P(b).
+print residue.
+
+/*
+# ex8d5.slk
+
+(used in ex8d4.ss verification)
+
+infer[P] c::cell<_>@M |- c::cell<_>@b & P(b).
+
+# this is too weak for post.
+
+ <1>c::cell<Anon_11>@M&b=@A & Anon_12=Anon_11&{FLOW,(20,21)=__norm#E}[]
+ inferred rel: [RELDEFN P: ( b=@A) -->  P(b)]
+
+# We should try to impl inst a<:b and then
+obtain instead:
+
+    a=@M & a<:b --> P(b)
+
+*/

@@ -1192,6 +1192,39 @@ RELDEFN Q: ( a_1491=@A) -->  Q(a_1491)]
 *************************************
 
 =======================================================
+# ex8d4.ss
+
+# using b=@A is too weak..
+
+[RELDEFN P: ( b_1452=@A) -->  P(b_1452)]
+
+GOT
+---
+!!! **pi.ml#802:new_specs2:[ EInfer [P]
+   EBase exists (Expl)[](Impl)[a; v](ex)[]c::cell<v>@a&a=@M&
+         {FLOW,(4,5)=__norm#E}[]
+           EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                   EAssume 
+                     (exists w_1451,b_1452: c::cell<w_1451>@b_1452&b_1452=@A&
+                     {FLOW,(4,5)=__norm#E}[]
+                     ]
+
+=======================================================
+# ex8d5.slk
+
+(used in ex8d4.ss verification)
+
+infer[P] c::cell<_>@M |- c::cell<_>@b & P(b).
+
+# this is too weak for post.
+
+ <1>c::cell<Anon_11>@M&b=@A & Anon_12=Anon_11&{FLOW,(20,21)=__norm#E}[]
+ inferred rel: [RELDEFN P: ( b=@A) -->  P(b)]
+
+# We should try to impl inst a<:b and then
+obtain instead:
+
+    a=@M & a<:b --> P(b)
 =======================================================
 =======================================================
 =======================================================
