@@ -4599,7 +4599,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             let fs,remf,remt = compact_field_access_sequence prog lhst fl in
             if (remf = "") then [] 
             else I.look_up_all_fields prog (match remt with
-                | Named c -> I.look_up_data_def_raw prog.I.prog_data_decls c
+                | Named c -> x_add I.look_up_data_def_raw prog.I.prog_data_decls c
                 | _ -> failwith "ERror!")
           | _ -> failwith "expand_field_list: unexpected pattern"
         else if (is_member_exp rhs) then
@@ -4613,7 +4613,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             let fs,remf,remt = compact_field_access_sequence prog rhst fr in
             if (remf = "") then []
             else I.look_up_all_fields prog (match remt with
-                | Named c -> I.look_up_data_def_raw prog.I.prog_data_decls c
+                | Named c -> x_add I.look_up_data_def_raw prog.I.prog_data_decls c
                 | _ -> failwith "ERror!")
           | _ -> failwith "expand_field_list: unexpected pattern"
         else []
@@ -10775,7 +10775,7 @@ and trans_expected_ass prog ass =
 
 let check_data_pred_name iprog name : bool =
   try
-    let todo_unk = I.look_up_data_def_raw iprog.I.prog_data_decls name in false
+    let todo_unk = x_add I.look_up_data_def_raw iprog.I.prog_data_decls name in false
   with | Not_found -> begin
       try
         let todo_unk = I.look_up_view_def_raw 3 iprog.I.prog_view_decls name in false

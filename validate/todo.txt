@@ -94,7 +94,7 @@ Some(( [
   ],true))Stop z3... 39 invocations Stop Omega... 16 invocations 
 
 ==================================================================
-err4b.slk
+err4b.slk (FIXED by removing add_last_diff line)
 
 # Why isn't there a type error with the node<null> scenario?
 

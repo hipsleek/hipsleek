@@ -8,7 +8,7 @@ pred ll<n> == self = null & n = 0
   inv n >= 0.
 
 //(4)
-checkentail x::node<a,q>*q::node<null> |- x::ll<n>.
+checkentail x::node<a,qqq>*qqq::node<null> |- x::ll<n>.
 //print residue.
 //expect Valid.
 //expect_infer R{x!=null & n=1}.
