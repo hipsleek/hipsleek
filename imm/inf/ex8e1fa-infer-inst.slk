@@ -1,0 +1,6 @@
+relation I(ann a, ann b).
+
+infer [I] a=@L & I(a,a1) |-  a1=@L.
+print residue.
+
+slk_simplify (a1=@L | a=@A | a<:@I) & a<:a1 &a=@L.
