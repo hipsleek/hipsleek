@@ -764,7 +764,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                 x_binfo_zp (lazy ((">>PRE : "^Cprinter.string_of_pure_formula pre))) no_pos
               ) res in
             let res = List.map (fun (rel_post,post,rel_pre,pre) ->  
-                (rel_post,Immutable.postprocess_post post pre_vars,rel_pre,Immutable.postprocess_pre pre)) res in
+                (rel_post,(Immutable.postprocess_post rel_post post pre_vars),rel_pre,(Immutable.postprocess_pre rel_pre pre))) res in
             res
           in
 
@@ -813,7 +813,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
               let _ = x_binfo_hp (add_str "new_specs1" (pr_list Cprinter.string_of_struc_formula)) new_specs1 no_pos in
               (* =============== imm rel norm ================== *)
               let lst_assume = norm_rel_oblgs lst_assume in (* TODOIMM - to check if this can be done at an earlier point *)
-              let lst_assume = List.map (fun (a,b,c) -> (a,b,Immutable.postprocess_pre c)) lst_assume in
+              let lst_assume = List.map (fun (a,b,c) -> (a,b,Immutable.postprocess_pre b c)) lst_assume in
               (* =============== END imm rel norm ================== *)
               let new_specs2 = List.map (fun new_spec1 -> fst (x_add_1 wrap (Fixpoint.simplify_relation new_spec1
                                                                                (Some triples) pre_vars post_vars_wo_rel prog true (* inf_post_flag *) evars) lst_assume)) new_specs1 in

@@ -49,7 +49,7 @@ let set_imm (f : h_formula) imm : h_formula =  match f with
   | ViewNode h -> ViewNode {h with h_formula_view_imm = imm; }
   | _ -> f
 
-let split_imm_pure pf =
+let split_imm_pure_lst pf =
   let split_imm_pure_helper pf0 =
     let conjs = CP.split_conjunctions pf0 in
     let imm_f, pure_f = List.partition Imm.contains_imm conjs in
@@ -59,6 +59,10 @@ let split_imm_pure pf =
   let disj_part = List.map (fun (ximm,ypure) -> (TP.simplify_tp ximm, ypure)) disj_part in (* simplify the imm formula of each disjunct *)
   let disj_part = List.filter (fun (ximm,ypure) -> not (CP.is_False ximm)) disj_part in  (* remove unsat disjuncts *)
   let imms, pures = List.split disj_part in
+  (imms, pures)
+
+let split_imm_pure pf =
+  let imms, pures = split_imm_pure_lst pf in
   (CP.join_conjunctions imms, CP.join_disjunctions pures) (* weaken imm *)
 
 let split_imm_pure pf =
@@ -2815,7 +2819,7 @@ let norm_eq e1 e2 loc vars_post aset =
   | _ -> ([], true)
 
 (* a<:@L ---> a=@L (for pre vars) / @L<:a ---> a=@A (for post vars) *)
-let norm_imm_rel_formula vars_post (rel:CP.formula): CP.formula  =
+let norm_imm_rel_formula vars_post (rel:CP.formula) (rel_f:CP.formula): CP.formula  =
   (* let rel = TP.simplify_tp rel in *)
   let fixpt = ref true in
 
@@ -2886,14 +2890,99 @@ let norm_imm_rel_formula vars_post (rel:CP.formula): CP.formula  =
     let rel = CP.map_formula rel ((f_f p_aset), f_b , f_e) in
     if not(!fixpt) then begin fixpt := true; helper rel end
     else rel in
-  helper  rel
+  helper  rel_f
 
 (* let norm_imm_rel_formula vars_post (rel:CP.formula) : CP.formula  = rel *)
+(* a<:@L ---> a=@L (for pre vars) / @L<:a ---> a=@A (for post vars) *)
+let norm_imm_rel_one_disj vars_post (rel:CP.formula) (rel_f:CP.formula): CP.formula  =
+  (* let rel = TP.simplify_tp rel in *)
+  let fixpt = ref true in
 
-let norm_imm_rel_formula ?post_vars:(vars_post=[]) (rel:CP.formula) : CP.formula  = 
+  let f_b aset b = 
+    let (p_f, bf_ann) = b in
+    let p_f = 
+      match p_f with
+      | CP.SubAnn (((CP.Var(sv1,l1)) as e1),((CP.AConst _) as e2),l) 
+      | CP.SubAnn (((CP.AConst _) as e2),((CP.Var(sv1,l1)) as e1),l) ->
+        let res_ex, fix = norm_subann sv1 e1 e2 l vars_post aset in
+        let () = if not fix then fixpt := false else () in
+        map_list_def [p_f] (fun x -> x) res_ex
+      | CP.SubAnn (((CP.Var(sv1,l1)) as e1),((CP.Var(sv2,l2)) as e2),l) ->
+        let res_ex, fix = if CP.EMapSV.mem sv1 vars_post then  norm_subann sv1 e1 e2 l2 vars_post aset 
+          else if CP.EMapSV.mem sv2 vars_post then  norm_subann sv2 e2 e1 l2 vars_post aset 
+          else [p_f], true
+        in
+        let () = if not fix then fixpt := false else () in
+        map_list_def [p_f] (fun x -> x) res_ex
+      | CP.Eq (e2,e1,l)-> 
+        let res_ex, fix = norm_eq e1 e2 l vars_post aset in
+        let () = if not fix then fixpt := false else () in
+        map_list_def [p_f] (fun x -> x) res_ex
+      | _ -> [p_f]
+    in
+    (p_f, bf_ann) in
+
+  let f_f aset f =
+    let rec f_f_helper f = 
+      match f with
+      | CP.BForm (b1,b2) -> 
+        (* below is needed in case we need to transform [a=b] --> [a=@A & b=@L] *)
+        let res_lst, bf_ann = f_b aset b1 in (* TODOIMM revise this *)
+        begin
+          match res_lst with
+          | []   -> f
+          | [b1] -> CP.BForm ((b1,bf_ann) ,b2)
+          | h::t -> List.fold_left (fun acc b -> CP.And (acc, CP.BForm ((b,bf_ann), b2), no_pos )) (CP.BForm ((h,bf_ann),b2)) t
+        end
+      | CP.And (e1,e2,l) -> 
+        let ne1 = f_f_helper e1 in
+        let ne2 = f_f_helper e2 in
+        CP.mkAnd ne1 ne2 l
+      | CP.AndList b -> CP.AndList (map_l_snd f_f_helper b) 
+      | CP.Or (e1,e2,fl, l) -> 
+        let ne1 = f_f_helper e1 in
+        let ne2 = f_f_helper e2 in
+        CP.Or (ne1,ne2,fl,l)		  
+      | CP.Not (e,fl,l) ->
+        let ne1 = f_f_helper e in
+        CP.Not (ne1,fl,l)
+      | CP.Forall (v,e,fl,l) ->
+        let ne = f_f_helper e in
+        CP.Forall(v,ne,fl,l)
+      | CP.Exists (v,e,fl,l) ->
+        let ne = f_f_helper e in
+        CP.Exists(v,ne,fl,l)
+    in
+    Some (f_f_helper f)
+  in
+
+  (* systematically transform formula until all a<:@L ---> a=@L *)
+  let rec helper rel = 
+    let p_aset = Imm.build_eset_of_imm_formula rel(* CP.pure_ptr_equations rel in *) in
+    (* let p_aset = CP.EMapSV.build_eset p_aset in *)
+    let f_e e = None in
+    let f_b e = None in
+    let rel = CP.map_formula rel ((f_f p_aset), f_b , f_e) in
+    if not(!fixpt) then begin fixpt := true; helper rel end
+    else rel in
+  helper  rel_f
+
+let norm_imm_rel_formula vars_post (rel:CP.formula) (rel_f:CP.formula): CP.formula  =
+  let imm_p, pure = split_imm_pure_lst rel_f in
+  let pure = CP.join_disjunctions pure in
+  let imm_p = List.map TP.simplify_tp imm_p in
+  let imm_p = List.map (norm_imm_rel_one_disj vars_post rel) imm_p in
+  let new_imm_p = CP.join_conjunctions imm_p in
+  let simp_imm_p = TP.simplify_tp new_imm_p in
+  let final_imm_p = 
+    if not(CP.is_False simp_imm_p) then simp_imm_p
+    else (CP.join_disjunctions imm_p) in (* TODOIMM - revise here to weaken/streanghten *)
+  CP.join_conjunctions [final_imm_p;pure]
+
+let norm_imm_rel_formula ?post_vars:(vars_post=[]) ?rel_head:(rel=CP.mkTrue no_pos) (rel_f:CP.formula) : CP.formula  = 
   let pr = Cprinter.string_of_pure_formula in
   let pr_lst = Cprinter.string_of_spec_var_list in
-  Debug.no_2 "norm_imm_rel_formula" pr_lst pr pr  norm_imm_rel_formula vars_post rel
+  Debug.no_3 "norm_imm_rel_formula" pr_lst pr pr pr norm_imm_rel_formula vars_post rel rel_f
 
 (* let weaken_imm_rel_formula ?post_vars:(vars_post=[]) (rel:CP.formula) : CP.formula  = *)
 (*   let pr = Cprinter.string_of_pure_formula in *)
@@ -2904,7 +2993,7 @@ let norm_rel_list lst =
   List.map (fun (rel_ct,rel1,rel2) ->
       match rel_ct with
       | CP.RelAssume _ -> 
-        let rel2 = (* x_add_1 *) norm_imm_rel_formula rel2 in
+        let rel2 = (* x_add_1 *) norm_imm_rel_formula ~rel_head:rel1 rel2  in
         (rel_ct, rel1, rel2)
       | _ -> (rel_ct,rel1,rel2) 
     ) lst
@@ -2999,18 +3088,19 @@ let imm_unify (form:CP.formula): CP.formula =
   let pr = !CP.print_formula in
   Debug.no_1 "imm_unify" pr pr imm_unify form
 
-let postprocess_post post pre_vars = 
+let postprocess_post post post_f pre_vars = 
   let post_var = Gen.BList.difference_eq CP.eq_spec_var (CP.all_vars post) pre_vars in
-  norm_imm_rel_formula ~post_vars:post_var post
+  norm_imm_rel_formula ~post_vars:post_var ~rel_head:post post_f
 
-let postprocess_post post pre_vars = 
+let postprocess_post post post_f pre_vars = 
   let pr = !CP.print_formula in
-  Debug.no_2 "postprocess_post" pr Cprinter.string_of_spec_var_list pr postprocess_post post pre_vars
+  Debug.no_3 "postprocess_post" pr pr Cprinter.string_of_spec_var_list pr postprocess_post post post_f pre_vars
 
-let postprocess_pre pre = norm_imm_rel_formula  pre
+let postprocess_pre pre pre_f = norm_imm_rel_formula  ~rel_head:pre pre_f
 
-let postprocess_pre pre =
-  Debug.no_1 "postprocess_pre" !CP.print_formula !CP.print_formula postprocess_pre pre
+let postprocess_pre pre pre_f =
+  let pr = !CP.print_formula in
+  Debug.no_2 "postprocess_pre" pr pr !CP.print_formula postprocess_pre pre pre_f
 
 (* ======================= remove absent nodes ============================= *)
 (* TODOIMM need to investigate if removing an absent node means i need to add its xpure to the pure part *)
