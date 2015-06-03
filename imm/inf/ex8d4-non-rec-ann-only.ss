@@ -18,22 +18,15 @@ int foo2(cell c)
 /*
 # ex8d4.ss
 
-# using b=@A is too weak..
+!!! **pi.ml#743:pre_fmls:[ a=@M & c=2, MayLoop[]]
+!!! **pi.ml#748:fixpoint:[( P(b_1452), @M<:b_1452, true, true)]
+!!! **pi.ml#769:>>REL POST :  P(b_1452)
+!!! **pi.ml#770:>>POST:  b_1452=@M
 
-[RELDEFN P: ( b_1452=@A) -->  P(b_1452)]
+# How is post strengthened? Is it safe?
 
-GOT
----
-!!! **pi.ml#802:new_specs2:[ EInfer [P]
-   EBase exists (Expl)[](Impl)[a; v](ex)[]c::cell<v>@a&a=@M&
-         {FLOW,(4,5)=__norm#E}[]
-           EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
-                   EAssume 
-                     (exists w_1451,b_1452: c::cell<w_1451>@b_1452&b_1452=@A&
-                     {FLOW,(4,5)=__norm#E}[]
-                     ]
-
-
-
+It seems safe only after pre-condition has been strengthened.
+Also, it seems safe cos we are merely strenthening the
+earlier instantiation.
 
 */
