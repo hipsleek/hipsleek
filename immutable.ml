@@ -2818,80 +2818,6 @@ let norm_eq e1 e2 loc vars_post aset =
     ([res_ex], fix)
   | _ -> ([], true)
 
-(* a<:@L ---> a=@L (for pre vars) / @L<:a ---> a=@A (for post vars) *)
-let norm_imm_rel_formula vars_post (rel:CP.formula) (rel_f:CP.formula): CP.formula  =
-  (* let rel = TP.simplify_tp rel in *)
-  let fixpt = ref true in
-
-  let f_b aset b = 
-    let (p_f, bf_ann) = b in
-    let p_f = 
-      match p_f with
-      | CP.SubAnn (((CP.Var(sv1,l1)) as e1),((CP.AConst _) as e2),l) 
-      | CP.SubAnn (((CP.AConst _) as e2),((CP.Var(sv1,l1)) as e1),l) ->
-        let res_ex, fix = norm_subann sv1 e1 e2 l vars_post aset in
-        let () = if not fix then fixpt := false else () in
-        map_list_def [p_f] (fun x -> x) res_ex
-      | CP.SubAnn (((CP.Var(sv1,l1)) as e1),((CP.Var(sv2,l2)) as e2),l) ->
-        let res_ex, fix = if CP.EMapSV.mem sv1 vars_post then  norm_subann sv1 e1 e2 l2 vars_post aset 
-          else if CP.EMapSV.mem sv2 vars_post then  norm_subann sv2 e2 e1 l2 vars_post aset 
-          else [p_f], true
-        in
-        let () = if not fix then fixpt := false else () in
-        map_list_def [p_f] (fun x -> x) res_ex
-      | CP.Eq (e2,e1,l)-> 
-        let res_ex, fix = norm_eq e1 e2 l vars_post aset in
-        let () = if not fix then fixpt := false else () in
-        map_list_def [p_f] (fun x -> x) res_ex
-      | _ -> [p_f]
-    in
-    (p_f, bf_ann) in
-
-  let f_f aset f =
-    let rec f_f_helper f = 
-      match f with
-      | CP.BForm (b1,b2) -> 
-        (* below is needed in case we need to transform [a=b] --> [a=@A & b=@L] *)
-        let res_lst, bf_ann = f_b aset b1 in (* TODOIMM revise this *)
-        begin
-          match res_lst with
-          | []   -> f
-          | [b1] -> CP.BForm ((b1,bf_ann) ,b2)
-          | h::t -> List.fold_left (fun acc b -> CP.And (acc, CP.BForm ((b,bf_ann), b2), no_pos )) (CP.BForm ((h,bf_ann),b2)) t
-        end
-      | CP.And (e1,e2,l) -> 
-        let ne1 = f_f_helper e1 in
-        let ne2 = f_f_helper e2 in
-        CP.mkAnd ne1 ne2 l
-      | CP.AndList b -> CP.AndList (map_l_snd f_f_helper b) 
-      | CP.Or (e1,e2,fl, l) -> 
-        let ne1 = f_f_helper e1 in
-        let ne2 = f_f_helper e2 in
-        CP.Or (ne1,ne2,fl,l)		  
-      | CP.Not (e,fl,l) ->
-        let ne1 = f_f_helper e in
-        CP.Not (ne1,fl,l)
-      | CP.Forall (v,e,fl,l) ->
-        let ne = f_f_helper e in
-        CP.Forall(v,ne,fl,l)
-      | CP.Exists (v,e,fl,l) ->
-        let ne = f_f_helper e in
-        CP.Exists(v,ne,fl,l)
-    in
-    Some (f_f_helper f)
-  in
-
-  (* systematically transform formula until all a<:@L ---> a=@L *)
-  let rec helper rel = 
-    let p_aset = Imm.build_eset_of_imm_formula rel(* CP.pure_ptr_equations rel in *) in
-    (* let p_aset = CP.EMapSV.build_eset p_aset in *)
-    let f_e e = None in
-    let f_b e = None in
-    let rel = CP.map_formula rel ((f_f p_aset), f_b , f_e) in
-    if not(!fixpt) then begin fixpt := true; helper rel end
-    else rel in
-  helper  rel_f
-
 (* let norm_imm_rel_formula vars_post (rel:CP.formula) : CP.formula  = rel *)
 (* a<:@L ---> a=@L (for pre vars) / @L<:a ---> a=@A (for post vars) *)
 let norm_imm_rel_one_disj vars_post (rel:CP.formula) (rel_f:CP.formula): CP.formula  =
@@ -2922,47 +2848,34 @@ let norm_imm_rel_one_disj vars_post (rel:CP.formula) (rel_f:CP.formula): CP.form
     in
     (p_f, bf_ann) in
 
-  let f_f aset f =
-    let rec f_f_helper f = 
-      match f with
-      | CP.BForm (b1,b2) -> 
-        (* below is needed in case we need to transform [a=b] --> [a=@A & b=@L] *)
-        let res_lst, bf_ann = f_b aset b1 in (* TODOIMM revise this *)
-        begin
-          match res_lst with
-          | []   -> f
-          | [b1] -> CP.BForm ((b1,bf_ann) ,b2)
-          | h::t -> List.fold_left (fun acc b -> CP.And (acc, CP.BForm ((b,bf_ann), b2), no_pos )) (CP.BForm ((h,bf_ann),b2)) t
-        end
-      | CP.And (e1,e2,l) -> 
-        let ne1 = f_f_helper e1 in
-        let ne2 = f_f_helper e2 in
-        CP.mkAnd ne1 ne2 l
-      | CP.AndList b -> CP.AndList (map_l_snd f_f_helper b) 
-      | CP.Or (e1,e2,fl, l) -> 
-        let ne1 = f_f_helper e1 in
-        let ne2 = f_f_helper e2 in
-        CP.Or (ne1,ne2,fl,l)		  
-      | CP.Not (e,fl,l) ->
-        let ne1 = f_f_helper e in
-        CP.Not (ne1,fl,l)
-      | CP.Forall (v,e,fl,l) ->
-        let ne = f_f_helper e in
-        CP.Forall(v,ne,fl,l)
-      | CP.Exists (v,e,fl,l) ->
-        let ne = f_f_helper e in
-        CP.Exists(v,ne,fl,l)
-    in
-    Some (f_f_helper f)
+  let rec f_f emap f =
+    match f with
+    | CP.BForm (b1,b2) ->  
+      (* below is needed in case we need to transform [a=b] --> [a=@A & b=@L] *)
+      let res_lst, bf_ann = f_b emap b1 in (* TODOIMM revise this *)
+      let new_f = 
+        match res_lst with
+        | []   -> f
+        | [b1] -> CP.BForm ((b1,bf_ann) ,b2)
+        | h::t -> List.fold_left (fun acc b -> CP.And (acc, CP.BForm ((b,bf_ann), b2), no_pos )) (CP.BForm ((h,bf_ann),b2)) t in
+      Some new_f
+    | Or (e1,e2,lbl,l) ->
+      let emap1 = CP.EMapSV.merge_eset emap (Imm.build_eset_of_imm_formula e1) in
+      let e1 = CP.map_formula_arg e1 emap1 (f_f, somef2, somef2) (idf2, idf2, idf2) in
+      let emap2 = CP.EMapSV.merge_eset emap (Imm.build_eset_of_imm_formula e2) in
+      let e2 = CP.map_formula_arg e2 emap2 (f_f, somef2, somef2) (idf2, idf2, idf2) in
+      Some (Or (e1,e2,lbl,l))
+    | Not (f, lbl, l) ->
+      let emap = CP.EMapSV.merge_eset emap (Imm.build_eset_of_imm_formula f) in
+      let f = CP.map_formula_arg f emap (f_f, somef2, somef2) (idf2, idf2, idf2) in
+      Some ( Not (f, lbl, l))
+    | _ -> None
   in
 
   (* systematically transform formula until all a<:@L ---> a=@L *)
   let rec helper rel = 
-    let p_aset = Imm.build_eset_of_imm_formula rel(* CP.pure_ptr_equations rel in *) in
-    (* let p_aset = CP.EMapSV.build_eset p_aset in *)
-    let f_e e = None in
-    let f_b e = None in
-    let rel = CP.map_formula rel ((f_f p_aset), f_b , f_e) in
+    let p_aset = Imm.build_eset_of_imm_formula rel in
+    let rel = CP.map_formula_arg rel p_aset (f_f, somef2, somef2) (idf2, idf2, idf2) in
     if not(!fixpt) then begin fixpt := true; helper rel end
     else rel in
   helper  rel_f
