@@ -106,6 +106,16 @@ Exception(heap_entail_non_empty_rhs_heap):Invalid_argument("List.combine")
 Exception(heap_entail_conjunct_helper):Invalid_argument("List.combine")
 
 ==================================================================
+../sleek ex4e-expect-linearize.slk | grep Expect
+
+# Try support: I, RA etc
+
+Expect_Infer 2.1: Valid. ( x::node<bb,q> * q::node<bb_70,flted_16_69>&flted_16_69=null & bb_70=bb&
+Expect_Infer 2.2: Valid. ( x::node<bb,q> * q::node<bb_81,Anon_13>&bb_81=bb&{FLOW,(20,21)=__norm#E}[])
+Expect_Infer 2.3: Valid. ( x::node<bb,q1> * q1::node<bb_89,Anon_14>&bb_89=bb&{FLOW,(20,21)=__norm#E}[])
+Expect_Infer 2.4: Fail. ( x::node<bb,q> * q::node<flted_19_98,Anon_15>&flted_19_98=1+bb&
+Expect_Infer 2.5: Fail. ( x::node<bb,Anon_16> * qq::node<bb_107,Anon_17>&bb_107=bb&
+Expect_Infer 2.6: Valid. ( x::node<bb,Anon_18> * q::node<bb_116,Anon_19>&bb_116=bb&
 ==================================================================
 ==================================================================
 ==================================================================

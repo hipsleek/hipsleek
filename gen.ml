@@ -730,6 +730,17 @@ class counter x_init =
       = ctr <- ctr + 1; string_of_int ctr
   end;;
 
+class ctr_with_aux x_init =
+  object 
+    inherit counter x_init as super
+    val mutable aux_ctr = x_init
+    method inc_and_get = 
+      ctr <- ctr + 1; aux_ctr <- x_init; ctr
+    method inc_and_get_aux_str = 
+      let () = aux_ctr <- aux_ctr + 1 in
+        (string_of_int ctr)^"."^(string_of_int aux_ctr)
+  end
+
 class ctr_call x_init =
   object 
     inherit counter x_init as super

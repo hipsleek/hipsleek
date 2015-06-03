@@ -109,7 +109,7 @@ module LO2 = Label_only.Lab2_List
 module TP = Tpdispatcher
 (* module FP = Fixpoint *)
 
-let sleek_proof_counter = new Gen.counter 0
+let sleek_proof_counter = new Gen.ctr_with_aux 0
 
 let unexpected_cmd = ref []
 
@@ -1589,34 +1589,41 @@ let process_shape_rec sel_hps=
 
 let process_validate_infer validation =
   let hdr = ref "" in
+  let nn = (sleek_proof_counter#inc_and_get_aux_str) in
   let validate_with_residue residue =
     let pr_f = Cprinter.string_of_formula in
-    let pr_h pr s = print_endline "expect_infer:"; print_endline ("  "^ !hdr ^"{" ^ pr s ^ "}") in
+    let pr_h pr s = print_endline "expect_infer :"; print_endline ("  "^ !hdr ^"{" ^ pr s ^ "}") in
     let res_f = snd (meta_to_formula residue false [] []) in
     if (!Globals.print_input || !Globals.print_input_all) then pr_h string_of_meta_formula residue;
     if (!Globals.print_core || !Globals.print_core_all) then pr_h pr_f res_f;
+    let res_f_str = "("^(pr_f res_f)^")" in
+    let meta_f_str = "("^(string_of_meta_formula residue)^")" in
+    let () = x_binfo_hp (add_str "expected residue(meta)" string_of_meta_formula) residue no_pos in
     let () = x_binfo_hp (add_str "expected residue" pr_f) res_f no_pos in
     let pr_lc = Cprinter.string_of_list_context in
     let pr_r = pr_option (pr_pair pr_lc string_of_bool) in
     let () = x_binfo_hp (add_str "current residue" pr_r) !CF.residues no_pos in
     (*  see process_validate. line 1617 *)
-    print_string "\nHeap entailment status : ";
+    let s =  "\nExpect_Infer "^nn^": " in
     match !CF.residues with
-    | None -> print_endline "Invalid (expected empty residue)"
-    | Some (lc, _) ->
-       begin
-         let lc = CF.normalize_max_renaming res_f no_pos false lc in
-         match (Solver.heap_entail_init !cprog false lc res_f no_pos) with
-         | (CF.SuccCtx _,_) -> print_endline "Valid"
-         | _ -> print_endline "Invalid"
-       end
+      | None -> print_endline_quiet (s^"Fail. (empty residue)")
+      | Some (lc, _) ->
+            begin
+              (* this combined LHS and RHS causing false *)
+              (* let lc = CF.normaliz
++e_max_renaming res_f no_pos false lc in *)
+              let rr = Solver.heap_entail_init !cprog false lc res_f no_pos in
+              match (rr) with
+                | (CF.SuccCtx _,_) -> print_endline_quiet  (s^"Valid. "^res_f_str)
+                | _ -> print_endline_quiet  (s^"Fail. "^res_f_str)
+            end
   in
   match validation with
-  | V_Residue (Some residue) -> hdr := "R"; validate_with_residue residue
-  | V_Residue None -> hdr := "R"; print_endline "No residue."
-  | V_Infer (Some inference) -> hdr := "I"; validate_with_residue inference 
-  | V_Infer None -> hdr:= "I"; print_endline "No inference."
-  | _ -> print_endline "RA etc. not yet implemented"
+    | V_Residue (Some residue) -> hdr := "R"; validate_with_residue residue
+    | V_Residue None -> hdr := "R"; print_endline "No residue."
+    | V_Infer (Some inference) -> hdr := "I"; validate_with_residue inference 
+    | V_Infer None -> hdr:= "I"; print_endline "No inference."
+    | _ -> print_endline "RA etc. not yet implemented"
 
 let process_validate exp_res opt_fl ils_es=
   if not !Globals.show_unexpected_ents then () else
