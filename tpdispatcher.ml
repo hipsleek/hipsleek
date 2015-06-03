@@ -1098,11 +1098,9 @@ let change_to_imm_rel_p_formula pf =
     else None
   | Lte(IConst(i,_),(Var(v,_) as a1),ll) 
   | Gte((Var(v,_) as a1),IConst(i,_), ll) -> 
-    let () = x_binfo_hp (add_str " here 0" string_of_typ) (type_of_spec_var v) no_pos in
     if is_ann_type (type_of_spec_var v) then
       let a1 = f_e a1 in
       let new_f =
-        let () = x_binfo_pp " here 1" no_pos in
         if (i<=(int_of_heap_ann imm_bot)&& !Globals.aggressive_imm_simpl)  then BConst(true, ll)
         else if i>(int_of_heap_ann imm_top) then BConst(false, ll)
         else if i=(int_of_heap_ann imm_top) then Eq(a1, Immutils.int_imm_to_exp i ll, ll)
