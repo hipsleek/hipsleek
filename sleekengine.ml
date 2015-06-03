@@ -1605,6 +1605,7 @@ let process_validate_infer validation =
     | None -> print_endline "Invalid (expected empty residue)"
     | Some (lc, _) ->
        begin
+         let lc = CF.normalize_max_renaming res_f no_pos false lc in
          match (Solver.heap_entail_init !cprog false lc res_f no_pos) with
          | (CF.SuccCtx _,_) -> print_endline "Valid"
          | _ -> print_endline "Invalid"
