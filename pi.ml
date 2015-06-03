@@ -670,7 +670,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let reldefns = reldefns @ reldefns_from_oblgs in (* TODOIMM how abt that infer flow inside for reldefns_from_oblgs *)
             (* let reldefns = List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in *)
             let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in
-            let pre_rel_df = List.map (fun (x,y) -> (Immutable.postprocess_pre x,y)) pre_rel_df in
+            (* let pre_rel_df = List.map (fun (x,y) -> (Immutable.postprocess_pre x,y)) pre_rel_df in *)
             let pre_rel_ids = List.filter (fun x -> CP.is_rel_typ x
                                                     && not(Gen.BList.mem_eq CP.eq_spec_var x post_vars)) pre_vars in
             let post_rel_ids = List.filter (fun sv -> CP.is_rel_typ sv) post_vars in
