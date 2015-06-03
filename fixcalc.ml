@@ -256,7 +256,7 @@ let rec fixcalc_of_h_formula f = match f with
   | Phase _ -> Error.report_no_pattern ()
 
 let fixcalc_of_mix_formula f = match f with
-  | MCP.MemoF _ -> ""
+  | MCP.MemoF _ -> "1=1"
   | MCP.OnePF pf -> fixcalc_of_pure_formula pf
 
 let rec fixcalc_of_formula e = match e with
@@ -268,6 +268,9 @@ let rec fixcalc_of_formula e = match e with
             formula_exists_pure = p} ->
     " exists (" ^ (string_of_elems svs fixcalc_of_spec_var ",") ^ ": " ^
     fixcalc_of_h_formula h ^ op_and ^ fixcalc_of_mix_formula p ^ ")"
+
+let fixcalc_of_formula e =
+  Debug.no_1 "fixcalc_of_formula" Cprinter.string_of_formula pr_id fixcalc_of_formula e
 
 (******************************************************************************)
 
