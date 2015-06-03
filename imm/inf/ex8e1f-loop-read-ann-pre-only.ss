@@ -49,6 +49,10 @@ Q(a) = a=@L
 
  a=@L & a<:@L & a<:a1 -->  a1=@L
 
+
+ I(a,a1) --> a<:a1
+ a=@L & a<:@L & I(a,a1) -->  a1=@L
+
 ----------
 
 !!! **fixcalc.ml#939:rel_defs:[( Q(a,pa), (a<=2 | (exists(a_1491:a<=a_1491 & Q(a_1491,pa)) & a<=2)),1)]

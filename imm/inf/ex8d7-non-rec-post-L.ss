@@ -15,26 +15,36 @@ relation P(ann v).
 }
 
 /*
-# ex8d6.ss
+# ex8d7.ss
+
+  requires c::cell<v>@a & a=@L
+     /* ensures c::cell<w>@b & P3(b,v,res,w)  ; */
+     ensures c::cell<w>@b & P(b);
+{
+ if (x>0) return c.fst;
+ return x;
+}
+
+# Got P(x) = x=@A
+# However, expects P(x) = x=@L;
+  as we expect post to be strengthened.
 
 *************************************
 ******pure relation assumption 1 *******
 *************************************
-[RELASS [P]: ( P(a)) -->  a<:@L]
+[RELDEFN P: ( @L<:b_1468) -->  P(b_1468)]
 *************************************
 
-!!! **pi.ml#677:post_rel_ids:[]
-!!! **pi.ml#678:reldefns:[( a<:@L, P(a))]
-!!! **pi.ml#679:reldefns_from_oblgs:[( a<:@L, P(a))]
-!!! **pi.ml#680:initial reloblgs:[( P(a), a<:@L)]
-!!! **pi.ml#681:reloblgs:[( P(a), a<:@L)]
-!!! **pi.ml#682:lst_assume:[( P(a), a<:@L)]
-!!! **pi.ml#683:pre_rel_fmls:[ P(a)]
-!!! **pi.ml#684:pre_ref_df:[( a<:@L, P(a))]
+!!! **pi.ml#754:fixpoint:[( P(b_1468), @L<:b_1468, true, true)]
+!!! **pi.ml#775:>>REL POST :  P(b_1468)
+!!! **pi.ml#776:>>POST:  b_1468=@A
 
-Can we strengthen this pre to
-
-  P(x) == x=@L
-
+   EBase exists (Expl)[](Impl)[a; v](ex)[]c::cell<v>@a&a=@L&
+         {FLOW,(4,5)=__norm#E}[]
+           EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                   EAssume 
+                     (exists w_1467,b_1468: c::cell<w_1467>@b_1468&b_1468=@A&
+                     {FLOW,(4,5)=__norm#E}[]
+                     ]
 
 */

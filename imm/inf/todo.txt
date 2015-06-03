@@ -1161,7 +1161,7 @@ Simplify  (3): x::cell<nv>@imm_23& choose(nv,v1,v2,a1,a2)
 Use choose(new_v,v1,v2,a1,a2)
  == a1<:@I & new_v=v1 | a2<:@I & new_v=v2 | 0<a1<1 & 0<a2<1 & new_v=v1=v2
 =======================================================
-#  imm/inf/ex8e1f.ss 
+#  imm/inf/ex8e1f.ss (OK)
 
 # should not be false below
 
@@ -1192,7 +1192,7 @@ RELDEFN Q: ( a_1491=@A) -->  Q(a_1491)]
 *************************************
 
 =======================================================
-# ex8d4.ss
+# ex8d4.ss (OK - no lend in post)
 
 # using b=@A is too weak..
 
@@ -1274,11 +1274,25 @@ Can we strengthen this pre to
    EBase exists (Expl)[](Impl)[a; v](ex)[]c::cell<v>@a&a=@L&
          {FLOW,(4,5)=__norm#E}[]
            EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
-                   EAssume 
+               s5
+    EAssume 
                      (exists w_1467,b_1468: c::cell<w_1467>@b_1468&b_1468=@A&
                      {FLOW,(4,5)=__norm#E}[]
                      ]
 =======================================================
+# ex8e1g.ss --trace-exc
+
+Why did we get format error?
+
+Exception(look_up_view_def_raw):Not_found
+!!! **fixcalc.ml#160:fixcalc trans error :: (@L+b_1507)<:b_1463Exception(fixcalc_of_pure_formula(really called)):Globals.Illegal_Prover_Format("Fixcalc.fixcalc_of_b_formula: Do not support bag, list")
+Exception(fixcalc_of_pure_formula):Globals.Illegal_Prover_Format("Fixcalc.fixcalc_of_b_formula: Do not support bag, list")
+Exception(compute_def):Failure("compute_def:Error in translating the input for fixcalc")
+Exception(compute_fixpoint_aux):Failure("compute_def:Error in translating the input for fixcalc")
+Exception(compute_fixpoint):Failure("compute_def:Error in translating the input for fixcalc")
+ExceptionFailure("compute_def:Error in translating the input for fixcalc")Occurred!
+Exception occurred: Failure("compute_def:Error in translating the input for fixc
+
 =======================================================
 =======================================================
 =======================================================

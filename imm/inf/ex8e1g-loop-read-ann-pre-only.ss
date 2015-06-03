@@ -8,8 +8,9 @@ relation Q(ann v1).
 //relation P3(ann v1, int v,int r, int s).
 
 int foo(cell c)
-  requires c::cell<v>@a & a<:@L //a=@L
-  ensures emp; //c::cell<w>@b & b=@L  ;
+  infer [Q]
+  requires c::cell<v>@a & a=@L //a=@L
+  ensures c::cell<_>@b & Q(b); //c::cell<w>@b & b=@L  ;
 /*
   requires c::cell<v>@a & a=@L
   ensures emp; //c::cell<w>@b & b=@L  ;
@@ -25,18 +26,18 @@ int foo(cell c)
 }
 
 /*
-# ex8e1g.ss --esl
+# ex8e1g.ss --trace-exc
 
-sleek file in ex8e2g.slk
-[
- Label: [(,0 ); (,1 )]
- State:c::cell<v>@[@a, @a_1482]&c=c' & x'=v & (((a_1482<:@L & a<:@L & 
-         2<=v) | (a_1482<:@L & v<=0 & a<:@L)))&{FLOW,(4,5)=__norm#E}[]
-       es_pure: a_1482<:@L
-       es_cond_path: [1; 0]
-       es_var_measures 1: Some(MayLoop[]{})
-       es_infer_vars_rel: []
- ]
+Why did we get format error?
+
+Exception(look_up_view_def_raw):Not_found
+!!! **fixcalc.ml#160:fixcalc trans error :: (@L+b_1507)<:b_1463Exception(fixcalc_of_pure_formula(really called)):Globals.Illegal_Prover_Format("Fixcalc.fixcalc_of_b_formula: Do not support bag, list")
+Exception(fixcalc_of_pure_formula):Globals.Illegal_Prover_Format("Fixcalc.fixcalc_of_b_formula: Do not support bag, list")
+Exception(compute_def):Failure("compute_def:Error in translating the input for fixcalc")
+Exception(compute_fixpoint_aux):Failure("compute_def:Error in translating the input for fixcalc")
+Exception(compute_fixpoint):Failure("compute_def:Error in translating the input for fixcalc")
+ExceptionFailure("compute_def:Error in translating the input for fixcalc")Occurred!
+Exception occurred: Failure("compute_def:Error in translating the input for fixc
 
 
 
