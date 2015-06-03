@@ -340,7 +340,7 @@ let pick_wekeast_instatiation_new lhs_exp rhs_sv loc lhs_f rhs_f ivars evars =
       let alias = CP.EMapSV.find_equiv rhs_sv aset in
       map_opt_def (helper () ) (fun x -> Some (alias_rel x rhs_sv), None) alias in
 
-  (*2. check if rhs_p_restricted is true and if so, inst to rhs_imm=top *)
+  (*2. check if rhs_p_restricted is true and if so, inst to lhs_imm<:rhs_imm *)
   let check4_empty rhs_p_restricted rhs_p = 
     let form = TP.simplify_tp (CP.wrap_exists_svl rhs_p_restricted evars) in
     if (CP.is_True form) then (* Some (inst_to_top rhs_exp) *) Some lrsubtype, None

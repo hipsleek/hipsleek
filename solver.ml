@@ -1931,6 +1931,10 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
     normalize_combine_phase uf1 uf2 pos
   | _ -> formula_of_heap_fl f fl pos
 
+and unfold_for_abs_merge prog pos = 
+  let unfold_fun fl h aset v uf =  unfold_heap (prog, None) h aset v fl uf pos in
+  unfold_fun
+
 (*
   vvars: variables of interest
   evars: those involving this will be on the rhs
@@ -2768,6 +2772,8 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
     let npf = MCP.merge_mems p ph true in
     tp_call_wrapper npf 
   in
+  (* TODOIMM : check if we have the segmented info for views at this point - if not, then it's not sound to merge here *)
+  let f = Norm.imm_abs_norm_formula f prog (unfold_for_abs_merge prog (pos_of_formula f)) in
   match f with
   | Or _ -> report_error no_pos ("unsat_xpure : encountered a disjunctive formula \n")
   | Base ({ formula_base_heap = h;
@@ -3623,10 +3629,6 @@ and heap_entail_struc_init (prog : prog_decl) (is_folding : bool)  (has_post: bo
   (* let pr_out (ctx_lst, pf) = string_of_int (length_ctx ctx_lst) in  *)
   let pr_out (ctx_lst, pf) = Cprinter.string_of_list_context ctx_lst in
   Debug.no_2 "heap_entail_struc_init" pr pr2 pr_out (fun _ _ -> heap_entail_struc_init_x prog is_folding has_post cl conseq pos pid) cl conseq
-
-and unfold_for_abs_merge prog pos = 
-  let unfold_fun fl h aset v uf =  unfold_heap (prog, None) h aset v fl uf pos in
-  unfold_fun
 
 (* check entailment:                                          *)
 (* each entailment should produce one proof, be it failure or *)
