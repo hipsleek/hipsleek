@@ -2755,7 +2755,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
     let t2 = Expure.build_ef_pure_formula ~shape:is_shape1 p1 in
     let d = Excore.EPureI.mk_star_disj t1 t2 in
     (* let d = Excore.EPureI.elim_unsat_disj d in *)
-    let res = (Excore.EPureI.is_false_disj   (is_shape1 && is_shape2) d) in
+    let res = (Excore.EPureI.is_false_disj (is_shape1 && is_shape2) d) in
     let () = x_tinfo_pp ("Omega unsat:end " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
     res
     (* let p = MCP.translate_level_mix_formula p in *)
@@ -13701,8 +13701,8 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
       (*prove extra heap + guard*)
       let conseq_extra = mkBase extra_heap_new (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) lhs_guard_new) lhs_vperm CF.TypeTrue (CF.mkTrueFlow ()) [] pos in
 
-      let () = print_endline_quiet ("ho_ps1 = " ^ (pr_list Cprinter.string_of_rflow_formula ho_ps1)) in
-      let () = print_endline_quiet ("ho_ps2 = " ^ (pr_list Cprinter.string_of_rflow_formula ho_ps2)) in
+      (* let () = print_endline_quiet ("ho_ps1 = " ^ (pr_list Cprinter.string_of_rflow_formula ho_ps1)) in *)
+      (* let () = print_endline_quiet ("ho_ps2 = " ^ (pr_list Cprinter.string_of_rflow_formula ho_ps2)) in *)
 
       (*=====================================================*)
       (***********Handle high-order argument: BEGIN**********)
@@ -13727,7 +13727,7 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
             let coer_rhs_new = CF.subst_hvar coer_rhs_new maps in
             coer_rhs_new
         in
-        let () = print_endline_quiet ("coer_rhs_new = " ^ (Cprinter.string_of_formula coer_rhs_new)) in
+        (* let () = print_endline_quiet ("coer_rhs_new = " ^ (Cprinter.string_of_formula coer_rhs_new)) in *)
 
         (* let qvars,new_conseq = CF.split_quantifiers new_conseq in *)
         (* let new_exist_vars = Gen.BList.remove_dups_eq CP.eq_spec_var (new_exist_vars@qvars) in *)

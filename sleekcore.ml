@@ -583,3 +583,6 @@ let validate ls_ex_es ls_act_es=
   Debug.no_2 "SC.validate" pr3 pr4 (pr_triple string_of_bool pr5 pr2a)
     (fun _ _ -> validate_x ls_ex_es ls_act_es)
     ls_ex_es ls_act_es
+
+
+let _ = Lemproving.sleek_entail := sleek_entail_check;;
