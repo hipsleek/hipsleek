@@ -18,8 +18,47 @@ int foo(cell c)
 }
 
 /*
-# ex8d2.ss
 
+
+
+========================================
+
+# ex8d2.ss
+ 
+to solve the hfalse due to norm_imm  a=@M & a<:@L ---> a=@M & a=@L
+
+(====)
+norm_rel_oblgs@4
+norm_rel_oblgs inp1 :[( P1(a,v), (a=@M | (v<=0 & a<:@L) | a=@A)),( P1(a,v), a<:@L)]
+norm_rel_oblgs@4 EXIT:[( P1(a,v), a=@M & a<:@L)]
+
+(==tpdispatcher.ml#2210==)
+norm_imm_rel_formula@5
+norm_imm_rel_formula inp1 :[]
+norm_imm_rel_formula inp2 : a=@M & a<:@L
+norm_imm_rel_formula@5 EXIT: a=@M & a=@L
+
+(====)
+simplify_relation@7@6
+simplify_relation inp1 : EBase exists (Expl)[](Impl)[a; v](ex)[]c::cell<v>@a&P1(a,v)&
+       {FLOW,(4,5)=__norm#E}[]
+         EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                 EAssume 
+                   (exists b_1456,w_1457: c::cell<w_1457>@b_1456&
+                   P2(a,b_1456,v,res,w_1457)&{FLOW,(4,5)=__norm#E}[]
+                   
+simplify_relation inp2 :Some([( P2(a,v,b_1456,res,w_1457), ((a=@M & b_1456=@M & w_1457=res & v=res & res<=0) | (a=@M & b_1456=@M & 
+w_1457=5 & v=res & 1<=res)), a=@M)])
+simplify_relation inp3 :lst_assume:[( P1(a,v), a=@M & a=@L)]
+simplify_relation@7 EXIT:( EBase exists (Expl)[](Impl)[a; v](ex)[]hfalse&false&{FLOW,(4,5)=__norm#E}[]
+         EBase emp&a=@M & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                 EAssume 
+                   (exists b_1456,w_1457: c::cell<w_1457>@b_1456&((a=@M & 
+                   b_1456=@M & w_1457=res & v=res & res<=0) | (a=@M & 
+                   b_1456=@M & w_1457=5 & v=res & 1<=res))&
+                   {FLOW,(4,5)=__norm#E}[]
+                   ,[])
+========================================================================
 
 GOT
 ---
