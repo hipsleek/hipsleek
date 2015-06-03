@@ -1587,40 +1587,34 @@ let process_shape_rec sel_hps=
   let _ = print_endline_quiet "*************************************" in
   ()
 
-let process_validate_infer_residue residue =
-  let pr_f = Cprinter.string_of_formula in
-  let pr_h pr s = print_endline "expect_infer:"; print_endline ("  R{" ^ pr s ^ "}") in
-  let res_f = snd (meta_to_formula residue false [] []) in
-  if (!Globals.print_input || !Globals.print_input_all) then pr_h string_of_meta_formula residue;
-  if (!Globals.print_core || !Globals.print_core_all) then pr_h pr_f res_f;
-  let () = print_endline "Processing residue validation" in
-  let () = x_binfo_hp (add_str "expected residue" pr_f) res_f no_pos in
-  let pr_lc = Cprinter.string_of_list_context in
-  let pr_r = pr_option (pr_pair pr_lc string_of_bool) in
-  let () = x_binfo_hp (add_str "current residue" pr_r) !CF.residues no_pos in
-  (*  see process_validate. line 1617 *)
-  ()
-
-let process_validate_infer_inference inference =
-  let pr_f = Cprinter.string_of_formula in
-  let pr_h pr s = print_endline "expect_infer:"; print_endline ("  I{" ^ pr s ^ "}") in
-  let res_f = snd (meta_to_formula inference false [] []) in
-  if (!Globals.print_input || !Globals.print_input_all) then pr_h string_of_meta_formula inference;
-  if (!Globals.print_core || !Globals.print_core_all) then pr_h pr_f res_f;
-  let () = print_endline "Processing inference validation" in
-  let () = x_binfo_hp (add_str "expected inference" pr_f) res_f no_pos in
-  let pr_lc = Cprinter.string_of_list_context in
-  let pr_r = pr_option (pr_pair pr_lc string_of_bool) in
-  let () = x_binfo_hp (add_str "current inference" pr_r) !CF.residues no_pos in
-  (*  see process_validate. line 1617 *)
-  ()
-
 let process_validate_infer validation =
+  let hdr = ref "" in
+  let validate_with_residue residue =
+    let pr_f = Cprinter.string_of_formula in
+    let pr_h pr s = print_endline "expect_infer:"; print_endline ("  "^ !hdr ^"{" ^ pr s ^ "}") in
+    let res_f = snd (meta_to_formula residue false [] []) in
+    if (!Globals.print_input || !Globals.print_input_all) then pr_h string_of_meta_formula residue;
+    if (!Globals.print_core || !Globals.print_core_all) then pr_h pr_f res_f;
+    let () = x_binfo_hp (add_str "expected residue" pr_f) res_f no_pos in
+    let pr_lc = Cprinter.string_of_list_context in
+    let pr_r = pr_option (pr_pair pr_lc string_of_bool) in
+    let () = x_binfo_hp (add_str "current residue" pr_r) !CF.residues no_pos in
+    (*  see process_validate. line 1617 *)
+    print_string "\nHeap entailment status : ";
+    match !CF.residues with
+    | None -> print_endline "Invalid (expected empty residue)"
+    | Some (lc, _) ->
+       begin
+         match (Solver.heap_entail_init !cprog false lc res_f no_pos) with
+         | (CF.SuccCtx _,_) -> print_endline "Valid"
+         | _ -> print_endline "Invalid"
+       end
+  in
   match validation with
-  | V_Residue (Some residue) -> process_validate_infer_residue residue
-  | V_Residue None -> print_endline "No residue."
-  | V_Infer (Some inference) -> process_validate_infer_inference inference 
-  | V_Infer None -> print_endline "No inference."
+  | V_Residue (Some residue) -> hdr := "R"; validate_with_residue residue
+  | V_Residue None -> hdr := "R"; print_endline "No residue."
+  | V_Infer (Some inference) -> hdr := "I"; validate_with_residue inference 
+  | V_Infer None -> hdr:= "I"; print_endline "No inference."
   | _ -> print_endline "RA etc. not yet implemented"
 
 let process_validate exp_res opt_fl ils_es=
