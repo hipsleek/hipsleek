@@ -3638,16 +3638,19 @@ let pr_failure_cex cex=
 let string_of_failure_cex cex=  poly_string_of_pr pr_failure_cex cex
 
 let pr_estate ?(nshort=true) (es : entail_state) =
+  let es_str = string_of_formula es.es_formula in
   fmt_open_vbox 0;
-  wrap_box ("H", 0) pr_formula es.es_formula;
+  fmt_string es_str;
   (* added temporarily to see consumed heap *)
   if !Globals.print_extra then
     begin
-      pr_vwrap_nocut "es_heap(consumed):" pr_h_formula  es.es_heap;
-      pr_wrap_test "es_evars:"  Gen.is_empty (pr_seq "" pr_spec_var)  es.es_evars;
-      pr_wrap_test "es_ante_evars:"  Gen.is_empty (pr_seq "" pr_spec_var)  es.es_ante_evars;
-      pr_wrap_test "es_gen_expl_vars:"  Gen.is_empty (pr_seq "" pr_spec_var)  es.es_gen_expl_vars;
-      pr_wrap_test "es_gen_impl_vars:"  Gen.is_empty (pr_seq "" pr_spec_var)  es.es_gen_impl_vars;
+      (* formula sometimes randomly add new lines, in that case no need to cut after printing it *)
+      if (String.get es_str (String.length es_str - 1) = '\n') then () else fmt_cut ();
+      pr_add_str "es_heap(consumed): " pr_h_formula es.es_heap;
+      pr_wrap_test "es_evars: "  Gen.is_empty (pr_seq "" pr_spec_var)  es.es_evars;
+      pr_wrap_test "es_ante_evars: "  Gen.is_empty (pr_seq "" pr_spec_var)  es.es_ante_evars;
+      pr_wrap_test "es_gen_expl_vars: "  Gen.is_empty (pr_seq "" pr_spec_var)  es.es_gen_expl_vars;
+      pr_wrap_test "es_gen_impl_vars: "  Gen.is_empty (pr_seq "" pr_spec_var)  es.es_gen_impl_vars;
     end;
   pr_wrap_test "es_ho_vars_map: " Gen.is_empty  (pr_seq "" (pr_map_aux pr_spec_var pr_formula)) (es.es_ho_vars_map);
   pr_wrap_test "es_conc_err: " Gen.is_empty (pr_seq "" (fun (msg, pos) -> fmt_string (msg ^ ":" ^ (string_of_pos pos)))) es.es_conc_err;

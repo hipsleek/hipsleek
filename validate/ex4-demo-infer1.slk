@@ -20,7 +20,7 @@ expect Valid.
 //(4)
 checkentail x::node<_,null> |- x::ll<n>.
 print residue.
-//expect Valid.
+expect Valid.
 expect_infer R{x!=null & n=1}.
 
 //(5)
