@@ -664,12 +664,16 @@ module EPURE =
     let elim_unsat_disj is_shape disj =
       List.filter (fun f -> not(unsat is_shape f)) disj
 
-    let is_false_disj is_shape disj =
+    let is_false_disj_x is_shape disj =
       let () = x_tinfo_pp ("Omega is_false_disj:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
       let res = List.for_all (fun epf -> unsat is_shape epf) disj in
       (* disj==[] *)
       let () = x_tinfo_pp ("Omega is_false_disj:end " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
       res
+
+    let is_false_disj is_shape disj=
+      Debug.no_2 "is_false_disj" string_of_bool string_of_disj string_of_bool
+          is_false_disj_x is_shape disj
 
     let mk_false_disj = []
 

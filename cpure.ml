@@ -9784,6 +9784,21 @@ let neg_neq p=
   Debug.no_1 "neg_neq" pr1 pr1
     (fun _ -> neg_neq_x p) p
 
+let map_f f0 fnc_bf fnc_comb=
+  let rec recf f= match f with
+    | BForm (b,_)-> fnc_bf b
+    | And (b1,b2,_) -> fnc_comb (recf b1) (recf b2)
+    | AndList b -> List.fold_left (fun svl (_,c)->
+          let svl1 = recf c in
+          fnc_comb svl svl1) [] b
+    | Or (b1,b2,_,_) -> fnc_comb (recf b1) (recf b2)
+    | Not (b,_,_)-> recf b
+    | Forall (_,f,_,_) -> recf f
+    | Exists (_,f,_,_) -> recf f
+  in
+  recf f0
+
+
 let rec get_neq_null_svl_x (f:formula) =
   let helper (bf:b_formula) =
     match bf with
@@ -9795,21 +9810,42 @@ let rec get_neq_null_svl_x (f:formula) =
       end
     | _ -> []
   in
-  match f with
-  | BForm (b,_)-> helper b
-  | And (b1,b2,_) -> (get_neq_null_svl_x b1)@(get_neq_null_svl_x b2)
-  | AndList b -> List.fold_left (fun svl (_,c)->
-      let svl1 = get_neq_null_svl_x c in
-      svl@svl1) [] b
-  | Or (b1,b2,_,_) -> (get_neq_null_svl_x b1)@(get_neq_null_svl_x b2)
-  | Not (b,_,_)-> get_neq_null_svl_x b
-  | Forall (_,f,_,_) -> get_neq_null_svl_x f
-  | Exists (_,f,_,_) -> get_neq_null_svl_x f
+  (* match f with *)
+  (* | BForm (b,_)-> helper b *)
+  (* | And (b1,b2,_) -> (get_neq_null_svl_x b1)@(get_neq_null_svl_x b2) *)
+  (* | AndList b -> List.fold_left (fun svl (_,c)-> *)
+  (*     let svl1 = get_neq_null_svl_x c in *)
+  (*     svl@svl1) [] b *)
+  (* | Or (b1,b2,_,_) -> (get_neq_null_svl_x b1)@(get_neq_null_svl_x b2) *)
+  (* | Not (b,_,_)-> get_neq_null_svl_x b *)
+  (* | Forall (_,f,_,_) -> get_neq_null_svl_x f *)
+  (* | Exists (_,f,_,_) -> get_neq_null_svl_x f *)
+  map_f f helper (@)
 
 let get_neq_null_svl (f:formula)=
   let pr1 = !print_formula in
   Debug.no_1 "get_neq_null_svl" pr1 !print_svl
     (fun _ -> get_neq_null_svl_x f) f
+
+let rec get_eq_null_svl_x (f:formula) =
+  let helper (bf:b_formula) =
+    match bf with
+    | (Eq (sv1,sv2,_),_) -> begin
+        match sv1,sv2 with
+        | Var (v,_), Null _ -> [v]
+        | Null _, Var (v,_) -> [v]
+        | _ -> []
+      end
+    | _ -> []
+  in
+  map_f f helper (@)
+
+let get_eq_null_svl (f:formula)=
+  let pr1 = !print_formula in
+  Debug.no_1 "get_eq_null_svl" pr1 !print_svl
+    (fun _ -> get_eq_null_svl_x f) f
+
+
 
 let check_dang_or_null_exp_x root (f:formula) = match f with
   | BForm (bf,_) ->

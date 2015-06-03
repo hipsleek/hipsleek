@@ -2,15 +2,11 @@ data node {
   node next;
 }.
 
-// --eps
-
-//Fail.Fail.Valid.Valid.Fail.Valid.
-//Valid.Fail.Fail.
-//Valid.Fail.Fail.Valid.Valid.Valid.
 
 pred l3<> == 
   self::node<q>*q::node<_> 
 inv self!=null.
+
 
 
 pred l4<q:node> == 
@@ -43,7 +39,7 @@ inv true.
 checkentail x::l3<> * x::l3<> |- false.
 expect Valid.
 
-/*
+
 // (6) valid
 checkentail x::l4<c> * c::node<_> |- false.
 expect Valid.
@@ -59,8 +55,9 @@ expect Valid.
 checkentail x::l7<q> * x::l7<q> & x!=null |- false.
 expect Valid.
 
+
 // --eps
 // (15) Valid
 checkentail x::l7<q> * y::l7<q> & x!=null & y!=null |- false.
 expect Valid.
-*/
+

@@ -125,12 +125,13 @@ module SS=
            ptos eqs neqs cl_eqNulls cl_neqNulls
 
      let is_s_unsat_x baga p=
-       let mf = Mcpure.mix_of_pure p in
-       let eqs = (Mcpure.ptr_equations_without_null mf) in
-       let neqs = CP.get_neqs_new p in
-       let eqNulls = CP.remove_dups_svl (Mcpure.get_null_ptrs mf) in
-       let neqNulls = CP.get_neq_null_svl p in
-       is_inconsistent baga eqs neqs eqNulls neqNulls
+       if baga = [] && CP.isConstFalse p then true else
+         let mf = Mcpure.mix_of_pure p in
+         let eqs = (Mcpure.ptr_equations_without_null mf) in
+         let neqs = CP.get_neqs_new p in
+         let eqNulls = CP.remove_dups_svl (get_eq_null_svl p) (* (Mcpure.get_null_ptrs mf) *) in
+         let neqNulls = CP.get_neq_null_svl p in
+         is_inconsistent baga eqs neqs eqNulls neqNulls
 
      let is_s_unsat baga p=
        let pr1 = !CP.print_svl in
