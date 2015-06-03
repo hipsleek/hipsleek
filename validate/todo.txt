@@ -56,8 +56,55 @@ Why is below not executed?
   ()
 
 ==================================================================
+# ex4a.slk
+
+--pcp
+
+GOT:
+Expected Residue :  emp&x!=null & n=1&{FLOW,(20,21)=__norm#E}[]
+
+Can we have:
+
+expect_infer: 
+ R{emp&x!=null & n=1&{FLOW,(20,21)=__norm#E}[]}
+ ..
+
+====================================================
+
+# ex4a.slk
+
+# Need to check
+   current residue |- expected residue
+
+# It seems that consumed heap is missing
+
+!!! **sleekengine.ml#1599:expected residue: emp&x!=null & n=1&{FLOW,(20,21)=__norm#E}[]
+!!! **sleekengine.ml#1602:current residue:
+Some(( [
+  emp&0+1=n & q_45=flted_11_35 & Anon_44=Anon_13 & flted_11_35=null&{FLOW,(20,21)=__norm#E}[]
+
 ==================================================================
+
+# ex4a.slk --print-extra (to show consumed heap)
+
+Some(( [
+  emp&0+1=n & q_45=flted_11_35 & Anon_44=Anon_13 & flted_11_35=null&{FLOW,(20,21)=__norm#E}[]
+  es_heap(consumed):
+  x::node<Anon_13,flted_11_35>
+  ],true))Stop z3... 39 invocations Stop Omega... 16 invocations 
+
 ==================================================================
+err4b.slk
+
+# Why isn't there a type error with the node<null> scenario?
+
+!!! **sleekengine.ml#1129:ivars:[]Exception(look_up_view_def_raw):Not_found
+Exception(do_match):Invalid_argument("List.combine")
+Exception(process_action):Invalid_argument("List.combine")
+Exception(process_action):Invalid_argument("List.combine")
+Exception(heap_entail_non_empty_rhs_heap):Invalid_argument("List.combine")
+Exception(heap_entail_conjunct_helper):Invalid_argument("List.combine")
+
 ==================================================================
 ==================================================================
 ==================================================================

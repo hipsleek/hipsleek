@@ -8,11 +8,24 @@ pred ll<n> == self = null & n = 0
   inv n >= 0.
 
 //(4)
-checkentail x::node<_,null> |- x::ll<n>.
-print residue.
-expect Valid.
-expect_infer R{x!=null & n=1}.
+checkentail x::node<a,q>*q::node<null> |- x::ll<n>.
+//print residue.
+//expect Valid.
+//expect_infer R{x!=null & n=1}.
 
+/*
+# err4b.slk
+
+# Why isn't there a type error with the node<null> scenario?
+
+!!! **sleekengine.ml#1129:ivars:[]Exception(look_up_view_def_raw):Not_found
+Exception(do_match):Invalid_argument("List.combine")
+Exception(process_action):Invalid_argument("List.combine")
+Exception(process_action):Invalid_argument("List.combine")
+Exception(heap_entail_non_empty_rhs_heap):Invalid_argument("List.combine")
+Exception(heap_entail_conjunct_helper):Invalid_argument("List.combine")
+
+*/
 
 /*
 # ex4a.slk --print-extra
