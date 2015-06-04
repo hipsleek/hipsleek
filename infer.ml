@@ -65,8 +65,7 @@ type fc_type = CP.formula * CP.formula * CP.formula * CP.formula
 
 let fixcalc_rel_stk : fc_type Gen.stack_pr = new Gen.stack_pr (pr_quad pr pr pr pr) (==)
 
-let infer_rel_stk : CP.infer_rel_type Gen.stack_pr = new Gen.stack_pr
-  CP.string_of_infer_rel (==)
+let infer_rel_stk : CP.infer_rel_type Gen.stack_pr = new Gen.stack_pr CP.string_of_infer_rel (==)
 
 let rel_ass_stk : hprel Gen.stack_pr = new Gen.stack_pr
   Cprinter.string_of_hprel_short (==)

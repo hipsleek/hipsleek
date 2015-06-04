@@ -1398,6 +1398,43 @@ res:  1[
      {FLOW,(4,5)=__norm#E}[]
    ]
 =======================================================
+# ex8e1f.ss
+
+Why @6 and @7 at the same level when they are caller/callee pair?
+
+%%%             combine_list_failesc_context_and_unsat_now@6.
+%%%             isAnyConstFalse
+%%%             merge_mems 
+%%%             isAnyConstFalse
+%%%             merge_mems 
+%%%             isAnyConstFalse
+%%%             isAnyConstFalse
+%%%             elim_unsat_es_now@7.
+%%%              unsat_base_nth
+
+(==cformula.ml#1724==)
+elim_unsat_es_now#2@7@6
+elim_unsat_es_now#2 inp1 : pr_entail_state_shortc::cell<v>@a&x'!=1 & x'=v & a<:@L & c'=c & Q(a) & v_bool_17_1452' & x'!=1 & v_bool_17_1452'&{FLOW,(4,5)=__norm#E}[]
+  es_heap:emp
+  es_infer_vars_rel: [Q]
+  es_infer_rel: [RELASS [Q]: ( Q(a)) -->  a<:@L]
+  es_cond_path: [0]
+  es_var_measures 3: MayLoop
+elim_unsat_es_now#2@7 EXIT: c::cell<v>@a&v_bool_17_1452' & x'!=1 & Q(a) & c'=c & a<:@L & x'=v&
+   {FLOW,(4,5)=__norm#E}[]
+
+
+(==typechecker.ml#2876==)
+ combine_list_failesc_context_and_unsat_now@6
+ combine_list_failesc_context_and_unsat_now inp1 : List of Failesc Context: [FEC(0, 0, 1  [])]
+
+why do we also have stk_rel_ass ?
+
+(==cformula.ml#11187==)
+add_infer_rel_to_estate@20@17
+add_infer_rel_to_estate inp1 :[RELASS [Q]: ( Q(a)) -->  a<:@L]
+add_infer_rel_to_estate@20 EXIT:[RELASS [Q]: ( Q(a)) -->  a<:@L,RELASS [Q]: ( Q(a)) -->  a<:@L]
+
 =======================================================
 =======================================================
 =======================================================

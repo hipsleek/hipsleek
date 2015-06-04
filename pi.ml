@@ -611,16 +611,16 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
   let proc_specs = List.fold_left (fun acc proc -> acc@[(* x_add_1 CF.simplify_ann *) (proc.proc_stk_of_static_specs # top)]) [] scc in
   let () = DD.ninfo_hprint (add_str "proc_specs" (pr_list Cprinter.string_of_struc_formula)) proc_specs no_pos in
   (* let _ = print_endline_quiet ("proc_specs: " ^ (pr_list Cprinter.string_of_struc_formula proc_specs)) in *)
-  let rels = Infer.infer_rel_stk # get_stk in
-  let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels) in
+  let rels_orig = Infer.infer_rel_stk # get_stk_no_dupl in
+  let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels_orig) in
   let (lst_assume,lst_rank) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) rest) in
-  let lst_assume = Gen.Basic.remove_dups lst_assume in
+  (* let lst_assume = Gen.Basic.remove_dups lst_assume in *)
   (* let rels = Immutable.norm_rel_list rels in *)
   (* let lst_assume = Immutable.norm_rel_list lst_assume in *)
   if rels = [] && lst_assume = [] then ()
   else
     let new_specs =
-      let rels = Infer.infer_rel_stk # get_stk in
+      let rels = rels_orig (* Infer.infer_rel_stk # get_stk *) in
       let () = Infer.infer_rel_stk # reset in
       (* let rels = Immutable.norm_rel_list rels in *)
       let pres,posts_wo_rel,all_posts,inf_vars,pre_fmls,grp_post_rel_flag =
@@ -644,7 +644,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
           let () = DD.ninfo_pprint ">>>>>> do_compute_fixpoint <<<<<<" no_pos in
           let tuples =
             (* let rels = Immutable.norm_rel_list rels in *)
-            let rels = Gen.Basic.remove_dups rels in
+            (* let rels = Gen.Basic.remove_dups rels in *)
             let rels = List.filter (fun (_,pf,_) -> not(CP.is_False pf)) rels in           
             if rels !=[] then
               begin

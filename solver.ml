@@ -1347,14 +1347,14 @@ and combine_es_and prog (f : MCP.mix_formula) (reset_flag:bool) (es : entail_sta
     else Ctx {es with es_formula = r1;}
   else Ctx {es with es_formula = r1;}
 
+and list_context_and_unsat_now prog (ctx : list_context) : list_context = 
+  let r = transform_list_context ((elim_unsat_es 7 prog (ref 1)),(fun c->c)) ctx in
+  TP.incr_sat_no () ; r
+
 (*and combine_list_context_and_unsat_now prog (ctx : list_context) (f : MCP.mix_formula) : list_context = 
   let r = transform_list_context ((combine_es_and prog f true),(fun c->c)) ctx in
   let r = transform_list_context ((elim_unsat_es_now prog (ref 1)),(fun c->c)) r in
   TP.incr_sat_no () ; r*)
-
-and list_context_and_unsat_now prog (ctx : list_context) : list_context = 
-  let r = transform_list_context ((elim_unsat_es 7 prog (ref 1)),(fun c->c)) ctx in
-  TP.incr_sat_no () ; r
 
 (*and list_partial_context_and_unsat_now prog (ctx : list_partial_context) : list_partial_context = 
   (* let r = transform_list_partial_context ((combine_es_and prog f true),(fun c->c)) ctx in *)
@@ -1367,11 +1367,16 @@ and list_failesc_context_and_unsat_now prog (ctx : list_failesc_context) : list_
   let r = List.map CF.remove_dupl_false_fe r in
   TP.incr_sat_no () ; r
 
-and combine_list_failesc_context_and_unsat_now prog (ctx : list_failesc_context) (f : MCP.mix_formula) : list_failesc_context = 
+and combine_list_failesc_context_and_unsat_now_x prog (ctx : list_failesc_context) (f : MCP.mix_formula) : list_failesc_context = 
   let r = transform_list_failesc_context (idf,idf,(combine_es_and prog f true)) ctx in
   let r = transform_list_failesc_context (idf,idf,(elim_unsat_es_now 2 prog (ref 1))) r in
   let r = List.map CF.remove_dupl_false_fe r in
   TP.incr_sat_no () ; r
+
+and combine_list_failesc_context_and_unsat_now prog (ctx : list_failesc_context) (f : MCP.mix_formula) : list_failesc_context =
+  let pr = Cprinter.string_of_list_failesc_context in
+  let pr2 = Cprinter.string_of_mix_formula in
+  Debug.no_2 " combine_list_failesc_context_and_unsat_now" pr pr2 pr (fun _ _ -> combine_list_failesc_context_and_unsat_now_x prog ctx f) ctx f
 
 and combine_list_failesc_context prog (ctx : list_failesc_context) (f : MCP.mix_formula) : list_failesc_context = 
   let r = transform_list_failesc_context (idf,idf,(combine_es_and prog f true)) ctx in
@@ -8226,7 +8231,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
     else lhs_p
   in
   let stk_inf_pure = new Gen.stack in (* of xpure *)
-  let stk_rel_ass = new Gen.stack in (* of xpure *)
+  let stk_rel_ass = new Gen.stack_pr (add_str "(stk_rel_ass)" CP.string_of_infer_rel) (==) in (* of rel_ass *)
   let stk_estate = new Gen.stack in (* of estate *)
   (* let () = print_string ("lhs_p2 : " ^ (Cprinter.string_of_mix_formula lhs_p2) ^ "\n\n") in *)
   (* infer must NOT use baga_enum outcome *)
@@ -8243,7 +8248,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
     | None,[] -> ()
     | None,[(h1,h2,_)] ->
       let () = Debug.ninfo_pprint "WARNING : pushing stk_estate (1)" pos in
-      (stk_rel_ass # push_list h2;
+      (stk_rel_ass # push_list_pr h2;
        stk_estate # push h1)
     | Some (es,p),[] ->
       let () = Debug.ninfo_pprint "WARNING : pushing stk_estate (2)" pos in
@@ -8252,7 +8257,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
     | Some (es,p),[(h1,h2,_)] ->
       let () = Debug.ninfo_pprint "WARNING : pushing stk_estate (3)" pos in
       (stk_inf_pure # push p;
-       stk_rel_ass # push_list h2;
+       stk_rel_ass # push_list_pr h2;
        stk_estate # push es)
     | _,_ -> report_error pos "Length of relational assumption list > 1"
   in
@@ -8432,7 +8437,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
                        (true,[],None))
                     | _ ->
                       (stk_inf_pure # push p;
-                       stk_rel_ass # push_list relass;
+                       stk_rel_ass # push_list_pr relass;
                        let () = 
                          if entail_states = [] then
                            report_error pos "Expecting a non-empty list of entail states"
@@ -8452,7 +8457,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
                         | [] -> 
                           i_res1,i_res2,i_res3
                         | _ -> (* stk_inf_pure # push pf; *)
-                          stk_rel_ass # push_list relass;
+                          stk_rel_ass # push_list_pr relass;
                           let () = 
                             if entail_states = [] then 
                               report_error pos "Expecting a non-empty list of entail states"
@@ -8479,7 +8484,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
                         | _ ->
                           (* TODO: to check the implication of new ante *)
                           stk_inf_pure # push pf;
-                          stk_rel_ass # push_list relass;
+                          stk_rel_ass # push_list_pr relass;
                           let () = 
                             if entail_states = [] then 
                               report_error pos "Expecting a non-empty list of entail states"
@@ -8559,8 +8564,8 @@ type: bool *
           | Ctx es -> Ctx {es with es_orig_ante = orig_ante}
           | _ -> ctx1 in
         let () = x_tinfo_hp (add_str "ctx1 1" Cprinter.string_of_context) ctx1 no_pos in
-        let ctx1 = x_add add_infer_pure_to_ctx (stk_inf_pure # get_stk) ctx1 in
-        let ctx1 = add_infer_rel_to_ctx (stk_rel_ass # get_stk) ctx1 in
+        let ctx1 = x_add add_infer_pure_to_ctx (stk_inf_pure # get_stk_and_reset) ctx1 in
+        let ctx1 = x_add add_infer_rel_to_ctx (stk_rel_ass # get_stk_and_reset) ctx1 in
         (SuccCtx[ctx1],UnsatAnte)
       else
         let estate = Gen.unsome_safe !smart_unsat_estate estate in
@@ -8576,7 +8581,7 @@ type: bool *
         in
         (* else (lhs_h,lhs_p) in *)
         let inf_p = stk_inf_pure # get_stk in
-        let inf_relass = stk_rel_ass # get_stk in
+        let inf_relass = stk_rel_ass # get_stk_and_reset in
         (* let inf_heap_ass = stk_rel_ass # get_stk in *)
         let estate = add_infer_pure_to_estate inf_p estate in
         let estate = x_add add_infer_rel_to_estate inf_relass estate in

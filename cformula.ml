@@ -10946,6 +10946,7 @@ let remove_dupl_false (sl:branch_ctx list) =
 
 let remove_dupl_false (sl:branch_ctx list) = 
   let pr n = string_of_int(List.length n) in
+  let pr l = pr_list !print_context (List.map (fun (_,c,_) -> c) l) in
   Debug.no_1 "remove_dupl_false" pr pr remove_dupl_false sl
 
 let remove_dupl_false_context_list (sl:context list) = 
@@ -11187,6 +11188,11 @@ let add_infer_rel_to_ctx cp ctx =
     | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
   in helper ctx
 
+let add_infer_rel_to_ctx cp ctx =
+  let pr0 = pr_list CP.print_lhs_rhs in
+  let pr = !print_context in
+  Debug.no_1 "add_infer_rel_to_ctx" pr0 pr (fun _ -> add_infer_rel_to_ctx cp ctx) cp
+
 let add_infer_pure_to_ctx cp ctx =
   let rec helper ctx =
     match ctx with
@@ -11227,7 +11233,11 @@ let add_infer_heap_to_list_context cp (l : list_context) : list_context  =
 let add_infer_rel_to_list_context cp (l : list_context) : list_context  = 
   match l with
   | FailCtx _-> l
-  | SuccCtx sc -> SuccCtx (List.map (add_infer_rel_to_ctx cp) sc)
+  | SuccCtx sc -> SuccCtx (List.map (x_add add_infer_rel_to_ctx cp) sc)
+
+let add_infer_rel_to_list_context cp (l : list_context) : list_context  = 
+  let pr = !print_list_context in
+  Debug.no_1 "add_infer_rel_to_list_context" pr pr (add_infer_rel_to_list_context cp) l
 
 (* f_ctx denotes false context *)
 let add_infer_pre f_ctx ctx =
@@ -11242,8 +11252,12 @@ let add_infer_pre f_ctx ctx =
     if (cp!=[]) then x_add add_infer_pure_to_ctx cp ctx
     else 
       let cr = collect_rel f_ctx in
-      if (cr!=[]) then add_infer_rel_to_ctx cr ctx
+      if (cr!=[]) then x_add add_infer_rel_to_ctx cr ctx
       else ctx
+
+let add_infer_pre f_ctx ctx =
+  let pr = !print_context in
+  Debug.no_2 "add_infer_pre" pr pr pr add_infer_pre f_ctx ctx 
 
 let map_ctx (ctx: context) f_es: context =
   let rec helper ctx = 
@@ -11264,14 +11278,20 @@ let map_list_partial_context (ctx: list_partial_context) f_es =
       (lst1,lst2)
     ) ctx
 
+let choose_add_pre ctx1 ctx2 = 
+  (* if !Globals.temp_opt_flag2 then ctx2 *)
+  (* else *) x_add add_infer_pre ctx1 ctx2
+
+(* WN : we need to add infer_pre of false context *)
+(* infer/ex/4.slk requires it *)
 let mkOCtx ctx1 ctx2 pos =
   (*if (isFailCtx ctx1) || (isFailCtx ctx2) then or_fail_ctx ctx1 ctx2
     else*)  (* if isStrictTrueCtx ctx1 || isStrictTrueCtx ctx2 then *)
   (* true_ctx (mkTrueFlow ()) pos *)  (* not much point in checking
                                          for true *)
   (* else *) 
-  if isAnyFalseCtx ctx1 then add_infer_pre ctx1 ctx2
-  else if isAnyFalseCtx ctx2 then add_infer_pre ctx2 ctx1
+  if isAnyFalseCtx ctx1 then choose_add_pre ctx1 ctx2
+  else if isAnyFalseCtx ctx2 then choose_add_pre ctx2 ctx1
   else OCtx (ctx1,ctx2) 
 
 let or_context c1 c2 = 
@@ -11790,7 +11810,7 @@ and and_list_context c1 c2= match c1,c2 with
   | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (x_add or_context_list t1 t2)
 
 and or_list_context c1 c2 = 
-  let pr = !print_list_context_short in
+  let pr = !print_list_context in
   Debug.no_2 "or_list_context" pr pr pr or_list_context_x_new c1 c2
 
 (* can remove redundancy here? *)

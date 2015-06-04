@@ -586,6 +586,11 @@ class ['a] stack  =
         stk <- i::stk
       end
     method get_stk  = stk (* return entire content of stack *)
+    method get_stk_and_reset  = let s=stk in (stk<-[];s) (* return entire content of stack & clear *)
+    method get_stk_no_dupl  = 
+      (* remove dupl *)
+      let s = self # get_stk in
+      Basic.remove_dups s
     method set_stk newstk  = stk <- newstk 
     (* override with a new stack *)
     method pop = match stk with 
