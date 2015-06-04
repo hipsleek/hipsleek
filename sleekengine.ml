@@ -1605,39 +1605,39 @@ let process_validate_infer (vr : validate_result) (validation: validation) =
     let () = x_binfo_hp (add_str "current residue" pr_r) !CF.residues no_pos in
     (*  see process_validate. line 1617 *)
     let s =  "\nExpect_Infer "^nn^": " in
+    let run_heap_entail lhs rhs = Solver.heap_entail_init !cprog false lhs rhs no_pos in
+    let check_heap_entail lhs rhs =
+      match run_heap_entail lhs rhs with (CF.SuccCtx _,_) -> true | _ -> false in
     match !CF.residues with
       | None -> print_endline_quiet (s^"Fail. (empty residue)")
       | Some (lc, _) ->
-            begin
-              (* this combined LHS and RHS causing false *)
-              (* let lc = CF.normaliz
-+e_max_renaming res_f no_pos false lc in *)
-              let run_heap_entail lhs rhs = Solver.heap_entail_init !cprog false lhs rhs no_pos in
-              let check_heap_entail lhs rhs =
-                match run_heap_entail lhs rhs with (CF.SuccCtx _,_) -> true | _ -> false in
-              let pr s str = if s then print_endline_quiet  (str^"Valid. "^res_f_str) else
-                           print_endline_quiet  (str^"Fail. "^res_f_str) in
-              pr (match run_heap_entail lc res_f with
-                    | (CF.SuccCtx lctx, _) ->
-                       begin match validation with
-                         | V_Infer _ ->
-                            let rec helper acc ctx = match ctx with
-                              | CF.Ctx es -> (check_heap_entail lc res_f) || acc
-                              | CF.OCtx (ctx1, ctx2) -> helper acc ctx1 || helper acc ctx2
-                            in
-                            List.fold_left helper false lctx
-                         | _ -> vr = VR_Valid
-                       end
-                    | (CF.FailCtx (_, ctx, _), _) ->
-                        let rec helper = function
-                          | CF.Ctx es ->
-                              begin match es.CF.es_must_error, es.CF.es_may_error with
-                              | Some _, _ -> (vr = VR_Fail 0) || (vr = VR_Fail 1)
-                              | _, _ -> (vr = VR_Fail 0) || (vr = VR_Fail (-1))
-                              end
-                          | CF.OCtx (ctx1, ctx2) -> helper ctx1 || helper ctx2
-                   in helper ctx) s
-            end
+        begin
+          let pr s str = if s then print_endline_quiet  (str^"Valid. "^res_f_str) else
+             print_endline_quiet  (str^"Fail. "^res_f_str) in
+          pr (match run_heap_entail lc res_f with
+            | (CF.SuccCtx lctx, _) ->
+                begin match validation with
+                    | V_Infer _ ->
+                       let rec helper acc ctx =
+                         match ctx with
+                         | CF.Ctx es ->
+                            let lcpure = CF.add_infer_pure_to_list_context es.CF.es_infer_pure lc in
+                            let lcheap = CF.add_infer_heap_to_list_context es.CF.es_infer_heap lcpure in
+                            (check_heap_entail lcheap res_f) || acc
+                        | CF.OCtx (ctx1, ctx2) -> helper acc ctx1 || helper acc ctx2
+                       in List.fold_left helper false lctx
+                    | _ -> vr = VR_Valid
+                end
+            | (CF.FailCtx (_, ctx, _), _) ->
+                let rec helper = function
+                    | CF.Ctx es ->
+                        begin match es.CF.es_must_error, es.CF.es_may_error with
+                        | Some _, _ -> (vr = VR_Fail 0) || (vr = VR_Fail 1)
+                        | _, _ -> (vr = VR_Fail 0) || (vr = VR_Fail (-1))
+                        end
+                    | CF.OCtx (ctx1, ctx2) -> helper ctx1 || helper ctx2
+                in helper ctx) s
+        end
   in
   match validation with
     | V_Residue (Some residue) -> hdr := "R"; validate_with_residue residue

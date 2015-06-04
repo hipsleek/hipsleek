@@ -11,7 +11,7 @@ pred ll<n> == self = null & n = 0
 checkentail x::node<_,null> |- x::ll<n>.
 print residue.
 expect Valid.
-expect_infer R{x!=null & n=1}.
+expect_infer Valid R{x!=null & n=1}.
 
 
 /*
