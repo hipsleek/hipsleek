@@ -1613,9 +1613,19 @@ let process_validate_infer (vr : validate_result) (validation: validation) =
               (* let lc = CF.normaliz
 +e_max_renaming res_f no_pos false lc in *)
               let rr = Solver.heap_entail_init !cprog false lc res_f no_pos in
-              match (rr) with
-                | (CF.SuccCtx _,_) -> print_endline_quiet  (s^"Valid. "^res_f_str)
-                | _ -> print_endline_quiet  (s^"Fail. "^res_f_str)
+              let pr s str = if s then print_endline_quiet  (str^"Valid. "^res_f_str) else
+                           print_endline_quiet  (str^"Fail. "^res_f_str) in
+              pr (match (rr) with
+                | (CF.SuccCtx _,_) -> vr = VR_Valid
+                | (CF.FailCtx (_, ctx, _), _) ->
+                   let rec helper = function
+                     | CF.Ctx es ->
+                        begin match es.CF.es_must_error, es.CF.es_may_error with
+                        | Some _, _ -> (vr = VR_Fail 0) || (vr = VR_Fail 1)
+                        | _, _ -> (vr = VR_Fail 0) || (vr = VR_Fail (-1))
+                        end
+                     | CF.OCtx (ctx1, ctx2) -> helper ctx1 || helper ctx2
+                   in helper ctx) s
             end
   in
   match validation with
