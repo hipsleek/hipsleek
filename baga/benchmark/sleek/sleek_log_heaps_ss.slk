@@ -717,9 +717,9 @@ expect Valid.
 d12=d2 & v13'=v12 & m1'=m1 & m2'=m2 & l'=l2 & r'=r2 & (0+m2)<=m1 & m1<=(1+
 m2) & mx1<=d2 & mx2<=d2 & 0<=v12 & v12<=d2 & m21=m1 & m20=m2 & m1'=0 & 
 v14' & v37'
- |-  (exists m54,m55,max,max1,mx30,mx31: l2::pq{}<m54,mx30> * r2::pq{}<m55,mx31>&
+ |-  (exists m54,m55,maxx,max1,mx30,mx31: l2::pq{}<m54,mx30> * r2::pq{}<m55,mx31>&
 m55=m2 & m54=m1 & 0<=d' & mx31<=d' & mx30<=d' & d'<=max1 & max1=max(mx2,
-max) & max=max(mx1,v12) & mx31<=mx2 & mx30<=mx1 & 0<=mx2 & 0<=mx1 & 
+maxx) & maxx=max(mx1,v12) & mx31<=mx2 & mx30<=mx1 & 0<=mx2 & 0<=mx1 & 
 exists(m1_61:0<=m1_61) & exists(m2_62:0<=m2_62)).
 expect Valid.
  
@@ -730,9 +730,9 @@ m2'=m2 & l'=l2 & r'=r2 & (0+m2)<=m1 & m1<=(1+m2) & mx1<=d2 & mx2<=d2 &
 0<=v12 & v12<=d2 & m23=m1 & m22=m2 & m1'!=0 & !(v14') & v17' & m32=m33 & 
 m30=m31 & m29<=1 & 0<=m29 & m29+m33=m31 & d4<=mx1 & mx17<=d4 & mx16<=d4 & 
 0<=d4 & m23=m33+1+m31 & d4<=v13' & v19'
- |-  (exists m54,m55,max,max1,mx30,mx31: l2::pq{}<m54,mx30> * r2::pq{}<m55,mx31>&
+ |-  (exists m54,m55,maxx,max1,mx30,mx31: l2::pq{}<m54,mx30> * r2::pq{}<m55,mx31>&
 m55=m2 & m54=m1 & 0<=d' & mx31<=d' & mx30<=d' & d'<=max1 & max1=max(mx2,
-max) & max=max(mx1,v12) & mx31<=mx2 & mx30<=mx1 & 0<=mx2 & 0<=mx1 & 
+maxx) & maxx=max(mx1,v12) & mx31<=mx2 & mx30<=mx1 & 0<=mx2 & 0<=mx1 & 
 exists(m1_61:0<=m1_61) & exists(m2_62:0<=m2_62)).
 expect Valid.
  
@@ -743,9 +743,9 @@ v13'=v12 & m1'=m1 & m2'=m2 & l'=l2 & r'=r2 & (0+m2)<=m1 & m1<=(1+m2) &
 mx1<=d2 & mx2<=d2 & 0<=v12 & v12<=d2 & m23=m1 & m22=m2 & m1'!=0 & !(v14') & 
 v17' & m32=m33 & m30=m31 & m29<=1 & 0<=m29 & m29+m33=m31 & d4<=mx1 & 
 mx17<=d4 & mx16<=d4 & 0<=d4 & m23=m33+1+m31 & v13'<d4 & !(v19')
- |-  (exists m54,m55,max,max1,mx30,mx31: l2::pq{}<m54,mx30> * r2::pq{}<m55,mx31>&
+ |-  (exists m54,m55,maxx,max1,mx30,mx31: l2::pq{}<m54,mx30> * r2::pq{}<m55,mx31>&
 m55=m2 & m54=m1 & 0<=d' & mx31<=d' & mx30<=d' & d'<=max1 & max1=max(mx2,
-max) & max=max(mx1,v12) & mx31<=mx2 & mx30<=mx1 & 0<=mx2 & 0<=mx1 & 
+maxx) & maxx=max(mx1,v12) & mx31<=mx2 & mx30<=mx1 & 0<=mx2 & 0<=mx1 & 
 exists(m1_61:0<=m1_61) & exists(m2_62:0<=m2_62)).
 expect Valid.
  
@@ -758,9 +758,9 @@ m22=m2 & m1'!=0 & !(v14') & m2'!=0 & !(v17') & m39=m42 & m40=m43 & m41<=1 &
 0<=m41 & m41+m42=m43 & d7<=mx1 & mx20<=d7 & mx21<=d7 & 0<=d7 & m23=m42+1+
 m43 & m52=m53 & m50=m51 & m49<=1 & 0<=m49 & m49+m53=m51 & d9<=mx2 & 
 mx25<=d9 & mx24<=d9 & 0<=d9 & m22=m53+1+m51 & d9<=d7 & v22' & d7<=v13' & v24'
- |-  (exists m54,m55,max,max1,mx30,mx31: l2::pq{}<m54,mx30> * r2::pq{}<m55,mx31>&
+ |-  (exists m54,m55,maxx,max1,mx30,mx31: l2::pq{}<m54,mx30> * r2::pq{}<m55,mx31>&
 m55=m2 & m54=m1 & 0<=d' & mx31<=d' & mx30<=d' & d'<=max1 & max1=max(mx2,
-max) & max=max(mx1,v12) & mx31<=mx2 & mx30<=mx1 & 0<=mx2 & 0<=mx1 & 
+maxx) & maxx=max(mx1,v12) & mx31<=mx2 & mx30<=mx1 & 0<=mx2 & 0<=mx1 & 
 exists(m1_61:0<=m1_61) & exists(m2_62:0<=m2_62)).
 expect Valid.
  
@@ -778,9 +778,9 @@ mx27=mx21 & mx26=mx20 & 0<=m39 & 0<=mx20 & 0<=m40 & 0<=mx21 & mx32<=mx27 &
 mx33<=mx26 & max2=max(mx27,v13') & max3=max(mx26,max2) & v25'<=max3 & 
 mx32<=v25' & mx33<=v25' & 0<=v25' & exists(m2_62:0<=m2_62) & 
 exists(m1_61:0<=m1_61) & 0<=mx27 & 0<=mx26)
- |-  (exists m54,m55,max,max1,mx30,mx31: l2::pq{}<m54,mx30> * r2::pq{}<m55,mx31>&
+ |-  (exists m54,m55,maxx,max1,mx30,mx31: l2::pq{}<m54,mx30> * r2::pq{}<m55,mx31>&
 m55=m2 & m54=m1 & 0<=d' & mx31<=d' & mx30<=d' & d'<=max1 & max1=max(mx2,
-max) & max=max(mx1,v12) & mx31<=mx2 & mx30<=mx1 & 0<=mx2 & 0<=mx1 & 
+maxx) & maxx=max(mx1,v12) & mx31<=mx2 & mx30<=mx1 & 0<=mx2 & 0<=mx1 & 
 exists(m1_61:0<=m1_61) & exists(m2_62:0<=m2_62)).
 expect Valid.
  
@@ -794,9 +794,9 @@ m22=m2 & m1'!=0 & !(v14') & m2'!=0 & !(v17') & m39=m42 & m40=m43 & m41<=1 &
 m43 & m52=m53 & m50=m51 & m49<=1 & 0<=m49 & m49+m53=m51 & d9<=mx2 & 
 mx25<=d9 & mx24<=d9 & 0<=d9 & m22=m53+1+m51 & d7<d9 & !(v22') & d9<=v13' & 
 v31'
- |-  (exists m54,m55,max,max1,mx30,mx31: l2::pq{}<m54,mx30> * r2::pq{}<m55,mx31>&
+ |-  (exists m54,m55,maxx,max1,mx30,mx31: l2::pq{}<m54,mx30> * r2::pq{}<m55,mx31>&
 m55=m2 & m54=m1 & 0<=d' & mx31<=d' & mx30<=d' & d'<=max1 & max1=max(mx2,
-max) & max=max(mx1,v12) & mx31<=mx2 & mx30<=mx1 & 0<=mx2 & 0<=mx1 & 
+maxx) & maxx=max(mx1,v12) & mx31<=mx2 & mx30<=mx1 & 0<=mx2 & 0<=mx1 & 
 exists(m1_61:0<=m1_61) & exists(m2_62:0<=m2_62)).
 expect Valid.
  
@@ -814,9 +814,9 @@ d'=d9 & mx29=mx24 & mx28=mx25 & 0<=m52 & 0<=mx25 & 0<=m50 & 0<=mx24 &
 mx34<=mx29 & mx35<=mx28 & max4=max(mx29,v13') & max5=max(mx28,max4) & 
 v32'<=max5 & mx34<=v32' & mx35<=v32' & 0<=v32' & exists(m2_62:0<=m2_62) & 
 exists(m1_61:0<=m1_61) & 0<=mx29 & 0<=mx28)
- |-  (exists m54,m55,max,max1,mx30,mx31: l2::pq{}<m54,mx30> * r2::pq{}<m55,mx31>&
+ |-  (exists m54,m55,maxx,max1,mx30,mx31: l2::pq{}<m54,mx30> * r2::pq{}<m55,mx31>&
 m55=m2 & m54=m1 & 0<=d' & mx31<=d' & mx30<=d' & d'<=max1 & max1=max(mx2,
-max) & max=max(mx1,v12) & mx31<=mx2 & mx30<=mx1 & 0<=mx2 & 0<=mx1 & 
+maxx) & maxx=max(mx1,v12) & mx31<=mx2 & mx30<=mx1 & 0<=mx2 & 0<=mx1 & 
 exists(m1_61:0<=m1_61) & exists(m2_62:0<=m2_62)).
 expect Valid.
  

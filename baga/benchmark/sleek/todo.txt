@@ -51,6 +51,8 @@ Total verification time: 0.072443 second(s)
 	Time spent in main process: 0.069001 second(s)
 	Time spent in child processes: 0.003442 second(s)
 
+Added by hand
+
 =============================================================================================================================
 
 longph@loris-7:~/workspace/baga/sleekex/baga/benchmark/sleek$ ../../../sleek sleek_log_perfect_ss.slk --gen-smt
