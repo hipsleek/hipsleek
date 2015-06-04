@@ -120,6 +120,7 @@ and validation =
   according to different usage.
 *)
 
+
 type var_table_t = (ident, meta_formula) H.t
 
 let var_tab : var_table_t = H.create 10240
@@ -206,6 +207,16 @@ let rec fv_meta_formula (mf: meta_formula) =
   | MetaCompose (idl, m1, m2) -> 
     (List.map (fun i -> (i, Unprimed)) idl) @ 
     (fv_meta_formula m1) @ (fv_meta_formula m2)
+
+let string_of_validation v=
+  let pr_omf = Gen.pr_option string_of_meta_formula in
+  let pr_orel = Gen.pr_option (Gen.pr_quad Cprinter.string_of_cond_path
+      string_of_meta_formula pr_omf string_of_meta_formula) in
+  match v with
+    | V_Residue o_mf -> "R{" ^ (pr_omf o_mf) ^"}"
+    | V_Infer o_mf -> "I{" ^ (pr_omf o_mf) ^"}"
+    | V_RelAssume o_vrels -> "RA{" ^ (pr_orel o_vrels) ^ "}"
+
 
 let clear_var_table () = H.clear var_tab
 

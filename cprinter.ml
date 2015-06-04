@@ -3054,6 +3054,8 @@ let string_of_hprel_def_short hp = poly_string_of_pr pr_hprel_def_short hp
 
 let string_of_hprel_def_lib hp = poly_string_of_pr pr_hprel_def_lib hp
 
+let string_of_cond_path = (fun p -> ((pr_list_round_sep ";" (fun s -> string_of_int s)) p))
+
 let pr_par_def (f1,f2,f3) =
   (* fmt_string (CP.print_only_lhs_rhs rel) *)
   fmt_open_box 1;
