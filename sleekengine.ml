@@ -1612,19 +1612,30 @@ let process_validate_infer (vr : validate_result) (validation: validation) =
               (* this combined LHS and RHS causing false *)
               (* let lc = CF.normaliz
 +e_max_renaming res_f no_pos false lc in *)
-              let rr = Solver.heap_entail_init !cprog false lc res_f no_pos in
+              let run_heap_entail lhs rhs = Solver.heap_entail_init !cprog false lhs rhs no_pos in
+              let check_heap_entail lhs rhs =
+                match run_heap_entail lhs rhs with (CF.SuccCtx _,_) -> true | _ -> false in
               let pr s str = if s then print_endline_quiet  (str^"Valid. "^res_f_str) else
                            print_endline_quiet  (str^"Fail. "^res_f_str) in
-              pr (match (rr) with
-                | (CF.SuccCtx _,_) -> vr = VR_Valid
-                | (CF.FailCtx (_, ctx, _), _) ->
-                   let rec helper = function
-                     | CF.Ctx es ->
-                        begin match es.CF.es_must_error, es.CF.es_may_error with
-                        | Some _, _ -> (vr = VR_Fail 0) || (vr = VR_Fail 1)
-                        | _, _ -> (vr = VR_Fail 0) || (vr = VR_Fail (-1))
-                        end
-                     | CF.OCtx (ctx1, ctx2) -> helper ctx1 || helper ctx2
+              pr (match run_heap_entail lc res_f with
+                    | (CF.SuccCtx lctx, _) ->
+                       begin match validation with
+                         | V_Infer _ ->
+                            let rec helper acc ctx = match ctx with
+                              | CF.Ctx es -> (check_heap_entail lc res_f) || acc
+                              | CF.OCtx (ctx1, ctx2) -> helper acc ctx1 || helper acc ctx2
+                            in
+                            List.fold_left helper false lctx
+                         | _ -> vr = VR_Valid
+                       end
+                    | (CF.FailCtx (_, ctx, _), _) ->
+                        let rec helper = function
+                          | CF.Ctx es ->
+                              begin match es.CF.es_must_error, es.CF.es_may_error with
+                              | Some _, _ -> (vr = VR_Fail 0) || (vr = VR_Fail 1)
+                              | _, _ -> (vr = VR_Fail 0) || (vr = VR_Fail (-1))
+                              end
+                          | CF.OCtx (ctx1, ctx2) -> helper ctx1 || helper ctx2
                    in helper ctx) s
             end
   in
