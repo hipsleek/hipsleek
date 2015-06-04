@@ -117,6 +117,39 @@ Expect_Infer 2.4: Fail. ( x::node<bb,q> * q::node<flted_19_98,Anon_15>&flted_19_
 Expect_Infer 2.5: Fail. ( x::node<bb,Anon_16> * qq::node<bb_107,Anon_17>&bb_107=bb&
 Expect_Infer 2.6: Valid. ( x::node<bb,Anon_18> * q::node<bb_116,Anon_19>&bb_116=bb&
 ==================================================================
+# ex5a.slk
+
+# We need to form 
+
+   emp & n=0 (from es_infer_pure; collect from list_context) 
+   |- emp & n=0 (from expected_infer pure)
+
+
+!!! **sleekengine.ml#1605:current residue:
+Some(( [
+   emp&y=null & n=0&{FLOW,(20,21)=__norm#E}[]
+  es_heap(consumed): emp
+  es_evars: [n_41]
+  es_ante_evars: [n_41]
+  es_infer_pure: [n=0]
+  ],true))
+Expect_Infer 1.1: Valid. ( emp&n=0&{FLOW,(20,21)=__norm#E}[])
+
+and normalize i (f1 : formula) (f2 : formula) (pos : loc) =
+  Debug.no_2 "normalize$" (!print_formula) (!print_formula) (!print_formula) (fun _ _ -> normalize_x f1 f2 pos) f1 f2
+
+(====)
+normalizeB@225
+normalizeB inp1 : r_1763::ll<flted_19_1761>&res=v_boolean_63_1600' & !(v_boolean_63_1600') & 
+flted_19_1761+1=n & xs'=xs & 0<n & r_1763=null & v_bool_62_1639'&
+{FLOW,(4,5)=__norm#E}[]
+normalizeB inp2 : emp&exists(l_1897:exists(s_1896:Anon_1762=s_1896 & s_1896=l_1897)) & 
+exists(n_1895:n_1895=1)&{FLOW,(1,28)=__flow#E}[]
+normalizeB@225 EXIT: r_1763::ll<flted_19_1761>&res=v_boolean_63_1600' & !(v_boolean_63_1600') & 
+flted_19_1761+1=n & xs'=xs & 0<n & r_1763=null & v_bool_62_1639' & 
+exists(l_1897:exists(s_1896:Anon_1762=s_1896 & s_1896=l_1897)) & 
+exists(n_1895:n_1895=1)&{FLOW,(4,5)=__norm#E}[]
+
 ==================================================================
 ==================================================================
 ==================================================================

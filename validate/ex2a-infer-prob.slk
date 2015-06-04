@@ -117,6 +117,13 @@ Residue:
 infer [y] y!=null |- y::ll<n>.  
 print residue.
 // expect_infer F{y::ll<_>}.
+
+//(8)
+infer [n] y=null |- 
+      case {y=null -> [] y::ll<n>;
+            y!=null -> [] y::ll<n>;}.  
+print residue.
+
 /*
 
 # I guess inference for this case is essential

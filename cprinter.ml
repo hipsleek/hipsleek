@@ -3651,6 +3651,12 @@ let pr_estate ?(nshort=true) (es : entail_state) =
       pr_wrap_test "es_ante_evars: "  Gen.is_empty (pr_seq "" pr_spec_var)  es.es_ante_evars;
       pr_wrap_test "es_gen_expl_vars: "  Gen.is_empty (pr_seq "" pr_spec_var)  es.es_gen_expl_vars;
       pr_wrap_test "es_gen_impl_vars: "  Gen.is_empty (pr_seq "" pr_spec_var)  es.es_gen_impl_vars;
+      pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pure;
+      pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) es.es_infer_heap;
+      pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es.es_infer_hp_rel;
+      pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) es.es_infer_rel;
+      pr_wrap_test "es_infer_templ: " Gen.is_empty  (pr_seq "" pr_formula_exp) es.es_infer_templ;
+      pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) es.es_infer_templ_assume;
     end;
   pr_wrap_test "es_ho_vars_map: " Gen.is_empty  (pr_seq "" (pr_map_aux pr_spec_var pr_formula)) (es.es_ho_vars_map);
   pr_wrap_test "es_conc_err: " Gen.is_empty (pr_seq "" (fun (msg, pos) -> fmt_string (msg ^ ":" ^ (string_of_pos pos)))) es.es_conc_err;
