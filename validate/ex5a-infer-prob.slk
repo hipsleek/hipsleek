@@ -22,7 +22,7 @@ expect_infer I{n=0}.
 # We need to form 
 
    emp & n=0 (from es_infer_pure; collect from list_context) 
-   |- emp & n=0 (from expected_infer pure)
+   |- emp & n=0 (from expected_infer I(..))
 
 
 !!! **sleekengine.ml#1605:current residue:

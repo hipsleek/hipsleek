@@ -1602,8 +1602,9 @@ let process_validate_infer (vr : validate_result) (validation: validation) =
       | _ -> false
   in
 
-  let pr s str res_f_str = if s then print_endline_quiet  (str^"Valid. "^res_f_str) else
-    print_endline_quiet  (str^"Fail. "^res_f_str)
+  let pr s str res_f_str = 
+    if s then print_endline_quiet  (str^"OK. ")
+    else print_endline_quiet  (str^"Unexpected. "^res_f_str)
   in
 
   let validate_with_residue hdr residue =
@@ -1734,7 +1735,7 @@ let process_validate exp_res opt_fl ils_es=
               if n2==0 then None
               else if n1==n2 then None
               else Some( "Expecting"^(string_of_vres exp_res)^" BUT got : "^(string_of_vres res))
-            | _,_ -> Some ("Expecting 3 "^(string_of_vres exp_res)^" BUT got : "^(string_of_vres res))
+            | _,_ -> Some ("Expecting(3)"^(string_of_vres exp_res)^" BUT got : "^(string_of_vres res))
           in
           let _ = match unexp with
             | None -> begin
