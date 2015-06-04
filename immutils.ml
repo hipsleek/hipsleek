@@ -190,21 +190,38 @@ let norm_eq_add lhs_sv lhs_l emap e l =
   let new_pf = map_opt_def  (BConst (false, l)) (fun x -> new_eq x) new_sum in
   (new_pf, fixpt)
 
-
+let norm_subann_add mksubann emap e l =
+  let new_sum, fixpt = imm_summation emap e in
+  let new_pf = map_opt_def  (BConst (false, l)) (fun x -> mksubann x) new_sum in
+  (new_pf, fixpt)
+  
 (* pre norm *)
 let simplify_imm_adddition (f:formula) =
   let fixpt = ref true in
+  
+  let f_b_ann_exp_check sv lbl f_op l  =
+    if is_ann_typ sv then 
+      let new_pf, fixpt0 = f_op l in
+      let () = if not(fixpt0) then fixpt:= false in
+      Some (new_pf, lbl)
+    else None in
+
+  let mk_SubAnn_4Add l lhs rhs =  SubAnn (lhs, rhs, l) in
+
   let f_b emap fb =
     (* need a helper because of local var emap *)
     let f_b_helper bf =
       let (p_f, lbl) = bf in
       match p_f with
-      | Eq (Var(sv,lv), (Add(e1,e2,la) as ea), l) ->
-        if is_ann_typ sv then 
-          let new_pf, fixpt0 = norm_eq_add sv lv emap ea l in
-          let () = if not(fixpt0) then fixpt:= false in
-          Some (new_pf, lbl)
-        else None
+      | Eq (Var(sv,lv), (Add(e1,e2,la) as ea), l) -> 
+        let f_eq l = norm_eq_add sv lv emap ea l in
+        f_b_ann_exp_check sv lbl f_eq l
+      | SubAnn (Var(sv,lv), (Add(e1,e2,la) as ea), l) ->
+        let f_subann l = norm_subann_add (mk_SubAnn_4Add la (Var(sv,lv)) ) emap ea l in
+        f_b_ann_exp_check sv lbl f_subann l
+      | SubAnn ((Add(e1,e2,la) as ea),Var(sv,lv), l) ->
+        let f_subann l = norm_subann_add (fun x -> mk_SubAnn_4Add la x (Var(sv,lv)) ) emap ea l in
+        f_b_ann_exp_check sv lbl f_subann l
       | _ -> None
     in 
     let fb = transform_b_formula (f_b_helper, somef) fb in

@@ -3028,6 +3028,10 @@ let fnc = (nonef, nonef, nonef, fnc_pure)
 
 let map_int_to_imm_pure_formula form = CP.transform_formula fnc_pure form
 
+let map_int_to_imm_pure_formula form =
+  let pr = !CP.print_formula in
+  Debug.no_1 "map_int_to_imm_pure_formula" pr pr map_int_to_imm_pure_formula form
+
 let map_int_to_imm_formula form = CF.transform_formula fnc form
 
 let map_int_to_imm_struc_formula form = CF.transform_struc_formula fnc form
