@@ -2,7 +2,7 @@ data node {
   int val;
   node next;
 }.
- pred sll<n:int,sm:NUM,lg:NUM> == 
+ pred sll<n:int,sm:int,lg:int> == 
   emp&self=null & n=0 & sm<=lg or
 (exists flted_16_26,qs_27,
   ql_28: self::node<qmin,q> * q::sll{}<flted_16_26,qs_27,ql_28>&flted_16_26+
