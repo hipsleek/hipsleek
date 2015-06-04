@@ -83,7 +83,7 @@ expect Valid.
 expect Valid.
  
 // id: 15; line: 0; kind: POST
- checkentail (exists v8',v3',v2',v6',v11': v6'::perfect{}<v> * (htrue) * 
+ checkentail (exists v8',v3',v2',v6',v11': v6'::perfect{}<v> * 
 v11'::perfect{}<v8'> * v10'::node2<v3',v2',v6',v11'>&MayLoop[] & !(v4') & 
 n'!=0 & n'=n & v3'=0 & v2'=0 & v+1=n' & v8'+1=n' & res=v10')
  |-  (exists n1: res::perfect{}<n1>&n1=n).
