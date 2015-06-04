@@ -1138,7 +1138,7 @@ let change_to_imm_rel_p_formula pf =
 
 let change_to_imm_rel_p_formula pf = 
   if not (!Globals.int2imm_conv) then 
-    let () = x_binfo_pp  "conversion of int to imm is disabled"  no_pos in
+    let () = x_ninfo_pp  "conversion of int to imm is disabled"  no_pos in
     None (* disable conversion of an arith formula back to one containing imm *) 
   else change_to_imm_rel_p_formula pf 
 
