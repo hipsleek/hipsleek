@@ -949,23 +949,31 @@ hip_with_option: [[ opt =arg_option; h = hprog-> (opt,h)]];
 macro: [[`PMACRO; n=id; `EQEQ ; tc=tree_const -> if !Globals.perm=(Globals.Dperm) then Hashtbl.add !macros n tc else  report_error (get_pos 1) ("distinct share reasoning not enabled")]];
 
 command_list: [[ t = LIST0 non_empty_command_dot -> t ]];
-  
+
 command: [[ t=OPT non_empty_command_dot-> un_option t EmptyCmd]];
-    
+
 non_empty_command_dot: [[t=non_empty_command; `DOT -> t]];
 
-expect_infer_term: [[ f = meta_constr -> f
-                    | f = meta_constr; `CONSTR; g = meta_constr -> f
-                    ]];
+(* For R{..} and I{..} *)
+expect_infer_term: [[f = meta_constr -> f]];
 
-expect_infer: [[`EXPECT_INFER; ty=validate_result; t=id; `OBRACE; f = OPT expect_infer_term; `CBRACE ->
-                   (match t with
-                    | "R" -> ExpectInfer (ty, V_Residue f)
-                    | "I" -> ExpectInfer (ty, V_Infer f)
-                    | _ -> failwith "todo"
-                 (* | "RA" -> ??? *)
-                 (* | "SA" -> ??? *)
-                    )]];
+expect_infer_relassume:
+  [[ il2 = OPT cond_path; l=meta_constr; `CONSTR;r=meta_constr ->
+      (un_option il2 [], l, None,  r)
+   | il2 = OPT cond_path; l=meta_constr; `REL_GUARD; guard = meta_constr; `CONSTR;r=meta_constr ->
+      (un_option il2 [], l, Some guard,  r)
+  ]];
+
+expect_infer:
+  [[
+    `EXPECT_INFER; ty=validate_result; t=id; `OBRACE; f = OPT expect_infer_term; `CBRACE ->
+       (match t with
+          | "R" -> ExpectInfer (ty, V_Residue f)
+          | "I" -> ExpectInfer (ty, V_Infer f)
+          | _ -> failwith "todo")
+  | `EXPECT_INFER; ty=validate_result; `RELASSUME; `OBRACE; f = OPT expect_infer_relassume; `CBRACE ->
+       ExpectInfer (ty, V_RelAssume f)
+  ]];
 
 non_empty_command:
     [[  t=data_decl           -> DataDef t

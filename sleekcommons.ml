@@ -111,7 +111,7 @@ and validation =
   (* I{..} *)
   | V_Infer   of meta_formula option
   (* RA{..} *)
-  | V_RelAssume  of (CF.cond_path_type * meta_formula * meta_formula option * meta_formula)
+  | V_RelAssume  of (CF.cond_path_type * meta_formula * meta_formula option * meta_formula) option
 (*
   The second component is IF.formula and not CF.formula since
   depending on how the formula is used (in negative or positive
