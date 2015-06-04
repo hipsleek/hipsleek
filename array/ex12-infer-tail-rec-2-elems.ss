@@ -16,7 +16,9 @@ int foo(ref int[] a)
     //    a[k] = a[5]-1;
     a[1] = a[1]+1;
     a[5] = a[5]-1;
-    return foo(a); } 
+    int r = foo(a);
+    a[5]=1;
+    return r; } 
   else {
     int tmp=a[1];
     dprint;
@@ -26,6 +28,31 @@ int foo(ref int[] a)
 
 /*
 # ex12.ss 
+
+
+!!! **trans_arr.ml#4933:new_result [(a,a',[1;5];(a,a',[]]
+
+ requires true
+ ensures a[5]>0 & forall(i: i!=1 & i!=5 --> a'[i]=a[i])
+      or a[5]<=0 & a'=a //forall(i:a'[i]=a[i]);
+
+
+Post Inference result:
+foo$int[]
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+  EAssume ref [a]
+           emp&(((a[5])>=1 & a'[1]=res & a'[1]=(a[1])+(a[5]) & 0=a'[5]) 
+   | (0>=(a'[5]) & a[1]=res & a=a'))&{FLOW,(4,5)=__norm#E}[]
+
+
+Post Inference result:
+foo$int[]
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+  EAssume ref [a]
+      emp&(((a[5])>=1 & a'[1]=res & a'[1]=(a[1])+(a[5]) & 0=a'[5]) 
+        & forall(i: i!=1 & i!=5 --> a'[i]=a[i])
+   | (0>=(a'[5]) & a[1]=res & a=a'))&{FLOW,(4,5)=__norm#E}[]
+
 
 [RELDEFN Q: ( update_array_1d(a_1252,a_1261,1+(a_1252[4]),4) & v_int_14_1233=(a[5])-1 & 
 1<=(a[5]) & Q(a_1261,a',res) & update_array_1d(a,a_1252,v_int_14_1233,5)) -->  Q(a,a',res),

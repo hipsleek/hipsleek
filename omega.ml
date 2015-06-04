@@ -1110,7 +1110,6 @@ let pairwisecheck (pe : formula) : formula =
 
 (* ZH *)
 let pairwisecheck (pe:formula) : formula =
-  (* Trans_arr.split_and_combine pairwisecheck (x_add_1 Trans_arr.can_be_simplify) pe *)
   (Trans_arr.translate_back_array_in_one_formula (pairwisecheck (x_add_1 Trans_arr.translate_array_one_formula pe)))
 ;;
 

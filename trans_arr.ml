@@ -6,6 +6,9 @@ open Debug
 open VarGen
 (* Translate out array in cpure formula  *)
 
+let global_unchanged_info = ref [];;
+
+
 (* array_transform_info contains 2 fields. *target_array* denotes the array element expression to be translated, while *new_name* denoting the new expression *)
 type array_transform_info =
   {
@@ -2776,7 +2779,7 @@ let instantiate_forall
     | Not (f,fl,loc)->
       Not (instantiate_forall_helper f env,fl,loc)
     | Forall (sv,sub_f,fl,loc)->
-      let new_env = remove_dupl is_same_exp (collect_free_array_index sub_f)@env in
+      let new_env = remove_dupl is_same_exp ((collect_free_array_index sub_f)@env) in
       let new_sub_f = instantiate_forall_helper sub_f new_env in
       (try
          let instantiated_sub_f = instantiate_with_one_sv new_sub_f sv env in
@@ -2785,7 +2788,7 @@ let instantiate_forall
          f
       )
     | Exists (sv,sub_f,fl,loc) ->
-      let new_env = remove_dupl is_same_exp (collect_free_array_index sub_f)@env in
+      let new_env = remove_dupl is_same_exp ((collect_free_array_index sub_f)@env) in
       let new_sub_f = instantiate_forall_helper sub_f new_env in
       Exists (sv,new_sub_f,fl,loc)
   in
@@ -4648,3 +4651,463 @@ let translate_back_array_in_one_formula
 (*   let ind_sv = SpecVar (Int,"unchanged_ind",Unprimed) in *)
 (*   prevar@[ind_sv] *)
 (* ;; *)
+
+(* ((from:int,to:int),relation name:string) *)
+(* let change_arr_rel = ref [];; *)
+
+(* let check_args explist = *)
+(*   let search_primed_match wholelist id = *)
+(*     let rec search_helper list id pos = *)
+(*       match list with *)
+(*       | (ArrayAt (SpecVar (Array _,nid,primed)),_,_)::rest -> *)
+(*         if nid = id *)
+(*         then Some pos *)
+(*         else search_helper rest id (pos+1) *)
+(*       | _::rest -> search_helper rest id (pos+1) *)
+(*       | [] -> None *)
+(*     in *)
+(*     search_helper wholelist id 0 *)
+(*   in *)
+(*   let rec helper explist wholelist pos = *)
+(*     match explist with *)
+(*     | (ArrayAt (SpecVar (Array _,id,Unprimed)),_,_)::rest -> *)
+(*       begin *)
+(*         match search_primed_match wholelist id with *)
+(*         | Some primed_pos -> (pos,primed_pos)::(helper rest wholelist) *)
+(*         | None -> helper rest wholelist *)
+(*       end *)
+(*     | _::rest -> helper rest wholelist *)
+(*     | [] -> [] *)
+(*   in *)
+(*   helper explist explist 0 *)
+(* ;; *)
+
+(* let build_change_rel_tbl_lst lst= *)
+(*   let rec helper lst= *)
+(*     match lst with *)
+(*     | (f,t)::rest -> *)
+(*       ( *)
+(*         change_arr_rel := (relname,(f,t))::(!change_arr_rel); *)
+(*         helper rest *)
+(*       ) *)
+(*     | [] -> *)
+(*       () *)
+(*   in *)
+(*   helper lst *)
+(* ;; *)
+
+(* let initial_change_arr_rel rel= *)
+(*   let list_helper rel = *)
+(*     match rel with *)
+(*     | BForm ((RelForm (SpecVar (_,id,_),explist,loc)),pa) -> *)
+(*       begin *)
+(*         match check_args explist with *)
+(*         | [] -> () *)
+(*         | lst -> *)
+(*           build_change_rel_tbl_lst lst id *)
+(*       end *)
+(*     | _ -> *)
+(*       () *)
+(*   in *)
+(*   list_helper rel *)
+(* ;; *)
+
+(* (\* ((from:int, to:int),setname:string,set content:(exp list*exp list)) *\) *)
+(* let unchanged_tbl = ref [];; *)
+(* let name_count = ref 0;; *)
+
+(* let add_change_info f t pos = *)
+(*   unchanged_tbl := ((f,t),"Set_"^(string_of_int name_count),([pos],[]))::!unchanged_tbl; *)
+(*   name_count := !name_count+1 *)
+(* ;; *)
+
+(* let build_up_unchange_tbl rel f = *)
+(*   let () = initial_change_arr_rel rel in *)
+(*   let helper_b (p,ba) = *)
+(*     match p with *)
+(*     | RelForm (SpecVar (_,id,_), explist, loc) -> *)
+(*       if id = "update_array_1d" *)
+(*       then *)
+(*         add_change_info 1 2 (List.nth 3 explist) *)
+(*       else *)
+(*         begin *)
+(*           match change_info id with *)
+(*           | Some (f,t) -> *)
+(*             add_change_info (List.nth f explist) (List.nth t explist) -1 *)
+(*           | None -> *)
+(*             () *)
+(*         end *)
+(*     | _ -> () *)
+(*   in *)
+(*   let helper f = *)
+(*     match f with *)
+(*     | BForm (b,fl)-> *)
+(*       helper_b b *)
+(*     | And (f1,f2,_) *)
+(*     | Or (f1,f2,_,_)-> *)
+(*       ( *)
+(*         helper f1; *)
+(*         helper f2 *)
+(*       ) *)
+(*     | AndList lst-> *)
+(*       failwith "get_unchanged_set: AndList To Be Implemented" *)
+(*     | Not (sub_f,fl,loc)-> *)
+(*       helper sub_f *)
+(*     | Forall (nsv,sub_f,fl,loc) *)
+(*     | Exists (nsv,sub_f,fl,loc)-> *)
+(*       helper sub_f *)
+(*   in *)
+(*   helper f *)
+(* ;; *)
+
+let string_of_unchanged_info (f,t,clst) =
+  "("^(ArithNormalizer.string_of_exp f)^","^(ArithNormalizer.string_of_exp t)^","^((pr_list ArithNormalizer.string_of_exp) clst)
+;;
+
+let clean_list lst af at =
+  let equal_unchanged (f1,t1,clst1) (f2,t2,clst2) =
+          (is_same_exp f1 f2)&&(is_same_exp t1 t2)
+  in
+  let drop lst =
+    List.fold_left (fun r (f,t,clst) -> if is_same_exp f t then r else (f,t,clst)::r) [] lst
+  in
+  let expand lst =
+    let expand_one_helper (f,t,clst) =
+      List.fold_left (fun r (nf,nt,nclst) -> if is_same_exp t nf then (f,nt,clst@nclst)::r else r) [(f,t,clst)] lst
+    in
+    let rec expand_helper lst =
+      match lst with
+      | h::rest -> (expand_one_helper h)@(expand_helper rest)
+      | [] -> []
+    in
+    let new_lst = ref [] in
+    let rec iterator lst =
+      let result = remove_dupl equal_unchanged (expand_helper lst) in
+      (* let () = x_binfo_pp ("expand_helper result: "^((pr_list string_of_unchanged_info) result)) no_pos in *)
+      if not (List.length result=List.length !new_lst)
+      then
+        (
+          new_lst := result;
+          iterator result
+        )
+      else
+        ()
+    in
+    (
+      iterator lst;
+      !new_lst
+    )
+  in
+  let clean lst af at =
+    try
+      Some (List.hd (List.fold_left (fun r (f,t,clst) -> if is_same_exp f af && is_same_exp t at then (f,t,remove_dupl is_same_exp clst)::r else r) [] lst))
+    with _ -> None
+  in
+  (* let () = x_binfo_pp ("clean_list"^((pr_list string_of_unchanged_info) lst)) no_pos in *)
+  clean (expand (drop lst)) af at
+;;
+
+let clean_list lst af at =
+  let po = function
+    | Some u -> string_of_unchanged_info u
+    | None ->"None"
+  in
+  Debug.no_3 "clean_list" (pr_list string_of_unchanged_info) (ArithNormalizer.string_of_exp) (ArithNormalizer.string_of_exp) po clean_list lst af at
+;;
+
+let same_unordered_list cmp lst1 lst2=
+    let rec same_helper one blst =
+      match blst with
+      | h::rest ->
+        if cmp h one
+        then (true,rest)
+        else same_helper one rest
+      | [] ->
+        (false,[])
+    in
+    let rec same_helper_2 alst blst =
+      match alst with
+      | h::rest ->
+        let (found,newlst) = same_helper h blst in
+        if found
+        then true&&(same_helper_2 rest newlst)
+        else false
+      | [] ->
+        List.length blst = 0
+    in
+    same_helper_2 lst1 lst2
+;;
+
+let unchanged_fixpoint (rel:formula) (define:formula list) =
+  (* rel is the name of the relation, define is a list of disjunction formula that defines this relation *)
+  let basic = ref (fun af at -> []) in
+  let calculator relname (arg1:exp) (arg2:exp) (define:formula list) basic=
+    (* Return a function, that takes in two arrays and returns the list of array relations between them *)
+    (* arg1 and arg2 say that how the arguments look like in the definition *)
+    let new_fun flst =
+      let new_fun_x (af:exp) (at:exp)=
+        let rec new_fun_helper (f:formula):((exp*exp*(exp list)) list) list =
+          match f with
+          | BForm (((RelForm (SpecVar (_,id,_),explist,loc)),pa),_) ->
+            let uop1=
+              if is_same_exp (List.nth explist 0)  arg1 then af else List.nth explist 0
+            in
+            let uop2=
+              if is_same_exp (List.nth explist 1)  arg2 then at else List.nth explist 1
+            in
+            if id = "update_array_1d"
+            then
+              (* Only one disjunction *)
+              [ [(uop1,uop2,[(List.nth explist 3)])] ]
+            else
+            if id = relname
+            then
+              [basic uop1 uop2]
+            else
+              []
+          | BForm (((Eq ((Var (SpecVar (Array _,_,_),_) as v2),(Var (SpecVar (Array _,_,_),_) as v1),loc)),pa),_) ->
+            let uop1=
+              if is_same_exp v1  arg1 then af else v1
+            in
+            let uop2=
+              if is_same_exp v2 arg2 then at else v2
+            in
+            [ [(uop1,uop2,[])] ]
+          | And (f1,f2,loc) ->
+            let dres1 = new_fun_helper f1 in
+            let dres2 = new_fun_helper f2 in
+            List.fold_left (fun result rlst1 -> (List.map (fun rlst2 -> rlst1@rlst2) dres2)@result) (dres1@dres2) dres1
+          | _ -> []
+        in
+        let equal_unchanged (f1,t1,clst1) (f2,t2,clst2) =
+          (is_same_exp f1 f2)&&(is_same_exp t1 t2)
+        in
+        let list_of_list = List.flatten (List.map new_fun_helper flst) in
+        (List.fold_left
+           (fun result flst ->
+              match clean_list flst af at with
+              | Some u -> u::result
+              | None -> result
+           ) [] list_of_list)
+      in
+      new_fun_x
+    in
+    new_fun define
+  in
+  let (relname,arg1,arg2) =
+    match rel with
+    | BForm (((RelForm (SpecVar (_,id,_),explist,loc)),pa),_) ->
+      (id,List.nth explist 0,List.nth explist 1)
+    | _ -> failwith "unchanged_fixpoint: Invalid rel"
+  in
+  let same_index_set = same_unordered_list is_same_exp in
+  let same_unchanged_info (f1,t1,iset1) (f2,t2,iset2)=
+    (is_same_exp f1 f2)&&(is_same_exp t1 t2)&&(same_index_set iset1 iset2)
+  in
+  let same_result = same_unordered_list same_unchanged_info in
+  let rec iterator () =
+    let old_result = !basic arg1 arg2 in
+    (* let () = x_binfo_pp ("old_result "^((pr_list string_of_unchanged_info) old_result)) no_pos in *)
+    let new_rel = calculator relname arg1 arg2 define !basic in
+    let new_result = new_rel arg1 arg2 in
+    let () = x_tinfo_pp ("new_result "^((pr_list string_of_unchanged_info) new_result)) no_pos in
+    if (same_result new_result old_result)
+    then
+      new_rel
+    else
+      let () = basic := new_rel in
+      iterator ()
+  in
+  iterator ()
+;;
+
+let unify_unchanged_fixpoint ulist =
+  match ulist with
+  | [] ->
+    ulist
+  | h::rest ->
+    let result =
+      List.fold_left (fun (rf,rt,rc) (nf,nt,nc) ->
+          if not (((is_same_exp rf nf)&&(is_same_exp rt nt))||((is_same_exp rf nt)&&(is_same_exp rt nf)))
+          then
+            failwith "unify_unchanged_fixpoint: Invalid input"
+          else
+            (rf,rt,rc@nc)
+        ) h rest
+    in
+    [result]
+;;
+
+let get_unchanged_fixpoint rel define =
+  let (relname,arg1,arg2) =
+    match rel with
+    | BForm (((RelForm (SpecVar (_,id,_),explist,loc)),pa),_) ->
+      (id,List.nth explist 0,List.nth explist 1)
+    | _ -> failwith "unchanged_fixpoint: Invalid rel"
+  in
+  let result = (unchanged_fixpoint rel define) arg1 arg2 in
+  let () = global_unchanged_info:= unify_unchanged_fixpoint result in
+  result
+;;
+
+let get_unchanged_fixpoint rel define =
+  Debug.no_2 "get_unchanged_fixpoint" !print_pure (pr_list !print_pure) (pr_list string_of_unchanged_info) get_unchanged_fixpoint rel define
+;;
+
+let get_unchanged_fixpoint rel define =
+  if !Globals.array_translate
+  then get_unchanged_fixpoint rel define
+  else []
+;;
+
+
+
+let rec add_unchanged_info_to_formula unchanged f =
+  let rec has_array_equal f e1 e2 =
+    (* only conjuction, see whether there is a=a' *)
+    match f with
+    | BForm (((Eq ((Var (SpecVar (Array _,_,_),_) as v2),(Var (SpecVar (Array _,_,_),_) as v1),loc)),pa),_) ->
+      (is_same_exp e1 v2 && is_same_exp e2 v1)||(is_same_exp e1 v1 && is_same_exp e2 v2)
+    | And (f1,f2,_)->
+      has_array_equal f1 e1 e2 || has_array_equal f2 e1 e2
+    | _ -> false
+  in
+  let produce_unchanged_formula unchanged =
+    match unchanged with
+    | [(((Var (SpecVar _ as svf,_)) as e1),((Var (SpecVar _ as svt,_)) as e2),clst)] ->
+      let new_qi = SpecVar (Int,"i",Unprimed) in
+      let new_qi_var = Var (new_qi,no_pos) in
+      let equal_f = BForm ((Eq (ArrayAt (svf,[new_qi_var],no_pos),ArrayAt (svt,[new_qi_var],no_pos),no_pos),None),None) in
+      begin
+        match clst with
+        | [] ->
+          Some (Forall (new_qi,equal_f,None,no_pos), e1, e2)
+        | h::rest ->
+          let pre_f = List.fold_left (
+              fun result e ->
+                let index_f = BForm ((Eq (new_qi_var,e,no_pos),None),None) in
+                let not_f = Not (index_f,None,no_pos) in
+                And (not_f,result,no_pos)
+            ) (Not (BForm ((Eq (new_qi_var,h,no_pos),None),None),None,no_pos)) rest
+          in
+          let sub_f = Or (pre_f,equal_f,None,no_pos) in
+          Some (Forall (new_qi,sub_f,None,no_pos),e1,e2)
+      end
+    | _ -> None
+  in
+  let helper unchanged f=
+    let unchanged_formula = produce_unchanged_formula unchanged in
+    match unchanged_formula with
+    | None -> f
+    | Some (uf,e1,e2) ->
+      if has_array_equal f e1 e2
+      then f
+      else
+        And (f,uf,no_pos)
+  in
+  match f with
+  | Or (f1,f2,fl,loc) ->
+    let new_f1 = add_unchanged_info_to_formula unchanged f1 in
+    let new_f2 = add_unchanged_info_to_formula unchanged f2 in
+    Or (new_f1,new_f2,fl,loc)
+  | _ -> helper unchanged f
+;;
+
+let add_unchanged_info_to_formula unchanged f =
+  Debug.no_2 "add_unchanged_info_to_formula" (pr_list string_of_unchanged_info) !print_pure !print_pure add_unchanged_info_to_formula unchanged f
+;;
+
+let add_unchanged_info_to_formula_f f =
+  add_unchanged_info_to_formula !global_unchanged_info f
+;;
+
+
+
+
+
+
+
+(* let unchanged_fixpoint rel define = *)
+(*   let function_tbl = rel [] in *)
+(*   let get_update_array_1d a b c = *)
+(*     [((a,b),[c])] *)
+(*   in *)
+(*   let basic_rel = ref (fun a1 a2 -> []) *)
+(*   in *)
+(*   let produce_set define a1 a2 = *)
+(*     let helper define = *)
+(*       match define with *)
+(*       | BForm ((RelForm (SpecVar (_,id,_),explist,loc)),pa) -> *)
+(*         if id = "update_array_1d" *)
+(*         then *)
+(*           get_update_array_1d (List.nth 0 explist) (List.nth 1 explist) (List.nth 3 explist) *)
+(*         else *)
+(*         if id = relname *)
+(*         then basic_rel (List.nth pos1 explist) (List.nth pos2 explist) *)
+(*         else [] *)
+(*       | And (f1,f2,_) -> *)
+(*         (helper f1)@(helper f2) *)
+(*       | Or _ -> failwith "produce_set helper: Invalid input Or" *)
+(*       | _ -> [] *)
+(*     in *)
+(*     let clean_list lst af at = *)
+(*       let expand lst = *)
+(*         let expand_one_helper (f,t,clst) = *)
+(*           fold_left (fun r (nf,nt,nclst) -> if t = nf then (f,nt,clst@nclst)::r else r) [(f,t,clst)] lst *)
+(*         in *)
+(*         let rec expand_helper lst = *)
+(*           match lst with *)
+(*           | h::rest -> (expand_one_helper h)::(expand_helper lst) *)
+(*           | [] -> [] *)
+(*         in *)
+(*         let new_lst = ref [] in *)
+(*         let iterator lst = *)
+(*           let result = expand_helper lst in *)
+(*           if not (List.length result=List.length !new_lst) *)
+(*           then *)
+(*             ( *)
+(*               new_lst := result; *)
+(*               iterator result *)
+(*             ) *)
+(*           else *)
+(*             () *)
+(*         in *)
+(*         ( *)
+(*           iterator lst; *)
+(*           !new_lst *)
+(*         ) *)
+(*       in *)
+(*       let clean lst af at = *)
+(*         fold_left (fun r (f,t,clst) -> if f=af && t=at then (f,t,clst)::r else r *)
+(*       in *)
+(*       clean (expand lst) *)
+(*     in *)
+    
+
+
+
+
+(*     let change_list = helper define in *)
+    
+
+
+
+
+
+(*   let produce_define relname define = *)
+(*     match define with *)
+(*     | BForm ((RelForm (SpecVar (_,id,_),explist,loc)),pa) -> *)
+(*       if id = "update_array_1d" *)
+(*       then *)
+(*         fun a1 a2 -> ((List.nth 0 explist,List.nth 1 explist),List.nth 3 explist) *)
+(*       else *)
+(*         if id = relname *)
+(*         then basic *)
+(*         else None *)
+(*     | And (f1,f2,_) -> *)
+(*       begin *)
+(*         match produce_define relname f1, produce_define relname f2 with *)
+(*         | None, None -> None *)
+(*         | Some fun1,None -> Some fun1 *)
+(*         | None, Some fun2 -> Some fun2 *)
+(*         | Some fun1,Some fun2 ->  *)
