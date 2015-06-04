@@ -132,3 +132,4 @@ ERROR: at sleek_log_trees_ss.slk_14:9_14:10
 Message: gather_type_info_var : unexpected exception Failure("UNIFICATION ERROR : at location {(Line:14,Col:9),(Line:14,Col:10)} types int and NUM are inconsistent")
 Fatal error: exception Failure("gather_type_info_var : unexpected exception Failure(\"UNIFICATION ERROR : at location {(Line:14,Col:9),(Line:14,Col:10)} types int and NUM are inconsistent\")")
 
+Added by hand

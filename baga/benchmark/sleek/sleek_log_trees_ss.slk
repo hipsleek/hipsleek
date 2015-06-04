@@ -7,7 +7,7 @@ data node {
   int val;
   node next;
 }.
- pred bst<sm:NUM,lg:NUM> == 
+ pred bst<sm:int,lg:int> == 
   emp&self=null & sm<=lg or
 (exists sm_37,lg_38,pl_35,
   qs_36: self::node2<v,p,q> * p::bst{}<sm_37,pl_35> * q::bst{}<qs_36,lg_38>&
