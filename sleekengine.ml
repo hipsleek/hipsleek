@@ -1588,11 +1588,24 @@ let process_shape_rec sel_hps=
   ()
 
 let process_validate_infer (vr : validate_result) (validation: validation) =
-  let hdr = ref "" in
+  (* let hdr = ref "" in *) (* to avoid to use global vars *)
   let nn = (sleek_proof_counter#inc_and_get_aux_str) in
-  let validate_with_residue residue =
+  (*********************************)
+  let run_heap_entail lhs rhs = Solver.heap_entail_init !cprog false lhs rhs no_pos in
+
+  let check_heap_entail lhs rhs =
+    match run_heap_entail lhs rhs with
+      | (CF.SuccCtx _,_) -> true
+      | _ -> false
+  in
+
+  let pr s str res_f_str = if s then print_endline_quiet  (str^"Valid. "^res_f_str) else
+    print_endline_quiet  (str^"Fail. "^res_f_str)
+  in
+
+  let validate_with_residue hdr residue =
     let pr_f = Cprinter.string_of_formula in
-    let pr_h pr s = print_endline "expect_infer :"; print_endline ("  "^ !hdr ^"{" ^ pr s ^ "}") in
+    let pr_h pr s = print_endline "expect_infer :"; print_endline ("  "^ hdr ^"{" ^ pr s ^ "}") in
     let res_f = snd (meta_to_formula residue false [] []) in
     if (!Globals.print_input || !Globals.print_input_all) then pr_h string_of_meta_formula residue;
     if (!Globals.print_core || !Globals.print_core_all) then pr_h pr_f res_f;
@@ -1603,18 +1616,12 @@ let process_validate_infer (vr : validate_result) (validation: validation) =
     let pr_lc = Cprinter.string_of_list_context in
     let pr_r = pr_option (pr_pair pr_lc string_of_bool) in
     let () = x_binfo_hp (add_str "current residue" pr_r) !CF.residues no_pos in
-    (*  see process_validate. line 1617 *)
     let s =  "\nExpect_Infer "^nn^": " in
-    let run_heap_entail lhs rhs = Solver.heap_entail_init !cprog false lhs rhs no_pos in
-    let check_heap_entail lhs rhs =
-      match run_heap_entail lhs rhs with (CF.SuccCtx _,_) -> true | _ -> false in
     match !CF.residues with
       | None -> print_endline_quiet (s^"Fail. (empty residue)")
       | Some (lc, _) ->
         begin
-          let pr s str = if s then print_endline_quiet  (str^"Valid. "^res_f_str) else
-             print_endline_quiet  (str^"Fail. "^res_f_str) in
-          pr (match run_heap_entail lc res_f with
+          let res = (match run_heap_entail lc res_f with
             | (CF.SuccCtx lctx, _) ->
                 begin match validation with
                     | V_Infer _ ->
@@ -1636,14 +1643,16 @@ let process_validate_infer (vr : validate_result) (validation: validation) =
                         | _, _ -> (vr = VR_Fail 0) || (vr = VR_Fail (-1))
                         end
                     | CF.OCtx (ctx1, ctx2) -> helper ctx1 || helper ctx2
-                in helper ctx) s
+                in helper ctx)
+          in pr res s res_f_str
         end
   in
+  (*********************************)
   match validation with
-    | V_Residue (Some residue) -> hdr := "R"; validate_with_residue residue
-    | V_Residue None -> hdr := "R"; print_endline "No residue."
-    | V_Infer (Some inference) -> hdr := "I"; validate_with_residue inference 
-    | V_Infer None -> hdr:= "I"; print_endline "No inference."
+    | V_Residue (Some residue) -> let hdr = "R" in validate_with_residue hdr residue
+    | V_Residue None -> let hdr = "R" in print_endline "No residue."
+    | V_Infer (Some inference) -> let hdr = "I" in validate_with_residue hdr inference 
+    | V_Infer None -> let hdr = "I" in print_endline "No inference."
     | _ -> print_endline "RA etc. not yet implemented"
 
 let process_validate exp_res opt_fl ils_es=
