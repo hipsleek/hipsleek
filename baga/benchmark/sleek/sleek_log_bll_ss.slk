@@ -2,7 +2,7 @@ data node {
   int val;
   node next;
 }.
- pred bndl<n:int,sm:NUM,bg:int> == 
+ pred bndl<n:int,sm:int,bg:int> == 
   emp&self=null & n=0 & sm<=bg or
 (exists sm_23,bg_24,
   flted_11_22: self::node<d,p> * p::bndl{}<flted_11_22,sm_23,bg_24>&
