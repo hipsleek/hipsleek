@@ -7302,7 +7302,7 @@ let exp_to_imm (e:exp) : ann =
   match e with
   | AConst(a,loc) -> ConstAnn a
   | Var(v,loc)    -> PolyAnn v
-  | _ -> failwith "expectiv imm expression"
+  | _ -> NoAnn
 
 (* get arguments of bformula and allowing constants *)
 let get_bform_eq_args_with_const (bf:b_formula) =

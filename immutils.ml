@@ -1,5 +1,7 @@
 #include "xdebug.cppo"
 
+(* extension of cpure, focused on imm related operations  *)
+
 open Globals
 open VarGen
 open Gen.Basic
@@ -54,6 +56,12 @@ let get_imm_emap_exp  ?loc:(l=no_pos) sv emap : exp  =
   map_opt_def (mkVar sv l) (fun x -> x) (get_imm_emap_exp_opt ~loc:l sv emap)
 
 let get_imm_emap_ann_opt  ?loc:(l=no_pos) sv emap : ann option = map_opt fst (get_imm_emap ~loc:l sv emap)
+
+(* replace with imm constant, where exp is constant or variable *)
+let norm_emap_imm_exp  ?loc:(l=no_pos) (e: exp) emap : exp  = 
+  match e with
+  | Var(sv,l) ->  get_imm_emap_exp ~loc:l sv emap
+  | _ -> e
 
 let eq_const_ann const_imm em sv = 
   match const_imm with
@@ -144,6 +152,21 @@ let build_eset_of_imm_formula f =
   let pr_out = EMapSV.string_of in
   Debug.no_1 "build_eset_of_imm_formula" pr pr_out build_eset_of_imm_formula f
 
+(* ===================== imm addition utils ========================= *)
+
+(* assume e is Add(..) *)
+let get_imm_var_cts_operands e =
+  let rec helper e =
+    match e with
+    | Add (a1,a2,_) -> (helper a1)@(helper a2)
+    | Var (sv, _)   -> [sv]
+    | AConst (a,l)  -> [mkAnnSVar a]
+    | _             -> []               (* should never reach this point if sum is well defined *)
+  in helper e
+
+let get_imm_var_cts_operands e =
+  Debug.no_1 "let get_imm_var_cts_operands" !print_exp !print_svl get_imm_var_cts_operands e
+
 let mkAdd_list exp_lst =  
   let rec helper exp_lst = 
     match exp_lst with
@@ -153,33 +176,36 @@ let mkAdd_list exp_lst =
     | e::tail -> Add(e, helper tail, no_pos)
   in helper exp_lst
 
+let sv_to_imm_exp_flag_change sv emap loc = 
+  let return_same_sv = (mkVar sv loc, true) in
+  if is_ann_const_sv sv then (get_imm_emap_exp ~loc:loc sv emap, true)
+  else 
+    let ne = get_imm_emap_exp_opt ~loc:loc sv emap in
+    map_opt_def return_same_sv (fun x -> (x,false)) ne
+
 (* prune @A's from imm summation and replace vars with their corresponding constants if the information exists *)
 let imm_summation emap e =
-  let f_e0 e0 =
-    match e0 with
-    | AConst (Accs,_) -> Some ([], false)
-    | AConst _ -> Some ([e0], true)
-    | Var(sv,l) -> let ne = get_imm_emap_exp ~loc:l sv emap in Some ([ne], eq_exp_no_aset ne e0)
-    | _ -> None (* Some ([e0], true) *)
-  in
-  
-  let f_comb lst = 
-    let lst, fixpt = List.split lst in
-    let fixpt = List.for_all (fun x -> x) fixpt in
-    let lst = List.flatten lst in
-    let lst = List.filter (fun x -> not(is_abs_exp x)) lst in (* remove @A - constant or var *)
-    let constants = List.filter (fun x -> is_const_imm ~emap:emap (exp_to_imm x)) lst in
-    if (List.length constants <= 1) then (* zero or only one non @A constant *)
-      ([mkAdd_list lst],fixpt)
-    else ([],fixpt) in
 
-  let new_e, fixpt = fold_exp e f_e0 f_comb in
-  if ((List.length new_e) > 0) then (Some (List.hd new_e), fixpt)
-  else (None, false)
+  (* retrieve addition operands - constanst or sv only *)
+  let sum_operands = get_imm_var_cts_operands e in 
+
+  (* replace vars with their corresponding constants if this info exists in emap *)
+  let sum_operands = List.map (fun sv -> sv_to_imm_exp_flag_change sv emap (pos_of_exp e)) sum_operands in
+  let sum_operands, fixptaux = List.split sum_operands in
+  let fixpt = List.for_all (fun x-> x) fixptaux in
+
+  (* prune @A's  *)
+  let nonA_sum_operands = List.filter (fun x -> not(is_abs_exp x)) sum_operands in
+  let fixpt = fixpt && (List.length sum_operands == List.length nonA_sum_operands) in
+
+  (* count the no of non@A constants in the sum  *)
+  let constants = List.filter (fun x -> is_const_imm ~emap:emap (exp_to_imm x)) nonA_sum_operands in
+  if (List.length constants <= 1) then (Some (mkAdd_list  nonA_sum_operands),fixpt) (* zero or only one non @A constant *)
+  else (None, fixpt)
 
 let imm_summation emap e =
   let pr = !print_exp in
-  let pr2 b = ite b "exp is unchanged" "exp changed" in
+  let pr2 b = ite b "exp is unchanged" "exp has changed" in
   Debug.no_2 "imm_summation" EMapSV.string_of pr (pr_pair (pr_opt pr) pr2) imm_summation emap e
 
 let norm_eq_add lhs_sv lhs_l emap e l =
@@ -194,11 +220,16 @@ let norm_subann_add mksubann emap e l =
   let new_sum, fixpt = imm_summation emap e in
   let new_pf = map_opt_def  (BConst (false, l)) (fun x -> mksubann x) new_sum in
   (new_pf, fixpt)
-  
-(* pre norm *)
+
+(*
+   identity element: @A
+   exp = @ct1 + @ct2  ----> false for @M <: ct1,ct2 <: @L
+   exp = @ct1 + @v    ----> exp = @ct1 + @ct2 if emap of f contains (v,ct2)
+   exp = @ct1 + @v    unchanged  if f doesn't contain a constant def for v
+*)
 let simplify_imm_adddition (f:formula) =
   let fixpt = ref true in
-  
+
   let f_b_ann_exp_check sv lbl f_op l  =
     if is_ann_typ sv then 
       let new_pf, fixpt0 = f_op l in
@@ -265,3 +296,5 @@ let simplify_imm_adddition (f:formula) =
 let simplify_imm_addition (f:formula) =
   let pr = !print_formula in
   Debug.no_1 "simplify_imm_addition" pr pr simplify_imm_adddition f
+
+(* ===================== END imm addition utils ========================= *)

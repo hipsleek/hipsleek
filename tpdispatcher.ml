@@ -907,10 +907,19 @@ let comm_inf a1 a2 =
   else (f2,a1,a2)
 
 let stack_imm_add e l =
-  let fresh_sv = CP.fresh_spec_var_ann ~old_name:"imm_add" () in
-  let subs = (fresh_sv, e) in
-  let _ = imm_stk # push subs in
-  CP.mkVar fresh_sv l
+  let sv = 
+    try
+      (*  below return the sum operands *)
+      let sum_op add_exp = Immutils.get_imm_var_cts_operands add_exp in
+      let sum_op_e = sum_op e in
+      let same_sum x = Gen.BList.list_setequal_eq CP.eq_spec_var sum_op_e (sum_op x)  in
+      fst (List.find ( fun (_,e0) -> same_sum e0) (imm_stk # get_stk))
+    with Not_found ->
+      let fresh_sv = CP.fresh_spec_var_ann ~old_name:"imm_add" ()  in
+      let subs = (fresh_sv, e) in
+      let _ = imm_stk # push subs in
+      fresh_sv in
+  CP.mkVar sv l
 
 let replace_imm_var_with_exp sv =
   try
