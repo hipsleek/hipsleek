@@ -976,7 +976,7 @@ expect Valid.
  
 // id: 325; line: 133; kind: BIND
  checkentail (exists v6: tmp1'::node2<v4,tmp2',tmp1'> * tmp2'::node2<v5,tmp1',tmp1'> * 
-(htrue) * tmp3'::node2<v6,tmp1',tmp2'>&MayLoop[] & v6=30 & prev7=tmp1' & 
+tmp3'::node2<v6,tmp1',tmp2'>&MayLoop[] & v6=30 & prev7=tmp1' & 
 tmp1'=null & v4=10 & v5=20)
  |-  tmp2'::node2<val36',prev36',next36'>.
 expect Valid.
