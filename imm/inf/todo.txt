@@ -1376,6 +1376,27 @@ ExceptionFailure("compute_def:Error in translating the input for fixcalc")Occurr
 Exception occurred: Failure("compute_def:Error in translating the input for fixcalc")
 
 =======================================================
+# ex8e1f.ss
+
+Why is there so much duplication?
+
+ checkentail (exists v_int_19_1449': c::cell<v>@imm_1504&res=v_int_19_1449'+2 & 
+a=imm_1505+a_1491 & imm_1504=imm_1505+b_1511 & v_1492=v & a<:a_1491 & 
+a<:@L & c'=c & Q(a) & v!=1 & v_bool_17_1452' & MayLoop[]&
+{FLOW,(4,5)=__norm#E}[]
+ |-  (exists : c::cell<w_1460>@b_1459&{FLOW,(4,5)=__norm#E}[]. 
+pure rel_ass: [RELASS [Q]: ( Q(a)) -->  a<:@L,
+RELASS [Q]: ( Q(a)) -->  a<:@L,
+RELDEFN Q: ( Q(a) & a<:@L & a<:a_1491) -->  Q(a_1491),
+RELASS [Q]: ( Q(a)) -->  a<:@L,
+RELASS [Q]: ( Q(a)) -->  a<:@L]
+ho_vars: nothing?
+res:  1[
+   c::cell<v>@[@imm_1504, @b_1459]&res=v_int_19_1527+2 & a=imm_1505+a_1491 & 
+     imm_1504=imm_1505+b_1511 & v_1492=v & a<:a_1491 & a<:@L & c'=c & Q(a) & 
+     v!=1 & v_bool_17_1452' & imm_1504<:b_1459 & w_1460=v&
+     {FLOW,(4,5)=__norm#E}[]
+   ]
 =======================================================
 =======================================================
 =======================================================
