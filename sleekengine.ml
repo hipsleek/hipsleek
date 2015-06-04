@@ -1587,7 +1587,7 @@ let process_shape_rec sel_hps=
   let _ = print_endline_quiet "*************************************" in
   ()
 
-let process_validate_infer validation =
+let process_validate_infer (vr : validate_result) (validation: validation) =
   let hdr = ref "" in
   let nn = (sleek_proof_counter#inc_and_get_aux_str) in
   let validate_with_residue residue =

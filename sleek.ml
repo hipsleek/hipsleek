@@ -154,7 +154,7 @@ module M = Lexer.Make(Token.Token)
     | TermAssume (iante, iconseq) -> process_term_assume iante iconseq
     | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ 
     | TemplDef _ | UtDef _  -> ()
-    | ExpectInfer e -> process_validate_infer e
+    | ExpectInfer (t, e) -> process_validate_infer t e
     | EmptyCmd -> () 
 
 (* TODO : This is a repetition of proc_one_cmd *)
@@ -183,7 +183,7 @@ let proc_gen_cmd cmd = proc_one_cmd cmd
   (* | ShapeConquer (ids, paths) -> process_shape_conquer ids paths *)
   (* | ShapeLFP ids -> process_shape_lfp ids *)
   (* | ShapeRec ids -> process_shape_rec ids *)
-  (* | ShapePostObl (pre_hps, post_hps) -> process_shape_postObl pre_hps post_hps *)
+  (* | ShapePostObl (pre_hps, post_shape_postObl pre_hps post_hps *)
   (* | ShapeInferProp (pre_hps, post_hps) -> process_shape_infer_prop pre_hps post_hps *)
   (* | ShapeSplitBase (pre_hps, post_hps) -> process_shape_split pre_hps post_hps *)
   (* | ShapeDeclDang (hp_names) -> process_decl_hpdang hp_names *)

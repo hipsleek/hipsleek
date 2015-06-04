@@ -84,7 +84,7 @@ type command =
   | TemplSolv of ident list
   | TermInfer
   | TermAssume of (meta_formula * meta_formula)
-  | ExpectInfer of validation
+  | ExpectInfer of (validate_result * validation)
   | EmptyCmd
 
 and print_cmd =
@@ -173,7 +173,7 @@ let string_of_command c = match c with
   | TemplSolv _ -> "TemplSolv"
   | TermInfer -> "TermInfer"
   | TermAssume _ -> "TermAssume"
-  | ExpectInfer _ -> "ExpectInfer"
+  | ExpectInfer (_,_) -> "ExpectInfer"
   | EmptyCmd -> "EmptyCmd"
 
 let put_var (v : ident) (info : meta_formula) = H.add var_tab v info

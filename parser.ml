@@ -954,14 +954,14 @@ command: [[ t=OPT non_empty_command_dot-> un_option t EmptyCmd]];
     
 non_empty_command_dot: [[t=non_empty_command; `DOT -> t]];
 
-expect_infer_term : [[ f = meta_constr -> f
-                     | f = meta_constr; `CONSTR; g = meta_constr -> f
+expect_infer_term: [[ f = meta_constr -> f
+                    | f = meta_constr; `CONSTR; g = meta_constr -> f
                     ]];
 
-expect_infer: [[`EXPECT_INFER; t=id; `OBRACE; f = OPT expect_infer_term; `CBRACE ->
+expect_infer: [[`EXPECT_INFER; ty=validate_result; t=id; `OBRACE; f = OPT expect_infer_term; `CBRACE ->
                    (match t with
-                    | "R" -> ExpectInfer (V_Residue f)
-                    | "I" -> ExpectInfer (V_Infer f)
+                    | "R" -> ExpectInfer (ty, V_Residue f)
+                    | "I" -> ExpectInfer (ty, V_Infer f)
                     | _ -> failwith "todo"
                  (* | "RA" -> ??? *)
                  (* | "SA" -> ??? *)
