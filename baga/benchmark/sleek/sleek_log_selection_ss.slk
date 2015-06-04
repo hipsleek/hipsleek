@@ -9,7 +9,7 @@ data node {
   flted_13_25: self::node<sm_27,q> * q::sll{}<flted_13_25,qs,lg_28>&
   flted_13_25+1=n & q!=null & sm<=qs & sm_27=sm & lg_28=lg)
   inv 1<=n & sm<=lg & self!=null.
- pred bnd1<n:int,sm:NUM,bg:int,mi:NUM> == 
+ pred bnd1<n:int,sm:int,bg:int,mi:int> == 
   (exists mi_33,flted_8_31: self::node<mi_33,flted_8_31>&flted_8_31=null & 
   sm<=mi & mi<bg & n=1 & mi_33=mi) or
 (exists sm_34,bg_35,

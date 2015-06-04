@@ -90,6 +90,8 @@ ERROR: at sleek_log_selection_ss.slk_17:43_17:46
 Message: gather_type_info_var : unexpected exception Failure("UNIFICATION ERROR : at location {(Line:17,Col:43),(Line:17,Col:46)} types NUM and int are inconsistent")
 Fatal error: exception Failure("gather_type_info_var : unexpected exception Failure(\"UNIFICATION ERROR : at location {(Line:17,Col:43),(Line:17,Col:46)} types NUM and int are inconsistent\")")
 
+Added by hand
+
 ===============================================================================================================================
 
 longph@loris-7:~/workspace/baga/sleekex/baga/benchmark/sleek$ ../../../sleek sleek_log_sll_ss.slk --gen-smt
