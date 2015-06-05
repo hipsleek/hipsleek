@@ -1636,7 +1636,7 @@ let process_validate_infer (vr : validate_result) (validation: validation) =
                   let rec helper acc ctx =
                     match ctx with
                     | CF.Ctx es ->
-                       let () = Cprinter.pr_estate es in
+                       (* let () = Cprinter.pr_estate es in *)
                        let ps = es.CF.es_infer_pure in
                        let hs = es.CF.es_infer_heap in
                        let pos = Cformula.pos_of_formula es.CF.es_formula in

@@ -1,4 +1,5 @@
 
+
 data node {
 	int val; 
 	node next;	
@@ -8,7 +9,7 @@ pred ll<n> == self = null & n = 0
 	or self::node<_, q> * q::ll<n-1> 
   inv n >= 0.
 
-// (12)
-infer [y] true |- y::ll<n>.
+infer [n] x::ll<n> |- x::node<_,null>.
 print residue.
-expect_infer Valid I{y::ll<i> & i=n}.
+expect Valid.
+expect_infer Valid I{n=1}.
