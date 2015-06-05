@@ -233,7 +233,11 @@ let trans_ints_block_lst fn (fr_lbl: ints_loc) (blks: ints_block list): I.proc_d
       | [] -> (I.Empty no_pos)
       | [exp] -> exp
       | blk::blk_exps ->
-        let nondet_call = I.mkCallNRecv Globals.nondet_int_proc_name None [] None None no_pos in
+        (* Ensure nondet proc in prim table. *)
+        let pn = Globals.nondet_int_proc_name in
+        let () = Hashtbl.add Iast.tnt_prim_proc_tbl pn pn in
+        (* Build if(nondet() > 0) { } else {} *)
+        let nondet_call = I.mkCallNRecv pn None [] None None no_pos in
         let nondet_cond = I.mkBinary I.OpGt nondet_call (I.mkIntLit 0 no_pos) None no_pos in
         I.mkCond nondet_cond blk (nondet_chain_for blk_exps) None (I.get_exp_pos blk) in
     nondet_chain_for blk_exps
@@ -305,10 +309,7 @@ let trans_ints_prog fn (iprog: ints_prog): I.prog_decl =
   let proc_decls = 
     [main_proc] @ 
     (List.map (fun (fr, blks) -> trans_ints_block_lst fn fr blks) proc_blks) @
-    abandoned_procs @
-    (* ensure `nondet()` proc is in program *)
-    match (Parser.create_tnt_prim_proc Globals.nondet_int_proc_name) with
-    | None -> [] | Some pd -> [pd]
+    abandoned_procs
   in
   let global_vars =
     let f e =
