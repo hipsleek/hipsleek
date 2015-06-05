@@ -799,6 +799,13 @@ let peek_obrace_par =
       | [OBRACE,_;CASE,_] -> raise Stream.Failure
       | _ -> ())
 
+let peek_relassume =
+  SHGram.Entry.of_parser "peek_relassume"
+    (fun strm ->
+      match Stream.npeek 1 strm with
+      | [IDENTIFIER "RA",_] -> raise Stream.Failure
+      | _ -> ())
+
 let get_heap_id_info (cid: ident * primed) (heap_id : (ident * int * int * Camlp4.PreCast.Loc.t)) =
   let (base_heap_id, ref_level, deref_level, l) = heap_id in
   let s = ref base_heap_id in
@@ -966,13 +973,15 @@ expect_infer_relassume:
 
 expect_infer:
   [[
-    `EXPECT_INFER; ty=validate_result; t=id; `OBRACE; f = OPT expect_infer_term; `CBRACE ->
+    `EXPECT_INFER; ty=validate_result; peek_relassume; t=id; `OBRACE; f = OPT expect_infer_term; `CBRACE ->
        (match t with
           | "R" -> ExpectInfer (ty, V_Residue f)
           | "I" -> ExpectInfer (ty, V_Infer f)
-          | _ -> failwith "todo")
-  | `EXPECT_INFER; ty=validate_result; `RELASSUME; `OBRACE; f = OPT expect_infer_relassume; `CBRACE ->
-       ExpectInfer (ty, V_RelAssume f)
+          | _ -> raise Stream.Failure)
+  | `EXPECT_INFER; ty=validate_result; t=id; `OBRACE; f = OPT expect_infer_relassume; `CBRACE ->
+       (match t with
+          | "RA" -> ExpectInfer (ty, V_RelAssume f)
+          | _ -> failwith "not possible")
   ]];
 
 non_empty_command:

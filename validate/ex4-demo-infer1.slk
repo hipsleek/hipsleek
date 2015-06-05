@@ -55,7 +55,7 @@ relation P(int n).
 //(10)
 infer [P] x::ll<n> & P(n) |- x::node<_,q>.
 print residue.
-expect_infer Valid relAssume {P(n)-->n!=0}.
+expect_infer Valid RA {P(n)-->n!=0}.
 
 
 // (11)
