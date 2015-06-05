@@ -1594,12 +1594,13 @@ let process_validate_infer (vr : validate_result) (validation: validation) =
   (* let hdr = ref "" in *) (* to avoid to use global vars *)
   let nn = (sleek_proof_counter#inc_and_get_aux_str) in
   (*********************************)
-  let run_heap_entail lhs rhs = Solver.heap_entail_init !cprog false lhs rhs no_pos in
+  let run_heap_entail lhs rhs = 
+    wrap_proving_kind (PK_Validate nn) (Solver.heap_entail_init !cprog false lhs rhs) no_pos in
 
   let check_heap_entail lhs rhs =
     match run_heap_entail lhs rhs with
-      | (CF.SuccCtx _,_) -> true
-      | _ -> false
+    | (CF.SuccCtx _,_) -> true
+    | _ -> false
   in
 
   let pr s str res_f_str = 
@@ -1622,38 +1623,56 @@ let process_validate_infer (vr : validate_result) (validation: validation) =
     let () = x_binfo_hp (add_str "current residue" pr_r) !CF.residues no_pos in
     let s =  "\nExpect_Infer "^nn^": " in
     match !CF.residues with
-      | None -> print_endline_quiet (s^"Fail. (empty residue)")
-      | Some (lc, _) ->
-        begin
-          let res = (match run_heap_entail lc res_f with
-            | (CF.SuccCtx lctx, _) ->
-                begin match validation with
-                    | V_Infer _ ->
-                       let rec helper acc ctx =
-                         match ctx with
-                         | CF.Ctx es ->
-                            let lcpure = CF.add_infer_pure_to_list_context es.CF.es_infer_pure lc in
-                            let lcheap = CF.add_infer_heap_to_list_context es.CF.es_infer_heap lcpure in
-                            (check_heap_entail lcheap res_f) || acc
-                        | CF.OCtx (ctx1, ctx2) -> helper acc ctx1 || helper acc ctx2
-                       in List.fold_left helper false lctx
-                    | _ -> vr = VR_Valid
-                end
-            | (CF.FailCtx (_, ctx, _), _) -> begin
-                match vr with
-                  | VR_Fail s -> if s = 0 then true else
-                      begin
-                        let final_error_opt = CF.get_final_error_ctx ctx in
-                        match final_error_opt with
-                          | Some (_, _, fk) -> begin
-                              match fk with
-                                | CF.Failure_May _ -> is_vr_may s
-                                | CF.Failure_Must _ -> is_vr_must s
-                                | _ -> false
-                            end
-                          | None -> false
-                      end
-                  | _ -> false
+    | None -> print_endline_quiet (s^"Fail. (empty residue)")
+    | Some (lc, _) ->
+      begin
+        let res = (match lc (* run_heap_entail lc res_f *) with
+            | (CF.SuccCtx lctx) ->
+              begin 
+                let () = x_binfo_hp (add_str "expected vr" string_of_vres) vr no_pos in
+                match validation with
+                | V_Infer _ ->
+                  let rec helper acc ctx =
+                    match ctx with
+                    | CF.Ctx es ->
+                      let lcpure = CF.add_infer_pure_to_list_context es.CF.es_infer_pure lc in
+                      let lcheap = CF.add_infer_heap_to_list_context es.CF.es_infer_heap lcpure in
+                      (check_heap_entail lcheap res_f) || acc
+                    | CF.OCtx (ctx1, ctx2) -> helper acc ctx1 || helper acc ctx2
+                  in let rr = List.fold_left helper false lctx in
+                  begin
+                    match vr with
+                    | VR_Valid -> rr
+                    | _ -> not(rr)
+                  end
+                | _ -> 
+                  let rr = run_heap_entail lc res_f in
+                  match rr with
+                  | (CF.SuccCtx _,_) -> vr = VR_Valid
+                  | (CF.FailCtx _,_) -> 
+                    match vr with
+                    | VR_Fail _ -> true
+                    | _ -> false
+                    (* WN : Below to incorporate later into a procedure *)
+                    (* TODO :need to consider exception as failure *)
+                    (* match vr with *)
+                    (* | VR_Fail s -> if s = 0 then true else *)
+                    (*     begin *)
+                    (*       let final_error_opt = CF.get_final_error_ctx ctx in *)
+                    (*       match final_error_opt with *)
+                    (*       | Some (_, _, fk) -> begin *)
+                    (*           match fk with *)
+                    (*           | CF.Failure_May _ -> is_vr_may s *)
+                    (*           | CF.Failure_Must _ -> is_vr_must s *)
+                    (*           | _ -> false *)
+                    (*         end *)
+                    (*       | None -> false *)
+                    (*     end *)
+                    (* | _ -> false *)
+              end
+            | (CF.FailCtx (_, ctx, _)) -> 
+              begin
+                false
                 (* let rec helper = function *)
                 (*     | CF.Ctx es -> *)
                 (*         begin match es.CF.es_must_error, es.CF.es_may_error with *)
@@ -1663,17 +1682,17 @@ let process_validate_infer (vr : validate_result) (validation: validation) =
                 (*     | CF.OCtx (ctx1, ctx2) -> helper ctx1 || helper ctx2 *)
                 (* in helper ctx *)
               end
-              )
-          in pr res s res_f_str
-        end
+          )
+        in pr res s res_f_str
+      end
   in
   (*********************************)
   match validation with
-    | V_Residue (Some residue) -> let hdr = "R" in validate_with_residue hdr residue
-    | V_Residue None -> let hdr = "R" in print_endline "No residue."
-    | V_Infer (Some inference) -> let hdr = "I" in validate_with_residue hdr inference 
-    | V_Infer None -> let hdr = "I" in print_endline "No inference."
-    | _ -> print_endline "RA etc. not yet implemented"
+  | V_Residue (Some residue) -> let hdr = "R" in validate_with_residue hdr residue
+  | V_Residue None -> let hdr = "R" in print_endline "No residue."
+  | V_Infer (Some inference) -> let hdr = "I" in validate_with_residue hdr inference 
+  | V_Infer None -> let hdr = "I" in print_endline "No inference."
+  | _ -> print_endline "RA etc. not yet implemented"
 
 
 let process_validate_infer (vr : validate_result) (validation: validation) =

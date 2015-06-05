@@ -24,6 +24,7 @@ type proving_kind =
   | PK_Term_Bnd
   | PK_NonTerm_Falsify
   | PK_Sleek_Entail of int
+  | PK_Validate of string
   | PK_Early_Contra_Detect
   | PK_Contra_Detect_Pure
   | PK_Cast
@@ -57,6 +58,7 @@ let string_of_proving_kind pk =
   | PK_Term_Bnd -> "Term_Bnd"
   | PK_NonTerm_Falsify -> "NonTerm_Falsify"
   | PK_Sleek_Entail(n) -> "Sleek_Entail("^(string_of_int n)^")"
+  | PK_Validate(n) -> "Validate("^(n)^")"
   | PK_Early_Contra_Detect -> "Early_Contra_Detect"
   | PK_Contra_Detect_Pure -> "Contra_Detect_Pure"
   | PK_Cast -> "Cast"
@@ -85,6 +87,7 @@ let find_impt ls =
     | [x] -> x
     | x::xs -> (match x with
         | PK_Sleek_Entail(_)
+        (* | PK_Validate(_) *)
         | PK_Assert | PK_Infer_Assume | PK_Assert_Assume | PK_BIND 
         | PK_PRE | PK_PRE_REC | PK_POST -> x
         | _ -> aux xs
