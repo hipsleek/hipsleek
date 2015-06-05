@@ -3649,6 +3649,9 @@ let pr_estate ?(nshort=true) (es : entail_state) =
       (* formula sometimes randomly add new lines, in that case no need to cut after printing it *)
       if (String.get es_str (String.length es_str - 1) = '\n') then () else fmt_cut ();
       pr_add_str "es_heap(consumed): " pr_h_formula es.es_heap;
+      (* (match es.es_orig_ante with *)
+      (*   | Some f -> pr_add_str "es_orig_ante: " (pr_formula) f *)
+      (*   | None -> ()); *)
       pr_wrap_test "es_evars: "  Gen.is_empty (pr_seq "" pr_spec_var)  es.es_evars;
       pr_wrap_test "es_ante_evars: "  Gen.is_empty (pr_seq "" pr_spec_var)  es.es_ante_evars;
       pr_wrap_test "es_gen_expl_vars: "  Gen.is_empty (pr_seq "" pr_spec_var)  es.es_gen_expl_vars;

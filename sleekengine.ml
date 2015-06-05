@@ -14,6 +14,8 @@ open Exc.GTable
 open Perm
 open Label_only
 
+let last_entail_lhs_xpure = ref None
+
 let string_of_vres t =
   match t with
   | VR_Valid -> "Valid"
@@ -1108,6 +1110,10 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
                       ^ "\n ### iconseq0 = "^(string_of_meta_formula iconseq0)
                       ^"\n\n") no_pos in
   let (n_tl,ante) = meta_to_formula iante0 false [] [] in
+  let () = x_binfo_hp (add_str "last_entail_lhs" !CF.print_formula) ante no_pos in
+  let (ante_h,ante_p,_,_,_,_) = CF.split_components ante in
+  let (mf,_,_) = Cvutil.xpure_heap_symbolic 999 !cprog ante_h ante_p 0 in
+  let () = last_entail_lhs_xpure := Some mf in
   (*let ante = x_add Solver.normalize_formula_w_coers !cprog (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) ante !cprog.Cast.prog_left_coercions in*)
   let ante = Cvutil.prune_preds !cprog true ante in
   let ante = (*important for permissions*)
@@ -1590,7 +1596,7 @@ let process_shape_rec sel_hps=
   let _ = print_endline_quiet "*************************************" in
   ()
 
-let process_validate_infer (vr : validate_result) (validation: validation) =
+let process_validate_infer (vr : validate_result) (validation: validation)  =
   (* let hdr = ref "" in *) (* to avoid to use global vars *)
   let nn = (sleek_proof_counter#inc_and_get_aux_str) in
   (*********************************)
@@ -1644,7 +1650,10 @@ let process_validate_infer (vr : validate_result) (validation: validation) =
                        let p = List.fold_left (fun acc p -> CP.mkAnd acc p pos) (CP.mkTrue pos) ps in
                        let h = List.fold_left (fun acc p -> CF.mkStarH acc p pos) CF.HEmp hs in
                        let empty_es = CF.empty_es (CF.mkNormalFlow ()) Lab2_List.unlabelled pos in
-                       let (mf,_,_) = Cvutil.xpure_heap_symbolic 999 !cprog es.CF.es_heap (Mcpure.mix_of_pure p) 0 in
+                       (* let (mf,_,_) = Cvutil.xpure_heap_symbolic 999 !cprog es.CF.es_heap (Mcpure.mix_of_pure p) 0 in *)
+                       let mf = match !last_entail_lhs_xpure with 
+                           Some f -> f 
+                         | None -> Mcpure.mix_of_pure (CP.mkTrue no_pos) in
                        let lhs_formula_pure = CF.mkAnd_pure empty_es.CF.es_formula (Mcpure.mix_of_pure p) pos in
                        let lhs_formula_pure = CF.mkAnd_pure lhs_formula_pure mf pos in
                        let lhs_formula_heap = CF.mkAnd_f_hf empty_es.CF.es_formula h pos in
