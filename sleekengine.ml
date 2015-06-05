@@ -1604,8 +1604,9 @@ let process_validate_infer (vr : validate_result) (validation: validation) =
   in
 
   let pr s str res_f_str = 
-    if s then print_endline_quiet  (str^"OK. ")
-    else print_endline_quiet  (str^"Unexpected. "^res_f_str)
+    let str2 = string_of_vres (match vr with | VR_Valid -> VR_Fail 0 | _ -> VR_Valid) in
+    if s then print_endline_quiet (str^"OK. ")
+    else print_endline_quiet (str^"Expected "^(string_of_vres vr)^" but got "^str2^" "^res_f_str)
   in
 
   let validate_with_residue hdr residue =
@@ -1629,7 +1630,7 @@ let process_validate_infer (vr : validate_result) (validation: validation) =
         let res = (match lc (* run_heap_entail lc res_f *) with
             | (CF.SuccCtx lctx) ->
               begin 
-                let () = x_binfo_hp (add_str "expected vr" string_of_vres) vr no_pos in
+                (* let () = x_binfo_hp (add_str "expected vr" string_of_vres) vr no_pos in *)
                 match validation with
                 | V_Infer _ ->
                   let rec helper acc ctx =
