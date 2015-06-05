@@ -1274,7 +1274,8 @@ let norm_pure_result f =
 
 let norm_pure_result f =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "norm_pure_result" pr pr (fun _ -> norm_pure_result f) f
+  let pr2 s = s # string_of in
+  Debug.no_2 "norm_pure_result" pr pr2 pr (fun _ _  -> norm_pure_result f) f imm_stk
 
 let wrap_pre_post_gen pre post f a =
   let s1 = pre a in
@@ -1617,7 +1618,7 @@ let norm_pure_input f =
 
 let norm_pure_input f =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "norm_pure_input" pr pr norm_pure_input f
+  Debug.no_1 "norm_pure_input" pr pr norm_pure_input f 
 
 (* rename and shorten variables for better caching of formulas *)
 (* TODO WN: check if it avoids name clashes? *)
@@ -2042,7 +2043,9 @@ let norm_pure_input f =
 
 let norm_pure_input f =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "norm_pure_input" pr pr norm_pure_input f
+  let pr2 s = s # string_of in 
+  (* let pr2 r = pr_pair Cprinter.string_of_pure_formula (fun s -> s#string_of) (r,imm_stk) in *)
+  Debug.no_eff_2 "norm_pure_input2" [false;true] pr pr2 pr (fun _ _ -> norm_pure_input f) f imm_stk
 
 let om_simplify f =
   (* wrap_pre_post x_add cnv_ptr_to_int norm_pure_result *)
