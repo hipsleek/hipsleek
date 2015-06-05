@@ -1636,9 +1636,19 @@ let process_validate_infer (vr : validate_result) (validation: validation) =
                   let rec helper acc ctx =
                     match ctx with
                     | CF.Ctx es ->
-                      let lcpure = CF.add_infer_pure_to_list_context es.CF.es_infer_pure lc in
-                      let lcheap = CF.add_infer_heap_to_list_context es.CF.es_infer_heap lcpure in
-                      (check_heap_entail lcheap res_f) || acc
+                       let ps = es.CF.es_infer_pure in
+                       let pos = Cformula.pos_of_formula es.CF.es_formula in
+                       (* Collect inferred formula and normalize them *)
+                       let coll_and_norm acc p =
+                         let pf = Cformula.formula_of_pure_formula p (CP.pos_of_formula p) in
+                         Cformula.normalize 2 acc pf (Cformula.pos_of_formula acc) in
+                       let acc_f = List.fold_left coll_and_norm (Cformula.mkTrue (CF.mkTrueFlow ()) pos) ps in
+                       let empty_es = CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled pos in
+                       let lhs_ctx = CF.Ctx {empty_es with CF.es_formula = acc_f } in
+                       let lhs = CF.SuccCtx [lhs_ctx] in
+                       let () = x_binfo_hp (add_str "inferred_list_context:"
+                                                      Cprinter.string_of_list_context) lhs no_pos in
+                       (check_heap_entail lhs res_f) || acc
                     | CF.OCtx (ctx1, ctx2) -> helper acc ctx1 || helper acc ctx2
                   in let rr = List.fold_left helper false lctx in
                   begin
