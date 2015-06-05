@@ -1,0 +1,94 @@
+
+ex8e1g.ss
+
+int foo(cell c)
+  infer [Q]
+  requires c::cell<v>@a & a=@L //a=@L
+  ensures c::cell<_>@b & Q(b); //c::cell<w>@b & b=@L  ;
+/*
+  requires c::cell<v>@a & a=@L
+  ensures emp; //c::cell<w>@b & b=@L  ;
+*/
+{
+ int x = c.fst;
+ if (x!=1) {
+   //c.fst =c.fst-1;
+   int tmp=2+foo(c);
+   dprint;
+   return tmp;
+ } else return 0;
+}
+
+
+*************************************
+******pure relation assumption 1 *******
+*************************************
+[RELDEFN Q: ( Q(b_1507) & (b_1507+@L)<:b_1463) -->  Q(b_1463),
+RELDEFN Q: ( @L<:b_1463) -->  Q(b_1463)]
+*************************************
+
+!!! **pi.ml#760:>>>>>>>>>>> (bef postprocess): <<<<<<<<<
+!!! **pi.ml#761:>>REL POST:  Q(b_1463)
+!!! **pi.ml#762:>>POST:  true
+!!! **pi.ml#763:>>REL PRE :  true
+!!! **pi.ml#764:>>PRE :  true
+
+Post Inference result:
+foo$cell
+ EBase exists (Expl)[](Impl)[a; v](ex)[]c::cell<v>@a&a=@L & MayLoop[]&
+       {FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           (exists Anon_1462,b_1463: c::cell<Anon_1462>@b_1463&
+           {FLOW,(4,5)=__norm#E}[]
+
+
+-------------------------------------------------------------
+
+As discussed, the reason we inferred true for post is that we replaced addition with a hole, thus we lost the dependency between b_1507 and b_1463, and things are reduced to true in fixcalc:
+
+ ( Q(b_1507) & (b_1507+@L)<:b_1463) -->  Q(b_1463) >>>>>>>
+ ( Q(b_1507) & imm1<:b_1463) -->  Q(b_1463) >>>>>>>
+ (exists b_1507, imm1:  Q(b_1507) & imm1<:b_1463) -->  Q(b_1463) >>>>>>> [true --> Q(b_1463) ]
+
+-------------------------------------------------------------
+
+But, if we add the min/max constraints for our addition (merging):
+
+x::cell<>@L*x::cell<>@b >>>>>>> x::cell<>@imm1 & imm1=@L+b & @A=max(@L,b) & imm1=min(@L,b))
+
+
+all our problems are solved (even though we'll get buried in disjuncts, if both lhs imm and rhs imm are poly)
+
+ @A=max(@NON-A-CONST,unk) is reduced to unk=@A
+ @A=max(unk1,unk2)  maintains the dependency between the 
+
+
+-------------------------------------------------------------
+we'll get the proof obligations as follows (with simplifications and ignoring unrelated pure part):
+
+adding rec call postcond :
+
+ c::cell<v>@L * c::cell<_>@b1 & Q(b1) >>>>>  c::cell<v>@imm & imm=@L+b1 & @A=max(@L,b1) & imm=min(@L,b1) & Q(b1)
+
+proving post cond:
+
+c::cell<v>@imm & imm=@L+b1 & @A=max(@L,b1) & imm=min(@L,b1) & Q(b1) |- x::cell<_>@b & Q(b)
+c::cell<v>@[@imm,@b] & imm<:b & imm=@L+b1 & @A=max(@L,b1) & imm=min(@L,b1) & Q(b1) |- Q(b)
+
+c::cell<v>@[@imm,@b] & imm<:b & imm=@L+b1 & (@A=@L & b1<:@L)|(b1=@A & @L<:b1) & (imm=@L & @L<:b1)|(imm=b1 & b1<:@L) & Q(b1) |- Q(b)
+
+will lead to this def:
+
+ imm<:b & imm=@L+b1 & (@A=@L & b1<:@L)|(b1=@A & @L<:b1) & (imm=@L & @L<:b1)|(imm=b1 & b1<:@L) & Q(b1) |- Q(b)
+ imm<:b & imm=@L+b1 &                   b1=@A & @L<:b1  & (imm=@L & @L<:b1)|(imm=b1 & b1<:@L) & Q(b1) |- Q(b)
+ imm<:b & imm=@L    &                   b1=@A & @L<:b1  & (imm=@L & @L<:b1)                   & Q(b1) |- Q(b)
+ @L<:b & imm=@L    &                   b1=@A & @L<:@A  & imm=@L & @L<:@A                   & Q(b1) |- Q(b)    
+
+ @L<:b & b1=@A & Q(b1) |- Q(b)
+
+
+
+-------------------------------------------------------------
+
+
+

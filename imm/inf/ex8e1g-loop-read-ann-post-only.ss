@@ -26,7 +26,27 @@ int foo(cell c)
 }
 
 /*
-# ex8e1g.ss --trace-exc
+
+# why no info abt b? given that:
+*************************************
+******pure relation assumption 1 *******
+*************************************
+[RELDEFN Q: ( Q(b_1507) & (b_1507+__CONST_Imm_@L)<:b_1463) -->  Q(b_1463),
+RELDEFN Q: ( @L<:b_1463) -->  Q(b_1463)]
+*************************************
+
+# how come  __CONST_Imm_@L escaped the norm?
+
+Post Inference result:
+foo$cell
+ EBase exists (Expl)[](Impl)[a; v](ex)[]c::cell<v>@a&a=@L & MayLoop[]&
+       {FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           (exists Anon_1462,b_1463: c::cell<Anon_1462>@b_1463&
+           {FLOW,(4,5)=__norm#E}[]  
+-------------------------------------------------------------1
+
+# ex8e1g.ss --trace-exc FIXED
 
 Why did we get format error?
 

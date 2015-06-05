@@ -1378,6 +1378,15 @@ let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
   else
     true_const @ (* non_rec_defs @ *) (x_add compute_fixpoint_aux rel_defs ante_vars bottom_up)
 
+let compute_fixpoint_xx input_pairs ante_vars specs bottom_up =
+  let pr0 = !CP.print_formula in
+  let pr1 = pr_list_ln (pr_pair pr0 pr0) in
+  let pr2 = !CP.print_svl in
+  let pr_res = pr_list (pr_pair pr0 pr0) in
+  Debug.no_2 "compute_fixpoint_xx" pr1 pr2 pr_res
+    (fun _ _ -> compute_fixpoint_xx input_pairs ante_vars specs bottom_up)
+    input_pairs ante_vars
+
 let compute_fixpoint_x input_pairs ante_vars specs bottom_up =
   let () = x_tinfo_pp ("input_pairs: " ^ (pr_list
                                         (pr_pair !CP.print_formula !CP.print_formula) input_pairs)) no_pos in

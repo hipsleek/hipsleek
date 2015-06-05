@@ -909,7 +909,7 @@ let comm_inf a1 a2 =
 let stack_imm_add e l =
   let sv = 
     try
-      (*  below return the sum operands *)
+      (*  below returns the sum operands *)
       let sum_op add_exp = Immutils.get_imm_var_cts_operands add_exp in
       let sum_op_e = sum_op e in
       let same_sum x = Gen.BList.list_setequal_eq CP.eq_spec_var sum_op_e (sum_op x)  in

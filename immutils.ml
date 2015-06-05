@@ -17,6 +17,9 @@ let is_ann_const_sv sv =
   | SpecVar(AnnT,a,_) -> List.exists (fun an -> an = a ) ann_sv_lst
   | _                 -> false
 
+let is_ann_const_sv sv = 
+  Debug.no_1 "is_ann_const_sv" !print_sv (fun b -> ite b "constant" "spec var")  is_ann_const_sv sv
+
 let helper_is_const_ann_sv em sv test =
   let imm_const_sv = mkAnnSVar test in
   if not (is_ann_typ sv) then false
@@ -46,9 +49,12 @@ let get_imm_list ?loc:(l=no_pos) list =
     with Not_found -> None
   in imm
 
+let get_imm_list ?loc:(l=no_pos) list =
+  Debug.no_1 "get_imm_list" !print_svl (pr_opt (pr_pair string_of_imm !print_exp)) (get_imm_list ~loc:l) list
+
 let get_imm_emap ?loc:(l=no_pos) sv emap =
   let aliases = EMapSV.find_equiv_all sv emap in
-  get_imm_list ~loc:l aliases
+  get_imm_list ~loc:l (sv::aliases)
 
 let get_imm_emap_exp_opt  ?loc:(l=no_pos) sv emap : exp option = map_opt snd (get_imm_emap ~loc:l sv emap)
 
@@ -165,7 +171,7 @@ let get_imm_var_cts_operands e =
   in helper e
 
 let get_imm_var_cts_operands e =
-  Debug.no_1 "let get_imm_var_cts_operands" !print_exp !print_svl get_imm_var_cts_operands e
+  Debug.no_1 "get_imm_var_cts_operands" !print_exp !print_svl get_imm_var_cts_operands e
 
 let mkAdd_list exp_lst =  
   let rec helper exp_lst = 
