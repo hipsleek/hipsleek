@@ -133,3 +133,32 @@ Message: gather_type_info_var : unexpected exception Failure("UNIFICATION ERROR 
 Fatal error: exception Failure("gather_type_info_var : unexpected exception Failure(\"UNIFICATION ERROR : at location {(Line:14,Col:9),(Line:14,Col:10)} types int and NUM are inconsistent\")")
 
 Added by hand
+
+================================================================================================================================
+
+Some unexpected results:
+
+../../../sleek sleek_log_append-tail_ss.slk --inv-baga --en-delay-eelim --dis-inv-check| grep "Validate"
+
+../../../sleek sleek_log_avl_ss.slk --inv-baga --en-delay-eelim --dis-inv-check| grep "Validate"
+
+../../../sleek sleek_log_bubble_ss.slk --inv-baga --en-delay-eelim --dis-inv-check| grep "Validate"
+
+../../../sleek sleek_log_dll_ss.slk --inv-baga --en-delay-eelim --dis-inv-check| grep "Validate"
+
+../../../sleek sleek_log_insertion_ss.slk --inv-baga --en-delay-eelim --dis-inv-check| grep "Validate"
+
+../../../sleek sleek_log_ll_ss.slk --inv-baga --en-delay-eelim --dis-inv-check| grep "Validate"
+
+../../../sleek sleek_log_merge_ss.slk --inv-baga --en-delay-eelim --dis-inv-check| grep "Validate"
+
+../../../sleek sleek_log_qsort_ss.slk --inv-baga --en-delay-eelim --dis-inv-check| grep "Validate"
+
+../../../sleek sleek_log_rb_ss.slk --inv-baga --en-delay-eelim --dis-inv-check| grep "Validate"
+
+../../../sleek sleek_log_trees_ss.slk --inv-baga --en-delay-eelim --dis-inv-check| grep "Validate"
+
+================================================================================================================================
+================================================================================================================================
+================================================================================================================================
+================================================================================================================================
