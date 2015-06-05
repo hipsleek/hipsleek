@@ -1641,7 +1641,7 @@ let process_validate_infer (vr : validate_result) (validation: validation) =
                        let pos = Cformula.pos_of_formula es.CF.es_formula in
                        (* Combine inferred formula *)
                        let p = List.fold_left (fun acc p -> CP.mkAnd acc p pos) (CP.mkTrue pos) ps in
-                       let h = List.fold_left (fun acc p -> CF.mkConjH acc p pos) CF.HEmp hs in
+                       let h = List.fold_left (fun acc p -> CF.mkStarH acc p pos) CF.HEmp hs in
                        let empty_es = CF.empty_es (CF.mkNormalFlow ()) Lab2_List.unlabelled pos in
                        let lhs_formula_pure = CF.mkAnd_pure empty_es.CF.es_formula (Mcpure.mix_of_pure p) pos in
                        let lhs_formula_heap = CF.mkAnd_f_hf empty_es.CF.es_formula h pos in
