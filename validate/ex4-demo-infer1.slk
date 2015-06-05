@@ -61,12 +61,14 @@ expect_infer Valid relAssume {P(n)-->n!=0}.
 // (11)
 infer [y] true |- y::node<a,b>.
 print residue.
-expect_infer Valid I{y::node<i1,i2> & i1=a & i2=b}.
+expect_infer Valid I{y::node<i1,i2>}.
+// expect_infer Valid I{y::node<i1,i2> & i1=a & i2=b}.
 
 // (12)
 infer [y] true |- y::ll<n>.
 print residue.
-expect_infer Valid I{y::ll<i> & i=n}.
+// expect_infer Valid I{y::ll<i>}.
+expect_infer Valid I{y::ll<i>}.
 
 
 // (13)

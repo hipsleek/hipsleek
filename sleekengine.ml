@@ -1637,12 +1637,16 @@ let process_validate_infer (vr : validate_result) (validation: validation) =
                     match ctx with
                     | CF.Ctx es ->
                        let ps = es.CF.es_infer_pure in
+                       let hs = es.CF.es_infer_heap in
                        let pos = Cformula.pos_of_formula es.CF.es_formula in
                        (* Combine inferred formula *)
                        let p = List.fold_left (fun acc p -> CP.mkAnd acc p pos) (CP.mkTrue pos) ps in
+                       let h = List.fold_left (fun acc p -> CF.mkConjH acc p pos) CF.HEmp hs in
                        let empty_es = CF.empty_es (CF.mkNormalFlow ()) Lab2_List.unlabelled pos in
-                       let lhs_ctx = CF.Ctx {empty_es with
-                         CF.es_formula = CF.mkAnd_pure empty_es.CF.es_formula (Mcpure.mix_of_pure p) pos } in
+                       let lhs_formula_pure = CF.mkAnd_pure empty_es.CF.es_formula (Mcpure.mix_of_pure p) pos in
+                       let lhs_formula_heap = CF.mkAnd_f_hf empty_es.CF.es_formula h pos in
+                       let lhs_formula = CF.normalize 2 lhs_formula_pure lhs_formula_heap pos in
+                       let lhs_ctx = CF.Ctx {empty_es with CF.es_formula = lhs_formula } in
                        let lhs = CF.SuccCtx [lhs_ctx] in
                        let () = x_binfo_hp (add_str "lhs:" Cprinter.string_of_list_context) lhs no_pos in
                        (check_heap_entail lhs res_f) || acc
