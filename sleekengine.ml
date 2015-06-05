@@ -1638,16 +1638,13 @@ let process_validate_infer (vr : validate_result) (validation: validation) =
                     | CF.Ctx es ->
                        let ps = es.CF.es_infer_pure in
                        let pos = Cformula.pos_of_formula es.CF.es_formula in
-                       (* Collect inferred formula and normalize them *)
-                       let coll_and_norm acc p =
-                         let pf = Cformula.formula_of_pure_formula p (CP.pos_of_formula p) in
-                         Cformula.normalize 2 acc pf (Cformula.pos_of_formula acc) in
-                       let acc_f = List.fold_left coll_and_norm (Cformula.mkTrue (CF.mkTrueFlow ()) pos) ps in
-                       let empty_es = CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled pos in
-                       let lhs_ctx = CF.Ctx {empty_es with CF.es_formula = acc_f } in
+                       (* Combine inferred formula *)
+                       let p = List.fold_left (fun acc p -> CP.mkAnd acc p pos) (CP.mkTrue pos) ps in
+                       let empty_es = CF.empty_es (CF.mkNormalFlow ()) Lab2_List.unlabelled pos in
+                       let lhs_ctx = CF.Ctx {empty_es with
+                         CF.es_formula = CF.mkAnd_pure empty_es.CF.es_formula (Mcpure.mix_of_pure p) pos } in
                        let lhs = CF.SuccCtx [lhs_ctx] in
-                       let () = x_binfo_hp (add_str "inferred_list_context:"
-                                                      Cprinter.string_of_list_context) lhs no_pos in
+                       let () = x_binfo_hp (add_str "lhs:" Cprinter.string_of_list_context) lhs no_pos in
                        (check_heap_entail lhs res_f) || acc
                     | CF.OCtx (ctx1, ctx2) -> helper acc ctx1 || helper acc ctx2
                   in let rr = List.fold_left helper false lctx in
