@@ -15,7 +15,7 @@ expect Valid.
 expect_infer Valid I{n=1}.
 
 /*
-# short.slk --esl
+# ex5b.slk --esl
 
 id: 6; caller: []; line: 0; classic: false; kind: Validate(1.1); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [] globals: []
  checkentail emp&n!=0 & n<=1&{FLOW,(20,21)=__norm#E}[]
@@ -28,5 +28,10 @@ res:  failctxfe_kind: MAY
     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
   }
 [[empty]]false
+
+# Fixed by using the orig LHS in a ref variable:
+
+!!! **sleekengine.ml#1113:last_entail_lhs: x::ll<n>&{FLOW,(20,21)=__norm#E}[]
+!!! **sleekengine.ml#1138:ivars:[n]
 
 */
