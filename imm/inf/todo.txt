@@ -1436,6 +1436,45 @@ add_infer_rel_to_estate inp1 :[RELASS [Q]: ( Q(a)) -->  a<:@L]
 add_infer_rel_to_estate@20 EXIT:[RELASS [Q]: ( Q(a)) -->  a<:@L,RELASS [Q]: ( Q(a)) -->  a<:@L]
 
 =======================================================
+# ex8e1g.ss
+
+c::cell<..>@L |- c::cell<..>@L (bind)
+c::cell<..>@L * c::cell<..>@b1 & Q(b1) (pre-cond proving)
+c::cell<..>@I & I=@L-@b1 & Q(b1) |- c::cell<..>@b & Q(b)  (post-cond)
+
+Thus far when proving the recursive post-cond, we got the
+following:
+
+ I=@L-@b1 & Q(b1) & I<:@b --> Q(b)
+
+which is equivalent to:
+
+[RELDEFN Q: ( Q(b_1507) & (b_1507+@L)<:b_1463) -->  Q(b_1463),
+
+The point here is what is permitted for
+ I=@L-b1
+where @b1 is the annotation in the post-condition.
+
+Now b1 can either be @A, @M and @L. 
+
+It cannot be @M since @L-@M is invalid. 
+
+It cannot be @L since @L is not allowed in
+post-condition.
+
+Hence, it can only be @A. Using this instantiation,
+we would now obtain:
+
+ I=@L-@b1 & b1=@A & Q(b1) & I<:@b --> Q(b)
+ I<:@b --> Q(b)
+
+ With this we only have:
+   @L<:b  --> Q(b)
+
+ Doing a post-condition processing, we get:
+  Q(b) = b=@A
+
+We can check if this idea applies to loop-write..
 =======================================================
 =======================================================
 =======================================================
