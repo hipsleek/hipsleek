@@ -68,7 +68,18 @@ we'll get the proof obligations as follows (with simplifications and ignoring un
 
 adding rec call postcond :
 
- c::cell<v>@L * c::cell<_>@b1 & Q(b1) >>>>>  c::cell<v>@imm & imm=@L+b1 & @A=max(@L,b1) & imm=min(@L,b1) & Q(b1)
+ c::cell<v>@L * c::cell<_>@b1 & Q(b1) >>>>>  
+  c::cell<v>@imm & imm=@L+b1 & @A=max(@L,b1) & imm=min(@L,b1) & Q(b1)
+
+> What does @A=max(@L,b1) mean? Does this not constrain b1=@A?
+> If we choose b1=@M, wouldn't max(@L,@M) return @L. Similarly for b1=@L.
+> Both of which would lead to false.
+
+> what does imm=min(@L,b1) mean?
+> If b1=@L, does it mean imm=@L?
+> If b1=@M, does it mean imm=@L?
+> If b1=@A, does it mean imm=@L?
+> If that is the case, does this not imply imm=@L?
 
 proving post cond:
 
@@ -86,9 +97,127 @@ will lead to this def:
 
  @L<:b & b1=@A & Q(b1) |- Q(b)
 
-
-
 -------------------------------------------------------------
+# ex8e1g.ss
+
+c::cell<..>@L |- c::cell<..>@L (bind)
+c::cell<..>@L * c::cell<..>@b1 & Q(b1) (pre-cond proving)
+c::cell<..>@I & I=@L+@b1 & Q(b1) |- c::cell<..>@b & Q(b)  (post-cond)
+
+Thus far when proving the recursive post-cond, we got the
+following:
+
+ I=@L+@b1 & Q(b1) & I<:@b --> Q(b)
+
+-----------------------------------
+Consider v1=v+v3.
+How would we deal with such imm additions?
+
+If we had: v1=@L+v3
+Possible values are:
+    @L=@L+@A
+That is v1=@L & v3=@A
+
+If we had:
+    v1=@A+v3
+Possible values are:
+    @L=@A+@L
+    @M=@A+@M
+    @A=@A+@A
+That is v1=v3.
+
+If we had:
+    v1=@M+v3
+Possible values are:
+    @M=@M+@A
+That is v1=@M & v3=@A
+
+In the general case, we have:
+  v2=@L & v1=@L & v3=@A
+  or v2=@A & v1=v3
+  or v2=@M & v1=@M & v3=@A
+
+Lastly, if we had:
+    v1=@frac{f3}+v2
+We should have:
+    v1=@frac{f1} & v2=@frac{f2} & f1=f3+f2 & 0<=f3+f2<=1
+--------------------------------
+WE also have to deal with the scenario:
+  cell<..>@w2 |- cell<..>@w3 ---> cell<..>@w1
+This is currently represented by a residue
+cell<..>::@[w2-w3]
+
+w3
+To make it uniform, we can re-present it as:
+  w1=w2-w3  & w2<:w3
+
+If we had:
+  w1=w2-@L & w2<:@L
+Possible values are:
+  w1=w2 & (w1=@M | w1=@L)
+
+
+If we had:
+  w1=w2-@M & w2<:@M
+Possible values are:
+  w2=@M & w1=@A
+
+
+If we had:
+  w1=w2-@A & w2<:@A
+Possible values are:
+  w1=w2
+
+Thus, if we have a general scenario:
+ w1=w2-w3
+
+We can simply reduce it to: 
+  w1=w2 & (w1=@M | w1=@L) & w3=@L
+  or w2=@M & w1=@A & w3=@M
+  or w1=w2 & w3=@A
+
+This is somewhat different from w2=w1+w3.
+We cannot therefore say that
+  w1=w2-w3 <--> w1+w3=w2
+
+Lastly, if we had:
+  w1=w2-@frac{f3} & w2<:@frac{f3}
+We should have:
+  w1=@frac{f1} & w2=@frac{f2} & f1=f2-f3 & 0<=f2-f3<=1
+
+
+
+Of course @frac{0/_}=@A and @frac{1}=@M.
+-----------------------------------
+
+which is equivalent to:
+
+[RELDEFN Q: ( Q(b_1507) & (b_1507+@L)<:b_1463) -->  Q(b_1463),
+
+The point here is what is permitted for
+ I=@L-b1
+where @b1 is the annotation in the post-condition.
+
+Now b1 can either be @A, @M and @L. 
+
+It cannot be @M since @L-@M is invalid. 
+
+It cannot be @L since @L is not allowed in
+post-condition.
+
+Hence, it can only be @A. Using this instantiation,
+we would now obtain:
+
+ I=@L-@b1 & b1=@A & Q(b1) & I<:@b --> Q(b)
+ I<:@b --> Q(b)
+
+ With this we only have:
+   @L<:b  --> Q(b)
+
+ Doing a post-condition processing, we get:
+  Q(b) = b=@A
+
+We can check if this idea applies to loop-write..
 
 
 
