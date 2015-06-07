@@ -140,15 +140,16 @@ In the general case, we have:
 Lastly, if we had:
     v1=@frac{f3}+v2
 We should have:
-    v1=@frac{f1} & v2=@frac{f2} & f1=f3+f2 & 0<=f3+f2<=1
+    v1=@frac{f1} & v2=@frac{f2} & f1=f3+f2 //& 0<=f3+f2<=1
+By default @frac{f1} --> 0<=f1<=1
+
 --------------------------------
-WE also have to deal with the scenario:
+We also have to deal with the scenario:
   cell<..>@w2 |- cell<..>@w3 ---> cell<..>@w1
 This is currently represented by a residue
 cell<..>::@[w2-w3]
 
-w3
-To make it uniform, we can re-present it as:
+To make it uniform, we can represent it as:
   w1=w2-w3  & w2<:w3
 
 If we had:
@@ -185,7 +186,25 @@ Lastly, if we had:
 We should have:
   w1=@frac{f1} & w2=@frac{f2} & f1=f2-f3 & 0<=f2-f3<=1
 
+---------
+Comparing addition and subtraction, we had:
 
+  w1=w2 & (w1=@M | w1=@L) & w3=@L
+  or w2=@M & w1=@A & w3=@M
+  or w1=w2 & w3=@A
+
+  v2=@L & v1=@L & v3=@A
+  or v2=@M & v1=@M & v3=@A
+  or v2=@A & v1=v3
+
+The main difference are:
+  @L-@L = @L
+  @M-@L = @M
+while:
+  @L+@L = false
+  @L+@A = @L
+  @M+@L = false
+  @M+@A = @M
 
 Of course @frac{0/_}=@A and @frac{1}=@M.
 -----------------------------------
@@ -227,6 +246,23 @@ Operation
 >> Addition
    v1=v2+v3   <-->  v1=min(v2,v3) & i=max(v2,v3) & @L<:i  
 
+
+   v1=v2+v3   <-->  v1=min(v2,v3) & @L<:max(v2,v3)
+   v1=@A+v3   <-->  v1=min(@A,v3) & @L<:max(@A,v3)
+   v1=@A+v3   <-->  v1=v3 & @L<:@A
+
+   v1=@L+v3   <-->  v1=min(@L,v3) & @L<:max(@L,v3)
+              <-->  v1=min(@L,v3) & @L<:max(@L,v3)
+
+Let v2=@M:
+   v1=v2+v3   <-->  v1=min(v2,v3) & @L<:max(v2,v3)
+   v1=@M+v3   <-->  v1=min(@M,v3) & @L<:max(@M,v3) 
+   v1=@M+v3   <-->  v1=@M & @L<:max(@M,v3) 
+As this allows v3 to be either @L or @A, I think
+the interpretation is more for subtraction; and
+do not reflect the addition process accurately. That
+is for addition, the property is actually:
+   v1=v2+v3    -->  v1=min(v2,v3) & @L<:max(v2,v3)
 
    v1    v2     v3      v1 = v2 + v3    v1=min(v2,v3)   i=max(v2,v3) & @L<:i    [v1=min(v2,v3) & i=max(v2,v3) & @L<:i]
    @M    @M     @M          False          True                 False                           False
