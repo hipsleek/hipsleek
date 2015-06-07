@@ -1,3 +1,5 @@
+#sleek_log_bll_ss.slk:
+
 longph@loris-7:~/workspace/baga/sleekex/baga/benchmark/sleek$ ../../../sleek sleek_log_bll_ss.slk --gen-smt
 !!! init_tp by default: 
 !!! Using z3
