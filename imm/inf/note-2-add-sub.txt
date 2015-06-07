@@ -219,5 +219,40 @@ we would now obtain:
 
 We can check if this idea applies to loop-write..
 
+----------------------------------------
 
+Operation
+
+
+>> Addition
+   v1=v2+v3   <-->  v1=min(v2,v3) & i=max(v2,v3) & @L<:i  
+
+
+   v1    v2     v3      v1 = v2 + v3    v1=min(v2,v3)   i=max(v2,v3) & @L<:i    [v1=min(v2,v3) & i=max(v2,v3) & @L<:i]
+   @M    @M     @M          False          True                 False                           False
+ # @M    @M     @L          True           True                 True                            True
+   @M    @M     @A          True           True                 True                            True
+   @M   @L/@A  @L/@A        False          False                True                            False
+   @L    @M     @M          False          False                False                           False
+   @L    @M    @L,@A        False          False                True                            False
+ # @L    @L     @L          True           True                 True                            True
+   @L    @L     @A          True           True                 True                            True
+   @L    @A     @A          False          False                True                            False
+   @A    @M     @M          False          False                False                           False
+   @A    @M    @L/@A        False          False                True                            False
+   @A    @L    @L/@A        False          False                True                            False
+   @A    @A     @A          True           True                 True                            True
+
+
+>> Merge     x::cell<>@v2 * x::cell<>@v3 -----> x::cell<>@v1
+   v1 = v2 + v3  &  @A = max(v2,v3) {& v1 = min(v2,v3)}    (* ensures one of the operands is @A - cuts back # cases *)
+                    ^^^^^^^^^^^^^^^
+>> Residue  x::cell<>@v1 |- x::cell<>@v3 -----> x::cell<>@v2 |- emp
+   v2 = v1 - v3   <-->  v1 = v2 + v3  (where v1 = min(v2,v3)  ensures that the subtype v1<:v3 holds *)
+
+Notes:
+i.  eqmax will never be sent to the prover/fixcalc as long as one of its operands is known. 
+(ex.:  @A=max(@M,v) --> v=@A  ;   @A=max(@A,v) --> true )
+ii. addition and min will be reduced to a var when one of the operands is @A
+(ex.:  v=@A+w --> v=w  ;   v=min(@A,w) --> v=w ;  )
 
