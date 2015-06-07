@@ -151,7 +151,9 @@ exists(l_1897:exists(s_1896:Anon_1762=s_1896 & s_1896=l_1897)) &
 exists(n_1895:n_1895=1)&{FLOW,(4,5)=__norm#E}[]
 
 ==================================================================
-# ex5c.slk --esl
+# ex5c.slk --esl -dre "heap_entail_conjunct"
+
+It seems that impl vars is empty ...
 
 # maybe can print the implicit vars
 
@@ -162,6 +164,38 @@ ho_vars: nothing?
 res:  1[
     emp&a=5 & b=a & Anon_14=Anon_13&{FLOW,(20,21)=__norm#E}[]
    ]
+
+# Below did not capture implicit vars bbb
+
+(==solver.ml#7181==)
+heap_entail_conjunct_helper#3@44@43@42@41@40@39@38
+heap_entail_conjunct_helper#3 inp1 :  x::node<a,Anon_13>&a=5&{FLOW,(20,21)=__norm#E}[]
+ es_heap(consumed): emp
+ es_gen_impl_vars: []
+ 
+heap_entail_conjunct_helper#3 inp2 : x::node<bbb,Anon_14>&0<bbb&{FLOW,(20,21)=__norm#E}[]
+heap_entail_conjunct_helper#3@44 EXIT: [
+   emp&a=5 & bbb=a & Anon_14=Anon_13&{FLOW,(20,21)=__norm#E}[]
+  es_heap(consumed): x::node<a,Anon_13>
+  es_gen_impl_vars: []
+  ]
+
+# implicit vars bbb for ex5d.slk
+
+(==solver.ml#7181==)
+heap_entail_conjunct_helper#3@4@3@2@1
+heap_entail_conjunct_helper#3 inp1 :  x::node<a,Anon_12>&a=5&{FLOW,(20,21)=__norm#E}[]
+ es_heap(consumed): emp
+ es_gen_impl_vars: [Anon_13; bbb]
+ es_gen_impl_vars: [Anon_13; bbb]
+ 
+heap_entail_conjunct_helper#3 inp2 : x::node<bbb,Anon_13>&0<bbb&{FLOW,(20,21)=__norm#E}[]
+heap_entail_conjunct_helper#3@4 EXIT: [
+   emp&a=5 & bbb=a & Anon_13=Anon_12&{FLOW,(20,21)=__norm#E}[]
+  es_heap(consumed): x::node<a,Anon_12>
+  es_gen_impl_vars: []
+  ]
+
 ==================================================================
 ==================================================================
 ==================================================================

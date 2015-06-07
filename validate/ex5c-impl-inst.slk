@@ -12,8 +12,8 @@ pred ll<n> == self = null & n = 0
 infer [] x::node<a,_> & a=5 |- true.
 print residue.
 expect Valid.
-expect_infer Valid R{x::node<b,_> & b>0}.
-expect_infer Fail R{x::node<b,_> & b>5}.
+expect_infer Valid R{x::node<bbb,_> & bbb>0}.
+//expect_infer Valid R{x::node<b,_> & b>5}.
 
 /*
 # ex5c.slk --esl
