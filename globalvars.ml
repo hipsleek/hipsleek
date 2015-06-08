@@ -1101,7 +1101,89 @@ let extend_proc (temp_procs : I.proc_decl list) (decl : I.proc_decl) : I.proc_de
   in
   { decl with I.proc_body = new_body }
 
-(** Translate an input program into an intermediate input program with global variables as parameters 
+(** Infer immutability annotation variables for one proc,
+    return the resulting proc and required rel declaration *)
+let infer_imm_ann_proc (proc: I.proc_decl) : (I.proc_decl * ((typ * ident) list)) =
+  let open Iformula in
+  let use_m = ref false in
+  let fresh =
+    let fn = ref (imm_var_prefix ^ "a") in
+    (fun loc -> let n = fresh_var_name !fn loc.start_pos.Lexing.pos_lnum in fn := n; n)
+  in
+  let assign_ann_or_var xs ann loc =
+    if ann= Ipure.NoAnn && !use_m then Ipure.ConstAnn (Mutable)
+    else (let f = (fresh loc, Unprimed) in (xs := (f::!xs); PolyAnn (f, loc)))
+  in
+  let rec ann_heap (h : h_formula) : (h_formula * (ident * primed) list) = match h with
+    | Phase hp ->
+       let (h1, lh1) = ann_heap hp.h_formula_phase_rd in
+       let (h2, lh2) = ann_heap hp.h_formula_phase_rw in
+       (Phase { hp with h_formula_phase_rd = h1; h_formula_phase_rw = h2 }, lh1@lh2)
+
+    | Conj hp ->
+       let (h1, lh1) = ann_heap hp.h_formula_conj_h1 in
+       let (h2, lh2) = ann_heap hp.h_formula_conj_h2 in
+       (Conj { hp with h_formula_conj_h1 = h1; h_formula_conj_h2 = h2 }, lh1@lh2)
+
+    | ConjStar hp ->
+       let (h1, lh1) = ann_heap hp.h_formula_conjstar_h1 in
+       let (h2, lh2) = ann_heap hp.h_formula_conjstar_h2 in
+       (ConjStar { hp with h_formula_conjstar_h1 = h1; h_formula_conjstar_h2 = h2 }, lh1@lh2)
+
+    | ConjConj hp ->
+       let (h1, lh1) = ann_heap hp.h_formula_conjconj_h1 in
+       let (h2, lh2) = ann_heap hp.h_formula_conjconj_h2 in
+       (ConjConj { hp with h_formula_conjconj_h1 = h1; h_formula_conjconj_h2 = h2 }, lh1@lh2)
+
+    | Star hp ->
+       let (h1, lh1) = ann_heap hp.h_formula_star_h1 in
+       let (h2, lh2) = ann_heap hp.h_formula_star_h2 in
+       (Star { hp with h_formula_star_h1 = h1; h_formula_star_h2 = h2 }, lh1@lh2)
+
+    | StarMinus hp ->
+       let (h1, lh1) = ann_heap hp.h_formula_starminus_h1 in
+       let (h2, lh2) = ann_heap hp.h_formula_starminus_h2 in
+       (StarMinus { hp with h_formula_starminus_h1 = h1; h_formula_starminus_h2 = h2 }, lh1@lh2)
+
+    | HeapNode hp ->
+       let loc = hp.h_formula_heap_pos in
+       let xs = ref [] in
+       (HeapNode
+         { hp with
+           h_formula_heap_imm = assign_ann_or_var xs hp.h_formula_heap_imm loc;
+           h_formula_heap_imm_param =
+             List.map (function None -> Some (assign_ann_or_var xs Ipure.NoAnn loc) | Some n -> Some n)
+                      hp.h_formula_heap_imm_param
+         }, !xs)
+
+    | HeapNode2 hp ->
+       let loc = hp.h_formula_heap2_pos in
+       let xs = ref [] in
+       (HeapNode2
+         { hp with
+           h_formula_heap2_imm = assign_ann_or_var xs hp.h_formula_heap2_imm loc;
+           h_formula_heap2_imm_param =
+             List.map (function None -> Some (assign_ann_or_var xs Ipure.NoAnn loc) | Some n -> Some n)
+                      hp.h_formula_heap2_imm_param
+         }, !xs)
+    | ((ThreadNode _) | (HRel _) | HTrue | HFalse | HEmp | (HVar _)) as h -> (h, [])
+  in
+  match proc with
+  | _ -> (proc, [])
+
+(** Infer immutability annotation variables for each heap elements in
+    every proc when @imm_pre and/or @imm_post is set.
+    @param prog current program declaration
+    @return new program declaration *)
+let infer_imm_ann (prog: I.prog_decl) : I.prog_decl = prog
+
+
+let infer_imm_ann (prog : I.prog_decl) : I.prog_decl =
+  let pr = Iprinter.string_of_program in
+  Debug.no_1 "infer_imm_ann" pr pr 
+    infer_imm_ann prog
+
+(** Translate an input program into an intermediate input program with global variables as parameters
     	@param prog current program declaration
     	@return new program declaration *)
 let trans_global_to_param (prog : I.prog_decl) : I.prog_decl =
@@ -1115,7 +1197,7 @@ let trans_global_to_param (prog : I.prog_decl) : I.prog_decl =
       let new_proc_decls = List.map (extend_proc temp_decls2) temp_decls2 in
       { prog with I.prog_proc_decls = new_proc_decls }
   in
-  new_prog
+  infer_imm_ann new_prog
 
 let trans_global_to_param (prog : I.prog_decl) : I.prog_decl =
   let pr = Iprinter.string_of_program in

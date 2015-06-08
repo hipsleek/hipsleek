@@ -250,6 +250,7 @@ let is_type_var t =
 
 
 let imm_var_sufix = "_imm"
+let imm_var_prefix = "imm"
 
 let is_program_pointer (name:ident) = 
   let slen = (String.length name) in

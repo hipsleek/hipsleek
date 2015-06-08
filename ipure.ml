@@ -663,7 +663,6 @@ and fresh_var (sv : (ident*primed)):(ident*primed) =
 
 and fresh_vars (svs : (ident*primed) list):(ident*primed) list = List.map fresh_var svs
 
-
 and eq_var (f: (ident*primed))(t:(ident*primed)):bool = 
   ((String.compare (fst f) (fst t))==0) &&(snd f)==(snd t) 
 
