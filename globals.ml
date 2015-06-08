@@ -1398,6 +1398,8 @@ type infer_type =
   | INF_CLASSIC (* For infer[@leak] *)
   | INF_PAR (* For infer[@par] inside par *)
   | INF_VER_POST (* For infer[@ver_post] for post-checking *)
+  | INF_IMM_PRE (* For infer [@imm_pre] for inferring imm annotation on pre *)
+  | INF_IMM_POST (* For infer [@imm_post] for inferring imm annotation on post *)
 
 (* let int_to_inf_const x = *)
 (*   if x==0 then INF_TERM *)
@@ -1430,7 +1432,8 @@ let string_of_inf_const x =
   | INF_CLASSIC -> "@leak"
   | INF_PAR -> "@par"
   | INF_VER_POST -> "@ver_post"
-
+  | INF_IMM_PRE -> "@imm_pre"
+  | INF_IMM_POST -> "@imm_post"
 (* let inf_const_to_int x = *)
 (*   match x with *)
 (*   | INF_TERM -> 0 *)
