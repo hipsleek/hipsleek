@@ -9,7 +9,7 @@ relation P(ann v1).
 
 int foo2(cell c)
   infer [@imm_pre, P]
-  requires c::cell<v>@a & a=@M
+  requires c::cell<yyy>
 /* ensures c::cell<w>@b & P3(b,v,res,w)  ; */
   ensures c::cell<w>@b & P(b)   ;
 {

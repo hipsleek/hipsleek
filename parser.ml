@@ -904,7 +904,7 @@ and get_heap_ann_opt annl : P.ann option =
 and get_heap_ann_list annl : P.ann list  = 
   match annl with
     | (Some a) :: r -> a :: get_heap_ann_list r
-    |  None :: r ->  P.ConstAnn(Mutable) :: get_heap_ann_list r
+    |  None :: r ->  P.NoAnn :: get_heap_ann_list r
     | [] -> []
 
 let stmt_list_to_block t pos = 

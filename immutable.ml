@@ -667,6 +667,7 @@ let rec ann_opt_to_ann_lst (ann_opt_lst: Ipure.ann option list) (default_ann: Ip
 
 let iformula_ann_to_cformula_ann (iann : Ipure.ann) : CP.ann = 
   match iann with
+  | Ipure.NoAnn -> CP.NoAnn
   | Ipure.ConstAnn(x) -> CP.ConstAnn(x)
   | Ipure.PolyAnn((id,p), l) -> 
     CP.PolyAnn(CP.SpecVar (AnnT, id, p))
@@ -2226,6 +2227,7 @@ let collect_imm_from_struc_iformula sf data_name =
 let add_position_to_imm_ann (a: Ipure.ann) (vp_pos: (ident * int) list) = 
   let a_pos = 
     match a with
+    | Ipure.NoAnn -> (a,0)
     | Ipure.ConstAnn _        -> (a,0)
     | Ipure.PolyAnn ((v,_),_) -> 
       let ff p = if (String.compare (fst p) v == 0) then Some (a,snd p) else None in
