@@ -576,9 +576,9 @@ let print_residue residue =
 let process_list_lemma ldef_lst  =
   let lem_infer_fnct r1 r2 =
     let _ = begin
-      let rel_defs = if not (!Globals.pred_syn_modular) then
-          Sa2.rel_def_stk
-        else Cformula.rel_def_stk
+      let rel_defs = (* if not (!Globals.pred_syn_modular) then *)
+        (*   Sa2.rel_def_stk *)
+        (* else *) Cformula.rel_def_stk
       in
       if not(rel_defs# is_empty) then
         let defs0 = List.sort CF.hpdef_cmp (rel_defs # get_stk) in
@@ -1096,7 +1096,7 @@ let run_pairwise (iante0 : meta_formula) =
 let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let _ = CF.residues := None in
   let _ = Infer.rel_ass_stk # reset in
-  let _ = Sa2.rel_def_stk # reset in
+  (* let _ = Sa2.rel_def_stk # reset in *)
   let _ = CF.rel_def_stk # reset in
   let _ = Iast.set_iprog iprog in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline_quiet ("INPUT 6: \n ### 1 ante = " ^ (string_of_meta_formula iante0) ^"\n ### conseq = " ^ (string_of_meta_formula iconseq0)) else () in
@@ -1390,9 +1390,9 @@ let process_shape_infer pre_hps post_hps=
   in
   let ls_hprel, ls_inferred_hps,_ =
     if List.length sel_hps> 0 && List.length hp_lst_assume > 0 then
-      let infer_shape_fnc =  if not (!Globals.pred_syn_modular) then
-          Sa2.infer_shapes
-        else Sa3.infer_shapes (* Sa.infer_hps *)
+      let infer_shape_fnc =  (* if not (!Globals.pred_syn_modular) then *)
+        (*   Sa2.infer_shapes *)
+        (* else *) Sa3.infer_shapes (* Sa.infer_hps *)
       in
       infer_shape_fnc iprog !cprog "" constrs2
         sel_hps sel_post_hps unk_map unk_hpargs link_hpargs true false (!norm_flow_int)
@@ -1400,9 +1400,9 @@ let process_shape_infer pre_hps post_hps=
   in
   let _ =
     begin
-      let rel_defs = if not (!Globals.pred_syn_modular) then
-          Sa2.rel_def_stk
-        else CF.rel_def_stk
+      let rel_defs = (* if not (!Globals.pred_syn_modular) then *)
+        (*   Sa2.rel_def_stk *)
+        (* else *) CF.rel_def_stk
       in
       if not(rel_defs# is_empty) then
         let defs0 = List.sort CF.hpdef_cmp (rel_defs # get_stk) in
@@ -1783,75 +1783,75 @@ let process_shape_divide pre_hps post_hps=
   ()
 
 let process_shape_conquer sel_ids cond_paths=
-  let _ = Debug.ninfo_pprint "process_shape_conquer\n" no_pos in
-  let ls_pr_defs = !sleek_hprel_defns in
-  let link_hpargs = !sleek_hprel_unknown in
-  let (* defs *) _ =
-    (* if not (!Globals.pred_syn_modular) then *)
-    let orig_vars = List.fold_left (fun ls (_,d)-> ls@(CF.h_fv d.CF.def_lhs)) [] ls_pr_defs in
-    let sel_hps = List.map (fun v -> x_add_0 Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (sel_ids) in
-    let sel_hps  = List.filter (fun sv ->
-        let t = CP.type_of_spec_var sv in
-        ((* is_RelT t || *) is_HpT t )) sel_hps in
-    let ls_path_link = Sautil.dang_partition link_hpargs in
-    let ls_path_defs = Sautil.defn_partition ls_pr_defs in
-    (*pairing*)
-    let ls_path_link_defs = Sautil.pair_dang_constr_path ls_path_defs ls_path_link
-        (pr_list_ln Cprinter.string_of_hp_rel_def_short) in
-    let ls_path_defs_settings = List.map (fun (path,link_hpargs, defs) ->
-        (path, defs, [],link_hpargs,[])) ls_path_link_defs in
-    Sa2.infer_shapes_conquer iprog !cprog "" ls_path_defs_settings sel_hps
-    (* else *)
-    (*   Sa3.infer_shapes iprog !cprog "" constrs2 *)
-    (*       sel_hps sel_post_hps unk_map unk_hpargs link_hpargs true false *)
-  in
-  let _ =
-    begin
-      let rel_defs =  Sa2.rel_def_stk in
-      if not(rel_defs# is_empty) then
-        let defs = List.sort CF.hpdef_cmp (rel_defs # get_stk) in
-        print_endline_quiet "";
-        print_endline_quiet "\n*************************************";
-        print_endline_quiet "*******relational definition ********";
-        print_endline_quiet "*************************************";
-        (* print_endline (rel_defs # string_of_reverse); *)
-        let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
-        print_endline_quiet (pr1 defs);
-        print_endline_quiet "*************************************"
-    end
-  in
+  (* let _ = Debug.ninfo_pprint "process_shape_conquer\n" no_pos in *)
+  (* let ls_pr_defs = !sleek_hprel_defns in *)
+  (* let link_hpargs = !sleek_hprel_unknown in *)
+  (* let (\* defs *\) _ = *)
+  (*   (\* if not (!Globals.pred_syn_modular) then *\) *)
+  (*   let orig_vars = List.fold_left (fun ls (_,d)-> ls@(CF.h_fv d.CF.def_lhs)) [] ls_pr_defs in *)
+  (*   let sel_hps = List.map (fun v -> x_add_0 Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (sel_ids) in *)
+  (*   let sel_hps  = List.filter (fun sv -> *)
+  (*       let t = CP.type_of_spec_var sv in *)
+  (*       ((\* is_RelT t || *\) is_HpT t )) sel_hps in *)
+  (*   let ls_path_link = Sautil.dang_partition link_hpargs in *)
+  (*   let ls_path_defs = Sautil.defn_partition ls_pr_defs in *)
+  (*   (\*pairing*\) *)
+  (*   let ls_path_link_defs = Sautil.pair_dang_constr_path ls_path_defs ls_path_link *)
+  (*       (pr_list_ln Cprinter.string_of_hp_rel_def_short) in *)
+  (*   let ls_path_defs_settings = List.map (fun (path,link_hpargs, defs) -> *)
+  (*       (path, defs, [],link_hpargs,[])) ls_path_link_defs in *)
+  (*   Sa2.infer_shapes_conquer iprog !cprog "" ls_path_defs_settings sel_hps *)
+  (*   (\* else *\) *)
+  (*   (\*   Sa3.infer_shapes iprog !cprog "" constrs2 *\) *)
+  (*   (\*       sel_hps sel_post_hps unk_map unk_hpargs link_hpargs true false *\) *)
+  (* in *)
+  (* let _ = *)
+  (*   begin *)
+  (*     let rel_defs =  Sa2.rel_def_stk in *)
+  (*     if not(rel_defs# is_empty) then *)
+  (*       let defs = List.sort CF.hpdef_cmp (rel_defs # get_stk) in *)
+  (*       print_endline_quiet ""; *)
+  (*       print_endline_quiet "\n*************************************"; *)
+  (*       print_endline_quiet "*******relational definition ********"; *)
+  (*       print_endline_quiet "*************************************"; *)
+  (*       (\* print_endline (rel_defs # string_of_reverse); *\) *)
+  (*       let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in *)
+  (*       print_endline_quiet (pr1 defs); *)
+  (*       print_endline_quiet "*************************************" *)
+  (*   end *)
+  (* in *)
   ()
 
 let process_shape_postObl pre_hps post_hps=
-  let hp_lst_assume = !sleek_hprel_assumes in
-  let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
-    shape_infer_pre_process hp_lst_assume pre_hps post_hps
-  in
-  let grp_link_hpargs = Sautil.dang_partition link_hpargs in
-  let cond_path = [] in
-  let link_hpargs = match grp_link_hpargs with
-    | [] -> []
-    | (_, a)::_ -> a
-  in
-  let ls_inferred_hps, ls_hprel, _, _ =
-    if List.length sel_hps> 0 && List.length hp_lst_assume > 0 then
-      let infer_shape_fnc = Sa2.infer_shapes_from_fresh_obligation in
-      infer_shape_fnc iprog !cprog "" false cond_path constrs2 [] []
-        sel_hps sel_post_hps [] unk_hpargs link_hpargs true unk_map false
-        [] [] []
-    else [], [],[],[]
-  in
-  let _ = begin
-    if (ls_hprel <> []) then
-      let pr = pr_list_ln Cprinter.string_of_hp_rel_def in
-      print_endline_quiet "";
-      print_endline_quiet "\n************************************************";
-      print_endline_quiet "*******relational definition (obligation)********";
-      print_endline_quiet "**************************************************";
-      print_endline_quiet (pr ls_hprel);
-      print_endline_quiet "*************************************"
-  end
-  in
+  (* let hp_lst_assume = !sleek_hprel_assumes in *)
+  (* let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs= *)
+  (*   shape_infer_pre_process hp_lst_assume pre_hps post_hps *)
+  (* in *)
+  (* let grp_link_hpargs = Sautil.dang_partition link_hpargs in *)
+  (* let cond_path = [] in *)
+  (* let link_hpargs = match grp_link_hpargs with *)
+  (*   | [] -> [] *)
+  (*   | (_, a)::_ -> a *)
+  (* in *)
+  (* let ls_inferred_hps, ls_hprel, _, _ = *)
+  (*   if List.length sel_hps> 0 && List.length hp_lst_assume > 0 then *)
+  (*     let infer_shape_fnc = Sa2.infer_shapes_from_fresh_obligation in *)
+  (*     infer_shape_fnc iprog !cprog "" false cond_path constrs2 [] [] *)
+  (*       sel_hps sel_post_hps [] unk_hpargs link_hpargs true unk_map false *)
+  (*       [] [] [] *)
+  (*   else [], [],[],[] *)
+  (* in *)
+  (* let _ = begin *)
+  (*   if (ls_hprel <> []) then *)
+  (*     let pr = pr_list_ln Cprinter.string_of_hp_rel_def in *)
+  (*     print_endline_quiet ""; *)
+  (*     print_endline_quiet "\n************************************************"; *)
+  (*     print_endline_quiet "*******relational definition (obligation)********"; *)
+  (*     print_endline_quiet "**************************************************"; *)
+  (*     print_endline_quiet (pr ls_hprel); *)
+  (*     print_endline_quiet "*************************************" *)
+  (* end *)
+  (* in *)
   ()
 
 let process_shape_sconseq pre_hps post_hps=
@@ -1953,9 +1953,9 @@ let process_shape_infer_prop pre_hps post_hps=
     shape_infer_pre_process hp_lst_assume pre_hps post_hps
   in
   let ls_hprel, (* ls_inferred_hps *) _ ,_=
-    let infer_shape_fnc =  if not (!Globals.pred_syn_modular) then
-        Sa2.infer_shapes
-      else Sa3.infer_shapes (* Sa.infer_hps *)
+    let infer_shape_fnc =  (* if not (!Globals.pred_syn_modular) then *)
+      (*   Sa2.infer_shapes *)
+      (* else *) Sa3.infer_shapes (* Sa.infer_hps *)
     in
     infer_shape_fnc iprog !cprog "" hp_lst_assume
       sel_hps sel_post_hps unk_map unk_hpargs link_hpargs false false (!norm_flow_int)

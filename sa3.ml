@@ -3213,4 +3213,135 @@ let infer_shapes (iprog: Iast.prog_decl) (prog: Cast.prog_decl) (proc_name:ident
         need_preprocess detect_dang flow_int)
     proc_name hp_constrs sel_post_hp_rels hp_rel_unkmap unk_hpargs link_hpargs
 
+
+let check_horm_data_decl_x tmpl_data_decl data_decl=
+  (*subs type s= temp t, t into tmpl ptr fiels*)
+  let get_ptr ((t,id),_,b,_)=
+    if is_pointer t then
+      [(id,b)]
+    else []
+  in
+  let get_ptr_and_susbt (id1,id2) ((t,id),_,b,_)=
+    if is_pointer t then
+      if id = id1 then
+        [(id2,b)]
+      else [(id,b)]
+    else []
+  in
+  let rec eq_ordered_ids tmpl_idbs idbs=
+    match tmpl_idbs,idbs with
+    | [], [] -> true
+    | (id1,b1)::ids1,(id2,b2)::ids2 ->
+      if id1=id2 && b1=b2 then eq_ordered_ids ids1 ids2
+      else false
+    | _ -> false
+  in
+  let tmpl_idbs = List.concat (List.map (get_ptr_and_susbt
+                                           (tmpl_data_decl.Iast.data_name, data_decl.Iast.data_name))
+                                 tmpl_data_decl.Iast.data_fields) in
+  let idbs = List.concat (List.map get_ptr data_decl.Iast.data_fields) in
+  eq_ordered_ids tmpl_idbs idbs
+
+let check_horm_data_decl tmpl_data_decl data_decl=
+  let pr1 = Iprinter.string_of_data_decl in
+  Debug.no_2 "check_horm_data_decl" pr1 pr1 string_of_bool
+    (fun _ _ -> check_horm_data_decl_x tmpl_data_decl data_decl)
+    tmpl_data_decl data_decl
+
+let build_horm_view_x templ_view_decls horm_dd=
+  let look_up_views data_name vds=
+    let rec helper lvds res=
+      match lvds with
+      | [] -> res
+      | vd::ss ->
+        if vd.Iast.view_data_name = data_name then
+          helper ss (res@[vd])
+        else helper ss res
+    in
+    helper vds []
+  in
+  let generate_view ((tmp_data_name,tmp_data_fields),(data_name,data_fields))
+      view=
+    (*assume they have the same number of fields*)
+    let n_view_name = view.Iast.view_name ^ "_" ^ data_name in
+    let ss =
+      List.fold_left(fun a (c1,c2)-> ((c1,Unprimed),(c2,Unprimed))::((c1,Primed),(c2,Primed))::a) [] [(tmp_data_name,data_name);(view.Iast.view_name,n_view_name)] in
+    let n_view_invariant = Ipure.subst ss view.Iast.view_invariant in
+    let n_view_formula = Iformula.subst_w_data_name_struc ss view.Iast.view_formula in
+    let n_view_inv_lock =
+      match view.Iast.view_inv_lock with
+      | None -> None
+      | Some f -> Some (Iformula.subst ss f)
+    in
+    { Iast.view_name = n_view_name;
+      Iast.view_pos = no_pos;
+      Iast.view_data_name = data_name;
+      Iast.view_type_of_self = None;
+      Iast.view_vars = view.Iast.view_vars;
+      Iast.view_ho_vars = view.Iast.view_ho_vars;
+      Iast.view_imm_map = view.Iast.view_imm_map;
+      Iast.view_labels = view.Iast.view_labels;
+      Iast.view_modes = view.Iast.view_modes;
+      Iast.view_is_prim = view.Iast.view_is_prim;
+      Iast.view_kind = view.Iast.view_kind;
+      Iast.view_derv = view.Iast.view_derv;
+      Iast.view_parent_name = view.Iast.view_parent_name;
+      Iast.view_prop_extns = view.Iast.view_prop_extns;
+      Iast.view_derv_info = view.Iast.view_derv_info;
+      Iast.view_typed_vars = view.Iast.view_typed_vars;
+      Iast.view_invariant = n_view_invariant;
+      Iast.view_baga_inv = None;
+      Iast.view_baga_over_inv = None;
+      Iast.view_baga_under_inv = None;
+      Iast.view_mem = view.Iast.view_mem;
+      Iast.view_formula = n_view_formula;
+      Iast.view_inv_lock = n_view_inv_lock;
+      Iast.view_pt_by_self = view.Iast.view_pt_by_self;
+      Iast.try_case_inference = view.Iast.try_case_inference;
+      Iast.view_materialized_vars = view.Iast.view_materialized_vars;
+    }
+  in
+  let (tmp_data_name,tmp_data_fields),(data_name,data_fields) = horm_dd in
+  let cand_views = look_up_views tmp_data_name templ_view_decls in
+  List.map (generate_view horm_dd) cand_views
+
+let build_horm_view templ_view_decls horm_dd=
+  let pr1 = fun ((templ_data_name,_),(data_name,_)) -> (templ_data_name ^ ":" ^ data_name) in
+  let pr2 = pr_list_ln Iprinter.string_of_view_decl in
+  Debug.no_2 "build_horm_view" pr2 pr1 pr2
+    (fun _ _ ->  build_horm_view_x templ_view_decls horm_dd) templ_view_decls horm_dd
+
+let compute_view_data_name templ_ddefs templ_vdefs vdef=
+  let data_name =
+    if (String.length vdef.Iast.view_data_name) = 0 then
+      let (cands,_)= Iast.find_data_view vdef templ_ddefs no_pos in
+      (* let () = print_endline ("Feasible self type: " ^ (String.concat "," cands)) in *)
+      List.hd cands
+    else vdef.Iast.view_data_name
+  in
+  {vdef with Iast.view_data_name = data_name}
+
+(*generate horm view*)
+let generate_horm_view_x templ_data_decls templ_view_decls data_decls=
+  (*find horm*)
+  let find_horm_data_decl ldata_decls tmpl_data_decl=
+    let helper templ_data_decl data_decl=
+      if check_horm_data_decl tmpl_data_decl data_decl then
+        [((templ_data_decl.Iast.data_name,templ_data_decl.Iast.data_fields),
+          (data_decl.Iast.data_name,data_decl.Iast.data_fields))]
+      else []
+    in
+    List.concat (List.map (helper tmpl_data_decl) ldata_decls)
+  in
+  let horm_dds = List.concat (List.map (find_horm_data_decl data_decls) templ_data_decls) in
+  let new_templ_vdefs = List.map (compute_view_data_name templ_data_decls templ_view_decls) templ_view_decls in
+  List.concat (List.map (build_horm_view new_templ_vdefs) horm_dds)
+
+let generate_horm_view templ_data_decls templ_view_decls data_decls=
+  let pr1 = pr_list_ln Iprinter.string_of_data_decl in
+  let pr2 = pr_list_ln Iprinter.string_of_view_decl in
+  Debug.no_3 "generate_horm_view" pr1 pr2 pr1 pr2
+    (fun _ _ _ -> generate_horm_view_x templ_data_decls templ_view_decls data_decls) templ_data_decls templ_view_decls data_decls
+
+
 let () = Lemma.infer_shapes := infer_shapes

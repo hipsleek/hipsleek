@@ -3286,20 +3286,21 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
         else ()
       in
       let (a, hp_defs,c) =
-        if not (!Globals.pred_syn_modular) then
-          if not (!Globals.sa_dnc) then
-            let r1,r2,r3 = x_add Sa2.infer_shapes iprog prog (* proc.proc_name *)"" hprels
-                scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
-                                                (fun ((hp1,_),_) ((hp2, _),_) ->
-                                                   (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true flow_int
-            in (r1,r2,r3)
-          else
-            let todo_unk = x_add Sa2.infer_shapes_new iprog prog (* proc.proc_name *)"" hprels
-                scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
-                                                (fun ((hp1,_),_) ((hp2, _),_) ->
-                                                   (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true flow_int
-            in ([],[], [])
-        else
+        (* sa2 is no longer used. use sa3 module *)
+        (* if not (!Globals.pred_syn_modular) then *)
+        (*   if not (!Globals.sa_dnc) then *)
+        (*     let r1,r2,r3 = x_add Sa2.infer_shapes iprog prog (\* proc.proc_name *\)"" hprels *)
+        (*         scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq *)
+        (*                                         (fun ((hp1,_),_) ((hp2, _),_) -> *)
+        (*                                            (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true flow_int *)
+        (*     in (r1,r2,r3) *)
+        (*   else *)
+        (*     let todo_unk = x_add Sa2.infer_shapes_new iprog prog (\* proc.proc_name *\)"" hprels *)
+        (*         scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq *)
+        (*                                         (fun ((hp1,_),_) ((hp2, _),_) -> *)
+        (*                                            (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true flow_int *)
+        (*     in ([],[], []) *)
+        (* else *)
           Sa3.infer_shapes iprog prog proc.proc_name (* "" *) hprels
             scc_sel_hps0 scc_sel_post_hps (Gen.BList.remove_dups_eq
                                              (fun ((hp1,_),_) ((hp2, _),_) ->
@@ -3353,8 +3354,8 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
     (*   () *)
     (* else () *)
     (* in *)
-    let rel_defs = if not (!Globals.pred_syn_modular) then Sa2.rel_def_stk
-      else CF.rel_def_stk
+    let rel_defs =(*  if not (!Globals.pred_syn_modular) then Sa2.rel_def_stk *)
+      (* else *) CF.rel_def_stk
     in
     let inferred_hpdefs = (rel_defs# get_stk) in
     if (* !Globals.sae *) false && not(rel_defs# is_empty) (* && !VarGen.sap *) then
