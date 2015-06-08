@@ -11,20 +11,21 @@ data node {
   n2) & exists(max_31:n=1+max_31 & max_31=max(n1,n2)) & n_33=n)
   inv 0<=m & 0<=n.
 
- 
+/*
 // id: 0; line: 12; kind: Pred_Check_Inv
  checkentail emp&((self=null & m=0 & n=0) | (1<=n & 1<=m & self!=null))
  |-  emp&0<=n & 0<=m.
 expect Valid.
- 
+
 // id: 1; line: 12; kind: Pred_Check_Inv
  checkentail emp&((self=null & m=0 & n=0) | (1<=n & 1<=m & self!=null))
  |-  emp&0<=n & 0<=m.
 expect Valid.
- 
+*/
+
 // id: 2; line: 136; kind: BIND
  checkentail (exists n1,Anon,p,m1,n2,q,m2,n3,nx1: x'::node<Anon,n1,p,q> * 
-p::avl{}<m1,n2> * q::avl{}<m2,n3> * y::avl{}<my,nx1>&MayLoop[] & mx=m2+1+
+p::avl{}<m1,n2> * q::avl{}<m2,n3> * y::avl{}<my,nx1> & mx=m2+1+
 m1 & (0+n3)<=(n2+1) & n2<=(1+n3) & exists(max_31:nx=1+max_31 & max_31=max(n2,
 n3)) & n1=nx & x'=x & y'=y & x!=null & nx1=nx & v'=0)
  |-  x'::node<val',height',left',right'>@L.
@@ -32,7 +33,7 @@ expect Valid.
  
 // id: 4; line: 137; kind: PRE
  checkentail x'::node<Anon1,n6,p1,q1> * p1::avl{}<m4,n4> * q1::avl{}<m3,n5> * 
-y::avl{}<my,nx2>&MayLoop[] & v1'=1 & tmp'=n6 & mx=m3+1+m4 & (0+n5)<=(n4+1) & 
+y::avl{}<my,nx2> & v1'=1 & tmp'=n6 & mx=m3+1+m4 & (0+n5)<=(n4+1) & 
 n4<=(1+n5) & exists(max_31:nx=1+max_31 & max_31=max(n4,n5)) & n6=nx & x'=x & 
 y'=y & x!=null & nx2=nx & v'=0
  |-  htrue.
@@ -40,15 +41,15 @@ expect Valid.
  
 // id: 5; line: 137; kind: PRE
  checkentail x'::node<Anon1,n6,p1,q1> * p1::avl{}<m4,n4> * q1::avl{}<m3,n5> * 
-y::avl{}<my,nx2>&MayLoop[] & v1'=1 & tmp'=n6 & mx=m3+1+m4 & (0+n5)<=(n4+1) & 
+y::avl{}<my,nx2> & v1'=1 & tmp'=n6 & mx=m3+1+m4 & (0+n5)<=(n4+1) & 
 n4<=(1+n5) & exists(max_31:nx=1+max_31 & max_31=max(n4,n5)) & n6=nx & x'=x & 
 y'=y & x!=null & nx2=nx & v'=0
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
  
 // id: 6; line: 0; kind: POST
  checkentail (exists v',tmp': x'::node<Anon1,n6,p1,q1> * p1::avl{}<m4,n4> * 
-q1::avl{}<m3,n5> * y::avl{}<my,nx2> * v2'::node<v',tmp',x',y'>&MayLoop[] & 
+q1::avl{}<m3,n5> * y::avl{}<my,nx2> * v2'::node<v',tmp',x',y'> & 
 v'=0 & nx2=nx & x!=null & y'=y & x'=x & n6=nx & exists(max_31:nx=1+max_31 & 
 max_31=max(n4,n5)) & n4<=(1+n5) & (0+n5)<=(n4+1) & mx=m3+1+m4 & tmp=n6 & 
 tmp'=1+tmp & res=v2')
@@ -58,7 +59,7 @@ expect Valid.
  
 // id: 18; line: 149; kind: BIND
  checkentail (exists ny1: y::avl{}<my,ny> * z::avl{}<mz,ny1> * 
-x::node<Anon2,Anon3,Anon4,Anon5>&MayLoop[] & x'=x & y'=y & z'=z & y!=null & 
+x::node<Anon2,Anon3,Anon4,Anon5> & x'=x & y'=y & z'=z & y!=null & 
 ny1=ny)
  |-  x'::node<val1',height1',left1',right1'>.
 expect Valid.
@@ -72,7 +73,7 @@ expect Valid.
 // id: 22; line: 151; kind: BIND
  checkentail (exists n7,Anon6,p2,m5,n8,q2,m6,n9: y'::node<Anon6,n7,p2,q2> * 
 p2::avl{}<m5,n8> * q2::avl{}<m6,n9> * z::avl{}<mz,ny2> * 
-x'::node<Anon2,Anon3,y',z'>&MayLoop[] & right=Anon5 & left=Anon4 & x'=x & 
+x'::node<Anon2,Anon3,y',z'> & right=Anon5 & left=Anon4 & x'=x & 
 y'=y & z'=z & y!=null & ny2=ny & n7=ny & exists(max_31:ny=1+max_31 & 
 max_31=max(n8,n9)) & n8<=(1+n9) & (0+n9)<=(n8+1) & my=m6+1+m5)
  |-  y'::node<val3',height3',left3',right3'>@L.
@@ -80,7 +81,7 @@ expect Valid.
  
 // id: 24; line: 151; kind: PRE
  checkentail y'::node<Anon7,n10,p3,q3> * p3::avl{}<m8,n12> * q3::avl{}<m7,n11> * 
-z::avl{}<mz,ny2> * x'::node<Anon2,Anon3,y',z'>&MayLoop[] & v3'=1 & v4'=n10 & 
+z::avl{}<mz,ny2> * x'::node<Anon2,Anon3,y',z'> & v3'=1 & v4'=n10 & 
 right=Anon5 & left=Anon4 & x'=x & y'=y & z'=z & y!=null & ny2=ny & n10=ny & 
 exists(max_31:ny=1+max_31 & max_31=max(n12,n11)) & n12<=(1+n11) & (0+
 n11)<=(n12+1) & my=m7+1+m8
@@ -89,16 +90,16 @@ expect Valid.
  
 // id: 25; line: 151; kind: PRE
  checkentail y'::node<Anon7,n10,p3,q3> * p3::avl{}<m8,n12> * q3::avl{}<m7,n11> * 
-z::avl{}<mz,ny2> * x'::node<Anon2,Anon3,y',z'>&MayLoop[] & v3'=1 & v4'=n10 & 
+z::avl{}<mz,ny2> * x'::node<Anon2,Anon3,y',z'> & v3'=1 & v4'=n10 & 
 right=Anon5 & left=Anon4 & x'=x & y'=y & z'=z & y!=null & ny2=ny & n10=ny & 
 exists(max_31:ny=1+max_31 & max_31=max(n12,n11)) & n12<=(1+n11) & (0+
 n11)<=(n12+1) & my=m7+1+m8
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
  
 // id: 26; line: 151; kind: BIND
  checkentail y'::node<Anon7,n10,p3,q3> * p3::avl{}<m8,n12> * q3::avl{}<m7,n11> * 
-z::avl{}<mz,ny2> * x'::node<Anon2,Anon3,y',z'>&MayLoop[] & v5'=1+n10 & 
+z::avl{}<mz,ny2> * x'::node<Anon2,Anon3,y',z'> & v5'=1+n10 & 
 right=Anon5 & left=Anon4 & x'=x & y'=y & z'=z & y!=null & ny2=ny & n10=ny & 
 exists(max_31:ny=1+max_31 & max_31=max(n12,n11)) & n12<=(1+n11) & (0+
 n11)<=(n12+1) & my=m7+1+m8
@@ -107,67 +108,69 @@ expect Valid.
  
 // id: 28; line: 0; kind: POST
  checkentail (exists v5': y'::node<Anon7,n10,p3,q3> * p3::avl{}<m8,n12> * 
-q3::avl{}<m7,n11> * z::avl{}<mz,ny2> * x'::node<Anon2,v5',y',z'>&MayLoop[] & 
+q3::avl{}<m7,n11> * z::avl{}<mz,ny2> * x'::node<Anon2,v5',y',z'> & 
 height=Anon3 & v5'=1+n10 & right=Anon5 & left=Anon4 & x'=x & y'=y & z'=z & 
 y!=null & ny2=ny & n10=ny & exists(max_31:ny=1+max_31 & max_31=max(n12,
 n11)) & n12<=(1+n11) & (0+n11)<=(n12+1) & my=m7+1+m8)
  |-  (exists flted2,flted3: x::avl{}<flted3,flted2>&flted2=ny+1 & flted3=mz+1+
 my & 0<=mz & 0<=ny & 0<=my & exists(ny_70:0<=ny_70)).
 expect Valid.
- 
+
+/*
 // id: 40; line: 68; kind: PRE
- checkentail htrue&MayLoop[] & b'<=a' & b'=b & a'=a
- |-  emp&Term[].
+ checkentail htrue & b'<=a' & b'=b & a'=a
+ |-  emp.
 expect Valid.
- 
+
 // id: 41; line: 68; kind: PRE
- checkentail htrue&MayLoop[] & a'<b' & b'=b & a'=a
- |-  emp&Term[].
+ checkentail htrue & a'<b' & b'=b & a'=a
+ |-  emp.
 expect Valid.
- 
+
 // id: 42; line: 0; kind: POST
- checkentail htrue&MayLoop[] & res=a' & a'=a & b'=b & b'<=a' & v6'
+ checkentail htrue & res=a' & a'=a & b'=b & b'<=a' & v6'
  |-  emp&res=max(a,b).
 expect Valid.
- 
+
 // id: 43; line: 0; kind: POST
- checkentail htrue&MayLoop[] & res=b' & a'=a & b'=b & a'<b' & !(v6')
+ checkentail htrue & res=b' & a'=a & b'=b & a'<b' & !(v6')
  |-  emp&res=max(a,b).
 expect Valid.
- 
+*/
+
 // id: 44; line: 23; kind: PRE
- checkentail x::avl{}<m,n>&MayLoop[] & x'=null & x'=x
+ checkentail x::avl{}<m,n> & x'=null & x'=x
  |-  htrue.
 expect Valid.
- 
+
 // id: 45; line: 23; kind: PRE
- checkentail x::avl{}<m,n>&MayLoop[] & x'=null & x'=x
- |-  emp&Term[].
+ checkentail x::avl{}<m,n> & x'=null & x'=x
+ |-  emp.
 expect Valid.
- 
+
 // id: 46; line: 23; kind: PRE
- checkentail x::avl{}<m,n>&MayLoop[] & x'!=null & x'=x
+ checkentail x::avl{}<m,n> & x'!=null & x'=x
  |-  htrue.
 expect Valid.
- 
+
 // id: 47; line: 23; kind: PRE
- checkentail x::avl{}<m,n>&MayLoop[] & x'!=null & x'=x
- |-  emp&Term[].
+ checkentail x::avl{}<m,n> & x'!=null & x'=x
+ |-  emp.
 expect Valid.
- 
+
 // id: 48; line: 26; kind: BIND
  checkentail (exists n13,Anon8,p4,m9,n14,q4,m10,n15: x'::node<Anon8,n13,p4,q4> * 
-p4::avl{}<m9,n14> * q4::avl{}<m10,n15>&MayLoop[] & x'=x & x'!=null & 
+p4::avl{}<m9,n14> * q4::avl{}<m10,n15> & x'=x & x'!=null & 
 !(v7') & n13=n & exists(max_31:n=1+max_31 & max_31=max(n14,n15)) & n14<=(1+
 n15) & (0+n15)<=(n14+1) & m=m10+1+m9)
  |-  x'::node<val5',height5',left5',right5'>@L.
 expect Valid.
- 
+
 // id: 50; line: 0; kind: POST
- checkentail x::avl{}<m,n>&MayLoop[] & res=v8' & v8'=0 & x'=x & x'=null & v7'
+ checkentail x::avl{}<m,n> & res=v8' & v8'=0 & x'=x & x'=null & v7'
  |-  (exists m11,n16: x::avl{}<m11,n16>&n16=n & m11=m & res=n & 0<=n & 0<=m).
 expect Valid.
- 
+
 // id: 54; line: 0; kind: POST
  checkentail x'::node<Anon9,n17,p5,q5> * p5::avl{}<m13,n19> * q5::avl{}<m12,n18>&
 MayLoop[] & res=v9' & v9'=n17 & x'=x & x'!=null & !(v7') & n17=n & 
@@ -175,21 +178,21 @@ exists(max_31:n=1+max_31 & max_31=max(n19,n18)) & n19<=(1+n18) & (0+
 n18)<=(n19+1) & m=m12+1+m13
  |-  (exists m11,n16: x::avl{}<m11,n16>&n16=n & m11=m & res=n & 0<=n & 0<=m).
 expect Valid.
- 
+
 // id: 61; line: 86; kind: PRE
  checkentail (exists an1: a::avl{}<am,an> * b::avl{}<bm,bn> * c::avl{}<cm,cn> * 
-d::avl{}<dm,an1>&MayLoop[] & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & 
+d::avl{}<dm,an1> & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & 
 v3'=v3 & an=max(bn,cn) & (0+cn)<=(bn+1) & bn<=(1+cn) & an1=an)
  |-  a'::avl{}<m,n>.
 expect Valid.
- 
+
 // id: 63; line: 86; kind: PRE
- checkentail b::avl{}<bm,bn> * c::avl{}<cm,cn> * d::avl{}<dm,an2>&MayLoop[] & n=an & 
+ checkentail b::avl{}<bm,bn> * c::avl{}<cm,cn> * d::avl{}<dm,an2> & n=an & 
 m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,
 cn) & (0+cn)<=(bn+1) & bn<=(1+cn) & an2=an
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 64; line: 86; kind: PRE
  checkentail b::avl{}<bm,bn> * c::avl{}<cm,cn> * d::avl{}<dm,an2> * a'::avl{}<m,n>&
 MayLoop[] & 0<=n & 0<=m & v10'=n & 0<=an & 0<=am & n=an & m=am & a'=a & 
@@ -197,15 +200,15 @@ b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+cn)<=(bn+
 1) & bn<=(1+cn) & an2=an
  |-  b'::avl{}<m14,n20>.
 expect Valid.
- 
+
 // id: 66; line: 86; kind: PRE
- checkentail c::avl{}<cm,cn> * d::avl{}<dm,an2> * a'::avl{}<m,n>&MayLoop[] & n20=bn & 
+ checkentail c::avl{}<cm,cn> * d::avl{}<dm,an2> * a'::avl{}<m,n> & n20=bn & 
 m14=bm & 0<=n & 0<=m & v10'=n & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & 
 c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+cn)<=(bn+1) & 
 bn<=(1+cn) & an2=an
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 67; line: 86; kind: PRE
  checkentail c::avl{}<cm,cn> * d::avl{}<dm,an2> * a'::avl{}<m,n> * b'::avl{}<m14,n20>&
 MayLoop[] & 0<=n20 & 0<=m14 & v11'=n20 & 0<=bn & 0<=bm & n20=bn & m14=bm & 
@@ -214,16 +217,16 @@ d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+cn)<=(bn+1) & bn<=(1+
 cn) & an2=an
  |-  htrue.
 expect Valid.
- 
+
 // id: 68; line: 86; kind: PRE
  checkentail c::avl{}<cm,cn> * d::avl{}<dm,an2> * a'::avl{}<m,n> * b'::avl{}<m14,n20>&
 MayLoop[] & 0<=n20 & 0<=m14 & v11'=n20 & 0<=bn & 0<=bm & n20=bn & m14=bm & 
 0<=n & 0<=m & v10'=n & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & c'=c & 
 d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+cn)<=(bn+1) & bn<=(1+
 cn) & an2=an
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 69; line: 87; kind: PRE
  checkentail c::avl{}<cm,cn> * d::avl{}<dm,an2> * a'::avl{}<m,n> * b'::avl{}<m14,n20>&
 MayLoop[] & v12'=1 & h'=max(n,n20) & 0<=n20 & 0<=m14 & 0<=bn & 0<=bm & 
@@ -232,57 +235,57 @@ c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+cn)<=(bn+1) &
 bn<=(1+cn) & an2=an
  |-  htrue.
 expect Valid.
- 
+
 // id: 70; line: 87; kind: PRE
  checkentail c::avl{}<cm,cn> * d::avl{}<dm,an2> * a'::avl{}<m,n> * b'::avl{}<m14,n20>&
 MayLoop[] & v12'=1 & h'=max(n,n20) & 0<=n20 & 0<=m14 & 0<=bn & 0<=bm & 
 n20=bn & m14=bm & 0<=n & 0<=m & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & 
 c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+cn)<=(bn+1) & 
 bn<=(1+cn) & an2=an
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 71; line: 90; kind: PRE
  checkentail c::avl{}<cm,cn> * d::avl{}<dm,an2> * a'::avl{}<m,n> * b'::avl{}<m14,n20> * 
-tmp1'::node<v1',h',a',b'>&MayLoop[] & h'=1+h & h=max(n,n20) & 0<=n20 & 
+tmp1'::node<v1',h',a',b'> & h'=1+h & h=max(n,n20) & 0<=n20 & 
 0<=m14 & 0<=bn & 0<=bm & n20=bn & m14=bm & 0<=n & 0<=m & 0<=an & 0<=am & 
 n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & 
 an=max(bn,cn) & (0+cn)<=(bn+1) & bn<=(1+cn) & an2=an
  |-  c'::avl{}<m15,n21>.
 expect Valid.
- 
+
 // id: 73; line: 90; kind: PRE
  checkentail d::avl{}<dm,an2> * a'::avl{}<m,n> * b'::avl{}<m14,n20> * 
-tmp1'::node<v1',h',a',b'>&MayLoop[] & n21=cn & m15=cm & h'=1+h & h=max(n,
+tmp1'::node<v1',h',a',b'> & n21=cn & m15=cm & h'=1+h & h=max(n,
 n20) & 0<=n20 & 0<=m14 & 0<=bn & 0<=bm & n20=bn & m14=bm & 0<=n & 0<=m & 
 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & 
 v3'=v3 & an=max(bn,cn) & (0+cn)<=(bn+1) & bn<=(1+cn) & an2=an
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 74; line: 90; kind: PRE
  checkentail d::avl{}<dm,an2> * a'::avl{}<m,n> * b'::avl{}<m14,n20> * 
-tmp1'::node<v1',h',a',b'> * c'::avl{}<m15,n21>&MayLoop[] & 0<=n21 & 0<=m15 & 
+tmp1'::node<v1',h',a',b'> * c'::avl{}<m15,n21> & 0<=n21 & 0<=m15 & 
 v13'=n21 & 0<=cn & 0<=cm & n21=cn & m15=cm & h'=1+h & h=max(n,n20) & 
 0<=n20 & 0<=m14 & 0<=bn & 0<=bm & n20=bn & m14=bm & 0<=n & 0<=m & 0<=an & 
 0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & 
 an=max(bn,cn) & (0+cn)<=(bn+1) & bn<=(1+cn) & an2=an
  |-  d'::avl{}<m16,n22>.
 expect Valid.
- 
+
 // id: 76; line: 90; kind: PRE
  checkentail tmp1'::node<v1',h',a',b'> * a'::avl{}<m,n> * b'::avl{}<m14,n20> * 
-c'::avl{}<m15,n21>&MayLoop[] & n22=an2 & m16=dm & 0<=n21 & 0<=m15 & 
+c'::avl{}<m15,n21> & n22=an2 & m16=dm & 0<=n21 & 0<=m15 & 
 v13'=n21 & 0<=cn & 0<=cm & n21=cn & m15=cm & h'=1+h & h=max(n,n20) & 
 0<=n20 & 0<=m14 & 0<=bn & 0<=bm & n20=bn & m14=bm & 0<=n & 0<=m & 0<=an & 
 0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & 
 an=max(bn,cn) & (0+cn)<=(bn+1) & bn<=(1+cn) & an2=an
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 77; line: 90; kind: PRE
  checkentail tmp1'::node<v1',h',a',b'> * a'::avl{}<m,n> * b'::avl{}<m14,n20> * 
-c'::avl{}<m15,n21> * d'::avl{}<m16,n22>&MayLoop[] & 0<=n22 & 0<=m16 & 
+c'::avl{}<m15,n21> * d'::avl{}<m16,n22> & 0<=n22 & 0<=m16 & 
 v14'=n22 & 0<=an2 & 0<=dm & n22=an2 & m16=dm & 0<=n21 & 0<=m15 & v13'=n21 & 
 0<=cn & 0<=cm & n21=cn & m15=cm & h'=1+h & h=max(n,n20) & 0<=n20 & 0<=m14 & 
 0<=bn & 0<=bm & n20=bn & m14=bm & 0<=n & 0<=m & 0<=an & 0<=am & n=an & 
@@ -290,21 +293,21 @@ m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,
 cn) & (0+cn)<=(bn+1) & bn<=(1+cn) & an2=an
  |-  htrue.
 expect Valid.
- 
+
 // id: 78; line: 90; kind: PRE
  checkentail tmp1'::node<v1',h',a',b'> * a'::avl{}<m,n> * b'::avl{}<m14,n20> * 
-c'::avl{}<m15,n21> * d'::avl{}<m16,n22>&MayLoop[] & 0<=n22 & 0<=m16 & 
+c'::avl{}<m15,n21> * d'::avl{}<m16,n22> & 0<=n22 & 0<=m16 & 
 v14'=n22 & 0<=an2 & 0<=dm & n22=an2 & m16=dm & 0<=n21 & 0<=m15 & v13'=n21 & 
 0<=cn & 0<=cm & n21=cn & m15=cm & h'=1+h & h=max(n,n20) & 0<=n20 & 0<=m14 & 
 0<=bn & 0<=bm & n20=bn & m14=bm & 0<=n & 0<=m & 0<=an & 0<=am & n=an & 
 m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,
 cn) & (0+cn)<=(bn+1) & bn<=(1+cn) & an2=an
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 79; line: 91; kind: PRE
  checkentail tmp1'::node<v1',h1,a',b'> * a'::avl{}<m,n> * b'::avl{}<m14,n20> * 
-c'::avl{}<m15,n21> * d'::avl{}<m16,n22>&MayLoop[] & v15'=1 & h'=max(n21,
+c'::avl{}<m15,n21> * d'::avl{}<m16,n22> & v15'=1 & h'=max(n21,
 n22) & 0<=n22 & 0<=m16 & 0<=an2 & 0<=dm & n22=an2 & m16=dm & 0<=n21 & 
 0<=m15 & 0<=cn & 0<=cm & n21=cn & m15=cm & h1=1+h & h=max(n,n20) & 0<=n20 & 
 0<=m14 & 0<=bn & 0<=bm & n20=bn & m14=bm & 0<=n & 0<=m & 0<=an & 0<=am & 
@@ -312,18 +315,18 @@ n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 &
 an=max(bn,cn) & (0+cn)<=(bn+1) & bn<=(1+cn) & an2=an
  |-  htrue.
 expect Valid.
- 
+
 // id: 80; line: 91; kind: PRE
  checkentail tmp1'::node<v1',h1,a',b'> * a'::avl{}<m,n> * b'::avl{}<m14,n20> * 
-c'::avl{}<m15,n21> * d'::avl{}<m16,n22>&MayLoop[] & v15'=1 & h'=max(n21,
+c'::avl{}<m15,n21> * d'::avl{}<m16,n22> & v15'=1 & h'=max(n21,
 n22) & 0<=n22 & 0<=m16 & 0<=an2 & 0<=dm & n22=an2 & m16=dm & 0<=n21 & 
 0<=m15 & 0<=cn & 0<=cm & n21=cn & m15=cm & h1=1+h & h=max(n,n20) & 0<=n20 & 
 0<=m14 & 0<=bn & 0<=bm & n20=bn & m14=bm & 0<=n & 0<=m & 0<=an & 0<=am & 
 n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & 
 an=max(bn,cn) & (0+cn)<=(bn+1) & bn<=(1+cn) & an2=an
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 81; line: 94; kind: PRE
  checkentail tmp1'::node<v1',h1,a',b'> * a'::avl{}<m,n> * b'::avl{}<m14,n20> * 
 c'::avl{}<m15,n21> * d'::avl{}<m16,n22> * tmp2'::node<v3',h',c',d'>&
@@ -335,7 +338,7 @@ v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+cn)<=(bn+1) & bn<=(1+cn) &
 an2=an
  |-  tmp1'::avl{}<m17,n23>.
 expect Valid.
- 
+
 // id: 88; line: 94; kind: PRE
  checkentail tmp2'::node<v3',h',c',d'> * c'::avl{}<m15,n21> * d'::avl{}<m16,n22>&
 MayLoop[] & h'=1+h2 & h2=max(n21,n22) & 0<=n22 & 0<=m16 & 0<=an2 & 0<=dm & 
@@ -347,12 +350,12 @@ an2=an & Anon10=v1' & p6=a' & q6=b' & m19=m & n24=n & m18=m14 & n25=n20 &
 n24<=(1+n25) & (0+n25)<=(n24+1) & (((h1=n24+1 & n25<=n24) | (h1=n25+1 & 
 n24<n25))) & h1=n23 & exists(max_31:n23=1+max_31 & max_31=max(n24,n25)) & 
 m17=m18+1+m19
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 89; line: 94; kind: PRE
  checkentail tmp2'::node<v3',h',c',d'> * c'::avl{}<m15,n21> * d'::avl{}<m16,n22> * 
-tmp1'::avl{}<m17,n23>&MayLoop[] & 0<=n23 & 0<=m17 & v16'=n23 & tmp1'!=null & 
+tmp1'::avl{}<m17,n23> & 0<=n23 & 0<=m17 & v16'=n23 & tmp1'!=null & 
 0<=n & 0<=m & 0<=n20 & 0<=m14 & h'=1+h2 & h2=max(n21,n22) & 0<=n22 & 
 0<=m16 & 0<=an2 & 0<=dm & n22=an2 & m16=dm & 0<=n21 & 0<=m15 & 0<=cn & 
 0<=cm & n21=cn & m15=cm & h1=1+h & h=max(n,n20) & 0<=bn & 0<=bm & n20=bn & 
@@ -363,9 +366,9 @@ n25) & (0+n25)<=(n24+1) & (((h1=n24+1 & n25<=n24) | (h1=n25+1 & n24<n25))) &
 h1=n23 & exists(max_31:n23=1+max_31 & max_31=max(n24,n25)) & m17=m18+1+m19
  |-  tmp2'::avl{}<m20,n26>.
 expect Valid.
- 
+
 // id: 96; line: 94; kind: PRE
- checkentail tmp1'::avl{}<m17,n23>&MayLoop[] & 0<=n23 & 0<=m17 & v16'=n23 & 
+ checkentail tmp1'::avl{}<m17,n23> & 0<=n23 & 0<=m17 & v16'=n23 & 
 tmp1'!=null & 0<=n & 0<=m & 0<=n20 & 0<=m14 & h'=1+h2 & h2=max(n21,n22) & 
 0<=n22 & 0<=m16 & 0<=an2 & 0<=dm & n22=an2 & m16=dm & 0<=n21 & 0<=m15 & 
 0<=cn & 0<=cm & n21=cn & m15=cm & h1=1+h & h=max(n,n20) & 0<=bn & 0<=bm & 
@@ -378,11 +381,11 @@ m17=m18+1+m19 & Anon11=v3' & p7=c' & q7=d' & m22=m15 & n27=n21 & m21=m16 &
 n28=n22 & n27<=(1+n28) & (0+n28)<=(n27+1) & (((h'=n27+1 & n28<=n27) | 
 (h'=n28+1 & n27<n28))) & h'=n26 & exists(max_31:n26=1+max_31 & 
 max_31=max(n27,n28)) & m20=m21+1+m22
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 97; line: 94; kind: PRE
- checkentail tmp1'::avl{}<m17,n23> * tmp2'::avl{}<m20,n26>&MayLoop[] & 0<=n26 & 0<=m20 & 
+ checkentail tmp1'::avl{}<m17,n23> * tmp2'::avl{}<m20,n26> & 0<=n26 & 0<=m20 & 
 v17'=n26 & tmp2'!=null & 0<=n21 & 0<=m15 & 0<=n22 & 0<=m16 & 0<=n23 & 
 0<=m17 & v16'=n23 & tmp1'!=null & 0<=n & 0<=m & 0<=n20 & 0<=m14 & h'=1+h2 & 
 h2=max(n21,n22) & 0<=an2 & 0<=dm & n22=an2 & m16=dm & 0<=cn & 0<=cm & 
@@ -397,9 +400,9 @@ n28) & (0+n28)<=(n27+1) & (((h'=n27+1 & n28<=n27) | (h'=n28+1 & n27<n28))) &
 h'=n26 & exists(max_31:n26=1+max_31 & max_31=max(n27,n28)) & m20=m21+1+m22
  |-  htrue.
 expect Valid.
- 
+
 // id: 98; line: 94; kind: PRE
- checkentail tmp1'::avl{}<m17,n23> * tmp2'::avl{}<m20,n26>&MayLoop[] & 0<=n26 & 0<=m20 & 
+ checkentail tmp1'::avl{}<m17,n23> * tmp2'::avl{}<m20,n26> & 0<=n26 & 0<=m20 & 
 v17'=n26 & tmp2'!=null & 0<=n21 & 0<=m15 & 0<=n22 & 0<=m16 & 0<=n23 & 
 0<=m17 & v16'=n23 & tmp1'!=null & 0<=n & 0<=m & 0<=n20 & 0<=m14 & h'=1+h2 & 
 h2=max(n21,n22) & 0<=an2 & 0<=dm & n22=an2 & m16=dm & 0<=cn & 0<=cm & 
@@ -412,11 +415,11 @@ exists(max_31:n23=1+max_31 & max_31=max(n24,n25)) & m17=m18+1+m19 &
 Anon11=v3' & p7=c' & q7=d' & m22=m15 & n27=n21 & m21=m16 & n28=n22 & n27<=(1+
 n28) & (0+n28)<=(n27+1) & (((h'=n27+1 & n28<=n27) | (h'=n28+1 & n27<n28))) & 
 h'=n26 & exists(max_31:n26=1+max_31 & max_31=max(n27,n28)) & m20=m21+1+m22
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 99; line: 95; kind: PRE
- checkentail tmp1'::avl{}<m17,n23> * tmp2'::avl{}<m20,n26>&MayLoop[] & v18'=1 & 
+ checkentail tmp1'::avl{}<m17,n23> * tmp2'::avl{}<m20,n26> & v18'=1 & 
 h'=max(n23,n26) & 0<=n26 & 0<=m20 & tmp2'!=null & 0<=n21 & 0<=m15 & 0<=n22 & 
 0<=m16 & 0<=n23 & 0<=m17 & tmp1'!=null & 0<=n & 0<=m & 0<=n20 & 0<=m14 & 
 h3=1+h2 & h2=max(n21,n22) & 0<=an2 & 0<=dm & n22=an2 & m16=dm & 0<=cn & 
@@ -431,9 +434,9 @@ n28) & (0+n28)<=(n27+1) & (((h3=n27+1 & n28<=n27) | (h3=n28+1 & n27<n28))) &
 h3=n26 & exists(max_31:n26=1+max_31 & max_31=max(n27,n28)) & m20=m21+1+m22
  |-  htrue.
 expect Valid.
- 
+
 // id: 100; line: 95; kind: PRE
- checkentail tmp1'::avl{}<m17,n23> * tmp2'::avl{}<m20,n26>&MayLoop[] & v18'=1 & 
+ checkentail tmp1'::avl{}<m17,n23> * tmp2'::avl{}<m20,n26> & v18'=1 & 
 h'=max(n23,n26) & 0<=n26 & 0<=m20 & tmp2'!=null & 0<=n21 & 0<=m15 & 0<=n22 & 
 0<=m16 & 0<=n23 & 0<=m17 & tmp1'!=null & 0<=n & 0<=m & 0<=n20 & 0<=m14 & 
 h3=1+h2 & h2=max(n21,n22) & 0<=an2 & 0<=dm & n22=an2 & m16=dm & 0<=cn & 
@@ -446,12 +449,12 @@ h1=n23 & exists(max_31:n23=1+max_31 & max_31=max(n24,n25)) & m17=m18+1+m19 &
 Anon11=v3' & p7=c' & q7=d' & m22=m15 & n27=n21 & m21=m16 & n28=n22 & n27<=(1+
 n28) & (0+n28)<=(n27+1) & (((h3=n27+1 & n28<=n27) | (h3=n28+1 & n27<n28))) & 
 h3=n26 & exists(max_31:n26=1+max_31 & max_31=max(n27,n28)) & m20=m21+1+m22
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 101; line: 0; kind: POST
  checkentail (exists tmp2',tmp1',h': tmp1'::avl{}<m17,n23> * tmp2'::avl{}<m20,n26> * 
-v19'::node<v2',h',tmp1',tmp2'>&MayLoop[] & m20=m21+1+m22 & 
+v19'::node<v2',h',tmp1',tmp2'> & m20=m21+1+m22 & 
 exists(max_31:n26=1+max_31 & max_31=max(n27,n28)) & h3=n26 & (((h3=n27+1 & 
 n28<=n27) | (h3=n28+1 & n27<n28))) & (0+n28)<=(n27+1) & n27<=(1+n28) & 
 n28=n22 & m21=m16 & n27=n21 & m22=m15 & q7=d' & p7=c' & Anon11=v3' & m17=m18+
@@ -469,21 +472,21 @@ h4=max(n23,n26) & h'=1+h4 & res=v19')
 3+am+cm & 0<=dm & 0<=cn & 0<=cm & 0<=bn & 0<=bm & 0<=an & 0<=am & 
 exists(an_97:0<=an_97)).
 expect Valid.
- 
+
 // id: 108; line: 111; kind: PRE
  checkentail (exists an3: a::avl{}<am,an> * b::avl{}<bm,bn> * c::avl{}<cm,cn> * 
-d::avl{}<dm,an3>&MayLoop[] & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & 
+d::avl{}<dm,an3> & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & 
 v3'=v3 & an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+bn) & an3=an)
  |-  a'::avl{}<m,n>.
 expect Valid.
- 
+
 // id: 110; line: 111; kind: PRE
- checkentail b::avl{}<bm,bn> * c::avl{}<cm,cn> * d::avl{}<dm,an4>&MayLoop[] & n=an & 
+ checkentail b::avl{}<bm,bn> * c::avl{}<cm,cn> * d::avl{}<dm,an4> & n=an & 
 m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,
 cn) & (0+bn)<=(cn+1) & cn<=(1+bn) & an4=an
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 111; line: 111; kind: PRE
  checkentail b::avl{}<bm,bn> * c::avl{}<cm,cn> * d::avl{}<dm,an4> * a'::avl{}<m,n>&
 MayLoop[] & 0<=n & 0<=m & v20'=n & 0<=an & 0<=am & n=an & m=am & a'=a & 
@@ -491,15 +494,15 @@ b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+bn)<=(cn+
 1) & cn<=(1+bn) & an4=an
  |-  b'::avl{}<m23,n29>.
 expect Valid.
- 
+
 // id: 113; line: 111; kind: PRE
- checkentail c::avl{}<cm,cn> * d::avl{}<dm,an4> * a'::avl{}<m,n>&MayLoop[] & n29=bn & 
+ checkentail c::avl{}<cm,cn> * d::avl{}<dm,an4> * a'::avl{}<m,n> & n29=bn & 
 m23=bm & 0<=n & 0<=m & v20'=n & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & 
 c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+bn)<=(cn+1) & 
 cn<=(1+bn) & an4=an
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 114; line: 111; kind: PRE
  checkentail c::avl{}<cm,cn> * d::avl{}<dm,an4> * a'::avl{}<m,n> * b'::avl{}<m23,n29>&
 MayLoop[] & 0<=n29 & 0<=m23 & v21'=n29 & 0<=bn & 0<=bm & n29=bn & m23=bm & 
@@ -508,16 +511,16 @@ d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+
 bn) & an4=an
  |-  htrue.
 expect Valid.
- 
+
 // id: 115; line: 111; kind: PRE
  checkentail c::avl{}<cm,cn> * d::avl{}<dm,an4> * a'::avl{}<m,n> * b'::avl{}<m23,n29>&
 MayLoop[] & 0<=n29 & 0<=m23 & v21'=n29 & 0<=bn & 0<=bm & n29=bn & m23=bm & 
 0<=n & 0<=m & v20'=n & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & c'=c & 
 d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+
 bn) & an4=an
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 116; line: 112; kind: PRE
  checkentail c::avl{}<cm,cn> * d::avl{}<dm,an4> * a'::avl{}<m,n> * b'::avl{}<m23,n29>&
 MayLoop[] & v22'=1 & h'=max(n,n29) & 0<=n29 & 0<=m23 & 0<=bn & 0<=bm & 
@@ -526,57 +529,57 @@ c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+bn)<=(cn+1) &
 cn<=(1+bn) & an4=an
  |-  htrue.
 expect Valid.
- 
+
 // id: 117; line: 112; kind: PRE
  checkentail c::avl{}<cm,cn> * d::avl{}<dm,an4> * a'::avl{}<m,n> * b'::avl{}<m23,n29>&
 MayLoop[] & v22'=1 & h'=max(n,n29) & 0<=n29 & 0<=m23 & 0<=bn & 0<=bm & 
 n29=bn & m23=bm & 0<=n & 0<=m & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & 
 c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+bn)<=(cn+1) & 
 cn<=(1+bn) & an4=an
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 118; line: 115; kind: PRE
  checkentail c::avl{}<cm,cn> * d::avl{}<dm,an4> * a'::avl{}<m,n> * b'::avl{}<m23,n29> * 
-tmp1'::node<v3',h',a',b'>&MayLoop[] & h'=1+h5 & h5=max(n,n29) & 0<=n29 & 
+tmp1'::node<v3',h',a',b'> & h'=1+h5 & h5=max(n,n29) & 0<=n29 & 
 0<=m23 & 0<=bn & 0<=bm & n29=bn & m23=bm & 0<=n & 0<=m & 0<=an & 0<=am & 
 n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & 
 an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+bn) & an4=an
  |-  c'::avl{}<m24,n30>.
 expect Valid.
- 
+
 // id: 120; line: 115; kind: PRE
  checkentail d::avl{}<dm,an4> * a'::avl{}<m,n> * b'::avl{}<m23,n29> * 
-tmp1'::node<v3',h',a',b'>&MayLoop[] & n30=cn & m24=cm & h'=1+h5 & h5=max(n,
+tmp1'::node<v3',h',a',b'> & n30=cn & m24=cm & h'=1+h5 & h5=max(n,
 n29) & 0<=n29 & 0<=m23 & 0<=bn & 0<=bm & n29=bn & m23=bm & 0<=n & 0<=m & 
 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & 
 v3'=v3 & an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+bn) & an4=an
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 121; line: 115; kind: PRE
  checkentail d::avl{}<dm,an4> * a'::avl{}<m,n> * b'::avl{}<m23,n29> * 
-tmp1'::node<v3',h',a',b'> * c'::avl{}<m24,n30>&MayLoop[] & 0<=n30 & 0<=m24 & 
+tmp1'::node<v3',h',a',b'> * c'::avl{}<m24,n30> & 0<=n30 & 0<=m24 & 
 v23'=n30 & 0<=cn & 0<=cm & n30=cn & m24=cm & h'=1+h5 & h5=max(n,n29) & 
 0<=n29 & 0<=m23 & 0<=bn & 0<=bm & n29=bn & m23=bm & 0<=n & 0<=m & 0<=an & 
 0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & 
 an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+bn) & an4=an
  |-  d'::avl{}<m25,n31>.
 expect Valid.
- 
+
 // id: 123; line: 115; kind: PRE
  checkentail tmp1'::node<v3',h',a',b'> * a'::avl{}<m,n> * b'::avl{}<m23,n29> * 
-c'::avl{}<m24,n30>&MayLoop[] & n31=an4 & m25=dm & 0<=n30 & 0<=m24 & 
+c'::avl{}<m24,n30> & n31=an4 & m25=dm & 0<=n30 & 0<=m24 & 
 v23'=n30 & 0<=cn & 0<=cm & n30=cn & m24=cm & h'=1+h5 & h5=max(n,n29) & 
 0<=n29 & 0<=m23 & 0<=bn & 0<=bm & n29=bn & m23=bm & 0<=n & 0<=m & 0<=an & 
 0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & 
 an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+bn) & an4=an
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 124; line: 115; kind: PRE
  checkentail tmp1'::node<v3',h',a',b'> * a'::avl{}<m,n> * b'::avl{}<m23,n29> * 
-c'::avl{}<m24,n30> * d'::avl{}<m25,n31>&MayLoop[] & 0<=n31 & 0<=m25 & 
+c'::avl{}<m24,n30> * d'::avl{}<m25,n31> & 0<=n31 & 0<=m25 & 
 v24'=n31 & 0<=an4 & 0<=dm & n31=an4 & m25=dm & 0<=n30 & 0<=m24 & v23'=n30 & 
 0<=cn & 0<=cm & n30=cn & m24=cm & h'=1+h5 & h5=max(n,n29) & 0<=n29 & 
 0<=m23 & 0<=bn & 0<=bm & n29=bn & m23=bm & 0<=n & 0<=m & 0<=an & 0<=am & 
@@ -584,21 +587,21 @@ n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 &
 an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+bn) & an4=an
  |-  htrue.
 expect Valid.
- 
+
 // id: 125; line: 115; kind: PRE
  checkentail tmp1'::node<v3',h',a',b'> * a'::avl{}<m,n> * b'::avl{}<m23,n29> * 
-c'::avl{}<m24,n30> * d'::avl{}<m25,n31>&MayLoop[] & 0<=n31 & 0<=m25 & 
+c'::avl{}<m24,n30> * d'::avl{}<m25,n31> & 0<=n31 & 0<=m25 & 
 v24'=n31 & 0<=an4 & 0<=dm & n31=an4 & m25=dm & 0<=n30 & 0<=m24 & v23'=n30 & 
 0<=cn & 0<=cm & n30=cn & m24=cm & h'=1+h5 & h5=max(n,n29) & 0<=n29 & 
 0<=m23 & 0<=bn & 0<=bm & n29=bn & m23=bm & 0<=n & 0<=m & 0<=an & 0<=am & 
 n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & 
 an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+bn) & an4=an
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 126; line: 116; kind: PRE
  checkentail tmp1'::node<v3',h6,a',b'> * a'::avl{}<m,n> * b'::avl{}<m23,n29> * 
-c'::avl{}<m24,n30> * d'::avl{}<m25,n31>&MayLoop[] & v25'=1 & h'=max(n30,
+c'::avl{}<m24,n30> * d'::avl{}<m25,n31> & v25'=1 & h'=max(n30,
 n31) & 0<=n31 & 0<=m25 & 0<=an4 & 0<=dm & n31=an4 & m25=dm & 0<=n30 & 
 0<=m24 & 0<=cn & 0<=cm & n30=cn & m24=cm & h6=1+h5 & h5=max(n,n29) & 
 0<=n29 & 0<=m23 & 0<=bn & 0<=bm & n29=bn & m23=bm & 0<=n & 0<=m & 0<=an & 
@@ -606,18 +609,18 @@ n31) & 0<=n31 & 0<=m25 & 0<=an4 & 0<=dm & n31=an4 & m25=dm & 0<=n30 &
 an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+bn) & an4=an
  |-  htrue.
 expect Valid.
- 
+
 // id: 127; line: 116; kind: PRE
  checkentail tmp1'::node<v3',h6,a',b'> * a'::avl{}<m,n> * b'::avl{}<m23,n29> * 
-c'::avl{}<m24,n30> * d'::avl{}<m25,n31>&MayLoop[] & v25'=1 & h'=max(n30,
+c'::avl{}<m24,n30> * d'::avl{}<m25,n31> & v25'=1 & h'=max(n30,
 n31) & 0<=n31 & 0<=m25 & 0<=an4 & 0<=dm & n31=an4 & m25=dm & 0<=n30 & 
 0<=m24 & 0<=cn & 0<=cm & n30=cn & m24=cm & h6=1+h5 & h5=max(n,n29) & 
 0<=n29 & 0<=m23 & 0<=bn & 0<=bm & n29=bn & m23=bm & 0<=n & 0<=m & 0<=an & 
 0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & 
 an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+bn) & an4=an
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 128; line: 119; kind: PRE
  checkentail tmp1'::node<v3',h6,a',b'> * a'::avl{}<m,n> * b'::avl{}<m23,n29> * 
 c'::avl{}<m24,n30> * d'::avl{}<m25,n31> * tmp2'::node<v1',h',c',d'>&
@@ -629,7 +632,7 @@ v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+bn) &
 an4=an
  |-  tmp1'::avl{}<m26,n32>.
 expect Valid.
- 
+
 // id: 135; line: 119; kind: PRE
  checkentail tmp2'::node<v1',h',c',d'> * c'::avl{}<m24,n30> * d'::avl{}<m25,n31>&
 MayLoop[] & h'=1+h7 & h7=max(n30,n31) & 0<=n31 & 0<=m25 & 0<=an4 & 0<=dm & 
@@ -641,12 +644,12 @@ an4=an & Anon12=v3' & p8=a' & q8=b' & m28=m & n33=n & m27=m23 & n34=n29 &
 n33<=(1+n34) & (0+n34)<=(n33+1) & (((h6=n33+1 & n34<=n33) | (h6=n34+1 & 
 n33<n34))) & h6=n32 & exists(max_31:n32=1+max_31 & max_31=max(n33,n34)) & 
 m26=m27+1+m28
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 136; line: 119; kind: PRE
  checkentail tmp2'::node<v1',h',c',d'> * c'::avl{}<m24,n30> * d'::avl{}<m25,n31> * 
-tmp1'::avl{}<m26,n32>&MayLoop[] & 0<=n32 & 0<=m26 & v26'=n32 & tmp1'!=null & 
+tmp1'::avl{}<m26,n32> & 0<=n32 & 0<=m26 & v26'=n32 & tmp1'!=null & 
 0<=n & 0<=m & 0<=n29 & 0<=m23 & h'=1+h7 & h7=max(n30,n31) & 0<=n31 & 
 0<=m25 & 0<=an4 & 0<=dm & n31=an4 & m25=dm & 0<=n30 & 0<=m24 & 0<=cn & 
 0<=cm & n30=cn & m24=cm & h6=1+h5 & h5=max(n,n29) & 0<=bn & 0<=bm & n29=bn & 
@@ -657,9 +660,9 @@ n34) & (0+n34)<=(n33+1) & (((h6=n33+1 & n34<=n33) | (h6=n34+1 & n33<n34))) &
 h6=n32 & exists(max_31:n32=1+max_31 & max_31=max(n33,n34)) & m26=m27+1+m28
  |-  tmp2'::avl{}<m29,n35>.
 expect Valid.
- 
+
 // id: 143; line: 119; kind: PRE
- checkentail tmp1'::avl{}<m26,n32>&MayLoop[] & 0<=n32 & 0<=m26 & v26'=n32 & 
+ checkentail tmp1'::avl{}<m26,n32> & 0<=n32 & 0<=m26 & v26'=n32 & 
 tmp1'!=null & 0<=n & 0<=m & 0<=n29 & 0<=m23 & h'=1+h7 & h7=max(n30,n31) & 
 0<=n31 & 0<=m25 & 0<=an4 & 0<=dm & n31=an4 & m25=dm & 0<=n30 & 0<=m24 & 
 0<=cn & 0<=cm & n30=cn & m24=cm & h6=1+h5 & h5=max(n,n29) & 0<=bn & 0<=bm & 
@@ -672,11 +675,11 @@ m26=m27+1+m28 & Anon13=v1' & p9=c' & q9=d' & m31=m24 & n36=n30 & m30=m25 &
 n37=n31 & n36<=(1+n37) & (0+n37)<=(n36+1) & (((h'=n36+1 & n37<=n36) | 
 (h'=n37+1 & n36<n37))) & h'=n35 & exists(max_31:n35=1+max_31 & 
 max_31=max(n36,n37)) & m29=m30+1+m31
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 144; line: 119; kind: PRE
- checkentail tmp1'::avl{}<m26,n32> * tmp2'::avl{}<m29,n35>&MayLoop[] & 0<=n35 & 0<=m29 & 
+ checkentail tmp1'::avl{}<m26,n32> * tmp2'::avl{}<m29,n35> & 0<=n35 & 0<=m29 & 
 v27'=n35 & tmp2'!=null & 0<=n30 & 0<=m24 & 0<=n31 & 0<=m25 & 0<=n32 & 
 0<=m26 & v26'=n32 & tmp1'!=null & 0<=n & 0<=m & 0<=n29 & 0<=m23 & h'=1+h7 & 
 h7=max(n30,n31) & 0<=an4 & 0<=dm & n31=an4 & m25=dm & 0<=cn & 0<=cm & 
@@ -691,9 +694,9 @@ n37) & (0+n37)<=(n36+1) & (((h'=n36+1 & n37<=n36) | (h'=n37+1 & n36<n37))) &
 h'=n35 & exists(max_31:n35=1+max_31 & max_31=max(n36,n37)) & m29=m30+1+m31
  |-  htrue.
 expect Valid.
- 
+
 // id: 145; line: 119; kind: PRE
- checkentail tmp1'::avl{}<m26,n32> * tmp2'::avl{}<m29,n35>&MayLoop[] & 0<=n35 & 0<=m29 & 
+ checkentail tmp1'::avl{}<m26,n32> * tmp2'::avl{}<m29,n35> & 0<=n35 & 0<=m29 & 
 v27'=n35 & tmp2'!=null & 0<=n30 & 0<=m24 & 0<=n31 & 0<=m25 & 0<=n32 & 
 0<=m26 & v26'=n32 & tmp1'!=null & 0<=n & 0<=m & 0<=n29 & 0<=m23 & h'=1+h7 & 
 h7=max(n30,n31) & 0<=an4 & 0<=dm & n31=an4 & m25=dm & 0<=cn & 0<=cm & 
@@ -706,11 +709,11 @@ h6=n32 & exists(max_31:n32=1+max_31 & max_31=max(n33,n34)) & m26=m27+1+m28 &
 Anon13=v1' & p9=c' & q9=d' & m31=m24 & n36=n30 & m30=m25 & n37=n31 & n36<=(1+
 n37) & (0+n37)<=(n36+1) & (((h'=n36+1 & n37<=n36) | (h'=n37+1 & n36<n37))) & 
 h'=n35 & exists(max_31:n35=1+max_31 & max_31=max(n36,n37)) & m29=m30+1+m31
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 146; line: 120; kind: PRE
- checkentail tmp1'::avl{}<m26,n32> * tmp2'::avl{}<m29,n35>&MayLoop[] & v28'=1 & 
+ checkentail tmp1'::avl{}<m26,n32> * tmp2'::avl{}<m29,n35> & v28'=1 & 
 h'=max(n32,n35) & 0<=n35 & 0<=m29 & tmp2'!=null & 0<=n30 & 0<=m24 & 0<=n31 & 
 0<=m25 & 0<=n32 & 0<=m26 & tmp1'!=null & 0<=n & 0<=m & 0<=n29 & 0<=m23 & 
 h8=1+h7 & h7=max(n30,n31) & 0<=an4 & 0<=dm & n31=an4 & m25=dm & 0<=cn & 
@@ -725,9 +728,9 @@ n37) & (0+n37)<=(n36+1) & (((h8=n36+1 & n37<=n36) | (h8=n37+1 & n36<n37))) &
 h8=n35 & exists(max_31:n35=1+max_31 & max_31=max(n36,n37)) & m29=m30+1+m31
  |-  htrue.
 expect Valid.
- 
+
 // id: 147; line: 120; kind: PRE
- checkentail tmp1'::avl{}<m26,n32> * tmp2'::avl{}<m29,n35>&MayLoop[] & v28'=1 & 
+ checkentail tmp1'::avl{}<m26,n32> * tmp2'::avl{}<m29,n35> & v28'=1 & 
 h'=max(n32,n35) & 0<=n35 & 0<=m29 & tmp2'!=null & 0<=n30 & 0<=m24 & 0<=n31 & 
 0<=m25 & 0<=n32 & 0<=m26 & tmp1'!=null & 0<=n & 0<=m & 0<=n29 & 0<=m23 & 
 h8=1+h7 & h7=max(n30,n31) & 0<=an4 & 0<=dm & n31=an4 & m25=dm & 0<=cn & 
@@ -740,12 +743,12 @@ h6=n32 & exists(max_31:n32=1+max_31 & max_31=max(n33,n34)) & m26=m27+1+m28 &
 Anon13=v1' & p9=c' & q9=d' & m31=m24 & n36=n30 & m30=m25 & n37=n31 & n36<=(1+
 n37) & (0+n37)<=(n36+1) & (((h8=n36+1 & n37<=n36) | (h8=n37+1 & n36<n37))) & 
 h8=n35 & exists(max_31:n35=1+max_31 & max_31=max(n36,n37)) & m29=m30+1+m31
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 148; line: 0; kind: POST
  checkentail (exists tmp2',tmp1',h': tmp1'::avl{}<m26,n32> * tmp2'::avl{}<m29,n35> * 
-v29'::node<v2',h',tmp1',tmp2'>&MayLoop[] & m29=m30+1+m31 & 
+v29'::node<v2',h',tmp1',tmp2'> & m29=m30+1+m31 & 
 exists(max_31:n35=1+max_31 & max_31=max(n36,n37)) & h8=n35 & (((h8=n36+1 & 
 n37<=n36) | (h8=n37+1 & n36<n37))) & (0+n37)<=(n36+1) & n36<=(1+n37) & 
 n37=n31 & m30=m25 & n36=n30 & m31=m24 & q9=d' & p9=c' & Anon13=v1' & m26=m27+
@@ -763,48 +766,48 @@ h9=max(n32,n35) & h'=1+h9 & res=v29')
 3+am+cm & 0<=dm & 0<=cn & 0<=cm & 0<=bn & 0<=bm & 0<=an & 0<=am & 
 exists(an_88:0<=an_88)).
 expect Valid.
- 
+
 // id: 155; line: 39; kind: PRE
  checkentail (exists ln1,flted8: l::avl{}<lm,ln> * rl::avl{}<rlm,ln1> * 
-rr::avl{}<rrm,flted8>&MayLoop[] & l'=l & rl'=rl & rr'=rr & flted8=1+ln & 
+rr::avl{}<rrm,flted8> & l'=l & rl'=rl & rr'=rr & flted8=1+ln & 
 ln1=ln & v'=10)
  |-  l'::avl{}<m,n>.
 expect Valid.
- 
+
 // id: 157; line: 39; kind: PRE
- checkentail rl::avl{}<rlm,ln2> * rr::avl{}<rrm,flted9>&MayLoop[] & n=ln & m=lm & l'=l & 
+ checkentail rl::avl{}<rlm,ln2> * rr::avl{}<rrm,flted9> & n=ln & m=lm & l'=l & 
 rl'=rl & rr'=rr & flted9=1+ln & ln2=ln & v'=10
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 158; line: 39; kind: PRE
- checkentail rl::avl{}<rlm,ln2> * rr::avl{}<rrm,flted9> * l'::avl{}<m,n>&MayLoop[] & 
+ checkentail rl::avl{}<rlm,ln2> * rr::avl{}<rrm,flted9> * l'::avl{}<m,n> & 
 v30'=1 & 0<=n & 0<=m & v31'=n & 0<=ln & 0<=lm & n=ln & m=lm & l'=l & 
 rl'=rl & rr'=rr & flted9=1+ln & ln2=ln & v'=10
  |-  htrue.
 expect Valid.
- 
+
 // id: 159; line: 39; kind: PRE
- checkentail rl::avl{}<rlm,ln2> * rr::avl{}<rrm,flted9> * l'::avl{}<m,n>&MayLoop[] & 
+ checkentail rl::avl{}<rlm,ln2> * rr::avl{}<rrm,flted9> * l'::avl{}<m,n> & 
 v30'=1 & 0<=n & 0<=m & v31'=n & 0<=ln & 0<=lm & n=ln & m=lm & l'=l & 
 rl'=rl & rr'=rr & flted9=1+ln & ln2=ln & v'=10
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 160; line: 41; kind: PRE
  checkentail rl::avl{}<rlm,ln2> * rr::avl{}<rrm,flted9> * l'::avl{}<m,n> * 
-tmp'::node<v',h',l',rl'>&MayLoop[] & v32'=1 & h'=1+n & 0<=n & 0<=m & 0<=ln & 
+tmp'::node<v',h',l',rl'> & v32'=1 & h'=1+n & 0<=n & 0<=m & 0<=ln & 
 0<=lm & n=ln & m=lm & l'=l & rl'=rl & rr'=rr & flted9=1+ln & ln2=ln & v'=10
  |-  htrue.
 expect Valid.
- 
+
 // id: 161; line: 41; kind: PRE
  checkentail rl::avl{}<rlm,ln2> * rr::avl{}<rrm,flted9> * l'::avl{}<m,n> * 
-tmp'::node<v',h',l',rl'>&MayLoop[] & v32'=1 & h'=1+n & 0<=n & 0<=m & 0<=ln & 
+tmp'::node<v',h',l',rl'> & v32'=1 & h'=1+n & 0<=n & 0<=m & 0<=ln & 
 0<=lm & n=ln & m=lm & l'=l & rl'=rl & rr'=rr & flted9=1+ln & ln2=ln & v'=10
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 162; line: 0; kind: POST
  checkentail (exists v',tmp',h': rl::avl{}<rlm,ln2> * rr::avl{}<rrm,flted9> * 
 l'::avl{}<m,n> * tmp'::node<v',h10,l',rl'> * v33'::node<v',h',tmp',rr'>&
@@ -814,50 +817,50 @@ n=ln & 0<=lm & 0<=ln & 0<=m & 0<=n & h10=1+n & h'=1+h10 & res=v33')
 flted11=rrm+lm+2+rlm & 0<=rrm & 0<=rlm & 0<=ln & 0<=lm & 
 exists(ln_120:0<=ln_120) & exists(flted_32_119:0<=flted_32_119)).
 expect Valid.
- 
+
 // id: 174; line: 56; kind: PRE
  checkentail (exists flted12,flted13: ll::avl{}<llm,lln> * lr::avl{}<lrm,flted13> * 
-r::avl{}<rm,flted12>&MayLoop[] & ll'=ll & lr'=lr & r'=r & flted13+1=lln & 
+r::avl{}<rm,flted12> & ll'=ll & lr'=lr & r'=r & flted13+1=lln & 
 flted12+1=lln & v'=10)
  |-  r'::avl{}<m,n>.
 expect Valid.
- 
+
 // id: 176; line: 56; kind: PRE
- checkentail ll::avl{}<llm,lln> * lr::avl{}<lrm,flted14>&MayLoop[] & n=flted15 & m=rm & 
+ checkentail ll::avl{}<llm,lln> * lr::avl{}<lrm,flted14> & n=flted15 & m=rm & 
 ll'=ll & lr'=lr & r'=r & flted14+1=lln & flted15+1=lln & v'=10
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 177; line: 56; kind: PRE
- checkentail ll::avl{}<llm,lln> * lr::avl{}<lrm,flted14> * r'::avl{}<m,n>&MayLoop[] & 
+ checkentail ll::avl{}<llm,lln> * lr::avl{}<lrm,flted14> * r'::avl{}<m,n> & 
 v34'=1 & 0<=n & 0<=m & v35'=n & 0<=flted15 & 0<=rm & n=flted15 & m=rm & 
 ll'=ll & lr'=lr & r'=r & flted14+1=lln & flted15+1=lln & v'=10
  |-  htrue.
 expect Valid.
- 
+
 // id: 178; line: 56; kind: PRE
- checkentail ll::avl{}<llm,lln> * lr::avl{}<lrm,flted14> * r'::avl{}<m,n>&MayLoop[] & 
+ checkentail ll::avl{}<llm,lln> * lr::avl{}<lrm,flted14> * r'::avl{}<m,n> & 
 v34'=1 & 0<=n & 0<=m & v35'=n & 0<=flted15 & 0<=rm & n=flted15 & m=rm & 
 ll'=ll & lr'=lr & r'=r & flted14+1=lln & flted15+1=lln & v'=10
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 179; line: 58; kind: PRE
  checkentail ll::avl{}<llm,lln> * lr::avl{}<lrm,flted14> * r'::avl{}<m,n> * 
-tmp'::node<v',h',lr',r'>&MayLoop[] & v36'=1 & h'=1+n & 0<=n & 0<=m & 
+tmp'::node<v',h',lr',r'> & v36'=1 & h'=1+n & 0<=n & 0<=m & 
 0<=flted15 & 0<=rm & n=flted15 & m=rm & ll'=ll & lr'=lr & r'=r & flted14+
 1=lln & flted15+1=lln & v'=10
  |-  htrue.
 expect Valid.
- 
+
 // id: 180; line: 58; kind: PRE
  checkentail ll::avl{}<llm,lln> * lr::avl{}<lrm,flted14> * r'::avl{}<m,n> * 
-tmp'::node<v',h',lr',r'>&MayLoop[] & v36'=1 & h'=1+n & 0<=n & 0<=m & 
+tmp'::node<v',h',lr',r'> & v36'=1 & h'=1+n & 0<=n & 0<=m & 
 0<=flted15 & 0<=rm & n=flted15 & m=rm & ll'=ll & lr'=lr & r'=r & flted14+
 1=lln & flted15+1=lln & v'=10
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 181; line: 0; kind: POST
  checkentail (exists v',tmp',h': ll::avl{}<llm,lln> * lr::avl{}<lrm,flted14> * 
 r'::avl{}<m,n> * tmp'::node<v',h11,lr',r'> * v37'::node<v',h',ll',tmp'>&
@@ -868,69 +871,69 @@ res=v37')
 flted17=rm+llm+2+lrm & 0<=rm & 0<=lrm & 0<=lln & 0<=llm & 
 exists(flted_49_108:0<=flted_49_108) & exists(flted_49_109:0<=flted_49_109)).
 expect Valid.
- 
+
 // id: 193; line: 165; kind: PRE
- checkentail x::avl{}<m,n>&MayLoop[] & x'=null & tmp1'=null & a'=a & x'=x
+ checkentail x::avl{}<m,n> & x'=null & tmp1'=null & a'=a & x'=x
  |-  htrue.
 expect Valid.
- 
+
 // id: 194; line: 165; kind: PRE
- checkentail x::avl{}<m,n>&MayLoop[] & x'=null & tmp1'=null & a'=a & x'=x
- |-  emp&Term[].
+ checkentail x::avl{}<m,n> & x'=null & tmp1'=null & a'=a & x'=x
+ |-  emp.
 expect Valid.
- 
+
 // id: 195; line: 165; kind: PRE
- checkentail x::avl{}<m,n>&MayLoop[] & x'!=null & tmp1'=null & a'=a & x'=x
+ checkentail x::avl{}<m,n> & x'!=null & tmp1'=null & a'=a & x'=x
  |-  htrue.
 expect Valid.
- 
+
 // id: 196; line: 165; kind: PRE
- checkentail x::avl{}<m,n>&MayLoop[] & x'!=null & tmp1'=null & a'=a & x'=x
- |-  emp&Term[].
+ checkentail x::avl{}<m,n> & x'!=null & tmp1'=null & a'=a & x'=x
+ |-  emp.
 expect Valid.
- 
+
 // id: 197; line: 169; kind: BIND
  checkentail (exists n38,Anon14,p10,m32,n39,q10,m33,n40: x'::node<Anon14,n38,p10,q10> * 
-p10::avl{}<m32,n39> * q10::avl{}<m33,n40>&MayLoop[] & x'=x & a'=a & 
+p10::avl{}<m32,n39> * q10::avl{}<m33,n40> & x'=x & a'=a & 
 tmp1'=null & x'!=null & !(v38') & n38=n & exists(max_31:n=1+max_31 & 
 max_31=max(n39,n40)) & n39<=(1+n40) & (0+n40)<=(n39+1) & m=m33+1+m32)
  |-  x'::node<xval',xheight',xleft',xright'>.
 expect Valid.
- 
+
 // id: 199; line: 170; kind: PRE
- checkentail p11::avl{}<m35,n41> * q11::avl{}<m34,n42>&MayLoop[] & m=m34+1+m35 & (0+
+ checkentail p11::avl{}<m35,n41> * q11::avl{}<m34,n42> & m=m34+1+m35 & (0+
 n42)<=(n41+1) & n41<=(1+n42) & exists(max_31:n=1+max_31 & max_31=max(n41,
 n42)) & n43=n & !(v38') & x'!=null & tmp1'=null & a'=a & x'=x & 
 xval'=Anon15 & xheight'=n43 & xleft'=p11 & xright'=q11 & a'<=xval'
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 200; line: 170; kind: PRE
- checkentail p11::avl{}<m35,n41> * q11::avl{}<m34,n42>&MayLoop[] & m=m34+1+m35 & (0+
+ checkentail p11::avl{}<m35,n41> * q11::avl{}<m34,n42> & m=m34+1+m35 & (0+
 n42)<=(n41+1) & n41<=(1+n42) & exists(max_31:n=1+max_31 & max_31=max(n41,
 n42)) & n43=n & !(v38') & x'!=null & tmp1'=null & a'=a & x'=x & 
 xval'=Anon15 & xheight'=n43 & xleft'=p11 & xright'=q11 & xval'<a'
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 201; line: 173; kind: PRE_REC
- checkentail p11::avl{}<m35,n41> * q11::avl{}<m34,n42>&MayLoop[] & tmp'=xleft' & 
+ checkentail p11::avl{}<m35,n41> * q11::avl{}<m34,n42> & tmp'=xleft' & 
 xright'=q11 & xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
 tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
 max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
 a'<=xval' & v39'
  |-  tmp'::avl{}<m36,n44>.
 expect Valid.
- 
+
 // id: 203; line: 173; kind: PRE_REC
- checkentail q11::avl{}<m34,n42>&MayLoop[] & n44=n41 & m36=m35 & tmp'=xleft' & 
+ checkentail q11::avl{}<m34,n42> & n44=n41 & m36=m35 & tmp'=xleft' & 
 xright'=q11 & xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
 tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
 max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
 a'<=xval' & v39'
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 204; line: 175; kind: PRE
  checkentail (exists flted18,Anon16: xleft'::avl{}<flted18,Anon16> * q11::avl{}<m34,n42>&
 MayLoop[] & 0<=n44 & 0<=m36 & flted18=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & 
@@ -940,19 +943,19 @@ exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+n42) & (0+
 n42)<=(n41+1) & m=m34+1+m35 & a'<=xval' & v39')
  |-  xleft'::avl{}<m37,n45>.
 expect Valid.
- 
+
 // id: 206; line: 175; kind: PRE
- checkentail q11::avl{}<m34,n42>&MayLoop[] & n45=Anon17 & m37=flted19 & 0<=n44 & 
+ checkentail q11::avl{}<m34,n42> & n45=Anon17 & m37=flted19 & 0<=n44 & 
 0<=m36 & flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & m36=m35 & tmp'=xleft & 
 xright'=q11 & xleft=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
 tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
 max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
 a'<=xval' & v39'
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 207; line: 175; kind: PRE
- checkentail xleft'::avl{}<m37,n45> * q11::avl{}<m34,n42>&MayLoop[] & 0<=n45 & 0<=m37 & 
+ checkentail xleft'::avl{}<m37,n45> * q11::avl{}<m34,n42> & 0<=n45 & 0<=m37 & 
 v40'=n45 & 0<=Anon17 & 0<=flted19 & n45=Anon17 & m37=flted19 & 0<=n44 & 
 0<=m36 & flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & m36=m35 & tmp'=xleft & 
 xright'=q11 & xleft=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
@@ -961,20 +964,20 @@ max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 &
 a'<=xval' & v39'
  |-  xright'::avl{}<m38,n46>.
 expect Valid.
- 
+
 // id: 209; line: 175; kind: PRE
- checkentail xleft'::avl{}<m37,n45>&MayLoop[] & n46=n42 & m38=m34 & 0<=n45 & 0<=m37 & 
+ checkentail xleft'::avl{}<m37,n45> & n46=n42 & m38=m34 & 0<=n45 & 0<=m37 & 
 v40'=n45 & 0<=Anon17 & 0<=flted19 & n45=Anon17 & m37=flted19 & 0<=n44 & 
 0<=m36 & flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & m36=m35 & tmp'=xleft & 
 xright'=q11 & xleft=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
 tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
 max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
 a'<=xval' & v39'
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 210; line: 175; kind: PRE
- checkentail xleft'::avl{}<m37,n45> * xright'::avl{}<m38,n46>&MayLoop[] & 0<=n46 & 
+ checkentail xleft'::avl{}<m37,n45> * xright'::avl{}<m38,n46> & 0<=n46 & 
 0<=m38 & v41'=n46 & 0<=n42 & 0<=m34 & n46=n42 & m38=m34 & 0<=n45 & 0<=m37 & 
 v40'=n45 & 0<=Anon17 & 0<=flted19 & n45=Anon17 & m37=flted19 & 0<=n44 & 
 0<=m36 & flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & m36=m35 & tmp'=xleft & 
@@ -984,9 +987,9 @@ max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 &
 a'<=xval' & v39'
  |-  htrue.
 expect Valid.
- 
+
 // id: 211; line: 175; kind: PRE
- checkentail xleft'::avl{}<m37,n45> * xright'::avl{}<m38,n46>&MayLoop[] & 0<=n46 & 
+ checkentail xleft'::avl{}<m37,n45> * xright'::avl{}<m38,n46> & 0<=n46 & 
 0<=m38 & v41'=n46 & 0<=n42 & 0<=m34 & n46=n42 & m38=m34 & 0<=n45 & 0<=m37 & 
 v40'=n45 & 0<=Anon17 & 0<=flted19 & n45=Anon17 & m37=flted19 & 0<=n44 & 
 0<=m36 & flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & m36=m35 & tmp'=xleft & 
@@ -994,11 +997,11 @@ xright'=q11 & xleft=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a &
 tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
 max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
 a'<=xval' & v39'
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 212; line: 175; kind: PRE
- checkentail xleft'::avl{}<m37,n45> * xright'::avl{}<m38,n46>&MayLoop[] & v39' & 
+ checkentail xleft'::avl{}<m37,n45> * xright'::avl{}<m38,n46> & v39' & 
 a'<=xval' & m=m34+1+m35 & (0+n42)<=(n41+1) & n41<=(1+n42) & 
 exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n43=n & !(v38') & 
 x'!=null & tmp1'=null & a'=a & x'=x & xval'=Anon15 & xheight'=n43 & 
@@ -1006,11 +1009,11 @@ xleft=p11 & xright'=q11 & tmp'=xleft & m36=m35 & n44=n41 & 0<=m35 & 0<=n41 &
 flted19=1+m36 & 0<=m36 & 0<=n44 & m37=flted19 & n45=Anon17 & 0<=flted19 & 
 0<=Anon17 & 0<=m37 & 0<=n45 & m38=m34 & n46=n42 & 0<=m34 & 0<=n42 & 0<=m38 & 
 0<=n46 & v42'+n46=n45 & v43'=2 & v42'=v43'
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 213; line: 175; kind: PRE
- checkentail xleft'::avl{}<m37,n45> * xright'::avl{}<m38,n46>&MayLoop[] & v39' & 
+ checkentail xleft'::avl{}<m37,n45> * xright'::avl{}<m38,n46> & v39' & 
 a'<=xval' & m=m34+1+m35 & (0+n42)<=(n41+1) & n41<=(1+n42) & 
 exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n43=n & !(v38') & 
 x'!=null & tmp1'=null & a'=a & x'=x & xval'=Anon15 & xheight'=n43 & 
@@ -1018,13 +1021,13 @@ xleft=p11 & xright'=q11 & tmp'=xleft & m36=m35 & n44=n41 & 0<=m35 & 0<=n41 &
 flted19=1+m36 & 0<=m36 & 0<=n44 & m37=flted19 & n45=Anon17 & 0<=flted19 & 
 0<=Anon17 & 0<=m37 & 0<=n45 & m38=m34 & n46=n42 & 0<=m34 & 0<=n42 & 0<=m38 & 
 0<=n46 & v42'+n46=n45 & v43'=2 & v42'!=v43'
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 214; line: 177; kind: BIND
  checkentail (exists n47,Anon18,p12,m39,n48,q12,m40,
 n49: xleft'::node<Anon18,n47,p12,q12> * p12::avl{}<m39,n48> * 
-q12::avl{}<m40,n49> * xright'::avl{}<m38,n46>&MayLoop[] & 2+n46=n45 & 
+q12::avl{}<m40,n49> * xright'::avl{}<m38,n46> & 2+n46=n45 & 
 0<=n46 & 0<=m38 & 0<=n42 & 0<=m34 & n46=n42 & m38=m34 & 0<=n45 & 0<=m37 & 
 0<=Anon17 & 0<=flted19 & n45=Anon17 & m37=flted19 & 0<=n44 & 0<=m36 & 
 flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & m36=m35 & tmp'=xleft & 
@@ -1035,7 +1038,7 @@ a'<=xval' & v39' & v44' & n47=n45 & exists(max_31:n45=1+max_31 &
 max_31=max(n48,n49)) & n48<=(1+n49) & (0+n49)<=(n48+1) & m37=m40+1+m39)
  |-  xleft'::node<xleftval',xleftheight',xleftleft',xleftright'>.
 expect Valid.
- 
+
 // id: 216; line: 178; kind: PRE
  checkentail p13::avl{}<m42,n52> * q13::avl{}<m41,n51> * xright'::avl{}<m38,n46>&
 MayLoop[] & xleftright'=q13 & xleftleft'=p13 & xleftheight'=n50 & 
@@ -1050,9 +1053,9 @@ exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n52<=(1+n51) & (0+
 n51)<=(n52+1) & m37=m41+1+m42
  |-  xleftleft'::avl{}<m43,n53>.
 expect Valid.
- 
+
 // id: 218; line: 178; kind: PRE
- checkentail q13::avl{}<m41,n51> * xright'::avl{}<m38,n46>&MayLoop[] & n53=n52 & 
+ checkentail q13::avl{}<m41,n51> * xright'::avl{}<m38,n46> & n53=n52 & 
 m43=m42 & xleftright'=q13 & xleftleft'=p13 & xleftheight'=n50 & 
 xleftval'=Anon19 & 2+n46=n45 & 0<=n46 & 0<=m38 & 0<=n42 & 0<=m34 & n46=n42 & 
 m38=m34 & 0<=n45 & 0<=m37 & 0<=Anon17 & 0<=flted19 & n45=Anon17 & 
@@ -1063,9 +1066,9 @@ exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+n42) & (0+
 n42)<=(n41+1) & m=m34+1+m35 & a'<=xval' & v39' & v44' & n50=n45 & 
 exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n52<=(1+n51) & (0+
 n51)<=(n52+1) & m37=m41+1+m42
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 219; line: 178; kind: PRE
  checkentail q13::avl{}<m41,n51> * xright'::avl{}<m38,n46> * xleftleft'::avl{}<m43,n53>&
 MayLoop[] & 0<=n53 & 0<=m43 & v45'=n53 & 0<=n52 & 0<=m42 & n53=n52 & 
@@ -1081,9 +1084,9 @@ exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n52<=(1+n51) & (0+
 n51)<=(n52+1) & m37=m41+1+m42
  |-  xleftright'::avl{}<m44,n54>.
 expect Valid.
- 
+
 // id: 221; line: 178; kind: PRE
- checkentail xright'::avl{}<m38,n46> * xleftleft'::avl{}<m43,n53>&MayLoop[] & n54=n51 & 
+ checkentail xright'::avl{}<m38,n46> * xleftleft'::avl{}<m43,n53> & n54=n51 & 
 m44=m41 & 0<=n53 & 0<=m43 & v45'=n53 & 0<=n52 & 0<=m42 & n53=n52 & m43=m42 & 
 xleftright'=q13 & xleftleft'=p13 & xleftheight'=n50 & xleftval'=Anon19 & 2+
 n46=n45 & 0<=n46 & 0<=m38 & 0<=n42 & 0<=m34 & n46=n42 & m38=m34 & 0<=n45 & 
@@ -1094,12 +1097,12 @@ tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 &
 max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
 a'<=xval' & v39' & v44' & n50=n45 & exists(max_31:n45=1+max_31 & 
 max_31=max(n52,n51)) & n52<=(1+n51) & (0+n51)<=(n52+1) & m37=m41+1+m42
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 222; line: 178; kind: PRE
  checkentail xright'::avl{}<m38,n46> * xleftleft'::avl{}<m43,n53> * 
-xleftright'::avl{}<m44,n54>&MayLoop[] & m37=m41+1+m42 & (0+n51)<=(n52+1) & 
+xleftright'::avl{}<m44,n54> & m37=m41+1+m42 & (0+n51)<=(n52+1) & 
 n52<=(1+n51) & exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n50=n45 & 
 v44' & v39' & a'<=xval' & m=m34+1+m35 & (0+n42)<=(n41+1) & n41<=(1+n42) & 
 exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n43=n & !(v38') & 
@@ -1111,12 +1114,12 @@ flted19=1+m36 & 0<=m36 & 0<=n44 & m37=flted19 & n45=Anon17 & 0<=flted19 &
 xleftright'=q13 & m43=m42 & n53=n52 & 0<=m42 & 0<=n52 & v45'=n53 & 0<=m43 & 
 0<=n53 & m44=m41 & n54=n51 & 0<=m41 & 0<=n51 & v46'=n54 & 0<=m44 & 0<=n54 & 
 v46'<v45'
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 223; line: 178; kind: PRE
  checkentail xright'::avl{}<m38,n46> * xleftleft'::avl{}<m43,n53> * 
-xleftright'::avl{}<m44,n54>&MayLoop[] & m37=m41+1+m42 & (0+n51)<=(n52+1) & 
+xleftright'::avl{}<m44,n54> & m37=m41+1+m42 & (0+n51)<=(n52+1) & 
 n52<=(1+n51) & exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n50=n45 & 
 v44' & v39' & a'<=xval' & m=m34+1+m35 & (0+n42)<=(n41+1) & n41<=(1+n42) & 
 exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n43=n & !(v38') & 
@@ -1128,12 +1131,12 @@ flted19=1+m36 & 0<=m36 & 0<=n44 & m37=flted19 & n45=Anon17 & 0<=flted19 &
 xleftright'=q13 & m43=m42 & n53=n52 & 0<=m42 & 0<=n52 & v45'=n53 & 0<=m43 & 
 0<=n53 & m44=m41 & n54=n51 & 0<=m41 & 0<=n51 & v46'=n54 & 0<=m44 & 0<=n54 & 
 v45'<=v46'
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 224; line: 180; kind: PRE
  checkentail xright'::avl{}<m38,n46> * xleftleft'::avl{}<m43,n53> * 
-xleftright'::avl{}<m44,n54>&MayLoop[] & 0<=n54 & 0<=m44 & 0<=n51 & 0<=m41 & 
+xleftright'::avl{}<m44,n54> & 0<=n54 & 0<=m44 & 0<=n51 & 0<=m41 & 
 n54=n51 & m44=m41 & 0<=n53 & 0<=m43 & 0<=n52 & 0<=m42 & n53=n52 & m43=m42 & 
 xleftright'=q13 & xleftleft'=p13 & xleftheight'=n50 & xleftval'=Anon19 & 2+
 n46=n45 & 0<=n46 & 0<=m38 & 0<=n42 & 0<=m34 & n46=n42 & m38=m34 & 0<=n45 & 
@@ -1149,9 +1152,10 @@ n54<n53 & v47'
 xleftright'::avl{}<lrm,flted13> * xright'::avl{}<rm,flted12>&flted12+1=lln & 
 flted13+1=lln).
 expect Valid.
- 
+
+/*
 // id: 228; line: 180; kind: PRE
- checkentail emp&MayLoop[] & rm=m38 & lrm=m44 & lln=n53 & llm=m43 & 0<=n54 & 0<=m44 & 
+ checkentail emp & rm=m38 & lrm=m44 & lln=n53 & llm=m43 & 0<=n54 & 0<=m44 & 
 0<=n51 & 0<=m41 & n54=n51 & m44=m41 & 0<=n53 & 0<=m43 & 0<=n52 & 0<=m42 & 
 n53=n52 & m43=m42 & xleftright'=q13 & xleftleft'=p13 & xleftheight'=n50 & 
 xleftval'=Anon19 & 2+n46=n45 & 0<=n46 & 0<=m38 & 0<=n42 & 0<=m34 & n46=n42 & 
@@ -1163,12 +1167,13 @@ exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+n42) & (0+
 n42)<=(n41+1) & m=m34+1+m35 & a'<=xval' & v39' & v44' & n50=n45 & 
 exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n52<=(1+n51) & (0+
 n51)<=(n52+1) & m37=m41+1+m42 & n54<n53 & v47'
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+*/
+
 // id: 229; line: 184; kind: PRE
  checkentail xright'::avl{}<m38,n46> * xleftleft'::avl{}<m43,n53> * 
-xleftright'::avl{}<m44,n54>&MayLoop[] & 0<=n54 & 0<=m44 & 0<=n51 & 0<=m41 & 
+xleftright'::avl{}<m44,n54> & 0<=n54 & 0<=m44 & 0<=n51 & 0<=m41 & 
 n54=n51 & m44=m41 & 0<=n53 & 0<=m43 & 0<=n52 & 0<=m42 & n53=n52 & m43=m42 & 
 xleftright'=q13 & xleftleft'=p13 & xleftheight'=n50 & xleftval'=Anon19 & 2+
 n46=n45 & 0<=n46 & 0<=m38 & 0<=n42 & 0<=m34 & n46=n42 & m38=m34 & 0<=n45 & 
@@ -1182,9 +1187,9 @@ max_31=max(n52,n51)) & n52<=(1+n51) & (0+n51)<=(n52+1) & m37=m41+1+m42 &
 n53<=n54 & !(v47')
  |-  xleftleft'::avl{}<m45,n55>.
 expect Valid.
- 
+
 // id: 231; line: 184; kind: PRE
- checkentail xright'::avl{}<m38,n46> * xleftright'::avl{}<m44,n54>&MayLoop[] & n55=n53 & 
+ checkentail xright'::avl{}<m38,n46> * xleftright'::avl{}<m44,n54> & n55=n53 & 
 m45=m43 & 0<=n54 & 0<=m44 & 0<=n51 & 0<=m41 & n54=n51 & m44=m41 & 0<=n53 & 
 0<=m43 & 0<=n52 & 0<=m42 & n53=n52 & m43=m42 & xleftright'=q13 & 
 xleftleft'=p13 & xleftheight'=n50 & xleftval'=Anon19 & 2+n46=n45 & 0<=n46 & 
@@ -1196,12 +1201,12 @@ xheight'=n43 & xval'=Anon15 & x'=x & a'=a & tmp1'=null & x'!=null &
 n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & a'<=xval' & v39' & v44' & n50=n45 & 
 exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n52<=(1+n51) & (0+
 n51)<=(n52+1) & m37=m41+1+m42 & n53<=n54 & !(v47')
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 232; line: 184; kind: PRE
  checkentail xright'::avl{}<m38,n46> * xleftright'::avl{}<m44,n54> * 
-xleftleft'::avl{}<m45,n55>&MayLoop[] & 0<=n55 & 0<=m45 & v48'=n55 & 0<=n53 & 
+xleftleft'::avl{}<m45,n55> & 0<=n55 & 0<=m45 & v48'=n55 & 0<=n53 & 
 0<=m43 & n55=n53 & m45=m43 & 0<=n54 & 0<=m44 & 0<=n51 & 0<=m41 & n54=n51 & 
 m44=m41 & 0<=n52 & 0<=m42 & n53=n52 & m43=m42 & xleftright'=q13 & 
 xleftleft'=p13 & xleftheight'=n50 & xleftval'=Anon19 & 2+n46=n45 & 0<=n46 & 
@@ -1215,9 +1220,9 @@ exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n52<=(1+n51) & (0+
 n51)<=(n52+1) & m37=m41+1+m42 & n53<=n54 & !(v47')
  |-  xleftright'::avl{}<m46,n56>.
 expect Valid.
- 
+
 // id: 234; line: 184; kind: PRE
- checkentail xright'::avl{}<m38,n46> * xleftleft'::avl{}<m45,n55>&MayLoop[] & n56=n54 & 
+ checkentail xright'::avl{}<m38,n46> * xleftleft'::avl{}<m45,n55> & n56=n54 & 
 m46=m44 & 0<=n55 & 0<=m45 & v48'=n55 & 0<=n53 & 0<=m43 & n55=n53 & m45=m43 & 
 0<=n54 & 0<=m44 & 0<=n51 & 0<=m41 & n54=n51 & m44=m41 & 0<=n52 & 0<=m42 & 
 n53=n52 & m43=m42 & xleftright'=q13 & xleftleft'=p13 & xleftheight'=n50 & 
@@ -1230,12 +1235,12 @@ exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+n42) & (0+
 n42)<=(n41+1) & m=m34+1+m35 & a'<=xval' & v39' & v44' & n50=n45 & 
 exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n52<=(1+n51) & (0+
 n51)<=(n52+1) & m37=m41+1+m42 & n53<=n54 & !(v47')
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 235; line: 184; kind: PRE
  checkentail xright'::avl{}<m38,n46> * xleftleft'::avl{}<m45,n55> * 
-xleftright'::avl{}<m46,n56>&MayLoop[] & v49'=1 & 0<=n56 & 0<=m46 & 
+xleftright'::avl{}<m46,n56> & v49'=1 & 0<=n56 & 0<=m46 & 
 v50'=n56 & 0<=n54 & 0<=m44 & n56=n54 & m46=m44 & 0<=n55 & 0<=m45 & 
 v48'=n55 & 0<=n53 & 0<=m43 & n55=n53 & m45=m43 & 0<=n51 & 0<=m41 & n54=n51 & 
 m44=m41 & 0<=n52 & 0<=m42 & n53=n52 & m43=m42 & xleftright'=q13 & 
@@ -1250,10 +1255,10 @@ exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n52<=(1+n51) & (0+
 n51)<=(n52+1) & m37=m41+1+m42 & n53<=n54 & !(v47')
  |-  htrue.
 expect Valid.
- 
+
 // id: 236; line: 184; kind: PRE
  checkentail xright'::avl{}<m38,n46> * xleftleft'::avl{}<m45,n55> * 
-xleftright'::avl{}<m46,n56>&MayLoop[] & v49'=1 & 0<=n56 & 0<=m46 & 
+xleftright'::avl{}<m46,n56> & v49'=1 & 0<=n56 & 0<=m46 & 
 v50'=n56 & 0<=n54 & 0<=m44 & n56=n54 & m46=m44 & 0<=n55 & 0<=m45 & 
 v48'=n55 & 0<=n53 & 0<=m43 & n55=n53 & m45=m43 & 0<=n51 & 0<=m41 & n54=n51 & 
 m44=m41 & 0<=n52 & 0<=m42 & n53=n52 & m43=m42 & xleftright'=q13 & 
@@ -1266,12 +1271,12 @@ xheight'=n43 & xval'=Anon15 & x'=x & a'=a & tmp1'=null & x'!=null &
 n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & a'<=xval' & v39' & v44' & n50=n45 & 
 exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n52<=(1+n51) & (0+
 n51)<=(n52+1) & m37=m41+1+m42 & n53<=n54 & !(v47')
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 237; line: 184; kind: PRE
  checkentail xright'::avl{}<m38,n46> * xleftleft'::avl{}<m45,n55> * 
-xleftright'::avl{}<m46,n56>&MayLoop[] & !(v47') & n53<=n54 & m37=m41+1+m42 & 
+xleftright'::avl{}<m46,n56> & !(v47') & n53<=n54 & m37=m41+1+m42 & 
 (0+n51)<=(n52+1) & n52<=(1+n51) & exists(max_31:n45=1+max_31 & 
 max_31=max(n52,n51)) & n50=n45 & v44' & v39' & a'<=xval' & m=m34+1+m35 & (0+
 n42)<=(n41+1) & n41<=(1+n42) & exists(max_31:n=1+max_31 & max_31=max(n41,
@@ -1284,12 +1289,12 @@ xleftval'=Anon19 & xleftheight'=n50 & xleftleft'=p13 & xleftright'=q13 &
 m43=m42 & n53=n52 & 0<=m42 & 0<=n52 & m44=m41 & n54=n51 & 0<=m41 & 0<=n51 & 
 m45=m43 & n55=n53 & 0<=m43 & 0<=n53 & v48'=n55 & 0<=m45 & 0<=n55 & m46=m44 & 
 n56=n54 & 0<=m44 & 0<=n54 & 0<=m46 & 0<=n56 & v51'+1=n56 & v48'=v51'
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 238; line: 184; kind: PRE
  checkentail xright'::avl{}<m38,n46> * xleftleft'::avl{}<m45,n55> * 
-xleftright'::avl{}<m46,n56>&MayLoop[] & !(v47') & n53<=n54 & m37=m41+1+m42 & 
+xleftright'::avl{}<m46,n56> & !(v47') & n53<=n54 & m37=m41+1+m42 & 
 (0+n51)<=(n52+1) & n52<=(1+n51) & exists(max_31:n45=1+max_31 & 
 max_31=max(n52,n51)) & n50=n45 & v44' & v39' & a'<=xval' & m=m34+1+m35 & (0+
 n42)<=(n41+1) & n41<=(1+n42) & exists(max_31:n=1+max_31 & max_31=max(n41,
@@ -1302,13 +1307,13 @@ xleftval'=Anon19 & xleftheight'=n50 & xleftleft'=p13 & xleftright'=q13 &
 m43=m42 & n53=n52 & 0<=m42 & 0<=n52 & m44=m41 & n54=n51 & 0<=m41 & 0<=n51 & 
 m45=m43 & n55=n53 & 0<=m43 & 0<=n53 & v48'=n55 & 0<=m45 & 0<=n55 & m46=m44 & 
 n56=n54 & 0<=m44 & 0<=n54 & 0<=m46 & 0<=n56 & v51'+1=n56 & v48'!=v51'
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 239; line: 185; kind: BIND
  checkentail (exists n57,Anon20,p14,m47,n58,q14,m48,n59: xright'::avl{}<m38,n46> * 
 xleftleft'::avl{}<m45,n55> * xleftright'::node<Anon20,n57,p14,q14> * 
-p14::avl{}<m47,n58> * q14::avl{}<m48,n59>&MayLoop[] & n55+1=n56 & 0<=n56 & 
+p14::avl{}<m47,n58> * q14::avl{}<m48,n59> & n55+1=n56 & 0<=n56 & 
 0<=m46 & 0<=n54 & 0<=m44 & n56=n54 & m46=m44 & 0<=n55 & 0<=m45 & 0<=n53 & 
 0<=m43 & n55=n53 & m45=m43 & 0<=n51 & 0<=m41 & n54=n51 & m44=m41 & 0<=n52 & 
 0<=m42 & n53=n52 & m43=m42 & xleftright'=q13 & xleftleft'=p13 & 
@@ -1325,11 +1330,11 @@ exists(max_31:n56=1+max_31 & max_31=max(n58,n59)) & n58<=(1+n59) & (0+
 n59)<=(n58+1) & m46=m48+1+m47)
  |-  xleftright'::node<val6',height6',left6',right6'>@L.
 expect Valid.
- 
+
 // id: 241; line: 185; kind: BIND
  checkentail xright'::avl{}<m38,n46> * xleftleft'::avl{}<m45,n55> * 
 xleftright'::node<Anon21,n60,p15,q15> * p15::avl{}<m50,n62> * 
-q15::avl{}<m49,n61>&MayLoop[] & v53'=p15 & n55+1=n56 & 0<=n56 & 0<=m46 & 
+q15::avl{}<m49,n61> & v53'=p15 & n55+1=n56 & 0<=n56 & 0<=m46 & 
 0<=n54 & 0<=m44 & n56=n54 & m46=m44 & 0<=n55 & 0<=m45 & 0<=n53 & 0<=m43 & 
 n55=n53 & m45=m43 & 0<=n51 & 0<=m41 & n54=n51 & m44=m41 & 0<=n52 & 0<=m42 & 
 n53=n52 & m43=m42 & xleftright'=q13 & xleftleft'=p13 & xleftheight'=n50 & 
@@ -1346,11 +1351,11 @@ exists(max_31:n56=1+max_31 & max_31=max(n62,n61)) & n62<=(1+n61) & (0+
 n61)<=(n62+1) & m46=m49+1+m50
  |-  xleftright'::node<val7',height7',left7',right7'>@L.
 expect Valid.
- 
+
 // id: 243; line: 185; kind: PRE
  checkentail xright'::avl{}<m38,n46> * xleftleft'::avl{}<m45,n55> * 
 xleftright'::node<Anon21,n60,p15,q15> * p15::avl{}<m50,n62> * 
-q15::avl{}<m49,n61>&MayLoop[] & v54'=1 & v55'=1 & v56'=1 & v57'=q15 & 
+q15::avl{}<m49,n61> & v54'=1 & v55'=1 & v56'=1 & v57'=q15 & 
 v53'=p15 & n55+1=n56 & 0<=n56 & 0<=m46 & 0<=n54 & 0<=m44 & n56=n54 & 
 m46=m44 & 0<=n55 & 0<=m45 & 0<=n53 & 0<=m43 & n55=n53 & m45=m43 & 0<=n51 & 
 0<=m41 & n54=n51 & m44=m41 & 0<=n52 & 0<=m42 & n53=n52 & m43=m42 & 
@@ -1369,9 +1374,9 @@ max_31=max(n62,n61)) & n62<=(1+n61) & (0+n61)<=(n62+1) & m46=m49+1+m50
 v57'::avl{}<cm,cn> * xright'::avl{}<dm,an1>&an1=an & bn<=(1+cn) & (0+
 cn)<=(bn+1) & an=max(bn,cn)).
 expect Valid.
- 
+
 // id: 248; line: 185; kind: PRE
- checkentail xleftright'::node<Anon21,n60,p15,q15>&MayLoop[] & dm=m38 & cn=n61 & 
+ checkentail xleftright'::node<Anon21,n60,p15,q15> & dm=m38 & cn=n61 & 
 cm=m49 & bn=n62 & bm=m50 & an=n55 & am=m45 & v54'=1 & v55'=1 & v56'=1 & 
 v57'=q15 & v53'=p15 & n55+1=n56 & 0<=n56 & 0<=m46 & 0<=n54 & 0<=m44 & 
 n56=n54 & m46=m44 & 0<=n55 & 0<=m45 & 0<=n53 & 0<=m43 & n55=n53 & m45=m43 & 
@@ -1387,12 +1392,12 @@ a'<=xval' & v39' & v44' & n50=n45 & exists(max_31:n45=1+max_31 &
 max_31=max(n52,n51)) & n52<=(1+n51) & (0+n51)<=(n52+1) & m37=m41+1+m42 & 
 n53<=n54 & !(v47') & v52' & n60=n56 & exists(max_31:n56=1+max_31 & 
 max_31=max(n62,n61)) & n62<=(1+n61) & (0+n61)<=(n62+1) & m46=m49+1+m50
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 249; line: 187; kind: PRE
  checkentail (exists v51': xright'::avl{}<m38,n46> * xleftleft'::avl{}<m45,n55> * 
-xleftright'::avl{}<m46,n56>&MayLoop[] & v51'+1=n56 & 0<=n56 & 0<=m46 & 
+xleftright'::avl{}<m46,n56> & v51'+1=n56 & 0<=n56 & 0<=m46 & 
 0<=n54 & 0<=m44 & n56=n54 & m46=m44 & 0<=n55 & 0<=m45 & 0<=n53 & 0<=m43 & 
 n55=n53 & m45=m43 & 0<=n51 & 0<=m41 & n54=n51 & m44=m41 & 0<=n52 & 0<=m42 & 
 n53=n52 & m43=m42 & xleftright'=q13 & xleftleft'=p13 & xleftheight'=n50 & 
@@ -1407,10 +1412,10 @@ exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n52<=(1+n51) & (0+
 n51)<=(n52+1) & m37=m41+1+m42 & n53<=n54 & !(v47') & n55!=v51' & !(v52'))
  |-  htrue.
 expect Valid.
- 
+
 // id: 250; line: 187; kind: PRE
  checkentail xright'::avl{}<m38,n46> * xleftleft'::avl{}<m45,n55> * 
-xleftright'::avl{}<m46,n56>&MayLoop[] & v+1=n56 & 0<=n56 & 0<=m46 & 0<=n54 & 
+xleftright'::avl{}<m46,n56> & v+1=n56 & 0<=n56 & 0<=m46 & 0<=n54 & 
 0<=m44 & n56=n54 & m46=m44 & 0<=n55 & 0<=m45 & 0<=n53 & 0<=m43 & n55=n53 & 
 m45=m43 & 0<=n51 & 0<=m41 & n54=n51 & m44=m41 & 0<=n52 & 0<=m42 & n53=n52 & 
 m43=m42 & xleftright'=q13 & xleftleft'=p13 & xleftheight'=n50 & 
@@ -1423,11 +1428,11 @@ exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+n42) & (0+
 n42)<=(n41+1) & m=m34+1+m35 & a'<=xval' & v39' & v44' & n50=n45 & 
 exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n52<=(1+n51) & (0+
 n51)<=(n52+1) & m37=m41+1+m42 & n53<=n54 & !(v47') & n55!=v & !(v52')
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 251; line: 192; kind: PRE
- checkentail (exists v42': xleft'::avl{}<m37,n45> * xright'::avl{}<m38,n46>&MayLoop[] & 
+ checkentail (exists v42': xleft'::avl{}<m37,n45> * xright'::avl{}<m38,n46> & 
 v42'+n46=n45 & 0<=n46 & 0<=m38 & 0<=n42 & 0<=m34 & n46=n42 & m38=m34 & 
 0<=n45 & 0<=m37 & 0<=Anon17 & 0<=flted19 & n45=Anon17 & m37=flted19 & 
 0<=n44 & 0<=m36 & flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & m36=m35 & 
@@ -1437,9 +1442,9 @@ max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 &
 a'<=xval' & v39' & v42'!=2 & !(v44'))
  |-  htrue.
 expect Valid.
- 
+
 // id: 252; line: 192; kind: PRE
- checkentail xleft'::avl{}<m37,n45> * xright'::avl{}<m38,n46>&MayLoop[] & v1+n46=n45 & 
+ checkentail xleft'::avl{}<m37,n45> * xright'::avl{}<m38,n46> & v1+n46=n45 & 
 0<=n46 & 0<=m38 & 0<=n42 & 0<=m34 & n46=n42 & m38=m34 & 0<=n45 & 0<=m37 & 
 0<=Anon17 & 0<=flted19 & n45=Anon17 & m37=flted19 & 0<=n44 & 0<=m36 & 
 flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & m36=m35 & tmp'=xleft & 
@@ -1447,49 +1452,49 @@ xright'=q11 & xleft=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a &
 tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
 max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
 a'<=xval' & v39' & v1!=2 & !(v44')
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 253; line: 197; kind: PRE_REC
- checkentail p11::avl{}<m35,n41> * q11::avl{}<m34,n42>&MayLoop[] & tmp'=xright' & 
+ checkentail p11::avl{}<m35,n41> * q11::avl{}<m34,n42> & tmp'=xright' & 
 xright'=q11 & xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
 tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
 max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
 xval'<a' & !(v39')
  |-  tmp'::avl{}<m51,n63>.
 expect Valid.
- 
+
 // id: 255; line: 197; kind: PRE_REC
- checkentail p11::avl{}<m35,n41>&MayLoop[] & n63=n42 & m51=m34 & tmp'=xright' & 
+ checkentail p11::avl{}<m35,n41> & n63=n42 & m51=m34 & tmp'=xright' & 
 xright'=q11 & xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
 tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
 max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
 xval'<a' & !(v39')
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 256; line: 198; kind: PRE
  checkentail (exists flted20,Anon22: xright'::avl{}<flted20,Anon22> * 
-p11::avl{}<m35,n41>&MayLoop[] & 0<=n63 & 0<=m51 & flted20=1+m51 & 0<=n42 & 
+p11::avl{}<m35,n41> & 0<=n63 & 0<=m51 & flted20=1+m51 & 0<=n42 & 
 0<=m34 & n63=n42 & m51=m34 & tmp'=xright & xright=q11 & xleft'=p11 & 
 xheight'=n43 & xval'=Anon15 & x'=x & a'=a & tmp1'=null & x'!=null & 
 !(v38') & n43=n & exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+
 n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & xval'<a' & !(v39'))
  |-  xright'::avl{}<m52,n64>.
 expect Valid.
- 
+
 // id: 258; line: 198; kind: PRE
- checkentail p11::avl{}<m35,n41>&MayLoop[] & n64=Anon23 & m52=flted21 & 0<=n63 & 
+ checkentail p11::avl{}<m35,n41> & n64=Anon23 & m52=flted21 & 0<=n63 & 
 0<=m51 & flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & m51=m34 & tmp'=xright & 
 xright=q11 & xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
 tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
 max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
 xval'<a' & !(v39')
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 259; line: 198; kind: PRE
- checkentail xright'::avl{}<m52,n64> * p11::avl{}<m35,n41>&MayLoop[] & 0<=n64 & 0<=m52 & 
+ checkentail xright'::avl{}<m52,n64> * p11::avl{}<m35,n41> & 0<=n64 & 0<=m52 & 
 v58'=n64 & 0<=Anon23 & 0<=flted21 & n64=Anon23 & m52=flted21 & 0<=n63 & 
 0<=m51 & flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & m51=m34 & tmp'=xright & 
 xright=q11 & xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
@@ -1498,20 +1503,20 @@ max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 &
 xval'<a' & !(v39')
  |-  xleft'::avl{}<m53,n65>.
 expect Valid.
- 
+
 // id: 261; line: 198; kind: PRE
- checkentail xright'::avl{}<m52,n64>&MayLoop[] & n65=n41 & m53=m35 & 0<=n64 & 0<=m52 & 
+ checkentail xright'::avl{}<m52,n64> & n65=n41 & m53=m35 & 0<=n64 & 0<=m52 & 
 v58'=n64 & 0<=Anon23 & 0<=flted21 & n64=Anon23 & m52=flted21 & 0<=n63 & 
 0<=m51 & flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & m51=m34 & tmp'=xright & 
 xright=q11 & xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
 tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
 max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
 xval'<a' & !(v39')
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 262; line: 198; kind: PRE
- checkentail xright'::avl{}<m52,n64> * xleft'::avl{}<m53,n65>&MayLoop[] & 0<=n65 & 
+ checkentail xright'::avl{}<m52,n64> * xleft'::avl{}<m53,n65> & 0<=n65 & 
 0<=m53 & v59'=n65 & 0<=n41 & 0<=m35 & n65=n41 & m53=m35 & 0<=n64 & 0<=m52 & 
 v58'=n64 & 0<=Anon23 & 0<=flted21 & n64=Anon23 & m52=flted21 & 0<=n63 & 
 0<=m51 & flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & m51=m34 & tmp'=xright & 
@@ -1521,9 +1526,9 @@ max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 &
 xval'<a' & !(v39')
  |-  htrue.
 expect Valid.
- 
+
 // id: 263; line: 198; kind: PRE
- checkentail xright'::avl{}<m52,n64> * xleft'::avl{}<m53,n65>&MayLoop[] & 0<=n65 & 
+ checkentail xright'::avl{}<m52,n64> * xleft'::avl{}<m53,n65> & 0<=n65 & 
 0<=m53 & v59'=n65 & 0<=n41 & 0<=m35 & n65=n41 & m53=m35 & 0<=n64 & 0<=m52 & 
 v58'=n64 & 0<=Anon23 & 0<=flted21 & n64=Anon23 & m52=flted21 & 0<=n63 & 
 0<=m51 & flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & m51=m34 & tmp'=xright & 
@@ -1531,11 +1536,11 @@ xright=q11 & xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a &
 tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
 max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
 xval'<a' & !(v39')
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 264; line: 198; kind: PRE
- checkentail xright'::avl{}<m52,n64> * xleft'::avl{}<m53,n65>&MayLoop[] & !(v39') & 
+ checkentail xright'::avl{}<m52,n64> * xleft'::avl{}<m53,n65> & !(v39') & 
 xval'<a' & m=m34+1+m35 & (0+n42)<=(n41+1) & n41<=(1+n42) & exists(max_31:n=1+
 max_31 & max_31=max(n41,n42)) & n43=n & !(v38') & x'!=null & tmp1'=null & 
 a'=a & x'=x & xval'=Anon15 & xheight'=n43 & xleft'=p11 & xright=q11 & 
@@ -1543,11 +1548,11 @@ tmp'=xright & m51=m34 & n63=n42 & 0<=m34 & 0<=n42 & flted21=1+m51 & 0<=m51 &
 0<=n63 & m52=flted21 & n64=Anon23 & 0<=flted21 & 0<=Anon23 & 0<=m52 & 
 0<=n64 & m53=m35 & n65=n41 & 0<=m35 & 0<=n41 & 0<=m53 & 0<=n65 & v60'+
 n65=n64 & v61'=2 & v60'=v61'
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 265; line: 198; kind: PRE
- checkentail xright'::avl{}<m52,n64> * xleft'::avl{}<m53,n65>&MayLoop[] & !(v39') & 
+ checkentail xright'::avl{}<m52,n64> * xleft'::avl{}<m53,n65> & !(v39') & 
 xval'<a' & m=m34+1+m35 & (0+n42)<=(n41+1) & n41<=(1+n42) & exists(max_31:n=1+
 max_31 & max_31=max(n41,n42)) & n43=n & !(v38') & x'!=null & tmp1'=null & 
 a'=a & x'=x & xval'=Anon15 & xheight'=n43 & xleft'=p11 & xright=q11 & 
@@ -1555,13 +1560,13 @@ tmp'=xright & m51=m34 & n63=n42 & 0<=m34 & 0<=n42 & flted21=1+m51 & 0<=m51 &
 0<=n63 & m52=flted21 & n64=Anon23 & 0<=flted21 & 0<=Anon23 & 0<=m52 & 
 0<=n64 & m53=m35 & n65=n41 & 0<=m35 & 0<=n41 & 0<=m53 & 0<=n65 & v60'+
 n65=n64 & v61'=2 & v60'!=v61'
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 266; line: 200; kind: BIND
  checkentail (exists n66,Anon24,p16,m54,n67,q16,m55,
 n68: xright'::node<Anon24,n66,p16,q16> * p16::avl{}<m54,n67> * 
-q16::avl{}<m55,n68> * xleft'::avl{}<m53,n65>&MayLoop[] & 2+n65=n64 & 
+q16::avl{}<m55,n68> * xleft'::avl{}<m53,n65> & 2+n65=n64 & 
 0<=n65 & 0<=m53 & 0<=n41 & 0<=m35 & n65=n41 & m53=m35 & 0<=n64 & 0<=m52 & 
 0<=Anon23 & 0<=flted21 & n64=Anon23 & m52=flted21 & 0<=n63 & 0<=m51 & 
 flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & m51=m34 & tmp'=xright & 
@@ -1572,7 +1577,7 @@ xval'<a' & !(v39') & v62' & n66=n64 & exists(max_31:n64=1+max_31 &
 max_31=max(n67,n68)) & n67<=(1+n68) & (0+n68)<=(n67+1) & m52=m55+1+m54)
  |-  xright'::node<xrightval',xrightheight',xrightleft',xrightright'>.
 expect Valid.
- 
+
 // id: 268; line: 201; kind: PRE
  checkentail p17::avl{}<m57,n71> * q17::avl{}<m56,n70> * xleft'::avl{}<m53,n65>&
 MayLoop[] & xrightright'=q17 & xrightleft'=p17 & xrightheight'=n69 & 
@@ -1587,9 +1592,9 @@ exists(max_31:n64=1+max_31 & max_31=max(n71,n70)) & n71<=(1+n70) & (0+
 n70)<=(n71+1) & m52=m56+1+m57
  |-  xrightright'::avl{}<m58,n72>.
 expect Valid.
- 
+
 // id: 270; line: 201; kind: PRE
- checkentail p17::avl{}<m57,n71> * xleft'::avl{}<m53,n65>&MayLoop[] & n72=n70 & 
+ checkentail p17::avl{}<m57,n71> * xleft'::avl{}<m53,n65> & n72=n70 & 
 m58=m56 & xrightright'=q17 & xrightleft'=p17 & xrightheight'=n69 & 
 xrightval'=Anon25 & 2+n65=n64 & 0<=n65 & 0<=m53 & 0<=n41 & 0<=m35 & 
 n65=n41 & m53=m35 & 0<=n64 & 0<=m52 & 0<=Anon23 & 0<=flted21 & n64=Anon23 & 
@@ -1600,9 +1605,9 @@ exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+n42) & (0+
 n42)<=(n41+1) & m=m34+1+m35 & xval'<a' & !(v39') & v62' & n69=n64 & 
 exists(max_31:n64=1+max_31 & max_31=max(n71,n70)) & n71<=(1+n70) & (0+
 n70)<=(n71+1) & m52=m56+1+m57
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 271; line: 201; kind: PRE
  checkentail p17::avl{}<m57,n71> * xleft'::avl{}<m53,n65> * xrightright'::avl{}<m58,n72>&
 MayLoop[] & 0<=n72 & 0<=m58 & v63'=n72 & 0<=n70 & 0<=m56 & n72=n70 & 
@@ -1618,9 +1623,9 @@ exists(max_31:n64=1+max_31 & max_31=max(n71,n70)) & n71<=(1+n70) & (0+
 n70)<=(n71+1) & m52=m56+1+m57
  |-  xrightleft'::avl{}<m59,n73>.
 expect Valid.
- 
+
 // id: 273; line: 201; kind: PRE
- checkentail xleft'::avl{}<m53,n65> * xrightright'::avl{}<m58,n72>&MayLoop[] & n73=n71 & 
+ checkentail xleft'::avl{}<m53,n65> * xrightright'::avl{}<m58,n72> & n73=n71 & 
 m59=m57 & 0<=n72 & 0<=m58 & v63'=n72 & 0<=n70 & 0<=m56 & n72=n70 & m58=m56 & 
 xrightright'=q17 & xrightleft'=p17 & xrightheight'=n69 & xrightval'=Anon25 & 
 2+n65=n64 & 0<=n65 & 0<=m53 & 0<=n41 & 0<=m35 & n65=n41 & m53=m35 & 0<=n64 & 
@@ -1631,12 +1636,12 @@ tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 &
 max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
 xval'<a' & !(v39') & v62' & n69=n64 & exists(max_31:n64=1+max_31 & 
 max_31=max(n71,n70)) & n71<=(1+n70) & (0+n70)<=(n71+1) & m52=m56+1+m57
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 274; line: 201; kind: PRE
  checkentail xleft'::avl{}<m53,n65> * xrightright'::avl{}<m58,n72> * 
-xrightleft'::avl{}<m59,n73>&MayLoop[] & m52=m56+1+m57 & (0+n70)<=(n71+1) & 
+xrightleft'::avl{}<m59,n73> & m52=m56+1+m57 & (0+n70)<=(n71+1) & 
 n71<=(1+n70) & exists(max_31:n64=1+max_31 & max_31=max(n71,n70)) & n69=n64 & 
 v62' & !(v39') & xval'<a' & m=m34+1+m35 & (0+n42)<=(n41+1) & n41<=(1+n42) & 
 exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n43=n & !(v38') & 
@@ -1648,12 +1653,12 @@ xleft'=p11 & xright=q11 & tmp'=xright & m51=m34 & n63=n42 & 0<=m34 &
 xrightheight'=n69 & xrightleft'=p17 & xrightright'=q17 & m58=m56 & n72=n70 & 
 0<=m56 & 0<=n70 & v63'=n72 & 0<=m58 & 0<=n72 & m59=m57 & n73=n71 & 0<=m57 & 
 0<=n71 & v64'=n73 & 0<=m59 & 0<=n73 & v64'<v63'
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 275; line: 201; kind: PRE
  checkentail xleft'::avl{}<m53,n65> * xrightright'::avl{}<m58,n72> * 
-xrightleft'::avl{}<m59,n73>&MayLoop[] & m52=m56+1+m57 & (0+n70)<=(n71+1) & 
+xrightleft'::avl{}<m59,n73> & m52=m56+1+m57 & (0+n70)<=(n71+1) & 
 n71<=(1+n70) & exists(max_31:n64=1+max_31 & max_31=max(n71,n70)) & n69=n64 & 
 v62' & !(v39') & xval'<a' & m=m34+1+m35 & (0+n42)<=(n41+1) & n41<=(1+n42) & 
 exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n43=n & !(v38') & 
@@ -1665,12 +1670,12 @@ xleft'=p11 & xright=q11 & tmp'=xright & m51=m34 & n63=n42 & 0<=m34 &
 xrightheight'=n69 & xrightleft'=p17 & xrightright'=q17 & m58=m56 & n72=n70 & 
 0<=m56 & 0<=n70 & v63'=n72 & 0<=m58 & 0<=n72 & m59=m57 & n73=n71 & 0<=m57 & 
 0<=n71 & v64'=n73 & 0<=m59 & 0<=n73 & v63'<=v64'
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 276; line: 203; kind: PRE
  checkentail xleft'::avl{}<m53,n65> * xrightright'::avl{}<m58,n72> * 
-xrightleft'::avl{}<m59,n73>&MayLoop[] & 0<=n73 & 0<=m59 & 0<=n71 & 0<=m57 & 
+xrightleft'::avl{}<m59,n73> & 0<=n73 & 0<=m59 & 0<=n71 & 0<=m57 & 
 n73=n71 & m59=m57 & 0<=n72 & 0<=m58 & 0<=n70 & 0<=m56 & n72=n70 & m58=m56 & 
 xrightright'=q17 & xrightleft'=p17 & xrightheight'=n69 & xrightval'=Anon25 & 
 2+n65=n64 & 0<=n65 & 0<=m53 & 0<=n41 & 0<=m35 & n65=n41 & m53=m35 & 0<=n64 & 
@@ -1685,9 +1690,10 @@ n73<n72 & v65'
  |-  (exists ln1,flted8: xleft'::avl{}<lm,ln> * xrightleft'::avl{}<rlm,ln1> * 
 xrightright'::avl{}<rrm,flted8>&ln1=ln & flted8=1+ln).
 expect Valid.
- 
+
+/*
 // id: 280; line: 203; kind: PRE
- checkentail emp&MayLoop[] & rrm=m58 & rlm=m59 & ln=n65 & lm=m53 & 0<=n73 & 0<=m59 & 
+ checkentail emp & rrm=m58 & rlm=m59 & ln=n65 & lm=m53 & 0<=n73 & 0<=m59 & 
 0<=n71 & 0<=m57 & n73=n71 & m59=m57 & 0<=n72 & 0<=m58 & 0<=n70 & 0<=m56 & 
 n72=n70 & m58=m56 & xrightright'=q17 & xrightleft'=p17 & xrightheight'=n69 & 
 xrightval'=Anon25 & 2+n65=n64 & 0<=n65 & 0<=m53 & 0<=n41 & 0<=m35 & 
@@ -1699,12 +1705,13 @@ exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+n42) & (0+
 n42)<=(n41+1) & m=m34+1+m35 & xval'<a' & !(v39') & v62' & n69=n64 & 
 exists(max_31:n64=1+max_31 & max_31=max(n71,n70)) & n71<=(1+n70) & (0+
 n70)<=(n71+1) & m52=m56+1+m57 & n73<n72 & v65'
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+*/
+
 // id: 281; line: 207; kind: PRE
  checkentail xleft'::avl{}<m53,n65> * xrightright'::avl{}<m58,n72> * 
-xrightleft'::avl{}<m59,n73>&MayLoop[] & 0<=n73 & 0<=m59 & 0<=n71 & 0<=m57 & 
+xrightleft'::avl{}<m59,n73> & 0<=n73 & 0<=m59 & 0<=n71 & 0<=m57 & 
 n73=n71 & m59=m57 & 0<=n72 & 0<=m58 & 0<=n70 & 0<=m56 & n72=n70 & m58=m56 & 
 xrightright'=q17 & xrightleft'=p17 & xrightheight'=n69 & xrightval'=Anon25 & 
 2+n65=n64 & 0<=n65 & 0<=m53 & 0<=n41 & 0<=m35 & n65=n41 & m53=m35 & 0<=n64 & 
@@ -1718,9 +1725,9 @@ max_31=max(n71,n70)) & n71<=(1+n70) & (0+n70)<=(n71+1) & m52=m56+1+m57 &
 n72<=n73 & !(v65')
  |-  xrightleft'::avl{}<m60,n74>.
 expect Valid.
- 
+
 // id: 283; line: 207; kind: PRE
- checkentail xleft'::avl{}<m53,n65> * xrightright'::avl{}<m58,n72>&MayLoop[] & n74=n73 & 
+ checkentail xleft'::avl{}<m53,n65> * xrightright'::avl{}<m58,n72> & n74=n73 & 
 m60=m59 & 0<=n73 & 0<=m59 & 0<=n71 & 0<=m57 & n73=n71 & m59=m57 & 0<=n72 & 
 0<=m58 & 0<=n70 & 0<=m56 & n72=n70 & m58=m56 & xrightright'=q17 & 
 xrightleft'=p17 & xrightheight'=n69 & xrightval'=Anon25 & 2+n65=n64 & 
@@ -1733,12 +1740,12 @@ max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 &
 xval'<a' & !(v39') & v62' & n69=n64 & exists(max_31:n64=1+max_31 & 
 max_31=max(n71,n70)) & n71<=(1+n70) & (0+n70)<=(n71+1) & m52=m56+1+m57 & 
 n72<=n73 & !(v65')
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 284; line: 207; kind: PRE
  checkentail xleft'::avl{}<m53,n65> * xrightright'::avl{}<m58,n72> * 
-xrightleft'::avl{}<m60,n74>&MayLoop[] & v66'=1 & 0<=n74 & 0<=m60 & 
+xrightleft'::avl{}<m60,n74> & v66'=1 & 0<=n74 & 0<=m60 & 
 v67'=n74 & 0<=n73 & 0<=m59 & n74=n73 & m60=m59 & 0<=n71 & 0<=m57 & n73=n71 & 
 m59=m57 & 0<=n72 & 0<=m58 & 0<=n70 & 0<=m56 & n72=n70 & m58=m56 & 
 xrightright'=q17 & xrightleft'=p17 & xrightheight'=n69 & xrightval'=Anon25 & 
@@ -1753,10 +1760,10 @@ max_31=max(n71,n70)) & n71<=(1+n70) & (0+n70)<=(n71+1) & m52=m56+1+m57 &
 n72<=n73 & !(v65')
  |-  htrue.
 expect Valid.
- 
+
 // id: 285; line: 207; kind: PRE
  checkentail xleft'::avl{}<m53,n65> * xrightright'::avl{}<m58,n72> * 
-xrightleft'::avl{}<m60,n74>&MayLoop[] & v66'=1 & 0<=n74 & 0<=m60 & 
+xrightleft'::avl{}<m60,n74> & v66'=1 & 0<=n74 & 0<=m60 & 
 v67'=n74 & 0<=n73 & 0<=m59 & n74=n73 & m60=m59 & 0<=n71 & 0<=m57 & n73=n71 & 
 m59=m57 & 0<=n72 & 0<=m58 & 0<=n70 & 0<=m56 & n72=n70 & m58=m56 & 
 xrightright'=q17 & xrightleft'=p17 & xrightheight'=n69 & xrightval'=Anon25 & 
@@ -1769,12 +1776,12 @@ max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 &
 xval'<a' & !(v39') & v62' & n69=n64 & exists(max_31:n64=1+max_31 & 
 max_31=max(n71,n70)) & n71<=(1+n70) & (0+n70)<=(n71+1) & m52=m56+1+m57 & 
 n72<=n73 & !(v65')
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 286; line: 207; kind: PRE
  checkentail xleft'::avl{}<m53,n65> * xrightright'::avl{}<m58,n72> * 
-xrightleft'::avl{}<m60,n74>&MayLoop[] & v68'+1=n74 & 0<=n74 & 0<=m60 & 
+xrightleft'::avl{}<m60,n74> & v68'+1=n74 & 0<=n74 & 0<=m60 & 
 0<=n73 & 0<=m59 & n74=n73 & m60=m59 & 0<=n71 & 0<=m57 & n73=n71 & m59=m57 & 
 0<=n72 & 0<=m58 & 0<=n70 & 0<=m56 & n72=n70 & m58=m56 & xrightright'=q17 & 
 xrightleft'=p17 & xrightheight'=n69 & xrightval'=Anon25 & 2+n65=n64 & 
@@ -1789,9 +1796,9 @@ max_31=max(n71,n70)) & n71<=(1+n70) & (0+n70)<=(n71+1) & m52=m56+1+m57 &
 n72<=n73 & !(v65')
  |-  xrightright'::avl{}<m61,n75>.
 expect Valid.
- 
+
 // id: 288; line: 207; kind: PRE
- checkentail xleft'::avl{}<m53,n65> * xrightleft'::avl{}<m60,n74>&MayLoop[] & n75=n72 & 
+ checkentail xleft'::avl{}<m53,n65> * xrightleft'::avl{}<m60,n74> & n75=n72 & 
 m61=m58 & v68'+1=n74 & 0<=n74 & 0<=m60 & 0<=n73 & 0<=m59 & n74=n73 & 
 m60=m59 & 0<=n71 & 0<=m57 & n73=n71 & m59=m57 & 0<=n72 & 0<=m58 & 0<=n70 & 
 0<=m56 & n72=n70 & m58=m56 & xrightright'=q17 & xrightleft'=p17 & 
@@ -1804,12 +1811,12 @@ x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & max_31=max(n41,
 n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & xval'<a' & !(v39') & 
 v62' & n69=n64 & exists(max_31:n64=1+max_31 & max_31=max(n71,n70)) & n71<=(1+
 n70) & (0+n70)<=(n71+1) & m52=m56+1+m57 & n72<=n73 & !(v65')
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 289; line: 207; kind: PRE
  checkentail xleft'::avl{}<m53,n65> * xrightleft'::avl{}<m60,n74> * 
-xrightright'::avl{}<m61,n75>&MayLoop[] & !(v65') & n72<=n73 & m52=m56+1+
+xrightright'::avl{}<m61,n75> & !(v65') & n72<=n73 & m52=m56+1+
 m57 & (0+n70)<=(n71+1) & n71<=(1+n70) & exists(max_31:n64=1+max_31 & 
 max_31=max(n71,n70)) & n69=n64 & v62' & !(v39') & xval'<a' & m=m34+1+m35 & 
 (0+n42)<=(n41+1) & n41<=(1+n42) & exists(max_31:n=1+max_31 & max_31=max(n41,
@@ -1822,12 +1829,12 @@ xrightval'=Anon25 & xrightheight'=n69 & xrightleft'=p17 & xrightright'=q17 &
 m58=m56 & n72=n70 & 0<=m56 & 0<=n70 & m59=m57 & n73=n71 & 0<=m57 & 0<=n71 & 
 m60=m59 & n74=n73 & 0<=m59 & 0<=n73 & 0<=m60 & 0<=n74 & v68'+1=n74 & 
 m61=m58 & n75=n72 & 0<=m58 & 0<=n72 & v69'=n75 & 0<=m61 & 0<=n75 & v68'=v69'
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 290; line: 207; kind: PRE
  checkentail xleft'::avl{}<m53,n65> * xrightleft'::avl{}<m60,n74> * 
-xrightright'::avl{}<m61,n75>&MayLoop[] & !(v65') & n72<=n73 & m52=m56+1+
+xrightright'::avl{}<m61,n75> & !(v65') & n72<=n73 & m52=m56+1+
 m57 & (0+n70)<=(n71+1) & n71<=(1+n70) & exists(max_31:n64=1+max_31 & 
 max_31=max(n71,n70)) & n69=n64 & v62' & !(v39') & xval'<a' & m=m34+1+m35 & 
 (0+n42)<=(n41+1) & n41<=(1+n42) & exists(max_31:n=1+max_31 & max_31=max(n41,
@@ -1840,13 +1847,13 @@ xrightval'=Anon25 & xrightheight'=n69 & xrightleft'=p17 & xrightright'=q17 &
 m58=m56 & n72=n70 & 0<=m56 & 0<=n70 & m59=m57 & n73=n71 & 0<=m57 & 0<=n71 & 
 m60=m59 & n74=n73 & 0<=m59 & 0<=n73 & 0<=m60 & 0<=n74 & v68'+1=n74 & 
 m61=m58 & n75=n72 & 0<=m58 & 0<=n72 & v69'=n75 & 0<=m61 & 0<=n75 & v68'!=v69'
- |-  emp&Term[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 291; line: 208; kind: BIND
  checkentail (exists n76,Anon26,p18,m62,n77,q18,m63,n78: xleft'::avl{}<m53,n65> * 
 xrightleft'::node<Anon26,n76,p18,q18> * p18::avl{}<m62,n77> * 
-q18::avl{}<m63,n78> * xrightright'::avl{}<m61,n75>&MayLoop[] & 0<=n75 & 
+q18::avl{}<m63,n78> * xrightright'::avl{}<m61,n75> & 0<=n75 & 
 0<=m61 & 0<=n72 & 0<=m58 & n75=n72 & m61=m58 & n75+1=n74 & 0<=n74 & 0<=m60 & 
 0<=n73 & 0<=m59 & n74=n73 & m60=m59 & 0<=n71 & 0<=m57 & n73=n71 & m59=m57 & 
 0<=n70 & 0<=m56 & n72=n70 & m58=m56 & xrightright'=q17 & xrightleft'=p17 & 
@@ -1863,7 +1870,7 @@ n76=n74 & exists(max_31:n74=1+max_31 & max_31=max(n77,n78)) & n77<=(1+n78) &
 (0+n78)<=(n77+1) & m60=m63+1+m62)
  |-  xrightleft'::node<val8',height8',left8',right8'>@L.
 expect Valid.
- 
+
 // id: 293; line: 208; kind: BIND
  checkentail xleft'::avl{}<m53,n65> * xrightleft'::node<Anon27,n79,p19,q19> * 
 p19::avl{}<m65,n81> * q19::avl{}<m64,n80> * xrightright'::avl{}<m61,n75>&
@@ -1884,7 +1891,7 @@ exists(max_31:n74=1+max_31 & max_31=max(n81,n80)) & n81<=(1+n80) & (0+
 n80)<=(n81+1) & m60=m64+1+m65
  |-  xrightleft'::node<val9',height9',left9',right9'>@L.
 expect Valid.
- 
+
 // id: 295; line: 208; kind: PRE
  checkentail xleft'::avl{}<m53,n65> * xrightleft'::node<Anon27,n79,p19,q19> * 
 p19::avl{}<m65,n81> * q19::avl{}<m64,n80> * xrightright'::avl{}<m61,n75>&
@@ -1907,9 +1914,9 @@ n79=n74 & exists(max_31:n74=1+max_31 & max_31=max(n81,n80)) & n81<=(1+n80) &
 v75'::avl{}<cm,cn> * xrightright'::avl{}<dm,an3>&an3=an & cn<=(1+bn) & (0+
 bn)<=(cn+1) & an=max(bn,cn)).
 expect Valid.
- 
+
 // id: 300; line: 208; kind: PRE
- checkentail xrightleft'::node<Anon27,n79,p19,q19>&MayLoop[] & dm=m61 & cn=n80 & 
+ checkentail xrightleft'::node<Anon27,n79,p19,q19> & dm=m61 & cn=n80 & 
 cm=m64 & bn=n81 & bm=m65 & an=n65 & am=m53 & v72'=1 & v73'=1 & v74'=1 & 
 v75'=q19 & v71'=p19 & 0<=n75 & 0<=m61 & 0<=n72 & 0<=m58 & n75=n72 & 
 m61=m58 & n75+1=n74 & 0<=n74 & 0<=m60 & 0<=n73 & 0<=m59 & n74=n73 & 
@@ -1926,12 +1933,12 @@ exists(max_31:n64=1+max_31 & max_31=max(n71,n70)) & n71<=(1+n70) & (0+
 n70)<=(n71+1) & m52=m56+1+m57 & n72<=n73 & !(v65') & v70' & n79=n74 & 
 exists(max_31:n74=1+max_31 & max_31=max(n81,n80)) & n81<=(1+n80) & (0+
 n80)<=(n81+1) & m60=m64+1+m65
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 301; line: 210; kind: PRE
  checkentail (exists v68': xleft'::avl{}<m53,n65> * xrightleft'::avl{}<m60,n74> * 
-xrightright'::avl{}<m61,n75>&MayLoop[] & 0<=n75 & 0<=m61 & 0<=n72 & 0<=m58 & 
+xrightright'::avl{}<m61,n75> & 0<=n75 & 0<=m61 & 0<=n72 & 0<=m58 & 
 n75=n72 & m61=m58 & v68'+1=n74 & 0<=n74 & 0<=m60 & 0<=n73 & 0<=m59 & 
 n74=n73 & m60=m59 & 0<=n71 & 0<=m57 & n73=n71 & m59=m57 & 0<=n70 & 0<=m56 & 
 n72=n70 & m58=m56 & xrightright'=q17 & xrightleft'=p17 & xrightheight'=n69 & 
@@ -1946,10 +1953,10 @@ exists(max_31:n64=1+max_31 & max_31=max(n71,n70)) & n71<=(1+n70) & (0+
 n70)<=(n71+1) & m52=m56+1+m57 & n72<=n73 & !(v65') & v68'!=n75 & !(v70'))
  |-  htrue.
 expect Valid.
- 
+
 // id: 302; line: 210; kind: PRE
  checkentail xleft'::avl{}<m53,n65> * xrightleft'::avl{}<m60,n74> * 
-xrightright'::avl{}<m61,n75>&MayLoop[] & 0<=n75 & 0<=m61 & 0<=n72 & 0<=m58 & 
+xrightright'::avl{}<m61,n75> & 0<=n75 & 0<=m61 & 0<=n72 & 0<=m58 & 
 n75=n72 & m61=m58 & v2+1=n74 & 0<=n74 & 0<=m60 & 0<=n73 & 0<=m59 & n74=n73 & 
 m60=m59 & 0<=n71 & 0<=m57 & n73=n71 & m59=m57 & 0<=n70 & 0<=m56 & n72=n70 & 
 m58=m56 & xrightright'=q17 & xrightleft'=p17 & xrightheight'=n69 & 
@@ -1962,11 +1969,11 @@ exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+n42) & (0+
 n42)<=(n41+1) & m=m34+1+m35 & xval'<a' & !(v39') & v62' & n69=n64 & 
 exists(max_31:n64=1+max_31 & max_31=max(n71,n70)) & n71<=(1+n70) & (0+
 n70)<=(n71+1) & m52=m56+1+m57 & n72<=n73 & !(v65') & v2!=n75 & !(v70')
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 303; line: 215; kind: PRE
- checkentail (exists v60': xright'::avl{}<m52,n64> * xleft'::avl{}<m53,n65>&MayLoop[] & 
+ checkentail (exists v60': xright'::avl{}<m52,n64> * xleft'::avl{}<m53,n65> & 
 v60'+n65=n64 & 0<=n65 & 0<=m53 & 0<=n41 & 0<=m35 & n65=n41 & m53=m35 & 
 0<=n64 & 0<=m52 & 0<=Anon23 & 0<=flted21 & n64=Anon23 & m52=flted21 & 
 0<=n63 & 0<=m51 & flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & m51=m34 & 
@@ -1976,9 +1983,9 @@ max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 &
 xval'<a' & !(v39') & v60'!=2 & !(v62'))
  |-  htrue.
 expect Valid.
- 
+
 // id: 304; line: 215; kind: PRE
- checkentail xright'::avl{}<m52,n64> * xleft'::avl{}<m53,n65>&MayLoop[] & v3+n65=n64 & 
+ checkentail xright'::avl{}<m52,n64> * xleft'::avl{}<m53,n65> & v3+n65=n64 & 
 0<=n65 & 0<=m53 & 0<=n41 & 0<=m35 & n65=n41 & m53=m35 & 0<=n64 & 0<=m52 & 
 0<=Anon23 & 0<=flted21 & n64=Anon23 & m52=flted21 & 0<=n63 & 0<=m51 & 
 flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & m51=m34 & tmp'=xright & 
@@ -1986,16 +1993,16 @@ xright=q11 & xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a &
 tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
 max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
 xval'<a' & !(v39') & v3!=2 & !(v62')
- |-  emp&MayLoop[].
+ |-  emp.
 expect Valid.
- 
+
 // id: 305; line: 0; kind: POST
  checkentail (exists v77',tmp1': x::avl{}<m,n> * v76'::node<a',v77',tmp1',tmp1'>&
 MayLoop[] & res=v76' & v77'=1 & x'=x & a'=a & tmp1'=null & x'=null & v38')
  |-  (exists flted22,Anon28: res::avl{}<flted22,Anon28>&flted22=1+m & 0<=n & 
 0<=m).
 expect Valid.
- 
+
 // id: 314; line: 0; kind: POST
  checkentail (exists xleft',flted23,flted24: v78'::avl{}<flted23,flted24> * 
 xleft'::node<Anon_3699,n50,p13,q13> * x'::node<Anon15,n43,xleft',q11>&
@@ -2015,11 +2022,11 @@ res=v78')
  |-  (exists flted22,Anon28: res::avl{}<flted22,Anon28>&flted22=1+m & 0<=n & 
 0<=m).
 expect Valid.
- 
+
 // id: 316; line: 0; kind: POST
  checkentail (exists xleft',flted25,flted26: q13::node<Anon21,n60,p15,q15> * 
 v79'::avl{}<flted26,flted25> * xleft'::node<Anon_3699,n50,p13,q13> * 
-x'::node<Anon15,n43,xleft',q11>&MayLoop[] & m46=m49+1+m50 & (0+n61)<=(n62+
+x'::node<Anon15,n43,xleft',q11> & m46=m49+1+m50 & (0+n61)<=(n62+
 1) & n62<=(1+n61) & exists(max_31:n56=1+max_31 & max_31=max(n62,n61)) & 
 n60=n56 & v52' & !(v47') & n53<=n54 & m37=m41+1+m42 & (0+n51)<=(n52+1) & 
 n52<=(1+n51) & exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n50=n45 & 
@@ -2038,7 +2045,7 @@ exists(an_97:0<=an_97) & 0<=am & 0<=an & 0<=bm & 0<=bn & 0<=cm & 0<=cn &
  |-  (exists flted22,Anon28: res::avl{}<flted22,Anon28>&flted22=1+m & 0<=n & 
 0<=m).
 expect Valid.
- 
+
 // id: 318; line: 0; kind: POST
  checkentail (exists xright',flted27,flted28: v80'::avl{}<flted27,flted28> * 
 xright'::node<Anon_3947,n69,p17,q17> * x'::node<Anon15,n43,p11,xright'>&
@@ -2057,11 +2064,11 @@ exists(flted_32_119:0<=flted_32_119) & exists(ln_120:0<=ln_120) & 0<=lm &
  |-  (exists flted22,Anon28: res::avl{}<flted22,Anon28>&flted22=1+m & 0<=n & 
 0<=m).
 expect Valid.
- 
+
 // id: 320; line: 0; kind: POST
  checkentail (exists xright',flted29,flted30: p17::node<Anon27,n79,p19,q19> * 
 v81'::avl{}<flted30,flted29> * xright'::node<Anon_3947,n69,p17,q17> * 
-x'::node<Anon15,n43,p11,xright'>&MayLoop[] & m60=m64+1+m65 & (0+n80)<=(n81+
+x'::node<Anon15,n43,p11,xright'> & m60=m64+1+m65 & (0+n80)<=(n81+
 1) & n81<=(1+n80) & exists(max_31:n74=1+max_31 & max_31=max(n81,n80)) & 
 n79=n74 & v70' & !(v65') & n72<=n73 & m52=m56+1+m57 & (0+n70)<=(n71+1) & 
 n71<=(1+n70) & exists(max_31:n64=1+max_31 & max_31=max(n71,n70)) & n69=n64 & 
