@@ -1110,7 +1110,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
                       ^ "\n ### iconseq0 = "^(string_of_meta_formula iconseq0)
                       ^"\n\n") no_pos in
   let (n_tl,ante) = meta_to_formula iante0 false [] [] in
-  let () = x_binfo_hp (add_str "last_entail_lhs" !CF.print_formula) ante no_pos in
+  let () = x_tinfo_hp (add_str "last_entail_lhs" !CF.print_formula) ante no_pos in
   let (ante_h,ante_p,_,_,_,_) = CF.split_components ante in
   let (mf,_,_) = Cvutil.xpure_heap_symbolic 999 !cprog ante_h ante_p 0 in
   let () = last_entail_lhs_xpure := Some mf in
@@ -1135,7 +1135,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   (* let _ = print_endline ("ivars"^(Cprinter.string_of_spec_var_list ivars_fvs)) in *)
   (* let _ = print_endline ("ante vars"^(Cprinter.string_of_spec_var_list fvs)) in *)
   (* Disable putting implicit existentials on unbound heap variables *)
-  let () = x_binfo_hp (add_str "ivars" (pr_list pr_id)) ivars no_pos in
+  let () = x_tinfo_hp (add_str "ivars" (pr_list pr_id)) ivars no_pos in
   (* WN : ivars - these are idents rather than spec_var *)
   (* TODO : shouldn't we be transforming to spec_vars instead ?? *)
   let fv_idents = (List.map CP.name_of_spec_var fvs)@ivars in
@@ -1623,11 +1623,11 @@ let process_validate_infer (vr : validate_result) (validation: validation)  =
     if (!Globals.print_core || !Globals.print_core_all) then pr_h pr_f res_f;
     let res_f_str = "("^(pr_f res_f)^")" in
     let meta_f_str = "("^(string_of_meta_formula residue)^")" in
-    let () = x_binfo_hp (add_str "expected residue(meta)" string_of_meta_formula) residue no_pos in
-    let () = x_binfo_hp (add_str "expected residue" pr_f) res_f no_pos in
+    let () = x_tinfo_hp (add_str "expected residue(meta)" string_of_meta_formula) residue no_pos in
+    let () = x_tinfo_hp (add_str "expected residue" pr_f) res_f no_pos in
     let pr_lc = Cprinter.string_of_list_context in
     let pr_r = pr_option (pr_pair pr_lc string_of_bool) in
-    let () = x_binfo_hp (add_str "current residue" pr_r) !CF.residues no_pos in
+    let () = x_tinfo_hp (add_str "current residue" pr_r) !CF.residues no_pos in
     let s =  "\nExpect_Infer "^nn^": " in
     match !CF.residues with
     | None -> print_endline_quiet (s^"Fail. (empty residue)")
@@ -1660,7 +1660,7 @@ let process_validate_infer (vr : validate_result) (validation: validation)  =
                        let lhs_formula = CF.normalize 2 lhs_formula_pure lhs_formula_heap pos in
                        let lhs_ctx = CF.Ctx {empty_es with CF.es_formula = lhs_formula } in
                        let lhs = CF.SuccCtx [lhs_ctx] in
-                       let () = x_binfo_hp (add_str "lhs:" Cprinter.string_of_list_context) lhs no_pos in
+                       let () = x_tinfo_hp (add_str "lhs:" Cprinter.string_of_list_context) lhs no_pos in
                        (check_heap_entail lhs res_f) || acc
                     | CF.OCtx (ctx1, ctx2) -> helper acc ctx1 || helper acc ctx2
                   in let rr = List.fold_left helper false lctx in

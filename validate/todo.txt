@@ -1,6 +1,23 @@
 ==================================================================
 # infer1.slk
 
+File "infer1.slk", line 16, characters 13-14
+ error: Stream.Error("EOF expected after [command_list] (in [sprog])")
+ at:error at: 
+
+Cannot handle:
+
+validate [
+( [H1,b],
+//   HP_32(b_34)&a=a_33 & b=b_34,
+   HP_32(b),
+  [H1(y) --> y::node<_,b>@M * HP_32(b)]
+  //[H1(y) --> y::node<a,b>@M * HP_32(b)]
+)
+].
+
+======
+
  <1>HP_33(b_35)&a=a_34 & b=b_35&{FLOW,(19,20)=__norm}[]
  inferred hprel: [H1(y) --> y::node<a,b>@M * HP_33(b)]
 
