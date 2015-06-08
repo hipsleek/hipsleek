@@ -2428,33 +2428,53 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
   let pr_guards = pr_list !CP.print_formula in
   Debug.no_2 "compatible_at_field_lvl" pr pr (pr_quad string_of_bool pr pr_out3 pr_guards) (fun _ _ -> compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap) h1 h2 
 
+(* imm_bound<:max(immr1,immr2) *)
+let bound_max_guard emap imm_bound immr1 immr2 =
+  let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"imm" () in
+  let fresh_ann_var = CP.Var(fresh_ann_sv, no_pos) in
+  let imm = CP.mkPolyAnn fresh_ann_sv in
+  let min_lend = CP.mkPure (CP.mkEqMax fresh_ann_var (CP.imm_to_exp immr1 no_pos) (CP.imm_to_exp immr2 no_pos) no_pos) in
+  let guard_max = Immutils.norm_eqmax emap imm immr1 immr2 min_lend in
+  if (Immutils.strict_subtype emap imm imm_bound) then [CP.mkFalse no_pos]
+  else 
+    let guard1 = CP.mkSubAnn (CP.imm_to_exp imm_bound no_pos) fresh_ann_var in
+    guard1::[guard_max]
+
 let mk_imm_add imml immr1 immr2 = 
   let left_imm = CP.imm_to_exp imml no_pos in
   let guard = CP.mkEq left_imm (CP.mkAdd (CP.imm_to_exp immr1 no_pos) (CP.imm_to_exp immr2 no_pos) no_pos) no_pos in
+  (* let guard = CP.mkEq left_imm (CP.mkAdd (CP.imm_to_exp immr1 no_pos) (CP.imm_to_exp immr2 no_pos) no_pos) no_pos in *)
   let guard = CP.mkPure guard in
   (imml, [guard])
 
-let subtraction_guards imm1 imm2 =
+(* c=a-b ----> a=c+b & @L<:max(c,b) *)
+let subtraction_guards emap imm1 imm2 =
   let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"imm" () in
   let fresh_ann_var = CP.Var(fresh_ann_sv, no_pos) in
-  let imm, guard = mk_imm_add imm1 (CP.mkPolyAnn fresh_ann_sv) imm2 in
-  imm, guard
+  let fresh_ann =  (CP.mkPolyAnn fresh_ann_sv) in
+  let _, guard_add = mk_imm_add imm1 fresh_ann imm2 in
+  let guard = bound_max_guard emap (CP.mkConstAnn Lend) imm1 imm2 in
+  fresh_ann, guard
 
 (* tranform @[@a,@b] to @c, where a=b+c *)
-let get_simpler_imm imm =
+let get_simpler_imm emap imm =
   match imm with
-  | CP.TempRes (a1,a2) ->  subtraction_guards a1 a2
+  | CP.TempRes (a1,a2) -> subtraction_guards emap a1 a2
   | _ -> imm, []
 
+(*  @A=max(imm1,imm2) *)
 let max_guard emap imm1 imm2 =
   let min_one_abs = CP.mkPure (CP.mkEqMax CP.const_ann_abs (CP.imm_to_exp imm1 no_pos) (CP.imm_to_exp imm2 no_pos) no_pos) in
   Immutils.norm_eqmax emap CP.imm_ann_top imm1 imm2 min_one_abs
 
+(* x::cell<>@imm1 * x::cell<>@imm2 ---> x::cell<>@imm & imm=imm1+imm2 & @A=max(imm1,imm2) *)
 let merge_guards emap imm1 imm2 = 
   let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"imm" () in
-  let imm1, guard1 = get_simpler_imm imm1 in
-  let imm2, guard2 = get_simpler_imm imm2 in
+  let imm1, guard1 = get_simpler_imm emap imm1 in
+  let imm2, guard2 = get_simpler_imm emap imm2 in
+  (* imm=imm1+imm2 *)
   let imm, guard =  mk_imm_add (CP.mkPolyAnn fresh_ann_sv) imm1 imm2 in
+  (* @A=max(imm1,imm2) *)
   let min_one_abs = CP.mkPure (CP.mkEqMax CP.const_ann_abs (CP.imm_to_exp imm1 no_pos) (CP.imm_to_exp imm2 no_pos) no_pos) in
   (imm, guard@guard1@guard2@[min_one_abs])
 
