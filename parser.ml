@@ -894,7 +894,7 @@ let rec get_heap_ann annl : P.ann =
   match annl with
     | (Some a) :: r -> a
     | None :: r -> get_heap_ann r
-    | [] ->  P.ConstAnn(Mutable)
+    | [] ->  P.NoAnn
 
 and get_heap_ann_opt annl : P.ann option = 
   match annl with
