@@ -2654,7 +2654,12 @@ let rec pr_numbered_list_formula (count:int) (e:list_formula)  =
 
 let pr_es_trace (trace:string list) : unit =
   if (trace==[]) then fmt_string "empty"
-  else pr_list_op " ==> " fmt_string trace
+  else
+    let rec helper xs = match xs with
+      | [] -> failwith "Not possible"
+      | [hd] -> fmt_string hd
+      | hd::tl -> fmt_string (hd ^ " ==> "); helper tl
+    in helper trace
 
 let pr_hp_rel hp_rel =
   let pr2 = prtt_string_of_formula in

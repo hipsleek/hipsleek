@@ -512,6 +512,15 @@ let common_arguments = [
        Debug.z_debug_file:=("$.*"); z_debug_flag:=true;
        Debug.mk_debug_arg s),
    "Matched input/output with reg-exp");
+  ("-dre-trace", Arg.String (fun s ->
+       let _ = print_endline ("!!!-dre "^s) in
+       Debug.z_debug_file:=("$"^s); z_debug_flag:=true;
+       Debug.debug_pattern_on := true;
+       Debug.dump_calls:=true;
+       Debug.dump_calls_all:=true;
+       Gen.debug_precise_trace:=true;
+       Debug.debug_pattern := (Str.regexp s)),
+   "Matched debug calls and its calees with reg-exp");
   ("-v", Arg.Set Debug.debug_on,
    "Verbose");
   ("--pipe", Arg.Unit Tpdispatcher.Netprover.set_use_pipe,
