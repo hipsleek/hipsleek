@@ -595,7 +595,12 @@ let type_of_spec_var (sv : spec_var) : typ =
 
 let is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
 
+(* RelT, uH_t *)
 let is_rel_var (sv : spec_var) : bool = is_RelT (type_of_spec_var sv)
+
+let is_rel_all_var (sv : spec_var) : bool = 
+  let t = (type_of_spec_var sv) in
+  is_RelT(t) || is_HpT(t)
 
 let is_func_var (sv: spec_var): bool = is_FuncT (type_of_spec_var sv)
 
@@ -2810,7 +2815,10 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
                                  ((List.fold_left (fun a v -> push_v v a) f_with_fv vs))))
 
 and mkExists vs f lbel pos =
-  Debug.no_2 "pure_mkExists" !print_svl !print_formula !print_formula (fun _ _ -> mkExists_x vs f lbel pos) vs f
+  let vs1 = List.filter (fun v -> not(is_rel_all_var v)) vs in
+  let () = x_tinfo_hp (add_str "vs(mkExists)" !print_svl) vs no_pos in
+  let () = x_tinfo_hp (add_str "vs(filtered rel type)" !print_svl) vs1 no_pos in
+  Debug.no_2 "pure_mkExists" !print_svl !print_formula !print_formula (fun _ _ -> mkExists_x vs1 f lbel pos) vs1 f
 
 (*and mkExistsBranches (vs : spec_var list) (f : (branch_label * formula )list) lbl pos =  List.map (fun (c1,c2)-> (c1,(mkExists vs c2 lbl pos))) f*)
 

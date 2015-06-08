@@ -4426,8 +4426,7 @@ and rename_bound_vars_x (f : formula) = match f with
   | Exists _ ->
     let qvars, base_f = split_quantifiers f in
     (*filter out RelT and HpT*)
-    let qvars = List.filter (fun sv -> not(CP.is_rel_typ sv ||
-                                           CP.is_hprel_typ sv)) qvars in
+    let qvars = List.filter (fun sv -> not(CP.is_rel_all_var sv)) qvars in
     let new_qvars = CP.fresh_spec_vars qvars in
     (*--- 09.05.2000 *)
     (*let () = (print_string ("\n[cformula.ml, line 519]: fresh name = " ^ (string_of_spec_var_list new_qvars) ^ "!!!!!!!!!!!\n")) in*)
@@ -4544,7 +4543,7 @@ and rename_struc_clash_bound_vars_X (f1 : struc_formula) (f2 : formula) : struc_
     (* let () = Debug.info_zprint (lazy  ("  b.formula_struc_implicit_inst " ^ (!CP.print_svl b.formula_struc_implicit_inst))) no_pos in *)
     (* let () = Debug.info_zprint (lazy  ("  b.formula_struc_explicit_inst " ^ (!CP.print_svl b.formula_struc_explicit_inst))) no_pos in *)
     let new_imp = List.map (fun v -> (if (check_name_clash v f2) &&
-                                         not(CP.is_rel_typ v) then (v,(CP.fresh_spec_var v)) else (v,v))) b.formula_struc_implicit_inst in
+                                         not(CP.is_rel_all_var v) then (v,(CP.fresh_spec_var v)) else (v,v))) b.formula_struc_implicit_inst in
     let new_exp = List.map (fun v -> (if (check_name_clash v f2) then (v,(CP.fresh_spec_var v)) else (v,v))) b.formula_struc_explicit_inst in
     let new_exs = List.map (fun v -> (if (check_name_clash v f2) then (v,(CP.fresh_spec_var v)) else (v,v))) b.formula_struc_exists in
     (* fresh_qvars contains only the freshly generated names *)
