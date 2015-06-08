@@ -401,6 +401,8 @@ rule tokenizer file_name = parse
   | "@pre_n" { INFER_AT_PRE }
   | "@post_n" { INFER_AT_POST }
   | "@ver_post" { INFER_AT_VER_POST }
+  | "@imm_pre" { INFER_IMM_PRE }
+  | "@imm_post" { INFER_IMM_POST }
   | "@imm" { INFER_AT_IMM }
   | "@field_imm" { INFER_AT_FIELD_IMM }
   | "@arrvar" { INFER_AT_ARR_AS_VAR }

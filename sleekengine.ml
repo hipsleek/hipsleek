@@ -2427,6 +2427,8 @@ let process_pairwise (f : meta_formula) =
 let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) etype =
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let is_tnt_flag = List.mem INF_TERM itype in
+  let is_infer_imm_pre_flag = List.mem INF_IMM_PRE itype in
+  let is_infer_imm_post_flag = List.mem INF_IMM_POST itype in
   let is_field_imm_flag = List.mem INF_FIELD_IMM itype in
   (* combine local vs. global of failure explaining *)
   let dfailure_anlysis = if List.mem INF_EFA itype then false else
