@@ -1,4 +1,4 @@
-// Valid.Valid.Fail.Fail.Fail.Valid.Fail.Fail.Fail.Fail.Valid.Fail.
+// Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Fail.
 data cell{
  int fst;
 }.
@@ -25,14 +25,9 @@ expect_infer I{} R{c::cell<v>@[@a, @b]&a<:b & w=v}
 //(3)
 checkentail c::cell<v>@a & @L<:a |-  c::cell<w>@b & @M<:b.
 print residue.
-expect Fail.
+expect Valid.
 /*
-Fail.(may) cause:AndR[ @L<:a |-  @M<:b. LOCS:[30];  @L<:a |-  a<:b. LOCS:[30;0] (may-bug).]
-
-
-pick_bounds@16@13@11
-pick_bounds inp1 :[@M]
-pick_bounds@16 EXIT:(Some( b=@M),None)
+with b=@A
 
 */
 
@@ -40,10 +35,9 @@ pick_bounds@16 EXIT:(Some( b=@M),None)
 //(4)
 checkentail c::cell<v>@a & @L<:a |-  c::cell<w>@b & @L<:b.
 print residue.
-expect Fail.
+expect Valid.
 /*
-Not sure if here it would makes sens to find an instantiation which would make the ent succeed. eg (@L<:b & a<:b) ?
-Fail.(may) cause: b=@L & @L<:a |-  a<:b. LOCS:[22;0] (may-bug)
+with b=@A
 */
 
 //5
@@ -70,21 +64,13 @@ expect_infer I{} R{c::cell<a>@M&w<:@M & v=@L & b=a}.
 
 //7
 checkentail c::cell<a>@w & w<:@L |-  c::cell<b>@v & @M<:v.
-expect Fail.
+expect Valid.
 print residue.
-/*
-Fail.(may) cause: v=@M & w<:@L |-  w<:v.
-*/
-
 
 //8
 checkentail c::cell<a>@w & w<:@L & u=@M|-  c::cell<b>@v & u<:v.
-expect Fail.
+expect Valid.
 print residue.
-/*
-Fail.(may) cause: v=@M & w<:@L |-  w<:v.
-*/
-
 
 //9
 checkentail c::cell<a>@w & u=ww |-  c::cell<b>@v & v=u.

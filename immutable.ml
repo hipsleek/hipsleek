@@ -2428,15 +2428,35 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
   let pr_guards = pr_list !CP.print_formula in
   Debug.no_2 "compatible_at_field_lvl" pr pr (pr_quad string_of_bool pr pr_out3 pr_guards) (fun _ _ -> compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap) h1 h2 
 
+let mk_imm_add imml immr1 immr2 = 
+  let left_imm = CP.imm_to_exp imml no_pos in
+  let guard = CP.mkEq left_imm (CP.mkAdd (CP.imm_to_exp immr1 no_pos) (CP.imm_to_exp immr2 no_pos) no_pos) no_pos in
+  let guard = CP.mkPure guard in
+  (imml, [guard])
+
+let subtraction_guards imm1 imm2 =
+  let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"imm" () in
+  let fresh_ann_var = CP.Var(fresh_ann_sv, no_pos) in
+  let imm, guard = mk_imm_add imm1 (CP.mkPolyAnn fresh_ann_sv) imm2 in
+  imm, guard
+
 (* tranform @[@a,@b] to @c, where a=b+c *)
 let get_simpler_imm imm =
   match imm with
-  | CP.TempRes (a1,a2) ->
-    let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"imm" () in
-    let fresh_ann_var = CP.Var(fresh_ann_sv, no_pos) in
-    let guard = CP.mkEq (CP.imm_to_exp a1 no_pos) (CP.mkAdd fresh_ann_var (CP.imm_to_exp a2 no_pos) no_pos) no_pos in
-    (CP.mkPolyAnn fresh_ann_sv), [CP.mkPure guard]
+  | CP.TempRes (a1,a2) ->  subtraction_guards a1 a2
   | _ -> imm, []
+
+let max_guard emap imm1 imm2 =
+  let min_one_abs = CP.mkPure (CP.mkEqMax CP.const_ann_abs (CP.imm_to_exp imm1 no_pos) (CP.imm_to_exp imm2 no_pos) no_pos) in
+  Immutils.norm_eqmax emap CP.imm_ann_top imm1 imm2 min_one_abs
+
+let merge_guards emap imm1 imm2 = 
+  let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"imm" () in
+  let imm1, guard1 = get_simpler_imm imm1 in
+  let imm2, guard2 = get_simpler_imm imm2 in
+  let imm, guard =  mk_imm_add (CP.mkPolyAnn fresh_ann_sv) imm1 imm2 in
+  let min_one_abs = CP.mkPure (CP.mkEqMax CP.const_ann_abs (CP.imm_to_exp imm1 no_pos) (CP.imm_to_exp imm2 no_pos) no_pos) in
+  (imm, guard@guard1@guard2@[min_one_abs])
 
 (* return (compatible_flag, to_keep_node) *)
 let compatible_at_node_lvl prog imm1 imm2 h1 h2 unfold_fun qvars emap =
@@ -2449,15 +2469,9 @@ let compatible_at_node_lvl prog imm1 imm2 h1 h2 unfold_fun qvars emap =
       let () = report_warning no_pos ("* between overlapping heaps: " ^ (pr_pair pr pr (h1,h2)) ) in
       (false, h1, []) 
     else
-      let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"imm" () in
-      let fresh_ann_var = CP.Var(fresh_ann_sv, no_pos) in
-      let h = set_imm h1 (CP.mkPolyAnn fresh_ann_sv) in (* TODOIMM to add the constraint fresh_ann = ann1 + ann2 *)
-      let imm1, guard1 = get_simpler_imm imm1 in
-      let imm2, guard2 = get_simpler_imm imm2 in
-      let guard = CP.mkEq fresh_ann_var (CP.mkAdd (CP.imm_to_exp imm1 no_pos) (CP.imm_to_exp imm2 no_pos) no_pos) no_pos in
-      let guard = CP.mkPure guard in
-      (true, h, [guard]@guard1@guard2) in
-      (* (false, h1, [guard]) in *)
+      let imm, guards = merge_guards emap imm1 imm2 in
+      let h = set_imm h1 imm in
+      (true, h, guards) in
   let compatible, keep_h, struc, guards =
     (match h1, h2 with
      | DataNode _, DataNode _

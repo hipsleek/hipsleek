@@ -69,6 +69,14 @@ let norm_emap_imm_exp  ?loc:(l=no_pos) (e: exp) emap : exp  =
   | Var(sv,l) ->  get_imm_emap_exp ~loc:l sv emap
   | _ -> e
 
+(* replace with imm constant, where a is constant or variable *)
+let norm_emap_imm  (a: ann) emap : ann  = 
+  match a with
+  | ConstAnn _ -> a
+  | PolyAnn sv -> map_opt_def a (fun x -> x) (get_imm_emap_ann_opt sv emap)
+  | _ -> a
+
+
 let eq_const_ann const_imm em sv = 
   match const_imm with
   | Mutable -> is_mut_sv ~emap:em sv
@@ -159,6 +167,63 @@ let build_eset_of_imm_formula f =
   Debug.no_1 "build_eset_of_imm_formula" pr pr_out build_eset_of_imm_formula f
 
 (* ===================== imm addition utils ========================= *)
+
+let gen_subtype emap imm1 imm2 test_fnc =
+  if (is_const_imm ~emap:emap imm1) && (is_const_imm ~emap:emap imm2) then
+    match (norm_emap_imm imm1 emap), (norm_emap_imm imm2 emap) with
+    | ConstAnn a1, ConstAnn a2 -> test_fnc a1 a2
+    | _ -> true
+  else true
+
+let strict_subtype emap imm1 imm2 = gen_subtype emap imm1 imm2 (fun a b -> a < b)
+let simple_subtype emap imm1 imm2 = gen_subtype emap imm1 imm2 (fun a b -> a <= b)
+
+(* norm of imml = max(immr1,immr2) 
+   @A = max(immr1,@M)  ----> immr1 = @A
+   @M = max(immr1,@A)  ----> false
+
+ *)
+let norm_eqmax emap imml immr1 immr2 def = 
+  let immr1, immr2 = norm_emap_imm immr1 emap, norm_emap_imm immr2 emap in
+  if not (is_const_imm ~emap:emap imml) then 
+    match immr1, immr2 with
+    | (ConstAnn Accs), v2
+    | v2, (ConstAnn Accs) -> mkPure (mkEq (imm_to_exp imml no_pos) (imm_to_exp (ConstAnn Accs) no_pos) no_pos)
+    | _ -> def
+  else
+    match immr1, immr2 with
+    | ((ConstAnn a) as v1), v2
+    | v2, ((ConstAnn a) as v1) -> 
+        if (strict_subtype emap imml v1) then mkFalse no_pos
+        else if not(helper_is_const_imm emap imml a) then 
+          mkPure (mkEq (imm_to_exp imml no_pos) (imm_to_exp v2 no_pos) no_pos) 
+        else def
+    | _ -> def
+
+
+
+(* norm of imml = min(immr1,immr2) 
+   imml = min(immr1,@M)  ----> imml = @M
+   @L = min(immr1,@M)    ----> false
+   @M = min(immr1,@L)    ----> immr1=@M
+
+ *)
+let norm_eqmin emap imml immr1 immr2 def = 
+  let immr1, immr2 = norm_emap_imm immr1 emap, norm_emap_imm immr2 emap in
+  if not (is_const_imm ~emap:emap imml) then 
+    match immr1, immr2 with
+    | (ConstAnn Mutable), v2
+    | v2, (ConstAnn Mutable) -> mkPure (mkEq (imm_to_exp imml no_pos) (imm_to_exp (ConstAnn Mutable) no_pos) no_pos)
+    | _ -> def
+  else
+    match immr1, immr2 with
+    | ((ConstAnn a) as v1), v2
+    | v2, ((ConstAnn a) as v1) -> 
+        if (strict_subtype emap v1 imml) then mkFalse no_pos
+        else if not(helper_is_const_imm emap imml a) then 
+          mkPure (mkEq (imm_to_exp v2 no_pos) (imm_to_exp imml no_pos) no_pos)
+        else def
+    | _ -> def
 
 (* assume e is Add(..) *)
 let get_imm_var_cts_operands e =
