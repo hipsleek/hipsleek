@@ -2440,21 +2440,34 @@ let bound_max_guard emap imm_bound immr1 immr2 =
     let guard1 = CP.mkSubAnn (CP.imm_to_exp imm_bound no_pos) fresh_ann_var in
     guard1::[guard_max]
 
-let mk_imm_add imml immr1 immr2 = 
+let mk_imm_add emap imml immr1 immr2 = 
   let left_imm = CP.imm_to_exp imml no_pos in
   let guard = CP.mkEq left_imm (CP.mkAdd (CP.imm_to_exp immr1 no_pos) (CP.imm_to_exp immr2 no_pos) no_pos) no_pos in
   (* let guard = CP.mkEq left_imm (CP.mkAdd (CP.imm_to_exp immr1 no_pos) (CP.imm_to_exp immr2 no_pos) no_pos) no_pos in *)
   let guard = CP.mkPure guard in
+  let guard = x_add_1 (Immutils.simplify_imm_addition ~emap:emap) guard in
   (imml, [guard])
 
 (* c=a-b ----> a=c+b & @L<:max(c,b) *)
 let subtraction_guards emap imm1 imm2 =
   let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"imm" () in
   let fresh_ann_var = CP.Var(fresh_ann_sv, no_pos) in
-  let fresh_ann =  (CP.mkPolyAnn fresh_ann_sv) in
-  let _, guard_add = mk_imm_add imm1 fresh_ann imm2 in
+  let fresh_ann =  (CP.mkPolyAnn fresh_ann_sv) in  
+
+  (*  @L<:max(c,b) *)
   let guard = bound_max_guard emap (CP.mkConstAnn Lend) imm1 imm2 in
-  fresh_ann, guard
+
+  (* a=c+b *)
+  let emap0 = Immutils.build_eset_of_imm_formula (CP.join_conjunctions guard) in
+  let emap = CP.EMapSV.merge_eset emap0 emap in
+  let _, guard_add = mk_imm_add emap imm1 fresh_ann imm2 in
+
+  fresh_ann, guard@guard_add
+
+let subtraction_guards emap imm1 imm2 =
+  let pr1 = CP.EMapSV.string_of in
+  let pr2 = CP.string_of_ann in
+  Debug.no_3 "subtraction_guards" pr1 pr2 pr2 (pr_pair pr2 (pr_list !CP.print_formula)) subtraction_guards emap imm1 imm2
 
 (* tranform @[@a,@b] to @c, where a=b+c *)
 let get_simpler_imm emap imm =
@@ -2472,11 +2485,25 @@ let merge_guards emap imm1 imm2 =
   let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"imm" () in
   let imm1, guard1 = get_simpler_imm emap imm1 in
   let imm2, guard2 = get_simpler_imm emap imm2 in
-  (* imm=imm1+imm2 *)
-  let imm, guard =  mk_imm_add (CP.mkPolyAnn fresh_ann_sv) imm1 imm2 in
+
   (* @A=max(imm1,imm2) *)
-  let min_one_abs = CP.mkPure (CP.mkEqMax CP.const_ann_abs (CP.imm_to_exp imm1 no_pos) (CP.imm_to_exp imm2 no_pos) no_pos) in
+  let min_one_abs = max_guard emap imm1 imm2 in
+
+ (* imm=imm1+imm2 *)
+  let emap0 = Immutils.build_eset_of_imm_formula min_one_abs in
+  let emap = CP.EMapSV.merge_eset emap0 emap in
+  let imm, guard =  mk_imm_add emap (CP.mkPolyAnn fresh_ann_sv) imm1 imm2 in
+
+  (* simplify addition *)
+  (* let emap0 = Immutils.build_eset_of_imm_formula min_one_abs in *)
+  (* let guard = List.map (x_add_1 (Immutils.simplify_imm_addition ~emap:(CP.EMapSV.merge_eset emap0 emap))) guard in *)
+
   (imm, guard@guard1@guard2@[min_one_abs])
+
+let merge_guards emap imm1 imm2 = 
+  let pr1 = CP.EMapSV.string_of in
+  let pr2 = CP.string_of_ann in
+  Debug.no_3 "merge_guards" pr1 pr2 pr2 (pr_pair pr2 (pr_list !CP.print_formula)) merge_guards emap imm1 imm2
 
 (* return (compatible_flag, to_keep_node) *)
 let compatible_at_node_lvl prog imm1 imm2 h1 h2 unfold_fun qvars emap =

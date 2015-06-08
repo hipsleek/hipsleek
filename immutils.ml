@@ -186,6 +186,7 @@ let simple_subtype emap imm1 imm2 = gen_subtype emap imm1 imm2 (fun a b -> a <= 
 let norm_eqmax emap imml immr1 immr2 def = 
   let immr1, immr2 = norm_emap_imm immr1 emap, norm_emap_imm immr2 emap in
   if not (is_const_imm ~emap:emap imml) then 
+    let () = x_binfo_pp ("HERE 3 ") no_pos in 
     match immr1, immr2 with
     | (ConstAnn Accs), v2
     | v2, (ConstAnn Accs) -> mkPure (mkEq (imm_to_exp imml no_pos) (imm_to_exp (ConstAnn Accs) no_pos) no_pos)
@@ -196,9 +197,10 @@ let norm_eqmax emap imml immr1 immr2 def =
     | v2, ((ConstAnn a) as v1) -> 
         if (strict_subtype emap imml v1) then mkFalse no_pos
         else if not(helper_is_const_imm emap imml a) then 
+          let () = x_binfo_pp ("HERE 0 ") no_pos in 
           mkPure (mkEq (imm_to_exp imml no_pos) (imm_to_exp v2 no_pos) no_pos) 
-        else def
-    | _ -> def
+        else           let () = x_binfo_pp ("HERE 2 ") no_pos in  def
+    | _ ->           let () = x_binfo_pp ("HERE 1 ") no_pos in  def
 
 
 
@@ -270,8 +272,9 @@ let imm_summation emap e =
   let fixpt = fixpt && (List.length sum_operands == List.length nonA_sum_operands) in
 
   (* count the no of non@A constants in the sum  *)
-  let constants = List.filter (fun x -> is_const_imm ~emap:emap (exp_to_imm x)) nonA_sum_operands in
-  if (List.length constants <= 1) then (Some (mkAdd_list  nonA_sum_operands),fixpt) (* zero or only one non @A constant *)
+  (* let constants = List.filter (fun x -> is_const_imm ~emap:emap (exp_to_imm x)) nonA_sum_operands in *)
+  let constants = List.filter (fun x -> is_mutable ~emap:emap (exp_to_imm x)) nonA_sum_operands in
+  if (List.length constants <= 1) then (Some (mkAdd_list  nonA_sum_operands),fixpt) (* zero or only one @M constant *)
   else (None, fixpt)
 
 let imm_summation emap e =
@@ -298,7 +301,7 @@ let norm_subann_add mksubann emap e l =
    exp = @ct1 + @v    ----> exp = @ct1 + @ct2 if emap of f contains (v,ct2)
    exp = @ct1 + @v    unchanged  if f doesn't contain a constant def for v
 *)
-let simplify_imm_adddition (f:formula) =
+let simplify_imm_adddition emap0 (f:formula) =
   let fixpt = ref true in
 
   let f_b_ann_exp_check sv lbl f_op l  =
@@ -355,6 +358,7 @@ let simplify_imm_adddition (f:formula) =
   let rec helper form = 
     let () = fixpt := true in
     let emap = build_eset_of_imm_formula form in
+    let emap = EMapSV.merge_eset emap emap0 in
     let () =  x_tinfo_hp (add_str "form" !print_formula) form no_pos in
     let () =  x_tinfo_hp (add_str "emap" EMapSV.string_of) emap no_pos in
     let new_form = map_formula_arg form emap fncs (idf2, idf2, idf2) in
@@ -364,8 +368,8 @@ let simplify_imm_adddition (f:formula) =
   if !Globals.imm_add  then helper f
   else f
 
-let simplify_imm_addition (f:formula) =
+let simplify_imm_addition ?emap:(em=[]) (f:formula) =
   let pr = !print_formula in
-  Debug.no_1 "simplify_imm_addition" pr pr simplify_imm_adddition f
+  Debug.no_1 "simplify_imm_addition" pr pr (simplify_imm_adddition em) f
 
 (* ===================== END imm addition utils ========================= *)
