@@ -1565,8 +1565,10 @@ class inf_obj  =
     method is_term_wo_post = self # get INF_TERM_WO_POST
     (* termination inference wo post-condition *)
     method is_pre  = self # get INF_PRE
+    method is_pre_imm = self # get INF_IMM_PRE
     (* pre-condition inference *)
     method is_post  = self # get INF_POST
+    method is_post_imm = self # get INF_IMM_POST
     (* post-condition inference *)
     method is_ver_post  = self # get INF_VER_POST
     method is_field_imm = self # get INF_FIELD_IMM
