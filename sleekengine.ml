@@ -116,7 +116,8 @@ module TP = Tpdispatcher
 
 let sleek_proof_counter = new Gen.ctr_with_aux 0
 
-let unexpected_cmd = ref []
+let unexpected_cmd = new Gen.stack_pr pr_id (=) 
+(* let unexpected_cmd = ref [] *)
 
 (*
   Global data structures. If we want to support push/pop commands,
@@ -1619,10 +1620,14 @@ let process_validate_infer (vr : validate_result) (validation: validation)  =
     | _ -> false
   in
 
-  let pr s str res_f_str = 
+  let pr_validate_outcome b nn res_f_str = 
+    let str1 =  "\nExpect_Infer "^nn^": " in
+    let () = x_binfo_hp (add_str "str" pr_id) str1 no_pos in
+    let () = x_binfo_hp (add_str "res_f_str" pr_id) res_f_str no_pos in
     let str2 = string_of_vres (match vr with | VR_Valid -> VR_Fail 0 | _ -> VR_Valid) in
-    if s then print_endline_quiet (str^"OK. ")
-    else print_endline_quiet (str^"Expected "^(string_of_vres vr)^" but got "^str2^" "^res_f_str)
+    if b then print_endline_quiet (str1^"OK. ")
+    else let () = unexpected_cmd # push nn in
+      print_endline_quiet (str1^"Expected "^(string_of_vres vr)^" but got "^str2^" "^res_f_str)
   in
 
   let validate_with_residue hdr residue =
@@ -1638,9 +1643,9 @@ let process_validate_infer (vr : validate_result) (validation: validation)  =
     let pr_lc = Cprinter.string_of_list_context in
     let pr_r = pr_option (pr_pair pr_lc string_of_bool) in
     let () = x_tinfo_hp (add_str "current residue" pr_r) !CF.residues no_pos in
-    let s =  "\nExpect_Infer "^nn^": " in
+    let ss = "Expect_Infer "^nn^" " in
     match !CF.residues with
-    | None -> print_endline_quiet (s^"Fail. (empty residue)")
+    | None -> print_endline_quiet ( ss ^"Fail. (empty residue)")
     | Some (lc, _) ->
       begin
         let res = (match lc (* run_heap_entail lc res_f *) with
@@ -1717,7 +1722,7 @@ let process_validate_infer (vr : validate_result) (validation: validation)  =
                 (* in helper ctx *)
               end
           )
-        in pr res s res_f_str
+        in pr_validate_outcome res nn res_f_str
       end
   in
   (*********************************)
@@ -1767,7 +1772,7 @@ let process_validate exp_res opt_fl ils_es=
     let a_r, ls_a_es, act_vars = match !CF.residues with
       | None ->
         let _ = res_str := "Expecting "^(string_of_vres exp_res)^"BUT got no residue" in
-        let _ = unexpected_cmd := !unexpected_cmd @ [nn] in
+        let _ = unexpected_cmd # push (string_of_int nn)  in
         (*   if (exp_res = "Fail") *)
         (*   then *)
         (*     res_str := "Expected.\n" *)
@@ -1804,11 +1809,11 @@ let process_validate exp_res opt_fl ils_es=
                     if List.exists (fun id1 -> string_compare id1 id) res_fl_ids then
                       res_str := "OK"
                     else
-                      let _ = unexpected_cmd := !unexpected_cmd @ [nn] in
+                      let _ = unexpected_cmd # push (string_of_int nn) in
                       res_str := ( "Expecting flow "^(id))
               end
             | Some s -> 
-              let _ = unexpected_cmd := !unexpected_cmd @ [nn] in
+              let _ = unexpected_cmd # push (string_of_int nn) in
               res_str := s
           in
           match lc with 
