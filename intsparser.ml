@@ -92,7 +92,6 @@ let formula_of_exp (exp : I.exp) : IP.formula =
     | I.BoolLit { I.exp_bool_lit_val = b; I.exp_bool_lit_pos = pos } ->
       IP.BForm ((IP.BConst (b, pos), None), None)
     | _ -> report_error no_pos "intsparser.formula_of_exp: unexpected exp"
-      I.trans_to_exp_form exp
   in
   helper exp
 
@@ -216,9 +215,7 @@ let rec trans_ints_exp_lst (exps: ints_exp list) (last_exp: I.exp): I.exp =
 
 let trans_ints_block (blk: ints_block): I.exp =
   let exps = blk.ints_block_commands in
-  let fr = blk.ints_block_from in
   let t = blk.ints_block_to in
-  let pos = blk.ints_block_pos in
   (* Translate to_label to a method call *)
   let to_exp = I.mkCallNRecv (name_of_ints_loc t) None [] None (fresh_branch_point_id "") (pos_of_ints_loc t) in
   (* Translate ints_exp list *)
@@ -241,10 +238,6 @@ let trans_ints_block_lst fn (fr_lbl: ints_loc) (blks: ints_block list): I.proc_d
         let nondet_cond = I.mkBinary I.OpGt nondet_call (I.mkIntLit 0 no_pos) None no_pos in
         I.mkCond nondet_cond blk (nondet_chain_for blk_exps) None (I.get_exp_pos blk) in
     nondet_chain_for blk_exps
-  in
-  let wrap_with_cond asm then_exp else_exp =
-    let asm_pos = asm.ints_exp_assume_pos in
-    I.mkCond asm.ints_exp_assume_formula then_exp else_exp None asm_pos
   in
   (* Get a disjunct/independent-ish set of assumptions from the initial
    * conditions of the blocks. *)
@@ -335,7 +328,7 @@ let trans_ints_prog fn (iprog: ints_prog): I.prog_decl =
       let is_self_recursive proc =
           let has_call_with_procname e =
             (match e with
-             | I.CallNRecv { exp_call_nrecv_method = cnr_method } ->
+             | I.CallNRecv { I.exp_call_nrecv_method = cnr_method } ->
                Some (cnr_method = proc.I.proc_name)
              | _ -> None) in
           match proc.I.proc_body with
@@ -348,7 +341,7 @@ let trans_ints_prog fn (iprog: ints_prog): I.prog_decl =
           (* function to inline function calls. *)
           let replace_all_proc_calls (e : I.exp) : I.exp option =
             (match e with
-             | (I.CallNRecv ({ exp_call_nrecv_method = cnr_method } as cnr)) ->
+             | (I.CallNRecv { I.exp_call_nrecv_method = cnr_method }) ->
                let cp = called_proc cnr_method in
                (match cp with
                 | Some cp ->
@@ -370,7 +363,7 @@ let trans_ints_prog fn (iprog: ints_prog): I.prog_decl =
     let f caller_name e =
       match e with
       (* Don't consider calls where the proc name is the caller name. *)
-      | I.CallNRecv { exp_call_nrecv_method = cnr_method } when cnr_method <> caller_name ->
+      | I.CallNRecv { I.exp_call_nrecv_method = cnr_method } when cnr_method <> caller_name ->
         Some [cnr_method]
       | _ -> None
     in
@@ -386,25 +379,25 @@ let trans_ints_prog fn (iprog: ints_prog): I.prog_decl =
   let proc_decls =
     List.filter (fun pd -> List.mem pd.I.proc_name called_proc_names) proc_decls
   in
-  { prog_include_decls = [];
-    prog_data_decls = [];
-    prog_global_var_decls = global_var_decls;
-    prog_logical_var_decls = [];
-    prog_enum_decls = [];
-    prog_view_decls = [];
-    prog_func_decls = [];
-    prog_rel_decls = [];
-    prog_rel_ids = [];
-    prog_templ_decls = [];
-    prog_ut_decls = [];
-    prog_hp_decls = [];
-    prog_hp_ids = [];
-    prog_axiom_decls = [];
-    prog_proc_decls = proc_decls;
-    prog_coercion_decls = [];
-    prog_hopred_decls = [];
-    prog_barrier_decls = [];
-    prog_test_comps = []; }
+  { I.prog_include_decls = [];
+    I.prog_data_decls = [];
+    I.prog_global_var_decls = global_var_decls;
+    I.prog_logical_var_decls = [];
+    I.prog_enum_decls = [];
+    I.prog_view_decls = [];
+    I.prog_func_decls = [];
+    I.prog_rel_decls = [];
+    I.prog_rel_ids = [];
+    I.prog_templ_decls = [];
+    I.prog_ut_decls = [];
+    I.prog_hp_decls = [];
+    I.prog_hp_ids = [];
+    I.prog_axiom_decls = [];
+    I.prog_proc_decls = proc_decls;
+    I.prog_coercion_decls = [];
+    I.prog_hopred_decls = [];
+    I.prog_barrier_decls = [];
+    I.prog_test_comps = []; }
 
 let parse_ints (file_name: string): I.prog_decl =
   let in_chnl = open_in file_name in
