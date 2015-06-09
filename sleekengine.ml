@@ -1111,6 +1111,8 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
                       ^"\n\n") no_pos in
   let (n_tl,ante) = meta_to_formula iante0 false [] [] in
   let () = x_tinfo_hp (add_str "last_entail_lhs" !CF.print_formula) ante no_pos in
+  (* WN : ante maybe a disjunction! *)
+  (* need a better solution here *)
   let (ante_h,ante_p,_,_,_,_) = CF.split_components ante in
   let (mf,_,_) = Cvutil.xpure_heap_symbolic 999 !cprog ante_h ante_p 0 in
   let () = last_entail_lhs_xpure := Some mf in
