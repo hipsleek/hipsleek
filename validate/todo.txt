@@ -223,8 +223,7 @@ Entail (1) : Valid.
 Residue:
  <1>emp&y=null & n=0&{FLOW,(20,21)=__norm#E}[]
  inferred pure: [n=0]
-[[ BaseCaseFold ==> 
-  COND]]
+[[ BaseCaseFold ==>  COND]]
 
 
 
