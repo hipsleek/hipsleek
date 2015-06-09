@@ -538,6 +538,9 @@ and exp = (* expressions keep their types *)
   | Try of exp_try
   | Par of exp_par
 
+
+let global_prog = ref (None : prog_decl option)
+
 (* Stack of Template Declarations *)
 let templ_decls: templ_decl Gen.stack = new Gen.stack
 
@@ -1095,6 +1098,20 @@ let look_up_view_inv defs act_args name inv_compute_fnc =
 let rec look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with
   | d :: rest -> if d.rel_name = name then d else look_up_rel_def_raw rest name
   | [] -> raise Not_found
+
+(* Returned the list of types of arguments *)
+let look_up_rel_args_type (defs: rel_decl list) name =
+  let rel = look_up_rel_def_raw defs name in
+  List.map (fun sv ->
+      match sv with
+      | Cpure.SpecVar (typ,id,_) ->
+        typ
+    ) rel.rel_vars
+;;
+
+let look_up_rel_args_type_from_prog p name =
+  look_up_rel_args_type p.prog_rel_decls name
+;;
 
 let look_up_templ_def_raw (defs: templ_decl list) (name : ident) = 
   List.find (fun d -> d.templ_name = name) defs

@@ -524,9 +524,10 @@ let trans_res_struc_formula prog sf =
 
 let infer_pure (prog : prog_decl) (scc : proc_decl list) =
   let proc_specs = List.fold_left (fun acc proc -> acc@[CF.simplify_ann (proc.proc_stk_of_static_specs # top)]) [] scc in
-  let () = DD.ninfo_hprint (add_str "proc_specs" (pr_list Cprinter.string_of_struc_formula)) proc_specs no_pos in
+  (* let () = x_binfo_hp (add_str "proc_specs" (pr_list Cprinter.string_of_struc_formula)) proc_specs no_pos in *)
   (* let _ = print_endline_quiet ("proc_specs: " ^ (pr_list Cprinter.string_of_struc_formula proc_specs)) in *)
   let rels = Infer.infer_rel_stk # get_stk in
+  (* let () = x_binfo_pp (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels)) no_pos in *)
   let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels) in
   let (lst_assume,lst_rank) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) rest) in
   let lst_assume = Gen.Basic.remove_dups lst_assume in
@@ -545,6 +546,8 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
       let pre_rel_fmls = List.filter (fun x -> CP.intersect (CP.get_rel_id_list x) inf_vars != []) pre_rel_fmls in
       let pre_vars = CP.remove_dups_svl (List.fold_left (fun pres proc ->
           pres @ (List.map (fun (t,id) -> CP.SpecVar (t,id,Unprimed)) proc.proc_args)) pres scc) in
+
+
       (*let _ = print_endline ("pre_vars!!!"^(Cprinter.string_of_typed_spec_var_list pre_vars)) in*)
       let post_vars_wo_rel = CP.remove_dups_svl posts_wo_rel in
       let post_vars = CP.remove_dups_svl all_posts in
@@ -557,6 +560,16 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
           let tuples =
             let rels = Gen.Basic.remove_dups rels in
             let rels = List.filter (fun (_,pf,_) -> not(CP.is_False pf)) rels in
+            (* The place to get the array unchanged part *)
+            let target_rel =
+              let one = List.hd rels in
+              match one with
+              | (_,_,rel) -> rel
+            in
+            let target_define =
+              List.map (fun (r,pf,rel) -> pf) rels in
+            let unchanged_result =
+              (Trans_arr.get_unchanged_fixpoint target_rel target_define) in
             if rels !=[] then
               begin
                 print_endline_quiet "\n*************************************";
@@ -613,10 +626,10 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let () = x_binfo_pp (s2 ^ s1) no_pos in
             (* let () = x_binfo_hp (add_str "constraints" (pr_list (pr_pair pr (fun _ -> "")))) post_rel_df_new no_pos in *)
             (* let _ = x_binfo_pp ("Pi.infer_pure") no_pos in *)
-            let () = x_binfo_hp (add_str "sp:compute_fixpoint" Cprinter.string_of_struc_formula) proc_spec no_pos in
+            let () = x_tinfo_hp (add_str "sp:compute_fixpoint" Cprinter.string_of_struc_formula) proc_spec no_pos in
             let fn x = x_add_1 (Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars) x in
             let bottom_up_fp0 = wrap fn proc_spec in
-            let () = x_binfo_hp (add_str "bottom_up_fp0" (pr_list (pr_pair pr pr))) bottom_up_fp0 no_pos in
+            let () = x_tinfo_hp (add_str "bottom_up_fp0" (pr_list (pr_pair pr pr))) bottom_up_fp0 no_pos in
             (* let bottom_up_fp0 = List.fold_left (fun acc proc_spec -> acc@(x_add Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars proc_spec)) [] proc_specs in *)
             (* temporarily remove gist because tut/ex2/bugs-ex20.ss example *)
             (* let bottom_up_fp = List.map (fun (r,p) -> *)
@@ -633,7 +646,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                 Fixcalc.compute_fixpoint_td
                 Fixcalc.fixc_preprocess reloblgs pre_rel_df post_rel_df_new post_rel_df pre_vars proc_spec) grp_post_rel_flag
             in
-            let () = x_binfo_hp (add_str "fixpoint" (pr_list (pr_quad pr pr pr pr))) res no_pos in
+            let () = x_tinfo_hp (add_str "fixpoint" (pr_list (pr_quad pr pr pr pr))) res no_pos in
             res
           in
           Infer.fixcalc_rel_stk # push_list tuples;
@@ -647,10 +660,10 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
           (*   end; *)
           Infer.fixcalc_rel_stk # reset;
           let () = List.iter (fun (rel_post,post,rel_pre,pre) ->
-              x_binfo_zp (lazy ((">>REL POST : "^Cprinter.string_of_pure_formula rel_post))) no_pos;
-              x_binfo_zp (lazy ((">>POST: "^Cprinter.string_of_pure_formula post))) no_pos;
-              x_binfo_zp (lazy ((">>REL PRE : "^Cprinter.string_of_pure_formula rel_pre))) no_pos;
-              x_binfo_zp (lazy ((">>PRE : "^Cprinter.string_of_pure_formula pre))) no_pos
+              x_tinfo_zp (lazy ((">>REL POST : "^Cprinter.string_of_pure_formula rel_post))) no_pos;
+              x_tinfo_zp (lazy ((">>POST: "^Cprinter.string_of_pure_formula post))) no_pos;
+              x_tinfo_zp (lazy ((">>REL PRE : "^Cprinter.string_of_pure_formula rel_pre))) no_pos;
+              x_tinfo_zp (lazy ((">>PRE : "^Cprinter.string_of_pure_formula pre))) no_pos
             ) tuples in
           (* WN : Why add post into pre if rel_pre is true ? *)
           (* removed pre inf unless explicitly requested *)

@@ -562,6 +562,10 @@ let is_res_var = function
   | Var (x,_) -> is_res_spec_var x
   | _ -> false
 
+let is_bool_res_var = function
+  | Var (x,_) -> is_bool_typ x (* && is_res_spec_var x *)
+  | _ -> false
+
 let primed_of_spec_var (sv : spec_var) : primed = match sv with
   | SpecVar (_, _, p) -> p 
 
@@ -876,9 +880,9 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
        We need only to compare names and primedness *)
     (String.compare v1 v2 = 0) && (p1 = p2)
 
-let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = 
-  let pr = !print_sv in
-  Debug.no_2 "eq_spec_var" pr pr string_of_bool eq_spec_var (sv1 : spec_var) (sv2 : spec_var)
+(* let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) =  *)
+(*   let pr = !print_sv in *)
+(*   Debug.no_2 "eq_spec_var" pr pr string_of_bool eq_spec_var (sv1 : spec_var) (sv2 : spec_var) *)
 
 
 
@@ -1478,28 +1482,10 @@ and afv (af : exp) : spec_var list =
   | ArrayAt (a, i, _) -> 
     let ifv = List.map afv i in
     let ifv = List.flatten ifv in
-    let mk_array_new_name_spec_var =
-      fun sv e ->
-        match sv with
-        | SpecVar (typ,id,primed)->
-          begin
-            match typ with
-            | Array (atyp,_)->
-              begin
-                match primed with
-                | Primed ->
-                  (*Var( SpecVar (atyp,(id)^"_"^"primed_"^(ArithNormalizer.string_of_exp e),primed),no_pos)*)
-                  SpecVar (atyp,(id)^"___"^(!print_exp e)^"___",primed)
-                | _ -> SpecVar (atyp,(id)^"___"^(!print_exp e)^"___",primed)
-              end
-            | _ -> failwith "mk_array_new_name: Not array type"
-          end
-    in
     begin
       match i with
       | [index] ->
         remove_dups_svl (a :: ifv)
-      (*remove_dups_svl ((mk_array_new_name_spec_var a index)::ifv)*)
       | _ ->
         remove_dups_svl (a :: ifv)
         (*failwith ("afv:"^(!print_exp af)^" Invalid index")*)

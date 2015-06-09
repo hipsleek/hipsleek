@@ -844,9 +844,13 @@ let is_list_b_formula (pf,_) = match pf with
   | _ -> Some false
 
 let is_array_constraint (e: CP.formula) : bool =
-
   let or_list = List.fold_left (||) false in
   CP.fold_formula e (nonef, is_array_b_formula, is_array_exp) or_list
+
+let is_array_constraint e =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "is_array_constraint" pr string_of_bool is_array_constraint e
+;;
 
 let is_relation_b_formula (pf,_) = match pf with
   | CP.RelForm _ -> Some true
@@ -1872,9 +1876,6 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
   (* TODO WN : can below remove duplicate constraints? *)
   (* let f = CP.elim_idents f in *)
   (* this reduces x>=x to true; x>x to false *)
-  (* let f = x_add_1 Trans_arr.new_translate_out_array_in_one_formula_split f in *)
-  (*let f = drop_array_formula f in*)
-  (* let _ = print_endline ("tp_is_sat After drop: "^(Cprinter.string_of_pure_formula f)) in *)
 
   let sat_num = next_proof_no () in
   let sat_no = (string_of_int sat_num) in
@@ -1930,9 +1931,9 @@ let om_simplify f =
 (* cnv_int_to_ptr r *)
 
 (* Take out formulas that omega cannot handle*)
-let om_simplify f=
-  Trans_arr.split_and_combine om_simplify (x_add_1 Trans_arr.can_be_simplify) f
-;;
+(* let om_simplify f= *)
+(*   Trans_arr.split_and_combine om_simplify (x_add_1 Trans_arr.can_be_simplify) f *)
+(* ;; *)
 
 let om_simplify f =
   let pr = Cprinter.string_of_pure_formula in
@@ -1957,14 +1958,12 @@ let simplify_omega (f:CP.formula): CP.formula =
 
 let simplify (f : CP.formula) : CP.formula =
   (* proof_no := !proof_no + 1; *)
-  (* let _ = Trans_arr.new_translate_out_array_in_one_formula_split f in *)
-  let f = x_add_1 Trans_arr.new_translate_out_array_in_one_formula_split f in
 
   let simpl_num = next_proof_no () in
   let simpl_no = (string_of_int simpl_num) in
   if !Globals.no_simpl then f else
-  if !perm=Dperm && CP.has_tscons f<>CP.No_cons then f 
-  else 
+  if !perm=Dperm && CP.has_tscons f<>CP.No_cons then f
+  else
     let cmd = PT_SIMPLIFY f in
     let () = Log.last_proof_command # set cmd in
     (* if !Globals.allow_inf_qe_coq then f else *)
@@ -2090,16 +2089,21 @@ let simplify (f : CP.formula) : CP.formula =
           f
       end
 
+let simplify f =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "(inner most) simplify" pr pr simplify f
+;;
+
 let om_pairwisecheck f =
   wrap_pre_post norm_pure_input norm_pure_result
     (* wrap_pre_post cnv_ptr_to_int norm_pure_result *)
     (x_add_1 Omega.pairwisecheck) f
 
 (* ZH: Take out the array part *)
-let om_pairwisecheck f =
-  (* let () = x_binfo_pp "take out array part" no_pos in *)
-  Trans_arr.split_and_combine (x_add_1 om_pairwisecheck) (fun f-> not (Trans_arr.contain_array f)) f
-;;
+(* let om_pairwisecheck f = *)
+(*   (\* let () = x_binfo_pp "take out array part" no_pos in *\) *)
+(*   Trans_arr.split_and_combine (x_add_1 om_pairwisecheck) (fun f-> not (Trans_arr.contain_array f)) f *)
+(* ;; *)
 
 let om_pairwisecheck f =
   let pr = Cprinter.string_of_pure_formula in
@@ -2218,7 +2222,9 @@ let simplify (f:CP.formula):CP.formula =
   let rec helper f = match f with 
     (* | Or(f1,f2,lbl,pos) -> mkOr (helper f1) (helper f2) lbl pos *)
     (* | AndList b -> mkAndList (map_l_snd simplify b) *)
-    | _ -> Trans_arr.translate_back_array_in_one_formula (tp_pairwisecheck (simplify f)) in
+    (* | _ -> Trans_arr.translate_back_array_in_one_formula (tp_pairwisecheck (simplify f)) *)
+    | _ ->
+      (tp_pairwisecheck (simplify f)) in
   helper f
 ;;
 
@@ -2669,11 +2675,6 @@ let tp_imply_preprocess (ante: CP.formula) (conseq: CP.formula) : (bool option *
 
 let tp_imply_no_cache ante conseq imp_no timeout process =
   (* let _ = print_endline ("##Before process: ante: "^(Cprinter.string_of_pure_formula ante)^"\n conseq: "^(Cprinter.string_of_pure_formula conseq)) in *)
-  (* let ante = translate_array_relation ante in *)
-
-  (* let n_ante,n_conseq = new_translate_out_array_in_imply_full ante conseq in *)
-  let n_ante,n_conseq = Trans_arr.new_translate_out_array_in_imply_split_full ante conseq in
-  let n_ante = Trans_arr.drop_array_formula n_ante in
   (* let _ = print_endline ("##After process: ante: "^(Cprinter.string_of_pure_formula n_ante)^"\n conseq: "^(Cprinter.string_of_pure_formula n_conseq)) in *)
   (* let _ = print_endline ("tp_imply_no_cache n_ante: "^(Cprinter.string_of_pure_formula n_ante)) in *)
   (* let _ = print_endline ("tp_imply_no_cache n_conseq: "^(Cprinter.string_of_pure_formula n_conseq)) in *)
@@ -2683,8 +2684,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   (*let _ = print_endline ("After Drop ante: "^(Cprinter.string_of_pure_formula d_ante)^" conseq: "^(Cprinter.string_of_pure_formula d_conseq)) in*)
   (* let _ = print_endline ("tp_imply_no_cache ante (after drop): "^(Cprinter.string_of_pure_formula ante)) in *)
   (* let _ = print_endline ("tp_imply_no_cache conseq (after drop): "^(Cprinter.string_of_pure_formula conseq)) in *)
-  let ante = n_ante in
-  let conseq = n_conseq in 
+  let ante = ante in
+  let conseq = conseq in 
   (**************************************)
   let res,ante,conseq = x_add tp_imply_preprocess ante conseq in
   match res with | Some ret -> ret | None -> (*continue normally*)
