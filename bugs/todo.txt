@@ -1517,6 +1517,26 @@ WARNING: _0:0_0:0:Z3 error message:
 (assert (not false))
 (check-sat)
 ===================================================================
+# ex47a
+
+checkentail x::node<nnn,_>@A * x::node<mmm,_>@M  |- nnn=mmm.
+
+# should we not have nnn=mmm being made equal on the LHS?
+
+Entail 1: Fail.(may) cause: true |-  nnn=mmm. LOCS:[0;32] (may-bug)
+
+Residue:
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: logical bug
+   fe_locs: {
+     fc_message:  true |-  nnn=mmm. LOCS:[0;32] (may-bug)
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[empty]]
+ CEX:false
+Validate 1: Expecting(3)Valid BUT got : Fail_May
+
 ===================================================================
 ===================================================================
 ===================================================================
