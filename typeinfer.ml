@@ -427,7 +427,7 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
   match t with
   | Named c ->
     (try
-       let todo_unk = I.look_up_data_def_raw prog.I.prog_data_decls c
+       let todo_unk = x_add I.look_up_data_def_raw prog.I.prog_data_decls c
        in Named c
      with
      | Not_found ->
@@ -1121,15 +1121,22 @@ and add_last_diff ls1 ls2 res=
   | _ -> raise (Invalid_argument "first is longer than second")
 
 and try_unify_data_type_args prog c v deref ies tlist pos =
+  let pr = add_str "ies" (pr_list Iprinter.string_of_formula_exp) in
+  Debug.no_2 "try_unify_data_type_args" pr_none pr pr_none (fun _ _ -> try_unify_data_type_args_x prog c v deref ies tlist pos) c ies
+
+and try_unify_data_type_args_x prog c v deref ies tlist pos =
   (* An Hoa : problem detected - have to expand the inline fields as well, fix in look_up_all_fields. *)
+  let pr_args = pr_list Iprinter.string_of_formula_exp in
   if (deref = 0) then (
     try (
-      let ddef = I.look_up_data_def_raw prog.I.prog_data_decls c in
+      let ddef = x_add I.look_up_data_def_raw prog.I.prog_data_decls c in
       let (n_tl,_) = x_add gather_type_info_var v tlist ((Named c)) pos in
-      let fields = I.look_up_all_fields prog ddef in
+      let fields = x_add_1 I.look_up_all_fields prog ddef in
       try
         (*fields may contain offset field and not-in-used*)
-        let ies = add_last_diff ies fields ([]) in
+        let () = x_tinfo_hp (add_str "ies(1)" pr_args) ies no_pos in
+        (* let ies = add_last_diff ies fields ([]) in *)
+        let () = x_tinfo_hp (add_str "ies(2)" pr_args) ies no_pos in
         let f tl arg ((ty,_),_,_,_)=
           (let (n_tl,_) = x_add gather_type_info_exp prog arg tl ty in n_tl)
         in (List.fold_left2 f n_tl ies fields)
@@ -1151,7 +1158,7 @@ and try_unify_data_type_args prog c v deref ies tlist pos =
           | "int" | "float" | "void" | "bool" -> c ^ "_star"
           | _ -> c
         ) in
-        I.look_up_data_def_raw prog.I.prog_data_decls dname
+        x_add I.look_up_data_def_raw prog.I.prog_data_decls dname
       ) in
       let holder_name = (
         let deref_str = ref "" in
@@ -1161,7 +1168,7 @@ and try_unify_data_type_args prog c v deref ies tlist pos =
         c ^ !deref_str
       ) in
       let (n_tl,_) = x_add gather_type_info_var v tlist ((Named holder_name)) pos in
-      let fields = I.look_up_all_fields prog base_ddecl in
+      let fields = x_add_1 I.look_up_all_fields prog base_ddecl in
       try 
         let f tl arg ((ty,_),_,_,_)=
           (let (n_tl,_) = x_add gather_type_info_exp prog arg tl ty in n_tl)
@@ -1401,6 +1408,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
                   IF.h_formula_heap_imm_param = ann_param;
                   IF.h_formula_heap_pos = pos } ->
     x_tinfo_hp (add_str "view" Iprinter.string_of_h_formula) h0 no_pos;
+    x_tinfo_hp (add_str "ies" (pr_list Iprinter.string_of_formula_exp)) ies no_pos;
     let ft = cperm_typ () in
     let gather_type_info_ho_args hoa tlist =
       List.fold_left (fun tl a ->
@@ -1451,7 +1459,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       let s = List.nth tokens 1 in
       let type_found,type_rootptr = try (* looking up in the list of data types *)
           (* Good user provides type for [rootptr] ==> done! *)
-          let ddef = I.look_up_data_def_raw prog.I.prog_data_decls s in 
+          let ddef = x_add I.look_up_data_def_raw prog.I.prog_data_decls s in 
           (* let () = print_endline ("[gather_type_info_heap_x] root pointer type = " ^ ddef.I.data_name) in *)
           (true, Named ddef.I.data_name)
         with 

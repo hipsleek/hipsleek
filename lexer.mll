@@ -178,6 +178,7 @@ module Make (Token : SleekTokenS)
    (* ("ex", EXISTS); *)
    ("exists", EXISTS);
    ("extends", EXTENDS);
+   ("expect_infer", EXPECT_INFER);
    ("false", FALSE);
    ("finalizes", FINALIZE);
    ("finally", FINALLY);

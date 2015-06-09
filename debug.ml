@@ -6,6 +6,8 @@ let debug_on = ref false
 let devel_debug_on = ref false
 let debug_print = ref false (* to support more printing for debugging *)
 let devel_debug_print_orig_conseq = ref false
+let debug_pattern_on = ref false
+let debug_pattern = ref (Str.regexp ".*")
 let trace_on = ref true
 let call_threshold = ref 10
 let dump_calls = ref false
@@ -152,8 +154,6 @@ let ninfo_pprint m p = ()
   -- -v:-1 (minimal tracing)
   -- -v:-2..(exact tracing)
 *)
-
-let add_str s f xs = s^":"^(f xs)
 
 let gen_vv_flags d =
   let m = !VarGen.verbose_num in
@@ -483,6 +483,19 @@ struct
   let debug_calls  =
     let len = 61 in
     let prefix = "%%%" in
+    let pr_cnt (s, cnt) = s ^ (if cnt > 1 then " (" ^ (string_of_int cnt) ^ ")" else "") in
+    let summarized_stack stk =
+      let new_stk = new Gen.stack_pr pr_cnt (==) in
+      match (List.rev stk#get_stk) with
+        | [] -> new_stk
+        | hd::tl ->
+            let ctr = ref 1 in
+            let now = ref hd in
+            List.iter (fun y ->
+              if y = !now then incr ctr
+              else (new_stk#push (!now, !ctr); ctr := 1; now := y)) tl;
+            new_stk
+    in
     object (self)
       val len_act = len -1
       val arr =  Array.make (len+1) prefix
@@ -495,6 +508,7 @@ struct
       val mutable rgx = None
       val stk = new Gen.stack_pr pr_id (==)
       val mutable offset = -1
+      val mutable last_matched_len = max_int
       method dump =
         let cnt = hash_to_list hcalls in
         let rcnt = hash_to_list rec_calls in
@@ -502,10 +516,10 @@ struct
         let cnt = list_cnt_sort_dec cnt in
         let rcnt = list_cnt_sort_dec rcnt in
         let pr = pr_list_brk_sep "" "" "\n" (pr_pair pr_id string_of_int) in
-        if !dump_calls_all then 
+        if !dump_calls_all then
           begin
             stk # push (lastline^"\n");
-            (stk # dump_no_ln) 
+            (summarized_stack stk) # dump_no_ln
           end;
         print_endline "\nDEBUGGED CALLS";
         print_endline "==============";
@@ -518,9 +532,10 @@ struct
             print_endline (pr rcnt)
           end
       method init =
-        for i = 1 to len_act do
-          arr.(i) <- arr.(i-1)^" "
-        done;
+        if (not !debug_pattern_on) then
+            for i = 1 to len_act do
+                arr.(i) <- arr.(i-1)^" "
+            done;
         let cs = !call_str in
         if not(cs="") 
         then 
@@ -563,20 +578,36 @@ struct
             arr.(n)
           end
       method print_call s =
+        let spaces n = String.init n (fun _ -> ' ') in
+        let is_match s = Str.string_match !debug_pattern s 0 in
+        let matched_call s =
+          let is_callee = (debug_stk # len) > last_matched_len in
+          let is_match_s = is_match s in
+          if is_match_s && !debug_pattern_on then
+            (lastline <- (lastline ^ "\n...");
+            last_matched_len <- (debug_stk#len));
+          is_match_s || is_callee
+        in
         begin
           try
-            let deb_len = debug_stk # len in
-            let len = self # get (deb_len) s in
-            if !dump_calls_all then 
-              begin
-                stk # push lastline;
-                lastline <- ("\n"^len^s)
-              end
+            if (!debug_pattern_on && not (matched_call s))
+            then last_matched_len <- max_int
+            else (
+              let deb_len = debug_stk # len in
+              let len = if !debug_pattern_on then
+                (self#get (deb_len) s) ^ (spaces (deb_len - last_matched_len))
+              else self # get (deb_len) s
+              in
+              if !dump_calls_all then
+                begin
+                  stk # push lastline;
+                  lastline <- "\n"^len^s
+              end)
           with _ -> ()
         end
       method add_id id =
         begin
-          if !dump_calls_all then 
+          if !dump_calls_all then
             lastline <- lastline^id^"."
         end
     end
@@ -649,7 +680,7 @@ struct
     (if loop_d then print_string ("\n"^h^" ENTRY :"^(String.concat "  " (pick_front 80 args))^"\n"));
     flush stdout;
     let r = (try
-               pop_aft_apply_with_exc f e
+               pop_aft_apply_with_exc s f e
              with ex -> 
                (
                  (* if not df then *) 
@@ -686,13 +717,13 @@ struct
       | b::bs, (i,s)::xs -> if b then (i,s)::(hp bs xs) else (hp bs xs) in
     hp bs xs
 
-  let ho_aux_no (f:'a -> 'z) (last:'a) : 'z =
+  let ho_aux_no s (f:'a -> 'z) (last:'a) : 'z =
     (* WN : why was his clearing done traced debug function? *)                   
     (* let ff z =  *)
     (*     let () = VarGen.last_posn # reset in *)
     (*     f z in *)
     push_no_call ();
-    pop_aft_apply_with_exc_no f last
+    pop_aft_apply_with_exc_no s f last
 
 
   let ho_1_opt_aux df (flags:bool list) (loop_d:bool) (test:'z -> bool) g (s:string) (pr1:'a->string) (pr_o:'z->string)  (f:'a -> 'z) (e1:'a) : 'z =
@@ -864,37 +895,37 @@ struct
 
   let no_1 s p1 p0 f =
     let code_gen fn = fn s p1 p0 f in
-    let code_none = ho_aux_no f in
+    let code_none = ho_aux_no s f in
     splitter s code_none code_gen go_1 
 
   let no_2 s p1 p2 p0 f e1 =
     let code_gen fn = fn s p1 p2 p0 f e1 in
-    let code_none = ho_aux_no (f e1) in
+    let code_none = ho_aux_no s (f e1) in
     splitter s code_none code_gen go_2
 
   let no_3 s p1 p2 p3 p0 f e1 e2 =
     let code_gen fn = fn s p1 p2 p3 p0 f e1 e2 in
-    let code_none = ho_aux_no (f e1 e2) in
+    let code_none = ho_aux_no s (f e1 e2) in
     splitter s code_none code_gen go_3
 
   let no_4 s p1 p2 p3 p4 p0 f e1 e2 e3 =
     let code_gen fn = fn s p1 p2 p3 p4 p0 f e1 e2 e3 in
-    let code_none = ho_aux_no (f e1 e2 e3) in
+    let code_none = ho_aux_no s (f e1 e2 e3) in
     splitter s code_none code_gen go_4
 
   let no_5 s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 =
     let code_gen fn = fn s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 in
-    let code_none = ho_aux_no (f e1 e2 e3 e4) in
+    let code_none = ho_aux_no s (f e1 e2 e3 e4) in
     splitter s code_none code_gen go_5
 
   let no_6 s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 =
     let code_gen fn = fn s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 in
-    let code_none = ho_aux_no (f e1 e2 e3 e4 e5) in
+    let code_none = ho_aux_no s (f e1 e2 e3 e4 e5) in
     splitter s code_none code_gen go_6
 
   let no_7 s p1 p2 p3 p4 p5 p6 p7 p0 f e1 e2 e3 e4 e5 e6 =
     let code_gen fn = fn s p1 p2 p3 p4 p5 p6 p7 p0 f e1 e2 e3 e4 e5 e6 in
-    let code_none = ho_aux_no (f e1 e2 e3 e4 e5 e6) in
+    let code_none = ho_aux_no s (f e1 e2 e3 e4 e5 e6) in
     splitter s code_none code_gen go_7
 
 
@@ -935,32 +966,32 @@ struct
 
   let no_1_opt op s p1 p0 f =
     let code_gen fn = fn op s p1 p0 f in
-    let code_none = ho_aux_no (f) in
+    let code_none = ho_aux_no s (f) in
     splitter s code_none code_gen ho_1_opt
 
   let no_2_opt op s p1 p2 p0 f e1 =
     let code_gen fn = fn op s p1 p2 p0 f e1 in
-    let code_none = ho_aux_no (f e1) in
+    let code_none = ho_aux_no s (f e1) in
     splitter s code_none code_gen ho_2_opt
 
   let no_3_opt op s p1 p2 p3 p0 f e1 e2 =
     let code_gen fn = fn op s p1 p2 p3 p0 f e1 e2 in
-    let code_none = ho_aux_no (f e1 e2) in
+    let code_none = ho_aux_no s (f e1 e2) in
     splitter s code_none code_gen ho_3_opt
 
   let no_4_opt op s p1 p2 p3 p4 p0 f e1 e2 e3 =
     let code_gen fn = fn op s p1 p2 p3 p4 p0 f e1 e2 e3 in
-    let code_none = ho_aux_no (f e1 e2 e3) in
+    let code_none = ho_aux_no s (f e1 e2 e3) in
     splitter s code_none code_gen ho_4_opt
 
   let no_5_opt op s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 =
     let code_gen fn = fn op s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 in
-    let code_none = ho_aux_no (f e1 e2 e3 e4) in
+    let code_none = ho_aux_no s (f e1 e2 e3 e4) in
     splitter s code_none code_gen ho_5_opt
 
   let no_6_opt op s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 =
     let code_gen fn = fn op s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 in
-    let code_none = ho_aux_no (f e1 e2 e3 e4 e5) in
+    let code_none = ho_aux_no s (f e1 e2 e3 e4 e5) in
     splitter s code_none code_gen ho_6_opt
 
   let add_num f i s = let str=(s^"#"^(string_of_int i)) in f str
@@ -1031,62 +1062,62 @@ struct
 
   let no_1_num_opt (i:int) p s p1 p0 f =
     let code_gen fn = fn i p s p1 p0 f in
-    let code_none = ho_aux_no f in
+    let code_none = ho_aux_no s f in
     splitter s code_none code_gen go_1_num_opt 
 
   let no_2_num_opt (i:int) p s p1 p2 p0 f e1 =
     let code_gen fn = fn i p s p1 p2 p0 f e1 in
-    let code_none = ho_aux_no (f e1) in
+    let code_none = ho_aux_no s (f e1) in
     splitter s code_none code_gen go_2_num_opt 
 
   let no_3_num_opt (i:int) p s p1 p2 p3 p0 f e1 e2 =
     let code_gen fn = fn i p s p1 p2 p3 p0 f e1 e2 in
-    let code_none = ho_aux_no (f e1 e2) in
+    let code_none = ho_aux_no s (f e1 e2) in
     splitter s code_none code_gen go_3_num_opt 
 
   let no_4_num_opt (i:int) p s p1 p2 p3 p4 p0 f e1 e2 e3 =
     let code_gen fn = fn i p s p1 p2 p3 p4 p0 f e1 e2 e3 in
-    let code_none = ho_aux_no (f e1 e2 e3) in
+    let code_none = ho_aux_no s (f e1 e2 e3) in
     splitter s code_none code_gen go_4_num_opt 
 
   let no_5_num_opt (i:int) p s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 =
     let code_gen fn = fn i p s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 in
-    let code_none = ho_aux_no (f e1 e2 e3 e4) in
+    let code_none = ho_aux_no s (f e1 e2 e3 e4) in
     splitter s code_none code_gen go_5_num_opt 
 
   let no_6_num_opt (i:int) p s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 =
     let code_gen fn = fn i p s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 in
-    let code_none = ho_aux_no (f e1 e2 e3 e4 e5) in
+    let code_none = ho_aux_no s (f e1 e2 e3 e4 e5) in
     splitter s code_none code_gen go_6_num_opt 
 
   let no_1_num (i:int) s p1 p0 f =
     let code_gen fn = fn i s p1 p0 f in
-    let code_none = ho_aux_no f in
+    let code_none = ho_aux_no s f in
     splitter s code_none code_gen go_1_num 
 
   let no_2_num (i:int) s p1 p2 p0 f e1 =
     let code_gen fn = fn i s p1 p2 p0 f e1 in
-    let code_none = ho_aux_no (f e1) in
+    let code_none = ho_aux_no s (f e1) in
     splitter s code_none code_gen go_2_num 
 
   let no_3_num (i:int) s p1 p2 p3 p0 f e1 e2 =
     let code_gen fn = fn i s p1 p2 p3 p0 f e1 e2 in
-    let code_none = ho_aux_no (f e1 e2) in
+    let code_none = ho_aux_no s (f e1 e2) in
     splitter s code_none code_gen go_3_num 
 
   let no_4_num (i:int) s p1 p2 p3 p4 p0 f e1 e2 e3 =
     let code_gen fn = fn i s p1 p2 p3 p4 p0 f e1 e2 e3 in
-    let code_none = ho_aux_no (f e1 e2 e3) in
+    let code_none = ho_aux_no s (f e1 e2 e3) in
     splitter s code_none code_gen go_4_num 
 
   let no_5_num (i:int) s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 =
     let code_gen fn = fn i s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 in
-    let code_none = ho_aux_no (f e1 e2 e3 e4) in
+    let code_none = ho_aux_no s (f e1 e2 e3 e4) in
     splitter s code_none code_gen go_5_num 
 
   let no_6_num (i:int) s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 =
     let code_gen fn = fn i s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 in
-    let code_none = ho_aux_no (f e1 e2 e3 e4 e5) in
+    let code_none = ho_aux_no s (f e1 e2 e3 e4 e5) in
     splitter s code_none code_gen go_6_num 
 
   let ho_1_cmp tr_flag lp_flag g = ho_1_opt_aux tr_flag [] lp_flag (fun _ -> true) (Some g) 
@@ -1119,51 +1150,51 @@ struct
 
   let no_1_cmp g s p1 p0 f =
     let code_gen fn = fn g s p1 p0 f in
-    let code_none = ho_aux_no f in
+    let code_none = ho_aux_no s f in
     splitter s code_none code_gen ho_1_cmp 
 
   let no_2_cmp g s p1 p2 p0 f e1 =
     let code_gen fn = fn g s p1 p2 p0 f e1 in
-    let code_none = ho_aux_no (f e1) in
+    let code_none = ho_aux_no s (f e1) in
     splitter s code_none code_gen ho_2_cmp 
 
   let no_3_cmp g s p1 p2 p3 p0 f e1 e2 =
     let code_gen fn = fn g s p1 p2 p3 p0 f e1 e2 in
-    let code_none = ho_aux_no (f e1 e2) in
+    let code_none = ho_aux_no s (f e1 e2) in
     splitter s code_none code_gen ho_3_cmp 
 
   let no_4_cmp g s p1 p2 p3 p4 p0 f e1 e2 e3 =
     let code_gen fn = fn g s p1 p2 p3 p4 p0 f e1 e2 e3 in
-    let code_none = ho_aux_no (f e1 e2 e3) in
+    let code_none = ho_aux_no s (f e1 e2 e3) in
     splitter s code_none code_gen ho_4_cmp 
 
   let no_5_cmp g s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 =
     let code_gen fn = fn g s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 in
-    let code_none = ho_aux_no (f e1 e2 e3 e4) in
+    let code_none = ho_aux_no s (f e1 e2 e3 e4) in
     splitter s code_none code_gen ho_5_cmp 
 
   let no_6_cmp g s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 =
     let code_gen fn = fn g s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 in
-    let code_none = ho_aux_no (f e1 e2 e3 e4 e5) in
+    let code_none = ho_aux_no s (f e1 e2 e3 e4 e5) in
     splitter s code_none code_gen ho_6_cmp 
 
   (* let no_6_cmp g s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 = *)
   (*   let code_gen fn = fn g s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 in *)
-  (*   let code_none = ho_aux_no (f e1 e2 e3 e4 p5) in *)
+  (*   let code_none = ho_aux_no s (f e1 e2 e3 e4 p5) in *)
   (*   splitter s code_none code_gen ho_6_cmp to_6_cmp ho_6_cmp_loop *)
 
   (* let no_1_cmp _ _ _ _ f  *)
-  (*       = ho_aux_no f *)
+  (*       = ho_aux_no s f *)
   (* let no_2_cmp _ _ _ _ _ f e1  *)
-  (*       = ho_aux_no (f e1) *)
+  (*       = ho_aux_no s (f e1) *)
   (* let no_3_cmp _ _ _ _ _ _ f e1 e2  *)
-  (*       = ho_aux_no (f e1 e2) *)
+  (*       = ho_aux_no s (f e1 e2) *)
   (* let no_4_cmp _ _ _ _ _ _ _ f e1 e2 e3  *)
-  (*       = ho_aux_no (f e1 e2 e3) *)
+  (*       = ho_aux_no s (f e1 e2 e3) *)
   (* let no_5_cmp _ _ _ _ _ _ _ _ f e1 e2 e3 e4  *)
-  (*       = ho_aux_no (f e1 e2 e3 e4) *)
+  (*       = ho_aux_no s (f e1 e2 e3 e4) *)
   (* let no_6_cmp _ _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5  *)
-  (*       = ho_aux_no (f e1 e2 e3 e4 e5) *)
+  (*       = ho_aux_no s (f e1 e2 e3 e4 e5) *)
 
   let ho_eff_1 tr_flag lp_flag s l = ho_1_opt_aux tr_flag l lp_flag (fun _ -> true) None s
   let ho_eff_2 tr_flag lp_flag s l = ho_2_opt_aux tr_flag l lp_flag (fun _ -> true) None s
@@ -1194,36 +1225,36 @@ struct
   (* let to_eff_6 s l = ho_6_opt_aux true l false (fun _ -> true) None s *)
 
   (* let no_eff_1 _ _ _ _ f  *)
-  (*       = ho_aux_no f *)
+  (*       = ho_aux_no s f *)
 
   let no_eff_1 s l p1 p0 f =
     let code_gen fn = fn s l p1 p0 f in
-    let code_none = ho_aux_no f in
+    let code_none = ho_aux_no s f in
     splitter s code_none code_gen ho_eff_1 
 
   let no_eff_2 s l p1 p2 p0 f e1 =
     let code_gen fn = fn s l p1 p2 p0 f e1 in
-    let code_none = ho_aux_no (f e1) in
+    let code_none = ho_aux_no s (f e1) in
     splitter s code_none code_gen ho_eff_2 
 
   let no_eff_3 s l p1 p2 p3 p0 f e1 e2 =
     let code_gen fn = fn s l p1 p2 p3 p0 f e1 e2 in
-    let code_none = ho_aux_no (f e1 e2) in
+    let code_none = ho_aux_no s (f e1 e2) in
     splitter s code_none code_gen ho_eff_3 
 
   let no_eff_4 s l p1 p2 p3 p4 p0 f e1 e2 e3 =
     let code_gen fn = fn s l p1 p2 p3 p4 p0 f e1 e2 e3 in
-    let code_none = ho_aux_no (f e1 e2 e3) in
+    let code_none = ho_aux_no s (f e1 e2 e3) in
     splitter s code_none code_gen ho_eff_4 
 
   let no_eff_5 s l p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 =
     let code_gen fn = fn s l p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 in
-    let code_none = ho_aux_no (f e1 e2 e3 e4) in
+    let code_none = ho_aux_no s (f e1 e2 e3 e4) in
     splitter s code_none code_gen ho_eff_5 
 
   let no_eff_6 s l p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 =
     let code_gen fn = fn s l p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 in
-    let code_none = ho_aux_no (f e1 e2 e3 e4 e5) in
+    let code_none = ho_aux_no s (f e1 e2 e3 e4 e5) in
     splitter s code_none code_gen ho_eff_6 
 
   (* let no_eff_2 _ _ _ _ _ f e1  *)
@@ -1267,32 +1298,32 @@ struct
 
   let no_eff_1_num i s l p1 p0 f =
     let code_gen fn = fn i s l p1 p0 f in
-    let code_none = ho_aux_no f in
+    let code_none = ho_aux_no s f in
     splitter s code_none code_gen ho_eff_1_num 
 
   let no_eff_2_num i s l p1 p2 p0 f e1 =
     let code_gen fn = fn i s l p1 p2 p0 f e1 in
-    let code_none = ho_aux_no (f e1) in
+    let code_none = ho_aux_no s (f e1) in
     splitter s code_none code_gen ho_eff_2_num 
 
   let no_eff_3_num i s l p1 p2 p3 p0 f e1 e2 =
     let code_gen fn = fn i s l p1 p2 p3 p0 f e1 e2 in
-    let code_none = ho_aux_no (f e1 e2) in
+    let code_none = ho_aux_no s (f e1 e2) in
     splitter s code_none code_gen ho_eff_3_num 
 
   let no_eff_4_num i s l p1 p2 p3 p4 p0 f e1 e2 e3 =
     let code_gen fn = fn i s l p1 p2 p3 p4 p0 f e1 e2 e3 in
-    let code_none = ho_aux_no (f e1 e2 e3) in
+    let code_none = ho_aux_no s (f e1 e2 e3) in
     splitter s code_none code_gen ho_eff_4_num 
 
   let no_eff_5_num i s l p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 =
     let code_gen fn = fn i s l p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 in
-    let code_none = ho_aux_no (f e1 e2 e3 e4) in
+    let code_none = ho_aux_no s (f e1 e2 e3 e4) in
     splitter s code_none code_gen ho_eff_5_num 
 
   let no_eff_6_num i s l p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 =
     let code_gen fn = fn i s l p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 in
-    let code_none = ho_aux_no (f e1 e2 e3 e4 e5) in
+    let code_none = ho_aux_no s (f e1 e2 e3 e4 e5) in
     splitter s code_none code_gen ho_eff_6_num 
 
   let ho_1_all tr_flag lp_flag s pf gf l = ho_1_opt_aux tr_flag l lp_flag pf gf s
@@ -1314,7 +1345,7 @@ struct
         Some p -> p 
       | _ -> fun _ -> true in
     let code_gen fn = fn i s pf gf l p1 p0 f in
-    let code_none = ho_aux_no (f) in
+    let code_none = ho_aux_no s (f) in
     splitter s code_none code_gen ho_1_all_num 
 
   let no_2_all i s pf gf l p1 p2 p0 f e1 =
@@ -1322,7 +1353,7 @@ struct
         Some p -> p 
       | _ -> fun _ -> true in
     let code_gen fn = fn i s pf gf l p1 p2 p0 f e1 in
-    let code_none = ho_aux_no (f e1) in
+    let code_none = ho_aux_no s (f e1) in
     splitter s code_none code_gen ho_2_all_num 
 
   let no_3_all i s pf gf l p1 p2 p3 p0 f e1 e2 =
@@ -1330,7 +1361,7 @@ struct
         Some p -> p 
       | _ -> fun _ -> true in
     let code_gen fn = fn i s pf gf l p1 p2 p3 p0 f e1 e2 in
-    let code_none = ho_aux_no (f e1 e2) in
+    let code_none = ho_aux_no s (f e1 e2) in
     splitter s code_none code_gen ho_3_all_num 
 
   let no_4_all i s pf gf l p1 p2 p3 p4 p0 f e1 e2 e3 =
@@ -1338,7 +1369,7 @@ struct
         Some p -> p 
       | _ -> fun _ -> true in
     let code_gen fn = fn i s pf gf l p1 p2 p3 p4 p0 f e1 e2 e3 in
-    let code_none = ho_aux_no (f e1 e2 e3) in
+    let code_none = ho_aux_no s (f e1 e2 e3) in
     splitter s code_none code_gen ho_4_all_num 
 
   let no_5_all i s pf gf l p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 =
@@ -1346,7 +1377,7 @@ struct
         Some p -> p 
       | _ -> fun _ -> true in
     let code_gen fn = fn i s pf gf l p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 in
-    let code_none = ho_aux_no (f e1 e2 e3 e4) in
+    let code_none = ho_aux_no s (f e1 e2 e3 e4) in
     splitter s code_none code_gen ho_5_all_num 
 
   let no_6_all i s pf gf l p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 =
@@ -1354,7 +1385,7 @@ struct
         Some p -> p 
       | _ -> fun _ -> true in
     let code_gen fn = fn i s pf gf l p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 in
-    let code_none = ho_aux_no (f e1 e2 e3 e4 e5) in
+    let code_none = ho_aux_no s (f e1 e2 e3 e4 e5) in
     splitter s code_none code_gen ho_6_all_num 
 
   (* let no_eff_1_num _ _ _ _ _ f  *)

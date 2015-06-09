@@ -1,0 +1,16 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+infer [x] x>5  |- x=8.
+print residue.
+// inferred pure: [(x=8 | x<=5)]
+//expect_infer I{x=8 | x<=5}.
+expect Valid.
+
+infer [y] y::node<b,c>*c::node<_,null> & b>10  |- y::node<a,_> & a>5.
+print residue.
+// <1>c::node<Anon_12,flted_11_20>&10<b & flted_11_20=null & a=b & Anon_13=c&{FLOW,(20,21)=__
+// expect_infer I{} R{c::node<_,null> & a=b}.
+expect Valid.

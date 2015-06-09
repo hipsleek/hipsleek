@@ -3652,9 +3652,20 @@ and heap_entail_struc_x (prog : prog_decl) (is_folding : bool)  (has_post: bool)
     else
       (x_add heap_entail_one_context_struc_nth 5 prog is_folding has_post (List.hd cl) conseq tid delayed_f join_id pos pid)
 
+and filter_infer_search (lc,a) =
+  let fn lc =
+    match lc with
+      | CF.FailCtx _ -> lc
+      | CF.SuccCtx lc2 -> 
+            let r = List.filter (fun c -> CF.is_infer_none_ctx c) lc2 in
+            if r==[] then  lc else CF.SuccCtx r
+  in
+  ((if !Globals.filter_infer_search then fn lc else lc),a)
+
 and heap_entail_struc (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_context) (conseq : struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (pid:control_path_id): (list_context * proof) =
   Debug.no_2 "heap_entail_struc" Cprinter.string_of_list_context Cprinter.string_of_struc_formula
-    (fun (ls,_) -> Cprinter.string_of_list_context ls) (fun a c -> heap_entail_struc_x prog is_folding has_post a c tid delayed_f join_id pos pid) cl conseq
+    (fun (ls,_) -> Cprinter.string_of_list_context ls) (fun a c -> 
+        filter_infer_search (heap_entail_struc_x prog is_folding has_post a c tid delayed_f join_id pos pid)) cl conseq
 
 (* and heap_entail_one_context_struc p i1 hp cl cs (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid = *)
 (*   Gen.Profiling.do_3 "heap_entail_one_context_struc" heap_entail_one_context_struc_x(\*_debug*\) p i1 hp cl cs tid delayed_f join_id pos pid *)
@@ -11732,10 +11743,10 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
   if not(Context.is_complex_action a) then
     begin
       x_dinfo_zp (lazy ("process_action :"
-                        ^ "\n ### action = " ^ (Context.string_of_action_res a)
-                        ^ "\n ### estate = " ^ ( Cprinter.string_of_entail_state_short estate)
-                        ^ "\n ### conseq = " ^ (Cprinter.string_of_formula conseq)
-                        ^ "\n\n"))  pos 
+                        ^ ((add_str "\n ### action " Context.string_of_action_res) a)
+                        ^ ((add_str "\n ### estate " Cprinter.string_of_entail_state_short) estate)
+                        ^ ((add_str "\n ### conseq " Cprinter.string_of_formula) conseq)
+                        ^ "\n"))  pos 
     end;
   (*add tracing into the entailment state*)
   let action_name:string = Context.string_of_action_name a in
@@ -14996,7 +15007,7 @@ let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding :
   x_dinfo_zp (lazy ("heap_entail_init struc_list_failesc_context_init:"
                     ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
                     ^ "\ndelayed_f:" ^ (pr_opt Cprinter.string_of_mix_formula delayed_f)
-                    ^ "\nconseq:"^ (Cprinter.string_of_struc_formula conseq) 
+                    ^ "\nconseq:\n"^ (Cprinter.string_of_struc_formula conseq) 
                     ^ "\nctx:\n" ^ (Cprinter.string_of_list_failesc_context cl)
                     ^"\n")) pos; 
   let res,prf = x_add heap_entail_failesc_prefix_init 1 prog is_folding  has_post cl conseq tid delayed_f join_id pos pid (rename_labels_struc,Cprinter.string_of_struc_formula,(x_add heap_entail_one_context_struc_nth 2)) in
@@ -15017,7 +15028,7 @@ let heap_entail_list_partial_context_init_x (prog : prog_decl) (is_folding : boo
   x_dinfo_zp (lazy ("heap_entail_init list_partial_context_init:"
                     ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
                     ^ "\ndelayed_f:" ^ (pr_opt Cprinter.string_of_mix_formula delayed_f)
-                    ^ "\nconseq:"^ (Cprinter.string_of_formula conseq) 
+                    ^ "\nconseq:\n"^ (Cprinter.string_of_formula conseq) 
                     ^ "\nctx:\n" ^ (Cprinter.string_of_list_partial_context cl)
                     ^"\n")) pos; 
   Gen.Profiling.push_time "entail_prune";  
@@ -15065,7 +15076,7 @@ let heap_entail_list_failesc_context_init_x (prog : prog_decl) (is_folding : boo
   x_dinfo_zp (lazy ("heap_entail_init list_failesc_context_init:"
                     ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
                     ^ "\ndelayed_f:" ^ (pr_opt Cprinter.string_of_mix_formula delayed_f)
-                    ^ "\nconseq:"^ (Cprinter.string_of_formula conseq) 
+                    ^ "\nconseq:\n"^ (Cprinter.string_of_formula conseq) 
                     ^ "\nctx:\n" ^ (Cprinter.string_of_list_failesc_context cl)
                     ^"\n")) pos;
   if cl==[] then ([],UnsatAnte)

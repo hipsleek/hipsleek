@@ -89,14 +89,26 @@ and fixcalc_of_exp e = match e with
     begin
       match e1, e2 with
       | (CP.IConst (i,_), CP.IConst (j,_)) -> string_of_int (i*j)
-      | (CP.IConst (i,_),_) -> fixcalc_of_exp_list e2 op_add i
-      | (_,CP.IConst (i,_)) -> fixcalc_of_exp_list e1 op_add i
+      | (CP.IConst (i,_),_) ->
+            if i >= 0 then
+              fixcalc_of_exp_list e2 op_add i
+            else
+              "0 " ^ op_sub ^ (fixcalc_of_exp_list e2 op_sub (-i))
+      | (_,CP.IConst (i,_)) ->
+            if i >= 0 then
+              fixcalc_of_exp_list e1 op_add i
+            else
+              "0 " ^ op_sub ^ (fixcalc_of_exp_list e1 op_sub (-i))
       | _ -> illegal_format ("Fixcalc.fixcalc_of_exp: Not supported expression")
     end
   | CP.InfConst _ -> "inf"
   | _ ->
         let () = x_binfo_hp (add_str "fixcalc_of_exp error :" (fun _ -> "" )) e no_pos in
         illegal_format ("Fixcalc.fixcalc_of_exp: Not supported expression")
+
+let fixcalc_of_exp f=
+  DD.no_1 "fixcalc_of_exp" !CP.print_exp (fun s->s) (fun f-> fixcalc_of_exp f) f
+;;
 
 let fixcalc_of_bool b =
   match b with

@@ -158,6 +158,7 @@ struct
   let pr_list_round_sep sep f xs = pr_list_brk_sep "(" ")" sep f xs
   let pr_list_ln f xs = "["^(pr_lst ",\n" f xs)^"]"
   let pr_list_num f xs = "["^(pr_lst_num ",\n" f xs)^"]"
+  let pr_list_num_vert f xs = "[\n"^(pr_lst_num ",\n" f xs)^"]"
   let pr_arr_ln f arr = pr_list_ln f (Array.to_list arr)
 
   let pr_list_mln f xs = (pr_lst "\n--------------\n" f xs)
@@ -182,6 +183,14 @@ struct
     | None -> def
     | Some v -> f v
 
+  let map_opt_w_def f_none f_some x = match x with
+    | None -> f_none
+    | Some v -> Some (f_some v)
+
+  let map_list_def def f x = match x with
+    | [] -> def
+    | _  -> f x
+
   let map_l_snd f x = List.map (fun (l,c)-> (l,f c)) x
   let map_l_fst f x = List.map (fun (l,c)-> (f l,c)) x
   let map_snd_only f x = List.map (fun (l,c)-> f c) x
@@ -191,7 +200,19 @@ struct
   let exists_l_snd f x = List.exists (fun (_,c)-> f c) x
   let all_l_snd f x = List.for_all (fun (_,c)-> f c) x
 
-  let add_str s f xs = s^":"^(f xs)
+  let line_break_threshold = 60
+  exception Break_Found
+  let add_str ?(inline=false) hdr f s =
+    (* A string should break if comprises >=2 lines or span more than 60 characters *)
+    let should_break s =
+      try
+        for i = 0 to line_break_threshold do
+          if (String.get s i = '\n') then raise Break_Found done;
+        false
+      with Break_Found -> true | _ -> false in
+    let str = f s in
+    let sep = if (not inline && should_break str) then ":\n" else ":" in
+    hdr^sep^str
 
   let opt_to_list o = match o with
     | None -> []
@@ -709,6 +730,17 @@ class counter x_init =
       = ctr <- ctr + 1; string_of_int ctr
   end;;
 
+class ctr_with_aux x_init =
+  object 
+    inherit counter x_init as super
+    val mutable aux_ctr = x_init
+    method inc_and_get = 
+      ctr <- ctr + 1; aux_ctr <- x_init; ctr
+    method inc_and_get_aux_str = 
+      let () = aux_ctr <- aux_ctr + 1 in
+        (string_of_int ctr)^"."^(string_of_int aux_ctr)
+  end
+
 class ctr_call x_init =
   object 
     inherit counter x_init as super
@@ -829,7 +861,7 @@ struct
 
 end;;
 
-let add_str s f xs = s^":"^(f xs)
+let add_str = Basic.add_str
 
 type 'a keyt = int option
 
@@ -1300,24 +1332,34 @@ struct
     (* let () = force_dd_print() in *)
     ()
 
-  (* call f and pop its trace in call stack of ho debug *)
-  let pop_aft_apply_with_exc (f:'a->'b) (e:'a) : 'b =
-    let r = (try 
-               (f e)
-             with exc -> (pop_call(); raise exc))
+  let trace_exception s exc =
+    if !VarGen.trace_exc then Basic.print_endline_quiet ("Exception("^s^"):"^(Printexc.to_string exc))
+
+    (* call f and pop its trace in call stack of ho debug *)
+  let pop_aft_apply_with_exc s (f:'a->'b) (e:'a) : 'b =
+    let r = try 
+      (f e)
+    with exc -> 
+        begin 
+          trace_exception s exc;
+          pop_call(); 
+          raise exc
+        end
     in pop_call(); r
 
+
   (* call f and pop its trace in call stack of ho debug *)
-  let pop_aft_apply_with_exc_no (f:'a->'b) (e:'a) : 'b =
+  let pop_aft_apply_with_exc_no s (f:'a->'b) (e:'a) : 'b =
     try 
       let r = (f e) in
       if !debug_precise_trace then debug_stk # pop; 
       r
     with exc -> 
-      begin
-        if !debug_precise_trace then debug_stk # pop; 
-        raise exc
-      end
+        begin
+          trace_exception s exc;
+          if !debug_precise_trace then debug_stk # pop; 
+          raise exc
+        end
 
   (* string representation of call stack of ho_debug *)
   let string_of () : string =

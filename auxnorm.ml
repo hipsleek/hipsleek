@@ -60,7 +60,8 @@ let simplif_arith f =
 
 let merge_other f1 f2 = (false, [])
 
-let limit_conj = 3
+(* this limits the number of conjunct *)
+let limit_conj = 2
 
 let list_of_n n start =
   let rec aux n top lst =

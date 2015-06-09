@@ -1,0 +1,91 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+
+// (4)
+infer [y] true |- y::node<a,b> * b::ll<m>.
+print residue.
+
+/*
+ex23-infer1.slk -dre "simplify"
+
+Add a new option -dre-trace "..."
+that would add debug calls, and 
+also trace its callees. Only the
+call (and its callees) matching
+the regular expression will be tracked as
+below. Other calls are not tracked.
+The callees need not match the pattern.
+This will help show the callees
+of the debugged calls.
+
+%%%      simplify(TP)@1.
+%%%       elim_exists_with_simpl
+%%%        elim_exists
+%%%         eq_spec_var (4)
+%%%         get_subst_equation_formula
+%%%          get_subst_equation_b_formula 
+%%%           eq_spec_var
+%%%          get_subst_equation_b_formula 
+%%%         pure_mkExists
+%%%          eq_spec_var (13)
+%%%         pure_mkOr
+%%%        simplify##@2.
+%%%         norm_pure_input
+%%%          cnv_ptr_to_int
+%%%         simplify@3.
+%%%          Omega.simplify
+%%%           memoise_rel_formula
+%%%            memoise_formula_ho
+%%%           Omega.simplify_ops
+%%%            eq_spec_var (4)
+%%%            b_apply_subs (2)
+%%%             eq_spec_var
+%%%            omega_of_formula
+%%%            eq_spec_var (4)
+%%%            Omega:send_and_receive
+%%%             maybe_raise_timeout
+%%%              build_relation
+%%%            match_vars
+%%%             eq_spec_var
+%%%            b_apply_subs
+%%%            Omega.trans_bool
+%%%             transform_formula
+%%%         norm_pure_result
+%%%          cnv_int_to_ptr
+%%%           is_ptr_ctr
+%%%          norm_disj
+%%%           norm_disj_tree
+%%%           formula_of_tree
+%%%         arith_simplify LHS
+%%%          b_form_simplify 
+%%%           simp_mult (2)
+%%%           purge_mult (2)
+%%%           split_sums (2)
+%%%           purge_mult (2)
+%%%         om_pairwisecheck
+%%%          norm_pure_input
+%%%           cnv_ptr_to_int
+%%%          Omega.pairwisecheck
+%%%           omega_of_formula_old
+%%%            omega_of_formula
+%%%           Omega:send_and_receive
+%%%            maybe_raise_timeout
+%%%             build_relation
+%%%           match_vars
+%%%            eq_spec_var
+%%%          norm_pure_result
+%%%           cnv_int_to_ptr
+%%%            is_ptr_ctr
+%%%           norm_disj
+%%%            norm_disj_tree
+%%%            formula_of_tree
+%%%         translate_back_array_in_one_formula
+
+*/

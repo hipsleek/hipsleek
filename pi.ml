@@ -446,7 +446,7 @@ let trans_res_formula prog f =
           with _ -> exc_name
         in
         let () = Debug.ninfo_pprint exc_name no_pos in
-        let dclr = Cast.look_up_data_def_raw prog.Cast.prog_data_decls exc_name in
+        let dclr = x_add Cast.look_up_data_def_raw prog.Cast.prog_data_decls exc_name in
         let (t,_),_ = (List.hd dclr.Cast.data_fields) in
         let eres = CP.mkeRes (Named exc_name) in
         let res = CP.mkRes t in

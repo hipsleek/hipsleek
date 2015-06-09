@@ -1062,7 +1062,7 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
 
 and smt_imply pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
   let pr = !print_pure in
-  Debug.no_2(* _loop *) "smt_imply" (pr_pair pr pr) string_of_float string_of_bool
+  Debug.no_2(* _loop *) "smt_imply" (pr_pair pr pr) (add_str "timeout" string_of_float) string_of_bool
     (fun _ _-> smt_imply_x  pr_weak pr_strong ante conseq prover timeout) (ante, conseq) timeout
 
 and smt_imply_x pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =

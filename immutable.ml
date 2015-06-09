@@ -1782,7 +1782,7 @@ let collect_view_imm_from_case_struc_formula sf param_ann data_name def_ann = (*
 
 (* andreeac TODOIMM use wrapper below *)
 let collect_annot_imm_info_in_formula annot_args f data_name ddefs =
-  let ddef = I.look_up_data_def_raw ddefs data_name in
+  let ddef = x_add I.look_up_data_def_raw ddefs data_name in
   let def_ann  = List.map (fun f -> CP.imm_ann_bot ) ddef.I.data_fields in
   let ann_final = 
     if not (!Globals.allow_field_ann) then def_ann
@@ -1924,7 +1924,7 @@ let add_position_to_imm_ann (a: Ipure.ann) (vp_pos: (ident * int) list) =
 
 let icollect_imm f vparam data_name ddefs =
   try
-    let ddef = I.look_up_data_def_raw ddefs data_name in
+    let ddef = x_add I.look_up_data_def_raw ddefs data_name in
     let def_ann  = List.map (fun f -> (Ipure.imm_ann_bot, 0) ) ddef.I.data_fields in
     let ann_final =
       if not (!Globals.allow_field_ann) then def_ann
