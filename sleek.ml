@@ -363,7 +363,7 @@ let parse_file (parse) (source_file : string) =
   let cviews = List.map (Cast.add_uni_vars_to_view !cprog (Lem_store.all_lemma # get_left_coercion) (*!cprog.C.prog_left_coercions*)) cviews in
   !cprog.C.prog_view_decls <- cviews;
   (*Long: reset unexpected_cmd = [] *)
-  Sleekengine.unexpected_cmd := [];
+  Sleekengine.unexpected_cmd # reset (* := [] *);
   List.iter proc_one_cmd cmds
 
 let main () =
@@ -529,12 +529,12 @@ let _ =
     (* let () = print_endline "before main" in *)
     main ();
     let _ =
-      if !Globals.show_unexpected_ents && ((List.length !unexpected_cmd) > 0)
+      if !Globals.show_unexpected_ents && ((unexpected_cmd # len) > 0)
       then (
-        let () = print_string "Unexpected: " in
-        let () = List.iter (fun id_cmd ->
-            print_string_quiet ((string_of_int id_cmd) ^ " ")) !unexpected_cmd in
-        print_string_quiet "\n\n"
+        let () = print_endline_quiet ("\nUnexpected List: "^(unexpected_cmd # string_of_no_ln_rev)) in
+        (* let () = List.iter (fun id_cmd -> *)
+        (*     print_string_quiet ((string_of_int id_cmd) ^ " ")) !unexpected_cmd in *)
+        print_endline_quiet ""
       ) else
         ()
     in

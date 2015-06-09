@@ -232,6 +232,16 @@ Expect_Infer 1.1: OK.
 
 Expect_Infer 1.2: OK. 
 ==================================================================
+# ex4f.slk
+
+# we need to add 2.6 to the list of Unexpected..
+
+!!! rhs: qq::node<bb_107,Anon_17>
+Expect_Infer 2.5: Expected Valid but got Fail ( x::node<bb,Anon_16> * qq::node<bb_107,Anon_17>&bb_107=bb&
+{FLOW,(20,21)=__norm#E}[])
+
+Expect_Infer 2.6: OK. 
+Unexpected: 1 
 ==================================================================
 ==================================================================
 ==================================================================
