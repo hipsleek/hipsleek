@@ -332,6 +332,8 @@ let common_arguments = [
        Globals.allow_ramify := true; 
        Solver.unfold_duplicated_pointers := false;)
   , "Enable Coq based Ramification for Shared Structures");
+  ("--en-filter-infer-search",Arg.Set Globals.filter_infer_search,"Enable filter on search result with inference");
+  ("--dis-filter-infer-search",Arg.Clear Globals.filter_infer_search,"Enable filter on search result with inference");
   ("--infer-mem",Arg.Set Globals.infer_mem,"Enable inference of memory specifications");
   ("--infer-en-raw",Arg.Set Globals.infer_raw_flag,"Enable simplify_raw during pure inference");
   ("--infer-dis-raw",Arg.Clear Globals.infer_raw_flag,"Disable simplify_raw during pure inference");
@@ -459,6 +461,7 @@ let common_arguments = [
   ("--dis-print-inline", Arg.Clear Globals.print_en_inline,"disable printing (with fewer intermediates)");
   ("--print-html", Arg.Set Globals.print_html,"enable html printing");
   ("--print-type", Arg.Set Globals.print_type,"Print type info");
+  ("--print-extra", Arg.Set Globals.print_extra,"Print extra info");
   ("--dis-type-err", Arg.Clear Globals.enforce_type_error,"Give just warning for type errors");
   ("--en-type-err", Arg.Set Globals.enforce_type_error,"Stricly enforce type errors");
   ("--print-x-inv", Arg.Set Globals.print_x_inv,

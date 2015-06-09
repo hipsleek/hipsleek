@@ -604,7 +604,7 @@ let norm_ann_seg_opz_x iprog cprog cviews=
   let check_seg_view_smt_compete vdcl=
     if !Globals.smt_compete_mode then
       let is_one_dir = try
-          let ddclr = Cast.look_up_data_def_raw cprog.Cast.prog_data_decls vdcl.Cast.view_data_name in
+          let ddclr = x_add Cast.look_up_data_def_raw cprog.Cast.prog_data_decls vdcl.Cast.view_data_name in
           let ptr_fields = List.filter (fun ((t,_),_) -> match t with
               | Named _ -> true
               | _ -> false

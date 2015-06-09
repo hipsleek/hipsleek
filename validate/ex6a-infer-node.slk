@@ -1,0 +1,17 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<na> == self = null & na = 0 
+	or self::node<_, q> * q::ll<na-1> 
+  inv na >= 0.
+
+infer [x] true |- x::node<_,null>.
+print residue.
+expect_infer Valid I{x!=null}.
+expect_infer Valid I{x::node<_,q> & q=null}.
+expect_infer Valid I{x::node<_,q>}.
+expect_infer Fail I{x::node<_,q> & q!=null}.
+expect_infer Fail I{x::node<_,q> * q::node<_,_>}.
+

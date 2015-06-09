@@ -4599,7 +4599,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             let fs,remf,remt = compact_field_access_sequence prog lhst fl in
             if (remf = "") then [] 
             else I.look_up_all_fields prog (match remt with
-                | Named c -> I.look_up_data_def_raw prog.I.prog_data_decls c
+                | Named c -> x_add I.look_up_data_def_raw prog.I.prog_data_decls c
                 | _ -> failwith "ERror!")
           | _ -> failwith "expand_field_list: unexpected pattern"
         else if (is_member_exp rhs) then
@@ -4613,7 +4613,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             let fs,remf,remt = compact_field_access_sequence prog rhst fr in
             if (remf = "") then []
             else I.look_up_all_fields prog (match remt with
-                | Named c -> I.look_up_data_def_raw prog.I.prog_data_decls c
+                | Named c -> x_add I.look_up_data_def_raw prog.I.prog_data_decls c
                 | _ -> failwith "ERror!")
           | _ -> failwith "expand_field_list: unexpected pattern"
         else []
@@ -7082,7 +7082,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
         (* let f1 = IF.Base {fb with IF.formula_base_heap = nh; *)
         (*     IF.formula_base_pure = np *)
         (* } in *)
-        let (n_tl,ch, newvars) = linearize_formula prog f0 n_tl in
+        let (n_tl,ch, newvars) = x_add linearize_formula prog f0 n_tl in
         let n_tlist = (
           if sep_collect then
             if quantify then (
@@ -7131,7 +7131,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
         (*     IF.formula_base_flow = fl; *)
         (*     IF.formula_base_and = a; *)
         (*     IF.formula_base_pos = pos; }) in *)
-        let (n_tl,ch, newvars) = linearize_formula prog f1 n_tl in
+        let (n_tl,ch, newvars) = x_add linearize_formula prog f1 n_tl in
         (* let () = print_string ("Cform ch: "^(Cprinter.string_of_formula ch) ^"\n" ) in *)
         let qsvars = List.map (fun qv -> trans_var qv n_tl pos) qvars in
         let newvars = List.map (fun qv -> trans_var qv n_tl pos) newvars in
@@ -7313,7 +7313,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
         let dataNode2, t_f, n_tl1, sv1 = linearize_heap dataNode pos tl in
         let new_dl = x_add trans_pure_formula dl tl in
         let new_dl = x_add Cpure.arith_simplify 5 new_dl in
-        let sv2, rsr2, n_tl2 = linearize_formula prog rsr tlist in
+        let sv2, rsr2, n_tl2 = x_add linearize_formula prog rsr tlist in
         let newNode = CF.ThreadNode {
             CF.h_formula_thread_name = x_add CF.get_node_name 1 dataNode2;
             CF.h_formula_thread_node = CF.get_node_var dataNode2;
@@ -7642,13 +7642,26 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     ) in 
     res
   ) in
+  (* WN: why do we have two diff linearize heap?? *)
+(* type: IF.h_formula -> *)
+(*   VarGen.loc -> *)
+(*   Typeinfer.spec_var_type_list -> *)
+(*   CF.h_formula * CF.t_formula * (Globals.ident * VarGen.primed) list * *)
+(*   Typeinfer.spec_var_type_list *)
+  let linearize_heap (f : IF.h_formula) pos (tl:spec_var_type_list)
+    : (( CF.h_formula (* *  (MCP.mix_formula list)  *)) * CF.t_formula * (Globals.ident * VarGen.primed) list * (spec_var_type_list)) = 
+    let pr1 = Iprinter.string_of_h_formula in
+    let pr2 = pr_none in
+    let pr_r (hf,tf,ls,svl) = Cprinter.string_of_h_formula hf in
+    Debug.no_2 "linearize_heap(dup)" pr1 pr2 pr_r (fun _ _ -> linearize_heap f pos tl) f tl in
+
   let linearize_one_formula_x f pos (tl:spec_var_type_list) = (
     let h = f.IF.formula_heap in
     let p = f.IF.formula_pure in
     let dl = f.IF.formula_delayed in
     let id = f.IF.formula_thread in
     let pos = f.IF.formula_pos in
-    let (new_h, type_f, newvars, n_tl) = linearize_heap h pos tl in
+    let (new_h, type_f, newvars, n_tl) = x_add linearize_heap h pos tl in
     (*let () = print_string("Heap: "^(Cprinter.string_of_h_formula new_h)^"\n") in*)
     let new_h, new_constr, new_vars = x_add_1 Immutable.normalize_field_ann_heap_node new_h in
     let newvars = newvars@new_vars in
@@ -7701,7 +7714,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     let fl = base.IF.formula_base_flow in
     let a = base.IF.formula_base_and in
     let pos = base.IF.formula_base_pos in
-    let (new_h, type_f, newvars1, n_tl) = linearize_heap h pos tl in
+    let (new_h, type_f, newvars1, n_tl) = x_add linearize_heap h pos tl in
     let new_h, new_constr, new_vars = x_add_1 Immutable.normalize_field_ann_heap_node new_h in
     let newvars = newvars1@new_vars in
     let new_vp = trans_vperm_sets vp n_tl pos in
@@ -7728,8 +7741,8 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
   | IF.Or {IF.formula_or_f1 = f1;
            IF.formula_or_f2 = f2;
            IF.formula_or_pos = pos } ->
-    let (n_tl,lf1, newvars1) = linearize_formula prog f1 tlist in
-    let (n_tl,lf2, newvars2) = linearize_formula prog f2 n_tl in
+    let (n_tl,lf1, newvars1) = x_add linearize_formula prog f1 tlist in
+    let (n_tl,lf2, newvars2) = x_add linearize_formula prog f2 n_tl in
     let result = CF.mkOr lf1 lf2 pos in
     (n_tl,result, newvars1 @ newvars2)
   | IF.Base base ->
@@ -8414,7 +8427,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
     (*let () = print_string("Before Normalization : "^(Iprinter.string_of_h_formula heap)^"\n") in*)
     let heap = (*if !Globals.allow_mem then heap else*) Immutable.normalize_h_formula heap false in 
     (*let () = print_string("After Normalization : "^(Iprinter.string_of_h_formula heap)^"\n") in*)
-    let nu, h_evars, new_h, link_f = linearize_heap [] heap in
+    let nu, h_evars, new_h, link_f = x_add linearize_heap [] heap in
     (*let new_h = if !Globals.allow_mem then Mem.normalize_h_formula new_h else new_h in*)
     (****processsing formula_*_and***********)
     (*Note: f.formula_thread should appear in f.formula_pure*)
@@ -10762,7 +10775,7 @@ and trans_expected_ass prog ass =
 
 let check_data_pred_name iprog name : bool =
   try
-    let todo_unk = I.look_up_data_def_raw iprog.I.prog_data_decls name in false
+    let todo_unk = x_add I.look_up_data_def_raw iprog.I.prog_data_decls name in false
   with | Not_found -> begin
       try
         let todo_unk = I.look_up_view_def_raw 3 iprog.I.prog_view_decls name in false

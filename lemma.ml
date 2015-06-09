@@ -1292,7 +1292,7 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
   let dname = vd.C.view_data_name in
   if (String.compare dname "" = 0) then [] else
     let () = Debug.ninfo_hprint (add_str "dname" pr_id) dname no_pos in
-    let ddecl = I.look_up_data_def_raw iprog.I.prog_data_decls dname in
+    let ddecl = x_add I.look_up_data_def_raw iprog.I.prog_data_decls dname in
     let processed_branches = List.map (fun (f, lbl) ->
         (* (* TRUNG: TODO remove it later *)                                                             *)
         (* let () = try                                                                                   *)

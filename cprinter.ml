@@ -1398,7 +1398,8 @@ let rec pr_h_formula h =
                h_formula_view_unfold_num = ufn;
                h_formula_view_pos =pos}) ->
     let perm_str = string_of_cperm perm in
-    let ho_arg_str = "{" ^ (String.concat "," (List.map string_of_rflow_formula ho_svs)) ^ "}" in
+    let ho_arg_str = if ho_svs==[] then "" 
+      else "{" ^ (String.concat "," (List.map string_of_rflow_formula ho_svs)) ^ "}" in
     let params = CP.create_view_arg_list_from_pos_map svs_orig svs anns in
     fmt_open_hbox ();
     if (!Globals.texify) then
@@ -3058,6 +3059,8 @@ let string_of_hprel_def_short hp = poly_string_of_pr pr_hprel_def_short hp
 
 let string_of_hprel_def_lib hp = poly_string_of_pr pr_hprel_def_lib hp
 
+let string_of_cond_path = (fun p -> ((pr_list_round_sep ";" (fun s -> string_of_int s)) p))
+
 let pr_par_def (f1,f2,f3) =
   (* fmt_string (CP.print_only_lhs_rhs rel) *)
   fmt_open_box 1;
@@ -3642,8 +3645,29 @@ let pr_failure_cex cex=
 let string_of_failure_cex cex=  poly_string_of_pr pr_failure_cex cex
 
 let pr_estate ?(nshort=true) (es : entail_state) =
+  let es_str = string_of_formula es.es_formula in
   fmt_open_vbox 0;
-  wrap_box ("H", 0) pr_formula es.es_formula;
+  fmt_string es_str;
+  (* added temporarily to see consumed heap *)
+  if !Globals.print_extra then
+    begin
+      (* formula sometimes randomly add new lines, in that case no need to cut after printing it *)
+      if (String.get es_str (String.length es_str - 1) = '\n') then () else fmt_cut ();
+      pr_add_str "es_heap(consumed): " pr_h_formula es.es_heap;
+      (* (match es.es_orig_ante with *)
+      (*   | Some f -> pr_add_str "es_orig_ante: " (pr_formula) f *)
+      (*   | None -> ()); *)
+      pr_wrap_test "es_evars: "  Gen.is_empty (pr_seq "" pr_spec_var)  es.es_evars;
+      pr_wrap_test "es_ante_evars: "  Gen.is_empty (pr_seq "" pr_spec_var)  es.es_ante_evars;
+      pr_wrap_test "es_gen_expl_vars: "  Gen.is_empty (pr_seq "" pr_spec_var)  es.es_gen_expl_vars;
+      pr_wrap_test "es_gen_impl_vars(E): "  (fun _ -> false) (pr_seq "" pr_spec_var)  es.es_gen_impl_vars;
+      pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pure;
+      pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) es.es_infer_heap;
+      pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es.es_infer_hp_rel;
+      pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) es.es_infer_rel;
+      pr_wrap_test "es_infer_templ: " Gen.is_empty  (pr_seq "" pr_formula_exp) es.es_infer_templ;
+      pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) es.es_infer_templ_assume;
+    end;
   pr_wrap_test "es_ho_vars_map: " Gen.is_empty  (pr_seq "" (pr_map_aux pr_spec_var pr_formula)) (es.es_ho_vars_map);
   pr_wrap_test "es_conc_err: " Gen.is_empty (pr_seq "" (fun (msg, pos) -> fmt_string (msg ^ ":" ^ (string_of_pos pos)))) es.es_conc_err;
   pr_wrap_test "es_final_error:" Gen.is_empty

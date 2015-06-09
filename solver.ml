@@ -3652,9 +3652,20 @@ and heap_entail_struc_x (prog : prog_decl) (is_folding : bool)  (has_post: bool)
     else
       (x_add heap_entail_one_context_struc_nth 5 prog is_folding has_post (List.hd cl) conseq tid delayed_f join_id pos pid)
 
+and filter_infer_search (lc,a) =
+  let fn lc =
+    match lc with
+      | CF.FailCtx _ -> lc
+      | CF.SuccCtx lc2 -> 
+            let r = List.filter (fun c -> CF.is_infer_none_ctx c) lc2 in
+            if r==[] then  lc else CF.SuccCtx r
+  in
+  ((if !Globals.filter_infer_search then fn lc else lc),a)
+
 and heap_entail_struc (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_context) (conseq : struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (pid:control_path_id): (list_context * proof) =
   Debug.no_2 "heap_entail_struc" Cprinter.string_of_list_context Cprinter.string_of_struc_formula
-    (fun (ls,_) -> Cprinter.string_of_list_context ls) (fun a c -> heap_entail_struc_x prog is_folding has_post a c tid delayed_f join_id pos pid) cl conseq
+    (fun (ls,_) -> Cprinter.string_of_list_context ls) (fun a c -> 
+        filter_infer_search (heap_entail_struc_x prog is_folding has_post a c tid delayed_f join_id pos pid)) cl conseq
 
 (* and heap_entail_one_context_struc p i1 hp cl cs (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid = *)
 (*   Gen.Profiling.do_3 "heap_entail_one_context_struc" heap_entail_one_context_struc_x(\*_debug*\) p i1 hp cl cs tid delayed_f join_id pos pid *)

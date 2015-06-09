@@ -2700,7 +2700,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               exp_sharp_pos = pos})	->
       (**********INTERNAL************)
       let look_up_typ_first_fld obj_name=
-        let dclr = Cast.look_up_data_def_raw prog.Cast.prog_data_decls obj_name in
+        let dclr = x_add Cast.look_up_data_def_raw prog.Cast.prog_data_decls obj_name in
         let (t,_),_ = (List.hd dclr.Cast.data_fields) in
         t
       in
