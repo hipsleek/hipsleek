@@ -1113,8 +1113,16 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   let () = x_tinfo_hp (add_str "last_entail_lhs" !CF.print_formula) ante no_pos in
   (* WN : ante maybe a disjunction! *)
   (* need a better solution here *)
-  let (ante_h,ante_p,_,_,_,_) = CF.split_components ante in
-  let (mf,_,_) = Cvutil.xpure_heap_symbolic 999 !cprog ante_h ante_p 0 in
+  let xpure_all f = 
+    let lst = CF.split_components_all f in
+    let disj = List.map (fun (h,p,_,_,_,_) ->
+        let (mf,_,_) = Cvutil.xpure_heap_symbolic 999 !cprog h p 0 in
+        (MCP.pure_of_mix mf)) lst in
+    CP.join_disjunctions disj in
+  let f = xpure_all ante in
+  let mf = MCP.mix_of_pure f in
+  (* let (ante_h,ante_p,_,_,_,_) = CF.split_components ante in *)
+  (* let (mf,_,_) = Cvutil.xpure_heap_symbolic 999 !cprog ante_h ante_p 0 in *)
   let () = last_entail_lhs_xpure := Some mf in
   (*let ante = x_add Solver.normalize_formula_w_coers !cprog (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) ante !cprog.Cast.prog_left_coercions in*)
   let ante = Cvutil.prune_preds !cprog true ante in
