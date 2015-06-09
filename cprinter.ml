@@ -2653,6 +2653,7 @@ let rec pr_numbered_list_formula (count:int) (e:list_formula)  =
     end
 
 let pr_es_trace (trace:string list) : unit =
+  let trace = List.rev trace in
   if (trace==[]) then fmt_string "empty"
   else
     let rec helper xs = match xs with
