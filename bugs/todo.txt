@@ -1519,23 +1519,13 @@ WARNING: _0:0_0:0:Z3 error message:
 ===================================================================
 # ex47a
 
-checkentail x::node<nnn,_>@A * x::node<mmm,_>@M  |- nnn=mmm.
+# why message appears twice?
 
-# should we not have nnn=mmm being made equal on the LHS?
+WARNING: _0:0_0:0:* between overlapping heaps: ( x::node<nnn,Anon_15>@M, x::node<mmm,Anon_16>@M)
 
-Entail 1: Fail.(may) cause: true |-  nnn=mmm. LOCS:[0;32] (may-bug)
+WARNING: _0:0_0:0:* between overlapping heaps: ( x::node<nnn,Anon_15>@M, x::node<mmm,Anon_16>@M)
+[Warning] False ctx
 
-Residue:
- MaybeErr Context: 
-   fe_kind: MAY
-   fe_name: logical bug
-   fe_locs: {
-     fc_message:  true |-  nnn=mmm. LOCS:[0;32] (may-bug)
-     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
-   }
- [[empty]]
- CEX:false
-Validate 1: Expecting(3)Valid BUT got : Fail_May
 
 ===================================================================
 ===================================================================
