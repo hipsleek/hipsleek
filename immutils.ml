@@ -186,7 +186,6 @@ let simple_subtype emap imm1 imm2 = gen_subtype emap imm1 imm2 (fun a b -> a <= 
 let norm_eqmax emap imml immr1 immr2 def = 
   let immr1, immr2 = norm_emap_imm immr1 emap, norm_emap_imm immr2 emap in
   if not (is_const_imm ~emap:emap imml) then 
-    let () = x_binfo_pp ("HERE 3 ") no_pos in 
     match immr1, immr2 with
     | (ConstAnn Accs), v2
     | v2, (ConstAnn Accs) -> mkPure (mkEq (imm_to_exp imml no_pos) (imm_to_exp (ConstAnn Accs) no_pos) no_pos)
@@ -197,12 +196,13 @@ let norm_eqmax emap imml immr1 immr2 def =
     | v2, ((ConstAnn a) as v1) -> 
         if (strict_subtype emap imml v1) then mkFalse no_pos
         else if not(helper_is_const_imm emap imml a) then 
-          let () = x_binfo_pp ("HERE 0 ") no_pos in 
           mkPure (mkEq (imm_to_exp imml no_pos) (imm_to_exp v2 no_pos) no_pos) 
-        else           let () = x_binfo_pp ("HERE 2 ") no_pos in  def
-    | _ ->           let () = x_binfo_pp ("HERE 1 ") no_pos in  def
+        else def
+    | _ -> def
 
-
+let norm_eqmax emap imml immr1 immr2 def = 
+  if not(!Globals.imm_add)  then def
+  else  norm_eqmax emap imml immr1 immr2 def
 
 (* norm of imml = min(immr1,immr2) 
    imml = min(immr1,@M)  ----> imml = @M
@@ -226,6 +226,10 @@ let norm_eqmin emap imml immr1 immr2 def =
           mkPure (mkEq (imm_to_exp v2 no_pos) (imm_to_exp imml no_pos) no_pos)
         else def
     | _ -> def
+
+let norm_eqmin emap imml immr1 immr2 def = 
+  if not(!Globals.imm_add)  then def
+  else  norm_eqmin emap imml immr1 immr2 def
 
 (* assume e is Add(..) *)
 let get_imm_var_cts_operands e =
@@ -301,7 +305,7 @@ let norm_subann_add mksubann emap e l =
    exp = @ct1 + @v    ----> exp = @ct1 + @ct2 if emap of f contains (v,ct2)
    exp = @ct1 + @v    unchanged  if f doesn't contain a constant def for v
 *)
-let simplify_imm_adddition emap0 (f:formula) =
+let simplify_imm_addition emap0 (f:formula) =
   let fixpt = ref true in
 
   let f_b_ann_exp_check sv lbl f_op l  =
@@ -364,12 +368,14 @@ let simplify_imm_adddition emap0 (f:formula) =
     let new_form = map_formula_arg form emap fncs (idf2, idf2, idf2) in
     (* let () = fixpt:=(equalFormula form new_form) in *) (* using equalFormula leads to loop *)
     if not(!fixpt) then helper new_form else new_form
-  in 
-  if !Globals.imm_add  then helper f
-  else f
+  in helper f
+
+let simplify_imm_addition emap f =
+  if not(!Globals.imm_add)  then f
+  else simplify_imm_addition emap f
 
 let simplify_imm_addition ?emap:(em=[]) (f:formula) =
   let pr = !print_formula in
-  Debug.no_1 "simplify_imm_addition" pr pr (simplify_imm_adddition em) f
+  Debug.no_1 "simplify_imm_addition" pr pr (simplify_imm_addition em) f
 
 (* ===================== END imm addition utils ========================= *)

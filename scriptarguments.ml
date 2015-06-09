@@ -329,8 +329,8 @@ let common_arguments = [
   ("--dis-imm-simplif-inst", Arg.Clear Globals.imm_simplif_inst,"don't merge aliased nodes");
   ("--en-aggresive-imm-inst", Arg.Set Globals.aggresive_imm_inst,"add lhs_imm<:rhs_imm to state (during matching), when lhs_imm is unrestricted");
   ("--dis-aggresive-immf-inst", Arg.Clear Globals.aggresive_imm_inst,"don't add lhs_imm<:rhs_imm, when lhs_imm is unrestricted");
-  ("--en-imm-add-simpl", Arg.Set Globals.imm_add,"simplify imm addition");
-  ("--dis-imm-add-simpl", Arg.Clear Globals.imm_add,"disable imm addition simplification");
+  ("--en-imm-simpl", Arg.Set Globals.imm_add,"simplify imm addition");
+  ("--dis-imm-simpl", Arg.Clear Globals.imm_add,"disable imm addition simplification");
   ("--mem", Arg.Unit (fun _ -> 
        Globals.allow_mem := true; 
        Globals.allow_field_ann := true;),

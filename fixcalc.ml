@@ -1399,7 +1399,7 @@ let compute_fixpoint_x input_pairs ante_vars specs bottom_up =
     else Fixbag.compute_fixpoint 1 input_pairs_bag ante_vars true
   in
   let num_res = if input_pairs_num = [] then []
-    else compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up
+    else x_add compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up
   in bag_res @ num_res
 
 let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up =
@@ -1466,12 +1466,21 @@ let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up =
     (* Wrapper.wrap_num_disj compute_fixpoint_x n_base input_pairs ante_vars specs bottom_up *)
     compute_fixpoint_x input_pairs ante_vars specs bottom_up
 
+let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up =
+  let pr0 = !CP.print_formula in
+  let pr1 = pr_list_ln (pr_pair pr0 pr0) in
+  let pr2 = !CP.print_svl in
+  let pr_res = add_str "before normalizing the result" (pr_list (pr_pair pr0 pr0)) in
+  DD.no_3 "compute_fixpoint_x2" pr_id pr1 pr2 pr_res
+    (fun _ _ _ -> compute_fixpoint_x2 input_pairs ante_vars specs true)
+    "after input normalization" input_pairs ante_vars
+
 (* Wrapper to 
 1. translate back array
 2. trasnform imm formula to imm-free formula and back
 3. disable fixcalc inner imm-free to imm transformation (eg. calling simpilfy, etc) *)
 let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up =
-  let fixpt (input_pairs,specs) = compute_fixpoint_x2 input_pairs ante_vars specs bottom_up in
+  let fixpt (input_pairs,specs) = x_add compute_fixpoint_x2 input_pairs ante_vars specs bottom_up in
   let fst_pre = (List.map (fold_pair1f (x_add_1 Immutable.map_imm_to_int_pure_formula))) in
   let snd_pre = Immutable.map_imm_to_int_struc_formula in
   let pre = fold_pair2f fst_pre snd_pre in
@@ -1491,11 +1500,21 @@ let compute_fixpoint (i:int) input_pairs ante_vars specs =
     (fun _ _ -> compute_fixpoint_x2 input_pairs ante_vars specs true)
     input_pairs ante_vars
 
+let compute_fixpoint_x input_pairs ante_vars specs bottom_up =
+  let pr0 = !CP.print_formula in
+  let pr1 = pr_list_ln (pr_pair pr0 pr0) in
+  let pr2 = !CP.print_svl in
+  let pr_res = add_str "before normalizing the result" (pr_list (pr_pair pr0 pr0)) in
+  DD.no_3 "compute_fixpoint_x" pr_id pr1 pr2 pr_res
+    (fun _ _ _ -> compute_fixpoint_x input_pairs ante_vars specs bottom_up)
+    "after input normalization" input_pairs ante_vars
+
+
 (*call the wrappers for:
 1. transform imm formula to imm-free formula and back
 2. disable fixcalc inner imm-free to imm transformation (eg. calling simplify, etc)  *)
 let compute_fixpoint_x input_pairs ante_vars specs bottom_up =
-  let fixpt (input_pairs,specs) = (* Wrapper.wrap_wo_int_to_imm *) (compute_fixpoint_x input_pairs ante_vars specs) false in
+  let fixpt (input_pairs,specs) = (* Wrapper.wrap_wo_int_to_imm *) (x_add compute_fixpoint_x input_pairs ante_vars specs) bottom_up in
   let fst_pre = (List.map (fold_pair1f (x_add_1 Immutable.map_imm_to_int_pure_formula))) in
   let snd_pre = Immutable.map_imm_to_int_struc_formula in
   let pre = fold_pair2f fst_pre snd_pre in

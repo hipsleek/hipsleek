@@ -2372,7 +2372,13 @@ let mk_imm_add emap imml immr1 immr2 =
   (* let guard = CP.mkEq left_imm (CP.mkAdd (CP.imm_to_exp immr1 no_pos) (CP.imm_to_exp immr2 no_pos) no_pos) no_pos in *)
   let guard = CP.mkPure guard in
   let guard = x_add_1 (Immutils.simplify_imm_addition ~emap:emap) guard in
-  (imml, [guard])
+
+  (* min guard  *)
+  let guard_min = CP.mkPure (CP.mkEqMin  (CP.imm_to_exp imml no_pos)  (CP.imm_to_exp immr1 no_pos)  (CP.imm_to_exp immr2 no_pos) no_pos) in
+  let guard_lst = if not(!Globals.imm_add) then [guard] 
+    else [guard;guard_min] in
+
+  (imml, guard_lst)
 
 (* c=a-b ----> a=c+b & @L<:max(c,b) *)
 let subtraction_guards emap imm1 imm2 =
