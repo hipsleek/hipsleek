@@ -1054,7 +1054,9 @@ let allow_mem = ref false
 let gen_coq_file = ref false
 
 let infer_mem = ref false
+let filter_infer_search = ref true
 let infer_raw_flag = ref true
+
 
 let pa = ref false
 
@@ -1208,6 +1210,8 @@ let trace_all = ref false
 let print_mvars = ref false
 
 let print_type = ref false
+let print_extra = ref false
+
 let enforce_type_error = ref true (* strictly enforce type error *)
 
 let print_en_tidy = ref false
@@ -2254,3 +2258,5 @@ let string_of_lemma_kind (l: lemma_kind) =
   | LEM_INFER_PRED   -> "LEM_INFER_PRED"
   | RLEM -> "RLEM"
 
+type debug_lvl = Short | Normal | Long
+let debug_level = ref Normal

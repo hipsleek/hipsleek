@@ -2417,7 +2417,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let st3= st2@st_ls@st_lsmu@st_waitlevel in
               let () = x_tinfo_hp (add_str "renamed_spec" Cprinter.string_of_struc_formula) renamed_spec no_pos in
               let pre2 = CF.subst_struc_pre st3 renamed_spec in
-              let () = x_tinfo_hp (add_str "pre2" Cprinter.string_of_struc_formula) pre2 no_pos in
+              let () = x_binfo_hp (add_str "pre2" Cprinter.string_of_struc_formula) pre2 no_pos in
               let new_spec = (Cprinter.string_of_struc_formula pre2) in
               (* Termination: Store unreachable state *)
               let _ =
@@ -2700,7 +2700,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               exp_sharp_pos = pos})	->
       (**********INTERNAL************)
       let look_up_typ_first_fld obj_name=
-        let dclr = Cast.look_up_data_def_raw prog.Cast.prog_data_decls obj_name in
+        let dclr = x_add Cast.look_up_data_def_raw prog.Cast.prog_data_decls obj_name in
         let (t,_),_ = (List.hd dclr.Cast.data_fields) in
         t
       in
@@ -3472,7 +3472,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
               print_string_web_mode (("\nChecking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
               (* print_string_quiet ("\n(andreeac)Specs :\n" ^ (Cprinter.string_of_struc_formula proc.proc_static_specs) ); *)
               x_dinfo_zp (lazy (("Checking procedure ") ^ proc.proc_name ^ "... ")) proc.proc_loc;
-              x_dinfo_zp (lazy ("Specs1 :\n" ^ Cprinter.string_of_struc_formula proc.proc_static_specs)) proc.proc_loc;
+              x_binfo_zp (lazy ("Specs1 :\n" ^ Cprinter.string_of_struc_formula proc.proc_static_specs)) proc.proc_loc;
             end;
           let sel_hps = CF.get_hp_rel_name_struc proc0.Cast.proc_static_specs in
           let () =  Debug.ninfo_hprint (add_str "sel_hps" (!CP.print_svl) ) sel_hps no_pos in
@@ -3681,7 +3681,6 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
               let lst_rank = List.map (fun (_,a2,a3)-> (a2,a3)) lst_rank in
               (*let () = Ranking.do_nothing in*)
               x_tinfo_hp (add_str "SPECS (after simplify_ann)" pr_spec) new_spec no_pos;
-
               x_tinfo_hp (add_str "SPECS (before add_pre)" pr_spec) new_spec no_pos;
               x_tinfo_hp (add_str "NEW SPECS(B4)" pr_spec) new_spec no_pos;
               let new_spec = x_add_1 Astsimp.add_pre prog new_spec in

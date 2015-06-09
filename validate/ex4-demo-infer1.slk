@@ -1,0 +1,127 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+checkentail x::ll<n> |- n>0.
+expect Fail.
+
+checkentail x::ll<n> & n>0 |- x!=null.
+expect Valid.
+
+
+checkentail x::ll<n> & x!=null |- n>0.
+expect Valid.
+
+//(4)
+checkentail x::node<_,null> |- x::ll<n>.
+print residue.
+expect Valid.
+expect_infer Valid R{x!=null & n=1}.
+
+//(5)
+checkentail x::node<_,q>*q::node<_,null> |- x::ll<n>.
+print residue.
+expect Valid.
+expect_infer Valid R{x!=null & n=2}.
+
+//(6)
+checkentail x::node<_,q>*q::node<_,_> |- x::ll<n>.
+print residue.
+expect Fail.
+
+//(7)
+checkentail x::ll<n> |- x::node<_,null>.
+print residue.
+expect Fail.
+
+//(8)
+infer [n] x::ll<n> |- x::node<_,null>.
+print residue.
+expect Valid.
+expect_infer Valid I{n=1}.
+
+//(9)
+infer [n] x::ll<n> |- x::node<_,q>*q::node<_,null>.
+print residue.
+expect_infer Valid I{n=2}.
+
+relation P(int n).
+
+//(10)
+infer [P] x::ll<n> & P(n) |- x::node<_,q>.
+print residue.
+expect_infer Valid RA {P(n)-->n!=0}.
+
+
+// (11)
+infer [y] true |- y::node<a,b>.
+print residue.
+expect_infer Valid I{y::node<i1,i2> & i1=a & i2=b}.
+
+// (12)
+infer [y] true |- y::ll<n>.
+print residue.
+expect_infer Valid I{y::ll<i> & i=n}.
+
+
+// (13)
+infer [y] true |- y::node<a,b> * b::node<c,d>.
+print residue.
+expect_infer Valid I{y::node<_,i2> * i2::node<_,_>}.
+
+// (14)
+infer [y] true |- y::node<a,b> * b::ll<m>.
+print residue.
+expect_infer Valid I{y::node<_,i2> * i2::ll<m>}.
+
+// (15)
+infer [x] x=y  |- y::ll<n>.
+print residue.
+expect_infer Valid I{x::ll<n>}.
+
+// (16)
+infer [x] n=0 & x=y  |- y::ll<n>.
+print residue.
+expect_infer Valid I{x=null}.
+
+// (17)
+infer [x] true & x=y |- x::ll<n> .
+print residue.
+expect_infer Valid I{x::ll<n>}.
+
+// (18)
+infer [ia,ib] y::node<ia,ib> |- y::node<a,b>.
+print residue.
+expect_infer Valid I{}.
+
+// (19)
+infer [y] true |- (exists a: y::node<a,null> & a>0).
+print residue.
+expect_infer Valid I{y::node<aa,null> & aa>0}.
+
+// (20)
+infer [aa]  y::node<aa,null> |- (exists a: y::node<a,null> & a>0).
+print residue.
+expect_infer Valid I{aa>0}.
+
+// (21)
+infer [m] y::ll<m> |- y::ll<n>.
+print residue.
+expect_infer Valid I{}.
+
+// (22)
+infer [x] x=null |- x::node<_,null> .
+print residue.
+expect_infer Valid I{x!=null}.
+
+// (23)
+infer [y] x=y & y=null |- y::node<a,b>.
+print residue.
+expect_infer Valid I{y!=null}.
+
+

@@ -1407,6 +1407,23 @@ Entail (1) : Fail.(may)
   ]
 
 ==========================================================================
+# ex23-infer1.slk -dre "simplify"
+
+Add a new option -dre-trace "..."
+that would add debug calls, and 
+also trace its callees. Only the
+call (and its callees) matching
+the regular expression will be tracked as
+below. Other calls are not tracked.
+The callees need not match the pattern.
+This will help show the callees
+of the debugged calls.
+
+%%%      simplify(TP)@1.
+%%%       elim_exists_with_simpl
+%%%        elim_exists
+%%%         eq_spec_var (4)
+%%%         get_subst_equation_formula
 ==========================================================================
 ==========================================================================
 ==========================================================================

@@ -799,6 +799,13 @@ let peek_obrace_par =
       | [OBRACE,_;CASE,_] -> raise Stream.Failure
       | _ -> ())
 
+let peek_relassume =
+  SHGram.Entry.of_parser "peek_relassume"
+    (fun strm ->
+      match Stream.npeek 1 strm with
+      | [IDENTIFIER "RA",_] -> raise Stream.Failure
+      | _ -> ())
+
 let get_heap_id_info (cid: ident * primed) (heap_id : (ident * int * int * Camlp4.PreCast.Loc.t)) =
   let (base_heap_id, ref_level, deref_level, l) = heap_id in
   let s = ref base_heap_id in
@@ -949,10 +956,33 @@ hip_with_option: [[ opt =arg_option; h = hprog-> (opt,h)]];
 macro: [[`PMACRO; n=id; `EQEQ ; tc=tree_const -> if !Globals.perm=(Globals.Dperm) then Hashtbl.add !macros n tc else  report_error (get_pos 1) ("distinct share reasoning not enabled")]];
 
 command_list: [[ t = LIST0 non_empty_command_dot -> t ]];
-  
+
 command: [[ t=OPT non_empty_command_dot-> un_option t EmptyCmd]];
-    
+
 non_empty_command_dot: [[t=non_empty_command; `DOT -> t]];
+
+(* For R{..} and I{..} *)
+expect_infer_term: [[f = meta_constr -> f]];
+
+expect_infer_relassume:
+  [[ il2 = OPT cond_path; l=meta_constr; `CONSTR;r=meta_constr ->
+      (un_option il2 [], l, None,  r)
+   | il2 = OPT cond_path; l=meta_constr; `REL_GUARD; guard = meta_constr; `CONSTR;r=meta_constr ->
+      (un_option il2 [], l, Some guard,  r)
+  ]];
+
+expect_infer:
+  [[
+    `EXPECT_INFER; ty=validate_result; peek_relassume; t=id; `OBRACE; f = OPT expect_infer_term; `CBRACE ->
+       (match t with
+          | "R" -> ExpectInfer (ty, V_Residue f)
+          | "I" -> ExpectInfer (ty, V_Infer f)
+          | _ -> raise Stream.Failure)
+  | `EXPECT_INFER; ty=validate_result; t=id; `OBRACE; f = OPT expect_infer_relassume; `CBRACE ->
+       (match t with
+          | "RA" -> ExpectInfer (ty, V_RelAssume f)
+          | _ -> failwith "not possible")
+  ]];
 
 non_empty_command:
     [[  t=data_decl           -> DataDef t
@@ -1007,7 +1037,8 @@ non_empty_command:
       | t = ut_decl -> UtDef t
       | t = term_infer_cmd -> TermInfer
       | t = term_assume_cmd -> TermAssume t
-      | t=macro				  -> EmptyCmd]];
+      | t = expect_infer -> t
+      | t=macro	-> EmptyCmd]];
   
 data_decl:
     [[ dh=data_header ; db = data_body 
@@ -4203,5 +4234,4 @@ let create_tnt_prim_proc_list ids : Iast.proc_decl list =
   List.concat (List.map (fun id -> 
     match (create_tnt_prim_proc id) with
     | None -> [] | Some pd -> [pd]) ids)
-
 
