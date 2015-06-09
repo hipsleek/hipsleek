@@ -529,9 +529,10 @@ let _ =
     (* let () = print_endline "before main" in *)
     main ();
     let _ =
+      print_endline_quiet "";
       if !Globals.show_unexpected_ents && ((unexpected_cmd # len) > 0)
       then (
-        let () = print_endline_quiet ("\nUnexpected List: "^(unexpected_cmd # string_of_no_ln_rev)) in
+        let () = print_endline_quiet ("Unexpected List: "^(unexpected_cmd # string_of_no_ln_rev)) in
         (* let () = List.iter (fun id_cmd -> *)
         (*     print_string_quiet ((string_of_int id_cmd) ^ " ")) !unexpected_cmd in *)
         print_endline_quiet ""
