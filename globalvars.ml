@@ -1201,7 +1201,7 @@ let infer_imm_ann (prog: I.prog_decl) : I.prog_decl =
          (EAssume { ff with formula_assume_simpl = sb;
                             formula_assume_struc = sb2 }, il@il2, None)
       | EInfer ff ->
-         let (sb, il, rn) = begin match ff.formula_inf_continuation with
+         let (sb, il, rn, new_ff) = begin match ff.formula_inf_continuation with
          | EBase ({ formula_struc_base = precondition;
                     formula_struc_continuation = (Some postcondition);
                     formula_struc_pos = loc } as br) ->
@@ -1210,6 +1210,9 @@ let infer_imm_ann (prog: I.prog_decl) : I.prog_decl =
             let () = use_mutable := (not (ff.formula_inf_obj # is_pre_imm)) in
             let (new_precondition, il) = ann_formula precondition in
             let rn = if (not !use_mutable) then Some (fresh_pred loc) else None in
+            let new_inf_vars = map_opt_def ff.formula_inf_vars
+                                           (fun x -> (x, Unprimed)::ff.formula_inf_vars) rn in
+            let new_ff = { ff with formula_inf_vars = new_inf_vars } in
             let and_with_rel relname pure =
               let open Ipure in
               let args = List.map (fun i -> Var (i, loc)) il in
@@ -1226,9 +1229,9 @@ let infer_imm_ann (prog: I.prog_decl) : I.prog_decl =
             let (new_postcondition, il2, rn2) = ann_struc_formula postcondition in
             let () = use_mutable := old_use_mutable in
             (EBase { br with formula_struc_base = new_precondition;
-                    formula_struc_continuation = Some new_postcondition }, il, rn)
-         | other -> (other, [], None) end in
-         (EInfer { ff with formula_inf_continuation = sb }, il, rn)
+                    formula_struc_continuation = Some new_postcondition }, il, rn, new_ff)
+         | other -> (other, [], None, ff) end in
+         (EInfer { new_ff with formula_inf_continuation = sb }, il, rn)
 
       | EList ff ->
          let helper (sl, sf) (slacc, ilacc) =
@@ -1257,7 +1260,10 @@ let infer_imm_ann (prog: I.prog_decl) : I.prog_decl =
     List.fold_right helper proc_decls ([], [])
   in
   prog.I.prog_rel_decls <- prog.I.prog_rel_decls @ rel_list;
-  prog.I.prog_rel_ids <- prog.I.prog_rel_ids @ (List.map (fun r -> (AnnT, r.I.rel_name)) rel_list);
+  prog.I.prog_rel_ids <- prog.I.prog_rel_ids @
+                           (List.map (fun x ->
+                                      let tl,_ = List.split x.I.rel_typed_vars in
+                                      (RelT tl,x.rel_name)) rel_list);
   { prog with I.prog_proc_decls = new_proc_decls }
 
 let infer_imm_ann (prog : I.prog_decl) : I.prog_decl =

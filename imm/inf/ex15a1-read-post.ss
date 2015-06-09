@@ -5,11 +5,14 @@ data cell{
 
 //relation P3(ann v1, int v,int r, int s).
 
+// relation P(ann v).
+
+relation QQQ(ann v).
 
 int foo2(cell c)
-  infer [@imm_pre]
+infer [@imm_pre]
   requires c::cell<yyy>
-  ensures c::cell<w>@M;
+  ensures c::cell<w>@a;
 {
   int x = c.fst;
   if (x>0) c.fst = 5;
