@@ -1351,6 +1351,20 @@ Total number of errors: 11 in files:
   infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) imm/norm/norm1.slk({E12#Valid}) imm/norm/norm3.slk({E11#Fail},{E4#Valid},{E7#Valid},{E9#Valid}) imm/norm/norm5.slk({E1#Valid},{E2#Valid}) imm/norm/norm6.slk({E3#Fail}) imm/norm/field.slk({E11#Valid}) fracperm/split-combine.slk(no result  for {E}) veribsync/bperm-split-combine.slk(no result  for {E}) veribsync/barrier-static.slk(no result  for {E}) veribsync/barrier-dynamic2.slk(no result  for {E}).
 !!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
 ====================================================================
+# ann_2
+
+Total number of errors: 4 in files:
+  infer/infer13.slk({E5#Valid}) 
+  infer/infer16.slk({E5#Valid},{E6#Valid}) 
+  imm-field/sleek02.slk({E11#Valid},{E12#Valid},{E7#Valid}) 
+  imm/norm/norm10.slk({E4#Valid}).
+
+# default
+  infer/infer13.slk({E5#Valid}) 
+  infer/infer16.slk({E5#Valid},{E6#Valid}) 
+  imm/norm/norm4.slk({E4#Fail},{E5#Fail}).
+!
+
 ====================================================================
 ====================================================================
 ====================================================================
