@@ -6,7 +6,7 @@ data cell{
 relation QQQ(ann v).
 
 int foo2(cell c)
-infer [@imm_post]
+infer [@imm_pre]
   requires c::cell<yyy>
   ensures c::cell<wwww>;
 {

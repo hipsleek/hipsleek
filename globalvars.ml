@@ -1113,12 +1113,15 @@ let infer_imm_ann (prog: I.prog_decl) : I.prog_decl =
         return the resulting proc and required rel declaration *)
   let infer_imm_ann_proc (proc: I.proc_decl) : (I.proc_decl * I.rel_decl option * I.rel_decl option) =
     let open Iformula in
-    let proc_loc = proc.proc_loc in
+    (* Will be set to false later when @imm_pre or @imm_post is set *)
     let use_mutable = ref true in
-    let post_use_mutable = ref true in
+    let imm_post_is_set = ref false in
+    let imm_pre_is_set = ref false in
+    (* Stack of added fresh variables in both pre && post *)
     let v_stack = new Gen.stack in
+    (* Stack of added fresh variables in both pre *)
     let pre_stack = new Gen.stack in
-    let inf_var_stack = new Gen.stack in
+    (* Relation added on pre and post *)
     let pre_rel = ref None in
     let post_rel = ref None in
     let assign_ann_or_var ann loc = match ann with
@@ -1139,8 +1142,6 @@ let infer_imm_ann (prog: I.prog_decl) : I.prog_decl =
          Some (HeapNode2 { hp with h_formula_heap2_imm = h_imm })
       | _ -> None
     in
-    let ann_heap h =
-                  Debug.no_1 "ann_heap" Iprinter.string_of_h_formula (pr_opt Iprinter.string_of_h_formula) ann_heap h in
     let and_pure_with_rel relname rel_params formula loc =
       let and_with_rel relname pure =
         let open Ipure in
@@ -1160,20 +1161,19 @@ let infer_imm_ann (prog: I.prog_decl) : I.prog_decl =
     in
     let rec ann_struc_formula_1 = function
       | EInfer ff ->
-         use_mutable := (not (ff.formula_inf_obj # is_pre_imm));
-         post_use_mutable := (not (ff.formula_inf_obj # is_post_imm));
+         imm_pre_is_set := ff.formula_inf_obj # is_pre_imm;
+         imm_post_is_set := ff.formula_inf_obj # is_post_imm;
+         use_mutable := (not !imm_pre_is_set && not !imm_post_is_set);
          None
       | EAssume ff ->
          pre_stack # push_list (v_stack # get_stk);
-         use_mutable := !post_use_mutable;
-         if !post_use_mutable then Some (EAssume ff) else
-           Some (EAssume { ff with formula_assume_simpl =
-                                transform_formula transform_1 ff.formula_assume_simpl })
+         if !use_mutable then Some (EAssume ff) else
+           Some (EAssume { ff with formula_assume_simpl = transform_formula transform_1 ff.formula_assume_simpl })
       | _ -> None
     and transform_1 = (ann_struc_formula_1, nonef, ann_heap, (somef, somef, somef, somef, somef)) in
     let ann_postcondition = function
       | EAssume ff ->
-         if ((not (v_stack # is_empty)) && (not !post_use_mutable)) then
+         if ((not (v_stack # is_empty)) && (not (!post_rel = None))) then
             let postcondition = ff.formula_assume_simpl in
             let post_rel = match !post_rel with Some p -> p | None -> failwith "Not possible (infer_imm_ann_proc)" in
             let rel_params = List.map (fun (_,i) -> (i, Unprimed)) post_rel.I.rel_typed_vars in
@@ -1184,15 +1184,12 @@ let infer_imm_ann (prog: I.prog_decl) : I.prog_decl =
         else Some (EAssume ff)
       | _ -> None
     in
-    (* And the pure part of pre/post condition with relation
-       Assumption : pre_rel and post_rel must have been created
-     *)
     let ann_struc_formula_2 = function
       | EInfer ff ->
          begin match ff.formula_inf_continuation with
          | EBase ({ formula_struc_base = precondition; formula_struc_pos = loc } as ebase) ->
             let new_ebase =
-              if (not (pre_stack # is_empty)) then
+              if (not (pre_stack # is_empty) && not (!pre_rel = None)) then
                 let pre_rel = match !pre_rel with Some p -> p | None -> failwith "Not possible (infer_imm_ann_proc)" in
                 let rel_params = List.map (fun (_,i) -> (i, Unprimed)) pre_rel.I.rel_typed_vars in
                 let precondition_with_rel = and_pure_with_rel pre_rel.I.rel_name rel_params precondition loc in
@@ -1220,10 +1217,10 @@ let infer_imm_ann (prog: I.prog_decl) : I.prog_decl =
     let transform_2 = (ann_struc_formula_2, somef, somef, (somef, somef, somef, somef, somef)) in
     let pss =
       let pss_1 = transform_struc_formula transform_1 proc.proc_static_specs in
-      if (!post_use_mutable && !use_mutable) then pss_1
+      if !use_mutable then pss_1
       else
-        (pre_rel := mk_rel (pre_stack # get_stk) no_pos;
-        if (not !post_use_mutable) then post_rel := mk_rel (v_stack # get_stk) no_pos;
+       (if !imm_pre_is_set then pre_rel := mk_rel (pre_stack # get_stk) no_pos;
+        if !imm_post_is_set then post_rel := mk_rel (v_stack # get_stk) no_pos;
         transform_struc_formula transform_2 pss_1) in
     ({ proc with proc_static_specs = pss }, !pre_rel, !post_rel)
   in
