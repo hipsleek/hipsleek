@@ -46,10 +46,10 @@ pred fact<x,r> == x=0 & r=1
  inv x>=0 & r>=x.
 
 checksat y::fact<x,r> & r=0.
-expect sat.
+expect Sat.
 
 checksat y::fact<x,r> & x=0 & r=2.
-expect unsat.
+expect Unsat.
 
 /*
 # ex6.slk

@@ -2386,6 +2386,8 @@ validate_result:
     | `FAIL -> VR_Fail 0
     | `FAIL_MUST -> VR_Fail 1
     | `FAIL_MAY -> VR_Fail (-1)
+    | `SSAT -> VR_Sat
+    | `SUNSAT -> VR_Unsat
   ]];
 validate_cmd_pair:
     [[ `VALIDATE; vr = validate_result  ->

@@ -88,7 +88,7 @@ type sleek_token =
   | INFINITY
   | NEGINFINITY
   | VALIDATE
-  | VALID
+  | VALID |SSAT | SUNSAT
   | FAIL
   | FAIL_MUST
   | FAIL_MAY
@@ -179,6 +179,8 @@ module Token = struct
     | MAYLOOP -> "MayLoop"
     | VALIDATE -> "expect"
     | VALID -> "Valid"
+    | SSAT -> "Sat"
+    | SUNSAT -> "Unsat"
     | FAIL -> "Fail"
     | FAIL_MUST -> "Fail_Must"
     | FAIL_MAY -> "Fail_May"

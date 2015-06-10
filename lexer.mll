@@ -280,6 +280,8 @@ module Make (Token : SleekTokenS)
    ("union", UNION);
    ("expect", VALIDATE);
    ("Valid", VALID);
+   ("Sat", SSAT);
+   ("Unsat", SUNSAT);
    ("Fail", FAIL);
    ("Fail_Must", FAIL_MUST);
    ("Fail_May", FAIL_MAY);
