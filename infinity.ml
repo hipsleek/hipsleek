@@ -258,9 +258,9 @@ let check_neg_inf (exp1: CP.exp) (exp2: CP.exp) (exp3: CP.exp)
            else false
          else false
        in let exp = 
-            if CP.is_inf e1 then e2 
-            else 
-            if CP.is_inf e2 then e1 else exp2
+         if CP.is_inf e1 then e2 
+         else 
+         if CP.is_inf e2 then e1 else exp2
        in flag,oexp,exp
      | _ -> match exp3 with
        | CP.Add(e1,e2,pos) -> 
@@ -275,9 +275,9 @@ let check_neg_inf (exp1: CP.exp) (exp2: CP.exp) (exp3: CP.exp)
              else false
            else false
          in let exp = 
-              if CP.is_inf e1 then e2 
-              else 
-              if CP.is_inf e2 then e1 else exp3
+           if CP.is_inf e1 then e2 
+           else 
+           if CP.is_inf e2 then e1 else exp3
          in flag,oexp,exp
        | _ -> false,exp2,exp3)
   | _ -> false,exp2,exp3

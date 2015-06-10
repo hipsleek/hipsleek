@@ -21,6 +21,8 @@ let string_of_vres t =
   | VR_Valid -> "Valid"
   | VR_Fail s -> "Fail"^(if s<0 then "_May" else if s>0 then "_Must" else "")
   | VR_Unknown s -> "UNKNOWN("^s^")"
+  | VR_Sat -> "Sat"
+  | VR_Unsat -> "Unsat"
 
 let is_vr_may s = s<0
 
@@ -1770,7 +1772,7 @@ let process_validate exp_res opt_fl ils_es=
     (*get current residue -> FAIL? VALID*)
     let rs = !CF.residues in
     let a_r, ls_a_es, act_vars = match !CF.residues with
-      | None ->
+      | None -> begin
         let _ = res_str := "Expecting "^(string_of_vres exp_res)^"BUT got no residue" in
         let _ = unexpected_cmd # push (string_of_int nn)  in
         (*   if (exp_res = "Fail") *)
@@ -1782,8 +1784,25 @@ let process_validate exp_res opt_fl ils_es=
         (* in *)
         (**res = Fail*)
         false, [], []
+        end
       | Some (lc, res) -> 
         begin (*res*)
+          if exp_res = VR_Sat || exp_res = VR_Unsat then
+            let r =
+              if (exp_res = VR_Sat) then
+                if res then let _ =  res_str := "OK" in
+                true
+                else let _ = res_str := "Expecting " ^(string_of_vres exp_res)^" BUT got : Unsat (or Unknown)" in
+                false
+              else
+                if (not res) then  let _ =  res_str := "OK" in
+                true
+                else
+                  let _ = res_str := "Expecting " ^(string_of_vres exp_res)^" BUT got : Sat (or Unknown)" in
+                  false
+            in
+            (r, [] , [])
+          else
           let lerr_exc = CF.is_en_error_exc_ctx_list lc in
           let res, fls = proc_sleek_result_validate res lc lerr_exc in
           let unexp =
@@ -2377,7 +2396,11 @@ let process_sat_check_x (f : meta_formula) =
   let num_id = "\nCheckSat "^(string_of_int nn) in
   let (_,f) = meta_to_formula f false [] [] in
   let f = Cvutil.prune_preds !cprog true f in
-  let unsat_command f = not(x_add Solver.unsat_base_nth 7 !cprog (ref 0) f) in
+  let unsat_command f =
+    let r = not(x_add Solver.unsat_base_nth 7 !cprog (ref 0) f) in
+    let _ = CF.residues := (Some (CF.SuccCtx [], r)) in
+    r
+  in
   let res = x_add Solver.unsat_base_nth 1 !cprog (ref 0) f in
   let sat_res =
     if res then false

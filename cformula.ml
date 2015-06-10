@@ -353,6 +353,7 @@ let print_infer_rel(l,r) = (!print_pure_f l)^" --> "^(!print_pure_f r)
 let print_mem_formula = ref (fun (c:mem_formula) -> "printer has not been initialized")
 let print_imm = ref (fun (c:ann) -> "printer has not been initialized")
 
+let sat_stk = new Gen.stack_pr !print_formula  (=)
 
 (* let print_failesc = ref (fun (c:failesc) -> "printer has not been initialized") *)
 
@@ -486,10 +487,10 @@ let isAnyConstFalse f = match f with
       formula_exists_pure = p;
       formula_exists_flow = fl; })
   | Base ({
-        formula_base_heap = h;
-        formula_base_vperm = vp;
-        formula_base_pure = p;
-        formula_base_flow = fl; }) -> 
+      formula_base_heap = h;
+      formula_base_vperm = vp;
+      formula_base_pure = p;
+      formula_base_flow = fl; }) -> 
     h = HFalse || MCP.isConstMFalse p || 
     is_false_flow fl.formula_flow_interval || CVP.is_false_vperm_sets vp
   | _ -> false
@@ -5022,7 +5023,7 @@ let hp_def_cmp (d1:hp_rel_def) (d2:hp_rel_def) =
       let hp2 = get_hpdef_name d2.def_cat in
       String.compare (CP.name_of_spec_var hp1) (CP.name_of_spec_var hp2)
     with _ -> 1
-  with _ -> -1
+    with _ -> -1
 
 let hpdef_cmp d1 d2 =
   try
@@ -5031,7 +5032,7 @@ let hpdef_cmp d1 d2 =
       let hp2 = get_hpdef_name d2.hprel_def_kind in
       String.compare (CP.name_of_spec_var hp1) (CP.name_of_spec_var hp2)
     with _ -> 1
-  with _ -> -1
+    with _ -> -1
 
 let mk_hp_rel_def hp (args, r, paras) (g: formula option) f ofl pos=
   let hf = HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, pos) in
@@ -7222,8 +7223,8 @@ let generate_xpure_view_x drop_hpargs total_unk_map=
       let xpvs = lookup_xpure_view hp total_unk_map in
       match xpvs with
       | [xp] -> let xp_r, xp_args = match xp.CP.xpure_view_node with
-          | None -> None, xp.CP.xpure_view_arguments
-          |Some _ -> Some (List.hd args), (List.tl args)
+        | None -> None, xp.CP.xpure_view_arguments
+        |Some _ -> Some (List.hd args), (List.tl args)
         in
         let new_xpv = {xp with CP.xpure_view_node =  xp_r;
                                xpure_view_arguments =  xp_args
@@ -7813,14 +7814,14 @@ let remove_neqNull_redundant_hnodes_f_x f0=
   let rec helper f=
     match f with
     | Base fb -> let np = remove_neqNull_redundant_hnodes_hf fb.formula_base_heap
-                     (MCP.pure_of_mix fb.formula_base_pure) in
+        (MCP.pure_of_mix fb.formula_base_pure) in
       (Base {fb with formula_base_pure = MCP.mix_of_pure np})
     | Or orf -> let nf1 = helper orf.formula_or_f1 in
       let nf2 = helper orf.formula_or_f2 in
       ( Or {orf with formula_or_f1 = nf1;
                      formula_or_f2 = nf2;})
     | Exists fe -> let np = remove_neqNull_redundant_hnodes_hf fe.formula_exists_heap
-                       (MCP.pure_of_mix fe.formula_exists_pure) in
+        (MCP.pure_of_mix fe.formula_exists_pure) in
       (Exists {fe with formula_exists_pure = MCP.mix_of_pure np;})
   in
   helper f0
@@ -7834,14 +7835,14 @@ let remove_neqNull_redundant_hnodes_f_wg (f0,og)=
   let rec helper f=
     match f with
     | Base fb -> let np = remove_neqNull_redundant_hnodes_hf fb.formula_base_heap
-                     (MCP.pure_of_mix fb.formula_base_pure) in
+        (MCP.pure_of_mix fb.formula_base_pure) in
       (Base {fb with formula_base_pure = MCP.mix_of_pure np})
     | Or orf -> let nf1 = helper orf.formula_or_f1 in
       let nf2 = helper orf.formula_or_f2 in
       ( Or {orf with formula_or_f1 = nf1;
                      formula_or_f2 = nf2;})
     | Exists fe -> let np = remove_neqNull_redundant_hnodes_hf fe.formula_exists_heap
-                       (MCP.pure_of_mix fe.formula_exists_pure) in
+        (MCP.pure_of_mix fe.formula_exists_pure) in
       (Exists {fe with formula_exists_pure = MCP.mix_of_pure np;})
   in
   let nf = helper f0 in
@@ -10527,9 +10528,9 @@ and combine_helper_x op los rs=
   match los with
   | [] -> op ^ "[\n" ^ rs ^ "\n]"
   | [os] -> let tmp=
-              ( match os with
-                | None -> rs
-                | Some s -> rs ^ s
+    ( match os with
+      | None -> rs
+      | Some s -> rs ^ s
               ) in op ^ "[\n" ^ tmp ^ "\n]"
   | os::ss ->
     (*os contains all failed of 1 path trace*)
@@ -11617,7 +11618,7 @@ let proc_left t1 t2 =
         | [c2] ->
           if isAnyFalseCtx c2
              && x_add_1 is_inferred_pre_ctx c2
-             (* both t1 and t2 are FalseCtx with Pre *)
+          (* both t1 and t2 are FalseCtx with Pre *)
           then Some [merge_false_ctx c1 c2]
           else Some t2 (* drop FalseCtx t1 with Pre *)
         | _ -> Some t1 (* only t1 is FalseCtx with Pre *)
@@ -15702,7 +15703,7 @@ let unwrap_exists f =
     | Base b -> ([],[],f)
     | Exists b -> (b.formula_exists_qvars, 
                    h_fv b.formula_exists_heap, Exists {b with formula_exists_qvars=[]} )
-    | Or b -> 
+    | Or b ->
       let (e1,h1,f1) = helper b.formula_or_f1 in
       let (e2,h2,f2) = helper b.formula_or_f2 in
       (e1@e2,h1@h2,mkOr f1 f2 b.formula_or_pos)
@@ -15728,6 +15729,29 @@ let wrap_exists svl f =
       let pos = pos_of_formula f in
       mkOr (helper f1) (helper f2) pos
   in helper f
+
+let is_shape_h_formula hf =
+   let vnodes =  get_views (formula_of_heap hf no_pos) in
+   List.for_all (fun vd -> List.for_all CP.is_node_typ vd.h_formula_view_arguments) vnodes
+
+let shape_abs svl f0 =
+  let filter_non_shape p =
+    let ps = CP.list_of_conjs p in
+    let ptr_ps = List.filter (fun p -> CP.is_shape p ) ps in
+    CP.conj_of_list ptr_ps (CP.pos_of_formula p)
+  in
+  let rec helper f =
+    match f with
+    | Base b ->
+          Base {b with formula_base_pure = MCP.mix_of_pure (filter_non_shape (MCP.pure_of_mix b.formula_base_pure))}
+    | Exists e -> let quans, base_f = split_quantifiers f in
+      add_quantifiers quans (helper base_f)
+    | Or o ->
+      let f1 = o.formula_or_f1 in
+      let f2 = o.formula_or_f2 in
+      mkOr (helper f1) (helper f2) o.formula_or_pos
+  in helper f0
+
 
 let lax_impl_of_post f =
   let (evs,hvs,bf) = unwrap_exists f in

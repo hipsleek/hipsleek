@@ -127,6 +127,10 @@ let is_int_typ sv = match sv with
   | SpecVar (Int,_,_) -> true
   | _ -> false
 
+let is_num_typ sv = match sv with
+  | SpecVar (NUM,_,_) -> true
+  | _ -> false
+
 let is_ann_typ sv = match sv with
   | SpecVar (AnnT,_,_) -> true
   | _ -> false
@@ -1952,6 +1956,10 @@ and is_int_type (t : typ) = match t with
   | Int -> true
   | _ -> false
 
+and is_num_type (t : typ) = match t with
+  | NUM -> true
+  | _ -> false
+
 and is_ann_type (t : typ) = match t with
   | AnnT -> true
   | _ -> false
@@ -2536,7 +2544,7 @@ and mkStupid_Or_x f1 f2 lbl pos=
           let l2 = List.assoc branch l2 in
           (branch, mkOr l1 l2 lbl pos)
         with Not_found -> (branch, mkTrue pos)
-      with Not_found -> (branch, mkTrue pos )
+        with Not_found -> (branch, mkTrue pos )
     in
     Label_Pure.norm  (List.map map_fun branches) in
   if (isConstFalse f1) then f2
@@ -8192,8 +8200,8 @@ module ArithNormalizer = struct
       | Add _ | Subtract _ -> true
       | _ -> false
     in let wrap e =
-         if need_parentheses e then "(" ^ (string_of_exp e) ^ ")"
-         else (string_of_exp e)
+      if need_parentheses e then "(" ^ (string_of_exp e) ^ ")"
+      else (string_of_exp e)
     in
     match e0 with
     | Null _ -> "null"
@@ -9762,6 +9770,21 @@ let neg_neq p=
   Debug.no_1 "neg_neq" pr1 pr1
     (fun _ -> neg_neq_x p) p
 
+let map_f f0 fnc_bf fnc_comb=
+  let rec recf f= match f with
+    | BForm (b,_)-> fnc_bf b
+    | And (b1,b2,_) -> fnc_comb (recf b1) (recf b2)
+    | AndList b -> List.fold_left (fun svl (_,c)->
+          let svl1 = recf c in
+          fnc_comb svl svl1) [] b
+    | Or (b1,b2,_,_) -> fnc_comb (recf b1) (recf b2)
+    | Not (b,_,_)-> recf b
+    | Forall (_,f,_,_) -> recf f
+    | Exists (_,f,_,_) -> recf f
+  in
+  recf f0
+
+
 let rec get_neq_null_svl_x (f:formula) =
   let helper (bf:b_formula) =
     match bf with
@@ -9773,21 +9796,42 @@ let rec get_neq_null_svl_x (f:formula) =
       end
     | _ -> []
   in
-  match f with
-  | BForm (b,_)-> helper b
-  | And (b1,b2,_) -> (get_neq_null_svl_x b1)@(get_neq_null_svl_x b2)
-  | AndList b -> List.fold_left (fun svl (_,c)->
-      let svl1 = get_neq_null_svl_x c in
-      svl@svl1) [] b
-  | Or (b1,b2,_,_) -> (get_neq_null_svl_x b1)@(get_neq_null_svl_x b2)
-  | Not (b,_,_)-> get_neq_null_svl_x b
-  | Forall (_,f,_,_) -> get_neq_null_svl_x f
-  | Exists (_,f,_,_) -> get_neq_null_svl_x f
+  (* match f with *)
+  (* | BForm (b,_)-> helper b *)
+  (* | And (b1,b2,_) -> (get_neq_null_svl_x b1)@(get_neq_null_svl_x b2) *)
+  (* | AndList b -> List.fold_left (fun svl (_,c)-> *)
+  (*     let svl1 = get_neq_null_svl_x c in *)
+  (*     svl@svl1) [] b *)
+  (* | Or (b1,b2,_,_) -> (get_neq_null_svl_x b1)@(get_neq_null_svl_x b2) *)
+  (* | Not (b,_,_)-> get_neq_null_svl_x b *)
+  (* | Forall (_,f,_,_) -> get_neq_null_svl_x f *)
+  (* | Exists (_,f,_,_) -> get_neq_null_svl_x f *)
+  map_f f helper (@)
 
 let get_neq_null_svl (f:formula)=
   let pr1 = !print_formula in
   Debug.no_1 "get_neq_null_svl" pr1 !print_svl
     (fun _ -> get_neq_null_svl_x f) f
+
+let rec get_eq_null_svl_x (f:formula) =
+  let helper (bf:b_formula) =
+    match bf with
+    | (Eq (sv1,sv2,_),_) -> begin
+        match sv1,sv2 with
+        | Var (v,_), Null _ -> [v]
+        | Null _, Var (v,_) -> [v]
+        | _ -> []
+      end
+    | _ -> []
+  in
+  map_f f helper (@)
+
+let get_eq_null_svl (f:formula)=
+  let pr1 = !print_formula in
+  Debug.no_1 "get_eq_null_svl" pr1 !print_svl
+    (fun _ -> get_eq_null_svl_x f) f
+
+
 
 let check_dang_or_null_exp_x root (f:formula) = match f with
   | BForm (bf,_) ->
@@ -14243,6 +14287,9 @@ let has_nondet_cond f =
   let or_list = List.fold_left (||) false in
   fold_formula f (nonef, f_b, nonef) or_list  
 
+let is_shape f=
+  let svl = fv f in
+  List.for_all (fun sv -> (is_node_typ sv)) svl
 let eq_nondet_rel r1 r2 = 
   match r1, r2 with
   | RelForm (sv1, _, p1), RelForm (sv2, _, p2) ->
@@ -14258,3 +14305,4 @@ let collect_nondet_rel f =
   in
   fold_formula f (nonef, f_bf, nonef) List.concat
 
+let syn_checkeq = ref(fun (ls:ident list) (a:formula) (c:formula) (m: ((spec_var * spec_var) list) list) -> (true,([]: ((spec_var * spec_var) list) list)))

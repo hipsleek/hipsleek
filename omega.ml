@@ -17,6 +17,7 @@ let set_proof_string str = Others.last_proof_string # set str
 let set_proof_result str = Others.last_proof_result # set str
 
 let omega_call_count: int ref = ref 0
+let omega_call_count_for_infer: int ref = ref 0
 let is_omega_running = ref false
 let in_timeout = ref 10.0 (* default timeout is 15 seconds *)
 let is_complex_form = ref false
@@ -80,15 +81,15 @@ let rec omega_of_exp e0 = match e0 with
     let r = match a1 with
       | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a2) ^ ")"
       | _ -> let rr = match a2 with
-          | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a1) ^ ")"
-          | _ -> 
-            let () = report_warning no_pos "[omega.ml] Non-linear arithmetic is not supported by Omega." in
-            "0=0"
-            (* illegal_format "[omega.ml] Non-linear arithmetic is not supported by Omega." *)
-            (* Error.report_error { *)
-            (*   Error.error_loc = l; *)
-            (*   Error.error_text = "[omega.ml] Non-linear arithmetic is not supported by Omega." *)
-            (* } *)
+        | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a1) ^ ")"
+        | _ -> 
+          let () = report_warning no_pos "[omega.ml] Non-linear arithmetic is not supported by Omega." in
+          "0=0"
+          (* illegal_format "[omega.ml] Non-linear arithmetic is not supported by Omega." *)
+          (* Error.report_error { *)
+          (*   Error.error_loc = l; *)
+          (*   Error.error_text = "[omega.ml] Non-linear arithmetic is not supported by Omega." *)
+          (* } *)
         in rr
     in r
   | Template t -> omega_of_exp (exp_of_template t)
@@ -292,7 +293,9 @@ let stop () =
   if !is_omega_running then begin
     let num_tasks = !test_number - !last_test_number in
     if (not !Globals.web_compile_flag) then
-      print_string_if !Globals.enable_count_stats ("Stop Omega... "^(string_of_int !omega_call_count)^" invocations "); flush stdout;
+      print_string_if !Globals.enable_count_stats ("Stop Omega... "^(string_of_int !omega_call_count)^" invocations ");
+      print_string_if (!Globals.gen_baga_inv && !Globals.enable_count_stats) ("Infer: " ^ (string_of_int !omega_call_count_for_infer) ^ " invocations; Proving: " ^ (string_of_int (!omega_call_count - !omega_call_count_for_infer)) ^ " invocations");
+      flush stdout;
     let () = Procutils.PrvComms.stop !log_all_flag log_all !process num_tasks Sys.sigkill (fun () -> ()) in
     is_omega_running := false;
   end

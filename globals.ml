@@ -470,13 +470,14 @@ let dump_proof = ref false
 let dump_sleek_proof = ref false
 let sleek_gen_vc = ref false
 let sleek_gen_vc_exact = ref false
+let sleek_gen_sat = ref false
 
 
 
 
 (*Some global vars for logging*)
 let explain_mode = new failure_mode
-let return_exp_pid = ref ([]: control_path_id list)	
+let return_exp_pid = ref ([]: control_path_id list)
 let z3_proof_log_list = ref ([]: string list)
 let z3_time = ref 0.0
 
@@ -1724,8 +1725,15 @@ let show_unexpected_ents = ref true
 (* generate baga inv from view *)
 let double_check = ref false
 let gen_baga_inv = ref false
+let delay_eelim_baga_inv = ref false
+let dis_baga_inv_check = ref false
+
 let is_inferring = ref false
 let use_baga = ref false
+
+(* let unsat_count_syn = ref (0:int) *)
+(* let unsat_count_sem = ref (0:int) *)
+
 let prove_invalid = ref false
 let gen_baga_inv_threshold = 7 (* number of preds <=6, set gen_baga_inv = false*)
 let do_under_baga_approx = ref false (* flag to choose under_baga *)

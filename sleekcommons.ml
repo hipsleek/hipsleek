@@ -104,6 +104,8 @@ and validate_result =
   | VR_Valid
   | VR_Fail of int (* 0 - any; -1 may; +1 must *) 
   | VR_Unknown of string
+  | VR_Sat
+  | VR_Unsat
 
 and validation =
   (* R{..} *)

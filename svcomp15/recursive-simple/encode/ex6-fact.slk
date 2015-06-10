@@ -1,0 +1,69 @@
+/*
+extern int __VERIFIER_nondet_int();
+extern void __VERIFIER_error();
+*/
+
+/*
+int fibo(int n) {
+    if (n < 1) {
+        return 0;
+    } else if (n == 1) {
+        return 1;
+    } else {
+        return fibo(n-1) + fibo(n-2);
+    }
+}
+*/
+
+/*
+pred fibo_v<n,r,e> == n<1 & r=0 & e=1
+   or n=1 & r=1 & e=1
+   or fibo_v<n-1, r1, e1> * fibo_v<n-2, r2, e2> & n>1 
+      & r=r1+r2 & e1=1 & e2=1 & e=1.
+*/
+
+// fibo 1-30
+// 1, 1, 2, 3, 5,
+// 8, 13, 21, 34, 55, 
+// 89, 144, 233, 377, 610,
+// 987, 1597, 2584, 4181, 6765,
+// 10946, 17711, 28657, 46368, 75025,
+// 121393, 196418, 317811, 514229, 832040
+
+/*
+int main() {
+    int x = 5;
+    int result = fibo(x);
+    if (result != 5) {
+        __VERIFIER_error();
+    }
+    return 0;
+}
+*/
+
+pred fact<x,r> == x=0 & r=1
+   or self::fact<x-1,r1> & x>0 & r=x*r1
+ inv x>=0 & r>=x.
+
+checksat y::fact<x,r> & r=0.
+expect Sat.
+
+checksat y::fact<x,r> & x=0 & r=2.
+expect Unsat.
+
+/*
+# ex6.slk
+
+# maybe can merge with default to get validate stuff?
+
+CheckSat 1: SAT
+
+Validate 1: Expecting UNKNOWN(sat)BUT got no residue
+
+
+CheckSat 2: SAT
+
+Validate 2: Expecting UNKNOWN(unsat)BUT got no residue
+
+Unexpected: 1 2 
+*/

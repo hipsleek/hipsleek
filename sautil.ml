@@ -1078,11 +1078,11 @@ let generate_closure_eq_null args eqNulls cur_eqs=
     match ls_eqs with
     | [] -> res
     | (sv1,sv2)::rest -> let new_res =
-                           if CP.eq_spec_var sv1 sv then
-                             (res@[sv2])
-                           else if CP.eq_spec_var sv2 sv then
-                             (res@[sv1])
-                           else res
+      if CP.eq_spec_var sv1 sv then
+        (res@[sv2])
+      else if CP.eq_spec_var sv2 sv then
+        (res@[sv1])
+      else res
       in
       find_exists rest sv new_res
   in
@@ -1619,9 +1619,9 @@ let simp_match_hp_w_unknown_x prog unk_hps link_hps cs=
   let rec_hps = CP.diff_svl rec_hps0 tot_unk_hps in
   (* let rec_hps = List.filter (fun hp -> not (CP.mem_svl hp ignored_hps)) rec_hps0 in *)
   if (List.length rec_hps <= 1)
-     (* check-dll: recusrsive do not check*)
-     || ( (List.length l_hds > 0 || List.length l_hvs > 0) && List.length lhrels > 0 &&
-          (* (List.length r_hds > 0 || List.length r_hvs > 0) && *) List.length rhrels > 0) (*swl-i.ss*)
+  (* check-dll: recusrsive do not check*)
+  || ( (List.length l_hds > 0 || List.length l_hvs > 0) && List.length lhrels > 0 &&
+       (* (List.length r_hds > 0 || List.length r_hvs > 0) && *) List.length rhrels > 0) (*swl-i.ss*)
   then
     (*sll-append*)
     (*remove irr unknown hpreds*)
@@ -5093,9 +5093,9 @@ let mk_orig_hprel_def prog is_pre cdefs unk_hps hp r other_args args sh_ldns eqN
     (* let n_hprel,n_hp =  add_raw_hp_rel prog n_args_inst no_pos in *)
     let n_hprels,ls_n_hpargs = List.fold_left
         ( fun (r_hprels,r_hpargs) (n_args_inst, r) ->
-            let is_pre = Cast.check_pre_post_hp prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
-            let n_hprel,n_hp =  add_raw_hp_rel prog is_pre false n_args_inst no_pos in
-            (r_hprels@[n_hprel], r_hpargs@[(n_hp,(List.map fst n_args_inst, r, other_args))])
+           let is_pre = Cast.check_pre_post_hp prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
+           let n_hprel,n_hp =  add_raw_hp_rel prog is_pre false n_args_inst no_pos in
+           (r_hprels@[n_hprel], r_hpargs@[(n_hp,(List.map fst n_args_inst, r, other_args))])
         ) ([],[]) ls_n_args_inst
     in
     (*synthesize the common*)

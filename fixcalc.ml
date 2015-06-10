@@ -82,7 +82,7 @@ and fixcalc_of_exp e = match e with
   | CP.Var (x, _) -> fixcalc_of_spec_var x
   | CP.IConst (i, _) -> string_of_int i
   | CP.FConst (f, _) -> string_of_float f
-  | CP.Add (e1, e2, _) -> fixcalc_of_exp e1 ^ op_add ^ fixcalc_of_exp e2 
+  | CP.Add (e1, e2, _) -> fixcalc_of_exp e1 ^ op_add ^ fixcalc_of_exp e2
   | CP.Subtract (e1, e2, _) -> 
     fixcalc_of_exp e1 ^ op_sub ^ "(" ^ fixcalc_of_exp e2 ^ ")"
   | CP.Mult (e1, e2, _) -> 
@@ -163,12 +163,16 @@ let rec fixcalc_of_b_formula b =
     let () = x_binfo_hp (add_str "fixcalc trans error :" Cprinter.string_of_b_formula) b no_pos in
     illegal_format ("Fixcalc.fixcalc_of_b_formula: Do not support bag, list")
 
+let fixcalc_of_b_formula f=
+  DD.no_1 "fixcalc_of_b_formula" !CP.print_b_formula (fun s->s) (fun f-> fixcalc_of_b_formula f) f
+;;
+
 let rec fixcalc_of_pure_formula f = match f with
   | CP.BForm ((CP.BVar (x,_),_),_) -> fixcalc_of_spec_var x ^ op_gt ^ "0"
   | CP.BForm (b,_) -> fixcalc_of_b_formula b
   | CP.And (p1, p2, _) ->
     "" ^ fixcalc_of_pure_formula p1 ^ op_and ^ fixcalc_of_pure_formula p2 ^ "" (* baga/infer/btree.slk *)
-  | CP.AndList b -> 
+  | CP.AndList b ->
     (match b with 
      | [] -> fixcalc_of_pure_formula (CP.mkFalse no_pos) 
      | (_,x)::t -> fixcalc_of_pure_formula 
@@ -176,7 +180,7 @@ let rec fixcalc_of_pure_formula f = match f with
     )
   | CP.Or (p1, p2,_ , _) ->
     "(" ^ fixcalc_of_pure_formula p1 ^ op_or ^ fixcalc_of_pure_formula p2 ^ ")"
-  | CP.Not (p,_ , _) -> 
+  | CP.Not (p,_ , _) ->
     begin
       match p with
       | CP.BForm ((CP.BVar (x,_),_),_) -> fixcalc_of_spec_var x ^ op_lte ^ "0"
@@ -261,7 +265,7 @@ let rec fixcalc_of_h_formula f = match f with
   | Phase _ -> Error.report_no_pattern ()
 
 let fixcalc_of_mix_formula f = match f with
-  | MCP.MemoF _ -> ""
+  | MCP.MemoF _ -> "1=1"
   | MCP.OnePF pf -> fixcalc_of_pure_formula pf
 
 let rec fixcalc_of_formula e = match e with
@@ -273,6 +277,9 @@ let rec fixcalc_of_formula e = match e with
             formula_exists_pure = p} ->
     " exists (" ^ (string_of_elems svs fixcalc_of_spec_var ",") ^ ": " ^
     fixcalc_of_h_formula h ^ op_and ^ fixcalc_of_mix_formula p ^ ")"
+
+let fixcalc_of_formula e =
+  Debug.no_1 "fixcalc_of_formula" Cprinter.string_of_formula pr_id fixcalc_of_formula e
 
 (******************************************************************************)
 
