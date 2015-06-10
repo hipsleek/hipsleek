@@ -6,8 +6,8 @@ data cell{
 relation QQQ(ann v).
 
 int foo2(cell c)
-infer [@imm_pre]
-  requires c::cell<yyy>
+infer [@imm_post]
+  requires c::cell<yyy>@a
   ensures c::cell<wwww>;
 {
   int x = c.fst;
