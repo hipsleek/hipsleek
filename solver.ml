@@ -4748,10 +4748,11 @@ and heap_entail_split_rhs (prog : prog_decl) (is_folding : bool) (ctx_0 : contex
 
 and heap_entail_split_rhs_x (prog : prog_decl) (is_folding : bool) (ctx_0 : context) (conseq : formula) 
     (rhs_h_matched_set: CP.spec_var list) pos : (list_context * proof) =
-  let ctx_with_rhs = let h, p, vp, fl, t, a  = CF.split_components conseq in
-    let eqns = (MCP.ptr_equations_without_null p) in
+  let ctx_with_rhs = let h, pure_rhs, vp, fl, t, a  = CF.split_components conseq in
+    let eqns = (MCP.ptr_equations_without_null pure_rhs) in
+    let rhs_p = MCP.pure_of_mix pure_rhs in
     CF.set_context (fun es -> {es with es_rhs_eqset=(es.es_rhs_eqset@eqns);}) ctx_0 in
-  let helper ctx_00 h p (func : CF.h_formula -> MCP.mix_formula -> CF.formula) = 
+  let helper ctx_00 h pure_rhs (func : CF.h_formula -> MCP.mix_formula -> CF.formula) = 
     if not(Mem.check_mem_sat h prog.prog_view_decls) 
     then (match ctx_00 with
         | Ctx estate ->let msg = "Memory Spec Error Conseq Heap not Satisfiable" in 
@@ -4766,10 +4767,10 @@ and heap_entail_split_rhs_x (prog : prog_decl) (is_folding : bool) (ctx_0 : cont
       then x_add heap_entail_conjunct 12 prog is_folding ctx_00 conseq rhs_h_matched_set pos 
       else
       if(is_empty_heap h1) && not(Mem.contains_conj h2) then 
-        let new_conseq = func h2 p in
+        let new_conseq = func h2 pure_rhs in
         x_add heap_entail_conjunct 13 prog is_folding ctx_00 new_conseq rhs_h_matched_set pos
       else if (is_empty_heap h2) && not(Mem.contains_conj h1) then 
-        let new_conseq = func h1 p in
+        let new_conseq = func h1 pure_rhs in
         x_add heap_entail_conjunct 13 prog is_folding ctx_00 new_conseq rhs_h_matched_set pos
       else
       if(is_empty_heap h2) then (* D |- h1 = D1 /\ h2 = HEmp*)
@@ -4777,7 +4778,7 @@ and heap_entail_split_rhs_x (prog : prog_decl) (is_folding : bool) (ctx_0 : cont
         let after_h1_ctx, after_h1_prfs = heap_entail_split_lhs prog is_folding ctx_00 new_conseq rhs_h_matched_set pos in
         match after_h1_ctx with
         | FailCtx _ -> (after_h1_ctx,after_h1_prfs) 
-        | SuccCtx (cl) -> let entail_p = List.map (fun c -> one_ctx_entail prog is_folding c conseq func p pos) cl
+        | SuccCtx (cl) -> let entail_p = List.map (fun c -> one_ctx_entail prog is_folding c conseq func pure_rhs pos) cl
           in 
           let entail_p_ctx,entail_p_prf = List.split entail_p in
           let entail_p_prf = mkContextList cl (Cformula.struc_formula_of_formula conseq pos) entail_p_prf in
@@ -4793,7 +4794,7 @@ and heap_entail_split_rhs_x (prog : prog_decl) (is_folding : bool) (ctx_0 : cont
                              | HTrue -> (after_h1_ctx,after_h1_prfs)
                              | _ -> let res = (* h2 may contain nested conjs *)
                                       List.map 
-                                        (fun c -> heap_entail_split_rhs prog is_folding c (func h2 p) rhs_h_matched_set pos) cl
+                                        (fun c -> heap_entail_split_rhs prog is_folding c (func h2 pure_rhs) rhs_h_matched_set pos) cl
                                in
                                let res_ctx,res_prf = List.split res in
                                let res_prf = mkContextList cl (Cformula.struc_formula_of_formula conseq pos) res_prf in
@@ -6173,7 +6174,11 @@ and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0
         (* let () = x_tinfo_hp (add_str "svl" !CP.print_svl) svl no_pos in *)
         (* let eqns1 = List.fold_left (fun r (sv1, sv2) -> if not (CP.mem_svl sv1 svl) && CP.mem_svl sv2 svl then
            (r@[(sv2,sv1)]) else (r@[(sv1, sv2)])) [] eqns in *)
-        {es with es_rhs_eqset=(es.es_rhs_eqset@eqns);}) ctx_0
+        let rhs_p = MCP.pure_of_mix rhs_pure in
+        {es with es_rhs_eqset=(es.es_rhs_eqset@eqns);
+                 es_rhs_pure = Gen.map_opt_def (Some rhs_p) (fun x -> Some (CP.join_conjunctions [rhs_p;x])) es.es_rhs_pure
+        }
+      ) ctx_0
   in
   let helper ctx_00 h pure (func : CF.h_formula -> MCP.mix_formula -> CF.formula) =
     let () = x_tinfo_hp (add_str "heap(helper)" Cprinter.string_of_h_formula) h no_pos in
@@ -9799,6 +9804,10 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                              (Cprinter.string_of_h_formula r_node))) pos in
   let () = x_dinfo_zp (lazy ("do_match: source LHS: " ^ (Cprinter.string_of_entail_state estate))) pos in
   let () = x_dinfo_zp (lazy ("do_match: source RHS: " ^ (Cprinter.string_of_formula rhs))) pos in 
+  let () = x_ninfo_hp (add_str "es_aux_conseq" !CP.print_formula) estate.es_aux_conseq no_pos in
+  let () = x_ninfo_hp (add_str "es_rhs_pure" (pr_opt !CP.print_formula)) estate.es_rhs_pure no_pos in
+  let () = x_ninfo_hp (add_str "es_aux_pure_lemma" !CP.print_formula) estate.es_conseq_pure_lemma no_pos in
+  let () = x_ninfo_hp (add_str "es_aux_xpure_1" !MCP.print_mix_formula) estate.es_aux_xpure_1 no_pos in
   (* x_tinfo_hp (add_str "source LHS estate" (Cprinter.string_of_entail_state)) estate pos; *)
   (* x_tinfo_hp (add_str "source RHS rhs" (Cprinter.string_of_formula)) rhs pos; *)
   let l_ho_args, l_args, l_node_name, node_kind, l_perm, l_ann, l_param_ann = 
@@ -9875,16 +9884,17 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
   (* let () = print_string("--C: l_ann = " ^ (Cprinter.string_of_imm l_ann) ^ "\n") in *)
   (* check subtyping between lhs and rhs node ann, and collect info between ann vars and const vars *)
   let es_at_par = estate.es_infer_obj # is_par in
+  let rhs_for_imm_inst = map_opt_def rhs (fun x ->  add_pure_formula_to_formula x rhs) estate.es_rhs_pure in
   let (subtyp, add_to_lhs, add_to_rhs, add_to_rhs_ex) = 
     (* if ((\*not(!allow_field_ann) &&*\) (!allow_imm)) then *)
     (*   subtype_ann_gen es_impl_vars es_evars l_ann r_ann *)
     (* else (true, [], [],[])  (\*ignore node ann is field ann enable*\) in *)
     if not es_at_par then
-      x_add (subtype_ann_gen ~rhs:rhs ~lhs:estate.es_formula) es_impl_vars es_evars l_ann r_ann
+      x_add (subtype_ann_gen ~rhs:rhs_for_imm_inst ~lhs:estate.es_formula) es_impl_vars es_evars l_ann r_ann
     else
       match l_ann, r_ann with
       | CP.ConstAnn Mutable, CP.ConstAnn Lend -> (false, [], [], [])
-      | _ -> x_add (subtype_ann_gen ~rhs:rhs ~lhs:estate.es_formula) es_impl_vars es_evars l_ann r_ann
+      | _ -> x_add (subtype_ann_gen ~rhs:rhs_for_imm_inst ~lhs:estate.es_formula) es_impl_vars es_evars l_ann r_ann
   in
   x_tinfo_hp (add_str "add_to_lhs" (pr_list Cprinter.string_of_pure_formula)) add_to_lhs pos;
   x_tinfo_hp (add_str "add_to_rhs" (pr_list Cprinter.string_of_pure_formula)) add_to_rhs pos;
@@ -9892,7 +9902,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
   (* check imm subtyping between lhs and rhs node fields, and collect info between vars and consts - makes sense only for data nodes *)
   let (rl, param_ann_lhs, param_ann_rhs, param_ann_rhs_ex) = 
     if (!allow_field_ann) then 
-      subtype_ann_list ~rhs:rhs ~lhs:estate.es_formula es_impl_vars es_evars l_param_ann r_param_ann 
+      subtype_ann_list ~rhs:rhs_for_imm_inst ~lhs:estate.es_formula es_impl_vars es_evars l_param_ann r_param_ann 
     else (true, [], [], []) 
   in
   x_tinfo_hp (add_str "param_ann_lhs" (pr_list ( Cprinter.string_of_pure_formula))) param_ann_lhs pos;

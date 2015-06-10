@@ -2375,7 +2375,7 @@ let mk_imm_add emap imml immr1 immr2 =
 
   (* min guard  *)
   let guard_min = CP.mkPure (CP.mkEqMin  (CP.imm_to_exp imml no_pos)  (CP.imm_to_exp immr1 no_pos)  (CP.imm_to_exp immr2 no_pos) no_pos) in
-  let guard_lst = if (* not(!Globals.imm_add) *) true  then [guard] 
+  let guard_lst = if not(!Globals.imm_add) then [guard] 
     else [guard;guard_min] in
 
   (imml, guard_lst)

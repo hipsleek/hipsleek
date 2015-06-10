@@ -9243,7 +9243,7 @@ type entail_state = {
   es_subst :  (CP.spec_var list *  CP.spec_var list) (* from * to *); 
   (* for immutability ann: as opposed to other vars, related imm vars are not substituted during a match, but added to the pure as a formula *)
   es_exists_pure : CP.formula option;
-
+  es_rhs_pure : CP.formula option;      (* updated before doing a rhs split; used to guide ann instantiation *)
   es_aux_conseq : CP.formula;
   (* es_imm_pure_stk : MCP.mix_formula list; *)
   es_must_error : (string * fail_type * failure_cex) option;
@@ -9735,6 +9735,7 @@ let empty_es flowt grp_lbl pos =
     es_group_lbl = grp_lbl;
     es_term_err = None;
     es_conc_err = [];
+    es_rhs_pure = None;
     (*es_infer_invs = [];*)
   }
 
