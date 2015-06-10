@@ -1106,159 +1106,103 @@ let extend_proc (temp_procs : I.proc_decl list) (decl : I.proc_decl) : I.proc_de
     @param prog current program declaration
     @return new program declaration *)
 let infer_imm_ann (prog: I.prog_decl) : I.prog_decl =
-  let proc_decls = prog.prog_proc_decls in
   let fresh_pred loc = fresh_var_name rel_default_prefix_name loc.start_pos.Lexing.pos_lnum in
   let fresh loc = fresh_var_name imm_var_prefix loc.start_pos.Lexing.pos_lnum in
 
   (** Infer immutability annotation variables for one proc,
         return the resulting proc and required rel declaration *)
-  let infer_imm_ann_proc (proc: I.proc_decl) : (I.proc_decl * ((ident * primed) list) * ident option) =
+  let infer_imm_ann_proc (proc: I.proc_decl) : (I.proc_decl * I.rel_decl option * I.rel_decl option) =
     let open Iformula in
     let proc_loc = proc.proc_loc in
-    let use_mutable = ref false in
-    let assign_ann_or_var ann loc =
-      match ann with
-      | Ipure.NoAnn -> if !use_mutable then (Ipure.ConstAnn Mutable, [])
-                       else (let f = (fresh loc, Unprimed) in (PolyAnn (f, loc), [f]))
-      | ann -> (ann, [])
-    in
-    let rec ann_heap (h : h_formula) : (h_formula * (ident * primed) list) = match h with
-      | Phase hp ->
-         let (h1, lh1) = ann_heap hp.h_formula_phase_rd in
-         let (h2, lh2) = ann_heap hp.h_formula_phase_rw in
-         (Phase { hp with h_formula_phase_rd = h1; h_formula_phase_rw = h2 }, lh1@lh2)
-
-      | Conj hp ->
-         let (h1, lh1) = ann_heap hp.h_formula_conj_h1 in
-         let (h2, lh2) = ann_heap hp.h_formula_conj_h2 in
-         (Conj { hp with h_formula_conj_h1 = h1; h_formula_conj_h2 = h2 }, lh1@lh2)
-
-      | ConjStar hp ->
-         let (h1, lh1) = ann_heap hp.h_formula_conjstar_h1 in
-         let (h2, lh2) = ann_heap hp.h_formula_conjstar_h2 in
-         (ConjStar { hp with h_formula_conjstar_h1 = h1; h_formula_conjstar_h2 = h2 }, lh1@lh2)
-
-      | ConjConj hp ->
-         let (h1, lh1) = ann_heap hp.h_formula_conjconj_h1 in
-         let (h2, lh2) = ann_heap hp.h_formula_conjconj_h2 in
-         (ConjConj { hp with h_formula_conjconj_h1 = h1; h_formula_conjconj_h2 = h2 }, lh1@lh2)
-
-      | Star hp ->
-         let (h1, lh1) = ann_heap hp.h_formula_star_h1 in
-         let (h2, lh2) = ann_heap hp.h_formula_star_h2 in
-         (Star { hp with h_formula_star_h1 = h1; h_formula_star_h2 = h2 }, lh1@lh2)
-
-      | StarMinus hp ->
-         let (h1, lh1) = ann_heap hp.h_formula_starminus_h1 in
-         let (h2, lh2) = ann_heap hp.h_formula_starminus_h2 in
-         (StarMinus { hp with h_formula_starminus_h1 = h1; h_formula_starminus_h2 = h2 }, lh1@lh2)
-
+    let use_mutable = ref true in
+    let post_use_mutable = ref true in
+    let v_stack = new Gen.stack in
+    let pre_stack = new Gen.stack in
+    let inf_var_stack = new Gen.stack in
+    let pre_rel = ref None in
+    let post_rel = ref None in
+    let assign_ann_or_var ann loc = match ann with
+      | Ipure.NoAnn -> if !use_mutable then (Ipure.ConstAnn Mutable, None)
+                       else (let f = (fresh loc, Unprimed) in (PolyAnn (f, loc), Some f))
+      | Ipure.PolyAnn (f, loc) -> (ann, Some f)
+      | ann -> (ann, None) in
+    let ann_heap = function
       | HeapNode hp ->
          let loc = hp.h_formula_heap_pos in
-         let (h_imm, f) = assign_ann_or_var hp.h_formula_heap_imm loc in
-         (HeapNode { hp with h_formula_heap_imm = h_imm }, f)
+         let (h_imm, v) = assign_ann_or_var hp.h_formula_heap_imm loc in
+         let () = map_opt_def () (fun v -> v_stack # push v) v in
+         Some (HeapNode { hp with h_formula_heap_imm = h_imm })
       | HeapNode2 hp ->
          let loc = hp.h_formula_heap2_pos in
-         let (h_imm, f) = assign_ann_or_var hp.h_formula_heap2_imm loc in
-         (HeapNode2 { hp with h_formula_heap2_imm = h_imm }, f)
-      | ((ThreadNode _) | (HRel _) | HTrue | HFalse | HEmp | (HVar _)) as h -> (h, [])
+         let (h_imm, v) = assign_ann_or_var hp.h_formula_heap2_imm loc in
+         let () = map_opt_def () (fun v -> v_stack # push v) v in
+         Some (HeapNode2 { hp with h_formula_heap2_imm = h_imm })
+      | _ -> None
     in
-    let rec ann_formula (f: formula) : (formula * (ident * primed) list) =
-      match f with
-      | Base ff ->
-         let (h_f, xs) = ann_heap ff.formula_base_heap in
-         (Base { ff with formula_base_heap = h_f }, xs)
-      | Exists ff ->
-         let (h_f, xs) = ann_heap ff.formula_exists_heap in
-         (Exists { ff with formula_exists_heap = h_f }, xs)
-      | Or ff ->
-         let (h_f1, xs1) = ann_formula ff.formula_or_f1 in
-         let (h_f2, xs2) = ann_formula ff.formula_or_f2 in
-         (Or { ff with formula_or_f1 = h_f1; formula_or_f2 = h_f2 }, xs1@xs2)
+    let transform_formula relname rel_params formula loc =
+      let and_with_rel relname pure =
+        let open Ipure in
+        let args = List.map (fun i -> Var (i, loc)) rel_params in
+        Some (mkAnd pure (BForm ((RelForm (relname, args, loc), None), None)) loc) in
+      transform_formula (None, nonef, nonef, (nonef, nonef, (and_with_rel relname), nonef, nonef)) formula
     in
-    let rec ann_struc_formula (f: struc_formula) : (struc_formula * (ident * primed) list * ident option) =
-      match f with
-      | ECase ff ->
-         let bs = ff.formula_case_branches in
-         let helper (p,sf) (hacc, sacc) =
-           let (h, s, _) = ann_struc_formula sf in ((p,h)::hacc, s@sacc)
-         in
-         let (fs, il) = List.fold_right helper bs ([], []) in
-         (ECase { ff with formula_case_branches = fs }, il, None)
-      | EBase ff ->
-         let (sb, il) = ann_formula ff.formula_struc_base in
-         let cont = ff.formula_struc_continuation in
-         begin match cont with
-               | None -> (EBase { ff with formula_struc_base = sb }, il, None)
-               | Some sf ->
-                  let (sb2, il2, _) = ann_struc_formula sf in
-                  (EBase { ff with formula_struc_base = sb;
-                                   formula_struc_continuation = Some sb2 }, il@il2, None)
-         end
-      | EAssume ff ->
-         let (sb, il) = ann_formula ff.formula_assume_simpl in
-         let (sb2, il2, _) = ann_struc_formula ff.formula_assume_struc in
-         (EAssume { ff with formula_assume_simpl = sb;
-                            formula_assume_struc = sb2 }, il@il2, None)
+    let mk_rel rel_params loc =
+      let rn = fresh_pred loc in
+      match rel_params with
+      | [] -> None
+      | rel_params -> Some ({
+        I.rel_name = rn;
+        I.rel_typed_vars = List.map (fun (i,_) -> (AnnT, i)) rel_params;
+        I.rel_formula = Ipure.mkTrue no_pos
+      })
+    in
+    let ann_struc_formula_1 = function
       | EInfer ff ->
-         let (sb, il, rn, new_ff) = begin match ff.formula_inf_continuation with
-         | EBase ({ formula_struc_base = precondition;
-                    formula_struc_continuation = (Some postcondition);
-                    formula_struc_pos = loc } as br) ->
-            let old_use_mutable = !use_mutable in
-            (** When @imm_pre is set **)
-            let () = use_mutable := (not (ff.formula_inf_obj # is_pre_imm)) in
-            let (new_precondition, il) = ann_formula precondition in
-            let rn = if (not !use_mutable) then Some (fresh_pred loc) else None in
-            let new_inf_vars = map_opt_def ff.formula_inf_vars
-                                           (fun x -> (x, Unprimed)::ff.formula_inf_vars) rn in
-            let new_ff = { ff with formula_inf_vars = new_inf_vars } in
-            let and_with_rel relname pure =
-              let open Ipure in
-              let args = List.map (fun i -> Var (i, loc)) il in
-              Some (mkAnd pure (BForm ((RelForm (relname, args, loc), None), None)) loc) in
-            let same x = None in
-            let new_precondition =
-              match rn with
-              | None -> new_precondition
-              | Some relname -> transform_formula (None, same, same, (None, None,
-                                                    (and_with_rel relname), same, same)) new_precondition
-            in
-            (** When @imm_post is set **)
-            let () = use_mutable := (not (ff.formula_inf_obj # is_post_imm)) in
-            let (new_postcondition, il2, rn2) = ann_struc_formula postcondition in
-            let () = use_mutable := old_use_mutable in
-            (EBase { br with formula_struc_base = new_precondition;
-                    formula_struc_continuation = Some new_postcondition }, il, rn, new_ff)
-         | other -> (other, [], None, ff) end in
-         (EInfer { new_ff with formula_inf_continuation = sb }, il, rn)
-
-      | EList ff ->
-         let helper (sl, sf) (slacc, ilacc) =
-           let (sb, il, _) = ann_struc_formula sf in
-           ((sl, sb)::slacc, il@ilacc)
-         in
-         let (el, il) = List.fold_right helper ff ([], []) in
-         (EList el, il, None)
+         use_mutable := (not (ff.formula_inf_obj # is_pre_imm));
+         post_use_mutable := (not (ff.formula_inf_obj # is_post_imm));
+         None
+      | EAssume ff ->
+         pre_stack # push_list (v_stack # get_stk);
+         if !post_use_mutable then Some (EAssume ff) else None
+      | _ -> None
     in
-    let (pss, rvars, relname1) = ann_struc_formula proc.proc_static_specs in
-    ({ proc with proc_static_specs = pss }, rvars, relname1)
+    let ann_struc_formula_2 = function
+      | EInfer ff ->
+         begin match ff.formula_inf_continuation with
+         | EBase ({ formula_struc_base = precondition; formula_struc_pos = loc } as ebase) ->
+            if (not (pre_stack # is_empty)) then
+              let pre_rel = match !pre_rel with Some p -> p | None -> failwith "Not possible (infer_imm_ann_proc)" in
+              let rel_params = List.map (fun (_,i) -> (i, Unprimed)) pre_rel.I.rel_typed_vars in
+              let precondition_with_rel = transform_formula pre_rel.I.rel_name rel_params precondition loc in
+              let new_continuation = EBase { ebase with formula_struc_base = precondition_with_rel; } in
+              let post_rel = match !post_rel with
+                | Some p -> [(p.I.rel_name, Unprimed)]
+                | None -> [] in
+              let new_inf_vars = post_rel@((pre_rel.I.rel_name, Unprimed)::ff.formula_inf_vars) in
+              Some (EInfer { ff with formula_inf_continuation = new_continuation;
+                                     formula_inf_vars = new_inf_vars })
+            else None
+         | _ -> None
+         end
+      | EAssume ff -> None
+      | _ -> None
+    in
+    let transform_1 = (ann_struc_formula_1, nonef, ann_heap, (nonef, nonef, nonef, nonef, nonef)) in
+    let transform_2 = (ann_struc_formula_2, nonef, nonef, (nonef, nonef, nonef, nonef, nonef)) in
+    let pss =
+      let pss_1 = transform_struc_formula transform_1 proc.proc_static_specs in
+      pre_rel := mk_rel (pre_stack # get_stk) no_pos;
+      if (not !post_use_mutable) then post_rel := mk_rel (v_stack # get_stk) no_pos;
+      transform_struc_formula transform_2 pss_1 in
+    ({ proc with proc_static_specs = pss }, !pre_rel, !post_rel)
   in
   let (new_proc_decls, rel_list) =
     let helper proc (proc_decls, rel_list) =
-      let (new_proc, rel_params, new_rel) = infer_imm_ann_proc proc in
-      match new_rel with
-      | None -> (new_proc::proc_decls, rel_list)
-      | Some rel_name ->
-        let new_rel = {
-            I.rel_name = rel_name;
-            I.rel_typed_vars = List.map (fun (i,_) -> (AnnT, i)) rel_params;
-            I.rel_formula = Ipure.mkTrue no_pos
-        }
-        in (new_proc::proc_decls, new_rel::rel_list)
-    in
-    List.fold_right helper proc_decls ([], [])
-  in
+      let (proc_decl, pre_rel, post_rel) = infer_imm_ann_proc proc in
+      let rel_list_1 = map_opt_def rel_list (fun r -> r::rel_list) pre_rel in
+      let rel_list_2 = map_opt_def rel_list_1 (fun r -> r::rel_list) post_rel in
+      (proc_decl::proc_decls, rel_list_2) in
+    List.fold_right helper prog.prog_proc_decls ([], []) in
   prog.I.prog_rel_decls <- prog.I.prog_rel_decls @ rel_list;
   prog.I.prog_rel_ids <- prog.I.prog_rel_ids @
                            (List.map (fun x ->
