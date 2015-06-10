@@ -148,6 +148,7 @@ expect Valid.
  |-  emp.
 expect Valid.
 
+/*
 // id: 46; line: 23; kind: PRE
  checkentail x::avl{}<m,n> & x'!=null & x'=x
  |-  htrue.
@@ -157,6 +158,7 @@ expect Valid.
  checkentail x::avl{}<m,n> & x'!=null & x'=x
  |-  emp.
 expect Valid.
+*/
 
 // id: 48; line: 26; kind: BIND
  checkentail (exists n13,Anon8,p4,m9,n14,q4,m10,n15: x'::node<Anon8,n13,p4,q4> * 
