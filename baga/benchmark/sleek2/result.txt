@@ -1,11 +1,13 @@
-avl            817 SAT         64 UNSAT
-bubble         280 SAT         20 UNSAT
-complete       360 SAT         33 UNSAT
-dll            402 SAT         50 UNSAT
-ell            107 SAT         32 UNSAT
 ll             591 SAT         75 UNSAT
-qsort          196 SAT         29 UNSAT
-rb             1524 SAT        217 UNSAT
+ell            107 SAT         32 UNSAT
 sll            196 SAT         21 UNSAT
-tll            115 SAT         13 UNSAT
+dll            402 SAT         50 UNSAT
+complete       360 SAT         33 UNSAT
+
+avl            817 SAT         64 UNSAT
 trees          307 SAT         34 UNSAT
+rb             1524 SAT        217 UNSAT
+tll            115 SAT         13 UNSAT
+
+bubble         280 SAT         20 UNSAT
+qsort          196 SAT         29 UNSAT
