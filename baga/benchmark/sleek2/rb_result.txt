@@ -1,0 +1,5241 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Starting Omega.../usr/local/bin/oc
+
+CheckSat 1: SAT
+
+
+CheckSat 2: SAT
+
+
+CheckSat 3: SAT
+
+
+CheckSat 4: SAT
+
+
+CheckSat 5: SAT
+
+
+CheckSat 6: SAT
+
+
+CheckSat 7: SAT
+
+
+CheckSat 8: SAT
+
+
+CheckSat 9: SAT
+
+
+CheckSat 10: SAT
+
+
+CheckSat 11: SAT
+
+
+CheckSat 12: SAT
+
+
+CheckSat 13: SAT
+
+
+CheckSat 14: SAT
+
+
+CheckSat 15: SAT
+
+
+CheckSat 16: SAT
+
+
+CheckSat 17: SAT
+
+
+CheckSat 18: SAT
+
+
+CheckSat 19: SAT
+
+
+CheckSat 20: SAT
+
+
+CheckSat 21: SAT
+
+
+CheckSat 22: SAT
+
+
+CheckSat 23: SAT
+
+
+CheckSat 24: SAT
+
+
+CheckSat 25: UNSAT
+
+
+CheckSat 26: SAT
+
+
+CheckSat 27: SAT
+
+
+CheckSat 28: UNSAT
+
+
+CheckSat 29: SAT
+
+
+CheckSat 30: SAT
+
+
+CheckSat 31: UNSAT
+
+
+CheckSat 32: SAT
+
+
+CheckSat 33: SAT
+
+
+CheckSat 34: UNSAT
+
+
+CheckSat 35: UNSAT
+
+
+CheckSat 36: SAT
+
+
+CheckSat 37: UNSAT
+
+
+CheckSat 38: UNSAT
+
+
+CheckSat 39: SAT
+
+
+CheckSat 40: SAT
+
+
+CheckSat 41: SAT
+
+
+CheckSat 42: SAT
+
+
+CheckSat 43: SAT
+
+
+CheckSat 44: UNSAT
+
+
+CheckSat 45: UNSAT
+
+
+CheckSat 46: SAT
+
+
+CheckSat 47: UNSAT
+
+
+CheckSat 48: UNSAT
+
+
+CheckSat 49: SAT
+
+
+CheckSat 50: SAT
+
+
+CheckSat 51: SAT
+
+
+CheckSat 52: SAT
+
+
+CheckSat 53: UNSAT
+
+
+CheckSat 54: SAT
+
+
+CheckSat 55: UNSAT
+
+
+CheckSat 56: SAT
+
+
+CheckSat 57: UNSAT
+
+
+CheckSat 58: SAT
+
+
+CheckSat 59: SAT
+
+
+CheckSat 60: UNSAT
+
+
+CheckSat 61: SAT
+
+
+CheckSat 62: SAT
+
+
+CheckSat 63: SAT
+
+
+CheckSat 64: SAT
+
+
+CheckSat 65: SAT
+
+
+CheckSat 66: SAT
+
+
+CheckSat 67: UNSAT
+
+
+CheckSat 68: UNSAT
+
+
+CheckSat 69: SAT
+
+
+CheckSat 70: UNSAT
+
+
+CheckSat 71: SAT
+
+
+CheckSat 72: SAT
+
+
+CheckSat 73: SAT
+
+
+CheckSat 74: SAT
+
+
+CheckSat 75: SAT
+
+
+CheckSat 76: SAT
+
+
+CheckSat 77: UNSAT
+
+
+CheckSat 78: SAT
+
+
+CheckSat 79: SAT
+
+
+CheckSat 80: SAT
+
+
+CheckSat 81: SAT
+
+
+CheckSat 82: SAT
+
+
+CheckSat 83: SAT
+
+
+CheckSat 84: SAT
+
+
+CheckSat 85: SAT
+
+
+CheckSat 86: SAT
+
+
+CheckSat 87: SAT
+
+
+CheckSat 88: SAT
+
+
+CheckSat 89: SAT
+
+
+CheckSat 90: UNSAT
+
+
+CheckSat 91: SAT
+
+
+CheckSat 92: SAT
+
+
+CheckSat 93: UNSAT
+
+
+CheckSat 94: SAT
+
+
+CheckSat 95: SAT
+
+
+CheckSat 96: UNSAT
+
+
+CheckSat 97: SAT
+
+
+CheckSat 98: SAT
+
+
+CheckSat 99: UNSAT
+
+
+CheckSat 100: UNSAT
+
+
+CheckSat 101: SAT
+
+
+CheckSat 102: UNSAT
+
+
+CheckSat 103: UNSAT
+
+
+CheckSat 104: SAT
+
+
+CheckSat 105: SAT
+
+
+CheckSat 106: SAT
+
+
+CheckSat 107: SAT
+
+
+CheckSat 108: SAT
+
+
+CheckSat 109: UNSAT
+
+
+CheckSat 110: UNSAT
+
+
+CheckSat 111: SAT
+
+
+CheckSat 112: UNSAT
+
+
+CheckSat 113: UNSAT
+
+
+CheckSat 114: SAT
+
+
+CheckSat 115: SAT
+
+
+CheckSat 116: SAT
+
+
+CheckSat 117: SAT
+
+
+CheckSat 118: UNSAT
+
+
+CheckSat 119: SAT
+
+
+CheckSat 120: UNSAT
+
+
+CheckSat 121: SAT
+
+
+CheckSat 122: UNSAT
+
+
+CheckSat 123: SAT
+
+
+CheckSat 124: SAT
+
+
+CheckSat 125: UNSAT
+
+
+CheckSat 126: SAT
+
+
+CheckSat 127: SAT
+
+
+CheckSat 128: SAT
+
+
+CheckSat 129: SAT
+
+
+CheckSat 130: SAT
+
+
+CheckSat 131: SAT
+
+
+CheckSat 132: UNSAT
+
+
+CheckSat 133: UNSAT
+
+
+CheckSat 134: SAT
+
+
+CheckSat 135: UNSAT
+
+
+CheckSat 136: SAT
+
+
+CheckSat 137: SAT
+
+
+CheckSat 138: SAT
+
+
+CheckSat 139: SAT
+
+
+CheckSat 140: SAT
+
+
+CheckSat 141: SAT
+
+
+CheckSat 142: UNSAT
+
+
+CheckSat 143: SAT
+
+
+CheckSat 144: SAT
+
+
+CheckSat 145: SAT
+
+
+CheckSat 146: SAT
+
+
+CheckSat 147: SAT
+
+
+CheckSat 148: SAT
+
+
+CheckSat 149: SAT
+
+
+CheckSat 150: SAT
+
+
+CheckSat 151: SAT
+
+
+CheckSat 152: SAT
+
+
+CheckSat 153: SAT
+
+
+CheckSat 154: SAT
+
+
+CheckSat 155: UNSAT
+
+
+CheckSat 156: SAT
+
+
+CheckSat 157: UNSAT
+
+
+CheckSat 158: SAT
+
+
+CheckSat 159: SAT
+
+
+CheckSat 160: UNSAT
+
+
+CheckSat 161: SAT
+
+
+CheckSat 162: UNSAT
+
+
+CheckSat 163: SAT
+
+
+CheckSat 164: SAT
+
+
+CheckSat 165: SAT
+
+
+CheckSat 166: SAT
+
+
+CheckSat 167: SAT
+
+
+CheckSat 168: SAT
+
+
+CheckSat 169: SAT
+
+
+CheckSat 170: SAT
+
+
+CheckSat 171: SAT
+
+
+CheckSat 172: SAT
+
+
+CheckSat 173: SAT
+
+
+CheckSat 174: SAT
+
+
+CheckSat 175: SAT
+
+
+CheckSat 176: SAT
+
+
+CheckSat 177: SAT
+
+
+CheckSat 178: SAT
+
+
+CheckSat 179: UNSAT
+
+
+CheckSat 180: UNSAT
+
+
+CheckSat 181: SAT
+
+
+CheckSat 182: SAT
+
+
+CheckSat 183: UNSAT
+
+
+CheckSat 184: SAT
+
+
+CheckSat 185: SAT
+
+
+CheckSat 186: SAT
+
+
+CheckSat 187: SAT
+
+
+CheckSat 188: SAT
+
+
+CheckSat 189: SAT
+
+
+CheckSat 190: SAT
+
+
+CheckSat 191: SAT
+
+
+CheckSat 192: SAT
+
+
+CheckSat 193: SAT
+
+
+CheckSat 194: SAT
+
+
+CheckSat 195: SAT
+
+
+CheckSat 196: SAT
+
+
+CheckSat 197: SAT
+
+
+CheckSat 198: SAT
+
+
+CheckSat 199: SAT
+
+
+CheckSat 200: SAT
+
+
+CheckSat 201: SAT
+
+
+CheckSat 202: SAT
+
+
+CheckSat 203: SAT
+
+
+CheckSat 204: SAT
+
+
+CheckSat 205: SAT
+
+
+CheckSat 206: SAT
+
+
+CheckSat 207: SAT
+
+
+CheckSat 208: SAT
+
+
+CheckSat 209: SAT
+
+
+CheckSat 210: SAT
+
+
+CheckSat 211: SAT
+
+
+CheckSat 212: SAT
+
+
+CheckSat 213: SAT
+
+
+CheckSat 214: SAT
+
+
+CheckSat 215: SAT
+
+
+CheckSat 216: SAT
+
+
+CheckSat 217: SAT
+
+
+CheckSat 218: SAT
+
+
+CheckSat 219: SAT
+
+
+CheckSat 220: SAT
+
+
+CheckSat 221: SAT
+
+
+CheckSat 222: SAT
+
+
+CheckSat 223: SAT
+
+
+CheckSat 224: SAT
+
+
+CheckSat 225: SAT
+
+
+CheckSat 226: SAT
+
+
+CheckSat 227: SAT
+
+
+CheckSat 228: SAT
+
+
+CheckSat 229: SAT
+
+
+CheckSat 230: SAT
+
+
+CheckSat 231: SAT
+
+
+CheckSat 232: SAT
+
+
+CheckSat 233: SAT
+
+
+CheckSat 234: SAT
+
+
+CheckSat 235: SAT
+
+
+CheckSat 236: SAT
+
+
+CheckSat 237: SAT
+
+
+CheckSat 238: SAT
+
+
+CheckSat 239: SAT
+
+
+CheckSat 240: SAT
+
+
+CheckSat 241: SAT
+
+
+CheckSat 242: SAT
+
+
+CheckSat 243: SAT
+
+
+CheckSat 244: SAT
+
+
+CheckSat 245: SAT
+
+
+CheckSat 246: SAT
+
+
+CheckSat 247: SAT
+
+
+CheckSat 248: SAT
+
+
+CheckSat 249: SAT
+
+
+CheckSat 250: SAT
+
+
+CheckSat 251: SAT
+
+
+CheckSat 252: SAT
+
+
+CheckSat 253: SAT
+
+
+CheckSat 254: SAT
+
+
+CheckSat 255: SAT
+
+
+CheckSat 256: SAT
+
+
+CheckSat 257: SAT
+
+
+CheckSat 258: SAT
+
+
+CheckSat 259: SAT
+
+
+CheckSat 260: SAT
+
+
+CheckSat 261: SAT
+
+
+CheckSat 262: SAT
+
+
+CheckSat 263: SAT
+
+
+CheckSat 264: SAT
+
+
+CheckSat 265: SAT
+
+
+CheckSat 266: SAT
+
+
+CheckSat 267: SAT
+
+
+CheckSat 268: SAT
+
+
+CheckSat 269: SAT
+
+
+CheckSat 270: SAT
+
+
+CheckSat 271: SAT
+
+
+CheckSat 272: SAT
+
+
+CheckSat 273: SAT
+
+
+CheckSat 274: SAT
+
+
+CheckSat 275: SAT
+
+
+CheckSat 276: SAT
+
+
+CheckSat 277: SAT
+
+
+CheckSat 278: SAT
+
+
+CheckSat 279: SAT
+
+
+CheckSat 280: SAT
+
+
+CheckSat 281: SAT
+
+
+CheckSat 282: SAT
+
+
+CheckSat 283: SAT
+
+
+CheckSat 284: SAT
+
+
+CheckSat 285: SAT
+
+
+CheckSat 286: SAT
+
+
+CheckSat 287: SAT
+
+
+CheckSat 288: SAT
+
+
+CheckSat 289: SAT
+
+
+CheckSat 290: SAT
+
+
+CheckSat 291: SAT
+
+
+CheckSat 292: SAT
+
+
+CheckSat 293: SAT
+
+
+CheckSat 294: SAT
+
+
+CheckSat 295: SAT
+
+
+CheckSat 296: SAT
+
+
+CheckSat 297: SAT
+
+
+CheckSat 298: SAT
+
+
+CheckSat 299: SAT
+
+
+CheckSat 300: SAT
+
+
+CheckSat 301: SAT
+
+
+CheckSat 302: SAT
+
+
+CheckSat 303: SAT
+
+
+CheckSat 304: SAT
+
+
+CheckSat 305: SAT
+
+
+CheckSat 306: SAT
+
+
+CheckSat 307: SAT
+
+
+CheckSat 308: SAT
+
+
+CheckSat 309: SAT
+
+
+CheckSat 310: SAT
+
+
+CheckSat 311: SAT
+
+
+CheckSat 312: SAT
+
+
+CheckSat 313: SAT
+
+
+CheckSat 314: SAT
+
+
+CheckSat 315: SAT
+
+
+CheckSat 316: SAT
+
+
+CheckSat 317: SAT
+
+
+CheckSat 318: SAT
+
+
+CheckSat 319: SAT
+
+
+CheckSat 320: SAT
+
+
+CheckSat 321: SAT
+
+
+CheckSat 322: SAT
+
+
+CheckSat 323: SAT
+
+
+CheckSat 324: SAT
+
+
+CheckSat 325: SAT
+
+
+CheckSat 326: SAT
+
+
+CheckSat 327: SAT
+
+
+CheckSat 328: SAT
+
+
+CheckSat 329: SAT
+
+
+CheckSat 330: SAT
+
+
+CheckSat 331: SAT
+
+
+CheckSat 332: SAT
+
+
+CheckSat 333: SAT
+
+
+CheckSat 334: SAT
+
+
+CheckSat 335: SAT
+
+
+CheckSat 336: SAT
+
+
+CheckSat 337: SAT
+
+
+CheckSat 338: SAT
+
+
+CheckSat 339: SAT
+
+
+CheckSat 340: SAT
+
+
+CheckSat 341: SAT
+
+
+CheckSat 342: SAT
+
+
+CheckSat 343: SAT
+
+
+CheckSat 344: SAT
+
+
+CheckSat 345: SAT
+
+
+CheckSat 346: SAT
+
+
+CheckSat 347: SAT
+
+
+CheckSat 348: SAT
+
+
+CheckSat 349: SAT
+
+
+CheckSat 350: SAT
+
+
+CheckSat 351: SAT
+
+
+CheckSat 352: SAT
+
+
+CheckSat 353: SAT
+
+
+CheckSat 354: SAT
+
+
+CheckSat 355: SAT
+
+
+CheckSat 356: SAT
+
+
+CheckSat 357: SAT
+
+
+CheckSat 358: SAT
+
+
+CheckSat 359: SAT
+
+
+CheckSat 360: SAT
+
+
+CheckSat 361: SAT
+
+
+CheckSat 362: SAT
+
+
+CheckSat 363: SAT
+
+
+CheckSat 364: SAT
+
+
+CheckSat 365: SAT
+
+
+CheckSat 366: SAT
+
+
+CheckSat 367: SAT
+
+
+CheckSat 368: SAT
+
+
+CheckSat 369: SAT
+
+
+CheckSat 370: SAT
+
+
+CheckSat 371: SAT
+
+
+CheckSat 372: SAT
+
+
+CheckSat 373: SAT
+
+
+CheckSat 374: SAT
+
+
+CheckSat 375: SAT
+
+
+CheckSat 376: SAT
+
+
+CheckSat 377: SAT
+
+
+CheckSat 378: SAT
+
+
+CheckSat 379: SAT
+
+
+CheckSat 380: SAT
+
+
+CheckSat 381: SAT
+
+
+CheckSat 382: SAT
+
+
+CheckSat 383: SAT
+
+
+CheckSat 384: SAT
+
+
+CheckSat 385: SAT
+
+
+CheckSat 386: SAT
+
+
+CheckSat 387: SAT
+
+
+CheckSat 388: SAT
+
+
+CheckSat 389: SAT
+
+
+CheckSat 390: SAT
+
+
+CheckSat 391: SAT
+
+
+CheckSat 392: SAT
+
+
+CheckSat 393: SAT
+
+
+CheckSat 394: UNSAT
+
+
+CheckSat 395: UNSAT
+
+
+CheckSat 396: UNSAT
+
+
+CheckSat 397: UNSAT
+
+
+CheckSat 398: UNSAT
+
+
+CheckSat 399: UNSAT
+
+
+CheckSat 400: UNSAT
+
+
+CheckSat 401: UNSAT
+
+
+CheckSat 402: UNSAT
+
+
+CheckSat 403: UNSAT
+
+
+CheckSat 404: UNSAT
+
+
+CheckSat 405: UNSAT
+
+
+CheckSat 406: UNSAT
+
+
+CheckSat 407: UNSAT
+
+
+CheckSat 408: UNSAT
+
+
+CheckSat 409: SAT
+
+
+CheckSat 410: SAT
+
+
+CheckSat 411: UNSAT
+
+
+CheckSat 412: SAT
+
+
+CheckSat 413: SAT
+
+
+CheckSat 414: UNSAT
+
+
+CheckSat 415: SAT
+
+
+CheckSat 416: SAT
+
+
+CheckSat 417: UNSAT
+
+
+CheckSat 418: SAT
+
+
+CheckSat 419: SAT
+
+
+CheckSat 420: UNSAT
+
+
+CheckSat 421: SAT
+
+
+CheckSat 422: SAT
+
+
+CheckSat 423: SAT
+
+
+CheckSat 424: SAT
+
+
+CheckSat 425: SAT
+
+
+CheckSat 426: SAT
+
+
+CheckSat 427: SAT
+
+
+CheckSat 428: SAT
+
+
+CheckSat 429: SAT
+
+
+CheckSat 430: SAT
+
+
+CheckSat 431: SAT
+
+
+CheckSat 432: SAT
+
+
+CheckSat 433: UNSAT
+
+
+CheckSat 434: SAT
+
+
+CheckSat 435: SAT
+
+
+CheckSat 436: SAT
+
+
+CheckSat 437: SAT
+
+
+CheckSat 438: SAT
+
+
+CheckSat 439: SAT
+
+
+CheckSat 440: UNSAT
+
+
+CheckSat 441: UNSAT
+
+
+CheckSat 442: UNSAT
+
+
+CheckSat 443: UNSAT
+
+
+CheckSat 444: UNSAT
+
+
+CheckSat 445: UNSAT
+
+
+CheckSat 446: UNSAT
+
+
+CheckSat 447: UNSAT
+
+
+CheckSat 448: UNSAT
+
+
+CheckSat 449: UNSAT
+
+
+CheckSat 450: UNSAT
+
+
+CheckSat 451: UNSAT
+
+
+CheckSat 452: UNSAT
+
+
+CheckSat 453: UNSAT
+
+
+CheckSat 454: UNSAT
+
+
+CheckSat 455: SAT
+
+
+CheckSat 456: SAT
+
+
+CheckSat 457: UNSAT
+
+
+CheckSat 458: SAT
+
+
+CheckSat 459: SAT
+
+
+CheckSat 460: UNSAT
+
+
+CheckSat 461: SAT
+
+
+CheckSat 462: SAT
+
+
+CheckSat 463: UNSAT
+
+
+CheckSat 464: SAT
+
+
+CheckSat 465: SAT
+
+
+CheckSat 466: UNSAT
+
+
+CheckSat 467: SAT
+
+
+CheckSat 468: SAT
+
+
+CheckSat 469: SAT
+
+
+CheckSat 470: SAT
+
+
+CheckSat 471: SAT
+
+
+CheckSat 472: SAT
+
+
+CheckSat 473: SAT
+
+
+CheckSat 474: SAT
+
+
+CheckSat 475: SAT
+
+
+CheckSat 476: SAT
+
+
+CheckSat 477: SAT
+
+
+CheckSat 478: SAT
+
+
+CheckSat 479: UNSAT
+
+
+CheckSat 480: SAT
+
+
+CheckSat 481: SAT
+
+
+CheckSat 482: SAT
+
+
+CheckSat 483: SAT
+
+
+CheckSat 484: SAT
+
+
+CheckSat 485: SAT
+
+
+CheckSat 486: UNSAT
+
+
+CheckSat 487: SAT
+
+
+CheckSat 488: UNSAT
+
+
+CheckSat 489: SAT
+
+
+CheckSat 490: SAT
+
+
+CheckSat 491: UNSAT
+
+
+CheckSat 492: SAT
+
+
+CheckSat 493: UNSAT
+
+
+CheckSat 494: SAT
+
+
+CheckSat 495: SAT
+
+
+CheckSat 496: SAT
+
+
+CheckSat 497: SAT
+
+
+CheckSat 498: SAT
+
+
+CheckSat 499: SAT
+
+
+CheckSat 500: SAT
+
+
+CheckSat 501: SAT
+
+
+CheckSat 502: SAT
+
+
+CheckSat 503: SAT
+
+
+CheckSat 504: SAT
+
+
+CheckSat 505: SAT
+
+
+CheckSat 506: SAT
+
+
+CheckSat 507: SAT
+
+
+CheckSat 508: UNSAT
+
+
+CheckSat 509: UNSAT
+
+
+CheckSat 510: UNSAT
+
+
+CheckSat 511: UNSAT
+
+
+CheckSat 512: UNSAT
+
+
+CheckSat 513: UNSAT
+
+
+CheckSat 514: UNSAT
+
+
+CheckSat 515: UNSAT
+
+
+CheckSat 516: UNSAT
+
+
+CheckSat 517: UNSAT
+
+
+CheckSat 518: UNSAT
+
+
+CheckSat 519: UNSAT
+
+
+CheckSat 520: UNSAT
+
+
+CheckSat 521: UNSAT
+
+
+CheckSat 522: UNSAT
+
+
+CheckSat 523: SAT
+
+
+CheckSat 524: SAT
+
+
+CheckSat 525: UNSAT
+
+
+CheckSat 526: SAT
+
+
+CheckSat 527: SAT
+
+
+CheckSat 528: UNSAT
+
+
+CheckSat 529: SAT
+
+
+CheckSat 530: SAT
+
+
+CheckSat 531: SAT
+
+
+CheckSat 532: SAT
+
+
+CheckSat 533: SAT
+
+
+CheckSat 534: SAT
+
+
+CheckSat 535: SAT
+
+
+CheckSat 536: SAT
+
+
+CheckSat 537: SAT
+
+
+CheckSat 538: UNSAT
+
+
+CheckSat 539: SAT
+
+
+CheckSat 540: SAT
+
+
+CheckSat 541: SAT
+
+
+CheckSat 542: SAT
+
+
+CheckSat 543: SAT
+
+
+CheckSat 544: SAT
+
+
+CheckSat 545: SAT
+
+
+CheckSat 546: SAT
+
+
+CheckSat 547: UNSAT
+
+
+CheckSat 548: UNSAT
+
+
+CheckSat 549: UNSAT
+
+
+CheckSat 550: UNSAT
+
+
+CheckSat 551: UNSAT
+
+
+CheckSat 552: UNSAT
+
+
+CheckSat 553: UNSAT
+
+
+CheckSat 554: UNSAT
+
+
+CheckSat 555: SAT
+
+
+CheckSat 556: SAT
+
+
+CheckSat 557: SAT
+
+
+CheckSat 558: UNSAT
+
+
+CheckSat 559: SAT
+
+
+CheckSat 560: UNSAT
+
+
+CheckSat 561: SAT
+
+
+CheckSat 562: SAT
+
+
+CheckSat 563: UNSAT
+
+
+CheckSat 564: SAT
+
+
+CheckSat 565: UNSAT
+
+
+CheckSat 566: SAT
+
+
+CheckSat 567: UNSAT
+
+
+CheckSat 568: SAT
+
+
+CheckSat 569: SAT
+
+
+CheckSat 570: SAT
+
+
+CheckSat 571: SAT
+
+
+CheckSat 572: UNSAT
+
+
+CheckSat 573: SAT
+
+
+CheckSat 574: SAT
+
+
+CheckSat 575: SAT
+
+
+CheckSat 576: SAT
+
+
+CheckSat 577: SAT
+
+
+CheckSat 578: SAT
+
+
+CheckSat 579: SAT
+
+
+CheckSat 580: SAT
+
+
+CheckSat 581: SAT
+
+
+CheckSat 582: UNSAT
+
+
+CheckSat 583: SAT
+
+
+CheckSat 584: UNSAT
+
+
+CheckSat 585: SAT
+
+
+CheckSat 586: SAT
+
+
+CheckSat 587: UNSAT
+
+
+CheckSat 588: SAT
+
+
+CheckSat 589: UNSAT
+
+
+CheckSat 590: SAT
+
+
+CheckSat 591: SAT
+
+
+CheckSat 592: SAT
+
+
+CheckSat 593: SAT
+
+
+CheckSat 594: SAT
+
+
+CheckSat 595: SAT
+
+
+CheckSat 596: SAT
+
+
+CheckSat 597: SAT
+
+
+CheckSat 598: SAT
+
+
+CheckSat 599: SAT
+
+
+CheckSat 600: SAT
+
+
+CheckSat 601: SAT
+
+
+CheckSat 602: SAT
+
+
+CheckSat 603: SAT
+
+
+CheckSat 604: SAT
+
+
+CheckSat 605: SAT
+
+
+CheckSat 606: SAT
+
+
+CheckSat 607: SAT
+
+
+CheckSat 608: UNSAT
+
+
+CheckSat 609: SAT
+
+
+CheckSat 610: UNSAT
+
+
+CheckSat 611: SAT
+
+
+CheckSat 612: SAT
+
+
+CheckSat 613: UNSAT
+
+
+CheckSat 614: SAT
+
+
+CheckSat 615: UNSAT
+
+
+CheckSat 616: SAT
+
+
+CheckSat 617: SAT
+
+
+CheckSat 618: SAT
+
+
+CheckSat 619: SAT
+
+
+CheckSat 620: SAT
+
+
+CheckSat 621: SAT
+
+
+CheckSat 622: SAT
+
+
+CheckSat 623: SAT
+
+
+CheckSat 624: SAT
+
+
+CheckSat 625: SAT
+
+
+CheckSat 626: SAT
+
+
+CheckSat 627: SAT
+
+
+CheckSat 628: SAT
+
+
+CheckSat 629: SAT
+
+
+CheckSat 630: SAT
+
+
+CheckSat 631: SAT
+
+
+CheckSat 632: UNSAT
+
+
+CheckSat 633: SAT
+
+
+CheckSat 634: UNSAT
+
+
+CheckSat 635: UNSAT
+
+
+CheckSat 636: SAT
+
+
+CheckSat 637: SAT
+
+
+CheckSat 638: SAT
+
+
+CheckSat 639: SAT
+
+
+CheckSat 640: SAT
+
+
+CheckSat 641: SAT
+
+
+CheckSat 642: SAT
+
+
+CheckSat 643: SAT
+
+
+CheckSat 644: SAT
+
+
+CheckSat 645: SAT
+
+
+CheckSat 646: SAT
+
+
+CheckSat 647: SAT
+
+
+CheckSat 648: SAT
+
+
+CheckSat 649: SAT
+
+
+CheckSat 650: SAT
+
+
+CheckSat 651: SAT
+
+
+CheckSat 652: SAT
+
+
+CheckSat 653: SAT
+
+
+CheckSat 654: SAT
+
+
+CheckSat 655: SAT
+
+
+CheckSat 656: SAT
+
+
+CheckSat 657: SAT
+
+
+CheckSat 658: SAT
+
+
+CheckSat 659: SAT
+
+
+CheckSat 660: SAT
+
+
+CheckSat 661: SAT
+
+
+CheckSat 662: SAT
+
+
+CheckSat 663: SAT
+
+
+CheckSat 664: SAT
+
+
+CheckSat 665: SAT
+
+
+CheckSat 666: SAT
+
+
+CheckSat 667: SAT
+
+
+CheckSat 668: SAT
+
+
+CheckSat 669: SAT
+
+
+CheckSat 670: SAT
+
+
+CheckSat 671: SAT
+
+
+CheckSat 672: SAT
+
+
+CheckSat 673: SAT
+
+
+CheckSat 674: SAT
+
+
+CheckSat 675: SAT
+
+
+CheckSat 676: SAT
+
+
+CheckSat 677: SAT
+
+
+CheckSat 678: SAT
+
+
+CheckSat 679: SAT
+
+
+CheckSat 680: SAT
+
+
+CheckSat 681: SAT
+
+
+CheckSat 682: SAT
+
+
+CheckSat 683: SAT
+
+
+CheckSat 684: SAT
+
+
+CheckSat 685: SAT
+
+
+CheckSat 686: SAT
+
+
+CheckSat 687: SAT
+
+
+CheckSat 688: SAT
+
+
+CheckSat 689: SAT
+
+
+CheckSat 690: SAT
+
+
+CheckSat 691: SAT
+
+
+CheckSat 692: SAT
+
+
+CheckSat 693: SAT
+
+
+CheckSat 694: SAT
+
+
+CheckSat 695: SAT
+
+
+CheckSat 696: SAT
+
+
+CheckSat 697: SAT
+
+
+CheckSat 698: SAT
+
+
+CheckSat 699: SAT
+
+
+CheckSat 700: SAT
+
+
+CheckSat 701: SAT
+
+
+CheckSat 702: SAT
+
+
+CheckSat 703: SAT
+
+
+CheckSat 704: SAT
+
+
+CheckSat 705: SAT
+
+
+CheckSat 706: SAT
+
+
+CheckSat 707: SAT
+
+
+CheckSat 708: SAT
+
+
+CheckSat 709: SAT
+
+
+CheckSat 710: SAT
+
+
+CheckSat 711: SAT
+
+
+CheckSat 712: SAT
+
+
+CheckSat 713: SAT
+
+
+CheckSat 714: SAT
+
+
+CheckSat 715: SAT
+
+
+CheckSat 716: SAT
+
+
+CheckSat 717: SAT
+
+
+CheckSat 718: SAT
+
+
+CheckSat 719: SAT
+
+
+CheckSat 720: SAT
+
+
+CheckSat 721: SAT
+
+
+CheckSat 722: SAT
+
+
+CheckSat 723: SAT
+
+
+CheckSat 724: SAT
+
+
+CheckSat 725: SAT
+
+
+CheckSat 726: SAT
+
+
+CheckSat 727: SAT
+
+
+CheckSat 728: SAT
+
+
+CheckSat 729: SAT
+
+
+CheckSat 730: SAT
+
+
+CheckSat 731: SAT
+
+
+CheckSat 732: SAT
+
+
+CheckSat 733: SAT
+
+
+CheckSat 734: SAT
+
+
+CheckSat 735: SAT
+
+
+CheckSat 736: SAT
+
+
+CheckSat 737: SAT
+
+
+CheckSat 738: SAT
+
+
+CheckSat 739: SAT
+
+
+CheckSat 740: SAT
+
+
+CheckSat 741: SAT
+
+
+CheckSat 742: SAT
+
+
+CheckSat 743: SAT
+
+
+CheckSat 744: SAT
+
+
+CheckSat 745: SAT
+
+
+CheckSat 746: SAT
+
+
+CheckSat 747: SAT
+
+
+CheckSat 748: SAT
+
+
+CheckSat 749: SAT
+
+
+CheckSat 750: SAT
+
+
+CheckSat 751: SAT
+
+
+CheckSat 752: SAT
+
+
+CheckSat 753: SAT
+
+
+CheckSat 754: SAT
+
+
+CheckSat 755: SAT
+
+
+CheckSat 756: SAT
+
+
+CheckSat 757: SAT
+
+
+CheckSat 758: SAT
+
+
+CheckSat 759: SAT
+
+
+CheckSat 760: SAT
+
+
+CheckSat 761: SAT
+
+
+CheckSat 762: SAT
+
+
+CheckSat 763: SAT
+
+
+CheckSat 764: SAT
+
+
+CheckSat 765: SAT
+
+
+CheckSat 766: SAT
+
+
+CheckSat 767: SAT
+
+
+CheckSat 768: SAT
+
+
+CheckSat 769: SAT
+
+
+CheckSat 770: SAT
+
+
+CheckSat 771: SAT
+
+
+CheckSat 772: SAT
+
+
+CheckSat 773: UNSAT
+
+
+CheckSat 774: UNSAT
+
+
+CheckSat 775: UNSAT
+
+
+CheckSat 776: UNSAT
+
+
+CheckSat 777: UNSAT
+
+
+CheckSat 778: UNSAT
+
+
+CheckSat 779: UNSAT
+
+
+CheckSat 780: UNSAT
+
+
+CheckSat 781: UNSAT
+
+
+CheckSat 782: UNSAT
+
+
+CheckSat 783: UNSAT
+
+
+CheckSat 784: UNSAT
+
+
+CheckSat 785: UNSAT
+
+
+CheckSat 786: UNSAT
+
+
+CheckSat 787: UNSAT
+
+
+CheckSat 788: SAT
+
+
+CheckSat 789: SAT
+
+
+CheckSat 790: UNSAT
+
+
+CheckSat 791: SAT
+
+
+CheckSat 792: SAT
+
+
+CheckSat 793: UNSAT
+
+
+CheckSat 794: SAT
+
+
+CheckSat 795: SAT
+
+
+CheckSat 796: SAT
+
+
+CheckSat 797: SAT
+
+
+CheckSat 798: SAT
+
+
+CheckSat 799: SAT
+
+
+CheckSat 800: SAT
+
+
+CheckSat 801: SAT
+
+
+CheckSat 802: SAT
+
+
+CheckSat 803: UNSAT
+
+
+CheckSat 804: SAT
+
+
+CheckSat 805: SAT
+
+
+CheckSat 806: SAT
+
+
+CheckSat 807: SAT
+
+
+CheckSat 808: SAT
+
+
+CheckSat 809: SAT
+
+
+CheckSat 810: SAT
+
+
+CheckSat 811: SAT
+
+
+CheckSat 812: UNSAT
+
+
+CheckSat 813: UNSAT
+
+
+CheckSat 814: UNSAT
+
+
+CheckSat 815: UNSAT
+
+
+CheckSat 816: UNSAT
+
+
+CheckSat 817: UNSAT
+
+
+CheckSat 818: UNSAT
+
+
+CheckSat 819: UNSAT
+
+
+CheckSat 820: SAT
+
+
+CheckSat 821: SAT
+
+
+CheckSat 822: SAT
+
+
+CheckSat 823: UNSAT
+
+
+CheckSat 824: SAT
+
+
+CheckSat 825: UNSAT
+
+
+CheckSat 826: SAT
+
+
+CheckSat 827: SAT
+
+
+CheckSat 828: UNSAT
+
+
+CheckSat 829: SAT
+
+
+CheckSat 830: UNSAT
+
+
+CheckSat 831: SAT
+
+
+CheckSat 832: UNSAT
+
+
+CheckSat 833: SAT
+
+
+CheckSat 834: SAT
+
+
+CheckSat 835: SAT
+
+
+CheckSat 836: SAT
+
+
+CheckSat 837: UNSAT
+
+
+CheckSat 838: SAT
+
+
+CheckSat 839: SAT
+
+
+CheckSat 840: SAT
+
+
+CheckSat 841: SAT
+
+
+CheckSat 842: SAT
+
+
+CheckSat 843: SAT
+
+
+CheckSat 844: SAT
+
+
+CheckSat 845: SAT
+
+
+CheckSat 846: SAT
+
+
+CheckSat 847: SAT
+
+
+CheckSat 848: SAT
+
+
+CheckSat 849: UNSAT
+
+
+CheckSat 850: SAT
+
+
+CheckSat 851: UNSAT
+
+
+CheckSat 852: SAT
+
+
+CheckSat 853: SAT
+
+
+CheckSat 854: UNSAT
+
+
+CheckSat 855: SAT
+
+
+CheckSat 856: UNSAT
+
+
+CheckSat 857: SAT
+
+
+CheckSat 858: SAT
+
+
+CheckSat 859: SAT
+
+
+CheckSat 860: SAT
+
+
+CheckSat 861: SAT
+
+
+CheckSat 862: SAT
+
+
+CheckSat 863: SAT
+
+
+CheckSat 864: SAT
+
+
+CheckSat 865: SAT
+
+
+CheckSat 866: SAT
+
+
+CheckSat 867: SAT
+
+
+CheckSat 868: SAT
+
+
+CheckSat 869: SAT
+
+
+CheckSat 870: SAT
+
+
+CheckSat 871: SAT
+
+
+CheckSat 872: SAT
+
+
+CheckSat 873: SAT
+
+
+CheckSat 874: SAT
+
+
+CheckSat 875: SAT
+
+
+CheckSat 876: SAT
+
+
+CheckSat 877: UNSAT
+
+
+CheckSat 878: SAT
+
+
+CheckSat 879: SAT
+
+
+CheckSat 880: SAT
+
+
+CheckSat 881: SAT
+
+
+CheckSat 882: SAT
+
+
+CheckSat 883: SAT
+
+
+CheckSat 884: SAT
+
+
+CheckSat 885: SAT
+
+
+CheckSat 886: SAT
+
+
+CheckSat 887: SAT
+
+
+CheckSat 888: SAT
+
+
+CheckSat 889: SAT
+
+
+CheckSat 890: SAT
+
+
+CheckSat 891: SAT
+
+
+CheckSat 892: SAT
+
+
+CheckSat 893: SAT
+
+
+CheckSat 894: SAT
+
+
+CheckSat 895: SAT
+
+
+CheckSat 896: SAT
+
+
+CheckSat 897: SAT
+
+
+CheckSat 898: SAT
+
+
+CheckSat 899: SAT
+
+
+CheckSat 900: SAT
+
+
+CheckSat 901: SAT
+
+
+CheckSat 902: SAT
+
+
+CheckSat 903: SAT
+
+
+CheckSat 904: SAT
+
+
+CheckSat 905: SAT
+
+
+CheckSat 906: SAT
+
+
+CheckSat 907: SAT
+
+
+CheckSat 908: SAT
+
+
+CheckSat 909: SAT
+
+
+CheckSat 910: UNSAT
+
+
+CheckSat 911: UNSAT
+
+
+CheckSat 912: SAT
+
+
+CheckSat 913: UNSAT
+
+
+CheckSat 914: SAT
+
+
+CheckSat 915: SAT
+
+
+CheckSat 916: SAT
+
+
+CheckSat 917: SAT
+
+
+CheckSat 918: SAT
+
+
+CheckSat 919: SAT
+
+
+CheckSat 920: UNSAT
+
+
+CheckSat 921: SAT
+
+
+CheckSat 922: SAT
+
+
+CheckSat 923: SAT
+
+
+CheckSat 924: SAT
+
+
+CheckSat 925: UNSAT
+
+
+CheckSat 926: UNSAT
+
+
+CheckSat 927: SAT
+
+
+CheckSat 928: SAT
+
+
+CheckSat 929: UNSAT
+
+
+CheckSat 930: SAT
+
+
+CheckSat 931: SAT
+
+
+CheckSat 932: SAT
+
+
+CheckSat 933: SAT
+
+
+CheckSat 934: SAT
+
+
+CheckSat 935: SAT
+
+
+CheckSat 936: SAT
+
+
+CheckSat 937: SAT
+
+
+CheckSat 938: SAT
+
+
+CheckSat 939: SAT
+
+
+CheckSat 940: SAT
+
+
+CheckSat 941: SAT
+
+
+CheckSat 942: SAT
+
+
+CheckSat 943: SAT
+
+
+CheckSat 944: SAT
+
+
+CheckSat 945: SAT
+
+
+CheckSat 946: SAT
+
+
+CheckSat 947: SAT
+
+
+CheckSat 948: SAT
+
+
+CheckSat 949: SAT
+
+
+CheckSat 950: SAT
+
+
+CheckSat 951: SAT
+
+
+CheckSat 952: SAT
+
+
+CheckSat 953: SAT
+
+
+CheckSat 954: SAT
+
+
+CheckSat 955: SAT
+
+
+CheckSat 956: SAT
+
+
+CheckSat 957: SAT
+
+
+CheckSat 958: SAT
+
+
+CheckSat 959: SAT
+
+
+CheckSat 960: SAT
+
+
+CheckSat 961: SAT
+
+
+CheckSat 962: SAT
+
+
+CheckSat 963: SAT
+
+
+CheckSat 964: SAT
+
+
+CheckSat 965: SAT
+
+
+CheckSat 966: SAT
+
+
+CheckSat 967: SAT
+
+
+CheckSat 968: SAT
+
+
+CheckSat 969: SAT
+
+
+CheckSat 970: SAT
+
+
+CheckSat 971: SAT
+
+
+CheckSat 972: SAT
+
+
+CheckSat 973: SAT
+
+
+CheckSat 974: SAT
+
+
+CheckSat 975: SAT
+
+
+CheckSat 976: SAT
+
+
+CheckSat 977: SAT
+
+
+CheckSat 978: SAT
+
+
+CheckSat 979: SAT
+
+
+CheckSat 980: SAT
+
+
+CheckSat 981: SAT
+
+
+CheckSat 982: SAT
+
+
+CheckSat 983: SAT
+
+
+CheckSat 984: SAT
+
+
+CheckSat 985: SAT
+
+
+CheckSat 986: SAT
+
+
+CheckSat 987: SAT
+
+
+CheckSat 988: SAT
+
+
+CheckSat 989: SAT
+
+
+CheckSat 990: SAT
+
+
+CheckSat 991: SAT
+
+
+CheckSat 992: SAT
+
+
+CheckSat 993: SAT
+
+
+CheckSat 994: SAT
+
+
+CheckSat 995: SAT
+
+
+CheckSat 996: SAT
+
+
+CheckSat 997: SAT
+
+
+CheckSat 998: SAT
+
+
+CheckSat 999: SAT
+
+
+CheckSat 1000: SAT
+
+
+CheckSat 1001: SAT
+
+
+CheckSat 1002: SAT
+
+
+CheckSat 1003: SAT
+
+
+CheckSat 1004: SAT
+
+
+CheckSat 1005: SAT
+
+
+CheckSat 1006: SAT
+
+
+CheckSat 1007: SAT
+
+
+CheckSat 1008: SAT
+
+
+CheckSat 1009: SAT
+
+
+CheckSat 1010: SAT
+
+
+CheckSat 1011: SAT
+
+
+CheckSat 1012: UNSAT
+
+
+CheckSat 1013: SAT
+
+
+CheckSat 1014: SAT
+
+
+CheckSat 1015: UNSAT
+
+
+CheckSat 1016: SAT
+
+
+CheckSat 1017: UNSAT
+
+
+CheckSat 1018: SAT
+
+
+CheckSat 1019: SAT
+
+
+CheckSat 1020: SAT
+
+
+CheckSat 1021: SAT
+
+
+CheckSat 1022: SAT
+
+
+CheckSat 1023: UNSAT
+
+
+CheckSat 1024: SAT
+
+
+CheckSat 1025: SAT
+
+
+CheckSat 1026: SAT
+
+
+CheckSat 1027: SAT
+
+
+CheckSat 1028: SAT
+
+
+CheckSat 1029: SAT
+
+
+CheckSat 1030: UNSAT
+
+
+CheckSat 1031: SAT
+
+
+CheckSat 1032: UNSAT
+
+
+CheckSat 1033: SAT
+
+
+CheckSat 1034: SAT
+
+
+CheckSat 1035: SAT
+
+
+CheckSat 1036: SAT
+
+
+CheckSat 1037: SAT
+
+
+CheckSat 1038: SAT
+
+
+CheckSat 1039: SAT
+
+
+CheckSat 1040: SAT
+
+
+CheckSat 1041: UNSAT
+
+
+CheckSat 1042: UNSAT
+
+
+CheckSat 1043: SAT
+
+
+CheckSat 1044: SAT
+
+
+CheckSat 1045: SAT
+
+
+CheckSat 1046: SAT
+
+
+CheckSat 1047: SAT
+
+
+CheckSat 1048: SAT
+
+
+CheckSat 1049: SAT
+
+
+CheckSat 1050: UNSAT
+
+
+CheckSat 1051: UNSAT
+
+
+CheckSat 1052: SAT
+
+
+CheckSat 1053: SAT
+
+
+CheckSat 1054: SAT
+
+
+CheckSat 1055: SAT
+
+
+CheckSat 1056: SAT
+
+
+CheckSat 1057: SAT
+
+
+CheckSat 1058: SAT
+
+
+CheckSat 1059: UNSAT
+
+
+CheckSat 1060: UNSAT
+
+
+CheckSat 1061: SAT
+
+
+CheckSat 1062: SAT
+
+
+CheckSat 1063: SAT
+
+
+CheckSat 1064: SAT
+
+
+CheckSat 1065: UNSAT
+
+
+CheckSat 1066: SAT
+
+
+CheckSat 1067: SAT
+
+
+CheckSat 1068: SAT
+
+
+CheckSat 1069: SAT
+
+
+CheckSat 1070: SAT
+
+
+CheckSat 1071: SAT
+
+
+CheckSat 1072: SAT
+
+
+CheckSat 1073: SAT
+
+
+CheckSat 1074: SAT
+
+
+CheckSat 1075: SAT
+
+
+CheckSat 1076: SAT
+
+
+CheckSat 1077: SAT
+
+
+CheckSat 1078: SAT
+
+
+CheckSat 1079: SAT
+
+
+CheckSat 1080: SAT
+
+
+CheckSat 1081: SAT
+
+
+CheckSat 1082: SAT
+
+
+CheckSat 1083: SAT
+
+
+CheckSat 1084: SAT
+
+
+CheckSat 1085: SAT
+
+
+CheckSat 1086: SAT
+
+
+CheckSat 1087: SAT
+
+
+CheckSat 1088: SAT
+
+
+CheckSat 1089: SAT
+
+
+CheckSat 1090: SAT
+
+
+CheckSat 1091: SAT
+
+
+CheckSat 1092: SAT
+
+
+CheckSat 1093: SAT
+
+
+CheckSat 1094: SAT
+
+
+CheckSat 1095: SAT
+
+
+CheckSat 1096: SAT
+
+
+CheckSat 1097: SAT
+
+
+CheckSat 1098: SAT
+
+
+CheckSat 1099: SAT
+
+
+CheckSat 1100: UNSAT
+
+
+CheckSat 1101: SAT
+
+
+CheckSat 1102: SAT
+
+
+CheckSat 1103: SAT
+
+
+CheckSat 1104: SAT
+
+
+CheckSat 1105: SAT
+
+
+CheckSat 1106: SAT
+
+
+CheckSat 1107: SAT
+
+
+CheckSat 1108: SAT
+
+
+CheckSat 1109: SAT
+
+
+CheckSat 1110: SAT
+
+
+CheckSat 1111: SAT
+
+
+CheckSat 1112: SAT
+
+
+CheckSat 1113: SAT
+
+
+CheckSat 1114: SAT
+
+
+CheckSat 1115: SAT
+
+
+CheckSat 1116: SAT
+
+
+CheckSat 1117: SAT
+
+
+CheckSat 1118: SAT
+
+
+CheckSat 1119: SAT
+
+
+CheckSat 1120: SAT
+
+
+CheckSat 1121: SAT
+
+
+CheckSat 1122: SAT
+
+
+CheckSat 1123: SAT
+
+
+CheckSat 1124: SAT
+
+
+CheckSat 1125: SAT
+
+
+CheckSat 1126: SAT
+
+
+CheckSat 1127: SAT
+
+
+CheckSat 1128: SAT
+
+
+CheckSat 1129: SAT
+
+
+CheckSat 1130: SAT
+
+
+CheckSat 1131: SAT
+
+
+CheckSat 1132: SAT
+
+
+CheckSat 1133: SAT
+
+
+CheckSat 1134: SAT
+
+
+CheckSat 1135: SAT
+
+
+CheckSat 1136: SAT
+
+
+CheckSat 1137: SAT
+
+
+CheckSat 1138: SAT
+
+
+CheckSat 1139: SAT
+
+
+CheckSat 1140: SAT
+
+
+CheckSat 1141: SAT
+
+
+CheckSat 1142: SAT
+
+
+CheckSat 1143: SAT
+
+
+CheckSat 1144: SAT
+
+
+CheckSat 1145: SAT
+
+
+CheckSat 1146: SAT
+
+
+CheckSat 1147: SAT
+
+
+CheckSat 1148: SAT
+
+
+CheckSat 1149: SAT
+
+
+CheckSat 1150: SAT
+
+
+CheckSat 1151: SAT
+
+
+CheckSat 1152: SAT
+
+
+CheckSat 1153: SAT
+
+
+CheckSat 1154: SAT
+
+
+CheckSat 1155: SAT
+
+
+CheckSat 1156: SAT
+
+
+CheckSat 1157: SAT
+
+
+CheckSat 1158: SAT
+
+
+CheckSat 1159: SAT
+
+
+CheckSat 1160: SAT
+
+
+CheckSat 1161: SAT
+
+
+CheckSat 1162: SAT
+
+
+CheckSat 1163: SAT
+
+
+CheckSat 1164: SAT
+
+
+CheckSat 1165: SAT
+
+
+CheckSat 1166: SAT
+
+
+CheckSat 1167: SAT
+
+
+CheckSat 1168: SAT
+
+
+CheckSat 1169: SAT
+
+
+CheckSat 1170: SAT
+
+
+CheckSat 1171: SAT
+
+
+CheckSat 1172: SAT
+
+
+CheckSat 1173: SAT
+
+
+CheckSat 1174: SAT
+
+
+CheckSat 1175: SAT
+
+
+CheckSat 1176: SAT
+
+
+CheckSat 1177: SAT
+
+
+CheckSat 1178: SAT
+
+
+CheckSat 1179: SAT
+
+
+CheckSat 1180: SAT
+
+
+CheckSat 1181: SAT
+
+
+CheckSat 1182: SAT
+
+
+CheckSat 1183: SAT
+
+
+CheckSat 1184: SAT
+
+
+CheckSat 1185: SAT
+
+
+CheckSat 1186: SAT
+
+
+CheckSat 1187: SAT
+
+
+CheckSat 1188: SAT
+
+
+CheckSat 1189: SAT
+
+
+CheckSat 1190: SAT
+
+
+CheckSat 1191: SAT
+
+
+CheckSat 1192: SAT
+
+
+CheckSat 1193: SAT
+
+
+CheckSat 1194: SAT
+
+
+CheckSat 1195: SAT
+
+
+CheckSat 1196: SAT
+
+
+CheckSat 1197: SAT
+
+
+CheckSat 1198: SAT
+
+
+CheckSat 1199: SAT
+
+
+CheckSat 1200: SAT
+
+
+CheckSat 1201: SAT
+
+
+CheckSat 1202: SAT
+
+
+CheckSat 1203: SAT
+
+
+CheckSat 1204: SAT
+
+
+CheckSat 1205: SAT
+
+
+CheckSat 1206: SAT
+
+
+CheckSat 1207: SAT
+
+
+CheckSat 1208: SAT
+
+
+CheckSat 1209: SAT
+
+
+CheckSat 1210: SAT
+
+
+CheckSat 1211: SAT
+
+
+CheckSat 1212: SAT
+
+
+CheckSat 1213: SAT
+
+
+CheckSat 1214: SAT
+
+
+CheckSat 1215: SAT
+
+
+CheckSat 1216: SAT
+
+
+CheckSat 1217: SAT
+
+
+CheckSat 1218: SAT
+
+
+CheckSat 1219: SAT
+
+
+CheckSat 1220: SAT
+
+
+CheckSat 1221: SAT
+
+
+CheckSat 1222: SAT
+
+
+CheckSat 1223: SAT
+
+
+CheckSat 1224: SAT
+
+
+CheckSat 1225: SAT
+
+
+CheckSat 1226: SAT
+
+
+CheckSat 1227: SAT
+
+
+CheckSat 1228: SAT
+
+
+CheckSat 1229: SAT
+
+
+CheckSat 1230: SAT
+
+
+CheckSat 1231: SAT
+
+
+CheckSat 1232: SAT
+
+
+CheckSat 1233: SAT
+
+
+CheckSat 1234: SAT
+
+
+CheckSat 1235: SAT
+
+
+CheckSat 1236: SAT
+
+
+CheckSat 1237: SAT
+
+
+CheckSat 1238: SAT
+
+
+CheckSat 1239: SAT
+
+
+CheckSat 1240: SAT
+
+
+CheckSat 1241: SAT
+
+
+CheckSat 1242: SAT
+
+
+CheckSat 1243: SAT
+
+
+CheckSat 1244: SAT
+
+
+CheckSat 1245: SAT
+
+
+CheckSat 1246: SAT
+
+
+CheckSat 1247: SAT
+
+
+CheckSat 1248: SAT
+
+
+CheckSat 1249: SAT
+
+
+CheckSat 1250: SAT
+
+
+CheckSat 1251: SAT
+
+
+CheckSat 1252: SAT
+
+
+CheckSat 1253: SAT
+
+
+CheckSat 1254: SAT
+
+
+CheckSat 1255: SAT
+
+
+CheckSat 1256: SAT
+
+
+CheckSat 1257: SAT
+
+
+CheckSat 1258: SAT
+
+
+CheckSat 1259: SAT
+
+
+CheckSat 1260: SAT
+
+
+CheckSat 1261: SAT
+
+
+CheckSat 1262: SAT
+
+
+CheckSat 1263: SAT
+
+
+CheckSat 1264: SAT
+
+
+CheckSat 1265: SAT
+
+
+CheckSat 1266: SAT
+
+
+CheckSat 1267: SAT
+
+
+CheckSat 1268: SAT
+
+
+CheckSat 1269: SAT
+
+
+CheckSat 1270: SAT
+
+
+CheckSat 1271: SAT
+
+
+CheckSat 1272: SAT
+
+
+CheckSat 1273: SAT
+
+
+CheckSat 1274: SAT
+
+
+CheckSat 1275: SAT
+
+
+CheckSat 1276: SAT
+
+
+CheckSat 1277: UNSAT
+
+
+CheckSat 1278: SAT
+
+
+CheckSat 1279: UNSAT
+
+
+CheckSat 1280: UNSAT
+
+
+CheckSat 1281: SAT
+
+
+CheckSat 1282: UNSAT
+
+
+CheckSat 1283: SAT
+
+
+CheckSat 1284: SAT
+
+
+CheckSat 1285: SAT
+
+
+CheckSat 1286: SAT
+
+
+CheckSat 1287: SAT
+
+
+CheckSat 1288: SAT
+
+
+CheckSat 1289: SAT
+
+
+CheckSat 1290: SAT
+
+
+CheckSat 1291: SAT
+
+
+CheckSat 1292: SAT
+
+
+CheckSat 1293: SAT
+
+
+CheckSat 1294: SAT
+
+
+CheckSat 1295: SAT
+
+
+CheckSat 1296: SAT
+
+
+CheckSat 1297: SAT
+
+
+CheckSat 1298: SAT
+
+
+CheckSat 1299: SAT
+
+
+CheckSat 1300: SAT
+
+
+CheckSat 1301: SAT
+
+
+CheckSat 1302: SAT
+
+
+CheckSat 1303: SAT
+
+
+CheckSat 1304: SAT
+
+
+CheckSat 1305: SAT
+
+
+CheckSat 1306: SAT
+
+
+CheckSat 1307: SAT
+
+
+CheckSat 1308: SAT
+
+
+CheckSat 1309: SAT
+
+
+CheckSat 1310: SAT
+
+
+CheckSat 1311: SAT
+
+
+CheckSat 1312: SAT
+
+
+CheckSat 1313: SAT
+
+
+CheckSat 1314: SAT
+
+
+CheckSat 1315: SAT
+
+
+CheckSat 1316: SAT
+
+
+CheckSat 1317: SAT
+
+
+CheckSat 1318: SAT
+
+
+CheckSat 1319: SAT
+
+
+CheckSat 1320: SAT
+
+
+CheckSat 1321: SAT
+
+
+CheckSat 1322: SAT
+
+
+CheckSat 1323: SAT
+
+
+CheckSat 1324: SAT
+
+
+CheckSat 1325: SAT
+
+
+CheckSat 1326: UNSAT
+
+
+CheckSat 1327: SAT
+
+
+CheckSat 1328: SAT
+
+
+CheckSat 1329: SAT
+
+
+CheckSat 1330: SAT
+
+
+CheckSat 1331: SAT
+
+
+CheckSat 1332: UNSAT
+
+
+CheckSat 1333: SAT
+
+
+CheckSat 1334: SAT
+
+
+CheckSat 1335: SAT
+
+
+CheckSat 1336: SAT
+
+
+CheckSat 1337: SAT
+
+
+CheckSat 1338: SAT
+
+
+CheckSat 1339: SAT
+
+
+CheckSat 1340: UNSAT
+
+
+CheckSat 1341: SAT
+
+
+CheckSat 1342: UNSAT
+
+
+CheckSat 1343: SAT
+
+
+CheckSat 1344: SAT
+
+
+CheckSat 1345: SAT
+
+
+CheckSat 1346: SAT
+
+
+CheckSat 1347: SAT
+
+
+CheckSat 1348: SAT
+
+
+CheckSat 1349: SAT
+
+
+CheckSat 1350: UNSAT
+
+
+CheckSat 1351: UNSAT
+
+
+CheckSat 1352: SAT
+
+
+CheckSat 1353: SAT
+
+
+CheckSat 1354: SAT
+
+
+CheckSat 1355: SAT
+
+
+CheckSat 1356: SAT
+
+
+CheckSat 1357: SAT
+
+
+CheckSat 1358: SAT
+
+
+CheckSat 1359: UNSAT
+
+
+CheckSat 1360: UNSAT
+
+
+CheckSat 1361: SAT
+
+
+CheckSat 1362: SAT
+
+
+CheckSat 1363: SAT
+
+
+CheckSat 1364: SAT
+
+
+CheckSat 1365: SAT
+
+
+CheckSat 1366: SAT
+
+
+CheckSat 1367: SAT
+
+
+CheckSat 1368: UNSAT
+
+
+CheckSat 1369: UNSAT
+
+
+CheckSat 1370: SAT
+
+
+CheckSat 1371: SAT
+
+
+CheckSat 1372: SAT
+
+
+CheckSat 1373: SAT
+
+
+CheckSat 1374: SAT
+
+
+CheckSat 1375: SAT
+
+
+CheckSat 1376: SAT
+
+
+CheckSat 1377: SAT
+
+
+CheckSat 1378: SAT
+
+
+CheckSat 1379: SAT
+
+
+CheckSat 1380: SAT
+
+
+CheckSat 1381: SAT
+
+
+CheckSat 1382: SAT
+
+
+CheckSat 1383: SAT
+
+
+CheckSat 1384: SAT
+
+
+CheckSat 1385: SAT
+
+
+CheckSat 1386: SAT
+
+
+CheckSat 1387: SAT
+
+
+CheckSat 1388: SAT
+
+
+CheckSat 1389: SAT
+
+
+CheckSat 1390: SAT
+
+
+CheckSat 1391: SAT
+
+
+CheckSat 1392: SAT
+
+
+CheckSat 1393: SAT
+
+
+CheckSat 1394: SAT
+
+
+CheckSat 1395: SAT
+
+
+CheckSat 1396: SAT
+
+
+CheckSat 1397: SAT
+
+
+CheckSat 1398: SAT
+
+
+CheckSat 1399: SAT
+
+
+CheckSat 1400: SAT
+
+
+CheckSat 1401: SAT
+
+
+CheckSat 1402: UNSAT
+
+
+CheckSat 1403: UNSAT
+
+
+CheckSat 1404: SAT
+
+
+CheckSat 1405: UNSAT
+
+
+CheckSat 1406: SAT
+
+
+CheckSat 1407: SAT
+
+
+CheckSat 1408: SAT
+
+
+CheckSat 1409: SAT
+
+
+CheckSat 1410: SAT
+
+
+CheckSat 1411: SAT
+
+
+CheckSat 1412: UNSAT
+
+
+CheckSat 1413: SAT
+
+
+CheckSat 1414: SAT
+
+
+CheckSat 1415: SAT
+
+
+CheckSat 1416: SAT
+
+
+CheckSat 1417: UNSAT
+
+
+CheckSat 1418: UNSAT
+
+
+CheckSat 1419: SAT
+
+
+CheckSat 1420: SAT
+
+
+CheckSat 1421: UNSAT
+
+
+CheckSat 1422: SAT
+
+
+CheckSat 1423: SAT
+
+
+CheckSat 1424: SAT
+
+
+CheckSat 1425: SAT
+
+
+CheckSat 1426: SAT
+
+
+CheckSat 1427: SAT
+
+
+CheckSat 1428: SAT
+
+
+CheckSat 1429: SAT
+
+
+CheckSat 1430: SAT
+
+
+CheckSat 1431: SAT
+
+
+CheckSat 1432: SAT
+
+
+CheckSat 1433: SAT
+
+
+CheckSat 1434: UNSAT
+
+
+CheckSat 1435: SAT
+
+
+CheckSat 1436: SAT
+
+
+CheckSat 1437: SAT
+
+
+CheckSat 1438: SAT
+
+
+CheckSat 1439: SAT
+
+
+CheckSat 1440: SAT
+
+
+CheckSat 1441: SAT
+
+
+CheckSat 1442: SAT
+
+
+CheckSat 1443: SAT
+
+
+CheckSat 1444: SAT
+
+
+CheckSat 1445: SAT
+
+
+CheckSat 1446: SAT
+
+
+CheckSat 1447: SAT
+
+
+CheckSat 1448: SAT
+
+
+CheckSat 1449: SAT
+
+
+CheckSat 1450: SAT
+
+
+CheckSat 1451: SAT
+
+
+CheckSat 1452: SAT
+
+
+CheckSat 1453: SAT
+
+
+CheckSat 1454: SAT
+
+
+CheckSat 1455: SAT
+
+
+CheckSat 1456: SAT
+
+
+CheckSat 1457: SAT
+
+
+CheckSat 1458: SAT
+
+
+CheckSat 1459: SAT
+
+
+CheckSat 1460: SAT
+
+
+CheckSat 1461: SAT
+
+
+CheckSat 1462: SAT
+
+
+CheckSat 1463: SAT
+
+
+CheckSat 1464: SAT
+
+
+CheckSat 1465: SAT
+
+
+CheckSat 1466: SAT
+
+
+CheckSat 1467: SAT
+
+
+CheckSat 1468: SAT
+
+
+CheckSat 1469: UNSAT
+
+
+CheckSat 1470: SAT
+
+
+CheckSat 1471: SAT
+
+
+CheckSat 1472: SAT
+
+
+CheckSat 1473: SAT
+
+
+CheckSat 1474: SAT
+
+
+CheckSat 1475: SAT
+
+
+CheckSat 1476: SAT
+
+
+CheckSat 1477: SAT
+
+
+CheckSat 1478: SAT
+
+
+CheckSat 1479: SAT
+
+
+CheckSat 1480: SAT
+
+
+CheckSat 1481: SAT
+
+
+CheckSat 1482: SAT
+
+
+CheckSat 1483: SAT
+
+
+CheckSat 1484: SAT
+
+
+CheckSat 1485: SAT
+
+
+CheckSat 1486: SAT
+
+
+CheckSat 1487: SAT
+
+
+CheckSat 1488: SAT
+
+
+CheckSat 1489: SAT
+
+
+CheckSat 1490: SAT
+
+
+CheckSat 1491: SAT
+
+
+CheckSat 1492: SAT
+
+
+CheckSat 1493: SAT
+
+
+CheckSat 1494: SAT
+
+
+CheckSat 1495: SAT
+
+
+CheckSat 1496: SAT
+
+
+CheckSat 1497: SAT
+
+
+CheckSat 1498: SAT
+
+
+CheckSat 1499: SAT
+
+
+CheckSat 1500: SAT
+
+
+CheckSat 1501: SAT
+
+
+CheckSat 1502: SAT
+
+
+CheckSat 1503: SAT
+
+
+CheckSat 1504: SAT
+
+
+CheckSat 1505: SAT
+
+
+CheckSat 1506: SAT
+
+
+CheckSat 1507: SAT
+
+
+CheckSat 1508: SAT
+
+
+CheckSat 1509: SAT
+
+
+CheckSat 1510: SAT
+
+
+CheckSat 1511: SAT
+
+
+CheckSat 1512: SAT
+
+
+CheckSat 1513: SAT
+
+
+CheckSat 1514: SAT
+
+
+CheckSat 1515: SAT
+
+
+CheckSat 1516: SAT
+
+
+CheckSat 1517: SAT
+
+
+CheckSat 1518: SAT
+
+
+CheckSat 1519: SAT
+
+
+CheckSat 1520: SAT
+
+
+CheckSat 1521: SAT
+
+
+CheckSat 1522: SAT
+
+
+CheckSat 1523: SAT
+
+
+CheckSat 1524: SAT
+
+
+CheckSat 1525: SAT
+
+
+CheckSat 1526: SAT
+
+
+CheckSat 1527: SAT
+
+
+CheckSat 1528: SAT
+
+
+CheckSat 1529: SAT
+
+
+CheckSat 1530: SAT
+
+
+CheckSat 1531: SAT
+
+
+CheckSat 1532: SAT
+
+
+CheckSat 1533: SAT
+
+
+CheckSat 1534: SAT
+
+
+CheckSat 1535: SAT
+
+
+CheckSat 1536: SAT
+
+
+CheckSat 1537: SAT
+
+
+CheckSat 1538: SAT
+
+
+CheckSat 1539: SAT
+
+
+CheckSat 1540: SAT
+
+
+CheckSat 1541: SAT
+
+
+CheckSat 1542: SAT
+
+
+CheckSat 1543: SAT
+
+
+CheckSat 1544: SAT
+
+
+CheckSat 1545: SAT
+
+
+CheckSat 1546: SAT
+
+
+CheckSat 1547: SAT
+
+
+CheckSat 1548: SAT
+
+
+CheckSat 1549: SAT
+
+
+CheckSat 1550: SAT
+
+
+CheckSat 1551: SAT
+
+
+CheckSat 1552: SAT
+
+
+CheckSat 1553: SAT
+
+
+CheckSat 1554: SAT
+
+
+CheckSat 1555: SAT
+
+
+CheckSat 1556: SAT
+
+
+CheckSat 1557: SAT
+
+
+CheckSat 1558: SAT
+
+
+CheckSat 1559: SAT
+
+
+CheckSat 1560: SAT
+
+
+CheckSat 1561: SAT
+
+
+CheckSat 1562: SAT
+
+
+CheckSat 1563: SAT
+
+
+CheckSat 1564: SAT
+
+
+CheckSat 1565: SAT
+
+
+CheckSat 1566: SAT
+
+
+CheckSat 1567: SAT
+
+
+CheckSat 1568: SAT
+
+
+CheckSat 1569: SAT
+
+
+CheckSat 1570: SAT
+
+
+CheckSat 1571: SAT
+
+
+CheckSat 1572: SAT
+
+
+CheckSat 1573: SAT
+
+
+CheckSat 1574: SAT
+
+
+CheckSat 1575: SAT
+
+
+CheckSat 1576: SAT
+
+
+CheckSat 1577: SAT
+
+
+CheckSat 1578: SAT
+
+
+CheckSat 1579: SAT
+
+
+CheckSat 1580: SAT
+
+
+CheckSat 1581: SAT
+
+
+CheckSat 1582: SAT
+
+
+CheckSat 1583: SAT
+
+
+CheckSat 1584: SAT
+
+
+CheckSat 1585: SAT
+
+
+CheckSat 1586: SAT
+
+
+CheckSat 1587: SAT
+
+
+CheckSat 1588: SAT
+
+
+CheckSat 1589: SAT
+
+
+CheckSat 1590: SAT
+
+
+CheckSat 1591: SAT
+
+
+CheckSat 1592: SAT
+
+
+CheckSat 1593: SAT
+
+
+CheckSat 1594: SAT
+
+
+CheckSat 1595: SAT
+
+
+CheckSat 1596: SAT
+
+
+CheckSat 1597: SAT
+
+
+CheckSat 1598: SAT
+
+
+CheckSat 1599: SAT
+
+
+CheckSat 1600: SAT
+
+
+CheckSat 1601: SAT
+
+
+CheckSat 1602: SAT
+
+
+CheckSat 1603: SAT
+
+
+CheckSat 1604: SAT
+
+
+CheckSat 1605: SAT
+
+
+CheckSat 1606: SAT
+
+
+CheckSat 1607: SAT
+
+
+CheckSat 1608: SAT
+
+
+CheckSat 1609: SAT
+
+
+CheckSat 1610: SAT
+
+
+CheckSat 1611: SAT
+
+
+CheckSat 1612: SAT
+
+
+CheckSat 1613: SAT
+
+
+CheckSat 1614: SAT
+
+
+CheckSat 1615: SAT
+
+
+CheckSat 1616: SAT
+
+
+CheckSat 1617: SAT
+
+
+CheckSat 1618: SAT
+
+
+CheckSat 1619: SAT
+
+
+CheckSat 1620: SAT
+
+
+CheckSat 1621: SAT
+
+
+CheckSat 1622: SAT
+
+
+CheckSat 1623: SAT
+
+
+CheckSat 1624: SAT
+
+
+CheckSat 1625: SAT
+
+
+CheckSat 1626: SAT
+
+
+CheckSat 1627: SAT
+
+
+CheckSat 1628: SAT
+
+
+CheckSat 1629: SAT
+
+
+CheckSat 1630: SAT
+
+
+CheckSat 1631: SAT
+
+
+CheckSat 1632: SAT
+
+
+CheckSat 1633: SAT
+
+
+CheckSat 1634: SAT
+
+
+CheckSat 1635: SAT
+
+
+CheckSat 1636: SAT
+
+
+CheckSat 1637: SAT
+
+
+CheckSat 1638: SAT
+
+
+CheckSat 1639: SAT
+
+
+CheckSat 1640: SAT
+
+
+CheckSat 1641: SAT
+
+
+CheckSat 1642: SAT
+
+
+CheckSat 1643: SAT
+
+
+CheckSat 1644: SAT
+
+
+CheckSat 1645: SAT
+
+
+CheckSat 1646: UNSAT
+
+
+CheckSat 1647: SAT
+
+
+CheckSat 1648: UNSAT
+
+
+CheckSat 1649: UNSAT
+
+
+CheckSat 1650: SAT
+
+
+CheckSat 1651: UNSAT
+
+
+CheckSat 1652: SAT
+
+
+CheckSat 1653: SAT
+
+
+CheckSat 1654: SAT
+
+
+CheckSat 1655: SAT
+
+
+CheckSat 1656: SAT
+
+
+CheckSat 1657: SAT
+
+
+CheckSat 1658: SAT
+
+
+CheckSat 1659: SAT
+
+
+CheckSat 1660: SAT
+
+
+CheckSat 1661: SAT
+
+
+CheckSat 1662: SAT
+
+
+CheckSat 1663: SAT
+
+
+CheckSat 1664: SAT
+
+
+CheckSat 1665: SAT
+
+
+CheckSat 1666: SAT
+
+
+CheckSat 1667: SAT
+
+
+CheckSat 1668: SAT
+
+
+CheckSat 1669: SAT
+
+
+CheckSat 1670: SAT
+
+
+CheckSat 1671: SAT
+
+
+CheckSat 1672: SAT
+
+
+CheckSat 1673: SAT
+
+
+CheckSat 1674: SAT
+
+
+CheckSat 1675: SAT
+
+
+CheckSat 1676: SAT
+
+
+CheckSat 1677: SAT
+
+
+CheckSat 1678: SAT
+
+
+CheckSat 1679: SAT
+
+
+CheckSat 1680: SAT
+
+
+CheckSat 1681: SAT
+
+
+CheckSat 1682: SAT
+
+
+CheckSat 1683: SAT
+
+
+CheckSat 1684: SAT
+
+
+CheckSat 1685: SAT
+
+
+CheckSat 1686: SAT
+
+
+CheckSat 1687: SAT
+
+
+CheckSat 1688: SAT
+
+
+CheckSat 1689: SAT
+
+
+CheckSat 1690: SAT
+
+
+CheckSat 1691: SAT
+
+
+CheckSat 1692: SAT
+
+
+CheckSat 1693: SAT
+
+
+CheckSat 1694: SAT
+
+
+CheckSat 1695: SAT
+
+
+CheckSat 1696: SAT
+
+
+CheckSat 1697: SAT
+
+
+CheckSat 1698: SAT
+
+
+CheckSat 1699: SAT
+
+
+CheckSat 1700: SAT
+
+
+CheckSat 1701: SAT
+
+
+CheckSat 1702: SAT
+
+
+CheckSat 1703: SAT
+
+
+CheckSat 1704: SAT
+
+
+CheckSat 1705: SAT
+
+
+CheckSat 1706: SAT
+
+
+CheckSat 1707: SAT
+
+
+CheckSat 1708: SAT
+
+
+CheckSat 1709: SAT
+
+
+CheckSat 1710: SAT
+
+
+CheckSat 1711: SAT
+
+
+CheckSat 1712: SAT
+
+
+CheckSat 1713: SAT
+
+
+CheckSat 1714: SAT
+
+
+CheckSat 1715: SAT
+
+
+CheckSat 1716: SAT
+
+
+CheckSat 1717: SAT
+
+
+CheckSat 1718: SAT
+
+
+CheckSat 1719: SAT
+
+
+CheckSat 1720: SAT
+
+
+CheckSat 1721: SAT
+
+
+CheckSat 1722: SAT
+
+
+CheckSat 1723: SAT
+
+
+CheckSat 1724: SAT
+
+
+CheckSat 1725: SAT
+
+
+CheckSat 1726: SAT
+
+
+CheckSat 1727: SAT
+
+
+CheckSat 1728: SAT
+
+
+CheckSat 1729: SAT
+
+
+CheckSat 1730: SAT
+
+
+CheckSat 1731: SAT
+
+
+CheckSat 1732: SAT
+
+
+CheckSat 1733: SAT
+
+
+CheckSat 1734: SAT
+
+
+CheckSat 1735: SAT
+
+
+CheckSat 1736: SAT
+
+
+CheckSat 1737: SAT
+
+
+CheckSat 1738: SAT
+
+
+CheckSat 1739: SAT
+
+
+CheckSat 1740: SAT
+
+
+CheckSat 1741: SAT
+
+
+Stop z3... 3231 invocations Stop Omega... 48 invocations 
+SAT Count   : 3224
+SAT % Hit   : 96.12%
+IMPLY Count : 29
+IMPLY % Hit : 68.96%
+Time(cache overhead) : 3.427534 (seconds)
+
+!!! log(small):(2.5269,3303)
+Total verification time: 35.294154 second(s)
+	Time spent in main process: 32.745173 second(s)
+	Time spent in child processes: 2.548981 second(s)
+

@@ -1,0 +1,402 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Starting Omega.../usr/local/bin/oc
+
+CheckSat 1: SAT
+
+
+CheckSat 2: SAT
+
+
+CheckSat 3: SAT
+
+
+CheckSat 4: SAT
+
+
+CheckSat 5: SAT
+
+
+CheckSat 6: SAT
+
+
+CheckSat 7: SAT
+
+
+CheckSat 8: SAT
+
+
+CheckSat 9: SAT
+
+
+CheckSat 10: SAT
+
+
+CheckSat 11: SAT
+
+
+CheckSat 12: SAT
+
+
+CheckSat 13: SAT
+
+
+CheckSat 14: SAT
+
+
+CheckSat 15: SAT
+
+
+CheckSat 16: SAT
+
+
+CheckSat 17: SAT
+
+
+CheckSat 18: SAT
+
+
+CheckSat 19: SAT
+
+
+CheckSat 20: SAT
+
+
+CheckSat 21: SAT
+
+
+CheckSat 22: SAT
+
+
+CheckSat 23: SAT
+
+
+CheckSat 24: SAT
+
+
+CheckSat 25: SAT
+
+
+CheckSat 26: UNSAT
+
+
+CheckSat 27: SAT
+
+
+CheckSat 28: SAT
+
+
+CheckSat 29: UNSAT
+
+
+CheckSat 30: SAT
+
+
+CheckSat 31: SAT
+
+
+CheckSat 32: SAT
+
+
+CheckSat 33: SAT
+
+
+CheckSat 34: UNSAT
+
+
+CheckSat 35: UNSAT
+
+
+CheckSat 36: SAT
+
+
+CheckSat 37: SAT
+
+
+CheckSat 38: SAT
+
+
+CheckSat 39: SAT
+
+
+CheckSat 40: SAT
+
+
+CheckSat 41: SAT
+
+
+CheckSat 42: SAT
+
+
+CheckSat 43: SAT
+
+
+CheckSat 44: SAT
+
+
+CheckSat 45: SAT
+
+
+CheckSat 46: SAT
+
+
+CheckSat 47: SAT
+
+
+CheckSat 48: SAT
+
+
+CheckSat 49: SAT
+
+
+CheckSat 50: SAT
+
+
+CheckSat 51: SAT
+
+
+CheckSat 52: SAT
+
+
+CheckSat 53: SAT
+
+
+CheckSat 54: SAT
+
+
+CheckSat 55: SAT
+
+
+CheckSat 56: SAT
+
+
+CheckSat 57: SAT
+
+
+CheckSat 58: SAT
+
+
+CheckSat 59: SAT
+
+
+CheckSat 60: SAT
+
+
+CheckSat 61: SAT
+
+
+CheckSat 62: SAT
+
+
+CheckSat 63: SAT
+
+
+CheckSat 64: SAT
+
+
+CheckSat 65: SAT
+
+
+CheckSat 66: SAT
+
+
+CheckSat 67: SAT
+
+
+CheckSat 68: SAT
+
+
+CheckSat 69: SAT
+
+
+CheckSat 70: SAT
+
+
+CheckSat 71: UNSAT
+
+
+CheckSat 72: SAT
+
+
+CheckSat 73: SAT
+
+
+CheckSat 74: SAT
+
+
+CheckSat 75: SAT
+
+
+CheckSat 76: SAT
+
+
+CheckSat 77: SAT
+
+
+CheckSat 78: UNSAT
+
+
+CheckSat 79: SAT
+
+
+CheckSat 80: SAT
+
+
+CheckSat 81: SAT
+
+
+CheckSat 82: SAT
+
+
+CheckSat 83: SAT
+
+
+CheckSat 84: UNSAT
+
+
+CheckSat 85: SAT
+
+
+CheckSat 86: SAT
+
+
+CheckSat 87: UNSAT
+
+
+CheckSat 88: SAT
+
+
+CheckSat 89: SAT
+
+
+CheckSat 90: UNSAT
+
+
+CheckSat 91: SAT
+
+
+CheckSat 92: SAT
+
+
+CheckSat 93: SAT
+
+
+CheckSat 94: SAT
+
+
+CheckSat 95: SAT
+
+
+CheckSat 96: SAT
+
+
+CheckSat 97: SAT
+
+
+CheckSat 98: SAT
+
+
+CheckSat 99: UNSAT
+
+
+CheckSat 100: UNSAT
+
+
+CheckSat 101: SAT
+
+
+CheckSat 102: SAT
+
+
+CheckSat 103: SAT
+
+
+CheckSat 104: SAT
+
+
+CheckSat 105: SAT
+
+
+CheckSat 106: SAT
+
+
+CheckSat 107: SAT
+
+
+CheckSat 108: SAT
+
+
+CheckSat 109: SAT
+
+
+CheckSat 110: SAT
+
+
+CheckSat 111: UNSAT
+
+
+CheckSat 112: UNSAT
+
+
+CheckSat 113: SAT
+
+
+CheckSat 114: SAT
+
+
+CheckSat 115: SAT
+
+
+CheckSat 116: SAT
+
+
+CheckSat 117: SAT
+
+
+CheckSat 118: SAT
+
+
+CheckSat 119: SAT
+
+
+CheckSat 120: SAT
+
+
+CheckSat 121: SAT
+
+
+CheckSat 122: SAT
+
+
+CheckSat 123: SAT
+
+
+CheckSat 124: SAT
+
+
+CheckSat 125: SAT
+
+
+CheckSat 126: SAT
+
+
+CheckSat 127: SAT
+
+
+CheckSat 128: SAT
+
+
+Stop z3... 291 invocations Stop Omega... 53 invocations 
+SAT Count   : 287
+SAT % Hit   : 95.47%
+IMPLY Count : 13
+IMPLY % Hit : 69.23%
+Time(cache overhead) : 0.094826 (seconds)
+
+!!! log(small):(0.124959,357)
+Total verification time: 1.009778 second(s)
+	Time spent in main process: 0.889734 second(s)
+	Time spent in child processes: 0.120044 second(s)
+
