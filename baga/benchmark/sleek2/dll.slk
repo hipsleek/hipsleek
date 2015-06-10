@@ -1,0 +1,3067 @@
+data node2 {
+  int valVAL_12;
+  node2 prevREC_11;
+  node2 nextREC_37;
+}.
+ pred dll<p:node2,n:int> == 
+  emp&self=null & n=0 or
+(exists p_40,self_41,
+  flted_12_39: self::node2<Anon_13,p_40,q> * q::dll<self_41,flted_12_39>&
+  flted_12_39+1=n & p_40=p & self_41=self)
+  inv 
+  0<=n.
+
+// id 1
+checksat  htrue&exists(self_3085:res=self_3085) & exists(flted_12_3086:0+1+
+1=flted_12_3086) & q_3089=tmp1_3073 & Anon_3088=v_int_130_3063 & 
+prev_133_3071=prev_131_3064 & v_int_132_3070=30 & prev_131_3064=null & 
+v_int_124_3062=10 & v_int_130_3063=20 & Anon_3076=v_int_132_3070 & 
+q_3077=tmp2_3072 & Anon_3100=v_int_124_3062 & q_3101=prev_131_3064 & 
+exists(flted_12_3098:0+1=flted_12_3098) & 
+exists(self_3097:tmp2_3072=self_3097) & exists(flted_121_3074:0+1+1+
+1=flted_121_3074) & exists(Anon_3075:prev_131_3064=Anon_3075).
+
+// id 2
+checksat  htrue&exists(self_3085:res=self_3085) & exists(flted_12_3086:0+1+
+1=flted_12_3086) & q_3089=tmp1_3073 & Anon_3088=v_int_130_3063 & 
+prev_133_3071=prev_131_3064 & v_int_132_3070=30 & prev_131_3064=null & 
+v_int_124_3062=10 & v_int_130_3063=20 & Anon_3076=v_int_132_3070 & 
+q_3077=tmp2_3072 & Anon_3100=v_int_124_3062 & q_3101=prev_131_3064 & 
+exists(flted_12_3098:0+1=flted_12_3098) & 
+exists(self_3097:tmp2_3072=self_3097) & exists(flted_121_3074:0+1+1+
+1=flted_121_3074) & exists(Anon_3075:prev_131_3064=Anon_3075).
+
+// id 3
+checksat  htrue&exists(self_3097:tmp2_3072=self_3097) & exists(flted_12_3098:0+
+1=flted_12_3098) & q_3101=prev_131_3064 & Anon_3100=v_int_124_3062 & 
+q_3077=tmp2_3072 & Anon_3076=v_int_132_3070 & v_int_130_3063=20 & 
+v_int_124_3062=10 & prev_131_3064=null & v_int_132_3070=30 & 
+prev_133_3071=prev_131_3064 & Anon_3088=v_int_130_3063 & q_3089=tmp1_3073 & 
+exists(flted_12_3086:0+1+1=flted_12_3086) & exists(self_3085:res=self_3085).
+
+// id 4
+checksat  htrue&exists(self_3097:tmp2_3072=self_3097) & exists(flted_12_3098:0+
+1=flted_12_3098) & q_3101=prev_131_3064 & Anon_3100=v_int_124_3062 & 
+q_3077=tmp2_3072 & Anon_3076=v_int_132_3070 & v_int_130_3063=20 & 
+v_int_124_3062=10 & prev_131_3064=null & v_int_132_3070=30 & 
+prev_133_3071=prev_131_3064 & Anon_3088=v_int_130_3063 & q_3089=tmp1_3073 & 
+exists(flted_12_3086:0+1+1=flted_12_3086) & exists(self_3085:res=self_3085).
+
+// id 5
+checksat  htrue&q_3089=tmp1_3073 & Anon_3088=v_int_130_3063 & 
+prev_133_3071=prev_131_3064 & v_int_132_3070=30 & prev_131_3064=null & 
+v_int_124_3062=10 & v_int_130_3063=20 & Anon_3076=v_int_132_3070 & 
+q_3077=tmp2_3072 & Anon_3100=v_int_124_3062 & q_3101=prev_131_3064 & 
+exists(flted_12_3098:0+1=flted_12_3098) & 
+exists(self_3097:tmp2_3072=self_3097).
+
+// id 6
+checksat  htrue&q_3089=tmp1_3073 & Anon_3088=v_int_130_3063 & 
+prev_133_3071=prev_131_3064 & v_int_132_3070=30 & prev_131_3064=null & 
+v_int_124_3062=10 & v_int_130_3063=20 & Anon_3076=v_int_132_3070 & 
+q_3077=tmp2_3072 & Anon_3100=v_int_124_3062 & q_3101=prev_131_3064 & 
+exists(flted_12_3098:0+1=flted_12_3098) & 
+exists(self_3097:tmp2_3072=self_3097).
+
+// id 7
+checksat  htrue&q_3101=prev_131_3064 & Anon_3100=v_int_124_3062 & q_3077=tmp2_3072 & 
+Anon_3076=v_int_132_3070 & v_int_130_3063=20 & v_int_124_3062=10 & 
+prev_131_3064=null & v_int_132_3070=30 & prev_133_3071=prev_131_3064 & 
+Anon_3088=v_int_130_3063 & q_3089=tmp1_3073.
+
+// id 8
+checksat  htrue&q_3101=prev_131_3064 & Anon_3100=v_int_124_3062 & q_3077=tmp2_3072 & 
+Anon_3076=v_int_132_3070 & v_int_130_3063=20 & v_int_124_3062=10 & 
+prev_131_3064=null & v_int_132_3070=30 & prev_133_3071=prev_131_3064 & 
+Anon_3088=v_int_130_3063 & q_3089=tmp1_3073.
+
+// id 9
+checksat  htrue&q_3089=tmp1_3073 & Anon_3088=v_int_130_3063 & 
+prev_133_3071=prev_131_3064 & v_int_132_3070=30 & prev_131_3064=null & 
+v_int_124_3062=10 & v_int_130_3063=20 & Anon_3076=v_int_132_3070 & 
+q_3077=tmp2_3072 & Anon_3100=v_int_124_3062 & q_3101=prev_131_3064.
+
+// id 10
+checksat  htrue&q_3089=tmp1_3073 & Anon_3088=v_int_130_3063 & 
+prev_133_3071=prev_131_3064 & v_int_132_3070=30 & prev_131_3064=null & 
+v_int_124_3062=10 & v_int_130_3063=20 & Anon_3076=v_int_132_3070 & 
+q_3077=tmp2_3072 & Anon_3100=v_int_124_3062 & q_3101=prev_131_3064.
+
+// id 11
+checksat   tmp1_3073::node2<v_int_124_3062,tmp2_3072,prev_131_3064>&
+q_3077=tmp2_3072 & Anon_3076=v_int_132_3070 & v_int_130_3063=20 & 
+v_int_124_3062=10 & prev_131_3064=null & v_int_132_3070=30 & 
+prev_133_3071=prev_131_3064 & Anon_3088=v_int_130_3063 & q_3089=tmp1_3073.
+
+// id 12
+checksat   tmp1_3073::node2<v_int_124_3062,tmp2_3072,prev_131_3064>&
+q_3077=tmp2_3072 & Anon_3076=v_int_132_3070 & v_int_130_3063=20 & 
+v_int_124_3062=10 & prev_131_3064=null & v_int_132_3070=30 & 
+prev_133_3071=prev_131_3064 & Anon_3088=v_int_130_3063 & q_3089=tmp1_3073.
+
+// id 13
+checksat   tmp1_3073::node2<v_int_124_3062,tmp2_3072,prev_131_3064> * 
+tmp2_3072::node2<v_int_130_3063,res,tmp1_3073>&prev_133_3071=prev_131_3064 & 
+v_int_132_3070=30 & prev_131_3064=null & v_int_124_3062=10 & 
+v_int_130_3063=20 & Anon_3076=v_int_132_3070 & q_3077=tmp2_3072.
+
+// id 14
+checksat   tmp1_3073::node2<v_int_124_3062,tmp2_3072,prev_131_3064> * 
+tmp2_3072::node2<v_int_130_3063,res,tmp1_3073>&prev_133_3071=prev_131_3064 & 
+v_int_132_3070=30 & prev_131_3064=null & v_int_124_3062=10 & 
+v_int_130_3063=20 & Anon_3076=v_int_132_3070 & q_3077=tmp2_3072.
+
+// id 15
+checksat   tmp1_3073::node2<v_int_124_3062,tmp2_3072,prev_131_3064> * 
+res::node2<v_int_132_3070,prev_131_3064,tmp2_3072> * 
+tmp2_3072::node2<v_int_130_3063,res,tmp1_3073>&v_int_130_3063=20 & 
+v_int_124_3062=10 & prev_131_3064=null & v_int_132_3070=30 & 
+prev_133_3071=prev_131_3064.
+
+// id 16
+checksat   tmp1_3073::node2<v_int_124_3062,tmp2_3072,prev_131_3064> * 
+res::node2<v_int_132_3070,prev_131_3064,tmp2_3072> * 
+tmp2_3072::node2<v_int_130_3063,res,tmp1_3073>&v_int_130_3063=20 & 
+v_int_124_3062=10 & prev_131_3064=null & v_int_132_3070=30 & 
+prev_133_3071=prev_131_3064.
+
+// id 17
+checksat   tmp1'::node2<v_int_124_3062,tmp2',tmp_null'> * 
+tmp3'::node2<v_int_132_3070,tmp_null',tmp2'>&next_133_1478'=tmp1' & 
+prev_133_1477'=tmp_null' & val_133_1476'=v_int_130_3063 & 
+v_int_132_3070=30 & prev_131_3064=tmp_null' & tmp_null'=null & 
+v_int_124_3062=10 & v_int_130_3063=20.
+
+// id 18
+checksat   tmp2'::node2<v_int_130_3063,tmp_null',tmp1'>&
+next_131_1474'=tmp_null' & prev_131_1473'=tmp_null' & 
+val_131_1472'=v_int_124_3062 & tmp_null'=null & v_int_124_3062=10 & 
+v_int_130_3063=20.
+
+// id 19
+checksat  emp&next_116_3003=Anon_22 & x'=x & tmp2'=tmp2 & tmp2=null & tmp2'=null & 
+!(v_bool_113_1506') & Anon_3034=Anon_20 & q_3035=tmp2' & exists(Anon_3033:0+
+1=Anon_3033) & exists(Anon_3032:Anon_21=Anon_3032).
+
+// id 20
+checksat  emp&next_116_3003=Anon_22 & x'=x & tmp2'=tmp2 & tmp2=null & tmp2'=null & 
+!(v_bool_113_1506') & Anon_3034=Anon_20 & q_3035=tmp2' & exists(Anon_3033:0+
+1=Anon_3033) & exists(Anon_3032:Anon_21=Anon_3032).
+
+// id 21
+checksat  emp&q_3035=tmp2' & Anon_3034=Anon_20 & !(v_bool_113_1506') & tmp2'=null & 
+tmp2=null & tmp2'=tmp2 & x'=x & next_116_3003=Anon_22.
+
+// id 22
+checksat  emp&q_3035=tmp2' & Anon_3034=Anon_20 & !(v_bool_113_1506') & tmp2'=null & 
+tmp2=null & tmp2'=tmp2 & x'=x & next_116_3003=Anon_22.
+
+// id 23
+checksat  emp&next_116_3003=Anon_22 & x'=x & tmp2'=tmp2 & tmp2=null & tmp2'=null & 
+!(v_bool_113_1506') & Anon_3034=Anon_20 & q_3035=tmp2'.
+
+// id 24
+checksat  emp&next_116_3003=Anon_22 & x'=x & tmp2'=tmp2 & tmp2=null & tmp2'=null & 
+!(v_bool_113_1506') & Anon_3034=Anon_20 & q_3035=tmp2'.
+
+// id 25
+checksat  x'::node2<Anon_20,Anon_21,tmp2'>&!(v_bool_113_1506') & tmp2'=null & 
+tmp2=null & tmp2'=tmp2 & x'=x & next_116_3003=Anon_22.
+
+// id 26
+checksat  x'::node2<Anon_20,Anon_21,tmp2'>&!(v_bool_113_1506') & tmp2'=null & 
+tmp2=null & tmp2'=tmp2 & x'=x & next_116_3003=Anon_22.
+
+// id 27
+checksat  emp&exists(self_3015:x'=self_3015) & exists(flted_12_3016:flted_12_2996+
+1=flted_12_3016) & q_3019=q_2998 & Anon_3018=Anon_2997 & 
+next_116_3002=Anon_18 & prev_114_2999=p_2994 & x'=x & tmp2'=tmp2 & 
+tmp2!=null & x_2971=x & tmp2'!=null & v_bool_113_1506' & self_2995=tmp2' & 
+p_2994=x_2971 & flted_12_2996+1=Anon_19 & Anon_3006=Anon_16 & q_3007=tmp2' & 
+exists(Anon_3005:flted_12_2996+1+1=Anon_3005) & 
+exists(Anon_3004:Anon_17=Anon_3004).
+
+// id 28
+checksat  emp&exists(self_3015:x'=self_3015) & exists(flted_12_3016:flted_12_2996+
+1=flted_12_3016) & q_3019=q_2998 & Anon_3018=Anon_2997 & 
+next_116_3002=Anon_18 & prev_114_2999=p_2994 & x'=x & tmp2'=tmp2 & 
+tmp2!=null & x_2971=x & tmp2'!=null & v_bool_113_1506' & self_2995=tmp2' & 
+p_2994=x_2971 & flted_12_2996+1=Anon_19 & Anon_3006=Anon_16 & q_3007=tmp2' & 
+exists(Anon_3005:flted_12_2996+1+1=Anon_3005) & 
+exists(Anon_3004:Anon_17=Anon_3004).
+
+// id 29
+checksat  emp&q_3007=tmp2' & Anon_3006=Anon_16 & flted_12_2996+1=Anon_19 & 
+p_2994=x_2971 & self_2995=tmp2' & v_bool_113_1506' & tmp2'!=null & 
+x_2971=x & tmp2!=null & tmp2'=tmp2 & x'=x & prev_114_2999=p_2994 & 
+next_116_3002=Anon_18 & Anon_3018=Anon_2997 & q_3019=q_2998 & 
+exists(flted_12_3016:flted_12_2996+1=flted_12_3016) & 
+exists(self_3015:x'=self_3015).
+
+// id 30
+checksat  emp&q_3007=tmp2' & Anon_3006=Anon_16 & flted_12_2996+1=Anon_19 & 
+p_2994=x_2971 & self_2995=tmp2' & v_bool_113_1506' & tmp2'!=null & 
+x_2971=x & tmp2!=null & tmp2'=tmp2 & x'=x & prev_114_2999=p_2994 & 
+next_116_3002=Anon_18 & Anon_3018=Anon_2997 & q_3019=q_2998 & 
+exists(flted_12_3016:flted_12_2996+1=flted_12_3016) & 
+exists(self_3015:x'=self_3015).
+
+// id 31
+checksat  emp&q_3019=q_2998 & Anon_3018=Anon_2997 & next_116_3002=Anon_18 & 
+prev_114_2999=p_2994 & x'=x & tmp2'=tmp2 & tmp2!=null & x_2971=x & 
+tmp2'!=null & v_bool_113_1506' & self_2995=tmp2' & p_2994=x_2971 & 
+flted_12_2996+1=Anon_19 & Anon_3006=Anon_16 & q_3007=tmp2'.
+
+// id 32
+checksat  q_2998::dll<self_2995,flted_12_2996> * tmp2'::node2<Anon_2997,x',q_2998>&
+next_116_3002=Anon_18 & prev_114_2999=p_2994 & x'=x & tmp2'=tmp2 & 
+tmp2!=null & x_2971=x & tmp2'!=null & v_bool_113_1506' & self_2995=tmp2' & 
+p_2994=x_2971 & flted_12_2996+1=Anon_19 & Anon_3006=Anon_16 & q_3007=tmp2'.
+
+// id 33
+checksat  q_2998::dll<self_2995,flted_12_2996> * tmp2'::node2<Anon_2997,x',q_2998>&
+next_116_3002=Anon_18 & prev_114_2999=p_2994 & x'=x & tmp2'=tmp2 & 
+tmp2!=null & x_2971=x & tmp2'!=null & v_bool_113_1506' & self_2995=tmp2' & 
+p_2994=x_2971 & flted_12_2996+1=Anon_19 & Anon_3006=Anon_16 & q_3007=tmp2'.
+
+// id 34
+checksat  q_2998::dll<self_2995,flted_12_2996> * tmp2'::node2<Anon_2997,x',q_2998> * 
+x'::node2<Anon_16,Anon_17,tmp2'>&flted_12_2996+1=Anon_19 & p_2994=x_2971 & 
+self_2995=tmp2' & v_bool_113_1506' & tmp2'!=null & x_2971=x & tmp2!=null & 
+tmp2'=tmp2 & x'=x & prev_114_2999=p_2994 & next_116_3002=Anon_18.
+
+// id 35
+checksat  q_2998::dll<self_2995,flted_12_2996> * tmp2'::node2<Anon_2997,x',q_2998> * 
+x'::node2<Anon_16,Anon_17,tmp2'>&flted_12_2996+1=Anon_19 & p_2994=x_2971 & 
+self_2995=tmp2' & v_bool_113_1506' & tmp2'!=null & x_2971=x & tmp2!=null & 
+tmp2'=tmp2 & x'=x & prev_114_2999=p_2994 & next_116_3002=Anon_18.
+
+// id 36
+checksat  emp&next_116_1509'=Anon_22 & prev_116_1508'=Anon_21 & 
+val_116_1507'=Anon_20 & x'=x & tmp2'=tmp2 & tmp2=null & tmp2'=null & 
+!(v_bool_113_1506').
+
+// id 37
+checksat  q_2998::dll<self_2995,flted_12_2996> * tmp2'::node2<Anon_2997,x',q_2998>&
+next_116_1509'=Anon_18 & prev_116_1508'=Anon_17 & val_116_1507'=Anon_16 & 
+prev_114_2999=p_2994 & x'=x & tmp2'=tmp2 & tmp2!=null & x_2971=x & 
+tmp2'!=null & v_bool_113_1506' & self_2995=tmp2' & p_2994=x_2971 & 
+flted_12_2996+1=Anon_19.
+
+// id 38
+checksat  x::node2<Anon_16,Anon_17,Anon_18> * q_2998::dll<self_2995,flted_12_2996>&
+next_114_1505'=q_2998 & prev_114_1504'=p_2994 & val_114_1503'=Anon_2997 & 
+x'=x & tmp2'=tmp2 & tmp2!=null & x_2971=x & tmp2'!=null & v_bool_113_1506' & 
+self_2995=tmp2' & p_2994=x_2971 & flted_12_2996+1=Anon_19.
+
+// id 39
+checksat  (exists p_2988,self_2989,flted_12_2990,Anon_2991,
+q_2992: x::node2<Anon_16,Anon_17,Anon_18> * 
+tmp2'::node2<Anon_2991,p_2988,q_2992> * q_2992::dll<self_2989,flted_12_2990>&
+flted_12_2990+1=Anon_19 & p_2988=x_2971 & self_2989=tmp2' & 
+v_bool_113_1506' & tmp2'!=null & x_2971=x & tmp2!=null & tmp2'=tmp2 & x'=x).
+
+// id 40
+checksat  x::node2<Anon_16,Anon_17,Anon_18>&tmp2'=null & Anon_19=0 & 
+v_bool_113_1506' & tmp2'!=null & x_2971=x & tmp2!=null & tmp2'=tmp2 & x'=x.
+
+// id 41
+checksat  x::node2<Anon_16,Anon_17,Anon_18> * tmp2::dll<x_2971,Anon_19>&x'=x & 
+tmp2'=tmp2 & tmp2!=null & x_2971=x & tmp2'!=null & v_bool_113_1506' & 
+tmp2'!=null & !(v_bool_113_1506').
+
+// id 42
+checksat  x::node2<Anon_20,Anon_21,Anon_22>&x'=x & tmp2'=tmp2 & tmp2=null & 
+tmp2'=null & !(v_bool_113_1506') & tmp2'=null & !(v_bool_113_1506').
+
+// id 43
+checksat  x::node2<Anon_16,Anon_17,Anon_18> * tmp2::dll<x_2971,Anon_19>&x'=x & 
+tmp2'=tmp2 & tmp2!=null & x_2971=x & tmp2'!=null & v_bool_113_1506' & 
+tmp2'!=null & v_bool_113_1506'.
+
+// id 44
+checksat  x::node2<Anon_20,Anon_21,Anon_22>&x'=x & tmp2'=tmp2 & tmp2=null & 
+tmp2'=null & !(v_bool_113_1506') & tmp2'=null & v_bool_113_1506'.
+
+// id 45
+checksat  x::node2<Anon_20,Anon_21,Anon_22>&x'=x & tmp2'=tmp2 & tmp2=null & 
+MayLoop[] & tmp2'!=null.
+
+// id 46
+checksat  x::node2<Anon_20,Anon_21,Anon_22>&x'=x & tmp2'=tmp2 & tmp2=null & 
+tmp2'=null & !(res) & tmp2'=null.
+
+// id 47
+checksat  x::node2<Anon_20,Anon_21,Anon_22>&tmp2'=null & tmp2=null & tmp2'=tmp2 & x'=x.
+
+// id 48
+checksat  x::node2<Anon_20,Anon_21,Anon_22>&tmp2'=null & tmp2=null & tmp2'=tmp2 & x'=x.
+
+// id 49
+checksat  x::node2<Anon_20,Anon_21,Anon_22>&x'=x & tmp2'=tmp2 & tmp2=null & 
+MayLoop[] & tmp2'=null.
+
+// id 50
+checksat  x::node2<Anon_16,Anon_17,Anon_18> * tmp2::dll<x_2971,Anon_19>&x'=x & 
+tmp2'=tmp2 & tmp2!=null & x_2971=x & tmp2'!=null & res & tmp2'!=null.
+
+// id 51
+checksat  x::node2<Anon_16,Anon_17,Anon_18> * tmp2::dll<x_2971,Anon_19>&tmp2'!=null & 
+x_2971=x & tmp2!=null & tmp2'=tmp2 & x'=x.
+
+// id 52
+checksat  x::node2<Anon_16,Anon_17,Anon_18> * tmp2::dll<x_2971,Anon_19>&tmp2'!=null & 
+x_2971=x & tmp2!=null & tmp2'=tmp2 & x'=x.
+
+// id 53
+checksat  x::node2<Anon_16,Anon_17,Anon_18> * tmp2::dll<x_94,Anon_19>&x'=x & 
+tmp2'=tmp2 & tmp2!=null & x_94=x & MayLoop[] & tmp2'!=null.
+
+// id 54
+checksat  x::node2<Anon_16,Anon_17,Anon_18> * tmp2::dll<x_94,Anon_19>&x'=x & 
+tmp2'=tmp2 & tmp2!=null & x_94=x & MayLoop[] & tmp2'=null.
+
+// id 55
+checksat  self_2874::node2<Anon_2876,p_2873,q_2877>&((flted_12_2875=0 | 
+q_2877=null)) & q_2951=q_2877 & Anon_2950=Anon_2848 & !(v_bool_92_1530') & 
+q_2877=null & flted_12_2875+1=flted_12_2847 & p_2873=self_2846 & 1<n & 
+x'=x & self_2846=x' & p_2845=p & flted_12_2847+1=n & self_2874=q_2849 & 
+next_101_2919=q_2849 & flted_12_2875=0 & exists(Anon_2949:0+1=Anon_2949) & 
+exists(Anon_2948:p_2845=Anon_2948).
+
+// id 56
+checksat  self_2874::node2<Anon_2876,p_2873,q_2877>&((flted_12_2875=0 | 
+q_2877=null)) & q_2951=q_2877 & Anon_2950=Anon_2848 & !(v_bool_92_1530') & 
+q_2877=null & flted_12_2875+1=flted_12_2847 & p_2873=self_2846 & 1<n & 
+x'=x & self_2846=x' & p_2845=p & flted_12_2847+1=n & self_2874=q_2849 & 
+next_101_2919=q_2849 & flted_12_2875=0 & exists(Anon_2949:0+1=Anon_2949) & 
+exists(Anon_2948:p_2845=Anon_2948).
+
+// id 57
+checksat  self_2874::node2<Anon_2876,p_2873,q_2877>&flted_12_2875=0 & 
+next_101_2919=q_2849 & self_2874=q_2849 & flted_12_2847+1=n & p_2845=p & 
+self_2846=x' & x'=x & 1<n & p_2873=self_2846 & flted_12_2875+
+1=flted_12_2847 & q_2877=null & !(v_bool_92_1530') & Anon_2950=Anon_2848 & 
+q_2951=q_2877 & ((flted_12_2875=0 | q_2877=null)).
+
+// id 58
+checksat  self_2874::node2<Anon_2876,p_2873,q_2877>&flted_12_2875=0 & 
+next_101_2919=q_2849 & self_2874=q_2849 & flted_12_2847+1=n & p_2845=p & 
+self_2846=x' & x'=x & 1<n & p_2873=self_2846 & flted_12_2875+
+1=flted_12_2847 & q_2877=null & !(v_bool_92_1530') & Anon_2950=Anon_2848 & 
+q_2951=q_2877 & ((flted_12_2875=0 | q_2877=null)).
+
+// id 59
+checksat  self_2874::node2<Anon_2876,p_2873,q_2877>&((flted_12_2875=0 | 
+q_2877=null)) & q_2951=q_2877 & Anon_2950=Anon_2848 & !(v_bool_92_1530') & 
+q_2877=null & flted_12_2875+1=flted_12_2847 & p_2873=self_2846 & 1<n & 
+x'=x & self_2846=x' & p_2845=p & flted_12_2847+1=n & self_2874=q_2849 & 
+next_101_2919=q_2849 & flted_12_2875=0.
+
+// id 60
+checksat  self_2874::node2<Anon_2876,p_2873,q_2877>&((flted_12_2875=0 | 
+q_2877=null)) & q_2951=q_2877 & Anon_2950=Anon_2848 & !(v_bool_92_1530') & 
+q_2877=null & flted_12_2875+1=flted_12_2847 & p_2873=self_2846 & 1<n & 
+x'=x & self_2846=x' & p_2845=p & flted_12_2847+1=n & self_2874=q_2849 & 
+next_101_2919=q_2849 & flted_12_2875=0.
+
+// id 61
+checksat  self_2874::node2<Anon_2876,p_2873,q_2877>&q_2877=null & flted_12_2875=0 & 
+next_101_2919=q_2849 & self_2874=q_2849 & flted_12_2847+1=n & p_2845=p & 
+self_2846=x' & x'=x & 1<n & p_2873=self_2846 & flted_12_2875+
+1=flted_12_2847 & q_2877=null & !(v_bool_92_1530') & Anon_2950=Anon_2848 & 
+q_2951=q_2877 & ((flted_12_2875=0 | q_2877=null)).
+
+// id 62
+checksat  self_2874::node2<Anon_2876,p_2873,q_2877> * 
+q_2877::dll<self_2874,flted_12_2875> * x'::node2<Anon_2848,p_2845,q_2877>&
+!(v_bool_92_1530') & q_2877=null & flted_12_2875+1=flted_12_2847 & 
+p_2873=self_2846 & 1<n & x'=x & self_2846=x' & p_2845=p & flted_12_2847+
+1=n & self_2874=q_2849 & next_101_2919=q_2849.
+
+// id 63
+checksat  self_2874::node2<Anon_2876,p_2873,q_2877> * 
+q_2877::dll<self_2874,flted_12_2875> * x'::node2<Anon_2848,p_2845,q_2877>&
+!(v_bool_92_1530') & q_2877=null & flted_12_2875+1=flted_12_2847 & 
+p_2873=self_2846 & 1<n & x'=x & self_2846=x' & p_2845=p & flted_12_2847+
+1=n & self_2874=q_2849 & next_101_2919=q_2849.
+
+// id 64
+checksat  self_2874::node2<Anon_2876,p_2873,q_2877>&exists(self_2931:x'=self_2931) & 
+exists(flted_12_2932:flted_12_2912+1=flted_12_2932) & q_2935=q_2914 & 
+Anon_2934=Anon_2913 & next_101_2918=q_2849 & prev_94_2915=p_2910 & 
+self_2911=q_2877 & self_2874=q_2849 & flted_12_2847+1=n & p_2845=p & 
+self_2846=x' & x'=x & 1<n & p_2873=self_2846 & flted_12_2875+
+1=flted_12_2847 & self_2911!=null & v_bool_92_1530' & p_2910=self_2874 & 
+flted_12_2912+1=flted_12_2875 & Anon_2922=Anon_2848 & q_2923=self_2911 & 
+exists(Anon_2921:flted_12_2912+1+1=Anon_2921) & 
+exists(Anon_2920:p_2845=Anon_2920).
+
+// id 65
+checksat  self_2874::node2<Anon_2876,p_2873,q_2877>&exists(self_2931:x'=self_2931) & 
+exists(flted_12_2932:flted_12_2912+1=flted_12_2932) & q_2935=q_2914 & 
+Anon_2934=Anon_2913 & next_101_2918=q_2849 & prev_94_2915=p_2910 & 
+self_2911=q_2877 & self_2874=q_2849 & flted_12_2847+1=n & p_2845=p & 
+self_2846=x' & x'=x & 1<n & p_2873=self_2846 & flted_12_2875+
+1=flted_12_2847 & self_2911!=null & v_bool_92_1530' & p_2910=self_2874 & 
+flted_12_2912+1=flted_12_2875 & Anon_2922=Anon_2848 & q_2923=self_2911 & 
+exists(Anon_2921:flted_12_2912+1+1=Anon_2921) & 
+exists(Anon_2920:p_2845=Anon_2920).
+
+// id 66
+checksat  self_2874::node2<Anon_2876,p_2873,q_2877>&q_2923=self_2911 & 
+Anon_2922=Anon_2848 & flted_12_2912+1=flted_12_2875 & p_2910=self_2874 & 
+v_bool_92_1530' & self_2911!=null & flted_12_2875+1=flted_12_2847 & 
+p_2873=self_2846 & 1<n & x'=x & self_2846=x' & p_2845=p & flted_12_2847+
+1=n & self_2874=q_2849 & self_2911=q_2877 & prev_94_2915=p_2910 & 
+next_101_2918=q_2849 & Anon_2934=Anon_2913 & q_2935=q_2914 & 
+exists(flted_12_2932:flted_12_2912+1=flted_12_2932) & 
+exists(self_2931:x'=self_2931).
+
+// id 67
+checksat  self_2874::node2<Anon_2876,p_2873,q_2877>&q_2923=self_2911 & 
+Anon_2922=Anon_2848 & flted_12_2912+1=flted_12_2875 & p_2910=self_2874 & 
+v_bool_92_1530' & self_2911!=null & flted_12_2875+1=flted_12_2847 & 
+p_2873=self_2846 & 1<n & x'=x & self_2846=x' & p_2845=p & flted_12_2847+
+1=n & self_2874=q_2849 & self_2911=q_2877 & prev_94_2915=p_2910 & 
+next_101_2918=q_2849 & Anon_2934=Anon_2913 & q_2935=q_2914 & 
+exists(flted_12_2932:flted_12_2912+1=flted_12_2932) & 
+exists(self_2931:x'=self_2931).
+
+// id 68
+checksat  self_2874::node2<Anon_2876,p_2873,q_2877>&q_2935=q_2914 & 
+Anon_2934=Anon_2913 & next_101_2918=q_2849 & prev_94_2915=p_2910 & 
+self_2911=q_2877 & self_2874=q_2849 & flted_12_2847+1=n & p_2845=p & 
+self_2846=x' & x'=x & 1<n & p_2873=self_2846 & flted_12_2875+
+1=flted_12_2847 & self_2911!=null & v_bool_92_1530' & p_2910=self_2874 & 
+flted_12_2912+1=flted_12_2875 & Anon_2922=Anon_2848 & q_2923=self_2911.
+
+// id 69
+checksat  self_2874::node2<Anon_2876,p_2873,q_2877> * 
+q_2914::dll<self_2911,flted_12_2912> * self_2911::node2<Anon_2913,x',q_2914>&
+next_101_2918=q_2849 & prev_94_2915=p_2910 & self_2911=q_2877 & 
+self_2874=q_2849 & flted_12_2847+1=n & p_2845=p & self_2846=x' & x'=x & 
+1<n & p_2873=self_2846 & flted_12_2875+1=flted_12_2847 & self_2911!=null & 
+v_bool_92_1530' & p_2910=self_2874 & flted_12_2912+1=flted_12_2875 & 
+Anon_2922=Anon_2848 & q_2923=self_2911.
+
+// id 70
+checksat  self_2874::node2<Anon_2876,p_2873,q_2877> * 
+q_2914::dll<self_2911,flted_12_2912> * self_2911::node2<Anon_2913,x',q_2914>&
+next_101_2918=q_2849 & prev_94_2915=p_2910 & self_2911=q_2877 & 
+self_2874=q_2849 & flted_12_2847+1=n & p_2845=p & self_2846=x' & x'=x & 
+1<n & p_2873=self_2846 & flted_12_2875+1=flted_12_2847 & self_2911!=null & 
+v_bool_92_1530' & p_2910=self_2874 & flted_12_2912+1=flted_12_2875 & 
+Anon_2922=Anon_2848 & q_2923=self_2911.
+
+// id 71
+checksat  self_2874::node2<Anon_2876,p_2873,q_2877> * 
+q_2914::dll<self_2911,flted_12_2912> * 
+self_2911::node2<Anon_2913,x',q_2914> * 
+x'::node2<Anon_2848,p_2845,self_2911>&flted_12_2912+1=flted_12_2875 & 
+p_2910=self_2874 & v_bool_92_1530' & self_2911!=null & flted_12_2875+
+1=flted_12_2847 & p_2873=self_2846 & 1<n & x'=x & self_2846=x' & p_2845=p & 
+flted_12_2847+1=n & self_2874=q_2849 & self_2911=q_2877 & 
+prev_94_2915=p_2910 & next_101_2918=q_2849.
+
+// id 72
+checksat  self_2874::node2<Anon_2876,p_2873,q_2877> * 
+q_2914::dll<self_2911,flted_12_2912> * 
+self_2911::node2<Anon_2913,x',q_2914> * 
+x'::node2<Anon_2848,p_2845,self_2911>&flted_12_2912+1=flted_12_2875 & 
+p_2910=self_2874 & v_bool_92_1530' & self_2911!=null & flted_12_2875+
+1=flted_12_2847 & p_2873=self_2846 & 1<n & x'=x & self_2846=x' & p_2845=p & 
+flted_12_2847+1=n & self_2874=q_2849 & self_2911=q_2877 & 
+prev_94_2915=p_2910 & next_101_2918=q_2849.
+
+// id 73
+checksat  tmp1'::node2<Anon_2876,p_2873,q_2877> * 
+q_2877::dll<self_2874,flted_12_2875>&next_101_1533'=q_2849 & 
+prev_101_1532'=p_2845 & val_101_1531'=Anon_2848 & tmp2'=q_2877 & 
+tmp1'=q_2849 & flted_12_2847+1=n & p_2845=p & self_2846=x' & x'=x & 1<n & 
+self_2874=tmp1' & p_2873=self_2846 & flted_12_2875+1=flted_12_2847 & 
+tmp2'=null & !(v_bool_92_1530').
+
+// id 74
+checksat  tmp1'::node2<Anon_2876,p_2873,q_2877> * 
+q_2914::dll<self_2911,flted_12_2912> * tmp2'::node2<Anon_2913,x',q_2914>&
+next_101_1533'=q_2849 & prev_101_1532'=p_2845 & val_101_1531'=Anon_2848 & 
+prev_94_2915=p_2910 & tmp2'=q_2877 & tmp1'=q_2849 & flted_12_2847+1=n & 
+p_2845=p & self_2846=x' & x'=x & 1<n & self_2874=tmp1' & p_2873=self_2846 & 
+flted_12_2875+1=flted_12_2847 & tmp2'!=null & v_bool_92_1530' & 
+self_2911=tmp2' & p_2910=self_2874 & flted_12_2912+1=flted_12_2875.
+
+// id 75
+checksat  x'::node2<Anon_2848,p_2845,q_2849> * 
+tmp1'::node2<Anon_2876,p_2873,q_2877> * q_2914::dll<self_2911,flted_12_2912>&
+next_94_1529'=q_2914 & prev_94_1528'=p_2910 & val_94_1527'=Anon_2913 & 
+tmp2'=q_2877 & tmp1'=q_2849 & flted_12_2847+1=n & p_2845=p & self_2846=x' & 
+x'=x & 1<n & self_2874=tmp1' & p_2873=self_2846 & flted_12_2875+
+1=flted_12_2847 & tmp2'!=null & v_bool_92_1530' & self_2911=tmp2' & 
+p_2910=self_2874 & flted_12_2912+1=flted_12_2875.
+
+// id 76
+checksat  (exists p_2904,self_2905,flted_12_2906,Anon_2907,
+q_2908: x'::node2<Anon_2848,p_2845,q_2849> * 
+tmp1'::node2<Anon_2876,p_2873,q_2877> * 
+tmp2'::node2<Anon_2907,p_2904,q_2908> * q_2908::dll<self_2905,flted_12_2906>&
+flted_12_2906+1=flted_12_2875 & p_2904=self_2874 & self_2905=tmp2' & 
+v_bool_92_1530' & tmp2'!=null & flted_12_2875+1=flted_12_2847 & 
+p_2873=self_2846 & self_2874=tmp1' & 1<n & x'=x & self_2846=x' & p_2845=p & 
+flted_12_2847+1=n & tmp1'=q_2849 & tmp2'=q_2877).
+
+// id 77
+checksat  x'::node2<Anon_2848,p_2845,q_2849> * tmp1'::node2<Anon_2876,p_2873,q_2877>&
+tmp2'=null & flted_12_2875=0 & v_bool_92_1530' & tmp2'!=null & flted_12_2875+
+1=flted_12_2847 & p_2873=self_2846 & self_2874=tmp1' & 1<n & x'=x & 
+self_2846=x' & p_2845=p & flted_12_2847+1=n & tmp1'=q_2849 & tmp2'=q_2877.
+
+// id 78
+checksat  x'::node2<Anon_2848,p_2845,q_2849> * 
+tmp1'::node2<Anon_2876,p_2873,q_2877> * q_2877::dll<self_2874,flted_12_2875>&
+tmp2'=null & tmp2'=q_2877 & tmp1'=q_2849 & flted_12_2847+1=n & p_2845=p & 
+self_2846=x' & x'=x & 1<n & self_2874=tmp1' & p_2873=self_2846 & 
+flted_12_2875+1=flted_12_2847 & !(v_bool_92_1530') & tmp2'=null & 
+!(v_bool_92_1530').
+
+// id 79
+checksat  x'::node2<Anon_2848,p_2845,q_2849> * 
+tmp1'::node2<Anon_2876,p_2873,q_2877> * q_2877::dll<self_2874,flted_12_2875>&
+tmp2'!=null & tmp2'=q_2877 & tmp1'=q_2849 & flted_12_2847+1=n & p_2845=p & 
+self_2846=x' & x'=x & 1<n & self_2874=tmp1' & p_2873=self_2846 & 
+flted_12_2875+1=flted_12_2847 & v_bool_92_1530' & tmp2'!=null & 
+!(v_bool_92_1530').
+
+// id 80
+checksat  x'::node2<Anon_2848,p_2845,q_2849> * 
+tmp1'::node2<Anon_2876,p_2873,q_2877> * q_2877::dll<self_2874,flted_12_2875>&
+tmp2'=null & tmp2'=q_2877 & tmp1'=q_2849 & flted_12_2847+1=n & p_2845=p & 
+self_2846=x' & x'=x & 1<n & self_2874=tmp1' & p_2873=self_2846 & 
+flted_12_2875+1=flted_12_2847 & !(v_bool_92_1530') & tmp2'=null & 
+v_bool_92_1530'.
+
+// id 81
+checksat  x'::node2<Anon_2848,p_2845,q_2849> * 
+tmp1'::node2<Anon_2876,p_2873,q_2877> * q_2877::dll<self_2874,flted_12_2875>&
+tmp2'!=null & tmp2'=q_2877 & tmp1'=q_2849 & flted_12_2847+1=n & p_2845=p & 
+self_2846=x' & x'=x & 1<n & self_2874=tmp1' & p_2873=self_2846 & 
+flted_12_2875+1=flted_12_2847 & v_bool_92_1530' & tmp2'!=null & 
+v_bool_92_1530'.
+
+// id 82
+checksat  x'::node2<Anon_2848,p_2845,q_2849> * 
+tmp1'::node2<Anon_2876,p_2873,q_2877> * q_2877::dll<self_2874,flted_12_2875>&
+tmp2'!=null & tmp2'=q_2877 & tmp1'=q_2849 & flted_12_2847+1=n & p_2845=p & 
+self_2846=x' & x'=x & 1<n & self_2874=tmp1' & p_2873=self_2846 & 
+flted_12_2875+1=flted_12_2847 & res & tmp2'!=null.
+
+// id 83
+checksat  x'::node2<Anon_2848,p_2845,q_2849> * 
+tmp1'::node2<Anon_2876,p_2873,q_2877> * q_2877::dll<self_2874,flted_12_2875>&
+flted_12_2875+1=flted_12_2847 & p_2873=self_2846 & self_2874=tmp1' & 1<n & 
+x'=x & self_2846=x' & p_2845=p & flted_12_2847+1=n & tmp1'=q_2849 & 
+tmp2'=q_2877 & tmp2'!=null.
+
+// id 84
+checksat  x'::node2<Anon_2848,p_2845,q_2849> * 
+tmp1'::node2<Anon_2876,p_2873,q_2877> * q_2877::dll<self_2874,flted_12_2875>&
+flted_12_2875+1=flted_12_2847 & p_2873=self_2846 & self_2874=tmp1' & 1<n & 
+x'=x & self_2846=x' & p_2845=p & flted_12_2847+1=n & tmp1'=q_2849 & 
+tmp2'=q_2877 & tmp2'!=null.
+
+// id 85
+checksat  x'::node2<Anon_2848,p_2845,q_2849> * 
+tmp1'::node2<Anon_2876,p_2873,q_2877> * q_2877::dll<self_2874,flted_12_2875>&
+flted_12_2875+1=flted_12_2847 & p_2873=self_2846 & self_2874=tmp1' & 1<n & 
+x'=x & self_2846=x' & p_2845=p & flted_12_2847+1=n & tmp1'=q_2849 & 
+tmp2'=q_2877 & tmp2'!=null.
+
+// id 86
+checksat  x'::node2<Anon_2848,p_2845,q_2849> * 
+tmp1'::node2<Anon_2876,p_2873,q_2877> * q_2877::dll<self_2874,flted_12_2875>&
+tmp2'=null & tmp2'=q_2877 & tmp1'=q_2849 & flted_12_2847+1=n & p_2845=p & 
+self_2846=x' & x'=x & 1<n & self_2874=tmp1' & p_2873=self_2846 & 
+flted_12_2875+1=flted_12_2847 & !(res) & tmp2'=null.
+
+// id 87
+checksat  x'::node2<Anon_2848,p_2845,q_2849> * 
+tmp1'::node2<Anon_2876,p_2873,q_2877> * q_2877::dll<self_2874,flted_12_2875>&
+flted_12_2875+1=flted_12_2847 & p_2873=self_2846 & self_2874=tmp1' & 1<n & 
+x'=x & self_2846=x' & p_2845=p & flted_12_2847+1=n & tmp1'=q_2849 & 
+tmp2'=q_2877 & tmp2'=null.
+
+// id 88
+checksat  x'::node2<Anon_2848,p_2845,q_2849> * 
+tmp1'::node2<Anon_2876,p_2873,q_2877> * q_2877::dll<self_2874,flted_12_2875>&
+flted_12_2875+1=flted_12_2847 & p_2873=self_2846 & self_2874=tmp1' & 1<n & 
+x'=x & self_2846=x' & p_2845=p & flted_12_2847+1=n & tmp1'=q_2849 & 
+tmp2'=q_2877 & tmp2'=null.
+
+// id 89
+checksat  x'::node2<Anon_2848,p_2845,q_2849> * 
+tmp1'::node2<Anon_2876,p_2873,q_2877> * q_2877::dll<self_2874,flted_12_2875>&
+flted_12_2875+1=flted_12_2847 & p_2873=self_2846 & self_2874=tmp1' & 1<n & 
+x'=x & self_2846=x' & p_2845=p & flted_12_2847+1=n & tmp1'=q_2849 & 
+tmp2'=q_2877 & tmp2'=null.
+
+// id 90
+checksat  x'::node2<Anon_2848,p_2845,q_2849> * 
+tmp1'::node2<Anon_2876,p_2873,q_2877> * q_2877::dll<self_2874,flted_12_2875>&
+next_90_1523'=q_2877 & prev_90_1522'=p_2873 & val_90_1521'=Anon_2876 & 
+tmp1'=q_2849 & flted_12_2847+1=n & p_2845=p & self_2846=x' & x'=x & 1<n & 
+self_2874=tmp1' & p_2873=self_2846 & flted_12_2875+1=flted_12_2847.
+
+// id 91
+checksat  (exists p_2867,self_2868,flted_12_2869,Anon_2870,
+q_2871: x'::node2<Anon_2848,p_2845,q_2849> * 
+tmp1'::node2<Anon_2870,p_2867,q_2871> * q_2871::dll<self_2868,flted_12_2869>&
+flted_12_2869+1=flted_12_2847 & p_2867=self_2846 & self_2868=tmp1' & 1<n & 
+x'=x & self_2846=x' & p_2845=p & flted_12_2847+1=n & tmp1'=q_2849).
+
+// id 92
+checksat  x'::node2<Anon_2848,p_2845,q_2849>&tmp1'=null & flted_12_2847=0 & 1<n & 
+x'=x & self_2846=x' & p_2845=p & flted_12_2847+1=n & tmp1'=q_2849.
+
+// id 93
+checksat  x'::node2<Anon_2848,p_2845,q_2849> * q_2849::dll<self_2846,flted_12_2847>&
+next_88_1520'=q_2849 & prev_88_1519'=p_2845 & val_88_1518'=Anon_2848 & 
+flted_12_2847+1=n & p_2845=p & self_2846=x' & x'=x & 1<n.
+
+// id 94
+checksat  (exists p_2839,self_2840,flted_12_2841,Anon_2842,
+q_2843: x'::node2<Anon_2842,p_2839,q_2843> * 
+q_2843::dll<self_2840,flted_12_2841>&flted_12_2841+1=n & p_2839=p & 
+self_2840=x' & x'=x & 1<n & MayLoop[]).
+
+// id 95
+checksat  emp&x'=null & n=0 & x'=x & 1<n & MayLoop[].
+
+// id 96
+checksat  emp&!(l_2809) & q_2749!=null & 0<n & a'=a & x'=x & self_2746=x' & 
+p_2745=p & flted_12_2747+1=n & p_2769=self_2746 & n_2770=flted_12_2747 & 
+0<=flted_12_2747 & n_2770<m_2808 & 0<=n_2770 & Anon_2812=Anon_2748 & 
+q_2813=q_2749 & exists(m_2811:m_2808+1=m_2811) & exists(p_2810:p_2745=p_2810).
+
+// id 97
+checksat  emp&!(l_2809) & q_2749!=null & 0<n & a'=a & x'=x & self_2746=x' & 
+p_2745=p & flted_12_2747+1=n & p_2769=self_2746 & n_2770=flted_12_2747 & 
+0<=flted_12_2747 & n_2770<m_2808 & 0<=n_2770 & Anon_2812=Anon_2748 & 
+q_2813=q_2749 & exists(m_2811:m_2808+1=m_2811) & exists(p_2810:p_2745=p_2810).
+
+// id 98
+checksat  emp&q_2813=q_2749 & Anon_2812=Anon_2748 & 0<=n_2770 & n_2770<m_2808 & 
+0<=flted_12_2747 & n_2770=flted_12_2747 & p_2769=self_2746 & flted_12_2747+
+1=n & p_2745=p & self_2746=x' & x'=x & a'=a & 0<n & q_2749!=null & !(l_2809).
+
+// id 99
+checksat  x'::node2<Anon_2748,p_2745,q_2749> * q_2749::dll<p_2769,m_2808>&0<=n_2770 & 
+n_2770<m_2808 & 0<=flted_12_2747 & n_2770=flted_12_2747 & p_2769=self_2746 & 
+flted_12_2747+1=n & p_2745=p & self_2746=x' & x'=x & a'=a & 0<n & 
+q_2749!=null & !(l_2809).
+
+// id 100
+checksat  x'::node2<Anon_2748,p_2745,q_2749> * q_2749::dll<p_2769,m_2808>&0<=n_2770 & 
+n_2770<m_2808 & 0<=flted_12_2747 & n_2770=flted_12_2747 & p_2769=self_2746 & 
+flted_12_2747+1=n & p_2745=p & self_2746=x' & x'=x & a'=a & 0<n & 
+q_2749!=null & !(l_2809).
+
+// id 101
+checksat  (exists m_2776,l': x'::node2<Anon_2748,p_2745,q_2749> * 
+q_2749::dll<p_2769,m_2776>&!(l') & q_2749!=null & 0<n & a'=a & x'=x & 
+self_2746=x' & p_2745=p & flted_12_2747+1=n & p_2769=self_2746 & 
+n_2770=flted_12_2747 & 0<=flted_12_2747 & n_2770<m_2776 & 0<=n_2770).
+
+// id 102
+checksat  q_2749::dll<self_2746,flted_12_2747>&exists(self_2790:x'=self_2790) & 
+exists(flted_12_2791:0+1=flted_12_2791) & q_2794=v_null_type_23_2762 & 
+Anon_2793=a' & next_23_2763=q_2749 & v_null_type_23_2762=null & 
+flted_12_2747+1=n & p_2745=p & self_2746=x' & x'=x & a'=a & 0<n & 
+q_2749=null & l_2778 & Anon_2781=Anon_2748 & q_2782=v_node2_23_2777 & 
+exists(m_2780:0+1+1=m_2780) & exists(p_2779:p_2745=p_2779).
+
+// id 103
+checksat  q_2749::dll<self_2746,flted_12_2747>&exists(self_2790:x'=self_2790) & 
+exists(flted_12_2791:0+1=flted_12_2791) & q_2794=v_null_type_23_2762 & 
+Anon_2793=a' & next_23_2763=q_2749 & v_null_type_23_2762=null & 
+flted_12_2747+1=n & p_2745=p & self_2746=x' & x'=x & a'=a & 0<n & 
+q_2749=null & l_2778 & Anon_2781=Anon_2748 & q_2782=v_node2_23_2777 & 
+exists(m_2780:0+1+1=m_2780) & exists(p_2779:p_2745=p_2779).
+
+// id 104
+checksat  q_2749::dll<self_2746,flted_12_2747>&q_2782=v_node2_23_2777 & 
+Anon_2781=Anon_2748 & l_2778 & q_2749=null & 0<n & a'=a & x'=x & 
+self_2746=x' & p_2745=p & flted_12_2747+1=n & v_null_type_23_2762=null & 
+next_23_2763=q_2749 & Anon_2793=a' & q_2794=v_null_type_23_2762 & 
+exists(flted_12_2791:0+1=flted_12_2791) & exists(self_2790:x'=self_2790).
+
+// id 105
+checksat  q_2749::dll<self_2746,flted_12_2747>&q_2782=v_node2_23_2777 & 
+Anon_2781=Anon_2748 & l_2778 & q_2749=null & 0<n & a'=a & x'=x & 
+self_2746=x' & p_2745=p & flted_12_2747+1=n & v_null_type_23_2762=null & 
+next_23_2763=q_2749 & Anon_2793=a' & q_2794=v_null_type_23_2762 & 
+exists(flted_12_2791:0+1=flted_12_2791) & exists(self_2790:x'=self_2790).
+
+// id 106
+checksat  q_2749::dll<self_2746,flted_12_2747>&q_2794=v_null_type_23_2762 & 
+Anon_2793=a' & next_23_2763=q_2749 & v_null_type_23_2762=null & 
+flted_12_2747+1=n & p_2745=p & self_2746=x' & x'=x & a'=a & 0<n & 
+q_2749=null & l_2778 & Anon_2781=Anon_2748 & q_2782=v_node2_23_2777.
+
+// id 107
+checksat  q_2749::dll<self_2746,flted_12_2747>&q_2794=v_null_type_23_2762 & 
+Anon_2793=a' & next_23_2763=q_2749 & v_null_type_23_2762=null & 
+flted_12_2747+1=n & p_2745=p & self_2746=x' & x'=x & a'=a & 0<n & 
+q_2749=null & l_2778 & Anon_2781=Anon_2748 & q_2782=v_node2_23_2777.
+
+// id 108
+checksat  q_2749::dll<self_2746,flted_12_2747>&q_2782=v_node2_23_2777 & 
+Anon_2781=Anon_2748 & l_2778 & q_2749=null & 0<n & a'=a & x'=x & 
+self_2746=x' & p_2745=p & flted_12_2747+1=n & v_null_type_23_2762=null & 
+next_23_2763=q_2749 & Anon_2793=a' & q_2794=v_null_type_23_2762.
+
+// id 109
+checksat  q_2749::dll<self_2746,flted_12_2747>&q_2782=v_node2_23_2777 & 
+Anon_2781=Anon_2748 & l_2778 & q_2749=null & 0<n & a'=a & x'=x & 
+self_2746=x' & p_2745=p & flted_12_2747+1=n & v_null_type_23_2762=null & 
+next_23_2763=q_2749 & Anon_2793=a' & q_2794=v_null_type_23_2762.
+
+// id 110
+checksat  q_2749::dll<self_2746,flted_12_2747> * 
+v_node2_23_2777::node2<a',x',v_null_type_23_2762>&next_23_2763=q_2749 & 
+v_null_type_23_2762=null & flted_12_2747+1=n & p_2745=p & self_2746=x' & 
+x'=x & a'=a & 0<n & q_2749=null & l_2778 & Anon_2781=Anon_2748 & 
+q_2782=v_node2_23_2777.
+
+// id 111
+checksat  q_2749::dll<self_2746,flted_12_2747> * 
+v_node2_23_2777::node2<a',x',v_null_type_23_2762>&next_23_2763=q_2749 & 
+v_null_type_23_2762=null & flted_12_2747+1=n & p_2745=p & self_2746=x' & 
+x'=x & a'=a & 0<n & q_2749=null & l_2778 & Anon_2781=Anon_2748 & 
+q_2782=v_node2_23_2777.
+
+// id 112
+checksat  q_2749::dll<self_2746,flted_12_2747> * 
+v_node2_23_2777::node2<a',x',v_null_type_23_2762> * 
+x'::node2<Anon_2748,p_2745,v_node2_23_2777>&l_2778 & q_2749=null & 0<n & 
+a'=a & x'=x & self_2746=x' & p_2745=p & flted_12_2747+1=n & 
+v_null_type_23_2762=null & next_23_2763=q_2749.
+
+// id 113
+checksat  q_2749::dll<self_2746,flted_12_2747> * 
+v_node2_23_2777::node2<a',x',v_null_type_23_2762> * 
+x'::node2<Anon_2748,p_2745,v_node2_23_2777>&l_2778 & q_2749=null & 0<n & 
+a'=a & x'=x & self_2746=x' & p_2745=p & flted_12_2747+1=n & 
+v_null_type_23_2762=null & next_23_2763=q_2749.
+
+// id 114
+checksat  (exists p_2775,m_2776: x'::node2<Anon_2748,p_2745,q_2749> * 
+v_node2_25_1713'::dll<p_2775,m_2776>&!(l') & q_2749!=null & 0<n & a'=a & 
+x'=x & self_2746=x' & p_2745=p & flted_12_2747+1=n & 
+v_node2_25_1713'=q_2749 & p_2769=self_2746 & n_2770=flted_12_2747 & 
+0<=flted_12_2747 & n_2770<m_2776 & p_2775=p_2769 & 0<=n_2770).
+
+// id 115
+checksat  x'::node2<Anon_2748,p_2745,q_2749>&n_2770=flted_12_2747 & 
+p_2769=self_2746 & v_node2_25_1713'=q_2749 & flted_12_2747+1=n & p_2745=p & 
+self_2746=x' & x'=x & a'=a & 0<n & q_2749!=null & !(l').
+
+// id 116
+checksat  x'::node2<Anon_2748,p_2745,q_2749>&n_2770=flted_12_2747 & 
+p_2769=self_2746 & v_node2_25_1713'=q_2749 & flted_12_2747+1=n & p_2745=p & 
+self_2746=x' & x'=x & a'=a & 0<n & q_2749!=null & !(l').
+
+// id 117
+checksat  x'::node2<Anon_2748,p_2745,q_2749> * q_2749::dll<self_2746,flted_12_2747>&
+next_25_1709'=q_2749 & prev_25_1708'=p_2745 & val_25_1707'=Anon_2748 & 
+flted_12_2747+1=n & p_2745=p & self_2746=x' & x'=x & a'=a & 0<n & 
+q_2749!=null & !(l').
+
+// id 118
+checksat  q_2749::dll<self_2746,flted_12_2747> * 
+v_node2_23_1703'::node2<a',x',v_null_type_23_2762>&next_23_1706'=q_2749 & 
+prev_23_1705'=p_2745 & val_23_1704'=Anon_2748 & v_null_type_23_2762=null & 
+flted_12_2747+1=n & p_2745=p & self_2746=x' & x'=x & a'=a & 0<n & 
+q_2749=null & l'.
+
+// id 119
+checksat  x'::node2<Anon_2748,p_2745,q_2749> * q_2749::dll<self_2746,flted_12_2747>&
+q_2749=null & flted_12_2747+1=n & p_2745=p & self_2746=x' & x'=x & a'=a & 
+0<n & l' & q_2749=null & !(l').
+
+// id 120
+checksat  x'::node2<Anon_2748,p_2745,q_2749> * q_2749::dll<self_2746,flted_12_2747>&
+q_2749!=null & flted_12_2747+1=n & p_2745=p & self_2746=x' & x'=x & a'=a & 
+0<n & !(l') & q_2749!=null & !(l').
+
+// id 121
+checksat  x'::node2<Anon_2748,p_2745,q_2749> * q_2749::dll<self_2746,flted_12_2747>&
+q_2749=null & flted_12_2747+1=n & p_2745=p & self_2746=x' & x'=x & a'=a & 
+0<n & l' & q_2749=null & l'.
+
+// id 122
+checksat  x'::node2<Anon_2748,p_2745,q_2749> * q_2749::dll<self_2746,flted_12_2747>&
+q_2749!=null & flted_12_2747+1=n & p_2745=p & self_2746=x' & x'=x & a'=a & 
+0<n & !(l') & q_2749!=null & l'.
+
+// id 123
+checksat  x'::node2<Anon_2748,p_2745,q_2749> * q_2749::dll<self_2746,flted_12_2747>&
+v_node2_21_1701'!=null & v_node2_21_1701'=q_2749 & flted_12_2747+1=n & 
+p_2745=p & self_2746=x' & x'=x & a'=a & 0<n & !(res) & v_node2_21_1701'!=null.
+
+// id 124
+checksat  x'::node2<Anon_2748,p_2745,q_2749> * q_2749::dll<self_2746,flted_12_2747>&
+0<n & a'=a & x'=x & self_2746=x' & p_2745=p & flted_12_2747+1=n & 
+v_node2_21_1701'=q_2749 & v_node2_21_1701'!=null.
+
+// id 125
+checksat  x'::node2<Anon_2748,p_2745,q_2749> * q_2749::dll<self_2746,flted_12_2747>&
+0<n & a'=a & x'=x & self_2746=x' & p_2745=p & flted_12_2747+1=n & 
+v_node2_21_1701'=q_2749 & v_node2_21_1701'!=null.
+
+// id 126
+checksat  x'::node2<Anon_2748,p_2745,q_2749> * q_2749::dll<self_2746,flted_12_2747>&
+0<n & a'=a & x'=x & self_2746=x' & p_2745=p & flted_12_2747+1=n & 
+v_node2_21_1701'=q_2749 & v_node2_21_1701'!=null.
+
+// id 127
+checksat  x'::node2<Anon_2748,p_2745,q_2749> * q_2749::dll<self_2746,flted_12_2747>&
+v_node2_21_1701'=null & v_node2_21_1701'=q_2749 & flted_12_2747+1=n & 
+p_2745=p & self_2746=x' & x'=x & a'=a & 0<n & res & v_node2_21_1701'=null.
+
+// id 128
+checksat  x'::node2<Anon_2748,p_2745,q_2749> * q_2749::dll<self_2746,flted_12_2747>&
+0<n & a'=a & x'=x & self_2746=x' & p_2745=p & flted_12_2747+1=n & 
+v_node2_21_1701'=q_2749 & v_node2_21_1701'=null.
+
+// id 129
+checksat  x'::node2<Anon_2748,p_2745,q_2749> * q_2749::dll<self_2746,flted_12_2747>&
+0<n & a'=a & x'=x & self_2746=x' & p_2745=p & flted_12_2747+1=n & 
+v_node2_21_1701'=q_2749 & v_node2_21_1701'=null.
+
+// id 130
+checksat  x'::node2<Anon_2748,p_2745,q_2749> * q_2749::dll<self_2746,flted_12_2747>&
+0<n & a'=a & x'=x & self_2746=x' & p_2745=p & flted_12_2747+1=n & 
+v_node2_21_1701'=q_2749 & v_node2_21_1701'=null.
+
+// id 131
+checksat  x'::node2<Anon_2748,p_2745,q_2749> * q_2749::dll<self_2746,flted_12_2747>&
+next_21_1697'=q_2749 & prev_21_1696'=p_2745 & val_21_1695'=Anon_2748 & 
+flted_12_2747+1=n & p_2745=p & self_2746=x' & x'=x & a'=a & 0<n.
+
+// id 132
+checksat  (exists p_2739,self_2740,flted_12_2741,Anon_2742,
+q_2743: x'::node2<Anon_2742,p_2739,q_2743> * 
+q_2743::dll<self_2740,flted_12_2741>&flted_12_2741+1=n & p_2739=p & 
+self_2740=x' & x'=x & a'=a & 0<n & MayLoop[]).
+
+// id 133
+checksat  emp&x'=null & n=0 & x'=x & a'=a & 0<n & MayLoop[].
+
+// id 134
+checksat  emp&0<m & x'=x & q_2716=q & m_2717=m & 0<=m & 0<=m_2717.
+
+// id 135
+checksat  x'::dll<q_2716,m_2717>&0<m & x'=x & q_2716=q & m_2717=m & 0<=m & 0<=m_2717.
+
+// id 136
+checksat  (exists q_2720,m_2721: x'::dll<q_2720,m_2721>&0<m & x'=x & q_2716=q & 
+m_2717=m & 0<=m & q_2720=q_2716 & m_2721=m_2717 & 0<=m_2717).
+
+// id 137
+checksat  emp&m_2717=m & q_2716=q & x'=x & 0<m.
+
+// id 138
+checksat  emp&m_2717=m & q_2716=q & x'=x & 0<m.
+
+// id 139
+checksat  emp&t_2707=0 & 0<m & x'=x.
+
+// id 140
+checksat  x::dll<q,m>&t_2707=0 & 0<m & x'=x.
+
+// id 141
+checksat  x::dll<q,m>&v_int_215_1321'=1 & t'=0 & 0<m & x'=x & res=v_int_215_1321'+t'.
+
+// id 142
+checksat  x::dll<q,m>&x'=x & 0<m & t'=0 & v_int_215_1321'=1.
+
+// id 143
+checksat  x::dll<q,m>&x'=x & 0<m & t'=0 & v_int_215_1321'=1.
+
+// id 144
+checksat  emp&flted_12_2614+1=n & p_2612=p & self_2613=x' & !(v_bool_59_1591') & 
+a'!=1 & 0<a & a<n & a'=a & x'=x & v_int_74_2680+1=a' & p_2626=self_2613 & 
+n_2627=flted_12_2614 & 0<=flted_12_2614 & flted_56_2679+1=n_2627 & 
+0<=n_2627 & Anon_2683=Anon_2615 & q_2684=q_2616 & 
+exists(flted_56_2682:flted_56_2679+1=flted_56_2682) & 
+exists(p_2681:p_2612=p_2681).
+
+// id 145
+checksat  emp&flted_12_2614+1=n & p_2612=p & self_2613=x' & !(v_bool_59_1591') & 
+a'!=1 & 0<a & a<n & a'=a & x'=x & v_int_74_2680+1=a' & p_2626=self_2613 & 
+n_2627=flted_12_2614 & 0<=flted_12_2614 & flted_56_2679+1=n_2627 & 
+0<=n_2627 & Anon_2683=Anon_2615 & q_2684=q_2616 & 
+exists(flted_56_2682:flted_56_2679+1=flted_56_2682) & 
+exists(p_2681:p_2612=p_2681).
+
+// id 146
+checksat  emp&q_2684=q_2616 & Anon_2683=Anon_2615 & 0<=n_2627 & flted_56_2679+
+1=n_2627 & 0<=flted_12_2614 & n_2627=flted_12_2614 & p_2626=self_2613 & 
+v_int_74_2680+1=a' & x'=x & a'=a & a<n & 0<a & a'!=1 & !(v_bool_59_1591') & 
+self_2613=x' & p_2612=p & flted_12_2614+1=n.
+
+// id 147
+checksat  x'::node2<Anon_2615,p_2612,q_2616> * q_2616::dll<p_2626,flted_56_2679>&
+0<=n_2627 & flted_56_2679+1=n_2627 & 0<=flted_12_2614 & 
+n_2627=flted_12_2614 & p_2626=self_2613 & v_int_74_2680+1=a' & x'=x & a'=a & 
+a<n & 0<a & a'!=1 & !(v_bool_59_1591') & self_2613=x' & p_2612=p & 
+flted_12_2614+1=n.
+
+// id 148
+checksat  x'::node2<Anon_2615,p_2612,q_2616> * q_2616::dll<p_2626,flted_56_2679>&
+0<=n_2627 & flted_56_2679+1=n_2627 & 0<=flted_12_2614 & 
+n_2627=flted_12_2614 & p_2626=self_2613 & v_int_74_2680+1=a' & x'=x & a'=a & 
+a<n & 0<a & a'!=1 & !(v_bool_59_1591') & self_2613=x' & p_2612=p & 
+flted_12_2614+1=n.
+
+// id 149
+checksat  (exists flted_56_2633,v_int_74_1589': x'::node2<Anon_2615,p_2612,q_2616> * 
+q_2616::dll<p_2626,flted_56_2633>&flted_12_2614+1=n & p_2612=p & 
+self_2613=x' & !(v_bool_59_1591') & a'!=1 & 0<a & a<n & a'=a & x'=x & 
+v_int_74_1589'+1=a' & p_2626=self_2613 & n_2627=flted_12_2614 & 
+0<=flted_12_2614 & flted_56_2633+1=n_2627 & 0<=n_2627).
+
+// id 150
+checksat  self_2551::node2<Anon_2553,p_2550,q_2554>&((flted_12_2552=0 | 
+q_2554=null)) & q_2665=q_2554 & Anon_2664=Anon_2525 & !(v_bool_62_1577') & 
+q_2554=null & flted_12_2552+1=flted_12_2524 & p_2550=self_2523 & 
+flted_12_2524+1=n & p_2522=p & self_2523=x' & v_bool_59_1591' & a'=1 & 0<a & 
+a<n & a'=a & x'=x & self_2551=q_2526 & next_67_2596=q_2526 & 
+flted_12_2552=0 & exists(flted_56_2663:0+1=flted_56_2663) & 
+exists(p_2662:p_2522=p_2662).
+
+// id 151
+checksat  self_2551::node2<Anon_2553,p_2550,q_2554>&((flted_12_2552=0 | 
+q_2554=null)) & q_2665=q_2554 & Anon_2664=Anon_2525 & !(v_bool_62_1577') & 
+q_2554=null & flted_12_2552+1=flted_12_2524 & p_2550=self_2523 & 
+flted_12_2524+1=n & p_2522=p & self_2523=x' & v_bool_59_1591' & a'=1 & 0<a & 
+a<n & a'=a & x'=x & self_2551=q_2526 & next_67_2596=q_2526 & 
+flted_12_2552=0 & exists(flted_56_2663:0+1=flted_56_2663) & 
+exists(p_2662:p_2522=p_2662).
+
+// id 152
+checksat  self_2551::node2<Anon_2553,p_2550,q_2554>&flted_12_2552=0 & 
+next_67_2596=q_2526 & self_2551=q_2526 & x'=x & a'=a & a<n & 0<a & a'=1 & 
+v_bool_59_1591' & self_2523=x' & p_2522=p & flted_12_2524+1=n & 
+p_2550=self_2523 & flted_12_2552+1=flted_12_2524 & q_2554=null & 
+!(v_bool_62_1577') & Anon_2664=Anon_2525 & q_2665=q_2554 & 
+((flted_12_2552=0 | q_2554=null)).
+
+// id 153
+checksat  self_2551::node2<Anon_2553,p_2550,q_2554>&flted_12_2552=0 & 
+next_67_2596=q_2526 & self_2551=q_2526 & x'=x & a'=a & a<n & 0<a & a'=1 & 
+v_bool_59_1591' & self_2523=x' & p_2522=p & flted_12_2524+1=n & 
+p_2550=self_2523 & flted_12_2552+1=flted_12_2524 & q_2554=null & 
+!(v_bool_62_1577') & Anon_2664=Anon_2525 & q_2665=q_2554 & 
+((flted_12_2552=0 | q_2554=null)).
+
+// id 154
+checksat  self_2551::node2<Anon_2553,p_2550,q_2554>&((flted_12_2552=0 | 
+q_2554=null)) & q_2665=q_2554 & Anon_2664=Anon_2525 & !(v_bool_62_1577') & 
+q_2554=null & flted_12_2552+1=flted_12_2524 & p_2550=self_2523 & 
+flted_12_2524+1=n & p_2522=p & self_2523=x' & v_bool_59_1591' & a'=1 & 0<a & 
+a<n & a'=a & x'=x & self_2551=q_2526 & next_67_2596=q_2526 & flted_12_2552=0.
+
+// id 155
+checksat  self_2551::node2<Anon_2553,p_2550,q_2554>&((flted_12_2552=0 | 
+q_2554=null)) & q_2665=q_2554 & Anon_2664=Anon_2525 & !(v_bool_62_1577') & 
+q_2554=null & flted_12_2552+1=flted_12_2524 & p_2550=self_2523 & 
+flted_12_2524+1=n & p_2522=p & self_2523=x' & v_bool_59_1591' & a'=1 & 0<a & 
+a<n & a'=a & x'=x & self_2551=q_2526 & next_67_2596=q_2526 & flted_12_2552=0.
+
+// id 156
+checksat  self_2551::node2<Anon_2553,p_2550,q_2554>&q_2554=null & flted_12_2552=0 & 
+next_67_2596=q_2526 & self_2551=q_2526 & x'=x & a'=a & a<n & 0<a & a'=1 & 
+v_bool_59_1591' & self_2523=x' & p_2522=p & flted_12_2524+1=n & 
+p_2550=self_2523 & flted_12_2552+1=flted_12_2524 & q_2554=null & 
+!(v_bool_62_1577') & Anon_2664=Anon_2525 & q_2665=q_2554 & 
+((flted_12_2552=0 | q_2554=null)).
+
+// id 157
+checksat  self_2551::node2<Anon_2553,p_2550,q_2554> * 
+q_2554::dll<self_2551,flted_12_2552> * x'::node2<Anon_2525,p_2522,q_2554>&
+!(v_bool_62_1577') & q_2554=null & flted_12_2552+1=flted_12_2524 & 
+p_2550=self_2523 & flted_12_2524+1=n & p_2522=p & self_2523=x' & 
+v_bool_59_1591' & a'=1 & 0<a & a<n & a'=a & x'=x & self_2551=q_2526 & 
+next_67_2596=q_2526.
+
+// id 158
+checksat  self_2551::node2<Anon_2553,p_2550,q_2554> * 
+q_2554::dll<self_2551,flted_12_2552> * x'::node2<Anon_2525,p_2522,q_2554>&
+!(v_bool_62_1577') & q_2554=null & flted_12_2552+1=flted_12_2524 & 
+p_2550=self_2523 & flted_12_2524+1=n & p_2522=p & self_2523=x' & 
+v_bool_59_1591' & a'=1 & 0<a & a<n & a'=a & x'=x & self_2551=q_2526 & 
+next_67_2596=q_2526.
+
+// id 159
+checksat  self_2551::node2<Anon_2553,p_2550,q_2554>&exists(self_2645:x'=self_2645) & 
+exists(flted_12_2646:flted_12_2589+1=flted_12_2646) & q_2649=q_2591 & 
+Anon_2648=Anon_2590 & next_67_2595=q_2526 & prev_64_2592=p_2587 & 
+self_2588=q_2554 & self_2551=q_2526 & x'=x & a'=a & a<n & 0<a & a'=1 & 
+v_bool_59_1591' & self_2523=x' & p_2522=p & flted_12_2524+1=n & 
+p_2550=self_2523 & flted_12_2552+1=flted_12_2524 & self_2588!=null & 
+v_bool_62_1577' & p_2587=self_2551 & flted_12_2589+1=flted_12_2552 & 
+Anon_2636=Anon_2525 & q_2637=self_2588 & exists(flted_56_2635:flted_12_2589+
+1+1=flted_56_2635) & exists(p_2634:p_2522=p_2634).
+
+// id 160
+checksat  self_2551::node2<Anon_2553,p_2550,q_2554>&exists(self_2645:x'=self_2645) & 
+exists(flted_12_2646:flted_12_2589+1=flted_12_2646) & q_2649=q_2591 & 
+Anon_2648=Anon_2590 & next_67_2595=q_2526 & prev_64_2592=p_2587 & 
+self_2588=q_2554 & self_2551=q_2526 & x'=x & a'=a & a<n & 0<a & a'=1 & 
+v_bool_59_1591' & self_2523=x' & p_2522=p & flted_12_2524+1=n & 
+p_2550=self_2523 & flted_12_2552+1=flted_12_2524 & self_2588!=null & 
+v_bool_62_1577' & p_2587=self_2551 & flted_12_2589+1=flted_12_2552 & 
+Anon_2636=Anon_2525 & q_2637=self_2588 & exists(flted_56_2635:flted_12_2589+
+1+1=flted_56_2635) & exists(p_2634:p_2522=p_2634).
+
+// id 161
+checksat  self_2551::node2<Anon_2553,p_2550,q_2554>&q_2637=self_2588 & 
+Anon_2636=Anon_2525 & flted_12_2589+1=flted_12_2552 & p_2587=self_2551 & 
+v_bool_62_1577' & self_2588!=null & flted_12_2552+1=flted_12_2524 & 
+p_2550=self_2523 & flted_12_2524+1=n & p_2522=p & self_2523=x' & 
+v_bool_59_1591' & a'=1 & 0<a & a<n & a'=a & x'=x & self_2551=q_2526 & 
+self_2588=q_2554 & prev_64_2592=p_2587 & next_67_2595=q_2526 & 
+Anon_2648=Anon_2590 & q_2649=q_2591 & exists(flted_12_2646:flted_12_2589+
+1=flted_12_2646) & exists(self_2645:x'=self_2645).
+
+// id 162
+checksat  self_2551::node2<Anon_2553,p_2550,q_2554>&q_2637=self_2588 & 
+Anon_2636=Anon_2525 & flted_12_2589+1=flted_12_2552 & p_2587=self_2551 & 
+v_bool_62_1577' & self_2588!=null & flted_12_2552+1=flted_12_2524 & 
+p_2550=self_2523 & flted_12_2524+1=n & p_2522=p & self_2523=x' & 
+v_bool_59_1591' & a'=1 & 0<a & a<n & a'=a & x'=x & self_2551=q_2526 & 
+self_2588=q_2554 & prev_64_2592=p_2587 & next_67_2595=q_2526 & 
+Anon_2648=Anon_2590 & q_2649=q_2591 & exists(flted_12_2646:flted_12_2589+
+1=flted_12_2646) & exists(self_2645:x'=self_2645).
+
+// id 163
+checksat  self_2551::node2<Anon_2553,p_2550,q_2554>&q_2649=q_2591 & 
+Anon_2648=Anon_2590 & next_67_2595=q_2526 & prev_64_2592=p_2587 & 
+self_2588=q_2554 & self_2551=q_2526 & x'=x & a'=a & a<n & 0<a & a'=1 & 
+v_bool_59_1591' & self_2523=x' & p_2522=p & flted_12_2524+1=n & 
+p_2550=self_2523 & flted_12_2552+1=flted_12_2524 & self_2588!=null & 
+v_bool_62_1577' & p_2587=self_2551 & flted_12_2589+1=flted_12_2552 & 
+Anon_2636=Anon_2525 & q_2637=self_2588.
+
+// id 164
+checksat  self_2551::node2<Anon_2553,p_2550,q_2554> * 
+q_2591::dll<self_2588,flted_12_2589> * self_2588::node2<Anon_2590,x',q_2591>&
+next_67_2595=q_2526 & prev_64_2592=p_2587 & self_2588=q_2554 & 
+self_2551=q_2526 & x'=x & a'=a & a<n & 0<a & a'=1 & v_bool_59_1591' & 
+self_2523=x' & p_2522=p & flted_12_2524+1=n & p_2550=self_2523 & 
+flted_12_2552+1=flted_12_2524 & self_2588!=null & v_bool_62_1577' & 
+p_2587=self_2551 & flted_12_2589+1=flted_12_2552 & Anon_2636=Anon_2525 & 
+q_2637=self_2588.
+
+// id 165
+checksat  self_2551::node2<Anon_2553,p_2550,q_2554> * 
+q_2591::dll<self_2588,flted_12_2589> * self_2588::node2<Anon_2590,x',q_2591>&
+next_67_2595=q_2526 & prev_64_2592=p_2587 & self_2588=q_2554 & 
+self_2551=q_2526 & x'=x & a'=a & a<n & 0<a & a'=1 & v_bool_59_1591' & 
+self_2523=x' & p_2522=p & flted_12_2524+1=n & p_2550=self_2523 & 
+flted_12_2552+1=flted_12_2524 & self_2588!=null & v_bool_62_1577' & 
+p_2587=self_2551 & flted_12_2589+1=flted_12_2552 & Anon_2636=Anon_2525 & 
+q_2637=self_2588.
+
+// id 166
+checksat  self_2551::node2<Anon_2553,p_2550,q_2554> * 
+q_2591::dll<self_2588,flted_12_2589> * 
+self_2588::node2<Anon_2590,x',q_2591> * 
+x'::node2<Anon_2525,p_2522,self_2588>&flted_12_2589+1=flted_12_2552 & 
+p_2587=self_2551 & v_bool_62_1577' & self_2588!=null & flted_12_2552+
+1=flted_12_2524 & p_2550=self_2523 & flted_12_2524+1=n & p_2522=p & 
+self_2523=x' & v_bool_59_1591' & a'=1 & 0<a & a<n & a'=a & x'=x & 
+self_2551=q_2526 & self_2588=q_2554 & prev_64_2592=p_2587 & 
+next_67_2595=q_2526.
+
+// id 167
+checksat  self_2551::node2<Anon_2553,p_2550,q_2554> * 
+q_2591::dll<self_2588,flted_12_2589> * 
+self_2588::node2<Anon_2590,x',q_2591> * 
+x'::node2<Anon_2525,p_2522,self_2588>&flted_12_2589+1=flted_12_2552 & 
+p_2587=self_2551 & v_bool_62_1577' & self_2588!=null & flted_12_2552+
+1=flted_12_2524 & p_2550=self_2523 & flted_12_2524+1=n & p_2522=p & 
+self_2523=x' & v_bool_59_1591' & a'=1 & 0<a & a<n & a'=a & x'=x & 
+self_2551=q_2526 & self_2588=q_2554 & prev_64_2592=p_2587 & 
+next_67_2595=q_2526.
+
+// id 168
+checksat  (exists p_2632,flted_56_2633: x'::node2<Anon_2615,p_2612,q_2616> * 
+v_node2_74_1590'::dll<p_2632,flted_56_2633>&flted_12_2614+1=n & p_2612=p & 
+self_2613=x' & !(v_bool_59_1591') & a'!=1 & 0<a & a<n & a'=a & x'=x & 
+v_node2_74_1590'=q_2616 & v_int_74_1589'+1=a' & p_2626=self_2613 & 
+n_2627=flted_12_2614 & 0<=flted_12_2614 & flted_56_2633+1=n_2627 & 
+p_2632=p_2626 & 0<=n_2627).
+
+// id 169
+checksat  x'::node2<Anon_2615,p_2612,q_2616>&n_2627=flted_12_2614 & 
+p_2626=self_2613 & v_int_74_1589'+1=a' & v_node2_74_1590'=q_2616 & x'=x & 
+a'=a & a<n & 0<a & a'!=1 & !(v_bool_59_1591') & self_2613=x' & p_2612=p & 
+flted_12_2614+1=n.
+
+// id 170
+checksat  x'::node2<Anon_2615,p_2612,q_2616>&n_2627=flted_12_2614 & 
+p_2626=self_2613 & v_int_74_1589'+1=a' & v_node2_74_1590'=q_2616 & x'=x & 
+a'=a & a<n & 0<a & a'!=1 & !(v_bool_59_1591') & self_2613=x' & p_2612=p & 
+flted_12_2614+1=n.
+
+// id 171
+checksat  x'::node2<Anon_2615,p_2612,q_2616> * q_2616::dll<self_2613,flted_12_2614>&
+flted_12_2614+1=n & p_2612=p & self_2613=x' & !(v_bool_59_1591') & a'!=1 & 
+0<a & a<n & a'=a & x'=x & v_node2_74_1590'=q_2616 & v_int_74_1586'=1 & res+
+v_int_74_1586'=a'.
+
+// id 172
+checksat  x'::node2<Anon_2615,p_2612,q_2616> * q_2616::dll<self_2613,flted_12_2614>&
+v_int_74_1586'=1 & v_node2_74_1590'=q_2616 & x'=x & a'=a & a<n & 0<a & 
+a'!=1 & !(v_bool_59_1591') & self_2613=x' & p_2612=p & flted_12_2614+1=n.
+
+// id 173
+checksat  x'::node2<Anon_2615,p_2612,q_2616> * q_2616::dll<self_2613,flted_12_2614>&
+v_int_74_1586'=1 & v_node2_74_1590'=q_2616 & x'=x & a'=a & a<n & 0<a & 
+a'!=1 & !(v_bool_59_1591') & self_2613=x' & p_2612=p & flted_12_2614+1=n.
+
+// id 174
+checksat  x'::node2<Anon_2615,p_2612,q_2616> * q_2616::dll<self_2613,flted_12_2614>&
+next_74_1583'=q_2616 & prev_74_1582'=p_2612 & val_74_1581'=Anon_2615 & 
+x'=x & a'=a & a<n & 0<a & a'!=1 & !(v_bool_59_1591') & self_2613=x' & 
+p_2612=p & flted_12_2614+1=n.
+
+// id 175
+checksat  (exists p_2606,self_2607,flted_12_2608,Anon_2609,
+q_2610: x'::node2<Anon_2609,p_2606,q_2610> * 
+q_2610::dll<self_2607,flted_12_2608>&flted_12_2608+1=n & p_2606=p & 
+self_2607=x' & !(v_bool_59_1591') & a'!=1 & 0<a & a<n & a'=a & x'=x).
+
+// id 176
+checksat  emp&x'=null & n=0 & !(v_bool_59_1591') & a'!=1 & 0<a & a<n & a'=a & x'=x.
+
+// id 177
+checksat  self_2551::node2<Anon_2553,p_2550,q_2554> * 
+q_2554::dll<self_2551,flted_12_2552>&next_67_1580'=q_2526 & 
+prev_67_1579'=p_2522 & val_67_1578'=Anon_2525 & l'=q_2554 & 
+self_2551=q_2526 & x'=x & a'=a & a<n & 0<a & a'=1 & v_bool_59_1591' & 
+self_2523=x' & p_2522=p & flted_12_2524+1=n & p_2550=self_2523 & 
+flted_12_2552+1=flted_12_2524 & l'=null & !(v_bool_62_1577').
+
+// id 178
+checksat  self_2551::node2<Anon_2553,p_2550,q_2554> * 
+q_2591::dll<self_2588,flted_12_2589> * l'::node2<Anon_2590,x',q_2591>&
+next_67_1580'=q_2526 & prev_67_1579'=p_2522 & val_67_1578'=Anon_2525 & 
+prev_64_2592=p_2587 & l'=q_2554 & self_2551=q_2526 & x'=x & a'=a & a<n & 
+0<a & a'=1 & v_bool_59_1591' & self_2523=x' & p_2522=p & flted_12_2524+1=n & 
+p_2550=self_2523 & flted_12_2552+1=flted_12_2524 & l'!=null & 
+v_bool_62_1577' & self_2588=l' & p_2587=self_2551 & flted_12_2589+
+1=flted_12_2552.
+
+// id 179
+checksat  x'::node2<Anon_2525,p_2522,q_2526> * 
+self_2551::node2<Anon_2553,p_2550,q_2554> * 
+q_2591::dll<self_2588,flted_12_2589>&next_64_1576'=q_2591 & 
+prev_64_1575'=p_2587 & val_64_1574'=Anon_2590 & l'=q_2554 & 
+self_2551=q_2526 & x'=x & a'=a & a<n & 0<a & a'=1 & v_bool_59_1591' & 
+self_2523=x' & p_2522=p & flted_12_2524+1=n & p_2550=self_2523 & 
+flted_12_2552+1=flted_12_2524 & l'!=null & v_bool_62_1577' & self_2588=l' & 
+p_2587=self_2551 & flted_12_2589+1=flted_12_2552.
+
+// id 180
+checksat  (exists p_2581,self_2582,flted_12_2583,Anon_2584,
+q_2585: x'::node2<Anon_2525,p_2522,q_2526> * 
+self_2551::node2<Anon_2553,p_2550,q_2554> * 
+l'::node2<Anon_2584,p_2581,q_2585> * q_2585::dll<self_2582,flted_12_2583>&
+flted_12_2583+1=flted_12_2552 & p_2581=self_2551 & self_2582=l' & 
+v_bool_62_1577' & l'!=null & flted_12_2552+1=flted_12_2524 & 
+p_2550=self_2523 & flted_12_2524+1=n & p_2522=p & self_2523=x' & 
+v_bool_59_1591' & a'=1 & 0<a & a<n & a'=a & x'=x & self_2551=q_2526 & 
+l'=q_2554).
+
+// id 181
+checksat  x'::node2<Anon_2525,p_2522,q_2526> * 
+self_2551::node2<Anon_2553,p_2550,q_2554>&l'=null & flted_12_2552=0 & 
+v_bool_62_1577' & l'!=null & flted_12_2552+1=flted_12_2524 & 
+p_2550=self_2523 & flted_12_2524+1=n & p_2522=p & self_2523=x' & 
+v_bool_59_1591' & a'=1 & 0<a & a<n & a'=a & x'=x & self_2551=q_2526 & 
+l'=q_2554.
+
+// id 182
+checksat  x'::node2<Anon_2525,p_2522,q_2526> * 
+self_2551::node2<Anon_2553,p_2550,q_2554> * 
+q_2554::dll<self_2551,flted_12_2552>&l'=null & l'=q_2554 & 
+self_2551=q_2526 & x'=x & a'=a & a<n & 0<a & a'=1 & v_bool_59_1591' & 
+self_2523=x' & p_2522=p & flted_12_2524+1=n & p_2550=self_2523 & 
+flted_12_2552+1=flted_12_2524 & !(v_bool_62_1577') & l'=null & 
+!(v_bool_62_1577').
+
+// id 183
+checksat  x'::node2<Anon_2525,p_2522,q_2526> * 
+self_2551::node2<Anon_2553,p_2550,q_2554> * 
+q_2554::dll<self_2551,flted_12_2552>&l'!=null & l'=q_2554 & 
+self_2551=q_2526 & x'=x & a'=a & a<n & 0<a & a'=1 & v_bool_59_1591' & 
+self_2523=x' & p_2522=p & flted_12_2524+1=n & p_2550=self_2523 & 
+flted_12_2552+1=flted_12_2524 & v_bool_62_1577' & l'!=null & 
+!(v_bool_62_1577').
+
+// id 184
+checksat  x'::node2<Anon_2525,p_2522,q_2526> * 
+self_2551::node2<Anon_2553,p_2550,q_2554> * 
+q_2554::dll<self_2551,flted_12_2552>&l'=null & l'=q_2554 & 
+self_2551=q_2526 & x'=x & a'=a & a<n & 0<a & a'=1 & v_bool_59_1591' & 
+self_2523=x' & p_2522=p & flted_12_2524+1=n & p_2550=self_2523 & 
+flted_12_2552+1=flted_12_2524 & !(v_bool_62_1577') & l'=null & 
+v_bool_62_1577'.
+
+// id 185
+checksat  x'::node2<Anon_2525,p_2522,q_2526> * 
+self_2551::node2<Anon_2553,p_2550,q_2554> * 
+q_2554::dll<self_2551,flted_12_2552>&l'!=null & l'=q_2554 & 
+self_2551=q_2526 & x'=x & a'=a & a<n & 0<a & a'=1 & v_bool_59_1591' & 
+self_2523=x' & p_2522=p & flted_12_2524+1=n & p_2550=self_2523 & 
+flted_12_2552+1=flted_12_2524 & v_bool_62_1577' & l'!=null & v_bool_62_1577'.
+
+// id 186
+checksat  x'::node2<Anon_2525,p_2522,q_2526> * 
+self_2551::node2<Anon_2553,p_2550,q_2554> * 
+q_2554::dll<self_2551,flted_12_2552>&l'!=null & l'=q_2554 & 
+self_2551=q_2526 & x'=x & a'=a & a<n & 0<a & a'=1 & v_bool_59_1591' & 
+self_2523=x' & p_2522=p & flted_12_2524+1=n & p_2550=self_2523 & 
+flted_12_2552+1=flted_12_2524 & res & l'!=null.
+
+// id 187
+checksat  x'::node2<Anon_2525,p_2522,q_2526> * 
+self_2551::node2<Anon_2553,p_2550,q_2554> * 
+q_2554::dll<self_2551,flted_12_2552>&flted_12_2552+1=flted_12_2524 & 
+p_2550=self_2523 & flted_12_2524+1=n & p_2522=p & self_2523=x' & 
+v_bool_59_1591' & a'=1 & 0<a & a<n & a'=a & x'=x & self_2551=q_2526 & 
+l'=q_2554 & l'!=null.
+
+// id 188
+checksat  x'::node2<Anon_2525,p_2522,q_2526> * 
+self_2551::node2<Anon_2553,p_2550,q_2554> * 
+q_2554::dll<self_2551,flted_12_2552>&flted_12_2552+1=flted_12_2524 & 
+p_2550=self_2523 & flted_12_2524+1=n & p_2522=p & self_2523=x' & 
+v_bool_59_1591' & a'=1 & 0<a & a<n & a'=a & x'=x & self_2551=q_2526 & 
+l'=q_2554 & l'!=null.
+
+// id 189
+checksat  x'::node2<Anon_2525,p_2522,q_2526> * 
+self_2551::node2<Anon_2553,p_2550,q_2554> * 
+q_2554::dll<self_2551,flted_12_2552>&flted_12_2552+1=flted_12_2524 & 
+p_2550=self_2523 & flted_12_2524+1=n & p_2522=p & self_2523=x' & 
+v_bool_59_1591' & a'=1 & 0<a & a<n & a'=a & x'=x & self_2551=q_2526 & 
+l'=q_2554 & l'!=null.
+
+// id 190
+checksat  x'::node2<Anon_2525,p_2522,q_2526> * 
+self_2551::node2<Anon_2553,p_2550,q_2554> * 
+q_2554::dll<self_2551,flted_12_2552>&l'=null & l'=q_2554 & 
+self_2551=q_2526 & x'=x & a'=a & a<n & 0<a & a'=1 & v_bool_59_1591' & 
+self_2523=x' & p_2522=p & flted_12_2524+1=n & p_2550=self_2523 & 
+flted_12_2552+1=flted_12_2524 & !(res) & l'=null.
+
+// id 191
+checksat  x'::node2<Anon_2525,p_2522,q_2526> * 
+self_2551::node2<Anon_2553,p_2550,q_2554> * 
+q_2554::dll<self_2551,flted_12_2552>&flted_12_2552+1=flted_12_2524 & 
+p_2550=self_2523 & flted_12_2524+1=n & p_2522=p & self_2523=x' & 
+v_bool_59_1591' & a'=1 & 0<a & a<n & a'=a & x'=x & self_2551=q_2526 & 
+l'=q_2554 & l'=null.
+
+// id 192
+checksat  x'::node2<Anon_2525,p_2522,q_2526> * 
+self_2551::node2<Anon_2553,p_2550,q_2554> * 
+q_2554::dll<self_2551,flted_12_2552>&flted_12_2552+1=flted_12_2524 & 
+p_2550=self_2523 & flted_12_2524+1=n & p_2522=p & self_2523=x' & 
+v_bool_59_1591' & a'=1 & 0<a & a<n & a'=a & x'=x & self_2551=q_2526 & 
+l'=q_2554 & l'=null.
+
+// id 193
+checksat  x'::node2<Anon_2525,p_2522,q_2526> * 
+self_2551::node2<Anon_2553,p_2550,q_2554> * 
+q_2554::dll<self_2551,flted_12_2552>&flted_12_2552+1=flted_12_2524 & 
+p_2550=self_2523 & flted_12_2524+1=n & p_2522=p & self_2523=x' & 
+v_bool_59_1591' & a'=1 & 0<a & a<n & a'=a & x'=x & self_2551=q_2526 & 
+l'=q_2554 & l'=null.
+
+// id 194
+checksat  x'::node2<Anon_2525,p_2522,q_2526> * 
+v_node2_61_1567'::node2<Anon_2553,p_2550,q_2554> * 
+q_2554::dll<self_2551,flted_12_2552>&next_61_1570'=q_2554 & 
+prev_61_1569'=p_2550 & val_61_1568'=Anon_2553 & v_node2_61_1567'=q_2526 & 
+x'=x & a'=a & a<n & 0<a & a'=1 & v_bool_59_1591' & self_2523=x' & p_2522=p & 
+flted_12_2524+1=n & self_2551=v_node2_61_1567' & p_2550=self_2523 & 
+flted_12_2552+1=flted_12_2524.
+
+// id 195
+checksat  (exists p_2544,self_2545,flted_12_2546,Anon_2547,
+q_2548: x'::node2<Anon_2525,p_2522,q_2526> * 
+v_node2_61_1567'::node2<Anon_2547,p_2544,q_2548> * 
+q_2548::dll<self_2545,flted_12_2546>&flted_12_2546+1=flted_12_2524 & 
+p_2544=self_2523 & self_2545=v_node2_61_1567' & flted_12_2524+1=n & 
+p_2522=p & self_2523=x' & v_bool_59_1591' & a'=1 & 0<a & a<n & a'=a & x'=x & 
+v_node2_61_1567'=q_2526).
+
+// id 196
+checksat  x'::node2<Anon_2525,p_2522,q_2526>&v_node2_61_1567'=null & 
+flted_12_2524=0 & flted_12_2524+1=n & p_2522=p & self_2523=x' & 
+v_bool_59_1591' & a'=1 & 0<a & a<n & a'=a & x'=x & v_node2_61_1567'=q_2526.
+
+// id 197
+checksat  x'::node2<Anon_2525,p_2522,q_2526> * q_2526::dll<self_2523,flted_12_2524>&
+next_61_1566'=q_2526 & prev_61_1565'=p_2522 & val_61_1564'=Anon_2525 & 
+x'=x & a'=a & a<n & 0<a & a'=1 & v_bool_59_1591' & self_2523=x' & p_2522=p & 
+flted_12_2524+1=n.
+
+// id 198
+checksat  (exists p_2516,self_2517,flted_12_2518,Anon_2519,
+q_2520: x'::node2<Anon_2519,p_2516,q_2520> * 
+q_2520::dll<self_2517,flted_12_2518>&flted_12_2518+1=n & p_2516=p & 
+self_2517=x' & v_bool_59_1591' & a'=1 & 0<a & a<n & a'=a & x'=x).
+
+// id 199
+checksat  emp&x'=null & n=0 & v_bool_59_1591' & a'=1 & 0<a & a<n & a'=a & x'=x.
+
+// id 200
+checksat  x::dll<p,n>&x'=x & a'=a & a<n & 0<a & a'=1 & v_bool_59_1591' & a'=a' & 
+!(v_bool_59_1591').
+
+// id 201
+checksat  x::dll<p,n>&x'=x & a'=a & a<n & 0<a & a'!=1 & !(v_bool_59_1591') & a'!=1 & 
+!(v_bool_59_1591').
+
+// id 202
+checksat  x::dll<p,n>&x'=x & a'=a & a<n & 0<a & a'=1 & v_bool_59_1591' & a'=a' & 
+v_bool_59_1591'.
+
+// id 203
+checksat  x::dll<p,n>&x'=x & a'=a & a<n & 0<a & a'!=1 & !(v_bool_59_1591') & a'!=1 & 
+v_bool_59_1591'.
+
+// id 204
+checksat  x::dll<p,n>&x'=x & a'=a & a<n & 0<a & v_int_59_1563'=1 & 
+a'!=v_int_59_1563' & !(res) & a'!=v_int_59_1563'.
+
+// id 205
+checksat  x::dll<p,n>&a'!=v_int_59_1563' & v_int_59_1563'=1 & 0<a & a<n & a'=a & x'=x.
+
+// id 206
+checksat  x::dll<p,n>&x'=x & a'=a & a<n & 0<a & MayLoop[] & v_int_59_1563'=1 & 
+a'!=v_int_59_1563'.
+
+// id 207
+checksat  x::dll<p,n>&x'=x & a'=a & a<n & 0<a & v_int_59_1563'=1 & 
+a'=v_int_59_1563' & res & a'=v_int_59_1563'.
+
+// id 208
+checksat  x::dll<p,n>&a'=v_int_59_1563' & v_int_59_1563'=1 & 0<a & a<n & a'=a & x'=x.
+
+// id 209
+checksat  x::dll<p,n>&x'=x & a'=a & a<n & 0<a & MayLoop[] & v_int_59_1563'=1 & 
+a'=v_int_59_1563'.
+
+// id 210
+checksat  emp&flted_12_2412+1=n & p_2410=p & self_2411=x' & !(v_bool_37_1675') & 
+a'!=1 & 0<a & a<n & a'=a & x'=x & v_int_49_2478+1=a' & p_2424=self_2411 & 
+n_2425=flted_12_2412 & 0<=flted_12_2412 & flted_32_2479+1=n_2425 & 
+0<=n_2425 & Anon_2482=Anon_2413 & q_2483=q_2414 & 
+exists(flted_32_2481:flted_32_2479+1=flted_32_2481) & 
+exists(p_2480:p_2410=p_2480).
+
+// id 211
+checksat  emp&flted_12_2412+1=n & p_2410=p & self_2411=x' & !(v_bool_37_1675') & 
+a'!=1 & 0<a & a<n & a'=a & x'=x & v_int_49_2478+1=a' & p_2424=self_2411 & 
+n_2425=flted_12_2412 & 0<=flted_12_2412 & flted_32_2479+1=n_2425 & 
+0<=n_2425 & Anon_2482=Anon_2413 & q_2483=q_2414 & 
+exists(flted_32_2481:flted_32_2479+1=flted_32_2481) & 
+exists(p_2480:p_2410=p_2480).
+
+// id 212
+checksat  emp&q_2483=q_2414 & Anon_2482=Anon_2413 & 0<=n_2425 & flted_32_2479+
+1=n_2425 & 0<=flted_12_2412 & n_2425=flted_12_2412 & p_2424=self_2411 & 
+v_int_49_2478+1=a' & x'=x & a'=a & a<n & 0<a & a'!=1 & !(v_bool_37_1675') & 
+self_2411=x' & p_2410=p & flted_12_2412+1=n.
+
+// id 213
+checksat  x'::node2<Anon_2413,p_2410,q_2414> * q_2414::dll<p_2424,flted_32_2479>&
+0<=n_2425 & flted_32_2479+1=n_2425 & 0<=flted_12_2412 & 
+n_2425=flted_12_2412 & p_2424=self_2411 & v_int_49_2478+1=a' & x'=x & a'=a & 
+a<n & 0<a & a'!=1 & !(v_bool_37_1675') & self_2411=x' & p_2410=p & 
+flted_12_2412+1=n.
+
+// id 214
+checksat  x'::node2<Anon_2413,p_2410,q_2414> * q_2414::dll<p_2424,flted_32_2479>&
+0<=n_2425 & flted_32_2479+1=n_2425 & 0<=flted_12_2412 & 
+n_2425=flted_12_2412 & p_2424=self_2411 & v_int_49_2478+1=a' & x'=x & a'=a & 
+a<n & 0<a & a'!=1 & !(v_bool_37_1675') & self_2411=x' & p_2410=p & 
+flted_12_2412+1=n.
+
+// id 215
+checksat  (exists v_int_49_1673',flted_32_2431: x'::node2<Anon_2413,p_2410,q_2414> * 
+q_2414::dll<p_2424,flted_32_2431>&flted_12_2412+1=n & p_2410=p & 
+self_2411=x' & !(v_bool_37_1675') & a'!=1 & 0<a & a<n & a'=a & x'=x & 
+v_int_49_1673'+1=a' & p_2424=self_2411 & n_2425=flted_12_2412 & 
+0<=flted_12_2412 & flted_32_2431+1=n_2425 & 0<=n_2425).
+
+// id 216
+checksat  self_2333::node2<Anon_2335,p_2332,q_2336> * 
+q_2336::dll<self_2333,flted_12_2334>&next_46_2394=q_2308 & 
+self_2333=q_2308 & x'=x & a'=a & a<n & 0<a & tmp_2460=null & a'=1 & 
+v_bool_37_1675' & self_2305=x' & p_2304=p & flted_12_2306+1=n & 
+p_2332=self_2305 & flted_12_2334+1=flted_12_2306 & q_2336=null & 
+!(v_bool_39_1660') & Anon_2463=Anon_2307 & q_2464=tmp_2460 & 
+exists(flted_32_2462:0+1=flted_32_2462) & exists(p_2461:p_2304=p_2461).
+
+// id 217
+checksat  self_2333::node2<Anon_2335,p_2332,q_2336> * 
+q_2336::dll<self_2333,flted_12_2334>&next_46_2394=q_2308 & 
+self_2333=q_2308 & x'=x & a'=a & a<n & 0<a & tmp_2460=null & a'=1 & 
+v_bool_37_1675' & self_2305=x' & p_2304=p & flted_12_2306+1=n & 
+p_2332=self_2305 & flted_12_2334+1=flted_12_2306 & q_2336=null & 
+!(v_bool_39_1660') & Anon_2463=Anon_2307 & q_2464=tmp_2460 & 
+exists(flted_32_2462:0+1=flted_32_2462) & exists(p_2461:p_2304=p_2461).
+
+// id 218
+checksat  self_2333::node2<Anon_2335,p_2332,q_2336> * 
+q_2336::dll<self_2333,flted_12_2334>&q_2464=tmp_2460 & Anon_2463=Anon_2307 & 
+!(v_bool_39_1660') & q_2336=null & flted_12_2334+1=flted_12_2306 & 
+p_2332=self_2305 & flted_12_2306+1=n & p_2304=p & self_2305=x' & 
+v_bool_37_1675' & a'=1 & tmp_2460=null & 0<a & a<n & a'=a & x'=x & 
+self_2333=q_2308 & next_46_2394=q_2308.
+
+// id 219
+checksat  self_2333::node2<Anon_2335,p_2332,q_2336> * 
+q_2336::dll<self_2333,flted_12_2334>&q_2464=tmp_2460 & Anon_2463=Anon_2307 & 
+!(v_bool_39_1660') & q_2336=null & flted_12_2334+1=flted_12_2306 & 
+p_2332=self_2305 & flted_12_2306+1=n & p_2304=p & self_2305=x' & 
+v_bool_37_1675' & a'=1 & tmp_2460=null & 0<a & a<n & a'=a & x'=x & 
+self_2333=q_2308 & next_46_2394=q_2308.
+
+// id 220
+checksat  self_2333::node2<Anon_2335,p_2332,q_2336> * 
+q_2336::dll<self_2333,flted_12_2334>&next_46_2394=q_2308 & 
+self_2333=q_2308 & x'=x & a'=a & a<n & 0<a & tmp_2460=null & a'=1 & 
+v_bool_37_1675' & self_2305=x' & p_2304=p & flted_12_2306+1=n & 
+p_2332=self_2305 & flted_12_2334+1=flted_12_2306 & q_2336=null & 
+!(v_bool_39_1660') & Anon_2463=Anon_2307 & q_2464=tmp_2460.
+
+// id 221
+checksat  self_2333::node2<Anon_2335,p_2332,q_2336> * 
+q_2336::dll<self_2333,flted_12_2334>&next_46_2394=q_2308 & 
+self_2333=q_2308 & x'=x & a'=a & a<n & 0<a & tmp_2460=null & a'=1 & 
+v_bool_37_1675' & self_2305=x' & p_2304=p & flted_12_2306+1=n & 
+p_2332=self_2305 & flted_12_2334+1=flted_12_2306 & q_2336=null & 
+!(v_bool_39_1660') & Anon_2463=Anon_2307 & q_2464=tmp_2460.
+
+// id 222
+checksat  self_2333::node2<Anon_2335,p_2332,q_2336> * 
+q_2336::dll<self_2333,flted_12_2334> * x'::node2<Anon_2307,p_2304,tmp_2460>&
+!(v_bool_39_1660') & q_2336=null & flted_12_2334+1=flted_12_2306 & 
+p_2332=self_2305 & flted_12_2306+1=n & p_2304=p & self_2305=x' & 
+v_bool_37_1675' & a'=1 & tmp_2460=null & 0<a & a<n & a'=a & x'=x & 
+self_2333=q_2308 & next_46_2394=q_2308.
+
+// id 223
+checksat  self_2333::node2<Anon_2335,p_2332,q_2336> * 
+q_2336::dll<self_2333,flted_12_2334> * x'::node2<Anon_2307,p_2304,tmp_2460>&
+!(v_bool_39_1660') & q_2336=null & flted_12_2334+1=flted_12_2306 & 
+p_2332=self_2305 & flted_12_2306+1=n & p_2304=p & self_2305=x' & 
+v_bool_37_1675' & a'=1 & tmp_2460=null & 0<a & a<n & a'=a & x'=x & 
+self_2333=q_2308 & next_46_2394=q_2308.
+
+// id 224
+checksat  q_2308::node2<Anon_2335,p_2332,q_2336>&exists(self_2443:x'=self_2443) & 
+exists(flted_12_2444:flted_12_2377+1=flted_12_2444) & q_2447=q_2379 & 
+Anon_2446=Anon_2378 & next_43_2391=q_2308 & prev_41_2380=p_2375 & 
+self_2376=q_2336 & self_2333=q_2308 & x'=x & a'=a & a<n & 0<a & a'=1 & 
+v_bool_37_1675' & self_2305=x' & p_2304=p & flted_12_2306+1=n & 
+p_2332=self_2305 & flted_12_2334+1=flted_12_2306 & q_2336!=null & 
+v_bool_39_1660' & p_2375=self_2333 & flted_12_2377+1=flted_12_2334 & 
+Anon_2434=Anon_2307 & q_2435=q_2336 & exists(flted_32_2433:flted_12_2377+1+
+1=flted_32_2433) & exists(p_2432:p_2304=p_2432).
+
+// id 225
+checksat  q_2308::node2<Anon_2335,p_2332,q_2336>&exists(self_2443:x'=self_2443) & 
+exists(flted_12_2444:flted_12_2377+1=flted_12_2444) & q_2447=q_2379 & 
+Anon_2446=Anon_2378 & next_43_2391=q_2308 & prev_41_2380=p_2375 & 
+self_2376=q_2336 & self_2333=q_2308 & x'=x & a'=a & a<n & 0<a & a'=1 & 
+v_bool_37_1675' & self_2305=x' & p_2304=p & flted_12_2306+1=n & 
+p_2332=self_2305 & flted_12_2334+1=flted_12_2306 & q_2336!=null & 
+v_bool_39_1660' & p_2375=self_2333 & flted_12_2377+1=flted_12_2334 & 
+Anon_2434=Anon_2307 & q_2435=q_2336 & exists(flted_32_2433:flted_12_2377+1+
+1=flted_32_2433) & exists(p_2432:p_2304=p_2432).
+
+// id 226
+checksat  q_2308::node2<Anon_2335,p_2332,q_2336>&q_2435=q_2336 & 
+Anon_2434=Anon_2307 & flted_12_2377+1=flted_12_2334 & p_2375=self_2333 & 
+v_bool_39_1660' & q_2336!=null & flted_12_2334+1=flted_12_2306 & 
+p_2332=self_2305 & flted_12_2306+1=n & p_2304=p & self_2305=x' & 
+v_bool_37_1675' & a'=1 & 0<a & a<n & a'=a & x'=x & self_2333=q_2308 & 
+self_2376=q_2336 & prev_41_2380=p_2375 & next_43_2391=q_2308 & 
+Anon_2446=Anon_2378 & q_2447=q_2379 & exists(flted_12_2444:flted_12_2377+
+1=flted_12_2444) & exists(self_2443:x'=self_2443).
+
+// id 227
+checksat  q_2308::node2<Anon_2335,p_2332,q_2336>&q_2435=q_2336 & 
+Anon_2434=Anon_2307 & flted_12_2377+1=flted_12_2334 & p_2375=self_2333 & 
+v_bool_39_1660' & q_2336!=null & flted_12_2334+1=flted_12_2306 & 
+p_2332=self_2305 & flted_12_2306+1=n & p_2304=p & self_2305=x' & 
+v_bool_37_1675' & a'=1 & 0<a & a<n & a'=a & x'=x & self_2333=q_2308 & 
+self_2376=q_2336 & prev_41_2380=p_2375 & next_43_2391=q_2308 & 
+Anon_2446=Anon_2378 & q_2447=q_2379 & exists(flted_12_2444:flted_12_2377+
+1=flted_12_2444) & exists(self_2443:x'=self_2443).
+
+// id 228
+checksat  q_2308::node2<Anon_2335,p_2332,q_2336>&q_2447=q_2379 & 
+Anon_2446=Anon_2378 & next_43_2391=q_2308 & prev_41_2380=p_2375 & 
+self_2376=q_2336 & self_2333=q_2308 & x'=x & a'=a & a<n & 0<a & a'=1 & 
+v_bool_37_1675' & self_2305=x' & p_2304=p & flted_12_2306+1=n & 
+p_2332=self_2305 & flted_12_2334+1=flted_12_2306 & q_2336!=null & 
+v_bool_39_1660' & p_2375=self_2333 & flted_12_2377+1=flted_12_2334 & 
+Anon_2434=Anon_2307 & q_2435=q_2336.
+
+// id 229
+checksat  q_2379::dll<self_2376,flted_12_2377> * 
+q_2308::node2<Anon_2335,p_2332,q_2336> * 
+self_2376::node2<Anon_2378,x',q_2379>&next_43_2391=q_2308 & 
+prev_41_2380=p_2375 & self_2376=q_2336 & self_2333=q_2308 & x'=x & a'=a & 
+a<n & 0<a & a'=1 & v_bool_37_1675' & self_2305=x' & p_2304=p & flted_12_2306+
+1=n & p_2332=self_2305 & flted_12_2334+1=flted_12_2306 & q_2336!=null & 
+v_bool_39_1660' & p_2375=self_2333 & flted_12_2377+1=flted_12_2334 & 
+Anon_2434=Anon_2307 & q_2435=q_2336.
+
+// id 230
+checksat  q_2379::dll<self_2376,flted_12_2377> * 
+q_2308::node2<Anon_2335,p_2332,q_2336> * 
+self_2376::node2<Anon_2378,x',q_2379>&next_43_2391=q_2308 & 
+prev_41_2380=p_2375 & self_2376=q_2336 & self_2333=q_2308 & x'=x & a'=a & 
+a<n & 0<a & a'=1 & v_bool_37_1675' & self_2305=x' & p_2304=p & flted_12_2306+
+1=n & p_2332=self_2305 & flted_12_2334+1=flted_12_2306 & q_2336!=null & 
+v_bool_39_1660' & p_2375=self_2333 & flted_12_2377+1=flted_12_2334 & 
+Anon_2434=Anon_2307 & q_2435=q_2336.
+
+// id 231
+checksat  q_2379::dll<self_2376,flted_12_2377> * 
+q_2308::node2<Anon_2335,p_2332,q_2336> * 
+self_2376::node2<Anon_2378,x',q_2379> * x'::node2<Anon_2307,p_2304,q_2336>&
+flted_12_2377+1=flted_12_2334 & p_2375=self_2333 & v_bool_39_1660' & 
+q_2336!=null & flted_12_2334+1=flted_12_2306 & p_2332=self_2305 & 
+flted_12_2306+1=n & p_2304=p & self_2305=x' & v_bool_37_1675' & a'=1 & 0<a & 
+a<n & a'=a & x'=x & self_2333=q_2308 & self_2376=q_2336 & 
+prev_41_2380=p_2375 & next_43_2391=q_2308.
+
+// id 232
+checksat  q_2379::dll<self_2376,flted_12_2377> * 
+q_2308::node2<Anon_2335,p_2332,q_2336> * 
+self_2376::node2<Anon_2378,x',q_2379> * x'::node2<Anon_2307,p_2304,q_2336>&
+flted_12_2377+1=flted_12_2334 & p_2375=self_2333 & v_bool_39_1660' & 
+q_2336!=null & flted_12_2334+1=flted_12_2306 & p_2332=self_2305 & 
+flted_12_2306+1=n & p_2304=p & self_2305=x' & v_bool_37_1675' & a'=1 & 0<a & 
+a<n & a'=a & x'=x & self_2333=q_2308 & self_2376=q_2336 & 
+prev_41_2380=p_2375 & next_43_2391=q_2308.
+
+// id 233
+checksat  (exists p_2430,flted_32_2431: x'::node2<Anon_2413,p_2410,q_2414> * 
+v_node2_49_1674'::dll<p_2430,flted_32_2431>&flted_12_2412+1=n & p_2410=p & 
+self_2411=x' & !(v_bool_37_1675') & a'!=1 & tmp_null'=null & 0<a & a<n & 
+a'=a & x'=x & v_node2_49_1674'=q_2414 & v_int_49_1673'+1=a' & 
+p_2424=self_2411 & n_2425=flted_12_2412 & 0<=flted_12_2412 & flted_32_2431+
+1=n_2425 & p_2430=p_2424 & 0<=n_2425).
+
+// id 234
+checksat  x'::node2<Anon_2413,p_2410,q_2414>&n_2425=flted_12_2412 & 
+p_2424=self_2411 & v_int_49_1673'+1=a' & v_node2_49_1674'=q_2414 & x'=x & 
+a'=a & a<n & 0<a & tmp_null'=null & a'!=1 & !(v_bool_37_1675') & 
+self_2411=x' & p_2410=p & flted_12_2412+1=n.
+
+// id 235
+checksat  x'::node2<Anon_2413,p_2410,q_2414>&n_2425=flted_12_2412 & 
+p_2424=self_2411 & v_int_49_1673'+1=a' & v_node2_49_1674'=q_2414 & x'=x & 
+a'=a & a<n & 0<a & tmp_null'=null & a'!=1 & !(v_bool_37_1675') & 
+self_2411=x' & p_2410=p & flted_12_2412+1=n.
+
+// id 236
+checksat  x'::node2<Anon_2413,p_2410,q_2414> * q_2414::dll<self_2411,flted_12_2412>&
+flted_12_2412+1=n & p_2410=p & self_2411=x' & !(v_bool_37_1675') & a'!=1 & 
+tmp_null'=null & 0<a & a<n & a'=a & x'=x & v_node2_49_1674'=q_2414 & 
+v_int_49_1668'=1 & res+v_int_49_1668'=a'.
+
+// id 237
+checksat  x'::node2<Anon_2413,p_2410,q_2414> * q_2414::dll<self_2411,flted_12_2412>&
+v_int_49_1668'=1 & v_node2_49_1674'=q_2414 & x'=x & a'=a & a<n & 0<a & 
+tmp_null'=null & a'!=1 & !(v_bool_37_1675') & self_2411=x' & p_2410=p & 
+flted_12_2412+1=n.
+
+// id 238
+checksat  x'::node2<Anon_2413,p_2410,q_2414> * q_2414::dll<self_2411,flted_12_2412>&
+v_int_49_1668'=1 & v_node2_49_1674'=q_2414 & x'=x & a'=a & a<n & 0<a & 
+tmp_null'=null & a'!=1 & !(v_bool_37_1675') & self_2411=x' & p_2410=p & 
+flted_12_2412+1=n.
+
+// id 239
+checksat  x'::node2<Anon_2413,p_2410,q_2414> * q_2414::dll<self_2411,flted_12_2412>&
+next_49_1663'=q_2414 & prev_49_1662'=p_2410 & val_49_1661'=Anon_2413 & 
+x'=x & a'=a & a<n & 0<a & tmp_null'=null & a'!=1 & !(v_bool_37_1675') & 
+self_2411=x' & p_2410=p & flted_12_2412+1=n.
+
+// id 240
+checksat  (exists p_2404,self_2405,flted_12_2406,Anon_2407,
+q_2408: x'::node2<Anon_2407,p_2404,q_2408> * 
+q_2408::dll<self_2405,flted_12_2406>&flted_12_2406+1=n & p_2404=p & 
+self_2405=x' & !(v_bool_37_1675') & a'!=1 & tmp_null'=null & 0<a & a<n & 
+a'=a & x'=x).
+
+// id 241
+checksat  emp&x'=null & n=0 & !(v_bool_37_1675') & a'!=1 & tmp_null'=null & 0<a & 
+a<n & a'=a & x'=x.
+
+// id 242
+checksat  self_2333::node2<Anon_2335,p_2332,q_2336> * 
+q_2336::dll<self_2333,flted_12_2334>&next_46_1659'=q_2308 & 
+prev_46_1658'=p_2304 & val_46_1657'=Anon_2307 & self_2333=q_2308 & x'=x & 
+a'=a & a<n & 0<a & tmp_null'=null & a'=1 & v_bool_37_1675' & self_2305=x' & 
+p_2304=p & flted_12_2306+1=n & p_2332=self_2305 & flted_12_2334+
+1=flted_12_2306 & q_2336=null & !(v_bool_39_1660').
+
+// id 243
+checksat  q_2379::dll<self_2376,flted_12_2377> * 
+q_2308::node2<Anon_2335,p_2332,q_2336> * 
+self_2376::node2<Anon_2378,x',q_2379>&next_43_1656'=q_2308 & 
+prev_43_1655'=p_2304 & val_43_1654'=Anon_2307 & tmp'=q_2336 & 
+prev_41_2380=p_2375 & self_2376=q_2336 & self_2333=q_2308 & x'=x & a'=a & 
+a<n & 0<a & tmp_null'=null & a'=1 & v_bool_37_1675' & self_2305=x' & 
+p_2304=p & flted_12_2306+1=n & p_2332=self_2305 & flted_12_2334+
+1=flted_12_2306 & q_2336!=null & v_bool_39_1660' & p_2375=self_2333 & 
+flted_12_2377+1=flted_12_2334.
+
+// id 244
+checksat  q_2379::dll<self_2376,flted_12_2377> * x'::node2<Anon_2307,p_2304,q_2308> * 
+q_2308::node2<Anon_2335,p_2332,q_2336> * 
+self_2376::node2<Anon_2378,x',q_2379>&next_42_1653'=q_2336 & 
+prev_42_1652'=p_2332 & val_42_1651'=Anon_2335 & v_node2_42_1650'=q_2308 & 
+prev_41_2380=p_2375 & self_2376=q_2336 & self_2333=q_2308 & x'=x & a'=a & 
+a<n & 0<a & tmp_null'=null & a'=1 & v_bool_37_1675' & self_2305=x' & 
+p_2304=p & flted_12_2306+1=n & p_2332=self_2305 & flted_12_2334+
+1=flted_12_2306 & q_2336!=null & v_bool_39_1660' & p_2375=self_2333 & 
+flted_12_2377+1=flted_12_2334.
+
+// id 245
+checksat  q_2379::dll<self_2376,flted_12_2377> * x'::node2<Anon_2307,p_2304,q_2308> * 
+q_2308::node2<Anon_2335,p_2332,q_2336> * 
+self_2376::node2<Anon_2378,x',q_2379>&next_42_1649'=q_2308 & 
+prev_42_1648'=p_2304 & val_42_1647'=Anon_2307 & prev_41_2380=p_2375 & 
+self_2376=q_2336 & self_2333=q_2308 & x'=x & a'=a & a<n & 0<a & 
+tmp_null'=null & a'=1 & v_bool_37_1675' & self_2305=x' & p_2304=p & 
+flted_12_2306+1=n & p_2332=self_2305 & flted_12_2334+1=flted_12_2306 & 
+q_2336!=null & v_bool_39_1660' & p_2375=self_2333 & flted_12_2377+
+1=flted_12_2334.
+
+// id 246
+checksat  q_2379::dll<self_2376,flted_12_2377> * x'::node2<Anon_2307,p_2304,q_2308> * 
+q_2308::node2<Anon_2335,p_2332,q_2336>&next_41_1646'=q_2379 & 
+prev_41_1645'=p_2375 & val_41_1644'=Anon_2378 & v_node2_41_1643'=q_2336 & 
+self_2333=q_2308 & x'=x & a'=a & a<n & 0<a & tmp_null'=null & a'=1 & 
+v_bool_37_1675' & self_2305=x' & p_2304=p & flted_12_2306+1=n & 
+p_2332=self_2305 & flted_12_2334+1=flted_12_2306 & q_2336!=null & 
+v_bool_39_1660' & self_2376=v_node2_41_1643' & p_2375=self_2333 & 
+flted_12_2377+1=flted_12_2334.
+
+// id 247
+checksat  (exists p_2369,self_2370,flted_12_2371,Anon_2372,
+q_2373: v_node2_41_1643'::node2<Anon_2372,p_2369,q_2373> * 
+q_2373::dll<self_2370,flted_12_2371> * x'::node2<Anon_2307,p_2304,q_2308> * 
+q_2308::node2<Anon_2335,p_2332,q_2336>&flted_12_2371+1=flted_12_2334 & 
+p_2369=self_2333 & self_2370=v_node2_41_1643' & v_bool_39_1660' & 
+q_2336!=null & flted_12_2334+1=flted_12_2306 & p_2332=self_2305 & 
+flted_12_2306+1=n & p_2304=p & self_2305=x' & v_bool_37_1675' & a'=1 & 
+tmp_null'=null & 0<a & a<n & a'=a & x'=x & self_2333=q_2308 & 
+v_node2_41_1643'=q_2336).
+
+// id 248
+checksat  x'::node2<Anon_2307,p_2304,q_2308> * q_2308::node2<Anon_2335,p_2332,q_2336>&
+v_node2_41_1643'=null & flted_12_2334=0 & v_bool_39_1660' & q_2336!=null & 
+flted_12_2334+1=flted_12_2306 & p_2332=self_2305 & flted_12_2306+1=n & 
+p_2304=p & self_2305=x' & v_bool_37_1675' & a'=1 & tmp_null'=null & 0<a & 
+a<n & a'=a & x'=x & self_2333=q_2308 & v_node2_41_1643'=q_2336.
+
+// id 249
+checksat  q_2336::dll<self_2333,flted_12_2334> * x'::node2<Anon_2307,p_2304,q_2308>&
+next_41_1642'=q_2336 & prev_41_1641'=p_2332 & val_41_1640'=Anon_2335 & 
+v_node2_41_1639'=q_2308 & self_2333=q_2308 & x'=x & a'=a & a<n & 0<a & 
+tmp_null'=null & a'=1 & v_bool_37_1675' & self_2305=x' & p_2304=p & 
+flted_12_2306+1=n & p_2332=self_2305 & flted_12_2334+1=flted_12_2306 & 
+q_2336!=null & v_bool_39_1660'.
+
+// id 250
+checksat  self_2333::node2<Anon_2335,p_2332,q_2336> * 
+q_2336::dll<self_2333,flted_12_2334>&next_41_1638'=q_2308 & 
+prev_41_1637'=p_2304 & val_41_1636'=Anon_2307 & self_2333=q_2308 & x'=x & 
+a'=a & a<n & 0<a & tmp_null'=null & a'=1 & v_bool_37_1675' & self_2305=x' & 
+p_2304=p & flted_12_2306+1=n & p_2332=self_2305 & flted_12_2334+
+1=flted_12_2306 & q_2336!=null & v_bool_39_1660'.
+
+// id 251
+checksat  x'::node2<Anon_2307,p_2304,q_2308> * 
+self_2333::node2<Anon_2335,p_2332,q_2336> * 
+q_2336::dll<self_2333,flted_12_2334>&q_2336=null & self_2333=q_2308 & x'=x & 
+a'=a & a<n & 0<a & tmp_null'=null & a'=1 & v_bool_37_1675' & self_2305=x' & 
+p_2304=p & flted_12_2306+1=n & p_2332=self_2305 & flted_12_2334+
+1=flted_12_2306 & !(v_bool_39_1660') & q_2336=null & !(v_bool_39_1660').
+
+// id 252
+checksat  x'::node2<Anon_2307,p_2304,q_2308> * 
+self_2333::node2<Anon_2335,p_2332,q_2336> * 
+q_2336::dll<self_2333,flted_12_2334>&q_2336!=null & self_2333=q_2308 & 
+x'=x & a'=a & a<n & 0<a & tmp_null'=null & a'=1 & v_bool_37_1675' & 
+self_2305=x' & p_2304=p & flted_12_2306+1=n & p_2332=self_2305 & 
+flted_12_2334+1=flted_12_2306 & v_bool_39_1660' & q_2336!=null & 
+!(v_bool_39_1660').
+
+// id 253
+checksat  x'::node2<Anon_2307,p_2304,q_2308> * 
+self_2333::node2<Anon_2335,p_2332,q_2336> * 
+q_2336::dll<self_2333,flted_12_2334>&q_2336=null & self_2333=q_2308 & x'=x & 
+a'=a & a<n & 0<a & tmp_null'=null & a'=1 & v_bool_37_1675' & self_2305=x' & 
+p_2304=p & flted_12_2306+1=n & p_2332=self_2305 & flted_12_2334+
+1=flted_12_2306 & !(v_bool_39_1660') & q_2336=null & v_bool_39_1660'.
+
+// id 254
+checksat  x'::node2<Anon_2307,p_2304,q_2308> * 
+self_2333::node2<Anon_2335,p_2332,q_2336> * 
+q_2336::dll<self_2333,flted_12_2334>&q_2336!=null & self_2333=q_2308 & 
+x'=x & a'=a & a<n & 0<a & tmp_null'=null & a'=1 & v_bool_37_1675' & 
+self_2305=x' & p_2304=p & flted_12_2306+1=n & p_2332=self_2305 & 
+flted_12_2334+1=flted_12_2306 & v_bool_39_1660' & q_2336!=null & 
+v_bool_39_1660'.
+
+// id 255
+checksat  x'::node2<Anon_2307,p_2304,q_2308> * 
+self_2333::node2<Anon_2335,p_2332,q_2336> * 
+q_2336::dll<self_2333,flted_12_2334>&v_node2_39_1635'!=null & 
+v_node2_39_1635'=q_2336 & self_2333=q_2308 & x'=x & a'=a & a<n & 0<a & 
+tmp_null'=null & a'=1 & v_bool_37_1675' & self_2305=x' & p_2304=p & 
+flted_12_2306+1=n & p_2332=self_2305 & flted_12_2334+1=flted_12_2306 & res & 
+v_node2_39_1635'!=null.
+
+// id 256
+checksat  x'::node2<Anon_2307,p_2304,q_2308> * 
+self_2333::node2<Anon_2335,p_2332,q_2336> * 
+q_2336::dll<self_2333,flted_12_2334>&flted_12_2334+1=flted_12_2306 & 
+p_2332=self_2305 & flted_12_2306+1=n & p_2304=p & self_2305=x' & 
+v_bool_37_1675' & a'=1 & tmp_null'=null & 0<a & a<n & a'=a & x'=x & 
+self_2333=q_2308 & v_node2_39_1635'=q_2336 & v_node2_39_1635'!=null.
+
+// id 257
+checksat  x'::node2<Anon_2307,p_2304,q_2308> * 
+self_2333::node2<Anon_2335,p_2332,q_2336> * 
+q_2336::dll<self_2333,flted_12_2334>&flted_12_2334+1=flted_12_2306 & 
+p_2332=self_2305 & flted_12_2306+1=n & p_2304=p & self_2305=x' & 
+v_bool_37_1675' & a'=1 & tmp_null'=null & 0<a & a<n & a'=a & x'=x & 
+self_2333=q_2308 & v_node2_39_1635'=q_2336 & v_node2_39_1635'!=null.
+
+// id 258
+checksat  x'::node2<Anon_2307,p_2304,q_2308> * 
+self_2333::node2<Anon_2335,p_2332,q_2336> * 
+q_2336::dll<self_2333,flted_12_2334>&flted_12_2334+1=flted_12_2306 & 
+p_2332=self_2305 & flted_12_2306+1=n & p_2304=p & self_2305=x' & 
+v_bool_37_1675' & a'=1 & tmp_null'=null & 0<a & a<n & a'=a & x'=x & 
+self_2333=q_2308 & v_node2_39_1635'=q_2336 & v_node2_39_1635'!=null.
+
+// id 259
+checksat  x'::node2<Anon_2307,p_2304,q_2308> * 
+self_2333::node2<Anon_2335,p_2332,q_2336> * 
+q_2336::dll<self_2333,flted_12_2334>&v_node2_39_1635'=null & 
+v_node2_39_1635'=q_2336 & self_2333=q_2308 & x'=x & a'=a & a<n & 0<a & 
+tmp_null'=null & a'=1 & v_bool_37_1675' & self_2305=x' & p_2304=p & 
+flted_12_2306+1=n & p_2332=self_2305 & flted_12_2334+1=flted_12_2306 & 
+!(res) & v_node2_39_1635'=null.
+
+// id 260
+checksat  x'::node2<Anon_2307,p_2304,q_2308> * 
+self_2333::node2<Anon_2335,p_2332,q_2336> * 
+q_2336::dll<self_2333,flted_12_2334>&flted_12_2334+1=flted_12_2306 & 
+p_2332=self_2305 & flted_12_2306+1=n & p_2304=p & self_2305=x' & 
+v_bool_37_1675' & a'=1 & tmp_null'=null & 0<a & a<n & a'=a & x'=x & 
+self_2333=q_2308 & v_node2_39_1635'=q_2336 & v_node2_39_1635'=null.
+
+// id 261
+checksat  x'::node2<Anon_2307,p_2304,q_2308> * 
+self_2333::node2<Anon_2335,p_2332,q_2336> * 
+q_2336::dll<self_2333,flted_12_2334>&flted_12_2334+1=flted_12_2306 & 
+p_2332=self_2305 & flted_12_2306+1=n & p_2304=p & self_2305=x' & 
+v_bool_37_1675' & a'=1 & tmp_null'=null & 0<a & a<n & a'=a & x'=x & 
+self_2333=q_2308 & v_node2_39_1635'=q_2336 & v_node2_39_1635'=null.
+
+// id 262
+checksat  x'::node2<Anon_2307,p_2304,q_2308> * 
+self_2333::node2<Anon_2335,p_2332,q_2336> * 
+q_2336::dll<self_2333,flted_12_2334>&flted_12_2334+1=flted_12_2306 & 
+p_2332=self_2305 & flted_12_2306+1=n & p_2304=p & self_2305=x' & 
+v_bool_37_1675' & a'=1 & tmp_null'=null & 0<a & a<n & a'=a & x'=x & 
+self_2333=q_2308 & v_node2_39_1635'=q_2336 & v_node2_39_1635'=null.
+
+// id 263
+checksat  x'::node2<Anon_2307,p_2304,q_2308> * 
+v_node2_39_1627'::node2<Anon_2335,p_2332,q_2336> * 
+q_2336::dll<self_2333,flted_12_2334>&next_39_1630'=q_2336 & 
+prev_39_1629'=p_2332 & val_39_1628'=Anon_2335 & v_node2_39_1627'=q_2308 & 
+x'=x & a'=a & a<n & 0<a & tmp_null'=null & a'=1 & v_bool_37_1675' & 
+self_2305=x' & p_2304=p & flted_12_2306+1=n & self_2333=v_node2_39_1627' & 
+p_2332=self_2305 & flted_12_2334+1=flted_12_2306.
+
+// id 264
+checksat  (exists p_2326,self_2327,flted_12_2328,Anon_2329,
+q_2330: x'::node2<Anon_2307,p_2304,q_2308> * 
+v_node2_39_1627'::node2<Anon_2329,p_2326,q_2330> * 
+q_2330::dll<self_2327,flted_12_2328>&flted_12_2328+1=flted_12_2306 & 
+p_2326=self_2305 & self_2327=v_node2_39_1627' & flted_12_2306+1=n & 
+p_2304=p & self_2305=x' & v_bool_37_1675' & a'=1 & tmp_null'=null & 0<a & 
+a<n & a'=a & x'=x & v_node2_39_1627'=q_2308).
+
+// id 265
+checksat  x'::node2<Anon_2307,p_2304,q_2308>&v_node2_39_1627'=null & 
+flted_12_2306=0 & flted_12_2306+1=n & p_2304=p & self_2305=x' & 
+v_bool_37_1675' & a'=1 & tmp_null'=null & 0<a & a<n & a'=a & x'=x & 
+v_node2_39_1627'=q_2308.
+
+// id 266
+checksat  x'::node2<Anon_2307,p_2304,q_2308> * q_2308::dll<self_2305,flted_12_2306>&
+next_39_1626'=q_2308 & prev_39_1625'=p_2304 & val_39_1624'=Anon_2307 & 
+x'=x & a'=a & a<n & 0<a & tmp_null'=null & a'=1 & v_bool_37_1675' & 
+self_2305=x' & p_2304=p & flted_12_2306+1=n.
+
+// id 267
+checksat  (exists p_2298,self_2299,flted_12_2300,Anon_2301,
+q_2302: x'::node2<Anon_2301,p_2298,q_2302> * 
+q_2302::dll<self_2299,flted_12_2300>&flted_12_2300+1=n & p_2298=p & 
+self_2299=x' & v_bool_37_1675' & a'=1 & tmp_null'=null & 0<a & a<n & a'=a & 
+x'=x).
+
+// id 268
+checksat  emp&x'=null & n=0 & v_bool_37_1675' & a'=1 & tmp_null'=null & 0<a & a<n & 
+a'=a & x'=x.
+
+// id 269
+checksat  x::dll<p,n>&x'=x & a'=a & a<n & 0<a & tmp_null'=null & a'=1 & 
+v_bool_37_1675' & a'=a' & !(v_bool_37_1675').
+
+// id 270
+checksat  x::dll<p,n>&x'=x & a'=a & a<n & 0<a & tmp_null'=null & a'!=1 & 
+!(v_bool_37_1675') & a'!=1 & !(v_bool_37_1675').
+
+// id 271
+checksat  x::dll<p,n>&x'=x & a'=a & a<n & 0<a & tmp_null'=null & a'=1 & 
+v_bool_37_1675' & a'=a' & v_bool_37_1675'.
+
+// id 272
+checksat  x::dll<p,n>&x'=x & a'=a & a<n & 0<a & tmp_null'=null & a'!=1 & 
+!(v_bool_37_1675') & a'!=1 & v_bool_37_1675'.
+
+// id 273
+checksat  x::dll<p,n>&x'=x & a'=a & a<n & 0<a & tmp_null'=null & v_int_37_1623'=1 & 
+a'!=v_int_37_1623' & !(res) & a'!=v_int_37_1623'.
+
+// id 274
+checksat  x::dll<p,n>&a'!=v_int_37_1623' & v_int_37_1623'=1 & tmp_null'=null & 0<a & 
+a<n & a'=a & x'=x.
+
+// id 275
+checksat  x::dll<p,n>&x'=x & a'=a & a<n & 0<a & MayLoop[] & tmp_null'=null & 
+v_int_37_1623'=1 & a'!=v_int_37_1623'.
+
+// id 276
+checksat  x::dll<p,n>&x'=x & a'=a & a<n & 0<a & tmp_null'=null & v_int_37_1623'=1 & 
+a'=v_int_37_1623' & res & a'=v_int_37_1623'.
+
+// id 277
+checksat  x::dll<p,n>&a'=v_int_37_1623' & v_int_37_1623'=1 & tmp_null'=null & 0<a & 
+a<n & a'=a & x'=x.
+
+// id 278
+checksat  x::dll<p,n>&x'=x & a'=a & a<n & 0<a & MayLoop[] & tmp_null'=null & 
+v_int_37_1623'=1 & a'=v_int_37_1623'.
+
+// id 279
+checksat  emp&!(v_bool_199_1374') & q_2078!=null & 0<m & y'=y & x'=x & self_2075=x' & 
+p_2074=q & flted_12_2076+1=m & q_2205=self_2075 & m_2206=flted_12_2076 & 
+p_2207=p & n_2208=n & 0<=n & 0<=flted_12_2076 & flted_193_2260=n_2208+
+m_2206 & 0<=m_2206 & 0<=n_2208 & Anon_2263=Anon_2077 & q_2264=q_2078 & 
+exists(flted_193_2262:flted_193_2260+1=flted_193_2262) & 
+exists(q_2261:p_2074=q_2261).
+
+// id 280
+checksat  emp&!(v_bool_199_1374') & q_2078!=null & 0<m & y'=y & x'=x & self_2075=x' & 
+p_2074=q & flted_12_2076+1=m & q_2205=self_2075 & m_2206=flted_12_2076 & 
+p_2207=p & n_2208=n & 0<=n & 0<=flted_12_2076 & flted_193_2260=n_2208+
+m_2206 & 0<=m_2206 & 0<=n_2208 & Anon_2263=Anon_2077 & q_2264=q_2078 & 
+exists(flted_193_2262:flted_193_2260+1=flted_193_2262) & 
+exists(q_2261:p_2074=q_2261).
+
+// id 281
+checksat  emp&q_2264=q_2078 & Anon_2263=Anon_2077 & 0<=n_2208 & 0<=m_2206 & 
+flted_193_2260=n_2208+m_2206 & 0<=flted_12_2076 & 0<=n & n_2208=n & 
+p_2207=p & m_2206=flted_12_2076 & q_2205=self_2075 & flted_12_2076+1=m & 
+p_2074=q & self_2075=x' & x'=x & y'=y & 0<m & q_2078!=null & 
+!(v_bool_199_1374').
+
+// id 282
+checksat  x'::node2<Anon_2077,p_2074,q_2078> * q_2078::dll<q_2205,flted_193_2260>&
+0<=n_2208 & 0<=m_2206 & flted_193_2260=n_2208+m_2206 & 0<=flted_12_2076 & 
+0<=n & n_2208=n & p_2207=p & m_2206=flted_12_2076 & q_2205=self_2075 & 
+flted_12_2076+1=m & p_2074=q & self_2075=x' & x'=x & y'=y & 0<m & 
+q_2078!=null & !(v_bool_199_1374').
+
+// id 283
+checksat  x'::node2<Anon_2077,p_2074,q_2078> * q_2078::dll<q_2205,flted_193_2260>&
+0<=n_2208 & 0<=m_2206 & flted_193_2260=n_2208+m_2206 & 0<=flted_12_2076 & 
+0<=n & n_2208=n & p_2207=p & m_2206=flted_12_2076 & q_2205=self_2075 & 
+flted_12_2076+1=m & p_2074=q & self_2075=x' & x'=x & y'=y & 0<m & 
+q_2078!=null & !(v_bool_199_1374').
+
+// id 284
+checksat  (exists flted_193_2214: x'::node2<Anon_2077,p_2074,q_2078> * 
+q_2078::dll<q_2205,flted_193_2214>&!(v_bool_199_1374') & q_2078!=null & 
+0<m & y'=y & x'=x & self_2075=x' & p_2074=q & flted_12_2076+1=m & 
+q_2205=self_2075 & m_2206=flted_12_2076 & p_2207=p & n_2208=n & 0<=n & 
+0<=flted_12_2076 & flted_193_2214=n_2208+m_2206 & 0<=m_2206 & 0<=n_2208).
+
+// id 285
+checksat  emp&v_bool_199_1374' & q_2078=null & 0<m & y'=y & x'=x & self_2075=x' & 
+p_2074=q & flted_12_2076+1=m & next_200_2088=q_2078 & n=0 & 
+flted_12_2076=0 & y'=null & !(v_bool_201_1366') & Anon_2245=Anon_2077 & 
+q_2246=y' & exists(flted_193_2244:0+1=flted_193_2244) & 
+exists(q_2243:p_2074=q_2243).
+
+// id 286
+checksat  emp&v_bool_199_1374' & q_2078=null & 0<m & y'=y & x'=x & self_2075=x' & 
+p_2074=q & flted_12_2076+1=m & next_200_2088=q_2078 & n=0 & 
+flted_12_2076=0 & y'=null & !(v_bool_201_1366') & Anon_2245=Anon_2077 & 
+q_2246=y' & exists(flted_193_2244:0+1=flted_193_2244) & 
+exists(q_2243:p_2074=q_2243).
+
+// id 287
+checksat  emp&q_2246=y' & Anon_2245=Anon_2077 & !(v_bool_201_1366') & y'=null & 
+flted_12_2076=0 & n=0 & next_200_2088=q_2078 & flted_12_2076+1=m & 
+p_2074=q & self_2075=x' & x'=x & y'=y & 0<m & q_2078=null & v_bool_199_1374'.
+
+// id 288
+checksat  emp&q_2246=y' & Anon_2245=Anon_2077 & !(v_bool_201_1366') & y'=null & 
+flted_12_2076=0 & n=0 & next_200_2088=q_2078 & flted_12_2076+1=m & 
+p_2074=q & self_2075=x' & x'=x & y'=y & 0<m & q_2078=null & v_bool_199_1374'.
+
+// id 289
+checksat  emp&v_bool_199_1374' & q_2078=null & 0<m & y'=y & x'=x & self_2075=x' & 
+p_2074=q & flted_12_2076+1=m & next_200_2088=q_2078 & n=0 & 
+flted_12_2076=0 & y'=null & !(v_bool_201_1366') & Anon_2245=Anon_2077 & 
+q_2246=y'.
+
+// id 290
+checksat  emp&v_bool_199_1374' & q_2078=null & 0<m & y'=y & x'=x & self_2075=x' & 
+p_2074=q & flted_12_2076+1=m & next_200_2088=q_2078 & n=0 & 
+flted_12_2076=0 & y'=null & !(v_bool_201_1366') & Anon_2245=Anon_2077 & 
+q_2246=y'.
+
+// id 291
+checksat  x'::node2<Anon_2077,p_2074,y'>&!(v_bool_201_1366') & y'=null & 
+flted_12_2076=0 & n=0 & next_200_2088=q_2078 & flted_12_2076+1=m & 
+p_2074=q & self_2075=x' & x'=x & y'=y & 0<m & q_2078=null & v_bool_199_1374'.
+
+// id 292
+checksat  x'::node2<Anon_2077,p_2074,y'>&!(v_bool_201_1366') & y'=null & 
+flted_12_2076=0 & n=0 & next_200_2088=q_2078 & flted_12_2076+1=m & 
+p_2074=q & self_2075=x' & x'=x & y'=y & 0<m & q_2078=null & v_bool_199_1374'.
+
+// id 293
+checksat  q_2078::dll<self_2075,flted_12_2076>&exists(self_2226:x'=self_2226) & 
+exists(flted_12_2227:flted_12_2196+1=flted_12_2227) & q_2230=q_2198 & 
+Anon_2229=Anon_2197 & prev_202_2199=p_2194 & next_200_2088=q_2078 & 
+flted_12_2076+1=m & p_2074=q & self_2075=x' & x'=x & y'=y & 0<m & 
+q_2078=null & v_bool_199_1374' & y'!=null & v_bool_201_1366' & 
+self_2195=y' & p_2194=p & flted_12_2196+1=n & Anon_2217=Anon_2077 & 
+q_2218=y' & exists(flted_193_2216:flted_12_2196+1+1=flted_193_2216) & 
+exists(q_2215:p_2074=q_2215).
+
+// id 294
+checksat  q_2078::dll<self_2075,flted_12_2076>&exists(self_2226:x'=self_2226) & 
+exists(flted_12_2227:flted_12_2196+1=flted_12_2227) & q_2230=q_2198 & 
+Anon_2229=Anon_2197 & prev_202_2199=p_2194 & next_200_2088=q_2078 & 
+flted_12_2076+1=m & p_2074=q & self_2075=x' & x'=x & y'=y & 0<m & 
+q_2078=null & v_bool_199_1374' & y'!=null & v_bool_201_1366' & 
+self_2195=y' & p_2194=p & flted_12_2196+1=n & Anon_2217=Anon_2077 & 
+q_2218=y' & exists(flted_193_2216:flted_12_2196+1+1=flted_193_2216) & 
+exists(q_2215:p_2074=q_2215).
+
+// id 295
+checksat  q_2078::dll<self_2075,flted_12_2076>&q_2218=y' & Anon_2217=Anon_2077 & 
+flted_12_2196+1=n & p_2194=p & self_2195=y' & v_bool_201_1366' & y'!=null & 
+v_bool_199_1374' & q_2078=null & 0<m & y'=y & x'=x & self_2075=x' & 
+p_2074=q & flted_12_2076+1=m & next_200_2088=q_2078 & prev_202_2199=p_2194 & 
+Anon_2229=Anon_2197 & q_2230=q_2198 & exists(flted_12_2227:flted_12_2196+
+1=flted_12_2227) & exists(self_2226:x'=self_2226).
+
+// id 296
+checksat  q_2078::dll<self_2075,flted_12_2076>&q_2218=y' & Anon_2217=Anon_2077 & 
+flted_12_2196+1=n & p_2194=p & self_2195=y' & v_bool_201_1366' & y'!=null & 
+v_bool_199_1374' & q_2078=null & 0<m & y'=y & x'=x & self_2075=x' & 
+p_2074=q & flted_12_2076+1=m & next_200_2088=q_2078 & prev_202_2199=p_2194 & 
+Anon_2229=Anon_2197 & q_2230=q_2198 & exists(flted_12_2227:flted_12_2196+
+1=flted_12_2227) & exists(self_2226:x'=self_2226).
+
+// id 297
+checksat  q_2078::dll<self_2075,flted_12_2076>&q_2230=q_2198 & Anon_2229=Anon_2197 & 
+prev_202_2199=p_2194 & next_200_2088=q_2078 & flted_12_2076+1=m & p_2074=q & 
+self_2075=x' & x'=x & y'=y & 0<m & q_2078=null & v_bool_199_1374' & 
+y'!=null & v_bool_201_1366' & self_2195=y' & p_2194=p & flted_12_2196+1=n & 
+Anon_2217=Anon_2077 & q_2218=y'.
+
+// id 298
+checksat  q_2078::dll<self_2075,flted_12_2076> * 
+q_2198::dll<self_2195,flted_12_2196> * y'::node2<Anon_2197,x',q_2198>&
+prev_202_2199=p_2194 & next_200_2088=q_2078 & flted_12_2076+1=m & p_2074=q & 
+self_2075=x' & x'=x & y'=y & 0<m & q_2078=null & v_bool_199_1374' & 
+y'!=null & v_bool_201_1366' & self_2195=y' & p_2194=p & flted_12_2196+1=n & 
+Anon_2217=Anon_2077 & q_2218=y'.
+
+// id 299
+checksat  q_2078::dll<self_2075,flted_12_2076> * 
+q_2198::dll<self_2195,flted_12_2196> * y'::node2<Anon_2197,x',q_2198>&
+prev_202_2199=p_2194 & next_200_2088=q_2078 & flted_12_2076+1=m & p_2074=q & 
+self_2075=x' & x'=x & y'=y & 0<m & q_2078=null & v_bool_199_1374' & 
+y'!=null & v_bool_201_1366' & self_2195=y' & p_2194=p & flted_12_2196+1=n & 
+Anon_2217=Anon_2077 & q_2218=y'.
+
+// id 300
+checksat  q_2078::dll<self_2075,flted_12_2076> * 
+q_2198::dll<self_2195,flted_12_2196> * x'::node2<Anon_2077,p_2074,y'> * 
+y'::node2<Anon_2197,x',q_2198>&flted_12_2196+1=n & p_2194=p & self_2195=y' & 
+v_bool_201_1366' & y'!=null & v_bool_199_1374' & q_2078=null & 0<m & y'=y & 
+x'=x & self_2075=x' & p_2074=q & flted_12_2076+1=m & next_200_2088=q_2078 & 
+prev_202_2199=p_2194.
+
+// id 301
+checksat  q_2078::dll<self_2075,flted_12_2076> * 
+q_2198::dll<self_2195,flted_12_2196> * x'::node2<Anon_2077,p_2074,y'> * 
+y'::node2<Anon_2197,x',q_2198>&flted_12_2196+1=n & p_2194=p & self_2195=y' & 
+v_bool_201_1366' & y'!=null & v_bool_199_1374' & q_2078=null & 0<m & y'=y & 
+x'=x & self_2075=x' & p_2074=q & flted_12_2076+1=m & next_200_2088=q_2078 & 
+prev_202_2199=p_2194.
+
+// id 302
+checksat  (exists q_2213,flted_193_2214: x'::node2<Anon_2077,p_2074,q_2078> * 
+v_node2_206_1373'::dll<q_2213,flted_193_2214>&!(v_bool_199_1374') & 
+q_2078!=null & 0<m & y'=y & x'=x & self_2075=x' & p_2074=q & flted_12_2076+
+1=m & v_node2_206_1373'=q_2078 & q_2205=self_2075 & m_2206=flted_12_2076 & 
+p_2207=p & n_2208=n & 0<=n & 0<=flted_12_2076 & flted_193_2214=n_2208+
+m_2206 & q_2213=q_2205 & 0<=m_2206 & 0<=n_2208).
+
+// id 303
+checksat  x'::node2<Anon_2077,p_2074,q_2078>&n_2208=n & p_2207=p & 
+m_2206=flted_12_2076 & q_2205=self_2075 & v_node2_206_1373'=q_2078 & 
+flted_12_2076+1=m & p_2074=q & self_2075=x' & x'=x & y'=y & 0<m & 
+q_2078!=null & !(v_bool_199_1374').
+
+// id 304
+checksat  x'::node2<Anon_2077,p_2074,q_2078>&n_2208=n & p_2207=p & 
+m_2206=flted_12_2076 & q_2205=self_2075 & v_node2_206_1373'=q_2078 & 
+flted_12_2076+1=m & p_2074=q & self_2075=x' & x'=x & y'=y & 0<m & 
+q_2078!=null & !(v_bool_199_1374').
+
+// id 305
+checksat  x'::node2<Anon_2077,p_2074,q_2078> * q_2078::dll<self_2075,flted_12_2076> * 
+y::dll<p,n>&next_206_1369'=q_2078 & prev_206_1368'=p_2074 & 
+val_206_1367'=Anon_2077 & flted_12_2076+1=m & p_2074=q & self_2075=x' & 
+x'=x & y'=y & 0<m & q_2078!=null & !(v_bool_199_1374').
+
+// id 306
+checksat  q_2078::dll<self_2075,flted_12_2076> * 
+q_2198::dll<self_2195,flted_12_2196> * x'::node2<Anon_2077,p_2074,y'>&
+next_202_1365'=q_2198 & prev_202_1364'=p_2194 & val_202_1363'=Anon_2197 & 
+next_200_2088=q_2078 & flted_12_2076+1=m & p_2074=q & self_2075=x' & x'=x & 
+y'=y & 0<m & q_2078=null & v_bool_199_1374' & y'!=null & v_bool_201_1366' & 
+self_2195=y' & p_2194=p & flted_12_2196+1=n.
+
+// id 307
+checksat  (exists p_2188,self_2189,flted_12_2190,Anon_2191,
+q_2192: q_2078::dll<self_2075,flted_12_2076> * 
+y'::node2<Anon_2191,p_2188,q_2192> * q_2192::dll<self_2189,flted_12_2190> * 
+x'::node2<Anon_2077,p_2074,y'>&flted_12_2190+1=n & p_2188=p & self_2189=y' & 
+v_bool_201_1366' & y'!=null & v_bool_199_1374' & q_2078=null & 0<m & y'=y & 
+x'=x & self_2075=x' & p_2074=q & flted_12_2076+1=m & next_200_2088=q_2078).
+
+// id 308
+checksat  q_2078::dll<self_2075,flted_12_2076> * x'::node2<Anon_2077,p_2074,y'>&
+y'=null & n=0 & v_bool_201_1366' & y'!=null & v_bool_199_1374' & 
+q_2078=null & 0<m & y'=y & x'=x & self_2075=x' & p_2074=q & flted_12_2076+
+1=m & next_200_2088=q_2078.
+
+// id 309
+checksat  x'::node2<Anon_2077,p_2074,y'>&v_bool_199_1374' & q_2078=null & 0<m & 
+y'=y & x'=x & self_2075=x' & p_2074=q & flted_12_2076+1=m & 
+next_200_2088=q_2078 & y'=null & n=0 & flted_12_2076=0 & 
+!(v_bool_201_1366') & y'=null & !(v_bool_201_1366').
+
+// id 310
+checksat  q_2078::dll<self_2075,flted_12_2076> * y::dll<p,n> * 
+x'::node2<Anon_2077,p_2074,y'>&y'!=null & next_200_2088=q_2078 & 
+flted_12_2076+1=m & p_2074=q & self_2075=x' & x'=x & y'=y & 0<m & 
+q_2078=null & v_bool_199_1374' & v_bool_201_1366' & y'!=null & 
+!(v_bool_201_1366').
+
+// id 311
+checksat  x'::node2<Anon_2077,p_2074,y'>&v_bool_199_1374' & q_2078=null & 0<m & 
+y'=y & x'=x & self_2075=x' & p_2074=q & flted_12_2076+1=m & 
+next_200_2088=q_2078 & y'=null & n=0 & flted_12_2076=0 & 
+!(v_bool_201_1366') & y'=null & v_bool_201_1366'.
+
+// id 312
+checksat  q_2078::dll<self_2075,flted_12_2076> * y::dll<p,n> * 
+x'::node2<Anon_2077,p_2074,y'>&y'!=null & next_200_2088=q_2078 & 
+flted_12_2076+1=m & p_2074=q & self_2075=x' & x'=x & y'=y & 0<m & 
+q_2078=null & v_bool_199_1374' & v_bool_201_1366' & y'!=null & 
+v_bool_201_1366'.
+
+// id 313
+checksat  q_2078::dll<self_2075,flted_12_2076> * y::dll<p,n> * 
+x'::node2<Anon_2077,p_2074,y'>&y'!=null & next_200_2088=q_2078 & 
+flted_12_2076+1=m & p_2074=q & self_2075=x' & x'=x & y'=y & 0<m & 
+q_2078=null & v_bool_199_1374' & res & y'!=null.
+
+// id 314
+checksat  q_2078::dll<self_2075,flted_12_2076> * y::dll<p,n> * 
+x'::node2<Anon_2077,p_2074,y'>&v_bool_199_1374' & q_2078=null & 0<m & y'=y & 
+x'=x & self_2075=x' & p_2074=q & flted_12_2076+1=m & next_200_2088=q_2078 & 
+y'!=null.
+
+// id 315
+checksat  q_2078::dll<self_2075,flted_12_2076> * y::dll<p,n> * 
+x'::node2<Anon_2077,p_2074,y'>&v_bool_199_1374' & q_2078=null & 0<m & y'=y & 
+x'=x & self_2075=x' & p_2074=q & flted_12_2076+1=m & next_200_2088=q_2078 & 
+y'!=null.
+
+// id 316
+checksat  q_2078::dll<self_2075,flted_12_2076> * y::dll<p,n> * 
+x'::node2<Anon_2077,p_2074,y'>&v_bool_199_1374' & q_2078=null & 0<m & y'=y & 
+x'=x & self_2075=x' & p_2074=q & flted_12_2076+1=m & next_200_2088=q_2078 & 
+y'!=null.
+
+// id 317
+checksat  x'::node2<Anon_2077,p_2074,y'>&v_bool_199_1374' & q_2078=null & 0<m & 
+y'=y & x'=x & self_2075=x' & p_2074=q & flted_12_2076+1=m & 
+next_200_2088=q_2078 & y'=null & n=0 & flted_12_2076=0 & !(res) & y'=null.
+
+// id 318
+checksat  x'::node2<Anon_2077,p_2074,y'>&flted_12_2076=0 & n=0 & y'=null & 
+next_200_2088=q_2078 & flted_12_2076+1=m & p_2074=q & self_2075=x' & x'=x & 
+y'=y & 0<m & q_2078=null & v_bool_199_1374'.
+
+// id 319
+checksat  x'::node2<Anon_2077,p_2074,y'>&flted_12_2076=0 & n=0 & y'=null & 
+next_200_2088=q_2078 & flted_12_2076+1=m & p_2074=q & self_2075=x' & x'=x & 
+y'=y & 0<m & q_2078=null & v_bool_199_1374'.
+
+// id 320
+checksat  x'::node2<Anon_2077,p_2074,y'>&q_2078=null & flted_12_2076=0 & 
+q_2078=null & n=0 & y'=null & next_200_2088=q_2078 & flted_12_2076+1=m & 
+p_2074=q & self_2075=x' & x'=x & y'=y & 0<m & q_2078=null & v_bool_199_1374'.
+
+// id 321
+checksat  (exists p_2157,self_2158,flted_12_2159,Anon_2160,q_2161,p_2162,self_2163,
+flted_12_2164,Anon_2165,q_2166: q_2078::node2<Anon_2160,p_2157,q_2161> * 
+q_2161::dll<self_2158,flted_12_2159> * 
+q_2078::node2<Anon_2165,p_2162,q_2166> * 
+q_2166::dll<self_2163,flted_12_2164> * x'::node2<Anon_2077,p_2074,y'>&
+flted_12_2159+1=flted_12_2076 & p_2157=self_2075 & self_2158=q_2078 & 
+flted_12_2164+1=n & p_2162=p & self_2163=q_2078 & y'=null & 
+next_200_2088=q_2078 & flted_12_2076+1=m & p_2074=q & self_2075=x' & x'=x & 
+y'=y & 0<m & q_2078=null & v_bool_199_1374').
+
+// id 322
+checksat  (exists p_2152,self_2153,flted_12_2154,Anon_2155,
+q_2156: q_2078::node2<Anon_2155,p_2152,q_2156> * 
+q_2156::dll<self_2153,flted_12_2154> * x'::node2<Anon_2077,p_2074,y'>&
+flted_12_2154+1=flted_12_2076 & p_2152=self_2075 & self_2153=q_2078 & 
+q_2078=null & n=0 & y'=null & next_200_2088=q_2078 & flted_12_2076+1=m & 
+p_2074=q & self_2075=x' & x'=x & y'=y & 0<m & q_2078=null & v_bool_199_1374').
+
+// id 323
+checksat  (exists p_2147,self_2148,flted_12_2149,Anon_2150,
+q_2151: q_2078::node2<Anon_2150,p_2147,q_2151> * 
+q_2151::dll<self_2148,flted_12_2149> * x'::node2<Anon_2077,p_2074,y'>&
+q_2078=null & flted_12_2076=0 & flted_12_2149+1=n & p_2147=p & 
+self_2148=q_2078 & y'=null & next_200_2088=q_2078 & flted_12_2076+1=m & 
+p_2074=q & self_2075=x' & x'=x & y'=y & 0<m & q_2078=null & v_bool_199_1374').
+
+// id 324
+checksat  x'::node2<Anon_2077,p_2074,y'>&q_2078=null & flted_12_2076=0 & 
+q_2078=null & n=0 & y'=null & next_200_2088=q_2078 & flted_12_2076+1=m & 
+p_2074=q & self_2075=x' & x'=x & y'=y & 0<m & q_2078=null & v_bool_199_1374'.
+
+// id 325
+checksat  q_2078::dll<self_2075,flted_12_2076> * y::dll<p,n> * 
+x'::node2<Anon_2077,p_2074,y'>&v_bool_199_1374' & q_2078=null & 0<m & y'=y & 
+x'=x & self_2075=x' & p_2074=q & flted_12_2076+1=m & next_200_2088=q_2078 & 
+y'=null.
+
+// id 326
+checksat  q_2078::dll<self_2075,flted_12_2076> * y::dll<p,n>&next_200_1359'=q_2078 & 
+prev_200_1358'=p_2074 & val_200_1357'=Anon_2077 & flted_12_2076+1=m & 
+p_2074=q & self_2075=x' & x'=x & y'=y & 0<m & q_2078=null & v_bool_199_1374'.
+
+// id 327
+checksat  x'::node2<Anon_2077,p_2074,q_2078> * q_2078::dll<self_2075,flted_12_2076> * 
+y::dll<p,n>&q_2078=null & flted_12_2076+1=m & p_2074=q & self_2075=x' & 
+x'=x & y'=y & 0<m & v_bool_199_1374' & q_2078=null & !(v_bool_199_1374').
+
+// id 328
+checksat  x'::node2<Anon_2077,p_2074,q_2078> * q_2078::dll<self_2075,flted_12_2076> * 
+y::dll<p,n>&q_2078!=null & flted_12_2076+1=m & p_2074=q & self_2075=x' & 
+x'=x & y'=y & 0<m & !(v_bool_199_1374') & q_2078!=null & !(v_bool_199_1374').
+
+// id 329
+checksat  x'::node2<Anon_2077,p_2074,q_2078> * q_2078::dll<self_2075,flted_12_2076> * 
+y::dll<p,n>&q_2078=null & flted_12_2076+1=m & p_2074=q & self_2075=x' & 
+x'=x & y'=y & 0<m & v_bool_199_1374' & q_2078=null & v_bool_199_1374'.
+
+// id 330
+checksat  x'::node2<Anon_2077,p_2074,q_2078> * q_2078::dll<self_2075,flted_12_2076> * 
+y::dll<p,n>&q_2078!=null & flted_12_2076+1=m & p_2074=q & self_2075=x' & 
+x'=x & y'=y & 0<m & !(v_bool_199_1374') & q_2078!=null & v_bool_199_1374'.
+
+// id 331
+checksat  x'::node2<Anon_2077,p_2074,q_2078> * q_2078::dll<self_2075,flted_12_2076> * 
+y::dll<p,n>&v_node2_199_1356'!=null & v_node2_199_1356'=q_2078 & 
+flted_12_2076+1=m & p_2074=q & self_2075=x' & x'=x & y'=y & 0<m & !(res) & 
+v_node2_199_1356'!=null.
+
+// id 332
+checksat  x'::node2<Anon_2077,p_2074,q_2078> * q_2078::dll<self_2075,flted_12_2076> * 
+y::dll<p,n>&0<m & y'=y & x'=x & self_2075=x' & p_2074=q & flted_12_2076+
+1=m & v_node2_199_1356'=q_2078 & v_node2_199_1356'!=null.
+
+// id 333
+checksat  x'::node2<Anon_2077,p_2074,q_2078> * q_2078::dll<self_2075,flted_12_2076> * 
+y::dll<p,n>&0<m & y'=y & x'=x & self_2075=x' & p_2074=q & flted_12_2076+
+1=m & v_node2_199_1356'=q_2078 & v_node2_199_1356'!=null.
+
+// id 334
+checksat  x'::node2<Anon_2077,p_2074,q_2078> * q_2078::dll<self_2075,flted_12_2076> * 
+y::dll<p,n>&0<m & y'=y & x'=x & self_2075=x' & p_2074=q & flted_12_2076+
+1=m & v_node2_199_1356'=q_2078 & v_node2_199_1356'!=null.
+
+// id 335
+checksat  x'::node2<Anon_2077,p_2074,q_2078> * q_2078::dll<self_2075,flted_12_2076> * 
+y::dll<p,n>&v_node2_199_1356'=null & v_node2_199_1356'=q_2078 & 
+flted_12_2076+1=m & p_2074=q & self_2075=x' & x'=x & y'=y & 0<m & res & 
+v_node2_199_1356'=null.
+
+// id 336
+checksat  x'::node2<Anon_2077,p_2074,q_2078> * q_2078::dll<self_2075,flted_12_2076> * 
+y::dll<p,n>&0<m & y'=y & x'=x & self_2075=x' & p_2074=q & flted_12_2076+
+1=m & v_node2_199_1356'=q_2078 & v_node2_199_1356'=null.
+
+// id 337
+checksat  x'::node2<Anon_2077,p_2074,q_2078> * q_2078::dll<self_2075,flted_12_2076> * 
+y::dll<p,n>&0<m & y'=y & x'=x & self_2075=x' & p_2074=q & flted_12_2076+
+1=m & v_node2_199_1356'=q_2078 & v_node2_199_1356'=null.
+
+// id 338
+checksat  x'::node2<Anon_2077,p_2074,q_2078> * q_2078::dll<self_2075,flted_12_2076> * 
+y::dll<p,n>&0<m & y'=y & x'=x & self_2075=x' & p_2074=q & flted_12_2076+
+1=m & v_node2_199_1356'=q_2078 & v_node2_199_1356'=null.
+
+// id 339
+checksat  x'::node2<Anon_2077,p_2074,q_2078> * q_2078::dll<self_2075,flted_12_2076> * 
+y::dll<p,n>&next_199_1352'=q_2078 & prev_199_1351'=p_2074 & 
+val_199_1350'=Anon_2077 & flted_12_2076+1=m & p_2074=q & self_2075=x' & 
+x'=x & y'=y & 0<m.
+
+// id 340
+checksat  (exists p_2068,self_2069,flted_12_2070,Anon_2071,
+q_2072: x'::node2<Anon_2071,p_2068,q_2072> * 
+q_2072::dll<self_2069,flted_12_2070> * y::dll<p,n>&flted_12_2070+1=m & 
+p_2068=q & self_2069=x' & x'=x & y'=y & 0<m & MayLoop[]).
+
+// id 341
+checksat  y::dll<p,n>&x'=null & m=0 & x'=x & y'=y & 0<m & MayLoop[].
+
+// id 342
+checksat  emp&((flted_174_1964=0 | tmp_2032=null)) & q_2036=tmp_2032 & 
+Anon_2035=Anon_1946 & !(v_bool_182_1410') & tmp_2032=null & flted_12_1945+
+1=m & p_1943=q & self_1944=x' & !(v_bool_177_1414') & x'!=null & y'=y & 
+x'=x & q_1951=self_1944 & m_1952=flted_12_1945 & p_1953=p & n_1954=n & 
+0<=n & 0<=flted_12_1945 & flted_174_1964=n_1954+m_1952 & 0<=m_1952 & 
+0<=n_1954 & next_184_1999=q_1947 & res=x' & flted_174_1964=0 & 
+exists(flted_174_2033:0+1=flted_174_2033) & 
+exists(Anon_2034:p_1943=Anon_2034).
+
+// id 343
+checksat  emp&((flted_174_1964=0 | tmp_2032=null)) & q_2036=tmp_2032 & 
+Anon_2035=Anon_1946 & !(v_bool_182_1410') & tmp_2032=null & flted_12_1945+
+1=m & p_1943=q & self_1944=x' & !(v_bool_177_1414') & x'!=null & y'=y & 
+x'=x & q_1951=self_1944 & m_1952=flted_12_1945 & p_1953=p & n_1954=n & 
+0<=n & 0<=flted_12_1945 & flted_174_1964=n_1954+m_1952 & 0<=m_1952 & 
+0<=n_1954 & next_184_1999=q_1947 & res=x' & flted_174_1964=0 & 
+exists(flted_174_2033:0+1=flted_174_2033) & 
+exists(Anon_2034:p_1943=Anon_2034).
+
+// id 344
+checksat  emp&flted_174_1964=0 & res=x' & next_184_1999=q_1947 & 0<=n_1954 & 
+0<=m_1952 & flted_174_1964=n_1954+m_1952 & 0<=flted_12_1945 & 0<=n & 
+n_1954=n & p_1953=p & m_1952=flted_12_1945 & q_1951=self_1944 & x'=x & 
+y'=y & x'!=null & !(v_bool_177_1414') & self_1944=x' & p_1943=q & 
+flted_12_1945+1=m & tmp_2032=null & !(v_bool_182_1410') & 
+Anon_2035=Anon_1946 & q_2036=tmp_2032 & ((flted_174_1964=0 | tmp_2032=null)).
+
+// id 345
+checksat  emp&flted_174_1964=0 & res=x' & next_184_1999=q_1947 & 0<=n_1954 & 
+0<=m_1952 & flted_174_1964=n_1954+m_1952 & 0<=flted_12_1945 & 0<=n & 
+n_1954=n & p_1953=p & m_1952=flted_12_1945 & q_1951=self_1944 & x'=x & 
+y'=y & x'!=null & !(v_bool_177_1414') & self_1944=x' & p_1943=q & 
+flted_12_1945+1=m & tmp_2032=null & !(v_bool_182_1410') & 
+Anon_2035=Anon_1946 & q_2036=tmp_2032 & ((flted_174_1964=0 | tmp_2032=null)).
+
+// id 346
+checksat  emp&((flted_174_1964=0 | tmp_2032=null)) & q_2036=tmp_2032 & 
+Anon_2035=Anon_1946 & !(v_bool_182_1410') & tmp_2032=null & flted_12_1945+
+1=m & p_1943=q & self_1944=x' & !(v_bool_177_1414') & x'!=null & y'=y & 
+x'=x & q_1951=self_1944 & m_1952=flted_12_1945 & p_1953=p & n_1954=n & 
+0<=n & 0<=flted_12_1945 & flted_174_1964=n_1954+m_1952 & 0<=m_1952 & 
+0<=n_1954 & next_184_1999=q_1947 & res=x' & flted_174_1964=0.
+
+// id 347
+checksat  emp&((flted_174_1964=0 | tmp_2032=null)) & q_2036=tmp_2032 & 
+Anon_2035=Anon_1946 & !(v_bool_182_1410') & tmp_2032=null & flted_12_1945+
+1=m & p_1943=q & self_1944=x' & !(v_bool_177_1414') & x'!=null & y'=y & 
+x'=x & q_1951=self_1944 & m_1952=flted_12_1945 & p_1953=p & n_1954=n & 
+0<=n & 0<=flted_12_1945 & flted_174_1964=n_1954+m_1952 & 0<=m_1952 & 
+0<=n_1954 & next_184_1999=q_1947 & res=x' & flted_174_1964=0.
+
+// id 348
+checksat  emp&tmp_2032=null & flted_174_1964=0 & res=x' & next_184_1999=q_1947 & 
+0<=n_1954 & 0<=m_1952 & flted_174_1964=n_1954+m_1952 & 0<=flted_12_1945 & 
+0<=n & n_1954=n & p_1953=p & m_1952=flted_12_1945 & q_1951=self_1944 & 
+x'=x & y'=y & x'!=null & !(v_bool_177_1414') & self_1944=x' & p_1943=q & 
+flted_12_1945+1=m & tmp_2032=null & !(v_bool_182_1410') & 
+Anon_2035=Anon_1946 & q_2036=tmp_2032 & ((flted_174_1964=0 | tmp_2032=null)).
+
+// id 349
+checksat  tmp_2032::dll<Anon_1965,flted_174_1964> * 
+x'::node2<Anon_1946,p_1943,tmp_2032>&!(v_bool_182_1410') & tmp_2032=null & 
+flted_12_1945+1=m & p_1943=q & self_1944=x' & !(v_bool_177_1414') & 
+x'!=null & y'=y & x'=x & q_1951=self_1944 & m_1952=flted_12_1945 & 
+p_1953=p & n_1954=n & 0<=n & 0<=flted_12_1945 & flted_174_1964=n_1954+
+m_1952 & 0<=m_1952 & 0<=n_1954 & next_184_1999=q_1947 & res=x'.
+
+// id 350
+checksat  tmp_2032::dll<Anon_1965,flted_174_1964> * 
+x'::node2<Anon_1946,p_1943,tmp_2032>&!(v_bool_182_1410') & tmp_2032=null & 
+flted_12_1945+1=m & p_1943=q & self_1944=x' & !(v_bool_177_1414') & 
+x'!=null & y'=y & x'=x & q_1951=self_1944 & m_1952=flted_12_1945 & 
+p_1953=p & n_1954=n & 0<=n & 0<=flted_12_1945 & flted_174_1964=n_1954+
+m_1952 & 0<=m_1952 & 0<=n_1954 & next_184_1999=q_1947 & res=x'.
+
+// id 351
+checksat  emp&exists(self_2015:x'=self_2015) & exists(flted_12_2016:flted_12_1992+
+1=flted_12_2016) & q_2019=q_1994 & Anon_2018=Anon_1993 & res=x' & 
+next_184_1998=q_1947 & prev_183_1995=p_1990 & 0<=n_1954 & 0<=m_1952 & 
+flted_174_1966=n_1954+m_1952 & 0<=flted_12_1945 & 0<=n & n_1954=n & 
+p_1953=p & m_1952=flted_12_1945 & q_1951=self_1944 & x'=x & y'=y & 
+x'!=null & !(v_bool_177_1414') & self_1944=x' & p_1943=q & flted_12_1945+
+1=m & self_1991!=null & v_bool_182_1410' & p_1990=Anon_1967 & flted_12_1992+
+1=flted_174_1966 & Anon_2006=Anon_1946 & q_2007=self_1991 & 
+exists(flted_174_2004:flted_12_1992+1+1=flted_174_2004) & 
+exists(Anon_2005:p_1943=Anon_2005).
+
+// id 352
+checksat  emp&exists(self_2015:x'=self_2015) & exists(flted_12_2016:flted_12_1992+
+1=flted_12_2016) & q_2019=q_1994 & Anon_2018=Anon_1993 & res=x' & 
+next_184_1998=q_1947 & prev_183_1995=p_1990 & 0<=n_1954 & 0<=m_1952 & 
+flted_174_1966=n_1954+m_1952 & 0<=flted_12_1945 & 0<=n & n_1954=n & 
+p_1953=p & m_1952=flted_12_1945 & q_1951=self_1944 & x'=x & y'=y & 
+x'!=null & !(v_bool_177_1414') & self_1944=x' & p_1943=q & flted_12_1945+
+1=m & self_1991!=null & v_bool_182_1410' & p_1990=Anon_1967 & flted_12_1992+
+1=flted_174_1966 & Anon_2006=Anon_1946 & q_2007=self_1991 & 
+exists(flted_174_2004:flted_12_1992+1+1=flted_174_2004) & 
+exists(Anon_2005:p_1943=Anon_2005).
+
+// id 353
+checksat  emp&q_2007=self_1991 & Anon_2006=Anon_1946 & flted_12_1992+
+1=flted_174_1966 & p_1990=Anon_1967 & v_bool_182_1410' & self_1991!=null & 
+flted_12_1945+1=m & p_1943=q & self_1944=x' & !(v_bool_177_1414') & 
+x'!=null & y'=y & x'=x & q_1951=self_1944 & m_1952=flted_12_1945 & 
+p_1953=p & n_1954=n & 0<=n & 0<=flted_12_1945 & flted_174_1966=n_1954+
+m_1952 & 0<=m_1952 & 0<=n_1954 & prev_183_1995=p_1990 & 
+next_184_1998=q_1947 & res=x' & Anon_2018=Anon_1993 & q_2019=q_1994 & 
+exists(flted_12_2016:flted_12_1992+1=flted_12_2016) & 
+exists(self_2015:x'=self_2015).
+
+// id 354
+checksat  emp&q_2007=self_1991 & Anon_2006=Anon_1946 & flted_12_1992+
+1=flted_174_1966 & p_1990=Anon_1967 & v_bool_182_1410' & self_1991!=null & 
+flted_12_1945+1=m & p_1943=q & self_1944=x' & !(v_bool_177_1414') & 
+x'!=null & y'=y & x'=x & q_1951=self_1944 & m_1952=flted_12_1945 & 
+p_1953=p & n_1954=n & 0<=n & 0<=flted_12_1945 & flted_174_1966=n_1954+
+m_1952 & 0<=m_1952 & 0<=n_1954 & prev_183_1995=p_1990 & 
+next_184_1998=q_1947 & res=x' & Anon_2018=Anon_1993 & q_2019=q_1994 & 
+exists(flted_12_2016:flted_12_1992+1=flted_12_2016) & 
+exists(self_2015:x'=self_2015).
+
+// id 355
+checksat  emp&q_2019=q_1994 & Anon_2018=Anon_1993 & res=x' & next_184_1998=q_1947 & 
+prev_183_1995=p_1990 & 0<=n_1954 & 0<=m_1952 & flted_174_1966=n_1954+
+m_1952 & 0<=flted_12_1945 & 0<=n & n_1954=n & p_1953=p & 
+m_1952=flted_12_1945 & q_1951=self_1944 & x'=x & y'=y & x'!=null & 
+!(v_bool_177_1414') & self_1944=x' & p_1943=q & flted_12_1945+1=m & 
+self_1991!=null & v_bool_182_1410' & p_1990=Anon_1967 & flted_12_1992+
+1=flted_174_1966 & Anon_2006=Anon_1946 & q_2007=self_1991.
+
+// id 356
+checksat  q_1994::dll<self_1991,flted_12_1992> * 
+self_1991::node2<Anon_1993,x',q_1994>&res=x' & next_184_1998=q_1947 & 
+prev_183_1995=p_1990 & 0<=n_1954 & 0<=m_1952 & flted_174_1966=n_1954+
+m_1952 & 0<=flted_12_1945 & 0<=n & n_1954=n & p_1953=p & 
+m_1952=flted_12_1945 & q_1951=self_1944 & x'=x & y'=y & x'!=null & 
+!(v_bool_177_1414') & self_1944=x' & p_1943=q & flted_12_1945+1=m & 
+self_1991!=null & v_bool_182_1410' & p_1990=Anon_1967 & flted_12_1992+
+1=flted_174_1966 & Anon_2006=Anon_1946 & q_2007=self_1991.
+
+// id 357
+checksat  q_1994::dll<self_1991,flted_12_1992> * 
+self_1991::node2<Anon_1993,x',q_1994>&res=x' & next_184_1998=q_1947 & 
+prev_183_1995=p_1990 & 0<=n_1954 & 0<=m_1952 & flted_174_1966=n_1954+
+m_1952 & 0<=flted_12_1945 & 0<=n & n_1954=n & p_1953=p & 
+m_1952=flted_12_1945 & q_1951=self_1944 & x'=x & y'=y & x'!=null & 
+!(v_bool_177_1414') & self_1944=x' & p_1943=q & flted_12_1945+1=m & 
+self_1991!=null & v_bool_182_1410' & p_1990=Anon_1967 & flted_12_1992+
+1=flted_174_1966 & Anon_2006=Anon_1946 & q_2007=self_1991.
+
+// id 358
+checksat  q_1994::dll<self_1991,flted_12_1992> * 
+self_1991::node2<Anon_1993,x',q_1994> * 
+x'::node2<Anon_1946,p_1943,self_1991>&flted_12_1992+1=flted_174_1966 & 
+p_1990=Anon_1967 & v_bool_182_1410' & self_1991!=null & flted_12_1945+1=m & 
+p_1943=q & self_1944=x' & !(v_bool_177_1414') & x'!=null & y'=y & x'=x & 
+q_1951=self_1944 & m_1952=flted_12_1945 & p_1953=p & n_1954=n & 0<=n & 
+0<=flted_12_1945 & flted_174_1966=n_1954+m_1952 & 0<=m_1952 & 0<=n_1954 & 
+prev_183_1995=p_1990 & next_184_1998=q_1947 & res=x'.
+
+// id 359
+checksat  q_1994::dll<self_1991,flted_12_1992> * 
+self_1991::node2<Anon_1993,x',q_1994> * 
+x'::node2<Anon_1946,p_1943,self_1991>&flted_12_1992+1=flted_174_1966 & 
+p_1990=Anon_1967 & v_bool_182_1410' & self_1991!=null & flted_12_1945+1=m & 
+p_1943=q & self_1944=x' & !(v_bool_177_1414') & x'!=null & y'=y & x'=x & 
+q_1951=self_1944 & m_1952=flted_12_1945 & p_1953=p & n_1954=n & 0<=n & 
+0<=flted_12_1945 & flted_174_1966=n_1954+m_1952 & 0<=m_1952 & 0<=n_1954 & 
+prev_183_1995=p_1990 & next_184_1998=q_1947 & res=x'.
+
+// id 360
+checksat  x::dll<q,m>&res=y' & x'=x & y'=y & x'=null & v_bool_177_1414'.
+
+// id 361
+checksat  tmp'::dll<Anon_1965,flted_174_1964>&next_184_1413'=q_1947 & 
+prev_184_1412'=p_1943 & val_184_1411'=Anon_1946 & 0<=n_1954 & 0<=m_1952 & 
+flted_174_1964=n_1954+m_1952 & 0<=flted_12_1945 & 0<=n & n_1954=n & 
+p_1953=p & m_1952=flted_12_1945 & q_1951=self_1944 & x'=x & y'=y & 
+x'!=null & !(v_bool_177_1414') & self_1944=x' & p_1943=q & flted_12_1945+
+1=m & tmp'=null & !(v_bool_182_1410').
+
+// id 362
+checksat  q_1994::dll<self_1991,flted_12_1992> * tmp'::node2<Anon_1993,x',q_1994>&
+next_184_1413'=q_1947 & prev_184_1412'=p_1943 & val_184_1411'=Anon_1946 & 
+prev_183_1995=p_1990 & 0<=n_1954 & 0<=m_1952 & flted_174_1966=n_1954+
+m_1952 & 0<=flted_12_1945 & 0<=n & n_1954=n & p_1953=p & 
+m_1952=flted_12_1945 & q_1951=self_1944 & x'=x & y'=y & x'!=null & 
+!(v_bool_177_1414') & self_1944=x' & p_1943=q & flted_12_1945+1=m & 
+tmp'!=null & v_bool_182_1410' & self_1991=tmp' & p_1990=Anon_1967 & 
+flted_12_1992+1=flted_174_1966.
+
+// id 363
+checksat  x'::node2<Anon_1946,p_1943,q_1947> * q_1994::dll<self_1991,flted_12_1992>&
+next_183_1409'=q_1994 & prev_183_1408'=p_1990 & val_183_1407'=Anon_1993 & 
+0<=n_1954 & 0<=m_1952 & flted_174_1966=n_1954+m_1952 & 0<=flted_12_1945 & 
+0<=n & n_1954=n & p_1953=p & m_1952=flted_12_1945 & q_1951=self_1944 & 
+x'=x & y'=y & x'!=null & !(v_bool_177_1414') & self_1944=x' & p_1943=q & 
+flted_12_1945+1=m & tmp'!=null & v_bool_182_1410' & self_1991=tmp' & 
+p_1990=Anon_1967 & flted_12_1992+1=flted_174_1966.
+
+// id 364
+checksat  (exists p_1984,self_1985,flted_12_1986,Anon_1987,
+q_1988: x'::node2<Anon_1946,p_1943,q_1947> * 
+tmp'::node2<Anon_1987,p_1984,q_1988> * q_1988::dll<self_1985,flted_12_1986>&
+flted_12_1986+1=flted_174_1966 & p_1984=Anon_1967 & self_1985=tmp' & 
+v_bool_182_1410' & tmp'!=null & flted_12_1945+1=m & p_1943=q & 
+self_1944=x' & !(v_bool_177_1414') & x'!=null & y'=y & x'=x & 
+q_1951=self_1944 & m_1952=flted_12_1945 & p_1953=p & n_1954=n & 0<=n & 
+0<=flted_12_1945 & flted_174_1966=n_1954+m_1952 & 0<=m_1952 & 0<=n_1954).
+
+// id 365
+checksat  x'::node2<Anon_1946,p_1943,q_1947>&tmp'=null & flted_174_1966=0 & 
+v_bool_182_1410' & tmp'!=null & flted_12_1945+1=m & p_1943=q & 
+self_1944=x' & !(v_bool_177_1414') & x'!=null & y'=y & x'=x & 
+q_1951=self_1944 & m_1952=flted_12_1945 & p_1953=p & n_1954=n & 0<=n & 
+0<=flted_12_1945 & flted_174_1966=n_1954+m_1952 & 0<=m_1952 & 0<=n_1954.
+
+// id 366
+checksat  x'::node2<Anon_1946,p_1943,q_1947> * tmp'::dll<Anon_1965,flted_174_1964>&
+tmp'=null & 0<=n_1954 & 0<=m_1952 & flted_174_1964=n_1954+m_1952 & 
+0<=flted_12_1945 & 0<=n & n_1954=n & p_1953=p & m_1952=flted_12_1945 & 
+q_1951=self_1944 & x'=x & y'=y & x'!=null & !(v_bool_177_1414') & 
+self_1944=x' & p_1943=q & flted_12_1945+1=m & !(v_bool_182_1410') & 
+tmp'=null & !(v_bool_182_1410').
+
+// id 367
+checksat  x'::node2<Anon_1946,p_1943,q_1947> * tmp'::dll<Anon_1967,flted_174_1966>&
+tmp'!=null & 0<=n_1954 & 0<=m_1952 & flted_174_1966=n_1954+m_1952 & 
+0<=flted_12_1945 & 0<=n & n_1954=n & p_1953=p & m_1952=flted_12_1945 & 
+q_1951=self_1944 & x'=x & y'=y & x'!=null & !(v_bool_177_1414') & 
+self_1944=x' & p_1943=q & flted_12_1945+1=m & v_bool_182_1410' & 
+tmp'!=null & !(v_bool_182_1410').
+
+// id 368
+checksat  x'::node2<Anon_1946,p_1943,q_1947> * tmp'::dll<Anon_1965,flted_174_1964>&
+tmp'=null & 0<=n_1954 & 0<=m_1952 & flted_174_1964=n_1954+m_1952 & 
+0<=flted_12_1945 & 0<=n & n_1954=n & p_1953=p & m_1952=flted_12_1945 & 
+q_1951=self_1944 & x'=x & y'=y & x'!=null & !(v_bool_177_1414') & 
+self_1944=x' & p_1943=q & flted_12_1945+1=m & !(v_bool_182_1410') & 
+tmp'=null & v_bool_182_1410'.
+
+// id 369
+checksat  x'::node2<Anon_1946,p_1943,q_1947> * tmp'::dll<Anon_1967,flted_174_1966>&
+tmp'!=null & 0<=n_1954 & 0<=m_1952 & flted_174_1966=n_1954+m_1952 & 
+0<=flted_12_1945 & 0<=n & n_1954=n & p_1953=p & m_1952=flted_12_1945 & 
+q_1951=self_1944 & x'=x & y'=y & x'!=null & !(v_bool_177_1414') & 
+self_1944=x' & p_1943=q & flted_12_1945+1=m & v_bool_182_1410' & 
+tmp'!=null & v_bool_182_1410'.
+
+// id 370
+checksat  x'::node2<Anon_1946,p_1943,q_1947> * tmp'::dll<Anon_1967,flted_174_1966>&
+tmp'!=null & 0<=n_1954 & 0<=m_1952 & flted_174_1966=n_1954+m_1952 & 
+0<=flted_12_1945 & 0<=n & n_1954=n & p_1953=p & m_1952=flted_12_1945 & 
+q_1951=self_1944 & x'=x & y'=y & x'!=null & !(v_bool_177_1414') & 
+self_1944=x' & p_1943=q & flted_12_1945+1=m & res & tmp'!=null.
+
+// id 371
+checksat  x'::node2<Anon_1946,p_1943,q_1947> * tmp'::dll<Anon_1967,flted_174_1966>&
+flted_12_1945+1=m & p_1943=q & self_1944=x' & !(v_bool_177_1414') & 
+x'!=null & y'=y & x'=x & q_1951=self_1944 & m_1952=flted_12_1945 & 
+p_1953=p & n_1954=n & 0<=n & 0<=flted_12_1945 & flted_174_1966=n_1954+
+m_1952 & 0<=m_1952 & 0<=n_1954 & tmp'!=null.
+
+// id 372
+checksat  x'::node2<Anon_1946,p_1943,q_1947> * tmp'::dll<Anon_1967,flted_174_1966>&
+flted_12_1945+1=m & p_1943=q & self_1944=x' & !(v_bool_177_1414') & 
+x'!=null & y'=y & x'=x & q_1951=self_1944 & m_1952=flted_12_1945 & 
+p_1953=p & n_1954=n & 0<=n & 0<=flted_12_1945 & flted_174_1966=n_1954+
+m_1952 & 0<=m_1952 & 0<=n_1954 & tmp'!=null.
+
+// id 373
+checksat  x'::node2<Anon_1946,p_1943,q_1947> * tmp'::dll<Anon_1960,flted_174_1959>&
+flted_12_1945+1=m & p_1943=q & self_1944=x' & !(v_bool_177_1414') & 
+x'!=null & y'=y & x'=x & q_1951=self_1944 & m_1952=flted_12_1945 & 
+p_1953=p & n_1954=n & 0<=n & 0<=flted_12_1945 & flted_174_1959=n_1954+
+m_1952 & 0<=m_1952 & 0<=n_1954 & tmp'!=null.
+
+// id 374
+checksat  x'::node2<Anon_1946,p_1943,q_1947> * tmp'::dll<Anon_1965,flted_174_1964>&
+tmp'=null & 0<=n_1954 & 0<=m_1952 & flted_174_1964=n_1954+m_1952 & 
+0<=flted_12_1945 & 0<=n & n_1954=n & p_1953=p & m_1952=flted_12_1945 & 
+q_1951=self_1944 & x'=x & y'=y & x'!=null & !(v_bool_177_1414') & 
+self_1944=x' & p_1943=q & flted_12_1945+1=m & !(res) & tmp'=null.
+
+// id 375
+checksat  x'::node2<Anon_1946,p_1943,q_1947> * tmp'::dll<Anon_1965,flted_174_1964>&
+flted_12_1945+1=m & p_1943=q & self_1944=x' & !(v_bool_177_1414') & 
+x'!=null & y'=y & x'=x & q_1951=self_1944 & m_1952=flted_12_1945 & 
+p_1953=p & n_1954=n & 0<=n & 0<=flted_12_1945 & flted_174_1964=n_1954+
+m_1952 & 0<=m_1952 & 0<=n_1954 & tmp'=null.
+
+// id 376
+checksat  x'::node2<Anon_1946,p_1943,q_1947> * tmp'::dll<Anon_1965,flted_174_1964>&
+flted_12_1945+1=m & p_1943=q & self_1944=x' & !(v_bool_177_1414') & 
+x'!=null & y'=y & x'=x & q_1951=self_1944 & m_1952=flted_12_1945 & 
+p_1953=p & n_1954=n & 0<=n & 0<=flted_12_1945 & flted_174_1964=n_1954+
+m_1952 & 0<=m_1952 & 0<=n_1954 & tmp'=null.
+
+// id 377
+checksat  x'::node2<Anon_1946,p_1943,q_1947> * tmp'::dll<Anon_1960,flted_174_1959>&
+flted_12_1945+1=m & p_1943=q & self_1944=x' & !(v_bool_177_1414') & 
+x'!=null & y'=y & x'=x & q_1951=self_1944 & m_1952=flted_12_1945 & 
+p_1953=p & n_1954=n & 0<=n & 0<=flted_12_1945 & flted_174_1959=n_1954+
+m_1952 & 0<=m_1952 & 0<=n_1954 & tmp'=null.
+
+// id 378
+checksat  (exists flted_174_1959,Anon_1960: x'::node2<Anon_1946,p_1943,q_1947> * 
+res::dll<Anon_1960,flted_174_1959>&flted_12_1945+1=m & p_1943=q & 
+self_1944=x' & !(v_bool_177_1414') & x'!=null & y'=y & x'=x & 
+v_node2_181_1403'=q_1947 & q_1951=self_1944 & m_1952=flted_12_1945 & 
+p_1953=p & n_1954=n & 0<=n & 0<=flted_12_1945 & flted_174_1959=n_1954+
+m_1952 & 0<=m_1952 & 0<=n_1954).
+
+// id 379
+checksat  x'::node2<Anon_1946,p_1943,q_1947>&n_1954=n & p_1953=p & 
+m_1952=flted_12_1945 & q_1951=self_1944 & v_node2_181_1403'=q_1947 & x'=x & 
+y'=y & x'!=null & !(v_bool_177_1414') & self_1944=x' & p_1943=q & 
+flted_12_1945+1=m.
+
+// id 380
+checksat  x'::node2<Anon_1946,p_1943,q_1947>&n_1954=n & p_1953=p & 
+m_1952=flted_12_1945 & q_1951=self_1944 & v_node2_181_1403'=q_1947 & x'=x & 
+y'=y & x'!=null & !(v_bool_177_1414') & self_1944=x' & p_1943=q & 
+flted_12_1945+1=m.
+
+// id 381
+checksat  x'::node2<Anon_1946,p_1943,q_1947> * q_1947::dll<self_1944,flted_12_1945> * 
+y::dll<p,n>&next_181_1399'=q_1947 & prev_181_1398'=p_1943 & 
+val_181_1397'=Anon_1946 & x'=x & y'=y & x'!=null & !(v_bool_177_1414') & 
+self_1944=x' & p_1943=q & flted_12_1945+1=m.
+
+// id 382
+checksat  (exists p_1937,self_1938,flted_12_1939,Anon_1940,
+q_1941: x'::node2<Anon_1940,p_1937,q_1941> * 
+q_1941::dll<self_1938,flted_12_1939> * y::dll<p,n>&flted_12_1939+1=m & 
+p_1937=q & self_1938=x' & !(v_bool_177_1414') & x'!=null & y'=y & x'=x).
+
+// id 383
+checksat  y::dll<p,n>&x'=null & m=0 & !(v_bool_177_1414') & x'!=null & y'=y & x'=x.
+
+// id 384
+checksat  x::dll<q,m> * y::dll<p,n>&x'=x & y'=y & x'=null & v_bool_177_1414' & 
+x'=null & !(v_bool_177_1414').
+
+// id 385
+checksat  x::dll<q,m> * y::dll<p,n>&x'=x & y'=y & x'!=null & !(v_bool_177_1414') & 
+x'!=null & !(v_bool_177_1414').
+
+// id 386
+checksat  x::dll<q,m> * y::dll<p,n>&x'=x & y'=y & x'=null & v_bool_177_1414' & 
+x'=null & v_bool_177_1414'.
+
+// id 387
+checksat  x::dll<q,m> * y::dll<p,n>&x'=x & y'=y & x'!=null & !(v_bool_177_1414') & 
+x'!=null & v_bool_177_1414'.
+
+// id 388
+checksat  x::dll<q,m> * y::dll<p,n>&x'=x & y'=y & x'!=null & !(res) & x'!=null.
+
+// id 389
+checksat  x::dll<q,m> * y::dll<p,n>&x'!=null & y'=y & x'=x.
+
+// id 390
+checksat  x::dll<q,m> * y::dll<p,n>&x'!=null & y'=y & x'=x.
+
+// id 391
+checksat  x::dll<q,m> * y::dll<p,n>&x'=x & y'=y & MayLoop[] & x'!=null.
+
+// id 392
+checksat  x::dll<q,m> * y::dll<p,n>&x'=x & y'=y & x'=null & res & x'=null.
+
+// id 393
+checksat  x::dll<q,m> * y::dll<p,n>&x'=null & y'=y & x'=x.
+
+// id 394
+checksat  x::dll<q,m> * y::dll<p,n>&x'=null & y'=y & x'=x.
+
+// id 395
+checksat  x::dll<q,m> * y::dll<p,n>&x'=x & y'=y & MayLoop[] & x'=null.
+
+// id 396
+checksat  tmp_1897::dll<Anon_1826,flted_144_1825>&res=x' & next_163_1863=q_1808 & 
+v_null_type_163_1896=null & 0<=n_1815 & 0<=m_1813 & flted_144_1825=n_1815+
+m_1813 & 0<=flted_12_1806 & 0<=n & n_1815=n & p_1814=p & 
+m_1813=flted_12_1806 & q_1812=self_1805 & tmp_1822=q_1808 & x'=x & y'=y & 
+x'!=null & !(v_bool_149_1458') & self_1805=x' & p_1804=q & flted_12_1806+
+1=m & tmp_1897=null & !(v_bool_157_1457') & Anon_1900=Anon_1807 & 
+q_1901=v_null_type_163_1896 & exists(flted_144_1898:0+1=flted_144_1898) & 
+exists(Anon_1899:p_1804=Anon_1899).
+
+// id 397
+checksat  tmp_1897::dll<Anon_1826,flted_144_1825>&res=x' & next_163_1863=q_1808 & 
+v_null_type_163_1896=null & 0<=n_1815 & 0<=m_1813 & flted_144_1825=n_1815+
+m_1813 & 0<=flted_12_1806 & 0<=n & n_1815=n & p_1814=p & 
+m_1813=flted_12_1806 & q_1812=self_1805 & tmp_1822=q_1808 & x'=x & y'=y & 
+x'!=null & !(v_bool_149_1458') & self_1805=x' & p_1804=q & flted_12_1806+
+1=m & tmp_1897=null & !(v_bool_157_1457') & Anon_1900=Anon_1807 & 
+q_1901=v_null_type_163_1896 & exists(flted_144_1898:0+1=flted_144_1898) & 
+exists(Anon_1899:p_1804=Anon_1899).
+
+// id 398
+checksat  tmp_1897::dll<Anon_1826,flted_144_1825>&q_1901=v_null_type_163_1896 & 
+Anon_1900=Anon_1807 & !(v_bool_157_1457') & tmp_1897=null & flted_12_1806+
+1=m & p_1804=q & self_1805=x' & !(v_bool_149_1458') & x'!=null & y'=y & 
+x'=x & tmp_1822=q_1808 & q_1812=self_1805 & m_1813=flted_12_1806 & 
+p_1814=p & n_1815=n & 0<=n & 0<=flted_12_1806 & flted_144_1825=n_1815+
+m_1813 & 0<=m_1813 & 0<=n_1815 & v_null_type_163_1896=null & 
+next_163_1863=q_1808 & res=x'.
+
+// id 399
+checksat  tmp_1897::dll<Anon_1826,flted_144_1825>&q_1901=v_null_type_163_1896 & 
+Anon_1900=Anon_1807 & !(v_bool_157_1457') & tmp_1897=null & flted_12_1806+
+1=m & p_1804=q & self_1805=x' & !(v_bool_149_1458') & x'!=null & y'=y & 
+x'=x & tmp_1822=q_1808 & q_1812=self_1805 & m_1813=flted_12_1806 & 
+p_1814=p & n_1815=n & 0<=n & 0<=flted_12_1806 & flted_144_1825=n_1815+
+m_1813 & 0<=m_1813 & 0<=n_1815 & v_null_type_163_1896=null & 
+next_163_1863=q_1808 & res=x'.
+
+// id 400
+checksat  tmp_1897::dll<Anon_1826,flted_144_1825>&res=x' & next_163_1863=q_1808 & 
+v_null_type_163_1896=null & 0<=n_1815 & 0<=m_1813 & flted_144_1825=n_1815+
+m_1813 & 0<=flted_12_1806 & 0<=n & n_1815=n & p_1814=p & 
+m_1813=flted_12_1806 & q_1812=self_1805 & tmp_1822=q_1808 & x'=x & y'=y & 
+x'!=null & !(v_bool_149_1458') & self_1805=x' & p_1804=q & flted_12_1806+
+1=m & tmp_1897=null & !(v_bool_157_1457') & Anon_1900=Anon_1807 & 
+q_1901=v_null_type_163_1896.
+
+// id 401
+checksat  tmp_1897::dll<Anon_1826,flted_144_1825>&res=x' & next_163_1863=q_1808 & 
+v_null_type_163_1896=null & 0<=n_1815 & 0<=m_1813 & flted_144_1825=n_1815+
+m_1813 & 0<=flted_12_1806 & 0<=n & n_1815=n & p_1814=p & 
+m_1813=flted_12_1806 & q_1812=self_1805 & tmp_1822=q_1808 & x'=x & y'=y & 
+x'!=null & !(v_bool_149_1458') & self_1805=x' & p_1804=q & flted_12_1806+
+1=m & tmp_1897=null & !(v_bool_157_1457') & Anon_1900=Anon_1807 & 
+q_1901=v_null_type_163_1896.
+
+// id 402
+checksat  tmp_1897::dll<Anon_1826,flted_144_1825> * 
+x'::node2<Anon_1807,p_1804,v_null_type_163_1896>&!(v_bool_157_1457') & 
+tmp_1897=null & flted_12_1806+1=m & p_1804=q & self_1805=x' & 
+!(v_bool_149_1458') & x'!=null & y'=y & x'=x & tmp_1822=q_1808 & 
+q_1812=self_1805 & m_1813=flted_12_1806 & p_1814=p & n_1815=n & 0<=n & 
+0<=flted_12_1806 & flted_144_1825=n_1815+m_1813 & 0<=m_1813 & 0<=n_1815 & 
+v_null_type_163_1896=null & next_163_1863=q_1808 & res=x'.
+
+// id 403
+checksat  tmp_1897::dll<Anon_1826,flted_144_1825> * 
+x'::node2<Anon_1807,p_1804,v_null_type_163_1896>&!(v_bool_157_1457') & 
+tmp_1897=null & flted_12_1806+1=m & p_1804=q & self_1805=x' & 
+!(v_bool_149_1458') & x'!=null & y'=y & x'=x & tmp_1822=q_1808 & 
+q_1812=self_1805 & m_1813=flted_12_1806 & p_1814=p & n_1815=n & 0<=n & 
+0<=flted_12_1806 & flted_144_1825=n_1815+m_1813 & 0<=m_1813 & 0<=n_1815 & 
+v_null_type_163_1896=null & next_163_1863=q_1808 & res=x'.
+
+// id 404
+checksat  emp&exists(self_1879:x'=self_1879) & exists(flted_12_1880:flted_12_1856+
+1=flted_12_1880) & q_1883=q_1858 & Anon_1882=Anon_1857 & res=x' & 
+prev_160_1859=p_1854 & next_159_1833=q_1808 & 0<=n_1815 & 0<=m_1813 & 
+flted_144_1827=n_1815+m_1813 & 0<=flted_12_1806 & 0<=n & n_1815=n & 
+p_1814=p & m_1813=flted_12_1806 & q_1812=self_1805 & tmp_1822=q_1808 & 
+x'=x & y'=y & x'!=null & !(v_bool_149_1458') & self_1805=x' & p_1804=q & 
+flted_12_1806+1=m & self_1855!=null & v_bool_157_1457' & p_1854=Anon_1828 & 
+flted_12_1856+1=flted_144_1827 & Anon_1870=Anon_1807 & q_1871=self_1855 & 
+exists(flted_144_1868:flted_12_1856+1+1=flted_144_1868) & 
+exists(Anon_1869:p_1804=Anon_1869).
+
+// id 405
+checksat  emp&exists(self_1879:x'=self_1879) & exists(flted_12_1880:flted_12_1856+
+1=flted_12_1880) & q_1883=q_1858 & Anon_1882=Anon_1857 & res=x' & 
+prev_160_1859=p_1854 & next_159_1833=q_1808 & 0<=n_1815 & 0<=m_1813 & 
+flted_144_1827=n_1815+m_1813 & 0<=flted_12_1806 & 0<=n & n_1815=n & 
+p_1814=p & m_1813=flted_12_1806 & q_1812=self_1805 & tmp_1822=q_1808 & 
+x'=x & y'=y & x'!=null & !(v_bool_149_1458') & self_1805=x' & p_1804=q & 
+flted_12_1806+1=m & self_1855!=null & v_bool_157_1457' & p_1854=Anon_1828 & 
+flted_12_1856+1=flted_144_1827 & Anon_1870=Anon_1807 & q_1871=self_1855 & 
+exists(flted_144_1868:flted_12_1856+1+1=flted_144_1868) & 
+exists(Anon_1869:p_1804=Anon_1869).
+
+// id 406
+checksat  emp&q_1871=self_1855 & Anon_1870=Anon_1807 & flted_12_1856+
+1=flted_144_1827 & p_1854=Anon_1828 & v_bool_157_1457' & self_1855!=null & 
+flted_12_1806+1=m & p_1804=q & self_1805=x' & !(v_bool_149_1458') & 
+x'!=null & y'=y & x'=x & tmp_1822=q_1808 & q_1812=self_1805 & 
+m_1813=flted_12_1806 & p_1814=p & n_1815=n & 0<=n & 0<=flted_12_1806 & 
+flted_144_1827=n_1815+m_1813 & 0<=m_1813 & 0<=n_1815 & 
+next_159_1833=q_1808 & prev_160_1859=p_1854 & res=x' & Anon_1882=Anon_1857 & 
+q_1883=q_1858 & exists(flted_12_1880:flted_12_1856+1=flted_12_1880) & 
+exists(self_1879:x'=self_1879).
+
+// id 407
+checksat  emp&q_1871=self_1855 & Anon_1870=Anon_1807 & flted_12_1856+
+1=flted_144_1827 & p_1854=Anon_1828 & v_bool_157_1457' & self_1855!=null & 
+flted_12_1806+1=m & p_1804=q & self_1805=x' & !(v_bool_149_1458') & 
+x'!=null & y'=y & x'=x & tmp_1822=q_1808 & q_1812=self_1805 & 
+m_1813=flted_12_1806 & p_1814=p & n_1815=n & 0<=n & 0<=flted_12_1806 & 
+flted_144_1827=n_1815+m_1813 & 0<=m_1813 & 0<=n_1815 & 
+next_159_1833=q_1808 & prev_160_1859=p_1854 & res=x' & Anon_1882=Anon_1857 & 
+q_1883=q_1858 & exists(flted_12_1880:flted_12_1856+1=flted_12_1880) & 
+exists(self_1879:x'=self_1879).
+
+// id 408
+checksat  emp&q_1883=q_1858 & Anon_1882=Anon_1857 & res=x' & prev_160_1859=p_1854 & 
+next_159_1833=q_1808 & 0<=n_1815 & 0<=m_1813 & flted_144_1827=n_1815+
+m_1813 & 0<=flted_12_1806 & 0<=n & n_1815=n & p_1814=p & 
+m_1813=flted_12_1806 & q_1812=self_1805 & tmp_1822=q_1808 & x'=x & y'=y & 
+x'!=null & !(v_bool_149_1458') & self_1805=x' & p_1804=q & flted_12_1806+
+1=m & self_1855!=null & v_bool_157_1457' & p_1854=Anon_1828 & flted_12_1856+
+1=flted_144_1827 & Anon_1870=Anon_1807 & q_1871=self_1855.
+
+// id 409
+checksat  q_1858::dll<self_1855,flted_12_1856> * 
+self_1855::node2<Anon_1857,x',q_1858>&res=x' & prev_160_1859=p_1854 & 
+next_159_1833=q_1808 & 0<=n_1815 & 0<=m_1813 & flted_144_1827=n_1815+
+m_1813 & 0<=flted_12_1806 & 0<=n & n_1815=n & p_1814=p & 
+m_1813=flted_12_1806 & q_1812=self_1805 & tmp_1822=q_1808 & x'=x & y'=y & 
+x'!=null & !(v_bool_149_1458') & self_1805=x' & p_1804=q & flted_12_1806+
+1=m & self_1855!=null & v_bool_157_1457' & p_1854=Anon_1828 & flted_12_1856+
+1=flted_144_1827 & Anon_1870=Anon_1807 & q_1871=self_1855.
+
+// id 410
+checksat  q_1858::dll<self_1855,flted_12_1856> * 
+self_1855::node2<Anon_1857,x',q_1858>&res=x' & prev_160_1859=p_1854 & 
+next_159_1833=q_1808 & 0<=n_1815 & 0<=m_1813 & flted_144_1827=n_1815+
+m_1813 & 0<=flted_12_1806 & 0<=n & n_1815=n & p_1814=p & 
+m_1813=flted_12_1806 & q_1812=self_1805 & tmp_1822=q_1808 & x'=x & y'=y & 
+x'!=null & !(v_bool_149_1458') & self_1805=x' & p_1804=q & flted_12_1806+
+1=m & self_1855!=null & v_bool_157_1457' & p_1854=Anon_1828 & flted_12_1856+
+1=flted_144_1827 & Anon_1870=Anon_1807 & q_1871=self_1855.
+
+// id 411
+checksat  q_1858::dll<self_1855,flted_12_1856> * 
+x'::node2<Anon_1807,p_1804,self_1855> * 
+self_1855::node2<Anon_1857,x',q_1858>&flted_12_1856+1=flted_144_1827 & 
+p_1854=Anon_1828 & v_bool_157_1457' & self_1855!=null & flted_12_1806+1=m & 
+p_1804=q & self_1805=x' & !(v_bool_149_1458') & x'!=null & y'=y & x'=x & 
+tmp_1822=q_1808 & q_1812=self_1805 & m_1813=flted_12_1806 & p_1814=p & 
+n_1815=n & 0<=n & 0<=flted_12_1806 & flted_144_1827=n_1815+m_1813 & 
+0<=m_1813 & 0<=n_1815 & next_159_1833=q_1808 & prev_160_1859=p_1854 & res=x'.
+
+// id 412
+checksat  q_1858::dll<self_1855,flted_12_1856> * 
+x'::node2<Anon_1807,p_1804,self_1855> * 
+self_1855::node2<Anon_1857,x',q_1858>&flted_12_1856+1=flted_144_1827 & 
+p_1854=Anon_1828 & v_bool_157_1457' & self_1855!=null & flted_12_1806+1=m & 
+p_1804=q & self_1805=x' & !(v_bool_149_1458') & x'!=null & y'=y & x'=x & 
+tmp_1822=q_1808 & q_1812=self_1805 & m_1813=flted_12_1806 & p_1814=p & 
+n_1815=n & 0<=n & 0<=flted_12_1806 & flted_144_1827=n_1815+m_1813 & 
+0<=m_1813 & 0<=n_1815 & next_159_1833=q_1808 & prev_160_1859=p_1854 & res=x'.
+
+// id 413
+checksat  x::dll<q,m>&res=y' & x'=x & y'=y & x'=null & v_bool_149_1458'.
+
+// id 414
+checksat  tmp'::dll<Anon_1826,flted_144_1825>&next_163_1456'=q_1808 & 
+prev_163_1455'=p_1804 & val_163_1454'=Anon_1807 & 
+v_null_type_163_1453'=null & 0<=n_1815 & 0<=m_1813 & flted_144_1825=n_1815+
+m_1813 & 0<=flted_12_1806 & 0<=n & n_1815=n & p_1814=p & 
+m_1813=flted_12_1806 & q_1812=self_1805 & tmp_1822=q_1808 & x'=x & y'=y & 
+x'!=null & !(v_bool_149_1458') & self_1805=x' & p_1804=q & flted_12_1806+
+1=m & tmp'=null & !(v_bool_157_1457').
+
+// id 415
+checksat  q_1858::dll<self_1855,flted_12_1856> * x'::node2<Anon_1807,p_1804,tmp'>&
+next_160_1452'=q_1858 & prev_160_1451'=p_1854 & val_160_1450'=Anon_1857 & 
+next_159_1833=q_1808 & 0<=n_1815 & 0<=m_1813 & flted_144_1827=n_1815+
+m_1813 & 0<=flted_12_1806 & 0<=n & n_1815=n & p_1814=p & 
+m_1813=flted_12_1806 & q_1812=self_1805 & tmp_1822=q_1808 & x'=x & y'=y & 
+x'!=null & !(v_bool_149_1458') & self_1805=x' & p_1804=q & flted_12_1806+
+1=m & tmp'!=null & v_bool_157_1457' & self_1855=tmp' & p_1854=Anon_1828 & 
+flted_12_1856+1=flted_144_1827.
+
+// id 416
+checksat  (exists p_1848,self_1849,flted_12_1850,Anon_1851,
+q_1852: tmp'::node2<Anon_1851,p_1848,q_1852> * 
+q_1852::dll<self_1849,flted_12_1850> * x'::node2<Anon_1807,p_1804,tmp'>&
+flted_12_1850+1=flted_144_1827 & p_1848=Anon_1828 & self_1849=tmp' & 
+v_bool_157_1457' & tmp'!=null & flted_12_1806+1=m & p_1804=q & 
+self_1805=x' & !(v_bool_149_1458') & x'!=null & y'=y & x'=x & 
+tmp_1822=q_1808 & q_1812=self_1805 & m_1813=flted_12_1806 & p_1814=p & 
+n_1815=n & 0<=n & 0<=flted_12_1806 & flted_144_1827=n_1815+m_1813 & 
+0<=m_1813 & 0<=n_1815 & next_159_1833=q_1808).
+
+// id 417
+checksat  x'::node2<Anon_1807,p_1804,tmp'>&tmp'=null & flted_144_1827=0 & 
+v_bool_157_1457' & tmp'!=null & flted_12_1806+1=m & p_1804=q & 
+self_1805=x' & !(v_bool_149_1458') & x'!=null & y'=y & x'=x & 
+tmp_1822=q_1808 & q_1812=self_1805 & m_1813=flted_12_1806 & p_1814=p & 
+n_1815=n & 0<=n & 0<=flted_12_1806 & flted_144_1827=n_1815+m_1813 & 
+0<=m_1813 & 0<=n_1815 & next_159_1833=q_1808.
+
+// id 418
+checksat  tmp'::dll<Anon_1828,flted_144_1827>&next_159_1449'=q_1808 & 
+prev_159_1448'=p_1804 & val_159_1447'=Anon_1807 & 0<=n_1815 & 0<=m_1813 & 
+flted_144_1827=n_1815+m_1813 & 0<=flted_12_1806 & 0<=n & n_1815=n & 
+p_1814=p & m_1813=flted_12_1806 & q_1812=self_1805 & tmp_1822=q_1808 & 
+x'=x & y'=y & x'!=null & !(v_bool_149_1458') & self_1805=x' & p_1804=q & 
+flted_12_1806+1=m & tmp'!=null & v_bool_157_1457'.
+
+// id 419
+checksat  x'::node2<Anon_1807,p_1804,q_1808> * tmp'::dll<Anon_1826,flted_144_1825>&
+tmp'=null & 0<=n_1815 & 0<=m_1813 & flted_144_1825=n_1815+m_1813 & 
+0<=flted_12_1806 & 0<=n & n_1815=n & p_1814=p & m_1813=flted_12_1806 & 
+q_1812=self_1805 & tmp_1822=q_1808 & x'=x & y'=y & x'!=null & 
+!(v_bool_149_1458') & self_1805=x' & p_1804=q & flted_12_1806+1=m & 
+!(v_bool_157_1457') & tmp'=null & !(v_bool_157_1457').
+
+// id 420
+checksat  x'::node2<Anon_1807,p_1804,q_1808> * tmp'::dll<Anon_1828,flted_144_1827>&
+tmp'!=null & 0<=n_1815 & 0<=m_1813 & flted_144_1827=n_1815+m_1813 & 
+0<=flted_12_1806 & 0<=n & n_1815=n & p_1814=p & m_1813=flted_12_1806 & 
+q_1812=self_1805 & tmp_1822=q_1808 & x'=x & y'=y & x'!=null & 
+!(v_bool_149_1458') & self_1805=x' & p_1804=q & flted_12_1806+1=m & 
+v_bool_157_1457' & tmp'!=null & !(v_bool_157_1457').
+
+// id 421
+checksat  x'::node2<Anon_1807,p_1804,q_1808> * tmp'::dll<Anon_1826,flted_144_1825>&
+tmp'=null & 0<=n_1815 & 0<=m_1813 & flted_144_1825=n_1815+m_1813 & 
+0<=flted_12_1806 & 0<=n & n_1815=n & p_1814=p & m_1813=flted_12_1806 & 
+q_1812=self_1805 & tmp_1822=q_1808 & x'=x & y'=y & x'!=null & 
+!(v_bool_149_1458') & self_1805=x' & p_1804=q & flted_12_1806+1=m & 
+!(v_bool_157_1457') & tmp'=null & v_bool_157_1457'.
+
+// id 422
+checksat  x'::node2<Anon_1807,p_1804,q_1808> * tmp'::dll<Anon_1828,flted_144_1827>&
+tmp'!=null & 0<=n_1815 & 0<=m_1813 & flted_144_1827=n_1815+m_1813 & 
+0<=flted_12_1806 & 0<=n & n_1815=n & p_1814=p & m_1813=flted_12_1806 & 
+q_1812=self_1805 & tmp_1822=q_1808 & x'=x & y'=y & x'!=null & 
+!(v_bool_149_1458') & self_1805=x' & p_1804=q & flted_12_1806+1=m & 
+v_bool_157_1457' & tmp'!=null & v_bool_157_1457'.
+
+// id 423
+checksat  x'::node2<Anon_1807,p_1804,q_1808> * tmp'::dll<Anon_1828,flted_144_1827>&
+tmp'!=null & 0<=n_1815 & 0<=m_1813 & flted_144_1827=n_1815+m_1813 & 
+0<=flted_12_1806 & 0<=n & n_1815=n & p_1814=p & m_1813=flted_12_1806 & 
+q_1812=self_1805 & tmp_1822=q_1808 & x'=x & y'=y & x'!=null & 
+!(v_bool_149_1458') & self_1805=x' & p_1804=q & flted_12_1806+1=m & res & 
+tmp'!=null.
+
+// id 424
+checksat  x'::node2<Anon_1807,p_1804,q_1808> * tmp'::dll<Anon_1828,flted_144_1827>&
+flted_12_1806+1=m & p_1804=q & self_1805=x' & !(v_bool_149_1458') & 
+x'!=null & y'=y & x'=x & tmp_1822=q_1808 & q_1812=self_1805 & 
+m_1813=flted_12_1806 & p_1814=p & n_1815=n & 0<=n & 0<=flted_12_1806 & 
+flted_144_1827=n_1815+m_1813 & 0<=m_1813 & 0<=n_1815 & tmp'!=null.
+
+// id 425
+checksat  x'::node2<Anon_1807,p_1804,q_1808> * tmp'::dll<Anon_1828,flted_144_1827>&
+flted_12_1806+1=m & p_1804=q & self_1805=x' & !(v_bool_149_1458') & 
+x'!=null & y'=y & x'=x & tmp_1822=q_1808 & q_1812=self_1805 & 
+m_1813=flted_12_1806 & p_1814=p & n_1815=n & 0<=n & 0<=flted_12_1806 & 
+flted_144_1827=n_1815+m_1813 & 0<=m_1813 & 0<=n_1815 & tmp'!=null.
+
+// id 426
+checksat  x'::node2<Anon_1807,p_1804,q_1808> * tmp'::dll<Anon_1821,flted_144_1820>&
+flted_12_1806+1=m & p_1804=q & self_1805=x' & !(v_bool_149_1458') & 
+x'!=null & y'=y & x'=x & tmp_1822=q_1808 & q_1812=self_1805 & 
+m_1813=flted_12_1806 & p_1814=p & n_1815=n & 0<=n & 0<=flted_12_1806 & 
+flted_144_1820=n_1815+m_1813 & 0<=m_1813 & 0<=n_1815 & tmp'!=null.
+
+// id 427
+checksat  x'::node2<Anon_1807,p_1804,q_1808> * tmp'::dll<Anon_1826,flted_144_1825>&
+tmp'=null & 0<=n_1815 & 0<=m_1813 & flted_144_1825=n_1815+m_1813 & 
+0<=flted_12_1806 & 0<=n & n_1815=n & p_1814=p & m_1813=flted_12_1806 & 
+q_1812=self_1805 & tmp_1822=q_1808 & x'=x & y'=y & x'!=null & 
+!(v_bool_149_1458') & self_1805=x' & p_1804=q & flted_12_1806+1=m & !(res) & 
+tmp'=null.
+
+// id 428
+checksat  x'::node2<Anon_1807,p_1804,q_1808> * tmp'::dll<Anon_1826,flted_144_1825>&
+flted_12_1806+1=m & p_1804=q & self_1805=x' & !(v_bool_149_1458') & 
+x'!=null & y'=y & x'=x & tmp_1822=q_1808 & q_1812=self_1805 & 
+m_1813=flted_12_1806 & p_1814=p & n_1815=n & 0<=n & 0<=flted_12_1806 & 
+flted_144_1825=n_1815+m_1813 & 0<=m_1813 & 0<=n_1815 & tmp'=null.
+
+// id 429
+checksat  x'::node2<Anon_1807,p_1804,q_1808> * tmp'::dll<Anon_1826,flted_144_1825>&
+flted_12_1806+1=m & p_1804=q & self_1805=x' & !(v_bool_149_1458') & 
+x'!=null & y'=y & x'=x & tmp_1822=q_1808 & q_1812=self_1805 & 
+m_1813=flted_12_1806 & p_1814=p & n_1815=n & 0<=n & 0<=flted_12_1806 & 
+flted_144_1825=n_1815+m_1813 & 0<=m_1813 & 0<=n_1815 & tmp'=null.
+
+// id 430
+checksat  x'::node2<Anon_1807,p_1804,q_1808> * tmp'::dll<Anon_1821,flted_144_1820>&
+flted_12_1806+1=m & p_1804=q & self_1805=x' & !(v_bool_149_1458') & 
+x'!=null & y'=y & x'=x & tmp_1822=q_1808 & q_1812=self_1805 & 
+m_1813=flted_12_1806 & p_1814=p & n_1815=n & 0<=n & 0<=flted_12_1806 & 
+flted_144_1820=n_1815+m_1813 & 0<=m_1813 & 0<=n_1815 & tmp'=null.
+
+// id 431
+checksat  (exists flted_144_1820,Anon_1821: x'::node2<Anon_1807,p_1804,q_1808> * 
+res::dll<Anon_1821,flted_144_1820>&flted_12_1806+1=m & p_1804=q & 
+self_1805=x' & !(v_bool_149_1458') & x'!=null & y'=y & x'=x & tmp'=q_1808 & 
+q_1812=self_1805 & m_1813=flted_12_1806 & p_1814=p & n_1815=n & 0<=n & 
+0<=flted_12_1806 & flted_144_1820=n_1815+m_1813 & 0<=m_1813 & 0<=n_1815).
+
+// id 432
+checksat  x'::node2<Anon_1807,p_1804,q_1808>&n_1815=n & p_1814=p & 
+m_1813=flted_12_1806 & q_1812=self_1805 & tmp'=q_1808 & x'=x & y'=y & 
+x'!=null & !(v_bool_149_1458') & self_1805=x' & p_1804=q & flted_12_1806+1=m.
+
+// id 433
+checksat  x'::node2<Anon_1807,p_1804,q_1808>&n_1815=n & p_1814=p & 
+m_1813=flted_12_1806 & q_1812=self_1805 & tmp'=q_1808 & x'=x & y'=y & 
+x'!=null & !(v_bool_149_1458') & self_1805=x' & p_1804=q & flted_12_1806+1=m.
+
+// id 434
+checksat  x'::node2<Anon_1807,p_1804,q_1808> * q_1808::dll<self_1805,flted_12_1806> * 
+y::dll<p,n>&next_154_1440'=q_1808 & prev_154_1439'=p_1804 & 
+val_154_1438'=Anon_1807 & x'=x & y'=y & x'!=null & !(v_bool_149_1458') & 
+self_1805=x' & p_1804=q & flted_12_1806+1=m.
+
+// id 435
+checksat  (exists p_1798,self_1799,flted_12_1800,Anon_1801,
+q_1802: x'::node2<Anon_1801,p_1798,q_1802> * 
+q_1802::dll<self_1799,flted_12_1800> * y::dll<p,n>&flted_12_1800+1=m & 
+p_1798=q & self_1799=x' & !(v_bool_149_1458') & x'!=null & y'=y & x'=x).
+
+// id 436
+checksat  y::dll<p,n>&x'=null & m=0 & !(v_bool_149_1458') & x'!=null & y'=y & x'=x.
+
+// id 437
+checksat  x::dll<q,m> * y::dll<p,n>&x'=x & y'=y & x'=null & v_bool_149_1458' & 
+x'=null & !(v_bool_149_1458').
+
+// id 438
+checksat  x::dll<q,m> * y::dll<p,n>&x'=x & y'=y & x'!=null & !(v_bool_149_1458') & 
+x'!=null & !(v_bool_149_1458').
+
+// id 439
+checksat  x::dll<q,m> * y::dll<p,n>&x'=x & y'=y & x'=null & v_bool_149_1458' & 
+x'=null & v_bool_149_1458'.
+
+// id 440
+checksat  x::dll<q,m> * y::dll<p,n>&x'=x & y'=y & x'!=null & !(v_bool_149_1458') & 
+x'!=null & v_bool_149_1458'.
+
+// id 441
+checksat  x::dll<q,m> * y::dll<p,n>&x'=x & y'=y & x'!=null & !(res) & x'!=null.
+
+// id 442
+checksat  x::dll<q,m> * y::dll<p,n>&x'!=null & y'=y & x'=x.
+
+// id 443
+checksat  x::dll<q,m> * y::dll<p,n>&x'!=null & y'=y & x'=x.
+
+// id 444
+checksat  x::dll<q,m> * y::dll<p,n>&x'=x & y'=y & MayLoop[] & x'!=null.
+
+// id 445
+checksat  x::dll<q,m> * y::dll<p,n>&x'=x & y'=y & x'=null & res & x'=null.
+
+// id 446
+checksat  x::dll<q,m> * y::dll<p,n>&x'=null & y'=y & x'=x.
+
+// id 447
+checksat  x::dll<q,m> * y::dll<p,n>&x'=null & y'=y & x'=x.
+
+// id 448
+checksat  x::dll<q,m> * y::dll<p,n>&x'=x & y'=y & MayLoop[] & x'=null.
+
+// id 449
+checksat  emp&((self=null & n=0) | (1<=n & self!=null)).
+
+// id 450
+checksat  emp&((self=null & n=0) | (1<=n & self!=null)).
+
+// id 451
+checksat  emp&((self=null & n=0) | (1<=n & self!=null)).
+
+// id 452
+checksat  emp&((self=null & n=0) | (1<=n & self!=null)).
