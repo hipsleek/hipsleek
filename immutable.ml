@@ -2473,6 +2473,7 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
           match i1, i2 with
           | CP.ConstAnn(Accs), a 
           | a, CP.ConstAnn(Accs) -> true && comp, lst@[a], guard
+          |  CP.ConstAnn _,  CP.ConstAnn _ -> (false, [], [])
           | _, _ -> let imm, guards = merge_guards emap i1 i2 in
             (* Debug.print_info "Warning: " "possible unsoundess (\* between overlapping heaps) " no_pos; *)
             (* false && comp *)

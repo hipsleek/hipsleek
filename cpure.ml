@@ -7287,7 +7287,8 @@ let imm_to_spec_var ann =
   match ann with
   | ConstAnn a  -> mkAnnSVar a
   | PolyAnn  sv -> sv
-  | _ -> failwith "Cpure.ml currently we do not provide support for nested TempAnn/TempRes"
+  | _ -> failwith 
+        ("imm_to_spec_var do do not provide support for nested TempAnn/TempRes"^(string_of_imm ann))
 
 let imm_to_spec_var_opt ann = 
   match ann with 

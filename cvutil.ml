@@ -877,13 +877,13 @@ let rec formula_2_mem_x (f : CF.formula) prog : CF.mem_formula =
     | Base ({formula_base_heap = h;
              formula_base_pure = p;
              formula_base_pos = pos}) -> 
-      h_formula_2_mem h p [] prog
+      x_add h_formula_2_mem h p [] prog
     | Exists ({formula_exists_qvars = qvars;
                formula_exists_heap = qh;
                formula_exists_pure = qp;
                formula_exists_pos = pos}) ->
       let subs = compute_subs_mem (pure_of_mix qp) qvars in
-      let mset = (h_formula_2_mem qh qp [] prog).mem_formula_mset in
+      let mset = (x_add h_formula_2_mem qh qp [] prog).mem_formula_mset in
       let mset = CP.DisjSetSV.mk_exist_dset qvars subs mset in
       { mem_formula_mset = mset }
     | Or ({formula_or_f1 = f1;
@@ -1151,7 +1151,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
     | FrmHole _ -> MCP.mkMTrue no_pos
   in
   (* to build a subs here *)
-  let memset = h_formula_2_mem h0 p0 [] prog in
+  let memset = x_add h_formula_2_mem h0 p0 [] prog in
   if (is_sat_mem_formula memset) then (x_add xpure_heap_helper prog h0 which_xpure memset, memset)
   else
     (MCP.mkMFalse no_pos, memset)
@@ -1516,7 +1516,7 @@ and xpure_heap_symbolic i (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
     (fun which_xpure h0 p0 -> xpure_heap_symbolic_x prog h0 p0 which_xpure) which_xpure h0 p0
 
 and xpure_heap_symbolic_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CP.spec_var list * CF.mem_formula) = 
-  let memset = h_formula_2_mem h0 p0 [] prog in
+  let memset = x_add h_formula_2_mem h0 p0 [] prog in
   let ph, pa = x_add xpure_heap_symbolic_i prog h0 p0 which_xpure in
   if (is_sat_mem_formula memset) then (ph, pa, memset)
   else (MCP.mkMFalse no_pos, pa, memset)
