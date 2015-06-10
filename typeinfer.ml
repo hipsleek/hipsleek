@@ -462,14 +462,14 @@ and trans_type_back (te : typ) : typ =
   | Array (t, d) -> Array (trans_type_back t, d) (* An Hoa *) 
   | p -> p 
 
-and sub_type_x (t1 : typ) (t2 : typ) =
+and sub_type (t1 : typ) (t2 : typ) =
   let it1 = trans_type_back t1 in
   let it2 = trans_type_back t2 in
   I.sub_type it1 it2
 
-and sub_type (t1 : typ) (t2 : typ) =
-  let pr = string_of_typ in
-  Debug.no_2 "sub_type" pr pr string_of_bool sub_type_x t1 t2 
+(* and sub_type (t1 : typ) (t2 : typ) = *)
+(*   let pr = string_of_typ in *)
+(*   Debug.no_2 "sub_type" pr pr string_of_bool sub_type_x t1 t2  *)
 
 and gather_type_info_var (var : ident) tlist (ex_t : typ) pos : (spec_var_type_list*typ) =
   let pr = string_of_typ in
@@ -1305,7 +1305,7 @@ and get_spec_var_ident (tlist:spec_var_type_list) (var : ident) p =
   try
     let k = snd(List.find (fun (v,en)->v=var) tlist) in
     CP.SpecVar(k.sv_info_kind,var,p)
-  with 
+  with
   | Not_found -> CP.SpecVar(UNK,var,p)
 
 

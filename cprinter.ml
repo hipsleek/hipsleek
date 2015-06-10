@@ -1090,7 +1090,7 @@ and pr_pure_formula  (e:P.formula) =
     (fmt_string "("; pr_list_op op_or f_b args; fmt_string ")")
   | P.Not (f, lbl, l) ->
     pr_formula_label_opt lbl;
-    fmt_string "!(";f_b f;fmt_string ")"
+    fmt_string "not(";f_b f;fmt_string ")"
   | P.Forall (x, f,lbl, l) ->
     pr_formula_label_opt lbl;
     fmt_string "forall("; pr_spec_var x; fmt_string ":";
@@ -2653,6 +2653,7 @@ let rec pr_numbered_list_formula (count:int) (e:list_formula)  =
     end
 
 let pr_es_trace (trace:string list) : unit =
+  let trace = List.rev trace in
   if (trace==[]) then fmt_string "empty"
   else
     let rec helper xs = match xs with

@@ -1,0 +1,28 @@
+relation update_array_1d(int[] a,int[] aa,int v, int i).
+
+relation P(int a).
+relation Q(int a,int b,int r).
+
+infer [P,Q]   res=0-3 & b<=4 & P(a) |-  Q(a,b,res).
+print residue.
+
+infer [P,Q]   b=res & 5<=a & P(a)|-  Q(a,b,res).
+print residue.
+
+relation_infer [P][Q].
+
+/*
+ inferred rel: [RELDEFN Q: ( a'=a & res=0-3 & (a'[5])<=4 & P(a)) -->  Q(a,a',res)]
+ inferred rel: [RELDEFN Q: ( a'[4]=res & 5<=(a[5]) & P(a) & update_array_1d(a,a',10,5)) -->  Q(a,a',res)]
+
+When only having infer [Q]
+Q:={[] -> [a,b,res] -> []: (b=res && 5<=a && P(a) || res=0-(3) && b<=4 && P(a))
+};
+bottomupgen([Q], [1], SimHeur);
+
+When having infer [P,Q]
+Q:={[] -> [a,b,res] -> []: (b=res && 5<=a && P(a) || res=0-(3) && b<=4 && P(a))
+};
+bottomupgen([Q], [1], SimHeur);
+
+*/
