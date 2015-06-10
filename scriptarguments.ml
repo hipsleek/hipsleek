@@ -744,6 +744,11 @@ let common_arguments = [
        Globals.sleek_logging_txt:=true;
        Globals.sleek_gen_vc_exact:=true
      ), "Generate exact verification condition in sleek format");
+  ("--gen-sat", Arg.Unit (fun _ ->
+       Globals.proof_logging_txt:=true;
+       Globals.sleek_logging_txt:=true;
+       Globals.sleek_gen_sat:=true
+     ), "Generate check sat formula");
   (* abduce pre from post *)
   ("--abdfpost", Arg.Set Globals.do_abd_from_post, "Enable abduction from post-condition");
   (* incremental spec *)

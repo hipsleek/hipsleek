@@ -86,6 +86,7 @@ type sleek_log_entry = {
 (*   | BINDING -> "BINDING" *)
 (*   | ASSERTION -> "ASSERTION" *)
 
+let num_sat = ref 1
 
 let string_of_sleek_proving_kind () 
   = proving_kind#string_of
@@ -764,7 +765,7 @@ let sleek_log_to_text_file slfn (src_files) =
 
 let sleek_log_to_sleek_file slfn src_files prog prim_names =
   (* let tstartlog = Gen.Profiling.get_time () in *)
-  let lgs = sleek_log_stk # len in
+  let lgs = if !Globals.sleek_gen_sat then CF.sat_stk # len else sleek_log_stk # len in
   let () = Debug.info_zprint  (lazy  ("Number of sleek log entries "^(string_of_int (lgs)))) no_pos in
   Debug.info_zprint  (lazy  ("Logging "^slfn^"\n")) no_pos;
   (* let fn = "logs/sleek_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt" in *)
@@ -775,22 +776,31 @@ let sleek_log_to_sleek_file slfn src_files prog prim_names =
     open_out fn
   in
   let ls = sleek_log_stk # get_stk in
-  let ls = 
+  let ls =
     if (!Globals.sleek_log_filter)
     then List.filter (fun e -> not(e.sleek_proving_avoid)) ls 
     else ls
   in
   let ls = List.sort (fun e1 e2 -> compare e1.sleek_proving_id e2.sleek_proving_id) ls in
-  let str_data = String.concat "\n" (List.map Cprinter.sleek_of_data_decl 
+  let str_data = String.concat "\n" (List.map Cprinter.sleek_of_data_decl
                                        (List.filter (fun d -> not (Gen.BList.mem_eq (=) d.Cast.data_name prim_names)) prog.Cast.prog_data_decls)) in
-  let str_view = String.concat "\n" (List.map Cprinter.sleek_of_view_decl 
+  let str_view = String.concat "\n" (List.map Cprinter.sleek_of_view_decl
                                        (List.filter (fun v -> not (Gen.BList.mem_eq (=) v.Cast.view_name prim_names)) prog.Cast.prog_view_decls)) in
-  let str_lem =  
+  let str_lem =
     let lem = (Lem_store.all_lemma # get_left_coercion) @ (Lem_store.all_lemma # get_right_coercion) in
-    if lem = [] then "" 
+    if lem = [] then ""
     else "/*\n" ^ (Cprinter.string_of_coerc_decl_list lem) ^ "\n*/"
   in
-  let str_ent = String.concat "\n" (List.map (sleek_of_sleek_log_entry prog) ls) in
+  let str_ent =
+    if !Globals.sleek_gen_sat then
+      let formula_list = CF.sat_stk # get_stk in
+      String.concat "\n" (List.map (fun f ->
+          let str1 = "// id " ^ (string_of_int !num_sat) ^ "\n" in
+          let str2 = "checksat " ^ (Cprinter.sleek_of_formula f) ^ ".\n" in
+          str1 ^ str2
+      ) formula_list)
+    else String.concat "\n" (List.map (sleek_of_sleek_log_entry prog) ls)
+  in
   let str = str_data ^ "\n" ^ str_view ^ "\n" ^ str_lem ^ "\n" ^ str_ent in
   let _= fprintf oc "%s" str in
   if !Globals.dump_sleek_proof then printf "%s" str;
@@ -836,7 +846,7 @@ let process_proof_logging src_files prog prim_names =
           (* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd src_files))^".txt") *)
           with _ -> ()
       in
-      let () = if (!Globals.sleek_gen_vc || !Globals.sleek_gen_vc_exact) 
+      let () = if (!Globals.sleek_gen_vc || !Globals.sleek_gen_vc_exact || !Globals.sleek_gen_sat)
         then 
           begin
             sleek_log_to_sleek_file slkfn src_files prog prim_names;

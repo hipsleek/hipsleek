@@ -2802,6 +2802,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
 (* tp_call_wrapper npf *)
 
 and unsat_base_a prog (sat_subno:  int ref) f  : bool=
+  let () = if !Globals.sleek_gen_sat then CF.sat_stk # push f else () in
   (*need normal lize heap_normal_form*)
   (* if !Globals.sep_unsat && !Frame.seg_opz then *)
   (*   let is_heap_conflict,_ = Frame.check_unsat_w_norm prog f in *)
@@ -2855,6 +2856,7 @@ and elim_unsat_es_now_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_st
   (* | None   ->  *)
   (* es.es_formula  *)
   let () = reset_int2 () in
+  let temp_f = if !Globals.sleek_gen_sat then Immutable.apply_subs es.CF.es_crt_holes temp_f else temp_f in
   let b = unsat_base_nth 1 prog sat_subno temp_f in
   let f = es.es_formula in
   x_tinfo_hp (add_str "es_formula" Cprinter.string_of_formula) f no_pos;

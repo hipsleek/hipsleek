@@ -470,13 +470,14 @@ let dump_proof = ref false
 let dump_sleek_proof = ref false
 let sleek_gen_vc = ref false
 let sleek_gen_vc_exact = ref false
+let sleek_gen_sat = ref false
 
 
 
 
 (*Some global vars for logging*)
 let explain_mode = new failure_mode
-let return_exp_pid = ref ([]: control_path_id list)	
+let return_exp_pid = ref ([]: control_path_id list)
 let z3_proof_log_list = ref ([]: string list)
 let z3_time = ref 0.0
 
