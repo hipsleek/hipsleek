@@ -19,16 +19,16 @@ pred ll<n, v1> == self = null & n = 0
 
 // (7) Valid
 
-checkentail x::node<p,q> * q::ll<n,ann1> & n > 1 |- x::ll<n+1,@A> & n > 1.
-expect Valid.
+//checkentail x::node<p,q> * q::ll<n,ann1> & n > 1 |- x::ll<n+1,@A> & n > 1.
+//expect Valid.
 
 checkentail x::node<p,q> * q::ll<n,ann1> & n > 1 & ann2=@A |- x::ll<n+1,ann2> & n > 1.
 print residue.
 expect Valid.
 
-checkentail x::node<p,q> * q::ll<n,ann1> & n > 1 |- [ann2] x::ll<n+1,ann2> & n > 1.
-print residue.
-expect Valid.
+//checkentail x::node<p,q> * q::ll<n,ann1> & n > 1 |- [ann2] x::ll<n+1,ann2> & n > 1.
+//print residue.
+//expect Valid.
 
 //checkentail x::node<p,q> * q::ll<n,ann1> & n > 1 |- x::node<_,qq>@ann2 * qq::ll<n,ann2> & n > 1.
 

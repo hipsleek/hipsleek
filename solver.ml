@@ -10933,7 +10933,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
   let () = Debug.ninfo_hprint (add_str "folding_conseq_pure" (pr_option Cprinter.string_of_mix_formula)) folding_conseq_pure pos in
   let () = Debug.ninfo_hprint (add_str "estate.es_folding_conseq_pure " (pr_option Cprinter.string_of_mix_formula)) estate.es_folding_conseq_pure pos in
   let estate =  {estate with es_folding_conseq_pure = folding_conseq_pure} in
-  let fold_rs, fold_prf = fold_op prog (Ctx estate) view_to_fold vd rhs_p (* false *) case_inst pos in
+  let fold_rs, fold_prf = x_add fold_op prog (Ctx estate) view_to_fold vd rhs_p (* false *) case_inst pos in
   let () = Debug.ninfo_hprint (add_str "do_fold_w: rhs_p 3 " (Cprinter.string_of_mix_formula)) rhs_p pos in
   let () = rhs_rest_emp := true in
   if not (CF.isFailCtx fold_rs) then

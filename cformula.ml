@@ -3208,7 +3208,7 @@ and one_formula_subst sst (f : one_formula) =
 and subst sst (f : formula) = 
   let pr1 = pr_list (pr_pair !print_sv !print_sv) in
   let pr2 = !print_formula in
-  Debug.no_2 "subst_one_by_one" pr1 pr2 pr2 subst_x sst f 
+  Debug.no_2 "subst" pr1 pr2 pr2 subst_x sst f 
 
 and subst_x sst (f : formula) =
   let rec helper f =
@@ -3469,7 +3469,7 @@ and subst_one_by_one_pure_x sst (f : formula) = match sst with
 and subst_one_by_one_h sst (f : h_formula) = 
   let pr1 = pr_list (pr_pair !print_sv !print_sv) in
   let pr2 = !print_h_formula in
-  Debug.no_2 "subst_one_by_one" pr1 pr2 pr2 subst_one_by_one_h_x sst f 
+  Debug.no_2 "subst_one_by_one_h" pr1 pr2 pr2 subst_one_by_one_h_x sst f 
 
 and subst_one_by_one_h_x sst (f : h_formula) = match sst with
   | s :: rest -> subst_one_by_one_h_x rest (h_apply_one s f)
@@ -3480,17 +3480,28 @@ and subst_one_by_one_var sst (v : CP.spec_var) =
   | s :: rest -> subst_one_by_one_var rest (subst_var s v)
   | [] -> v
 
-and apply_one_imm (fr,t) a = match a with
+and apply_one_imm_x (fr,t) a = match a with
   | CP.ConstAnn _ | CP.NoAnn -> a
-  | CP.TempAnn t1 -> CP.TempAnn(apply_one_imm (fr,t) t1)
-  | CP.TempRes (tl,tr) ->  CP.TempRes(apply_one_imm (fr,t) tl, apply_one_imm (fr,t) tr)
+  | CP.TempAnn t1 -> CP.TempAnn(apply_one_imm_x (fr,t) t1)
+  | CP.TempRes (tl,tr) ->  CP.TempRes(apply_one_imm_x (fr,t) tl, apply_one_imm_x (fr,t) tr)
   | CP.PolyAnn sv ->  CP.PolyAnn (if CP.eq_spec_var sv fr then t else sv)
 
-and subs_imm_par sst a = match a with
+and apply_one_imm (fr,t) a = 
+  let pr1 =  (pr_pair !print_sv !print_sv) in
+  let pr2 = !print_imm in
+  Debug.no_2 "apply_one_imm" pr1 pr2 pr2 apply_one_imm_x (fr,t) a
+
+and subs_imm_par_x sst a = match a with
   | CP.ConstAnn _ | CP.NoAnn -> a
-  | CP.TempAnn t1 -> CP.TempAnn(subs_imm_par sst t1)
-  | CP.TempRes (tl,tr) -> CP.TempRes(subs_imm_par sst tl,subs_imm_par sst tr)
-  | CP.PolyAnn sv ->  CP.PolyAnn (CP.subst_var_par sst sv)
+  | CP.TempAnn t1 -> CP.TempAnn(subs_imm_par_x sst t1)
+  | CP.TempRes (tl,tr) -> CP.TempRes(subs_imm_par_x sst tl,subs_imm_par_x sst tr)
+  | CP.PolyAnn sv ->  (* CP.PolyAnn (CP.subst_var_par sst sv) *)
+    CP.PolyAnn (subst_one_by_one_var sst sv)
+
+and subs_imm_par sst a = 
+ let pr1 =  pr_list (pr_pair !print_sv !print_sv) in
+ let pr2 = !print_imm in
+ Debug.no_2 "subs_imm_par" pr1 pr2 pr2 subs_imm_par_x sst a
 
 and subst_var (fr, t) (o : CP.spec_var) = 
   if CP.eq_spec_var fr o then t else o
