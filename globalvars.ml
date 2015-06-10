@@ -1158,7 +1158,7 @@ let infer_imm_ann (prog: I.prog_decl) : I.prog_decl =
         I.rel_formula = Ipure.mkTrue no_pos
       })
     in
-    let ann_struc_formula_1 = function
+    let rec ann_struc_formula_1 = function
       | EInfer ff ->
          use_mutable := (not (ff.formula_inf_obj # is_pre_imm));
          post_use_mutable := (not (ff.formula_inf_obj # is_post_imm));
@@ -1166,13 +1166,13 @@ let infer_imm_ann (prog: I.prog_decl) : I.prog_decl =
       | EAssume ff ->
          pre_stack # push_list (v_stack # get_stk);
          use_mutable := !post_use_mutable;
-         if !post_use_mutable then Some (EAssume ff) else None
+         if !post_use_mutable then Some (EAssume ff) else
+           Some (EAssume { ff with formula_assume_simpl =
+                                transform_formula transform_1 ff.formula_assume_simpl })
       | _ -> None
-    in
+    and transform_1 = (ann_struc_formula_1, nonef, ann_heap, (somef, somef, somef, somef, somef)) in
     let ann_postcondition = function
       | EAssume ff ->
-         let () = x_binfo_hp (add_str "v_stack_length" string_of_int) (v_stack # len) no_pos in
-         let () = x_binfo_hp (add_str "post_use_mutable" string_of_bool) (!post_use_mutable) no_pos in
          if ((not (v_stack # is_empty)) && (not !post_use_mutable)) then
             let postcondition = ff.formula_assume_simpl in
             let post_rel = match !post_rel with Some p -> p | None -> failwith "Not possible (infer_imm_ann_proc)" in
@@ -1217,8 +1217,6 @@ let infer_imm_ann (prog: I.prog_decl) : I.prog_decl =
          end
       | other -> Some other
     in
-    let transform_1 = (ann_struc_formula_1, nonef, ann_heap, (somef, somef, somef, somef, somef)) in
-    let () = x_binfo_hp (add_str "v_stack_length" string_of_int) (v_stack # len) no_pos in
     let transform_2 = (ann_struc_formula_2, somef, somef, (somef, somef, somef, somef, somef)) in
     let pss =
       let pss_1 = transform_struc_formula transform_1 proc.proc_static_specs in
