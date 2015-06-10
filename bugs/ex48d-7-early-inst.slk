@@ -22,9 +22,16 @@ pred ll<n, v1> == self = null & n = 0
 //checkentail x::node<p,q> * q::ll<n,ann1> & n > 1 |- x::ll<n+1,@A> & n > 1.
 //expect Valid.
 
-checkentail x::node<p,q> * q::ll<n,ann1> & n > 1 & axx2=@A |- x::ll<n+1,axx2> & n > 1.
+checkentail x::node<p,q> * q::ll<n,ann1> & n > 1 |- x::ll<n+1,axx2> & n > 1.
+print residue.
+expect Fail.
+// this should be Valid but early inst give less accurate inst
+
+
+checkentail x::node<p,q> * q::ll<n,ann1> & n > 1 |- [axx2] x::ll<n+1,axx2> & n > 1.
 print residue.
 expect Valid.
+// this should be Valid for late instantiation
 
 /*
 # ex48c.slk

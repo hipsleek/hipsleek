@@ -32,6 +32,13 @@ expect Valid.
 /*
 # ex48b.slk --field-imm
 
+checkentail x::node<a@M, r@M> * r::node<b@M, r2@M> * r2::ll<n, v2> |- x::ll<n + 2, v2>.
+
+# why is there an exception?
+
+Entail 1: EXCast. Failure("imm_to_spec_var do do not provide support for nested TempAnn/TempRes@[@M, @v2]")
+: no residue 
+
 Exception(compatible_ann):Failure("Cpure.ml currently we do not provide support for nested TempAnn/TempRes")
 Exception(h_formula_2_mem):Failure("Cpure.ml currently we do not provide support for nested TempAnn/TempRes")
 Exception(xpure_heap_symbolic):Failure("Cpure.ml currently we do not provide support for nested TempAnn/TempRes")
