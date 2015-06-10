@@ -797,6 +797,7 @@ let sleek_log_to_sleek_file slfn src_files prog prim_names =
       String.concat "\n" (List.map (fun f ->
           let str1 = "// id " ^ (string_of_int !num_sat) ^ "\n" in
           let str2 = "checksat " ^ (Cprinter.sleek_of_formula f) ^ ".\n" in
+          let () = num_sat := !num_sat + 1 in
           str1 ^ str2
       ) formula_list)
     else String.concat "\n" (List.map (sleek_of_sleek_log_entry prog) ls)
