@@ -1115,7 +1115,6 @@ let infer_imm_ann (prog: I.prog_decl) : I.prog_decl =
     let open Iformula in
     let proc_loc = proc.proc_loc in
     let use_mutable = ref true in
-    let post_use_mutable = ref true in
     let v_stack = new Gen.stack in
     let pre_stack = new Gen.stack in
     let inf_var_stack = new Gen.stack in
@@ -1160,20 +1159,20 @@ let infer_imm_ann (prog: I.prog_decl) : I.prog_decl =
     in
     let rec ann_struc_formula_1 = function
       | EInfer ff ->
-         use_mutable := (not (ff.formula_inf_obj # is_pre_imm));
-         post_use_mutable := (not (ff.formula_inf_obj # is_post_imm));
+         let neither_flag_is_set = (not ff.formula_inf_obj # is_pre_imm) &&
+                                     (not ff.formula_inf_obj # is_post_imm) in
+         use_mutable := neither_flag_is_set;
          None
       | EAssume ff ->
          pre_stack # push_list (v_stack # get_stk);
-         use_mutable := !post_use_mutable;
-         if !post_use_mutable then Some (EAssume ff) else
+         if !use_mutable then Some (EAssume ff) else
            Some (EAssume { ff with formula_assume_simpl =
                                 transform_formula transform_1 ff.formula_assume_simpl })
       | _ -> None
     and transform_1 = (ann_struc_formula_1, nonef, ann_heap, (somef, somef, somef, somef, somef)) in
     let ann_postcondition = function
       | EAssume ff ->
-         if ((not (v_stack # is_empty)) && (not !post_use_mutable)) then
+         if (not (v_stack # is_empty)) then
             let postcondition = ff.formula_assume_simpl in
             let post_rel = match !post_rel with Some p -> p | None -> failwith "Not possible (infer_imm_ann_proc)" in
             let rel_params = List.map (fun (_,i) -> (i, Unprimed)) post_rel.I.rel_typed_vars in
@@ -1220,10 +1219,10 @@ let infer_imm_ann (prog: I.prog_decl) : I.prog_decl =
     let transform_2 = (ann_struc_formula_2, somef, somef, (somef, somef, somef, somef, somef)) in
     let pss =
       let pss_1 = transform_struc_formula transform_1 proc.proc_static_specs in
-      if (!post_use_mutable && !use_mutable) then pss_1
+      if (!use_mutable) then pss_1
       else
         (pre_rel := mk_rel (pre_stack # get_stk) no_pos;
-        if (not !post_use_mutable) then post_rel := mk_rel (v_stack # get_stk) no_pos;
+        if (not !use_mutable) then post_rel := mk_rel (v_stack # get_stk) no_pos;
         transform_struc_formula transform_2 pss_1) in
     ({ proc with proc_static_specs = pss }, !pre_rel, !post_rel)
   in
