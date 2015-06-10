@@ -1524,7 +1524,7 @@ and would like to see when it disappeared.
 
 # below should be an error and not warning..
 
-!!!Full processing file "ex8e1g-loop-read-ann-post-only.ss"
+ex!!!Full processing file "ex8e1g-loop-read-ann-post-only.ss"
 Parsing file "ex8e1g-loop-read-ann-post-only.ss" by default parser...
 WARNING : parsing problem QQ is neither a ranking function nor a relation nor a heap predicate
 

@@ -6175,9 +6175,9 @@ and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0
            (r@[(sv2,sv1)]) else (r@[(sv1, sv2)])) [] eqns in *)
         {es with es_rhs_eqset=(es.es_rhs_eqset@eqns);}) ctx_0
   in
-  let helper ctx_00 h p (func : CF.h_formula -> MCP.mix_formula -> CF.formula) =
+  let helper ctx_00 h pure (func : CF.h_formula -> MCP.mix_formula -> CF.formula) =
     let () = x_tinfo_hp (add_str "heap(helper)" Cprinter.string_of_h_formula) h no_pos in
-    let () = x_tinfo_hp (add_str "pure(helper)" Cprinter.string_of_mix_formula) p no_pos in
+    let () = x_tinfo_hp (add_str "pure(helper)" Cprinter.string_of_mix_formula) pure no_pos in
     let h1, h2, h3 = split_phase 1 h in
     if(is_empty_heap h1) && (is_empty_heap h2) && (is_empty_heap h3) then (* no heap on the RHS *)
       let () = x_tinfo_hp (add_str "BRANCH1" pr_none) () no_pos in
@@ -6185,15 +6185,15 @@ and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0
     else(* only h2!=true *)
     if ((is_empty_heap h1) && (is_empty_heap h3)) then
       let () = x_tinfo_hp (add_str "BRANCH2" pr_none) () no_pos in
-      x_add heap_n_pure_entail 1 prog is_folding  ctx_00 conseq h2 p func true pos
+      x_add heap_n_pure_entail 1 prog is_folding  ctx_00 conseq h2 pure func true pos
     else(* only h1!=true *)
     if ((is_empty_heap h2) && (is_empty_heap h3)) then
-      x_add heap_n_pure_entail 2 prog is_folding  ctx_00 conseq h1 p func false pos
+      x_add heap_n_pure_entail 2 prog is_folding  ctx_00 conseq h1 pure func false pos
     else(* only h3!=true *)
     if ((is_empty_heap h1) && (is_empty_heap h2)) then
-      let new_conseq = func h3 p in
+      let new_conseq = func h3 pure in
       if not(Cformula.contains_phase h3) then (* h3 does not contain any nested phases *)
-        x_add heap_n_pure_entail 3 prog is_folding  ctx_00  conseq (choose_not_empty_heap h1 h2 h3) p func (consume_heap new_conseq) (*drop_read_phase*) pos
+        x_add heap_n_pure_entail 3 prog is_folding  ctx_00  conseq (choose_not_empty_heap h1 h2 h3) pure func (consume_heap new_conseq) (*drop_read_phase*) pos
       else (* h3 contains nested phases *)
         heap_entail_split_rhs_phases prog is_folding ctx_00 new_conseq (consume_heap new_conseq) pos
     else
@@ -6217,12 +6217,12 @@ and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0
         (* let () = print_string("************************************************************************\n") in *)
         (* let () = print_string("[heap_n_pure_entail]: entail the pure part: p =" ^ (Cprinter.string_of_mix_formula p) ^ "\n") in *)
         (* let () = print_string("************************************************************************\n") in *)
-        let () = x_tinfo_hp (add_str "p" (Cprinter.string_of_mix_formula)) p pos in
+        let () = x_tinfo_hp (add_str "pure" (Cprinter.string_of_mix_formula)) pure pos in
         let res = List.map (fun c -> 
             let new_conseq1, aux_conseq_from_fold = 
               (match c with 
                | Ctx(estate) -> 
-                 subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HEmp p), 
+                 subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HEmp pure), 
                  subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HEmp (MCP.mix_of_pure estate.es_aux_conseq))
                | OCtx _ -> report_error no_pos ("Disjunctive context\n"))
             in 
