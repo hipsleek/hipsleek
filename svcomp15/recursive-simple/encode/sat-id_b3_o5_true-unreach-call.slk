@@ -34,10 +34,10 @@ int id(int x)
 }
 */
 
-pred id_v(x, r, e) == x=0 & r=0 & e=1
-   or x!=0 & id_v(x-1, r1, e1) & & e1=1 & r2=r1+1 & r2>3 & r=3 & e = 1.
-   or x!=0 & id_v(x-1, r1, e1) & & e1=1 & r2=r1+1 & r2<=3 & r=r2 & e = 1.
-   or x!=0 & id_v(x-1, r1, e1) & & e1=0 & e = 0.
+pred id_v<x,r,e> == x=0 & r=0 & e=1
+     or _::id_v<x-1,r1,e1> & x!=0 & (r1+1)>3 & r=3 & e1=1 & e=1
+     or _::id_v<x-1,r1,e1> & x!=0 & (r1+1)<=3 & r=r1+1 & e1=1 & e=1
+     or _::id_v<x-1,r1,e1> & x!=0 & e1=0 & e=0.
 
 /*
 void main()
@@ -54,14 +54,14 @@ void main()
 }
 */
 
-pred main(e) == id_v(input,result, e1) & e1=1 & result=5 & e=0
-  \/ id_v(input,result, e1) & e1=1 & result!=5 & e=1
-  \/ id_v(input,result, e1) & e1=0 & e=0
+pred main_v<e> ==  _::id_v<input,result,e_1> & result=5 & e_1=1 & e=0
+   or  _::id_v<input,result,e_1> & result!=5 & e_1=1 & e=1
+   or  _::id_v<input,result,e_1> & e_1=0 & e=0.
 
 
 checksat main_v(e) & e=0 .
 
-expect sat.
+expect Unsat.
 
 /*
     main_v(e) & e=0

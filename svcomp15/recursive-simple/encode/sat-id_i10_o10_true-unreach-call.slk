@@ -1,0 +1,58 @@
+/*
+// extern int __VERIFIER_nondet_int();
+// extern void __VERIFIER_error();
+
+int __nondet_int()
+/*@
+  requires true
+  ensures true;
+*/;
+
+void __error()
+/*@
+  requires emp & true
+  ensures emp & true & flow __Error;
+*/;
+*/
+
+/*
+int id(int x)
+/*@
+  case {
+  x>=0 -> ensures emp & res=x;
+  x<0 -> requires Loop ensures false;
+  }
+ */
+{
+  if (x==0) return 0;
+  return id(x-1) + 1;
+}
+*/
+
+pred id_v<x,r,e> == x=0 & r=0 & e=1
+     or _::id_v<x-1,r1,e1> & x!=0 & r=r1+1 & e1=1 & e=1
+     or _::id_v<x-1,r1,e1> & x!=0 & e1=0 & e=0.
+
+/*
+void main()
+/*@
+  requires true
+  ensures true;
+*/
+{
+  int input = 10;
+  int result = id(input);
+  if (result != 10) {
+    __error();
+  }
+}
+*/
+
+pred main_v<e> ==  _::id_v<input,result,e_1> & input=10 & result!=10 & e_1=1 & e=0
+   or  _::id_v<input,result,e_1> & input=10 & result=10 & e_1=1 & e=1
+   or  _::id_v<input,result,e_1> & input=10 & e_1=0 & e=0.
+
+
+checksat _::main_v<e> & e=0.
+
+expect Unsat.

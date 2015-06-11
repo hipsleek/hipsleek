@@ -1,0 +1,46 @@
+/*
+void __error()
+/*@
+  requires emp & true
+  ensures emp & true & flow __Error;
+*/;
+*/
+
+/*
+void f(int n)
+/*@
+  case {
+  n<3 -> ensures emp & true;
+  n>=3 -> ensures emp & true & flow __Error;
+  }
+ */
+{
+  if (n<3) return;
+  n--;
+  f(n);
+  __error();
+}
+*/
+
+pred f_v<n,e> == n<3 & e=1
+   or _::f_v<n-1,e1> & n>=3 & e1=1 & e=0.
+
+/*
+void main()
+/*@
+  requires true
+  ensures true;
+*/
+{
+  f(4);
+}
+*/
+
+pred main_v<e> == _::f_v<4,e1> & e1=1 & e=1
+   or _::f_v<4,e1> & e1=0 & e=0.
+
+
+
+checksat _::main_v<e> & e=0.
+
+expect Sat.

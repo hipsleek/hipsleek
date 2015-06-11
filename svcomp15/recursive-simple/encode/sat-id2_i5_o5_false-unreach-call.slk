@@ -19,44 +19,36 @@ void __error()
 int id(int x)
 /*@
   case {
-  x>=0 & x<=3 -> ensures emp & res=x;
-  x>3 -> ensures emp & res=3;
+  x>=0 -> ensures emp & res=x;
   x<0 -> requires Loop ensures false;
   }
  */
 {
   if (x==0) return 0;
-  int ret = id2(x-1) + 1;
-  if (ret > 3) return 3;
-  return ret;
+  return id2(x-1) + 1;
 }
 */
 
 pred id_v<x,r,e> == x=0 & r=0 & e=1
-     or _::id2_v<x-1,r1,e1> & x!=0 & (r1+1)>3 & r=3 & e1=1 & e=1
-     or _::id2_v<x-1,r1,e1> & x!=0 & (r1+1)<=3 & r=r1+1 & e1=1 & e=1
+     or _::id2_v<x-1,r1,e1> & x!=0 & r=r1+1 & e1=1 & e=1
      or _::id2_v<x-1,r1,e1> & x!=0 & e1=0 & e=0.
 
 /*
 int id2(int x)
 /*@
   case {
-  x>=0 & x<=3 -> ensures emp & res=x;
-  x>3 -> ensures emp & res=3;
+  x>=0 -> ensures emp & res=x;
   x<0 -> requires Loop ensures false;
   }
  */
 {
   if (x==0) return 0;
-  int ret = id(x-1) + 1;
-  if (ret > 3) return 3;
-  return ret;
+  return id(x-1) + 1;
 }
 */
 
 pred id2_v<x,r,e> == x=0 & r=0 & e=1
-     or _::id_v<x-1,r1,e1> & x!=0 & (r1+1)>3 & r=3 & e1=1 & e=1
-     or _::id_v<x-1,r1,e1> & x!=0 & (r1+1)<=3 & r=r1+1 & e1=1 & e=1
+     or _::id_v<x-1,r1,e1> & x!=0 & r=r1+1 & e1=1 & e=1
      or _::id_v<x-1,r1,e1> & x!=0 & e1=0 & e=0.
 
 /*
@@ -66,7 +58,7 @@ void main()
   ensures true;
 */
 {
-  int input = __nondet_int();
+  int input = 5;
   int result = id(input);
   if (result == 5) {
     __error();
@@ -74,12 +66,12 @@ void main()
 }
 */
 
-pred main_v<e> ==  _::id_v<input,result,e_1> & result=5 & e_1=1 & e=0
-   or  _::id_v<input,result,e_1> & result!=5 & e_1=1 & e=1
-   or  _::id_v<input,result,e_1> & e_1=0 & e=0.
+pred main_v<e> ==  _::id_v<input,result,e_1> & input=5 & result=5 & e_1=1 & e=0
+   or  _::id_v<input,result,e_1> & input=5 & result!=5 & e_1=1 & e=1
+   or  _::id_v<input,result,e_1> & input=5 & e_1=0 & e=0.
 
 
 
 checksat _::main_v<e> & e=0.
 
-expect Unsat.
+expect Sat.

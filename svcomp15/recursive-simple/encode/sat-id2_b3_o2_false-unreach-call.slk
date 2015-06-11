@@ -4,8 +4,8 @@
 
 int __nondet_int()
 /*@
-  requires true
-  ensures true;
+  requires emp & true
+  ensures emp & true;
 */;
 
 void __error()
@@ -68,18 +68,20 @@ void main()
 {
   int input = __nondet_int();
   int result = id(input);
-  if (result == 5) {
+  //@ dprint;
+  if (result == 2) {
     __error();
   }
+   //@ dprint;
 }
 */
 
-pred main_v<e> ==  _::id_v<input,result,e_1> & result=5 & e_1=1 & e=0
-   or  _::id_v<input,result,e_1> & result!=5 & e_1=1 & e=1
+pred main_v<e> ==  _::id_v<input,result,e_1> & result=2 & e_1=1 & e=0
+   or  _::id_v<input,result,e_1> & result!=2 & e_1=1 & e=1
    or  _::id_v<input,result,e_1> & e_1=0 & e=0.
 
 
 
 checksat _::main_v<e> & e=0.
 
-expect Unsat.
+expect Sat.

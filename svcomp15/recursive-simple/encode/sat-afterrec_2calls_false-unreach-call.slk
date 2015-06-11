@@ -54,28 +54,15 @@ void main()
   ensures true;
 */
 {
-  f(2);
+  f(4);
 }
 */
 
-pred main_v<e> == _::f_v<2,e1> & e1=1 & e=1
-   or _::f_v<2,e1> & e1=0 & e=0.
+pred main_v<e> == _::f_v<4,e1> & e1=1 & e=1
+   or _::f_v<4,e1> & e1=0 & e=0.
 
 
 
 checksat _::main_v<e> & e=0.
 
-expect Unsat.
-
-/*
-   main_v(e) & e=0
-== (1) f_v(2, e1) & e1=1 & e=1 & e=0 // unsat
-  \/ (2) f_v(2, e1) & e1=0 & e=0 & e=0
-
-== (2.1) n=2 & n<3 & e1=1 & e1=0 & e=0 & e=0 //unsat
- \/ (2.2) n=2 & n>=3 & f2_v(n-1, e11) & e11=1 & e1 = 0 & e1=0 & e=0 & e=0. //unsat
- \/ (2.3) n=2 & n>=3 & f2_v(n-1, e11) & e11=0 & e1 = 0 & e1=0 & e=0 & e=0.
-
-== unsat
-
- */
+expect Sat.

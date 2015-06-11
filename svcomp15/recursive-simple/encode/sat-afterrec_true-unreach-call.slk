@@ -20,11 +20,10 @@ void f(int n)
   f(n);
   __error();
 }
-
-pred f_v(n, e) == n<3 & e=1
-   or n>=3 & f(n-1, e1) & & e1=1 & e = 0.
-
 */
+
+pred f_v<n,e> == n<3 & e=1
+   or _::f_v<n-1,e1> & n>=3 & e1=1 & e=0.
 
 /*
 void main()
@@ -37,14 +36,14 @@ void main()
 }
 */
 
-pred main_v(e) == f_v(2, e1) & e1=1 & e=1
-   \/ f_v(2, e1) & e1=0 & e=0.
+pred main_v<e> == _::f_v<2,e1> & e1=1 & e=1
+   or _::f_v<2,e1> & e1=0 & e=0.
 
 
 
-checksat main_v(e) & e=0 .
+checksat _::main_v<e> & e=0.
 
-expect unsat.
+expect Unsat.
 
 /*
    main_v(e) & e=0
