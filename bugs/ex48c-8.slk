@@ -13,8 +13,8 @@ data node {
 }.
 
 pred ll<v1> == self = null 
-	or self::node<a@v1, q> * 
-    q::ll<v1>
+	or (exists qq: self::node<a@v1, qq> * 
+    qq::ll<v1>)
   inv true      .
 
 
@@ -23,8 +23,34 @@ checkentail x::node<p,q> * q::ll<ann1> & ann2=@A |- x::ll<ann2> .
 print residue.
 expect Valid.
 
+checkentail x::node<p,q> * q::ll<@A> & ann2=@A |- x::ll<ann2> .
+print residue.
+expect Valid.
 
-/**
+checkentail x::node<p,q> * q::ll<@M> & ann2=@M |- x::ll<ann2> .
+print residue.
+expect_infer Valid R{emp}. // classic proving needed
+
+checkentail x::node<p,q> * q::ll<@A> & ann2=@M |- x::ll<ann2> .
+print residue.
+expect Fail.
+
+/*
+
+
+  x::ll<@A> |- x::ll<@A> --> emp // x::ll
+
+  x::ll<@M> |- x::ll<@M> --> emp // should be empty
+
+  x::ll<@M> |- x::ll<@A> --> emp // May Failure ..
+
+  x::ll<@A> |- x::ll<@M> --> emp // May Failure ..
+
+ --
+
+Residue:
+ <1>(exists ann2_35: q::ll<ann1>@M * x::node<p@M,q_40@A>@M&ann2_35=@A & a_36=p & @M<:ann2_35 & ann2=@A&{FLOW,(20,21)=__norm#E}[]
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  Match(q,q)]]
 
 
 (====)
