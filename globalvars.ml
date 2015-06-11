@@ -1106,8 +1106,8 @@ let extend_proc (temp_procs : I.proc_decl list) (decl : I.proc_decl) : I.proc_de
     @param prog current program declaration
     @return new program declaration *)
 let infer_imm_ann (prog: I.prog_decl) : I.prog_decl =
-  let fresh_pred loc = fresh_var_name rel_default_prefix_name loc.start_pos.Lexing.pos_lnum in
-  let fresh loc = fresh_var_name imm_var_prefix loc.start_pos.Lexing.pos_lnum in
+  let fresh_pred loc = fresh_any_name rel_default_prefix_name in
+  let fresh loc = fresh_any_name imm_var_prefix in
 
   (** Infer immutability annotation variables for one proc,
         return the resulting proc and required rel declaration *)
@@ -1119,45 +1119,71 @@ let infer_imm_ann (prog: I.prog_decl) : I.prog_decl =
     let imm_pre_is_set = ref false in
     (* Stack of added fresh variables in both pre && post *)
     let v_stack = new Gen.stack in
+    let n_stack = new Gen.stack in
     (* Stack of added fresh variables in both pre *)
     let pre_stack = new Gen.stack in
+    (* Stack of added constant anot normalization *)
+    let pre_norm_stack = new Gen.stack in
     (* Relation added on pre and post *)
     let pre_rel = ref None in
     let post_rel = ref None in
     let assign_ann_or_var ann loc = match ann with
       | Ipure.NoAnn -> if !use_mutable then (Ipure.ConstAnn Mutable, None)
-                       else (let f = (fresh loc, Unprimed) in (PolyAnn (f, loc), Some f))
-      | Ipure.PolyAnn (f, loc) -> (ann, Some f)
-      | ann -> (ann, None) in
+                       else (let f = (fresh loc, Unprimed) in (PolyAnn (f, loc), Some (f, false)))
+      | Ipure.ConstAnn _ -> if !use_mutable then (ann, None)
+                              else (let f = (fresh loc, Unprimed) in (ann, Some (f, true)))
+      | Ipure.PolyAnn (f, loc) -> (ann, Some (f, false)) in
+    let update_v_stack v = map_opt_def () (fun (v,_) -> v_stack # push v) v in
+    let update_n_stack v ann =
+      map_opt_def () (fun (v,norm) -> if norm then n_stack # push (v, ann)) v in
     let ann_heap = function
       | HeapNode hp ->
          let loc = hp.h_formula_heap_pos in
          let (h_imm, v) = assign_ann_or_var hp.h_formula_heap_imm loc in
-         let () = map_opt_def () (fun v -> v_stack # push v) v in
+         let () = update_v_stack v in
+         let () = update_n_stack v h_imm in
+         let h_imm = match v with
+           | Some (_, false) -> h_imm
+           | Some (v, true) -> Ipure.PolyAnn (v, loc)
+           | None -> h_imm in
          Some (HeapNode { hp with h_formula_heap_imm = h_imm })
       | HeapNode2 hp ->
          let loc = hp.h_formula_heap2_pos in
          let (h_imm, v) = assign_ann_or_var hp.h_formula_heap2_imm loc in
-         let () = map_opt_def () (fun v -> v_stack # push v) v in
+         let () = update_v_stack v in
+         let () = update_n_stack v h_imm in
+         let h_imm = match v with
+           | Some (_, false) -> h_imm
+           | Some (v, true) -> Ipure.PolyAnn (v, loc)
+           | None -> h_imm in
          Some (HeapNode2 { hp with h_formula_heap2_imm = h_imm })
       | _ -> None
     in
+    let and_pure_with_eqs vars formula loc =
+      let eq_v (v, ann) =
+        match ann with
+        | Ipure.ConstAnn h_ann ->
+           let p_formula = Ipure.Eq (Ipure.Var (v,loc), Ipure.AConst (h_ann, loc), loc) in
+           let b_formula = (p_formula, None) in
+           Ipure.BForm (b_formula, None)
+        | _ -> failwith "Not possible"
+      in
+      List.fold_right (fun pure acc -> add_pure_formula_to_formula pure acc) (List.map eq_v vars) formula in
     let and_pure_with_rel relname rel_params formula loc =
-      let and_with_rel relname pure =
-        let open Ipure in
-        let args = List.map (fun i -> Var (i, loc)) rel_params in
-        Some (mkAnd pure (BForm ((RelForm (relname, args, loc), None), None)) loc) in
-      transform_formula (None, nonef, nonef, (nonef, nonef, (and_with_rel relname), nonef, nonef)) formula
-    in
+      let rel_pure =
+        let args = List.map (fun i -> Ipure.Var (i, loc)) rel_params in
+        let p_formula = Ipure.RelForm (relname, args, loc) in
+        let b_formula = (p_formula, None) in
+        Ipure.BForm (b_formula, None)
+      in add_pure_formula_to_formula rel_pure formula in
     let mk_rel rel_params loc =
       let rn = fresh_pred loc in
       match rel_params with
       | [] -> None
       | rel_params -> Some ({
         I.rel_name = rn;
-        I.rel_typed_vars = List.map (fun (i,_) -> (AnnT, i)) rel_params;
-        I.rel_formula = Ipure.mkTrue no_pos
-      })
+        I.rel_typed_vars = List.map (fun (_,_) -> (AnnT, fresh loc)) rel_params;
+        I.rel_formula = Ipure.mkTrue no_pos })
     in
     let rec ann_struc_formula_1 = function
       | EInfer ff ->
@@ -1167,21 +1193,27 @@ let infer_imm_ann (prog: I.prog_decl) : I.prog_decl =
          None
       | EAssume ff ->
          pre_stack # push_list (v_stack # get_stk);
+         pre_norm_stack # push_list (n_stack # get_stk_and_reset);
          if !use_mutable then Some (EAssume ff) else
            Some (EAssume { ff with formula_assume_simpl = transform_formula transform_1 ff.formula_assume_simpl })
       | _ -> None
     and transform_1 = (ann_struc_formula_1, nonef, ann_heap, (somef, somef, somef, somef, somef)) in
     let ann_postcondition = function
       | EAssume ff ->
+         let loc = pos_of_formula ff.formula_assume_simpl in
+         (* Normalize postcondition *)
+         let postcondition =
+           if (not (n_stack # is_empty)) then
+             and_pure_with_eqs (n_stack # get_stk) ff.formula_assume_simpl loc
+           else ff.formula_assume_simpl in
+         (* And the pure part with relation *)
          if ((not (v_stack # is_empty)) && (not (!post_rel = None))) then
-            let postcondition = ff.formula_assume_simpl in
             let post_rel = match !post_rel with Some p -> p | None -> failwith "Not possible (infer_imm_ann_proc)" in
-            let rel_params = List.map (fun (_,i) -> (i, Unprimed)) post_rel.I.rel_typed_vars in
-            let postcondition_with_rel = and_pure_with_rel post_rel.I.rel_name
-                                                        rel_params postcondition (pos_of_formula postcondition) in
+            let rel_params = List.map (fun (i,_) -> (i, Unprimed)) (v_stack # get_stk) in
+            let postcondition_with_rel = and_pure_with_rel post_rel.I.rel_name rel_params postcondition loc in
             let () = x_binfo_hp (add_str "updated_postcondition:" Iprinter.string_of_formula) postcondition_with_rel no_pos in
             Some (EAssume { ff with formula_assume_simpl = postcondition_with_rel })
-        else Some (EAssume ff)
+        else Some (EAssume {ff with formula_assume_simpl = postcondition })
       | _ -> None
     in
     let ann_struc_formula_2 = function
@@ -1189,12 +1221,17 @@ let infer_imm_ann (prog: I.prog_decl) : I.prog_decl =
          begin match ff.formula_inf_continuation with
          | EBase ({ formula_struc_base = precondition; formula_struc_pos = loc } as ebase) ->
             let new_ebase =
+              (* Normalize precondition *)
+              let precondition =
+                if (not (pre_norm_stack # is_empty)) then
+                  and_pure_with_eqs (pre_norm_stack # get_stk) precondition loc
+                else precondition in
               if (not (pre_stack # is_empty) && not (!pre_rel = None)) then
                 let pre_rel = match !pre_rel with Some p -> p | None -> failwith "Not possible (infer_imm_ann_proc)" in
-                let rel_params = List.map (fun (_,i) -> (i, Unprimed)) pre_rel.I.rel_typed_vars in
+                let rel_params = List.map (fun (i,_) -> (i, Unprimed)) (pre_stack # get_stk) in
                 let precondition_with_rel = and_pure_with_rel pre_rel.I.rel_name rel_params precondition loc in
                 { ebase with formula_struc_base = precondition_with_rel }
-              else ebase in
+              else { ebase with formula_struc_base = precondition } in
             let new_continuation =
               if (not (v_stack # is_empty)) then
                 let transform = (ann_postcondition, nonef, nonef, (nonef, nonef, nonef, nonef, nonef)) in

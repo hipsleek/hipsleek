@@ -5,10 +5,10 @@ data cell{
 
 relation QQQ(ann v).
 
-int foo2(cell c)
-infer [@imm_post]
-  requires c::cell<yyy>@a
-  ensures c::cell<wwww>;
+int foo2(cell c, cell d)
+infer [@imm_pre]
+  requires c::cell<yyy>@M * d::cell<yyy>
+  ensures c::cell<wwww>@a * d::cell<yyy>@A;
 {
   int x = c.fst;
   if (x>0) c.fst = 5;
