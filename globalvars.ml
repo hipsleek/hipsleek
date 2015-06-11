@@ -1108,7 +1108,6 @@ let extend_proc (temp_procs : I.proc_decl list) (decl : I.proc_decl) : I.proc_de
 let infer_imm_ann (prog: I.prog_decl) : I.prog_decl =
   let fresh_pred loc = fresh_any_name rel_default_prefix_name in
   let fresh loc = fresh_any_name imm_var_prefix in
-
   (** Infer immutability annotation variables for one proc,
         return the resulting proc and required rel declaration *)
   let infer_imm_ann_proc (proc: I.proc_decl) : (I.proc_decl * I.rel_decl option * I.rel_decl option) =
@@ -1130,7 +1129,7 @@ let infer_imm_ann (prog: I.prog_decl) : I.prog_decl =
     let assign_ann_or_var ann loc = match ann with
       | Ipure.NoAnn -> if !use_mutable then (Ipure.ConstAnn Mutable, None)
                        else (let f = (fresh loc, Unprimed) in (PolyAnn (f, loc), Some (f, false)))
-      | Ipure.ConstAnn _ -> if !use_mutable then (ann, None)
+      | Ipure.ConstAnn _ -> if !use_mutable || (not !Globals.allow_imm_norm) then (ann, None)
                               else (let f = (fresh loc, Unprimed) in (ann, Some (f, true)))
       | Ipure.PolyAnn (f, loc) -> (ann, Some (f, false)) in
     let update_v_stack v = map_opt_def () (fun (v,_) -> v_stack # push v) v in

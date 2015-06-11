@@ -312,6 +312,8 @@ let common_arguments = [
   ("--oc-dis-adv-simp", Arg.Clear Globals.oc_adv_simplify,"disable oc advancde simplification");
   ("--oc-en-adv-simp", Arg.Set Globals.oc_adv_simplify,"enable oc advanced simplification");
   ("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
+  ("--en-imm-norm", Arg.Set Globals.allow_imm_norm, "enable normalization of immutability annotations (default)");
+  ("--dis-imm-norm", Arg.Clear Globals.allow_imm_norm, "disable normalization of immutability annotations");
   ("--field-imm", Arg.Unit ( fun _ ->
        Globals.allow_field_ann := true;
        Globals.imm_merge := true;
