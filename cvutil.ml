@@ -1563,7 +1563,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) p0 xp_no: (MCP.m
           let rel_vars = rel.rel_vars in
           let p0_rels = CP.get_RelForm (MCP.pure_of_mix p0) in
           let lookup_rel = List.filter (fun r -> match (x_add_1 CP.get_rel_id r) with
-              | Some SpecVar(_,id,_) -> 
+              | Some CP.SpecVar(_,id,_) -> 
                 (*let () = (print_endline id) in*)
                 if (String.compare id "lookup") = 0 then true else false
               | None -> false)

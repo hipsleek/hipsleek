@@ -395,6 +395,38 @@ let pre_calculate fp_func input_fml pre_vars proc_spec
   | [] -> List.map (fun (rel,post) -> (rel,post,constTrue,constTrue)) rel_posts
   | _ -> report_error no_pos "Error in top-down fixpoint calculation"
 
+(*
+let pre_calculate fp_func input_fml pre_vars proc_spec
+    pre pure_oblg_to_check (rel_posts,pre_rel)
+    pre_fmls pre_rel_vars pre_rel_df =
+  let pr1 = Cprinter.string_of_pure_formula in
+  let pr2 = pr_list_ln pr1 in
+  let pr3 = pr_list_ln (pr_pair pr1 pr1) in
+  let pr4 = pr_list_ln (pr_quad pr1 pr1 pr1 pr1) in
+  Debug.no_7 "pre_calculate" pr3 !CP.print_svl pr1 pr1 (pr_pair pr3 pr1) pr2 (pr_pair !CP.print_svl pr3) pr4
+    (fun _ _ _ _ _ _ _ -> pre_calculate fp_func input_fml pre_vars proc_spec
+        pre pure_oblg_to_check (rel_posts,pre_rel)  pre_fmls pre_rel_vars pre_rel_df)
+    input_fml pre_vars pre pure_oblg_to_check (rel_posts,pre_rel) pre_fmls (pre_rel_vars, pre_rel_df)
+*)
+
+(* let pre_calculate fp_func input_fml pre_vars proc_spec *)
+(*     pre pure_oblg_to_check (rel_posts,pre_rel) *)
+(*     pre_fmls pre_rel_vars pre_rel_df = *)
+(*   let pr1 = Cprinter.string_of_pure_formula in *)
+(*   let pr2 = pr_list_ln pr1 in *)
+(*   let pr3 = pr_list_ln (pr_pair pr1 pr1) in *)
+(*   let pr4 = pr_list_ln (pr_quad pr1 pr1 pr1 pr1) in *)
+(*   Debug.no_7 "pre_calculate"  *)
+(*     (add_str "input_fml" pr3) *)
+(*     (add_str "pre_vars" !CP.print_svl) *)
+(*     (add_str "pre" pr1) *)
+(*     (add_str "pure_oblg_to_check" pr1)  *)
+(*     (add_str "(rel_posts,pre_rel)" (pr_pair pr3 pr1)) *)
+(*     (add_str "pre_fmls" pr2) *)
+(*     (fun _ _ _ _ _ _ _ -> pre_calculate fp_func input_fml pre_vars proc_spec *)
+(*         pre pure_oblg_to_check (rel_posts,pre_rel)  pre_fmls pre_rel_vars pre_rel_df) *)
+(*     input_fml pre_vars pre pure_oblg_to_check (rel_posts,pre_rel) pre_fmls (pre_rel_vars, pre_rel_df) *)
+
 let pre_calculate fp_func input_fml pre_vars proc_spec
     pre pure_oblg_to_check (rel_posts,pre_rel)
     pre_fmls pre_rel_vars pre_rel_df =
@@ -410,7 +442,8 @@ let pre_calculate fp_func input_fml pre_vars proc_spec
     (add_str "(rel_posts,pre_rel)" (pr_pair pr3 pr1))
     (add_str "pre_fmls" pr2)
     (pr_pair (add_str "pre_rel_vars" !CP.print_svl) (add_str "pre_rel_df" pr3)) pr4
-        (* pre pure_oblg_to_check (rel_posts,pre_rel)  pre_fmls pre_rel_vars pre_rel_df) *)
+    (fun _ _ _ _ _ _ _ -> pre_calculate fp_func input_fml pre_vars proc_spec
+        pre pure_oblg_to_check (rel_posts,pre_rel)  pre_fmls pre_rel_vars pre_rel_df)
     input_fml pre_vars pre pure_oblg_to_check (rel_posts,pre_rel) pre_fmls (pre_rel_vars, pre_rel_df)
 
 let update_rel rel pre_rel new_args old_rhs =
