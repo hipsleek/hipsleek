@@ -1,6 +1,23 @@
 ==================================================================
 # infer1.slk
 
+File "infer1.slk", line 16, characters 13-14
+ error: Stream.Error("EOF expected after [command_list] (in [sprog])")
+ at:error at: 
+
+Cannot handle:
+
+validate [
+( [H1,b],
+//   HP_32(b_34)&a=a_33 & b=b_34,
+   HP_32(b),
+  [H1(y) --> y::node<_,b>@M * HP_32(b)]
+  //[H1(y) --> y::node<a,b>@M * HP_32(b)]
+)
+].
+
+======
+
  <1>HP_33(b_35)&a=a_34 & b=b_35&{FLOW,(19,20)=__norm}[]
  inferred hprel: [H1(y) --> y::node<a,b>@M * HP_33(b)]
 
@@ -35,15 +52,195 @@ validate Valid:[
 // inferred hprel: [H1(y) --> y::node<a_1,b_2>@M * HP_35(b_2)]
 // or you could have renamed the existentially quantified vars.
 ==================================================================
+# ex4.slk
+
+If {} is empty, can be omit its printing.
+  q_122::ll{}<flted_7_126>(must)
+should be printed as:  
+  q_122::ll<flted_7_126>(must)
+
 ==================================================================
+# ex4a.slk
+
+checkentail x::node<_,null> |- x::ll<n>.
+print residue.
+expect Valid.
+expect_infer R{x!=null & n=1}.
+
+Why is below not executed?
+
+  let () = x_binfo_pp "Evan: place to add expect_infer code" no_pos in
+  ()
+
 ==================================================================
+# ex4a.slk
+
+--pcp
+
+GOT:
+Expected Residue :  emp&x!=null & n=1&{FLOW,(20,21)=__norm#E}[]
+
+Can we have:
+
+expect_infer: 
+ R{emp&x!=null & n=1&{FLOW,(20,21)=__norm#E}[]}
+ ..
+
+====================================================
+
+# ex4a.slk
+
+# Need to check
+   current residue |- expected residue
+
+# It seems that consumed heap is missing
+
+!!! **sleekengine.ml#1599:expected residue: emp&x!=null & n=1&{FLOW,(20,21)=__norm#E}[]
+!!! **sleekengine.ml#1602:current residue:
+Some(( [
+  emp&0+1=n & q_45=flted_11_35 & Anon_44=Anon_13 & flted_11_35=null&{FLOW,(20,21)=__norm#E}[]
+
 ==================================================================
+
+# ex4a.slk --print-extra (to show consumed heap)
+
+Some(( [
+  emp&0+1=n & q_45=flted_11_35 & Anon_44=Anon_13 & flted_11_35=null&{FLOW,(20,21)=__norm#E}[]
+  es_heap(consumed):
+  x::node<Anon_13,flted_11_35>
+  ],true))Stop z3... 39 invocations Stop Omega... 16 invocations 
+
 ==================================================================
+err4b.slk (FIXED by removing add_last_diff line)
+
+# Why isn't there a type error with the node<null> scenario?
+
+!!! **sleekengine.ml#1129:ivars:[]Exception(look_up_view_def_raw):Not_found
+Exception(do_match):Invalid_argument("List.combine")
+Exception(process_action):Invalid_argument("List.combine")
+Exception(process_action):Invalid_argument("List.combine")
+Exception(heap_entail_non_empty_rhs_heap):Invalid_argument("List.combine")
+Exception(heap_entail_conjunct_helper):Invalid_argument("List.combine")
+
 ==================================================================
+../sleek ex4e-expect-linearize.slk | grep Expect
+
+# Try support: I, RA etc
+
+Expect_Infer 2.1: Valid. ( x::node<bb,q> * q::node<bb_70,flted_16_69>&flted_16_69=null & bb_70=bb&
+Expect_Infer 2.2: Valid. ( x::node<bb,q> * q::node<bb_81,Anon_13>&bb_81=bb&{FLOW,(20,21)=__norm#E}[])
+Expect_Infer 2.3: Valid. ( x::node<bb,q1> * q1::node<bb_89,Anon_14>&bb_89=bb&{FLOW,(20,21)=__norm#E}[])
+Expect_Infer 2.4: Fail. ( x::node<bb,q> * q::node<flted_19_98,Anon_15>&flted_19_98=1+bb&
+Expect_Infer 2.5: Fail. ( x::node<bb,Anon_16> * qq::node<bb_107,Anon_17>&bb_107=bb&
+Expect_Infer 2.6: Valid. ( x::node<bb,Anon_18> * q::node<bb_116,Anon_19>&bb_116=bb&
 ==================================================================
+# ex5a.slk (OK)
+
+# We need to form 
+
+   emp & n=0 (from es_infer_pure; collect from list_context) 
+   |- emp & n=0 (from expected_infer pure)
+
+
+!!! **sleekengine.ml#1605:current residue:
+Some(( [
+   emp&y=null & n=0&{FLOW,(20,21)=__norm#E}[]
+  es_heap(consumed): emp
+  es_evars: [n_41]
+  es_ante_evars: [n_41]
+  es_infer_pure: [n=0]
+  ],true))
+Expect_Infer 1.1: Valid. ( emp&n=0&{FLOW,(20,21)=__norm#E}[])
+
+and normalize i (f1 : formula) (f2 : formula) (pos : loc) =
+  Debug.no_2 "normalize$" (!print_formula) (!print_formula) (!print_formula) (fun _ _ -> normalize_x f1 f2 pos) f1 f2
+
+(====)
+normalizeB@225
+normalizeB inp1 : r_1763::ll<flted_19_1761>&res=v_boolean_63_1600' & !(v_boolean_63_1600') & 
+flted_19_1761+1=n & xs'=xs & 0<n & r_1763=null & v_bool_62_1639'&
+{FLOW,(4,5)=__norm#E}[]
+normalizeB inp2 : emp&exists(l_1897:exists(s_1896:Anon_1762=s_1896 & s_1896=l_1897)) & 
+exists(n_1895:n_1895=1)&{FLOW,(1,28)=__flow#E}[]
+normalizeB@225 EXIT: r_1763::ll<flted_19_1761>&res=v_boolean_63_1600' & !(v_boolean_63_1600') & 
+flted_19_1761+1=n & xs'=xs & 0<n & r_1763=null & v_bool_62_1639' & 
+exists(l_1897:exists(s_1896:Anon_1762=s_1896 & s_1896=l_1897)) & 
+exists(n_1895:n_1895=1)&{FLOW,(4,5)=__norm#E}[]
+
 ==================================================================
+# ex5c.slk --esl -dre "heap_entail_conjunct"
+
+It seems that impl vars is empty ...
+
+# maybe can print the implicit vars
+
+id: 3; caller: []; line: 0; classic: false; kind: Validate(1.1); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [] globals: []
+ checkentail x::node<a,Anon_13>&a=5&{FLOW,(20,21)=__norm#E}[]
+ |-  x::node<b,Anon_14>&0<b&{FLOW,(20,21)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+    emp&a=5 & b=a & Anon_14=Anon_13&{FLOW,(20,21)=__norm#E}[]
+   ]
+
+# Below did not capture implicit vars bbb
+
+(==solver.ml#7181==)
+heap_entail_conjunct_helper#3@44@43@42@41@40@39@38
+heap_entail_conjunct_helper#3 inp1 :  x::node<a,Anon_13>&a=5&{FLOW,(20,21)=__norm#E}[]
+ es_heap(consumed): emp
+ es_gen_impl_vars: []
+ 
+heap_entail_conjunct_helper#3 inp2 : x::node<bbb,Anon_14>&0<bbb&{FLOW,(20,21)=__norm#E}[]
+heap_entail_conjunct_helper#3@44 EXIT: [
+   emp&a=5 & bbb=a & Anon_14=Anon_13&{FLOW,(20,21)=__norm#E}[]
+  es_heap(consumed): x::node<a,Anon_13>
+  es_gen_impl_vars: []
+  ]
+
+# implicit vars bbb for ex5d.slk
+
+(==solver.ml#7181==)
+heap_entail_conjunct_helper#3@4@3@2@1
+heap_entail_conjunct_helper#3 inp1 :  x::node<a,Anon_12>&a=5&{FLOW,(20,21)=__norm#E}[]
+ es_heap(consumed): emp
+ es_gen_impl_vars: [Anon_13; bbb]
+ es_gen_impl_vars: [Anon_13; bbb]
+ 
+heap_entail_conjunct_helper#3 inp2 : x::node<bbb,Anon_13>&0<bbb&{FLOW,(20,21)=__norm#E}[]
+heap_entail_conjunct_helper#3@4 EXIT: [
+   emp&a=5 & bbb=a & Anon_13=Anon_12&{FLOW,(20,21)=__norm#E}[]
+  es_heap(consumed): x::node<a,Anon_12>
+  es_gen_impl_vars: []
+  ]
+
 ==================================================================
+# ex5a.slk
+
+# why so many blank lines..
+
+Entail (1) : Valid. 
+
+Residue:
+ <1>emp&y=null & n=0&{FLOW,(20,21)=__norm#E}[]
+ inferred pure: [n=0]
+[[ BaseCaseFold ==>  COND]]
+
+
+
+Expect_Infer 1.1: OK. 
+
+Expect_Infer 1.2: OK. 
 ==================================================================
+# ex4f.slk (OK)
+
+# we need to add 2.6 to the list of Unexpected..
+
+!!! rhs: qq::node<bb_107,Anon_17>
+Expect_Infer 2.5: Expected Valid but got Fail ( x::node<bb,Anon_16> * qq::node<bb_107,Anon_17>&bb_107=bb&
+{FLOW,(20,21)=__norm#E}[])
+
+Expect_Infer 2.6: OK. 
+Unexpected: 1 
 ==================================================================
 ==================================================================
 ==================================================================

@@ -1,0 +1,116 @@
+data node {
+  int val;
+  node next;
+}.
+ pred ll_tail2<tx:node,n:int> == 
+  (exists flted_18_27: self::node<Anon_13,flted_18_27>&flted_18_27=null & 
+  tx=self & n=1) or
+(exists tx_29,flted_19_28: self::node<Anon_14,r> * 
+  r::ll_tail2{}<tx_29,flted_19_28>&flted_19_28+1=n & r!=null & tx_29=tx)
+  inv self!=null & tx!=null & 1<=n.
+ pred lseg2<p:node,n:int> == 
+  emp&self=p & n=0 or
+(exists p_32,flted_15_31: self::node<Anon_12,r> * 
+  r::lseg2{}<p_32,flted_15_31>&flted_15_31+1=n & p_32=p)
+  inv 0<=n.
+/*
+Lemma "ll_tail2_left":  self::ll_tail2{}<t,n>&{FLOW,(4,5)=__norm#E}[]==> (exists flted_23_1566,flted_23_1567,
+Anon_15: self::lseg2{}<t,flted_23_1567> * t::node<Anon_15,flted_23_1566>&
+flted_23_1567+1=n & flted_23_1566=null&{FLOW,(4,5)=__norm#E}[]
+ head match:ll_tail2
+ body view:lseg2
+ coercion_univ_vars: []
+ materialized vars:  [(self,full,[lseg2]); (t,full,[])]
+ coercion_case: Simple
+ head_norm:  (exists t_1594,n_1595: self::ll_tail2{}<t_1594,n_1595>&t_1594=t & n_1595=n&
+{FLOW,(4,5)=__norm#E}[]
+ body_norm:  EBase (exists t_1582,Anon_15,flted_23_1580,
+       flted_23_1581: self::lseg2{}<t_1582,flted_23_1581> * 
+       t::node<Anon_15,flted_23_1580>&flted_23_1581+1=n & 
+       flted_23_1580=null & t_1582=t&{FLOW,(4,5)=__norm#E}[]
+ coercion_univ_vars: []
+ coercion_case: Simple
+ coercion_origin: user-given
+ coercion_kind: LEM
+
+Lemma "lseg2":  self::lseg2{}<p,n>&{FLOW,(4,5)=__norm#E}[]<== (exists q_1641,n2_1642,n1_1643: self::lseg2{}<q_1641,n1_1643> * 
+q_1641::lseg2{}<p,n2_1642>&n=n2_1642+n1_1643&{FLOW,(4,5)=__norm#E}[]
+ head match:lseg2
+ body view:lseg2
+ coercion_univ_vars: []
+ materialized vars:  [(self,full,[lseg2])]
+ coercion_case: Simple
+ head_norm:  (exists p_1633,n_1634: self::lseg2{}<p_1633,n_1634>&p_1633=p & n_1634=n&
+{FLOW,(4,5)=__norm#E}[]
+ body_norm:  EBase exists (Expl)[](Impl)[n1; q; 
+       n2](ex)[](exists p_1644: self::lseg2{}<q,n1> * q::lseg2{}<p_1644,n2>&
+       n=n2+n1 & p_1644=p&{FLOW,(4,5)=__norm#E}[]
+ coercion_univ_vars: []
+ coercion_case: Simple
+ coercion_origin: user-given
+ coercion_kind: LEM
+
+Lemma "ll_tail2_left_right":  self::ll_tail2{}<t,n>&{FLOW,(4,5)=__norm#E}[]<== (exists flted_23_1610,flted_23_1611,
+Anon_1612: self::lseg2{}<t,flted_23_1611> * t::node<Anon_1612,flted_23_1610>&
+flted_23_1611+1=n & flted_23_1610=null&{FLOW,(4,5)=__norm#E}[]
+ head match:ll_tail2
+ body view:lseg2
+ coercion_univ_vars: []
+ materialized vars:  [(self,full,[lseg2]); (t,full,[])]
+ coercion_case: Simple
+ head_norm:  (exists t_1602,n_1603: self::ll_tail2{}<t_1602,n_1603>&t_1602=t & n_1603=n&
+{FLOW,(4,5)=__norm#E}[]
+ body_norm:  EBase (exists t_1613,Anon_1614,flted_23_1615,
+       flted_23_1616: self::lseg2{}<t_1613,flted_23_1616> * 
+       t::node<Anon_1614,flted_23_1615>&flted_23_1616+1=n & 
+       flted_23_1615=null & t_1613=t&{FLOW,(4,5)=__norm#E}[]
+ coercion_univ_vars: []
+ coercion_case: Simple
+ coercion_origin: user-given
+ coercion_kind: LEM
+
+*/
+
+/*
+// id: 0; line: 18; kind: Pred_Check_Inv
+ checkentail emp&((tx=self & n=1 & self!=null) | (2<=n & tx!=null & self!=null))
+ |-  emp&1<=n & tx!=null & self!=null.
+expect Valid.
+ 
+// id: 1; line: 18; kind: Pred_Check_Inv
+ checkentail emp&((tx=self & n=1 & self!=null) | (2<=n & tx!=null & self!=null))
+ |-  emp&1<=n & tx!=null & self!=null.
+expect Valid.
+ 
+// id: 2; line: 14; kind: Pred_Check_Inv
+ checkentail emp&((self=p & n=0) | (1<=n & self!=null))
+ |-  emp&0<=n.
+expect Valid.
+ 
+// id: 3; line: 14; kind: Pred_Check_Inv
+ checkentail emp&((self=p & n=0) | (1<=n & self!=null))
+ |-  emp&0<=n.
+expect Valid.
+ */
+
+// id: 4; line: 41; kind: BIND
+ checkentail (exists tx1,ty1: x::ll_tail2{}<tx1,n> * y::ll_tail2{}<ty1,m> & 
+x'=x & tx'=tx & y'=y & ty'=ty & tx1=tx & ty1=ty)
+ |-  tx'::node<val',next'>.
+expect Valid.
+ 
+// id: 10; line: 0; kind: POST
+ checkentail y::ll_tail2{}<ty2,m> * tx'::node<Anon,y'>&MayLoop[] & next=flted & 
+flted=null & tx2=x & n=1 & ty2=ty & tx2=tx & ty'=ty & y'=y & tx'=tx & x'=x
+ |-  (exists ty3,q: x::ll_tail2{}<ty3,q>&ty3=ty & q=n+m & 1<=m & y!=null & 
+1<=n & x!=null & exists(tx_62:tx_62!=null) & exists(ty_63:ty_63!=null)).
+expect Valid.
+ 
+// id: 23; line: 0; kind: POST
+ checkentail r::lseg2{}<tx3,flted1> * x::node<Anon1,r> * y::ll_tail2{}<ty2,m> * 
+tx'::node<Anon2,y'>&MayLoop[] & next1=flted2 & flted1+1=flted3 & 
+flted2=null & x'=x & tx'=tx & y'=y & ty'=ty & tx2=tx & ty2=ty & tx3=tx2 & 
+r!=null & flted3+1=n
+ |-  (exists ty3,q: x::ll_tail2{}<ty3,q>&ty3=ty & q=n+m & 1<=m & y!=null & 
+1<=n & x!=null & exists(tx_62:tx_62!=null) & exists(ty_63:ty_63!=null)).
+expect Valid.

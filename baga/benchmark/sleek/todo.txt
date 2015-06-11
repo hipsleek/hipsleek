@@ -1,0 +1,166 @@
+#sleek_log_bll_ss.slk:
+
+longph@loris-7:~/workspace/baga/sleekex/baga/benchmark/sleek$ ../../../sleek sleek_log_bll_ss.slk --gen-smt
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+ERROR: at sleek_log_bll_ss.slk_6:28_6:30
+Message: UNIFICATION ERROR : at location {(Line:6,Col:28),(Line:6,Col:30)} types int and NUM are inconsistent
+
+ERROR: at sleek_log_bll_ss.slk_6:28_6:30
+Message: gather_type_info_var : unexpected exception Failure("UNIFICATION ERROR : at location {(Line:6,Col:28),(Line:6,Col:30)} types int and NUM are inconsistent")
+error at: 
+SLEEK FAILURE (END)
+
+ERROR: at sleek_log_bll_ss.slk_9:36_9:44
+Message: UNIFICATION ERROR : at location {(Line:9,Col:36),(Line:9,Col:44)} types NUM and NUM are inconsistent
+Fatal error: exception Failure("UNIFICATION ERROR : at location {(Line:9,Col:36),(Line:9,Col:44)} types NUM and NUM are inconsistent")
+
+Added by hand
+
+===========================================================================================================================
+
+longph@loris-7:~/workspace/baga/sleekex/baga/benchmark/sleek$ ../../../sleek sleek_log_dll_ss.slk --gen-smt
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+File "sleek_log_dll_ss.slk", line 979, characters 8-9
+ error: Stream.Error("[vperm_constr] expected after STAR (in [star_vperm_constr])")
+ at:error at: 
+SLEEK FAILURE (END)
+Stop z3... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.067271 second(s)
+	Time spent in main process: 0.064233 second(s)
+	Time spent in child processes: 0.003038 second(s)
+
+Added by hand
+
+============================================================================================================================
+
+longph@loris-7:~/workspace/baga/sleekex/baga/benchmark/sleek$ ../../../sleek sleek_log_heaps_ss.slk --gen-smt
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+File "sleek_log_heaps_ss.slk", line 720, characters 20-21
+ error: Stream.Error("[cid] expected after COMMA (in [cid_list])")
+ at:error at: 
+SLEEK FAILURE (END)
+Stop z3... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.072443 second(s)
+	Time spent in main process: 0.069001 second(s)
+	Time spent in child processes: 0.003442 second(s)
+
+Added by hand
+
+=============================================================================================================================
+
+longph@loris-7:~/workspace/baga/sleekex/baga/benchmark/sleek$ ../../../sleek sleek_log_perfect_ss.slk --gen-smt
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+File "sleek_log_perfect_ss.slk", line 86, characters 71-72
+ error: Stream.Error("[vperm_constr] expected after STAR (in [star_vperm_constr])")
+ at:error at: 
+SLEEK FAILURE (END)
+Stop z3... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.01631 second(s)
+	Time spent in main process: 0.013315 second(s)
+	Time spent in child processes: 0.002995 second(s)
+
+Added by hand
+
+==============================================================================================================================
+
+longph@loris-7:~/workspace/baga/sleekex/baga/benchmark/sleek$ ../../../sleek sleek_log_selection_ss.slk --gen-smt
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+ERROR: at sleek_log_selection_ss.slk_14:2_14:8
+Message: TYPE ERROR 1 : Found NUM but expecting NUM
+error at: 
+SLEEK FAILURE (END)
+
+ERROR: at sleek_log_selection_ss.slk_17:43_17:46
+Message: UNIFICATION ERROR : at location {(Line:17,Col:43),(Line:17,Col:46)} types NUM and int are inconsistent
+
+ERROR: at sleek_log_selection_ss.slk_17:43_17:46
+Message: gather_type_info_var : unexpected exception Failure("UNIFICATION ERROR : at location {(Line:17,Col:43),(Line:17,Col:46)} types NUM and int are inconsistent")
+Fatal error: exception Failure("gather_type_info_var : unexpected exception Failure(\"UNIFICATION ERROR : at location {(Line:17,Col:43),(Line:17,Col:46)} types NUM and int are inconsistent\")")
+
+Added by hand
+
+===============================================================================================================================
+
+longph@loris-7:~/workspace/baga/sleekex/baga/benchmark/sleek$ ../../../sleek sleek_log_sll_ss.slk --gen-smt
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+ERROR: at sleek_log_sll_ss.slk_6:24_6:30
+Message: TYPE ERROR 1 : Found NUM but expecting NUM
+error at: 
+SLEEK FAILURE (END)
+
+ERROR: at sleek_log_sll_ss.slk_9:14_9:19
+Message: UNIFICATION ERROR : at location {(Line:9,Col:14),(Line:9,Col:19)} types NUM and int are inconsistent
+
+ERROR: at sleek_log_sll_ss.slk_9:14_9:19
+Message: gather_type_info_var : unexpected exception Failure("UNIFICATION ERROR : at location {(Line:9,Col:14),(Line:9,Col:19)} types NUM and int are inconsistent")
+Fatal error: exception Failure("gather_type_info_var : unexpected exception Failure(\"UNIFICATION ERROR : at location {(Line:9,Col:14),(Line:9,Col:19)} types NUM and int are inconsistent\")")
+
+Added by hand
+
+================================================================================================================================
+
+longph@loris-7:~/workspace/baga/sleekex/baga/benchmark/sleek$ ../../../sleek sleek_log_trees_ss.slk --gen-smt
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+ERROR: at sleek_log_trees_ss.slk_11:18_11:24
+Message: TYPE ERROR 1 : Found NUM but expecting NUM
+error at: 
+SLEEK FAILURE (END)
+
+ERROR: at sleek_log_trees_ss.slk_14:9_14:10
+Message: UNIFICATION ERROR : at location {(Line:14,Col:9),(Line:14,Col:10)} types int and NUM are inconsistent
+
+ERROR: at sleek_log_trees_ss.slk_14:9_14:10
+Message: gather_type_info_var : unexpected exception Failure("UNIFICATION ERROR : at location {(Line:14,Col:9),(Line:14,Col:10)} types int and NUM are inconsistent")
+Fatal error: exception Failure("gather_type_info_var : unexpected exception Failure(\"UNIFICATION ERROR : at location {(Line:14,Col:9),(Line:14,Col:10)} types int and NUM are inconsistent\")")
+
+Added by hand
+
+================================================================================================================================
+
+Some unexpected results:
+
+../../../sleek sleek_log_append-tail_ss.slk --inv-baga --en-delay-eelim --dis-inv-check| grep "Validate"
+
+../../../sleek sleek_log_avl_ss.slk --inv-baga --en-delay-eelim --dis-inv-check| grep "Validate"
+
+../../../sleek sleek_log_bubble_ss.slk --inv-baga --en-delay-eelim --dis-inv-check| grep "Validate"
+
+../../../sleek sleek_log_dll_ss.slk --inv-baga --en-delay-eelim --dis-inv-check| grep "Validate"
+
+../../../sleek sleek_log_insertion_ss.slk --inv-baga --en-delay-eelim --dis-inv-check| grep "Validate"
+
+../../../sleek sleek_log_ll_ss.slk --inv-baga --en-delay-eelim --dis-inv-check| grep "Validate"
+
+../../../sleek sleek_log_merge_ss.slk --inv-baga --en-delay-eelim --dis-inv-check| grep "Validate"
+
+../../../sleek sleek_log_qsort_ss.slk --inv-baga --en-delay-eelim --dis-inv-check| grep "Validate"
+
+../../../sleek sleek_log_rb_ss.slk --inv-baga --en-delay-eelim --dis-inv-check| grep "Validate"
+
+../../../sleek sleek_log_trees_ss.slk --inv-baga --en-delay-eelim --dis-inv-check| grep "Validate"
+
+================================================================================================================================
+================================================================================================================================
+================================================================================================================================
+================================================================================================================================

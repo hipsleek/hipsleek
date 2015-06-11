@@ -1684,6 +1684,15 @@ heap_entail_conjunct_lhs#1@9 EXIT:
  ### conseq =  EBase (exists axx2_44,flted_25_43: x::ll{}<flted_25_43,axx2_44>@M&
        flted_25_43=1+n & 1<n & axx2_44=axx2&{FLOW,(20,21)=__norm#E}[]
 
+# ann subs not complete..
+
+(==solver.ml#7245==)
+subst@70
+subst inp1 :[(axx2_44,axx2_53),(flted_25_43,flted_25_54)]
+subst inp2 : x::ll<flted_25_43,axx2_44>@M&flted_25_43=1+n & 1<n & axx2_44=axx2&
+{FLOW,(20,21)=__norm#E}[]
+subst@70 EXIT: x::ll<flted_25_54,axx2_44>@M&flted_25_54=1+n & 1<n & axx2_53=axx2&
+{FLOW,(20,21)=__norm#E}[]
 
 ===================================================================
 # ex47b.slk --field-imm (FIXED)

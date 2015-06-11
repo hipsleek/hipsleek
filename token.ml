@@ -34,7 +34,7 @@ type sleek_token =
   | DTIME
   | ELSE_TT
   | EMPTY
-  | ENSURES | ENSURES_EXACT | ENSURES_INEXACT | ENUM | EXISTS | EXTENDS
+  | ENSURES | ENSURES_EXACT | ENSURES_INEXACT | ENUM | EXISTS | EXPECT_INFER | EXTENDS
   | FALSE | FLOAT | FORALL | FUNC
   | HP | HPPOST
   | HTRUE
@@ -89,7 +89,7 @@ type sleek_token =
   | INFINITY
   | NEGINFINITY
   | VALIDATE
-  | VALID
+  | VALID |SSAT | SUNSAT
   | FAIL
   | FAIL_MUST
   | FAIL_MAY
@@ -133,7 +133,7 @@ module Token = struct
     | REL_INFER -> "relation_infer" | SPEC -> "spec"
     | SIMPLIFY -> "simplify" | SLK_HULL -> "slk_hull"  | SLK_PAIRWISE -> "slk_pairwise"
     | COMPOSE ->"compose" | CONST ->"const" | CONTINUE ->"continue"	| DATA ->"data" | DDEBUG ->"debug" | DIFF ->"diff"| DYNAMIC ->"dynamic"
-    | DTIME ->"time" | ELSE_TT ->"else" | EMPTY -> "emp"| ENSURES ->"ensures" | ENSURES_EXACT ->"ensures_exact" | ENSURES_INEXACT ->"ensures_inexact" | ENUM ->"enum"| EXISTS ->"ex" | EXTENDS ->"extends"
+    | DTIME ->"time" | ELSE_TT ->"else" | EMPTY -> "emp"| ENSURES ->"ensures" | ENSURES_EXACT ->"ensures_exact" | ENSURES_INEXACT ->"ensures_inexact" | ENUM ->"enum"| EXISTS ->"ex" | EXTENDS ->"extends" | EXPECT_INFER -> "expect_infer"
     | FALSE ->"false"| FLOAT ->"float" | FORALL ->"forall" | FUNC -> "ranking"
     | HTRUE -> "htrue"
     | HP->"HeapPred" | HPPOST->"PostPred"
@@ -180,6 +180,8 @@ module Token = struct
     | MAYLOOP -> "MayLoop"
     | VALIDATE -> "expect"
     | VALID -> "Valid"
+    | SSAT -> "Sat"
+    | SUNSAT -> "Unsat"
     | FAIL -> "Fail"
     | FAIL_MUST -> "Fail_Must"
     | FAIL_MAY -> "Fail_May"

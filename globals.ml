@@ -486,13 +486,14 @@ let dump_proof = ref false
 let dump_sleek_proof = ref false
 let sleek_gen_vc = ref false
 let sleek_gen_vc_exact = ref false
+let sleek_gen_sat = ref false
 
 
 
 
 (*Some global vars for logging*)
 let explain_mode = new failure_mode
-let return_exp_pid = ref ([]: control_path_id list)	
+let return_exp_pid = ref ([]: control_path_id list)
 let z3_proof_log_list = ref ([]: string list)
 let z3_time = ref 0.0
 
@@ -1084,7 +1085,9 @@ let allow_mem = ref false
 let gen_coq_file = ref false
 
 let infer_mem = ref false
+let filter_infer_search = ref true
 let infer_raw_flag = ref true
+
 
 let pa = ref false
 
@@ -1211,7 +1214,7 @@ let split_rhs_flag = ref true
 let n_xpure = ref 1
 
 
-let fixcalc_disj = ref 1 (* should be n+1 where n is the base-case *)
+let fixcalc_disj = ref 2 (* should be n+1 where n is the base-case *)
 
 let pre_residue_lvl = ref 0
 (* Lvl 0 - add conjunctive pre to residue only *)
@@ -1238,6 +1241,8 @@ let trace_all = ref false
 let print_mvars = ref false
 
 let print_type = ref false
+let print_extra = ref false
+
 let enforce_type_error = ref true (* strictly enforce type error *)
 
 let print_en_tidy = ref false
@@ -1758,8 +1763,15 @@ let show_unexpected_ents = ref true
 (* generate baga inv from view *)
 let double_check = ref false
 let gen_baga_inv = ref false
+let delay_eelim_baga_inv = ref false
+let dis_baga_inv_check = ref false
+
 let is_inferring = ref false
 let use_baga = ref false
+
+(* let unsat_count_syn = ref (0:int) *)
+(* let unsat_count_sem = ref (0:int) *)
+
 let prove_invalid = ref false
 let gen_baga_inv_threshold = 7 (* number of preds <=6, set gen_baga_inv = false*)
 let do_under_baga_approx = ref false (* flag to choose under_baga *)
@@ -1799,9 +1811,9 @@ let omega_err = ref false
 
 let seq_number = ref 10
 
-let sat_timeout_limit = ref 2.
+let sat_timeout_limit = ref 5.
 let user_sat_timeout = ref false
-let imply_timeout_limit = ref 3.
+let imply_timeout_limit = ref 10.
 
 let dis_provers_timeout = ref false
 let sleek_timeout_limit = ref 0.
@@ -1813,9 +1825,9 @@ let dis_inv_baga () =
 
 let dis_bk ()=
   let () = oc_simplify := true in
-  let () = sat_timeout_limit:= 2. in
+  let () = sat_timeout_limit:= 5. in
   let () = user_sat_timeout := false in
-  let () = imply_timeout_limit := 3. in
+  let () = imply_timeout_limit := 10. in
   (* let () = en_slc_ps := false in *)
   ()
 
@@ -2285,3 +2297,5 @@ let string_of_lemma_kind (l: lemma_kind) =
   | LEM_INFER_PRED   -> "LEM_INFER_PRED"
   | RLEM -> "RLEM"
 
+type debug_lvl = Short | Normal | Long
+let debug_level = ref Normal

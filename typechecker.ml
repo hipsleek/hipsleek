@@ -778,7 +778,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       (* Debug.info_hprint (add_str "fv post" !CP.print_svl) ovars no_pos; *)
       (* Debug.info_hprint (add_str "out vars" !CP.print_svl) ov no_pos; *)
       if ((Immutable.is_lend post_cond) && not(!Globals.allow_field_ann))
-         || (!Globals.allow_field_ann && Mem.is_lend post_cond) then
+      || (!Globals.allow_field_ann && Mem.is_lend post_cond) then
         Error.report_error {Error.error_loc = pos_spec; Error.error_text =  ("The postcondition cannot contain @L heap predicates/data nodes/field annotations\n")}
       else
         let () = post_pos#set (CF.pos_of_formula post_cond) in
@@ -2729,7 +2729,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               exp_sharp_pos = pos})	->
       (**********INTERNAL************)
       let look_up_typ_first_fld obj_name=
-        let dclr = Cast.look_up_data_def_raw prog.Cast.prog_data_decls obj_name in
+        let dclr = x_add Cast.look_up_data_def_raw prog.Cast.prog_data_decls obj_name in
         let (t,_),_ = (List.hd dclr.Cast.data_fields) in
         t
       in
@@ -3488,6 +3488,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
       | Some body ->
         begin
           stk_vars # reset;
+          let () = Excore.UnCa.reset_cache () in
           (* push proc.proc_args *)
           let args = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed) ) proc.proc_args in
           stk_vars # push_list args;
@@ -3709,7 +3710,6 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
               let lst_rank = List.map (fun (_,a2,a3)-> (a2,a3)) lst_rank in
               (*let () = Ranking.do_nothing in*)
               x_tinfo_hp (add_str "SPECS (after simplify_ann)" pr_spec) new_spec no_pos;
-
               x_tinfo_hp (add_str "SPECS (before add_pre)" pr_spec) new_spec no_pos;
               x_tinfo_hp (add_str "NEW SPECS(B4)" pr_spec) new_spec no_pos;
               let new_spec = x_add_1 Astsimp.add_pre prog new_spec in

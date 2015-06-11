@@ -1,0 +1,64 @@
+relation Q(int[] a,int[] b,int r).
+
+/*
+infer[@arrvar,Q] htrue&res=a'[4] & a'=a & (a'[5])<=0 & !(v_bool_13_1185')  |-  emp&Q(a,a',res).
+print residue.
+*/
+
+infer[Q] htrue&res=a'[4] & a'=a & (a'[5])<=0 & !(v_bool_13_1185') 
+ |-  emp&Q(a,a',res).
+print residue.
+
+/*
+id: 26; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ Q,update_array_1d]; c_heap: emp; others: [@arrvar] globals: [@flow,@ver_post]
+ checkentail (exists a_1283: htrue&res=v_int_17_1181' & Q(a_1283,a',v_int_17_1181') & 
+update_array_1d(a_1282,a_1283,1+(a_1282[4]),4) & 
+update_array_1d(a_1263,a_1282,v_int_15_1262,5) & v_int_15_1262+1=a_1263[5] & 
+update_array_1d(a,a_1263,1+(a[6]),6) & 0<(a[5]) & v_bool_13_1185' & 
+MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&Q(a,a',res)&{FLOW,(4,5)=__norm#E}[]. 
+pure rel_ass: [RELDEFN Q: ( update_array_1d(a_1263,a_1282,v_int_15_1262,5) &
+*/
+
+relation update_array_1d(int[] a,int[] a',int b,int c).
+
+infer[Q,update_array_1d] (exists a_1283: htrue&res=v_int_17_1181' & Q(a_1283,a',v_int_17_1181') & 
+update_array_1d(a_1282,a_1283,1+(a_1282[4]),4) & 
+update_array_1d(a_1263,a_1282,v_int_15_1262,5) & v_int_15_1262+1=a_1263[5] & 
+update_array_1d(a,a_1263,1+(a[6]),6) & 0<(a[5]) & v_bool_13_1185')
+ |-  emp&Q(a,a',res).
+print residue. 
+
+/*
+infer[@arrvar,Q,update_array_1d] (exists a_1283: htrue&res=v_int_17_1181' & Q(a_1283,a',v_int_17_1181') & 
+update_array_1d(a_1282,a_1283,1+(a_1282[4]),4) & 
+update_array_1d(a_1263,a_1282,v_int_15_1262,5) & v_int_15_1262+1=a_1263[5] & 
+update_array_1d(a,a_1263,1+(a[6]),6) & 0<(a[5]) & v_bool_13_1185')
+ |-  emp&Q(a,a',res).
+print residue. 
+*/
+
+/*
+
+Residue:
+ <1>htrue&v_bool_13_1185' & 0<(a[5]) & update_array_1d(a,a_1263,(a[6])+1,6) & 1+v_int_15_1262=a_1263[5] & update_array_1d(a_1263,a_1282,v_int_15_1262,5) & update_array_1d(a_1282,a_36,(a_1282[4])+1,4) & Q(a_36,a',v_int_17_1181') & res=v_int_17_1181'&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELDEFN Q: ( 
+update_array_1d(a_1282,a_36,(a_1282[4])+1,4) & 
+update_array_1d(a_1263,a_1282,v_int_15_1262,5) 
+& 1+v_int_15_1262=a_1263[5] 
+& 0<(a[5]) 
+& update_array_1d(a,a_1263,(a[6])+1,6) & Q(a_36,a',res)) -->  Q(a,a',res)]
+
+
+!!! **sleekengine.ml#1129:ivars:[Q,update_array_1d]
+Entail (4) : Valid. 
+
+Residue:
+ <1>htrue&v_bool_13_1185' & 0<(a[5]) & update_array_1d(a,a_1263,(a[6])+1,6) & 1+v_int_15_1262=a_1263[5] & update_array_1d(a_1263,a_1282,v_int_15_1262,5) & update_array_1d(a_1282,a_58,(a_1282[4])+1,4) & Q(a_58,a',v_int_17_1181') & res=v_int_17_1181'&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELDEFN Q: ( 
+update_array_1d(a_1282,a_58,(a_1282[4])+1,4) & 
+update_array_1d(a_1263,a_1282,v_int_15_1262,5) 
+& v_int_15_1262=(a_1263[5])-1 
+& 1<=(a[5]) 
+& update_array_1d(a,a_1263,(a[6])+1,6) & Q(a_58,a',res)) -->  Q(a,a',res)]
+*/

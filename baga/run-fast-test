@@ -1,0 +1,32 @@
+
+ ./run-fast-tests.pl hip -flags "-tp z3"
+Total number of errors: 26 in files:
+Total verification time: 69.60 second
+        Time spent in main process: 41.95 second
+        Time spent in child processes: 27.64 second
+        Number of false contexts: 413
+
+
+
+------
+ ./run-fast-tests.pl hip -flags "-tp z3 --inv-baga --en-delay-eelim"
+
+Total number of errors: 26 in files:
+Total verification time: 113.20 second
+        Time spent in main process: 66.66 second
+        Time spent in child processes: 46.54 second
+        Number of false contexts: 417
+
+------
+ ./run-fast-tests.pl hip -flags "-tp z3 --inv-baga"
+Total number of errors: 26 in files:
+Total verification time: 261.45 second
+        Time spent in main process: 134.56 second
+        Time spent in child processes: 126.88 second
+        Number of false contexts: 417
+
+====================================================
+
+
+====================================================
+====================================================

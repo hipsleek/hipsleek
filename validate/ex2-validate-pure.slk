@@ -1,0 +1,65 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<na> == self = null & na = 0 
+	or self::node<_, q> * q::ll<na-1> 
+  inv na >= 0.
+
+
+// (1) OK
+infer [y,n] y::ll<n> |- y::node<_,null>.
+print residue.
+// expect_infer F{n=1}.
+
+//(2)
+infer [n] y::ll<n> |- y::node<_,null>.
+print residue.
+// expect_infer F{n=1}.
+
+
+// (3)
+// seems OK
+infer [n] y::ll<n> |- y::node<_,b>.
+print residue.
+// expect_infer F{n>0}.
+
+
+// (4)
+// seems OK
+infer [y] y::ll<n> |- y::node<_,b>.
+print residue.
+// expect_infer F{y!=null}.
+
+// (5) Valid & inferred n=0
+infer [] y=null |- y::ll<n>.  
+print residue.
+// expect_infer F{}.
+
+// (6) Valid & inferred n=0
+infer [n] y=null |- y::ll<n>.  
+print residue.
+// expect_infer F{}.
+// why did we get inferred pure: [n=0]
+
+
+// (7) Valid & inferred n=0
+infer [] y=null |- y::ll<n>.  
+print residue.
+// expect_infer F{}.
+
+
+// (8) Valid & inferred n=0
+infer [y] y=null |- y::ll<n>.  
+print residue.
+// expect_infer F{}.
+// why did we get inferred heap: [y::ll{}<inf_146>]
+
+/*
+ex2.slk
+
+#6 & #8 are wrong currently.
+They should have been empty inferred outcome
+
+*/

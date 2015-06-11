@@ -286,7 +286,7 @@ let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs view_equ
     match rest with
     | [] -> res
     | sv1::rest ->let n_res=
-                    if Gen.BList.mem_eq (=) n  inter_pos then res@[sv1] else res
+      if Gen.BList.mem_eq (=) n  inter_pos then res@[sv1] else res
       in
       retreive_svl_of_inter_svl rest (n+1) inter_pos n_res
   in
@@ -597,7 +597,7 @@ let rec case_struc_formula_trans_x prog dang_hps to_unfold_hps pre_hps post_hps 
             let f1,_ = CF.drop_hrel_f f0 [hp] in
             let f2 = CF.substitute_flow_into_f iflow f1 in
             f2
-    with _ -> f0
+          with _ -> f0
   in
   let elim_dup_with_guard_x g sf=
     match sf with
