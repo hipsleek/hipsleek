@@ -71,37 +71,37 @@ let is_int c = '0' <= c && c <= '9'
   or_formula:
     [ "or_formula" LEFTA
         [ x = SELF; "||"; y = SELF -> mkOr x y None loc
-                        | x = and_formula -> x ]
+        | x = and_formula -> x ]
     ];
 
   and_formula:
     [ "and_formula" LEFTA
         [ x = SELF; "&&"; y = SELF -> mkAnd x y loc
-                        | x = formula -> x ]
+        | x = formula -> x ]
     ];
 
   formula:
     [ "formula" LEFTA
-        [ NATIVEINT; "="; exp        -> mkTrue loc
-                        | exp; "="; NATIVEINT        -> mkTrue loc
-                                  | NATIVEINT; "<"; exp        -> mkTrue loc
-                                                  | exp; "<"; NATIVEINT        -> mkTrue loc
-                                                            | NATIVEINT; ">"; exp        -> mkTrue loc
-                                                                            | exp; ">"; NATIVEINT        -> mkTrue loc
-                                                                                      | NATIVEINT; "<="; exp       -> mkTrue loc
-                                                                                                       | exp; "<="; NATIVEINT       -> mkTrue loc
-                                                                                                                  | NATIVEINT; ">="; exp       -> mkTrue loc
-                                                                                                                                   | exp; ">="; NATIVEINT       -> mkTrue loc
-                                                                                                                                              | NATIVEINT; "!="; exp       -> mkTrue loc
-                                                                                                                                                               | exp; "!="; NATIVEINT       -> mkTrue loc
-                                                                                                                                                                          | NATIVEINT; "="; NATIVEINT  -> mkTrue loc
-                                                                                                                                                                                          | NATIVEINT; "<"; NATIVEINT  -> mkTrue loc
-                                                                                                                                                                                                          | NATIVEINT; ">"; NATIVEINT  -> mkTrue loc
-                                                                                                                                                                                                                          | NATIVEINT; "<="; NATIVEINT -> mkTrue loc
-                                                                                                                                                                                                                                           | NATIVEINT; ">="; NATIVEINT -> mkTrue loc
-                                                                                                                                                                                                                                                            | NATIVEINT; "!="; NATIVEINT -> mkTrue loc
-                                                                                                                                                                                                                                                                             | x = INT; "="; y = INT ->
-          let tmp =
+      [ NATIVEINT; "="; exp        -> mkTrue loc
+      | exp; "="; NATIVEINT        -> mkTrue loc
+      | NATIVEINT; "<"; exp        -> mkTrue loc
+      | exp; "<"; NATIVEINT        -> mkTrue loc
+      | NATIVEINT; ">"; exp        -> mkTrue loc
+      | exp; ">"; NATIVEINT        -> mkTrue loc
+      | NATIVEINT; "<="; exp       -> mkTrue loc
+      | exp; "<="; NATIVEINT       -> mkTrue loc
+      | NATIVEINT; ">="; exp       -> mkTrue loc
+      | exp; ">="; NATIVEINT       -> mkTrue loc
+      | NATIVEINT; "!="; exp       -> mkTrue loc
+      | exp; "!="; NATIVEINT       -> mkTrue loc
+      | NATIVEINT; "="; NATIVEINT  -> mkTrue loc
+      | NATIVEINT; "<"; NATIVEINT  -> mkTrue loc
+      | NATIVEINT; ">"; NATIVEINT  -> mkTrue loc
+      | NATIVEINT; "<="; NATIVEINT -> mkTrue loc
+      | NATIVEINT; ">="; NATIVEINT -> mkTrue loc
+      | NATIVEINT; "!="; NATIVEINT -> mkTrue loc
+      | x = INT; "="; y = INT ->
+           let tmp =
             if int_of_string x = int_of_string y
             then BConst (true,loc)
             else BConst (false,loc)
@@ -197,11 +197,11 @@ let is_int c = '0' <= c && c <= '9'
   exp:
     [ "exp" LEFTA
         [ x = SELF; "+"; y = SELF -> Add (x, y, loc)
-                       | x = SELF; "-"; y = SELF -> Subtract (x, y, loc)
+        | x = SELF; "-"; y = SELF -> Subtract (x, y, loc)
                                       (* | x = INT; y = SELF -> *)
                                       (*       let ni=IConst (int_of_string x, loc)  *)
                                       (*       in Mult (ni, y, loc) *) (* bugs in post/t/ack3.ss : res >= 1 && m >= 0 && res >= 1 + m + n 0 >= res && 0 = m && res = n + 1 1 = 0 *)
-                                      | x = INT; "*"; y = SELF ->
+        | x = INT; "*"; y = SELF ->
           let ni=IConst (int_of_string x, loc) 
           in Mult (ni, y, loc)
            | x = specvar             -> Var (x, loc)
