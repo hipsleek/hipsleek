@@ -15,7 +15,6 @@ HeapPred H2(node x, int n).
 infer [H1] H1(y) |- y::node<a,b>.
 print residue.
 
-
 /*
 validate [
 ( [H1,b],

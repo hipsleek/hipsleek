@@ -1,0 +1,49 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+
+//(4)
+checkentail x::node<aaa,q>*q::node<aaa,null> |- false.
+expect Fail.
+
+
+
+checkentail x::node<aaa,q>*q::node<aaa,null> |- emp.
+print residue.
+expect Valid.
+expect_infer Valid R{x::node<bb,q>*q::node<bb,null>}. //Valid
+expect_infer Valid R{x::node<bb,q>*q::node<bb,_>}.//Valid
+expect_infer Valid R{x::node<bb,q1>*q1::node<bb,_>}.//Valid
+
+expect_infer Fail R{x::node<bb,q>*q::node<bb+1,_>}. //Invalid
+
+expect_infer Fail R{x::node<bb,_>*qq::node<bb,_>}. //Invalid
+expect_infer Valid R{x::node<bb,_>*q::node<bb,_>}. //Valid??
+
+/*
+ex4d.slk
+
+Why is there a false below?
+It seems to be dule to x!=null & n=1 added
+to the context..
+
+
+(==astsimp.ml#7727==)
+heap_entail_init@116
+heap_entail_init inp1 : [
+   emp&0+1+1=n & q_50=q & Anon_49=aaa & aaa_35=aaa & flted_11_34=null & 
+Anon_55=aaa_35 & q_56=flted_11_34 & x!=null & n=1&{FLOW,(20,21)=__norm#E}[]
+  ]
+heap_entail_init inp2 : emp&x!=null & n=1&{FLOW,(20,21)=__norm#E}[]
+heap_entail_init@116 EXIT: [
+   hfalse&false&{FLOW,(20,21)=__norm#E}[]
+  ]
+
+
+*/

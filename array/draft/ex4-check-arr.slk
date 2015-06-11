@@ -1,0 +1,52 @@
+// 7(1)
+
+// print residue.
+//print residue.
+
+
+//infer [@arrvar] a[2]=3 & i=2  |- a[i]=3.
+//print residue.
+
+/*
+# ex4.slk
+
+Why so many is_sat calls?
+
+!!! **omega.ml#673:WARNING: exception from Omega.is_valid
+!!! **omega.ml#673:WARNING: exception from Omega.is_valid
+!!! **omega.ml#561:WARNING: exception from Omega.is_sat_ops
+(==tpdispatcher.ml#1603==)
+Omega.is_sat_ops@2
+Omega.is_sat_ops inp1 : a[i]=3
+Omega.is_sat_ops@2 EXIT:true
+
+!!! **omega.ml#561:WARNING: exception from Omega.is_sat_ops
+(==tpdispatcher.ml#1603==)
+Omega.is_sat_ops@3
+Omega.is_sat_ops inp1 : a[2]=3 & i=2 & a[i]=3
+Omega.is_sat_ops@3 EXIT:true
+
+!!! **omega.ml#561:WARNING: exception from Omega.is_sat_ops
+(==tpdispatcher.ml#1603==)
+Omega.is_sat_ops@4
+Omega.is_sat_ops inp1 : a[2]=3 & i=2 & (a[i])!=3
+Omega.is_sat_ops@4 EXIT:true
+
+!!! **omega.ml#561:WARNING: exception from Omega.is_sat_ops
+(==tpdispatcher.ml#1603==)
+Omega.is_sat_ops@5
+Omega.is_sat_ops inp1 : a[i]=3
+Omega.is_sat_ops@5 EXIT:true
+
+!!! **omega.ml#561:WARNING: exception from Omega.is_sat_ops
+(==tpdispatcher.ml#1603==)
+Omega.is_sat_ops@6
+Omega.is_sat_ops inp1 : a[2]=3 & i=2 & a[i]=3
+Omega.is_sat_ops@6 EXIT:true
+
+!!! **omega.ml#561:WARNING: exception from Omega.is_sat_ops
+(==tpdispatcher.ml#1603==)
+Omega.is_sat_ops@7
+Omega.is_sat_ops inp1 : a[2]=3 & i=2 & (a[i])!=3
+Omega.is_sat_ops@7 EXIT:true
+*/

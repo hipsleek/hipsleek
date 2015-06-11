@@ -2399,7 +2399,7 @@ let simple_unk_info_check_x prog dang_hps constrs=
           in
           List.fold_left
             ( fun (ls1,ls2,ls3) (hp,non_unk_svl,non_unk_locs) ->
-                (ls1@[hp],ls2@[(hp,non_unk_locs)],ls3@non_unk_svl)
+               (ls1@[hp],ls2@[(hp,non_unk_locs)],ls3@non_unk_svl)
             ) ([],[],[]) non_unk_hp_args_locs
       in
       (*update other cs*)

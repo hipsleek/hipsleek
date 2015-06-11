@@ -1,5 +1,5 @@
 #echo $2
-timeout 10s $1 $2 --ann-vp --print-min $3 > result/$2.out
+timeout 10s $1 $2 --ann-vp --print-min $3 > ref/$2.out
 #timeout 10s $1 $2 $3 > result/$2.out
 #echo $?
 OUT=$?

@@ -1,0 +1,707 @@
+data node {
+  int val;
+  node next;
+}.
+ pred sll<n:int,sm:int,lg:int> == 
+  (exists flted_13_23: self::node<qmin,flted_13_23>&flted_13_23=null & 
+  qmin=sm & qmin=lg & n=1) or
+(exists sm_25,lg_26,
+  flted_14_24: self::node<sm_25,q> * q::sll{}<flted_14_24,qs,lg_26>&
+  flted_14_24+1=n & sm<=qs & sm_25=sm & lg_26=lg)
+  inv 1<=n & sm<=lg & self!=null.
+ pred bnd<n:int,sm:int,bg:int> == 
+  emp&self=null & n=0 or
+(exists sm_29,bg_30,flted_9_28: self::node<d,p> * 
+  p::bnd{}<flted_9_28,sm_29,bg_30>&flted_9_28+1=n & sm<=d & d<bg & 
+  sm_29=sm & bg_30=bg)
+  inv 0<=n.
+
+/*
+// id: 0; line: 13; kind: Pred_Check_Inv
+ checkentail emp&((sm=lg & n=1 & self!=null) | (sm<=lg & 2<=n & self!=null))
+ |-  emp&self!=null & sm<=lg & 1<=n.
+expect Valid.
+
+// id: 1; line: 13; kind: Pred_Check_Inv
+ checkentail emp&((sm=lg & n=1 & self!=null) | (sm<=lg & 2<=n & self!=null))
+ |-  emp&self!=null & sm<=lg & 1<=n.
+expect Valid.
+
+// id: 2; line: 8; kind: Pred_Check_Inv
+ checkentail emp&((self=null & n=0) | (sm<bg & 1<=n & self!=null))
+ |-  emp&0<=n.
+expect Valid.
+
+// id: 3; line: 8; kind: Pred_Check_Inv
+ checkentail emp&((self=null & n=0) | (sm<bg & 1<=n & self!=null))
+ |-  emp&0<=n.
+expect Valid.
+*/
+
+// id: 4; line: 55; kind: PRE
+ checkentail y::sll{}<m,s2,b2> & x'=null & x=null & y'=y & x'=x
+ |-  htrue.
+expect Valid.
+ 
+// id: 5; line: 55; kind: PRE
+ checkentail y::sll{}<m,s2,b2> & x'=null & x=null & y'=y & x'=x
+ |-  emp.
+expect Valid.
+ 
+// id: 6; line: 0; kind: POST
+ checkentail y::sll{}<m,s2,b2> & res=y' & x'=x & y'=y & x=null & x'=null & v'
+ |-  (exists m1,s,b: res::sll{}<m1,s,b>&b=b2 & s=s2 & m1=m & y!=null & s2<=b2 & 
+1<=m).
+expect Valid.
+ 
+// id: 8; line: 55; kind: PRE
+ checkentail x::sll{}<nn,s0,b0> * y::sll{}<m,s2,b2> & x'!=null & b0<=s2 & 
+y'=y & x'=x
+ |-  htrue.
+expect Valid.
+ 
+// id: 9; line: 55; kind: PRE
+ checkentail x::sll{}<nn,s0,b0> * y::sll{}<m,s2,b2> & x'!=null & b0<=s2 & 
+y'=y & x'=x
+ |-  emp.
+expect Valid.
+ 
+// id: 10; line: 57; kind: BIND
+ checkentail (exists flted,qmin: x'::node<qmin,flted> * y::sll{}<m,s2,b2> & 
+x'=x & y'=y & b0<=s2 & x'!=null & !(v') & nn=1 & qmin=b0 & qmin=s0 & 
+flted=null)
+ |-  x'::node<val',next'>@L.
+expect Valid.
+ 
+// id: 12; line: 57; kind: BIND
+ checkentail (exists sm1,lg1,flted1,q,qs: q::sll{}<flted1,qs,lg1> * x'::node<sm1,q> * 
+y::sll{}<m,s2,b2> & x'=x & y'=y & b0<=s2 & x'!=null & !(v') & 
+lg1=b0 & sm1=s0 & s0<=qs & flted1+1=nn)
+ |-  x'::node<val',next'>@L.
+expect Valid.
+ 
+// id: 14; line: 57; kind: PRE_REC
+ checkentail x'::node<qmin1,flted2> * y::sll{}<m,s2,b2> & v1'=flted2 & x'=x & 
+y'=y & b0<=s2 & x'!=null & !(v') & nn=1 & qmin1=b0 & qmin1=s0 & flted2=null
+ |-  y'::sll{}<m2,s1,b1>&v1'=null.
+expect Valid.
+ 
+// id: 16; line: 57; kind: PRE_REC
+ checkentail x'::node<qmin1,flted2> & b1=b2 & s1=s2 & m2=m & v1'=flted2 & 
+x'=x & y'=y & b0<=s2 & x'!=null & !(v') & nn=1 & qmin1=b0 & qmin1=s0 & 
+flted2=null
+ |-  emp.
+expect Valid.
+ 
+// id: 17; line: 57; kind: PRE_REC
+ checkentail x'::node<qmin1,flted2> * y::sll{}<m,s2,b2> & v1'=flted2 & x'=x & 
+y'=y & b0<=s2 & x'!=null & !(v') & nn=1 & qmin1=b0 & qmin1=s0 & flted2=null
+ |-  v1'::sll{}<nn1,s2,b3> * y'::sll{}<m3,s3,b2>&b3<=s3.
+expect Fail.
+ 
+// id: 19; line: 57; kind: PRE_REC
+ checkentail x'::node<sm2,q1> * q1::sll{}<flted3,qs1,lg2> * y::sll{}<m,s2,b2>&
+MayLoop[] & v1'=q1 & x'=x & y'=y & b0<=s2 & x'!=null & !(v') & lg2=b0 & 
+sm2=s0 & s0<=qs1 & flted3+1=nn
+ |-  y'::sll{}<m2,s1,b1>&v1'=null.
+expect Fail.
+ 
+// id: 21; line: 57; kind: PRE_REC
+ checkentail x'::node<sm2,q1> * q1::sll{}<flted3,qs1,lg2> * y::sll{}<m,s2,b2>&
+MayLoop[] & v1'=q1 & x'=x & y'=y & b0<=s2 & x'!=null & !(v') & lg2=b0 & 
+sm2=s0 & s0<=qs1 & flted3+1=nn
+ |-  v1'::sll{}<nn1,s2,b3> * y'::sll{}<m3,s3,b2>&b3<=s3.
+expect Valid.
+ 
+// id: 24; line: 57; kind: PRE_REC
+ checkentail x'::node<sm2,q1> & b2=b2 & s3=s2 & m3=m & b3=lg2 & s2=qs1 & 
+nn1=flted3 & v1'=q1 & x'=x & y'=y & b0<=s2 & x'!=null & !(v') & lg2=b0 & 
+sm2=s0 & s0<=qs1 & flted3+1=nn
+ |-  emp.
+expect Valid.
+ 
+// id: 25; line: 58; kind: BIND
+ checkentail xn'::sll{}<m2,s1,b1> * x'::node<qmin1,flted2> & y'!=null & 
+s1<=b1 & 1<=m2 & y!=null & s2<=b2 & 1<=m & b1=b2 & s1=s2 & m2=m & x'=x & 
+y'=y & b0<=s2 & x'!=null & !(v') & nn=1 & qmin1=b0 & qmin1=s0 & flted2=null
+ |-  x'::node<val1',next1'>.
+expect Valid.
+ 
+// id: 27; line: 58; kind: BIND
+ checkentail (exists flted4: xn'::sll{}<flted4,s2,b2> * x'::node<sm2,q1> & 
+y'!=null & s3<=b2 & 1<=m3 & q1!=null & s2<=b3 & 1<=nn1 & flted4=m3+nn1 & 
+qs1<=lg2 & 1<=flted3 & y!=null & s2<=b2 & 1<=m & b2=b2 & s3=s2 & m3=m & 
+b3=lg2 & s2=qs1 & nn1=flted3 & x'=x & y'=y & b0<=s2 & x'!=null & !(v') & 
+lg2=b0 & sm2=s0 & s0<=qs1 & flted3+1=nn)
+ |-  x'::node<val1',next1'>.
+expect Valid.
+ 
+// id: 29; line: 0; kind: POST
+ checkentail (exists xn': xn'::sll{}<m2,s1,b1> * x'::node<qmin1,xn'> & 
+res=x' & next=flted2 & y'!=null & s1<=b1 & 1<=m2 & y!=null & s2<=b2 & 1<=m & 
+b1=b2 & s1=s2 & m2=m & x'=x & y'=y & b0<=s2 & x'!=null & !(v') & nn=1 & 
+qmin1=b0 & qmin1=s0 & flted2=null)
+ |-  (exists s4,b4,flted5: res::sll{}<flted5,s4,b4>&b4=b2 & s4=s0 & flted5=m+
+nn & y!=null & s2<=b2 & 1<=m & x!=null & s0<=b0 & 1<=nn).
+expect Valid.
+ 
+// id: 36; line: 0; kind: POST
+ checkentail (exists xn': xn'::sll{}<flted6,s2,b2> * x'::node<sm2,xn'> & 
+res=x' & next1=q1 & y'!=null & s3<=b2 & 1<=m3 & q1!=null & s2<=b3 & 1<=nn1 & 
+flted6=m3+nn1 & qs1<=lg2 & 1<=flted3 & y!=null & s2<=b2 & 1<=m & b2=b2 & 
+s3=s2 & m3=m & b3=lg2 & s2=qs1 & nn1=flted3 & x'=x & y'=y & b0<=s2 & 
+x'!=null & !(v') & lg2=b0 & sm2=s0 & s0<=qs1 & flted3+1=nn)
+ |-  (exists s4,b4,flted5: res::sll{}<flted5,s4,b4>&b4=b2 & s4=s0 & flted5=m+
+nn & y!=null & s2<=b2 & 1<=m & x!=null & s0<=b0 & 1<=nn).
+expect Valid.
+ 
+// id: 43; line: 24; kind: PRE
+ checkentail xs::bnd{}<n,sm,bg> & xs'=null & c<=bg & sm<=c & c'=c & xs'=xs
+ |-  htrue.
+expect Valid.
+ 
+// id: 44; line: 24; kind: PRE
+ checkentail xs::bnd{}<n,sm,bg> & xs'=null & c<=bg & sm<=c & c'=c & xs'=xs
+ |-  emp.
+expect Valid.
+ 
+// id: 45; line: 24; kind: PRE
+ checkentail xs::bnd{}<n,sm,bg> & xs'!=null & c<=bg & sm<=c & c'=c & xs'=xs
+ |-  htrue.
+expect Valid.
+ 
+// id: 46; line: 24; kind: PRE
+ checkentail xs::bnd{}<n,sm,bg> & xs'!=null & c<=bg & sm<=c & c'=c & xs'=xs
+ |-  emp.
+expect Valid.
+ 
+// id: 47; line: 28; kind: BIND
+ checkentail (exists sm3,bg1,flted7,d,p: p::bnd{}<flted7,sm3,bg1> * xs'::node<d,p>&
+MayLoop[] & xs'=xs & c'=c & sm<=c & c<=bg & xs'!=null & !(v2') & bg1=bg & 
+sm3=sm & d<bg & sm<=d & flted7+1=n)
+ |-  xs'::node<val2',next2'>@L.
+expect Valid.
+ 
+// id: 49; line: 28; kind: PRE
+ checkentail p1::bnd{}<flted8,sm4,bg2> * xs'::node<d1,p1> & flted8+1=n & 
+sm<=d1 & d1<bg & sm4=sm & bg2=bg & !(v2') & xs'!=null & c<=bg & sm<=c & 
+c'=c & xs'=xs & v3'=d1 & c'<=v3'
+ |-  emp.
+expect Valid.
+ 
+// id: 50; line: 28; kind: PRE
+ checkentail p1::bnd{}<flted8,sm4,bg2> * xs'::node<d1,p1> & flted8+1=n & 
+sm<=d1 & d1<bg & sm4=sm & bg2=bg & !(v2') & xs'!=null & c<=bg & sm<=c & 
+c'=c & xs'=xs & v3'=d1 & v3'<c'
+ |-  emp.
+expect Valid.
+ 
+// id: 51; line: 30; kind: BIND
+ checkentail p1::bnd{}<flted8,sm4,bg2> * xs'::node<d1,p1> & xs'=xs & c'=c & 
+sm<=c & c<=bg & xs'!=null & !(v2') & bg2=bg & sm4=sm & d1<bg & sm<=d1 & 
+flted8+1=n & c'<=d1 & v4'
+ |-  xs'::node<val3',next3'>@L.
+expect Valid.
+ 
+// id: 53; line: 31; kind: BIND
+ checkentail p1::bnd{}<flted8,sm4,bg2> * xs'::node<d1,p1> & v5'=d1 & xs'=xs & 
+c'=c & sm<=c & c<=bg & xs'!=null & !(v2') & bg2=bg & sm4=sm & d1<bg & 
+sm<=d1 & flted8+1=n & c'<=d1 & v4'
+ |-  xs'::node<xsval',xsnext'>.
+expect Valid.
+ 
+// id: 55; line: 32; kind: PRE_REC
+ checkentail p1::bnd{}<flted8,sm4,bg2> & xsnext'=p1 & xsval'=d1 & v5'=d1 & 
+xs'=xs & c'=c & sm<=c & c<=bg & xs'!=null & !(v2') & bg2=bg & sm4=sm & 
+d1<bg & sm<=d1 & flted8+1=n & c'<=d1 & v4'
+ |-  xsnext'::bnd{}<n1,sm5,bg3>&c'<=bg3 & sm5<=c'.
+expect Valid.
+
+/*
+// id: 57; line: 32; kind: PRE_REC
+ checkentail emp & bg3=bg2 & sm5=sm4 & n1=flted8 & xsnext'=p1 & xsval'=d1 & 
+v5'=d1 & xs'=xs & c'=c & sm<=c & c<=bg & xs'!=null & !(v2') & bg2=bg & 
+sm4=sm & d1<bg & sm<=d1 & flted8+1=n & c'<=d1 & v4'
+ |-  emp.
+expect Valid.
+*/
+
+// id: 58; line: 34; kind: BIND
+ checkentail (exists a,b5,xsnext: tmp1'::bnd{}<b5,c',bg3> * xsnext::bnd{}<a,sm5,c'> * 
+xs'::node<d1,xsnext> & 0<=n1 & n1=b5+a & 0<=flted8 & bg3=bg2 & 
+sm5=sm4 & n1=flted8 & v5'=d1 & xs'=xs & c'=c & sm<=c & c<=bg & xs'!=null & 
+!(v2') & bg2=bg & sm4=sm & d1<bg & sm<=d1 & flted8+1=n & c'<=d1 & v4')
+ |-  xs'::node<val4',next4'>@L.
+expect Valid.
+ 
+// id: 60; line: 38; kind: BIND
+ checkentail p1::bnd{}<flted8,sm4,bg2> * xs'::node<d1,p1> & xs'=xs & c'=c & 
+sm<=c & c<=bg & xs'!=null & !(v2') & bg2=bg & sm4=sm & d1<bg & sm<=d1 & 
+flted8+1=n & d1<c' & !(v4')
+ |-  xs'::node<xsval',xsnext'>.
+expect Valid.
+ 
+// id: 62; line: 39; kind: PRE_REC
+ checkentail p1::bnd{}<flted8,sm4,bg2> & xsnext'=p1 & xsval'=d1 & xs'=xs & 
+c'=c & sm<=c & c<=bg & xs'!=null & !(v2') & bg2=bg & sm4=sm & d1<bg & 
+sm<=d1 & flted8+1=n & d1<c' & !(v4')
+ |-  xsnext'::bnd{}<n2,sm6,bg4>&c'<=bg4 & sm6<=c'.
+expect Valid.
+
+/*
+// id: 64; line: 39; kind: PRE_REC
+ checkentail emp & bg4=bg2 & sm6=sm4 & n2=flted8 & xsnext'=p1 & xsval'=d1 & 
+xs'=xs & c'=c & sm<=c & c<=bg & xs'!=null & !(v2') & bg2=bg & sm4=sm & 
+d1<bg & sm<=d1 & flted8+1=n & d1<c' & !(v4')
+ |-  emp.
+expect Valid.
+*/
+
+// id: 65; line: 0; kind: POST
+ checkentail xs::bnd{}<n,sm,bg> & res=v6' & v6'=null & xs'=xs & c'=c & sm<=c & 
+c<=bg & xs'=null & v2'
+ |-  (exists sm7,c1,c2,bg5,a1,b6: xs'::bnd{}<a1,sm7,c1> * res::bnd{}<b6,c2,bg5>&
+bg5=bg & c2=c & c1=c & sm7=sm & n=b6+a1 & 0<=n).
+expect Valid.
+ 
+// id: 71; line: 0; kind: POST
+ checkentail (exists tmp1': tmp1'::bnd{}<b7,c',bg3> * xsnext1::bnd{}<a2,sm5,c'> * 
+xs1::node<d1,xsnext1> * v7'::node<d1,tmp1'> & res=v7' & 
+xs'=xsnext1 & 0<=n1 & n1=b7+a2 & 0<=flted8 & bg3=bg2 & sm5=sm4 & n1=flted8 & 
+xs1=xs & c'=c & sm<=c & c<=bg & xs1!=null & !(v2') & bg2=bg & sm4=sm & 
+d1<bg & sm<=d1 & flted8+1=n & c'<=d1 & v4')
+ |-  (exists sm7,c1,c2,bg5,a1,b6: xs'::bnd{}<a1,sm7,c1> * res::bnd{}<b6,c2,bg5>&
+bg5=bg & c2=c & c1=c & sm7=sm & n=b6+a1 & 0<=n).
+expect Valid.
+ 
+// id: 78; line: 0; kind: POST
+ checkentail (exists a3,b8,xsnext': res::bnd{}<b8,c',bg4> * xsnext'::bnd{}<a3,sm6,c'> * 
+xs'::node<d1,xsnext'> & !(v4') & d1<c' & flted8+1=n & sm<=d1 & 
+d1<bg & sm4=sm & bg2=bg & !(v2') & xs'!=null & c<=bg & sm<=c & c'=c & 
+xs'=xs & n2=flted8 & sm6=sm4 & bg4=bg2 & 0<=flted8 & n2=b8+a3 & 0<=n2)
+ |-  (exists sm7,c1,c2,bg5,a1,b6: xs'::bnd{}<a1,sm7,c1> * res::bnd{}<b6,c2,bg5>&
+bg5=bg & c2=c & c1=c & sm7=sm & n=b6+a1 & 0<=n).
+expect Valid.
+
+/*
+// id: 85; line: 74; kind: PRE
+ checkentail emp & xs'=null & xs=null & xs'=xs
+ |-  htrue.
+expect Valid.
+
+// id: 86; line: 74; kind: PRE
+ checkentail emp & xs'=null & xs=null & xs'=xs
+ |-  emp.
+expect Valid.
+
+// id: 87; line: 0; kind: POST
+ checkentail emp & xs'=xs & xs=null & xs'=null & !(v8')
+ |-  emp&xs'=null.
+expect Valid.
+*/
+
+// id: 88; line: 74; kind: PRE
+ checkentail xs::bnd{}<n,sm,bg> & xs'!=null & 0<n & xs'=xs
+ |-  htrue.
+expect Valid.
+ 
+// id: 89; line: 74; kind: PRE
+ checkentail xs::bnd{}<n,sm,bg> & xs'!=null & 0<n & xs'=xs
+ |-  emp.
+expect Valid.
+ 
+// id: 90; line: 76; kind: BIND
+ checkentail (exists sm8,bg6,flted9,d2,p2: p2::bnd{}<flted9,sm8,bg6> * xs'::node<d2,p2>&
+MayLoop[] & xs'=xs & 0<n & xs'!=null & v8' & bg6=bg & sm8=sm & d2<bg & 
+sm<=d2 & flted9+1=n)
+ |-  xs'::node<val5',next5'>@L.
+expect Valid.
+ 
+// id: 92; line: 77; kind: BIND
+ checkentail p3::bnd{}<flted10,sm9,bg7> * xs'::node<d3,p3> & v5'=d3 & xs'=xs & 
+0<n & xs'!=null & v8' & bg7=bg & sm9=sm & d3<bg & sm<=d3 & flted10+1=n
+ |-  xs'::node<xsval',xsnext'>.
+expect Valid.
+ 
+// id: 94; line: 78; kind: PRE
+ checkentail p3::bnd{}<flted10,sm9,bg7> & xsnext'=p3 & xsval'=d3 & v5'=d3 & 
+xs'=xs & 0<n & xs'!=null & v8' & bg7=bg & sm9=sm & d3<bg & sm<=d3 & flted10+
+1=n
+ |-  xsnext'::bnd{}<n3,sm10,bg8>&v5'<=bg8 & sm10<=v5'.
+expect Valid.
+
+/*
+// id: 96; line: 78; kind: PRE
+ checkentail emp & bg8=bg7 & sm10=sm9 & n3=flted10 & xsnext'=p3 & xsval'=d3 & 
+v5'=d3 & xs'=xs & 0<n & xs'!=null & v8' & bg7=bg & sm9=sm & d3<bg & sm<=d3 & 
+flted10+1=n
+ |-  emp.
+expect Valid.
+*/
+
+// id: 97; line: 80; kind: BIND
+ checkentail (exists a4,b9,xsnext2: tmp'::bnd{}<b9,v5',bg8> * 
+xsnext2::bnd{}<a4,sm10,v5'> * xs'::node<d3,xsnext2> & 0<=n3 & 
+n3=b9+a4 & 0<=flted10 & bg8=bg7 & sm10=sm9 & n3=flted10 & v5'=d3 & xs'=xs & 
+0<n & xs'!=null & v8' & bg7=bg & sm9=sm & d3<bg & sm<=d3 & flted10+1=n)
+ |-  xs'::node<val6',next6'>@L.
+expect Valid.
+ 
+// id: 99; line: 80; kind: PRE
+ checkentail tmp'::bnd{}<b10,v5',bg8> * xsnext3::bnd{}<a5,sm10,v5'> * 
+xs'::node<d3,xsnext3> & flted10+1=n & sm<=d3 & d3<bg & sm9=sm & 
+bg7=bg & v8' & xs'!=null & 0<n & xs'=xs & v5'=d3 & n3=flted10 & sm10=sm9 & 
+bg8=bg7 & 0<=flted10 & n3=b10+a5 & 0<=n3 & v9'=xsnext3 & v9'=null
+ |-  htrue.
+expect Valid.
+ 
+// id: 100; line: 80; kind: PRE
+ checkentail tmp'::bnd{}<b10,v5',bg8> * xsnext3::bnd{}<a5,sm10,v5'> * 
+xs'::node<d3,xsnext3> & flted10+1=n & sm<=d3 & d3<bg & sm9=sm & 
+bg7=bg & v8' & xs'!=null & 0<n & xs'=xs & v5'=d3 & n3=flted10 & sm10=sm9 & 
+bg8=bg7 & 0<=flted10 & n3=b10+a5 & 0<=n3 & v9'=xsnext3 & v9'=null
+ |-  emp.
+expect Valid.
+ 
+// id: 101; line: 80; kind: PRE
+ checkentail tmp'::bnd{}<b10,v5',bg8> * xsnext3::bnd{}<a5,sm10,v5'> * 
+xs'::node<d3,xsnext3> & flted10+1=n & sm<=d3 & d3<bg & sm9=sm & 
+bg7=bg & v8' & xs'!=null & 0<n & xs'=xs & v5'=d3 & n3=flted10 & sm10=sm9 & 
+bg8=bg7 & 0<=flted10 & n3=b10+a5 & 0<=n3 & v9'=xsnext3 & v9'!=null
+ |-  htrue.
+expect Valid.
+ 
+// id: 102; line: 80; kind: PRE
+ checkentail tmp'::bnd{}<b10,v5',bg8> * xsnext3::bnd{}<a5,sm10,v5'> * 
+xs'::node<d3,xsnext3> & flted10+1=n & sm<=d3 & d3<bg & sm9=sm & 
+bg7=bg & v8' & xs'!=null & 0<n & xs'=xs & v5'=d3 & n3=flted10 & sm10=sm9 & 
+bg8=bg7 & 0<=flted10 & n3=b10+a5 & 0<=n3 & v9'=xsnext3 & v9'!=null
+ |-  emp.
+expect Valid.
+ 
+// id: 103; line: 81; kind: PRE
+ checkentail xs'::node<d3,xsnext3> & a5=0 & b10=0 & tmp'=null & xsnext3=null & 
+b' & flted10+1=n & sm<=d3 & d3<bg & sm9=sm & bg7=bg & v8' & xs'!=null & 
+0<n & xs'=xs & v5'=d3 & n3=flted10 & sm10=sm9 & bg8=bg7 & 0<=flted10 & 
+n3=b10+a5 & 0<=n3
+ |-  htrue.
+expect Valid.
+ 
+// id: 104; line: 81; kind: PRE
+ checkentail xs'::node<d3,xsnext3> & a5=0 & b10=0 & tmp'=null & xsnext3=null & 
+b' & flted10+1=n & sm<=d3 & d3<bg & sm9=sm & bg7=bg & v8' & xs'!=null & 
+0<n & xs'=xs & v5'=d3 & n3=flted10 & sm10=sm9 & bg8=bg7 & 0<=flted10 & 
+n3=b10+a5 & 0<=n3
+ |-  emp.
+expect Valid.
+ 
+// id: 105; line: 81; kind: PRE
+ checkentail xsnext3::bnd{}<a5,sm10,v5'> * tmp'::bnd{}<b10,v5',bg8> * 
+xs'::node<d3,xsnext3> & 0<=n3 & n3=b10+a5 & 0<=flted10 & bg8=bg7 & 
+sm10=sm9 & n3=flted10 & v5'=d3 & xs'=xs & 0<n & xs'!=null & v8' & bg7=bg & 
+sm9=sm & d3<bg & sm<=d3 & flted10+1=n & b' & xsnext3=null & tmp'!=null
+ |-  htrue.
+expect Valid.
+ 
+// id: 106; line: 81; kind: PRE
+ checkentail xsnext3::bnd{}<a5,sm10,v5'> * tmp'::bnd{}<b10,v5',bg8> * 
+xs'::node<d3,xsnext3> & 0<=n3 & n3=b10+a5 & 0<=flted10 & bg8=bg7 & 
+sm10=sm9 & n3=flted10 & v5'=d3 & xs'=xs & 0<n & xs'!=null & v8' & bg7=bg & 
+sm9=sm & d3<bg & sm<=d3 & flted10+1=n & b' & xsnext3=null & tmp'!=null
+ |-  emp.
+expect Valid.
+ 
+// id: 107; line: 81; kind: PRE
+ checkentail xsnext3::bnd{}<a5,sm10,v5'> * tmp'::bnd{}<b10,v5',bg8> * 
+xs'::node<d3,xsnext3> & 0<=n3 & n3=b10+a5 & 0<=flted10 & bg8=bg7 & 
+sm10=sm9 & n3=flted10 & v5'=d3 & xs'=xs & 0<n & xs'!=null & v8' & bg7=bg & 
+sm9=sm & d3<bg & sm<=d3 & flted10+1=n & !(b') & xsnext3!=null & tmp'=null
+ |-  htrue.
+expect Valid.
+ 
+// id: 108; line: 81; kind: PRE
+ checkentail xsnext3::bnd{}<a5,sm10,v5'> * tmp'::bnd{}<b10,v5',bg8> * 
+xs'::node<d3,xsnext3> & 0<=n3 & n3=b10+a5 & 0<=flted10 & bg8=bg7 & 
+sm10=sm9 & n3=flted10 & v5'=d3 & xs'=xs & 0<n & xs'!=null & v8' & bg7=bg & 
+sm9=sm & d3<bg & sm<=d3 & flted10+1=n & !(b') & xsnext3!=null & tmp'=null
+ |-  emp.
+expect Valid.
+ 
+// id: 109; line: 81; kind: PRE
+ checkentail xsnext3::bnd{}<a5,sm10,v5'> * tmp'::bnd{}<b10,v5',bg8> * 
+xs'::node<d3,xsnext3> & 0<=n3 & n3=b10+a5 & 0<=flted10 & bg8=bg7 & 
+sm10=sm9 & n3=flted10 & v5'=d3 & xs'=xs & 0<n & xs'!=null & v8' & bg7=bg & 
+sm9=sm & d3<bg & sm<=d3 & flted10+1=n & !(b') & xsnext3!=null & tmp'!=null
+ |-  htrue.
+expect Valid.
+ 
+// id: 110; line: 81; kind: PRE
+ checkentail xsnext3::bnd{}<a5,sm10,v5'> * tmp'::bnd{}<b10,v5',bg8> * 
+xs'::node<d3,xsnext3> & 0<=n3 & n3=b10+a5 & 0<=flted10 & bg8=bg7 & 
+sm10=sm9 & n3=flted10 & v5'=d3 & xs'=xs & 0<n & xs'!=null & v8' & bg7=bg & 
+sm9=sm & d3<bg & sm<=d3 & flted10+1=n & !(b') & xsnext3!=null & tmp'!=null
+ |-  emp.
+expect Valid.
+ 
+// id: 111; line: 83; kind: PRE_REC
+ checkentail xsnext3::bnd{}<a5,sm10,v5'> * tmp'::bnd{}<b10,v5',bg8> * 
+xs'::node<d3,xsnext3> & xsnext3=null & b' & flted10+1=n & sm<=d3 & 
+d3<bg & sm9=sm & bg7=bg & v8' & xs'!=null & 0<n & xs'=xs & v5'=d3 & 
+n3=flted10 & sm10=sm9 & bg8=bg7 & 0<=flted10 & n3=b10+a5 & 0<=n3 & 
+tmp'!=null & v10'
+ |-  emp&tmp'=null.
+expect Fail.
+ 
+// id: 112; line: 83; kind: PRE_REC
+ checkentail xsnext3::bnd{}<a5,sm10,v5'> * tmp'::bnd{}<b10,v5',bg8> * 
+xs'::node<d3,xsnext3> & xsnext3=null & b' & flted10+1=n & sm<=d3 & 
+d3<bg & sm9=sm & bg7=bg & v8' & xs'!=null & 0<n & xs'=xs & v5'=d3 & 
+n3=flted10 & sm10=sm9 & bg8=bg7 & 0<=flted10 & n3=b10+a5 & 0<=n3 & 
+tmp'!=null & v10'
+ |-  tmp'::bnd{}<n4,sm11,bg9>&0<n4.
+expect Valid.
+ 
+// id: 114; line: 83; kind: PRE_REC
+ checkentail xsnext3::bnd{}<a5,sm10,v5'> * xs'::node<d3,xsnext3> & bg9=bg8 & 
+sm11=v5' & n4=b10 & xsnext3=null & b' & flted10+1=n & sm<=d3 & d3<bg & 
+sm9=sm & bg7=bg & v8' & xs'!=null & 0<n & xs'=xs & v5'=d3 & n3=flted10 & 
+sm10=sm9 & bg8=bg7 & 0<=flted10 & n3=b10+a5 & 0<=n3 & tmp'!=null & v10'
+ |-  emp.
+expect Valid.
+ 
+// id: 115; line: 83; kind: PRE_REC
+ checkentail xsnext3::bnd{}<a5,sm10,v5'> * tmp'::bnd{}<b10,v5',bg8> * 
+xs'::node<d3,xsnext3> & xsnext3!=null & !(b') & flted10+1=n & 
+sm<=d3 & d3<bg & sm9=sm & bg7=bg & v8' & xs'!=null & 0<n & xs'=xs & v5'=d3 & 
+n3=flted10 & sm10=sm9 & bg8=bg7 & 0<=flted10 & n3=b10+a5 & 0<=n3 & 
+tmp'!=null & v10'
+ |-  emp&tmp'=null.
+expect Fail.
+ 
+// id: 116; line: 83; kind: PRE_REC
+ checkentail xsnext3::bnd{}<a5,sm10,v5'> * tmp'::bnd{}<b10,v5',bg8> * 
+xs'::node<d3,xsnext3> & xsnext3!=null & !(b') & flted10+1=n & 
+sm<=d3 & d3<bg & sm9=sm & bg7=bg & v8' & xs'!=null & 0<n & xs'=xs & v5'=d3 & 
+n3=flted10 & sm10=sm9 & bg8=bg7 & 0<=flted10 & n3=b10+a5 & 0<=n3 & 
+tmp'!=null & v10'
+ |-  tmp'::bnd{}<n4,sm11,bg9>&0<n4.
+expect Valid.
+ 
+// id: 118; line: 83; kind: PRE_REC
+ checkentail xsnext3::bnd{}<a5,sm10,v5'> * xs'::node<d3,xsnext3> & bg9=bg8 & 
+sm11=v5' & n4=b10 & xsnext3!=null & !(b') & flted10+1=n & sm<=d3 & d3<bg & 
+sm9=sm & bg7=bg & v8' & xs'!=null & 0<n & xs'=xs & v5'=d3 & n3=flted10 & 
+sm10=sm9 & bg8=bg7 & 0<=flted10 & n3=b10+a5 & 0<=n3 & tmp'!=null & v10'
+ |-  emp.
+expect Valid.
+ 
+// id: 119; line: 90; kind: BIND
+ checkentail (exists smres,bgres,tmp1: tmp'::node<v5',tmp> * 
+tmp::sll{}<n4,smres,bgres> * xsnext3::bnd{}<a5,sm10,v5'> * 
+xs'::node<d3,xsnext3> & v10' & tmp1!=null & 0<=n3 & n3=b10+a5 & 
+0<=flted10 & bg8=bg7 & sm10=sm9 & n3=flted10 & v5'=d3 & xs'=xs & 0<n & 
+xs'!=null & v8' & bg7=bg & sm9=sm & d3<bg & sm<=d3 & flted10+1=n & 
+xsnext3!=null & n4=b10 & sm11=v5' & bg9=bg8 & 0<=b10 & sm11<=smres & 
+bgres<bg9 & 0<=n4 & !(b'))
+ |-  xs'::node<xsval',xsnext'>.
+expect Valid.
+ 
+// id: 121; line: 90; kind: BIND
+ checkentail tmp'::node<v5',tmp2> * tmp2::bnd{}<b10,v5',bg8> * 
+xsnext3::bnd{}<a5,sm10,v5'> * xs'::node<d3,xsnext3> & !(v10') & 
+tmp2=null & 0<=n3 & n3=b10+a5 & 0<=flted10 & bg8=bg7 & sm10=sm9 & 
+n3=flted10 & v5'=d3 & xs'=xs & 0<n & xs'!=null & v8' & bg7=bg & sm9=sm & 
+d3<bg & sm<=d3 & flted10+1=n & xsnext3!=null & !(b')
+ |-  xs'::node<xsval',xsnext'>.
+expect Valid.
+ 
+// id: 123; line: 91; kind: PRE_REC
+ checkentail tmp'::node<v5',tmp> * tmp::sll{}<n4,smres1,bgres1> * 
+xsnext3::bnd{}<a5,sm10,v5'> & xsnext'=xsnext3 & xsval'=d3 & v10' & 
+tmp3!=null & 0<=n3 & n3=b10+a5 & 0<=flted10 & bg8=bg7 & sm10=sm9 & 
+n3=flted10 & v5'=d3 & xs'=xs & 0<n & xs'!=null & v8' & bg7=bg & sm9=sm & 
+d3<bg & sm<=d3 & flted10+1=n & xsnext3!=null & n4=b10 & sm11=v5' & bg9=bg8 & 
+0<=b10 & sm11<=smres1 & bgres1<bg9 & 0<=n4 & !(b')
+ |-  emp&xsnext'=null.
+expect Fail.
+ 
+// id: 124; line: 91; kind: PRE_REC
+ checkentail tmp'::node<v5',tmp> * tmp::sll{}<n4,smres1,bgres1> * 
+xsnext3::bnd{}<a5,sm10,v5'> & xsnext'=xsnext3 & xsval'=d3 & v10' & 
+tmp3!=null & 0<=n3 & n3=b10+a5 & 0<=flted10 & bg8=bg7 & sm10=sm9 & 
+n3=flted10 & v5'=d3 & xs'=xs & 0<n & xs'!=null & v8' & bg7=bg & sm9=sm & 
+d3<bg & sm<=d3 & flted10+1=n & xsnext3!=null & n4=b10 & sm11=v5' & bg9=bg8 & 
+0<=b10 & sm11<=smres1 & bgres1<bg9 & 0<=n4 & !(b')
+ |-  xsnext'::bnd{}<n5,sm12,bg10>&0<n5.
+expect Valid.
+ 
+// id: 126; line: 91; kind: PRE_REC
+ checkentail tmp'::node<v5',tmp> * tmp::sll{}<n4,smres1,bgres1> & bg10=v5' & 
+sm12=sm10 & n5=a5 & xsnext'=xsnext3 & xsval'=d3 & v10' & tmp3!=null & 
+0<=n3 & n3=b10+a5 & 0<=flted10 & bg8=bg7 & sm10=sm9 & n3=flted10 & v5'=d3 & 
+xs'=xs & 0<n & xs'!=null & v8' & bg7=bg & sm9=sm & d3<bg & sm<=d3 & flted10+
+1=n & xsnext3!=null & n4=b10 & sm11=v5' & bg9=bg8 & 0<=b10 & sm11<=smres1 & 
+bgres1<bg9 & 0<=n4 & !(b')
+ |-  emp.
+expect Valid.
+ 
+// id: 127; line: 91; kind: PRE_REC
+ checkentail tmp'::node<v5',tmp2> * tmp2::bnd{}<b10,v5',bg8> * 
+xsnext3::bnd{}<a5,sm10,v5'> & xsnext'=xsnext3 & xsval'=d3 & 
+!(v10') & tmp2=null & 0<=n3 & n3=b10+a5 & 0<=flted10 & bg8=bg7 & sm10=sm9 & 
+n3=flted10 & v5'=d3 & xs'=xs & 0<n & xs'!=null & v8' & bg7=bg & sm9=sm & 
+d3<bg & sm<=d3 & flted10+1=n & xsnext3!=null & !(b')
+ |-  emp&xsnext'=null.
+expect Fail.
+ 
+// id: 128; line: 91; kind: PRE_REC
+ checkentail tmp'::node<v5',tmp2> * tmp2::bnd{}<b10,v5',bg8> * 
+xsnext3::bnd{}<a5,sm10,v5'> & xsnext'=xsnext3 & xsval'=d3 & 
+!(v10') & tmp2=null & 0<=n3 & n3=b10+a5 & 0<=flted10 & bg8=bg7 & sm10=sm9 & 
+n3=flted10 & v5'=d3 & xs'=xs & 0<n & xs'!=null & v8' & bg7=bg & sm9=sm & 
+d3<bg & sm<=d3 & flted10+1=n & xsnext3!=null & !(b')
+ |-  xsnext'::bnd{}<n5,sm12,bg10>&0<n5.
+expect Valid.
+ 
+// id: 130; line: 91; kind: PRE_REC
+ checkentail tmp'::node<v5',tmp2> * tmp2::bnd{}<b10,v5',bg8> & bg10=v5' & 
+sm12=sm10 & n5=a5 & xsnext'=xsnext3 & xsval'=d3 & !(v10') & tmp2=null & 
+0<=n3 & n3=b10+a5 & 0<=flted10 & bg8=bg7 & sm10=sm9 & n3=flted10 & v5'=d3 & 
+xs'=xs & 0<n & xs'!=null & v8' & bg7=bg & sm9=sm & d3<bg & sm<=d3 & flted10+
+1=n & xsnext3!=null & !(b')
+ |-  emp.
+expect Valid.
+ 
+// id: 131; line: 94; kind: BIND
+ checkentail (exists smres2,bgres2,xsnext4: tmp'::node<v5',tmp> * 
+tmp::sll{}<n4,smres1,bgres1> * xsnext4::sll{}<n5,smres2,bgres2> * 
+xs'::node<d3,xsnext4> & 0<=n5 & bgres2<bg10 & sm12<=smres2 & 
+0<=a5 & bg10=v5' & sm12=sm10 & n5=a5 & v10' & tmp3!=null & 0<=n3 & n3=b10+
+a5 & 0<=flted10 & bg8=bg7 & sm10=sm9 & n3=flted10 & v5'=d3 & xs'=xs & 0<n & 
+xs'!=null & v8' & bg7=bg & sm9=sm & d3<bg & sm<=d3 & flted10+1=n & 
+xsnext3!=null & n4=b10 & sm11=v5' & bg9=bg8 & 0<=b10 & sm11<=smres1 & 
+bgres1<bg9 & 0<=n4 & !(b'))
+ |-  xs'::node<val7',next7'>@L.
+expect Valid.
+ 
+// id: 133; line: 94; kind: BIND
+ checkentail (exists smres3,bgres3,xsnext5: tmp'::node<v5',tmp2> * 
+tmp2::bnd{}<b10,v5',bg8> * xsnext5::sll{}<n5,smres3,bgres3> * 
+xs'::node<d3,xsnext5> & 0<=n5 & bgres3<bg10 & sm12<=smres3 & 
+0<=a5 & bg10=v5' & sm12=sm10 & n5=a5 & !(v10') & tmp2=null & 0<=n3 & n3=b10+
+a5 & 0<=flted10 & bg8=bg7 & sm10=sm9 & n3=flted10 & v5'=d3 & xs'=xs & 0<n & 
+xs'!=null & v8' & bg7=bg & sm9=sm & d3<bg & sm<=d3 & flted10+1=n & 
+xsnext3!=null & !(b'))
+ |-  xs'::node<val7',next7'>@L.
+expect Valid.
+ 
+// id: 135; line: 94; kind: PRE
+ checkentail tmp'::node<v5',tmp> * tmp::sll{}<n4,smres1,bgres1> * 
+xsnext6::sll{}<n5,smres4,bgres4> * xs'::node<d3,xsnext6> & 
+v11'=xsnext6 & 0<=n5 & bgres4<bg10 & sm12<=smres4 & 0<=a5 & bg10=v5' & 
+sm12=sm10 & n5=a5 & v10' & tmp3!=null & 0<=n3 & n3=b10+a5 & 0<=flted10 & 
+bg8=bg7 & sm10=sm9 & n3=flted10 & v5'=d3 & xs'=xs & 0<n & xs'!=null & v8' & 
+bg7=bg & sm9=sm & d3<bg & sm<=d3 & flted10+1=n & xsnext3!=null & n4=b10 & 
+sm11=v5' & bg9=bg8 & 0<=b10 & sm11<=smres1 & bgres1<bg9 & 0<=n4 & !(b')
+ |-  tmp'::sll{}<m,s2,b2>&v11'=null.
+expect Fail.
+ 
+// id: 142; line: 94; kind: PRE
+ checkentail tmp'::node<v5',tmp> * tmp::sll{}<n4,smres1,bgres1> * 
+xsnext6::sll{}<n5,smres4,bgres4> * xs'::node<d3,xsnext6> & 
+v11'=xsnext6 & 0<=n5 & bgres4<bg10 & sm12<=smres4 & 0<=a5 & bg10=v5' & 
+sm12=sm10 & n5=a5 & v10' & tmp3!=null & 0<=n3 & n3=b10+a5 & 0<=flted10 & 
+bg8=bg7 & sm10=sm9 & n3=flted10 & v5'=d3 & xs'=xs & 0<n & xs'!=null & v8' & 
+bg7=bg & sm9=sm & d3<bg & sm<=d3 & flted10+1=n & xsnext3!=null & n4=b10 & 
+sm11=v5' & bg9=bg8 & 0<=b10 & sm11<=smres1 & bgres1<bg9 & 0<=n4 & !(b')
+ |-  v11'::sll{}<nn,s0,b0> * tmp'::sll{}<m,s2,b2>&b0<=s2.
+expect Valid.
+ 
+// id: 150; line: 94; kind: PRE
+ checkentail xs'::node<d3,xsnext6> & b0=bgres4 & s0=smres4 & nn=n5 & 
+v11'=xsnext6 & 0<=n5 & bgres4<bg10 & sm12<=smres4 & 0<=a5 & bg10=v5' & 
+sm12=sm10 & n5=a5 & v10' & tmp3!=null & 0<=n3 & n3=b10+a5 & 0<=flted10 & 
+bg8=bg7 & sm10=sm9 & n3=flted10 & v5'=d3 & xs'=xs & 0<n & xs'!=null & v8' & 
+bg7=bg & sm9=sm & d3<bg & sm<=d3 & flted10+1=n & xsnext3!=null & n4=b10 & 
+sm11=v5' & bg9=bg8 & 0<=b10 & sm11<=smres1 & bgres1<bg9 & 0<=n4 & !(b') & 
+q2=tmp & qs2=smres1 & v5'<=qs2 & bgres1=b2 & v5'=s2 & s2<=qs2 & n4+1=m
+ |-  emp.
+expect Valid.
+ 
+// id: 151; line: 94; kind: PRE
+ checkentail tmp'::node<v5',tmp2> * tmp2::bnd{}<b10,v5',bg8> * 
+xsnext7::sll{}<n5,smres5,bgres5> * xs'::node<d3,xsnext7> & 
+v11'=xsnext7 & 0<=n5 & bgres5<bg10 & sm12<=smres5 & 0<=a5 & bg10=v5' & 
+sm12=sm10 & n5=a5 & !(v10') & tmp2=null & 0<=n3 & n3=b10+a5 & 0<=flted10 & 
+bg8=bg7 & sm10=sm9 & n3=flted10 & v5'=d3 & xs'=xs & 0<n & xs'!=null & v8' & 
+bg7=bg & sm9=sm & d3<bg & sm<=d3 & flted10+1=n & xsnext3!=null & !(b')
+ |-  tmp'::sll{}<m,s2,b2>&v11'=null.
+expect Fail.
+ 
+// id: 158; line: 94; kind: PRE
+ checkentail tmp'::node<v5',tmp2> * tmp2::bnd{}<b10,v5',bg8> * 
+xsnext7::sll{}<n5,smres5,bgres5> * xs'::node<d3,xsnext7> & 
+v11'=xsnext7 & 0<=n5 & bgres5<bg10 & sm12<=smres5 & 0<=a5 & bg10=v5' & 
+sm12=sm10 & n5=a5 & !(v10') & tmp2=null & 0<=n3 & n3=b10+a5 & 0<=flted10 & 
+bg8=bg7 & sm10=sm9 & n3=flted10 & v5'=d3 & xs'=xs & 0<n & xs'!=null & v8' & 
+bg7=bg & sm9=sm & d3<bg & sm<=d3 & flted10+1=n & xsnext3!=null & !(b')
+ |-  v11'::sll{}<nn,s0,b0> * tmp'::sll{}<m,s2,b2>&b0<=s2.
+expect Valid.
+ 
+// id: 166; line: 94; kind: PRE
+ checkentail tmp2::bnd{}<b10,v5',bg8> * xs'::node<d3,xsnext7> & b0=bgres5 & 
+s0=smres5 & nn=n5 & v11'=xsnext7 & 0<=n5 & bgres5<bg10 & sm12<=smres5 & 
+0<=a5 & bg10=v5' & sm12=sm10 & n5=a5 & !(v10') & tmp2=null & 0<=n3 & n3=b10+
+a5 & 0<=flted10 & bg8=bg7 & sm10=sm9 & n3=flted10 & v5'=d3 & xs'=xs & 0<n & 
+xs'!=null & v8' & bg7=bg & sm9=sm & d3<bg & sm<=d3 & flted10+1=n & 
+xsnext3!=null & !(b') & qmin2=v5' & m=1 & qmin2=b2 & qmin2=s2
+ |-  emp.
+expect Valid.
+ 
+// id: 167; line: 0; kind: POST
+ checkentail (exists smres6,bgres6,tmp5,b': xs'::node<sm11,tmp4> * 
+tmp4::sll{}<n4,smres6,bgres6> * xsnext3::bnd{}<a5,sm10,sm11> * 
+xs2::node<d3,xsnext3> & v10' & tmp5!=null & 0<=n3 & n3=b10+a5 & 
+0<=flted10 & bg8=bg7 & sm10=sm9 & n3=flted10 & sm11=d3 & xs2=xs & 0<n & 
+xs2!=null & v8' & bg7=bg & sm9=sm & d3<bg & sm<=d3 & flted10+1=n & 
+xsnext3=null & n4=b10 & bg9=bg8 & 0<=b10 & sm11<=smres6 & bgres6<bg9 & 
+0<=n4 & b')
+ |-  (exists n6,smres7,bgres7: xs'::sll{}<n6,smres7,bgres7>&n6=n & bgres7<bg & 
+sm<=smres7 & 0<=n).
+expect Valid.
+ 
+// id: 174; line: 0; kind: POST
+ checkentail (exists flted11,tmp',b': xs'::sll{}<flted11,s0,b2> * xs3::node<d3,xsnext6>&
+MayLoop[] & n4+1=m & bgres1=b2 & s2<=qs2 & qs2=smres1 & q2=tmp & !(b') & 
+0<=n4 & bgres1<bg9 & sm11<=smres1 & 0<=b10 & bg9=bg8 & sm11=s2 & n4=b10 & 
+xsnext3!=null & flted10+1=n & sm<=d3 & d3<bg & sm9=sm & bg7=bg & v8' & 
+xs3!=null & 0<n & xs3=xs & s2=d3 & n3=flted10 & sm10=sm9 & bg8=bg7 & 
+0<=flted10 & n3=b10+a5 & 0<=n3 & tmp3!=null & v10' & n5=a5 & sm12=sm10 & 
+bg10=s2 & 0<=a5 & sm12<=smres4 & bgres4<bg10 & 0<=n5 & nn=n5 & s0=smres4 & 
+b0=bgres4 & 1<=n4 & smres1<=bgres1 & tmp!=null & 1<=n5 & smres4<=bgres4 & 
+flted11=m+nn & 1<=nn & s0<=b0 & xsnext6!=null & 1<=m & s2<=b2 & tmp'!=null)
+ |-  (exists n6,smres7,bgres7: xs'::sll{}<n6,smres7,bgres7>&n6=n & bgres7<bg & 
+sm<=smres7 & 0<=n).
+expect Valid.
+ 
+// id: 176; line: 0; kind: POST
+ checkentail (exists b': xs'::node<d3,tmp6> * xs4::node<d3,xsnext3> & 
+!(v10') & tmp6=null & a5=0 & b10=0 & xsnext3=null & flted10+1=n & sm<=d3 & 
+d3<bg & sm9=sm & bg7=bg & v8' & xs4!=null & 0<n & xs4=xs & n3=flted10 & 
+sm10=sm9 & bg8=bg7 & 0<=flted10 & n3=b10+a5 & 0<=n3 & b')
+ |-  (exists n6,smres7,bgres7: xs'::sll{}<n6,smres7,bgres7>&n6=n & bgres7<bg & 
+sm<=smres7 & 0<=n).
+expect Valid.
+ 
+// id: 182; line: 0; kind: POST
+ checkentail (exists flted12,tmp',b': xs'::sll{}<flted12,s0,b2> * 
+tmp2::bnd{}<b10,qmin2,bg8> * xs5::node<d3,xsnext7> & qmin2=s2 & 
+qmin2=b2 & m=1 & !(b') & xsnext3!=null & flted10+1=n & sm<=d3 & d3<bg & 
+sm9=sm & bg7=bg & v8' & xs5!=null & 0<n & xs5=xs & qmin2=d3 & n3=flted10 & 
+sm10=sm9 & bg8=bg7 & 0<=flted10 & n3=b10+a5 & 0<=n3 & tmp2=null & !(v10') & 
+n5=a5 & sm12=sm10 & bg10=qmin2 & 0<=a5 & sm12<=smres5 & bgres5<bg10 & 
+0<=n5 & nn=n5 & s0=smres5 & b0=bgres5 & 1<=n5 & smres5<=bgres5 & flted12=m+
+nn & 1<=nn & s0<=b0 & xsnext7!=null & 1<=m & s2<=b2 & tmp'!=null)
+ |-  (exists n6,smres7,bgres7: xs'::sll{}<n6,smres7,bgres7>&n6=n & bgres7<bg & 
+sm<=smres7 & 0<=n).
+expect Valid.
