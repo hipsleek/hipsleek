@@ -46,4 +46,4 @@ pred main_v<r,e> ==  _::fibo_v<x,result,e_1> & x=5  & result!=5 & e_1=1 & e=0
 
 checksat _::main_v<r,e> & e=0.
 
-expect unsat.
+expect Unsat.
