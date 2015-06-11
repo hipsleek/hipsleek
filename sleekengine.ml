@@ -1897,7 +1897,12 @@ let process_validate exp_res opt_fl ils_es=
     ()
 
 let process_validate exp_res opt_fl ils_es =
-  Debug.no_2 "process_validate" pr_none pr_none pr_none (process_validate exp_res) opt_fl ils_es
+  let pr1 os = match os with
+    | Some _ -> "Some"
+    | None -> "None"
+  in
+  Debug.no_2 "process_validate" string_of_vres pr1 pr_none
+      (fun _ _ -> process_validate exp_res opt_fl ils_es)  exp_res opt_fl
 
 let process_shape_divide pre_hps post_hps=
   (* let _ = Debug.info_pprint "process_shape_divide" no_pos in *)
@@ -2398,14 +2403,15 @@ let process_sat_check_x (f : meta_formula) =
   let f = Cvutil.prune_preds !cprog true f in
   let unsat_command f =
     let r = not(x_add Solver.unsat_base_nth 7 !cprog (ref 0) f) in
-    let _ = CF.residues := (Some (CF.SuccCtx [], r)) in
     r
   in
   let res = x_add Solver.unsat_base_nth 1 !cprog (ref 0) f in
   let sat_res =
     if res then false
     else wrap_under_baga unsat_command f (* WN: invoke SAT checking *)
-  in print_sat_result res sat_res num_id
+  in
+  let _ = CF.residues := (Some (CF.SuccCtx [], sat_res)) in
+  print_sat_result res sat_res num_id
 
 let process_sat_check (f : meta_formula) =
   let pr = string_of_meta_formula in
