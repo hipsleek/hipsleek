@@ -13726,6 +13726,29 @@ let isPoly(a : ann) : bool =
   | PolyAnn v -> true
   | _ -> false
 
+let rec apply_one_imm_x (fr,t) a = match a with
+  | ConstAnn _ | NoAnn -> a
+  | TempAnn t1 -> TempAnn(apply_one_imm_x (fr,t) t1)
+  | TempRes (tl,tr) ->  TempRes(apply_one_imm_x (fr,t) tl, apply_one_imm_x (fr,t) tr)
+  | PolyAnn sv ->  PolyAnn (if eq_spec_var sv fr then t else sv)
+
+let apply_one_imm (fr,t) a = 
+  let pr1 =  (pr_pair !print_sv !print_sv) in
+  let pr2 = string_of_imm in
+  Debug.no_2 "apply_one_imm" pr1 pr2 pr2 apply_one_imm_x (fr,t) a
+
+let rec subs_imm_par_x sst a = match a with
+  | ConstAnn _ | NoAnn -> a
+  | TempAnn t1 -> TempAnn(subs_imm_par_x sst t1)
+  | TempRes (tl,tr) -> TempRes(subs_imm_par_x sst tl,subs_imm_par_x sst tr)
+  | PolyAnn sv ->  (* CP.PolyAnn (CP.subst_var_par sst sv) *)
+    PolyAnn (subs_one sst sv)
+
+let subs_imm_par sst a = 
+ let pr1 =  pr_list (pr_pair !print_sv !print_sv) in
+ let pr2 = string_of_imm in
+ Debug.no_2 "subs_imm_par" pr1 pr2 pr2 subs_imm_par_x sst a
+
 (* let is_const_imm ?emap:(em=[]) (a:ann) : bool = *)
 (*   match a with *)
 (*   | ConstAnn _ -> true *)
@@ -13983,15 +14006,29 @@ let update_positions_for_annot_view_params (aa: annot_arg list) (old_lst: (annot
   Debug.no_2 "update_positions_for_annot_view_params" pr1 pr2
     pr2 update_positions_for_annot_view_params aa old_lst
 
-let apply_f_to_annot_arg f_imm (args: annot_arg list) : annot_arg list=
+let apply_flist_to_annot_arg f_imm (args: annot_arg list) : annot_arg list=
   let args = annot_arg_to_imm_ann_list args in
   let args = f_imm args in
   let args = imm_ann_to_annot_arg_list args in
   args
 
+let apply_f_to_annot_arg f (args: annot_arg list) : annot_arg list=
+  let flist args = List.map f args in
+  apply_flist_to_annot_arg flist args
+
 let update_imm_args_in_view f (aa: (annot_arg * int) list): (annot_arg * int) list = 
+  let new_pimm = apply_flist_to_annot_arg f (List.map fst aa) in 
+  update_positions_for_annot_view_params new_pimm aa
+
+let subst_annot_arg_no_pos sst (aa: annot_arg list): annot_arg  list = 
+  let f a = subs_imm_par sst a in
+  apply_f_to_annot_arg f aa
+
+let subst_annot_arg sst (aa:  (annot_arg * int) list): (annot_arg * int) list = 
+  let f a = subs_imm_par sst a in
   let new_pimm = apply_f_to_annot_arg f (List.map fst aa) in 
   update_positions_for_annot_view_params new_pimm aa
+
 
 (* end utilities for allowing annotations as view arguments *)
 

@@ -3376,7 +3376,7 @@ and h_subst sst (f : h_formula) =
               h_formula_view_perm = map_opt (CP.e_apply_subs sst) perm;
               h_formula_view_arguments = List.map (CP.subst_var_par sst) svs;
               h_formula_view_ho_arguments = List.map (rf_subst sst) ho_svs;
-
+               h_formula_view_annot_arg = CP.subst_annot_arg sst anns;
               h_formula_view_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) pcond
           }
     | DataNode ({h_formula_data_node = x; 
@@ -3480,29 +3480,6 @@ and subst_one_by_one_var sst (v : CP.spec_var) =
   match sst with
     | s :: rest -> subst_one_by_one_var rest (subst_var s v)
     | [] -> v
-
-and apply_one_imm_x (fr,t) a = match a with
-  | CP.ConstAnn _ | CP.NoAnn -> a
-  | CP.TempAnn t1 -> CP.TempAnn(apply_one_imm_x (fr,t) t1)
-  | CP.TempRes (tl,tr) ->  CP.TempRes(apply_one_imm_x (fr,t) tl, apply_one_imm_x (fr,t) tr)
-  | CP.PolyAnn sv ->  CP.PolyAnn (if CP.eq_spec_var sv fr then t else sv)
-
-and apply_one_imm (fr,t) a = 
-  let pr1 =  (pr_pair !print_sv !print_sv) in
-  let pr2 = !print_imm in
-  Debug.no_2 "apply_one_imm" pr1 pr2 pr2 apply_one_imm_x (fr,t) a
-
-and subs_imm_par_x sst a = match a with
-  | CP.ConstAnn _ | CP.NoAnn -> a
-  | CP.TempAnn t1 -> CP.TempAnn(subs_imm_par_x sst t1)
-  | CP.TempRes (tl,tr) -> CP.TempRes(subs_imm_par_x sst tl,subs_imm_par_x sst tr)
-  | CP.PolyAnn sv ->  (* CP.PolyAnn (CP.subst_var_par sst sv) *)
-    CP.PolyAnn (subst_one_by_one_var sst sv)
-
-and subs_imm_par sst a = 
- let pr1 =  pr_list (pr_pair !print_sv !print_sv) in
- let pr2 = !print_imm in
- Debug.no_2 "subs_imm_par" pr1 pr2 pr2 subs_imm_par_x sst a
 
 and subst_var (fr, t) (o : CP.spec_var) = 
   if CP.eq_spec_var fr o then t else o
