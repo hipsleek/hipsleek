@@ -2417,23 +2417,38 @@ let max_guard emap imm1 imm2 =
 
 (* x::cell<>@imm1 * x::cell<>@imm2 ---> x::cell<>@imm & imm=imm1+imm2 & @A=max(imm1,imm2) *)
 let merge_guards emap imm1 imm2 = 
-  let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"imm" () in
-  let imm1, guard1 = get_simpler_imm emap imm1 in
-  let imm2, guard2 = get_simpler_imm emap imm2 in
+  let imm, guards00 = 
+    (* check for a merge between <>@TempRes[a,b] * <>@b ---> @a*)
+    match imm1, imm2 with
+    | CP.TempRes (a1,a2), CP.PolyAnn v
+    | CP.PolyAnn v, CP.TempRes (a1,a2) -> begin
+        try
+          if (CP.EMapSV.is_equiv emap v (CP.imm_to_spec_var a2)) then
+            Some a1,[]
+          else None, []
+        with _ -> None, [] end
+    | _ -> None, []
+  in
+  match imm with
+  | Some a -> a, guards00
+  | None   ->
+    let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"imm" () in
+    let imm1, guard1 = get_simpler_imm emap imm1 in
+    let imm2, guard2 = get_simpler_imm emap imm2 in
 
-  (* @A=max(imm1,imm2) *)
-  let min_one_abs = max_guard emap imm1 imm2 in
+    (* @A=max(imm1,imm2) *)
+    let min_one_abs = max_guard emap imm1 imm2 in
 
- (* imm=imm1+imm2 *)
-  let emap0 = Immutils.build_eset_of_imm_formula min_one_abs in
-  let emap = CP.EMapSV.merge_eset emap0 emap in
-  let imm, guard =  mk_imm_add emap (CP.mkPolyAnn fresh_ann_sv) imm1 imm2 in
+    (* imm=imm1+imm2 *)
+    let emap0 = Immutils.build_eset_of_imm_formula min_one_abs in
+    let emap = CP.EMapSV.merge_eset emap0 emap in
+    let imm, guard =  mk_imm_add emap (CP.mkPolyAnn fresh_ann_sv) imm1 imm2 in
 
-  (* simplify addition *)
-  (* let emap0 = Immutils.build_eset_of_imm_formula min_one_abs in *)
-  (* let guard = List.map (x_add_1 (Immutils.simplify_imm_addition ~emap:(CP.EMapSV.merge_eset emap0 emap))) guard in *)
+    (* simplify addition *)
+    (* let emap0 = Immutils.build_eset_of_imm_formula min_one_abs in *)
+    (* let guard = List.map (x_add_1 (Immutils.simplify_imm_addition ~emap:(CP.EMapSV.merge_eset emap0 emap))) guard in *)
 
-  (imm, guard@guard1@guard2@[min_one_abs])
+    (imm, guard@guard1@guard2@[min_one_abs])
 
 let merge_guards emap imm1 imm2 = 
   let pr1 = CP.EMapSV.string_of in
