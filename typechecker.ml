@@ -907,6 +907,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                 (* let hp_rels1 = Gen.BList.remove_dups_eq (=) (Infer.collect_hp_rel_list_partial_context res_ctx) in *)
                 (*  let () = print_string_quiet ("\n WN 2 : "^(Cprinter.prtt_string_of_formula post_cond)) in *)
                 let tmp_ctx = check_post prog proc res_ctx (post_cond,post_struc) pos_post post_label etype in
+                let () = x_binfo_hp (add_str "context:" Cprinter.string_of_list_partial_context) tmp_ctx no_pos in
                 (*                      x_dinfo_pp ">>>>> Performing check_post ENDS" no_pos;*)
                 (* Termination: collect error messages from successful states *)
                 let term_err_msg = CF.collect_term_err_list_partial_context tmp_ctx in 
@@ -958,11 +959,15 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                         (* CF.formula_of_heap CF.HTrue no_pos *)
                     in
                     let i_post =
-                      if not(infer_post_flag) then spec
+                      if not(infer_post_flag) then
+                        spec
                       else
-                      if rels!=[] then let () = post_ctr # inc in spec
+                        if rels!=[] then
+                        let () = print_endline "OOOOOO" in
+                          let () = post_ctr # inc in spec
                       else
                         begin
+                          let () = print_endline "WWWWW" in
                           let () = post_ctr # inc in
                           let pre_vars = CF.context_fv ctx in
                           (* filter out is_prime *)
