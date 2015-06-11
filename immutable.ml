@@ -2408,27 +2408,41 @@ let subtraction_guards emap imm1 imm2 =
 let get_simpler_imm emap imm =
   match imm with
   | CP.TempRes (a1,a2) -> subtraction_guards emap a1 a2
+  | CP.TempAnn (a) -> subtraction_guards emap a (CP.mkConstAnn Lend)
   | _ -> imm, []
+
+let get_simpler_imm emap imm =
+  let pr1 = CP.EMapSV.string_of in
+  let pr2 = CP.string_of_imm in
+  Debug.no_2 "get_simpler_imm" pr1 pr2 (pr_pair pr2 (pr_list !CP.print_formula)) get_simpler_imm emap imm
 
 (*  @A=max(imm1,imm2) *)
 let max_guard emap imm1 imm2 =
   let min_one_abs = CP.mkPure (CP.mkEqMax CP.const_ann_abs (CP.imm_to_exp imm1 no_pos) (CP.imm_to_exp imm2 no_pos) no_pos) in
   Immutils.norm_eqmax emap CP.imm_ann_top imm1 imm2 min_one_abs
 
+let check_for_trivial_merge emap imm1 imm2 =
+  let helper def a1 a2 =  try
+      if (CP.EMapSV.is_equiv emap (CP.imm_to_spec_var a1) (CP.imm_to_spec_var a2)) then Some def,[]
+      else None, []
+    with _ -> None, [] in
+
+  (* check for a merge between <>@TempRes[a,b] * <>@b ---> @a*)
+  match imm1, imm2 with
+  | CP.TempRes (a1,a2), a
+  | a, CP.TempRes (a1,a2) -> helper a1 a a2
+  | a,  CP.TempAnn (at)
+  | CP.TempAnn (at), a -> helper at a (CP.ConstAnn Lend) 
+  | _ -> None, []  
+
+let check_for_trivial_merge emap imm1 imm2 = 
+  let pr1 = CP.EMapSV.string_of in
+  let pr2 = CP.string_of_ann in
+  Debug.no_3 "check_for_trivial_merge" pr1 pr2 pr2 (pr_pair (pr_opt pr2) (pr_list !CP.print_formula)) check_for_trivial_merge emap imm1 imm2
+
 (* x::cell<>@imm1 * x::cell<>@imm2 ---> x::cell<>@imm & imm=imm1+imm2 & @A=max(imm1,imm2) *)
 let merge_guards emap imm1 imm2 = 
-  let imm, guards00 = 
-    (* check for a merge between <>@TempRes[a,b] * <>@b ---> @a*)
-    match imm1, imm2 with
-    | CP.TempRes (a1,a2), CP.PolyAnn v
-    | CP.PolyAnn v, CP.TempRes (a1,a2) -> begin
-        try
-          if (CP.EMapSV.is_equiv emap v (CP.imm_to_spec_var a2)) then
-            Some a1,[]
-          else None, []
-        with _ -> None, [] end
-    | _ -> None, []
-  in
+  let imm, guards00 =  check_for_trivial_merge emap imm1 imm2 in
   match imm with
   | Some a -> a, guards00
   | None   ->
