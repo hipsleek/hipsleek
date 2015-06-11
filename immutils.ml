@@ -171,12 +171,17 @@ let build_eset_of_imm_formula f =
 let gen_subtype emap imm1 imm2 test_fnc =
   if (is_const_imm ~emap:emap imm1) && (is_const_imm ~emap:emap imm2) then
     match (norm_emap_imm imm1 emap), (norm_emap_imm imm2 emap) with
-    | ConstAnn a1, ConstAnn a2 -> test_fnc a1 a2
-    | _ -> true
-  else true
+    | ConstAnn a1, ConstAnn a2 -> Some (test_fnc a1 a2)
+    | _ -> None
+  else None
 
-let strict_subtype emap imm1 imm2 = gen_subtype emap imm1 imm2 (fun a b -> a < b)
-let simple_subtype emap imm1 imm2 = gen_subtype emap imm1 imm2 (fun a b -> a <= b)
+let strict_subtype emap imm1 imm2 = 
+  let res = gen_subtype emap imm1 imm2 (fun a b -> a < b) in
+  map_opt_def false (fun x -> x) res
+
+let simple_subtype emap imm1 imm2 =
+  let res = gen_subtype emap imm1 imm2 (fun a b -> a <= b) in
+  map_opt_def true (fun x -> x) res
 
 (* norm of imml = max(immr1,immr2) 
    @A = max(immr1,@M)  ----> immr1 = @A

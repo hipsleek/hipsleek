@@ -2360,6 +2360,14 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
         let () = Debug.ninfo_hprint (add_str "do_fold: view_form 4" Cprinter.string_of_struc_formula) view_form no_pos in
         (*let new_ctx = set_es_evars ctx vs in*)
         (* andreeac - to add the pure of rhs which shall be used for contra detection inside the fold *)
+        let new_ctx =
+          CF.set_context (fun es ->
+              let rhs_p = MCP.pure_of_mix rhs_p in
+              {es with es_rhs_pure = Gen.map_opt_def 
+                           (if(CP.is_True rhs_p || CP.is_False rhs_p ) then None else Some rhs_p) 
+                           (fun x -> Some (CP.join_conjunctions [rhs_p;x])) 
+                           es.es_rhs_pure   }
+            ) new_ctx in 
         let heap_enatil = heap_entail_one_context_struc_nth 99 prog true false new_ctx view_form None None None pos (* None *) in
         x_tinfo_hp (add_str "fold_op, rhs_p" !MCP.print_mix_formula) rhs_p no_pos;
         let rs0, fold_prf = contra_wrapper heap_enatil rhs_p in
@@ -2778,12 +2786,13 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
     Debug.no_2 "Solver.tp_syn" pr1 pr2 string_of_bool
       (fun _ _ -> tp_syn_x h p) h p
   in
-  let tp_sem h p =
+  let tp_sem fh fp =
     let () = x_tinfo_pp ("Omega unsat:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
     (* let _ = unsat_count_sem := !unsat_count_sem + 1 in *)
-    let p = MCP.translate_level_mix_formula p in
-    let ph,_,_ = x_add xpure_heap 1 prog h p 1 in
-    let npf = MCP.merge_mems p ph true in
+    let fp = MCP.translate_level_mix_formula fp in
+    let fh, fp = Norm.imm_norm_h_formula prog fh fp unfold_for_abs_merge no_pos in
+    let ph,_,_ = x_add xpure_heap 1 prog fh fp 1 in
+    let npf = MCP.merge_mems fp ph true in
     let res = tp_call_wrapper npf in
     let () = x_tinfo_pp ("Omega unsat:end " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
     res
@@ -7790,14 +7799,22 @@ and xpure_imply_x (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout : b
   let imp_subno = ref 0 in
   let estate = lhs in
   let pos = no_pos in
-  let r,c = match lhs.es_formula with
+  let formula = estate.es_formula in
+  let formula4xpure = match formula with
+    | Or _ -> report_error no_pos ("xpure_imply: encountered Or formula on lhs")
+    | Base b -> Base {b with formula_base_heap = mkStarH b.formula_base_heap estate.es_heap pos}
+    | Exists b ->  report_error no_pos ("xpure_imply: encountered Exists formula on lhs") in
+  let formula4xpure = Norm.imm_norm_formula prog formula4xpure unfold_for_abs_merge pos in
+  let rrr,c = match formula4xpure with
     | Or _ -> report_error no_pos ("xpure_imply: encountered Or formula on lhs")
     | Base b ->  (b,lhs)
     | Exists b ->  report_error no_pos ("xpure_imply: encountered Exists formula on lhs")in
-  let lhs_h = r.formula_base_heap in
-  let lhs_p = r.formula_base_pure in
+  let lhs_h = rrr.formula_base_heap in
+  let lhs_p = rrr.formula_base_pure in
   let () = reset_int2 () in
-  let xpure_lhs_h, _, memset = x_add xpure_heap 8 prog (mkStarH lhs_h estate.es_heap pos) lhs_p 1 in
+  (* let heapf = (mkStarH lhs_h estate.es_heap pos) in *)
+  let heap_f = lhs_h in
+  let xpure_lhs_h, _, memset = x_add xpure_heap 8 prog heap_f lhs_p 1 in
   let tmp1 = MCP.merge_mems lhs_p xpure_lhs_h true in
   let new_ante, new_conseq = x_add heap_entail_build_mix_formula_check 1 (estate.es_evars@estate.es_gen_expl_vars@estate.es_gen_impl_vars@estate.es_ivars) tmp1
       (MCP.memoise_add_pure_N (MCP.mkMTrue pos) rhs_p) pos in
@@ -8223,6 +8240,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
       let () = force_verbose_xpure := true in ()
     else ()
   in
+  let curr_lhs_h, lhs_p = Norm.imm_norm_h_formula prog curr_lhs_h lhs_p unfold_for_abs_merge pos in
   let (xpure_lhs_h1, yy, memset) as xp1 = x_add xpure_heap 9 prog curr_lhs_h lhs_p 1 in
   let (xpure_lhs_h1_sym, _, _) as xp1 = x_add xpure_heap_sym 19 prog curr_lhs_h lhs_p 1 in
   let () = force_verbose_xpure := cur_force_verbose_xpure in
@@ -9822,10 +9840,10 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                              (Cprinter.string_of_h_formula r_node))) pos in
   let () = x_dinfo_zp (lazy ("do_match: source LHS: " ^ (Cprinter.string_of_entail_state estate))) pos in
   let () = x_dinfo_zp (lazy ("do_match: source RHS: " ^ (Cprinter.string_of_formula rhs))) pos in 
-  let () = x_ninfo_hp (add_str "es_aux_conseq" !CP.print_formula) estate.es_aux_conseq no_pos in
-  let () = x_ninfo_hp (add_str "es_rhs_pure" (pr_opt !CP.print_formula)) estate.es_rhs_pure no_pos in
-  let () = x_ninfo_hp (add_str "es_aux_pure_lemma" !CP.print_formula) estate.es_conseq_pure_lemma no_pos in
-  let () = x_ninfo_hp (add_str "es_aux_xpure_1" !MCP.print_mix_formula) estate.es_aux_xpure_1 no_pos in
+  let () = x_binfo_hp (add_str "es_aux_conseq" !CP.print_formula) estate.es_aux_conseq no_pos in
+  let () = x_binfo_hp (add_str "es_rhs_pure" (pr_opt !CP.print_formula)) estate.es_rhs_pure no_pos in
+  let () = x_binfo_hp (add_str "es_aux_pure_lemma" !CP.print_formula) estate.es_conseq_pure_lemma no_pos in
+  let () = x_binfo_hp (add_str "es_aux_xpure_1" !MCP.print_mix_formula) estate.es_aux_xpure_1 no_pos in
   (* x_tinfo_hp (add_str "source LHS estate" (Cprinter.string_of_entail_state)) estate pos; *)
   (* x_tinfo_hp (add_str "source RHS rhs" (Cprinter.string_of_formula)) rhs pos; *)
   let l_ho_args, l_args, l_node_name, node_kind, l_perm, l_ann, l_param_ann = 
@@ -9920,7 +9938,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
   (* check imm subtyping between lhs and rhs node fields, and collect info between vars and consts - makes sense only for data nodes *)
   let (rl, param_ann_lhs, param_ann_rhs, param_ann_rhs_ex) = 
     if (!allow_field_ann) then 
-      subtype_ann_list ~rhs:rhs_for_imm_inst ~lhs:estate.es_formula es_impl_vars es_evars l_param_ann r_param_ann 
+      x_add (subtype_ann_list ~rhs:rhs_for_imm_inst ~lhs:estate.es_formula) es_impl_vars es_evars l_param_ann r_param_ann 
     else (true, [], [], []) 
   in
   x_tinfo_hp (add_str "param_ann_lhs" (pr_list ( Cprinter.string_of_pure_formula))) param_ann_lhs pos;

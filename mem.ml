@@ -139,7 +139,7 @@ let rec fl_subtyping (fl1 : (ident * (CP.ann list)) list) (fl2: (ident * (CP.ann
     		    (fun c -> let () = print_string (String.concat "," (List.map string_of_imm (snd c))) in c) fl2*)
     in (*let todo_unk = List.map
          		    (fun c -> let () = print_string ("fl2: "^(String.concat "," (List.map string_of_imm (snd c)))^"\n") in c) fl2
-         		    in*) let tmp = (List.exists (fun c -> let b,_,_ ,_= (Imm.subtype_ann_list [] [] (snd x) (snd c)) in 
+         		    in*) let tmp = (List.exists (fun c -> let b,_,_ ,_= (x_add Imm.subtype_ann_list [] [] (snd x) (snd c)) in 
                                              (*let () = 
                                                		    print_string ("Ann Lists: "^ (*(string_of_bool b) ^*)(String.concat "," (List.map string_of_imm (snd c)))^" :> "^
                                                		    		(String.concat "," (List.map string_of_imm (snd x)))^ "\n")
@@ -161,7 +161,7 @@ let rec fl_subtyping_rev (fl1 : (ident * (CP.ann list)) list) (fl2: (ident * (CP
       if List.length matched_fields == 0 then  Err.report_error { Err.error_loc = pos;
                                                                   Err.error_text = "[mem.ml] : Memory Spec field layout doesn't have a matching field";}
       else let tmp = 
-        List.exists (fun c -> let b,_,_, _ = (Imm.subtype_ann_list [] [] (snd c) (snd (List.hd matched_fields))) in b ) fl1 in
+        List.exists (fun c -> let b,_,_, _ = (x_add Imm.subtype_ann_list [] [] (snd c) (snd (List.hd matched_fields))) in b ) fl1 in
         if  tmp then () else Err.report_error { Err.error_loc = pos;
                                                 Err.error_text = "[mem.ml] : Memory Spec field layout doesn't respect annotation subtyping";}
   in match fl2 with

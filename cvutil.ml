@@ -152,7 +152,12 @@ let compatible_ann (ann1: CP.ann list) (ann2: CP.ann list) emap : bool =
       | (CP.ConstAnn(Accs))::t1, a::t2 
       | a::t1, (CP.ConstAnn(Accs))::t2 -> let compatible = helper t1 t2 in
         true && compatible
-      | (CP.TempRes(a1,a2))::t1, a::t2 
+      | (CP.TempRes _)::t1, (CP.TempRes _)::t2
+      | (CP.TempAnn _)::t1, (CP.TempRes _)::t2
+      | (CP.TempRes _)::t1, (CP.TempAnn _)::t2 -> false
+      | (CP.TempAnn(a1))::t1, (CP.TempAnn(a2))::t2 -> let compatible = helper t1 t2 in
+        (compatible_helper a1 a2) && compatible
+      | (CP.TempRes(a1,a2))::t1, a::t2
       | a::t1, (CP.TempRes(a1,a2))::t2 -> let compatible = helper t1 t2 in
         (* (CP.eq_ann a a2) && compatible *)
         (compatible_helper a a2) && compatible
@@ -164,7 +169,7 @@ let compatible_ann (ann1: CP.ann list) (ann2: CP.ann list) emap : bool =
     in helper ann1 ann2
 
 let compatible_ann (ann1: CP.ann list) (ann2: CP.ann list) emap : bool =
-  let pr = pr_list CP.string_of_ann in
+  let pr = pr_list CP.string_of_imm in
   Debug.no_2 "compatible_ann" pr pr string_of_bool (fun _ _  -> compatible_ann ann1 ann2 emap) ann1 ann2
 
 (****************************************************************************)
@@ -1518,6 +1523,8 @@ and xpure_heap_symbolic i (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
     (fun which_xpure h0 p0 -> xpure_heap_symbolic_x prog h0 p0 which_xpure) which_xpure h0 p0
 
 and xpure_heap_symbolic_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CP.spec_var list * CF.mem_formula) = 
+  (*TODOIMM - I cannot cannot perform an alias merge at this point because I do not have an unfold_heap func*)
+  (* let h0 = Norm.imm_norm_h_formula prog h0 () in *) 
   let memset = x_add h_formula_2_mem h0 p0 [] prog in
   let ph, pa = x_add xpure_heap_symbolic_i prog h0 p0 which_xpure in
   if (is_sat_mem_formula memset) then (ph, pa, memset)

@@ -2361,7 +2361,10 @@ let bound_max_guard emap imm_bound immr1 immr2 =
   let imm = CP.mkPolyAnn fresh_ann_sv in
   let min_lend = CP.mkPure (CP.mkEqMax fresh_ann_var (CP.imm_to_exp immr1 no_pos) (CP.imm_to_exp immr2 no_pos) no_pos) in
   let guard_max = Immutils.norm_eqmax emap imm immr1 immr2 min_lend in
-  if (Immutils.strict_subtype emap imm imm_bound) then [CP.mkFalse no_pos]
+  if (Immutils.strict_subtype emap imm imm_bound) then 
+    let () = report_warning no_pos ("creating false ctx ("^(CP.string_of_imm imm)^"<:"^(CP.string_of_imm imm_bound)
+                                    ^" but not("^(CP.string_of_imm imm_bound) ^"<:"^(CP.string_of_imm imm)^"))" ) in
+    [CP.mkFalse no_pos]
   else 
     let guard1 = CP.mkSubAnn (CP.imm_to_exp imm_bound no_pos) fresh_ann_var in
     guard1::[guard_max]
@@ -2719,11 +2722,14 @@ let merge_alias_nodes_formula_helper prog heapf puref quantif xpure unfold_fun q
     else (new_f, new_p, struc)
   in helper heapf puref
 
+(* let merge_alias_h_formula prog heap pure quantif xpure unfold_fun qvars = *)
+(*   merge_alias_nodes_formula_helper prog heap pure quantif xpure (unfold_fun fl) qvars *)
+
 let merge_and_combine prog f heap pure quantif xpure unfold_fun qvars mk_new_f rec_fun =
   let fl  = flow_formula_of_formula f in 
   let pos = pos_of_formula f in
-  let new_f, new_p, unfold_f_lst = merge_alias_nodes_formula_helper prog heap pure quantif xpure (unfold_fun fl) qvars in
-  let new_f =  mk_new_f new_f new_p in
+  let new_h, new_p, unfold_f_lst = merge_alias_nodes_formula_helper prog heap pure quantif xpure (unfold_fun fl) qvars in
+  let new_f =  mk_new_f new_h new_p in
   let ret_f = match unfold_f_lst with
     | [] -> new_f
     | _  ->

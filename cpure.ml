@@ -13840,6 +13840,10 @@ let annot_arg_to_sv (arg: annot_arg): spec_var list =
 let annot_arg_to_sv_list (args:annot_arg list): spec_var list =
   List.fold_left (fun acc a -> acc@(annot_arg_to_sv a)) [] args
 
+let fv_annot_arg (args: (annot_arg *int) list): spec_var list =
+  let anns = annot_arg_to_imm_ann_list_no_pos args in
+  fv_ann_lst anns
+
 let view_arg_to_sv (arg:view_arg): spec_var list =
   match arg with
   | SVArg sv   -> [sv]
@@ -14029,6 +14033,10 @@ let subst_annot_arg sst (aa:  (annot_arg * int) list): (annot_arg * int) list =
   let new_pimm = apply_f_to_annot_arg f (List.map fst aa) in 
   update_positions_for_annot_view_params new_pimm aa
 
+let apply_one_annot_arg (fr,t) (aa:  (annot_arg * int) list): (annot_arg * int) list = 
+  let f a = apply_one_imm (fr,t) a in
+  let new_pimm = apply_f_to_annot_arg f (List.map fst aa) in 
+  update_positions_for_annot_view_params new_pimm aa
 
 (* end utilities for allowing annotations as view arguments *)
 

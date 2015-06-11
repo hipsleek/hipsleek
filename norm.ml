@@ -1063,6 +1063,14 @@ let imm_norm_formula prog f unfold_fun pos =
   let f = if(!Globals.allow_field_ann) then Mem.compact_nodes_with_same_name_in_formula f else f in
   f
 
+let imm_norm_h_formula prog fh fp unfold_fun pos =
+  let form = CF.mkBase_simp fh fp in
+  let form = imm_norm_formula prog form unfold_fun pos in
+  match form with
+  | CF.Base b -> b.CF.formula_base_heap, b.CF.formula_base_pure
+  | _ -> let () = report_warning no_pos "could not perform alias node merge" in
+    fh,fp 
+
 let imm_norm_struc prog f (conseq: bool) unfold_fun pos = 
   (* imm_abs_norm_formula modifies f only when Globals.imm_merge is set *)
   let f = imm_abs_norm_struc_formula f conseq prog (unfold_fun prog pos) in 
