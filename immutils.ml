@@ -6,8 +6,9 @@ open Globals
 open VarGen
 open Gen.Basic
 open Cpure
+open Imminfer
 
-let int_imm_to_exp i loc = 
+let int_imm_to_exp i loc =
   mkExpAnnSymb (mkConstAnn (heap_ann_of_int i)) loc
 
 let ann_sv_lst  = (name_for_imm_sv Mutable):: (name_for_imm_sv Imm):: (name_for_imm_sv Lend)::[(name_for_imm_sv Accs)]
