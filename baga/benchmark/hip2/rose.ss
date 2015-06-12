@@ -37,9 +37,9 @@ requires t::treep<> //& t!=null
    else return check_child(t.children,t); 
 }
 
-bool check_child (node l, tree par)
+bool check_child (node l, tree p)
 
- requires l::sll<par> 
+ requires l::sll<p> 
   ensures  res;
 /*
   infer [H1,H2,G1,G2]
@@ -48,7 +48,7 @@ bool check_child (node l, tree par)
 */
 {
 	if (l==null) return true;
-	else if (l.parent==par) return check_child(l.next, par)&& check_tree(l.child);
+	else if (l.parent==p) return check_child(l.next, p)&& check_tree(l.child);
 	else return false;
 }
 

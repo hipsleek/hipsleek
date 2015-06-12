@@ -1,0 +1,940 @@
+data node {
+  int valVAL_11;
+  node nextREC_24;
+}.
+ pred sll<n:int,sm:int,lg:int> == 
+  emp&self=null & n=0 & sm<=lg or
+(exists flted_16_26,qs_27,
+  ql_28: self::node<qmin,q> * q::sll<flted_16_26,qs_27,ql_28>&flted_16_26+
+  1=n & qmin<=qs_27 & ql_28<=lg & sm<=qmin)
+  inv 
+  0<=n & sm<=lg.
+ pred ll<n:int> == 
+  emp&self=null & n=0 or
+(exists flted_11_30: self::node<Anon_12,q> * 
+  q::ll<flted_11_30>&flted_11_30+1=n)
+  inv 
+  0<=n.
+
+// id 1
+checksat  x'::node<Anon_2134,q_2135> * q_2135::ll<n_2157>&ys1_2159<=yl1_2160 & 
+0<=m1_2158 & 0<=n_2157 & flted_101_2170=m1_2158+n_2157 & 0<=flted_11_2133 & 
+mi_2153<=ma_2154 & 0<=flted_23_2152 & yl1_2160=ma_2154 & ys1_2159=mi_2153 & 
+m1_2158=flted_23_2152 & n_2157=flted_11_2133 & sm<=lg & 0<=n_2138 & 
+ma_2154=max(Anon_2134,lg) & mi_2153=min(Anon_2134,sm) & flted_23_2152=1+
+n_2138 & ys1<=yl1 & 0<=m1 & lg=yl1 & sm=ys1 & n_2138=m1 & x'=x & y_2146=y & 
+x'!=null & v_bool_104_1304' & flted_11_2133+1=n.
+
+// id 2
+checksat  x'::node<Anon_2134,q_2135> * q_2135::ll<n_2157>&ys1_2159<=yl1_2160 & 
+0<=m1_2158 & 0<=n_2157 & flted_101_2170=m1_2158+n_2157 & 0<=flted_11_2133 & 
+mi_2153<=ma_2154 & 0<=flted_23_2152 & yl1_2160=ma_2154 & ys1_2159=mi_2153 & 
+m1_2158=flted_23_2152 & n_2157=flted_11_2133 & sm<=lg & 0<=n_2138 & 
+ma_2154=max(Anon_2134,lg) & mi_2153=min(Anon_2134,sm) & flted_23_2152=1+
+n_2138 & ys1<=yl1 & 0<=m1 & lg=yl1 & sm=ys1 & n_2138=m1 & x'=x & y_2146=y & 
+x'!=null & v_bool_104_1304' & flted_11_2133+1=n.
+
+// id 3
+checksat  (exists flted_101_2167,Anon_2168,Anon_2169: x'::node<Anon_2134,q_2135> * 
+y'::sll<flted_101_2167,Anon_2168,Anon_2169> * q_2135::ll<n_2157>&
+flted_11_2133+1=n & v_bool_104_1304' & x'!=null & y_2146=y & x'=x & 
+n_2138=m1 & sm=ys1 & lg=yl1 & 0<=m1 & ys1<=yl1 & flted_23_2152=1+n_2138 & 
+mi_2153=min(Anon_2134,sm) & ma_2154=max(Anon_2134,lg) & 0<=n_2138 & sm<=lg & 
+n_2157=flted_11_2133 & m1_2158=flted_23_2152 & ys1_2159=mi_2153 & 
+yl1_2160=ma_2154 & 0<=flted_23_2152 & mi_2153<=ma_2154 & 0<=flted_11_2133 & 
+flted_101_2167=m1_2158+n_2157 & 0<=n_2157 & 0<=m1_2158 & ys1_2159<=yl1_2160).
+
+// id 4
+checksat  (exists n_2166,flted_101_2167,Anon_2168,
+Anon_2169: x'::node<Anon_2134,q_2135> * 
+y'::sll<flted_101_2167,Anon_2168,Anon_2169> * v_node_107_1303'::ll<n_2166>&
+flted_11_2133+1=n & v_bool_104_1304' & x'!=null & y_2146=y & x'=x & 
+n_2138=m1 & sm=ys1 & lg=yl1 & 0<=m1 & ys1<=yl1 & flted_23_2152=1+n_2138 & 
+mi_2153=min(Anon_2134,sm) & ma_2154=max(Anon_2134,lg) & 0<=n_2138 & sm<=lg & 
+v_node_107_1303'=q_2135 & n_2157=flted_11_2133 & m1_2158=flted_23_2152 & 
+ys1_2159=mi_2153 & yl1_2160=ma_2154 & 0<=flted_23_2152 & mi_2153<=ma_2154 & 
+0<=flted_11_2133 & flted_101_2167=m1_2158+n_2157 & n_2166=n_2157 & 
+0<=n_2157 & 0<=m1_2158 & ys1_2159<=yl1_2160).
+
+// id 5
+checksat  x'::node<Anon_2134,q_2135>&yl1_2160=ma_2154 & ys1_2159=mi_2153 & 
+m1_2158=flted_23_2152 & n_2157=flted_11_2133 & v_node_107_1303'=q_2135 & 
+sm<=lg & 0<=n_2138 & ma_2154=max(Anon_2134,lg) & mi_2153=min(Anon_2134,sm) & 
+flted_23_2152=1+n_2138 & ys1<=yl1 & 0<=m1 & lg=yl1 & sm=ys1 & n_2138=m1 & 
+x'=x & y_2146=y & x'!=null & v_bool_104_1304' & flted_11_2133+1=n.
+
+// id 6
+checksat  x'::node<Anon_2134,q_2135>&yl1_2160=ma_2154 & ys1_2159=mi_2153 & 
+m1_2158=flted_23_2152 & n_2157=flted_11_2133 & v_node_107_1303'=q_2135 & 
+sm<=lg & 0<=n_2138 & ma_2154=max(Anon_2134,lg) & mi_2153=min(Anon_2134,sm) & 
+flted_23_2152=1+n_2138 & ys1<=yl1 & 0<=m1 & lg=yl1 & sm=ys1 & n_2138=m1 & 
+x'=x & y_2146=y & x'!=null & v_bool_104_1304' & flted_11_2133+1=n.
+
+// id 7
+checksat  x'::node<Anon_2134,q_2135> * q_2135::ll<flted_11_2133> * 
+y'::sll<flted_23_2152,mi_2153,ma_2154>&next_107_1300'=q_2135 & 
+val_107_1299'=Anon_2134 & sm<=lg & 0<=n_2138 & ma_2154=max(Anon_2134,lg) & 
+mi_2153=min(Anon_2134,sm) & flted_23_2152=1+n_2138 & ys1<=yl1 & 0<=m1 & 
+lg=yl1 & sm=ys1 & n_2138=m1 & x'=x & y_2146=y & x'!=null & 
+v_bool_104_1304' & flted_11_2133+1=n.
+
+// id 8
+checksat  (exists flted_23_2143,mi_2144,ma_2145: x'::node<Anon_2134,q_2135> * 
+q_2135::ll<flted_11_2133> * res::sll<flted_23_2143,mi_2144,ma_2145>&
+flted_11_2133+1=n & v_bool_104_1304' & x'!=null & y'=y & x'=x & 
+v_int_106_1298'=Anon_2134 & n_2138=m1 & sm=ys1 & lg=yl1 & 0<=m1 & ys1<=yl1 & 
+flted_23_2143=1+n_2138 & mi_2144=min(v_int_106_1298',sm) & 
+ma_2145=max(v_int_106_1298',lg) & 0<=n_2138 & sm<=lg).
+
+// id 9
+checksat  x'::node<Anon_2134,q_2135> * q_2135::ll<flted_11_2133>&lg=yl1 & sm=ys1 & 
+n_2138=m1 & v_int_106_1298'=Anon_2134 & x'=x & y'=y & x'!=null & 
+v_bool_104_1304' & flted_11_2133+1=n.
+
+// id 10
+checksat  x'::node<Anon_2134,q_2135> * q_2135::ll<flted_11_2133>&lg=yl1 & sm=ys1 & 
+n_2138=m1 & v_int_106_1298'=Anon_2134 & x'=x & y'=y & x'!=null & 
+v_bool_104_1304' & flted_11_2133+1=n.
+
+// id 11
+checksat  x'::node<Anon_2134,q_2135> * q_2135::ll<flted_11_2133> * y::sll<m1,ys1,yl1>&
+next_106_1295'=q_2135 & val_106_1294'=Anon_2134 & x'=x & y'=y & x'!=null & 
+v_bool_104_1304' & flted_11_2133+1=n.
+
+// id 12
+checksat  (exists flted_11_2129,Anon_2130,q_2131: x'::node<Anon_2130,q_2131> * 
+q_2131::ll<flted_11_2129> * y::sll<m1,ys1,yl1>&flted_11_2129+1=n & 
+v_bool_104_1304' & x'!=null & y'=y & x'=x).
+
+// id 13
+checksat  y::sll<m1,ys1,yl1>&x'=null & n=0 & v_bool_104_1304' & x'!=null & y'=y & x'=x.
+
+// id 14
+checksat  x::ll<n> * y::sll<m1,ys1,yl1>&x'=x & y'=y & x'=null & !(v_bool_104_1304') & 
+x'=null & !(v_bool_104_1304').
+
+// id 15
+checksat  x::ll<n> * y::sll<m1,ys1,yl1>&x'=x & y'=y & x'!=null & v_bool_104_1304' & 
+x'!=null & !(v_bool_104_1304').
+
+// id 16
+checksat  x::ll<n> * y::sll<m1,ys1,yl1>&x'=x & y'=y & x'=null & !(v_bool_104_1304') & 
+x'=null & v_bool_104_1304'.
+
+// id 17
+checksat  x::ll<n> * y::sll<m1,ys1,yl1>&x'=x & y'=y & x'!=null & v_bool_104_1304' & 
+x'!=null & v_bool_104_1304'.
+
+// id 18
+checksat  x::ll<n> * y::sll<m1,ys1,yl1>&x'=x & y'=y & x'!=null & res & x'!=null.
+
+// id 19
+checksat  x::ll<n> * y::sll<m1,ys1,yl1>&x'!=null & y'=y & x'=x.
+
+// id 20
+checksat  x::ll<n> * y::sll<m1,ys1,yl1>&x'!=null & y'=y & x'=x.
+
+// id 21
+checksat  x::ll<n> * y::sll<m1,ys1,yl1>&x'=x & y'=y & MayLoop[] & x'!=null.
+
+// id 22
+checksat  x::ll<n> * y::sll<m1,ys1,yl1>&x'=x & y'=y & x'=null & !(res) & x'=null.
+
+// id 23
+checksat  x::ll<n> * y::sll<m1,ys1,yl1>&x'=null & y'=y & x'=x.
+
+// id 24
+checksat  x::ll<n> * y::sll<m1,ys1,yl1>&x'=null & y'=y & x'=x.
+
+// id 25
+checksat  x::ll<n> * y::sll<m1,ys1,yl1>&x'=x & y'=y & MayLoop[] & x'=null.
+
+// id 26
+checksat  v_node_57_2081::sll<flted_46_1993,mi_1994,ma_1995> * 
+x'::node<qmin_1958,v_node_57_2081>&!(v_bool_52_1442') & qmin_1958<v & 
+flted_16_1955+1=n & qmin_1958<=qs_1956 & ql_1957<=lg & sm<=qmin_1958 & 
+!(v_bool_48_1443') & x'!=null & vn'=vn & x'=x & n_1975=flted_16_1955 & 
+sm_1976=qs_1956 & lg_1977=ql_1957 & v_1978=v & Anon_1979=Anon_13 & 
+vn!=null & 0<=flted_16_1955 & qs_1956<=ql_1957 & flted_46_1993=1+n_1975 & 
+mi_1994=min(v_1978,sm_1976) & ma_1995=max(v_1978,lg_1977) & 0<=n_1975 & 
+sm_1976<=lg_1977 & next_57_1996=q_1959 & res=x'.
+
+// id 27
+checksat  v_node_57_2081::sll<flted_46_1993,mi_1994,ma_1995> * 
+x'::node<qmin_1958,v_node_57_2081>&!(v_bool_52_1442') & qmin_1958<v & 
+flted_16_1955+1=n & qmin_1958<=qs_1956 & ql_1957<=lg & sm<=qmin_1958 & 
+!(v_bool_48_1443') & x'!=null & vn'=vn & x'=x & n_1975=flted_16_1955 & 
+sm_1976=qs_1956 & lg_1977=ql_1957 & v_1978=v & Anon_1979=Anon_13 & 
+vn!=null & 0<=flted_16_1955 & qs_1956<=ql_1957 & flted_46_1993=1+n_1975 & 
+mi_1994=min(v_1978,sm_1976) & ma_1995=max(v_1978,lg_1977) & 0<=n_1975 & 
+sm_1976<=lg_1977 & next_57_1996=q_1959 & res=x'.
+
+// id 28
+checksat  x'::node<qmin_1958,q_1959> * q_1959::sll<flted_16_1955,qs_1956,ql_1957>&
+res=vn' & next_53_1970=Anon_13 & x'=x & vn'=vn & x'!=null & 
+!(v_bool_48_1443') & sm<=qmin_1958 & ql_1957<=lg & qmin_1958<=qs_1956 & 
+flted_16_1955+1=n & v<=qmin_1958 & v_bool_52_1442' & qmin_2032=v & q_2033=x'.
+
+// id 29
+checksat  x'::node<qmin_1958,q_1959> * q_1959::sll<flted_16_1955,qs_1956,ql_1957>&
+res=vn' & next_53_1970=Anon_13 & x'=x & vn'=vn & x'!=null & 
+!(v_bool_48_1443') & sm<=qmin_1958 & ql_1957<=lg & qmin_1958<=qs_1956 & 
+flted_16_1955+1=n & v<=qmin_1958 & v_bool_52_1442' & qmin_2032=v & q_2033=x'.
+
+// id 30
+checksat  x'::node<qmin_1958,q_1959> * q_1959::sll<flted_16_1955,qs_1956,ql_1957> * 
+vn'::node<v,x'>&v_bool_52_1442' & v<=qmin_1958 & flted_16_1955+1=n & 
+qmin_1958<=qs_1956 & ql_1957<=lg & sm<=qmin_1958 & !(v_bool_48_1443') & 
+x'!=null & vn'=vn & x'=x & next_53_1970=Anon_13 & res=vn'.
+
+// id 31
+checksat  x'::node<qmin_1958,q_1959> * q_1959::sll<flted_16_1955,qs_1956,ql_1957> * 
+vn'::node<v,x'>&v_bool_52_1442' & v<=qmin_1958 & flted_16_1955+1=n & 
+qmin_1958<=qs_1956 & ql_1957<=lg & sm<=qmin_1958 & !(v_bool_48_1443') & 
+x'!=null & vn'=vn & x'=x & next_53_1970=Anon_13 & res=vn'.
+
+// id 32
+checksat  x::sll<n,sm,lg>&res=vn' & next_49_1929=Anon_13 & v_null_type_49_1997=null & 
+x'=x & vn'=vn & x'=null & v_bool_48_1443' & qmin_2001=v & 
+q_2002=v_null_type_49_1997 & exists(flted_46_1998:0+1=flted_46_1998) & 
+exists(ma_2000:qmin_2001<=ma_2000) & exists(mi_1999:mi_1999<=qmin_2001).
+
+// id 33
+checksat  x::sll<n,sm,lg>&res=vn' & next_49_1929=Anon_13 & v_null_type_49_1997=null & 
+x'=x & vn'=vn & x'=null & v_bool_48_1443' & qmin_2001=v & 
+q_2002=v_null_type_49_1997 & exists(flted_46_1998:0+1=flted_46_1998) & 
+exists(ma_2000:qmin_2001<=ma_2000) & exists(mi_1999:mi_1999<=qmin_2001).
+
+// id 34
+checksat  x::sll<n,sm,lg>&q_2002=v_null_type_49_1997 & qmin_2001=v & 
+v_bool_48_1443' & x'=null & vn'=vn & x'=x & v_null_type_49_1997=null & 
+next_49_1929=Anon_13 & res=vn'.
+
+// id 35
+checksat  x::sll<n,sm,lg>&q_2002=v_null_type_49_1997 & qmin_2001=v & 
+v_bool_48_1443' & x'=null & vn'=vn & x'=x & v_null_type_49_1997=null & 
+next_49_1929=Anon_13 & res=vn'.
+
+// id 36
+checksat  x::sll<n,sm,lg>&res=vn' & next_49_1929=Anon_13 & v_null_type_49_1997=null & 
+x'=x & vn'=vn & x'=null & v_bool_48_1443' & qmin_2001=v & 
+q_2002=v_null_type_49_1997.
+
+// id 37
+checksat  x::sll<n,sm,lg>&res=vn' & next_49_1929=Anon_13 & v_null_type_49_1997=null & 
+x'=x & vn'=vn & x'=null & v_bool_48_1443' & qmin_2001=v & 
+q_2002=v_null_type_49_1997.
+
+// id 38
+checksat  x::sll<n,sm,lg> * vn'::node<v,v_null_type_49_1997>&v_bool_48_1443' & 
+x'=null & vn'=vn & x'=x & v_null_type_49_1997=null & next_49_1929=Anon_13 & 
+res=vn'.
+
+// id 39
+checksat  x::sll<n,sm,lg> * vn'::node<v,v_null_type_49_1997>&v_bool_48_1443' & 
+x'=null & vn'=vn & x'=x & v_null_type_49_1997=null & next_49_1929=Anon_13 & 
+res=vn'.
+
+// id 40
+checksat  v_node_57_1439'::sll<flted_46_1993,mi_1994,ma_1995>&next_57_1441'=q_1959 & 
+val_57_1440'=qmin_1958 & sm_1976<=lg_1977 & 0<=n_1975 & ma_1995=max(v_1978,
+lg_1977) & mi_1994=min(v_1978,sm_1976) & flted_46_1993=1+n_1975 & 
+qs_1956<=ql_1957 & 0<=flted_16_1955 & vn!=null & Anon_1979=Anon_13 & 
+v_1978=v & lg_1977=ql_1957 & sm_1976=qs_1956 & n_1975=flted_16_1955 & x'=x & 
+vn'=vn & x'!=null & !(v_bool_48_1443') & sm<=qmin_1958 & ql_1957<=lg & 
+qmin_1958<=qs_1956 & flted_16_1955+1=n & qmin_1958<v & !(v_bool_52_1442').
+
+// id 41
+checksat  (exists flted_46_1984,mi_1985,ma_1986: x'::node<qmin_1958,q_1959> * 
+res::sll<flted_46_1984,mi_1985,ma_1986>&!(v_bool_52_1442') & qmin_1958<v & 
+flted_16_1955+1=n & qmin_1958<=qs_1956 & ql_1957<=lg & sm<=qmin_1958 & 
+!(v_bool_48_1443') & x'!=null & vn'=vn & x'=x & v_node_57_1438'=q_1959 & 
+n_1975=flted_16_1955 & sm_1976=qs_1956 & lg_1977=ql_1957 & v_1978=v & 
+Anon_1979=Anon_13 & vn!=null & 0<=flted_16_1955 & qs_1956<=ql_1957 & 
+flted_46_1984=1+n_1975 & mi_1985=min(v_1978,sm_1976) & ma_1986=max(v_1978,
+lg_1977) & 0<=n_1975 & sm_1976<=lg_1977).
+
+// id 42
+checksat  x'::node<qmin_1958,q_1959>&Anon_1979=Anon_13 & v_1978=v & lg_1977=ql_1957 & 
+sm_1976=qs_1956 & n_1975=flted_16_1955 & v_node_57_1438'=q_1959 & x'=x & 
+vn'=vn & x'!=null & !(v_bool_48_1443') & sm<=qmin_1958 & ql_1957<=lg & 
+qmin_1958<=qs_1956 & flted_16_1955+1=n & qmin_1958<v & !(v_bool_52_1442').
+
+// id 43
+checksat  x'::node<qmin_1958,q_1959>&Anon_1979=Anon_13 & v_1978=v & lg_1977=ql_1957 & 
+sm_1976=qs_1956 & n_1975=flted_16_1955 & v_node_57_1438'=q_1959 & x'=x & 
+vn'=vn & x'!=null & !(v_bool_48_1443') & sm<=qmin_1958 & ql_1957<=lg & 
+qmin_1958<=qs_1956 & flted_16_1955+1=n & qmin_1958<v & !(v_bool_52_1442').
+
+// id 44
+checksat  x'::node<qmin_1958,q_1959> * q_1959::sll<flted_16_1955,qs_1956,ql_1957> * 
+vn::node<v,Anon_13>&next_57_1435'=q_1959 & val_57_1434'=qmin_1958 & x'=x & 
+vn'=vn & x'!=null & !(v_bool_48_1443') & sm<=qmin_1958 & ql_1957<=lg & 
+qmin_1958<=qs_1956 & flted_16_1955+1=n & qmin_1958<v & !(v_bool_52_1442').
+
+// id 45
+checksat  x'::node<qmin_1958,q_1959> * q_1959::sll<flted_16_1955,qs_1956,ql_1957>&
+next_53_1433'=Anon_13 & val_53_1432'=v & x'=x & vn'=vn & x'!=null & 
+!(v_bool_48_1443') & sm<=qmin_1958 & ql_1957<=lg & qmin_1958<=qs_1956 & 
+flted_16_1955+1=n & v<=qmin_1958 & v_bool_52_1442'.
+
+// id 46
+checksat  x'::node<qmin_1958,q_1959> * q_1959::sll<flted_16_1955,qs_1956,ql_1957> * 
+vn::node<v,Anon_13>&v<=qmin_1958 & x'=x & vn'=vn & x'!=null & 
+!(v_bool_48_1443') & sm<=qmin_1958 & ql_1957<=lg & qmin_1958<=qs_1956 & 
+flted_16_1955+1=n & v_bool_52_1442' & v<=qmin_1958 & !(v_bool_52_1442').
+
+// id 47
+checksat  x'::node<qmin_1958,q_1959> * q_1959::sll<flted_16_1955,qs_1956,ql_1957> * 
+vn::node<v,Anon_13>&qmin_1958<v & x'=x & vn'=vn & x'!=null & 
+!(v_bool_48_1443') & sm<=qmin_1958 & ql_1957<=lg & qmin_1958<=qs_1956 & 
+flted_16_1955+1=n & !(v_bool_52_1442') & qmin_1958<v & !(v_bool_52_1442').
+
+// id 48
+checksat  x'::node<qmin_1958,q_1959> * q_1959::sll<flted_16_1955,qs_1956,ql_1957> * 
+vn::node<v,Anon_13>&v<=qmin_1958 & x'=x & vn'=vn & x'!=null & 
+!(v_bool_48_1443') & sm<=qmin_1958 & ql_1957<=lg & qmin_1958<=qs_1956 & 
+flted_16_1955+1=n & v_bool_52_1442' & v<=qmin_1958 & v_bool_52_1442'.
+
+// id 49
+checksat  x'::node<qmin_1958,q_1959> * q_1959::sll<flted_16_1955,qs_1956,ql_1957> * 
+vn::node<v,Anon_13>&qmin_1958<v & x'=x & vn'=vn & x'!=null & 
+!(v_bool_48_1443') & sm<=qmin_1958 & ql_1957<=lg & qmin_1958<=qs_1956 & 
+flted_16_1955+1=n & !(v_bool_52_1442') & qmin_1958<v & v_bool_52_1442'.
+
+// id 50
+checksat  x'::node<qmin_1958,q_1959> * q_1959::sll<flted_16_1955,qs_1956,ql_1957> * 
+vn::node<v,Anon_13>&v_int_52_1430'<v_int_52_1431' & 
+v_int_52_1430'=qmin_1958 & v_int_52_1431'=v & x'=x & vn'=vn & x'!=null & 
+!(v_bool_48_1443') & sm<=qmin_1958 & ql_1957<=lg & qmin_1958<=qs_1956 & 
+flted_16_1955+1=n & !(res) & v_int_52_1430'<v_int_52_1431'.
+
+// id 51
+checksat  x'::node<qmin_1958,q_1959> * q_1959::sll<flted_16_1955,qs_1956,ql_1957> * 
+vn::node<v,Anon_13>&flted_16_1955+1=n & qmin_1958<=qs_1956 & ql_1957<=lg & 
+sm<=qmin_1958 & !(v_bool_48_1443') & x'!=null & vn'=vn & x'=x & 
+v_int_52_1431'=v & v_int_52_1430'=qmin_1958 & v_int_52_1430'<v_int_52_1431'.
+
+// id 52
+checksat  x'::node<qmin_1958,q_1959> * q_1959::sll<flted_16_1955,qs_1956,ql_1957> * 
+vn::node<v,Anon_13>&flted_16_1955+1=n & qmin_1958<=qs_1956 & ql_1957<=lg & 
+sm<=qmin_1958 & !(v_bool_48_1443') & x'!=null & vn'=vn & x'=x & 
+v_int_52_1431'=v & v_int_52_1430'=qmin_1958 & v_int_52_1430'<v_int_52_1431'.
+
+// id 53
+checksat  x'::node<qmin_1958,q_1959> * q_1959::sll<flted_16_1955,qs_1956,ql_1957> * 
+vn::node<v,Anon_13>&v_int_52_1431'<=v_int_52_1430' & 
+v_int_52_1430'=qmin_1958 & v_int_52_1431'=v & x'=x & vn'=vn & x'!=null & 
+!(v_bool_48_1443') & sm<=qmin_1958 & ql_1957<=lg & qmin_1958<=qs_1956 & 
+flted_16_1955+1=n & res & v_int_52_1431'<=v_int_52_1430'.
+
+// id 54
+checksat  x'::node<qmin_1958,q_1959> * q_1959::sll<flted_16_1955,qs_1956,ql_1957> * 
+vn::node<v,Anon_13>&flted_16_1955+1=n & qmin_1958<=qs_1956 & ql_1957<=lg & 
+sm<=qmin_1958 & !(v_bool_48_1443') & x'!=null & vn'=vn & x'=x & 
+v_int_52_1431'=v & v_int_52_1430'=qmin_1958 & v_int_52_1431'<=v_int_52_1430'.
+
+// id 55
+checksat  x'::node<qmin_1958,q_1959> * q_1959::sll<flted_16_1955,qs_1956,ql_1957> * 
+vn::node<v,Anon_13>&flted_16_1955+1=n & qmin_1958<=qs_1956 & ql_1957<=lg & 
+sm<=qmin_1958 & !(v_bool_48_1443') & x'!=null & vn'=vn & x'=x & 
+v_int_52_1431'=v & v_int_52_1430'=qmin_1958 & v_int_52_1431'<=v_int_52_1430'.
+
+// id 56
+checksat  x'::node<qmin_1958,q_1959> * q_1959::sll<flted_16_1955,qs_1956,ql_1957> * 
+vn::node<v,Anon_13>&next_52_1427'=q_1959 & val_52_1426'=qmin_1958 & 
+v_int_52_1431'=v & x'=x & vn'=vn & x'!=null & !(v_bool_48_1443') & 
+sm<=qmin_1958 & ql_1957<=lg & qmin_1958<=qs_1956 & flted_16_1955+1=n.
+
+// id 57
+checksat  (exists flted_16_1949,qs_1950,ql_1951,qmin_1952,
+q_1953: x'::node<qmin_1952,q_1953> * 
+q_1953::sll<flted_16_1949,qs_1950,ql_1951> * vn::node<v,Anon_13>&
+flted_16_1949+1=n & qmin_1952<=qs_1950 & ql_1951<=lg & sm<=qmin_1952 & 
+!(v_bool_48_1443') & x'!=null & vn'=vn & x'=x & v_int_52_1431'=v).
+
+// id 58
+checksat  vn::node<v,Anon_13>&x'=null & n=0 & sm<=lg & !(v_bool_48_1443') & 
+x'!=null & vn'=vn & x'=x & v_int_52_1431'=v.
+
+// id 59
+checksat  x::sll<n,sm,lg> * vn::node<v,Anon_13>&next_52_1425'=Anon_13 & 
+val_52_1424'=v & x'=x & vn'=vn & x'!=null & !(v_bool_48_1443').
+
+// id 60
+checksat  x::sll<n,sm,lg>&next_49_1423'=Anon_13 & val_49_1422'=v & 
+v_null_type_49_1421'=null & x'=x & vn'=vn & x'=null & v_bool_48_1443'.
+
+// id 61
+checksat  x::sll<n,sm,lg> * vn::node<v,Anon_13>&x'=x & vn'=vn & x'=null & 
+v_bool_48_1443' & x'=null & !(v_bool_48_1443').
+
+// id 62
+checksat  x::sll<n,sm,lg> * vn::node<v,Anon_13>&x'=x & vn'=vn & x'!=null & 
+!(v_bool_48_1443') & x'!=null & !(v_bool_48_1443').
+
+// id 63
+checksat  x::sll<n,sm,lg> * vn::node<v,Anon_13>&x'=x & vn'=vn & x'=null & 
+v_bool_48_1443' & x'=null & v_bool_48_1443'.
+
+// id 64
+checksat  x::sll<n,sm,lg> * vn::node<v,Anon_13>&x'=x & vn'=vn & x'!=null & 
+!(v_bool_48_1443') & x'!=null & v_bool_48_1443'.
+
+// id 65
+checksat  x::sll<n,sm,lg> * vn::node<v,Anon_13>&x'=x & vn'=vn & x'!=null & !(res) & 
+x'!=null.
+
+// id 66
+checksat  x::sll<n,sm,lg> * vn::node<v,Anon_13>&x'!=null & vn'=vn & x'=x.
+
+// id 67
+checksat  x::sll<n,sm,lg> * vn::node<v,Anon_13>&x'!=null & vn'=vn & x'=x.
+
+// id 68
+checksat  x::sll<n,sm,lg> * vn::node<v,Anon_13>&x'=x & vn'=vn & MayLoop[] & x'!=null.
+
+// id 69
+checksat  x::sll<n,sm,lg> * vn::node<v,Anon_13>&x'=x & vn'=vn & x'=null & res & 
+x'=null.
+
+// id 70
+checksat  x::sll<n,sm,lg> * vn::node<v,Anon_13>&x'=null & vn'=vn & x'=x.
+
+// id 71
+checksat  x::sll<n,sm,lg> * vn::node<v,Anon_13>&x'=null & vn'=vn & x'=x.
+
+// id 72
+checksat  x::sll<n,sm,lg> * vn::node<v,Anon_13>&x'=x & vn'=vn & MayLoop[] & x'=null.
+
+// id 73
+checksat  v_node_37_1887::sll<flted_23_1799,mi_1800,ma_1801> * 
+x'::node<qmin_1768,v_node_37_1887>&!(v_bool_32_1490') & qmin_1768<v' & 
+flted_16_1765+1=n & qmin_1768<=qs_1766 & ql_1767<=lg & sm<=qmin_1768 & 
+!(v_bool_28_1491') & x'!=null & v'=v & x'=x & n_1783=flted_16_1765 & 
+sm_1784=qs_1766 & lg_1785=ql_1767 & 0<=flted_16_1765 & qs_1766<=ql_1767 & 
+flted_23_1799=1+n_1783 & mi_1800=min(v',sm_1784) & ma_1801=max(v',lg_1785) & 
+0<=n_1783 & sm_1784<=lg_1785 & next_37_1802=q_1769 & res=x'.
+
+// id 74
+checksat  v_node_37_1887::sll<flted_23_1799,mi_1800,ma_1801> * 
+x'::node<qmin_1768,v_node_37_1887>&!(v_bool_32_1490') & qmin_1768<v' & 
+flted_16_1765+1=n & qmin_1768<=qs_1766 & ql_1767<=lg & sm<=qmin_1768 & 
+!(v_bool_28_1491') & x'!=null & v'=v & x'=x & n_1783=flted_16_1765 & 
+sm_1784=qs_1766 & lg_1785=ql_1767 & 0<=flted_16_1765 & qs_1766<=ql_1767 & 
+flted_23_1799=1+n_1783 & mi_1800=min(v',sm_1784) & ma_1801=max(v',lg_1785) & 
+0<=n_1783 & sm_1784<=lg_1785 & next_37_1802=q_1769 & res=x'.
+
+// id 75
+checksat  x'::node<qmin_1768,q_1769> * q_1769::sll<flted_16_1765,qs_1766,ql_1767>&
+res=v_node_33_1481' & x'=x & v'=v & x'!=null & !(v_bool_28_1491') & 
+sm<=qmin_1768 & ql_1767<=lg & qmin_1768<=qs_1766 & flted_16_1765+1=n & 
+v'<=qmin_1768 & v_bool_32_1490' & qmin_1838=v' & q_1839=x'.
+
+// id 76
+checksat  x'::node<qmin_1768,q_1769> * q_1769::sll<flted_16_1765,qs_1766,ql_1767>&
+res=v_node_33_1481' & x'=x & v'=v & x'!=null & !(v_bool_28_1491') & 
+sm<=qmin_1768 & ql_1767<=lg & qmin_1768<=qs_1766 & flted_16_1765+1=n & 
+v'<=qmin_1768 & v_bool_32_1490' & qmin_1838=v' & q_1839=x'.
+
+// id 77
+checksat  x'::node<qmin_1768,q_1769> * q_1769::sll<flted_16_1765,qs_1766,ql_1767> * 
+v_node_33_1481'::node<v',x'>&v_bool_32_1490' & v'<=qmin_1768 & flted_16_1765+
+1=n & qmin_1768<=qs_1766 & ql_1767<=lg & sm<=qmin_1768 & 
+!(v_bool_28_1491') & x'!=null & v'=v & x'=x & res=v_node_33_1481'.
+
+// id 78
+checksat  x'::node<qmin_1768,q_1769> * q_1769::sll<flted_16_1765,qs_1766,ql_1767> * 
+v_node_33_1481'::node<v',x'>&v_bool_32_1490' & v'<=qmin_1768 & flted_16_1765+
+1=n & qmin_1768<=qs_1766 & ql_1767<=lg & sm<=qmin_1768 & 
+!(v_bool_28_1491') & x'!=null & v'=v & x'=x & res=v_node_33_1481'.
+
+// id 79
+checksat  x::sll<n,sm,lg>&res=v_node_29_1474' & v_null_type_29_1803=null & x'=x & 
+v'=v & x'=null & v_bool_28_1491' & qmin_1807=v' & 
+q_1808=v_null_type_29_1803 & exists(flted_23_1804:0+1=flted_23_1804) & 
+exists(ma_1806:qmin_1807<=ma_1806) & exists(mi_1805:mi_1805<=qmin_1807).
+
+// id 80
+checksat  x::sll<n,sm,lg>&res=v_node_29_1474' & v_null_type_29_1803=null & x'=x & 
+v'=v & x'=null & v_bool_28_1491' & qmin_1807=v' & 
+q_1808=v_null_type_29_1803 & exists(flted_23_1804:0+1=flted_23_1804) & 
+exists(ma_1806:qmin_1807<=ma_1806) & exists(mi_1805:mi_1805<=qmin_1807).
+
+// id 81
+checksat  x::sll<n,sm,lg>&q_1808=v_null_type_29_1803 & qmin_1807=v' & 
+v_bool_28_1491' & x'=null & v'=v & x'=x & v_null_type_29_1803=null & 
+res=v_node_29_1474'.
+
+// id 82
+checksat  x::sll<n,sm,lg>&q_1808=v_null_type_29_1803 & qmin_1807=v' & 
+v_bool_28_1491' & x'=null & v'=v & x'=x & v_null_type_29_1803=null & 
+res=v_node_29_1474'.
+
+// id 83
+checksat  x::sll<n,sm,lg>&res=v_node_29_1474' & v_null_type_29_1803=null & x'=x & 
+v'=v & x'=null & v_bool_28_1491' & qmin_1807=v' & q_1808=v_null_type_29_1803.
+
+// id 84
+checksat  x::sll<n,sm,lg>&res=v_node_29_1474' & v_null_type_29_1803=null & x'=x & 
+v'=v & x'=null & v_bool_28_1491' & qmin_1807=v' & q_1808=v_null_type_29_1803.
+
+// id 85
+checksat  x::sll<n,sm,lg> * v_node_29_1474'::node<v',v_null_type_29_1803>&
+v_bool_28_1491' & x'=null & v'=v & x'=x & v_null_type_29_1803=null & 
+res=v_node_29_1474'.
+
+// id 86
+checksat  x::sll<n,sm,lg> * v_node_29_1474'::node<v',v_null_type_29_1803>&
+v_bool_28_1491' & x'=null & v'=v & x'=x & v_null_type_29_1803=null & 
+res=v_node_29_1474'.
+
+// id 87
+checksat  v_node_37_1487'::sll<flted_23_1799,mi_1800,ma_1801>&next_37_1489'=q_1769 & 
+val_37_1488'=qmin_1768 & sm_1784<=lg_1785 & 0<=n_1783 & ma_1801=max(v',
+lg_1785) & mi_1800=min(v',sm_1784) & flted_23_1799=1+n_1783 & 
+qs_1766<=ql_1767 & 0<=flted_16_1765 & lg_1785=ql_1767 & sm_1784=qs_1766 & 
+n_1783=flted_16_1765 & tmp'=q_1769 & x'=x & v'=v & x'!=null & 
+!(v_bool_28_1491') & sm<=qmin_1768 & ql_1767<=lg & qmin_1768<=qs_1766 & 
+flted_16_1765+1=n & qmin_1768<v' & !(v_bool_32_1490').
+
+// id 88
+checksat  (exists flted_23_1790,mi_1791,ma_1792: x'::node<qmin_1768,q_1769> * 
+res::sll<flted_23_1790,mi_1791,ma_1792>&!(v_bool_32_1490') & qmin_1768<v' & 
+flted_16_1765+1=n & qmin_1768<=qs_1766 & ql_1767<=lg & sm<=qmin_1768 & 
+!(v_bool_28_1491') & x'!=null & v'=v & x'=x & tmp'=q_1769 & 
+n_1783=flted_16_1765 & sm_1784=qs_1766 & lg_1785=ql_1767 & 
+0<=flted_16_1765 & qs_1766<=ql_1767 & flted_23_1790=1+n_1783 & 
+mi_1791=min(v',sm_1784) & ma_1792=max(v',lg_1785) & 0<=n_1783 & 
+sm_1784<=lg_1785).
+
+// id 89
+checksat  x'::node<qmin_1768,q_1769>&lg_1785=ql_1767 & sm_1784=qs_1766 & 
+n_1783=flted_16_1765 & tmp'=q_1769 & x'=x & v'=v & x'!=null & 
+!(v_bool_28_1491') & sm<=qmin_1768 & ql_1767<=lg & qmin_1768<=qs_1766 & 
+flted_16_1765+1=n & qmin_1768<v' & !(v_bool_32_1490').
+
+// id 90
+checksat  x'::node<qmin_1768,q_1769>&lg_1785=ql_1767 & sm_1784=qs_1766 & 
+n_1783=flted_16_1765 & tmp'=q_1769 & x'=x & v'=v & x'!=null & 
+!(v_bool_28_1491') & sm<=qmin_1768 & ql_1767<=lg & qmin_1768<=qs_1766 & 
+flted_16_1765+1=n & qmin_1768<v' & !(v_bool_32_1490').
+
+// id 91
+checksat  x'::node<qmin_1768,q_1769> * q_1769::sll<flted_16_1765,qs_1766,ql_1767>&
+next_36_1483'=q_1769 & val_36_1482'=qmin_1768 & x'=x & v'=v & x'!=null & 
+!(v_bool_28_1491') & sm<=qmin_1768 & ql_1767<=lg & qmin_1768<=qs_1766 & 
+flted_16_1765+1=n & qmin_1768<v' & !(v_bool_32_1490').
+
+// id 92
+checksat  x'::node<qmin_1768,q_1769> * q_1769::sll<flted_16_1765,qs_1766,ql_1767>&
+v'<=qmin_1768 & x'=x & v'=v & x'!=null & !(v_bool_28_1491') & 
+sm<=qmin_1768 & ql_1767<=lg & qmin_1768<=qs_1766 & flted_16_1765+1=n & 
+v_bool_32_1490' & v'<=qmin_1768 & !(v_bool_32_1490').
+
+// id 93
+checksat  x'::node<qmin_1768,q_1769> * q_1769::sll<flted_16_1765,qs_1766,ql_1767>&
+qmin_1768<v' & x'=x & v'=v & x'!=null & !(v_bool_28_1491') & sm<=qmin_1768 & 
+ql_1767<=lg & qmin_1768<=qs_1766 & flted_16_1765+1=n & !(v_bool_32_1490') & 
+qmin_1768<v' & !(v_bool_32_1490').
+
+// id 94
+checksat  x'::node<qmin_1768,q_1769> * q_1769::sll<flted_16_1765,qs_1766,ql_1767>&
+v'<=qmin_1768 & x'=x & v'=v & x'!=null & !(v_bool_28_1491') & 
+sm<=qmin_1768 & ql_1767<=lg & qmin_1768<=qs_1766 & flted_16_1765+1=n & 
+v_bool_32_1490' & v'<=qmin_1768 & v_bool_32_1490'.
+
+// id 95
+checksat  x'::node<qmin_1768,q_1769> * q_1769::sll<flted_16_1765,qs_1766,ql_1767>&
+qmin_1768<v' & x'=x & v'=v & x'!=null & !(v_bool_28_1491') & sm<=qmin_1768 & 
+ql_1767<=lg & qmin_1768<=qs_1766 & flted_16_1765+1=n & !(v_bool_32_1490') & 
+qmin_1768<v' & v_bool_32_1490'.
+
+// id 96
+checksat  x'::node<qmin_1768,q_1769> * q_1769::sll<flted_16_1765,qs_1766,ql_1767>&
+v_int_32_1480'<v' & v_int_32_1480'=qmin_1768 & x'=x & v'=v & x'!=null & 
+!(v_bool_28_1491') & sm<=qmin_1768 & ql_1767<=lg & qmin_1768<=qs_1766 & 
+flted_16_1765+1=n & !(res) & v_int_32_1480'<v'.
+
+// id 97
+checksat  x'::node<qmin_1768,q_1769> * q_1769::sll<flted_16_1765,qs_1766,ql_1767>&
+flted_16_1765+1=n & qmin_1768<=qs_1766 & ql_1767<=lg & sm<=qmin_1768 & 
+!(v_bool_28_1491') & x'!=null & v'=v & x'=x & v_int_32_1480'=qmin_1768 & 
+v_int_32_1480'<v'.
+
+// id 98
+checksat  x'::node<qmin_1768,q_1769> * q_1769::sll<flted_16_1765,qs_1766,ql_1767>&
+flted_16_1765+1=n & qmin_1768<=qs_1766 & ql_1767<=lg & sm<=qmin_1768 & 
+!(v_bool_28_1491') & x'!=null & v'=v & x'=x & v_int_32_1480'=qmin_1768 & 
+v_int_32_1480'<v'.
+
+// id 99
+checksat  x'::node<qmin_1768,q_1769> * q_1769::sll<flted_16_1765,qs_1766,ql_1767>&
+v'<=v_int_32_1480' & v_int_32_1480'=qmin_1768 & x'=x & v'=v & x'!=null & 
+!(v_bool_28_1491') & sm<=qmin_1768 & ql_1767<=lg & qmin_1768<=qs_1766 & 
+flted_16_1765+1=n & res & v'<=v_int_32_1480'.
+
+// id 100
+checksat  x'::node<qmin_1768,q_1769> * q_1769::sll<flted_16_1765,qs_1766,ql_1767>&
+flted_16_1765+1=n & qmin_1768<=qs_1766 & ql_1767<=lg & sm<=qmin_1768 & 
+!(v_bool_28_1491') & x'!=null & v'=v & x'=x & v_int_32_1480'=qmin_1768 & 
+v'<=v_int_32_1480'.
+
+// id 101
+checksat  x'::node<qmin_1768,q_1769> * q_1769::sll<flted_16_1765,qs_1766,ql_1767>&
+flted_16_1765+1=n & qmin_1768<=qs_1766 & ql_1767<=lg & sm<=qmin_1768 & 
+!(v_bool_28_1491') & x'!=null & v'=v & x'=x & v_int_32_1480'=qmin_1768 & 
+v'<=v_int_32_1480'.
+
+// id 102
+checksat  x'::node<qmin_1768,q_1769> * q_1769::sll<flted_16_1765,qs_1766,ql_1767>&
+next_32_1476'=q_1769 & val_32_1475'=qmin_1768 & x'=x & v'=v & x'!=null & 
+!(v_bool_28_1491') & sm<=qmin_1768 & ql_1767<=lg & qmin_1768<=qs_1766 & 
+flted_16_1765+1=n.
+
+// id 103
+checksat  (exists flted_16_1759,qs_1760,ql_1761,qmin_1762,
+q_1763: x'::node<qmin_1762,q_1763> * 
+q_1763::sll<flted_16_1759,qs_1760,ql_1761>&flted_16_1759+1=n & 
+qmin_1762<=qs_1760 & ql_1761<=lg & sm<=qmin_1762 & !(v_bool_28_1491') & 
+x'!=null & v'=v & x'=x).
+
+// id 104
+checksat  x::sll<n,sm,lg>&x'=x & v'=v & x'=null & v_bool_28_1491' & x'=null & 
+!(v_bool_28_1491').
+
+// id 105
+checksat  x::sll<n,sm,lg>&x'=x & v'=v & x'!=null & !(v_bool_28_1491') & x'!=null & 
+!(v_bool_28_1491').
+
+// id 106
+checksat  x::sll<n,sm,lg>&x'=x & v'=v & x'=null & v_bool_28_1491' & x'=null & 
+v_bool_28_1491'.
+
+// id 107
+checksat  x::sll<n,sm,lg>&x'=x & v'=v & x'!=null & !(v_bool_28_1491') & x'!=null & 
+v_bool_28_1491'.
+
+// id 108
+checksat  x::sll<n,sm,lg>&x'=x & v'=v & x'!=null & !(res) & x'!=null.
+
+// id 109
+checksat  x::sll<n,sm,lg>&x'!=null & v'=v & x'=x.
+
+// id 110
+checksat  x::sll<n,sm,lg>&x'!=null & v'=v & x'=x.
+
+// id 111
+checksat  x::sll<n,sm,lg>&x'=x & v'=v & MayLoop[] & x'!=null.
+
+// id 112
+checksat  x::sll<n,sm,lg>&x'=x & v'=v & x'=null & res & x'=null.
+
+// id 113
+checksat  x::sll<n,sm,lg>&x'=null & v'=v & x'=x.
+
+// id 114
+checksat  x::sll<n,sm,lg>&x'=null & v'=v & x'=x.
+
+// id 115
+checksat  x::sll<n,sm,lg>&x'=x & v'=v & MayLoop[] & x'=null.
+
+// id 116
+checksat  x'::node<qmin_1716,q_1717>&res=v_node_94_1335' & v_node_94_1335'=q_1717 & 
+flted_16_1713+1=n & qmin_1716<=qs_1714 & ql_1715<=xl & xs<=qmin_1716 & 
+x'=x & x!=null.
+
+// id 117
+checksat  x'::node<qmin_1716,q_1717> * q_1717::sll<flted_16_1713,qs_1714,ql_1715>&
+next_94_1334'=q_1717 & val_94_1333'=qmin_1716 & flted_16_1713+1=n & 
+qmin_1716<=qs_1714 & ql_1715<=xl & xs<=qmin_1716 & x'=x & x!=null.
+
+// id 118
+checksat  (exists flted_16_1707,qs_1708,ql_1709,qmin_1710,
+q_1711: x'::node<qmin_1710,q_1711> * 
+q_1711::sll<flted_16_1707,qs_1708,ql_1709>&flted_16_1707+1=n & 
+qmin_1710<=qs_1708 & ql_1709<=xl & xs<=qmin_1710 & x'=x & x!=null & 
+MayLoop[]).
+
+// id 119
+checksat  x::sll<n,xs,xl>&res=v_null_type_84_1389' & v_null_type_84_1389'=null & 
+x'=x & v'=v & x'=null & !(v_bool_71_1390').
+
+// id 120
+checksat  x::sll<n,xs,xl>&res=v_null_type_84_1389' & v_null_type_84_1389'=null & 
+x'=x & v'=v & x'=null & !(v_bool_71_1390').
+
+// id 121
+checksat  x::sll<n,xs,xl>&!(v_bool_71_1390') & x'=null & v'=v & x'=x & 
+v_null_type_84_1389'=null & res=v_null_type_84_1389'.
+
+// id 122
+checksat  x::sll<n,xs,xl>&!(v_bool_71_1390') & x'=null & v'=v & x'=x & 
+v_null_type_84_1389'=null & res=v_null_type_84_1389'.
+
+// id 123
+checksat  v_node_80_1653::sll<nres_1614,sres_1612,lres_1613> * 
+x'::node<qmin_1568,v_node_80_1653>&!(v_bool_75_1387') & v'!=qmin_1568 & 
+!(v_bool_72_1388') & qmin_1568<=v' & flted_16_1565+1=n & 
+qmin_1568<=qs_1566 & ql_1567<=xl & xs<=qmin_1568 & v_bool_71_1390' & 
+x'!=null & v'=v & x'=x & n_1596=flted_16_1565 & xs_1597=qs_1566 & 
+xl_1598=ql_1567 & 0<=flted_16_1565 & qs_1566<=ql_1567 & xs_1597<=sres_1612 & 
+lres_1613<=xl_1598 & n_1596<=(nres_1614+1) & nres_1614<=n_1596 & 0<=n_1596 & 
+xs_1597<=xl_1598 & next_80_1615=q_1569 & res=x'.
+
+// id 124
+checksat  v_node_80_1653::sll<nres_1614,sres_1612,lres_1613> * 
+x'::node<qmin_1568,v_node_80_1653>&!(v_bool_75_1387') & v'!=qmin_1568 & 
+!(v_bool_72_1388') & qmin_1568<=v' & flted_16_1565+1=n & 
+qmin_1568<=qs_1566 & ql_1567<=xl & xs<=qmin_1568 & v_bool_71_1390' & 
+x'!=null & v'=v & x'=x & n_1596=flted_16_1565 & xs_1597=qs_1566 & 
+xl_1598=ql_1567 & 0<=flted_16_1565 & qs_1566<=ql_1567 & xs_1597<=sres_1612 & 
+lres_1613<=xl_1598 & n_1596<=(nres_1614+1) & nres_1614<=n_1596 & 0<=n_1596 & 
+xs_1597<=xl_1598 & next_80_1615=q_1569 & res=x'.
+
+// id 125
+checksat  x'::node<qmin_1568,q_1569>&res=v_node_76_1378' & v_node_76_1378'=q_1569 & 
+v'=qmin_1568 & x'=x & v'=v & x'!=null & v_bool_71_1390' & xs<=qmin_1568 & 
+ql_1567<=xl & qmin_1568<=qs_1566 & flted_16_1565+1=n & qmin_1568<=v' & 
+!(v_bool_72_1388') & v_bool_75_1387'.
+
+// id 126
+checksat  x'::node<qmin_1568,q_1569> * q_1569::sll<flted_16_1565,qs_1566,ql_1567>&
+v_bool_72_1388' & v'<qmin_1568 & flted_16_1565+1=n & qmin_1568<=qs_1566 & 
+ql_1567<=xl & xs<=qmin_1568 & v_bool_71_1390' & x'!=null & v'=v & x'=x & 
+res=x'.
+
+// id 127
+checksat  x'::node<qmin_1568,q_1569> * q_1569::sll<flted_16_1565,qs_1566,ql_1567>&
+v_bool_72_1388' & v'<qmin_1568 & flted_16_1565+1=n & qmin_1568<=qs_1566 & 
+ql_1567<=xl & xs<=qmin_1568 & v_bool_71_1390' & x'!=null & v'=v & x'=x & 
+res=x'.
+
+// id 128
+checksat  v_node_80_1384'::sll<nres_1614,sres_1612,lres_1613>&next_80_1386'=q_1569 & 
+val_80_1385'=qmin_1568 & xs_1597<=xl_1598 & 0<=n_1596 & nres_1614<=n_1596 & 
+n_1596<=(nres_1614+1) & lres_1613<=xl_1598 & xs_1597<=sres_1612 & 
+qs_1566<=ql_1567 & 0<=flted_16_1565 & xl_1598=ql_1567 & xs_1597=qs_1566 & 
+n_1596=flted_16_1565 & tmp'=q_1569 & x'=x & v'=v & x'!=null & 
+v_bool_71_1390' & xs<=qmin_1568 & ql_1567<=xl & qmin_1568<=qs_1566 & 
+flted_16_1565+1=n & qmin_1568<=v' & !(v_bool_72_1388') & v'!=qmin_1568 & 
+!(v_bool_75_1387').
+
+// id 129
+checksat  (exists sres_1603,lres_1604,nres_1605: x'::node<qmin_1568,q_1569> * 
+res::sll<nres_1605,sres_1603,lres_1604>&!(v_bool_75_1387') & v'!=qmin_1568 & 
+!(v_bool_72_1388') & qmin_1568<=v' & flted_16_1565+1=n & 
+qmin_1568<=qs_1566 & ql_1567<=xl & xs<=qmin_1568 & v_bool_71_1390' & 
+x'!=null & v'=v & x'=x & tmp'=q_1569 & n_1596=flted_16_1565 & 
+xs_1597=qs_1566 & xl_1598=ql_1567 & 0<=flted_16_1565 & qs_1566<=ql_1567 & 
+xs_1597<=sres_1603 & lres_1604<=xl_1598 & n_1596<=(nres_1605+1) & 
+nres_1605<=n_1596 & 0<=n_1596 & xs_1597<=xl_1598).
+
+// id 130
+checksat  x'::node<qmin_1568,q_1569>&xl_1598=ql_1567 & xs_1597=qs_1566 & 
+n_1596=flted_16_1565 & tmp'=q_1569 & x'=x & v'=v & x'!=null & 
+v_bool_71_1390' & xs<=qmin_1568 & ql_1567<=xl & qmin_1568<=qs_1566 & 
+flted_16_1565+1=n & qmin_1568<=v' & !(v_bool_72_1388') & v'!=qmin_1568 & 
+!(v_bool_75_1387').
+
+// id 131
+checksat  x'::node<qmin_1568,q_1569>&xl_1598=ql_1567 & xs_1597=qs_1566 & 
+n_1596=flted_16_1565 & tmp'=q_1569 & x'=x & v'=v & x'!=null & 
+v_bool_71_1390' & xs<=qmin_1568 & ql_1567<=xl & qmin_1568<=qs_1566 & 
+flted_16_1565+1=n & qmin_1568<=v' & !(v_bool_72_1388') & v'!=qmin_1568 & 
+!(v_bool_75_1387').
+
+// id 132
+checksat  x'::node<qmin_1568,q_1569> * q_1569::sll<flted_16_1565,qs_1566,ql_1567>&
+next_79_1380'=q_1569 & val_79_1379'=qmin_1568 & x'=x & v'=v & x'!=null & 
+v_bool_71_1390' & xs<=qmin_1568 & ql_1567<=xl & qmin_1568<=qs_1566 & 
+flted_16_1565+1=n & qmin_1568<=v' & !(v_bool_72_1388') & v'!=qmin_1568 & 
+!(v_bool_75_1387').
+
+// id 133
+checksat  x'::node<qmin_1568,q_1569> * q_1569::sll<flted_16_1565,qs_1566,ql_1567>&
+next_76_1377'=q_1569 & val_76_1376'=qmin_1568 & v'=qmin_1568 & x'=x & v'=v & 
+x'!=null & v_bool_71_1390' & xs<=qmin_1568 & ql_1567<=xl & 
+qmin_1568<=qs_1566 & flted_16_1565+1=n & qmin_1568<=v' & 
+!(v_bool_72_1388') & v_bool_75_1387'.
+
+// id 134
+checksat  x'::node<qmin_1568,q_1569> * q_1569::sll<flted_16_1565,qs_1566,ql_1567>&
+v'=qmin_1568 & x'=x & v'=v & x'!=null & v_bool_71_1390' & xs<=qmin_1568 & 
+ql_1567<=xl & qmin_1568<=qs_1566 & flted_16_1565+1=n & qmin_1568<=v' & 
+!(v_bool_72_1388') & v_bool_75_1387' & v'=v' & !(v_bool_75_1387').
+
+// id 135
+checksat  x'::node<qmin_1568,q_1569> * q_1569::sll<flted_16_1565,qs_1566,ql_1567>&
+v'!=qmin_1568 & x'=x & v'=v & x'!=null & v_bool_71_1390' & xs<=qmin_1568 & 
+ql_1567<=xl & qmin_1568<=qs_1566 & flted_16_1565+1=n & qmin_1568<=v' & 
+!(v_bool_72_1388') & !(v_bool_75_1387') & v'!=qmin_1568 & !(v_bool_75_1387').
+
+// id 136
+checksat  x'::node<qmin_1568,q_1569> * q_1569::sll<flted_16_1565,qs_1566,ql_1567>&
+v'=qmin_1568 & x'=x & v'=v & x'!=null & v_bool_71_1390' & xs<=qmin_1568 & 
+ql_1567<=xl & qmin_1568<=qs_1566 & flted_16_1565+1=n & qmin_1568<=v' & 
+!(v_bool_72_1388') & v_bool_75_1387' & v'=v' & v_bool_75_1387'.
+
+// id 137
+checksat  x'::node<qmin_1568,q_1569> * q_1569::sll<flted_16_1565,qs_1566,ql_1567>&
+v'!=qmin_1568 & x'=x & v'=v & x'!=null & v_bool_71_1390' & xs<=qmin_1568 & 
+ql_1567<=xl & qmin_1568<=qs_1566 & flted_16_1565+1=n & qmin_1568<=v' & 
+!(v_bool_72_1388') & !(v_bool_75_1387') & v'!=qmin_1568 & v_bool_75_1387'.
+
+// id 138
+checksat  x'::node<qmin_1568,q_1569> * q_1569::sll<flted_16_1565,qs_1566,ql_1567>&
+v'!=v_int_75_1375' & v_int_75_1375'=qmin_1568 & x'=x & v'=v & x'!=null & 
+v_bool_71_1390' & xs<=qmin_1568 & ql_1567<=xl & qmin_1568<=qs_1566 & 
+flted_16_1565+1=n & qmin_1568<=v' & !(v_bool_72_1388') & !(res) & 
+v'!=v_int_75_1375'.
+
+// id 139
+checksat  x'::node<qmin_1568,q_1569> * q_1569::sll<flted_16_1565,qs_1566,ql_1567>&
+!(v_bool_72_1388') & qmin_1568<=v' & flted_16_1565+1=n & 
+qmin_1568<=qs_1566 & ql_1567<=xl & xs<=qmin_1568 & v_bool_71_1390' & 
+x'!=null & v'=v & x'=x & v_int_75_1375'=qmin_1568 & v'!=v_int_75_1375'.
+
+// id 140
+checksat  x'::node<qmin_1568,q_1569> * q_1569::sll<flted_16_1565,qs_1566,ql_1567>&
+!(v_bool_72_1388') & qmin_1568<=v' & flted_16_1565+1=n & 
+qmin_1568<=qs_1566 & ql_1567<=xl & xs<=qmin_1568 & v_bool_71_1390' & 
+x'!=null & v'=v & x'=x & v_int_75_1375'=qmin_1568 & v'!=v_int_75_1375'.
+
+// id 141
+checksat  x'::node<qmin_1568,q_1569> * q_1569::sll<flted_16_1565,qs_1566,ql_1567>&
+v'=v_int_75_1375' & v_int_75_1375'=qmin_1568 & x'=x & v'=v & x'!=null & 
+v_bool_71_1390' & xs<=qmin_1568 & ql_1567<=xl & qmin_1568<=qs_1566 & 
+flted_16_1565+1=n & qmin_1568<=v' & !(v_bool_72_1388') & res & 
+v'=v_int_75_1375'.
+
+// id 142
+checksat  x'::node<qmin_1568,q_1569> * q_1569::sll<flted_16_1565,qs_1566,ql_1567>&
+!(v_bool_72_1388') & qmin_1568<=v' & flted_16_1565+1=n & 
+qmin_1568<=qs_1566 & ql_1567<=xl & xs<=qmin_1568 & v_bool_71_1390' & 
+x'!=null & v'=v & x'=x & v_int_75_1375'=qmin_1568 & v'=v_int_75_1375'.
+
+// id 143
+checksat  x'::node<qmin_1568,q_1569> * q_1569::sll<flted_16_1565,qs_1566,ql_1567>&
+!(v_bool_72_1388') & qmin_1568<=v' & flted_16_1565+1=n & 
+qmin_1568<=qs_1566 & ql_1567<=xl & xs<=qmin_1568 & v_bool_71_1390' & 
+x'!=null & v'=v & x'=x & v_int_75_1375'=qmin_1568 & v'=v_int_75_1375'.
+
+// id 144
+checksat  x'::node<qmin_1568,q_1569> * q_1569::sll<flted_16_1565,qs_1566,ql_1567>&
+next_75_1371'=q_1569 & val_75_1370'=qmin_1568 & x'=x & v'=v & x'!=null & 
+v_bool_71_1390' & xs<=qmin_1568 & ql_1567<=xl & qmin_1568<=qs_1566 & 
+flted_16_1565+1=n & qmin_1568<=v' & !(v_bool_72_1388').
+
+// id 145
+checksat  x'::node<qmin_1568,q_1569> * q_1569::sll<flted_16_1565,qs_1566,ql_1567>&
+v'<qmin_1568 & x'=x & v'=v & x'!=null & v_bool_71_1390' & xs<=qmin_1568 & 
+ql_1567<=xl & qmin_1568<=qs_1566 & flted_16_1565+1=n & v_bool_72_1388' & 
+v'<qmin_1568 & !(v_bool_72_1388').
+
+// id 146
+checksat  x'::node<qmin_1568,q_1569> * q_1569::sll<flted_16_1565,qs_1566,ql_1567>&
+qmin_1568<=v' & x'=x & v'=v & x'!=null & v_bool_71_1390' & xs<=qmin_1568 & 
+ql_1567<=xl & qmin_1568<=qs_1566 & flted_16_1565+1=n & !(v_bool_72_1388') & 
+qmin_1568<=v' & !(v_bool_72_1388').
+
+// id 147
+checksat  x'::node<qmin_1568,q_1569> * q_1569::sll<flted_16_1565,qs_1566,ql_1567>&
+v'<qmin_1568 & x'=x & v'=v & x'!=null & v_bool_71_1390' & xs<=qmin_1568 & 
+ql_1567<=xl & qmin_1568<=qs_1566 & flted_16_1565+1=n & v_bool_72_1388' & 
+v'<qmin_1568 & v_bool_72_1388'.
+
+// id 148
+checksat  x'::node<qmin_1568,q_1569> * q_1569::sll<flted_16_1565,qs_1566,ql_1567>&
+qmin_1568<=v' & x'=x & v'=v & x'!=null & v_bool_71_1390' & xs<=qmin_1568 & 
+ql_1567<=xl & qmin_1568<=qs_1566 & flted_16_1565+1=n & !(v_bool_72_1388') & 
+qmin_1568<=v' & v_bool_72_1388'.
+
+// id 149
+checksat  x'::node<qmin_1568,q_1569> * q_1569::sll<flted_16_1565,qs_1566,ql_1567>&
+v_int_72_1369'<=v' & v_int_72_1369'=qmin_1568 & x'=x & v'=v & x'!=null & 
+v_bool_71_1390' & xs<=qmin_1568 & ql_1567<=xl & qmin_1568<=qs_1566 & 
+flted_16_1565+1=n & !(res) & v_int_72_1369'<=v'.
+
+// id 150
+checksat  x'::node<qmin_1568,q_1569> * q_1569::sll<flted_16_1565,qs_1566,ql_1567>&
+flted_16_1565+1=n & qmin_1568<=qs_1566 & ql_1567<=xl & xs<=qmin_1568 & 
+v_bool_71_1390' & x'!=null & v'=v & x'=x & v_int_72_1369'=qmin_1568 & 
+v_int_72_1369'<=v'.
+
+// id 151
+checksat  x'::node<qmin_1568,q_1569> * q_1569::sll<flted_16_1565,qs_1566,ql_1567>&
+flted_16_1565+1=n & qmin_1568<=qs_1566 & ql_1567<=xl & xs<=qmin_1568 & 
+v_bool_71_1390' & x'!=null & v'=v & x'=x & v_int_72_1369'=qmin_1568 & 
+v_int_72_1369'<=v'.
+
+// id 152
+checksat  x'::node<qmin_1568,q_1569> * q_1569::sll<flted_16_1565,qs_1566,ql_1567>&
+v'<v_int_72_1369' & v_int_72_1369'=qmin_1568 & x'=x & v'=v & x'!=null & 
+v_bool_71_1390' & xs<=qmin_1568 & ql_1567<=xl & qmin_1568<=qs_1566 & 
+flted_16_1565+1=n & res & v'<v_int_72_1369'.
+
+// id 153
+checksat  x'::node<qmin_1568,q_1569> * q_1569::sll<flted_16_1565,qs_1566,ql_1567>&
+flted_16_1565+1=n & qmin_1568<=qs_1566 & ql_1567<=xl & xs<=qmin_1568 & 
+v_bool_71_1390' & x'!=null & v'=v & x'=x & v_int_72_1369'=qmin_1568 & 
+v'<v_int_72_1369'.
+
+// id 154
+checksat  x'::node<qmin_1568,q_1569> * q_1569::sll<flted_16_1565,qs_1566,ql_1567>&
+flted_16_1565+1=n & qmin_1568<=qs_1566 & ql_1567<=xl & xs<=qmin_1568 & 
+v_bool_71_1390' & x'!=null & v'=v & x'=x & v_int_72_1369'=qmin_1568 & 
+v'<v_int_72_1369'.
+
+// id 155
+checksat  x'::node<qmin_1568,q_1569> * q_1569::sll<flted_16_1565,qs_1566,ql_1567>&
+next_72_1365'=q_1569 & val_72_1364'=qmin_1568 & x'=x & v'=v & x'!=null & 
+v_bool_71_1390' & xs<=qmin_1568 & ql_1567<=xl & qmin_1568<=qs_1566 & 
+flted_16_1565+1=n.
+
+// id 156
+checksat  (exists flted_16_1559,qs_1560,ql_1561,qmin_1562,
+q_1563: x'::node<qmin_1562,q_1563> * 
+q_1563::sll<flted_16_1559,qs_1560,ql_1561>&flted_16_1559+1=n & 
+qmin_1562<=qs_1560 & ql_1561<=xl & xs<=qmin_1562 & v_bool_71_1390' & 
+x'!=null & v'=v & x'=x).
+
+// id 157
+checksat  x::sll<n,xs,xl>&x'=x & v'=v & x'=null & !(v_bool_71_1390') & x'=null & 
+!(v_bool_71_1390').
+
+// id 158
+checksat  x::sll<n,xs,xl>&x'=x & v'=v & x'!=null & v_bool_71_1390' & x'!=null & 
+!(v_bool_71_1390').
+
+// id 159
+checksat  x::sll<n,xs,xl>&x'=x & v'=v & x'=null & !(v_bool_71_1390') & x'=null & 
+v_bool_71_1390'.
+
+// id 160
+checksat  x::sll<n,xs,xl>&x'=x & v'=v & x'!=null & v_bool_71_1390' & x'!=null & 
+v_bool_71_1390'.
+
+// id 161
+checksat  x::sll<n,xs,xl>&x'=x & v'=v & x'!=null & res & x'!=null.
+
+// id 162
+checksat  x::sll<n,xs,xl>&x'!=null & v'=v & x'=x.
+
+// id 163
+checksat  x::sll<n,xs,xl>&x'!=null & v'=v & x'=x.
+
+// id 164
+checksat  x::sll<n,xs,xl>&x'=x & v'=v & MayLoop[] & x'!=null.
+
+// id 165
+checksat  x::sll<n,xs,xl>&x'=x & v'=v & x'=null & !(res) & x'=null.
+
+// id 166
+checksat  x::sll<n,xs,xl>&x'=null & v'=v & x'=x.
+
+// id 167
+checksat  x::sll<n,xs,xl>&x'=null & v'=v & x'=x.
+
+// id 168
+checksat  x::sll<n,xs,xl>&x'=x & v'=v & MayLoop[] & x'=null.

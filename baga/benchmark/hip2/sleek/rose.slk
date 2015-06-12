@@ -1,0 +1,279 @@
+data node {
+  tree childREC_13;
+  node nextREC_12;
+  tree parentREC_26;
+}.
+data tree {
+  int valVAL_11;
+  node childrenREC_27;
+}.
+ pred treep<> == 
+  (exists self_30: self::tree<Anon_14,c> * c::sll<self_30>&self_30=self)
+  inv 
+  true.
+ pred sll<parent:tree> == 
+  emp&self=null or
+(exists parent_28,parent_29: self::node<c,n,parent_28> * 
+  c::treep<> * n::sll<parent_29>&parent_28=parent & parent_29=parent)
+  inv 
+  true.
+
+// id 1
+checksat  l'::node<c_1392,n_1393,parent_1390>&v_bool_51_1296' & parent_1390=p_1374 & 
+parent_1391=p_1374 & !(v_bool_50_1297') & l'!=null & p_1374=p & p'=p & 
+l'=l & p'=parent_1390 & v_boolean_51_1294' & v_boolean_51_1426 & 
+v_boolean_51_1425 & res=v_boolean_51_1294'.
+
+// id 2
+checksat  (exists v_boolean_51_1293',
+v_boolean_51_1292': l'::node<c_1392,n_1393,parent_1390>&v_bool_51_1296' & 
+parent_1390=p_1374 & parent_1391=p_1374 & !(v_bool_50_1297') & l'!=null & 
+p_1374=p & p'=p & l'=l & p'=parent_1390 & v_boolean_51_1293' & 
+v_boolean_51_1292' & v_boolean_51_1294' & v_boolean_51_1292' & 
+v_boolean_51_1293' & res=v_boolean_51_1294').
+
+// id 3
+checksat  l::sll<p_1373>&res=v_boolean_50_1271' & v_boolean_50_1271' & l'=l & p'=p & 
+p_1373=p & l'=null & v_bool_50_1297'.
+
+// id 4
+checksat  l'::node<c_1392,n_1393,parent_1390>&v_bool_51_1296' & parent_1390=p_1374 & 
+parent_1391=p_1374 & !(v_bool_50_1297') & l'!=null & p_1374=p & p'=p & 
+l'=l & p'=parent_1390 & v_boolean_51_1293' & v_boolean_51_1292' & res & 
+v_boolean_51_1292' & v_boolean_51_1293'.
+
+// id 5
+checksat  l'::node<c_1392,n_1393,parent_1390>&v_boolean_51_1292' & 
+v_boolean_51_1293' & p'=parent_1390 & l'=l & p'=p & p_1374=p & l'!=null & 
+!(v_bool_50_1297') & parent_1391=p_1374 & parent_1390=p_1374 & 
+v_bool_51_1296'.
+
+// id 6
+checksat  l'::node<c_1392,n_1393,parent_1390>&v_bool_51_1296' & parent_1390=p_1374 & 
+parent_1391=p_1374 & !(v_bool_50_1297') & l'!=null & p_1374=p & p'=p & 
+l'=l & p'=parent_1390 & v_boolean_51_1293' & v_tree_51_1289'=c_1392 & res.
+
+// id 7
+checksat  l'::node<c_1392,n_1393,parent_1390>&v_tree_51_1289'=c_1392 & 
+v_boolean_51_1293' & p'=parent_1390 & l'=l & p'=p & p_1374=p & l'!=null & 
+!(v_bool_50_1297') & parent_1391=p_1374 & parent_1390=p_1374 & 
+v_bool_51_1296'.
+
+// id 8
+checksat  l'::node<c_1392,n_1393,parent_1390>&v_tree_51_1289'=c_1392 & 
+v_boolean_51_1293' & p'=parent_1390 & l'=l & p'=p & p_1374=p & l'!=null & 
+!(v_bool_50_1297') & parent_1391=p_1374 & parent_1390=p_1374 & 
+v_bool_51_1296'.
+
+// id 9
+checksat  l'::node<c_1392,n_1393,parent_1390>&c_1392!=null & v_bool_51_1296' & 
+parent_1390=p_1374 & parent_1391=p_1374 & !(v_bool_50_1297') & l'!=null & 
+p_1374=p & p'=p & l'=l & p'=parent_1390 & v_boolean_51_1293' & 
+v_tree_51_1289'=c_1392 & c_1392!=null.
+
+// id 10
+checksat  l'::node<c_1392,n_1393,parent_1390> * c_1392::treep<>&
+parent_51_1286'=parent_1390 & next_51_1285'=n_1393 & child_51_1284'=c_1392 & 
+v_boolean_51_1293' & p'=parent_1390 & l'=l & p'=p & p_1374=p & l'!=null & 
+!(v_bool_50_1297') & parent_1391=p_1374 & parent_1390=p_1374 & 
+v_bool_51_1296'.
+
+// id 11
+checksat  l'::node<c_1392,n_1393,parent_1390> * c_1392::treep<>&v_bool_51_1296' & 
+parent_1390=p_1374 & parent_1391=p_1374 & !(v_bool_50_1297') & l'!=null & 
+p_1374=p & p'=p & l'=l & p'=parent_1390 & v_node_51_1283'=n_1393 & res.
+
+// id 12
+checksat  l'::node<c_1392,n_1393,parent_1390> * c_1392::treep<>&
+v_node_51_1283'=n_1393 & p'=parent_1390 & l'=l & p'=p & p_1374=p & 
+l'!=null & !(v_bool_50_1297') & parent_1391=p_1374 & parent_1390=p_1374 & 
+v_bool_51_1296'.
+
+// id 13
+checksat  l'::node<c_1392,n_1393,parent_1390> * c_1392::treep<>&
+v_node_51_1283'=n_1393 & p'=parent_1390 & l'=l & p'=p & p_1374=p & 
+l'!=null & !(v_bool_50_1297') & parent_1391=p_1374 & parent_1390=p_1374 & 
+v_bool_51_1296'.
+
+// id 14
+checksat  l'::node<c_1392,n_1393,parent_1390> * c_1392::treep<> * 
+n_1393::sll<parent_1391>&parent_51_1280'=parent_1390 & 
+next_51_1279'=n_1393 & child_51_1278'=c_1392 & p'=parent_1390 & l'=l & 
+p'=p & p_1374=p & l'!=null & !(v_bool_50_1297') & parent_1391=p_1374 & 
+parent_1390=p_1374 & v_bool_51_1296'.
+
+// id 15
+checksat  l'::node<c_1392,n_1393,parent_1390> * c_1392::treep<> * 
+n_1393::sll<parent_1391>&p'=parent_1390 & l'=l & p'=p & p_1374=p & 
+l'!=null & !(v_bool_50_1297') & parent_1391=p_1374 & parent_1390=p_1374 & 
+v_bool_51_1296' & p'=p' & !(v_bool_51_1296').
+
+// id 16
+checksat  l'::node<c_1392,n_1393,parent_1390> * c_1392::treep<> * 
+n_1393::sll<parent_1391>&p'=parent_1390 & l'=l & p'=p & p_1374=p & 
+l'!=null & !(v_bool_50_1297') & parent_1391=p_1374 & parent_1390=p_1374 & 
+v_bool_51_1296' & p'=p' & v_bool_51_1296'.
+
+// id 17
+checksat  l'::node<c_1392,n_1393,parent_1390> * c_1392::treep<> * 
+n_1393::sll<parent_1391>&parent_1390=p_1374 & parent_1391=p_1374 & 
+!(v_bool_50_1297') & l'!=null & p_1374=p & p'=p & l'=l & 
+v_tree_51_1277'=parent_1390 & v_tree_51_1277'!=p'.
+
+// id 18
+checksat  l'::node<c_1392,n_1393,parent_1390> * c_1392::treep<> * 
+n_1393::sll<parent_1391>&v_tree_51_1277'=p' & v_tree_51_1277'=parent_1390 & 
+l'=l & p'=p & p_1374=p & l'!=null & !(v_bool_50_1297') & 
+parent_1391=p_1374 & parent_1390=p_1374 & res & v_tree_51_1277'=p'.
+
+// id 19
+checksat  l'::node<c_1392,n_1393,parent_1390> * c_1392::treep<> * 
+n_1393::sll<parent_1391>&parent_1390=p_1374 & parent_1391=p_1374 & 
+!(v_bool_50_1297') & l'!=null & p_1374=p & p'=p & l'=l & 
+v_tree_51_1277'=parent_1390 & v_tree_51_1277'=p'.
+
+// id 20
+checksat  l'::node<c_1392,n_1393,parent_1390> * c_1392::treep<> * 
+n_1393::sll<parent_1391>&parent_1390=p_1374 & parent_1391=p_1374 & 
+!(v_bool_50_1297') & l'!=null & p_1374=p & p'=p & l'=l & 
+v_tree_51_1277'=parent_1390 & v_tree_51_1277'=p'.
+
+// id 21
+checksat  l'::node<c_1392,n_1393,parent_1390> * c_1392::treep<> * 
+n_1393::sll<parent_1391>&parent_1390=p_1374 & parent_1391=p_1374 & 
+!(v_bool_50_1297') & l'!=null & p_1374=p & p'=p & l'=l & 
+v_tree_51_1277'=parent_1390 & v_tree_51_1277'=p'.
+
+// id 22
+checksat  l'::node<c_1392,n_1393,parent_1390> * c_1392::treep<> * 
+n_1393::sll<parent_1391>&parent_51_1274'=parent_1390 & 
+next_51_1273'=n_1393 & child_51_1272'=c_1392 & l'=l & p'=p & p_1374=p & 
+l'!=null & !(v_bool_50_1297') & parent_1391=p_1374 & parent_1390=p_1374.
+
+// id 23
+checksat  (exists parent_1385,parent_1386,c_1387,
+n_1388: l'::node<c_1387,n_1388,parent_1385> * c_1387::treep<> * 
+n_1388::sll<parent_1386>&parent_1385=p_1374 & parent_1386=p_1374 & 
+!(v_bool_50_1297') & l'!=null & p_1374=p & p'=p & l'=l).
+
+// id 24
+checksat  l::sll<p_1373>&l'=l & p'=p & p_1373=p & l'=null & v_bool_50_1297' & 
+l'=null & !(v_bool_50_1297').
+
+// id 25
+checksat  l::sll<p_1374>&l'=l & p'=p & p_1374=p & l'!=null & !(v_bool_50_1297') & 
+l'!=null & !(v_bool_50_1297').
+
+// id 26
+checksat  l::sll<p_1373>&l'=l & p'=p & p_1373=p & l'=null & v_bool_50_1297' & 
+l'=null & v_bool_50_1297'.
+
+// id 27
+checksat  l::sll<p_1374>&l'=l & p'=p & p_1374=p & l'!=null & !(v_bool_50_1297') & 
+l'!=null & v_bool_50_1297'.
+
+// id 28
+checksat  l::sll<p_1374>&l'=l & p'=p & p_1374=p & l'!=null & !(res) & l'!=null.
+
+// id 29
+checksat  l::sll<p_1374>&l'!=null & p_1374=p & p'=p & l'=l.
+
+// id 30
+checksat  l::sll<p_1374>&l'!=null & p_1374=p & p'=p & l'=l.
+
+// id 31
+checksat  l::sll<p_60>&l'=l & p'=p & p_60=p & MayLoop[] & l'!=null.
+
+// id 32
+checksat  l::sll<p_1373>&l'=l & p'=p & p_1373=p & l'=null & res & l'=null.
+
+// id 33
+checksat  l::sll<p_1373>&l'=null & p_1373=p & p'=p & l'=l.
+
+// id 34
+checksat  l::sll<p_1373>&l'=null & p_1373=p & p'=p & l'=l.
+
+// id 35
+checksat  l::sll<p_60>&l'=l & p'=p & p_60=p & MayLoop[] & l'=null.
+
+// id 36
+checksat  t'::tree<Anon_1349,c_1350>&!(v_bool_36_1311') & c_1350!=null & t'=t & 
+self_1348=t' & v_boolean_37_1310' & res=v_boolean_37_1310'.
+
+// id 37
+checksat  t'::tree<Anon_1349,c_1350>&!(v_bool_36_1311') & c_1350!=null & t'=t & 
+self_1348=t' & v_boolean_37_1310' & res=v_boolean_37_1310'.
+
+// id 38
+checksat  t'::tree<Anon_1349,c_1350> * c_1350::sll<self_1348>&
+res=v_boolean_36_1305' & v_boolean_36_1305' & self_1348=t' & t'=t & 
+c_1350=null & v_bool_36_1311'.
+
+// id 39
+checksat  t'::tree<Anon_1349,c_1350>&!(v_bool_36_1311') & c_1350!=null & t'=t & 
+self_1348=t' & v_node_37_1309'=c_1350 & res.
+
+// id 40
+checksat  t'::tree<Anon_1349,c_1350>&v_node_37_1309'=c_1350 & self_1348=t' & t'=t & 
+c_1350!=null & !(v_bool_36_1311').
+
+// id 41
+checksat  t'::tree<Anon_1349,c_1350>&v_node_37_1309'=c_1350 & self_1348=t' & t'=t & 
+c_1350!=null & !(v_bool_36_1311').
+
+// id 42
+checksat  t'::tree<Anon_1349,c_1350> * c_1350::sll<self_1348>&
+children_37_1307'=c_1350 & val_37_1306'=Anon_1349 & self_1348=t' & t'=t & 
+c_1350!=null & !(v_bool_36_1311').
+
+// id 43
+checksat  t'::tree<Anon_1349,c_1350> * c_1350::sll<self_1348>&c_1350=null & 
+self_1348=t' & t'=t & v_bool_36_1311' & c_1350=null & !(v_bool_36_1311').
+
+// id 44
+checksat  t'::tree<Anon_1349,c_1350> * c_1350::sll<self_1348>&c_1350!=null & 
+self_1348=t' & t'=t & !(v_bool_36_1311') & c_1350!=null & !(v_bool_36_1311').
+
+// id 45
+checksat  t'::tree<Anon_1349,c_1350> * c_1350::sll<self_1348>&c_1350=null & 
+self_1348=t' & t'=t & v_bool_36_1311' & c_1350=null & v_bool_36_1311'.
+
+// id 46
+checksat  t'::tree<Anon_1349,c_1350> * c_1350::sll<self_1348>&c_1350!=null & 
+self_1348=t' & t'=t & !(v_bool_36_1311') & c_1350!=null & v_bool_36_1311'.
+
+// id 47
+checksat  t'::tree<Anon_1349,c_1350> * c_1350::sll<self_1348>&v_node_36_1304'!=null & 
+v_node_36_1304'=c_1350 & self_1348=t' & t'=t & !(res) & v_node_36_1304'!=null.
+
+// id 48
+checksat  t'::tree<Anon_1349,c_1350> * c_1350::sll<self_1348>&t'=t & self_1348=t' & 
+v_node_36_1304'=c_1350 & v_node_36_1304'!=null.
+
+// id 49
+checksat  t'::tree<Anon_1349,c_1350> * c_1350::sll<self_1348>&t'=t & self_1348=t' & 
+v_node_36_1304'=c_1350 & v_node_36_1304'!=null.
+
+// id 50
+checksat  t'::tree<Anon_1349,c_1350> * c_1350::sll<self_1348>&t'=t & self_1348=t' & 
+v_node_36_1304'=c_1350 & v_node_36_1304'!=null.
+
+// id 51
+checksat  t'::tree<Anon_1349,c_1350> * c_1350::sll<self_1348>&v_node_36_1304'=null & 
+v_node_36_1304'=c_1350 & self_1348=t' & t'=t & res & v_node_36_1304'=null.
+
+// id 52
+checksat  t'::tree<Anon_1349,c_1350> * c_1350::sll<self_1348>&t'=t & self_1348=t' & 
+v_node_36_1304'=c_1350 & v_node_36_1304'=null.
+
+// id 53
+checksat  t'::tree<Anon_1349,c_1350> * c_1350::sll<self_1348>&t'=t & self_1348=t' & 
+v_node_36_1304'=c_1350 & v_node_36_1304'=null.
+
+// id 54
+checksat  t'::tree<Anon_1349,c_1350> * c_1350::sll<self_1348>&t'=t & self_1348=t' & 
+v_node_36_1304'=c_1350 & v_node_36_1304'=null.
+
+// id 55
+checksat  t'::tree<Anon_1349,c_1350> * c_1350::sll<self_1348>&
+children_36_1302'=c_1350 & val_36_1301'=Anon_1349 & self_1348=t' & t'=t.

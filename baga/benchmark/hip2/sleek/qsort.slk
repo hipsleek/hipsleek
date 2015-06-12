@@ -1,0 +1,1500 @@
+data node {
+  int valVAL_11;
+  node nextREC_20;
+}.
+ pred sll<n:int,sm:int,lg:int> == 
+  (exists flted_13_23: self::node<qmin,flted_13_23>&flted_13_23=null & 
+  qmin=sm & qmin=lg & n=1) or
+(exists sm_25,lg_26,
+  flted_14_24: self::node<sm_25,q> * q::sll<flted_14_24,qs,lg_26>&
+  flted_14_24+1=n & sm<=qs & sm_25=sm & lg_26=lg)
+  inv 
+  1<=n & sm<=lg & self!=null.
+ pred bnd<n:int,sm:int,bg:int> == 
+  emp&self=null & n=0 or
+(exists sm_29,bg_30,flted_9_28: self::node<d,p> * 
+  p::bnd<flted_9_28,sm_29,bg_30>&flted_9_28+1=n & sm<=d & d<bg & sm_29=sm & 
+  bg_30=bg)
+  inv 
+  0<=n.
+
+// id 1
+checksat  tmp_2078::bnd<b_1971,qmin_2183,bg_1952> * xs_2204::node<d_1944,xsnext_2117>&
+qmin_2183=s2 & qmin_2183=b2 & m=1 & !(b_2263) & xsnext_1972!=null & 
+flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & 
+v_bool_74_1365' & xs_2204!=null & 0<n & xs_2204=xs & qmin_2183=d_1944 & 
+n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & 
+n_1950=b_1971+a_1970 & 0<=n_1950 & tmp_2078=null & !(v_bool_81_1351') & 
+n_2090=a_1970 & sm_2091=sm_1951 & bg_2092=qmin_2183 & 0<=a_1970 & 
+sm_2091<=smres_2115 & bgres_2116<bg_2092 & 0<=n_2090 & nn=n_2090 & 
+s0=smres_2115 & b0=bgres_2116 & 1<=n_2090 & smres_2115<=bgres_2116 & 
+flted_51_2261=m+nn & 1<=nn & s0<=b0 & xsnext_2117!=null & 1<=m & s2<=b2 & 
+tmp_2262!=null.
+
+// id 2
+checksat  (exists flted_51_2202,tmp',b': tmp_2078::bnd<b_1971,qmin_2183,bg_1952> * 
+xs_2204::node<d_1944,xsnext_2117> * xs'::sll<flted_51_2202,s0,b2>&
+qmin_2183=s2 & qmin_2183=b2 & m=1 & !(b') & xsnext_1972!=null & flted_9_1943+
+1=n & sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & v_bool_74_1365' & 
+xs_2204!=null & 0<n & xs_2204=xs & qmin_2183=d_1944 & n_1950=flted_9_1943 & 
+sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & n_1950=b_1971+a_1970 & 
+0<=n_1950 & tmp_2078=null & !(v_bool_81_1351') & n_2090=a_1970 & 
+sm_2091=sm_1951 & bg_2092=qmin_2183 & 0<=a_1970 & sm_2091<=smres_2115 & 
+bgres_2116<bg_2092 & 0<=n_2090 & nn=n_2090 & s0=smres_2115 & b0=bgres_2116 & 
+tmp'!=null & 1<=n_2090 & smres_2115<=bgres_2116 & xsnext_2117!=null & 
+flted_51_2202=m+nn & 1<=nn & s0<=b0 & xsnext_2117!=null & 1<=m & s2<=b2 & 
+tmp'!=null).
+
+// id 3
+checksat  xs_2081::node<d_1944,xsnext_1972>&!(v_bool_81_1351') & tmp_2079=null & 
+a_1970=0 & b_1971=0 & xsnext_1972=null & flted_9_1943+1=n & sm<=d_1944 & 
+d_1944<bg & sm_1941=sm & bg_1942=bg & v_bool_74_1365' & xs_2081!=null & 
+0<n & xs_2081=xs & n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 
+0<=flted_9_1943 & n_1950=b_1971+a_1970 & 0<=n_1950 & b_2240 & 
+qmin_2244=d_1944 & exists(smres_2242:qmin_2244=smres_2242) & 
+exists(bgres_2243:qmin_2244=bgres_2243) & exists(n_2241:n_2241=1).
+
+// id 4
+checksat  xs_2081::node<d_1944,xsnext_1972>&!(v_bool_81_1351') & tmp_2079=null & 
+a_1970=0 & b_1971=0 & xsnext_1972=null & flted_9_1943+1=n & sm<=d_1944 & 
+d_1944<bg & sm_1941=sm & bg_1942=bg & v_bool_74_1365' & xs_2081!=null & 
+0<n & xs_2081=xs & n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 
+0<=flted_9_1943 & n_1950=b_1971+a_1970 & 0<=n_1950 & b_2240 & 
+qmin_2244=d_1944 & exists(smres_2242:qmin_2244=smres_2242) & 
+exists(bgres_2243:qmin_2244=bgres_2243) & exists(n_2241:n_2241=1).
+
+// id 5
+checksat  xs_2081::node<d_1944,xsnext_1972> * xs'::node<d_1944,tmp_2079>&b_2240 & 
+0<=n_1950 & n_1950=b_1971+a_1970 & 0<=flted_9_1943 & bg_1952=bg_1942 & 
+sm_1951=sm_1941 & n_1950=flted_9_1943 & xs_2081=xs & 0<n & xs_2081!=null & 
+v_bool_74_1365' & bg_1942=bg & sm_1941=sm & d_1944<bg & sm<=d_1944 & 
+flted_9_1943+1=n & xsnext_1972=null & b_1971=0 & a_1970=0 & tmp_2079=null & 
+!(v_bool_81_1351').
+
+// id 6
+checksat  xs_2081::node<d_1944,xsnext_1972>&qmin_2244=d_1944 & b_2240 & 0<=n_1950 & 
+n_1950=b_1971+a_1970 & 0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & 
+n_1950=flted_9_1943 & xs_2081=xs & 0<n & xs_2081!=null & v_bool_74_1365' & 
+bg_1942=bg & sm_1941=sm & d_1944<bg & sm<=d_1944 & flted_9_1943+1=n & 
+xsnext_1972=null & b_1971=0 & a_1970=0 & tmp_2079=null & !(v_bool_81_1351').
+
+// id 7
+checksat  xs_2081::node<d_1944,xsnext_1972> * xs'::node<d_1944,tmp_2079>&b_2240 & 
+0<=n_1950 & n_1950=b_1971+a_1970 & 0<=flted_9_1943 & bg_1952=bg_1942 & 
+sm_1951=sm_1941 & n_1950=flted_9_1943 & xs_2081=xs & 0<n & xs_2081!=null & 
+v_bool_74_1365' & bg_1942=bg & sm_1941=sm & d_1944<bg & sm<=d_1944 & 
+flted_9_1943+1=n & xsnext_1972=null & b_1971=0 & a_1970=0 & tmp_2079=null & 
+!(v_bool_81_1351').
+
+// id 8
+checksat  xs_2203::node<d_1944,xsnext_2113>&n_2063+1=m & bgres_2088=b2 & 
+s2<=qs_2147 & qs_2147=smres_2087 & q_2146=tmp_2076 & !(b_2233) & 0<=n_2063 & 
+bgres_2088<bg_2065 & sm_2064<=smres_2087 & 0<=b_1971 & bg_2065=bg_1952 & 
+sm_2064=s2 & n_2063=b_1971 & xsnext_1972!=null & flted_9_1943+1=n & 
+sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & v_bool_74_1365' & 
+xs_2203!=null & 0<n & xs_2203=xs & s2=d_1944 & n_1950=flted_9_1943 & 
+sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & n_1950=b_1971+a_1970 & 
+0<=n_1950 & tmp_2089!=null & v_bool_81_1351' & n_2090=a_1970 & 
+sm_2091=sm_1951 & bg_2092=s2 & 0<=a_1970 & sm_2091<=smres_2111 & 
+bgres_2112<bg_2092 & 0<=n_2090 & nn=n_2090 & s0=smres_2111 & b0=bgres_2112 & 
+1<=n_2063 & smres_2087<=bgres_2088 & tmp_2076!=null & 1<=n_2090 & 
+smres_2111<=bgres_2112 & flted_51_2231=m+nn & 1<=nn & s0<=b0 & 
+xsnext_2113!=null & 1<=m & s2<=b2 & tmp_2232!=null.
+
+// id 9
+checksat  (exists flted_51_2165,tmp',b': xs_2203::node<d_1944,xsnext_2113> * 
+xs'::sll<flted_51_2165,s0,b2>&n_2063+1=m & s2<=qs_2147 & bgres_2088=b2 & 
+s2<=qs_2147 & qs_2147=smres_2087 & q_2146=tmp_2076 & !(b') & 0<=n_2063 & 
+bgres_2088<bg_2065 & sm_2064<=smres_2087 & 0<=b_1971 & bg_2065=bg_1952 & 
+sm_2064=s2 & n_2063=b_1971 & xsnext_1972!=null & flted_9_1943+1=n & 
+sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & v_bool_74_1365' & 
+xs_2203!=null & 0<n & xs_2203=xs & s2=d_1944 & n_1950=flted_9_1943 & 
+sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & n_1950=b_1971+a_1970 & 
+0<=n_1950 & tmp_2089!=null & v_bool_81_1351' & n_2090=a_1970 & 
+sm_2091=sm_1951 & bg_2092=s2 & 0<=a_1970 & sm_2091<=smres_2111 & 
+bgres_2112<bg_2092 & 0<=n_2090 & nn=n_2090 & s0=smres_2111 & b0=bgres_2112 & 
+1<=n_2063 & smres_2087<=bgres_2088 & tmp_2076!=null & tmp'!=null & 
+1<=n_2090 & smres_2111<=bgres_2112 & xsnext_2113!=null & flted_51_2165=m+
+nn & 1<=nn & s0<=b0 & xsnext_2113!=null & 1<=m & s2<=b2 & tmp'!=null).
+
+// id 10
+checksat  xsnext_1972::bnd<a_1970,sm_1951,sm_2064> * 
+xs_2080::node<d_1944,xsnext_1972>&v_bool_81_1351' & tmp_2207!=null & 
+0<=n_1950 & n_1950=b_1971+a_1970 & 0<=flted_9_1943 & bg_1952=bg_1942 & 
+sm_1951=sm_1941 & n_1950=flted_9_1943 & sm_2064=d_1944 & xs_2080=xs & 0<n & 
+xs_2080!=null & v_bool_74_1365' & bg_1942=bg & sm_1941=sm & d_1944<bg & 
+sm<=d_1944 & flted_9_1943+1=n & xsnext_1972=null & n_2063=b_1971 & 
+bg_2065=bg_1952 & 0<=b_1971 & sm_2064<=smres_2205 & bgres_2206<bg_2065 & 
+0<=n_2063 & b_2208 & q_2214=tmp_2077 & qs_2215=smres_2205 & 
+exists(n_2209:n_2063+1=n_2209) & exists(smres_2210:sm_2064=smres_2210 & 
+smres_2210<=qs_2215) & exists(bgres_2211:bgres_2206=bgres_2211).
+
+// id 11
+checksat  xsnext_1972::bnd<a_1970,sm_1951,sm_2064> * 
+xs_2080::node<d_1944,xsnext_1972>&v_bool_81_1351' & tmp_2207!=null & 
+0<=n_1950 & n_1950=b_1971+a_1970 & 0<=flted_9_1943 & bg_1952=bg_1942 & 
+sm_1951=sm_1941 & n_1950=flted_9_1943 & sm_2064=d_1944 & xs_2080=xs & 0<n & 
+xs_2080!=null & v_bool_74_1365' & bg_1942=bg & sm_1941=sm & d_1944<bg & 
+sm<=d_1944 & flted_9_1943+1=n & xsnext_1972=null & n_2063=b_1971 & 
+bg_2065=bg_1952 & 0<=b_1971 & sm_2064<=smres_2205 & bgres_2206<bg_2065 & 
+0<=n_2063 & b_2208 & q_2214=tmp_2077 & qs_2215=smres_2205 & 
+exists(n_2209:n_2063+1=n_2209) & exists(smres_2210:sm_2064=smres_2210 & 
+smres_2210<=qs_2215) & exists(bgres_2211:bgres_2206=bgres_2211).
+
+// id 12
+checksat  xsnext_1972::bnd<a_1970,sm_1951,sm_2064> * 
+xs_2080::node<d_1944,xsnext_1972>&qs_2215=smres_2205 & q_2214=tmp_2077 & 
+b_2208 & 0<=n_2063 & bgres_2206<bg_2065 & sm_2064<=smres_2205 & 0<=b_1971 & 
+bg_2065=bg_1952 & n_2063=b_1971 & xsnext_1972=null & flted_9_1943+1=n & 
+sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & v_bool_74_1365' & 
+xs_2080!=null & 0<n & xs_2080=xs & sm_2064=d_1944 & n_1950=flted_9_1943 & 
+sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & n_1950=b_1971+a_1970 & 
+0<=n_1950 & tmp_2207!=null & v_bool_81_1351'.
+
+// id 13
+checksat  xsnext_1972::bnd<a_1970,sm_1951,sm_2064> * 
+xs_2080::node<d_1944,xsnext_1972> * 
+tmp_2077::sll<n_2063,smres_2205,bgres_2206> * xs'::node<sm_2064,tmp_2077>&
+b_2208 & 0<=n_2063 & bgres_2206<bg_2065 & sm_2064<=smres_2205 & 0<=b_1971 & 
+bg_2065=bg_1952 & n_2063=b_1971 & xsnext_1972=null & flted_9_1943+1=n & 
+sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & v_bool_74_1365' & 
+xs_2080!=null & 0<n & xs_2080=xs & sm_2064=d_1944 & n_1950=flted_9_1943 & 
+sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & n_1950=b_1971+a_1970 & 
+0<=n_1950 & tmp_2207!=null & v_bool_81_1351'.
+
+// id 14
+checksat  xsnext_1972::bnd<a_1970,sm_1951,sm_2064> * 
+xs_2080::node<d_1944,xsnext_1972> * 
+tmp_2077::sll<n_2063,smres_2205,bgres_2206> * xs'::node<sm_2064,tmp_2077>&
+b_2208 & 0<=n_2063 & bgres_2206<bg_2065 & sm_2064<=smres_2205 & 0<=b_1971 & 
+bg_2065=bg_1952 & n_2063=b_1971 & xsnext_1972=null & flted_9_1943+1=n & 
+sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & v_bool_74_1365' & 
+xs_2080!=null & 0<n & xs_2080=xs & sm_2064=d_1944 & n_1950=flted_9_1943 & 
+sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & n_1950=b_1971+a_1970 & 
+0<=n_1950 & tmp_2207!=null & v_bool_81_1351'.
+
+// id 15
+checksat  (exists s0_2200,b2_2201,flted_51_2202: tmp_2078::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_2117> * res::sll<flted_51_2202,s0_2200,b2_2201>&
+qmin_2183=s2 & qmin_2183=b2 & m=1 & qmin_2183=v' & !(b') & 
+xsnext_1972!=null & flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & sm_1941=sm & 
+bg_1942=bg & v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & v'=d_1944 & 
+n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & 
+n_1950=b_1971+a_1970 & 0<=n_1950 & tmp_2078=null & !(v_bool_81_1351') & 
+n_2090=a_1970 & sm_2091=sm_1951 & bg_2092=v' & 0<=a_1970 & 
+sm_2091<=smres_2115 & bgres_2116<bg_2092 & 0<=n_2090 & 
+v_node_94_1364'=xsnext_2117 & nn=n_2090 & s0=smres_2115 & b0=bgres_2116 & 
+tmp'!=null & 1<=n_2090 & smres_2115<=bgres_2116 & xsnext_2117!=null & 
+flted_51_2202=m+nn & s0_2200=s0 & b2_2201=b2 & 1<=nn & s0<=b0 & 
+v_node_94_1364'!=null & 1<=m & s2<=b2 & tmp'!=null).
+
+// id 16
+checksat  tmp_2078::bnd<b_1971,v',bg_1952> * xs'::node<d_1944,xsnext_2117>&
+b0=bgres_2116 & s0=smres_2115 & nn=n_2090 & v_node_94_1364'=xsnext_2117 & 
+0<=n_2090 & bgres_2116<bg_2092 & sm_2091<=smres_2115 & 0<=a_1970 & 
+bg_2092=v' & sm_2091=sm_1951 & n_2090=a_1970 & !(v_bool_81_1351') & 
+tmp_2078=null & 0<=n_1950 & n_1950=b_1971+a_1970 & 0<=flted_9_1943 & 
+bg_1952=bg_1942 & sm_1951=sm_1941 & n_1950=flted_9_1943 & v'=d_1944 & 
+xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & sm_1941=sm & 
+d_1944<bg & sm<=d_1944 & flted_9_1943+1=n & xsnext_1972!=null & !(b') & 
+qmin_2183=v' & m=1 & qmin_2183=b2 & qmin_2183=s2.
+
+// id 17
+checksat  tmp_2078::bnd<b_1971,v',bg_1952> * xs'::node<d_1944,xsnext_2117>&
+b0=bgres_2116 & s0=smres_2115 & nn=n_2090 & v_node_94_1364'=xsnext_2117 & 
+0<=n_2090 & bgres_2116<bg_2092 & sm_2091<=smres_2115 & 0<=a_1970 & 
+bg_2092=v' & sm_2091=sm_1951 & n_2090=a_1970 & !(v_bool_81_1351') & 
+tmp_2078=null & 0<=n_1950 & n_1950=b_1971+a_1970 & 0<=flted_9_1943 & 
+bg_1952=bg_1942 & sm_1951=sm_1941 & n_1950=flted_9_1943 & v'=d_1944 & 
+xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & sm_1941=sm & 
+d_1944<bg & sm<=d_1944 & flted_9_1943+1=n & xsnext_1972!=null & !(b') & 
+qmin_2183=v' & m=1 & qmin_2183=b2 & qmin_2183=s2.
+
+// id 18
+checksat  tmp_2078::bnd<b_1971,v',bg_1952> * xs'::node<d_1944,xsnext_2117>&
+b0=bgres_2116 & s0=smres_2115 & nn=n_2090 & v_node_94_1364'=xsnext_2117 & 
+0<=n_2090 & bgres_2116<bg_2092 & sm_2091<=smres_2115 & 0<=a_1970 & 
+bg_2092=v' & sm_2091=sm_1951 & n_2090=a_1970 & !(v_bool_81_1351') & 
+tmp_2078=null & 0<=n_1950 & n_1950=b_1971+a_1970 & 0<=flted_9_1943 & 
+bg_1952=bg_1942 & sm_1951=sm_1941 & n_1950=flted_9_1943 & v'=d_1944 & 
+xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & sm_1941=sm & 
+d_1944<bg & sm<=d_1944 & flted_9_1943+1=n & xsnext_1972!=null & !(b') & 
+qmin_2183=v' & m=1 & qmin_2183=b2 & qmin_2183=s2.
+
+// id 19
+checksat  xs'::node<d_1944,xsnext_2117>&tmp_2078=null & b_1971=0 & b0=bgres_2116 & 
+s0=smres_2115 & nn=n_2090 & v_node_94_1364'=xsnext_2117 & 0<=n_2090 & 
+bgres_2116<bg_2092 & sm_2091<=smres_2115 & 0<=a_1970 & bg_2092=v' & 
+sm_2091=sm_1951 & n_2090=a_1970 & !(v_bool_81_1351') & tmp_2078=null & 
+0<=n_1950 & n_1950=b_1971+a_1970 & 0<=flted_9_1943 & bg_1952=bg_1942 & 
+sm_1951=sm_1941 & n_1950=flted_9_1943 & v'=d_1944 & xs'=xs & 0<n & 
+xs'!=null & v_bool_74_1365' & bg_1942=bg & sm_1941=sm & d_1944<bg & 
+sm<=d_1944 & flted_9_1943+1=n & xsnext_1972!=null & !(b') & 
+q_2185=tmp_2078 & ((b_1971=0 | tmp_2078=null)).
+
+// id 20
+checksat  tmp_2078::bnd<b_1971,v',bg_1952> * tmp'::node<v',tmp_2078> * 
+xs'::node<d_1944,xsnext_2117>&!(b') & xsnext_1972!=null & flted_9_1943+1=n & 
+sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & v_bool_74_1365' & 
+xs'!=null & 0<n & xs'=xs & v'=d_1944 & n_1950=flted_9_1943 & 
+sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & n_1950=b_1971+a_1970 & 
+0<=n_1950 & tmp_2078=null & !(v_bool_81_1351') & n_2090=a_1970 & 
+sm_2091=sm_1951 & bg_2092=v' & 0<=a_1970 & sm_2091<=smres_2115 & 
+bgres_2116<bg_2092 & 0<=n_2090 & v_node_94_1364'=xsnext_2117 & nn=n_2090 & 
+s0=smres_2115 & b0=bgres_2116.
+
+// id 21
+checksat  tmp_2078::bnd<b_1971,v',bg_1952> * xs'::node<d_1944,xsnext_2117>&
+qmin_2183=v' & !(b') & xsnext_1972!=null & flted_9_1943+1=n & sm<=d_1944 & 
+d_1944<bg & sm_1941=sm & bg_1942=bg & v_bool_74_1365' & xs'!=null & 0<n & 
+xs'=xs & v'=d_1944 & n_1950=flted_9_1943 & sm_1951=sm_1941 & 
+bg_1952=bg_1942 & 0<=flted_9_1943 & n_1950=b_1971+a_1970 & 0<=n_1950 & 
+tmp_2078=null & !(v_bool_81_1351') & n_2090=a_1970 & sm_2091=sm_1951 & 
+bg_2092=v' & 0<=a_1970 & sm_2091<=smres_2115 & bgres_2116<bg_2092 & 
+0<=n_2090 & v_node_94_1364'=xsnext_2117 & nn=n_2090 & s0=smres_2115 & 
+b0=bgres_2116.
+
+// id 22
+checksat  tmp_2078::bnd<b_1971,v',bg_1952> * tmp'::node<v',tmp_2078> * 
+xs'::node<d_1944,xsnext_2117>&!(b') & xsnext_1972!=null & flted_9_1943+1=n & 
+sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & v_bool_74_1365' & 
+xs'!=null & 0<n & xs'=xs & v'=d_1944 & n_1950=flted_9_1943 & 
+sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & n_1950=b_1971+a_1970 & 
+0<=n_1950 & tmp_2078=null & !(v_bool_81_1351') & n_2090=a_1970 & 
+sm_2091=sm_1951 & bg_2092=v' & 0<=a_1970 & sm_2091<=smres_2115 & 
+bgres_2116<bg_2092 & 0<=n_2090 & v_node_94_1364'=xsnext_2117 & nn=n_2090 & 
+s0=smres_2115 & b0=bgres_2116.
+
+// id 23
+checksat  tmp_2078::bnd<b_1971,v',bg_1952> * 
+xsnext_2117::sll<n_2090,smres_2115,bgres_2116> * 
+xs'::node<d_1944,xsnext_2117>&v_node_94_1364'=xsnext_2117 & 0<=n_2090 & 
+bgres_2116<bg_2092 & sm_2091<=smres_2115 & 0<=a_1970 & bg_2092=v' & 
+sm_2091=sm_1951 & n_2090=a_1970 & !(v_bool_81_1351') & tmp_2078=null & 
+0<=n_1950 & n_1950=b_1971+a_1970 & 0<=flted_9_1943 & bg_1952=bg_1942 & 
+sm_1951=sm_1941 & n_1950=flted_9_1943 & v'=d_1944 & xs'=xs & 0<n & 
+xs'!=null & v_bool_74_1365' & bg_1942=bg & sm_1941=sm & d_1944<bg & 
+sm<=d_1944 & flted_9_1943+1=n & xsnext_1972!=null & !(b') & qmin_2166=v' & 
+m=1 & qmin_2166=b2 & qmin_2166=s2.
+
+// id 24
+checksat  xsnext_2117::sll<n_2090,smres_2115,bgres_2116> * 
+xs'::node<d_1944,xsnext_2117>&tmp_2078=null & b_1971=0 & 
+v_node_94_1364'=xsnext_2117 & 0<=n_2090 & bgres_2116<bg_2092 & 
+sm_2091<=smres_2115 & 0<=a_1970 & bg_2092=v' & sm_2091=sm_1951 & 
+n_2090=a_1970 & !(v_bool_81_1351') & tmp_2078=null & 0<=n_1950 & 
+n_1950=b_1971+a_1970 & 0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & 
+n_1950=flted_9_1943 & v'=d_1944 & xs'=xs & 0<n & xs'!=null & 
+v_bool_74_1365' & bg_1942=bg & sm_1941=sm & d_1944<bg & sm<=d_1944 & 
+flted_9_1943+1=n & xsnext_1972!=null & !(b') & q_2168=tmp_2078 & 
+((b_1971=0 | tmp_2078=null)).
+
+// id 25
+checksat  tmp_2078::bnd<b_1971,v',bg_1952> * tmp'::node<v',tmp_2078> * 
+xsnext_2117::sll<n_2090,smres_2115,bgres_2116> * 
+xs'::node<d_1944,xsnext_2117>&!(b') & xsnext_1972!=null & flted_9_1943+1=n & 
+sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & v_bool_74_1365' & 
+xs'!=null & 0<n & xs'=xs & v'=d_1944 & n_1950=flted_9_1943 & 
+sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & n_1950=b_1971+a_1970 & 
+0<=n_1950 & tmp_2078=null & !(v_bool_81_1351') & n_2090=a_1970 & 
+sm_2091=sm_1951 & bg_2092=v' & 0<=a_1970 & sm_2091<=smres_2115 & 
+bgres_2116<bg_2092 & 0<=n_2090 & v_node_94_1364'=xsnext_2117.
+
+// id 26
+checksat  tmp_2078::bnd<b_1971,v',bg_1952> * 
+xsnext_2117::sll<n_2090,smres_2115,bgres_2116> * 
+xs'::node<d_1944,xsnext_2117>&qmin_2166=v' & !(b') & xsnext_1972!=null & 
+flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & 
+v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & v'=d_1944 & 
+n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & 
+n_1950=b_1971+a_1970 & 0<=n_1950 & tmp_2078=null & !(v_bool_81_1351') & 
+n_2090=a_1970 & sm_2091=sm_1951 & bg_2092=v' & 0<=a_1970 & 
+sm_2091<=smres_2115 & bgres_2116<bg_2092 & 0<=n_2090 & 
+v_node_94_1364'=xsnext_2117.
+
+// id 27
+checksat  tmp_2078::bnd<b_1971,v',bg_1952> * tmp'::node<v',tmp_2078> * 
+xsnext_2117::sll<n_2090,smres_2115,bgres_2116> * 
+xs'::node<d_1944,xsnext_2117>&!(b') & xsnext_1972!=null & flted_9_1943+1=n & 
+sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & v_bool_74_1365' & 
+xs'!=null & 0<n & xs'=xs & v'=d_1944 & n_1950=flted_9_1943 & 
+sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & n_1950=b_1971+a_1970 & 
+0<=n_1950 & tmp_2078=null & !(v_bool_81_1351') & n_2090=a_1970 & 
+sm_2091=sm_1951 & bg_2092=v' & 0<=a_1970 & sm_2091<=smres_2115 & 
+bgres_2116<bg_2092 & 0<=n_2090 & v_node_94_1364'=xsnext_2117.
+
+// id 28
+checksat  (exists s0_2163,b2_2164,flted_51_2165: xs'::node<d_1944,xsnext_2113> * 
+res::sll<flted_51_2165,s0_2163,b2_2164>&n_2063+1=m & s2<=qs_2147 & v'=s2 & 
+bgres_2088=b2 & v'<=qs_2147 & qs_2147=smres_2087 & q_2146=tmp_2076 & !(b') & 
+0<=n_2063 & bgres_2088<bg_2065 & sm_2064<=smres_2087 & 0<=b_1971 & 
+bg_2065=bg_1952 & sm_2064=v' & n_2063=b_1971 & xsnext_1972!=null & 
+flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & 
+v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & v'=d_1944 & 
+n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & 
+n_1950=b_1971+a_1970 & 0<=n_1950 & tmp_2089!=null & v_bool_81_1351' & 
+n_2090=a_1970 & sm_2091=sm_1951 & bg_2092=v' & 0<=a_1970 & 
+sm_2091<=smres_2111 & bgres_2112<bg_2092 & 0<=n_2090 & 
+v_node_94_1364'=xsnext_2113 & nn=n_2090 & s0=smres_2111 & b0=bgres_2112 & 
+1<=n_2063 & smres_2087<=bgres_2088 & tmp_2076!=null & tmp'!=null & 
+1<=n_2090 & smres_2111<=bgres_2112 & xsnext_2113!=null & flted_51_2165=m+
+nn & s0_2163=s0 & b2_2164=b2 & 1<=nn & s0<=b0 & v_node_94_1364'!=null & 
+1<=m & s2<=b2 & tmp'!=null).
+
+// id 29
+checksat  xs'::node<d_1944,xsnext_2113>&b0=bgres_2112 & s0=smres_2111 & nn=n_2090 & 
+v_node_94_1364'=xsnext_2113 & 0<=n_2090 & bgres_2112<bg_2092 & 
+sm_2091<=smres_2111 & 0<=a_1970 & bg_2092=v' & sm_2091=sm_1951 & 
+n_2090=a_1970 & v_bool_81_1351' & tmp_2089!=null & 0<=n_1950 & n_1950=b_1971+
+a_1970 & 0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & 
+n_1950=flted_9_1943 & v'=d_1944 & xs'=xs & 0<n & xs'!=null & 
+v_bool_74_1365' & bg_1942=bg & sm_1941=sm & d_1944<bg & sm<=d_1944 & 
+flted_9_1943+1=n & xsnext_1972!=null & n_2063=b_1971 & sm_2064=v' & 
+bg_2065=bg_1952 & 0<=b_1971 & sm_2064<=smres_2087 & bgres_2088<bg_2065 & 
+0<=n_2063 & !(b') & q_2146=tmp_2076 & qs_2147=smres_2087 & v'<=qs_2147 & 
+bgres_2088=b2 & v'=s2 & s2<=qs_2147 & n_2063+1=m.
+
+// id 30
+checksat  xs'::node<d_1944,xsnext_2113>&b0=bgres_2112 & s0=smres_2111 & nn=n_2090 & 
+v_node_94_1364'=xsnext_2113 & 0<=n_2090 & bgres_2112<bg_2092 & 
+sm_2091<=smres_2111 & 0<=a_1970 & bg_2092=v' & sm_2091=sm_1951 & 
+n_2090=a_1970 & v_bool_81_1351' & tmp_2089!=null & 0<=n_1950 & n_1950=b_1971+
+a_1970 & 0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & 
+n_1950=flted_9_1943 & v'=d_1944 & xs'=xs & 0<n & xs'!=null & 
+v_bool_74_1365' & bg_1942=bg & sm_1941=sm & d_1944<bg & sm<=d_1944 & 
+flted_9_1943+1=n & xsnext_1972!=null & n_2063=b_1971 & sm_2064=v' & 
+bg_2065=bg_1952 & 0<=b_1971 & sm_2064<=smres_2087 & bgres_2088<bg_2065 & 
+0<=n_2063 & !(b') & q_2146=tmp_2076 & qs_2147=smres_2087 & v'<=qs_2147 & 
+bgres_2088=b2 & v'=s2 & s2<=qs_2147 & n_2063+1=m.
+
+// id 31
+checksat  xs'::node<d_1944,xsnext_2113>&b0=bgres_2112 & s0=smres_2111 & nn=n_2090 & 
+v_node_94_1364'=xsnext_2113 & 0<=n_2090 & bgres_2112<bg_2092 & 
+sm_2091<=smres_2111 & 0<=a_1970 & bg_2092=v' & sm_2091=sm_1951 & 
+n_2090=a_1970 & v_bool_81_1351' & tmp_2089!=null & 0<=n_1950 & n_1950=b_1971+
+a_1970 & 0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & 
+n_1950=flted_9_1943 & v'=d_1944 & xs'=xs & 0<n & xs'!=null & 
+v_bool_74_1365' & bg_1942=bg & sm_1941=sm & d_1944<bg & sm<=d_1944 & 
+flted_9_1943+1=n & xsnext_1972!=null & n_2063=b_1971 & sm_2064=v' & 
+bg_2065=bg_1952 & 0<=b_1971 & sm_2064<=smres_2087 & bgres_2088<bg_2065 & 
+0<=n_2063 & !(b') & q_2146=tmp_2076 & qs_2147=smres_2087 & v'<=qs_2147 & 
+bgres_2088=b2 & v'=s2 & s2<=qs_2147 & n_2063+1=m.
+
+// id 32
+checksat  xs'::node<d_1944,xsnext_2113>&qs_2147=smres_2087 & q_2146=tmp_2076 & 
+!(b') & 0<=n_2063 & bgres_2088<bg_2065 & sm_2064<=smres_2087 & 0<=b_1971 & 
+bg_2065=bg_1952 & sm_2064=v' & n_2063=b_1971 & xsnext_1972!=null & 
+flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & 
+v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & v'=d_1944 & 
+n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & 
+n_1950=b_1971+a_1970 & 0<=n_1950 & tmp_2089!=null & v_bool_81_1351' & 
+n_2090=a_1970 & sm_2091=sm_1951 & bg_2092=v' & 0<=a_1970 & 
+sm_2091<=smres_2111 & bgres_2112<bg_2092 & 0<=n_2090 & 
+v_node_94_1364'=xsnext_2113 & nn=n_2090 & s0=smres_2111 & b0=bgres_2112.
+
+// id 33
+checksat  tmp_2076::sll<n_2063,smres_2087,bgres_2088> * tmp'::node<v',tmp_2076> * 
+xs'::node<d_1944,xsnext_2113>&!(b') & 0<=n_2063 & bgres_2088<bg_2065 & 
+sm_2064<=smres_2087 & 0<=b_1971 & bg_2065=bg_1952 & sm_2064=v' & 
+n_2063=b_1971 & xsnext_1972!=null & flted_9_1943+1=n & sm<=d_1944 & 
+d_1944<bg & sm_1941=sm & bg_1942=bg & v_bool_74_1365' & xs'!=null & 0<n & 
+xs'=xs & v'=d_1944 & n_1950=flted_9_1943 & sm_1951=sm_1941 & 
+bg_1952=bg_1942 & 0<=flted_9_1943 & n_1950=b_1971+a_1970 & 0<=n_1950 & 
+tmp_2089!=null & v_bool_81_1351' & n_2090=a_1970 & sm_2091=sm_1951 & 
+bg_2092=v' & 0<=a_1970 & sm_2091<=smres_2111 & bgres_2112<bg_2092 & 
+0<=n_2090 & v_node_94_1364'=xsnext_2113 & nn=n_2090 & s0=smres_2111 & 
+b0=bgres_2112.
+
+// id 34
+checksat  tmp_2076::sll<n_2063,smres_2087,bgres_2088> * tmp'::node<v',tmp_2076> * 
+xs'::node<d_1944,xsnext_2113>&!(b') & 0<=n_2063 & bgres_2088<bg_2065 & 
+sm_2064<=smres_2087 & 0<=b_1971 & bg_2065=bg_1952 & sm_2064=v' & 
+n_2063=b_1971 & xsnext_1972!=null & flted_9_1943+1=n & sm<=d_1944 & 
+d_1944<bg & sm_1941=sm & bg_1942=bg & v_bool_74_1365' & xs'!=null & 0<n & 
+xs'=xs & v'=d_1944 & n_1950=flted_9_1943 & sm_1951=sm_1941 & 
+bg_1952=bg_1942 & 0<=flted_9_1943 & n_1950=b_1971+a_1970 & 0<=n_1950 & 
+tmp_2089!=null & v_bool_81_1351' & n_2090=a_1970 & sm_2091=sm_1951 & 
+bg_2092=v' & 0<=a_1970 & sm_2091<=smres_2111 & bgres_2112<bg_2092 & 
+0<=n_2090 & v_node_94_1364'=xsnext_2113 & nn=n_2090 & s0=smres_2111 & 
+b0=bgres_2112.
+
+// id 35
+checksat  xsnext_2113::sll<n_2090,smres_2111,bgres_2112> * 
+xs'::node<d_1944,xsnext_2113>&v_node_94_1364'=xsnext_2113 & 0<=n_2090 & 
+bgres_2112<bg_2092 & sm_2091<=smres_2111 & 0<=a_1970 & bg_2092=v' & 
+sm_2091=sm_1951 & n_2090=a_1970 & v_bool_81_1351' & tmp_2089!=null & 
+0<=n_1950 & n_1950=b_1971+a_1970 & 0<=flted_9_1943 & bg_1952=bg_1942 & 
+sm_1951=sm_1941 & n_1950=flted_9_1943 & v'=d_1944 & xs'=xs & 0<n & 
+xs'!=null & v_bool_74_1365' & bg_1942=bg & sm_1941=sm & d_1944<bg & 
+sm<=d_1944 & flted_9_1943+1=n & xsnext_1972!=null & n_2063=b_1971 & 
+sm_2064=v' & bg_2065=bg_1952 & 0<=b_1971 & sm_2064<=smres_2087 & 
+bgres_2088<bg_2065 & 0<=n_2063 & !(b') & q_2127=tmp_2076 & 
+qs_2128=smres_2087 & v'<=qs_2128 & bgres_2088=b2 & v'=s2 & s2<=qs_2128 & 
+n_2063+1=m.
+
+// id 36
+checksat  xsnext_2113::sll<n_2090,smres_2111,bgres_2112> * 
+xs'::node<d_1944,xsnext_2113>&qs_2128=smres_2087 & q_2127=tmp_2076 & !(b') & 
+0<=n_2063 & bgres_2088<bg_2065 & sm_2064<=smres_2087 & 0<=b_1971 & 
+bg_2065=bg_1952 & sm_2064=v' & n_2063=b_1971 & xsnext_1972!=null & 
+flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & 
+v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & v'=d_1944 & 
+n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & 
+n_1950=b_1971+a_1970 & 0<=n_1950 & tmp_2089!=null & v_bool_81_1351' & 
+n_2090=a_1970 & sm_2091=sm_1951 & bg_2092=v' & 0<=a_1970 & 
+sm_2091<=smres_2111 & bgres_2112<bg_2092 & 0<=n_2090 & 
+v_node_94_1364'=xsnext_2113.
+
+// id 37
+checksat  tmp_2076::sll<n_2063,smres_2087,bgres_2088> * tmp'::node<v',tmp_2076> * 
+xsnext_2113::sll<n_2090,smres_2111,bgres_2112> * 
+xs'::node<d_1944,xsnext_2113>&!(b') & 0<=n_2063 & bgres_2088<bg_2065 & 
+sm_2064<=smres_2087 & 0<=b_1971 & bg_2065=bg_1952 & sm_2064=v' & 
+n_2063=b_1971 & xsnext_1972!=null & flted_9_1943+1=n & sm<=d_1944 & 
+d_1944<bg & sm_1941=sm & bg_1942=bg & v_bool_74_1365' & xs'!=null & 0<n & 
+xs'=xs & v'=d_1944 & n_1950=flted_9_1943 & sm_1951=sm_1941 & 
+bg_1952=bg_1942 & 0<=flted_9_1943 & n_1950=b_1971+a_1970 & 0<=n_1950 & 
+tmp_2089!=null & v_bool_81_1351' & n_2090=a_1970 & sm_2091=sm_1951 & 
+bg_2092=v' & 0<=a_1970 & sm_2091<=smres_2111 & bgres_2112<bg_2092 & 
+0<=n_2090 & v_node_94_1364'=xsnext_2113.
+
+// id 38
+checksat  tmp_2076::sll<n_2063,smres_2087,bgres_2088> * tmp'::node<v',tmp_2076> * 
+xsnext_2113::sll<n_2090,smres_2111,bgres_2112> * 
+xs'::node<d_1944,xsnext_2113>&!(b') & 0<=n_2063 & bgres_2088<bg_2065 & 
+sm_2064<=smres_2087 & 0<=b_1971 & bg_2065=bg_1952 & sm_2064=v' & 
+n_2063=b_1971 & xsnext_1972!=null & flted_9_1943+1=n & sm<=d_1944 & 
+d_1944<bg & sm_1941=sm & bg_1942=bg & v_bool_74_1365' & xs'!=null & 0<n & 
+xs'=xs & v'=d_1944 & n_1950=flted_9_1943 & sm_1951=sm_1941 & 
+bg_1952=bg_1942 & 0<=flted_9_1943 & n_1950=b_1971+a_1970 & 0<=n_1950 & 
+tmp_2089!=null & v_bool_81_1351' & n_2090=a_1970 & sm_2091=sm_1951 & 
+bg_2092=v' & 0<=a_1970 & sm_2091<=smres_2111 & bgres_2112<bg_2092 & 
+0<=n_2090 & v_node_94_1364'=xsnext_2113.
+
+// id 39
+checksat  tmp_2078::bnd<b_1971,v',bg_1952> * tmp'::node<v',tmp_2078> * 
+xsnext_2117::sll<n_2090,smres_2115,bgres_2116> * 
+xs'::node<d_1944,xsnext_2117>&next_94_1359'=xsnext_2117 & 
+val_94_1358'=d_1944 & 0<=n_2090 & bgres_2116<bg_2092 & sm_2091<=smres_2115 & 
+0<=a_1970 & bg_2092=v' & sm_2091=sm_1951 & n_2090=a_1970 & 
+!(v_bool_81_1351') & tmp_2078=null & 0<=n_1950 & n_1950=b_1971+a_1970 & 
+0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & n_1950=flted_9_1943 & 
+v'=d_1944 & xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & 
+sm_1941=sm & d_1944<bg & sm<=d_1944 & flted_9_1943+1=n & xsnext_1972!=null & 
+!(b').
+
+// id 40
+checksat  tmp_2076::sll<n_2063,smres_2087,bgres_2088> * tmp'::node<v',tmp_2076> * 
+xsnext_2113::sll<n_2090,smres_2111,bgres_2112> * 
+xs'::node<d_1944,xsnext_2113>&next_94_1359'=xsnext_2113 & 
+val_94_1358'=d_1944 & 0<=n_2090 & bgres_2112<bg_2092 & sm_2091<=smres_2111 & 
+0<=a_1970 & bg_2092=v' & sm_2091=sm_1951 & n_2090=a_1970 & v_bool_81_1351' & 
+tmp_2089!=null & 0<=n_1950 & n_1950=b_1971+a_1970 & 0<=flted_9_1943 & 
+bg_1952=bg_1942 & sm_1951=sm_1941 & n_1950=flted_9_1943 & v'=d_1944 & 
+xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & sm_1941=sm & 
+d_1944<bg & sm<=d_1944 & flted_9_1943+1=n & xsnext_1972!=null & 
+n_2063=b_1971 & sm_2064=v' & bg_2065=bg_1952 & 0<=b_1971 & 
+sm_2064<=smres_2087 & bgres_2088<bg_2065 & 0<=n_2063 & !(b').
+
+// id 41
+checksat  (exists n_2100,smres_2101,bgres_2102,
+xsnext_2099: tmp_2078::bnd<b_1971,v',bg_1952> * tmp'::node<v',tmp_2078> * 
+xsnext'::sll<n_2100,smres_2101,bgres_2102>&!(b') & xsnext_1972!=null & 
+flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & 
+v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & v'=d_1944 & 
+n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & 
+n_1950=b_1971+a_1970 & 0<=n_1950 & tmp_2078=null & !(v_bool_81_1351') & 
+xsval'=d_1944 & xsnext_2099=xsnext_1972 & n_2090=a_1970 & sm_2091=sm_1951 & 
+bg_2092=v' & 0<=a_1970 & sm_2091<=smres_2101 & bgres_2102<bg_2092 & 
+n_2100=n_2090 & 0<=n_2090).
+
+// id 42
+checksat  tmp_2078::bnd<b_1971,v',bg_1952> * tmp'::node<v',tmp_2078>&bg_2092=v' & 
+sm_2091=sm_1951 & n_2090=a_1970 & xsnext'=xsnext_1972 & xsval'=d_1944 & 
+!(v_bool_81_1351') & tmp_2078=null & 0<=n_1950 & n_1950=b_1971+a_1970 & 
+0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & n_1950=flted_9_1943 & 
+v'=d_1944 & xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & 
+sm_1941=sm & d_1944<bg & sm<=d_1944 & flted_9_1943+1=n & xsnext_1972!=null & 
+!(b').
+
+// id 43
+checksat  tmp_2078::bnd<b_1971,v',bg_1952> * tmp'::node<v',tmp_2078>&bg_2092=v' & 
+sm_2091=sm_1951 & n_2090=a_1970 & xsnext'=xsnext_1972 & xsval'=d_1944 & 
+!(v_bool_81_1351') & tmp_2078=null & 0<=n_1950 & n_1950=b_1971+a_1970 & 
+0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & n_1950=flted_9_1943 & 
+v'=d_1944 & xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & 
+sm_1941=sm & d_1944<bg & sm<=d_1944 & flted_9_1943+1=n & xsnext_1972!=null & 
+!(b').
+
+// id 44
+checksat  (exists n_2096,smres_2097,bgres_2098,
+xsnext_2095: tmp_2076::sll<n_2063,smres_2087,bgres_2088> * 
+tmp'::node<v',tmp_2076> * xsnext'::sll<n_2096,smres_2097,bgres_2098>&!(b') & 
+0<=n_2063 & bgres_2088<bg_2065 & sm_2064<=smres_2087 & 0<=b_1971 & 
+bg_2065=bg_1952 & sm_2064=v' & n_2063=b_1971 & xsnext_1972!=null & 
+flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & 
+v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & v'=d_1944 & 
+n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & 
+n_1950=b_1971+a_1970 & 0<=n_1950 & tmp_2089!=null & v_bool_81_1351' & 
+xsval'=d_1944 & xsnext_2095=xsnext_1972 & n_2090=a_1970 & sm_2091=sm_1951 & 
+bg_2092=v' & 0<=a_1970 & sm_2091<=smres_2097 & bgres_2098<bg_2092 & 
+n_2096=n_2090 & 0<=n_2090).
+
+// id 45
+checksat  tmp_2076::sll<n_2063,smres_2087,bgres_2088> * tmp'::node<v',tmp_2076>&
+bg_2092=v' & sm_2091=sm_1951 & n_2090=a_1970 & xsnext'=xsnext_1972 & 
+xsval'=d_1944 & v_bool_81_1351' & tmp_2089!=null & 0<=n_1950 & n_1950=b_1971+
+a_1970 & 0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & 
+n_1950=flted_9_1943 & v'=d_1944 & xs'=xs & 0<n & xs'!=null & 
+v_bool_74_1365' & bg_1942=bg & sm_1941=sm & d_1944<bg & sm<=d_1944 & 
+flted_9_1943+1=n & xsnext_1972!=null & n_2063=b_1971 & sm_2064=v' & 
+bg_2065=bg_1952 & 0<=b_1971 & sm_2064<=smres_2087 & bgres_2088<bg_2065 & 
+0<=n_2063 & !(b').
+
+// id 46
+checksat  tmp_2076::sll<n_2063,smres_2087,bgres_2088> * tmp'::node<v',tmp_2076>&
+bg_2092=v' & sm_2091=sm_1951 & n_2090=a_1970 & xsnext'=xsnext_1972 & 
+xsval'=d_1944 & v_bool_81_1351' & tmp_2089!=null & 0<=n_1950 & n_1950=b_1971+
+a_1970 & 0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & 
+n_1950=flted_9_1943 & v'=d_1944 & xs'=xs & 0<n & xs'!=null & 
+v_bool_74_1365' & bg_1942=bg & sm_1941=sm & d_1944<bg & sm<=d_1944 & 
+flted_9_1943+1=n & xsnext_1972!=null & n_2063=b_1971 & sm_2064=v' & 
+bg_2065=bg_1952 & 0<=b_1971 & sm_2064<=smres_2087 & bgres_2088<bg_2065 & 
+0<=n_2063 & !(b').
+
+// id 47
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp_2078::bnd<b_1971,v',bg_1952> * 
+tmp'::node<v',tmp_2078>&xsnext'=xsnext_1972 & xsval'=d_1944 & 
+!(v_bool_81_1351') & tmp_2078=null & 0<=n_1950 & n_1950=b_1971+a_1970 & 
+0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & n_1950=flted_9_1943 & 
+v'=d_1944 & xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & 
+sm_1941=sm & d_1944<bg & sm<=d_1944 & flted_9_1943+1=n & xsnext_1972!=null & 
+!(b').
+
+// id 48
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * 
+tmp_2076::sll<n_2063,smres_2087,bgres_2088> * tmp'::node<v',tmp_2076>&
+xsnext'=xsnext_1972 & xsval'=d_1944 & v_bool_81_1351' & tmp_2089!=null & 
+0<=n_1950 & n_1950=b_1971+a_1970 & 0<=flted_9_1943 & bg_1952=bg_1942 & 
+sm_1951=sm_1941 & n_1950=flted_9_1943 & v'=d_1944 & xs'=xs & 0<n & 
+xs'!=null & v_bool_74_1365' & bg_1942=bg & sm_1941=sm & d_1944<bg & 
+sm<=d_1944 & flted_9_1943+1=n & xsnext_1972!=null & n_2063=b_1971 & 
+sm_2064=v' & bg_2065=bg_1952 & 0<=b_1971 & sm_2064<=smres_2087 & 
+bgres_2088<bg_2065 & 0<=n_2063 & !(b').
+
+// id 49
+checksat  xs'::node<d_1944,xsnext_1972> * tmp'::node<v',tmp_2079>&
+!(v_bool_81_1351') & tmp_2079=null & a_1970=0 & b_1971=0 & 
+xsnext_1972=null & b' & flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & 
+sm_1941=sm & bg_1942=bg & v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & 
+v'=d_1944 & n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 
+0<=flted_9_1943 & n_1950=b_1971+a_1970 & 0<=n_1950 & !(b').
+
+// id 50
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp_2078::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972> * tmp'::node<v',tmp_2078>&!(v_bool_81_1351') & 
+tmp_2078=null & 0<=n_1950 & n_1950=b_1971+a_1970 & 0<=flted_9_1943 & 
+bg_1952=bg_1942 & sm_1951=sm_1941 & n_1950=flted_9_1943 & v'=d_1944 & 
+xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & sm_1941=sm & 
+d_1944<bg & sm<=d_1944 & flted_9_1943+1=n & !(b') & xsnext_1972!=null & !(b').
+
+// id 51
+checksat  (exists smres_2070,bgres_2071,
+tmp_2068: xsnext_1972::bnd<a_1970,sm_1951,v'> * 
+xs'::node<d_1944,xsnext_1972> * 
+tmp_2077::sll<n_2063,smres_2070,bgres_2071> * tmp'::node<v',tmp_2077>&
+v_bool_81_1351' & tmp_2068!=null & 0<=n_1950 & n_1950=b_1971+a_1970 & 
+0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & n_1950=flted_9_1943 & 
+v'=d_1944 & xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & 
+sm_1941=sm & d_1944<bg & sm<=d_1944 & flted_9_1943+1=n & b' & 
+xsnext_1972=null & n_2063=b_1971 & sm_2064=v' & bg_2065=bg_1952 & 
+0<=b_1971 & sm_2064<=smres_2070 & bgres_2071<bg_2065 & 0<=n_2063 & !(b')).
+
+// id 52
+checksat  (exists smres_2074,bgres_2075,
+tmp_2072: xsnext_1972::bnd<a_1970,sm_1951,v'> * 
+xs'::node<d_1944,xsnext_1972> * 
+tmp_2076::sll<n_2063,smres_2074,bgres_2075> * tmp'::node<v',tmp_2076>&
+v_bool_81_1351' & tmp_2072!=null & 0<=n_1950 & n_1950=b_1971+a_1970 & 
+0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & n_1950=flted_9_1943 & 
+v'=d_1944 & xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & 
+sm_1941=sm & d_1944<bg & sm<=d_1944 & flted_9_1943+1=n & !(b') & 
+xsnext_1972!=null & n_2063=b_1971 & sm_2064=v' & bg_2065=bg_1952 & 
+0<=b_1971 & sm_2064<=smres_2074 & bgres_2075<bg_2065 & 0<=n_2063 & !(b')).
+
+// id 53
+checksat  xs'::node<d_1944,xsnext_1972> * tmp'::node<v',tmp_2079>&
+!(v_bool_81_1351') & tmp_2079=null & a_1970=0 & b_1971=0 & 
+xsnext_1972=null & b' & flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & 
+sm_1941=sm & bg_1942=bg & v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & 
+v'=d_1944 & n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 
+0<=flted_9_1943 & n_1950=b_1971+a_1970 & 0<=n_1950 & b'.
+
+// id 54
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp_2078::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972> * tmp'::node<v',tmp_2078>&!(v_bool_81_1351') & 
+tmp_2078=null & 0<=n_1950 & n_1950=b_1971+a_1970 & 0<=flted_9_1943 & 
+bg_1952=bg_1942 & sm_1951=sm_1941 & n_1950=flted_9_1943 & v'=d_1944 & 
+xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & sm_1941=sm & 
+d_1944<bg & sm<=d_1944 & flted_9_1943+1=n & !(b') & xsnext_1972!=null & b'.
+
+// id 55
+checksat  (exists smres_2070,bgres_2071,
+tmp_2068: xsnext_1972::bnd<a_1970,sm_1951,v'> * 
+xs'::node<d_1944,xsnext_1972> * 
+tmp_2077::sll<n_2063,smres_2070,bgres_2071> * tmp'::node<v',tmp_2077>&
+v_bool_81_1351' & tmp_2068!=null & 0<=n_1950 & n_1950=b_1971+a_1970 & 
+0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & n_1950=flted_9_1943 & 
+v'=d_1944 & xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & 
+sm_1941=sm & d_1944<bg & sm<=d_1944 & flted_9_1943+1=n & b' & 
+xsnext_1972=null & n_2063=b_1971 & sm_2064=v' & bg_2065=bg_1952 & 
+0<=b_1971 & sm_2064<=smres_2070 & bgres_2071<bg_2065 & 0<=n_2063 & b').
+
+// id 56
+checksat  (exists smres_2074,bgres_2075,
+tmp_2072: xsnext_1972::bnd<a_1970,sm_1951,v'> * 
+xs'::node<d_1944,xsnext_1972> * 
+tmp_2076::sll<n_2063,smres_2074,bgres_2075> * tmp'::node<v',tmp_2076>&
+v_bool_81_1351' & tmp_2072!=null & 0<=n_1950 & n_1950=b_1971+a_1970 & 
+0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & n_1950=flted_9_1943 & 
+v'=d_1944 & xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & 
+sm_1941=sm & d_1944<bg & sm<=d_1944 & flted_9_1943+1=n & !(b') & 
+xsnext_1972!=null & n_2063=b_1971 & sm_2064=v' & bg_2065=bg_1952 & 
+0<=b_1971 & sm_2064<=smres_2074 & bgres_2075<bg_2065 & 0<=n_2063 & b').
+
+// id 57
+checksat  (exists n_2073,smres_2074,bgres_2075,
+tmp_2072: xsnext_1972::bnd<a_1970,sm_1951,v'> * 
+xs'::node<d_1944,xsnext_1972> * tmp'::sll<n_2073,smres_2074,bgres_2075>&
+v_bool_81_1351' & tmp_2072!=null & 0<=n_1950 & n_1950=b_1971+a_1970 & 
+0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & n_1950=flted_9_1943 & 
+v'=d_1944 & xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & 
+sm_1941=sm & d_1944<bg & sm<=d_1944 & flted_9_1943+1=n & !(b') & 
+xsnext_1972!=null & n_2063=b_1971 & sm_2064=v' & bg_2065=bg_1952 & 
+0<=b_1971 & sm_2064<=smres_2074 & bgres_2075<bg_2065 & n_2073=n_2063 & 
+0<=n_2063).
+
+// id 58
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * xs'::node<d_1944,xsnext_1972>&
+bg_2065=bg_1952 & sm_2064=v' & n_2063=b_1971 & xsnext_1972!=null & !(b') & 
+flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & 
+v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & v'=d_1944 & 
+n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & 
+n_1950=b_1971+a_1970 & 0<=n_1950 & tmp'!=null & v_bool_81_1351'.
+
+// id 59
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * xs'::node<d_1944,xsnext_1972>&
+bg_2065=bg_1952 & sm_2064=v' & n_2063=b_1971 & xsnext_1972!=null & !(b') & 
+flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & 
+v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & v'=d_1944 & 
+n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & 
+n_1950=b_1971+a_1970 & 0<=n_1950 & tmp'!=null & v_bool_81_1351'.
+
+// id 60
+checksat  (exists n_2069,smres_2070,bgres_2071,
+tmp_2068: xsnext_1972::bnd<a_1970,sm_1951,v'> * 
+xs'::node<d_1944,xsnext_1972> * tmp'::sll<n_2069,smres_2070,bgres_2071>&
+v_bool_81_1351' & tmp_2068!=null & 0<=n_1950 & n_1950=b_1971+a_1970 & 
+0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & n_1950=flted_9_1943 & 
+v'=d_1944 & xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & 
+sm_1941=sm & d_1944<bg & sm<=d_1944 & flted_9_1943+1=n & b' & 
+xsnext_1972=null & n_2063=b_1971 & sm_2064=v' & bg_2065=bg_1952 & 
+0<=b_1971 & sm_2064<=smres_2070 & bgres_2071<bg_2065 & n_2069=n_2063 & 
+0<=n_2063).
+
+// id 61
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * xs'::node<d_1944,xsnext_1972>&
+bg_2065=bg_1952 & sm_2064=v' & n_2063=b_1971 & xsnext_1972=null & b' & 
+flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & 
+v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & v'=d_1944 & 
+n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & 
+n_1950=b_1971+a_1970 & 0<=n_1950 & tmp'!=null & v_bool_81_1351'.
+
+// id 62
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * xs'::node<d_1944,xsnext_1972>&
+bg_2065=bg_1952 & sm_2064=v' & n_2063=b_1971 & xsnext_1972=null & b' & 
+flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & 
+v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & v'=d_1944 & 
+n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & 
+n_1950=b_1971+a_1970 & 0<=n_1950 & tmp'!=null & v_bool_81_1351'.
+
+// id 63
+checksat  xs'::node<d_1944,xsnext_1972>&0<=n_1950 & n_1950=b_1971+a_1970 & 
+0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & n_1950=flted_9_1943 & 
+v'=d_1944 & xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & 
+sm_1941=sm & d_1944<bg & sm<=d_1944 & flted_9_1943+1=n & b' & 
+xsnext_1972=null & tmp'=null & b_1971=0 & a_1970=0 & !(v_bool_81_1351') & 
+tmp'=null & !(v_bool_81_1351').
+
+// id 64
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp'::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972>&tmp'!=null & xsnext_1972=null & b' & 
+flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & 
+v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & v'=d_1944 & 
+n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & 
+n_1950=b_1971+a_1970 & 0<=n_1950 & v_bool_81_1351' & tmp'!=null & 
+!(v_bool_81_1351').
+
+// id 65
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp'::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972>&tmp'=null & xsnext_1972!=null & !(b') & 
+flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & 
+v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & v'=d_1944 & 
+n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & 
+n_1950=b_1971+a_1970 & 0<=n_1950 & !(v_bool_81_1351') & tmp'=null & 
+!(v_bool_81_1351').
+
+// id 66
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp'::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972>&tmp'!=null & xsnext_1972!=null & !(b') & 
+flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & 
+v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & v'=d_1944 & 
+n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & 
+n_1950=b_1971+a_1970 & 0<=n_1950 & v_bool_81_1351' & tmp'!=null & 
+!(v_bool_81_1351').
+
+// id 67
+checksat  xs'::node<d_1944,xsnext_1972>&0<=n_1950 & n_1950=b_1971+a_1970 & 
+0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & n_1950=flted_9_1943 & 
+v'=d_1944 & xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & 
+sm_1941=sm & d_1944<bg & sm<=d_1944 & flted_9_1943+1=n & b' & 
+xsnext_1972=null & tmp'=null & b_1971=0 & a_1970=0 & !(v_bool_81_1351') & 
+tmp'=null & v_bool_81_1351'.
+
+// id 68
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp'::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972>&tmp'!=null & xsnext_1972=null & b' & 
+flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & 
+v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & v'=d_1944 & 
+n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & 
+n_1950=b_1971+a_1970 & 0<=n_1950 & v_bool_81_1351' & tmp'!=null & 
+v_bool_81_1351'.
+
+// id 69
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp'::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972>&tmp'=null & xsnext_1972!=null & !(b') & 
+flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & 
+v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & v'=d_1944 & 
+n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & 
+n_1950=b_1971+a_1970 & 0<=n_1950 & !(v_bool_81_1351') & tmp'=null & 
+v_bool_81_1351'.
+
+// id 70
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp'::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972>&tmp'!=null & xsnext_1972!=null & !(b') & 
+flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & 
+v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & v'=d_1944 & 
+n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & 
+n_1950=b_1971+a_1970 & 0<=n_1950 & v_bool_81_1351' & tmp'!=null & 
+v_bool_81_1351'.
+
+// id 71
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp'::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972>&tmp'!=null & xsnext_1972!=null & !(b') & 
+flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & 
+v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & v'=d_1944 & 
+n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & 
+n_1950=b_1971+a_1970 & 0<=n_1950 & res & tmp'!=null.
+
+// id 72
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp'::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972>&0<=n_1950 & n_1950=b_1971+a_1970 & 
+0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & n_1950=flted_9_1943 & 
+v'=d_1944 & xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & 
+sm_1941=sm & d_1944<bg & sm<=d_1944 & flted_9_1943+1=n & !(b') & 
+xsnext_1972!=null & tmp'!=null.
+
+// id 73
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp'::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972>&0<=n_1950 & n_1950=b_1971+a_1970 & 
+0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & n_1950=flted_9_1943 & 
+v'=d_1944 & xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & 
+sm_1941=sm & d_1944<bg & sm<=d_1944 & flted_9_1943+1=n & !(b') & 
+xsnext_1972!=null & tmp'!=null.
+
+// id 74
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp'::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972>&xsnext_1972!=null & 0<=n_1950 & n_1950=b_1971+
+a_1970 & 0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & 
+n_1950=flted_9_1943 & v'=d_1944 & xs'=xs & 0<n & xs'!=null & 
+v_bool_74_1365' & bg_1942=bg & sm_1941=sm & d_1944<bg & sm<=d_1944 & 
+flted_9_1943+1=n & !(b') & xsnext_1972!=null & tmp'!=null.
+
+// id 75
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp'::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972>&tmp'=null & xsnext_1972!=null & !(b') & 
+flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & 
+v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & v'=d_1944 & 
+n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & 
+n_1950=b_1971+a_1970 & 0<=n_1950 & !(res) & tmp'=null.
+
+// id 76
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp'::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972>&0<=n_1950 & n_1950=b_1971+a_1970 & 
+0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & n_1950=flted_9_1943 & 
+v'=d_1944 & xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & 
+sm_1941=sm & d_1944<bg & sm<=d_1944 & flted_9_1943+1=n & !(b') & 
+xsnext_1972!=null & tmp'=null.
+
+// id 77
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp'::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972>&0<=n_1950 & n_1950=b_1971+a_1970 & 
+0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & n_1950=flted_9_1943 & 
+v'=d_1944 & xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & 
+sm_1941=sm & d_1944<bg & sm<=d_1944 & flted_9_1943+1=n & !(b') & 
+xsnext_1972!=null & tmp'=null.
+
+// id 78
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp'::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972>&xsnext_1972!=null & 0<=n_1950 & n_1950=b_1971+
+a_1970 & 0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & 
+n_1950=flted_9_1943 & v'=d_1944 & xs'=xs & 0<n & xs'!=null & 
+v_bool_74_1365' & bg_1942=bg & sm_1941=sm & d_1944<bg & sm<=d_1944 & 
+flted_9_1943+1=n & !(b') & xsnext_1972!=null & tmp'=null.
+
+// id 79
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp'::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972>&tmp'!=null & xsnext_1972=null & b' & 
+flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & 
+v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & v'=d_1944 & 
+n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & 
+n_1950=b_1971+a_1970 & 0<=n_1950 & res & tmp'!=null.
+
+// id 80
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp'::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972>&0<=n_1950 & n_1950=b_1971+a_1970 & 
+0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & n_1950=flted_9_1943 & 
+v'=d_1944 & xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & 
+sm_1941=sm & d_1944<bg & sm<=d_1944 & flted_9_1943+1=n & b' & 
+xsnext_1972=null & tmp'!=null.
+
+// id 81
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp'::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972>&0<=n_1950 & n_1950=b_1971+a_1970 & 
+0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & n_1950=flted_9_1943 & 
+v'=d_1944 & xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & 
+sm_1941=sm & d_1944<bg & sm<=d_1944 & flted_9_1943+1=n & b' & 
+xsnext_1972=null & tmp'!=null.
+
+// id 82
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp'::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972>&xsnext_1972=null & 0<=n_1950 & n_1950=b_1971+
+a_1970 & 0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & 
+n_1950=flted_9_1943 & v'=d_1944 & xs'=xs & 0<n & xs'!=null & 
+v_bool_74_1365' & bg_1942=bg & sm_1941=sm & d_1944<bg & sm<=d_1944 & 
+flted_9_1943+1=n & b' & xsnext_1972=null & tmp'!=null.
+
+// id 83
+checksat  xs'::node<d_1944,xsnext_1972>&0<=n_1950 & n_1950=b_1971+a_1970 & 
+0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & n_1950=flted_9_1943 & 
+v'=d_1944 & xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & 
+sm_1941=sm & d_1944<bg & sm<=d_1944 & flted_9_1943+1=n & b' & 
+xsnext_1972=null & tmp'=null & b_1971=0 & a_1970=0 & !(res) & tmp'=null.
+
+// id 84
+checksat  xs'::node<d_1944,xsnext_1972>&a_1970=0 & b_1971=0 & tmp'=null & 
+xsnext_1972=null & b' & flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & 
+sm_1941=sm & bg_1942=bg & v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & 
+v'=d_1944 & n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 
+0<=flted_9_1943 & n_1950=b_1971+a_1970 & 0<=n_1950.
+
+// id 85
+checksat  xs'::node<d_1944,xsnext_1972>&a_1970=0 & b_1971=0 & tmp'=null & 
+xsnext_1972=null & b' & flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & 
+sm_1941=sm & bg_1942=bg & v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & 
+v'=d_1944 & n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 
+0<=flted_9_1943 & n_1950=b_1971+a_1970 & 0<=n_1950.
+
+// id 86
+checksat  xs'::node<d_1944,xsnext_1972>&xsnext_1972=null & a_1970=0 & 
+xsnext_1972=null & b_1971=0 & tmp'=null & xsnext_1972=null & b' & 
+flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & 
+v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & v'=d_1944 & 
+n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & 
+n_1950=b_1971+a_1970 & 0<=n_1950.
+
+// id 87
+checksat  (exists sm_2049,bg_2050,flted_9_2051,d_2052,p_2053,sm_2054,bg_2055,
+flted_9_2056,d_2057,p_2058: xsnext_1972::node<d_2052,p_2053> * 
+p_2053::bnd<flted_9_2051,sm_2049,bg_2050> * 
+xsnext_1972::node<d_2057,p_2058> * 
+p_2058::bnd<flted_9_2056,sm_2054,bg_2055> * xs'::node<d_1944,xsnext_1972>&
+flted_9_2051+1=a_1970 & sm_1951<=d_2052 & d_2052<v' & sm_2049=sm_1951 & 
+bg_2050=v' & flted_9_2056+1=b_1971 & v'<=d_2057 & d_2057<bg_1952 & 
+sm_2054=v' & bg_2055=bg_1952 & tmp'=null & xsnext_1972=null & b' & 
+flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & 
+v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & v'=d_1944 & 
+n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & 
+n_1950=b_1971+a_1970 & 0<=n_1950).
+
+// id 88
+checksat  (exists sm_2044,bg_2045,flted_9_2046,d_2047,
+p_2048: xsnext_1972::node<d_2047,p_2048> * 
+p_2048::bnd<flted_9_2046,sm_2044,bg_2045> * xs'::node<d_1944,xsnext_1972>&
+flted_9_2046+1=a_1970 & sm_1951<=d_2047 & d_2047<v' & sm_2044=sm_1951 & 
+bg_2045=v' & xsnext_1972=null & b_1971=0 & tmp'=null & xsnext_1972=null & 
+b' & flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & 
+v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & v'=d_1944 & 
+n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & 
+n_1950=b_1971+a_1970 & 0<=n_1950).
+
+// id 89
+checksat  (exists sm_2039,bg_2040,flted_9_2041,d_2042,
+p_2043: xsnext_1972::node<d_2042,p_2043> * 
+p_2043::bnd<flted_9_2041,sm_2039,bg_2040> * xs'::node<d_1944,xsnext_1972>&
+xsnext_1972=null & a_1970=0 & flted_9_2041+1=b_1971 & v'<=d_2042 & 
+d_2042<bg_1952 & sm_2039=v' & bg_2040=bg_1952 & tmp'=null & 
+xsnext_1972=null & b' & flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & 
+sm_1941=sm & bg_1942=bg & v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & 
+v'=d_1944 & n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 
+0<=flted_9_1943 & n_1950=b_1971+a_1970 & 0<=n_1950).
+
+// id 90
+checksat  xs'::node<d_1944,xsnext_1972>&xsnext_1972=null & a_1970=0 & 
+xsnext_1972=null & b_1971=0 & tmp'=null & xsnext_1972=null & b' & 
+flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & sm_1941=sm & bg_1942=bg & 
+v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & v'=d_1944 & 
+n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & 
+n_1950=b_1971+a_1970 & 0<=n_1950.
+
+// id 91
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp'::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972>&xsnext_1972=null & 0<=n_1950 & n_1950=b_1971+
+a_1970 & 0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & 
+n_1950=flted_9_1943 & v'=d_1944 & xs'=xs & 0<n & xs'!=null & 
+v_bool_74_1365' & bg_1942=bg & sm_1941=sm & d_1944<bg & sm<=d_1944 & 
+flted_9_1943+1=n & b' & xsnext_1972=null & tmp'=null.
+
+// id 92
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp'::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972>&v_node_80_1342'!=null & 
+v_node_80_1342'=xsnext_1972 & 0<=n_1950 & n_1950=b_1971+a_1970 & 
+0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & n_1950=flted_9_1943 & 
+v'=d_1944 & xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & 
+sm_1941=sm & d_1944<bg & sm<=d_1944 & flted_9_1943+1=n & !(res) & 
+v_node_80_1342'!=null.
+
+// id 93
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp'::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972>&flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & 
+sm_1941=sm & bg_1942=bg & v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & 
+v'=d_1944 & n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 
+0<=flted_9_1943 & n_1950=b_1971+a_1970 & 0<=n_1950 & 
+v_node_80_1342'=xsnext_1972 & v_node_80_1342'!=null.
+
+// id 94
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp'::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972>&flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & 
+sm_1941=sm & bg_1942=bg & v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & 
+v'=d_1944 & n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 
+0<=flted_9_1943 & n_1950=b_1971+a_1970 & 0<=n_1950 & 
+v_node_80_1342'=xsnext_1972 & v_node_80_1342'!=null.
+
+// id 95
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp'::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972>&flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & 
+sm_1941=sm & bg_1942=bg & v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & 
+v'=d_1944 & n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 
+0<=flted_9_1943 & n_1950=b_1971+a_1970 & 0<=n_1950 & 
+v_node_80_1342'=xsnext_1972 & v_node_80_1342'!=null.
+
+// id 96
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp'::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972>&v_node_80_1342'=null & 
+v_node_80_1342'=xsnext_1972 & 0<=n_1950 & n_1950=b_1971+a_1970 & 
+0<=flted_9_1943 & bg_1952=bg_1942 & sm_1951=sm_1941 & n_1950=flted_9_1943 & 
+v'=d_1944 & xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & 
+sm_1941=sm & d_1944<bg & sm<=d_1944 & flted_9_1943+1=n & res & 
+v_node_80_1342'=null.
+
+// id 97
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp'::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972>&flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & 
+sm_1941=sm & bg_1942=bg & v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & 
+v'=d_1944 & n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 
+0<=flted_9_1943 & n_1950=b_1971+a_1970 & 0<=n_1950 & 
+v_node_80_1342'=xsnext_1972 & v_node_80_1342'=null.
+
+// id 98
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp'::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972>&flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & 
+sm_1941=sm & bg_1942=bg & v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & 
+v'=d_1944 & n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 
+0<=flted_9_1943 & n_1950=b_1971+a_1970 & 0<=n_1950 & 
+v_node_80_1342'=xsnext_1972 & v_node_80_1342'=null.
+
+// id 99
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp'::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972>&flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & 
+sm_1941=sm & bg_1942=bg & v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & 
+v'=d_1944 & n_1950=flted_9_1943 & sm_1951=sm_1941 & bg_1952=bg_1942 & 
+0<=flted_9_1943 & n_1950=b_1971+a_1970 & 0<=n_1950 & 
+v_node_80_1342'=xsnext_1972 & v_node_80_1342'=null.
+
+// id 100
+checksat  xsnext_1972::bnd<a_1970,sm_1951,v'> * tmp'::bnd<b_1971,v',bg_1952> * 
+xs'::node<d_1944,xsnext_1972>&next_80_1337'=xsnext_1972 & 
+val_80_1336'=d_1944 & 0<=n_1950 & n_1950=b_1971+a_1970 & 0<=flted_9_1943 & 
+bg_1952=bg_1942 & sm_1951=sm_1941 & n_1950=flted_9_1943 & v'=d_1944 & 
+xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & sm_1941=sm & 
+d_1944<bg & sm<=d_1944 & flted_9_1943+1=n.
+
+// id 101
+checksat  (exists sm_1958,c_1959,c_1960,bg_1961,a_1962,b_1963,
+xsnext_1957: xsnext'::bnd<a_1962,sm_1958,c_1959> * 
+res::bnd<b_1963,c_1960,bg_1961>&flted_9_1943+1=n & sm<=d_1944 & d_1944<bg & 
+sm_1941=sm & bg_1942=bg & v_bool_74_1365' & xs'!=null & 0<n & xs'=xs & 
+v'=d_1944 & xsval'=d_1944 & xsnext_1957=p_1945 & n_1950=flted_9_1943 & 
+sm_1951=sm_1941 & bg_1952=bg_1942 & 0<=flted_9_1943 & n_1950=b_1963+a_1962 & 
+sm_1958=sm_1951 & c_1959=v' & c_1960=v' & bg_1961=bg_1952 & 0<=n_1950).
+
+// id 102
+checksat  p_1945::bnd<flted_9_1943,sm_1941,bg_1942>&xsnext'=p_1945 & xsval'=d_1944 & 
+v'=d_1944 & xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & bg_1942=bg & 
+sm_1941=sm & d_1944<bg & sm<=d_1944 & flted_9_1943+1=n.
+
+// id 103
+checksat  xs'::node<d_1944,p_1945> * p_1945::bnd<flted_9_1943,sm_1941,bg_1942>&
+next_76_1329'=p_1945 & val_76_1328'=d_1944 & xs'=xs & 0<n & xs'!=null & 
+v_bool_74_1365' & bg_1942=bg & sm_1941=sm & d_1944<bg & sm<=d_1944 & 
+flted_9_1943+1=n.
+
+// id 104
+checksat  (exists sm_1935,bg_1936,flted_9_1937,d_1938,
+p_1939: xs'::node<d_1938,p_1939> * p_1939::bnd<flted_9_1937,sm_1935,bg_1936>&
+flted_9_1937+1=n & sm<=d_1938 & d_1938<bg & sm_1935=sm & bg_1936=bg & 
+v_bool_74_1365' & xs'!=null & 0<n & xs'=xs).
+
+// id 105
+checksat  xs::bnd<n,sm,bg>&xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & xs'!=null & 
+!(v_bool_74_1365').
+
+// id 106
+checksat  xs::bnd<n,sm,bg>&xs'=xs & 0<n & xs'!=null & v_bool_74_1365' & xs'!=null & 
+v_bool_74_1365'.
+
+// id 107
+checksat  xs::bnd<n,sm,bg>&xs'=xs & 0<n & xs'!=null & res & xs'!=null.
+
+// id 108
+checksat  xs::bnd<n,sm,bg>&xs'!=null & 0<n & xs'=xs.
+
+// id 109
+checksat  xs::bnd<n,sm,bg>&xs'!=null & 0<n & xs'=xs.
+
+// id 110
+checksat  xs::bnd<n,sm,bg>&xs'=xs & 0<n & MayLoop[] & xs'!=null.
+
+// id 111
+checksat  xs::bnd<n,sm,bg>&xs'=xs & 0<n & MayLoop[] & xs'=null.
+
+// id 112
+checksat  res::bnd<b_1846,c',bg_1793>&!(v_bool_28_1524') & d_1747<c' & flted_9_1746+
+1=n & sm<=d_1747 & d_1747<bg & sm_1744=sm & bg_1745=bg & 
+!(v_bool_24_1525') & xs'!=null & c<=bg & sm<=c & c'=c & xs'=xs & 
+n_1791=flted_9_1746 & sm_1792=sm_1744 & bg_1793=bg_1745 & 0<=flted_9_1746 & 
+n_1791=b_1846+a_1845 & 0<=n_1791 & d_1854=d_1747 & p_1855=xsnext_1847 & 
+exists(a_1852:a_1845+1=a_1852) & exists(sm_1848:sm_1792=sm_1848 & 
+sm_1848<=d_1854) & exists(c_1849:c'=c_1849 & d_1854<c_1849).
+
+// id 113
+checksat  res::bnd<b_1846,c',bg_1793>&p_1855=xsnext_1847 & d_1854=d_1747 & 
+0<=n_1791 & n_1791=b_1846+a_1845 & 0<=flted_9_1746 & bg_1793=bg_1745 & 
+sm_1792=sm_1744 & n_1791=flted_9_1746 & xs'=xs & c'=c & sm<=c & c<=bg & 
+xs'!=null & !(v_bool_24_1525') & bg_1745=bg & sm_1744=sm & d_1747<bg & 
+sm<=d_1747 & flted_9_1746+1=n & d_1747<c' & !(v_bool_28_1524').
+
+// id 114
+checksat  xsnext_1847::bnd<a_1845,sm_1792,c'> * res::bnd<b_1846,c',bg_1793> * 
+xs'::node<d_1747,xsnext_1847>&0<=n_1791 & n_1791=b_1846+a_1845 & 
+0<=flted_9_1746 & bg_1793=bg_1745 & sm_1792=sm_1744 & n_1791=flted_9_1746 & 
+xs'=xs & c'=c & sm<=c & c<=bg & xs'!=null & !(v_bool_24_1525') & 
+bg_1745=bg & sm_1744=sm & d_1747<bg & sm<=d_1747 & flted_9_1746+1=n & 
+d_1747<c' & !(v_bool_28_1524').
+
+// id 115
+checksat  xsnext_1847::bnd<a_1845,sm_1792,c'> * res::bnd<b_1846,c',bg_1793> * 
+xs'::node<d_1747,xsnext_1847>&0<=n_1791 & n_1791=b_1846+a_1845 & 
+0<=flted_9_1746 & bg_1793=bg_1745 & sm_1792=sm_1744 & n_1791=flted_9_1746 & 
+xs'=xs & c'=c & sm<=c & c<=bg & xs'!=null & !(v_bool_24_1525') & 
+bg_1745=bg & sm_1744=sm & d_1747<bg & sm<=d_1747 & flted_9_1746+1=n & 
+d_1747<c' & !(v_bool_28_1524').
+
+// id 116
+checksat  (exists a_1803,b_1804,xsnext': xsnext'::bnd<a_1803,sm_1792,c'> * 
+res::bnd<b_1804,c',bg_1793> * xs'::node<d_1747,xsnext'>&!(v_bool_28_1524') & 
+d_1747<c' & flted_9_1746+1=n & sm<=d_1747 & d_1747<bg & sm_1744=sm & 
+bg_1745=bg & !(v_bool_24_1525') & xs'!=null & c<=bg & sm<=c & c'=c & 
+xs'=xs & n_1791=flted_9_1746 & sm_1792=sm_1744 & bg_1793=bg_1745 & 
+0<=flted_9_1746 & n_1791=b_1804+a_1803 & 0<=n_1791).
+
+// id 117
+checksat  xs_1787::node<d_1747,xsnext_1785>&res=v_node_35_1517' & xs'=xsnext_1785 & 
+0<=n_1763 & n_1763=b_1784+a_1783 & 0<=flted_9_1746 & bg_1765=bg_1745 & 
+sm_1764=sm_1744 & n_1763=flted_9_1746 & xs_1787=xs & c'=c & sm<=c & c<=bg & 
+xs_1787!=null & !(v_bool_24_1525') & bg_1745=bg & sm_1744=sm & d_1747<bg & 
+sm<=d_1747 & flted_9_1746+1=n & c'<=d_1747 & v_bool_28_1524' & 
+d_1830=d_1747 & p_1831=tmp1_1820 & exists(b_1826:b_1784+1=b_1826) & 
+exists(c_1823:c'=c_1823 & c_1823<=d_1830) & exists(bg_1824:bg_1765=bg_1824 & 
+d_1830<bg_1824).
+
+// id 118
+checksat  xs_1787::node<d_1747,xsnext_1785>&res=v_node_35_1517' & xs'=xsnext_1785 & 
+0<=n_1763 & n_1763=b_1784+a_1783 & 0<=flted_9_1746 & bg_1765=bg_1745 & 
+sm_1764=sm_1744 & n_1763=flted_9_1746 & xs_1787=xs & c'=c & sm<=c & c<=bg & 
+xs_1787!=null & !(v_bool_24_1525') & bg_1745=bg & sm_1744=sm & d_1747<bg & 
+sm<=d_1747 & flted_9_1746+1=n & c'<=d_1747 & v_bool_28_1524' & 
+d_1830=d_1747 & p_1831=tmp1_1820 & exists(b_1826:b_1784+1=b_1826) & 
+exists(c_1823:c'=c_1823 & c_1823<=d_1830) & exists(bg_1824:bg_1765=bg_1824 & 
+d_1830<bg_1824).
+
+// id 119
+checksat  xs_1787::node<d_1747,xsnext_1785>&p_1831=tmp1_1820 & d_1830=d_1747 & 
+v_bool_28_1524' & c'<=d_1747 & flted_9_1746+1=n & sm<=d_1747 & d_1747<bg & 
+sm_1744=sm & bg_1745=bg & !(v_bool_24_1525') & xs_1787!=null & c<=bg & 
+sm<=c & c'=c & xs_1787=xs & n_1763=flted_9_1746 & sm_1764=sm_1744 & 
+bg_1765=bg_1745 & 0<=flted_9_1746 & n_1763=b_1784+a_1783 & 0<=n_1763 & 
+xs'=xsnext_1785 & res=v_node_35_1517'.
+
+// id 120
+checksat  tmp1_1820::bnd<b_1784,c',bg_1765> * xs_1787::node<d_1747,xsnext_1785> * 
+v_node_35_1517'::node<d_1747,tmp1_1820>&v_bool_28_1524' & c'<=d_1747 & 
+flted_9_1746+1=n & sm<=d_1747 & d_1747<bg & sm_1744=sm & bg_1745=bg & 
+!(v_bool_24_1525') & xs_1787!=null & c<=bg & sm<=c & c'=c & xs_1787=xs & 
+n_1763=flted_9_1746 & sm_1764=sm_1744 & bg_1765=bg_1745 & 0<=flted_9_1746 & 
+n_1763=b_1784+a_1783 & 0<=n_1763 & xs'=xsnext_1785 & res=v_node_35_1517'.
+
+// id 121
+checksat  tmp1_1820::bnd<b_1784,c',bg_1765> * xs_1787::node<d_1747,xsnext_1785> * 
+v_node_35_1517'::node<d_1747,tmp1_1820>&v_bool_28_1524' & c'<=d_1747 & 
+flted_9_1746+1=n & sm<=d_1747 & d_1747<bg & sm_1744=sm & bg_1745=bg & 
+!(v_bool_24_1525') & xs_1787!=null & c<=bg & sm<=c & c'=c & xs_1787=xs & 
+n_1763=flted_9_1746 & sm_1764=sm_1744 & bg_1765=bg_1745 & 0<=flted_9_1746 & 
+n_1763=b_1784+a_1783 & 0<=n_1763 & xs'=xsnext_1785 & res=v_node_35_1517'.
+
+// id 122
+checksat  (exists sm_1799,c_1800,c_1801,bg_1802,a_1803,b_1804,
+xsnext_1798: xsnext'::bnd<a_1803,sm_1799,c_1800> * 
+res::bnd<b_1804,c_1801,bg_1802>&!(v_bool_28_1524') & d_1747<c' & 
+flted_9_1746+1=n & sm<=d_1747 & d_1747<bg & sm_1744=sm & bg_1745=bg & 
+!(v_bool_24_1525') & xs'!=null & c<=bg & sm<=c & c'=c & xs'=xs & 
+xsval'=d_1747 & xsnext_1798=p_1748 & n_1791=flted_9_1746 & sm_1792=sm_1744 & 
+bg_1793=bg_1745 & 0<=flted_9_1746 & n_1791=b_1804+a_1803 & sm_1799=sm_1792 & 
+c_1800=c' & c_1801=c' & bg_1802=bg_1793 & 0<=n_1791).
+
+// id 123
+checksat  p_1748::bnd<flted_9_1746,sm_1744,bg_1745>&xsnext'=p_1748 & xsval'=d_1747 & 
+xs'=xs & c'=c & sm<=c & c<=bg & xs'!=null & !(v_bool_24_1525') & 
+bg_1745=bg & sm_1744=sm & d_1747<bg & sm<=d_1747 & flted_9_1746+1=n & 
+d_1747<c' & !(v_bool_28_1524').
+
+// id 124
+checksat  xsnext_1785::bnd<a_1783,sm_1764,c'> * tmp1'::bnd<b_1784,c',bg_1765> * 
+xs'::node<d_1747,xsnext_1785>&next_34_1516'=xsnext_1785 & 
+val_34_1515'=d_1747 & 0<=n_1763 & n_1763=b_1784+a_1783 & 0<=flted_9_1746 & 
+bg_1765=bg_1745 & sm_1764=sm_1744 & n_1763=flted_9_1746 & v'=d_1747 & 
+xs'=xs & c'=c & sm<=c & c<=bg & xs'!=null & !(v_bool_24_1525') & 
+bg_1745=bg & sm_1744=sm & d_1747<bg & sm<=d_1747 & flted_9_1746+1=n & 
+c'<=d_1747 & v_bool_28_1524'.
+
+// id 125
+checksat  (exists sm_1771,c_1772,c_1773,bg_1774,a_1775,b_1776,
+xsnext_1770: xsnext'::bnd<a_1775,sm_1771,c_1772> * 
+res::bnd<b_1776,c_1773,bg_1774>&v_bool_28_1524' & c'<=d_1747 & flted_9_1746+
+1=n & sm<=d_1747 & d_1747<bg & sm_1744=sm & bg_1745=bg & 
+!(v_bool_24_1525') & xs'!=null & c<=bg & sm<=c & c'=c & xs'=xs & v'=d_1747 & 
+xsval'=d_1747 & xsnext_1770=p_1748 & n_1763=flted_9_1746 & sm_1764=sm_1744 & 
+bg_1765=bg_1745 & 0<=flted_9_1746 & n_1763=b_1776+a_1775 & sm_1771=sm_1764 & 
+c_1772=c' & c_1773=c' & bg_1774=bg_1765 & 0<=n_1763).
+
+// id 126
+checksat  p_1748::bnd<flted_9_1746,sm_1744,bg_1745>&xsnext'=p_1748 & xsval'=d_1747 & 
+v'=d_1747 & xs'=xs & c'=c & sm<=c & c<=bg & xs'!=null & !(v_bool_24_1525') & 
+bg_1745=bg & sm_1744=sm & d_1747<bg & sm<=d_1747 & flted_9_1746+1=n & 
+c'<=d_1747 & v_bool_28_1524'.
+
+// id 127
+checksat  xs'::node<d_1747,p_1748> * p_1748::bnd<flted_9_1746,sm_1744,bg_1745>&
+next_30_1508'=p_1748 & val_30_1507'=d_1747 & xs'=xs & c'=c & sm<=c & c<=bg & 
+xs'!=null & !(v_bool_24_1525') & bg_1745=bg & sm_1744=sm & d_1747<bg & 
+sm<=d_1747 & flted_9_1746+1=n & c'<=d_1747 & v_bool_28_1524'.
+
+// id 128
+checksat  xs'::node<d_1747,p_1748> * p_1748::bnd<flted_9_1746,sm_1744,bg_1745>&
+c'<=d_1747 & xs'=xs & c'=c & sm<=c & c<=bg & xs'!=null & 
+!(v_bool_24_1525') & bg_1745=bg & sm_1744=sm & d_1747<bg & sm<=d_1747 & 
+flted_9_1746+1=n & v_bool_28_1524' & c'<=d_1747 & !(v_bool_28_1524').
+
+// id 129
+checksat  xs'::node<d_1747,p_1748> * p_1748::bnd<flted_9_1746,sm_1744,bg_1745>&
+d_1747<c' & xs'=xs & c'=c & sm<=c & c<=bg & xs'!=null & !(v_bool_24_1525') & 
+bg_1745=bg & sm_1744=sm & d_1747<bg & sm<=d_1747 & flted_9_1746+1=n & 
+!(v_bool_28_1524') & d_1747<c' & !(v_bool_28_1524').
+
+// id 130
+checksat  xs'::node<d_1747,p_1748> * p_1748::bnd<flted_9_1746,sm_1744,bg_1745>&
+c'<=d_1747 & xs'=xs & c'=c & sm<=c & c<=bg & xs'!=null & 
+!(v_bool_24_1525') & bg_1745=bg & sm_1744=sm & d_1747<bg & sm<=d_1747 & 
+flted_9_1746+1=n & v_bool_28_1524' & c'<=d_1747 & v_bool_28_1524'.
+
+// id 131
+checksat  xs'::node<d_1747,p_1748> * p_1748::bnd<flted_9_1746,sm_1744,bg_1745>&
+d_1747<c' & xs'=xs & c'=c & sm<=c & c<=bg & xs'!=null & !(v_bool_24_1525') & 
+bg_1745=bg & sm_1744=sm & d_1747<bg & sm<=d_1747 & flted_9_1746+1=n & 
+!(v_bool_28_1524') & d_1747<c' & v_bool_28_1524'.
+
+// id 132
+checksat  xs'::node<d_1747,p_1748> * p_1748::bnd<flted_9_1746,sm_1744,bg_1745>&
+v_int_28_1506'<c' & v_int_28_1506'=d_1747 & xs'=xs & c'=c & sm<=c & c<=bg & 
+xs'!=null & !(v_bool_24_1525') & bg_1745=bg & sm_1744=sm & d_1747<bg & 
+sm<=d_1747 & flted_9_1746+1=n & !(res) & v_int_28_1506'<c'.
+
+// id 133
+checksat  xs'::node<d_1747,p_1748> * p_1748::bnd<flted_9_1746,sm_1744,bg_1745>&
+flted_9_1746+1=n & sm<=d_1747 & d_1747<bg & sm_1744=sm & bg_1745=bg & 
+!(v_bool_24_1525') & xs'!=null & c<=bg & sm<=c & c'=c & xs'=xs & 
+v_int_28_1506'=d_1747 & v_int_28_1506'<c'.
+
+// id 134
+checksat  xs'::node<d_1747,p_1748> * p_1748::bnd<flted_9_1746,sm_1744,bg_1745>&
+flted_9_1746+1=n & sm<=d_1747 & d_1747<bg & sm_1744=sm & bg_1745=bg & 
+!(v_bool_24_1525') & xs'!=null & c<=bg & sm<=c & c'=c & xs'=xs & 
+v_int_28_1506'=d_1747 & v_int_28_1506'<c'.
+
+// id 135
+checksat  xs'::node<d_1747,p_1748> * p_1748::bnd<flted_9_1746,sm_1744,bg_1745>&
+c'<=v_int_28_1506' & v_int_28_1506'=d_1747 & xs'=xs & c'=c & sm<=c & c<=bg & 
+xs'!=null & !(v_bool_24_1525') & bg_1745=bg & sm_1744=sm & d_1747<bg & 
+sm<=d_1747 & flted_9_1746+1=n & res & c'<=v_int_28_1506'.
+
+// id 136
+checksat  xs'::node<d_1747,p_1748> * p_1748::bnd<flted_9_1746,sm_1744,bg_1745>&
+flted_9_1746+1=n & sm<=d_1747 & d_1747<bg & sm_1744=sm & bg_1745=bg & 
+!(v_bool_24_1525') & xs'!=null & c<=bg & sm<=c & c'=c & xs'=xs & 
+v_int_28_1506'=d_1747 & c'<=v_int_28_1506'.
+
+// id 137
+checksat  xs'::node<d_1747,p_1748> * p_1748::bnd<flted_9_1746,sm_1744,bg_1745>&
+flted_9_1746+1=n & sm<=d_1747 & d_1747<bg & sm_1744=sm & bg_1745=bg & 
+!(v_bool_24_1525') & xs'!=null & c<=bg & sm<=c & c'=c & xs'=xs & 
+v_int_28_1506'=d_1747 & c'<=v_int_28_1506'.
+
+// id 138
+checksat  xs'::node<d_1747,p_1748> * p_1748::bnd<flted_9_1746,sm_1744,bg_1745>&
+next_28_1501'=p_1748 & val_28_1500'=d_1747 & xs'=xs & c'=c & sm<=c & c<=bg & 
+xs'!=null & !(v_bool_24_1525') & bg_1745=bg & sm_1744=sm & d_1747<bg & 
+sm<=d_1747 & flted_9_1746+1=n.
+
+// id 139
+checksat  (exists sm_1738,bg_1739,flted_9_1740,d_1741,
+p_1742: xs'::node<d_1741,p_1742> * p_1742::bnd<flted_9_1740,sm_1738,bg_1739>&
+flted_9_1740+1=n & sm<=d_1741 & d_1741<bg & sm_1738=sm & bg_1739=bg & 
+!(v_bool_24_1525') & xs'!=null & c<=bg & sm<=c & c'=c & xs'=xs).
+
+// id 140
+checksat  xs::bnd<n,sm,bg>&xs'=xs & c'=c & sm<=c & c<=bg & xs'=null & 
+v_bool_24_1525' & xs'=null & !(v_bool_24_1525').
+
+// id 141
+checksat  xs::bnd<n,sm,bg>&xs'=xs & c'=c & sm<=c & c<=bg & xs'!=null & 
+!(v_bool_24_1525') & xs'!=null & !(v_bool_24_1525').
+
+// id 142
+checksat  xs::bnd<n,sm,bg>&xs'=xs & c'=c & sm<=c & c<=bg & xs'=null & 
+v_bool_24_1525' & xs'=null & v_bool_24_1525'.
+
+// id 143
+checksat  xs::bnd<n,sm,bg>&xs'=xs & c'=c & sm<=c & c<=bg & xs'!=null & 
+!(v_bool_24_1525') & xs'!=null & v_bool_24_1525'.
+
+// id 144
+checksat  xs::bnd<n,sm,bg>&xs'=xs & c'=c & sm<=c & c<=bg & xs'!=null & !(res) & 
+xs'!=null.
+
+// id 145
+checksat  xs::bnd<n,sm,bg>&xs'!=null & c<=bg & sm<=c & c'=c & xs'=xs.
+
+// id 146
+checksat  xs::bnd<n,sm,bg>&xs'!=null & c<=bg & sm<=c & c'=c & xs'=xs.
+
+// id 147
+checksat  xs::bnd<n,sm,bg>&xs'=xs & c'=c & sm<=c & c<=bg & MayLoop[] & xs'!=null.
+
+// id 148
+checksat  xs::bnd<n,sm,bg>&xs'=xs & c'=c & sm<=c & c<=bg & xs'=null & res & xs'=null.
+
+// id 149
+checksat  xs::bnd<n,sm,bg>&xs'=null & c<=bg & sm<=c & c'=c & xs'=xs.
+
+// id 150
+checksat  xs::bnd<n,sm,bg>&xs'=null & c<=bg & sm<=c & c'=c & xs'=xs.
+
+// id 151
+checksat  xs::bnd<n,sm,bg>&xs'=xs & c'=c & sm<=c & c<=bg & MayLoop[] & xs'=null.
+
+// id 152
+checksat  xn_1688::sll<flted_51_1662,s0_1642,b2_1646> * x'::node<sm_1630,xn_1688>&
+flted_14_1632+1=nn & s0<=qs_1634 & sm_1630=s0 & lg_1631=b0 & 
+!(v_bool_55_1442') & x'!=null & b0<=s2 & y'=y & x'=x & 
+nn_1641=flted_14_1632 & s0_1642=qs_1634 & b0_1643=lg_1631 & m_1644=m & 
+s2_1645=s2 & b2_1646=b2 & 1<=m & s2<=b2 & y!=null & 1<=flted_14_1632 & 
+qs_1634<=lg_1631 & flted_51_1662=m_1644+nn_1641 & 1<=nn_1641 & 
+s0_1642<=b0_1643 & q_1633!=null & 1<=m_1644 & s2_1645<=b2_1646 & y'!=null & 
+next_58_1663=q_1633 & res=x'.
+
+// id 153
+checksat  xn_1688::sll<flted_51_1662,s0_1642,b2_1646> * x'::node<sm_1630,xn_1688>&
+flted_14_1632+1=nn & s0<=qs_1634 & sm_1630=s0 & lg_1631=b0 & 
+!(v_bool_55_1442') & x'!=null & b0<=s2 & y'=y & x'=x & 
+nn_1641=flted_14_1632 & s0_1642=qs_1634 & b0_1643=lg_1631 & m_1644=m & 
+s2_1645=s2 & b2_1646=b2 & 1<=m & s2<=b2 & y!=null & 1<=flted_14_1632 & 
+qs_1634<=lg_1631 & flted_51_1662=m_1644+nn_1641 & 1<=nn_1641 & 
+s0_1642<=b0_1643 & q_1633!=null & 1<=m_1644 & s2_1645<=b2_1646 & y'!=null & 
+next_58_1663=q_1633 & res=x'.
+
+// id 154
+checksat  xn_1665::sll<m_1638,s2_1639,b2_1640> * x'::node<qmin_1628,xn_1665>&
+flted_13_1627=null & qmin_1628=s0 & qmin_1628=b0 & nn=1 & 
+!(v_bool_55_1442') & x'!=null & b0<=s2 & y'=y & x'=x & m_1638=m & 
+s2_1639=s2 & b2_1640=b2 & 1<=m & s2<=b2 & y!=null & 1<=m_1638 & 
+s2_1639<=b2_1640 & y'!=null & next_58_1664=flted_13_1627 & res=x'.
+
+// id 155
+checksat  xn_1665::sll<m_1638,s2_1639,b2_1640> * x'::node<qmin_1628,xn_1665>&
+flted_13_1627=null & qmin_1628=s0 & qmin_1628=b0 & nn=1 & 
+!(v_bool_55_1442') & x'!=null & b0<=s2 & y'=y & x'=x & m_1638=m & 
+s2_1639=s2 & b2_1640=b2 & 1<=m & s2<=b2 & y!=null & 1<=m_1638 & 
+s2_1639<=b2_1640 & y'!=null & next_58_1664=flted_13_1627 & res=x'.
+
+// id 156
+checksat  xn'::sll<flted_51_1662,s0_1642,b2_1646>&next_58_1441'=q_1633 & 
+val_58_1440'=sm_1630 & y'!=null & s2_1645<=b2_1646 & 1<=m_1644 & 
+q_1633!=null & s0_1642<=b0_1643 & 1<=nn_1641 & flted_51_1662=m_1644+
+nn_1641 & qs_1634<=lg_1631 & 1<=flted_14_1632 & y!=null & s2<=b2 & 1<=m & 
+b2_1646=b2 & s2_1645=s2 & m_1644=m & b0_1643=lg_1631 & s0_1642=qs_1634 & 
+nn_1641=flted_14_1632 & x'=x & y'=y & b0<=s2 & x'!=null & 
+!(v_bool_55_1442') & lg_1631=b0 & sm_1630=s0 & s0<=qs_1634 & flted_14_1632+
+1=nn.
+
+// id 157
+checksat  xn'::sll<m_1638,s2_1639,b2_1640>&next_58_1441'=flted_13_1627 & 
+val_58_1440'=qmin_1628 & y'!=null & s2_1639<=b2_1640 & 1<=m_1638 & y!=null & 
+s2<=b2 & 1<=m & b2_1640=b2 & s2_1639=s2 & m_1638=m & x'=x & y'=y & b0<=s2 & 
+x'!=null & !(v_bool_55_1442') & nn=1 & qmin_1628=b0 & qmin_1628=s0 & 
+flted_13_1627=null.
+
+// id 158
+checksat  (exists s0_1654,b2_1655,flted_51_1656: x'::node<sm_1630,q_1633> * 
+res::sll<flted_51_1656,s0_1654,b2_1655>&flted_14_1632+1=nn & s0<=qs_1634 & 
+sm_1630=s0 & lg_1631=b0 & !(v_bool_55_1442') & x'!=null & b0<=s2 & y'=y & 
+x'=x & v_node_57_1439'=q_1633 & nn_1641=flted_14_1632 & s0_1642=qs_1634 & 
+b0_1643=lg_1631 & m_1644=m & s2_1645=s2 & b2_1646=b2 & 1<=m & s2<=b2 & 
+y!=null & 1<=flted_14_1632 & qs_1634<=lg_1631 & q_1633!=null & 
+flted_51_1656=m_1644+nn_1641 & s0_1654=s0_1642 & b2_1655=b2_1646 & 
+1<=nn_1641 & s0_1642<=b0_1643 & v_node_57_1439'!=null & 1<=m_1644 & 
+s2_1645<=b2_1646 & y'!=null).
+
+// id 159
+checksat  x'::node<sm_1630,q_1633>&b2_1646=b2 & s2_1645=s2 & m_1644=m & 
+b0_1643=lg_1631 & s0_1642=qs_1634 & nn_1641=flted_14_1632 & 
+v_node_57_1439'=q_1633 & x'=x & y'=y & b0<=s2 & x'!=null & 
+!(v_bool_55_1442') & lg_1631=b0 & sm_1630=s0 & s0<=qs_1634 & flted_14_1632+
+1=nn.
+
+// id 160
+checksat  x'::node<sm_1630,q_1633>&b2_1646=b2 & s2_1645=s2 & m_1644=m & 
+b0_1643=lg_1631 & s0_1642=qs_1634 & nn_1641=flted_14_1632 & 
+v_node_57_1439'=q_1633 & x'=x & y'=y & b0<=s2 & x'!=null & 
+!(v_bool_55_1442') & lg_1631=b0 & sm_1630=s0 & s0<=qs_1634 & flted_14_1632+
+1=nn.
+
+// id 161
+checksat  (exists m_1651,s2_1652,b2_1653: x'::node<qmin_1628,flted_13_1627> * 
+res::sll<m_1651,s2_1652,b2_1653>&flted_13_1627=null & qmin_1628=s0 & 
+qmin_1628=b0 & nn=1 & !(v_bool_55_1442') & x'!=null & b0<=s2 & y'=y & x'=x & 
+v_node_57_1439'=flted_13_1627 & m_1638=m & s2_1639=s2 & b2_1640=b2 & 1<=m & 
+s2<=b2 & y!=null & m_1651=m_1638 & s2_1652=s2_1639 & b2_1653=b2_1640 & 
+1<=m_1638 & s2_1639<=b2_1640 & y'!=null).
+
+// id 162
+checksat  x'::node<qmin_1628,flted_13_1627>&b2_1640=b2 & s2_1639=s2 & m_1638=m & 
+v_node_57_1439'=flted_13_1627 & x'=x & y'=y & b0<=s2 & x'!=null & 
+!(v_bool_55_1442') & nn=1 & qmin_1628=b0 & qmin_1628=s0 & flted_13_1627=null.
+
+// id 163
+checksat  x'::node<qmin_1628,flted_13_1627>&b2_1640=b2 & s2_1639=s2 & m_1638=m & 
+v_node_57_1439'=flted_13_1627 & x'=x & y'=y & b0<=s2 & x'!=null & 
+!(v_bool_55_1442') & nn=1 & qmin_1628=b0 & qmin_1628=s0 & flted_13_1627=null.
+
+// id 164
+checksat  x'::node<sm_1630,q_1633> * q_1633::sll<flted_14_1632,qs_1634,lg_1631> * 
+y::sll<m,s2,b2>&next_57_1435'=q_1633 & val_57_1434'=sm_1630 & x'=x & y'=y & 
+b0<=s2 & x'!=null & !(v_bool_55_1442') & lg_1631=b0 & sm_1630=s0 & 
+s0<=qs_1634 & flted_14_1632+1=nn.
+
+// id 165
+checksat  x'::node<qmin_1628,flted_13_1627> * y::sll<m,s2,b2>&
+next_57_1435'=flted_13_1627 & val_57_1434'=qmin_1628 & x'=x & y'=y & 
+b0<=s2 & x'!=null & !(v_bool_55_1442') & nn=1 & qmin_1628=b0 & 
+qmin_1628=s0 & flted_13_1627=null.
+
+// id 166
+checksat  (exists sm_1621,lg_1622,flted_14_1623,q_1624,
+qs_1625: x'::node<sm_1621,q_1624> * 
+q_1624::sll<flted_14_1623,qs_1625,lg_1622> * y::sll<m,s2,b2>&flted_14_1623+
+1=nn & s0<=qs_1625 & sm_1621=s0 & lg_1622=b0 & !(v_bool_55_1442') & 
+x'!=null & b0<=s2 & y'=y & x'=x).
+
+// id 167
+checksat  (exists flted_13_1619,qmin_1620: x'::node<qmin_1620,flted_13_1619> * 
+y::sll<m,s2,b2>&flted_13_1619=null & qmin_1620=s0 & qmin_1620=b0 & nn=1 & 
+!(v_bool_55_1442') & x'!=null & b0<=s2 & y'=y & x'=x).
+
+// id 168
+checksat  x::sll<nn,s0,b0> * y::sll<m,s2,b2>&x'=x & y'=y & b0<=s2 & x'!=null & 
+!(v_bool_55_1442') & x'!=null & !(v_bool_55_1442').
+
+// id 169
+checksat  x::sll<nn,s0,b0> * y::sll<m,s2,b2>&x'=x & y'=y & b0<=s2 & x'!=null & 
+!(v_bool_55_1442') & x'!=null & v_bool_55_1442'.
+
+// id 170
+checksat  x::sll<nn,s0,b0> * y::sll<m,s2,b2>&x'=x & y'=y & b0<=s2 & x'!=null & 
+!(res) & x'!=null.
+
+// id 171
+checksat  x::sll<nn,s0,b0> * y::sll<m,s2,b2>&x'!=null & b0<=s2 & y'=y & x'=x.
+
+// id 172
+checksat  x::sll<nn,s0,b0> * y::sll<m,s2,b2>&x'!=null & b0<=s2 & y'=y & x'=x.
+
+// id 173
+checksat  x::sll<nn,s0,b0> * y::sll<m,s2,b2>&x'=x & y'=y & b0<=s2 & MayLoop[] & 
+x'!=null.
+
+// id 174
+checksat  x::sll<nn,s0,b0> * y::sll<m,s2,b2>&x'=x & y'=y & b0<=s2 & MayLoop[] & 
+x'=null.
+
+// id 175
+checksat  y::sll<m,s2,b2>&x'=x & y'=y & x=null & x'=null & v_bool_55_1442' & 
+x'=null & !(v_bool_55_1442').
+
+// id 176
+checksat  y::sll<m,s2,b2>&x'=x & y'=y & x=null & x'=null & v_bool_55_1442' & 
+x'=null & v_bool_55_1442'.
+
+// id 177
+checksat  y::sll<m,s2,b2>&x'=x & y'=y & x=null & MayLoop[] & x'!=null.
+
+// id 178
+checksat  y::sll<m,s2,b2>&x'=x & y'=y & x=null & x'=null & res & x'=null.
+
+// id 179
+checksat  y::sll<m,s2,b2>&x'=null & x=null & y'=y & x'=x.
+
+// id 180
+checksat  y::sll<m,s2,b2>&x'=null & x=null & y'=y & x'=x.
+
+// id 181
+checksat  y::sll<m,s2,b2>&x'=x & y'=y & x=null & MayLoop[] & x'=null.

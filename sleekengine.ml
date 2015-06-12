@@ -16,6 +16,12 @@ open Label_only
 
 let last_entail_lhs_xpure = ref None
 
+let num_sat = ref 0
+
+let num_unsat = ref 0
+
+let num_unknown = ref 0
+
 let string_of_vres t =
   match t with
   | VR_Valid -> "Valid"
@@ -2380,9 +2386,9 @@ let print_exception_result s (num_id: string) =
 
 let print_sat_result (unsat: bool) (sat:bool) (num_id: string) =
   let res =
-    if unsat then "UNSAT\n\n"
-    else if sat then "SAT\n\n"
-    else "UNKNOWN\n\n"
+    if unsat then let () = num_unsat := !num_unsat + 1 in "UNSAT\n\n"
+    else if sat then let () = num_sat := !num_sat + 1 in "SAT\n\n"
+    else let () = num_unknown := !num_unknown + 1 in "UNKNOWN\n\n"
   in silenced_print print_string (num_id^": "^res); flush stdout
 
 let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id: string) lerr_exc:bool =

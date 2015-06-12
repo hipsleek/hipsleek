@@ -2802,7 +2802,10 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
 (* tp_call_wrapper npf *)
 
 and unsat_base_a prog (sat_subno:  int ref) f  : bool=
-  let () = if !Globals.sleek_gen_sat then CF.sat_stk # push f else () in
+  let () = if !Globals.sleek_gen_sat then
+    let h,_,_,_,_,_ = CF.split_components f in
+    if (CF.is_empty_heap h || CF.is_unknown_heap h) then () else CF.sat_stk # push f
+  else () in
   (*need normal lize heap_normal_form*)
   (* if !Globals.sep_unsat && !Frame.seg_opz then *)
   (*   let is_heap_conflict,_ = Frame.check_unsat_w_norm prog f in *)

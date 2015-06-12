@@ -558,7 +558,8 @@ let _ =
           if s_c>0 then
             begin
               print_endline_if !Globals.enable_count_stats ("\nSAT Count   : "^(string_of_int s_c));
-              print_endline_if !Globals.enable_time_stats ("SAT % Hit   : "^(string_of_hit_percent s_c s_m))
+              print_endline_if !Globals.enable_time_stats ("SAT % Hit   : "^(string_of_hit_percent s_c s_m));
+              print_endline_if !Globals.enable_count_stats ("\nSAT : "^(string_of_int !num_sat) ^ "\nUNSAT : "^(string_of_int !num_unsat) ^ "\nUNKNOWN : "^(string_of_int !num_unknown) ^ "\n");
             end;
           if i_c>0 then
             begin
