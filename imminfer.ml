@@ -167,10 +167,13 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
        transform_struc_formula transform_2 pss_1) in
   (pss, !pre_rel, !post_rel)
 
-(** Infer immutability annotation variables for each heap elements in
-    every proc when @imm_pre and/or @imm_post is set.
-    @param prog current program declaration
-    @return new program declaration *)
+let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula * C.rel_decl option * C.rel_decl option) =
+  Debug.no_1 "infer_imm_ann_proc"
+             Cprinter.string_of_struc_formula
+             (fun (f,_,_) -> Cprinter.string_of_struc_formula f)
+             infer_imm_ann_proc
+             proc_static_specs
+
 let infer_imm_ann (prog: C.prog_decl) (proc_decls: C.proc_decl list) : C.proc_decl list =
   (** Infer immutability annotation variables for one proc,
       @return (new proc, precondition relation, postcondition relation) **)
