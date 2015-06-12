@@ -1182,7 +1182,7 @@ let infer_imm_ann (prog: I.prog_decl) : I.prog_decl =
       | rel_params -> Some ({
         I.rel_name = rn;
         I.rel_typed_vars = List.map (fun (_,_) -> (AnnT, fresh loc)) rel_params;
-        I.rel_formula = Ipure.mkTrue loc })
+        I.rel_formula = Ipure.mkTrue no_pos })
     in
     let rec ann_struc_formula_1 = function
       | EInfer ff ->
