@@ -190,6 +190,14 @@ let rec is_infer_post sf = match sf with
     (inf_obj # is_post) || (List.length (List.filter (fun sv -> (Cpure.is_rel_typ sv)) inf_vars) > 0)
   | _ -> false
 
+let is_infer_pre_imm sf = match sf with
+  | CF.EInfer ei -> ei.CF.formula_inf_obj # is_pre_imm
+  | _ -> false
+
+let is_infer_post_imm sf = match sf with
+  | CF.EInfer ei -> ei.CF.formula_inf_obj # is_post_imm
+  | _ -> false
+
 let is_infer_post sf =
   let pr = Cprinter.string_of_struc_formula in
   Debug.no_1 "is_infer_post" pr string_of_bool is_infer_post sf
