@@ -12,26 +12,6 @@ let string_of_exp = ArithNormalizer.string_of_exp;;
 let print_pure = ref (fun (c:formula) -> "printing not initialized");;
 let print_p_formula = ref (fun (p:p_formula) -> "printing not initialized");;
 
-
-let get_array_name
-    (e:exp):(spec_var)=
-  match e with
-  | ArrayAt (sv,_,_) -> sv
-  | _ -> failwith "get_array_name: Invalid input"
-;;
-
-let get_array_at_index
-    (e:exp):exp=
-  match e with
-  | ArrayAt (sv,elst,_)->
-    begin
-      match elst with
-      | [index] -> index
-      | _ -> failwith "get_array_at_index: Fail to handle multi-dimension array"
-    end
-  | _ -> failwith "get_array_at_index: Invalid input"
-;;
-
 let is_same_sv
     (sv1:spec_var) (sv2:spec_var):bool=
   (* let () = print_endline ((string_of_spec_var sv1)^" and "^(string_of_spec_var sv2)) in *)
@@ -104,27 +84,6 @@ let rec is_same_exp
   | _ -> false
 ;;
 
-let is_same_array
-    (e1:exp) (e2:exp):bool=
-  match e1,e2 with
-  | ArrayAt (sv1,elst1,_), ArrayAt (sv2,elst2,_) ->
-    if is_same_sv sv1 sv2 then true else false
-  | _,_ -> failwith "is_same_array: Invalid Input"
-;;
-
-(* It may not work properly for not-constant cases because the implementation of is_same_exp *)
-let is_same_array_at
-    (e1:exp) (e2:exp):bool=
-  let is_same_exp_list
-      (elst1:exp list) (elst2:exp list):bool=
-    List.fold_left2 (fun b e1 e2 -> b && (is_same_exp e1 e2)) true elst1 elst2
-  in
-  match e1,e2 with
-  | ArrayAt (sv1,elst1,_), ArrayAt (sv2,elst2,_) ->
-    if (is_same_sv sv1 sv2) && (is_same_exp_list elst1 elst2) then true else false
-  | _,_ -> failwith "is_same_array_at: Invalid Input"
-;;
-
 let rec remove_dupl_spec_var_list
     (svlst:spec_var list):(spec_var list) =
   let rec helper
@@ -146,8 +105,6 @@ let mk_imply
     (ante:formula) (conseq:formula):formula=
   Or (Not (ante,None,no_pos),conseq,None,no_pos)
 ;;
-
-
 
 let mk_array_new_name_sv
   sv e :spec_var =
@@ -568,8 +525,6 @@ let can_be_simplify
 (* -------------------------------------------------------------------------------------------- *)
 (* apply index replacement to array formula using quantifiers. If fail to replace, return None. *)
 
-
-
 let rec process_quantifier
     (f:formula) :(formula)=
   let  get_array_index_replacement (* The input can be any form *)
@@ -881,15 +836,7 @@ let constantize_ex_q f=
 ;;
 
 (* ---------------------------------------------------------------------------------------------------- *)
-(* Assuming that only one point of the array is accessed *)
-(* And you need to append the result just inside the conjunction. Be careful to A\/B\/C...*)
-(* let instantiate_forall *)
-(*       (f:formula) : formula = *)
-(*   let can_be_instantiated *)
-(*         (f:formula):bool = *)
-(*     true *)
-(*   in *)
-(*   let  *)
+
 
 (* ---------------------------------------------------------------------------------------------------- *)
 
@@ -1508,34 +1455,6 @@ let split_and_combine
   then split_and_combine processor cond f
   else processor f
 ;;
-
-(* let weaken_array_in_imply_LHS *)
-(*       (processor:formula -> formula -> 'a) (ante:formula) (conseq:formula):'a = *)
-(*   let nante = new_translate_out_array_in_one_formula *)
-
-(* ------------------------------------------------------------------- *)
-(* !!!!! let extract_scheme_for_quantifier *)
-(*       (f:formula):(spec_var option) = *)
-(*   if can_be_simplify f *)
-(*   then None *)
-(*   else *)
-(*     match f with *)
-(*       | Forall (sv,f1,fl,l) -> *)
-(*             helper f1 sv *)
-(*       | _ -> *)
-
-
-(* let weaken_quantifier *)
-(*       (f:formula) (scheme: ((spec_var * (exp list)) list)):(formula * (formula option)) = *)
-(*   if can_be_simplify f *)
-(*   then (f,None) *)
-(*   else *)
-(*     match f with *)
-(*       | Forall (sv,f1,fl,l)-> *)
-(*             let  *)
-
-
-
 (* ------------------------------------------------------------------- *)
 
 module Index=
@@ -1554,11 +1473,6 @@ struct
     | _ , _ -> 1
 end
 ;;
-
-
-
-module IndexSet = Set.Make(Index);;
-
 
 (* Turn all the array element in f into normal variables *)
 let rec mk_array_free_formula
@@ -2309,11 +2223,6 @@ let rec expand_array_variable
     | h::rest -> (expand h replace)@(helper rest replace)
     | [] -> []
   in
-  (* let replace = *)
-  (*   let env = extend_env [] [] f in *)
-  (*   let collect = List.fold_left (fun r (arr,ilst) -> ilst@r) [] env in *)
-  (*   remove_dupl is_same_exp collect *)
-  (* in *)
   let replace = collect_free_array_index f in
   (* let () = x_binfo_pp ("expand_array_variable: replace "^((pr_list string_of_exp) replace)) no_pos in *)
   remove_dupl_spec_var_list (helper svlst replace)
@@ -2332,12 +2241,7 @@ let expand_array_variable
 
 
 let expand_relation f =
-   let string_of_replace replace =
-      (* let string_of_item r = *)
-      (*   match r with *)
-      (*   | (arr,indexlst) -> *)
-      (*     "("^(string_of_spec_var arr)^","^((pr_list string_of_exp) indexlst) *)
-      (* in *)
+  let string_of_replace replace =
       (pr_list string_of_exp) replace
    in
    let find_replace index_exp replace:exp list =
@@ -2659,7 +2563,7 @@ let translate_array_one_formula_for_validity
 ;;
 
 let translate_array_one_formula_for_validity f =
-      Debug.no_1 "#1translate_array_one_formula_for_validity" !print_pure !print_pure translate_array_one_formula_for_validity f
+  Debug.no_1 "#1translate_array_one_formula_for_validity" !print_pure !print_pure translate_array_one_formula_for_validity f
 ;;
 
 let translate_array_one_formula_for_validity f=
@@ -2683,8 +2587,6 @@ let translate_preprocess_helper
 ;;
 
 let translate_preprocess = translate_preprocess_helper true;;
-
-let translate_preprocess_keep_relation = translate_preprocess_helper false;;
 
 let translate_preprocess f =
   Debug.no_1 "translate_preprocess" !print_pure !print_pure translate_preprocess f
@@ -2918,11 +2820,6 @@ let translate_back_array_in_one_formula
   else f
 ;;
 (* END of translating back the array to a formula *)
-
-
-
-
-
 
 let string_of_unchanged_info (f,t,clst) =
   "("^(string_of_exp f)^","^(string_of_exp t)^","^((pr_list string_of_exp) clst)

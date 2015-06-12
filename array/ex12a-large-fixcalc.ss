@@ -17,10 +17,12 @@ int foo(ref int[] a)
     a[1] = a[1]+1;
     a[5] = a[5]-1;
     int r = foo(a);
-    a[1]=a[1]+1;
+    a[5]=1;
     return r; } 
   else {
-    return a[1];
+    int tmp=a[1];
+    dprint;
+    return tmp;
   }
 }
 
