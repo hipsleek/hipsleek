@@ -1,0 +1,72 @@
+// extern void __VERIFIER_error() __attribute__ ((__noreturn__));
+
+/*
+ * Recursive implementation integer addition.
+ * 
+ * Author: Matthias Heizmann
+ * Date: 2013-07-13
+ * 
+ */
+
+// extern int __VERIFIER_nondet_int(void);
+
+// int isOdd(int n);
+// int isEven(int n);
+
+/*
+int isOdd(int n) {
+    if (n == 0) {
+        return 0;
+    } else if (n == 1) {
+        return 1;
+    } else {
+        return isEven(n - 1);
+    }
+}
+*/
+
+pred isOdd_v<n,r,e> == n=0 & r=0 & e=1
+     or n=1 & r=1 & e=1
+     or _::isEven_v<n-1,r1,e1> & r=r1 & e=e1.
+
+/*
+int isEven(int n) {
+    if (n == 0) {
+        return 1;
+    } else if (n == 1) {
+        return 0;
+    } else {
+        return isOdd(n - 1);
+    }
+}
+*/
+
+pred isEven_v<n,r,e> == n=0 & r=1 & e=1
+     or n=1 & r=0 & e=1
+     or _::isOdd_v<n-1,r1,e1> & r=r1 & e=e1.
+
+/*
+int main() {
+    int n = __VERIFIER_nondet_int();
+    if (n < 0) {
+        return 0;
+    }
+    int result = isOdd(n);
+    int mod = n % 2;
+    if (result < 0 || result == mod) {
+        return 0;
+    } else {
+        ERROR: __VERIFIER_error();
+    }
+}
+*/
+
+pred main_v<n,r,e> == n<0 & r=0 & e=1
+     or _::isOdd_v<n,r1,e1> & n>=0 & r1<0 & r=0 & e=e1
+     or _::isOdd_v<n,r1,e1> & n>=0 & r1>=0 & n=r1*2 & r=0 & e=e1
+     or _::isOdd_v<n,r1,e1> & n>=0 & r1>=0 & n!=r1*2 & e=0.
+
+
+checksat _::main_v<n,r,e> & e=0.
+
+expect Unsat.

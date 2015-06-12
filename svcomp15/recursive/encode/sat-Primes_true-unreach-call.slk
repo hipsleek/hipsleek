@@ -1,0 +1,136 @@
+// extern void __VERIFIER_error() __attribute__ ((__noreturn__));
+
+/*
+ * Recursive implementation of prime number test
+ * (Sieve of Eratosthenes)
+ * 
+ * Author: Jan Leike
+ * Date: 2013-07-17
+ * 
+ */
+
+// extern int __VERIFIER_nondet_int(void);
+
+/*
+// Multiplies two integers n and m
+int mult(int n, int m) {
+    if (m < 0) {
+        return mult(n, -m);
+    }
+    if (m == 0) {
+        return 0;
+    }
+    if (m == 1) {
+        return 1;
+    }
+    return n + mult(n, m - 1);
+}
+*/
+
+pred mult_v<m,n,r,e> == _::mult_v<n,-m,r1,e1> & m<0 & r=r1 & e=e1
+     or m=0 & r=0 & e=1
+     or m=1 & r=1 & e=1
+     or _::mult_v<n,m-1,r1,e1> & m>1 & r=n+r1 & e=e1.
+
+/*
+// Is n a multiple of m?
+int multiple_of(int n, int m) {
+    if (m < 0) {
+        return multiple_of(n, -m);
+    }
+    if (n < 0) {
+        return multiple_of(-n, m); // false
+    }
+    if (m == 0) {
+        return 0; // false
+    }
+    if (n == 0) {
+        return 1; // true
+    }
+    return multiple_of(n - m, m);
+}
+*/
+
+pred multiple_of_v<n,m,r,e> == _::multiple_of_v<n,-m,r1,e1> & m<0 & r=r1 & e=e1
+     or _::multiple_of_v< -n,m,r1,e1> & n<0 & r=r1 & e=e1
+     or m=0 & r=0 & e=1
+     or n=0 & r=0 & e=1
+     or _::multiple_of_v<n-m,m,r1,e1> & m>0 & n>0 & r=r1 & e=e1.
+
+// int is_prime_(int n, int m);
+// int is_prime(int n);
+
+/*
+// Is n prime?
+int is_prime(int n) {
+    return is_prime_(n, n - 1);
+}
+*/
+
+pred is_prime_v<n,r,e> == _::is_prime__v<n,n-1,r1,e1> & r=r1 & e=e1.
+
+/*
+int is_prime_(int n, int m) {
+    if (n <= 1) {
+        return 0; // false
+    }
+    if (n == 2) {
+        return 1; // true
+    }
+    if (n > 2) {
+        if (m <= 1) {
+            return 1; // true
+        } else {
+            if (multiple_of(n, m) == 0) {
+                return 0; // false
+            }
+            return is_prime_(n, m - 1);
+        }
+    }
+}
+*/
+
+pred is_prime__v<n,m,r,e> == n<=1 & r=0 & e=1
+     or n=2 & r=1 & e=1
+     or n>2 & m<=1 & r=1 & e=1
+     or _::multiple_of_v<n,m,r1,e1> & n>2 & m>1 & r1=0 & r=0 & e=e1
+     or _::multiple_of_v<n,m,r1,e1> * _::is_prime__v<n,m-1,r2,e2> & n>2 & m>1 & r1=1 & r=r2 & e1=1 & e2=1 & e=1.
+
+/*
+int main() {
+    int n = __VERIFIER_nondet_int();
+    if (n < 1 || n > 46340) {
+        return 0;
+    }
+    int result = is_prime(n);
+    int f1 = __VERIFIER_nondet_int();
+    if (f1 < 1 || f1 > 46340) {
+        return 0;
+    }
+    int f2 = __VERIFIER_nondet_int();
+    if (f1 < 1 || f1 > 46340) {
+        return 0;
+    }
+
+    if (result == 1 && mult(f1, f2) == n && f1 > 1 && f2 > 1) {
+        ERROR: __VERIFIER_error();
+    } else {
+        return 0;
+    }
+}
+*/
+
+pred main_v<n,f1,f2,r,e> == n<1 & r=0 & e=1
+     or n>46340 & r=0 & e=1
+     or f1<1 & r=0 & e=1
+     or f1>46340 & r=0 & e=1
+     or f2<1 & r=0 & e=1
+     or f2>46340 & r=0 & e=1
+     or _::is_prime_v<n,r1,e1> * _::mult_v<f1,f2,r2,e2> & n>=1 & n<=46340 & f1>=1 & f1<=46340 & f2>=1 & f2<=46340 & r1=1 & n=r2 & e=0
+     or _::is_prime_v<n,r1,e1> * _::mult_v<f1,f2,r2,e2> & n>=1 & n<=46340 & f1>=1 & f1<=46340 & f2>=1 & f2<=46340 & r1!=1 & r=0 & e1=1 & e2=1 & e=1
+     or _::is_prime_v<n,r1,e1> * _::mult_v<f1,f2,r2,e2> & n>=1 & n<=46340 & f1>=1 & f1<=46340 & f2>=1 & f2<=46340 & n!=r2 & r=0 & e1=1 & e2=1 & e=1.
+
+
+checksat _::main_v<n,f1,f2,r,e> & e=0.
+
+expect Unsat.
