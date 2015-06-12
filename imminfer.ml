@@ -147,7 +147,8 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
             let new_inf_vars =
               if (not (v_stack # is_empty)) then
                 let rel_to_var rel = match rel with
-                  | Some p -> [CP.SpecVar (AnnT, p.C.rel_name, Unprimed)]
+                  (* the relation var *)
+                  | Some p -> [CP.SpecVar (RelT (CP.type_of_spec_var_list  p.C.rel_vars), p.C.rel_name, Unprimed)]
                   | None -> [] in
                 (rel_to_var !post_rel)@(rel_to_var !pre_rel)@ff.formula_inf_vars
               else ff.formula_inf_vars in

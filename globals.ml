@@ -1055,7 +1055,7 @@ let allow_imm = ref false (*imm will delay checking guard conditions*)
 let allow_imm_inv = ref true (*imm inv to add of form @M<:v<:@A*)
 let allow_imm_subs_rhs = ref true (*imm rhs subs from do_match*)
 let allow_field_ann = ref false
-let allow_imm_norm = ref true
+let allow_imm_norm = ref false
 
 let remove_abs = ref true
 let allow_array_inst = ref false

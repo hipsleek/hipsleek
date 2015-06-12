@@ -593,6 +593,8 @@ let type_of_spec_var (sv : spec_var) : typ =
   match sv with
   | SpecVar (t, _, _) -> t
 
+let type_of_spec_var_list (sv : spec_var list) : typ list = List.map type_of_spec_var sv
+
 let is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
 
 let is_rel_var (sv : spec_var) : bool = is_RelT (type_of_spec_var sv)

@@ -630,13 +630,14 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       let new_fml_fv = CF.struc_fv new_formula_inf_continuation in
       (* let (vars_rel,vars_inf) = List.partition (fun v -> is_RelT(CP.type_of_spec_var v) ) vars in *)
       (* let (vars_templ, vars_inf) = List.partition (fun v -> is_FuncT (CP.type_of_spec_var v)) vars_inf in *)
+      let () = x_binfo_hp (add_str "vars" !print_svl) vars no_pos in
       let vars_rel, vars_templ, vars_inf = List.fold_left (fun (vr, vt, vi) v -> 
           let typ = CP.type_of_spec_var v in
           if is_RelT typ then (vr@[v], vt, vi)
           else if is_UtT typ then (vr@[v], vt, vi)
           else if is_FuncT typ then (vr, vt@[v], vi)
           else (vr, vt, vi@[v])) ([], [], []) vars in
-      let () = Debug.ninfo_hprint (add_str "vars_rel" !print_svl) vars_rel no_pos in
+      let () = x_binfo_hp (add_str "vars_rel" !print_svl) vars_rel no_pos in
       let _ =
         (*              if old_vars=[] then *)
         (*                Debug.info_hprint (add_str "TRANSLATED SPECS" pr_spec) einfer no_pos *)
@@ -646,9 +647,11 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
         let pre_post_vars = CP.remove_dups_svl (pre_vars @ post_vars @ new_fml_fv @ proc_args_vars) in
         let () = Debug.ninfo_hprint (add_str "all vars" !print_svl) pre_post_vars no_pos in
         let () = Debug.ninfo_hprint (add_str "inf vars" !print_svl) vars no_pos in
+        let () = x_binfo_hp (add_str "vars_rel1" !print_svl) vars_rel no_pos in
         let classify_rel v =
           let rel_decl = Cast.look_up_rel_def_raw prog.Cast.prog_rel_decls (CP.name_of_spec_var v) in
           if not (is_primitive_rel rel_decl) && (CP.isConstTrue rel_decl.rel_formula) then true else false in
+        let () = x_binfo_hp (add_str "vars_rel1" !print_svl) vars_rel no_pos in
         let (unknown_rel,known_rel) = List.partition classify_rel
             (CP.remove_dups_svl ((List.filter CP.is_rel_var pre_post_vars)@vars_rel)) in
         let () = Debug.ninfo_hprint (add_str "unknown_rel" !print_svl) unknown_rel no_pos in
@@ -4400,7 +4403,7 @@ let rec check_prog iprog (prog : prog_decl) =
     let scc = if (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) then Pi.resume_infer_obj_scc scc old_specs else scc in
 
     (* ========================== imm infer  ========================== *)
-    let scc = Imminfer.infer_imm_ann prog scc in
+    (* let scc = Imminfer.infer_imm_ann prog scc in *)
     (* ======================== END imm infer  ======================== *)
 
     (* let () = List.iter (fun proc -> *)
