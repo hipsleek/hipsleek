@@ -1699,7 +1699,7 @@ and add_pre_to_cprog_one cprog c =
   let ns_caller = if c.C.proc_by_copy_params = [] then ns else
       x_add trans_copy_spec_4caller c.C.proc_by_copy_params ns
   in
-  let () = c.C.proc_stk_of_static_specs # push ns_caller in
+  let () = c.C.proc_stk_of_static_specs # push_pr "astsimpl:1702" ns_caller in
   c
 
 and add_pre_to_cprog cprog = 
@@ -4061,7 +4061,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
            C.proc_static_specs = (* if proc.I.proc_is_main then CF.elim_exists_struc_preserve_pre_evars [] final_static_specs_list else *) final_static_specs_list;
            C.proc_dynamic_specs = final_dynamic_specs_list;
            (* C.proc_static_specs_with_pre =  []; *)
-           C.proc_stk_of_static_specs = new Gen.stack (* _noexc Cprinter.string_of_struc_formula (=) *);
+           C.proc_stk_of_static_specs = new Gen.stack_pr Cprinter.string_of_struc_formula (==);
            C.proc_hprel_ass = [];
            C.proc_hprel_unkmap = [];
            C.proc_sel_hps = [];
