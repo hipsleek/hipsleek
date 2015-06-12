@@ -5,7 +5,7 @@ data cell{
 //relation P(int x, int y).
 
   int foo2(cell c, cell d)
-  infer [@post_n]
+  infer [@term]
   requires c::cell<yyy> & yyy>2
     ensures c::cell<w> ;
 {

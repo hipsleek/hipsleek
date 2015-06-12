@@ -4398,6 +4398,11 @@ let rec check_prog iprog (prog : prog_decl) =
     let () = DD.ninfo_hprint (add_str "has_infer_post_proc" string_of_bool) has_infer_post_proc no_pos in
     (* Resume other infer *)
     let scc = if (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) then Pi.resume_infer_obj_scc scc old_specs else scc in
+
+    (* ========================== imm infer  ========================== *)
+    let () = x_binfo_pp "Andreea: normalize specs here" no_pos in
+    (* ======================== END imm infer  ======================== *)
+
     (* let () = List.iter (fun proc -> *)
     (*     DD.ninfo_hprint (add_str "spec" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in *)
 

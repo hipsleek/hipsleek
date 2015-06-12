@@ -3843,6 +3843,10 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
          (*   CP.tu_sol = None;                                                                                                    *)
          (*   CP.tu_pos = pos; } in                                                                                                *)
 
+         (* ========================== imm infer  ========================== *)
+         let () = x_binfo_pp "Andreea: normalize specs here" no_pos in
+         (* ======================== END imm infer  ======================== *)
+
          let static_specs_list =
            if not !Globals.dis_term_chk then
              CF.norm_struc_with_lexvar is_primitive false None static_specs_list
