@@ -1,0 +1,41 @@
+// Valid.Valid.Valid.Valid.Fail.Fail.Valid
+
+data node{int val; node next;}. 
+
+pred ll<n> == self=null & n=0 or
+     self::node<_, q> * q::ll<n-1> & n>0
+   inv n>=0.
+
+
+//4
+checkentail x::ll<n> * y::ll<n> & x=y |- x=null.
+print residue.
+expect Valid.
+
+/*
+# ex47b.slk --field-imm
+
+checkentail x::ll<n> * y::ll<n> & x=y |- x=null.
+
+# why did --field-imm fail for this example?
+
+(==mcpure.ml#2282==)
+generate_action@3
+generate_action inp1 :[ x::ll{}<n>@M, y::ll{}<n_34>@M]
+generate_action inp2 :emap[{n,n_34};{x,y}]
+generate_action@3 EXIT: Unfold 1 =>
+             LHS: x::ll{}<n>@M
+             RHS: x::ll{}<n>@M
+
+# why below see only one predicate?
+
+--field-imm
+(==mcpure.ml#2282==)
+generate_action@3
+generate_action inp1 :[ x::ll{}<n>@M]
+generate_action inp2 :emap[{n,n_34};{x,y}]
+generate_action@3 EXIT: NothingToDo => No duplicated nodes!
+
+
+
+*/

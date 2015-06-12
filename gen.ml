@@ -200,6 +200,8 @@ struct
   let exists_l_snd f x = List.exists (fun (_,c)-> f c) x
   let all_l_snd f x = List.for_all (fun (_,c)-> f c) x
 
+  let ite cond f1 f2 =  if cond then f1 else f2
+
   let line_break_threshold = 60
   exception Break_Found
   let add_str ?(inline=false) hdr f s =
@@ -597,6 +599,11 @@ class ['a] stack  =
         stk <- i::stk
       end
     method get_stk  = stk (* return entire content of stack *)
+    method get_stk_and_reset  = let s=stk in (stk<-[];s) (* return entire content of stack & clear *)
+    method get_stk_no_dupl  = 
+      (* remove dupl *)
+      let s = self # get_stk in
+      Basic.remove_dups s
     method set_stk newstk  = stk <- newstk 
     (* override with a new stack *)
     method pop = match stk with 
@@ -692,6 +699,7 @@ class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  =
     method top_no_exc : 'a = match stk with 
       | [] ->  emp_val
       | x::xs -> x
+    (* method top : 'a = self # top_no_exc  *)
     method last : 'a = match stk with 
       | [] -> emp_val
       | _ -> List.hd (List.rev stk)
@@ -1085,7 +1093,7 @@ module EqMap =
       let r =
         let (t1,t2) = order_two t1 t2 in
         List.fold_left (fun a (p1,p2) -> add_equiv a p1 p2) t2 (get_equiv t1) in
-      let pr = string_of_debug in
+      (* let pr = string_of_debug in *)
       (* let () = print_endline ("eset1 :"^ (pr t1)) in *)
       (* let () = print_endline ("eset2 :"^ (pr t2)) in *)
       (* let () = print_endline ("eset_out :"^ (pr r)) in *)

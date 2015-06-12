@@ -65,8 +65,7 @@ type fc_type = CP.formula * CP.formula * CP.formula * CP.formula
 
 let fixcalc_rel_stk : fc_type Gen.stack_pr = new Gen.stack_pr (pr_quad pr pr pr pr) (==)
 
-let infer_rel_stk : CP.infer_rel_type Gen.stack_pr = new Gen.stack_pr
-  CP.string_of_infer_rel (==)
+let infer_rel_stk : CP.infer_rel_type Gen.stack_pr = new Gen.stack_pr CP.string_of_infer_rel (==)
 
 let rel_ass_stk : hprel Gen.stack_pr = new Gen.stack_pr
   Cprinter.string_of_hprel_short (==)
@@ -384,8 +383,8 @@ let get_args_h_formula aset (h:h_formula) =
     (*   DataNode {h with h_formula_data_arguments=new_arg}) *)
     Some (root, arg,new_arg, [],
           DataNode {h with h_formula_data_arguments=new_arg;
-                           h_formula_data_imm =  CP.ConstAnn(Mutable); 
-                           h_formula_data_param_imm = List.map (fun c -> CP.mkConstAnn 0) h.h_formula_data_param_imm })
+                           h_formula_data_imm =  CP.mkConstAnn imm_bot; 
+                           h_formula_data_param_imm = List.map (fun c -> CP.mkConstAnn imm_bot) h.h_formula_data_param_imm })
 
   | ViewNode h -> 
     let h = to_unprimed_view_root aset h in
@@ -560,6 +559,7 @@ let rec filter_var f vars =
     if TP.is_sat_raw (MCP.mix_of_pure f) && CP.get_Neg_RelForm f = []
     then CP.filter_var_new (CP.drop_rel_formula f) vars
     else CP.mkFalse no_pos
+(* | _ -> if TP.is_sat_raw (MCP.mix_of_pure f) && CP.get_Neg_RelForm f = [] then CP.filter_var_new (CP.drop_rel_formula f) vars else CP.mkFalse no_pos*)
 (*        let flag = TP.is_sat_raw f                                 *)
 (*          try                                                      *)
 (*            Omega.is_sat_weaken f "0"                              *)
@@ -1360,10 +1360,11 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                       else
                         (rel_ass, [],new_estate)
                     in
-                    let () =  DD.ninfo_hprint (add_str "New estate 1: " !print_entail_state) new_estate pos in
+                    let () =  x_dinfo_hp (add_str "New estate 1: " !print_entail_state) new_estate pos in
                     if rel_ass = [] 
                     then (Some (new_estate, CP.mkTrue pos),None,[]) 
                     else
+                      let () = x_binfo_hp (add_str "RelInferred (rel_ass)" (pr_list print_lhs_rhs)) rel_ass pos in
                       let () = infer_rel_stk # push_list_pr rel_ass in
                       let () = Log.current_infer_rel_stk # push_list rel_ass in
                       (None,Some inferred_pure,[(new_estate,rel_ass,false)])
@@ -2145,6 +2146,7 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
         (* -------------------------------------------------------------- *)
         (* below causes non-linear LHS for relation *)
         (* let inf_rel_ls = List.map (simp_lhs_rhs vars) inf_rel_ls in *)
+        x_binfo_hp (add_str "RelInferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos;
         infer_rel_stk # push_list_pr inf_rel_ls;
         Log.current_infer_rel_stk # push_list inf_rel_ls;
         let estate = { estate with es_infer_rel = estate.es_infer_rel@inf_rel_ls;} in

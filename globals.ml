@@ -15,6 +15,11 @@ let trailer_num_list = ref []
 
 let change_flow = ref false
 
+let abs_int = ref 7
+let lend_int = ref 2
+let imm_int = ref 1
+let mut_int = ref 0
+
 type formula_type =
   | Simple
   | Complex
@@ -186,6 +191,11 @@ type typ =
   | Pointer of typ (* base type and dimension *)
 (* | SLTyp (* type of ho formula *) *)
 
+let is_undef_typ t =
+  match t with
+  |UNK |RelT _ |HpT |UtT _ -> true
+  | _ -> false 
+
 let is_node_typ t =
   match t with
   | Named id -> String.compare id "" != 0
@@ -239,7 +249,7 @@ let is_type_var t =
   | _ -> false
 
 
-let ann_var_sufix = "_ann"
+let imm_var_sufix = "_imm"
 
 let is_program_pointer (name:ident) = 
   let slen = (String.length name) in
@@ -373,10 +383,16 @@ let string_of_heap_ann a =
 
 let int_of_heap_ann a =
   match a with
-  | Accs -> 3
-  | Lend -> 2
-  | Imm -> 1
-  | Mutable -> 0
+  | Accs -> !abs_int
+  | Lend -> !lend_int
+  | Imm -> !imm_int
+  | Mutable -> !mut_int
+
+let heap_ann_of_int i =
+  if i = !mut_int then Mutable
+  else if i = !imm_int then Imm
+  else if i = !lend_int then Lend
+  else Accs
 
 let string_of_vp_ann a =  
   (match a with
@@ -531,7 +547,7 @@ let rec string_of_typ (x:typ) : string = match x with
 
 let is_RelT x =
   match x with
-  | RelT _ | UtT _ -> true
+  | RelT _ | UtT _  (* | HpT _  *)-> true
   | _ -> false
 ;;
 
@@ -655,6 +671,7 @@ let nonef2 e f = None
 let voidf e = ()
 let voidf2 e f = ()
 let somef v = Some v
+let somef2 v f = Some f
 let or_list = List.fold_left (||) false
 let and_list = List.fold_left (&&) true
 
@@ -778,6 +795,7 @@ let is_sleek_running = ref false
 let is_hip_running = ref false
 
 let temp_opt_flag = ref false
+let temp_opt_flag2 = ref false
 
 let remove_label_flag = ref false
 let label_split_conseq = ref true
@@ -1041,7 +1059,19 @@ let allow_field_ann = ref false
 let remove_abs = ref true
 let allow_array_inst = ref false
 
-let imm_merge = ref false
+let imm_merge = ref false                (* true *) (*TODOIMM set default to false when merging to default branch *)
+
+let imm_weak = ref true
+
+let aggressive_imm_simpl = ref false
+
+let imm_simplif_inst = ref true
+
+let int2imm_conv = ref true
+
+let aggresive_imm_inst = ref false 
+
+let imm_add = ref true
 
 (*Since this flag is disabled by default if you use this ensure that 
   run-fast-test mem test cases pass *)
@@ -1365,6 +1395,7 @@ type infer_type =
   | INF_ERR_MAY (* For infer[@err_may] *)
   | INF_SIZE (* For infer[@size] *)
   | INF_IMM (* For infer[@imm] *)
+  | INF_FIELD_IMM (* For infer[@field_imm] *)
   | INF_ARR_AS_VAR (* For infer[@arrvar] *)
   | INF_EFA (* For infer[@efa] *)
   | INF_DFA (* For infer[@dfa] *)
@@ -1396,6 +1427,7 @@ let string_of_inf_const x =
   | INF_ERR_MAY -> "@err_may"
   | INF_SIZE -> "@size"
   | INF_IMM -> "@imm"
+  | INF_FIELD_IMM -> "@field_imm"
   | INF_ARR_AS_VAR -> "@arrvar"
   | INF_EFA -> "@efa"
   | INF_DFA -> "@dfa"
@@ -1478,6 +1510,7 @@ class inf_obj  =
     val mutable arr = []
     method init =
       if !enable_error_as_exc then self # set INF_ERR_MUST;
+      if self # is_field_imm then allow_field_ann:=true;
       if self # get INF_ARR_AS_VAR then array_translate :=true
     method set_init_arr s = 
       let helper r c =
@@ -1497,6 +1530,7 @@ class inf_obj  =
         helper "@pre"           INF_PRE;
         helper "@post"          INF_POST;
         helper "@imm"           INF_IMM;
+        helper "@field_imm"     INF_FIELD_IMM;
         helper "@arrvar"        INF_ARR_AS_VAR;
         helper "@shape"         INF_SHAPE;
         helper "@error"         INF_ERROR;
@@ -1527,6 +1561,7 @@ class inf_obj  =
     (* method get_int i  = Array.get arr i *)
     method is_term = (self # get INF_TERM) || (self # get INF_TERM_WO_POST)
     (* termination inference *)
+    (* termination inference *)
     method is_term_wo_post = self # get INF_TERM_WO_POST
     (* termination inference wo post-condition *)
     method is_pre  = self # get INF_PRE
@@ -1534,9 +1569,11 @@ class inf_obj  =
     method is_post  = self # get INF_POST
     (* post-condition inference *)
     method is_ver_post  = self # get INF_VER_POST
+    method is_field_imm = self # get INF_FIELD_IMM
     method is_arr_as_var  = self # get INF_ARR_AS_VAR
     method is_imm  = self # get INF_IMM
     (* immutability inference *)
+    method is_field = (self # get INF_FIELD_IMM)
     method is_shape  = self # get INF_SHAPE
     (* shape inference *)
     method is_error  = self # get INF_ERROR
@@ -1549,9 +1586,9 @@ class inf_obj  =
     method is_pre_must  = not(self # get INF_DE_EXC)
                           && self # get INF_PRE_MUST
     method is_err_must_only  = not(self # get INF_DE_EXC)
-                          && not(self # get INF_ERR_MAY) 
-                          && not(self # get INF_ERR_MUST)
-                          && self # get INF_ERR_MUST_ONLY
+                               && not(self # get INF_ERR_MAY) 
+                               && not(self # get INF_ERR_MUST)
+                               && self # get INF_ERR_MUST_ONLY
     method is_err_may  = not(self # get INF_DE_EXC) 
                          && self # get INF_ERR_MAY
     method is_size  = self # get INF_SIZE
@@ -1646,6 +1683,7 @@ class inf_obj_sub  =
                               || (not(self # get INF_ERR_MAY) && not(self # get INF_DE_EXC) 
                                   && infer_const_obj # is_err_must)
     method is_classic_all  = super # is_classic || infer_const_obj # is_classic
+    method is_imm_all  = super # is_imm || infer_const_obj # is_imm
     (* method is__all  = super # is_ || infer_const_obj # is_ *)
     method is_ver_post_all  = super # is_ver_post || infer_const_obj # is_ver_post
     method is_par_all  = super # is_par || infer_const_obj # is_par

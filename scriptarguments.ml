@@ -70,6 +70,8 @@ let common_arguments = [
   (* Labelling Options *)
   ("--temp-opt", Arg.Set Globals.temp_opt_flag,
    "Temporary option flag.");
+  ("--temp-opt2", Arg.Set Globals.temp_opt_flag2,
+   "Temporary option flag2.");
   ("--dis-lbl", Arg.Set Globals.remove_label_flag,
    "Disable Labelling of Formula by removing AndList."); 
   ("--lbl-dis-split-conseq", Arg.Clear Globals.label_split_conseq,
@@ -314,13 +316,25 @@ let common_arguments = [
   ("--oc-dis-adv-simp", Arg.Clear Globals.oc_adv_simplify,"disable oc advancde simplification");
   ("--oc-en-adv-simp", Arg.Set Globals.oc_adv_simplify,"enable oc advanced simplification");
   ("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
-  ("--field-imm", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
+  ("--field-imm", Arg.Unit ( fun _ ->
+       Globals.allow_field_ann := true;
+       Globals.imm_merge := true;
+       Globals.simpl_memset := true;
+     ),"enable the use of immutability annotations for data fields");
   ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
   ("--dis-field-imm", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
   ("--allow-array-inst", Arg.Set Globals.allow_array_inst,"Allow instantiation of existential arrays");
   ("--imm-remove-abs", Arg.Set Globals.remove_abs,"remove @A nodes from formula (incl nodes with all fields ann with @A)");
   ("--en-imm-merge", Arg.Set Globals.imm_merge,"try to merge aliased nodes");
   ("--dis-imm-merge", Arg.Clear Globals.imm_merge,"don't merge aliased nodes");
+  ("--en-weak-imm", Arg.Set Globals.imm_weak,"enable weak instatiation (<:)");
+  ("--dis-weak-imm", Arg.Clear Globals.imm_weak,"enable strong instatiation (=)");
+  ("--en-imm-simplif-inst", Arg.Set Globals.imm_simplif_inst,"don't merge aliased nodes");
+  ("--dis-imm-simplif-inst", Arg.Clear Globals.imm_simplif_inst,"don't merge aliased nodes");
+  ("--en-aggresive-imm-inst", Arg.Set Globals.aggresive_imm_inst,"add lhs_imm<:rhs_imm to state (during matching), when lhs_imm is unrestricted");
+  ("--dis-aggresive-immf-inst", Arg.Clear Globals.aggresive_imm_inst,"don't add lhs_imm<:rhs_imm, when lhs_imm is unrestricted");
+  ("--en-imm-simpl", Arg.Set Globals.imm_add,"simplify imm addition");
+  ("--dis-imm-simpl", Arg.Clear Globals.imm_add,"disable imm addition simplification");
   ("--mem", Arg.Unit (fun _ -> 
        Globals.allow_mem := true; 
        Globals.allow_field_ann := true;),
@@ -348,7 +362,7 @@ let common_arguments = [
      ),"disable the use of immutability annotations");
   ("--imm-en-subs-rhs", Arg.Set Globals.allow_imm_subs_rhs,"enable the substitution of rhs eq for immutability");
   ("--imm-dis-subs-rhs", Arg.Clear Globals.allow_imm_subs_rhs,"disable the substitution of rhs eq for immutability");
-  ("--en-imm-inv", Arg.Set Globals.allow_imm_inv,"enable the additionof of immutability invariant for implication");
+  ("--en-imm-inv", Arg.Set Globals.allow_imm_inv,"enable the addition of immutability invariant for implication");
   ("--dis-imm-inv", Arg.Clear Globals.allow_imm_inv,"disable the additionof of immutability invariant for implication");
   ("--dis-inf", Arg.Clear Globals.allow_inf,"disable support for infinity ");
   ("--en-inf", Arg.Unit (fun _ ->

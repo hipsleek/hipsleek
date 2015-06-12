@@ -1539,6 +1539,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
          let ctempls = List.map (x_add trans_templ prog) prog.I.prog_templ_decls in
          let tmp_views,ls_mut_rec_views = order_views prog.I.prog_view_decls in
          let cuts = List.map (x_add trans_ut prog) prog.I.prog_ut_decls in
+         let cuis = List.map (trans_ui prog) prog.I.prog_ui_decls in
          (* let () = x_add Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in *)
          (* let () = print_string "trans_prog :: going to trans_view \n" in *)
          x_tinfo_hp (add_str "trans_prog 1 (views)" (pr_list Iprinter.string_of_view_decl))  prog.I.prog_view_decls  no_pos;
@@ -1618,15 +1619,18 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
          let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
          let bdecls = List.map (x_add trans_bdecl prog) prog.I.prog_barrier_decls in
          let ut_vs = cuts @ C.ut_decls # get_stk in
+         let ui_vs = cuis @ C.ui_decls # get_stk in
+         let extra_rels = List.map (fun ui -> ui.Cast.ui_rel) ui_vs in
          let () = Debug.ninfo_hprint (add_str "ut_vs added" (pr_list (fun ut -> ut.C.ut_name))) ut_vs no_pos in
          let cprog = {
            C.prog_data_decls = cdata;
            C.prog_view_decls = cviews2;
            C.prog_barrier_decls = bdecls;
            C.prog_logical_vars = log_vars;
-           C.prog_rel_decls = crels; (* An Hoa *)
+           C.prog_rel_decls = crels@extra_rels; (* An Hoa *)
            C.prog_templ_decls = ctempls;
            C.prog_ut_decls = (ut_vs);
+           C.prog_ui_decls = (ui_vs);
            C.prog_hp_decls = chps;
            C.prog_view_equiv = []; (*to update if views equiv is allowed to checking at beginning*)
            C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
@@ -2278,7 +2282,8 @@ and add_param_ann_constraints_struc (cf: CF.struc_formula) : CF.struc_formula = 
 
 and trans_view (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef : I.view_decl): C.view_decl =
   let pr = Iprinter.string_of_view_decl in
-  let pr_r = Cprinter.string_of_view_decl in
+  let pr_r = Cprinter.string_of_view_decl_short in
+  (* let pr_r = pr_none in  *)
   Debug.no_1 "trans_view" pr pr_r  (fun _ -> trans_view_x prog  mutrec_vnames
                                        transed_views ann_typs vdef) vdef
 
@@ -2295,7 +2300,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
    let tlist = ([(self,{ sv_info_kind = (Named data_name);id = fresh_int () })]@tlist) in
    let (n_tl,cf) = trans_I2C_struc_formula 1 prog false true (self :: vdef.I.view_vars) vdef.I.view_formula (ann_typs@tlist) false
        true (*check_pre*) in
-   let () = Debug.ninfo_hprint (add_str "cf 3" Cprinter.string_of_struc_formula) cf no_pos in
+   let () = Debug.tinfo_hprint (add_str "cf 3" Cprinter.string_of_struc_formula) cf no_pos in
    (* let () = print_string ("cf: "^(Cprinter.string_of_struc_formula cf)^"\n") in *)
    let inv_lock = vdef.I.view_inv_lock in
    let (n_tl,inv_lock) =
@@ -2325,7 +2330,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
        let (n_tl,_) = x_add gather_type_info_exp prog a.IF.mem_formula_exp n_tl new_typ_mem in 
        (n_tl,x_add trans_view_mem vdef.I.view_mem n_tl)
      | None -> (n_tl,None)
-   ) in 
+   ) in
    let inv = if(!Globals.allow_mem) then Mem.add_mem_invariant inv vdef.I.view_mem else inv in
    let n_tl = x_add gather_type_info_pure prog inv n_tl in 
    let inv_pf = x_add trans_pure_formula inv n_tl in   
@@ -2526,8 +2531,8 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
        C.view_prune_conditions_baga = [];
        C.view_ef_pure_disj = None;
        C.view_prune_invariants = []} in
-     (x_dinfo_zp (lazy ("\n" ^ (Cprinter.string_of_view_decl cvdef))) (CF.pos_of_struc_formula cf);
-      cvdef)
+     ( x_dinfo_zp (lazy ("\n" ^ (Cprinter.string_of_view_decl cvdef))) (CF.pos_of_struc_formula cf);
+       cvdef)
    )
   )
 
@@ -3005,6 +3010,15 @@ and trans_ut (prog: I.prog_decl) (utdef: I.ut_decl): C.ut_decl =
     C.ut_is_pre = utdef.I.ut_is_pre;
     C.ut_pos = pos; } in
   c_ut
+
+and trans_ui (prog: I.prog_decl) (uidef: I.ui_decl): C.ui_decl =
+  let pos = uidef.I.ui_pos in
+  let rel = trans_rel prog uidef.I.ui_rel in
+  let c_ui = {
+    C.ui_rel = rel;
+    C.ui_is_pre = uidef.I.ui_is_pre;
+    C.ui_pos = pos; } in
+  c_ui
 
 and trans_hp_x (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_decl) =
   let pos = IF.pos_of_formula hpdef.I.hp_formula in
@@ -6737,7 +6751,7 @@ and trans_var_x (ve, pe) (tlist: spec_var_type_list) pos =
        (*               Err.error_loc = pos; *)
        (*               Err.error_text = "couldn't infer type for " ^ ve^(match pe with |Unprimed->""|Primed -> "'")^" in "^(string_of_tlist tlist)^"\n"; *)
        (*           } *)
-        | t -> CP.SpecVar (t, ve, pe)
+       | t -> CP.SpecVar (t, ve, pe)
 
       )
     with Not_found ->   
@@ -6989,104 +7003,104 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (prepost_flag:bool) (quantify
 (*     | CF.Star -> false *)
 (*     | _ -> false *)
 (*
-  and compact_nodes_with_same_name_in_h_formula_x (f: CF.h_formula) (aset: CP.spec_var list list) : CF.h_formula = 
-  if not (!Globals.allow_field_ann) then f else
-  match f with
-  | CF.Star {CF.h_formula_star_h1 = h1;
-  CF.h_formula_star_h2 = h2;
-  CF.h_formula_star_pos = pos } ->
-  let rec helper h1 h2 = 
-  match h1 with
-  | CF.DataNode { CF.h_formula_data_name = name1;
-  CF.h_formula_data_node = v1;
-  CF.h_formula_data_param_imm = param_ann1;
-  } ->
-  let aset_sv = Context.get_aset aset v1 in
-  let res_h1, res_h2 = 
-  match h2 with
-  | CF.DataNode { CF.h_formula_data_name = name2;
-  CF.h_formula_data_node = v2;
-  CF.h_formula_data_param_imm = param_ann2; } ->
-(* h1, h2 nodes; check if they can be join into a single node. If so, h1 will contain the updated annotations, while 
-  h2 will be replaced by "true". Otherwise both data nodes will remain unchanged *)
-  if (String.compare name1 name2 == 0) && ((CP.mem v2 aset_sv) || (CP.eq_spec_var v1 v2)) then
-  let compatible, new_param_imm = join_ann param_ann1 param_ann2 in
-  match h1 with (* this match is to avoid the rewriting of all h1 parameters*)
-  | CF.DataNode h -> 
-  if (compatible == true) then 
-  (CF.DataNode {h with CF.h_formula_data_param_imm = new_param_imm}, CF.HTrue)
-  else (h1, h2)
-  | _ -> (h1, h2) (* will never reach this branch *)
-  else (h1, h2) (* h2 is not an alias of h1 *) 
-  | CF.Star {CF.h_formula_star_h1 = h21;
-  CF.h_formula_star_h2 = h22;
-  CF.h_formula_star_pos = pos2 } ->
-(* h1 node, h2 star formula. Try to unify h1 with nodes on the left hand side of h2 star-formula, resulting in a new h1
-  which will be checked against the right side of h2 star-formula. This will result in updated part of h2 right and left hand side of '*'.
-  Rejoin h2 star fomula, and apply compact_nodes_with_same_name_in_h_formula_x on the updated h2 to check for other groups of aliases.
-*)
-  let h31, h32 = helper h1 h21 in
-  let h41, h42 = helper h31 h22 in
-  let new_h2 = CF.mkStarH h32 h42 pos2 10 in
-  let new_h2 = compact_nodes_with_same_name_in_h_formula_x new_h2 aset in 
-  (h41, new_h2)
-  | _ -> (h1,h2) in
-  (res_h1, res_h2)
-  | CF.Star {CF.h_formula_star_h1 = h11;
-  CF.h_formula_star_h2 = h12;
-  CF.h_formula_star_pos = pos1 } ->
-  let new_h2 = CF.mkStarH h12 h2 pos1 11 in
-  let h31, h32 = helper h11 new_h2 in
-  let new_h2 = compact_nodes_with_same_name_in_h_formula_x h32 aset in 
-  (h31, new_h2)
-  | _ ->    (h1, h2)
-  in
-  let h1,h2 = helper h1 h2 in
-  let res = CF.mkStarH h1 h2 pos 12 in
-  res
-  | CF.Conj h  -> CF.Conj {h with CF.h_formula_conj_h1 = compact_nodes_with_same_name_in_h_formula_x h.CF.h_formula_conj_h1 aset;
-  CF.h_formula_conj_h2 = compact_nodes_with_same_name_in_h_formula_x h.CF.h_formula_conj_h2 aset}
-  | CF.Phase h ->  CF.Phase {h with CF.h_formula_phase_rd = compact_nodes_with_same_name_in_h_formula_x h.CF.h_formula_phase_rd aset;
-  CF.h_formula_phase_rw = compact_nodes_with_same_name_in_h_formula_x h.CF.h_formula_phase_rw aset}
-  | _ -> f
+(*   and compact_nodes_with_same_name_in_h_formula_x (f: CF.h_formula) (aset: CP.spec_var list list) : CF.h_formula =  *)
+(*   if not (!Globals.allow_field_ann) then f else *)
+(*   match f with *)
+(*   | CF.Star {CF.h_formula_star_h1 = h1; *)
+(*   CF.h_formula_star_h2 = h2; *)
+(*   CF.h_formula_star_pos = pos } -> *)
+(*   let rec helper h1 h2 =  *)
+(*   match h1 with *)
+(*   | CF.DataNode { CF.h_formula_data_name = name1; *)
+(*   CF.h_formula_data_node = v1; *)
+(*   CF.h_formula_data_param_imm = param_ann1; *)
+(*   } -> *)
+(*   let aset_sv = Context.get_aset aset v1 in *)
+(*   let res_h1, res_h2 =  *)
+(*   match h2 with *)
+(*   | CF.DataNode { CF.h_formula_data_name = name2; *)
+(*   CF.h_formula_data_node = v2; *)
+(*   CF.h_formula_data_param_imm = param_ann2; } -> *)
+(* (\* h1, h2 nodes; check if they can be join into a single node. If so, h1 will contain the updated annotations, while  *)
+(*   h2 will be replaced by "true". Otherwise both data nodes will remain unchanged *\) *)
+(*   if (String.compare name1 name2 == 0) && ((CP.mem v2 aset_sv) || (CP.eq_spec_var v1 v2)) then *)
+(*   let compatible, new_param_imm = join_ann param_ann1 param_ann2 in *)
+(*   match h1 with (\* this match is to avoid the rewriting of all h1 parameters*\) *)
+(*   | CF.DataNode h ->  *)
+(*   if (compatible == true) then  *)
+(*   (CF.DataNode {h with CF.h_formula_data_param_imm = new_param_imm}, CF.HTrue) *)
+(*   else (h1, h2) *)
+(*   | _ -> (h1, h2) (\* will never reach this branch *\) *)
+(*   else (h1, h2) (\* h2 is not an alias of h1 *\)  *)
+(*   | CF.Star {CF.h_formula_star_h1 = h21; *)
+(*   CF.h_formula_star_h2 = h22; *)
+(*   CF.h_formula_star_pos = pos2 } -> *)
+(* (\* h1 node, h2 star formula. Try to unify h1 with nodes on the left hand side of h2 star-formula, resulting in a new h1 *)
+(*   which will be checked against the right side of h2 star-formula. This will result in updated part of h2 right and left hand side of '*'. *)
+(*   Rejoin h2 star fomula, and apply compact_nodes_with_same_name_in_h_formula_x on the updated h2 to check for other groups of aliases. *)
+(* *\) *)
+(*   let h31, h32 = helper h1 h21 in *)
+(*   let h41, h42 = helper h31 h22 in *)
+(*   let new_h2 = CF.mkStarH h32 h42 pos2 10 in *)
+(*   let new_h2 = compact_nodes_with_same_name_in_h_formula_x new_h2 aset in  *)
+(*   (h41, new_h2) *)
+(*   | _ -> (h1,h2) in *)
+(*   (res_h1, res_h2) *)
+(*   | CF.Star {CF.h_formula_star_h1 = h11; *)
+(*   CF.h_formula_star_h2 = h12; *)
+(*   CF.h_formula_star_pos = pos1 } -> *)
+(*   let new_h2 = CF.mkStarH h12 h2 pos1 11 in *)
+(*   let h31, h32 = helper h11 new_h2 in *)
+(*   let new_h2 = compact_nodes_with_same_name_in_h_formula_x h32 aset in  *)
+(*   (h31, new_h2) *)
+(*   | _ ->    (h1, h2) *)
+(*   in *)
+(*   let h1,h2 = helper h1 h2 in *)
+(*   let res = CF.mkStarH h1 h2 pos 12 in *)
+(*   res *)
+(*   | CF.Conj h  -> CF.Conj {h with CF.h_formula_conj_h1 = compact_nodes_with_same_name_in_h_formula_x h.CF.h_formula_conj_h1 aset; *)
+(*   CF.h_formula_conj_h2 = compact_nodes_with_same_name_in_h_formula_x h.CF.h_formula_conj_h2 aset} *)
+(*   | CF.Phase h ->  CF.Phase {h with CF.h_formula_phase_rd = compact_nodes_with_same_name_in_h_formula_x h.CF.h_formula_phase_rd aset; *)
+(*   CF.h_formula_phase_rw = compact_nodes_with_same_name_in_h_formula_x h.CF.h_formula_phase_rw aset} *)
+(*   | _ -> f *)
 
-  and compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.spec_var list list) : CF.h_formula =
-  let pr = Cprinter.string_of_h_formula in 
-  let pr_sv = pr_list Cprinter.string_of_spec_var_list in
-  Debug.no_2 "compact_nodes_with_same_name_in_h_formula" pr pr_sv pr (fun _ _ -> compact_nodes_with_same_name_in_h_formula_x f aset) f aset
+(*   and compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.spec_var list list) : CF.h_formula = *)
+(*   let pr = Cprinter.string_of_h_formula in  *)
+(*   let pr_sv = pr_list Cprinter.string_of_spec_var_list in *)
+(*   Debug.no_2 "compact_nodes_with_same_name_in_h_formula" pr pr_sv pr (fun _ _ -> compact_nodes_with_same_name_in_h_formula_x f aset) f aset *)
 
 
-  and compact_nodes_with_same_name_in_formula (cf: CF.formula): CF.formula =
-  match cf with
-  | CF.Base f   -> CF.Base { f with
-  CF.formula_base_heap = compact_nodes_with_same_name_in_h_formula f.CF.formula_base_heap
-(* (Context.comp_aliases f.CF.formula_base_pure); *)
-  (Csvutil.comp_aliases f.CF.formula_base_pure);
-  }
-  | CF.Or f     -> CF.Or { f with 
-  CF.formula_or_f1 = compact_nodes_with_same_name_in_formula f.CF.formula_or_f1; 
-  CF.formula_or_f2 = compact_nodes_with_same_name_in_formula f.CF.formula_or_f2; }
-  | CF.Exists f -> CF.Exists { f with
-  CF.formula_exists_heap = compact_nodes_with_same_name_in_h_formula f.CF.formula_exists_heap (Context.comp_aliases f.CF.formula_exists_pure); }
+(*   and compact_nodes_with_same_name_in_formula (cf: CF.formula): CF.formula = *)
+(*   match cf with *)
+(*   | CF.Base f   -> CF.Base { f with *)
+(*   CF.formula_base_heap = compact_nodes_with_same_name_in_h_formula f.CF.formula_base_heap *)
+(* (\* (Context.comp_aliases f.CF.formula_base_pure); *\) *)
+(*   (Csvutil.comp_aliases f.CF.formula_base_pure); *)
+(*   } *)
+(*   | CF.Or f     -> CF.Or { f with  *)
+(*   CF.formula_or_f1 = compact_nodes_with_same_name_in_formula f.CF.formula_or_f1;  *)
+(*   CF.formula_or_f2 = compact_nodes_with_same_name_in_formula f.CF.formula_or_f2; } *)
+(*   | CF.Exists f -> CF.Exists { f with *)
+(*   CF.formula_exists_heap = compact_nodes_with_same_name_in_h_formula f.CF.formula_exists_heap (Context.comp_aliases f.CF.formula_exists_pure); } *)
 
-  and compact_nodes_with_same_name_in_struc_x (f: CF.struc_formula): CF.struc_formula = (* f *)
-  if not (!Globals.allow_field_ann ) then f
-  else
-  match f with
-  | CF.EOr sf            -> CF.EOr { sf with 
-  CF.formula_struc_or_f1 = compact_nodes_with_same_name_in_struc_x sf.CF.formula_struc_or_f1;
-  CF.formula_struc_or_f2 = compact_nodes_with_same_name_in_struc_x  sf.CF.formula_struc_or_f2;} 
-  | CF.EList sf          -> CF.EList  (map_l_snd compact_nodes_with_same_name_in_struc_x sf) 
-  | CF.ECase sf          -> CF.ECase {sf with CF.formula_case_branches = map_l_snd compact_nodes_with_same_name_in_struc_x sf.CF.formula_case_branches;} 
-  | CF.EBase sf          -> CF.EBase {sf with
-  CF.formula_struc_base = x_add_1 Mem.compact_nodes_with_same_name_in_formula sf.CF.formula_struc_base;
-  CF.formula_struc_continuation = map_opt compact_nodes_with_same_name_in_struc_x sf.CF.formula_struc_continuation; }
-  | CF.EAssume (x, f, y)-> CF.EAssume (x,(Mem.compact_nodes_with_same_name_in_formula f),y)
-  | CF.EInfer sf         -> CF.EInfer {sf with CF.formula_inf_continuation = compact_nodes_with_same_name_in_struc_x sf.CF.formula_inf_continuation} (* (andreeac) ?? *)
+(*   and compact_nodes_with_same_name_in_struc_x (f: CF.struc_formula): CF.struc_formula = (\* f *\) *)
+(*   if not (!Globals.allow_field_ann ) then f *)
+(*   else *)
+(*   match f with *)
+(*   | CF.EOr sf            -> CF.EOr { sf with  *)
+(*   CF.formula_struc_or_f1 = compact_nodes_with_same_name_in_struc_x sf.CF.formula_struc_or_f1; *)
+(*   CF.formula_struc_or_f2 = compact_nodes_with_same_name_in_struc_x  sf.CF.formula_struc_or_f2;}  *)
+(*   | CF.EList sf          -> CF.EList  (map_l_snd compact_nodes_with_same_name_in_struc_x sf)  *)
+(*   | CF.ECase sf          -> CF.ECase {sf with CF.formula_case_branches = map_l_snd compact_nodes_with_same_name_in_struc_x sf.CF.formula_case_branches;}  *)
+(*   | CF.EBase sf          -> CF.EBase {sf with *)
+(*   CF.formula_struc_base = x_add_1 Mem.compact_nodes_with_same_name_in_formula sf.CF.formula_struc_base; *)
+(*   CF.formula_struc_continuation = map_opt compact_nodes_with_same_name_in_struc_x sf.CF.formula_struc_continuation; } *)
+(*   | CF.EAssume (x, f, y)-> CF.EAssume (x,(Mem.compact_nodes_with_same_name_in_formula f),y) *)
+(*   | CF.EInfer sf         -> CF.EInfer {sf with CF.formula_inf_continuation = compact_nodes_with_same_name_in_struc_x sf.CF.formula_inf_continuation} (\* (andreeac) ?? *\) *)
 
-  and compact_nodes_with_same_name_in_struc (f: CF.struc_formula): CF.struc_formula = 
-  let pr = Cprinter.string_of_struc_formula in
-  Debug.no_1 "compact_nodes_with_same_name_in_struc" pr pr (fun _ -> compact_nodes_with_same_name_in_struc_x f ) f
+(*   and compact_nodes_with_same_name_in_struc (f: CF.struc_formula): CF.struc_formula =  *)
+(*   let pr = Cprinter.string_of_struc_formula in *)
+(*   Debug.no_1 "compact_nodes_with_same_name_in_struc" pr pr (fun _ -> compact_nodes_with_same_name_in_struc_x f ) f *)
 *)
 and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect
     (f0 : IF.formula) tlist (clean_res:bool) : (spec_var_type_list*CF.formula) =
@@ -7207,7 +7221,10 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
   (*TO CHECK: temporarily disabled*) 
   (* let cf = CF.merge_partial_heaps cf in (\*ENABLE THIS for partial fields*\) *)
   (* let () = print_string ("\nbefore ann: "^ Cprinter.string_of_formula cf) in *)
-  let cf = if (!Globals.allow_field_ann) then add_param_ann_constraints_formula cf else cf in
+  let cf = 
+    if (!Globals.allow_field_ann) then add_param_ann_constraints_formula cf 
+    else if (!Globals.temp_opt_flag2) then CF.merge_partial_heaps cf 
+    else cf in
   (* let () = print_string ("\nafter ann: "^ Cprinter.string_of_formula cf) in *)
   (n_tl,cf)
 
@@ -7765,11 +7782,11 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     let pos = base.IF.formula_base_pos in
     let (new_h, type_f, newvars1, n_tl) = x_add linearize_heap h pos tl in
     let new_h, new_constr, new_vars = x_add_1 Immutable.normalize_field_ann_heap_node new_h in
-    let newvars = newvars1@new_vars in
+    let newvars1 = newvars1@new_vars in
     let new_vp = trans_vperm_sets vp n_tl pos in
     let new_p = x_add trans_pure_formula p n_tl in
     (* let () = print_string("\nForm: "^(Cprinter.string_of_pure_formula new_p)) in *)
-    let new_p = CP.join_disjunctions (new_p::new_constr) in
+    let new_p = CP.conj_of_list (new_p::new_constr) pos in
     (* let () = print_string("\nForm: "^(Cprinter.string_of_pure_formula new_p)) in *)
     let new_p = x_add Cpure.arith_simplify 5 new_p in
     (* let () = print_string("\nSimpleForm: "^(Cprinter.string_of_pure_formula new_p)) in *)
@@ -7889,100 +7906,102 @@ and trans_pure_b_formula (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b_f
 
 and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b_formula =
   let (pf, sl) = b0 in
-  let npf =  match pf with
-    | IP.Frm ((v,p),pos) ->
-      let v_type = Cpure.type_of_spec_var (trans_var (v,Unprimed) tlist pos) in
-      let sv = CP.SpecVar (v_type, v, p) in
-      CP.Frm (sv, pos)
-    | IP.BConst (b, pos) -> CP.BConst (b, pos)
-    | IP.BVar ((v, p), pos) -> CP.BVar (CP.SpecVar (C.bool_type, v, p), pos)
-    | IP.LexVar (t_ann, ls1, ls2, pos) ->
-      let cle = List.map (fun e -> x_add trans_pure_exp e tlist) ls1 in
-      let clt = List.map (fun e -> x_add trans_pure_exp e tlist) ls2 in
-      CP.LexVar {
-        CP.lex_ann = trans_term_ann t_ann tlist;
-        CP.lex_exp = cle;
-        CP.lex_fid = "";
-        CP.lex_tmp = clt;
-        CP.lex_loc = pos; }
-    | IP.Lt (e1, e2, pos) ->
-      let pe1 = x_add trans_pure_exp e1 tlist in
-      let pe2 = x_add trans_pure_exp e2 tlist in CP.mkLt pe1 pe2 pos
-    | IP.Lte (e1, e2, pos) ->
-      let pe1 = x_add trans_pure_exp e1 tlist in
-      let pe2 = x_add trans_pure_exp e2 tlist in CP.mkLte pe1 pe2 pos
-    | IP.SubAnn (e1, e2, pos) ->
-      let pe1 = x_add trans_pure_exp e1 tlist in
-      let pe2 = x_add trans_pure_exp e2 tlist in CP.SubAnn(pe1,pe2,pos)
-    | IP.Gt (e1, e2, pos) ->
-      let pe1 = x_add trans_pure_exp e1 tlist in
-      let pe2 = x_add trans_pure_exp e2 tlist in CP.mkGt pe1 pe2 pos
-    | IP.Gte (e1, e2, pos) ->
-      let pe1 = x_add trans_pure_exp e1 tlist in
-      let pe2 = x_add trans_pure_exp e2 tlist in CP.mkGte pe1 pe2 pos
-    | IP.Eq (e1, e2, pos) ->
-      let pe1 = x_add trans_pure_exp e1 tlist in
-      let pe2 = x_add trans_pure_exp e2 tlist in 
-      (check_dfrac_wf pe1 pe2 pos; CP.mkEq pe1 pe2 pos)
-    | IP.Neq (e1, e2, pos) ->
-      let pe1 = x_add trans_pure_exp e1 tlist in
-      let pe2 = x_add trans_pure_exp e2 tlist in CP.mkNeq pe1 pe2 pos
-    | IP.EqMax (e1, e2, e3, pos) ->
-      let pe1 = x_add trans_pure_exp e1 tlist in
-      let pe2 = x_add trans_pure_exp e2 tlist in
-      let pe3 = x_add trans_pure_exp e3 tlist in CP.EqMax (pe1, pe2, pe3, pos)
-    | IP.EqMin (e1, e2, e3, pos) ->
-      let pe1 = x_add trans_pure_exp e1 tlist in
-      let pe2 = x_add trans_pure_exp e2 tlist in
-      let pe3 = x_add trans_pure_exp e3 tlist in CP.EqMin (pe1, pe2, pe3, pos)
-    | IP.BagIn ((v, p), e, pos) ->
-      let pe = x_add trans_pure_exp e tlist in CP.BagIn ((trans_var (v,p) tlist pos), pe, pos)
-    | IP.BagNotIn ((v, p), e, pos) ->
-      let pe = x_add trans_pure_exp e tlist in
-      CP.BagNotIn ((trans_var (v,p) tlist pos), pe, pos)
-    | IP.BagSub (e1, e2, pos) ->
-      let pe1 = x_add trans_pure_exp e1 tlist in
-      let pe2 = x_add trans_pure_exp e2 tlist in CP.BagSub (pe1, pe2, pos)
-    | IP.BagMax ((v1, p1), (v2, p2), pos) ->
-      CP.BagMax (CP.SpecVar (C.int_type, v1, p1),CP.SpecVar (C.bag_type, v2, p2), pos)
-    | IP.BagMin ((v1, p1), (v2, p2), pos) ->
-      CP.BagMin (CP.SpecVar (C.int_type, v1, p1), CP.SpecVar (C.bag_type, v2, p2), pos)
-    (* | IP.VarPerm (ct,ls,pos) ->                                 *)
-    (*       let func (v,p) =                                      *)
-    (*         CP.SpecVar (UNK,v,p) (*TO CHECK: ignore type info*) *)
-    (*       in                                                    *)
-    (*       let ls1 = List.map func ls in                         *)
-    (*       CP.VarPerm (ct,ls1,pos)                               *)
-    | IP.ListIn (e1, e2, pos) ->
-      let pe1 = x_add trans_pure_exp e1 tlist in
-      let pe2 = x_add trans_pure_exp e2 tlist in CP.ListIn (pe1, pe2, pos)
-    | IP.ListNotIn (e1, e2, pos) ->
-      let pe1 = x_add trans_pure_exp e1 tlist in
-      let pe2 = x_add trans_pure_exp e2 tlist in CP.ListNotIn (pe1, pe2, pos)
-    | IP.ListAllN (e1, e2, pos) ->
-      let pe1 = x_add trans_pure_exp e1 tlist in
-      let pe2 = x_add trans_pure_exp e2 tlist in CP.ListAllN (pe1, pe2, pos)
-    | IP.ListPerm (e1, e2, pos) ->
-      let pe1 = x_add trans_pure_exp e1 tlist in
-      let pe2 = x_add trans_pure_exp e2 tlist in CP.ListPerm (pe1, pe2, pos)
-    | IP.RelForm (r, args, pos) ->    
-      let nv = trans_var_safe (r,Unprimed) (RelT[]) tlist pos in
-      (* Match types of arguments with relation signature *)
-      let cpargs = x_add trans_pure_exp_list args tlist in
-      CP.RelForm (nv, cpargs, pos) (* An Hoa : Translate IP.RelForm to CP.RelForm *)
-    | IP.XPure ({IP.xpure_view_node = vn ;
-                 IP.xpure_view_name = r;
-                 IP.xpure_view_arguments = args;
-                 IP.xpure_view_remaining_branches = brs;
-                 IP.xpure_view_pos = pos}) -> 
-      let nargs = List.map (fun arg -> trans_var (arg,Unprimed) tlist pos) args in 
-      CP.XPure {CP.xpure_view_node = None ;
-                CP.xpure_view_name = r;
-                CP.xpure_view_arguments = nargs;
-                CP.xpure_view_remaining_branches = brs;
-                CP.xpure_view_pos = pos
-               }
-  in
+  let npf =  let rec helper pf = 
+               match pf with
+               | IP.Frm ((v,p),pos) ->
+                 let v_type = Cpure.type_of_spec_var (trans_var (v,Unprimed) tlist pos) in
+                 let sv = CP.SpecVar (v_type, v, p) in
+                 CP.Frm (sv, pos)
+               | IP.BConst (b, pos) -> CP.BConst (b, pos)
+               | IP.BVar ((v, p), pos) -> CP.BVar (CP.SpecVar (C.bool_type, v, p), pos)
+               | IP.LexVar (t_ann, ls1, ls2, pos) ->
+                 let cle = List.map (fun e -> x_add trans_pure_exp e tlist) ls1 in
+                 let clt = List.map (fun e -> x_add trans_pure_exp e tlist) ls2 in
+                 CP.LexVar {
+                   CP.lex_ann = trans_term_ann t_ann tlist;
+                   CP.lex_exp = cle;
+                   CP.lex_fid = "";
+                   CP.lex_tmp = clt;
+                   CP.lex_loc = pos; }
+               | IP.ImmRel (r, cond, pos) -> CP.ImmRel(helper r, trans_imm_ann cond tlist, pos)
+               | IP.Lt (e1, e2, pos) ->
+                 let pe1 = x_add trans_pure_exp e1 tlist in
+                 let pe2 = x_add trans_pure_exp e2 tlist in CP.mkLt pe1 pe2 pos
+               | IP.Lte (e1, e2, pos) ->
+                 let pe1 = x_add trans_pure_exp e1 tlist in
+                 let pe2 = x_add trans_pure_exp e2 tlist in CP.mkLte pe1 pe2 pos
+               | IP.SubAnn (e1, e2, pos) ->
+                 let pe1 = x_add trans_pure_exp e1 tlist in
+                 let pe2 = x_add trans_pure_exp e2 tlist in CP.SubAnn(pe1,pe2,pos)
+               | IP.Gt (e1, e2, pos) ->
+                 let pe1 = x_add trans_pure_exp e1 tlist in
+                 let pe2 = x_add trans_pure_exp e2 tlist in CP.mkGt pe1 pe2 pos
+               | IP.Gte (e1, e2, pos) ->
+                 let pe1 = x_add trans_pure_exp e1 tlist in
+                 let pe2 = x_add trans_pure_exp e2 tlist in CP.mkGte pe1 pe2 pos
+               | IP.Eq (e1, e2, pos) ->
+                 let pe1 = x_add trans_pure_exp e1 tlist in
+                 let pe2 = x_add trans_pure_exp e2 tlist in 
+                 (check_dfrac_wf pe1 pe2 pos; CP.mkEq pe1 pe2 pos)
+               | IP.Neq (e1, e2, pos) ->
+                 let pe1 = x_add trans_pure_exp e1 tlist in
+                 let pe2 = x_add trans_pure_exp e2 tlist in CP.mkNeq pe1 pe2 pos
+               | IP.EqMax (e1, e2, e3, pos) ->
+                 let pe1 = x_add trans_pure_exp e1 tlist in
+                 let pe2 = x_add trans_pure_exp e2 tlist in
+                 let pe3 = x_add trans_pure_exp e3 tlist in CP.EqMax (pe1, pe2, pe3, pos)
+               | IP.EqMin (e1, e2, e3, pos) ->
+                 let pe1 = x_add trans_pure_exp e1 tlist in
+                 let pe2 = x_add trans_pure_exp e2 tlist in
+                 let pe3 = x_add trans_pure_exp e3 tlist in CP.EqMin (pe1, pe2, pe3, pos)
+               | IP.BagIn ((v, p), e, pos) ->
+                 let pe = x_add trans_pure_exp e tlist in CP.BagIn ((trans_var (v,p) tlist pos), pe, pos)
+               | IP.BagNotIn ((v, p), e, pos) ->
+                 let pe = x_add trans_pure_exp e tlist in
+                 CP.BagNotIn ((trans_var (v,p) tlist pos), pe, pos)
+               | IP.BagSub (e1, e2, pos) ->
+                 let pe1 = x_add trans_pure_exp e1 tlist in
+                 let pe2 = x_add trans_pure_exp e2 tlist in CP.BagSub (pe1, pe2, pos)
+               | IP.BagMax ((v1, p1), (v2, p2), pos) ->
+                 CP.BagMax (CP.SpecVar (C.int_type, v1, p1),CP.SpecVar (C.bag_type, v2, p2), pos)
+               | IP.BagMin ((v1, p1), (v2, p2), pos) ->
+                 CP.BagMin (CP.SpecVar (C.int_type, v1, p1), CP.SpecVar (C.bag_type, v2, p2), pos)
+               (* | IP.VarPerm (ct,ls,pos) ->                                 *)
+               (*       let func (v,p) =                                      *)
+               (*         CP.SpecVar (UNK,v,p) (*TO CHECK: ignore type info*) *)
+               (*       in                                                    *)
+               (*       let ls1 = List.map func ls in                         *)
+               (*       CP.VarPerm (ct,ls1,pos)                               *)
+               | IP.ListIn (e1, e2, pos) ->
+                 let pe1 = x_add trans_pure_exp e1 tlist in
+                 let pe2 = x_add trans_pure_exp e2 tlist in CP.ListIn (pe1, pe2, pos)
+               | IP.ListNotIn (e1, e2, pos) ->
+                 let pe1 = x_add trans_pure_exp e1 tlist in
+                 let pe2 = x_add trans_pure_exp e2 tlist in CP.ListNotIn (pe1, pe2, pos)
+               | IP.ListAllN (e1, e2, pos) ->
+                 let pe1 = x_add trans_pure_exp e1 tlist in
+                 let pe2 = x_add trans_pure_exp e2 tlist in CP.ListAllN (pe1, pe2, pos)
+               | IP.ListPerm (e1, e2, pos) ->
+                 let pe1 = x_add trans_pure_exp e1 tlist in
+                 let pe2 = x_add trans_pure_exp e2 tlist in CP.ListPerm (pe1, pe2, pos)
+               | IP.RelForm (r, args, pos) ->    
+                 let nv = trans_var_safe (r,Unprimed) (RelT[]) tlist pos in
+                 (* Match types of arguments with relation signature *)
+                 let cpargs = x_add trans_pure_exp_list args tlist in
+                 CP.RelForm (nv, cpargs, pos) (* An Hoa : Translate IP.RelForm to CP.RelForm *)
+               | IP.XPure ({IP.xpure_view_node = vn ;
+                            IP.xpure_view_name = r;
+                            IP.xpure_view_arguments = args;
+                            IP.xpure_view_remaining_branches = brs;
+                            IP.xpure_view_pos = pos}) -> 
+                 let nargs = List.map (fun arg -> trans_var (arg,Unprimed) tlist pos) args in 
+                 CP.XPure {CP.xpure_view_node = None ;
+                           CP.xpure_view_name = r;
+                           CP.xpure_view_arguments = nargs;
+                           CP.xpure_view_remaining_branches = brs;
+                           CP.xpure_view_pos = pos
+                          }
+    in helper pf in
   (*let () = print_string("\nC_B_Form: "^(Cprinter.string_of_b_formula (npf,None))) in*)
   match sl with
   | None -> (npf, None)
@@ -8009,6 +8028,14 @@ and trans_term_ann (ann: IP.term_ann) (tlist:spec_var_type_list): CP.term_ann =
   | IP.TermU uid -> CP.TermU (trans_term_id uid tlist)
   | IP.TermR uid -> CP.TermR (trans_term_id uid tlist)
   | IP.Fail f -> CP.Fail (trans_term_fail f)
+
+and trans_imm_ann (ann: IP.imm_ann) (tlist:spec_var_type_list): CP.imm_ann =
+  let helper p_f = 
+    let (p,_) = x_add trans_pure_b_formula (p_f, None) tlist in
+    p in
+  match ann with
+  | IP.PreImm  uid -> CP.PreImm (helper uid)
+  | IP.PostImm uid -> CP.PostImm (helper uid)
 
 and trans_pure_exp (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
   Debug.no_1 "trans_pure_exp" 
@@ -8629,8 +8656,10 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
         (*let onb_struc = convert_anonym_to_exist_struc b.IF.formula_assume_struc in*)
         let hp = rdups (hv @p_vars)in
         let ann_vars = IF.collect_annot_vars onb in 
-        let nb,nh,_ = case_normalize_renamed_formula prog hp strad_vs onb ann_vars in
+        (* x_tinfo_hp (add_str "nb(bef normalize)" Iprinter.string_of_formula) nb no_pos; *)
+        let nb,nh,_ = x_add case_normalize_renamed_formula prog hp strad_vs onb ann_vars in
         (*let nb_struc = case_normalize_renamed_struc_formula prog hp stread_vs onb_struc in*)
+        x_tinfo_hp (add_str "nb(bef ilinearize)" Iprinter.string_of_formula) nb no_pos;
         let nb = ilinearize_formula nb (hp@strad_vs) in
         (*let nb_struc = ilinearize_struc_formula nb_struc np in*)
         x_tinfo_hp (add_str "nb(after ilinearize)" Iprinter.string_of_formula) nb no_pos;

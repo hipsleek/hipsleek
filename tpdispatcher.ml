@@ -69,8 +69,6 @@ let decr_priority = ref false
 let set_priority = ref false
 let prio_list = ref []
 
-
-
 let sat_cache = ref (Hashtbl.create 200)
 let imply_cache = ref (Hashtbl.create 200)
 
@@ -488,6 +486,10 @@ let init_tp () =
   set_tp !Smtsolver.smtsolver_name (* "z3" *)
 (* set_tp "parahip" *)
 
+let pr_p = pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula_exp
+
+let imm_stk = new Gen.stack_pr pr_p (fun (x,_) (y,_) -> CP.eq_spec_var x y )
+
 let string_of_tp tp = match tp with
   | OmegaCalc -> "omega"
   | CvcLite -> "cvcl"
@@ -806,6 +808,7 @@ let is_array_b_formula (pf,_) = match pf with
   | CP.ListNotIn _
   | CP.ListAllN _ 
   | CP.ListPerm _
+  | CP.ImmRel _ 
     -> Some false
   | CP.RelForm _ -> Some true
 (* | CP.VarPerm _ -> Some false *)
@@ -853,6 +856,7 @@ let is_array_constraint e =
 ;;
 
 let is_relation_b_formula (pf,_) = match pf with
+  | CP.ImmRel _
   | CP.RelForm _ -> Some true
   | _ -> Some false
 
@@ -906,6 +910,49 @@ let comm_inf a1 a2 =
   else if f1 then (f1,a2,a1)
   else (f2,a1,a2)
 
+let stack_imm_add e l =
+  let sv = 
+    try
+      (*  below returns the sum operands *)
+      let sum_op add_exp = Immutils.get_imm_var_cts_operands add_exp in
+      let sum_op_e = sum_op e in
+      let same_sum x = Gen.BList.list_setequal_eq CP.eq_spec_var sum_op_e (sum_op x)  in
+      fst (List.find ( fun (_,e0) -> same_sum e0) (imm_stk # get_stk))
+    with Not_found ->
+      let fresh_sv = CP.fresh_spec_var_ann ~old_name:"imm_add" ()  in
+      let subs = (fresh_sv, e) in
+      let _ = imm_stk # push subs in
+      fresh_sv in
+  CP.mkVar sv l
+
+let replace_imm_var_with_exp sv =
+  try
+    let exp = snd ( imm_stk # find (fun (a,b) -> CP.eq_spec_var a sv)) in (* (sv, dummy_exp) *)
+    Some exp
+  with Not_found -> None
+
+let cnv_imm_to_int_exp e =
+  match e with
+  | AConst (a,l)  -> Some (IConst(int_of_heap_ann a, l))
+  | Add (a1,a2,l) -> 
+    if CP.is_ann_type (CP.get_exp_type e) then 
+      let new_var = stack_imm_add e l in
+      Some new_var 
+    else None
+  | _ -> None
+
+let cnv_imm_to_int_exp e =
+  let pr = !CP.print_exp in
+  Debug.no_1 "cnv_imm_to_int_exp" pr (pr_opt pr) cnv_imm_to_int_exp e
+
+let transform_imm_to_int_exp_opt e =
+  CP.transform_exp (x_add_1 cnv_imm_to_int_exp) e
+
+let cnv_imm_to_int_p_formula pf lbl =
+  match pf with
+  | SubAnn (a1, a2, ll)-> Some (Lte (transform_imm_to_int_exp_opt a1, transform_imm_to_int_exp_opt a2, ll), lbl)
+  | _ -> None
+
 (*
   strong
   ======
@@ -919,9 +966,11 @@ let comm_inf a1 a2 =
 *)
 
 let cnv_ptr_to_int (ex_flag,st_flag) f = 
+  let f = x_add_1 Immutils.simplify_imm_addition f in
   let f_f arg e = None in
   let f_bf (ex_flag,st_flag) bf = 
     let (pf, l) = bf in
+    (* let pf = cnv_imm_to_int_p_formula pf in *)
     match pf with
     | Eq (a1, a2, ll) -> 
       let (is_null_flag,a1,a2) = comm_null a1 a2 in
@@ -945,13 +994,15 @@ let cnv_ptr_to_int (ex_flag,st_flag) f =
           (*else  let (is_inf_flag,a1,a2) = comm_inf a1 a2 in
             if is_inf_flag then
               Some (Lt(a1,CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),ll),ll),l)*)
-      else Some(bf)
+      else None (* Some(bf) *)
     (* | Lte(a1,a2,ll) -> if is_inf a1 && not(is_inf a2) then Some(BConst(false,ll),l)  
        else if is_inf a2 && not(is_inf a1) then Some(BConst(true,ll),l) 
        else Some(bf)*)
-    | _ -> Some(bf)
+    (* | Lte _ -> Some (pf,l) *)
+    | _ -> cnv_imm_to_int_p_formula pf l (* None *) (* Some(bf) *)
   in
-  let f_e arg e = (Some e) in
+  (* let f_e arg e = (Some (cnv_imm_to_int_exp e)) in *)
+  let f_e arg e = (x_add_1 cnv_imm_to_int_exp e) in
   let a_f ((ex_flag,st_flag) as flag) f =
     match f with
     | Not _ -> (not(ex_flag),not(st_flag))
@@ -994,10 +1045,14 @@ let comm_is_null a1 a2 =
 let comm_is_ann a1 a2 =
   match a1,a2 with
   | Var(v,_),IConst(i,_) ->
-    (is_ann_type (type_of_spec_var v),a1,i)
+    (is_ann_type (type_of_spec_var v),a1,i, a2)
   | IConst(i,_),Var(v,_) ->
-    (is_ann_type (type_of_spec_var v),a2,i)
-  | _ -> (false,a1,0)
+    (is_ann_type (type_of_spec_var v),a2,i, a1)
+  | Var(v,_), e  ->
+    (is_ann_type (type_of_spec_var v),a1,1, a2) 
+  | e, Var(v,_)->
+    (is_ann_type (type_of_spec_var v),a2,1, a1) 
+  | _ -> (false, a1, 0, a2)
 
 let is_ptr_ctr a1 a2 =
   match a1,a2 with
@@ -1014,20 +1069,86 @@ let is_ptr_ctr a1 a2 =
   let pb = string_of_bool in
   Debug.no_2 "is_ptr_ctr" pr pr (pr_pair pb pb) is_ptr_ctr a1 a2
 
-(* pre 0<=v<=3 *)
-let int_to_ann v = 
-  if v=0 then const_ann_mut
-  else if v=1 then const_ann_imm
-  else if v=2 then const_ann_lend
-  else const_ann_abs
-
-let is_valid_ann v = 0<=v && v<=3 
+let is_valid_ann v = (int_of_heap_ann imm_bot)<=v && v<=(int_of_heap_ann imm_top)
 
 let is_null a1 a2 =
   match a1,a2 with
   | Var(v,_),IConst(0,_) ->
     (is_otype (type_of_spec_var v),a1,a2)
   | _ -> (false,a1,a2)
+
+let trans_int_to_imm_exp a = 
+  let f_e a = 
+    match a with 
+    | IConst (i,loc) -> Some (Immutils.int_imm_to_exp i loc)
+    | Var (sv,loc)   -> replace_imm_var_with_exp sv
+    | _ -> None in
+  CP.transform_exp f_e a
+
+let f_e_trans_int_to_imm_exp a =
+  match a with 
+  | Var (sv,loc)   -> if (is_ann_type ((type_of_spec_var sv))) then replace_imm_var_with_exp sv else Some a
+  | _ -> None
+
+let trans_int_to_imm_exp a = 
+  let pr = Cprinter.string_of_formula_exp in
+  Debug.no_1 "trans_int_to_imm_exp"  pr pr trans_int_to_imm_exp a
+
+(* Andreea : use a flag to determine aggressive simplification *)
+let change_to_imm_rel_p_formula pf = 
+  let f_e e = trans_int_to_imm_exp e in 
+  match pf with 
+  | Lte((Var(v,_) as a1), IConst(i,_),ll)  
+  | Gte(IConst(i,_), (Var(v,_) as a1), ll) -> 
+    if is_ann_type (type_of_spec_var v) then
+      let a1 = f_e a1 in
+      let new_f =
+        if i<(int_of_heap_ann imm_bot)  then BConst(false, ll)
+        else if (i>=(int_of_heap_ann imm_top) && !Globals.aggressive_imm_simpl) then BConst(true, ll)
+        else if i=(int_of_heap_ann imm_bot) then Eq(a1, Immutils.int_imm_to_exp i ll, ll)
+        else SubAnn(a1, Immutils.int_imm_to_exp i ll, ll)
+      in Some new_f
+    else None
+  | Lte(IConst(i,_),(Var(v,_) as a1),ll) 
+  | Gte((Var(v,_) as a1),IConst(i,_), ll) -> 
+    if is_ann_type (type_of_spec_var v) then
+      let a1 = f_e a1 in
+      let new_f =
+        if (i<=(int_of_heap_ann imm_bot)&& !Globals.aggressive_imm_simpl)  then BConst(true, ll)
+        else if i>(int_of_heap_ann imm_top) then BConst(false, ll)
+        else if i=(int_of_heap_ann imm_top) then Eq(a1, Immutils.int_imm_to_exp i ll, ll)
+        else SubAnn(Immutils.int_imm_to_exp i ll, a1, ll)
+      in Some new_f
+    else None
+  | Lte((Var(v1,_) as a1), (Var(v2,_) as a2), ll)
+  | Gte((Var(v2,_) as a2), (Var(v1,_) as a1), ll) ->
+    if is_ann_type (type_of_spec_var v1) && is_ann_type(type_of_spec_var v2) then Some (SubAnn(f_e a1, f_e a2, ll))
+    else None
+  | Eq (a1, a2, ll) -> 
+    let (is_imm,a1,i,a2) = comm_is_ann a1 a2 in
+    if is_imm then 
+      let a1,a2 = f_e a1, f_e a2 in Some (Eq (a1,a2, ll))
+    else None
+  | Neq (a1, a2, ll) -> 
+    let (is_imm,a1,i,a2) = comm_is_ann a1 a2 in
+    if is_imm then 
+      let a1,a2 = f_e a1, f_e a2 in Some (Neq (a1, a2, ll))
+    else None
+  | _ -> None
+
+let change_to_imm_rel_p_formula pf = 
+  let pr = !CP.print_p_formula in
+  Debug.no_1 "change_to_imm_rel_p_formula" pr (pr_opt pr) change_to_imm_rel_p_formula pf
+
+let change_to_imm_rel_p_formula pf = 
+  if not (!Globals.int2imm_conv) then 
+    let () = x_ninfo_pp  "conversion of int to imm is disabled"  no_pos in
+    None (* disable conversion of an arith formula back to one containing imm *) 
+  else change_to_imm_rel_p_formula pf 
+
+let change_to_imm_rel_b_formula pf l = map_opt_def None (fun x -> Some (x,l)) (change_to_imm_rel_p_formula pf)
+
+let change_to_imm_rel pf = map_opt_def pf (fun x -> x) (change_to_imm_rel_p_formula pf)
 
 (* s>0 -> 0<s -> 1<=s *)
 let to_ptr ptr_flag pf =
@@ -1046,21 +1167,14 @@ let to_ptr ptr_flag pf =
         if i<=(-1) then BConst(false,ll)   (* v<=0 --> v=M; v<=1 --> @L<:v *)
         else if i>0 then BConst(true,ll)
         else Eq(a1,Null ll,ll)
-      else (* ann_flag *)
-      if i<=(-1)  then BConst(false,ll)
-      else if i>2 then BConst(true,ll)
-      else if i=0 then Eq(a1,int_to_ann i,ll)
-      else SubAnn(a1,int_to_ann i,ll)
+      else (* ann_flag *)  change_to_imm_rel pf 
     | Lte(IConst(i,_),(Var(v,_) as a1),ll) ->
       if ptr_flag then
         if i>=1 then Neq(a1,Null ll,ll)
         else BConst(true,ll)
-      else (* ann_flag *)
-      if i<=(0)  then BConst(true,ll)
-      else if i>3 then BConst(false,ll)
-      else if i=3 then Eq(a1,int_to_ann i,ll)
-      else SubAnn(int_to_ann i,a1,ll)
-    | _ -> pf
+      else (* ann_flag *) change_to_imm_rel pf 
+    | Lte(Var(_,_),Var(_,_),ll) ->  change_to_imm_rel pf
+    | _ -> change_to_imm_rel pf 
   in norm (norm0 pf)
 
 let to_ptr ptr_flag pf =
@@ -1078,33 +1192,31 @@ let cnv_int_to_ptr f =
       if is_null_flag then
         Some(Eq(a1,Null ll,ll),l)
       else 
-        let (is_ann_flag,a1,i) = comm_is_ann a1 a2 in
-        if is_ann_flag then
-          if is_valid_ann i then Some(Eq(a1,int_to_ann i,ll),l)
-          else  Some(BConst (false,ll),l) (* contradiction *)
-          (*else if is_inf a1 then Some(Eq(a2,mkInfConst ll,ll),l)*)
+        let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
+        if (ptr_flag || ann_flag) then   Some(x_add to_ptr is_null_flag pf,l)
+        (* let (is_ann_flag,_,_,_) = comm_is_ann a1 a2 in *)
+        (* if is_ann_flag then  Some(x_add to_ptr is_null_flag pf,l) *)
+          (* map_opt_def (Some bf) (fun x -> Some (x,l)) (change_to_imm_rel_p_formula pf) *)
         else Some bf
     | Neq (a1, a2, ll) -> 
       let (is_null_flag,a1,a2) = comm_is_null a1 a2 in
       if is_null_flag then
         Some(Neq(a1,Null ll,ll),l)
       else
-        let (is_ann_flag,a1,i) = comm_is_ann a1 a2 in
-        if is_ann_flag then
-          if is_valid_ann i then
-            Some(Neq(a1,int_to_ann i,ll),l)
-          else
-            (*let () = print_endline_quiet "xxxxxx" in*)
-            Some(BConst (true,ll),l) (* of course *)
+        let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
+        if (ptr_flag || ann_flag) then   Some(x_add to_ptr is_null_flag pf,l)
+        (* let (is_ann_flag,_,_,_) = comm_is_ann a1 a2 in *)
+        (* if is_ann_flag then Some(x_add to_ptr is_null_flag pf,l) *)
+        (* map_opt_def (Some bf) (fun x -> Some (x,l)) (change_to_imm_rel_p_formula pf) *)
         else Some bf
     | Gt(a2,a1,ll) | Lt(a1,a2,ll) ->
       let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
-      if ptr_flag || ann_flag then Some(to_ptr ptr_flag pf,l)
+      if ptr_flag || ann_flag then Some(x_add to_ptr ptr_flag pf,l)
       (*else if CP.is_inf a2 then Some(Neq(a1,mkInfConst ll,ll),l)*)
       else Some bf
     | Lte (a1, a2,_) | Gte(a1,a2,_) ->
       let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
-      if ptr_flag || ann_flag then Some(to_ptr ptr_flag pf,l)
+      if ptr_flag || ann_flag then Some(x_add to_ptr ptr_flag pf,l)
       else Some bf
     (* | Lte ((Var(v,_) as a1), IConst(0,_), ll) | Gte (IConst(0,_), (Var(v,_) as a1), ll)  *)
     (* | Lt ((Var(v,_) as a1), IConst(1,_), ll) | Gt (IConst(1,_), (Var(v,_) as a1), ll) ->  *)
@@ -1161,16 +1273,19 @@ let norm_pure_result f =
       Infinity.normalize_inf_formula f
     else f in 
   let f = if !Globals.allow_norm_disj then NM.norm_disj f else f in
+  let () = imm_stk # reset in
   f
 
 let norm_pure_result f =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "norm_pure_result" pr pr (fun _ -> norm_pure_result f) f
+  let pr2 s = s # string_of in
+  Debug.no_2 "norm_pure_result" pr pr2 pr (fun _ _  -> norm_pure_result f) f imm_stk
 
 let wrap_pre_post_gen pre post f a =
   let s1 = pre a in
   let r2 = f a in
-  post s1 r2
+  let res =  post s1 r2 in
+  res
 
 let wrap_pre_post_print s fn x =
   let pr = Cprinter.string_of_pure_formula in
@@ -1206,11 +1321,19 @@ let add_imm_inv f1 f2 =
   let () = x_tinfo_hp (add_str "Inv" Cprinter.string_of_pure_formula) f1_inv no_pos in
   f1_inv
 
+let add_imm_inv f1 f2 =
+  let pr = Cprinter.string_of_pure_formula in
+ Debug.no_2 "add_imm_inv" pr pr pr add_imm_inv f1 f2
+
 let cnv_ptr_to_int_weak f =
-  wrap_pre_post_print "cnv_ptr_to_int_weak" (cnv_ptr_to_int (true,false)) f
+  wrap_pre_post_print "cnv_ptr_to_int_weak" (x_add cnv_ptr_to_int (true,false)) f
 
 let cnv_ptr_to_int(* _strong *) f =
-  wrap_pre_post_print "cnv_ptr_to_int" (cnv_ptr_to_int (true,true)) f
+  wrap_pre_post_print "cnv_ptr_to_int" (x_add cnv_ptr_to_int (true,true)) f
+
+let cnv_ptr_to_int f = 
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "cnv_ptr_to_int#2" pr pr cnv_ptr_to_int f
 
 let norm_pure_result f =
   wrap_pre_post_print "norm_pure_result" norm_pure_result f
@@ -1247,7 +1370,8 @@ let norm_pure_result f =
 let wrap_pre_post pre post f a =
   let a = pre a in
   let r = f a in
-  post r
+  let res = post r in
+  res
 
 (*  
    [["a","b"]:f1; "a":f2; "b":f3; "c":f4]
@@ -1489,7 +1613,7 @@ let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP
     assumption_filter ante cons
 
 let norm_pure_input f =
-  let f = cnv_ptr_to_int f in
+  let f = x_add_1 cnv_ptr_to_int f in
   let f = if !Globals.allow_inf 
     then let f = Infinity.convert_inf_to_var f
       in let add_inf_constr = BForm((mkLt (CP.Var(CP.SpecVar(Int,constinfinity,Primed),no_pos)) (CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),no_pos)) no_pos,None),None) in
@@ -1498,7 +1622,7 @@ let norm_pure_input f =
 
 let norm_pure_input f =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "norm_pure_input" pr pr norm_pure_input f
+  Debug.no_1 "norm_pure_input" pr pr norm_pure_input f 
 
 (* rename and shorten variables for better caching of formulas *)
 (* TODO WN: check if it avoids name clashes? *)
@@ -1785,7 +1909,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   res
 
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
-  let f = cnv_ptr_to_int f in
+  let f = x_add_1 cnv_ptr_to_int f in
   let flag = tp_is_sat_no_cache f sat_no in 
   if !Globals.allow_inf && !Globals.allow_inf_qe
   then  
@@ -1911,7 +2035,7 @@ let tp_is_sat f sat_no =
 (* in let add_inf_constr = BForm((mkLt (CP.Var(CP.SpecVar(Int,constinfinity,Primed),no_pos)) (CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),no_pos)) no_pos,None),None) in *)
 
 let norm_pure_input f =
-  let f = cnv_ptr_to_int f in
+  let f = x_add_1 cnv_ptr_to_int f in
   let f = if !Globals.allow_inf (*&& not(!Globals.allow_inf_qe_coq)*)
     then let f = Infinity.convert_inf_to_var f
       in let add_inf_constr = BForm((mkLt (CP.Var(CP.SpecVar(Int,constinfinity,Primed),no_pos)) (CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),no_pos)) no_pos,None),None) in
@@ -1920,11 +2044,13 @@ let norm_pure_input f =
 
 let norm_pure_input f =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "norm_pure_input" pr pr norm_pure_input f
+  let pr2 s = s # string_of in 
+  (* let pr2 r = pr_pair Cprinter.string_of_pure_formula (fun s -> s#string_of) (r,imm_stk) in *)
+  Debug.no_eff_2 "norm_pure_input2" [false;true] pr pr2 pr (fun _ _ -> norm_pure_input f) f imm_stk
 
 let om_simplify f =
-  (* wrap_pre_post cnv_ptr_to_int norm_pure_result *)
-  wrap_pre_post norm_pure_input norm_pure_result
+  (* wrap_pre_post x_add cnv_ptr_to_int norm_pure_result *)
+  wrap_pre_post norm_pure_input (x_add_1 norm_pure_result)
     (x_add_1 Omega.simplify) f
 (* let f = cnv_ptr_to_int f in *)
 (* let r = Omega.simplify f in *)
@@ -2181,6 +2307,10 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
   let res = Timelog.log_wrapper "pairwise" logger fn f in
   if not !tp_batch_mode then stop_prover ();
   res
+
+let tp_pairwisecheck (f : CP.formula) : CP.formula = 
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "tp_pairwisecheck" pr pr tp_pairwisecheck f
 
 let rec pairwisecheck_x (f : CP.formula) : CP.formula = 
   if no_andl f then  tp_pairwisecheck f 
@@ -2526,9 +2656,17 @@ let simplify_with_pairwise (s:int) (f:CP.formula): CP.formula =
   let pf = Cprinter.string_of_pure_formula in
   Debug.no_1_num s ("TP.simplify_with_pairwise") pf pf simplify_with_pairwise f
 
+(* syn gist to remove conj in f1 already in f2 *)
+let syn_gist f1 f2 =
+  let x1=split_conjunctions f1 in
+  let x2=split_conjunctions f2 in
+  let x3=List.filter (fun x -> not(List.exists (fun y -> equalFormula x y) x2)) x1 in
+  join_conjunctions x3
+
 let om_gist f1 f2 =
-  wrap_pre_post norm_pure_input norm_pure_result
-    (fun f1 -> Omega.gist f1 f2) f1
+  let f1 = syn_gist f1 f2 in
+  wrap_pre_post (fun (a,b) -> (norm_pure_input a,norm_pure_input b)) norm_pure_result
+    (fun (f1,f2) -> Omega.gist f1 f2) (f1,f2)
 
 let om_gist f1 f2 =
   let pr = Cprinter.string_of_pure_formula in
@@ -2908,7 +3046,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let ante = 
     if !Globals.allow_imm_inv then add_imm_inv ante conseq
     else ante in
-  let ante = cnv_ptr_to_int ante in
+  let ante = x_add_1 cnv_ptr_to_int ante in
   let conseq = cnv_ptr_to_int_weak conseq in
   let flag = tp_imply_no_cache ante conseq imp_no timeout process in
   if !Globals.allow_inf && !Globals.allow_inf_qe
@@ -2950,6 +3088,17 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
     (* tp_imply_no_cache (Coqinf.check_sat_inf_formula  ante) 
        (Coqinf.check_sat_inf_formula conseq) imp_no timeout process*)
   else flag 
+
+let add_imm_inv_wrap f ante conseq = 
+  let ante = 
+    if !Globals.allow_imm_inv then add_imm_inv ante conseq
+    else ante in
+  (* enable aggressive im simplification only when imm guards are added *)
+  Wrapper.wrap_one_bool Globals.aggressive_imm_simpl !Globals.allow_imm_inv f ante
+
+let tp_imply_no_cache ante conseq imp_no timeout process =
+  add_imm_inv_wrap (fun ante -> tp_imply_no_cache ante conseq imp_no timeout process) ante conseq
+  
 
 (* let tp_imply_no_cache ante conseq imp_no timeout process = *)
 (* 	(\*wrapper for capturing equalities due to transitive equality with null*\) *)
