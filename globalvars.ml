@@ -1292,7 +1292,7 @@ let trans_global_to_param (prog : I.prog_decl) : I.prog_decl =
       let new_proc_decls = List.map (extend_proc temp_decls2) temp_decls2 in
       { prog with I.prog_proc_decls = new_proc_decls }
   in
-  infer_imm_ann new_prog
+  new_prog
 
 let trans_global_to_param (prog : I.prog_decl) : I.prog_decl =
   let pr = Iprinter.string_of_program in

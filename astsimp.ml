@@ -3844,7 +3844,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
          (*   CP.tu_pos = pos; } in                                                                                                *)
 
          (* ========================== imm infer  ========================== *)
-         let () = x_binfo_pp "Andreea: normalize specs here" no_pos in
+         let (static_specs_list,_,_) = Imminfer.infer_imm_ann_proc static_specs_list in
          (* ======================== END imm infer  ======================== *)
 
          let static_specs_list =

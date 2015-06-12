@@ -3,12 +3,12 @@ data cell{
  int fst;
 }
 
-relation QQQ(ann v).
+relation Q(ann v).
 
 int foo2(cell c, cell d)
 infer [@imm_pre]
-  requires c::cell<yyy>@M * d::cell<yyy>
-  ensures c::cell<wwww>@a * d::cell<yyy>@A;
+  requires c::cell<yyy>@a * d::cell<yyy>
+  ensures c::cell<wwww>@b * d::cell<yyy>@A;
 {
   int x = c.fst;
   if (x>0) c.fst = 5;

@@ -4400,7 +4400,7 @@ let rec check_prog iprog (prog : prog_decl) =
     let scc = if (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) then Pi.resume_infer_obj_scc scc old_specs else scc in
 
     (* ========================== imm infer  ========================== *)
-    let () = x_binfo_pp "Andreea: normalize specs here" no_pos in
+    let scc = Imminfer.infer_imm_ann prog scc in
     (* ======================== END imm infer  ======================== *)
 
     (* let () = List.iter (fun proc -> *)
