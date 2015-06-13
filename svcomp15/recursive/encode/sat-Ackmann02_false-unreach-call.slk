@@ -32,15 +32,9 @@ pred ackermann_v<m,n,r,e> == m=0 & r=n+1 & e=1
 /*
 int main() {
     int m = __VERIFIER_nondet_int();
-    if (m < 0 || m > 3) {
-        return 0;
-    }
     int n = __VERIFIER_nondet_int();
-    if (n < 0 || n > 23) {
-        return 0;
-    }
     int result = ackermann(m,n);
-    if (m < 0 || n < 0 || result >= 0) {
+    if (m < 2 || result >= 4) {
         return 0;
     } else {
         ERROR: __VERIFIER_error();
@@ -48,16 +42,12 @@ int main() {
 }
 */
 
-pred main_v<m,n,r,e> == m<0 & r=0 & e=1
-     or m>3 & r=0 & e=1
-     or n<0 & r=0 & e=1
-     or n>23 & r=0 & e=1
-     or _::ackermann_v<m,n,r1,e1> & m<0 & r=0 & e=e1
-     or _::ackermann_v<m,n,r1,e1> & n<0 & r=0 & e=e1
-     or _::ackermann_v<m,n,r1,e1> & r1>=0 & r=0 & e=e1
-     or _::ackermann_v<m,n,r1,e1> & m>=0 & n>=0 & r1<0 & e=0.
+pred main_v<m,n,r,e> ==
+      _::ackermann_v<m,n,r1,e1> & m<2 & r=0 & e=e1
+     or _::ackermann_v<m,n,r1,e1> & r1>=4 & r=0 & e=e1
+     or _::ackermann_v<m,n,r1,e1> & m>=2 & r1<4 & e=0.
 
 
 checksat _::main_v<m,n,r,e> & e=0.
 
-expect Unsat.
+expect Sat.

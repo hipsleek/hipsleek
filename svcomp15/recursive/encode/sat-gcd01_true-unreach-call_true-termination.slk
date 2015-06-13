@@ -15,8 +15,7 @@
 // Compute the greatest common denominator using Euclid's algorithm
 int gcd(int y1, int y2) {
     if (y1 <= 0 || y2 <= 0) {
-        // No non-positive input allowed
-        ERROR: __VERIFIER_error();
+        return 0;
     }
     if (y1 == y2) {
         return y1;
@@ -28,28 +27,11 @@ int gcd(int y1, int y2) {
 }
 */
 
-pred gcd_v<y1,y2,r,e> == y1<=0 & e=0
-     or y2<=0 & e=0
+pred gcd_v<y1,y2,r,e> == y1<=0 & r=0 & e=1
+     or y2<=0 & r=0 & e=1
      or y1=y2 & r=y1 & e=1
      or _::gcd_v<y1-y2,y2,r1,e1> & y1>y2 & r=r1 & e=e1
      or _::gcd_v<y1,y2-y1,r1,e1> & y2>=y1 & r=r1 & e=e1.
-
-/*
-// does n divide m?
-int divides(int n, int m) {
-    if (m == 0) {
-        return 1; // true
-    }
-    if (n > m) {
-        return 0; // false
-    }
-    return divides(n, m - n);
-}
-*/
-
-pred divides_v<n,m,r,e> == m=0 & r=1 & e=1
-     or n>0 & r=0 & e=1
-     or _::divides_v<n,m-n,r1,e1> & r=r1 & e=e1.
 
 /*
 int main() {
@@ -61,13 +43,11 @@ int main() {
     if (n <= 0 || n > 2147483647) {
         return 0;
     }
-    if (m > 0 && n > 0) {
-        int z = gcd(m, n);
-        if (divides(z, m) == 0) {
-            ERROR: __VERIFIER_error();
-        } else {
-            return 0;
-        }
+    int z = gcd(m, n);
+    if (z < 1 && m > 0 && n > 0) {
+        ERROR: __VERIFIER_error();
+    } else {
+        return 0;
     }
 }
 */
@@ -76,10 +56,10 @@ pred main_v<m,n,r,e> == m<=0 & r=0 & e=1
      or m>2147483647 & r=0 & e=1
      or n<=0 & r=0 & e=1
      or n>2147483647 & r=0 & e=1
-     or _::gcd_v<m,n,z,e1> * _::divides_v<z,m,r2,e2> & m>0 & m<=2147483647 & n>0 & n<=2147483647 & r2=0 & e=0
-     or _::gcd_v<m,n,z,e1> * _::divides_v<z,m,r2,e2> & m>0 & m<=2147483647 & n>0 & n<=2147483647 & r2!=0 & e1=1 & e2=1 & e=1
-     or _::gcd_v<m,n,z,e1> * _::divides_v<z,m,r2,e2> & m>0 & m<=2147483647 & n>0 & n<=2147483647 & e1=0 & e=0
-     or _::gcd_v<m,n,z,e1> * _::divides_v<z,m,r2,e2> & m>0 & m<=2147483647 & n>0 & n<=2147483647 & e2=0 & e=0..
+     or _::gcd_v<m,n,z,e1> & z<1 & m>0 & n>0 & e=0
+     or _::gcd_v<m,n,z,e1> & z>=1 & e=e1
+     or _::gcd_v<m,n,z,e1> & m<=0 & e=e1
+     or _::gcd_v<m,n,z,e1> & n<=0 & e=e1.
 
 
 checksat _::main<m,n,r,e> & e=0.

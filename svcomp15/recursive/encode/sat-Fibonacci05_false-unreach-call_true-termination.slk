@@ -31,11 +31,8 @@ pred fibonacci_v<n,r,e> == n<1 & r=0 & e=1
 /*
 int main() {
     int x = __VERIFIER_nondet_int();
-    if (x > 46 || x == -2147483648) {
-        return 0;
-    }
     int result = fibonacci(x);
-    if (result >= x - 1) {
+    if (x < 8 || result >= 34) {
         return 0;
     } else {
         ERROR: __VERIFIER_error();
@@ -43,13 +40,12 @@ int main() {
 }
 */
 
-pred main_v<x,r,e> == x>46 & r=0 & e=1
-     or x=-2147483648 & r=0 & e=1
-     or _::fibonacci_v<x,r1,e1> & x<=46 & x!=-2147483648 & r1>=x-1 & r=0 & e=e1
-     or _::fibonacci_v<x,r1,e1> & x<=46 & x!=-2147483648 & r1<x-1 & e=0.
+pred main_v<x,r,e> ==
+     _::fibonacci_v<x,r1,e1> & x<8 & r=0 & e=e1
+     or _::fibonacci_v<x,r1,e1> & r1>=34 & r=0 & e=e1
+     or _::fibonacci_v<x,r1,e1> & x>=8 & r1<34 & e=0.
 
 
 checksat _::main_v<x,r,e> & e=0.
 
-expect Unsat.
-
+expect Sat.

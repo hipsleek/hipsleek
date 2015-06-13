@@ -61,5 +61,6 @@ Total verification time: 0.21347 second(s)
 ========================================================
 
 sat-recHanoi01_true-unreach-call_true-termination.slk
+sat-BallRajamani-SPIN2000-Fig1_false-unreach-call.slk
 
 global variable

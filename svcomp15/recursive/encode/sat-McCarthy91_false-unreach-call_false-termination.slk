@@ -30,7 +30,7 @@ pred f91_v<x,r,e> == x>100 & r=x-10 & e=1
 int main() {
     int x = __VERIFIER_nondet_int();
     int result = f91(x);
-    if (result == 91 || x > 101 && result == x - 10) {
+    if (result == 91 || x > 102 && result == x - 10) {
         return 0;
     } else {
         ERROR: __VERIFIER_error();
@@ -39,11 +39,11 @@ int main() {
 */
 
 pred main_v<x,r,e> == _::f91_v<x,result,e1> & result=91 & r=0 & e=e1
-     or _::f91_v<x,result,e1> & x>101 & result=x-10 & r=0 & e=e1
-     or _::f91_v<x,result,e1> & x<=101 & result!=91 & e=0
+     or _::f91_v<x,result,e1> & x>102 & result=x-10 & r=0 & e=e1
+     or _::f91_v<x,result,e1> & x<=102 & result!=91 & e=0
      or _::f91_v<x,result,e1> & result!=91 & result!=x-10 & e=0.
 
 
 checksat _::main_v<x,r,e> & e=0.
 
-expect Unsat.
+expect Sat.
