@@ -346,7 +346,7 @@ let rec turn_off_infer_pure spec old_spec =
 
 let resume_infer_obj_proc proc old_spec =
   let spec = turn_off_infer_pure (proc.proc_stk_of_static_specs # top) old_spec in
-  let () = DD.ninfo_hprint (add_str "spec" Cprinter.string_of_struc_formula) spec no_pos in
+  let () = x_binfo_hp (add_str "spec" Cprinter.string_of_struc_formula) spec no_pos in
   let () = proc.proc_stk_of_static_specs # push spec in
   proc
 
@@ -380,12 +380,12 @@ let rec filter_infer_pure_struc_formula sf =
 
 let filter_infer_pure_proc proc =
   let spec = proc.proc_stk_of_static_specs # top in
-  let () = DD.ninfo_hprint (add_str "spec" Cprinter.string_of_struc_formula) spec no_pos in
+  let () = x_binfo_hp (add_str "spec" Cprinter.string_of_struc_formula) spec no_pos in
   let new_spec = filter_infer_pure_struc_formula spec in
   let () = proc.proc_stk_of_static_specs # push new_spec in
-  let () = DD.ninfo_hprint (add_str "spec" Cprinter.string_of_struc_formula) spec no_pos in
-  let () = DD.ninfo_hprint (add_str "new_spec" Cprinter.string_of_struc_formula) new_spec no_pos in
-  (proc,spec)
+  let () = x_binfo_hp (add_str "spec" Cprinter.string_of_struc_formula) spec no_pos in
+  let () = x_binfo_hp (add_str "new_spec" Cprinter.string_of_struc_formula) new_spec no_pos in
+  (proc,new_spec)
 
 let filter_infer_pure_scc scc =
   List.map (fun proc -> filter_infer_pure_proc proc) scc

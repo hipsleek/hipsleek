@@ -16,6 +16,9 @@ let fresh_pred loc = fresh_any_name rel_default_prefix_name
 let fresh loc = fresh_any_name imm_var_prefix
 let fresh_ann loc = CP.SpecVar (AnnT, fresh loc, Unprimed)
 
+let has_infer_imm_pre = ref false
+let has_infer_imm_post = ref false
+
 let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula * C.rel_decl option * C.rel_decl option) =
   let open Cformula in
   (* Will be set to false later when @imm_pre or @imm_post is set *)
@@ -96,7 +99,9 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
   let rec ann_struc_formula_1 = function
     | EInfer ff ->
        imm_pre_is_set := ff.formula_inf_obj # is_pre_imm;
+       has_infer_imm_pre := (!has_infer_imm_pre || !imm_pre_is_set);
        imm_post_is_set := ff.formula_inf_obj # is_post_imm;
+       has_infer_imm_post := (!has_infer_imm_post || !imm_post_is_set);
        x_tinfo_hp (add_str "imm_pre_flag" string_of_bool) !imm_pre_is_set no_pos;
        x_tinfo_hp (add_str "imm_post_flag" string_of_bool) !imm_post_is_set no_pos;
        use_mutable := (not !imm_pre_is_set && not !imm_post_is_set);
