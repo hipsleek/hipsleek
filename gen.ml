@@ -158,6 +158,7 @@ struct
   let pr_list_round_sep sep f xs = pr_list_brk_sep "(" ")" sep f xs
   let pr_list_ln f xs = "["^(pr_lst ",\n" f xs)^"]"
   let pr_list_num f xs = "["^(pr_lst_num ",\n" f xs)^"]"
+  let pr_list_num_vert f xs = "[\n"^(pr_lst_num ",\n" f xs)^"]"
   let pr_arr_ln f arr = pr_list_ln f (Array.to_list arr)
 
   let pr_list_mln f xs = (pr_lst "\n--------------\n" f xs)
@@ -201,7 +202,19 @@ struct
 
   let ite cond f1 f2 =  if cond then f1 else f2
 
-  let add_str s f xs = s^":"^(f xs)
+  let line_break_threshold = 60
+  exception Break_Found
+  let add_str ?(inline=false) hdr f s =
+    (* A string should break if comprises >=2 lines or span more than 60 characters *)
+    let should_break s =
+      try
+        for i = 0 to line_break_threshold do
+          if (String.get s i = '\n') then raise Break_Found done;
+        false
+      with Break_Found -> true | _ -> false in
+    let str = f s in
+    let sep = if (not inline && should_break str) then ":\n" else ":" in
+    hdr^sep^str
 
   let opt_to_list o = match o with
     | None -> []
@@ -642,7 +655,7 @@ class ['a] stack_pr (epr:'a->string) (eq:'a->'a->bool)  =
     val elem_eq = eq 
     method push_list_pr (ls:'a list) =  
       (* WN : below is to be removed later *)
-      let () = print_endline ("push_list:"^(Basic.pr_list epr ls)) in
+      (* let () = print_endline ("push_list:"^(Basic.pr_list epr ls)) in *)
       super # push_list ls 
     method string_of = Basic.pr_list_ln elem_pr stk
     method string_of_no_ln = Basic.pr_list elem_pr stk
@@ -724,6 +737,17 @@ class counter x_init =
     method str_get_next : string 
       = ctr <- ctr + 1; string_of_int ctr
   end;;
+
+class ctr_with_aux x_init =
+  object 
+    inherit counter x_init as super
+    val mutable aux_ctr = x_init
+    method inc_and_get = 
+      ctr <- ctr + 1; aux_ctr <- x_init; ctr
+    method inc_and_get_aux_str = 
+      let () = aux_ctr <- aux_ctr + 1 in
+        (string_of_int ctr)^"."^(string_of_int aux_ctr)
+  end
 
 class ctr_call x_init =
   object 
@@ -845,7 +869,7 @@ struct
 
 end;;
 
-let add_str s f xs = s^":"^(f xs)
+let add_str = Basic.add_str
 
 type 'a keyt = int option
 
@@ -1086,7 +1110,13 @@ module EqMap =
     let find_equiv_all  (e:elem) (s:emap) : elist  =
       let r1 = find s e in
       if (r1==None) then []
+      else List.map fst (List.filter (fun (a,k) -> k==r1) s)
+
+    let find_equiv_all_new  (e:elem) (s:emap) : elist  =
+      let r1 = find s e in
+      if (r1==None) then [e]
       else List.map fst (List.filter (fun (a,k) -> k==r1) s) 
+  
 
     (* return a distinct element equal to e *)
     let find_equiv  (e:elem) (s:emap) : elem option  =

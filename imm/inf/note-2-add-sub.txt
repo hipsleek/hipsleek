@@ -246,6 +246,10 @@ Operation
 >> Addition
    v1=v2+v3   <-->  v1=min(v2,v3) & i=max(v2,v3) & @L<:i  
 
+   v1=v2+v3   <-->  v1=min(v2,v3) & @A=max(v2,v3) //& @L<:max(v2,v3) 
+   v1-v3=v2   <-->  v1=min(v2,v3) & @L<:max(v2,v3) 
+
+===================
 
    v1=v2+v3   <-->  v1=min(v2,v3) & @L<:max(v2,v3)
    v1=@A+v3   <-->  v1=min(@A,v3) & @L<:max(@A,v3)

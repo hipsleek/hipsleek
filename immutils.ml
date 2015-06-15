@@ -70,6 +70,14 @@ let norm_emap_imm_exp  ?loc:(l=no_pos) (e: exp) emap : exp  =
   | Var(sv,l) ->  get_imm_emap_exp ~loc:l sv emap
   | _ -> e
 
+(* replace with imm constant, where a is constant or variable *)
+let norm_emap_imm  (a: ann) emap : ann  = 
+  match a with
+  | ConstAnn _ -> a
+  | PolyAnn sv -> map_opt_def a (fun x -> x) (get_imm_emap_ann_opt sv emap)
+  | _ -> a
+
+
 let eq_const_ann const_imm em sv = 
   match const_imm with
   | Mutable -> is_mut_sv ~emap:em sv
@@ -161,6 +169,74 @@ let build_eset_of_imm_formula f =
 
 (* ===================== imm addition utils ========================= *)
 
+let gen_subtype emap imm1 imm2 test_fnc =
+  if (is_const_imm ~emap:emap imm1) && (is_const_imm ~emap:emap imm2) then
+    match (norm_emap_imm imm1 emap), (norm_emap_imm imm2 emap) with
+    | ConstAnn a1, ConstAnn a2 -> Some (test_fnc a1 a2)
+    | _ -> None
+  else None
+
+let strict_subtype emap imm1 imm2 = 
+  let res = gen_subtype emap imm1 imm2 (fun a b -> a < b) in
+  map_opt_def false (fun x -> x) res
+
+let simple_subtype emap imm1 imm2 =
+  let res = gen_subtype emap imm1 imm2 (fun a b -> a <= b) in
+  map_opt_def true (fun x -> x) res
+
+(* norm of imml = max(immr1,immr2) 
+   @A = max(immr1,@M)  ----> immr1 = @A
+   @M = max(immr1,@A)  ----> false
+
+ *)
+let norm_eqmax emap imml immr1 immr2 def = 
+  let immr1, immr2 = norm_emap_imm immr1 emap, norm_emap_imm immr2 emap in
+  if not (is_const_imm ~emap:emap imml) then 
+    match immr1, immr2 with
+    | (ConstAnn Accs), v2
+    | v2, (ConstAnn Accs) -> mkPure (mkEq (imm_to_exp imml no_pos) (imm_to_exp (ConstAnn Accs) no_pos) no_pos)
+    | _ -> def
+  else
+    match immr1, immr2 with
+    | ((ConstAnn a) as v1), v2
+    | v2, ((ConstAnn a) as v1) -> 
+        if (strict_subtype emap imml v1) then mkFalse no_pos
+        else if not(helper_is_const_imm emap imml a) then 
+          mkPure (mkEq (imm_to_exp imml no_pos) (imm_to_exp v2 no_pos) no_pos) 
+        else def
+    | _ -> def
+
+let norm_eqmax emap imml immr1 immr2 def = 
+  if not(!Globals.imm_add)  then def
+  else  norm_eqmax emap imml immr1 immr2 def
+
+(* norm of imml = min(immr1,immr2) 
+   imml = min(immr1,@M)  ----> imml = @M
+   @L = min(immr1,@M)    ----> false
+   @M = min(immr1,@L)    ----> immr1=@M
+
+ *)
+let norm_eqmin emap imml immr1 immr2 def = 
+  let immr1, immr2 = norm_emap_imm immr1 emap, norm_emap_imm immr2 emap in
+  if not (is_const_imm ~emap:emap imml) then 
+    match immr1, immr2 with
+    | (ConstAnn Mutable), v2
+    | v2, (ConstAnn Mutable) -> mkPure (mkEq (imm_to_exp imml no_pos) (imm_to_exp (ConstAnn Mutable) no_pos) no_pos)
+    | _ -> def
+  else
+    match immr1, immr2 with
+    | ((ConstAnn a) as v1), v2
+    | v2, ((ConstAnn a) as v1) -> 
+        if (strict_subtype emap v1 imml) then mkFalse no_pos
+        else if not(helper_is_const_imm emap imml a) then 
+          mkPure (mkEq (imm_to_exp v2 no_pos) (imm_to_exp imml no_pos) no_pos)
+        else def
+    | _ -> def
+
+let norm_eqmin emap imml immr1 immr2 def = 
+  if not(!Globals.imm_add)  then def
+  else  norm_eqmin emap imml immr1 immr2 def
+
 (* assume e is Add(..) *)
 let get_imm_var_cts_operands e =
   let rec helper e =
@@ -206,8 +282,9 @@ let imm_summation emap e =
   let fixpt = fixpt && (List.length sum_operands == List.length nonA_sum_operands) in
 
   (* count the no of non@A constants in the sum  *)
-  let constants = List.filter (fun x -> is_const_imm ~emap:emap (exp_to_imm x)) nonA_sum_operands in
-  if (List.length constants <= 1) then (Some (mkAdd_list  nonA_sum_operands),fixpt) (* zero or only one non @A constant *)
+  (* let constants = List.filter (fun x -> is_const_imm ~emap:emap (exp_to_imm x)) nonA_sum_operands in *)
+  let constants = List.filter (fun x -> is_mutable ~emap:emap (exp_to_imm x)) nonA_sum_operands in
+  if (List.length constants <= 1) then (Some (mkAdd_list  nonA_sum_operands),fixpt) (* zero or only one @M constant *)
   else (None, fixpt)
 
 let imm_summation emap e =
@@ -234,7 +311,7 @@ let norm_subann_add mksubann emap e l =
    exp = @ct1 + @v    ----> exp = @ct1 + @ct2 if emap of f contains (v,ct2)
    exp = @ct1 + @v    unchanged  if f doesn't contain a constant def for v
 *)
-let simplify_imm_adddition (f:formula) =
+let simplify_imm_addition emap0 (f:formula) =
   let fixpt = ref true in
 
   let f_b_ann_exp_check sv lbl f_op l  =
@@ -291,18 +368,21 @@ let simplify_imm_adddition (f:formula) =
   let rec helper form = 
     let () = fixpt := true in
     let emap = build_eset_of_imm_formula form in
+    let emap = EMapSV.merge_eset emap emap0 in
     let () =  x_tinfo_hp (add_str "form" !print_formula) form no_pos in
     let () =  x_tinfo_hp (add_str "emap" EMapSV.string_of) emap no_pos in
     let new_form = map_formula_arg form emap fncs (idf2, idf2, idf2) in
     (* let () = fixpt:=(equalFormula form new_form) in *) (* using equalFormula leads to loop *)
     if not(!fixpt) then helper new_form else new_form
-  in 
-  if !Globals.imm_add  then helper f
-  else f
+  in helper f
 
-let simplify_imm_addition (f:formula) =
+let simplify_imm_addition emap f =
+  if not(!Globals.imm_add)  then f
+  else simplify_imm_addition emap f
+
+let simplify_imm_addition ?emap:(em=[]) (f:formula) =
   let pr = !print_formula in
-  Debug.no_1 "simplify_imm_addition" pr pr simplify_imm_adddition f
+  Debug.no_1 "simplify_imm_addition" pr pr (simplify_imm_addition em) f
 
 (* ===================== END imm addition utils ========================= *)
 

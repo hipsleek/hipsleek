@@ -14,12 +14,19 @@ open Exc.GTable
 open Perm
 open Label_only
 
+let last_entail_lhs_xpure = ref None
+
 let string_of_vres t =
   match t with
   | VR_Valid -> "Valid"
   | VR_Fail s -> "Fail"^(if s<0 then "_May" else if s>0 then "_Must" else "")
   | VR_Unknown s -> "UNKNOWN("^s^")"
+  | VR_Sat -> "Sat"
+  | VR_Unsat -> "Unsat"
 
+let is_vr_may s = s<0
+
+let is_vr_must s = s>0
 
 
 (* let transfrom_bexpr_x lhs rhs tl= *)
@@ -109,9 +116,10 @@ module LO2 = Label_only.Lab2_List
 module TP = Tpdispatcher
 (* module FP = Fixpoint *)
 
-let sleek_proof_counter = new Gen.counter 0
+let sleek_proof_counter = new Gen.ctr_with_aux 0
 
-let unexpected_cmd = ref []
+let unexpected_cmd = new Gen.stack_pr pr_id (=) 
+(* let unexpected_cmd = ref [] *)
 
 (*
   Global data structures. If we want to support push/pop commands,
@@ -1169,6 +1177,20 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
                       ^ "\n ### iconseq0 = "^(string_of_meta_formula iconseq0)
                       ^"\n\n") no_pos in
   let (n_tl,ante) = x_add meta_to_formula iante0 false [] [] in
+  let () = x_tinfo_hp (add_str "last_entail_lhs" !CF.print_formula) ante no_pos in
+  (* WN : ante maybe a disjunction! *)
+  (* need a better solution here *)
+  let xpure_all f = 
+    let lst = CF.split_components_all f in
+    let disj = List.map (fun (h,p,_,_,_,_) ->
+        let (mf,_,_) = Cvutil.xpure_heap_symbolic 999 !cprog h p 0 in
+        (MCP.pure_of_mix mf)) lst in
+    CP.join_disjunctions disj in
+  let f = xpure_all ante in
+  let mf = MCP.mix_of_pure f in
+  (* let (ante_h,ante_p,_,_,_,_) = CF.split_components ante in *)
+  (* let (mf,_,_) = Cvutil.xpure_heap_symbolic 999 !cprog ante_h ante_p 0 in *)
+  let () = last_entail_lhs_xpure := Some mf in
   (*let ante = x_add Solver.normalize_formula_w_coers !cprog (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) ante !cprog.Cast.prog_left_coercions in*)
   let ante = Cvutil.prune_preds !cprog true ante in
   let ante = (*important for permissions*)
@@ -1554,7 +1576,7 @@ let process_rel_infer pre_rels post_rels =
   let post_rels = List.map (fun id -> CP.mk_typed_spec_var (RelT []) id) post_rels in
   let _ = Debug.ninfo_hprint (add_str "reldefns" (pr_list (pr_pair pr pr))) reldefns no_pos in
   let post_rel_constrs, pre_rel_constrs = List.partition (fun (_,x) -> Pi.is_post_rel x post_rels) reldefns in
-  let _ = Debug.ninfo_hprint (add_str "post_rel_constrs" (pr_list (pr_pair pr pr))) post_rel_constrs no_pos in
+  let _ = x_binfo_hp (add_str "post_rel_constrs" (pr_list (pr_pair pr pr))) post_rel_constrs no_pos in
   (* let post_rel_constrs = post_rel_constrs@pre_rel_constrs in *)
   (* let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in *)
   (* let r = Fixpoint.rel_fixpoint_wrapper pre_invs0 [] pre_rel_constrs post_rel_constrs pre_rel_ids post_rels proc_spec 1 in *)
@@ -1651,6 +1673,138 @@ let process_shape_rec sel_hps=
   let _ = print_endline_quiet "*************************************" in
   ()
 
+let process_validate_infer (vr : validate_result) (validation: validation)  =
+  (* let hdr = ref "" in *) (* to avoid to use global vars *)
+  let nn = (sleek_proof_counter#inc_and_get_aux_str) in
+  (*********************************)
+  let run_heap_entail lhs rhs = 
+    wrap_proving_kind (PK_Validate nn) (Solver.heap_entail_init !cprog false lhs rhs) no_pos in
+
+  let check_heap_entail lhs rhs =
+    match run_heap_entail lhs rhs with
+    | (CF.SuccCtx _,_) -> true
+    | _ -> false
+  in
+
+  let pr_validate_outcome b nn res_f_str = 
+    let str1 =  "\nExpect_Infer "^nn^": " in
+    let () = x_binfo_hp (add_str "str" pr_id) str1 no_pos in
+    let () = x_binfo_hp (add_str "res_f_str" pr_id) res_f_str no_pos in
+    let str2 = string_of_vres (match vr with | VR_Valid -> VR_Fail 0 | _ -> VR_Valid) in
+    if b then print_endline_quiet (str1^"OK. ")
+    else let () = unexpected_cmd # push nn in
+      print_endline_quiet (str1^"Expected "^(string_of_vres vr)^" but got "^str2^" "^res_f_str)
+  in
+
+  let validate_with_residue hdr residue =
+    let pr_f = Cprinter.string_of_formula in
+    let pr_h pr s = print_endline "expect_infer :"; print_endline ("  "^ hdr ^"{" ^ pr s ^ "}") in
+    let res_f = snd (meta_to_formula residue false [] []) in
+    if (!Globals.print_input || !Globals.print_input_all) then pr_h string_of_meta_formula residue;
+    if (!Globals.print_core || !Globals.print_core_all) then pr_h pr_f res_f;
+    let res_f_str = "("^(pr_f res_f)^")" in
+    let meta_f_str = "("^(string_of_meta_formula residue)^")" in
+    let () = x_tinfo_hp (add_str "expected residue(meta)" string_of_meta_formula) residue no_pos in
+    let () = x_tinfo_hp (add_str "expected residue" pr_f) res_f no_pos in
+    let pr_lc = Cprinter.string_of_list_context in
+    let pr_r = pr_option (pr_pair pr_lc string_of_bool) in
+    let () = x_tinfo_hp (add_str "current residue" pr_r) !CF.residues no_pos in
+    let ss = "Expect_Infer "^nn^" " in
+    match !CF.residues with
+    | None -> print_endline_quiet ( ss ^"Fail. (empty residue)")
+    | Some (lc, _) ->
+      begin
+        let res = (match lc (* run_heap_entail lc res_f *) with
+            | (CF.SuccCtx lctx) ->
+              begin 
+                (* let () = x_binfo_hp (add_str "expected vr" string_of_vres) vr no_pos in *)
+                match validation with
+                | V_Infer _ ->
+                  let rec helper acc ctx =
+                    match ctx with
+                    | CF.Ctx es ->
+                       (* let () = Cprinter.pr_estate es in *)
+                       let ps = es.CF.es_infer_pure in
+                       let hs = es.CF.es_infer_heap in
+                       let pos = Cformula.pos_of_formula es.CF.es_formula in
+                       (* Combine inferred formula *)
+                       let p = List.fold_left (fun acc p -> CP.mkAnd acc p pos) (CP.mkTrue pos) ps in
+                       let h = List.fold_left (fun acc p -> CF.mkStarH acc p pos) CF.HEmp hs in
+                       let empty_es = CF.empty_es (CF.mkNormalFlow ()) Lab2_List.unlabelled pos in
+                       (* let (mf,_,_) = Cvutil.xpure_heap_symbolic 999 !cprog es.CF.es_heap (Mcpure.mix_of_pure p) 0 in *)
+                       let mf = match !last_entail_lhs_xpure with 
+                           Some f -> f 
+                         | None -> Mcpure.mix_of_pure (CP.mkTrue no_pos) in
+                       let lhs_formula_pure = CF.mkAnd_pure empty_es.CF.es_formula (Mcpure.mix_of_pure p) pos in
+                       let lhs_formula_pure = CF.mkAnd_pure lhs_formula_pure mf pos in
+                       let lhs_formula_heap = CF.mkAnd_f_hf empty_es.CF.es_formula h pos in
+                       let lhs_formula = CF.normalize 2 lhs_formula_pure lhs_formula_heap pos in
+                       let lhs_ctx = CF.Ctx {empty_es with CF.es_formula = lhs_formula } in
+                       let lhs = CF.SuccCtx [lhs_ctx] in
+                       let () = x_tinfo_hp (add_str "lhs:" Cprinter.string_of_list_context) lhs no_pos in
+                       (check_heap_entail lhs res_f) || acc
+                    | CF.OCtx (ctx1, ctx2) -> helper acc ctx1 || helper acc ctx2
+                  in let rr = List.fold_left helper false lctx in
+                  begin
+                    match vr with
+                    | VR_Valid -> rr
+                    | _ -> not(rr)
+                  end
+                | _ -> 
+                  let rr = run_heap_entail lc res_f in
+                  match rr with
+                  | (CF.SuccCtx _,_) -> vr = VR_Valid
+                  | (CF.FailCtx _,_) -> 
+                    match vr with
+                    | VR_Fail _ -> true
+                    | _ -> false
+                    (* WN : Below to incorporate later into a procedure *)
+                    (* TODO :need to consider exception as failure *)
+                    (* match vr with *)
+                    (* | VR_Fail s -> if s = 0 then true else *)
+                    (*     begin *)
+                    (*       let final_error_opt = CF.get_final_error_ctx ctx in *)
+                    (*       match final_error_opt with *)
+                    (*       | Some (_, _, fk) -> begin *)
+                    (*           match fk with *)
+                    (*           | CF.Failure_May _ -> is_vr_may s *)
+                    (*           | CF.Failure_Must _ -> is_vr_must s *)
+                    (*           | _ -> false *)
+                    (*         end *)
+                    (*       | None -> false *)
+                    (*     end *)
+                    (* | _ -> false *)
+              end
+            | (CF.FailCtx (_, ctx, _)) -> 
+              begin
+                false
+                (* let rec helper = function *)
+                (*     | CF.Ctx es -> *)
+                (*         begin match es.CF.es_must_error, es.CF.es_may_error with *)
+                (*         | Some _, _ -> (vr = VR_Fail 0) || (vr = VR_Fail 1) *)
+                (*         | _, _ -> (vr = VR_Fail 0) || (vr = VR_Fail (-1)) *)
+                (*         end *)
+                (*     | CF.OCtx (ctx1, ctx2) -> helper ctx1 || helper ctx2 *)
+                (* in helper ctx *)
+              end
+          )
+        in pr_validate_outcome res nn res_f_str
+      end
+  in
+  (*********************************)
+  match validation with
+  | V_Residue (Some residue) -> let hdr = "R" in validate_with_residue hdr residue
+  | V_Residue None -> let hdr = "R" in print_endline "No residue."
+  | V_Infer (Some inference) -> let hdr = "I" in validate_with_residue hdr inference 
+  | V_Infer None -> let hdr = "I" in print_endline "No inference."
+  | _ -> print_endline "RA etc. not yet implemented"
+
+
+let process_validate_infer (vr : validate_result) (validation: validation) =
+  let pr1 = string_of_vres in
+  Debug.no_2 "process_validate_infer" pr1 string_of_validation pr_unit
+      (fun _ _ -> process_validate_infer vr validation) vr validation
+
 let process_validate exp_res opt_fl ils_es=
   if not !Globals.show_unexpected_ents then () else
     (**********INTERNAL**********)
@@ -1682,9 +1836,9 @@ let process_validate exp_res opt_fl ils_es=
     (*get current residue -> FAIL? VALID*)
     let rs = !CF.residues in
     let a_r, ls_a_es, act_vars = match !CF.residues with
-      | None ->
+      | None -> begin
         let _ = res_str := "Expecting "^(string_of_vres exp_res)^"BUT got no residue" in
-        let _ = unexpected_cmd := !unexpected_cmd @ [nn] in
+        let _ = unexpected_cmd # push (string_of_int nn)  in
         (*   if (exp_res = "Fail") *)
         (*   then *)
         (*     res_str := "Expected.\n" *)
@@ -1694,8 +1848,25 @@ let process_validate exp_res opt_fl ils_es=
         (* in *)
         (**res = Fail*)
         false, [], []
+        end
       | Some (lc, res) -> 
         begin (*res*)
+          if exp_res = VR_Sat || exp_res = VR_Unsat then
+            let r =
+              if (exp_res = VR_Sat) then
+                if res then let _ =  res_str := "OK" in
+                true
+                else let _ = res_str := "Expecting " ^(string_of_vres exp_res)^" BUT got : Unsat (or Unknown)" in
+                false
+              else
+                if (not res) then  let _ =  res_str := "OK" in
+                true
+                else
+                  let _ = res_str := "Expecting " ^(string_of_vres exp_res)^" BUT got : Sat (or Unknown)" in
+                  false
+            in
+            (r, [] , [])
+          else
           let lerr_exc = CF.is_en_error_exc_ctx_list lc in
           let res, fls = proc_sleek_result_validate res lc lerr_exc in
           let unexp =
@@ -1705,7 +1876,7 @@ let process_validate exp_res opt_fl ils_es=
               if n2==0 then None
               else if n1==n2 then None
               else Some( "Expecting"^(string_of_vres exp_res)^" BUT got : "^(string_of_vres res))
-            | _,_ -> Some ("Expecting 3 "^(string_of_vres exp_res)^" BUT got : "^(string_of_vres res))
+            | _,_ -> Some ("Expecting(3)"^(string_of_vres exp_res)^" BUT got : "^(string_of_vres res))
           in
           let _ = match unexp with
             | None -> begin
@@ -1721,11 +1892,11 @@ let process_validate exp_res opt_fl ils_es=
                     if List.exists (fun id1 -> string_compare id1 id) res_fl_ids then
                       res_str := "OK"
                     else
-                      let _ = unexpected_cmd := !unexpected_cmd @ [nn] in
+                      let _ = unexpected_cmd # push (string_of_int nn) in
                       res_str := ( "Expecting flow "^(id))
               end
             | Some s -> 
-              let _ = unexpected_cmd := !unexpected_cmd @ [nn] in
+              let _ = unexpected_cmd # push (string_of_int nn) in
               res_str := s
           in
           match lc with 
@@ -1788,6 +1959,9 @@ let process_validate exp_res opt_fl ils_es=
     in
     let _ = print_endline_quiet ("\n") in
     ()
+
+let process_validate exp_res opt_fl ils_es =
+  Debug.no_2 "process_validate" pr_none pr_none pr_none (process_validate exp_res) opt_fl ils_es
 
 let process_shape_divide pre_hps post_hps=
   (* let _ = Debug.info_pprint "process_shape_divide" no_pos in *)
@@ -1868,6 +2042,7 @@ let process_shape_conquer sel_ids cond_paths=
   in
   ()
 
+  
 let process_shape_postObl pre_hps post_hps=
   let hp_lst_assume = !sleek_hprel_assumes in
   let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
@@ -2285,7 +2460,11 @@ let process_sat_check_x (f : meta_formula) =
   let num_id = "\nCheckSat "^(string_of_int nn) in
   let (_,f) = x_add meta_to_formula f false [] [] in
   let f = Cvutil.prune_preds !cprog true f in
-  let unsat_command f = not(x_add Solver.unsat_base_nth 7 !cprog (ref 0) f) in
+  let unsat_command f =
+    let r = not(x_add Solver.unsat_base_nth 7 !cprog (ref 0) f) in
+    let _ = CF.residues := (Some (CF.SuccCtx [], r)) in
+    r
+  in
   let res = x_add Solver.unsat_base_nth 1 !cprog (ref 0) f in
   let sat_res =
     if res then false

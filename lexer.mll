@@ -178,6 +178,7 @@ module Make (Token : SleekTokenS)
    (* ("ex", EXISTS); *)
    ("exists", EXISTS);
    ("extends", EXTENDS);
+   ("expect_infer", EXPECT_INFER);
    ("false", FALSE);
    ("finalizes", FINALIZE);
    ("finally", FINALLY);
@@ -281,6 +282,8 @@ module Make (Token : SleekTokenS)
    ("union", UNION);
    ("expect", VALIDATE);
    ("Valid", VALID);
+   ("Sat", SSAT);
+   ("Unsat", SUNSAT);
    ("Fail", FAIL);
    ("Fail_Must", FAIL_MUST);
    ("Fail_May", FAIL_MAY);

@@ -1,0 +1,22 @@
+relation update_array_1d(int[] a,int[] aa,int v, int i).
+
+relation P(int[] a).
+relation Q(int a4, int a4p, int a5, int a5p,int r).
+
+relAssume res=0-3 & a4=a4p & a5=a5p & a5p<=4 -->  Q(a4,a4p,a5,a5p,res).
+
+relAssume  a4p=res & 5<=a5 & a4p=a4 & a5p=10
+    -->  Q(a4,a4p,a5,a5p,res).
+
+relation_infer [][Q].
+
+/*
+# ex7c2.slk
+
+Why printout different from infer[..] example..
+
+!!! fixpoint2:[( Q(a4,a4p,a5,a5p,res), ((a4p=res & 5<=a5 & a4p=a4 & a5p=10) | (res+3=0 & a4=a4p & a5=a5p & a5p<=4)))]
+Stop z3... 0 invocations Stop Omega... 4 invocations 
+
+
+*/

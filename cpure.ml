@@ -127,6 +127,10 @@ let is_int_typ sv = match sv with
   | SpecVar (Int,_,_) -> true
   | _ -> false
 
+let is_num_typ sv = match sv with
+  | SpecVar (NUM,_,_) -> true
+  | _ -> false
+
 let is_ann_typ sv = match sv with
   | SpecVar (AnnT,_,_) -> true
   | _ -> false
@@ -570,6 +574,10 @@ let is_res_var = function
   | Var (x,_) -> is_res_spec_var x
   | _ -> false
 
+let is_bool_res_var = function
+  | Var (x,_) -> is_bool_typ x (* && is_res_spec_var x *)
+  | _ -> false
+
 let primed_of_spec_var (sv : spec_var) : primed = match sv with
   | SpecVar (_, _, p) -> p 
 
@@ -597,7 +605,12 @@ let type_of_spec_var_list (sv : spec_var list) : typ list = List.map type_of_spe
 
 let is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
 
+(* RelT, uH_t *)
 let is_rel_var (sv : spec_var) : bool = is_RelT (type_of_spec_var sv)
+
+let is_rel_all_var (sv : spec_var) : bool = 
+  let t = (type_of_spec_var sv) in
+  is_RelT(t) || is_HpT(t)
 
 let is_func_var (sv: spec_var): bool = is_FuncT (type_of_spec_var sv)
 
@@ -1498,28 +1511,10 @@ and afv (af : exp) : spec_var list =
   | ArrayAt (a, i, _) -> 
     let ifv = List.map afv i in
     let ifv = List.flatten ifv in
-    let mk_array_new_name_spec_var =
-      fun sv e ->
-        match sv with
-        | SpecVar (typ,id,primed)->
-          begin
-            match typ with
-            | Array (atyp,_)->
-              begin
-                match primed with
-                | Primed ->
-                  (*Var( SpecVar (atyp,(id)^"_"^"primed_"^(ArithNormalizer.string_of_exp e),primed),no_pos)*)
-                  SpecVar (atyp,(id)^"___"^(!print_exp e)^"___",primed)
-                | _ -> SpecVar (atyp,(id)^"___"^(!print_exp e)^"___",primed)
-              end
-            | _ -> failwith "mk_array_new_name: Not array type"
-          end
-    in
     begin
       match i with
       | [index] ->
         remove_dups_svl (a :: ifv)
-      (*remove_dups_svl ((mk_array_new_name_spec_var a index)::ifv)*)
       | _ ->
         remove_dups_svl (a :: ifv)
         (*failwith ("afv:"^(!print_exp af)^" Invalid index")*)
@@ -1984,6 +1979,10 @@ and is_list_type (t : typ) = match t with
 
 and is_int_type (t : typ) = match t with
   | Int -> true
+  | _ -> false
+
+and is_num_type (t : typ) = match t with
+  | NUM -> true
   | _ -> false
 
 and is_ann_type (t : typ) = match t with
@@ -2576,7 +2575,7 @@ and mkStupid_Or_x f1 f2 lbl pos=
           let l2 = List.assoc branch l2 in
           (branch, mkOr l1 l2 lbl pos)
         with Not_found -> (branch, mkTrue pos)
-      with Not_found -> (branch, mkTrue pos )
+        with Not_found -> (branch, mkTrue pos )
     in
     Label_Pure.norm  (List.map map_fun branches) in
   if (isConstFalse f1) then f2
@@ -2812,7 +2811,10 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
                                  ((List.fold_left (fun a v -> push_v v a) f_with_fv vs))))
 
 and mkExists vs f lbel pos =
-  Debug.no_2 "pure_mkExists" !print_svl !print_formula !print_formula (fun _ _ -> mkExists_x vs f lbel pos) vs f
+  let vs1 = List.filter (fun v -> not(is_rel_all_var v)) vs in
+  let () = x_tinfo_hp (add_str "vs(mkExists)" !print_svl) vs no_pos in
+  let () = x_tinfo_hp (add_str "vs(filtered rel type)" !print_svl) vs1 no_pos in
+  Debug.no_2 "pure_mkExists" !print_svl !print_formula !print_formula (fun _ _ -> mkExists_x vs1 f lbel pos) vs1 f
 
 (*and mkExistsBranches (vs : spec_var list) (f : (branch_label * formula )list) lbl pos =  List.map (fun (c1,c2)-> (c1,(mkExists vs c2 lbl pos))) f*)
 
@@ -7281,7 +7283,8 @@ let imm_to_spec_var ann =
   match ann with
   | ConstAnn a  -> mkAnnSVar a
   | PolyAnn  sv -> sv
-  | _ -> failwith "Cpure.ml currently we do not provide support for nested TempAnn/TempRes"
+  | _ -> failwith 
+        ("imm_to_spec_var do do not provide support for nested TempAnn/TempRes"^(string_of_imm ann))
 
 let imm_to_spec_var_opt ann = 
   match ann with 
@@ -8300,8 +8303,8 @@ module ArithNormalizer = struct
       | Add _ | Subtract _ -> true
       | _ -> false
     in let wrap e =
-         if need_parentheses e then "(" ^ (string_of_exp e) ^ ")"
-         else (string_of_exp e)
+      if need_parentheses e then "(" ^ (string_of_exp e) ^ ")"
+      else (string_of_exp e)
     in
     match e0 with
     | Null _ -> "null"
@@ -9870,6 +9873,21 @@ let neg_neq p=
   Debug.no_1 "neg_neq" pr1 pr1
     (fun _ -> neg_neq_x p) p
 
+let map_f f0 fnc_bf fnc_comb=
+  let rec recf f= match f with
+    | BForm (b,_)-> fnc_bf b
+    | And (b1,b2,_) -> fnc_comb (recf b1) (recf b2)
+    | AndList b -> List.fold_left (fun svl (_,c)->
+          let svl1 = recf c in
+          fnc_comb svl svl1) [] b
+    | Or (b1,b2,_,_) -> fnc_comb (recf b1) (recf b2)
+    | Not (b,_,_)-> recf b
+    | Forall (_,f,_,_) -> recf f
+    | Exists (_,f,_,_) -> recf f
+  in
+  recf f0
+
+
 let rec get_neq_null_svl_x (f:formula) =
   let helper (bf:b_formula) =
     match bf with
@@ -9881,21 +9899,42 @@ let rec get_neq_null_svl_x (f:formula) =
       end
     | _ -> []
   in
-  match f with
-  | BForm (b,_)-> helper b
-  | And (b1,b2,_) -> (get_neq_null_svl_x b1)@(get_neq_null_svl_x b2)
-  | AndList b -> List.fold_left (fun svl (_,c)->
-      let svl1 = get_neq_null_svl_x c in
-      svl@svl1) [] b
-  | Or (b1,b2,_,_) -> (get_neq_null_svl_x b1)@(get_neq_null_svl_x b2)
-  | Not (b,_,_)-> get_neq_null_svl_x b
-  | Forall (_,f,_,_) -> get_neq_null_svl_x f
-  | Exists (_,f,_,_) -> get_neq_null_svl_x f
+  (* match f with *)
+  (* | BForm (b,_)-> helper b *)
+  (* | And (b1,b2,_) -> (get_neq_null_svl_x b1)@(get_neq_null_svl_x b2) *)
+  (* | AndList b -> List.fold_left (fun svl (_,c)-> *)
+  (*     let svl1 = get_neq_null_svl_x c in *)
+  (*     svl@svl1) [] b *)
+  (* | Or (b1,b2,_,_) -> (get_neq_null_svl_x b1)@(get_neq_null_svl_x b2) *)
+  (* | Not (b,_,_)-> get_neq_null_svl_x b *)
+  (* | Forall (_,f,_,_) -> get_neq_null_svl_x f *)
+  (* | Exists (_,f,_,_) -> get_neq_null_svl_x f *)
+  map_f f helper (@)
 
 let get_neq_null_svl (f:formula)=
   let pr1 = !print_formula in
   Debug.no_1 "get_neq_null_svl" pr1 !print_svl
     (fun _ -> get_neq_null_svl_x f) f
+
+let rec get_eq_null_svl_x (f:formula) =
+  let helper (bf:b_formula) =
+    match bf with
+    | (Eq (sv1,sv2,_),_) -> begin
+        match sv1,sv2 with
+        | Var (v,_), Null _ -> [v]
+        | Null _, Var (v,_) -> [v]
+        | _ -> []
+      end
+    | _ -> []
+  in
+  map_f f helper (@)
+
+let get_eq_null_svl (f:formula)=
+  let pr1 = !print_formula in
+  Debug.no_1 "get_eq_null_svl" pr1 !print_svl
+    (fun _ -> get_eq_null_svl_x f) f
+
+
 
 let check_dang_or_null_exp_x root (f:formula) = match f with
   | BForm (bf,_) ->
@@ -13689,6 +13728,29 @@ let isPoly(a : ann) : bool =
   | PolyAnn v -> true
   | _ -> false
 
+let rec apply_one_imm_x (fr,t) a = match a with
+  | ConstAnn _ | NoAnn -> a
+  | TempAnn t1 -> TempAnn(apply_one_imm_x (fr,t) t1)
+  | TempRes (tl,tr) ->  TempRes(apply_one_imm_x (fr,t) tl, apply_one_imm_x (fr,t) tr)
+  | PolyAnn sv ->  PolyAnn (if eq_spec_var sv fr then t else sv)
+
+let apply_one_imm (fr,t) a = 
+  let pr1 =  (pr_pair !print_sv !print_sv) in
+  let pr2 = string_of_imm in
+  Debug.no_2 "apply_one_imm" pr1 pr2 pr2 apply_one_imm_x (fr,t) a
+
+let rec subs_imm_par_x sst a = match a with
+  | ConstAnn _ | NoAnn -> a
+  | TempAnn t1 -> TempAnn(subs_imm_par_x sst t1)
+  | TempRes (tl,tr) -> TempRes(subs_imm_par_x sst tl,subs_imm_par_x sst tr)
+  | PolyAnn sv ->  (* CP.PolyAnn (CP.subst_var_par sst sv) *)
+    PolyAnn (subs_one sst sv)
+
+let subs_imm_par sst a = 
+ let pr1 =  pr_list (pr_pair !print_sv !print_sv) in
+ let pr2 = string_of_imm in
+ Debug.no_2 "subs_imm_par" pr1 pr2 pr2 subs_imm_par_x sst a
+
 (* let is_const_imm ?emap:(em=[]) (a:ann) : bool = *)
 (*   match a with *)
 (*   | ConstAnn _ -> true *)
@@ -13779,6 +13841,10 @@ let annot_arg_to_sv (arg: annot_arg): spec_var list =
 
 let annot_arg_to_sv_list (args:annot_arg list): spec_var list =
   List.fold_left (fun acc a -> acc@(annot_arg_to_sv a)) [] args
+
+let fv_annot_arg (args: (annot_arg *int) list): spec_var list =
+  let anns = annot_arg_to_imm_ann_list_no_pos args in
+  fv_ann_lst anns
 
 let view_arg_to_sv (arg:view_arg): spec_var list =
   match arg with
@@ -13946,13 +14012,31 @@ let update_positions_for_annot_view_params (aa: annot_arg list) (old_lst: (annot
   Debug.no_2 "update_positions_for_annot_view_params" pr1 pr2
     pr2 update_positions_for_annot_view_params aa old_lst
 
-let apply_f_to_annot_arg f_imm (args: annot_arg list) : annot_arg list=
+let apply_flist_to_annot_arg f_imm (args: annot_arg list) : annot_arg list=
   let args = annot_arg_to_imm_ann_list args in
   let args = f_imm args in
   let args = imm_ann_to_annot_arg_list args in
   args
 
+let apply_f_to_annot_arg f (args: annot_arg list) : annot_arg list=
+  let flist args = List.map f args in
+  apply_flist_to_annot_arg flist args
+
 let update_imm_args_in_view f (aa: (annot_arg * int) list): (annot_arg * int) list = 
+  let new_pimm = apply_flist_to_annot_arg f (List.map fst aa) in 
+  update_positions_for_annot_view_params new_pimm aa
+
+let subst_annot_arg_no_pos sst (aa: annot_arg list): annot_arg  list = 
+  let f a = subs_imm_par sst a in
+  apply_f_to_annot_arg f aa
+
+let subst_annot_arg sst (aa:  (annot_arg * int) list): (annot_arg * int) list = 
+  let f a = subs_imm_par sst a in
+  let new_pimm = apply_f_to_annot_arg f (List.map fst aa) in 
+  update_positions_for_annot_view_params new_pimm aa
+
+let apply_one_annot_arg (fr,t) (aa:  (annot_arg * int) list): (annot_arg * int) list = 
+  let f a = apply_one_imm (fr,t) a in
   let new_pimm = apply_f_to_annot_arg f (List.map fst aa) in 
   update_positions_for_annot_view_params new_pimm aa
 
@@ -14416,6 +14500,9 @@ let has_nondet_cond f =
   let or_list = List.fold_left (||) false in
   fold_formula f (nonef, f_b, nonef) or_list  
 
+let is_shape f=
+  let svl = fv f in
+  List.for_all (fun sv -> (is_node_typ sv)) svl
 let eq_nondet_rel r1 r2 = 
   match r1, r2 with
   | RelForm (sv1, _, p1), RelForm (sv2, _, p2) ->
@@ -14435,3 +14522,4 @@ let contains_undef (f:formula) =
   let afv = all_vars f in
   List.fold_left (fun acc sv -> acc || (is_undef_typ (type_of_spec_var sv)) ) false afv 
 
+let syn_checkeq = ref(fun (ls:ident list) (a:formula) (c:formula) (m: ((spec_var * spec_var) list) list) -> (true,([]: ((spec_var * spec_var) list) list)))

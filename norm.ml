@@ -604,7 +604,7 @@ let norm_ann_seg_opz_x iprog cprog cviews=
   let check_seg_view_smt_compete vdcl=
     if !Globals.smt_compete_mode then
       let is_one_dir = try
-          let ddclr = Cast.look_up_data_def_raw cprog.Cast.prog_data_decls vdcl.Cast.view_data_name in
+          let ddclr = x_add Cast.look_up_data_def_raw cprog.Cast.prog_data_decls vdcl.Cast.view_data_name in
           let ptr_fields = List.filter (fun ((t,_),_) -> match t with
               | Named _ -> true
               | _ -> false
@@ -1062,6 +1062,14 @@ let imm_norm_formula prog f unfold_fun pos =
   let f = imm_abs_norm_formula f prog (unfold_fun prog pos) in 
   let f = if(!Globals.allow_field_ann) then Mem.compact_nodes_with_same_name_in_formula f else f in
   f
+
+let imm_norm_h_formula prog fh fp unfold_fun pos =
+  let form = CF.mkBase_simp fh fp in
+  let form = imm_norm_formula prog form unfold_fun pos in
+  match form with
+  | CF.Base b -> b.CF.formula_base_heap, b.CF.formula_base_pure
+  | _ -> let () = report_warning no_pos "could not perform alias node merge" in
+    fh,fp 
 
 let imm_norm_struc prog f (conseq: bool) unfold_fun pos = 
   (* imm_abs_norm_formula modifies f only when Globals.imm_merge is set *)

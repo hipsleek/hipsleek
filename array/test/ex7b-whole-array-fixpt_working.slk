@@ -1,0 +1,62 @@
+relation update_array_1d(int[] a,int[] aa,int v, int i).
+
+relation P(int[] a).
+relation Q(int[] a,int[] b,int r).
+
+infer [Q]   res=0-3 & a'=a & a'[5]<=4 & P(a) |-  Q(a,a',res).
+print residue.
+
+infer [Q,update_array_1d]   a'[4]=res & 5<=a[5] 
+  & update_array_1d(a,a',10,5) 
+  & P(a)
+    |-  Q(a,a',res).
+print residue.
+
+relation_infer [P][Q].
+
+/*
+ex6.slk -dre "compute"
+
+!!! **fixcalc.ml#906:rel_defs:[( Q(m,r'), ((m=0 & r'=0) | exists(r1:exists(m1:m=m1+1 & Q(m1,r1)) & r1=r'-2)),1)]
+!!! **fixcalc.ml#907:No of disjs:1
+!!! **fixcalc.ml#912:bottom up
+(==fixcalc.ml#194==)
+compute_cmd@6@4@3@2
+compute_cmd inp1 :?
+compute_cmd inp2 :?
+compute_cmd@6 EXIT:?
+
+!!! fixcalc file name: logs/fixcalc.inf
+(====)
+compute_fixpoint_aux@4@3@2
+compute_fixpoint_aux inp1 :[( Q(m,r'), ((m=0 & r'=0) | exists(r1:exists(m1:m=m1+1 & Q(m1,r1)) & r1=r'-2)),1)]
+compute_fixpoint_aux inp2 :[Q]
+compute_fixpoint_aux@4 EXIT:[( Q(m,r'), m>=0 & 2*m=r')]
+
+(==omega.ml#1124==)
+compute_fixpoint_aux@3@2
+compute_fixpoint_aux inp1 :?
+compute_fixpoint_aux inp2 :?
+compute_fixpoint_aux@3 EXIT:?
+
+(==sleekengine.ml#1500==)
+compute_fixpoint#2@2
+compute_fixpoint#2 inp1 :[( Q(m1,r1) & r1=r'-2 & m=m1+1, Q(m,r')),
+( m=0 & n=0, Q(m,n))]
+compute_fixpoint#2 inp2 :[Q]
+compute_fixpoint#2@2 EXIT:[( Q(m,r'), m>=0 & 2*m=r')]
+
+ex7b.slk -dre "compute"
+
+(==sleekengine.ml#1500==)
+compute_fixpoint#2@2
+compute_fixpoint#2 inp1 :[( a'[5]=10 & res=a'[4] & a[4]=a'[4] & 5<=(a[5]), Q(a,a',res)),
+( a'=a & res=0-3 & (a'[5])<=4, Q(a,a',res))]
+compute_fixpoint#2 inp2 :[Q]
+compute_fixpoint#2@2 EXIT:[( Q(a,a',res), ((a'[5]=10 & res=a'[4] & a[4]=a'[4] & 5<=(a[5])) | (a'=a & res=0-3 & 
+(a'[5])<=4)))]
+
+!!! fixpoint2:[( Q(a,a',res), ((a'[5]=10 & res=a'[4] & a[4]=a'[4] & 5<=(a[5])) | (a'=a & res=0-3 & 
+(a'[5])<=4)))]
+
+*/

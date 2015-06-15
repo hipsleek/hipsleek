@@ -189,7 +189,11 @@ let common_arguments = [
   ("--dis-trace", Arg.Clear Debug.trace_on,
    "Turn off brief tracing");
   ("-dd", Arg.Set Debug.devel_debug_on,
-   "Turn on devel_debug");
+   "Turn on devel_debug on short and normal output");
+  ("-dd-short", Arg.Unit (fun () -> Debug.devel_debug_on := true; Globals.debug_level := Globals.Short),
+   "Turn on devel_debug only short output");
+  ("-dd-long", Arg.Unit (fun () -> Debug.devel_debug_on := true; Globals.debug_level := Globals.Long),
+   "Turn on devel_debug on all outputs");
   ("--dd-debug",  Arg.Unit
      (fun _ -> 
         Debug.debug_print:=true;
@@ -331,8 +335,8 @@ let common_arguments = [
   ("--dis-imm-simplif-inst", Arg.Clear Globals.imm_simplif_inst,"don't merge aliased nodes");
   ("--en-aggresive-imm-inst", Arg.Set Globals.aggresive_imm_inst,"add lhs_imm<:rhs_imm to state (during matching), when lhs_imm is unrestricted");
   ("--dis-aggresive-immf-inst", Arg.Clear Globals.aggresive_imm_inst,"don't add lhs_imm<:rhs_imm, when lhs_imm is unrestricted");
-  ("--en-imm-add-simpl", Arg.Set Globals.imm_add,"simplify imm addition");
-  ("--dis-imm-add-simpl", Arg.Clear Globals.imm_add,"disable imm addition simplification");
+  ("--en-imm-simpl", Arg.Set Globals.imm_add,"simplify imm addition");
+  ("--dis-imm-simpl", Arg.Clear Globals.imm_add,"disable imm addition simplification");
   ("--mem", Arg.Unit (fun _ -> 
        Globals.allow_mem := true; 
        Globals.allow_field_ann := true;),
@@ -344,6 +348,8 @@ let common_arguments = [
        Globals.allow_ramify := true; 
        Solver.unfold_duplicated_pointers := false;)
   , "Enable Coq based Ramification for Shared Structures");
+  ("--en-filter-infer-search",Arg.Set Globals.filter_infer_search,"Enable filter on search result with inference");
+  ("--dis-filter-infer-search",Arg.Clear Globals.filter_infer_search,"Enable filter on search result with inference");
   ("--infer-mem",Arg.Set Globals.infer_mem,"Enable inference of memory specifications");
   ("--infer-en-raw",Arg.Set Globals.infer_raw_flag,"Enable simplify_raw during pure inference");
   ("--infer-dis-raw",Arg.Clear Globals.infer_raw_flag,"Disable simplify_raw during pure inference");
@@ -471,6 +477,7 @@ let common_arguments = [
   ("--dis-print-inline", Arg.Clear Globals.print_en_inline,"disable printing (with fewer intermediates)");
   ("--print-html", Arg.Set Globals.print_html,"enable html printing");
   ("--print-type", Arg.Set Globals.print_type,"Print type info");
+  ("--print-extra", Arg.Set Globals.print_extra,"Print extra info");
   ("--dis-type-err", Arg.Clear Globals.enforce_type_error,"Give just warning for type errors");
   ("--en-type-err", Arg.Set Globals.enforce_type_error,"Stricly enforce type errors");
   ("--print-x-inv", Arg.Set Globals.print_x_inv,
@@ -521,6 +528,15 @@ let common_arguments = [
        Debug.z_debug_file:=("$.*"); z_debug_flag:=true;
        Debug.mk_debug_arg s),
    "Matched input/output with reg-exp");
+  ("-dre-trace", Arg.String (fun s ->
+       let _ = print_endline ("!!!-dre "^s) in
+       Debug.z_debug_file:=("$"^s); z_debug_flag:=true;
+       Debug.debug_pattern_on := true;
+       Debug.dump_calls:=true;
+       Debug.dump_calls_all:=true;
+       Gen.debug_precise_trace:=true;
+       Debug.debug_pattern := (Str.regexp s)),
+   "Matched debug calls and its calees with reg-exp");
   ("-v", Arg.Set Debug.debug_on,
    "Verbose");
   ("--pipe", Arg.Unit Tpdispatcher.Netprover.set_use_pipe,
@@ -744,6 +760,11 @@ let common_arguments = [
        Globals.sleek_logging_txt:=true;
        Globals.sleek_gen_vc_exact:=true
      ), "Generate exact verification condition in sleek format");
+  ("--gen-sat", Arg.Unit (fun _ ->
+       Globals.proof_logging_txt:=true;
+       Globals.sleek_logging_txt:=true;
+       Globals.sleek_gen_sat:=true
+     ), "Generate check sat formula");
   (* abduce pre from post *)
   ("--abdfpost", Arg.Set Globals.do_abd_from_post, "Enable abduction from post-condition");
   (* incremental spec *)
@@ -761,6 +782,8 @@ let common_arguments = [
   (* ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view"); *)
   ("--inv-baga",Arg.Unit (fun _ ->  Globals.use_baga := true; Globals.gen_baga_inv := true),"generate baga inv from view");
   ("--dis-inv-baga",Arg.Clear Globals.gen_baga_inv,"disable baga inv from view");
+  ("--en-delay-eelim",Arg.Set Globals.delay_eelim_baga_inv,"delay simplification during inference of shape baga inv");
+  ("--dis-inv-check",Arg.Set Globals.dis_baga_inv_check,"disable dis_baga_inv_check");
   ("--pred-sat", Arg.Unit Globals.en_pred_sat ," turn off oc-simp for pred sat checking");
   ("--baga-xpure",Arg.Set Globals.use_baga (* Globals.baga_xpure *),"use baga for xpure");
   ("--dis-baga-xpure",Arg.Clear Globals.use_baga (* Globals.baga_xpure *),"do not use baga for xpure");

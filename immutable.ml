@@ -2097,7 +2097,7 @@ let collect_view_imm_from_case_struc_formula sf param_ann data_name def_ann = (*
 
 (* andreeac TODOIMM use wrapper below *)
 let collect_annot_imm_info_in_formula annot_args f data_name ddefs =
-  let ddef = I.look_up_data_def_raw ddefs data_name in
+  let ddef = x_add I.look_up_data_def_raw ddefs data_name in
   let def_ann  = List.map (fun f -> CP.imm_ann_bot ) ddef.I.data_fields in
   let ann_final = 
     if not (!Globals.allow_field_ann) then def_ann
@@ -2240,7 +2240,7 @@ let add_position_to_imm_ann (a: Ipure.ann) (vp_pos: (ident * int) list) =
 
 let icollect_imm f vparam data_name ddefs =
   try
-    let ddef = I.look_up_data_def_raw ddefs data_name in
+    let ddef = x_add I.look_up_data_def_raw ddefs data_name in
     let def_ann  = List.map (fun f -> (Ipure.imm_ann_bot, 0) ) ddef.I.data_fields in
     let ann_final =
       if not (!Globals.allow_field_ann) then def_ann
@@ -2356,6 +2356,121 @@ let unfold_and_norm vn vh dn emap unfold_fun qvars emap =
   let ret_f = crop_incompatible_disjuncts unfolded_f dn emap in
   ret_f
 
+(* imm_bound<:max(immr1,immr2) *)
+let bound_max_guard emap imm_bound immr1 immr2 =
+  let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"imm" () in
+  let fresh_ann_var = CP.Var(fresh_ann_sv, no_pos) in
+  let imm = CP.mkPolyAnn fresh_ann_sv in
+  let min_lend = CP.mkPure (CP.mkEqMax fresh_ann_var (CP.imm_to_exp immr1 no_pos) (CP.imm_to_exp immr2 no_pos) no_pos) in
+  let guard_max = Immutils.norm_eqmax emap imm immr1 immr2 min_lend in
+  if (Immutils.strict_subtype emap imm imm_bound) then 
+    let () = report_warning no_pos ("creating false ctx ("^(CP.string_of_imm imm)^"<:"^(CP.string_of_imm imm_bound)
+                                    ^" but not("^(CP.string_of_imm imm_bound) ^"<:"^(CP.string_of_imm imm)^"))" ) in
+    [CP.mkFalse no_pos]
+  else 
+    let guard1 = CP.mkSubAnn (CP.imm_to_exp imm_bound no_pos) fresh_ann_var in
+    guard1::[guard_max]
+
+let mk_imm_add emap imml immr1 immr2 = 
+  let left_imm = CP.imm_to_exp imml no_pos in
+  let guard = CP.mkEq left_imm (CP.mkAdd (CP.imm_to_exp immr1 no_pos) (CP.imm_to_exp immr2 no_pos) no_pos) no_pos in
+  (* let guard = CP.mkEq left_imm (CP.mkAdd (CP.imm_to_exp immr1 no_pos) (CP.imm_to_exp immr2 no_pos) no_pos) no_pos in *)
+  let guard = CP.mkPure guard in
+  let guard = x_add_1 (Immutils.simplify_imm_addition ~emap:emap) guard in
+
+  (* min guard  *)
+  let guard_min = CP.mkPure (CP.mkEqMin  (CP.imm_to_exp imml no_pos)  (CP.imm_to_exp immr1 no_pos)  (CP.imm_to_exp immr2 no_pos) no_pos) in
+  let guard_lst = if not(!Globals.imm_add) then [guard] 
+    else [guard;guard_min] in
+
+  (imml, guard_lst)
+
+(* c=a-b ----> a=c+b & @L<:max(c,b) *)
+let subtraction_guards emap imm1 imm2 =
+  let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"imm" () in
+  let fresh_ann_var = CP.Var(fresh_ann_sv, no_pos) in
+  let fresh_ann =  (CP.mkPolyAnn fresh_ann_sv) in  
+
+  (*  @L<:max(c,b) *)
+  let guard = bound_max_guard emap (CP.mkConstAnn Lend) imm1 imm2 in
+
+  (* a=c+b *)
+  let emap0 = Immutils.build_eset_of_imm_formula (CP.join_conjunctions guard) in
+  let emap = CP.EMapSV.merge_eset emap0 emap in
+  let _, guard_add = mk_imm_add emap imm1 fresh_ann imm2 in
+
+  fresh_ann, guard@guard_add
+
+let subtraction_guards emap imm1 imm2 =
+  let pr1 = CP.EMapSV.string_of in
+  let pr2 = CP.string_of_ann in
+  Debug.no_3 "subtraction_guards" pr1 pr2 pr2 (pr_pair pr2 (pr_list !CP.print_formula)) subtraction_guards emap imm1 imm2
+
+(* tranform @[@a,@b] to @c, where a=b+c *)
+let get_simpler_imm emap imm =
+  match imm with
+  | CP.TempRes (a1,a2) -> subtraction_guards emap a1 a2
+  | CP.TempAnn (a) -> subtraction_guards emap a (CP.mkConstAnn Lend)
+  | _ -> imm, []
+
+let get_simpler_imm emap imm =
+  let pr1 = CP.EMapSV.string_of in
+  let pr2 = CP.string_of_imm in
+  Debug.no_2 "get_simpler_imm" pr1 pr2 (pr_pair pr2 (pr_list !CP.print_formula)) get_simpler_imm emap imm
+
+(*  @A=max(imm1,imm2) *)
+let max_guard emap imm1 imm2 =
+  let min_one_abs = CP.mkPure (CP.mkEqMax CP.const_ann_abs (CP.imm_to_exp imm1 no_pos) (CP.imm_to_exp imm2 no_pos) no_pos) in
+  Immutils.norm_eqmax emap CP.imm_ann_top imm1 imm2 min_one_abs
+
+let check_for_trivial_merge emap imm1 imm2 =
+  let helper def a1 a2 =  try
+      if (CP.EMapSV.is_equiv emap (CP.imm_to_spec_var a1) (CP.imm_to_spec_var a2)) then Some def,[]
+      else None, []
+    with _ -> None, [] in
+
+  (* check for a merge between <>@TempRes[a,b] * <>@b ---> @a*)
+  match imm1, imm2 with
+  | CP.TempRes (a1,a2), a
+  | a, CP.TempRes (a1,a2) -> helper a1 a a2
+  | a,  CP.TempAnn (at)
+  | CP.TempAnn (at), a -> helper at a (CP.ConstAnn Lend) 
+  | _ -> None, []  
+
+let check_for_trivial_merge emap imm1 imm2 = 
+  let pr1 = CP.EMapSV.string_of in
+  let pr2 = CP.string_of_ann in
+  Debug.no_3 "check_for_trivial_merge" pr1 pr2 pr2 (pr_pair (pr_opt pr2) (pr_list !CP.print_formula)) check_for_trivial_merge emap imm1 imm2
+
+(* x::cell<>@imm1 * x::cell<>@imm2 ---> x::cell<>@imm & imm=imm1+imm2 & @A=max(imm1,imm2) *)
+let merge_guards emap imm1 imm2 = 
+  let imm, guards00 =  check_for_trivial_merge emap imm1 imm2 in
+  match imm with
+  | Some a -> a, guards00
+  | None   ->
+    let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"imm" () in
+    let imm1, guard1 = get_simpler_imm emap imm1 in
+    let imm2, guard2 = get_simpler_imm emap imm2 in
+
+    (* @A=max(imm1,imm2) *)
+    let min_one_abs = max_guard emap imm1 imm2 in
+
+    (* imm=imm1+imm2 *)
+    let emap0 = Immutils.build_eset_of_imm_formula min_one_abs in
+    let emap = CP.EMapSV.merge_eset emap0 emap in
+    let imm, guard =  mk_imm_add emap (CP.mkPolyAnn fresh_ann_sv) imm1 imm2 in
+
+    (* simplify addition *)
+    (* let emap0 = Immutils.build_eset_of_imm_formula min_one_abs in *)
+    (* let guard = List.map (x_add_1 (Immutils.simplify_imm_addition ~emap:(CP.EMapSV.merge_eset emap0 emap))) guard in *)
+
+    (imm, guard@guard1@guard2@[min_one_abs])
+
+let merge_guards emap imm1 imm2 = 
+  let pr1 = CP.EMapSV.string_of in
+  let pr2 = CP.string_of_ann in
+  Debug.no_3 "merge_guards" pr1 pr2 pr2 (pr_pair pr2 (pr_list !CP.print_formula)) merge_guards emap imm1 imm2
+
 (* return (compatible_flag, to_keep_node) *)
 let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap = 
   let comp, ret_h, unfold_f, guards =
@@ -2368,33 +2483,37 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
           let imm = List.combine p1 p2 in
           (p1,p2,imm,[])
         with Invalid_argument _ -> failwith "Immutable.ml, compatible_at_field_lvl" in
-      let (comp, updated_elements) = List.fold_left (fun (comp,lst) ((a1,i1), (a2,i2)) ->
+      let (comp, updated_elements, guards) = List.fold_left (fun (comp,lst,guard) ((a1,i1), (a2,i2)) ->
           match i1, i2 with
-          | CP.ConstAnn(Accs), a -> (true && comp, lst@[(a2,i2)])
-          | a, CP.ConstAnn(Accs) -> (true && comp, lst@[(a1,i1)])
-          | _, _ ->
+          | CP.ConstAnn(Accs), a -> (true && comp, lst@[(a2,i2)],guard)
+          | a, CP.ConstAnn(Accs) -> (true && comp, lst@[(a1,i1)],guard)
+          | _, _ ->  
+            let imm, guards = merge_guards emap i1 i2 in
             (* Debug.print_info "Warning: " "possible unsoundess (\* between overlapping heaps) " no_pos; *)
-            (false && comp, lst)
-        ) (true,[]) imm in
+            (true && comp, lst@[(a1,imm)],guard@guards)
+        ) (true,[],[]) imm in
       let args, pimm = List.split updated_elements in
       (* !!!! Andreea: to check how to safely merge two data nodes. Origins and Original info (and other info) abt dn2 is lost *)
       let dn = DataNode {dn1 with h_formula_data_arguments = args; h_formula_data_param_imm = pimm;} in
-      (comp, dn, None, [])
+      (comp, dn, None, guards)
     | ViewNode vn1, ViewNode vn2 -> (* Debug.print_info "Warning: " "combining two views not yet implemented" no_pos; *)
+      (* needs revision *)
       let imm1 = get_node_param_imm h1 in
       let imm2 = get_node_param_imm h2 in
       let imm  = 
         try List.combine imm1 imm2 
         with Invalid_argument _ -> failwith "Immutable.ml, compatible_at_field_lvl" in
-      let comp = List.fold_left (fun comp (i1,i2) -> 
+      let comp, pimm, guards = List.fold_left (fun (comp,lst,guard) (i1,i2) -> 
           match i1, i2 with
-          | CP.ConstAnn(Accs), a -> true && comp
-          | a, CP.ConstAnn(Accs) -> true && comp
-          | _, _ ->
+          | CP.ConstAnn(Accs), a 
+          | a, CP.ConstAnn(Accs) -> true && comp, lst@[a], guard
+          |  CP.ConstAnn _,  CP.ConstAnn _ -> (false, [], [])
+          | _, _ -> let imm, guards = merge_guards emap i1 i2 in
             (* Debug.print_info "Warning: " "possible unsoundess (\* between overlapping heaps) " no_pos; *)
-            false && comp
-        ) true imm in 
-      (comp, h1, None, [])
+            (* false && comp *)
+            (true && comp, lst@[imm],guard@guards)
+        ) (true,[],[]) imm in 
+      (comp, h1, None, guards)
     | DataNode dn, ((ViewNode vn) as vh)
     | ((ViewNode vn) as vh), DataNode dn ->
       let pimm = CP.annot_arg_to_imm_ann_list_no_pos vn.h_formula_view_annot_arg in
@@ -2430,16 +2549,6 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
   let pr_guards = pr_list !CP.print_formula in
   Debug.no_2 "compatible_at_field_lvl" pr pr (pr_quad string_of_bool pr pr_out3 pr_guards) (fun _ _ -> compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap) h1 h2 
 
-(* tranform @[@a,@b] to @c, where a=b+c *)
-let get_simpler_imm imm =
-  match imm with
-  | CP.TempRes (a1,a2) ->
-    let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"imm" () in
-    let fresh_ann_var = CP.Var(fresh_ann_sv, no_pos) in
-    let guard = CP.mkEq (CP.imm_to_exp a1 no_pos) (CP.mkAdd fresh_ann_var (CP.imm_to_exp a2 no_pos) no_pos) no_pos in
-    (CP.mkPolyAnn fresh_ann_sv), [CP.mkPure guard]
-  | _ -> imm, []
-
 (* return (compatible_flag, to_keep_node) *)
 let compatible_at_node_lvl prog imm1 imm2 h1 h2 unfold_fun qvars emap =
   let comp, ret_h, guards =
@@ -2448,18 +2557,13 @@ let compatible_at_node_lvl prog imm1 imm2 h1 h2 unfold_fun qvars emap =
     else  if (Imm.is_const_imm_list ~emap:emap [imm1;imm2]) then 
       (* imm1 & imm2 are imm constants, but none is @A *)
       let pr = Cprinter.string_of_h_formula in
+      (* let () = print_endline "*** at overlapping location" in- *)
       let () = report_warning no_pos ("* between overlapping heaps: " ^ (pr_pair pr pr (h1,h2)) ) in
       (false, h1, []) 
     else
-      let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"imm" () in
-      let fresh_ann_var = CP.Var(fresh_ann_sv, no_pos) in
-      let h = set_imm h1 (CP.mkPolyAnn fresh_ann_sv) in (* TODOIMM to add the constraint fresh_ann = ann1 + ann2 *)
-      let imm1, guard1 = get_simpler_imm imm1 in
-      let imm2, guard2 = get_simpler_imm imm2 in
-      let guard = CP.mkEq fresh_ann_var (CP.mkAdd (CP.imm_to_exp imm1 no_pos) (CP.imm_to_exp imm2 no_pos) no_pos) no_pos in
-      let guard = CP.mkPure guard in
-      (true, h, [guard]@guard1@guard2) in
-      (* (false, h1, [guard]) in *)
+      let imm, guards = merge_guards emap imm1 imm2 in
+      let h = set_imm h1 imm in
+      (true, h, guards) in
   let compatible, keep_h, struc, guards =
     (match h1, h2 with
      | DataNode _, DataNode _
@@ -2599,8 +2703,8 @@ let merge_alias_nodes_h_formula_helper prog p lst emap quantif xpure unfold_fun 
       let updated_head, updated_tail, eqs_lst, subs_lst, struc_lst, pf_lst = merge_list_w_node h t emap prog quantif unfold_fun qvars in
       let (fixpoint, emap) = List.fold_left 
           ( fun (fixpoint,emap) (a,b) -> 
-              if CP.EMapSV.is_equiv emap a b then (fixpoint&&true,emap)
-              else (fixpoint&&false, CP.EMapSV.add_equiv emap a b) 
+             if CP.EMapSV.is_equiv emap a b then (fixpoint&&true,emap)
+             else (fixpoint&&false, CP.EMapSV.add_equiv emap a b) 
           ) (true, emap) eqs_lst in
       let fixpoint = fixpoint && (is_empty subs_lst) in
       let merged_tail, eqs_lst_tail, subs_lst_tail, fixpoint_tail, struc_tail, pf_tail = helper updated_tail emap  in
@@ -2649,11 +2753,14 @@ let merge_alias_nodes_formula_helper prog heapf puref quantif xpure unfold_fun q
     else (new_f, new_p, struc)
   in helper heapf puref
 
+(* let merge_alias_h_formula prog heap pure quantif xpure unfold_fun qvars = *)
+(*   merge_alias_nodes_formula_helper prog heap pure quantif xpure (unfold_fun fl) qvars *)
+
 let merge_and_combine prog f heap pure quantif xpure unfold_fun qvars mk_new_f rec_fun =
   let fl  = flow_formula_of_formula f in 
   let pos = pos_of_formula f in
-  let new_f, new_p, unfold_f_lst = merge_alias_nodes_formula_helper prog heap pure quantif xpure (unfold_fun fl) qvars in
-  let new_f =  mk_new_f new_f new_p in
+  let new_h, new_p, unfold_f_lst = merge_alias_nodes_formula_helper prog heap pure quantif xpure (unfold_fun fl) qvars in
+  let new_f =  mk_new_f new_h new_p in
   let ret_f = match unfold_f_lst with
     | [] -> new_f
     | _  ->
