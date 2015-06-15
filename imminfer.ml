@@ -189,10 +189,15 @@ let infer_imm_ann (prog: C.prog_decl) (proc_decls: C.proc_decl list) : C.proc_de
       @return (new proc, precondition relation, postcondition relation) **)
   let (new_proc_decls, rel_list) =
     let helper proc (proc_decls, rel_list) =
-      let (pss, pre_rel, post_rel) = infer_imm_ann_proc proc.C.proc_static_specs in
-      let rel_list_1 = map_opt_def rel_list (fun r -> r::rel_list) pre_rel in
-      let rel_list_2 = map_opt_def rel_list_1 (fun r -> r::rel_list) post_rel in
-      (({proc with C.proc_static_specs = pss })::proc_decls, rel_list_2) in
+      let pss_stk = new Gen.stack in
+      let old_specs = proc.C.proc_stk_of_static_specs # get_stk in
+      let (pre_rels, post_rels) = List.fold_right (fun spec (pre_rels, post_rels) ->
+        let (pss, pre_rel, post_rel) = infer_imm_ann_proc spec in
+        let pre_rels = map_opt_def pre_rels (fun r -> r::rel_list) pre_rel in
+        let post_rels = map_opt_def post_rels (fun r -> r::rel_list) post_rel in
+        pss_stk # push pss;
+        (pre_rels, post_rels)) old_specs ([], []) in
+      (({proc with C.proc_stk_of_static_specs = pss_stk })::proc_decls, pre_rels@post_rels@rel_list) in
     List.fold_right helper proc_decls ([], []) in
   prog.C.prog_rel_decls <- prog.C.prog_rel_decls @ rel_list;
   new_proc_decls
@@ -202,10 +207,15 @@ let infer_imm_ann_prog (prog: C.prog_decl) : C.prog_decl =
   let proc_decls = Hashtbl.create (Hashtbl.length prog.C.new_proc_decls) in
   let (new_proc_decls, rel_list) =
     let helper id proc (proc_decls, rel_list) =
-      let (pss, pre_rel, post_rel) = infer_imm_ann_proc proc.C.proc_static_specs in
-      let rel_list_1 = map_opt_def rel_list (fun r -> r::rel_list) pre_rel in
-      let rel_list_2 = map_opt_def rel_list_1 (fun r -> r::rel_list) post_rel in
-      ((id, { proc with C.proc_static_specs = pss })::proc_decls, rel_list_2) in
+      let pss_stk = new Gen.stack in
+      let old_specs = proc.C.proc_stk_of_static_specs # get_stk in
+      let (pre_rels, post_rels) = List.fold_right (fun spec (pre_rels, post_rels) ->
+        let (pss, pre_rel, post_rel) = infer_imm_ann_proc spec in
+        let pre_rels = map_opt_def pre_rels (fun r -> r::rel_list) pre_rel in
+        let post_rels = map_opt_def post_rels (fun r -> r::rel_list) post_rel in
+        pss_stk # push pss;
+        (pre_rels, post_rels)) old_specs ([], []) in
+      ((id, {proc with C.proc_stk_of_static_specs = pss_stk })::proc_decls, pre_rels@post_rels@rel_list) in
     Hashtbl.fold helper prog.new_proc_decls ([], []) in
   prog.C.prog_rel_decls <- prog.C.prog_rel_decls @ rel_list;
   List.iter (fun (id, proc_decl) -> Hashtbl.add proc_decls id proc_decl) new_proc_decls;

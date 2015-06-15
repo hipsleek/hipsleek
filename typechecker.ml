@@ -4252,7 +4252,7 @@ let rec check_prog iprog (prog : prog_decl) =
   (*     check_coercion prog; *)
   (*     print_string_quiet "DONE.\n" *)
   (*   end; *)
-
+  let prog = Imminfer.infer_imm_ann_prog prog in
   ignore (List.map (check_data iprog prog) prog.prog_data_decls);
   (* Sort the proc_decls by proc_call_order *)
   let l_proc = Cast.list_of_procs prog in
@@ -4293,7 +4293,7 @@ let rec check_prog iprog (prog : prog_decl) =
     let () = List.iter (fun proc ->
         x_binfo_hp (add_str "spec" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in
 
-    let scc = Imminfer.infer_imm_ann prog scc in
+    (* let scc = Imminfer.infer_imm_ann prog scc in *)
 
     let () = x_binfo_hp (add_str "RELS 1 :" (pr_list (fun r -> r.rel_name))) prog.prog_rel_decls no_pos in
     let () = List.iter (fun proc ->
