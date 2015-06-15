@@ -901,7 +901,7 @@ let rec get_heap_ann annl : P.ann =
   match annl with
     | (Some a) :: r -> a
     | None :: r -> get_heap_ann r
-    | [] ->  P.NoAnn
+    | [] ->  P.NoAnn (* P.ConstAnn Mutable *)
 
 and get_heap_ann_opt annl : P.ann option = 
   match annl with
@@ -911,7 +911,7 @@ and get_heap_ann_opt annl : P.ann option =
 and get_heap_ann_list annl : P.ann list  = 
   match annl with
     | (Some a) :: r -> a :: get_heap_ann_list r
-    |  None :: r ->  P.NoAnn :: get_heap_ann_list r
+    |  None :: r ->  P.NoAnn (* P.ConstAnn Mutable  *):: get_heap_ann_list r
     | [] -> []
 
 let stmt_list_to_block t pos = 

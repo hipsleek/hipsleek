@@ -38,6 +38,8 @@ let isLend = CP.isLend
 let isImm = CP.isImm 
 let isMutable = CP.isMutable
 
+let defImm = ref (CP.ConstAnn Mutable)
+
 let isAccsList (al : CP.ann list) : bool = List.for_all isAccs al
 let isMutList (al : CP.ann list) : bool = List.for_all isMutable al
 
@@ -667,7 +669,7 @@ let rec ann_opt_to_ann_lst (ann_opt_lst: Ipure.ann option list) (default_ann: Ip
 
 let iformula_ann_to_cformula_ann (iann : Ipure.ann) : CP.ann = 
   match iann with
-  | Ipure.NoAnn -> CP.NoAnn
+  | Ipure.NoAnn -> if not (!Globals.imm_infer) then !defImm else CP.NoAnn 
   | Ipure.ConstAnn(x) -> CP.ConstAnn(x)
   | Ipure.PolyAnn((id,p), l) -> 
     CP.PolyAnn(CP.SpecVar (AnnT, id, p))

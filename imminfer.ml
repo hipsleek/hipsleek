@@ -226,3 +226,6 @@ let infer_imm_ann_prog (prog: C.prog_decl) : C.prog_decl =
   prog.C.prog_rel_decls <- prog.C.prog_rel_decls @ rel_list;
   List.iter (fun (id, proc_decl) -> Hashtbl.add proc_decls id proc_decl) new_proc_decls;
   { prog with C.new_proc_decls = proc_decls }
+
+let should_infer_imm inf_obj =
+ inf_obj # is_pre_imm ||  inf_obj # is_post_imm || !Globals.imm_infer

@@ -669,7 +669,7 @@ let string_of_ann a = match a with
   | PolyAnn v -> "PolyAnn"
   | TempAnn v -> "TempAnn"
   | TempRes _ -> "TempRes"
-  | NoAnn -> "@[]"
+  | NoAnn -> "@[NOANN]"
 
 let rec string_of_imm_helper imm = 
   match imm with
@@ -680,7 +680,7 @@ let rec string_of_imm_helper imm =
   | TempAnn(t) -> "@[" ^ (string_of_imm_helper t) ^ "]"
   | TempRes(l,r) -> "@[" ^ (string_of_imm_helper l) ^ ", " ^ (string_of_imm_helper r) ^ "]"
   | PolyAnn(v) -> "@" ^ (string_of_spec_var v)
-  | NoAnn -> "@[]"
+  | NoAnn -> "@[NOANN]"
 
 let rec string_of_imm imm = 
   if not !print_ann then ""

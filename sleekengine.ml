@@ -939,10 +939,10 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typein
     | MetaEFormCF b ->       (* let _ = print_string ("\n (andreeac) meta_to_struc_formula 6") in *) (tl,b) (* assume it has already been normalized *)
   in helper mf0 quant fv_idents tlist 
 
-let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list)
-        : (Typeinfer.spec_var_type_list*CF.struc_formula) =
-  let (tvl, f) = meta_to_struc_formula mf0 quant fv_idents tlist in
-  (tvl, Immutils.annotate_imm_struc_formula f)
+(* let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list) *)
+(*         : (Typeinfer.spec_var_type_list*CF.struc_formula) = *)
+(*   let (tvl, f) = meta_to_struc_formula mf0 quant fv_idents tlist in *)
+(*   (tvl, Immutils.annotate_imm_struc_formula f) *)
 
 let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list)
   : (Typeinfer.spec_var_type_list*CF.struc_formula) 
@@ -1042,10 +1042,10 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
 (*   let res_f = x_add Norm.imm_abs_norm_formula res_f !cprog (Solver.unfold_for_abs_merge !cprog no_pos) in *)
 (*   svtl, res_f *)
   
-let meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list)
-        : (Typeinfer.spec_var_type_list*CF.formula) =
-  let (tvl, f) = meta_to_formula mf0 quant fv_idents tlist in
-  (tvl, Immutils.annotate_imm_formula f)
+(* let meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list) *)
+(*         : (Typeinfer.spec_var_type_list*CF.formula) = *)
+(*   let (tvl, f) = meta_to_formula mf0 quant fv_idents tlist in *)
+(*   (tvl, Immutils.annotate_imm_formula f) *)
 
 let meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list) : (Typeinfer.spec_var_type_list*CF.formula) = 
   let pr_meta = string_of_meta_formula in

@@ -386,6 +386,7 @@ let simplify_imm_addition ?emap:(em=[]) (f:formula) =
 
 (* ===================== END imm addition utils ========================= *)
 
+(* below should preserve the old annotation, and only set NoAnn to Mutable *)
 let ann_heap_with_m = function
   | CF.DataNode hp -> Some (CF.DataNode { hp with h_formula_data_imm = CP.ConstAnn(Mutable) })
   | CF.ViewNode hp -> Some (CF.ViewNode { hp with h_formula_view_imm = CP.ConstAnn(Mutable) })
