@@ -3606,11 +3606,12 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
               (* in *)
               (* Long: end TODO here *)
               let spec = proc.proc_stk_of_static_specs # top in
+              x_binfo_hp (add_str "SPECS (before specs_infer)" pr_spec) spec no_pos;
               (* let new_spec = if Pi.is_infer_post spec then Pi.add_post_relation prog proc spec "" UNK else spec in *)
               (* let () = proc.proc_stk_of_static_specs # push new_spec in *)
               let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx spec body true in
               (* let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx (proc.proc_static_specs (\* @ proc.proc_dynamic_specs *\)) body true in *)
-              x_tinfo_hp (add_str "SPECS (after specs_infer)" pr_spec) new_spec no_pos;
+              x_binfo_hp (add_str "SPECS (after specs_infer)" pr_spec) new_spec no_pos;
               x_tinfo_hp (add_str "fm formula " (pr_list !CF.print_formula)) fm no_pos;
               (* let new_spec = x_add_1 CF.simplify_ann new_spec in *)
               let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels) in
@@ -3963,8 +3964,9 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
 
 let check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : proc_decl list) : bool =
   let pr p = pr_id (name_of_proc p)  in
+  let pr2 p = Cprinter.string_of_struc_formula p.proc_static_specs in
   Debug.no_1_opt (fun _ -> not(is_primitive_proc proc))
-    "check_proc" pr string_of_bool (fun _ -> check_proc iprog prog proc cout_option mutual_grp) proc
+    "check_proc" pr2 string_of_bool (fun _ -> check_proc iprog prog proc cout_option mutual_grp) proc
 
 let reverify_proc prog proc do_infer =
   if !reverify_flag then
@@ -4237,6 +4239,7 @@ let ext_pure_check_procs iprog prog proc_names error_traces=
   []
 
 let rec check_prog iprog (prog : prog_decl) =
+  let prog = Imminfer.infer_imm_ann_prog prog in
   let cout_option = if(!Globals.gen_cpfile) then (
       Some (open_out (!Globals.cpfile))
     )
