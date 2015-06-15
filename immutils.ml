@@ -305,3 +305,14 @@ let simplify_imm_addition (f:formula) =
   Debug.no_1 "simplify_imm_addition" pr pr simplify_imm_adddition f
 
 (* ===================== END imm addition utils ========================= *)
+
+let ann_heap_with_m = function
+  | CF.DataNode hp -> Some (CF.DataNode { hp with h_formula_data_imm = CP.ConstAnn(Mutable) })
+  | CF.ViewNode hp -> Some (CF.ViewNode { hp with h_formula_view_imm = CP.ConstAnn(Mutable) })
+  | _ -> None
+
+let annotate_imm_struc_formula (constr: CF.struc_formula) : CF.struc_formula =
+  CF.transform_struc_formula (nonef, nonef, ann_heap_with_m, (somef, somef, somef, somef, somef)) constr
+
+let annotate_imm_formula (constr: CF.formula) : CF.formula =
+  CF.transform_formula (nonef, nonef, ann_heap_with_m, (somef, somef, somef, somef, somef)) constr
