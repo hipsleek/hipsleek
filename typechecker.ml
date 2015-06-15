@@ -648,11 +648,9 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
         let pre_post_vars = CP.remove_dups_svl (pre_vars @ post_vars @ new_fml_fv @ proc_args_vars) in
         let () = Debug.ninfo_hprint (add_str "all vars" !print_svl) pre_post_vars no_pos in
         let () = Debug.ninfo_hprint (add_str "inf vars" !print_svl) vars no_pos in
-        let () = x_binfo_hp (add_str "vars_rel1" !print_svl) vars_rel no_pos in
         let classify_rel v =
           let rel_decl = Cast.look_up_rel_def_raw prog.Cast.prog_rel_decls (CP.name_of_spec_var v) in
           if not (is_primitive_rel rel_decl) && (CP.isConstTrue rel_decl.rel_formula) then true else false in
-        let () = x_binfo_hp (add_str "vars_rel1" !print_svl) vars_rel no_pos in
         let (unknown_rel,known_rel) = List.partition classify_rel
             (CP.remove_dups_svl ((List.filter CP.is_rel_var pre_post_vars)@vars_rel)) in
         let () = Debug.ninfo_hprint (add_str "unknown_rel" !print_svl) unknown_rel no_pos in
@@ -4290,10 +4288,24 @@ let rec check_prog iprog (prog : prog_decl) =
   (***************************INTERNAL**************************)
   (******************************************************************)
   let verify_scc_helper prog verified_sccs scc =
-    let prog = Imminfer.infer_imm_ann_prog prog in
+
+    let () = x_binfo_hp (add_str "RELS 0 :" (pr_list (fun r -> r.rel_name))) prog.prog_rel_decls no_pos in
+    let () = List.iter (fun proc ->
+        x_binfo_hp (add_str "spec" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in
+
+    let scc = Imminfer.infer_imm_ann prog scc in
+
+    let () = x_binfo_hp (add_str "RELS 1 :" (pr_list (fun r -> r.rel_name))) prog.prog_rel_decls no_pos in
+    let () = List.iter (fun proc ->
+        x_binfo_hp (add_str "spec" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in
+
     let scc, ini_hpdefs =
       Da.find_rel_args_groups_scc prog scc
     in
+
+    let () = x_binfo_hp (add_str "RELS 2 :" (pr_list (fun r -> r.rel_name))) prog.prog_rel_decls no_pos in
+    let () = List.iter (fun proc ->
+        x_binfo_hp (add_str "spec" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in
 
     let has_infer_shape_proc = x_add_1 Pi.is_infer_shape_scc scc in
 
@@ -4301,7 +4313,11 @@ let rec check_prog iprog (prog : prog_decl) =
     let () = if (not(has_infer_shape_proc) && has_infer_pre_proc) then Pi.add_pre_relation_scc prog scc in
 
     let has_infer_post_proc = Pi.is_infer_post_scc scc in
-    let () = if (not(has_infer_shape_proc)) then Pi.add_post_relation_scc prog scc in
+    let () = if (not(has_infer_shape_proc)) then x_add Pi.add_post_relation_scc prog scc in
+
+    let () = x_binfo_hp (add_str "RELS 3 :" (pr_list (fun r -> r.rel_name))) prog.prog_rel_decls no_pos in
+    let () = List.iter (fun proc ->
+        x_binfo_hp (add_str "spec" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in
 
     (* let () = List.iter (fun proc -> *)
     (*     DD.info_hprint (add_str "spec before infer post" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in *)
@@ -4388,7 +4404,7 @@ let rec check_prog iprog (prog : prog_decl) =
 
     (* Pure inference *)
     let () = if (has_infer_shape_proc && has_infer_pre_proc) then Pi.add_pre_relation_scc prog scc in
-    let () = if (has_infer_shape_proc && has_infer_post_proc) then Pi.add_post_relation_scc prog scc in
+    let () = if (has_infer_shape_proc && has_infer_post_proc) then x_add Pi.add_post_relation_scc prog scc in
     let () = if (has_infer_shape_proc && (has_infer_pre_proc || has_infer_post_proc)) then wrap_reverify_scc reverify_scc prog scc true in
     let () = if (has_infer_pre_proc || has_infer_post_proc) then Pi.infer_pure prog scc in
     (* let () = List.iter (fun proc -> *)
