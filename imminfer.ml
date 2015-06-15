@@ -86,15 +86,19 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
     let rn = fresh_pred loc in
     match rel_params with
     | [] -> None
-    | rel_params -> Some ({
-                             C.rel_name = rn;
-                             C.rel_vars = List.map (fun _ -> Cpure.SpecVar (AnnT, fresh loc, Unprimed)) rel_params;
-                             C.rel_formula = CP.mkTrue no_pos })
+    | rel_params ->
+       Some ({
+        C.rel_name = rn;
+        C.rel_vars = List.map (fun _ -> Cpure.SpecVar (AnnT, fresh loc, Unprimed)) rel_params;
+        C.rel_formula = CP.mkTrue no_pos
+       })
   in
   let rec ann_struc_formula_1 = function
     | EInfer ff ->
        imm_pre_is_set := ff.formula_inf_obj # is_pre_imm;
        imm_post_is_set := ff.formula_inf_obj # is_post_imm;
+       x_tinfo_hp (add_str "imm_pre_flag" string_of_bool) !imm_pre_is_set no_pos;
+       x_tinfo_hp (add_str "imm_post_flag" string_of_bool) !imm_post_is_set no_pos;
        use_mutable := (not !imm_pre_is_set && not !imm_post_is_set);
        None
     | EAssume ff ->
@@ -171,7 +175,12 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
 let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula * C.rel_decl option * C.rel_decl option) =
   Debug.no_1 "infer_imm_ann_proc"
              Cprinter.string_of_struc_formula
-             (fun (f,_,_) -> Cprinter.string_of_struc_formula f)
+              (Cprinter.poly_string_of_pr_gen 0 (fun (f,r1,r2) ->
+                 Cprinter.pr_vwrap "cformula:" Cprinter.pr_struc_formula f;
+                 Cprinter.pr_vwrap "pre_rel:" Cprinter.fmt_string
+                   (map_opt_def "None" (fun x -> x.C.rel_name) r1);
+                 Cprinter.pr_vwrap "post_rel:" Cprinter.fmt_string
+                   (map_opt_def "None" (fun x -> x.C.rel_name) r2)))
              infer_imm_ann_proc
              proc_static_specs
 
@@ -187,3 +196,17 @@ let infer_imm_ann (prog: C.prog_decl) (proc_decls: C.proc_decl list) : C.proc_de
     List.fold_right helper proc_decls ([], []) in
   prog.C.prog_rel_decls <- prog.C.prog_rel_decls @ rel_list;
   new_proc_decls
+
+
+let infer_imm_ann_prog (prog: C.prog_decl) : C.prog_decl =
+  let proc_decls = Hashtbl.create (Hashtbl.length prog.C.new_proc_decls) in
+  let (new_proc_decls, rel_list) =
+    let helper id proc (proc_decls, rel_list) =
+      let (pss, pre_rel, post_rel) = infer_imm_ann_proc proc.C.proc_static_specs in
+      let rel_list_1 = map_opt_def rel_list (fun r -> r::rel_list) pre_rel in
+      let rel_list_2 = map_opt_def rel_list_1 (fun r -> r::rel_list) post_rel in
+      ((id, { proc with C.proc_static_specs = pss })::proc_decls, rel_list_2) in
+    Hashtbl.fold helper prog.new_proc_decls ([], []) in
+  prog.C.prog_rel_decls <- prog.C.prog_rel_decls @ rel_list;
+  List.iter (fun (id, proc_decl) -> Hashtbl.add proc_decls id proc_decl) new_proc_decls;
+  { prog with C.new_proc_decls = proc_decls }
