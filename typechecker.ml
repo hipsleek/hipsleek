@@ -3605,7 +3605,9 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
               (*   | _ -> sf *)
               (* in *)
               (* Long: end TODO here *)
-              let spec = proc.proc_stk_of_static_specs # top in
+              (* Evan: we use proc0 instead of proc here because the inference result
+                  may not be reflected on the prog *)
+              let spec = proc0.proc_stk_of_static_specs # top in
               (* let new_spec = if Pi.is_infer_post spec then Pi.add_post_relation prog proc spec "" UNK else spec in *)
               (* let () = proc.proc_stk_of_static_specs # push new_spec in *)
               let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx spec body true in
@@ -4293,7 +4295,7 @@ let rec check_prog iprog (prog : prog_decl) =
     let () = List.iter (fun proc ->
         x_binfo_hp (add_str "spec" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in
 
-    (* let scc = Imminfer.infer_imm_ann prog scc in *)
+    let scc = Imminfer.infer_imm_ann prog scc in
 
     let () = x_binfo_hp (add_str "RELS 1 :" (pr_list (fun r -> r.rel_name))) prog.prog_rel_decls no_pos in
     let () = List.iter (fun proc ->
