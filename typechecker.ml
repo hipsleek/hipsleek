@@ -3607,7 +3607,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
               (* Long: end TODO here *)
               (* Evan: we use proc0 instead of proc here because the inference result
                   may not be reflected on the prog *)
-              let spec = proc0.proc_stk_of_static_specs # top in
+              let spec = proc.proc_stk_of_static_specs # top in
               (* let new_spec = if Pi.is_infer_post spec then Pi.add_post_relation prog proc spec "" UNK else spec in *)
               (* let () = proc.proc_stk_of_static_specs # push new_spec in *)
               let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx spec body true in
@@ -4419,7 +4419,9 @@ let rec check_prog iprog (prog : prog_decl) =
     let () = if (has_infer_shape_proc && has_infer_pre_proc) then Pi.add_pre_relation_scc prog scc in
     let () = if (has_infer_shape_proc && has_infer_post_proc) then x_add Pi.add_post_relation_scc prog scc in
     let () = if (has_infer_shape_proc && (has_infer_pre_proc || has_infer_post_proc)) then wrap_reverify_scc reverify_scc prog scc true in
-    let () = if (has_infer_pre_proc || has_infer_post_proc) then Pi.infer_pure prog scc in
+    let () = if (has_infer_pre_proc || has_infer_post_proc) ||
+                   (!Imminfer.has_infer_imm_pre || !Imminfer.has_infer_imm_post)
+             then Pi.infer_pure prog scc in
     (* let () = List.iter (fun proc -> *)
     (*     DD.ninfo_hprint (add_str "spec after infer post" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in *)
 
@@ -4432,7 +4434,9 @@ let rec check_prog iprog (prog : prog_decl) =
     let () = DD.ninfo_hprint (add_str "has_infer_post_proc" string_of_bool) has_infer_post_proc no_pos in
     (* Resume other infer *)
 
-    let scc = if (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) then Pi.resume_infer_obj_scc scc old_specs else scc in
+    let scc = if (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) ||
+                   (!Imminfer.has_infer_imm_pre || !Imminfer.has_infer_imm_post)
+              then Pi.resume_infer_obj_scc scc old_specs else scc in
 
     (* ========================== imm infer  ========================== *)
     (* let scc = Imminfer.infer_imm_ann prog scc in *)
