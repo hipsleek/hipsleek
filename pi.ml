@@ -385,7 +385,7 @@ let filter_infer_pure_proc proc =
   let () = proc.proc_stk_of_static_specs # push new_spec in
   let () = x_binfo_hp (add_str "spec" Cprinter.string_of_struc_formula) spec no_pos in
   let () = x_binfo_hp (add_str "new_spec" Cprinter.string_of_struc_formula) new_spec no_pos in
-  (proc,new_spec)
+  (proc,new_spec)                       (* spec or new_spec *)
 
 let filter_infer_pure_scc scc =
   List.map (fun proc -> filter_infer_pure_proc proc) scc

@@ -9,8 +9,8 @@ relation P(ann v1).
 int foo2(cell c)
 //  infer [P,@term]
 //  infer [@term]
-  infer [@post_n, @imm_post]
-//  infer [@post_n]
+//  infer [@post_n, @imm_post]
+  infer [@post_n]
 //  requires c::cell<v>
   requires c::cell<v>@M
   ensures c::cell<w>@b   ;
