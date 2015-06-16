@@ -42,29 +42,24 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
                        else (let f = fresh_ann loc in (ann, Some (f, true)))
     | CP.PolyAnn f -> (ann, Some (f, false))
     | _ -> (CP.NoAnn, None) in
-  let update_v_stack v = map_opt_def () (fun (v,_) -> v_stack # push v) v in
+  let update_v_stack v = map_opt_def () (fun (v,_) -> print_endline "push"; v_stack # push v) v in
   let update_n_stack v ann =
     map_opt_def () (fun (v,norm) -> if norm then n_stack # push (v, ann)) v in
-  let ann_heap = function
-    | DataNode hp ->
-       let loc = hp.h_formula_data_pos in
-       let (h_imm, v) = assign_ann_or_var hp.h_formula_data_imm loc in
-       let () = update_v_stack v in
+  let ann_heap_ho stop loc imm_ann =
+       let (h_imm, v) = assign_ann_or_var imm_ann loc in
+       let () = if not stop then update_v_stack v in
        let () = update_n_stack v h_imm in
        let h_imm = match v with
          | Some (_, false) -> h_imm
          | Some (v, true) -> CP.PolyAnn v
          | None -> h_imm in
+       h_imm in
+  let ann_heap stop h = match h with
+    | DataNode hp ->
+       let h_imm = ann_heap_ho stop hp.h_formula_data_pos hp.h_formula_data_imm in
        Some (DataNode { hp with h_formula_data_imm = h_imm })
     | ViewNode hp ->
-       let loc = hp.h_formula_view_pos in
-       let (h_imm, v) = assign_ann_or_var hp.h_formula_view_imm loc in
-       let () = update_v_stack v in
-       let () = update_n_stack v h_imm in
-       let h_imm = match v with
-         | Some (_, false) -> h_imm
-         | Some (v, true) -> CP.PolyAnn v
-         | None -> h_imm in
+       let h_imm = ann_heap_ho stop hp.h_formula_view_pos hp.h_formula_view_imm in
        Some (ViewNode { hp with h_formula_view_imm = h_imm })
     | _ -> None
   in
@@ -108,11 +103,13 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
        None
     | EAssume ff ->
        if !use_mutable then Some (EAssume ff) else
-         let new_formula = transform_formula transform_1 ff.formula_assume_simpl in
+         let stop = not !imm_post_is_set in
+         let new_formula = transform_formula (transform_1 stop) ff.formula_assume_simpl in
          Some (EAssume { ff with formula_assume_simpl = new_formula;
                                  formula_assume_struc = CF.formula_to_struc_formula new_formula })
     | _ -> None
-  and transform_1 = (ann_struc_formula_1, nonef, ann_heap, (somef, somef, somef, somef, somef)) in
+  and transform_1 stop =
+    (ann_struc_formula_1, nonef, ann_heap stop, (somef, somef, somef, somef, somef)) in
   let ann_postcondition = function
     | EAssume ff ->
        let loc = pos_of_formula ff.formula_assume_simpl in
@@ -171,10 +168,10 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
   in
   let transform_2 = (ann_struc_formula_2, somef, somef, (somef, somef, somef, somef, somef)) in
   let pss =
-    let pss_1 = transform_struc_formula transform_1 proc_static_specs in
+    let pss_1 = transform_struc_formula (transform_1 false) proc_static_specs in
     if !use_mutable then pss_1
     else
-       (pre_stack # push_list (v_stack # get_stk);
+        (pre_stack # push_list (v_stack # get_stk);
         pre_norm_stack # push_list (n_stack # get_stk_and_reset);
         if !imm_pre_is_set then pre_rel := mk_rel (pre_stack # get_stk) no_pos;
         if !imm_post_is_set then post_rel := mk_rel (v_stack # get_stk) no_pos;
