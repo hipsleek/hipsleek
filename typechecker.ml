@@ -4311,7 +4311,7 @@ let rec check_prog iprog (prog : prog_decl) =
 
     let has_infer_shape_proc = x_add_1 Pi.is_infer_shape_scc scc in
 
-    let has_infer_pre_proc = Pi.is_infer_pre_scc scc  || !Imminfer.has_infer_imm_pre in
+    let has_infer_pre_proc = Pi.is_infer_pre_scc scc in
     let () = if (not(has_infer_shape_proc) && has_infer_pre_proc) then Pi.add_pre_relation_scc prog scc in
 
     let has_infer_post_proc = Pi.is_infer_post_scc scc in

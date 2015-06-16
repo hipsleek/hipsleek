@@ -2,26 +2,26 @@
 data cell{
  int fst;
 }
-/*
+
 relation Q(ann v).
 
 int foo2(cell c, cell d)
-infer [@imm_pre]
-  requires c::cell<yyy>@M * d::cell<yyy>
-  ensures c::cell<wwww>@b * d::cell<yyy>@A;
+infer [@imm_post]
+  requires c::cell<yyy>@M * d::cell<yyy>@A
+  ensures c::cell<wwww>@b * d::cell<yyy>;
 {
   int x = c.fst;
   if (x>0) c.fst = 5;
   return x;
 }
-*/
+/*
 relation P(ann v1).
 //relation P3(ann v1, int v,int r, int s).
 
 
 int foo2(cell c)
-  infer [P]
-  requires c::cell<v>@a & P(a)
+  infer [@imm_post]
+  requires c::cell<v>@M
   ensures c::cell<w>@b ;
 {
   int x = c.fst;
@@ -29,7 +29,7 @@ int foo2(cell c)
   return x;
 }
 
-/*
+
 relation P(ann v1, ann v2).
 //relation P3(ann v1, int v,int r, int s).
 
