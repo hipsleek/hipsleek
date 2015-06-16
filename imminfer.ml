@@ -75,8 +75,9 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
     List.fold_right (fun pure acc -> add_pure_formula_to_formula pure acc) (List.map eq_v vars) formula in
   let and_pure_with_rel relname rel_params formula loc =
     let rel_pure =
-      let args = List.map (fun i -> CP.Var (i, loc)) rel_params in
-      let p_formula = CP.RelForm (CP.SpecVar (AnnT, relname, Unprimed), args, loc) in
+      let pairs = List.map (fun i -> (AnnT, CP.Var (i, loc))) rel_params in
+      let (types, args) = List.split pairs in
+      let p_formula = CP.RelForm ((CP.SpecVar (RelT types, relname, Unprimed)), args, loc) in
       let b_formula = (p_formula, None) in
       CP.BForm (b_formula, None)
     in add_pure_formula_to_formula rel_pure formula in
