@@ -489,7 +489,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
   : CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *(CF.hprel list) * (CP.spec_var list)* (CP.spec_var list) * ((CP.spec_var * int list)  *CP.xpure_view ) list * bool =
   let rec helper (ctx : CF.context) (spec: CF.struc_formula) :  CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *(CF.hprel list) * (CP.spec_var list)* (CP.spec_var list) *
                                                                 ((CP.spec_var * int list)  *CP.xpure_view) list * bool =
-    let () = x_binfo_hp (add_str "rels:" (pr_list (fun r -> r.rel_name))) prog.prog_rel_decls no_pos in
+    let () = x_tinfo_hp (add_str "rels:" (pr_list (fun r -> r.rel_name))) prog.prog_rel_decls no_pos in
     let pos_spec = CF.pos_of_struc_formula spec in
     let _= proving_loc # set pos_spec in
     log_spec := (Cprinter.string_of_struc_formula spec) ^ ", Line " ^ (string_of_int pos_spec.start_pos.Lexing.pos_lnum);
@@ -638,7 +638,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
           else if is_UtT typ then (vr@[v], vt, vi)
           else if is_FuncT typ then (vr, vt@[v], vi)
           else (vr, vt, vi@[v])) ([], [], []) vars in
-      let () = x_binfo_hp (add_str "vars_rel" !print_svl) vars_rel no_pos in
+      let () = x_tinfo_hp (add_str "vars_rel" !print_svl) vars_rel no_pos in
       let _ =
         (*              if old_vars=[] then *)
         (*                Debug.info_hprint (add_str "TRANSLATED SPECS" pr_spec) einfer no_pos *)
@@ -4290,36 +4290,17 @@ let rec check_prog iprog (prog : prog_decl) =
   (***************************INTERNAL**************************)
   (******************************************************************)
   let verify_scc_helper prog verified_sccs scc =
-
-    let () = x_binfo_hp (add_str "RELS 0 :" (pr_list (fun r -> r.rel_name))) prog.prog_rel_decls no_pos in
-    let () = List.iter (fun proc ->
-        x_binfo_hp (add_str "spec" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in
-
+    (* Imminfer starts here *)
     let scc = Imminfer.infer_imm_ann prog scc in
-
-    let () = x_binfo_hp (add_str "RELS 1 :" (pr_list (fun r -> r.rel_name))) prog.prog_rel_decls no_pos in
-    let () = List.iter (fun proc ->
-        x_binfo_hp (add_str "spec" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in
-
+    (* End of Imminfer *)
     let scc, ini_hpdefs =
       Da.find_rel_args_groups_scc prog scc
     in
-
-    let () = x_binfo_hp (add_str "RELS 2 :" (pr_list (fun r -> r.rel_name))) prog.prog_rel_decls no_pos in
-    let () = List.iter (fun proc ->
-        x_binfo_hp (add_str "spec" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in
-
     let has_infer_shape_proc = x_add_1 Pi.is_infer_shape_scc scc in
-
     let has_infer_pre_proc = Pi.is_infer_pre_scc scc in
     let () = if (not(has_infer_shape_proc) && has_infer_pre_proc) then Pi.add_pre_relation_scc prog scc in
-
     let has_infer_post_proc = Pi.is_infer_post_scc scc in
     let () = if (not(has_infer_shape_proc)) then x_add Pi.add_post_relation_scc prog scc in
-
-    let () = x_binfo_hp (add_str "RELS 3 :" (pr_list (fun r -> r.rel_name))) prog.prog_rel_decls no_pos in
-    let () = List.iter (fun proc ->
-        x_binfo_hp (add_str "spec" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in
 
     (* let () = List.iter (fun proc -> *)
     (*     DD.info_hprint (add_str "spec before infer post" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in *)
@@ -4328,7 +4309,7 @@ let rec check_prog iprog (prog : prog_decl) =
     let (scc,old_specs) = if (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) then List.split (Pi.filter_infer_pure_scc scc) else (scc,[]) in
 
     let () = List.iter (fun proc ->
-         x_binfo_hp (add_str "spec before phase inference for mutual-recursive groups" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in
+         x_tinfo_hp (add_str "spec before phase inference for mutual-recursive groups" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in
     let is_all_verified1, prog =
       let call_order = (List.hd scc).proc_call_order in
       (* perform phase inference for mutual-recursive groups captured by stk_scc_with_phases *)
@@ -4351,8 +4332,6 @@ let rec check_prog iprog (prog : prog_decl) =
     (* let () = List.iter (fun proc -> *)
     (*    x_binfo_hp (add_str "spec after phase inference for mutual-recursive groups" Cprinter.string_of_struc_formula) (proc.proc_static_specs) no_pos) scc in *)
     (* let () = Debug.info_hprint (add_str "is_all_verified1" string_of_bool) is_all_verified1 no_pos in *)
-    let () = List.iter (fun proc ->
-        x_binfo_hp (add_str "spec(after)" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in
     let mutual_grp = ref scc in
 
     x_tinfo_hp (add_str "MG"  (pr_list (fun p -> p.proc_name))) !mutual_grp no_pos;
@@ -4368,15 +4347,11 @@ let rec check_prog iprog (prog : prog_decl) =
         end
       ) in
 
-    let () = List.iter (fun proc ->
-        x_binfo_hp (add_str "spec(after2)" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in
     let should_print_term_res = List.fold_left (fun acc proc ->
         if not acc then CF.has_known_pre_lexvar_struc (proc.Cast.proc_stk_of_static_specs # top)
         else acc) false scc in
     let () = if should_print_term_res then Term.term_check_output_scc () else () in
 
-    let () = List.iter (fun proc ->
-        x_binfo_hp (add_str "spec(after3)" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in
     let scc = if is_all_verified2 || not !Globals.sa_ex then scc
       else
         let rele_sccs = lookup_called_procs iprog prog scc verified_sccs in
@@ -4388,8 +4363,6 @@ let rec check_prog iprog (prog : prog_decl) =
         n_scc
     in
 
-    let () = List.iter (fun proc ->
-        x_binfo_hp (add_str "spec(after4)" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in
     let () = Debug.ninfo_hprint (add_str "is_all_verified2" string_of_bool) is_all_verified2 no_pos in
     let () = if (* is_all_verified1 && *) is_all_verified2 then
         let () = Infer.scc_rel_ass_stk # reverse in
@@ -4413,8 +4386,6 @@ let rec check_prog iprog (prog : prog_decl) =
       else ()
     in
 
-    let () = List.iter (fun proc ->
-        x_binfo_hp (add_str "spec(after5)" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in
     (* Pure inference *)
     let () = if (has_infer_shape_proc && has_infer_pre_proc) then Pi.add_pre_relation_scc prog scc in
     let () = if (has_infer_shape_proc && has_infer_post_proc) then x_add Pi.add_post_relation_scc prog scc in
@@ -4439,8 +4410,6 @@ let rec check_prog iprog (prog : prog_decl) =
     (* let scc = Imminfer.infer_imm_ann prog scc in *)
     (* ======================== END imm infer  ======================== *)
 
-    let () = List.iter (fun proc ->
-         x_binfo_hp (add_str "spec" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in
     (* let () = if (!Imminfer.has_infer_imm_pre || !Imminfer.has_infer_imm_post) then Pi.infer_pure prog scc in *)
     (* Reverify *)
     (* let has_infer_others_proc = (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) && Pi.is_infer_others_scc scc in *)

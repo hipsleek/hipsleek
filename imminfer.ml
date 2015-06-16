@@ -42,7 +42,7 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
                        else (let f = fresh_ann loc in (ann, Some (f, true)))
     | CP.PolyAnn f -> (ann, Some (f, false))
     | _ -> (CP.NoAnn, None) in
-  let update_v_stack v = map_opt_def () (fun (v,_) -> print_endline "push"; v_stack # push v) v in
+  let update_v_stack v = map_opt_def () (fun (v,_) -> v_stack # push v) v in
   let update_n_stack v ann =
     map_opt_def () (fun (v,norm) -> if norm then n_stack # push (v, ann)) v in
   let ann_heap_ho stop loc imm_ann =
@@ -97,8 +97,8 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
        has_infer_imm_pre := (!has_infer_imm_pre || !imm_pre_is_set);
        imm_post_is_set := ff.formula_inf_obj # is_post_imm;
        has_infer_imm_post := (!has_infer_imm_post || !imm_post_is_set);
-       x_binfo_hp (add_str "imm_pre_flag" string_of_bool) !imm_pre_is_set no_pos;
-       x_binfo_hp (add_str "imm_post_flag" string_of_bool) !imm_post_is_set no_pos;
+       x_tinfo_hp (add_str "imm_pre_flag" string_of_bool) !imm_pre_is_set no_pos;
+       x_tinfo_hp (add_str "imm_post_flag" string_of_bool) !imm_post_is_set no_pos;
        use_mutable := (not !imm_pre_is_set && not !imm_post_is_set);
        None
     | EAssume ff ->

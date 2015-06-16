@@ -1866,15 +1866,15 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
 
     (*let _ = print_endline("input rhs_mix "^(Cprinter.string_of_mix_formula rhs_mix)) in*)
     let ivs = estate.es_infer_vars_rel(* @estate.es_infer_vars_hp_rel *)  in
-    x_binfo_hp (add_str "infer_vars_rel" Cprinter.string_of_spec_var_list) ivs no_pos;
-    x_binfo_hp (add_str "infer_vars" Cprinter.string_of_spec_var_list) estate.es_infer_vars no_pos;
+    x_tinfo_hp (add_str "infer_vars_rel" Cprinter.string_of_spec_var_list) ivs no_pos;
+    x_tinfo_hp (add_str "infer_vars" Cprinter.string_of_spec_var_list) estate.es_infer_vars no_pos;
     x_tinfo_hp (add_str "infer_vars_sel_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_hp_rel no_pos;
     x_tinfo_hp (add_str "infer_vars_sel_post_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_post_hp_rel no_pos;
     (*add instance of relational s0-pred*)
     (* let new_es_infer_vars_rel = find_close_infer_vars_rel lhs_mix estate.CF.es_infer_vars_rel in *)
     (* let estate = { estate with CF.es_infer_vars_rel = new_es_infer_vars_rel} in *)
     let rhs_p = MCP.pure_of_mix rhs_mix in
-    let () = x_binfo_hp (add_str "rhs_p:" Cprinter.string_of_pure_formula) rhs_p no_pos in
+    let () = x_tinfo_hp (add_str "rhs_p:" Cprinter.string_of_pure_formula) rhs_p no_pos in
     (*let _ = print_endline("#### rhs_p "^(Cprinter.string_of_pure_formula rhs_p)) in*)
     (*    (* Eliminate dijs in rhs which cannot be implied by lhs and do not contain relations *)*)
     (*    (* Suppose rhs_p is in DNF *)*)
@@ -2147,7 +2147,7 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
         (* -------------------------------------------------------------- *)
         (* below causes non-linear LHS for relation *)
         (* let inf_rel_ls = List.map (simp_lhs_rhs vars) inf_rel_ls in *)
-        x_binfo_hp (add_str "RelInferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos;
+        x_tinfo_hp (add_str "RelInferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos;
         infer_rel_stk # push_list_pr inf_rel_ls;
         Log.current_infer_rel_stk # push_list inf_rel_ls;
         let estate = { estate with es_infer_rel = estate.es_infer_rel@inf_rel_ls;} in
