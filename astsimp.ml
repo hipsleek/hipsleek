@@ -3892,29 +3892,6 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
          (*   CP.tu_sol = None;                                                                                                    *)
          (*   CP.tu_pos = pos; } in                                                                                                *)
 
-         (* ========================== imm infer  ========================== *)
-         (*
-         let (static_specs_list, pre_rel, post_rel) =
-           Imminfer.infer_imm_ann_proc static_specs_list in
-         let add_rel_to_prog rel =
-            let to_i_rel c_rel = {
-                I.rel_name = c_rel.C.rel_name;
-                I.rel_typed_vars = List.map (function CP.SpecVar (t,id,_) -> (t,id)) c_rel.C.rel_vars;
-                I.rel_formula = Ipure.mkTrue (CP.pos_of_formula c_rel.C.rel_formula)
-            }
-            in
-            map_opt_def () (fun r ->
-                            let ir = to_i_rel r in
-                            prog.I.prog_rel_decls <- (ir::prog.I.prog_rel_decls);
-                            prog.I.prog_rel_ids <- ((fun x ->
-                                                       let tl,_ = List.split x.I.rel_typed_vars in
-                                                       (RelT tl,x.rel_name)) ir) :: prog.I.prog_rel_ids
-                           ) rel in
-         let () = add_rel_to_prog pre_rel in
-         let () = add_rel_to_prog post_rel in
-         *)
-         (* ======================== END imm infer  ======================== *)
-
          let static_specs_list =
            if not !Globals.dis_term_chk then
              CF.norm_struc_with_lexvar is_primitive false None static_specs_list
