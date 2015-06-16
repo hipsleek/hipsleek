@@ -6,7 +6,7 @@ data cell{
 relation Q(ann v).
 
 int foo2(cell c, cell d)
-infer [@post_n, @imm_post]
+infer [@imm_post]
   requires c::cell<yyy>@M * d::cell<yyy>
   ensures c::cell<wwww>@b * d::cell<yyy>@A;
 {

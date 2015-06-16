@@ -4325,7 +4325,7 @@ let rec check_prog iprog (prog : prog_decl) =
     (*     DD.info_hprint (add_str "spec before infer post" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in *)
 
     (* Only infer post *)
-    let (scc,old_specs) = if (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) then List.split (Pi.filter_infer_pure_scc scc) else (scc,[]) in
+    let (scc,old_specs) = if (!Imminfer.has_infer_imm_pre || !Imminfer.has_infer_imm_post || has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) then List.split (Pi.filter_infer_pure_scc scc) else (scc,[]) in
 
     let () = List.iter (fun proc ->
          x_binfo_hp (add_str "spec before phase inference for mutual-recursive groups" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in
@@ -4416,11 +4416,10 @@ let rec check_prog iprog (prog : prog_decl) =
     let () = List.iter (fun proc ->
         x_binfo_hp (add_str "spec(after5)" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in
     (* Pure inference *)
-    let () = if (has_infer_shape_proc && has_infer_pre_proc) then Pi.add_pre_relation_scc prog scc in
-    let () = if (has_infer_shape_proc && has_infer_post_proc) then x_add Pi.add_post_relation_scc prog scc in
-    let () = if (has_infer_shape_proc && (has_infer_pre_proc || has_infer_post_proc)) then wrap_reverify_scc reverify_scc prog scc true in
-    let () = if (has_infer_pre_proc || has_infer_post_proc) ||
-                   (!Imminfer.has_infer_imm_pre || !Imminfer.has_infer_imm_post)
+    let () = if (has_infer_shape_proc && has_infer_pre_proc) || (!Imminfer.has_infer_imm_pre)then Pi.add_pre_relation_scc prog scc in
+    let () = if (has_infer_shape_proc && has_infer_post_proc) || (!Imminfer.has_infer_imm_post)then x_add Pi.add_post_relation_scc prog scc in
+    let () = if (has_infer_shape_proc && (has_infer_pre_proc || has_infer_post_proc)) || (!Imminfer.has_infer_imm_pre || !Imminfer.has_infer_imm_post)then wrap_reverify_scc reverify_scc prog scc true in
+    let () = if (has_infer_pre_proc || has_infer_post_proc) || (!Imminfer.has_infer_imm_pre || !Imminfer.has_infer_imm_post)
              then Pi.infer_pure prog scc in
     (* let () = List.iter (fun proc -> *)
     (*     DD.ninfo_hprint (add_str "spec after infer post" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in *)
@@ -4434,8 +4433,7 @@ let rec check_prog iprog (prog : prog_decl) =
     let () = DD.ninfo_hprint (add_str "has_infer_post_proc" string_of_bool) has_infer_post_proc no_pos in
     (* Resume other infer *)
 
-    let scc = if (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) ||
-                   (!Imminfer.has_infer_imm_pre || !Imminfer.has_infer_imm_post)
+    let scc = if (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) 
               then Pi.resume_infer_obj_scc scc old_specs else scc in
 
     (* ========================== imm infer  ========================== *)

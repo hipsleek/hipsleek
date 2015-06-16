@@ -108,7 +108,9 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
        None
     | EAssume ff ->
        if !use_mutable then Some (EAssume ff) else
-         Some (EAssume { ff with formula_assume_simpl = transform_formula transform_1 ff.formula_assume_simpl })
+         let new_formula = transform_formula transform_1 ff.formula_assume_simpl in
+         Some (EAssume { ff with formula_assume_simpl = new_formula;
+                                 formula_assume_struc = CF.formula_to_struc_formula new_formula })
     | _ -> None
   and transform_1 = (ann_struc_formula_1, nonef, ann_heap, (somef, somef, somef, somef, somef)) in
   let ann_postcondition = function
@@ -124,8 +126,10 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
          let post_rel = match !post_rel with Some p -> p | None -> failwith "Not possible (infer_imm_ann_proc)" in
          let rel_params = v_stack # get_stk in
          let postcondition_with_rel = and_pure_with_rel post_rel.C.rel_name rel_params postcondition loc in
-         Some (EAssume { ff with formula_assume_simpl = postcondition_with_rel })
-       else Some (EAssume {ff with formula_assume_simpl = postcondition })
+         Some (EAssume { ff with formula_assume_simpl = postcondition_with_rel;
+                                 formula_assume_struc = CF.formula_to_struc_formula postcondition_with_rel })
+       else Some (EAssume {ff with formula_assume_simpl = postcondition;
+                          formula_assume_struc = CF.formula_to_struc_formula postcondition })
     | _ -> None
   in
   let ann_struc_formula_2 = function

@@ -1248,9 +1248,9 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                 | (ps,rs) ->
                   let rel_ass = 
                     let ls = List.concat (List.map CP.get_rel_id_list (CP.list_of_conjs f)) in
-                    let () = x_tinfo_hp (add_str "f" Cprinter.string_of_pure_formula) f no_pos in
-                    let () = x_tinfo_hp (add_str "vs_rel" Cprinter.string_of_spec_var_list) vs_rel no_pos in
-                    let () = x_tinfo_hp (add_str "ls" Cprinter.string_of_spec_var_list) ls no_pos in
+                    let () = x_binfo_hp (add_str "f" Cprinter.string_of_pure_formula) f no_pos in
+                    let () = x_binfo_hp (add_str "vs_rel" Cprinter.string_of_spec_var_list) vs_rel no_pos in
+                    let () = x_binfo_hp (add_str "ls" Cprinter.string_of_spec_var_list) ls no_pos in
                     if (List.length ls)=1 then
                       [RelAssume vs_rel,f,CP.conj_of_list (ps@rs) pos]
                     else
@@ -1308,11 +1308,11 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                                      } 
                     in
                     let pr = Cprinter.string_of_pure_formula in
-                    let () = x_tinfo_hp (add_str "LHS : " !CP.print_formula) lhs_xpure pos in           
-                    let () = x_dinfo_hp (add_str "rel_ass_final: " (pr_list print_lhs_rhs)) rel_ass pos in
-                    let () = x_dinfo_hp (add_str "pure(before)" pr) pf1 pos in
-                    let () = x_dinfo_hp (add_str "pure(simplified)" pr) pf2 pos in
-                    let () = x_dinfo_hp (add_str "New estate : " !print_entail_state_short) new_estate pos in
+                    let () = x_binfo_hp (add_str "LHS : " !CP.print_formula) lhs_xpure pos in           
+                    let () = x_binfo_hp (add_str "rel_ass_final: " (pr_list print_lhs_rhs)) rel_ass pos in
+                    let () = x_binfo_hp (add_str "pure(before)" pr) pf1 pos in
+                    let () = x_binfo_hp (add_str "pure(simplified)" pr) pf2 pos in
+                    let () = x_binfo_hp (add_str "New estate : " !print_entail_state_short) new_estate pos in
                     (* WN : infer_pure_of_heap_pred *)
                     let rel_ass,heap_ass,new_estate =
                       if unk_heaps!=[] then
@@ -1874,6 +1874,7 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
     (* let new_es_infer_vars_rel = find_close_infer_vars_rel lhs_mix estate.CF.es_infer_vars_rel in *)
     (* let estate = { estate with CF.es_infer_vars_rel = new_es_infer_vars_rel} in *)
     let rhs_p = MCP.pure_of_mix rhs_mix in
+    let () = x_binfo_hp (add_str "rhs_p:" Cprinter.string_of_pure_formula) rhs_p no_pos in
     (*let _ = print_endline("#### rhs_p "^(Cprinter.string_of_pure_formula rhs_p)) in*)
     (*    (* Eliminate dijs in rhs which cannot be implied by lhs and do not contain relations *)*)
     (*    (* Suppose rhs_p is in DNF *)*)
