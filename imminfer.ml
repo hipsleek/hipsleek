@@ -102,13 +102,11 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
        has_infer_imm_pre := (!has_infer_imm_pre || !imm_pre_is_set);
        imm_post_is_set := ff.formula_inf_obj # is_post_imm;
        has_infer_imm_post := (!has_infer_imm_post || !imm_post_is_set);
-       x_tinfo_hp (add_str "imm_pre_flag" string_of_bool) !imm_pre_is_set no_pos;
-       x_tinfo_hp (add_str "imm_post_flag" string_of_bool) !imm_post_is_set no_pos;
+       x_binfo_hp (add_str "imm_pre_flag" string_of_bool) !imm_pre_is_set no_pos;
+       x_binfo_hp (add_str "imm_post_flag" string_of_bool) !imm_post_is_set no_pos;
        use_mutable := (not !imm_pre_is_set && not !imm_post_is_set);
        None
     | EAssume ff ->
-       pre_stack # push_list (v_stack # get_stk);
-       pre_norm_stack # push_list (n_stack # get_stk_and_reset);
        if !use_mutable then Some (EAssume ff) else
          Some (EAssume { ff with formula_assume_simpl = transform_formula transform_1 ff.formula_assume_simpl })
     | _ -> None
@@ -172,21 +170,26 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
     let pss_1 = transform_struc_formula transform_1 proc_static_specs in
     if !use_mutable then pss_1
     else
-      (if !imm_pre_is_set then pre_rel := mk_rel (pre_stack # get_stk) no_pos;
-       if !imm_post_is_set then post_rel := mk_rel (v_stack # get_stk) no_pos;
-       transform_struc_formula transform_2 pss_1) in
+       (pre_stack # push_list (v_stack # get_stk);
+        pre_norm_stack # push_list (n_stack # get_stk_and_reset);
+        if !imm_pre_is_set then pre_rel := mk_rel (pre_stack # get_stk) no_pos;
+        if !imm_post_is_set then post_rel := mk_rel (v_stack # get_stk) no_pos;
+        transform_struc_formula transform_2 pss_1) in
   (pss, !pre_rel, !post_rel)
 
+let pr_infer_imm_ann_result (f, r1, r2) =
+  let open Cprinter in
+  fmt_open_vbox 0;
+  pr_add_str_cut "cformula:" pr_struc_formula f;
+  pr_add_str_cut "pre_rel:" fmt_string
+    (map_opt_def "None" (fun x -> x.C.rel_name) r1);
+  pr_add_str_cut "post_rel:" fmt_string
+    (map_opt_def "None" (fun x -> x.C.rel_name) r2);
+  fmt_close ()
+
 let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula * C.rel_decl option * C.rel_decl option) =
-  Debug.no_1 "infer_imm_ann_proc"
-             Cprinter.string_of_struc_formula
-              (Cprinter.poly_string_of_pr_gen 0 (fun (f,r1,r2) ->
-                 Cprinter.pr_vwrap "cformula:" Cprinter.pr_struc_formula f;
-                 Cprinter.pr_vwrap "pre_rel:" Cprinter.fmt_string
-                   (map_opt_def "None" (fun x -> x.C.rel_name) r1);
-                 Cprinter.pr_vwrap "post_rel:" Cprinter.fmt_string
-                   (map_opt_def "None" (fun x -> x.C.rel_name) r2)))
-             infer_imm_ann_proc
+  Debug.no_1 "infer_imm_ann_proc" Cprinter.string_of_struc_formula
+              (Cprinter.poly_string_of_pr_gen 0 pr_infer_imm_ann_result) infer_imm_ann_proc
              proc_static_specs
 
 let infer_imm_ann (prog: C.prog_decl) (proc_decls: C.proc_decl list) : C.proc_decl list =
@@ -221,7 +224,8 @@ let infer_imm_ann_prog (prog: C.prog_decl) : C.prog_decl =
         let post_rels = map_opt_def post_rels (fun r -> r::post_rels) post_rel in
         pss_stk # push pss;
         (pre_rels, post_rels)) old_specs ([], []) in
-      ((id, {proc with C.proc_stk_of_static_specs = pss_stk; C.proc_static_specs = (pss_stk # top) })::proc_decls, pre_rels@post_rels@rel_list) in
+      ((id, {proc with C.proc_stk_of_static_specs = pss_stk;
+                       C.proc_static_specs = (pss_stk # top) })::proc_decls, pre_rels@post_rels@rel_list) in
     Hashtbl.fold helper prog.new_proc_decls ([], []) in
   prog.C.prog_rel_decls <- prog.C.prog_rel_decls @ rel_list;
   List.iter (fun (id, proc_decl) -> Hashtbl.add proc_decls id proc_decl) new_proc_decls;
