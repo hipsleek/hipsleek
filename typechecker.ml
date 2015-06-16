@@ -4406,10 +4406,6 @@ let rec check_prog iprog (prog : prog_decl) =
     let scc = if (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) 
               then Pi.resume_infer_obj_scc scc old_specs else scc in
 
-    (* ========================== imm infer  ========================== *)
-    (* let scc = Imminfer.infer_imm_ann prog scc in *)
-    (* ======================== END imm infer  ======================== *)
-
     (* let () = if (!Imminfer.has_infer_imm_pre || !Imminfer.has_infer_imm_post) then Pi.infer_pure prog scc in *)
     (* Reverify *)
     (* let has_infer_others_proc = (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) && Pi.is_infer_others_scc scc in *)
