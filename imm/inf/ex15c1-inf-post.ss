@@ -7,13 +7,15 @@ relation P(ann v1).
 
 
 int foo2(cell c)
-//  infer [P,@term]
+//  infer [P]
 //  infer [@term]
+//  infer [ @imm_post]
+  infer [ @imm_pre]
 //  infer [@post_n, @imm_post]
-  infer [@post_n]
+//  infer [@post_n]
 //  requires c::cell<v>
-  requires c::cell<v>@M
-  ensures c::cell<w>@b   ;
+  requires c::cell<v>@a //& P(a)
+  ensures c::cell<w>@b  ;
 {
   int x = c.fst;
   if (x>0) c.fst = 5;

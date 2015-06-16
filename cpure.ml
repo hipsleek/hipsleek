@@ -7309,6 +7309,8 @@ let exp_to_imm (e:exp) : ann =
   | Var(v,loc)    -> PolyAnn v
   | _ -> NoAnn
 
+let mkSubAnn_from_imm ?pos1:(loc1=no_pos) ?pos2:(loc2=no_pos) a1  a2 = mkSubAnn (imm_to_exp a1 loc1) (imm_to_exp a2 loc2)
+
 (* get arguments of bformula and allowing constants *)
 let get_bform_eq_args_with_const (bf:b_formula) =
   get_bform_eq_args_aux conv_exp_with_const bf
