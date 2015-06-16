@@ -59,6 +59,7 @@ let split_imm_pure_lst pf =
   let disj = CP.split_disjunctions_deep pf in
   let disj_part = List.map split_imm_pure_helper disj in (* split each disj in imm formula + pure formula *)
   let disj_part = List.map (fun (ximm,ypure) -> (TP.simplify_tp ximm, ypure)) disj_part in (* simplify the imm formula of each disjunct *)
+  let () = x_binfo_hp (add_str "imm + pure" (pr_list (pr_pair !CP.print_formula !CP.print_formula))) disj_part no_pos in
   let disj_part = List.filter (fun (ximm,ypure) -> not (CP.is_False ximm)) disj_part in  (* remove unsat disjuncts *)
   let imms, pures = List.split disj_part in
   (imms, pures)
@@ -208,7 +209,7 @@ let pick_bounds ~upper:upper bounds var_to_be_instantiated sv_to_be_instantiated
   let pr_out = pr_pair (pr_opt pr) (pr_opt (pr_list pr)) in 
   Debug.no_1 "pick_bounds" pr1 pr_out (fun _ -> pick_bounds upper bounds var_to_be_instantiated sv_to_be_instantiated) bounds 
 
-let pick_wekeast_instatiation_new lhs_exp rhs_sv loc lhs_f rhs_f ivars evars =
+let pick_weakest_instatiation_new lhs_exp rhs_sv loc lhs_f rhs_f ivars evars =
   let rhs_exp = CP.Var(rhs_sv,loc) in
   let lrsubtype = lhs_rhs_rel lhs_exp rhs_exp in
   let pure_lhs = CF.get_pure lhs_f in
@@ -309,10 +310,10 @@ let pick_wekeast_instatiation_new lhs_exp rhs_sv loc lhs_f rhs_f ivars evars =
       Some (CP.join_conjunctions (lrsubtype::to_lhs_lst)), Some [] (* this is not very sound... *)
     else to_lhs, to_rhs 
 
-let pick_wekeast_instatiation lhs rhs loc lhs_f rhs_f ivars evars=
+let pick_weakest_instatiation lhs rhs loc lhs_f rhs_f ivars evars=
   let pr2 = Cprinter.string_of_formula in
   let pr3 = pr_pair (pr_opt Cprinter.string_of_pure_formula) (pr_opt (pr_list Cprinter.string_of_pure_formula) ) in
-  Debug.no_2 "pick_wekeast_instatiation" pr2 pr2 pr3 (fun _ _ -> pick_wekeast_instatiation_new lhs rhs loc lhs_f rhs_f ivars evars) lhs_f rhs_f
+  Debug.no_2 "pick_weakest_instatiation" pr2 pr2 pr3 (fun _ _ -> pick_weakest_instatiation_new lhs rhs loc lhs_f rhs_f ivars evars) lhs_f rhs_f
 
 let get_emaps lhs_f rhs_f elhs erhs =
   match elhs, erhs with  
@@ -401,11 +402,11 @@ let subtype_ann_gen_x lhs_f rhs_f elhs erhs impl_vars evars (imm1 : CP.ann) (imm
     begin
       match r with
       | CP.Var(rhs_sv,loc) -> 
-        let inst, to_rhs' = x_add pick_wekeast_instatiation l rhs_sv loc lhs_f rhs_f impl_vars evars in
+        let inst, to_rhs' = x_add pick_weakest_instatiation l rhs_sv loc lhs_f rhs_f impl_vars evars in
         let to_lhs = map_opt_def to_lhs (fun x -> x) inst in
         (* implicit var annotation on rhs *)
         if CP.mem rhs_sv impl_vars then 
-          (* let inst, to_rhs' = x_add pick_wekeast_instatiation l rhs_sv loc lhs_f rhs_f impl_vars evars in *)
+          (* let inst, to_rhs' = x_add pick_weakest_instatiation l rhs_sv loc lhs_f rhs_f impl_vars evars in *)
           (* let to_lhs = map_opt_def to_lhs (fun x -> x) inst in *)
           let to_rhs = map_opt_def [to_rhs] (fun x ->  x) to_rhs' in
           (f, [to_lhs], to_rhs, [])
@@ -466,13 +467,21 @@ let subtype_ann_list
     (fun _ _ _ _ _ _ -> subtype_ann_list_x ~lhs:lhs_f ~rhs:rhs_f impl_vars evars (ann1 : CP.ann list) (ann2 : CP.ann list) )  impl_vars evars ann1 ann2 lhs_f rhs_f
 
 
-let get_strongest_imm  (ann_lst: CP.ann list): CP.ann = 
+let get_strongest_imm  (ann_lst: CP.ann list): CP.ann option = 
   let rec helper ann ann_lst = 
     match ann_lst with
-    | []   -> ann
-    | (CP.ConstAnn(Mutable)) :: t -> (CP.ConstAnn(Mutable))
+    | []   -> Some ann
+    | (CP.ConstAnn(Mutable)) :: t -> Some (CP.ConstAnn(Mutable))
     | x::t -> if subtype_ann 3 x ann then helper x t else helper ann t
-  in helper (CP.ConstAnn(Accs)) ann_lst
+  in
+  map_list_def None (fun lst -> helper (List.hd lst) (List.tl lst)) ann_lst
+
+let get_strongest_imm  (ann_lst: CP.ann list): CP.ann option = 
+  let pr =  Cprinter.string_of_imm in
+  Debug.no_1 "get_strongest_imm" (pr_list pr) (pr_opt pr) get_strongest_imm ann_lst
+
+let get_strongest_imm  (ann_lst: CP.ann list): CP.ann = 
+  map_opt_def (CP.ConstAnn(Accs)) (fun x -> x) (get_strongest_imm ann_lst)
 
 let get_weakest_imm  (ann_lst: CP.ann list): CP.ann = 
   let rec helper ann ann_lst = 
@@ -3025,6 +3034,19 @@ let infer_specs_imm_post_process (spec: CF.struc_formula) : CF.struc_formula =
   in
   let spec = helper fncs spec in
   spec
+
+(* let strenghten_disj lst_disj = *)
+(*   (\* all fv in the disjunctions *\) *)
+(*   let fv_lst = List.fold_left (fun acc x -> acc@(CP.fv x)) [] lst_disj in *)
+(*   let fv_lst = Gen.BList.remove_dups_eq CP.eq_spec_var fv_lst in *)
+(*   (\* search for fv=const for all fv *\) *)
+(*   let fv_guards = List.map (fun sv_x -> *)
+(*       let eqs = List.fold_left (fun acc pure -> (get_imm_from_pure_ann_list sv_x pure)@acc) [] lst_disj in *)
+(*       let imm = get_strongest_imm eqs in *)
+(*       map_opt_def () (fun x -> ) imm *)
+(*       (\* TODOIMM  *\) *)
+(*     ) fv_lst in *)
+  
 
 let imm_unify (form:CP.formula): CP.formula = 
   let simp_immf, pure = split_imm_pure form in

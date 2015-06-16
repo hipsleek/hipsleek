@@ -8,6 +8,33 @@ open Gen.Basic
 open Cpure
 open Imminfer
 
+(* assumption: f is in CNF *)
+let build_eset_of_imm_formula f =
+  let lst = split_conjunctions f in
+  let emap = List.fold_left (fun acc f -> match f with
+      | BForm (bf,_) ->
+        (match bf with
+         | (Eq (Var (v1,_), Var (v2,_), _),_) -> 
+           if (is_bag_typ v1) then acc
+           else EMapSV.add_equiv acc v1 v2
+         | (Eq (ex, Var (v1,_), _),_) 
+         | (Eq (Var (v1,_), ex, _),_) -> 
+           (match conv_ann_exp_to_var ex with
+            | Some (v2,_) -> EMapSV.add_equiv acc v1 v2
+            | None -> acc)
+         | (SubAnn (Var (v1,_), (AConst(Mutable,_) as exp), _),_) -> (* bot *)
+           let v2 = mkAnnSVar Mutable in EMapSV.add_equiv acc v1 v2
+         | (SubAnn(AConst(Accs,_) as exp, Var (v1,_), _),_) -> (* top *)
+           let v2 = mkAnnSVar Accs in EMapSV.add_equiv acc v1 v2
+         | _ -> acc)
+      | _ -> acc
+    ) EMapSV.mkEmpty lst in emap
+
+let build_eset_of_imm_formula f =
+  let pr = !print_formula in
+  let pr_out = EMapSV.string_of in
+  Debug.no_1 "build_eset_of_imm_formula" pr pr_out build_eset_of_imm_formula f
+
 let int_imm_to_exp i loc =
   mkExpAnnSymb (mkConstAnn (heap_ann_of_int i)) loc
 
@@ -63,6 +90,13 @@ let get_imm_emap_exp  ?loc:(l=no_pos) sv emap : exp  =
   map_opt_def (mkVar sv l) (fun x -> x) (get_imm_emap_exp_opt ~loc:l sv emap)
 
 let get_imm_emap_ann_opt  ?loc:(l=no_pos) sv emap : ann option = map_opt fst (get_imm_emap ~loc:l sv emap)
+
+let get_imm_from_pure_ann_opt  ?loc:(l=no_pos) sv pure : ann option =  
+  let emap = build_eset_of_imm_formula pure in
+  get_imm_emap_ann_opt  ~loc:l sv emap 
+
+let get_imm_from_pure_ann_list  ?loc:(l=no_pos) sv pure : ann list =
+  map_opt_def [] (fun x -> [x]) (get_imm_from_pure_ann_opt  ~loc:l sv pure)
 
 (* replace with imm constant, where exp is constant or variable *)
 let norm_emap_imm_exp  ?loc:(l=no_pos) (e: exp) emap : exp  = 
@@ -139,33 +173,6 @@ let contains_imm (f:formula) =
 
 let contains_imm (f:formula) =
   Debug.no_1 "contains_imm" !print_formula string_of_bool contains_imm f
-
-(* assumption: f is in CNF *)
-let build_eset_of_imm_formula f =
-  let lst = split_conjunctions f in
-  let emap = List.fold_left (fun acc f -> match f with
-      | BForm (bf,_) ->
-        (match bf with
-         | (Eq (Var (v1,_), Var (v2,_), _),_) -> 
-           if (is_bag_typ v1) then acc
-           else EMapSV.add_equiv acc v1 v2
-         | (Eq (ex, Var (v1,_), _),_) 
-         | (Eq (Var (v1,_), ex, _),_) -> 
-           (match conv_ann_exp_to_var ex with
-            | Some (v2,_) -> EMapSV.add_equiv acc v1 v2
-            | None -> acc)
-         | (SubAnn (Var (v1,_), (AConst(Mutable,_) as exp), _),_) -> (* bot *)
-           let v2 = mkAnnSVar Mutable in EMapSV.add_equiv acc v1 v2
-         | (SubAnn(AConst(Accs,_) as exp, Var (v1,_), _),_) -> (* top *)
-           let v2 = mkAnnSVar Accs in EMapSV.add_equiv acc v1 v2
-         | _ -> acc)
-      | _ -> acc
-    ) EMapSV.mkEmpty lst in emap
-
-let build_eset_of_imm_formula f =
-  let pr = !print_formula in
-  let pr_out = EMapSV.string_of in
-  Debug.no_1 "build_eset_of_imm_formula" pr pr_out build_eset_of_imm_formula f
 
 (* ===================== imm addition utils ========================= *)
 
@@ -383,6 +390,9 @@ let simplify_imm_addition emap f =
 let simplify_imm_addition ?emap:(em=[]) (f:formula) =
   let pr = !print_formula in
   Debug.no_1 "simplify_imm_addition" pr pr (simplify_imm_addition em) f
+
+(* let is_rel_containing_ann_typ rel : bool = *)
+(*   match r *)
 
 (* ===================== END imm addition utils ========================= *)
 

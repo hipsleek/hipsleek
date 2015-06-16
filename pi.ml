@@ -529,7 +529,7 @@ let trans_res_struc_formula prog sf =
 
 let norm_rel_oblgs reloblgs =
   let is_rel_eq rel1 rel2 = 
-    (fun (_,a1,_) (_,a2,_) ->  
+    (fun (r1,a1,_) (r2,a2,_) ->  
        if not(CP.is_RelForm a1 && CP.is_RelForm a2) then false
        else try
            let get_ids f = map_opt_def [] (fun (id, args) -> id::args) (CP.get_relargs_opt f) in
@@ -565,7 +565,6 @@ let norm_reloblgs_and_init_defs reloblgs =
   let reloblgs = norm_rel_oblgs reloblgs in
   (* init defs *)
   let reloblgs_new, reldefs = List.partition (fun (_,_,rel_d) -> CP.contains_undef rel_d) reloblgs in 
-(* TODODIMM should i also preserve the reloblgs? currently obligations without unk are transformed into definitions  *)
   let reldefs = List.map (fun (_,a,b) -> (b,a)) reldefs in
   reloblgs, reldefs
 
@@ -620,6 +619,14 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
   (* let () = x_binfo_pp (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels)) no_pos in *)
   let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels_orig) in
   let (lst_assume,lst_rank) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) rest) in
+
+  (* =============== imm rel norm ================== *)
+  let lst_assume = norm_rel_oblgs lst_assume in (* TODOIMM - to check if this can be done at an earlier point *)
+  let lst_assume = List.map (fun (a,b,c) -> (a,b,Immutable.postprocess_pre b c)) lst_assume in
+  let pr = Cprinter.string_of_pure_formula in
+  let pr_oblg = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in
+  let () = x_binfo_hp (add_str "lst_assume (after norm and postprocess)" pr_oblg) lst_assume no_pos in
+  (* =============== END imm rel norm ================== *)
   (* let lst_assume = Gen.Basic.remove_dups lst_assume in *)
   (* let rels = Immutable.norm_rel_list rels in *)
   (* let lst_assume = Immutable.norm_rel_list lst_assume in *)
@@ -686,7 +693,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let is_infer_flow = is_infer_flow reldefns in
             let reldefns = if is_infer_flow then add_flow reldefns else List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in
             let reloblgs, reldefns_from_oblgs = x_add_1 norm_reloblgs_and_init_defs reloblgs_init in
-            let reldefns = reldefns @ reldefns_from_oblgs in (* TODOIMM how abt that infer flow inside for reldefns_from_oblgs *)
+            let reldefns = reldefns (* @ reldefns_from_oblgs *) in 
             (* let reldefns = List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in *)
             let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in
             (* let pre_rel_df = List.map (fun (x,y) -> (Immutable.postprocess_pre x,y)) pre_rel_df in *)
@@ -701,7 +708,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let pr_oblg = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in
             let () = x_binfo_hp (add_str "post_rel_ids" pr_svl) post_rel_ids no_pos in
             let () = x_binfo_hp (add_str "reldefns" pr_def) reldefns no_pos in
-            let () = x_binfo_hp (add_str "reldefns_from_oblgs" pr_def) reldefns_from_oblgs no_pos in
+            (* let () = x_binfo_hp (add_str "reldefns_from_oblgs" pr_def) reldefns_from_oblgs no_pos in *)
             let () = x_binfo_hp (add_str "initial reloblgs" pr_oblg) reloblgs_init no_pos in
             let () = x_binfo_hp (add_str "reloblgs" pr_oblg) reloblgs no_pos in
             let () = x_binfo_hp (add_str "lst_assume" pr_oblg) lst_assume no_pos in
@@ -829,13 +836,6 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             else
               let new_specs1 = List.map (fun proc_spec -> CF.transform_spec proc_spec (CF.list_of_posts proc_spec)) proc_specs in
               let _ = x_binfo_hp (add_str "new_specs1" (pr_list Cprinter.string_of_struc_formula)) new_specs1 no_pos in
-              (* =============== imm rel norm ================== *)
-              let lst_assume = norm_rel_oblgs lst_assume in (* TODOIMM - to check if this can be done at an earlier point *)
-              let lst_assume = List.map (fun (a,b,c) -> (a,b,Immutable.postprocess_pre b c)) lst_assume in
-              let pr = Cprinter.string_of_pure_formula in
-              let pr_oblg = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in
-              let () = x_binfo_hp (add_str "lst_assume (after norm and postprocess)" pr_oblg) lst_assume no_pos in
-              (* =============== END imm rel norm ================== *)
               let new_specs2 = List.map (fun new_spec1 -> fst (x_add_1 wrap (Fixpoint.simplify_relation new_spec1
                                                                                (Some triples) pre_vars post_vars_wo_rel prog true (* inf_post_flag *) evars) lst_assume)) new_specs1 in
               let _ = x_binfo_hp (add_str "new_specs2" (pr_list Cprinter.string_of_struc_formula)) new_specs2 no_pos in

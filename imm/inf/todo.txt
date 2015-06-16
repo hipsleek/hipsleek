@@ -1678,7 +1678,7 @@ int left_write(tree t)
   t.left.node = t.left.node + 3;
   return 0;
 }
-=======================================================
+
 # ex15c6.ss
 
 Post Inference result:
@@ -1693,7 +1693,6 @@ foo2$cell~cell
 # Nice though d::cell<..> need not be removed from pre.
 # Can we use an option to control such removal.
 
-=======================================================
 # ex15b8.ss
 
 # need to make a2=@A explicit.
