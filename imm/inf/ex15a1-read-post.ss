@@ -20,7 +20,7 @@ relation P(ann v1).
 
 
 int foo2(cell c)
-  infer [@imm_pre, P]
+  infer [P]
   requires c::cell<v>@a & P(a)
   ensures c::cell<w>@b ;
 {
