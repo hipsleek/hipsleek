@@ -6,13 +6,13 @@ data cell{
 relation P(ann v,ann w).
 
 int foo2(cell c, cell d)
-/*  infer [@imm_pre]
+  infer [@imm_pre]
   requires c::cell<_> * d::cell<_>
   ensures c::cell<_> * d::cell<_>;
-*/
+/*
    infer [P] 
    requires c::cell<_>@a1 * d::cell<_>@a2 & P(a1,a2) 
-   ensures c::cell<_>@a3 * d::cell<_>@a4; 
+   ensures c::cell<_>@a3 * d::cell<_>@a4; */
 {
   int x = c.fst;
   if (x>0) c.fst = 5;
