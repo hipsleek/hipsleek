@@ -6,8 +6,9 @@ data cell{
 relation P(ann v,ann w).
 
 int foo2(cell c, cell d)
-infer [P]
-  requires c::cell<_>@a1 * d::cell<_>@a2 & P(a1,a2)
+//infer [P]
+  infer [@infer_pre]
+  requires c::cell<_>@a1 * d::cell<_>@a2 //& P(a1,a2)
   ensures c::cell<_> * d::cell<_>;
 {
   int x = c.fst;
