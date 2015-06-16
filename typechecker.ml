@@ -4290,9 +4290,12 @@ let rec check_prog iprog (prog : prog_decl) =
   (***************************INTERNAL**************************)
   (******************************************************************)
   let verify_scc_helper prog verified_sccs scc =
+
     (* Imminfer starts here *)
-    let scc = Imminfer.infer_imm_ann prog scc in
+    let scc,reloblgs = Imminfer.infer_imm_ann prog scc in
+    let () = Infer.infer_rel_stk # push_list reloblgs in
     (* End of Imminfer *)
+
     let scc, ini_hpdefs =
       Da.find_rel_args_groups_scc prog scc
     in
