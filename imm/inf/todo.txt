@@ -1638,9 +1638,46 @@ GOT
          (exists b1_1207,Anon_1208,b2_1209,
          Anon_1210: c::cell<Anon_1208>@b1_1207 * d::cell<Anon_1210>@b2_1209&
          {FLOW,(4,5)=__norm#E}[]]
+======================================================
+
+Expected @M, got @L
+
+data cell {
+ int fst;
+ int snd;
+}
+
+void recursive_write(tree t)
+   infer [@imm_pre]
+   requires t::tree<_,_,_>
+   ensures t::tree<_,_,_>;
+{
+  if (t.left != null) recursive_write(t.left);
+  t.node = t.node + 1;
+  if (t.right != null) recursive_write(t.right);
+ }
+
 =======================================================
+Inference not triggered.
+
+cell trick(cell y)
+    infer [@imm_pre]
+    requires y::cell<_,_>
+    ensures res::cell<_,_>;
+{
+    y = new cell(3, 4);
+    return y;
+}
 =======================================================
-=======================================================
+Entailment failed
+int left_write(tree t)
+   infer [@imm_pre]
+   requires t::tree<_,l,r> * l::tree<_,_,_> * r::tree<_,_,_>
+   ensures t::tree<_,l,r> * l::tree<_,_,_> * r::tree<_,_,_>;
+{
+  t.left.node = t.left.node + 3;
+  return 0;
+}
 =======================================================
 =======================================================
 =======================================================
