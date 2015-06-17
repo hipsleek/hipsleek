@@ -1,3 +1,7 @@
+#include "xdebug.cppo"
+open VarGen
+
+
 (*
 this module tranform an iast to pred
 *)
@@ -35,6 +39,27 @@ let has_error_stmt iprog=
   a /\ rec(C_1) \/ -a /\ rec(C_2)
 
 *)
+let gen_view_from_stmt iprog e0=
+  let rec recf e= match e with
+    | I.Assign e_ass -> true
+    | I.Binary e_bin -> true
+    | I.Cond e_cond -> true
+    | I.CallRecv _ -> true
+    | I.CallNRecv _ -> true
+    | I.Empty _ -> true
+    | I.FloatLit _ -> true
+    | I.IntLit _ -> true
+    | I.Null - -> true
+    | I.Return _ -> true
+    | I.Seq _ -> true
+    | I.Unary _ -> true
+    | I.Var _ -> true
+    | I.VarDecl _ -> true
+    | I.While _ -> true
+    | _ -> true
+  in
+  true
+
 
 let gen_view_from_proc iprog iproc=
   (*
