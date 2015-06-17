@@ -3234,10 +3234,14 @@ let remove_abs_nodes_formula_helper form =
                     CF.formula_base_pure = new_pure })
   | CF.Exists e -> 
      let (new_heap, coll_imm) = transform_h form e.CF.formula_exists_heap in
+     let svl = imm_to_svl coll_imm in
+     let new_qvars = List.filter (fun s -> List.mem s svl) e.CF.formula_exists_qvars in
      let new_pure =
-       MCP.mix_of_pure (CP.filter_var_new (MCP.pure_of_mix e.CF.formula_exists_pure) (imm_to_svl coll_imm)) in
-     Some (CF.Exists{ e with CF.formula_exists_heap = new_heap;
-                             CF.formula_exists_pure = new_pure })
+       MCP.mix_of_pure (CP.filter_var_new (MCP.pure_of_mix e.CF.formula_exists_pure) svl) in
+     Some (CF.Exists { e with
+            CF.formula_exists_qvars = new_qvars;
+            CF.formula_exists_heap = new_heap;
+            CF.formula_exists_pure = new_pure })
   | CF.Or _ -> None
 
 let remove_abs_nodes_formula formula =
