@@ -72,6 +72,22 @@ let split_imm_pure pf =
   let pr = !CP.print_formula in
   Debug.no_1 "split_imm_pure" pr (pr_pair pr pr) split_imm_pure pf
 
+let imm_unify (form:CP.formula): CP.formula = 
+  let simp_immf, pure = split_imm_pure form in
+  if not (CP.is_False simp_immf) then
+    let immf = simp_immf in
+    (* let pure = CP.join_disjunctions pures in *)
+    let pr = !CP.print_formula in
+    let () = x_tinfo_hp (add_str " vp_pos:" (pr_pair (add_str "imm" pr) (add_str "pure" pr) ) ) (immf, pure) no_pos in
+    (* let pure = TP.simplify_tp pure in  *)  (* TODOIMM check if pure simplif is also mandatory? temp disabled*)
+    CP.mkAnd immf pure no_pos 
+  else form (* if we cannot strenghten the imm formula, return the initial formula *)
+
+let imm_unify (form:CP.formula): CP.formula = 
+  let pr = !CP.print_formula in
+  Debug.no_1 "imm_unify" pr pr imm_unify form
+
+
 (* if pure contains sv=AConst, then instantiate to AConst *)
 let pick_equality_instantiation sv loc pure : CP.formula option =
   let p_aset = Imm.build_eset_of_imm_formula pure in
@@ -2984,8 +3000,8 @@ let get_relevant rels oblg = (* true *)
   let oblg =  CP.filter_var_new oblg fv in
   oblg
 
-(* splits an onbligation which is a combination of pure and imm relation, 
-   in pure obligations and imm obligations  *)
+(* splits an obligation which is a combination of pure and imm relation, 
+   into pure obligations and imm obligations  *)
 let split_rel rel =
   match rel with
     | CP.RelAssume svl, p1, p2  -> 
@@ -3001,7 +3017,8 @@ let split_rel rel =
               let p2_pure_relev = List.map (get_relevant p1_pure) p2_pure in
               let p2_imm = CP.join_disjunctions p2_imm_relev in 
               let p2_pure = CP.join_disjunctions p2_pure_relev in 
-              [CP.RelAssume [], p1_imm, p2_imm; CP.RelAssume [], p1_pure, p2_pure ]
+              let svl_imm, svl_pure = List.partition (fun x -> CP.EMapSV.mem x (CP.fv p1_imm)) svl in
+              [CP.RelAssume svl_imm, p1_imm, p2_imm; CP.RelAssume svl_pure, p1_pure, p2_pure ]
           else [rel] 
     | _ -> [rel]
 
@@ -3009,6 +3026,56 @@ let split_rel rel =
   let pr = Cprinter.string_of_pure_formula in
   let pr_oblg = (fun (_,a,b) -> pr_pair pr pr (a,b)) in
   Debug.no_1 "split_rel"  pr_oblg (pr_list pr_oblg) split_rel rel
+
+let norm_rel_oblgs reloblgs =
+  let is_rel_eq rel1 rel2 = 
+    (fun (r1,a1,_) (r2,a2,_) ->  
+       if not(CP.is_RelForm a1 && CP.is_RelForm a2) then false
+       else try
+           let get_ids f = map_opt_def [] (fun (id, args) -> id::args) (CP.get_relargs_opt f) in
+           let ids =  List.combine (get_ids a1) (get_ids a2) in 
+           List.fold_left (fun acc (sv1, sv2) -> acc && (CP.eq_spec_var sv1 sv2 )) true ids
+         with _ -> false
+    ) rel1 rel2 in
+  let rec update_acc ((a1,b1,c1) as rel) acc =
+    match acc with
+    | []   -> [rel]
+    | ((a2,b2,c2) as h)::t -> if is_rel_eq rel h then (a1,b1, CP.mkAnd c1 c2 no_pos)::t
+      else h::(update_acc rel t)
+  in
+  let rec helper lst acc = 
+    let fnc acc lst = 
+      let acc = update_acc (List.hd lst) acc in 
+      helper (List.tl lst) acc in
+    map_list_def acc (fnc acc) lst
+  in
+  let reloblgs_new = List.fold_left (fun acc rel -> (split_rel rel)@acc) [] reloblgs in (* split mixed rels *)
+  let reloblgs_new = helper reloblgs_new [] in
+  let reloblgs_new = List.map (fun ((rel_c,rel_n,rel_d) as rel) -> 
+      if CP.contains_undef rel_d then rel 
+      else (rel_c, rel_n, imm_unify ((* TP.simplify_tp *) rel_d))) reloblgs_new  in
+  reloblgs_new
+
+let norm_rel_oblgs reloblgs =
+  let pr = Cprinter.string_of_pure_formula in
+  let pr_oblg = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in
+  Debug.no_1 "norm_rel_oblgs" pr_oblg pr_oblg norm_rel_oblgs reloblgs
+
+let norm_reloblgs_and_init_defs reloblgs =
+  (* norm *)
+  let reloblgs = norm_rel_oblgs reloblgs in
+  (* init defs *)
+  let reloblgs_new, reldefs = List.partition (fun (_,_,rel_d) -> CP.contains_undef rel_d) reloblgs in 
+  let reldefs = List.map (fun (_,a,b) -> (b,a)) reldefs in
+  reloblgs, reldefs
+
+let norm_reloblgs_and_init_defs reloblgs =
+  let pr = Cprinter.string_of_pure_formula in
+  let pr_def = pr_list (pr_pair pr pr) in
+  let pr_oblg = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in
+  Debug.no_1 "norm_reloblgs_and_init_defs" pr_oblg 
+    (pr_pair (add_str "norm reloblgs:" pr_oblg) (add_str "new defs:" pr_def))
+    norm_reloblgs_and_init_defs reloblgs
 
 (* ==================== END norm inferred pre/post ======================== *)
 
@@ -3088,22 +3155,6 @@ let infer_specs_imm_post_process (spec: CF.struc_formula) : CF.struc_formula =
 (*       (\* TODOIMM  *\) *)
 (*     ) fv_lst in *)
   
-
-let imm_unify (form:CP.formula): CP.formula = 
-  let simp_immf, pure = split_imm_pure form in
-  if not (CP.is_False simp_immf) then
-    let immf = simp_immf in
-    (* let pure = CP.join_disjunctions pures in *)
-    let pr = !CP.print_formula in
-    let () = x_tinfo_hp (add_str " vp_pos:" (pr_pair (add_str "imm" pr) (add_str "pure" pr) ) ) (immf, pure) no_pos in
-    (* let pure = TP.simplify_tp pure in  *)  (* TODOIMM check if pure simplif is also mandatory? temp disabled*)
-    CP.mkAnd immf pure no_pos 
-  else form (* if we cannot strenghten the imm formula, return the initial formula *)
-
-let imm_unify (form:CP.formula): CP.formula = 
-  let pr = !CP.print_formula in
-  Debug.no_1 "imm_unify" pr pr imm_unify form
-
 let postprocess_post post post_f pre_vars = 
   let post_var = Gen.BList.difference_eq CP.eq_spec_var (CP.all_vars post) pre_vars in
   norm_imm_rel_formula ~post_vars:post_var ~rel_head:post post_f
