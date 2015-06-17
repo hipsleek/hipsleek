@@ -114,7 +114,7 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
        None
     | EAssume ff ->
        if !use_mutable then Some (EAssume ff) else
-         let new_formula = transform_formula (transform_1 is_post) ff.formula_assume_simpl in
+         let new_formula = transform_formula (transform_1 true) ff.formula_assume_simpl in
          Some (EAssume { ff with formula_assume_simpl = new_formula;
                                  formula_assume_struc = CF.formula_to_struc_formula new_formula })
     | _ -> None
