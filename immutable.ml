@@ -3187,20 +3187,57 @@ let remove_abs_nodes_h_formula emap h =
       |_ -> None in
   let h = CF.transform_h_formula helper h in h
 
-let remove_abs_nodes_h_formula emap h = 
+let remove_abs_nodes_and_collect_imm_h_formula emap h =
+  let helper _ h =
+    if not (!Globals.remove_abs) then Some (h, [])
+    else
+      match h with
+      | CF.DataNode { CF.h_formula_data_imm = imm; CF.h_formula_data_param_imm = param_imm;} ->
+        let (heap, ann) = if (not !Globals.allow_field_ann) && (Imm.is_abs ~emap:emap imm) then (HEmp, [])
+          else if (!Globals.allow_field_ann) && (Imm.is_abs_list ~emap:emap param_imm) then (HEmp, []) else (h,[imm])
+        in Some (heap, ann)
+      | CF.ViewNode { CF.h_formula_view_imm = imm; CF.h_formula_view_annot_arg = annot_arg; } ->
+        let pimm = (CP.annot_arg_to_imm_ann_list_no_pos annot_arg) in
+        let (heap, ann) =  if (not !Globals.allow_field_ann) && (Imm.is_abs ~emap:emap imm) then (HEmp, [])
+          else if (!Globals.allow_field_ann) && (Imm.is_abs_list ~emap:emap pimm) then (HEmp, []) else (h, [imm])
+        in Some (heap, ann)
+      |_ -> None in
+  CF.trans_h_formula h [] helper (fun x _ -> x) List.concat
+
+let remove_abs_nodes_and_collect_imm_h_formula emap h =
   let pr = Cprinter.string_of_h_formula in
   let pr2 = CP.EMapSV.string_of in
-  Debug.no_2 "remove_abs_nodes_h_formula" pr2 pr pr remove_abs_nodes_h_formula emap h 
+  let pr3 = pr_pair pr (pr_list Cprinter.string_of_imm) in
+  Debug.no_2 "remove_abs_nodes_and_collect_imm_formula" pr2 pr pr3
+             remove_abs_nodes_and_collect_imm_h_formula emap h
+
+let remove_abs_nodes_h_formula emap h =
+  let pr = Cprinter.string_of_h_formula in
+  let pr2 = CP.EMapSV.string_of in
+  Debug.no_2 "remove_abs_nodes_h_formula" pr2 pr pr remove_abs_nodes_h_formula emap h
 
 let remove_abs_nodes_formula_helper form =
   let transform_h form heap = 
     let () = x_ninfo_hp (add_str "pure" (!CP.print_formula)) (CF.get_pure_ignore_exists form) no_pos in
     let emap = Imm.build_eset_of_imm_formula (CF.get_pure_ignore_exists form) in
-    remove_abs_nodes_h_formula emap heap in
+    remove_abs_nodes_and_collect_imm_h_formula emap heap in
+  let imm_to_svl imms =
+    List.map (function CP.PolyAnn sv -> sv | _ -> failwith "Not possible (immutable.ml 3225)")
+      (List.filter Imm.isPoly imms) in
   match form with
-  | CF.Base   b -> Some (CF.Base{ b with CF.formula_base_heap = transform_h form b.CF.formula_base_heap;})
+  | CF.Base b ->
+     let (new_heap, coll_imm) = transform_h form b.CF.formula_base_heap in
+     let new_pure =
+       MCP.mix_of_pure (CP.filter_var_new (MCP.pure_of_mix b.CF.formula_base_pure) (imm_to_svl coll_imm))  in
+     Some (CF.Base{ b with
+                    CF.formula_base_heap = new_heap;
+                    CF.formula_base_pure = new_pure })
   | CF.Exists e -> 
-    Some (CF.Exists{ e with CF.formula_exists_heap = transform_h form e.CF.formula_exists_heap;})
+     let (new_heap, coll_imm) = transform_h form e.CF.formula_exists_heap in
+     let new_pure =
+       MCP.mix_of_pure (CP.filter_var_new (MCP.pure_of_mix e.CF.formula_exists_pure) (imm_to_svl coll_imm)) in
+     Some (CF.Exists{ e with CF.formula_exists_heap = new_heap;
+                             CF.formula_exists_pure = new_pure })
   | CF.Or _ -> None
 
 let remove_abs_nodes_formula formula =

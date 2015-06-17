@@ -1694,6 +1694,7 @@ foo2$cell~cell
 
 # Nice though d::cell<..> need not be removed from pre.
 # Can we use an option to control such removal.
+ We already have the --imm-remove-abs for this
 =======================================================
 # ex15b8.ss (FIXED)
 

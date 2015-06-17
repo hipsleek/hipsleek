@@ -16,7 +16,7 @@ int left_read(tree t)
 {
   return t.left.node;
 }
-
+/*
 int left_write(tree t)
    infer [@imm_pre]
    requires t::tree<_,l,r> * l::tree<_,_,_> * r::tree<_,_,_>
@@ -25,3 +25,4 @@ int left_write(tree t)
   t.left.node = t.left.node + 3;
   return 0;
 }
+*/
