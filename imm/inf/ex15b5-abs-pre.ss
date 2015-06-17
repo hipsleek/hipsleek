@@ -16,15 +16,12 @@ infer [Q]
 
 /*
 # ex15b5.ss
-
-Given below. 
-
-infer [Q]
-  requires c::cell<_>@aaa & Q(aaa)
-  ensures c::cell<_>@bbb;
-
-# Why aren't we getting Q(aaa) == aaa=@A
-
-Since there is no requirement on pre-condition,
-we should make above assumption
+Post Inference result:
+foo2$cell
+ EBase 
+   exists (Expl)[](Impl)[aaa; Anon_11](ex)[]emp&aaa=@A & MayLoop[]&
+   {FLOW,(4,5)=__norm#E}[]
+   EAssume 
+     (exists Anon_1197,bbb_1196: c::cell<Anon_1197>@bbb_1196&
+     {FLOW,(4,5)=__norm#E}[]
 */
