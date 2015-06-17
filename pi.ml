@@ -527,83 +527,6 @@ let trans_res_struc_formula prog sf =
   if Gen.BList.mem_eq CP.eq_spec_var (CP.mk_spec_var "res") sfv then helper sf
   else sf
 
-(* below to move to immutable *)
-let is_imm_relation pure = 
-  if not(CP.is_RelForm pure) then false
-  else true                                 (* get rel arg |> all must be AnnT *)
-
-let get_relevant rels oblg = (* true *)
-  let fv = CP.fv rels in
-  let oblg =  CP.filter_var_new oblg fv in
-  oblg
-
-let split_rel rel =
-  match rel with
-    | CP.RelAssume svl, p1, p2  -> 
-          if List.length svl > 1 then
-            let p1_conj = CP.split_conjunctions p1 in
-            let p1_imm, p1_pure = List.partition is_imm_relation p1_conj in
-            let p1_imm = CP.join_conjunctions p1_imm in
-            let p1_pure = CP.join_conjunctions p1_pure in
-            let p2_imm, p2_pure = Immutable.split_imm_pure_lst p2 in
-            let p2_imm_relev = List.map (get_relevant p1_imm) p2_imm in
-            let p2_pure_relev = List.map (get_relevant p1_pure) p2_pure in
-            let p2_imm = CP.join_disjunctions p2_imm_relev in 
-            let p2_pure = CP.join_disjunctions p2_pure_relev in 
-            [CP.RelAssume [], p1_imm, p2_imm; CP.RelAssume [], p1_pure, p2_pure ]
-          else [rel] 
-    | _ -> [rel]
-
-let norm_rel_oblgs reloblgs =
-  let is_rel_eq rel1 rel2 = 
-    (fun (r1,a1,_) (r2,a2,_) ->  
-       if not(CP.is_RelForm a1 && CP.is_RelForm a2) then false
-       else try
-           let get_ids f = map_opt_def [] (fun (id, args) -> id::args) (CP.get_relargs_opt f) in
-           let ids =  List.combine (get_ids a1) (get_ids a2) in 
-           List.fold_left (fun acc (sv1, sv2) -> acc && (CP.eq_spec_var sv1 sv2 )) true ids
-         with _ -> false
-    ) rel1 rel2 in
-  let rec update_acc ((a1,b1,c1) as rel) acc =
-    match acc with
-    | []   -> [rel]
-    | ((a2,b2,c2) as h)::t -> if is_rel_eq rel h then (a1,b1, CP.mkAnd c1 c2 no_pos)::t
-      else h::(update_acc rel t)
-  in
-  let rec helper lst acc = 
-    let fnc acc lst = 
-      let acc = update_acc (List.hd lst) acc in 
-      helper (List.tl lst) acc in
-    map_list_def acc (fnc acc) lst
-  in
-  let reloblgs_new = List.fold_left (fun acc rel -> (split_rel rel)@acc) [] reloblgs in (* split mixed rels *)
-  let reloblgs_new = helper reloblgs_new [] in
-  let reloblgs_new = List.map (fun ((rel_c,rel_n,rel_d) as rel) -> 
-      if CP.contains_undef rel_d then rel 
-      else (rel_c, rel_n, Immutable.imm_unify ((* TP.simplify_tp *) rel_d))) reloblgs_new  in
-  reloblgs_new
-
-let norm_rel_oblgs reloblgs =
-  let pr = Cprinter.string_of_pure_formula in
-  let pr_oblg = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in
-  Debug.no_1 "norm_rel_oblgs" pr_oblg pr_oblg norm_rel_oblgs reloblgs
-
-let norm_reloblgs_and_init_defs reloblgs =
-  (* norm *)
-  let reloblgs = norm_rel_oblgs reloblgs in
-  (* init defs *)
-  let reloblgs_new, reldefs = List.partition (fun (_,_,rel_d) -> CP.contains_undef rel_d) reloblgs in 
-  let reldefs = List.map (fun (_,a,b) -> (b,a)) reldefs in
-  reloblgs, reldefs
-
-let norm_reloblgs_and_init_defs reloblgs =
-  let pr = Cprinter.string_of_pure_formula in
-  let pr_def = pr_list (pr_pair pr pr) in
-  let pr_oblg = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in
-  Debug.no_1 "norm_reloblgs_and_init_defs" pr_oblg 
-    (pr_pair (add_str "norm reloblgs:" pr_oblg) (add_str "new defs:" pr_def))
-    norm_reloblgs_and_init_defs reloblgs
-
 (* replaces the unk (rels) formulas with their definitions, provided they have one *)
 let norm_post_rel_def post_rel_df pre_rel_ids all_reldefns =
   let replace_with_def rel defs acc = 
@@ -649,7 +572,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
   let (lst_assume,lst_rank) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) rest) in
 
   (* =============== imm rel norm ================== *)
-  let lst_assume = norm_rel_oblgs lst_assume in (* TODOIMM - to check if this can be done at an earlier point *)
+  let lst_assume = Immutable.norm_rel_oblgs lst_assume in (* TODOIMM - to check if this can be done at an earlier point *)
   let lst_assume = List.map (fun (a,b,c) -> (a,b,Immutable.postprocess_pre b c)) lst_assume in
   let pr = Cprinter.string_of_pure_formula in
   let pr_oblg = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in
@@ -720,8 +643,15 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let reloblgs_init, reldefns = List.partition (fun (rt,_,_) -> CP.is_rel_assume rt) rels in
             let is_infer_flow = is_infer_flow reldefns in
             let reldefns = if is_infer_flow then add_flow reldefns else List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in
-            let reloblgs, reldefns_from_oblgs = x_add_1 norm_reloblgs_and_init_defs reloblgs_init in
-            let reldefns = reldefns (* @ reldefns_from_oblgs *) in 
+            let reloblgs = x_add_1 Immutable.norm_rel_oblgs reloblgs_init in
+            if rels !=[] then
+              begin
+                print_endline_quiet "\n***************************************";
+                print_endline_quiet "** relation obligations after imm norm **";
+                print_endline_quiet "*****************************************";
+                print_endline_quiet (Gen.Basic.pr_list_ln (CP.string_of_infer_rel)  reloblgs);
+                print_endline_quiet "*****************************************";
+              end;
             (* let reldefns = List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in *)
             let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in
             (* let pre_rel_df = List.map (fun (x,y) -> (Immutable.postprocess_pre x,y)) pre_rel_df in *)
