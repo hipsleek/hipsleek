@@ -631,7 +631,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       let new_fml_fv = CF.struc_fv new_formula_inf_continuation in
       (* let (vars_rel,vars_inf) = List.partition (fun v -> is_RelT(CP.type_of_spec_var v) ) vars in *)
       (* let (vars_templ, vars_inf) = List.partition (fun v -> is_FuncT (CP.type_of_spec_var v)) vars_inf in *)
-      let () = x_binfo_hp (add_str "vars" !print_svl) vars no_pos in
+      let () = x_tinfo_hp (add_str "vars" !print_svl) vars no_pos in
       let vars_rel, vars_templ, vars_inf = List.fold_left (fun (vr, vt, vi) v -> 
           let typ = CP.type_of_spec_var v in
           if is_RelT typ then (vr@[v], vt, vi)

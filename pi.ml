@@ -788,8 +788,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
           (*   ) tuples in *)
           let triples = List.map (fun (a,b,c,d) -> (a,b,d)) tuples in
           let new_specs = if triples = [] then
-              (print_endline "Herezzz";
-              List.map (fun old_spec -> fst (Fixpoint.simplify_relation old_spec None
+              (List.map (fun old_spec -> fst (Fixpoint.simplify_relation old_spec None
                                                pre_vars post_vars_wo_rel prog true (* inf_post_flag *) evars lst_assume)) proc_specs)
             else
               let new_specs1 = List.map (fun proc_spec -> CF.transform_spec proc_spec (CF.list_of_posts proc_spec)) proc_specs in
