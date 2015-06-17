@@ -18911,3 +18911,16 @@ let form_components (f : formula) hf pf heap_pure =
       | Base bf -> Base {bf with formula_base_heap=hf; formula_base_pure=mpf}
       | Exists bf -> Exists {bf with formula_exists_heap=hf; formula_exists_pure=mpf}
       | _ -> report_error no_pos "simplify cannot handle or"
+
+(* When existential variables is empty *)
+let formula_base_of_formula_exists e =
+  {
+    formula_base_heap = e.formula_exists_heap;
+    formula_base_vperm = e.formula_exists_vperm;
+    formula_base_pure = e.formula_exists_pure;
+    formula_base_type = e.formula_exists_type;
+    formula_base_and = e.formula_exists_and;
+    formula_base_flow = e.formula_exists_flow;
+    formula_base_label = e.formula_exists_label;
+    formula_base_pos = e.formula_exists_pos
+  }
