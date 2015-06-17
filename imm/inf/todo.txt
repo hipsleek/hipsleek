@@ -1593,7 +1593,7 @@ And then try to obtain:
   requires c::cell<_>@M * d::cell<_>@A
   ensures c::cell<_>@a3 * d::cell<_>@a4;
 =======================================================
-# ex15b5.ss
+# ex15b5.ss (FIXED)
 
 Given below. 
 
