@@ -768,7 +768,7 @@ a<:@A     a=@A        a=@A
 
 =======================================================
 
-# ex8d1.ss
+# ex8d1.ss (FIXED)
 
  int x = c.fst;
  return x;
@@ -905,7 +905,7 @@ compute_fixpoint#2@4 EXIT:[( Q(i,j,res), res>=i)]
 !!! **pi.ml#652:>>REL PRE :  P(i,j)
 !!! **pi.ml#653:>>PRE :  true
 ======================================================
-# ex8e5b.slk 
+# ex8e5b.slk  (FIXED)
 
 Why m=n and a=b not in residue.?
 
@@ -1762,6 +1762,15 @@ imm_unify@17 EXIT: ann_1227=@M & ann_1227<:@L & ann_1227=@A
 { 1.480756 second(s) versus  0.833354 second(s) } (FIXED)
 This is due to global ann vars vs local
 =======================================================
+# ex8e1f.ss 
+!!! **pi.ml#733:pre_fmls:[ Q(a) & c=2, MayLoop[]]
+!!! PROBLEM with fix-point calculation
+ExceptionInvalid_argument("List.combine")Occurred!
+
+Error1(s) detected at main 
+Stop Omega... 128 invocations caught
+
+Exception occurred: Invalid_argument("List.combine")
 =======================================================
 =======================================================
 =======================================================

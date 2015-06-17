@@ -82,7 +82,7 @@ imm_unify inp1 : (ann_1227=@M | (ann_1227<:@L & Anon_11<=0) | ann_1227=@A)
 imm_unify@17 EXIT: ann_1227=@M & ann_1227<:@L & ann_1227=@A
 
 =======================================================
-# ex15c4.ss to add ann_1226, ann_1225 to the list of existential vars
+# ex15c4.ss to add ann_1226, ann_1225 to the list of existential vars (FIXED)
 
 !!! **pi.ml#384:new_spec:
  EInfer @imm_pre[P__1229]
