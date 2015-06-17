@@ -3223,20 +3223,21 @@ let remove_abs_nodes_formula_helper form =
   let imm_to_svl imms =
     List.map (function CP.PolyAnn sv -> sv | _ -> failwith "Not possible (immutable.ml 3225)")
       (List.filter Imm.isPoly imms) in
+  let transform_heap_and_pure heap pure =
+     let (new_heap, coll_imm) = transform_h form heap in
+     let svl = imm_to_svl coll_imm in
+     let new_pure = MCP.update_pure_of_mix
+                      (fun a -> Some (CP.filter_var_new a svl)) pure in
+     (new_heap, new_pure, svl) in
   match form with
   | CF.Base b ->
-     let (new_heap, coll_imm) = transform_h form b.CF.formula_base_heap in
-     let new_pure =
-       MCP.mix_of_pure (CP.filter_var_new (MCP.pure_of_mix b.CF.formula_base_pure) (imm_to_svl coll_imm))  in
+     let (new_heap, new_pure, _) = transform_heap_and_pure b.CF.formula_base_heap b.CF.formula_base_pure in
      Some (CF.Base{ b with
                     CF.formula_base_heap = new_heap;
                     CF.formula_base_pure = new_pure })
   | CF.Exists e -> 
-     let (new_heap, coll_imm) = transform_h form e.CF.formula_exists_heap in
-     let svl = imm_to_svl coll_imm in
+     let (new_heap, new_pure, svl) = transform_heap_and_pure e.CF.formula_exists_heap e.CF.formula_exists_pure in
      let removed_qvars = List.filter (fun s -> not (List.mem s svl)) e.CF.formula_exists_qvars in
-     let new_pure =
-       MCP.mix_of_pure (CP.filter_var_new (MCP.pure_of_mix e.CF.formula_exists_pure) svl) in
      (match (CF.remove_quantifiers removed_qvars form) with
       | CF.Base b ->
          Some (CF.Base { b with
