@@ -3171,8 +3171,9 @@ let postprocess_pre pre pre_f =
 
 (* ======================= remove absent nodes ============================= *)
 (* TODOIMM need to investigate if removing an absent node means i need to add its xpure to the pure part *)
+(*
 let remove_abs_nodes_h_formula emap h =
-  let helper h = if not (!Globals.remove_abs) then Some h 
+  let helper h =
     else
       match h with
       | CF.DataNode { CF.h_formula_data_imm = imm; CF.h_formula_data_param_imm = param_imm;} ->
@@ -3187,21 +3188,24 @@ let remove_abs_nodes_h_formula emap h =
       |_ -> None in
   let h = CF.transform_h_formula helper h in h
 
+let remove_abs_nodes_h_formula emap h =
+  let pr = Cprinter.string_of_h_formula in
+  let pr2 = CP.EMapSV.string_of in
+  Debug.no_2 "remove_abs_nodes_h_formula" pr2 pr pr remove_abs_nodes_h_formula emap h
+*)
 let remove_abs_nodes_and_collect_imm_h_formula emap h =
   let helper _ h =
-    if not (!Globals.remove_abs) then Some (h, [])
-    else
-      match h with
-      | CF.DataNode { CF.h_formula_data_imm = imm; CF.h_formula_data_param_imm = param_imm;} ->
-        let (heap, ann) = if (not !Globals.allow_field_ann) && (Imm.is_abs ~emap:emap imm) then (HEmp, [])
-          else if (!Globals.allow_field_ann) && (Imm.is_abs_list ~emap:emap param_imm) then (HEmp, []) else (h,[imm])
-        in Some (heap, ann)
-      | CF.ViewNode { CF.h_formula_view_imm = imm; CF.h_formula_view_annot_arg = annot_arg; } ->
-        let pimm = (CP.annot_arg_to_imm_ann_list_no_pos annot_arg) in
-        let (heap, ann) =  if (not !Globals.allow_field_ann) && (Imm.is_abs ~emap:emap imm) then (HEmp, [])
-          else if (!Globals.allow_field_ann) && (Imm.is_abs_list ~emap:emap pimm) then (HEmp, []) else (h, [imm])
-        in Some (heap, ann)
-      |_ -> None in
+    match h with
+    | CF.DataNode { CF.h_formula_data_imm = imm; CF.h_formula_data_param_imm = param_imm;} ->
+       let (heap, ann) = if (not !Globals.allow_field_ann) && (Imm.is_abs ~emap:emap imm) then (HEmp, [])
+                         else if (!Globals.allow_field_ann) && (Imm.is_abs_list ~emap:emap param_imm) then (HEmp, []) else (h,[imm])
+       in Some (heap, ann)
+    | CF.ViewNode { CF.h_formula_view_imm = imm; CF.h_formula_view_annot_arg = annot_arg; } ->
+       let pimm = (CP.annot_arg_to_imm_ann_list_no_pos annot_arg) in
+       let (heap, ann) =  if (not !Globals.allow_field_ann) && (Imm.is_abs ~emap:emap imm) then (HEmp, [])
+                          else if (!Globals.allow_field_ann) && (Imm.is_abs_list ~emap:emap pimm) then (HEmp, []) else (h, [imm])
+       in Some (heap, ann)
+    |_ -> None in
   CF.trans_h_formula h [] helper (fun x _ -> x) List.concat
 
 let remove_abs_nodes_and_collect_imm_h_formula emap h =
@@ -3210,11 +3214,6 @@ let remove_abs_nodes_and_collect_imm_h_formula emap h =
   let pr3 = pr_pair pr (pr_list Cprinter.string_of_imm) in
   Debug.no_2 "remove_abs_nodes_and_collect_imm_formula" pr2 pr pr3
              remove_abs_nodes_and_collect_imm_h_formula emap h
-
-let remove_abs_nodes_h_formula emap h =
-  let pr = Cprinter.string_of_h_formula in
-  let pr2 = CP.EMapSV.string_of in
-  Debug.no_2 "remove_abs_nodes_h_formula" pr2 pr pr remove_abs_nodes_h_formula emap h
 
 let remove_abs_nodes_formula_helper form =
   let transform_h form heap = 
@@ -3251,10 +3250,12 @@ let remove_abs_nodes_formula_helper form =
   | CF.Or _ -> None
 
 let remove_abs_nodes_formula formula =
+  if (not !Globals.remove_abs) then formula else
   let fnc = (nonef, remove_abs_nodes_formula_helper, nonef, (somef,somef,somef,somef,somef)) in
   CF.transform_formula fnc formula
 
 let remove_abs_nodes_struc struc =
+  if (not !Globals.remove_abs) then struc else
   let fnc = (nonef, remove_abs_nodes_formula_helper, nonef, (somef,somef,somef,somef,somef)) in
   CF.transform_struc_formula fnc struc 
 

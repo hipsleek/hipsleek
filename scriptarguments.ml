@@ -326,7 +326,8 @@ let common_arguments = [
   ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
   ("--dis-field-imm", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
   ("--allow-array-inst", Arg.Set Globals.allow_array_inst,"Allow instantiation of existential arrays");
-  ("--imm-remove-abs", Arg.Set Globals.remove_abs,"remove @A nodes from formula (incl nodes with all fields ann with @A)");
+  ("--en-remove-abs", Arg.Set Globals.remove_abs,"remove @A nodes from formula (incl nodes with all fields ann with @A)");
+  ("--dis-remove-abs", Arg.Clear Globals.remove_abs,"disable removing @A nodes from formula (incl nodes with all fields ann with @A)");
   ("--en-imm-merge", Arg.Set Globals.imm_merge,"try to merge aliased nodes");
   ("--dis-imm-merge", Arg.Clear Globals.imm_merge,"don't merge aliased nodes");
   ("--en-weak-imm", Arg.Set Globals.imm_weak,"enable weak instatiation (<:)");
