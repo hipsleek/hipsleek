@@ -91,10 +91,6 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
       rel
 
     in add_pure_formula_to_formula rel_pure formula in
-  let add_qvars_to_postcondition postcondition =
-    { postcondition with
-      CF.formula_exists_qvars =
-        ((post_stack # get_stk) @ postcondition.CF.formula_exists_qvars) } in
   let mk_rel rel_params loc =
     let rn = fresh_pred loc in
     match rel_params with
@@ -134,9 +130,7 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
            and_pure_with_eqs (n_stack # get_stk) ff.formula_assume_simpl loc
          else ff.formula_assume_simpl in
        let postcondition_add_qvars =
-         match postcondition with
-         | Exists pc -> Exists (add_qvars_to_postcondition pc)
-         | other -> other in
+         CF.push_exists (post_stack # get_stk) postcondition in
        (* And the pure part with relation *)
        if ((not (post_stack # is_empty)) && (not (!post_rel = None))) then
          let post_rel = match !post_rel with Some p -> p | None -> failwith "Not possible (infer_imm_ann_proc)" in
