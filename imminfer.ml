@@ -20,10 +20,6 @@ let fresh_ann loc = CP.SpecVar (AnnT, fresh loc, Unprimed)
 let has_infer_imm_pre = ref false
 let has_infer_imm_post = ref false
 
-(* contains rel oblg formed from joining the annotations guards; should be dumped into the Infer.infer_rel_stk *)
-let infer_rel_stk  = new Gen.stack
-
-
 let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula * C.rel_decl option * C.rel_decl option) =
   let open Cformula in
   (* Will be set to false later when @imm_pre or @imm_post is set *)
@@ -84,12 +80,8 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
       let (types, args) = List.split pairs in
       let rel_sv = CP.SpecVar (RelT types, relname, Unprimed) in
       let p_formula = CP.RelForm (rel_sv, args, loc) in
-      let guards = List.map (fun var -> CP.mkSubAnn var CP.const_ann_top) args in
       let rel = CP.mkPure p_formula in 
-      let reloblg = CP.RelAssume [rel_sv], rel, (CP.join_conjunctions guards) in
-      let () = infer_rel_stk # push reloblg in
       rel
-
     in add_pure_formula_to_formula rel_pure formula in
   let mk_rel rel_params loc =
     let rn = fresh_pred loc in
@@ -204,7 +196,7 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
               (Cprinter.poly_string_of_pr_gen 0 pr_infer_imm_ann_result) infer_imm_ann_proc
              proc_static_specs
 
-let infer_imm_ann (prog: C.prog_decl) (proc_decls: C.proc_decl list) : C.proc_decl list * CP.infer_rel_type list =
+let infer_imm_ann (prog: C.prog_decl) (proc_decls: C.proc_decl list) : C.proc_decl list =
   (** Infer immutability annotation variables for one proc,
       @return (new proc, precondition relation, postcondition relation) **)
   let (new_proc_decls, rel_list) =
@@ -221,7 +213,7 @@ let infer_imm_ann (prog: C.prog_decl) (proc_decls: C.proc_decl list) : C.proc_de
        ::proc_decls, pre_rels@post_rels@rel_list) in
     List.fold_right helper proc_decls ([], []) in
   prog.C.prog_rel_decls <- prog.C.prog_rel_decls @ rel_list;
-  new_proc_decls, infer_rel_stk # get_stk
+  new_proc_decls
 
 
 let infer_imm_ann_prog (prog: C.prog_decl) : C.prog_decl =
@@ -254,3 +246,27 @@ let should_infer_imm prog inf_vars inf_obj =
   in
   let has_imm_rel = List.fold_right (fun (id,_) acc -> (arg_is_ann id) || acc) inf_vars false in
   inf_obj # is_pre_imm ||  inf_obj # is_post_imm || !Globals.imm_infer || has_imm_rel
+
+let collect_reloblgs_spec (spec: CF.struc_formula) =
+  let infer_rel_stk = new Gen.stack in
+  let collect_reloblgs_b (p_formula, _) =
+    match p_formula with
+    | CP.RelForm (rel_sv, args, _) ->
+       let guards = List.map (fun var -> CP.mkSubAnn var CP.const_ann_top) args in
+       let reloblg = CP.RelAssume [rel_sv], CP.mkPure p_formula,
+                     (CP.join_conjunctions guards) in
+       let () = infer_rel_stk # push reloblg in
+       None
+    | _ -> None
+  in
+  let collect_reloblgs = (nonef, nonef, nonef, (nonef, nonef, nonef,
+                                                collect_reloblgs_b, nonef)) in
+  ignore (CF.transform_struc_formula collect_reloblgs spec);
+  (infer_rel_stk # get_stk)
+
+let collect_reloblgs_proc (proc : C.proc_decl) =
+  let specs = proc.C.proc_stk_of_static_specs # get_stk in
+  List.concat (List.map collect_reloblgs_spec specs)
+
+let collect_reloblgs (proc_decls: C.proc_decl list) =
+  List.concat (List.map collect_reloblgs_proc proc_decls)

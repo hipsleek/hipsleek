@@ -4292,7 +4292,8 @@ let rec check_prog iprog (prog : prog_decl) =
   let verify_scc_helper prog verified_sccs scc =
 
     (* Imminfer starts here *)
-    let scc,reloblgs = Imminfer.infer_imm_ann prog scc in
+    let scc = Imminfer.infer_imm_ann prog scc in
+    let reloblgs = Imminfer.collect_reloblgs scc in
     let () = Infer.infer_rel_stk # push_list reloblgs in
     (* End of Imminfer *)
 
