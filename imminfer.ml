@@ -11,6 +11,7 @@ open Gen
 module C = Cast
 module CF = Cformula
 module CP = Cpure
+module I = Iast
 
 let fresh_pred loc = fresh_any_name rel_default_prefix_name
 let fresh loc = fresh_any_name imm_var_prefix
@@ -40,12 +41,11 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
   let pre_rel = ref None in
   let post_rel = ref None in
   let assign_ann_or_var ann loc = match ann with
-    | CP.NoAnn -> if !use_mutable then (CP.ConstAnn Mutable, None)
-                  else (let f = fresh_ann loc in (CP.PolyAnn f, Some (f, false)))
-    | CP.ConstAnn _ -> if !use_mutable || (not !Globals.allow_imm_norm) then (ann, None)
+    | CP.NoAnn -> (let f = fresh_ann loc in (CP.PolyAnn f, Some (f, false)))
+    | CP.ConstAnn _ -> if (not !Globals.allow_imm_norm) then (ann, None)
                        else (let f = fresh_ann loc in (ann, Some (f, true)))
     | CP.PolyAnn f -> (ann, Some (f, false))
-    | _ -> (CP.NoAnn, None) in
+    | ann -> (ann, None) in
   let update_pre_stack v = map_opt_def () (fun (v,_) -> pre_stack # push v) v in
   let update_post_stack v = map_opt_def () (fun (v,_) -> post_stack # push v) v in
   let update_n_stack v ann =
@@ -113,10 +113,9 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
        use_mutable := (not !imm_pre_is_set && not !imm_post_is_set);
        None
     | EAssume ff ->
-       if !use_mutable then Some (EAssume ff) else
-         let new_formula = transform_formula (transform_1 true) ff.formula_assume_simpl in
-         Some (EAssume { ff with formula_assume_simpl = new_formula;
-                                 formula_assume_struc = CF.formula_to_struc_formula new_formula })
+      let new_formula = transform_formula (transform_1 true) ff.formula_assume_simpl in
+      Some (EAssume { ff with formula_assume_simpl = new_formula;
+                              formula_assume_struc = CF.formula_to_struc_formula new_formula })
     | _ -> None
   and transform_1 is_post =
     (ann_struc_formula_1, nonef, ann_heap is_post, (somef, somef, somef, somef, somef)) in
@@ -183,13 +182,11 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
   let transform_2 = (ann_struc_formula_2, somef, somef, (somef, somef, somef, somef, somef)) in
   let pss =
     let pss_1 = transform_struc_formula (transform_1 false) proc_static_specs in
-    if !use_mutable then pss_1
-    else
-        (pre_norm_stack # push_list (n_stack # get_stk_and_reset);
-        if !imm_pre_is_set then pre_rel := mk_rel (pre_stack # get_stk) no_pos;
-         if !imm_post_is_set then post_rel :=
-                 mk_rel ((pre_stack # get_stk)@(post_stack # get_stk)) no_pos;
-        transform_struc_formula transform_2 pss_1) in
+    (pre_norm_stack # push_list (n_stack # get_stk_and_reset);
+     if !imm_pre_is_set then pre_rel := mk_rel (pre_stack # get_stk) no_pos;
+     if !imm_post_is_set then post_rel :=
+                                mk_rel ((pre_stack # get_stk)@(post_stack # get_stk)) no_pos;
+     transform_struc_formula transform_2 pss_1) in
   (pss, !pre_rel, !post_rel)
 
 let pr_infer_imm_ann_result (f, r1, r2) =
@@ -246,5 +243,14 @@ let infer_imm_ann_prog (prog: C.prog_decl) : C.prog_decl =
   List.iter (fun (id, proc_decl) -> Hashtbl.add proc_decls id proc_decl) new_proc_decls;
   { prog with C.new_proc_decls = proc_decls }
 
-let should_infer_imm inf_obj =
- inf_obj # is_pre_imm ||  inf_obj # is_post_imm || !Globals.imm_infer
+let should_infer_imm prog inf_vars inf_obj =
+  let arg_is_ann id =
+    try
+      let rel_decl = I.look_up_rel_def_raw prog.I.prog_rel_decls id in
+      List.fold_right (fun (x,_) acc -> (Ipure.is_ann_type x) && acc)
+                      rel_decl.I.rel_typed_vars
+                      true
+    with _ -> false
+  in
+  let has_imm_rel = List.fold_right (fun (id,_) acc -> (arg_is_ann id) || acc) inf_vars false in
+  inf_obj # is_pre_imm ||  inf_obj # is_post_imm || !Globals.imm_infer || has_imm_rel

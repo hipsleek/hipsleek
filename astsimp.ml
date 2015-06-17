@@ -6921,32 +6921,34 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (prepost_flag:bool) (quantify
       )
     | IF.EInfer b -> 
       (* TODO : check iv - fvars = {} *)
-      let infer_helper () = 
+       let infer_helper () = 
         let pos = b.IF.formula_inf_pos in
-        let ivs = b.IF.formula_inf_vars in
         let (n_tl,ct) = trans_struc_formula fvars tl b.IF.formula_inf_continuation in
-        let new_ivs = ident_list_to_spec_var_list ivs n_tl prog in
         (* TODO : any warning below should be fixed *)
-        let ivs_unk = List.filter (fun v -> (CP.type_of_spec_var v)==UNK) new_ivs in
-        if ivs_unk!=[] then 
-          begin
-            let s = (Cprinter.string_of_spec_var_list ivs_unk) in
-            print_endline_quiet ("WARNING (must fix): Vars from"^s^"has type UNK")
-          end;
-        if ivs_unk!=[] then
-          Err.report_error { Err.error_loc = pos;
-                             Err.error_text = ("infer vars with unknown type "^(Cprinter.string_of_spec_var_list ivs_unk)) }
-        else
-          (n_tl, CF.EInfer {
-              (* CF.formula_inf_tnt = b.IF.formula_inf_tnt; *)
-              CF.formula_inf_obj = b.IF.formula_inf_obj;
-              CF.formula_inf_post = b.IF.formula_inf_post;
-              CF.formula_inf_xpost = b.IF.formula_inf_xpost;
-              CF.formula_inf_transpec = b.IF.formula_inf_transpec;
-              CF.formula_inf_vars = new_ivs;
-              CF.formula_inf_continuation = ct;
-              CF.formula_inf_pos = pos})
-      in  wrap_one_bool Globals.imm_infer (Imminfer.should_infer_imm b.IF.formula_inf_obj) infer_helper ()
+        let ivs = b.IF.formula_inf_vars in
+        let new_ivs = ident_list_to_spec_var_list ivs n_tl prog in
+         let ivs_unk = List.filter (fun v -> (CP.type_of_spec_var v)==UNK) new_ivs in
+         if ivs_unk!=[] then 
+           begin
+             let s = (Cprinter.string_of_spec_var_list ivs_unk) in
+             print_endline_quiet ("WARNING (must fix): Vars from"^s^"has type UNK")
+           end;
+         if ivs_unk!=[] then
+           Err.report_error { Err.error_loc = pos;
+                              Err.error_text = ("infer vars with unknown type "^(Cprinter.string_of_spec_var_list ivs_unk)) }
+         else
+           (n_tl, CF.EInfer {
+                      (* CF.formula_inf_tnt = b.IF.formula_inf_tnt; *)
+                      CF.formula_inf_obj = b.IF.formula_inf_obj;
+                      CF.formula_inf_post = b.IF.formula_inf_post;
+                      CF.formula_inf_xpost = b.IF.formula_inf_xpost;
+                      CF.formula_inf_transpec = b.IF.formula_inf_transpec;
+                      CF.formula_inf_vars = new_ivs;
+                      CF.formula_inf_continuation = ct;
+                      CF.formula_inf_pos = pos})
+       in
+       wrap_one_bool Globals.imm_infer (Imminfer.should_infer_imm prog
+                                        b.IF.formula_inf_vars b.IF.formula_inf_obj) infer_helper ()
     | IF.EList b ->
       let rec aux tlist clist = (
         match clist with

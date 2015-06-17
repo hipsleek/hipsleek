@@ -2344,3 +2344,5 @@ let rec transform_bexp_form f: formula=
   | Not (f1, a, b) -> Not (recf f1, a,b)
   | Forall (a,f1,b,c) -> Forall (a,recf f1,b,c)
   | Exists (a,f1,b,c) -> Exists(a,recf f1, b, c)
+
+let is_ann_type = (=) AnnT
