@@ -24,7 +24,7 @@ int addition(int m, int n) {
 }
 */
 
-pred addition_v<m,n,r,e> == n=0 & r=m & e=1
+pred addition_v<m,n,r,e> == n=0 & r=m & e=0
      or _::addition_v<m+1,n-1,r1,e1> & n>0 & r=r1 & e=e1
      or _::addition_v<m-1,n+1,r1,e1> & n<0 & r=r1 & e=e1.
 
@@ -42,10 +42,10 @@ int main() {
 */
 
 pred main_v<m,n,r,e> ==
-     _::addition_v<m,n,r1,e1> & r1=m-n & r=0 & e=e
-     or _::addition_v<m,n,r1,e1> & r1!=m-n & e=0.
+     _::addition_v<m,n,r1,e1> & r1=m-n & r=0 & e=e1
+     or _::addition_v<m,n,r1,e1> & r1!=m-n & e=1.
 
 
-checksat _::main_v<m,n,r,e> & e=0.
+checksat _::main_v<m,n,r,e> & e=1.
 
 expect Sat.

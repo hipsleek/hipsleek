@@ -28,9 +28,9 @@ int gcd(int y1, int y2) {
 }
 */
 
-pred gcd_v<y1,y2,r,e> == y1<=0 & e=0
-     or y2<=0 & e=0
-     or y1=y2 & r=y1 & e=1
+pred gcd_v<y1,y2,r,e> == y1<=0 & e=1
+     or y2<=0 & e=1
+     or y1=y2 & r=y1 & e=0
      or _::gcd_v<y1-y2,y2,r1,e1> & y1>y2 & r=r1 & e=e1
      or _::gcd_v<y1,y2-y1,r1,e1> & y2>=y1 & r=r1 & e=e1.
 
@@ -47,8 +47,8 @@ int divides(int n, int m) {
 }
 */
 
-pred divides_v<n,m,r,e> == m=0 & r=1 & e=1
-     or n>0 & r=0 & e=1
+pred divides_v<n,m,r,e> == m=0 & r=1 & e=0
+     or n>0 & r=0 & e=0
      or _::divides_v<n,m-n,r1,e1> & r=r1 & e=e1.
 
 /*
@@ -72,16 +72,16 @@ int main() {
 }
 */
 
-pred main_v<m,n,r,e> == m<=0 & r=0 & e=1
-     or m>2147483647 & r=0 & e=1
-     or n<=0 & r=0 & e=1
-     or n>2147483647 & r=0 & e=1
-     or _::gcd_v<m,n,z,e1> * _::divides_v<z,m,r2,e2> & m>0 & m<=2147483647 & n>0 & n<=2147483647 & r2=0 & e=0
-     or _::gcd_v<m,n,z,e1> * _::divides_v<z,m,r2,e2> & m>0 & m<=2147483647 & n>0 & n<=2147483647 & r2!=0 & e1=1 & e2=1 & e=1
-     or _::gcd_v<m,n,z,e1> * _::divides_v<z,m,r2,e2> & m>0 & m<=2147483647 & n>0 & n<=2147483647 & e1=0 & e=0
-     or _::gcd_v<m,n,z,e1> * _::divides_v<z,m,r2,e2> & m>0 & m<=2147483647 & n>0 & n<=2147483647 & e2=0 & e=0..
+pred main_v<m,n,r,e> == m<=0 & r=0 & e=0
+     or m>2147483647 & r=0 & e=0
+     or n<=0 & r=0 & e=0
+     or n>2147483647 & r=0 & e=0
+     or _::gcd_v<m,n,z,e1> * _::divides_v<z,m,r2,e2> & m>0 & m<=2147483647 & n>0 & n<=2147483647 & r2=0 & e=1
+     or _::gcd_v<m,n,z,e1> * _::divides_v<z,m,r2,e2> & m>0 & m<=2147483647 & n>0 & n<=2147483647 & r2!=0 & e1=0 & e2=0 & e=0
+     or _::gcd_v<m,n,z,e1> * _::divides_v<z,m,r2,e2> & m>0 & m<=2147483647 & n>0 & n<=2147483647 & e1=1 & e=1
+     or _::gcd_v<m,n,z,e1> * _::divides_v<z,m,r2,e2> & m>0 & m<=2147483647 & n>0 & n<=2147483647 & e2=1 & e=1.
 
 
-checksat _::main<m,n,r,e> & e=0.
+checksat _::main<m,n,r,e> & e=1.
 
 expect Unsat.

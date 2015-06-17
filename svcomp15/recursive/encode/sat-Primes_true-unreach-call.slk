@@ -28,8 +28,8 @@ int mult(int n, int m) {
 */
 
 pred mult_v<m,n,r,e> == _::mult_v<n,-m,r1,e1> & m<0 & r=r1 & e=e1
-     or m=0 & r=0 & e=1
-     or m=1 & r=1 & e=1
+     or m=0 & r=0 & e=0
+     or m=1 & r=1 & e=0
      or _::mult_v<n,m-1,r1,e1> & m>1 & r=n+r1 & e=e1.
 
 /*
@@ -53,8 +53,8 @@ int multiple_of(int n, int m) {
 
 pred multiple_of_v<n,m,r,e> == _::multiple_of_v<n,-m,r1,e1> & m<0 & r=r1 & e=e1
      or _::multiple_of_v< -n,m,r1,e1> & n<0 & r=r1 & e=e1
-     or m=0 & r=0 & e=1
-     or n=0 & r=0 & e=1
+     or m=0 & r=0 & e=0
+     or n=0 & r=0 & e=0
      or _::multiple_of_v<n-m,m,r1,e1> & m>0 & n>0 & r=r1 & e=e1.
 
 // int is_prime_(int n, int m);
@@ -90,11 +90,11 @@ int is_prime_(int n, int m) {
 }
 */
 
-pred is_prime__v<n,m,r,e> == n<=1 & r=0 & e=1
-     or n=2 & r=1 & e=1
-     or n>2 & m<=1 & r=1 & e=1
+pred is_prime__v<n,m,r,e> == n<=1 & r=0 & e=0
+     or n=2 & r=1 & e=0
+     or n>2 & m<=1 & r=1 & e=0
      or _::multiple_of_v<n,m,r1,e1> & n>2 & m>1 & r1=0 & r=0 & e=e1
-     or _::multiple_of_v<n,m,r1,e1> * _::is_prime__v<n,m-1,r2,e2> & n>2 & m>1 & r1=1 & r=r2 & e1=1 & e2=1 & e=1.
+     or _::multiple_of_v<n,m,r1,e1> * _::is_prime__v<n,m-1,r2,e2> & n>2 & m>1 & r1=1 & r=r2 & e1=0 & e2=0 & e=0.
 
 /*
 int main() {
@@ -120,17 +120,17 @@ int main() {
 }
 */
 
-pred main_v<n,f1,f2,r,e> == n<1 & r=0 & e=1
-     or n>46340 & r=0 & e=1
-     or f1<1 & r=0 & e=1
-     or f1>46340 & r=0 & e=1
-     or f2<1 & r=0 & e=1
-     or f2>46340 & r=0 & e=1
-     or _::is_prime_v<n,r1,e1> * _::mult_v<f1,f2,r2,e2> & n>=1 & n<=46340 & f1>=1 & f1<=46340 & f2>=1 & f2<=46340 & r1=1 & n=r2 & e=0
-     or _::is_prime_v<n,r1,e1> * _::mult_v<f1,f2,r2,e2> & n>=1 & n<=46340 & f1>=1 & f1<=46340 & f2>=1 & f2<=46340 & r1!=1 & r=0 & e1=1 & e2=1 & e=1
-     or _::is_prime_v<n,r1,e1> * _::mult_v<f1,f2,r2,e2> & n>=1 & n<=46340 & f1>=1 & f1<=46340 & f2>=1 & f2<=46340 & n!=r2 & r=0 & e1=1 & e2=1 & e=1.
+pred main_v<n,f1,f2,r,e> == n<1 & r=0 & e=0
+     or n>46340 & r=0 & e=0
+     or f1<1 & r=0 & e=0
+     or f1>46340 & r=0 & e=0
+     or f2<1 & r=0 & e=0
+     or f2>46340 & r=0 & e=0
+     or _::is_prime_v<n,r1,e1> * _::mult_v<f1,f2,r2,e2> & n>=1 & n<=46340 & f1>=1 & f1<=46340 & f2>=1 & f2<=46340 & r1=1 & n=r2 & e=1
+     or _::is_prime_v<n,r1,e1> * _::mult_v<f1,f2,r2,e2> & n>=1 & n<=46340 & f1>=1 & f1<=46340 & f2>=1 & f2<=46340 & r1!=1 & r=0 & e1=0 & e2=0 & e=0
+     or _::is_prime_v<n,r1,e1> * _::mult_v<f1,f2,r2,e2> & n>=1 & n<=46340 & f1>=1 & f1<=46340 & f2>=1 & f2<=46340 & n!=r2 & r=0 & e1=0 & e2=0 & e=0.
 
 
-checksat _::main_v<n,f1,f2,r,e> & e=0.
+checksat _::main_v<n,f1,f2,r,e> & e=1.
 
 expect Unsat.
