@@ -30,7 +30,7 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
   let imm_post_is_set = ref false in
   let imm_pre_is_set = ref false in
   (* Stack of added fresh variables in both pre && post *)
-  let v_stack = new Gen.stack in
+  let post_stack = new Gen.stack in
   let n_stack = new Gen.stack in
   (* Stack of added fresh variables in both pre *)
   let pre_stack = new Gen.stack in
@@ -46,24 +46,25 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
                        else (let f = fresh_ann loc in (ann, Some (f, true)))
     | CP.PolyAnn f -> (ann, Some (f, false))
     | _ -> (CP.NoAnn, None) in
-  let update_v_stack v = map_opt_def () (fun (v,_) -> v_stack # push v) v in
+  let update_pre_stack v = map_opt_def () (fun (v,_) -> pre_stack # push v) v in
+  let update_post_stack v = map_opt_def () (fun (v,_) -> post_stack # push v) v in
   let update_n_stack v ann =
     map_opt_def () (fun (v,norm) -> if norm then n_stack # push (v, ann)) v in
-  let ann_heap_ho stop loc imm_ann =
+  let ann_heap_ho is_post loc imm_ann =
        let (h_imm, v) = assign_ann_or_var imm_ann loc in
-       let () = if not stop then update_v_stack v in
+       let () = (if is_post then update_post_stack else update_pre_stack) v in
        let () = update_n_stack v h_imm in
        let h_imm = match v with
          | Some (_, false) -> h_imm
          | Some (v, true) -> CP.PolyAnn v
          | None -> h_imm in
        h_imm in
-  let ann_heap stop h = match h with
+  let ann_heap is_post h = match h with
     | DataNode hp ->
-       let h_imm = ann_heap_ho stop hp.h_formula_data_pos hp.h_formula_data_imm in
+       let h_imm = ann_heap_ho is_post hp.h_formula_data_pos hp.h_formula_data_imm in
        Some (DataNode { hp with h_formula_data_imm = h_imm })
     | ViewNode hp ->
-       let h_imm = ann_heap_ho stop hp.h_formula_view_pos hp.h_formula_view_imm in
+       let h_imm = ann_heap_ho is_post hp.h_formula_view_pos hp.h_formula_view_imm in
        Some (ViewNode { hp with h_formula_view_imm = h_imm })
     | _ -> None
   in
@@ -87,9 +88,13 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
       let rel = CP.mkPure p_formula in 
       let reloblg = CP.RelAssume [rel_sv], rel, (CP.join_conjunctions guards) in
       let () = infer_rel_stk # push reloblg in
-      rel 
+      rel
 
     in add_pure_formula_to_formula rel_pure formula in
+  let add_qvars_to_postcondition postcondition =
+    { postcondition with
+      CF.formula_exists_qvars =
+        ((post_stack # get_stk) @ postcondition.CF.formula_exists_qvars) } in
   let mk_rel rel_params loc =
     let rn = fresh_pred loc in
     match rel_params with
@@ -113,13 +118,13 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
        None
     | EAssume ff ->
        if !use_mutable then Some (EAssume ff) else
-         let stop = not !imm_post_is_set in
-         let new_formula = transform_formula (transform_1 stop) ff.formula_assume_simpl in
+         let is_post = not !imm_post_is_set in
+         let new_formula = transform_formula (transform_1 is_post) ff.formula_assume_simpl in
          Some (EAssume { ff with formula_assume_simpl = new_formula;
                                  formula_assume_struc = CF.formula_to_struc_formula new_formula })
     | _ -> None
-  and transform_1 stop =
-    (ann_struc_formula_1, nonef, ann_heap stop, (somef, somef, somef, somef, somef)) in
+  and transform_1 is_post =
+    (ann_struc_formula_1, nonef, ann_heap is_post, (somef, somef, somef, somef, somef)) in
   let ann_postcondition = function
     | EAssume ff ->
        let loc = pos_of_formula ff.formula_assume_simpl in
@@ -128,15 +133,21 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
          if (not (n_stack # is_empty)) then
            and_pure_with_eqs (n_stack # get_stk) ff.formula_assume_simpl loc
          else ff.formula_assume_simpl in
+       let postcondition_add_qvars =
+         match postcondition with
+         | Exists pc -> Exists (add_qvars_to_postcondition pc)
+         | other -> other in
        (* And the pure part with relation *)
-       if ((not (v_stack # is_empty)) && (not (!post_rel = None))) then
+       if ((not (post_stack # is_empty)) && (not (!post_rel = None))) then
          let post_rel = match !post_rel with Some p -> p | None -> failwith "Not possible (infer_imm_ann_proc)" in
-         let rel_params = v_stack # get_stk in
-         let postcondition_with_rel = and_pure_with_rel post_rel.C.rel_name rel_params postcondition loc in
+         let rel_params = (pre_stack # get_stk) @ (post_stack # get_stk) in
+         let postcondition_with_rel = and_pure_with_rel post_rel.C.rel_name rel_params
+                                                        postcondition_add_qvars loc in
          Some (EAssume { ff with formula_assume_simpl = postcondition_with_rel;
                                  formula_assume_struc = CF.formula_to_struc_formula postcondition_with_rel })
-       else Some (EAssume {ff with formula_assume_simpl = postcondition;
-                          formula_assume_struc = CF.formula_to_struc_formula postcondition })
+       else Some (EAssume {ff with formula_assume_simpl = postcondition_add_qvars;
+                                   formula_assume_struc = CF.formula_to_struc_formula
+                                                            postcondition_add_qvars })
     | _ -> None
   in
   let ann_struc_formula_2 = function
@@ -157,13 +168,13 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
                 { ebase with formula_struc_base = precondition_with_rel }
               else { ebase with formula_struc_base = precondition } in
             let new_continuation =
-              if (not (v_stack # is_empty)) then
+              if (not (post_stack # is_empty)) then
                 let transform = (ann_postcondition, nonef, nonef, (nonef, nonef, nonef, nonef, nonef)) in
                 let base_continuation = map_opt (transform_struc_formula transform) ebase.formula_struc_continuation in
                 EBase { new_ebase with formula_struc_continuation = base_continuation }
               else EBase new_ebase in
             let new_inf_vars =
-              if (not (v_stack # is_empty)) then
+              if (not (post_stack # is_empty)) then
                 let rel_to_var rel = match rel with
                   (* the relation var *)
                   | Some p -> [CP.SpecVar (RelT (CP.type_of_spec_var_list  p.C.rel_vars), p.C.rel_name, Unprimed)]
@@ -181,10 +192,9 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
     let pss_1 = transform_struc_formula (transform_1 false) proc_static_specs in
     if !use_mutable then pss_1
     else
-        (pre_stack # push_list (v_stack # get_stk);
-        pre_norm_stack # push_list (n_stack # get_stk_and_reset);
+        (pre_norm_stack # push_list (n_stack # get_stk_and_reset);
         if !imm_pre_is_set then pre_rel := mk_rel (pre_stack # get_stk) no_pos;
-        if !imm_post_is_set then post_rel := mk_rel (v_stack # get_stk) no_pos;
+        if !imm_post_is_set then post_rel := mk_rel (post_stack # get_stk) no_pos;
         transform_struc_formula transform_2 pss_1) in
   (pss, !pre_rel, !post_rel)
 
