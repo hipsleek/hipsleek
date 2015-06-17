@@ -29,9 +29,9 @@ int id(int x)
 }
 */
 
-pred id_v<x,r,e> == x=0 & r=0 & e=1
-     or _::id_v<x-1,r1,e1> & x!=0 & r=r1+1 & e1=1 & e=1
-     or _::id_v<x-1,r1,e1> & x!=0 & e1=0 & e=0.
+pred id_v<x,r,e> == x=0 & r=0 & e=0
+     or _::id_v<x-1,r1,e1> & x!=0 & r=r1+1 & e1=0 & e=0
+     or _::id_v<x-1,r1,e1> & x!=0 & e1=1 & e=1.
 
 /*
 void main()
@@ -48,11 +48,11 @@ void main()
 }
 */
 
-pred main_v<e> ==  _::id_v<input,result,e_1> & input=5 & result=5 & e_1=1 & e=0
-   or  _::id_v<input,result,e_1> & input=5 & result!=5 & e_1=1 & e=1
-   or  _::id_v<input,result,e_1> & input=5 & e_1=0 & e=0.
+pred main_v<e> ==  _::id_v<input,result,e_1> & input=5 & result=5 & e_1=0 & e=1
+   or  _::id_v<input,result,e_1> & input=5 & result!=5 & e_1=0 & e=0
+   or  _::id_v<input,result,e_1> & input=5 & e_1=1 & e=1.
 
 
-checksat _::main_v<e> & e=0.
+checksat _::main_v<e> & e=1.
 
 expect Sat.

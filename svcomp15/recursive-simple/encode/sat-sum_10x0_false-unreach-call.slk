@@ -21,9 +21,9 @@ int sum(int n, int m)
 }
 */
 
-pred sum_v<n,m,r,e> == n<=0 & r=m+n & e=1
-     or _::sum_v<n-1,m+1,r1,e1> & r=r1 & e1=1 & e=1
-     or _::sum_v<n-1,m+1,r1,e1> & e1=0 & e=0.
+pred sum_v<n,m,r,e> == n<=0 & r=m+n & e=0
+     or _::sum_v<n-1,m+1,r1,e1> & r=r1 & e1=0 & e=0
+     or _::sum_v<n-1,m+1,r1,e1> & e1=1 & e=1.
 
 /*
 void main()
@@ -41,11 +41,11 @@ void main()
 }
 */
 
-pred main_v<e> ==  _::sum_v<a,b,result,e1> & a=10 & b=0 & result=a+b & e1=1 & e=0
-   or  _::sum_v<a,b,result,e1> & a=10 & b=0 & result!=a+b & e1=1 & e=1
-   or  _::sum_v<a,b,result,e1> & a=10 & b=0 & e1=0 & e=0.
+pred main_v<e> ==  _::sum_v<a,b,result,e1> & a=10 & b=0 & result=a+b & e1=0 & e=1
+   or  _::sum_v<a,b,result,e1> & a=10 & b=0 & result!=a+b & e1=0 & e=0
+   or  _::sum_v<a,b,result,e1> & a=10 & b=0 & e1=1 & e=1.
 
 
-checksat _::main_v<e> & e=0.
+checksat _::main_v<e> & e=1.
 
 expect Sat.

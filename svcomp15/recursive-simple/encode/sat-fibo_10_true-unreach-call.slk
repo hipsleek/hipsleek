@@ -15,9 +15,11 @@ int fibo(int n) {
 }
 */
 
-pred fibo_v<n,r,e> == n<1 & r=0 & e=1
-   or n=1 & r=1 & e=1
-   or  _::fibo_v<n-1, r1, e1> * _::fibo_v<n-2, r2, e2> & n>1 & r=r1+r2 & e1=1 & e2=1 & e=1.
+pred fibo_v<n,r,e> == n<1 & r=0 & e=0
+   or n=1 & r=1 & e=0
+   or  _::fibo_v<n-1, r1, e1> * _::fibo_v<n-2, r2, e2> & n>1 & r=r1+r2 & e1=0 & e2=0 & e=0
+   or  _::fibo_v<n-1, r1, e1> * _::fibo_v<n-2, r2, e2> & n>1 & e1=1 & e=1
+   or  _::fibo_v<n-1, r1, e1> * _::fibo_v<n-2, r2, e2> & n>1 & e2=1 & e=1.
 
 // fibo 1-30
 // 1, 1, 2, 3, 5,
@@ -38,12 +40,12 @@ int main() {
 }
 */
 
-pred main_v<r,e> ==  _::fibo_v<x,result,e_1> & x=10 & result!=55 & e_1=1 & e=0
-   or  _::fibo_v<x,result,e_1> & x=10 & result=55 & e_1=1 & e=1
-   or  _::fibo_v<x,result,e_1> & x=10 & e_1=0 & e=0.
+pred main_v<r,e> ==  _::fibo_v<x,result,e_1> & x=10 & result!=55 & e_1=0 & e=1
+   or  _::fibo_v<x,result,e_1> & x=10 & result=55 & e_1=0 & e=0
+   or  _::fibo_v<x,result,e_1> & x=10 & e_1=1 & e=1.
 
 
 
-checksat _::main_v<r,e> & e=0.
+checksat _::main_v<r,e> & e=1.
 
 expect Unsat.
