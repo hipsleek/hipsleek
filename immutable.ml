@@ -2968,6 +2968,47 @@ let norm_rel_list lst =
 
 let weaken_infer_rel_in_es es =
   {es with es_infer_rel =  norm_rel_list es.es_infer_rel}
+(* below to move to immutable *)
+let is_imm_relation pure = 
+  if not(CP.is_RelForm pure) then false
+  else 
+    let fv = CP.fv_wo_rel pure in
+    List.for_all CP.is_ann_typ fv
+
+let is_imm_relation pure = 
+   let pr = Cprinter.string_of_pure_formula in
+   Debug.no_1 "is_imm_relation" pr string_of_bool is_imm_relation pure
+
+let get_relevant rels oblg = (* true *)
+  let fv = CP.fv rels in
+  let oblg =  CP.filter_var_new oblg fv in
+  oblg
+
+(* splits an onbligation which is a combination of pure and imm relation, 
+   in pure obligations and imm obligations  *)
+let split_rel rel =
+  match rel with
+    | CP.RelAssume svl, p1, p2  -> 
+          if List.length svl > 1 then
+            let p1_conj = CP.split_conjunctions p1 in
+            let p1_imm, p1_pure = List.partition is_imm_relation p1_conj in
+            if (List.length p1_imm == 0 || List.length p1_pure == 0) then [rel]
+            else
+              let p1_imm = CP.join_conjunctions p1_imm in
+              let p1_pure = CP.join_conjunctions p1_pure in
+              let p2_imm, p2_pure = split_imm_pure_lst p2 in
+              let p2_imm_relev = List.map (get_relevant p1_imm) p2_imm in
+              let p2_pure_relev = List.map (get_relevant p1_pure) p2_pure in
+              let p2_imm = CP.join_disjunctions p2_imm_relev in 
+              let p2_pure = CP.join_disjunctions p2_pure_relev in 
+              [CP.RelAssume [], p1_imm, p2_imm; CP.RelAssume [], p1_pure, p2_pure ]
+          else [rel] 
+    | _ -> [rel]
+
+let split_rel rel =
+  let pr = Cprinter.string_of_pure_formula in
+  let pr_oblg = (fun (_,a,b) -> pr_pair pr pr (a,b)) in
+  Debug.no_1 "split_rel"  pr_oblg (pr_list pr_oblg) split_rel rel
 
 (* ==================== END norm inferred pre/post ======================== *)
 
@@ -3171,4 +3212,5 @@ let map_int_to_imm_struc_formula form = CF.transform_struc_formula fnc form
 
 
 (* ======================= END prover pre/post-process  ============================= *)
+
 

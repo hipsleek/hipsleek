@@ -527,33 +527,6 @@ let trans_res_struc_formula prog sf =
   if Gen.BList.mem_eq CP.eq_spec_var (CP.mk_spec_var "res") sfv then helper sf
   else sf
 
-(* below to move to immutable *)
-let is_imm_relation pure = 
-  if not(CP.is_RelForm pure) then false
-  else true                                 (* get rel arg |> all must be AnnT *)
-
-let get_relevant rels oblg = (* true *)
-  let fv = CP.fv rels in
-  let oblg =  CP.filter_var_new oblg fv in
-  oblg
-
-let split_rel rel =
-  match rel with
-    | CP.RelAssume svl, p1, p2  -> 
-          if List.length svl > 1 then
-            let p1_conj = CP.split_conjunctions p1 in
-            let p1_imm, p1_pure = List.partition is_imm_relation p1_conj in
-            let p1_imm = CP.join_conjunctions p1_imm in
-            let p1_pure = CP.join_conjunctions p1_pure in
-            let p2_imm, p2_pure = Immutable.split_imm_pure_lst p2 in
-            let p2_imm_relev = List.map (get_relevant p1_imm) p2_imm in
-            let p2_pure_relev = List.map (get_relevant p1_pure) p2_pure in
-            let p2_imm = CP.join_disjunctions p2_imm_relev in 
-            let p2_pure = CP.join_disjunctions p2_pure_relev in 
-            [CP.RelAssume [], p1_imm, p2_imm; CP.RelAssume [], p1_pure, p2_pure ]
-          else [rel] 
-    | _ -> [rel]
-
 let norm_rel_oblgs reloblgs =
   let is_rel_eq rel1 rel2 = 
     (fun (r1,a1,_) (r2,a2,_) ->  
@@ -576,7 +549,7 @@ let norm_rel_oblgs reloblgs =
       helper (List.tl lst) acc in
     map_list_def acc (fnc acc) lst
   in
-  let reloblgs_new = List.fold_left (fun acc rel -> (split_rel rel)@acc) [] reloblgs in (* split mixed rels *)
+  let reloblgs_new = List.fold_left (fun acc rel -> (Immutable.split_rel rel)@acc) [] reloblgs in (* split mixed rels *)
   let reloblgs_new = helper reloblgs_new [] in
   let reloblgs_new = List.map (fun ((rel_c,rel_n,rel_d) as rel) -> 
       if CP.contains_undef rel_d then rel 

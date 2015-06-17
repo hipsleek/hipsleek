@@ -2847,7 +2847,7 @@ and split_conjunctions_x =  function
 
 and split_conjunctions f =  
   let pr = !print_formula in
-  Debug.DebugEmpty.no_1 "split_conjunctions" pr (pr_list pr) split_conjunctions_x f 
+  Debug.no_1 "split_conjunctions" pr (pr_list pr) split_conjunctions_x f 
 
 
 and join_conjunctions fl = conj_of_list fl no_pos
