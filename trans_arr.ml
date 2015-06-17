@@ -9,6 +9,45 @@ open VarGen
 let global_unchanged_info = ref [];;
 let string_of_exp = ArithNormalizer.string_of_exp;;
 
+let plain_string_of_exp e0 =
+  let need_parentheses e = match e with
+    | Add _ | Subtract _ -> true
+    | _ -> false
+  in
+  let wrap e =
+       if need_parentheses e then "(" ^ (string_of_exp e) ^ ")"
+       else (string_of_exp e)
+  in
+  let tmp_string_of_spec_var ?(print_typ=false) (sv: spec_var) =
+    match sv with
+    | SpecVar (t, v, p) ->
+      if p==Primed
+      then ("PRI"^v)
+      else v
+  in
+  match e0 with
+  | Null _ -> "null"
+  | Var (v, _) -> tmp_string_of_spec_var v
+  | IConst (i, _) -> string_of_int i
+  | FConst (f, _) -> string_of_float f
+  | AConst (f, _) -> string_of_heap_ann f
+  | Tsconst (f,_) -> Tree_shares.Ts.string_of f
+  | Add (e1, e2, _) -> (string_of_exp e1) ^ " + " ^ (string_of_exp e2)
+  | Subtract (e1, e2, _) -> (string_of_exp e1) ^ " - " ^ (string_of_exp e2)
+  | Mult (e1, e2, _) -> (wrap e1) ^ "*" ^ (wrap e2)
+  | Div (e1, e2, _) -> (wrap e1) ^ "/" ^ (wrap e2)
+  | Max (e1, e2, _) -> "max(" ^ (string_of_exp e1) ^ "," ^ (string_of_exp e2) ^ ")"
+  | Min (e1, e2, _) -> "min(" ^ (string_of_exp e1) ^ "," ^ (string_of_exp e2) ^ ")"
+  | TypeCast (ty, e1, _) -> "(" ^ (Globals.string_of_typ ty) ^ ") " ^ string_of_exp e1
+  | ArrayAt (sv,elst,_)->
+    let string_of_index_list
+        (elst:exp list):string=
+      List.fold_left (fun s e -> s ^"["^(string_of_exp e)^"]") "" elst
+    in
+    (string_of_spec_var sv)^(string_of_index_list elst) 
+  | _ -> "???"
+;;
+
 let print_pure = ref (fun (c:formula) -> "printing not initialized");;
 let print_p_formula = ref (fun (p:p_formula) -> "printing not initialized");;
 
@@ -113,13 +152,7 @@ let mk_array_new_name_sv
     begin
       match typ with
       | Array (atyp,_)->
-        begin
-          match primed with
-          | Primed ->
-            (*Var( SpecVar (atyp,(id)^"_"^"primed_"^(string_of_exp e),primed),no_pos)*)
-            SpecVar (atyp,(id)^"__"^(string_of_exp e),primed)
-          | _ -> SpecVar (atyp,(id)^"__"^(string_of_exp e),primed)
-        end
+        SpecVar (atyp,(id)^"__"^(plain_string_of_exp e),primed)
       | _ -> failwith "mk_array_new_name: Not array type"
     end
 ;;
@@ -2513,8 +2546,13 @@ let produce_aux_formula_for_exists f env =
 let translate_array_one_formula
       (f:formula):formula =
 
+  (* standarize index format *)
+  let f = standarize_one_formula f in
+  (* translate a=a' *)
   let f = translate_array_equality_to_forall f in
+  (* translate update_array_1d *)
   let f = translate_array_relation f in
+  (* Constantiate existential quantifier *)
   let f = constantize_ex_q f in
 
   let global_env = extend_env [] [] f in
@@ -2545,12 +2583,15 @@ let translate_array_one_formula f=
 let translate_array_one_formula_for_validity
       (f:formula):formula =
 
+  let f = standarize_one_formula f in
   let f = translate_array_relation f in
   let f = constantize_ex_q f in
-  let f = process_exists_array f in
+
 
   let global_env = extend_env [] [] f in
   let f = instantiate_forall f in
+  let f = process_exists_array f in
+
   let f = produce_aux_formula_for_exists f global_env in
   let array_free_formula = mk_array_free_formula f in
   let aux_formula = produce_aux_formula global_env in
@@ -2719,7 +2760,13 @@ let rec translate_back_array_in_one_formula
                 IConst (const,no_pos)
               with
                 Failure "int_of_string" ->
-                Var (SpecVar (Int,index,Unprimed),no_pos)
+                let prefix_regexp = Str.regexp "PRI.*" in
+                if Str.string_match prefix_regexp index 0
+                then
+                  let sv = SpecVar (Int,(List.nth (Str.split (Str.regexp "PRI") index) 0),Primed) in
+                  Var (sv,no_pos)
+                  else
+                    Var (SpecVar (Int,index,Unprimed),no_pos)
             in
             ArrayAt (n_sv,[n_exp],no_pos)
           else
