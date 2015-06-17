@@ -114,7 +114,6 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
        None
     | EAssume ff ->
        if !use_mutable then Some (EAssume ff) else
-         let is_post = not !imm_post_is_set in
          let new_formula = transform_formula (transform_1 is_post) ff.formula_assume_simpl in
          Some (EAssume { ff with formula_assume_simpl = new_formula;
                                  formula_assume_struc = CF.formula_to_struc_formula new_formula })
@@ -188,7 +187,8 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
     else
         (pre_norm_stack # push_list (n_stack # get_stk_and_reset);
         if !imm_pre_is_set then pre_rel := mk_rel (pre_stack # get_stk) no_pos;
-        if !imm_post_is_set then post_rel := mk_rel (post_stack # get_stk) no_pos;
+         if !imm_post_is_set then post_rel :=
+                 mk_rel ((pre_stack # get_stk)@(post_stack # get_stk)) no_pos;
         transform_struc_formula transform_2 pss_1) in
   (pss, !pre_rel, !post_rel)
 

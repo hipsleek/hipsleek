@@ -6,14 +6,15 @@ data cell{
 relation Q(ann v).
 
 int foo2(cell c, cell d)
-infer [@imm_post]
-  requires c::cell<yyy>@M * d::cell<yyy>@A
-  ensures c::cell<wwww>@b * d::cell<yyy>;
+infer [@imm_pre]
+  requires c::cell<yyy> * d::cell<yyy>@A
+  ensures c::cell<yyy>@b * d::cell<yyy>;
 {
   int x = c.fst;
   if (x>0) c.fst = 5;
   return x;
 }
+
 /*
 relation P(ann v1).
 //relation P3(ann v1, int v,int r, int s).
