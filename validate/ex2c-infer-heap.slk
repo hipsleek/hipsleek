@@ -1,0 +1,96 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<na> == self = null & na = 0 
+	or self::node<_, q> * q::ll<na-1> 
+  inv na >= 0.
+
+// (1) Valid & inferred n=0
+infer [y] emp |- y::ll<n>.  
+print residue.
+// expect I{y::ll<_>}.
+// inferred heap: [y::ll{}<inf_39>]
+
+
+// (2)
+infer [y] emp |- y::node<_,_>.  
+print residue.
+//  expect I{y::node<_,_>}.
+//  inferred heap: [y::node<inf_Anon_45,inf_Anon_46>]
+
+
+// (3)
+infer [y] emp |- y::node<3,_>.  
+print residue.
+//  expect I{y::node<3,_>}.
+//  inferred heap: [y::node<inf_flted_23_58,inf_Anon_59>]
+// inferred pure: [inf_flted_23_58=3]
+
+// (4)
+infer [y] emp |- y::node<a,_> & a>3.  
+print residue.
+//  expect I{y::node<b,_> & b>=4}.
+//  inferred heap: [y::node<inf_68,inf_Anon_69>]
+// inferred pure: [4<=inf_68]
+
+
+// (5)
+infer [y] emp |- y::node<a,_> * y::node<_,_>.  
+//  expect Fail.
+print residue.
+expect Fail.
+
+// (6)
+infer [y] y=null |- y::node<a,_>.  
+print residue.
+//expect I{y!=null} R{false}.
+// I - infer
+// R - residue
+// A - assumptions
+//   <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+// inferred pure: [y!=null]
+
+
+// (7)
+infer [y] y!=null |- y::node<a,_>.  
+print residue.
+//expect I{y::node<k,_>} R{y!=null & k=a}.
+
+//(8)
+infer [y] y=0 |- x>6.
+print residue.
+expect Fail.
+
+relation P(int y).
+
+//(9)
+infer [y] y=0 |- y>6.
+print residue.
+//expect I{y!=0} R{false}.
+// <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+// inferred pure: [y!=0]
+
+//(10)
+infer [P] y=0 & P(y) |- y>6.
+print residue.
+//expect RA{P(y)-->y!=0} R{false}.
+// inferred rel: [RELASS [P]: ( P(y)) -->  y!=0]
+
+//(11)
+infer [P] y=0 & x+y>4 |- P(y).
+print residue.
+//expect RD{y=0 --> P(y)} R{y=0 & x+y>4}.
+//  inferred rel: [RELDEFN P: ( y=0) -->  P(y)]
+
+HeapPred H(node y).
+
+// (12)
+infer [H] H(y) & y!=null |- y::node<a,_>.  
+print residue.
+//expect HD{H(y) & y!=null --> y::node<aa,kk> * HP_1(kk)}
+//         R{HP_1(kk) & aa=a}.
+// <1>HP_128(Anon_127)&y!=null & a=a_126 & Anon_22=Anon_127&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H(y)&y!=null --> y::node<a_126,Anon_127> * 
+//                   HP_128(Anon_127)&true]

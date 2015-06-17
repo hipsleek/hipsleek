@@ -200,6 +200,8 @@ struct
   let exists_l_snd f x = List.exists (fun (_,c)-> f c) x
   let all_l_snd f x = List.for_all (fun (_,c)-> f c) x
 
+  let ite cond f1 f2 =  if cond then f1 else f2
+
   let line_break_threshold = 60
   exception Break_Found
   let add_str ?(inline=false) hdr f s =
@@ -597,6 +599,11 @@ class ['a] stack  =
         stk <- i::stk
       end
     method get_stk  = stk (* return entire content of stack *)
+    method get_stk_and_reset  = let s=stk in (stk<-[];s) (* return entire content of stack & clear *)
+    method get_stk_no_dupl  = 
+      (* remove dupl *)
+      let s = self # get_stk in
+      Basic.remove_dups s
     method set_stk newstk  = stk <- newstk 
     (* override with a new stack *)
     method pop = match stk with 
@@ -650,6 +657,9 @@ class ['a] stack_pr (epr:'a->string) (eq:'a->'a->bool)  =
       (* WN : below is to be removed later *)
       (* let () = print_endline ("push_list:"^(Basic.pr_list epr ls)) in *)
       super # push_list ls 
+    method push_pr s (ls:'a) =  
+      let () = print_endline ("push_pr("^s^"):"^(epr ls)) in
+      super # push ls 
     method string_of = Basic.pr_list_ln elem_pr stk
     method string_of_no_ln = Basic.pr_list elem_pr stk
     method string_of_no_ln_rev = 
@@ -692,6 +702,7 @@ class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  =
     method top_no_exc : 'a = match stk with 
       | [] ->  emp_val
       | x::xs -> x
+    (* method top : 'a = self # top_no_exc  *)
     method last : 'a = match stk with 
       | [] -> emp_val
       | _ -> List.hd (List.rev stk)
@@ -729,6 +740,17 @@ class counter x_init =
     method str_get_next : string 
       = ctr <- ctr + 1; string_of_int ctr
   end;;
+
+class ctr_with_aux x_init =
+  object 
+    inherit counter x_init as super
+    val mutable aux_ctr = x_init
+    method inc_and_get = 
+      ctr <- ctr + 1; aux_ctr <- x_init; ctr
+    method inc_and_get_aux_str = 
+      let () = aux_ctr <- aux_ctr + 1 in
+        (string_of_int ctr)^"."^(string_of_int aux_ctr)
+  end
 
 class ctr_call x_init =
   object 
@@ -1074,7 +1096,7 @@ module EqMap =
       let r =
         let (t1,t2) = order_two t1 t2 in
         List.fold_left (fun a (p1,p2) -> add_equiv a p1 p2) t2 (get_equiv t1) in
-      let pr = string_of_debug in
+      (* let pr = string_of_debug in *)
       (* let () = print_endline ("eset1 :"^ (pr t1)) in *)
       (* let () = print_endline ("eset2 :"^ (pr t2)) in *)
       (* let () = print_endline ("eset_out :"^ (pr r)) in *)
@@ -1091,7 +1113,13 @@ module EqMap =
     let find_equiv_all  (e:elem) (s:emap) : elist  =
       let r1 = find s e in
       if (r1==None) then []
+      else List.map fst (List.filter (fun (a,k) -> k==r1) s)
+
+    let find_equiv_all_new  (e:elem) (s:emap) : elist  =
+      let r1 = find s e in
+      if (r1==None) then [e]
       else List.map fst (List.filter (fun (a,k) -> k==r1) s) 
+  
 
     (* return a distinct element equal to e *)
     let find_equiv  (e:elem) (s:emap) : elem option  =

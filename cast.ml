@@ -33,6 +33,7 @@ and prog_decl = {
   mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
   mutable prog_templ_decls: templ_decl list;
   mutable prog_ut_decls: ut_decl list;
+  mutable prog_ui_decls: ui_decl list;
   mutable prog_hp_decls : hp_decl list; (*only used to compare against some expected output????*)
   mutable prog_view_equiv : (ident * ident) list; (*inferred with --pred-en-equiv*)
   mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
@@ -175,6 +176,12 @@ and ut_decl = {
   ut_pos: loc;
 }
 
+(* Unknown Imm Declaration *)
+and ui_decl = {
+  ui_rel: rel_decl;
+  ui_is_pre: bool;
+  ui_pos: loc;
+}
 
 and hp_decl = {
   hp_name : ident;
@@ -207,7 +214,7 @@ and proc_decl = {
   proc_dynamic_specs : Cformula.struc_formula;
   (*proc_dynamic_specs_with_pre : Cformula.struc_formula;*)
   (* stack of static specs inferred *)
-  proc_stk_of_static_specs : Cformula.struc_formula Gen.stack;
+  proc_stk_of_static_specs : Cformula.struc_formula Gen.stack_pr (* !print_struc_formula (==) *);
   mutable proc_hprel_ass: (Cformula.hprel list * nflow) list;
   mutable proc_hprel_unkmap: ((P.spec_var * int list) * P.xpure_view) list;
   mutable proc_sel_hps: P.spec_var list;
@@ -538,11 +545,16 @@ and exp = (* expressions keep their types *)
   | Try of exp_try
   | Par of exp_par
 
+
+let global_prog = ref (None : prog_decl option)
+
 (* Stack of Template Declarations *)
 let templ_decls: templ_decl Gen.stack = new Gen.stack
 
 (* Stack of Unknown Temporal Declarations *)
 let ut_decls: ut_decl Gen.stack = new Gen.stack
+
+let ui_decls: ui_decl Gen.stack = new Gen.stack
 
 let get_sharp_flow sf = match sf with
   | Sharp_ct ff -> ff.F.formula_flow_interval
@@ -1096,6 +1108,20 @@ let rec look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs w
   | d :: rest -> if d.rel_name = name then d else look_up_rel_def_raw rest name
   | [] -> raise Not_found
 
+(* Returned the list of types of arguments *)
+let look_up_rel_args_type (defs: rel_decl list) name =
+  let rel = look_up_rel_def_raw defs name in
+  List.map (fun sv ->
+      match sv with
+      | Cpure.SpecVar (typ,id,_) ->
+        typ
+    ) rel.rel_vars
+;;
+
+let look_up_rel_args_type_from_prog p name =
+  look_up_rel_args_type p.prog_rel_decls name
+;;
+
 let look_up_templ_def_raw (defs: templ_decl list) (name : ident) = 
   List.find (fun d -> d.templ_name = name) defs
 
@@ -1285,7 +1311,7 @@ let self_param vdef = P.SpecVar (Named vdef.view_data_name, self, Unprimed)
 let look_up_view_baga prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
   let vdef = look_up_view_def no_pos prog.prog_view_decls c in
   let ba = vdef.view_baga in
-  (* let () = print_endline_quiet(" look_up_view_baga: baga= " ^ (!print_svl ba)) in *)
+  (* let () = x_binfo_hp (add_str "look_up_view_baga: baga= " !print_svl) ba no_pos in *)
   let from_svs = (self_param vdef) :: vdef.view_vars in
   let to_svs = root :: args in
   P.subst_var_list_avoid_capture from_svs to_svs ba

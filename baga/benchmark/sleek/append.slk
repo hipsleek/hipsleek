@@ -1,0 +1,446 @@
+data node {
+  int val;
+  node next;
+}.
+ pred lseg<p:node,n:int> == 
+  emp&self=p & n=0 or
+(exists p_29,flted_11_28: self::node<Anon_13,q> * 
+  q::lseg{}<p_29,flted_11_28>&flted_11_28+1=n & p_29=p)
+  inv 0<=n.
+ pred ll<n:int> == 
+  emp&self=null & n=0 or
+(exists flted_7_31: self::node<Anon_12,q> * 
+  q::ll{}<flted_7_31>&flted_7_31+1=n)
+  inv 0<=n.
+ pred clist<n:int> == 
+  (exists self_26,flted_14_25: self::node<Anon_14,p> * 
+  p::lseg{}<self_26,flted_14_25>&flted_14_25+1=n & self_26=self)
+  inv 1<=n.
+
+ /*
+// id: 0; line: 10; kind: Pred_Check_Inv
+ checkentail emp&((self=p & n=0) | (1<=n & self!=null))
+ |-  emp&0<=n.
+expect Valid.
+ 
+// id: 1; line: 10; kind: Pred_Check_Inv
+ checkentail emp&((self=p & n=0) | (1<=n & self!=null))
+ |-  emp&0<=n.
+expect Valid.
+ 
+// id: 2; line: 6; kind: Pred_Check_Inv
+ checkentail emp&((self=null & n=0) | (1<=n & self!=null))
+ |-  emp&0<=n.
+expect Valid.
+ 
+// id: 3; line: 6; kind: Pred_Check_Inv
+ checkentail emp&((self=null & n=0) | (1<=n & self!=null))
+ |-  emp&0<=n.
+expect Valid.
+ 
+// id: 4; line: 14; kind: Pred_Check_Inv
+ checkentail emp&1<=n & self!=null
+ |-  emp&1<=n.
+expect Valid.
+ 
+// id: 5; line: 14; kind: Pred_Check_Inv
+ checkentail emp&1<=n & self!=null
+ |-  emp&1<=n.
+expect Valid.
+ */
+
+// id: 6; line: 28; kind: BIND
+ checkentail (exists flted,Anon,q: x'::node<Anon,q> * q::ll{}<flted>&MayLoop[] & flted+
+1=n & x'=x & y'=y & x!=null)
+ |-  x'::node<val',next'>@L.
+expect Valid.
+ 
+// id: 8; line: 29; kind: PRE
+ checkentail x'::node<Anon1,q1> * q1::ll{}<flted1>&MayLoop[] & x!=null & y'=y & x'=x & 
+flted1+1=n & tmp'=q1 & tmp'=null
+ |-  htrue.
+expect Valid.
+ 
+// id: 9; line: 29; kind: PRE
+ checkentail x'::node<Anon1,q1> * q1::ll{}<flted1>&MayLoop[] & x!=null & y'=y & x'=x & 
+flted1+1=n & tmp'=q1 & tmp'=null
+ |-  emp&Term[].
+expect Valid.
+ 
+// id: 10; line: 29; kind: PRE
+ checkentail x'::node<Anon1,q1> * q1::ll{}<flted1>&MayLoop[] & x!=null & y'=y & x'=x & 
+flted1+1=n & tmp'=q1 & tmp'!=null
+ |-  htrue.
+expect Valid.
+ 
+// id: 11; line: 29; kind: PRE
+ checkentail x'::node<Anon1,q1> * q1::ll{}<flted1>&MayLoop[] & x!=null & y'=y & x'=x & 
+flted1+1=n & tmp'=q1 & tmp'!=null
+ |-  emp&Term[].
+expect Valid.
+ 
+// id: 12; line: 31; kind: BIND
+ checkentail x'::node<Anon1,q1> * q1::ll{}<flted1>&MayLoop[] & tmp'=q1 & flted1+1=n & 
+x'=x & y'=y & x!=null & tmp'!=null & fl'
+ |-  x'::node<val1',next1'>@L.
+expect Valid.
+ 
+// id: 14; line: 31; kind: PRE_REC
+ checkentail x'::node<Anon1,q1> * q1::ll{}<flted1>&MayLoop[] & v'=q1 & tmp'=q1 & flted1+
+1=n & x'=x & y'=y & x!=null & tmp'!=null & fl'
+ |-  v'::ll{}<n1>&v'!=null.
+expect Valid.
+ 
+// id: 16; line: 31; kind: PRE_REC
+ checkentail x'::node<Anon1,q1>&MayLoop[] & n1=flted1 & v'=q1 & tmp'=q1 & flted1+1=n & 
+x'=x & y'=y & x!=null & tmp'!=null & fl'
+ |-  emp&MayLoop[].
+expect Valid.
+ 
+// id: 17; line: 31; kind: PRE_REC
+ checkentail x'::node<Anon1,q1> * q1::ll{}<flted1>&MayLoop[] & v'=q1 & tmp'=q1 & flted1+
+1=n & x'=x & y'=y & x!=null & tmp'!=null & fl'
+ |-  v'::ll{}<n2>&0<n2 & y'=v'.
+expect Fail.
+ 
+// id: 19; line: 31; kind: PRE_REC
+ checkentail x'::node<Anon1,q1> * q1::ll{}<flted1>&MayLoop[] & v'=q1 & tmp'=q1 & flted1+
+1=n & x'=x & y'=y & x!=null & tmp'!=null & fl'
+ |-  v'::ll{}<n3> * y'::ll{}<m>&0<n3.
+expect Fail.
+ 
+// id: 22; line: 31; kind: PRE_REC
+ checkentail x'::node<Anon1,q1> * q1::ll{}<flted1>&MayLoop[] & v'=q1 & tmp'=q1 & flted1+
+1=n & x'=x & y'=y & x!=null & tmp'!=null & fl'
+ |-  (exists flted2: v'::lseg{}<r,n4> * r::node<b,flted2>&flted2=null).
+expect Fail.
+ 
+// id: 23; line: 35; kind: BIND
+ checkentail x'::node<Anon1,q1> * q1::ll{}<flted1>&MayLoop[] & tmp'=q1 & flted1+1=n & 
+x'=x & y'=y & x!=null & tmp'=null & !(fl')
+ |-  x'::node<val2',next2'>.
+expect Valid.
+ 
+// id: 25; line: 0; kind: POST
+ checkentail (exists fl': x'::node<Anon1,q1> * q1::lseg{}<y',n1>&MayLoop[] & fl' & 
+q1!=null & x!=null & y'=y & x'=x & flted1+1=n & n1=flted1 & 0<=flted1 & 
+0<=n1)
+ |-  (exists y1,n5: x::lseg{}<y1,n5>&n5=n & y1=y & 0<=n).
+expect Valid.
+ 
+// id: 32; line: 0; kind: POST
+ checkentail (exists fl': q1::ll{}<flted1> * x'::node<Anon1,y'>&MayLoop[] & next=q1 & 
+flted1+1=n & x'=x & y'=y & x!=null & q1=null & !(fl'))
+ |-  (exists y1,n5: x::lseg{}<y1,n5>&n5=n & y1=y & 0<=n).
+expect Valid.
+ 
+// id: 40; line: 28; kind: BIND
+ checkentail (exists flted3,Anon2,q2: x'::node<Anon2,q2> * q2::ll{}<flted3>&MayLoop[] & 
+flted3+1=n & x'=x & y'=y & y=x & 0<n)
+ |-  x'::node<val',next'>@L.
+expect Valid.
+ 
+// id: 42; line: 29; kind: PRE
+ checkentail x'::node<Anon3,q3> * q3::ll{}<flted4>&MayLoop[] & 0<n & y=x & y'=y & x'=x & 
+flted4+1=n & tmp'=q3 & tmp'=null
+ |-  htrue.
+expect Valid.
+
+ /*
+// id: 43; line: 29; kind: PRE
+ checkentail x'::node<Anon3,q3> * q3::ll{}<flted4>&MayLoop[] & 0<n & y=x & y'=y & x'=x & 
+flted4+1=n & tmp'=q3 & tmp'=null
+ |-  emp&Term[].
+expect Valid.
+ */
+
+// id: 44; line: 29; kind: PRE
+ checkentail x'::node<Anon3,q3> * q3::ll{}<flted4>&MayLoop[] & 0<n & y=x & y'=y & x'=x & 
+flted4+1=n & tmp'=q3 & tmp'!=null
+ |-  htrue.
+expect Valid.
+ 
+
+/*
+// id: 45; line: 29; kind: PRE
+ checkentail x'::node<Anon3,q3> * q3::ll{}<flted4>&MayLoop[] & 0<n & y=x & y'=y & x'=x & 
+flted4+1=n & tmp'=q3 & tmp'!=null
+ |-  emp&Term[].
+expect Valid.
+ */
+
+// id: 46; line: 31; kind: BIND
+ checkentail x'::node<Anon3,q3> * q3::ll{}<flted4>&MayLoop[] & tmp'=q3 & flted4+1=n & 
+x'=x & y'=y & y=x & 0<n & tmp'!=null & fl'
+ |-  x'::node<val1',next1'>@L.
+expect Valid.
+ 
+// id: 48; line: 31; kind: PRE_REC
+ checkentail x'::node<Anon3,q3> * q3::ll{}<flted4>&MayLoop[] & v'=q3 & tmp'=q3 & flted4+
+1=n & x'=x & y'=y & y=x & 0<n & tmp'!=null & fl'
+ |-  v'::ll{}<n6>&v'!=null.
+expect Valid.
+ 
+/*
+// id: 50; line: 31; kind: PRE_REC
+ checkentail x'::node<Anon3,q3>&MayLoop[] & n6=flted4 & v'=q3 & tmp'=q3 & flted4+1=n & 
+x'=x & y'=y & y=x & 0<n & tmp'!=null & fl'
+ |-  emp&MayLoop[].
+expect Valid.
+ */
+
+// id: 51; line: 31; kind: PRE_REC
+ checkentail x'::node<Anon3,q3> * q3::ll{}<flted4>&MayLoop[] & v'=q3 & tmp'=q3 & flted4+
+1=n & x'=x & y'=y & y=x & 0<n & tmp'!=null & fl'
+ |-  v'::ll{}<n7>&0<n7 & y'=v'.
+expect Fail.
+ 
+// id: 58; line: 31; kind: PRE_REC
+ checkentail x'::node<Anon3,q3> * q3::ll{}<flted4>&MayLoop[] & v'=q3 & tmp'=q3 & flted4+
+1=n & x'=x & y'=y & y=x & 0<n & tmp'!=null & fl'
+ |-  v'::ll{}<n8> * y'::ll{}<m>&0<n8.
+expect Fail.
+ 
+// id: 70; line: 31; kind: PRE_REC
+ checkentail x'::node<Anon3,q3> * q3::ll{}<flted4>&MayLoop[] & v'=q3 & tmp'=q3 & flted4+
+1=n & x'=x & y'=y & y=x & 0<n & tmp'!=null & fl'
+ |-  (exists flted2: v'::lseg{}<r,n9> * r::node<b,flted2>&flted2=null).
+expect Fail.
+ 
+// id: 71; line: 35; kind: BIND
+ checkentail x'::node<Anon3,q3> * q3::ll{}<flted4>&MayLoop[] & tmp'=q3 & flted4+1=n & 
+x'=x & y'=y & y=x & 0<n & tmp'=null & !(fl')
+ |-  x'::node<val2',next2'>.
+expect Valid.
+ 
+// id: 73; line: 0; kind: POST
+ checkentail (exists fl': x'::node<Anon3,q3> * q3::lseg{}<y',n6> & fl' & 
+q3!=null & 0<n & y=x & y'=y & x'=x & flted4+1=n & n6=flted4 & 0<=flted4 & 
+0<=n6)
+ |-  (exists n10: x::clist{}<n10>&n10=n & 0<=n).
+expect Valid.
+ 
+// id: 78; line: 0; kind: POST
+ checkentail (exists fl': q3::ll{}<flted4> * x'::node<Anon3,y'> & next1=q3 & 
+flted4+1=n & x'=x & y'=y & y=x & 0<n & q3=null & !(fl'))
+ |-  (exists n10: x::clist{}<n10>&n10=n & 0<=n).
+expect Valid.
+ 
+// id: 84; line: 28; kind: BIND
+ checkentail (exists flted5,Anon4,q4: x'::node<Anon4,q4> * q4::ll{}<flted5> * y::ll{}<m>&
+MayLoop[] & flted5+1=n & x'=x & y'=y & 0<n)
+ |-  x'::node<val',next'>@L.
+expect Valid.
+ 
+// id: 86; line: 29; kind: PRE
+ checkentail x'::node<Anon5,q5> * q5::ll{}<flted6> * y::ll{}<m> & 0<n & y'=y & 
+x'=x & flted6+1=n & tmp'=q5 & tmp'=null
+ |-  htrue.
+expect Valid.
+ 
+/*
+// id: 87; line: 29; kind: PRE
+ checkentail x'::node<Anon5,q5> * q5::ll{}<flted6> * y::ll{}<m>&MayLoop[] & 0<n & y'=y & 
+x'=x & flted6+1=n & tmp'=q5 & tmp'=null
+ |-  emp&Term[].
+expect Valid.
+ */
+
+// id: 88; line: 29; kind: PRE
+ checkentail x'::node<Anon5,q5> * q5::ll{}<flted6> * y::ll{}<m> & 0<n & y'=y & 
+x'=x & flted6+1=n & tmp'=q5 & tmp'!=null
+ |-  htrue.
+expect Valid.
+
+/*
+// id: 89; line: 29; kind: PRE
+ checkentail x'::node<Anon5,q5> * q5::ll{}<flted6> * y::ll{}<m> & 0<n & y'=y & 
+x'=x & flted6+1=n & tmp'=q5 & tmp'!=null
+ |-  emp&Term[].
+expect Valid.
+ */
+
+// id: 90; line: 31; kind: BIND
+ checkentail x'::node<Anon5,q5> * q5::ll{}<flted6> * y::ll{}<m> & tmp'=q5 & 
+flted6+1=n & x'=x & y'=y & 0<n & tmp'!=null & fl'
+ |-  x'::node<val1',next1'>@L.
+expect Valid.
+ 
+// id: 92; line: 31; kind: PRE_REC
+ checkentail x'::node<Anon5,q5> * q5::ll{}<flted6> * y::ll{}<m> & v'=q5 & 
+tmp'=q5 & flted6+1=n & x'=x & y'=y & 0<n & tmp'!=null & fl'
+ |-  v'::ll{}<n11>&v'!=null.
+expect Valid.
+
+/*
+// id: 94; line: 31; kind: PRE_REC
+ checkentail x'::node<Anon5,q5> * y::ll{}<m>&MayLoop[] & n11=flted6 & v'=q5 & tmp'=q5 & 
+flted6+1=n & x'=x & y'=y & 0<n & tmp'!=null & fl'
+ |-  emp&MayLoop[].
+expect Valid.
+ */
+
+// id: 95; line: 31; kind: PRE_REC
+ checkentail x'::node<Anon5,q5> * q5::ll{}<flted6> * y::ll{}<m> & v'=q5 & 
+tmp'=q5 & flted6+1=n & x'=x & y'=y & 0<n & tmp'!=null & fl'
+ |-  v'::ll{}<n12>&0<n12 & y'=v'.
+expect Fail.
+ 
+// id: 98; line: 31; kind: PRE_REC
+ checkentail x'::node<Anon5,q5> * q5::ll{}<flted6> * y::ll{}<m>& v'=q5 & 
+tmp'=q5 & flted6+1=n & x'=x & y'=y & 0<n & tmp'!=null & fl'
+ |-  v'::ll{}<n13> * y'::ll{}<m1>&0<n13.
+expect Valid.
+ 
+/*
+// id: 101; line: 31; kind: PRE_REC
+ checkentail x'::node<Anon5,q5>&MayLoop[] & m1=m & n13=flted6 & v'=q5 & tmp'=q5 & flted6+
+1=n & x'=x & y'=y & 0<n & tmp'!=null & fl'
+ |-  emp&MayLoop[].
+expect Valid.
+ */
+
+// id: 102; line: 31; kind: PRE_REC
+ checkentail x'::node<Anon5,q5> * q5::ll{}<flted6> * y::ll{}<m> & v'=q5 & 
+tmp'=q5 & flted6+1=n & x'=x & y'=y & 0<n & tmp'!=null & fl'
+ |-  (exists flted2: v'::lseg{}<r,n14> * r::node<b,flted2>&flted2=null).
+expect Fail.
+ 
+// id: 103; line: 35; kind: BIND
+ checkentail x'::node<Anon5,q5> * q5::ll{}<flted6> * y::ll{}<m> & tmp'=q5 & 
+flted6+1=n & x'=x & y'=y & 0<n & tmp'=null & !(fl')
+ |-  x'::node<val2',next2'>.
+expect Valid.
+ 
+// id: 105; line: 0; kind: POST
+ checkentail (exists fl': x'::node<Anon5,q5> * y::ll{}<m> * q5::lseg{}<y',n11>&
+MayLoop[] & fl' & q5!=null & 0<n & y'=y & x'=x & flted6+1=n & n11=flted6 & 
+0<=flted6 & 0<=n11)
+ |-  (exists e: x::ll{}<e>&e=m+n & 0<=m & 0<=n).
+expect Fail.
+ 
+// id: 109; line: 0; kind: POST
+ checkentail (exists fl': q5::ll{}<flted6> * y::ll{}<m> * x'::node<Anon5,y'>&MayLoop[] & 
+next2=q5 & flted6+1=n & x'=x & y'=y & 0<n & q5=null & !(fl'))
+ |-  (exists e: x::ll{}<e>&e=m+n & 0<=m & 0<=n).
+expect Valid.
+ 
+// id: 115; line: 0; kind: POST
+ checkentail (exists e1,fl': x'::node<Anon5,q5> * q5::ll{}<e1> & fl' & 
+q5!=null & 0<n & y'=y & x'=x & flted6+1=n & n13=flted6 & m1=m & 0<=m & 
+0<=flted6 & e1=m1+n13 & 0<=n13 & 0<=m1)
+ |-  (exists e: x::ll{}<e>&e=m+n & 0<=m & 0<=n).
+expect Valid.
+ 
+// id: 121; line: 0; kind: POST
+ checkentail (exists fl': q5::ll{}<flted6> * y::ll{}<m> * x'::node<Anon5,y'>&MayLoop[] & 
+next2=q5 & flted6+1=n & x'=x & y'=y & 0<n & q5=null & !(fl'))
+ |-  (exists e: x::ll{}<e>&e=m+n & 0<=m & 0<=n).
+expect Valid.
+ 
+// id: 127; line: 28; kind: BIND
+ checkentail (exists flted7: r::node<b,flted7>&MayLoop[] & x'=r & n=0 & x'=x & y'=y & 
+flted7=null)
+ |-  x'::node<val',next'>@L.
+expect Valid.
+ 
+// id: 129; line: 28; kind: BIND
+ checkentail (exists p1,flted8,Anon6,q6,flted7: x'::node<Anon6,q6> * 
+q6::lseg{}<p1,flted8> * r::node<b,flted7> & flted8+1=n & p1=r & 
+x'=x & y'=y & flted7=null)
+ |-  x'::node<val',next'>@L.
+expect Valid.
+ 
+/*
+// id: 131; line: 29; kind: PRE
+ checkentail r::node<b,flted9>&MayLoop[] & flted9=null & y'=y & x'=x & n=0 & x'=r & 
+tmp'=flted9 & tmp'=null
+ |-  htrue.
+expect Valid.
+ 
+// id: 132; line: 29; kind: PRE
+ checkentail r::node<b,flted9>&MayLoop[] & flted9=null & y'=y & x'=x & n=0 & x'=r & 
+tmp'=flted9 & tmp'=null
+ |-  emp&Term[].
+expect Valid.
+ */
+
+// id: 133; line: 29; kind: PRE
+ checkentail x'::node<Anon7,q7> * q7::lseg{}<p2,flted11> * r::node<b,flted10>&
+MayLoop[] & flted10=null & y'=y & x'=x & p2=r & flted11+1=n & tmp'=q7 & 
+tmp'!=null
+ |-  htrue.
+expect Valid.
+ 
+/*
+// id: 134; line: 29; kind: PRE
+ checkentail x'::node<Anon7,q7> * q7::lseg{}<p2,flted11> * r::node<b,flted10>&
+MayLoop[] & flted10=null & y'=y & x'=x & p2=r & flted11+1=n & tmp'=q7 & 
+tmp'!=null
+ |-  emp&Term[].
+expect Valid.
+ */
+
+// id: 135; line: 31; kind: BIND
+ checkentail x'::node<Anon7,q7> * q7::lseg{}<p2,flted11> * r::node<b,flted10>&
+ tmp'=q7 & flted11+1=n & p2=r & x'=x & y'=y & flted10=null & 
+tmp'!=null & fl'
+ |-  x'::node<val1',next1'>@L.
+expect Valid.
+ 
+// id: 137; line: 31; kind: PRE_REC
+ checkentail x'::node<Anon7,q7> * q7::lseg{}<p2,flted11> * r::node<b,flted10>&
+ v'=q7 & tmp'=q7 & flted11+1=n & p2=r & x'=x & y'=y & 
+flted10=null & tmp'!=null & fl'
+ |-  v'::ll{}<n15>&v'!=null.
+expect Fail.
+ 
+// id: 138; line: 31; kind: PRE_REC
+ checkentail x'::node<Anon7,q7> * q7::lseg{}<p2,flted11> * r::node<b,flted10>&
+MayLoop[] & v'=q7 & tmp'=q7 & flted11+1=n & p2=r & x'=x & y'=y & 
+flted10=null & tmp'!=null & fl'
+ |-  v'::ll{}<n16>&0<n16 & y'=v'.
+expect Fail.
+ 
+// id: 139; line: 31; kind: PRE_REC
+ checkentail x'::node<Anon7,q7> * q7::lseg{}<p2,flted11> * r::node<b,flted10>&
+ v'=q7 & tmp'=q7 & flted11+1=n & p2=r & x'=x & y'=y & 
+flted10=null & tmp'!=null & fl'
+ |-  v'::ll{}<n17> * y'::ll{}<m>&0<n17.
+expect Fail.
+ 
+// id: 141; line: 31; kind: PRE_REC
+ checkentail x'::node<Anon7,q7> * q7::lseg{}<p2,flted11> * r::node<b,flted10>&
+ v'=q7 & tmp'=q7 & flted11+1=n & p2=r & x'=x & y'=y & 
+flted10=null & tmp'!=null & fl'
+ |-  (exists flted2: v'::lseg{}<r1,n18> * r1::node<b1,flted2>&flted2=null).
+expect Valid.
+
+/* 
+// id: 144; line: 31; kind: PRE_REC
+ checkentail x'::node<Anon7,q7> & b1=b & n18=flted11 & r1=p2 & v'=q7 & 
+tmp'=q7 & flted11+1=n & p2=r & x'=x & y'=y & flted10=null & tmp'!=null & fl'
+ |-  emp&MayLoop[].
+expect Valid.
+*/
+ 
+// id: 145; line: 35; kind: BIND
+ checkentail r::node<b,flted9>&MayLoop[] & tmp'=flted9 & x'=r & n=0 & x'=x & y'=y & 
+flted9=null & tmp'=null & !(fl')
+ |-  x'::node<val2',next2'>.
+expect Valid.
+ 
+// id: 147; line: 0; kind: POST
+ checkentail (exists fl': x'::node<Anon7,q7> * q7::lseg{}<r1,n18> * r1::node<b1,y'>&
+MayLoop[] & fl' & q7!=null & flted10=null & y'=y & x'=x & p2=r & flted11+
+1=n & r1=p2 & n18=flted11 & b1=b & r!=null & 0<=flted11 & 0<=n18)
+ |-  (exists r2,n19,b2,y2: x::lseg{}<r2,n19> * r::node<b2,y2>&y2=y & b2=b & 
+n19=n & r2=r & 0<=n).
+expect Valid.
+ 
+// id: 157; line: 0; kind: POST
+ checkentail (exists fl': x'::node<b,y'>&MayLoop[] & next3=flted9 & x'=r & n=0 & x'=x & 
+y'=y & flted9=null & !(fl'))
+ |-  (exists r2,n19,b2,y2: x::lseg{}<r2,n19> * r::node<b2,y2>&y2=y & b2=b & 
+n19=n & r2=r & 0<=n).
+expect Valid.

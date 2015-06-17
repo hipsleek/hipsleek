@@ -1,0 +1,7 @@
+data cell {
+  int val;
+}.
+
+
+checkentail x::cell<a>@u & u=@M & v=@L  |- x::cell<b>@v & v<:@L.
+print residue.

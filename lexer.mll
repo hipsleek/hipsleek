@@ -178,6 +178,7 @@ module Make (Token : SleekTokenS)
    (* ("ex", EXISTS); *)
    ("exists", EXISTS);
    ("extends", EXTENDS);
+   ("expect_infer", EXPECT_INFER);
    ("false", FALSE);
    ("finalizes", FINALIZE);
    ("finally", FINALLY);
@@ -258,6 +259,8 @@ module Make (Token : SleekTokenS)
    ("split", SPLIT);
    ("LexVar", LEXVAR);
    ("template", TEMPL);
+   ("UIPre", UIPRE);
+   ("UIPost", UIPOST);
    ("UTPre", UTPRE);
    ("UTPost", UTPOST);
    ("Term", TERM);
@@ -279,6 +282,8 @@ module Make (Token : SleekTokenS)
    ("union", UNION);
    ("expect", VALIDATE);
    ("Valid", VALID);
+   ("Sat", SSAT);
+   ("Unsat", SUNSAT);
    ("Fail", FAIL);
    ("Fail_Must", FAIL_MUST);
    ("Fail_May", FAIL_MAY);
@@ -400,6 +405,7 @@ rule tokenizer file_name = parse
   | "@post_n" { INFER_AT_POST }
   | "@ver_post" { INFER_AT_VER_POST }
   | "@imm" { INFER_AT_IMM }
+  | "@field_imm" { INFER_AT_FIELD_IMM }
   | "@arrvar" { INFER_AT_ARR_AS_VAR }
   | "@shape" { INFER_AT_SHAPE }
   | "@error" { INFER_AT_ERROR }

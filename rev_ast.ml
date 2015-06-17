@@ -77,6 +77,7 @@ let rec rev_trans_pf f = match f with
       IP.xpure_view_remaining_branches = None;
       IP.xpure_view_pos = b.CP.xpure_view_pos}
   | CP.LexVar _ -> failwith "rev_trans_pure: unexpected lexvar, if you want support for it , implement this case\n"
+  | CP.ImmRel _ -> failwith "rev_trans_pf for imm rel not implemented yet"
   | CP.BConst b -> IP.BConst b
   | CP.Frm (v,p) -> IP.Frm ( rev_trans_spec_var v, p)
   | CP.BVar (v,p) -> IP.BVar ( rev_trans_spec_var v, p)

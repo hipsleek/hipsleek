@@ -374,10 +374,10 @@ let convert_starminus ls =
                        h_formula_starminus_aliasing = al;
                        h_formula_starminus_pos = pos}) ->
            (let h1 =  match al with
-               | Not_Aliased -> mkStarH h2 h1 pos 
-               | May_Aliased -> mkConjH h2 h1 pos
-               | Must_Aliased -> mkConjConjH h2 h1 pos
-               | Partial_Aliased -> mkConjStarH h2 h1 pos in 
+              | Not_Aliased -> mkStarH h2 h1 pos 
+              | May_Aliased -> mkConjH h2 h1 pos
+              | Must_Aliased -> mkConjConjH h2 h1 pos
+              | Partial_Aliased -> mkConjStarH h2 h1 pos in 
             (mkStarMinusH h1 h2 al pos 111))
          | Star({h_formula_star_h1 = h1;
                  h_formula_star_h2 = h2;
@@ -644,7 +644,7 @@ and update_field_imm_x (f : h_formula) (new_fann: CP.ann list) (consumed_ann: CP
         DataNode ( {d with h_formula_data_param_imm = new_fann; 
                            h_formula_data_arguments = new_args;
                    } )
-      | ViewNode v -> ViewNode ( {v with h_formula_view_annot_arg =  CP.update_positions_for_imm_view_params  new_fann v.h_formula_view_annot_arg} )
+      | ViewNode v -> ViewNode ( {v with h_formula_view_annot_arg = CP.update_positions_for_imm_view_params  new_fann v.h_formula_view_annot_arg} )
       | _          -> report_error no_pos ("[context.ml] : only data node should allow field annotations \n")
     in
     updated_f
@@ -1753,7 +1753,9 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          let new_orig_r = if !ann_derv then not(vr_view_derv) else vr_view_orig in
          let new_orig_l = if !ann_derv then not(dl_derv) else dl_orig in
          let sub_ann  = if (!Globals.allow_field_ann) then 
-             let r,_,_,_ = Immutable.subtype_ann_list [] [] dl.h_formula_data_param_imm (CP.annot_arg_to_imm_ann_list (get_node_annot_args rhs_node)) in
+             let rhs_no_h = CF.add_mix_formula_to_formula rhs_p (CF.mkTrue_nf no_pos) in
+             let rhs_for_imm_inst = map_opt_def rhs_no_h (fun x ->  CF.add_pure_formula_to_formula x rhs) estate.es_rhs_pure in
+             let r,_,_,_ = x_add (Immutable.subtype_ann_list ~rhs:rhs_for_imm_inst ~lhs:estate.es_formula) [] [] dl.h_formula_data_param_imm (CP.annot_arg_to_imm_ann_list (get_node_annot_args rhs_node)) in
              let isAccs  = Immutable.isAccsList dl.h_formula_data_param_imm in
              r && not(isAccs)
            else true in
@@ -1883,7 +1885,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          (* let a1 = if (new_orig || vl_self_pts==[]) then [(1,M_unfold (m_res,uf_i))] else [] in *)
          (* let () = pr_hdebug (add_str "left_ls" (pr_list pr_none)) left_ls in *)
          let sub_ann  = if (!Globals.allow_field_ann) then 
-             let r,_,_,_ = Immutable.subtype_ann_list [] []  (CP.annot_arg_to_imm_ann_list (get_node_annot_args lhs_node)) dr.h_formula_data_param_imm in
+             let r,_,_,_ = x_add Immutable.subtype_ann_list [] []  (CP.annot_arg_to_imm_ann_list (get_node_annot_args lhs_node)) dr.h_formula_data_param_imm in
              r
            else true in
          let a1 = 
@@ -2377,10 +2379,10 @@ and group_equal_actions_x (ys: action_wt list) (running:action_wt list) (running
   (action_wt list)=
   match ys with
   | [] -> let new_rs =
-            match running with
-            | [] -> rs
-            | [a] -> rs @ [a]
-            | _ -> rs @ [(running_w, Cond_action running)]
+    match running with
+    | [] -> rs
+    | [a] -> rs @ [a]
+    | _ -> rs @ [(running_w, Cond_action running)]
     in new_rs
   | (w, act)::ss ->
     if (w > running_w) then

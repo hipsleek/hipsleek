@@ -34,6 +34,7 @@ type prog_decl = {
   mutable prog_rel_decls : rel_decl list; 
   mutable prog_templ_decls: templ_decl list;
   mutable prog_ut_decls: ut_decl list;
+  mutable prog_ui_decls: ui_decl list;
   mutable prog_hp_decls : hp_decl list; 
   mutable prog_rel_ids : (typ * ident) list; 
   mutable prog_hp_ids : (typ * ident) list; 
@@ -143,6 +144,12 @@ and ut_decl = {
   ut_pos: loc;
 }
 
+(* Unknown Imm Declaration *)
+and ui_decl = {
+  ui_rel: rel_decl;
+  ui_is_pre: bool;
+  ui_pos: loc;
+}
 
 and hp_decl = { hp_name : ident; 
                 (* rel_vars : ident list; *)
@@ -1665,7 +1672,7 @@ and expand_inline_fields ddefs fls =
                             let fn  = get_field_name fld in
                             let ft = get_field_typ fld in
                             try
-                              let ddef = look_up_data_def_raw ddefs (string_of_typ ft) in
+                              let ddef = x_add look_up_data_def_raw ddefs (string_of_typ ft) in
                               let fld_fs = List.map (fun y -> augment_field_with_prefix y (fn ^ Globals.inline_field_expand)) ddef.data_fields in
                               fld_fs
                             with
@@ -1695,7 +1702,7 @@ and look_up_all_fields_x (prog : prog_decl) (c : data_decl) =
 *)
 
 and look_up_all_fields_cname (prog : prog_decl) (c : ident) = 
-  let ddef = look_up_data_def_raw prog.prog_data_decls c
+  let ddef = x_add look_up_data_def_raw prog.prog_data_decls c
   in look_up_all_fields prog ddef
 
 and subs_heap_type_env_x (henv: (ident * typ) list) old_typ new_typ =
@@ -1843,7 +1850,7 @@ and collect_data_view_from_h_formula_x (h0 : F.h_formula) (data_decls: data_decl
       done;
       let c = c ^ !deref_str in
       try
-        let ddecl = look_up_data_def_raw data_decls c in
+        let ddecl = x_add look_up_data_def_raw data_decls c in
         let dl, vl = (
           if (String.compare v self = 0) then ([c], [])
           else ([], [])
@@ -2019,7 +2026,7 @@ and collect_data_view_from_pure_bformula_x (bf : P.b_formula) (data_decls: data_
   | P.EqMax _ | P.EqMin _ | P.LexVar _ -> ([], [], henv)
   | P.BagIn _ | P.BagNotIn _ | P.BagSub _ | P.BagMin _ | P.BagMax _ -> ([], [], henv)
   | P.ListIn _ | P.ListNotIn _ | P.ListAllN _ | P.ListPerm _ -> ([], [], henv)
-  (* | P.VarPerm _ *) | P.RelForm _ -> ([], [], henv)
+  (* | P.VarPerm _ *) | P.RelForm _ | P.ImmRel _ -> ([], [], henv)
 
 and collect_data_view_from_pure_bformula (bf : P.b_formula) (data_decls: data_decl list)
     (henv: (ident * typ) list)
@@ -2042,7 +2049,7 @@ and find_data_view_x (vdecl: view_decl) (data_decls: data_decl list) pos
         (* find type of self in the heap type env *)
         let typ, _ = get_heap_type henv self in
         let tname = string_of_typ typ in
-        let todo_unknown = look_up_data_def_raw data_decls tname in
+        let todo_unknown = x_add look_up_data_def_raw data_decls tname in
         ([tname], el)
       with Not_found ->
         ([], el)
@@ -2849,6 +2856,7 @@ let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) :
       prog_rel_ids = hd.prog_rel_ids @ iprims.prog_rel_ids; (* An Hoa *)
       prog_templ_decls = hd.prog_templ_decls @ iprims.prog_templ_decls;
       prog_ut_decls = hd.prog_ut_decls @ iprims.prog_ut_decls;
+      prog_ui_decls = hd.prog_ui_decls @ iprims.prog_ui_decls;
       prog_hp_decls = hd.prog_hp_decls @ iprims.prog_hp_decls;
       prog_hp_ids = hd.prog_hp_ids @ iprims.prog_hp_ids; 
       prog_axiom_decls = hd.prog_axiom_decls @ iprims.prog_axiom_decls; (* [4/10/2011] An Hoa *)
@@ -2875,6 +2883,7 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
       prog_rel_ids = [];
       prog_templ_decls = [];
       prog_ut_decls = [];
+      prog_ui_decls = [];
       prog_hp_decls = [];
       prog_hp_ids = [];
       prog_axiom_decls = [];
@@ -2894,7 +2903,7 @@ let get_field_from_typ ddefs data_typ field_name = match data_typ with
   | Named data_name -> 
     (* let () = print_endline ("1: " ^ data_name) in *)
     (* let () = print_endline ("2: " ^ field_name) in *)
-    let ddef = look_up_data_def_raw ddefs data_name in
+    let ddef = x_add look_up_data_def_raw ddefs data_name in
     (try
        let field = List.find (fun x -> (get_field_name x = field_name)) ddef.data_fields in
        (* let () = print_endline ("3: " ^ (snd (fst3 field))) in*)
@@ -2925,7 +2934,7 @@ let rec get_type_of_field_seq ddefs root_type field_seq =
   | [] -> root_type
   | f::t -> (match root_type with
       | Named c -> (try
-                      let ddef = look_up_data_def_raw ddefs c in
+                      let ddef = x_add look_up_data_def_raw ddefs c in
                       let ft = get_type_of_field ddef f in
                       (match ft with
                        | UNK -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[get_type_of_field_seq] Compound type " ^ c ^ " has no field " ^ f ^ "!" }
@@ -2957,7 +2966,7 @@ let rec compute_typ_size ddefs t =
   (* let () = print_endline ("[compute_typ_size] input = " ^ (string_of_typ t)) in *)
   let res = match t with
     | Named data_name -> (try 
-                            let ddef = look_up_data_def_raw ddefs data_name in
+                            let ddef = x_add look_up_data_def_raw ddefs data_name in
                             List.fold_left (fun a f -> 
                                 let fs = if (is_inline_field f) then 
                                     compute_typ_size ddefs (get_field_typ f) 
@@ -2982,7 +2991,7 @@ let rec compute_field_offset ddefs data_name accessed_field =
   try 
     (* let () = print_endline ("[compute_field_offset] input = { " ^ data_name ^ " , " ^ accessed_field ^ " }") in *)
     let found = ref false in
-    let ddef = look_up_data_def_raw ddefs data_name in
+    let ddef = x_add look_up_data_def_raw ddefs data_name in
     (* Accumulate the offset along the way *)
     let offset = List.fold_left (fun a f -> 
         if (!found) then a (* Once found, just keep constant*)
@@ -3016,7 +3025,7 @@ and compute_field_seq_offset ddefs data_name field_sequence =
         let offset = compute_field_offset ddefs !dname field_name in
         (* Update the dname to the data type of the field_name *)
         try
-          let ddef = look_up_data_def_raw ddefs !dname in
+          let ddef = x_add look_up_data_def_raw ddefs !dname in
           let field_type = get_type_of_field ddef field_name in
           begin
             dname := string_of_typ field_type;
@@ -3177,7 +3186,7 @@ let look_up_field_ann_x prog data_name sel_anns=
         ann_w_pos rest (n+1) (res@[((data_name,n),anns)])
       else ann_w_pos rest (n+1) res
   in
-  let dd = look_up_data_def_raw prog.prog_data_decls data_name in
+  let dd = x_add look_up_data_def_raw prog.prog_data_decls data_name in
   let ls_anns = List.map (fun (_,_,_,anns) -> anns) dd.data_fields in
   let ann_w_pos,ls_anns_only = List.split (ann_w_pos ls_anns 0 []) in
   let anns_only = List.concat ls_anns_only in

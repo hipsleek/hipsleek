@@ -1,0 +1,89 @@
+1. Places that use procedures in Trans_arr
+cprinter.ml:5438:Trans_arr.print_pure := string_of_pure_formula;;
+cprinter.ml:5439:Trans_arr.print_p_formula := string_of_p_formula;;
+fixcalc.ml:184:  let nf = x_add_1 Trans_arr.new_translate_out_array_in_one_formula_split f in
+fixcalc.ml:864:  let pre_vars = Trans_arr.expand_array_variable pf pre_vars in
+fixcalc.ml:865:  let post_vars = Trans_arr.expand_array_variable pf post_vars in
+fixcalc.ml:1403:  List.map (fun (a,b) -> (Trans_arr.translate_back_array_in_one_formula a,Trans_arr.translate_back_array_in_one_formula b)) resultlst
+infer.ml:1573:    let nf = Trans_arr.translate_back_array_in_one_formula f in
+omega.ml:499:      then Trans_arr.drop_array_formula pe
+omega.ml:854:    (* let pe = Trans_arr.translate_out_array_in_one_formula_full pe in *)
+omega.ml:1088:    (* let pe = Trans_arr.new_translate_out_array_in_one_formula_split pe in *)
+omega.ml:1111:  Trans_arr.split_and_combine pairwisecheck (x_add_1 Trans_arr.can_be_simplify) pe
+solver.ml:8871:      (*   (Trans_arr.drop_array_formula a0, Trans_arr.drop_array_formula c) in *)
+solver.ml:8872:      (* let _ = Trans_arr.new_translate_out_array_in_imply_split_full a0 c in *)
+solver.ml:8874:      (*     | (n_a,n_c) -> (Trans_arr.drop_array_formula n_a, Trans_arr.drop_array_formula n_c)) *)
+solver.ml:8875:      (*       (Trans_arr.new_translate_out_array_in_imply_split_full a0 c) *)
+tpdispatcher.ml:1879:  (* let f = x_add_1 Trans_arr.new_translate_out_array_in_one_formula_split f in *)
+tpdispatcher.ml:1938:  Trans_arr.split_and_combine om_simplify (x_add_1 Trans_arr.can_be_simplify) f
+tpdispatcher.ml:1964:  (* let _ = Trans_arr.new_translate_out_array_in_one_formula_split f in *)
+tpdispatcher.ml:1965:  let f = x_add_1 Trans_arr.new_translate_out_array_in_one_formula_split f in
+tpdispatcher.ml:2110:  Trans_arr.split_and_combine (x_add_1 om_pairwisecheck) (fun f-> not (Trans_arr.contain_array f)) f
+tpdispatcher.ml:2230:    | _ -> Trans_arr.translate_back_array_in_one_formula (tp_pairwisecheck (simplify f)) in
+tpdispatcher.ml:2684:  let n_ante,n_conseq = Trans_arr.new_translate_out_array_in_imply_split_full ante conseq in
+
+2. In cprinter.ml
+These places are just providing printing function for Trans_arr.
+
+3. In fixcalc.ml
+a. fixcalc_of_pure_formula: translate the array part to normal variable so that the fixcalc input of the formula can be produced.
+b. compute_def: use expand_array_variable to extract the array element of the formula otherwise fixcalc can only have the array as a whole can omega does not know the relation between the array and its element.
+c. compute_fixpoint_x2: After the fix point for single variables are calculated, translate_back_array_in_one_formula is used to recover it to the original array-involved formula.
+d. infer.ml:1573 infer_pure_m: same purpose as c.
+e. omega.ml:499 is_sat_ops_x It is not necessary actually...
+f. omega.ml 1111 pairwisecheck: take out all the parts that cannot be translated
+g. omega.ml 1938 om_simplify: same purpose as f.
+h. tpdispatcher.ml 1965: translate the array part into normal variable.
+i. tpdispatcher.ml 2110: as same f.
+j. tpdispatcher.ml 2230: Translate back the result.
+k. tpdispatcher.ml 2684: translate out array part in an implication.
+
+1. Places that use procedures in Trans_arr
+cprinter.ml:5438:Trans_arr.print_pure := string_of_pure_formula;;
+cprinter.ml:5439:Trans_arr.print_p_formula := string_of_p_formula;;
+fixcalc.ml:184:  let nf = x_add_1 Trans_arr.new_translate_out_array_in_one_formula_split f in
+fixcalc.ml:864:  let pre_vars = Trans_arr.expand_array_variable pf pre_vars in
+fixcalc.ml:865:  let post_vars = Trans_arr.expand_array_variable pf post_vars in
+fixcalc.ml:1403:  List.map (fun (a,b) -> (Trans_arr.translate_back_array_in_one_formula a,Trans_arr.translate_back_array_in_one_formula b)) resultlst
+infer.ml:1573:    let nf = Trans_arr.translate_back_array_in_one_formula f in
+omega.ml:499:      then Trans_arr.drop_array_formula pe
+omega.ml:854:    (* let pe = Trans_arr.translate_out_array_in_one_formula_full pe in *)
+omega.ml:1088:    (* let pe = Trans_arr.new_translate_out_array_in_one_formula_split pe in *)
+omega.ml:1111:  Trans_arr.split_and_combine pairwisecheck (x_add_1 Trans_arr.can_be_simplify) pe
+solver.ml:8871:      (*   (Trans_arr.drop_array_formula a0, Trans_arr.drop_array_formula c) in *)
+solver.ml:8872:      (* let _ = Trans_arr.new_translate_out_array_in_imply_split_full a0 c in *)
+solver.ml:8874:      (*     | (n_a,n_c) -> (Trans_arr.drop_array_formula n_a, Trans_arr.drop_array_formula n_c)) *)
+solver.ml:8875:      (*       (Trans_arr.new_translate_out_array_in_imply_split_full a0 c) *)
+tpdispatcher.ml:1879:  (* let f = x_add_1 Trans_arr.new_translate_out_array_in_one_formula_split f in *)
+tpdispatcher.ml:1938:  Trans_arr.split_and_combine om_simplify (x_add_1 Trans_arr.can_be_simplify) f
+tpdispatcher.ml:1964:  (* let _ = Trans_arr.new_translate_out_array_in_one_formula_split f in *)
+tpdispatcher.ml:1965:  let f = x_add_1 Trans_arr.new_translate_out_array_in_one_formula_split f in
+tpdispatcher.ml:2110:  Trans_arr.split_and_combine (x_add_1 om_pairwisecheck) (fun f-> not (Trans_arr.contain_array f)) f
+tpdispatcher.ml:2230:    | _ -> Trans_arr.translate_back_array_in_one_formula (tp_pairwisecheck (simplify f)) in
+tpdispatcher.ml:2684:  let n_ante,n_conseq = Trans_arr.new_translate_out_array_in_imply_split_full ante conseq in
+
+2. In cprinter.ml
+These places are just providing printing function for Trans_arr.
+
+3. In fixcalc.ml
+a. fixcalc_of_pure_formula: translate the array part to normal variable so that the fixcalc input of the formula can be produced.
+b. compute_def: use expand_array_variable to extract the array element of the formula otherwise fixcalc can only have the array as a whole can omega does not know the relation between the array and its element.
+c. compute_fixpoint_x2: After the fix point for single variables are calculated, translate_back_array_in_one_formula is used to recover it to the original array-involved formula.
+d. infer.ml:1573 infer_pure_m: same purpose as c.
+e. omega.ml:499 is_sat_ops_x It is not necessary actually...
+f. omega.ml 1111 pairwisecheck: take out all the parts that cannot be translated
+g. omega.ml 1938 om_simplify: same purpose as f.
+h. tpdispatcher.ml 1965: translate the array part into normal variable.
+i. tpdispatcher.ml 2110: as same f.
+j. tpdispatcher.ml 2230: Translate back the result.
+k. tpdispatcher.ml 2684: translate out array part in an implication.
+
+4. What can be handled?
+a. array element with constant or free variable as index. For example, a[5], b[i].
+b. exists a. a is an array.
+c. forall about array in the form that the formula itself will not cause any contradiction, which means that only one point of an array can be used. EX. forall i i>5->a[i]=5 is fine. But forall i.i>5->a[i]>0&a[i+1]<0 may be false itself and reducing it may lose such information.
+
+5. Problem
+1. Split and combine is problematic in that the update relation translation happens after the split and hence the forall formula will not be filtered out.
+2. How to deal with exists?????
+exists(fc_1193: exists(fc_1192: a'[fc_1193]=fc_1192 & fc_1192=10) & fc_1193=5) & a'[4]=res. This is now temporarily safe in a way that the scope of the exists quantifiers are over the whole formula.

@@ -13,6 +13,17 @@ module CP = Cpure
 module H  = Hashtbl
 module I  = Iast
 
+
+let sleek_entail = ref(fun (n: int) (fts:Globals.infer_type list)
+  (svl:CP.spec_var list) (cprog:C.prog_decl)
+ (cache: (CF.formula * CF.formula) list)
+ (ante: CF.formula) (conseq: CF.struc_formula) ->
+     let a = (false:bool) in
+     let b = (CF.SuccCtx []:CF.list_context) in
+     let c = ([]: CP.spec_var list) in
+     (a, b, c)
+)
+
 (* the cformulae used during lemma proving *)
 type lem_formula = 
   | CFormula of CF.formula
@@ -77,20 +88,22 @@ let run_entail_check_helper ctx (iante: lem_formula) (iconseq: lem_formula) (inf
                           Error.error_text = "Cannot Prove Lemma in a False Ctx "}
   in 
   (* let ctx = add_infer_vars_to_list_ctx inf_vars ctx in *)
-  let () = if !Globals.print_core || !Globals.print_core_all then print_string ("\nrun_entail_check_helper:\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
-  (* let ctx = CF.transform_list_context (x_add Solver.elim_unsat_es 10 cprog (ref 1)) ctx in *)
-  let rs1, _ = 
-    if not !Globals.disable_failure_explaining then
-      x_add Solver.heap_entail_struc_init_bug_inv cprog false false ctx conseq no_pos None
-    else
-      x_add Solver.heap_entail_struc_init cprog false false ctx conseq no_pos None
-  in
-  let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
-  flush stdout;
-  let res =
-    if !Globals.disable_failure_explaining then ((not (CF.isFailCtx rs)))
-    else ((not (CF.isFailCtx_gen rs)))
-  in
+  (* let () = if !Globals.print_core || !Globals.print_core_all then print_string ("\nrun_entail_check_helper:\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in *)
+  (* (\* let ctx = CF.transform_list_context (x_add Solver.elim_unsat_es 10 cprog (ref 1)) ctx in *\) *)
+  (* let rs1, _ =  *)
+  (*   if not !Globals.disable_failure_explaining then *)
+  (*     x_add Solver.heap_entail_struc_init_bug_inv cprog false false ctx conseq no_pos None *)
+  (*   else *)
+  (*     x_add Solver.heap_entail_struc_init cprog false false ctx conseq no_pos None *)
+  (* in *)
+  (* let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in *)
+  (* flush stdout; *)
+  (* let res = *)
+  (*   if !Globals.disable_failure_explaining then ((not (CF.isFailCtx rs))) *)
+  (*   else ((not (CF.isFailCtx_gen rs))) *)
+  (* in *)
+  let _ = Debug.ninfo_hprint (add_str "inf_vars" !CP.print_svl) inf_vars  no_pos in
+  let (res, rs,_) = !sleek_entail 7 [] inf_vars  cprog [] ante conseq in
   (res, rs)
 
 (* the value of flag "exact" decides the type of entailment checking              *)

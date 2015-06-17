@@ -1,0 +1,16 @@
+infer [a]
+  true
+  |- a[i] + 5 > 3.
+print residue.
+
+infer [a]
+  true
+  |- a[i]>0.
+print residue.
+
+/*
+infer [a,@arrvar]
+  true
+  |- a[i] > 10.
+print residue.
+*/
