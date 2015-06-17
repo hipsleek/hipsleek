@@ -1557,7 +1557,7 @@ Entail (24) : Fail.(must) cause:
   true |-  ann_f_r_198=@M & @I<:ann_f_r_198. LOCS:[92;0] (RHS: contradiction)
 
 =======================================================
-# ex15c1.ss
+# ex15c1.ss (FIXED)
 
 infer [P]
   requires c::cell<_>@a1 * d::cell<_>@a2 & P(a1,a2)
@@ -1625,7 +1625,7 @@ GOT
 
 # Why is it spurious?
 
-# What happen to a2=@A?
+# What happen to a2=@A? (FIXED)
 
 [ EInfer [Q]
    EBase 
@@ -1639,7 +1639,7 @@ GOT
          Anon_1210: c::cell<Anon_1208>@b1_1207 * d::cell<Anon_1210>@b2_1209&
          {FLOW,(4,5)=__norm#E}[]]
 ======================================================
-
+** working/imm_infer2.ss
 Expected @M, got @L
 
 data cell {
@@ -1658,7 +1658,8 @@ void recursive_write(tree t)
  }
 
 =======================================================
-Inference not triggered.
+** working/imm_infer5.ss
+Inference not triggered. (FIXED)
 
 cell trick(cell y)
     infer [@imm_pre]
@@ -1669,7 +1670,8 @@ cell trick(cell y)
     return y;
 }
 =======================================================
-Entailment failed
+** working/imm_infer3.ss
+Entailment failed (FIXED)
 int left_write(tree t)
    infer [@imm_pre]
    requires t::tree<_,l,r> * l::tree<_,_,_> * r::tree<_,_,_>
@@ -1693,7 +1695,7 @@ foo2$cell~cell
 # Nice though d::cell<..> need not be removed from pre.
 # Can we use an option to control such removal.
 =======================================================
-# ex15b8.ss
+# ex15b8.ss (FIXED)
 
 # need to make a2=@A explicit.
 
@@ -1741,7 +1743,7 @@ imm_unify inp1 : (ann_1227=@M | (ann_1227<:@L & Anon_11<=0) | ann_1227=@A)
 imm_unify@17 EXIT: ann_1227=@M & ann_1227<:@L & ann_1227=@A
 
 =======================================================
-# ex15c4.ss to add ann_1226, ann_1225 to the list of existential vars
+# ex15c4.ss to add ann_1226, ann_1225 to the list of existential vars (FIXED)
 
 !!! **pi.ml#384:new_spec:
  EInfer @imm_pre[P__1229]
@@ -1756,7 +1758,8 @@ imm_unify@17 EXIT: ann_1227=@M & ann_1227<:@L & ann_1227=@A
          d::cell<Anon_1208>@ann_1226&{FLOW,(4,5)=__norm#E}[]
 =======================================================
 # ex15c4. to check why is taking so long when [@imm_pre] versus [P]
-{ 1.480756 second(s) versus  0.833354 second(s) }
+{ 1.480756 second(s) versus  0.833354 second(s) } (FIXED)
+This is due to global ann vars vs local
 =======================================================
 =======================================================
 =======================================================

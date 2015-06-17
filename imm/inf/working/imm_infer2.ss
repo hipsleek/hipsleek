@@ -14,8 +14,7 @@ void recursive_read_only(tree t)
   int c = t.node;
   if (t.right != null) recursive_read_only(t.right);
 }
-/*
-Need to fix
+
 void recursive_write(tree t)
    infer [@imm_pre]
    requires t::tree<_,_,_>
@@ -25,4 +24,3 @@ void recursive_write(tree t)
   t.node = t.node + 1;
   if (t.right != null) recursive_write(t.right);
  }
-*/
