@@ -12,19 +12,29 @@ while (x > 0 || y > 0) {
 // above cannot be handled by normal size-change..
 
 
+     /*
+      case {
+       x>y -> requires Term[x]
+              ensures true;
+       x<=y -> requires Term[y]
+       ensures true;
+      }
+     */
+
 void loo (ref int x, ref int y,int a, int b)
  case {
    x>0 | y>0 -> 
     case {
-     a=b -> 
-      case {
-       x>0 -> requires Term[x]
-              ensures true;
-       x<=0 -> requires Term[y]
-       ensures true;
-      }
-     a!=b -> requires MayLoop
-             ensures true;
+     a=b -> requires Term[max(x,y)] ensures true; 
+     a<b -> case {
+              x>0 -> requires Term[x] ensures true;
+              x<=0 -> requires MayLoop ensures true;
+             }
+     a>b -> 
+            case {
+              y>0 -> requires Term[y] ensures true;
+              y<=0 -> requires MayLoop ensures true;
+             }
      }
    x<=0 & y<=0 ->
      requires Term[] ensures true;
