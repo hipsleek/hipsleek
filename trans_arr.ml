@@ -9,6 +9,8 @@ open VarGen
 let global_unchanged_info = ref [];;
 let string_of_exp = ArithNormalizer.string_of_exp;;
 
+
+
 let plain_string_of_exp e0 =
   let need_parentheses e = match e with
     | Add _ | Subtract _ -> true
@@ -121,6 +123,23 @@ let rec is_same_exp
   | Func (sv1,elst1,_), Func (sv2,elst2,_)->
     (is_same_sv sv1 sv2) && (List.fold_left2 (fun b e1 e2 -> b && (is_same_exp e1 e2)) true elst1 elst2)
   | _ -> false
+;;
+
+(* OrderTyped of expression *)
+module OrderedExp =
+  struct
+    type t = Cpure.exp
+    let compare e1 e2 =
+      if is_same_exp e1 e2
+      then 0
+      else 1
+  end
+;;
+
+module ExpSet = Set.Make(OrderedExp);;
+
+let string_of_expset s =
+  "{ "^(ExpSet.fold (fun item r -> ((string_of_exp item)^" "^r)) s "")^"}"
 ;;
 
 let rec remove_dupl_spec_var_list
@@ -2970,7 +2989,10 @@ let unchanged_fixpoint (rel:formula) (define:formula list) =
             else
             if id = relname
             then
-              [basic uop1 uop2]
+              let basic_result = basic uop1 uop2 in
+              let () = x_binfo_pp ("basic_result args: "^(string_of_exp uop1)^" "^(string_of_exp uop2)) no_pos in
+              let () = x_binfo_pp ("basic_result "^((pr_list string_of_unchanged_info) basic_result)) no_pos in
+              [basic_result]
             else
               []
           | BForm (((Eq ((Var (SpecVar (Array _,_,_),_) as v2),(Var (SpecVar (Array _,_,_),_) as v1),loc)),pa),_) ->
@@ -3018,7 +3040,7 @@ let unchanged_fixpoint (rel:formula) (define:formula list) =
     (* let () = x_binfo_pp ("old_result "^((pr_list string_of_unchanged_info) old_result)) no_pos in *)
     let new_rel = calculator relname arg1 arg2 define !basic in
     let new_result = new_rel arg1 arg2 in
-    let () = x_tinfo_pp ("new_result "^((pr_list string_of_unchanged_info) new_result)) no_pos in
+    let () = x_binfo_pp ("new_result "^((pr_list string_of_unchanged_info) new_result)) no_pos in
     if (same_result new_result old_result)
     then
       new_rel
@@ -3045,6 +3067,177 @@ let unify_unchanged_fixpoint ulist =
     in
     [result]
 ;;
+
+
+module H_Unchanged =
+  struct
+    type t = (Cpure.exp * Cpure.exp)
+    let equal (f1,t1) (f2,t2) =
+      ((is_same_exp f1 f2)&&(is_same_exp t1 t2))||((is_same_exp f1 t2)&&(is_same_exp t1 f2))
+    let hash = Hashtbl.hash
+  end
+;;
+
+module Unchanged_Htbl = Hashtbl.Make(H_Unchanged);;
+let string_of_unchanged_tbl tbl=
+  Unchanged_Htbl.fold (fun (f,t) s r -> "("^(string_of_exp f)^","^(string_of_exp t)^","^(string_of_expset s)^")"^r) tbl ""
+;;
+
+let string_of_unchanged ((f,t),s) =
+  "("^(string_of_exp f)^","^(string_of_exp t)^" "^(string_of_expset s)^")"
+;;
+
+let clean_tbl tbl arglst =
+  let expand_tbl tbl =
+    let changed = ref false in
+    let expand_helper (f,t) eset =
+      Unchanged_Htbl.iter (
+        fun (nf,nt) neset ->
+          let new_key =
+            if (is_same_exp f nf && (not (is_same_exp nt t)))
+            then
+              Some (nt,t)
+            else
+              if (is_same_exp f nt && (not (is_same_exp nf t)))
+              then
+                Some (nf,t)
+              else
+                None
+          in
+          match new_key with
+          | None -> ()
+          | Some key ->
+            let new_eset = ExpSet.union eset neset in
+            try
+              let exists_set = Unchanged_Htbl.find tbl key in
+              if ExpSet.equal new_eset exists_set
+              then ()
+              else
+                let () = changed := true in
+                Unchanged_Htbl.replace tbl key (ExpSet.union new_eset exists_set)
+            with
+            Not_found ->
+              ()
+      ) tbl
+    in
+    let rec iterator () =
+      let () = Unchanged_Htbl.iter expand_helper tbl in
+      if !changed
+      then
+        let () = changed:=false in
+        iterator ()
+      else
+        ()
+    in
+    iterator ()
+  in
+  let clean_fv tbl arglst =
+    Unchanged_Htbl.iter (
+      fun (f,t) _ ->
+        if not ((List.exists (fun x -> is_same_exp x f) arglst)&&(List.exists (fun x -> is_same_exp x t) arglst))
+        then Unchanged_Htbl.remove tbl (f,t)
+        else ()
+    ) tbl
+  in
+  (
+    expand_tbl tbl;
+    clean_fv tbl arglst
+  )
+;;
+
+
+let substitute_unchanged (arglst,infolst) explst =
+  let subs = List.combine arglst explst in
+  let subs_helper ((f,t),s) subs =
+    let nf =
+      try
+        let (_,nf) = List.find (fun (a,s)->is_same_exp a f) subs in
+        nf
+      with
+      | Not_found -> f
+    in
+    let nt =
+      try
+        let (_,nt) = List.find (fun (a,s)->is_same_exp a t) subs in
+        nf
+      with
+      | Not_found -> t
+    in
+    let ns =
+      ExpSet.fold
+        (fun item r ->
+          let nitem =
+            try
+              let (_,nitem) = List.find (fun (a,s) -> is_same_exp a item) subs in
+              nitem
+            with
+            | Not_found ->
+              item
+          in
+          ExpSet.add nitem r) s ExpSet.empty
+    in
+    (nf,nt,ns)
+  in
+  List.map (fun x -> subs_helper x subs) infolst
+;;
+
+let new_unchanged_fixpoint relname arglst definelst basic=
+  let rec helper define =
+    match define with
+    | BForm (((RelForm (SpecVar (_,id,_),explist,loc)),pa),_) ->
+      if id = "update_array_1d"
+      then
+        (* Only one disjunction *)
+        [ (List.nth explist 0,List.nth explist 1,ExpSet.singleton (List.nth explist 3)) ]
+      else
+      if id = relname
+      then
+        substitute_unchanged basic explist
+      else
+        []
+    | BForm (((Eq ((Var (SpecVar (Array _,_,_),_) as v2),(Var (SpecVar (Array _,_,_),_) as v1),loc)),pa),_) ->
+      [ (v1,v2,ExpSet.empty) ]
+    | And (f1,f2,loc) ->
+      (helper f1)@(helper f2)
+    | _ -> []
+  in
+  let list = List.flatten (List.map helper definelst) in
+  let tbl = Unchanged_Htbl.create 100000 in
+  let () = List.iter (fun (f,t,s) -> Unchanged_Htbl.add tbl (f,t) s) list in
+  let () = x_binfo_pp ("clean_tbl tbl: "^(string_of_unchanged_tbl tbl)) no_pos in
+  let () = x_binfo_pp ("clean_tbl arglst: "^((pr_list string_of_exp) arglst)) no_pos in
+  let () = clean_tbl tbl arglst in
+  let () = x_binfo_pp ("clean_tbl new tbl: "^(string_of_unchanged_tbl tbl)) no_pos in
+  Unchanged_Htbl.fold (fun (f,t) item r-> (((f,t),item)::r)) tbl []
+;;
+
+let is_same_unchanged ((f1,t1),s1) ((f2,t2),s2) =
+  (((is_same_exp f1 f2)&&(is_same_exp t1 t2))||((is_same_exp f1 t2)&&(is_same_exp t1 f2))) && (ExpSet.equal s1 s2)
+;;
+
+let new_get_unchanged_fixpoint rel definelst =
+  let (relname,arglst) =
+    match rel with
+    | BForm (((RelForm (SpecVar (_,id,_),explist,loc)),pa),_) ->
+      (id,explist)
+    | _ -> failwith "get_unchanged_fixpoint: Invalid rel"
+  in
+  let basic = ref [] in
+  let rec iterator () =
+    let new_basic = new_unchanged_fixpoint relname arglst definelst (arglst,!basic) in
+    if same_unordered_list is_same_unchanged new_basic !basic
+    then !basic
+    else
+      let () = basic := new_basic in
+      iterator ()
+  in
+  iterator ()
+;;
+
+let new_get_unchanged_fixpoint rel definelst =
+  Debug.no_2 "new_get_unchanged_fixpoint" !print_pure (pr_list !print_pure) (pr_list string_of_unchanged) new_get_unchanged_fixpoint rel definelst
+;;
+
 
 let get_unchanged_fixpoint rel define =
   let (relname,arg1,arg2) =

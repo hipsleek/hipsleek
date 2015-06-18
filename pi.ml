@@ -568,6 +568,8 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             in
             let target_define =
               List.map (fun (r,pf,rel) -> pf) rels in
+            let _ =
+              (Trans_arr.new_get_unchanged_fixpoint target_rel target_define) in
             let unchanged_result =
               (Trans_arr.get_unchanged_fixpoint target_rel target_define) in
             if rels !=[] then
