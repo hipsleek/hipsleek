@@ -704,7 +704,7 @@ let iformula_ann_to_cformula_ann_lst (iann_lst : Ipure.ann list) : CP.ann list =
   List.map iformula_ann_to_cformula_ann iann_lst
 
 let iformula_ann_opt_to_cformula_ann_lst (iann_lst : Ipure.ann option list) : CP.ann list = 
-  let def_ann = if not (!Globals.imm_infer) then !defIImm else Ipure.NoAnn in
+  let def_ann = if not (!Globals.imm_infer) || not(!Globals.allow_field_ann) then !defIImm else Ipure.NoAnn in
   List.map iformula_ann_to_cformula_ann (ann_opt_to_ann_lst iann_lst def_ann)
 
 let iformula_ann_to_cformula_ann_node_level (iann : Ipure.ann) : CP.ann = 
