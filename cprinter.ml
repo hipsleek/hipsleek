@@ -533,7 +533,7 @@ let pr_fn_args ?(lvl=(!glob_lvl)) op f xs = match xs with
 
 (** print infix form : x1 op .. op xn *)
 let pr_list_op ?(lvl=(!glob_lvl)) sep f xs =
-  pr_args ~lvl None (Some "A") "" "" "" sep f xs
+  pr_args ~lvl (Some ("HOV", 0)) (Some "A") "" "" "" sep f xs
 
 (** print infix form : x1 op .. op xn *)
 let pr_list_op_vbox ?(lvl=(!glob_lvl)) sep f xs =
