@@ -657,8 +657,8 @@ class ['a] stack_pr (epr:'a->string) (eq:'a->'a->bool)  =
       (* WN : below is to be removed later *)
       (* let () = print_endline ("push_list:"^(Basic.pr_list epr ls)) in *)
       super # push_list ls 
-    method push_pr s (ls:'a) =  
-      let () = print_endline ("push_pr("^s^"):"^(epr ls)) in
+    method push_pr (s:string) (ls:'a) =  
+      (* let () = print_endline ("push_pr("^s^"):"^(epr ls)) in *)
       super # push ls 
     method string_of = Basic.pr_list_ln elem_pr stk
     method string_of_no_ln = Basic.pr_list elem_pr stk
