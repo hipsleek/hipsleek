@@ -38,14 +38,22 @@ void loo (ref int x, ref int y,int a, int b)
            }
           a>b+1 -> 
           //requires MayLoop ensures true;
-          /* not working
-           x++, y--
+          /* not working  a-b>=2
+           x++, y--  
+               x --> x+(a-b)-1
+               y --> y-1-(a-b) 
            a>=b+2
            b<=a-2
           */
           case {
             y>0 & x>0 -> requires Loop ensures false;
             y>0 & x<=0 -> requires MayLoop ensures true;
+            /*
+            case {
+              y-x<a-b -> requires Term ensures true;
+              y-x>=a-b -> requires MayLoop ensures true;
+            }
+            */
             y<=0 & x>0 -> requires Loop ensures false;
            }
           b>a+1 -> //requires MayLoop ensures true;
