@@ -56,9 +56,7 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
         | Some (v, true) -> CP.PolyAnn v
         | None -> h_imm in
       h_imm in
-    let result = (update_heap_imm imm_ann, []) in
-    let () = x_binfo_hp (add_str "pre_stack:" (pr_list Cprinter.string_of_spec_var))
-                        (pre_stack # get_stk) no_pos in
+    let result = (update_heap_imm imm_ann, List.map update_heap_imm imm_ann_params) in
     result in
   let ann_heap is_post h = match h with
     | DataNode hp ->
@@ -66,7 +64,7 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
          ann_heap_ho is_post hp.h_formula_data_pos hp.h_formula_data_imm
                      hp.h_formula_data_param_imm in
        Some (DataNode { hp with h_formula_data_imm = h_imm;
-                                h_formula_data_param_imm = h_imm_params})
+                                h_formula_data_param_imm = h_imm_params })
     | ViewNode hp ->
        let (h_imm, _) =
          ann_heap_ho is_post hp.h_formula_view_pos hp.h_formula_view_imm [] in
