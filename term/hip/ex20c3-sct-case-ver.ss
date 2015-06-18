@@ -36,14 +36,25 @@ void loo (ref int x, ref int y,int a, int b)
             y>0 -> requires Loop ensures false;
             y<=0 -> requires Term[x] ensures true;
            }
-          a>b+1 -> requires MayLoop ensures true;
+          a>b+1 -> 
+          //requires MayLoop ensures true;
           /* not working
-           case {
-            y>0 -> requires MayLoop ensures true;
-            y<=0 -> requires Term[x] ensures true;
-           }
+           x++, y--
+           a>=b+2
+           b<=a-2
           */
-          b>a+1 -> requires MayLoop ensures true;
+          case {
+            y>0 & x>0 -> requires Loop ensures false;
+            y>0 & x<=0 -> requires MayLoop ensures true;
+            y<=0 & x>0 -> requires Loop ensures false;
+           }
+          b>a+1 -> //requires MayLoop ensures true;
+            //x--;y++
+          case {
+            y>0 & x>0 -> requires Loop ensures false;
+            y<=0 & x>0 -> requires MayLoop ensures true;
+            y>0 & x<=0 -> requires Loop ensures false;
+           }
          }
       x<=0 & y<=0 -> requires Term[] ensures true;
  }
