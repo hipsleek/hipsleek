@@ -31,4 +31,3 @@ void simple_read_write(cell c)
 {
   c.fst = c.fst + 1;
 }
-

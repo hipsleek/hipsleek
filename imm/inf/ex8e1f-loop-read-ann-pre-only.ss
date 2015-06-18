@@ -121,4 +121,56 @@ foo$cell
 
 
 
+
+>>>>>>>>>>>>>>>>TO SIMPLIFY:
+-------------
+c::cell<v>@imm_1257&
+(((exists(a_1243:exists(b_1265:exists(imm_1258:imm_1257=imm_1258 & b_1265+
+imm_1258=imm_1258 & @L<:imm_1258 & imm_1258<:@A & a_1243+imm_1258=@L) & 
+b_1265=@A) & a_1243=@L) & a=@L & v!=1) | 
+(exists(a_1243:exists(b_1265:exists(imm_1258:imm_1258=@A & b_1265+
+imm_1258=b_1265 & a_1243+imm_1258=@L) & imm_1257=b_1265 & b_1265<:@A) & 
+a_1243=@L) & a=@L & v!=1) | 
+(exists(a_1243:exists(b_1265:exists(imm_1258:imm_1258=a_1243+imm_1258 & 
+imm_1257=a_1243+imm_1258 & b_1265+imm_1258=a_1243+imm_1258 & a=a_1243+
+imm_1258 & (a_1243+imm_1258)<:@L) & b_1265=@A) & (imm_1276--1)<=a_1243 & 
+@L<:a_1243) & v!=1))) & c=c' & x'=v & Q(a)&{FLOW,(4,5)=__norm#E}[]
+
+
+>>>>>>>>>>>>>>>>TO FIX this exception:
+
+!!! **pi.ml#733:pre_fmls:[ Q(a) & c=2, MayLoop[]]Exception(substitute_args):Invalid_argument("List.combine")
+Exception(extract_inv_helper):Invalid_argument("List.combine")
+Exception(compute_fixpoint_xx):Invalid_argument("List.combine")
+Exception(compute_fixpoint_x):Invalid_argument("List.combine")
+Exception(compute_fixpoint_td):Invalid_argument("List.combine")
+Exception(pre_calculate):Invalid_argument("List.combine")
+Exception(pre_rel_fixpoint):Invalid_argument("List.combine")
+Exception(update_with_td_fp):Invalid_argument("List.combine")
+
+!!! PROBLEM with fix-point calculation
+ExceptionInvalid_argument("List.combine")Occurred!
+
+Error1(s) detected at main 
+Stop Omega... 128 invocations caught
+
+Exception occurred: Invalid_argument("List.combine")
+
+>>>>>>>>>>>>>>>> above exc DUE TO (way Q has two args?): 
+(==tpdispatcher.ml#3674==)
+update_rel@4@3
+update_rel inp1 : Q(a)
+update_rel inp2 : Q(a)
+update_rel inp3 :[ pa]
+update_rel inp4 : Q(a_1243)
+update_rel@4 EXIT: Q(a_1243,pa)
+
+!!! **fixpoint.ml#496:input_fml:[( Q(a_1243,pa) & a<:@L & a<:a_1243, Q(a,pa))]
+(==fixcalc.ml#1468==)
+compute_fixpoint_xx@7@6@5@3
+compute_fixpoint_xx inp1 :[( Q(a_1243,pa) & a<=2 & a<=a_1243, Q(a,pa))]
+compute_fixpoint_xx inp2 :[v,Q,a,c]
+compute_fixpoint_xx@7 EXIT ExceptionInvalid_argument("List.combine")Occurred!
+
+
 */
