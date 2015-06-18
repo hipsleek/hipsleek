@@ -299,11 +299,11 @@ let imm_summation emap e =
   let pr2 b = ite b "exp is unchanged" "exp has changed" in
   Debug.no_2 "imm_summation" EMapSV.string_of pr (pr_pair (pr_opt pr) pr2) imm_summation emap e
 
-let norm_eq_add lhs_sv lhs_l emap e l =
+let norm_eq_add lhs_exp emap e l =
   (* let new_var  = f_e emap (Var(sv,lv)) in *) (* without this we might have false ctx: eg b=@L  & b=@A+@M*)
-  let new_var = Var(lhs_sv,lhs_l) in
+  (* let new_var = Var(lhs_sv,lhs_l) in *)
   let new_sum, fixpt = imm_summation emap e in
-  let new_eq rhs = Eq (new_var, rhs, l) in 
+  let new_eq rhs = Eq (lhs_exp, rhs, l) in 
   let new_pf = map_opt_def  (BConst (false, l)) (fun x -> new_eq x) new_sum in
   (new_pf, fixpt)
 
@@ -321,8 +321,8 @@ let norm_subann_add mksubann emap e l =
 let simplify_imm_addition emap0 (f:formula) =
   let fixpt = ref true in
 
-  let f_b_ann_exp_check sv lbl f_op l  =
-    if is_ann_typ sv then 
+  let f_b_ann_exp_check exp lbl f_op l  =
+    if is_ann_type (get_exp_type exp) then 
       let new_pf, fixpt0 = f_op l in
       let () = if not(fixpt0) then fixpt:= false in
       Some (new_pf, lbl)
@@ -335,15 +335,16 @@ let simplify_imm_addition emap0 (f:formula) =
     let f_b_helper bf =
       let (p_f, lbl) = bf in
       match p_f with
-      | Eq (Var(sv,lv), (Add(e1,e2,la) as ea), l) -> 
-        let f_eq l = norm_eq_add sv lv emap ea l in
-        f_b_ann_exp_check sv lbl f_eq l
+      | Eq (exp, (Add(e1,e2,la) as ea), l) 
+      | Eq ( (Add(e1,e2,la) as ea), exp, l) -> 
+        let f_eq l = norm_eq_add exp emap ea l in
+        f_b_ann_exp_check exp lbl f_eq l
       | SubAnn (Var(sv,lv), (Add(e1,e2,la) as ea), l) ->
         let f_subann l = norm_subann_add (mk_SubAnn_4Add la (Var(sv,lv)) ) emap ea l in
-        f_b_ann_exp_check sv lbl f_subann l
+        f_b_ann_exp_check (Var(sv,lv)) lbl f_subann l
       | SubAnn ((Add(e1,e2,la) as ea),Var(sv,lv), l) ->
         let f_subann l = norm_subann_add (fun x -> mk_SubAnn_4Add la x (Var(sv,lv)) ) emap ea l in
-        f_b_ann_exp_check sv lbl f_subann l
+        f_b_ann_exp_check (Var(sv,lv)) lbl f_subann l
       | _ -> None
     in 
     let fb = transform_b_formula (f_b_helper, somef) fb in
@@ -376,12 +377,19 @@ let simplify_imm_addition emap0 (f:formula) =
     let () = fixpt := true in
     let emap = build_eset_of_imm_formula form in
     let emap = EMapSV.merge_eset emap emap0 in
-    let () =  x_tinfo_hp (add_str "form" !print_formula) form no_pos in
-    let () =  x_tinfo_hp (add_str "emap" EMapSV.string_of) emap no_pos in
+    let () =  x_binfo_hp (add_str "form" !print_formula) form no_pos in
+    let () =  x_binfo_hp (add_str "emap" EMapSV.string_of) emap no_pos in
     let new_form = map_formula_arg form emap fncs (idf2, idf2, idf2) in
     (* let () = fixpt:=(equalFormula form new_form) in *) (* using equalFormula leads to loop *)
     if not(!fixpt) then helper new_form else new_form
-  in helper f
+  in 
+  let helper form =
+    let pr = !print_formula in
+    Debug.no_1 "helper_simplify" pr pr helper form in
+  let disj = split_disjunctions_deep f in
+  let disj = List.map helper disj in
+  join_disjunctions disj
+  (* helper f *)
 
 let simplify_imm_addition emap f =
   if not(!Globals.imm_add)  then f

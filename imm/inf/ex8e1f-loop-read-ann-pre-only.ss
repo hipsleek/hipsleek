@@ -156,7 +156,7 @@ Stop Omega... 128 invocations caught
 
 Exception occurred: Invalid_argument("List.combine")
 
->>>>>>>>>>>>>>>> above exc DUE TO (way Q has two args?): 
+>>>>>>>>>>>>>>>> above exc DUE TO (why Q has two args?): 
 (==tpdispatcher.ml#3674==)
 update_rel@4@3
 update_rel inp1 : Q(a)
