@@ -1,9 +1,9 @@
 data cell{
  int fst;
 }
-
+/*
 relation P1(ann v1).
-relation P2(ann v1, ann v2).
+relation P2(ann v1, ann v2).*/
 relation Q(ann v1).
 //relation P3(ann v1, int v,int r, int s).
 
@@ -12,6 +12,11 @@ int foo(cell c)
   requires c::cell<v>@a & Q(a)
   ensures c::cell<w>@b  ;
 
+/*
+  infer [@pre_n]
+  requires c::cell<v>
+  ensures c::cell<w>  ;
+*/
 {
  int x = c.fst;
  if (x!=1) {

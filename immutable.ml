@@ -38,7 +38,8 @@ let isLend = CP.isLend
 let isImm = CP.isImm 
 let isMutable = CP.isMutable
 
-let defImm = ref (CP.ConstAnn Mutable)
+let defCImm = ref (CP.ConstAnn Mutable)
+let defIImm = ref (Ipure.ConstAnn Mutable)
 
 let isAccsList (al : CP.ann list) : bool = List.for_all isAccs al
 let isMutList (al : CP.ann list) : bool = List.for_all isMutable al
@@ -694,7 +695,7 @@ let rec ann_opt_to_ann_lst (ann_opt_lst: Ipure.ann option list) (default_ann: Ip
 
 let iformula_ann_to_cformula_ann (iann : Ipure.ann) : CP.ann = 
   match iann with
-  | Ipure.NoAnn -> if not (!Globals.imm_infer) then !defImm else CP.NoAnn 
+  | Ipure.NoAnn -> if not (!Globals.imm_infer) then !defCImm else CP.NoAnn 
   | Ipure.ConstAnn(x) -> CP.ConstAnn(x)
   | Ipure.PolyAnn((id,p), l) -> 
     CP.PolyAnn(CP.SpecVar (AnnT, id, p))
@@ -703,7 +704,12 @@ let iformula_ann_to_cformula_ann_lst (iann_lst : Ipure.ann list) : CP.ann list =
   List.map iformula_ann_to_cformula_ann iann_lst
 
 let iformula_ann_opt_to_cformula_ann_lst (iann_lst : Ipure.ann option list) : CP.ann list = 
-  List.map iformula_ann_to_cformula_ann (ann_opt_to_ann_lst iann_lst  (Ipure.ConstAnn(Mutable)))
+  let def_ann = if not (!Globals.imm_infer) then !defIImm else Ipure.NoAnn in
+  List.map iformula_ann_to_cformula_ann (ann_opt_to_ann_lst iann_lst def_ann)
+
+let iformula_ann_to_cformula_ann_node_level (iann : Ipure.ann) : CP.ann = 
+  (* if we are doing ifnerence at field level, translate node level NoAnn to @M *)
+  Wrapper.wrap_one_bool (Globals.imm_infer) (not(!Globals.allow_field_ann))  iformula_ann_to_cformula_ann iann
 
 (* check lending property (@L) in classic reasoning. Hole is treated like @L *)
 let rec is_classic_lending_hformula (f: h_formula) : bool =
@@ -1928,7 +1934,7 @@ let push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula  * (CP.formula
 
 let push_node_imm_to_field_imm caller (h:CF.h_formula) : CF.h_formula * (CP.formula list) * ((Globals.ident * VarGen.primed) list) =
   let pr = Cprinter.string_of_h_formula in
-  let pr_out = pr_triple Cprinter.string_of_h_formula pr_none pr_none in
+  let pr_out = pr_triple Cprinter.string_of_h_formula (pr_list !CP.print_formula) pr_none in
   Debug.no_1_num caller "push_node_imm_to_field_imm" pr pr_out push_node_imm_to_field_imm_x h 
 
 let normalize_field_ann_heap_node_x (h:CF.h_formula): CF.h_formula  * (CP.formula list) * ((Globals.ident * VarGen.primed) list) =

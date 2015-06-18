@@ -7523,7 +7523,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                 CF.h_formula_data_name = rootptr_type_name;
                 CF.h_formula_data_derv = dr;
                 CF.h_formula_data_split = split;
-                CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
+                CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann_node_level imm;
                 CF.h_formula_data_param_imm = Immutable.iformula_ann_opt_to_cformula_ann_lst ann_param1;
                 CF.h_formula_data_perm = permvar; (*??? TO CHECK: temporarily*)
                 CF.h_formula_data_origins = []; (*??? temporarily*)
@@ -7578,7 +7578,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   CF.h_formula_view_name = c;
                   CF.h_formula_view_derv = dr;
                   CF.h_formula_view_split = split;
-                  CF.h_formula_view_imm = Immutable.iformula_ann_to_cformula_ann imm;
+                  CF.h_formula_view_imm = Immutable.iformula_ann_to_cformula_ann_node_level imm;
                   CF.h_formula_view_perm = permvar; (*LDK: TO CHECK*)
                   CF.h_formula_view_arguments = hvars;
                   CF.h_formula_view_ho_arguments = ho_args; (* TODO:HO *)
@@ -7634,7 +7634,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                              CF.h_formula_data_name = c;
                              CF.h_formula_data_derv = dr;
                              CF.h_formula_data_split = split;
-                             CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
+                             CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann_node_level imm;
                              CF.h_formula_data_param_imm = Immutable.iformula_ann_opt_to_cformula_ann_lst ann_param;
                              CF.h_formula_data_perm = permvar; (*LDK*)
                              CF.h_formula_data_origins = [];
