@@ -19,7 +19,7 @@ int simple_read_only(cell c)
   x = x + 1;
   return x + y;
 }
-
+/*
 
 void simple_read_write(cell c)
   infer [@imm_pre]
@@ -28,3 +28,4 @@ void simple_read_write(cell c)
 {
   c.fst = c.fst + 1;
 }
+*/

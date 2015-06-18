@@ -46,21 +46,30 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
   let update_post_stack v = map_opt_def () (fun (v,_) -> post_stack # push v) v in
   let update_n_stack v ann =
     map_opt_def () (fun (v,norm) -> if norm then n_stack # push (v, ann)) v in
-  let ann_heap_ho is_post loc imm_ann =
-       let (h_imm, v) = assign_ann_or_var imm_ann loc in
-       let () = (if is_post then update_post_stack else update_pre_stack) v in
-       let () = update_n_stack v h_imm in
-       let h_imm = match v with
-         | Some (_, false) -> h_imm
-         | Some (v, true) -> CP.PolyAnn v
-         | None -> h_imm in
-       h_imm in
+  let ann_heap_ho is_post loc imm_ann imm_ann_params =
+    let update_heap_imm imm_ann =
+      let (h_imm, v) = assign_ann_or_var imm_ann loc in
+      let () = (if is_post then update_post_stack else update_pre_stack) v in
+      let () = update_n_stack v h_imm in
+      let h_imm = match v with
+        | Some (_, false) -> h_imm
+        | Some (v, true) -> CP.PolyAnn v
+        | None -> h_imm in
+      h_imm in
+    let result = (update_heap_imm imm_ann, []) in
+    let () = x_binfo_hp (add_str "pre_stack:" (pr_list Cprinter.string_of_spec_var))
+                        (pre_stack # get_stk) no_pos in
+    result in
   let ann_heap is_post h = match h with
     | DataNode hp ->
-       let h_imm = ann_heap_ho is_post hp.h_formula_data_pos hp.h_formula_data_imm in
-       Some (DataNode { hp with h_formula_data_imm = h_imm })
+       let (h_imm, h_imm_params) =
+         ann_heap_ho is_post hp.h_formula_data_pos hp.h_formula_data_imm
+                     hp.h_formula_data_param_imm in
+       Some (DataNode { hp with h_formula_data_imm = h_imm;
+                                h_formula_data_param_imm = h_imm_params})
     | ViewNode hp ->
-       let h_imm = ann_heap_ho is_post hp.h_formula_view_pos hp.h_formula_view_imm in
+       let (h_imm, _) =
+         ann_heap_ho is_post hp.h_formula_view_pos hp.h_formula_view_imm [] in
        Some (ViewNode { hp with h_formula_view_imm = h_imm })
     | _ -> None
   in
@@ -158,13 +167,11 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
                 EBase { new_ebase with formula_struc_continuation = base_continuation }
               else EBase new_ebase in
             let new_inf_vars =
-              if (not (post_stack # is_empty)) then
-                let rel_to_var rel = match rel with
-                  (* the relation var *)
-                  | Some p -> [CP.SpecVar (RelT (CP.type_of_spec_var_list  p.C.rel_vars), p.C.rel_name, Unprimed)]
-                  | None -> [] in
-                (rel_to_var !post_rel)@(rel_to_var !pre_rel)@ff.formula_inf_vars
-              else ff.formula_inf_vars in
+              let rel_to_var rel = match rel with
+                (* the relation var *)
+                | Some p -> [CP.SpecVar (RelT (CP.type_of_spec_var_list  p.C.rel_vars), p.C.rel_name, Unprimed)]
+                | None -> [] in
+              (rel_to_var !post_rel)@(rel_to_var !pre_rel)@ff.formula_inf_vars in
             Some (EInfer { ff with formula_inf_continuation = new_continuation;
                                    formula_inf_vars = new_inf_vars })
          | _ -> None
