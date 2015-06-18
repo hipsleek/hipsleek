@@ -247,6 +247,7 @@ and proc_decl = {
   proc_is_while : bool; (* true if the proc is translated from a while loop *)
   mutable proc_has_while_return: bool;
   mutable proc_is_invoked : bool;
+  mutable proc_has_assert_err: bool;
   proc_verified_domains: infer_type list;
   proc_file : string;
   proc_loc : loc;
@@ -1080,6 +1081,9 @@ let get_catch_of_exp e = match e with
 let get_finally_of_exp e = match e with
   | Finally e -> e
   | _  -> Error.report_error {Err.error_loc = get_exp_pos e; Err.error_text = "malformed expression, expecting finally clause"}
+
+
+
  (*
 let rec type_of_exp e = match e with
   | Assert _ -> None
@@ -1192,6 +1196,51 @@ let mkhp_decl iprog hp_id vars parts rpos is_pre body=
                  } in
   let () = iprog.prog_hp_decls <- iprog.prog_hp_decls@[nhp_dclr] in
   nhp_dclr
+
+let rec look_up_proc_def_raw (procs : proc_decl list) (name : string) = match procs with
+  | p :: rest ->
+    if p.proc_name = name then
+      p
+    else
+      look_up_proc_def_raw rest name
+  | [] -> raise Not_found
+
+and look_up_proc_def_mingled_name (procs : proc_decl list) (name : string) = 
+  match procs with
+  | p :: rest ->
+    if p.proc_mingled_name = name then
+      p
+    else
+      look_up_proc_def_mingled_name rest name
+  | [] -> raise Not_found
+
+let exists_assert_error_x iprog e0=
+  let rec helper e=
+    (* let () = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
+    match e with
+    | Block { exp_block_body = bb} -> helper bb
+    | Cond {exp_cond_then_arm = tb; exp_cond_else_arm=eb} ->
+          (helper tb) || (helper eb)
+    | Raise {exp_raise_type = et} -> false
+    | Return _ -> false
+    | Seq {exp_seq_exp1 = e1; exp_seq_exp2 = e2} ->
+      (helper e2) || (helper e1)
+    | While {exp_while_body = wb} ->
+          helper wb
+    | CallNRecv {exp_call_nrecv_method = mn} ->
+          let p = look_up_proc_def_raw iprog.prog_proc_decls mn in
+          p.proc_has_assert_err
+    | Label (_, el) -> (* let () = Debug.info_pprint (" LABEL" ) no_pos in *)
+      helper el
+    | _ -> false
+  in
+  helper e0
+
+let exists_assert_error iprog e0=
+  let pr1 = !print_exp in
+  Debug.no_1 "exists_assert_error" pr1 string_of_bool
+    (fun _ -> exists_assert_error_x iprog e0) e0
+
 
 let find_close_ids ids equivs=
   let pr1 = pr_list pr_id in
@@ -1500,6 +1549,7 @@ let mkProc sfile id flgs n dd c ot ags r ho_param ss ds pos bd =
     proc_has_while_return = false;
     proc_is_while = false;
     proc_is_invoked = false;
+    proc_has_assert_err = false;
     proc_file = !input_file_name;
     proc_body = bd;
     proc_test_comps = None}
@@ -1618,22 +1668,7 @@ and look_up_enum_def_raw (defs : enum_decl list) (name : ident) = match defs wit
   | d :: rest -> if d.enum_name = name then d else look_up_enum_def_raw rest name
   | [] -> raise Not_found
 
-and look_up_proc_def_raw (procs : proc_decl list) (name : string) = match procs with
-  | p :: rest ->
-    if p.proc_name = name then
-      p
-    else
-      look_up_proc_def_raw rest name
-  | [] -> raise Not_found
 
-and look_up_proc_def_mingled_name (procs : proc_decl list) (name : string) = 
-  match procs with
-  | p :: rest ->
-    if p.proc_mingled_name = name then
-      p
-    else
-      look_up_proc_def_mingled_name rest name
-  | [] -> raise Not_found
 
 (*
 (* takes a proc and returns the class where it is declared *)
@@ -3080,6 +3115,7 @@ let add_bar_inits prog =
         proc_is_while = false;
         proc_has_while_return = false;
         proc_is_invoked = false;
+        proc_has_assert_err = false;
         proc_verified_domains = [];
         proc_file = "";
         proc_loc = no_pos;
@@ -3272,6 +3308,7 @@ let exists_return e0=
   let pr1 = !print_exp in
   Debug.no_1 "exists_return" pr1 string_of_bool
     (fun _ -> exists_return_x e0) e0
+
 let exists_while_return_x e0=
   let rec helper e=
     (* let () = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
@@ -3590,3 +3627,84 @@ let find_all_num_trailer iprog =
     ) [] body_list in
   (* use fold_exp_args .. *)
   id_list
+
+
+let sort_proc_decls (pl: proc_decl list) : proc_decl list =
+  List.fast_sort (fun p1 p2 -> p1.proc_call_order - p2.proc_call_order) pl
+
+module IG = Graph.Persistent.Digraph.Concrete(IdentComp)
+module IGO = Graph.Oper.P(IG)
+module IGC = Graph.Components.Make(IG)
+module IGP = Graph.Path.Check(IG)
+module IGN = Graph.Oper.Neighbourhood(IG)
+module IGT = Graph.Topological.Make(IG)
+
+let ex_args f a b = f b a
+
+let ngs_union gs = 
+  List.fold_left IGO.union IG.empty gs 
+
+let addin_callgraph_of_exp (cg:IG.t) exp mnv : IG.t = 
+  let f e = 
+    match e with
+    | ICall e ->
+      (* let () = print_endline_quiet(mnv ^ " -> " ^ e.exp_icall_method_name) in *)
+      Some (IG.add_edge cg mnv e.exp_icall_method_name)
+    | SCall e ->
+      (* let () = print_endline_quiet(mnv ^ " -> " ^ e.exp_scall_method_name) in *)
+      Some (IG.add_edge cg mnv e.exp_scall_method_name)
+    | _ -> None
+  in
+  fold_exp exp f ngs_union cg
+
+let addin_callgraph_of_proc cg proc : IG.t = 
+  match proc.proc_body with
+  | None -> cg
+  | Some e -> addin_callgraph_of_exp cg e proc.proc_name
+
+let callgraph_of_prog prog : IG.t = 
+  let cg = IG.empty in
+  let pn pc = pc.proc_name in
+  (*let mns = List.map pn prog.old_proc_decls in*)
+  let mns = List.map pn (list_of_procs prog) in 
+  let cg = List.fold_right (ex_args IG.add_vertex) mns cg in
+  (*List.fold_right (ex_args addin_callgraph_of_proc) prog.old_proc_decls cg*)
+  Hashtbl.fold (fun i pd acc -> ex_args addin_callgraph_of_proc pd acc) prog.new_proc_decls cg
+
+
+(* Termination *)
+and mark_recursive_call (cp: prog_decl) scc_list cg : prog_decl =
+  irf_traverse_prog cp scc_list
+
+and mark_call_order_x (cp: prog_decl) scc_list cg : prog_decl =
+  let _, fscc = IGC.scc cg in
+  let tbl = C.proc_decls_map (fun p ->
+      { p with proc_call_order = fscc p.C.proc_name }
+    ) cp.new_proc_decls in
+  { cp with new_proc_decls = tbl }
+
+and mark_call_order ip scc_list ig : prog_decl =
+  let pr1 p = pr_list (fun c -> (pr_proc_call_order c) ^ "\n") 
+      (List.filter (fun x -> x.proc_is_main) (C.list_of_procs p)) in
+  let pr2 scc_list = pr_list (fun scc -> (pr_list (fun s -> s) scc) ^ "\n") scc_list in
+  Debug.no_2 "mark_call_order" pr1 pr2 pr1
+    (fun _ _ -> mark_call_order_x cp scc_list cg) cp scc_list
+
+
+(* Recursive call and call order detection *)
+(* irf = is_rec_field *)
+and mark_rec_and_call_order_x (cp: C.prog_decl) : C.prog_decl =
+  let cg = C.callgraph_of_prog cp in
+  (* let scc_list = List.rev (C.IGC.scc_list cg) in *)
+  let scc_arr = C.IGC.scc_array cg in
+  let scc_list = Array.to_list scc_arr in
+  let cp = mark_recursive_call cp scc_list cg in
+  let cp = mark_call_order cp scc_list cg in
+  let (prims, mutual_grps) = C.re_proc_mutual (C.sort_proc_decls (C.list_of_procs cp)) in
+  x_tinfo_hp (add_str "mutual scc" (pr_list (pr_list pr_proc_call_order))) mutual_grps no_pos;
+  cp
+
+and mark_rec_and_call_order (cp: prog_decl) : prog_decl =
+  let pr p = pr_list (pr_proc_call_order) 
+      (List.filter (fun x -> not (x.C.proc_body == None)) (C.list_of_procs p)) in
+  Debug.no_1 "mark_rec_and_call_order" pr pr mark_rec_and_call_order_x cp

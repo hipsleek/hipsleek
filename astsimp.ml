@@ -5906,6 +5906,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
         I.proc_is_while = true;
         I.proc_has_while_return = false;
         I.proc_is_invoked = true;
+        I.proc_has_assert_err = false;
         I.proc_verified_domains = [];
         I.proc_file = proc.I.proc_file;
         I.proc_loc = pos; 

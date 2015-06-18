@@ -27,8 +27,10 @@ module IP = Ipure
 module LO = Label_only.LOne
 open IastUtil
 
+let err_var = "#e"
+let res_var = "#r"
 
-let has_error_stmt iprog=
+let exam_ass_error_prog iprog=
   (*func call error*)
   false
 
@@ -39,8 +41,9 @@ let has_error_stmt iprog=
   a /\ rec(C_1) \/ -a /\ rec(C_2)
 
 *)
-let gen_view_from_stmt iprog e0=
-  let rec recf e= match e with
+let exe_gen_view iprog proc_args pos e0=
+  (**)
+  let rec recf e counter= match e with
     | I.Assign e_ass -> true
     | I.Binary e_bin -> true
     | I.Cond e_cond -> true
@@ -49,7 +52,7 @@ let gen_view_from_stmt iprog e0=
     | I.Empty _ -> true
     | I.FloatLit _ -> true
     | I.IntLit _ -> true
-    | I.Null - -> true
+    | I.Null _ -> true
     | I.Return _ -> true
     | I.Seq _ -> true
     | I.Unary _ -> true
@@ -58,7 +61,7 @@ let gen_view_from_stmt iprog e0=
     | I.While _ -> true
     | _ -> true
   in
-  true
+  IP.mkTrue pos
 
 
 let gen_view_from_proc iprog iproc=
@@ -70,16 +73,24 @@ let gen_view_from_proc iprog iproc=
   let pred_name = iproc.I.proc_name ^ "_v" in
   let r_args = match iproc.I.proc_return with
     | Void -> []
-    | _ -> let r_arg =  "#res" in
+    | _ -> let r_arg =  res_var in
       [r_arg]
   in
-  let e_arg = "#e" in
-  let pred_args = (List.map (fun para -> para.I.param_name) iproc.I.proc_args) @ r_args @ [e_arg] in
+  let e_arg = err_var in
+  let proc_args = (List.map (fun para -> para.I.param_name) iproc.I.proc_args) in
+  let pred_args = proc_args @ r_args @ [e_arg] in
+  let f_body = match iproc.I.proc_body with
+    | Some body -> exe_gen_view iprog proc_args iproc.I.proc_loc body
+    | None -> IP.mkTrue iproc.I.proc_loc
+  in
   true
 
 let gen_view_from_prog iprog iproc=
   false
 
-(* O: safe, 1: unsafe, 2: unknown, 3: not applicaple *)
+(* O: safe, 1: unsafe, 2: unknown, 3: not applicaple (all method donot have assert error) *)
 let verify_as_sat iprog=
-  2
+  (* sort method call*)
+  (* look up assert error location *)
+  (* transform *)
+  3
