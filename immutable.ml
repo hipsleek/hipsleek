@@ -709,7 +709,7 @@ let iformula_ann_opt_to_cformula_ann_lst (iann_lst : Ipure.ann option list) : CP
 
 let iformula_ann_to_cformula_ann_node_level (iann : Ipure.ann) : CP.ann = 
   (* if we are doing ifnerence at field level, translate node level NoAnn to @M *)
-  Wrapper.wrap_one_bool (Globals.imm_infer) (not(!Globals.allow_field_ann))  iformula_ann_to_cformula_ann iann
+  Wrapper.wrap_one_bool (Globals.imm_infer) (not(!Globals.allow_field_ann) && !Globals.imm_infer)  iformula_ann_to_cformula_ann iann
 
 (* check lending property (@L) in classic reasoning. Hole is treated like @L *)
 let rec is_classic_lending_hformula (f: h_formula) : bool =

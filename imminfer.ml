@@ -250,7 +250,7 @@ let should_infer_imm prog inf_vars inf_obj =
     with _ -> false
   in
   let has_imm_rel = List.fold_right (fun (id,_) acc -> (arg_is_ann id) || acc) inf_vars false in
-  inf_obj # is_pre_imm ||  inf_obj # is_post_imm || !Globals.imm_infer || has_imm_rel
+  inf_obj # is_pre_imm ||  inf_obj # is_post_imm (* || !Globals.imm_infer *) || has_imm_rel
 
 let collect_reloblgs_spec (spec: CF.struc_formula) =
   let infer_rel_stk = new Gen.stack in
