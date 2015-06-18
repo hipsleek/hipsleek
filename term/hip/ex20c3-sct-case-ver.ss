@@ -22,34 +22,33 @@ while (x > 0 || y > 0) {
      */
 
 void loo (ref int x, ref int y,int a, int b)
- case {
-   a=b ->
      case {
-      x>0 | y>0 -> requires Term[max(x,y)] ensures true;
+      x>0 | y>0 -> 
+        case { 
+          a=b -> requires Term[max(x,y)] ensures true;
+          a=b+1 -> 
+           case {
+            x>0 -> requires Loop ensures false;
+            x<=0 -> requires Term[y] ensures true;
+           }
+          b=a+1 -> //requires MayLoop ensures true;
+           case {
+            y>0 -> requires Loop ensures false;
+            y<=0 -> requires Term[x] ensures true;
+           }
+          a>b+1 -> requires MayLoop ensures true;
+          /* not working
+           case {
+            y>0 -> requires MayLoop ensures true;
+            y<=0 -> requires Term[x] ensures true;
+           }
+          */
+          b>a+1 -> requires MayLoop ensures true;
+         }
       x<=0 & y<=0 -> requires Term[] ensures true;
-     }
-   a<b ->
-     case {
-      x>0  -> 
-        //requires MayLoop ensures true;
-        case {
-        x-y<b-a+1 -> requires Term[x+y] ensures true;
-        x-y>=b-a+1 -> requires MayLoop ensures true;
-        
-        }
-      //x>0 & y<=0 -> requires MayLoop ensures true;
-      x<=0 & y>0 -> requires Loop ensures false;
-      x<=0 & y<=0 -> requires Term[] ensures true;
-     }
-   a>b ->
-     case {
-      x>0 & y>0 -> requires MayLoop ensures true;
-      x<=0 & y>0 -> requires MayLoop ensures true;
-      x>0 & y<=0 -> requires Loop ensures false;
-      x<=0 & y<=0 -> requires Term[] ensures true;
-     }
  }
 {
+
   if (x>0 || y>0) {
     x = x+a-b-1;
     y = y+b-a-1;
@@ -58,7 +57,7 @@ void loo (ref int x, ref int y,int a, int b)
 }
 
 /*
-# ex20c1.ss
+# ex20c3.ss
 
    a<b ->
      case {
@@ -67,6 +66,9 @@ void loo (ref int x, ref int y,int a, int b)
       x<=0 & y>0 -> requires Loop ensures false;
       x<=0 & y<=0 -> requires Term[] ensures true;
      }
+
+          a>b+1 -> requires MayLoop ensures true;
+          b>a+1 -> requires MayLoop ensures true;
 
 # MayLoop can be refine to some terminating scenario..
 

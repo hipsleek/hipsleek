@@ -22,34 +22,22 @@ while (x > 0 || y > 0) {
      */
 
 void loo (ref int x, ref int y,int a, int b)
- case {
-   a=b ->
      case {
-      x>0 | y>0 -> requires Term[max(x,y)] ensures true;
+      x>0 | y>0 -> 
+        case { 
+         a=b -> requires Term[max(x,y)] ensures true;
+         a=b+1 -> requires Term[max(x,y) ensures true;
+         a<b -> 
+      case {
+         x<=0  -> requires Loop ensures false;
+         x>0  -> requires MayLoop ensures true;
+       }
+         a>b -> requires MayLoop ensures true;
+      }
       x<=0 & y<=0 -> requires Term[] ensures true;
-     }
-   a<b ->
-     case {
-      x>0  -> 
-        //requires MayLoop ensures true;
-        case {
-        x-y<b-a+1 -> requires Term[x+y] ensures true;
-        x-y>=b-a+1 -> requires MayLoop ensures true;
-        
-        }
-      //x>0 & y<=0 -> requires MayLoop ensures true;
-      x<=0 & y>0 -> requires Loop ensures false;
-      x<=0 & y<=0 -> requires Term[] ensures true;
-     }
-   a>b ->
-     case {
-      x>0 & y>0 -> requires MayLoop ensures true;
-      x<=0 & y>0 -> requires MayLoop ensures true;
-      x>0 & y<=0 -> requires Loop ensures false;
-      x<=0 & y<=0 -> requires Term[] ensures true;
-     }
  }
 {
+
   if (x>0 || y>0) {
     x = x+a-b-1;
     y = y+b-a-1;
