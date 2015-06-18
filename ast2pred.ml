@@ -30,9 +30,26 @@ open IastUtil
 let err_var = "#e"
 let res_var = "#r"
 
-let exam_ass_error_prog iprog=
+type assert_err=
+  | Safe
+  | Unsafe
+  | Unk
+  | NotApp
+
+let string_of_assert_err res= match res with
+    | Safe -> "safe"
+    | Unsafe -> "unsafe"
+    | Unk -> "unknown"
+    | NotApp -> "not applicable"
+
+let exam_ass_error_proc iprog proc=
+  match proc.I.proc_body with
+    | Some e -> I.exists_assert_error iprog e
+    | None -> false
+
+let exam_ass_error_scc iprog scc=
   (*func call error*)
-  false
+  List.exists (exam_ass_error_proc iprog) scc
 
 (*
   x=y ==> x=y
@@ -91,6 +108,11 @@ let gen_view_from_prog iprog iproc=
 (* O: safe, 1: unsafe, 2: unknown, 3: not applicaple (all method donot have assert error) *)
 let verify_as_sat iprog=
   (* sort method call*)
+  let niprog,scc_procs = Iast.Ast_sort.sort_call_graph iprog in
   (* look up assert error location *)
-  (* transform *)
-  3
+  if List.for_all (exam_ass_error_scc niprog) scc_procs then
+    (* transform *)
+    (* check sat *)
+    NotApp
+  else
+    NotApp

@@ -243,6 +243,7 @@ and compile_pre (prog : C.prog_decl) (proc : C.proc_decl) (pre : CF.formula) jav
         I.proc_has_while_return = false;
         I.proc_is_invoked = false;
         I.proc_has_assert_err = false;
+        I.proc_call_order = 0;
         I.proc_verified_domains = [];
         I.proc_file = "";
         I.proc_loc = no_pos;
@@ -327,6 +328,7 @@ and compile_post (prog : C.prog_decl) (proc : C.proc_decl) (post : CF.formula) (
         I.proc_has_while_return = false;
         I.proc_is_invoked = false;
         I.proc_has_assert_err = false;
+        I.proc_call_order = 0;
         I.proc_verified_domains = [];
         I.proc_file = "";
         I.proc_loc = no_pos;

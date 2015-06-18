@@ -2172,6 +2172,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
     Iast.proc_has_while_return = false;
     Iast.proc_is_invoked = false;
     Iast.proc_has_assert_err = false;
+    Iast.proc_call_order = 0;
     Iast.proc_verified_domains = [INF_SHAPE];
     Iast.proc_file = filename;
     Iast.proc_loc = pos;
