@@ -37,6 +37,15 @@ which seem sufficient to analyse that
   x,y are inductive
   a,b are unchanged
 
+# more formally:
+
+ parameter analysis for loo
+
+ loo(x,y,a,b) = (IND([x,a,b],x+a-b-1)
+                 ,IND([y,a,b],y+b-a-1)
+                 ,FLOW(a)
+                 ,FLOW(b))
+
 # Earlier context were as follows. Are they similar to above?
 
   State:

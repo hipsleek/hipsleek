@@ -14,6 +14,15 @@ which seem sufficient to analyse that
    a,b are unchanged across recursion  a'=a, b'=b
    x,y are inductively changed by x'=nxt1(x); y'= nxt2(y)
 
+# more formally:
+
+ parameter analysis for loo
+
+ loo(x,y,a,b) = [loo(IND([x,a,b],x+a-b-1)
+                 ,IND([y,a,b],y+b-a-1)
+                 ,FLOW(a)
+                 ,FLOW(b))]
+ 
 # Add an option --analyse-param to trigger the output
 
   x,y are inductive
