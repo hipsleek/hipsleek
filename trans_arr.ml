@@ -132,7 +132,7 @@ module OrderedExp =
     let compare e1 e2 =
       if is_same_exp e1 e2
       then 0
-      else 1
+      else Pervasives.compare e1 e2
   end
 ;;
 
@@ -3073,8 +3073,10 @@ module H_Unchanged =
   struct
     type t = (Cpure.exp * Cpure.exp)
     let equal (f1,t1) (f2,t2) =
-      ((is_same_exp f1 f2)&&(is_same_exp t1 t2))||((is_same_exp f1 t2)&&(is_same_exp t1 f2))
-    let hash = Hashtbl.hash
+      let result = ((is_same_exp f1 f2)&&(is_same_exp t1 t2))||((is_same_exp f1 t2)&&(is_same_exp t1 f2)) in
+      let () = x_binfo_pp ("hash equal: f1 "^(string_of_exp f1)^" t1 "^(string_of_exp t1)^" f2 "^(string_of_exp f2)^" t2 "^(string_of_exp t2)^" "^(string_of_bool result)) no_pos in
+      result
+    let hash (f,t)= (String.length (string_of_exp f))+(String.length (string_of_exp t))
   end
 ;;
 
@@ -3088,6 +3090,15 @@ let string_of_unchanged ((f,t),s) =
 ;;
 
 let clean_tbl tbl arglst =
+  let merge_tbl tbl =
+    let merge_helper (f,t) item =
+      let itemlst = Unchanged_Htbl.find_all tbl (f,t) in
+      (* let () = x_binfo_pp ("itemlst length: "^(string_of_int (List.length itemlst))) no_pos in *)
+      let new_item = List.fold_left (fun r i -> let () = Unchanged_Htbl.remove tbl (f,t) in ExpSet.union i r) ExpSet.empty itemlst in
+      Unchanged_Htbl.replace tbl (f,t) new_item
+    in
+    Unchanged_Htbl.iter merge_helper tbl
+  in
   let expand_tbl tbl =
     let changed = ref false in
     let expand_helper (f,t) eset =
@@ -3098,15 +3109,24 @@ let clean_tbl tbl arglst =
             then
               Some (nt,t)
             else
-              if (is_same_exp f nt && (not (is_same_exp nf t)))
-              then
-                Some (nf,t)
-              else
-                None
+            if (is_same_exp f nt && (not (is_same_exp nf t)))
+            then
+              Some (nf,t)
+            else
+            if (is_same_exp t nt && (not (is_same_exp f nf)))
+            then Some (f,nf)
+            else
+            if (is_same_exp t nf && (not (is_same_exp f nt)))
+            then Some (f,nt)
+            else
+              None
           in
           match new_key with
           | None -> ()
-          | Some key ->
+          | Some ((kf,kt) as key) ->
+            let () = x_tinfo_pp ("expand_tbl: Find some key!") no_pos in
+            let () = x_tinfo_pp ("key: "^(string_of_exp kf)^" "^(string_of_exp kt)) no_pos in
+            let ()=  x_tinfo_pp ("tbl: "^(string_of_unchanged_tbl tbl)) no_pos in
             let new_eset = ExpSet.union eset neset in
             try
               let exists_set = Unchanged_Htbl.find tbl key in
@@ -3117,7 +3137,8 @@ let clean_tbl tbl arglst =
                 Unchanged_Htbl.replace tbl key (ExpSet.union new_eset exists_set)
             with
             Not_found ->
-              ()
+              let () = x_binfo_pp ("Not_found") no_pos in
+              Unchanged_Htbl.add tbl key new_eset
       ) tbl
     in
     let rec iterator () =
@@ -3140,8 +3161,10 @@ let clean_tbl tbl arglst =
     ) tbl
   in
   (
+    merge_tbl tbl;
     expand_tbl tbl;
-    clean_fv tbl arglst
+    clean_fv tbl arglst;
+    merge_tbl tbl
   )
 ;;
 
@@ -3159,7 +3182,7 @@ let substitute_unchanged (arglst,infolst) explst =
     let nt =
       try
         let (_,nt) = List.find (fun (a,s)->is_same_exp a t) subs in
-        nf
+        nt
       with
       | Not_found -> t
     in
@@ -3176,9 +3199,17 @@ let substitute_unchanged (arglst,infolst) explst =
           in
           ExpSet.add nitem r) s ExpSet.empty
     in
-    (nf,nt,ns)
+    ((nf,nt),ns)
   in
   List.map (fun x -> subs_helper x subs) infolst
+;;
+
+let substitute_unchanged (arglst,infolst) explst :((Cpure.exp * Cpure.exp) * ExpSet.t) list=
+  let pr1 (arglst,infolst)=
+    "["^((pr_list string_of_exp) arglst)^"]::["^((pr_list string_of_unchanged) infolst)^"]"
+  in
+  let basic = (arglst,infolst) in
+  Debug.no_2 "substitute_unchanged" pr1 (pr_list string_of_exp) (pr_list string_of_unchanged) substitute_unchanged basic explst
 ;;
 
 let new_unchanged_fixpoint relname arglst definelst basic=
@@ -3188,7 +3219,7 @@ let new_unchanged_fixpoint relname arglst definelst basic=
       if id = "update_array_1d"
       then
         (* Only one disjunction *)
-        [ (List.nth explist 0,List.nth explist 1,ExpSet.singleton (List.nth explist 3)) ]
+        [ ((List.nth explist 0,List.nth explist 1),ExpSet.singleton (List.nth explist 3)) ]
       else
       if id = relname
       then
@@ -3196,14 +3227,14 @@ let new_unchanged_fixpoint relname arglst definelst basic=
       else
         []
     | BForm (((Eq ((Var (SpecVar (Array _,_,_),_) as v2),(Var (SpecVar (Array _,_,_),_) as v1),loc)),pa),_) ->
-      [ (v1,v2,ExpSet.empty) ]
+      [ ((v1,v2),ExpSet.empty) ]
     | And (f1,f2,loc) ->
       (helper f1)@(helper f2)
     | _ -> []
   in
   let list = List.flatten (List.map helper definelst) in
   let tbl = Unchanged_Htbl.create 100000 in
-  let () = List.iter (fun (f,t,s) -> Unchanged_Htbl.add tbl (f,t) s) list in
+  let () = List.iter (fun ((f,t),s) -> Unchanged_Htbl.add tbl (f,t) s) list in
   let () = x_binfo_pp ("clean_tbl tbl: "^(string_of_unchanged_tbl tbl)) no_pos in
   let () = x_binfo_pp ("clean_tbl arglst: "^((pr_list string_of_exp) arglst)) no_pos in
   let () = clean_tbl tbl arglst in
