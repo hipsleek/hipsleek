@@ -6947,7 +6947,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (prepost_flag:bool) (quantify
                       CF.formula_inf_continuation = ct;
                       CF.formula_inf_pos = pos})
        in
-       wrap_one_bool Globals.imm_infer (Imminfer.should_infer_imm prog
+       wrap_one_bool Globals.allow_noann (Imminfer.should_infer_imm prog
                                         b.IF.formula_inf_vars b.IF.formula_inf_obj) infer_helper ()
     | IF.EList b ->
       let rec aux tlist clist = (

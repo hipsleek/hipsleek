@@ -1734,7 +1734,7 @@ TO FIX the imm_unify
 
 !!! **immutable.ml#62:imm + pure:[( ann_1227=@M, true),( ann_1227<:@L, Anon_11<=0),( ann_1227=@A, true)]
 (====)
-split_imm_pure@18@17@16
+split_imm_pure@18@17@16g
 split_imm_pure inp1 : (ann_1227=@M | (ann_1227<:@L & Anon_11<=0) | ann_1227=@A)
 split_imm_pure@18 EXIT:( ann_1227=@M & ann_1227<:@L & ann_1227=@A, true)
 

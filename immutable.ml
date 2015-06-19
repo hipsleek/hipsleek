@@ -59,6 +59,7 @@ let split_imm_pure_lst pf =
     (CP.conj_of_list imm_f no_pos), (CP.conj_of_list pure_f no_pos) in
   let disj = CP.split_disjunctions_deep pf in
   let disj_part = List.map split_imm_pure_helper disj in (* split each disj in imm formula + pure formula *)
+  let () = x_binfo_hp (add_str "imm + pure" (pr_list (pr_pair !CP.print_formula !CP.print_formula))) disj_part no_pos in
   let disj_part = List.map (fun (ximm,ypure) -> (TP.simplify_tp ximm, ypure)) disj_part in (* simplify the imm formula of each disjunct *)
   let () = x_binfo_hp (add_str "imm + pure" (pr_list (pr_pair !CP.print_formula !CP.print_formula))) disj_part no_pos in
   let disj_part = List.filter (fun (ximm,ypure) -> not (CP.is_False ximm)) disj_part in  (* remove unsat disjuncts *)
@@ -695,7 +696,7 @@ let rec ann_opt_to_ann_lst (ann_opt_lst: Ipure.ann option list) (default_ann: Ip
 
 let iformula_ann_to_cformula_ann (iann : Ipure.ann) : CP.ann = 
   match iann with
-  | Ipure.NoAnn -> if not (!Globals.imm_infer) then !defCImm else CP.NoAnn 
+  | Ipure.NoAnn -> if not (!Globals.allow_noann) then !defCImm else CP.NoAnn 
   | Ipure.ConstAnn(x) -> CP.ConstAnn(x)
   | Ipure.PolyAnn((id,p), l) -> 
     CP.PolyAnn(CP.SpecVar (AnnT, id, p))
@@ -704,12 +705,12 @@ let iformula_ann_to_cformula_ann_lst (iann_lst : Ipure.ann list) : CP.ann list =
   List.map iformula_ann_to_cformula_ann iann_lst
 
 let iformula_ann_opt_to_cformula_ann_lst (iann_lst : Ipure.ann option list) : CP.ann list = 
-  let def_ann = if not (!Globals.imm_infer) || not(!Globals.allow_field_ann) then !defIImm else Ipure.NoAnn in
+  let def_ann = if not (!Globals.allow_noann) || not(!Globals.allow_field_ann) then !defIImm else Ipure.NoAnn in
   List.map iformula_ann_to_cformula_ann (ann_opt_to_ann_lst iann_lst def_ann)
 
 let iformula_ann_to_cformula_ann_node_level (iann : Ipure.ann) : CP.ann = 
   (* if we are doing ifnerence at field level, translate node level NoAnn to @M *)
-  Wrapper.wrap_one_bool (Globals.imm_infer) (not(!Globals.allow_field_ann) && !Globals.imm_infer)  iformula_ann_to_cformula_ann iann
+  Wrapper.wrap_one_bool (Globals.allow_noann) (not(!Globals.allow_field_ann) && !Globals.allow_noann)  iformula_ann_to_cformula_ann iann
 
 (* check lending property (@L) in classic reasoning. Hole is treated like @L *)
 let rec is_classic_lending_hformula (f: h_formula) : bool =

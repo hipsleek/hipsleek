@@ -1313,6 +1313,7 @@ let add_imm_inv f1 f2 =
   (* form a list of imm_inv to add *)
   let vs = fv (mkAnd f1 f2 no_pos) in
   let vs = List.filter (fun v -> CP.is_ann_type (CP.type_of_spec_var v)) vs in
+  let vs = CP.remove_dups_svl vs in
   let inv = List.map (fun v -> 
       let vp=Var(v,no_pos) in 
       mkAnd (mkSubAnn const_ann_bot vp) (mkSubAnn vp const_ann_top) no_pos ) vs in
@@ -3043,9 +3044,9 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 
 let tp_imply_no_cache ante conseq imp_no timeout process =
   let ante,conseq = if !Globals.simpl_unfold3 then simpl_equalities ante conseq else (ante,conseq) in
-  let ante = 
-    if !Globals.allow_imm_inv then add_imm_inv ante conseq
-    else ante in
+  (* let ante =  *)
+  (*   if !Globals.allow_imm_inv then add_imm_inv ante conseq *)
+  (*   else ante in *)
   let ante = x_add_1 cnv_ptr_to_int ante in
   let conseq = cnv_ptr_to_int_weak conseq in
   let flag = tp_imply_no_cache ante conseq imp_no timeout process in

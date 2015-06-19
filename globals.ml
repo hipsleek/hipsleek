@@ -15,7 +15,7 @@ let trailer_num_list = ref []
 
 let change_flow = ref false
 
-let abs_int = ref 7
+let abs_int = ref 3
 let lend_int = ref 2
 let imm_int = ref 1
 let mut_int = ref 0
@@ -1075,7 +1075,7 @@ let aggresive_imm_inst = ref false
 
 let imm_add = ref true
 
-let imm_infer = ref false
+let allow_noann = ref false
 
 (*Since this flag is disabled by default if you use this ensure that 
   run-fast-test mem test cases pass *)

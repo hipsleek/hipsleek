@@ -6,7 +6,8 @@ data cell{
 relation P(ann v,ann w).
 
 int foo2(cell c, cell d)
-  infer [@imm_pre,@pre_n]
+//  infer [@imm_pre,@pre_n]
+  infer [@imm_pre]
   requires c::cell<_> * d::cell<_>
   ensures c::cell<_> * d::cell<_>;
 /*

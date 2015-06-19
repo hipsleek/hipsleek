@@ -377,8 +377,8 @@ let simplify_imm_addition emap0 (f:formula) =
     let () = fixpt := true in
     let emap = build_eset_of_imm_formula form in
     let emap = EMapSV.merge_eset emap emap0 in
-    let () =  x_binfo_hp (add_str "form" !print_formula) form no_pos in
-    let () =  x_binfo_hp (add_str "emap" EMapSV.string_of) emap no_pos in
+    let () =  x_tinfo_hp (add_str "form" !print_formula) form no_pos in
+    let () =  x_tinfo_hp (add_str "emap" EMapSV.string_of) emap no_pos in
     let new_form = map_formula_arg form emap fncs (idf2, idf2, idf2) in
     (* let () = fixpt:=(equalFormula form new_form) in *) (* using equalFormula leads to loop *)
     if not(!fixpt) then helper new_form else new_form

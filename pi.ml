@@ -587,7 +587,6 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
     let new_specs =
       let rels = rels_orig (* Infer.infer_rel_stk # get_stk *) in
       let () = Infer.infer_rel_stk # reset in
-      (* let rels = Immutable.norm_rel_list rels in *)
       let pres,posts_wo_rel,all_posts,inf_vars,pre_fmls,grp_post_rel_flag =
         List.fold_left (fun (pres_acc,posts_wo_rel_acc,all_posts_acc,inf_vars_acc,pre_fmls_acc,grp_post_rel_flag) proc ->
             let pres,posts_wo_rel,all_posts,inf_vars,pre_fmls,grp_post_rel_flag =
