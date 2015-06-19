@@ -224,7 +224,7 @@ let verify_td_sccs iprog prog fast_return scc_procs=
             let pairs,ivdecls = List.split pair_iviews in
             let () = List.iter (Astsimp.process_pred_def_4_iast iprog false) ivdecls in
             let old_inv_gen = !Globals.do_infer_inv in
-            let () = Globals.do_infer_inv := false in
+            let () = Globals.do_infer_inv := true in
             let cviews = (Astsimp.convert_pred_to_cast pairs false iprog prog false) in
             let () = Globals.do_infer_inv := old_inv_gen in
             let () = Debug.info_hprint (add_str " predicated generated"
