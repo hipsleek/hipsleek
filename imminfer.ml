@@ -83,7 +83,8 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
     List.fold_right (fun pure acc -> add_pure_formula_to_formula pure acc) (List.map eq_v vars) formula in
   let and_pure_with_rel relname rel_params formula loc =
     let rel_pure =
-      let pairs = List.map (fun i -> (AnnT, CP.Var (i, loc))) rel_params in
+      let pairs = List.map (fun sv -> (CP.type_of_spec_var sv, CP.Var (sv, loc)))
+                           rel_params in
       let (types, args) = List.split pairs in
       let rel_sv = CP.SpecVar (RelT types, relname, Unprimed) in
       let p_formula = CP.RelForm (rel_sv, args, loc) in
@@ -97,7 +98,8 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
     | rel_params ->
        Some ({
         C.rel_name = rn;
-        C.rel_vars = List.map (fun _ -> Cpure.SpecVar (AnnT, fresh loc, Unprimed)) rel_params;
+        C.rel_vars = List.map (fun sv -> CP.SpecVar (CP.type_of_spec_var sv,
+                                                     fresh loc, Unprimed)) rel_params;
         C.rel_formula = CP.mkTrue no_pos
        })
   in
@@ -257,10 +259,16 @@ let collect_reloblgs_spec (spec: CF.struc_formula) =
   let collect_reloblgs_b (p_formula, _) =
     match p_formula with
     | CP.RelForm (rel_sv, args, _) ->
-       let guards = List.map (fun var -> CP.mkSubAnn var CP.const_ann_top) args in
+       let () = x_binfo_hp (add_str "args" Cprinter.string_of_typed_spec_var_list)
+                           (List.map CP.exp_to_spec_var args) no_pos in
+       let guards = List.fold_right (fun exp guards -> 
+                                      if CP.is_ann_typ (CP.exp_to_spec_var exp) then
+                                        (CP.mkSubAnn exp CP.const_ann_top)::guards
+                                      else guards) args [] in
+       let () = x_binfo_hp (add_str "guards" (pr_list Cprinter.string_of_pure_formula)) guards no_pos in
        let reloblg = CP.RelAssume [rel_sv], CP.mkPure p_formula,
                      (CP.join_conjunctions guards) in
-       let () = infer_rel_stk # push reloblg in
+       let () = if guards != [] then infer_rel_stk # push reloblg in
        None
     | _ -> None
   in

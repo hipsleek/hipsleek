@@ -4,12 +4,12 @@ data cell{
 
 relation P1(int v).
 relation P2(int v,int r, int s).
-//relation P3(ann v1, int v,int r, int s).
+relation P3(ann v1, int v,int r, int s).
 
 int foo(cell c)
   infer [P1,P2]
   requires c::cell<v>@M & P1(v)
-     /* ensures c::cell<w>@b & P3(b,v,res,w)  ; */
+     //ensures c::cell<w>@b & P3(b,v,res,w);
      ensures c::cell<w>@M & P2(v,res,w)  ;
 {
  int x = c.fst;

@@ -1106,12 +1106,13 @@ module EqMap =
     let elim_elems  (s:emap) (e:elem list) : emap = 
       List.filter (fun (a,k2) -> not(mem a e)) s
 
-    (* return all elements equivalent to e, including itself *)
+    (* return all elements equivalent to e, not including itself *)
     let find_equiv_all  (e:elem) (s:emap) : elist  =
       let r1 = find s e in
       if (r1==None) then []
       else List.map fst (List.filter (fun (a,k) -> k==r1) s)
 
+    (* return all elements equivalent to e, including itself *)
     let find_equiv_all_new  (e:elem) (s:emap) : elist  =
       let r1 = find s e in
       if (r1==None) then [e]
