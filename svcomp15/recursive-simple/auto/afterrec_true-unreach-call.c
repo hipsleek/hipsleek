@@ -19,7 +19,7 @@ void f(int n)
 {
   if (n<3)
     // n_0 < 3
-    return;
+    return ;
   n--; // [( n_0 < 3 , 0);], [(\neg(n_0 < 3)  /\ n_1 = n_0 -1, 1)]
   f(n); // [( n_0 < 3 , 0);], [(\neg(n_0 < 3)  /\ n_1 = n_0 -1 /\ f(n_1, e_2), 1)]
   // [( n_0 < 3 , 0);(\neg(n_0 < 3)  /\ n_1 = n_0 -1 /\ f(n_1, e_2) /\ e_2 =1 /\ e=1, 1)],
@@ -32,13 +32,14 @@ pred main_v<e> == _::f_v<2,e1> & e1=0 & e=0
    or _::f_v<2,e1> & e1=1 & e=1.
  */
 
-void main()
+int main()
 /*@
   requires true
   ensures true;
 */
 {
   f(2);
+  return 0;
 }
 
 /*

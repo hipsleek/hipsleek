@@ -545,8 +545,9 @@ let process_source_full source =
   (* let () =  Debug.info_zprint (lazy  ("XXXX 1: ")) no_pos in *)
   (* let () = I.set_iprog intermediate_prog in *)
   (*let () = print_endline ("@@intermediate_prog\n"^Iprinter.string_of_program intermediate_prog) in*)
-  let _ = Ast2pred.verify_as_sat intermediate_prog in
+  (* let _ = Ast2pred.verify_as_sat intermediate_prog in *)
   let cprog, tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
+  let _ = Verify_td.verify_as_sat intermediate_prog cprog in
   let () = saved_cprog := Some cprog in
   (* let () = if !Globals.sa_pure then *)
   (*   let norm_views, extn_views = List.fold_left (fun (nviews, eviews) v -> *)

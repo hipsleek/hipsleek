@@ -51,6 +51,17 @@ let exam_ass_error_scc iprog scc=
   (*func call error*)
   List.exists (exam_ass_error_proc iprog) scc
 
+
+let symex_gen_view_e iprog e=
+  match e with
+    | I.FloatLit {exp_float_lit_val = f;
+      exp_float_lit_pos = l;} -> IP.FConst (f, l)
+    | I.IntLit {exp_int_lit_val = i;
+      exp_int_lit_pos = l} -> IP.IConst(i,l)
+    | I.Null l -> IP.Null l
+    | I.Var {exp_var_name = v;
+      exp_var_pos = l} -> IP.Var((v, UnPrimed), l)
+
 (*
   x=y ==> x=y
 
@@ -58,27 +69,31 @@ let exam_ass_error_scc iprog scc=
   a /\ rec(C_1) \/ -a /\ rec(C_2)
 
 *)
-let exe_gen_view iprog proc_args pos e0=
-  (**)
-  let rec recf e counter= match e with
+let symex_gen_view iprog proc_args  pos e0=
+  let e_var = (IP.Ann_Exp (IP.Var ((err_var, Unprimed), no_pos)),Int,no_pos)
+  let rec recf e h p= match e with
     | I.Assign e_ass -> true
     | I.Binary e_bin -> true
     | I.Cond e_cond -> true
     | I.CallRecv _ -> true
     | I.CallNRecv _ -> true
-    | I.Empty _ -> true
-    | I.FloatLit _ -> true
-    | I.IntLit _ -> true
-    | I.Null _ -> true
+    | I.Empty _ -> h,p
+    | I.BoolLit {exp_bool_lit_val=b;
+      exp_bool_lit_pos=l;}-> h, IP.mkAnd p (IP.BForm ((IP.BConst (b,l), None),None)) pos
+    | I.FloatLit _ -> h,p
+    | I.IntLit _ -> h,p
+    | I.Null _ -> h,p
     | I.Return _ -> true
     | I.Seq _ -> true
     | I.Unary _ -> true
-    | I.Var _ -> true
-    | I.VarDecl _ -> true
-    | I.While _ -> true
-    | _ -> true
+    | I.Var _ -> h,p
+    | I.VarDecl _ -> h,p
+    | I.While _ -> let () = print_line "ast2pred.symex_gen_view: to handle" in h,p
+    | _ -> h,p
   in
-  IP.mkTrue pos
+  ley int_p = IP.BForm (((IP.Eq (e_var, IP.IConst (0,no_pos), no_pos)),None),None) in
+  let h, p = recf e0 IF.Emp int_p in
+  h,p
 
 
 let gen_view_from_proc iprog iproc=

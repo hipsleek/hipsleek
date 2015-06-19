@@ -1356,7 +1356,7 @@ and check_exp prog proc ctx (e0:exp) label =
 (* WN_2_Loc : to be implemented by returing xpure of asserted f formula*)
 and get_xpure_of_formula f = 1
 
-and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_context) (e0:exp) (post_start_label:formula_label) : CF.list_failesc_context =
+and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_context) (e0:exp) (post_start_label:formula_label): CF.list_failesc_context =
   let ctx = if !Globals.tc_drop_unused then
       let f es = CF.Ctx{es with CF.es_formula = CF.elim_e_var !proc_used_names es.CF.es_formula} in
       List.map (CF.transform_failesc_context (idf,idf,f)) ctx
@@ -2277,7 +2277,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         exp_scall_ho_arg = ha;
         exp_scall_is_rec = is_rec_flag;
         exp_scall_path_id = pid;
-        exp_scall_pos = pos}) ->
+        exp_scall_pos = pos} as ecall_info) ->
       begin
         Gen.Profiling.push_time "[check_exp] SCall";
         let () = proving_loc#set pos in
@@ -2286,6 +2286,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         (*clear history*)
         let farg_types, _ (* farg_names *) = List.split proc.proc_args in
         let ctx = CF.clear_entailment_history_failesc_list (fun x -> None) ctx in
+        (*topdown exe*)
+        let mn_decl = Cast.look_up_proc_def_raw prog.Cast.new_proc_decls mn in
+        if !symex_td && ((mn_decl.Cast.proc_is_main && mn_decl.Cast.proc_body != None) ||
+            String.compare (Cast.unmingle_name mn) assert_err_fn = 0) then
+          Td_utils.symex_td_method_call prog proc ctx ecall_info
+        else
         (*=========================*)
         (*======= CONCURRENCY======*)
         (*=========================*)

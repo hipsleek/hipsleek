@@ -4062,6 +4062,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
            C.proc_call_order = 0;
            C.proc_is_main = proc.I.proc_is_main;
            C.proc_is_invoked = proc.I.proc_is_invoked;
+           C.proc_has_assert_err = false;
            C.proc_verified_domains = proc.I.proc_verified_domains;
            C.proc_is_recursive = false;
            C.proc_file = proc.I.proc_file;

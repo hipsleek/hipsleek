@@ -226,6 +226,7 @@ and proc_decl = {
   proc_call_order : int;
   proc_is_main : bool;
   proc_is_invoked : bool;
+  mutable proc_has_assert_err: bool;
   proc_is_recursive : bool;
   proc_file : string;
   proc_loc : loc;
