@@ -3202,16 +3202,17 @@ let remove_abs_nodes_h_formula emap h =
 *)
 let remove_abs_nodes_and_collect_imm_h_formula emap h =
   let helper _ h =
-    let sv_of ann = match ann with CP.PolyAnn sv -> [sv] | _ -> [] in
+    let sv_of ann args =
+      List.fold_right (fun ann acc -> match ann with CP.PolyAnn sv -> sv::acc | _ -> acc) (ann::(List.map CP.mkPolyAnn args)) [] in
     match h with
-    | CF.DataNode { CF.h_formula_data_imm = imm; CF.h_formula_data_param_imm = param_imm;} ->
-       let (heap, ann) = if (not !Globals.allow_field_ann) && (Imm.is_abs ~emap:emap imm) then (HEmp, sv_of imm)
-                         else if (!Globals.allow_field_ann) && (Imm.is_abs_list ~emap:emap param_imm) then (HEmp, sv_of imm) else (h, [])
+    | CF.DataNode { CF.h_formula_data_imm = imm; CF.h_formula_data_param_imm = param_imm; CF.h_formula_data_arguments = args } ->
+       let (heap, ann) = if (not !Globals.allow_field_ann) && (Imm.is_abs ~emap:emap imm) then (HEmp, sv_of imm args)
+                         else if (!Globals.allow_field_ann) && (Imm.is_abs_list ~emap:emap param_imm) then (HEmp, sv_of imm args) else (h, [])
        in Some (heap, ann)
-    | CF.ViewNode { CF.h_formula_view_imm = imm; CF.h_formula_view_annot_arg = annot_arg; } ->
+    | CF.ViewNode { CF.h_formula_view_imm = imm; CF.h_formula_view_annot_arg = annot_arg; CF.h_formula_view_arguments = args } ->
        let pimm = (CP.annot_arg_to_imm_ann_list_no_pos annot_arg) in
-       let (heap, ann) = if (not !Globals.allow_field_ann) && (Imm.is_abs ~emap:emap imm) then (HEmp, sv_of imm)
-                         else if (!Globals.allow_field_ann) && (Imm.is_abs_list ~emap:emap pimm) then (HEmp, sv_of imm) else (h, [])
+       let (heap, ann) = if (not !Globals.allow_field_ann) && (Imm.is_abs ~emap:emap imm) then (HEmp, sv_of imm args)
+                         else if (!Globals.allow_field_ann) && (Imm.is_abs_list ~emap:emap pimm) then (HEmp, sv_of imm args) else (h, [])
        in Some (heap, ann)
     |_ -> None in
   CF.trans_h_formula h [] helper (fun x _ -> x) List.concat
@@ -3229,12 +3230,15 @@ let remove_abs_nodes_formula_helper form =
     | CP.Var (sv, loc) -> Some (if CP.EMapSV.mem sv not_relevant then CP.AConst(Accs,loc) else e)
     | _ -> None in
   let prune_a_eq_a formula =
-    let is_a_eq_a = function
-      | CP.BForm ((CP.Eq (CP.AConst (Accs,_), CP.AConst (Accs, _), _),_),_) -> true
-      | _ -> false in
+    let aux = function
+      | CP.BForm ((CP.Eq (CP.AConst (Accs,_), CP.AConst (Accs, _), _),_),_) -> None
+      | CP.BForm ((CP.Eq ((CP.AConst (Accs,_)) as a, ((CP.Var _) as b), x),y),z) ->
+         Some (CP.BForm ((CP.Eq (b,a,x),y),z))
+      | s -> Some s in
     let prune_a_eq_a_d disjunct =
       let conjuncts = CP.split_conjunctions disjunct in
-      CP.join_conjunctions (List.fold_right (fun f acc -> if is_a_eq_a f then acc else f::acc) conjuncts []) in
+      CP.join_conjunctions (List.fold_right (fun f acc -> map_opt_def acc (fun f -> f::acc) (aux f))
+                                            conjuncts []) in
     let disjuncts = CP.split_disjunctions formula in
     CP.join_disjunctions (List.map prune_a_eq_a_d disjuncts) in
   let transform_heap_and_pure heap pure =
