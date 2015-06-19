@@ -42,9 +42,11 @@ let reverify_flag = ref false
 let reverify_all_flag = ref false
 let ineq_opt_flag = ref false
 let symex_td = ref(false:bool)
-let err_var = "#e"
+let err_var = "e"
+
 let assert_err_fn = "__VERIFIER_error"
 
+let method2pred mn = mn^"_v"
 
 let illegal_format s = raise (Illegal_Prover_Format s)
 

@@ -18,42 +18,32 @@ open Mcpure_D
 open Mcpure
 open Label_only
 open Typeinfer
+open Slsat
 
 module E = Env
 module Err = Error
-module C = Cast
+module IA = Iast
+module CA = Cast
 module CF = Cformula
 module CP = Cpure
 module LO = Label_only.LOne
+module MCP = Mcpure
 
-
-
-type assert_err=
-  | VTD_Safe
-  | VTD_Unsafe
-  | VTD_Unk
-  | VTD_NotApp
-
-let string_of_assert_err res= match res with
-    | VTD_Safe -> "safe"
-    | VTD_Unsafe -> "unsafe"
-    | VTD_Unk -> "unknown"
-    | VTD_NotApp -> "not applicable"
 
 let exists_assert_error_x prog e0=
   let rec helper e=
     (* let () = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
     match e with
-      | C.SCall sc -> begin
-            let mn = C.unmingle_name sc.C.exp_scall_method_name in
+      | CA.SCall sc -> begin
+            let mn = CA.unmingle_name sc.CA.exp_scall_method_name in
             let () = Debug.ninfo_hprint (add_str "SCall"
                                  (pr_id)
-                              ) sc.C.exp_scall_method_name no_pos in
+                              ) sc.CA.exp_scall_method_name no_pos in
             if String.compare mn assert_err_fn = 0 then
               Some true
             else
-              let mn_decl = C.look_up_proc_def_raw prog.C.new_proc_decls sc.exp_scall_method_name in
-              let is_assert= mn_decl.C.proc_has_assert_err in
+              let mn_decl = CA.look_up_proc_def_raw prog.CA.new_proc_decls sc.exp_scall_method_name in
+              let is_assert= mn_decl.CA.proc_has_assert_err in
               Some is_assert
               end
       | _ -> None
@@ -68,10 +58,10 @@ let exists_assert_error prog e0=
 
 let exam_ass_error_proc prog proc=
   let exist_ass_err = match proc.C.proc_body with
-    | Some e -> C.fold_exp e (exists_assert_error prog) (List.exists (fun b -> b)) false
+    | Some e -> CA.fold_exp e (exists_assert_error prog) (List.exists (fun b -> b)) false
     | None -> false
   in
-  let () = proc.C.proc_has_assert_err <- exist_ass_err in
+  let () = proc.CA.proc_has_assert_err <- exist_ass_err in
   exist_ass_err
 
 let exam_ass_error_proc prog proc=
@@ -84,7 +74,7 @@ let exam_ass_error_scc iprog scc=
   List.exists (exam_ass_error_proc iprog) scc
 
 
-let symex_gen_view iprog prog proc body=
+let symex_gen_view iprog prog proc vname v_args body pos=
   let ctx0 = CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled proc.C.proc_loc in
   let ctx1 = CF.set_flow_in_context_override
     { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None} ctx0 in
@@ -97,16 +87,68 @@ let symex_gen_view iprog prog proc body=
   let () = symex_td := true in
   let res_ctx = x_add Typechecker.check_exp prog proc lfe body label in
   let () = symex_td := old_symex_td in
-  let () = x_binfo_hp (add_str ("symex_gen_view:" ^ proc.C.proc_name) (Cprinter.string_of_list_failesc_context_short)) res_ctx no_pos in
+  let () = x_tinfo_hp (add_str ("symex_gen_view:" ^ proc.C.proc_name) (Cprinter.string_of_list_failesc_context_short)) res_ctx no_pos in
   let br_ctxs = List.fold_left (fun acc (_,esc, brs) -> acc@(List.fold_left (fun eacc (_, ebrs) -> eacc@ebrs) [] esc)@brs ) [] res_ctx in
   let rec collect_es c = match c with
     | CF.Ctx es -> [CF.substitute_flow_in_f !norm_flow_int !ret_flow_int es.CF.es_formula]
     | CF.OCtx (c1,c2) -> (collect_es c1)@(collect_es c2)
   in
-  let brs = List.fold_left (fun acc (_,ctx,_) -> acc@(collect_es ctx)) [] br_ctxs in
-  let () = x_binfo_hp (add_str ("brs") (pr_list !CF.print_formula)) brs no_pos in
-  CP.mkTrue proc.C.proc_loc
+  let brs0 = List.fold_left (fun acc (_,ctx,_) -> acc@(collect_es ctx)) [] br_ctxs in
+  let () = x_tinfo_hp (add_str ("brs") (pr_list !CF.print_formula)) brs0 no_pos in
+  let brs1 = List.fold_left (fun fs f ->
+      let new_f = if CF.is_error_flow f then
+        let f1 = CF.substitute_flow_in_f !norm_flow_int !error_flow_int f in
+        CF.mkAnd_pure f1 (MCP.mix_of_pure CP.err_p) no_pos
+      else f in
+      fs@[new_f]
+  ) [] brs0 in
+  (* generate new iview *)
+  let f_body = List.fold_left (fun acc f -> CF.mkOr acc f pos) (List.hd brs1) (List.tl brs1) in
+  let vars = List.map CP.name_of_spec_var v_args in
+  let tvars = List.map (fun (CP.SpecVar (t,id,_)) -> (t,id)) v_args in
+  let f_body1,tis = Cfutil.norm_free_vars f_body (v_args) in
+  let () = Debug.ninfo_hprint (add_str "f_body1: " Cprinter.prtt_string_of_formula) f_body1 no_pos in
+  let no_prm_body = CF.elim_prm f_body1 in
+  let new_body = CF.set_flow_in_formula_override {CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link =None} no_prm_body in
+  let i_body = Rev_ast.rev_trans_formula new_body in
+  (* let i_body = IF.subst [((slf,Unprimed),(self,Unprimed))] i_body in *)
+  let () = Debug.ninfo_hprint (add_str "i_body1: " Iprinter.string_of_formula) i_body no_pos in
+  let struc_body = IF.mkEBase [] [] [] i_body None (* false *) no_pos in
+  let data_name = "" in
+  let imm_map = Immutable.icollect_imm struc_body vars data_name iprog.I.prog_data_decls in
+  let n_iview = {  I.view_name = vname;
+  IA.view_pos = pos;
+  IA.view_data_name = data_name;
+  IA.view_type_of_self = None;
+  IA.view_vars = vars;
+  IA.view_ho_vars = [];
+  IA.view_imm_map = imm_map;
+  IA.view_labels = List.map (fun _ -> LO.unlabelled) vars, false;
+  IA.view_modes = List.map (fun _ -> ModeOut) vars ;
+  IA.view_typed_vars =  tvars;
+  IA.view_kind = I.View_NORM;
+  IA.view_derv = false;
+  IA.view_parent_name = None;
+  IA.view_prop_extns = [];
+  IA.view_derv_info = [];
+  IA.view_pt_by_self  = [];
+  IA.view_formula = struc_body;
+  IA.view_inv_lock = None;
+  IA.view_is_prim = false;
+  IA.view_invariant = IP.mkTrue no_pos;
+  IA.view_baga_inv = None;
+  IA.view_baga_over_inv = None;
+  IA.view_baga_under_inv = None;
+  IA.view_mem = None;
+  IA.view_materialized_vars = [];
+  IA.try_case_inference = false; }
+  in
+  ((vname,tis), n_iview)
 
+let symex_gen_view iprog prog proc vname v_args body pos=
+  let pr = (pr_pair (pr_pair pr_id Typeinfer.string_of_tlist) Iprinter.string_of_view_decl) in
+  Debug.no_1 "symex_gen_view" pr_id pr
+      (fun _ -> symex_gen_view iprog prog proc vname v_args body pos) vname
 
 let symex_gen_view_from_proc iprog prog proc=
   (*
@@ -114,27 +156,57 @@ let symex_gen_view_from_proc iprog prog proc=
     - parameter list = method.para + option res + #e
     - parse body
   *)
-  let pred_name = (C.unmingle_name proc.C.proc_name) ^ "_v" in
-  let r_args = match proc.C.proc_return with
-    | Void -> []
-    | _ -> let r_arg =  res_name in
-      [r_arg]
+  let pred_name = (C.unmingle_name proc.CA.proc_name) ^ "_v" in
+  let r_args = (* match proc.CA.proc_return with *)
+    (* | Void -> [] *)
+    (* | _ -> let r_arg =  res_name in *)
+      [CP.SpecVar (proc.CA.proc_return, res_name,Unprimed)]
   in
-  let e_arg = err_var in
-  let proc_args = (List.map (fun (_,arg) -> arg) proc.C.proc_args) in
+  let e_arg = CP.SpecVar (Int, err_var, Unprimed) in
+  let proc_args = (List.map (fun (t,arg) -> CP.SpecVar (t,arg,Unprimed)) proc.CA.proc_args) in
   let pred_args = proc_args @ r_args @ [e_arg] in
-  let f_body = match proc.C.proc_body with
-    | Some body -> symex_gen_view iprog prog proc body
-    | None -> CP.mkTrue proc.C.proc_loc
+  let iviews = match proc.CA.proc_body with
+    | Some body -> begin
+        try
+          let iview = symex_gen_view iprog prog proc pred_name pred_args body no_pos in
+          [iview]
+        with _ -> []
+      end
+    | None -> []
   in
-  true
+  iviews
 
 let symex_gen_view_from_scc iprog prog scc=
-  let vdecls = List.map (symex_gen_view_from_proc iprog prog) scc in
+  let vdecls = List.fold_left ( fun acc p ->
+      acc@(symex_gen_view_from_proc iprog prog p)
+  ) [] scc in
   vdecls
 
+(* main_v(..) /\ e=1*)
 let verify_td_scc iprog prog scc=
-  VTD_Unk
+  let build_f_from_method mdecl=
+    let view_args =
+      List.map (fun (t, form) -> CP.SpecVar (t, form, Unprimed)) mdecl.CA.proc_args in
+    let res = CP.SpecVar (mdecl.CA.proc_return, res_name, Unprimed) in
+    let e = CP.SpecVar (Int, err_var, Unprimed) in
+    let view_args_extra = view_args@[res; e] in
+    let hv = CF.mkViewNode Td_utils.dump_self (method2pred mdecl.CA.proc_name) view_args_extra no_pos in
+    let hv_f = CF.formula_of_heap_fl hv (CF.mkNormalFlow ()) no_pos in
+    CF.mkAnd_pure hv_f (MCP.mix_of_pure CP.err_p) no_pos
+  in
+  let rec build_sat_query procs=
+    match procs with
+      | [] -> VTD_Unk
+      | [mdecl] -> begin
+          let query = build_f_from_method mdecl in
+          let () = Debug.info_hprint (add_str "query"
+                                 (!CF.print_formula)
+                              ) query no_pos in
+          Slsat.check_sat_topdown_x prog false query
+        end
+      | _::rest -> build_sat_query rest
+  in
+  build_sat_query scc
 
 let verify_td_sccs iprog prog fast_return scc_procs=
   let combine_res ls_res=
@@ -142,18 +214,30 @@ let verify_td_sccs iprog prog fast_return scc_procs=
     else if List.for_all (fun r -> r == VTD_Safe) ls_res then VTD_Safe
     else VTD_Unk
   in
-  let rec recf ls_scc res=
-    match ls_scc with
-      | [] -> res,combine_res res
-      | scc::rest ->
-            let vdcls = symex_gen_view_from_scc iprog prog scc in
+  (* let rec recf ls_scc res= *)
+  (*   match ls_scc with *)
+  (*     | [] -> res,combine_res res *)
+  (*     | scc::rest -> *)
+  let scc = List.concat scc_procs in
+            let pair_iviews = symex_gen_view_from_scc iprog prog scc in
+            (*transform to cviews *)
+            let pairs,ivdecls = List.split pair_iviews in
+            let () = List.iter (Astsimp.process_pred_def_4_iast iprog false) ivdecls in
+            let old_inv_gen = !Globals.do_infer_inv in
+            let () = Globals.do_infer_inv := false in
+            let cviews = (Astsimp.convert_pred_to_cast pairs false iprog prog false) in
+            let () = Globals.do_infer_inv := old_inv_gen in
+            let () = Debug.info_hprint (add_str " predicated generated"
+                                 (pr_list_ln Cprinter.string_of_view_decl_short)
+                              ) cviews no_pos in
             let r = verify_td_scc iprog prog scc in
-            let n_res = res@[r] in
-            if fast_return && r == VTD_Unsafe then
-              (n_res,VTD_Unsafe)
-            else recf rest n_res
-  in
-  recf scc_procs []
+            (* let n_res = res@[r] in *)
+            (* if fast_return && r == VTD_Unsafe then *)
+            (*   (n_res,VTD_Unsafe) *)
+            (* else recf rest n_res *)
+            r
+  (* in *)
+  (* recf scc_procs [] *)
 
 (* O: safe, 1: unsafe, 2: unknown, 3: not applicaple (all method donot have assert error) *)
 let verify_as_sat iprog prog=
@@ -161,23 +245,23 @@ let verify_as_sat iprog prog=
   let l_proc = Cast.list_of_procs prog in
   let proc_prim, proc_main = List.partition Cast.is_primitive_proc l_proc in
   let sorted_proc_main = Cast.sort_proc_decls proc_main in
-  let () = Debug.info_hprint (add_str "sorted_proc_main"
+  let () = Debug.ninfo_hprint (add_str "sorted_proc_main"
                                  (pr_list Astsimp.pr_proc_call_order)
                               ) sorted_proc_main no_pos in
   (* this computes a list of scc mutual-recursive methods for processing *)
   let proc_scc = List.fold_left (fun a x -> match a with
       | [] -> [[x]]
       | xs::xss ->
-        let i=(List.hd xs).C.proc_call_order in
-        if i==x.C.proc_call_order then (x::xs)::xss
+        let i=(List.hd xs).CA.proc_call_order in
+        if i==x.CA.proc_call_order then (x::xs)::xss
         else [x]::a
     ) [] sorted_proc_main in
   let proc_scc0 = List.rev proc_scc in
   (* look up assert error location *)
   if List.for_all (exam_ass_error_scc prog)  proc_scc0 then
     (* transform *)
-    let _,res = verify_td_sccs iprog prog true proc_scc0 in
+    let res = verify_td_sccs iprog prog true proc_scc0 in
     (* check sat *)
-    VTD_NotApp
+    res
   else
     VTD_NotApp

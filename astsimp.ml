@@ -2294,7 +2294,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
    let tlist = List.map (fun (t,c) -> (c,{sv_info_kind=t; id=fresh_int() })) vtv in
    let tlist = ([(self,{ sv_info_kind = (Named data_name);id = fresh_int () })]@tlist) in
    let (n_tl,cf) = trans_I2C_struc_formula 1 prog false true (self :: vdef.I.view_vars) vdef.I.view_formula (ann_typs@tlist) false
-       true (*check_pre*) in
+       (* true *) false (*check_pre*) in
    let () = Debug.ninfo_hprint (add_str "cf 3" Cprinter.string_of_struc_formula) cf no_pos in
    (* let () = print_string ("cf: "^(Cprinter.string_of_struc_formula cf)^"\n") in *)
    let inv_lock = vdef.I.view_inv_lock in
@@ -2338,8 +2338,8 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
    in
    let pf_fv = List.map CP.name_of_spec_var (CP.fv inv_pf) in
 
-   if (List.mem res_name cf_fv) || (List.mem res_name pf_fv) || (List.mem res_name inv_lock_fv)  then
-     report_error (IF.pos_of_struc_formula view_formula1) "res is not allowed in view definition or invariant"
+   if (* (List.mem res_name cf_fv) || (List.mem res_name pf_fv) || (List.mem res_name inv_lock_fv) *) false  then
+     report_error (IF.pos_of_struc_formula view_formula1) "res should not be allowed in view definition or invariant"
    else(
      let pos = IF.pos_of_struc_formula view_formula1 in
      let view_sv_vars = List.map (fun c-> x_add trans_var (c,Unprimed) n_tl pos) vdef.I.view_vars in
@@ -3797,7 +3797,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
          let static_specs_list = set_pre_flow cf in
          (* let () = Debug.info_zprint (lazy (("   static spec" ^(Cprinter.string_of_struc_formula static_specs_list)))) no_pos in *)
          (* let () = print_string "trans_proc :: set_pre_flow PASSED 1\n" in *)
-         let (n_tl,cf) = x_add trans_I2C_struc_formula 3 prog false true free_vars proc.I.proc_dynamic_specs n_tl true true (*check_pre*) in
+         let (n_tl,cf) = x_add trans_I2C_struc_formula 3 prog false true free_vars proc.I.proc_dynamic_specs n_tl true true  (*check_pre*) in
          let cf = CF.add_inf_cmd_struc is_primitive cf in
          let dynamic_specs_list = set_pre_flow cf in
          (****** Infering LSMU from LS if there is LS in spec >>*********)

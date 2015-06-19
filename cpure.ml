@@ -443,6 +443,9 @@ and map_ann_uid f_f f_e uid =
         (map_term_ann f_f f_e ann),
         List.map f_e el) uid.tu_sol; }
 
+let e_sv = SpecVar (Int, err_var, Unprimed)
+
+
 let is_False cp = match cp with
   | BForm (p,_) ->
     begin
@@ -1292,6 +1295,7 @@ let bag_type = BagT Int
 
 let null_var = mk_zero
 (* SpecVar (Named "", null_name, Unprimed) *)
+
 
 let flow_var = SpecVar ((Int), flow , Unprimed)
 
@@ -2374,6 +2378,7 @@ and mkBVar_pure v p pos = mkPure (mkBVar v p pos)
 and mkVarNull v pos = 
   if is_null_const v then Null pos
   else mkVar v pos
+
 
 and mkPtrEqn v1 v2 pos = 
   let v1 = mkVarNull v1 pos in
@@ -4854,6 +4859,11 @@ let add_flow_var (f0 : formula) : formula =
 (*   | t -> string_of_prim_type t  *)
 (*   | Named ot -> if ((String.compare ot "") ==0) then "ptr" else ("Object:"^ot) *)
 (*   | Array (et, _) -> (string_of_typ et) ^ "[]" (\* An Hoa *\) *)
+
+let err_p =
+  let efn_exp = Var (e_sv, no_pos) in
+  (mkEqExp efn_exp (IConst (1, no_pos)) no_pos)
+
 
 let compare_prime v1 v2 =
   if v1==v2 then 0
