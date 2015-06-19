@@ -176,6 +176,7 @@ let mk_array_new_name_sv
     end
 ;;
 
+
 let mk_array_new_name
     (sv:spec_var) (e:exp):exp=
   Var (mk_array_new_name_sv sv e,no_pos)
@@ -2372,6 +2373,132 @@ let expand_relation f =
   then expand_relation f
   else f
 ;;
+
+let expand_array rel_def rel_f prevlst postvlst =
+  let construct_replace def_arglst raw_replace =
+    let find_pos def_arglst one =
+      let rec find_pos_helper def_arglst one pos =
+        match def_arglst with
+        | h::rest ->
+          if is_same_exp h one
+          then pos
+          else find_pos_helper rest one (pos+1)
+        | [] -> failwith "find_pos: Not found"
+      in
+      find_pos_helper def_arglst one 0
+    in
+    let rec helper raw_replace =
+      match raw_replace with
+      | (IConst c)::rest -> (Some (IConst c),None)::(helper rest)
+      | (Var v)::rest -> (None,Some (find_pos def_arglst (Var v)))::(helper rest)
+      | [] -> []
+      | _ -> failwith "construct_replace: Invalid input"
+    in
+    helper raw_replace
+  in
+  let match_replace arglst replace =
+    let match_helper one =
+      match one with
+      | (Some (IConst c),None) -> IConst c
+      | (None, Some pos) -> List.nth arglst pos
+      | _ -> failwith "match_helper: Invalid input"
+    in
+    let rec helper replace =
+      match replace with
+      | h::rest -> (match_helper h)::(helper rest)
+      | [] -> []
+    in
+    helper replace
+  in
+  let expand_array_vlst vlst raw_replace =
+    let find_replace index_exp replace:exp list =
+      (* given the name of an array, return the list of the array elements as replacement *)
+      match index_exp with
+      | Var (sv,_)->
+        begin
+          match sv with
+          | SpecVar (Array _,id,_) ->
+            List.map (fun i -> (ArrayAt (sv,[i],no_pos))) replace
+          | _ ->
+            []
+        end
+      | _ -> []
+    in
+    let replace_helper explst replace =
+      (* let () = x_tinfo_pp ("replace: "^(string_of_replace replace)) no_pos in *)
+      List.fold_left (fun nlst exp ->nlst@((find_replace exp replace)@[exp])) [] explst
+    in
+    replace_helper vlst raw_replace
+  in
+  let expand_relation f replace =
+    let rec helper f replace =
+      let helper_b ((p,ba):b_formula) replace =
+        match p with
+        | RelForm (SpecVar (_,id,_) as rel_name,explst,loc) ->
+          if id = "update_array_1d"
+          then
+           (p,ba)
+          else
+            let new_raw_replace = match_replace explst replace in
+            let new_explst = expand_array_vlst explst new_raw_replace in
+            (RelForm (rel_name,new_explst,loc),ba)
+        | _ ->
+          (p,ba)
+      in
+      match f with
+      | BForm (b,fl)->
+        BForm (helper_b b replace,fl)
+      | And (f1,f2,loc)->
+        And (helper f1 replace,helper f2 replace,loc)
+      | AndList lst->
+        AndList (List.map (fun (t,f)-> (t,drop_array_formula f)) lst)
+      | Or (f1,f2,fl,loc)->
+        Or (helper f1 replace,helper f2 replace,fl,loc)
+      | Not (f,fl,loc)->
+        Not (helper f replace,fl,loc)
+      | Forall (sv,nf,fl,loc)->
+        Forall (sv,helper nf replace,fl,loc)
+      | Exists (sv,nf,fl,loc)->
+        Exists (sv,helper nf replace,fl,loc)
+    in
+    helper f replace
+  in
+  let strip_exp_to_sv e =
+    match e with
+    | ArrayAt (arr,[index],loc) ->
+      mk_array_new_name_sv arr index
+    | Var (sv,_) ->
+      sv
+    | _ -> failwith "strip_exp_to_sv: Invalid input"
+  in
+  let raw_replace = collect_free_array_index rel_f in
+  match rel_def with
+  | BForm (((RelForm (_,def_arglst,_)),_),_)->
+    let replace = construct_replace def_arglst raw_replace in
+    let (new_pre_vlst,new_post_vlst) =
+      let new_raw_replace = match_replace def_arglst replace in
+      (List.map strip_exp_to_sv (expand_array_vlst prevlst new_raw_replace),List.map strip_exp_to_sv (expand_array_vlst postvlst new_raw_replace))
+    in
+    let new_f =
+      expand_relation rel_f replace
+    in
+    (new_pre_vlst,new_post_vlst,new_f)
+  | _ ->
+    failwith "expand_array: Invalid expression, expecting RelForm"
+;;
+let expand_array rel_def rel_f prevlst postvlst =
+  let pr (prelst,postlst,newf)=
+    "(prelst: "^((pr_list string_of_spec_var) prelst)^",postlst"^((pr_list string_of_spec_var) postlst)^",newf:"^(!print_pure newf)
+  in
+  Debug.no_4 "expand_array" !print_pure !print_pure (pr_list string_of_exp) (pr_list string_of_exp) pr expand_array rel_def rel_f prevlst postvlst
+;;
+
+let expand_array_sv_wrapper rel_def rel_f pre_svlst post_svlst =
+  let pre_vlst = List.map (fun sv -> Var (sv,no_pos)) pre_svlst in
+  let post_vlst = List.map (fun sv -> Var (sv,no_pos)) post_svlst in
+  expand_array rel_def rel_f pre_vlst post_vlst
+;;
+
 
 (* let expand_for_fixcalc f pre_vars post_vars = *)
 (*   let replace =  *)

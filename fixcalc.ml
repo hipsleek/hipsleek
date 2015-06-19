@@ -802,6 +802,9 @@ let substitute_args_x a_rel = match a_rel with
         | Some p -> p
         | None -> failwith "substitute_args: Initialize globas_prog first!"
       in
+      (* I just realized that there may be some problem here. *)
+      (* When I pick a parameter list from the original program, it can somehow be different with the one here *)
+      (* I don't know why the order of parameters are changed here *)
       let typed_args = List.combine (Cast.look_up_rel_args_type_from_prog prog id) args in
       List.split
         (List.map (fun (t,e) ->
@@ -906,9 +909,10 @@ let compute_def (rel_fml, pf, no) ante_vars =
   (* let _ = print_endline ("compute_def vars: "^(Cprinter.string_of_typed_spec_var_list vars)) in *)
   let pre_vars, post_vars =
     List.partition (fun v -> List.mem v ante_vars) vars in
-  let pre_vars = Trans_arr.expand_array_variable pf pre_vars in
-  let post_vars = Trans_arr.expand_array_variable pf post_vars in
-  let pf = Trans_arr.expand_relation pf in
+  let (pre_vars,post_vars,pf) = Trans_arr.expand_array_sv_wrapper rel_fml pf pre_vars post_vars in
+  (* let pre_vars = Trans_arr.expand_array_variable pf pre_vars in *)
+  (* let post_vars = Trans_arr.expand_array_variable pf post_vars in *)
+  (* let pf = Trans_arr.expand_relation pf in *)
   begin
     print_endline_quiet "\n*************************************";
     print_endline_quiet "****** Before putting into fixcalc*******";
