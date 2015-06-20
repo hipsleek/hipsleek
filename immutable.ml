@@ -2390,6 +2390,16 @@ let unfold_and_norm vn vh dn emap unfold_fun qvars emap =
   let ret_f = crop_incompatible_disjuncts unfolded_f dn emap in
   ret_f
 
+(*  @imm1=max(imm2,imm3) *)
+let max_guard emap imm1 imm2 imm3 =
+  let pure_max = CP.mkPure (CP.mkEqMax (CP.imm_to_exp imm1 no_pos) (CP.imm_to_exp imm2 no_pos) (CP.imm_to_exp imm3 no_pos) no_pos) in
+  Immutils.norm_eqmax emap imm1 imm2 imm3 pure_max
+
+(*  @imm1=min(imm2,imm3) *)
+let min_guard emap imm1 imm2 imm3 =
+  let pure_min = CP.mkPure (CP.mkEqMin (CP.imm_to_exp imm1 no_pos) (CP.imm_to_exp imm2 no_pos) (CP.imm_to_exp imm3 no_pos) no_pos) in
+  Immutils.norm_eqmin emap imm1 imm2 imm3 pure_min
+
 (* imm_bound<:max(immr1,immr2) *)
 let bound_max_guard emap imm_bound immr1 immr2 =
   let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"imm" () in
@@ -2419,21 +2429,20 @@ let mk_imm_add emap imml immr1 immr2 =
 
   (imml, guard_lst)
 
-(* c=a-b ----> a=c+b & @L<:max(c,b) *)
+(* c=a-b ----> a=min(c,b) & @L<:max(c,b) *)
 let subtraction_guards emap imm1 imm2 =
-  let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"imm" () in
-  let fresh_ann_var = CP.Var(fresh_ann_sv, no_pos) in
-  let fresh_ann =  (CP.mkPolyAnn fresh_ann_sv) in  
-
   (*  @L<:max(c,b) *)
-  let guard = bound_max_guard emap (CP.mkConstAnn Lend) imm1 imm2 in
+  let guard_max = bound_max_guard emap (CP.mkConstAnn Lend) imm1 imm2 in
 
-  (* a=c+b *)
-  let emap0 = Immutils.build_eset_of_imm_formula (CP.join_conjunctions guard) in
+  (* a=min(c,b) *)
+  let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"imm" () in
+  let fresh_ann =  (CP.mkPolyAnn fresh_ann_sv) in  
+  let emap0 = Immutils.build_eset_of_imm_formula (CP.join_conjunctions guard_max) in
   let emap = CP.EMapSV.merge_eset emap0 emap in
-  let _, guard_add = mk_imm_add emap imm1 fresh_ann imm2 in
+  (* let _, guard_add = mk_imm_add emap imm1 fresh_ann imm2 in *)
+  let guard_min = min_guard emap imm1 fresh_ann imm2 in
 
-  fresh_ann, guard@guard_add
+  fresh_ann, guard_max@[guard_min]
 
 let subtraction_guards emap imm1 imm2 =
   let pr1 = CP.EMapSV.string_of in
@@ -2444,7 +2453,8 @@ let subtraction_guards emap imm1 imm2 =
 let get_simpler_imm emap imm =
   match imm with
   | CP.TempRes (a1,a2) -> subtraction_guards emap a1 a2
-  | CP.TempAnn (a) -> subtraction_guards emap a (CP.mkConstAnn Lend)
+  (*not sound to do this -  might get back the borrowed permission before solving the entailment*)
+  (* | CP.TempAnn (a) -> subtraction_guards emap a (CP.mkConstAnn Lend) *) 
   | _ -> imm, []
 
 let get_simpler_imm emap imm =
@@ -2452,11 +2462,7 @@ let get_simpler_imm emap imm =
   let pr2 = CP.string_of_imm in
   Debug.no_2 "get_simpler_imm" pr1 pr2 (pr_pair pr2 (pr_list !CP.print_formula)) get_simpler_imm emap imm
 
-(*  @A=max(imm1,imm2) *)
-let max_guard emap imm1 imm2 =
-  let min_one_abs = CP.mkPure (CP.mkEqMax CP.const_ann_abs (CP.imm_to_exp imm1 no_pos) (CP.imm_to_exp imm2 no_pos) no_pos) in
-  Immutils.norm_eqmax emap CP.imm_ann_top imm1 imm2 min_one_abs
-
+(* TODOIMM not safe to return @a from @[a]+@L *)
 let check_for_trivial_merge emap imm1 imm2 =
   let helper def a1 a2 =  try
       if (CP.EMapSV.is_equiv emap (CP.imm_to_spec_var a1) (CP.imm_to_spec_var a2)) then Some def,[]
@@ -2467,8 +2473,8 @@ let check_for_trivial_merge emap imm1 imm2 =
   match imm1, imm2 with
   | CP.TempRes (a1,a2), a
   | a, CP.TempRes (a1,a2) -> helper a1 a a2
-  | a,  CP.TempAnn (at)
-  | CP.TempAnn (at), a -> helper at a (CP.ConstAnn Lend) 
+  (* | a,  CP.TempAnn (at) *)
+  (* | CP.TempAnn (at), a -> helper at a (CP.ConstAnn Lend)  *)
   | _ -> None, []  
 
 let check_for_trivial_merge emap imm1 imm2 = 
@@ -2482,27 +2488,36 @@ let merge_guards emap imm1 imm2 =
   match imm with
   | Some a -> a, guards00
   | None   ->
-    let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"imm" () in
     let imm1, guard1 = get_simpler_imm emap imm1 in
     let imm2, guard2 = get_simpler_imm emap imm2 in
 
     (* @A=max(imm1,imm2) *)
-    let min_one_abs = max_guard emap imm1 imm2 in
+    let min_one_abs = max_guard emap (CP.ConstAnn Accs) imm1 imm2 in
 
-    (* imm=imm1+imm2 *)
+    (* fresh_sv=min(imm1,imm2) *)
     let emap0 = Immutils.build_eset_of_imm_formula min_one_abs in
     let emap = CP.EMapSV.merge_eset emap0 emap in
-    let imm, guard =  mk_imm_add emap (CP.mkPolyAnn fresh_ann_sv) imm1 imm2 in
+    let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"imm" () in
+    let imm = CP.mkPolyAnn fresh_ann_sv in
+    let min_guard = min_guard emap imm imm1 imm2 in
+    (* let imm, guard =  mk_imm_add emap (CP.mkPolyAnn fresh_ann_sv) imm1 imm2 in *)
 
-    (* simplify addition *)
-    (* let emap0 = Immutils.build_eset_of_imm_formula min_one_abs in *)
-    (* let guard = List.map (x_add_1 (Immutils.simplify_imm_addition ~emap:(CP.EMapSV.merge_eset emap0 emap))) guard in *)
+    (imm, min_guard::guard1@guard2@[min_one_abs])
 
-    (imm, guard@guard1@guard2@[min_one_abs])
+let merge_guards emap imm1 imm2 =
+  match imm1, imm2 with
+  | CP.TempAnn a, CP.TempAnn b ->
+    let imm, guards = merge_guards emap a b in
+    (CP.TempAnn imm, guards)
+  | (CP.TempAnn a), imm
+  | imm , (CP.TempAnn a) ->
+    let imm_new, guards = merge_guards emap a imm in
+    (CP.TempAnn imm_new, guards)
+  | _ -> merge_guards emap imm1 imm2
 
 let merge_guards emap imm1 imm2 = 
   let pr1 = CP.EMapSV.string_of in
-  let pr2 = CP.string_of_ann in
+  let pr2 = CP.string_of_imm in
   Debug.no_3 "merge_guards" pr1 pr2 pr2 (pr_pair pr2 (pr_list !CP.print_formula)) merge_guards emap imm1 imm2
 
 (* return (compatible_flag, to_keep_node) *)
@@ -2734,6 +2749,7 @@ let merge_alias_nodes_h_formula_helper prog p lst emap quantif xpure unfold_fun 
     (* | [h]  -> let new_h, pure = norm_abs_node h p xpure in  *)
     (*   ([new_h], (opt_to_list pure)) *)  (* andreeac: uncomment this 2 lines if you wnat to replace @A node with HEmp & xpure*)
     | h::t ->
+      (* TODOIMM to merge tmpann as a special case *)
       let updated_head, updated_tail, eqs_lst, subs_lst, struc_lst, pf_lst = merge_list_w_node h t emap prog quantif unfold_fun qvars in
       let (fixpoint, emap) = List.fold_left 
           ( fun (fixpoint,emap) (a,b) -> 

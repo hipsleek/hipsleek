@@ -207,7 +207,9 @@ let norm_eqmax emap imml immr1 immr2 def =
     match immr1, immr2 with
     | ((ConstAnn a) as v1), v2
     | v2, ((ConstAnn a) as v1) -> 
-        if (strict_subtype emap imml v1) then mkFalse no_pos
+        if (strict_subtype emap imml v1) then 
+          let () = report_warning no_pos ("creating false ctx during max norm)" ) in
+          mkFalse no_pos
         else if not(helper_is_const_imm emap imml a) then 
           mkPure (mkEq (imm_to_exp imml no_pos) (imm_to_exp v2 no_pos) no_pos) 
         else def
@@ -234,7 +236,9 @@ let norm_eqmin emap imml immr1 immr2 def =
     match immr1, immr2 with
     | ((ConstAnn a) as v1), v2
     | v2, ((ConstAnn a) as v1) -> 
-        if (strict_subtype emap v1 imml) then mkFalse no_pos
+        if (strict_subtype emap v1 imml) then 
+          let () = report_warning no_pos ("creating false ctx during min norm)" ) in
+          mkFalse no_pos
         else if not(helper_is_const_imm emap imml a) then 
           mkPure (mkEq (imm_to_exp v2 no_pos) (imm_to_exp imml no_pos) no_pos)
         else def
@@ -335,6 +339,7 @@ let simplify_imm_addition emap0 (f:formula) =
     let f_b_helper bf =
       let (p_f, lbl) = bf in
       match p_f with
+      (* | Eq ((Add(e11,e12,la1) as ea1, (Add(e21,e22,la2) as ea2), l)  *)
       | Eq (exp, (Add(e1,e2,la) as ea), l) 
       | Eq ( (Add(e1,e2,la) as ea), exp, l) -> 
         let f_eq l = norm_eq_add exp emap ea l in
