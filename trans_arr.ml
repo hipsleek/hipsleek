@@ -3117,8 +3117,8 @@ let unchanged_fixpoint (rel:formula) (define:formula list) =
             if id = relname
             then
               let basic_result = basic uop1 uop2 in
-              let () = x_binfo_pp ("basic_result args: "^(string_of_exp uop1)^" "^(string_of_exp uop2)) no_pos in
-              let () = x_binfo_pp ("basic_result "^((pr_list string_of_unchanged_info) basic_result)) no_pos in
+              let () = x_tinfo_pp ("basic_result args: "^(string_of_exp uop1)^" "^(string_of_exp uop2)) no_pos in
+              let () = x_tinfo_pp ("basic_result "^((pr_list string_of_unchanged_info) basic_result)) no_pos in
               [basic_result]
             else
               []
@@ -3167,7 +3167,7 @@ let unchanged_fixpoint (rel:formula) (define:formula list) =
     (* let () = x_binfo_pp ("old_result "^((pr_list string_of_unchanged_info) old_result)) no_pos in *)
     let new_rel = calculator relname arg1 arg2 define !basic in
     let new_result = new_rel arg1 arg2 in
-    let () = x_binfo_pp ("new_result "^((pr_list string_of_unchanged_info) new_result)) no_pos in
+    let () = x_tinfo_pp ("new_result "^((pr_list string_of_unchanged_info) new_result)) no_pos in
     if (same_result new_result old_result)
     then
       new_rel
@@ -3201,7 +3201,7 @@ module H_Unchanged =
     type t = (Cpure.exp * Cpure.exp)
     let equal (f1,t1) (f2,t2) =
       let result = ((is_same_exp f1 f2)&&(is_same_exp t1 t2))||((is_same_exp f1 t2)&&(is_same_exp t1 f2)) in
-      let () = x_binfo_pp ("hash equal: f1 "^(string_of_exp f1)^" t1 "^(string_of_exp t1)^" f2 "^(string_of_exp f2)^" t2 "^(string_of_exp t2)^" "^(string_of_bool result)) no_pos in
+      let () = x_tinfo_pp ("hash equal: f1 "^(string_of_exp f1)^" t1 "^(string_of_exp t1)^" f2 "^(string_of_exp f2)^" t2 "^(string_of_exp t2)^" "^(string_of_bool result)) no_pos in
       result
     let hash (f,t)= (String.length (string_of_exp f))+(String.length (string_of_exp t))
   end
@@ -3264,7 +3264,7 @@ let clean_tbl tbl arglst =
                 Unchanged_Htbl.replace tbl key (ExpSet.union new_eset exists_set)
             with
             Not_found ->
-              let () = x_binfo_pp ("Not_found") no_pos in
+              let () = x_tinfo_pp ("Not_found") no_pos in
               Unchanged_Htbl.add tbl key new_eset
       ) tbl
     in
@@ -3362,10 +3362,10 @@ let new_unchanged_fixpoint relname arglst definelst basic=
   let list = List.flatten (List.map helper definelst) in
   let tbl = Unchanged_Htbl.create 100000 in
   let () = List.iter (fun ((f,t),s) -> Unchanged_Htbl.add tbl (f,t) s) list in
-  let () = x_binfo_pp ("clean_tbl tbl: "^(string_of_unchanged_tbl tbl)) no_pos in
-  let () = x_binfo_pp ("clean_tbl arglst: "^((pr_list string_of_exp) arglst)) no_pos in
+  let () = x_tinfo_pp ("clean_tbl tbl: "^(string_of_unchanged_tbl tbl)) no_pos in
+  let () = x_tinfo_pp ("clean_tbl arglst: "^((pr_list string_of_exp) arglst)) no_pos in
   let () = clean_tbl tbl arglst in
-  let () = x_binfo_pp ("clean_tbl new tbl: "^(string_of_unchanged_tbl tbl)) no_pos in
+  let () = x_tinfo_pp ("clean_tbl new tbl: "^(string_of_unchanged_tbl tbl)) no_pos in
   Unchanged_Htbl.fold (fun (f,t) item r-> (((f,t),item)::r)) tbl []
 ;;
 
@@ -3389,7 +3389,14 @@ let new_get_unchanged_fixpoint rel definelst =
       let () = basic := new_basic in
       iterator ()
   in
-  iterator ()
+  let wrapper ((f,t),s) =
+    let slst = ExpSet.fold (fun item r -> item::r) s [] in
+    (f,t,slst)
+  in
+  let unchange_result = iterator () in
+  let unchange_result_new = List.map wrapper unchange_result in
+  let () = global_unchanged_info:= unchange_result_new in
+  unchange_result
 ;;
 
 let new_get_unchanged_fixpoint rel definelst =
