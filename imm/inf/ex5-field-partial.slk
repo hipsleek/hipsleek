@@ -1,0 +1,9 @@
+data pair{
+ int fst;
+ int snd;
+}.
+
+infer [] p::pair<f,s@A> * p::pair<a@A,2> |- false.
+print residue.
+expect Fail.
+

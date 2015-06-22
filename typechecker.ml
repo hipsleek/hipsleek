@@ -438,12 +438,13 @@ and check_specs_infer_a0 (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
   let pr3 = pr_octa pr1 pr2a  pr2 pr2b pr4 pr4 pr5 string_of_bool in
   let pr_exp = Cprinter.string_of_exp in
   let arr_as_var_flag = CF.determine_infer_type sp INF_ARR_AS_VAR in
+  let field_imm_flag = CF.determine_infer_type sp INF_FIELD_IMM in
   let classic_flag = CF.determine_infer_classic sp in
   let ck_sp x = (check_specs_infer_a prog proc ctx e0 do_infer) x in
   let fn x = if classic_flag then wrap_classic (Some true) ck_sp x else ck_sp x in
-  (* let fn x =  *)
-  (*   if field_imm_flag then wrap_field_imm (Some true) fn x  *)
-  (*   else fn x in *)
+  let fn x = 
+    if field_imm_flag then wrap_field_imm (Some true) fn x 
+    else fn x in
   let fn x = 
     if arr_as_var_flag then wrap_arr_as_var fn x 
     else fn x in
@@ -459,6 +460,30 @@ and check_specs_infer_a0 (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 
 (* and determine_infer_classic sp  =  *)
 (*   determine_infer_type sp INF_CLASSIC *)
+
+(* must move to cformula.ml
+
+   and determine_infer_type sp t  = match sp with
+
+   and determine_infer_classic sp  = 
+   determine_infer_type sp INF_CLASSIC
+
+   and determine_infer_field_imm sp  = 
+   determine_infer_type sp INF_FIELD_IMM
+
+   and determine_infer_type sp t  = match sp with
+   | CF.EInfer b ->
+    let inf_o = b.CF.formula_inf_obj in
+    inf_o # get t
+   | _ -> false 
+
+*)
+
+(* match sp with *)
+(*   | CF.EInfer b -> *)
+(*     let inf_o = b.CF.formula_inf_obj in *)
+(*     inf_o # is_classic *)
+(*   | _ -> false  *)
 
 and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (e0:exp) (do_infer:bool) (spec: CF.struc_formula)
   : CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *(CF.hprel list) * (CP.spec_var list)* (CP.spec_var list) * ((CP.spec_var * int list)  *CP.xpure_view ) list * bool =
@@ -753,7 +778,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       (* Debug.info_hprint (add_str "fv post" !CP.print_svl) ovars no_pos; *)
       (* Debug.info_hprint (add_str "out vars" !CP.print_svl) ov no_pos; *)
       if ((Immutable.is_lend post_cond) && not(!Globals.allow_field_ann))
-         || (!Globals.allow_field_ann && Mem.is_lend post_cond) then
+      || (!Globals.allow_field_ann && Mem.is_lend post_cond) then
         Error.report_error {Error.error_loc = pos_spec; Error.error_text =  ("The postcondition cannot contain @L heap predicates/data nodes/field annotations\n")}
       else
         let () = post_pos#set (CF.pos_of_formula post_cond) in
@@ -799,11 +824,15 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
               if (CF.isFailListPartialCtx_new res_ctx)
               then (spec, [], [],[], [],[],[], false)
               else
+                (* let res_ctx = x_add_1 CF.map_list_partial_context res_ctx Immutable.weaken_infer_rel_in_es in *)
                 let lh = Infer.collect_pre_heap_list_partial_context res_ctx in
                 let lp = Infer.collect_pre_pure_list_partial_context res_ctx in
                 let lr = x_add_1 Infer.collect_rel_list_partial_context res_ctx in
-                let () = Infer.infer_rel_stk # push_list lr in
-                let () = Log.current_infer_rel_stk # push_list lr in
+                if lr!=[] then
+                  x_binfo_hp (add_str "WARNING : Spurious RelInferred (not collected)" (pr_list CP.print_lhs_rhs)) lr pos;
+                (* lr seems to be spurious RelInferred which have already been collected? *)
+                let () = Infer.infer_rel_stk # push_list_pr lr in
+                (* let () = Log.current_infer_rel_stk # push_list lr in *)
                 let post_iv = Infer.collect_infer_vars_list_partial_context res_ctx in
                 (* Why? Bug cll-count-base.ss *)
                 (* no abductive inference for post-condition *)
@@ -1380,14 +1409,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 exp_assert_path_id = (pidi,s);
                 exp_assert_type = atype;
                 exp_assert_pos = pos}) ->
-       let assert_assume_msg = match c_assert_opt with
-         | None -> ""
-         | Some f -> (
-               match c_assume_opt with
-                 | None -> !CF.print_struc_formula f
-                 | Some post -> !CF.print_struc_formula (CF.add_post (CF.mkE_ensures_f post (CF. mkTrueFlow ()) no_pos) f)
-           )
-       in
+      let assert_assume_msg = match c_assert_opt with
+        | None -> ""
+        | Some f -> (
+            match c_assume_opt with
+            | None -> !CF.print_struc_formula f
+            | Some post -> !CF.print_struc_formula (CF.add_post (CF.mkE_ensures_f post (CF. mkTrueFlow ()) no_pos) f)
+          )
+      in
       let assert_op ()=
         let () = if !print_proof && (match c_assert_opt with | None -> false | Some _ -> true) then
             begin
@@ -1498,8 +1527,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         let idf = (fun c -> c) in
                         let to_print = "Proving assert/assume in method " ^ proc.proc_name ^ " (" ^ (string_of_loc pos) ^ ") Failed" ^ fk_msg in
                         CF.transform_list_failesc_context (idf,idf,
-                        (fun es -> CF.Ctx{es with CF.es_final_error = CF.acc_error_msg es.CF.es_final_error to_print}))
-                            res
+                                                           (fun es -> CF.Ctx{es with CF.es_final_error = CF.acc_error_msg es.CF.es_final_error to_print}))
+                          res
                       else
                         begin
                           (*L2: this code fragment may never be reached since we set is_err_must in the wrapper*)
@@ -2417,7 +2446,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let st3= st2@st_ls@st_lsmu@st_waitlevel in
               let () = x_tinfo_hp (add_str "renamed_spec" Cprinter.string_of_struc_formula) renamed_spec no_pos in
               let pre2 = CF.subst_struc_pre st3 renamed_spec in
-              let () = x_binfo_hp (add_str "pre2" Cprinter.string_of_struc_formula) pre2 no_pos in
+              let () = x_tinfo_hp (add_str "pre2" Cprinter.string_of_struc_formula) pre2 no_pos in
               let new_spec = (Cprinter.string_of_struc_formula pre2) in
               (* Termination: Store unreachable state *)
               let _ =
@@ -2520,7 +2549,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 let idf = (fun c -> c) in
                 let err_kind_msg = if CF.is_infer_pre_must (proc.proc_stk_of_static_specs#top) then "must" else "may" in
                 let to_print = "Proving precondition in method " ^ proc.proc_name ^ "(" ^ (string_of_loc pos) ^
-                  ") Failed (" ^  err_kind_msg ^ ")" in
+                               ") Failed (" ^  err_kind_msg ^ ")" in
                 CF.transform_list_failesc_context (idf,idf,
                                                    (fun es -> CF.Ctx{es with CF.es_formula = 
                                                                                Norm.imm_norm_formula prog es.CF.es_formula Solver.unfold_for_abs_merge pos;
@@ -3459,6 +3488,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
       | Some body ->
         begin
           stk_vars # reset;
+          let () = Excore.UnCa.reset_cache () in
           (* push proc.proc_args *)
           let args = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed) ) proc.proc_args in
           stk_vars # push_list args;
@@ -3471,7 +3501,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
               print_string_web_mode (("\nChecking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
               (* print_string_quiet ("\n(andreeac)Specs :\n" ^ (Cprinter.string_of_struc_formula proc.proc_static_specs) ); *)
               x_dinfo_zp (lazy (("Checking procedure ") ^ proc.proc_name ^ "... ")) proc.proc_loc;
-              x_binfo_zp (lazy ("Specs1 :\n" ^ Cprinter.string_of_struc_formula proc.proc_static_specs)) proc.proc_loc;
+              x_dinfo_zp (lazy ("Specs1 :\n" ^ Cprinter.string_of_struc_formula proc.proc_static_specs)) proc.proc_loc;
             end;
           let sel_hps = CF.get_hp_rel_name_struc proc0.Cast.proc_static_specs in
           let () =  Debug.ninfo_hprint (add_str "sel_hps" (!CP.print_svl) ) sel_hps no_pos in
@@ -3581,7 +3611,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
               (* let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx (proc.proc_static_specs (\* @ proc.proc_dynamic_specs *\)) body true in *)
               x_tinfo_hp (add_str "SPECS (after specs_infer)" pr_spec) new_spec no_pos;
               x_tinfo_hp (add_str "fm formula " (pr_list !CF.print_formula)) fm no_pos;
-              let new_spec = CF.simplify_ann new_spec in
+              (* let new_spec = x_add_1 CF.simplify_ann new_spec in *)
               let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels) in
               let (lst_assume,lst_rank) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) rest) in
               let (hprels,hp_rest) = (List.partition (fun hp -> match hp.CF.hprel_kind with | CP.RelDefn _ -> true | _ -> false) hprels) in

@@ -1,3 +1,41 @@
+Implemented feature
+===================
+We introduce a new feature to test for sleek inference capability.
+Currently, we can check for infer heap/pure and also residue,
+but not relational assumptions yet.
+
+A sample file is in ex4f.slk
+
+The new commands are to come immediately after
+an entailment, but before the next. You may start
+writing them in sleek files, and we will be supporting
+these in run-fast-test in future.
+
+Some examples:
+
+# ex4f.slk
+
+checkentail x::node<aaa,q>*q::node<aaa,null> |- emp.
+print residue.
+expect Valid.
+// below is for checking residues.
+expect_infer Valid R{x::node<bb,q>*q::node<bb,null>}. //Valid 1
+expect_infer Valid R{x::node<bb,q>*q::node<bb,_>}.//Valid
+expect_infer Valid R{x::node<bb,q1>*q1::node<bb,_>}.//Valid
+expect_infer Fail R{x::node<bb,q>*q::node<bb+1,_>}. //Invalid
+expect_infer Valid R{x::node<bb,_>*qq::node<bb,_>}. //Invalid
+expect_infer Valid R{x::node<bb,_>*q::node<bb,_>}. //Valid??
+
+# ex5a.slk
+
+infer [n] y=null |- y::ll<n>.  
+print residue.
+expect_infer Fail I{y=null}.
+expect_infer Valid I{n=0}.
+
+
+====================================
+
 We need to validate SLEEK's inference capability
 including implicit instantiation for residue.
 

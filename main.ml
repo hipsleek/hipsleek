@@ -17,7 +17,7 @@ let to_java = ref false
 
 let usage_msg = Sys.argv.(0) ^ " [options] <source files>"
 
-let set_source_file arg = 
+let set_source_file arg =
   Globals.source_files := arg :: !Globals.source_files
 
 let process_cmd_line () =
@@ -1169,6 +1169,10 @@ let old_main () =
     (*   if !Global.enable_counters then *)
     (*     print_string (Gen.Profiling.string_of_counters ()) *)
     (*   else () in *)
+    (* let _ = print_endline ("unsat_count_syn:" ^ (string_of_int !unsat_count_syn)) in *)
+    (* let _ = print_endline ("unsat_count_sem:" ^ (string_of_int !unsat_count_sem)) in *)
+    (* let _ = print_endline ("Excore.UnCa.hit:" ^ (string_of_int !Excore.UnCa.hit_cache)) in *)
+    (* let _ = print_endline ("Excore.UnCa.miss:" ^ (string_of_int !Excore.UnCa.miss_cache)) in *)
     let () = Gen.Profiling.print_counters_info () in
     let () = Gen.Profiling.print_info () in
     ()

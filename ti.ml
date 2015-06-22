@@ -191,19 +191,27 @@ let solve_trrel_list params trrels turels =
 (* let conds = List.concat (List.map split_disj_trrel_sol conds) in *)
 (* conds                                                            *)
 
+let pr_cond_w_ids f =
+  let pr_cond (i, c) = "[" ^ (string_of_int i) ^ "]" ^ (print_trrel_sol c) in 
+  (pr_list (fun ((fn, _), s) -> 
+      "\t" ^ (if fn = "" then "" else fn ^ ": ") ^ 
+          (pr_list pr_cond s) ^ "\n")) f
+
 let case_split_init prog trrels turels = 
   let fn_rels = partition_trels_by_proc trrels turels in
   let fn_cond_w_ids = List.map (fun (fn, trrels, turels) ->
       let params = snd fn in
       (fn, List.map (fun c -> tnt_fresh_int (), c) (solve_trrel_list params trrels turels))) fn_rels in
   let () = 
-    let pr_cond (i, c) = "[" ^ (string_of_int i) ^ "]" ^ (print_trrel_sol c) in 
     print_endline_quiet ("\nBase/Rec Case Splitting:\n" ^ 
-                         (pr_list (fun ((fn, _), s) -> 
-                              "\t" ^ (if fn = "" then "" else fn ^ ": ") ^ 
-                              (pr_list pr_cond s) ^ "\n") fn_cond_w_ids))
+                         (pr_cond_w_ids fn_cond_w_ids))
   in fn_cond_w_ids 
 
+let case_split_init prog trrels turels = 
+  Debug.no_2 "case_split_init" 
+      pr_none pr_none pr_cond_w_ids 
+      (fun _ _ -> case_split_init prog trrels turels) trrels turels
+  
 (*****************************)
 (* Temporal Relation at Call *)
 (*****************************)

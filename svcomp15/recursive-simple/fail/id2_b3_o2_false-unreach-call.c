@@ -3,8 +3,8 @@
 
 int __nondet_int()
 /*@
-  requires true
-  ensures true;
+  requires emp & true
+  ensures emp & true;
 */;
 
 void __error()
@@ -55,4 +55,5 @@ void main()
   if (result == 2) {
     __error();
   }
+   //@ dprint;
 }

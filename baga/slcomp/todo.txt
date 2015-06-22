@@ -1,0 +1,102 @@
+===========================================================
+#ex1-incons.slk: FIXED
+
+../../sleek ex1-incons.slk --inv-baga  --en-delay-eelim --dis-inv-check
+
+
+GOT
+-------
+Entail 1: Fail.(must) cause: true |-  false. LOCS:[0] (RHS: contradiction)
+
+Validate 1: Expecting 3 Valid BUT got : Fail_Must
+
+
+EXPECTED:
+-------
+Valid
+
+
+===========================================================
+#ex2-rec02.slk: FIXED
+
+../../sleek ex2-rec02.slk --inv-baga  --en-delay-eelim --dis-inv-check
+
+GOT
+-------
+infered baga inv(succ2rec):[([], x2=y2 & null=self & null!=y1),([], null=y1 & null!=self & null=x2)]
+
+
+
+EXPECTED:
+-------
+infered baga inv(succ2rec):[([], x2=y2 & null=self & null!=y1),([], null=y1 & null!=self & null=x2 & null!=y2)]
+
+===========================================================
+# label-dll
+
+--inv-baga  --en-delay-eelim --dis-inv-check
+                                ^^^^^^^^^^^
+
+astsimp.ml (compute_view_x_formula_x - helper):
+
+vdef.C.view_x_formula <- xform2;
+
+===========================================================
+#ex3a-baga.slk: FIXED
+
+fixcalc: Parse error on line 2 rest of line:
+
+===========================================================
+run-fast-test:
+
+use entail-check of sleekcore for lemproving. easier for maintenance
+
+Total number of errors: 6 in files:
+  label-dll.slk({E4#Valid}) baga-test-eps.slk({E14#Valid},{E15#Valid},{E4#Valid},{E6#Valid},{E7#Valid}) infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) imm/norm/norm4.slk({E4#Fail},{E5#Fail}) lemmas/lseg_complex.slk({L3#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 33.13 second
+
+
+ error at: dll.ss delete1
+error at: dll.ss test_del
+error at: dll.ss append1
+error at: qsort.ss partition
+error at: trees.ss append
+error at: trees.ss flatten
+error at: ../../modular_examples/dll-modular.ss append
+error at: ../../modular_examples/dll-modular.ss append1
+error at: ../../modular_examples/dll-modular.ss append2
+error at: ../../modular_examples/dll-modular.ss delete
+error at: ../../modular_examples/dll-modular.ss delete1
+error at: ../../modular_examples/dll-modular.ss insert
+error at: ../../modular_examples/dll-modular.ss test_del
+error at: ../../modular_examples/selection-modular.ss delete_min
+error at: ../../modular_examples/selection-modular.ss find_min
+error at: ../../modular_examples/selection-modular.ss selection_sort
+error at: ../../modular_examples/qsort-modular.ss append_bll
+error at: ../../modular_examples/qsort-modular.ss partition
+error at: ../../modular_examples/qsort-modular.ss qsort
+
+
+
+
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
