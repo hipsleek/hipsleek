@@ -2511,8 +2511,9 @@ let merge_guards emap imm1 imm2 =
     (CP.TempAnn imm, guards)
   | (CP.TempAnn a), imm
   | imm , (CP.TempAnn a) ->
-    let imm_new, guards = merge_guards emap a imm in
-    (CP.TempAnn imm_new, guards)
+    if (Immutils.is_lend ~emap:emap imm) then (a,[])
+    else let imm_new, guards = merge_guards emap a imm in
+      (CP.TempAnn imm_new, guards)
   | _ -> merge_guards emap imm1 imm2
 
 let merge_guards emap imm1 imm2 = 
