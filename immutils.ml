@@ -409,7 +409,7 @@ let simplify_imm_addition ?emap:(em=[]) (f:formula) =
 let simplify_imm_min_max f =
   let mk_min_expand i a b loc lbl  =
     mkOr (mkAnd (mkEqExp i a loc) (mkSubAnn a b) loc)
-         (mkAnd (mkEqExp i b loc) (mkAnd (mkLteExp b a loc) (mkNeqExp b a loc) loc) loc)
+         (mkAnd (mkEqExp i b loc) (mkAnd (mkSubAnn b a) (mkNeqExp b a loc) loc) loc)
          lbl loc in
   let f_b b_formula lbl = match b_formula with
     | (EqMin (id, lhs, rhs, loc), _) ->
