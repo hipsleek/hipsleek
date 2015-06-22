@@ -548,8 +548,8 @@ let process_source_full source =
   (* let _ = Ast2pred.verify_as_sat intermediate_prog in *)
   let cprog, tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
   let td_r = Verify_td.verify_as_sat intermediate_prog cprog in
-  if td_r != Slsat.VTD_NotApp then
-    let () = print_endline ("\n" ^(Slsat.string_of_assert_err td_r)) in
+  if td_r != Verify_td.VTD_NotApp then
+    let () = print_endline ("\n" ^(Verify_td.string_of_assert_err td_r)) in
     ()
   else
   let () = saved_cprog := Some cprog in

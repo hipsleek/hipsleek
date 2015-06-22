@@ -445,7 +445,6 @@ and map_ann_uid f_f f_e uid =
 
 let e_sv = SpecVar (Int, err_var, Unprimed)
 
-
 let is_False cp = match cp with
   | BForm (p,_) ->
     begin

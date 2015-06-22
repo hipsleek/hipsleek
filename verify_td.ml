@@ -30,6 +30,19 @@ module LO = Label_only.LOne
 module MCP = Mcpure
 
 
+type assert_err=
+  | VTD_Safe
+  | VTD_Unsafe
+  | VTD_Unk
+  | VTD_NotApp
+
+let string_of_assert_err res= match res with
+    | VTD_Safe -> "safe"
+    | VTD_Unsafe -> "unsafe"
+    | VTD_Unk -> "unknown"
+    | VTD_NotApp -> "not applicable"
+
+
 let exists_assert_error_x prog e0=
   let rec helper e=
     (* let () = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
@@ -73,9 +86,51 @@ let exam_ass_error_scc iprog scc=
   (*func call error*)
   List.exists (exam_ass_error_proc iprog) scc
 
+let simplify_symex_trace_x prog v_args fs=
+  let f_pf p0=
+    let ps = CP.list_of_conjs p0 in
+    (* elim bool vars *)
+    let ps1 = List.filter (fun p -> not (CP.is_bool_formula p)) ps in
+    let p1 = (CP.conj_of_list ps1 (CP.pos_of_formula p0)) in
+    let eqs = (MCP.ptr_equations_without_null (MCP.mix_of_pure p1)) in
+    let sel_eqs = List.fold_left (fun acc (sv1,sv2) ->
+        match CP.mem_svl sv1 v_args, CP.mem_svl sv2 v_args with
+          | true, false -> acc@[(sv2,sv1)]
+          | false, true -> acc@[(sv1,sv2)]
+          | _ -> acc
+    ) [] eqs in
+    Some (CP.remove_redundant (CP.subst sel_eqs p1))
+  in
+  let f_ef _ = None in
+  let f_f _ = None in
+  let f_hf _ = None in
+  let f_m mp = Some mp in
+  let f_a a = Some a in
+  let f_b bf= Some bf in
+  let f_e e = Some e in
+  let simplify_pure f = CF.transform_formula (f_ef, f_f, f_hf, (f_m, f_a, f_pf, f_b, f_e)) f in
+  (* let fs1 = Gen.BList.remove_dups_eq (Syn_checkeq.check_relaxeq_formula v_args) fs in *)
+  let fs1 = List.map simplify_pure fs in
+  fs1
 
-let symex_gen_view iprog prog proc vname v_args body pos=
-  let ctx0 = CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled proc.C.proc_loc in
+let simplify_symex_trace prog v_args fs=
+  let pr1 = !CP.print_svl in
+  let pr2 = pr_list_ln !CF.print_formula in
+  Debug.no_2 "simplify_symex_trace" pr1 pr2 pr2
+      (fun _ _ -> simplify_symex_trace_x prog v_args fs) v_args fs
+
+
+let symex_gen_view iprog prog proc vname proc_args v_args body pos=
+  let eqs = List.fold_left (fun acc (CP.SpecVar (t,id,p) as sv) ->
+      match p with
+        | Unprimed ->
+              let eq = CP.mkEqVar (CP.SpecVar (t,id,Primed)) sv no_pos in
+              acc@[(eq)]
+        | Primed -> acc
+  ) [] proc_args in
+  let init_p = List.fold_left (fun p p1 -> CP.mkAnd p p1 no_pos) (CP.mkTrue pos) eqs in
+  let empty_es = CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled proc.C.proc_loc in
+  let ctx0 = CF.Ctx {empty_es with CF.es_formula = CF.formula_of_pure_formula init_p no_pos} in
   let ctx1 = CF.set_flow_in_context_override
     { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None} ctx0 in
   let label = (fresh_formula_label "") in
@@ -94,7 +149,7 @@ let symex_gen_view iprog prog proc vname v_args body pos=
     | CF.OCtx (c1,c2) -> (collect_es c1)@(collect_es c2)
   in
   let brs0 = List.fold_left (fun acc (_,ctx,_) -> acc@(collect_es ctx)) [] br_ctxs in
-  let () = x_tinfo_hp (add_str ("brs") (pr_list !CF.print_formula)) brs0 no_pos in
+  let () = x_tinfo_hp (add_str ("brs0") (pr_list_ln !CF.print_formula)) brs0 no_pos in
   let brs1 = List.fold_left (fun fs f ->
       let new_f = if CF.is_error_flow f then
         let f1 = CF.substitute_flow_in_f !norm_flow_int !error_flow_int f in
@@ -102,8 +157,10 @@ let symex_gen_view iprog prog proc vname v_args body pos=
       else f in
       fs@[new_f]
   ) [] brs0 in
+  let brs2 = simplify_symex_trace prog v_args brs1 in
+  let () = x_binfo_hp (add_str ("brs2") (pr_list_ln !CF.print_formula)) brs2 no_pos in
   (* generate new iview *)
-  let f_body = List.fold_left (fun acc f -> CF.mkOr acc f pos) (List.hd brs1) (List.tl brs1) in
+  let f_body = List.fold_left (fun acc f -> CF.mkOr acc f pos) (List.hd brs2) (List.tl brs2) in
   let vars = List.map CP.name_of_spec_var v_args in
   let tvars = List.map (fun (CP.SpecVar (t,id,_)) -> (t,id)) v_args in
   let f_body1,tis = Cfutil.norm_free_vars f_body (v_args) in
@@ -145,10 +202,10 @@ let symex_gen_view iprog prog proc vname v_args body pos=
   in
   ((vname,tis), n_iview)
 
-let symex_gen_view iprog prog proc vname v_args body pos=
+let symex_gen_view iprog prog proc vname proc_args v_args body pos=
   let pr = (pr_pair (pr_pair pr_id Typeinfer.string_of_tlist) Iprinter.string_of_view_decl) in
-  Debug.no_1 "symex_gen_view" pr_id pr
-      (fun _ -> symex_gen_view iprog prog proc vname v_args body pos) vname
+  Debug.no_2 "symex_gen_view" pr_id !CP.print_svl pr
+      (fun _ _ -> symex_gen_view iprog prog proc vname proc_args v_args body pos) vname  v_args
 
 let symex_gen_view_from_proc iprog prog proc=
   (*
@@ -168,7 +225,7 @@ let symex_gen_view_from_proc iprog prog proc=
   let iviews = match proc.CA.proc_body with
     | Some body -> begin
         try
-          let iview = symex_gen_view iprog prog proc pred_name pred_args body no_pos in
+          let iview = symex_gen_view iprog prog proc pred_name proc_args pred_args body no_pos in
           [iview]
         with _ -> []
       end
@@ -202,7 +259,11 @@ let verify_td_scc iprog prog scc=
           let () = Debug.info_hprint (add_str "query"
                                  (!CF.print_formula)
                               ) query no_pos in
-          Slsat.check_sat_topdown_x prog false query
+          let r = Slsat.check_sat_topdown_x prog false query in
+          match r with
+            | 0 -> VTD_Safe
+            | 1 -> VTD_Unsafe
+            | _ -> VTD_Unk
         end
       | _::rest -> build_sat_query rest
   in
@@ -239,7 +300,11 @@ let verify_td_sccs iprog prog fast_return scc_procs=
   (* in *)
   (* recf scc_procs [] *)
 
-(* O: safe, 1: unsafe, 2: unknown, 3: not applicaple (all method donot have assert error) *)
+(* O: safe,
+   1: unsafe,
+   2: unknown,
+   3: not applicaple (all method donot have assert error)
+ *)
 let verify_as_sat iprog prog=
   (* Sort the proc_decls by proc_call_order *)
   let l_proc = Cast.list_of_procs prog in

@@ -7,20 +7,9 @@ open Gen
 open Cformula
 module CP = Cpure
 
-type assert_err=
-  | VTD_Safe
-  | VTD_Unsafe
-  | VTD_Unk
-  | VTD_NotApp
-
-let string_of_assert_err res= match res with
-    | VTD_Safe -> "safe"
-    | VTD_Unsafe -> "unsafe"
-    | VTD_Unk -> "unknown"
-    | VTD_NotApp -> "not applicable"
 
 let check_sat_topdown_x prog need_slice f0=
-  VTD_Unk
+  2
 
 (* Loc: to implement*)
 let check_sat_uo ante_uo conseq_uo=

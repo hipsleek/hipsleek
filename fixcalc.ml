@@ -624,7 +624,9 @@ let compute_heap_pure_inv fml (name:ident) data_name (para_names:CP.spec_var lis
   (* let () = DD.info_hprint (add_str "res(parsed)= " !CP.print_formula) inv no_pos in *)
   (* inv *)
   let invs = (x_add_1 compute_invs_fixcalc input_fixcalc) in
-  lookup_inv invs 0 fr_vars rev_sst
+  try
+    lookup_inv invs 0 fr_vars rev_sst
+  with _ -> CP.mkTrue no_pos
 
 let compute_heap_pure_inv fml (name:ident) data_name (para_names:CP.spec_var list) lower_invs: CP.formula =
   let pr1 = !CP.print_formula in
