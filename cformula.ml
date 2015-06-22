@@ -10193,6 +10193,11 @@ let is_error_flow f=
   Debug.no_1 "is_error_flow" pr1 string_of_bool
     (fun _ -> is_error_flow_x f) f
 
+let rec is_norm_flow f =  match f with
+  | Base b-> equal_flow_interval !norm_flow_int  b.formula_base_flow.formula_flow_interval
+  | Exists b-> equal_flow_interval !norm_flow_int b.formula_exists_flow.formula_flow_interval
+  | Or b ->  is_norm_flow b.formula_or_f1 || is_norm_flow b.formula_or_f2 
+
 let rec is_mayerror_flow_x f =  match f with
   | Base b-> equal_flow_interval !mayerror_flow_int  b.formula_base_flow.formula_flow_interval
   | Exists b-> equal_flow_interval !mayerror_flow_int b.formula_exists_flow.formula_flow_interval

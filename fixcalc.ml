@@ -506,7 +506,7 @@ let slk2fix_body lower_invs fml0 vname dataname para_names=
       "\n};\n"
     with _ -> report_error no_pos "slk2fix_body: Error in translating the input for fixcalc"
   in
-  DD.ninfo_zprint (lazy (("Input of fixcalc: " ^ input_fixcalc))) no_pos;
+  DD.info_zprint (lazy (("Input of fixcalc: " ^ input_fixcalc))) no_pos;
   (input_fixcalc, fr_vars, rev_sst)
 
 let slk2fix_body_wo_fresh_vars lower_invs fml0 vname para_names=

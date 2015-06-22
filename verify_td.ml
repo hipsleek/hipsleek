@@ -145,16 +145,20 @@ let symex_gen_view iprog prog proc vname proc_args v_args body pos=
   let () = x_tinfo_hp (add_str ("symex_gen_view:" ^ proc.C.proc_name) (Cprinter.string_of_list_failesc_context_short)) res_ctx no_pos in
   let br_ctxs = List.fold_left (fun acc (_,esc, brs) -> acc@(List.fold_left (fun eacc (_, ebrs) -> eacc@ebrs) [] esc)@brs ) [] res_ctx in
   let rec collect_es c = match c with
-    | CF.Ctx es -> [CF.substitute_flow_in_f !norm_flow_int !ret_flow_int es.CF.es_formula]
+    | CF.Ctx es ->
+          let f = CF.substitute_flow_in_f !norm_flow_int !ret_flow_int es.CF.es_formula in
+          [f]
     | CF.OCtx (c1,c2) -> (collect_es c1)@(collect_es c2)
   in
   let brs0 = List.fold_left (fun acc (_,ctx,_) -> acc@(collect_es ctx)) [] br_ctxs in
-  let () = x_tinfo_hp (add_str ("brs0") (pr_list_ln !CF.print_formula)) brs0 no_pos in
+  let () = x_binfo_hp (add_str ("brs0") (pr_list_ln !CF.print_formula)) brs0 no_pos in
+  let e = CP.SpecVar (Int, err_var, Unprimed) in
+  let safe_fl = MCP.mix_of_pure (CP.mkEqExp (CP.Var (e, no_pos)) (CP.IConst (0, no_pos)) no_pos) in
   let brs1 = List.fold_left (fun fs f ->
       let new_f = if CF.is_error_flow f then
         let f1 = CF.substitute_flow_in_f !norm_flow_int !error_flow_int f in
         CF.mkAnd_pure f1 (MCP.mix_of_pure CP.err_p) no_pos
-      else f in
+      else CF.mkAnd_pure f safe_fl no_pos  in
       fs@[new_f]
   ) [] brs0 in
   let brs2 = simplify_symex_trace prog v_args brs1 in
