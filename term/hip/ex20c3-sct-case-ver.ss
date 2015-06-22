@@ -67,7 +67,6 @@ void loo (ref int x, ref int y,int a, int b)
       x<=0 & y<=0 -> requires Term[] ensures true;
  }
 {
-
   if (x>0 || y>0) {
     x = x+a-b-1;
     y = y+b-a-1;
