@@ -2252,6 +2252,11 @@ and is_formula_arith (f:formula) :bool =
   Debug.no_1 "is_formula_arith" !print_formula string_of_bool
     is_formula_arith_x f
 
+and is_exp_ann (e:exp) : bool =
+  match e with
+  | Var (sv, _) -> is_ann_typ sv
+  | AConst (_, _) -> true
+  | _ -> false
 (* smart constructor *)
 
 (*Create a locklevel of a lock sv*)

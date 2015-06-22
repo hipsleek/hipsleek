@@ -966,7 +966,9 @@ let cnv_imm_to_int_p_formula pf lbl =
 *)
 
 let cnv_ptr_to_int (ex_flag,st_flag) f = 
-  let f = x_add_1 Immutils.simplify_imm_addition f in
+  let f = x_add_1 (fun f ->
+    let f_1 = Immutils.simplify_imm_min_max f in
+    Immutils.simplify_imm_addition f_1) f in
   let f_f arg e = None in
   let f_bf (ex_flag,st_flag) bf = 
     let (pf, l) = bf in

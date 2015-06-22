@@ -406,6 +406,27 @@ let simplify_imm_addition ?emap:(em=[]) (f:formula) =
 
 (* let is_rel_containing_ann_typ rel : bool = *)
 (*   match r *)
+let simplify_imm_min_max f =
+  let mk_min_expand i a b loc lbl  =
+    mkOr (mkAnd (mkEqExp i a loc) (mkSubAnn a b) loc)
+         (mkAnd (mkEqExp i b loc) (mkAnd (mkLteExp b a loc) (mkNeqExp b a loc) loc) loc)
+         lbl loc in
+  let f_b b_formula lbl = match b_formula with
+    | (EqMin (id, lhs, rhs, loc), _) ->
+       if not (is_exp_ann lhs && is_exp_ann rhs) then BForm (b_formula, lbl)
+       else mk_min_expand id lhs rhs loc lbl
+    | (EqMax (id, lhs, rhs, loc), _) ->
+       if not (is_exp_ann lhs && is_exp_ann rhs) then BForm (b_formula, lbl)
+       else mk_min_expand id rhs lhs loc lbl
+    | b_formula -> BForm (b_formula, lbl) in
+  let f_f f = match f with
+    | BForm (b_formula, lbl) -> Some (f_b b_formula lbl)
+    | _ -> None in
+  transform_formula (nonef, nonef, f_f, nonef, nonef) f
+
+let simplify_imm_min_max (f:formula) =
+  let pr = !print_formula in
+  Debug.no_1 "simplify_imm_min_max" pr pr simplify_imm_min_max f
 
 (* ===================== END imm addition utils ========================= *)
 
