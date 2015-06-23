@@ -350,6 +350,11 @@ and rounding_func =
 
 and infer_rel_type =  (rel_cat * formula * formula)
 
+type param_flow =
+  | IND of (spec_var list * formula)
+  | FLOW of spec_var
+  | UNKNOWN of spec_var
+
 let get_rel_from_imm_ann p = match p with
   | PostImm f
   | PreImm  f -> f

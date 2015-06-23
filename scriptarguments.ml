@@ -335,6 +335,8 @@ let common_arguments = [
   ("--dis-aggresive-immf-inst", Arg.Clear Globals.aggresive_imm_inst,"don't add lhs_imm<:rhs_imm, when lhs_imm is unrestricted");
   ("--en-imm-simpl", Arg.Set Globals.imm_add,"simplify imm addition");
   ("--dis-imm-simpl", Arg.Clear Globals.imm_add,"disable imm addition simplification");
+  ("--en-analyse-param", Arg.Set Globals.param_analysis, "analyse input parameters for relation/transition");
+  ("--dis-analyse-param", Arg.Clear Globals.param_analysis, "analyse input parameters for relation/transition");
   ("--mem", Arg.Unit (fun _ -> 
        Globals.allow_mem := true; 
        Globals.allow_field_ann := true;),

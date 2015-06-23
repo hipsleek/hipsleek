@@ -1073,6 +1073,8 @@ let aggresive_imm_inst = ref false
 
 let imm_add = ref true
 
+let param_analysis = ref true
+
 (*Since this flag is disabled by default if you use this ensure that 
   run-fast-test mem test cases pass *)
 (* let allow_field_ann = ref false  *)

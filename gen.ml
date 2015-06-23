@@ -655,7 +655,7 @@ class ['a] stack_pr (epr:'a->string) (eq:'a->'a->bool)  =
     val elem_eq = eq 
     method push_list_pr (ls:'a list) =  
       (* WN : below is to be removed later *)
-      (* let () = print_endline ("push_list:"^(Basic.pr_list epr ls)) in *)
+      let () = print_endline ("push_list:"^(Basic.pr_list epr ls)) in
       super # push_list ls 
     method push_pr (s:string) (ls:'a) =  
       (* let () = print_endline ("push_pr("^s^"):"^(epr ls)) in *)
