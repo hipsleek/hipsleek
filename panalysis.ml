@@ -18,7 +18,7 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
        * (all non-recursive don't have any list_assume). *)
       let lhs_formulae = CP.split_conjunctions a in
       (* assumes that at least one RelForm in the list of formulae,
-       * assumes it  *)
+       * assumes it is *the* relation we're looking for. *)
       match (List.filter CP.is_RelForm lhs_formulae) with
          | [] -> (None, [])
          | pre_r::_ ->
@@ -35,18 +35,15 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
             (* all the (in)equalities are on the LHS, the entailed relation on RHS *)
             (* need to get all the 'constraints' on `arg`. *)
             let has_arg form =
-              (* let (pf,_) = bf in *)
-              (* match pf with *)
-              (* | CP.Eq (e1,e2,_) -> *)
-                let spec_vars = CP.fv form in
-                CP.is_eq_exp form &&
-                CP.EMapSV.mem arg spec_vars &&
-                CP.EMapSV.mem (CP.sp_rm_prime arg) spec_vars in
+              let spec_vars = CP.fv form in
+              CP.is_eq_exp form &&
+              CP.EMapSV.mem arg spec_vars &&
+              CP.EMapSV.mem (CP.sp_rm_prime arg) spec_vars in
             let constraints = List.filter has_arg lhs_formulae in
             let () = x_binfo_hp (add_str ("constraints of " ^ (Cprinter.string_of_spec_var arg)) (pr_list !CP.print_formula)) constraints no_pos in
             (flow, constraints)
       ) lst_assume in
-      (* comibne *)
+      (* combine *)
       CP.UNKNOWN arg in
   List.map flow_of_arg (List.mapi (fun i x -> (i,x)) specvars)
 
