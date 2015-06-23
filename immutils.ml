@@ -427,6 +427,7 @@ let simplify_imm_min_max f =
 let simplify_imm_min_max (f:formula) =
   let pr = !print_formula in
   Debug.no_1 "simplify_imm_min_max" pr pr simplify_imm_min_max f
+
 (**
 Syntactically replace minmax between immutability ann with it results
 that can be syntactically deduced from emap.
@@ -466,7 +467,7 @@ let prune_imm_min_max_conjunct poset f =
   let f_f f = match f with
     | BForm (b_formula, lbl) -> Some (f_b b_formula lbl)
     | _ -> None in
-  transform_formula (nonef, nonef, f_f, nonef, nonef) f
+  transform_formula (nonef, nonef, f_f, somef, somef) f
 
 let prune_imm_min_max f =
   let collect_subann f =
@@ -489,7 +490,7 @@ let prune_imm_min_max f =
        Some (mkAnd (prune_imm_min_max_conjunct poset f1)
                    (prune_imm_min_max_conjunct poset f2) pos)
     | other -> None in
-  transform_formula (nonef, nonef, f_f, nonef, nonef) f
+  transform_formula (nonef, nonef, f_f, somef, somef) f
 
 let prune_imm_min_max f =
   let pr = !print_formula in

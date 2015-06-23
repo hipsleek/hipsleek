@@ -2251,9 +2251,11 @@ module type DAG =
     val create : unit -> t
     (* Add a pair of < relation to DAG *)
     val add : t -> (e * e) -> unit
+    (* Add a list of pairs of < relation to DAG *)
+    val add_list : t -> (e * e) list -> unit
     (* Check whether an element exists in the DAG *)
     val mem : t -> e -> bool
-    (* Check whether there is a path between to nodes *)
+    (* Check whether there is a path between two nodes *)
     val has_path : t -> e -> e -> bool
     (* Check whether lhs < rhs *)
     val is_lt : t -> e -> e -> bool
@@ -2297,6 +2299,7 @@ module Make_DAG(Eq : EQ_TYPE) : DAG with type e := Eq.t =
       let v2 = try find t e2 with Not_found -> add_vertex t e2 in
       connect t t.top v1;
       connect t v1 v2
+    let add_list t xs = List.iter (add t) xs
     let create () = { tbl = M.empty; top = mk_dummy_vertex () }
     let vertex_eq v1 v2 = Eq.eq (node_of v1) (node_of v2)
     let rec has_path_v v1 v2 =
