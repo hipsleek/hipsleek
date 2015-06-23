@@ -45,10 +45,22 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
               CP.EMapSV.mem (CP.sp_rm_prime arg) spec_vars in
             let constraints = List.filter has_arg lhs_formulae in
             let () = x_binfo_hp (add_str ("constraints of " ^ (Cprinter.string_of_spec_var arg)) (pr_list !CP.print_formula)) constraints no_pos in
-            (flow, constraints) in
+            let nml_constraints = List.map Tlutils.normalize_formula constraints in
+            let () = x_binfo_hp (add_str ("normalzd constraints of " ^ (Cprinter.string_of_spec_var arg)) (pr_list !CP.print_formula)) nml_constraints no_pos in
+            (arg,flow,constraints) in
           let res = List.map flow_of_arg args_with_index in
           (* TODO: analyse res into CP.param_flow list *)
-          List.map (fun a -> CP.UNKNOWN a) primed_args
+          List.map (fun (arg,flow,constr) ->
+            match flow with
+            (* if None, may be constant, or alias, or something else. *)
+            | None -> CP.UNKNOWN arg
+            | Some (fr_a,to_a) ->
+              (match constr with
+               | [] -> CP.FLOW (List.nth primed_args fr_a)
+               | [form] -> CP.IND (CP.fv form, form)
+               (* am assuming there is only one x'=f(x) form per infer_rel_ass *)
+               | _ -> failwith "more constraints than assumed")
+          ) res
     ) lst_assume in
 
   (* TODO: combine various param-flow lists, reduce duplication. *)
