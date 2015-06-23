@@ -2249,22 +2249,60 @@ module type DAG =
     type t
     (* Create an empty DAG *)
     val create : unit -> t
-    (* Add element to DAG *)
-    val add : t -> e -> unit
+    (* Add a pair of < relation to DAG *)
+    val add : t -> (e * e) -> unit
+    (* Check whether an element exists in the DAG *)
+    val mem : t -> e -> bool
     (* Check whether there is a path between to nodes *)
-    val has_path : t -> e -> e -> e list option
+    val has_path : t -> e -> e -> bool
     (* Check whether lhs < rhs *)
     val is_lt : t -> e -> e -> bool
+    (* Check whether lhs >= rhs *)
+    val is_gte : t -> e -> e -> bool
+    (* Standard unordered fold *)
+    val fold : t -> ('acc -> e -> 'acc) -> 'acc -> 'acc
   end
 
 module Make_DAG(Eq : EQ_TYPE) : DAG with type e := Eq.t =
   struct
+    module M = Map.Make(Eq)
     type e = Eq.t
-    type t = e list
-    let create () = []
-    let add t e = ()
-    let has_path t e1 e2 = None
-    let is_lt t e1 e2 = false
+    type node = Node of (e * vertex list)
+    and vertex = node ref
+    type t = {
+        mutable tbl : node ref M.t;
+        top : vertex;
+      }
+    let node_of v = match !v with Node (n,_) -> n
+    let adjacent_of v = match !v with Node (_,n) -> n
+    let mk_vertex e vs = ref (Node(e, vs))
+    let mk_dummy_vertex () = ref (Node(Eq.zero, []))
+    let add_vertex t e =
+      let v = mk_vertex e [] in
+      let () = t.tbl <- M.add e v t.tbl in v
+    let mem t e = M.mem e t.tbl
+    let find t e = M.find e t.tbl
+    let connect t v1 v2 =
+      let e1 = node_of v1 in
+      let vs = adjacent_of v1 in
+      let new_e1 = mk_vertex e1 (v2::vs) in
+      t.tbl <- M.remove e1 t.tbl;
+      t.tbl <- M.add e1 new_e1 t.tbl
+    let add t (e1, e2) =
+      let v1 = try find t e1 with Not_found -> add_vertex t e1 in
+      let v2 = try find t e2 with Not_found -> add_vertex t e2 in
+      connect t t.top v1;
+      connect t v1 v2
+    let create () = { tbl = M.empty; top = mk_dummy_vertex () }
+    let vertex_eq v1 v2 = Eq.eq (node_of v1) (node_of v2)
+    let rec has_path_v v1 v2 =
+      List.fold_right (fun v acc -> (has_path_v v v2) || acc) (adjacent_of v1)
+                      (vertex_eq v1 v2)
+    let has_path t e1 e2 =
+      try has_path_v (find t e1) (find t e2) with Not_found -> false
+    let is_lt t e1 e2 = has_path t e1 e2
+    let is_gte t e1 e2 = not (is_lt t e1 e2)
+    let fold t f init = List.fold_left f init (List.map fst (M.bindings t.tbl))
   end
 
 include Basic
