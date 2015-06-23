@@ -10,9 +10,11 @@ void loo (ref int x, ref int y,int a, int b)
   if (x>0 || y>0) {
     a=a+1;
     x = x+a-b-1;
+    x=x+100;
     a=a-1;
     y = y+b-a-1;
     loo(x,y,b,a);
+    x=x+1000;
     loo(x,y,a,b);
   };
 }

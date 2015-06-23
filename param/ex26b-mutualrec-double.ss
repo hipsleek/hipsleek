@@ -12,7 +12,12 @@ void loo (ref int x, ref int y,int a, int b)
     x = x+a-b-1;
     a=a-1;
     y = y+b-a-1;
-    loo2(x,y,a,b);
+    if (x > 100) {
+      loo2(x,y,a,b);
+    } else {
+      x = x + 100000;
+      loo(x,y,a,b);
+    }
   };
 }
 
