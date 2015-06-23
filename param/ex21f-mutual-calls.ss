@@ -18,7 +18,7 @@ void loo (int x, int y,int a, int b)
 }
 
 /*
-# ex21e.ss
+# ex21f.ss
 
 [RELDEFN R: ( x=(b'-a')+x' & y=(a'-b')+y'+1 & a'<(b'+x') & b'<=(a'+y') & R(x,y,a',b')) -->  R(x',y',b',a'),
 RELDEFN R: ( y=(a'-b')+y'+1 & x=(b'-a')+x' & (a'+y')<b' & a'<(b'+x') & R(x,y,a',b')) -->  R(x',y',b',a'),
