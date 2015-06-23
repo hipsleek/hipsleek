@@ -18,11 +18,21 @@ which seem sufficient to analyse that
 
  parameter analysis for loo
 
- loo(x,y,a,b) = [loo(IND([x,a,b],x+a-b-1)
-                 ,IND([y,a,b],y+b-a-1)
-                 ,FLOW(a)
-                 ,FLOW(b))]
+ loo1(x,y,a,b) = [loo2(IND([x,a,b],x+a-b-1)
+                      ,IND([y,a,b],y+b-a-1)
+                      ,FLOW(a)
+                      ,FLOW(b))
+                    ,
+                  loo1(...)
+         ]
  
+ a-b-1=0
+ b-a-1=0
+ a=b
+ a-b-1<0
+ b-a-1>0
+ 
+
 # Add an option --analyse-param to trigger the output
 
   x,y are inductive
