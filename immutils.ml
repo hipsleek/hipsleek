@@ -428,6 +428,19 @@ let simplify_imm_min_max (f:formula) =
   let pr = !print_formula in
   Debug.no_1 "simplify_imm_min_max" pr pr simplify_imm_min_max f
 
+(**
+Syntactically prune minmax relation between immutability ann that
+can be syntactically deduced from emap.
+1. Collect all subtyping relations
+2. Build a DAG of equivalence sets based on emaps
+3. Use the DAG to deduce minmax.
+ **)
+let prune_imm_min_max emap f = f
+
+let prune_imm_min_max emap f =
+  let pr = !print_formula in
+  Debug.no_1 "prune_min_max" pr pr (prune_imm_min_max emap) f
+
 (* ===================== END imm addition utils ========================= *)
 
 (* below should preserve the old annotation, and only set NoAnn to Mutable *)
