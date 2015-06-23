@@ -2240,6 +2240,33 @@ struct
 
 end;;
 
+(* Efficient imperative DAG for implementing posets *)
+module type DAG =
+  sig
+    (* Element type *)
+    type e
+    (* DAG inner type *)
+    type t
+    (* Create an empty DAG *)
+    val create : unit -> t
+    (* Add element to DAG *)
+    val add : t -> e -> unit
+    (* Check whether there is a path between to nodes *)
+    val has_path : t -> e -> e -> e list option
+    (* Check whether lhs < rhs *)
+    val is_lt : t -> e -> e -> bool
+  end
+
+module Make_DAG(Eq : EQ_TYPE) : DAG with type e := Eq.t =
+  struct
+    type e = Eq.t
+    type t = e list
+    let create () = []
+    let add t e = ()
+    let has_path t e1 e2 = None
+    let is_lt t e1 e2 = false
+  end
+
 include Basic
 include SysUti
 
@@ -2256,4 +2283,3 @@ let range a b =
     if a > b then [] else a :: aux (a+1) b  in
   (* if a > b then List.rev (aux b a) else aux a b;; *)
   if a > b then [] else aux a b;;
-

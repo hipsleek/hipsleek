@@ -429,8 +429,8 @@ let simplify_imm_min_max (f:formula) =
   Debug.no_1 "simplify_imm_min_max" pr pr simplify_imm_min_max f
 
 (**
-Syntactically prune minmax relation between immutability ann that
-can be syntactically deduced from emap.
+Syntactically replace minmax between immutability ann with it results
+that can be syntactically deduced from emap.
 1. Collect all subtyping relations
 2. Build a DAG of equivalence sets based on emaps
 3. Use the DAG to deduce minmax.
