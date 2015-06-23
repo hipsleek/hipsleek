@@ -427,7 +427,6 @@ let simplify_imm_min_max f =
 let simplify_imm_min_max (f:formula) =
   let pr = !print_formula in
   Debug.no_1 "simplify_imm_min_max" pr pr simplify_imm_min_max f
-
 (**
 Syntactically replace minmax between immutability ann with it results
 that can be syntactically deduced from emap.
@@ -435,11 +434,66 @@ that can be syntactically deduced from emap.
 2. Build a DAG of equivalence sets based on emaps
 3. Use the DAG to deduce minmax.
  **)
-let prune_imm_min_max emap f = f
+module SubAnn : Gen.EQ_TYPE with type t = CP.exp =
+  struct
+    type t = CP.exp
+    let zero = CP.AConst(Mutable, no_pos)
+    let is_zero e1 = e1 = CP.AConst(Mutable, no_pos)
+    let eq = CP.eq_exp_no_aset
+    let compare e1 e2 =
+      String.compare (CP.ArithNormalizer.string_of_exp e1)
+                     (CP.ArithNormalizer.string_of_exp e2)
+    let string_of = CP.ArithNormalizer.string_of_exp
+  end
 
-let prune_imm_min_max emap f =
+module SubAnnPoset = Gen.Make_DAG(SubAnn)
+
+let prune_imm_min_max_conjunct poset f =
+  let f_b b_formula lbl = match b_formula with
+    | (EqMin (id, lhs, rhs, loc), p) ->
+       begin match SubAnnPoset.is_lt_opt poset lhs rhs with
+       | Some true -> mkEqExp id lhs loc
+       | Some false -> mkEqExp id rhs loc
+       | None -> BForm (b_formula, lbl)
+       end
+    | (EqMax (id, lhs, rhs, loc), _) ->
+       begin match SubAnnPoset.is_lt_opt poset lhs rhs with
+       | Some true -> mkEqExp id rhs loc
+       | Some false -> mkEqExp id lhs loc
+       | None -> BForm (b_formula, lbl)
+       end
+    | b_formula -> BForm (b_formula, lbl) in
+  let f_f f = match f with
+    | BForm (b_formula, lbl) -> Some (f_b b_formula lbl)
+    | _ -> None in
+  transform_formula (nonef, nonef, f_f, nonef, nonef) f
+
+let prune_imm_min_max f =
+  let collect_subann f =
+    let is_subann p_f = match p_f with SubAnn _ -> true | _ -> false in
+    let to_pair p_f = match p_f with
+      | SubAnn (e1,e2,_) -> (e1,e2)
+      | _ -> failwith "Not possible" in
+    fold_formula f (nonef, (fun (p_f,_) ->
+                            if is_subann p_f then Some [to_pair p_f]
+                            else None), nonef) List.concat in
+  let f_f f = match f with
+    | BForm _ ->
+       let poset = SubAnnPoset.create () in
+       let () = List.iter (SubAnnPoset.add poset) (collect_subann f) in
+       Some (prune_imm_min_max_conjunct poset f)
+    | And (f1, f2, pos) ->
+       let poset = SubAnnPoset.create () in
+       let () = List.iter (SubAnnPoset.add poset) (collect_subann f1) in
+       let () = List.iter (SubAnnPoset.add poset) (collect_subann f2) in
+       Some (mkAnd (prune_imm_min_max_conjunct poset f1)
+                   (prune_imm_min_max_conjunct poset f2) pos)
+    | other -> None in
+  transform_formula (nonef, nonef, f_f, nonef, nonef) f
+
+let prune_imm_min_max f =
   let pr = !print_formula in
-  Debug.no_1 "prune_min_max" pr pr (prune_imm_min_max emap) f
+  Debug.no_1 "prune_imm_min_max" pr pr prune_imm_min_max f
 
 (* ===================== END imm addition utils ========================= *)
 

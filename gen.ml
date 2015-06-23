@@ -2259,6 +2259,10 @@ module type DAG =
     val is_lt : t -> e -> e -> bool
     (* Check whether lhs >= rhs *)
     val is_gte : t -> e -> e -> bool
+    (* Check whether lhs < rhs or None if not found *)
+    val is_lt_opt : t -> e -> e -> bool option
+    (* Check whether lhs >= rhs, or None if not found *)
+    val is_gte_opt : t -> e -> e -> bool option
     (* Standard unordered fold *)
     val fold : t -> ('acc -> e -> 'acc) -> 'acc -> 'acc
   end
@@ -2298,10 +2302,16 @@ module Make_DAG(Eq : EQ_TYPE) : DAG with type e := Eq.t =
     let rec has_path_v v1 v2 =
       List.fold_right (fun v acc -> (has_path_v v v2) || acc) (adjacent_of v1)
                       (vertex_eq v1 v2)
+    let has_path_exc t e1 e2 =
+      has_path_v (find t e1) (find t e2)
     let has_path t e1 e2 =
       try has_path_v (find t e1) (find t e2) with Not_found -> false
     let is_lt t e1 e2 = has_path t e1 e2
     let is_gte t e1 e2 = not (is_lt t e1 e2)
+    let is_lt_opt t e1 e2 =
+      try Some (has_path_exc t e1 e2) with Not_found -> None
+    let is_gte_opt t e1 e2 = 
+      try Some (not (has_path_exc t e1 e2)) with Not_found -> None
     let fold t f init = List.fold_left f init (List.map fst (M.bindings t.tbl))
   end
 
