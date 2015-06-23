@@ -1,0 +1,48 @@
+Chanh's example
+==============
+           while (x + y > 0) {
+              old_x = x;
+              old_y = y;
+              x = 2*old_y;
+              y = old_x - old_y + z;
+            }
+
+core language
+=============
+loop(ref int x, ref int y, int z)
+ = if x+y>0 then
+            old_x = x;
+            old_y = y;
+            x = 2*old_y;
+            y = old_x - old_y + z;
+           loop(x,y,z)
+   else ()
+
+parameter analysis
+==================
+For this example, I would expect the
+parameter analysis to be:
+   x'=2*y
+   y'=x-y+z
+   z'=z
+which corresponds to:
+   loop(x,y,z) = [loop(IND[y],2*y,
+                    IND[x,y,z],x-y+z,
+                    FLOW(z))]
+This makes z a constant parameter; while
+x,y and mutually dependent.
+
+ranking function analysis
+=========================
+WE can use prior parameter analysis information to
+analyze expression x+y since it is inductively
+  x'+y' --> 2*y+x-y+z = x+y+z
+
+Hence, x'+y' --> x+y+z.
+
+Such an expression is increasing, decreasing
+or unchanged depending on constant z. 
+
+Thus, expression analysis can be built on top of
+parameter analysis.
+
