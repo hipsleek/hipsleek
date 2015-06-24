@@ -140,6 +140,7 @@ let symex_gen_view iprog prog proc vname proc_args v_args body pos=
   let lfe = [CF.mk_failesc_context ctx1 [] init_esc] in
   let old_symex_td = !symex_td in
   let () = symex_td := true in
+  let () = Td_utils.func_call_no := 0 in
   let res_ctx = x_add Typechecker.check_exp prog proc lfe body label in
   let () = symex_td := old_symex_td in
   let () = x_tinfo_hp (add_str ("symex_gen_view:" ^ proc.C.proc_name) (Cprinter.string_of_list_failesc_context_short)) res_ctx no_pos in
@@ -332,10 +333,10 @@ let verify_as_sat iprog prog iprims=
         if i==x.CA.proc_call_order then (x::xs)::xss
         else [x]::a
     ) [] sorted_proc_main in
-   let () = Debug.ninfo_hprint (add_str "proc_scc"
-                                 (pr_list_ln (pr_list Astsimp.pr_proc_call_order))
-                              ) proc_scc no_pos in
   let proc_scc0 = List.rev proc_scc in
+  let () = Debug.ninfo_hprint (add_str "proc_scc0"
+      (pr_list_ln (pr_list Astsimp.pr_proc_call_order))
+  ) proc_scc0 no_pos in
   (* look up assert error location *)
   if List.exists (exam_ass_error_scc prog) proc_scc0 then
     (* transform *)
