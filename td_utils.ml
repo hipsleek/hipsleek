@@ -54,9 +54,15 @@ let symex_td_method_call prog proc ctx ecall=
     let e = CP.SpecVar (Int, err_var^(fresh_trailer()), Unprimed) in
     let view_args_extra = view_args@[res; e] in
     let hv = CF.mkViewNode dump_self (method2pred mn) view_args_extra ecall.CA.exp_scall_pos in
-    let hv_f = CF.formula_of_heap hv ecall.CA.exp_scall_pos in
+    let hole_id = fresh_int () in
+    let hole = CF.Hole hole_id in
+    (* let hv_f = CF.formula_of_heap hv ecall.CA.exp_scall_pos in *)
+    let hv_f = CF.formula_of_heap hole ecall.CA.exp_scall_pos in
     let ctx1 = CF.transform_list_failesc_context 
-    (idf,idf,(fun es -> Ctx{es with es_formula = CF.mkStar es.es_formula hv_f CF.Flow_combine ecall.CA.exp_scall_pos;})) ctx in
+    (idf,idf,(fun es -> Ctx{es with es_formula =
+            CF.mkStar es.es_formula hv_f CF.Flow_combine ecall.CA.exp_scall_pos;
+        CF.es_crt_holes = es.CF.es_crt_holes@[(hv, hole_id)]
+    })) ctx in
     (* ecall contain assert_error *)
     let is_clone = mdecl.CA.proc_has_assert_err in
     let e_exp = CP.Var (e, no_pos) in

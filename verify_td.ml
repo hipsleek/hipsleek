@@ -147,11 +147,12 @@ let symex_gen_view iprog prog proc vname proc_args v_args body pos=
   let rec collect_es c = match c with
     | CF.Ctx es ->
           let f = CF.substitute_flow_in_f !norm_flow_int !ret_flow_int es.CF.es_formula in
-          [f]
+          let f1 = Immutable.apply_subs es.CF.es_crt_holes f in
+          [f1]
     | CF.OCtx (c1,c2) -> (collect_es c1)@(collect_es c2)
   in
   let brs0 = List.fold_left (fun acc (_,ctx,_) -> acc@(collect_es ctx)) [] br_ctxs in
-  let () = x_binfo_hp (add_str ("brs0") (pr_list_ln !CF.print_formula)) brs0 no_pos in
+  let () = x_tinfo_hp (add_str ("brs0") (pr_list_ln !CF.print_formula)) brs0 no_pos in
   let e = CP.SpecVar (Int, err_var, Unprimed) in
   let safe_fl = MCP.mix_of_pure (CP.mkEqExp (CP.Var (e, no_pos)) (CP.IConst (0, no_pos)) no_pos) in
   let brs1 = List.fold_left (fun fs f ->
@@ -283,7 +284,7 @@ let verify_td_sccs iprog prog fast_return scc_procs=
   (*   match ls_scc with *)
   (*     | [] -> res,combine_res res *)
   (*     | scc::rest -> *)
-  let scc = List.concat scc_procs in
+            let scc = List.concat scc_procs in
             let pair_iviews = symex_gen_view_from_scc iprog prog scc in
             (*transform to cviews *)
             let pairs,ivdecls = List.split pair_iviews in
@@ -325,9 +326,12 @@ let verify_as_sat iprog prog=
         if i==x.CA.proc_call_order then (x::xs)::xss
         else [x]::a
     ) [] sorted_proc_main in
+   let () = Debug.ninfo_hprint (add_str "proc_scc"
+                                 (pr_list_ln (pr_list Astsimp.pr_proc_call_order))
+                              ) proc_scc no_pos in
   let proc_scc0 = List.rev proc_scc in
   (* look up assert error location *)
-  if List.for_all (exam_ass_error_scc prog)  proc_scc0 then
+  if List.exists (exam_ass_error_scc prog) proc_scc0 then
     (* transform *)
     let res = verify_td_sccs iprog prog true proc_scc0 in
     (* check sat *)
