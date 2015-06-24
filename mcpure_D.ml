@@ -26,7 +26,7 @@ and prune_status =
   | Implied_P (* Propagated constraint - Need not be proven when present in conseq *)
   | Implied_N (* Original constraint *)
 
-and var_aset = Gen.EqMap(SV).emap 
+and var_aset = EMapSV.emap
 
 let empty_var_aset = EMapSV.mkEmpty
 

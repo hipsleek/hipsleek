@@ -163,7 +163,8 @@ and isConstMTrue f =
   | _ -> false
 
 and isTrivMTerm f = match f with
-  | h::[]-> h.memo_group_fv==[] &&  h.memo_group_linking_vars==[] && h.memo_group_cons==[] && h.memo_group_aset==[] &&
+  | h::[]-> h.memo_group_fv==[] &&  h.memo_group_linking_vars==[] && h.memo_group_cons==[] &&
+     (EMapSV.is_empty h.memo_group_aset) &&
             (match h.memo_group_slice with
              | h::[] -> isTrivTerm h
              | _ -> false)
@@ -1102,7 +1103,7 @@ and memo_pure_push_exists_eq_x (qv: spec_var list) (f0: memo_pure) pos : (memo_p
     find_subst [] aliases 
   in
   let split_eqs eq_list qv = Debug.no_2 "MCP.split_eqs " EMapSV.string_of !print_svl (pr_list (pr_pair !print_sv !print_sv)) split_eqs eq_list qv in
-  let all_aliases = List.fold_left (fun acc grp -> acc @ grp.memo_group_aset) [] f0 in
+  let all_aliases = List.fold_left (fun acc grp -> EMapSV.merge_eset acc grp.memo_group_aset) EMapSV.mkEmpty f0 in
   let to_subst = split_eqs all_aliases qv in
   let subst_vars = fst (List.split to_subst) in
   let r_v = Gen.BList.difference_eq eq_spec_var qv subst_vars in
@@ -1769,7 +1770,7 @@ let is_sat_memo_sub_no_ineq_slicing_complete (mem : memo_pure) with_dupl with_in
   if (isConstMFalse mem) then false
   else
     (* create a single eset for memo pure *)
-    let m_aset = List.fold_left (fun a mg -> EMapSV.merge_eset a mg.memo_group_aset) [] mem in
+    let m_aset = List.fold_left (fun a mg -> EMapSV.merge_eset a mg.memo_group_aset) EMapSV.mkEmpty mem in
     (* parition the eset *)
     let m_apart = EMapSV.partition m_aset in
     let is_sat_one_slice mg =
@@ -2526,7 +2527,7 @@ let find_rel_constraints (f:mix_formula) (v_l :spec_var list):  mix_formula = ma
     MemoF (List.filter (fun c-> not ((Gen.BList.intersect_eq eq_spec_var c.memo_group_fv v_l )==[]))f)
   | OnePF f -> OnePF (Cpure.find_rel_constraints f v_l)
 
-let memo_filter_complex_inv f = List.map (fun c-> {c with memo_group_cons = []; memo_group_aset=[]}) f
+let memo_filter_complex_inv f = List.map (fun c-> {c with memo_group_cons = []; memo_group_aset=EMapSV.mkEmpty}) f
 
 
 let filter_complex_inv f = match f with
@@ -2612,7 +2613,7 @@ let constraint_collector p_sel f : (mix_formula * (b_formula * spec_var) list)=
           match p_sel ((Eq (Var (v1,no_pos), Var (v2,no_pos),no_pos)),None) with
           | (true,l) -> ((v1,v2)::a1, l@a2)
           | (false,l) -> (a1, l@a2)) ([],[]) vl in
-    let aset = List.fold_left (fun a (x,y) -> EMapSV.add_equiv a x y) []  aset in
+    let aset = List.fold_left (fun a (x,y) -> EMapSV.add_equiv a x y) EMapSV.mkEmpty aset in
     let x = {x with
              memo_group_fv = [];
              memo_group_slice = slice;

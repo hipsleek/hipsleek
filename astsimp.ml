@@ -1195,7 +1195,7 @@ let rec splitter_x (f_list_init:(Cpure.formula*CF.struc_formula) list) (v1:Cpure
       let sz = Array.length constr_array in
       let matr = Array.make_matrix sz sz Cpure.Unknown in
       let f_sat f = x_add TP.is_sat_sub_no 12 f (ref 0) in
-      let f_imply f1 f2 = if (CP.fast_imply [] [f1] f2>0) then true else false in
+      let f_imply f1 f2 = if (CP.fast_imply CP.EMapSV.mkEmpty [f1] f2>0) then true else false in
       let filled_matr = 
         Array.mapi(fun x c->(Array.mapi (fun y c->
             if (x>y) then Cpure.compute_constraint_relation f_sat f_imply (constr_array.(x)) (constr_array.(y)) 

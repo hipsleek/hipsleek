@@ -54,15 +54,15 @@ let helper_is_const_ann_sv em sv test =
   else if eq_spec_var sv imm_const_sv then true
   else EMapSV.is_equiv em sv imm_const_sv 
 
-let is_mut_sv ?emap:(em=[])  sv = helper_is_const_ann_sv em sv Mutable 
+let is_mut_sv ?emap:(em=EMapSV.mkEmpty)  sv = helper_is_const_ann_sv em sv Mutable 
 
-let is_imm_sv ?emap:(em=[])  sv = helper_is_const_ann_sv em sv Imm
+let is_imm_sv ?emap:(em=EMapSV.mkEmpty)  sv = helper_is_const_ann_sv em sv Imm
 
-let is_lend_sv ?emap:(em=[]) sv = helper_is_const_ann_sv em sv Lend
+let is_lend_sv ?emap:(em=EMapSV.mkEmpty) sv = helper_is_const_ann_sv em sv Lend
 
-let is_abs_sv ?emap:(em=[])  sv = helper_is_const_ann_sv em sv Accs
+let is_abs_sv ?emap:(em=EMapSV.mkEmpty)  sv = helper_is_const_ann_sv em sv Accs
 
-let is_imm_const_sv ?emap:(em=[])  sv = 
+let is_imm_const_sv ?emap:(em=EMapSV.mkEmpty)  sv = 
   (is_abs_sv ~emap:em sv) ||   (is_mut_sv ~emap:em sv) ||   (is_lend_sv ~emap:em sv) ||   (is_imm_sv ~emap:em sv)
 
 let get_imm_list ?loc:(l=no_pos) list =
@@ -126,22 +126,22 @@ let helper_is_const_imm em (imm:ann) const_imm =
   | _ -> false
 
 (* below functions take into account the alias information while checking if imm is a certain const. *)
-let is_abs ?emap:(em=[]) (imm:ann) = helper_is_const_imm em imm Accs
-let is_abs_exp ?emap:(em=[]) (e: exp) = is_abs ~emap:em (exp_to_imm e)
+let is_abs ?emap:(em=EMapSV.mkEmpty) (imm:ann) = helper_is_const_imm em imm Accs
+let is_abs_exp ?emap:(em=EMapSV.mkEmpty) (e: exp) = is_abs ~emap:em (exp_to_imm e)
 
-let is_abs_list ?emap:(em=[]) imm_list = List.for_all (is_abs ~emap:em) imm_list
+let is_abs_list ?emap:(em=EMapSV.mkEmpty) imm_list = List.for_all (is_abs ~emap:em) imm_list
 
-let is_mutable ?emap:(em=[]) (imm:ann) = helper_is_const_imm em imm Mutable 
+let is_mutable ?emap:(em=EMapSV.mkEmpty) (imm:ann) = helper_is_const_imm em imm Mutable 
 
-let is_mutable_list ?emap:(em=[]) imm_list =  List.for_all (is_mutable ~emap:em) imm_list
+let is_mutable_list ?emap:(em=EMapSV.mkEmpty) imm_list =  List.for_all (is_mutable ~emap:em) imm_list
 
-let is_immutable ?emap:(em=[]) (imm:ann) = helper_is_const_imm em imm Imm
+let is_immutable ?emap:(em=EMapSV.mkEmpty) (imm:ann) = helper_is_const_imm em imm Imm
 
-let is_immutable_list ?emap:(em=[]) imm_list =  List.for_all (is_immutable ~emap:em) imm_list
+let is_immutable_list ?emap:(em=EMapSV.mkEmpty) imm_list =  List.for_all (is_immutable ~emap:em) imm_list
 
-let is_lend ?emap:(em=[]) (imm:ann) = helper_is_const_imm em imm Lend
+let is_lend ?emap:(em=EMapSV.mkEmpty) (imm:ann) = helper_is_const_imm em imm Lend
 
-let is_lend_list ?emap:(em=[]) imm_list =  List.for_all (is_lend ~emap:em) imm_list
+let is_lend_list ?emap:(em=EMapSV.mkEmpty) imm_list =  List.for_all (is_lend ~emap:em) imm_list
 
 let isAccs (a : ann) : bool = is_abs a
 
@@ -156,13 +156,13 @@ let isPoly(a : ann) : bool =
   | PolyAnn v -> true
   | _ -> false
 
-let is_const_imm ?emap:(em=[]) (a:ann) : bool =
+let is_const_imm ?emap:(em=EMapSV.mkEmpty) (a:ann) : bool =
   match a with
   | ConstAnn _ -> true
   | PolyAnn sv -> (is_mutable ~emap:em a) || (is_immutable ~emap:em a) || (is_lend ~emap:em a) || (is_abs ~emap:em a)
   | _ -> false
 
-let is_const_imm_list ?emap:(em=[]) (alst:ann list) : bool =
+let is_const_imm_list ?emap:(em=EMapSV.mkEmpty) (alst:ann list) : bool =
   List.for_all (is_const_imm ~emap:em) alst
 
 (* end imm utilities *)
@@ -400,7 +400,7 @@ let simplify_imm_addition emap f =
   if not(!Globals.imm_add)  then f
   else simplify_imm_addition emap f
 
-let simplify_imm_addition ?emap:(em=[]) (f:formula) =
+let simplify_imm_addition ?emap:(em=EMapSV.mkEmpty) (f:formula) =
   let pr = !print_formula in
   Debug.no_1 "simplify_imm_addition" pr pr (simplify_imm_addition em) f
 

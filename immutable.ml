@@ -334,12 +334,11 @@ let pick_weakest_instatiation lhs rhs loc lhs_f rhs_f ivars evars=
   Debug.no_2 "pick_weakest_instatiation" pr2 pr2 pr3 (fun _ _ -> pick_weakest_instatiation_new lhs rhs loc lhs_f rhs_f ivars evars) lhs_f rhs_f
 
 let get_emaps lhs_f rhs_f elhs erhs =
-  match elhs, erhs with  
-  | [], [] -> 
+  if (CP.EMapSV.is_empty elhs) && (CP.EMapSV.is_empty erhs) then
     let elhs = Imm.build_eset_of_imm_formula (CF.get_pure lhs_f) in
     let erhs = Imm.build_eset_of_imm_formula (CF.get_pure rhs_f) in
-    elhs,erhs 
-  | _ -> elhs,erhs
+    (elhs, erhs)
+  else (elhs,erhs)
 
 let post_process_subtype_answer v emap unk_fnc rec_fnc =
   let imm_l = Imm.get_imm_emap_ann_opt v emap in
@@ -455,7 +454,7 @@ let subtype_ann_list_x
     ?lhs:(lhs_f = CF.mkTrue (mkTrueFlow ()) no_pos )
     ?rhs:(rhs_f = CF.mkTrue (mkTrueFlow ()) no_pos )
     impl_vars evars (ann1 : CP.ann list) (ann2 : CP.ann list) : bool * (CP.formula  list) * (CP.formula  list) * (CP.formula  list) =
-  let elhs,erhs = get_emaps lhs_f rhs_f [] [] in
+  let elhs,erhs = get_emaps lhs_f rhs_f CP.EMapSV.mkEmpty CP.EMapSV.mkEmpty in
   let rec helper impl_vars evars (ann1 : CP.ann list) (ann2 : CP.ann list) =
     match (ann1, ann2) with
     | ([], [])         -> (true, [], [], [])
