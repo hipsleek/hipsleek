@@ -615,7 +615,8 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
   (* let () = x_binfo_pp (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels)) no_pos in *)
   let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels_orig) in
   let (lst_assume,lst_rank) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) rest) in
-  let () = List.iter (fun proc ->
+  let () = if !Globals.param_analysis then 
+    List.iter (fun proc ->
       let _ = Panalysis.analyse_param rels (proc.Cast.proc_args) in ()) scc in
   (* *)
   (* let lst_assume = Gen.Basic.remove_dups lst_assume in *)

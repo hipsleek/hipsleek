@@ -1,0 +1,24 @@
+
+
+Rel := {[x,y,a,b]->[x',y',a',b']:a=a' & b=b' & x=(b'-a')+x'+1 & y=((a'+y')-b')+1 & (b'+x')<a' & b'<=(a'+y')};
+
+Rel1 := {[x,y,a,b]->[x',y',a',b']:exists(y',a',b':a=a' & b=b' & x=(b'-a')+x'+1 & y=((a'+y')-b')+1 & (b'+x')<a' & b'<=(a'+y'))};
+
+Rel1;
+#{[x,y,a,b] -> [x+a-b-1,y',a',b'] : x <= 0 && 1 <= y}
+
+Rel2 := {[x,y,a,b]->[x',y',a',b']:exists(x',a',b':a=a' & b=b' & x=(b'-a')+x'+1 & y=((a'+y')-b')+1 & (b'+x')<a' & b'<=(a'+y'))};
+
+Rel2;
+#{[x,y,a,b] -> [x',y-a+b-1,a',b'] : x <= 0 && 1 <= y}
+
+Rel3 := {[x,y,a,b]->[x',y',a',b']:exists(x',y',b':a=a' & b=b' & x=(b'-a')+x'+1 & y=((a'+y')-b')+1 & (b'+x')<a' & b'<=(a'+y'))};
+
+Rel3;
+#{[x,y,a,b] -> [x',y',a,b'] : x <= 0 && 1 <= y}
+
+Rel4 := {[x,y,a,b]->[x',y',a',b']:exists(x',y',a':a=a' & b=b' & x=(b'-a')+x'+1 & y=((a'+y')-b')+1 & (b'+x')<a' & b'<=(a'+y'))};
+
+Rel4;
+#{[x,y,a,b] -> [x',y',a',b] : x <= 0 && 1 <= y}
+
