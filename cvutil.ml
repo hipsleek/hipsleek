@@ -343,6 +343,16 @@ let build_vis prog f=
   Debug.no_1 "build_vis" !print_formula (pr_quad string_of_bool string_of_bool pr1 pr2)
     (fun _ -> build_vis_x prog f) f
 
+let rec find_self_sv fs= match fs with
+  | (f,_)::rest ->begin let svl = Cformula.fv f in
+    try
+      let self_sv = List.find (fun sv -> String.compare (CP.name_of_spec_var sv) self = 0) svl in
+      self_sv
+    with _ -> find_self_sv rest
+    end
+  | [] -> raise Not_found
+
+
 let process_vis_x prog term_first_sat (vname,p_root,p_args,p_eqs,p_neqs,p_null_svl, p_neqNull_svl) =
   (*********************************)
   let rec find_self_sv fs=
@@ -2360,3 +2370,122 @@ let crop_h_formula (f: h_formula) (svl: CP.spec_var list):
 
 (* =========== end- remove the node specified by sv and return the removed node  ==========*)
 
+(*
+ which_abs:
+ 0: under
+ 1: exact; fail if can not
+ 2: over
+*)
+let expure_heap_symbolic_x (prog : prog_decl) (h0 : h_formula) xp_no which_abs: (MCP.mix_formula *  CP.spec_var list) = 
+  let rec helper h0 : (MCP.mix_formula *  CP.spec_var list) = match h0 with
+    | ThreadNode {CF.h_formula_thread_resource = rsr}  ->
+          (*Thread resource may be used for xpure*)
+          let mf,svl,_ =  xpure_symbolic 5 prog rsr in
+          (mf,svl)
+    | DataNode ({ h_formula_data_node = p;
+      h_formula_data_perm = perm;
+      h_formula_data_label = lbl;
+      h_formula_data_pos = pos}) ->
+          let non_zero = CP.BForm ((CP.Neq (CP.Var (p, pos), CP.Null pos, pos), None), lbl) in
+          (*LDK: add fractional invariant 0<f<=1, if applicable*)
+          (match perm with
+            | None -> (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_zero , [p])
+            | Some f ->
+                  let res = CP.mkAnd non_zero (mkPermInv () f) no_pos in
+	          (MCP.memoise_add_pure_N (MCP.mkMTrue pos) res , [p]))
+
+    | ViewNode ({ h_formula_view_node = p;
+      h_formula_view_name = c;
+      h_formula_view_perm = perm; (*Viewnode does not neccessary have invariant on fractional permission*)
+      h_formula_view_arguments = vs;
+      h_formula_view_remaining_branches = lbl_lst;
+      h_formula_view_pos = pos}) ->
+          let ba = look_up_view_baga prog c p vs in
+          let vdef = look_up_view_def pos prog.prog_view_decls c in
+          let diff_flag = not(vdef.view_xpure_flag) in
+          let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
+          let to_svs = p :: vs in
+		  let helper () = 
+		    (*--imm only*)
+                    (*LDK: add fractional invariant 0<f<=1, if applicable*)
+		    let diff_flag = not(vdef.view_xpure_flag) in
+                    let _ = if diff_flag then smart_same_flag := false in
+                    let frac_inv = match perm with
+                      | None -> CP.mkTrue pos
+                      | Some f -> mkPermInv () f in
+                    let _ = Debug.ninfo_hprint (add_str "view_name" (fun x -> x)) vdef.view_name no_pos in
+                    let _ = Debug.ninfo_hprint (add_str "diff_flag" string_of_bool) diff_flag no_pos in
+                    let _ = Debug.ninfo_hprint (add_str "xp_no" string_of_int) xp_no no_pos in
+                    let vinv = match which_abs with
+                      | 1 -> begin match vdef.view_baga_inv with
+                          | Some bp -> fst (conv_from_ef_disj bp)
+                          | None -> report_error pos ("cvutil.expure: pred " ^ c ^ " does not have exact inv")
+                        end
+                      | 2
+                      | _ -> if (xp_no=1 && diff_flag) then vdef.view_x_formula else vdef.view_user_inv
+                    in
+                    let _ = Debug.ninfo_hprint (add_str "vinv" !Cast.print_mix_formula) vinv no_pos in
+                    (*add fractional invariant*)
+                    let frac_inv_mix = MCP.OnePF frac_inv in
+                    let vinv = CF.add_mix_formula_to_mix_formula frac_inv_mix vinv in
+                    let subst_m_fun f = MCP.subst_avoid_capture_memo from_svs to_svs f in
+                    let vinv1 = subst_m_fun vinv in
+                    let _ = Debug.ninfo_hprint (add_str "vinv1" !Cast.print_mix_formula) vinv1 no_pos in
+                    (vinv1, ba) in
+                  (match lbl_lst with
+                    | None -> helper ()
+                    | Some ls -> if !force_verbose_xpure then helper ()
+		      else
+                        (*--imm and --eps *)
+                        let ba = lookup_view_baga_with_subs ls vdef from_svs to_svs in
+                        (MCP.mkMTrue no_pos, ba)
+                  )
+    | Star ({ h_formula_star_h1 = h1;
+      h_formula_star_h2 = h2;
+      h_formula_star_pos = pos}) ->
+          let ph1, addrs1 = helper h1 in
+          let ph2, addrs2 = helper h2 in
+          let tmp1 = MCP.merge_mems ph1 ph2 true in
+          let _ = Debug.ninfo_hprint (add_str "ph1" !Cast.print_mix_formula) ph1 no_pos in
+          let _ = Debug.ninfo_hprint (add_str "ph2" !Cast.print_mix_formula) ph2 no_pos in
+          let _ = Debug.ninfo_hprint (add_str "addrs1" !CP.print_svl) addrs1 no_pos in
+          let _ = Debug.ninfo_hprint (add_str "addrs2" !CP.print_svl) addrs2 no_pos in
+          (tmp1, addrs1 @ addrs2)
+    | StarMinus ({ h_formula_starminus_h1 = h1;
+      h_formula_starminus_h2 = h2;
+      h_formula_starminus_pos = pos}) -> (mkMTrue no_pos, [])
+          (*let ph1, addrs1 = helper h1 in
+            let ph2, addrs2 = helper h2 in
+            let tmp1 = MCP.merge_mems ph1 ph2 true in
+            (tmp1, addrs1 @ addrs2)          *)
+    | Phase ({ h_formula_phase_rd = h1;
+      h_formula_phase_rw = h2;
+      h_formula_phase_pos = pos}) 
+    | Conj ({ h_formula_conj_h1 = h1;
+      h_formula_conj_h2 = h2;
+      h_formula_conj_pos = pos})
+    | ConjStar ({ h_formula_conjstar_h1 = h1;
+      h_formula_conjstar_h2 = h2;
+      h_formula_conjstar_pos = pos})	  	  
+    | ConjConj ({ h_formula_conjconj_h1 = h1;
+      h_formula_conjconj_h2 = h2;
+      h_formula_conjconj_pos = pos}) ->
+          let ph1, addrs1 = helper h1 in
+          let ph2, addrs2 = helper h2 in
+          let tmp1 = merge_mems ph1 ph2 true in
+          (tmp1, addrs1 @ addrs2)
+    | HRel _ -> (mkMTrue no_pos, [])
+    | HTrue  -> (mkMTrue no_pos, [])
+    | Hole _ -> (mkMTrue no_pos, []) (* shouldn't get here *)
+    | FrmHole _ -> (mkMTrue no_pos, [])
+    | HFalse -> (mkMFalse no_pos, [])
+    | HEmp | HVar _  -> (mkMTrue no_pos, []) in
+  helper h0
+
+
+let expure_heap_symbolic (prog : prog_decl) (h0 : h_formula)  xp_no which_abs: (MCP.mix_formula * CP.spec_var list) = 
+  (* let _ = smart_same_flag := true in *)
+  let pr (a,b) = pr_triple Cprinter.string_of_mix_formula Cprinter.string_of_spec_var_list string_of_bool (a,b,!smart_same_flag) in
+  Debug.no_2 "expure_heap_symbolic" string_of_int 
+      Cprinter.string_of_h_formula pr
+      (fun xp_no h0 -> expure_heap_symbolic_x prog h0 xp_no which_abs) xp_no h0

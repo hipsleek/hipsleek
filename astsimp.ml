@@ -2573,6 +2573,9 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
   in
   (*******************************)
   let cviews0,_ = List.fold_left (x_add trans_one_view) ([],[]) ls_pr_view_typ in
+  let has_pure_props = List.exists (fun vdecl -> vdecl.C.view_kind=C.View_NORM &&
+  List.exists (fun a -> not (Cpure.is_node_typ a))  vdecl.C.view_vars) cviews0 in
+  let _ = pred_has_pure_props := has_pure_props in
   let has_arith = !Globals.gen_baga_inv && not(!Globals.smt_compete_mode) && List.exists (fun cv ->
       Expure.is_ep_view_arith cv) cviews0 in
   (* this was incorrect (due to simplifier) since spaguetti benchmark disables it inv_baga; please check to ensure all SMT benchmarks passes..*)
@@ -10956,7 +10959,7 @@ let convert_pred_to_cast_x ls_pr_new_view_tis is_add_pre iprog cprog do_pure_ext
   let () = Debug.ninfo_zprint (lazy (( "cviews1: " ^ (pr2 cviews1)))) no_pos in
   let cviews2 = x_add_1 Norm.cont_para_analysis cprog cviews1 in
   let () = cprog.C.prog_view_decls <- cprog.C.prog_view_decls@cviews2 in
-  let todo_unk =  (List.map (fun vdef -> compute_view_x_formula cprog vdef !Globals.n_xpure) cviews2) in
+  let todo_unk =  if (!Globals.pred_has_pure_props) then (List.map (fun vdef -> compute_view_x_formula cprog vdef !Globals.n_xpure) cviews2) else [] in
   let todo_unk = (List.map (fun vdef -> set_materialized_prop vdef) cprog.C.prog_view_decls) in
   let cprog1 = fill_base_case cprog in
   let cprog2 = sat_warnings cprog1 in

@@ -799,7 +799,7 @@ let convert_data_and_pred_to_cast_x () =
       cviews1
   in
   let _ = !cprog.Cast.prog_view_decls <- cviews2 in
-  let _ =  (List.map (fun vdef -> Astsimp.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews2) in
+  let _ =  if  (!Globals.pred_has_pure_props) then (List.map (fun vdef -> Astsimp.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews2) else [] in
   x_tinfo_pp "after compute_view" no_pos;
   let _ = (List.map (fun vdef -> Astsimp.set_materialized_prop vdef) cviews2) in
   let cviews2 = (List.map (fun vdef -> Norm.norm_formula_for_unfold !cprog vdef) cviews2) in

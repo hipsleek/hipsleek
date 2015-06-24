@@ -1095,6 +1095,14 @@ let look_up_view_inv defs act_args name inv_compute_fnc =
   in
   P.subst ss inv
 
+let look_up_view_inv_simp defs act_args name inv_compute_fnc =
+  let vdcl = look_up_view_def_raw 46 defs name in
+  let ss = List.combine ((P.SpecVar (Named vdcl.view_data_name, self, Unprimed))::vdcl.view_vars) act_args in
+  let inv =
+     MP.pure_of_mix vdcl.view_user_inv
+  in
+  P.subst ss inv
+
 (* An Hoa *)
 let rec look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with
   | d :: rest -> if d.rel_name = name then d else look_up_rel_def_raw rest name

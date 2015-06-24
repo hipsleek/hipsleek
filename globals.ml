@@ -1026,6 +1026,8 @@ let elim_exists_ff = ref true
 
 let allow_frame = ref false
 
+let pred_has_pure_props = ref false
+
 let graph_norm = ref false
 
 let oc_simplify = ref true

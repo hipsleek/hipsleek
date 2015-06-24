@@ -14031,6 +14031,34 @@ let transform_bexpr p=
   Debug.no_1 "CP.transform_bexpr" pr1 pr1
     (fun _ -> transform_bexpr_x p) p
 
+
+let extract_bexpr_pf pf0=
+  match pf0 with
+    | BConst (b,_) -> if b then [], b,false else [],false,b
+    | BVar (sv,_) -> [sv],false,false
+    | _ -> [],false,false
+
+
+let extract_bexpr p0=
+  let rec recf p= match p with
+    | BForm  ((pf, a), lbl) -> let bsvl, bconst_true, bconstr_false = extract_bexpr_pf pf in
+       bsvl, [], bconst_true, bconstr_false
+    | And  (f1, f2, p) ->  let a1,b1,c1,d1 = recf f1 in
+      let a2,b2,c2,d2 = recf f2 in
+      a1@a2,b1@b2, c1||c2, d1||d2
+    | AndList ps -> List.fold_left (fun (a0,b0,c0,d0) (_,f1) ->
+          let a1,b1,c1,d1 = recf f1 in
+          (a0@a1,b0@b1,c0||c1,d0||d1)
+      ) ([],[],false,false) ps
+    | Or (f1, f2, lbl, p) -> [],[],false,false
+    | Not (f1, lbl, p) -> let a1,b1,c1,d1 = (recf f1) in
+      (* let c11,d11 = if c1=d1 then true,true else false,false in *)
+      b1,diff_svl a1 b1,c1,d1
+    | Forall (sv, f1, lbl, p) -> recf f1
+    | Exists (sv, f1, lbl, p ) -> recf f1
+  in
+  recf p0
+
 let rec compare_term_ann a1 a2 =
   match a1, a2 with 
   | Term, Term -> 0

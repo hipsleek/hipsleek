@@ -9527,6 +9527,12 @@ let mk_cex is_sat=
   cex_processed_mark=false;
   }
 
+let mk_cex2 is_sat model= {
+    cex_sat = is_sat;
+    (* cex_model = model; *)
+    cex_processed_mark=false;
+}
+
 let is_sat_fail cex=
   cex.cex_sat
 
