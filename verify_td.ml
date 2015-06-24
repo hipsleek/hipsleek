@@ -251,7 +251,7 @@ let verify_td_scc iprog prog scc=
     let res = CP.SpecVar (mdecl.CA.proc_return, res_name, Unprimed) in
     let e = CP.SpecVar (Int, err_var, Unprimed) in
     let view_args_extra = view_args@[res; e] in
-    let hv = CF.mkViewNode Td_utils.dump_self (method2pred mdecl.CA.proc_name) view_args_extra no_pos in
+    let hv = CF.mkViewNode Td_utils.dump_self (method2pred (CA.unmingle_name mdecl.CA.proc_name)) view_args_extra no_pos in
     let hv_f = CF.formula_of_heap_fl hv (CF.mkNormalFlow ()) no_pos in
     CF.mkAnd_pure hv_f (MCP.mix_of_pure CP.err_p) no_pos
   in
