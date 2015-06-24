@@ -18,7 +18,7 @@ case {
 }
 
 /*
-# ex27c.ss 
+# ex27d.ss 
 
 case {
  x <= 0 -> requires Term ensures true;
