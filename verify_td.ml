@@ -280,11 +280,10 @@ let verify_td_sccs iprog prog fast_return scc_procs=
     else if List.for_all (fun r -> r == VTD_Safe) ls_res then VTD_Safe
     else VTD_Unk
   in
-  (* let rec recf ls_scc res= *)
-  (*   match ls_scc with *)
-  (*     | [] -> res,combine_res res *)
-  (*     | scc::rest -> *)
-            let scc = List.concat scc_procs in
+  let rec recf_trans_views ls_scc=
+    match ls_scc with
+      | [] -> ()
+      | scc::rest ->
             let pair_iviews = symex_gen_view_from_scc iprog prog scc in
             (*transform to cviews *)
             let pairs,ivdecls = List.split pair_iviews in
@@ -294,16 +293,18 @@ let verify_td_sccs iprog prog fast_return scc_procs=
             let cviews = (Astsimp.convert_pred_to_cast pairs false iprog prog false) in
             let () = Globals.do_infer_inv := old_inv_gen in
             let () = Debug.info_hprint (add_str " predicated generated"
-                                 (pr_list_ln Cprinter.string_of_view_decl_short)
-                              ) cviews no_pos in
-            let r = verify_td_scc iprog prog scc in
+                (pr_list_ln Cprinter.string_of_view_decl_short)
+            ) cviews no_pos in
+            (* let r = verify_td_scc iprog prog scc in *)
             (* let n_res = res@[r] in *)
             (* if fast_return && r == VTD_Unsafe then *)
             (*   (n_res,VTD_Unsafe) *)
             (* else recf rest n_res *)
-            r
-  (* in *)
-  (* recf scc_procs [] *)
+            recf_trans_views rest
+  in
+  let () = recf_trans_views scc_procs in
+  let scc = List.concat scc_procs in
+  verify_td_scc iprog prog scc
 
 (* O: safe,
    1: unsafe,
