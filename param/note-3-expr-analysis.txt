@@ -70,6 +70,21 @@ symbolically compute the difference:
 With this I suppose we can infer
 non-termination for y>=0 & x>+0?
 
+==========================================
+
+while (x > 0) {
+  x = 2*x + y;
+  y = y + 1;
+} 
+
+case {
+ x <= 0 -> requires Term ensures true;
+ x > 0 -> case {
+  x+y >= 0 -> requires Term[x] ensures true;
+  x+y < 0 -> requires Loop ensures false;
+ }
+}
+
 
 
 
