@@ -169,7 +169,7 @@ let symex_gen_view iprog prog proc vname proc_args v_args body pos=
   let vars = List.map CP.name_of_spec_var v_args in
   let tvars = List.map (fun (CP.SpecVar (t,id,_)) -> (t,id)) v_args in
   let f_body1,tis = Cfutil.norm_free_vars f_body (v_args) in
-  let () = Debug.ninfo_hprint (add_str "f_body1: " Cprinter.prtt_string_of_formula) f_body1 no_pos in
+  let () = Debug.info_hprint (add_str "f_body1: " Cprinter.prtt_string_of_formula) f_body1 no_pos in
   let no_prm_body = CF.elim_prm f_body1 in
   let new_body = CF.set_flow_in_formula_override {CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link =None} no_prm_body in
   let i_body = Rev_ast.rev_trans_formula new_body in
@@ -311,8 +311,13 @@ let verify_td_sccs iprog prog fast_return scc_procs=
    2: unknown,
    3: not applicaple (all method donot have assert error)
  *)
-let verify_as_sat iprog prog=
+let verify_as_sat iprog prog iprims=
   (* Sort the proc_decls by proc_call_order *)
+  let () = if (!Globals.print_core_all) then print_string (Cprinter.string_of_program prog)  
+    else if(!Globals.print_core) then
+      print_string (Cprinter.string_of_program_separate_prelude prog iprims)
+    else ()
+  in
   let l_proc = Cast.list_of_procs prog in
   let proc_prim, proc_main = List.partition Cast.is_primitive_proc l_proc in
   let sorted_proc_main = Cast.sort_proc_decls proc_main in

@@ -12040,6 +12040,7 @@ let rec merge_esc f e1 e2 =
   ; (l1,merge_success b1 b2)::(merge_esc f z1 z2)
   (* if not ((fst l1)==(fst l2)) then  *)
   (*   Err.report_error {Err.error_loc = no_pos;  Err.error_text = "malfunction in merge failesc context lbl mismatch\n"} *)
+  | _, [] -> e1
   | _ ->   
     print_string ("stack e1: "^ (f e1)^":"^" stack e2: "^(f e2)^":"^"\n");
     Err.report_error {Err.error_loc = no_pos;  Err.error_text = "mismatched number in merge_esc methd \n"} 

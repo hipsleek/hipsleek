@@ -50,7 +50,10 @@ let symex_td_method_call prog proc ctx ecall=
       let sst= List.combine ecall.exp_scall_arguments mdecl.CA.proc_args in
       List.map (fun (act, (t, form)) -> CP.SpecVar (t, act, Primed)) sst
     in
-    let res = CP.SpecVar (mdecl.CA.proc_return, res_name^(fresh_trailer()), Unprimed) in
+    let res = if mdecl.CA.proc_return = Void then
+      CP.SpecVar (mdecl.CA.proc_return,  res_name ^(fresh_trailer()) , Unprimed)
+    else
+      CP.SpecVar (mdecl.CA.proc_return,  "tmp", Primed) in
     let e = CP.SpecVar (Int, err_var^(fresh_trailer()), Unprimed) in
     let view_args_extra = view_args@[res; e] in
     let hv = CF.mkViewNode dump_self (method2pred mn) view_args_extra ecall.CA.exp_scall_pos in
