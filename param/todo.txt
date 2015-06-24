@@ -123,6 +123,20 @@ Rel4;
 #{[x,y,a,b] -> [x',y',a',b] : x <= 0 && 1 <= y}
 
 ================================================================
+# ex27b.ss 
+
+  if (x>0) {
+    x = 2*x+y;
+    y=y+1;
+
+# I guess the warning below can be downplayed
+  as we had 2*x there which is later converted.
+
+WARNING: _0:0_0:0:[omega.ml] Non-linear arithmetic is not supported by Omega.
+push_list:[]
+
+WARNING: _0:0_0:0:[omega.ml] Non-linear arithmetic is not supported by Omega.
+push_list:[]
 ================================================================
 ================================================================
 ================================================================

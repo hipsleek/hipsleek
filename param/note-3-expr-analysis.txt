@@ -46,3 +46,31 @@ or unchanged depending on constant z.
 Thus, expression analysis can be built on top of
 parameter analysis.
 
+=============================================================
+
+while (x > 0) {
+  x = 2*x + y;
+  y = y + 1;
+} 
+
+For this example, parameter analysis 
+should yield:
+
+ x-->x' IND(2*x+y)
+ y-->y' IND(y+1)
+
+To identify the changes, we just need to 
+symbolically compute the difference:
+
+  x'-x == 2*x+y-x
+       == x+y
+  y'-y == y+1-y
+       == 1
+
+With this I suppose we can infer
+non-termination for y>=0 & x>+0?
+
+
+
+
+
