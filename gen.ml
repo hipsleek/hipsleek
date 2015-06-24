@@ -899,34 +899,37 @@ module EqMap =
       end
     module M = Map.Make(Key)
     module N = Map.Make(Elt)
-    type emap = (elem list M.t * key N.t)
+    module S = Set.Make(Elt)
+    type emap = (S.t M.t * key N.t)
     type epart = (elem list) list
     type elist = (elem list)
     type epair = ((elem * elem) list)
     open Basic
 
+    let stl s = S.fold (fun x acc -> x::acc) s []
     let emap_of = fst
     let keymap_of = snd
     let eq = Elt.eq
     let not_eq x y = not (Elt.eq x y)
     let string_of_elem = Elt.string_of
 
-    let map f s = (M.map (List.map f) (emap_of s),
+    let map f s = (M.map (fun s -> S.of_list (List.map f (stl s))) (emap_of s),
                    List.fold_left (fun acc (k,a) -> N.add (f k) a acc)
                                   N.empty (N.bindings (keymap_of s)))
     let to_list s = N.bindings (keymap_of s)
-    let partition (s: emap) : epart = M.fold (fun _ xs acc -> xs::acc) (emap_of s) []
+    let partition (s: emap) : epart = M.fold (fun _ xs acc -> (stl xs)::acc) (emap_of s) []
     let string_of (e: emap) : string =
       let f = string_of_elem in
       let ll = partition e in 
       "emap["^ (String.concat ";" (List.map (fun cl -> "{"^(String.concat ","(List.map f cl))^"}") ll))^"]"
     let key_string_of = pr_option string_of_int
     let string_of_debug (e: emap) : string =
-      let xs = List.concat (M.fold (fun k xs acc -> (List.map (fun e -> (e, k)) xs)::acc) (emap_of e) []) in
+      let xs = List.concat (M.fold (fun k xs acc -> (List.map (fun e -> (e, k)) (stl xs))::acc) (emap_of e) []) in
       pr_list (pr_pair Elt.string_of key_string_of) xs
     let un_partition (ll:epart) : emap =
       let helper (emap, keymap) xs =
-        let key = new_key () in (M.add key xs emap, List.fold_left (fun acc x -> N.add x key acc) keymap xs) in
+        let key = new_key () in (M.add key (S.of_list xs) emap,
+                                 List.fold_left (fun acc x -> N.add x key acc) keymap xs) in
       List.fold_left helper (M.empty, N.empty) ll
     let mkEmpty : emap = (M.empty, N.empty)
     let is_empty (m:emap) = M.is_empty (emap_of m)
@@ -956,14 +959,14 @@ module EqMap =
       match key, key2 with
         | None, None ->
            let new_key = new_key () in
-           let new_emap = M.add new_key [x;y] (emap_of s) in
+           let new_emap = M.add new_key (S.of_list [x;y]) (emap_of s) in
            let new_keymap = N.add x new_key (keymap_of s) in
            let new_keymap = N.add y new_key (new_keymap) in
            (new_emap, new_keymap)
         | None, (Some _) -> add_equiv s y x
         | (Some _), None ->
            let xs = M.find key (emap_of s) in
-           let new_emap = M.add key (y::xs) (emap_of s) in
+           let new_emap = M.add key (S.add y xs) (emap_of s) in
            let new_keymap = N.add y key (keymap_of s) in
            (new_emap, new_keymap)
         | _ -> s
@@ -1008,19 +1011,23 @@ module EqMap =
 
     (* merge two equivalence sets s1 /\ s2 *)
     let merge_eset (t1: emap) (t2: emap): emap =
-      let r =
-        let (t1,t2) = order_two t1 t2 in
-        List.fold_left (fun a (p1,p2) -> add_equiv a p1 p2) t2 (get_equiv t1) in
-      (* let pr = string_of_debug in *)
-      (* let () = print_endline ("eset1 :"^ (pr t1)) in *)
-      (* let () = print_endline ("eset2 :"^ (pr t2)) in *)
-      (* let () = print_endline ("eset_out :"^ (pr r)) in *)
-      r
+      let merge_f _ et1 et2 = match et1, et2 with
+        | Some et1, Some et2 -> Some (S.union et1 et2)
+        | Some et1, None -> Some et1
+        | None, Some et2 -> Some et2
+        | None, None -> None in
+      let merge_g _ et1 et2 = match et1, et2 with
+        | Some et1, Some et2 -> Some et1
+        | Some et1, None -> Some et1
+        | None, Some et2 -> Some et2
+        | None, None -> None in
+      (M.merge merge_f (emap_of t1) (emap_of t2),
+       N.merge merge_g (keymap_of t1) (keymap_of t2))
 
     (* remove key e from e_set  *)
     let elim_elems_one (s:emap) (e:elem) : emap =
       let key = find s e in
-      let new_xs = List.filter (not_eq e) (M.find key (emap_of s)) in
+      let new_xs = S.remove e (M.find key (emap_of s)) in
       (M.add key new_xs (emap_of s), N.remove e (keymap_of s))
 
     let elim_elems (s:emap) (e:elem list) : emap = List.fold_left elim_elems_one s e
@@ -1028,7 +1035,7 @@ module EqMap =
     (* return all elements equivalent to e, not including itself *)
     let find_equiv_all  (e:elem) (s:emap) : elist  =
       let key = find s e in
-      try List.filter (not_eq e) (M.find key (emap_of s))
+      try stl (S.remove e (M.find key (emap_of s)))
       with Not_found -> []
 
     (* return all elements equivalent to e, including itself *)
@@ -1037,7 +1044,7 @@ module EqMap =
     (* return a distinct element equal to e *)
     let find_equiv (e:elem) (s:emap) : elem option  =
       let key = find s e in
-      try Some (List.find (not_eq e) (M.find key (emap_of s)))
+      try Some (S.choose (S.remove e (M.find key (emap_of s))))
       with Not_found -> None
 
     (* return an element r that is equiv to e but distinct from it, and elim e from e_set *)
@@ -1122,379 +1129,6 @@ module EqMap =
           nsubs@(aux rest)
       in aux evars
   end
-
-(**
-module EqMap =
-  functor (Elt : EQ_TYPE) ->
-  struct
-    type elem = Elt.t
-    type key = elem keyt
-    type emap = (elem * key) list
-    type epart = (elem list) list
-    type elist = (elem list) 
-    type epair = ((elem * elem) list) 
-    open Basic
-
-    let eq = Elt.eq 
-    let string_of_elem = Elt.string_of 
-    (* let string_of_emap = Basic.pr_list (fun (e,_) -> Elt.string_of e) *)
-    (* let string_of_epart = Basic.pr_list (Basic.pr_list Elt.string_of) *)
-
-    let emap_sort s = List.sort (fun (e1,_) (e2,_) -> Elt.compare e1 e2) s 
-
-    (* TODO : rec03.slk bug here *)
-    (* partition@53 *)
-    (* partition inp1 :emap[{_null,x3,y1,y2}] *)
-    (* [(y1,Some(22)),(_null,Some(22)),(y3,Some(23)),(y2,Some(22)),(x3,Some(22))] *)
-    (* partition@53 EXIT:[[_null,x3,y1,y2]] *)
-
-    (* TODO : can we get in sorted order by elem *)
-    (* let partition (s: emap) : epart = *)
-    (*   let s = emap_sort s in *)
-    (*   let rec insert  a k  acc =  *)
-    (*     match acc with *)
-    (*       | [] -> [(k,[a])] *)
-    (*       | ((k2,ls) as p)::xs ->  *)
-    (*             if (k=k2) then (k,a::ls)::xs *)
-    (*             else p::(insert a k xs) in *)
-    (*   let r = List.fold_left (fun acc (a,k) ->  insert a k acc) [] s in *)
-    (*   let r = List.filter (fun (_,x) -> List.length x > 1) r in *)
-    (*   (\* let r = List.rev r in *\) *)
-    (*   let r = List.map ( fun (_,b) -> List.rev b) r in *)
-    (*   r *)
-    (* print_endline ((add_str "emap" string_of_emap) s); *)
-    (* print_endline ((add_str "epart" string_of_epart) r); *)
-
-    (* let partition (s: emap) : epart = *)
-    (*   Debug.no_1 "partition" string_of_emap string_of_epart partition s *)
-
-    let compare_key k1 k2 =
-      match k1,k2 with
-      | None, None -> 0
-      | None, Some _ -> -1
-      | Some _, None -> 1
-      | Some n1, Some n2 -> 
-        if n1=n2 then 0
-        else if n1<n2 then -1 else 1
-    let compare_v (e1,k1) (e2,k2) =
-      let x1 =compare_key k1 k2 in
-      if x1=0 then -(Elt.compare e1 e2)
-      else x1
-
-    let compare_list cmp b1 b2 =
-      let rec aux b1 b2 =
-        match b1,b2 with
-        | [],[] -> 0
-        | [],_ -> -1
-        | _,[] ->1
-        | (x::xs),(y::ys) ->
-          let c = cmp x y in
-          if c==0 then aux xs ys
-          else c
-      in aux b1 b2
-
-    let partition (s: emap) : epart =
-      let s = List.sort compare_v s in
-      let rec aux k ls s =
-        match s with
-        | [] -> [ls]
-        | (e2,k2)::ss -> if k==k2 then aux k (e2::ls) ss
-          else ls::(aux k2 [e2] ss) in
-      let ans = match s with 
-        | [] -> []
-        | (e,k)::ss -> aux k [e] ss in
-      let ans = List.filter (fun x -> List.length x>1) ans in
-      List.sort (compare_list Elt.compare) ans
-
-    let string_of (e: emap) : string =
-      let f = string_of_elem in
-      let ll = partition e in 
-      (* let ll = List.filter (fun v -> List.length v > 1) ll in *)
-
-      "emap["^ (String.concat ";" (List.map (fun cl -> "{"^(String.concat ","(List.map f cl))^"}") ll))^"]"
-
-    let key_string_of = pr_option string_of_int
-
-    let string_of_debug (e: emap) : string =
-      (* (string_of e)^"\n"^ *)
-      (pr_list (pr_pair Elt.string_of key_string_of) e)
-
-    let un_partition (ll:epart) : emap =
-      let flat xs = 
-        if (List.length xs>1) then 
-          let newk = new_key () in
-          List.map (fun x -> (x,newk)) xs 
-        else [] in
-      List.concat (List.map (fun x -> flat x) ll)
-
-    let mkEmpty : emap = []
-
-    let is_empty (m:emap) = match m with | [] -> true | _ -> false
-
-    let find_aux (s: emap) (e:elem) (d:key) : key =
-      try
-        snd(List.find (fun (e1,_) -> eq e e1) s)
-      with
-        _ -> d
-
-    (* find key of e in s *)
-    let find (s : emap) (e:elem) : key  = find_aux s e None
-
-    (* find key of e in s and return remainder after
-       all elements equivalent to e is removed *)
-    let find_remove (s : emap) (e:elem) : key * emap  = 
-      let r1 = find_aux s e None in
-      (r1, if r1==None then s else List.filter (fun (e2,_)-> not(eq e e2)) s)
-
-    (* returns s |- x=y *)
-    let is_equiv (s: emap)  (x:elem) (y:elem) : bool =
-      if (eq x y) then true
-      else
-        let r1 = find s x in
-        let r2 = find s y in
-        (r1==r2 && not(r1==None))
-
-    (* add x=y to e-set s and returning a new e-set with
-       extra elements added *)
-    let add_equiv  (s: emap) (x:elem) (y:elem) : emap = 
-      if (eq x y) then s
-      else
-        let r1 = find s x in
-        let r2 = find s y in
-        begin
-          match r1 with
-          | None -> 
-            begin
-              match r2 with
-              | None ->
-                let r3 = new_key () in
-                (x,r3)::((y,r3)::s)
-              | _ -> (x,r2)::s
-            end
-          | _ -> 
-            begin
-              match r2 with
-              | None ->  (y,r1)::s
-              | _ -> 
-                begin
-                  if r1==r2 then s
-                  else
-                    (* let r3=new_key() in *)
-                    List.map (fun ((a,b) as ar) -> 
-                        if (b==r1) then (a,r2) else ar) s
-                end
-            end
-        end
-
-    let build_eset (xs:(elem * elem) list) :  emap =
-      let pr1 = Basic.pr_pair Elt.string_of Elt.string_of in
-      let p_aset = List.fold_left (fun eqs (x,y) ->
-          add_equiv eqs x y
-        ) mkEmpty xs in
-      p_aset
-
-    let mem x ls =
-      List.exists (fun e -> eq x e) ls
-
-    let overlap l1 l2 = 
-      List.exists (fun x -> (mem x l2)) l1
-
-    (* this method is used to merge two partitions 
-       which may have different keys *)
-    (* split out sub-lists in l which overlaps with x *)
-    let split_partition (x:elist) (l:epart): (epart * epart) =
-      List.fold_left ( fun (r1,r2) y -> if (overlap x y) then (y::r1,r2) else (r1,y::r2)) ([],[]) l
-
-    (* merge l1 /\ l2 to [[a]] *)
-    let rec merge_partition (l1:epart) (l2:epart) : epart = match l1 with
-      | [] -> l2
-      | x::xs ->
-        let (y,ys)=split_partition x l2 in
-        if y==[] then x::(merge_partition xs l2)
-        else merge_partition xs ((x@(List.concat y))::ys)
-    (*remove dupl of x*)
-
-    (* return the domain of e-set *)
-    let domain (s: emap) : elist = List.map fst s
-
-    (* return list of elements in e_set *)
-    let get_elems (s:emap) : elist = domain s
-
-    (* return pairs of equivalent elements from e_set *)
-    let get_equiv (s:emap) : epair = 
-      let ll = partition s in
-      let make_p l = match l with
-        | [] -> []
-        | x::xs -> List.map (fun b -> (x,b)) xs in
-      List.concat (List.map make_p ll)
-
-    let order_two (l1:'a list) (l2:'a list) : ('a list * 'a list) =
-      if (List.length l1)>(List.length l2) then (l2,l1)
-      else (l1,l2)
-
-    (* merge two equivalence sets s1 /\ s2 *)
-    let merge_eset (t1: emap) (t2: emap): emap =
-      let r =
-        let (t1,t2) = order_two t1 t2 in
-        List.fold_left (fun a (p1,p2) -> add_equiv a p1 p2) t2 (get_equiv t1) in
-      (* let pr = string_of_debug in *)
-      (* let () = print_endline ("eset1 :"^ (pr t1)) in *)
-      (* let () = print_endline ("eset2 :"^ (pr t2)) in *)
-      (* let () = print_endline ("eset_out :"^ (pr r)) in *)
-      r
-
-    (* remove key e from e_set  *)
-    let elim_elems_one  (s:emap) (e:elem) : emap = 
-      List.filter (fun (a,k2) -> not(eq a e)) s
-
-    let elim_elems  (s:emap) (e:elem list) : emap = 
-      List.filter (fun (a,k2) -> not(mem a e)) s
-
-    (* return all elements equivalent to e, not including itself *)
-    let find_equiv_all  (e:elem) (s:emap) : elist  =
-      let r1 = find s e in
-      if (r1==None) then []
-      else List.map fst (List.filter (fun (a,k) -> k==r1) s)
-
-    (* return all elements equivalent to e, including itself *)
-    let find_equiv_all_new  (e:elem) (s:emap) : elist  =
-      let r1 = find s e in
-      if (r1==None) then [e]
-      else List.map fst (List.filter (fun (a,k) -> k==r1) s) 
-  
-
-    (* return a distinct element equal to e *)
-    let find_equiv  (e:elem) (s:emap) : elem option  =
-      let ls=find_equiv_all e s in
-      try 
-        let p = List.find (fun x -> not(eq x e)) ls in
-        Some p
-      with _ -> None
-
-    (* return an element r that is equiv to e but distinct from it, and elim e from e_set *)
-    let find_equiv_elim_sure (e:elem) (s:emap) : elem option * emap  =
-      let r1,s1 = find_remove s e in
-      if (r1==None) then (None,s)
-      else let (ls,ls2) = List.partition (fun (a,k) -> k==r1 ) s1 in
-        match ls with
-        | [] -> (None,s1)
-        | [(x,_)] -> (Some x, ls2)
-        | (x,_)::_ -> (Some x, s1)
-
-    (* return a distinct element equal to e and elim e from e_set if found *)
-    let find_equiv_elim (e:elem) (s:emap) : (elem * emap) option  = 
-      let (ne,ns) = find_equiv_elim_sure e s in
-      match ne with
-      | None -> None
-      | Some x -> Some (x, ns) 
-
-    (* make fv=tv and then eliminate fv *)
-    (* fv should never be constant *)
-    (* let subs_eset   ((fv,tv):elem * elem) (s:emap) : emap =  *)
-    (*   if (eq fv tv) then s *)
-    (*   else *)
-    (*     let r1 = find s fv in *)
-    (*     if (r1==None) then s *)
-    (*     else  *)
-    (*       let ns = add_equiv s fv tv in *)
-    (*       elim_elems_one ns fv *)
-
-    (* TODO : will below suffer name-calsh *)
-    (* let subs_eset_par   (f_t_ls:(elem * elem) list) (s:emap) : emap =  *)
-    (*   List.fold_left (fun e p -> subs_eset p e) s f_t_ls *)
-
-
-    let subs_elem sst a =
-      try 
-        let (_,b) = List.find (fun (x,_) -> Elt.compare a x == 0) sst in
-        b
-      with _ -> a
-
-    let subs_eset_par   (f_t_ls:(elem * elem) list) (s:emap) : emap = 
-      let new_s = List.map (fun (a,k) -> (subs_elem f_t_ls a,k)) s in
-      emap_sort new_s
-
-
-    (* returns true if s contains no duplicates *)
-    (* let check_no_dupl (s:elist) : bool = *)
-    (*   let rec helper s = match s with *)
-    (*     | [] -> true *)
-    (*     | x::xs ->  *)
-    (*           if mem x xs then false *)
-    (*           else helper xs in *)
-    (*   helper s *)
-
-    let check_no_dups (s:elist) : bool = not(BList.check_dups_eq eq s)
-
-    (* check f is 1-to-1 map assuming s contains no duplicates *)
-    let is_one2one (f:elem -> elem) (s:elist) : bool =
-      let l = List.map f s in
-      if (check_no_dups l) then true
-      else (print_string ("duplicates here :"^(BList.string_of_f string_of_elem l)^"\n") ; false) 
-
-    (* rename the elements of e_set *)
-    (* pre : f must be 1-to-1 map *)
-    let rename_eset (f:elem -> elem) (s:emap) : emap = 
-      let b = is_one2one f (get_elems s) in
-      if b then  List.map (fun (e,k) -> (f e,k)) s
-      else Error.report_error {Error.error_loc = no_pos; 
-                               Error.error_text = ("rename_eset : f is not 1-to-1 map")}
-
-    let rename_eset_with_key (f:elem -> elem) (s:emap) : emap = 
-      let b = is_one2one f (get_elems s) in
-      if b then  List.map (fun (e,k) -> (f e, k)) s
-      else Error.report_error {Error.error_loc = no_pos; 
-                               Error.error_text = ("rename_eset : f is not 1-to-1 map")}
-
-    (* s - from var; t - to var *)
-    let norm_subs_eq (subs:epair) : epair =
-      let rec add (f,t) acc = match acc with
-        | [] -> [[(f,t)]]
-        | (a::acc) -> if eq (snd (List.hd a)) t then ((f,t)::a)::acc
-          else a::(add (f,t) acc) in
-      let rec part xs acc = match xs with
-        | [] -> acc
-        | (x::xs) -> part xs (add x acc) in
-      let pp = part subs [] in
-      let rec mkeq xs = match xs with
-        | (a1,b1)::((a2,b2)::xs) -> (a1,a2)::(mkeq ((a2,b2)::xs))
-        | _ -> [] in
-      let eqlst = List.fold_left (fun l x -> (mkeq x) @ l) [] pp in
-      eqlst
-
-    let rename_eset_allow_clash (f:elem -> elem) (s:emap) : emap =
-      let sl = get_elems s in
-      let tl = List.map f sl in
-      if (BList.check_no_dups_eq eq tl) then
-        List.map (fun (e,k) -> (f e,k)) s
-      else
-        let s1 = List.combine sl tl in
-        let e2= norm_subs_eq s1 in
-        let ns = List.fold_left (fun s (a1,a2) -> add_equiv s a1 a2) s e2 in
-        List.map (fun (e,k) -> (f e,k)) ns
-
-    (* given existential evars and an eset, return a set of substitution *)
-    (* from evars to free vars, where possible *)
-    (* if not possible, return subs to the first existential var found *)
-    (* [v] [v=w, v=y] ---> [(v,w)] *)
-    (* [v,y] [v=w, v=y] ---> [(v,w),(y,w)] *)
-    (* [v,y,w] [v=w, v=y] ---> [(v,v),(w,v),(y,v)] *)
-    let build_subs_4_evars evars eset =
-      let rec aux ev  =
-        match ev with 
-        | [] -> []
-        | e::evs -> 
-          let eqlist = find_equiv_all e eset in
-          let (bound,free) = List.partition (fun c -> BList.mem_eq eq c evars) eqlist in
-          let (used,rest) = List.partition (fun c -> BList.mem_eq eq c bound) evs in
-          let target = match free with 
-            | [] -> e
-            | h::_ -> h in
-          let nsubs = List.map (fun x -> (x,target)) (e::used) in
-          nsubs@(aux rest)
-      in aux evars
-  end;;
-**)
 
 module ID =
 struct 
