@@ -25,8 +25,20 @@ case {
    x+y > 0 -> ensures true;
 }
 
+# why did we have some post-inference?
+# Aren't they redundant?
+
+
+Procedure loo: FALSE - Counterexample:  {call 14:4}
+ case {
+   x<=((0-y)-1) & x<=0 -> requires emp & Term[63,1]
+                          ensures true & (y+x)<0;
 
 ==>
+
+# why did we have some post-inference?
+# Aren't they redundant?
+
 
 Procedure loo: FALSE - Counterexample:  {call 14:4}
  case {
