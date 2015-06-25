@@ -1824,6 +1824,20 @@ Procedure foo$cell FAIL.(2)
      exists (Expl)[](Impl)[v](ex)[]c::cell<v>@ann_1221&P__1222(ann_1221)&
      {FLOW,(4,5)=__norm#E}[]
 =======================================================
+ex17a2.ss
+
+we could prune disjuncts like the following:
+(@A=imm_1321 & imm_1321<:a2_1318 & imm_1321!=a2_1318)
+
+in other words:
+a=top & a<:b & a!=b 
+a=bot & b<:a & a!=b
+
+ii) takes super long:
+Total verification time: 2.598301 second(s)
+	Time spent in main process: 1.130108 second(s)
+	Time spent in child processes: 1.468193 second(s)
+
 =======================================================
 =======================================================
 =======================================================
