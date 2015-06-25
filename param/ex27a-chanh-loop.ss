@@ -1,12 +1,13 @@
 
-relation R(int x,int y,int a,int b).
+relation R(int x,int y).
 
 void loo (int x, int y)
+ infer [R]
  case {
-  x <= 0 -> requires Term ensures true;
+  x <= 0 -> requires R(x,y) & Term ensures true;
   x > 0 -> case {
-   x+y < 0 -> requires Term[x] ensures true;
-   x+y >= 0 -> requires Loop ensures false;
+   x+y < 0 -> requires R(x,y) & Term[x] ensures true;
+   x+y >= 0 -> requires R(x,y) & Loop ensures false;
   }
  }
 {
