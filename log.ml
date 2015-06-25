@@ -58,7 +58,8 @@ type sleek_log_entry = {
   sleek_proving_pos: loc;
   sleek_proving_classic_flag: bool;
   sleek_proving_avoid: bool;
-  sleek_proving_caller: string;
+  sleek_proving_caller : string;
+  sleek_proving_aob: string;
   sleek_proving_hec: int;
   sleek_proving_kind : string;
   (* sleek_proving_kind; *)
@@ -85,6 +86,7 @@ type sleek_log_entry = {
 (*   | BINDING -> "BINDING" *)
 (*   | ASSERTION -> "ASSERTION" *)
 
+let num_sat = ref 1
 
 let string_of_sleek_proving_kind () 
   = proving_kind#string_of
@@ -195,6 +197,7 @@ let pr_sleek_log_entry e =
   fmt_string ("; evars: " ^ (Cprinter.string_of_spec_var_list e.sleek_proving_evars)) ;
   fmt_string ("; infer_vars: " ^ (Cprinter.string_of_infer_list (opt_to_list e.sleek_proving_infer_type) e.sleek_proving_infer_vars)) ;
   fmt_string ("; c_heap:" ^ (Cprinter.string_of_h_formula e.sleek_proving_c_heap)) ;
+  fmt_string ("; others: " ^ (e.sleek_proving_aob));
   fmt_string "\n checkentail";
   let f = Cfout.tidy_print e.sleek_proving_ante in
   fmt_string (Cprinter.string_of_formula f);
@@ -376,11 +379,12 @@ class last_commands =
       let res = entry.sleek_proving_res in
       match res with
       | Some res -> 
-        if CF.isFailCtx(res) then
+        let f = if (* (!Globals.enable_error_as_exc || CF.is_en_error_exc_ctx_list res) && *) not (CF.is_dis_error_exc_ctx_list res) then CF.isFailCtx_gen else CF.isFailCtx in
+        if (* CF.isFailCtx *) f (res) then
           last_sleek_fail <- cmd
       | None -> last_sleek_fail <- cmd
     method dumping no =
-      if  !proof_logging_txt (*|| !sleek_logging_txt *) then
+      if  !proof_logging_txt && !is_hip_running (*|| !sleek_logging_txt *) then
         begin
           match last_proof_fail with
           | Some e -> 
@@ -388,7 +392,7 @@ class last_commands =
             Debug.info_hprint string_of_proof_log_entry e no_pos 
           | _ -> Debug.info_pprint ("Cannot find imply proof failure for "^no) no_pos
         end;
-      if !sleek_logging_txt then
+      if !sleek_logging_txt && !is_hip_running then
         match last_sleek_fail with
         | Some e -> 
           let () = Debug.info_zprint  (lazy  ("dumping for "^no)) no_pos in
@@ -456,8 +460,24 @@ let proof_log_stk : proof_log  Gen.stack_filter
 let add_sleek_logging (es_opt:Cformula.entail_state option) timeout_flag stime infer_type infer_vars classic_flag caller avoid hec slk_no ante conseq 
     consumed_heap evars (result) pos=
   (* let () = Debug.info_zprint  (lazy  ("avoid: "^(string_of_bool avoid))) no_pos in *)
+  (* let () = x_binfo_hp (add_str "es_opt" (pr_option Cprinter.string_of_entail_state)) es_opt no_pos in *)
+  (* es_infer_obj: Globals.inf_obj; *)
   if !Globals.sleek_logging_txt then
+    let result = match result with
+      | Some c -> 
+        begin 
+          match c with
+          | CF.FailCtx (_,c,cex) -> 
+            if cex.CF.cex_processed_mark then Some (CF.SuccCtx [c])
+            else result
+          | _ -> result
+        end
+      | _ -> None in
     (* let () = Debug.info_pprint "logging .." no_pos in *)
+    let (ho_vars_map,str) = match es_opt with
+      | None -> ([],""); 
+      | Some es -> (es.es_ho_vars_map, es.es_infer_obj # string_of) in
+    let str = str^" globals: "^(Globals.infer_const_obj # string_of) in
     let (stk_slk_no,src,slk_parent_no) = last_cmd # get_sleek_no in
     if slk_no != stk_slk_no then print_endline_quiet ("LOGGING ERROR : inconsistent slk_no problem "
                                                       ^(string_of_int slk_no)^" "^((add_str "stk" string_of_int) stk_slk_no));
@@ -467,6 +487,7 @@ let add_sleek_logging (es_opt:Cformula.entail_state option) timeout_flag stime i
       sleek_parent_no = slk_parent_no; 
       sleek_proving_id = slk_no;
       sleek_proving_caller = caller;
+      sleek_proving_aob = str;
       sleek_proving_avoid = avoid;
       sleek_proving_classic_flag = classic_flag;
       sleek_proving_hec = hec;
@@ -483,9 +504,7 @@ let add_sleek_logging (es_opt:Cformula.entail_state option) timeout_flag stime i
       sleek_proving_evars = evars;
       sleek_proving_infer_vars = infer_vars;
       sleek_proving_infer_type = infer_type;
-      sleek_ho_vars_map = (match es_opt with
-          | None -> []; 
-          | Some es -> es.es_ho_vars_map;);
+      sleek_ho_vars_map = ho_vars_map;
       sleek_time = stime;
       sleek_timeout = timeout_flag;
       sleek_proving_res = result;
@@ -746,7 +765,7 @@ let sleek_log_to_text_file slfn (src_files) =
 
 let sleek_log_to_sleek_file slfn src_files prog prim_names =
   (* let tstartlog = Gen.Profiling.get_time () in *)
-  let lgs = sleek_log_stk # len in
+  let lgs = if !Globals.sleek_gen_sat then CF.sat_stk # len else sleek_log_stk # len in
   let () = Debug.info_zprint  (lazy  ("Number of sleek log entries "^(string_of_int (lgs)))) no_pos in
   Debug.info_zprint  (lazy  ("Logging "^slfn^"\n")) no_pos;
   (* let fn = "logs/sleek_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt" in *)
@@ -757,22 +776,31 @@ let sleek_log_to_sleek_file slfn src_files prog prim_names =
     open_out fn
   in
   let ls = sleek_log_stk # get_stk in
-  let ls = 
+  let ls =
     if (!Globals.sleek_log_filter)
     then List.filter (fun e -> not(e.sleek_proving_avoid)) ls 
     else ls
   in
   let ls = List.sort (fun e1 e2 -> compare e1.sleek_proving_id e2.sleek_proving_id) ls in
-  let str_data = String.concat "\n" (List.map Cprinter.sleek_of_data_decl 
+  let str_data = String.concat "\n" (List.map Cprinter.sleek_of_data_decl
                                        (List.filter (fun d -> not (Gen.BList.mem_eq (=) d.Cast.data_name prim_names)) prog.Cast.prog_data_decls)) in
-  let str_view = String.concat "\n" (List.map Cprinter.sleek_of_view_decl 
+  let str_view = String.concat "\n" (List.map Cprinter.sleek_of_view_decl
                                        (List.filter (fun v -> not (Gen.BList.mem_eq (=) v.Cast.view_name prim_names)) prog.Cast.prog_view_decls)) in
-  let str_lem =  
+  let str_lem =
     let lem = (Lem_store.all_lemma # get_left_coercion) @ (Lem_store.all_lemma # get_right_coercion) in
-    if lem = [] then "" 
+    if lem = [] then ""
     else "/*\n" ^ (Cprinter.string_of_coerc_decl_list lem) ^ "\n*/"
   in
-  let str_ent = String.concat "\n" (List.map (sleek_of_sleek_log_entry prog) ls) in
+  let str_ent =
+    if !Globals.sleek_gen_sat then
+      let formula_list = CF.sat_stk # get_stk in
+      String.concat "\n" (List.map (fun f ->
+          let str1 = "// id " ^ (string_of_int !num_sat) ^ "\n" in
+          let str2 = "checksat " ^ (Cprinter.sleek_of_formula f) ^ ".\n" in
+          str1 ^ str2
+      ) formula_list)
+    else String.concat "\n" (List.map (sleek_of_sleek_log_entry prog) ls)
+  in
   let str = str_data ^ "\n" ^ str_view ^ "\n" ^ str_lem ^ "\n" ^ str_ent in
   let _= fprintf oc "%s" str in
   if !Globals.dump_sleek_proof then printf "%s" str;
@@ -818,7 +846,7 @@ let process_proof_logging src_files prog prim_names =
           (* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd src_files))^".txt") *)
           with _ -> ()
       in
-      let () = if (!Globals.sleek_gen_vc || !Globals.sleek_gen_vc_exact) 
+      let () = if (!Globals.sleek_gen_vc || !Globals.sleek_gen_vc_exact || !Globals.sleek_gen_sat)
         then 
           begin
             sleek_log_to_sleek_file slkfn src_files prog prim_names;

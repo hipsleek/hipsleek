@@ -34,7 +34,7 @@ type sleek_token =
   | DTIME
   | ELSE_TT
   | EMPTY
-  | ENSURES | ENSURES_EXACT | ENSURES_INEXACT | ENUM | EXISTS | EXTENDS
+  | ENSURES | ENSURES_EXACT | ENSURES_INEXACT | ENUM | EXISTS | EXPECT_INFER | EXTENDS
   | FALSE | FLOAT | FORALL | FUNC
   | HP | HPPOST
   | HTRUE
@@ -54,12 +54,13 @@ type sleek_token =
   | TERM_INFER 
   (* | TREL_INFER  change to  INFER_AT_TERM *)
   | TREL_ASSUME
-  | INFER_AT_EFA | INFER_AT_DFA | INFER_AT_CLASSIC | INFER_AT_PAR
+  | INFER_AT_EFA | INFER_AT_DFA | INFER_AT_CLASSIC | INFER_AT_PAR | INFER_AT_ERRMUST | INFER_AT_ERRMUST_ONLY | INFER_AT_ERRMAY | INFER_AT_DE_EXC | INFER_AT_PREMUST
   | INFER_AT_VER_POST
-  | INFER_AT_TERM | INFER_AT_TERM_WO_POST 
+  | INFER_AT_TERM | INFER_AT_TERM_WO_POST | INFER_AT_FIELD_IMM
   | INFER_AT_PRE | INFER_AT_POST | INFER_AT_IMM | INFER_AT_SHAPE | INFER_AT_ERROR | INFER_AT_FLOW
-  | INFER_AT_SIZE
+  | INFER_AT_SIZE | INFER_AT_ARR_AS_VAR 
   | UTPRE | UTPOST
+  | UIPRE | UIPOST
   | UNFOLD | UNION
   | VOID 
   | WHILE | FLOW of string
@@ -73,7 +74,7 @@ type sleek_token =
   | DOT | DOUBLEQUOTE | EQ | EQEQ | RIGHTARROW | EQUIV | GT | GTE | HASH | REL_GUARD | HEAD | INLIST | LEFTARROW | LENGTH
   | LT | LTE | MINUS | MEM | MEME | NEQ | NOT | NOTINLIST | OBRACE |OLIST | OPAREN | OP_ADD_ASSIGN | OP_DEC | OP_DIV_ASSIGN 
   | OP_INC | OP_MOD_ASSIGN | OP_MULT_ASSIGN | OP_SUB_ASSIGN | OR | OROR | PERM | DERIVE | EQV | CONSTR | OSQUARE  | REVERSE | SET | TAIL 
-  | TOPAREN | TCPAREN
+  (* | TOPAREN | TCPAREN *)
   | PERCENT | PMACRO 
   | PZERO | PFULL | PVALUE | PLEND | PCONST of Frac.frac |PFRAC (* | PREF *)
   | SPLITANN
@@ -88,7 +89,7 @@ type sleek_token =
   | INFINITY
   | NEGINFINITY
   | VALIDATE
-  | VALID
+  | VALID |SSAT | SUNSAT
   | FAIL
   | FAIL_MUST
   | FAIL_MAY
@@ -132,7 +133,7 @@ module Token = struct
     | REL_INFER -> "relation_infer" | SPEC -> "spec"
     | SIMPLIFY -> "simplify" | SLK_HULL -> "slk_hull"  | SLK_PAIRWISE -> "slk_pairwise"
     | COMPOSE ->"compose" | CONST ->"const" | CONTINUE ->"continue"	| DATA ->"data" | DDEBUG ->"debug" | DIFF ->"diff"| DYNAMIC ->"dynamic"
-    | DTIME ->"time" | ELSE_TT ->"else" | EMPTY -> "emp"| ENSURES ->"ensures" | ENSURES_EXACT ->"ensures_exact" | ENSURES_INEXACT ->"ensures_inexact" | ENUM ->"enum"| EXISTS ->"ex" | EXTENDS ->"extends"
+    | DTIME ->"time" | ELSE_TT ->"else" | EMPTY -> "emp"| ENSURES ->"ensures" | ENSURES_EXACT ->"ensures_exact" | ENSURES_INEXACT ->"ensures_inexact" | ENUM ->"enum"| EXISTS ->"ex" | EXTENDS ->"extends" | EXPECT_INFER -> "expect_infer"
     | FALSE ->"false"| FLOAT ->"float" | FORALL ->"forall" | FUNC -> "ranking"
     | HTRUE -> "htrue"
     | HP->"HeapPred" | HPPOST->"PostPred"
@@ -179,6 +180,8 @@ module Token = struct
     | MAYLOOP -> "MayLoop"
     | VALIDATE -> "expect"
     | VALID -> "Valid"
+    | SSAT -> "Sat"
+    | SUNSAT -> "Unsat"
     | FAIL -> "Fail"
     | FAIL_MUST -> "Fail_Must"
     | FAIL_MAY -> "Fail_May"
@@ -186,10 +189,17 @@ module Token = struct
     (* | TERMR -> "TermR" *)
     | UTPRE -> "UTPre"
     | UTPOST -> "UTPost"
+    | UIPRE -> "UImmPre"
+    | UIPOST -> "UImmPost"
     (* | TREL_INFER -> "@term" *)
     | INFER_AT_EFA -> "@efa"
     | INFER_AT_DFA -> "@dfa"
     | INFER_AT_TERM -> "@term"
+    | INFER_AT_ERRMUST -> "@err_must"
+    | INFER_AT_PREMUST -> "@pre_must"
+    | INFER_AT_ERRMUST_ONLY -> "@err_must_only"
+    | INFER_AT_DE_EXC -> "@dis_err"
+    | INFER_AT_ERRMAY -> "@err_may"
     | INFER_AT_TERM_WO_POST -> "@term_wo_post"
     | INFER_AT_PRE -> "@pre_n"
     | INFER_AT_POST -> "@post_n"
@@ -197,6 +207,8 @@ module Token = struct
     | INFER_AT_CLASSIC -> "@leak"
     | INFER_AT_PAR -> "@par"
     | INFER_AT_IMM -> "@imm"
+    | INFER_AT_FIELD_IMM -> "@field_imm"
+    | INFER_AT_ARR_AS_VAR -> "@arrvar"
     | INFER_AT_SHAPE -> "@shape"
     | INFER_AT_ERROR -> "@error"
     | INFER_AT_FLOW -> "@flow"
@@ -204,13 +216,12 @@ module Token = struct
     | TREL_ASSUME -> "termAssume"
     | TERM_INFER -> "term_infer"
     | XPURE -> "XPURE"
-    | TOPAREN -> "<#" 
-    | TCPAREN -> "#>" (*Open and close paren for thread heap*)
+    (* | "<#" { TOPAREN } *) (* replaced by `LT;`HASH. inline\data-holes.lsk. examples/fracperm/thread/thrd1.slk*)
+    (* | "#>" { TCPAREN } (\*Open and close paren for thread heap*\) *) (* replaced by `HASH;`GT*)
     | PAR -> "par"
     | ARGOPTION arg -> "##OPTION "^arg
   (* | SKIP -> "skip" *)
   (* | IN_RFLOW -> "-%" | OUT_RFLOW -> "+%" *)
-
 
   let print ppf x = pp_print_string ppf (to_string x)
 

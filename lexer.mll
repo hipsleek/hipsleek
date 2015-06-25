@@ -178,6 +178,7 @@ module Make (Token : SleekTokenS)
    (* ("ex", EXISTS); *)
    ("exists", EXISTS);
    ("extends", EXTENDS);
+   ("expect_infer", EXPECT_INFER);
    ("false", FALSE);
    ("finalizes", FINALIZE);
    ("finally", FINALLY);
@@ -258,6 +259,8 @@ module Make (Token : SleekTokenS)
    ("split", SPLIT);
    ("LexVar", LEXVAR);
    ("template", TEMPL);
+   ("UIPre", UIPRE);
+   ("UIPost", UIPOST);
    ("UTPre", UTPRE);
    ("UTPost", UTPOST);
    ("Term", TERM);
@@ -279,6 +282,8 @@ module Make (Token : SleekTokenS)
    ("union", UNION);
    ("expect", VALIDATE);
    ("Valid", VALID);
+   ("Sat", SSAT);
+   ("Unsat", SUNSAT);
    ("Fail", FAIL);
    ("Fail_Must", FAIL_MUST);
    ("Fail_May", FAIL_MAY);
@@ -400,8 +405,15 @@ rule tokenizer file_name = parse
   | "@post_n" { INFER_AT_POST }
   | "@ver_post" { INFER_AT_VER_POST }
   | "@imm" { INFER_AT_IMM }
+  | "@field_imm" { INFER_AT_FIELD_IMM }
+  | "@arrvar" { INFER_AT_ARR_AS_VAR }
   | "@shape" { INFER_AT_SHAPE }
   | "@error" { INFER_AT_ERROR }
+  | "@dis_err" { INFER_AT_DE_EXC }
+  | "@err_must" { INFER_AT_ERRMUST }
+  | "@pre_must" { INFER_AT_PREMUST }
+  | "@err_must_only" { INFER_AT_ERRMUST_ONLY }
+  | "@err_may" { INFER_AT_ERRMAY }
   | "@flow" { INFER_AT_FLOW }
   | "@size" { INFER_AT_SIZE }
   | "@efa" { INFER_AT_EFA }
@@ -462,8 +474,8 @@ rule tokenizer file_name = parse
   | "|-" { (* (print_string "der\n"; *)DERIVE }
   | "-|-" { EQV }
   | "-->" { CONSTR }
-  | "<#" { TOPAREN }
-  | "#>" { TCPAREN } (*Open and close paren for thread heap*)
+  (* | "<#" { TOPAREN } *) (* replaced by `LT;`HASH. inline\data-holes.lsk. examples/fracperm/thread/thrd1.slk*)
+  (* | "#>" { TCPAREN } (\*Open and close paren for thread heap*\) *) (* replaced by `HASH;`GT*)
   (* | "-%" { IN_RFLOW }  *)
   (* | "+%" { OUT_RFLOW } *)
   | '[' { OSQUARE }

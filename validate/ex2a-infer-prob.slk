@@ -1,0 +1,144 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<na> == self = null & na = 0 
+	or self::node<_, q> * q::ll<na-1> 
+  inv na >= 0.
+
+
+
+// (1) Valid & inferred n=0
+infer [n] y=null |- y::ll<n>.  
+print residue.
+// expect_infer F{}.
+// why did we get inferred pure: [n=0]
+// this is due to n being treated as global
+
+//(2)
+infer [n] y=null |- y=null or n=1.
+print residue.
+// expect_infer F{}.
+/*
+# ex2a.slk (FIXED)
+
+# Maybe can filter out <2>?
+
+GOT:
+Residue:
+ <1>emp&y=null&{FLOW,(20,21)=__norm#E}[]
+<2>emp&y=null & n=1&{FLOW,(20,21)=__norm#E}[]
+inferred pure: [n=1]
+*/
+
+//(3)
+infer [y] y>5 |- y>2.
+print residue.
+// expect_infer F{}.
+
+//(4)
+infer [y] y=null |- y=null or y::node<_,_>.
+print residue.
+// expect_infer F{}.
+
+//(5)
+infer [y] true |- y=null or y::node<_,_>.
+print residue.
+// how do we handle two outcoms?
+
+/*
+# ex2a.slk
+
+# Do we need to choose which to filter out..
+
+Residue:
+ <1>htrue&y=null&{FLOW,(20,21)=__norm#E}[]
+ inferred pure: [y=null]
+<2>htrue&Anon_15=inf_Anon_76 & Anon_16=inf_Anon_77&{FLOW,(20,21)=__norm#E}[]
+inferred heap: [y::node<inf_Anon_76,inf_Anon_77>]
+[[ COND ==>  InferHeap ==>  Match(y,y) ==> ]]
+*/
+
+//(6)
+infer [y] y=null or y!=null |- y=null or y::node<_,_>.
+print residue.
+//expect_infer y::node<_,_>
+/*
+# ex2a.slk
+
+# case analysis forced y::node<..> inferred on 2nd branch..
+
+Residue:
+ <1>emp&y=null&{FLOW,(20,21)=__norm#E}[]
+    or emp&y!=null & Anon_17=inf_Anon_93 & Anon_18=inf_Anon_94&
+       {FLOW,(20,21)=__norm#E}[]
+    
+ inferred heap: [y::node<inf_Anon_93,inf_Anon_94>]
+*/
+
+//(7)
+infer [n] n=0 or n!=0 |- n>=0 or n!=0.
+print residue.
+/*
+FIXED
+# maybe can elim redundant infer outcome?
+
+ <1>emp&n=0&{FLOW,(20,21)=__norm#E}[]
+    or emp&n!=0 & 0<=n&{FLOW,(20,21)=__norm#E}[]
+ inferred pure: [0<=n]
+[[||OR|| ==> ]]
+
+<2>emp&n=0&{FLOW,(20,21)=__norm#E}[]
+   or emp&n!=0&{FLOW,(20,21)=__norm#E}[]
+   
+[[||OR|| ==> ]]
+
+*/
+
+// (8) Valid & inferred y::ll<_>
+infer [y] y=null |- y::ll<n>.  
+print residue.
+// expect_infer F{}.
+/*
+
+# why did we get inferred heap: [y::ll{}<inf_146>]
+# do we need to perform RHS unfolding?
+
+Residue:
+ <1>emp&y=null & n=inf_109&{FLOW,(20,21)=__norm#E}[]
+ inferred heap: [y::ll{}<inf_109>]
+[[ COND ==>  InferHeap ==>  Match(y,y) ==> ]]
+
+*/
+
+
+// (8) Valid & inferred n=0
+infer [y] y!=null |- y::ll<n>.  
+print residue.
+// expect_infer F{y::ll<_>}.
+
+//(8)
+infer [n] y=null |- 
+      case {y=null -> [] y::ll<n>;
+            y!=null -> [] y::ll<n>;}.  
+print residue.
+
+/*
+
+# I guess inference for this case is essential
+
+Residue:
+ <1>emp&y!=null & n=inf_116&{FLOW,(20,21)=__norm#E}[]
+ inferred heap: [y::ll{}<inf_116>]
+
+
+*/
+
+/*
+ex2a.slk
+
+#6 & #8 are wrong currently.
+They should have been empty inferred outcome
+
+*/

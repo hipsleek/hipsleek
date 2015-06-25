@@ -285,7 +285,7 @@ let add_term_relation_scc prog scc =
   List.iter (fun proc ->
       let spec = proc.proc_stk_of_static_specs # top in
       let new_spec = add_term_relation_proc prog proc spec in
-      proc.proc_stk_of_static_specs # push new_spec) scc
+      proc.proc_stk_of_static_specs # push_pr "ti3:288" new_spec) scc
 
 let partition_trels_by_proc trrels turels =
   let fn_trrels = 

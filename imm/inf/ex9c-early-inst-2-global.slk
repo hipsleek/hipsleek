@@ -1,0 +1,52 @@
+data cell{
+ int fst;
+}.
+
+
+checkentail x::cell<_>@u & u=@M  |- x::cell<_>@v & v<:@L.
+print residue.
+expect Valid.
+
+checkentail x::cell<_>@u & u=@M  |- (exists w: x::cell<_>@v & v<:w & w=@L).
+print residue.
+expect Valid.
+
+
+checkentail x::cell<_>@u & u=@L  |- x::cell<_>@v & v<:w & w=@M.
+print residue.
+expect Fail.
+
+checkentail x::cell<_>@u & u=@L  |- x::cell<_>@v & v<:u.
+print residue.
+expect Valid.
+
+checkentail x::cell<_>@u & u=@M  |- x::cell<_>@v & v<:u.
+print residue.
+expect Valid.
+
+
+
+/*
+ <1>x::cell<Anon_21>@A&u=@M & u=v & Anon_22=Anon_21&{FLOW,(20,21)=__norm#E}[]
+
+ at the point of matching
+ look for weakest inst of v so that u<:v and RHS is <<provable>>
+
+ inst v<:@L & v=@L   |- u<:v
+
+*/
+
+slk_simplify u=@M & v<:@L & u<:v.
+
+slk_simplify v=@L & v<:@A & u<:v.
+
+slk_simplify v=@M & @L<:v & u<:v.
+
+slk_simplify u=@M & v<:@L & u<:v & @A<:v.
+
+slk_simplify v<:u & u<:@L.
+
+
+slk_simplify v<:u & u=@L.
+
+slk_simplify (exists w: v<:w & w<:@L).

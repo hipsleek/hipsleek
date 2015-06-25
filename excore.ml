@@ -14,6 +14,35 @@ open Cpure
 open VarGen
 (* open Cprinter *)
 
+module UnCa=
+   struct
+     let unsat_cache = Hashtbl.create 200
+     let hit_cache = ref (0:int)
+     let miss_cache = ref (0:int)
+
+     let init_cache () =
+       let () = Hashtbl.add unsat_cache "self.false" true in
+       Hashtbl.add unsat_cache "self.true" false
+
+     let reset_cache () =
+       let () =  Hashtbl.clear unsat_cache in
+       init_cache ()
+
+     let find f=
+       let str = !print_formula f in
+       Hashtbl.find unsat_cache str
+
+     let is_unsat_cache str_f f unsat_fnc=
+       try
+         let res = Hashtbl.find unsat_cache str_f in
+         let _ = hit_cache := !hit_cache + 1 in
+         res
+       with Not_found ->
+           let res = unsat_fnc f in
+           let () = Hashtbl.add unsat_cache str_f res in
+           let _ = miss_cache := !miss_cache + 1 in
+           res
+   end;;
 
 let is_sat_raw = ref(fun (c:Mcpure.mix_formula) -> true)
 let simplify_raw = ref(fun (c:Cpure.formula) -> mkTrue no_pos)
@@ -238,17 +267,29 @@ let subs_null f0 =
 *)
 (* remove unsat terms *)
 let ef_elim_exists_1 (svl : spec_var list) epf  =
-  let (baga,pure) = epf in
+  let () = x_tinfo_pp ("Omega call before simplify: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+  let (baga,pure0) = epf in
   (* let () = Debug.ninfo_pprint "ef_elim_exists" no_pos in *)
   (* let () = Debug.ninfo_pprint "==============" no_pos in *)
   let () = x_dinfo_hp (add_str "svl" string_of_spec_var_list) svl no_pos in
   (* let () = Debug.ninfo_hprint (add_str "old baga" string_of_spec_var_list) baga no_pos in *)
   (* let () = Debug.ninfo_hprint (add_str "pure" !print_pure_formula) pure no_pos in *)
-  let p_aset = pure_ptr_equations pure in
-  let () = x_tinfo_hp (add_str "pure = " !print_pure_formula) pure no_pos in
-  let pure = wrap_exists_svl pure svl in
+  let p_aset = pure_ptr_equations pure0 in
+  let () = x_tinfo_hp (add_str "pure = " !print_pure_formula) pure0 no_pos in
+  let pure = wrap_exists_svl pure0 svl in
   let () = x_tinfo_hp (add_str "pure1 = " !print_pure_formula) pure no_pos in
-  let pure = simplify_with_label_omega (* x_add_1 Omega.simplify *) pure in
+  let pure = (* match pure with *)
+    (* | Cpure.AndList _ -> simplify_with_label_omega (\* x_add_1 Omega.simplify *\) pure *)
+    (* | _ -> *)
+          if !Globals.delay_eelim_baga_inv && Cpure.is_shape pure0 then
+            let is_unsat = Ssat.SS.is_s_unsat baga pure0 in
+            if is_unsat then mkFalse (pos_of_formula pure0) else
+            let ps = Cpure.list_of_conjs pure in
+            let ps1 = List.map (Ssat.SS.elim_exists svl) ps in
+            Cpure.conj_of_list ps1 (Cpure.pos_of_formula pure)
+          else
+            simplify_with_label_omega (* x_add_1 Omega.simplify *) pure
+  in
   let () = x_tinfo_hp (add_str "pure2 = " !print_pure_formula) pure no_pos in
   let () = x_tinfo_hp (add_str "pure_ptr_eq" (pr_list (pr_pair string_of_typed_spec_var string_of_typed_spec_var))) p_aset no_pos in
   let p_aset = EMapSV.build_eset p_aset in
@@ -285,13 +326,15 @@ let ef_elim_exists_1 (svl : spec_var list) epf  =
   let new_pure = remove_redundant_for_expure (elim_clause pure1 svl) in
   let () = Debug.ninfo_hprint (add_str "pure" !print_pure_formula) pure no_pos in
   let () = Debug.ninfo_hprint (add_str "pure1" !print_pure_formula) pure1 no_pos in
-  let () = Debug.ninfo_hprint (add_str "new pure" !print_pure_formula) new_pure no_pos in
-  (List.sort compare_sv new_baga, new_pure)
+  let () = x_tinfo_hp (add_str "new pure" !print_pure_formula) new_pure no_pos in
+  let res = (List.sort compare_sv new_baga, new_pure) in
+  let () = x_tinfo_pp ("Omega call after simplify: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+  res
 
-let ef_elim_exists_1 (svl : spec_var list) epf =
-  (* let pr = string_of_ef_pure in *)
-  (* Debug.no_2 "ef_elim_exists" string_of_typed_spec_var_list pr pr *)
-  ef_elim_exists_1 svl epf
+(* let ef_elim_exists_1 (svl : spec_var list) epf = *)
+(*   (\* let pr = string_of_ef_pure in *\) *)
+(*   (\* Debug.no_2 "ef_elim_exists" string_of_typed_spec_var_list pr pr *\) *)
+(*   ef_elim_exists_1 svl epf *)
 
 let calc_fix_pure (svl : spec_var list) pf =
   let pf_base = x_add_1 Omega.simplify pf in
@@ -303,13 +346,13 @@ let calc_fix_pure (svl : spec_var list) pf =
   let pf_fix = x_add_1 Omega.simplify (mkOr pf_base pf_indu None no_pos) in
   pf_fix
 
-let ef_elim_exists_2 (svl : spec_var list) epf =
-  let (baga, pf) = epf in
-  let svl1 = List.filter (fun sv -> not(is_node_typ sv)) svl in
-  let svl2 = List.filter (fun sv -> is_node_typ sv) svl in
-  let pf1 = calc_fix_pure svl1 (filter_var pf svl1) in
-  let (baga, pf2) = ef_elim_exists_1 svl2 (baga, (filter_var pf svl2)) in
-  (baga, mkAnd pf1 pf2 no_pos)
+(* let ef_elim_exists_2 (svl : spec_var list) epf = *)
+(*   let (baga, pf) = epf in *)
+(*   let svl1 = List.filter (fun sv -> not(is_node_typ sv)) svl in *)
+(*   let svl2 = List.filter (fun sv -> is_node_typ sv) svl in *)
+(*   let pf1 = calc_fix_pure svl1 (filter_var pf svl1) in *)
+(*   let (baga, pf2) = ef_elim_exists_1 svl2 (baga, (filter_var pf svl2)) in *)
+(*   (baga, mkAnd pf1 pf2 no_pos) *)
 
 (* substitute baga *)
 (* [self,y] -> [x,y] -> [self] -> [x] *)
@@ -452,12 +495,13 @@ module EPURE =
 
     let is_false (e:epure) = (e == mk_false)
     let string_of (x:epure) = pr_pair (pr_list Elt.string_of) !print_pure_formula x
-    let string_of_disj lst = pr_list_ln string_of lst
+    let string_of_disj lst = pr_list (* pr_list_ln *) string_of lst
     let mk_data sv = [([sv], mkTrue no_pos)]
 
     let merge_baga b1 b2 = Elt.merge_baga b1 b2
 
     let is_eq_baga (b1,_) (b2,_) = Elt.is_eq_baga b1 b2
+
 
     (* convert ptr to integer constraints *)
     (* ([a,a,b]  --> a!=a & a!=b & a!=b & a>0 & a>0 & b>0 *)
@@ -507,11 +551,13 @@ module EPURE =
       match baga with
       | [] -> mkTrue no_pos
       | h::ts ->
-        let i = ref 1 in
-        List.fold_left (fun f sv ->
-            i := !i + 1;
-            mkAnd f (mkEqVarInt sv !i no_pos) no_pos
-          ) (mkEqVarInt (List.hd baga) !i no_pos) (List.tl baga)
+        (* let i = ref 1 in *)
+        let f,_= List.fold_left (fun (f,i) sv ->
+            (* i := !i + 1; *)
+            let i = i + 1 in
+            (mkAnd f (mkEqVarInt sv (* !i *)i no_pos) no_pos, i)
+          ) ((mkEqVarInt (List.hd baga) (* !i *)1 no_pos),1) (List.tl baga)
+        in f
 
     (* ef_conv_enum :  ef_pure -> formula *)
     (* provide an enumeration that can be used by ante *)
@@ -539,7 +585,7 @@ module EPURE =
       (* Debug.no_1 "ef_conv_enum_disj" string_of_ef_pure_disj string_of_pure_formula *)
       ef_conv_enum_disj_x disj
 
-    let mk_star efp1 efp2 =
+    let mk_star_wrap efp1 efp2 =
       if (is_false efp1) || (is_false efp2) then mk_false
       else
         let (baga1, pure1) = efp1 in
@@ -551,10 +597,16 @@ module EPURE =
         (* (merge_baga baga1 baga2, mkAnd pure1 pure2 no_pos) *)
         with _ -> mk_false
 
+    let mk_star efp1 efp2 =
+      let res = mk_star_wrap efp1 efp2 in
+      res
+
     let mk_star_disj_x (efpd1:epure_disj) (efpd2:epure_disj)  =
+      let () = x_tinfo_pp ("Omega mk_star_disj:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
       let res =
         List.map (fun efp1 -> List.map (fun efp2 -> mk_star efp1 efp2) efpd2) efpd1 in
       let res = List.concat res in
+      let () = x_tinfo_pp ("Omega mk_star_disj:end " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
       res
     (* List.filter (fun v -> not(is_false v)) res *)
 
@@ -580,27 +632,48 @@ module EPURE =
     (* ef_unsat : ef_pure -> bool *)
     (* remove unsat terms *)
     (* convert unsat with ef_conv_enum *)
-    let ef_unsat_0 (f : epure) : bool =
+    let unsat_call p=
+      not (!is_sat_raw (Mcpure.mix_of_pure p))
+
+    let ef_unsat_0 ?(shape=false) ((b,p) as f : epure) : bool =
       (* use ef_conv_enum *)
+      if shape then Ssat.SS.is_s_unsat (Elt.conv_var b) p else
       let cf = ef_conv_enum f in
-      (* if unsat(cf) return true *)
-      not (!is_sat_raw (Mcpure.mix_of_pure cf))
+      (* if !Globals.delay_eelim_baga_inv then *)
+      (*   (\* if unsat(cf) return true *\) *)
+      (*   let ps = list_of_conjs p in *)
+      (*   if List.length ps < 42 then *)
+      (*     let str_f = ((pr_list Elt.string_of) b) ^ "." ^ (!print_pure_formula p) in *)
+      (*     UnCa.is_unsat_cache str_f cf unsat_call *)
+      (*   else unsat_call cf *)
+      (* else *)
+      (* not (!is_sat_raw (Mcpure.mix_of_pure cf)) *)
+        unsat_call cf
 
     (* DO NOT CALL DIRECTLY *)
-    let ef_unsat_0 (f : epure) : bool =
+    let ef_unsat_0 ?(shape=false) (f : epure) : bool =
       Debug.no_1 "ef_unsat" string_of(* _ef_pure *) string_of_bool
-        ef_unsat_0 f
+          (fun _ ->  ef_unsat_0 ~shape:shape f) f
 
-    let unsat (b,f) = ef_unsat_0 (b, f)
+    let unsat is_shape (b,f) = ef_unsat_0 ~shape:is_shape (b, f)
 
-    let norm (efp) =
-      if unsat efp then mk_false
+    let norm is_shape (efp) =
+      if unsat is_shape efp then mk_false
       else efp
 
-    let elim_unsat_disj disj =
-      List.filter (fun f -> not(unsat f)) disj
+    let elim_unsat_disj is_shape disj =
+      List.filter (fun f -> not(unsat is_shape f)) disj
 
-    let is_false_disj disj = disj==[]
+    let is_false_disj_x is_shape disj =
+      let () = x_tinfo_pp ("Omega is_false_disj:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+      let res = List.for_all (fun epf -> unsat is_shape epf) disj in
+      (* disj==[] *)
+      let () = x_tinfo_pp ("Omega is_false_disj:end " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+      res
+
+    let is_false_disj is_shape disj=
+      Debug.no_2 "is_false_disj" string_of_bool string_of_disj string_of_bool
+          is_false_disj_x is_shape disj
 
     let mk_false_disj = []
 
@@ -612,11 +685,27 @@ module EPURE =
 
     let elim_exists (svl:spec_var list) (b,f) : epure =
       let pr = string_of_typed_spec_var_list in
-      Debug.no_2 "ef_elim_exists" pr string_of string_of elim_exists svl (b,f) 
+      Debug.no_2 "ef_elim_exists_a" pr string_of string_of elim_exists svl (b,f)
+
+     let wrap_exists (svl:spec_var list) l p (b,f) : epure =
+       let b_svl = Elt.conv_var b in
+       let new_svl = diff_svl b_svl svl in
+       let nf = let svl = intersect_svl svl (fv f) in
+       match svl with
+         | [] -> f
+         | sv::_ -> Exists (sv, f, l, p)
+       in
+       (Elt.from_var new_svl, nf)
 
     (* TODO-WN : why ins't elem used instead of spec_var *)
     let elim_exists_disj (svl : spec_var list) (lst : epure_disj) : epure_disj =
+       let () = x_tinfo_pp ("Omega call elim_exists_disj-before: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
       let r = List.map (fun e -> elim_exists svl e) lst in
+      let () = x_tinfo_pp ("Omega call elim_exists_disj-end: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+
+      r
+    let wrap_exists_disj (svl : spec_var list) l p (lst : epure_disj) : epure_disj =
+      let r = List.map (fun e -> wrap_exists svl l p e) lst in
       r
 
     (* ef_imply : ante:ef_pure -> conseq:ef_pure -> bool *)
@@ -643,32 +732,46 @@ module EPURE =
         (imply ep1 ([],f2)) && (imply ep2 ([],f1))
       else false
 
+    let is_eq_epure_syn ((b1,f1) as ep1) ((b2,f2) as ep2) =
+      if Elt.is_eq_baga b1 b2 then
+        (* Cpure.checkeq (List.map Cpure.name_of_spec_var (Elt.conv_var b1))  f1 f2 [] *)
+        Cpure.equalFormula f1 f2
+      else false
+
     (* reducing duplicate? *)
-    let norm_disj disj =
+    let norm_disj is_shape disj =
+      let pure_cmp_fnc = (* if syn then is_eq_epure_syn else *) is_eq_epure in
       let rec remove_duplicate (disj : epure_disj) : epure_disj =
         match disj with
         | [] -> []
         | hd::tl ->
           let new_tl = remove_duplicate (List.filter (fun ep ->
-              not (is_eq_epure hd ep)) tl) in
+              not ((* is_eq_epure *)pure_cmp_fnc hd ep)) tl) in
           hd::new_tl
       in
-      remove_duplicate (List.filter (fun v -> not(is_false v)) (List.map norm disj))
+      let () = x_tinfo_pp ("Omega call norm_disj-before: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+      let sat_disj = (* if syn then disj else *) (List.filter (fun v -> not(is_false v)) (List.map (norm is_shape) disj)) in
+      let res = remove_duplicate sat_disj (* (List.filter (fun v -> not(is_false v)) (List.map norm disj)) *) in
+      let () = x_tinfo_pp ("Omega call norm_disj-after: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+      res
 
     let ef_imply_disj_x (ante : epure_disj) (conseq : epure_disj) : bool =
       let a_f = ef_conv_enum_disj ante in
       let c_f = ef_conv_disj conseq in
       (* a_f --> c_f *)
       let f = mkAnd a_f (mkNot_s c_f) no_pos in
-      not (!is_sat_raw (Mcpure.mix_of_pure f))
+      not (x_add_1 !is_sat_raw (Mcpure.mix_of_pure f))
 
     let ef_imply_disj_0 (ante : epure_disj) (conseq : epure_disj) : bool =
       (* Debug.no_2 "ef_imply_disj" string_of_ef_pure_disj string_of_ef_pure_disj string_of_bool *)
       ef_imply_disj_x ante conseq
 
     let imply_disj (ante : epure_disj) (conseq : epure_disj) : bool =
+      let () = x_tinfo_pp ("Omega call before imply disj: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
       let f = List.map (fun (b,f) -> (b,f)) in
-      ef_imply_disj_0 (f ante) (f conseq)
+      let r = ef_imply_disj_0 (f ante) (f conseq) in
+      let () = x_tinfo_pp ("Omega call after imply disj: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+      r
 
     let pair_cmp (x1,x2) (y1,y2) =
       let c = Elt.compare x1 y1 in
@@ -682,11 +785,13 @@ module EPURE =
           t
         with _ -> failwith ("subst_elem : cannot find elem "^Elt.string_of v)
 
-    let subst_epure sst ((baga,f) as ep) = 
-      let subs_fn = subst_elem sst in
-      let new_baga = List.map (subs_fn) baga in
-      let new_f = subst (Elt.conv_var_pairs sst) f in
-      (new_baga,new_f)
+    let subst_epure sst ((baga,f) as ep) =
+      try
+        let subs_fn = subst_elem sst in
+        let new_baga = List.map (subs_fn) baga in
+        let new_f = subst (Elt.conv_var_pairs sst) f in
+        (new_baga,new_f)
+      with _ -> ep
 
     let subst_epure_disj sst (lst:epure_disj) =
       List.map (subst_epure sst) lst
@@ -711,6 +816,13 @@ module EPURE =
               (new_baga, new_eq, new_ineq)
           ) efpd in
 *)
+
+    let get_baga (epd : epure_disj) =
+      if List.length epd = 0 then []
+      else
+        List.fold_left (fun acc (baga,_) ->
+            Gen.BList.intersect_eq Elt.eq acc baga
+        ) (fst (List.hd epd)) (List.tl epd)
 
     let mk_epure (pf:formula) =
       [([], (* subs_null *) pf)]
@@ -988,7 +1100,9 @@ module EPUREN =
     let elim_unsat_disj disj =
       List.filter (fun f -> not(unsat f)) disj
 
-    let is_false_disj disj = disj==[]
+    let is_false_disj disj =
+      List.for_all (fun epf -> unsat epf) disj
+      (* disj==[] *)
 
     let mk_false_disj = []
 
@@ -1369,7 +1483,7 @@ module EPUREN =
       let c_f = ef_conv_disj conseq in
       (* a_f --> c_f *)
       let f = mkAnd a_f (mkNot_s c_f) no_pos in
-      not (!is_sat_raw (Mcpure.mix_of_pure f))
+      not (x_add_1 !is_sat_raw (Mcpure.mix_of_pure f))
 
     let imply_disj (ante : epure_disj) (conseq : epure_disj) : bool =
       let r = epure_disj_syn_imply ante conseq in
@@ -1547,6 +1661,13 @@ module EPUREN =
 
     (* let to_cpure_disj (epd : epure_disj) = *)
     (*   List.map (fun ep -> to_cpure ep) epd *)
+
+    let get_baga (epd : epure_disj) =
+      if List.length epd = 0 then []
+      else
+        List.fold_left (fun acc (baga,_,_) ->
+            Gen.BList.intersect_eq Elt.eq acc baga
+        ) ((fun (a,_,_) -> a) (List.hd epd)) (List.tl epd)
 
     let to_cpure (ep : epure) = ep
 

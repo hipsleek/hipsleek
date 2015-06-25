@@ -58,6 +58,7 @@ type decl =
   | Include of string
   | Template of templ_decl
   | Ut of ut_decl
+  | Ui of ui_decl
 
 
 type member = 
@@ -122,6 +123,7 @@ let func_names = new Gen.stack (* list of names of ranking functions *)
 let rel_names = new Gen.stack (* list of names of relations declared *)
 let templ_names = new Gen.stack (* List of declared templates' names *)
 let ut_names = new Gen.stack (* List of declared unknown temporal' names *)
+let ui_names = new Gen.stack (* List of declared unknown imm rel *)
 let view_names = new Gen.stack (* list of names of views declared *)
 let hp_names = new Gen.stack (* list of names of heap preds declared *)
 (* let g_rel_defs = new Gen.stack (\* list of relations decl in views *\) *)
@@ -674,6 +676,14 @@ let peek_dc =
              | [IDENTIFIER n,_;EQ,_] ->  ()
              | _ -> raise Stream.Failure)
 
+let peek_hash_thread = 
+   SHGram.Entry.of_parser "peek_hash_thread"
+       (fun strm -> 
+           match Stream.npeek 3 strm with
+             | [_;_;COMMA,_] ->  raise Stream.Failure
+             | [_;_;GT,_] ->  raise Stream.Failure
+             | _ -> ())
+
  let peek_extended = 
    SHGram.Entry.of_parser "peek_extended"
        (fun strm -> 
@@ -789,6 +799,13 @@ let peek_obrace_par =
     (fun strm ->
       match Stream.npeek 2 strm with
       | [OBRACE,_;CASE,_] -> raise Stream.Failure
+      | _ -> ())
+
+let peek_relassume =
+  SHGram.Entry.of_parser "peek_relassume"
+    (fun strm ->
+      match Stream.npeek 1 strm with
+      | [IDENTIFIER "RA",_] -> raise Stream.Failure
       | _ -> ())
 
 let get_heap_id_info (cid: ident * primed) (heap_id : (ident * int * int * Camlp4.PreCast.Loc.t)) =
@@ -941,10 +958,33 @@ hip_with_option: [[ opt =arg_option; h = hprog-> (opt,h)]];
 macro: [[`PMACRO; n=id; `EQEQ ; tc=tree_const -> if !Globals.perm=(Globals.Dperm) then Hashtbl.add !macros n tc else  report_error (get_pos 1) ("distinct share reasoning not enabled")]];
 
 command_list: [[ t = LIST0 non_empty_command_dot -> t ]];
-  
+
 command: [[ t=OPT non_empty_command_dot-> un_option t EmptyCmd]];
-    
+
 non_empty_command_dot: [[t=non_empty_command; `DOT -> t]];
+
+(* For R{..} and I{..} *)
+expect_infer_term: [[f = meta_constr -> f]];
+
+expect_infer_relassume:
+  [[ il2 = OPT cond_path; l=meta_constr; `CONSTR;r=meta_constr ->
+      (un_option il2 [], l, None,  r)
+   | il2 = OPT cond_path; l=meta_constr; `REL_GUARD; guard = meta_constr; `CONSTR;r=meta_constr ->
+      (un_option il2 [], l, Some guard,  r)
+  ]];
+
+expect_infer:
+  [[
+    `EXPECT_INFER; ty=validate_result; peek_relassume; t=id; `OBRACE; f = OPT expect_infer_term; `CBRACE ->
+       (match t with
+          | "R" -> ExpectInfer (ty, V_Residue f)
+          | "I" -> ExpectInfer (ty, V_Infer f)
+          | _ -> raise Stream.Failure)
+  | `EXPECT_INFER; ty=validate_result; t=id; `OBRACE; f = OPT expect_infer_relassume; `CBRACE ->
+       (match t with
+          | "RA" -> ExpectInfer (ty, V_RelAssume f)
+          | _ -> failwith "not possible")
+  ]];
 
 non_empty_command:
     [[  t=data_decl           -> DataDef t
@@ -965,7 +1005,7 @@ non_empty_command:
       | t= checksat_cmd     -> SatCheck t
       | t= checknondet_cmd     -> NonDetCheck t
       | t= validate_cmd     -> Validate t
-      | t=relassume_cmd     -> RelAssume t
+      | t= relassume_cmd     -> RelAssume t
       | t=reldefn_cmd     -> RelDefn t
       | t=shapeinfer_cmd     -> ShapeInfer t
       | t=shapedivide_cmd     -> ShapeDivide t
@@ -993,13 +1033,15 @@ non_empty_command:
       | t=print_cmd           -> PrintCmd t
       | t=cmp_cmd           ->  CmpCmd t
       | t=time_cmd            -> t 
+      | t = ui_decl         -> UiDef t
       (* TermInf: Command for Termination Inference *)
       | t = templ_decl -> TemplDef t
       | t = templ_solve_cmd -> TemplSolv t
       | t = ut_decl -> UtDef t
       | t = term_infer_cmd -> TermInfer
       | t = term_assume_cmd -> TermAssume t
-      | t=macro				  -> EmptyCmd]];
+      | t = expect_infer -> t
+      | t=macro	-> EmptyCmd]];
   
 data_decl:
     [[ dh=data_header ; db = data_body 
@@ -1785,13 +1827,35 @@ simple_heap_constr_imm:
            F.mkHeapNode c hid ho_args deref dr split imm_opt false false false frac t1 t2 ofl (get_pos_camlp4 _loc 2)
   ]];
 
+(* the next three rules:
+    separate the parsing args of heap/data node for backtracking
+*)
+thread_args:
+   [[peek_hash_thread;(* `TOPAREN *)`LT; `HASH ; dl = opt_delayed_constr; rsr = disjunctive_constr; (* `TCPAREN *) `HASH; `GT -> (dl,rsr) ]];
+
+non_thread_args1:
+  [[
+    `LT; hl= opt_general_h_args; `GT -> hl
+  ]];
+
+non_thread_args2:
+  [[
+    `LT; hl= opt_data_h_args; `GT -> hl
+  ]];
+
 (*LDK: add frac for fractional permission*)
 simple_heap_constr:
-    [[ peek_heap; c=cid; `COLONCOLON;  hid = heap_id; opt1 = OPT rflow_form_list ; (* simple2 ; *) frac= opt_perm; `TOPAREN; dl = opt_delayed_constr; rsr = disjunctive_constr; `TCPAREN ; ofl = opt_formula_label ->
+    [[ peek_heap; c=cid; `COLONCOLON;  hid = heap_id; opt1 = OPT rflow_form_list ; (* simple2 ; *) frac= opt_perm;
+ (*  peek_hash_thread;(* `TOPAREN *)`LT; `HASH ; dl = opt_delayed_constr; rsr = disjunctive_constr; (* `TCPAREN *) `HASH; `GT ; *)
+    a=thread_args;
+ ofl = opt_formula_label ->
      (*For threads as resource*)
+     let (dl,rsr) = a in
      let (c, hid, deref) = get_heap_id_info c hid in
      F.mkThreadNode c hid (F.subst_stub_flow n_flow rsr) dl frac ofl (get_pos_camlp4 _loc 2)
-   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *); frac= opt_perm; `LT; hl= opt_general_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label -> (
+   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *); frac= opt_perm; (*`LT; hl= opt_general_h_args; `GT;*)
+     hl = non_thread_args1;
+     annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label -> (
        (*ignore permission if applicable*)
        let frac = if (Perm.allow_perm ())then frac else empty_iperm () in
        let imm_opt = get_heap_ann annl in
@@ -1804,7 +1868,10 @@ simple_heap_constr:
        | ([],t) -> F.mkHeapNode2 c hid ho_args deref dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
        | (t,_)  -> F.mkHeapNode c hid ho_args deref dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
-   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *); frac= opt_perm; `LT; hl= opt_data_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label -> (
+   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *); frac= opt_perm; 
+     (* `LT; hl= opt_data_h_args; `GT;*)
+     hl = non_thread_args2;
+     annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label -> (
         (*ignore permission if applicable*)
         let frac = if (Perm.allow_perm ())then frac else empty_iperm () in
         let imm_opt = get_heap_ann annl in
@@ -1821,7 +1888,10 @@ simple_heap_constr:
             let t1, t2 = List.split t in  
             F.mkHeapNode c hid ho_args deref dr split imm_opt false false false frac t1 t2 ofl (get_pos_camlp4 _loc 2)
      )
-   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *); frac= opt_perm;`LT; hal=opt_general_h_args; `GT; dr=opt_derv; split= opt_split; ofl = opt_formula_label -> (
+   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *); frac= opt_perm;
+     (* `LT; hal=opt_general_h_args; `GT; *)
+     hal = non_thread_args1;
+     dr=opt_derv; split= opt_split; ofl = opt_formula_label -> (
        let (c, hid, deref) = get_heap_id_info c hid in
        let ho_args = un_option opt1 [] in
        match hal with
@@ -1839,7 +1909,10 @@ simple_heap_constr:
        F.mkHeapNode ("",Primed) "" [] 0 false (*dr*) SPLIT0 (P.ConstAnn(Mutable)) false false false frac [] [] None  (get_pos_camlp4 _loc 1)
      )
      (* An Hoa : Abbreviated syntax. We translate into an empty type "" which will be filled up later. *)
-   | peek_heap; c=cid; `COLONCOLON;  opt1 = OPT rflow_form_list (* simple2*) ; frac= opt_perm; `LT; hl= opt_general_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label -> (
+   | peek_heap; c=cid; `COLONCOLON;  opt1 = OPT rflow_form_list (* simple2*) ; frac= opt_perm;
+         (* `LT; hl= opt_general_h_args; `GT;*)
+         hl = non_thread_args1;
+         annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label -> (
        let frac = if (Perm.allow_perm ()) then frac else empty_iperm () in
        let imm_opt = get_heap_ann annl in
        let ho_args = un_option opt1 [] in
@@ -1847,7 +1920,9 @@ simple_heap_constr:
        | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name ho_args 0 dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
        | (t,_)  -> F.mkHeapNode c generic_pointer_type_name ho_args 0 dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
-   | peek_heap; c=cid; `COLONCOLON; opt1 = OPT rflow_form_list  (*simple2*); frac= opt_perm; `LT; hal=opt_general_h_args; `GT; dr=opt_derv; split= opt_split; ofl = opt_formula_label -> (
+   | peek_heap; c=cid; `COLONCOLON; opt1 = OPT rflow_form_list  (*simple2*); frac= opt_perm; (* `LT; hal=opt_general_h_args; `GT; *)
+         hal = non_thread_args1;
+         dr=opt_derv; split= opt_split; ofl = opt_formula_label -> (
        let ho_args = un_option opt1 [] in
        match hal with
        | ([],[])  -> F.mkHeapNode c generic_pointer_type_name ho_args 0 dr split (P.ConstAnn(Mutable)) false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
@@ -2147,6 +2222,13 @@ cexp_w:
           Pure_c (P.mkTemplate id cl (get_pos_camlp4 _loc 1))
         else if hp_names # mem id then (* Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None)) *)
           report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
+        else if ui_names # mem_eq (fun (id1, _) (id2, _) ->  id1 = id2 ) (id, true) then 
+          begin
+            let _, is_pre = ui_names # find (fun (name,  _) -> name = id) in
+            let pos = get_pos_camlp4 _loc 1 in
+            let rel = P.RelForm (id, cl, pos) in
+            Pure_f (P.BForm ((P.ImmRel (rel, P.mkUimmAnn is_pre  (BConst (true, pos)), pos), None), None))
+          end
         else begin
           try
             let _, fname, is_pre = ut_names # find (fun (name, _, _) -> name = id) in
@@ -2156,7 +2238,7 @@ cexp_w:
             let ann = P.mkUtAnn 0 id is_pre fname (P.mkTrue pos) cl pos in
             Pure_f (P.BForm ((P.LexVar (ann, [], [], pos), None), None))
           with Not_found -> 
-            if not (rel_names # mem id) then 
+            if not (rel_names # mem id ) then 
               if not !Globals.web_compile_flag then 
                 print_endline_quiet ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
             Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
@@ -2314,6 +2396,8 @@ validate_result:
     | `FAIL -> VR_Fail 0
     | `FAIL_MUST -> VR_Fail 1
     | `FAIL_MAY -> VR_Fail (-1)
+    | `SSAT -> VR_Sat
+    | `SUNSAT -> VR_Unsat
   ]];
 validate_cmd_pair:
     [[ `VALIDATE; vr = validate_result  ->
@@ -2476,17 +2560,24 @@ shapeExtract_cmd:
 infer_type:
    [[ `INFER_AT_TERM -> INF_TERM
    | `INFER_AT_TERM_WO_POST -> INF_TERM_WO_POST
+   | `INFER_AT_FIELD_IMM -> INF_FIELD_IMM
    | `INFER_AT_PRE -> INF_PRE
    | `INFER_AT_POST -> INF_POST
    | `INFER_AT_CLASSIC -> INF_CLASSIC
    | `INFER_AT_PAR -> INF_PAR
    | `INFER_AT_VER_POST -> INF_VER_POST
    | `INFER_AT_IMM -> INF_IMM
+   | `INFER_AT_ARR_AS_VAR -> INF_ARR_AS_VAR
    | `INFER_AT_SHAPE -> INF_SHAPE
    | `INFER_AT_ERROR -> INF_ERROR
    | `INFER_AT_SIZE -> INF_SIZE
    | `INFER_AT_EFA -> INF_EFA
    | `INFER_AT_DFA -> INF_DFA
+   | `INFER_AT_DE_EXC -> INF_DE_EXC
+   | `INFER_AT_ERRMUST_ONLY -> INF_ERR_MUST_ONLY
+   | `INFER_AT_ERRMUST -> INF_ERR_MUST
+   | `INFER_AT_PREMUST -> INF_PRE_MUST
+   | `INFER_AT_ERRMAY -> INF_ERR_MAY
    | `INFER_AT_FLOW -> INF_FLOW
    ]];
 
@@ -2508,7 +2599,7 @@ infer_type_list:
 
 infer_cmd:
   [[ `INFER; il_w_itype = cid_list_w_itype; t=meta_constr; `DERIVE; b=extended_meta_constr ->
-      let inf_o = Globals.infer_const_obj # clone in
+      let inf_o = new Globals.inf_obj_sub (* Globals.clone_sub_infer_const_obj () *) (* Globals.infer_const_obj # clone *) in
       let (i_consts,ivl) = List.fold_left 
         (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r) 
           | SndAns r -> (lst_l,r::lst_r)) ([],[]) il_w_itype in
@@ -2869,6 +2960,30 @@ ut_decl:
       in utdef 
   ]];
 
+(* Unknown Imm Definition *)
+ui_decl: 
+  [[ `UIPRE; `IDENTIFIER id; `OPAREN; tl= typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+      let () = ui_names # push (id, true) in
+      let () = rel_names # push id in
+      let rel = { rel_name = id; rel_typed_vars = tl;
+      rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *) } in
+      let uimmdef = { 
+        ui_rel = rel;
+        ui_is_pre = true;
+        ui_pos = get_pos_camlp4 _loc 1; } 
+      in uimmdef 
+  | `UIPOST; `IDENTIFIER id; `OPAREN; tl= typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+      let () = ui_names # push (id, false) in
+      let () = rel_names # push id in
+      let rel = { rel_name = id; rel_typed_vars = tl;
+      rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *) } in
+      let uimmdef = { 
+        ui_rel = rel;
+        ui_is_pre = false;
+        ui_pos = get_pos_camlp4 _loc 1; } 
+      in uimmdef 
+  ]];
+
 axiom_decl:[[
 	`AXIOM; lhs=pure_constr; `ESCAPE; rhs=pure_constr ->
 		{ axiom_id = fresh_int ();
@@ -2921,6 +3036,7 @@ hprogn:
       let rel_defs = new Gen.stack in(* list of relations *)
       let templ_defs = new Gen.stack in (* List of template definitions *)
       let ut_defs = new Gen.stack in (* List of unknown temporal definitions *)
+      let ui_defs = new Gen.stack in (* List of unknown temporal definitions *)
       let hp_defs = new Gen.stack in(* list of heap predicate relations *)
       let axiom_defs = ref ([] : axiom_decl list) in (* [4/10/2011] An Hoa *)
       let proc_defs = ref ([] : proc_decl list) in
@@ -2940,6 +3056,7 @@ hprogn:
         | Rel rdef -> rel_defs # push rdef
         | Template tdef -> templ_defs # push tdef
         | Ut utdef -> ut_defs # push utdef
+        | Ui uidef -> ui_defs # push uidef
         | Hp hpdef -> hp_defs # push hpdef 
         | Axm adef -> axiom_defs := adef :: !axiom_defs (* An Hoa *)
         | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs
@@ -2967,7 +3084,9 @@ hprogn:
     let rel_lst = ((rel_defs # get_stk)(* @(g_rel_lst) *)) in
     let templ_lst = templ_defs # get_stk in
     let ut_lst = ut_defs # get_stk in
+    let ui_lst = ui_defs # get_stk in
     let hp_lst = hp_defs # get_stk in
+    let extra_rels = List.map (fun u -> u.Iast.ui_rel) ui_lst in 
     (* WN : how come not executed for loop2.slk? *)
     (* PURE_RELATION_OF_HEAP_PRED *)
     (* to create __pure_of_relation from hp_lst to add to rel_lst *)
@@ -2980,10 +3099,11 @@ hprogn:
     (* prog_rel_decls = [];  TODO : new field for array parsing *)
     prog_view_decls = !view_defs;
     prog_func_decls = func_defs # get_stk ;
-    prog_rel_decls = rel_lst; (* An Hoa *)
+    prog_ui_decls = ui_lst;
+    prog_rel_decls = rel_lst@extra_rels; (* An Hoa *)
     prog_rel_ids = List.map (fun x ->
         let tl,_ = List.split x.rel_typed_vars in
-        (RelT tl,x.rel_name)) (rel_lst); (* WN *)
+        (RelT tl,x.rel_name)) (rel_lst@extra_rels); (* WN *)
     prog_templ_decls = templ_lst;
     prog_ut_decls = ut_lst;
     prog_hp_decls = hp_lst ;
@@ -3009,6 +3129,7 @@ decl:
   |  r=rel_decl; `DOT -> Rel r (* An Hoa *)
   |  r=templ_decl; `DOT -> Template r
   |  r=ut_decl; `DOT -> Ut r
+  |  r=ui_decl; `DOT -> Ui r
   |  r=hp_decl; `DOT -> Hp r
   |  a=axiom_decl; `DOT -> Axm a (* [4/10/2011] An Hoa *)
   |  g=global_var_decl            -> Global_var g
@@ -3154,7 +3275,7 @@ spec:
     `INFER; transpec = opt_transpec; postxf = opt_infer_xpost; postf= opt_infer_post; ivl_w_itype = cid_list_w_itype; s = SELF ->
     (* WN : need to use a list of @sym *)
      (* let inf_o = Globals.infer_const_obj # clone in *)
-     let inf_o = new inf_obj in
+     let inf_o = new Globals.inf_obj_sub in
      let (i_consts,ivl) = List.fold_left
        (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r)
          | SndAns r -> (lst_l,r::lst_r)) ([],[]) ivl_w_itype in
@@ -4156,5 +4277,4 @@ let create_tnt_prim_proc_list ids : Iast.proc_decl list =
   List.concat (List.map (fun id -> 
     match (create_tnt_prim_proc id) with
     | None -> [] | Some pd -> [pd]) ids)
-
 

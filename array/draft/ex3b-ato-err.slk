@@ -1,0 +1,30 @@
+infer [a] i=3  |- a[i]>a[i-1].
+print residue.
+
+/*
+# ex3a-ato-err.slk
+
+Difference below seems to be due to starting Omega?
+
+!!! **sleekcore.ml#222:arrvar_flag:false
+Starting Omega.../usr/local/bin/oc
+
+without --ato
+Entail (1) : Valid. 
+Residue:
+ <1>emp&i=3 & forall(i:(i!=3 | (a[i-1])<(a[i])))&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [forall(i:(i!=3 | (1+(a[i-1]))<=(a[i])))]
+
+with --ato
+Entail (1) : Fail.(may) cause: i=3 |-  (a[i-1])<(a[i]). LOCS:[1] (may-bug)
+Residue:
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message:  i=3 |-  (a[i-1])<(a[i]). LOCS:[1] (may-bug)
+                             fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}}
+[[empty]]
+CEX:false
+
+*/

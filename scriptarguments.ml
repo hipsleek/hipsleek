@@ -68,6 +68,10 @@ let common_arguments = [
   (* ("--ufdp", Arg.Set Solver.unfold_duplicated_pointers, *)
   (* "Do unfolding of predicates with duplicated pointers."); (\* An Hoa *\) *)
   (* Labelling Options *)
+  ("--temp-opt", Arg.Set Globals.temp_opt_flag,
+   "Temporary option flag.");
+  ("--temp-opt2", Arg.Set Globals.temp_opt_flag2,
+   "Temporary option flag2.");
   ("--dis-lbl", Arg.Set Globals.remove_label_flag,
    "Disable Labelling of Formula by removing AndList."); 
   ("--lbl-dis-split-conseq", Arg.Clear Globals.label_split_conseq,
@@ -185,7 +189,11 @@ let common_arguments = [
   ("--dis-trace", Arg.Clear Debug.trace_on,
    "Turn off brief tracing");
   ("-dd", Arg.Set Debug.devel_debug_on,
-   "Turn on devel_debug");
+   "Turn on devel_debug on short and normal output");
+  ("-dd-short", Arg.Unit (fun () -> Debug.devel_debug_on := true; Globals.debug_level := Globals.Short),
+   "Turn on devel_debug only short output");
+  ("-dd-long", Arg.Unit (fun () -> Debug.devel_debug_on := true; Globals.debug_level := Globals.Long),
+   "Turn on devel_debug on all outputs");
   ("--dd-debug",  Arg.Unit
      (fun _ -> 
         Debug.debug_print:=true;
@@ -252,10 +260,16 @@ let common_arguments = [
    "Log (failed) proof to file");
   ("--trace-failure", Arg.Set VarGen.trace_failure,
    "Enable trace all failure (and exception). Use make gbyte");
+  ("--trace-exc", Arg.Set VarGen.trace_exc,
+   "Enable trace of exceptions invoked by methods");
+  (* Exception(fixcalc_of_pure_formula):Stack overflow *)
+  (* Exception(compute_def@6):Failure("compute_def:Error in translating the input for fixcalc") *)
+  (* Exception(compute_fixpoint_aux@5):Failure("compute_def:Error in translating the input for fixcalc") *)
+  (* Exception(compute_fixpoint#5@4):Failure("compute_def:Error in translating the input for fixcalc") *)
   ("--trace-all", Arg.Set Globals.trace_all,
-   "Trace all proof paths");
+  "Trace all proof paths");
   ("--log-cvcl", Arg.String Cvclite.set_log_file,
-   "Log all CVC Lite formula to specified log file");
+  "Log all CVC Lite formula to specified log file");
   (* ("--log-cvc3", Arg.String Cvc3.set_log_file, *)
   ("--log-cvc3", Arg.Unit Cvc3.set_log_file,    "Log all formulae sent to CVC3 in file allinput.cvc3");
   ("--log-omega", Arg.Set Omega.log_all_flag,
@@ -302,13 +316,25 @@ let common_arguments = [
   ("--oc-dis-adv-simp", Arg.Clear Globals.oc_adv_simplify,"disable oc advancde simplification");
   ("--oc-en-adv-simp", Arg.Set Globals.oc_adv_simplify,"enable oc advanced simplification");
   ("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
-  ("--field-imm", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
+  ("--field-imm", Arg.Unit ( fun _ ->
+       Globals.allow_field_ann := true;
+       Globals.imm_merge := true;
+       Globals.simpl_memset := true;
+     ),"enable the use of immutability annotations for data fields");
   ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
   ("--dis-field-imm", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
   ("--allow-array-inst", Arg.Set Globals.allow_array_inst,"Allow instantiation of existential arrays");
   ("--imm-remove-abs", Arg.Set Globals.remove_abs,"remove @A nodes from formula (incl nodes with all fields ann with @A)");
   ("--en-imm-merge", Arg.Set Globals.imm_merge,"try to merge aliased nodes");
   ("--dis-imm-merge", Arg.Clear Globals.imm_merge,"don't merge aliased nodes");
+  ("--en-weak-imm", Arg.Set Globals.imm_weak,"enable weak instatiation (<:)");
+  ("--dis-weak-imm", Arg.Clear Globals.imm_weak,"enable strong instatiation (=)");
+  ("--en-imm-simplif-inst", Arg.Set Globals.imm_simplif_inst,"don't merge aliased nodes");
+  ("--dis-imm-simplif-inst", Arg.Clear Globals.imm_simplif_inst,"don't merge aliased nodes");
+  ("--en-aggresive-imm-inst", Arg.Set Globals.aggresive_imm_inst,"add lhs_imm<:rhs_imm to state (during matching), when lhs_imm is unrestricted");
+  ("--dis-aggresive-immf-inst", Arg.Clear Globals.aggresive_imm_inst,"don't add lhs_imm<:rhs_imm, when lhs_imm is unrestricted");
+  ("--en-imm-simpl", Arg.Set Globals.imm_add,"simplify imm addition");
+  ("--dis-imm-simpl", Arg.Clear Globals.imm_add,"disable imm addition simplification");
   ("--mem", Arg.Unit (fun _ -> 
        Globals.allow_mem := true; 
        Globals.allow_field_ann := true;),
@@ -320,6 +346,8 @@ let common_arguments = [
        Globals.allow_ramify := true; 
        Solver.unfold_duplicated_pointers := false;)
   , "Enable Coq based Ramification for Shared Structures");
+  ("--en-filter-infer-search",Arg.Set Globals.filter_infer_search,"Enable filter on search result with inference");
+  ("--dis-filter-infer-search",Arg.Clear Globals.filter_infer_search,"Enable filter on search result with inference");
   ("--infer-mem",Arg.Set Globals.infer_mem,"Enable inference of memory specifications");
   ("--infer-en-raw",Arg.Set Globals.infer_raw_flag,"Enable simplify_raw during pure inference");
   ("--infer-dis-raw",Arg.Clear Globals.infer_raw_flag,"Disable simplify_raw during pure inference");
@@ -334,7 +362,7 @@ let common_arguments = [
      ),"disable the use of immutability annotations");
   ("--imm-en-subs-rhs", Arg.Set Globals.allow_imm_subs_rhs,"enable the substitution of rhs eq for immutability");
   ("--imm-dis-subs-rhs", Arg.Clear Globals.allow_imm_subs_rhs,"disable the substitution of rhs eq for immutability");
-  ("--en-imm-inv", Arg.Set Globals.allow_imm_inv,"enable the additionof of immutability invariant for implication");
+  ("--en-imm-inv", Arg.Set Globals.allow_imm_inv,"enable the addition of immutability invariant for implication");
   ("--dis-imm-inv", Arg.Clear Globals.allow_imm_inv,"disable the additionof of immutability invariant for implication");
   ("--dis-inf", Arg.Clear Globals.allow_inf,"disable support for infinity ");
   ("--en-inf", Arg.Unit (fun _ ->
@@ -447,6 +475,9 @@ let common_arguments = [
   ("--dis-print-inline", Arg.Clear Globals.print_en_inline,"disable printing (with fewer intermediates)");
   ("--print-html", Arg.Set Globals.print_html,"enable html printing");
   ("--print-type", Arg.Set Globals.print_type,"Print type info");
+  ("--print-extra", Arg.Set Globals.print_extra,"Print extra info");
+  ("--dis-type-err", Arg.Clear Globals.enforce_type_error,"Give just warning for type errors");
+  ("--en-type-err", Arg.Set Globals.enforce_type_error,"Stricly enforce type errors");
   ("--print-x-inv", Arg.Set Globals.print_x_inv,
    "Print computed view invariants");
   ("--print-en-relassume", Arg.Set Globals.print_relassume,
@@ -495,6 +526,15 @@ let common_arguments = [
        Debug.z_debug_file:=("$.*"); z_debug_flag:=true;
        Debug.mk_debug_arg s),
    "Matched input/output with reg-exp");
+  ("-dre-trace", Arg.String (fun s ->
+       let _ = print_endline ("!!!-dre "^s) in
+       Debug.z_debug_file:=("$"^s); z_debug_flag:=true;
+       Debug.debug_pattern_on := true;
+       Debug.dump_calls:=true;
+       Debug.dump_calls_all:=true;
+       Gen.debug_precise_trace:=true;
+       Debug.debug_pattern := (Str.regexp s)),
+   "Matched debug calls and its calees with reg-exp");
   ("-v", Arg.Set Debug.debug_on,
    "Verbose");
   ("--pipe", Arg.Unit Tpdispatcher.Netprover.set_use_pipe,
@@ -536,6 +576,8 @@ let common_arguments = [
   (* ("--dis-cache", Arg.Set Globals.no_cache_formula, *)
   (* "Do not cache result of satisfiability and validity checking"); *)
   ("--dis-cache", Arg.Set Globals.no_cache_formula,
+   "Disable Caching result of satisfiability and validity checking");
+  ("--en-cache", Arg.Clear Globals.no_cache_formula,
    "Cache result of satisfiability and validity checking");
   ("--dis-simplify-imply", Arg.Clear Globals.simplify_imply,
    "Simplification of existential for imply calls");
@@ -571,6 +613,10 @@ let common_arguments = [
   ("--efa", Arg.Clear Globals.disable_failure_explaining,"shorthand for --en-failure-analysis");
   ("--efa-exc", Arg.Set Globals.enable_error_as_exc,"enable to transform error as exception");
   ("--dis-efa-exc", Arg.Clear Globals.enable_error_as_exc,"disable to transform error as exception");
+  ("--efa-may", Arg.Unit 
+     (fun _ ->
+        Globals.infer_const_obj # set INF_ERR_MAY
+     ),"set may error scenrio as default");
   ("--dfa", Arg.Set Globals.disable_failure_explaining,"shorthand for --dis-failure-analysis");
   ("--refine-error", Arg.Set Globals.simplify_error,
    "Simplify the error");
@@ -712,6 +758,11 @@ let common_arguments = [
        Globals.sleek_logging_txt:=true;
        Globals.sleek_gen_vc_exact:=true
      ), "Generate exact verification condition in sleek format");
+  ("--gen-sat", Arg.Unit (fun _ ->
+       Globals.proof_logging_txt:=true;
+       Globals.sleek_logging_txt:=true;
+       Globals.sleek_gen_sat:=true
+     ), "Generate check sat formula");
   (* abduce pre from post *)
   ("--abdfpost", Arg.Set Globals.do_abd_from_post, "Enable abduction from post-condition");
   (* incremental spec *)
@@ -729,6 +780,8 @@ let common_arguments = [
   (* ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view"); *)
   ("--inv-baga",Arg.Unit (fun _ ->  Globals.use_baga := true; Globals.gen_baga_inv := true),"generate baga inv from view");
   ("--dis-inv-baga",Arg.Clear Globals.gen_baga_inv,"disable baga inv from view");
+  ("--en-delay-eelim",Arg.Set Globals.delay_eelim_baga_inv,"delay simplification during inference of shape baga inv");
+  ("--dis-inv-check",Arg.Set Globals.dis_baga_inv_check,"disable dis_baga_inv_check");
   ("--pred-sat", Arg.Unit Globals.en_pred_sat ," turn off oc-simp for pred sat checking");
   ("--baga-xpure",Arg.Set Globals.use_baga (* Globals.baga_xpure *),"use baga for xpure");
   ("--dis-baga-xpure",Arg.Clear Globals.use_baga (* Globals.baga_xpure *),"do not use baga for xpure");
@@ -921,6 +974,7 @@ let common_arguments = [
      (fun _ ->
         (* print_endline "inside svcomp-compete setting"; *)
         compete_mode:=true; (* main flag *)
+        Globals.enforce_type_error:=false;
         Globals.svcomp_compete_mode:=true; (* main flag *)
         (* Globals.show_unexpected_ents := false; *)
         (* diable printing *)
@@ -1004,6 +1058,7 @@ let common_arguments = [
      (fun _ ->
         compete_mode:=true; (* main flag *)
         Globals.smt_compete_mode:=true;
+        Globals.enforce_type_error:=false;
         Globals.show_unexpected_ents := false;
         Debug.trace_on := false;
         Debug.devel_debug_on:= false;

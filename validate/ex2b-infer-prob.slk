@@ -1,0 +1,23 @@
+infer [n] n=0 or n!=0 |- n>=0 or n!=0.
+print residue.
+/*
+
+FIXED
+
+# add --en_filter_infer_search
+      --dis_filter_infer_search
+
+# maybe can elim redundant infer outcomes?
+
+ <1>emp&n=0&{FLOW,(20,21)=__norm#E}[]
+    or emp&n!=0 & 0<=n&{FLOW,(20,21)=__norm#E}[]
+ inferred pure: [0<=n]
+[[||OR|| ==> ]]
+
+<2>emp&n=0&{FLOW,(20,21)=__norm#E}[]
+   or emp&n!=0&{FLOW,(20,21)=__norm#E}[]
+   
+[[||OR|| ==> ]]
+
+*/
+

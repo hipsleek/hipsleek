@@ -46,7 +46,7 @@ and struc_formula =
 and struc_infer_formula =
   {
     (* formula_inf_tnt: bool; (\* true if termination to be inferred *\) *)
-    formula_inf_obj: Globals.inf_obj; (* local infer object *)
+    formula_inf_obj: Globals.inf_obj_sub; (* local infer object *)
     formula_inf_post : bool; (* true if post to be inferred *)
     formula_inf_xpost : bool option; (* None -> no auto-var; Some _ -> true if post to be inferred *)
     formula_inf_transpec : (ident * ident) option;
@@ -751,7 +751,7 @@ and h_fv (f:h_formula):(ident*primed) list = match f with
     let perm_vars = (fv_iperm ()) perm in
     let imm_vars =  fv_imm imm in
     let prm_ann =  List.flatten (List.map fv_imm  (ann_opt_to_ann_lst ann_param imm)) in
-    let imm_vars = if (!Globals.allow_field_ann) then imm_vars@prm_ann else imm_vars in
+    let imm_vars = if true (* (!Globals.allow_field_ann) *) then imm_vars@prm_ann else imm_vars in
     let hvars = List.concat (List.map (fun ff -> heap_fv ff.rflow_base) ho_b) in
     Gen.BList.remove_dups_eq (=) (hvars@imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map Ipure.afv b))))
   | HeapNode2 { h_formula_heap2_node = name ;
@@ -2674,7 +2674,7 @@ let add_formula_to_post (f,ex_vars) (f0 : struc_formula): struc_formula =
 
 let mkEInfer xpost transpec pos = EInfer { 
     (* formula_inf_tnt = false; *)
-    formula_inf_obj = new Globals.inf_obj; (* Globals.infer_const_obj # clone; *)
+    formula_inf_obj = new Globals.inf_obj_sub; (* Globals.infer_const_obj # clone; *)
     formula_inf_post = true;
     formula_inf_xpost = xpost;
     formula_inf_transpec = transpec;

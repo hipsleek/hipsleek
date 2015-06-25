@@ -345,7 +345,7 @@ let mkFailCtx_vp msg estate conseq pos =
   let estate = { estate with es_formula = substitute_flow_into_f !Exc.GTable.top_flow_int estate.es_formula } in
   mkFailCtx_in (
     Basic_Reason (mkFailContext msg estate (Base rhs_b) None pos,
-                  mk_failure_may msg logical_error, estate.es_trace)) (Ctx {estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.es_formula}) (mk_cex true)
+                  mk_failure_may msg logical_error, estate.es_trace)) ({estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.es_formula}, msg, Failure_Must msg) (mk_cex true)
 
 let vperm_entail_set ?(par_flag=false) ?(ver_post_flag=false) ?(classic_flag=false) lhs_vperm_sets rhs_vperm_sets =
   let pr_vp = pr_pair !print_sv string_of_vp_ann in
@@ -395,9 +395,9 @@ let vperm_entail_set ?(par_flag=false) ?(ver_post_flag=false) ?(classic_flag=fal
       (fun _ _ -> vperm_entail_set  ~par_flag ~ver_post_flag ~classic_flag lhs_vperm_sets rhs_vperm_sets) lhs_vperm_sets rhs_vperm_sets
 
 let vperm_entail_rhs estate conseq pos =
-  let par_flag = estate.CF.es_infer_obj # is_par || infer_const_obj # is_par in
-  let ver_post_flag = estate.CF.es_infer_obj # is_ver_post || infer_const_obj # is_ver_post in
-  let classic_flag = estate.CF.es_infer_obj # is_classic || infer_const_obj # is_classic in
+  let par_flag = estate.CF.es_infer_obj # is_par_all (* || infer_const_obj # is_par *) in
+  let ver_post_flag = estate.CF.es_infer_obj # is_ver_post_all (* || infer_const_obj # is_ver_post *) in
+  let classic_flag = estate.CF.es_infer_obj # is_classic_all (* || infer_const_obj # is_classic *) in
   if not (!Globals.ann_vp) then Succ estate
   else
     let lhs_vperm_sets = collect_vperm_sets estate.es_formula in

@@ -251,9 +251,9 @@ let is_sat f sn = Gen.Profiling.do_2 "dpsat" Smtsolver.is_sat f sn
 	*)  
 let simplify f = (* (x_add Omega.simplify) *) !Cpure.simplify f
 
-let hull f = Omega.hull f	
+let hull f = x_add_1 Omega.hull f	
 
-let pairwisecheck f = Omega.pairwisecheck f
+let pairwisecheck f = x_add_1 Omega.pairwisecheck f
 
 (*let imply ante conseq impl_no _ = match trans_f false ante with
   | SFalse -> true

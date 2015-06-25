@@ -1488,10 +1488,257 @@ Residue:
 [[ Fold ==> ]]
 
 ===================================================================
+# ex11a2.ss -tp z3 --smtinp: FIXED
+
+Why did we generate P twice?
+
+WARNING: _0:0_0:0:Z3 error message: 
+(error "line 304 column 25: invalid declaration, function 'P' (whith the given signature) already declared")
+
+Checking procedure foo$int[]... 
+!!! **wrapper.ml#271:Calling wrap_arr_as_var
+WARNING: _0:0_0:0:Z3 error message: 
+(error "line 304 column 25: invalid declaration, function 'P' (whith the given signature) already declared")
+>>> GENERATED SMT INPUT:
+
+;Variables declarations
+(declare-fun a_primed () (Array Int Int))
+(declare-fun a () (Array Int Int))
+(declare-fun v_int_11_1152_primed () Int)
+;Relations declarations
+(declare-fun P (Int) Bool)
+(declare-fun P (Int) Bool)
+;Axioms assertions
+;Antecedent
+(assert (= a_primed a))
+(assert (P (select a 5)))
+(assert (= v_int_11_1152_primed 5))
+;Negation of Consequence
+(assert (not false))
+(check-sat)
 ===================================================================
+# ex47a
+
+# why message appears twice?
+
+WARNING: _0:0_0:0:* between overlapping heaps: ( x::node<nnn,Anon_15>@M, x::node<mmm,Anon_16>@M)
+
+WARNING: _0:0_0:0:* between overlapping heaps: ( x::node<nnn,Anon_15>@M, x::node<mmm,Anon_16>@M)
+[Warning] False ctx
+
 ===================================================================
+# bugs/ex1a.slk (ann2.slk) --imm
+
+
+# how to make new instantiation work for phase mechanism of imm?
+
+infer [] y::node<_,_>@I |- y::node<a,b>@v & v<:@I.
+
+# expect Valid but pure missing from phase reasoning
+# soln : add pure back into reasnoning for earlier phases
+
+Entail (1) : Fail.(may) cause: @I<:v |-  v<:@I. LOCS:[0;7] (may-bug)
+
+Residue:
+ 
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message:  @I<:v |-  v<:@I. LOCS:[0;7] (may-bug)
+                             fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}}
+[[ SEARCH ==>  Match(y,y) ==> ]]
+CEX:false
+
+------------------------------------------------------------
+--imm -dre  "heap_entail\|heap_n_" 
+
+(==solver.ml#7639==)
+heap_entail_non_empty_rhs_heap@15@14@13@12@11@10@9@8@7@6@5@4@3@2@1
+heap_entail_non_empty_rhs_heap inp1 : y::node<Anon_12,Anon_13>@I&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars: [v; b; a]
+ es_infer_vars_rel: []
+ es_unsat_flag: false
+heap_entail_non_empty_rhs_heap inp2 :LHS base: y::node<Anon_12,Anon_13>@I&{FLOW,(20,21)=__norm#E}[]
+heap_entail_non_empty_rhs_heap inp3 :RHS base: y::node<a,b>@v&{FLOW,(20,21)=__norm#E}[]
+heap_entail_non_empty_rhs_heap inp4 :ante    : y::node<Anon_12,Anon_13>@I&{FLOW,(20,21)=__norm#E}[]
+heap_entail_non_empty_rhs_heap inp5 :conseq  : y::node<a,b>@v&{FLOW,(20,21)=__norm#E}[]
+heap_entail_non_empty_rhs_heap inp6 :matched_set:[]
+heap_entail_non_empty_rhs_heap@15 EXIT:( 
+[
+ y::node<Anon_12,Anon_13>@[@I, @v]&@I<:v & a=Anon_12 & b=Anon_13&
+   {FLOW,(20,21)=__norm#E}[]
+ ]
+,<Pure>
+Success
+</Pure>
+)
+
+(==solver.ml#7215==)
+heap_entail_conjunct_helper#3@14@13@12@11@10@9@8@7@6@5@4@3@2@1
+heap_entail_conjunct_helper#3 inp1 : y::node<Anon_12,Anon_13>@I&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars: [v; b; a]
+ es_infer_vars_rel: []
+ es_unsat_flag: false
+heap_entail_conjunct_helper#3 inp2 : y::node<a,b>@v&{FLOW,(20,21)=__norm#E}[]
+heap_entail_conjunct_helper#3@14 EXIT: 
+[
+ y::node<Anon_12,Anon_13>@[@I, @v]&@I<:v & a=Anon_12 & b=Anon_13&
+   {FLOW,(20,21)=__norm#E}[]
+ ]
+
+(==solver.ml#6556==)
+heap_entail_conjunct#5@13@12@11@10@9@8@7@6@5@4@3@2@1
+heap_entail_conjunct#5 inp1 :false
+heap_entail_conjunct#5 inp2 : y::node<Anon_12,Anon_13>@I&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars: [v; b; a]
+ es_infer_vars_rel: []
+ es_unsat_flag: false
+heap_entail_conjunct#5 inp3 : y::node<a,b>@v&{FLOW,(20,21)=__norm#E}[]
+heap_entail_conjunct#5@13 EXIT: 
+[
+ y::node<Anon_12,Anon_13>@[@I, @v]&@I<:v & a=Anon_12 & b=Anon_13&
+   {FLOW,(20,21)=__norm#E}[]
+ ]
+
+
+(==solver.ml#6357==)
+heap_entail_split_lhs_phases@12@11@10@9@8@7@6@5@4@3@2@1
+heap_entail_split_lhs_phases inp1 : y::node<Anon_12,Anon_13>@I&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars: [v; b; a]
+ es_infer_vars_rel: []
+heap_entail_split_lhs_phases inp2 :RHS: y::node<a,b>@v&{FLOW,(20,21)=__norm#E}[]
+heap_entail_split_lhs_phases@12 EXIT: 
+[
+ y::node<Anon_12,Anon_13>@[@I, @v]&@I<:v & a=Anon_12 & b=Anon_13&
+   {FLOW,(20,21)=__norm#E}[]
+ ]
+
+------------------------------------------------------------
+
+--field-imm -dre  "heap_entail\|heap_n_" 
+
+(==solver.ml#7639==)
+heap_entail_non_empty_rhs_heap@12@11@10@9@8@7@6@5@4@3@2@1
+heap_entail_non_empty_rhs_heap inp1 : y::node<Anon_12,Anon_13>@I&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars: [v; b; a]
+ es_infer_vars_rel: []
+heap_entail_non_empty_rhs_heap inp2 :LHS base: y::node<Anon_12,Anon_13>@I&{FLOW,(20,21)=__norm#E}[]
+heap_entail_non_empty_rhs_heap inp3 :RHS base: y::node<a,b>@v&v<:@I&{FLOW,(20,21)=__norm#E}[]
+heap_entail_non_empty_rhs_heap inp4 :ante    : y::node<Anon_12,Anon_13>@I&{FLOW,(20,21)=__norm#E}[]
+heap_entail_non_empty_rhs_heap inp5 :conseq  : y::node<a,b>@v&v<:@I&{FLOW,(20,21)=__norm#E}[]
+heap_entail_non_empty_rhs_heap inp6 :matched_set:[]
+heap_entail_non_empty_rhs_heap@12 EXIT:( 
+[
+ y::node<Anon_12,Anon_13>@A&v=@I & a=Anon_12 & b=Anon_13&
+   {FLOW,(20,21)=__norm#E}[]
+ ]
+(==solver.ml#7215==)
+heap_entail_conjunct_helper#3@11@10@9@8@7@6@5@4@3@2@1
+heap_entail_conjunct_helper#3 inp1 : y::node<Anon_12,Anon_13>@I&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars: [v; b; a]
+ es_infer_vars_rel: []
+heap_entail_conjunct_helper#3 inp2 : y::node<a,b>@v&v<:@I&{FLOW,(20,21)=__norm#E}[]
+heap_entail_conjunct_helper#3@11 EXIT: 
+[
+ y::node<Anon_12,Anon_13>@A&v=@I & a=Anon_12 & b=Anon_13&
+   {FLOW,(20,21)=__norm#E}[]
+ ]
+
+
+(==solver.ml#5721==)
+heap_entail_conjunct#1@10@9@8@7@6@5@4@3@2@1
+heap_entail_conjunct#1 inp1 :false
+heap_entail_conjunct#1 inp2 : y::node<Anon_12,Anon_13>@I&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars: [v; b; a]
+ es_infer_vars_rel: []
+heap_entail_conjunct#1 inp3 : y::node<a,b>@v&v<:@I&{FLOW,(20,21)=__norm#E}[]
+heap_entail_conjunct#1@10 EXIT: 
+[
+ y::node<Anon_12,Anon_13>@A&v=@I & a=Anon_12 & b=Anon_13&
+   {FLOW,(20,21)=__norm#E}[]
+ ]
+
+
+(==solver.ml#5173==)
+heap_entail_conjunct_lhs#1@9@8@7@6@5@4@3@2@1
+heap_entail_conjunct_lhs#1 inp1 :prog_decl
+heap_entail_conjunct_lhs#1 inp2 :false
+heap_entail_conjunct_lhs#1 inp3 : y::node<Anon_12,Anon_13>@I&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars: [v; b; a]
+ es_infer_vars_rel: []
+heap_entail_conjunct_lhs#1 inp4 : y::node<a,b>@v&v<:@I&{FLOW,(20,21)=__norm#E}[]
+heap_entail_conjunct_lhs#1 inp5 :1 File "",Line:0,Col:0
+heap_entail_conjunct_lhs#1@9 EXIT:
+ ctx =  
+[
+ y::node<Anon_12,Anon_13>@A&v=@I & a=Anon_12 & b=Anon_13&
+   {FLOW,(20,21)=__norm#E}[]
+ ]
+
+==============================================================
+# ex48c.slk (FIXED by changing to expl inst)
+
+# I guess the renaming on RHS is caused by axx2 being global.
+
+ ### conseq =  EBase (exists axx2_44,flted_25_43: x::ll{}<flted_25_43,axx2_44>@M&
+       flted_25_43=1+n & 1<n & axx2_44=axx2&{FLOW,(20,21)=__norm#E}[]
+
+# ann subs not complete..
+
+(==solver.ml#7245==)
+subst@70
+subst inp1 :[(axx2_44,axx2_53),(flted_25_43,flted_25_54)]
+subst inp2 : x::ll<flted_25_43,axx2_44>@M&flted_25_43=1+n & 1<n & axx2_44=axx2&
+{FLOW,(20,21)=__norm#E}[]
+subst@70 EXIT: x::ll<flted_25_54,axx2_44>@M&flted_25_54=1+n & 1<n & axx2_53=axx2&
+{FLOW,(20,21)=__norm#E}[]
+
 ===================================================================
+# ex47b.slk --field-imm (FIXED)
+
+checkentail x::ll<n> * y::ll<n> & x=y |- x=null.
+
+# why did --field-imm fail for this example?
+
+(==mcpure.ml#2282==)
+generate_action@3
+generate_action inp1 :[ x::ll{}<n>@M, y::ll{}<n_34>@M]
+generate_action inp2 :emap[{n,n_34};{x,y}]
+generate_action@3 EXIT: Unfold 1 =>
+             LHS: x::ll{}<n>@M
+             RHS: x::ll{}<n>@M
+
+# why below see only one predicate?
+
+--field-imm
+(==mcpure.ml#2282==)
+generate_action@3
+generate_action inp1 :[ x::ll{}<n>@M]
+generate_action inp2 :emap[{n,n_34};{x,y}]
+generate_action@3 EXIT: NothingToDo => No duplicated nodes!
+
 ===================================================================
+# ex48b.slk --field-imm
+
+checkentail x::node<a@M, r@M> * r::node<b@M, r2@M> * r2::ll<n, v2> |- x::ll<n + 2, v2>.
+
+# why is there an exception?
+
+Entail 1: EXCast. Failure("imm_to_spec_var do do not provide support for nested TempAnn/TempRes@[@M, @v2]")
+: no residue 
+
+Exception(compatible_ann):Failure("Cpure.ml currently we do not provide support for nested TempAnn/TempRes")
+Exception(h_formula_2_mem):Failure("Cpure.ml currently we do not provide support for nested TempAnn/TempRes")
+Exception(xpure_heap_symbolic):Failure("Cpure.ml currently we do not provide support for nested TempAnn/TempRes")
+Exception(xpure_heap):Failure("Cpure.ml currently we do not provide support for nested TempAnn/TempRes")
+Exception(xpure_imply):Failure("Cpure.ml currently we do not provide support for nested TempAnn/TempRes")
+Exception(sem_imply_add):Failure("Cpure.ml currently we do not provide support for nested TempAnn/TempRes")
+Exception(do_base_case_unfold_only):Failure("Cpure.ml currently we do not provide support for nested TempAnn/TempRes")
+Exception(process_action):Failure("Cpure.ml currently we do not provide support for nested TempAnn/TempRes")
+Exception(process_action):Failure("Cpure.ml currently we do not provide support for nested TempAnn/TempRes")
+Exception(heap_entail_non_empty_rhs_heap):Failure("Cpure.ml currently we do not provide support for nested TempAnn/TempRes")
+Exception(heap_entail_conjunct_helper):Failure("Cpure.ml currently we do not provide support for nested TempAnn/TempRes")
 ===================================================================
 ===================================================================
 ===================================================================

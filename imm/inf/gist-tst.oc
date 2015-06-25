@@ -1,0 +1,54 @@
+# Omega Calculator v2.1 (based on Omega Library 2.1, July, 2008):
+R:={[t1,t2]: exists (aa : 2aa = t1 &&  2 <= t1 && t1 <= 8)};
+
+known := {[t1,t2]: 1 <= t1 <= 9};
+
+gist R given known;
+
+#{[t1,t2]: Exists ( alpha : 2alpha = t1)}
+
+
+P:= {[v]: 0<=v & v<=3};
+kno := {[v]:v<=2};
+
+gist P given kno;
+
+gist kno given P;
+
+Q := {[v,w]: v=v};
+kn := {[v,w]:v<=2};
+
+gist Q given kn;
+
+Z:={[v]: 0=0};
+Z;
+
+P1:={[v]: (v=0 | v=3) & v<=2};
+kn1 := {[v]:v<=2};
+gist P1 given kn1;
+
+
+P:={[a,b]: a<=2 & b<=2};
+k := {[a,b]:a<=b};
+gist P given k;
+gist k given P;
+
+P:={[a,b]: a<=2 & b<=1};
+k := {[a,b]:a<=b};
+gist P given k;
+gist k given P;
+
+
+P5:={[a,b]: a=a & b=b};
+k5 := {[a,b]:a<=b};
+gist P5 given k5;
+gist k5 given P5;
+
+
+P:={[a,b]: a<=2 & b<=2};
+k := {[a,b]:a<=b};
+gist P given k;
+gist k given P;
+
+
+gist {[flted_38_44] : ((flted_38_44 = 2))} given {[flted_38_44] : (((0>0)))};

@@ -27,6 +27,7 @@
   Debug.winfo_pprint ((VarGen.build_loc_str __FILE__ __LINE__)^s))
 #define x_ninfo_hp (fun pr s p -> ())
 #define x_ninfo_pp (fun s p -> ())
+#define x_add_0 (fun f -> let () = VarGen.store_loc_str  __FILE__ __LINE__ in f)
 #define x_add_1 (fun f x -> let () = VarGen.store_loc_str  __FILE__ __LINE__ in f x)
 #define x_add (fun f x y -> let () = VarGen.store_loc_str  __FILE__ __LINE__ in f x y)
 #define x_add_3 (fun f a b c -> let () = VarGen.store_loc_str  __FILE__ __LINE__ in f a b c)

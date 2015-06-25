@@ -31,6 +31,20 @@ sig
   val string_of : t -> string
 end;;
 
+module PLevel =
+struct
+  type t = int
+  let short = 100
+  let norm = 200
+  let long = 300
+  let is_short x = x>=short
+  let is_norm x = x>=norm
+  let is_long x = x>=long
+  let is_short_only x = x==short
+  let is_norm_only x = x==norm
+  let is_long_only x = x==long
+end;;
+
 module Basic =
 (* basic utilities that can be opened *)
 struct
@@ -70,14 +84,14 @@ struct
     in aux xs
 
   let print_endline_quiet s =
-    let flag = !compete_mode in
+    let flag = !silence_output(* compete_mode *) in
     (* print_endline ("compete mode : "^(string_of_bool flag)); *)
     if flag then () 
     else print_endline s 
   let print_endline_if b s = if b then print_endline s else ()
   let print_string_if b s = if b then print_string s else ()
   let print_string_quiet s = 
-    if !compete_mode then () 
+    if !silence_output (* compete_mode *) then () 
     else print_string s 
 
   let print_web_mode s = 
@@ -144,6 +158,7 @@ struct
   let pr_list_round_sep sep f xs = pr_list_brk_sep "(" ")" sep f xs
   let pr_list_ln f xs = "["^(pr_lst ",\n" f xs)^"]"
   let pr_list_num f xs = "["^(pr_lst_num ",\n" f xs)^"]"
+  let pr_list_num_vert f xs = "[\n"^(pr_lst_num ",\n" f xs)^"]"
   let pr_arr_ln f arr = pr_list_ln f (Array.to_list arr)
 
   let pr_list_mln f xs = (pr_lst "\n--------------\n" f xs)
@@ -168,6 +183,14 @@ struct
     | None -> def
     | Some v -> f v
 
+  let map_opt_w_def f_none f_some x = match x with
+    | None -> f_none
+    | Some v -> Some (f_some v)
+
+  let map_list_def def f x = match x with
+    | [] -> def
+    | _  -> f x
+
   let map_l_snd f x = List.map (fun (l,c)-> (l,f c)) x
   let map_l_fst f x = List.map (fun (l,c)-> (f l,c)) x
   let map_snd_only f x = List.map (fun (l,c)-> f c) x
@@ -177,7 +200,21 @@ struct
   let exists_l_snd f x = List.exists (fun (_,c)-> f c) x
   let all_l_snd f x = List.for_all (fun (_,c)-> f c) x
 
-  let add_str s f xs = s^":"^(f xs)
+  let ite cond f1 f2 =  if cond then f1 else f2
+
+  let line_break_threshold = 60
+  exception Break_Found
+  let add_str ?(inline=false) hdr f s =
+    (* A string should break if comprises >=2 lines or span more than 60 characters *)
+    let should_break s =
+      try
+        for i = 0 to line_break_threshold do
+          if (String.get s i = '\n') then raise Break_Found done;
+        false
+      with Break_Found -> true | _ -> false in
+    let str = f s in
+    let sep = if (not inline && should_break str) then ":\n" else ":" in
+    hdr^sep^str
 
   let opt_to_list o = match o with
     | None -> []
@@ -566,6 +603,11 @@ class ['a] stack  =
         stk <- i::stk
       end
     method get_stk  = stk (* return entire content of stack *)
+    method get_stk_and_reset  = let s=stk in (stk<-[];s) (* return entire content of stack & clear *)
+    method get_stk_no_dupl  = 
+      (* remove dupl *)
+      let s = self # get_stk in
+      Basic.remove_dups s
     method set_stk newstk  = stk <- newstk 
     (* override with a new stack *)
     method pop = match stk with 
@@ -615,6 +657,13 @@ class ['a] stack_pr (epr:'a->string) (eq:'a->'a->bool)  =
     inherit ['a] stack as super
     val elem_pr = epr 
     val elem_eq = eq 
+    method push_list_pr (ls:'a list) =  
+      (* WN : below is to be removed later *)
+      (* let () = print_endline ("push_list:"^(Basic.pr_list epr ls)) in *)
+      super # push_list ls 
+    method push_pr (s:string) (ls:'a) =  
+      (* let () = print_endline ("push_pr("^s^"):"^(epr ls)) in *)
+      super # push ls 
     method string_of = Basic.pr_list_ln elem_pr stk
     method string_of_no_ln = Basic.pr_list elem_pr stk
     method string_of_no_ln_rev = 
@@ -657,6 +706,7 @@ class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  =
     method top_no_exc : 'a = match stk with 
       | [] ->  emp_val
       | x::xs -> x
+    (* method top : 'a = self # top_no_exc  *)
     method last : 'a = match stk with 
       | [] -> emp_val
       | _ -> List.hd (List.rev stk)
@@ -694,6 +744,17 @@ class counter x_init =
     method str_get_next : string 
       = ctr <- ctr + 1; string_of_int ctr
   end;;
+
+class ctr_with_aux x_init =
+  object 
+    inherit counter x_init as super
+    val mutable aux_ctr = x_init
+    method inc_and_get = 
+      ctr <- ctr + 1; aux_ctr <- x_init; ctr
+    method inc_and_get_aux_str = 
+      let () = aux_ctr <- aux_ctr + 1 in
+        (string_of_int ctr)^"."^(string_of_int aux_ctr)
+  end
 
 class ctr_call x_init =
   object 
@@ -815,7 +876,7 @@ struct
 
 end;;
 
-let add_str s f xs = s^":"^(f xs)
+let add_str = Basic.add_str
 
 type 'a keyt = int option
 
@@ -1039,7 +1100,7 @@ module EqMap =
       let r =
         let (t1,t2) = order_two t1 t2 in
         List.fold_left (fun a (p1,p2) -> add_equiv a p1 p2) t2 (get_equiv t1) in
-      let pr = string_of_debug in
+      (* let pr = string_of_debug in *)
       (* let () = print_endline ("eset1 :"^ (pr t1)) in *)
       (* let () = print_endline ("eset2 :"^ (pr t2)) in *)
       (* let () = print_endline ("eset_out :"^ (pr r)) in *)
@@ -1056,7 +1117,13 @@ module EqMap =
     let find_equiv_all  (e:elem) (s:emap) : elist  =
       let r1 = find s e in
       if (r1==None) then []
+      else List.map fst (List.filter (fun (a,k) -> k==r1) s)
+
+    let find_equiv_all_new  (e:elem) (s:emap) : elist  =
+      let r1 = find s e in
+      if (r1==None) then [e]
       else List.map fst (List.filter (fun (a,k) -> k==r1) s) 
+  
 
     (* return a distinct element equal to e *)
     let find_equiv  (e:elem) (s:emap) : elem option  =
@@ -1286,24 +1353,34 @@ struct
     (* let () = force_dd_print() in *)
     ()
 
-  (* call f and pop its trace in call stack of ho debug *)
-  let pop_aft_apply_with_exc (f:'a->'b) (e:'a) : 'b =
-    let r = (try 
-               (f e)
-             with exc -> (pop_call(); raise exc))
+  let trace_exception s exc =
+    if !VarGen.trace_exc then Basic.print_endline_quiet ("Exception("^s^"):"^(Printexc.to_string exc))
+
+    (* call f and pop its trace in call stack of ho debug *)
+  let pop_aft_apply_with_exc s (f:'a->'b) (e:'a) : 'b =
+    let r = try 
+      (f e)
+    with exc -> 
+        begin 
+          trace_exception s exc;
+          pop_call(); 
+          raise exc
+        end
     in pop_call(); r
 
+
   (* call f and pop its trace in call stack of ho debug *)
-  let pop_aft_apply_with_exc_no (f:'a->'b) (e:'a) : 'b =
+  let pop_aft_apply_with_exc_no s (f:'a->'b) (e:'a) : 'b =
     try 
       let r = (f e) in
       if !debug_precise_trace then debug_stk # pop; 
       r
     with exc -> 
-      begin
-        if !debug_precise_trace then debug_stk # pop; 
-        raise exc
-      end
+        begin
+          trace_exception s exc;
+          if !debug_precise_trace then debug_stk # pop; 
+          raise exc
+        end
 
   (* string representation of call stack of ho_debug *)
   let string_of () : string =

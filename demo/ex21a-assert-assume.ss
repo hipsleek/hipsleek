@@ -7,7 +7,7 @@ void foo(int x)
   ensures true;
 {
   if (x>0) {
-    assert x'>=5; //assume true;
+    assert x'>=5 assume true;
     dprint;
     assert x'>=0;
     assert x'<0;

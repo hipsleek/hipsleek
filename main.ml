@@ -17,7 +17,7 @@ let to_java = ref false
 
 let usage_msg = Sys.argv.(0) ^ " [options] <source files>"
 
-let set_source_file arg = 
+let set_source_file arg =
   Globals.source_files := arg :: !Globals.source_files
 
 let process_cmd_line () =
@@ -371,6 +371,11 @@ let reverify_with_hp_rel old_cprog iprog =
   let cprog = Saout.trans_specs_hprel_2_cview iprog old_cprog proc_name unk_hps []
       [] [] need_trans_hprels1 chprels_decl in
   ignore (Typechecker.check_prog iprog cprog)
+
+(* after scriptaguments are read *)
+let hip_prologue () =
+  Globals.is_hip_running := true;
+  Globals.infer_const_obj # init
 
 let hip_epilogue () = 
   if !Debug.dump_calls then Debug.dump_debug_calls ();
@@ -738,10 +743,11 @@ let process_source_full source =
   (* let () = print_string ("Translating to core language...\n"); flush stdout in *)
   (*let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in*)
   (* Forward axioms and relations declarations to SMT solver module *)
-  let todo_unk = List.map (fun crdef -> 
-      let () = Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula in
-      Z3.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula
-    ) (List.rev cprog.Cast.prog_rel_decls) in
+  (* L2: these relations were added at Astsimp.trans_rel *)
+  (* let todo_unk = List.map (fun crdef ->  *)
+  (*     let () = Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula in *)
+  (*     Z3.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula *)
+  (*   ) (List.rev cprog.Cast.prog_rel_decls) in *)
   let todo_unk = List.map (fun cadef ->
       let () = Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion in
       Z3.add_axiom cadef.Cast.axiom_hypothesis Z3.IMPLIES cadef.Cast.axiom_conclusion
@@ -993,6 +999,7 @@ let process_source_full_after_parser source (prog, prims_list) =
   (* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
 
   (* Forward axioms and relations declarations to SMT solver module *)
+  (* L2: not-in-used *)
   let todo_unk = List.map (fun crdef -> 
       let () = Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula in
       Z3.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula
@@ -1110,6 +1117,7 @@ let main1 () =
   process_cmd_line ();
   let () = Debug.read_main () in
   Scriptarguments.check_option_consistency ();
+  hip_prologue ();
   if !Globals.print_version_flag then begin
     print_version ()
   end else
@@ -1167,6 +1175,10 @@ let old_main () =
     (*   if !Global.enable_counters then *)
     (*     print_string (Gen.Profiling.string_of_counters ()) *)
     (*   else () in *)
+    (* let _ = print_endline ("unsat_count_syn:" ^ (string_of_int !unsat_count_syn)) in *)
+    (* let _ = print_endline ("unsat_count_sem:" ^ (string_of_int !unsat_count_sem)) in *)
+    (* let _ = print_endline ("Excore.UnCa.hit:" ^ (string_of_int !Excore.UnCa.hit_cache)) in *)
+    (* let _ = print_endline ("Excore.UnCa.miss:" ^ (string_of_int !Excore.UnCa.miss_cache)) in *)
     let () = Gen.Profiling.print_counters_info () in
     let () = Gen.Profiling.print_info () in
     ()

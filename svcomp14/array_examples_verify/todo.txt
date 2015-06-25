@@ -9,6 +9,7 @@ File "bug-1-type-error.slk", line 6, characters 14-15
  at:error at: 
 SLEEK FAILURE (END)
 ======================================================================
+Fixed
 # test_new.slk
 
 z3 can handle but
@@ -24,6 +25,8 @@ Entail 3: EXCast. Failure("replace_exp: Invalid index form a[a[i]]")
 Entail 4: EXCast. Failure("replace_exp: Invalid index form a[a[i] + 0]")
 : no residue 
 ======================================================================
+Further discussion needed.
+
 # test_forall2.slk (solved)
 
 // solved after merging
@@ -47,6 +50,7 @@ Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or
 Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a[i]")
  Formula: exists(i:a[i]=3)
 ======================================================================
+Fixed
 # err1-  --ato -tp oc
 
 Why below? Can we suppress the message?
@@ -70,7 +74,9 @@ Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or
 
 What is this function doing?
 ======================================================================
+Fixed
 # err2
+
 
 // 7(1)
 infer [a] i=2  |- a[i] + 5 > 3.

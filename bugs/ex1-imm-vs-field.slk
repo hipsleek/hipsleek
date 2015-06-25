@@ -1,0 +1,49 @@
+data node {
+  int val;
+  node next;
+}.
+
+// (27) Valid
+infer [] y::node<_,_>@I |- y::node<a,b>@v & v<:@I.
+print residue.
+expect Valid.
+
+// (27) FAIL
+infer [] y::node<_,_>@I |- y::node<a,b>@v & v<:@M.
+print residue.
+expect Fail.
+
+// (30) FAIL
+infer [] y::node<_,_>@I |- [v] y::node<a,b>@v & v<:@M.
+expect Fail.
+
+/*
+# ann2.slk
+
+Need to improve error messages..
+
+infer [] y::node<_,_>@I |- y::node<a,b>@v & v<:@M.
+
+GOT:
+===
+Entail (1) : Fail.(must) cause:mismatched imm annotation for data node
+
+# Can we generate this instead:
+     v=@M  |-  @I<:v & v<:@M
+
+infer [] y::node<_,_>@I |- [v] y::node<a,b>@v & v<:@M.
+
+GOT:
+===
+Entail (1) : Fail.(must) cause:mismatched imm annotation for data node
+
+# Can we generate this instead:
+     true  |-  (ex v: v=@M & @I<:v & v<:@M)
+
+
+Default (branch):
+Entail (24) : Fail.(must) cause: 
+  true |-  ann_f_r_198=@M & @I<:ann_f_r_198. LOCS:[92;0] (RHS: contradiction)
+
+
+*/

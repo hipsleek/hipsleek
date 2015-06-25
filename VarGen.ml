@@ -1,5 +1,23 @@
+type print_level =
+  (* | P_Quiet *)
+  (* | P_VShort *)
+  | P_Short
+  | P_Norm  (* default *)
+  | P_Detail
+  (* | P_Debug *)
+
+type print_set =
+  | PS_Debug (* to assist with debugging *)
+  | PS_Type (* to print type *)
+  | PS_Quiet (* quiet printing *)
+  | PS_Orig_Conseq (* quiet printing *)
+  | PS_Tidy (* quiet printing *)
+  | PS_IParams (* quiet printing *)
+  | PS_HTML (* quiet printing *)
+
 let compete_mode = ref false
 let trace_failure = ref false
+let trace_exc = ref false
 let verbose_num = ref 0
 
 let last_posn = ref (None:string option)
@@ -18,6 +36,11 @@ type loc =  {
 type primed =
   | Primed
   | Unprimed
+
+let string_of_primed p =
+  match p with
+  | Primed -> "Primed"
+  | Unprimed -> "Unprimed"
 
 let no_pos = 
   let no_pos1 = { Lexing.pos_fname = "";

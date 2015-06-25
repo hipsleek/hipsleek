@@ -396,6 +396,7 @@ let rec math_of_b_formula b : string =
   | CP.ListNotIn _
   | CP.ListAllN _
   | CP.ListPerm _
+  | CP.ImmRel _
   | CP.RelForm _ -> failwith ("math_of_b_formula: cannot handle bag, list, rel, perm formula")
 
 let rec math_of_formula pr_w pr_s f0 : string =
@@ -830,5 +831,5 @@ let hull (f: CP.formula) : CP.formula =
   else f
 
 let pairwisecheck (f: CP.formula): CP.formula =
-  if is_linear_formula f then Omega.pairwisecheck f 
+  if is_linear_formula f then x_add_1 Omega.pairwisecheck f 
   else f
