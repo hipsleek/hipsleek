@@ -5,6 +5,62 @@ open Globals
 open Gen.Basic
 
 module CP = Cpure
+module TL = Tlutils
+
+(* e.g. given x', x=x'+a'-b'+1 return x+a'-b'+1 *)
+let extract_ind_exp sv form : CP.exp =
+  (* norm should be a sum of terms *)
+  let () = x_binfo_hp (add_str "specvar: " CP.string_of_spec_var) sv no_pos in
+
+  (* term will be of form coe*sv^1  *)
+  let is_term_for_sv (term : TL.term) : bool =
+    match term.TL.term_var with
+    | [(v,1)] -> CP.eq_spec_var sv v
+    | _ -> false in
+
+  let negate_term t =
+    let neg = match t.TL.term_coe with
+      | CP.IConst (i, pos) ->
+        CP.mkIConst (-1 * i) pos
+      | coe ->
+        let pos = CP.pos_of_exp coe in
+        CP.mkMult (CP.mkIConst (-1) pos) coe pos in
+    { t with TL.term_coe = neg } in
+
+  match form with
+  | CP.BForm ((CP.Eq (lhs, rhs, _), _), _) ->
+    let lhs_tl = TL.term_list_of_exp (CP.afv lhs) lhs in
+    let () = x_binfo_hp (add_str "lhs terms: " TL.print_term_list) lhs_tl no_pos in
+    let rhs_tl = TL.term_list_of_exp (CP.afv rhs) rhs in
+    let () = x_binfo_hp (add_str "rhs terms: " TL.print_term_list) rhs_tl no_pos in
+    (* move lhs terms to rhs *)
+    let tl = rhs_tl @ (List.map negate_term lhs_tl) in
+    (* move the *sv* given to the 'lhs',
+     * assume that the form contains the specvar *)
+    let (s,rest) = List.partition is_term_for_sv tl in
+    let s = List.map negate_term s in
+    let new_form = CP.BForm ((CP.mkEq (TL.exp_of_term_list s no_pos) (TL.exp_of_term_list rest no_pos) no_pos, None), None) in
+    let () = x_binfo_hp (add_str "rearranged: " !CP.print_formula) new_form no_pos in
+    (match s with
+     | [] -> failwith "extract_ind_exp: expected formula to contain given spec_var"
+     | [s] ->
+       (* since form is equivalent to x'=f(x,...),
+        * sv_coe is going to be -1 or 1. *)
+       (match s.TL.term_coe with
+        | CP.IConst (i, pos) ->
+          let res_tl = if i > 0
+            then rest
+            else (List.map negate_term rest) in
+          TL.exp_of_term_list res_tl no_pos
+        | _ -> failwith "extract_ind_exp: expected coe of spec_var to be -1 or 1")
+     | _ -> failwith "extract_ind_exp: expected only one specvar term")
+  | _ -> failwith "extract_ind_exp: expected Eq lhs=rhs formula"
+
+let extract_ind_exp sv form : CP.exp =
+  let pr1 = Cprinter.string_of_spec_var in
+  let pr2 = !CP.print_formula in
+  let pr_out = Cprinter.string_of_formula_exp in
+  Debug.no_2 "simplify_ind_form" pr1 pr2 pr_out extract_ind_exp sv form
 
 let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident list) : CP.param_flow list list =
   (* group together which have relations  *)
@@ -45,8 +101,6 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
               CP.EMapSV.mem (CP.sp_rm_prime arg) spec_vars in
             let constraints = List.filter has_arg lhs_formulae in
             let () = x_binfo_hp (add_str ("constraints of " ^ (Cprinter.string_of_spec_var arg)) (pr_list !CP.print_formula)) constraints no_pos in
-            let nml_constraints = List.map Tlutils.normalize_formula constraints in
-            let () = x_binfo_hp (add_str ("normalzd constraints of " ^ (Cprinter.string_of_spec_var arg)) (pr_list !CP.print_formula)) nml_constraints no_pos in
             (arg,flow,constraints) in
           let res = List.map flow_of_arg args_with_index in
           (* TODO: analyse res into CP.param_flow list *)
@@ -55,10 +109,13 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
             (* if None, may be constant, or alias, or something else. *)
             | None -> CP.UNKNOWN arg
             | Some (fr_a,to_a) ->
+              let from_arg = List.nth primed_args fr_a in
               (match constr with
-               | [] -> CP.FLOW (List.nth primed_args fr_a)
-               | [form] -> CP.IND (CP.fv form, form)
-               (* am assuming there is only one x'=f(x) form per infer_rel_ass *)
+               | [] -> CP.FLOW from_arg
+               | [form] ->
+                 (* am assuming there is only one x'=f(x) form per infer_rel_ass *)
+                 let simpl = extract_ind_exp from_arg form in
+                 CP.IND (CP.afv simpl, simpl)
                | _ -> failwith "more constraints than assumed")
           ) res
     ) lst_assume in
