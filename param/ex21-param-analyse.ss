@@ -55,5 +55,67 @@ which seem sufficient to analyse that
     CtxOR
       emp&a'=a & b'=b & x=x' & y'=y & x'<=0 & 1<=y & R(x,y,a,b)&
 
+!!! **panalysis.ml#103:constraints of x':[ x=(b'-a')+x'+1]
+!!! **panalysis.ml#103:constraints of y':[ y=(y'-b')+a'+1]
+!!! **panalysis.ml#103:constraints of a':[]
+!!! **panalysis.ml#103:constraints of b':[]
+!!! **panalysis.ml#13:specvar: :x'
+!!! **panalysis.ml#33:lhs terms: :( 1)*x^1
+!!! **panalysis.ml#35:rhs terms: :( 1)*b'^1 + ( -1)*a'^1 + ( 1)*x'^1 + ( 1)
+!!! **panalysis.ml#43:rearranged: : -1*x'=(1*b')+(-1*a')+1+(-1*x)
+!!! **panalysis.ml#13:specvar: :y'
+!!! **panalysis.ml#33:lhs terms: :( 1)*y^1
+!!! **panalysis.ml#35:rhs terms: :( 1)*y'^1 + ( -1)*b'^1 + ( 1)*a'^1 + ( 1)
+!!! **panalysis.ml#43:rearranged: : -1*y'=(-1*b')+(1*a')+1+(-1*y)
+!!! **panalysis.ml#103:constraints of x':[ x=(b'-a')+x'+1]
+!!! **panalysis.ml#103:constraints of y':[ y=(y'-b')+a'+1]
+!!! **panalysis.ml#103:constraints of a':[]
+!!! **panalysis.ml#103:constraints of b':[]
+!!! **panalysis.ml#13:specvar: :x'
+!!! **panalysis.ml#33:lhs terms: :( 1)*x^1
+!!! **panalysis.ml#35:rhs terms: :( 1)*b'^1 + ( -1)*a'^1 + ( 1)*x'^1 + ( 1)
+!!! **panalysis.ml#43:rearranged: : -1*x'=(1*b')+(-1*a')+1+(-1*x)
+!!! **panalysis.ml#13:specvar: :y'
+!!! **panalysis.ml#33:lhs terms: :( 1)*y^1
+!!! **panalysis.ml#35:rhs terms: :( 1)*y'^1 + ( -1)*b'^1 + ( 1)*a'^1 + ( 1)
+!!! **panalysis.ml#43:rearranged: : -1*y'=(-1*b')+(1*a')+1+(-1*y)
+!!! **panalysis.ml#103:constraints of x':[ x=(b'-a')+x'+1]
+!!! **panalysis.ml#103:constraints of y':[ y=(y'-b')+a'+1]
+!!! **panalysis.ml#103:constraints of a':[]
+!!! **panalysis.ml#103:constraints of b':[]
+!!! **panalysis.ml#13:specvar: :x'
+!!! **panalysis.ml#33:lhs terms: :( 1)*x^1
+!!! **panalysis.ml#35:rhs terms: :( 1)*b'^1 + ( -1)*a'^1 + ( 1)*x'^1 + ( 1)
+!!! **panalysis.ml#43:rearranged: : -1*x'=(1*b')+(-1*a')+1+(-1*x)
+!!! **panalysis.ml#13:specvar: :y'
+!!! **panalysis.ml#33:lhs terms: :( 1)*y^1
+!!! **panalysis.ml#35:rhs terms: :( 1)*y'^1 + ( -1)*b'^1 + ( 1)*a'^1 + ( 1)
+!!! **panalysis.ml#43:rearranged: : -1*y'=(-1*b')+(1*a')+1+(-1*y)
+
+# ex21.ss
+
+!!! **infer.ml#2149:RelInferred (simplified):[
+RELDEFN R: ( x=(b'-a')+x'+1 & y=(y'-b')+a'+1 & a'<=(b'+x') & b'<=(y'+a') 
+   & R(x,y,a',b')) -->  R(x',y',a',b')]
+
+I think we need to change to:
+
+RELDEFN R: ( x=(b'-a')+x'+1 & y=(y'-b')+a'+1 & a'<=(b'+x') & b'<=(y'+a') 
+   & a=a' & b=b' & R(x,y,a,b)) -->  R(x',y',a',b')]
+
+This would allow us apply to specvar a' and b'
+
+
+!!! **panalysis.ml#103:constraints of a':[]
+!!! **panalysis.ml#103:constraints of b':[]
+!!! **panalysis.ml#13:specvar: :x'
+!!! **panalysis.ml#33:lhs terms: :( 1)*x^1
+!!! **panalysis.ml#35:rhs terms: :( 1)*b'^1 + ( -1)*a'^1 + ( 1)*x'^1 + ( 1)
+!!! **panalysis.ml#43:rearranged: : -1*x'=(1*b')+(-1*a')+1+(-1*x)
+!!! **panalysis.ml#13:specvar: :y'
+!!! **panalysis.ml#33:lhs terms: :( 1)*y^1
+!!! **panalysis.ml#35:rhs terms: :( 1)*y'^1 + ( -1)*b'^1 + ( 1)*a'^1 + ( 1)
+!!! **panalysis.ml#43:rearranged: : -1*y'=(-1*b')+(1*a')+1+(-1*y)
+
 
  */
