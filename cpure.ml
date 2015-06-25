@@ -351,7 +351,7 @@ and rounding_func =
 and infer_rel_type =  (rel_cat * formula * formula)
 
 type param_flow =
-  | IND of (spec_var list * formula)
+  | IND of (spec_var list * exp)
   | FLOW of spec_var
   | UNKNOWN of spec_var
 

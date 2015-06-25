@@ -5030,7 +5030,7 @@ let app_sv_print xs ys =
 
 let string_of_param_flow (pf : P.param_flow) : string =
   match pf with
-  | IND (vars, f) -> "IND(" ^ (string_of_spec_var_list vars) ^ "," ^ (string_of_pure_formula f) ^ ")"
+  | IND (vars, f) -> "IND(" ^ (string_of_spec_var_list vars) ^ "," ^ (string_of_formula_exp f) ^ ")"
   | FLOW var -> "FLO(" ^ (string_of_spec_var var) ^ ")"
   | UNKNOWN var -> "UNK(" ^ (string_of_spec_var var) ^ ")"
 
