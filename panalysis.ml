@@ -60,7 +60,7 @@ let extract_ind_exp sv form : CP.exp =
   let pr1 = Cprinter.string_of_spec_var in
   let pr2 = !CP.print_formula in
   let pr_out = Cprinter.string_of_formula_exp in
-  Debug.no_2 "simplify_ind_form" pr1 pr2 pr_out extract_ind_exp sv form
+  Debug.no_2 "extract_ind_exp" pr1 pr2 pr_out extract_ind_exp sv form
 
 let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident list) : CP.param_flow list list =
   (* group together which have relations  *)
@@ -103,7 +103,6 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
             let () = x_binfo_hp (add_str ("constraints of " ^ (Cprinter.string_of_spec_var arg)) (pr_list !CP.print_formula)) constraints no_pos in
             (arg,flow,constraints) in
           let res = List.map flow_of_arg args_with_index in
-          (* TODO: analyse res into CP.param_flow list *)
           List.map (fun (arg,flow,constr) ->
             match flow with
             (* if None, may be constant, or alias, or something else. *)
