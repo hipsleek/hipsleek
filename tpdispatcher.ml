@@ -967,13 +967,13 @@ let cnv_imm_to_int_p_formula pf lbl =
 
 let cnv_ptr_to_int (ex_flag,st_flag) f = 
   let f = x_add_1 (fun f ->
-    (* a=top & a <: b & a != b *)
-    let f_0 = Immutils.prune_eq_top_bot_imm f in
     (* a=min(b,c) & some subtyping *)
-    let f_1 = Immutils.prune_eq_min_max_imm f_0 in
+    let f_0 = Immutils.prune_eq_min_max_imm f in
     (* a=min(b,c) --> (... | ...) *)
-    let f_2 = Immutils.simplify_imm_min_max f_1 in
-    f_1) f in
+    let f_1 = Immutils.simplify_imm_min_max f_0 in
+    (* a=top & a <: b & a != b *)
+    let f_2 = Immutils.prune_eq_top_bot_imm f_1 in
+    f_2) f in
   let f_f arg e = None in
   let f_bf (ex_flag,st_flag) bf = 
     let (pf, l) = bf in
