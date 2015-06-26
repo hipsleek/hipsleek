@@ -36,8 +36,10 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
   (* Relation added on pre and post *)
   let pre_rel = ref None in
   let post_rel = ref None in
+  let pre_intro = ref CP.SetSV.empty in
   let assign_ann_or_var ann loc = match ann with
-    | CP.NoAnn -> (let f = fresh_ann loc in (CP.PolyAnn f, Some (f, false)))
+    | CP.NoAnn -> (let f = fresh_ann loc
+                   in (CP.PolyAnn f, Some (f, false)))
     | CP.ConstAnn _ -> if (not !Globals.allow_imm_norm) then (ann, None)
                        else (let f = fresh_ann loc in (ann, Some (f, true)))
     | CP.PolyAnn f -> (ann, Some (f, false))
@@ -46,9 +48,15 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
   let update_post_stack v = map_opt_def () (fun (v,_) -> post_stack # push v) v in
   let update_n_stack v ann =
     map_opt_def () (fun (v,norm) -> if norm then n_stack # push (v, ann)) v in
+  let update_pre_intro ann v =
+    match ann, v with
+    | CP.NoAnn, Some (sv,_) -> pre_intro := CP.SetSV.add sv !pre_intro
+    | CP.ConstAnn _, Some (sv,_) -> pre_intro := CP.SetSV.add sv !pre_intro
+    | _ -> () in
   let ann_heap_ho is_post loc imm_ann imm_ann_params =
     let update_heap_imm imm_ann =
       let (h_imm, v) = assign_ann_or_var imm_ann loc in
+      let () = if is_post then () else update_pre_intro imm_ann v in
       let () = (if is_post then update_post_stack else update_pre_stack) v in
       let () = update_n_stack v h_imm in
       let h_imm = match v with
@@ -148,8 +156,9 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
        begin
          match ff.formula_inf_continuation with
          | EBase ({ formula_struc_base = precondition; formula_struc_pos = loc; formula_struc_implicit_inst = impl_inst } as ebase) ->
-            let ebase = { ebase with formula_struc_implicit_inst = Gen.BList.remove_dups_eq CP.eq_spec_var
-                                                                                            ((pre_stack # get_stk) @ impl_inst) } in
+            let ebase = { ebase with
+                          formula_struc_implicit_inst = Gen.BList.remove_dups_eq CP.eq_spec_var
+                                                        ((CP.SetSV.elements !pre_intro) @ impl_inst) } in
             let new_ebase =
               (* Normalize precondition *)
               let precondition =
