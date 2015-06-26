@@ -170,14 +170,6 @@ RELDEFN R: ( x=(b'-a')+x'+1 & y=(y'-b')+a'+1 & a'<=(b'+x') & b'<=(y'+a')
 This would allow us apply to specvar a' and b'
 
 ================================================================
-# ex29b.ss
-
-!!! **panalysis.ml#103:constraints of y':[ y=((x'+y')-x)+2]
-!!! **panalysis.ml#103:constraints of a':[]
-!!! **panalysis.ml#103:constraints of b':[]
-ExceptionFailure("more constraints than assumed")Occurred!
-
-================================================================
 # ex29c.ss --dis-analyse-param
 
 # why did adding valid postcond affect this @term result?
