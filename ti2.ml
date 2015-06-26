@@ -529,10 +529,11 @@ let rec collect_term_ann_in_tnt_case_spec spec =
 
 let rec merge_tnt_case_spec_into_struc_formula prog ctx spec sf = 
   match sf with
-  | CF.ECase ec -> CF.ECase { ec with 
-                              CF.formula_case_branches = List.map (fun (c, ef) ->
-                                  let ctx, _ = CF.combine_and ctx (MCP.mix_of_pure c) in
-                                  c, merge_tnt_case_spec_into_struc_formula prog ctx spec ef) ec.CF.formula_case_branches }
+  | CF.ECase ec -> CF.ECase { 
+      ec with
+        CF.formula_case_branches = List.map (fun (c, ef) ->
+            let ctx, _ = CF.combine_and ctx (MCP.mix_of_pure c) in
+            c, merge_tnt_case_spec_into_struc_formula prog ctx spec ef) ec.CF.formula_case_branches }
   | CF.EBase eb -> 
     let pos = eb.CF.formula_struc_pos in 
     let base = eb.CF.formula_struc_base in
@@ -1103,7 +1104,51 @@ let infer_ranking_function_scc prog g scc =
     else None
 
 (* Abductive Inference *)
-let infer_abductive_cond prog ann ante conseq =
+(* let infer_abductive_cond_subtract subtrahend_cond prog ann abd_ante abd_conseq =  *)
+(*   let cons_conds = List.split_conjunction abd_conseq in                           *)
+  
+
+let infer_abductive_cond_templ prog ann abd_ante abd_conseq = 
+  let abd_templ, abd_templ_id, abd_templ_args, abd_templ_decl = templ_of_term_ann true ann in
+  let abd_cond = mkGte abd_templ (CP.mkIConst 0 no_pos) in
+  let abd_ctx = mkAnd abd_ante abd_cond in
+  
+  (* let () = print_endline ("ABD LHS: " ^ (!CP.print_formula abd_ctx)) in    *)
+  (* let () = print_endline ("ABD RHS: " ^ (!CP.print_formula abd_conseq)) in *)
+  let todo_unk = add_templ_assume (MCP.mix_of_pure abd_ctx) abd_conseq abd_templ_id in
+  
+  (* let oc = !Tlutils.oc_solver in (* Using oc to get optimal solution *)          *)
+  (* let () = Tlutils.oc_solver := true in                                          *)
+  (* let res = solve_templ_assume prog (opt_to_list abd_templ_decl) abd_templ_id in *)
+  (* let () = Tlutils.oc_solver := oc in                                            *)
+  let res = wrap_oc_tl (solve_templ_assume prog (opt_to_list abd_templ_decl)) abd_templ_id in
+  
+  match res with
+  | Sat model ->
+    let sst = List.map (fun (v, i) -> (CP.SpecVar (Int, v, Unprimed), i)) model in
+    let abd_exp = Tlutils.subst_model_to_exp true sst (CP.exp_of_template_exp abd_templ) in
+    let icond = mkGte abd_exp (CP.mkIConst 0 no_pos) in
+    let icond = om_simplify icond in
+    (* let () = print_endline ("Abductive synthesis: result: " ^ (Tlutils.print_solver_res res)) in  *)
+    (* let () = print_endline ("Abductive synthesis: icond: " ^ (!CP.print_formula icond) ^ "\n") in *)
+  
+    if is_sat (mkAnd abd_ante icond)
+    then Some icond
+    else
+      (* Return trivial abductive condition *)
+      let args = List.concat (List.map CP.afv abd_templ_args) in
+      Some (simplify 1 (mkAnd abd_ante abd_conseq) args)
+    (* let excl_args = CP.fv icond in                                                             *)
+    (* let incl_args = diff args excl_args in                                                     *)
+    (* let () = print_endline ("Abductive synthesis: args: " ^ (!CP.print_svl args)) in           *)
+    (* let () = print_endline ("Abductive synthesis: excl_args: " ^ (!CP.print_svl excl_args)) in *)
+    (* let () = print_endline ("Abductive synthesis: incl_args: " ^ (!CP.print_svl incl_args)) in *)
+    (* let args = if is_empty incl_args then args else incl_args in                               *)
+    (* let neg_icond = simplify 1 (mkAnd abd_ante (mkNot abd_conseq)) args in                     *)
+    (* Some (mkNot neg_icond)                                                                     *)
+  | _ -> None
+
+let infer_abductive_cond abd_f prog ann ante conseq =
   if imply ante conseq then Some (CP.mkTrue no_pos) (* None *)
   else
     (* Handle boolean formulas in consequent *)
@@ -1114,49 +1159,12 @@ let infer_abductive_cond prog ann ante conseq =
       let abd_ante = CP.join_conjunctions (List.filter (fun f -> 
           not (CP.is_bool_formula f)) (CP.split_conjunctions ante)) in
       let abd_conseq = CP.join_conjunctions conseq in
-      let abd_templ, abd_templ_id, abd_templ_args, abd_templ_decl = templ_of_term_ann true ann in
-      let abd_cond = mkGte abd_templ (CP.mkIConst 0 no_pos) in
-      let abd_ctx = mkAnd abd_ante abd_cond in
+      abd_f prog ann abd_ante abd_conseq
 
-      (* let () = print_endline ("ABD LHS: " ^ (!CP.print_formula abd_ctx)) in    *)
-      (* let () = print_endline ("ABD RHS: " ^ (!CP.print_formula abd_conseq)) in *)
-      let todo_unk = add_templ_assume (MCP.mix_of_pure abd_ctx) abd_conseq abd_templ_id in
-
-      (* let oc = !Tlutils.oc_solver in (* Using oc to get optimal solution *)          *)
-      (* let () = Tlutils.oc_solver := true in                                          *)
-      (* let res = solve_templ_assume prog (opt_to_list abd_templ_decl) abd_templ_id in *)
-      (* let () = Tlutils.oc_solver := oc in                                            *)
-      let res = wrap_oc_tl (solve_templ_assume prog (opt_to_list abd_templ_decl)) abd_templ_id in
-
-      match res with
-      | Sat model ->
-        let sst = List.map (fun (v, i) -> (CP.SpecVar (Int, v, Unprimed), i)) model in
-        let abd_exp = Tlutils.subst_model_to_exp true sst (CP.exp_of_template_exp abd_templ) in
-        let icond = mkGte abd_exp (CP.mkIConst 0 no_pos) in
-        let icond = om_simplify icond in
-        (* let () = print_endline ("Abductive synthesis: result: " ^ (Tlutils.print_solver_res res)) in  *)
-        (* let () = print_endline ("Abductive synthesis: icond: " ^ (!CP.print_formula icond) ^ "\n") in *)
-
-        if is_sat (mkAnd ante icond)
-        then Some icond
-        else
-          (* Return trivial abductive condition *)
-          let args = List.concat (List.map CP.afv abd_templ_args) in
-          Some (simplify 1 (mkAnd abd_ante abd_conseq) args)
-      (* let excl_args = CP.fv icond in                                                             *)
-      (* let incl_args = diff args excl_args in                                                     *)
-      (* let () = print_endline ("Abductive synthesis: args: " ^ (!CP.print_svl args)) in           *)
-      (* let () = print_endline ("Abductive synthesis: excl_args: " ^ (!CP.print_svl excl_args)) in *)
-      (* let () = print_endline ("Abductive synthesis: incl_args: " ^ (!CP.print_svl incl_args)) in *)
-      (* let args = if is_empty incl_args then args else incl_args in                               *)
-      (* let neg_icond = simplify 1 (mkAnd abd_ante (mkNot abd_conseq)) args in                     *)
-      (* Some (mkNot neg_icond)                                                                     *)
-      | _ -> None
-
-let infer_abductive_cond prog ann ante conseq =
+let infer_abductive_cond abd_f prog ann ante conseq =
   let pr = !CP.print_formula in
   Debug.no_2 "infer_abductive_cond" pr pr (pr_option pr) 
-    (fun _ _ -> infer_abductive_cond prog ann ante conseq) ante conseq
+    (fun _ _ -> infer_abductive_cond abd_f prog ann ante conseq) ante conseq
 
 let infer_abductive_icond_edge prog g e =
   let _, rel, _ = e in
@@ -1170,56 +1178,56 @@ let infer_abductive_icond_edge prog g e =
     let params = params_of_term_ann prog rel.termu_rhs in
     let args = CP.args_of_term_ann rel.termu_rhs in
     let abd_conseq = CP.subst_term_avoid_capture (List.combine params args) tuic in
-    let ires = infer_abductive_cond prog rel.termu_lhs eh_ctx abd_conseq in
+    let ires = infer_abductive_cond infer_abductive_cond_templ prog rel.termu_lhs eh_ctx abd_conseq in
     begin match ires with
       | None -> None
       | Some ic -> Some (uid, ic) 
     end
 
-  (* let bool_abd_conseq, abd_conseq = List.partition CP.is_bool_formula                      *)
-  (*   (CP.split_conjunctions abd_conseq) in                                                  *)
-
-  (* if not (imply eh_ctx (CP.join_conjunctions bool_abd_conseq)) then None                   *)
-  (* else                                                                                     *)
-  (*   let abd_conseq = CP.join_conjunctions abd_conseq in                                    *)
-  (*   let abd_templ, abd_templ_id, _, abd_templ_decl = templ_of_term_ann rel.termu_lhs in    *)
-  (*   let abd_cond = mkGte abd_templ (CP.mkIConst 0 no_pos) in                               *)
-  (*   let abd_ctx = mkAnd eh_ctx abd_cond in                                                 *)
-
-  (*   (* let () = print_endline ("ABD LHS: " ^ (!CP.print_formula abd_ctx)) in    *)         *)
-  (*   (* let () = print_endline ("ABD RHS: " ^ (!CP.print_formula abd_conseq)) in *)         *)
-
-  (*   if imply eh_ctx abd_conseq then                                                        *)
-  (*     let icond = CP.mkTrue no_pos in (* The node has an edge looping on itself *)         *)
-  (*     Some (uid, icond)                                                                    *)
-  (*   else                                                                                   *)
-  (*     let todo_unk = add_templ_assume (MCP.mix_of_pure abd_ctx) abd_conseq abd_templ_id in *)
-  (*     let oc = !Tlutils.oc_solver in (* Using oc to get optimal solution *)                *)
-  (*     let () = Tlutils.oc_solver := true in                                                *)
-  (*     let res = solve_templ_assume prog abd_templ_decl abd_templ_id in                     *)
-  (*     let () = Tlutils.oc_solver := oc in                                                  *)
-
-  (*     begin match res with                                                                 *)
-  (*     | Sat model ->                                                                       *)
-  (*       let sst = List.map (fun (v, i) -> (CP.SpecVar (Int, v, Unprimed), i)) model in     *)
-  (*       let abd_exp = Tlutils.subst_model_to_exp sst (CP.exp_of_template_exp abd_templ) in *)
-  (*       let icond = mkGte abd_exp (CP.mkIConst 0 no_pos) in                                *)
-
-  (*       (* let () = print_endline ("ABD: " ^ (!CP.print_formula icond)) in *)              *)
-
-  (*       (* Update TNT case spec with new abductive case *)                                 *)
-  (*       (* if the abductive condition is feasible       *)                                 *)
-  (*       if is_sat (mkAnd abd_ctx icond) then                                               *)
-  (*         (* let () = update_case_spec_with_icond_proc uid.CP.tu_fname tuc icond in *)     *)
-  (*         Some (uid, icond)                                                                *)
-  (*       else None                                                                          *)
-  (*     | _ -> None end                                                                      *)
+    (* let bool_abd_conseq, abd_conseq = List.partition CP.is_bool_formula                      *)
+    (*   (CP.split_conjunctions abd_conseq) in                                                  *)
+  
+    (* if not (imply eh_ctx (CP.join_conjunctions bool_abd_conseq)) then None                   *)
+    (* else                                                                                     *)
+    (*   let abd_conseq = CP.join_conjunctions abd_conseq in                                    *)
+    (*   let abd_templ, abd_templ_id, _, abd_templ_decl = templ_of_term_ann rel.termu_lhs in    *)
+    (*   let abd_cond = mkGte abd_templ (CP.mkIConst 0 no_pos) in                               *)
+    (*   let abd_ctx = mkAnd eh_ctx abd_cond in                                                 *)
+  
+    (*   (* let () = print_endline ("ABD LHS: " ^ (!CP.print_formula abd_ctx)) in    *)         *)
+    (*   (* let () = print_endline ("ABD RHS: " ^ (!CP.print_formula abd_conseq)) in *)         *)
+  
+    (*   if imply eh_ctx abd_conseq then                                                        *)
+    (*     let icond = CP.mkTrue no_pos in (* The node has an edge looping on itself *)         *)
+    (*     Some (uid, icond)                                                                    *)
+    (*   else                                                                                   *)
+    (*     let todo_unk = add_templ_assume (MCP.mix_of_pure abd_ctx) abd_conseq abd_templ_id in *)
+    (*     let oc = !Tlutils.oc_solver in (* Using oc to get optimal solution *)                *)
+    (*     let () = Tlutils.oc_solver := true in                                                *)
+    (*     let res = solve_templ_assume prog abd_templ_decl abd_templ_id in                     *)
+    (*     let () = Tlutils.oc_solver := oc in                                                  *)
+  
+    (*     begin match res with                                                                 *)
+    (*     | Sat model ->                                                                       *)
+    (*       let sst = List.map (fun (v, i) -> (CP.SpecVar (Int, v, Unprimed), i)) model in     *)
+    (*       let abd_exp = Tlutils.subst_model_to_exp sst (CP.exp_of_template_exp abd_templ) in *)
+    (*       let icond = mkGte abd_exp (CP.mkIConst 0 no_pos) in                                *)
+  
+    (*       (* let () = print_endline ("ABD: " ^ (!CP.print_formula icond)) in *)              *)
+  
+    (*       (* Update TNT case spec with new abductive case *)                                 *)
+    (*       (* if the abductive condition is feasible       *)                                 *)
+    (*       if is_sat (mkAnd abd_ctx icond) then                                               *)
+    (*         (* let () = update_case_spec_with_icond_proc uid.CP.tu_fname tuc icond in *)     *)
+    (*         Some (uid, icond)                                                                *)
+    (*       else None                                                                          *)
+    (*     | _ -> None end                                                                      *)
   | _ -> None 
 
 let infer_abductive_icond_vertex prog g v = 
   let self_loop_edges = TG.find_all_edges g v v in
-  let abd_conds = List.fold_left (fun a e -> a @ 
-                                             opt_to_list (infer_abductive_icond_edge prog g e)) [] self_loop_edges in
+  let abd_conds = List.fold_left (
+    fun a e -> a @ opt_to_list (infer_abductive_icond_edge prog g e)) [] self_loop_edges in
   match abd_conds with
   | [] -> []
   | (uid, _)::_ -> 
@@ -1408,48 +1416,48 @@ let uid_of_loop trel =
 (*     | None -> acc                                                               *)
 (*     | Some c -> acc @ [c]) [] cl                                                *)
 
-let infer_abductive_contra prog rhs_uid ante cons =
+let infer_abductive_contra abd_f prog rhs_uid ante cons =
   let cl = CP.split_conjunctions cons in
   let cl = List.filter (fun c -> not (imply ante c)) cl in
   if is_empty cl then [CP.mkTrue no_pos]
   else
     List.fold_left (
       fun acc c ->
-        let ic = infer_abductive_cond prog (CP.TermU rhs_uid) ante c in
+        let ic = infer_abductive_cond abd_f prog (CP.TermU rhs_uid) ante c in
         match ic with
         | None -> acc
         | Some c -> acc @ [c]) [] cl
 
-let rec infer_abductive_cond_list prog rhs_uid ante conds =
+let rec infer_abductive_cond_list abd_f prog rhs_uid ante conds =
   match conds with
   | [] -> []
   | cl::cs -> 
     let cl = List.filter (fun c -> not (imply ante (mkNot c.ntc_cond))) cl in
-    if is_empty cl then infer_abductive_cond_list prog rhs_uid ante cs
+    if is_empty cl then infer_abductive_cond_list abd_f prog rhs_uid ante cs
     else
       try
         let self_c = List.find (fun c -> c.ntc_id == rhs_uid.CP.tu_id) cl in
         (* let self_ic = infer_abductive_cond prog (CP.TermU rhs_uid) ante self_c.ntc_cond in *)
-        let icl = infer_abductive_contra prog rhs_uid ante self_c.ntc_cond in
+        let icl = infer_abductive_contra abd_f prog rhs_uid ante self_c.ntc_cond in
         (* let icl = icl @ (opt_to_list self_ic) in *)
         if not (is_empty icl) then icl
-        else infer_abductive_cond_list prog rhs_uid ante cs
+        else infer_abductive_cond_list abd_f prog rhs_uid ante cs
       with Not_found -> 
         let rec helper cl = 
           match cl with
-          | [] -> infer_abductive_cond_list prog rhs_uid ante cs
+          | [] -> infer_abductive_cond_list abd_f prog rhs_uid ante cs
           | c::cl -> 
-            let icl = infer_abductive_contra prog rhs_uid ante c.ntc_cond in
+            let icl = infer_abductive_contra abd_f prog rhs_uid ante c.ntc_cond in
             if not (is_empty icl) then icl
             else helper cl
         in helper cl
 
-let infer_abductive_cond_list prog rhs_uid ante conds =
+let infer_abductive_cond_list abd_f prog rhs_uid ante conds =
   let pr1 = !CP.print_formula in
   let pr2 = pr_list pr1 in
   let pr3 = pr_list pr2 in
   Debug.no_2 "infer_abductive_cond_list" pr1 pr3 pr2
-    (fun _ _ -> infer_abductive_cond_list prog rhs_uid ante conds) 
+    (fun _ _ -> infer_abductive_cond_list abd_f prog rhs_uid ante conds) 
     ante (List.map (fun cl -> List.map (fun c -> c.ntc_cond) cl) conds)
 
 let infer_loop_cond_list params ante conds =
@@ -1558,7 +1566,8 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
           (*     if (eq_str fn c.ntc_fn) && not (c.ntc_id == rhs_uid.CP.tu_id) then acc *)
           (*     else acc @ [c.ntc_cond]) [] cl) rec_iconds                             *)
           (* in                                                                         *)
-          let ir = infer_abductive_cond_list prog rhs_uid eh_ctx rec_iconds in
+          let abd_f = infer_abductive_cond_templ in
+          let ir = infer_abductive_cond_list abd_f prog rhs_uid eh_ctx rec_iconds in
           NT_No (ir @ (opt_to_list il))
     in ntres
 
