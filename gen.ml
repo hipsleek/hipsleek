@@ -677,7 +677,14 @@ class ['a] stack_pr (epr:'a->string) (eq:'a->'a->bool)  =
         List.iter (fun e -> print_string (elem_pr e)) s;
         print_endline ""
       end
-    method mem (i:'a) = List.exists (elem_eq i) stk
+     method dump h =
+      begin
+        let s = super#reverse_of  in
+        print_endline ("dump:("^(string_of_int (List.length s))^")"^h);
+        print_endline "===============";
+        List.iter (fun e -> print_endline (elem_pr e)) s;
+      end
+   method mem (i:'a) = List.exists (elem_eq i) stk
     method overlap (ls:'a list) = 
       if (ls == []) then false
       else List.exists (fun x -> List.exists (elem_eq x) ls) stk
