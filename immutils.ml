@@ -435,19 +435,22 @@ that can be syntactically deduced from emap.
 2. Build a DAG of equivalence sets based on emaps
 3. Use the DAG to deduce minmax.
  **)
-module SubAnn : Gen.EQ_TYPE with type t = CP.exp =
+module SubAnn : Gen.EQ_TYPE with type t = exp =
   struct
-    type t = CP.exp
-    let zero = CP.AConst(Mutable, no_pos)
-    let is_zero e1 = e1 = CP.AConst(Mutable, no_pos)
-    let eq = CP.eq_exp_no_aset
+    type t = exp
+    let zero = AConst(Mutable, no_pos)
+    let is_zero e1 = e1 = AConst(Mutable, no_pos)
+    let eq = eq_exp_no_aset
     let compare e1 e2 =
-      String.compare (CP.ArithNormalizer.string_of_exp e1)
-                     (CP.ArithNormalizer.string_of_exp e2)
-    let string_of = CP.ArithNormalizer.string_of_exp
+      String.compare (ArithNormalizer.string_of_exp e1)
+                     (ArithNormalizer.string_of_exp e2)
+    let string_of = ArithNormalizer.string_of_exp
   end
 
 module SubAnnPoset = Gen.Make_DAG(SubAnn)
+
+module SVEq : (Gen.EQ_TYPE with type t = spec_var) = SV
+module SVPoset = Gen.Make_DAG(SVEq)
 
 let prune_imm_min_max_conjunct poset f =
   let f_b b_formula lbl = match b_formula with
@@ -469,7 +472,56 @@ let prune_imm_min_max_conjunct poset f =
     | _ -> None in
   transform_formula (nonef, nonef, f_f, somef, somef) f
 
-let prune_imm_min_max f =
+(* Pruned Case
+  1. a=min(b,c), given some ann subtyping relations, deduce a=b or a=c if possible
+  2. a=top & a <: b & a != b
+  3. a=bot & b <: a & a != b
+*)
+let prune_eq_top_bot_imm_disjunct f =
+  let collect_subann p_f =
+    match p_f with
+    | SubAnn (Var(sv1,_), Var(sv2,_),_) -> [(sv1, sv2)]
+    | _ -> [] in
+  let collect_eq_imm imm p_f = match p_f with
+    | Eq (Var(sv,_), AConst(imm, _), _) -> [sv]
+    | Eq (AConst(imm,_), Var(sv,_), _) -> [sv]
+    | _ -> [] in
+  let collect_eq_bot = collect_eq_imm imm_bot in
+  let collect_eq_top = collect_eq_imm imm_top in
+  let collect_neq_sv p_f = match p_f with
+    | Neq (Var(sv1,_), Var(sv2, _), _) -> [(sv1, sv2)]
+    | _ -> [] in
+  let get4 p_f = (collect_subann p_f, collect_eq_bot p_f,
+                  collect_eq_top p_f, collect_neq_sv p_f) in
+  let concat4 xs = List.fold_right (fun (a,b,c,d) (e,f,g,h) -> (a@e, b@f, c@g, d@h)) xs
+                                   ([],[],[],[]) in
+  let (subanns, eq_bot, eq_top, neq_sv) =
+    (fun (a,b,c,d) -> (a, SetSV.of_list b, SetSV.of_list c, d))
+    (fold_formula f (nonef, (fun (p_f,_) -> Some (get4 p_f)), nonef) concat4) in
+  let poset =
+    let p = SVPoset.create () in
+    (List.iter (SVPoset.add p) subanns; p) in
+  let ( <: ) a b = SVPoset.is_lt poset a b in
+  let ( := ) a b = SetSV.mem a (if b = imm_top then eq_top else eq_bot) in
+  let prune_if_top a b = ((a := imm_top) && (a <: b)) || ((b := imm_top) && (b <: a)) in
+  let prune_if_bot a b = ((a := imm_bot) && (b <: a)) || ((b := imm_bot) && (a <: b)) in
+  let prune_if_match (sv1, sv2) = prune_if_top sv1 sv2 || prune_if_bot sv1 sv2 in
+  List.fold_right (fun b acc -> acc || prune_if_match b) neq_sv false
+
+let prune_eq_top_bot_imm_disjunct f =
+  let pr = !print_formula in
+  Debug.no_1 "prune_eq_top_bot_imm_disjunct" pr string_of_bool prune_eq_top_bot_imm_disjunct f
+
+let prune_eq_top_bot_imm f =
+  let ds = split_disjunctions_deep f in
+  let new_disjunctions = List.filter (fun f -> not (prune_eq_top_bot_imm_disjunct f)) ds in
+  join_disjunctions new_disjunctions
+
+let prune_eq_top_bot_imm f =
+  let pr = !print_formula in
+  Debug.no_1 "prune_eq_top_bot_imm" pr pr prune_eq_top_bot_imm f
+
+let prune_eq_min_max_imm f =
   let collect_subann f =
     let is_subann p_f = match p_f with SubAnn _ -> true | _ -> false in
     let to_pair p_f = match p_f with
@@ -492,9 +544,9 @@ let prune_imm_min_max f =
     | other -> None in
   transform_formula (nonef, nonef, f_f, somef, somef) f
 
-let prune_imm_min_max f =
+let prune_eq_min_max_imm f =
   let pr = !print_formula in
-  Debug.no_1 "prune_imm_min_max" pr pr prune_imm_min_max f
+  Debug.no_1 "prune_eq_min_max_imm" pr pr prune_eq_min_max_imm f
 
 (* ===================== END imm addition utils ========================= *)
 

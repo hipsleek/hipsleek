@@ -4987,6 +4987,7 @@ module PtrSV = Ptr(SV);;
 module BagaSV = Gen.Baga(PtrSV);;
 module EMapSV = Gen.EqMap(SV);;
 module DisjSetSV = Gen.DisjSet(PtrSV);;
+module SetSV = Set.Make(SV);;
 
 type baga_sv = BagaSV.baga
 
