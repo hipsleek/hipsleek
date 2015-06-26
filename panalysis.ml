@@ -73,11 +73,11 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
   let lst_assume = List.filter (fun (_,lhs,rhs) ->
     let has_useful_rel (f:CP.formula) =
       List.exists (fun f ->
-        match f with
+        let rel_args = CP.get_rel_args f in
         (* a relation is 'useful' if it has the same # args
          * as the proc being analysed. *)
-        | CP.BForm((CP.RelForm (_,ls,_),_),_) -> (List.length ls) == (List.length args)
-        | _ -> false) (CP.split_conjunctions f) in
+        (List.length rel_args) == (List.length args) &&
+         List.for_all2 CP.eq_spec_var_unp rel_args primed_args) (CP.split_conjunctions f) in
     (has_useful_rel lhs) && (has_useful_rel rhs)) lst_assume in
 
   let frm_assumes = List.map (fun (cat,lhs,rhs) ->
