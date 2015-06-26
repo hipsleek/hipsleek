@@ -1103,10 +1103,52 @@ let infer_ranking_function_scc prog g scc =
       infer_lex_ranking_function_scc prog g scc_edges
     else None
 
+(* f is a single formula *)
+(* ctx -/-> f            *)
+let subst_by_ctx vars ctx f = 
+  let simpl_f = simplify 20 (mkAnd ctx f) vars in
+  try
+    List.find (fun c -> imply (mkAnd ctx c) f) (CP.split_conjunctions simpl_f)
+  with _ -> simpl_f
+
 (* Abductive Inference *)
-(* let infer_abductive_cond_subtract subtrahend_cond prog ann abd_ante abd_conseq =  *)
-(*   let cons_conds = List.split_conjunction abd_conseq in                           *)
-  
+let infer_abductive_cond_subtract_single args subtrahend_terms_lst ante cons =
+  let triv_cons = subst_by_ctx args ante cons in
+  let count_overlapping_terms ante_terms cons_terms =
+    let overlapping_terms = List.find_all (
+      fun ta -> List.exists (fun tc -> 
+        (eq_linear_term_var ta.linear_term_var tc.linear_term_var) && 
+        (ta.linear_term_coe * tc.linear_term_coe > 0)) 
+        cons_terms) 
+      ante_terms in 
+    List.length overlapping_terms 
+  in 
+  let compare_overlapping_terms c a1 a2 = 
+    (count_overlapping_terms a1 c) - (count_overlapping_terms a2 c) 
+  in
+  try 
+    (* Search for a suitable subtrahend *)
+    let cons_terms = List.map linear_term_of_term (term_list_of_formula (CP.fv triv_cons) triv_cons) in
+    let subtrahend_terms = List.hd (List.rev (List.sort (compare_overlapping_terms cons_terms) subtrahend_terms_lst)) in
+    let abd_terms = subt_linear_terms cons_terms subtrahend_terms in
+    let abd_cond = CP.mkPure (CP.mkLte (exp_of_linear_term_list abd_terms no_pos) (CP.mkIConst 0 no_pos) no_pos) in
+    [abd_cond]
+  with _ -> [triv_cons]
+
+let infer_abductive_cond_subtract args subtrahend_cond prog ann abd_ante abd_conseq =
+  try
+    let subtrahend_conds = CP.split_conjunctions subtrahend_cond in
+    let subtrahend_terms_lst = List.map 
+        (fun t -> List.map linear_term_of_term (term_list_of_formula (CP.fv t) t)) 
+        subtrahend_conds 
+    in
+    
+    let cons_conds = CP.split_conjunctions abd_conseq in
+    let abd_conds = List.map (fun cons -> 
+        infer_abductive_cond_subtract_single args subtrahend_terms_lst abd_ante cons) cons_conds 
+    in
+    Some (CP.join_conjunctions (List.concat abd_conds))
+  with _ -> None
 
 let infer_abductive_cond_templ prog ann abd_ante abd_conseq = 
   let abd_templ, abd_templ_id, abd_templ_args, abd_templ_decl = templ_of_term_ann true ann in
@@ -1566,7 +1608,8 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
           (*     if (eq_str fn c.ntc_fn) && not (c.ntc_id == rhs_uid.CP.tu_id) then acc *)
           (*     else acc @ [c.ntc_cond]) [] cl) rec_iconds                             *)
           (* in                                                                         *)
-          let abd_f = infer_abductive_cond_templ in
+          (* let abd_f = infer_abductive_cond_templ in *)
+          let abd_f = infer_abductive_cond_subtract params cond in
           let ir = infer_abductive_cond_list abd_f prog rhs_uid eh_ctx rec_iconds in
           NT_No (ir @ (opt_to_list il))
     in ntres

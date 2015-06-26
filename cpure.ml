@@ -14496,11 +14496,8 @@ let has_nondet_cond f =
     | _ -> Some false
   in
   let or_list = List.fold_left (||) false in
-  fold_formula f (nonef, f_b, nonef) or_list  
+  fold_formula f (nonef, f_b, nonef) or_list
 
-let is_shape f=
-  let svl = fv f in
-  List.for_all (fun sv -> (is_node_typ sv)) svl
 let eq_nondet_rel r1 r2 = 
   match r1, r2 with
   | RelForm (sv1, _, p1), RelForm (sv2, _, p2) ->
@@ -14515,6 +14512,10 @@ let collect_nondet_rel f =
     else None
   in
   fold_formula f (nonef, f_bf, nonef) List.concat
+
+let is_shape f=
+  let svl = fv f in
+  List.for_all (fun sv -> (is_node_typ sv)) svl
 
 let contains_undef (f:formula) =
   let afv = all_vars f in
