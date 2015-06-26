@@ -170,7 +170,56 @@ RELDEFN R: ( x=(b'-a')+x'+1 & y=(y'-b')+a'+1 & a'<=(b'+x') & b'<=(y'+a')
 This would allow us apply to specvar a' and b'
 
 ================================================================
+# ex29b.ss
+
+!!! **panalysis.ml#103:constraints of y':[ y=((x'+y')-x)+2]
+!!! **panalysis.ml#103:constraints of a':[]
+!!! **panalysis.ml#103:constraints of b':[]
+ExceptionFailure("more constraints than assumed")Occurred!
+
 ================================================================
+# ex29c.ss --dis-analyse-param
+
+# why did adding valid postcond affect this @term result?
+
+# with post
+  infer [@term]
+  requires true
+  ensures y<=0 & x<=0 & y=y' & x=x' | y'<=0 & x'<=0 & y+x>=2+y'+x';
+
+# ex29d.ss --dis-analyse-param
+
+# without post
+  infer [@term]
+  requires true
+  ensures true;
+
+# why is post being inferred by TNT?
+
+Procedure loo: UNKNOWN
+ requires true & true
+ case {
+   y<=0 & x<=0 -> 
+   requires emp & Term[64,1]
+   ensures true & ((0>=y & 0>=x & y=y' & x=x') | 
+                   (0>=y' & 0>=x' & (y+x)>=(2+y'+x')));
+   
+     
+   y<=0 & 1<=x -> 
+   case {
+     b<=a -> 
+     case {
+       y<=0 & b<=a & (3+(2*b))<=(x+(2*a)) & 1<=x -> 
+       requires emp & MayLoop[]
+       ensures true & ((0>=y & 0>=x & y=y' & x=x') | 
+                       (0>=y' & 0>=x' & (y+x)>=(2+y'+x')));
+       
+         
+       b=a & x=2 & y<=0 -> 
+       requires emp & Term[64,4]
+       ensures true & ((0>=y & 0>=x & y=y' & x=x') | 
+                       (0>=y' & 0>=x' & (y+x)>=(2+y'+x')));
+       
 ================================================================
 ================================================================
 ================================================================
