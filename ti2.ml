@@ -72,7 +72,7 @@ let unsat_base_nth = ref (fun _ _ _ _ -> true) (* Solver.unsat_base_nth *)
 
 let f_is_sat prog f =
   (* let _, pf, _, _, _, _ = CF.split_components f in *)
-  (* Tpdispatcher.is_sat_raw pf                    *)
+  (* Tpdispatcher.is_sat_raw pf                       *)
   not (!unsat_base_nth 1 prog (ref 0) f)
 
 let join_disjs f_lst = 
@@ -208,8 +208,8 @@ let params_of_term_ann prog ann =
         let ut_decl = List.find (fun utd -> 
             String.compare utd.Cast.ut_name sid == 0) prog.Cast.prog_ut_decls in
         ut_decl.Cast.ut_params
-      with Not_found -> report_error no_pos 
-                          ("[TNT Inference]: Definition of " ^ sid ^ " cannot be found.")
+      with Not_found -> 
+        report_error no_pos ("[TNT Inference]: Definition of " ^ sid ^ " cannot be found.")
     end
   | _ -> []
 
@@ -1008,10 +1008,10 @@ let templ_rank_constr_of_rel for_lex rel =
   (* let dec = mkGt src_rank dst_rank in                                                           *)
   (* let bnd = mkGte src_rank (CP.mkIConst 0 no_pos) in                                            *)
   (* let constr = mkAnd dec bnd in                                                                 *)
-  (* let todo_unk = add_templ_assume (MCP.mix_of_pure ctx) constr inf_templs in                           *)
-  (* let () = print_endline_quiet ("Rank synthesis: vars: " ^ (!CP.print_svl inf_templs)) in        *)
-  (* let () = print_endline_quiet ("Rank synthesis: ctx: " ^ (!CP.print_formula ctx)) in            *)
-  (* let () = print_endline_quiet ("Rank synthesis: constr: " ^ (!CP.print_formula constr)) in      *)
+  (* let todo_unk = add_templ_assume (MCP.mix_of_pure ctx) constr inf_templs in                    *)
+  (* let () = print_endline_quiet ("Rank synthesis: vars: " ^ (!CP.print_svl inf_templs)) in       *)
+  (* let () = print_endline_quiet ("Rank synthesis: ctx: " ^ (!CP.print_formula ctx)) in           *)
+  (* let () = print_endline_quiet ("Rank synthesis: constr: " ^ (!CP.print_formula constr)) in     *)
 
   let ctx_bnd = mkAnd rel.call_ctx (CP.cond_of_term_ann rel.termu_lhs) in
   let bnd = mkGte src_rank (CP.mkIConst 0 no_pos) in
@@ -1019,11 +1019,11 @@ let templ_rank_constr_of_rel for_lex rel =
   let ctx_dec = if not for_lex then mkAnd ctx_bnd (CP.cond_of_term_ann rel.termu_rhs) else ctx_bnd in
   let dec = mkGt src_rank dst_rank in
   let todo_unk = add_templ_assume (MCP.mix_of_pure ctx_dec) dec inf_templs in
-  (* let () = print_endline_quiet ("Rank synthesis: vars: " ^ (!CP.print_svl inf_templs)) in                    *)
-  (* let () = print_endline_quiet ("Rank synthesis: ctx_bnd: " ^ (!CP.print_formula ctx_bnd)) in                *)
-  (* let () = print_endline_quiet ("Rank synthesis: bnd: " ^ (!CP.print_formula bnd)) in                        *)
-  (* let () = print_endline_quiet ("Rank synthesis: ctx_dec: " ^ (!CP.print_formula ctx_dec)) in                *)
-  (* let () = print_endline_quiet ("Rank synthesis: dec: " ^ (!CP.print_formula dec)) in                        *)
+  (* let () = print_endline_quiet ("Rank synthesis: vars: " ^ (!CP.print_svl inf_templs)) in     *)
+  (* let () = print_endline_quiet ("Rank synthesis: ctx_bnd: " ^ (!CP.print_formula ctx_bnd)) in *)
+  (* let () = print_endline_quiet ("Rank synthesis: bnd: " ^ (!CP.print_formula bnd)) in         *)
+  (* let () = print_endline_quiet ("Rank synthesis: ctx_dec: " ^ (!CP.print_formula ctx_dec)) in *)
+  (* let () = print_endline_quiet ("Rank synthesis: dec: " ^ (!CP.print_formula dec)) in         *)
 
   inf_templs, (opt_to_list src_templ_decl) @ (opt_to_list dst_templ_decl)
 
@@ -1123,9 +1123,9 @@ let infer_abductive_cond prog ann ante conseq =
       let todo_unk = add_templ_assume (MCP.mix_of_pure abd_ctx) abd_conseq abd_templ_id in
 
       (* let oc = !Tlutils.oc_solver in (* Using oc to get optimal solution *)          *)
-      (* let () = Tlutils.oc_solver := true in                                           *)
+      (* let () = Tlutils.oc_solver := true in                                          *)
       (* let res = solve_templ_assume prog (opt_to_list abd_templ_decl) abd_templ_id in *)
-      (* let () = Tlutils.oc_solver := oc in                                             *)
+      (* let () = Tlutils.oc_solver := oc in                                            *)
       let res = wrap_oc_tl (solve_templ_assume prog (opt_to_list abd_templ_decl)) abd_templ_id in
 
       match res with
@@ -1143,14 +1143,14 @@ let infer_abductive_cond prog ann ante conseq =
           (* Return trivial abductive condition *)
           let args = List.concat (List.map CP.afv abd_templ_args) in
           Some (simplify 1 (mkAnd abd_ante abd_conseq) args)
-      (* let excl_args = CP.fv icond in                                                            *)
-      (* let incl_args = diff args excl_args in                                                    *)
+      (* let excl_args = CP.fv icond in                                                             *)
+      (* let incl_args = diff args excl_args in                                                     *)
       (* let () = print_endline ("Abductive synthesis: args: " ^ (!CP.print_svl args)) in           *)
       (* let () = print_endline ("Abductive synthesis: excl_args: " ^ (!CP.print_svl excl_args)) in *)
       (* let () = print_endline ("Abductive synthesis: incl_args: " ^ (!CP.print_svl incl_args)) in *)
-      (* let args = if is_empty incl_args then args else incl_args in                              *)
-      (* let neg_icond = simplify 1 (mkAnd abd_ante (mkNot abd_conseq)) args in                    *)
-      (* Some (mkNot neg_icond)                                                                    *)
+      (* let args = if is_empty incl_args then args else incl_args in                               *)
+      (* let neg_icond = simplify 1 (mkAnd abd_ante (mkNot abd_conseq)) args in                     *)
+      (* Some (mkNot neg_icond)                                                                     *)
       | _ -> None
 
 let infer_abductive_cond prog ann ante conseq =
@@ -1186,18 +1186,18 @@ let infer_abductive_icond_edge prog g e =
   (*   let abd_cond = mkGte abd_templ (CP.mkIConst 0 no_pos) in                               *)
   (*   let abd_ctx = mkAnd eh_ctx abd_cond in                                                 *)
 
-  (*   (* let () = print_endline ("ABD LHS: " ^ (!CP.print_formula abd_ctx)) in    *)          *)
-  (*   (* let () = print_endline ("ABD RHS: " ^ (!CP.print_formula abd_conseq)) in *)          *)
+  (*   (* let () = print_endline ("ABD LHS: " ^ (!CP.print_formula abd_ctx)) in    *)         *)
+  (*   (* let () = print_endline ("ABD RHS: " ^ (!CP.print_formula abd_conseq)) in *)         *)
 
   (*   if imply eh_ctx abd_conseq then                                                        *)
   (*     let icond = CP.mkTrue no_pos in (* The node has an edge looping on itself *)         *)
   (*     Some (uid, icond)                                                                    *)
   (*   else                                                                                   *)
-  (*     let todo_unk = add_templ_assume (MCP.mix_of_pure abd_ctx) abd_conseq abd_templ_id in        *)
+  (*     let todo_unk = add_templ_assume (MCP.mix_of_pure abd_ctx) abd_conseq abd_templ_id in *)
   (*     let oc = !Tlutils.oc_solver in (* Using oc to get optimal solution *)                *)
-  (*     let () = Tlutils.oc_solver := true in                                                 *)
+  (*     let () = Tlutils.oc_solver := true in                                                *)
   (*     let res = solve_templ_assume prog abd_templ_decl abd_templ_id in                     *)
-  (*     let () = Tlutils.oc_solver := oc in                                                   *)
+  (*     let () = Tlutils.oc_solver := oc in                                                  *)
 
   (*     begin match res with                                                                 *)
   (*     | Sat model ->                                                                       *)
@@ -1205,12 +1205,12 @@ let infer_abductive_icond_edge prog g e =
   (*       let abd_exp = Tlutils.subst_model_to_exp sst (CP.exp_of_template_exp abd_templ) in *)
   (*       let icond = mkGte abd_exp (CP.mkIConst 0 no_pos) in                                *)
 
-  (*       (* let () = print_endline ("ABD: " ^ (!CP.print_formula icond)) in *)               *)
+  (*       (* let () = print_endline ("ABD: " ^ (!CP.print_formula icond)) in *)              *)
 
   (*       (* Update TNT case spec with new abductive case *)                                 *)
   (*       (* if the abductive condition is feasible       *)                                 *)
   (*       if is_sat (mkAnd abd_ctx icond) then                                               *)
-  (*         (* let () = update_case_spec_with_icond_proc uid.CP.tu_fname tuc icond in *)      *)
+  (*         (* let () = update_case_spec_with_icond_proc uid.CP.tu_fname tuc icond in *)     *)
   (*         Some (uid, icond)                                                                *)
   (*       else None                                                                          *)
   (*     | _ -> None end                                                                      *)
@@ -1413,7 +1413,8 @@ let infer_abductive_contra prog rhs_uid ante cons =
   let cl = List.filter (fun c -> not (imply ante c)) cl in
   if is_empty cl then [CP.mkTrue no_pos]
   else
-    List.fold_left (fun acc c ->
+    List.fold_left (
+      fun acc c ->
         let ic = infer_abductive_cond prog (CP.TermU rhs_uid) ante c in
         match ic with
         | None -> acc
@@ -1526,12 +1527,12 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
       (* let () = print_endline_quiet ("self_conds: " ^ (pr_list !CP.print_formula self_conds)) in *)
       (* let () = print_endline_quiet ("eh_ctx: " ^ (!CP.print_formula eh_ctx)) in                 *)
 
-      (* if List.exists (fun c -> (imply eh_ctx c)) loop_conds then NT_Yes *)
-      (* For self loop on the same condition *)
+      (* if List.exists (fun c -> (imply eh_ctx c)) loop_conds then NT_Yes      *)
+      (* (* For self loop on the same condition *)                              *)
       (* else if List.exists (fun c -> (imply eh_ctx c)) self_conds then NT_Yes *)
-      (* else if (self_conds != []) &&                            *)
-      (*         (imply eh_ctx (CP.join_disjunctions self_conds)) *)
-      (*      then NT_Yes                                         *)
+      (* else if (self_conds != []) &&                                          *)
+      (*         (imply eh_ctx (CP.join_disjunctions self_conds))               *)
+      (*      then NT_Yes                                                       *)
 
       let disj_loop_conds = join_disjs (self_conds @ loop_conds) in
       if (imply eh_ctx disj_loop_conds) then NT_Yes
@@ -1629,15 +1630,15 @@ let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
 (*     CP.is_Loop r.termu_rhs) out_edges_from_v in                                              *)
 (*   let loop_uids = List.map (fun (_, r, _) -> uid_of_loop r) loop_edges_from_v in             *)
 
-(*   (* let () = print_endline ("LOOP: " ^                                            *)         *)
+(*   (* let () = print_endline ("LOOP: " ^                                           *)         *)
 (*   (*   (pr_list (fun (_, r, _) -> print_call_trel_debug r) loop_edges_from_v)) in *)         *)
 
 (*   let scc_edges_from_v = edges_of_scc_vertex tg scc v in                                     *)
 (*   let looping_edges, non_looping_edges =                                                     *)
 (*     List.partition (fun (_, _, d) -> d = v) scc_edges_from_v in                              *)
-(*   (* let () = print_endline ("LOOPING: " ^                                         *)         *)
+(*   (* let () = print_endline ("LOOPING: " ^                                        *)         *)
 (*   (*   (pr_list (fun (_, r, _) -> print_call_trel_debug r) looping_edges)) in     *)         *)
-(*   (* let () = print_endline ("NON-LOOPING: " ^                                     *)         *)
+(*   (* let () = print_endline ("NON-LOOPING: " ^                                    *)         *)
 (*   (*   (pr_list (fun (_, r, _) -> print_call_trel_debug r) non_looping_edges)) in *)         *)
 
 (*   (* If the number of looping edges is > 1, it means there is          *)                    *)
