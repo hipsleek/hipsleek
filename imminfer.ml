@@ -148,7 +148,8 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
        begin
          match ff.formula_inf_continuation with
          | EBase ({ formula_struc_base = precondition; formula_struc_pos = loc; formula_struc_implicit_inst = impl_inst } as ebase) ->
-            let ebase = { ebase with formula_struc_implicit_inst = (pre_stack # get_stk ) @ impl_inst } in
+            let ebase = { ebase with formula_struc_implicit_inst = Gen.BList.remove_dups_eq CP.eq_spec_var
+                                                                                            ((pre_stack # get_stk) @ impl_inst) } in
             let new_ebase =
               (* Normalize precondition *)
               let precondition =
