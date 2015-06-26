@@ -147,15 +147,14 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
     | EInfer ff ->
        begin
          match ff.formula_inf_continuation with
-         | EBase ({ formula_struc_base = precondition; formula_struc_pos = loc } as ebase) ->
+         | EBase ({ formula_struc_base = precondition; formula_struc_pos = loc; formula_struc_implicit_inst = impl_inst } as ebase) ->
+            let ebase = { ebase with formula_struc_implicit_inst = (pre_stack # get_stk ) @ impl_inst } in
             let new_ebase =
               (* Normalize precondition *)
               let precondition =
                 if (not (pre_norm_stack # is_empty)) then
                   and_pure_with_eqs (pre_norm_stack # get_stk) precondition loc
                 else precondition in
-              (* Add implicitly added ann to exists *)
-              let precondition = CF.push_exists (pre_stack # get_stk) precondition in
               if (not (pre_stack # is_empty) && not (!pre_rel = None)) then
                 let pre_rel = match !pre_rel with Some p -> p | None -> failwith "Not possible (infer_imm_ann_proc)" in
                 let rel_params = pre_stack # get_stk in
