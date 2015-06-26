@@ -154,6 +154,8 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
                 if (not (pre_norm_stack # is_empty)) then
                   and_pure_with_eqs (pre_norm_stack # get_stk) precondition loc
                 else precondition in
+              (* Add implicitly added ann to exists *)
+              let precondition = CF.push_exists (pre_stack # get_stk) precondition in
               if (not (pre_stack # is_empty) && not (!pre_rel = None)) then
                 let pre_rel = match !pre_rel with Some p -> p | None -> failwith "Not possible (infer_imm_ann_proc)" in
                 let rel_params = pre_stack # get_stk in
