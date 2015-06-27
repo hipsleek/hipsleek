@@ -674,6 +674,8 @@ let common_arguments = [
   ("--dis-term-msg", Arg.Set Globals.dis_term_msg, "turn off the printing of termination messages");
   ("--dis-post-check", Arg.Set Globals.dis_post_chk, "turn off the post_condition and loop checking");
   ("--post-eres", Arg.Set Globals.post_add_eres, "add res=eres.val for post-condition proving");
+  ("--add-pre", Arg.Set Globals.add_pre, "to add pre of case-spec into post-cond");
+  ("--dis-add-pre", Arg.Clear Globals.add_pre, "not to add pre of case-spec into post-cond");
   ("--post-flow", Arg.Set Globals.post_infer_flow, "add exception flow as a post-cond parameter for inference");
   ("--dis-post-flow", Arg.Clear Globals.post_infer_flow, "add exception flow as a post-cond parameter for inference");
   ("--dis-assert-check", Arg.Set Globals.dis_ass_chk, "turn off the assertion checking");

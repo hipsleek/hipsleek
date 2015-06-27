@@ -1,19 +1,19 @@
 
-relation R(int x,int y,int a,int b).
+relation R(int xxx,int y,int a,int b).
 
-void loo (ref int x, ref int y,int a, int b)
+void loo (ref int xxx, ref int y,int a, int b)
   infer [@term_wo_post]
  case {
-  x>0 | y>0 -> ensures true;
-  x<=0 & y<=0 -> ensures true;
+  xxx>0 | y>0 -> ensures true;
+  xxx<=0 & y<=0 -> ensures true;
   }
 {
 
-  if (x>0 || y>0) {
+  if (xxx>0 || y>0) {
     //dprint;
-    x = x+a-b-1;
+    xxx = xxx+a-b-1;
     y = y+b-a-1;
-    loo(x,y,a,b);
+    loo(xxx,y,a,b);
   };
 }
 

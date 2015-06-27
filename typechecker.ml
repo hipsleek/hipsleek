@@ -3709,6 +3709,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
               (**************end cp_test _ gen_cpfile******************)
               let lst_rank = List.map (fun (_,a2,a3)-> (a2,a3)) lst_rank in
               (*let () = Ranking.do_nothing in*)
+              (* TODO:WN : add_pre may be redundant here *)
               x_tinfo_hp (add_str "SPECS (after simplify_ann)" pr_spec) new_spec no_pos;
               x_tinfo_hp (add_str "SPECS (before add_pre)" pr_spec) new_spec no_pos;
               x_tinfo_hp (add_str "NEW SPECS(B4)" pr_spec) new_spec no_pos;
