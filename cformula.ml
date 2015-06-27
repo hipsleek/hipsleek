@@ -17607,6 +17607,11 @@ let rec add_pure (sp:struc_formula) rel_fml_pre rel_fml_post = match sp with
                              formula_assume_struc = add_pure b.formula_assume_struc rel_fml_post rel_fml_post;})
   | EList b -> EList (List.map (fun (l,e) ->(l,add_pure e rel_fml_pre rel_fml_post)) b)
 
+let add_pure (sp:struc_formula) rel_fml_pre rel_fml_post =
+  let pr1 = !print_struc_formula in
+  let pr2 = pr_option !CP.print_formula in
+  Debug.no_3 "add_pure" pr1 pr2 pr2 pr1 add_pure sp rel_fml_pre rel_fml_post
+
 (*let rec remove_rel_fml fml = match fml with*)
 (*  | Or {formula_or_f1 = f1;*)
 (*        formula_or_f2 = f2;*)

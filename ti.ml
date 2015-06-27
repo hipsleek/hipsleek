@@ -47,7 +47,7 @@ let merge_trrels rec_trrels =
   merge_trrels
 
 let solve_rec_trrel rtr conds = 
-  let rec_cond = simplify 4 rtr.ret_ctx rtr.termr_rhs_params in
+  let rec_cond = x_add simplify rtr.ret_ctx rtr.termr_rhs_params in
   let rec_cond =
     if CP.is_disjunct rec_cond
     then pairwisecheck rec_cond
@@ -78,7 +78,7 @@ let solve_rec_trrel rtr conds =
   else conds 
 
 let solve_base_trrel btr turels =
-  let base_cond = simplify 5 btr.ret_ctx btr.termr_rhs_params in
+  let base_cond = x_add simplify btr.ret_ctx btr.termr_rhs_params in
   let base_cond =
     if CP.is_disjunct base_cond
     then pairwisecheck base_cond
@@ -91,9 +91,9 @@ let solve_base_trrel btr turels =
 
 let solve_base_trrels params base_trrels turels =
   let base_ctx = List.map (fun btr ->
-      simplify 7 btr.ret_ctx btr.termr_rhs_params) base_trrels in
+      x_add simplify btr.ret_ctx btr.termr_rhs_params) base_trrels in
   let not_term_cond = List.fold_left (fun ac tu ->
-      let ctx = simplify 9 tu.call_ctx params in
+      let ctx = x_add simplify tu.call_ctx params in
       (* let () = print_endline_quiet ("ctx: " ^ (!CP.print_formula ctx)) in *)
       mkOr ac ctx) (CP.mkFalse no_pos) turels in
   let not_term_cond = om_simplify not_term_cond in
@@ -144,7 +144,7 @@ let solve_trrel_list params trrels turels =
   (* let () = print_endline_quiet ("not_rec_cond: " ^ (!CP.print_formula not_rec_cond)) in *)
 
   let rec_conds = List.fold_left (fun acc rtr ->
-      let rec_cond = simplify 4 rtr.ret_ctx ((* remove_nondet_vars *) rtr.termr_rhs_params) in
+      let rec_cond = x_add simplify rtr.ret_ctx ((* remove_nondet_vars *) rtr.termr_rhs_params) in
       let rec_cond =
         if CP.is_disjunct rec_cond
         then pairwisecheck rec_cond
@@ -157,7 +157,7 @@ let solve_trrel_list params trrels turels =
   let loop_conds = List.fold_left (fun acc tu ->
       match tu.termu_rhs with
       | Loop _ ->
-        let loop_cond = simplify 10 tu.call_ctx params in
+        let loop_cond = x_add simplify tu.call_ctx params in
         let loop_cond = mkAnd loop_cond (mkNot not_rec_cond) in
         if is_sat loop_cond then acc @ [loop_cond] else acc
       | _ -> acc) [] turels 
@@ -179,7 +179,7 @@ let solve_trrel_list params trrels turels =
   (* else conds                                                                   *)
   let rem_cond = om_simplify (mkNot (join_disjs (List.map get_cond conds))) in
   let pre_cond = CP.join_conjunctions (List.fold_left (fun acc tu ->
-      let cond = simplify 11 tu.call_ctx params in
+      let cond = x_add simplify tu.call_ctx params in
       acc @ [cond]) [] turels) in
   let unk_cond = om_simplify (mkAnd pre_cond rem_cond) in
   let may_cond = om_simplify (mkAnd rem_cond (mkNot unk_cond)) in 
@@ -453,8 +453,7 @@ let solve no_verification_errors should_infer_tnt prog =
   if turels = [] && trrels = [] then 
     x_tinfo_pp ("\n\n!!! Termination Inference is not performed due to empty set of relational assumptions.\n\n") no_pos
   else if not no_verification_errors then
-    let () = x_tinfo_pp ("\n\n!!! Termination Inference is not performed due to errors in verification process.\n\n") no_pos in
-    ()
+    x_tinfo_pp ("\n\n!!! Termination Inference is not performed due to errors in verification process.\n\n") no_pos
   else if not should_infer_tnt then ()
   else
     let () = print_endline_quiet "\n\n*****************************" in

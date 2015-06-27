@@ -3556,6 +3556,18 @@ let is_prim_proc prog id =
     not proc.proc_is_main
   with _ -> false
 
+let is_rec_proc prog mn = 
+  try
+    let proc = find_proc prog mn in
+    proc.proc_is_recursive
+  with _ -> false
+
+let has_ref_params prog mn =
+  try
+    let proc = find_proc prog mn in
+    proc.proc_by_name_params != []
+  with _ -> false
+
 let print_data_dependency_graph ddg = 
   IG.fold_edges (fun s d a -> "\n" ^ s ^ " -> " ^ d ^ a)  ddg ""
 
@@ -3572,8 +3584,8 @@ let data_dependency_graph_of_call_exp prog ddg src mn args =
       let mn_decl = look_up_proc_def_raw prog.new_proc_decls mn in
       let by_name_params = mn_decl.proc_by_name_params in
       let ddg = List.fold_left (fun g (arg, par) ->
-          if List.exists (fun sv -> eq_str (P.name_of_spec_var sv) (snd arg)) by_name_params then
-            IG.add_edge g par mn
+          if List.exists (fun sv -> eq_str (P.name_of_spec_var sv) (snd arg)) by_name_params 
+          then IG.add_edge g par mn
           else g) ddg (List.combine mn_decl.proc_args args) 
       in
       ddg, mn
@@ -3632,22 +3644,10 @@ let rec_calls_of_exp exp =
     | _ -> None
   in fold_exp exp f List.concat []
 
-let has_ref_params prog mn =
-  try
-    let proc = find_proc prog mn in
-    proc.proc_by_name_params != []
-  with _ -> false
-
 let has_named_params prog mn =
   try
     let proc = find_proc prog mn in
     List.exists (fun (t, _) -> is_node_typ t) proc.proc_args
-  with _ -> false
-
-let is_rec_proc prog mn = 
-  try
-    let proc = find_proc prog mn in
-    proc.proc_is_recursive
   with _ -> false
 
 let data_dependency_graph_of_proc prog proc = 
@@ -3661,7 +3661,7 @@ let rec collect_dependence_procs_aux prog init ws ddg src =
     match succ with
     | [] -> [], ws
     | _ -> 
-      let depend_mns = List.filter is_mingle_name succ in
+      let depend_mns = List.filter is_mingle_name succ in (* Choose only methods *)
       let depend_mns = 
         if init then 
           if not (is_rec_proc prog src) then []
@@ -3685,6 +3685,7 @@ let dependence_procs_of_proc prog proc =
   | Some e ->
     let pn = proc.proc_name in
     let ddg = data_dependency_graph_of_exp prog pn e in
+    let () = print_endline_quiet ("ddg of " ^ proc.proc_name ^ ": " ^ (print_data_dependency_graph ddg)) in
     let rec_pns = rec_calls_of_exp e in
     let pns = remove_dups_id (pn::rec_pns) in
     let r = List.fold_left (fun acc pn -> 

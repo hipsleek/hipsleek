@@ -27,10 +27,10 @@ let simplify f args =
     CP.mkExists_with_simpl om_simplify (* Tpdispatcher.simplify_raw *)
       (diff (CP.fv f) args) f None (CP.pos_of_formula f)
 
-let simplify num f args =
+let simplify f args =
   let pr1 = !CP.print_formula in
   let pr2 = pr_list !CP.print_sv in
-  Debug.no_2_num num "Ti.simplify" pr1 pr2 pr1
+  Debug.no_2 "Ti.simplify" pr1 pr2 pr1
     (fun _ _ -> simplify f args) f args
 
 let is_sat f = 
@@ -326,7 +326,7 @@ let elim_nondet_vars f =
   let fv_f = CP.fv f in
   let nondet_vars = List.find_all is_nondet_var fv_f in 
   let params = diff fv_f nondet_vars in
-  simplify 12 f params, nondet_vars
+  x_add simplify f params, nondet_vars
 
 let remove_nondet_vars svl = 
   List.filter (fun v -> not (is_nondet_var v)) svl
@@ -1106,7 +1106,7 @@ let infer_ranking_function_scc prog g scc =
 (* f is a single formula *)
 (* ctx -/-> f            *)
 let subst_by_ctx vars ctx f = 
-  let simpl_f = simplify 20 (mkAnd ctx f) vars in
+  let simpl_f = x_add simplify (mkAnd ctx f) vars in
   try
     List.find (fun c -> imply (mkAnd ctx c) f) (CP.split_conjunctions simpl_f)
   with _ -> simpl_f
@@ -1179,7 +1179,7 @@ let infer_abductive_cond_templ prog ann abd_ante abd_conseq =
     else
       (* Return trivial abductive condition *)
       let args = List.concat (List.map CP.afv abd_templ_args) in
-      Some (simplify 1 (mkAnd abd_ante abd_conseq) args)
+      Some (x_add simplify (mkAnd abd_ante abd_conseq) args)
     (* let excl_args = CP.fv icond in                                                             *)
     (* let incl_args = diff args excl_args in                                                     *)
     (* let () = print_endline ("Abductive synthesis: args: " ^ (!CP.print_svl args)) in           *)
@@ -1434,7 +1434,7 @@ let uid_of_loop trel =
   | Loop _ ->
     let args = trel.termu_rhs_args in
     let params = List.concat (List.map CP.afv args) in
-    let cond = simplify 2 trel.call_ctx params in
+    let cond = x_add simplify trel.call_ctx params in
     { CP.tu_id = CP.loop_id;
       CP.tu_sid = "";
       CP.tu_fname = trel.termu_cle;
@@ -1506,7 +1506,7 @@ let infer_loop_cond_list params ante conds =
   (* print_endline ("TO-LOOP: " ^ (pr_list !CP.print_formula conds)) *)
   match conds with
   | [] -> None
-  | _ -> Some (mkNot (simplify 3 ante params))
+  | _ -> Some (mkNot (x_add simplify ante params))
 
 let search_nt_cond_ann lhs_uids ann =
   let fn = CP.fn_of_term_ann ann in
@@ -1608,8 +1608,11 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
           (*     if (eq_str fn c.ntc_fn) && not (c.ntc_id == rhs_uid.CP.tu_id) then acc *)
           (*     else acc @ [c.ntc_cond]) [] cl) rec_iconds                             *)
           (* in                                                                         *)
-          (* let abd_f = infer_abductive_cond_templ in *)
-          let abd_f = infer_abductive_cond_subtract params cond in
+          let abd_f = 
+            if !Globals.tnt_abd_strategy = 1 then
+              infer_abductive_cond_subtract params cond
+            else infer_abductive_cond_templ
+          in
           let ir = infer_abductive_cond_list abd_f prog rhs_uid eh_ctx rec_iconds in
           NT_No (ir @ (opt_to_list il))
     in ntres
@@ -1623,8 +1626,8 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
 
 let is_nondet_rec rec_trrel base_trrels = 
   let base_ctx = List.map (fun btr ->
-      simplify 10 btr.ret_ctx btr.termr_rhs_params) base_trrels in
-  let rec_ctx = simplify 11 rec_trrel.ret_ctx rec_trrel.termr_rhs_params in
+      x_add simplify btr.ret_ctx btr.termr_rhs_params) base_trrels in
+  let rec_ctx = x_add simplify rec_trrel.ret_ctx rec_trrel.termr_rhs_params in
   List.exists (fun bctx -> is_sat (mkAnd rec_ctx bctx)) base_ctx
 
 let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
@@ -1761,7 +1764,7 @@ let proving_trivial_termination_one_vertex prog tg scc v =
       let term_conds = List.map (fun (_, r, _) -> 
           mkAnd eh_ctx (mkNot (CP.cond_of_term_ann r.termu_rhs))) term_edges_from_v in
       (* let () = print_endline (pr_list !CP.print_formula term_conds) in *)
-      let term_conds = List.map (fun f -> simplify 6 f params) term_conds in
+      let term_conds = List.map (fun f -> x_add simplify f params) term_conds in
       let term_conds = get_full_disjoint_cond_list_with_ctx eh_ctx term_conds in
       (* let term_conds = List.filter (fun c -> is_sat (mkAnd eh_ctx c)) term_conds in *)
       (Some uid, term_conds)

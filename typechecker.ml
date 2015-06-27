@@ -581,8 +581,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             | None ->
               if new_args = [] then [],new_formula_inf_continuation
               else
-                (*                            let pre_vars,_ = CF.get_pre_post_vars_simp [] new_formula_inf_continuation in*)
-                (*                            let pre_inf_vars = List.filter CP.is_node_typ pre_vars in*)
+                (* let pre_vars,_ = CF.get_pre_post_vars_simp [] new_formula_inf_continuation in *)
+                (* let pre_inf_vars = List.filter CP.is_node_typ pre_vars in *)
                 let pre_args, _ = List.partition (fun x -> List.mem x pre_vars) new_args in
                 let new_rel_pre = CP.fresh_spec_var_rel () in
                 let new_rel_post = CP.fresh_spec_var_rel () in
@@ -599,7 +599,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             | Some pflag ->
               if not(pflag) then
                 if new_args = [] then
-                  (*                              let pre_vars,_ = CF.get_pre_post_vars_simp [] new_formula_inf_continuation in*)
+                  (* let pre_vars,_ = CF.get_pre_post_vars_simp [] new_formula_inf_continuation in *)
                   pre_vars@pargs,new_formula_inf_continuation
                 else
                   let new_rel = CP.fresh_spec_var_rel () in
@@ -608,7 +608,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                   let new_spec = CF.add_pure new_formula_inf_continuation (Some new_rel_fml) None in
                   x_tinfo_hp (add_str "TEMP SPECS2" pr_spec) new_spec no_pos;
                   [new_rel],new_spec
-                  (*                              new_args,new_formula_inf_continuation*)
+                  (* new_args,new_formula_inf_continuation *)
               else
               if pflag then
                 let new_rel = CP.fresh_spec_var_rel () in
@@ -626,7 +626,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                               CF.formula_inf_vars = vars;
                               CF.formula_inf_continuation = new_formula_inf_continuation}
       in
-      let () = proc.proc_stk_of_static_specs # push einfer in
+      let () = proc.proc_stk_of_static_specs # push_pr "typechecker:629" einfer in
       let new_fml_fv = CF.struc_fv new_formula_inf_continuation in
       (* let (vars_rel,vars_inf) = List.partition (fun v -> is_RelT(CP.type_of_spec_var v) ) vars in *)
       (* let (vars_templ, vars_inf) = List.partition (fun v -> is_FuncT (CP.type_of_spec_var v)) vars_inf in *)

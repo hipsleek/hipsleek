@@ -902,7 +902,7 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps
       let n_stk_spec = update_infer_objs n_stk_spec in
       let n_stk_specs = proc.C.proc_stk_of_static_specs in
       let _ = n_stk_specs # pop in
-      let _ =  n_stk_specs # push n_stk_spec in
+      let _ =  n_stk_specs # push_pr "saout:905" n_stk_spec in
       (* let proc_stk_of_static_specs = proc.C.proc_stk_of_static_specs  in *)
       (* let n_proc_stk_of_static_specs = List.map (fun s -> *)
       (*     CF.struc_formula_trans_heap_node [] hn_trans_formula (CF.struc_formula_drop_infer unk_hps s) *)
