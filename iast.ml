@@ -396,11 +396,13 @@ and exp_bool_lit = { exp_bool_lit_val : bool;
 
 and exp_barrier = {exp_barrier_recv : ident; exp_barrier_pos : loc}
 
+(* WN : why do we have two kinds of calls? should unify *)
+
 and exp_call_nrecv = { 
   exp_call_nrecv_method : ident;
   exp_call_nrecv_lock : ident option;
-  exp_call_nrecv_arguments : exp list;
   exp_call_nrecv_ho_arg : Iformula.formula option;
+  exp_call_nrecv_arguments : exp list;
   exp_call_nrecv_path_id : control_path_id;
   exp_call_nrecv_pos : loc }
 
