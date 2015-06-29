@@ -15243,7 +15243,7 @@ let verify_pre_is_sat prog fml =
   Debug.no_1 "verify_pre_is_sat" pr string_of_bool
     (fun _ -> verify_pre_is_sat prog fml) fml
 
-let () = Ti2.unsat_base_nth := unsat_base_nth
+(* let () = Ti2.unsat_base_nth := unsat_base_nth *)
 
 (********************************************************************************************)
 (*********The following code is moved to fixpoint.ml*************************************)

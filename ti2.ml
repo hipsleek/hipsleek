@@ -68,12 +68,12 @@ let fp_imply f p =
 let fp_imply f p =
   Debug.no_2 "fp_imply" Cprinter.string_of_formula Cprinter.string_of_pure_formula string_of_bool fp_imply f p
 
-let unsat_base_nth = ref (fun _ _ _ _ -> true) (* Solver.unsat_base_nth *)
+(* let unsat_base_nth = ref (fun _ _ _ _ -> true) (* Solver.unsat_base_nth *) *)
 
-let f_is_sat prog f =
-  (* let _, pf, _, _, _, _ = CF.split_components f in *)
-  (* Tpdispatcher.is_sat_raw pf                       *)
-  not (!unsat_base_nth 1 prog (ref 0) f)
+(* let f_is_sat prog f =                                                      *)
+(*   (* let _, pf, _, _, _, _ = CF.split_components f in *)                   *)
+(*   (* Tpdispatcher.is_sat_raw pf                       *)                   *)
+(*   not (!unsat_base_nth 1 prog (ref 0) f)                                   *)
 
 let join_disjs f_lst = 
   if is_empty f_lst then CP.mkFalse no_pos
@@ -588,11 +588,20 @@ and merge_tnt_case_spec_into_assume prog ctx spec af =
       let sub_case = List.find (fun (c, _) -> x_add fp_imply ctx c) cases in
       merge_tnt_case_spec_into_assume prog ctx (snd sub_case) af
     with _ -> 
+      let merged_cases = List.fold_left (
+          fun acc (c, s) ->
+            let mix_ctx, _, _ = x_add Cvutil.xpure 100 prog ctx in
+            let pure_ctx = MCP.pure_of_mix mix_ctx in
+            let nc = Tpdispatcher.om_gist c pure_ctx in
+            if is_sat nc then acc @ [(nc, merge_tnt_case_spec_into_assume prog ctx s af)]
+            else acc) [] cases
+      in
       CF.ECase {
-        CF.formula_case_branches = List.map (fun (c, s) -> 
-            let nctx, _ = CF.combine_and ctx (MCP.mix_of_pure c) in
-            if f_is_sat prog nctx then (c, merge_tnt_case_spec_into_assume prog ctx s af)
-            else (c, struc_formula_of_dead_path ())) cases;
+        (* CF.formula_case_branches = List.map (fun (c, s) ->                                *)
+        (*     let nctx, _ = CF.combine_and ctx (MCP.mix_of_pure c) in                       *)
+        (*     if f_is_sat prog nctx then (c, merge_tnt_case_spec_into_assume prog ctx s af) *)
+        (*     else (c, struc_formula_of_dead_path ())) cases;                               *)
+        CF.formula_case_branches = merged_cases;
         CF.formula_case_pos = no_pos; }
 
 let merge_tnt_case_spec_into_struc_formula prog ctx spec sf =
