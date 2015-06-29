@@ -66,10 +66,12 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
   (* group together which have relations  *)
   let primed_args = List.map (fun (t,i) -> CP.sp_add_prime (CP.mk_typed_spec_var t i) Primed) args in
 
-  (* QUICKFIX:
-   * because post_cond pure inference calls this function, the input isn't
-   * 'well-formed' as we'd like, so filter through lst_assume ensuring each
-   * infer_rel_type has a relevant relation. *)
+  let is_same_set_of_svs svs1 svs2 =
+    List.for_all (fun u -> List.exists (fun v -> CP.eq_spec_var_unp u v) svs1) svs2 &&
+    List.for_all (fun u -> List.exists (fun v -> CP.eq_spec_var_unp u v) svs2) svs1 in
+
+  (* filter through lst_assume ensuring each infer_rel_type
+   * has a relevant relation. *)
   let lst_assume = List.filter (fun (_,lhs,rhs) ->
     let has_useful_rel (f:CP.formula) =
       List.exists (fun f ->
@@ -77,8 +79,9 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
         (* a relation is 'useful' if it has the same # args
          * as the proc being analysed. *)
         (List.length rel_args) == (List.length args) &&
-         List.for_all2 CP.eq_spec_var_unp rel_args primed_args) (CP.split_conjunctions f) in
-    (has_useful_rel lhs) && (has_useful_rel rhs)) lst_assume in
+         is_same_set_of_svs rel_args primed_args) (CP.split_conjunctions f) in
+    (* assume if it has a 'good' rel on LHS, has one on RHS. *)
+    (has_useful_rel lhs)) lst_assume in
 
   let frm_assumes = List.map (fun (cat,lhs,rhs) ->
     (* find the flow; i.e. maybe a transition from one index to another in
