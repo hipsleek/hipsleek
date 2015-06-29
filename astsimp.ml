@@ -1694,7 +1694,7 @@ and trans_prog (prog : I.prog_decl) : C.prog_decl * I.prog_decl=
     ) cprog.C.old_proc_decls;}  
 *)
 and add_pre_to_cprog_one cprog c =
-  let ns = add_pre cprog c.C.proc_static_specs in
+  let ns = x_add add_pre cprog c.C.proc_static_specs in
   (*to handle @C. should handle copy on prim types?*)
   let ns_caller = if c.C.proc_by_copy_params = [] then ns else
       x_add trans_copy_spec_4caller c.C.proc_by_copy_params ns
@@ -6798,12 +6798,13 @@ and add_pre_x (prog :C.prog_decl) (f:CF.struc_formula):CF.struc_formula =
     | CF.EInfer b -> CF.EInfer {b with CF.formula_inf_continuation = helper pf b.CF.formula_inf_continuation;}
     | CF.EList b -> CF.EList (map_l_snd (helper pf) b)
   in
-  if !Globals.add_pre then helper (Cpure.mkTrue no_pos) f
-  else f
+  helper (Cpure.mkTrue no_pos) f
 
 and add_pre prog f =
   let pr = Cprinter.string_of_struc_formula in
-  Debug.no_1 "add_pre"  pr pr (add_pre_x prog) f 
+  if !Globals.add_pre then 
+    Debug.no_1 "add_pre"  pr pr (add_pre_x prog) f 
+  else f
 
 and trans_copy_spec_4caller_x copy_params sf=
   let convert_to_L hf=
