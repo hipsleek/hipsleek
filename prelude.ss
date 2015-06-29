@@ -13,6 +13,28 @@ int mult___(int a, int b)
   requires true 
   ensures res = a * b;
 
+/*
+
+int mults___(int a, int b) 
+  requires true 
+  ensures res = a * b;
+  
+int mults___(int a, int b)
+  case {
+    a = 0 -> ensures res = 0;
+    a > 0 -> case {
+      b = 0 -> ensures res = 0;
+      b < 0 -> ensures res < 0 & res < -a & res < b;
+      b > 0 -> ensures res > 0 & res > a & res > b;
+    }
+    a < 0 -> case {
+      b = 0 -> ensures res = 0;
+      b < 0 -> ensures res > 0 & res > -a & res > -b;
+      b > 0 -> ensures res < 0 & res < a & res < -b;
+    }
+  }
+*/
+
 int div___(int a, int b) 
  case {
   a >= 0 -> case {
