@@ -1155,6 +1155,8 @@ let hip_specific_arguments = [ ("-cp", Arg.String set_pred,
                                 "Print procedures being checked");
                                ("--dis-pgbv", Arg.Clear Globals.pass_global_by_value, 
                                 "disable pass read global variables by value");
+                               ("--en-pgbv", Arg.Set Globals.pass_global_by_value, 
+                                "enable pass read global variables by value");
                                ("--sqt", Arg.Set Globals.seq_to_try,
                                 "translate seq to try");
                                ("-validate", Arg.String set_validate_config,

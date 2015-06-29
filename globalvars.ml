@@ -445,19 +445,24 @@ let find_read_write_global_var
     	@param readSet the set of read-only global variables
     	@param writeSet the set of read/write global variables 
     	@return a pair of read and write variable declaration lists *)
-let rec to_var_decl_list (global_var_decls : I.exp_var_decl list) (readSet : IdentSet.t) (writeSet : IdentSet.t) :
+let to_var_decl_list (global_var_decls : I.exp_var_decl list) (readSet : IdentSet.t) (writeSet : IdentSet.t) :
   (I.exp_var_decl list * I.exp_var_decl list) =
-  match global_var_decls with
+  let rec helper l =
+
+  match l with
     [] -> [], []
   | h::t ->
-    let (readlist,writelist) = to_var_decl_list t readSet writeSet in
+    let (readlist,writelist) = helper t in
     let add_read_decl = List.filter (inIdentSet readSet) h.I.exp_var_decl_decls in
     let add_write_decl = List.filter (inIdentSet writeSet) h.I.exp_var_decl_decls in
     let add_read = List.map (to_var_decl h.I.exp_var_decl_type h.I.exp_var_decl_pos) add_read_decl in
     let add_write = List.map (to_var_decl h.I.exp_var_decl_type h.I.exp_var_decl_pos) add_write_decl in
     let new_read_list = add_read @ readlist in
     let new_write_list = add_write @ writelist in
-    (new_read_list, new_write_list)
+    (new_read_list, new_write_list) in
+  let rl,wl = helper global_var_decls in
+  if !Globals.pass_global_by_value then rl,wl
+  else ([],rl@wl)
 
 let to_var_decl_list (global_var_decls : I.exp_var_decl list) (readSet : IdentSet.t) (writeSet : IdentSet.t) :
   (I.exp_var_decl list * I.exp_var_decl list) =
