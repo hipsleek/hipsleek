@@ -3562,10 +3562,24 @@ let is_rec_proc prog mn =
     proc.proc_is_recursive
   with _ -> false
 
+let rec_calls_of_exp exp = 
+  let f exp = 
+    match exp with
+    | ICall e -> if e.exp_icall_is_rec then Some ([e.exp_icall_method_name]) else None
+    | SCall e -> if e.exp_scall_is_rec then Some ([e.exp_scall_method_name]) else None
+    | _ -> None
+  in fold_exp exp f List.concat []
+
 let has_ref_params prog mn =
   try
     let proc = find_proc prog mn in
     proc.proc_by_name_params != []
+  with _ -> false
+
+let has_named_params prog mn =
+  try
+    let proc = find_proc prog mn in
+    List.exists (fun (t, _) -> is_node_typ t) proc.proc_args
   with _ -> false
 
 let print_data_dependency_graph ddg = 
@@ -3575,40 +3589,44 @@ let eq_str s1 s2 = String.compare s1 s2 == 0
 
 let remove_dups_id = Gen.BList.remove_dups_eq eq_str
 
-let data_dependency_graph_of_call_exp prog ddg src mn args = 
-  let ddg, dst =
-    if is_prim_proc prog mn then ddg, src
-    else
-      let ddg = IG.add_edge ddg src mn in
-      (* The method call depends on its pass-by-name arguments *)
-      let mn_decl = look_up_proc_def_raw prog.new_proc_decls mn in
-      let by_name_params = mn_decl.proc_by_name_params in
-      let ddg = List.fold_left (fun g (arg, par) ->
-          if List.exists (fun sv -> eq_str (P.name_of_spec_var sv) (snd arg)) by_name_params 
-          then IG.add_edge g par mn
-          else g) ddg (List.combine mn_decl.proc_args args) 
-      in
-      ddg, mn
-  in
-  List.fold_left (fun g i -> IG.add_edge g dst i) ddg args
+let data_dependency_graph_of_call_exp prog ddg src mn args =
+  if is_prim_proc prog mn then
+    match src with
+    | None -> ddg
+    | Some v -> List.fold_left (fun g i -> IG.add_edge g v i) ddg args
+  else
+    (* Method call depends on its arguments *)
+    let ddg = List.fold_left (fun g i -> IG.add_edge g mn i) ddg args in
+    (* Pass-by-name (ref) parameters depend on their method call *)
+    let mn_decl = look_up_proc_def_raw prog.new_proc_decls mn in
+    let by_name_params = mn_decl.proc_by_name_params in
+    let ddg = List.fold_left (fun g (arg, par) ->
+        if List.exists (fun sv -> eq_str (P.name_of_spec_var sv) (snd arg)) by_name_params 
+        then IG.add_edge g par mn
+        else g) ddg (List.combine mn_decl.proc_args args) 
+    in
+    (* Src depends on the method call *) 
+    match src with
+    | None -> ddg
+    | Some v -> IG.add_edge ddg v mn
 
-(* src depends on exp *)
-let data_dependency_graph_of_exp prog src exp =
+let data_dependency_graph_of_exp prog mn exp =
+  (* src depends on exp *)
   let rec helper ddg src exp = 
     match exp with
     | Label e -> helper ddg src e.exp_label_exp
     | Assign e ->
       (* let ddg = IG.add_edge ddg src e.exp_assign_lhs in *)
-      helper ddg e.exp_assign_lhs e.exp_assign_rhs
+      helper ddg (Some e.exp_assign_lhs) e.exp_assign_rhs
     | Bind e ->
       let bvar = snd e.exp_bind_bound_var in
-      let ddg = IG.add_edge ddg src bvar in
+      (* let ddg = IG.add_edge ddg src bvar in *)
       let ddg = List.fold_left (fun g (_, i) ->
           IG.add_edge g bvar i) ddg e.exp_bind_fields in
-      helper ddg bvar e.exp_bind_body
+      helper ddg (Some bvar) e.exp_bind_body
     | Block e -> helper ddg src e.exp_block_body
     | Cond e ->
-      let ddg = IG.add_edge ddg src e.exp_cond_condition in
+      let ddg = IG.add_edge ddg mn e.exp_cond_condition in
       let ddg = helper ddg src e.exp_cond_then_arm in
       helper ddg src e.exp_cond_else_arm
     | Cast e -> helper ddg src e.exp_cast_body 
@@ -3620,9 +3638,12 @@ let data_dependency_graph_of_exp prog src exp =
     | Seq e ->
       let ddg = helper ddg src e.exp_seq_exp1 in
       helper ddg src e.exp_seq_exp2
-    | Var e -> IG.add_edge ddg src e.exp_var_name
+    | Var e ->
+        (match src with 
+        | Some v -> IG.add_edge ddg v e.exp_var_name
+        | None -> ddg)
     | While e -> 
-      let ddg = IG.add_edge ddg src e.exp_while_condition in
+      let ddg = IG.add_edge ddg mn e.exp_while_condition in
       helper ddg src e.exp_while_body
     | Try e ->
       let ddg = helper ddg src e.exp_try_body in
@@ -3630,30 +3651,26 @@ let data_dependency_graph_of_exp prog src exp =
     | _ -> ddg
   in
   let ddg = IG.empty in
-  helper ddg src exp
+  helper ddg None exp
 
-let data_dependency_graph_of_exp prog src exp =
+let data_dependency_graph_of_exp prog mn exp =
   Debug.no_1 "data_dependency_graph_of_exp" idf print_data_dependency_graph
-    (fun _ -> data_dependency_graph_of_exp prog src exp) src
-
-let rec_calls_of_exp exp = 
-  let f exp = 
-    match exp with
-    | ICall e -> if e.exp_icall_is_rec then Some ([e.exp_icall_method_name]) else None
-    | SCall e -> if e.exp_scall_is_rec then Some ([e.exp_scall_method_name]) else None
-    | _ -> None
-  in fold_exp exp f List.concat []
-
-let has_named_params prog mn =
-  try
-    let proc = find_proc prog mn in
-    List.exists (fun (t, _) -> is_node_typ t) proc.proc_args
-  with _ -> false
+    (fun _ -> data_dependency_graph_of_exp prog mn exp) mn
 
 let data_dependency_graph_of_proc prog proc = 
   match proc.proc_body with
-  | None -> None
-  | Some e -> Some (data_dependency_graph_of_exp prog proc.proc_name e)
+  | None -> IG.empty
+  | Some e -> data_dependency_graph_of_exp prog proc.proc_name e
+
+let ddg_proc_tbl: (ident, IG.t) Hashtbl.t = Hashtbl.create 20
+
+let build_ddg_proc_tbl prog = 
+  Hashtbl.iter 
+    (fun _ proc ->
+      if proc.proc_is_main then
+        Hashtbl.add ddg_proc_tbl proc.proc_name (data_dependency_graph_of_proc prog proc)
+      else ()) 
+    prog.new_proc_decls
 
 let rec collect_dependence_procs_aux prog init ws ddg src =
   try
@@ -3676,7 +3693,9 @@ let rec collect_dependence_procs_aux prog init ws ddg src =
           (acc @ dd), ws) (depend_mns, ws) working_succ
   with _ -> [], ws
 
-let collect_dependence_procs prog g pn = 
+let collect_dependent_procs prog proc =
+  
+   
   fst (collect_dependence_procs_aux prog true [pn] g pn)
 
 let dependence_procs_of_proc prog proc =
