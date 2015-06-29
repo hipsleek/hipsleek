@@ -47,11 +47,11 @@ let g = NG.create ()
 
 class ['k,'e] get_table (pr:'k -> string) (pr_elem:'e->string)  =
   object 
-    val tab = Hashtbl.create 10
+    val tab:('k,'e) Hashtbl.t  = Hashtbl.create 10
     method get n = Hashtbl.find tab n
     method replace n e = 
-      let () = x_binfo_hp pr n no_pos in
-      let () = x_binfo_hp pr_elem e no_pos in
+      (* let () = x_tinfo_hp pr n no_pos in *)
+      (* let () = x_tinfo_hp pr_elem e no_pos in *)
       Hashtbl.replace tab n e
   end;;
 
@@ -193,7 +193,7 @@ let rec find_read_write_global_var
       end in
   let process_call e =
     let pr e = Iprinter.string_of_exp (I.CallNRecv e) in
-    let () = x_binfo_hp (add_str "XXcallNR" pr_id) e.I.exp_call_nrecv_method no_pos in
+    (* let () = x_tinfo_hp (add_str "XXcallNR" pr_id) e.I.exp_call_nrecv_method no_pos in *)
     Debug.no_1 "global:process_call" pr (pr_pair print_set print_set) process_call e 
   in
   match block with
@@ -259,7 +259,7 @@ let rec find_read_write_global_var
             (IdentSet.diff (IdentSet.singleton e.I.exp_barrier_recv) local_vars, IdentSet.empty)
           else (IdentSet.empty, IdentSet.empty)
     | I.CallRecv e ->
-          let () = x_binfo_hp (add_str "XXcall" pr_id) e.I.exp_call_recv_method no_pos in
+          let () = x_tinfo_hp (add_str "XXcall" pr_id) e.I.exp_call_recv_method no_pos in
           begin
             ignore (NG.add_edge g (NG.V.create !curr_proc) (NG.V.create e.I.exp_call_recv_method));
             let read_write_list =  List.map (find_read_write_global_var global_vars local_vars) e.I.exp_call_recv_arguments in
@@ -494,8 +494,8 @@ let find_read_write_global_var_proc (global_id_set : IdentSet.t) (proc : I.proc_
         let readSet = IdentSet.diff reads writes in
         (* let readSet=reads in *)
         let writeSet = writes in
-        let () = x_binfo_hp (add_str "proc(readSet)" print_set) readSet no_pos in
-        let () = x_binfo_hp (add_str "proc(writeSet)" print_set) writeSet no_pos in
+        let () = x_tinfo_hp (add_str "proc(readSet)" print_set) readSet no_pos in
+        let () = x_tinfo_hp (add_str "proc(writeSet)" print_set) writeSet no_pos in
         (readSet,writeSet)
       end
   in 
@@ -527,9 +527,9 @@ let find_read_write_global_var_proc (global_id_set : IdentSet.t) (proc : I.proc_
   let writeSet= writes in
   (* let _= IdentSet.iter (fun x-> print_endline (proc.I.proc_name^" Find glbv R:" ^x) )readSet in  *)
   (* let _= IdentSet.iter (fun x-> print_endline (proc.I.proc_name^" Find glbv W:" ^x) )writeSet in *)
-  let () = x_binfo_hp (add_str "XXproc_name" pr_id) proc.I.proc_name no_pos in
-  let () = x_binfo_hp (add_str "XXreadSet" print_set) readSet no_pos in
-  let () = x_binfo_hp (add_str "XXwriteSet" print_set) writeSet no_pos in
+  let () = x_tinfo_hp (add_str "XXproc_name" pr_id) proc.I.proc_name no_pos in
+  let () = x_tinfo_hp (add_str "XXreadSet" print_set) readSet no_pos in
+  let () = x_tinfo_hp (add_str "XXwriteSet" print_set) writeSet no_pos in
   call_global_param # replace proc.I.proc_name (readSet,writeSet)
 
 let find_read_write_global_var_proc (global_id_set : IdentSet.t) (proc : I.proc_decl) : unit =
@@ -546,9 +546,9 @@ let find_read_write_global_var_proc (global_id_set : IdentSet.t) (proc : I.proc_
 let get_read_write_global_var (global_var_decls : I.exp_var_decl list) (proc : I.proc_decl) : 
   (I.exp_var_decl list * I.exp_var_decl list) =
   let (reads,writes) = call_global_param # get proc.I.proc_name in
-  let () = x_binfo_hp (add_str "get_read_write_global_var: proc_name" pr_id) proc.I.proc_name no_pos in
-  let () = x_binfo_hp (add_str "read vars: " string_of_IdentSet) reads no_pos in
-  let () = x_binfo_hp (add_str "writes vars: " string_of_IdentSet) writes no_pos in
+  let () = x_tinfo_hp (add_str "get_read_write_global_var: proc_name" pr_id) proc.I.proc_name no_pos in
+  let () = x_tinfo_hp (add_str "read vars: " string_of_IdentSet) reads no_pos in
+  let () = x_tinfo_hp (add_str "writes vars: " string_of_IdentSet) writes no_pos in
   let readSet = IdentSet.diff reads writes in
   let writeSet = writes in
   x_add to_var_decl_list global_var_decls readSet writeSet
