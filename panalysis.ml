@@ -132,6 +132,21 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
     ) lst_assume in
 
   (* TODO: combine various param-flow lists, reduce duplication. *)
+
+  (* Print summary of results
+   * (for convenience, so -dre analyse isn't needed). *)
+  let pr = Cprinter.string_of_pure_formula in
+  let pr_def = pr_list (pr_pair pr pr) in
+  let pr1 = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in
+  let pr2 = pr_list (pr_pair string_of_typ pr_id) in
+  let pr_out = pr_list (pr_list Cprinter.string_of_param_flow) in
+
+  let () = Debug.binfo_pprint "analyse_param summary:" no_pos in
+  let () = Debug.binfo_hprint (add_str "relations" pr1) lst_assume no_pos in
+  let () = Debug.binfo_hprint (add_str "args" pr2) args no_pos in
+  let () = Debug.binfo_hprint (add_str "result" pr_out) frm_assumes no_pos in
+  let () = Debug.binfo_pprint "" no_pos in (* pr_list does't end in newline. *)
+
   frm_assumes
 
 let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident list) : (CP.param_flow list list) =
