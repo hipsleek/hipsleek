@@ -4556,6 +4556,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_exp
 and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_exp_type =
   (* let () = print_endline ("[trans_exp] input = { " ^ (Iprinter.string_of_exp ie) ^ " }") in *)
   let rec helper ie =
+    (* let () = print_endline ("[trans_exp:helper] input = { " ^ (Iprinter.string_of_exp ie) ^ " }") in *)
     match ie with
     | I.Label (pid, e)-> 
       let e1,t1 = (helper e) in
@@ -4860,7 +4861,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
         let new_e = I.CallNRecv {
             (* mults for linearizing non-linear mult *)
             (* sv-comp/termination-numeric/LogRecursive_true-termination *)
-            I.exp_call_nrecv_method = "mults___"; 
+            I.exp_call_nrecv_method = "mult___"; 
             I.exp_call_nrecv_lock = None;
             I.exp_call_nrecv_arguments = [ e1; e2 ];
             I.exp_call_nrecv_ho_arg = None;
@@ -5043,7 +5044,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
         I.exp_call_nrecv_ho_arg = ho_arg;
         I.exp_call_nrecv_path_id = pi;
         I.exp_call_nrecv_pos = pos } ->
-      (* let () = print_string "trans_exp :: case CallNRecv\n" in*)
+      (* let () = print_string ("trans_exp :: case CallNRecv: " ^ mn ^ "\n") in *)
       let tmp = List.map (helper) args in
       let (cargs, cts) = List.split tmp in
       let proc_decl = I.look_up_proc_def_raw prog.I.prog_proc_decls mn in
