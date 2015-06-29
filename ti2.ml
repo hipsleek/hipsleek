@@ -1116,9 +1116,10 @@ let infer_ranking_function_scc prog g scc =
 (* ctx -/-> f            *)
 let subst_by_ctx vars ctx f = 
   let simpl_f = x_add simplify (mkAnd ctx f) vars in
-  try
-    List.find (fun c -> imply (mkAnd ctx c) f) (CP.split_conjunctions simpl_f)
-  with _ -> simpl_f
+  Tpdispatcher.om_gist simpl_f (x_add simplify ctx vars)
+  (* try                                                                          *)
+  (*   List.find (fun c -> imply (mkAnd ctx c) f) (CP.split_conjunctions simpl_f) *)
+  (* with _ -> simpl_f                                                            *)
 
 (* Abductive Inference *)
 let infer_abductive_cond_subtract_single args subtrahend_terms_lst ante cons =
