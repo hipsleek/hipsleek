@@ -33,6 +33,7 @@ int sum(int x)
   int r;
   if (x==0) r=0;
   else {
+    dprint;
     r=2+sum(x-1);
   }
   sub_stk(2); //add back stack frame prior to return
