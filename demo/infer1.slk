@@ -8,8 +8,13 @@ pred ll<n> == self = null & n = 0
   inv n >= 0.
 
 checkentail x::ll<n> |- n>0.
+print residue.
 
 checkentail x::ll<n> & n>0 |- x!=null.
+print residue.
+
+checkentail x::ll<n> & n>0 |- x::node<_,q>.
+print residue.
 
 checkentail x::ll<n> & x!=null |- n>0.
 
@@ -17,7 +22,7 @@ checkentail x::node<_,null> |- x::ll<n>.
 print residue.
 
 //(5)
-checkentail x::node<_,q>*q::node<_,null> |- x::ll<n>.
+checkentail x::node<_,q>*q::node<_,null> |- (exists n: x::ll<n>).
 print residue.
 
 checkentail x::node<_,q>*q::node<_,_> |- x::ll<n>.
@@ -27,7 +32,10 @@ checkentail x::ll<n> |- x::node<_,null>.
 print residue.
 
 //(8)
-infer [n] x::ll<n> |- x::node<_,null>.
+infer [x] x::ll<n> |- x::node<_,null>.
+print residue.
+
+infer [x] x::ll<n> |- x::node<_,q>.
 print residue.
 
 infer [n] x::ll<n> |- x::node<_,q>*q::node<_,null>.
@@ -35,7 +43,10 @@ print residue.
 
 relation P(int n).
 
-infer [P] x::ll<n> & P(n) |- x::node<_,q>.
+infer [P] x::ll<n> & P(n) |- x::node<_,null>.
+print residue.
+
+infer [n] x::ll<n>  |- x::node<_,null>.
 print residue.
 
 
@@ -51,7 +62,7 @@ print residue.
 infer [y] true |- y::node<a,b> * b::node<c,d>.
 print residue.
 
-// (4)
+// (4) 
 infer [y] true |- y::node<a,b> * b::ll<m>.
 print residue.
 
@@ -89,6 +100,12 @@ print residue.
 
 // (13)
 infer [y] y=null |- y::node<a,b>.
+print residue.
+
+infer [P] 0<n & n<y+2   |- P(y).
+print residue.
+
+infer [P] y=2*n   |- P(y).
 print residue.
 
 
