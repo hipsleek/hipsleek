@@ -66,6 +66,28 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
   (* group together which have relations  *)
   let primed_args = List.map (fun (t,i) -> CP.sp_add_prime (CP.mk_typed_spec_var t i) Primed) args in
 
+  (* A formula is 'important' for analysis if it contains
+   * both some x' primed specvar as well as some unprimed
+   * specvars.
+   * i.e. formulas with only primed specvars not 'important' here. *)
+  let is_important_formula f =
+    let has_primed_sv svs =
+      List.exists CP.is_primed svs in
+    let has_unprimed_sv svs =
+      List.exists CP.is_unprimed svs in
+    match f with
+    | CP.BForm((pf, _), _) ->
+      (match pf with
+       | CP.Lt (lhs, rhs, _)
+       | CP.Lte (lhs, rhs, _)
+       | CP.Gt (lhs, rhs, _)
+       | CP.Gte (lhs, rhs, _)
+       | CP.Eq (lhs, rhs, _) ->
+         let svs = (CP.afv lhs)@(CP.afv rhs) in
+         has_primed_sv svs && has_unprimed_sv svs
+       | _ -> false)
+    |  _ -> false in
+
   let is_same_set_of_svs svs1 svs2 =
     List.for_all (fun u -> List.exists (fun v -> CP.eq_spec_var_unp u v) svs1) svs2 &&
     List.for_all (fun u -> List.exists (fun v -> CP.eq_spec_var_unp u v) svs2) svs1 in
