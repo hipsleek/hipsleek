@@ -1,15 +1,15 @@
 relation P(int[] a).
 relation Q(int[] a,int[] b,int r,int i,int j).
 
-  int foo(ref int[] a,int k,int j)
-  infer [@arrvar,Q,update_array_1d] requires true ensures Q(a,a',res,k,j);
+  int foo(ref int[] arr,int k,int j)
+  infer [@arrvar,Q,update_array_1d] requires true ensures Q(arr,arr',res,k,j);
 {
-   if(a[k]>0){
-      a[k] = 0;
-      return foo(a,j,k);
+   if(arr[k]>0){
+      arr[k] = 0;
+      return foo(arr,j,k);
    }
    else{
-     return a[k]+a[j]+5;
+     return arr[k]+arr[j]+5;
    }
 
 }
