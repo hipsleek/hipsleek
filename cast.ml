@@ -478,6 +478,7 @@ and exp_check_ref = {
 and exp_java = { 
   exp_java_code : string;
   exp_java_pos : loc}
+
 and exp_label = {
   exp_label_type : typ;
   exp_label_path_id : (control_path_id * path_label);
@@ -2351,6 +2352,7 @@ module IGC = Graph.Components.Make(IG)
 module IGP = Graph.Path.Check(IG)
 module IGN = Graph.Oper.Neighbourhood(IG)
 module IGT = Graph.Topological.Make(IG)
+module PCG = Graph.Path.Check(IG)
 
 let ex_args f a b = f b a
 
@@ -3547,16 +3549,64 @@ let is_resourceless_h_formula prog (h: F.h_formula) =
     !print_h_formula string_of_bool
     (fun _ -> is_resourceless_h_formula_x prog h) h
 
-(*************************************************)
-(* Data structure to track the sequence of calls *)
-(*************************************************)
-type call_seq = {
-  call_seq_root: ident;
-  call_seq_succ: call_seq list;
-}
+(*********************************************)
+(* Call graph to track the sequence of calls *)
+(*********************************************)
+let eq_num_ident (s1, i1) (s2, i2) =
+  (i1 == i2) && (String.compare s1 s2 == 0)
 
-let call_seq_of_exp 
+let print_num_ident (s, i) =
+  s ^ ":" ^ (string_of_int i) 
 
+module NumIdent = struct
+  type t = ident * int
+  let compare = compare  
+  let hash = Hashtbl.hash
+  let equal = eq_num_ident
+end
+
+module CG = Graph.Persistent.Digraph.Concrete(NumIdent)
+
+let print_call_seq_graph csg = 
+  CG.fold_edges (fun s d a -> 
+      "\n" ^ (print_num_ident s) ^ " -> " ^ (print_num_ident d) ^ a)  csg ""
+
+let call_seq_graph_of_exp mn exp : CG.t = 
+  let rec helper cg roots index exp : (CG.t * NumIdent.t list * int) = 
+    match exp with
+    | Label e -> helper cg roots index e.exp_label_exp
+    | Assign e -> helper cg roots index e.exp_assign_rhs
+    | Bind e -> helper cg roots index e.exp_bind_body
+    | Block e -> helper cg roots index e.exp_block_body
+    | Cond e -> 
+      let n_cg, then_n_roots, n_index = helper cg roots index e.exp_cond_then_arm in
+      let n_cg, else_n_roots, n_index = helper cg roots n_index e.exp_cond_else_arm in
+      n_cg, then_n_roots @ else_n_roots, n_index
+    | Cast e -> helper cg roots index e.exp_cast_body
+    | Catch e -> helper cg roots index e.exp_catch_body
+    | ICall e ->
+      let dst = (e.exp_icall_method_name, index) in
+      let n_cg = List.fold_left (fun g r -> CG.add_edge g r dst) (CG.add_vertex cg dst) roots in
+      n_cg, [dst], index + 1
+    | SCall e ->
+      let dst = (e.exp_scall_method_name, index) in
+      let n_cg = List.fold_left (fun g r -> CG.add_edge g r dst) (CG.add_vertex cg dst) roots in
+      n_cg, [dst], index + 1
+    | Seq e ->
+      let n_cg, n_roots, n_index = helper cg roots index e.exp_seq_exp1 in
+      helper n_cg n_roots n_index e.exp_seq_exp2
+    | While e -> helper cg roots index e.exp_while_body
+    | Try e -> helper cg roots index e.exp_try_body
+    | _ -> cg, roots, index
+  in
+  let init_index = 0 in
+  let cg, _, _ = helper CG.empty [(mn, init_index)] (init_index + 1) exp in
+  cg
+
+let call_seq_graph_of_exp mn exp =
+  Debug.no_1 "call_seq_graph_of_exp" idf print_call_seq_graph
+    (fun _ -> call_seq_graph_of_exp mn exp) mn
+  
 (*************************************************)
 (* Construct a data dependency graph from an exp *)
 (*************************************************)
@@ -3598,6 +3648,8 @@ let print_data_dependency_graph ddg =
 let eq_str s1 s2 = String.compare s1 s2 == 0
 
 let remove_dups_id = Gen.BList.remove_dups_eq eq_str
+
+let diff_id = Gen.BList.difference_eq eq_str
 
 let data_dependency_graph_of_call_exp prog ddg src mn args =
   if is_prim_proc prog mn then
@@ -3659,15 +3711,13 @@ let data_dependency_graph_of_exp prog mn exp =
       let ddg = helper ddg src e.exp_try_body in
       helper ddg src e.exp_catch_clause
     | _ -> ddg
-  in
-  let ddg = IG.empty in
-  helper ddg None exp
+  in helper (IG.empty) None exp
 
 let data_dependency_graph_of_exp prog mn exp =
   Debug.no_1 "data_dependency_graph_of_exp" idf print_data_dependency_graph
     (fun _ -> data_dependency_graph_of_exp prog mn exp) mn
 
-let data_dependency_graph_of_proc prog proc = 
+let data_dependency_graph_of_proc prog proc =
   match proc.proc_body with
   | None -> IG.empty
   | Some e -> data_dependency_graph_of_exp prog proc.proc_name e
@@ -3682,42 +3732,52 @@ let build_ddg_proc_tbl prog =
       else ()) 
     prog.new_proc_decls
 
-let rec collect_dependence_procs_aux prog init ws ddg src =
-  try
-    let succ = IG.succ ddg src in
-    match succ with
-    | [] -> [], ws
-    | _ -> 
-      let depend_mns = List.filter is_mingle_name succ in (* Choose only methods *)
-      let depend_mns = 
-        if init then 
-          if not (is_rec_proc prog src) then []
-          else List.filter (fun mn -> 
-              not (eq_str mn src) && 
-              ((has_ref_params prog mn) || (has_named_params prog mn))) depend_mns  
-        else depend_mns
-      in
-      let working_succ = Gen.BList.difference_eq eq_str succ ws in 
-      List.fold_left (fun (acc, ws) d ->
-          let dd, ws = collect_dependence_procs_aux prog false (ws @ [d]) ddg d in
-          (acc @ dd), ws) (depend_mns, ws) working_succ
-  with _ -> [], ws
+(* dst is data dependent on src 
+ * iff there is a path of ddg from dst to src *)
+let is_data_dependent trans_ddg src dst = 
+  (* let checker = PCG.create ddg in    *)
+  (* try PCG.check_path checker dst src *)
+  (* with _ -> false                    *)
+  IG.mem_edge trans_ddg dst src
 
-let collect_dependence_procs prog g pn =
-  fst (collect_dependence_procs_aux prog true [pn] g pn)
+let is_data_dependent ddg src dst = 
+  Debug.no_2 "is_data_dependent" idf idf string_of_bool
+    (fun _ _ -> is_data_dependent ddg src dst) src dst
 
-let dependence_procs_of_proc prog proc =
+(* Note: call_seq_graph csg is acyclic *)
+(* We must infer post-condition of a method    *)
+(* if a successor in the call sequence depends *)
+(* on its output.                              *)
+let should_infer_post csg ddg src =
+  let rec helper ws analyzed_calls =
+    let succ = List.concat (List.map (fun s -> CG.succ csg s) ws) in
+    if is_empty succ then false
+    else
+      let succ = Gen.BList.remove_dups_eq eq_num_ident succ in
+      let not_analyzed_calls = diff_id (List.map fst succ) analyzed_calls in
+      let mn = fst src in
+      try
+        let dependent_call = List.find (fun dst -> is_data_dependent ddg mn dst) not_analyzed_calls in
+        let () = x_binfo_pp ("@post is added into " ^ mn ^ " for " ^ dependent_call) no_pos in
+        true
+      with Not_found -> helper succ (analyzed_calls @ not_analyzed_calls)
+  in helper [src] []
+
+let collect_infer_post_procs prog proc =
   match proc.proc_body with
   | None -> []
-  | Some e ->
-    let pn = proc.proc_name in
-    let ddg = data_dependency_graph_of_exp prog pn e in
-    let () = print_endline_quiet ("ddg of " ^ proc.proc_name ^ ": " ^ (print_data_dependency_graph ddg)) in
-    let rec_pns = rec_calls_of_exp e in
-    let pns = remove_dups_id (pn::rec_pns) in
-    let r = List.fold_left (fun acc pn -> 
-        acc @ (collect_dependence_procs prog ddg pn)) [] pns in
-    remove_dups_id r
+  | Some e -> 
+    let mn = proc.proc_name in
+    let csg = call_seq_graph_of_exp mn e in
+    let ddg = data_dependency_graph_of_exp prog mn e in
+    let trans_ddg = IGO.transitive_closure ~reflexive:true ddg in
+    let root = (mn, 0) in
+    CG.fold_vertex (fun src infer_post_procs ->
+        if (eq_num_ident src root) || (List.exists (fun mn -> eq_str mn (fst src)) infer_post_procs)
+        then infer_post_procs
+        else if (should_infer_post csg trans_ddg src) then infer_post_procs @ [(fst src)]
+        else infer_post_procs
+    ) csg []
 
 let add_inf_post_proc proc = 
   { proc with 
@@ -3730,12 +3790,7 @@ let add_post_for_tnt_prog prog =
       if not (Cformula.is_inf_term_only_struc spec) then acc
       else acc @ [proc]) prog.new_proc_decls [] in (* @term only, no @term_wo_post *)
   let inf_post_procs = List.fold_left (fun acc proc ->
-      let dprocs = dependence_procs_of_proc prog proc in
-      let () = 
-        if is_empty dprocs then ()
-        else print_endline_quiet ("\n !!! @post is added into " ^ 
-                                  (pr_list idf dprocs) ^ " for " ^ proc.proc_name) 
-      in
+      let dprocs = collect_infer_post_procs prog proc in
       acc @ dprocs) [] inf_term_procs in
   let inf_post_procs = Gen.BList.remove_dups_eq
       (fun s1 s2 -> String.compare s1 s2 == 0) inf_post_procs in
