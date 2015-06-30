@@ -547,11 +547,11 @@ let process_source_full source =
   (*let () = print_endline ("@@intermediate_prog\n"^Iprinter.string_of_program intermediate_prog) in*)
   (* let _ = Ast2pred.verify_as_sat intermediate_prog in *)
   let cprog, tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
-  let td_r = Verify_td.verify_as_sat intermediate_prog cprog iprims in
-  if td_r != Verify_td.VTD_NotApp then
-    let () = print_endline ("\n" ^(Verify_td.string_of_assert_err td_r)) in
-    ()
-  else
+  (* let td_r = Verify_td.verify_as_sat intermediate_prog cprog iprims in *)
+  (* if td_r != Verify_td.VTD_NotApp then *)
+  (*   let () = print_endline ("\n" ^(Verify_td.string_of_assert_err td_r)) in *)
+  (*   () *)
+  (* else *)
   let () = saved_cprog := Some cprog in
   (* let () = if !Globals.sa_pure then *)
   (*   let norm_views, extn_views = List.fold_left (fun (nviews, eviews) v -> *)
