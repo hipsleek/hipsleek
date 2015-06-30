@@ -3,10 +3,14 @@ relation R(int xxx,int y,int a,int b).
 
 void loo (ref int xxx, ref int y,int a, int b)
   infer [@term_wo_post]
+  requires true
+  ensures true;
+/*
  case {
   xxx>0 | y>0 -> ensures true;
   xxx<=0 & y<=0 -> ensures true;
   }
+*/
 {
 
   if (xxx>0 || y>0) {
