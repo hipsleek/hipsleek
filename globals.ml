@@ -1733,7 +1733,7 @@ let show_unexpected_ents = ref true
 (* generate baga inv from view *)
 let double_check = ref false
 let gen_baga_inv = ref false
-let delay_eelim_baga_inv = ref false
+let delay_eelim_baga_inv = ref true
 let dis_baga_inv_check = ref false
 
 let is_inferring = ref false
