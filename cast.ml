@@ -3547,7 +3547,17 @@ let is_resourceless_h_formula prog (h: F.h_formula) =
     !print_h_formula string_of_bool
     (fun _ -> is_resourceless_h_formula_x prog h) h
 
-(*************************************************)      
+(*************************************************)
+(* Data structure to track the sequence of calls *)
+(*************************************************)
+type call_seq = {
+  call_seq_root: ident;
+  call_seq_succ: call_seq list;
+}
+
+let call_seq_of_exp 
+
+(*************************************************)
 (* Construct a data dependency graph from an exp *)
 (*************************************************)
 let is_prim_proc prog id = 
@@ -3693,9 +3703,7 @@ let rec collect_dependence_procs_aux prog init ws ddg src =
           (acc @ dd), ws) (depend_mns, ws) working_succ
   with _ -> [], ws
 
-let collect_dependent_procs prog proc =
-  
-   
+let collect_dependence_procs prog g pn =
   fst (collect_dependence_procs_aux prog true [pn] g pn)
 
 let dependence_procs_of_proc prog proc =
