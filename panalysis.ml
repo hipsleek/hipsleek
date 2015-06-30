@@ -65,6 +65,7 @@ let extract_ind_exp sv form : CP.exp =
 let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident list) : CP.param_flow list list =
   (* group together which have relations  *)
   let primed_args = List.map (fun (t,i) -> CP.sp_add_prime (CP.mk_typed_spec_var t i) Primed) args in
+  let unprimed_args = List.map (fun (t,i) -> CP.sp_rm_prime (CP.mk_typed_spec_var t i)) args in
 
   (* A formula is 'important' for analysis if it contains
    * both some x' primed specvar as well as some unprimed
@@ -88,6 +89,27 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
        | _ -> false)
     |  _ -> false in
 
+  (* Given e.g. (R(x'), R(x')), normalise to (x'=x & R(x), R(x'))
+   * so that analysis of params can be done more consistently. *)
+  let normalise_infer_rel (ir : CP.infer_rel_type) : CP.infer_rel_type =
+    let helper (f : CP.formula) =
+      match f with
+      | CP.BForm ((CP.RelForm (r,rel_arg_exps,pos),_),_) ->
+        (* assumes this RelForm is a relation for the proc we analyse *)
+        (* build v'=v for when the rel_args don't correspond to
+         * the unprimed_args. *)
+        let rel_args = CP.get_rel_args f in
+        let zip = List.combine rel_args unprimed_args in
+        let diff = List.filter (fun (r,arg) -> not (CP.eq_spec_var r arg)) zip in
+        let eq = List.map (fun (r,arg) -> CP.mkEqVar r arg pos) diff in
+        eq@[CP.mkRel r (List.map (fun sv -> CP.mkVar sv pos) unprimed_args) pos]
+      | _ -> [f] in
+    let (a,lhs,rhs) = ir in
+    let lhs_fs = CP.split_conjunctions lhs in
+    let norm_fs = List.flatten (List.map helper lhs_fs) in
+    let new_lhs = CP.join_conjunctions norm_fs in
+    (a,new_lhs,rhs) in
+
   let is_same_set_of_svs svs1 svs2 =
     List.for_all (fun u -> List.exists (fun v -> CP.eq_spec_var_unp u v) svs1) svs2 &&
     List.for_all (fun u -> List.exists (fun v -> CP.eq_spec_var_unp u v) svs2) svs1 in
@@ -104,6 +126,8 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
          is_same_set_of_svs rel_args primed_args) (CP.split_conjunctions f) in
     (* assume if it has a 'good' rel on LHS, has one on RHS. *)
     (has_useful_rel lhs)) lst_assume in
+
+  let lst_assume = List.map normalise_infer_rel lst_assume in
 
   let frm_assumes = List.map (fun (cat,lhs,rhs) ->
     (* find the flow; i.e. maybe a transition from one index to another in
@@ -167,7 +191,7 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
   let pr_out = pr_list (pr_list Cprinter.string_of_param_flow) in
 
   let () = Debug.binfo_pprint "analyse_param summary:" no_pos in
-  let () = Debug.binfo_hprint (add_str "relations" pr1) lst_assume no_pos in
+  let () = Debug.binfo_hprint (add_str "relations (normalised)" pr1) lst_assume no_pos in
   let () = Debug.binfo_hprint (add_str "args" pr2) args no_pos in
   let () = Debug.binfo_hprint (add_str "result" pr_out) frm_assumes no_pos in
   let () = Debug.binfo_pprint "" no_pos in (* pr_list does't end in newline. *)
