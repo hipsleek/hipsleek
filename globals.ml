@@ -1563,7 +1563,6 @@ class inf_obj  =
     (* method get_int i  = Array.get arr i *)
     method is_term = (self # get INF_TERM) || (self # get INF_TERM_WO_POST)
     (* termination inference *)
-    (* termination inference *)
     method is_term_wo_post = self # get INF_TERM_WO_POST
     (* termination inference wo post-condition *)
     method is_pre  = self # get INF_PRE

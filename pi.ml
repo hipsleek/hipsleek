@@ -215,7 +215,7 @@ let is_infer_pre_scc scc =
 
 let rec is_infer_others sf = match sf with
   | CF.EList el -> List.exists (fun (lbl,sf) ->
-      x_add_1 is_infer_post sf) el
+      x_add_1 is_infer_others sf) el
   | CF.EInfer ei ->
     let inf_obj = ei.CF.formula_inf_obj in
     let inf_vars = ei.CF.formula_inf_vars in

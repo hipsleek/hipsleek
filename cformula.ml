@@ -9622,7 +9622,7 @@ let rec is_inf_term_ctx ctx =
 
 let rec is_inf_term_struc f =
   match f with
-  | EInfer ei -> ei.formula_inf_obj # is_term
+  | EInfer ei -> (ei.formula_inf_obj # is_term) || (ei.formula_inf_obj # is_term_wo_post)
   | EBase eb -> begin
       match eb.formula_struc_continuation with
       | None -> false
@@ -9655,6 +9655,18 @@ let rec is_inf_term_wo_post_struc f =
   | EAssume _ -> false
   | ECase ec -> List.exists (fun (_, c) -> is_inf_term_wo_post_struc c) ec.formula_case_branches
   | EList el -> List.exists (fun (_, c) -> is_inf_term_wo_post_struc c) el
+
+let rec is_inf_post_struc f =
+  match f with
+  | EInfer ei -> ei.formula_inf_obj # is_post
+  | EBase eb -> begin
+      match eb.formula_struc_continuation with
+      | None -> false
+      | Some c -> is_inf_post_struc c
+    end 
+  | EAssume _ -> false
+  | ECase ec -> List.exists (fun (_, c) -> is_inf_post_struc c) ec.formula_case_branches
+  | EList el -> List.exists (fun (_, c) -> is_inf_post_struc c) el
 
 let rec add_infer_vars_templ_ctx ctx inf_vars_templ =
   match ctx with
@@ -16077,15 +16089,15 @@ let add_inf_cmd_struc is_primitive f =
   Debug.no_1 "add_inf_cmd_struc" pr pr 
     (fun _ -> add_inf_cmd_struc is_primitive f) f
 
-let rec add_inf_post_struc f =
+let rec set_inf_obj_struc itype f =
   match f with
   | EInfer ei -> 
-    let () = ei.formula_inf_obj # set INF_POST in
+    let () = ei.formula_inf_obj # set itype in
     EInfer ei
-  | EList el -> EList (List.map (fun (sld, s) -> (sld, add_inf_post_struc s)) el)
+  | EList el -> EList (List.map (fun (sld, s) -> (sld, set_inf_obj_struc itype s)) el)
   | _ -> 
     let new_inf_obj = new Globals.inf_obj_sub in
-    let () = new_inf_obj # set INF_POST in
+    let () = new_inf_obj # set itype in
     EInfer {
       formula_inf_obj = new_inf_obj;
       formula_inf_post = true (* Globals.infer_const_obj # is_post *);
@@ -16095,10 +16107,10 @@ let rec add_inf_post_struc f =
       formula_inf_continuation = f;
       formula_inf_pos = pos_of_struc_formula f }
 
-let add_inf_post_struc f =
+let set_inf_obj_struc itype f =
   let pr = !print_struc_formula in
-  Debug.no_1 "add_inf_post_struc" pr pr 
-    (fun _ -> add_inf_post_struc f) f
+  Debug.no_2 "set_inf_post_term_struc" string_of_inf_const pr pr 
+    set_inf_obj_struc itype f
 
 (* Termination: Add the call numbers and the implicit phase 
  * variables to specifications if the option 
