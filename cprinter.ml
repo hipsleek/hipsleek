@@ -5031,7 +5031,12 @@ let app_sv_print xs ys =
 let string_of_param_flow (pf : P.param_flow) : string =
   match pf with
   | IND (vars, f) -> "IND(" ^ (string_of_spec_var_list vars) ^ "," ^ (string_of_formula_exp f) ^ ")"
-  | FLOW var -> "FLO(" ^ (string_of_spec_var var) ^ ")"
+  | INC (vars, f) -> "INC(" ^ (string_of_spec_var_list vars) ^ "," ^ (string_of_formula_exp f) ^ ")"
+  | INCEQ (vars, f) -> "INCEQ(" ^ (string_of_spec_var_list vars) ^ "," ^ (string_of_formula_exp f) ^ ")"
+  | DEC (vars, f) -> "DEC(" ^ (string_of_spec_var_list vars) ^ "," ^ (string_of_formula_exp f) ^ ")"
+  | DECEQ (vars, f) -> "DECEQ(" ^ (string_of_spec_var_list vars) ^ "," ^ (string_of_formula_exp f) ^ ")"
+  | FLOW var -> "FLOW(" ^ (string_of_spec_var var) ^ ")"
+  | CONST exp -> "CONST(" ^ (string_of_formula_exp exp) ^ ")"
   | UNKNOWN var -> "UNK(" ^ (string_of_spec_var var) ^ ")"
 
 (* An Hoa : formula to HTML output facility *)

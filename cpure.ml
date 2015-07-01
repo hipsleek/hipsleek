@@ -351,8 +351,13 @@ and rounding_func =
 and infer_rel_type =  (rel_cat * formula * formula)
 
 type param_flow =
+  | INC of (spec_var list * exp)
+  | INCEQ of (spec_var list * exp)
   | IND of (spec_var list * exp)
+  | DEC of (spec_var list * exp)
+  | DECEQ of (spec_var list * exp)
   | FLOW of spec_var
+  | CONST of exp
   | UNKNOWN of spec_var
 
 let get_rel_from_imm_ann p = match p with
