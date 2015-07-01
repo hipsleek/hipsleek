@@ -35,18 +35,45 @@ void g(int z)
 }
 
 int f(int x)
-  //infer [@post_n]
+  //infer [@term]
   requires true
   ensures true;
 {
-  int r = h(x - 1);
+  int r = h(h(x - 1));
   return r;
 }
 
 int h(int y)
-  infer [@post_n]
+  //infer [@post_n]
   requires true
   ensures true;
 {
   return y + 1;
 }
+
+/*
+int g(int z)
+  requires true
+  ensures true;
+{
+  return z;
+}
+
+int f(int x)
+  infer [@term]
+  requires true
+  ensures true;
+{
+  int v = g(h(x));
+  int r = g(x - 1);
+  return r;
+}
+
+int h(int y)
+  //infer [@post_n]
+  requires true
+  ensures true;
+{
+  return y + 1;
+}
+*/
