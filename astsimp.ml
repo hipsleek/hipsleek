@@ -1506,6 +1506,8 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
                       (List.map (fun ddef -> ddef.I.data_name) prog0.I.prog_data_decls) @
                       (List.map (fun vdef -> vdef.I.view_name) prog0.I.prog_view_decls)(*@
                                                                                          			                                                   (List.map (fun bdef -> bdef.I.barrier_name) prog0.I.prog_barrier_decls)*) in
+       (* prelude contains all basic prim *)
+       let () = Iast.prim_sanity_check prog in
        let dups = Gen.BList.find_dups_eq (=) all_names in
        (* let () = I.find_empty_static_specs prog in *)
        if not (Gen.is_empty dups) then
@@ -4860,7 +4862,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
         let new_e = I.CallNRecv {
             (* mults for linearizing non-linear mult *)
             (* sv-comp/termination-numeric/LogRecursive_true-termination *)
-            I.exp_call_nrecv_method = "mults___"; 
+            I.exp_call_nrecv_method = if !Globals.prelude_is_mult then "mult___" else "mults___"; 
             I.exp_call_nrecv_lock = None;
             I.exp_call_nrecv_arguments = [ e1; e2 ];
             I.exp_call_nrecv_ho_arg = None;

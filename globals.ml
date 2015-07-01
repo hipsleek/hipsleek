@@ -850,6 +850,8 @@ let dis_show_diff = ref false
 (* sap has moved to VarGen; needed by debug.ml *)
 let fo_iheap = ref true
 
+let prelude_is_mult = ref true
+
 let sae = ref false
 let sac = ref false
 (* transform a predicate to case formula *)
