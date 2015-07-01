@@ -28,6 +28,10 @@ let extract_ind_exp sv form : CP.exp =
     { t with TL.term_coe = neg } in
 
   match form with
+  | CP.BForm ((CP.Lt (lhs, rhs, _), _), _)
+  | CP.BForm ((CP.Lte (lhs, rhs, _), _), _)
+  | CP.BForm ((CP.Gt (lhs, rhs, _), _), _)
+  | CP.BForm ((CP.Gte (lhs, rhs, _), _), _)
   | CP.BForm ((CP.Eq (lhs, rhs, _), _), _) ->
     let lhs_tl = TL.term_list_of_exp (CP.afv lhs) lhs in
     let () = x_binfo_hp (add_str "lhs terms: " TL.print_term_list) lhs_tl no_pos in
@@ -54,7 +58,7 @@ let extract_ind_exp sv form : CP.exp =
           TL.exp_of_term_list res_tl no_pos
         | _ -> failwith "extract_ind_exp: expected coe of spec_var to be -1 or 1")
      | _ -> failwith "extract_ind_exp: expected only one specvar term")
-  | _ -> failwith "extract_ind_exp: expected Eq lhs=rhs formula"
+  | _ -> failwith "extract_ind_exp: expected Eq/Lt/Gt lhs=rhs formula"
 
 let extract_ind_exp sv form : CP.exp =
   let pr1 = Cprinter.string_of_spec_var in
@@ -143,16 +147,8 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
           let pre_r_args = CP.get_rel_args pre_r in
           let post_r = rhs in
           let post_r_args = CP.get_rel_args post_r in
-          (* you should have used the vars themselves, rather than idx. *)
-          let post_with_index = List.mapi (fun i x -> (i,x)) post_r_args in
-          let args_with_index = List.mapi (fun i x -> (i,x)) primed_args in
           (* build (flow, constraints) for each arg *)
-          let flow_of_arg (idx, arg) = (* : ((int * int) option * CP.formula list) *)
-            let flow_to_idx = List.filter (fun (i,x) ->
-              CP.eq_spec_var_unp arg x) post_with_index in
-            let flow = match flow_to_idx with
-              | (i,_)::_ -> Some (idx,i)
-              | [] -> None in
+          let constraits_of_arg arg =
             (* all the (in)equalities are on the LHS, the entailed relation on RHS *)
             (* need to get all the 'constraints' on `arg`. *)
             let has_arg form =
@@ -162,21 +158,32 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
               CP.EMapSV.mem (CP.sp_rm_prime arg) spec_vars in
             let constraints = List.filter has_arg lhs_formulae in
             let () = x_binfo_hp (add_str ("constraints of " ^ (Cprinter.string_of_spec_var arg)) (pr_list !CP.print_formula)) constraints no_pos in
-            (arg,flow,constraints) in
-          let res = List.map flow_of_arg args_with_index in
-          List.map (fun (arg,flow,constr) ->
-            match flow with
-            (* if None, may be constant, or alias, or something else. *)
-            | None -> CP.UNKNOWN arg
-            | Some (fr_a,to_a) ->
-              let from_arg = List.nth primed_args fr_a in
-              (match constr with
-               | [] -> CP.FLOW from_arg
-               | [form] ->
-                 (* am assuming there is only one x'=f(x) form per infer_rel_ass *)
-                 let simpl = extract_ind_exp from_arg form in
-                 CP.IND (CP.afv simpl, simpl)
-               | _ -> failwith "more constraints than assumed")
+            (arg,constraints) in
+          let res = List.map constraits_of_arg post_r_args in
+          List.map (fun (arg,constr) ->
+            (match constr with
+               (* since we normalise the input, we shouldn't see empty here. *)
+             | [] -> CP.UNKNOWN arg
+             | [form] ->
+               (* am assuming there is only one x'=f(x) form per infer_rel_ass *)
+               let simpl = extract_ind_exp arg form in
+               (match form with
+                | CP.BForm ((pf, _), _) ->
+                  (match pf with
+                   | CP.Eq (lhs, rhs, _) ->
+                     CP.IND (CP.afv simpl, simpl)
+                   | CP.Lt (lhs, rhs, _) ->
+                     CP.DEC (CP.afv simpl, simpl)
+                   | CP.Lte (lhs, rhs, _) ->
+                     CP.DECEQ (CP.afv simpl, simpl)
+                   | CP.Gt (lhs, rhs, _) ->
+                     CP.INC (CP.afv simpl, simpl)
+                   | CP.Gte (lhs, rhs, _) ->
+                     CP.INCEQ (CP.afv simpl, simpl)
+                   | _ ->
+                     CP.UNKNOWN arg)
+                | _ -> CP.UNKNOWN arg)
+             | _ -> failwith "more constraints than assumed")
           ) res
     ) lst_assume in
 
