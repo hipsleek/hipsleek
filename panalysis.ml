@@ -126,8 +126,7 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
         let rel_args = CP.get_rel_args f in
         (* a relation is 'useful' if it has the same # args
          * as the proc being analysed. *)
-        (List.length rel_args) == (List.length args) &&
-         is_same_set_of_svs rel_args primed_args) (CP.split_conjunctions f) in
+        (List.length rel_args) == (List.length args)) (CP.split_conjunctions f) in
     (* assume if it has a 'good' rel on LHS, has one on RHS. *)
     (has_useful_rel lhs)) lst_assume in
 
