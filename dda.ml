@@ -248,7 +248,7 @@ let build_ddg_proc_tbl prog =
 (***********************)
 (* Unified ddg and csg *)
 (***********************)
-let var_index = -1
+let var_index = -1 (* For normal vars *)
 let root_index = 0
 
 let seq_data_dependency_graph_of_call_exp prog ddg src index mn args =
