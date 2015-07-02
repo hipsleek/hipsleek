@@ -71,28 +71,6 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
   let primed_args = List.map (fun (t,i) -> CP.sp_add_prime (CP.mk_typed_spec_var t i) Primed) args in
   let unprimed_args = List.map (fun (t,i) -> CP.sp_rm_prime (CP.mk_typed_spec_var t i)) args in
 
-  (* A formula is 'important' for analysis if it contains
-   * both some x' primed specvar as well as some unprimed
-   * specvars.
-   * i.e. formulas with only primed specvars not 'important' here. *)
-  let is_important_formula f =
-    let has_primed_sv svs =
-      List.exists CP.is_primed svs in
-    let has_unprimed_sv svs =
-      List.exists CP.is_unprimed svs in
-    match f with
-    | CP.BForm((pf, _), _) ->
-      (match pf with
-       | CP.Lt (lhs, rhs, _)
-       | CP.Lte (lhs, rhs, _)
-       | CP.Gt (lhs, rhs, _)
-       | CP.Gte (lhs, rhs, _)
-       | CP.Eq (lhs, rhs, _) ->
-         let svs = (CP.afv lhs)@(CP.afv rhs) in
-         has_primed_sv svs && has_unprimed_sv svs
-       | _ -> false)
-    |  _ -> false in
-
   (* Given e.g. (R(x'), R(x')), normalise to (x'=x & R(x), R(x'))
    * so that analysis of params can be done more consistently. *)
   let normalise_infer_rel (ir : CP.infer_rel_type) : CP.infer_rel_type =
@@ -159,7 +137,6 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
           let pre_r_args = CP.get_rel_args pre_r in
           let post_r = rhs in
           let post_r_args = CP.get_rel_args post_r in
-          (* build (flow, constraints) for each arg *)
           let constraits_of_arg arg =
             (* all the (in)equalities are on the LHS, the entailed relation on RHS *)
             (* need to get all the 'constraints' on `arg`. *)
@@ -168,7 +145,27 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
               CP.is_eq_exp form &&
               CP.EMapSV.mem arg spec_vars &&
               CP.EMapSV.mem (CP.sp_rm_prime arg) spec_vars in
-            let constraints = List.filter has_arg lhs_formulae in
+            (* let constraints = List.filter has_arg lhs_formulae in *)
+            let constraints =
+              (match (List.filter (fun f ->
+                                     let spec_vars = CP.fv f in
+                                     CP.EMapSV.mem arg spec_vars)
+                                  lhs_formulae) with
+                 (* I don't see why there'd be no formulae involving arg *)
+               | [] -> []
+                 (* assuming that if there's only one formula involving arg,
+                  * it must be a defining formula for that arg. *)
+               | [f] -> [f]
+               | fs ->
+                 (* assuming that either arg has an alias e.g. b'=a,
+                  * or there's a formula w/ unprimed e.g. x=x'+1 *)
+                 let sv = (match CP.EMapSV.find_equiv arg emap with
+                           | Some sv -> sv (* some formula arg=sv *)
+                           | None -> (CP.sp_rm_prime arg)) in
+                 List.filter (fun f ->
+                                let spec_vars = CP.fv f in
+                                CP.EMapSV.mem sv spec_vars)
+                             fs) in
             let () = x_binfo_hp (add_str ("constraints of " ^ (Cprinter.string_of_spec_var arg)) (pr_list !CP.print_formula)) constraints no_pos in
             (arg,constraints) in
           let res = List.map constraits_of_arg post_r_args in
