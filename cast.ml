@@ -3570,4 +3570,12 @@ let get_ret_vars_exp exp =
 let get_ret_vars_proc proc = 
   match proc.proc_body with
   | None -> []
-  | Some e -> get_ret_vars_exp e 
+  | Some e -> get_ret_vars_exp e
+
+let get_output_vars_proc prog mn =
+  try
+    let proc = find_proc prog mn in
+    (List.map P.name_of_spec_var proc.proc_by_name_params) @ 
+    (get_ret_vars_proc proc)
+  with _ -> [] 
+  

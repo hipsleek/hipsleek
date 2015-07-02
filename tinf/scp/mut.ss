@@ -39,7 +39,7 @@ int f(int x)
   requires true
   ensures true;
 {
-  int r = h(h(x - 1));
+  int r = (h(x - 1));
   return r;
 }
 

@@ -82,6 +82,10 @@ let diff_proc = Gen.BList.difference_eq eq_proc
 let eq_num_ident (s1, i1) (s2, i2) =
   (i1 == i2) && (String.compare s1 s2 == 0)
 
+let remove_dups_nid = Gen.BList.remove_dups_eq eq_num_ident
+
+let diff_nid = Gen.BList.difference_eq eq_num_ident
+
 let print_num_ident (s, i) =
   s ^ (if i >= 0 then (":" ^ (string_of_int i)) else "") 
 
@@ -316,6 +320,24 @@ let seq_data_dependency_graph_of_exp prog mn exp =
   Debug.no_1 "seq_data_dependency_graph_of_exp" idf print_call_seq_graph
     (fun _ -> seq_data_dependency_graph_of_exp prog mn exp) mn
 
+let seq_data_dependency_graph_of_proc prog proc =
+  match proc.proc_body with
+  | None -> CG.empty, CG.empty
+  | Some e ->
+    let sdg = seq_data_dependency_graph_of_exp prog proc.proc_name e in
+    let trans_sdg = CGO.transitive_closure ~reflexive:true sdg in
+    sdg, trans_sdg
+
+let sdg_proc_tbl: (ident, CG.t * CG.t) Hashtbl.t = Hashtbl.create 20
+
+let build_sdg_proc_tbl prog = 
+  Hashtbl.iter 
+    (fun _ proc ->
+      if proc.proc_is_main then
+        Hashtbl.add sdg_proc_tbl proc.proc_name (seq_data_dependency_graph_of_proc prog proc)
+      else ()) 
+    prog.new_proc_decls
+
 (* dst is data dependent on src 
  * iff there is a path of ddg from dst to src *)
 let is_data_dependent trans_ddg src dst = 
@@ -337,7 +359,7 @@ let should_infer_post_for_call csg trans_ddg src =
     let succ = List.concat (List.map (fun s -> CG.succ csg s) ws) in
     if is_empty succ then false
     else
-      let succ = Gen.BList.remove_dups_eq eq_num_ident succ in
+      let succ = remove_dups_nid succ in
       let not_analyzed_calls = diff_id (List.map fst succ) analyzed_calls in
       let mn = fst src in
       try
@@ -351,8 +373,7 @@ let collect_cond_depend_procs root sdg =
   let rec helper curr ws = 
     let succ = List.concat (List.map (fun v -> CG.succ sdg v) curr) in
     let depend_procs, n_curr = List.partition (fun (_, i) -> i > root_index) succ in
-    let n_curr = Gen.BList.remove_dups_eq eq_num_ident
-        (Gen.BList.difference_eq eq_num_ident n_curr ws) in
+    let n_curr = remove_dups_nid (diff_nid n_curr ws) in
     match n_curr with
     | [] -> depend_procs
     | _ -> depend_procs @ (helper n_curr (ws @ curr))
@@ -375,31 +396,35 @@ let collect_infer_post_procs_for_tnt_acc acc prog proc =
     (*     else if (should_infer_post_for_call csg trans_ddg src) then infer_post_procs @ [(fst src)]   *)
     (*     else infer_post_procs                                                                        *)
     (* ) csg acc                                                                                        *)
-    let sdg = seq_data_dependency_graph_of_exp prog mn e in
-    let trans_sdg = CGO.transitive_closure ~reflexive:true sdg in
-    CG.fold_vertex (fun (src, index) infer_post_procs ->
-        if (index == root_index) then
-          (* Find procs which the conditional conditions depend on *)
-          let cond_depend_procs = collect_cond_depend_procs (src, index) sdg in
-          let () = if not (is_empty cond_depend_procs) then x_binfo_pp (
-                "@post is added into " ^ (pr_list print_num_ident cond_depend_procs) ^ 
-                " for conditions in " ^ (print_num_ident (src, index))) no_pos 
-          in
-          infer_post_procs @ (List.map fst cond_depend_procs)
-        (* If a method has already been marked as @post, we do not need to work on it again *)
-        else if (index == var_index) || (List.exists (fun mn -> eq_str mn src) infer_post_procs) 
-        then infer_post_procs
-        else
-          let depend_procs = CG.pred trans_sdg (src, index) in
-          try
-            (* A succ of src (w.r.t the call sequence) depends on its output *)
-            let succ_depend_proc = List.find (fun (_, i) -> i > index) depend_procs in
-            let () = x_binfo_pp (
-                "@post is added into " ^ (print_num_ident (src, index)) ^ 
-                " for " ^ (print_num_ident succ_depend_proc)) no_pos in
-            infer_post_procs @ [src]
-          with _ -> infer_post_procs
-      ) sdg acc
+    
+    (* let sdg = seq_data_dependency_graph_of_exp prog mn e in       *)
+    (* let trans_sdg = CGO.transitive_closure ~reflexive:true sdg in *)
+    try
+      let sdg, trans_sdg = Hashtbl.find sdg_proc_tbl mn in
+      CG.fold_vertex (fun (src, index) infer_post_procs ->
+          if (index == root_index) then
+            (* Find procs which the conditional conditions depend on *)
+            let cond_depend_procs = collect_cond_depend_procs (src, index) sdg in
+            let () = if not (is_empty cond_depend_procs) then x_binfo_pp (
+                  "@post is added into " ^ (pr_list print_num_ident cond_depend_procs) ^ 
+                  " for conditions in " ^ (print_num_ident (src, index))) no_pos 
+            in
+            infer_post_procs @ (List.map fst cond_depend_procs)
+          (* If a method has already been marked as @post, we do not need to work on it again *)
+          else if (index == var_index) || (List.exists (fun mn -> eq_str mn src) infer_post_procs) 
+          then infer_post_procs
+          else
+            let depend_procs = CG.pred trans_sdg (src, index) in
+            try
+              (* A succ of src (w.r.t the call sequence) depends on its output *)
+              let succ_depend_proc = List.find (fun (_, i) -> i > index) depend_procs in
+              let () = x_binfo_pp (
+                  "@post is added into " ^ (print_num_ident (src, index)) ^ 
+                  " for " ^ (print_num_ident succ_depend_proc)) no_pos in
+              infer_post_procs @ [src]
+            with _ -> infer_post_procs
+        ) sdg acc
+    with _ -> acc
 
 let collect_callees_of_proc prog proc =
   match proc.proc_body with
@@ -420,6 +445,33 @@ let rec collect_should_infer_term_procs prog inf_term_procs =
       helper (analyzed_procs @ [p]) (ps @ n_analyzing_procs)
   in
   helper [] inf_term_procs
+
+let collect_infer_post_procs_for_output prog mn = 
+  try
+    let output_vars = get_output_vars_proc prog mn in
+    let _, trans_sdg = Hashtbl.find sdg_proc_tbl mn in
+    let depend_procs = remove_dups_nid (List.concat (List.map
+        (* Only get dependent procs *)
+        (fun v -> List.filter (fun (_, i) -> i > root_index) (CG.succ trans_sdg v)) 
+        (List.map (fun v -> (v, var_index)) output_vars)))
+    in
+    List.map fst depend_procs
+  with _ -> []
+
+let rec collect_should_infer_post_procs_for_output prog inf_post_procs =
+  let rec helper analyzed_procs analyzing_procs =
+    match analyzing_procs with
+    | [] -> analyzed_procs
+    | p::ps -> 
+      let depend_procs_p_ret = collect_infer_post_procs_for_output prog p in
+      let n_analyzing_procs = diff_id depend_procs_p_ret (analyzed_procs @ analyzing_procs) in
+      let () = if not (is_empty n_analyzing_procs) then x_binfo_pp (
+          "@post is added into " ^ (pr_list idf n_analyzing_procs) ^ 
+          " for " ^ p ^ " output") no_pos 
+      in
+      helper (analyzed_procs @ [p]) (ps @ n_analyzing_procs)
+  in
+  helper [] inf_post_procs
 
 let set_inf_obj_for_tnt_prog prog =
   (* Step 1: Incrementally adding @term into callees of @term or @term_wo_post callers *)
@@ -445,13 +497,20 @@ let set_inf_obj_for_tnt_prog prog =
         if not (Cformula.is_inf_term_only_struc spec) then acc
         else acc @ [proc]) prog.new_proc_decls [] 
     in
+
+    let () = build_sdg_proc_tbl prog in
+    
     (* Parameters of proc depends on inf_post_procs *)
     let inf_post_procs = List.fold_left (fun acc proc ->
         let dprocs = collect_infer_post_procs_for_tnt_acc acc prog proc in
         acc @ dprocs) [] inf_term_only_procs in
     let inf_post_procs = Gen.BList.remove_dups_eq eq_str inf_post_procs in
+
+    (* Return values or Ref parameters of proc depends on inf_post_procs *)
+    let inc_inf_post_procs = collect_should_infer_post_procs_for_output prog inf_post_procs in
+    
     { prog with
       new_proc_decls = proc_decls_map (fun proc ->
-          if List.mem proc.proc_name inf_post_procs 
+          if List.mem proc.proc_name inc_inf_post_procs 
           then set_inf_obj_proc INF_POST proc
           else proc) prog.new_proc_decls; }
