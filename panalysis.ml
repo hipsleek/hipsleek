@@ -138,6 +138,19 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
      * all recursive procs have a relation on LHS.
      * (all non-recursive don't have any list_assume). *)
     let lhs_formulae = CP.split_conjunctions lhs in
+
+    (* may have formulae like a'=a or b'=a,
+     * may be necessary to make use of this formulae *)
+    let emap = List.fold_left (fun emap f -> 
+      match f with
+      | CP.BForm((pf,_),_) ->
+        (match pf with
+         | CP.Eq (CP.Var (sv1,_),CP.Var(sv2,_),_) ->
+           CP.EMapSV.add_equiv emap sv1 sv2
+         | _ -> emap)
+      | _ -> emap) CP.EMapSV.mkEmpty lhs_formulae in
+    let () = Debug.binfo_hprint (add_str "EMap" CP.EMapSV.string_of) emap no_pos in
+
     (* assumes that at least one RelForm in the list of formulae,
      * assumes it is *the* relation we're looking for. *)
     match (List.filter CP.is_RelForm lhs_formulae) with
