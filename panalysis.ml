@@ -96,18 +96,6 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
     List.for_all (fun u -> List.exists (fun v -> CP.eq_spec_var_unp u v) svs1) svs2 &&
     List.for_all (fun u -> List.exists (fun v -> CP.eq_spec_var_unp u v) svs2) svs1 in
 
-  (* filter through lst_assume ensuring each infer_rel_type
-   * has a relevant relation. *)
-  let lst_assume = List.filter (fun (_,lhs,rhs) ->
-    let has_useful_rel (f:CP.formula) =
-      List.exists (fun f ->
-        let rel_args = CP.get_rel_args f in
-        (* a relation is 'useful' if it has the same # args
-         * as the proc being analysed. *)
-        (List.length rel_args) == (List.length args)) (CP.split_conjunctions f) in
-    (* assume if it has a 'good' rel on LHS, has one on RHS. *)
-    (has_useful_rel lhs)) lst_assume in
-
   let lst_assume = List.map normalise_infer_rel lst_assume in
 
   let frm_assumes = List.map (fun (cat,lhs,rhs) ->
@@ -131,69 +119,64 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
 
     (* assumes that at least one RelForm in the list of formulae,
      * assumes it is *the* relation we're looking for. *)
-    match (List.filter CP.is_RelForm lhs_formulae) with
-       | [] -> []
-       | pre_r::_ ->
-          let pre_r_args = CP.get_rel_args pre_r in
-          let post_r = rhs in
-          let post_r_args = CP.get_rel_args post_r in
-          let constraits_of_arg arg =
-            (* all the (in)equalities are on the LHS, the entailed relation on RHS *)
-            (* need to get all the 'constraints' on `arg`. *)
-            let has_arg form =
-              let spec_vars = CP.fv form in
-              CP.is_eq_exp form &&
-              CP.EMapSV.mem arg spec_vars &&
-              CP.EMapSV.mem (CP.sp_rm_prime arg) spec_vars in
-            (* let constraints = List.filter has_arg lhs_formulae in *)
-            let constraints =
-              (match (List.filter (fun f ->
-                                     let spec_vars = CP.fv f in
-                                     CP.EMapSV.mem arg spec_vars)
-                                  lhs_formulae) with
-                 (* I don't see why there'd be no formulae involving arg *)
-               | [] -> []
-                 (* assuming that if there's only one formula involving arg,
-                  * it must be a defining formula for that arg. *)
-               | [f] -> [f]
-               | fs ->
-                 (* assuming that either arg has an alias e.g. b'=a,
-                  * or there's a formula w/ unprimed e.g. x=x'+1 *)
-                 let sv = (match CP.EMapSV.find_equiv arg emap with
-                           | Some sv -> sv (* some formula arg=sv *)
-                           | None -> (CP.sp_rm_prime arg)) in
-                 List.filter (fun f ->
-                                let spec_vars = CP.fv f in
-                                CP.EMapSV.mem sv spec_vars)
-                             fs) in
-            let () = x_binfo_hp (add_str ("constraints of " ^ (Cprinter.string_of_spec_var arg)) (pr_list !CP.print_formula)) constraints no_pos in
-            (arg,constraints) in
-          let res = List.map constraits_of_arg post_r_args in
-          List.map (fun (arg,constr) ->
-            (match constr with
-               (* since we normalise the input, we shouldn't see empty here. *)
-             | [] -> CP.UNKNOWN arg
-             | [form] ->
-               (* am assuming there is only one x'=f(x) form per infer_rel_ass *)
-               let simpl = extract_ind_exp arg form in
-               (match form with
-                | CP.BForm ((pf, _), _) ->
-                  (match pf with
-                   | CP.Eq (lhs, rhs, _) ->
-                     CP.IND (CP.afv simpl, simpl)
-                   | CP.Lt (lhs, rhs, _) ->
-                     CP.DEC (CP.afv simpl, simpl)
-                   | CP.Lte (lhs, rhs, _) ->
-                     CP.DECEQ (CP.afv simpl, simpl)
-                   | CP.Gt (lhs, rhs, _) ->
-                     CP.INC (CP.afv simpl, simpl)
-                   | CP.Gte (lhs, rhs, _) ->
-                     CP.INCEQ (CP.afv simpl, simpl)
-                   | _ ->
-                     CP.UNKNOWN arg)
-                | _ -> CP.UNKNOWN arg)
-             | _ -> failwith "more constraints than assumed")
-          ) res
+    let post_r = rhs in
+    let post_r_args = CP.get_rel_args post_r in
+    let constraits_of_arg arg =
+      (* all the (in)equalities are on the LHS, the entailed relation on RHS *)
+      (* need to get all the 'constraints' on `arg`. *)
+      let has_arg form =
+        let spec_vars = CP.fv form in
+        CP.is_eq_exp form &&
+        CP.EMapSV.mem arg spec_vars &&
+        CP.EMapSV.mem (CP.sp_rm_prime arg) spec_vars in
+      (* let constraints = List.filter has_arg lhs_formulae in *)
+      let constraints =
+        (match (List.filter (fun f ->
+                               let spec_vars = CP.fv f in
+                               CP.EMapSV.mem arg spec_vars)
+                            lhs_formulae) with
+           (* I don't see why there'd be no formulae involving arg *)
+         | [] -> []
+           (* assuming that if there's only one formula involving arg,
+            * it must be a defining formula for that arg. *)
+         | [f] -> [f]
+         | fs ->
+           (* assuming that either arg has an alias e.g. b'=a,
+            * or there's a formula w/ unprimed e.g. x=x'+1 *)
+           let sv = (match CP.EMapSV.find_equiv arg emap with
+                     | Some sv -> sv (* some formula arg=sv *)
+                     | None -> (CP.sp_rm_prime arg)) in
+           List.filter (fun f ->
+                          let spec_vars = CP.fv f in
+                          CP.EMapSV.mem sv spec_vars)
+                       fs) in
+      let () = x_binfo_hp (add_str ("constraints of " ^ (Cprinter.string_of_spec_var arg)) (pr_list !CP.print_formula)) constraints no_pos in
+      (arg,constraints) in
+    let res = List.map constraits_of_arg post_r_args in
+    List.map (fun (arg,constr) ->
+      (match constr with
+         (* since we normalise the input, we shouldn't see empty here. *)
+       | [] -> CP.UNKNOWN arg
+       | [form] ->
+         (* am assuming there is only one x'=f(x) form per infer_rel_ass *)
+         let simpl = extract_ind_exp arg form in
+         (match form with
+          | CP.BForm ((pf, _), _) ->
+            (match pf with
+             | CP.Eq (lhs, rhs, _) ->
+               CP.IND (CP.afv simpl, simpl)
+             | CP.Lt (lhs, rhs, _) ->
+               CP.DEC (CP.afv simpl, simpl)
+             | CP.Lte (lhs, rhs, _) ->
+               CP.DECEQ (CP.afv simpl, simpl)
+             | CP.Gt (lhs, rhs, _) ->
+               CP.INC (CP.afv simpl, simpl)
+             | CP.Gte (lhs, rhs, _) ->
+               CP.INCEQ (CP.afv simpl, simpl)
+             | _ ->
+               CP.UNKNOWN arg)
+          | _ -> CP.UNKNOWN arg)
+       | _ -> failwith "more constraints than assumed")) res
     ) lst_assume in
 
   (* TODO: combine various param-flow lists, reduce duplication. *)
