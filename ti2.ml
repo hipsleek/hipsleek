@@ -685,7 +685,7 @@ let tnt_spec_of_proc prog proc ispec =
 let print_svcomp2015_result term_anns =
   let unknown_ans = "UNKNOWN" in
   let yes_ans = "TRUE" in
-  let no_ans cex = "FALSE - Counterexample: " ^ cex in
+  let no_ans cex = "FALSE" ^ "\nCounterexample: " ^ cex in
   (* print_endline ("term_anns" ^ (pr_list string_of_term_ann term_anns)); *)
   (* no termination info --> UNKNOWN *)
   if (List.length term_anns = 0) then

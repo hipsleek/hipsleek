@@ -678,8 +678,7 @@ class ['a] stack_pr (epr:'a->string) (eq:'a->'a->bool)  =
     method dump_no_ln =
       begin
         let s = super#reverse_of  in
-        List.iter (fun e -> print_string (elem_pr e)) s;
-        print_endline ""
+        List.iter (fun e -> print_string (elem_pr e)) s
       end
     method mem (i:'a) = List.exists (elem_eq i) stk
     method overlap (ls:'a list) = 

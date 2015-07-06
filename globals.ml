@@ -1377,7 +1377,7 @@ let infer_const = ref ""
 
 (* TNT Inference *)
 let tnt_verbosity = ref 1
-let tnt_infer_lex = ref false
+let tnt_infer_lex = ref true
 let tnt_add_post = ref true (* disabled with @term_wo_post or --dis-term-add-post *)
 let tnt_abd_strategy = ref 0 (* by default: abd_templ *)
 
