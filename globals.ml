@@ -1382,6 +1382,7 @@ let tnt_add_post = ref true (* disabled with @term_wo_post or --dis-term-add-pos
 let tnt_abd_strategy = ref 0 (* by default: abd_templ *)
 
 let nondet_int_proc_name = "__VERIFIER_nondet_int"
+let nondet_int_rel_name = "nondet_int__"
 
 type infer_type =
   | INF_TERM (* For infer[@term] *)

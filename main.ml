@@ -484,13 +484,23 @@ let process_source_full source =
   let prog = Iast.append_iprims_list_head ([prog]@prims_incls) in
 
   (*let () = print_string (Iprinter.string_of_program prog^"haha") in*)
-  let tnt_prim_proc_decls = Hashtbl.fold (fun id _ acc ->
-      if List.exists (fun (p, _) -> String.compare p id == 0) acc then acc
-      else 
-        match (Parser.create_tnt_prim_proc id) with
-        | None -> acc | Some pd -> acc @ [(id, pd)]) Iast.tnt_prim_proc_tbl [] in
-  let tnt_prim_proc_decls = snd (List.split tnt_prim_proc_decls) in
-  let prog = { prog with Iast.prog_proc_decls = prog.Iast.prog_proc_decls @ tnt_prim_proc_decls; } in
+
+  (* let tnt_prim_proc_decls = Hashtbl.fold (fun id _ acc ->                                             *)
+  (*     if List.exists (fun (p, _) -> String.compare p id == 0) acc then acc                            *)
+  (*     else                                                                                            *)
+  (*       match (Parser.create_tnt_prim_proc id) with                                                   *)
+  (*       | None -> acc | Some pd -> acc @ [(id, pd)]) Iast.tnt_prim_proc_tbl [] in                     *)
+  (* let tnt_prim_proc_decls = snd (List.split tnt_prim_proc_decls) in                                   *)
+  (* let prog = { prog with Iast.prog_proc_decls = prog.Iast.prog_proc_decls @ tnt_prim_proc_decls; } in *)
+  let prog, _ = Hashtbl.fold
+    (fun id _ (prog, acc) ->
+      if List.exists (fun p -> String.compare p id == 0) acc then (prog, acc)
+      else
+        let prog = Parser.add_tnt_prim_proc prog id in
+        (prog, acc @ [id]))
+    Iast.tnt_prim_proc_tbl (prog, [])
+  in
+  
   let intermediate_prog = x_add_1 Globalvars.trans_global_to_param prog in
   let tnl = Iast.find_all_num_trailer prog in
   let tnl = Gen.BList.remove_dups_eq (fun a b -> a = b) tnl in
