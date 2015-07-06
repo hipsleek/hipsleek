@@ -855,7 +855,7 @@ let prelude_is_mult = ref true
 let sae = ref false
 let sac = ref false
 (* transform a predicate to case formula *)
-let sa_pred_case = ref true
+let sa_pred_case = ref false
 
 let sags = ref true
 
