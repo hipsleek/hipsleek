@@ -4871,7 +4871,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
         helper new_e
       else if not (I.is_num e2) && (I.is_div_op b_op) then
         let new_e = I.CallNRecv {
-            (* mults for linearizing non-linear div *)
+            (* divs for linearizing non-linear div *)
             (* sv-comp/termination-numeric/ex1_true-termination              *)
             (* sv-comp/termination-memory-alloca/ex1-alloca_true-termination *)
             (* sv-comp/termination-numeric/ex2_true-termination              *)

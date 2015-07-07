@@ -694,6 +694,8 @@ let common_arguments = [
    "level of detail in termination inference printing 0-verbose 1-standard (default)");
   ("--infer-lex", Arg.Set Globals.tnt_infer_lex,
    "enable lexicographic ranking function inference");
+  ("--dis-infer-lex", Arg.Clear Globals.tnt_infer_lex,
+   "disable lexicographic ranking function inference");
   ("--term-add-post", Arg.Set Globals.tnt_add_post, "Automatically infer necessary postcondition");
   ("--dis-term-add-post", Arg.Clear Globals.tnt_add_post, "Automatically infer necessary postcondition");
   ("--abd-strategy", Arg.Set_int Globals.tnt_abd_strategy,
