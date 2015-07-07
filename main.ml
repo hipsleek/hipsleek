@@ -472,7 +472,6 @@ let process_source_full source =
   let iprims_list = process_intermediate_prims prims_list in
   (* let () = print_endline_quiet ("process_source_full: after  process_intermediate_prims") in *)
   let iprims = Iast.append_iprims_list_head iprims_list in
-
   let prim_names = 
     (List.map (fun d -> d.Iast.data_name) iprims.Iast.prog_data_decls) @
     (List.map (fun v -> v.Iast.view_name) iprims.Iast.prog_view_decls) @

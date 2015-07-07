@@ -116,6 +116,10 @@ let common_arguments = [
   (* ("--dis-label-aggr-sat", Arg.Clear Globals.label_aggressive_sat, "disable aggressive splitting of labels during unsat"); *)
   (* ("--en-label-aggr", Arg.Set Globals.label_aggressive_flag, "enable aggressive splitting of labels"); *)
   (* ("--dis-label-aggr", Arg.Clear Globals.label_aggressive_flag, "disable aggressive splitting of labels"); *)
+  ("--en-mult", Arg.Set Globals.prelude_is_mult,
+   "Enable using mult as prim.");
+  ("--dis-mult", Arg.Clear Globals.prelude_is_mult,
+   "Enable using mult as prim.");
   ("--dis-ufdp", Arg.Clear Solver.unfold_duplicated_pointers,
    "Disable unfolding of predicates with duplicated pointers."); (* An Hoa *)
   ("--ahwytdi", Arg.Set Smtsolver.try_induction,
@@ -1159,6 +1163,8 @@ let hip_specific_arguments = [ ("-cp", Arg.String set_pred,
                                 "Print procedures being checked");
                                ("--dis-pgbv", Arg.Clear Globals.pass_global_by_value, 
                                 "disable pass read global variables by value");
+                               ("--en-pgbv", Arg.Set Globals.pass_global_by_value, 
+                                "enable pass read global variables by value");
                                ("--sqt", Arg.Set Globals.seq_to_try,
                                 "translate seq to try");
                                ("-validate", Arg.String set_validate_config,

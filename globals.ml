@@ -850,10 +850,12 @@ let dis_show_diff = ref false
 (* sap has moved to VarGen; needed by debug.ml *)
 let fo_iheap = ref true
 
+let prelude_is_mult = ref false
+
 let sae = ref false
 let sac = ref false
 (* transform a predicate to case formula *)
-let sa_pred_case = ref true
+let sa_pred_case = ref false
 
 let sags = ref true
 
@@ -1310,7 +1312,7 @@ let enable_constraint_based_filtering = ref false
 
 let enulalias = ref false
 
-let pass_global_by_value = ref false
+let pass_global_by_value = ref true
 
 let exhaust_match = ref false
 
