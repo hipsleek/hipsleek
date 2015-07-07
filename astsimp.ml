@@ -4878,7 +4878,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             (* sv-comp/termination-memory-alloca/ex2-alloca_true-termination *)
             (* sv-comp/termination-numeric/ex3a_true-termination             *)
             (* sv-comp/termination-numeric/ex3b_true-termination             *)
-            I.exp_call_nrecv_method = "divs___"; 
+            I.exp_call_nrecv_method = if !Globals.prelude_is_mult then "div___" else "divs___";
             I.exp_call_nrecv_lock = None;
             I.exp_call_nrecv_arguments = [ e1; e2 ];
             I.exp_call_nrecv_ho_arg = None;
