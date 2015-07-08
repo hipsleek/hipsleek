@@ -367,19 +367,21 @@ let trans_nondet_trels_proc prog trrels turels =
   let nd_args = List.map (fun (nd, ndp) -> CP.Var (nd, ndp)) nd_vars in
   let primed_nd_args = List.map (fun (nd, ndp) -> CP.Var (CP.to_primed nd, ndp)) nd_vars in
 
-  let trans_trrels_w_rname = List.map (fun tr -> { tr with
-                                                   termr_lhs = List.map (fun ann -> CP.add_args_term_ann ann primed_nd_args) tr.termr_lhs;
-                                                   termr_rhs = CP.add_args_term_ann tr.termr_rhs nd_args; 
-                                                   termr_rhs_params = tr.termr_rhs_params @ nd_sv_lst; }, tr.termr_fname) trans_trrels
+  let trans_trrels_w_rname = List.map (
+      fun tr -> { tr with
+                  termr_lhs = List.map (fun ann -> CP.add_args_term_ann ann primed_nd_args) tr.termr_lhs;
+                  termr_rhs = CP.add_args_term_ann tr.termr_rhs nd_args; 
+                  termr_rhs_params = tr.termr_rhs_params @ nd_sv_lst; }, tr.termr_fname) trans_trrels
   in
   let trans_trrels, rname = List.split trans_trrels_w_rname in
 
-  let trans_turels_w_uname = List.map (fun tu -> { tu with
-                                                   call_ctx = fst (trans_nondet_ctx prog tu.call_ctx tu.termu_pos);
-                                                   termu_lhs = CP.add_args_term_ann tu.termu_lhs nd_args;
-                                                   termu_rhs = CP.add_args_term_ann tu.termu_rhs primed_nd_args;
-                                                   termu_rhs_params = tu.termu_rhs_params @ nd_sv_lst;
-                                                   termu_rhs_args = tu.termu_rhs_args @ primed_nd_args; }, tu.termu_fname) turels 
+  let trans_turels_w_uname = List.map (
+      fun tu -> { tu with
+                  call_ctx = fst (trans_nondet_ctx prog tu.call_ctx tu.termu_pos);
+                  termu_lhs = CP.add_args_term_ann tu.termu_lhs nd_args;
+                  termu_rhs = CP.add_args_term_ann tu.termu_rhs primed_nd_args;
+                  termu_rhs_params = tu.termu_rhs_params @ nd_sv_lst;
+                  termu_rhs_args = tu.termu_rhs_args @ primed_nd_args; }, tu.termu_fname) turels 
   in
   let trans_turels, uname = List.split trans_turels_w_uname in
 

@@ -415,8 +415,9 @@ let solve_turel_graph_init prog trrels tg =
   finalize_turel_graph prog tg
 
 let solve_trel_init prog trrels turels =
-  (* Transform nondet relations into vars *)
-  let trrels, turels = trans_nondet_trels prog trrels turels in
+  (* (* Transform nondet relations into vars *)                       *)
+  (* Unsound: termination-crafted/NonTermination2_false-termination.c *)
+  (* let trrels, turels = trans_nondet_trels prog trrels turels in    *)
   let fn_cond_w_ids = case_split_init prog trrels turels in 
   (* Update TNT case spec with base condition *)
   let () = List.iter (add_case_spec_of_trrel_sol_proc prog)
