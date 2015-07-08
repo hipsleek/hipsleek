@@ -309,10 +309,11 @@ let solve_turel_one_unknown_scc prog trrels tg scc =
       then update_ann scc (subst (CP.Term, [CP.mkIConst (scc_fresh_int ()) no_pos]))
       else
         try
+          (* Loop with nondet *)
           let nd_trrel = List.find (fun rel -> CP.has_nondet_cond rel.ret_ctx) trrels in
           let nd_pos = nd_trrel.termr_pos in
-          update_ann scc (subst (CP.MayLoop (Some { CP.tcex_trace = [CP.TCall nd_pos] }), [])) (* Loop with nondet *)
-        with _ -> 
+          update_ann scc (subst (CP.MayLoop (Some { CP.tcex_trace = [CP.TCall nd_pos] }), []))
+        with _ ->
           (* update_ann scc (subst (CP.Loop None, [])) (* Loop without nondet *) *)
           proving_non_termination_scc prog trrels tg scc
 
@@ -406,7 +407,7 @@ and solve_turel_graph_one_group iter_num prog trrels tg scc_list =
       let tg = List.fold_left (fun tg -> solve_turel_one_scc prog trrels tg) tg scc_list in
       ()
     with
-    | Restart_with_Cond tg -> solve_turel_graph (iter_num + 1) prog trrels tg
+    | Restart_with_Cond (_, tg) -> solve_turel_graph (iter_num + 1) prog trrels tg
     | _ -> ()
   else ()
 

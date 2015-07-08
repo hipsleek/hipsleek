@@ -785,7 +785,7 @@ module TG = Graph.Persistent.Digraph.ConcreteLabeled(TNTElem)(TNTEdge)
 module TGC = Graph.Components.Make(TG)
 
 (* Exceptions to guide the main algorithm *)
-exception Restart_with_Cond of TG.t
+exception Restart_with_Cond of (CP.formula list * TG.t)
 exception Should_Finalize
 
 let graph_of_trels trels =
@@ -1775,9 +1775,13 @@ let proving_trivial_termination_one_vertex prog tg scc v =
           mkAnd eh_ctx (mkNot (CP.cond_of_term_ann r.termu_rhs))) term_edges_from_v in
       (* let () = print_endline (pr_list !CP.print_formula term_conds) in *)
       let term_conds = List.map (fun f -> x_add simplify f params) term_conds in
-      let term_conds = get_full_disjoint_cond_list_with_ctx eh_ctx term_conds in
-      (* let term_conds = List.filter (fun c -> is_sat (mkAnd eh_ctx c)) term_conds in *)
-      (Some uid, term_conds)
+      (* Only keep the new conditions *)
+      let term_conds = List.filter (fun c -> not (imply eh_ctx c)) term_conds in
+      if (is_empty term_conds) then (None, [])
+      else
+        let term_conds = get_full_disjoint_cond_list_with_ctx eh_ctx term_conds in
+        (* let term_conds = List.filter (fun c -> is_sat (mkAnd eh_ctx c)) term_conds in *)
+        (Some uid, term_conds)
     | _ -> (None, [])
 
 let proving_trivial_termination_one_vertex prog tg scc v =
@@ -1807,14 +1811,16 @@ let rec proving_non_termination_scc prog trrels tg scc =
       | CP.TermU uid ->
         if Gen.BList.mem_eq (fun u1 u2 -> u1.CP.tu_id == u2.CP.tu_id) uid nonterm_uids
         then subst (CP.Loop None, []) ann
-        else 
-          begin try
-              (* let _, nd_pos = List.find (fun (nd_uid, _) ->                  *)
-              (*   uid.CP.tu_id == nd_uid.CP.tu_id) nd_nonterm_uids in          *)
-              (* subst (CP.MayLoop (Some { CP.tcex_trace = [nd_pos] }), []) ann *)
-              (* termination-crafted-lit/GulwaniJainKoskinen-PLDI2009-Fig1_true-termination.c *)
+        else
+          (* termination-crafted-lit/GulwaniJainKoskinen-PLDI2009-Fig1_true-termination.c *)  
+          begin
+            try
+              let _, nd_pos = List.find (fun (nd_uid, _) ->
+                uid.CP.tu_id == nd_uid.CP.tu_id) nd_nonterm_uids in
+              (* subst (CP.MayLoop (Some { CP.tcex_trace = [CP.TCall nd_pos] }), []) ann *)
               subst (CP.MayLoop None, []) ann
-            with Not_found -> ann end
+            with Not_found -> ann
+          end
       | _ -> ann
     in
     let tg = match nonterm_uids, nd_nonterm_uids with
@@ -1832,7 +1838,9 @@ let rec proving_non_termination_scc prog trrels tg scc =
         | _ -> acc) [] ntres_scc in
     if not (is_empty abd_conds) then 
       let tg = update_graph_with_icond tg scc abd_conds in
-      raise (Restart_with_Cond tg)
+      let n_conds = List.concat (List.map snd abd_conds) in
+      let () = x_binfo_hp (add_str "Restarting TNT analysis with new conds" (pr_list !CP.print_formula)) n_conds no_pos in
+      raise (Restart_with_Cond (n_conds, tg))
     else 
       let term_conds_scc = List.fold_left (fun acc v ->
           let tres = proving_trivial_termination_one_vertex prog tg scc v in
@@ -1845,7 +1853,9 @@ let rec proving_non_termination_scc prog trrels tg scc =
               acc @ [(uid.CP.tu_id, tc)]) [] scc in
       if not (is_empty term_conds_scc) then
         let tg = update_graph_with_icond tg scc term_conds_scc in
-        raise (Restart_with_Cond tg)
+        let n_conds = List.concat (List.map snd term_conds_scc) in
+        let () = x_binfo_hp (add_str "Restarting TNT analysis with new conds" (pr_list !CP.print_formula)) n_conds no_pos in
+        raise (Restart_with_Cond (n_conds, tg))
       else raise Should_Finalize
 
 let proving_non_termination_scc prog trrels tg scc =
