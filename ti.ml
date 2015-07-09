@@ -329,7 +329,7 @@ let solve_turel_one_unknown_scc prog trrels tg scc =
     else if List.for_all (fun (_, v) -> CP.is_Term v) outside_scc_succ then
       if is_acyclic_scc tg scc 
       then update_ann scc (subst (CP.Term, [CP.mkIConst (scc_fresh_int ()) no_pos])) (* Term *)
-      else aux_solve_turel_one_scc prog trrels tg scc
+      else proving_termination_scc prog trrels tg scc
 
     else if (List.exists (fun (_, v) -> CP.is_Loop v) outside_scc_succ)
     then proving_non_termination_scc prog trrels tg scc

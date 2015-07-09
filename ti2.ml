@@ -754,6 +754,7 @@ let update_spec_proc prog proc =
   try
     let ispec = Hashtbl.find proc_case_specs mn in
     let nspec = tnt_spec_of_proc prog proc ispec in
+    let nspec = if !Globals.tnt_infer_nondet then nspec else nspec in
     let () = proc.Cast.proc_stk_of_static_specs # push_pr "ti2:747" nspec in 
     let nproc = { proc with Cast.proc_static_specs = nspec; }  in
     (* let () = Cprinter.string_of_proc_decl_no_body nproc in *)
@@ -1839,7 +1840,7 @@ let rec proving_non_termination_scc prog trrels tg scc =
     if not (is_empty abd_conds) then 
       let tg = update_graph_with_icond tg scc abd_conds in
       let n_conds = List.concat (List.map snd abd_conds) in
-      let () = x_binfo_hp (add_str "Restarting TNT analysis with new conds" (pr_list !CP.print_formula)) n_conds no_pos in
+      let () = x_tinfo_hp (add_str "Restarting TNT analysis with new conds" (pr_list !CP.print_formula)) n_conds no_pos in
       raise (Restart_with_Cond (n_conds, tg))
     else 
       let term_conds_scc = List.fold_left (fun acc v ->
@@ -1854,7 +1855,7 @@ let rec proving_non_termination_scc prog trrels tg scc =
       if not (is_empty term_conds_scc) then
         let tg = update_graph_with_icond tg scc term_conds_scc in
         let n_conds = List.concat (List.map snd term_conds_scc) in
-        let () = x_binfo_hp (add_str "Restarting TNT analysis with new conds" (pr_list !CP.print_formula)) n_conds no_pos in
+        let () = x_tinfo_hp (add_str "Restarting TNT analysis with new conds" (pr_list !CP.print_formula)) n_conds no_pos in
         raise (Restart_with_Cond (n_conds, tg))
       else raise Should_Finalize
 
@@ -1865,7 +1866,7 @@ let proving_non_termination_scc prog trrels tg scc =
     (fun _ _ -> proving_non_termination_scc prog trrels tg scc) tg scc
 
 (* Auxiliary methods for main algorithms *)
-let aux_solve_turel_one_scc prog trrels tg scc =
+let proving_termination_scc prog trrels tg scc =
   (* let () = print_endline ("Analyzing scc: " ^ (pr_list string_of_int scc)) in *)
   (* Term with a ranking function for each scc's node *)
   let res = infer_ranking_function_scc prog tg scc in

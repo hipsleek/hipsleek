@@ -4047,7 +4047,7 @@ let check_phase_only iprog prog proc =
   (* check_proc prog proc *)
   try
     (*  let () = print_endline ("check_proc_wrapper : proc = " ^ proc.Cast.proc_name) in *)
-    let _=check_proc iprog prog proc in ()
+    let _ = check_proc iprog prog proc in ()
   with _ as e -> (
       print_string_quiet ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
       print_string_quiet ("\nException "^(Printexc.to_string e)^" during check_phase_only!\n");
@@ -4436,13 +4436,21 @@ let rec check_prog iprog (prog : prog_decl) =
         ) stk in
       is_empty err
     in
+
+    let () = 
+      if not is_term_verified then
+        x_binfo_pp ("Errors in TNT verification") no_pos
+    in
     (* Only do inference when there are some unknowns in the specifications *)
     let should_infer_tnt = List.fold_left (fun acc proc ->
         if not acc then CF.has_unknown_pre_lexvar_struc (proc.Cast.proc_stk_of_static_specs # top) (* proc.Cast.proc_static_specs *)
         else acc) false scc in
-    let () = Ti.solve (is_all_verified2 && is_term_verified) should_infer_tnt prog in
-    let prog = Ti2.update_specs_prog prog in
+    let verify_res = is_all_verified2 && is_term_verified in
+    let () = if should_infer_tnt then x_binfo_pp ("Starting TNT inference ...") no_pos in
+    let () = Ti.solve verify_res should_infer_tnt prog in
+    let prog = if verify_res && should_infer_tnt then Ti2.update_specs_prog prog else prog in
     let () = Ti.finalize () in
+    
     let scc_ids = List.map (fun proc -> proc.Cast.proc_name) scc in
     let updated_scc = List.fold_left (fun r proc_id ->
         try
