@@ -700,10 +700,10 @@ let common_arguments = [
   ("--dis-term-add-post", Arg.Clear Globals.tnt_add_post, "Automatically infer necessary postcondition");
   ("--abd-strategy", Arg.Set_int Globals.tnt_abd_strategy,
    "level of detail in termination printing 0-template(default) 1-size-change");
-  ("--en-infer-nondet", Arg.Set Globals.tnt_infer_nondet,
-   "enable local inference for nondeterminism");
-  ("--dis-infer-nondet", Arg.Clear Globals.tnt_infer_nondet,
-   "disable local inference for nondeterminism");
+  (* ("--en-infer-nondet", Arg.Set Globals.tnt_infer_nondet,    *)
+  (*  "enable local inference for nondeterminism");             *)
+  (* ("--dis-infer-nondet", Arg.Clear Globals.tnt_infer_nondet, *)
+  (*  "disable local inference for nondeterminism");            *)
 
   (* Slicing *)
   ("--eps", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization");

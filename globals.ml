@@ -1382,7 +1382,7 @@ let tnt_verbosity = ref 1
 let tnt_infer_lex = ref true
 let tnt_add_post = ref true (* disabled with @term_wo_post or --dis-term-add-post *)
 let tnt_abd_strategy = ref 0 (* by default: abd_templ *)
-let tnt_infer_nondet = ref true
+(* let tnt_infer_nondet = ref true *)
 
 let nondet_int_proc_name = "__VERIFIER_nondet_int"
 let nondet_int_rel_name = "nondet_int__"
