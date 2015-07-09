@@ -8,7 +8,7 @@ module CP = Cpure
 module TL = Tlutils
 
 (* e.g. given x', x=x'+a'-b'+1 return x+a'-b'+1 *)
-let extract_ind_exp sv form : CP.exp =
+let extract_ind_exp sv form : CP.param_flow =
   (* norm should be a sum of terms *)
   let () = x_binfo_hp (add_str "specvar: " CP.string_of_spec_var) sv no_pos in
 
@@ -28,11 +28,11 @@ let extract_ind_exp sv form : CP.exp =
     { t with TL.term_coe = neg } in
 
   match form with
-  | CP.BForm ((CP.Lt (lhs, rhs, _), _), _)
-  | CP.BForm ((CP.Lte (lhs, rhs, _), _), _)
-  | CP.BForm ((CP.Gt (lhs, rhs, _), _), _)
-  | CP.BForm ((CP.Gte (lhs, rhs, _), _), _)
-  | CP.BForm ((CP.Eq (lhs, rhs, _), _), _) ->
+  | CP.BForm ((CP.Lt (lhs, rhs, _) as pf, _), _)
+  | CP.BForm ((CP.Lte (lhs, rhs, _) as pf, _), _)
+  | CP.BForm ((CP.Gt (lhs, rhs, _) as pf, _), _)
+  | CP.BForm ((CP.Gte (lhs, rhs, _) as pf, _), _)
+  | CP.BForm ((CP.Eq (lhs, rhs, _) as pf, _), _) ->
     let lhs_tl = TL.term_list_of_exp (CP.afv lhs) lhs in
     let () = x_binfo_hp (add_str "lhs terms: " TL.print_term_list) lhs_tl no_pos in
     let rhs_tl = TL.term_list_of_exp (CP.afv rhs) rhs in
@@ -52,18 +52,39 @@ let extract_ind_exp sv form : CP.exp =
         * sv_coe is going to be -1 or 1. *)
        (match s.TL.term_coe with
         | CP.IConst (i, pos) ->
-          let res_tl = if i > 0
-            then rest
-            else (List.map negate_term rest) in
-          TL.exp_of_term_list res_tl no_pos
+          (* This affects the result we end up with *)
+          (* If I could think of a way to write this without
+           * so much repetition, I would. *)
+          if i > 0 then
+            let simpl = TL.exp_of_term_list rest no_pos in
+            (match pf with
+             | CP.Lt (_,_,_) -> CP.DEC (CP.afv simpl,simpl)
+             | CP.Lte (_,_,_) -> CP.DECEQ (CP.afv simpl,simpl)
+             | CP.Eq (_,_,_) -> CP.IND (CP.afv simpl,simpl)
+             | CP.Gt (_,_,_) -> CP.INC (CP.afv simpl,simpl)
+             | CP.Gte (_,_,_) -> CP.INCEQ (CP.afv simpl,simpl)
+             | _ -> failwith "pf must be one of lt/lte/eq/gt/gte")
+          else
+            (* needs to invert the _flow_, also. *)
+            let rest = (List.map negate_term rest) in
+            let simpl = TL.exp_of_term_list rest no_pos in
+            (match pf with
+             | CP.Lt (_,_,_) -> CP.INC (CP.afv simpl,simpl)
+             | CP.Lte (_,_,_) -> CP.INCEQ (CP.afv simpl,simpl)
+             | CP.Eq (_,_,_) -> CP.IND (CP.afv simpl,simpl)
+             | CP.Gt (_,_,_) -> CP.DEC (CP.afv simpl,simpl)
+             | CP.Gte (_,_,_) -> CP.DECEQ (CP.afv simpl,simpl)
+             | _ -> failwith "pf must be one of lt/lte/eq/gt/gte")
+          (* let simpl = TL.exp_of_term_list res_tl no_pos in *)
+          (* CP.IND (CP.afv simpl,simpl) *)
         | _ -> failwith "extract_ind_exp: expected coe of spec_var to be -1 or 1")
      | _ -> failwith "extract_ind_exp: expected only one specvar term")
   | _ -> failwith "extract_ind_exp: expected Eq/Lt/Gt lhs=rhs formula"
 
-let extract_ind_exp sv form : CP.exp =
+let extract_ind_exp sv form : CP.param_flow =
   let pr1 = Cprinter.string_of_spec_var in
   let pr2 = !CP.print_formula in
-  let pr_out = Cprinter.string_of_formula_exp in
+  let pr_out = Cprinter.string_of_param_flow in
   Debug.no_2 "extract_ind_exp" pr1 pr2 pr_out extract_ind_exp sv form
 
 let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident list) : CP.param_flow list list =
@@ -98,7 +119,7 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
 
   let lst_assume = List.map normalise_infer_rel lst_assume in
 
-  let frm_assumes = List.map (fun (cat,lhs,rhs) ->
+  let zipped_frm_assumes = List.map (fun (cat,lhs,rhs) ->
     (* find the flow; i.e. maybe a transition from one index to another in
      * pre/post Rltn
      * all recursive procs have a relation on LHS.
@@ -153,31 +174,15 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
       let () = x_binfo_hp (add_str ("constraints of " ^ (Cprinter.string_of_spec_var arg)) (pr_list !CP.print_formula)) constraints no_pos in
       (arg,constraints) in
     let res = List.map constraits_of_arg post_r_args in
-    List.map (fun (arg,constr) ->
+    let analysis = List.map (fun (arg,constr) ->
       (match constr with
          (* since we normalise the input, we shouldn't see empty here. *)
        | [] -> CP.UNKNOWN arg
        | [form] ->
          (* am assuming there is only one x'=f(x) form per infer_rel_ass *)
-         let simpl = extract_ind_exp arg form in
-         (match form with
-          | CP.BForm ((pf, _), _) ->
-            (match pf with
-             | CP.Eq (lhs, rhs, _) ->
-               CP.IND (CP.afv simpl, simpl)
-             | CP.Lt (lhs, rhs, _) ->
-               CP.DEC (CP.afv simpl, simpl)
-             | CP.Lte (lhs, rhs, _) ->
-               CP.DECEQ (CP.afv simpl, simpl)
-             | CP.Gt (lhs, rhs, _) ->
-               CP.INC (CP.afv simpl, simpl)
-             | CP.Gte (lhs, rhs, _) ->
-               CP.INCEQ (CP.afv simpl, simpl)
-             | _ ->
-               CP.UNKNOWN arg)
-          | _ -> CP.UNKNOWN arg)
-       | _ -> failwith "more constraints than assumed")) res
-    ) lst_assume in
+         extract_ind_exp arg form
+       | _ -> failwith "more constraints than assumed")) res in
+    (post_r_args,analysis)) lst_assume in
 
   (* TODO: combine various param-flow lists, reduce duplication. *)
 
@@ -188,6 +193,36 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
   let pr1 = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in
   let pr2 = pr_list (pr_pair string_of_typ pr_id) in
   let pr_out = pr_list (pr_list Cprinter.string_of_param_flow) in
+
+  (* TODO: eliminate the primed variables within the expressions.. *)
+  let frm_assumes = List.map snd zipped_frm_assumes in
+  let () = Debug.binfo_hprint (add_str "initial result" pr_out) frm_assumes no_pos in
+
+  (* build (sv, exp) from zipped. *)
+  let sv_noprimes =
+    let svs = List.map fst zipped_frm_assumes in
+    (* get rid of primed spec_vars in the expressions, *)
+    (* let exp_of_sv sv flows = *)
+    (*   try List.assoc sv zipped_frm_assumes *)
+    (*   with Not_found -> CP.mkIConst 0 no_pos in *)
+    let helper zipped =
+      match zipped with
+      | [] -> []
+      | (sv,e)::rest -> []
+      in
+    helper zipped_frm_assumes in
+
+  let frm_assumes = List.map (fun (args,pa) ->
+    let res = pa in
+    res) zipped_frm_assumes in
+
+  (* TODO: eliminate the primed variables within the expressions.. *)
+  let () = Debug.binfo_hprint (add_str "initial result" pr_out) frm_assumes no_pos in
+  let frm_assumes = List.map (fun pa ->
+    let res = pa in
+    res) frm_assumes in
+
+  (* TODO: combine various param-flow lists, reduce duplication. *)
 
   let () = Debug.binfo_pprint "analyse_param summary:" no_pos in
   let () = Debug.binfo_hprint (add_str "relations (normalised)" pr1) lst_assume no_pos in
