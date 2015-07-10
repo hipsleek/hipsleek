@@ -1166,6 +1166,8 @@ let string_of_term_id = poly_string_of_pr (pr_term_id true)
 
 let string_of_term_ann = poly_string_of_pr (pr_term_ann true)
 
+let string_of_tcex_cmd = poly_string_of_pr pr_tcex_cmd
+
 let string_of_term_cex  = poly_string_of_pr pr_term_cex
 
 let pr_prune_status st = match st with

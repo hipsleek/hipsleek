@@ -75,6 +75,8 @@ let fp_imply f p =
 (*   (* Tpdispatcher.is_sat_raw pf                       *)                   *)
 (*   not (!unsat_base_nth 1 prog (ref 0) f)                                   *)
 
+let entail_inf = ref (fun _ _ _ -> None) (* Solver.heap_entail_one_context *)
+
 let join_disjs f_lst = 
   if is_empty f_lst then CP.mkFalse no_pos
   else CP.join_disjunctions f_lst
@@ -1404,7 +1406,7 @@ type nt_res =
   | NT_Yes
   | NT_Partial_Yes (* For mutual recursion *)
   | NT_No of (CP.formula list)
-  | NT_Nondet_May of loc (* For nondet non-termination *)
+  | NT_Nondet_May of CP.tcex_cmd list (* For nondet non-termination *)
 
 type nt_cond = {
   ntc_fn: string;
@@ -1416,7 +1418,7 @@ let print_nt_res = function
   | NT_Yes -> "NT_Yes"
   | NT_Partial_Yes -> "NT_Partial_Yes"
   | NT_No ic -> "NT_No[" ^ (pr_list !CP.print_formula ic) ^ "]" 
-  | NT_Nondet_May pos -> "NT_Nondet_May @ " ^ (Cprinter.string_of_pos pos)
+  | NT_Nondet_May tcex -> "NT_Nondet_May[" ^ (pr_list Cprinter.string_of_tcex_cmd tcex) ^ "]"
 
 let is_nt_yes = function
   | NT_Yes -> true
@@ -1640,6 +1642,60 @@ let is_nondet_rec rec_trrel base_trrels =
   let rec_ctx = x_add simplify rec_trrel.ret_ctx rec_trrel.termr_rhs_params in
   List.exists (fun bctx -> is_sat (mkAnd rec_ctx bctx)) base_ctx
 
+let proving_non_termination_nondet_trrel (prog: Cast.prog_decl) lhs_uids rhs_uid trrel =
+  let pos = no_pos in
+  let conseq = rhs_uid.CP.tu_cond in 
+  let ctx = trrel.ret_ctx in
+  let nd_vars = remove_dups (CP.collect_nondet_vars ctx) in
+  let antes = List.fold_left (fun acc ann ->
+      acc @ (search_nt_cond_ann lhs_uids ann)) [] trrel.termr_lhs 
+  in
+  let antes = List.map (fun a -> a.ntc_cond) antes in
+  let assume_f = CP.join_conjunctions ([ctx] @ (List.map (fun a -> mkNot a) antes)) in
+  let empty_es = CF.empty_es (CF.mkNormalFlow ())  Label_only.Lab2_List.unlabelled pos in
+  let assume_ctx_es = { empty_es with
+      CF.es_infer_vars = nd_vars;
+      CF.es_formula = CF.mkAnd_pure empty_es.CF.es_formula (Mcpure.mix_of_pure assume_f) pos }
+  in
+  let assume_ctx = CF.Ctx assume_ctx_es in
+  let conseq_f = CF.mkAnd_pure empty_es.CF.es_formula (Mcpure.mix_of_pure (mkNot conseq)) pos in
+  let rs = x_add !entail_inf prog assume_ctx conseq_f in
+  match rs with
+  | None -> (false, [])
+  | Some rs ->
+    (match rs with
+    | CF.FailCtx _ -> (false, [])
+    | CF.SuccCtx lst -> 
+      let infer_assume_nd = List.concat (List.map CF.collect_pre_pure lst) in
+      let () = x_binfo_hp (add_str "assume_nondet" (pr_list !CP.print_formula)) infer_assume_nd pos in
+      (true, infer_assume_nd)
+    )
+
+let proving_non_termination_nondet_trrel prog lhs_uids rhs_uid trrel =
+  let pr = Cprinter.string_of_term_id in
+  Debug.no_3 "proving_non_termination_nondet_trrel" 
+    (pr_list pr) pr print_ret_trel (pr_pair string_of_bool (pr_list !CP.print_formula))
+    (fun _ _ _ -> proving_non_termination_nondet_trrel prog lhs_uids rhs_uid trrel)
+    lhs_uids rhs_uid trrel
+
+let proving_non_termination_nondet_trrels prog lhs_uids rhs_uid trrels =
+  if List.for_all (fun trrel -> is_empty trrel.termr_lhs) trrels then (false, [])
+  else
+    let infer_nd_res = List.map (proving_non_termination_nondet_trrel prog lhs_uids rhs_uid) trrels in
+    if List.exists (fun (r, _) -> not r) infer_nd_res then (false, [])
+    else 
+      let infer_nd_conds = List.concat (List.map snd infer_nd_res) in
+      if is_empty infer_nd_conds then (false, [])
+      else if not (is_sat (CP.join_conjunctions infer_nd_conds)) then (false, [])
+      else (true, infer_nd_conds)
+
+let proving_non_termination_nondet_trrels prog lhs_uids rhs_uid trrel =
+  let pr = Cprinter.string_of_term_id in
+  Debug.no_3 "proving_non_termination_nondet_trrels" 
+    (pr_list pr) pr (pr_list print_ret_trel) (pr_pair string_of_bool (pr_list !CP.print_formula))
+    (fun _ _ _ -> proving_non_termination_nondet_trrels prog lhs_uids rhs_uid trrel)
+    lhs_uids rhs_uid trrel
+
 let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
   let trrels = List.filter (fun trrel -> 
       eq_str (CP.fn_of_term_ann trrel.termr_rhs) rhs_uid.CP.tu_fname) trrels in
@@ -1664,20 +1720,12 @@ let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
         NT_No feasible_disj_ic_list
       in
       (* gen_disj_conds ntres *)
-      let nt_yes_rec = List.filter (fun (res, rel) ->
-          (is_nt_yes res) && 
-          not (is_empty rel.termr_lhs) && 
-          (CP.has_nondet_cond rel.ret_ctx)) ntres_w_rel in
-      if is_empty nt_yes_rec then gen_disj_conds ntres
-      else
-        let nt_base_no = List.filter (fun (res, rel) ->
-            (is_nt_no res) && (is_empty rel.termr_lhs)) ntres_w_rel in
-        let base_no_trrels = List.map snd nt_base_no in
-        try
-          let _, nd_rec_trrel = List.find (fun (_, rec_trrel) -> 
-              is_nondet_rec rec_trrel base_no_trrels) nt_yes_rec in
-          NT_Nondet_May nd_rec_trrel.termr_pos
-        with Not_found -> gen_disj_conds ntres
+
+      (* Attemp to infer_assume on nondet vars *)
+      let res, assume_nondet = proving_non_termination_nondet_trrels prog lhs_uids rhs_uid trrels in
+      if res then 
+        NT_Nondet_May (List.map (fun c -> CP.TAssume c) assume_nondet)
+      else gen_disj_conds ntres
 
 let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
   let pr = Cprinter.string_of_term_id in
@@ -1803,7 +1851,7 @@ let rec proving_non_termination_scc prog trrels tg scc =
     let nonterm_uids = List.map fst (List.filter (fun (uid, r) -> is_nt_yes r) ntres_scc) in
     let nd_nonterm_uids = List.fold_left (fun acc (uid, r) -> 
         match r with
-        | NT_Nondet_May pos -> acc @ [(uid, pos)]
+        | NT_Nondet_May tcex -> acc @ [(uid, tcex)]
         | _ -> acc) [] ntres_scc in
     (* Update ann with nonterm_uid to Loop *)
     let subst_loop ann =
@@ -1815,10 +1863,10 @@ let rec proving_non_termination_scc prog trrels tg scc =
           (* termination-crafted-lit/GulwaniJainKoskinen-PLDI2009-Fig1_true-termination.c *)  
           begin
             try
-              let _, nd_pos = List.find (fun (nd_uid, _) ->
+              let _, nd_cex = List.find (fun (nd_uid, _) ->
                 uid.CP.tu_id == nd_uid.CP.tu_id) nd_nonterm_uids in
-              (* subst (CP.MayLoop (Some { CP.tcex_trace = [CP.TCall nd_pos] }), []) ann *)
-              subst (CP.MayLoop None, []) ann
+              subst (CP.MayLoop (Some { CP.tcex_trace = nd_cex }), []) ann
+              (* subst (CP.MayLoop None, []) ann *)
             with Not_found -> ann
           end
       | _ -> ann

@@ -14513,6 +14513,17 @@ let collect_nondet_rel f =
   in
   fold_formula f (nonef, f_bf, nonef) List.concat
 
+let collect_nondet_vars f = 
+  let f_bf bf =
+    match (fst bf) with
+    | RelForm (sv, args, _) -> 
+      if is_nondet_sv sv 
+      then Some (List.concat (List.map afv args)) 
+      else None
+    | _ -> None 
+  in
+  fold_formula f (nonef, f_bf, nonef) List.concat
+
 let is_shape f=
   let svl = fv f in
   List.for_all (fun sv -> (is_node_typ sv)) svl

@@ -15244,6 +15244,12 @@ let verify_pre_is_sat prog fml =
     (fun _ -> verify_pre_is_sat prog fml) fml
 
 (* let () = Ti2.unsat_base_nth := unsat_base_nth *)
+let () = 
+  let infer_func prog ante conseq =
+    let rs, _ = heap_entail_one_context 20 prog false ante conseq None None None no_pos in
+    Some rs 
+  in
+  Ti2.entail_inf := infer_func 
 
 (********************************************************************************************)
 (*********The following code is moved to fixpoint.ml*************************************)

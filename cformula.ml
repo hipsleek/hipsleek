@@ -11162,7 +11162,10 @@ let rec collect_term_measures_context ctx =
   | Ctx es -> (match es.es_var_measures with
       | None -> []
       | Some (_, ml, _) -> [ml])
-  | OCtx (ctx1, _) -> collect_term_measures_context ctx1
+  | OCtx (ctx1, ctx2) -> 
+    let m1 = collect_term_measures_context ctx1 in
+    if not (is_empty m1) then m1
+    else collect_term_measures_context ctx2
 
 let collect_term_measures_branch_ctx_list br_ctx_l =
   List.concat (List.map (fun (_, ctx) -> 
