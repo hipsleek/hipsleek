@@ -18,6 +18,7 @@ void f(int x)
       f(x - 1);
     else
       f(x + 1);
+    dprint;
   }
 }
 

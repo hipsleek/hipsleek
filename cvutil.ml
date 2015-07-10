@@ -370,7 +370,7 @@ let process_vis_x prog term_first_sat (vname,p_root,p_args,p_eqs,p_neqs,p_null_s
     (* local info *)
     let f0a = CF.elim_exists f in
     let _,f0 = CF.split_quantifiers f0a in
-    let f1 = Cformula.subst arg_sst f0 in
+    let f1 = x_add Cformula.subst arg_sst f0 in
     let is_unsat, is_sat, new_vis, (br_eqs, br_neqs, br_null_svl, br_neqNull_svl) = build_vis prog f1 in
     if is_unsat then
       ([(vname,p_root,p_args,br_eqs, br_neqs, br_null_svl, br_neqNull_svl)],[],[])

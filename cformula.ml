@@ -3199,7 +3199,7 @@ and one_formula_subst sst (f : one_formula) =
   let df = f.formula_delayed in
   let ndf = MCP.m_apply_par sst df in
   let base = formula_of_one_formula f in
-  let rs = subst sst base in
+  let rs = x_add subst sst base in
   let ref_vars = (List.map (CP.subst_var_par sst) f.formula_ref_vars) in
   let tid = CP.subst_var_par sst f.formula_thread in
   let one_f = (one_formula_of_formula rs tid ndf) in
@@ -3433,7 +3433,7 @@ and h_subst sst (f : h_formula) =
                  h_formula_thread_split = split; 
                  h_formula_thread_perm = map_opt (CP.e_apply_subs sst) perm;   (*LDK*)
                  h_formula_thread_delayed = ndl;
-                 h_formula_thread_resource = subst sst rsr;
+                 h_formula_thread_resource = x_add subst sst rsr;
                  h_formula_thread_origins = orgs;
                  h_formula_thread_original = original;
                  h_formula_thread_label = lbl;
@@ -4161,7 +4161,7 @@ and elim_exists_x (f0 : formula) : formula = match f0 with
     let r = 
       if List.length st = 1 then
         let tmp = mkBase h pp1 vp t fl a pos in (*TO CHECK*) (* VP: no aliasing *)
-        let new_baref = subst st tmp in
+        let new_baref = x_add subst st tmp in
         let tmp2 = add_quantifiers rest_qvars new_baref in
         let tmp3 = elim_exists_x tmp2 in
         tmp3
@@ -4275,7 +4275,7 @@ and elim_exists_struc_preserve_pre_evars pre_evars0 (cf0: struc_formula) : struc
           if CP.mem_svl sv1 qvars && CP.mem_svl sv2 inter then r@[(sv1,sv2)] else r
         ) [] eqs in
       let n_qvars = CP.subst_var_list sst qvars in
-      let n_base_f = simplify_pure_f (subst sst base_f) in
+      let n_base_f = simplify_pure_f (x_add subst sst base_f) in
       let () = DD.ninfo_hprint (add_str "n_qvars" !CP.print_svl) n_qvars no_pos in
       let () = DD.ninfo_hprint (add_str "n_base_f" !print_formula) n_base_f no_pos in
       EAssume {b with
@@ -4314,7 +4314,7 @@ and elim_exists_preserve (f0 : formula) rvars : formula = match f0 with
       in
       if vp then
         let tmp = mkBase h pp1 vps t fl a pos in (*TO CHECK*)
-        let new_baref = subst st tmp in
+        let new_baref = x_add subst st tmp in
 
         let tmp2 = add_quantifiers rest_qvars new_baref in
 
@@ -4352,7 +4352,7 @@ and elim_exists_es_his_x (f0 : formula) (* (his:h_formula list) *) : formula(* *
       let r(* ,n_hfs *) = 
         if List.length st = 1 then
           let tmp = mkBase h pp1 vp t fl a pos in (*TO CHECK*)
-          let new_baref = subst st tmp in
+          let new_baref = x_add subst st tmp in
           (* let new_hfs = List.map (h_subst st) hfs in *)
           (* let n_ss_ref = List.map (fun (sv1,sv2) -> (sv1, CP.subs_one st sv2)) ss_ref in *)
           let tmp2 = add_quantifiers rest_qvars new_baref in
@@ -4437,7 +4437,7 @@ and rename_bound_vars_x (f : formula) = match f with
     (*let () = (print_string ("\n[cformula.ml, line 519]: fresh name = " ^ (string_of_spec_var_list new_qvars) ^ "!!!!!!!!!!!\n")) in*)
     (*09.05.2000 ---*)
     let rho = List.combine qvars new_qvars in
-    let new_base_f = subst rho base_f in (*TO CHECK*)
+    let new_base_f = x_add subst rho base_f in (*TO CHECK*)
     let resform = add_quantifiers new_qvars new_base_f in
     (resform,rho)
 
@@ -4560,7 +4560,7 @@ and rename_struc_clash_bound_vars_X (f1 : struc_formula) (f2 : formula) : struc_
            formula_struc_implicit_inst = (snd (List.split new_imp));
            formula_struc_explicit_inst = (snd (List.split new_exp));
            formula_struc_exists = (snd (List.split new_exs));
-           formula_struc_base = subst rho (fst ( rename_clash_bound_vars b.formula_struc_base f2 ));
+           formula_struc_base = x_add subst rho (fst ( rename_clash_bound_vars b.formula_struc_base f2 ));
            formula_struc_continuation = map_opt (fun c-> rename_struc_clash_bound_vars (subst_struc rho c) f2) b.formula_struc_continuation;
           }
   | EInfer b -> EInfer {b with formula_inf_continuation = rename_struc_clash_bound_vars b.formula_inf_continuation f2}
@@ -4580,7 +4580,7 @@ and rename_clash_bound_vars (f1 : formula) (f2 : formula) : (formula * CP.spec_v
     (* fresh_qvars contains only the freshly generated names *)
     let fresh_qvars = (List.filter (fun v1 -> (not (List.exists (fun v2 -> CP.eq_spec_var v1 v2) qvars)))  new_qvars) in
     let rho = List.combine qvars new_qvars in
-    let new_base_f = subst rho base_f in
+    let new_base_f = x_add subst rho base_f in
     let resform = add_quantifiers new_qvars new_base_f in
     (resform, fresh_qvars)
 
@@ -4604,8 +4604,8 @@ and compose_formula_new (delta : formula) (phi : formula) (x : CP.spec_var list)
   (*09.05.2000 ---*)
   let rho1 = List.combine (List.map CP.to_unprimed x) rs in
   let rho2 = List.combine (List.map CP.to_primed x) rs in
-  let new_delta = subst rho2 delta in
-  let new_phi = subst rho1 phi in
+  let new_delta = x_add subst rho2 delta in
+  let new_phi = x_add subst rho1 phi in
   (* let new_history = List.map (h_subst rho2) history in *)
   let new_f = normalize_keep_flow new_delta new_phi flow_tr pos in
   let () = must_consistent_formula "compose_formula 1" new_f in
@@ -4620,9 +4620,9 @@ and compose_formula_x (delta : formula) (phi : formula) (x : CP.spec_var list) f
   (*09.05.2000 ---*)
   let rho1 = List.combine (List.map CP.to_unprimed x) rs in
   let rho2 = List.combine (List.map CP.to_primed x) rs in
-  let new_delta = subst rho2 delta in
+  let new_delta = x_add subst rho2 delta in
   DD.info_zprint (lazy  ("   should not subst hprel old: " ^ (!print_formula phi))) pos;
-  let new_phi = subst rho1 phi in
+  let new_phi = x_add subst rho1 phi in
   DD.info_zprint (lazy  ("   should not subst hprel new: " ^ (!print_formula new_phi))) pos;
   let new_f = normalize_keep_flow new_delta new_phi flow_tr pos in
   (* WN : this checking seems to be for debugging purpose of *)
@@ -4671,8 +4671,8 @@ and compose_formula_join_x (delta : formula) (phi : formula) (x : CP.spec_var li
   (*09.05.2000 ---*)
   let rho1 = List.combine (List.map CP.to_unprimed x) rs in
   let rho2 = List.combine (List.map CP.to_primed x) rs in
-  let new_delta = subst rho2 delta in
-  let new_phi = subst rho1 phi in
+  let new_delta = x_add subst rho2 delta in
+  let new_phi = x_add subst rho1 phi in
   let new_f = normalize_keep_flow_join new_delta new_phi flow_tr pos in
   let () = must_consistent_formula "compose_formula 1" new_f in
   let resform = push_exists rs new_f in
@@ -4995,7 +4995,7 @@ let get_hpdef_name_w_tupled hpdef=
 let subst_opt ss f_opt=
   match f_opt with
   | None -> None
-  | Some f -> Some (subst ss f)
+  | Some f -> Some (x_add subst ss f)
 
 let h_subst_opt ss hf_opt=
   match hf_opt with
@@ -6700,7 +6700,7 @@ let do_unfold_view_hf cprog pr_views hf0 =
     let () = DD.ninfo_hprint (add_str "qvars" !CP.print_svl) qvars no_pos in
     let fr_qvars = CP.fresh_spec_vars qvars in
     let ss = List.combine qvars fr_qvars in
-    let nf = subst ss base1 in
+    let nf = x_add subst ss base1 in
     add_quantifiers fr_qvars ( nf)
   in
   let rec helper hf=
@@ -6776,7 +6776,7 @@ let do_unfold_view_hf cprog pr_views hf0 =
           let fs = List.map (fun (f,_) -> fresh_var f_args f) v_un_struc_formula in
           let a_args = hv.h_formula_view_node::hv.h_formula_view_arguments in
           let ss = List.combine f_args  a_args in
-          let fs1 = List.map (subst ss) fs in
+          let fs1 = List.map (x_add subst ss) fs in
           List.map (fun f -> (List.hd (heap_of f), MCP.mix_of_pure (get_pure f))) fs1
         with _ -> report_error no_pos ("LEM.do_unfold_view_hf: can not find view " ^ hv.h_formula_view_name)
       end
@@ -6989,7 +6989,7 @@ let do_unfold_hp_def_hf cprog pr_hp_defs hf0 =
           let fs = List.fold_left (fun r (f,_) -> r@(list_of_disjs f)) [] hp_def.def_rhs in
           let a_args = List.fold_left List.append [] (List.map CP.afv eargs) in
           let ss = List.combine f_args  a_args in
-          let fs1 = List.map (subst ss) fs in
+          let fs1 = List.map (x_add subst ss) fs in
           List.map (fun f -> (List.hd (heap_of f), MCP.mix_of_pure (get_pure f))) fs1
         with _ -> [(hf, MCP.mix_of_pure (CP.mkTrue no_pos))]
       end
@@ -8826,10 +8826,10 @@ let ins_x ss f0=
     match f with
     | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
       Or ({formula_or_f1 = helper f1; formula_or_f2 =  helper f2; formula_or_pos = pos})
-    | Base _-> subst ss f
+    | Base _-> x_add subst ss f
     | Exists fe ->
       let qvars, base1 = split_quantifiers f in
-      let nf = subst ss base1 in
+      let nf = x_add subst ss base1 in
       let ins_svl = fst (List.split ss) in
       let n_qvars = List.filter (fun sv -> not (CP.mem_svl sv ins_svl)) qvars in
       add_quantifiers n_qvars nf
@@ -16606,8 +16606,8 @@ let compose_formula_and_x (f : formula) (post : formula) (delayed_f : MCP.mix_fo
   let rs = CP.fresh_spec_vars ref_vars in
   let rho1 = List.combine (List.map CP.to_unprimed ref_vars) rs in
   let rho2 = List.combine (List.map CP.to_primed ref_vars) rs in
-  let new_f = subst rho2 f in
-  let new_post = subst rho1 post in
+  let new_f = x_add subst rho2 f in
+  let new_post = x_add subst rho1 post in
   (* let new_f = push_exists rs new_f in (\* IMPORTANT: do not do this*\) *)
   (*Rename @value for later join*)
   (* y'=1 and x'=x+y' => y'=y_20 & y_20=1 and x'=x+y_20*)
@@ -16615,9 +16615,9 @@ let compose_formula_and_x (f : formula) (post : formula) (delayed_f : MCP.mix_fo
   let uprimed_vars = (List.map CP.to_unprimed fresh_vars) in
   let rho3 = List.combine val_vars uprimed_vars in
   (*x'=x+y_20*)
-  let new_post2 = subst rho3 new_post in
+  let new_post2 = x_add subst rho3 new_post in
   (*y_20=1*)
-  let new_f2 = subst rho3 new_f in
+  let new_f2 = x_add subst rho3 new_f in
   (*y'=y_20*)
   let func v1 v2 =
     Cpure.BForm (((Cpure.Eq (
@@ -18526,7 +18526,7 @@ let force_elim_exists_x f quans=
           | _ -> r1,r2
         ) ([],[]) eqs in
   (* let ps = List.map  (fun (sv1, sv2) -> CP.mkPtrEqn sv1 sv2 no_pos) inter_eqs in *)
-  simplify_pure_f (subst sst f)(* ,  Mcpure.mix_of_pure (CP.conj_of_list ps no_pos ) *)
+  simplify_pure_f (x_add subst sst f)(* ,  Mcpure.mix_of_pure (CP.conj_of_list ps no_pos ) *)
 
 let force_elim_exists f quans=
   let pr1 = !print_formula in

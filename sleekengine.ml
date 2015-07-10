@@ -1226,7 +1226,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
     ) [] fvs
   in
   (*let _ = print_endline "run_infer_one_pass" in*)
-  let ante1 = CF.subst sst ante in
+  let ante1 = x_add CF.subst sst ante in
   let ante = Cfutil.transform_bexpr ante1 in
   let conseq = CF.struc_formula_trans_heap_node [] Cfutil.transform_bexpr conseq in
   let pr = Cprinter.string_of_struc_formula in
@@ -1313,7 +1313,7 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
       (* let _ = Debug.info_pprint (Cprinter.string_of_formula guard) no_pos in *)
       let p = CF.get_pure guard in
       let eq = (Mcpure.ptr_equations_without_null (Mcpure.mix_of_pure p)) in
-      let guard1 = CF.subst eq guard in
+      let guard1 = x_add CF.subst eq guard in
       (* if CP.isConstTrue p then *)
       (* let hfs = CF.heap_of guard1 in *)
       (* CF.join_star_conjunctions_opt hfs *)
@@ -1629,7 +1629,7 @@ let process_shape_rec sel_hps=
     | (hp,args0,f)::rest ->
       let fs = List.map (fun (_,args1, f1) ->
           let sst = List.combine args1 args0 in
-          CF.subst sst f1
+          x_add CF.subst sst f1
         ) rest in
       {CF.def_cat= (CP.HPRelDefn (hp, List.hd args0, List.tl args0));
        CF.def_lhs= (CF.HRel (hp, List.map (fun sv -> CP.mkVar sv no_pos) args0, no_pos));

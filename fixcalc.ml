@@ -533,7 +533,7 @@ let slk2fix_body lower_invs fml0 vname dataname para_names=
   let fr_vars = CP.fresh_spec_vars (vars) in
   let sst = List.combine vars fr_vars in
   let rev_sst = List.combine fr_vars vars in
-  let fs = List.map (fun (f,_) -> Cformula.subst sst (x_add subst_inv_lower_view lower_invs f)) fml0 in
+  let fs = List.map (fun (f,_) -> x_add Cformula.subst sst (x_add subst_inv_lower_view lower_invs f)) fml0 in
   let input_fixcalc =
     try
       vname ^ ":={[" ^ (self) ^ (if (List.length fr_vars > 0) then "," else "") ^ (string_of_elems fr_vars fixcalc_of_spec_var ",") ^

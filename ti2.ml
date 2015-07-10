@@ -1721,10 +1721,12 @@ let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
       in
       (* gen_disj_conds ntres *)
 
-      (* Attemp to infer_assume on nondet vars *)
-      let res, assume_nondet = proving_non_termination_nondet_trrels prog lhs_uids rhs_uid trrels in
-      if res then 
-        NT_Nondet_May (List.map (fun c -> CP.TAssume c) assume_nondet)
+      if !Globals.tnt_infer_nondet then
+        (* Attemp to infer_assume on nondet vars *)
+        let res, assume_nondet = proving_non_termination_nondet_trrels prog lhs_uids rhs_uid trrels in
+        if res then 
+          NT_Nondet_May (List.map (fun c -> CP.TAssume c) assume_nondet)
+        else gen_disj_conds ntres
       else gen_disj_conds ntres
 
 let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
@@ -1860,7 +1862,7 @@ let rec proving_non_termination_scc prog trrels tg scc =
         if Gen.BList.mem_eq (fun u1 u2 -> u1.CP.tu_id == u2.CP.tu_id) uid nonterm_uids
         then subst (CP.Loop None, []) ann
         else
-          (* termination-crafted-lit/GulwaniJainKoskinen-PLDI2009-Fig1_true-termination.c *)  
+          (* termination-crafted-lit/GulwaniJainKoskinen-PLDI2009-Fig1_true-termination.c *)
           begin
             try
               let _, nd_cex = List.find (fun (nd_uid, _) ->

@@ -428,6 +428,7 @@ and check_bounded_term prog ctx post_pos =
 
 and check_specs_infer_a0 (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) e0 do_infer (sp:CF.struc_formula):
   CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *(CF.hprel list) * (CP.spec_var list)* (CP.spec_var list) * ((CP.spec_var * int list)  *CP.xpure_view ) list * bool =
+  let pr0 = Cprinter.string_of_context in
   let pr1 = Cprinter.string_of_struc_formula in
   let pr1n s = Cprinter.string_of_struc_formula (CF.norm_specs s) in
   let pr2 = add_str "inferred rels" (fun l -> string_of_int (List.length l)) in
@@ -448,8 +449,8 @@ and check_specs_infer_a0 (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
   let fn x = 
     if arr_as_var_flag then wrap_arr_as_var fn x 
     else fn x in
-  Debug.no_2 "check_specs_infer" pr1 pr_exp pr3
-    (fun _ _ -> fn sp) sp e0
+  Debug.no_3 "check_specs_infer" pr0 pr1 pr_exp pr3
+    (fun _ _ _ -> fn sp) ctx sp e0
 
 (* move to cformula *)
 (* and determine_infer_type sp t  = match sp with *)
@@ -882,8 +883,9 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                 let impl_vs, expl_vs = List.partition (fun v -> CP.mem_svl v (pre_vars@posts)) impl_vs in
                 DD.ninfo_pprint ("Pre Vars :"^(Cprinter.string_of_spec_var_list pre_vars)) pos;
                 x_dinfo_pp ("Post Vars :"^(Cprinter.string_of_spec_var_list posts)) pos;
-                x_dinfo_pp ("Extra Implicit Vars :"^(Cprinter.string_of_spec_var_list impl_vs)) pos;
-                x_dinfo_pp ("Extra Explicit Vars :"^(Cprinter.string_of_spec_var_list expl_vs)) pos;
+                x_binfo_pp ("Extra Implicit Vars :"^(Cprinter.string_of_spec_var_list impl_vs)) pos;
+                x_binfo_pp ("Extra Explicit Vars :"^(Cprinter.string_of_spec_var_list expl_vs)) pos;
+                x_binfo_pp ("Res ctx:" ^ (Cprinter.string_of_list_partial_context res_ctx)) pos;
                 (* TODO: Timing *)
                 let res_ctx = Infer.add_impl_expl_vars_list_partial_context impl_vs expl_vs res_ctx in
                 let pos_post = (CF.pos_of_formula post_cond) in
@@ -1644,7 +1646,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
                   let tmp_vsv = CP.fresh_spec_var vsv in
                   (* let () = print_endline ("Before :"^(Cprinter.string_of_formula c1.CF.es_formula)) in *)
-                  let compose_es = CF.subst [(vsv, tmp_vsv); ((P.mkRes t), vsv)] c1.CF.es_formula in
+                  let compose_es = x_add CF.subst [(vsv, tmp_vsv); ((P.mkRes t), vsv)] c1.CF.es_formula in
                   (* let () = print_endline ("After :"^(Cprinter.string_of_formula compose_es)) in *)
                   let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es})) in
                   (* let () = print_endline ("c1.CF.es_formula: " ^ (Cprinter.string_of_formula c1.CF.es_formula)) in *)
@@ -2067,7 +2069,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           let tempvar = CP.SpecVar (org_typ, Globals.fresh_name (), Primed) in
           let fct c1 =
             if (CF.subsume_flow_f !norm_flow_int (CF.flow_formula_of_formula c1.CF.es_formula)) then
-              let compose_es = CF.subst [((P.mkRes org_typ), tempvar)] c1.CF.es_formula in
+              let compose_es = x_add CF.subst [((P.mkRes org_typ), tempvar)] c1.CF.es_formula in
               let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es})) in
               compose_ctx
             else (CF.Ctx c1) in
