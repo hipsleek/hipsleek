@@ -20,6 +20,7 @@ void f(int x)
       f(x + 1);
     dprint;
   }
+  dprint;
 }
 
 /*

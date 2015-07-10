@@ -2010,7 +2010,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     tmp_res2
                 in
                 let tmp_res2 = prune_ctx_failesc_list prog tmp_res2 in
-                let tmp_res3 = CF.push_exists_list_failesc_context vs_prim tmp_res2 in
+                let tmp_res3 = x_add CF.push_exists_list_failesc_context vs_prim tmp_res2 in
                 let () = CF.must_consistent_list_failesc_context "bind 7" tmp_res3  in
                 let res = if !Globals.elim_exists_ff then elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 in
                 let () = CF.must_consistent_list_failesc_context "bind 8" res  in
@@ -2041,7 +2041,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           stk_vars # pop_list vss;
           let ctx1 = VP.clear_vperm_sets_list_failesc_ctx [(VP_Full, vss)] ctx1 in
           let svars = List.map (fun (t, n) -> CP.SpecVar (t, n, Primed)) local_vars in
-          let ctx2 = CF.push_exists_list_failesc_context svars ctx1 in
+          let ctx2 = x_add CF.push_exists_list_failesc_context svars ctx1 in
           (* let () = print_endline ("\ncheck_exp: Block: ctx2:\n" ^ (Cprinter.string_of_list_failesc_context ctx2)) in *)
           (* let () = print_endline ("\ncheck_exp: Block: after elim_exists ctx2:\n" ^            *)
           (*   (Cprinter.string_of_list_failesc_context (elim_exists_failesc_ctx_list ctx2))) in *)

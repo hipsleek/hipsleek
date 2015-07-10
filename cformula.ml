@@ -12606,9 +12606,9 @@ let topologize_formula (h0 : h_formula) : h_formula =
    	- now, we want to be more aggressive and search for substitutions of the form v1 = exp2; however, we can only apply these substitutions to the pure part 
    	(due to the way shape predicates are recorded --> root pointer and args are suppose to be spec vars)
  *************************************************************************************************************************)	 
-let rec subst_exp sst (f : formula) = match sst with
+let rec subst_exp_x sst (f : formula) = match sst with
   | s :: rest -> 
-    let new_f = subst_exp rest (apply_one_exp s f) in
+    let new_f = subst_exp_x rest (apply_one_exp s f) in
     (*let fv_new_f = fv new_f in
       		 	if List.mem (fst s) fv_new_f then 
       		 		let f = add_quantifiers [(fst s)] new_f in
@@ -12617,6 +12617,12 @@ let rec subst_exp sst (f : formula) = match sst with
       		 	 		mkExists qvars h (CP.mkAnd p (CP.mkEqExp (CP.mkVar (fst s) no_pos) (snd s) no_pos) no_pos) t no_pos 
       			else*) new_f
   | [] -> f 
+
+and subst_exp sst (f : formula) =
+  let pr1 = !print_formula in
+  let pr2 = pr_pair !CP.print_sv !CP.print_exp in
+  Debug.no_2 "subst_exp" (pr_list pr2) pr1 pr1
+  subst_exp_x sst f
 
 and subst_var_exp (fr, t) (o : CP.spec_var) = 
   if CP.eq_spec_var fr o then t else o
@@ -14046,8 +14052,14 @@ and push_exists_list_partial_context (qvars : CP.spec_var list) (ctx : list_part
 and fresh_view_list_partial_context (ctx : list_partial_context) : list_partial_context = 
   transform_list_partial_context ((fun es -> Ctx{es with es_formula = fresh_view es.es_formula}),(fun c->c)) ctx
 
-and push_exists_list_failesc_context (qvars : CP.spec_var list) (ctx : list_failesc_context) : list_failesc_context = 
+and push_exists_list_failesc_context_x (qvars : CP.spec_var list) (ctx : list_failesc_context) : list_failesc_context = 
   transform_list_failesc_context (idf,idf,(fun es -> Ctx{es with es_formula = push_exists qvars es.es_formula})) ctx
+
+and push_exists_list_failesc_context (qvars : CP.spec_var list) (ctx : list_failesc_context) : list_failesc_context = 
+  let pr1 = !print_list_failesc_context in
+  let pr2 = pr_list !CP.print_sv in
+  Debug.no_2 "push_exists_list_failesc_context" pr2 pr1 pr1
+    push_exists_list_failesc_context_x qvars ctx
 
 and push_exists_context_x (qvars : CP.spec_var list) (ctx : context) : context = 
   transform_context (fun es -> Ctx{es with es_formula = push_exists qvars es.es_formula}) ctx

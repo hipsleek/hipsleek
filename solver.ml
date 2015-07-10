@@ -14912,7 +14912,7 @@ and elim_exists_exp_loop_x (f0 : formula) : (formula * bool) =
           (* basically we only apply one substitution *)
           let one_subst = List.hd st in
           let tmp = mkBase h pp1 vp t fl a pos in
-          let new_baref = subst_exp [one_subst] tmp in
+          let new_baref = x_add subst_exp [one_subst] tmp in
           let tmp2 = add_quantifiers rest_qvars new_baref in
           let tmp3, _ = helper tmp2 in
           (tmp3, true)
