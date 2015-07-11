@@ -13,9 +13,10 @@ void f(int x)
     //assume ccc' <= 0;
     //assume bbb' <= 0;
     //infer_assume [bbb, ccc];
-    if (bbb > 0)
+    dprint;
+    if (bbb > 0) {dprint;
     //if (__VERIFIER_nondet_int() > 0)
-      f(x - 1);
+      f(x - 1);}
     else
       f(x + 1);
     dprint;
