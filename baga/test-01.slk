@@ -1,0 +1,15 @@
+
+
+data c {c next;}.
+
+pred P<y> == self::c<null> & y = 1
+     or self::c<z> * z::P<y-1> & 1 <= y & y <= 2.
+
+checksat x::P<3>.
+
+/*
+!!! **astsimp.ml#2709:Predicate P has precise invariant
+
+!!! **astsimp.ml#2876:infered baga inv(P):[([self], y>=1 & 2>=y),([self], y>=1 & 2>=y)]
+
+*/
