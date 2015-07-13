@@ -1,0 +1,128 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+HeapPred H1(node x).
+HeapPred HP_32(node x).
+HeapPred H2(node x, int n).
+
+// (1)
+infer [H1] H1(y) |- y::node<a,b>.
+print residue.
+
+/*
+validate [
+( [H1,b],
+//   HP_32(b_34)&a=a_33 & b=b_34,
+   HP_32(b),
+  [H1(y) --> y::node<_,b>@M * HP_32(b)]
+  //[H1(y) --> y::node<a,b>@M * HP_32(b)]
+)
+].
+
+
+
+validate [
+( [H1,b], 
+// It is important to place b above
+// so that we ensure that HP_32(b) is satisfied.
+//   HP_32(b_34)&a=a_33 & b=b_34,
+   HP_32(b),
+  [H1(y) --> y::node<_,bb>@M * HP_32(bb)]
+  //[H1(y) --> y::node<a,b>@M * HP_32(b)]
+  // however, it is not important to change b to bb
+  // since b/bb is local to each relational assumption
+)
+].
+*/
+
+/*
+# infer1.slk
+
+ <1>HP_33(b_35)&a=a_34 & b=b_35&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H1(y) --> y::node<a,b>@M * HP_33(b)]
+
+Why did we get above?
+
+Should it not be:
+ inferred hprel: [H1(y) --> y::node<a_34,b_35>@M * HP_33(b_35)]
+
+*/
+
+/*
+// (2)
+infer [H1] H1(y) |- y::ll<n>.
+print residue.
+*/
+
+/*
+// (3)
+infer [H1]  H1(y) |- y::node<a,b> * b::node<c,d>.
+print residue.
+*/
+
+/*
+// (4)
+infer [H1]  H1(y) |- y::node<a,b> * b::ll<m>.
+print residue.
+*/
+
+/*
+// (5)
+infer [H1]  H1(x) & x=y  |- y::ll<n>.
+print residue.
+*/
+
+/*
+// (6)
+infer [H1] H1(x) & n=0 & x=y  |- y::ll<n>.
+print residue.
+*/
+
+/*
+// (7)
+infer [H1] H1(x) & x=y |- x::ll<n> .
+print residue.
+*/
+
+/*
+// (8)
+infer [ia,ib] y::node<ia,ib> |- y::node<a,b>.
+print residue.
+*/
+
+/*
+// (9)
+infer [H1]  H1(y) |- (exists a: y::node<a,null> & a>0).
+print residue.
+*/
+
+/*
+// (10)
+infer [aa]  y::node<aa,null> |- (exists a: y::node<a,null> & a>0).
+print residue.
+*/
+
+/*
+// (11)
+infer [m] y::ll<m> |- y::ll<n>.
+print residue.
+*/
+
+/*
+// (12)
+infer [x] x=null |- x::node<_,null> .
+print residue.
+*/
+
+/*
+// (13)
+infer [y] y=null |- y::node<a,b>.
+print residue.
+*/
+

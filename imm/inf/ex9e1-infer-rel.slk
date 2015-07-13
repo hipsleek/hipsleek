@@ -1,0 +1,33 @@
+relation R(ann v).
+relation P(int v).
+
+//infer[P] u=0 & u<=v  |- P(v).
+//print residue.
+//  inferred rel: [RELDEFN P: ( 0<=v) -->  P(v)]
+
+infer[R] u=@M & u<:v  |- R(v).
+print residue.
+// inferred rel: [RELDEFN R: ( true) -->  R(v)]
+// inferred rel: [RELDEFN R: ( @M<:v -->  R(v)]
+
+/*
+# ex9e1.slk -debug dd.log
+
+# dropping u<:v seems correct simplification
+
+@1! **infer.ml#1969:lhs_p:: u<:v & u=@M
+@1! **infer.ml#1970:lhs_p_memo:: u<:v & u=@M
+@1! **infer.ml#1971:lhs_h_p (lhs_h_mix):: true
+@1! **infer.ml#1972:lhs (after lhs_simplifier):: u=@M
+@1! **infer.ml#1973:lhs_p_new (b4 filter ass):: u=@M
+
+# working with integer..
+
+@1! **infer.ml#1969:lhs_p:: u<=v & u=0
+@1! **infer.ml#1970:lhs_p_memo:: u<=v & u=0
+@1! **infer.ml#1971:lhs_h_p (lhs_h_mix):: true
+@1! **infer.ml#1972:lhs (after lhs_simplifier):: u=0 & 0<=v
+@1! **infer.ml#1973:lhs_p_new (b4 filter ass):: u=0 & 0<=v
+
+*/
+

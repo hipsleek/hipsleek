@@ -1,0 +1,63 @@
+/*
+@M - mutable   (0)
+@I - immutable (1)
+@L - lending   (2)
+@A - no access (3)
+*/
+
+//data cell {int val;}.
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n, v1> == self = null & n = 0 
+	or self::node<a@v1, q> * 
+    q::ll<n-1, v1>
+  inv n >= 0.
+
+/*
+// (7) Valid
+checkentail x::node<p,q> * q::ll<n,_> & n > 1 |- x::ll<n+1,_> & n > 1.
+print residue.
+expect Valid.
+
+// (11) Valid
+checkentail x::node<a@M, r@M> * r::node<b@M, r2@M> * r2::ll<n, v2> |- x::ll<n + 2, v2>.
+print residue.
+expect Valid.
+*/
+
+
+// (12) Valid
+checkentail x::node<_, r> * r::ll<n,aaa> |- x::ll<n + 1,bbb>.
+print residue.
+expect Valid.
+
+/*
+this example should actually fail:
+(first instantiation comes from matching the head)
+
+
+Entail 1: Fail.(may) cause: @M<:bbb |-  aaa<:bbb. LOCS:[0] (may-bug)
+
+Residue:
+ MaybeErr Context: 
+    fe_kind: MUST
+    fe_name: logical bug
+    fe_locs: {
+        fc_message:  x!=null |-  x=null. LOCS:[34;15] (must-bug)
+        fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+      }
+    [[ Fold]]
+   FAIL_UNION 
+    fe_kind: MAY
+    fe_name: logical bug
+    fe_locs: {
+        fc_message:  @M<:bbb |-  aaa<:bbb. LOCS:[0] (may-bug)
+        fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+      }
+    [[ Fold ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  Match(r,q_49)]]
+   
+**/

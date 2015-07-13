@@ -1,0 +1,43 @@
+data pair{
+ int fst;
+ int snd;
+}.
+
+
+infer [@field_imm] p::pair<f,s@A> |- p::pair<_,b@L>.
+print residue.
+expect Fail.
+/*
+Got Fail with --field-imm
+
+Entail (1) : Fail.(must) cause:mismatched imm annotation for data pair
+Residue:
+MustErr Context: 
+*/
+
+infer [@field_imm] p::pair<f,s@x> |- p::pair<_,b@L>.
+print residue.
+expect Fail.
+/*
+# ex4c
+
+Entail (3) : Valid. 
+Residue:
+ <1>emp&Anon_14=f & b=s&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  Match(p,p) ==> ]]
+
+Expects fail
+*/
+
+infer [@field_imm,x] p::pair<f,s@x> |- p::pair<_,b@L>.
+print residue.
+/*
+Got:
+Residue:
+ <1>p::pair<f_23,s>&Anon_12=f & b=s&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  Match(p,p) ==> ]]
+
+Expects infer pure x<:L
+*/
+
+

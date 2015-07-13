@@ -1,0 +1,43 @@
+data cell{
+ int fst;
+}.
+
+relation P(ann v).
+
+infer[P] c::cell<_>@M |- c::cell<_>@b & P(b).
+print residue.
+
+infer[] c::cell<_>@M |- c::cell<_>@b.
+print residue.
+// c::cell<Anon_13>@[@M, @b]&@M<:b & Anon_14=Anon_13
+
+relation P2(ann v, ann w).
+infer[P2] c::cell<_>@a & P2(a,b) |- c::cell<_>@b.
+print residue.
+/*
+Residue:
+ <1>c::cell<Anon_15>@[@a, @b]&P2(a,b) & Anon_16=Anon_15 & a<:b&{FLOW,(20,21)=__norm#E}[]
+ inferred rel: [RELASS [P2]: ( P2(a,b)) -->  a<:b]
+[[ SEARCH ==>  Match(c,c) ==> ]]
+*/
+
+
+
+/*
+# ex8d5.slk
+
+(used in ex8d4.ss verification)
+
+infer[P] c::cell<_>@M |- c::cell<_>@b & P(b).
+
+# this is too weak for post.
+
+ <1>c::cell<Anon_11>@M&b=@A & Anon_12=Anon_11&{FLOW,(20,21)=__norm#E}[]
+ inferred rel: [RELDEFN P: ( b=@A) -->  P(b)]
+
+# We should try to impl inst a<:b and then
+obtain instead:
+
+    a=@M & a<:b --> P(b)
+
+*/

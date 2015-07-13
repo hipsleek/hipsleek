@@ -1,0 +1,11 @@
+data cell{
+ int val;
+}.
+
+infer [@field_imm] p::cell<s@x> |- p::cell<b@L>.
+print residue.
+expect Fail.
+
+infer [@field_imm] p::cell<s@x> |- p::cell<b@M>.
+print residue.
+expect Fail.

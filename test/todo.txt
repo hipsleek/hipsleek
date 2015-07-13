@@ -1,0 +1,648 @@
+# test/ls3.slk
+
+checkentail x::lseg<p,n> & n>=0 |- x::lseg<q1,a>.
+print residue.
+/*
+Two solutions when n>=0 added explicitly. 
+Need a way to add this information implicitly.
+# add invariant prior to lemma rewriting?
+
+Entail 1: Valid. 
+
+ <1>emp&0<=n & p=q1 & a=n&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  COND ==>  Match ==> ]]
+<2>q1::lseg<p,b_60>@M&0<=n & 0<=b_60 & b_60<=n & n=b_60+a & 0<=a & 0<=b_60&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  (Lemma ==> lem_11) ==>  Match ==> ]]
+====================================================================
+# ls6b3.slk -dre ".*coercion_check"
+
+lemma_test
+  self::ns<p,n> <- self::lseg<p,n>.
+// unsound
+
+SOLUTION : Need to unfold RHS (inp2)
+
+process_coercion_check inp1 : 
+ emp&p=self_lem_12 & n=0&{FLOW,(21,22)=__norm}[]
+ or (exists p_80,flted_7_81,q_82: self_lem_12::node<q_82>@M * 
+    q_82::lseg<p_80,flted_7_81>@M&n=flted_7_81+1 & p=p_80&
+    {FLOW,(21,22)=__norm})[]
+ 
+process_coercion_check inp2 : EBase self_lem_12::ns<p,n>@M&{FLOW,(21,22)=__norm}[]
+====================================================================
+# ls6b4.slk --dis-lem-rhs-unfold
+
+lemma_test
+  self::ns<p,n> <-> self::lseg<p,n>.
+
+why is this unsound for <-- ?
+
+For folding lhs <- rhs
+we convert to:
+  unfold(rhs) --> lhs
+
+However, this is unsound if rhs is actually
+weaker. An issue is why is folding unsound
+under such a scenario?
+====================================================================
+# ls7a.slk
+
+Need to add case-analysis for RHS unfolding.
+
+lemma_test
+  self::lseg<p,n> & a>=0 & b>=0 & n=a+b
+  <- self::lseg<q,a> * q::lseg<p,b>.
+
+--en-lem-rhs-unfold causes incompleteness in the above due
+to lack of case expression.  I think we need to convert to
+case expression for the RHS-unfolded term, as shown below:
+
+ |- case { 
+     n=0 -> [] p=self_lem_11;
+     n!=0 -> [] (exists q_82,p_88,flted_7_89:
+        self_lem_11::node<q_82>@M * 
+          q_82::lseg<p_88,flted_7_89>@M&n=flted_7_89+1 & p=p_88);
+   }.
+
+It needs to look for contradicting pure expression, such
+as n=0, p=self_lem_11 and self_lem_11!=null, n>0 that
+are unbound; and then pick a pair that is disjoint for
+case-spec; as above
+====================================================================
+# ../sleek ls7a1.slk -dre ".*coercion_check"
+
+process_coercion_check@1
+process_coercion_check inp1 : 
+ (exists q_67,b_68,a_69: q_67::lseg<p,b_68>@M&q_67=self_lem_11 & a_69=0 & 
+ 0<=a_69 & 0<=b_68 & n=b_68+a_69&{FLOW,(21,22)=__norm})[]
+ or (exists p_79,flted_7_80,q_81,q_67,b_68,a_69: self_lem_11::node<q_81>@M * 
+    q_81::lseg<p_79,flted_7_80>@M * q_67::lseg<p,b_68>@M&a_69=flted_7_80+1 & 
+    p_79=q_67 & 0<=a_69 & 0<=b_68 & n=b_68+a_69&{FLOW,(21,22)=__norm})[]
+ 
+process_coercion_check inp2 : :EBase emp&p=self_lem_11 & n=0&{FLOW,(21,22)=__norm}[]
+|| :EBase exists (Expl)[](Impl)[q_82](ex)[](exists p_88,
+          flted_7_89: self_lem_11::node<q_82>@M * 
+          q_82::lseg<p_88,flted_7_89>@M&n=flted_7_89+1 & p=p_88&
+          {FLOW,(21,22)=__norm})[]
+
+
+(i) free var on LHS (inp1) --> self_lem_11, n, p
+(ii) pure expr conjunctive on each branch of RHS (inp2) b
+     ased on free var
+      [p=self_lem_1, n=0]
+      [n>0]
+
+
+formula -> case-formula
+
+====================================================================
+ P & x=1 |- x=1 & q1 \/ x=2 & q2
+
+ P & x=1  & not(x=2 & q2)|- x=1 & q1 
+
+ P & x=1  & not(x=1 & q1)|- x=2 & q2 
+
+ P & x=1  & (not(x=1) or not(q1)) |- x=2 & q2 
+
+ P & x=1  & not(q1) |- x=2 & q2 
+
+// complete
+  P & p1 |- R1 * G1
+  P & p2 |- R2 * G2
+ --------------------------------------------
+ P |- case {p1 -> R1; p2 -> R2} * (G1 \/ G2)
+
+
+// incomplete
+   P |- p1 & R1 * G1
+   P |- p2 & R2 * G2
+ --------------------------------------
+   P |-p1 & R1 \/ p2 & R2 * (G1 + G2)
+
+        p1 & p2 <-> false
+  P |- case {p1 -> R1; p2 -> R2; !(p1|p2) -> false} * G
+ --------------------------------------------------------
+      P |-p1 & R1 \/ p2 & R2 * (G)
+
+
+  P & not(p1) |- R2 * G
+ -----------------------------------
+  P |- (p1 \/ R2) * G
+
+====================================================================
+# ls7a2.slk
+
+case vs non-case examples
+
+====================================================================
+# ls-case-bug-1a.slk -debug case.log
+
+ why isn't n>0 accepted BUT only n!=0?
+
+formula_case_inference@1
+formula_case_inference inp1 : :EBase {1}->emp&p=self & n=0&{FLOW,(1,24)=__flow}[]
+|| :EBase exists (Expl)[](Impl)[q](ex)[]{2}->(exists p_14,
+          flted_7_13: self::node<q>@M * q::ls<p_14,flted_7_13>@M&
+          n=flted_7_13+1 & 0<n & p=p_14&{FLOW,(1,24)=__flow})[]
+formula_case_inference inp2 :[self,p,n]
+formula_case_inference@1 EXIT: :EBase {1}->emp&p=self & n=0&{FLOW,(1,24)=__flow}[]
+|| :EBase exists (Expl)[](Impl)[q](ex)[](exists p_14,
+          flted_7_13: self::node<q>@M * q::ls<p_14,flted_7_13>@M&
+          n=flted_7_13+1 & 0<n & p=p_14&{FLOW,(1,24)=__flow})[]
+====================================================================
+# ls-case-bug-1b.slk -debug case.log
+
+pred ls<p,n> == self=p & n=0
+  or self::node<q>*q::ls<p,n-1> //& n>0 //n!=0
+  inv n>=0.
+
+ managed to capture :
+
+@1! f_list:[ p=self & n=0, self!=null & 1<=n]
+
+However splitter did not form case. Expecting:
+
+  case { 
+     n=0 -> ..
+     n!=0 -> ..
+  }
+
+@2! splitter-flist:[
+        ( p=self & n=0,[p,self],[ p=self]),
+        ( self!=null & 1<=n,[self],[ self!=null])]
+@2! splitter-flist:[
+        ( p=self & n=0,[p,self],[ p=self]),
+        ( self!=null & 1<=n,[p],[])]
+@2! splitter-flist:[( p=self & n=0,[n],[ n=0]),
+        ( self!=null & 1<=n,[n],[ 1<=n])]
+
+====================================================================
+# ls-case-bug-2c.slk -debug case.log (FIXED)
+
+make into warning ...
+
+the view body for ls3 contains unsat branch(es) :
+    {3}->(exists flted_9_37,q_38: self::node<q_38>@M * q_38::ls3<flted_9_37>@M&
+n!=0 & n<0 & n=flted_9_37+1&{FLOW,(1,24)=__flow})[]
+====================================================================
+# ls-case-bug-2c3.slk -debug case.log
+
+pred ls3<n> == case {
+   n=0 -> [] self=null; 
+   n!=0 -> case {
+             n>0 -> [] self::node<q>*q::ls3<n-1> & false ;
+             n<0 -> [] false;
+        };
+  } inv n>=0.
+
+
+Why the warning message below?
+
+WARNING: _0:0_0:0:self of ls3 cannot have its type determined
+====================================================================
+# ls-case-bug-2a.slk
+
+
+====================================================================
+# case-1s.slk (FIXED)
+
+--eci did not give case spec ...
+
+ view ll<p:TVar[27],n:int>= 
+  :EBase {1}->emp&self=null & n=0&{FLOW,(1,24)=__flow}[]
+  || :EBase exists (Expl)[](Impl)[q](ex)[](exists p_13,
+            flted_11_12: self::node<q>@M * q::ll<p_13,flted_11_12>@M&
+            n=flted_11_12+1 & p=p_13&{FLOW,(1,24)=__flow})[]
+
+
+====================================================================
+# case-1s.slk 
+
+(i) add_case_coverage being invoked twice by splitter
+
+add_case_coverage@5@2@1
+add_case_coverage inp1 : true
+add_case_coverage inp2 : (n=0 | 1<=n)
+add_case_coverage@5 EXIT:[( n<=(0-1), EBase hfalse&false&{FLOW,(0,0)=__false}[])]
+
+add_case_coverage@6@2@1
+add_case_coverage inp1 : true
+add_case_coverage inp2 : (1<=n | n=0)
+add_case_coverage@6 EXIT:[( n<=(0-1), EBase hfalse&false&{FLOW,(0,0)=__false}[])]
+
+splitter@2@1
+splitter inp1 :[( p=self & n=0, EBase {1}->emp&p=self & n=0&{FLOW,(1,24)=__flow}[]),( self!=null & 1<=n, EBase exists (Expl)[](Impl)[q](ex)[]{2}->(exists p_14,
+       flted_7_13: self::node<q>@M * q::lseg<p_14,flted_7_13>@M&n=flted_7_13+
+       1 & p!=self & p=p_14&{FLOW,(1,24)=__flow})[])]
+splitter inp2 :[self,p,n]
+splitter@2 EXIT:[ ECase case {
+        n=0 -> :EBase {1}->emp&p=self & n=0&{FLOW,(1,24)=__flow}[] ;
+        1<=n -> :EBase exists (Expl)[](Impl)[q](ex)[]{2}->(exists p_14,
+                       flted_7_13: self::node<q>@M * 
+                       q::lseg<p_14,flted_7_13>@M&n=flted_7_13+1 & p!=self & 
+                       p=p_14&{FLOW,(1,24)=__flow})[]
+        ;
+        n<=(0-1) -> EBase hfalse&false&{FLOW,(0,0)=__false}[] 
+        }, ECase case {
+        1<=n -> :EBase exists (Expl)[](Impl)[q](ex)[]{2}->(exists p_14,
+                       flted_7_13: self::node<q>@M * 
+                       q::lseg<p_14,flted_7_13>@M&n=flted_7_13+1 & p!=self & 
+                       p=p_14&{FLOW,(1,24)=__flow})[]
+        ;
+        n=0 -> :EBase {1}->emp&p=self & n=0&{FLOW,(1,24)=__flow}[] ;
+        n<=(0-1) -> EBase hfalse&false&{FLOW,(0,0)=__false}[] 
+        }]
+====================================================================
+# case-ls-3.slk --eci -debug case.log (FIXED -using clever_hull)
+
+How come f_list did not contain self!=p in the 2nd formula?
+This caused case-inference to be missed..
+
+Problem seems to be at normalize_to_CNF:
+  let fact =  Solver.normalize_to_CNF (pure_of_mix not_fact) no_pos in
+
+@7! not_fact: exists(p_12:p=p_12 & (((q!=null & p_12!=q) | p_12=q))) & p!=self & 
+self!=null
+@7! after norm: self!=null
+
+!!! f_list:[ p=self, self!=null]
+compute_constraint_relation@3@2@1
+compute_constraint_relation inp1 :(1, self!=null,[self])
+compute_constraint_relation inp2 :(0, p=self,[p,self])
+compute_constraint_relation@3 EXIT:Unk
+
+====================================================================
+# infer1b.slk
+
+// (1)
+infer [y] y=null |- y!=null.
+print residue.
+
+// (2)
+infer [y] y=0|- y!=0.
+print residue.
+
+Why isn't contra inference not working for pointers?
+
+Entail (1) : Fail.(must) cause: y=null |-  y!=null. LOCS:[7] (must-bug)
+
+
+Entail (2) : Valid. 
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred pure: [y=0]
+[[empty]]
+
+
+# check CP.prune_disjunct
+
+====================================================================
+# hip append.ss --eps --eci (FIXED by allowing unlabelled false)
+
+Exception Failure("view is unlabeled\n") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+
+
+====================================================================
+#loc-lem.slk
+
+inner case not yet supported by parser..
+
+pred HP<> ==
+  [] self::node<_,p> 
+  p::HP<>
+/*
+  case { 
+    p=null -> [] emp;
+    p!=null -> [] p::HP<>;
+  }
+*/
+====================================================================
+sa/norm/zip-1e.slk
+
+
+# zip-1e1.slk
+
+# unsound to strengthen LHS..
+
+ prune_relative_unsat_disj@1
+ prune_relative_unsat_disj inp1 : self_one3=null & n_92=0 & P3(n_92,m_93) & (((1<=m_93 & y!=null) | (m_93=0 & 
+y=null)))
+ prune_relative_unsat_disj inp2 : self_one3!=null & y!=null & q_108=q_112
+ prune_relative_unsat_disj@1 EXIT: 
+     n_92=0 & P3(n_92,m_93) & 1<=m_93 & y!=null
+
+# why is it losing unsound to strengthen LHS..
+
+ prune_relative_unsat_disj@2
+ prune_relative_unsat_disj inp1 : 
+n_92=1+n1_104 & P3(n_92,m_93) 
+& self_one3!=null (MISSING)
+& (((1<=n1_104 & p_103!=null) | (n1_104=0 & p_103=null))) 
+& (((1<=m_93 & y!=null) | (m_93=0 & y=null))) (UNSOUND)
+
+ prune_relative_unsat_disj inp2 : self_one3=null & y=null
+
+ prune_relative_unsat_disj@2 EXIT: 
+n_92=1+n1_104 & P3(n_92,m_93) 
+& (((n1_104=0 & p_103=null) | (1<=n1_104 & p_103!=null))) 
+& m_93=0 & y=null
+
+ prune_relative_unsat_disj@3
+ prune_relative_unsat_disj inp1 : 
+y=null (MISSING)
+& m_136=0 & n_135=1+n1_134 
+& P3(n_135,m_136) 
+& Anon_105=Anon_132 
+& p_107=p_133 
+& (((1<=n1_134 & p_133!=null) | (n1_134=0 & p_133=null)))
+ prune_relative_unsat_disj inp2 : y!=null
+ prune_relative_unsat_disj@3 EXIT: 
+m_136=0 & n_135=1+n1_134
+& P3(n_135,m_136) 
+& Anon_105=Anon_132 
+& p_107=p_133 
+& (((n1_134=0 & p_133=null) | (1<=n1_134 & p_133!=null)))
+
+
+====================================================================
+# loc-lem-2.slk -debug lem.log: FIXED by Trung
+
+ unfold needs to be applied to predicates reachable from self.
+
+process_coercion_check@4@3
+process_coercion_check inp1 : (exists _,p_87: self_one::node<_,p_87>@M * p_87::ll<>@M&
+{FLOW,(21,22)=__norm})[]
+process_coercion_check inp2 : :EBase exists (Expl)[](Impl)[_](ex)[](exists flted_19_93: self_one::node<_,flted_19_93>@M&
+        flted_19_93=null&{FLOW,(21,22)=__norm})[]
+|| :EBase exists (Expl)[](Impl)[_; p_91](ex)[]self_one::node<_,p_91>@M * 
+          p_91::HP<>@M&p_91!=null&{FLOW,(21,22)=__norm}[]
+====================================================================
+# loc-lem-3.slk
+
+Fail
+
+succ with --dci
+
+====================================================================
+# loc-lem2.slk -debug lem.log (FIXED)
+
+This unfold_struc_nth spec is inaccurate since
+the case expression should not float out of its
+quantifier.
+
+unfold_struc_nth#9@5@
+unfold_struc_nth#9 inp1 :true
+unfold_struc_nth#9 inp2 :p
+unfold_struc_nth#9 inp3 : EBase (exists _,p: self::node<_,p>@M * p::ll<>@M&{FLOW,(21,22)=__norm})[]
+unfold_struc_nth#9 inp4 :None
+unfold_struc_nth#9@5 EXIT: ECase case {
+        p_50=null -> :EBase (exists _,p_50: self::node<_,p_50>@M&p_50=null&
+                            {FLOW,(21,22)=__norm})[]
+        ;
+        p_50!=null -> :EBase exists (Expl)[](Impl)[_; p_52](ex)[](exists _,
+                             p_50: self::node<_,p_50>@M * 
+                             p_50::node<_,p_52>@M * p_52::ll<>@M&
+                             {FLOW,(21,22)=__norm})[]
+====================================================================
+# loc-lem-4.slk -debug lem.log (FIXED)
+
+error in process_coercion_check that that was
+avoided by hand translation. Is it due to unnecessary
+quantifiers?
+
+
+process_coercion_check@11@1
+process_coercion_check inp1 : 
+ (exists flted_12_55,_: self_two::node<_,flted_12_55>@M&flted_12_55=null&
+ {FLOW,(21,22)=__norm})[]
+ or (exists _,p_58: self_two::node<_,p_58>@M * p_58::HP<>@M&p_58!=null&
+    {FLOW,(21,22)=__norm})[]
+====================================================================
+# loc-embedd 
+
+  case study
+====================================================================
+# loc-lem-4c.slk (FIXED by substituting rhs_eqset from subst)
+
+why it failed for:
+
+checkentail_exact
+ self::node<_,last>*last::node<_,null>
+|- (exists lst,p: self::node<_,lst>*p::node<_,null> & lst=p).
+//Entail 1: Fail.(must) cause:Cannot infer heap and pure 2
+
+but succeeds for:
+
+checkentail_exact
+ self::node<_,last>*last::node<_,null>
+|- (exists lst,p: self::node<_,lst>*lst::node<_,null> & lst=p).
+====================================================================
+
+
+--lem-en-deep-unfold  (FIXED)
+
+  lemmas/lseg_case.slk({L2#Valid},{L3#Valid},{L4#Valid},{L6#Valid}) 
+  lemmas/sll_tailL.slk({L2#Valid}).
+
+====================================================================
+# bug-cll.ss 
+
+--eps fails
+
+id: 22; caller: []; line: 21; classic: false; kind: POST; hec_num: 4; evars: [flted_21_1017]; infer_vars: []; c_heap: x'::node<_,tmp_1016>@M@ rem br[{1}]
+ checkentail r_1006::cll<self_1003,flted_15_1004>@M@ rem br[{173,174}] * 
+tmp_1016::node<v',r_1006>@M@ rem br[{1}]&(
+([Anon_1005=Anon_1018][next_26_1013=r_1006][v=v']
+ [n=1+flted_15_1004 & 0<=flted_15_1004 & n!=0 & 1<=n & 0<=n]
+ [x=x' & self_1003=x' & r_1019=x' & tmp_1016=x' & x'!=null]))&
+{FLOW,(24,25)=__norm}[]
+ |-  (exists flted_21_1017: emp&(
+([flted_21_1017=1 & n=-1+flted_21_1017 & 0<=flted_21_1017]))&
+{FLOW,(24,25)=__norm})[]. 
+
+====================================================================
+# bug-cll-3a.slk (FIXED)
+
+classic problem
+
+Why (1) fail but (2) succeeds without residue.
+
+Entail 1: Fail.(may) cause:Nothing_to_do? 
+  Type: WArg
+  LHS: r::cll<self,flted>@M
+  RHS: x::hd2<flted_22_74>@M
+ lhs_rest: tmp'::node<v',r>@M * 
+  x'::node<_,tmp'>@M
+ rhs_rest: emp
+
+
+Entail 2: Valid. 
+
+ <1>(exists flted_29_139: emp&0<flted_29_139 & 0<flted_29_139 & n=1+flted & self=x' & 0<n & v=v' & x=x' & next=r & Anon_140=Anon_15 & r_141=tmp' & Anon_148=v' & r=r_149 & exists(self_146:r_141!=self_146 & self=self_146) & exists(flted_14_147:flted_14_147=flted+1) & 0<(flted+1+1)&{FLOW,(21,22)=__norm})[]
+====================================================================
+# bug-cll-3b.slk (FIXED)
+
+Why did --eci lead to failure?
+--dci lead to success.
+
+# seems related to classic bug ..
+
+Entail 1: Fail.(may) cause:UnionR[Nothing_to_do? 
+  Type: WArg
+  LHS: r::cll<self,flted>@M
+  RHS: x::hd1<flted_31_77>@M
+ lhs_rest: tmp'::node<v',r>@M * 
+  x'::node<_,tmp'>@M
+ rhs_rest: emp,OrR[residue is forbidden.,valid]]
+
+====================================================================
+# bug-cll-3b.slk
+
+use gist?
+
+(i) remove redundant constraint
+  ECase case {
+         p=self -> EBase {1}->emp&p=self & n=0&{FLOW,(1,24)=__flow}[] ;
+         p!=self -> EBase exists (Expl)[](Impl)[_; r](ex)[]{2}->(exists p_21,
+                          flted_8_20: self::node<_,r>@M * 
+                          r::cll<p_21,flted_8_20>@M&n=flted_8_20+1 & 
+                          p!=self & p=p_21&{FLOW,(1,24)=__flow})[]
+         
+         }
+
+====================================================================
+# bug-cll-5.slk
+
+Why --eci fail for above but not dci?
+
+--dci
+
+Entail 1: Valid. 
+
+ <1>emp&n=1+flted & self=x' & 0<n & v=v' & x=x' & next=r & Anon_14=Anon_15 & r1=tmp' & Anon_85=v' & r=r_86 & exists(self_82:r1!=self_82 & self=self_82) & exists(flted_23_83:flted_23_83=flted+1)&{FLOW,(21,22)=__norm}[]
+[[ Match ==>  SEARCH ==>  Fold ==>  Match ==>  COND ==>  Match ==> ]]
+
+--eci
+
+Entail 1: Fail.(may) cause:OrR[residue is forbidden.,valid]
+
+====================================================================
+
+checkentail_exact
+ r::cll<self,flted>@M * tmp'::node<v',r>@M * x'::node<_,tmp'>@M&n=flted+1 & self=x'
+  & 0<n & v=v' & x=x' & next=r 
+ |- x::hd2<m> & m=n+1.
+print residue.
+
+/*
+# bug-cll-4.slk
+
+why isn't folding triggered by above 
+
+Entail 1: Fail.(may) cause:Nothing_to_do? 
+  Type: WArg
+  LHS: r::cll<self,flted>@M
+  RHS: x::hd2<m>@M
+ lhs_rest: tmp'::node<v',r>@M * 
+  x'::node<_,tmp'>@M
+ rhs_rest: emp
+====================================================================
+# bug-cll-6,6a,6b.slk  (FIXED)
+
+====================================================================
+# bug-cll-8.slk -debug zd1.dd (FIXED)
+
+ by temporarily adding consumed heap for UNSAT_now checking
+
+--eci fail here (but --dci works)
+
+(DUE to tidy print errors here)
+How come 
+ & Anon_14=Anon_86 & r_87=tmp' // ??
+became:
+ & Anon=Anon1 & r1=tmp' // WHY?
+
+heap_entail_conjunct_lhs_struc@12@11@10@9@8@5@4@3@2@1
+heap_entail_conjunct_lhs_struc inp1 :Ctx  r::cll<self,flted>@M 
+* tmp'::node<v',r>@M&0<m & n=1+flted & self=x' & 0<n 
+& v=v' & x=x' & next=r 
+& Anon=Anon1 & r1=tmp' // WHY?
+& {FLOW,(21,22)=__norm}[]
+ es_trace:  SEARCH ==>  SEARCH ==>  Fold ==>  Match ==>  SEARCH ==>  Fold ==>
+ 
+heap_entail_conjunct_lhs_struc inp2 : ECase case {
+        r_87=x -> EBase {1}->emp&r_87=x & flted_14_126=0&
+
+
+heap_entail_one_context_struc@11@10@9@8@5@4@3@2@1
+heap_entail_one_context_struc inp1 : es_formula: 
+  r::cll<self,flted>@M 
+* tmp'::node<v',r>@M&0<m & n=1+flted & self=x' &  0<n 
+& v=v' & x=x' & next=r 
+& Anon_14=Anon_86 & r_87=tmp' // ??
+&  {FLOW,(21,22)=__norm}[]
+
+====================================================================
+# bug-cll-8.slk -debug zd1.dd (DUE to tidy_print renamings)
+
+- removed tidy_print renaming from string_of_context_short
+
+
+@16! es(3): r::cll<self,flted>@M * tmp'::node<v',r>@M&0<m & n=1+flted & self=x' & 0<n & v=v' & x=x' & next=r & Anon_14=Anon_86 & r_87=tmp'&{FLOW,(21,22)=__norm}[]
+@16! annot: 2
+@16! annot: [0,0]
+@16! p: 1
+@16! i: 0
+@16! i: 0
+@16! p: 2
+@16! i: 0
+@16! i: 0
+@16! view_args_pos: 2
+@16! to_be_updated: 2
+@16! hargs: 2
+@16! annot: 2
+@16! annot: [0,0]
+@16! p: 1
+@16! i: 0
+@16! i: 0
+@16! p: 2
+@16! i: 0
+@16! i: 0
+@16! view_args_pos: 2
+@16! to_be_updated: 2
+@16! hargs: 2
+heap_entail_conjunct_lhs_struc@17@16@15@14@13@12@11@7@6@5@4@3@2@1 ENTRY :Ctx  r::cll<self,flted>@M * tmp'::node<v',r>@M&0<m & n=1+flted & self=x' & 0<n & v=v' & x=x' & next=r & Anon=Anon1 & r1=tmp'&{FLOW,(21,22)=__norm}[]
+====================================================================
+# ex3.ss
+
+# Missing mults__ manifest as following message.
+# Please make an explicit check, and report this error at beginng
+  for all expected built-in primitives
+
+!!! **main.ml#1162:WARNING : Logging not done on finalizeStop Omega... 26 invocations caught
+
+Exception occurred: Not_found
+Error3(s) detected at main 
+
+# Add mults__ to prelude.ss
+# Please add option --en-mult to support non-linear mult (mult__)
+# Please add option --dis-mult to support linear mult (mults)
+
+====================================================================
+# ex3.ss
+
+# I guess multiplication has been stripped off by Omega. I wonder
+if we can put it back into the inference result.
+
+WARNING: _0:0_0:0:[omega.ml] Non-linear arithmetic is not supported by Omega.
+
+!!! **infer.ml#2149:RelInferred (simplified):[
+RELDEFN ff: ( ff(v_int_10_1198,v_int_10_1200) & res=0 
+  & v_int_10_1198=n-1 & 1<=n) -->  ff(n,res)]
+WARNING: _0:0_0:0:[omega.ml] Non-linear arithmetic is not supported by Omega.
+====================================================================
+====================================================================
+====================================================================
+====================================================================

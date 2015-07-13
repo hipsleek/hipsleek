@@ -1,0 +1,48 @@
+data cell{
+ int fst;
+}.
+
+checkentail c::cell<v>@a & @L<:a //& b=@A 
+  |-  c::cell<_>@b & @M<:b.
+print residue.
+expect Valid. // inst b=@A
+
+
+checkentail c::cell<v>@a & @L<:a //& b=@A 
+  |-  c::cell<_>@b & @M<:b & b<:@L.
+print residue.
+expect Fail. // inst to b=@L still fails
+
+checkentail c::cell<v>@a & a<:@L //& b=@L 
+  |-  c::cell<_>@b & @M<:b & b<:@L.
+print residue.
+expect Valid. // expect b=@L to help
+
+checkentail c::cell<v>@a & @L<:a & a<:b
+  |-  c::cell<_>@b & @M<:b & b<:@L.
+print residue.
+expect Fail. // instantiating to a<:b did not help
+
+checkentail c::cell<v>@a & @L<:a //& b=@A 
+  |-  c::cell<_>@b.
+print residue.
+expect Valid. // better inst a<:b rather than b=@A
+
+/*
+# ex8e6g.slk
+
+checkentail c::cell<v>@a & @L<:a //& b=@A 
+  |-  c::cell<_>@b.
+print residue.
+expect Valid. // 
+
+# GOT b=@A:
+
+Entail 5: Valid. 
+Residue:
+ <1>c::cell<v>@a&@L<:a & b=@A & Anon_12=v&{FLOW,(20,21)=__norm#E}[]
+
+# Better to have:  a<:b
+
+
+*/

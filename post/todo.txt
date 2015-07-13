@@ -1,0 +1,266 @@
+===========================================================
+# test.sh
+
+chinwn@loris-7:~/hg/sl_post/post$ ./test.sh >1
+10s Timeout for t/ack3.ss
+10s Timeout for t/ack.ss
+10s Timeout for t/ack-z.ss
+10s Timeout for t/rb.ss
+
+Executed t/fact-case2.ss
+fixcalc: debugApply: substitution does not have unique args: [((SizeVar "x",Unprimed),(SizeVar "v_int_10_1238",Unprimed)),((SizeVar "x",Unprimed),(SizeVar "v_int_10_1238",Unprimed)),((SizeVar "res",Unprimed),(SizeVar "v_int_10_1242",Unprimed)),((SizeVar "res",Unprimed),(SizeVar "v_int_10_1242",Unprimed))]
+Executed t/rec-f91a.ss
+fixcalc: bad mutual recursion detected :"postA"
+Executed t/rec-f91g.ss
+fixcalc: bad mutual recursion detected :"postA"
+Executed t/tree-data.ss
+fixcalc: Parse error on line 1 rest of line:  -> [] -> []: (0=0 && self<=0) ||  exists (Anon_14,h,NODl,NODr: ((self>0 && tree(NODl,)) && tree(NODr,)) && 0<=h)
+c
+===========================================================
+# test.sh 11Mar15
+ 
+10s Timeout for t/rb.ss
+
+Create ref; need to check!
+
+t/ack3c.ss.ref:Exception Failure("[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped. es_formula: \n  (exists v_int_28_1359',r_35',m1_33',n1_34': htrue&res=v_int_28_1360' & \n  post_1379_1381_1383(v_int_28_1359',r_35',v_int_28_1360') & \n  0<=v_int_28_1359' & 0<=r_35' & fpost_0(v_int_28_1359',r_35')[] & \n  0<=v_int_28_1360' & v_int_28_1359'+1=m' & \n  post_1379_1381_1382(m',n1_34',r_35') & 0<=m' & n1_34'<0 & n1_34'+1=n' & \n  m1_33'+1=m' & m'=m & n'=n & 0<=m & n<0 & m'!=0 & !(v_bool_15_1362') & \n  n'!=0 & !(v_bool_16_1361')&{FLOW,(4,5)=__norm#E}[]\n es_history: [emp; emp; emp; emp; emp; emp; emp; emp; emp; emp; emp; emp; \n              emp; emp]\n es_infer_obj: [@post]\n es_cond_path: [2; 2; 0]\n es_var_measures 1: Some(MayLoop[]{})\n es_infer_vars_rel: [post_1379_1381_1382; post_1379_1381_1383]") Occurred!
+t/ack3c.ss.ref:Error(s) detected when checking procedure ack$int~int
+t/ack3c.ss.ref:ExceptionFailure("[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped. es_formula: \n  emp&0<=n1_34' & !(v_bool_16_1361') & n'!=0 & !(v_bool_15_1362') & m'!=0 & \n  0<=n & 0<=m & n'=n & m'=m & m1_33'+1=m' & n1_34'+1=n' & 0<=m' & 0<=r_35' & \n  fpost_0(m',n1_34')[] & 0<=n1_34' & 0<=m' & v_int_28_1353'=1&\n  {FLOW,(4,5)=__norm#E}[]\n es_history: [emp; emp; emp; emp; emp; emp; emp; emp; emp; emp]\n es_infer_obj: [@term]\n es_cond_path: [2; 2; 0]\n es_var_measures 1: Some(fpre_0(m,n)[4]{m,n})\n es_infer_vars_rel: []")Occurred!
+t/ack3c.ss.ref:Error1(s) detected at main 
+t/ack3c.ss.ref:Exception occurred: Failure("[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped. es_formula: \n  emp&0<=n1_34' & !(v_bool_16_1361') & n'!=0 & !(v_bool_15_1362') & m'!=0 & \n  0<=n & 0<=m & n'=n & m'=m & m1_33'+1=m' & n1_34'+1=n' & 0<=m' & 0<=r_35' & \n  fpost_0(m',n1_34')[] & 0<=n1_34' & 0<=m' & v_int_28_1353'=1&\n  {FLOW,(4,5)=__norm#E}[]\n es_history: [emp; emp; emp; emp; emp; emp; emp; emp; emp; emp]\n es_infer_obj: [@term]\n es_cond_path: [2; 2; 0]\n es_var_measures 1: Some(fpre_0(m,n)[4]{m,n})\n es_infer_vars_rel: []")
+t/ack3c.ss.ref:Error3(s) detected at main 
+t/ack3.ss.ref:Message: Error in compute_fixpoint_aux
+t/ack3.ss.ref:ExceptionFailure("Error in compute_fixpoint_aux")Occurred!
+t/ack3.ss.ref:Error1(s) detected at main 
+t/ack3.ss.ref:Exception occurred: Failure("Error in compute_fixpoint_aux")
+t/ack3.ss.ref:Error3(s) detected at main 
+t/deadpool.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+t/deadpool.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+t/deadpool.ss.ref:Error3(s) detected at main 
+t/exc3a.ss.ref:Exception Failure("Post condition cannot be derived.") Occurred!
+t/exc3a.ss.ref:Error(s) detected when checking procedure loop$int
+t/exc4.ss.ref:Exception Failure("Post condition cannot be derived.") Occurred!
+t/exc4.ss.ref:Error(s) detected when checking procedure loop$int
+t/exc6a.ss.ref:Exception Failure("Post condition cannot be derived.") Occurred!
+t/exc6a.ss.ref:Error(s) detected when checking procedure loop$int
+t/exc6b.ss.ref:ExceptionInvalid_argument("List.combine")Occurred!
+t/exc6b.ss.ref:Error1(s) detected at main 
+t/exc6b.ss.ref:Exception occurred: Invalid_argument("List.combine")
+t/exc6b.ss.ref:Error3(s) detected at main 
+t/exc6c.ss.ref:Exception Failure("Post condition cannot be derived.") Occurred!
+t/exc6c.ss.ref:Error(s) detected when checking procedure loop$int
+t/exc7a.ss.ref:Exception Failure("hd") Occurred!
+t/exc7a.ss.ref:Error(s) detected when checking procedure loop$int
+t/exc8.ss.ref:Exception Failure("Post condition cannot be derived.") Occurred!
+t/exc8.ss.ref:Error(s) detected when checking procedure loop$int
+t/exc.ss.ref:Exception Failure("Post condition cannot be derived.") Occurred!
+t/exc.ss.ref:Error(s) detected when checking procedure loop$int
+t/fact-case2.ss.ref:Warning: False precondition detected in procedure fact$int
+t/fact-case2.ss.ref:Message: Error in compute_fixpoint_aux
+t/fact-case2.ss.ref:ExceptionFailure("Error in compute_fixpoint_aux")Occurred!
+t/fact-case2.ss.ref:Error1(s) detected at main 
+t/fact-case2.ss.ref:Exception occurred: Failure("Error in compute_fixpoint_aux")
+t/fact-case2.ss.ref:Error3(s) detected at main 
+t/foo-fact2.ss.ref: --error: Stream.Error("[infer_id] expected after COMMA (in [infer_type_list])")
+t/foo-fact2.ss.ref:Exception occurred: Stream.Error("[infer_id] expected after COMMA (in [infer_type_list])")
+t/foo-fact2.ss.ref:Error3(s) detected at main 
+t/ll-app-post1.ss.ref:                   fc_current_lhs_flow: {FLOW,(6,10)=__Error#E}}
+t/ll-app-post1.ss.ref:Exception Failure("bind failure exception") Occurred!
+t/ll-app-post1.ss.ref:Error(s) detected when checking procedure append2$node~node
+t/multi-join2.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+t/multi-join2.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+t/multi-join2.ss.ref:Error3(s) detected at main 
+t/rec-f91.ss.ref: --error: Stream.Error("[infer_type_list] expected after OSQUARE (in [cid_list_w_itype])")
+t/rec-f91.ss.ref:Exception occurred: Stream.Error("[infer_type_list] expected after OSQUARE (in [cid_list_w_itype])")
+t/rec-f91.ss.ref:Error3(s) detected at main 
+t/shape.ss.ref:Exception Failure("Expect a node") Occurred!
+t/shape.ss.ref:Error(s) detected when checking procedure while_10_2$cell~cell
+t/shape.ss.ref:Exception Failure("Expect a node or a hrel") Occurred!
+t/shape.ss.ref:Error(s) detected when checking procedure main$cell~cell
+t/strong1.ss.ref:Exception Failure("Post condition cannot be derived.") Occurred!
+t/strong1.ss.ref:Error(s) detected when checking procedure rec1$int
+
+===========================================================
+
+ref/bugs/mut-rec1.ss.ref:!!! WARNING : Inferable vars include some external variables!
+ref/bugs/mut-rec1.ss.ref:!!! WARNING : Inferable vars include some external variables!
+ref/bugs/mut-rec2.ss.ref:!!! WARNING : Inferable vars include some external variables!
+ref/bugs/mut-rec2.ss.ref:!!! WARNING : Inferable vars include some external variables!
+ref/t/ack3c.ss.ref:Exception Failure("[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped. es_formula: \n  (exists v_int_28_1359',r_35',m1_33',n1_34': htrue&res=v_int_28_1360' & \n  post_1379_1381_1383(v_int_28_1359',r_35',v_int_28_1360',flow) & \n  0<=v_int_28_1359' & 0<=r_35' & fpost_0(v_int_28_1359',r_35')[] & \n  0<=v_int_28_1360' & v_int_28_1359'+1=m' & \n  post_1379_1381_1382(m',n1_34',r_35',flow) & 0<=m' & n1_34'<0 & n1_34'+\n  1=n' & m1_33'+1=m' & m'=m & n'=n & 0<=m & n<0 & m'!=0 & \n  !(v_bool_15_1362') & n'!=0 & !(v_bool_16_1361')&{FLOW,(4,5)=__norm#E}[]\n es_history: [emp; emp; emp; emp; emp; emp; emp; emp; emp; emp; emp; emp; \n              emp; emp]\n es_infer_obj: [@post]\n es_cond_path: [2; 2; 0]\n es_var_measures 1: Some(MayLoop[]{})\n es_infer_vars_rel: [post_1379_1381_1382; post_1379_1381_1383]") Occurred!
+ref/t/ack3c.ss.ref:Error(s) detected when checking procedure ack$int~int
+ref/t/ack3c.ss.ref:ExceptionFailure("[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped. es_formula: \n  emp&0<=n1_34' & !(v_bool_16_1361') & n'!=0 & !(v_bool_15_1362') & m'!=0 & \n  0<=n & 0<=m & n'=n & m'=m & m1_33'+1=m' & n1_34'+1=n' & 0<=m' & 0<=r_35' & \n  fpost_0(m',n1_34')[] & 0<=n1_34' & 0<=m' & v_int_28_1353'=1&\n  {FLOW,(4,5)=__norm#E}[]\n es_history: [emp; emp; emp; emp; emp; emp; emp; emp; emp; emp]\n es_infer_obj: [@term]\n es_cond_path: [2; 2; 0]\n es_var_measures 1: Some(fpre_0(m,n)[4]{m,n})\n es_infer_vars_rel: []")Occurred!
+ref/t/ack3c.ss.ref:Error1(s) detected at main 
+ref/t/ack3c.ss.ref:Exception occurred: Failure("[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped. es_formula: \n  emp&0<=n1_34' & !(v_bool_16_1361') & n'!=0 & !(v_bool_15_1362') & m'!=0 & \n  0<=n & 0<=m & n'=n & m'=m & m1_33'+1=m' & n1_34'+1=n' & 0<=m' & 0<=r_35' & \n  fpost_0(m',n1_34')[] & 0<=n1_34' & 0<=m' & v_int_28_1353'=1&\n  {FLOW,(4,5)=__norm#E}[]\n es_history: [emp; emp; emp; emp; emp; emp; emp; emp; emp; emp]\n es_infer_obj: [@term]\n es_cond_path: [2; 2; 0]\n es_var_measures 1: Some(fpre_0(m,n)[4]{m,n})\n es_infer_vars_rel: []")
+ref/t/ack3c.ss.ref:Error3(s) detected at main 
+ref/t/ack3.ss.ref:Message: Error in compute_fixpoint_aux
+ref/t/ack3.ss.ref:ExceptionFailure("Error in compute_fixpoint_aux")Occurred!
+ref/t/ack3.ss.ref:Error1(s) detected at main 
+ref/t/ack3.ss.ref:Exception occurred: Failure("Error in compute_fixpoint_aux")
+ref/t/ack3.ss.ref:Error3(s) detected at main 
+ref/t/deadpool.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/t/deadpool.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/t/deadpool.ss.ref:Error3(s) detected at main 
+ref/t/exc3a.ss.ref:Exception Failure("Post condition cannot be derived.") Occurred!
+ref/t/exc3a.ss.ref:Error(s) detected when checking procedure loop$int
+ref/t/exc4.ss.ref:Exception Failure("Post condition cannot be derived.") Occurred!
+ref/t/exc4.ss.ref:Error(s) detected when checking procedure loop$int
+ref/t/exc6a.ss.ref:Exception Failure("Post condition cannot be derived.") Occurred!
+ref/t/exc6a.ss.ref:Error(s) detected when checking procedure loop$int
+ref/t/exc6b.ss.ref:ExceptionInvalid_argument("List.combine")Occurred!
+ref/t/exc6b.ss.ref:Error1(s) detected at main 
+ref/t/exc6b.ss.ref:Exception occurred: Invalid_argument("List.combine")
+ref/t/exc6b.ss.ref:Error3(s) detected at main 
+ref/t/exc6c.ss.ref:Exception Failure("Post condition cannot be derived.") Occurred!
+ref/t/exc6c.ss.ref:Error(s) detected when checking procedure loop$int
+ref/t/exc7a.ss.ref:Exception Failure("hd") Occurred!
+ref/t/exc7a.ss.ref:Error(s) detected when checking procedure loop$int
+ref/t/exc8.ss.ref:Exception Failure("Post condition cannot be derived.") Occurred!
+ref/t/exc8.ss.ref:Error(s) detected when checking procedure loop$int
+ref/t/exc.ss.ref:Exception Failure("Post condition cannot be derived.") Occurred!
+ref/t/exc.ss.ref:Error(s) detected when checking procedure loop$int
+ref/t/fact-case2.ss.ref:Warning: False precondition detected in procedure fact$int
+ref/t/foo-fact2.ss.ref: --error: Stream.Error("[infer_id] expected after COMMA (in [infer_type_list])")
+ref/t/foo-fact2.ss.ref:Exception occurred: Stream.Error("[infer_id] expected after COMMA (in [infer_type_list])")
+ref/t/foo-fact2.ss.ref:Error3(s) detected at main 
+ref/t/len2.ss.ref:!!!WARNING : uninterpreted free variables [m] in specification.
+ref/t/len2.ss.ref:!!! WARNING : Inferable vars include some external variables!
+ref/t/ll-app-post1.ss.ref:                   fc_current_lhs_flow: {FLOW,(6,10)=__Error#E}}
+ref/t/ll-app-post1.ss.ref:Exception Failure("bind failure exception") Occurred!
+ref/t/ll-app-post1.ss.ref:Error(s) detected when checking procedure append2$node~node
+ref/t/multi-join2.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/t/multi-join2.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/t/multi-join2.ss.ref:Error3(s) detected at main 
+ref/t/mut-rec1.ss.ref:!!! WARNING : Inferable vars include some external variables!
+ref/t/mut-rec1.ss.ref:!!! WARNING : Inferable vars include some external variables!
+ref/t/mut-rec2.ss.ref:!!! WARNING : Inferable vars include some external variables!
+ref/t/mut-rec2.ss.ref:!!! WARNING : Inferable vars include some external variables!
+ref/t/rec-f91.ss.ref: --error: Stream.Error("[infer_type_list] expected after OSQUARE (in [cid_list_w_itype])")
+ref/t/rec-f91.ss.ref:Exception occurred: Stream.Error("[infer_type_list] expected after OSQUARE (in [cid_list_w_itype])")
+ref/t/rec-f91.ss.ref:Error3(s) detected at main 
+ref/t/shape.ss.ref:!!! WARNING logtime exception:0.000593
+ref/t/shape.ss.ref:Exception Failure("Expect a node") Occurred!
+ref/t/shape.ss.ref:Error(s) detected when checking procedure while_10_2$cell~cell
+ref/t/shape.ss.ref:!!! WARNING logtime exception:0.000269
+ref/t/shape.ss.ref:Exception Failure("Expect a node or a hrel") Occurred!
+ref/t/shape.ss.ref:Error(s) detected when checking procedure main$cell~cell
+ref/t/strong1.ss.ref:Exception Failure("Post condition cannot be derived.") Occurred!
+ref/t/strong1.ss.ref:Error(s) detected when checking procedure rec1$int
+===========================================================
+ref/field/field2.slk.ref: <1>emp&x!=null&{FLOW,(4,8)=__MayError#E}[]
+ref/field/field3.slk.ref:[Warning] False ctx
+ref/field/field.slk.ref:[Warning] False ctx
+ref/field/field.slk.ref:[Warning] False ctx
+ref/field/field.slk.ref:[Warning] False ctx
+ref/field/field.slk.ref: <1>(Hole[186]) * q_185::ll{}<flted_7_183>&0<n & flted_7_183+1=n & Anon_20=Anon_184 & q=q_185&{FLOW,(4,8)=__MayError#E}[]
+ref/flow/flow1.slk.ref:WARNING: _0:0_0:0:LHS should not be top_flow
+ref/flow/flow1.slk.ref:WARNING: _0:0_0:0:LHS should not be top_flow
+ref/flow/flow2.slk.ref:WARNING: _0:0_0:0:LHS should not be top_flow
+ref/flow/flow3.slk.ref:WARNING: _0:0_0:0:LHS should not be top_flow
+ref/flow/flow5r.slk.ref:WARNING: _0:0_0:0:LHS should not be top_flow
+ref/flow/flow5.slk.ref:WARNING: _0:0_0:0:LHS should not be top_flow
+ref/t/loop2.slk.ref:[Warning] False ctx
+ref/t/loop2.slk.ref:[Warning] False ctx
+ref/t/loop2.slk.ref:[Warning] False ctx
+ref/t/loop2.slk.ref:[Warning] False ctx
+ref/t/loop2.slk.ref:[Warning] False ctx
+ref/t/sexc1a.slk.ref: error: Stream.Error("illegal begin of sprog")
+ref/t/sexc1a.slk.ref: at:error at: 
+ref/t/sexc1a.slk.ref:SLEEK FAILURE (END)
+ref/t/sexc1b.slk.ref:ERROR: at _0:0_0:0
+ref/t/sexc1.slk.ref:ERROR: at _0:0_0:0
+ref/t/sexc2.slk.ref: error: Stream.Error("illegal begin of sprog")
+ref/t/sexc2.slk.ref: at:error at: 
+ref/t/sexc2.slk.ref:SLEEK FAILURE (END)
+ref/t/slk-exc3a.slk.ref: error: Stream.Error("IDENTIFIER _ expected after [typ] (in [typed_id_list])")
+ref/t/slk-exc3a.slk.ref: at:error at: 
+ref/t/slk-exc3a.slk.ref:SLEEK FAILURE (END)
+===========================================================
+# ex29a.ss
+
+-fixcalc-disj 1
+
+# post_1216:={ ... };
+((0 >= PRIy && 0 >= PRIx) && y + x >= PRIy + PRIx)
+# Total CPU time: 0.265681 seconds
+
+-fixcalc-disj 2
+
+# post_1216:={ ... };
+(((0 >= PRIy && 0 >= PRIx) && y + x >= 2 + PRIy + PRIx) 
+  || ((0 >= y && 0 >= x) && y = PRIy && x = PRIx))
+# Total CPU time: 0.26917 seconds
+
+-fixcalc-disj 3
+
+# post_1216:={ ... };
+(((0 >= PRIy && 0 >= PRIx) && y + x >= 2 + PRIy + PRIx) 
+  || ((0 >= y && 0 >= x) && y = PRIy && x = PRIx))
+# Total CPU time: 0.968779 seconds
+
+-fixcalc-disj 3
+# expect 3 disjuncts
+# post_1216:={ ... };
+(((0 >= PRIy && 0 >= PRIx) && y + x >= 2 + PRIy + PRIx) || ((0 >= y && 0 >= x) && y = PRIy && x = PRIx))
+# Total CPU time: 1.223589 seconds
+
+-fixcalc-disj 4
+# how come 4 become worse..
+# post_1216:={ ... };
+0 >= PRIx
+# Total CPU time: 1.257247 seconds
+
+-fixcalc-disj 5
+ERROR:
+An attempt was made to set the number of available inequality constraints to 1025.
+The maximum number of inequality constraints in a conjunction is 1024.
+This limit can be changed by redefining maxmaxGEQs in oc.h and recompiling.
+
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================

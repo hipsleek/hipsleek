@@ -1,0 +1,46 @@
+data cell{
+ int fst;
+}.
+
+
+//(8)
+checkentail c::cell<v>@a & @M<:a //& b=@A 
+  |-  c::cell<_>@b & @L<:b.
+print residue.
+expect Valid. // why not inst b=@A rather than b=@L
+//goes thru for both b=@L and b=@A
+
+checkentail c::cell<v>@a & @L<:a & b=@A 
+  |-  c::cell<_>@b & @M<:b.
+print residue.
+expect Valid. 
+
+checkentail c::cell<v>@a & @L<:a //& b=@A 
+  |-  c::cell<_>@b & @M<:b.
+print residue.
+expect Valid. 
+//goes thru for @A only 
+
+checkentail c::cell<v>@a & @M<:a & d<:@L //& b=@L
+  |-  c::cell<_>@b & @L<:b & b<:d.
+print residue.
+expect Valid. 
+// fails whether b=@L or b=d
+
+
+/*
+# ex8e5g.slk
+
+checkentail c::cell<v>@a & @M<:a \\& b=@A 
+  |-  c::cell<_>@b & @L<:b.
+expect Valid. // why not inst b=@A rather than b=@L
+
+
+# expects Valid with b=@A inst
+
+GOT inst b=@L. 
+
+Entail 1: Fail.(may) cause: b=@L & @M<:a |-  a<:b. LOCS:[7;0] (may-bug)
+
+
+*/
