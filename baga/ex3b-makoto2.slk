@@ -1,0 +1,19 @@
+
+data c {c next;}.
+
+pred P<y> == (self = null & y = 0) or
+        (exists z: z::P<y-1> & self != z & y > 0).
+
+checksat x::P<1> & x=null.
+
+/*
+
+precise invarian
+
+!!! **astsimp.ml#2878:infered baga inv(P):
+ [([], self=null & y=0),
+  ([], self!=null & y=1),([], 2<=y)]
+
+CheckSat 1: UNSAT
+
+*/
