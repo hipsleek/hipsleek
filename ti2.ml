@@ -1642,6 +1642,15 @@ let is_nondet_rec rec_trrel base_trrels =
   let rec_ctx = x_add simplify rec_trrel.ret_ctx rec_trrel.termr_rhs_params in
   List.exists (fun bctx -> is_sat (mkAnd rec_ctx bctx)) base_ctx
 
+let norm_nondet_assume nd_vars ctx f = 
+  let disj_fs = CP.split_disjunctions f in
+  let disj_fs = List.filter (fun d ->
+    if not (overlap nd_vars (CP.fv d)) then false
+    else if not (is_sat (mkAnd ctx d)) then false
+    else true) disj_fs 
+  in
+  disj_fs
+
 let proving_non_termination_nondet_trrel (prog: Cast.prog_decl) lhs_uids rhs_uid trrel =
   let pos = no_pos in
   let conseq = rhs_uid.CP.tu_cond in 
@@ -1653,7 +1662,7 @@ let proving_non_termination_nondet_trrel (prog: Cast.prog_decl) lhs_uids rhs_uid
   in
   let antes = List.map (fun a -> a.ntc_cond) antes in
   let assume_f = CP.join_conjunctions ([ctx] @ (List.map (fun a -> mkNot a) antes)) in
-  let empty_es = CF.empty_es (CF.mkNormalFlow ())  Label_only.Lab2_List.unlabelled pos in
+  let empty_es = CF.empty_es (CF.mkNormalFlow ()) Label_only.Lab2_List.unlabelled pos in
   let assume_ctx_es = { empty_es with
       CF.es_infer_vars = params @ nd_vars;
       CF.es_formula = CF.mkAnd_pure empty_es.CF.es_formula (Mcpure.mix_of_pure assume_f) pos }
@@ -1668,8 +1677,15 @@ let proving_non_termination_nondet_trrel (prog: Cast.prog_decl) lhs_uids rhs_uid
     | CF.FailCtx _ -> (false, [])
     | CF.SuccCtx lst -> 
       let infer_assume_nd = List.concat (List.map CF.collect_pre_pure lst) in
+      let infer_assume_nd = List.fold_left (fun acc c ->
+          let norm_c = norm_nondet_assume nd_vars conseq c in
+          if is_empty norm_c then acc
+          else acc @ [(join_disjs norm_c)]
+        ) [] infer_assume_nd
+      in
       let () = x_binfo_hp (add_str "assume_nondet" (pr_list !CP.print_formula)) infer_assume_nd pos in
-      (true, infer_assume_nd)
+      if is_empty infer_assume_nd then (true, []) (* true means the entailment is successful *)
+      else (true, [(join_disjs infer_assume_nd)]) 
     )
 
 let proving_non_termination_nondet_trrel prog lhs_uids rhs_uid trrel =
