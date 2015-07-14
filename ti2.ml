@@ -1676,15 +1676,16 @@ let proving_non_termination_nondet_trrel (prog: Cast.prog_decl) lhs_uids rhs_uid
     (match rs with
     | CF.FailCtx _ -> (false, [])
     | CF.SuccCtx lst -> 
-      let infer_assume_nd = List.concat (List.map CF.collect_pre_pure lst) in
+      let infer_assume = List.concat (List.map CF.collect_pre_pure lst) in
       let infer_assume_nd = List.fold_left (fun acc c ->
           let norm_c = norm_nondet_assume nd_vars conseq c in
           if is_empty norm_c then acc
           else acc @ [(join_disjs norm_c)]
-        ) [] infer_assume_nd
+        ) [] infer_assume
       in
       let () = x_binfo_hp (add_str "assume_nondet" (pr_list !CP.print_formula)) infer_assume_nd pos in
-      if is_empty infer_assume_nd then (true, []) (* true means the entailment is successful *)
+      if is_empty infer_assume then (true, []) (* true means the entailment is successful *)
+      else if is_empty infer_assume_nd then (false, [])
       else (true, [(join_disjs infer_assume_nd)]) 
     )
 
