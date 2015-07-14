@@ -38,7 +38,7 @@ int getChar(STR x)
   requires x::STR<n,k>@L & Term[]
   case { 
     n=k -> ensures res=0;
-    n!=k -> ensures true;
+    n!=k -> ensures res!=0; // res!=0;
   }
   requires x::WSTR<>@L & Term[] // MayLoop cause problem?
   ensures emp;
@@ -50,7 +50,8 @@ int getChar(STR x)
 */
 void while1(ref STR s)
   requires s::STR<n,k> & Term[k-n]
-  ensures s'::STR<_,_>; // need to conclude s'::WSTR<>
+  //ensures s'::WSTR<>; // need to conclude s'::WSTR<>
+  ensures s'::STR<_,_>; // s'::WSTR<> needed later
 {
   int x=getChar(s);
   if (x!=0) {
@@ -64,8 +65,8 @@ void while1(ref STR s)
          ;               
 */
 void while2(ref STR s1,ref STR s2)
-  requires s1::WSTR<>@L * s2::STR<n,k>@L & Term[k-n]
-  ensures emp; 
+  requires s1::WSTR<> * s2::STR<n,k> & Term[k-n]
+  ensures s1::WSTR<> * s2'::STR<k,k>; 
 {
   int x=getChar(s2);
   assignStr(s1,x);

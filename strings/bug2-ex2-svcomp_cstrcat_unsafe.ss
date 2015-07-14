@@ -40,7 +40,7 @@ int getChar(STR x)
     n=k -> ensures res=0;
     n!=k -> ensures true;
   }
-requires x::WSTR<>@L //& Term[] // MayLoop cause problem?
+  requires x::WSTR<>@L //& Term[] // MayLoop cause problem?
   ensures emp;
  
 /*
