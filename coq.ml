@@ -29,6 +29,8 @@ let rec coq_of_typ = function
   | Bool          -> "int"
   | Float         -> "float"	(* all types will be ints. *)
   | Int | INFInt  -> "int"
+  | Char -> "Int"
+  | String -> "Int" (* TODO: array? *)
   | AnnT          -> "int"
   | Void          -> "unit" 	(* all types will be ints. *)
   | BagT t		   -> "("^(coq_of_typ t) ^") set"

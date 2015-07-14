@@ -6271,6 +6271,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
 and default_value (t :typ) pos : C.exp =
   match t with
   | Int -> C.IConst { C.exp_iconst_val = 0; C.exp_iconst_pos = pos; }
+  | Char -> C.IConst { C.exp_iconst_val = 0; C.exp_iconst_pos = pos; }
   | Bool ->
     C.BConst { C.exp_bconst_val = false; C.exp_bconst_pos = pos; }
   | Float ->
@@ -6278,7 +6279,7 @@ and default_value (t :typ) pos : C.exp =
   | (TVar _) ->
     failwith
       "default_value: typevar in variable declaration should have been rejected"
-  | NUM | UNK | Void | AnnT ->
+  | String | NUM | UNK | Void | AnnT ->
     failwith
       "default_value: void/NUM/UNK/AnnT in variable declaration should have been rejected by parser"
   | (BagT _) ->

@@ -73,6 +73,8 @@ let aux_str : string = "aux"
 
 let default_value (t :typ) pos : exp =
   match t with
+  | Char -> 
+    IntLit { exp_int_lit_val = 0; exp_int_lit_pos = pos; }
   | Int -> 
     IntLit { exp_int_lit_val = 0; exp_int_lit_pos = pos; }
   | Bool ->
@@ -82,7 +84,7 @@ let default_value (t :typ) pos : exp =
   | (TVar _) ->
     failwith
       "default_value: typevar in variable declaration should have been rejected"
-  | NUM | UNK | Void | AnnT | FORM | Tup2 _ ->
+  | String | NUM | UNK | Void | AnnT | FORM | Tup2 _ ->
     failwith
       "default_value: void/NUM/UNK/AnnT/FORM/Tup2 in variable declaration should have been rejected by parser"
   | (BagT _) ->

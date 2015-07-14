@@ -76,6 +76,8 @@ let rec smt_of_typ t =
   | Float -> "Real" (* Currently, do not support real arithmetic! *)
   | Tree_sh -> "Int"
   | Int -> "Int"
+  | Char -> "Int"
+  | String -> "Int" (* TODO: array? *)
   | AnnT -> "Int"
   | UNK ->  "Int" (* illegal_format "z3.smt_of_typ: unexpected UNKNOWN type" *)
   | NUM -> "Int" (* Use default Int for NUM *)

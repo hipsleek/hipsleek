@@ -52,6 +52,8 @@ let rec mona_of_typ t = match t with
     Error.report_error {Error.error_loc = no_pos; 
                         Error.error_text = "float type not supported for mona"}
   | Int           -> "int"
+  | Char -> "int"
+  | String -> "int" (* TODO: array? *)
   | INFInt        -> "int"
   | AnnT          -> "AnnT"
   | RelT _        -> "RelT"
