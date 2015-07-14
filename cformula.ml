@@ -13615,6 +13615,21 @@ let trans_formula (e: formula) (arg: 'a) f f_arg f_comb: (formula * 'b) =
   in
   trans_f e arg
 
+
+let fold_formula (e: formula) f (f_comb: 'b list -> 'b) : 'b =
+  let trans_opt_f f = (fun _ e -> push_opt_val_rev (f e) e) in
+  let trans_f f = (fun e _ -> (e, (f e))) in
+  let trans_rev_f f = (fun _ e -> (e, (f e))) in
+  let f_f, f_h_f, (f_p_f, f_p_b, f_p_e), (f_mg, f_mc, f_va, f_m_f, f_m_v) = f in
+  let n_f =
+    voidf,
+    trans_opt_f f_f, trans_opt_f f_h_f,
+    (trans_opt_f f_p_f, trans_opt_f f_p_b, trans_opt_f f_p_e),
+    (trans_opt_f f_mg, trans_f f_mc, trans_rev_f f_va, trans_f f_m_f, trans_f f_m_v)
+  in
+  let f_arg = voidf2, voidf2, voidf2, (voidf2, voidf2, voidf2), voidf2 in
+  snd (trans_formula e () n_f f_arg f_comb)
+
 (* let map_formula_args (e: formula) (arg:'a) (f:'a -> formula -> formula option) (f_args: 'a -> formula -> 'a) : formula = *)
 (*   let f1 ac e = push_opt_void_pair (f ac e) in *)
 (*   fst (trans_formula e arg f1 f_args voidf) *)
@@ -18943,3 +18958,18 @@ let form_components (f : formula) hf pf heap_pure =
       | Base bf -> Base {bf with formula_base_heap=hf; formula_base_pure=mpf}
       | Exists bf -> Exists {bf with formula_exists_heap=hf; formula_exists_pure=mpf}
       | _ -> report_error no_pos "simplify cannot handle or"
+
+(* Nondeterminism variables *)
+let collect_nondet_vars_formula f =
+  let f_p_f e = CP.collect_nondet_vars e in
+  let f_p_f_opt e = Some (f_p_f e) in
+  let f_emp_f _ = [] in
+  let f_f = nonef, nonef, (f_p_f_opt, nonef, nonef), (nonef, f_emp_f, f_emp_f, f_p_f, f_emp_f) in
+  fold_formula f f_f List.concat
+
+let collect_nondet_vars_list_failesc_context c =
+  let f_c _ c = Some (c, fold_context (fun _ es -> collect_nondet_vars_formula es.es_formula) [] c) in 
+  Gen.BList.remove_dups_eq CP.eq_spec_var 
+    (snd (trans_list_failesc_context c () f_c voidf2 List.concat))
+
+(* End of Nondeterminism variables *)

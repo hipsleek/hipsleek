@@ -2041,6 +2041,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           stk_vars # pop_list vss;
           let ctx1 = VP.clear_vperm_sets_list_failesc_ctx [(VP_Full, vss)] ctx1 in
           let svars = List.map (fun (t, n) -> CP.SpecVar (t, n, Primed)) local_vars in
+          (* Do not push exists on nondet local vars *)
+          let nd_vars = CF.collect_nondet_vars_list_failesc_context ctx1 in
+          let svars = Gen.BList.difference_eq CP.eq_spec_var svars nd_vars in
           let ctx2 = x_add CF.push_exists_list_failesc_context svars ctx1 in
           (* let () = print_endline ("\ncheck_exp: Block: ctx2:\n" ^ (Cprinter.string_of_list_failesc_context ctx2)) in *)
           (* let () = print_endline ("\ncheck_exp: Block: after elim_exists ctx2:\n" ^            *)

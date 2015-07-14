@@ -12,7 +12,7 @@ void f(int xx)
 {
   if (xx < 0) return;
   else {
-    xx = __VERIFIER_nondet_int() - xx;
+    xx = __VERIFIER_nondet_int();
     int yy = rand();
     //infer_assume [xx];
     //assume xx' >= 0;

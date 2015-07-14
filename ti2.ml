@@ -1645,6 +1645,7 @@ let is_nondet_rec rec_trrel base_trrels =
 let proving_non_termination_nondet_trrel (prog: Cast.prog_decl) lhs_uids rhs_uid trrel =
   let pos = no_pos in
   let conseq = rhs_uid.CP.tu_cond in 
+  let params = List.concat (List.map CP.afv rhs_uid.CP.tu_args) in
   let ctx = trrel.ret_ctx in
   let nd_vars = remove_dups (CP.collect_nondet_vars ctx) in
   let antes = List.fold_left (fun acc ann ->
@@ -1654,7 +1655,7 @@ let proving_non_termination_nondet_trrel (prog: Cast.prog_decl) lhs_uids rhs_uid
   let assume_f = CP.join_conjunctions ([ctx] @ (List.map (fun a -> mkNot a) antes)) in
   let empty_es = CF.empty_es (CF.mkNormalFlow ())  Label_only.Lab2_List.unlabelled pos in
   let assume_ctx_es = { empty_es with
-      CF.es_infer_vars = nd_vars;
+      CF.es_infer_vars = params @ nd_vars;
       CF.es_formula = CF.mkAnd_pure empty_es.CF.es_formula (Mcpure.mix_of_pure assume_f) pos }
   in
   let assume_ctx = CF.Ctx assume_ctx_es in
