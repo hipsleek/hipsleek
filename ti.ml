@@ -308,13 +308,13 @@ let solve_turel_one_unknown_scc prog trrels tg scc =
       (* Term with phase number or MayLoop *)
       then update_ann scc (subst (CP.Term, [CP.mkIConst (scc_fresh_int ()) no_pos]))
       else
-        (* try                                                                                    *)
-        (*   (* Loop with nondet *)                                                               *)
-        (*   let nd_trrel = List.find (fun rel -> CP.has_nondet_cond rel.ret_ctx) trrels in       *)
-        (*   let nd_pos = nd_trrel.termr_pos in                                                   *)
-        (*   update_ann scc (subst (CP.MayLoop (Some { CP.tcex_trace = [CP.TCall nd_pos] }), [])) *)
-        (* with _ ->                                                                              *)
-        (*   (* update_ann scc (subst (CP.Loop None, [])) (* Loop without nondet *) *)            *)
+        try
+          (* Loop with nondet *)
+          let nd_trrel = List.find (fun rel -> CP.has_nondet_cond rel.ret_ctx) trrels in
+          let nd_pos = nd_trrel.termr_pos in
+          update_ann scc (subst (CP.MayLoop (Some { CP.tcex_trace = [CP.TCall nd_pos] }), []))
+        with _ ->
+          (* update_ann scc (subst (CP.Loop None, [])) (* Loop without nondet *) *)
           proving_non_termination_scc prog trrels tg scc
 
     (* match outside_scc_succ with                                                      *)
