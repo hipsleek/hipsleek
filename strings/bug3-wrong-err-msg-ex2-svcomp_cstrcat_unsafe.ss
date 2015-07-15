@@ -16,20 +16,20 @@ int main() {
   return 0;
 }
 */
-
 data str {
   int val;
-  str next;
+  strin next;
 }
+
+
+BAD<> ==
+  self::str<v,q>*q::BAD<> 
+  inv true;
 
 WFS<n:int,k:int> ==
   self::str<0,q>*q::BAD<> & n=k
   or self::str<v,q>*q::WFS<n+1,k> & v!=0 & n<k
   inv n<=k;
-
-BAD<> ==
-  self::str<v,q>*q::BAD<> 
-  inv true;
 
 pred_prim STR<n:int,k:int> inv 0<=n<=k;
 pred_prim WSTR<> inv true;
