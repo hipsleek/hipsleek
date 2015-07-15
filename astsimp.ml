@@ -4557,7 +4557,12 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_exp
 
 and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_exp_type =
   (* let () = print_endline ("[trans_exp] input = { " ^ (Iprinter.string_of_exp ie) ^ " }") in *)
-  let rec helper ie =
+  let rec helper ie = 
+    let pr1 = Iprinter.string_of_exp in
+    let pr2 = (pr_pair Cprinter.string_of_exp string_of_typ) in
+    Debug.no_1 "helper_trans_exp" pr1 pr2 helper_x ie
+  
+  and helper_x ie =
     match ie with
     | I.Label (pid, e)-> 
       let e1,t1 = (helper e) in
@@ -5240,12 +5245,37 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                     C.exp_scall_is_rec = false; 
                     C.exp_scall_pos = pos;
                     C.exp_scall_path_id = pi; } in
-                let seq_1 = C.mkSeq ret_ct init_seq call_e pos in
-                ((C.Block {
-                     C.exp_block_type = ret_ct;
-                     C.exp_block_body = seq_1;
-                     C.exp_block_local_vars = local_vars;
-                     C.exp_block_pos = pos; }),ret_ct)))
+                (* To handle nondet call *)
+                if (String.compare mn Globals.nondet_int_proc_name == 0) then
+                  let nd = fresh_var_name "nd" pos.start_pos.Lexing.pos_lnum in
+                  let nd_decl =
+                    C.VarDecl {
+                      C.exp_var_decl_type = ret_ct;
+                      C.exp_var_decl_name = nd;
+                      C.exp_var_decl_pos = pos; } 
+                  in
+                  let nd_assign =
+                    C.Assign {
+                      C.exp_assign_lhs = nd;
+                      C.exp_assign_rhs = call_e;
+                      C.exp_assign_pos = pos; } 
+                  in
+                  let nd_var =
+                    C.Var { 
+                      C.exp_var_type = ret_ct;
+                      C.exp_var_name = nd;
+                      C.exp_var_pos = pos; } 
+                  in
+                  let seq_1 = C.mkSeq ret_ct nd_assign nd_var pos in
+                  let seq_2 = C.mkSeq ret_ct nd_decl seq_1 pos in
+                  (seq_2, ret_ct)
+                else
+                  let seq_1 = C.mkSeq ret_ct init_seq call_e pos in
+                  ((C.Block {
+                       C.exp_block_type = ret_ct;
+                       C.exp_block_body = seq_1;
+                       C.exp_block_local_vars = local_vars;
+                       C.exp_block_pos = pos; }),ret_ct)))
         )
         with Not_found -> (
             try
@@ -6266,7 +6296,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
         (Debug.print_info ("(" ^ (Cprinter.string_of_formula trans_lend_heap) ^ ") ") msg err_pos;
          Debug.print_info ("(Cause of Par Failure)") (Cprinter.string_of_formula trans_lend_heap) err_pos;
          Err.report_error { Err.error_loc = err_pos; Err.error_text = msg })
-  in helper ie
+  in 
+  helper ie
 
 and default_value (t :typ) pos : C.exp =
   match t with
@@ -6542,6 +6573,11 @@ and set_mingled_name (prog : I.prog_decl) =
   in (helper1 prog.I.prog_proc_decls; helper2 prog.I.prog_data_decls)
 
 and insert_dummy_vars (ce : C.exp) (pos : loc) : C.exp =
+  let pr = !C.print_prog_exp in
+  Debug.no_1 "insert_dummy_vars" pr pr
+    (fun _ -> insert_dummy_vars_x ce pos) ce
+
+and insert_dummy_vars_x (ce : C.exp) (pos : loc) : C.exp =
   match ce with
   | C.Seq{
       C.exp_seq_type = t;

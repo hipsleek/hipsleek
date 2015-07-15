@@ -3097,17 +3097,28 @@ and subst_var_list sst (svs : Cpure.spec_var list) = match svs with
       | _ -> sv in
     new_sv :: new_vars
 
-(*LDK: substitue variales (t) in formula (f) by variables (fr)*)
 and subst_struc_avoid_capture (fr : CP.spec_var list) (t : CP.spec_var list) (f : struc_formula):struc_formula =
+  let pr1 = !CP.print_svl in
+  let pr2 = !print_struc_formula in
+  Debug.no_3 "subst_struc_avoid_capture" pr1 pr1 pr2 pr2
+    subst_struc_avoid_capture_x fr t f
+
+(*LDK: substitue variales (t) in formula (f) by variables (fr)*)
+and subst_struc_avoid_capture_x (fr : CP.spec_var list) (t : CP.spec_var list) (f : struc_formula):struc_formula =
   let fresh_fr = CP.fresh_spec_vars fr in
   let st1 = List.combine fr fresh_fr in
   let st2 = List.combine fresh_fr t in
-  let f1 = subst_struc st1 f in
-  let f2 = subst_struc st2 f1 in
+  let f1 = subst_struc_x st1 f in
+  let f2 = subst_struc_x st2 f1 in
   f2
 
-and subst_struc sst (f : struc_formula) = match sst with
-  | s :: rest -> subst_struc rest (apply_one_struc s f)
+and subst_struc sst (f : struc_formula) =
+  let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  let pr2 = !print_struc_formula in
+  Debug.no_2 "subst_struc" pr1 pr2 pr2 subst_struc_x sst f
+
+and subst_struc_x sst (f : struc_formula) = match sst with
+  | s :: rest -> subst_struc_x rest (apply_one_struc s f)
   | [] -> f
 
 and subst_struc_pre sst (f : struc_formula) = 
@@ -4597,7 +4608,7 @@ and check_name_clash (v : CP.spec_var) (f : formula) : bool =
 (* x+x' o[x'->fx] x'=x+1 --> x+fx & x'=fx+1 *)
 
 (*transform history also*)
-and compose_formula_new (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr (* history *) (pos : loc) =
+and compose_formula_new_x (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr (* history *) (pos : loc) =
   let rs = CP.fresh_spec_vars x in
   (*--- 09.05.2000 *)
   (*let () = (print_string ("\n[cformula.ml, line 533]: fresh name = " ^ (string_of_spec_var_list rs) ^ "!!!!!!!!!!!\n")) in*)
@@ -4612,6 +4623,12 @@ and compose_formula_new (delta : formula) (phi : formula) (x : CP.spec_var list)
   let resform = push_exists rs new_f in
   let () = must_consistent_formula "compose_formula 2" resform in
   resform,(* new_history, *)rho2
+
+and compose_formula_new (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr (* history *) (pos : loc) =
+  let pr = !print_formula in
+  let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  Debug.no_3 "compose_formula_new" pr pr (!CP.print_svl) (pr_pair pr pr1) 
+    (fun _ _ _ -> compose_formula_new_x delta phi x flow_tr pos) delta phi x
 
 and compose_formula_x (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) =
   let rs = CP.fresh_spec_vars x in
