@@ -37,7 +37,6 @@ BADS<m> ==
   self::str<v,q>*q::BADS<m-1> & v>=0 
   inv m>=0;
 
-
 str incStr(str x)
   requires x::str<_,q>@L & Term[]
   ensures  res=q ;
@@ -58,37 +57,47 @@ void assignStr(str x,int v)
 int getChar(str x)
   requires x::str<v,q>@L & Term[]
   ensures res=v;
- 
+
 /*
      while (*s != '\0')
          s++;
- no guarantee it reaches the end of string ..
+     no guarantee it reaches the end of string ..
 */
-void while1(ref str s)
-  requires s::WFS<n,k,m> & Term[k-n]
-  ensures s::WFSeg<k-n,s'>*s'::str<0,q>*q::BADS<m>;
+void loop1(ref str s)
+  requires s::WFS<n,k,m> 
+  case {
+    n=k -> requires Term[] ensures true;
+    n!=k -> requires Loop ensures false;
+  }
+  requires s::BADS<m>@L & MayLoop & m>0
+  ensures true;
+{
+  int x=getChar(s);
+  if (x!=0) {
+    loop1(s);
+  }
+}
+
+void loop2(ref str s)
+  requires s::WFS<n,k,_>@L & Loop
+  ensures false;
+  requires s::BADS<m>@L & Loop & m>0
+  ensures false;
+{
+  int x=getChar(s);
+  loop2(s);
+}
+
+void loop3(ref str s)
+  requires s::WFS<n,k,m>@L & exists(i: k-n=2*i & i>=0) // & Term[k-n]
+  ensures true;
 {
   int x=getChar(s);
   if (x!=0) {
     s = incStr(s);
-    while1(s);
+    s = incStr(s);
+    loop3(s);
   }
 }
 
-/*
-     while ((*s++ = *s2++) != '\0')
-         ;               
-*/
-void while2(ref str s1,ref str s2)
-  requires s1::str<_,q>*q::BADS<m> * s2::WFS<n,k,m2> & Term[k-n] & m>k-n
-  ensures s1::WFSeg<k-n,s1'>*s1'::str<0,qq>*qq::BADS<m-(k-n)> * s2'::str<0,q2> * q2::BADS<m2> ; 
-{
-  int x=getChar(s2);
-  assignStr(s1,x);
-  if (x!=0) {
-    s2 = incStr(s2);
-    s1 = incStr(s1);
-    while2(s1,s2);
-  }
 
-}

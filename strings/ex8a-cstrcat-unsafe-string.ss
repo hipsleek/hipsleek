@@ -38,13 +38,17 @@ BADS<> ==
 
 
 str incStr(str x)
+  requires x::str<_,q>@L & Term[]
+  ensures  res=q ;
+/*
   requires x::WFS<n,k> & Term[]
   case { 
-    n<k  -> ensures x::str<v,res> * res::WFS<n+1,k> & v>0;
+    n!=k  -> ensures x::str<v,res> * res::WFS<n+1,k> & v>0;
     n=k  ->  ensures x::str<0,res> * res::BADS<>;
   }
   requires x::BADS<> & Term[]
   ensures x::str<v,res> * res::BADS<> & v>=0;
+*/
 
 void assignStr(str x,int v)
   requires x::str<_,q> & Term[]
@@ -76,7 +80,8 @@ void while1(ref str s)
 */
 void while2(ref str s1,ref str s2)
   requires s1::str<_,q>*q::BADS<> * s2::WFS<n,k> & Term[k-n]
-  ensures s1::WFSeg<k-n,q>*q::str<0,qq>*qq::BADS<> * s2'::str<0,qq> & s1'=q; 
+  ensures s1::WFSeg<k-n,s1'>*s1'::str<0,qq>*qq::BADS<> 
+  * s2'::str<0,qqq> * qqq::BADS<>; //
 {
   int x=getChar(s2);
   assignStr(s1,x);
