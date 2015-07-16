@@ -184,8 +184,6 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
        | _ -> failwith "more constraints than assumed")) res in
     (post_r_args,analysis)) lst_assume in
 
-  (* TODO: combine various param-flow lists, reduce duplication. *)
-
   (* Print summary of results
    * (for convenience, so -dre analyse isn't needed). *)
   let pr = Cprinter.string_of_pure_formula in
@@ -212,15 +210,11 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
       in
     helper zipped_frm_assumes in
 
+  (* TODO: eliminate the primed variables within the expressions.. *)
+  let () = Debug.binfo_hprint (add_str "initial result" pr_out) frm_assumes no_pos in
   let frm_assumes = List.map (fun (args,pa) ->
     let res = pa in
     res) zipped_frm_assumes in
-
-  (* TODO: eliminate the primed variables within the expressions.. *)
-  let () = Debug.binfo_hprint (add_str "initial result" pr_out) frm_assumes no_pos in
-  let frm_assumes = List.map (fun pa ->
-    let res = pa in
-    res) frm_assumes in
 
   (* TODO: combine various param-flow lists, reduce duplication. *)
 
