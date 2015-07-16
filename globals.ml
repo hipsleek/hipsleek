@@ -1387,6 +1387,8 @@ let tnt_infer_nondet = ref true
 let nondet_int_proc_name = "__VERIFIER_nondet_int"
 let nondet_int_rel_name = "nondet_int__"
 
+let hip_sleek_keywords = ["res"]
+
 type infer_type =
   | INF_TERM (* For infer[@term] *)
   | INF_TERM_WO_POST (* For infer[@term_wo_post] *)

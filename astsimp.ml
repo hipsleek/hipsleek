@@ -4971,7 +4971,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
        let (ce, te) = helper e in
        let tmp_local_vars = E.names_on_top () in
        let local_vars = List.map (fun (t, n) -> ((x_add trans_type prog t pos), n)) tmp_local_vars in
-       (E.pop_scope (); ((C.Block {
+       (E.pop_scope (); 
+       ((C.Block {
             C.exp_block_type = te;
             C.exp_block_body = ce;
             C.exp_block_local_vars = local_vars;
