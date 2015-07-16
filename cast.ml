@@ -1123,6 +1123,10 @@ let look_up_rel_args_type_from_prog p name =
   look_up_rel_args_type p.prog_rel_decls name
 ;;
 
+let look_up_rel_args_type_from_prog p name =
+  Debug.no_1 "look_up_rel_args_type_from_prog" pr_id (pr_list string_of_typ) (look_up_rel_args_type_from_prog p) name
+;;
+
 let look_up_templ_def_raw (defs: templ_decl list) (name : ident) = 
   List.find (fun d -> d.templ_name = name) defs
 

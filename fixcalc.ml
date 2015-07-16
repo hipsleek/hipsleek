@@ -845,14 +845,18 @@ let substitute_args_x a_rel = match a_rel with
         | Some p -> p
         | None -> failwith "substitute_args: Initialize globas_prog first!"
       in
-      let typed_args = List.combine (Cast.look_up_rel_args_type_from_prog prog id) args in
+      let typed_args = 
+        try
+          List.combine (x_add_1 Cast.look_up_rel_args_type_from_prog prog id) args 
+        with _ ->  failwith "substitute_args: failure with look_up_rel_args_type"
+      in
       List.split
         (List.map (fun (t,e) ->
              match e with
              | CP.Var _ -> (e, [])
              | _ ->
                (try
-                  (* Must refine the renaming method. It is really awkward now... *)
+                  (* TODO: Must refine the renaming method. It is really awkward now... *)
                   let fvs = CP.afv e in
                   let arb =
                     if List.length fvs > 0 then
