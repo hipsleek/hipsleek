@@ -88,7 +88,11 @@ void loop2(ref str s)
 }
 
 void loop3(ref str s)
-  requires s::WFS<n,k>@L & exists(i: k-n=2*i & i>=0) // & Term[k-n]
+  requires s::WFS<n,k>@L & exists(i: k-n=2*i & i>=0) & Term[k-n]
+  ensures true;
+  requires s::WFS<n,k>@L & exists(i: k-n=2*i+1 & i>=0) & MayLoop
+  ensures true;
+  requires s::BADS<>@L & MayLoop 
   ensures true;
 {
   int x=getChar(s);

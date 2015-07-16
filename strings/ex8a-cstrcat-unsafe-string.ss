@@ -79,16 +79,19 @@ void while1(ref str s)
          ;               
 */
 void while2(ref str s1,ref str s2)
+  requires s1::str<_,q>*q::BADS<> * s2::WFS<n,k>@L & Term[k-n]
+  ensures s1::WFSeg<k-n,s1a>*s1a::str<0,ppp>*ppp::BADS<> & s1'=ppp;
+/*
   requires s1::str<_,q>*q::BADS<> * s2::WFS<n,k> & Term[k-n]
-  ensures s1::WFSeg<k-n,s1'>*s1'::str<0,qq>*qq::BADS<> 
-  * s2'::str<0,qqq> * qqq::BADS<>; //
+  ensures s1::WFSeg<k-n,s1a>*s1a::str<0,s1'>*s1'::BADS<> 
+     * _::str<0,s2'> *s2'::BADS<>; //
+*/
 {
   int x=getChar(s2);
   assignStr(s1,x);
+  s2 = incStr(s2);
+  s1 = incStr(s1);
   if (x!=0) {
-    s2 = incStr(s2);
-    s1 = incStr(s1);
     while2(s1,s2);
   }
-
 }
