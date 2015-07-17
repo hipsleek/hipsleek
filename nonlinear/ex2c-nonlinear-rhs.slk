@@ -1,0 +1,14 @@
+// non-linear RHS is harder to handle..
+
+checkentail true |- (exists b: b*a>=0).
+print residue.
+// valid?
+
+checkentail true |- (exists b: 0<=b*a<=1).
+print residue.
+// valid?
+
+checkentail true |- (exists b: 0<b*a<=1).
+print residue.
+// fail?
+

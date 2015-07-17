@@ -1,0 +1,36 @@
+checkentail a*b>=1 |- b*a>=0.
+print residue.
+// valid
+
+checkentail true |- b*a>=0.
+print residue.
+// fail
+
+
+checkentail a*b>=1 |- a>=0.
+print residue.
+// fail
+
+checkentail a*b>=2 & a=1 |- b>=2.
+print residue.
+// valid
+
+checkentail true |- (exists b: b*a>=0).
+print residue.
+// valid?
+
+checkentail true |- (exists b: 0<=b*a<=1).
+print residue.
+// valid?
+
+checkentail true |- (exists b: 0<b*a<=1).
+print residue.
+// fail?
+
+/*
+# ex2b.slk -tp oc
+
+-tp z3
+
+seems to perform correctly but not -tp oc
+*/
