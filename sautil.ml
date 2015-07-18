@@ -302,7 +302,8 @@ let add_raw_rel prog args pos=
       Cast.rel_vars = args;
       Cast.rel_formula =(CP.mkTrue pos);}
   in
-  let () = prog.Cast.prog_rel_decls <- (rel_decl :: prog.Cast.prog_rel_decls) in
+  (* let () = prog.Cast.prog_rel_decls <- (rel_decl :: prog.Cast.prog_rel_decls) in *)
+  let () = prog.Cast.prog_rel_decls # push rel_decl in
   let _= Smtsolver.add_relation rel_decl.Cast.rel_name rel_decl.Cast.rel_vars rel_decl.Cast.rel_formula in
   let _= Z3.add_relation rel_decl.Cast.rel_name rel_decl.Cast.rel_vars rel_decl.Cast.rel_formula in
   CP.mkRel_sv rel_decl.Cast.rel_name

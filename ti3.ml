@@ -327,7 +327,7 @@ let trans_nondet_formula prog f =
         let svn = CP.name_of_spec_var sv in
         match args with
         | e::[] ->
-          let nd_rel_def = look_up_rel_def_raw prog.prog_rel_decls svn in
+          let nd_rel_def = look_up_rel_def_raw (prog.prog_rel_decls # get_stk) svn in
           (try
              let param = List.hd nd_rel_def.rel_vars in
              let svp = CP.SpecVar (CP.type_of_spec_var param, svn ^ (string_of_nondet_pos pos), Unprimed) in

@@ -1555,7 +1555,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) p0 xp_no: (MCP.m
                   h_formula_data_label = lbl;
                   h_formula_data_pos = pos}) ->
       let non_zero = CP.BForm ((CP.Neq (CP.Var (p, pos), CP.Null pos, pos), None), lbl) in
-      let rdels = prog.C.prog_rel_decls in
+      let rdels = prog.C.prog_rel_decls # get_stk in
       (* Add update relation during XPure *)
       let update_rel = List.filter (fun r -> if r.rel_name = "update"
                                              || r.rel_name = "cons"
@@ -1691,7 +1691,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) p0 xp_no: (MCP.m
     | HFalse -> (mkMFalse no_pos, [])
     | HEmp | HVar _  -> (mkMTrue no_pos, []) in
   (* Add lookup relation during XPure *)
-  let rdels = prog.C.prog_rel_decls in
+  let rdels = prog.C.prog_rel_decls # get_stk in
   let lookup_rel = List.filter (fun r -> if r.rel_name = "lookup" then true else false) rdels in
   if (List.length lookup_rel = 1) then
     let lookup = List.hd lookup_rel in

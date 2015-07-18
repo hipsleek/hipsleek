@@ -56,7 +56,8 @@ let rec add_post_relation prog proc sf rel_name rel_type rel_vars = match sf wit
     (* let rel_vars = (List.map (fun (t,id) -> CP.mk_typed_spec_var t id) proc.proc_args)@[CP.mk_typed_spec_var proc.proc_return res_name] in *)
     let rel_formula = CP.mkTrue no_pos in
     let rel_decl = {rel_name = rel_name; rel_vars = rel_vars; rel_formula = rel_formula} in
-    let () = prog.prog_rel_decls <- prog.prog_rel_decls@[rel_decl] in
+    (* let () = prog.prog_rel_decls <- prog.prog_rel_decls@[rel_decl] in *)
+    let () = prog.prog_rel_decls # push rel_decl in
     let rel_spec_var = CP.mk_typed_spec_var rel_type rel_name in
     (* let rel_args = (List.map (fun (_,id) -> CP.mkVar (CP.mk_spec_var id) no_pos) proc.proc_args)@[CP.mkVar (CP.mk_spec_var res_name) no_pos] in *)
     let rel_args = List.map (fun sv -> CP.mkVar sv no_pos) rel_vars in
@@ -105,7 +106,8 @@ let rec add_pre_relation prog proc sf rel_name rel_type rel_vars = match sf with
   | CF.EBase eb ->
     let rel_formula = CP.mkTrue no_pos in
     let rel_decl = {rel_name = rel_name; rel_vars = rel_vars; rel_formula = rel_formula} in
-    let () = prog.prog_rel_decls <- prog.prog_rel_decls@[rel_decl] in
+    (* let () = prog.prog_rel_decls <- prog.prog_rel_decls@[rel_decl] in *)
+    let () = prog.prog_rel_decls # push rel_decl in
     let rel_spec_var = CP.mk_typed_spec_var rel_type rel_name in
     let rel_args = List.map (fun sv -> CP.mkVar sv no_pos) rel_vars in
     let new_rel = CP.mkRel rel_spec_var rel_args no_pos in

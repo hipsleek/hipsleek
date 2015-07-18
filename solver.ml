@@ -8149,7 +8149,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
 
 and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) rhs_matched_set pos : (list_context * proof) =
   (* An Hoa note: RHS has no heap so that we only have to consider whether "pure of LHS" |- RHS *)
-  let rel_w_defs = List.filter (fun rel -> not (CP.isConstTrue rel.Cast.rel_formula)) prog.Cast.prog_rel_decls in
+  let rel_w_defs = List.filter (fun rel -> not (CP.isConstTrue rel.Cast.rel_formula)) (prog.Cast.prog_rel_decls # get_stk) in
   (* Changed for merge.ss on 9/3/2013 *)
   let rhs_p = if (estate_orig.es_infer_rel!=[]) then subst_rel_by_def_mix rel_w_defs rhs_p else rhs_p in
   (*TODO: let estate_orig = {estate_orig with CF.subst_rel_by_def_formula estate_orig.CF.es_formula}*)
@@ -9595,8 +9595,8 @@ and do_match_perm_vars (l_perm:P.exp option) (r_perm:P.exp option) evars ivars i
 (*generate rel formula for relational args of views*)
 and generate_rel_formulas_x prog (lrel,rrel) pos=
   try
-    let ldef = Cast.look_up_rel_def_raw prog.Cast.prog_rel_decls (CP.name_of_spec_var lrel) in
-    let rdef = Cast.look_up_rel_def_raw prog.Cast.prog_rel_decls (CP.name_of_spec_var rrel) in
+    let ldef = Cast.look_up_rel_def_raw (prog.Cast.prog_rel_decls # get_stk) (CP.name_of_spec_var lrel) in
+    let rdef = Cast.look_up_rel_def_raw (prog.Cast.prog_rel_decls # get_stk) (CP.name_of_spec_var rrel) in
     if List.length ldef.Cast.rel_vars = List.length rdef.Cast.rel_vars then
       let new_args= CP.fresh_spec_vars ldef.Cast.rel_vars  in
       let exps = List.map (fun sv -> CP.mkVar sv pos) new_args in

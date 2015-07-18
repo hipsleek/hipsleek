@@ -183,7 +183,8 @@ let cprog = ref {
     Cast.prog_view_decls = [];
     Cast.prog_logical_vars = [];
     (*	Cast.prog_func_decls = [];*)
-    Cast.prog_rel_decls = []; (* An Hoa *)
+    (* Cast.prog_rel_decls = []; (\* An Hoa *\) *)
+    Cast.prog_rel_decls = (let s = new Gen.stack_pr Cprinter.string_of_rel_decl (=) in s);
     Cast.prog_templ_decls = [];
     Cast.prog_ui_decls = [];
     Cast.prog_ut_decls = [];
@@ -226,7 +227,8 @@ let clear_iprog () =
 let clear_cprog () =
   !cprog.Cast.prog_data_decls <- [];
   !cprog.Cast.prog_view_decls <- [];
-  !cprog.Cast.prog_rel_decls <- [];
+  (* !cprog.Cast.prog_rel_decls <- []; *)
+  (!cprog.Cast.prog_rel_decls # reset);
   !cprog.Cast.prog_hp_decls <- [];
   !cprog.Cast.prog_templ_decls <- [];
   !cprog.Cast.prog_ut_decls <- [];
@@ -444,7 +446,9 @@ let process_rel_def rdef =
         		let  ()= if !Globals.print_core || !Globals.print_core_all then print_string (Cprinter.string_of_view_decl n_crdef ^"\n") else () in
         		cprog.Cast.prog_view_decls <- (n_crdef :: old_vdec) *)
       iprog.I.prog_rel_decls <- ( rdef :: iprog.I.prog_rel_decls);
-      let crdef = Astsimp.trans_rel iprog rdef in !cprog.Cast.prog_rel_decls <- (crdef :: !cprog.Cast.prog_rel_decls);
+      let crdef = Astsimp.trans_rel iprog rdef 
+      (* in !cprog.Cast.prog_rel_decls <- (crdef :: !cprog.Cast.prog_rel_decls); *)
+      in !cprog.Cast.prog_rel_decls # push crdef;
       (*L2: duplicate with trans_rel *)
       (* Forward the relation to the smt solver. *)
       (* let _ = Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula in *)
@@ -480,7 +484,8 @@ let process_ui_def uidef =
       iprog.I.prog_rel_decls <- (uidef.Iast.ui_rel::iprog.I.prog_rel_decls);
       let cuidef = Astsimp.trans_ui iprog uidef in
       !cprog.Cast.prog_ui_decls <- cuidef::!cprog.Cast.prog_ui_decls;
-      !cprog.Cast.prog_rel_decls <- cuidef.Cast.ui_rel::!cprog.Cast.prog_rel_decls;
+      (* !cprog.Cast.prog_rel_decls <- cuidef.Cast.ui_rel::!cprog.Cast.prog_rel_decls; *)
+      !cprog.Cast.prog_rel_decls # push cuidef.Cast.ui_rel;
     with _ -> dummy_exception (); iprog.I.prog_ui_decls <- tmp 
   else print_endline_quiet (uidef.I.ui_rel.rel_name ^ " is already defined.")
 
@@ -494,7 +499,8 @@ let process_hp_def hpdef =
       iprog.I.prog_hp_decls <- ( hpdef :: iprog.I.prog_hp_decls);
       let chpdef, p_chpdef = Astsimp.trans_hp iprog hpdef in
       let _ = !cprog.Cast.prog_hp_decls <- (chpdef :: !cprog.Cast.prog_hp_decls) in
-      let _ = !cprog.Cast.prog_rel_decls <- (p_chpdef::!cprog.Cast.prog_rel_decls) in
+      (* let _ = !cprog.Cast.prog_rel_decls <- (p_chpdef::!cprog.Cast.prog_rel_decls) in *)
+      let _ = !cprog.Cast.prog_rel_decls # push p_chpdef in
       (* Forward the relation to the smt solver. *)
       let args = fst (List.split chpdef.Cast.hp_vars_inst) in
       let _ = Smtsolver.add_hp_relation chpdef.Cast.hp_name args chpdef.Cast.hp_formula in

@@ -656,7 +656,7 @@ let process_source_full source =
                 | _ -> "Uknown"
               ) rd.C.rel_vars) in "  Parameter "^rd.C.rel_name^" : "^rel_params_arrow^
                                   " -> formula.\n"
-        ) c.C.prog_rel_decls in
+        ) (c.C.prog_rel_decls # get_stk) in
       let parameter_relations = String.concat "" relation_list in
       let rec convert_cp_formula f = match f with
         | CP.BForm((pf,_),_) -> (match pf with 
@@ -1013,7 +1013,7 @@ let process_source_full_after_parser source (prog, prims_list) =
       let () = Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula in
       Z3.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula
     )
-      (List.rev cprog.Cast.prog_rel_decls) in
+      (List.rev (cprog.Cast.prog_rel_decls # get_stk)) in
 
   let todo_unk = List.map (fun cadef ->
       let () = Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion in

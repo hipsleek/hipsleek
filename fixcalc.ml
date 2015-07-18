@@ -848,7 +848,8 @@ let substitute_args_x a_rel = match a_rel with
       let typed_args = 
         try
           List.combine (x_add_1 Cast.look_up_rel_args_type_from_prog prog id) args 
-        with _ ->  failwith "substitute_args: failure with look_up_rel_args_type"
+        with _ ->  (* args *)
+            failwith "substitute_args: failure with look_up_rel_args_type"
       in
       List.split
         (List.map (fun (t,e) ->

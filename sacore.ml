@@ -3809,7 +3809,8 @@ let pred_split_ext iprog cprog proc_name ass_stk hpdef_stk
                           Iast.rel_formula = Ipure.mkTrue no_pos
                          } in
             let () = iprog.Iast.prog_rel_decls <- iprog.Iast.prog_rel_decls@[n_irel] in
-            let () = cprog.Cast.prog_rel_decls <- cprog.Cast.prog_rel_decls@[n_rel] in
+            (* let () = cprog.Cast.prog_rel_decls <- cprog.Cast.prog_rel_decls@[n_rel] in *)
+            let () = cprog.Cast.prog_rel_decls # push n_rel in
             let rel_var = CP.SpecVar (RelT (List.map fst n_irel.Iast.rel_typed_vars) , nrel_name ,Unprimed) in
             let p_rel_ext = CP.mkRel rel_var (List.map (fun sv -> CP.mkVar sv no_pos) ext_pure_vars) no_pos in
             let p_rel = if  pure_comps=[] then p_rel_ext else

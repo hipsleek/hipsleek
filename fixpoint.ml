@@ -783,7 +783,7 @@ let gen_slk_file_4fix prog file_name pre_rel_ids post_rel_ids rel_oblgs=
   let all_rel_vars = CP.remove_dups_svl all_rel_vars0 in
   let all_rel_decls = List.fold_left (fun ls rel_sv ->
       try
-        let rel_decl = Cast.look_up_rel_def_raw prog.Cast.prog_rel_decls (CP.name_of_spec_var rel_sv) in
+        let rel_decl = Cast.look_up_rel_def_raw (prog.Cast.prog_rel_decls # get_stk) (CP.name_of_spec_var rel_sv) in
         ls@[rel_decl]
       with _ -> ls
     ) [] all_rel_vars

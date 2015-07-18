@@ -648,7 +648,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
         let () = Debug.ninfo_hprint (add_str "all vars" !print_svl) pre_post_vars no_pos in
         let () = Debug.ninfo_hprint (add_str "inf vars" !print_svl) vars no_pos in
         let classify_rel v =
-          let rel_decl = Cast.look_up_rel_def_raw prog.Cast.prog_rel_decls (CP.name_of_spec_var v) in
+          let rel_decl = Cast.look_up_rel_def_raw (prog.Cast.prog_rel_decls # get_stk) (CP.name_of_spec_var v) in
           if not (is_primitive_rel rel_decl) && (CP.isConstTrue rel_decl.rel_formula) then true else false in
         let (unknown_rel,known_rel) = List.partition classify_rel
             (CP.remove_dups_svl ((List.filter CP.is_rel_var pre_post_vars)@vars_rel)) in
@@ -4399,8 +4399,11 @@ let rec check_prog iprog (prog : prog_decl) =
         let r1 = Str.regexp "post_" in
         let r2 = Str.regexp "pre_" in
         not(Str.string_match r1 rel_decl.rel_name 0) && not(Str.string_match r2 rel_decl.rel_name 0)
-      ) prog.prog_rel_decls in
-    let () = prog.prog_rel_decls <- rem_pure_inf_prog_rel_decls in
+      ) (prog.prog_rel_decls # get_stk) in
+    (* let () = prog.prog_rel_decls <- rem_pure_inf_prog_rel_decls in *)
+    (* QUICK FIX : why did we remove pre/post? *)
+    (* let () = prog.prog_rel_decls # reset in *)
+    (* let () = prog.prog_rel_decls # push_list rem_pure_inf_prog_rel_decls in *)
     let () = DD.ninfo_hprint (add_str "has_infer_post_proc" string_of_bool) has_infer_post_proc no_pos in
     (* Resume other infer *)
     let scc = if (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) then Pi.resume_infer_obj_scc scc old_specs else scc in

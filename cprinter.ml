@@ -4902,7 +4902,7 @@ let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ 
                           (string_of_view_decl_list p.prog_view_decls) ^ "\n\n" ^
                           (string_of_barrier_decl_list p.prog_barrier_decls) ^ "\n\n" ^
                           (string_of_ut_decl_list p.prog_ut_decls) ^ "\n\n" ^
-                          (string_of_rel_decl_list p.prog_rel_decls) ^ "\n\n" ^
+                          (string_of_rel_decl_list (p.prog_rel_decls # get_stk)) ^ "\n\n" ^
                           (string_of_axiom_decl_list p.prog_axiom_decls) ^ "\n\n" ^
                           (* WN_all_lemma - override usage? *)
                           (string_of_coerc_decl_list (*p.prog_left_coercions*) (Lem_store.all_lemma # get_left_coercion))^"\n\n"^
@@ -4962,7 +4962,7 @@ let string_of_program_separate_prelude p (iprims:Iast.prog_decl)=
   let datastr= (string_of_data_decl_list (remove_prim_data_decls p.prog_data_decls)) in
   let viewstr=(string_of_view_decl_list p.prog_view_decls) in
   let barrierstr=(string_of_barrier_decl_list p.prog_barrier_decls) in
-  let relstr=(string_of_rel_decl_list (remove_prim_rel_decls p.prog_rel_decls)) in
+  let relstr=(string_of_rel_decl_list (remove_prim_rel_decls (p.prog_rel_decls # get_stk))) in
   let axiomstr=(string_of_axiom_decl_list (remove_prim_axiom_decls p.prog_axiom_decls)) in
   let left_coerstr=(string_of_coerc_decl_list (Lem_store.all_lemma # get_left_coercion) (*p.prog_left_coercions*)) in
   let right_coerstr=(string_of_coerc_decl_list (Lem_store.all_lemma # get_right_coercion) (*p.prog_right_coercions*)) in

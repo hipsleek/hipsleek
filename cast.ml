@@ -30,7 +30,8 @@ and prog_decl = {
   mutable prog_data_decls : data_decl list;
   mutable prog_logical_vars : P.spec_var list;
   mutable prog_view_decls : view_decl list;
-  mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
+  (* mutable prog_rel_decls : rel_decl list; (\* An Hoa : relation definitions *\) *)
+  prog_rel_decls : rel_decl Gen.stack_pr; (* An Hoa : relation definitions *)
   mutable prog_templ_decls: templ_decl list;
   mutable prog_ut_decls: ut_decl list;
   mutable prog_ui_decls: ui_decl list;
@@ -1120,7 +1121,7 @@ let look_up_rel_args_type (defs: rel_decl list) name =
 ;;
 
 let look_up_rel_args_type_from_prog p name =
-  look_up_rel_args_type p.prog_rel_decls name
+  look_up_rel_args_type (p.prog_rel_decls # get_stk) name
 ;;
 
 let look_up_rel_args_type_from_prog p name =
@@ -1196,7 +1197,8 @@ let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos=
     prog.prog_hp_decls <- (hp_decl :: prog.prog_hp_decls);
     (* PURE_RELATION_OF_HEAP_PRED *)
     let p_hp_decl = generate_pure_rel hp_decl in
-    let () = prog.prog_rel_decls <- (p_hp_decl::prog.prog_rel_decls) in
+    (* let () = prog.prog_rel_decls <- (p_hp_decl::prog.prog_rel_decls) in *)
+    let () = prog.prog_rel_decls # push p_hp_decl in
     let () = Smtsolver.add_hp_relation hp_decl.hp_name unk_args hp_decl.hp_formula in
     let () = Z3.add_hp_relation hp_decl.hp_name unk_args hp_decl.hp_formula in
     let hf =

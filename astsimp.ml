@@ -1624,12 +1624,14 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
          let ui_vs = cuis @ C.ui_decls # get_stk in
          let extra_rels = List.map (fun ui -> ui.Cast.ui_rel) ui_vs in
          let () = Debug.ninfo_hprint (add_str "ut_vs added" (pr_list (fun ut -> ut.C.ut_name))) ut_vs no_pos in
+         let xrels = crels@extra_rels in
          let cprog = {
            C.prog_data_decls = cdata;
            C.prog_view_decls = cviews2;
            C.prog_barrier_decls = bdecls;
            C.prog_logical_vars = log_vars;
-           C.prog_rel_decls = crels@extra_rels; (* An Hoa *)
+           (* C.prog_rel_decls = xrels (\* crels@extra_rels *\); (\* An Hoa *\) *)
+           C.prog_rel_decls = (let s = new Gen.stack_pr Cprinter.string_of_rel_decl (=) in (s # push_list xrels ; s));
            C.prog_templ_decls = ctempls;
            C.prog_ut_decls = (ut_vs);
            C.prog_ui_decls = (ui_vs);
@@ -4094,7 +4096,7 @@ and ident_to_spec_var id n_tl p prog =
   | CP.SpecVar(t,id,pr) ->
     if t == UNK then
       try
-        let todo_unk = I.look_up_rel_def_raw prog.I.prog_rel_decls id in
+        let todo_unk = I.look_up_rel_def_raw (prog.I.prog_rel_decls ) id in
         CP.SpecVar(RelT[],id,pr)
       with _ ->
         try
