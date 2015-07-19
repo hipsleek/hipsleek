@@ -751,12 +751,19 @@ class counter x_init =
     method get : int = ctr
     method inc = ctr <- ctr + 1
     method inc_and_get = ctr <- ctr + 1; ctr
+    method diff = ctr - x_init
     method add (i:int) = ctr <- ctr + i
-    method reset = ctr <- 0x0
+    method reset = ctr <- x_init (* 0x0 *)
     method string_of : string= (string_of_int ctr)
     method str_get_next : string 
       = ctr <- ctr + 1; string_of_int ctr
   end;;
+
+let seq_number2 = new counter 0
+
+let fresh_int2 () = seq_number2 # inc_and_get
+
+let reset_int2 () = seq_number2 # reset
 
 class ctr_with_aux x_init =
   object 

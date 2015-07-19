@@ -1972,14 +1972,18 @@ let fresh_int () =
   seq_number := helper (!seq_number + 1);
   !seq_number
 
-let seq_number2 = ref 0
 
-let fresh_int2 () =
-  seq_number2 := !seq_number2 + 1;
-  !seq_number2
+(* let seq_number2 = ref 0 *)
 
-let reset_int2 () =
-  seq_number2 := 0
+(* let fresh_int2 () = *)
+(*   seq_number2 := !seq_number2 + 1; *)
+(*   !seq_number2 *)
+
+(* let reset_int2 () = *)
+(*   seq_number2 := 0 *)
+
+(* let get_int2 () = *)
+(*   !seq_number2 *)
 
 (* let fresh_int () = *)
 (*   seq_number := !seq_number + 1; *)
