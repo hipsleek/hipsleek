@@ -728,6 +728,15 @@ class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  =
 (* (\* Gen.BList.overlap_eq elem_eq ls stk *\) *)
 (*    end;; *)
 
+class detect_obj =
+  object 
+    val mutable flag = false
+    method get : bool = flag
+    method set = flag <- true
+    method reset = flag <- false
+  end;;
+
+
 class counter x_init =
   object 
     val mutable ctr = x_init

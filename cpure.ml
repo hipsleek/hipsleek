@@ -2637,7 +2637,7 @@ and mkNeqExp (ae1 : exp) (ae2 : exp) pos = match (ae1, ae2) with
 and mkNot_s f :formula = mkNot f None no_pos
 
 and mkNot_dumb f lbl1 pos0:formula = 
-  if(not !Globals.allow_norm  && !Globals.allow_inf_qe_coq) then Not (f, lbl1,pos0)
+  if (!Globals.oc_non_linear) || (not !Globals.allow_norm  && !Globals.allow_inf_qe_coq) then Not (f, lbl1,pos0)
   else 
     match f with
     | BForm (bf,lbl) -> begin
@@ -2657,7 +2657,7 @@ and mkNot_dumb f lbl1 pos0:formula =
     | _ -> Not (f, lbl1,pos0)
 
 and mkNot_x f lbl1 pos0 :formula= 
-  if no_andl f then mkNot_dumb f lbl1 pos0
+  if no_andl f  then mkNot_dumb f lbl1 pos0
   else 
     match f with
     | And (f1,f2,p) -> mkOr (mkNot f1 lbl1 pos0) (mkNot f2  lbl1 pos0) None p

@@ -1,8 +1,9 @@
 
-checkentail a>=1 |- a>=0.
+checkentail aaa*b>=1 |- aaa>=0.
 print residue.
 
 /*
+checkentail a>=1 |- a>=0.
 checkentail a*b>=1 |- a>=0.
 print residue.
 
