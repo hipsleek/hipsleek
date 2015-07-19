@@ -6966,6 +6966,7 @@ let transform_formula f (e:formula) :formula =
     !print_formula
     (fun _ -> transform_formula f e ) e
 
+
 let rename_labels  e=
   let f_b e = Some e in
   let f_e e = Some e in
@@ -10519,6 +10520,76 @@ let memo_complex_ops stk bool_vars is_complex =
         Some (BForm ((BVar (v,no_pos),None),None))
       else None
   in (pr, pr)
+
+let check_nonlinear e =
+  let flag = ref false in
+  let f_None _ = None in
+  let rec f_exp e = match e with
+    | Mult(a1,a2,l) ->
+          begin
+            match a1 with
+              | IConst (i, _) -> f_exp a2
+              | _ -> match a2 with
+                  | IConst (i, _) -> f_exp a1
+                  | _ -> (flag := true; Some e)
+          end
+    | _ -> None
+  in
+  let f_Some x = Some x in
+  let f = (f_None, f_None, f_None, f_None, f_exp) in
+  let _ = transform_formula f e in
+  !flag
+
+let rec nonlinear_exp a = match a with
+  | Mult(a1,a2,l) ->
+        begin
+          match a1 with
+            | IConst (i, _) -> nonlinear_exp a2
+            | _ -> match a2 with
+                | IConst (i, _) ->  nonlinear_exp a1
+                | _ -> true
+        end
+  | Add (a1, a2, _) 
+  | Subtract (a1, a2, _) ->  nonlinear_exp a1 || nonlinear_exp a2
+  | _ -> false
+
+let check_nonlinear b =
+  match b with
+      Lt (a1, a2, _) 
+    | Lte (a1, a2, _) 
+    | Gt (a1, a2, _) 
+    | Gte (a1, a2, _) 
+    | Eq (a1, a2, _) 
+    | Neq (a1, a2, _) 
+    | EqMin (_,a1, a2, _) 
+    | EqMax (_,a1, a2, _) 
+        -> nonlinear_exp a1 || nonlinear_exp a2
+    | _ -> false
+
+let drop_nonlinear_formula_ops =
+  let pr_weak b = 
+    if check_nonlinear b then Some (mkTrue (pos_of_b_formula (b, None)))
+    else None in
+  let pr_strong b = 
+    if check_nonlinear b then Some (mkFalse (pos_of_b_formula (b, None)))
+    else None in
+  (pr_weak,pr_strong)
+
+let drop_nonlinear_formula (f:formula) : formula =
+  let (pr_weak,pr_strong) = drop_nonlinear_formula_ops in
+  drop_formula pr_weak pr_strong f
+
+let drop_nonlinear_formula_rev (f:formula) : formula =
+  let (pr_weak,pr_strong) = drop_nonlinear_formula_ops in
+  drop_formula pr_strong pr_weak f
+
+let drop_nonlinear_formula (f:formula) : formula =
+  let pr = !print_formula in
+  Debug.no_1 "drop_nonlinear_formula" pr pr drop_nonlinear_formula f
+
+let drop_nonlinear_formula_rev (f:formula) : formula =
+  let pr = !print_formula in
+  Debug.no_1 "drop_nonlinear_formula_rev" pr pr drop_nonlinear_formula_rev f
 
 let drop_rel_formula (f:formula) : formula =
   let (pr_weak,pr_strong) = drop_rel_formula_ops in

@@ -129,7 +129,7 @@ and omega_of_b_formula b =
   let aux pf =
     match pf with
       | Frm _ -> "(0=0)"
-      | BConst (c, _) -> if c then "(0=0)" else "(0>0)"
+      | BConst (c, _) -> if c then "(1=1)" else "(0>0)"
       | XPure _ -> "(0=0)"
       | BVar (bv, _) ->  (omega_of_spec_var bv) ^ " > 0" (* easy to track boolean var *)
       | Lt (a1, a2, _) ->(omega_of_exp a1) ^ " < " ^ (omega_of_exp a2)
@@ -515,6 +515,7 @@ let is_sat_ops_x pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
     (*  Cvclite.write_CVCLite pe; *)
     (*  Lash.write pe; *)
     (* let pe0 = drop_varperm_formula pe in *)
+    let pe = if !Globals.oc_non_linear then x_add_1 Cpure.drop_nonlinear_formula pe else pe in
     let pe = Trans_arr.translate_array_one_formula pe in
     let svl0 = Cpure.fv pe in
     let svl,fr_svl = mkSpecVarList 0 svl0 in
@@ -586,7 +587,7 @@ let is_sat_ops pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
 
 let is_sat (pe : formula)  (sat_no : string): bool =
   let pr x = None in
-  is_sat_ops pr pr pe sat_no
+  x_add_1 is_sat_ops pr pr pe sat_no
 
 let is_sat (pe : formula)  (sat_no : string): bool =
   let pf = !print_pure in
@@ -627,13 +628,14 @@ let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
   (*print_endline "LOCLE: is_valid";*)
   begin
     (* let pe0 = drop_varperm_formula pe in *)
+    let pe = x_add_1 drop_nonlinear_formula_rev pe in
     let svl0 = Cpure.fv pe in
     let svl,fr_svl = mkSpecVarList 0 svl0 in
     let ss = List.combine svl fr_svl in
     let pe = Cpure.subst ss pe in
     let pe = Trans_arr.translate_array_one_formula_for_validity pe in
     let pvars = get_vars_formula pe in
-    (*if not safe then true else*)
+    (*i not safe then true else*)
     begin
       omega_subst_lst := [];
       let fstr = omega_of_formula 2 pr_strong pr_weak pe in
