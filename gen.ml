@@ -575,6 +575,14 @@ class ['a] mut_option =
       end
   end;;
 
+class mut_bool =
+  object (self)
+    val mutable flag = false
+    method get = flag
+    method set = flag <- true
+    method reset = flag <- false
+  end;;
+
 class change_flag =
   object 
     val mutable cnt = 0

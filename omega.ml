@@ -25,6 +25,7 @@ let varLength = 48
 
 let non_linear_detect = new Gen.detect_obj
 
+
 (***********)
 let test_number = ref 0
 let last_test_number = ref 0
@@ -86,15 +87,15 @@ let rec omega_of_exp e0 = match e0 with
               | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a1) ^ ")"
               | _ -> 
                     (* "0=0" *)
-                    (* illegal_format "[omega.ml] Non-linear arithmetic is not supported by Omega." *)
-                    if (!Globals.oc_non_linear) then
-                      let () = report_warning no_pos "[omega.ml] Removing non-linear arithmetic expr." in
-                      (non_linear_detect # set ; "<non-linear>")
-                    else
-                      Error.report_error {
-                          Error.error_loc = l;
-                          Error.error_text = "[omega.ml] Non-linear arithmetic is not supported by Omega."
-                      }
+                    illegal_format "[omega.ml] Non-linear arithmetic is not supported by Omega."
+                    (* if (!Globals.oc_non_linear) then *)
+                    (*   let () = report_warning no_pos "[omega.ml] Removing non-linear arithmetic expr." in *)
+                    (*   (non_linear_detect # set ; "<non-linear>") *)
+                    (* else *)
+                    (*   Error.report_error { *)
+                    (*       Error.error_loc = l; *)
+                    (*       Error.error_text = "[omega.ml] Non-linear arithmetic is not supported by Omega." *)
+                    (*   } *)
             in rr
         in r
   | Template t -> omega_of_exp (exp_of_template t)
@@ -183,12 +184,12 @@ and omega_of_b_formula b =
       | LexVar _ -> illegal_format ("Omega.omega_of_exp: LexVar 3")
       | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
   in 
-  let () = non_linear_detect # reset in
+  (* let () = non_linear_detect # reset in *)
   let ans = aux pf in
-  let flag = non_linear_detect # get in
-  let () = non_linear_detect # reset in
-  if flag then "(0=0)"
-  else ans
+  (* let flag = non_linear_detect # get in *)
+  (* let () = non_linear_detect # reset in *)
+  (* if flag then "(0=0)" *)
+  (* else *) ans
     
 and omega_of_formula_x pr_w pr_s f  =
   let rec helper f =
@@ -978,14 +979,22 @@ let simplify_ops pr_weak pr_strong (pe : formula) : formula =
     (fun _ -> simplify_ops_x pr_weak pr_strong pe) pe
 
 let simplify (pe : formula) : formula =
-  let pr_w, pr_s = no_drop_ops in
+  let pr_w, pr_s = 
+    (* if !Globals.oc_non_linear then drop_nonlinear_formula_ops  *)
+    (* else *) no_drop_ops in
+  (* WN:todo - should not simplify with non-linear *)
+  (* let pe =  *)
+  (*   if !Globals.oc_non_linear then drop_nonlinear_formula_rev pe *)
+  (*   else pe in *)
   (* simplify_ops pr_w pr_s pe *)
   let f_memo, subs, bvars = memoise_rel_formula [] pe in
   if has_template_formula f_memo then pe
   else
     (* let res_memo = simplify_ops pr_w pr_s f_memo in *)
     (* restore_memo_formula subs bvars res_memo *)
-    x_add simplify_ops pr_w pr_s pe
+    try
+      x_add simplify_ops pr_w pr_s pe
+    with _ -> pe
 
 let simplify (pe : formula) : formula =
   let pf = !print_pure in

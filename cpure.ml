@@ -10575,6 +10575,10 @@ let drop_nonlinear_formula_ops =
     else None in
   (pr_weak,pr_strong)
 
+let drop_nonlinear_formula_ops_rev =
+  let (pr1,pr2) = drop_nonlinear_formula_ops in
+  (pr2,pr1)
+
 let drop_nonlinear_formula (f:formula) : formula =
   let (pr_weak,pr_strong) = drop_nonlinear_formula_ops in
   drop_formula pr_weak pr_strong f

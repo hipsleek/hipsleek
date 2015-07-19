@@ -2592,7 +2592,7 @@ and elim_exists_pure_branch (i:int) (w : CP.spec_var list) (f0 : CP.formula) pos
   Debug.no_2 ("elim_exists_pure_branch"^(string_of_int i)) Cprinter.string_of_spec_var_list pf pf 
     (fun w f0 -> elim_exists_pure_branch_x w f0 pos) w f0
 
-and elim_exists_pure_branch_x (w : CP.spec_var list) (f0 : CP.formula) pos : CP.formula =
+and elim_exists_pure_branch_x ?(revflag=false) (w : CP.spec_var list) (f0 : CP.formula) pos : CP.formula =
   let r=if (w==[]) then [] else CP.intersect w (CP.fv f0) in
   if (r==[]) then f0
   else
@@ -8240,6 +8240,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
       let () = force_verbose_xpure := true in ()
     else ()
   in
+  (* WN:TODO can we invoke a single xpure if the formula are identical? *)
   let curr_lhs_h, lhs_p = Norm.imm_norm_h_formula prog curr_lhs_h lhs_p unfold_for_abs_merge pos in
   let (xpure_lhs_h1, yy, memset) as xp1 = x_add xpure_heap 9 prog curr_lhs_h lhs_p 1 in
   let (xpure_lhs_h1_sym, _, _) as xp1 = x_add xpure_heap_sym 19 prog curr_lhs_h lhs_p 1 in
