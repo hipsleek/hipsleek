@@ -506,11 +506,11 @@ relation concrete(bag(Object) g).
 relation cyclic(bag((Object,Object)) g).
 relation acyclic(bag((Object,Object)) g).
 relation waitS(bag((Object,Object)) g, bag(Object) S, Object d).
-/*
+
 //Now added automatically by add_tnt_prim_proc in parser.ml
 relation nondet_int__(int x).
 relation nondet_bool__(bool x).
-*/
+
 
 int rand_int ()
 requires true

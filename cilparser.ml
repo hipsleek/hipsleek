@@ -594,7 +594,7 @@ let rec create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
         ) in
         let param = (
           match base_data with
-          | "int"   -> "<_,o>"
+          | "int"   -> "<i,o> & " ^ (Globals.nondet_int_rel_name) ^ "(i)"
           | "bool"  -> "<_,o>"
           | "float" -> "<_,o>"
           | "void"  -> "<_,o>"
