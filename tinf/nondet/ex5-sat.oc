@@ -1,0 +1,6 @@
+{[x,tx,z]: exists(v_nd: 0<=x & x<=(tx+z) &
+  (v_nd+1)>0 & ((0>v_nd | (x+z)>v_nd)))};
+
+
+{[x,tx,z]: exists(v_nd: 
+  (v_nd+1)>0 & ((0>v_nd | (x+z)>v_nd)))};
