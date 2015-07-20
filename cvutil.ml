@@ -1011,11 +1011,11 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
     | DataNode ({h_formula_data_node = p;
                  h_formula_data_perm = perm;
                  h_formula_data_pos = pos}) ->
-      let i = fresh_int2 () in
+      let ii = fresh_int2 () in
       (* let non_null = CP.mkNeqNull p pos in *)
       (* let non_null = CP.mkEqVarInt p i pos in *)
       if not (Perm.allow_perm ()) then
-        let non_null = CP.mkEqVarInt p i pos in
+        let non_null = CP.mkEqVarInt p ii pos in
         MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_null
       else
         (*WITH PERMISSION*)

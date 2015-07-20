@@ -1333,7 +1333,10 @@ let look_up_view_baga ?(epure=None) prog (c : ident) (root:P.spec_var) (args : P
     None -> []
     | Some pf -> (add_epure pf baga_lst) in
   let () = x_binfo_hp (add_str "baga (filtered)= " ( !print_ef_pure_disj)) baga_sp no_pos in
-  P.subst_var_list_avoid_capture from_svs to_svs ba
+  (* TODO:merge baga_sp for common memset *)
+  match baga_sp with
+  [(ad,_)] -> ad
+  | _ ->  P.subst_var_list_avoid_capture from_svs to_svs ba
 
 let look_up_view_baga ?(epure=None) prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
   Debug.no_2 "look_up_view_baga" (fun v -> !print_svl [v]) !print_svl !print_svl 

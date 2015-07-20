@@ -3159,7 +3159,7 @@ file_name: [[ `DOTDOT -> ".."
             ]];
 
 opt_pred:
-  [[ OPT [ x = `PRED] -> 1 ]];
+  [[ OPT [x = `PRED] -> 1 ]];
 
 type_decl:
   [[ t= data_decl  -> Data t
