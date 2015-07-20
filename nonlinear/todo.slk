@@ -138,7 +138,7 @@ dangerous to simplify RHS ..
 ========================================================
 # ex3d1.slk
 
-Why is here x!=y?
+Why is there x!=y?
 
 !!! **solver.ml#8263:xpure_lhs_h1: x=1 & y=2 & x!=y
 !!! **solver.ml#8264:xpure_lhs_h1_sym: x!=null & y!=null & x!=y

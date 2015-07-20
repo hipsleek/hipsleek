@@ -1653,7 +1653,6 @@ module EPUREN =
       check_epure_disj "mk_epure : result" r;
       r
 
-
     (* let to_cpure ((baga,eq,ineq) : epure) = *)
     (*   let f1 = conv_eq eq in *)
     (*   let f2 = conv_ineq ineq in *)

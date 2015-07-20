@@ -513,7 +513,10 @@ let dlist_2_pure diff =
   mf
 
 (* WN : this calculation on mem_formula need to be revamped *) 
-let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var list) prog : CF.mem_formula = 
+let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var list) prog : CF.mem_formula =
+  let pure_f = MCP.pure_of_mix p0 in
+  let () = x_tinfo_hp (add_str "pure f" Cprinter.string_of_pure_formula) (pure_f) no_pos in
+  let () = x_tinfo_hp (add_str "evars" Cprinter.string_of_spec_var_list) (evars) no_pos in
   let  baga_helper imm sv = 
     if ((Immutable.isLend imm) && !Globals.baga_imm) then CP.DisjSetSV.mkEmpty
     else CP.DisjSetSV.singleton_dset sv in
@@ -675,9 +678,9 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
              (*prove that p0 |- var=full_perm*)
              let full_f = Perm.mkFullPerm_pure () (Cpure.get_var var) in
              let f0 = MCP.pure_of_mix p0 in
-             x_dinfo_zp (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
+             x_tinfo_zp (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
              let res,_,_ = CP.imply_disj_orig [f0] full_f (x_add TP.imply_one 24) imp_no in
-             x_dinfo_zp (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
+             x_tinfo_zp (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
              if (res) then
                CP.DisjSetSV.singleton_dset (p(*, CP.mkTrue pos*))
              else [])
@@ -818,7 +821,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
         (*   		  lookup_view_baga_with_subs ls vdef from_svs to_svs) in *)
         (*   	{mem_formula_mset = CP.DisjSetSV.one_list_dset new_mset;} *)
         (*   ) *)
-        let ba = look_up_view_baga prog c p vs in
+        let ba = x_add (look_up_view_baga ~epure:(Some pure_f)) prog c p vs in
         let vdef = look_up_view_def pos prog.prog_view_decls c in
         let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
         let to_svs = p :: vs in
@@ -1843,7 +1846,7 @@ let heap_baga (prog : prog_decl) (h0 : h_formula): CP.spec_var list =
                   h_formula_view_remaining_branches = lbl_lst;
                   h_formula_view_pos = pos}) ->
       (match lbl_lst with
-       | None -> look_up_view_baga prog c p vs
+       | None -> x_add look_up_view_baga prog c p vs
        | Some ls ->  
          let vdef = look_up_view_def pos prog.prog_view_decls c in
          let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in

@@ -664,8 +664,9 @@ let peek_dc =
  let peek_view_decl = 
    SHGram.Entry.of_parser "peek_heap_args"
        (fun strm -> 
-           match Stream.npeek 2 strm with
-             | [IDENTIFIER n,_;LT,_] ->  ()
+           match Stream.npeek 3 strm with
+             | [PRED,_;IDENTIFIER n,_;LT,_] ->  ()
+             | [IDENTIFIER n,_;LT,_;_] ->  ()
              (* | [IDENTIFIER n,_;OBRACE,_] ->  () (\*This is for prim_view_decl*\) *)
              | _ -> raise Stream.Failure)
 
@@ -3157,12 +3158,15 @@ file_name: [[ `DOTDOT -> ".."
               | `IDENTIFIER id -> id
             ]];
 
+opt_pred:
+  [[ OPT [ x = `PRED] -> 1 ]];
+
 type_decl:
   [[ t= data_decl  -> Data t
    | t= template_data_decl  -> Data t
    | c=class_decl -> Data c
    | e=enum_decl  -> Enum e
-   | peek_view_decl; v=view_decl; `SEMICOLON -> View v
+   | peek_view_decl; o = opt_pred ; v=view_decl; `SEMICOLON -> View v
    | `PRED_PRIM; v = prim_view_decl; `SEMICOLON    -> View v
    | `PRED_EXT;v= view_decl_ext  ; `SEMICOLON   -> View v
    | b=barrier_decl ; `SEMICOLON   -> Barrier b

@@ -3,7 +3,7 @@ data node {
 	node next;
 }
 
-ll<n> == self=null & n=0
+pred ll<n> == self=null & n=0
 	or self::node<_, q> * q::ll<n-1>
 	inv n>=0;
 

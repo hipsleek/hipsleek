@@ -2,7 +2,7 @@ data node {
   node next;
 }.
 
-checkentail x::node<y> * y::node<_> |- (exists bbbb: bbbb>=0).
+checkentail xxx::node<y> * y::node<_> |- (exists bbbb: bbbb>=0).
 print residue.
 // valid?
 
