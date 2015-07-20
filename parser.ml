@@ -3167,6 +3167,7 @@ type_decl:
    | c=class_decl -> Data c
    | e=enum_decl  -> Enum e
    | peek_view_decl; o = opt_pred ; v=view_decl; `SEMICOLON -> View v
+   | peek_view_decl; o = opt_pred ; v=view_decl; `DOT -> View v
    | `PRED_PRIM; v = prim_view_decl; `SEMICOLON    -> View v
    | `PRED_EXT;v= view_decl_ext  ; `SEMICOLON   -> View v
    | b=barrier_decl ; `SEMICOLON   -> Barrier b
