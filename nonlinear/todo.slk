@@ -212,8 +212,16 @@ xpure_heap#1 inp1 : xxx::node<y>@M * y::ll<n>@M
 xpure_heap#1 inp2 : 0<n
 xpure_heap#1 inp3 :1
 xpure_heap#1@63 EXIT:( xxx=1 & (((y=null & n=0) | (1<=n & y!=null))) & xxx!=y,[], [])#true
-
 ========================================================
+# ex3d4.slk --inv-baga
+
+Why isn't there a normalization?
+What is the diff between baga_over and baga_over (unfolded)?
+
+  baga inv: [([self], n>=1),([self], n>=1)]
+  baga over inv: [([self], n>=1),([self], n>=1)]
+  baga over inv (unfolded): [([self], n>=1),([self], n>=1)]
+  baga under inv: [([self], n>=1),([self], n>=1)]
 ========================================================
 ========================================================
 ========================================================

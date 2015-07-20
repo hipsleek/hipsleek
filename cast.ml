@@ -1309,6 +1309,33 @@ let is_lock_inv prog (name : ident) : bool =
 
 let self_param vdef = P.SpecVar (Named vdef.view_data_name, self, Unprimed) 
 
+(* get specialized baga form *)
+let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
+  let vdef = look_up_view_def no_pos prog.prog_view_decls c in
+  (* let ba = vdef.view_baga in *)
+  (* let () = x_binfo_hp (add_str "look_up_view_baga: baga= " !print_svl) ba no_pos in *)
+  (* Excore.ef_pure_disj option *)
+  let ba_oinv = vdef.view_baga_x_over_inv in
+  let () = x_binfo_hp (add_str "look_up_view_baga: baga= " (pr_option !print_ef_pure_disj)) ba_oinv no_pos in
+  let from_svs = (self_param vdef) :: vdef.view_vars in
+  let to_svs = root :: args in
+  let baga_lst = match ba_oinv with
+    | None -> []
+    | Some bl -> 
+      let sst = List.combine from_svs to_svs in
+      List.map (Excore.EPureI.subst_epure sst) bl in
+  let () = x_binfo_hp (add_str "baga (subst)= " ( !print_ef_pure_disj)) baga_lst no_pos in
+  let add_epure pf lst =
+      let ep = Excore.EPureI.mk_epure pf in
+      let lst = Excore.EPureI.mk_star_disj ep lst in
+      Excore.EPureI.elim_unsat_disj false lst
+  in
+  let baga_sp = (add_epure epure baga_lst) in
+  let () = x_binfo_hp (add_str "baga (filtered)= " ( !print_ef_pure_disj)) baga_sp no_pos in
+  let r = Excore.EPureI.hull_memset baga_sp in
+  let () = x_binfo_hp (add_str "baga (hulled)= " (!print_svl)) r no_pos in
+  r
+
 let look_up_view_baga ?(epure=None) prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
   let vdef = look_up_view_def no_pos prog.prog_view_decls c in
   let ba = vdef.view_baga in

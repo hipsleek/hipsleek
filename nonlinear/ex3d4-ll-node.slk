@@ -1,0 +1,24 @@
+data node {
+  node next;
+}.
+
+pred ll<n> == self::node<null> & n=1
+  or self::node<q>*q::ll<n-1>
+inv n>=1.
+
+checkentail x::node<_>*yyy::ll<n>  |- x!=yyy.
+print residue.
+// valid?
+
+/*
+# ex3d4.slk --inv-baga
+
+Why isn't there a normalization?
+What is the diff between baga_over and baga_over (unfolded)?
+
+  baga inv: [([self], n>=1),([self], n>=1)]
+  baga over inv: [([self], n>=1),([self], n>=1)]
+  baga over inv (unfolded): [([self], n>=1),([self], n>=1)]
+  baga under inv: [([self], n>=1),([self], n>=1)]
+
+*/

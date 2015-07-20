@@ -821,7 +821,8 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
         (*   		  lookup_view_baga_with_subs ls vdef from_svs to_svs) in *)
         (*   	{mem_formula_mset = CP.DisjSetSV.one_list_dset new_mset;} *)
         (*   ) *)
-        let ba = x_add (look_up_view_baga ~epure:(Some pure_f)) prog c p vs in
+        (* get specialized baga based on pure_f *)
+        let ba = get_spec_baga pure_f prog c p vs in
         let vdef = look_up_view_def pos prog.prog_view_decls c in
         let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
         let to_svs = p :: vs in

@@ -466,6 +466,7 @@ sig
   val from_var : spec_var list -> t list
   val from_var_pairs : (spec_var * spec_var) list -> (t*t) list
   val merge_baga : t list -> t list -> t list
+  val hull_baga : t list -> t list -> t list
   val is_eq_baga : t list -> t list -> bool
   val mk_elem : spec_var -> t
 end;;
@@ -663,6 +664,16 @@ module EPURE =
 
     let elim_unsat_disj is_shape disj =
       List.filter (fun f -> not(unsat is_shape f)) disj
+
+    (* assumes that baga is sorted *)
+    let hull_memset disj =
+      let rec aux m disj =
+        match disj with
+          | [] -> m
+          | (m2,_)::lst -> Elt.hull_baga m (aux m2 lst) 
+      in match disj with
+        | [] -> []
+        | (m,_)::lst -> aux m lst
 
     let is_false_disj_x is_shape disj =
       let () = x_tinfo_pp ("Omega is_false_disj:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
@@ -945,6 +956,7 @@ module EPUREN =
           ) (mkEqVarInt (List.hd baga) !i no_pos) (List.tl baga)
 
     let merge_baga b1 b2 = Elt.merge_baga b1 b2
+    let hull_baga b1 b2 = Elt.hull_baga b1 b2
 
     let merge cmp b1 b2 =
       let rec aux b1 b2 =
