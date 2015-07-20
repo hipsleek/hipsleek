@@ -1642,15 +1642,20 @@ let is_nondet_rec rec_trrel base_trrels =
   let rec_ctx = x_add simplify rec_trrel.ret_ctx rec_trrel.termr_rhs_params in
   List.exists (fun bctx -> is_sat (mkAnd rec_ctx bctx)) base_ctx
 
-let norm_nondet_assume nd_vars ctx f = 
+let norm_nondet_assume nd_vars ctx curr_case f = 
   let disj_fs = CP.split_disjunctions f in
   let disj_fs = List.filter (fun d ->
     if not (overlap nd_vars (CP.fv d)) then false
-    else if not (is_sat (mkAnd ctx d)) then false
+    else if not (is_sat (mkAnd curr_case d)) then false
     else true) disj_fs 
   in
-  disj_fs
-
+  match disj_fs with
+  | [] -> []
+  | d::_ ->
+    let disj_fs = List.filter (fun d -> is_sat (mkAnd ctx d)) disj_fs in
+    if not (is_empty disj_fs) then disj_fs
+    else [simplify d nd_vars]
+  
 let proving_non_termination_nondet_trrel (prog: Cast.prog_decl) lhs_uids rhs_uid trrel =
   let pos = no_pos in
   let conseq = rhs_uid.CP.tu_cond in 
@@ -1678,7 +1683,7 @@ let proving_non_termination_nondet_trrel (prog: Cast.prog_decl) lhs_uids rhs_uid
     | CF.SuccCtx lst -> 
       let infer_assume = List.concat (List.map CF.collect_pre_pure lst) in
       let infer_assume_nd = List.fold_left (fun acc c ->
-          let norm_c = norm_nondet_assume nd_vars conseq c in
+          let norm_c = norm_nondet_assume nd_vars ctx conseq c in
           if is_empty norm_c then acc
           else acc @ [(join_disjs norm_c)]
         ) [] infer_assume
@@ -1708,6 +1713,8 @@ let proving_non_termination_nondet_trrels prog lhs_uids rhs_uid trrels =
         let curr_case = rhs_uid.CP.tu_cond in
         let params = List.concat (List.map CP.afv rhs_uid.CP.tu_args) in
         let infer_nd_cond = simplify (CP.join_conjunctions infer_nd_conds) params in
+        let () = x_tinfo_hp (add_str "Nondet conditions: " (pr_list !CP.print_formula)) infer_nd_conds no_pos in
+        let () = x_tinfo_hp (add_str "Simplified nondet condition: " !CP.print_formula) infer_nd_cond no_pos in
         if not (is_sat (mkAnd curr_case infer_nd_cond)) ||
            not (imply curr_case infer_nd_cond)
         then (false, [])

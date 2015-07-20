@@ -1,4 +1,5 @@
 void loop(int x, int z, int tx) 
+/*
 case {
   x < 0 | x > tx + z -> requires Term ensures true;
   x >= 0 & x <= tx + z -> case {
@@ -6,6 +7,7 @@ case {
     z < 0 -> requires Term[1,x] ensures true;
   }
 }
+*/
 {
   if (x >= 0 && x <= tx + z) {
     z = z - 1;
