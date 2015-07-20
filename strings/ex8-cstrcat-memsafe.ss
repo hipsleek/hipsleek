@@ -37,7 +37,6 @@ BADS<m> ==
   self::str<v,q>*q::BADS<m-1> & v>=0 
   inv m>=0;
 
-
 str incStr(str x)
   requires x::str<_,q>@L & Term[]
   ensures  res=q ;
