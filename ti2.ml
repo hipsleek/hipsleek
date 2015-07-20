@@ -1704,8 +1704,14 @@ let proving_non_termination_nondet_trrels prog lhs_uids rhs_uid trrels =
     else 
       let infer_nd_conds = List.concat (List.map snd infer_nd_res) in
       if is_empty infer_nd_conds then (false, [])
-      else if not (is_sat (CP.join_conjunctions infer_nd_conds)) then (false, [])
-      else (true, infer_nd_conds)
+      else 
+        let curr_case = rhs_uid.CP.tu_cond in
+        let params = List.concat (List.map CP.afv rhs_uid.CP.tu_args) in
+        let infer_nd_cond = simplify (CP.join_conjunctions infer_nd_conds) params in
+        if not (is_sat (mkAnd curr_case infer_nd_cond)) ||
+           not (imply curr_case infer_nd_cond)
+        then (false, [])
+        else (true, infer_nd_conds)
 
 let proving_non_termination_nondet_trrels prog lhs_uids rhs_uid trrel =
   let pr = Cprinter.string_of_term_id in
