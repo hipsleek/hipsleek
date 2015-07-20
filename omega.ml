@@ -215,7 +215,7 @@ and omega_of_formula_x pr_w pr_s f  =
     helper f
   with _ as e ->
       let s = Printexc.to_string e in
-      let () = print_string_quiet ("Omega Error Exp:"^s^"\n Formula:"^(!print_formula f)^"\n") in
+      let () = x_dinfo_pp (* print_string_quiet *) ("Omega Error Exp:"^s^"\n Formula:"^(!print_formula f)^"\n") no_pos in
       (* let () = x_tinfo_hp (add_str "Omega Error format:" !print_formula) f in *)
       raise e
 
