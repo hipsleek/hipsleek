@@ -10584,8 +10584,17 @@ let drop_nonlinear_formula (f:formula) : formula =
   drop_formula pr_weak pr_strong f
 
 let drop_nonlinear_formula_rev (f:formula) : formula =
+  let cnt = new Gen.counter 0 in
   let (pr_weak,pr_strong) = drop_nonlinear_formula_ops in
-  drop_formula pr_strong pr_weak f
+  let pr_weak x = cnt # inc; pr_weak x in
+  let pr_strong x = cnt # inc; pr_strong x in
+  let pr = !print_formula in
+  let nf = drop_formula pr_strong pr_weak f in
+  if (cnt#get) > 0 then
+    let () = x_binfo_hp (add_str "DROP non-linear (BFE)" pr) f no_pos in
+    let () = x_binfo_hp (add_str "DROP non-linear (AFT)" pr) nf no_pos in
+    nf
+  else nf
 
 let drop_nonlinear_formula (f:formula) : formula =
   let pr = !print_formula in
