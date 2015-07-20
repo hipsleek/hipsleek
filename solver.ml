@@ -8242,12 +8242,16 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
   in
   (* WN:TODO can we invoke a single xpure if the formula are identical? *)
   let curr_lhs_h, lhs_p = Norm.imm_norm_h_formula prog curr_lhs_h lhs_p unfold_for_abs_merge pos in
-  let (xpure_lhs_h1, yy, memset) as xp1a = x_add xpure_heap 9 prog curr_lhs_h lhs_p 1 in
+  let (xpure_lhs_h1, yy, memset) as xp1a = 
+    x_add xpure_heap 9 prog curr_lhs_h lhs_p 1 in
   let diff_num2 = Gen.seq_number2 # diff in
   let () = x_binfo_hp (add_str "used seq_number2" string_of_int) (diff_num2) no_pos in
+  (* xpure_lhs_h1_sym needed by infer_collect *)
   let (xpure_lhs_h1_sym, _, _) as xp1b = 
     if diff_num2==0 then xp1a 
     else x_add xpure_heap_sym 19 prog curr_lhs_h lhs_p 1 in
+  (* x=1 is the same as x>0 for single node *)
+  let xpure_lhs_h1 = if diff_num2==1 then xpure_lhs_h1_sym else xpure_lhs_h1 in
   let () = force_verbose_xpure := cur_force_verbose_xpure in
   (*let () = print_string("\nxpure_lhs_h1-1:"^(Cprinter.string_of_mix_formula xpure_lhs_h1)) in*)
   let diff_flag = not(!smart_same_flag) in

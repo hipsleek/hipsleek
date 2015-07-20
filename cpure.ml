@@ -10603,6 +10603,33 @@ let strong_drop_rel_formula (f:formula) : formula =
   let (pr_weak,pr_strong) = drop_rel_formula_ops in
   drop_formula pr_strong pr_weak f
 
+let find_all_nonlinear f = []
+
+let build_nl_table nl = []
+
+let replace_nonlinear f nl = f
+
+(* extract non-linear expr and replace by fresh var *)
+(* a*b>=1 |- b*a>=0   ==>   z=a*b & z>=1 |- z>=0*)
+let extr_nonlinear_formula (f:formula) : formula =
+  let nl_list = find_all_nonlinear f in
+  let nl_table = build_nl_table nl_list in
+  replace_nonlinear f nl_table
+
+(* a=c & c=1 & a*b>=1 |- b>=0   ==>   1*b>=1 & a=1 |- b>=0*)
+let subs_const_var_formula (f:formula) : formula =
+  let f_f a e = None in
+  let f_bf a e = None in
+  let f_e a e = None in
+  let ff = (f_f,f_bf,f_e) in
+  let f_arg_1 a e = a in
+  let f_arg = (f_arg_1,f_arg_1,f_arg_1) in
+  map_formula_arg f [] ff f_arg
+
+let subs_const_var_formula (f:formula) : formula =
+  let pr = !print_formula in
+  Debug.no_1 "subs_const_var_formula" pr pr subs_const_var_formula f
+
 let drop_rel_formula (f:formula) : formula =
   let pr = !print_formula in
   Debug.no_1 "drop_rel_formula" pr pr drop_rel_formula f
@@ -11460,6 +11487,37 @@ let get_eqs_rel_args p eqs rel_args pos=
   Debug.no_2 "get_eqs_rel_args" !print_formula !print_svl !print_formula
     (fun _ _ -> get_eqs_rel_args_x p eqs rel_args pos) p rel_args
 
+let find_eq_all e =
+  let f_f f = 
+    (match f with
+     | And _ | AndList _  | BForm _ -> None 
+     | _ -> Some [])
+  in
+  let f_bf bf = 
+    (match bf with
+     | (Eq _) ,_ -> Some ([bf]) 
+     | _,_ -> Some ([])
+    )
+  in
+  let f_e e = Some ([]) in
+  (* let f_arg = (fun _ _ -> ()),(fun _ _ -> ()),(fun _ _ -> ()) in *)
+  (* let subs e = trans_formula e () (f_f,f_bf,f_e) f_arg List.concat in *)
+  let find_eq e = fold_formula e (f_f,f_bf,f_e) List.concat in
+  let eq_list = find_eq e in
+  (* ZH:TODO use EMapSV to build an equality map involving variable  *)
+  let eqset = EMapSV.mkEmpty in
+  let eqset = List.fold_left (fun eset exp -> 
+      let (p_f,bf_ann) = exp in
+      (match p_f with
+       | Eq (e1,e2,pos) -> 
+         (match e1,e2 with
+          | Var(sv1,_),Var(sv2,_) -> EMapSV.add_equiv eset sv1 sv2
+          | Var(sv1,_),IConst(i2,_) -> EMapSV.add_equiv eset sv1 (mk_sp_const i2)
+          | IConst(i1,_),Var(sv2,_) -> EMapSV.add_equiv eset (mk_sp_const i1) sv2
+          | IConst(i1,_),IConst(i2,_) -> EMapSV.add_equiv eset (mk_sp_const i1)(mk_sp_const i2)
+          | _  -> eset)
+       | _ -> eset)
+    ) eqset eq_list in eqset 
 
 (* check for x=y & x!=y and mark as unsat assumes that disjunctions are all split using deep_split *)
 let is_sat_eq_ineq (f : formula) : bool =
@@ -11468,37 +11526,7 @@ let is_sat_eq_ineq (f : formula) : bool =
     if (isConstFalse f) then true
     else
       (* create a single eset for pure formula*)
-      let find_eq_all e =
-        let f_f f = 
-          (match f with
-           | And _ | AndList _  | BForm _ -> None 
-           | _ -> Some [])
-        in
-        let f_bf bf = 
-          (match bf with
-           | (Eq _) ,_ -> Some ([bf]) 
-           | _,_ -> Some ([])
-          )
-        in
-        let f_e e = Some ([]) in
-        (* let f_arg = (fun _ _ -> ()),(fun _ _ -> ()),(fun _ _ -> ()) in *)
-        (* let subs e = trans_formula e () (f_f,f_bf,f_e) f_arg List.concat in *)
-        let find_eq e = fold_formula e (f_f,f_bf,f_e) List.concat in
-        let eq_list = find_eq e in
-        let eqset = EMapSV.mkEmpty in
-        let eqset = List.fold_left (fun eset exp -> 
-            let (p_f,bf_ann) = exp in
-            (match p_f with
-             | Eq (e1,e2,pos) -> 
-               (match e1,e2 with
-                | Var(sv1,_),Var(sv2,_) -> EMapSV.add_equiv eset sv1 sv2
-                | Var(sv1,_),IConst(i2,_) -> EMapSV.add_equiv eset sv1 (mk_sp_const i2)
-                | IConst(i1,_),Var(sv2,_) -> EMapSV.add_equiv eset (mk_sp_const i1) sv2
-                | IConst(i1,_),IConst(i2,_) -> EMapSV.add_equiv eset (mk_sp_const i1)(mk_sp_const i2)
-                | _  -> eset)
-             | _ -> eset)
-          ) eqset eq_list in eqset
-      in let m_aset = find_eq_all f in
+      let m_aset = find_eq_all f in
       let p_aset = pure_ptr_equations f in
       let p_aset = EMapSV.build_eset p_aset in
       let m_aset = EMapSV.merge_eset p_aset m_aset in

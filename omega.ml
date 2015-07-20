@@ -629,7 +629,7 @@ let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
   (*print_endline "LOCLE: is_valid";*)
   begin
     (* let pe0 = drop_varperm_formula pe in *)
-    let pe = x_add_1 drop_nonlinear_formula_rev pe in
+    let pe = if !Globals.oc_non_linear then x_add_1 drop_nonlinear_formula_rev pe else pe in
     let svl0 = Cpure.fv pe in
     let svl,fr_svl = mkSpecVarList 0 svl0 in
     let ss = List.combine svl fr_svl in
