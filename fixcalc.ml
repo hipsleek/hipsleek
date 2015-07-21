@@ -1193,13 +1193,20 @@ let rec re_order_para rels pfs ante_vars = match rels with
 
 let arrange_para_new input_pairs ante_vars =
   let rels,pfs = List.split input_pairs in
-  let () = Debug.ninfo_hprint (add_str "rels(b4):" (pr_list !CP.print_formula)) rels no_pos in
-  let () = Debug.ninfo_hprint (add_str "pfs(b4):" (pr_list (pr_list !CP.print_formula))) pfs no_pos in
+  let () = Debug.binfo_hprint (add_str "rels(b4):" (pr_list !CP.print_formula)) rels no_pos in
+  let () = Debug.binfo_hprint (add_str "pfs(b4):" (pr_list (pr_list !CP.print_formula))) pfs no_pos in
   let rels,pfs = re_order_para rels pfs ante_vars in
-  let () = Debug.ninfo_hprint (add_str "rels(af):" (pr_list !CP.print_formula)) rels no_pos in
-  let () = Debug.ninfo_hprint (add_str "pfs(af):" (pr_list (pr_list !CP.print_formula))) pfs no_pos in
+  let () = Debug.binfo_hprint (add_str "rels(af):" (pr_list !CP.print_formula)) rels no_pos in
+  let () = Debug.binfo_hprint (add_str "pfs(af):" (pr_list (pr_list !CP.print_formula))) pfs no_pos in
   try List.combine rels pfs
   with _ -> report_error no_pos "Error in re_order_para"
+
+(* type: (CP.formula * CP.formula list) list -> *)
+(*   CP.spec_var list -> (CP.formula * CP.formula list) list *)
+let arrange_para_new input_pairs ante_vars =
+  let pr_pf = !CP.print_formula in
+  let pr1 = pr_list (pr_pair pr_pf (pr_list pr_pf)) in
+  Debug.no_2 "arrange_para_new" pr1 !CP.print_svl pr1 arrange_para_new input_pairs ante_vars
 
 (*  let pairs, subs = List.split *)
 (*    (List.map (fun (r,pfs) ->*)

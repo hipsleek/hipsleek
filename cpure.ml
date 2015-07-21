@@ -10469,6 +10469,7 @@ let drop_rel_formula_ops =
     | _ -> None in
   (pr_weak,pr_strong)
 
+
 let no_drop_ops =
   let pr x = None in
   (pr,pr)
@@ -10523,6 +10524,27 @@ let memo_complex_ops stk bool_vars is_complex =
         Some (BForm ((BVar (v,no_pos),None),None))
       else None
   in (pr, pr)
+
+let subs_rel_formula_ops =
+  let pr_weak b = match b with
+    | RelForm (_,_,p) -> 
+      let () = x_binfo_hp (add_str "subs_rel_formula : " !print_p_formula) b p in
+      Some (mkTrue p)
+    | _ -> None in
+  let pr_strong b = match b with
+    | RelForm (_,_,p) -> 
+      let () = x_binfo_pp "WARNING:subs_rel_formula in contrvariant position" p in
+      Some (mkFalse p)
+    | _ -> None in
+  (pr_weak,pr_strong)
+
+let subs_rel_formula (f:formula) : formula =
+  let (pr_weak,pr_strong) = subs_rel_formula_ops in
+  drop_formula pr_weak pr_strong f
+
+let subs_rel_formula (f:formula) : formula =
+  let pr = !print_formula in
+  Debug.no_1 "subs_rel_formula" pr pr subs_rel_formula f
 
 let drop_rel_formula (f:formula) : formula =
   let (pr_weak,pr_strong) = drop_rel_formula_ops in
