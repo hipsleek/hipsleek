@@ -33,12 +33,6 @@ int mults___(int a, int b)
       b > 0 -> ensures res < 0 & res < a & res < -b;
     }
   }
-
-r=a*b & b=c*d
--->  (a=0 & r=0 | b=0 & r=0 |
-      a>0&b>0&r>a&r>b | a>0&b<0&r<-a&r<b | a<0&b>0&r<a&r<-b 
-      | a<0&b<0&r>-a,r>-b)
-
 */
 
 int div___(int a, int b) 
@@ -482,6 +476,8 @@ relation concrete(bag(Object) g).
 relation cyclic(bag((Object,Object)) g).
 relation acyclic(bag((Object,Object)) g).
 relation waitS(bag((Object,Object)) g, bag(Object) S, Object d).
+
+relation nondet_int__(int r).
 
 int rand_int ()
 requires true
