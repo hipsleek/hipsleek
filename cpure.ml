@@ -360,6 +360,46 @@ type param_flow =
   | CONST of exp
   | UNKNOWN of spec_var
 
+let exp_of_param_flow f =
+  match f with
+  | INC (svs,e)   -> Some e
+  | INCEQ (svs,e) -> Some e
+  | IND (svs,e)   -> Some e
+  | DEC (svs,e)   -> Some e
+  | DECEQ (svs,e) -> Some e
+  | CONST e       -> Some e
+  | FLOW _        -> None
+  | UNKNOWN _        -> None
+
+let tranform_param_flow_exp f pflow =
+  match pflow with
+  | INC (svs,e) ->
+    (match (f e) with
+     | Some e -> INC (svs,e)
+     | None -> pflow)
+  | INCEQ (svs,e) ->
+    (match (f e) with
+     | Some e -> INCEQ (svs,e)
+     | None -> pflow)
+  | IND (svs,e) ->
+    (match (f e) with
+     | Some e -> IND (svs,e)
+     | None -> pflow)
+  | DEC (svs,e) ->
+    (match (f e) with
+     | Some e -> DEC (svs,e)
+     | None -> pflow)
+  | DECEQ (svs,e) ->
+    (match (f e) with
+     | Some e -> DECEQ (svs,e)
+     | None -> pflow)
+  | CONST e ->
+    (match (f e) with
+     | Some e -> CONST e
+     | None -> pflow)
+  | FLOW _ -> pflow
+  | UNKNOWN _ -> pflow
+
 let get_rel_from_imm_ann p = match p with
   | PostImm f
   | PreImm  f -> f

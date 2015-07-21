@@ -196,22 +196,109 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
   let frm_assumes = List.map snd zipped_frm_assumes in
   let () = Debug.binfo_hprint (add_str "initial result" pr_out) frm_assumes no_pos in
 
-  (* build (sv, exp) from zipped. *)
-  let sv_noprimes =
-    let svs = List.map fst zipped_frm_assumes in
+  (* eliminate the primed specvars from the expressions
+   * of the param flows. *)
+  (* svs,flows need to be the same length *)
+  let simplify (svs,flows : CP.spec_var list * CP.param_flow list) : CP.param_flow list =
+    (* helper functions *)
+    let primed_vars_of_flow flow =
+      match CP.exp_of_param_flow flow with
+      | Some e ->
+        List.filter CP.is_primed (CP.afv e)
+      | None -> [] in
+    (* replace occurrences of sv with sub in exp *)
+    let subst_primed_var exp sv sub =
+      (*TODO*)
+      exp in
+
+    let zipped = List.combine svs flows in
     (* get rid of primed spec_vars in the expressions, *)
-    (* let exp_of_sv sv flows = *)
-    (*   try List.assoc sv zipped_frm_assumes *)
-    (*   with Not_found -> CP.mkIConst 0 no_pos in *)
-    let helper zipped =
+    (* assumes the sv/flows are formed nicely,
+     * so that this can terminate. *)
+    let rec helper (res:(CP.spec_var * CP.param_flow) list) (zipped:(CP.spec_var * CP.param_flow) list) =
       match zipped with
-      | [] -> []
-      | (sv,e)::rest -> []
+      | [] -> res
+      | (sv,flow)::rest ->
+        (match primed_vars_of_flow flow with
+         | [] ->
+           (* no more primed in flow,
+            * so, carry on to the next one. *)
+           helper (res@[(sv,flow)]) rest
+         | primed ->
+           let flow_subst flow pv =
+             (* assumes all the primed vars in the exp of a param_flow
+              * occur as arguments to the function. i.e. in res@rest *)
+             let replacement = List.assoc pv (res@rest) in
+             (match (flow,replacement) with
+              | (CP.UNKNOWN _,_) -> flow
+              | (_,CP.UNKNOWN _) -> CP.UNKNOWN sv
+
+              | (CP.IND(svs,e1),CP.INC(nsvs,e2)) ->
+                let e = subst_primed_var e1 pv e2 in
+                CP.INC(CP.afv e,e)
+              | (CP.IND(svs,e1),CP.INCEQ(nsvs,e2)) ->
+                let e = subst_primed_var e1 pv e2 in
+                CP.INCEQ(CP.afv e,e)
+              | (CP.IND(svs,e1),CP.IND(nsvs,e2)) ->
+                let e = subst_primed_var e1 pv e2 in
+                CP.IND(CP.afv e,e)
+              | (CP.IND(svs,e1),CP.DEC(nsvs,e2)) ->
+                let e = subst_primed_var e1 pv e2 in
+                CP.DEC(CP.afv e,e)
+              | (CP.IND(svs,e1),CP.DECEQ(nsvs,e2)) ->
+                let e = subst_primed_var e1 pv e2 in
+                CP.DECEQ(CP.afv e,e)
+
+              | (CP.INC(svs,e1),CP.INC(nsvs,e2))
+              | (CP.INC(svs,e1),CP.INCEQ(nsvs,e2))
+              | (CP.INC(svs,e1),CP.IND(nsvs,e2)) -> (* INC *)
+                let e = subst_primed_var e1 pv e2 in
+                CP.INC(CP.afv e,e)
+              | (CP.INC(svs,e1),CP.DEC(nsvs,e2)) -> CP.UNKNOWN sv
+              | (CP.INC(svs,e1),CP.DECEQ(nsvs,e2)) -> CP.UNKNOWN sv
+
+              | (CP.INCEQ(svs,e1),CP.INCEQ(nsvs,e2))
+              | (CP.INCEQ(svs,e1),CP.IND(nsvs,e2)) ->
+                let e = subst_primed_var e1 pv e2 in
+                CP.INCEQ(CP.afv e,e)
+              | (CP.INCEQ(svs,e1),CP.INC(nsvs,e2)) ->
+                let e = subst_primed_var e1 pv e2 in
+                CP.INC(CP.afv e,e)
+              | (CP.INCEQ(svs,e1),CP.DEC(nsvs,e2)) -> CP.UNKNOWN sv
+              | (CP.INCEQ(svs,e1),CP.DECEQ(nsvs,e2)) -> CP.UNKNOWN sv
+
+              | (CP.DEC(svs,e1),CP.INC(nsvs,e2)) -> CP.UNKNOWN sv
+              | (CP.DEC(svs,e1),CP.INCEQ(nsvs,e2)) -> CP.UNKNOWN sv
+              | (CP.DEC(svs,e1),CP.IND(nsvs,e2))
+              | (CP.DEC(svs,e1),CP.DEC(nsvs,e2))
+              | (CP.DEC(svs,e1),CP.DECEQ(nsvs,e2)) ->
+                let e = subst_primed_var e1 pv e2 in
+                CP.DEC(CP.afv e,e)
+
+              | (CP.DECEQ(svs,e1),CP.INC(nsvs,e2)) -> CP.UNKNOWN sv
+              | (CP.DECEQ(svs,e1),CP.INCEQ(nsvs,e2)) -> CP.UNKNOWN sv
+              | (CP.DECEQ(svs,e1),CP.IND(nsvs,e2))
+              | (CP.DECEQ(svs,e1),CP.DECEQ(nsvs,e2)) ->
+                let e = subst_primed_var e1 pv e2 in
+                CP.DECEQ(CP.afv e,e)
+              | (CP.DECEQ(svs,e1),CP.DEC(nsvs,e2)) ->
+                let e = subst_primed_var e1 pv e2 in
+                CP.DEC(CP.afv e,e)
+
+              (* TODO: Need to take care of cases where (one of)
+               * the flows is CONST or FLOW.
+               * Alternatively, these are 'special' cases of the
+               * other flows, so it could be IND(x) rather than FLO(x)
+               * at this stage. *)
+
+              | (_,_) -> CP.UNKNOWN sv) in
+           (* fold over / substitute for each of the primed vars in the flow. *)
+           let flow = List.fold_left flow_subst flow primed in
+           helper res ((sv,flow)::rest))
       in
-    helper zipped_frm_assumes in
+    flows in
 
   (* TODO: eliminate the primed variables within the expressions.. *)
-  let () = Debug.binfo_hprint (add_str "initial result" pr_out) frm_assumes no_pos in
   let frm_assumes = List.map (fun (args,pa) ->
     let res = pa in
     res) zipped_frm_assumes in
