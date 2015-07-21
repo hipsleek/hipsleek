@@ -68,7 +68,7 @@ relation P(int a, int b, int c,int d, int e).
 void while1(ref str s)
   infer [P]
   requires s::WFS<n,k,m> 
-  ensures s::WFSeg<n1,s'>*s'::str<0,q>*q::BADS<m> & P(m1,n1,n,k,m);
+  ensures s::WFSeg<n1,s'>*s'::str<0,q>*q::BADS<m1> & P(m1,n1,n,k,m);
 {
   int x=getChar(s);
   if (x!=0) {
@@ -80,20 +80,43 @@ void while1(ref str s)
 /*
 # ex18a.ss
 
-Expects: n1=n-k & m1=m
+  requires s::WFS<n,k> & Term[k-n]
+  ensures s::WFSeg<k-n,s'>*s'::str<0,q>*q::BADS<>;
 
-!!! **fixcalc.ml#1023:Input of fixcalc: :P:={[n,k,m] -> [m1_1487,n1_1383] -> []: (n1_1383=0 && k=n && 0<=m ||  (exists (n1_1473: (exists (m1_1472: (exists (n_1458:n=n_1458-(1) && n_1458<=k && P(n_1458,k,m,m1_1472,n1_1473))) ))  && n1_1383=n1_1473+1 && 0<=n1_1473))  && 0<=m)
-};
-bottomupgen([P], [2], SimHeur);
-!!! **fixcalc.ml#386:svls (orig):[m1_1487,n,P,k,n1_1383,m]
-!!! **fixcalc.ml#387:svls (from parse_fix):[m,n1_1383,n,k]
-!!! **fixcalc.ml#1051:Result of fixcalc (parsed): :[ n1_1383>=0 & m>=0 & n1_1383+n=k]
+Inferred:
+!!! **pi.ml#775:>>POST:  n1_1372>=0 & m1_1371>=0 & m1_1371=m & n1_1372+n=k
 
-P:={[n,k,m] -> [m1_1487,n1_1383] -> []: 
- (n1_1383=0 && k=n && 0<=m ||  
- (exists (n1_1473: (exists (m1_1472: (exists (n_1458:
-   n =n_1458-(1) && n_1458<=k && P(n_1458,k,m,m1_1472,n1_1473))) ))  
-    && n1_1383=n1_1473+1 && 0<=n1_1473))  && 0<=m)
-};
+[ EInfer [P]
+   EBase 
+     exists (Expl)[](Impl)[n; k; m](ex)[]s::WFS<n,k,m>@M&
+     {FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         ref [s]
+         (exists s_1373,flted_71_1374,q_1375,m1_1376,
+         n1_1377: s::WFSeg<n1_1377,s_1373>@M * 
+                  s'::str<flted_71_1374,q_1375>@M * q_1375::BADS<m1_1376>@M&
+         flted_71_1374=0 & P(m1_1376,n1_1377,n,k,m) & s_1373=s' & n<=k & 0<=m&
+         {FLOW,(4,5)=__norm#E}[]]
+
+# Why did s::WFSEg<...> disappeared below?
+  What happen to P(...)??
+
+!!! **pi.ml#831:lst_assume (after norm and postprocess):[]
+!!! **pi.ml#835:new_specs2:
+[ EInfer [P]
+   EBase 
+     exists (Expl)[](Impl)[n; k; m](ex)[]s::WFS<n,k,m>@M&
+     {FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         ref [s]
+         (exists s_1373,flted_71_1374,q_1375,m1_1376,
+         n1_1377: s'::str<flted_71_1374,q_1375>@M * q_1375::BADS<m1_1376>@M&
+         flted_71_1374=0 & s_1373=s' & n<=k & 0<=m&{FLOW,(4,5)=__norm#E}[]]
+
+
 
  */
