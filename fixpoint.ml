@@ -118,13 +118,14 @@ let elim_heap h p pre_vars heap_vars aset ref_vars =
 let helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_vars =
   let h, p, _, _, _, _ = CF.split_components post_fml in
   let p = MCP.pure_of_mix p in
-  let h = if pre_vars = [] || not(inf_post) then h else (
-      enulalias := true;
-      let node_als = MCP.ptr_equations_with_null (MCP.mix_of_pure p) in
-      enulalias := false;
-      let node_aset = CP.EMapSV.build_eset node_als in
-      elim_heap h p pre_vars (CF.h_fv h) node_aset ref_vars)
-  in
+  (* WN : why is there a need to weaken the post-condition?? *)
+  (* let h = if pre_vars = [] || not(inf_post) then h else ( *)
+  (*     enulalias := true; *)
+  (*     let node_als = MCP.ptr_equations_with_null (MCP.mix_of_pure p) in *)
+  (*     enulalias := false; *)
+  (*     let node_aset = CP.EMapSV.build_eset node_als in *)
+  (*     elim_heap h p pre_vars (CF.h_fv h) node_aset ref_vars) *)
+  (* in *)
   let p,pre,bag_vars = begin
     match subst_fml with
     | None ->
@@ -144,7 +145,7 @@ let helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_var
     | Some triples (*(rel, post, pre)*) ->
       if inf_post then
         let rels = CP.get_RelForm p in
-        let p = CP.drop_rel_formula p in
+        let p = x_add_1 CP.drop_rel_formula p in
         let ps = List.filter (fun x -> not (CP.isConstTrue x)) (CP.list_of_conjs p) in  
         let pres,posts = List.split (List.concat (List.map (fun (a1,a2,a3) -> 
             if Gen.BList.mem_eq CP.equalFormula a1 rels
@@ -163,6 +164,26 @@ let helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_var
   in
   (h, p, pre, bag_vars)
 
+(* type: 'a -> *)
+(*   'b -> *)
+  (* CF.formula -> *)
+  (* CP.spec_var list -> *)
+  (* 'c -> *)
+  (* (CP.formula * CP.formula * CP.formula) list option -> *)
+  (* Cast.P.spec_var list -> *)
+  (* bool -> *)
+  (* CP.spec_var list -> *)
+  (* CF.h_formula * TP.CP.formula * CP.formula list * CP.spec_var list *)
+
+let helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_vars =
+  let pr_h_f = !CF.print_h_formula in
+  let pr_pf = !CP.print_formula in
+  let pr_svl = !CP.print_svl in
+  let pr1 = !CF.print_formula in
+  let pr_r = pr_quad pr_h_f pr_pf (pr_list pr_pf) pr_svl in
+  Debug.no_2 "simplify_post_helper" pr1 pr_svl pr_r (fun _ _ -> helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_vars)
+    post_fml post_vars 
+
 let rec simplify_post post_fml post_vars prog subst_fml pre_vars inf_post evars ref_vars = match post_fml with
   | CF.Or _ ->
     let disjs = CF.list_of_disjs post_fml in
@@ -172,12 +193,12 @@ let rec simplify_post post_fml post_vars prog subst_fml pre_vars inf_post evars 
     let fs,pres = List.split res in
     (CF.disj_of_list fs no_pos, List.concat pres)
   | CF.Exists e ->
-    let h,p,pre,bag_vars = helper e.CF.formula_exists_heap e.CF.formula_exists_pure post_fml post_vars prog subst_fml pre_vars inf_post ref_vars in
+    let h,p,pre,bag_vars = x_add helper e.CF.formula_exists_heap e.CF.formula_exists_pure post_fml post_vars prog subst_fml pre_vars inf_post ref_vars in
     (*print_endline ("VARS: " ^ Cprinter.string_of_spec_var_list pre_vars);*)
     (CF.Exists {e with CF.formula_exists_qvars = e.CF.formula_exists_qvars @ bag_vars;
                        CF.formula_exists_heap = h; CF.formula_exists_pure = MCP.mix_of_pure p},pre)
   | CF.Base b ->
-    let h,p,pre,bag_vars = helper b.CF.formula_base_heap b.CF.formula_base_pure post_fml post_vars prog subst_fml pre_vars inf_post ref_vars in
+    let h,p,pre,bag_vars = x_add helper b.CF.formula_base_heap b.CF.formula_base_pure post_fml post_vars prog subst_fml pre_vars inf_post ref_vars in
     (*print_endline ("VARS: " ^ Cprinter.string_of_spec_var_list pre_vars);*)
     let exists_h_vars = if pre_vars = [] then [] else 
         List.filter (fun x -> not (CP.is_res_spec_var x || CP.is_hprel_typ x)) (CP.diff_svl (CF.h_fv h) (pre_vars @ ref_vars @ (List.map CP.to_primed ref_vars))) in
@@ -208,10 +229,10 @@ let rec simplify_pre pre_fml lst_assume = match pre_fml with
     let p = if !do_infer_inc then TP.pairwisecheck_raw (Infer.simplify_helper (CP.conj_of_list p2 no_pos))
       else CP.mkAnd (TP.pairwisecheck_raw (Infer.simplify_helper (CP.conj_of_list p2 no_pos))) (CP.conj_of_list p1 no_pos) no_pos
     in
-    let p = if lst_assume = [] then CP.drop_rel_formula p (* need to recheck *)
+    let p = if lst_assume = [] then x_add_1 CP.drop_rel_formula p (* need to recheck *)
       else
         let rels = CP.get_RelForm p in
-        let p = CP.drop_rel_formula p in
+        let p = x_add_1 CP.drop_rel_formula p in
         let ps = List.filter (fun x -> not (CP.isConstTrue x)) (CP.list_of_conjs p) in
         let pres = List.concat (List.map (fun (a1,a2,a3) ->
             if Gen.BList.mem_eq CP.equalFormula a2 rels then [a3] else []) lst_assume) in
