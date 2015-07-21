@@ -749,6 +749,9 @@ let common_arguments = [
        Globals.sleek_logging_txt:=true;
        Globals.sleek_gen_sat:=true
      ), "Generate check sat formula");
+  ("--gen-pres", Arg.Unit (fun _ ->
+      Globals.gen_pres_sat:=true
+     ), "Generate Presbuger  sat pure formula");
   (* abduce pre from post *)
   ("--abdfpost", Arg.Set Globals.do_abd_from_post, "Enable abduction from post-condition");
   (* incremental spec *)

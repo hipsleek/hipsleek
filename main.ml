@@ -857,6 +857,7 @@ let process_source_full source =
   (*   (\* let _=print_endline_quiet ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in    () *\) *)
   (* end *)
   in
+  let () = Smtsolver.Pres_Log.log_pres_queries (List.hd !Globals.source_files) in
   (* let () = Log.process_sleek_logging () in *)
   (* print mapping table control path id and loc *)
   (*let () = print_endline_quiet (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)

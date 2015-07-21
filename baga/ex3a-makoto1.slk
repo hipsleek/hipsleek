@@ -12,4 +12,6 @@ checksat x::P<3>.
 
 !!! **astsimp.ml#2876:infered baga inv(P):[([self], y>=1 & 2>=y),([self], y>=1 & 2>=y)]
 
+CheckSat 1: UNSAT
+
 */
