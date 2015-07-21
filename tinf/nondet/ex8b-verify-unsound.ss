@@ -35,12 +35,12 @@ int main() {
 */
 
 void loop(int x, int y, int z)
-/* 
   case {
-    x <= 0 | x >= y -> requires Term ensures true;
-    x > 0 & x < y -> requires Loop ensures true;
+    ((y<=x & 1<=x) | ((z-1)<=x & 1<=x & x<y) | x<=0)
+      -> requires Term ensures true;
+    1<=x & x<=(y-1) & x<=(z-2)
+      -> requires Term[z-x] ensures true;
   }
-*/
 {
   if (x > 0 && x < y) {
     int old_x = x;

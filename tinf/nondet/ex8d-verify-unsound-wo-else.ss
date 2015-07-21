@@ -34,25 +34,35 @@ int main() {
 }
 */
 
-void loop(int x, int y, int z)
-/* 
+relation nd(int x).
+
+int nondet()
+  requires Term
+  ensures nd(res);
+
+void loop(int x, int y)
+/*
   case {
-    x <= 0 | x >= y -> requires Term ensures true;
-    x > 0 & x < y -> requires Loop ensures true;
+    !(x > 0 & x < y) 
+      -> requires Term ensures true;
+    (x>0 & x<y)
+      -> requires Term[y-x] ensures true;
   }
 */
 {
   if (x > 0 && x < y) {
     int old_x = x;
-    x = __VERIFIER_nondet_int();
+    x = nondet(); //__VERIFIER_nondet_int();
+    dprint;
     //assume z' > x';
     if (x <= old_x) {
       return;
     }
-    dprint;
+    //dprint;
     //else {
-      y = z;
-      loop(x, y, z);
-    //}
+    //y = z;
+      loop(x, y);
+      dprint;
+      //}
   }
 }
