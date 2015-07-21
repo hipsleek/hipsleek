@@ -4268,15 +4268,15 @@ let add_tnt_prim_proc prog id =
       "  requires true\n" ^
       "  ensures true & " ^ Globals.nondet_int_rel_name ^ "(res)" ^ ";\n"
     in
-    (* let nondet_rel = {                                            *)
-    (*   rel_name = nondet_int_rel_name;                             *)
-    (*   rel_typed_vars = [(int_type, nondet_int_rel_name ^ "res")]; *)
-    (*   rel_formula = P.mkTrue no_pos; }                            *)
-    (* in                                                            *)
-    (* let () = rel_names # push Globals.nondet_int_rel_name in      *)
+    let nondet_rel = {
+      rel_name = nondet_int_rel_name;
+      rel_typed_vars = [(int_type, nondet_int_rel_name ^ "res")];
+      rel_formula = P.mkTrue no_pos; }
+    in
+    let () = rel_names # push Globals.nondet_int_rel_name in
     let proc_decl = parse_c_aux_proc "tnt_prim_proc" proc_src in
     { prog with
-      (* Iast.prog_rel_decls = prog.Iast.prog_rel_decls @ [nondet_rel]; *)
+      Iast.prog_rel_decls = prog.Iast.prog_rel_decls @ [nondet_rel];
       Iast.prog_proc_decls = prog.Iast.prog_proc_decls @ [proc_decl]; }
   else if String.compare id "__VERIFIER_error" == 0 then 
     let proc_src =
