@@ -145,13 +145,18 @@ let helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_var
     | Some triples (*(rel, post, pre)*) ->
       if inf_post then
         let rels = CP.get_RelForm p in
+        let () = x_tinfo_hp (add_str "rels" (pr_list !CP.print_formula)) rels no_pos in
         let p = x_add_1 CP.drop_rel_formula p in
         let ps = List.filter (fun x -> not (CP.isConstTrue x)) (CP.list_of_conjs p) in  
         let pres,posts = List.split (List.concat (List.map (fun (a1,a2,a3) -> 
             if Gen.BList.mem_eq CP.equalFormula a1 rels
             then [(a3,a2)] else []) triples)) in
+        let () = x_tinfo_hp (add_str "pres" (pr_list !CP.print_formula)) pres no_pos in
+        let () = x_tinfo_hp (add_str "posts" (pr_list !CP.print_formula)) posts no_pos in
         let post = CP.conj_of_list (ps@posts) no_pos in
         let pre = CP.conj_of_list pres no_pos in
+        let () = x_tinfo_hp (add_str "pre" (!CP.print_formula)) pre no_pos in
+        let () = x_tinfo_hp (add_str "post" (!CP.print_formula)) post no_pos in
         (post,[pre],[])
       else
         let rels = CP.get_RelForm p in
@@ -180,9 +185,11 @@ let helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_var
   let pr_pf = !CP.print_formula in
   let pr_svl = !CP.print_svl in
   let pr1 = !CF.print_formula in
+  let pr_3 = pr_option (pr_list (pr_triple pr_pf pr_pf pr_pf)) in
   let pr_r = pr_quad pr_h_f pr_pf (pr_list pr_pf) pr_svl in
-  Debug.no_2 "simplify_post_helper" pr1 pr_svl pr_r (fun _ _ -> helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_vars)
-    post_fml post_vars 
+  Debug.no_3 "simplify_post_helper" pr1 (add_str "post_vars" pr_svl) 
+    (add_str "subst_fml" pr_3) pr_r (fun _ _ _ -> helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_vars)
+    post_fml post_vars subst_fml
 
 let rec simplify_post post_fml post_vars prog subst_fml pre_vars inf_post evars ref_vars = match post_fml with
   | CF.Or _ ->

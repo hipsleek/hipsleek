@@ -80,7 +80,7 @@ Checking procedure while2$str~str... [omega.ml]Timeout when checking sat for
 10. Restarting Omega after ... 263 invocations Stop Omega... 263 invocations [omega.ml]Timeout when checking sat for 
 10. Restarting Omega after ... 274 invocations Stop Omega... 274 invocations 
 ==================================================================
-# ex18a.ss
+# ex18a.ss (FIXED)
 
   requires s::WFS<n,k> & Term[k-n]
   ensures s::WFSeg<k-n,s'>*s'::str<0,q>*q::BADS<>;
@@ -170,6 +170,7 @@ elim_heap inp4 :[s,n1_1377,s_1373,s',flted_71_1374,q_1375,mmmm_1376]
 elim_heap@2 EXIT: s'::str<flted_71_1374,q_1375>@M * q_1375::BADS<mmmm_1376>@M
 
 # why not replace the inferred post-condition?
+  (FIXED: problem is absent in ti_case branch )
 
 (==fixpoint.ml#148==)
 drop_rel_formula@29@28@27
@@ -187,10 +188,19 @@ simplify_post_helper inp2 :[P]
 simplify_post_helper@28 EXIT:( s::WFSeg<n1_1377,s_1373>@M * s'::str<flted_71_1374,q_1375>@M * 
  q_1375::BADS<mmmm_1376>@M, flted_71_1374=0 & s_1373=s' & n<=k & 0<=m,[ true],[])
 
-
-
-
 ==================================================================
+# ex18a.ss 
+
+
+Why did explore branch has an expensive pairwise?
+
+!!! log(small):(0.785025,541)
+!!! log(big)(>0.5s)(1):(2.152736,[(pairwise,2.152736)])
+Total verification time: 1.778222 second(s)
+	Time spent in main process: 0.452301 second(s)
+	Time spent in child processes: 1.325921 second(s)
+	Time for logging: 0.095004 second(s)
+
 ==================================================================
 ==================================================================
 ==================================================================
