@@ -49,9 +49,9 @@ void loop(int x, int y, int z)
     if (x <= old_x) {
       return;
     }
-    //else {
+    else {
       y = z;
       loop(x, y, z);
-    //}
+    }
   }
 }
