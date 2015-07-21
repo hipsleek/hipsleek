@@ -1,0 +1,25 @@
+
+checkentail aaa>=1 |- aaa>=0.
+print residue.
+
+/*
+checkentail a>=1 |- a>=0.
+checkentail a*b>=1 |- a>=0.
+print residue.
+
+checkentail a*b>=2 & a=1 |- b>=2.
+print residue.
+*/
+
+/*
+# ex2.slk
+
+ id: 1<-1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:SAT:{[b, a] : (((2 <= 0=0) & (a = 1)))};
+ raw result:{[b,a]  : FALSE }
+ Sat:  2<=(a*b) & a=1
+ res: UNSAT
+
+
+
+*/

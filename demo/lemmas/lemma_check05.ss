@@ -1,12 +1,12 @@
 //
 data node { int val ; node next }
 
-rlist<y> == self::node<_,y> * y::node<_,_> 
-  or  self::rlist<z> * z::node<_, y> * y::node<_,_> ;
+pred rlist<y> == self::node<_,y> * y::node<_,_> 
+  or  self::rlist<z> * z::node<_, y> * y::node<_,_> .
 
-s_list<y> == self::node<_,y> * y::node<_,_>;
+pred s_list<y> == self::node<_,y> * y::node<_,_>.
 
-lemma "L01" self::s_list<y> * y::rlist<z> * z::node<_,_> -> self::rlist<z>;
+lemma "L01" self::s_list<y> * y::rlist<z> * z::node<_,_> -> self::rlist<z>.
 
 /*
 pred ll<n> == self = null & n = 0

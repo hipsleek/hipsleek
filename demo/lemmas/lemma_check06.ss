@@ -1,23 +1,23 @@
 //Valid.Valid.Valid.Fail.Fail.Fail
 data node { int val ; node next }
 
-lseg<n, p> == self = p & n = 0
+pred lseg<n, p> == self = p & n = 0
          or self::node<next = r> * r::lseg<n - 1, p>
-  inv n >= 0;
+  inv n >= 0.
 
-lemma "L61" self::lseg<n, p> & n = 6 -> self::lseg<n1, r1> * r1::lseg<n2, p> & n1 + n2 = 6;
+lemma "L61" self::lseg<n, p> & n = 6 -> self::lseg<n1, r1> * r1::lseg<n2, p> & n1 + n2 = 6.
 
-lemma "L67" self::lseg<n, p> -> self::lseg<n1, r1> * r1::lseg<n2, p> & n1 + n2 = n;
+lemma "L67" self::lseg<n, p> -> self::lseg<n1, r1> * r1::lseg<n2, p> & n1 + n2 = n.
 
-lemma "L62" self::lseg<n, p> & n>6 -> self::lseg<n1, r1> * r1::node<_,r2> * r2::lseg<n2, p> & n1 + n2 > 5;
+lemma "L62" self::lseg<n, p> & n>6 -> self::lseg<n1, r1> * r1::node<_,r2> * r2::lseg<n2, p> & n1 + n2 > 5.
 
 //lemma "L63" self::lseg<n, p> & n > 6 <- self::lseg<n1, r1> * r1::lseg<n2, p> & n1 = 2 & n2 > 4.
 
-lemma "L64" self::lseg<n, p> & n = 6 -> self::lseg<n1, r1> * r1::lseg<n2, p> & n1 = n2;
+lemma "L64" self::lseg<n, p> & n = 6 -> self::lseg<n1, r1> * r1::lseg<n2, p> & n1 = n2.
 
-lemma "L65" self::lseg<n, p> -> self::lseg<n, null> ;
+lemma "L65" self::lseg<n, p> -> self::lseg<n, null> .
 
-lemma "L66" self::lseg<n, p> & n=3 -> self::lseg<n1, r1> * r1::node<_,p> & n1=2;
+lemma "L66" self::lseg<n, p> & n=3 -> self::lseg<n1, r1> * r1::node<_,p> & n1=2.
 //why does it fail
 
 
