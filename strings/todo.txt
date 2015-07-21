@@ -119,6 +119,86 @@ Inferred:
          n1_1377: s'::str<flted_71_1374,q_1375>@M * q_1375::BADS<m1_1376>@M&
          flted_71_1374=0 & s_1373=s' & n<=k & 0<=m&{FLOW,(4,5)=__norm#E}[]]
 
+
+../hip ex18a-infer-cstrcat-memsafe.ss -dre "elim_heap\|simplify_rel" --dd-calls-all > 1
+../hip ex18a-infer-cstrcat-memsafe.ss -debug dd.log > 1
+
+hg annotate fixpoint.ml -udn fixpoint.ml > 1
+
+
+locle 10295 Thu Dec 19 15:03:09 2013 +0800:   | CF.ViewNode v ->
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:     let v_var = v.CF.h_formula_view_node in
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:     if Gen.BList.mem_eq CP.eq_spec_var_x v_var ref_vars && CP.is_unprimed v_var then CF.HEmp
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:     else
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:       let alias = (CP.EMapSV.find_equiv_all v_var aset) @ [v_var] in
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:       if List.exists CP.is_null_const alias then CF.HEmp else
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:         let cond = (CP.intersect_x (CP.eq_spec_var_x) alias pre_vars = []) 
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:           && not (List.exists (fun x -> CP.is_res_spec_var x) alias)
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:           && List.length (List.filter (fun x -> x = v_var) heap_vars) <= 1
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:         in if cond then CF.HEmp else h
+
+
+  | CF.ViewNode v ->
+    let v_var = v.CF.h_formula_view_node in
+    if Gen.BList.mem_eq CP.eq_spec_var_x v_var ref_vars && CP.is_unprimed v_var then CF.HEmp
+    else
+      let alias = (CP.EMapSV.find_equiv_all v_var aset) @ [v_var] in
+      if List.exists CP.is_null_const alias then CF.HEmp else
+        let cond = (CP.intersect_x (CP.eq_spec_var_x) alias pre_vars = []) 
+                   && not (List.exists (fun x -> CP.is_res_spec_var x) alias)
+                   && List.length (List.filter (fun x -> x = v_var) heap_vars) <= 1 in 
+        if cond then CF.HEmp else h
+  | CF.DataNode d ->
+    let d_var = d.CF.h_formula_data_node in
+    if Gen.BList.mem_eq CP.eq_spec_var_x d_var ref_vars && CP.is_unprimed d_var then CF.HEmp
+    else
+      let alias = (CP.EMapSV.find_equiv_all d_var aset) @ [d_var] in
+      let cond = (CP.intersect_x (CP.eq_spec_var_x) alias pre_vars = []) 
+                 && not (List.exists (fun x -> CP.is_res_spec_var x) alias)
+                 && List.length (List.filter (fun x -> x = d_var) heap_vars) <= 1
+      in if cond then CF.HEmp else h
+
+# why did elim_heap drop some heap nodes?
+
+(==mcpure.ml#2282==)
+elim_heap@2@1
+elim_heap inp1 : s::WFSeg<n1_1377,s_1373>@M * s'::str<flted_71_1374,q_1375>@M * 
+ q_1375::BADS<mmmm_1376>@M
+elim_heap inp2 : flted_71_1374=0 & P(mmmm_1376,n1_1377,n,k,m) & s_1373=s' & n<=k & 0<=m
+elim_heap inp3 :[n,k,m,s,s,n,k,m]
+elim_heap inp4 :[s,n1_1377,s_1373,s',flted_71_1374,q_1375,mmmm_1376]
+elim_heap@2 EXIT: s'::str<flted_71_1374,q_1375>@M * q_1375::BADS<mmmm_1376>@M
+
+(==pi.ml#833==)
+simplify_relation@1
+simplify_relation inp1 : EInfer [P]
+   EBase 
+     exists (Expl)[](Impl)[n; k; m](ex)[]s::WFS<n,k,m>@M&
+     {FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         ref [s]
+         (exists s_1373,flted_71_1374,q_1375,mmmm_1376,
+         n1_1377: s::WFSeg<n1_1377,s_1373>@M * 
+                  s'::str<flted_71_1374,q_1375>@M * q_1375::BADS<mmmm_1376>@M&
+         flted_71_1374=0 & P(mmmm_1376,n1_1377,n,k,m) & s_1373=s' & n<=k & 
+         0<=m&{FLOW,(4,5)=__norm#E}[]
+simplify_relation inp2 :Some([( P(n,k,m,mmmm_1371,n1_1372), n1_1372>=0 & mmmm_1371>=0 & mmmm_1371=m & n1_1372+n=k, true)])
+simplify_relation inp3 :lst_assume:[]
+simplify_relation@1 EXIT:( EInfer [P]
+   EBase 
+     exists (Expl)[](Impl)[n; k; m](ex)[]s::WFS<n,k,m>@M&
+     {FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         ref [s]
+         (exists s_1373,flted_71_1374,q_1375,mmmm_1376,
+         n1_1377: s'::str<flted_71_1374,q_1375>@M * q_1375::BADS<mmmm_1376>@M&
+         flted_71_1374=0 & s_1373=s' & n<=k & 0<=m&{FLOW,(4,5)=__norm#E}[],[])
+
+
 ==================================================================
 ==================================================================
 ==================================================================

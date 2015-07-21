@@ -68,7 +68,7 @@ relation P(int a, int b, int c,int d, int e).
 void while1(ref str s)
   infer [P]
   requires s::WFS<n,k,m> 
-  ensures s::WFSeg<n1,s'>*s'::str<0,q>*q::BADS<m1> & P(m1,n1,n,k,m);
+  ensures s::WFSeg<n1,s'>*s'::str<0,q>*q::BADS<mmmm> & P(mmmm,n1,n,k,m);
 {
   int x=getChar(s);
   if (x!=0) {
@@ -98,6 +98,7 @@ Inferred:
          n1_1377: s::WFSeg<n1_1377,s_1373>@M * 
                   s'::str<flted_71_1374,q_1375>@M * q_1375::BADS<m1_1376>@M&
          flted_71_1374=0 & P(m1_1376,n1_1377,n,k,m) & s_1373=s' & n<=k & 0<=m&
+&
          {FLOW,(4,5)=__norm#E}[]]
 
 # Why did s::WFSEg<...> disappeared below?
