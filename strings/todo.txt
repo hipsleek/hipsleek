@@ -214,6 +214,20 @@ Total verification time: 1.778222 second(s)
 # Parameter re-arrangment for fixcalc.
   Need to reverse it..
 
+!!! rels(b4)::[ PPP(mmmm_1371,n1_1372,n,k,m)]
+!!! pfs(b4)::[[ PPP(mmmm_1371,n1_1460,n_1446,k,m) & 0<=n1_1460 & 0<=m & n_1446<=k & 
+ n=n_1446-1 & n1_1372=n1_1460+1 & 0<=mmmm_1371, n1_1372=0 & k=n & mmmm_1371=m & 0<=m]]
+!!! rels(af)::[ PPP(n,k,m,mmmm_1371,n1_1372)]
+!!! pfs(af)::[[ 0<=n1_1460 & 0<=m & n_1446<=k & n=n_1446-1 & n1_1372=n1_1460+1 & 
+ 0<=mmmm_1371 & PPP(n_1446,k,m,mmmm_1371,n1_1460), n1_1372=0 & k=n & mmmm_1371=m & 0<=m]]
+(==fixcalc.ml#1501==)
+arrange_para_new@1
+arrange_para_new inp1 :[( PPP(mmmm_1371,n1_1372,n,k,m),[ PPP(mmmm_1371,n1_1460,n_1446,k,m) & 0<=n1_1460 & 0<=m & n_1446<=k & 
+ n=n_1446-1 & n1_1372=n1_1460+1 & 0<=mmmm_1371, n1_1372=0 & k=n & mmmm_1371=m & 0<=m])]
+arrange_para_new inp2 :[n,k,m,s]
+arrange_para_new@1 EXIT:[( PPP(n,k,m,mmmm_1371,n1_1372),[ PPP(mmmm_1371,n1_1460,n_1446,k,m) & 0<=n1_1460 & 0<=m & n_1446<=k & 
+ n=n_1446-1 & n1_1372=n1_1460+1 & 0<=mmmm_1371, n1_1372=0 & k=n & mmmm_1371=m & 0<=m])]
+
 (==fixcalc.ml#1475==)
 arrange_para_new@1
 arrange_para_new inp1 :[( PPP(mmmm_1371,n1_1372,n,k,m),[ PPP(mmmm_1371,n1_1460,n_1446,k,m) & 0<=n1_1460 & 0<=m & n_1446<=k & 
@@ -296,7 +310,55 @@ simplify_relation@27 EXIT:( EInfer [P]
          flted_71_1374=0 & s_1373=s' & n<=k & 0<=m&{FLOW,(4,5)=__norm#E}[]]
 
 ==================================================================
+# ex18a <in ti_case branch)
+
+simplify_relation@30@29@28@27
+simplify_relation inp1 : EAssume 
+   ref [s]
+   (exists s_76,flted_71_75,q,mmmm,
+   n1: s::WFSeg<n1,s_76>@M * s'::str<flted_71_75,q>@M * q::BADS<mmmm>@M&
+   flted_71_75=0 & PPP(mmmm,n1,n,k,m) & s_76=s'&{FLOW,(4,5)=__norm#E}[]
+simplify_relation inp2 :Some([( PPP(n,k,m,mmmm,n1), n1>=0 & m=mmmm & n1+n=k, true)])
+simplify_relation inp3 :lst_assume:[]
+simplify_relation@30 EXIT:( EAssume 
+   ref [s]
+   (exists s_76,flted_71_75,q,mmmm,
+   n1: s'::str<flted_71_75,q>@M * q::BADS<mmmm>@M&
+   flted_71_75=0 & s_76=s' & n1>=0 & m=mmmm & n1+n=k&{FLOW,(4,5)=__norm#E}[],[ true])
 ==================================================================
+# ex18a.ss -dre arrange_para\|re_order_\|.*para_of_pure
+
+(==fixcalc.ml#1224==)
+re_order_new@3@2@1
+re_order_new inp1 :[ mmmm_1371, n1_1372, n, k, m]
+re_order_new inp2 :[false,false,true,true,true]
+re_order_new@3 EXIT:[ n, k, m, mmmm_1371, n1_1372]
+
+(==fixcalc.ml#1251==)
+re_order_para@2@1
+re_order_para inp1 :[ PPP(mmmm_1371,n1_1372,n,k,m)]
+re_order_para inp2 :[[ PPP(mmmm_1371,n1_1460,n_1446,k,m) & 0<=n1_1460 & 0<=m & n_1446<=k & 
+ n=n_1446-1 & n1_1372=n1_1460+1 & 0<=mmmm_1371, n1_1372=0 & k=n & mmmm_1371=m & 0<=m]]
+re_order_para inp3 :[n,k,m,s]
+re_order_para@2 EXIT:([ PPP(n,k,m,mmmm_1371,n1_1372)],[[ 0<=n1_1460 & 0<=m & n_1446<=k & n=n_1446-1 & n1_1372=n1_1460+1 & 
+ 0<=mmmm_1371 & PPP(mmmm_1371,n1_1460,n_1446,k,m), n1_1372=0 & k=n & mmmm_1371=m & 0<=m]])
+
+(====)
+re_order_new@5@4@2@1
+re_order_new inp1 :[ mmmm_1371, n1_1460, n_1446, k, m]
+re_order_new inp2 :[false,false,true,true,true]
+re_order_new@5 EXIT:[ n_1446, k, m, mmmm_1371, n1_1460]
+
+(==fixcalc.ml#1232==)
+arrange_para_of_pure@4@2@1
+arrange_para_of_pure inp1 : PPP(mmmm_1371,n1_1460,n_1446,k,m) & 0<=n1_1460 & 0<=m & n_1446<=k & 
+ n=n_1446-1 & n1_1372=n1_1460+1 & 0<=mmmm_1371
+arrange_para_of_pure inp2 :PPP
+arrange_para_of_pure inp3 :[false,false,true,true,true]
+arrange_para_of_pure@4 EXIT: 0<=n1_1460 & 0<=m & n_1446<=k & n=n_1446-1 & n1_1372=n1_1460+1 & 
+ 0<=mmmm_1371 & PPP(mmmm_1371,n1_1460,n_1446,k,m)
+
+# no change in PPP(mmmm_1371,n1_1460,n_1446,k,m)
 ==================================================================
 ==================================================================
 ==================================================================
