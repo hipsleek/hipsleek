@@ -5528,6 +5528,7 @@ Cast.print_proc_decl_no_body := string_of_proc_decl_no_body;;
 Cast.print_program := string_of_program;;
 Cast.slk_of_data_decl := slk_of_data_decl;;
 Cast.slk_of_view_decl := slk_of_view_decl;;
+Cast.print_ef_pure_disj := string_of_ef_pure_disj;;
 Omega.print_pure := string_of_pure_formula;;
 Omega.print_exp := string_of_formula_exp;
 Smtsolver.print_pure := string_of_pure_formula;;

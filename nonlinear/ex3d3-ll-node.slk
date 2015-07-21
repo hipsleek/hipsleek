@@ -1,0 +1,26 @@
+data node {
+  node next;
+}.
+
+pred ll<n> == self=null & n=0
+  or self::node<q>*q::ll<n-1>
+inv n>=0.
+
+checkentail x::node<_>*yyy::ll<n> & n>0 |- x!=yyy.
+print residue.
+// valid?
+
+/*
+# ex3d3.slk
+
+!!! **cast.ml#1315:look_up_view_baga: baga= :[]
+!!! **cast.ml#1318:look_up_view_baga: baga= :Some([([self], 1<=n),([], self=null & n=0)])
+!!! **cast.ml#1326:baga (subst)= :[([yyy], 1<=n),([], yyy=null & n=0)]
+!!! **cast.ml#1335:baga (filtered)= :[]
+!!! **cast.ml#1315:look_up_view_baga: baga= :[]
+!!! **cast.ml#1318:look_up_view_baga: baga= :Some([([self], 1<=n),([], self=null & n=0)])
+!!! **cast.ml#1326:baga (subst)= :[([yyy], 1<=n),([], yyy=null & n=0)]
+!!! **cast.ml#1335:baga (filtered)= :[([yyy], 0<n & 1<=n)]
+!!! **cvutil.ml#1165:memset: [[x,yyy]]
+
+*/

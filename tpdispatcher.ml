@@ -33,7 +33,6 @@ let wrap_ocredlog = Wrapper.wrap_one_bool Redlog.dis_omega false
 
 let test_db = false
 
-
 (* let pure_tp = ref OmegaCalc *)
 (* let tp = ref OmegaCalc *)
 

@@ -485,6 +485,8 @@ relation waitS(bag((Object,Object)) g, bag(Object) S, Object d).
 
 relation nondet_int__(int r).
 
+relation nondet_int__(int r).
+
 int rand_int ()
 requires true
 ensures true;

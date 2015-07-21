@@ -1,22 +1,18 @@
 
-checkentail a*b>=1 |- a>=0.
+//checkentail a*b>=1 |- a>=0.
+checkentail a*b>=1 & a>6 |- a>=0.
 print residue.
 
 
 /*
-# ex2a.slk -tp oc --esl
+# ex2a.slk -tp oc --esl -dre ".*nonlinear"
 
- id: 1<-1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
- raw proof:SAT:{[a, b] : ((1 <= 0=0))};
- raw result:{[a,b]  : FALSE }
- Sat:  1<=(a*b)
- res: UNSAT
+(==omega.ml#634==)
+drop_nonlinear_formula_rev@11
+drop_nonlinear_formula_rev inp1 : (not((6<a & 1<=(a*b))) | 0<=a)
+drop_nonlinear_formula_rev@11 EXIT: (not((6<a & true)) | 0<=a)
 
-For SAT checking of
-   SAT(a*b>=1)
-
-We should not replace a*b by true,
-as the type is wrong.
+-----
 
 At worst, we should replace a*b>=1 by true
 as a weakening measure.

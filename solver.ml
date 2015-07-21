@@ -8251,7 +8251,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
     if diff_num2==0 then xp1a 
     else x_add xpure_heap_sym 19 prog curr_lhs_h lhs_p 1 in
   (* x=1 is the same as x>0 for single node *)
-  let xpure_lhs_h1 = if diff_num2==1 then xpure_lhs_h1_sym else xpure_lhs_h1 in
+  (* let xpure_lhs_h1 = if diff_num2==1 then xpure_lhs_h1_sym else xpure_lhs_h1 in *)
   let () = force_verbose_xpure := cur_force_verbose_xpure in
   (*let () = print_string("\nxpure_lhs_h1-1:"^(Cprinter.string_of_mix_formula xpure_lhs_h1)) in*)
   let diff_flag = not(!smart_same_flag) in
