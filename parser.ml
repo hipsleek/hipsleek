@@ -2675,7 +2675,7 @@ coercion_decl:
 
 coercion_decl_list:
     [[
-        coerc = LIST1 coercion_decl SEP `DOT -> {
+        coerc = LIST1 coercion_decl SEP `SEMICOLON -> {
             coercion_list_elems = coerc;
             coercion_list_kind  = LEM;
         }

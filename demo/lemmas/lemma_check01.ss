@@ -7,12 +7,12 @@ pred lseg<n, p> == case {
      }
 inv n >= 0.
 
-lemma "V1" self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>;
+lemma "V1" self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
 // Valid 
 
-lemma "V2" self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>;
+lemma "V2" self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
 // Valid
 
-lemma "F3" self::lseg<n, p> -> (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b+2);
+lemma "F3" self::lseg<n, p> -> (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b+2).
 // Fail
 
