@@ -1,1725 +1,866 @@
 data node2 {
-  int valVAL_13;
-  node2 leftREC_12;
-  node2 rightREC_33;
+  int valVAL_14;
+  node2 leftREC_13;
+  node2 rightREC_31;
 }.
 data node {
-  int valVAL_11;
-  node nextREC_34;
+  int valVAL_12;
+  node nextREC_32;
 }.
- pred bst<sm:int,lg:int> == 
-  emp&self=null & sm<=lg or
-(exists sm_37,lg_38,pl_35,
-  qs_36: self::node2<v,p,q> * p::bst<sm_37,pl_35> * q::bst<qs_36,lg_38>&
-  pl_35<=v & v<=qs_36 & sm_37=sm & lg_38=lg)
-  inv 
-  sm<=lg.
  pred tree1<m:int> == 
   emp&self=null & m=0 or
-self::node2<Anon_14,p,q> * p::tree1<m1> * 
+self::node2<Anon_15,p,q> * p::tree1<m1> * 
   q::tree1<m2>&m=m2+1+m1
   inv 
   0<=m.
  pred tree<m:int,n:int> == 
   emp&self=null & m=0 & n=0 or
-self::node2<Anon_15,p,q> * p::tree<m1,n1> * 
-  q::tree<m2,n2>&m=m2+1+m1 & exists(max_41:n=max_41+1 & max_41=max(n1,n2))
+self::node2<Anon_16,p,q> * p::tree<m1,n1> * 
+  q::tree<m2,n2>&m=m2+1+m1 & exists(max_35:n=max_35+1 & max_35=max(n1,n2))
   inv 
   0<=m & 0<=n.
  pred dll<p:node2,n:int> == 
   emp&self=null & n=0 or
-(exists p_39,self_40: self::node2<Anon_16,p_39,q> * 
-  q::dll<self_40,n1>&n=1+n1 & p_39=p & self_40=self)
+(exists p_33,self_34: self::node2<Anon_17,p_33,q> * 
+  q::dll<self_34,n1>&n=1+n1 & p_33=p & self_34=self)
   inv 
   0<=n.
 
 // id 1
-checksat  p_2408::bst<sm_2403,pl_2405> * v_node2_172_2511::bst<mi_2455,ma_2456> * 
-x'::node2<v_2407,p_2408,v_node2_172_2511>&!(v_bool_164_1527') & v_2407<a' & 
-pl_2405<=v_2407 & v_2407<=qs_2406 & sm_2403=sm & lg_2404=lg & 
-!(v_bool_160_1528') & x'!=null & a'=a & x'=x & sm_2442=qs_2406 & 
-lg_2443=lg_2404 & qs_2406<=lg_2404 & v_node2_172_2511!=null & 
-mi_2455=min(sm_2442,a') & ma_2456=max(lg_2443,a') & sm_2442<=lg_2443 & 
-right_172_2457=q_2409 & res=x'.
+checksat  tmp_1860::dll<r_1784,flted_33_1783> * 
+x'::node2<Anon_1728,v_null_type_75_1789,tmp_1860>&!(v_bool_77_1382') & 
+tmp_1860=null & m=m2_1733+1+m1_1730 & exists(max_35:n=max_35+1 & 
+max_35=max(n1_1731,n2_1734)) & v_bool_71_1383' & x'!=null & x'=x & 
+m_1737=m1_1730 & n_1738=n1_1731 & 0<=m1_1730 & 0<=n1_1731 & q_1747=null & 
+0<=n_1738 & m_1750=m2_1733 & n_1751=n2_1734 & 0<=m2_1733 & 0<=n2_1734 & 
+q_1760=null & 0<=n_1751 & Anon_18=q_1747 & m_1767=m_1737 & Anon_19=q_1760 & 
+n_1768=m_1750 & 0<=m_1750 & 0<=m_1737 & flted_33_1783=n_1768+m_1767 & 
+0<=m_1767 & 0<=n_1768 & v_null_type_75_1789=null & left_75_1785=p_1729 & 
+right_76_1790=q_1732.
 
 // id 2
-checksat  p_2408::bst<sm_2403,pl_2405> * v_node2_172_2511::bst<mi_2455,ma_2456> * 
-x'::node2<v_2407,p_2408,v_node2_172_2511>&!(v_bool_164_1527') & v_2407<a' & 
-pl_2405<=v_2407 & v_2407<=qs_2406 & sm_2403=sm & lg_2404=lg & 
-!(v_bool_160_1528') & x'!=null & a'=a & x'=x & sm_2442=qs_2406 & 
-lg_2443=lg_2404 & qs_2406<=lg_2404 & v_node2_172_2511!=null & 
-mi_2455=min(sm_2442,a') & ma_2456=max(lg_2443,a') & sm_2442<=lg_2443 & 
-right_172_2457=q_2409 & res=x'.
+checksat  tmp_1860::dll<r_1784,flted_33_1783> * 
+x'::node2<Anon_1728,v_null_type_75_1789,tmp_1860>&!(v_bool_77_1382') & 
+tmp_1860=null & m=m2_1733+1+m1_1730 & exists(max_35:n=max_35+1 & 
+max_35=max(n1_1731,n2_1734)) & v_bool_71_1383' & x'!=null & x'=x & 
+m_1737=m1_1730 & n_1738=n1_1731 & 0<=m1_1730 & 0<=n1_1731 & q_1747=null & 
+0<=n_1738 & m_1750=m2_1733 & n_1751=n2_1734 & 0<=m2_1733 & 0<=n2_1734 & 
+q_1760=null & 0<=n_1751 & Anon_18=q_1747 & m_1767=m_1737 & Anon_19=q_1760 & 
+n_1768=m_1750 & 0<=m_1750 & 0<=m_1737 & flted_33_1783=n_1768+m_1767 & 
+0<=m_1767 & 0<=n_1768 & v_null_type_75_1789=null & left_75_1785=p_1729 & 
+right_76_1790=q_1732.
 
 // id 3
-checksat  q_2409::bst<qs_2406,lg_2404> * v_node2_167_2490::bst<mi_2435,ma_2436> * 
-x'::node2<v_2407,v_node2_167_2490,q_2409>&v_bool_164_1527' & a'<=v_2407 & 
-pl_2405<=v_2407 & v_2407<=qs_2406 & sm_2403=sm & lg_2404=lg & 
-!(v_bool_160_1528') & x'!=null & a'=a & x'=x & sm_2422=sm_2403 & 
-lg_2423=pl_2405 & sm_2403<=pl_2405 & v_node2_167_2490!=null & 
-mi_2435=min(sm_2422,a') & ma_2436=max(lg_2423,a') & sm_2422<=lg_2423 & 
-left_167_2437=p_2408 & res=x'.
+checksat  q_1818::dll<self_1816,n1_1819> * self_1816::node2<Anon_1817,x',q_1818>&
+left_78_1820=p_1815 & right_76_1790=q_1732 & left_75_1785=p_1729 & 
+v_null_type_75_1789=null & 0<=n_1768 & 0<=m_1767 & flted_33_1783=n_1768+
+m_1767 & 0<=m_1737 & 0<=m_1750 & n_1768=m_1750 & Anon_19=q_1760 & 
+m_1767=m_1737 & Anon_18=q_1747 & 0<=n_1751 & q_1760=null & 0<=n2_1734 & 
+0<=m2_1733 & n_1751=n2_1734 & m_1750=m2_1733 & 0<=n_1738 & q_1747=null & 
+0<=n1_1731 & 0<=m1_1730 & n_1738=n1_1731 & m_1737=m1_1730 & x'=x & 
+x'!=null & v_bool_71_1383' & exists(max_35:n=max_35+1 & max_35=max(n1_1731,
+n2_1734)) & m=m2_1733+1+m1_1730 & self_1816!=null & v_bool_77_1382' & 
+p_1815=r_1784 & flted_33_1783=1+n1_1819 & Anon_1823=Anon_1728 & 
+q_1824=self_1816.
 
 // id 4
-checksat  q_2409::bst<qs_2406,lg_2404> * v_node2_167_2490::bst<mi_2435,ma_2436> * 
-x'::node2<v_2407,v_node2_167_2490,q_2409>&v_bool_164_1527' & a'<=v_2407 & 
-pl_2405<=v_2407 & v_2407<=qs_2406 & sm_2403=sm & lg_2404=lg & 
-!(v_bool_160_1528') & x'!=null & a'=a & x'=x & sm_2422=sm_2403 & 
-lg_2423=pl_2405 & sm_2403<=pl_2405 & v_node2_167_2490!=null & 
-mi_2435=min(sm_2422,a') & ma_2436=max(lg_2423,a') & sm_2422<=lg_2423 & 
-left_167_2437=p_2408 & res=x'.
+checksat  q_1818::dll<self_1816,n1_1819> * self_1816::node2<Anon_1817,x',q_1818>&
+left_78_1820=p_1815 & right_76_1790=q_1732 & left_75_1785=p_1729 & 
+v_null_type_75_1789=null & 0<=n_1768 & 0<=m_1767 & flted_33_1783=n_1768+
+m_1767 & 0<=m_1737 & 0<=m_1750 & n_1768=m_1750 & Anon_19=q_1760 & 
+m_1767=m_1737 & Anon_18=q_1747 & 0<=n_1751 & q_1760=null & 0<=n2_1734 & 
+0<=m2_1733 & n_1751=n2_1734 & m_1750=m2_1733 & 0<=n_1738 & q_1747=null & 
+0<=n1_1731 & 0<=m1_1730 & n_1738=n1_1731 & m_1737=m1_1730 & x'=x & 
+x'!=null & v_bool_71_1383' & exists(max_35:n=max_35+1 & max_35=max(n1_1731,
+n2_1734)) & m=m2_1733+1+m1_1730 & self_1816!=null & v_bool_77_1382' & 
+p_1815=r_1784 & flted_33_1783=1+n1_1819 & Anon_1823=Anon_1728 & 
+q_1824=self_1816.
 
 // id 5
-checksat  x::bst<sm,lg>&res=v_node2_161_1495' & v_null_type_161_2458=null & 
-v_null_type_161_2459=null & x'=x & a'=a & x'=null & v_bool_160_1528' & 
-v_2462=a' & p_2463=v_null_type_161_2459 & q_2464=v_null_type_161_2458 & 
-exists(mi_2460:mi_2460<=v_2462) & exists(ma_2461:v_2462<=ma_2461).
+checksat  q_1818::dll<self_1816,n1_1819> * 
+x'::node2<Anon_1728,v_null_type_75_1789,self_1816> * 
+self_1816::node2<Anon_1817,x',q_1818>&flted_33_1783=1+n1_1819 & 
+p_1815=r_1784 & v_bool_77_1382' & self_1816!=null & m=m2_1733+1+m1_1730 & 
+exists(max_35:n=max_35+1 & max_35=max(n1_1731,n2_1734)) & v_bool_71_1383' & 
+x'!=null & x'=x & m_1737=m1_1730 & n_1738=n1_1731 & 0<=m1_1730 & 
+0<=n1_1731 & q_1747=null & 0<=n_1738 & m_1750=m2_1733 & n_1751=n2_1734 & 
+0<=m2_1733 & 0<=n2_1734 & q_1760=null & 0<=n_1751 & Anon_18=q_1747 & 
+m_1767=m_1737 & Anon_19=q_1760 & n_1768=m_1750 & 0<=m_1750 & 0<=m_1737 & 
+flted_33_1783=n_1768+m_1767 & 0<=m_1767 & 0<=n_1768 & 
+v_null_type_75_1789=null & left_75_1785=p_1729 & right_76_1790=q_1732 & 
+left_78_1820=p_1815.
 
 // id 6
-checksat  x::bst<sm,lg>&res=v_node2_161_1495' & v_null_type_161_2458=null & 
-v_null_type_161_2459=null & x'=x & a'=a & x'=null & v_bool_160_1528' & 
-v_2462=a' & p_2463=v_null_type_161_2459 & q_2464=v_null_type_161_2458 & 
-exists(mi_2460:mi_2460<=v_2462) & exists(ma_2461:v_2462<=ma_2461).
+checksat  q_1818::dll<self_1816,n1_1819> * 
+x'::node2<Anon_1728,v_null_type_75_1789,self_1816> * 
+self_1816::node2<Anon_1817,x',q_1818>&flted_33_1783=1+n1_1819 & 
+p_1815=r_1784 & v_bool_77_1382' & self_1816!=null & m=m2_1733+1+m1_1730 & 
+exists(max_35:n=max_35+1 & max_35=max(n1_1731,n2_1734)) & v_bool_71_1383' & 
+x'!=null & x'=x & m_1737=m1_1730 & n_1738=n1_1731 & 0<=m1_1730 & 
+0<=n1_1731 & q_1747=null & 0<=n_1738 & m_1750=m2_1733 & n_1751=n2_1734 & 
+0<=m2_1733 & 0<=n2_1734 & q_1760=null & 0<=n_1751 & Anon_18=q_1747 & 
+m_1767=m_1737 & Anon_19=q_1760 & n_1768=m_1750 & 0<=m_1750 & 0<=m_1737 & 
+flted_33_1783=n_1768+m_1767 & 0<=m_1767 & 0<=n_1768 & 
+v_null_type_75_1789=null & left_75_1785=p_1729 & right_76_1790=q_1732 & 
+left_78_1820=p_1815.
 
 // id 7
-checksat  x::bst<sm,lg>&q_2464=v_null_type_161_2458 & p_2463=v_null_type_161_2459 & 
-v_2462=a' & v_bool_160_1528' & x'=null & a'=a & x'=x & 
-v_null_type_161_2459=null & v_null_type_161_2458=null & res=v_node2_161_1495'.
+checksat  q_1818::dll<self_1816,n1_1819> * 
+x'::node2<Anon_1728,v_null_type_75_1789,tmp'>&right_78_1381'=q_1818 & 
+left_78_1380'=p_1815 & val_78_1379'=Anon_1817 & right_76_1790=q_1732 & 
+left_75_1785=p_1729 & v_null_type_75_1789=null & 0<=n_1768 & 0<=m_1767 & 
+flted_33_1783=n_1768+m_1767 & 0<=m_1737 & 0<=m_1750 & n_1768=m_1750 & 
+Anon_19=q_1760 & m_1767=m_1737 & Anon_18=q_1747 & 0<=n_1751 & q_1760=null & 
+0<=n2_1734 & 0<=m2_1733 & n_1751=n2_1734 & m_1750=m2_1733 & 0<=n_1738 & 
+q_1747=null & 0<=n1_1731 & 0<=m1_1730 & n_1738=n1_1731 & m_1737=m1_1730 & 
+x'=x & x'!=null & v_bool_71_1383' & exists(max_35:n=max_35+1 & 
+max_35=max(n1_1731,n2_1734)) & m=m2_1733+1+m1_1730 & tmp'!=null & 
+v_bool_77_1382' & self_1816=tmp' & p_1815=r_1784 & flted_33_1783=1+n1_1819.
 
 // id 8
-checksat  x::bst<sm,lg>&q_2464=v_null_type_161_2458 & p_2463=v_null_type_161_2459 & 
-v_2462=a' & v_bool_160_1528' & x'=null & a'=a & x'=x & 
-v_null_type_161_2459=null & v_null_type_161_2458=null & res=v_node2_161_1495'.
+checksat  (exists p_1809,self_1810,Anon_1811,q_1812,
+n1_1813: tmp'::node2<Anon_1811,p_1809,q_1812> * 
+q_1812::dll<self_1810,n1_1813> * 
+x'::node2<Anon_1728,v_null_type_75_1789,tmp'>&flted_33_1783=1+n1_1813 & 
+p_1809=r_1784 & self_1810=tmp' & v_bool_77_1382' & tmp'!=null & m=m2_1733+1+
+m1_1730 & exists(max_35:n=max_35+1 & max_35=max(n1_1731,n2_1734)) & 
+v_bool_71_1383' & x'!=null & x'=x & m_1737=m1_1730 & n_1738=n1_1731 & 
+0<=m1_1730 & 0<=n1_1731 & q_1747=null & 0<=n_1738 & m_1750=m2_1733 & 
+n_1751=n2_1734 & 0<=m2_1733 & 0<=n2_1734 & q_1760=null & 0<=n_1751 & 
+Anon_18=q_1747 & m_1767=m_1737 & Anon_19=q_1760 & n_1768=m_1750 & 
+0<=m_1750 & 0<=m_1737 & flted_33_1783=n_1768+m_1767 & 0<=m_1767 & 
+0<=n_1768 & v_null_type_75_1789=null & left_75_1785=p_1729 & 
+right_76_1790=q_1732).
 
 // id 9
-checksat  x::bst<sm,lg>&res=v_node2_161_1495' & v_null_type_161_2458=null & 
-v_null_type_161_2459=null & x'=x & a'=a & x'=null & v_bool_160_1528' & 
-v_2462=a' & p_2463=v_null_type_161_2459 & q_2464=v_null_type_161_2458.
+checksat  x'::node2<Anon_1728,v_null_type_75_1789,tmp'>&tmp'=null & flted_33_1783=0 & 
+v_bool_77_1382' & tmp'!=null & m=m2_1733+1+m1_1730 & exists(max_35:n=max_35+
+1 & max_35=max(n1_1731,n2_1734)) & v_bool_71_1383' & x'!=null & x'=x & 
+m_1737=m1_1730 & n_1738=n1_1731 & 0<=m1_1730 & 0<=n1_1731 & q_1747=null & 
+0<=n_1738 & m_1750=m2_1733 & n_1751=n2_1734 & 0<=m2_1733 & 0<=n2_1734 & 
+q_1760=null & 0<=n_1751 & Anon_18=q_1747 & m_1767=m_1737 & Anon_19=q_1760 & 
+n_1768=m_1750 & 0<=m_1750 & 0<=m_1737 & flted_33_1783=n_1768+m_1767 & 
+0<=m_1767 & 0<=n_1768 & v_null_type_75_1789=null & left_75_1785=p_1729 & 
+right_76_1790=q_1732.
 
 // id 10
-checksat  x::bst<sm,lg>&res=v_node2_161_1495' & v_null_type_161_2458=null & 
-v_null_type_161_2459=null & x'=x & a'=a & x'=null & v_bool_160_1528' & 
-v_2462=a' & p_2463=v_null_type_161_2459 & q_2464=v_null_type_161_2458.
+checksat  tmp'::dll<r_1784,flted_33_1783> * 
+x'::node2<Anon_1728,v_null_type_75_1789,tmp'>&tmp'=null & 
+right_76_1790=q_1732 & left_75_1785=p_1729 & v_null_type_75_1789=null & 
+0<=n_1768 & 0<=m_1767 & flted_33_1783=n_1768+m_1767 & 0<=m_1737 & 
+0<=m_1750 & n_1768=m_1750 & Anon_19=q_1760 & m_1767=m_1737 & 
+Anon_18=q_1747 & 0<=n_1751 & q_1760=null & 0<=n2_1734 & 0<=m2_1733 & 
+n_1751=n2_1734 & m_1750=m2_1733 & 0<=n_1738 & q_1747=null & 0<=n1_1731 & 
+0<=m1_1730 & n_1738=n1_1731 & m_1737=m1_1730 & x'=x & x'!=null & 
+v_bool_71_1383' & exists(max_35:n=max_35+1 & max_35=max(n1_1731,n2_1734)) & 
+m=m2_1733+1+m1_1730 & !(v_bool_77_1382') & tmp'=null & !(v_bool_77_1382').
 
 // id 11
-checksat  x::bst<sm,lg>&q_2464=v_null_type_161_2458 & p_2463=v_null_type_161_2459 & 
-v_2462=a' & v_bool_160_1528' & x'=null & a'=a & x'=x & 
-v_null_type_161_2459=null & v_null_type_161_2458=null & res=v_node2_161_1495'.
+checksat  tmp'::dll<r_1784,flted_33_1783> * 
+x'::node2<Anon_1728,v_null_type_75_1789,tmp'>&tmp'!=null & 
+right_76_1790=q_1732 & left_75_1785=p_1729 & v_null_type_75_1789=null & 
+0<=n_1768 & 0<=m_1767 & flted_33_1783=n_1768+m_1767 & 0<=m_1737 & 
+0<=m_1750 & n_1768=m_1750 & Anon_19=q_1760 & m_1767=m_1737 & 
+Anon_18=q_1747 & 0<=n_1751 & q_1760=null & 0<=n2_1734 & 0<=m2_1733 & 
+n_1751=n2_1734 & m_1750=m2_1733 & 0<=n_1738 & q_1747=null & 0<=n1_1731 & 
+0<=m1_1730 & n_1738=n1_1731 & m_1737=m1_1730 & x'=x & x'!=null & 
+v_bool_71_1383' & exists(max_35:n=max_35+1 & max_35=max(n1_1731,n2_1734)) & 
+m=m2_1733+1+m1_1730 & v_bool_77_1382' & tmp'!=null & !(v_bool_77_1382').
 
 // id 12
-checksat  x::bst<sm,lg>&res=v_node2_161_1495' & v_null_type_161_2458=null & 
-v_null_type_161_2459=null & x'=x & a'=a & x'=null & v_bool_160_1528' & 
-v_2462=a' & p_2463=v_null_type_161_2459 & q_2464=v_null_type_161_2458.
+checksat  tmp'::dll<r_1784,flted_33_1783> * 
+x'::node2<Anon_1728,v_null_type_75_1789,tmp'>&tmp'=null & 
+right_76_1790=q_1732 & left_75_1785=p_1729 & v_null_type_75_1789=null & 
+0<=n_1768 & 0<=m_1767 & flted_33_1783=n_1768+m_1767 & 0<=m_1737 & 
+0<=m_1750 & n_1768=m_1750 & Anon_19=q_1760 & m_1767=m_1737 & 
+Anon_18=q_1747 & 0<=n_1751 & q_1760=null & 0<=n2_1734 & 0<=m2_1733 & 
+n_1751=n2_1734 & m_1750=m2_1733 & 0<=n_1738 & q_1747=null & 0<=n1_1731 & 
+0<=m1_1730 & n_1738=n1_1731 & m_1737=m1_1730 & x'=x & x'!=null & 
+v_bool_71_1383' & exists(max_35:n=max_35+1 & max_35=max(n1_1731,n2_1734)) & 
+m=m2_1733+1+m1_1730 & !(v_bool_77_1382') & tmp'=null & v_bool_77_1382'.
 
 // id 13
-checksat  x::bst<sm,lg>&res=v_node2_161_1495' & v_null_type_161_2458=null & 
-v_null_type_161_2459=null & x'=x & a'=a & x'=null & v_bool_160_1528' & 
-v_2462=a' & p_2463=v_null_type_161_2459 & q_2464=v_null_type_161_2458.
+checksat  tmp'::dll<r_1784,flted_33_1783> * 
+x'::node2<Anon_1728,v_null_type_75_1789,tmp'>&tmp'!=null & 
+right_76_1790=q_1732 & left_75_1785=p_1729 & v_null_type_75_1789=null & 
+0<=n_1768 & 0<=m_1767 & flted_33_1783=n_1768+m_1767 & 0<=m_1737 & 
+0<=m_1750 & n_1768=m_1750 & Anon_19=q_1760 & m_1767=m_1737 & 
+Anon_18=q_1747 & 0<=n_1751 & q_1760=null & 0<=n2_1734 & 0<=m2_1733 & 
+n_1751=n2_1734 & m_1750=m2_1733 & 0<=n_1738 & q_1747=null & 0<=n1_1731 & 
+0<=m1_1730 & n_1738=n1_1731 & m_1737=m1_1730 & x'=x & x'!=null & 
+v_bool_71_1383' & exists(max_35:n=max_35+1 & max_35=max(n1_1731,n2_1734)) & 
+m=m2_1733+1+m1_1730 & v_bool_77_1382' & tmp'!=null & v_bool_77_1382'.
 
 // id 14
-checksat  x::bst<sm,lg> * 
-v_node2_161_1495'::node2<a',v_null_type_161_2459,v_null_type_161_2458>&
-v_bool_160_1528' & x'=null & a'=a & x'=x & v_null_type_161_2459=null & 
-v_null_type_161_2458=null & res=v_node2_161_1495'.
+checksat  tmp'::dll<r_1784,flted_33_1783> * 
+x'::node2<Anon_1728,v_null_type_75_1789,tmp'>&tmp'!=null & 
+right_76_1790=q_1732 & left_75_1785=p_1729 & v_null_type_75_1789=null & 
+0<=n_1768 & 0<=m_1767 & flted_33_1783=n_1768+m_1767 & 0<=m_1737 & 
+0<=m_1750 & n_1768=m_1750 & Anon_19=q_1760 & m_1767=m_1737 & 
+Anon_18=q_1747 & 0<=n_1751 & q_1760=null & 0<=n2_1734 & 0<=m2_1733 & 
+n_1751=n2_1734 & m_1750=m2_1733 & 0<=n_1738 & q_1747=null & 0<=n1_1731 & 
+0<=m1_1730 & n_1738=n1_1731 & m_1737=m1_1730 & x'=x & x'!=null & 
+v_bool_71_1383' & exists(max_35:n=max_35+1 & max_35=max(n1_1731,n2_1734)) & 
+m=m2_1733+1+m1_1730 & res & tmp'!=null.
 
 // id 15
-checksat  x::bst<sm,lg> * 
-v_node2_161_1495'::node2<a',v_null_type_161_2459,v_null_type_161_2458>&
-v_bool_160_1528' & x'=null & a'=a & x'=x & v_null_type_161_2459=null & 
-v_null_type_161_2458=null & res=v_node2_161_1495'.
+checksat  tmp'::dll<r_1784,flted_33_1783> * 
+x'::node2<Anon_1728,v_null_type_75_1789,tmp'>&m=m2_1733+1+m1_1730 & 
+exists(max_35:n=max_35+1 & max_35=max(n1_1731,n2_1734)) & v_bool_71_1383' & 
+x'!=null & x'=x & m_1737=m1_1730 & n_1738=n1_1731 & 0<=m1_1730 & 
+0<=n1_1731 & q_1747=null & 0<=n_1738 & m_1750=m2_1733 & n_1751=n2_1734 & 
+0<=m2_1733 & 0<=n2_1734 & q_1760=null & 0<=n_1751 & Anon_18=q_1747 & 
+m_1767=m_1737 & Anon_19=q_1760 & n_1768=m_1750 & 0<=m_1750 & 0<=m_1737 & 
+flted_33_1783=n_1768+m_1767 & 0<=m_1767 & 0<=n_1768 & 
+v_null_type_75_1789=null & left_75_1785=p_1729 & right_76_1790=q_1732 & 
+tmp'!=null.
 
 // id 16
-checksat  p_2408::bst<sm_2403,pl_2405> * v_node2_172_1523'::bst<mi_2455,ma_2456>&
-right_172_1526'=q_2409 & left_172_1525'=p_2408 & val_172_1524'=v_2407 & 
-sm_2442<=lg_2443 & ma_2456=max(lg_2443,a') & mi_2455=min(sm_2442,a') & 
-v_node2_172_1523'!=null & qs_2406<=lg_2404 & lg_2443=lg_2404 & 
-sm_2442=qs_2406 & x'=x & a'=a & tmp_null'=null & x'!=null & 
-!(v_bool_160_1528') & lg_2404=lg & sm_2403=sm & v_2407<=qs_2406 & 
-pl_2405<=v_2407 & v_2407<a' & !(v_bool_164_1527').
+checksat  tmp'::dll<r_1784,flted_33_1783> * 
+x'::node2<Anon_1728,v_null_type_75_1789,tmp'>&m=m2_1733+1+m1_1730 & 
+exists(max_35:n=max_35+1 & max_35=max(n1_1731,n2_1734)) & v_bool_71_1383' & 
+x'!=null & x'=x & m_1737=m1_1730 & n_1738=n1_1731 & 0<=m1_1730 & 
+0<=n1_1731 & q_1747=null & 0<=n_1738 & m_1750=m2_1733 & n_1751=n2_1734 & 
+0<=m2_1733 & 0<=n2_1734 & q_1760=null & 0<=n_1751 & Anon_18=q_1747 & 
+m_1767=m_1737 & Anon_19=q_1760 & n_1768=m_1750 & 0<=m_1750 & 0<=m_1737 & 
+flted_33_1783=n_1768+m_1767 & 0<=m_1767 & 0<=n_1768 & 
+v_null_type_75_1789=null & left_75_1785=p_1729 & right_76_1790=q_1732 & 
+tmp'!=null.
 
 // id 17
-checksat  (exists mi_2448,ma_2449: x'::node2<v_2407,p_2408,q_2409> * 
-p_2408::bst<sm_2403,pl_2405> * res::bst<mi_2448,ma_2449>&
-!(v_bool_164_1527') & v_2407<a' & pl_2405<=v_2407 & v_2407<=qs_2406 & 
-sm_2403=sm & lg_2404=lg & !(v_bool_160_1528') & x'!=null & tmp_null'=null & 
-a'=a & x'=x & v_node2_172_1522'=q_2409 & sm_2442=qs_2406 & lg_2443=lg_2404 & 
-qs_2406<=lg_2404 & res!=null & mi_2448=min(sm_2442,a') & ma_2449=max(lg_2443,
-a') & sm_2442<=lg_2443).
+checksat  tmp'::dll<r_1784,flted_33_1783> * 
+x'::node2<Anon_1728,v_null_type_75_1789,tmp'>&m=m2_1733+1+m1_1730 & 
+exists(max_35:n=max_35+1 & max_35=max(n1_1731,n2_1734)) & v_bool_71_1383' & 
+x'!=null & x'=x & m_1737=m1_1730 & n_1738=n1_1731 & 0<=m1_1730 & 
+0<=n1_1731 & q_1747=null & 0<=n_1738 & m_1750=m2_1733 & n_1751=n2_1734 & 
+0<=m2_1733 & 0<=n2_1734 & q_1760=null & 0<=n_1751 & Anon_18=q_1747 & 
+m_1767=m_1737 & Anon_19=q_1760 & n_1768=m_1750 & 0<=m_1750 & 0<=m_1737 & 
+flted_33_1783=n_1768+m_1767 & 0<=m_1767 & 0<=n_1768 & 
+v_null_type_75_1789=null & left_75_1785=p_1729 & right_76_1790=q_1732 & 
+tmp'!=null.
 
 // id 18
-checksat  x'::node2<v_2407,p_2408,q_2409> * p_2408::bst<sm_2403,pl_2405>&
-lg_2443=lg_2404 & sm_2442=qs_2406 & v_node2_172_1522'=q_2409 & x'=x & a'=a & 
-tmp_null'=null & x'!=null & !(v_bool_160_1528') & lg_2404=lg & sm_2403=sm & 
-v_2407<=qs_2406 & pl_2405<=v_2407 & v_2407<a' & !(v_bool_164_1527').
+checksat  tmp'::dll<r_1784,flted_33_1783> * 
+x'::node2<Anon_1728,v_null_type_75_1789,tmp'>&tmp'=null & 
+right_76_1790=q_1732 & left_75_1785=p_1729 & v_null_type_75_1789=null & 
+0<=n_1768 & 0<=m_1767 & flted_33_1783=n_1768+m_1767 & 0<=m_1737 & 
+0<=m_1750 & n_1768=m_1750 & Anon_19=q_1760 & m_1767=m_1737 & 
+Anon_18=q_1747 & 0<=n_1751 & q_1760=null & 0<=n2_1734 & 0<=m2_1733 & 
+n_1751=n2_1734 & m_1750=m2_1733 & 0<=n_1738 & q_1747=null & 0<=n1_1731 & 
+0<=m1_1730 & n_1738=n1_1731 & m_1737=m1_1730 & x'=x & x'!=null & 
+v_bool_71_1383' & exists(max_35:n=max_35+1 & max_35=max(n1_1731,n2_1734)) & 
+m=m2_1733+1+m1_1730 & !(res) & tmp'=null.
 
 // id 19
-checksat  x'::node2<v_2407,p_2408,q_2409> * p_2408::bst<sm_2403,pl_2405>&
-lg_2443=lg_2404 & sm_2442=qs_2406 & v_node2_172_1522'=q_2409 & x'=x & a'=a & 
-tmp_null'=null & x'!=null & !(v_bool_160_1528') & lg_2404=lg & sm_2403=sm & 
-v_2407<=qs_2406 & pl_2405<=v_2407 & v_2407<a' & !(v_bool_164_1527').
+checksat  tmp'::dll<r_1784,flted_33_1783> * 
+x'::node2<Anon_1728,v_null_type_75_1789,tmp'>&m=m2_1733+1+m1_1730 & 
+exists(max_35:n=max_35+1 & max_35=max(n1_1731,n2_1734)) & v_bool_71_1383' & 
+x'!=null & x'=x & m_1737=m1_1730 & n_1738=n1_1731 & 0<=m1_1730 & 
+0<=n1_1731 & q_1747=null & 0<=n_1738 & m_1750=m2_1733 & n_1751=n2_1734 & 
+0<=m2_1733 & 0<=n2_1734 & q_1760=null & 0<=n_1751 & Anon_18=q_1747 & 
+m_1767=m_1737 & Anon_19=q_1760 & n_1768=m_1750 & 0<=m_1750 & 0<=m_1737 & 
+flted_33_1783=n_1768+m_1767 & 0<=m_1767 & 0<=n_1768 & 
+v_null_type_75_1789=null & left_75_1785=p_1729 & right_76_1790=q_1732 & 
+tmp'=null.
 
 // id 20
-checksat  x'::node2<v_2407,p_2408,q_2409> * p_2408::bst<sm_2403,pl_2405> * 
-q_2409::bst<qs_2406,lg_2404>&right_172_1517'=q_2409 & 
-left_172_1516'=p_2408 & val_172_1515'=v_2407 & x'=x & a'=a & 
-tmp_null'=null & x'!=null & !(v_bool_160_1528') & lg_2404=lg & sm_2403=sm & 
-v_2407<=qs_2406 & pl_2405<=v_2407 & v_2407<a' & !(v_bool_164_1527').
+checksat  tmp'::dll<r_1784,flted_33_1783> * 
+x'::node2<Anon_1728,v_null_type_75_1789,tmp'>&m=m2_1733+1+m1_1730 & 
+exists(max_35:n=max_35+1 & max_35=max(n1_1731,n2_1734)) & v_bool_71_1383' & 
+x'!=null & x'=x & m_1737=m1_1730 & n_1738=n1_1731 & 0<=m1_1730 & 
+0<=n1_1731 & q_1747=null & 0<=n_1738 & m_1750=m2_1733 & n_1751=n2_1734 & 
+0<=m2_1733 & 0<=n2_1734 & q_1760=null & 0<=n_1751 & Anon_18=q_1747 & 
+m_1767=m_1737 & Anon_19=q_1760 & n_1768=m_1750 & 0<=m_1750 & 0<=m_1737 & 
+flted_33_1783=n_1768+m_1767 & 0<=m_1767 & 0<=n_1768 & 
+v_null_type_75_1789=null & left_75_1785=p_1729 & right_76_1790=q_1732 & 
+tmp'=null.
 
 // id 21
-checksat  q_2409::bst<qs_2406,lg_2404> * v_node2_167_1511'::bst<mi_2435,ma_2436>&
-right_167_1514'=q_2409 & left_167_1513'=p_2408 & val_167_1512'=v_2407 & 
-sm_2422<=lg_2423 & ma_2436=max(lg_2423,a') & mi_2435=min(sm_2422,a') & 
-v_node2_167_1511'!=null & sm_2403<=pl_2405 & lg_2423=pl_2405 & 
-sm_2422=sm_2403 & tmp'=p_2408 & x'=x & a'=a & tmp_null'=null & x'!=null & 
-!(v_bool_160_1528') & lg_2404=lg & sm_2403=sm & v_2407<=qs_2406 & 
-pl_2405<=v_2407 & a'<=v_2407 & v_bool_164_1527'.
+checksat  tmp'::dll<r_1784,flted_33_1783> * 
+x'::node2<Anon_1728,v_null_type_75_1789,tmp'>&m=m2_1733+1+m1_1730 & 
+exists(max_35:n=max_35+1 & max_35=max(n1_1731,n2_1734)) & v_bool_71_1383' & 
+x'!=null & x'=x & m_1737=m1_1730 & n_1738=n1_1731 & 0<=m1_1730 & 
+0<=n1_1731 & q_1747=null & 0<=n_1738 & m_1750=m2_1733 & n_1751=n2_1734 & 
+0<=m2_1733 & 0<=n2_1734 & q_1760=null & 0<=n_1751 & Anon_18=q_1747 & 
+m_1767=m_1737 & Anon_19=q_1760 & n_1768=m_1750 & 0<=m_1750 & 0<=m_1737 & 
+flted_33_1783=n_1768+m_1767 & 0<=m_1767 & 0<=n_1768 & 
+v_null_type_75_1789=null & left_75_1785=p_1729 & right_76_1790=q_1732 & 
+tmp'=null.
 
 // id 22
-checksat  (exists mi_2428,ma_2429: x'::node2<v_2407,p_2408,q_2409> * 
-q_2409::bst<qs_2406,lg_2404> * res::bst<mi_2428,ma_2429>&v_bool_164_1527' & 
-a'<=v_2407 & pl_2405<=v_2407 & v_2407<=qs_2406 & sm_2403=sm & lg_2404=lg & 
-!(v_bool_160_1528') & x'!=null & tmp_null'=null & a'=a & x'=x & 
-tmp'=p_2408 & sm_2422=sm_2403 & lg_2423=pl_2405 & sm_2403<=pl_2405 & 
-res!=null & mi_2428=min(sm_2422,a') & ma_2429=max(lg_2423,a') & 
-sm_2422<=lg_2423).
+checksat  tmp'::dll<r_1784,flted_33_1783>&right_76_1376'=q_1732 & 
+left_76_1375'=v_null_type_75_1789 & val_76_1374'=Anon_1728 & 
+left_75_1785=p_1729 & v_null_type_75_1789=null & 0<=n_1768 & 0<=m_1767 & 
+flted_33_1783=n_1768+m_1767 & 0<=m_1737 & 0<=m_1750 & n_1768=m_1750 & 
+Anon_19=q_1760 & m_1767=m_1737 & Anon_18=q_1747 & 0<=n_1751 & q_1760=null & 
+0<=n2_1734 & 0<=m2_1733 & n_1751=n2_1734 & m_1750=m2_1733 & 0<=n_1738 & 
+q_1747=null & 0<=n1_1731 & 0<=m1_1730 & n_1738=n1_1731 & m_1737=m1_1730 & 
+x'=x & x'!=null & v_bool_71_1383' & exists(max_35:n=max_35+1 & 
+max_35=max(n1_1731,n2_1734)) & m=m2_1733+1+m1_1730.
 
 // id 23
-checksat  x'::node2<v_2407,p_2408,q_2409> * q_2409::bst<qs_2406,lg_2404>&
-lg_2423=pl_2405 & sm_2422=sm_2403 & tmp'=p_2408 & x'=x & a'=a & 
-tmp_null'=null & x'!=null & !(v_bool_160_1528') & lg_2404=lg & sm_2403=sm & 
-v_2407<=qs_2406 & pl_2405<=v_2407 & a'<=v_2407 & v_bool_164_1527'.
+checksat  tmp'::dll<r_1784,flted_33_1783>&right_75_1373'=q_1732 & 
+left_75_1372'=p_1729 & val_75_1371'=Anon_1728 & v_null_type_75_1370'=null & 
+0<=n_1768 & 0<=m_1767 & flted_33_1783=n_1768+m_1767 & 0<=m_1737 & 
+0<=m_1750 & n_1768=m_1750 & Anon_19=q_1760 & m_1767=m_1737 & 
+Anon_18=q_1747 & 0<=n_1751 & q_1760=null & 0<=n2_1734 & 0<=m2_1733 & 
+n_1751=n2_1734 & m_1750=m2_1733 & 0<=n_1738 & q_1747=null & 0<=n1_1731 & 
+0<=m1_1730 & n_1738=n1_1731 & m_1737=m1_1730 & x'=x & x'!=null & 
+v_bool_71_1383' & exists(max_35:n=max_35+1 & max_35=max(n1_1731,n2_1734)) & 
+m=m2_1733+1+m1_1730.
 
 // id 24
-checksat  x'::node2<v_2407,p_2408,q_2409> * q_2409::bst<qs_2406,lg_2404>&
-lg_2423=pl_2405 & sm_2422=sm_2403 & tmp'=p_2408 & x'=x & a'=a & 
-tmp_null'=null & x'!=null & !(v_bool_160_1528') & lg_2404=lg & sm_2403=sm & 
-v_2407<=qs_2406 & pl_2405<=v_2407 & a'<=v_2407 & v_bool_164_1527'.
+checksat  (exists flted_33_1775,r_1776: x'::node2<Anon_1728,p_1729,q_1732> * 
+res::dll<r_1776,flted_33_1775>&m=m2_1733+1+m1_1730 & exists(max_35:n=max_35+
+1 & max_35=max(n1_1731,n2_1734)) & v_bool_71_1383' & x'!=null & x'=x & 
+m_1737=m1_1730 & n_1738=n1_1731 & 0<=m1_1730 & 0<=n1_1731 & q_1747=null & 
+0<=m_1737 & 0<=n_1738 & m_1750=m2_1733 & n_1751=n2_1734 & 0<=m2_1733 & 
+0<=n2_1734 & q_1760=null & 0<=m_1750 & 0<=n_1751 & v_node2_74_1369'=p_1729 & 
+v_node2_74_1368'=q_1732 & Anon_18=q_1747 & m_1767=m_1737 & Anon_19=q_1760 & 
+n_1768=m_1750 & 0<=m_1750 & 0<=m_1737 & flted_33_1775=n_1768+m_1767 & 
+0<=m_1767 & 0<=n_1768).
 
 // id 25
-checksat  x'::node2<v_2407,p_2408,q_2409> * p_2408::bst<sm_2403,pl_2405> * 
-q_2409::bst<qs_2406,lg_2404>&right_166_1506'=q_2409 & 
-left_166_1505'=p_2408 & val_166_1504'=v_2407 & x'=x & a'=a & 
-tmp_null'=null & x'!=null & !(v_bool_160_1528') & lg_2404=lg & sm_2403=sm & 
-v_2407<=qs_2406 & pl_2405<=v_2407 & a'<=v_2407 & v_bool_164_1527'.
+checksat  x'::node2<Anon_1728,p_1729,q_1732>&n_1768=m_1750 & Anon_19=q_1760 & 
+m_1767=m_1737 & Anon_18=q_1747 & v_node2_74_1368'=q_1732 & 
+v_node2_74_1369'=p_1729 & 0<=n_1751 & 0<=m_1750 & q_1760=null & 0<=n2_1734 & 
+0<=m2_1733 & n_1751=n2_1734 & m_1750=m2_1733 & 0<=n_1738 & 0<=m_1737 & 
+q_1747=null & 0<=n1_1731 & 0<=m1_1730 & n_1738=n1_1731 & m_1737=m1_1730 & 
+x'=x & x'!=null & v_bool_71_1383' & exists(max_35:n=max_35+1 & 
+max_35=max(n1_1731,n2_1734)) & m=m2_1733+1+m1_1730.
 
 // id 26
-checksat  x'::node2<v_2407,p_2408,q_2409> * p_2408::bst<sm_2403,pl_2405> * 
-q_2409::bst<qs_2406,lg_2404>&a'<=v_2407 & x'=x & a'=a & tmp_null'=null & 
-x'!=null & !(v_bool_160_1528') & lg_2404=lg & sm_2403=sm & v_2407<=qs_2406 & 
-pl_2405<=v_2407 & v_bool_164_1527' & a'<=v_2407 & !(v_bool_164_1527').
+checksat  x'::node2<Anon_1728,p_1729,q_1732>&n_1768=m_1750 & Anon_19=q_1760 & 
+m_1767=m_1737 & Anon_18=q_1747 & v_node2_74_1368'=q_1732 & 
+v_node2_74_1369'=p_1729 & 0<=n_1751 & 0<=m_1750 & q_1760=null & 0<=n2_1734 & 
+0<=m2_1733 & n_1751=n2_1734 & m_1750=m2_1733 & 0<=n_1738 & 0<=m_1737 & 
+q_1747=null & 0<=n1_1731 & 0<=m1_1730 & n_1738=n1_1731 & m_1737=m1_1730 & 
+x'=x & x'!=null & v_bool_71_1383' & exists(max_35:n=max_35+1 & 
+max_35=max(n1_1731,n2_1734)) & m=m2_1733+1+m1_1730.
 
 // id 27
-checksat  x'::node2<v_2407,p_2408,q_2409> * p_2408::bst<sm_2403,pl_2405> * 
-q_2409::bst<qs_2406,lg_2404>&v_2407<a' & x'=x & a'=a & tmp_null'=null & 
-x'!=null & !(v_bool_160_1528') & lg_2404=lg & sm_2403=sm & v_2407<=qs_2406 & 
-pl_2405<=v_2407 & !(v_bool_164_1527') & v_2407<a' & !(v_bool_164_1527').
+checksat  x'::node2<Anon_1728,p_1729,q_1732> * p_1729::dll<q_1747,m_1737> * 
+q_1732::dll<q_1760,m_1750>&right_74_1365'=q_1732 & left_74_1364'=p_1729 & 
+val_74_1363'=Anon_1728 & v_node2_74_1369'=p_1729 & 0<=n_1751 & 0<=m_1750 & 
+q_1760=null & 0<=n2_1734 & 0<=m2_1733 & n_1751=n2_1734 & m_1750=m2_1733 & 
+0<=n_1738 & 0<=m_1737 & q_1747=null & 0<=n1_1731 & 0<=m1_1730 & 
+n_1738=n1_1731 & m_1737=m1_1730 & x'=x & x'!=null & v_bool_71_1383' & 
+exists(max_35:n=max_35+1 & max_35=max(n1_1731,n2_1734)) & m=m2_1733+1+m1_1730.
 
 // id 28
-checksat  x'::node2<v_2407,p_2408,q_2409> * p_2408::bst<sm_2403,pl_2405> * 
-q_2409::bst<qs_2406,lg_2404>&a'<=v_2407 & x'=x & a'=a & tmp_null'=null & 
-x'!=null & !(v_bool_160_1528') & lg_2404=lg & sm_2403=sm & v_2407<=qs_2406 & 
-pl_2405<=v_2407 & v_bool_164_1527' & a'<=v_2407 & v_bool_164_1527'.
+checksat  x'::node2<Anon_1728,p_1729,q_1732> * p_1729::dll<q_1747,m_1737> * 
+q_1732::dll<q_1760,m_1750>&right_74_1362'=q_1732 & left_74_1361'=p_1729 & 
+val_74_1360'=Anon_1728 & 0<=n_1751 & 0<=m_1750 & q_1760=null & 0<=n2_1734 & 
+0<=m2_1733 & n_1751=n2_1734 & m_1750=m2_1733 & 0<=n_1738 & 0<=m_1737 & 
+q_1747=null & 0<=n1_1731 & 0<=m1_1730 & n_1738=n1_1731 & m_1737=m1_1730 & 
+x'=x & x'!=null & v_bool_71_1383' & exists(max_35:n=max_35+1 & 
+max_35=max(n1_1731,n2_1734)) & m=m2_1733+1+m1_1730.
 
 // id 29
-checksat  x'::node2<v_2407,p_2408,q_2409> * p_2408::bst<sm_2403,pl_2405> * 
-q_2409::bst<qs_2406,lg_2404>&v_2407<a' & x'=x & a'=a & tmp_null'=null & 
-x'!=null & !(v_bool_160_1528') & lg_2404=lg & sm_2403=sm & v_2407<=qs_2406 & 
-pl_2405<=v_2407 & !(v_bool_164_1527') & v_2407<a' & v_bool_164_1527'.
+checksat  (exists m_1755,q_1756: x'::node2<Anon_1728,p_1729,q_1732> * 
+p_1729::dll<q_1747,m_1737> * v_node2_73_1359'::dll<q_1756,m_1755>&m=m2_1733+
+1+m1_1730 & exists(max_35:n=max_35+1 & max_35=max(n1_1731,n2_1734)) & 
+v_bool_71_1383' & x'!=null & x'=x & m_1737=m1_1730 & n_1738=n1_1731 & 
+0<=m1_1730 & 0<=n1_1731 & q_1747=null & 0<=m_1737 & 0<=n_1738 & 
+v_node2_73_1359'=q_1732 & m_1750=m2_1733 & n_1751=n2_1734 & 0<=m2_1733 & 
+0<=n2_1734 & q_1756=null & m_1755=m_1750 & 0<=m_1750 & 0<=n_1751).
 
 // id 30
-checksat  x'::node2<v_2407,p_2408,q_2409> * p_2408::bst<sm_2403,pl_2405> * 
-q_2409::bst<qs_2406,lg_2404>&v_int_164_1503'<a' & v_int_164_1503'=v_2407 & 
-x'=x & a'=a & tmp_null'=null & x'!=null & !(v_bool_160_1528') & lg_2404=lg & 
-sm_2403=sm & v_2407<=qs_2406 & pl_2405<=v_2407 & !(res) & v_int_164_1503'<a'.
+checksat  x'::node2<Anon_1728,p_1729,q_1732> * p_1729::dll<q_1747,m_1737>&
+n_1751=n2_1734 & m_1750=m2_1733 & v_node2_73_1359'=q_1732 & 0<=n_1738 & 
+0<=m_1737 & q_1747=null & 0<=n1_1731 & 0<=m1_1730 & n_1738=n1_1731 & 
+m_1737=m1_1730 & x'=x & x'!=null & v_bool_71_1383' & exists(max_35:n=max_35+
+1 & max_35=max(n1_1731,n2_1734)) & m=m2_1733+1+m1_1730.
 
 // id 31
-checksat  x'::node2<v_2407,p_2408,q_2409> * p_2408::bst<sm_2403,pl_2405> * 
-q_2409::bst<qs_2406,lg_2404>&pl_2405<=v_2407 & v_2407<=qs_2406 & 
-sm_2403=sm & lg_2404=lg & !(v_bool_160_1528') & x'!=null & tmp_null'=null & 
-a'=a & x'=x & v_int_164_1503'=v_2407 & v_int_164_1503'<a'.
+checksat  x'::node2<Anon_1728,p_1729,q_1732> * p_1729::dll<q_1747,m_1737>&
+n_1751=n2_1734 & m_1750=m2_1733 & v_node2_73_1359'=q_1732 & 0<=n_1738 & 
+0<=m_1737 & q_1747=null & 0<=n1_1731 & 0<=m1_1730 & n_1738=n1_1731 & 
+m_1737=m1_1730 & x'=x & x'!=null & v_bool_71_1383' & exists(max_35:n=max_35+
+1 & max_35=max(n1_1731,n2_1734)) & m=m2_1733+1+m1_1730.
 
 // id 32
-checksat  x'::node2<v_2407,p_2408,q_2409> * p_2408::bst<sm_2403,pl_2405> * 
-q_2409::bst<qs_2406,lg_2404>&pl_2405<=v_2407 & v_2407<=qs_2406 & 
-sm_2403=sm & lg_2404=lg & !(v_bool_160_1528') & x'!=null & tmp_null'=null & 
-a'=a & x'=x & v_int_164_1503'=v_2407 & v_int_164_1503'<a'.
+checksat  x'::node2<Anon_1728,p_1729,q_1732> * q_1732::tree<m2_1733,n2_1734> * 
+p_1729::dll<q_1747,m_1737>&right_73_1356'=q_1732 & left_73_1355'=p_1729 & 
+val_73_1354'=Anon_1728 & 0<=n_1738 & 0<=m_1737 & q_1747=null & 0<=n1_1731 & 
+0<=m1_1730 & n_1738=n1_1731 & m_1737=m1_1730 & x'=x & x'!=null & 
+v_bool_71_1383' & exists(max_35:n=max_35+1 & max_35=max(n1_1731,n2_1734)) & 
+m=m2_1733+1+m1_1730.
 
 // id 33
-checksat  x'::node2<v_2407,p_2408,q_2409> * p_2408::bst<sm_2403,pl_2405> * 
-q_2409::bst<qs_2406,lg_2404>&a'<=v_int_164_1503' & v_int_164_1503'=v_2407 & 
-x'=x & a'=a & tmp_null'=null & x'!=null & !(v_bool_160_1528') & lg_2404=lg & 
-sm_2403=sm & v_2407<=qs_2406 & pl_2405<=v_2407 & res & a'<=v_int_164_1503'.
+checksat  (exists m_1742,q_1743: x'::node2<Anon_1728,p_1729,q_1732> * 
+q_1732::tree<m2_1733,n2_1734> * v_node2_72_1353'::dll<q_1743,m_1742>&
+m=m2_1733+1+m1_1730 & exists(max_35:n=max_35+1 & max_35=max(n1_1731,
+n2_1734)) & v_bool_71_1383' & x'!=null & x'=x & v_node2_72_1353'=p_1729 & 
+m_1737=m1_1730 & n_1738=n1_1731 & 0<=m1_1730 & 0<=n1_1731 & q_1743=null & 
+m_1742=m_1737 & 0<=m_1737 & 0<=n_1738).
 
 // id 34
-checksat  x'::node2<v_2407,p_2408,q_2409> * p_2408::bst<sm_2403,pl_2405> * 
-q_2409::bst<qs_2406,lg_2404>&pl_2405<=v_2407 & v_2407<=qs_2406 & 
-sm_2403=sm & lg_2404=lg & !(v_bool_160_1528') & x'!=null & tmp_null'=null & 
-a'=a & x'=x & v_int_164_1503'=v_2407 & a'<=v_int_164_1503'.
+checksat  x'::node2<Anon_1728,p_1729,q_1732> * q_1732::tree<m2_1733,n2_1734>&
+n_1738=n1_1731 & m_1737=m1_1730 & v_node2_72_1353'=p_1729 & x'=x & 
+x'!=null & v_bool_71_1383' & exists(max_35:n=max_35+1 & max_35=max(n1_1731,
+n2_1734)) & m=m2_1733+1+m1_1730.
 
 // id 35
-checksat  x'::node2<v_2407,p_2408,q_2409> * p_2408::bst<sm_2403,pl_2405> * 
-q_2409::bst<qs_2406,lg_2404>&pl_2405<=v_2407 & v_2407<=qs_2406 & 
-sm_2403=sm & lg_2404=lg & !(v_bool_160_1528') & x'!=null & tmp_null'=null & 
-a'=a & x'=x & v_int_164_1503'=v_2407 & a'<=v_int_164_1503'.
+checksat  x'::node2<Anon_1728,p_1729,q_1732> * q_1732::tree<m2_1733,n2_1734>&
+n_1738=n1_1731 & m_1737=m1_1730 & v_node2_72_1353'=p_1729 & x'=x & 
+x'!=null & v_bool_71_1383' & exists(max_35:n=max_35+1 & max_35=max(n1_1731,
+n2_1734)) & m=m2_1733+1+m1_1730.
 
 // id 36
-checksat  x'::node2<v_2407,p_2408,q_2409> * p_2408::bst<sm_2403,pl_2405> * 
-q_2409::bst<qs_2406,lg_2404>&right_164_1498'=q_2409 & 
-left_164_1497'=p_2408 & val_164_1496'=v_2407 & x'=x & a'=a & 
-tmp_null'=null & x'!=null & !(v_bool_160_1528') & lg_2404=lg & sm_2403=sm & 
-v_2407<=qs_2406 & pl_2405<=v_2407.
+checksat  x'::node2<Anon_1728,p_1729,q_1732> * p_1729::tree<m1_1730,n1_1731> * 
+q_1732::tree<m2_1733,n2_1734>&right_72_1350'=q_1732 & left_72_1349'=p_1729 & 
+val_72_1348'=Anon_1728 & x'=x & x'!=null & v_bool_71_1383' & 
+exists(max_35:n=max_35+1 & max_35=max(n1_1731,n2_1734)) & m=m2_1733+1+m1_1730.
 
 // id 37
-checksat  (exists sm_2395,lg_2396,pl_2397,qs_2398,v_2399,p_2400,
-q_2401: x'::node2<v_2399,p_2400,q_2401> * p_2400::bst<sm_2395,pl_2397> * 
-q_2401::bst<qs_2398,lg_2396>&pl_2397<=v_2399 & v_2399<=qs_2398 & 
-sm_2395=sm & lg_2396=lg & !(v_bool_160_1528') & x'!=null & tmp_null'=null & 
-a'=a & x'=x).
+checksat  (exists Anon_1720,p_1721,m1_1722,n1_1723,q_1724,m2_1725,
+n2_1726: x'::node2<Anon_1720,p_1721,q_1724> * 
+p_1721::tree<m1_1722,n1_1723> * q_1724::tree<m2_1725,n2_1726>&m=m2_1725+1+
+m1_1722 & exists(max_35:n=max_35+1 & max_35=max(n1_1723,n2_1726)) & 
+v_bool_71_1383' & x'!=null & x'=x).
 
 // id 38
-checksat  x::bst<sm,lg>&x'=x & a'=a & tmp_null'=null & x'=null & v_bool_160_1528' & 
-x'=null & !(v_bool_160_1528').
+checksat  x::tree<m,n>&x'=x & x'=null & !(v_bool_71_1383') & x'=null & 
+!(v_bool_71_1383').
 
 // id 39
-checksat  x::bst<sm,lg>&x'=x & a'=a & tmp_null'=null & x'!=null & 
-!(v_bool_160_1528') & x'!=null & !(v_bool_160_1528').
+checksat  x::tree<m,n>&x'=x & x'!=null & v_bool_71_1383' & x'!=null & 
+!(v_bool_71_1383').
 
 // id 40
-checksat  x::bst<sm,lg>&x'=x & a'=a & tmp_null'=null & x'=null & v_bool_160_1528' & 
-x'=null & v_bool_160_1528'.
+checksat  x::tree<m,n>&x'=x & x'=null & !(v_bool_71_1383') & x'=null & v_bool_71_1383'.
 
 // id 41
-checksat  x::bst<sm,lg>&x'=x & a'=a & tmp_null'=null & x'!=null & 
-!(v_bool_160_1528') & x'!=null & v_bool_160_1528'.
+checksat  x::tree<m,n>&x'=x & x'!=null & v_bool_71_1383' & x'!=null & v_bool_71_1383'.
 
 // id 42
-checksat  x::bst<sm,lg>&x'=x & a'=a & tmp_null'=null & x'!=null & !(res) & x'!=null.
-
-// id 43
-checksat  x::bst<sm,lg>&x'!=null & tmp_null'=null & a'=a & x'=x.
-
-// id 44
-checksat  x::bst<sm,lg>&x'!=null & tmp_null'=null & a'=a & x'=x.
-
-// id 45
-checksat  x::bst<sm,lg>&x'=x & a'=a & MayLoop[] & tmp_null'=null & x'!=null.
-
-// id 46
-checksat  x::bst<sm,lg>&x'=x & a'=a & tmp_null'=null & x'=null & res & x'=null.
-
-// id 47
-checksat  x::bst<sm,lg>&x'=null & tmp_null'=null & a'=a & x'=x.
-
-// id 48
-checksat  x::bst<sm,lg>&x'=null & tmp_null'=null & a'=a & x'=x.
-
-// id 49
-checksat  x::bst<sm,lg>&x'=x & a'=a & MayLoop[] & tmp_null'=null & x'=null.
-
-// id 50
-checksat  tmp_2340::dll<r_2264,flted_40_2263> * 
-x'::node2<Anon_2208,v_null_type_110_2269,tmp_2340>&!(v_bool_112_1589') & 
-tmp_2340=null & m=m2_2213+1+m1_2210 & exists(max_41:n=max_41+1 & 
-max_41=max(n1_2211,n2_2214)) & v_bool_105_1590' & x'!=null & x'=x & 
-m_2217=m1_2210 & n_2218=n1_2211 & 0<=m1_2210 & 0<=n1_2211 & q_2227=null & 
-0<=n_2218 & m_2230=m2_2213 & n_2231=n2_2214 & 0<=m2_2213 & 0<=n2_2214 & 
-q_2240=null & 0<=n_2231 & Anon_17=q_2227 & m_2247=m_2217 & Anon_18=q_2240 & 
-n_2248=m_2230 & 0<=m_2230 & 0<=m_2217 & flted_40_2263=n_2248+m_2247 & 
-0<=m_2247 & 0<=n_2248 & v_null_type_110_2269=null & left_110_2265=p_2209 & 
-right_111_2270=q_2212.
-
-// id 51
-checksat  tmp_2340::dll<r_2264,flted_40_2263> * 
-x'::node2<Anon_2208,v_null_type_110_2269,tmp_2340>&!(v_bool_112_1589') & 
-tmp_2340=null & m=m2_2213+1+m1_2210 & exists(max_41:n=max_41+1 & 
-max_41=max(n1_2211,n2_2214)) & v_bool_105_1590' & x'!=null & x'=x & 
-m_2217=m1_2210 & n_2218=n1_2211 & 0<=m1_2210 & 0<=n1_2211 & q_2227=null & 
-0<=n_2218 & m_2230=m2_2213 & n_2231=n2_2214 & 0<=m2_2213 & 0<=n2_2214 & 
-q_2240=null & 0<=n_2231 & Anon_17=q_2227 & m_2247=m_2217 & Anon_18=q_2240 & 
-n_2248=m_2230 & 0<=m_2230 & 0<=m_2217 & flted_40_2263=n_2248+m_2247 & 
-0<=m_2247 & 0<=n_2248 & v_null_type_110_2269=null & left_110_2265=p_2209 & 
-right_111_2270=q_2212.
-
-// id 52
-checksat  q_2298::dll<self_2296,n1_2299> * self_2296::node2<Anon_2297,x',q_2298>&
-left_113_2300=p_2295 & right_111_2270=q_2212 & left_110_2265=p_2209 & 
-v_null_type_110_2269=null & 0<=n_2248 & 0<=m_2247 & flted_40_2263=n_2248+
-m_2247 & 0<=m_2217 & 0<=m_2230 & n_2248=m_2230 & Anon_18=q_2240 & 
-m_2247=m_2217 & Anon_17=q_2227 & 0<=n_2231 & q_2240=null & 0<=n2_2214 & 
-0<=m2_2213 & n_2231=n2_2214 & m_2230=m2_2213 & 0<=n_2218 & q_2227=null & 
-0<=n1_2211 & 0<=m1_2210 & n_2218=n1_2211 & m_2217=m1_2210 & x'=x & 
-x'!=null & v_bool_105_1590' & exists(max_41:n=max_41+1 & max_41=max(n1_2211,
-n2_2214)) & m=m2_2213+1+m1_2210 & self_2296!=null & v_bool_112_1589' & 
-p_2295=r_2264 & flted_40_2263=1+n1_2299 & Anon_2303=Anon_2208 & 
-q_2304=self_2296.
-
-// id 53
-checksat  q_2298::dll<self_2296,n1_2299> * self_2296::node2<Anon_2297,x',q_2298>&
-left_113_2300=p_2295 & right_111_2270=q_2212 & left_110_2265=p_2209 & 
-v_null_type_110_2269=null & 0<=n_2248 & 0<=m_2247 & flted_40_2263=n_2248+
-m_2247 & 0<=m_2217 & 0<=m_2230 & n_2248=m_2230 & Anon_18=q_2240 & 
-m_2247=m_2217 & Anon_17=q_2227 & 0<=n_2231 & q_2240=null & 0<=n2_2214 & 
-0<=m2_2213 & n_2231=n2_2214 & m_2230=m2_2213 & 0<=n_2218 & q_2227=null & 
-0<=n1_2211 & 0<=m1_2210 & n_2218=n1_2211 & m_2217=m1_2210 & x'=x & 
-x'!=null & v_bool_105_1590' & exists(max_41:n=max_41+1 & max_41=max(n1_2211,
-n2_2214)) & m=m2_2213+1+m1_2210 & self_2296!=null & v_bool_112_1589' & 
-p_2295=r_2264 & flted_40_2263=1+n1_2299 & Anon_2303=Anon_2208 & 
-q_2304=self_2296.
-
-// id 54
-checksat  q_2298::dll<self_2296,n1_2299> * 
-x'::node2<Anon_2208,v_null_type_110_2269,self_2296> * 
-self_2296::node2<Anon_2297,x',q_2298>&flted_40_2263=1+n1_2299 & 
-p_2295=r_2264 & v_bool_112_1589' & self_2296!=null & m=m2_2213+1+m1_2210 & 
-exists(max_41:n=max_41+1 & max_41=max(n1_2211,n2_2214)) & v_bool_105_1590' & 
-x'!=null & x'=x & m_2217=m1_2210 & n_2218=n1_2211 & 0<=m1_2210 & 
-0<=n1_2211 & q_2227=null & 0<=n_2218 & m_2230=m2_2213 & n_2231=n2_2214 & 
-0<=m2_2213 & 0<=n2_2214 & q_2240=null & 0<=n_2231 & Anon_17=q_2227 & 
-m_2247=m_2217 & Anon_18=q_2240 & n_2248=m_2230 & 0<=m_2230 & 0<=m_2217 & 
-flted_40_2263=n_2248+m_2247 & 0<=m_2247 & 0<=n_2248 & 
-v_null_type_110_2269=null & left_110_2265=p_2209 & right_111_2270=q_2212 & 
-left_113_2300=p_2295.
-
-// id 55
-checksat  q_2298::dll<self_2296,n1_2299> * 
-x'::node2<Anon_2208,v_null_type_110_2269,self_2296> * 
-self_2296::node2<Anon_2297,x',q_2298>&flted_40_2263=1+n1_2299 & 
-p_2295=r_2264 & v_bool_112_1589' & self_2296!=null & m=m2_2213+1+m1_2210 & 
-exists(max_41:n=max_41+1 & max_41=max(n1_2211,n2_2214)) & v_bool_105_1590' & 
-x'!=null & x'=x & m_2217=m1_2210 & n_2218=n1_2211 & 0<=m1_2210 & 
-0<=n1_2211 & q_2227=null & 0<=n_2218 & m_2230=m2_2213 & n_2231=n2_2214 & 
-0<=m2_2213 & 0<=n2_2214 & q_2240=null & 0<=n_2231 & Anon_17=q_2227 & 
-m_2247=m_2217 & Anon_18=q_2240 & n_2248=m_2230 & 0<=m_2230 & 0<=m_2217 & 
-flted_40_2263=n_2248+m_2247 & 0<=m_2247 & 0<=n_2248 & 
-v_null_type_110_2269=null & left_110_2265=p_2209 & right_111_2270=q_2212 & 
-left_113_2300=p_2295.
-
-// id 56
-checksat  q_2298::dll<self_2296,n1_2299> * 
-x'::node2<Anon_2208,v_null_type_110_2269,tmp'>&right_113_1588'=q_2298 & 
-left_113_1587'=p_2295 & val_113_1586'=Anon_2297 & right_111_2270=q_2212 & 
-left_110_2265=p_2209 & v_null_type_110_2269=null & 0<=n_2248 & 0<=m_2247 & 
-flted_40_2263=n_2248+m_2247 & 0<=m_2217 & 0<=m_2230 & n_2248=m_2230 & 
-Anon_18=q_2240 & m_2247=m_2217 & Anon_17=q_2227 & 0<=n_2231 & q_2240=null & 
-0<=n2_2214 & 0<=m2_2213 & n_2231=n2_2214 & m_2230=m2_2213 & 0<=n_2218 & 
-q_2227=null & 0<=n1_2211 & 0<=m1_2210 & n_2218=n1_2211 & m_2217=m1_2210 & 
-x'=x & x'!=null & v_bool_105_1590' & exists(max_41:n=max_41+1 & 
-max_41=max(n1_2211,n2_2214)) & m=m2_2213+1+m1_2210 & tmp'!=null & 
-v_bool_112_1589' & self_2296=tmp' & p_2295=r_2264 & flted_40_2263=1+n1_2299.
-
-// id 57
-checksat  (exists p_2289,self_2290,Anon_2291,q_2292,
-n1_2293: tmp'::node2<Anon_2291,p_2289,q_2292> * 
-q_2292::dll<self_2290,n1_2293> * 
-x'::node2<Anon_2208,v_null_type_110_2269,tmp'>&flted_40_2263=1+n1_2293 & 
-p_2289=r_2264 & self_2290=tmp' & v_bool_112_1589' & tmp'!=null & m=m2_2213+1+
-m1_2210 & exists(max_41:n=max_41+1 & max_41=max(n1_2211,n2_2214)) & 
-v_bool_105_1590' & x'!=null & x'=x & m_2217=m1_2210 & n_2218=n1_2211 & 
-0<=m1_2210 & 0<=n1_2211 & q_2227=null & 0<=n_2218 & m_2230=m2_2213 & 
-n_2231=n2_2214 & 0<=m2_2213 & 0<=n2_2214 & q_2240=null & 0<=n_2231 & 
-Anon_17=q_2227 & m_2247=m_2217 & Anon_18=q_2240 & n_2248=m_2230 & 
-0<=m_2230 & 0<=m_2217 & flted_40_2263=n_2248+m_2247 & 0<=m_2247 & 
-0<=n_2248 & v_null_type_110_2269=null & left_110_2265=p_2209 & 
-right_111_2270=q_2212).
-
-// id 58
-checksat  x'::node2<Anon_2208,v_null_type_110_2269,tmp'>&tmp'=null & 
-flted_40_2263=0 & v_bool_112_1589' & tmp'!=null & m=m2_2213+1+m1_2210 & 
-exists(max_41:n=max_41+1 & max_41=max(n1_2211,n2_2214)) & v_bool_105_1590' & 
-x'!=null & x'=x & m_2217=m1_2210 & n_2218=n1_2211 & 0<=m1_2210 & 
-0<=n1_2211 & q_2227=null & 0<=n_2218 & m_2230=m2_2213 & n_2231=n2_2214 & 
-0<=m2_2213 & 0<=n2_2214 & q_2240=null & 0<=n_2231 & Anon_17=q_2227 & 
-m_2247=m_2217 & Anon_18=q_2240 & n_2248=m_2230 & 0<=m_2230 & 0<=m_2217 & 
-flted_40_2263=n_2248+m_2247 & 0<=m_2247 & 0<=n_2248 & 
-v_null_type_110_2269=null & left_110_2265=p_2209 & right_111_2270=q_2212.
-
-// id 59
-checksat  tmp'::dll<r_2264,flted_40_2263> * 
-x'::node2<Anon_2208,v_null_type_110_2269,tmp'>&tmp'=null & 
-right_111_2270=q_2212 & left_110_2265=p_2209 & v_null_type_110_2269=null & 
-0<=n_2248 & 0<=m_2247 & flted_40_2263=n_2248+m_2247 & 0<=m_2217 & 
-0<=m_2230 & n_2248=m_2230 & Anon_18=q_2240 & m_2247=m_2217 & 
-Anon_17=q_2227 & 0<=n_2231 & q_2240=null & 0<=n2_2214 & 0<=m2_2213 & 
-n_2231=n2_2214 & m_2230=m2_2213 & 0<=n_2218 & q_2227=null & 0<=n1_2211 & 
-0<=m1_2210 & n_2218=n1_2211 & m_2217=m1_2210 & x'=x & x'!=null & 
-v_bool_105_1590' & exists(max_41:n=max_41+1 & max_41=max(n1_2211,n2_2214)) & 
-m=m2_2213+1+m1_2210 & !(v_bool_112_1589') & tmp'=null & !(v_bool_112_1589').
-
-// id 60
-checksat  tmp'::dll<r_2264,flted_40_2263> * 
-x'::node2<Anon_2208,v_null_type_110_2269,tmp'>&tmp'!=null & 
-right_111_2270=q_2212 & left_110_2265=p_2209 & v_null_type_110_2269=null & 
-0<=n_2248 & 0<=m_2247 & flted_40_2263=n_2248+m_2247 & 0<=m_2217 & 
-0<=m_2230 & n_2248=m_2230 & Anon_18=q_2240 & m_2247=m_2217 & 
-Anon_17=q_2227 & 0<=n_2231 & q_2240=null & 0<=n2_2214 & 0<=m2_2213 & 
-n_2231=n2_2214 & m_2230=m2_2213 & 0<=n_2218 & q_2227=null & 0<=n1_2211 & 
-0<=m1_2210 & n_2218=n1_2211 & m_2217=m1_2210 & x'=x & x'!=null & 
-v_bool_105_1590' & exists(max_41:n=max_41+1 & max_41=max(n1_2211,n2_2214)) & 
-m=m2_2213+1+m1_2210 & v_bool_112_1589' & tmp'!=null & !(v_bool_112_1589').
-
-// id 61
-checksat  tmp'::dll<r_2264,flted_40_2263> * 
-x'::node2<Anon_2208,v_null_type_110_2269,tmp'>&tmp'=null & 
-right_111_2270=q_2212 & left_110_2265=p_2209 & v_null_type_110_2269=null & 
-0<=n_2248 & 0<=m_2247 & flted_40_2263=n_2248+m_2247 & 0<=m_2217 & 
-0<=m_2230 & n_2248=m_2230 & Anon_18=q_2240 & m_2247=m_2217 & 
-Anon_17=q_2227 & 0<=n_2231 & q_2240=null & 0<=n2_2214 & 0<=m2_2213 & 
-n_2231=n2_2214 & m_2230=m2_2213 & 0<=n_2218 & q_2227=null & 0<=n1_2211 & 
-0<=m1_2210 & n_2218=n1_2211 & m_2217=m1_2210 & x'=x & x'!=null & 
-v_bool_105_1590' & exists(max_41:n=max_41+1 & max_41=max(n1_2211,n2_2214)) & 
-m=m2_2213+1+m1_2210 & !(v_bool_112_1589') & tmp'=null & v_bool_112_1589'.
-
-// id 62
-checksat  tmp'::dll<r_2264,flted_40_2263> * 
-x'::node2<Anon_2208,v_null_type_110_2269,tmp'>&tmp'!=null & 
-right_111_2270=q_2212 & left_110_2265=p_2209 & v_null_type_110_2269=null & 
-0<=n_2248 & 0<=m_2247 & flted_40_2263=n_2248+m_2247 & 0<=m_2217 & 
-0<=m_2230 & n_2248=m_2230 & Anon_18=q_2240 & m_2247=m_2217 & 
-Anon_17=q_2227 & 0<=n_2231 & q_2240=null & 0<=n2_2214 & 0<=m2_2213 & 
-n_2231=n2_2214 & m_2230=m2_2213 & 0<=n_2218 & q_2227=null & 0<=n1_2211 & 
-0<=m1_2210 & n_2218=n1_2211 & m_2217=m1_2210 & x'=x & x'!=null & 
-v_bool_105_1590' & exists(max_41:n=max_41+1 & max_41=max(n1_2211,n2_2214)) & 
-m=m2_2213+1+m1_2210 & v_bool_112_1589' & tmp'!=null & v_bool_112_1589'.
-
-// id 63
-checksat  tmp'::dll<r_2264,flted_40_2263> * 
-x'::node2<Anon_2208,v_null_type_110_2269,tmp'>&tmp'!=null & 
-right_111_2270=q_2212 & left_110_2265=p_2209 & v_null_type_110_2269=null & 
-0<=n_2248 & 0<=m_2247 & flted_40_2263=n_2248+m_2247 & 0<=m_2217 & 
-0<=m_2230 & n_2248=m_2230 & Anon_18=q_2240 & m_2247=m_2217 & 
-Anon_17=q_2227 & 0<=n_2231 & q_2240=null & 0<=n2_2214 & 0<=m2_2213 & 
-n_2231=n2_2214 & m_2230=m2_2213 & 0<=n_2218 & q_2227=null & 0<=n1_2211 & 
-0<=m1_2210 & n_2218=n1_2211 & m_2217=m1_2210 & x'=x & x'!=null & 
-v_bool_105_1590' & exists(max_41:n=max_41+1 & max_41=max(n1_2211,n2_2214)) & 
-m=m2_2213+1+m1_2210 & res & tmp'!=null.
-
-// id 64
-checksat  tmp'::dll<r_2264,flted_40_2263> * 
-x'::node2<Anon_2208,v_null_type_110_2269,tmp'>&m=m2_2213+1+m1_2210 & 
-exists(max_41:n=max_41+1 & max_41=max(n1_2211,n2_2214)) & v_bool_105_1590' & 
-x'!=null & x'=x & m_2217=m1_2210 & n_2218=n1_2211 & 0<=m1_2210 & 
-0<=n1_2211 & q_2227=null & 0<=n_2218 & m_2230=m2_2213 & n_2231=n2_2214 & 
-0<=m2_2213 & 0<=n2_2214 & q_2240=null & 0<=n_2231 & Anon_17=q_2227 & 
-m_2247=m_2217 & Anon_18=q_2240 & n_2248=m_2230 & 0<=m_2230 & 0<=m_2217 & 
-flted_40_2263=n_2248+m_2247 & 0<=m_2247 & 0<=n_2248 & 
-v_null_type_110_2269=null & left_110_2265=p_2209 & right_111_2270=q_2212 & 
-tmp'!=null.
-
-// id 65
-checksat  tmp'::dll<r_2264,flted_40_2263> * 
-x'::node2<Anon_2208,v_null_type_110_2269,tmp'>&m=m2_2213+1+m1_2210 & 
-exists(max_41:n=max_41+1 & max_41=max(n1_2211,n2_2214)) & v_bool_105_1590' & 
-x'!=null & x'=x & m_2217=m1_2210 & n_2218=n1_2211 & 0<=m1_2210 & 
-0<=n1_2211 & q_2227=null & 0<=n_2218 & m_2230=m2_2213 & n_2231=n2_2214 & 
-0<=m2_2213 & 0<=n2_2214 & q_2240=null & 0<=n_2231 & Anon_17=q_2227 & 
-m_2247=m_2217 & Anon_18=q_2240 & n_2248=m_2230 & 0<=m_2230 & 0<=m_2217 & 
-flted_40_2263=n_2248+m_2247 & 0<=m_2247 & 0<=n_2248 & 
-v_null_type_110_2269=null & left_110_2265=p_2209 & right_111_2270=q_2212 & 
-tmp'!=null.
-
-// id 66
-checksat  tmp'::dll<r_2264,flted_40_2263> * 
-x'::node2<Anon_2208,v_null_type_110_2269,tmp'>&m=m2_2213+1+m1_2210 & 
-exists(max_41:n=max_41+1 & max_41=max(n1_2211,n2_2214)) & v_bool_105_1590' & 
-x'!=null & x'=x & m_2217=m1_2210 & n_2218=n1_2211 & 0<=m1_2210 & 
-0<=n1_2211 & q_2227=null & 0<=n_2218 & m_2230=m2_2213 & n_2231=n2_2214 & 
-0<=m2_2213 & 0<=n2_2214 & q_2240=null & 0<=n_2231 & Anon_17=q_2227 & 
-m_2247=m_2217 & Anon_18=q_2240 & n_2248=m_2230 & 0<=m_2230 & 0<=m_2217 & 
-flted_40_2263=n_2248+m_2247 & 0<=m_2247 & 0<=n_2248 & 
-v_null_type_110_2269=null & left_110_2265=p_2209 & right_111_2270=q_2212 & 
-tmp'!=null.
-
-// id 67
-checksat  tmp'::dll<r_2264,flted_40_2263> * 
-x'::node2<Anon_2208,v_null_type_110_2269,tmp'>&tmp'=null & 
-right_111_2270=q_2212 & left_110_2265=p_2209 & v_null_type_110_2269=null & 
-0<=n_2248 & 0<=m_2247 & flted_40_2263=n_2248+m_2247 & 0<=m_2217 & 
-0<=m_2230 & n_2248=m_2230 & Anon_18=q_2240 & m_2247=m_2217 & 
-Anon_17=q_2227 & 0<=n_2231 & q_2240=null & 0<=n2_2214 & 0<=m2_2213 & 
-n_2231=n2_2214 & m_2230=m2_2213 & 0<=n_2218 & q_2227=null & 0<=n1_2211 & 
-0<=m1_2210 & n_2218=n1_2211 & m_2217=m1_2210 & x'=x & x'!=null & 
-v_bool_105_1590' & exists(max_41:n=max_41+1 & max_41=max(n1_2211,n2_2214)) & 
-m=m2_2213+1+m1_2210 & !(res) & tmp'=null.
-
-// id 68
-checksat  tmp'::dll<r_2264,flted_40_2263> * 
-x'::node2<Anon_2208,v_null_type_110_2269,tmp'>&m=m2_2213+1+m1_2210 & 
-exists(max_41:n=max_41+1 & max_41=max(n1_2211,n2_2214)) & v_bool_105_1590' & 
-x'!=null & x'=x & m_2217=m1_2210 & n_2218=n1_2211 & 0<=m1_2210 & 
-0<=n1_2211 & q_2227=null & 0<=n_2218 & m_2230=m2_2213 & n_2231=n2_2214 & 
-0<=m2_2213 & 0<=n2_2214 & q_2240=null & 0<=n_2231 & Anon_17=q_2227 & 
-m_2247=m_2217 & Anon_18=q_2240 & n_2248=m_2230 & 0<=m_2230 & 0<=m_2217 & 
-flted_40_2263=n_2248+m_2247 & 0<=m_2247 & 0<=n_2248 & 
-v_null_type_110_2269=null & left_110_2265=p_2209 & right_111_2270=q_2212 & 
-tmp'=null.
-
-// id 69
-checksat  tmp'::dll<r_2264,flted_40_2263> * 
-x'::node2<Anon_2208,v_null_type_110_2269,tmp'>&m=m2_2213+1+m1_2210 & 
-exists(max_41:n=max_41+1 & max_41=max(n1_2211,n2_2214)) & v_bool_105_1590' & 
-x'!=null & x'=x & m_2217=m1_2210 & n_2218=n1_2211 & 0<=m1_2210 & 
-0<=n1_2211 & q_2227=null & 0<=n_2218 & m_2230=m2_2213 & n_2231=n2_2214 & 
-0<=m2_2213 & 0<=n2_2214 & q_2240=null & 0<=n_2231 & Anon_17=q_2227 & 
-m_2247=m_2217 & Anon_18=q_2240 & n_2248=m_2230 & 0<=m_2230 & 0<=m_2217 & 
-flted_40_2263=n_2248+m_2247 & 0<=m_2247 & 0<=n_2248 & 
-v_null_type_110_2269=null & left_110_2265=p_2209 & right_111_2270=q_2212 & 
-tmp'=null.
-
-// id 70
-checksat  tmp'::dll<r_2264,flted_40_2263> * 
-x'::node2<Anon_2208,v_null_type_110_2269,tmp'>&m=m2_2213+1+m1_2210 & 
-exists(max_41:n=max_41+1 & max_41=max(n1_2211,n2_2214)) & v_bool_105_1590' & 
-x'!=null & x'=x & m_2217=m1_2210 & n_2218=n1_2211 & 0<=m1_2210 & 
-0<=n1_2211 & q_2227=null & 0<=n_2218 & m_2230=m2_2213 & n_2231=n2_2214 & 
-0<=m2_2213 & 0<=n2_2214 & q_2240=null & 0<=n_2231 & Anon_17=q_2227 & 
-m_2247=m_2217 & Anon_18=q_2240 & n_2248=m_2230 & 0<=m_2230 & 0<=m_2217 & 
-flted_40_2263=n_2248+m_2247 & 0<=m_2247 & 0<=n_2248 & 
-v_null_type_110_2269=null & left_110_2265=p_2209 & right_111_2270=q_2212 & 
-tmp'=null.
-
-// id 71
-checksat  tmp'::dll<r_2264,flted_40_2263>&right_111_1583'=q_2212 & 
-left_111_1582'=v_null_type_110_2269 & val_111_1581'=Anon_2208 & 
-left_110_2265=p_2209 & v_null_type_110_2269=null & 0<=n_2248 & 0<=m_2247 & 
-flted_40_2263=n_2248+m_2247 & 0<=m_2217 & 0<=m_2230 & n_2248=m_2230 & 
-Anon_18=q_2240 & m_2247=m_2217 & Anon_17=q_2227 & 0<=n_2231 & q_2240=null & 
-0<=n2_2214 & 0<=m2_2213 & n_2231=n2_2214 & m_2230=m2_2213 & 0<=n_2218 & 
-q_2227=null & 0<=n1_2211 & 0<=m1_2210 & n_2218=n1_2211 & m_2217=m1_2210 & 
-x'=x & x'!=null & v_bool_105_1590' & exists(max_41:n=max_41+1 & 
-max_41=max(n1_2211,n2_2214)) & m=m2_2213+1+m1_2210.
-
-// id 72
-checksat  tmp'::dll<r_2264,flted_40_2263>&right_110_1580'=q_2212 & 
-left_110_1579'=p_2209 & val_110_1578'=Anon_2208 & 
-v_null_type_110_1577'=null & 0<=n_2248 & 0<=m_2247 & flted_40_2263=n_2248+
-m_2247 & 0<=m_2217 & 0<=m_2230 & n_2248=m_2230 & Anon_18=q_2240 & 
-m_2247=m_2217 & Anon_17=q_2227 & 0<=n_2231 & q_2240=null & 0<=n2_2214 & 
-0<=m2_2213 & n_2231=n2_2214 & m_2230=m2_2213 & 0<=n_2218 & q_2227=null & 
-0<=n1_2211 & 0<=m1_2210 & n_2218=n1_2211 & m_2217=m1_2210 & x'=x & 
-x'!=null & v_bool_105_1590' & exists(max_41:n=max_41+1 & max_41=max(n1_2211,
-n2_2214)) & m=m2_2213+1+m1_2210.
-
-// id 73
-checksat  (exists flted_40_2255,r_2256: x'::node2<Anon_2208,p_2209,q_2212> * 
-res::dll<r_2256,flted_40_2255>&m=m2_2213+1+m1_2210 & exists(max_41:n=max_41+
-1 & max_41=max(n1_2211,n2_2214)) & v_bool_105_1590' & x'!=null & x'=x & 
-m_2217=m1_2210 & n_2218=n1_2211 & 0<=m1_2210 & 0<=n1_2211 & q_2227=null & 
-0<=m_2217 & 0<=n_2218 & m_2230=m2_2213 & n_2231=n2_2214 & 0<=m2_2213 & 
-0<=n2_2214 & q_2240=null & 0<=m_2230 & 0<=n_2231 & 
-v_node2_109_1576'=p_2209 & v_node2_109_1575'=q_2212 & Anon_17=q_2227 & 
-m_2247=m_2217 & Anon_18=q_2240 & n_2248=m_2230 & 0<=m_2230 & 0<=m_2217 & 
-flted_40_2255=n_2248+m_2247 & 0<=m_2247 & 0<=n_2248).
-
-// id 74
-checksat  x'::node2<Anon_2208,p_2209,q_2212>&n_2248=m_2230 & Anon_18=q_2240 & 
-m_2247=m_2217 & Anon_17=q_2227 & v_node2_109_1575'=q_2212 & 
-v_node2_109_1576'=p_2209 & 0<=n_2231 & 0<=m_2230 & q_2240=null & 
-0<=n2_2214 & 0<=m2_2213 & n_2231=n2_2214 & m_2230=m2_2213 & 0<=n_2218 & 
-0<=m_2217 & q_2227=null & 0<=n1_2211 & 0<=m1_2210 & n_2218=n1_2211 & 
-m_2217=m1_2210 & x'=x & x'!=null & v_bool_105_1590' & exists(max_41:n=max_41+
-1 & max_41=max(n1_2211,n2_2214)) & m=m2_2213+1+m1_2210.
-
-// id 75
-checksat  x'::node2<Anon_2208,p_2209,q_2212>&n_2248=m_2230 & Anon_18=q_2240 & 
-m_2247=m_2217 & Anon_17=q_2227 & v_node2_109_1575'=q_2212 & 
-v_node2_109_1576'=p_2209 & 0<=n_2231 & 0<=m_2230 & q_2240=null & 
-0<=n2_2214 & 0<=m2_2213 & n_2231=n2_2214 & m_2230=m2_2213 & 0<=n_2218 & 
-0<=m_2217 & q_2227=null & 0<=n1_2211 & 0<=m1_2210 & n_2218=n1_2211 & 
-m_2217=m1_2210 & x'=x & x'!=null & v_bool_105_1590' & exists(max_41:n=max_41+
-1 & max_41=max(n1_2211,n2_2214)) & m=m2_2213+1+m1_2210.
-
-// id 76
-checksat  x'::node2<Anon_2208,p_2209,q_2212> * p_2209::dll<q_2227,m_2217> * 
-q_2212::dll<q_2240,m_2230>&right_109_1572'=q_2212 & left_109_1571'=p_2209 & 
-val_109_1570'=Anon_2208 & v_node2_109_1576'=p_2209 & 0<=n_2231 & 0<=m_2230 & 
-q_2240=null & 0<=n2_2214 & 0<=m2_2213 & n_2231=n2_2214 & m_2230=m2_2213 & 
-0<=n_2218 & 0<=m_2217 & q_2227=null & 0<=n1_2211 & 0<=m1_2210 & 
-n_2218=n1_2211 & m_2217=m1_2210 & x'=x & x'!=null & v_bool_105_1590' & 
-exists(max_41:n=max_41+1 & max_41=max(n1_2211,n2_2214)) & m=m2_2213+1+m1_2210.
-
-// id 77
-checksat  x'::node2<Anon_2208,p_2209,q_2212> * p_2209::dll<q_2227,m_2217> * 
-q_2212::dll<q_2240,m_2230>&right_109_1569'=q_2212 & left_109_1568'=p_2209 & 
-val_109_1567'=Anon_2208 & 0<=n_2231 & 0<=m_2230 & q_2240=null & 0<=n2_2214 & 
-0<=m2_2213 & n_2231=n2_2214 & m_2230=m2_2213 & 0<=n_2218 & 0<=m_2217 & 
-q_2227=null & 0<=n1_2211 & 0<=m1_2210 & n_2218=n1_2211 & m_2217=m1_2210 & 
-x'=x & x'!=null & v_bool_105_1590' & exists(max_41:n=max_41+1 & 
-max_41=max(n1_2211,n2_2214)) & m=m2_2213+1+m1_2210.
-
-// id 78
-checksat  (exists m_2235,q_2236: x'::node2<Anon_2208,p_2209,q_2212> * 
-p_2209::dll<q_2227,m_2217> * v_node2_108_1566'::dll<q_2236,m_2235>&m=m2_2213+
-1+m1_2210 & exists(max_41:n=max_41+1 & max_41=max(n1_2211,n2_2214)) & 
-v_bool_105_1590' & x'!=null & x'=x & m_2217=m1_2210 & n_2218=n1_2211 & 
-0<=m1_2210 & 0<=n1_2211 & q_2227=null & 0<=m_2217 & 0<=n_2218 & 
-v_node2_108_1566'=q_2212 & m_2230=m2_2213 & n_2231=n2_2214 & 0<=m2_2213 & 
-0<=n2_2214 & q_2236=null & m_2235=m_2230 & 0<=m_2230 & 0<=n_2231).
-
-// id 79
-checksat  x'::node2<Anon_2208,p_2209,q_2212> * p_2209::dll<q_2227,m_2217>&
-n_2231=n2_2214 & m_2230=m2_2213 & v_node2_108_1566'=q_2212 & 0<=n_2218 & 
-0<=m_2217 & q_2227=null & 0<=n1_2211 & 0<=m1_2210 & n_2218=n1_2211 & 
-m_2217=m1_2210 & x'=x & x'!=null & v_bool_105_1590' & exists(max_41:n=max_41+
-1 & max_41=max(n1_2211,n2_2214)) & m=m2_2213+1+m1_2210.
-
-// id 80
-checksat  x'::node2<Anon_2208,p_2209,q_2212> * p_2209::dll<q_2227,m_2217>&
-n_2231=n2_2214 & m_2230=m2_2213 & v_node2_108_1566'=q_2212 & 0<=n_2218 & 
-0<=m_2217 & q_2227=null & 0<=n1_2211 & 0<=m1_2210 & n_2218=n1_2211 & 
-m_2217=m1_2210 & x'=x & x'!=null & v_bool_105_1590' & exists(max_41:n=max_41+
-1 & max_41=max(n1_2211,n2_2214)) & m=m2_2213+1+m1_2210.
-
-// id 81
-checksat  x'::node2<Anon_2208,p_2209,q_2212> * q_2212::tree<m2_2213,n2_2214> * 
-p_2209::dll<q_2227,m_2217>&right_108_1563'=q_2212 & left_108_1562'=p_2209 & 
-val_108_1561'=Anon_2208 & 0<=n_2218 & 0<=m_2217 & q_2227=null & 0<=n1_2211 & 
-0<=m1_2210 & n_2218=n1_2211 & m_2217=m1_2210 & x'=x & x'!=null & 
-v_bool_105_1590' & exists(max_41:n=max_41+1 & max_41=max(n1_2211,n2_2214)) & 
-m=m2_2213+1+m1_2210.
-
-// id 82
-checksat  (exists m_2222,q_2223: x'::node2<Anon_2208,p_2209,q_2212> * 
-q_2212::tree<m2_2213,n2_2214> * v_node2_107_1560'::dll<q_2223,m_2222>&
-m=m2_2213+1+m1_2210 & exists(max_41:n=max_41+1 & max_41=max(n1_2211,
-n2_2214)) & v_bool_105_1590' & x'!=null & x'=x & v_node2_107_1560'=p_2209 & 
-m_2217=m1_2210 & n_2218=n1_2211 & 0<=m1_2210 & 0<=n1_2211 & q_2223=null & 
-m_2222=m_2217 & 0<=m_2217 & 0<=n_2218).
-
-// id 83
-checksat  x'::node2<Anon_2208,p_2209,q_2212> * q_2212::tree<m2_2213,n2_2214>&
-n_2218=n1_2211 & m_2217=m1_2210 & v_node2_107_1560'=p_2209 & x'=x & 
-x'!=null & v_bool_105_1590' & exists(max_41:n=max_41+1 & max_41=max(n1_2211,
-n2_2214)) & m=m2_2213+1+m1_2210.
-
-// id 84
-checksat  x'::node2<Anon_2208,p_2209,q_2212> * q_2212::tree<m2_2213,n2_2214>&
-n_2218=n1_2211 & m_2217=m1_2210 & v_node2_107_1560'=p_2209 & x'=x & 
-x'!=null & v_bool_105_1590' & exists(max_41:n=max_41+1 & max_41=max(n1_2211,
-n2_2214)) & m=m2_2213+1+m1_2210.
-
-// id 85
-checksat  x'::node2<Anon_2208,p_2209,q_2212> * p_2209::tree<m1_2210,n1_2211> * 
-q_2212::tree<m2_2213,n2_2214>&right_107_1557'=q_2212 & 
-left_107_1556'=p_2209 & val_107_1555'=Anon_2208 & x'=x & x'!=null & 
-v_bool_105_1590' & exists(max_41:n=max_41+1 & max_41=max(n1_2211,n2_2214)) & 
-m=m2_2213+1+m1_2210.
-
-// id 86
-checksat  (exists Anon_2200,p_2201,m1_2202,n1_2203,q_2204,m2_2205,
-n2_2206: x'::node2<Anon_2200,p_2201,q_2204> * 
-p_2201::tree<m1_2202,n1_2203> * q_2204::tree<m2_2205,n2_2206>&m=m2_2205+1+
-m1_2202 & exists(max_41:n=max_41+1 & max_41=max(n1_2203,n2_2206)) & 
-v_bool_105_1590' & x'!=null & x'=x).
-
-// id 87
-checksat  x::tree<m,n>&x'=x & x'=null & !(v_bool_105_1590') & x'=null & 
-!(v_bool_105_1590').
-
-// id 88
-checksat  x::tree<m,n>&x'=x & x'!=null & v_bool_105_1590' & x'!=null & 
-!(v_bool_105_1590').
-
-// id 89
-checksat  x::tree<m,n>&x'=x & x'=null & !(v_bool_105_1590') & x'=null & 
-v_bool_105_1590'.
-
-// id 90
-checksat  x::tree<m,n>&x'=x & x'!=null & v_bool_105_1590' & x'!=null & 
-v_bool_105_1590'.
-
-// id 91
 checksat  x::tree<m,n>&x'=x & x'!=null & res & x'!=null.
 
-// id 92
+// id 43
 checksat  x::tree<m,n>&x'!=null & x'=x.
 
-// id 93
+// id 44
 checksat  x::tree<m,n>&x'!=null & x'=x.
 
-// id 94
+// id 45
 checksat  x::tree<m,n>&x'=x & MayLoop[] & x'!=null.
 
-// id 95
+// id 46
 checksat  x::tree<m,n>&x'=x & x'=null & !(res) & x'=null.
 
-// id 96
+// id 47
 checksat  x::tree<m,n>&x'=null & x'=x.
 
-// id 97
+// id 48
 checksat  x::tree<m,n>&x'=null & x'=x.
 
-// id 98
+// id 49
 checksat  x::tree<m,n>&x'=x & MayLoop[] & x'=null.
 
-// id 99
-checksat  q_2033::bst<qs_2030,lg_2028> * xleft_2155::bst<s_2153,l_2154> * 
-x'::node2<v_2031,xleft_2155,q_2033>&sm_2067<=lg_2068 & l_2154<=lg_2068 & 
-sm_2067<=s_2153 & sm_2027<=pl_2029 & lg_2068=pl_2029 & sm_2067=sm_2027 & 
-x'=x & a'=a & x'!=null & v_bool_269_1421' & lg_2028=lg & sm_2027=sm & 
-v_2031<=qs_2030 & pl_2029<=v_2031 & v_2031!=a' & !(v_bool_273_1420') & 
-a'<=v_2031 & !(v_bool_287_1419').
-
-// id 100
-checksat  q_2033::bst<qs_2030,lg_2028> * xleft_2155::bst<s_2153,l_2154> * 
-x'::node2<v_2031,xleft_2155,q_2033>&sm_2067<=lg_2068 & l_2154<=lg_2068 & 
-sm_2067<=s_2153 & sm_2027<=pl_2029 & lg_2068=pl_2029 & sm_2067=sm_2027 & 
-x'=x & a'=a & x'!=null & v_bool_269_1421' & lg_2028=lg & sm_2027=sm & 
-v_2031<=qs_2030 & pl_2029<=v_2031 & v_2031!=a' & !(v_bool_273_1420') & 
-a'<=v_2031 & !(v_bool_287_1419').
-
-// id 101
-checksat  (exists s_2074,l_2075,xleft': q_2033::bst<qs_2030,lg_2028> * 
-xleft'::bst<s_2074,l_2075> * x'::node2<v_2031,xleft',q_2033>&
-!(v_bool_287_1419') & a'<=v_2031 & !(v_bool_273_1420') & v_2031!=a' & 
-pl_2029<=v_2031 & v_2031<=qs_2030 & sm_2027=sm & lg_2028=lg & 
-v_bool_269_1421' & x'!=null & a'=a & x'=x & sm_2067=sm_2027 & 
-lg_2068=pl_2029 & sm_2027<=pl_2029 & sm_2067<=s_2074 & l_2075<=lg_2068 & 
-sm_2067<=lg_2068).
-
-// id 102
-checksat  p_2032::bst<sm_2027,pl_2029> * xright_2132::bst<s_2130,l_2131> * 
-x'::node2<v_2031,p_2032,xright_2132>&sm_2058<=lg_2059 & l_2131<=lg_2059 & 
-sm_2058<=s_2130 & qs_2030<=lg_2028 & lg_2059=lg_2028 & sm_2058=qs_2030 & 
-x'=x & a'=a & x'!=null & v_bool_269_1421' & lg_2028=lg & sm_2027=sm & 
-v_2031<=qs_2030 & pl_2029<=v_2031 & v_2031!=a' & !(v_bool_273_1420') & 
-v_2031<a' & v_bool_287_1419'.
-
-// id 103
-checksat  p_2032::bst<sm_2027,pl_2029> * xright_2132::bst<s_2130,l_2131> * 
-x'::node2<v_2031,p_2032,xright_2132>&sm_2058<=lg_2059 & l_2131<=lg_2059 & 
-sm_2058<=s_2130 & qs_2030<=lg_2028 & lg_2059=lg_2028 & sm_2058=qs_2030 & 
-x'=x & a'=a & x'!=null & v_bool_269_1421' & lg_2028=lg & sm_2027=sm & 
-v_2031<=qs_2030 & pl_2029<=v_2031 & v_2031!=a' & !(v_bool_273_1420') & 
-v_2031<a' & v_bool_287_1419'.
-
-// id 104
-checksat  (exists s_2065,l_2066,xright': p_2032::bst<sm_2027,pl_2029> * 
-xright'::bst<s_2065,l_2066> * x'::node2<v_2031,p_2032,xright'>&
-v_bool_287_1419' & v_2031<a' & !(v_bool_273_1420') & v_2031!=a' & 
-pl_2029<=v_2031 & v_2031<=qs_2030 & sm_2027=sm & lg_2028=lg & 
-v_bool_269_1421' & x'!=null & a'=a & x'=x & sm_2058=qs_2030 & 
-lg_2059=lg_2028 & qs_2030<=lg_2028 & sm_2058<=s_2065 & l_2066<=lg_2059 & 
-sm_2058<=lg_2059).
-
-// id 105
-checksat  p_2032::bst<sm_2027,pl_2029> * xright_2108::bst<s1_2107,b> * 
-x'::node2<tmp_2109,p_2032,xright_2108>&s<=b & tmp_2109<=s1_2107 & 
-s<=tmp_2109 & qs_2030<=lg_2028 & b=lg_2028 & s=qs_2030 & xval_2051=v_2031 & 
-x'=x & a'=a & x'!=null & v_bool_269_1421' & lg_2028=lg & sm_2027=sm & 
-v_2031<=qs_2030 & pl_2029<=v_2031 & xval_2051=a' & v_bool_273_1420' & 
-q_2033!=null & !(v_bool_275_1400').
-
-// id 106
-checksat  p_2032::bst<sm_2027,pl_2029> * xright_2108::bst<s1_2107,b> * 
-x'::node2<tmp_2109,p_2032,xright_2108>&s<=b & tmp_2109<=s1_2107 & 
-s<=tmp_2109 & qs_2030<=lg_2028 & b=lg_2028 & s=qs_2030 & xval_2051=v_2031 & 
-x'=x & a'=a & x'!=null & v_bool_269_1421' & lg_2028=lg & sm_2027=sm & 
-v_2031<=qs_2030 & pl_2029<=v_2031 & xval_2051=a' & v_bool_273_1420' & 
-q_2033!=null & !(v_bool_275_1400').
-
-// id 107
-checksat  (exists s1_2049,xright',tmp': p_2032::bst<sm_2027,pl_2029> * 
-xright'::bst<s1_2049,b> * x'::node2<tmp',p_2032,xright'>&
-!(v_bool_275_1400') & q_2033!=null & v_bool_273_1420' & xval_2051=a' & 
-pl_2029<=v_2031 & v_2031<=qs_2030 & sm_2027=sm & lg_2028=lg & 
-v_bool_269_1421' & x'!=null & a'=a & x'=x & xval_2051=v_2031 & s=qs_2030 & 
-b=lg_2028 & qs_2030<=lg_2028 & s<=tmp' & tmp'<=s1_2049 & s<=b).
-
-// id 108
-checksat  (exists sm_2100,lg_2101,pl_2102,qs_2103,v_2104,p_2105,
-q_2106: p_2032::node2<v_2104,p_2105,q_2106> * p_2105::bst<sm_2100,pl_2102> * 
-q_2106::bst<qs_2103,lg_2101> * q_2033::bst<qs_2030,lg_2028> * 
-x'::node2<a',p_2032,q_2033>&pl_2102<=v_2104 & v_2104<=qs_2103 & 
-sm_2100=sm_2027 & lg_2101=pl_2029 & v_bool_275_1400' & q_2033=null & 
-v_bool_273_1420' & pl_2029<=v_2031 & v_2031<=qs_2030 & sm_2027=sm & 
-lg_2028=lg & v_bool_269_1421' & x_2044!=null & a'=a & x_2044=x & a'=v_2031 & 
-x'=p_2032).
-
-// id 109
-checksat  q_2033::bst<qs_2030,lg_2028> * x'::node2<a',p_2032,q_2033>&p_2032=null & 
-sm_2027<=pl_2029 & v_bool_275_1400' & q_2033=null & v_bool_273_1420' & 
-pl_2029<=v_2031 & v_2031<=qs_2030 & sm_2027=sm & lg_2028=lg & 
-v_bool_269_1421' & x_2044!=null & a'=a & x_2044=x & a'=v_2031 & x'=p_2032.
-
-// id 110
-checksat  (exists s_2074,l_2075,xleft_2073: q_2033::bst<qs_2030,lg_2028> * 
-xleft'::bst<s_2074,l_2075>&!(v_bool_287_1419') & a'<=xval' & 
-!(v_bool_273_1420') & xval'!=a' & pl_2029<=v_2031 & v_2031<=qs_2030 & 
-sm_2027=sm & lg_2028=lg & v_bool_269_1421' & x'!=null & a'=a & x'=x & 
-xval'=v_2031 & xleft_2073=p_2032 & xright'=q_2033 & sm_2067=sm_2027 & 
-lg_2068=pl_2029 & sm_2027<=pl_2029 & sm_2067<=s_2074 & l_2075<=lg_2068 & 
-sm_2067<=lg_2068).
-
-// id 111
-checksat  q_2033::bst<qs_2030,lg_2028>&lg_2068=pl_2029 & sm_2067=sm_2027 & 
-xright'=q_2033 & xleft'=p_2032 & xval'=v_2031 & x'=x & a'=a & x'!=null & 
-v_bool_269_1421' & lg_2028=lg & sm_2027=sm & v_2031<=qs_2030 & 
-pl_2029<=v_2031 & xval'!=a' & !(v_bool_273_1420') & a'<=xval' & 
-!(v_bool_287_1419').
-
-// id 112
-checksat  q_2033::bst<qs_2030,lg_2028>&lg_2068=pl_2029 & sm_2067=sm_2027 & 
-xright'=q_2033 & xleft'=p_2032 & xval'=v_2031 & x'=x & a'=a & x'!=null & 
-v_bool_269_1421' & lg_2028=lg & sm_2027=sm & v_2031<=qs_2030 & 
-pl_2029<=v_2031 & xval'!=a' & !(v_bool_273_1420') & a'<=xval' & 
-!(v_bool_287_1419').
-
-// id 113
-checksat  (exists s_2065,l_2066,xright_2064: p_2032::bst<sm_2027,pl_2029> * 
-xright'::bst<s_2065,l_2066>&v_bool_287_1419' & xval'<a' & 
-!(v_bool_273_1420') & xval'!=a' & pl_2029<=v_2031 & v_2031<=qs_2030 & 
-sm_2027=sm & lg_2028=lg & v_bool_269_1421' & x'!=null & a'=a & x'=x & 
-xval'=v_2031 & xleft'=p_2032 & xright_2064=q_2033 & sm_2058=qs_2030 & 
-lg_2059=lg_2028 & qs_2030<=lg_2028 & sm_2058<=s_2065 & l_2066<=lg_2059 & 
-sm_2058<=lg_2059).
-
-// id 114
-checksat  p_2032::bst<sm_2027,pl_2029>&lg_2059=lg_2028 & sm_2058=qs_2030 & 
-xright'=q_2033 & xleft'=p_2032 & xval'=v_2031 & x'=x & a'=a & x'!=null & 
-v_bool_269_1421' & lg_2028=lg & sm_2027=sm & v_2031<=qs_2030 & 
-pl_2029<=v_2031 & xval'!=a' & !(v_bool_273_1420') & xval'<a' & 
-v_bool_287_1419'.
-
-// id 115
-checksat  p_2032::bst<sm_2027,pl_2029>&lg_2059=lg_2028 & sm_2058=qs_2030 & 
-xright'=q_2033 & xleft'=p_2032 & xval'=v_2031 & x'=x & a'=a & x'!=null & 
-v_bool_269_1421' & lg_2028=lg & sm_2027=sm & v_2031<=qs_2030 & 
-pl_2029<=v_2031 & xval'!=a' & !(v_bool_273_1420') & xval'<a' & 
-v_bool_287_1419'.
-
-// id 116
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&xval'<a' & 
-xright'=q_2033 & xleft'=p_2032 & xval'=v_2031 & x'=x & a'=a & x'!=null & 
-v_bool_269_1421' & lg_2028=lg & sm_2027=sm & v_2031<=qs_2030 & 
-pl_2029<=v_2031 & xval'!=a' & !(v_bool_273_1420') & v_bool_287_1419' & 
-xval'<a' & !(v_bool_287_1419').
-
-// id 117
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&a'<=xval' & 
-xright'=q_2033 & xleft'=p_2032 & xval'=v_2031 & x'=x & a'=a & x'!=null & 
-v_bool_269_1421' & lg_2028=lg & sm_2027=sm & v_2031<=qs_2030 & 
-pl_2029<=v_2031 & xval'!=a' & !(v_bool_273_1420') & !(v_bool_287_1419') & 
-a'<=xval' & !(v_bool_287_1419').
-
-// id 118
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&xval'<a' & 
-xright'=q_2033 & xleft'=p_2032 & xval'=v_2031 & x'=x & a'=a & x'!=null & 
-v_bool_269_1421' & lg_2028=lg & sm_2027=sm & v_2031<=qs_2030 & 
-pl_2029<=v_2031 & xval'!=a' & !(v_bool_273_1420') & v_bool_287_1419' & 
-xval'<a' & v_bool_287_1419'.
-
-// id 119
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&a'<=xval' & 
-xright'=q_2033 & xleft'=p_2032 & xval'=v_2031 & x'=x & a'=a & x'!=null & 
-v_bool_269_1421' & lg_2028=lg & sm_2027=sm & v_2031<=qs_2030 & 
-pl_2029<=v_2031 & xval'!=a' & !(v_bool_273_1420') & !(v_bool_287_1419') & 
-a'<=xval' & v_bool_287_1419'.
-
-// id 120
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&a'<=xval' & 
-xright'=q_2033 & xleft'=p_2032 & xval'=v_2031 & x'=x & a'=a & x'!=null & 
-v_bool_269_1421' & lg_2028=lg & sm_2027=sm & v_2031<=qs_2030 & 
-pl_2029<=v_2031 & xval'!=a' & !(v_bool_273_1420') & !(res) & a'<=xval'.
-
-// id 121
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&
-!(v_bool_273_1420') & xval'!=a' & pl_2029<=v_2031 & v_2031<=qs_2030 & 
-sm_2027=sm & lg_2028=lg & v_bool_269_1421' & x'!=null & a'=a & x'=x & 
-xval'=v_2031 & xleft'=p_2032 & xright'=q_2033 & a'<=xval'.
-
-// id 122
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&
-!(v_bool_273_1420') & xval'!=a' & pl_2029<=v_2031 & v_2031<=qs_2030 & 
-sm_2027=sm & lg_2028=lg & v_bool_269_1421' & x'!=null & a'=a & x'=x & 
-xval'=v_2031 & xleft'=p_2032 & xright'=q_2033 & a'<=xval'.
-
-// id 123
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&xval'<a' & 
-xright'=q_2033 & xleft'=p_2032 & xval'=v_2031 & x'=x & a'=a & x'!=null & 
-v_bool_269_1421' & lg_2028=lg & sm_2027=sm & v_2031<=qs_2030 & 
-pl_2029<=v_2031 & xval'!=a' & !(v_bool_273_1420') & res & xval'<a'.
-
-// id 124
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&
-!(v_bool_273_1420') & xval'!=a' & pl_2029<=v_2031 & v_2031<=qs_2030 & 
-sm_2027=sm & lg_2028=lg & v_bool_269_1421' & x'!=null & a'=a & x'=x & 
-xval'=v_2031 & xleft'=p_2032 & xright'=q_2033 & xval'<a'.
-
-// id 125
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&
-!(v_bool_273_1420') & xval'!=a' & pl_2029<=v_2031 & v_2031<=qs_2030 & 
-sm_2027=sm & lg_2028=lg & v_bool_269_1421' & x'!=null & a'=a & x'=x & 
-xval'=v_2031 & xleft'=p_2032 & xright'=q_2033 & xval'<a'.
-
-// id 126
-checksat  (exists b_2048,s1_2049,xright_2047: p_2032::bst<sm_2027,pl_2029> * 
-xright'::bst<s1_2049,b_2048>&!(v_bool_275_1400') & xright_2047!=null & 
-v_bool_273_1420' & xval'=a' & pl_2029<=v_2031 & v_2031<=qs_2030 & 
-sm_2027=sm & lg_2028=lg & v_bool_269_1421' & x'!=null & a'=a & x'=x & 
-xval'=v_2031 & xleft'=p_2032 & xright_2047=q_2033 & s=qs_2030 & b=lg_2028 & 
-qs_2030<=lg_2028 & s<=res & res<=s1_2049 & b_2048=b & s<=b).
-
-// id 127
-checksat  p_2032::bst<sm_2027,pl_2029>&b=lg_2028 & s=qs_2030 & xright'=q_2033 & 
-xleft'=p_2032 & xval'=v_2031 & x'=x & a'=a & x'!=null & v_bool_269_1421' & 
-lg_2028=lg & sm_2027=sm & v_2031<=qs_2030 & pl_2029<=v_2031 & xval'=a' & 
-v_bool_273_1420' & xright'!=null & !(v_bool_275_1400').
-
-// id 128
-checksat  p_2032::bst<sm_2027,pl_2029>&b=lg_2028 & s=qs_2030 & xright'=q_2033 & 
-xleft'=p_2032 & xval'=v_2031 & x'=x & a'=a & x'!=null & v_bool_269_1421' & 
-lg_2028=lg & sm_2027=sm & v_2031<=qs_2030 & pl_2029<=v_2031 & xval'=a' & 
-v_bool_273_1420' & xright'!=null & !(v_bool_275_1400').
-
-// id 129
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&
-xright'=q_2033 & xleft'=p_2032 & xval'=v_2031 & x'=x & a'=a & x'!=null & 
-v_bool_269_1421' & lg_2028=lg & sm_2027=sm & v_2031<=qs_2030 & 
-pl_2029<=v_2031 & xval'=a' & v_bool_273_1420' & xright'=null & 
-v_bool_275_1400'.
-
-// id 130
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&xright'=null & 
-xright'=q_2033 & xleft'=p_2032 & xval'=v_2031 & x'=x & a'=a & x'!=null & 
-v_bool_269_1421' & lg_2028=lg & sm_2027=sm & v_2031<=qs_2030 & 
-pl_2029<=v_2031 & xval'=a' & v_bool_273_1420' & v_bool_275_1400' & 
-xright'=null & !(v_bool_275_1400').
-
-// id 131
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&xright'!=null & 
-xright'=q_2033 & xleft'=p_2032 & xval'=v_2031 & x'=x & a'=a & x'!=null & 
-v_bool_269_1421' & lg_2028=lg & sm_2027=sm & v_2031<=qs_2030 & 
-pl_2029<=v_2031 & xval'=a' & v_bool_273_1420' & !(v_bool_275_1400') & 
-xright'!=null & !(v_bool_275_1400').
-
-// id 132
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&xright'=null & 
-xright'=q_2033 & xleft'=p_2032 & xval'=v_2031 & x'=x & a'=a & x'!=null & 
-v_bool_269_1421' & lg_2028=lg & sm_2027=sm & v_2031<=qs_2030 & 
-pl_2029<=v_2031 & xval'=a' & v_bool_273_1420' & v_bool_275_1400' & 
-xright'=null & v_bool_275_1400'.
-
-// id 133
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&xright'!=null & 
-xright'=q_2033 & xleft'=p_2032 & xval'=v_2031 & x'=x & a'=a & x'!=null & 
-v_bool_269_1421' & lg_2028=lg & sm_2027=sm & v_2031<=qs_2030 & 
-pl_2029<=v_2031 & xval'=a' & v_bool_273_1420' & !(v_bool_275_1400') & 
-xright'!=null & v_bool_275_1400'.
-
-// id 134
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&xright'!=null & 
-xright'=q_2033 & xleft'=p_2032 & xval'=v_2031 & x'=x & a'=a & x'!=null & 
-v_bool_269_1421' & lg_2028=lg & sm_2027=sm & v_2031<=qs_2030 & 
-pl_2029<=v_2031 & xval'=a' & v_bool_273_1420' & !(res) & xright'!=null.
-
-// id 135
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&
-v_bool_273_1420' & xval'=a' & pl_2029<=v_2031 & v_2031<=qs_2030 & 
-sm_2027=sm & lg_2028=lg & v_bool_269_1421' & x'!=null & a'=a & x'=x & 
-xval'=v_2031 & xleft'=p_2032 & xright'=q_2033 & xright'!=null.
-
-// id 136
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&
-v_bool_273_1420' & xval'=a' & pl_2029<=v_2031 & v_2031<=qs_2030 & 
-sm_2027=sm & lg_2028=lg & v_bool_269_1421' & x'!=null & a'=a & x'=x & 
-xval'=v_2031 & xleft'=p_2032 & xright'=q_2033 & xright'!=null.
-
-// id 137
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&
-v_bool_273_1420' & xval'=a' & pl_2029<=v_2031 & v_2031<=qs_2030 & 
-sm_2027=sm & lg_2028=lg & v_bool_269_1421' & x'!=null & a'=a & x'=x & 
-xval'=v_2031 & xleft'=p_2032 & xright'=q_2033 & xright'!=null.
-
-// id 138
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&xright'=null & 
-xright'=q_2033 & xleft'=p_2032 & xval'=v_2031 & x'=x & a'=a & x'!=null & 
-v_bool_269_1421' & lg_2028=lg & sm_2027=sm & v_2031<=qs_2030 & 
-pl_2029<=v_2031 & xval'=a' & v_bool_273_1420' & res & xright'=null.
-
-// id 139
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&
-v_bool_273_1420' & xval'=a' & pl_2029<=v_2031 & v_2031<=qs_2030 & 
-sm_2027=sm & lg_2028=lg & v_bool_269_1421' & x'!=null & a'=a & x'=x & 
-xval'=v_2031 & xleft'=p_2032 & xright'=q_2033 & xright'=null.
-
-// id 140
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&
-v_bool_273_1420' & xval'=a' & pl_2029<=v_2031 & v_2031<=qs_2030 & 
-sm_2027=sm & lg_2028=lg & v_bool_269_1421' & x'!=null & a'=a & x'=x & 
-xval'=v_2031 & xleft'=p_2032 & xright'=q_2033 & xright'=null.
-
-// id 141
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&
-v_bool_273_1420' & xval'=a' & pl_2029<=v_2031 & v_2031<=qs_2030 & 
-sm_2027=sm & lg_2028=lg & v_bool_269_1421' & x'!=null & a'=a & x'=x & 
-xval'=v_2031 & xleft'=p_2032 & xright'=q_2033 & xright'=null.
-
-// id 142
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&xval'=a' & 
-xright'=q_2033 & xleft'=p_2032 & xval'=v_2031 & x'=x & a'=a & x'!=null & 
-v_bool_269_1421' & lg_2028=lg & sm_2027=sm & v_2031<=qs_2030 & 
-pl_2029<=v_2031 & v_bool_273_1420' & xval'=a' & !(v_bool_273_1420').
-
-// id 143
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&xval'!=a' & 
-xright'=q_2033 & xleft'=p_2032 & xval'=v_2031 & x'=x & a'=a & x'!=null & 
-v_bool_269_1421' & lg_2028=lg & sm_2027=sm & v_2031<=qs_2030 & 
-pl_2029<=v_2031 & !(v_bool_273_1420') & xval'!=a' & !(v_bool_273_1420').
-
-// id 144
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&xval'=a' & 
-xright'=q_2033 & xleft'=p_2032 & xval'=v_2031 & x'=x & a'=a & x'!=null & 
-v_bool_269_1421' & lg_2028=lg & sm_2027=sm & v_2031<=qs_2030 & 
-pl_2029<=v_2031 & v_bool_273_1420' & xval'=a' & v_bool_273_1420'.
-
-// id 145
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&xval'!=a' & 
-xright'=q_2033 & xleft'=p_2032 & xval'=v_2031 & x'=x & a'=a & x'!=null & 
-v_bool_269_1421' & lg_2028=lg & sm_2027=sm & v_2031<=qs_2030 & 
-pl_2029<=v_2031 & !(v_bool_273_1420') & xval'!=a' & v_bool_273_1420'.
-
-// id 146
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&xval'!=a' & 
-xright'=q_2033 & xleft'=p_2032 & xval'=v_2031 & x'=x & a'=a & x'!=null & 
-v_bool_269_1421' & lg_2028=lg & sm_2027=sm & v_2031<=qs_2030 & 
-pl_2029<=v_2031 & !(res) & xval'!=a'.
-
-// id 147
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&
-pl_2029<=v_2031 & v_2031<=qs_2030 & sm_2027=sm & lg_2028=lg & 
-v_bool_269_1421' & x'!=null & a'=a & x'=x & xval'=v_2031 & xleft'=p_2032 & 
-xright'=q_2033 & xval'!=a'.
-
-// id 148
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&
-pl_2029<=v_2031 & v_2031<=qs_2030 & sm_2027=sm & lg_2028=lg & 
-v_bool_269_1421' & x'!=null & a'=a & x'=x & xval'=v_2031 & xleft'=p_2032 & 
-xright'=q_2033 & xval'!=a'.
-
-// id 149
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&xval'=a' & 
-xright'=q_2033 & xleft'=p_2032 & xval'=v_2031 & x'=x & a'=a & x'!=null & 
-v_bool_269_1421' & lg_2028=lg & sm_2027=sm & v_2031<=qs_2030 & 
-pl_2029<=v_2031 & res & xval'=a'.
-
-// id 150
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&
-pl_2029<=v_2031 & v_2031<=qs_2030 & sm_2027=sm & lg_2028=lg & 
-v_bool_269_1421' & x'!=null & a'=a & x'=x & xval'=v_2031 & xleft'=p_2032 & 
-xright'=q_2033 & xval'=a'.
-
-// id 151
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&
-pl_2029<=v_2031 & v_2031<=qs_2030 & sm_2027=sm & lg_2028=lg & 
-v_bool_269_1421' & x'!=null & a'=a & x'=x & xval'=v_2031 & xleft'=p_2032 & 
-xright'=q_2033 & xval'=a'.
-
-// id 152
-checksat  p_2032::bst<sm_2027,pl_2029> * q_2033::bst<qs_2030,lg_2028>&
-xright'=q_2033 & xleft'=p_2032 & xval'=v_2031 & x'=x & a'=a & x'!=null & 
-v_bool_269_1421' & lg_2028=lg & sm_2027=sm & v_2031<=qs_2030 & 
-pl_2029<=v_2031.
-
-// id 153
-checksat  (exists sm_2019,lg_2020,pl_2021,qs_2022,v_2023,p_2024,
-q_2025: x'::node2<v_2023,p_2024,q_2025> * p_2024::bst<sm_2019,pl_2021> * 
-q_2025::bst<qs_2022,lg_2020>&pl_2021<=v_2023 & v_2023<=qs_2022 & 
-sm_2019=sm & lg_2020=lg & v_bool_269_1421' & x'!=null & a'=a & x'=x).
-
-// id 154
-checksat  x::bst<sm,lg>&x'=x & a'=a & x'=null & !(v_bool_269_1421') & x'=null & 
-!(v_bool_269_1421').
-
-// id 155
-checksat  x::bst<sm,lg>&x'=x & a'=a & x'!=null & v_bool_269_1421' & x'!=null & 
-!(v_bool_269_1421').
-
-// id 156
-checksat  x::bst<sm,lg>&x'=x & a'=a & x'=null & !(v_bool_269_1421') & x'=null & 
-v_bool_269_1421'.
-
-// id 157
-checksat  x::bst<sm,lg>&x'=x & a'=a & x'!=null & v_bool_269_1421' & x'!=null & 
-v_bool_269_1421'.
-
-// id 158
-checksat  x::bst<sm,lg>&x'=x & a'=a & x'!=null & res & x'!=null.
-
-// id 159
-checksat  x::bst<sm,lg>&x'!=null & a'=a & x'=x.
-
-// id 160
-checksat  x::bst<sm,lg>&x'!=null & a'=a & x'=x.
-
-// id 161
-checksat  x::bst<sm,lg>&x'=x & a'=a & MayLoop[] & x'!=null.
-
-// id 162
-checksat  x::bst<sm,lg>&x'=x & a'=a & x'=null & !(res) & x'=null.
-
-// id 163
-checksat  x::bst<sm,lg>&x'=null & a'=a & x'=x.
-
-// id 164
-checksat  x::bst<sm,lg>&x'=null & a'=a & x'=x.
-
-// id 165
-checksat  x::bst<sm,lg>&x'=x & a'=a & MayLoop[] & x'=null.
-
-// id 166
-checksat  q_1949::bst<qs_1946,lg_1944> * xleft_1979::bst<s1_1978,b_1967> * 
-x'::node2<v_1947,xleft_1979,q_1949>&s_1966<=b_1967 & res<=s1_1978 & 
-s_1966<=res & sm_1943<=pl_1945 & b_1967=pl_1945 & s_1966=sm_1943 & 
-pl_1945<=v_1947 & v_1947<=qs_1946 & sm_1943=s & lg_1944=b & x'=x & x!=null & 
-p_1948!=null & !(v_bool_217_1465').
-
-// id 167
-checksat  q_1949::bst<qs_1946,lg_1944> * xleft_1979::bst<s1_1978,b_1967> * 
-x'::node2<v_1947,xleft_1979,q_1949>&s_1966<=b_1967 & res<=s1_1978 & 
-s_1966<=res & sm_1943<=pl_1945 & b_1967=pl_1945 & s_1966=sm_1943 & 
-pl_1945<=v_1947 & v_1947<=qs_1946 & sm_1943=s & lg_1944=b & x'=x & x!=null & 
-p_1948!=null & !(v_bool_217_1465').
-
-// id 168
-checksat  (exists s1_1972,xleft': q_1949::bst<qs_1946,lg_1944> * 
-xleft'::bst<s1_1972,b_1967> * x'::node2<v_1947,xleft',q_1949>&
-!(v_bool_217_1465') & p_1948!=null & x!=null & x'=x & lg_1944=b & 
-sm_1943=s & v_1947<=qs_1946 & pl_1945<=v_1947 & s_1966=sm_1943 & 
-b_1967=pl_1945 & sm_1943<=pl_1945 & s_1966<=res & res<=s1_1972 & 
-s_1966<=b_1967).
-
-// id 169
-checksat  x_1963::node2<v_1947,p_1948,q_1949> * p_1948::bst<sm_1943,pl_1945>&
-res=v_1947 & x'=q_1949 & pl_1945<=v_1947 & v_1947<=qs_1946 & sm_1943=s & 
-lg_1944=b & x_1963=x & x!=null & p_1948=null & v_bool_217_1465'.
-
-// id 170
-checksat  (exists b_1971,s1_1972,xleft_1970: q_1949::bst<qs_1946,lg_1944> * 
-xleft'::bst<s1_1972,b_1971>&!(v_bool_217_1465') & p_1948!=null & x!=null & 
-x'=x & lg_1944=b & sm_1943=s & v_1947<=qs_1946 & pl_1945<=v_1947 & 
-Anon_19'=v_1947 & xleft_1970=p_1948 & Anon_20'=q_1949 & s_1966=sm_1943 & 
-b_1967=pl_1945 & sm_1943<=pl_1945 & s_1966<=res & res<=s1_1972 & 
-b_1971=b_1967 & s_1966<=b_1967).
-
-// id 171
-checksat  q_1949::bst<qs_1946,lg_1944>&b_1967=pl_1945 & s_1966=sm_1943 & 
-Anon_20'=q_1949 & xleft'=p_1948 & Anon_19'=v_1947 & pl_1945<=v_1947 & 
-v_1947<=qs_1946 & sm_1943=s & lg_1944=b & x'=x & x!=null & p_1948!=null & 
-!(v_bool_217_1465').
-
-// id 172
-checksat  q_1949::bst<qs_1946,lg_1944>&b_1967=pl_1945 & s_1966=sm_1943 & 
-Anon_20'=q_1949 & xleft'=p_1948 & Anon_19'=v_1947 & pl_1945<=v_1947 & 
-v_1947<=qs_1946 & sm_1943=s & lg_1944=b & x'=x & x!=null & p_1948!=null & 
-!(v_bool_217_1465').
-
-// id 173
-checksat  p_1948::bst<sm_1943,pl_1945> * q_1949::bst<qs_1946,lg_1944>&
-Anon_20'=q_1949 & xleft'=p_1948 & Anon_19'=v_1947 & pl_1945<=v_1947 & 
-v_1947<=qs_1946 & sm_1943=s & lg_1944=b & x'=x & x!=null & p_1948!=null & 
-!(v_bool_217_1465').
-
-// id 174
-checksat  x'::node2<v_1947,p_1948,q_1949> * p_1948::bst<sm_1943,pl_1945> * 
-q_1949::bst<qs_1946,lg_1944>&right_220_1457'=q_1949 & 
-left_220_1456'=p_1948 & val_220_1455'=v_1947 & tmp'=v_1947 & 
-pl_1945<=v_1947 & v_1947<=qs_1946 & sm_1943=s & lg_1944=b & x'=x & x!=null & 
-p_1948=null & v_bool_217_1465'.
-
-// id 175
-checksat  x'::node2<v_1947,p_1948,q_1949> * p_1948::bst<sm_1943,pl_1945> * 
-q_1949::bst<qs_1946,lg_1944>&right_219_1454'=q_1949 & 
-left_219_1453'=p_1948 & val_219_1452'=v_1947 & pl_1945<=v_1947 & 
-v_1947<=qs_1946 & sm_1943=s & lg_1944=b & x'=x & x!=null & p_1948=null & 
-v_bool_217_1465'.
-
-// id 176
-checksat  x'::node2<v_1947,p_1948,q_1949> * p_1948::bst<sm_1943,pl_1945> * 
-q_1949::bst<qs_1946,lg_1944>&p_1948=null & pl_1945<=v_1947 & 
-v_1947<=qs_1946 & sm_1943=s & lg_1944=b & x'=x & x!=null & 
-v_bool_217_1465' & p_1948=null & !(v_bool_217_1465').
-
-// id 177
-checksat  x'::node2<v_1947,p_1948,q_1949> * p_1948::bst<sm_1943,pl_1945> * 
-q_1949::bst<qs_1946,lg_1944>&p_1948!=null & pl_1945<=v_1947 & 
-v_1947<=qs_1946 & sm_1943=s & lg_1944=b & x'=x & x!=null & 
-!(v_bool_217_1465') & p_1948!=null & !(v_bool_217_1465').
-
-// id 178
-checksat  x'::node2<v_1947,p_1948,q_1949> * p_1948::bst<sm_1943,pl_1945> * 
-q_1949::bst<qs_1946,lg_1944>&p_1948=null & pl_1945<=v_1947 & 
-v_1947<=qs_1946 & sm_1943=s & lg_1944=b & x'=x & x!=null & 
-v_bool_217_1465' & p_1948=null & v_bool_217_1465'.
-
-// id 179
-checksat  x'::node2<v_1947,p_1948,q_1949> * p_1948::bst<sm_1943,pl_1945> * 
-q_1949::bst<qs_1946,lg_1944>&p_1948!=null & pl_1945<=v_1947 & 
-v_1947<=qs_1946 & sm_1943=s & lg_1944=b & x'=x & x!=null & 
-!(v_bool_217_1465') & p_1948!=null & v_bool_217_1465'.
-
-// id 180
-checksat  x'::node2<v_1947,p_1948,q_1949> * p_1948::bst<sm_1943,pl_1945> * 
-q_1949::bst<qs_1946,lg_1944>&v_node2_217_1451'!=null & 
-v_node2_217_1451'=p_1948 & pl_1945<=v_1947 & v_1947<=qs_1946 & sm_1943=s & 
-lg_1944=b & x'=x & x!=null & !(res) & v_node2_217_1451'!=null.
-
-// id 181
-checksat  x'::node2<v_1947,p_1948,q_1949> * p_1948::bst<sm_1943,pl_1945> * 
-q_1949::bst<qs_1946,lg_1944>&x!=null & x'=x & lg_1944=b & sm_1943=s & 
-v_1947<=qs_1946 & pl_1945<=v_1947 & v_node2_217_1451'=p_1948 & 
-v_node2_217_1451'!=null.
-
-// id 182
-checksat  x'::node2<v_1947,p_1948,q_1949> * p_1948::bst<sm_1943,pl_1945> * 
-q_1949::bst<qs_1946,lg_1944>&x!=null & x'=x & lg_1944=b & sm_1943=s & 
-v_1947<=qs_1946 & pl_1945<=v_1947 & v_node2_217_1451'=p_1948 & 
-v_node2_217_1451'!=null.
-
-// id 183
-checksat  x'::node2<v_1947,p_1948,q_1949> * p_1948::bst<sm_1943,pl_1945> * 
-q_1949::bst<qs_1946,lg_1944>&x!=null & x'=x & lg_1944=b & sm_1943=s & 
-v_1947<=qs_1946 & pl_1945<=v_1947 & v_node2_217_1451'=p_1948 & 
-v_node2_217_1451'!=null.
-
-// id 184
-checksat  x'::node2<v_1947,p_1948,q_1949> * p_1948::bst<sm_1943,pl_1945> * 
-q_1949::bst<qs_1946,lg_1944>&v_node2_217_1451'=null & 
-v_node2_217_1451'=p_1948 & pl_1945<=v_1947 & v_1947<=qs_1946 & sm_1943=s & 
-lg_1944=b & x'=x & x!=null & res & v_node2_217_1451'=null.
-
-// id 185
-checksat  x'::node2<v_1947,p_1948,q_1949> * p_1948::bst<sm_1943,pl_1945> * 
-q_1949::bst<qs_1946,lg_1944>&x!=null & x'=x & lg_1944=b & sm_1943=s & 
-v_1947<=qs_1946 & pl_1945<=v_1947 & v_node2_217_1451'=p_1948 & 
-v_node2_217_1451'=null.
-
-// id 186
-checksat  x'::node2<v_1947,p_1948,q_1949> * p_1948::bst<sm_1943,pl_1945> * 
-q_1949::bst<qs_1946,lg_1944>&x!=null & x'=x & lg_1944=b & sm_1943=s & 
-v_1947<=qs_1946 & pl_1945<=v_1947 & v_node2_217_1451'=p_1948 & 
-v_node2_217_1451'=null.
-
-// id 187
-checksat  x'::node2<v_1947,p_1948,q_1949> * p_1948::bst<sm_1943,pl_1945> * 
-q_1949::bst<qs_1946,lg_1944>&x!=null & x'=x & lg_1944=b & sm_1943=s & 
-v_1947<=qs_1946 & pl_1945<=v_1947 & v_node2_217_1451'=p_1948 & 
-v_node2_217_1451'=null.
-
-// id 188
-checksat  x'::node2<v_1947,p_1948,q_1949> * p_1948::bst<sm_1943,pl_1945> * 
-q_1949::bst<qs_1946,lg_1944>&right_217_1447'=q_1949 & 
-left_217_1446'=p_1948 & val_217_1445'=v_1947 & pl_1945<=v_1947 & 
-v_1947<=qs_1946 & sm_1943=s & lg_1944=b & x'=x & x!=null.
-
-// id 189
-checksat  (exists sm_1935,lg_1936,pl_1937,qs_1938,v_1939,p_1940,
-q_1941: x'::node2<v_1939,p_1940,q_1941> * p_1940::bst<sm_1935,pl_1937> * 
-q_1941::bst<qs_1938,lg_1936>&pl_1937<=v_1939 & v_1939<=qs_1938 & sm_1935=s & 
-lg_1936=b & x'=x & x!=null & MayLoop[]).
-
-// id 190
-checksat  z'::node2<Anon_1879,p_1880,q_1882> * p_1880::tree1<m_1886> * 
-q_1882::tree1<m_1895>&res=v_int_95_1638' & v_int_95_1638'=m_1895+m_1886+1 & 
-0<=m_1895 & 0<=m2_1883 & m_1895=m2_1883 & 0<=m_1886 & 0<=m1_1881 & 
-m_1886=m1_1881 & z'=z & z'!=null & !(v_bool_89_1639') & m=m2_1883+1+m1_1881.
-
-// id 191
-checksat  z'::node2<Anon_1879,p_1880,q_1882> * p_1880::tree1<m_1886> * 
-q_1882::tree1<m_1895>&res=v_int_95_1638' & v_int_95_1638'=m_1895+m_1886+1 & 
-0<=m_1895 & 0<=m2_1883 & m_1895=m2_1883 & 0<=m_1886 & 0<=m1_1881 & 
-m_1886=m1_1881 & z'=z & z'!=null & !(v_bool_89_1639') & m=m2_1883+1+m1_1881.
-
-// id 192
-checksat  z'::node2<Anon_1879,p_1880,q_1882> * p_1880::tree1<m_1886> * 
-q_1882::tree1<m_1895>&m=m2_1883+1+m1_1881 & !(v_bool_89_1639') & z'!=null & 
-z'=z & m_1886=m1_1881 & 0<=m1_1881 & 0<=m_1886 & 0<=m_1886 & 
-m_1895=m2_1883 & 0<=m2_1883 & 0<=m_1895 & 0<=m_1895 & v_int_95_1638'=m_1895+
-m_1886+1 & res=v_int_95_1638'.
-
-// id 193
-checksat  z'::node2<Anon_1879,p_1880,q_1882> * p_1880::tree1<m_1886> * 
-q_1882::tree1<m_1895>&m=m2_1883+1+m1_1881 & !(v_bool_89_1639') & z'!=null & 
-z'=z & m_1886=m1_1881 & 0<=m1_1881 & cleft'=m_1886 & 0<=cleft' & 0<=m_1886 & 
-m_1895=m2_1883 & 0<=m2_1883 & cright'=m_1895 & 0<=cright' & 0<=m_1895 & 
-v_int_95_1637'=cleft'+1 & res=cright'+v_int_95_1637'.
-
-// id 194
-checksat  z'::node2<Anon_1879,p_1880,q_1882> * p_1880::tree1<m_1886> * 
-q_1882::tree1<m_1895>&v_int_95_1637'=cleft'+1 & 0<=m_1895 & 0<=cright' & 
-cright'=m_1895 & 0<=m2_1883 & m_1895=m2_1883 & 0<=m_1886 & 0<=cleft' & 
-cleft'=m_1886 & 0<=m1_1881 & m_1886=m1_1881 & z'=z & z'!=null & 
-!(v_bool_89_1639') & m=m2_1883+1+m1_1881.
-
-// id 195
-checksat  z'::node2<Anon_1879,p_1880,q_1882> * p_1880::tree1<m_1886> * 
-q_1882::tree1<m_1895>&v_int_95_1637'=cleft'+1 & 0<=m_1895 & 0<=cright' & 
-cright'=m_1895 & 0<=m2_1883 & m_1895=m2_1883 & 0<=m_1886 & 0<=cleft' & 
-cleft'=m_1886 & 0<=m1_1881 & m_1886=m1_1881 & z'=z & z'!=null & 
-!(v_bool_89_1639') & m=m2_1883+1+m1_1881.
-
-// id 196
-checksat  z'::node2<Anon_1879,p_1880,q_1882> * p_1880::tree1<m_1886> * 
-q_1882::tree1<m_1895>&m=m2_1883+1+m1_1881 & !(v_bool_89_1639') & z'!=null & 
-z'=z & m_1886=m1_1881 & 0<=m1_1881 & cleft'=m_1886 & 0<=cleft' & 0<=m_1886 & 
-m_1895=m2_1883 & 0<=m2_1883 & cright'=m_1895 & 0<=cright' & 0<=m_1895 & 
-v_int_95_1633'=1 & res=cleft'+v_int_95_1633'.
-
-// id 197
-checksat  z'::node2<Anon_1879,p_1880,q_1882> * p_1880::tree1<m_1886> * 
-q_1882::tree1<m_1895>&v_int_95_1633'=1 & 0<=m_1895 & 0<=cright' & 
-cright'=m_1895 & 0<=m2_1883 & m_1895=m2_1883 & 0<=m_1886 & 0<=cleft' & 
-cleft'=m_1886 & 0<=m1_1881 & m_1886=m1_1881 & z'=z & z'!=null & 
-!(v_bool_89_1639') & m=m2_1883+1+m1_1881.
-
-// id 198
-checksat  z'::node2<Anon_1879,p_1880,q_1882> * p_1880::tree1<m_1886> * 
-q_1882::tree1<m_1895>&v_int_95_1633'=1 & 0<=m_1895 & 0<=cright' & 
-cright'=m_1895 & 0<=m2_1883 & m_1895=m2_1883 & 0<=m_1886 & 0<=cleft' & 
-cleft'=m_1886 & 0<=m1_1881 & m_1886=m1_1881 & z'=z & z'!=null & 
-!(v_bool_89_1639') & m=m2_1883+1+m1_1881.
-
-// id 199
-checksat  (exists m_1898: z'::node2<Anon_1879,p_1880,q_1882> * 
-p_1880::tree1<m_1886> * v_node2_94_1629'::tree1<m_1898>&m=m2_1883+1+
-m1_1881 & !(v_bool_89_1639') & z'!=null & z'=z & m_1886=m1_1881 & 
-0<=m1_1881 & cleft'=m_1886 & 0<=cleft' & 0<=m_1886 & 
-v_node2_94_1629'=q_1882 & m_1895=m2_1883 & 0<=m2_1883 & res=m_1895 & 
-0<=res & m_1898=m_1895 & 0<=m_1895).
-
-// id 200
-checksat  z'::node2<Anon_1879,p_1880,q_1882> * p_1880::tree1<m_1886>&m_1895=m2_1883 & 
-v_node2_94_1629'=q_1882 & 0<=m_1886 & 0<=cleft' & cleft'=m_1886 & 
-0<=m1_1881 & m_1886=m1_1881 & z'=z & z'!=null & !(v_bool_89_1639') & 
-m=m2_1883+1+m1_1881.
-
-// id 201
-checksat  z'::node2<Anon_1879,p_1880,q_1882> * p_1880::tree1<m_1886>&m_1895=m2_1883 & 
-v_node2_94_1629'=q_1882 & 0<=m_1886 & 0<=cleft' & cleft'=m_1886 & 
-0<=m1_1881 & m_1886=m1_1881 & z'=z & z'!=null & !(v_bool_89_1639') & 
-m=m2_1883+1+m1_1881.
-
-// id 202
-checksat  z'::node2<Anon_1879,p_1880,q_1882> * q_1882::tree1<m2_1883> * 
-p_1880::tree1<m_1886>&right_94_1625'=q_1882 & left_94_1624'=p_1880 & 
-val_94_1623'=Anon_1879 & 0<=m_1886 & 0<=cleft' & cleft'=m_1886 & 
-0<=m1_1881 & m_1886=m1_1881 & z'=z & z'!=null & !(v_bool_89_1639') & 
-m=m2_1883+1+m1_1881.
-
-// id 203
-checksat  (exists m_1889: z'::node2<Anon_1879,p_1880,q_1882> * 
-q_1882::tree1<m2_1883> * v_node2_93_1622'::tree1<m_1889>&m=m2_1883+1+
-m1_1881 & !(v_bool_89_1639') & z'!=null & z'=z & v_node2_93_1622'=p_1880 & 
-m_1886=m1_1881 & 0<=m1_1881 & res=m_1886 & 0<=res & m_1889=m_1886 & 
-0<=m_1886).
-
-// id 204
-checksat  z'::node2<Anon_1879,p_1880,q_1882> * q_1882::tree1<m2_1883>&
-m_1886=m1_1881 & v_node2_93_1622'=p_1880 & z'=z & z'!=null & 
-!(v_bool_89_1639') & m=m2_1883+1+m1_1881.
-
-// id 205
-checksat  z'::node2<Anon_1879,p_1880,q_1882> * q_1882::tree1<m2_1883>&
-m_1886=m1_1881 & v_node2_93_1622'=p_1880 & z'=z & z'!=null & 
-!(v_bool_89_1639') & m=m2_1883+1+m1_1881.
-
-// id 206
-checksat  z'::node2<Anon_1879,p_1880,q_1882> * p_1880::tree1<m1_1881> * 
-q_1882::tree1<m2_1883>&right_93_1618'=q_1882 & left_93_1617'=p_1880 & 
-val_93_1616'=Anon_1879 & z'=z & z'!=null & !(v_bool_89_1639') & m=m2_1883+1+
-m1_1881.
-
-// id 207
-checksat  (exists Anon_1873,p_1874,m1_1875,q_1876,
-m2_1877: z'::node2<Anon_1873,p_1874,q_1876> * p_1874::tree1<m1_1875> * 
-q_1876::tree1<m2_1877>&m=m2_1877+1+m1_1875 & !(v_bool_89_1639') & z'!=null & 
+// id 50
+checksat  z'::node2<Anon_1660,p_1661,q_1663> * p_1661::tree1<m_1667> * 
+q_1663::tree1<m_1676>&res=v_int_61_1431' & v_int_61_1431'=m_1676+m_1667+1 & 
+0<=m_1676 & 0<=m2_1664 & m_1676=m2_1664 & 0<=m_1667 & 0<=m1_1662 & 
+m_1667=m1_1662 & z'=z & z'!=null & !(v_bool_56_1432') & m=m2_1664+1+m1_1662.
+
+// id 51
+checksat  z'::node2<Anon_1660,p_1661,q_1663> * p_1661::tree1<m_1667> * 
+q_1663::tree1<m_1676>&res=v_int_61_1431' & v_int_61_1431'=m_1676+m_1667+1 & 
+0<=m_1676 & 0<=m2_1664 & m_1676=m2_1664 & 0<=m_1667 & 0<=m1_1662 & 
+m_1667=m1_1662 & z'=z & z'!=null & !(v_bool_56_1432') & m=m2_1664+1+m1_1662.
+
+// id 52
+checksat  z'::node2<Anon_1660,p_1661,q_1663> * p_1661::tree1<m_1667> * 
+q_1663::tree1<m_1676>&m=m2_1664+1+m1_1662 & !(v_bool_56_1432') & z'!=null & 
+z'=z & m_1667=m1_1662 & 0<=m1_1662 & 0<=m_1667 & 0<=m_1667 & 
+m_1676=m2_1664 & 0<=m2_1664 & 0<=m_1676 & 0<=m_1676 & v_int_61_1431'=m_1676+
+m_1667+1 & res=v_int_61_1431'.
+
+// id 53
+checksat  z'::node2<Anon_1660,p_1661,q_1663> * p_1661::tree1<m_1667> * 
+q_1663::tree1<m_1676>&m=m2_1664+1+m1_1662 & !(v_bool_56_1432') & z'!=null & 
+z'=z & m_1667=m1_1662 & 0<=m1_1662 & cleft'=m_1667 & 0<=cleft' & 0<=m_1667 & 
+m_1676=m2_1664 & 0<=m2_1664 & cright'=m_1676 & 0<=cright' & 0<=m_1676 & 
+v_int_61_1430'=cleft'+1 & res=cright'+v_int_61_1430'.
+
+// id 54
+checksat  z'::node2<Anon_1660,p_1661,q_1663> * p_1661::tree1<m_1667> * 
+q_1663::tree1<m_1676>&v_int_61_1430'=cleft'+1 & 0<=m_1676 & 0<=cright' & 
+cright'=m_1676 & 0<=m2_1664 & m_1676=m2_1664 & 0<=m_1667 & 0<=cleft' & 
+cleft'=m_1667 & 0<=m1_1662 & m_1667=m1_1662 & z'=z & z'!=null & 
+!(v_bool_56_1432') & m=m2_1664+1+m1_1662.
+
+// id 55
+checksat  z'::node2<Anon_1660,p_1661,q_1663> * p_1661::tree1<m_1667> * 
+q_1663::tree1<m_1676>&v_int_61_1430'=cleft'+1 & 0<=m_1676 & 0<=cright' & 
+cright'=m_1676 & 0<=m2_1664 & m_1676=m2_1664 & 0<=m_1667 & 0<=cleft' & 
+cleft'=m_1667 & 0<=m1_1662 & m_1667=m1_1662 & z'=z & z'!=null & 
+!(v_bool_56_1432') & m=m2_1664+1+m1_1662.
+
+// id 56
+checksat  z'::node2<Anon_1660,p_1661,q_1663> * p_1661::tree1<m_1667> * 
+q_1663::tree1<m_1676>&m=m2_1664+1+m1_1662 & !(v_bool_56_1432') & z'!=null & 
+z'=z & m_1667=m1_1662 & 0<=m1_1662 & cleft'=m_1667 & 0<=cleft' & 0<=m_1667 & 
+m_1676=m2_1664 & 0<=m2_1664 & cright'=m_1676 & 0<=cright' & 0<=m_1676 & 
+v_int_61_1426'=1 & res=cleft'+v_int_61_1426'.
+
+// id 57
+checksat  z'::node2<Anon_1660,p_1661,q_1663> * p_1661::tree1<m_1667> * 
+q_1663::tree1<m_1676>&v_int_61_1426'=1 & 0<=m_1676 & 0<=cright' & 
+cright'=m_1676 & 0<=m2_1664 & m_1676=m2_1664 & 0<=m_1667 & 0<=cleft' & 
+cleft'=m_1667 & 0<=m1_1662 & m_1667=m1_1662 & z'=z & z'!=null & 
+!(v_bool_56_1432') & m=m2_1664+1+m1_1662.
+
+// id 58
+checksat  z'::node2<Anon_1660,p_1661,q_1663> * p_1661::tree1<m_1667> * 
+q_1663::tree1<m_1676>&v_int_61_1426'=1 & 0<=m_1676 & 0<=cright' & 
+cright'=m_1676 & 0<=m2_1664 & m_1676=m2_1664 & 0<=m_1667 & 0<=cleft' & 
+cleft'=m_1667 & 0<=m1_1662 & m_1667=m1_1662 & z'=z & z'!=null & 
+!(v_bool_56_1432') & m=m2_1664+1+m1_1662.
+
+// id 59
+checksat  (exists m_1679: z'::node2<Anon_1660,p_1661,q_1663> * 
+p_1661::tree1<m_1667> * v_node2_60_1422'::tree1<m_1679>&m=m2_1664+1+
+m1_1662 & !(v_bool_56_1432') & z'!=null & z'=z & m_1667=m1_1662 & 
+0<=m1_1662 & cleft'=m_1667 & 0<=cleft' & 0<=m_1667 & 
+v_node2_60_1422'=q_1663 & m_1676=m2_1664 & 0<=m2_1664 & res=m_1676 & 
+0<=res & m_1679=m_1676 & 0<=m_1676).
+
+// id 60
+checksat  z'::node2<Anon_1660,p_1661,q_1663> * p_1661::tree1<m_1667>&m_1676=m2_1664 & 
+v_node2_60_1422'=q_1663 & 0<=m_1667 & 0<=cleft' & cleft'=m_1667 & 
+0<=m1_1662 & m_1667=m1_1662 & z'=z & z'!=null & !(v_bool_56_1432') & 
+m=m2_1664+1+m1_1662.
+
+// id 61
+checksat  z'::node2<Anon_1660,p_1661,q_1663> * p_1661::tree1<m_1667>&m_1676=m2_1664 & 
+v_node2_60_1422'=q_1663 & 0<=m_1667 & 0<=cleft' & cleft'=m_1667 & 
+0<=m1_1662 & m_1667=m1_1662 & z'=z & z'!=null & !(v_bool_56_1432') & 
+m=m2_1664+1+m1_1662.
+
+// id 62
+checksat  z'::node2<Anon_1660,p_1661,q_1663> * q_1663::tree1<m2_1664> * 
+p_1661::tree1<m_1667>&right_60_1418'=q_1663 & left_60_1417'=p_1661 & 
+val_60_1416'=Anon_1660 & 0<=m_1667 & 0<=cleft' & cleft'=m_1667 & 
+0<=m1_1662 & m_1667=m1_1662 & z'=z & z'!=null & !(v_bool_56_1432') & 
+m=m2_1664+1+m1_1662.
+
+// id 63
+checksat  (exists m_1670: z'::node2<Anon_1660,p_1661,q_1663> * 
+q_1663::tree1<m2_1664> * v_node2_59_1415'::tree1<m_1670>&m=m2_1664+1+
+m1_1662 & !(v_bool_56_1432') & z'!=null & z'=z & v_node2_59_1415'=p_1661 & 
+m_1667=m1_1662 & 0<=m1_1662 & res=m_1667 & 0<=res & m_1670=m_1667 & 
+0<=m_1667).
+
+// id 64
+checksat  z'::node2<Anon_1660,p_1661,q_1663> * q_1663::tree1<m2_1664>&
+m_1667=m1_1662 & v_node2_59_1415'=p_1661 & z'=z & z'!=null & 
+!(v_bool_56_1432') & m=m2_1664+1+m1_1662.
+
+// id 65
+checksat  z'::node2<Anon_1660,p_1661,q_1663> * q_1663::tree1<m2_1664>&
+m_1667=m1_1662 & v_node2_59_1415'=p_1661 & z'=z & z'!=null & 
+!(v_bool_56_1432') & m=m2_1664+1+m1_1662.
+
+// id 66
+checksat  z'::node2<Anon_1660,p_1661,q_1663> * p_1661::tree1<m1_1662> * 
+q_1663::tree1<m2_1664>&right_59_1411'=q_1663 & left_59_1410'=p_1661 & 
+val_59_1409'=Anon_1660 & z'=z & z'!=null & !(v_bool_56_1432') & m=m2_1664+1+
+m1_1662.
+
+// id 67
+checksat  (exists Anon_1654,p_1655,m1_1656,q_1657,
+m2_1658: z'::node2<Anon_1654,p_1655,q_1657> * p_1655::tree1<m1_1656> * 
+q_1657::tree1<m2_1658>&m=m2_1658+1+m1_1656 & !(v_bool_56_1432') & z'!=null & 
 z'=z).
 
-// id 208
-checksat  z::tree1<m>&z'=z & z'=null & v_bool_89_1639' & z'=null & !(v_bool_89_1639').
+// id 68
+checksat  z::tree1<m>&z'=z & z'=null & v_bool_56_1432' & z'=null & !(v_bool_56_1432').
 
-// id 209
-checksat  z::tree1<m>&z'=z & z'!=null & !(v_bool_89_1639') & z'!=null & 
-!(v_bool_89_1639').
+// id 69
+checksat  z::tree1<m>&z'=z & z'!=null & !(v_bool_56_1432') & z'!=null & 
+!(v_bool_56_1432').
 
-// id 210
-checksat  z::tree1<m>&z'=z & z'=null & v_bool_89_1639' & z'=null & v_bool_89_1639'.
+// id 70
+checksat  z::tree1<m>&z'=z & z'=null & v_bool_56_1432' & z'=null & v_bool_56_1432'.
 
-// id 211
-checksat  z::tree1<m>&z'=z & z'!=null & !(v_bool_89_1639') & z'!=null & 
-v_bool_89_1639'.
+// id 71
+checksat  z::tree1<m>&z'=z & z'!=null & !(v_bool_56_1432') & z'!=null & 
+v_bool_56_1432'.
 
-// id 212
+// id 72
 checksat  z::tree1<m>&z'=z & z'!=null & !(res) & z'!=null.
 
-// id 213
+// id 73
 checksat  z::tree1<m>&z'!=null & z'=z.
 
-// id 214
+// id 74
 checksat  z::tree1<m>&z'!=null & z'=z.
 
-// id 215
+// id 75
 checksat  z::tree1<m>&z'=z & MayLoop[] & z'!=null.
 
-// id 216
+// id 76
 checksat  z::tree1<m>&z'=z & z'=null & res & z'=null.
 
-// id 217
+// id 77
 checksat  z::tree1<m>&z'=null & z'=z.
 
-// id 218
+// id 78
 checksat  z::tree1<m>&z'=null & z'=z.
 
-// id 219
+// id 79
 checksat  z::tree1<m>&z'=z & MayLoop[] & z'=null.
 
-// id 220
-checksat  z_1839::dll<r_1778,flted_40_1777> * x'::node2<Anon_1756,p_1754,z_1839>&
-!(v_bool_51_1679') & z_1839=null & m=1+n1_1758 & p_1754=Anon_17 & 
-self_1755=x' & !(v_bool_45_1680') & x'!=null & y'=y & x'=x & 
-Anon_1762=self_1755 & m_1763=n1_1758 & Anon_1764=Anon_18 & n_1765=n & 0<=n & 
-0<=n1_1758 & flted_40_1777=n_1765+m_1763 & 0<=m_1763 & 0<=n_1765 & 
-right_50_1779=q_1757 & res=x'.
+// id 80
+checksat  z_1620::dll<r_1559,flted_33_1558> * x'::node2<Anon_1537,p_1535,z_1620>&
+!(v_bool_42_1472') & z_1620=null & m=1+n1_1539 & p_1535=Anon_18 & 
+self_1536=x' & !(v_bool_37_1473') & x'!=null & y'=y & x'=x & 
+Anon_1543=self_1536 & m_1544=n1_1539 & Anon_1545=Anon_19 & n_1546=n & 0<=n & 
+0<=n1_1539 & flted_33_1558=n_1546+m_1544 & 0<=m_1544 & 0<=n_1546 & 
+right_41_1560=q_1538 & res=x'.
 
-// id 221
-checksat  z_1839::dll<r_1778,flted_40_1777> * x'::node2<Anon_1756,p_1754,z_1839>&
-!(v_bool_51_1679') & z_1839=null & m=1+n1_1758 & p_1754=Anon_17 & 
-self_1755=x' & !(v_bool_45_1680') & x'!=null & y'=y & x'=x & 
-Anon_1762=self_1755 & m_1763=n1_1758 & Anon_1764=Anon_18 & n_1765=n & 0<=n & 
-0<=n1_1758 & flted_40_1777=n_1765+m_1763 & 0<=m_1763 & 0<=n_1765 & 
-right_50_1779=q_1757 & res=x'.
+// id 81
+checksat  z_1620::dll<r_1559,flted_33_1558> * x'::node2<Anon_1537,p_1535,z_1620>&
+!(v_bool_42_1472') & z_1620=null & m=1+n1_1539 & p_1535=Anon_18 & 
+self_1536=x' & !(v_bool_37_1473') & x'!=null & y'=y & x'=x & 
+Anon_1543=self_1536 & m_1544=n1_1539 & Anon_1545=Anon_19 & n_1546=n & 0<=n & 
+0<=n1_1539 & flted_33_1558=n_1546+m_1544 & 0<=m_1544 & 0<=n_1546 & 
+right_41_1560=q_1538 & res=x'.
 
-// id 222
-checksat  q_1807::dll<self_1805,n1_1808> * self_1805::node2<Anon_1806,x',q_1807>&
-res=x' & left_52_1809=p_1804 & right_50_1779=q_1757 & 0<=n_1765 & 
-0<=m_1763 & flted_40_1777=n_1765+m_1763 & 0<=n1_1758 & 0<=n & n_1765=n & 
-Anon_1764=Anon_18 & m_1763=n1_1758 & Anon_1762=self_1755 & x'=x & y'=y & 
-x'!=null & !(v_bool_45_1680') & self_1755=x' & p_1754=Anon_17 & m=1+
-n1_1758 & self_1805!=null & v_bool_51_1679' & p_1804=r_1778 & 
-flted_40_1777=1+n1_1808 & Anon_1816=Anon_1756 & q_1817=self_1805.
+// id 82
+checksat  q_1588::dll<self_1586,n1_1589> * self_1586::node2<Anon_1587,x',q_1588>&
+res=x' & left_43_1590=p_1585 & right_41_1560=q_1538 & 0<=n_1546 & 
+0<=m_1544 & flted_33_1558=n_1546+m_1544 & 0<=n1_1539 & 0<=n & n_1546=n & 
+Anon_1545=Anon_19 & m_1544=n1_1539 & Anon_1543=self_1536 & x'=x & y'=y & 
+x'!=null & !(v_bool_37_1473') & self_1536=x' & p_1535=Anon_18 & m=1+
+n1_1539 & self_1586!=null & v_bool_42_1472' & p_1585=r_1559 & 
+flted_33_1558=1+n1_1589 & Anon_1597=Anon_1537 & q_1598=self_1586.
 
-// id 223
-checksat  q_1807::dll<self_1805,n1_1808> * self_1805::node2<Anon_1806,x',q_1807>&
-res=x' & left_52_1809=p_1804 & right_50_1779=q_1757 & 0<=n_1765 & 
-0<=m_1763 & flted_40_1777=n_1765+m_1763 & 0<=n1_1758 & 0<=n & n_1765=n & 
-Anon_1764=Anon_18 & m_1763=n1_1758 & Anon_1762=self_1755 & x'=x & y'=y & 
-x'!=null & !(v_bool_45_1680') & self_1755=x' & p_1754=Anon_17 & m=1+
-n1_1758 & self_1805!=null & v_bool_51_1679' & p_1804=r_1778 & 
-flted_40_1777=1+n1_1808 & Anon_1816=Anon_1756 & q_1817=self_1805.
+// id 83
+checksat  q_1588::dll<self_1586,n1_1589> * self_1586::node2<Anon_1587,x',q_1588>&
+res=x' & left_43_1590=p_1585 & right_41_1560=q_1538 & 0<=n_1546 & 
+0<=m_1544 & flted_33_1558=n_1546+m_1544 & 0<=n1_1539 & 0<=n & n_1546=n & 
+Anon_1545=Anon_19 & m_1544=n1_1539 & Anon_1543=self_1536 & x'=x & y'=y & 
+x'!=null & !(v_bool_37_1473') & self_1536=x' & p_1535=Anon_18 & m=1+
+n1_1539 & self_1586!=null & v_bool_42_1472' & p_1585=r_1559 & 
+flted_33_1558=1+n1_1589 & Anon_1597=Anon_1537 & q_1598=self_1586.
 
-// id 224
-checksat  q_1807::dll<self_1805,n1_1808> * x'::node2<Anon_1756,p_1754,self_1805> * 
-self_1805::node2<Anon_1806,x',q_1807>&flted_40_1777=1+n1_1808 & 
-p_1804=r_1778 & v_bool_51_1679' & self_1805!=null & m=1+n1_1758 & 
-p_1754=Anon_17 & self_1755=x' & !(v_bool_45_1680') & x'!=null & y'=y & 
-x'=x & Anon_1762=self_1755 & m_1763=n1_1758 & Anon_1764=Anon_18 & n_1765=n & 
-0<=n & 0<=n1_1758 & flted_40_1777=n_1765+m_1763 & 0<=m_1763 & 0<=n_1765 & 
-right_50_1779=q_1757 & left_52_1809=p_1804 & res=x'.
+// id 84
+checksat  q_1588::dll<self_1586,n1_1589> * x'::node2<Anon_1537,p_1535,self_1586> * 
+self_1586::node2<Anon_1587,x',q_1588>&flted_33_1558=1+n1_1589 & 
+p_1585=r_1559 & v_bool_42_1472' & self_1586!=null & m=1+n1_1539 & 
+p_1535=Anon_18 & self_1536=x' & !(v_bool_37_1473') & x'!=null & y'=y & 
+x'=x & Anon_1543=self_1536 & m_1544=n1_1539 & Anon_1545=Anon_19 & n_1546=n & 
+0<=n & 0<=n1_1539 & flted_33_1558=n_1546+m_1544 & 0<=m_1544 & 0<=n_1546 & 
+right_41_1560=q_1538 & left_43_1590=p_1585 & res=x'.
 
-// id 225
-checksat  q_1807::dll<self_1805,n1_1808> * x'::node2<Anon_1756,p_1754,self_1805> * 
-self_1805::node2<Anon_1806,x',q_1807>&flted_40_1777=1+n1_1808 & 
-p_1804=r_1778 & v_bool_51_1679' & self_1805!=null & m=1+n1_1758 & 
-p_1754=Anon_17 & self_1755=x' & !(v_bool_45_1680') & x'!=null & y'=y & 
-x'=x & Anon_1762=self_1755 & m_1763=n1_1758 & Anon_1764=Anon_18 & n_1765=n & 
-0<=n & 0<=n1_1758 & flted_40_1777=n_1765+m_1763 & 0<=m_1763 & 0<=n_1765 & 
-right_50_1779=q_1757 & left_52_1809=p_1804 & res=x'.
+// id 85
+checksat  q_1588::dll<self_1586,n1_1589> * x'::node2<Anon_1537,p_1535,self_1586> * 
+self_1586::node2<Anon_1587,x',q_1588>&flted_33_1558=1+n1_1589 & 
+p_1585=r_1559 & v_bool_42_1472' & self_1586!=null & m=1+n1_1539 & 
+p_1535=Anon_18 & self_1536=x' & !(v_bool_37_1473') & x'!=null & y'=y & 
+x'=x & Anon_1543=self_1536 & m_1544=n1_1539 & Anon_1545=Anon_19 & n_1546=n & 
+0<=n & 0<=n1_1539 & flted_33_1558=n_1546+m_1544 & 0<=m_1544 & 0<=n_1546 & 
+right_41_1560=q_1538 & left_43_1590=p_1585 & res=x'.
 
-// id 226
-checksat  x::dll<Anon_17,m>&res=y' & x'=x & y'=y & x'=null & v_bool_45_1680'.
+// id 86
+checksat  x::dll<Anon_18,m>&res=y' & x'=x & y'=y & x'=null & v_bool_37_1473'.
 
-// id 227
-checksat  q_1807::dll<self_1805,n1_1808> * x'::node2<Anon_1756,p_1754,z'>&
-right_52_1678'=q_1807 & left_52_1677'=p_1804 & val_52_1676'=Anon_1806 & 
-right_50_1779=q_1757 & 0<=n_1765 & 0<=m_1763 & flted_40_1777=n_1765+m_1763 & 
-0<=n1_1758 & 0<=n & n_1765=n & Anon_1764=Anon_18 & m_1763=n1_1758 & 
-Anon_1762=self_1755 & x'=x & y'=y & x'!=null & !(v_bool_45_1680') & 
-self_1755=x' & p_1754=Anon_17 & m=1+n1_1758 & z'!=null & v_bool_51_1679' & 
-self_1805=z' & p_1804=r_1778 & flted_40_1777=1+n1_1808.
+// id 87
+checksat  q_1588::dll<self_1586,n1_1589> * x'::node2<Anon_1537,p_1535,z'>&
+right_43_1471'=q_1588 & left_43_1470'=p_1585 & val_43_1469'=Anon_1587 & 
+right_41_1560=q_1538 & 0<=n_1546 & 0<=m_1544 & flted_33_1558=n_1546+m_1544 & 
+0<=n1_1539 & 0<=n & n_1546=n & Anon_1545=Anon_19 & m_1544=n1_1539 & 
+Anon_1543=self_1536 & x'=x & y'=y & x'!=null & !(v_bool_37_1473') & 
+self_1536=x' & p_1535=Anon_18 & m=1+n1_1539 & z'!=null & v_bool_42_1472' & 
+self_1586=z' & p_1585=r_1559 & flted_33_1558=1+n1_1589.
 
-// id 228
-checksat  (exists p_1798,self_1799,Anon_1800,q_1801,
-n1_1802: z'::node2<Anon_1800,p_1798,q_1801> * 
-q_1801::dll<self_1799,n1_1802> * x'::node2<Anon_1756,p_1754,z'>&
-flted_40_1777=1+n1_1802 & p_1798=r_1778 & self_1799=z' & v_bool_51_1679' & 
-z'!=null & m=1+n1_1758 & p_1754=Anon_17 & self_1755=x' & 
-!(v_bool_45_1680') & x'!=null & y'=y & x'=x & Anon_1762=self_1755 & 
-m_1763=n1_1758 & Anon_1764=Anon_18 & n_1765=n & 0<=n & 0<=n1_1758 & 
-flted_40_1777=n_1765+m_1763 & 0<=m_1763 & 0<=n_1765 & right_50_1779=q_1757).
+// id 88
+checksat  (exists p_1579,self_1580,Anon_1581,q_1582,
+n1_1583: z'::node2<Anon_1581,p_1579,q_1582> * 
+q_1582::dll<self_1580,n1_1583> * x'::node2<Anon_1537,p_1535,z'>&
+flted_33_1558=1+n1_1583 & p_1579=r_1559 & self_1580=z' & v_bool_42_1472' & 
+z'!=null & m=1+n1_1539 & p_1535=Anon_18 & self_1536=x' & 
+!(v_bool_37_1473') & x'!=null & y'=y & x'=x & Anon_1543=self_1536 & 
+m_1544=n1_1539 & Anon_1545=Anon_19 & n_1546=n & 0<=n & 0<=n1_1539 & 
+flted_33_1558=n_1546+m_1544 & 0<=m_1544 & 0<=n_1546 & right_41_1560=q_1538).
 
-// id 229
-checksat  x'::node2<Anon_1756,p_1754,z'>&z'=null & flted_40_1777=0 & 
-v_bool_51_1679' & z'!=null & m=1+n1_1758 & p_1754=Anon_17 & self_1755=x' & 
-!(v_bool_45_1680') & x'!=null & y'=y & x'=x & Anon_1762=self_1755 & 
-m_1763=n1_1758 & Anon_1764=Anon_18 & n_1765=n & 0<=n & 0<=n1_1758 & 
-flted_40_1777=n_1765+m_1763 & 0<=m_1763 & 0<=n_1765 & right_50_1779=q_1757.
+// id 89
+checksat  x'::node2<Anon_1537,p_1535,z'>&z'=null & flted_33_1558=0 & 
+v_bool_42_1472' & z'!=null & m=1+n1_1539 & p_1535=Anon_18 & self_1536=x' & 
+!(v_bool_37_1473') & x'!=null & y'=y & x'=x & Anon_1543=self_1536 & 
+m_1544=n1_1539 & Anon_1545=Anon_19 & n_1546=n & 0<=n & 0<=n1_1539 & 
+flted_33_1558=n_1546+m_1544 & 0<=m_1544 & 0<=n_1546 & right_41_1560=q_1538.
 
-// id 230
-checksat  z'::dll<r_1778,flted_40_1777> * x'::node2<Anon_1756,p_1754,z'>&z'=null & 
-right_50_1779=q_1757 & 0<=n_1765 & 0<=m_1763 & flted_40_1777=n_1765+m_1763 & 
-0<=n1_1758 & 0<=n & n_1765=n & Anon_1764=Anon_18 & m_1763=n1_1758 & 
-Anon_1762=self_1755 & x'=x & y'=y & x'!=null & !(v_bool_45_1680') & 
-self_1755=x' & p_1754=Anon_17 & m=1+n1_1758 & !(v_bool_51_1679') & z'=null & 
-!(v_bool_51_1679').
+// id 90
+checksat  z'::dll<r_1559,flted_33_1558> * x'::node2<Anon_1537,p_1535,z'>&z'=null & 
+right_41_1560=q_1538 & 0<=n_1546 & 0<=m_1544 & flted_33_1558=n_1546+m_1544 & 
+0<=n1_1539 & 0<=n & n_1546=n & Anon_1545=Anon_19 & m_1544=n1_1539 & 
+Anon_1543=self_1536 & x'=x & y'=y & x'!=null & !(v_bool_37_1473') & 
+self_1536=x' & p_1535=Anon_18 & m=1+n1_1539 & !(v_bool_42_1472') & z'=null & 
+!(v_bool_42_1472').
 
-// id 231
-checksat  z'::dll<r_1778,flted_40_1777> * x'::node2<Anon_1756,p_1754,z'>&z'!=null & 
-right_50_1779=q_1757 & 0<=n_1765 & 0<=m_1763 & flted_40_1777=n_1765+m_1763 & 
-0<=n1_1758 & 0<=n & n_1765=n & Anon_1764=Anon_18 & m_1763=n1_1758 & 
-Anon_1762=self_1755 & x'=x & y'=y & x'!=null & !(v_bool_45_1680') & 
-self_1755=x' & p_1754=Anon_17 & m=1+n1_1758 & v_bool_51_1679' & z'!=null & 
-!(v_bool_51_1679').
+// id 91
+checksat  z'::dll<r_1559,flted_33_1558> * x'::node2<Anon_1537,p_1535,z'>&z'!=null & 
+right_41_1560=q_1538 & 0<=n_1546 & 0<=m_1544 & flted_33_1558=n_1546+m_1544 & 
+0<=n1_1539 & 0<=n & n_1546=n & Anon_1545=Anon_19 & m_1544=n1_1539 & 
+Anon_1543=self_1536 & x'=x & y'=y & x'!=null & !(v_bool_37_1473') & 
+self_1536=x' & p_1535=Anon_18 & m=1+n1_1539 & v_bool_42_1472' & z'!=null & 
+!(v_bool_42_1472').
 
-// id 232
-checksat  z'::dll<r_1778,flted_40_1777> * x'::node2<Anon_1756,p_1754,z'>&z'=null & 
-right_50_1779=q_1757 & 0<=n_1765 & 0<=m_1763 & flted_40_1777=n_1765+m_1763 & 
-0<=n1_1758 & 0<=n & n_1765=n & Anon_1764=Anon_18 & m_1763=n1_1758 & 
-Anon_1762=self_1755 & x'=x & y'=y & x'!=null & !(v_bool_45_1680') & 
-self_1755=x' & p_1754=Anon_17 & m=1+n1_1758 & !(v_bool_51_1679') & z'=null & 
-v_bool_51_1679'.
+// id 92
+checksat  z'::dll<r_1559,flted_33_1558> * x'::node2<Anon_1537,p_1535,z'>&z'=null & 
+right_41_1560=q_1538 & 0<=n_1546 & 0<=m_1544 & flted_33_1558=n_1546+m_1544 & 
+0<=n1_1539 & 0<=n & n_1546=n & Anon_1545=Anon_19 & m_1544=n1_1539 & 
+Anon_1543=self_1536 & x'=x & y'=y & x'!=null & !(v_bool_37_1473') & 
+self_1536=x' & p_1535=Anon_18 & m=1+n1_1539 & !(v_bool_42_1472') & z'=null & 
+v_bool_42_1472'.
 
-// id 233
-checksat  z'::dll<r_1778,flted_40_1777> * x'::node2<Anon_1756,p_1754,z'>&z'!=null & 
-right_50_1779=q_1757 & 0<=n_1765 & 0<=m_1763 & flted_40_1777=n_1765+m_1763 & 
-0<=n1_1758 & 0<=n & n_1765=n & Anon_1764=Anon_18 & m_1763=n1_1758 & 
-Anon_1762=self_1755 & x'=x & y'=y & x'!=null & !(v_bool_45_1680') & 
-self_1755=x' & p_1754=Anon_17 & m=1+n1_1758 & v_bool_51_1679' & z'!=null & 
-v_bool_51_1679'.
+// id 93
+checksat  z'::dll<r_1559,flted_33_1558> * x'::node2<Anon_1537,p_1535,z'>&z'!=null & 
+right_41_1560=q_1538 & 0<=n_1546 & 0<=m_1544 & flted_33_1558=n_1546+m_1544 & 
+0<=n1_1539 & 0<=n & n_1546=n & Anon_1545=Anon_19 & m_1544=n1_1539 & 
+Anon_1543=self_1536 & x'=x & y'=y & x'!=null & !(v_bool_37_1473') & 
+self_1536=x' & p_1535=Anon_18 & m=1+n1_1539 & v_bool_42_1472' & z'!=null & 
+v_bool_42_1472'.
 
-// id 234
-checksat  z'::dll<r_1778,flted_40_1777> * x'::node2<Anon_1756,p_1754,z'>&z'!=null & 
-right_50_1779=q_1757 & 0<=n_1765 & 0<=m_1763 & flted_40_1777=n_1765+m_1763 & 
-0<=n1_1758 & 0<=n & n_1765=n & Anon_1764=Anon_18 & m_1763=n1_1758 & 
-Anon_1762=self_1755 & x'=x & y'=y & x'!=null & !(v_bool_45_1680') & 
-self_1755=x' & p_1754=Anon_17 & m=1+n1_1758 & res & z'!=null.
+// id 94
+checksat  z'::dll<r_1559,flted_33_1558> * x'::node2<Anon_1537,p_1535,z'>&z'!=null & 
+right_41_1560=q_1538 & 0<=n_1546 & 0<=m_1544 & flted_33_1558=n_1546+m_1544 & 
+0<=n1_1539 & 0<=n & n_1546=n & Anon_1545=Anon_19 & m_1544=n1_1539 & 
+Anon_1543=self_1536 & x'=x & y'=y & x'!=null & !(v_bool_37_1473') & 
+self_1536=x' & p_1535=Anon_18 & m=1+n1_1539 & res & z'!=null.
 
-// id 235
-checksat  z'::dll<r_1778,flted_40_1777> * x'::node2<Anon_1756,p_1754,z'>&m=1+
-n1_1758 & p_1754=Anon_17 & self_1755=x' & !(v_bool_45_1680') & x'!=null & 
-y'=y & x'=x & Anon_1762=self_1755 & m_1763=n1_1758 & Anon_1764=Anon_18 & 
-n_1765=n & 0<=n & 0<=n1_1758 & flted_40_1777=n_1765+m_1763 & 0<=m_1763 & 
-0<=n_1765 & right_50_1779=q_1757 & z'!=null.
+// id 95
+checksat  z'::dll<r_1559,flted_33_1558> * x'::node2<Anon_1537,p_1535,z'>&m=1+
+n1_1539 & p_1535=Anon_18 & self_1536=x' & !(v_bool_37_1473') & x'!=null & 
+y'=y & x'=x & Anon_1543=self_1536 & m_1544=n1_1539 & Anon_1545=Anon_19 & 
+n_1546=n & 0<=n & 0<=n1_1539 & flted_33_1558=n_1546+m_1544 & 0<=m_1544 & 
+0<=n_1546 & right_41_1560=q_1538 & z'!=null.
 
-// id 236
-checksat  z'::dll<r_1778,flted_40_1777> * x'::node2<Anon_1756,p_1754,z'>&m=1+
-n1_1758 & p_1754=Anon_17 & self_1755=x' & !(v_bool_45_1680') & x'!=null & 
-y'=y & x'=x & Anon_1762=self_1755 & m_1763=n1_1758 & Anon_1764=Anon_18 & 
-n_1765=n & 0<=n & 0<=n1_1758 & flted_40_1777=n_1765+m_1763 & 0<=m_1763 & 
-0<=n_1765 & right_50_1779=q_1757 & z'!=null.
+// id 96
+checksat  z'::dll<r_1559,flted_33_1558> * x'::node2<Anon_1537,p_1535,z'>&m=1+
+n1_1539 & p_1535=Anon_18 & self_1536=x' & !(v_bool_37_1473') & x'!=null & 
+y'=y & x'=x & Anon_1543=self_1536 & m_1544=n1_1539 & Anon_1545=Anon_19 & 
+n_1546=n & 0<=n & 0<=n1_1539 & flted_33_1558=n_1546+m_1544 & 0<=m_1544 & 
+0<=n_1546 & right_41_1560=q_1538 & z'!=null.
 
-// id 237
-checksat  z'::dll<r_1778,flted_40_1777> * x'::node2<Anon_1756,p_1754,z'>&m=1+
-n1_1758 & p_1754=Anon_17 & self_1755=x' & !(v_bool_45_1680') & x'!=null & 
-y'=y & x'=x & Anon_1762=self_1755 & m_1763=n1_1758 & Anon_1764=Anon_18 & 
-n_1765=n & 0<=n & 0<=n1_1758 & flted_40_1777=n_1765+m_1763 & 0<=m_1763 & 
-0<=n_1765 & right_50_1779=q_1757 & z'!=null.
+// id 97
+checksat  z'::dll<r_1559,flted_33_1558> * x'::node2<Anon_1537,p_1535,z'>&m=1+
+n1_1539 & p_1535=Anon_18 & self_1536=x' & !(v_bool_37_1473') & x'!=null & 
+y'=y & x'=x & Anon_1543=self_1536 & m_1544=n1_1539 & Anon_1545=Anon_19 & 
+n_1546=n & 0<=n & 0<=n1_1539 & flted_33_1558=n_1546+m_1544 & 0<=m_1544 & 
+0<=n_1546 & right_41_1560=q_1538 & z'!=null.
 
-// id 238
-checksat  z'::dll<r_1778,flted_40_1777> * x'::node2<Anon_1756,p_1754,z'>&z'=null & 
-right_50_1779=q_1757 & 0<=n_1765 & 0<=m_1763 & flted_40_1777=n_1765+m_1763 & 
-0<=n1_1758 & 0<=n & n_1765=n & Anon_1764=Anon_18 & m_1763=n1_1758 & 
-Anon_1762=self_1755 & x'=x & y'=y & x'!=null & !(v_bool_45_1680') & 
-self_1755=x' & p_1754=Anon_17 & m=1+n1_1758 & !(res) & z'=null.
+// id 98
+checksat  z'::dll<r_1559,flted_33_1558> * x'::node2<Anon_1537,p_1535,z'>&z'=null & 
+right_41_1560=q_1538 & 0<=n_1546 & 0<=m_1544 & flted_33_1558=n_1546+m_1544 & 
+0<=n1_1539 & 0<=n & n_1546=n & Anon_1545=Anon_19 & m_1544=n1_1539 & 
+Anon_1543=self_1536 & x'=x & y'=y & x'!=null & !(v_bool_37_1473') & 
+self_1536=x' & p_1535=Anon_18 & m=1+n1_1539 & !(res) & z'=null.
 
-// id 239
-checksat  z'::dll<r_1778,flted_40_1777> * x'::node2<Anon_1756,p_1754,z'>&m=1+
-n1_1758 & p_1754=Anon_17 & self_1755=x' & !(v_bool_45_1680') & x'!=null & 
-y'=y & x'=x & Anon_1762=self_1755 & m_1763=n1_1758 & Anon_1764=Anon_18 & 
-n_1765=n & 0<=n & 0<=n1_1758 & flted_40_1777=n_1765+m_1763 & 0<=m_1763 & 
-0<=n_1765 & right_50_1779=q_1757 & z'=null.
+// id 99
+checksat  z'::dll<r_1559,flted_33_1558> * x'::node2<Anon_1537,p_1535,z'>&m=1+
+n1_1539 & p_1535=Anon_18 & self_1536=x' & !(v_bool_37_1473') & x'!=null & 
+y'=y & x'=x & Anon_1543=self_1536 & m_1544=n1_1539 & Anon_1545=Anon_19 & 
+n_1546=n & 0<=n & 0<=n1_1539 & flted_33_1558=n_1546+m_1544 & 0<=m_1544 & 
+0<=n_1546 & right_41_1560=q_1538 & z'=null.
 
-// id 240
-checksat  z'::dll<r_1778,flted_40_1777> * x'::node2<Anon_1756,p_1754,z'>&m=1+
-n1_1758 & p_1754=Anon_17 & self_1755=x' & !(v_bool_45_1680') & x'!=null & 
-y'=y & x'=x & Anon_1762=self_1755 & m_1763=n1_1758 & Anon_1764=Anon_18 & 
-n_1765=n & 0<=n & 0<=n1_1758 & flted_40_1777=n_1765+m_1763 & 0<=m_1763 & 
-0<=n_1765 & right_50_1779=q_1757 & z'=null.
+// id 100
+checksat  z'::dll<r_1559,flted_33_1558> * x'::node2<Anon_1537,p_1535,z'>&m=1+
+n1_1539 & p_1535=Anon_18 & self_1536=x' & !(v_bool_37_1473') & x'!=null & 
+y'=y & x'=x & Anon_1543=self_1536 & m_1544=n1_1539 & Anon_1545=Anon_19 & 
+n_1546=n & 0<=n & 0<=n1_1539 & flted_33_1558=n_1546+m_1544 & 0<=m_1544 & 
+0<=n_1546 & right_41_1560=q_1538 & z'=null.
 
-// id 241
-checksat  z'::dll<r_1778,flted_40_1777> * x'::node2<Anon_1756,p_1754,z'>&m=1+
-n1_1758 & p_1754=Anon_17 & self_1755=x' & !(v_bool_45_1680') & x'!=null & 
-y'=y & x'=x & Anon_1762=self_1755 & m_1763=n1_1758 & Anon_1764=Anon_18 & 
-n_1765=n & 0<=n & 0<=n1_1758 & flted_40_1777=n_1765+m_1763 & 0<=m_1763 & 
-0<=n_1765 & right_50_1779=q_1757 & z'=null.
+// id 101
+checksat  z'::dll<r_1559,flted_33_1558> * x'::node2<Anon_1537,p_1535,z'>&m=1+
+n1_1539 & p_1535=Anon_18 & self_1536=x' & !(v_bool_37_1473') & x'!=null & 
+y'=y & x'=x & Anon_1543=self_1536 & m_1544=n1_1539 & Anon_1545=Anon_19 & 
+n_1546=n & 0<=n & 0<=n1_1539 & flted_33_1558=n_1546+m_1544 & 0<=m_1544 & 
+0<=n_1546 & right_41_1560=q_1538 & z'=null.
 
-// id 242
-checksat  z'::dll<r_1778,flted_40_1777>&right_50_1672'=q_1757 & 
-left_50_1671'=p_1754 & val_50_1670'=Anon_1756 & 0<=n_1765 & 0<=m_1763 & 
-flted_40_1777=n_1765+m_1763 & 0<=n1_1758 & 0<=n & n_1765=n & 
-Anon_1764=Anon_18 & m_1763=n1_1758 & Anon_1762=self_1755 & x'=x & y'=y & 
-x'!=null & !(v_bool_45_1680') & self_1755=x' & p_1754=Anon_17 & m=1+n1_1758.
+// id 102
+checksat  z'::dll<r_1559,flted_33_1558>&right_41_1465'=q_1538 & 
+left_41_1464'=p_1535 & val_41_1463'=Anon_1537 & 0<=n_1546 & 0<=m_1544 & 
+flted_33_1558=n_1546+m_1544 & 0<=n1_1539 & 0<=n & n_1546=n & 
+Anon_1545=Anon_19 & m_1544=n1_1539 & Anon_1543=self_1536 & x'=x & y'=y & 
+x'!=null & !(v_bool_37_1473') & self_1536=x' & p_1535=Anon_18 & m=1+n1_1539.
 
-// id 243
-checksat  (exists flted_40_1770,r_1771: x'::node2<Anon_1756,p_1754,q_1757> * 
-res::dll<r_1771,flted_40_1770>&m=1+n1_1758 & p_1754=Anon_17 & self_1755=x' & 
-!(v_bool_45_1680') & x'!=null & y'=y & x'=x & v_node2_49_1669'=q_1757 & 
-Anon_1762=self_1755 & m_1763=n1_1758 & Anon_1764=Anon_18 & n_1765=n & 0<=n & 
-0<=n1_1758 & flted_40_1770=n_1765+m_1763 & 0<=m_1763 & 0<=n_1765).
+// id 103
+checksat  (exists flted_33_1551,r_1552: x'::node2<Anon_1537,p_1535,q_1538> * 
+res::dll<r_1552,flted_33_1551>&m=1+n1_1539 & p_1535=Anon_18 & self_1536=x' & 
+!(v_bool_37_1473') & x'!=null & y'=y & x'=x & v_node2_40_1462'=q_1538 & 
+Anon_1543=self_1536 & m_1544=n1_1539 & Anon_1545=Anon_19 & n_1546=n & 0<=n & 
+0<=n1_1539 & flted_33_1551=n_1546+m_1544 & 0<=m_1544 & 0<=n_1546).
 
-// id 244
-checksat  x'::node2<Anon_1756,p_1754,q_1757>&n_1765=n & Anon_1764=Anon_18 & 
-m_1763=n1_1758 & Anon_1762=self_1755 & v_node2_49_1669'=q_1757 & x'=x & 
-y'=y & x'!=null & !(v_bool_45_1680') & self_1755=x' & p_1754=Anon_17 & m=1+
-n1_1758.
+// id 104
+checksat  x'::node2<Anon_1537,p_1535,q_1538>&n_1546=n & Anon_1545=Anon_19 & 
+m_1544=n1_1539 & Anon_1543=self_1536 & v_node2_40_1462'=q_1538 & x'=x & 
+y'=y & x'!=null & !(v_bool_37_1473') & self_1536=x' & p_1535=Anon_18 & m=1+
+n1_1539.
 
-// id 245
-checksat  x'::node2<Anon_1756,p_1754,q_1757>&n_1765=n & Anon_1764=Anon_18 & 
-m_1763=n1_1758 & Anon_1762=self_1755 & v_node2_49_1669'=q_1757 & x'=x & 
-y'=y & x'!=null & !(v_bool_45_1680') & self_1755=x' & p_1754=Anon_17 & m=1+
-n1_1758.
+// id 105
+checksat  x'::node2<Anon_1537,p_1535,q_1538>&n_1546=n & Anon_1545=Anon_19 & 
+m_1544=n1_1539 & Anon_1543=self_1536 & v_node2_40_1462'=q_1538 & x'=x & 
+y'=y & x'!=null & !(v_bool_37_1473') & self_1536=x' & p_1535=Anon_18 & m=1+
+n1_1539.
 
-// id 246
-checksat  x'::node2<Anon_1756,p_1754,q_1757> * q_1757::dll<self_1755,n1_1758> * 
-y::dll<Anon_18,n>&right_49_1665'=q_1757 & left_49_1664'=p_1754 & 
-val_49_1663'=Anon_1756 & x'=x & y'=y & x'!=null & !(v_bool_45_1680') & 
-self_1755=x' & p_1754=Anon_17 & m=1+n1_1758.
+// id 106
+checksat  x'::node2<Anon_1537,p_1535,q_1538> * q_1538::dll<self_1536,n1_1539> * 
+y::dll<Anon_19,n>&right_40_1458'=q_1538 & left_40_1457'=p_1535 & 
+val_40_1456'=Anon_1537 & x'=x & y'=y & x'!=null & !(v_bool_37_1473') & 
+self_1536=x' & p_1535=Anon_18 & m=1+n1_1539.
 
-// id 247
-checksat  (exists p_1748,self_1749,Anon_1750,q_1751,
-n1_1752: x'::node2<Anon_1750,p_1748,q_1751> * 
-q_1751::dll<self_1749,n1_1752> * y::dll<Anon_18,n>&m=1+n1_1752 & 
-p_1748=Anon_17 & self_1749=x' & !(v_bool_45_1680') & x'!=null & y'=y & x'=x).
+// id 107
+checksat  (exists p_1529,self_1530,Anon_1531,q_1532,
+n1_1533: x'::node2<Anon_1531,p_1529,q_1532> * 
+q_1532::dll<self_1530,n1_1533> * y::dll<Anon_19,n>&m=1+n1_1533 & 
+p_1529=Anon_18 & self_1530=x' & !(v_bool_37_1473') & x'!=null & y'=y & x'=x).
 
-// id 248
-checksat  y::dll<Anon_18,n>&x'=null & m=0 & !(v_bool_45_1680') & x'!=null & y'=y & 
+// id 108
+checksat  y::dll<Anon_19,n>&x'=null & m=0 & !(v_bool_37_1473') & x'!=null & y'=y & 
 x'=x.
 
-// id 249
-checksat  x::dll<Anon_17,m> * y::dll<Anon_18,n>&x'=x & y'=y & x'=null & 
-v_bool_45_1680' & x'=null & !(v_bool_45_1680').
+// id 109
+checksat  x::dll<Anon_18,m> * y::dll<Anon_19,n>&x'=x & y'=y & x'=null & 
+v_bool_37_1473' & x'=null & !(v_bool_37_1473').
 
-// id 250
-checksat  x::dll<Anon_17,m> * y::dll<Anon_18,n>&x'=x & y'=y & x'!=null & 
-!(v_bool_45_1680') & x'!=null & !(v_bool_45_1680').
+// id 110
+checksat  x::dll<Anon_18,m> * y::dll<Anon_19,n>&x'=x & y'=y & x'!=null & 
+!(v_bool_37_1473') & x'!=null & !(v_bool_37_1473').
 
-// id 251
-checksat  x::dll<Anon_17,m> * y::dll<Anon_18,n>&x'=x & y'=y & x'=null & 
-v_bool_45_1680' & x'=null & v_bool_45_1680'.
+// id 111
+checksat  x::dll<Anon_18,m> * y::dll<Anon_19,n>&x'=x & y'=y & x'=null & 
+v_bool_37_1473' & x'=null & v_bool_37_1473'.
 
-// id 252
-checksat  x::dll<Anon_17,m> * y::dll<Anon_18,n>&x'=x & y'=y & x'!=null & 
-!(v_bool_45_1680') & x'!=null & v_bool_45_1680'.
+// id 112
+checksat  x::dll<Anon_18,m> * y::dll<Anon_19,n>&x'=x & y'=y & x'!=null & 
+!(v_bool_37_1473') & x'!=null & v_bool_37_1473'.
 
-// id 253
-checksat  x::dll<Anon_17,m> * y::dll<Anon_18,n>&x'=x & y'=y & x'!=null & !(res) & 
+// id 113
+checksat  x::dll<Anon_18,m> * y::dll<Anon_19,n>&x'=x & y'=y & x'!=null & !(res) & 
 x'!=null.
 
-// id 254
-checksat  x::dll<Anon_17,m> * y::dll<Anon_18,n>&x'!=null & y'=y & x'=x.
+// id 114
+checksat  x::dll<Anon_18,m> * y::dll<Anon_19,n>&x'!=null & y'=y & x'=x.
 
-// id 255
-checksat  x::dll<Anon_17,m> * y::dll<Anon_18,n>&x'!=null & y'=y & x'=x.
+// id 115
+checksat  x::dll<Anon_18,m> * y::dll<Anon_19,n>&x'!=null & y'=y & x'=x.
 
-// id 256
-checksat  x::dll<Anon_17,m> * y::dll<Anon_18,n>&x'=x & y'=y & MayLoop[] & x'!=null.
+// id 116
+checksat  x::dll<Anon_18,m> * y::dll<Anon_19,n>&x'=x & y'=y & MayLoop[] & x'!=null.
 
-// id 257
-checksat  x::dll<Anon_17,m> * y::dll<Anon_18,n>&x'=x & y'=y & x'=null & res & x'=null.
+// id 117
+checksat  x::dll<Anon_18,m> * y::dll<Anon_19,n>&x'=x & y'=y & x'=null & res & x'=null.
 
-// id 258
-checksat  x::dll<Anon_17,m> * y::dll<Anon_18,n>&x'=null & y'=y & x'=x.
+// id 118
+checksat  x::dll<Anon_18,m> * y::dll<Anon_19,n>&x'=null & y'=y & x'=x.
 
-// id 259
-checksat  x::dll<Anon_17,m> * y::dll<Anon_18,n>&x'=null & y'=y & x'=x.
+// id 119
+checksat  x::dll<Anon_18,m> * y::dll<Anon_19,n>&x'=null & y'=y & x'=x.
 
-// id 260
-checksat  x::dll<Anon_17,m> * y::dll<Anon_18,n>&x'=x & y'=y & MayLoop[] & x'=null.
+// id 120
+checksat  x::dll<Anon_18,m> * y::dll<Anon_19,n>&x'=x & y'=y & MayLoop[] & x'=null.

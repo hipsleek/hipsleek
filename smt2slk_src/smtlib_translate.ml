@@ -135,7 +135,7 @@ and get_pto_fields t =
           in
           if op = "ref"
           then
-            [trans_term (List.hd tl)]
+            [trans_term false (List.hd tl)]
           else if op = "sref"
           then
             List.fold_left (fun tl t ->
@@ -264,7 +264,7 @@ and trans_command c cl =
           (* let s4 = trans_var_list (List.tl vl) in *)
           let s4 = trans_para_list (List.tl vl) in
           let s5 = "> ==\n" in
-          let s6 = trans_term t in
+          let s6 = trans_term false t in
           let s7 = ".\n" in
           let _ = Hashtbl.reset tbl_selfdef in
           (* Hashtbl.reset tbl_paradef; *)
@@ -280,10 +280,10 @@ and trans_command c cl =
           if (!checkentail = 0)
           then (
               checkentail := 1;
-              "\ncheckentail_exact " ^ (trans_term term)
+              "\ncheckentail_exact " ^ (trans_term false term)
           ) else (
               checkentail := 2;
-              "\n         |- " ^ (trans_term term) ^ ".";
+              "\n         |- " ^ (trans_term false term) ^ ".";
           )
     | CommandCheckSat _ ->
           (if (!checkentail = 1)
@@ -312,7 +312,7 @@ and trans_attr attr =
     | _ -> () end
   | _ -> ()
 
-and trans_term t =
+and trans_term (is_pure: bool) t =
   match t with
     | TermSpecConst (_, const) ->
           trans_const const
@@ -333,18 +333,19 @@ and trans_term t =
           if op = "or"
           then (
               let s1 = " " in
-              let s2 = trans_term (List.hd tl) in
-              let s3 = List.fold_left (fun s t -> s ^ "\nor " ^ (trans_term t)) "" (List.tl tl) in
+              let s2 = trans_term is_pure (List.hd tl) in
+              let str_or = if is_pure then "| " else "or " in
+              let s3 = List.fold_left (fun s t -> s ^ "\n" ^ str_or ^ (trans_term is_pure t)) "" (List.tl tl) in
               s1 ^ s2 ^ s3
           ) else if op = "="
           then (
               (* print_string " "; *)
-              let s1 = trans_term (List.hd tl) in
-              let s2 = List.fold_left (fun s t -> s ^ " = " ^ (trans_term t)) "" (List.tl tl) in
+              let s1 = trans_term is_pure (List.hd tl) in
+              let s2 = List.fold_left (fun s t -> s ^ " = " ^ (trans_term is_pure t)) "" (List.tl tl) in
               s1 ^ s2
           ) else if op = "pto"
           then (
-              let s1 = trans_term (List.hd tl) in
+              let s1 = trans_term is_pure (List.hd tl) in
               let s2 = "::" in
               (* try *)
               (*   let sort = Hashtbl.find tbl_paradef (get_str_term (List.hd tl)) in *)
@@ -358,7 +359,7 @@ and trans_term t =
                     let sort = Hashtbl.find tbl_vardef (get_str_term (List.hd tl)) in
                     let ss1 = sort in
                     let ss2 = "<" in
-                    let ss3 = List.fold_left (fun s t -> s ^ (trans_term t)) "" (List.tl tl) in
+                    let ss3 = List.fold_left (fun s t -> s ^ (trans_term is_pure t)) "" (List.tl tl) in
                     let pto_fields = get_pto_fields (List.hd (List.tl tl)) in
                     let data_fields = Hashtbl.find tbl_sortdef sort in
                     let ss4 = List.fold_left (fun s df ->
@@ -380,29 +381,35 @@ and trans_term t =
           ) else if (op = "ssep" || op = "sep")
           then (
               (* print_string " "; *)
-              let s1 = trans_term (List.hd tl) in
-              let s2 = List.fold_left (fun s t -> s ^ " * " ^ (trans_term t)) "" (List.tl tl) in
+              let s1 = trans_term is_pure (List.hd tl) in
+              let s2 = List.fold_left (fun s t -> s ^ " * " ^ (trans_term is_pure t)) "" (List.tl tl) in
               s1 ^ s2
           ) else if op = "and"
           then (
               let tl1 = get_heap_tl tl in
               let tl2 = get_pure_tl tl in
               let tl = tl1@tl2 in
-              let s1 = trans_term (List.hd tl) in
-              let s2 = List.fold_left (fun s t -> s ^ " & " ^ (trans_term t)) "" (List.tl tl) in
+              let s11 = try trans_term false (List.hd tl1)
+              with _ -> ""
+              in
+              let s12 = try
+                trans_term true (List.hd tl2)
+              with _ -> "" in
+              let s1 = s11 ^ s12 in
+              let s2 = List.fold_left (fun s t -> s ^ " & " ^ (trans_term false t)) "" (List.tl tl) in
               s1 ^ s2
           ) else if op = "ref"
           then (
-              (trans_term (List.hd tl)) ^ " = " ^ (trans_term (List.hd (List.tl tl)))
+              (trans_term false (List.hd tl)) ^ " = " ^ (trans_term false (List.hd (List.tl tl)))
           ) else if op = "distinct"
           then (
-              (trans_term (List.hd tl)) ^ " != " ^ (trans_term (List.hd (List.tl tl)))
+              (trans_term false (List.hd tl)) ^ " != " ^ (trans_term false (List.hd (List.tl tl)))
           ) else if op = "index"
           then (
-              trans_term (List.hd (List.tl tl))
+              trans_term false (List.hd (List.tl tl))
           ) else if (op = "+" || op = "-" || op = "*")
           then (
-              (trans_term (List.hd tl)) ^ op ^ (trans_term_list (List.tl tl))
+              (trans_term false (List.hd tl)) ^ op ^ (trans_term_list (List.tl tl))
           ) else if not ( op = "tobool" ||
                   op = "tospace" ||
                   op = "sref" ||
@@ -412,7 +419,7 @@ and trans_term t =
           then (
               (* try *)
               (*   let _ = Hashtbl.find tbl_preddef op in *)
-              (trans_term (List.hd tl)) ^ "::" ^ op ^ "<" ^ (trans_term_list (List.tl tl)) ^ ">"
+              (trans_term false (List.hd tl)) ^ "::" ^ op ^ "<" ^ (trans_term_list (List.tl tl)) ^ ">"
               (* with Not_found -> ( *)
                   (* trans_term_list tl; *)
               (* ) *)
@@ -425,16 +432,16 @@ and trans_term t =
           "forall\n"
     | TermExistsTerm (_, (_, vl), t) ->
           let s1 = trans_var_list vl in
-          let s2 = trans_term t in
+          let s2 = trans_term  false t in
           "(exists " ^ s1 ^  ": " ^ s2 ^ ")"
     | TermExclimationPt _ ->
           "exclimation\n"
 
 and trans_term_list tl =
   if (List.length tl > 0) then (
-      let s1 = trans_term (List.hd tl) in
+      let s1 = trans_term false (List.hd tl) in
       let s2 = List.fold_left (fun s t ->
-          s ^ "," ^ (trans_term t)) "" (List.tl tl) in
+          s ^ "," ^ (trans_term false t)) "" (List.tl tl) in
       s1 ^ s2
   ) else
     ""

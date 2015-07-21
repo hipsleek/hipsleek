@@ -1,0 +1,185 @@
+data node {
+  tree child;
+  node next;
+  tree parent;
+}.
+data tree {
+  int val;
+  node children;
+}.
+ pred treep<n:int> == 
+  (exists self_35,flted_13_34: self::tree<Anon_15,c> * 
+  c::sll<self_35,flted_13_34>&flted_13_34+1=n & self_35=self)
+  inv 
+  true.
+ pred sll<parent:tree,s:int> == 
+  emp&self=null & s=0 or
+(exists parent_31,
+  parent_32: self::node<c,n,parent_31> * c::treep<s1> * n::sll<parent_32,s2>&
+  s=s2+s1 & parent_31=parent & parent_32=parent)
+  inv 
+  true.
+
+ 
+// id: 0; line: 25; kind: BIND
+ checkentail (exists self,flted,Anon1,c: t'::tree<Anon1,c> * c::sll<self,flted>&
+MayLoop[] & flted+1=Anon & self=t' & t'=t)
+ |-  t'::tree<val',children'>@L.
+expect Valid.
+ 
+// id: 2; line: 25; kind: PRE
+ checkentail t'::tree<Anon2,c1> * c1::sll<self1,flted1>&MayLoop[] & t'=t & self1=t' & 
+flted1+1=Anon & v'=c1 & v'=null
+ |-  htrue.
+expect Valid.
+ 
+// id: 3; line: 25; kind: PRE
+ checkentail t'::tree<Anon2,c1> * c1::sll<self1,flted1>&MayLoop[] & t'=t & self1=t' & 
+flted1+1=Anon & v'=c1 & v'=null
+ |-  emp&Term[].
+expect Valid.
+ 
+// id: 4; line: 25; kind: PRE
+ checkentail t'::tree<Anon2,c1> * c1::sll<self1,flted1>&MayLoop[] & t'=t & self1=t' & 
+flted1+1=Anon & v'=c1 & v'!=null
+ |-  htrue.
+expect Valid.
+ 
+// id: 5; line: 25; kind: PRE
+ checkentail t'::tree<Anon2,c1> * c1::sll<self1,flted1>&MayLoop[] & t'=t & self1=t' & 
+flted1+1=Anon & v'=c1 & v'!=null
+ |-  emp&Term[].
+expect Valid.
+ 
+// id: 6; line: 26; kind: BIND
+ checkentail t'::tree<Anon2,c1> * c1::sll<self1,flted1>&MayLoop[] & flted1+1=Anon & 
+self1=t' & t'=t & c1!=null & !(v1')
+ |-  t'::tree<val1',children1'>@L.
+expect Valid.
+ 
+// id: 8; line: 26; kind: PRE_REC
+ checkentail t'::tree<Anon2,c1> * c1::sll<self1,flted1>&MayLoop[] & v2'=c1 & flted1+
+1=Anon & self1=t' & t'=t & c1!=null & !(v1')
+ |-  (exists p: v2'::sll<p,Anon3>&p=t').
+expect Valid.
+ 
+// id: 10; line: 26; kind: PRE_REC
+ checkentail t'::tree<Anon2,c1>&MayLoop[] & Anon3=flted1 & v2'=c1 & flted1+1=Anon & 
+self1=t' & t'=t & c1!=null & !(v1')
+ |-  emp&MayLoop[].
+expect Valid.
+ 
+// id: 11; line: 0; kind: POST
+ checkentail t'::tree<Anon2,c1> * c1::sll<self1,flted1>&MayLoop[] & res=v3' & v3' & 
+flted1+1=Anon & self1=t' & t'=t & c1=null & v1'
+ |-  emp&res.
+expect Valid.
+ 
+// id: 12; line: 0; kind: POST
+ checkentail t'::tree<Anon2,c1>&MayLoop[] & !(v1') & c1!=null & t'=t & self1=t' & flted1+
+1=Anon & Anon3=flted1 & v4' & res=v4'
+ |-  emp&res.
+expect Valid.
+ 
+// id: 13; line: 33; kind: PRE
+ checkentail (exists p: l::sll<p,Anon3>&MayLoop[] & l'=null & p=p1 & p'=p1 & l'=l)
+ |-  htrue.
+expect Valid.
+ 
+// id: 14; line: 33; kind: PRE
+ checkentail l::sll<p2,Anon3>&MayLoop[] & l'=null & p2=p1 & p'=p1 & l'=l
+ |-  emp&Term[].
+expect Valid.
+ 
+// id: 15; line: 33; kind: PRE
+ checkentail (exists p: l::sll<p,Anon3>&MayLoop[] & l'!=null & p=p1 & p'=p1 & l'=l)
+ |-  htrue.
+expect Valid.
+ 
+// id: 16; line: 33; kind: PRE
+ checkentail l::sll<p3,Anon3>&MayLoop[] & l'!=null & p3=p1 & p'=p1 & l'=l
+ |-  emp&Term[].
+expect Valid.
+ 
+// id: 17; line: 34; kind: BIND
+ checkentail (exists parent,parent1,c2,s,n,s1: c2::treep<s> * l'::node<c2,n,parent> * 
+n::sll<parent1,s1>&MayLoop[] & l'=l & p'=p1 & p3=p1 & l'!=null & !(v5') & 
+parent1=p3 & parent=p3 & Anon3=s1+s)
+ |-  l'::node<child',next',parent'>@L.
+expect Valid.
+ 
+// id: 19; line: 34; kind: PRE
+ checkentail c3::treep<s3> * l'::node<c3,n1,parent3> * n1::sll<parent2,s2>&MayLoop[] & 
+Anon3=s2+s3 & parent3=p3 & parent2=p3 & !(v5') & l'!=null & p3=p1 & p'=p1 & 
+l'=l & v6'=parent3 & v6'=p'
+ |-  htrue.
+expect Valid.
+ 
+// id: 20; line: 34; kind: PRE
+ checkentail c3::treep<s3> * l'::node<c3,n1,parent3> * n1::sll<parent2,s2>&MayLoop[] & 
+Anon3=s2+s3 & parent3=p3 & parent2=p3 & !(v5') & l'!=null & p3=p1 & p'=p1 & 
+l'=l & v6'=parent3 & v6'=p'
+ |-  emp&Term[].
+expect Valid.
+ 
+// id: 21; line: 34; kind: BIND
+ checkentail c3::treep<s3> * l'::node<c3,n1,parent3> * n1::sll<parent2,s2>&MayLoop[] & 
+p'=parent3 & l'=l & p'=p1 & p3=p1 & l'!=null & !(v5') & parent2=p3 & 
+parent3=p3 & Anon3=s2+s3 & v7'
+ |-  l'::node<child1',next1',parent1'>@L.
+expect Valid.
+ 
+// id: 23; line: 34; kind: PRE_REC
+ checkentail c3::treep<s3> * l'::node<c3,n1,parent3> * n1::sll<parent2,s2>&MayLoop[] & 
+v8'=n1 & p'=parent3 & l'=l & p'=p1 & p3=p1 & l'!=null & !(v5') & 
+parent2=p3 & parent3=p3 & Anon3=s2+s3 & v7'
+ |-  (exists p: v8'::sll<p,Anon4>&p=p').
+expect Valid.
+ 
+// id: 25; line: 34; kind: PRE_REC
+ checkentail c3::treep<s3> * l'::node<c3,n1,parent3>&MayLoop[] & Anon4=s2 & v8'=n1 & 
+p'=parent3 & l'=l & p'=p1 & p3=p1 & l'!=null & !(v5') & parent2=p3 & 
+parent3=p3 & Anon3=s2+s3 & v7'
+ |-  emp&MayLoop[].
+expect Valid.
+ 
+// id: 26; line: 34; kind: BIND
+ checkentail l'::node<c3,n1,parent3> * c3::treep<s3>&MayLoop[] & v9' & Anon4=s2 & 
+p'=parent3 & l'=l & p'=p1 & p3=p1 & l'!=null & !(v5') & parent2=p3 & 
+parent3=p3 & Anon3=s2+s3 & v7'
+ |-  l'::node<child2',next2',parent2'>@L.
+expect Valid.
+ 
+// id: 28; line: 34; kind: PRE_REC
+ checkentail l'::node<c3,n1,parent3> * c3::treep<s3>&MayLoop[] & v10'=c3 & v9' & 
+Anon4=s2 & p'=parent3 & l'=l & p'=p1 & p3=p1 & l'!=null & !(v5') & 
+parent2=p3 & parent3=p3 & Anon3=s2+s3 & v7'
+ |-  v10'::treep<Anon>.
+expect Valid.
+ 
+// id: 31; line: 34; kind: PRE_REC
+ checkentail l'::node<c3,n1,parent3>&MayLoop[] & Anon=s3 & v10'=c3 & v9' & Anon4=s2 & 
+p'=parent3 & l'=l & p'=p1 & p3=p1 & l'!=null & !(v5') & parent2=p3 & 
+parent3=p3 & Anon3=s2+s3 & v7'
+ |-  emp&MayLoop[].
+expect Valid.
+ 
+// id: 32; line: 34; kind: PRE
+ checkentail l'::node<c3,n1,parent3>&MayLoop[] & v11' & Anon=s3 & v9' & Anon4=s2 & 
+p'=parent3 & l'=l & p'=p1 & p3=p1 & l'!=null & !(v5') & parent2=p3 & 
+parent3=p3 & Anon3=s2+s3 & v7'
+ |-  emp&Term[].
+expect Valid.
+ 
+// id: 33; line: 0; kind: POST
+ checkentail l::sll<p2,Anon3>&MayLoop[] & res=v12' & v12' & l'=l & p'=p1 & p2=p1 & 
+l'=null & v5'
+ |-  emp&res.
+expect Valid.
+ 
+// id: 34; line: 0; kind: POST
+ checkentail (exists v9',v11': l'::node<c3,n1,parent3>&MayLoop[] & v7' & Anon3=s2+s3 & 
+parent3=p3 & parent2=p3 & !(v5') & l'!=null & p3=p1 & p'=p1 & l'=l & 
+p'=parent3 & Anon4=s2 & Anon=s3 & v13' & v11' & v9' & res=v13')
+ |-  emp&res.
+expect Valid.

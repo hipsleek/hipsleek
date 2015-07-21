@@ -512,7 +512,8 @@ let add_sleek_logging (es_opt:Cformula.entail_state option) timeout_flag stime i
     in
     let () =  x_dinfo_pp (string_of_sleek_log_entry sleek_log_entry) no_pos in
     let () = last_cmd # set_sleek sleek_log_entry in
-    let () = sleek_log_stk # push sleek_log_entry in
+    let () = if !Globals.sleek_gen_vc && Cformula.is_trivial_f conseq then () else
+      sleek_log_stk # push sleek_log_entry in
     (if not(avoid) then 
        begin
          current_tntrel_ass_stk # reset;

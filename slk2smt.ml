@@ -121,7 +121,11 @@ let rec process_pure_formula pre_fix_var pf =
     process_p_formula pre_fix_var pf
   | Ipure.And (p1,p2,_) -> let s1 = recf p1 in
     let s2 = recf p2 in
-    ("and ("^ s1 ^ " " ^ s2 ^ ")" )
+    ("(and "^ s1 ^ " " ^ s2 ^ ")" )
+  | Ipure.Or (p1,p2,_,_) -> let s1 = recf p1 in
+    let s2 = recf p2 in
+    ("(or "^ s1 ^ " " ^ s2 ^ ")" )
+  | Ipure.Not (p,_,_) -> "(not " ^ (recf p) ^ ")"
   | _ -> (* "other" *) ""
 
 let rec process_h_formula pre_fix_var hf all_view_names pred_abs_num=
@@ -419,7 +423,7 @@ let trans_smt slk_fname iprog cprog cmds =
     "(set-logic QF_S)\n" ^ 
     "(set-info :source |" ^
     "  Sleek solver\n" ^
-    "  http://loris-7.ddns.comp.nus.edu.sg/~project/s2/beta/\n" ^  
+    "  http://loris-7.ddns.comp.nus.edu.sg/~project/hip/\n" ^  
     "|)\n\n" ^ 
     "(set-info :smt-lib-version 2.0)\n" ^
     "(set-info :category \"crafted\")\n" 
