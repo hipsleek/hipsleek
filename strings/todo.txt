@@ -1,0 +1,231 @@
+==================================================================
+# bug2.ss
+
+# Is termination proving assumption too strong here?
+# lemma search creates choice! should not be more problem ..
+
+Termination checking result: 
+(55)->(55) (ERR: invalid transition)  Term[100; k-n] ->  MayLoop[]
+
+
+Checking procedure while2$STR~STR... 
+Procedure while2$STR~STR SUCCESS.
+
+
+Termination checking result: 
+(70)->(70) (ERR: invalid transition)  Term[101; k-n] ->  MayLoop[]
+==================================================================
+# ex3.c
+
+Currently translate char* to int*.
+Perhaps, we should use string type?
+
+ char *(cstrcat)(char *s1, const char *s2)
+ /*@ 
+     requires true
+     ensures true;
+ */
+ {
+     char *s = s1;
+     s++;
+     char x = *s2;
+     *s = x;
+     s++;
+     s2++;
+     return s1;
+ }
+
+===>
+
+int_star cstrcat$int_star~int_star(  int_star s1,  int_star s2)static  EBase 
+   htrue&{FLOW,(4,5)=__norm#E}[]
+   EBase 
+     emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+     EAssume 
+       htrue&{FLOW,(4,5)=__norm#E}[]
+dynamic  EBase 
+   hfalse&false&{FLOW,(4,5)=__norm#E}[]
+{((int_star s;
+int x);
+{((((((s = s1;
+s = {((int v_int_27_1198;
+v_int_27_1198 = 1);
+__pointer_add__int_star__int__$int_star~int(s,v_int_27_1198))});
+x = bind s2 to (value_28_1199,offset_28_1200) [read] in 
+value_28_1199);
+bind s to (value_29_1201,offset_29_1202) [write] in 
+value_29_1201 = x);
+s = {((int v_int_30_1207;
+v_int_30_1207 = 1);
+__pointer_add__int_star__int__$int_star~int(s,v_int_30_1207))});
+s2 = {((int v_int_31_1212;
+v_int_31_1212 = 1);
+__pointer_add__int_star__int__$int_star~int(s2,v_int_31_1212))});
+ret# s1)})}
+
+{(20,1),(33,2)}
+
+==================================================================
+# bug4.ss -p while2
+
+void while2(ref str s1,ref str s2)
+  requires s1::str<_,q>*q::BADS<> * s2::WFS<n,k> & Term[k-n]
+  ensures s1::WFSeg<k-n,pp>*pp::str<0,qq>*qq::BADS<> 
+  * s2'::str<0,qqq> * qqq::BADS<> & pp=s1'; //
+
+Why is there a performance bug when we used pp=s1'?
+
+Checking procedure while2$str~str... [omega.ml]Timeout when checking sat for 
+10. Restarting Omega after ... 249 invocations Stop Omega... 249 invocations [omega.ml]Timeout when checking sat for 
+10. Restarting Omega after ... 263 invocations Stop Omega... 263 invocations [omega.ml]Timeout when checking sat for 
+10. Restarting Omega after ... 274 invocations Stop Omega... 274 invocations 
+==================================================================
+# ex18a.ss (FIXED)
+
+  requires s::WFS<n,k> & Term[k-n]
+  ensures s::WFSeg<k-n,s'>*s'::str<0,q>*q::BADS<>;
+
+Inferred:
+!!! **pi.ml#775:>>POST:  n1_1372>=0 & m1_1371>=0 & m1_1371=m & n1_1372+n=k
+
+[ EInfer [P]
+   EBase 
+     exists (Expl)[](Impl)[n; k; m](ex)[]s::WFS<n,k,m>@M&
+     {FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         ref [s]
+         (exists s_1373,flted_71_1374,q_1375,m1_1376,
+         n1_1377: s::WFSeg<n1_1377,s_1373>@M * 
+                  s'::str<flted_71_1374,q_1375>@M * q_1375::BADS<m1_1376>@M&
+         flted_71_1374=0 & P(m1_1376,n1_1377,n,k,m) & s_1373=s' & n<=k & 0<=m&
+         {FLOW,(4,5)=__norm#E}[]]
+
+# Why did s::WFSEg<...> disappeared below?
+  What happen to P(...)??
+
+!!! **pi.ml#831:lst_assume (after norm and postprocess):[]
+!!! **pi.ml#835:new_specs2:
+[ EInfer [P]
+   EBase 
+     exists (Expl)[](Impl)[n; k; m](ex)[]s::WFS<n,k,m>@M&
+     {FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         ref [s]
+         (exists s_1373,flted_71_1374,q_1375,m1_1376,
+         n1_1377: s'::str<flted_71_1374,q_1375>@M * q_1375::BADS<m1_1376>@M&
+         flted_71_1374=0 & s_1373=s' & n<=k & 0<=m&{FLOW,(4,5)=__norm#E}[]]
+
+
+../hip ex18a-infer-cstrcat-memsafe.ss -dre "elim_heap\|simplify_rel" --dd-calls-all > 1
+../hip ex18a-infer-cstrcat-memsafe.ss -debug dd.log > 1
+
+hg annotate fixpoint.ml -udn fixpoint.ml > 1
+
+
+locle 10295 Thu Dec 19 15:03:09 2013 +0800:   | CF.ViewNode v ->
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:     let v_var = v.CF.h_formula_view_node in
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:     if Gen.BList.mem_eq CP.eq_spec_var_x v_var ref_vars && CP.is_unprimed v_var then CF.HEmp
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:     else
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:       let alias = (CP.EMapSV.find_equiv_all v_var aset) @ [v_var] in
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:       if List.exists CP.is_null_const alias then CF.HEmp else
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:         let cond = (CP.intersect_x (CP.eq_spec_var_x) alias pre_vars = []) 
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:           && not (List.exists (fun x -> CP.is_res_spec_var x) alias)
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:           && List.length (List.filter (fun x -> x = v_var) heap_vars) <= 1
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:         in if cond then CF.HEmp else h
+
+
+  | CF.ViewNode v ->
+    let v_var = v.CF.h_formula_view_node in
+    if Gen.BList.mem_eq CP.eq_spec_var_x v_var ref_vars && CP.is_unprimed v_var then CF.HEmp
+    else
+      let alias = (CP.EMapSV.find_equiv_all v_var aset) @ [v_var] in
+      if List.exists CP.is_null_const alias then CF.HEmp else
+        let cond = (CP.intersect_x (CP.eq_spec_var_x) alias pre_vars = []) 
+                   && not (List.exists (fun x -> CP.is_res_spec_var x) alias)
+                   && List.length (List.filter (fun x -> x = v_var) heap_vars) <= 1 in 
+        if cond then CF.HEmp else h
+  | CF.DataNode d ->
+    let d_var = d.CF.h_formula_data_node in
+    if Gen.BList.mem_eq CP.eq_spec_var_x d_var ref_vars && CP.is_unprimed d_var then CF.HEmp
+    else
+      let alias = (CP.EMapSV.find_equiv_all d_var aset) @ [d_var] in
+      let cond = (CP.intersect_x (CP.eq_spec_var_x) alias pre_vars = []) 
+                 && not (List.exists (fun x -> CP.is_res_spec_var x) alias)
+                 && List.length (List.filter (fun x -> x = d_var) heap_vars) <= 1
+      in if cond then CF.HEmp else h
+
+# why did elim_heap drop some heap nodes? (FIXED by removing it)
+
+(==mcpure.ml#2282==)
+elim_heap@2@1
+elim_heap inp1 : s::WFSeg<n1_1377,s_1373>@M * s'::str<flted_71_1374,q_1375>@M * 
+ q_1375::BADS<mmmm_1376>@M
+elim_heap inp2 : flted_71_1374=0 & P(mmmm_1376,n1_1377,n,k,m) & s_1373=s' & n<=k & 0<=m
+elim_heap inp3 :[n,k,m,s,s,n,k,m]
+elim_heap inp4 :[s,n1_1377,s_1373,s',flted_71_1374,q_1375,mmmm_1376]
+elim_heap@2 EXIT: s'::str<flted_71_1374,q_1375>@M * q_1375::BADS<mmmm_1376>@M
+
+# why not replace the inferred post-condition?
+  (FIXED: problem is absent in ti_case branch )
+
+(==fixpoint.ml#148==)
+drop_rel_formula@29@28@27
+drop_rel_formula inp1 : flted_71_1374=0 & P(mmmm_1376,n1_1377,n,k,m) & s_1373=s' & n<=k & 0<=m
+drop_rel_formula@29 EXIT: flted_71_1374=0 & true & s_1373=s' & n<=k & 0<=m
+
+(==fixpoint.ml#196==)
+simplify_post_helper@28@27
+simplify_post_helper inp1 : (exists s_1373,flted_71_1374,q_1375,mmmm_1376,
+n1_1377: s::WFSeg<n1_1377,s_1373>@M * s'::str<flted_71_1374,q_1375>@M * 
+         q_1375::BADS<mmmm_1376>@M&
+flted_71_1374=0 & P(mmmm_1376,n1_1377,n,k,m) & s_1373=s' & n<=k & 0<=m&
+{FLOW,(4,5)=__norm#E}[]
+simplify_post_helper inp2 :[P]
+simplify_post_helper@28 EXIT:( s::WFSeg<n1_1377,s_1373>@M * s'::str<flted_71_1374,q_1375>@M * 
+ q_1375::BADS<mmmm_1376>@M, flted_71_1374=0 & s_1373=s' & n<=k & 0<=m,[ true],[])
+
+==================================================================
+# ex18a.ss 
+
+
+Why did explore branch has an expensive pairwise?
+
+!!! log(small):(0.785025,541)
+!!! log(big)(>0.5s)(1):(2.152736,[(pairwise,2.152736)])
+Total verification time: 1.778222 second(s)
+	Time spent in main process: 0.452301 second(s)
+	Time spent in child processes: 1.325921 second(s)
+	Time for logging: 0.095004 second(s)
+
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================

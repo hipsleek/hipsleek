@@ -63,7 +63,8 @@ let remove_dups_imply imply lst =
   let res = Gen.BList.remove_dups_eq imply lst in
   Gen.BList.remove_dups_eq imply (List.rev res)
 
-let rec elim_heap_x h p pre_vars heap_vars aset ref_vars = match h with
+let rec elim_heap h p pre_vars heap_vars aset ref_vars = 
+  match h with
   | CF.Star {CF.h_formula_star_h1 = h1;
              CF.h_formula_star_h2 = h2;
              CF.h_formula_star_pos = pos} -> 
@@ -85,17 +86,20 @@ let rec elim_heap_x h p pre_vars heap_vars aset ref_vars = match h with
     CF.mkPhaseH h1 h2 pos
   | CF.ViewNode v ->
     let v_var = v.CF.h_formula_view_node in
-    if Gen.BList.mem_eq CP.eq_spec_var_x v_var ref_vars && CP.is_unprimed v_var then CF.HEmp
+    if Gen.BList.mem_eq CP.eq_spec_var_x v_var ref_vars && CP.is_unprimed v_var 
+    then CF.HEmp
     else
       let alias = (CP.EMapSV.find_equiv_all v_var aset) @ [v_var] in
-      if List.exists CP.is_null_const alias then CF.HEmp else
+      if List.exists CP.is_null_const alias then CF.HEmp 
+      else
         let cond = (CP.intersect_x (CP.eq_spec_var_x) alias pre_vars = []) 
                    && not (List.exists (fun x -> CP.is_res_spec_var x) alias)
-                   && List.length (List.filter (fun x -> x = v_var) heap_vars) <= 1
-        in if cond then CF.HEmp else h
+                   && List.length (List.filter (fun x -> x = v_var) heap_vars) <= 1 in 
+        if cond then CF.HEmp else h
   | CF.DataNode d ->
     let d_var = d.CF.h_formula_data_node in
-    if Gen.BList.mem_eq CP.eq_spec_var_x d_var ref_vars && CP.is_unprimed d_var then CF.HEmp
+    if Gen.BList.mem_eq CP.eq_spec_var_x d_var ref_vars && CP.is_unprimed d_var 
+    then CF.HEmp
     else
       let alias = (CP.EMapSV.find_equiv_all d_var aset) @ [d_var] in
       let cond = (CP.intersect_x (CP.eq_spec_var_x) alias pre_vars = []) 
@@ -104,23 +108,24 @@ let rec elim_heap_x h p pre_vars heap_vars aset ref_vars = match h with
       in if cond then CF.HEmp else h
   | _ -> h
 
-and elim_heap h p pre_vars heap_vars aset ref_vars =
+let elim_heap h p pre_vars heap_vars aset ref_vars =
   let pr = Cprinter.string_of_h_formula in
   let pr2 = Cprinter.string_of_pure_formula in
   let pr3 = !print_svl in
   Debug.no_4 "elim_heap" pr pr2 pr3 pr3 pr
-    (fun _ _ _ _ -> elim_heap_x h p pre_vars heap_vars aset ref_vars) h p pre_vars heap_vars
+    (fun _ _ _ _ -> elim_heap h p pre_vars heap_vars aset ref_vars) h p pre_vars heap_vars
 
 let helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_vars =
   let h, p, _, _, _, _ = CF.split_components post_fml in
   let p = MCP.pure_of_mix p in
-  let h = if pre_vars = [] || not(inf_post) then h else (
-      enulalias := true;
-      let node_als = MCP.ptr_equations_with_null (MCP.mix_of_pure p) in
-      enulalias := false;
-      let node_aset = CP.EMapSV.build_eset node_als in
-      elim_heap h p pre_vars (CF.h_fv h) node_aset ref_vars)
-  in
+  (* WN : why is there a need to weaken the post-condition?? *)
+  (* let h = if pre_vars = [] || not(inf_post) then h else ( *)
+  (*     enulalias := true; *)
+  (*     let node_als = MCP.ptr_equations_with_null (MCP.mix_of_pure p) in *)
+  (*     enulalias := false; *)
+  (*     let node_aset = CP.EMapSV.build_eset node_als in *)
+  (*     elim_heap h p pre_vars (CF.h_fv h) node_aset ref_vars) *)
+  (* in *)
   let p,pre,bag_vars = begin
     match subst_fml with
     | None ->
@@ -140,13 +145,18 @@ let helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_var
     | Some triples (*(rel, post, pre)*) ->
       if inf_post then
         let rels = CP.get_RelForm p in
-        let p = CP.drop_rel_formula p in
+        let () = x_tinfo_hp (add_str "rels" (pr_list !CP.print_formula)) rels no_pos in
+        let p = x_add_1 CP.drop_rel_formula p in
         let ps = List.filter (fun x -> not (CP.isConstTrue x)) (CP.list_of_conjs p) in  
         let pres,posts = List.split (List.concat (List.map (fun (a1,a2,a3) -> 
             if Gen.BList.mem_eq CP.equalFormula a1 rels
             then [(a3,a2)] else []) triples)) in
+        let () = x_tinfo_hp (add_str "pres" (pr_list !CP.print_formula)) pres no_pos in
+        let () = x_tinfo_hp (add_str "posts" (pr_list !CP.print_formula)) posts no_pos in
         let post = CP.conj_of_list (ps@posts) no_pos in
         let pre = CP.conj_of_list pres no_pos in
+        let () = x_tinfo_hp (add_str "pre" (!CP.print_formula)) pre no_pos in
+        let () = x_tinfo_hp (add_str "post" (!CP.print_formula)) post no_pos in
         (post,[pre],[])
       else
         let rels = CP.get_RelForm p in
@@ -159,6 +169,28 @@ let helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_var
   in
   (h, p, pre, bag_vars)
 
+(* type: 'a -> *)
+(*   'b -> *)
+  (* CF.formula -> *)
+  (* CP.spec_var list -> *)
+  (* 'c -> *)
+  (* (CP.formula * CP.formula * CP.formula) list option -> *)
+  (* Cast.P.spec_var list -> *)
+  (* bool -> *)
+  (* CP.spec_var list -> *)
+  (* CF.h_formula * TP.CP.formula * CP.formula list * CP.spec_var list *)
+
+let helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_vars =
+  let pr_h_f = !CF.print_h_formula in
+  let pr_pf = !CP.print_formula in
+  let pr_svl = !CP.print_svl in
+  let pr1 = !CF.print_formula in
+  let pr_3 = pr_option (pr_list (pr_triple pr_pf pr_pf pr_pf)) in
+  let pr_r = pr_quad pr_h_f pr_pf (pr_list pr_pf) pr_svl in
+  Debug.no_3 "simplify_post_helper" pr1 (add_str "post_vars" pr_svl) 
+    (add_str "subst_fml" pr_3) pr_r (fun _ _ _ -> helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_vars)
+    post_fml post_vars subst_fml
+
 let rec simplify_post post_fml post_vars prog subst_fml pre_vars inf_post evars ref_vars = match post_fml with
   | CF.Or _ ->
     let disjs = CF.list_of_disjs post_fml in
@@ -168,12 +200,12 @@ let rec simplify_post post_fml post_vars prog subst_fml pre_vars inf_post evars 
     let fs,pres = List.split res in
     (CF.disj_of_list fs no_pos, List.concat pres)
   | CF.Exists e ->
-    let h,p,pre,bag_vars = helper e.CF.formula_exists_heap e.CF.formula_exists_pure post_fml post_vars prog subst_fml pre_vars inf_post ref_vars in
+    let h,p,pre,bag_vars = x_add helper e.CF.formula_exists_heap e.CF.formula_exists_pure post_fml post_vars prog subst_fml pre_vars inf_post ref_vars in
     (*print_endline ("VARS: " ^ Cprinter.string_of_spec_var_list pre_vars);*)
     (CF.Exists {e with CF.formula_exists_qvars = e.CF.formula_exists_qvars @ bag_vars;
                        CF.formula_exists_heap = h; CF.formula_exists_pure = MCP.mix_of_pure p},pre)
   | CF.Base b ->
-    let h,p,pre,bag_vars = helper b.CF.formula_base_heap b.CF.formula_base_pure post_fml post_vars prog subst_fml pre_vars inf_post ref_vars in
+    let h,p,pre,bag_vars = x_add helper b.CF.formula_base_heap b.CF.formula_base_pure post_fml post_vars prog subst_fml pre_vars inf_post ref_vars in
     (*print_endline ("VARS: " ^ Cprinter.string_of_spec_var_list pre_vars);*)
     let exists_h_vars = if pre_vars = [] then [] else 
         List.filter (fun x -> not (CP.is_res_spec_var x || CP.is_hprel_typ x)) (CP.diff_svl (CF.h_fv h) (pre_vars @ ref_vars @ (List.map CP.to_primed ref_vars))) in
@@ -204,10 +236,10 @@ let rec simplify_pre pre_fml lst_assume = match pre_fml with
     let p = if !do_infer_inc then TP.pairwisecheck_raw (Infer.simplify_helper (CP.conj_of_list p2 no_pos))
       else CP.mkAnd (TP.pairwisecheck_raw (Infer.simplify_helper (CP.conj_of_list p2 no_pos))) (CP.conj_of_list p1 no_pos) no_pos
     in
-    let p = if lst_assume = [] then CP.drop_rel_formula p (* need to recheck *)
+    let p = if lst_assume = [] then x_add_1 CP.drop_rel_formula p (* need to recheck *)
       else
         let rels = CP.get_RelForm p in
-        let p = CP.drop_rel_formula p in
+        let p = x_add_1 CP.drop_rel_formula p in
         let ps = List.filter (fun x -> not (CP.isConstTrue x)) (CP.list_of_conjs p) in
         let pres = List.concat (List.map (fun (a1,a2,a3) ->
             if Gen.BList.mem_eq CP.equalFormula a2 rels then [a3] else []) lst_assume) in
@@ -224,7 +256,7 @@ let simplify_pre pre_fml lst_assume =
   let pr1 = pr_list (fun (_,f1,f2) -> (pr_pair pr_f pr_f) (f1,f2)) in
   Debug.no_2 "simplify_pre" pr pr1 pr (fun _ _ -> simplify_pre pre_fml lst_assume) pre_fml lst_assume
 
-let rec simplify_relation_x (sp:CF.struc_formula) subst_fml pre_vars post_vars prog inf_post evars lst_assume
+let rec simplify_relation (sp:CF.struc_formula) subst_fml pre_vars post_vars prog inf_post evars lst_assume
   : CF.struc_formula * CP.formula list =
   match sp with
   | CF.ECase b ->
@@ -268,13 +300,13 @@ let rec simplify_relation_x (sp:CF.struc_formula) subst_fml pre_vars post_vars p
     let new_sp, pres = map_l_snd_res (fun s-> simplify_relation s subst_fml pre_vars post_vars prog inf_post evars lst_assume) b in
     (CF.EList new_sp, List.concat pres)
 
-and simplify_relation sp subst_fml pre_vars post_vars prog inf_post evars lst_assume =
+let simplify_relation sp subst_fml pre_vars post_vars prog inf_post evars lst_assume =
   let pr = !print_struc_formula in
   let pr_f = !CP.print_formula in
   let pr1 = pr_option (pr_list (pr_triple pr_f pr_f pr_f)) in
   let pr2 = pr_list (fun (_,f1,f2) -> (pr_pair pr_f pr_f) (f1,f2)) in
   Debug.no_3 "simplify_relation" pr pr1 (add_str "lst_assume" pr2) (pr_pair pr (pr_list pr_f))
-    (fun _ _ _ -> simplify_relation_x sp subst_fml pre_vars post_vars prog inf_post evars lst_assume) sp subst_fml lst_assume
+    (fun _ _ _ -> simplify_relation sp subst_fml pre_vars post_vars prog inf_post evars lst_assume) sp subst_fml lst_assume
 
 (*let deep_split f1 f2 =*)
 (*  let f1 = TP.simplify_raw f1 in*)

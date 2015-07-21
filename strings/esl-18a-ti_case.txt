@@ -1,0 +1,189 @@
+ 
+id: 0; caller: []; line: 36; classic: false; kind: Pred_Check_Inv; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [] globals: []
+ checkentail emp&((self=null & m=0) | (1<=m & self!=null))&{FLOW,(1,28)=__flow#E}[]
+ |-  emp&0<=m&{FLOW,(1,28)=__flow#E}[]. 
+ho_vars: nothing?
+res:  1[
+    emp&((self=null & m=0) | (1<=m & self!=null))&{FLOW,(1,28)=__flow#E}[]
+   ]
+ 
+id: 1; caller: []; line: 36; classic: false; kind: Pred_Check_Inv; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [] globals: []
+ checkentail emp&((self=null & m=0) | (1<=m & self!=null))&{FLOW,(1,28)=__flow#E}[]
+ |-  emp&0<=m&{FLOW,(1,28)=__flow#E}[]. 
+ho_vars: nothing?
+res:  1[
+    emp&((self=null & m=0) | (1<=m & self!=null))&{FLOW,(1,28)=__flow#E}[]
+   ]
+ 
+id: 2; caller: []; line: 31; classic: false; kind: Pred_Check_Inv; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [] globals: []
+ checkentail emp&((self=p & n=0) | (1<=n & self!=null))&{FLOW,(1,28)=__flow#E}[]
+ |-  emp&0<=n&{FLOW,(1,28)=__flow#E}[]. 
+ho_vars: nothing?
+res:  1[
+    emp&((self=p & n=0) | (1<=n & self!=null))&{FLOW,(1,28)=__flow#E}[]
+   ]
+ 
+id: 3; caller: []; line: 31; classic: false; kind: Pred_Check_Inv; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [] globals: []
+ checkentail emp&((self=p & n=0) | (1<=n & self!=null))&{FLOW,(1,28)=__flow#E}[]
+ |-  emp&0<=n&{FLOW,(1,28)=__flow#E}[]. 
+ho_vars: nothing?
+res:  1[
+    emp&((self=p & n=0) | (1<=n & self!=null))&{FLOW,(1,28)=__flow#E}[]
+   ]
+ 
+id: 4; caller: []; line: 26; classic: false; kind: Pred_Check_Inv; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [] globals: []
+ checkentail emp&
+((((m=0 | 1<=m)) & n=k & self!=null) | ((1+n)<=k & 0<=m & n<k & self!=null))&
+{FLOW,(1,28)=__flow#E}[]
+ |-  emp&n<=k & 0<=m&{FLOW,(1,28)=__flow#E}[]. 
+ho_vars: nothing?
+res:  1[
+    emp&
+((((m=0 | 1<=m)) & n=k & self!=null) | ((1+n)<=k & 0<=m & n<k & self!=null))&
+{FLOW,(1,28)=__flow#E}[]
+   ]
+ 
+id: 5; caller: []; line: 26; classic: false; kind: Pred_Check_Inv; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [] globals: []
+ checkentail emp&
+((((m=0 | 1<=m)) & n=k & self!=null) | ((1+n)<=k & 0<=m & n<k & self!=null))&
+{FLOW,(1,28)=__flow#E}[]
+ |-  emp&n<=k & 0<=m&{FLOW,(1,28)=__flow#E}[]. 
+ho_vars: nothing?
+res:  1[
+    emp&
+((((m=0 | 1<=m)) & n=k & self!=null) | ((1+n)<=k & 0<=m & n<k & self!=null))&
+{FLOW,(1,28)=__flow#E}[]
+   ]
+ 
+id: 6; caller: []; line: 73; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ P]; c_heap: emp; others: [] globals: [@dis_err]
+ checkentail s::WFS<n,k,m>@M&s'=s & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  s'::str<v,q>@L&Term[36]&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+    (Hole[1636]) * q_1635::BADS<m_1633>@M&
+s'=s & m_1633=m & n=k & flted_26_1634=0 & v=flted_26_1634 & q=q_1635&
+{FLOW,(4,5)=__norm#E}[]
+   or  (Hole[1642]) * q_1641::WFS<flted_27_1639,k_1637,m_1638>@M&
+s'=s & m_1638=m & k_1637=k & n<k & 0<v_1640 & flted_27_1639=1+n & v=v_1640 & 
+q=q_1641&{FLOW,(4,5)=__norm#E}[]
+   
+   ]
+ 
+id: 11; caller: []; line: 74; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ P]; c_heap: emp; others: [] globals: [@dis_err]
+ checkentail s::str<flted_26_1634,q_1635>@M * q_1635::BADS<m_1633>@M&
+x'=v_int_74_1555' & v_int_74_1555'=0 & x'=v & q=q_1635 & v=flted_26_1634 & 
+flted_26_1634=0 & n=k & m_1633=m & s'=s & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&Term[]&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+    s::str<flted_26_1634,q_1635>@M * q_1635::BADS<m_1633>@M&
+x'=v_int_74_1555' & v_int_74_1555'=0 & x'=v & q=q_1635 & v=flted_26_1634 & 
+flted_26_1634=0 & n=k & m_1633=m & s'=s&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 12; caller: []; line: 74; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ P]; c_heap: emp; others: [] globals: [@dis_err]
+ checkentail s::str<v_1640,q_1641>@M * q_1641::WFS<flted_27_1639,k_1637,m_1638>@M&
+x'!=v_int_74_1555' & v_int_74_1555'=0 & x'=v & q=q_1641 & v=v_1640 & 
+flted_27_1639=1+n & 0<v_1640 & n<k & k_1637=k & m_1638=m & s'=s & MayLoop[]&
+{FLOW,(4,5)=__norm#E}[]
+ |-  emp&Term[]&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+    s::str<v_1640,q_1641>@M * q_1641::WFS<flted_27_1639,k_1637,m_1638>@M&
+x'!=v_int_74_1555' & v_int_74_1555'=0 & x'=v & q=q_1641 & v=v_1640 & 
+flted_27_1639=1+n & 0<v_1640 & n<k & k_1637=k & m_1638=m & s'=s&
+{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 13; caller: []; line: 75; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ P]; c_heap: emp; others: [] globals: [@dis_err]
+ checkentail s::str<v_1640,q_1641>@M * q_1641::WFS<flted_27_1639,k_1637,m_1638>@M&
+v_bool_74_1560' & s'=s & m_1638=m & k_1637=k & n<k & 0<v_1640 & 
+flted_27_1639=1+n & v=v_1640 & q=q_1641 & x'=v & x'!=0 & MayLoop[]&
+{FLOW,(4,5)=__norm#E}[]
+ |-  s'::str<Anon_12,q_1653>@L&Term[39]&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+    (Hole[1656]) * q_1641::WFS<flted_27_1639,k_1637,m_1638>@M&
+v_bool_74_1560' & s'=s & m_1638=m & k_1637=k & n<k & 0<v_1640 & 
+flted_27_1639=1+n & v=v_1640 & q=q_1641 & x'=v & x'!=0 & Anon_12=v_1640 & 
+q_1653=q_1641&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 15; caller: []; line: 76; classic: false; kind: PRE_REC; hec_num: 1; evars: []; infer_vars: [ P]; c_heap: emp; others: [] globals: [@dis_err]
+ checkentail s::str<v_1640,q_1641>@M * q_1641::WFS<flted_27_1639,k_1637,m_1638>@M&
+v_bool_74_1560' & s_1657=s & m_1638=m & k_1637=k & n<k & 0<v_1640 & 
+flted_27_1639=1+n & v=v_1640 & q=q_1641 & x'=v & x'!=0 & Anon_12=v_1640 & 
+q_1653=q_1641 & s'=q_1653 & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  s'::WFS<n_1658,k_1659,m_1660>@M&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+    s::str<v_1640,q_1641>@M&
+v_bool_74_1560' & s_1657=s & m_1638=m & k_1637=k & n<k & 0<v_1640 & 
+flted_27_1639=1+n & v=v_1640 & q=q_1641 & x'=v & x'!=0 & Anon_12=v_1640 & 
+q_1653=q_1641 & s'=q_1653 & n_1658=flted_27_1639 & k_1659=k_1637 & 
+m_1660=m_1638&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 17; caller: []; line: 76; classic: false; kind: PRE_REC; hec_num: 1; evars: []; infer_vars: [ P]; c_heap: q_1641::WFS<flted_27_1639,k_1637,m_1638>@M; others: [] globals: [@dis_err]
+ checkentail s::str<v_1640,q_1641>@M&
+v_bool_74_1560' & s_1657=s & m_1638=m & k_1637=k & n<k & 0<v_1640 & 
+flted_27_1639=1+n & v=v_1640 & q=q_1641 & x'=v & x'!=0 & Anon_12=v_1640 & 
+q_1653=q_1641 & s'=q_1653 & n_1658=flted_27_1639 & k_1659=k_1637 & 
+m_1660=m_1638 & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+    s::str<v_1640,q_1641>@M&
+v_bool_74_1560' & s_1657=s & m_1638=m & k_1637=k & n<k & 0<v_1640 & 
+flted_27_1639=1+n & v=v_1640 & q=q_1641 & x'=v & x'!=0 & Anon_12=v_1640 & 
+q_1653=q_1641 & s'=q_1653 & n_1658=flted_27_1639 & k_1659=k_1637 & 
+m_1660=m_1638&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 18; caller: []; line: 71; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ P]; c_heap: emp; others: [] globals: [@flow,@ver_post]
+ checkentail (exists flted_71_1667,q_1668,mmmm_1669,
+n1_1670: s::str<v_1640,q_1641>@M * q_1653::WFSeg<n1_1670,s'>@M * 
+         s'::str<flted_71_1667,q_1668>@M * q_1668::BADS<mmmm_1669>@M&
+P(mmmm_1669,n1_1670,n_1658,k_1659,m_1660) & flted_71_1667=0 & 0<=m_1638 & 
+flted_27_1639<=k_1637 & m_1660=m_1638 & k_1659=k_1637 & 
+n_1658=flted_27_1639 & q_1653=q_1641 & Anon_12=v_1640 & v!=0 & q=q_1641 & 
+v=v_1640 & flted_27_1639=1+n & 0<v_1640 & n<k & k_1637=k & m_1638=m & 
+s_1657=s & v_bool_74_1560' & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  (exists : s::WFSeg<n1,s'>@M * s'::str<flted_71_74,q>@M * q::BADS<mmmm>@M&
+flted_71_74=0 & P(mmmm,n1,n,k,m)&{FLOW,(4,5)=__norm#E}[]. 
+pure rel_ass: [RELDEFN P: ( P(mmmm,n1_1674,n_1658,k,m) & 0<=n1_1674 & 0<=m & n_1658<=k & n=n_1658-1 & 
+ n1=n1_1674+1 & 1<=mmmm) -->  P(mmmm,n1,n,k,m)]
+ho_vars: nothing?
+res:  1[
+    emp&
+n1_1674+1=n1 & q_1676=q_1641 & v_1675=v_1640 & 
+P(mmmm_1673,n1_1674,n_1658,k_1659,m_1660) & flted_71_1671=0 & 0<=m_1638 & 
+flted_27_1639<=k_1637 & m_1660=m_1638 & k_1659=k_1637 & 
+n_1658=flted_27_1639 & q_1653=q_1641 & Anon_12=v_1640 & v!=0 & q=q_1641 & 
+v=v_1640 & flted_27_1639=1+n & 0<v_1640 & n<k & k_1637=k & m_1638=m & 
+s_1657=s & v_bool_74_1560' & flted_71_74=flted_71_1671 & q=q_1672 & 
+mmmm=mmmm_1673&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 19<:18 src:5; caller: [18]; line: 71; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [] globals: [@flow,@ver_post]
+ checkentail hfalse&false&{FLOW,(4,5)=__norm#E}[]
+ |-  (* lbl: *){229}->emp&s=s' & n1=0&{FLOW,(1,28)=__flow#E}[]. 
+ho_vars: nothing?
+res:  1[
+    hfalse&false&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 26; caller: []; line: 71; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ P]; c_heap: emp; others: [] globals: [@flow,@ver_post]
+ checkentail s::str<flted_26_1634,q_1635>@M * q_1635::BADS<m_1633>@M&
+not(v_bool_74_1560') & s'=s & m_1633=m & n=k & flted_26_1634=0 & 
+v=flted_26_1634 & q=q_1635 & v=0 & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  (exists : s::WFSeg<n1,s'>@M * s'::str<flted_71_74,q>@M * q::BADS<mmmm>@M&
+flted_71_74=0 & P(mmmm,n1,n,k,m)&{FLOW,(4,5)=__norm#E}[]. 
+pure rel_ass: [RELDEFN P: ( n1=0 & k=n & mmmm=m & 0<=m) -->  P(mmmm,n1,n,k,m)]
+ho_vars: nothing?
+res:  1[
+    emp&
+n1=0 & s=s' & not(v_bool_74_1560') & m_1633=m & n=k & flted_26_1634=0 & 
+v=flted_26_1634 & v=0 & flted_71_74=flted_26_1634 & q=q_1635 & mmmm=m_1633&
+{FLOW,(4,5)=__norm#E}[]
+   ]
