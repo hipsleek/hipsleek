@@ -23,6 +23,9 @@ let in_timeout = ref 10.0 (* default timeout is 15 seconds *)
 let is_complex_form = ref false
 let varLength = 48
 
+let non_linear_detect = new Gen.detect_obj
+
+
 (***********)
 let test_number = ref 0
 let last_test_number = ref 0
@@ -71,43 +74,46 @@ let omega_of_spec_var (sv : spec_var):string = match sv with
 let rec omega_of_exp e0 = match e0 with
   | Null _ -> "0"
   | Var (SpecVar(_,n,_) as sv, _) -> 
-    if n="null" then "0"
-    else (omega_of_spec_var sv)
+        if n="null" then "0"
+        else (omega_of_spec_var sv)
   | IConst (i, _) -> string_of_int i 
   | AConst (i, _) -> string_of_int(int_of_heap_ann i) 
   | Add (a1, a2, _) ->  (omega_of_exp a1)^ " + " ^(omega_of_exp a2) 
   | Subtract (a1, a2, _) ->  (omega_of_exp a1)^ " - " ^"("^(omega_of_exp a2)^")"
   | Mult (a1, a2, l) ->
-    let r = match a1 with
-      | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a2) ^ ")"
-      | _ -> let rr = match a2 with
-        | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a1) ^ ")"
-        | _ -> 
-          let () = report_warning no_pos "[omega.ml] Non-linear arithmetic is not supported by Omega." in
-          "0=0"
-          (* illegal_format "[omega.ml] Non-linear arithmetic is not supported by Omega." *)
-          (* Error.report_error { *)
-          (*   Error.error_loc = l; *)
-          (*   Error.error_text = "[omega.ml] Non-linear arithmetic is not supported by Omega." *)
-          (* } *)
-        in rr
-    in r
+        let r = match a1 with
+          | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a2) ^ ")"
+          | _ -> let rr = match a2 with
+              | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a1) ^ ")"
+              | _ -> 
+                    (* "0=0" *)
+                    illegal_format "[omega.ml] Non-linear arithmetic is not supported by Omega."
+                    (* if (!Globals.oc_non_linear) then *)
+                    (*   let () = report_warning no_pos "[omega.ml] Removing non-linear arithmetic expr." in *)
+                    (*   (non_linear_detect # set ; "<non-linear>") *)
+                    (* else *)
+                    (*   Error.report_error { *)
+                    (*       Error.error_loc = l; *)
+                    (*       Error.error_text = "[omega.ml] Non-linear arithmetic is not supported by Omega." *)
+                    (*   } *)
+            in rr
+        in r
   | Template t -> omega_of_exp (exp_of_template t)
   | Div (_, _, l) -> illegal_format "[omega.ml] Divide is not supported."
-  (* Error.report_error { *)
-  (*   Error.error_loc = l; *)
-  (*   Error.error_text ="[omega.ml] Divide is not supported." *)
-  (* } *)
+        (* Error.report_error { *)
+        (*   Error.error_loc = l; *)
+        (*   Error.error_text ="[omega.ml] Divide is not supported." *)
+        (* } *)
   | Max _
   | Min _ -> illegal_format ("Omega.omega_of_exp: min/max should not appear here")
   | TypeCast (t, e1, p) -> omega_of_exp e1  (* illegal_format ("Omega.omega_of_exp: TypeCast should not appear here") *)
   | FConst _ -> illegal_format ("Omega.omega_of_exp: FConst")
   | Func _ -> "0" (* TODO: Need to handle *)
   | _ -> illegal_format ("Omega.omega_of_exp: array, bag or list constraint "^(!print_exp e0))
-(*
-(ArrayAt _|ListReverse _|ListAppend _|ListLength _|ListTail _|ListHead _|
-ListCons _|List _|BagDiff _|BagIntersect _|BagUnion _|Bag _|FConst _)
-*)
+        (*
+          (ArrayAt _|ListReverse _|ListAppend _|ListLength _|ListTail _|ListHead _|
+          ListCons _|List _|BagDiff _|BagIntersect _|BagUnion _|Bag _|FConst _)
+        *)
 
 (* and omega_ptr_eq_null a1 = *)
 (*   let v= omega_of_exp a1 in *)
@@ -121,89 +127,97 @@ ListCons _|List _|BagDiff _|BagIntersect _|BagUnion _|Bag _|FConst _)
 
 and omega_of_b_formula b =
   let (pf, _) = b in
-  match pf with
-  | Frm _ -> "(0=0)"
-  | BConst (c, _) -> if c then "(0=0)" else "(0>0)"
-  | XPure _ -> "(0=0)"
-  | BVar (bv, _) ->  (omega_of_spec_var bv) ^ " > 0" (* easy to track boolean var *)
-  | Lt (a1, a2, _) ->(omega_of_exp a1) ^ " < " ^ (omega_of_exp a2)
-  | Lte (a1, a2, _) -> (omega_of_exp a1) ^ " <= " ^ (omega_of_exp a2)
-  | Gt (a1, a2, _) ->  (omega_of_exp a1) ^ " > " ^ (omega_of_exp a2)
-  | Gte (a1, a2, _) -> (omega_of_exp a1) ^ " >= " ^ (omega_of_exp a2)
-  | SubAnn (a1, a2, _) -> (omega_of_exp a1) ^ " <= " ^ (omega_of_exp a2)
-  (* | LexVar (_, a1, a2, _) -> "(0=0)" *)
-  | Eq (a1, a2, _) -> begin
-      (* if is_null a2 then *)
-      (*   omega_ptr_eq_null a1 *)
-      (*   (\* let v= omega_of_exp a1 in *\) *)
-      (*   (\* if !Globals.ptr_to_int_exact then *\) *)
-      (*   (\*   ("("^v^" < 1)") *\) *)
-      (*   (\* else ("("^v^" = 0)") *\) *)
-      (*   (\* ("("^v^" < 1 && "^v^" = xxxnull)") *\) *)
-      (* else if is_null a1 then  *)
-      (*   omega_ptr_eq_null a2 *)
-      (*   (\* let v= omega_of_exp a2 in *\) *)
-      (*   (\* ("("^v^" < 1)") *\) *)
-      (*   (\* ("("^v^ " < 1 && "^v^" = xxxnull)") *\) *)
-      (* else  *)
-      (omega_of_exp a1) ^ " = " ^ (omega_of_exp a2)
-    end
-  | Neq (a1, a2, _) -> begin
-      (* if is_null a2 then *)
-      (*   omega_ptr_neq_null a1 *)
-      (*       (\* (omega_of_exp a1) ^ " > 0" *\) *)
-      (* else if is_null a1 then *)
-      (*   omega_ptr_neq_null a2 *)
-      (*   (\* (omega_of_exp a2) ^ " > 0" *\) *)
-      (* else  *)
-      (omega_of_exp a1)^ " != " ^ (omega_of_exp a2)
-    end
-  | EqMax (a1, a2, a3, _) ->
-    let a1str = omega_of_exp a1 in
-    let a2str = omega_of_exp a2 in
-    let a3str = omega_of_exp a3 in
-    "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ ") | ("
-    ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a3str ^ "))"
-  | EqMin (a1, a2, a3, _) ->
-    let a1str = omega_of_exp a1  in
-    let a2str = omega_of_exp a2  in
-    let a3str = omega_of_exp a3  in
-    "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
-    ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
-  (* | VarPerm _ -> illegal_format ("Omega.omega_of_exp: VarPerm constraint") *)
-  | RelForm _ -> 
-    if !Globals.oc_weaken_rel_flag then "0=0"
-    else illegal_format ("Omega.omega_of_exp: RelForm")
-  | LexVar _ -> illegal_format ("Omega.omega_of_exp: LexVar 3")
-  | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
-
+  let aux pf =
+    match pf with
+      | Frm _ -> "(0=0)"
+      | BConst (c, _) -> if c then "(1=1)" else "(0>0)"
+      | XPure _ -> "(0=0)"
+      | BVar (bv, _) ->  (omega_of_spec_var bv) ^ " > 0" (* easy to track boolean var *)
+      | Lt (a1, a2, _) ->(omega_of_exp a1) ^ " < " ^ (omega_of_exp a2)
+      | Lte (a1, a2, _) -> (omega_of_exp a1) ^ " <= " ^ (omega_of_exp a2)
+      | Gt (a1, a2, _) ->  (omega_of_exp a1) ^ " > " ^ (omega_of_exp a2)
+      | Gte (a1, a2, _) -> (omega_of_exp a1) ^ " >= " ^ (omega_of_exp a2)
+      | SubAnn (a1, a2, _) -> (omega_of_exp a1) ^ " <= " ^ (omega_of_exp a2)
+            (* | LexVar (_, a1, a2, _) -> "(0=0)" *)
+      | Eq (a1, a2, _) -> begin
+          (* if is_null a2 then *)
+          (*   omega_ptr_eq_null a1 *)
+          (*   (\* let v= omega_of_exp a1 in *\) *)
+          (*   (\* if !Globals.ptr_to_int_exact then *\) *)
+          (*   (\*   ("("^v^" < 1)") *\) *)
+          (*   (\* else ("("^v^" = 0)") *\) *)
+          (*   (\* ("("^v^" < 1 && "^v^" = xxxnull)") *\) *)
+          (* else if is_null a1 then  *)
+          (*   omega_ptr_eq_null a2 *)
+          (*   (\* let v= omega_of_exp a2 in *\) *)
+          (*   (\* ("("^v^" < 1)") *\) *)
+          (*   (\* ("("^v^ " < 1 && "^v^" = xxxnull)") *\) *)
+          (* else  *)
+          (omega_of_exp a1) ^ " = " ^ (omega_of_exp a2)
+        end
+      | Neq (a1, a2, _) -> begin
+          (* if is_null a2 then *)
+          (*   omega_ptr_neq_null a1 *)
+          (*       (\* (omega_of_exp a1) ^ " > 0" *\) *)
+          (* else if is_null a1 then *)
+          (*   omega_ptr_neq_null a2 *)
+          (*   (\* (omega_of_exp a2) ^ " > 0" *\) *)
+          (* else  *)
+          (omega_of_exp a1)^ " != " ^ (omega_of_exp a2)
+        end
+      | EqMax (a1, a2, a3, _) ->
+            let a1str = omega_of_exp a1 in
+            let a2str = omega_of_exp a2 in
+            let a3str = omega_of_exp a3 in
+            "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ ") | ("
+            ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a3str ^ "))"
+      | EqMin (a1, a2, a3, _) ->
+            let a1str = omega_of_exp a1  in
+            let a2str = omega_of_exp a2  in
+            let a3str = omega_of_exp a3  in
+            "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
+            ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
+                (* | VarPerm _ -> illegal_format ("Omega.omega_of_exp: VarPerm constraint") *)
+      | RelForm _ -> 
+            if !Globals.oc_weaken_rel_flag then "0=0"
+            else illegal_format ("Omega.omega_of_exp: RelForm")
+      | LexVar _ -> illegal_format ("Omega.omega_of_exp: LexVar 3")
+      | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
+  in 
+  (* let () = non_linear_detect # reset in *)
+  let ans = aux pf in
+  (* let flag = non_linear_detect # get in *)
+  (* let () = non_linear_detect # reset in *)
+  (* if flag then "(0=0)" *)
+  (* else *) ans
+    
 and omega_of_formula_x pr_w pr_s f  =
   let rec helper f =
     match f with
-    | BForm ((b,_) as bf,_) ->
-      begin
-        match (pr_w b) with
-        | None -> "(" ^ (omega_of_b_formula bf) ^ ")"
-        | Some f -> helper f
-      end
-    | AndList _ ->
-      begin
-        let () = print_endline_quiet ("AndList:?"^(!print_formula f)) in
-        report_error no_pos "omega.ml: encountered AndList, should have been already handled"
-      end
-    | And (p1, p2, _) -> "(" ^ (helper p1) ^ " & " ^ (helper p2 ) ^ ")"
-    | Or (p1, p2,_ , _) -> let () = is_complex_form:= true in	"(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")"
-    | Not (p,_ , _) ->       " (not (" ^ (omega_of_formula_x pr_s pr_w p) ^ ")) "
-    | Forall (sv, p,_ , _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
-    | Exists (sv, p,_ , _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
+      | BForm ((b,_) as bf,_) ->
+            begin
+              match (pr_w b) with
+                | None -> "(" ^ (omega_of_b_formula bf) ^ ")"
+                | Some f -> helper f
+            end
+      | AndList _ ->
+            begin
+              let () = print_endline_quiet ("AndList:?"^(!print_formula f)) in
+              report_error no_pos "omega.ml: encountered AndList, should have been already handled"
+            end
+      | And (p1, p2, _) -> "(" ^ (helper p1) ^ " & " ^ (helper p2 ) ^ ")"
+      | Or (p1, p2,_ , _) -> let () = is_complex_form:= true in	"(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")"
+      | Not (p,_ , _) ->       " (not (" ^ (omega_of_formula_x pr_s pr_w p) ^ ")) "
+      | Forall (sv, p,_ , _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
+      | Exists (sv, p,_ , _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
   in
   try
     helper f
   with _ as e ->
-    let s = Printexc.to_string e in
-    let () = print_string_quiet ("Omega Error Exp:"^s^"\n Formula:"^(!print_formula f)^"\n") in
-    (* let () = x_tinfo_hp (add_str "Omega Error format:" !print_formula) f in *)
-    raise e
+      let s = Printexc.to_string e in
+      let () = print_string_quiet ("Omega Error Exp:"^s^"\n Formula:"^(!print_formula f)^"\n") in
+      (* let () = x_tinfo_hp (add_str "Omega Error format:" !print_formula) f in *)
+      raise e
 
 (* let omega_of_formula_x pr_w pr_s f = *)
 (*   omega_of_formula_x pr_w pr_s (Trans_arr.translate_array_one_formula f) *)
@@ -502,6 +516,9 @@ let is_sat_ops_x pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
     (*  Cvclite.write_CVCLite pe; *)
     (*  Lash.write pe; *)
     (* let pe0 = drop_varperm_formula pe in *)
+    let _ = Cpure.subs_const_var_formula pe in
+    let pe = if !Globals.oc_non_linear then x_add_1 Cpure.drop_nonlinear_formula pe else pe in
+
     let pe = Trans_arr.translate_array_one_formula pe in
     let svl0 = Cpure.fv pe in
     let svl,fr_svl = mkSpecVarList 0 svl0 in
@@ -573,7 +590,7 @@ let is_sat_ops pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
 
 let is_sat (pe : formula)  (sat_no : string): bool =
   let pr x = None in
-  is_sat_ops pr pr pe sat_no
+  x_add_1 is_sat_ops pr pr pe sat_no
 
 let is_sat (pe : formula)  (sat_no : string): bool =
   let pf = !print_pure in
@@ -614,13 +631,14 @@ let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
   (*print_endline "LOCLE: is_valid";*)
   begin
     (* let pe0 = drop_varperm_formula pe in *)
+    let pe = if !Globals.oc_non_linear then x_add_1 drop_nonlinear_formula_rev pe else pe in
     let svl0 = Cpure.fv pe in
     let svl,fr_svl = mkSpecVarList 0 svl0 in
     let ss = List.combine svl fr_svl in
     let pe = Cpure.subst ss pe in
     let pe = Trans_arr.translate_array_one_formula_for_validity pe in
     let pvars = get_vars_formula pe in
-    (*if not safe then true else*)
+    (*i not safe then true else*)
     begin
       omega_subst_lst := [];
       let fstr = omega_of_formula 2 pr_strong pr_weak pe in
@@ -714,7 +732,9 @@ let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : st
     not (is_valid tmp2)
    *)
 
-  let tmp_form = mkOr (mkNot_dumb ante None no_pos) conseq None no_pos in
+  (* let tmp_form = mkOr (mkNot_dumb ante None no_pos) conseq None no_pos in *)
+
+  let tmp_form = mkOr (mkNot ante None no_pos) conseq None no_pos in
 
   let result = is_valid_ops pr_weak pr_strong tmp_form !in_timeout in
   if !log_all_flag = true then begin
@@ -961,14 +981,22 @@ let simplify_ops pr_weak pr_strong (pe : formula) : formula =
     (fun _ -> simplify_ops_x pr_weak pr_strong pe) pe
 
 let simplify (pe : formula) : formula =
-  let pr_w, pr_s = no_drop_ops in
+  let pr_w, pr_s = 
+    (* if !Globals.oc_non_linear then drop_nonlinear_formula_ops  *)
+    (* else *) no_drop_ops in
+  (* WN:todo - should not simplify with non-linear *)
+  (* let pe =  *)
+  (*   if !Globals.oc_non_linear then drop_nonlinear_formula_rev pe *)
+  (*   else pe in *)
   (* simplify_ops pr_w pr_s pe *)
   let f_memo, subs, bvars = memoise_rel_formula [] pe in
   if has_template_formula f_memo then pe
   else
     (* let res_memo = simplify_ops pr_w pr_s f_memo in *)
     (* restore_memo_formula subs bvars res_memo *)
-    x_add simplify_ops pr_w pr_s pe
+    try
+      x_add simplify_ops pr_w pr_s pe
+    with _ -> pe
 
 let simplify (pe : formula) : formula =
   let pf = !print_pure in

@@ -1,0 +1,101 @@
+
+checkentail true |- (exists bbbb: bbbb*a>=0).
+print residue.
+// valid?
+
+
+/*
+# ex3b.slk -tp z3 --eps
+
+Why so many simplify/pairwise?
+
+Omega Error Exp:Globals.Illegal_Prover_Format("[omega.ml] Non-linear arithmetic is not supported by Omega.")
+ Formula: exists(bbbb_15:0<=(bbbb_15*a))
+
+(==omega.ml#996==)
+Omega.simplify_ops@2@1
+Omega.simplify_ops inp1 : exists(bbbb_15:0<=(bbbb_15*a))
+Omega.simplify_ops@2 EXIT: exists(bbbb_15:0<=(bbbb_15*a))
+
+(==smtsolver.ml#1255==)
+Omega.simplify@1
+Omega.simplify inp1 : exists(bbbb_15:0<=(bbbb_15*a))
+
+(==omega.ml#996==)
+Omega.simplify_ops@7@6
+Omega.simplify_ops inp1 : exists(bbbb_15:0<=(bbbb_15*a))
+Omega.simplify_ops@7 EXIT: exists(bbbb_15:0<=(bbbb_15*a))
+
+(==smtsolver.ml#1255==)
+Omega.simplify@6
+Omega.simplify inp1 : exists(bbbb_15:0<=(bbbb_15*a))
+Omega.simplify@6 EXIT: exists(bbbb_15:0<=(bbbb_15*a))
+
+
+Omega Error Exp:Globals.Illegal_Prover_Format("[omega.ml] Non-linear arithmetic is not supported by Omega.")
+ Formula: exists(bbbb_15:0<=(bbbb_15*a))
+
+(==omega.ml#996==)
+Omega.simplify_ops@12@11
+Omega.simplify_ops inp1 : exists(bbbb_15:0<=(bbbb_15*a))
+Omega.simplify_ops@12 EXIT: exists(bbbb_15:0<=(bbbb_15*a))
+
+(==smtsolver.ml#1255==)
+Omega.simplify@11
+Omega.simplify inp1 : exists(bbbb_15:0<=(bbbb_15*a))
+Omega.simplify@11 EXIT: exists(bbbb_15:0<=(bbbb_15*a))
+
+seems to perform correctly but not -tp oc
+
+id: 1<0; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:no proof raw result:no result
+ Simplify:  exists(bbbb_15:0<=(bbbb_15*a))
+ res:  exists(bbbb_15:0<=(bbbb_15*a))
+ -------------------- 
+ id: 2<0; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:no proof raw result:no result
+ PairWise:  exists(bbbb_15:0<=(bbbb_15*a))
+ res:  exists(bbbb_15:0<=(bbbb_15*a))
+ -------------------- 
+ id: 3<0; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:no proof raw result:no result
+ Simplify:  exists(bbbb_15:0<=(bbbb_15*a))
+ res:  exists(bbbb_15:0<=(bbbb_15*a))
+ -------------------- 
+ id: 4<0; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:no proof raw result:no result
+ PairWise:  exists(bbbb_15:0<=(bbbb_15*a))
+ res:  exists(bbbb_15:0<=(bbbb_15*a))
+ -------------------- 
+ id: 5<0; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:no proof raw result:no result
+ Simplify:  exists(bbbb_15:0<=(bbbb_15*a))
+ res:  exists(bbbb_15:0<=(bbbb_15*a))
+ -------------------- 
+ id: 6<0; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:no proof raw result:no result
+ PairWise:  exists(bbbb_15:0<=(bbbb_15*a))
+ res:  exists(bbbb_15:0<=(bbbb_15*a))
+ -------------------- 
+ id: 7<0; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:no proof raw result:no result
+ Simplify:  exists(bbbb_15:0<=(bbbb_15*a))
+ res:  exists(bbbb_15:0<=(bbbb_15*a))
+ -------------------- 
+ id: 8<0; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:no proof raw result:no result
+ PairWise:  exists(bbbb_15:0<=(bbbb_15*a))
+ res:  exists(bbbb_15:0<=(bbbb_15*a))
+ -------------------- 
+
+WhY (5-7) VALID WITH drop_nonlinear?
+
+dangerous to simplify RHS ..
+
+ id: 52<6; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(7)
+ raw proof:SIMPLIFY:{[a] : ( (exists (bbbb_47:(((0=0)) & ((0=0))))) )};
+ raw result:{[a]}
+ Simplify:  exists(bbbb_47:(bbbb_47*a)<=1 & 0<(bbbb_47*a))
+ res:  true
+
+*/

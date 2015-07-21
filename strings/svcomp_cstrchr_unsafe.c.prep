@@ -1,0 +1,125 @@
+# 1 "svcomp_cstrchr_unsafe.c"
+# 1 "<command-line>"
+# 1 "/usr/include/stdc-predef.h" 1 3 4
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+   This file is part of the GNU C Library.
+
+   The GNU C Library is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 2.1 of the License, or (at your option) any later version.
+
+   The GNU C Library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
+
+   You should have received a copy of the GNU Lesser General Public
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
+
+
+
+
+/* This header is separate from features.h so that the compiler can
+   include it implicitly at the start of every compilation.  It must
+   not itself include <features.h> or any other header that includes
+   <features.h> because the implicit include comes before any feature
+   test macros that may be defined in a source file before it first
+   explicitly includes a system header.  GCC knows the name of this
+   header in order to preinclude it.  */
+
+/* glibc's intent is to support the IEC 559 math functionality, real
+   and complex.  If the GCC (4.9 and later) predefined macros
+   specifying compiler intent are available, use them to determine
+   whether the overall intent is to support these features; otherwise,
+   presume an older compiler has intent to support these features and
+   define these macros by default.  */
+# 52 "/usr/include/stdc-predef.h" 3 4
+/* wchar_t uses ISO/IEC 10646 (2nd ed., published 2011-03-15) /
+   Unicode 6.0.  */
+
+
+/* We do not support C11 <threads.h>.  */
+# 1 "<command-line>" 2
+# 1 "svcomp_cstrchr_unsafe.c"
+/*
+
+ * Date: 17.12.2013
+
+ * Author: Thomas Ströder
+
+ * not memory safe
+
+ */
+# 6 "svcomp_cstrchr_unsafe.c"
+# 1 "../stdlib.h" 1
+/*
+ * HIP/SLEEK standard library for C program
+ * 
+ * Created: Oct. 31, 2013.
+ */
+
+typedef unsigned int size_t;
+
+void* malloc(int size) __attribute__ ((noreturn))
+/*@
+  case {
+    size <= 0 -> requires true ensures res = null;
+    size >  0 -> requires true ensures res::memLoc<h,s> & (res != null) & h;
+  }
+*/;
+
+void* alloca(int size) __attribute__ ((noreturn))
+/*@
+  case {
+    size <= 0 -> requires true ensures res = null;
+    size >  0 -> requires true ensures res::memLoc<h,s> & (res != null) & h;
+  }
+*/;
+
+/**************************/
+/*** Pointer Arithmetic ***/
+/**************************/
+int lt___(int* p, int* q)
+/*@
+  requires p::int*<vp, op> * q::int*<vq, oq>
+  case {
+    op <  oq -> ensures p::int*<vp, op> * q::int*<vq, oq> & res > 0;
+    op >= oq -> ensures p::int*<vp, op> * q::int*<vq, oq> & res <= 0; }
+*/;
+# 7 "svcomp_cstrchr_unsafe.c" 2
+
+extern int __VERIFIER_nondet_int(void);
+
+/* Returns some null-terminated string. */
+char* __VERIFIER_nondet_String(void) {
+    int length = __VERIFIER_nondet_int();
+    if (length < 1) {
+        length = 1;
+    }
+    char* nondetString = (char*) malloc(length * sizeof(char));
+    nondetString[length-1] = '\0';
+    return nondetString;
+}
+
+
+
+
+
+char *(cstrchr)(const char *s, int c)
+ {
+     /* Scan s for the character.  When this loop is finished,
+
+        s will either point to the end of the string or the
+
+        character we were looking for.  */
+# 30 "svcomp_cstrchr_unsafe.c"
+     while (*s != '\0' && *s != (char)c)
+         s++;
+     return ( (*s == c) ? (char *) s : 0 );
+ }
+
+int main() {
+    return *cstrchr(__VERIFIER_nondet_String(),__VERIFIER_nondet_int());
+}
