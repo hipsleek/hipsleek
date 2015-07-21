@@ -1,0 +1,68 @@
+
+checkentail a*b>=1 |- a>=0.
+print residue.
+
+
+/*
+# ex2a.slk -tp oc --esl
+
+ id: 1<-1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:SAT:{[a, b] : ((1 <= 0=0))};
+ raw result:{[a,b]  : FALSE }
+ Sat:  1<=(a*b)
+ res: UNSAT
+
+For SAT checking of
+   SAT(a*b>=1)
+
+We should not replace a*b by true,
+as the type is wrong.
+
+At worst, we should replace a*b>=1 by true
+as a weakening measure.
+
+However, I like to suggest the following algorithm, we do this:
+
+(1)  subs all constants (maybe use eqmap)
+
+  checkentail b=1  & a*b>=1 |- a>=0
+  ==>
+  checkentail b=1  & a*1>=1 |- a>=0
+
+
+(2)  extract non-linear term to place on LHS, if possible.
+
+   checkentail a*b>=1 |- a>=0.
+   ==>
+   checkentail z=a*b & z>=1 |- a>=0.
+
+(3)  weaken LHS & strengthen RHS
+
+
+   checkentail z=a*b & z>=1 |- a>=0.
+   ==>
+   checkentail true & z>=1 |- a>=0.
+
+Examples
+========
+Using the above algorithm, we can support the following examples:
+
+   checkentail a*b>=1 |- b*a>=0.
+   ==> Step 2 (z is a fresh var)
+   checkentail z=a*b & z>=1 |- z>=0.
+   ==> Step 3
+   checkentail true & z>=1 |- z>=0.
+
+   checkentail true |- b*a>=0.
+   ==> Step 2
+   checkentail z=b*a & true |- z>=0.
+   ==> Step 3
+   checkentail true & true |- z>=0.
+
+   checkentail true |- (exists b: b*a>=0).
+   ==> Step 2 // fail to linearize as b is not free
+   checkentail true |- (exists b: b*a>=0).
+   ==> Step 3
+   checkentail true |- (exists b: false).
+
+*/

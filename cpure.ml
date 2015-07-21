@@ -2637,7 +2637,7 @@ and mkNeqExp (ae1 : exp) (ae2 : exp) pos = match (ae1, ae2) with
 and mkNot_s f :formula = mkNot f None no_pos
 
 and mkNot_dumb f lbl1 pos0:formula = 
-  if(not !Globals.allow_norm  && !Globals.allow_inf_qe_coq) then Not (f, lbl1,pos0)
+  if (!Globals.oc_non_linear) || (not !Globals.allow_norm  && !Globals.allow_inf_qe_coq) then Not (f, lbl1,pos0)
   else 
     match f with
     | BForm (bf,lbl) -> begin
@@ -2657,7 +2657,7 @@ and mkNot_dumb f lbl1 pos0:formula =
     | _ -> Not (f, lbl1,pos0)
 
 and mkNot_x f lbl1 pos0 :formula= 
-  if no_andl f then mkNot_dumb f lbl1 pos0
+  if no_andl f  then mkNot_dumb f lbl1 pos0
   else 
     match f with
     | And (f1,f2,p) -> mkOr (mkNot f1 lbl1 pos0) (mkNot f2  lbl1 pos0) None p
@@ -6966,6 +6966,7 @@ let transform_formula f (e:formula) :formula =
     !print_formula
     (fun _ -> transform_formula f e ) e
 
+
 let rename_labels  e=
   let f_b e = Some e in
   let f_e e = Some e in
@@ -10520,6 +10521,80 @@ let memo_complex_ops stk bool_vars is_complex =
       else None
   in (pr, pr)
 
+let check_nonlinear e =
+  let flag = ref false in
+  let f_None _ = None in
+  let rec f_exp e = match e with
+    | Mult(a1,a2,l) ->
+          begin
+            match a1 with
+              | IConst (i, _) -> f_exp a2
+              | _ -> match a2 with
+                  | IConst (i, _) -> f_exp a1
+                  | _ -> (flag := true; Some e)
+          end
+    | _ -> None
+  in
+  let f_Some x = Some x in
+  let f = (f_None, f_None, f_None, f_None, f_exp) in
+  let _ = transform_formula f e in
+  !flag
+
+let rec nonlinear_exp a = match a with
+  | Mult(a1,a2,l) ->
+        begin
+          match a1 with
+            | IConst (i, _) -> nonlinear_exp a2
+            | _ -> match a2 with
+                | IConst (i, _) ->  nonlinear_exp a1
+                | _ -> true
+        end
+  | Add (a1, a2, _) 
+  | Subtract (a1, a2, _) ->  nonlinear_exp a1 || nonlinear_exp a2
+  | _ -> false
+
+let check_nonlinear b =
+  match b with
+      Lt (a1, a2, _) 
+    | Lte (a1, a2, _) 
+    | Gt (a1, a2, _) 
+    | Gte (a1, a2, _) 
+    | Eq (a1, a2, _) 
+    | Neq (a1, a2, _) 
+    | EqMin (_,a1, a2, _) 
+    | EqMax (_,a1, a2, _) 
+        -> nonlinear_exp a1 || nonlinear_exp a2
+    | _ -> false
+
+let drop_nonlinear_formula_ops =
+  let pr_weak b = 
+    if check_nonlinear b then Some (mkTrue (pos_of_b_formula (b, None)))
+    else None in
+  let pr_strong b = 
+    if check_nonlinear b then Some (mkFalse (pos_of_b_formula (b, None)))
+    else None in
+  (pr_weak,pr_strong)
+
+let drop_nonlinear_formula_ops_rev =
+  let (pr1,pr2) = drop_nonlinear_formula_ops in
+  (pr2,pr1)
+
+let drop_nonlinear_formula (f:formula) : formula =
+  let (pr_weak,pr_strong) = drop_nonlinear_formula_ops in
+  drop_formula pr_weak pr_strong f
+
+let drop_nonlinear_formula_rev (f:formula) : formula =
+  let (pr_weak,pr_strong) = drop_nonlinear_formula_ops in
+  drop_formula pr_strong pr_weak f
+
+let drop_nonlinear_formula (f:formula) : formula =
+  let pr = !print_formula in
+  Debug.no_1 "drop_nonlinear_formula" pr pr drop_nonlinear_formula f
+
+let drop_nonlinear_formula_rev (f:formula) : formula =
+  let pr = !print_formula in
+  Debug.no_1 "drop_nonlinear_formula_rev" pr pr drop_nonlinear_formula_rev f
+
 let drop_rel_formula (f:formula) : formula =
   let (pr_weak,pr_strong) = drop_rel_formula_ops in
   drop_formula pr_weak pr_strong f
@@ -10527,6 +10602,93 @@ let drop_rel_formula (f:formula) : formula =
 let strong_drop_rel_formula (f:formula) : formula =
   let (pr_weak,pr_strong) = drop_rel_formula_ops in
   drop_formula pr_strong pr_weak f
+
+let find_all_nonlinear f = []
+
+let build_nl_table nl = []
+
+let replace_nonlinear f nl = f
+
+(* extract non-linear expr and replace by fresh var *)
+(* a*b>=1 |- b*a>=0   ==>   z=a*b & z>=1 |- z>=0*)
+let extr_nonlinear_formula (f:formula) : formula =
+  let nl_list = find_all_nonlinear f in
+  let nl_table = build_nl_table nl_list in
+  replace_nonlinear f nl_table
+
+
+let find_eq_all e =
+  let f_f f = 
+    (match f with
+     | And _ | AndList _  | BForm _ -> None 
+     | _ -> Some [])
+  in
+  let f_bf bf = 
+    (match bf with
+     | (Eq _) ,_ -> Some ([bf]) 
+     | _,_ -> Some ([])
+    )
+  in
+  let f_e e = Some ([]) in
+  (* let f_arg = (fun _ _ -> ()),(fun _ _ -> ()),(fun _ _ -> ()) in *)
+  (* let subs e = trans_formula e () (f_f,f_bf,f_e) f_arg List.concat in *)
+  let find_eq e = fold_formula e (f_f,f_bf,f_e) List.concat in
+  let eq_list = find_eq e in
+  (* ZH:TODO use EMapSV to build an equality map involving variable  *)
+  let eqset = EMapSV.mkEmpty in
+  let eqset = List.fold_left (fun eset exp -> 
+      let (p_f,bf_ann) = exp in
+      (match p_f with
+       | Eq (e1,e2,pos) -> 
+         (match e1,e2 with
+          | Var(sv1,_),Var(sv2,_) -> EMapSV.add_equiv eset sv1 sv2
+          | Var(sv1,_),IConst(i2,_) -> EMapSV.add_equiv eset sv1 (mk_sp_const i2)
+          | IConst(i1,_),Var(sv2,_) -> EMapSV.add_equiv eset (mk_sp_const i1) sv2
+          | IConst(i1,_),IConst(i2,_) -> EMapSV.add_equiv eset (mk_sp_const i1)(mk_sp_const i2)
+          | _  -> eset)
+       | _ -> eset)
+    ) eqset eq_list in eqset 
+;;
+
+let find_const_sv sv =
+  match sv with
+  | SpecVar (_,str,_) ->
+    get_int_const str
+;;
+
+(* a=c & c=1 & a*b>=1 |- b>=0   ==>   1*b>=1 & a=1 |- b>=0*)
+let subs_const_var_formula (f:formula) : formula =
+  let f_f a e = None in
+  let f_bf a e = None in
+  let f_e a e =
+    match e with
+    | Var (sv,_) ->
+      let eqlst = EMapSV.find_equiv_all_new sv a in
+      let eqconst =
+        List.fold_left
+          (fun r item ->
+             match find_const_sv item with
+             | Some i -> Some i
+             | None -> r
+          ) None eqlst
+      in
+      (
+        match eqconst with
+        | Some i -> Some (IConst (i,no_pos))
+        | None -> Some e
+      )
+    | _ -> None
+  in
+  let ff = (f_f,f_bf,f_e) in
+  let f_arg_1 a e = a in
+  let f_arg = (f_arg_1,f_arg_1,f_arg_1) in
+  let eq_map = find_eq_all f in
+  let () = x_binfo_pp (EMapSV.string_of eq_map) no_pos in
+  map_formula_arg f eq_map ff f_arg
+
+let subs_const_var_formula (f:formula) : formula =
+  let pr = !print_formula in
+  Debug.no_1 "subs_const_var_formula" pr pr subs_const_var_formula f
 
 let drop_rel_formula (f:formula) : formula =
   let pr = !print_formula in
@@ -11386,6 +11548,7 @@ let get_eqs_rel_args p eqs rel_args pos=
     (fun _ _ -> get_eqs_rel_args_x p eqs rel_args pos) p rel_args
 
 
+
 (* check for x=y & x!=y and mark as unsat assumes that disjunctions are all split using deep_split *)
 let is_sat_eq_ineq (f : formula) : bool =
   let b =
@@ -11393,37 +11556,7 @@ let is_sat_eq_ineq (f : formula) : bool =
     if (isConstFalse f) then true
     else
       (* create a single eset for pure formula*)
-      let find_eq_all e =
-        let f_f f = 
-          (match f with
-           | And _ | AndList _  | BForm _ -> None 
-           | _ -> Some [])
-        in
-        let f_bf bf = 
-          (match bf with
-           | (Eq _) ,_ -> Some ([bf]) 
-           | _,_ -> Some ([])
-          )
-        in
-        let f_e e = Some ([]) in
-        (* let f_arg = (fun _ _ -> ()),(fun _ _ -> ()),(fun _ _ -> ()) in *)
-        (* let subs e = trans_formula e () (f_f,f_bf,f_e) f_arg List.concat in *)
-        let find_eq e = fold_formula e (f_f,f_bf,f_e) List.concat in
-        let eq_list = find_eq e in
-        let eqset = EMapSV.mkEmpty in
-        let eqset = List.fold_left (fun eset exp -> 
-            let (p_f,bf_ann) = exp in
-            (match p_f with
-             | Eq (e1,e2,pos) -> 
-               (match e1,e2 with
-                | Var(sv1,_),Var(sv2,_) -> EMapSV.add_equiv eset sv1 sv2
-                | Var(sv1,_),IConst(i2,_) -> EMapSV.add_equiv eset sv1 (mk_sp_const i2)
-                | IConst(i1,_),Var(sv2,_) -> EMapSV.add_equiv eset (mk_sp_const i1) sv2
-                | IConst(i1,_),IConst(i2,_) -> EMapSV.add_equiv eset (mk_sp_const i1)(mk_sp_const i2)
-                | _  -> eset)
-             | _ -> eset)
-          ) eqset eq_list in eqset
-      in let m_aset = find_eq_all f in
+      let m_aset = find_eq_all f in
       let p_aset = pure_ptr_equations f in
       let p_aset = EMapSV.build_eset p_aset in
       let m_aset = EMapSV.merge_eset p_aset m_aset in

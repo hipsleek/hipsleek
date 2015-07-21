@@ -661,7 +661,8 @@ let common_arguments = [
                       Tlutils.set_solver), "Choose LP solver");
   ("--piecewise", Arg.Set Globals.templ_piecewise, "Enable piecewise function inference");
   ("--dis-ln-z3", Arg.Set Globals.dis_ln_z3, "Disable linearization on Z3 (using non-linear engine)");
-
+  ("--en-oc-non-linear", Arg.Set Globals.oc_non_linear, "Enable the handling of non-linear formula for OC");
+  ("--dis-oc-non-linear", Arg.Clear Globals.oc_non_linear, "Disable the handling of non-linear formula for OC");
   (* Termination options *)
   ("--dis-term-check", Arg.Set Globals.dis_term_chk, "turn off the termination checking");
   ("--term-verbose", Arg.Set_int Globals.term_verbosity,
