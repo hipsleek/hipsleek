@@ -45,7 +45,7 @@ void loop(int x, int y, int z)
   if (x > 0 && x < y) {
     int old_x = x;
     x = __VERIFIER_nondet_int();
-    assume z' > x';
+    //assume z' > x';
     if (x <= old_x) {
       return;
     }
