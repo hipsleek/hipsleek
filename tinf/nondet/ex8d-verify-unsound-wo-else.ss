@@ -52,7 +52,9 @@ void loop(int x, int y)
 {
   if (x > 0 && x < y) {
     int old_x = x;
-    x = nondet(); //__VERIFIER_nondet_int();
+    x = __VERIFIER_nondet_int(); 
+    //int tmp = nondet();
+    //x = tmp;
     dprint;
     //assume z' > x';
     if (x <= old_x) {
@@ -62,7 +64,7 @@ void loop(int x, int y)
     //else {
     //y = z;
       loop(x, y);
-      dprint;
+      //dprint;
       //}
   }
 }

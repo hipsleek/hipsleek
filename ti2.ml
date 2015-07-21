@@ -1651,10 +1651,16 @@ let norm_nondet_assume nd_vars ctx curr_case f =
   in
   match disj_fs with
   | [] -> []
-  | d::_ ->
-    let disj_fs = List.filter (fun d -> is_sat (mkAnd ctx d)) disj_fs in
-    if not (is_empty disj_fs) then disj_fs
-    else [simplify d nd_vars]
+  | _ ->
+    let filtered_disj_fs = List.filter (fun d -> is_sat (mkAnd ctx d)) disj_fs in
+    if not (is_empty filtered_disj_fs) then filtered_disj_fs
+    else disj_fs
+
+let norm_nondet_assume nd_vars ctx curr_case f =
+  let pr1 = pr_list !CP.print_sv in 
+  let pr2 = !CP.print_formula in
+  Debug.no_4 "norm_nondet_assume" pr1 pr2 pr2 pr2 (pr_list pr2) 
+    norm_nondet_assume nd_vars ctx curr_case f
   
 let proving_non_termination_nondet_trrel (prog: Cast.prog_decl) lhs_uids rhs_uid trrel =
   let pos = no_pos in
@@ -1713,8 +1719,8 @@ let proving_non_termination_nondet_trrels prog lhs_uids rhs_uid trrels =
         let curr_case = rhs_uid.CP.tu_cond in
         let params = List.concat (List.map CP.afv rhs_uid.CP.tu_args) in
         let infer_nd_cond = simplify (CP.join_conjunctions infer_nd_conds) params in
-        let () = x_tinfo_hp (add_str "Nondet conditions: " (pr_list !CP.print_formula)) infer_nd_conds no_pos in
-        let () = x_tinfo_hp (add_str "Simplified nondet condition: " !CP.print_formula) infer_nd_cond no_pos in
+        let () = x_binfo_hp (add_str "Nondet conditions: " (pr_list !CP.print_formula)) infer_nd_conds no_pos in
+        let () = x_binfo_hp (add_str "Simplified nondet condition: " !CP.print_formula) infer_nd_cond no_pos in
         if not (is_sat (mkAnd curr_case infer_nd_cond)) ||
            not (imply curr_case infer_nd_cond)
         then (false, [])
