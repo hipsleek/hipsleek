@@ -17,7 +17,7 @@ int mult___(int a, int b)
   requires true 
   ensures res = a * b;
 
-/*
+
 int mults___(int a, int b)
   //requires true 
   //ensures res = a * b;
@@ -34,7 +34,7 @@ int mults___(int a, int b)
       b > 0 -> ensures res < 0 & res < a & res < -b;
     }
   }
-
+/*
 r=a*b & b=c*d
 -->  (a=0 & r=0 | b=0 & r=0 |
       a>0&b>0&r>a&r>b | a>0&b<0&r<-a&r<b | a<0&b>0&r<a&r<-b 
@@ -514,10 +514,11 @@ relation cyclic(bag((Object,Object)) g).
 relation acyclic(bag((Object,Object)) g).
 relation waitS(bag((Object,Object)) g, bag(Object) S, Object d).
 
-relation nondet_int__(int r).
+/*
 //Now added automatically by add_tnt_prim_proc in parser.ml
 relation nondet_int__(int x).
 relation nondet_bool__(bool x).
+*/
 
 relation nondet_int__(int r).
 

@@ -8245,7 +8245,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
   let (xpure_lhs_h1, yy, memset) as xp1a = 
     x_add xpure_heap 9 prog curr_lhs_h lhs_p 1 in
   let diff_num2 = Gen.seq_number2 # diff in
-  let () = x_binfo_hp (add_str "used seq_number2" string_of_int) (diff_num2) no_pos in
+  let () = x_tinfo_hp (add_str "used seq_number2" string_of_int) (diff_num2) no_pos in
   (* xpure_lhs_h1_sym needed by infer_collect *)
   let (xpure_lhs_h1_sym, _, _) as xp1b = 
     if diff_num2==0 then xp1a 
@@ -8264,10 +8264,10 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
     else xp1b in
   let xp1 = if diff_flag then xp0b else (xpure_lhs_h0,yy,memset) in
   let pr = Cprinter.string_of_mix_formula in
-  let () = x_binfo_hp (add_str "xpure_lhs_h1" pr) xpure_lhs_h1 no_pos in
-  let () = x_binfo_hp (add_str "xpure_lhs_h1_sym" pr) xpure_lhs_h1_sym no_pos in
-  let () = x_binfo_hp (add_str "diff_flag" string_of_bool) diff_flag no_pos in
-  let () = x_binfo_hp (add_str "super_smart_xpure" string_of_bool) !Globals.super_smart_xpure no_pos in
+  let () = x_tinfo_hp (add_str "xpure_lhs_h1" pr) xpure_lhs_h1 no_pos in
+  let () = x_tinfo_hp (add_str "xpure_lhs_h1_sym" pr) xpure_lhs_h1_sym no_pos in
+  let () = x_tinfo_hp (add_str "diff_flag" string_of_bool) diff_flag no_pos in
+  let () = x_tinfo_hp (add_str "super_smart_xpure" string_of_bool) !Globals.super_smart_xpure no_pos in
   let xpure_lhs_h0, _, _ = 
     if (!Globals.super_smart_xpure) then xp0a
     else xp1
@@ -8377,8 +8377,8 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
         (* TODO-EXPURE : need to build new expure stuff *)
         let (split_ante1, new_conseq1) as xx = x_add heap_entail_build_mix_formula_check 2 exist_vars tmp3 rhs_p pos in
         let (split_ante1_sym, _) as xx1 = x_add heap_entail_build_mix_formula_check 2 exist_vars tmp3_sym rhs_p pos in
-        let () = Debug.binfo_hprint (add_str "split_ante1 " Cprinter.string_of_mix_formula) split_ante1 no_pos in
-        let () = Debug.binfo_hprint (add_str "split_ante1_sym " Cprinter.string_of_mix_formula) split_ante1_sym no_pos in
+        let () = Debug.tinfo_hprint (add_str "split_ante1 " Cprinter.string_of_mix_formula) split_ante1 no_pos in
+        let () = Debug.tinfo_hprint (add_str "split_ante1_sym " Cprinter.string_of_mix_formula) split_ante1_sym no_pos in
         let (split_ante0_sym, _) as xx = 
           if tmp3_sym==tmp0_sym then xx1
           else x_add heap_entail_build_mix_formula_check 2 exist_vars tmp0_sym rhs_p pos in
@@ -10429,7 +10429,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   in
                   (* let lhs_lhs = { new_es with es_formula = ho_lhs; } in *)
                   (* let pr = Cprinter.string_of_formula in *)
-                  (* let () = x_binfo_hp (add_str "lhs_lhs" pr) lhs_lhs.es_formula no_pos in *)
+                  (* let () = x_tinfo_hp (add_str "lhs_lhs" pr) lhs_lhs.es_formula no_pos in *)
                   (* tmp_ho_var is used to capture residue after matching *)
                   let tmp_ho_var, new_es, new_ho_rhs =
                     match hvars with
@@ -12563,7 +12563,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
       (* (CF.mkFailCtx_in (Basic_Reason (mkFailContext "infer_heap not yet implemented" estate (Base rhs_b) None pos, *)
       (* CF.mk_failure_bot ("infer_heap .. "))), NoAlias) *)
       (* let () =  Debug.info_pprint ">>>>>> Infer.infer_collect_hp_rel 1: infer_heap <<<<<<" pos in *)
-      (*let () = DD.binfo_start "TODO : Check for LHS Contradiction here?" in*)
+      (*let () = DD.tinfo_start "TODO : Check for LHS Contradiction here?" in*)
       let msg = "M_infer_heap :"^(Cprinter.string_of_h_formula rhs) in
       (* let lhs_xpure,_,_ = x_add xpure prog estate.es_formula in *)
       (* (\* call infer_lhs_contra *\) *)

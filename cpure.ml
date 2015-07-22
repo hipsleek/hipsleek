@@ -4118,10 +4118,10 @@ and check_non_determinism_x (var_name: ident) (f: formula) =
         let svs = bfv b in
         let common_svs = intersect_svl svs !related_vars in
         if (List.length common_svs > 0) then (
-          (* Debug.binfo_hprint (add_str "common_svs" (pr_list !print_sv)) common_svs no_pos; *)
-          (* Debug.binfo_hprint (add_str "svs" (pr_list !print_sv)) svs no_pos; *)
+          (* Debug.tinfo_hprint (add_str "common_svs" (pr_list !print_sv)) common_svs no_pos; *)
+          (* Debug.tinfo_hprint (add_str "svs" (pr_list !print_sv)) svs no_pos; *)
           related_vars := remove_dups_svl (!related_vars @ svs);
-          (* Debug.binfo_hprint (add_str "related_vars" (pr_list !print_sv)) !related_vars no_pos; *)
+          (* Debug.tinfo_hprint (add_str "related_vars" (pr_list !print_sv)) !related_vars no_pos; *)
         );
         None
       ) in
@@ -4134,12 +4134,12 @@ and check_non_determinism_x (var_name: ident) (f: formula) =
       let origin_var = List.find (fun x -> eq_str (name_of_sv x) var_name) simp_svs in
       let related_vars = collect_related_vars [origin_var] in
       let related_nondet_svs = intersect_svl nondet_svs related_vars in
-      (* x_binfo_hp (add_str "check var" pr_id) v no_pos;                                         *)
-      (* x_binfo_hp (add_str "f" !print_formula) f no_pos;                                        *)
-      (* x_binfo_hp (add_str "nondet_svs" (pr_list !print_sv)) nondet_svs no_pos;                 *)
-      (* x_binfo_hp (add_str "sim_f" !print_formula) simp_f no_pos;                               *)
-      (* x_binfo_hp (add_str "related_vars" (pr_list !print_sv)) related_vars no_pos;             *)
-      (* x_binfo_hp (add_str "related_nondet_svs" (pr_list !print_sv)) related_nondet_svs no_pos; *)
+      (* x_tinfo_hp (add_str "check var" pr_id) v no_pos;                                         *)
+      (* x_tinfo_hp (add_str "f" !print_formula) f no_pos;                                        *)
+      (* x_tinfo_hp (add_str "nondet_svs" (pr_list !print_sv)) nondet_svs no_pos;                 *)
+      (* x_tinfo_hp (add_str "sim_f" !print_formula) simp_f no_pos;                               *)
+      (* x_tinfo_hp (add_str "related_vars" (pr_list !print_sv)) related_vars no_pos;             *)
+      (* x_tinfo_hp (add_str "related_nondet_svs" (pr_list !print_sv)) related_nondet_svs no_pos; *)
       (List.length related_nondet_svs != 0)
     with _ -> false
   )
@@ -10403,12 +10403,12 @@ let get_rel_args (f:formula) = match f with
   | _ -> []
 
 let is_rel_in_vars (vl:spec_var list) (f:formula) =
-  (* let () = x_binfo_hp (add_str "2formula" !print_formula) f no_pos in *)
+  (* let () = x_tinfo_hp (add_str "2formula" !print_formula) f no_pos in *)
   match (x_add_1 get_rel_id f) with
   | Some n ->
     if mem n vl then true else false
   | _ ->
-    (* let () = Debug.binfo_pprint "2None" no_pos in *)
+    (* let () = Debug.tinfo_pprint "2None" no_pos in *)
     false
 
 let is_rel_in_vars (vl:spec_var list) (f:formula) =
@@ -10715,7 +10715,7 @@ let subs_rel_formula_ops results  =
     | _ -> None in
   let pr_strong b = match b with
     | RelForm (_,_,p) -> 
-      let () = x_binfo_pp "WARNING:subs_rel_formula in contrvariant position" p in
+      let () = x_tinfo_pp "WARNING:subs_rel_formula in contrvariant position" p in
       Some (mkFalse p)
     | _ -> None in
   (pr_weak,pr_strong)
@@ -10809,8 +10809,8 @@ let drop_nonlinear_formula_rev (f:formula) : formula =
   let pr = !print_formula in
   let nf = drop_formula pr_strong pr_weak f in
   if (cnt#get) > 0 then
-    let () = x_binfo_hp (add_str "DROP non-linear (BFE)" pr) f no_pos in
-    let () = x_binfo_hp (add_str "DROP non-linear (AFT)" pr) nf no_pos in
+    let () = x_tinfo_hp (add_str "DROP non-linear (BFE)" pr) f no_pos in
+    let () = x_tinfo_hp (add_str "DROP non-linear (AFT)" pr) nf no_pos in
     nf
   else nf
 
@@ -10926,7 +10926,7 @@ let subs_const_var_formula (f:formula) : formula =
   let f_arg_1 a e = a in
   let f_arg = (f_arg_1,f_arg_1,f_arg_1) in
   let eq_map = find_eq_all f in
-  let () = x_binfo_pp (EMapSV.string_of eq_map) no_pos in
+  let () = x_tinfo_pp (EMapSV.string_of eq_map) no_pos in
   map_formula_arg f eq_map ff f_arg
 
 let subs_const_var_formula (f:formula) : formula =
