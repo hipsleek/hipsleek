@@ -80,10 +80,287 @@ Checking procedure while2$str~str... [omega.ml]Timeout when checking sat for
 10. Restarting Omega after ... 263 invocations Stop Omega... 263 invocations [omega.ml]Timeout when checking sat for 
 10. Restarting Omega after ... 274 invocations Stop Omega... 274 invocations 
 ==================================================================
+# ex18a.ss (FIXED)
+
+  requires s::WFS<n,k> & Term[k-n]
+  ensures s::WFSeg<k-n,s'>*s'::str<0,q>*q::BADS<>;
+
+Inferred:
+!!! **pi.ml#775:>>POST:  n1_1372>=0 & m1_1371>=0 & m1_1371=m & n1_1372+n=k
+
+[ EInfer [P]
+   EBase 
+     exists (Expl)[](Impl)[n; k; m](ex)[]s::WFS<n,k,m>@M&
+     {FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         ref [s]
+         (exists s_1373,flted_71_1374,q_1375,m1_1376,
+         n1_1377: s::WFSeg<n1_1377,s_1373>@M * 
+                  s'::str<flted_71_1374,q_1375>@M * q_1375::BADS<m1_1376>@M&
+         flted_71_1374=0 & P(m1_1376,n1_1377,n,k,m) & s_1373=s' & n<=k & 0<=m&
+         {FLOW,(4,5)=__norm#E}[]]
+
+# Why did s::WFSEg<...> disappeared below?
+  What happen to P(...)??
+
+!!! **pi.ml#831:lst_assume (after norm and postprocess):[]
+!!! **pi.ml#835:new_specs2:
+[ EInfer [P]
+   EBase 
+     exists (Expl)[](Impl)[n; k; m](ex)[]s::WFS<n,k,m>@M&
+     {FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         ref [s]
+         (exists s_1373,flted_71_1374,q_1375,m1_1376,
+         n1_1377: s'::str<flted_71_1374,q_1375>@M * q_1375::BADS<m1_1376>@M&
+         flted_71_1374=0 & s_1373=s' & n<=k & 0<=m&{FLOW,(4,5)=__norm#E}[]]
+
+
+../hip ex18a-infer-cstrcat-memsafe.ss -dre "elim_heap\|simplify_rel" --dd-calls-all > 1
+../hip ex18a-infer-cstrcat-memsafe.ss -debug dd.log > 1
+
+hg annotate fixpoint.ml -udn fixpoint.ml > 1
+
+
+locle 10295 Thu Dec 19 15:03:09 2013 +0800:   | CF.ViewNode v ->
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:     let v_var = v.CF.h_formula_view_node in
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:     if Gen.BList.mem_eq CP.eq_spec_var_x v_var ref_vars && CP.is_unprimed v_var then CF.HEmp
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:     else
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:       let alias = (CP.EMapSV.find_equiv_all v_var aset) @ [v_var] in
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:       if List.exists CP.is_null_const alias then CF.HEmp else
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:         let cond = (CP.intersect_x (CP.eq_spec_var_x) alias pre_vars = []) 
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:           && not (List.exists (fun x -> CP.is_res_spec_var x) alias)
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:           && List.length (List.filter (fun x -> x = v_var) heap_vars) <= 1
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:         in if cond then CF.HEmp else h
+
+
+  | CF.ViewNode v ->
+    let v_var = v.CF.h_formula_view_node in
+    if Gen.BList.mem_eq CP.eq_spec_var_x v_var ref_vars && CP.is_unprimed v_var then CF.HEmp
+    else
+      let alias = (CP.EMapSV.find_equiv_all v_var aset) @ [v_var] in
+      if List.exists CP.is_null_const alias then CF.HEmp else
+        let cond = (CP.intersect_x (CP.eq_spec_var_x) alias pre_vars = []) 
+                   && not (List.exists (fun x -> CP.is_res_spec_var x) alias)
+                   && List.length (List.filter (fun x -> x = v_var) heap_vars) <= 1 in 
+        if cond then CF.HEmp else h
+  | CF.DataNode d ->
+    let d_var = d.CF.h_formula_data_node in
+    if Gen.BList.mem_eq CP.eq_spec_var_x d_var ref_vars && CP.is_unprimed d_var then CF.HEmp
+    else
+      let alias = (CP.EMapSV.find_equiv_all d_var aset) @ [d_var] in
+      let cond = (CP.intersect_x (CP.eq_spec_var_x) alias pre_vars = []) 
+                 && not (List.exists (fun x -> CP.is_res_spec_var x) alias)
+                 && List.length (List.filter (fun x -> x = d_var) heap_vars) <= 1
+      in if cond then CF.HEmp else h
+
+# why did elim_heap drop some heap nodes? (FIXED by removing it)
+
+(==mcpure.ml#2282==)
+elim_heap@2@1
+elim_heap inp1 : s::WFSeg<n1_1377,s_1373>@M * s'::str<flted_71_1374,q_1375>@M * 
+ q_1375::BADS<mmmm_1376>@M
+elim_heap inp2 : flted_71_1374=0 & P(mmmm_1376,n1_1377,n,k,m) & s_1373=s' & n<=k & 0<=m
+elim_heap inp3 :[n,k,m,s,s,n,k,m]
+elim_heap inp4 :[s,n1_1377,s_1373,s',flted_71_1374,q_1375,mmmm_1376]
+elim_heap@2 EXIT: s'::str<flted_71_1374,q_1375>@M * q_1375::BADS<mmmm_1376>@M
+
+# why not replace the inferred post-condition?
+  (FIXED: problem is absent in ti_case branch )
+
+(==fixpoint.ml#148==)
+drop_rel_formula@29@28@27
+drop_rel_formula inp1 : flted_71_1374=0 & P(mmmm_1376,n1_1377,n,k,m) & s_1373=s' & n<=k & 0<=m
+drop_rel_formula@29 EXIT: flted_71_1374=0 & true & s_1373=s' & n<=k & 0<=m
+
+(==fixpoint.ml#196==)
+simplify_post_helper@28@27
+simplify_post_helper inp1 : (exists s_1373,flted_71_1374,q_1375,mmmm_1376,
+n1_1377: s::WFSeg<n1_1377,s_1373>@M * s'::str<flted_71_1374,q_1375>@M * 
+         q_1375::BADS<mmmm_1376>@M&
+flted_71_1374=0 & P(mmmm_1376,n1_1377,n,k,m) & s_1373=s' & n<=k & 0<=m&
+{FLOW,(4,5)=__norm#E}[]
+simplify_post_helper inp2 :[P]
+simplify_post_helper@28 EXIT:( s::WFSeg<n1_1377,s_1373>@M * s'::str<flted_71_1374,q_1375>@M * 
+ q_1375::BADS<mmmm_1376>@M, flted_71_1374=0 & s_1373=s' & n<=k & 0<=m,[ true],[])
+
 ==================================================================
+# ex18a.ss --esl
+
+
+Why did explore branch has an expensive pairwise?
+
+!!! log(small):(0.785025,541)
+!!! log(big)(>0.5s)(1):(2.152736,[(pairwise,2.152736)])
+Total verification time: 1.778222 second(s)
+	Time spent in main process: 0.452301 second(s)
+	Time spent in child processes: 1.325921 second(s)
+	Time for logging: 0.095004 second(s)
+
+# why was it named CACHED and not Omega?
+
+ id: 438<25; prover : CACHED ; TIME: 1.555878; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:PAIRWISE:pairwisecheck {[Anon_12, flted_27_1427, v_1428, n, k_1425, k, m_1426, m, v, flted_71_1369, flted_71_1457, n_1446, k_1447, m_1448, memo_rel_hole_1472, v_bool_74_1319PRMD, v_1461, n1_1372, q_1441, q, q_1429, q_1458, mmmm_1459, s_1445, q_1370, mmmm_1371, n1_1460, q_1462, sPRMD, s] : ((((((((((((((((((((Anon_12 = v_1461) & (flted_27_1427 = n_1446)) & (v_1428 = v_1461)) & (n + 1 = n_1446)) & (k_1425 = k_1447)) & (k = k_1447)) & (m_1426 = m_1448)) & (m = m_1448)) & (s = s_1445)) & (v = v_1461)) & (flted_71_1369 = 0)) & (flted_71_1457 = 0)) & (n_1446 <= k_1447)) & (0 <= m_1448)) & (memo_rel_hole_1472 > 0)) & (v_bool_74_1319PRMD > 0)) & (1 <= v_1461)) & (((((((((((((n1_1460 = 0) & (n1_1372 = 1)) & (q_1462 = sPRMD)) & (q_1441 = sPRMD)) & (q = sPRMD)) & (q_1429 = sPRMD)) & (q_1458 = q_1370)) & (mmmm_1459 = mmmm_1371)) & (sPRMD > 0)) & (sPRMD < s_1445)) & (q_1370 > 0)) & (1 <= mmmm_1371)) | (((((((((((((n1_1372 = 1 + n1_1460) & (q_1441 = q_1462)) & (q = q_1462)) & (q_1429 = q_1462)) & (q_1458 = q_1370)) & (mmmm_1459 = mmmm_1371)) & (q_1370 > 0)) & (1 <= mmmm_1371)) & (1 <= n1_1460)) & (q_1462 > 0)) & (s_1445 > 0)) & (s_1445 < sPRMD)) | (((((((((((((q_1458 = q_1370) & (mmmm_1459 = mmmm_1371)) & (q_1370 > 0)) & (1 <= mmmm_1371)) & (n1_1460 = 0)) & (n1_1372 = 1)) & (q_1462 = sPRMD)) & (q_1441 = sPRMD)) & (q = sPRMD)) & (q_1429 = sPRMD)) & (s_1445 > 0)) & (s_1445 < sPRMD)) | (((((((((((((q_1370 = 0) & (q_1458 = 0)) & (mmmm_1371 = 0)) & (mmmm_1459 = 0)) & (n1_1460 = 0)) & (n1_1372 = 1)) & (q_1462 = sPRMD)) & (q_1441 = sPRMD)) & (q = sPRMD)) & (q_1429 = sPRMD)) & (s_1445 > 0)) & (s_1445 < sPRMD)) | (((((((((((((n1_1372 = 1 + n1_1460) & (q_1441 = q_1462)) & (q = q_1462)) & (q_1429 = q_1462)) & (q_1370 = 0)) & (q_1458 = 0)) & (mmmm_1371 = 0)) & (mmmm_1459 = 0)) & (1 <= n1_1460)) & (q_1462 > 0)) & (s_1445 > 0)) & (s_1445 < sPRMD)) | (((((((((((((n1_1460 = 0) & (n1_1372 = 1)) & (q_1462 = sPRMD)) & (q_1441 = sPRMD)) & (q = sPRMD)) & (q_1429 = sPRMD)) & (q_1370 = 0)) & (q_1458 = 0)) & (mmmm_1371 = 0)) & (mmmm_1459 = 0)) & (sPRMD > 0)) & (sPRMD < s_1445)) | (((((((((((((n1_1372 = 1 + n1_1460) & (q_1441 = q_1462)) & (q = q_1462)) & (q_1429 = q_1462)) & (q_1370 = 0)) & (q_1458 = 0)) & (mmmm_1371 = 0)) & (mmmm_1459 = 0)) & (sPRMD > 0)) & (sPRMD < s_1445)) & (1 <= n1_1460)) & (q_1462 > 0)) | ((((((((((((n1_1372 = 1 + n1_1460) & (q_1441 = q_1462)) & (q = q_1462)) & (q_1429 = q_1462)) & (q_1458 = q_1370)) & (mmmm_1459 = mmmm_1371)) & (sPRMD > 0)) & (sPRMD < s_1445)) & (q_1370 > 0)) & (1 <= mmmm_1371)) & (1 <= n1_1460)) & (q_1462 > 0)))))))))) & (sPRMD != s)))};
+
 ==================================================================
+# ex18a.ss -dre "drop_rel" 
+
+# ex18a.ss
+
+# Parameter re-arrangment for fixcalc.
+  Need to reverse it..
+
+!!! rels(b4)::[ PPP(mmmm_1371,n1_1372,n,k,m)]
+!!! pfs(b4)::[[ PPP(mmmm_1371,n1_1460,n_1446,k,m) & 0<=n1_1460 & 0<=m & n_1446<=k & 
+ n=n_1446-1 & n1_1372=n1_1460+1 & 0<=mmmm_1371, n1_1372=0 & k=n & mmmm_1371=m & 0<=m]]
+!!! rels(af)::[ PPP(n,k,m,mmmm_1371,n1_1372)]
+!!! pfs(af)::[[ 0<=n1_1460 & 0<=m & n_1446<=k & n=n_1446-1 & n1_1372=n1_1460+1 & 
+ 0<=mmmm_1371 & PPP(n_1446,k,m,mmmm_1371,n1_1460), n1_1372=0 & k=n & mmmm_1371=m & 0<=m]]
+(==fixcalc.ml#1501==)
+arrange_para_new@1
+arrange_para_new inp1 :[( PPP(mmmm_1371,n1_1372,n,k,m),[ PPP(mmmm_1371,n1_1460,n_1446,k,m) & 0<=n1_1460 & 0<=m & n_1446<=k & 
+ n=n_1446-1 & n1_1372=n1_1460+1 & 0<=mmmm_1371, n1_1372=0 & k=n & mmmm_1371=m & 0<=m])]
+arrange_para_new inp2 :[n,k,m,s]
+arrange_para_new@1 EXIT:[( PPP(n,k,m,mmmm_1371,n1_1372),[ PPP(mmmm_1371,n1_1460,n_1446,k,m) & 0<=n1_1460 & 0<=m & n_1446<=k & 
+ n=n_1446-1 & n1_1372=n1_1460+1 & 0<=mmmm_1371, n1_1372=0 & k=n & mmmm_1371=m & 0<=m])]
+
+(==fixcalc.ml#1475==)
+arrange_para_new@1
+arrange_para_new inp1 :[( PPP(mmmm_1371,n1_1372,n,k,m),[ PPP(mmmm_1371,n1_1460,n_1446,k,m) & 0<=n1_1460 & 0<=m & n_1446<=k & 
+ n=n_1446-1 & n1_1372=n1_1460+1 & 0<=mmmm_1371, n1_1372=0 & k=n & mmmm_1371=m & 0<=m])]
+arrange_para_new inp2 :[n,k,m,s]
+arrange_para_new@1 EXIT:[( PPP(n,k,m,mmmm_1371,n1_1372),[ 0<=n1_1460 & 0<=m & n_1446<=k & n=n_1446-1 & n1_1372=n1_1460+1 & 
+ 0<=mmmm_1371 & PPP(n_1446,k,m,mmmm_1371,n1_1460), n1_1372=0 & k=n & mmmm_1371=m & 0<=m])]
+
+# Why are the parameters wrongly ordered?
+
+!!! **fixcalc.ml#1409:input_pairs(b4): :
+     [( PPP(mmmm_1371,n1_1372,n,k,m),[ PPP(mmmm_1371,n1_1460,n_1446,k,m) & 0<=n1_1460 & 0<=m & n_1446<=k & 
+ n=n_1446-1 & n1_1372=n1_1460+1 & 0<=mmmm_1371, n1_1372=0 & k=n & mmmm_1371=m & 0<=m])]
+!!! **fixcalc.ml#1420:input_pairs(af): :
+     [( PPP(n,k,m,mmmm_1371,n1_1372),[ 0<=n1_1460 & 0<=m & n_1446<=k & n=n_1446-1 & n1_1372=n1_1460+1 & 
+ 0<=mmmm_1371 & PPP(n_1446,k,m,mmmm_1371,n1_1460), n1_1372=0 & k=n & mmmm_1371=m & 0<=m])]
+
+!!! **fixpoint.ml#149:triples:[( P(n,k,m,mmmm_1371,n1_1372), n1_1372>=0 & mmmm_1371>=0 & mmmm_1371=m & n1_1372+n=k, true)]
+!!! **cpure.ml#10531:subs_rel_formula : : P(mmmm_1376,n1_1377,n,k,m)
+
+# can we use subst_inferred_rel instead?
+
+(==fixpoint.ml#149==)
+drop_rel_formula@28@27
+drop_rel_formula inp1 : flted_71_1374=0 & P(mmmm_1376,n1_1377,n,k,m) & s_1373=s' & n<=k & 0<=m
+drop_rel_formula@28 EXIT: flted_71_1374=0 & true & s_1373=s' & n<=k & 0<=m
+
+(==fixpoint.ml#239==)
+drop_rel_formula@29@27
+drop_rel_formula inp1 : MayLoop[]
+drop_rel_formula@29 EXIT: MayLoop[]
+
+(==fixpoint.ml#239==)
+drop_rel_formula@30@27
+drop_rel_formula inp1 : true
+drop_rel_formula@30 EXIT: true
+
+(==pi.ml#833==)
+simplify_relation@27
+simplify_relation inp1 : EInfer [P]
+   EBase 
+     exists (Expl)[](Impl)[n; k; m](ex)[]s::WFS<n,k,m>@M&
+     {FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         ref [s]
+         (exists s_1373,flted_71_1374,q_1375,mmmm_1376,
+         n1_1377: s::WFSeg<n1_1377,s_1373>@M * 
+                  s'::str<flted_71_1374,q_1375>@M * q_1375::BADS<mmmm_1376>@M&
+         flted_71_1374=0 & P(mmmm_1376,n1_1377,n,k,m) & s_1373=s' & n<=k & 
+         0<=m&{FLOW,(4,5)=__norm#E}[]
+simplify_relation inp2 :Some([( P(n,k,m,mmmm_1371,n1_1372), n1_1372>=0 & mmmm_1371>=0 & mmmm_1371=m & n1_1372+n=k, true)])
+simplify_relation inp3 :lst_assume:[]
+simplify_relation@27 EXIT:( EInfer [P]
+   EBase 
+     exists (Expl)[](Impl)[n; k; m](ex)[]s::WFS<n,k,m>@M&
+     {FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         ref [s]
+         (exists s_1373,flted_71_1374,q_1375,mmmm_1376,
+         n1_1377: s::WFSeg<n1_1377,s_1373>@M * 
+                  s'::str<flted_71_1374,q_1375>@M * q_1375::BADS<mmmm_1376>@M&
+         flted_71_1374=0 & s_1373=s' & n<=k & 0<=m&{FLOW,(4,5)=__norm#E}[],[])
+
+!!! **pi.ml#835:new_specs2:
+[ EInfer [P]
+   EBase 
+     exists (Expl)[](Impl)[n; k; m](ex)[]s::WFS<n,k,m>@M&
+     {FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         ref [s]
+         (exists s_1373,flted_71_1374,q_1375,mmmm_1376,
+         n1_1377: s::WFSeg<n1_1377,s_1373>@M * 
+                  s'::str<flted_71_1374,q_1375>@M * q_1375::BADS<mmmm_1376>@M&
+         flted_71_1374=0 & s_1373=s' & n<=k & 0<=m&{FLOW,(4,5)=__norm#E}[]]
+
 ==================================================================
+# ex18a <in ti_case branch)
+
+simplify_relation@30@29@28@27
+simplify_relation inp1 : EAssume 
+   ref [s]
+   (exists s_76,flted_71_75,q,mmmm,
+   n1: s::WFSeg<n1,s_76>@M * s'::str<flted_71_75,q>@M * q::BADS<mmmm>@M&
+   flted_71_75=0 & PPP(mmmm,n1,n,k,m) & s_76=s'&{FLOW,(4,5)=__norm#E}[]
+simplify_relation inp2 :Some([( PPP(n,k,m,mmmm,n1), n1>=0 & m=mmmm & n1+n=k, true)])
+simplify_relation inp3 :lst_assume:[]
+simplify_relation@30 EXIT:( EAssume 
+   ref [s]
+   (exists s_76,flted_71_75,q,mmmm,
+   n1: s'::str<flted_71_75,q>@M * q::BADS<mmmm>@M&
+   flted_71_75=0 & s_76=s' & n1>=0 & m=mmmm & n1+n=k&{FLOW,(4,5)=__norm#E}[],[ true])
 ==================================================================
+# ex18a.ss -dre arrange_para\|re_order_\|.*para_of_pure
+
+(==fixcalc.ml#1224==)
+re_order_new@3@2@1
+re_order_new inp1 :[ mmmm_1371, n1_1372, n, k, m]
+re_order_new inp2 :[false,false,true,true,true]
+re_order_new@3 EXIT:[ n, k, m, mmmm_1371, n1_1372]
+
+(==fixcalc.ml#1251==)
+re_order_para@2@1
+re_order_para inp1 :[ PPP(mmmm_1371,n1_1372,n,k,m)]
+re_order_para inp2 :[[ PPP(mmmm_1371,n1_1460,n_1446,k,m) & 0<=n1_1460 & 0<=m & n_1446<=k & 
+ n=n_1446-1 & n1_1372=n1_1460+1 & 0<=mmmm_1371, n1_1372=0 & k=n & mmmm_1371=m & 0<=m]]
+re_order_para inp3 :[n,k,m,s]
+re_order_para@2 EXIT:([ PPP(n,k,m,mmmm_1371,n1_1372)],[[ 0<=n1_1460 & 0<=m & n_1446<=k & n=n_1446-1 & n1_1372=n1_1460+1 & 
+ 0<=mmmm_1371 & PPP(mmmm_1371,n1_1460,n_1446,k,m), n1_1372=0 & k=n & mmmm_1371=m & 0<=m]])
+
+# why PPP(...) not changed?
+
+(====)
+re_order_new@5@4@2@1
+re_order_new inp1 :[ mmmm_1371, n1_1460, n_1446, k, m]
+re_order_new inp2 :[false,false,true,true,true]
+re_order_new@5 EXIT:[ n_1446, k, m, mmmm_1371, n1_1460]
+
+(==fixcalc.ml#1232==)
+arrange_para_of_pure@4@2@1
+arrange_para_of_pure inp1 : PPP(mmmm_1371,n1_1460,n_1446,k,m) & 0<=n1_1460 & 0<=m & n_1446<=k & 
+ n=n_1446-1 & n1_1372=n1_1460+1 & 0<=mmmm_1371
+arrange_para_of_pure inp2 :PPP
+arrange_para_of_pure inp3 :[false,false,true,true,true]
+arrange_para_of_pure@4 EXIT: 0<=n1_1460 & 0<=m & n_1446<=k & n=n_1446-1 & n1_1372=n1_1460+1 & 
+ 0<=mmmm_1371 & PPP(mmmm_1371,n1_1460,n_1446,k,m)
+
+# no change in PPP(mmmm_1371,n1_1460,n_1446,k,m)
 ==================================================================
 ==================================================================
 ==================================================================

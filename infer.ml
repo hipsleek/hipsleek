@@ -3154,7 +3154,7 @@ let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
         (f, h, [])
     in
     let new_es_formula, new_lhs, new_holes = check_consumed_node rhs new_es_formula in
-    let new_es_formula1 = CF.subst m new_es_formula in
+    let new_es_formula1 = x_add CF.subst m new_es_formula in
     (*if rhs_rest = Emp && . remove infer svl such that infer_pure_m is not invoked*)
     let n_ihvr = (* if (\* CF.is_empty_heap rhs_rest *\) false then *)
       (*   CP.diff_svl (es.CF.es_infer_vars_hp_rel@rvhp_rels) (CF.get_hp_rel_name_h_formula rhs) *)
@@ -3715,7 +3715,7 @@ let filter_var_heap keep_vars fml =
                               let hd = List.hd vars in 
                               List.map (fun v -> (v,hd)) (List.tl vars)) alias_tbl) in
   (*  DD.info_hprint (add_str "SUBS: " (pr_list (pr_pair !print_sv !print_sv))) subst_lst no_pos;*)
-  let fml = CF.subst subst_lst fml in
+  let fml = x_add CF.subst subst_lst fml in
   let heap,pure,_,_,_,_ = CF.split_components fml in
   let pure = CP.remove_redundant_constraints (MCP.pure_of_mix pure) in
   (*  CF.normalize_combine_heap (CF.formula_of_pure_formula pure no_pos) heap*)

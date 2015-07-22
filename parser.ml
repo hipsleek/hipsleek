@@ -3052,7 +3052,7 @@ hprogn:
             | Hopred hpdef -> hopred_defs := hpdef :: !hopred_defs
             | Barrier bdef -> barrier_defs := bdef :: !barrier_defs
           end
-	| Include incl -> include_defs := incl :: !include_defs
+        | Include incl -> include_defs := incl :: !include_defs
         | Func fdef -> func_defs # push fdef 
         | Rel rdef -> rel_defs # push rdef
         | Template tdef -> templ_defs # push tdef
@@ -4261,16 +4261,46 @@ let parse_c_statement_spec (fname: string) (spec: string) (base_loc: file_offset
       
 let create_tnt_prim_proc id : Iast.proc_decl option =
   let proc_source = 
-    if String.compare id Globals.nondet_int_proc_name == 0 then Some (
+    if String.compare id Globals.nondet_int_proc_name == 0 then 
+      let () = rel_names # push Globals.nondet_int_rel_name in
+      Some (
+        "int " ^ Globals.nondet_int_proc_name ^ "()\n" ^
+        "  requires true\n" ^
+        "  ensures true & " ^ Globals.nondet_int_rel_name ^ "(res)" ^ ";\n")
+    else if String.compare id "__VERIFIER_error" == 0 then 
+      Some (
+        "int __VERIFIER_error()\n" ^
+        "  requires true\n" ^
+        "  ensures res = 0;\n")
+    else None
+  in map_opt (parse_c_aux_proc "tnt_prim_proc") proc_source
+
+let add_tnt_prim_proc prog id = 
+  if String.compare id Globals.nondet_int_proc_name == 0 then
+    let proc_src = 
       "int " ^ Globals.nondet_int_proc_name ^ "()\n" ^
       "  requires true\n" ^
-      "  ensures true & nondet_int__(res);\n")
-    else if String.compare id "__VERIFIER_error" == 0 then Some (
+      "  ensures true & " ^ Globals.nondet_int_rel_name ^ "(res)" ^ ";\n"
+    in
+    let nondet_rel = {
+      rel_name = nondet_int_rel_name;
+      rel_typed_vars = [(int_type, nondet_int_rel_name ^ "res")];
+      rel_formula = P.mkTrue no_pos; }
+    in
+    let () = rel_names # push Globals.nondet_int_rel_name in
+    let proc_decl = parse_c_aux_proc "tnt_prim_proc" proc_src in
+    { prog with
+      Iast.prog_rel_decls = prog.Iast.prog_rel_decls @ [nondet_rel];
+      Iast.prog_proc_decls = prog.Iast.prog_proc_decls @ [proc_decl]; }
+  else if String.compare id "__VERIFIER_error" == 0 then 
+    let proc_src =
       "int __VERIFIER_error()\n" ^
       "  requires true\n" ^
-      "  ensures res = 0;\n")
-    else None
-  in map_opt (parse_c_aux_proc "tnt_prim_proc") proc_source  
+      "  ensures res = 0;\n"
+    in
+    let proc_decl = parse_c_aux_proc "tnt_prim_proc" proc_src in
+    { prog with Iast.prog_proc_decls = prog.Iast.prog_proc_decls @ [proc_decl]; }
+  else prog
   
 let create_tnt_stdlib_proc () : Iast.proc_decl list =
   let alloca_proc =

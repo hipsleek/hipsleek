@@ -405,8 +405,8 @@ let check_exists_cyclic_proofs_x es (ante,conseq)=
     else
       let l_ss = build_subst [] vn_a1 l_vns in
       let r_ss = build_subst [] vn_c1 r_vns in
-      let a11 = if l_ss = [] then a1 else Cformula.subst l_ss a1 in
-      let c11 = if r_ss = [] then c1 else Cformula.subst r_ss c1 in
+      let a11 = if l_ss = [] then a1 else x_add Cformula.subst l_ss a1 in
+      let c11 = if r_ss = [] then c1 else x_add Cformula.subst r_ss c1 in
       (* (check_relaxeq_formula [] ante a11) && (check_relaxeq_formula [] conseq c11) *)
       (fst (Checkeq.checkeq_formulas [] ante a11)) && (fst(Checkeq.checkeq_formulas [] conseq c11))
   in
