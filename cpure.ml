@@ -10886,6 +10886,10 @@ let build_eqmap_at_toplevel e =
   let eq_list = find_eq_at_toplevel e in
    build_eqmap eq_list
 
+let add_eqmap_at_toplevel em e =
+  let eq_list = find_eq_at_toplevel e in
+  add_to_eqmap eq_list em
+
 (* let find_eq_all e = build_eqmap_at_toplevel e *)
 (*   let f_f f =  *)
 (*     (match f with *)
@@ -11022,9 +11026,15 @@ subs_const_var_formula@2
 subs_const_var_formula inp1 : (not((a=1 & 1<=b)) | 1<=(a*b))
 subs_const_var_formula@2 EXIT: (not((a=1 & 1<=b)) | 1<=(a*b))
 
+  not(x=3 & LHS) \/ RHS
+  <==>  not(x=3 & LHS) \/ RHS[x->3]
 *)
-let subs_const_var_formula (f:formula) : formula =
-  let f_f a e = None in
+let subs_const_var_formula ?(em=None) (f:formula) : formula =
+  let f_f a e = None 
+    (* need a special case for not(LHS) \/ RHS *)
+    (* build_eqmap for LHS *)
+    (* use it as starting for RHS *)
+  in
   let f_bf a ((pf,ann) as f) =
     match pf with
     | Eq (e1,e2,pos) ->
@@ -11042,7 +11052,8 @@ let subs_const_var_formula (f:formula) : formula =
     | Var (sv,l) -> Some(spec_with_const em sv l)
     | _ -> None
   in
-  let f_arg_f (start_flag,emap) e = match e with
+  let f_arg_f (start_flag,emap) e = 
+    match e with
     | And _ | AndList _ -> 
       if start_flag then (* add to eqmap *)
         let eqlist = find_eq_at_toplevel e in
@@ -11059,9 +11070,12 @@ let subs_const_var_formula (f:formula) : formula =
   let ff = (f_f,f_bf,f_e) in
   let f_arg_1 a e = a in
   let f_arg = (f_arg_f,f_arg_1,f_arg_1) in
-  let eq_map = build_eqmap_at_toplevel (* find_eq_all *) f in
-  let () = x_binfo_pp (EMapSV.string_of eq_map) no_pos in
-  map_formula_arg f (true,eq_map) ff f_arg
+  let init_arg = match em with
+    | None -> (true,EMapSV.mkEmpty) (* build_eqmap_at_toplevel (\* find_eq_all *\) f *) 
+    | Some em -> em (* add_emap_at_toplevel em f *)
+  in
+  (* let () = x_binfo_pp ((add_str "subs_const(emap)" EMapSV.string_of) eq_map) no_pos in *)
+  map_formula_arg f init_arg ff f_arg
 
 let subs_const_var_formula (f:formula) : formula =
   let pr = !print_formula in
