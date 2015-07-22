@@ -1203,17 +1203,29 @@ let arrange_para_of_pure fml lhs_rel_name subst bottom_up =
 let no_change bool_lst =
   let rec aux_false lst = match lst with
     | [] -> true
-    | f::l -> if f then aux_false l
-      else false in
+    | f::l -> if f then false
+      else aux_false l in
   let rec aux_true lst = match lst with
     | [] -> true
     | f::l -> if f then aux_true l
       else aux_false l in
   aux_true bool_lst
 
+let no_change bool_lst =
+  Debug.no_1 "no_change" (pr_list string_of_bool) string_of_bool no_change bool_lst
+
 let build_inp_bool_args ante_vars args =
   List.map (fun e -> Gen.BList.subset_eq CP.eq_spec_var (CP.afv e) ante_vars) args
 
+(* (==fixcalc.ml#1254==) *)
+(* re_order_para@2@1 *)
+(* re_order_para inp1 :[ PPP(mmmm_1371,n1_1372,n,k,m)] *)
+(* re_order_para inp2 :[[ PPP(mmmm_1371,n1_1460,n_1446,k,m) & 0<=n1_1460 & 0<=m & n_1446<=k &  *)
+(*  n=n_1446-1 & n1_1372=n1_1460+1 & 0<=mmmm_1371, n1_1372=0 & k=n & mmmm_1371=m & 0<=m]] *)
+(* re_order_para inp3 :[n,k,m,s] *)
+(* re_order_para@2 EXIT:([ PPP(n,k,m,mmmm_1371,n1_1372)],[[ 0<=n1_1460 & 0<=m & n_1446<=k & n=n_1446-1 & n1_1372=n1_1460+1 &  *)
+(*  0<=mmmm_1371 & PPP(mmmm_1371,n1_1460,n_1446,k,m), n1_1372=0 & k=n & mmmm_1371=m & 0<=m]]) *)
+(* WN :WHY rec not re-ordered? *)
 let rec re_order_para rels pfs ante_vars = match rels with
   | [] -> ([],pfs)
   | r::rs ->
@@ -1225,7 +1237,7 @@ let rec re_order_para rels pfs ante_vars = match rels with
        (* let pre_args, post_args = List.partition  *)
        (*     (fun e -> Gen.BList.subset_eq CP.eq_spec_var (CP.afv e) ante_vars) args  *)
        (* in *)
-       if no_change inp_bool_args (* new_args = args *) then (r::res_rs,res_pfs)
+       if x_add_1 no_change inp_bool_args (* new_args = args *) then (r::res_rs,res_pfs)
        else
          let subst_arg = inp_bool_args (* args, new_args *) in
          let new_pfs = List.map (fun pf_lst ->
@@ -1295,7 +1307,7 @@ let arrange_para_td input_pairs ante_vars =
         (*     args *)
         (* in *)
         (* let new_args = pre_args @ post_args in *)
-        if no_change inp_bool_args (* ew_args = args *) then (r,pfs)
+        if x_add_1 no_change inp_bool_args (* ew_args = args *) then (r,pfs)
         else
           let subst_arg = inp_bool_args (* args, new_args *) in
           CP.BForm ((CP.RelForm (name,new_args,o1),o2),o3), 
