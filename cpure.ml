@@ -10541,11 +10541,15 @@ let subs_rel_formula_ops results  =
         let () = x_binfo_hp (add_str "subs_rel_formula (formal para) : " (pr_list !print_exp)) args p in
         let () = x_binfo_hp (add_str "subs_rel_formula (rel_args) : " (pr_list !print_exp)) rel_args p in
         let () = x_binfo_hp (add_str "subs_rel_formula (reorder) : " (pr_option (pr_list string_of_bool))) pc p in
+        let () = x_binfo_hp (add_str "subs_rel_formula (post) : " !print_formula) post p in
         let new_rel_args = match pc with
           | None -> rel_args
           | Some bl -> re_order_new rel_args bl in
+        let subs = List.combine (List.map get_var args) (List.map get_var new_rel_args) in
+        let new_f = subst subs post in
+        let () = x_binfo_hp (add_str "subs_rel_formula (new post ) : " (!print_formula)) new_f p in
         let () = x_binfo_hp (add_str "subs_rel_formula (new_rel_args) : " (pr_list !print_exp)) new_rel_args p in
-        Some (mkTrue p)
+        Some (new_f)
       with _ -> None)
     | _ -> None in
   let pr_strong b = match b with
