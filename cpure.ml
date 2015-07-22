@@ -10676,7 +10676,18 @@ let find_const_sv sv =
 (* a=c & c=1 & a*b>=1 |- b>=0   ==>   1*b>=1 & a=1 |- b>=0*)
 let subs_const_var_formula (f:formula) : formula =
   let f_f a e = None in
-  let f_bf a e = None in
+  let f_bf a (pf,ann) =
+    match pf with
+    | Eq (e1,e2,pos) ->
+      (
+        match e1,e2 with
+        | Var (sv1,_), IConst (i1,_)
+        | IConst (i1,_), Var (sv1,_) ->
+          Some (pf,ann)
+        | _ -> None
+      )
+    | _ -> None
+ in
   let f_e a e =
     match e with
     | Var (sv,_) ->
