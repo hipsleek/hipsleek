@@ -362,6 +362,20 @@ arrange_para_of_pure@4 EXIT: 0<=n1_1460 & 0<=m & n_1446<=k & n=n_1446-1 & n1_137
 
 # no change in PPP(mmmm_1371,n1_1460,n_1446,k,m)
 ==================================================================
+# hip string/ex18a-infer-cstrcat-memsafe.ss
+
+parser problem to be fixed by Toan/Muoi
+
+Parsing file "todo.txt" by default parser...
+File "todo.txt", line 1, characters 0-2
+ --error: Stream.Error("illegal begin of hip_with_option")
+ at:
+!!! **main.ml#1161:WARNING : Logging not done on finalizecaught
+
+Exception occurred: Stream.Error("illegal begin of hip_with_option")
+Error3(s) detected at main 
+
+[4]+  Done                    ../hip ex18a-infer-cstrcat-memsafe.ss e todo.txt
 ==================================================================
 ==================================================================
 ==================================================================

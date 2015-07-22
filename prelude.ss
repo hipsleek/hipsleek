@@ -17,6 +17,7 @@ int mult___(int a, int b)
   requires true 
   ensures res = a * b;
 
+/*
 int mults___(int a, int b)
   //requires true 
   //ensures res = a * b;
@@ -38,7 +39,7 @@ r=a*b & b=c*d
 -->  (a=0 & r=0 | b=0 & r=0 |
       a>0&b>0&r>a&r>b | a>0&b<0&r<-a&r<b | a<0&b>0&r<a&r<-b 
       | a<0&b<0&r>-a,r>-b)
-
+*/
 
 int div___(int a, int b) 
  case {
@@ -517,7 +518,6 @@ relation nondet_int__(int r).
 //Now added automatically by add_tnt_prim_proc in parser.ml
 relation nondet_int__(int x).
 relation nondet_bool__(bool x).
-*/
 
 relation nondet_int__(int r).
 
