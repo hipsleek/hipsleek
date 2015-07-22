@@ -223,6 +223,19 @@ What is the diff between baga_over and baga_over (unfolded)?
   baga over inv (unfolded): [([self], n>=1),([self], n>=1)]
   baga under inv: [([self], n>=1),([self], n>=1)]
 ========================================================
+# ex4c.slk
+
+Can we use eqmap of LHS for conseq but
+how far can we go?
+
+Fails for implication
+=====================
+!!! **cpure.ml#11034:emap[]
+(==omega.ml#632==)
+subs_const_var_formula@2
+subs_const_var_formula inp1 : (not((a=1 & 1<=b)) | 1<=(a*b))
+subs_const_var_formula@2 EXIT: (not((a=1 & 1<=b)) | 1<=(a*b))
+
 ========================================================
 ========================================================
 ========================================================
