@@ -1178,7 +1178,7 @@ let arrange_para_of_rel rhs_rel lhs_rel_name inp_bool_args bottom_up =
   match rhs_rel with
   | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->
     if name = lhs_rel_name then 
-      let arg = re_order_new args inp_bool_args in
+      let args = re_order_new args inp_bool_args in
       (* let pairs = List.combine old_args args in *)
       (* let args = List.map (fun a -> List.assoc a pairs) new_args in *)
       CP.BForm ((CP.RelForm (name,args,o1),o2),o3)
@@ -1198,7 +1198,6 @@ let arrange_para_of_pure fml lhs_rel_name subst bottom_up =
   let pr_pf = !CP.print_formula in
   Debug.no_3 "arrange_para_of_pure" pr_pf !CP.print_sv (pr_list string_of_bool) pr_pf
     (fun _ _ _ -> arrange_para_of_pure fml lhs_rel_name subst bottom_up) fml lhs_rel_name subst
-
 
 let no_change bool_lst =
   let rec aux_false lst = match lst with
@@ -1225,29 +1224,81 @@ let build_inp_bool_args ante_vars args =
 (* re_order_para inp3 :[n,k,m,s] *)
 (* re_order_para@2 EXIT:([ PPP(n,k,m,mmmm_1371,n1_1372)],[[ 0<=n1_1460 & 0<=m & n_1446<=k & n=n_1446-1 & n1_1372=n1_1460+1 &  *)
 (*  0<=mmmm_1371 & PPP(mmmm_1371,n1_1460,n_1446,k,m), n1_1372=0 & k=n & mmmm_1371=m & 0<=m]]) *)
-(* WN :WHY rec not re-ordered? *)
-let rec re_order_para rels pfs ante_vars = match rels with
-  | [] -> ([],pfs)
-  | r::rs ->
-    let res_rs,res_pfs = re_order_para rs pfs ante_vars in
-    (match r with
-     | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->
-       let inp_bool_args = build_inp_bool_args ante_vars args in
-       let new_args = x_add re_order_new args inp_bool_args in
-       (* let pre_args, post_args = List.partition  *)
-       (*     (fun e -> Gen.BList.subset_eq CP.eq_spec_var (CP.afv e) ante_vars) args  *)
-       (* in *)
-       if x_add_1 no_change inp_bool_args (* new_args = args *) then (r::res_rs,res_pfs)
-       else
-         let subst_arg = inp_bool_args (* args, new_args *) in
-         let new_pfs = List.map (fun pf_lst ->
-             List.map (fun pf -> x_add arrange_para_of_pure pf name subst_arg true) pf_lst) res_pfs
-         in ([CP.BForm ((CP.RelForm (name,new_args,o1),o2),o3)]@res_rs, new_pfs)
-     | _ -> report_error no_pos "re_order_para: Expected a relation")
+(* WN : Obsolete as cannot handle mutual rec *)
+(* type: CP.formula list -> *)
+(*   CP.formula list list -> *)
+(*   CP.spec_var list -> CP.formula list * CP.formula list list *)
+(* let rec re_order_para rels pfs ante_vars = match rels with *)
+(*   | [] -> ([],pfs) *)
+(*   | r::rs -> *)
+(*     let res_rs,res_pfs = re_order_para rs pfs ante_vars in *)
+(*     (match r with *)
+(*      | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) -> *)
+(*        let inp_bool_args = build_inp_bool_args ante_vars args in *)
+(*        let new_args = x_add re_order_new args inp_bool_args in *)
+(*        (\* let pre_args, post_args = List.partition  *\) *)
+(*        (\*     (fun e -> Gen.BList.subset_eq CP.eq_spec_var (CP.afv e) ante_vars) args  *\) *)
+(*        (\* in *\) *)
+(*        if x_add_1 no_change inp_bool_args (\* new_args = args *\) then (r::res_rs,res_pfs) *)
+(*        else *)
+(*          let subst_arg = inp_bool_args (\* args, new_args *\) in *)
+(*          let new_pfs = List.map (fun pf_lst -> *)
+(*              List.map (fun pf -> x_add arrange_para_of_pure pf name subst_arg true) pf_lst) res_pfs *)
+(*          in ([CP.BForm ((CP.RelForm (name,new_args,o1),o2),o3)]@res_rs, new_pfs) *)
+(*      | _ -> report_error no_pos "re_order_para: Expected a relation") *)
+
+let find_rel lst name =
+  let (_,r,_) = List.find (fun (a,_,_) -> CP.eq_spec_var a name) lst in
+  r
+
+let subs_rel lst_bool_args f =
+  match f with
+  | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->
+    begin
+    try
+      let r = find_rel lst_bool_args name in
+      begin
+        match r with
+        | None -> f
+        | Some b_args ->
+          let args = re_order_new args b_args in
+          CP.BForm ((CP.RelForm (name,args,o1),o2),o3)
+      end
+    with _ -> 
+      let () = x_binfo_pp ("Cannot find relation "^(!CP.print_sv name)) no_pos in
+      f
+    end
+  | _ -> f
+
+let save_data = ref None
+let save_reorder f = save_data := Some f 
+let get_reorder () = 
+  match !save_data with
+  | None -> []
+  | Some f -> f 
+
+let process_body_pure lst_bool_args fml =
+  let conjs = CP.list_of_conjs fml in
+  let new_conjs = List.map (subs_rel lst_bool_args) conjs in
+  CP.conj_of_list (new_conjs) no_pos
 
 (* type: CP.formula list -> *)
 (*   CP.formula list list -> *)
 (*   CP.spec_var list -> CP.formula list * CP.formula list list *)
+let re_order_para rels pfs ante_vars = 
+  let to_bool_args r = match r with
+    | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) -> 
+      let b_arg = build_inp_bool_args ante_vars args in
+      let nc = no_change b_arg in
+      if nc then (name,None,r)
+      else 
+        let new_args = x_add re_order_new args b_arg in
+        (name,Some b_arg,CP.BForm ((CP.RelForm (name,new_args,o1),o2),o3))
+    | _ -> report_error no_pos "re_order_para: rels should have only relations" 
+  in let lst_bool_args = List.map to_bool_args rels in
+  let () = save_reorder lst_bool_args in
+  let pfs = List.map (List.map (process_body_pure lst_bool_args)) pfs in
+  (List.map (fun (_,_,r)->r) lst_bool_args, pfs)
 
 let re_order_para rels pfs ante_vars = 
   let pr_pf = !CP.print_formula in

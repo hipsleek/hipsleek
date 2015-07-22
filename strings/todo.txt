@@ -343,6 +343,8 @@ re_order_para inp3 :[n,k,m,s]
 re_order_para@2 EXIT:([ PPP(n,k,m,mmmm_1371,n1_1372)],[[ 0<=n1_1460 & 0<=m & n_1446<=k & n=n_1446-1 & n1_1372=n1_1460+1 & 
  0<=mmmm_1371 & PPP(mmmm_1371,n1_1460,n_1446,k,m), n1_1372=0 & k=n & mmmm_1371=m & 0<=m]])
 
+# why PPP(...) not changed?
+
 (====)
 re_order_new@5@4@2@1
 re_order_new inp1 :[ mmmm_1371, n1_1460, n_1446, k, m]

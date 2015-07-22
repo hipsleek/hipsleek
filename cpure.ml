@@ -10525,11 +10525,28 @@ let memo_complex_ops stk bool_vars is_complex =
       else None
   in (pr, pr)
 
-let subs_rel_formula_ops =
+let re_order_new args inp_bool_args =
+       let dec_args = List.combine args inp_bool_args in
+       let pre_args, post_args = List.partition (fun (_,b) -> b) dec_args in
+       let pre_args = List.map fst pre_args in
+       let post_args = List.map fst post_args in
+       (pre_args@post_args)
+
+let subs_rel_formula_ops results  =
   let pr_weak b = match b with
-    | RelForm (_,_,p) -> 
-      let () = x_binfo_hp (add_str "subs_rel_formula : " !print_p_formula) b p in
-      Some (mkTrue p)
+    | RelForm (name,rel_args,p) -> 
+      (try
+        let (_,args,pc,post,_) = List.find (fun (n,args,pc,post,_)->n=name) results in
+        let () = x_binfo_hp (add_str "subs_rel_formula : " !print_p_formula) b p in
+        let () = x_binfo_hp (add_str "subs_rel_formula (formal para) : " (pr_list !print_exp)) args p in
+        let () = x_binfo_hp (add_str "subs_rel_formula (rel_args) : " (pr_list !print_exp)) rel_args p in
+        let () = x_binfo_hp (add_str "subs_rel_formula (reorder) : " (pr_option (pr_list string_of_bool))) pc p in
+        let new_rel_args = match pc with
+          | None -> rel_args
+          | Some bl -> re_order_new rel_args bl in
+        let () = x_binfo_hp (add_str "subs_rel_formula (new_rel_args) : " (pr_list !print_exp)) new_rel_args p in
+        Some (mkTrue p)
+      with _ -> None)
     | _ -> None in
   let pr_strong b = match b with
     | RelForm (_,_,p) -> 
@@ -10538,13 +10555,24 @@ let subs_rel_formula_ops =
     | _ -> None in
   (pr_weak,pr_strong)
 
-let subs_rel_formula (f:formula) : formula =
-  let (pr_weak,pr_strong) = subs_rel_formula_ops in
+(* let process_tables results = *)
+(*   List.map (fun (r,post,pre) -> match r with *)
+(*       | BForm ((RelForm (name,args,_),_),_) -> (name,args,post,pre) *)
+(*       | _ -> report_error no_pos ("process_tables expecting relation but got:"^(!print_formula r)) *)
+(*     ) results *)
+
+(* (==fixpoint.ml#150==) *)
+(* subs_rel_formula@1 *)
+(* subs_rel_formula inp1 : flted_71_1374=0 & PPP(mmmm_1376,n1_1377,n,k,m) & s_1373=s' & n<=k & 0<=m *)
+(* subs_rel_formula@1 EXIT: flted_71_1374=0 & true & s_1373=s' & n<=k & 0<=m *)
+let subs_rel_formula results (f:formula) : formula =
+  (* let new_res = process_tables results in *)
+  let (pr_weak,pr_strong) = subs_rel_formula_ops results in
   drop_formula pr_weak pr_strong f
 
-let subs_rel_formula (f:formula) : formula =
+let subs_rel_formula results (f:formula) : formula =
   let pr = !print_formula in
-  Debug.no_1 "subs_rel_formula" pr pr subs_rel_formula f
+  Debug.no_1 "subs_rel_formula" pr pr (subs_rel_formula results) f
 
 let drop_rel_formula (f:formula) : formula =
   let (pr_weak,pr_strong) = drop_rel_formula_ops in

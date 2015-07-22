@@ -143,11 +143,21 @@ let helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_var
       let p = x_add_1 TP.simplify (CP.mkExists post_vars p None no_pos) in
       (p,[],bag_vars)
     | Some triples (*(rel, post, pre)*) ->
+      let process_tables results =
+        let sd = Fixcalc.get_reorder () in
+        List.map (fun (r,post,pre) -> match r with
+            | CP.BForm ((CP.RelForm (name,args,_),_),_) -> 
+              let (_,pc,_) = List.find (fun (n,_,_) -> n=name) sd in
+              (name,args,pc,post,pre)
+            | _ -> report_error no_pos ("process_tables expecting relation but got:"^(!CP.print_formula r))
+          ) results 
+      in
+      let res_table = process_tables triples in
       if inf_post then
         (* let rels = CP.get_RelForm p in *)
         let pr = !CP.print_formula in
         let () = x_binfo_hp (add_str "triples" (pr_list (pr_triple pr pr pr)) ) triples no_pos in
-        let p = x_add_1 CP.subs_rel_formula p in
+        let p = x_add_1 CP.subs_rel_formula res_table p in
         (* let ps = List.filter (fun x -> not (CP.isConstTrue x)) (CP.list_of_conjs p) in  *)
         (* WN : code below seems redundant *)
         (* let pres,posts = List.split (List.concat (List.map (fun (a1,a2,a3) ->  *)
