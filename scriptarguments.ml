@@ -678,6 +678,8 @@ let common_arguments = [
   ("--dis-term-msg", Arg.Set Globals.dis_term_msg, "turn off the printing of termination messages");
   ("--dis-post-check", Arg.Set Globals.dis_post_chk, "turn off the post_condition and loop checking");
   ("--post-eres", Arg.Set Globals.post_add_eres, "add res=eres.val for post-condition proving");
+  ("--add-pre", Arg.Set Globals.add_pre, "to add pre of case-spec into post-cond");
+  ("--dis-add-pre", Arg.Clear Globals.add_pre, "not to add pre of case-spec into post-cond");
   ("--post-flow", Arg.Set Globals.post_infer_flow, "add exception flow as a post-cond parameter for inference");
   ("--dis-post-flow", Arg.Clear Globals.post_infer_flow, "add exception flow as a post-cond parameter for inference");
   ("--dis-assert-check", Arg.Set Globals.dis_ass_chk, "turn off the assertion checking");
@@ -692,8 +694,20 @@ let common_arguments = [
    "level of detail in termination inference printing 0-verbose 1-standard (default)");
   ("--infer-lex", Arg.Set Globals.tnt_infer_lex,
    "enable lexicographic ranking function inference");
+  ("--en-infer-lex", Arg.Set Globals.tnt_infer_lex,
+   "enable lexicographic ranking function inference");
+  ("--dis-infer-lex", Arg.Clear Globals.tnt_infer_lex,
+   "disable lexicographic ranking function inference");
   ("--term-add-post", Arg.Set Globals.tnt_add_post, "Automatically infer necessary postcondition");
   ("--dis-term-add-post", Arg.Clear Globals.tnt_add_post, "Automatically infer necessary postcondition");
+  ("--abd-strategy", Arg.Set_int Globals.tnt_abd_strategy,
+   "level of detail in termination printing 0-template(default) 1-size-change");
+  ("--en-infer-nondet", Arg.Set Globals.tnt_infer_nondet,
+   "enable local inference for nondeterminism");
+  ("--dis-infer-nondet", Arg.Clear Globals.tnt_infer_nondet,
+   "disable local inference for nondeterminism");
+  ("--tnt-max-iter", Arg.Set_int Globals.tnt_thres,
+   "maximum number of iteration on TNT algorithm");
 
   (* Slicing *)
   ("--eps", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization");

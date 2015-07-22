@@ -417,7 +417,7 @@ let trans_view_one_spec_x (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.
   let ls_dname_pos = Iast.look_up_field_ann prog orig_view.Cast.view_data_name extn_props in
   let orig_fs,labels = List.split orig_view.Cast.view_un_struc_formula in
   let ss = List.combine orig_view.Cast.view_vars spec_view.Cast.view_vars in
-  let spec_fs = List.map (CF.subst ss) orig_fs in
+  let spec_fs = List.map (x_add CF.subst ss) orig_fs in
   let pure_extn_svl = [ (CP.SpecVar (Named (view_derv.Iast.view_data_name),self, Unprimed))] in
   let (orig_b_brs,orig_ind_brs) = CF.extract_abs_formula_branch spec_fs orig_view.Cast.view_name view_derv.Iast.view_name spec_view.Cast.view_vars ls_dname_pos pure_extn_svl true true in
   (* let orig_inv_p = (MCP.pure_of_mix spec_view.Cast.view_user_inv) in *)

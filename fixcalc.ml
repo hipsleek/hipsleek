@@ -110,6 +110,10 @@ let fixcalc_of_exp f=
   DD.no_1 "fixcalc_of_exp" !CP.print_exp (fun s->s) (fun f-> fixcalc_of_exp f) f
 ;;
 
+let fixcalc_of_exp f=
+  DD.no_1 "fixcalc_of_exp" !CP.print_exp (fun s->s) (fun f-> fixcalc_of_exp f) f
+;;
+
 let fixcalc_of_bool b =
   match b with
   | true -> "1=1"
@@ -529,7 +533,7 @@ let slk2fix_body lower_invs fml0 vname dataname para_names=
   let fr_vars = CP.fresh_spec_vars (vars) in
   let sst = List.combine vars fr_vars in
   let rev_sst = List.combine fr_vars vars in
-  let fs = List.map (fun (f,_) -> Cformula.subst sst (x_add subst_inv_lower_view lower_invs f)) fml0 in
+  let fs = List.map (fun (f,_) -> x_add Cformula.subst sst (x_add subst_inv_lower_view lower_invs f)) fml0 in
   let input_fixcalc =
     try
       vname ^ ":={[" ^ (self) ^ (if (List.length fr_vars > 0) then "," else "") ^ (string_of_elems fr_vars fixcalc_of_spec_var ",") ^
@@ -841,14 +845,19 @@ let substitute_args_x a_rel = match a_rel with
         | Some p -> p
         | None -> failwith "substitute_args: Initialize globas_prog first!"
       in
-      let typed_args = List.combine (Cast.look_up_rel_args_type_from_prog prog id) args in
+      let typed_args = 
+        try
+          List.combine (x_add_1 Cast.look_up_rel_args_type_from_prog prog id) args 
+        with _ ->  (* args *)
+            failwith "substitute_args: failure with look_up_rel_args_type"
+      in
       List.split
         (List.map (fun (t,e) ->
              match e with
              | CP.Var _ -> (e, [])
              | _ ->
                (try
-                  (* Must refine the renaming method. It is really awkward now... *)
+                  (* TODO: Must refine the renaming method. It is really awkward now... *)
                   let fvs = CP.afv e in
                   let arb =
                     if List.length fvs > 0 then
@@ -965,8 +974,8 @@ let compute_def (rel_fml, pf, no) ante_vars =
       ^ (string_of_elems post_vars fixcalc_of_spec_var ",") ^ "] -> []: "
       ^ rhs ^ "\n};"
     in input_fixcalc
-  with _ ->
-    report_error no_pos "compute_def:Error in translating the input for fixcalc"
+  with e ->
+    report_error ~exc:(Some e) no_pos "compute_def:Error in translating the input for fixcalc"
 ;;
 
 let compute_def (rel_fml, pf, no) ante_vars =

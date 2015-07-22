@@ -1624,12 +1624,14 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
          let ui_vs = cuis @ C.ui_decls # get_stk in
          let extra_rels = List.map (fun ui -> ui.Cast.ui_rel) ui_vs in
          let () = Debug.ninfo_hprint (add_str "ut_vs added" (pr_list (fun ut -> ut.C.ut_name))) ut_vs no_pos in
+         let xrels = crels@extra_rels in
          let cprog = {
            C.prog_data_decls = cdata;
            C.prog_view_decls = cviews2;
            C.prog_barrier_decls = bdecls;
            C.prog_logical_vars = log_vars;
-           C.prog_rel_decls = crels@extra_rels; (* An Hoa *)
+           (* C.prog_rel_decls = xrels (\* crels@extra_rels *\); (\* An Hoa *\) *)
+           C.prog_rel_decls = (let s = new Gen.stack_pr Cprinter.string_of_rel_decl (=) in (s # push_list xrels ; s));
            C.prog_templ_decls = ctempls;
            C.prog_ut_decls = (ut_vs);
            C.prog_ui_decls = (ui_vs);
@@ -1667,8 +1669,8 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
             else c
           in
           let c = (add_pre_to_cprog c) in
-          (* TNT: Automatically adding @post for dependence methods of @term methods *)
-          let c = if !Globals.tnt_add_post then C.add_post_for_tnt_prog c else c in
+          (* TNT: Automatically adding @post and @term for dependence methods of @term methods *)
+          let c = Dda.set_inf_obj_for_tnt_prog c in
           (* let () = print_endline (exlist # string_of) in *)
           (* let () = exlist # sort in *)
           (* let () = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in *)
@@ -1696,7 +1698,7 @@ and trans_prog (prog : I.prog_decl) : C.prog_decl * I.prog_decl=
     ) cprog.C.old_proc_decls;}  
 *)
 and add_pre_to_cprog_one cprog c =
-  let ns = add_pre cprog c.C.proc_static_specs in
+  let ns = x_add add_pre cprog c.C.proc_static_specs in
   (*to handle @C. should handle copy on prim types?*)
   let ns_caller = if c.C.proc_by_copy_params = [] then ns else
       x_add trans_copy_spec_4caller c.C.proc_by_copy_params ns
@@ -4094,7 +4096,7 @@ and ident_to_spec_var id n_tl p prog =
   | CP.SpecVar(t,id,pr) ->
     if t == UNK then
       try
-        let todo_unk = I.look_up_rel_def_raw prog.I.prog_rel_decls id in
+        let todo_unk = I.look_up_rel_def_raw (prog.I.prog_rel_decls ) id in
         CP.SpecVar(RelT[],id,pr)
       with _ ->
         try
@@ -4557,7 +4559,12 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_exp
 
 and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_exp_type =
   (* let () = print_endline ("[trans_exp] input = { " ^ (Iprinter.string_of_exp ie) ^ " }") in *)
-  let rec helper ie =
+  let rec helper ie = 
+    let pr1 = Iprinter.string_of_exp in
+    let pr2 = (pr_pair Cprinter.string_of_exp string_of_typ) in
+    Debug.no_1 "helper_trans_exp" pr1 pr2 helper_x ie
+  
+  and helper_x ie =
     match ie with
     | I.Label (pid, e)-> 
       let e1,t1 = (helper e) in
@@ -4871,14 +4878,14 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
         helper new_e
       else if not (I.is_num e2) && (I.is_div_op b_op) then
         let new_e = I.CallNRecv {
-            (* mults for linearizing non-linear div *)
+            (* divs for linearizing non-linear div *)
             (* sv-comp/termination-numeric/ex1_true-termination              *)
             (* sv-comp/termination-memory-alloca/ex1-alloca_true-termination *)
             (* sv-comp/termination-numeric/ex2_true-termination              *)
             (* sv-comp/termination-memory-alloca/ex2-alloca_true-termination *)
             (* sv-comp/termination-numeric/ex3a_true-termination             *)
             (* sv-comp/termination-numeric/ex3b_true-termination             *)
-            I.exp_call_nrecv_method = "divs___"; 
+            I.exp_call_nrecv_method = if !Globals.prelude_is_mult then "div___" else "divs___";
             I.exp_call_nrecv_lock = None;
             I.exp_call_nrecv_arguments = [ e1; e2 ];
             I.exp_call_nrecv_ho_arg = None;
@@ -4966,7 +4973,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
        let (ce, te) = helper e in
        let tmp_local_vars = E.names_on_top () in
        let local_vars = List.map (fun (t, n) -> ((x_add trans_type prog t pos), n)) tmp_local_vars in
-       (E.pop_scope (); ((C.Block {
+       (E.pop_scope (); 
+       ((C.Block {
             C.exp_block_type = te;
             C.exp_block_body = ce;
             C.exp_block_local_vars = local_vars;
@@ -5240,12 +5248,37 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                     C.exp_scall_is_rec = false; 
                     C.exp_scall_pos = pos;
                     C.exp_scall_path_id = pi; } in
-                let seq_1 = C.mkSeq ret_ct init_seq call_e pos in
-                ((C.Block {
-                     C.exp_block_type = ret_ct;
-                     C.exp_block_body = seq_1;
-                     C.exp_block_local_vars = local_vars;
-                     C.exp_block_pos = pos; }),ret_ct)))
+                (* To handle nondet call *)
+                if (String.compare mn Globals.nondet_int_proc_name == 0) then
+                  let nd = fresh_var_name "nd" pos.start_pos.Lexing.pos_lnum in
+                  let nd_decl =
+                    C.VarDecl {
+                      C.exp_var_decl_type = ret_ct;
+                      C.exp_var_decl_name = nd;
+                      C.exp_var_decl_pos = pos; } 
+                  in
+                  let nd_assign =
+                    C.Assign {
+                      C.exp_assign_lhs = nd;
+                      C.exp_assign_rhs = call_e;
+                      C.exp_assign_pos = pos; } 
+                  in
+                  let nd_var =
+                    C.Var { 
+                      C.exp_var_type = ret_ct;
+                      C.exp_var_name = nd;
+                      C.exp_var_pos = pos; } 
+                  in
+                  let seq_1 = C.mkSeq ret_ct nd_assign nd_var pos in
+                  let seq_2 = C.mkSeq ret_ct nd_decl seq_1 pos in
+                  (seq_2, ret_ct)
+                else
+                  let seq_1 = C.mkSeq ret_ct init_seq call_e pos in
+                  ((C.Block {
+                       C.exp_block_type = ret_ct;
+                       C.exp_block_body = seq_1;
+                       C.exp_block_local_vars = local_vars;
+                       C.exp_block_pos = pos; }),ret_ct)))
         )
         with Not_found -> (
             try
@@ -6266,7 +6299,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
         (Debug.print_info ("(" ^ (Cprinter.string_of_formula trans_lend_heap) ^ ") ") msg err_pos;
          Debug.print_info ("(Cause of Par Failure)") (Cprinter.string_of_formula trans_lend_heap) err_pos;
          Err.report_error { Err.error_loc = err_pos; Err.error_text = msg })
-  in helper ie
+  in 
+  helper ie
 
 and default_value (t :typ) pos : C.exp =
   match t with
@@ -6542,6 +6576,11 @@ and set_mingled_name (prog : I.prog_decl) =
   in (helper1 prog.I.prog_proc_decls; helper2 prog.I.prog_data_decls)
 
 and insert_dummy_vars (ce : C.exp) (pos : loc) : C.exp =
+  let pr = !C.print_prog_exp in
+  Debug.no_1 "insert_dummy_vars" pr pr
+    (fun _ -> insert_dummy_vars_x ce pos) ce
+
+and insert_dummy_vars_x (ce : C.exp) (pos : loc) : C.exp =
   match ce with
   | C.Seq{
       C.exp_seq_type = t;
@@ -6804,7 +6843,9 @@ and add_pre_x (prog :C.prog_decl) (f:CF.struc_formula):CF.struc_formula =
 
 and add_pre prog f =
   let pr = Cprinter.string_of_struc_formula in
-  Debug.no_1 "add_pre"  pr pr (add_pre_x prog) f 
+  if !Globals.add_pre then 
+    Debug.no_1 "add_pre"  pr pr (add_pre_x prog) f 
+  else f
 
 and trans_copy_spec_4caller_x copy_params sf=
   let convert_to_L hf=

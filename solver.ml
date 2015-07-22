@@ -4063,7 +4063,7 @@ and delayed_lockset_checking prog es new_es_f delayed_f base res2 pos =
              else
                mkExists remained_vars qh qp qvp qt qfl qa pos
            in
-           let new_f2 = subst st new_f in
+           let new_f2 = x_add subst st new_f in
            let new_delayed_f = CP.subst st delayed_f in
            (new_delayed_f,new_f2)
          | Base b -> (delayed_f,Base b)
@@ -4886,7 +4886,7 @@ and heap_entail_split_rhs_x (prog : prog_decl) (is_folding : bool) (ctx_0 : cont
             let ws = CP.fresh_spec_vars qvars in
             let st = List.combine qvars ws in
             let baref = mkBase qh qp qvp qt qfl qa pos in
-            let new_baref = subst st baref in
+            let new_baref = x_add subst st baref in
             let new_ctx = Ctx {estate with es_evars = ws @ estate.es_evars} in
             let tmp_rs, tmp_prf = heap_entail_split_rhs prog is_folding  new_ctx new_baref rhs_h_matched_set pos
             in
@@ -6342,7 +6342,7 @@ and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0
             let ws = CP.fresh_spec_vars qvars in
             let st = List.combine qvars ws in
             let baref = mkBase qh qp qvp qt qfl qa pos in
-            let new_baref = subst st baref in
+            let new_baref = x_add subst st baref in
             let new_ctx = Ctx {estate with es_evars = ws @ estate.es_evars} in
             let tmp_rs, tmp_prf = heap_entail_split_rhs_phases prog is_folding  new_ctx new_baref drop_read_phase pos
             in
@@ -6371,7 +6371,7 @@ and eliminate_exist_from_LHS_x qvars qh qp qvp qt qfl pos estate =
   let st = List.combine qvars ws in
   let a = formula_and_of_formula estate.es_formula in
   let baref = mkBase qh qp qvp qt qfl a pos in (*TO CHECK ???*)
-  let new_baref = subst st baref in
+  let new_baref = x_add subst st baref in
   (* new ctx is the new context after substituting the fresh vars for the exist quantified vars *)
   let new_ctx = Ctx {estate with
                      es_formula = new_baref;
@@ -7313,7 +7313,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
             (* TODO : for memo-pure, these fresh_vars seem to affect partitioning *)
             let st = List.combine qvars ws in
             let baref = mkBase qh qp qvp qt qfl qa pos in
-            let new_baref = subst st baref in
+            let new_baref = x_add subst st baref in
             let fct st v =
               try
                 let (_,v2) = List.find (fun (v1,_) -> CP.eq_spec_var_ident v v1) st in
@@ -7359,7 +7359,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                 let ws = CP.fresh_spec_vars qvars in
                 let st = List.combine qvars ws in
                 let baref = mkBase qh qp qvp qt qfl qa pos in
-                let new_baref = subst st baref in
+                let new_baref = x_add subst st baref in
                 let new_ctx = Ctx {estate with es_evars = ws @ estate.es_evars} in
                 x_tinfo_hp (add_str "new_ctx match" (Cprinter.string_of_context)) new_ctx no_pos;
                 let tmp_rs, tmp_prf = heap_entail_conjunct_helper_x (* 5 *) prog is_folding  new_ctx new_baref rhs_h_matched_set pos in
@@ -8149,7 +8149,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
 
 and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) rhs_matched_set pos : (list_context * proof) =
   (* An Hoa note: RHS has no heap so that we only have to consider whether "pure of LHS" |- RHS *)
-  let rel_w_defs = List.filter (fun rel -> not (CP.isConstTrue rel.Cast.rel_formula)) prog.Cast.prog_rel_decls in
+  let rel_w_defs = List.filter (fun rel -> not (CP.isConstTrue rel.Cast.rel_formula)) (prog.Cast.prog_rel_decls # get_stk) in
   (* Changed for merge.ss on 9/3/2013 *)
   let rhs_p = if (estate_orig.es_infer_rel!=[]) then subst_rel_by_def_mix rel_w_defs rhs_p else rhs_p in
   (*TODO: let estate_orig = {estate_orig with CF.subst_rel_by_def_formula estate_orig.CF.es_formula}*)
@@ -9595,8 +9595,8 @@ and do_match_perm_vars (l_perm:P.exp option) (r_perm:P.exp option) evars ivars i
 (*generate rel formula for relational args of views*)
 and generate_rel_formulas_x prog (lrel,rrel) pos=
   try
-    let ldef = Cast.look_up_rel_def_raw prog.Cast.prog_rel_decls (CP.name_of_spec_var lrel) in
-    let rdef = Cast.look_up_rel_def_raw prog.Cast.prog_rel_decls (CP.name_of_spec_var rrel) in
+    let ldef = Cast.look_up_rel_def_raw (prog.Cast.prog_rel_decls # get_stk) (CP.name_of_spec_var lrel) in
+    let rdef = Cast.look_up_rel_def_raw (prog.Cast.prog_rel_decls # get_stk) (CP.name_of_spec_var rrel) in
     if List.length ldef.Cast.rel_vars = List.length rdef.Cast.rel_vars then
       let new_args= CP.fresh_spec_vars ldef.Cast.rel_vars  in
       let exps = List.map (fun sv -> CP.mkVar sv pos) new_args in
@@ -13053,15 +13053,15 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
     *)
     (*let () = print_string ("[do_univ]: rename the univ boudn vars: " ^ (String.concat ", " (List.map CP.name_of_spec_var f_univ_vars)) ^ "\n") in	*)
     let tmp_rho = List.combine coer.coercion_univ_vars f_univ_vars in
-    let coer_lhs = CF.subst tmp_rho coer.coercion_head in
-    let coer_rhs = CF.subst tmp_rho coer.coercion_body in
+    let coer_lhs = x_add CF.subst tmp_rho coer.coercion_head in
+    let coer_rhs = x_add CF.subst tmp_rho coer.coercion_body in
     (************************************************************************)
     (* also rename the free vars from the rhs that do not appear in the lhs *)
     let lhs_fv = (fv_rhs coer_lhs coer_rhs) in
     let fresh_lhs_fv = CP.fresh_spec_vars lhs_fv in
     let tmp_rho = List.combine lhs_fv fresh_lhs_fv in
-    let coer_lhs = CF.subst tmp_rho coer_lhs in
-    let coer_rhs = CF.subst tmp_rho coer_rhs in
+    let coer_lhs = x_add CF.subst tmp_rho coer_lhs in
+    let coer_rhs = x_add CF.subst tmp_rho coer_rhs in
     let lhs_heap, lhs_guard, lhs_vperm, lhs_fl, _, lhs_a  = split_components coer_lhs in
     let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) false false (* true true *) lhs_guard in
     (*node -> current heap node | lhs_heap -> head of the coercion*)
@@ -13688,8 +13688,8 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
   let lhs_fv = (CF.fv coer_lhs) in
   let fresh_lhs_fv = CP.fresh_spec_vars lhs_fv in
   let tmp_rho = List.combine lhs_fv fresh_lhs_fv in
-  let coer_lhs = CF.subst tmp_rho coer_lhs in
-  let coer_rhs = CF.subst tmp_rho coer_rhs in
+  let coer_lhs = x_add CF.subst tmp_rho coer_lhs in
+  let coer_rhs = x_add CF.subst tmp_rho coer_rhs in
   (************************************************************************)
   let lhs_heap, lhs_guard, lhs_vperm, lhs_flow, _, lhs_a = split_components coer_lhs in
   let lhs_qvars,_ = CF.split_quantifiers coer_lhs in
@@ -14048,15 +14048,15 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
       in
       (* rename the bound vars *)
       let tmp_rho = List.combine extra_vars (CP.fresh_spec_vars extra_vars) in
-      let coer_lhs = CF.subst tmp_rho coer_lhs in
-      let coer_rhs = CF.subst tmp_rho coer_rhs in
+      let coer_lhs = x_add CF.subst tmp_rho coer_lhs in
+      let coer_rhs = x_add CF.subst tmp_rho coer_rhs in
       (************************************************************************)
       (* also rename the free vars from the rhs that do not appear in the lhs *)
       let lhs_fv = (fv_rhs coer_lhs coer_rhs) in
       let fresh_lhs_fv = CP.fresh_spec_vars lhs_fv in
       let tmp_rho = List.combine lhs_fv fresh_lhs_fv in
-      let coer_lhs = CF.subst tmp_rho coer_lhs in
-      let coer_rhs = CF.subst tmp_rho coer_rhs in
+      let coer_lhs = x_add CF.subst tmp_rho coer_lhs in
+      let coer_rhs = x_add CF.subst tmp_rho coer_rhs in
       (************************************************************************)
       let lhs_heap, lhs_guard, lhs_vperm, lhs_flow, _, lhs_a = split_components coer_lhs in
       let lhs_qvars,_ = CF.split_quantifiers coer_lhs in
@@ -14631,14 +14631,14 @@ and prop_w_coers_x prog (estate: CF.entail_state) (coers: coercion_decl list)
       in
       (* rename the bound vars *)
       let tmp_rho = List.combine extra_vars (CP.fresh_spec_vars extra_vars) in
-      let coer_lhs = CF.subst tmp_rho coer_lhs in
-      let coer_rhs = CF.subst tmp_rho coer_rhs in
+      let coer_lhs = x_add CF.subst tmp_rho coer_lhs in
+      let coer_rhs = x_add CF.subst tmp_rho coer_rhs in
       (* rename the free vars from the rhs that do not appear in the lhs *)
       let lhs_fv = (fv_rhs coer_lhs coer_rhs) in
       let fresh_lhs_fv = CP.fresh_spec_vars lhs_fv in
       let tmp_rho = List.combine lhs_fv fresh_lhs_fv in
-      let coer_lhs = CF.subst tmp_rho coer_lhs in
-      let coer_rhs = CF.subst tmp_rho coer_rhs in
+      let coer_lhs = x_add CF.subst tmp_rho coer_lhs in
+      let coer_rhs = x_add CF.subst tmp_rho coer_rhs in
       (************************************************************************)
       let coer_heap, coer_guard, coer_vperm, coer_flow, _, coer_a = split_components coer_lhs in
       let lhs_qvars, _ = CF.split_quantifiers coer_lhs in
@@ -14912,7 +14912,7 @@ and elim_exists_exp_loop_x (f0 : formula) : (formula * bool) =
           (* basically we only apply one substitution *)
           let one_subst = List.hd st in
           let tmp = mkBase h pp1 vp t fl a pos in
-          let new_baref = subst_exp [one_subst] tmp in
+          let new_baref = x_add subst_exp [one_subst] tmp in
           let tmp2 = add_quantifiers rest_qvars new_baref in
           let tmp3, _ = helper tmp2 in
           (tmp3, true)
@@ -15243,7 +15243,13 @@ let verify_pre_is_sat prog fml =
   Debug.no_1 "verify_pre_is_sat" pr string_of_bool
     (fun _ -> verify_pre_is_sat prog fml) fml
 
-let () = Ti2.unsat_base_nth := unsat_base_nth
+(* let () = Ti2.unsat_base_nth := unsat_base_nth *)
+let () = 
+  let infer_func prog ante conseq =
+    let rs, _ = heap_entail_one_context 20 prog false ante conseq None None None no_pos in
+    Some rs 
+  in
+  Ti2.entail_inf := infer_func 
 
 (********************************************************************************************)
 (*********The following code is moved to fixpoint.ml*************************************)

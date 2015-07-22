@@ -2011,6 +2011,6 @@ and print_vmap (vmap : var_map) : unit =
     | HExp (v1, f, p) -> print_string (v1 ^ "." ^ f ^ ":" ^ (string_of_bool p) ^ "\n")
     | PExp pe -> print_string ((Cprinter.string_of_formula_exp pe) ^ "\n")
   in
-  print_string ("\nvmap:\n");
+  Gen.Basic.print_string_quiet ("\nvmap:\n");
   H.iter print_entry vmap;
-  print_string ("\n")
+  Gen.Basic.print_string_quiet ("\n")

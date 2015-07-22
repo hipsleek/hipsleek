@@ -30,7 +30,8 @@ and prog_decl = {
   mutable prog_data_decls : data_decl list;
   mutable prog_logical_vars : P.spec_var list;
   mutable prog_view_decls : view_decl list;
-  mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
+  (* mutable prog_rel_decls : rel_decl list; (\* An Hoa : relation definitions *\) *)
+  prog_rel_decls : rel_decl Gen.stack_pr; (* An Hoa : relation definitions *)
   mutable prog_templ_decls: templ_decl list;
   mutable prog_ut_decls: ut_decl list;
   mutable prog_ui_decls: ui_decl list;
@@ -478,6 +479,7 @@ and exp_check_ref = {
 and exp_java = { 
   exp_java_code : string;
   exp_java_pos : loc}
+
 and exp_label = {
   exp_label_type : typ;
   exp_label_path_id : (control_path_id * path_label);
@@ -1119,7 +1121,11 @@ let look_up_rel_args_type (defs: rel_decl list) name =
 ;;
 
 let look_up_rel_args_type_from_prog p name =
-  look_up_rel_args_type p.prog_rel_decls name
+  look_up_rel_args_type (p.prog_rel_decls # get_stk) name
+;;
+
+let look_up_rel_args_type_from_prog p name =
+  Debug.no_1 "look_up_rel_args_type_from_prog" pr_id (pr_list string_of_typ) (look_up_rel_args_type_from_prog p) name
 ;;
 
 let look_up_templ_def_raw (defs: templ_decl list) (name : ident) = 
@@ -1191,7 +1197,8 @@ let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos=
     prog.prog_hp_decls <- (hp_decl :: prog.prog_hp_decls);
     (* PURE_RELATION_OF_HEAP_PRED *)
     let p_hp_decl = generate_pure_rel hp_decl in
-    let () = prog.prog_rel_decls <- (p_hp_decl::prog.prog_rel_decls) in
+    (* let () = prog.prog_rel_decls <- (p_hp_decl::prog.prog_rel_decls) in *)
+    let () = prog.prog_rel_decls # push p_hp_decl in
     let () = Smtsolver.add_hp_relation hp_decl.hp_name unk_args hp_decl.hp_formula in
     let () = Z3.add_hp_relation hp_decl.hp_name unk_args hp_decl.hp_formula in
     let hf =
@@ -2351,6 +2358,7 @@ module IGC = Graph.Components.Make(IG)
 module IGP = Graph.Path.Check(IG)
 module IGN = Graph.Oper.Neighbourhood(IG)
 module IGT = Graph.Topological.Make(IG)
+module PCG = Graph.Path.Check(IG)
 
 let ex_args f a b = f b a
 
@@ -3547,174 +3555,33 @@ let is_resourceless_h_formula prog (h: F.h_formula) =
     !print_h_formula string_of_bool
     (fun _ -> is_resourceless_h_formula_x prog h) h
 
-(*************************************************)      
-(* Construct a data dependency graph from an exp *)
-(*************************************************)
-let is_prim_proc prog id = 
-  try
-    let proc = Hashtbl.find prog.new_proc_decls id in
-    not proc.proc_is_main
-  with _ -> false
-
-let print_data_dependency_graph ddg = 
-  IG.fold_edges (fun s d a -> "\n" ^ s ^ " -> " ^ d ^ a)  ddg ""
-
-let eq_str s1 s2 = String.compare s1 s2 == 0
-
-let remove_dups_id = Gen.BList.remove_dups_eq eq_str
-
-let data_dependency_graph_of_call_exp prog ddg src mn args = 
-  let ddg, dst =
-    if is_prim_proc prog mn then ddg, src
-    else
-      let ddg = IG.add_edge ddg src mn in
-      (* The method call depends on its pass-by-name arguments *)
-      let mn_decl = look_up_proc_def_raw prog.new_proc_decls mn in
-      let by_name_params = mn_decl.proc_by_name_params in
-      let ddg = List.fold_left (fun g (arg, par) ->
-          if List.exists (fun sv -> eq_str (P.name_of_spec_var sv) (snd arg)) by_name_params then
-            IG.add_edge g par mn
-          else g) ddg (List.combine mn_decl.proc_args args) 
-      in
-      ddg, mn
-  in
-  List.fold_left (fun g i -> IG.add_edge g dst i) ddg args
-
-(* src depends on exp *)
-let data_dependency_graph_of_exp prog src exp =
-  let rec helper ddg src exp = 
-    match exp with
-    | Label e -> helper ddg src e.exp_label_exp
-    | Assign e ->
-      (* let ddg = IG.add_edge ddg src e.exp_assign_lhs in *)
-      helper ddg e.exp_assign_lhs e.exp_assign_rhs
-    | Bind e ->
-      let bvar = snd e.exp_bind_bound_var in
-      let ddg = IG.add_edge ddg src bvar in
-      let ddg = List.fold_left (fun g (_, i) ->
-          IG.add_edge g bvar i) ddg e.exp_bind_fields in
-      helper ddg bvar e.exp_bind_body
-    | Block e -> helper ddg src e.exp_block_body
-    | Cond e ->
-      let ddg = IG.add_edge ddg src e.exp_cond_condition in
-      let ddg = helper ddg src e.exp_cond_then_arm in
-      helper ddg src e.exp_cond_else_arm
-    | Cast e -> helper ddg src e.exp_cast_body 
-    | Catch e -> helper ddg src e.exp_catch_body 
-    | ICall e -> 
-      data_dependency_graph_of_call_exp prog ddg src e.exp_icall_method_name e.exp_icall_arguments
-    | SCall e -> 
-      data_dependency_graph_of_call_exp prog ddg src e.exp_scall_method_name e.exp_scall_arguments
-    | Seq e ->
-      let ddg = helper ddg src e.exp_seq_exp1 in
-      helper ddg src e.exp_seq_exp2
-    | Var e -> IG.add_edge ddg src e.exp_var_name
-    | While e -> 
-      let ddg = IG.add_edge ddg src e.exp_while_condition in
-      helper ddg src e.exp_while_body
-    | Try e ->
-      let ddg = helper ddg src e.exp_try_body in
-      helper ddg src e.exp_catch_clause
-    | _ -> ddg
-  in
-  let ddg = IG.empty in
-  helper ddg src exp
-
-let data_dependency_graph_of_exp prog src exp =
-  Debug.no_1 "data_dependency_graph_of_exp" idf print_data_dependency_graph
-    (fun _ -> data_dependency_graph_of_exp prog src exp) src
-
-let rec_calls_of_exp exp = 
-  let f exp = 
-    match exp with
-    | ICall e -> if e.exp_icall_is_rec then Some ([e.exp_icall_method_name]) else None
-    | SCall e -> if e.exp_scall_is_rec then Some ([e.exp_scall_method_name]) else None
+let get_ret_vars_exp exp =
+  let f e = 
+    match e with
+    | Sharp ({
+        exp_sharp_flow_type = st;
+        exp_sharp_val = eo; }) ->
+      (match st with
+      | Sharp_ct f ->
+        if (F.equal_flow_interval f.formula_flow_interval !ret_flow_int) then
+          match eo with
+          | Sharp_var e -> Some [(snd e)]
+          | _ -> None
+        else None
+      | _ -> None)
     | _ -> None
-  in fold_exp exp f List.concat []
+  in
+  fold_exp exp f List.concat []
 
-let has_ref_params prog mn =
-  try
-    let proc = find_proc prog mn in
-    proc.proc_by_name_params != []
-  with _ -> false
-
-let has_named_params prog mn =
-  try
-    let proc = find_proc prog mn in
-    List.exists (fun (t, _) -> is_node_typ t) proc.proc_args
-  with _ -> false
-
-let is_rec_proc prog mn = 
-  try
-    let proc = find_proc prog mn in
-    proc.proc_is_recursive
-  with _ -> false
-
-let data_dependency_graph_of_proc prog proc = 
-  match proc.proc_body with
-  | None -> None
-  | Some e -> Some (data_dependency_graph_of_exp prog proc.proc_name e)
-
-let rec collect_dependence_procs_aux prog init ws ddg src =
-  try
-    let succ = IG.succ ddg src in
-    match succ with
-    | [] -> [], ws
-    | _ -> 
-      let depend_mns = List.filter is_mingle_name succ in
-      let depend_mns = 
-        if init then 
-          if not (is_rec_proc prog src) then []
-          else List.filter (fun mn -> 
-              not (eq_str mn src) && 
-              ((has_ref_params prog mn) || (has_named_params prog mn))) depend_mns  
-        else depend_mns
-      in
-      let working_succ = Gen.BList.difference_eq eq_str succ ws in 
-      List.fold_left (fun (acc, ws) d ->
-          let dd, ws = collect_dependence_procs_aux prog false (ws @ [d]) ddg d in
-          (acc @ dd), ws) (depend_mns, ws) working_succ
-  with _ -> [], ws
-
-let collect_dependence_procs prog g pn = 
-  fst (collect_dependence_procs_aux prog true [pn] g pn)
-
-let dependence_procs_of_proc prog proc =
+let get_ret_vars_proc proc = 
   match proc.proc_body with
   | None -> []
-  | Some e ->
-    let pn = proc.proc_name in
-    let ddg = data_dependency_graph_of_exp prog pn e in
-    let rec_pns = rec_calls_of_exp e in
-    let pns = remove_dups_id (pn::rec_pns) in
-    let r = List.fold_left (fun acc pn -> 
-        acc @ (collect_dependence_procs prog ddg pn)) [] pns in
-    remove_dups_id r
+  | Some e -> get_ret_vars_exp e
 
-let add_inf_post_proc proc = 
-  { proc with 
-    proc_static_specs = Cformula.add_inf_post_struc proc.proc_static_specs; 
-    proc_dynamic_specs = Cformula.add_inf_post_struc proc.proc_dynamic_specs; }
-
-let add_post_for_tnt_prog prog =
-  let inf_term_procs = Hashtbl.fold (fun _ proc acc ->
-      let spec = proc.proc_static_specs in
-      if not (Cformula.is_inf_term_only_struc spec) then acc
-      else acc @ [proc]) prog.new_proc_decls [] in (* @term only, no @term_wo_post *)
-  let inf_post_procs = List.fold_left (fun acc proc ->
-      let dprocs = dependence_procs_of_proc prog proc in
-      let () = 
-        if is_empty dprocs then ()
-        else print_endline_quiet ("\n !!! @post is added into " ^ 
-                                  (pr_list idf dprocs) ^ " for " ^ proc.proc_name) 
-      in
-      acc @ dprocs) [] inf_term_procs in
-  let inf_post_procs = Gen.BList.remove_dups_eq
-      (fun s1 s2 -> String.compare s1 s2 == 0) inf_post_procs in
-  { prog with
-    new_proc_decls = proc_decls_map (fun proc ->
-        if List.mem proc.proc_name inf_post_procs then
-          add_inf_post_proc proc
-        else proc) prog.new_proc_decls; }
-
-
+let get_output_vars_proc prog mn =
+  try
+    let proc = find_proc prog mn in
+    (List.map P.name_of_spec_var proc.proc_by_name_params) @ 
+    (get_ret_vars_proc proc)
+  with _ -> [] 
+  

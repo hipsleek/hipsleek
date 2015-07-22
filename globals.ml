@@ -852,7 +852,7 @@ let dis_show_diff = ref false
 (* sap has moved to VarGen; needed by debug.ml *)
 let fo_iheap = ref true
 
-let prelude_is_mult = ref true
+let prelude_is_mult = ref false
 
 let sae = ref false
 let sac = ref false
@@ -870,7 +870,7 @@ let simpl_unfold2 = ref false
 let simpl_unfold1 = ref false
 let simpl_memset = ref false
 
-let simplify_dprint = ref true
+let simplify_dprint = ref false
 
 let print_heap_pred_decl = ref true
 
@@ -1369,6 +1369,7 @@ let dis_bnd_chk = ref false
 let dis_term_msg = ref false
 let dis_post_chk = ref false
 let post_add_eres = ref false
+let add_pre = ref false
 let post_infer_flow = ref false
 let dis_ass_chk = ref false
 let log_filter = ref true
@@ -1380,10 +1381,15 @@ let infer_const = ref ""
 
 (* TNT Inference *)
 let tnt_verbosity = ref 1
-let tnt_infer_lex = ref false
+let tnt_infer_lex = ref true
 let tnt_add_post = ref true (* disabled with @term_wo_post or --dis-term-add-post *)
+let tnt_abd_strategy = ref 0 (* by default: abd_templ *)
+let tnt_infer_nondet = ref true
 
 let nondet_int_proc_name = "__VERIFIER_nondet_int"
+let nondet_int_rel_name = "nondet_int__"
+
+let hip_sleek_keywords = ["res"]
 
 type infer_type =
   | INF_TERM (* For infer[@term] *)
@@ -1564,7 +1570,6 @@ class inf_obj  =
     method get c  = List.mem c arr
     (* method get_int i  = Array.get arr i *)
     method is_term = (self # get INF_TERM) || (self # get INF_TERM_WO_POST)
-    (* termination inference *)
     (* termination inference *)
     method is_term_wo_post = self # get INF_TERM_WO_POST
     (* termination inference wo post-condition *)
@@ -2303,3 +2308,8 @@ let string_of_lemma_kind (l: lemma_kind) =
 
 type debug_lvl = Short | Normal | Long
 let debug_level = ref Normal
+
+let prim_method_names = [ nondet_int_proc_name ]
+
+let is_prim_method pn = 
+  List.exists (fun mn -> String.compare pn mn == 0) prim_method_names

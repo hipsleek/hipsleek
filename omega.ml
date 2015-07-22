@@ -293,6 +293,7 @@ let stop () =
   if !is_omega_running then begin
     let num_tasks = !test_number - !last_test_number in
     if (not !Globals.web_compile_flag) then
+      print_endline_quiet "";
       print_string_if !Globals.enable_count_stats ("Stop Omega... "^(string_of_int !omega_call_count)^" invocations ");
       print_string_if (!Globals.gen_baga_inv && !Globals.enable_count_stats) ("Infer: " ^ (string_of_int !omega_call_count_for_infer) ^ " invocations; Proving: " ^ (string_of_int (!omega_call_count - !omega_call_count_for_infer)) ^ " invocations");
       flush stdout;
@@ -1182,7 +1183,7 @@ let gist_x (pe1 : formula) (pe2 : formula) : formula =
         let fomega =  "gist {[" ^ vstr ^ "] : (" ^ fstr1
                       ^ ")} given {[" ^ vstr ^ "] : (" ^ fstr2 ^ ")};" ^ Gen.new_line_str in
         (* gist not properly logged *)
-        let () = Debug.binfo_pprint ("fomega = " ^ fomega) no_pos in
+        let () = x_tinfo_pp ("fomega = " ^ fomega) no_pos in
         let () = set_proof_string ("GIST(not properly logged yet):"^fomega) in
         if !log_all_flag then begin
           output_string log_all ("#gist" ^ Gen.new_line_str ^ Gen.new_line_str);
