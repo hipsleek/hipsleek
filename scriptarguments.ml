@@ -706,6 +706,8 @@ let common_arguments = [
    "enable local inference for nondeterminism");
   ("--dis-infer-nondet", Arg.Clear Globals.tnt_infer_nondet,
    "disable local inference for nondeterminism");
+  ("--tnt-max-iter", Arg.Set_int Globals.tnt_thres,
+   "maximum number of iteration on TNT algorithm");
 
   (* Slicing *)
   ("--eps", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization");

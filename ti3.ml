@@ -138,13 +138,14 @@ let eq_base_rank rnk1 rnk2 =
 
 let eq_tnt_case_spec sp1 sp2 =
   match sp1, sp2 with
-  | Unknown _, Unknown _ -> true
-  | Unknown _, Sol (CP.MayLoop _, _) -> true
-  | Sol (CP.MayLoop _, _), Unknown _ -> true
+  (* Do not merge MayLoop with cex *)
+  | Unknown None, Unknown None -> true
+  | Unknown None, Sol (CP.MayLoop None, _) -> true
+  | Sol (CP.MayLoop None, _), Unknown None -> true
   | Sol (ann1, rnk1), Sol (ann2, rnk2) ->
     begin match ann1, ann2 with
       | CP.Loop _, CP.Loop _ -> true
-      | CP.MayLoop _, CP.MayLoop _ -> true
+      | CP.MayLoop None, CP.MayLoop None -> true
       (* | CP.Term, CP.Term ->                          *)
       (*   (* is_base_rank rnk1 && is_base_rank rnk2 *) *)
       (*   eq_base_rank rnk1 rnk2                       *)

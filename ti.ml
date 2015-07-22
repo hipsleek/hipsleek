@@ -404,7 +404,9 @@ and solve_turel_graph_one_group iter_num prog trrels tg scc_list =
       (*   print_endline_quiet (print_graph_by_rel tg)                       *)
       (* in                                                                  *)
       (* let () = print_endline_quiet (print_scc_list_num scc_list) in       *)
-      let tg = List.fold_left (fun tg -> solve_turel_one_scc prog trrels tg) tg scc_list in
+      let tg = List.fold_left (fun tg scc -> 
+          try solve_turel_one_scc prog trrels tg scc
+          with Should_Finalize -> tg) tg scc_list in
       ()
     with
     | Restart_with_Cond (_, tg) -> solve_turel_graph (iter_num + 1) prog trrels tg

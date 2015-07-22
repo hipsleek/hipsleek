@@ -1721,6 +1721,7 @@ let proving_non_termination_nondet_trrels prog lhs_uids rhs_uid trrels =
         let infer_nd_cond = simplify (CP.join_conjunctions infer_nd_conds) params in
         let () = x_binfo_hp (add_str "Nondet conditions: " (pr_list !CP.print_formula)) infer_nd_conds no_pos in
         let () = x_binfo_hp (add_str "Simplified nondet condition: " !CP.print_formula) infer_nd_cond no_pos in
+        let () = x_binfo_hp (add_str "Current case: " !CP.print_formula) curr_case no_pos in
         if not (is_sat (mkAnd curr_case infer_nd_cond)) ||
            not (imply curr_case infer_nd_cond)
         then (false, [])
@@ -1953,7 +1954,7 @@ let proving_non_termination_scc prog trrels tg scc =
 
 (* Auxiliary methods for main algorithms *)
 let proving_termination_scc prog trrels tg scc =
-  (* let () = print_endline ("Analyzing scc: " ^ (pr_list string_of_int scc)) in *)
+  let () = x_binfo_pp ("Analyzing scc: " ^ (pr_list string_of_int scc)) no_pos in
   (* Term with a ranking function for each scc's node *)
   let res = infer_ranking_function_scc prog tg scc in
   match res with
