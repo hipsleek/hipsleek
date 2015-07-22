@@ -299,11 +299,12 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
            let flow = List.fold_left flow_subst flow primed in
            helper res ((sv,flow)::rest))
       in
-    flows in
+    let res = helper [] zipped in
+    let (_,simpl_flows) = List.split res in
+    simpl_flows in
 
-  (* TODO: eliminate the primed variables within the expressions.. *)
   let frm_assumes = List.map (fun (args,pa) ->
-    let res = pa in
+    let res = simplify (args,pa) in
     res) zipped_frm_assumes in
 
   (* TODO: combine various param-flow lists, reduce duplication. *)
