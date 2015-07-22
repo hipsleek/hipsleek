@@ -1710,6 +1710,7 @@ let proving_non_termination_nondet_trrel prog lhs_uids rhs_uid trrel =
 let proving_non_termination_nondet_trrels prog lhs_uids rhs_uid trrels =
   if List.for_all (fun trrel -> is_empty trrel.termr_lhs) trrels then (false, [])
   else
+    let lhs_uids = List.filter (fun lhs_uid -> lhs_uid.CP.tu_id == rhs_uid.CP.tu_id) lhs_uids in
     let infer_nd_res = List.map (proving_non_termination_nondet_trrel prog lhs_uids rhs_uid) trrels in
     if List.exists (fun (r, _) -> not r) infer_nd_res then (false, [])
     else 
