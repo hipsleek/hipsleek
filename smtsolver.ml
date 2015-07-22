@@ -7,39 +7,6 @@ module CP = Cpure
 
 module StringSet = Set.Make(String)
 
-module Pres_Log=
-struct
-  let pr_elt = pr_id
-  let pres_stk = new Gen.stack_pr pr_elt  (=)
-
-  (*add entry e into pres_stk*)
-  let add_one_query (e:string)=
-     x_binfo_hp (add_str "add_one_query" pr_elt) e no_pos;
-    if !Globals.gen_pres_sat then () else
-    ()
-
-  (* reset pres_stk*)
-  let reset ()=
-    x_binfo_hp (add_str "reset" pr_id) "" no_pos;
-    ()
-
-  (*write e into file_name*)
-  let write_one_query (e:string) file_name=
-    x_binfo_hp (add_str "write_one_query" (pr_pair pr_elt pr_id)) (e, file_name) no_pos;
-    (*open to write*)
-    (*write*)
-    print_string ("\nSaving " ^ file_name ^ "\n"); flush stdout;
-    (*close file*)
-    ()
-
-  (*iterate pres_stk, each entry write into a file*)
-  let log_pres_queries prefix_fn=
-    x_binfo_hp (add_str "log_pres_queries" pr_id)  prefix_fn no_pos;
-    if !Globals.gen_pres_sat then () else
-    ()
-
-end;;
-
 let set_prover_type () = Others.last_tp_used # set Others.Z3
 
 let set_generated_prover_input = ref (fun _ -> ())
@@ -762,7 +729,6 @@ let check_formula f timeout =
     let () = incr z3_call_count in
     (*due to global stack - incremental, push current env into a stack before working and
       removing it after that. may be improved *)
-    let () = Pres_Log.add_one_query f in
     let new_f = "(push)\n" ^ f ^ "(pop)\n" in
     let _= if(!proof_logging_txt) then add_to_z3_proof_log_list new_f in
     output_string (!prover_process.outchannel) new_f;
