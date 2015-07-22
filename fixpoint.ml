@@ -114,13 +114,14 @@ and elim_heap h p pre_vars heap_vars aset ref_vars =
 let helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_vars =
   let h, p, _, _, _, _ = CF.split_components post_fml in
   let p = MCP.pure_of_mix p in
-  let h = if pre_vars = [] || not(inf_post) then h else (
-      enulalias := true;
-      let node_als = MCP.ptr_equations_with_null (MCP.mix_of_pure p) in
-      enulalias := false;
-      let node_aset = CP.EMapSV.build_eset node_als in
-      elim_heap h p pre_vars (CF.h_fv h) node_aset ref_vars)
-  in
+  (* WN : why is there a need to weaken the post-condition?? *)
+  (* let h = if pre_vars = [] || not(inf_post) then h else ( *)
+  (*     enulalias := true; *)
+  (*     let node_als = MCP.ptr_equations_with_null (MCP.mix_of_pure p) in *)
+  (*     enulalias := false; *)
+  (*     let node_aset = CP.EMapSV.build_eset node_als in *)
+  (*     elim_heap h p pre_vars (CF.h_fv h) node_aset ref_vars) *)
+  (* in *)
   let p,pre,bag_vars = begin
     match subst_fml with
     | None ->
