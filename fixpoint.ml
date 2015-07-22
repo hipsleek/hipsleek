@@ -156,7 +156,7 @@ let helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_var
       if inf_post then
         (* let rels = CP.get_RelForm p in *)
         let pr = !CP.print_formula in
-        let () = x_binfo_hp (add_str "triples" (pr_list (pr_triple pr pr pr)) ) triples no_pos in
+        let () = x_tinfo_hp (add_str "triples" (pr_list (pr_triple pr pr pr)) ) triples no_pos in
         let p = x_add_1 CP.subs_rel_formula res_table p in
         (* let ps = List.filter (fun x -> not (CP.isConstTrue x)) (CP.list_of_conjs p) in  *)
         (* WN : code below seems redundant *)
@@ -165,8 +165,8 @@ let helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_var
         (*     then [(a3,a2)] else []) triples)) in *)
         let post = p in
         let pre = CP.conj_of_list (List.map (fun (_,_,pre) -> pre) triples) no_pos in
-        let () = x_binfo_hp (add_str "pre" (!CP.print_formula)) pre no_pos in
-        let () = x_binfo_hp (add_str "post" (!CP.print_formula)) post no_pos in
+        let () = x_tinfo_hp (add_str "pre" (!CP.print_formula)) pre no_pos in
+        let () = x_tinfo_hp (add_str "post" (!CP.print_formula)) post no_pos in
         (post,[pre],[])
       else
         let rels = CP.get_RelForm p in

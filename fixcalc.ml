@@ -1163,22 +1163,19 @@ let arrange_para input_pairs ante_vars =
 (* let reorder_rev old_args new_args args = *)
 (*   reorder new_args old_args args *)
 
-let re_order_new args inp_bool_args =
-       let dec_args = List.combine args inp_bool_args in
-       let pre_args, post_args = List.partition (fun (_,b) -> b) dec_args in
-       let pre_args = List.map fst pre_args in
-       let post_args = List.map fst post_args in
-       (pre_args@post_args)
+(* let re_order_new args inp_bool_args = *)
+(*        let dec_args = List.combine args inp_bool_args in *)
+(*        let pre_args, post_args = List.partition (fun (_,b) -> b) dec_args in *)
+(*        let pre_args = List.map fst pre_args in *)
+(*        let post_args = List.map fst post_args in *)
+(*        (pre_args@post_args) *)
 
-let re_order_new args inp_bool_args =
-  let pr_args = pr_list !CP.print_exp in
-  Debug.no_2 "re_order_new" pr_args (pr_list string_of_bool) pr_args re_order_new args inp_bool_args
 
 let arrange_para_of_rel rhs_rel lhs_rel_name inp_bool_args bottom_up = 
   match rhs_rel with
   | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->
     if name = lhs_rel_name then 
-      let args = re_order_new args inp_bool_args in
+      let args = CP.re_order_new args inp_bool_args in
       (* let pairs = List.combine old_args args in *)
       (* let args = List.map (fun a -> List.assoc a pairs) new_args in *)
       CP.BForm ((CP.RelForm (name,args,o1),o2),o3)
@@ -1235,7 +1232,7 @@ let build_inp_bool_args ante_vars args =
 (*     (match r with *)
 (*      | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) -> *)
 (*        let inp_bool_args = build_inp_bool_args ante_vars args in *)
-(*        let new_args = x_add re_order_new args inp_bool_args in *)
+(*        let new_args = x_add CP.re_order_new args inp_bool_args in *)
 (*        (\* let pre_args, post_args = List.partition  *\) *)
 (*        (\*     (fun e -> Gen.BList.subset_eq CP.eq_spec_var (CP.afv e) ante_vars) args  *\) *)
 (*        (\* in *\) *)
@@ -1261,7 +1258,7 @@ let subs_rel lst_bool_args f =
         match r with
         | None -> f
         | Some b_args ->
-          let args = re_order_new args b_args in
+          let args = CP.re_order_new args b_args in
           CP.BForm ((CP.RelForm (name,args,o1),o2),o3)
       end
     with _ -> 
@@ -1292,7 +1289,7 @@ let re_order_para rels pfs ante_vars =
       let nc = no_change b_arg in
       if nc then (name,None,r)
       else 
-        let new_args = x_add re_order_new args b_arg in
+        let new_args = x_add CP.re_order_new args b_arg in
         (name,Some b_arg,CP.BForm ((CP.RelForm (name,new_args,o1),o2),o3))
     | _ -> report_error no_pos "re_order_para: rels should have only relations" 
   in let lst_bool_args = List.map to_bool_args rels in
@@ -1351,7 +1348,7 @@ let arrange_para_td input_pairs ante_vars =
       match r with
       | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->
         let inp_bool_args = build_inp_bool_args ante_vars args in
-        let new_args = x_add re_order_new args inp_bool_args in
+        let new_args = x_add CP.re_order_new args inp_bool_args in
         (* let pre_args, post_args =  *)
         (*   List.partition  *)
         (*     (fun e -> Gen.BList.subset_eq CP.eq_spec_var (CP.afv e) ante_vars)  *)

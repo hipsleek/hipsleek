@@ -828,7 +828,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
               let lst_assume = List.map (fun (a,b,c) -> (a,b,Immutable.postprocess_pre b c)) lst_assume in
               let pr = Cprinter.string_of_pure_formula in
               let pr_oblg = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in
-              let () = x_binfo_hp (add_str "lst_assume (after norm and postprocess)" pr_oblg) lst_assume no_pos in
+              let () = x_tinfo_hp (add_str "lst_assume (after norm and postprocess)" pr_oblg) lst_assume no_pos in
               (* =============== END imm rel norm ================== *)
               let new_specs2 = List.map (fun new_spec1 -> fst (x_add_1 wrap (Fixpoint.simplify_relation new_spec1
                                                                                (Some triples) pre_vars post_vars_wo_rel prog true (* inf_post_flag *) evars) lst_assume)) new_specs1 in
