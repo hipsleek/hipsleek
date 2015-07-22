@@ -3609,8 +3609,12 @@ and is_disjunct f : bool =
   | Or(_,_,_,_) -> true
   | _ -> false
 
-(*limited, should use equal_formula, equal_b_formula, eq_exp instead*)
 and equalFormula_f (eq:spec_var -> spec_var -> bool) (f01:formula)(f02:formula):bool =
+  let pr = !print_formula in
+  Debug.no_2 "equalFormula_f" pr pr string_of_bool (fun _ _ -> equalFormula_f_x eq f01 f02) f01 f02
+
+(*limited, should use equal_formula, equal_b_formula, eq_exp instead*)
+and equalFormula_f_x (eq:spec_var -> spec_var -> bool) (f01:formula)(f02:formula):bool =
   let rec helper f1 f2=
     match (f1,f2) with
     | ((BForm (b1,_)),(BForm (b2,_))) -> equalBFormula_f eq  b1 b2
@@ -10613,6 +10617,7 @@ let drop_rel_formula_ops =
     | _ -> None in
   (pr_weak,pr_strong)
 
+
 let no_drop_ops =
   let pr x = None in
   (pr,pr)
@@ -10667,6 +10672,63 @@ let memo_complex_ops stk bool_vars is_complex =
         Some (BForm ((BVar (v,no_pos),None),None))
       else None
   in (pr, pr)
+
+let re_order_new args inp_bool_args =
+       let dec_args = List.combine args inp_bool_args in
+       let pre_args, post_args = List.partition (fun (_,b) -> b) dec_args in
+       let pre_args = List.map fst pre_args in
+       let post_args = List.map fst post_args in
+       (pre_args@post_args)
+
+let re_order_new args inp_bool_args =
+  let pr_args = pr_list !print_exp in
+  Debug.no_2 "re_order_new" pr_args (pr_list string_of_bool) pr_args re_order_new args inp_bool_args
+
+let subs_rel_formula_ops results  =
+  let pr_weak b = match b with
+    | RelForm (name,rel_args,p) -> 
+      (try
+        let (_,args,pc,post,_) = List.find (fun (n,args,pc,post,_)->n=name) results in
+        let () = x_tinfo_hp (add_str "subs_rel_formula : " !print_p_formula) b p in
+        let () = x_tinfo_hp (add_str "subs_rel_formula (formal para) : " (pr_list !print_exp)) args p in
+        let () = x_tinfo_hp (add_str "subs_rel_formula (rel_args) : " (pr_list !print_exp)) rel_args p in
+        let () = x_tinfo_hp (add_str "subs_rel_formula (reorder) : " (pr_option (pr_list string_of_bool))) pc p in
+        let () = x_tinfo_hp (add_str "subs_rel_formula (post) : " !print_formula) post p in
+        let new_rel_args = match pc with
+          | None -> rel_args
+          | Some bl -> re_order_new rel_args bl in
+        let subs = List.combine (List.map get_var args) (List.map get_var new_rel_args) in
+        let new_f = subst subs post in
+        let () = x_tinfo_hp (add_str "subs_rel_formula (new post ) : " (!print_formula)) new_f p in
+        let () = x_tinfo_hp (add_str "subs_rel_formula (new_rel_args) : " (pr_list !print_exp)) new_rel_args p in
+        Some (new_f)
+      with _ -> None)
+    | _ -> None in
+  let pr_strong b = match b with
+    | RelForm (_,_,p) -> 
+      let () = x_binfo_pp "WARNING:subs_rel_formula in contrvariant position" p in
+      Some (mkFalse p)
+    | _ -> None in
+  (pr_weak,pr_strong)
+
+(* let process_tables results = *)
+(*   List.map (fun (r,post,pre) -> match r with *)
+(*       | BForm ((RelForm (name,args,_),_),_) -> (name,args,post,pre) *)
+(*       | _ -> report_error no_pos ("process_tables expecting relation but got:"^(!print_formula r)) *)
+(*     ) results *)
+
+(* (==fixpoint.ml#150==) *)
+(* subs_rel_formula@1 *)
+(* subs_rel_formula inp1 : flted_71_1374=0 & PPP(mmmm_1376,n1_1377,n,k,m) & s_1373=s' & n<=k & 0<=m *)
+(* subs_rel_formula@1 EXIT: flted_71_1374=0 & true & s_1373=s' & n<=k & 0<=m *)
+let subs_rel_formula results (f:formula) : formula =
+  (* let new_res = process_tables results in *)
+  let (pr_weak,pr_strong) = subs_rel_formula_ops results in
+  drop_formula pr_weak pr_strong f
+
+let subs_rel_formula results (f:formula) : formula =
+  let pr = !print_formula in
+  Debug.no_1 "subs_rel_formula" pr pr (subs_rel_formula results) f
 
 let drop_rel_formula (f:formula) : formula =
   let (pr_weak,pr_strong) = drop_rel_formula_ops in
