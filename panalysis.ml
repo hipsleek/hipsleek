@@ -208,11 +208,12 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
       | None -> [] in
     (* replace occurrences of sv with sub in exp *)
     let subst_primed_var exp sv sub =
-      CP.transform_exp (fun e ->
+      let subst = CP.transform_exp (fun e ->
         match e with
         | CP.Var(v,_) when CP.eq_spec_var sv v ->
           Some sub
         | _ -> None) exp in
+      Tlutils.normalize_exp subst in
 
     let zipped = List.combine svs flows in
     (* get rid of primed spec_vars in the expressions, *)
