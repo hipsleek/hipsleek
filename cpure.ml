@@ -2904,6 +2904,11 @@ and is_disjunct f : bool =
 
 (*limited, should use equal_formula, equal_b_formula, eq_exp instead*)
 and equalFormula_f (eq:spec_var -> spec_var -> bool) (f01:formula)(f02:formula):bool =
+  let pr = !print_formula in
+  Debug.no_2 "equalFormula_f" pr pr string_of_bool (fun _ _ -> equalFormula_f_x eq f01 f02) f01 f02
+
+(*limited, should use equal_formula, equal_b_formula, eq_exp instead*)
+and equalFormula_f_x (eq:spec_var -> spec_var -> bool) (f01:formula)(f02:formula):bool =
   let rec helper f1 f2=
     match (f1,f2) with
     | ((BForm (b1,_)),(BForm (b2,_))) -> equalBFormula_f eq  b1 b2
@@ -10673,6 +10678,11 @@ let find_const_sv sv =
     get_int_const str
 ;;
 
+(* Not working under negation *)
+(* (==omega.ml#631==) *)
+(* subs_const_var_formula@3 *)
+(* subs_const_var_formula inp1 : (not((a=1 & 1<=(a*b))) | 1<=b) *)
+(* subs_const_var_formula@3 EXIT: (not((a=1 & 1<=(a*b))) | 1<=b) *)
 (* a=c & c=1 & a*b>=1 |- b>=0   ==>   1*b>=1 & a=1 |- b>=0*)
 let subs_const_var_formula (f:formula) : formula =
   let f_f a e = None in
