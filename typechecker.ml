@@ -4333,6 +4333,11 @@ let rec check_prog iprog (prog : prog_decl) =
     (* let () = Debug.info_hprint (add_str "is_all_verified1" string_of_bool) is_all_verified1 no_pos in *)
     let mutual_grp = ref scc in
 
+    (* keep track of number of relations,
+     * so that parameter analysis knows which have been added
+     * for a particular procedure. *)
+    let rel_count = ref 0 in
+
     x_tinfo_hp (add_str "MG"  (pr_list (fun p -> p.proc_name))) !mutual_grp no_pos;
     let () = Infer.infer_rel_stk # dump curr_file_loc  in
     let is_all_verified2 = proc_mutual_scc prog scc (fun prog proc1 ->
@@ -4349,6 +4354,10 @@ let rec check_prog iprog (prog : prog_decl) =
           (* Param Analysis for the proc *)
           let () = if !Globals.param_analysis then 
             let rels_orig = Infer.infer_rel_stk # get_stk_no_dupl in
+            (* grab only the rels made since last call. *)
+            let new_count = (List.length rels_orig) - (!rel_count) in
+            let rels_orig = Gen.BList.take new_count rels_orig in
+            let () = rel_count := (List.length rels_orig) in
             let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels_orig) in
             let _ = Panalysis.analyse_param rels (proc1.Cast.proc_args) in () in
           (* add rel_assumption of r to relass_grp *)
