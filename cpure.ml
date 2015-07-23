@@ -10854,7 +10854,7 @@ let find_eq_at_toplevel e =
   in
   let f_bf bf = 
     (match bf with
-     | (Eq _) ,_ -> Some ([bf]) 
+     | (Eq (e1,e2,_)) ,_ -> Some ([(e1,e2)]) 
      | _,_ -> Some ([])
     )
   in
@@ -10867,23 +10867,53 @@ let find_eq_at_toplevel e =
 
 let add_to_eqmap eq_list eqset =
   (* ZH:TODO use EMapSV to build an equality map involving variable  *)
-  let eqset = List.fold_left (fun eset exp -> 
-      let (p_f,bf_ann) = exp in
-      (match p_f with
-       | Eq (e1,e2,pos) -> 
+  let eqset = List.fold_left (fun eset (e1,e2) -> 
+      (* let (p_f,bf_ann) = exp in *)
+      (* (match p_f with *)
+      (*  | Eq (e1,e2,pos) ->  *)
          (match e1,e2 with
           | Var(sv1,_),Var(sv2,_) -> EMapSV.add_equiv eset sv1 sv2
-          | Var(sv1,_),IConst(i2,_) -> EMapSV.add_equiv eset sv1 (mk_sp_const i2)
-          | IConst(i1,_),Var(sv2,_) -> EMapSV.add_equiv eset (mk_sp_const i1) sv2
-          | IConst(i1,_),IConst(i2,_) -> EMapSV.add_equiv eset (mk_sp_const i1)(mk_sp_const i2)
+          | Var(sv,_),IConst(i,_)  
+          | IConst(i,_),Var(sv,_) -> EMapSV.add_equiv eset sv (mk_sp_const i)
+          (* | IConst(i1,_),IConst(i2,_) -> EMapSV.add_equiv eset (mk_sp_const i1)(mk_sp_const i2) *)
           | _  -> eset)
-       | _ -> eset)
+       (* | _ -> eset) *)
     ) eqset eq_list in eqset 
 ;;
 
 let build_eqmap eq_list =
   let eqset = EMapSV.mkEmpty in
   add_to_eqmap eq_list eqset
+
+  (*  new processing of equality with constant propagation ..
+
+      x=a*b & b=1+2 & a=1 |- RHS
+      ===>  ([a=1], [(x,a*b);(b,1+2)])
+      ===>  ([a=1,b=3], [(x,a*1)])
+      ===>  ([a=1,b=3], [(x,3*1)])
+      ===>  ([a=1,b=3,x=3], 
+
+      x=d*b & b=1+a & a=1 |- RHS
+      ===>  ([a=1], [(x,d*b);(b,1+a)])
+      ===>  ([a=1], [(x,d*b);(b,1+1)])
+      ===>  ([a=1,b=1], [(x,d*1)])
+      ===>  ([a=1,b=1], [(x,d)])
+      ===>  ([a=1,b=1,x=d], [])
+
+      ===>  ([b=1,a=3], [(x,a*1)])
+      ===>  ([b=1,a=3], [(x,3*1)])
+      ===>  ([b=1,a=3,x=3], 
+
+  *)
+let add_to_em_set eq_list em_set =
+  let em_set = List.fold_left (fun ((em,set) as em_set) (e1,e2) -> 
+         (match e1,e2 with
+          | Var(sv1,_),Var(sv2,_) -> (EMapSV.add_equiv em sv1 sv2, set)
+          | Var(sv,_),IConst(i,_)  | IConst(i,_),Var(sv,_) -> (EMapSV.add_equiv em sv (mk_sp_const i), set)
+          | Var(sv,_),e  | e,Var(sv,_) -> (em, (sv,e)::set)
+          | _  -> em_set)
+    ) em_set eq_list in em_set 
+;;
 
 let build_eqmap_at_toplevel e =
   let eq_list = find_eq_at_toplevel e in
