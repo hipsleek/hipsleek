@@ -192,7 +192,7 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
   let pr2 = pr_list (pr_pair string_of_typ pr_id) in
   let pr_out = pr_list (pr_list Cprinter.string_of_param_flow) in
 
-  (* TODO: eliminate the primed variables within the expressions.. *)
+  (* debug output initial results (before removing primes) *)
   let frm_assumes = List.map snd zipped_frm_assumes in
   let () = Debug.binfo_hprint (add_str "initial result" pr_out) frm_assumes no_pos in
 
@@ -308,7 +308,17 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
     let res = simplify (args,pa) in
     res) zipped_frm_assumes in
 
-  (* TODO: combine various param-flow lists, reduce duplication. *)
+  let () = Debug.binfo_hprint (add_str "interim result" pr_out) frm_assumes no_pos in
+
+  (* combine various param-flow lists, reduce duplication. *)
+  let is_param_flows_same (pf1:CP.param_flow list) (pf2:CP.param_flow list) : bool =
+    (* structural equality. ... which doesn't quite work for all cases. *)
+    (pf1 = pf2) in
+
+  let frm_assumes = List.fold_left (fun uniq pflows ->
+      if List.exists (is_param_flows_same pflows) uniq
+      then uniq
+      else pflows::uniq) [] frm_assumes in
 
   let () = Debug.binfo_pprint "analyse_param summary:" no_pos in
   let () = Debug.binfo_hprint (add_str "relations (normalised)" pr1) lst_assume no_pos in
