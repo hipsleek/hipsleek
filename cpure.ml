@@ -2638,7 +2638,7 @@ and mkNeqExp (ae1 : exp) (ae2 : exp) pos = match (ae1, ae2) with
 and mkNot_s f :formula = mkNot f None no_pos
 
 and mkNot_dumb f lbl1 pos0:formula = 
-  if(not !Globals.allow_norm  && !Globals.allow_inf_qe_coq) then Not (f, lbl1,pos0)
+  if (!Globals.oc_non_linear) || (not !Globals.allow_norm  && !Globals.allow_inf_qe_coq) then Not (f, lbl1,pos0)
   else 
     match f with
     | BForm (bf,lbl) -> begin
@@ -2658,7 +2658,7 @@ and mkNot_dumb f lbl1 pos0:formula =
     | _ -> Not (f, lbl1,pos0)
 
 and mkNot_x f lbl1 pos0 :formula= 
-  if no_andl f then mkNot_dumb f lbl1 pos0
+  if no_andl f  then mkNot_dumb f lbl1 pos0
   else 
     match f with
     | And (f1,f2,p) -> mkOr (mkNot f1 lbl1 pos0) (mkNot f2  lbl1 pos0) None p
@@ -3014,7 +3014,8 @@ and split_disjunctions =
   | Or (x, y, _,_) -> (split_disjunctions x) @ (split_disjunctions y)
   | z -> [z]
 
-and join_disjunctions xs = disj_of_list xs no_pos
+(* preserve order of disjunction *)
+and join_disjunctions xs = disj_of_list (List.rev xs) no_pos
 
 and no_andl  = function
   | BForm _ | And _ | Not _ | Forall _ | Exists _  -> true
@@ -4118,10 +4119,10 @@ and check_non_determinism_x (var_name: ident) (f: formula) =
         let svs = bfv b in
         let common_svs = intersect_svl svs !related_vars in
         if (List.length common_svs > 0) then (
-          (* Debug.binfo_hprint (add_str "common_svs" (pr_list !print_sv)) common_svs no_pos; *)
-          (* Debug.binfo_hprint (add_str "svs" (pr_list !print_sv)) svs no_pos; *)
+          (* Debug.tinfo_hprint (add_str "common_svs" (pr_list !print_sv)) common_svs no_pos; *)
+          (* Debug.tinfo_hprint (add_str "svs" (pr_list !print_sv)) svs no_pos; *)
           related_vars := remove_dups_svl (!related_vars @ svs);
-          (* Debug.binfo_hprint (add_str "related_vars" (pr_list !print_sv)) !related_vars no_pos; *)
+          (* Debug.tinfo_hprint (add_str "related_vars" (pr_list !print_sv)) !related_vars no_pos; *)
         );
         None
       ) in
@@ -4134,12 +4135,12 @@ and check_non_determinism_x (var_name: ident) (f: formula) =
       let origin_var = List.find (fun x -> eq_str (name_of_sv x) var_name) simp_svs in
       let related_vars = collect_related_vars [origin_var] in
       let related_nondet_svs = intersect_svl nondet_svs related_vars in
-      (* x_binfo_hp (add_str "check var" pr_id) v no_pos;                                         *)
-      (* x_binfo_hp (add_str "f" !print_formula) f no_pos;                                        *)
-      (* x_binfo_hp (add_str "nondet_svs" (pr_list !print_sv)) nondet_svs no_pos;                 *)
-      (* x_binfo_hp (add_str "sim_f" !print_formula) simp_f no_pos;                               *)
-      (* x_binfo_hp (add_str "related_vars" (pr_list !print_sv)) related_vars no_pos;             *)
-      (* x_binfo_hp (add_str "related_nondet_svs" (pr_list !print_sv)) related_nondet_svs no_pos; *)
+      (* x_tinfo_hp (add_str "check var" pr_id) v no_pos;                                         *)
+      (* x_tinfo_hp (add_str "f" !print_formula) f no_pos;                                        *)
+      (* x_tinfo_hp (add_str "nondet_svs" (pr_list !print_sv)) nondet_svs no_pos;                 *)
+      (* x_tinfo_hp (add_str "sim_f" !print_formula) simp_f no_pos;                               *)
+      (* x_tinfo_hp (add_str "related_vars" (pr_list !print_sv)) related_vars no_pos;             *)
+      (* x_tinfo_hp (add_str "related_nondet_svs" (pr_list !print_sv)) related_nondet_svs no_pos; *)
       (List.length related_nondet_svs != 0)
     with _ -> false
   )
@@ -5657,6 +5658,14 @@ struct
       if c<0 then x1::(merge_baga t1 b2)
       else if c>0 then x2::(merge_baga b1 t2)
       else failwith "detected false"
+  let rec hull_baga b1 b2 =
+    match b1,b2 with
+    | [],b | b,[] -> []
+    | x1::t1, x2::t2 ->
+      let c = compare x1 x2 in
+      if c<0 then hull_baga t1 b2
+      else if c>0 then hull_baga b1 t2
+      else x1::(hull_baga t1 t2)
   let rec is_eq_baga b1 b2 =
     match b1,b2 with
     | [],[] -> true
@@ -7117,6 +7126,7 @@ let get_pure_label n =  match n with
 let select zs n = 
   let l = List.length zs in
   (List.nth zs (n mod l))
+
 
 let rename_labels  e=
   let f_b e = Some e in
@@ -10394,12 +10404,12 @@ let get_rel_args (f:formula) = match f with
   | _ -> []
 
 let is_rel_in_vars (vl:spec_var list) (f:formula) =
-  (* let () = x_binfo_hp (add_str "2formula" !print_formula) f no_pos in *)
+  (* let () = x_tinfo_hp (add_str "2formula" !print_formula) f no_pos in *)
   match (x_add_1 get_rel_id f) with
   | Some n ->
     if mem n vl then true else false
   | _ ->
-    (* let () = Debug.binfo_pprint "2None" no_pos in *)
+    (* let () = Debug.tinfo_pprint "2None" no_pos in *)
     false
 
 let is_rel_in_vars (vl:spec_var list) (f:formula) =
@@ -10706,7 +10716,7 @@ let subs_rel_formula_ops results  =
     | _ -> None in
   let pr_strong b = match b with
     | RelForm (_,_,p) -> 
-      let () = x_binfo_pp "WARNING:subs_rel_formula in contrvariant position" p in
+      let () = x_tinfo_pp "WARNING:subs_rel_formula in contrvariant position" p in
       Some (mkFalse p)
     | _ -> None in
   (pr_weak,pr_strong)
@@ -10730,6 +10740,91 @@ let subs_rel_formula results (f:formula) : formula =
   let pr = !print_formula in
   Debug.no_1 "subs_rel_formula" pr pr (subs_rel_formula results) f
 
+let check_nonlinear e =
+  let flag = ref false in
+  let f_None _ = None in
+  let rec f_exp e = match e with
+    | Mult(a1,a2,l) ->
+          begin
+            match a1 with
+              | IConst (i, _) -> f_exp a2
+              | _ -> match a2 with
+                  | IConst (i, _) -> f_exp a1
+                  | _ -> (flag := true; Some e)
+          end
+    | _ -> None
+  in
+  let f_Some x = Some x in
+  let f = (f_None, f_None, f_None, f_None, f_exp) in
+  let _ = transform_formula f e in
+  !flag
+
+let rec nonlinear_exp a = match a with
+  | Mult(a1,a2,l) ->
+        begin
+          match a1 with
+            | IConst (i, _) -> nonlinear_exp a2
+            | _ -> match a2 with
+                | IConst (i, _) ->  nonlinear_exp a1
+                | _ -> true
+        end
+  | Add (a1, a2, _) 
+  | Subtract (a1, a2, _) ->  nonlinear_exp a1 || nonlinear_exp a2
+  | _ -> false
+
+let check_nonlinear b =
+  match b with
+      Lt (a1, a2, _) 
+    | Lte (a1, a2, _) 
+    | Gt (a1, a2, _) 
+    | Gte (a1, a2, _) 
+    | Eq (a1, a2, _) 
+    | Neq (a1, a2, _) 
+    | EqMin (_,a1, a2, _) 
+    | EqMax (_,a1, a2, _) 
+        -> nonlinear_exp a1 || nonlinear_exp a2
+    | _ -> false
+
+let drop_nonlinear_formula_ops =
+  let pr_weak b = 
+    if check_nonlinear b then Some (mkTrue (pos_of_b_formula (b, None)))
+    else None in
+  let pr_strong b = 
+    if check_nonlinear b then Some (mkFalse (pos_of_b_formula (b, None)))
+    else None in
+  (pr_weak,pr_strong)
+
+let drop_nonlinear_formula_ops_rev =
+  let (pr1,pr2) = drop_nonlinear_formula_ops in
+  (pr2,pr1)
+
+let drop_nonlinear_formula (f:formula) : formula =
+  let (pr_weak,pr_strong) = drop_nonlinear_formula_ops in
+  drop_formula pr_weak pr_strong f
+
+let drop_nonlinear_formula_rev (f:formula) : formula =
+  (* let cnt = new Gen.counter 0 in *)
+  let (pr_weak,pr_strong) = drop_nonlinear_formula_ops in
+  (* let pr_weak x = cnt # inc; pr_weak x in *)
+  (* let pr_strong x = cnt # inc; pr_strong x in *)
+  let pr = !print_formula in
+  let nf = drop_formula pr_strong pr_weak f in
+  (* let c = cnt#get in *)
+  (* if (c) > 0 then *)
+  (*   let () = x_binfo_hp (add_str "non-linear detected" string_of_int) c no_pos in *)
+  (*   let () = x_binfo_hp (add_str "DROP non-linear (BFE)" pr) f no_pos in *)
+  (*   let () = x_binfo_hp (add_str "DROP non-linear (AFT)" pr) nf no_pos in *)
+    nf
+  (* else nf *)
+
+let drop_nonlinear_formula (f:formula) : formula =
+  let pr = !print_formula in
+  Debug.no_1 "drop_nonlinear_formula" pr pr drop_nonlinear_formula f
+
+let drop_nonlinear_formula_rev (f:formula) : formula =
+  let pr = !print_formula in
+  Debug.no_1 "drop_nonlinear_formula_rev" pr pr drop_nonlinear_formula_rev f
+
 let drop_rel_formula (f:formula) : formula =
   let (pr_weak,pr_strong) = drop_rel_formula_ops in
   drop_formula pr_weak pr_strong f
@@ -10737,6 +10832,310 @@ let drop_rel_formula (f:formula) : formula =
 let strong_drop_rel_formula (f:formula) : formula =
   let (pr_weak,pr_strong) = drop_rel_formula_ops in
   drop_formula pr_strong pr_weak f
+
+let find_all_nonlinear f = []
+
+let build_nl_table nl = []
+
+let replace_nonlinear f nl = f
+
+(* extract non-linear expr and replace by fresh var *)
+(* a*b>=1 |- b*a>=0   ==>   z=a*b & z>=1 |- z>=0*)
+let extr_nonlinear_formula (f:formula) : formula =
+  let nl_list = find_all_nonlinear f in
+  let nl_table = build_nl_table nl_list in
+  replace_nonlinear f nl_table
+
+let find_eq_at_toplevel e =
+  let f_f f = 
+    (match f with
+     | And _ | AndList _  | BForm _ -> None 
+     | _ -> Some [])
+  in
+  let f_bf bf = 
+    (match bf with
+     | (Eq (e1,e2,_)) ,_ -> Some ([(e1,e2)]) 
+     | _,_ -> Some ([])
+    )
+  in
+  let f_e e = Some ([]) in
+  (* let f_arg = (fun _ _ -> ()),(fun _ _ -> ()),(fun _ _ -> ()) in *)
+  (* let subs e = trans_formula e () (f_f,f_bf,f_e) f_arg List.concat in *)
+  let find_eq e = fold_formula e (f_f,f_bf,f_e) List.concat in
+  let eq_list = find_eq e in
+  eq_list
+
+let add_to_eqmap eq_list eqset =
+  (* ZH:TODO use EMapSV to build an equality map involving variable  *)
+  let eqset = List.fold_left (fun eset (e1,e2) -> 
+      (* let (p_f,bf_ann) = exp in *)
+      (* (match p_f with *)
+      (*  | Eq (e1,e2,pos) ->  *)
+         (match e1,e2 with
+          | Var(sv1,_),Var(sv2,_) -> EMapSV.add_equiv eset sv1 sv2
+          | Var(sv,_),IConst(i,_)  
+          | IConst(i,_),Var(sv,_) -> EMapSV.add_equiv eset sv (mk_sp_const i)
+          (* | IConst(i1,_),IConst(i2,_) -> EMapSV.add_equiv eset (mk_sp_const i1)(mk_sp_const i2) *)
+          | _  -> eset)
+       (* | _ -> eset) *)
+    ) eqset eq_list in eqset 
+;;
+
+let build_eqmap eq_list =
+  let eqset = EMapSV.mkEmpty in
+  add_to_eqmap eq_list eqset
+
+  (*  new processing of equality with constant propagation ..
+
+      x=a*b & b=1+2 & a=1 |- RHS
+      ===>  ([a=1], [(x,a*b);(b,1+2)])
+      ===>  ([a=1,b=3], [(x,a*1)])
+      ===>  ([a=1,b=3], [(x,3*1)])
+      ===>  ([a=1,b=3,x=3], 
+
+      x=d*b & b=1+a & a=1 |- RHS
+      ===>  ([a=1], [(x,d*b);(b,1+a)])
+      ===>  ([a=1], [(x,d*b);(b,1+1)])
+      ===>  ([a=1,b=1], [(x,d*1)])
+      ===>  ([a=1,b=1], [(x,d)])
+      ===>  ([a=1,b=1,x=d], [])
+
+      ===>  ([b=1,a=3], [(x,a*1)])
+      ===>  ([b=1,a=3], [(x,3*1)])
+      ===>  ([b=1,a=3,x=3], 
+
+  *)
+let add_to_em_set eq_list em_set =
+  let em_set = List.fold_left (fun ((em,set) as em_set) (e1,e2) -> 
+         (match e1,e2 with
+          | Var(sv1,_),Var(sv2,_) -> (EMapSV.add_equiv em sv1 sv2, set)
+          | Var(sv,_),IConst(i,_)  | IConst(i,_),Var(sv,_) -> (EMapSV.add_equiv em sv (mk_sp_const i), set)
+          | Var(sv,_),e  | e,Var(sv,_) -> (em, (sv,e)::set)
+          | _  -> em_set)
+    ) em_set eq_list in em_set 
+;;
+
+let build_eqmap_at_toplevel e =
+  let eq_list = find_eq_at_toplevel e in
+   build_eqmap eq_list
+
+let add_eqmap_at_toplevel em e =
+  let eq_list = find_eq_at_toplevel e in
+  add_to_eqmap eq_list em
+
+(* let find_eq_all e = build_eqmap_at_toplevel e *)
+(*   let f_f f =  *)
+(*     (match f with *)
+(*      | And _ | AndList _  | BForm _ -> None  *)
+(*      | _ -> Some []) *)
+(*   in *)
+(*   let f_bf bf =  *)
+(*     (match bf with *)
+(*      | (Eq _) ,_ -> Some ([bf])  *)
+(*      | _,_ -> Some ([]) *)
+(*     ) *)
+(*   in *)
+(*   let f_e e = Some ([]) in *)
+(*   (\* let f_arg = (fun _ _ -> ()),(fun _ _ -> ()),(fun _ _ -> ()) in *\) *)
+(*   (\* let subs e = trans_formula e () (f_f,f_bf,f_e) f_arg List.concat in *\) *)
+(*   let find_eq e = fold_formula e (f_f,f_bf,f_e) List.concat in *)
+(*   let eq_list = find_eq e in *)
+(*   (\* ZH:TODO use EMapSV to build an equality map involving variable  *\) *)
+(*   let eqset = EMapSV.mkEmpty in *)
+(*   let eqset = List.fold_left (fun eset exp ->  *)
+(*       let (p_f,bf_ann) = exp in *)
+(*       (match p_f with *)
+(*        | Eq (e1,e2,pos) ->  *)
+(*          (match e1,e2 with *)
+(*           | Var(sv1,_),Var(sv2,_) -> EMapSV.add_equiv eset sv1 sv2 *)
+(*           | Var(sv1,_),IConst(i2,_) -> EMapSV.add_equiv eset sv1 (mk_sp_const i2) *)
+(*           | IConst(i1,_),Var(sv2,_) -> EMapSV.add_equiv eset (mk_sp_const i1) sv2 *)
+(*           | IConst(i1,_),IConst(i2,_) -> EMapSV.add_equiv eset (mk_sp_const i1)(mk_sp_const i2) *)
+(*           | _  -> eset) *)
+(*        | _ -> eset) *)
+(*     ) eqset eq_list in eqset  *)
+(* ;; *)
+
+let find_const_sv sv =
+  match sv with
+  | SpecVar (_,str,_) ->
+    get_int_const str
+;;
+
+(* WN : Not working under negation *)
+(* (==omega.ml#631==) *)
+(* subs_const_var_formula@3 *)
+(* subs_const_var_formula inp1 : (not((a=1 & 1<=(a*b))) | 1<=b) *)
+(* subs_const_var_formula@3 EXIT: (not((a=1 & 1<=(a*b))) | 1<=b) *)
+(* a=c & c=1 & a*b>=1 |- b>=0   ==>   1*b>=1 & a=1 |- b>=0*)
+(* v1=v2 & v1=c & lhs |- (ex r=c & rhs) *)
+(* let subs_const_var_formula (f:formula) : formula = *)
+(*   let f_f a e = None in *)
+(*   let f_bf a (pf,ann) = *)
+(*     match pf with *)
+(*     | Eq (e1,e2,pos) -> *)
+(*       ( *)
+(*         match e1,e2 with *)
+(*         | Var (sv1,_), IConst (i1,_) *)
+(*         | IConst (i1,_), Var (sv1,_) -> *)
+(*           Some (pf,ann) *)
+(*         | _ -> None *)
+(*       ) *)
+(*     | _ -> None *)
+(*   in *)
+(*   let f_e a e = *)
+(*     match e with *)
+(*     | Var (sv,_) -> *)
+(*       let eqlst = EMapSV.find_equiv_all_new sv a in *)
+(*       let eqconst = *)
+(*         List.fold_left *)
+(*           (fun r item -> *)
+(*              match find_const_sv item with *)
+(*              | Some i -> Some i *)
+(*              | None -> r *)
+(*           ) None eqlst *)
+(*       in *)
+(*       ( *)
+(*         match eqconst with *)
+(*         | Some i -> Some (IConst (i,no_pos)) *)
+(*         | None -> Some e *)
+(*       ) *)
+(*     | _ -> None *)
+(*   in *)
+(*   let ff = (f_f,f_bf,f_e) in *)
+(*   let f_arg_1 a e = a in *)
+(*   let f_arg = (f_arg_1,f_arg_1,f_arg_1) in *)
+(*   let eq_map = build_eqmap_at_toplevel (\* find_eq_all *\) f in *)
+(*   let () = x_binfo_pp (EMapSV.string_of eq_map) no_pos in *)
+(*   map_formula_arg f eq_map ff f_arg *)
+
+let spec_with_const em sv l =
+  let eqlst = EMapSV.find_equiv_all_new sv em in
+  let eqconst =
+    List.fold_left
+      (fun r item ->
+         match find_const_sv item with
+         | Some i -> Some i
+         | None -> r
+      ) None eqlst
+  in
+  match eqconst with
+  | Some i -> (IConst (i,no_pos))
+  | None -> Var (sv,l)
+
+(*
+new substitute to work under negation & quantifiers
+but not implication
+
+(==omega.ml#517==)
+subs_const_var_formula@1
+subs_const_var_formula inp1 : forall(b:1<=(a*b)) & a=1
+subs_const_var_formula@1 EXIT: forall(b:1<=(1*b)) & a=1
+
+(==omega.ml#517==)
+subs_const_var_formula@2
+subs_const_var_formula inp1 : forall(a:1<=(a*b)) & a=1
+subs_const_var_formula@2 EXIT: forall(a:1<=(a*b)) & a=1
+
+(==omega.ml#517==)
+subs_const_var_formula@1
+subs_const_var_formula inp1 : 1<=(a*b) & a=1
+subs_const_var_formula@1 EXIT: 1<=(1*b) & a=1
+
+!!! **cpure.ml#11034:emap[]
+(==omega.ml#632==)
+subs_const_var_formula@2
+subs_const_var_formula inp1 : (not((a=1 & 1<=(a*b))) | 1<=b)
+subs_const_var_formula@2 EXIT: (not((a=1 & 1<=(1*b))) | 1<=b)
+
+Can we use eqmap of LHS for conseq but
+how far can we go?
+
+Fails for implication
+=====================
+!!! **cpure.ml#11034:emap[]
+(==omega.ml#632==)
+subs_const_var_formula@2
+subs_const_var_formula inp1 : (not((a=1 & 1<=b)) | 1<=(a*b))
+subs_const_var_formula@2 EXIT: (not((a=1 & 1<=b)) | 1<=(a*b))
+
+  not(x=3 & LHS) \/ RHS
+  <==>  not(x=3 & LHS) \/ RHS[x->3]
+*)
+let rec subs_const_var_formula ?(em=None) (f:formula) : formula =
+  let is_neg f = match f with
+    | Not _ -> true
+    | _ -> false in
+  let extr_neg f = match f with
+    | Not (l,_,_) -> l
+    | _ -> failwith "subs_const: expects neg here" in
+  let f_f ((sflag,em) as em_arg) e = 
+    if sflag then
+      let lst = split_disjunctions e in
+      if List.length lst <= 1 then None
+      else let (neglst,dislst) = List.partition (is_neg) lst in
+        match neglst with
+        | [] -> None
+        | lhs::rest -> 
+          let () = x_dinfo_hp (add_str "subs_const (neg)" !print_formula) lhs no_pos in
+          (* need a special case for not(LHS) \/ RHS *)
+          (* build_eqmap for LHS *)
+          (* use it as starting for RHS *)
+          let rhs = rest@dislst in
+          let f = extr_neg lhs in
+          let eqlist = find_eq_at_toplevel f in
+          let emap = em in
+          let new_em = (true,add_to_eqmap eqlist emap) in
+          let new_rhs = List.map (subs_const_var_formula ~em:(Some new_em)) rhs in
+          let new_lhs = subs_const_var_formula ~em:(Some em_arg) lhs in
+          Some (join_disjunctions (new_lhs::new_rhs))
+    else None
+  in
+  let f_bf a ((pf,ann) as f) =
+    match pf with
+    | Eq (e1,e2,pos) ->
+      begin
+        match e1,e2 with
+        | Var _, IConst _ | IConst _, Var _ | Var _, Var _
+          (* no change to the vars here *)
+          -> Some f
+        | _ -> None
+      end
+    | _ -> None
+  in
+  let f_e (_,em) e =
+    match e with
+    | Var (sv,l) -> Some(spec_with_const em sv l)
+    | _ -> None
+  in
+  let f_arg_f (start_flag,emap) e = 
+    match e with
+    | And _ | AndList _ -> 
+      if start_flag then (* add to eqmap *)
+        let eqlist = find_eq_at_toplevel e in
+        (false,add_to_eqmap eqlist emap)
+      else (* inside ; no change to eqmap *)
+        (false,emap)
+    | Or _ | Not _ ->  (* re-start *)
+      (true,emap) 
+    | Forall (v,_,_,_) | Exists (v,_,_,_) -> 
+      (* change vs_set vs-v *)
+      (true,EMapSV.elim_elems_one emap v) 
+    | BForm _ -> (false,emap)
+  in
+  let ff = (f_f,f_bf,f_e) in
+  let f_arg_1 a e = a in
+  let f_arg = (f_arg_f,f_arg_1,f_arg_1) in
+  let init_arg = match em with
+    | None -> (true,EMapSV.mkEmpty) (* build_eqmap_at_toplevel (\* find_eq_all *\) f *) 
+    | Some em -> em (* add_emap_at_toplevel em f *)
+  in
+  (* let () = x_binfo_pp ((add_str "subs_const(emap)" EMapSV.string_of) eq_map) no_pos in *)
+  map_formula_arg f init_arg ff f_arg
+
+let subs_const_var_formula (f:formula) : formula =
+  let pr = !print_formula in
+   Debug.no_1 "subs_const_var_formula" pr pr subs_const_var_formula f
 
 let drop_rel_formula (f:formula) : formula =
   let pr = !print_formula in
@@ -11596,6 +11995,7 @@ let get_eqs_rel_args p eqs rel_args pos=
     (fun _ _ -> get_eqs_rel_args_x p eqs rel_args pos) p rel_args
 
 
+
 (* check for x=y & x!=y and mark as unsat assumes that disjunctions are all split using deep_split *)
 let is_sat_eq_ineq (f : formula) : bool =
   let b =
@@ -11603,37 +12003,7 @@ let is_sat_eq_ineq (f : formula) : bool =
     if (isConstFalse f) then true
     else
       (* create a single eset for pure formula*)
-      let find_eq_all e =
-        let f_f f = 
-          (match f with
-           | And _ | AndList _  | BForm _ -> None 
-           | _ -> Some [])
-        in
-        let f_bf bf = 
-          (match bf with
-           | (Eq _) ,_ -> Some ([bf]) 
-           | _,_ -> Some ([])
-          )
-        in
-        let f_e e = Some ([]) in
-        (* let f_arg = (fun _ _ -> ()),(fun _ _ -> ()),(fun _ _ -> ()) in *)
-        (* let subs e = trans_formula e () (f_f,f_bf,f_e) f_arg List.concat in *)
-        let find_eq e = fold_formula e (f_f,f_bf,f_e) List.concat in
-        let eq_list = find_eq e in
-        let eqset = EMapSV.mkEmpty in
-        let eqset = List.fold_left (fun eset exp -> 
-            let (p_f,bf_ann) = exp in
-            (match p_f with
-             | Eq (e1,e2,pos) -> 
-               (match e1,e2 with
-                | Var(sv1,_),Var(sv2,_) -> EMapSV.add_equiv eset sv1 sv2
-                | Var(sv1,_),IConst(i2,_) -> EMapSV.add_equiv eset sv1 (mk_sp_const i2)
-                | IConst(i1,_),Var(sv2,_) -> EMapSV.add_equiv eset (mk_sp_const i1) sv2
-                | IConst(i1,_),IConst(i2,_) -> EMapSV.add_equiv eset (mk_sp_const i1)(mk_sp_const i2)
-                | _  -> eset)
-             | _ -> eset)
-          ) eqset eq_list in eqset
-      in let m_aset = find_eq_all f in
+      let m_aset = build_eqmap_at_toplevel (* find_eq_all *) f in
       let p_aset = pure_ptr_equations f in
       let p_aset = EMapSV.build_eset p_aset in
       let m_aset = EMapSV.merge_eset p_aset m_aset in

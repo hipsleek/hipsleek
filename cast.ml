@@ -574,6 +574,7 @@ let print_pure_formula = ref (fun (c:P.formula) -> "cform printer has not been i
 let print_spec_var_list = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
 let print_struc_formula = ref (fun (c:F.struc_formula) -> "cpure printer has not been initialized")
 let print_svl = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
+let print_ef_pure_disj = ref (fun (c:Excore.ef_pure_disj) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:P.spec_var) -> "cpure printer has not been initialized")
 let print_mater_prop = ref (fun (c:mater_property) -> "cast printer has not been initialized")
 let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer has not been initialized")
@@ -1315,17 +1316,72 @@ let is_lock_inv prog (name : ident) : bool =
 
 let self_param vdef = P.SpecVar (Named vdef.view_data_name, self, Unprimed) 
 
-let look_up_view_baga prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
+(* get specialized baga form *)
+let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
   let vdef = look_up_view_def no_pos prog.prog_view_decls c in
-  let ba = vdef.view_baga in
-  (* let () = x_binfo_hp (add_str "look_up_view_baga: baga= " !print_svl) ba no_pos in *)
+  (* let ba = vdef.view_baga in *)
+  (* let () = x_tinfo_hp (add_str "look_up_view_baga: baga= " !print_svl) ba no_pos in *)
+  (* Excore.ef_pure_disj option *)
+  let ba_oinv = vdef.view_baga_x_over_inv in
+  let () = x_tinfo_hp (add_str "look_up_view_baga: baga= " (pr_option !print_ef_pure_disj)) ba_oinv no_pos in
   let from_svs = (self_param vdef) :: vdef.view_vars in
   let to_svs = root :: args in
-  P.subst_var_list_avoid_capture from_svs to_svs ba
+  let baga_lst = match ba_oinv with
+    | None -> []
+    | Some bl -> 
+      (* if Excore.EPureI.is_false bl then [root,root] *)
+      (* else *)
+        let sst = List.combine from_svs to_svs in
+        List.map (Excore.EPureI.subst_epure sst) bl in
+  let () = x_tinfo_hp (add_str "baga (subst)= " ( !print_ef_pure_disj)) baga_lst no_pos in
+  let add_epure pf lst =
+    let ep = Excore.EPureI.mk_epure pf in
+    let lst = Excore.EPureI.mk_star_disj ep lst in
+    Excore.EPureI.elim_unsat_disj false lst
+  in
+  let baga_sp = (add_epure epure baga_lst) in
+  let () = x_tinfo_hp (add_str "baga (filtered)= " ( !print_ef_pure_disj)) baga_sp no_pos in
+  let r = Excore.EPureI.hull_memset baga_sp in
+  let () = x_tinfo_hp (add_str "baga (hulled)= " (!print_svl)) r no_pos in
+  if baga_sp==[] then [root;root]
+  else r
 
-let look_up_view_baga  prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
+let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
+  Debug.no_3 "get_spec_baga" !P.print_formula (fun v -> !print_svl [v]) !print_svl !print_svl 
+    (fun _ r a ->  get_spec_baga epure prog c r a) epure root args
+
+let look_up_view_baga ?(epure=None) prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
+  let vdef = look_up_view_def no_pos prog.prog_view_decls c in
+  let ba = vdef.view_baga in
+  let () = x_tinfo_hp (add_str "look_up_view_baga: baga= " !print_svl) ba no_pos in
+  (* Excore.ef_pure_disj option *)
+  let ba_oinv = vdef.view_baga_x_over_inv in
+  let () = x_tinfo_hp (add_str "look_up_view_baga: baga= " (pr_option !print_ef_pure_disj)) ba_oinv no_pos in
+  let from_svs = (self_param vdef) :: vdef.view_vars in
+  let to_svs = root :: args in
+  let baga_lst = match ba_oinv with
+    | None -> []
+    | Some bl -> 
+      let sst = List.combine from_svs to_svs in
+      List.map (Excore.EPureI.subst_epure sst) bl in
+  let () = x_tinfo_hp (add_str "baga (subst)= " ( !print_ef_pure_disj)) baga_lst no_pos in
+  let add_epure pf lst =
+      let ep = Excore.EPureI.mk_epure pf in
+      let lst = Excore.EPureI.mk_star_disj ep lst in
+      Excore.EPureI.elim_unsat_disj false lst
+  in
+  let baga_sp = match epure with
+    None -> []
+    | Some pf -> (add_epure pf baga_lst) in
+  let () = x_tinfo_hp (add_str "baga (filtered)= " ( !print_ef_pure_disj)) baga_sp no_pos in
+  (* TODO:merge baga_sp for common memset *)
+  match baga_sp with
+  [(ad,_)] -> ad
+  | _ ->  P.subst_var_list_avoid_capture from_svs to_svs ba
+
+let look_up_view_baga ?(epure=None) prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
   Debug.no_2 "look_up_view_baga" (fun v -> !print_svl [v]) !print_svl !print_svl 
-    (fun r a ->  look_up_view_baga prog c r a) root args
+    (fun r a ->  look_up_view_baga prog ~epure:epure c r a) root args
 
 let rec look_up_data_def pos (ddefs : data_decl list) (name : string) = match ddefs with
   | d :: rest -> 

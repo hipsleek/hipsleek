@@ -1143,6 +1143,8 @@ let dis_norm = ref false
 
 let dis_ln_z3 = ref false
 
+let oc_non_linear = ref true
+
 let allow_ls = ref false (*enable lockset during verification*)
 
 let allow_locklevel = ref false (*enable locklevel during verification*)
@@ -1977,14 +1979,18 @@ let fresh_int () =
   seq_number := helper (!seq_number + 1);
   !seq_number
 
-let seq_number2 = ref 0
 
-let fresh_int2 () =
-  seq_number2 := !seq_number2 + 1;
-  !seq_number2
+(* let seq_number2 = ref 0 *)
 
-let reset_int2 () =
-  seq_number2 := 0
+(* let fresh_int2 () = *)
+(*   seq_number2 := !seq_number2 + 1; *)
+(*   !seq_number2 *)
+
+(* let reset_int2 () = *)
+(*   seq_number2 := 0 *)
+
+(* let get_int2 () = *)
+(*   !seq_number2 *)
 
 (* let fresh_int () = *)
 (*   seq_number := !seq_number + 1; *)
