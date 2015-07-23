@@ -11105,7 +11105,7 @@ let rec subs_const_var_formula ?(em=None) (f:formula) : formula =
 
 let subs_const_var_formula (f:formula) : formula =
   let pr = !print_formula in
-  Debug.no_1 "subs_const_var_formula" pr pr subs_const_var_formula f
+   Debug.no_1 "subs_const_var_formula" pr pr subs_const_var_formula f
 
 let drop_rel_formula (f:formula) : formula =
   let pr = !print_formula in
