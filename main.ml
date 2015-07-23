@@ -684,7 +684,7 @@ let process_source_full source =
           let (_,exists_list) = CP.split_ex_quantifiers_rec axd.C.axiom_conclusion in
           let var_exlst = String.concat " " (List.map
                                                (fun sv -> CP.name_of_spec_var sv) exists_list) in
-          "  Axiom axiom_"^(string_of_int (Globals.fresh_int2()))
+          "  Axiom axiom_"^(string_of_int (Gen.fresh_int2()))
           ^" : forall "^var_list_string^","^
           (if (String.length var_exlst) > 0 
            then " exists "^var_exlst^","
