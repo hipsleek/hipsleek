@@ -312,8 +312,16 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
 
   (* combine various param-flow lists, reduce duplication. *)
   let is_param_flows_same (pf1:CP.param_flow list) (pf2:CP.param_flow list) : bool =
-    (* structural equality. ... which doesn't quite work for all cases. *)
-    (pf1 = pf2) in
+    (* if two pflows are the same, each exp will have same TL *)
+    let is_pflow_same p q =
+      let e1 = CP.exp_of_param_flow p in
+      let e2 = CP.exp_of_param_flow q in
+      match (e1,e2) with
+      | (Some e1,Some e2) ->
+        CP.eqExp (CP.mkIConst 0 no_pos)
+                 (Tlutils.normalize_exp (CP.mkSubtract e1 e2 no_pos))
+      | _ -> false in
+    List.for_all2 is_pflow_same pf1 pf2 in
 
   let frm_assumes = List.fold_left (fun uniq pflows ->
       if List.exists (is_param_flows_same pflows) uniq
