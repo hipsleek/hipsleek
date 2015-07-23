@@ -4,6 +4,7 @@ open Globals
 open Sleekcommons
 open Gen
 open Cformula
+open Log
 
 let smt_number = ref (0:int)
 
@@ -11,6 +12,21 @@ let subst_pred_self = ref (true: bool)
 
 let smt_self =  ("in": string)
 let pred_pre_fix_var =  ref ("?": string)
+
+type smtlogic =
+  | QF_S
+  | QF_LIA    (* quantifier free linear integer arithmetic *)
+  | QF_NIA    (* quantifier free nonlinear integer arithmetic *)
+  | AUFLIA    (* arrays, uninterpreted functions and linear integer arithmetic *)
+  | UFNIA     (* uninterpreted functions and nonlinear integer arithmetic *)
+
+let string_of_logic logic =
+  match logic with
+    | QF_S -> "QF_S"
+    | QF_LIA -> "QF_LIA"
+    | QF_NIA -> "QF_NIA"
+    | AUFLIA -> "AUFLIA"
+    | UFNIA -> "UFNIA"
 
 let smt_string_of_primed p =
   match p with
@@ -419,7 +435,8 @@ let trans_smt slk_fname iprog cprog cmds =
       | _ -> false
     ) cmds in
   let ent_cmds = !smt_ent_cmds in
-  let logic_header = 
+  (*declaration*)
+   let logic_header = 
     "(set-logic QF_S)\n" ^ 
     "(set-info :source |" ^
     "  Sleek solver\n" ^
@@ -428,11 +445,10 @@ let trans_smt slk_fname iprog cprog cmds =
     "(set-info :smt-lib-version 2.0)\n" ^
     "(set-info :category \"crafted\")\n" 
   in
-  (*declaration*)
   let decl_s0 = List.fold_left (fun s cmd -> s ^ (process_cmd cmd iprog cprog)) "" other_cmds in
   (* let decl_s = logic_header ^ decl_s0 in *)
   (*each ent check -> one file*)
-  let str_ents = List.map (fun cmd -> (process_entail_new cprog iprog 0 cmd logic_header decl_s0)) ent_cmds in
+  let str_ents = List.map (fun cmd -> (process_entail_new cprog iprog 0 cmd (logic_header) decl_s0)) ent_cmds in
   let norm_slk_fname =  Globals.norm_file_name slk_fname in
   let () = List.iter (fun s ->
       let n= fresh_number () in
@@ -443,3 +459,63 @@ let trans_smt slk_fname iprog cprog cmds =
   let () = smt_ent_cmds := [] in
   (* let () = Slk2smt1.tmp () in *)
   true
+
+module Pres_Log=
+struct
+  let pr_elt = pr_id
+  (* let pres_stk = new Gen.stack_pr pr_elt  (=) *)
+
+  (*add entry e into pres_stk*)
+  (* let add_one_query (e:string)= *)
+  (*    x_binfo_hp (add_str "add_one_query" pr_elt) e no_pos; *)
+  (*   if !Globals.gen_pres_sat then () else *)
+  (*   () *)
+
+  (* reset pres_stk*)
+  (* let reset ()= *)
+  (*   x_binfo_hp (add_str "reset" pr_id) "" no_pos; *)
+  (*   () *)
+
+  let string_of_log_type lt =
+    match lt.Log.log_type with
+      | PT_IMPLY (ante, conseq) |PT_IMPLY_TOP (ante, conseq) ->
+            let (pr_w,pr_s) = Cpure.drop_complex_ops in
+            Smtsolver.to_smt pr_w pr_s ante (Some conseq) Smtsolver.Z3
+      | PT_SAT f-> let (pr_w,pr_s) = Cpure.drop_complex_ops in
+            Smtsolver.to_smt pr_w pr_s f (None) Smtsolver.Z3
+      | PT_SIMPLIFY f -> ";Simplify"
+      | PT_HULL f -> ";Hull"
+      | PT_PAIRWISE f -> ";PairWise"
+
+  (*write e into file_name*)
+  let write_one_query (lt) file_name=
+    let e_body = string_of_log_type lt in
+    let e =  "(set-logic " ^ (string_of_logic (if !Globals.gen_pres_sat then QF_LIA else QF_S)) ^ ")\n" ^ e_body in
+    x_tinfo_hp (add_str "write_one_query" (pr_pair pr_elt pr_id)) (e, file_name) no_pos;
+    (*open to write*)
+    let full_fn = ("logs/"^file_name ^".smt2") in
+    let oc = 
+        (try Unix.mkdir "logs" 0o750 with _ -> ());
+      open_out full_fn in
+    (*write*)
+    print_string ("\nSaving " ^ full_fn ^ "\n"); flush stdout;
+    let () = Printf.fprintf  oc "%s" e in
+    (*close file*)
+    let () = close_out oc in
+    ()
+
+  (*iterate pres_stk, each entry write into a file*)
+  let log_pres_queries prefix_fn=
+    if !Globals.gen_pres_sat then
+      let lgs = (List.rev (proof_log_stk # get_stk)) in
+       let todo_unk = List.fold_left
+          (fun id log ->
+              if log.log_proving_kind !=  Others.PK_Trans_Proc then
+                let () = write_one_query log (prefix_fn ^ "-"^(string_of_int id)) in
+                (id+1)
+              else id
+          ) 0 lgs in
+       ()
+    else ()
+
+end;;

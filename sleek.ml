@@ -542,7 +542,6 @@ let _ =
     (*Long: gen smt *)
     let todo_unk = if !Globals.gen_smt then
         Slk2smt.trans_smt (List.hd !Globals.source_files) Sleekengine.iprog !Sleekengine.cprog !Slk2smt.smt_cmds else false in
-    let () = Smtsolver.Pres_Log.log_pres_queries (List.hd !Globals.source_files) in
     (* let () = print_endline "after main" in *)
     Gen.Profiling.pop_time "Overall";
     if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
@@ -606,6 +605,7 @@ let _ =
       else ()
     in
     let _= sleek_proof_log_Z3 !Globals.source_files in
+    let () = Slk2smt.Pres_Log.log_pres_queries (List.hd !Globals.source_files) in
     let _ =
       if (!Gen.profiling && not !inter) then
         ( Gen.Profiling.print_info (); print_string (Gen.Profiling.string_of_counters ())) in

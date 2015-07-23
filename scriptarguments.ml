@@ -750,6 +750,7 @@ let common_arguments = [
        Globals.sleek_gen_sat:=true
      ), "Generate check sat formula");
   ("--gen-pres", Arg.Unit (fun _ ->
+      Globals.proof_logging_txt:=true; Globals.proof_logging:=true;
       Globals.gen_pres_sat:=true
      ), "Generate Presbuger  sat pure formula");
   (* abduce pre from post *)
