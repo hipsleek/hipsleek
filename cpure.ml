@@ -3014,7 +3014,8 @@ and split_disjunctions =
   | Or (x, y, _,_) -> (split_disjunctions x) @ (split_disjunctions y)
   | z -> [z]
 
-and join_disjunctions xs = disj_of_list xs no_pos
+(* preserve order of disjunction *)
+and join_disjunctions xs = disj_of_list (List.rev xs) no_pos
 
 and no_andl  = function
   | BForm _ | And _ | Not _ | Forall _ | Exists _  -> true
@@ -10802,17 +10803,19 @@ let drop_nonlinear_formula (f:formula) : formula =
   drop_formula pr_weak pr_strong f
 
 let drop_nonlinear_formula_rev (f:formula) : formula =
-  let cnt = new Gen.counter 0 in
+  (* let cnt = new Gen.counter 0 in *)
   let (pr_weak,pr_strong) = drop_nonlinear_formula_ops in
-  let pr_weak x = cnt # inc; pr_weak x in
-  let pr_strong x = cnt # inc; pr_strong x in
+  (* let pr_weak x = cnt # inc; pr_weak x in *)
+  (* let pr_strong x = cnt # inc; pr_strong x in *)
   let pr = !print_formula in
   let nf = drop_formula pr_strong pr_weak f in
-  if (cnt#get) > 0 then
-    let () = x_binfo_hp (add_str "DROP non-linear (BFE)" pr) f no_pos in
-    let () = x_binfo_hp (add_str "DROP non-linear (AFT)" pr) nf no_pos in
+  (* let c = cnt#get in *)
+  (* if (c) > 0 then *)
+  (*   let () = x_binfo_hp (add_str "non-linear detected" string_of_int) c no_pos in *)
+  (*   let () = x_binfo_hp (add_str "DROP non-linear (BFE)" pr) f no_pos in *)
+  (*   let () = x_binfo_hp (add_str "DROP non-linear (AFT)" pr) nf no_pos in *)
     nf
-  else nf
+  (* else nf *)
 
 let drop_nonlinear_formula (f:formula) : formula =
   let pr = !print_formula in
@@ -11029,11 +11032,34 @@ subs_const_var_formula@2 EXIT: (not((a=1 & 1<=b)) | 1<=(a*b))
   not(x=3 & LHS) \/ RHS
   <==>  not(x=3 & LHS) \/ RHS[x->3]
 *)
-let subs_const_var_formula ?(em=None) (f:formula) : formula =
-  let f_f a e = None 
-    (* need a special case for not(LHS) \/ RHS *)
-    (* build_eqmap for LHS *)
-    (* use it as starting for RHS *)
+let rec subs_const_var_formula ?(em=None) (f:formula) : formula =
+  let is_neg f = match f with
+    | Not _ -> true
+    | _ -> false in
+  let extr_neg f = match f with
+    | Not (l,_,_) -> l
+    | _ -> failwith "subs_const: expects neg here" in
+  let f_f ((sflag,em) as em_arg) e = 
+    if sflag then
+      let lst = split_disjunctions e in
+      if List.length lst <= 1 then None
+      else let (neglst,dislst) = List.partition (is_neg) lst in
+        match neglst with
+        | [] -> None
+        | lhs::rest -> 
+          let () = x_dinfo_hp (add_str "subs_const (neg)" !print_formula) lhs no_pos in
+          (* need a special case for not(LHS) \/ RHS *)
+          (* build_eqmap for LHS *)
+          (* use it as starting for RHS *)
+          let rhs = rest@dislst in
+          let f = extr_neg lhs in
+          let eqlist = find_eq_at_toplevel f in
+          let emap = em in
+          let new_em = (true,add_to_eqmap eqlist emap) in
+          let new_rhs = List.map (subs_const_var_formula ~em:(Some new_em)) rhs in
+          let new_lhs = subs_const_var_formula ~em:(Some em_arg) lhs in
+          Some (join_disjunctions (new_lhs::new_rhs))
+    else None
   in
   let f_bf a ((pf,ann) as f) =
     match pf with
