@@ -1,0 +1,23 @@
+data node {
+  node next;
+}.
+
+// --eps
+
+
+pred l3a<> == 
+  self::node<q>*q::node<_>*q::node<_>
+inv self!=null.
+
+
+//(3) valid
+checkentail x::l3a<> |- false.
+expect Valid.
+
+
+/*
+# ex3.slk
+
+
+
+*/

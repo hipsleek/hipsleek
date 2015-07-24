@@ -1,0 +1,12 @@
+//Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail
+data node { int val ; node next }.
+
+pred ll_s<n> == self = null & n = 0
+	or self::node<next = r> * r::ll_s<n - 1>
+	inv n >= 0.
+
+//checkentail x::ll_s<n> |- n>=0.
+//print residue.
+
+//checkentail x::ll_s<n> & n>0 |- x!=null.
+//print residue.

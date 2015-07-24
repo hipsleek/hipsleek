@@ -1,0 +1,96 @@
+//hip_include '../prelude_aux.ss'
+//#option --ato
+relation P(int a).
+relation Q(int a,int b,int r).
+relation R(int a,int[] b,int r).
+
+infer [P,Q]  res=k & k=a' & P(a) |-  emp&Q(a,a',res).
+print residue.
+
+infer [P,R]  res=k & k=aa[4] & P(a) |-  emp&R(a,aa,res).
+print residue.
+
+/*
+# ex11d2.slk
+
+
+@2! **infer.ml#1907:rel_rhs:[ R(a,aa,res)] ### differece. For normal case, the variable can just be collected, but for array, not the array element, but the array itself is picked up.
+
+=====================================
+
+intermediate k not being picked up for aa[4]?
+
+!!! init_tp by default: 
+!!! Using z3
+infer_collect_rel
+Trace
+Starting z3... 
+
+!!! **sleekengine.ml#1125:type-table:[(res:15:int)(aa:19:int[])(a:21:int)(R:23:RelT([]))(Anon_full_perm:22:float)(P:20:RelT([]))(TVar__18:18:int)(k:16:int)(TVar__17:17:int)(TVar__16:16:int)(TVar__15:15:int)]
+!!! **sleekcore.ml#129:conseq: EBase emp&R(a,aa,res)&{FLOW,(4,5)=__norm#E}[]
+!!! **sleekcore.ml#130:fvs(conseq):[R,a,aa,res]
+!!! **sleekcore.ml#131:itype:[]
+!!! **sleekcore.ml#132:isvl:[P,R]
+WARNING: _0:0_0:0:Z3 error message: (error "line 9 column 25: invalid declaration, function 'P' (whith the given signature) already declared")
+
+WARNING: _0:0_0:0:Z3 error message: (error "line 26 column 25: invalid declaration, function 'P' (whith the given signature) already declared")
+
+@1! **infer.ml#1867:infer_vars_rel:[P,R]
+@1! **infer.ml#1868:infer_vars:[]
+@1! **infer.ml#1869:infer_vars_sel_hp_rel:[]
+@1! **infer.ml#1870:infer_vars_sel_post_hp_rel:[]
+@1! **infer.ml#1907:rel_rhs:[ R(a,aa,res)]
+@1! **infer.ml#1908:other_rhs:[]
+@1!:0: 0: **tpdispatcher.ml#1881:SAT #4
+@1!:0: 0: **tpdispatcher.ml#1882: k=aa[4] & res=k
+@1!:0: 0: **smtsolver.ml#217:f(smt): k=aa[4]
+@1!:0: 0: **smtsolver.ml#222:NONE #
+@1!:0: 0: **smtsolver.ml#217:f(smt): res=k
+@1!:0: 0: **smtsolver.ml#222:NONE #
+@1!:0: 0: **smtsolver.ml#217:f(smt): false
+@1!:0: 0: **smtsolver.ml#222:NONE #
+@1! **infer.ml#1978:lhs_p:: P(a) & k=aa[4] & res=k
+@1! **infer.ml#1979:lhs_p_memo:: memo_rel_hole_24 & k=aa[4] & res=k
+@1! **infer.ml#1980:lhs_h_p (lhs_h_mix):: true
+@1! **infer.ml#1981:lhs (after lhs_simplifier):: memo_rel_hole_24 & k=aa[4] & res=k
+@1! **infer.ml#1982:lhs_p_new (b4 filter ass):: P(a) & k=aa[4] & res=k
+@1!:0: 0: **tpdispatcher.ml#1881:SAT #7
+@1!:0: 0: **tpdispatcher.ml#1882: P(a) & k=aa[4] & res=k
+@1!:0: 0: **smtsolver.ml#217:f(smt): P(a)
+@1!:0: 0: **smtsolver.ml#222:NONE #
+@1!:0: 0: **smtsolver.ml#217:f(smt): k=aa[4]
+@1!:0: 0: **smtsolver.ml#222:NONE #
+@1!:0: 0: **smtsolver.ml#217:f(smt): res=k
+@1!:0: 0: **smtsolver.ml#222:NONE #
+@1!:0: 0: **smtsolver.ml#217:f(smt): false
+@1!:0: 0: **smtsolver.ml#222:NONE #
+WARNING: _0:0_0:0:Z3 error message: (error "line 71 column 25: invalid declaration, function 'P' (whith the given signature) already declared")
+
+@1! **infer.ml#2125:Rel Inferred (b4 pairwise)::[( P(a) & k=aa[4] & res=k) -->  R(a,aa,res)]
+@1! **infer.ml#2130:Rel Inferred (b4 wrap_exists)::[( P(a) & k=aa[4] & res=k) -->  R(a,aa,res)]
+@1! **infer.ml#2003:diff_vs:[k]
+@1! **infer.ml#2005:new_lhs (b4 elim_exists): exists(k:k=aa[4] & res=k) & P(a)
+@1! **infer.ml#2022:rel-defn:rhs: R(a,aa,res)
+@1! **infer.ml#2023:rel-defn:new lhs: exists(k:k=aa[4] & res=k) & P(a)
+@1! **infer.ml#2025:rel-defn:filter_ante lhs: exists(k:k=aa[4] & res=k) & P(a)
+@1! **infer.ml#2070:closest flow:__norm#E
+@1!:0: 0: **infer.ml#2144:>>>>>> infer_collect_rel <<<<<<
+@1! **infer.ml#2145:Infer Rel Ids:[P,R]
+@1! **infer.ml#2147:LHS pure: P(a) & k=aa[4] & res=k
+@1! **infer.ml#2148:RHS pure: R(a,aa,res)
+@1!:0: 0: **infer.ml#2150:Rel Inferred::[RELDEFN R: ( true & P(a)) -->  R(a,aa,res)]
+@1! **infer.ml#2151:RHS Rel List:[ R(a,aa,res)]
+(==cvutil.ml#1513==)
+infer_collect_rel@1
+infer_collect_rel inp1 : es_formula: emp&P(a) & k=aa[4] & res=k&{FLOW,(4,5)=__norm#E}[]
+ es_infer_vars_rel: [P; R]
+ es_final_error: None
+infer_collect_rel inp2 :[P,R]
+infer_collect_rel inp3 : true
+infer_collect_rel inp4 : P(a) & k=aa[4] & res=k
+infer_collect_rel inp5 : R(a,aa,res)
+infer_collect_rel@1 EXIT:( P(a) & k=aa[4] & res=k,2: true,3:[RELDEFN R: ( true & P(a)) -->  R(a,aa,res)],4:None,5:[])
+
+
+
+*/

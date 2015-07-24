@@ -423,7 +423,7 @@ let norm_extract_common_one_view_x iprog cprog cur_m cviews vdecl=
         let self_var2 = Cpure.SpecVar ((Named vname2), self, Unprimed) in
         let ss = [(List.hd args2, self_var2)] in
         let n_f21 = hprel_to_view f2 in
-        let n_f22 = CF.subst ss n_f21 in
+        let n_f22 = x_add CF.subst ss n_f21 in
         let n_vdecl2 = recover_view_decl vdecl vname2 (List.tl args2) vdecl.C.view_is_rec n_f22 in
         ([n_vdecl2],None)
       else
@@ -604,7 +604,7 @@ let norm_ann_seg_opz_x iprog cprog cviews=
   let check_seg_view_smt_compete vdcl=
     if !Globals.smt_compete_mode then
       let is_one_dir = try
-          let ddclr = Cast.look_up_data_def_raw cprog.Cast.prog_data_decls vdcl.Cast.view_data_name in
+          let ddclr = x_add Cast.look_up_data_def_raw cprog.Cast.prog_data_decls vdcl.Cast.view_data_name in
           let ptr_fields = List.filter (fun ((t,_),_) -> match t with
               | Named _ -> true
               | _ -> false
@@ -1049,13 +1049,12 @@ let convert_tail_vdefs_to_linear prog =
 
 (************* end CONVERT TAIL-REC to LINEAR vdef ***************)
 
-
 let imm_abs_norm_formula (f:CF.formula) prog unfold_fun : CF.formula  = 
-  Immutable.merge_alias_nodes_formula prog f [] (x_add Cvutil.xpure_heap_symbolic 13 prog) unfold_fun
+  x_add Immutable.merge_alias_nodes_formula prog f [] (x_add Cvutil.xpure_heap_symbolic 13 prog) unfold_fun
 (* Cvutil.crop_h_formula f svl *)
 
 let imm_abs_norm_struc_formula (f:CF.struc_formula) conseq prog  unfold_fun: CF.struc_formula  = 
-  Immutable.merge_alias_nodes_struc_formula prog f (x_add Cvutil.xpure_heap_symbolic 14 prog) conseq  unfold_fun
+  x_add Immutable.merge_alias_nodes_struc_formula prog f (x_add Cvutil.xpure_heap_symbolic 14 prog) conseq  unfold_fun
 (* Cvutil.crop_h_formula f svl *)
 
 let imm_norm_formula prog f unfold_fun pos = 
@@ -1063,6 +1062,14 @@ let imm_norm_formula prog f unfold_fun pos =
   let f = imm_abs_norm_formula f prog (unfold_fun prog pos) in 
   let f = if(!Globals.allow_field_ann) then Mem.compact_nodes_with_same_name_in_formula f else f in
   f
+
+let imm_norm_h_formula prog fh fp unfold_fun pos =
+  let form = CF.mkBase_simp fh fp in
+  let form = imm_norm_formula prog form unfold_fun pos in
+  match form with
+  | CF.Base b -> b.CF.formula_base_heap, b.CF.formula_base_pure
+  | _ -> let () = report_warning no_pos "could not perform alias node merge" in
+    fh,fp 
 
 let imm_norm_struc prog f (conseq: bool) unfold_fun pos = 
   (* imm_abs_norm_formula modifies f only when Globals.imm_merge is set *)

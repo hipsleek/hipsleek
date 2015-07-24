@@ -1,0 +1,42 @@
+//hip_include '../prelude_aux.ss'
+//#option --ato
+relation P(int[] a).
+relation Q(int[] a,int[] b,int r).
+
+relation update_arr(int[] a,int[] ap, int val, int i).
+
+  infer [Q] a=a' & a'[5]<=0 & res=a'[4]
+   |- Q(a,a',res).
+  print residue.
+  //inferred rel: [RELDEFN Q: ( res=a'[4] & (a'[5])<=0 & a=a') -->  Q(a,a',res)]
+
+  infer [Q,update_arr] a=a' & a'[5]>0 & update_arr(a',b,a'[5]-1,5)
+  & update_arr(b,c,b[4]+1,4) & Q(c,d,res) |- Q(a,d,res).
+  print residue.
+
+  infer [Q] a=a' & a'[5]>0 & update_arr(a',b,a'[5]-1,5)
+  & update_arr(b,c,b[4]+1,4) & Q(c,d,res) |- Q(a,d,res).
+  print residue.
+
+
+/*
+# ex12b1.slk
+
+What is the best way to handle known relation
+automatically?
+
+#1 Use a special function to identify update_rel.
+
+#2 When inferring, add them automatically into infer.
+
+#3 After that, check if certain RHS known relations are provable.
+   If so, they can be dropped. If not, we must keep them.
+
+Got:
+ inferred rel: [RELDEFN Q: ( exists(a':0<(a'[5]) & a=a') & Q(c,d,res)) -->  Q(a,d,res)]
+
+Can we have:
+ inferred rel: [RELDEFN Q: ( update_arr(b,c,1+(b[4]),4) & 0<(a[5]) & Q(c,d,res) & update_arr(a,b,-1+
+(a[5]),5)) -->  Q(a,d,res)]
+
+*/

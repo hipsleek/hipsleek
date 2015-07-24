@@ -58,6 +58,7 @@ type decl =
   | Include of string
   | Template of templ_decl
   | Ut of ut_decl
+  | Ui of ui_decl
 
 
 type member = 
@@ -122,6 +123,7 @@ let func_names = new Gen.stack (* list of names of ranking functions *)
 let rel_names = new Gen.stack (* list of names of relations declared *)
 let templ_names = new Gen.stack (* List of declared templates' names *)
 let ut_names = new Gen.stack (* List of declared unknown temporal' names *)
+let ui_names = new Gen.stack (* List of declared unknown imm rel *)
 let view_names = new Gen.stack (* list of names of views declared *)
 let hp_names = new Gen.stack (* list of names of heap preds declared *)
 (* let g_rel_defs = new Gen.stack (\* list of relations decl in views *\) *)
@@ -662,8 +664,9 @@ let peek_dc =
  let peek_view_decl = 
    SHGram.Entry.of_parser "peek_heap_args"
        (fun strm -> 
-           match Stream.npeek 2 strm with
-             | [IDENTIFIER n,_;LT,_] ->  ()
+           match Stream.npeek 3 strm with
+             | [PRED,_;IDENTIFIER n,_;LT,_] ->  ()
+             | [IDENTIFIER n,_;LT,_;_] ->  ()
              (* | [IDENTIFIER n,_;OBRACE,_] ->  () (\*This is for prim_view_decl*\) *)
              | _ -> raise Stream.Failure)
 
@@ -797,6 +800,13 @@ let peek_obrace_par =
     (fun strm ->
       match Stream.npeek 2 strm with
       | [OBRACE,_;CASE,_] -> raise Stream.Failure
+      | _ -> ())
+
+let peek_relassume =
+  SHGram.Entry.of_parser "peek_relassume"
+    (fun strm ->
+      match Stream.npeek 1 strm with
+      | [IDENTIFIER "RA",_] -> raise Stream.Failure
       | _ -> ())
 
 let get_heap_id_info (cid: ident * primed) (heap_id : (ident * int * int * Camlp4.PreCast.Loc.t)) =
@@ -949,10 +959,33 @@ hip_with_option: [[ opt =arg_option; h = hprog-> (opt,h)]];
 macro: [[`PMACRO; n=id; `EQEQ ; tc=tree_const -> if !Globals.perm=(Globals.Dperm) then Hashtbl.add !macros n tc else  report_error (get_pos 1) ("distinct share reasoning not enabled")]];
 
 command_list: [[ t = LIST0 non_empty_command_dot -> t ]];
-  
+
 command: [[ t=OPT non_empty_command_dot-> un_option t EmptyCmd]];
-    
+
 non_empty_command_dot: [[t=non_empty_command; `DOT -> t]];
+
+(* For R{..} and I{..} *)
+expect_infer_term: [[f = meta_constr -> f]];
+
+expect_infer_relassume:
+  [[ il2 = OPT cond_path; l=meta_constr; `CONSTR;r=meta_constr ->
+      (un_option il2 [], l, None,  r)
+   | il2 = OPT cond_path; l=meta_constr; `REL_GUARD; guard = meta_constr; `CONSTR;r=meta_constr ->
+      (un_option il2 [], l, Some guard,  r)
+  ]];
+
+expect_infer:
+  [[
+    `EXPECT_INFER; ty=validate_result; peek_relassume; t=id; `OBRACE; f = OPT expect_infer_term; `CBRACE ->
+       (match t with
+          | "R" -> ExpectInfer (ty, V_Residue f)
+          | "I" -> ExpectInfer (ty, V_Infer f)
+          | _ -> raise Stream.Failure)
+  | `EXPECT_INFER; ty=validate_result; t=id; `OBRACE; f = OPT expect_infer_relassume; `CBRACE ->
+       (match t with
+          | "RA" -> ExpectInfer (ty, V_RelAssume f)
+          | _ -> failwith "not possible")
+  ]];
 
 non_empty_command:
     [[  t=data_decl           -> DataDef t
@@ -973,7 +1006,7 @@ non_empty_command:
       | t= checksat_cmd     -> SatCheck t
       | t= checknondet_cmd     -> NonDetCheck t
       | t= validate_cmd     -> Validate t
-      | t=relassume_cmd     -> RelAssume t
+      | t= relassume_cmd     -> RelAssume t
       | t=reldefn_cmd     -> RelDefn t
       | t=shapeinfer_cmd     -> ShapeInfer t
       | t=shapedivide_cmd     -> ShapeDivide t
@@ -1001,13 +1034,15 @@ non_empty_command:
       | t=print_cmd           -> PrintCmd t
       | t=cmp_cmd           ->  CmpCmd t
       | t=time_cmd            -> t 
+      | t = ui_decl         -> UiDef t
       (* TermInf: Command for Termination Inference *)
       | t = templ_decl -> TemplDef t
       | t = templ_solve_cmd -> TemplSolv t
       | t = ut_decl -> UtDef t
       | t = term_infer_cmd -> TermInfer
       | t = term_assume_cmd -> TermAssume t
-      | t=macro				  -> EmptyCmd]];
+      | t = expect_infer -> t
+      | t=macro	-> EmptyCmd]];
   
 data_decl:
     [[ dh=data_header ; db = data_body 
@@ -2188,6 +2223,13 @@ cexp_w:
           Pure_c (P.mkTemplate id cl (get_pos_camlp4 _loc 1))
         else if hp_names # mem id then (* Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None)) *)
           report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
+        else if ui_names # mem_eq (fun (id1, _) (id2, _) ->  id1 = id2 ) (id, true) then 
+          begin
+            let _, is_pre = ui_names # find (fun (name,  _) -> name = id) in
+            let pos = get_pos_camlp4 _loc 1 in
+            let rel = P.RelForm (id, cl, pos) in
+            Pure_f (P.BForm ((P.ImmRel (rel, P.mkUimmAnn is_pre  (BConst (true, pos)), pos), None), None))
+          end
         else begin
           try
             let _, fname, is_pre = ut_names # find (fun (name, _, _) -> name = id) in
@@ -2197,7 +2239,7 @@ cexp_w:
             let ann = P.mkUtAnn 0 id is_pre fname (P.mkTrue pos) cl pos in
             Pure_f (P.BForm ((P.LexVar (ann, [], [], pos), None), None))
           with Not_found -> 
-            if not (rel_names # mem id) then 
+            if not (rel_names # mem id ) then 
               if not !Globals.web_compile_flag then 
                 print_endline_quiet ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
             Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
@@ -2355,6 +2397,8 @@ validate_result:
     | `FAIL -> VR_Fail 0
     | `FAIL_MUST -> VR_Fail 1
     | `FAIL_MAY -> VR_Fail (-1)
+    | `SSAT -> VR_Sat
+    | `SUNSAT -> VR_Unsat
   ]];
 validate_cmd_pair:
     [[ `VALIDATE; vr = validate_result  ->
@@ -2517,6 +2561,7 @@ shapeExtract_cmd:
 infer_type:
    [[ `INFER_AT_TERM -> INF_TERM
    | `INFER_AT_TERM_WO_POST -> INF_TERM_WO_POST
+   | `INFER_AT_FIELD_IMM -> INF_FIELD_IMM
    | `INFER_AT_PRE -> INF_PRE
    | `INFER_AT_POST -> INF_POST
    | `INFER_AT_CLASSIC -> INF_CLASSIC
@@ -2916,6 +2961,30 @@ ut_decl:
       in utdef 
   ]];
 
+(* Unknown Imm Definition *)
+ui_decl: 
+  [[ `UIPRE; `IDENTIFIER id; `OPAREN; tl= typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+      let () = ui_names # push (id, true) in
+      let () = rel_names # push id in
+      let rel = { rel_name = id; rel_typed_vars = tl;
+      rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *) } in
+      let uimmdef = { 
+        ui_rel = rel;
+        ui_is_pre = true;
+        ui_pos = get_pos_camlp4 _loc 1; } 
+      in uimmdef 
+  | `UIPOST; `IDENTIFIER id; `OPAREN; tl= typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+      let () = ui_names # push (id, false) in
+      let () = rel_names # push id in
+      let rel = { rel_name = id; rel_typed_vars = tl;
+      rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *) } in
+      let uimmdef = { 
+        ui_rel = rel;
+        ui_is_pre = false;
+        ui_pos = get_pos_camlp4 _loc 1; } 
+      in uimmdef 
+  ]];
+
 axiom_decl:[[
 	`AXIOM; lhs=pure_constr; `ESCAPE; rhs=pure_constr ->
 		{ axiom_id = fresh_int ();
@@ -2968,6 +3037,7 @@ hprogn:
       let rel_defs = new Gen.stack in(* list of relations *)
       let templ_defs = new Gen.stack in (* List of template definitions *)
       let ut_defs = new Gen.stack in (* List of unknown temporal definitions *)
+      let ui_defs = new Gen.stack in (* List of unknown temporal definitions *)
       let hp_defs = new Gen.stack in(* list of heap predicate relations *)
       let axiom_defs = ref ([] : axiom_decl list) in (* [4/10/2011] An Hoa *)
       let proc_defs = ref ([] : proc_decl list) in
@@ -2982,11 +3052,12 @@ hprogn:
             | Hopred hpdef -> hopred_defs := hpdef :: !hopred_defs
             | Barrier bdef -> barrier_defs := bdef :: !barrier_defs
           end
-	| Include incl -> include_defs := incl :: !include_defs
+        | Include incl -> include_defs := incl :: !include_defs
         | Func fdef -> func_defs # push fdef 
         | Rel rdef -> rel_defs # push rdef
         | Template tdef -> templ_defs # push tdef
         | Ut utdef -> ut_defs # push utdef
+        | Ui uidef -> ui_defs # push uidef
         | Hp hpdef -> hp_defs # push hpdef 
         | Axm adef -> axiom_defs := adef :: !axiom_defs (* An Hoa *)
         | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs
@@ -3014,7 +3085,9 @@ hprogn:
     let rel_lst = ((rel_defs # get_stk)(* @(g_rel_lst) *)) in
     let templ_lst = templ_defs # get_stk in
     let ut_lst = ut_defs # get_stk in
+    let ui_lst = ui_defs # get_stk in
     let hp_lst = hp_defs # get_stk in
+    let extra_rels = List.map (fun u -> u.Iast.ui_rel) ui_lst in 
     (* WN : how come not executed for loop2.slk? *)
     (* PURE_RELATION_OF_HEAP_PRED *)
     (* to create __pure_of_relation from hp_lst to add to rel_lst *)
@@ -3027,10 +3100,11 @@ hprogn:
     (* prog_rel_decls = [];  TODO : new field for array parsing *)
     prog_view_decls = !view_defs;
     prog_func_decls = func_defs # get_stk ;
-    prog_rel_decls = rel_lst; (* An Hoa *)
+    prog_ui_decls = ui_lst;
+    prog_rel_decls = rel_lst@extra_rels; (* An Hoa *)
     prog_rel_ids = List.map (fun x ->
         let tl,_ = List.split x.rel_typed_vars in
-        (RelT tl,x.rel_name)) (rel_lst); (* WN *)
+        (RelT tl,x.rel_name)) (rel_lst@extra_rels); (* WN *)
     prog_templ_decls = templ_lst;
     prog_ut_decls = ut_lst;
     prog_hp_decls = hp_lst ;
@@ -3056,6 +3130,7 @@ decl:
   |  r=rel_decl; `DOT -> Rel r (* An Hoa *)
   |  r=templ_decl; `DOT -> Template r
   |  r=ut_decl; `DOT -> Ut r
+  |  r=ui_decl; `DOT -> Ui r
   |  r=hp_decl; `DOT -> Hp r
   |  a=axiom_decl; `DOT -> Axm a (* [4/10/2011] An Hoa *)
   |  g=global_var_decl            -> Global_var g
@@ -3064,13 +3139,23 @@ decl:
   | `RLEMMA ; c= coercion_decl; `SEMICOLON    -> let c =  {c with coercion_kind = RLEM} in
                                                  Coercion_list { coercion_list_elems = [c];
                                                                  coercion_list_kind = RLEM}
+  | `RLEMMA ; c= coercion_decl; `DOT    -> let c =  {c with coercion_kind = RLEM} in
+                                                 Coercion_list { coercion_list_elems = [c];
+                                                                 coercion_list_kind = RLEM}
   | `LEMMA kind; c= coercion_decl; `SEMICOLON    -> 
         let k = convert_lem_kind kind in
         let c = {c with coercion_kind = k;} in
         Coercion_list
         { coercion_list_elems = [c];
           coercion_list_kind  = k}
+  | `LEMMA kind; c= coercion_decl; `DOT    -> 
+        let k = convert_lem_kind kind in
+        let c = {c with coercion_kind = k;} in
+        Coercion_list
+        { coercion_list_elems = [c];
+          coercion_list_kind  = k}
   | `LEMMA kind(* lex *); c = coercion_decl_list; `SEMICOLON    -> Coercion_list {c with (* coercion_exact = false *) coercion_list_kind = convert_lem_kind kind}
+  | `LEMMA kind(* lex *); c = coercion_decl_list; `DOT    -> Coercion_list {c with (* coercion_exact = false *) coercion_list_kind = convert_lem_kind kind}
   ]];
 
 dir_path: [[t = LIST1 file_name SEP `DIV ->
@@ -3083,12 +3168,15 @@ file_name: [[ `DOTDOT -> ".."
               | `IDENTIFIER id -> id
             ]];
 
+opt_pred:
+  [[ OPT [ x = `PRED] -> 1]];
 type_decl:
   [[ t= data_decl  -> Data t
    | t= template_data_decl  -> Data t
    | c=class_decl -> Data c
    | e=enum_decl  -> Enum e
-   | peek_view_decl; v=view_decl; `SEMICOLON -> View v
+   | peek_view_decl; o = opt_pred; v=view_decl; `SEMICOLON -> View v
+   | peek_view_decl; o = opt_pred; v=view_decl; `DOT -> View v
    | `PRED_PRIM; v = prim_view_decl; `SEMICOLON    -> View v
    | `PRED_EXT;v= view_decl_ext  ; `SEMICOLON   -> View v
    | b=barrier_decl ; `SEMICOLON   -> Barrier b
@@ -4173,16 +4261,46 @@ let parse_c_statement_spec (fname: string) (spec: string) (base_loc: file_offset
       
 let create_tnt_prim_proc id : Iast.proc_decl option =
   let proc_source = 
-    if String.compare id Globals.nondet_int_proc_name == 0 then Some (
+    if String.compare id Globals.nondet_int_proc_name == 0 then 
+      let () = rel_names # push Globals.nondet_int_rel_name in
+      Some (
+        "int " ^ Globals.nondet_int_proc_name ^ "()\n" ^
+        "  requires true\n" ^
+        "  ensures true & " ^ Globals.nondet_int_rel_name ^ "(res)" ^ ";\n")
+    else if String.compare id "__VERIFIER_error" == 0 then 
+      Some (
+        "int __VERIFIER_error()\n" ^
+        "  requires true\n" ^
+        "  ensures res = 0;\n")
+    else None
+  in map_opt (parse_c_aux_proc "tnt_prim_proc") proc_source
+
+let add_tnt_prim_proc prog id = 
+  if String.compare id Globals.nondet_int_proc_name == 0 then
+    let proc_src = 
       "int " ^ Globals.nondet_int_proc_name ^ "()\n" ^
       "  requires true\n" ^
-      "  ensures true & nondet_int__(res);\n")
-    else if String.compare id "__VERIFIER_error" == 0 then Some (
+      "  ensures true & " ^ Globals.nondet_int_rel_name ^ "(res)" ^ ";\n"
+    in
+    let nondet_rel = {
+      rel_name = nondet_int_rel_name;
+      rel_typed_vars = [(int_type, nondet_int_rel_name ^ "res")];
+      rel_formula = P.mkTrue no_pos; }
+    in
+    let () = rel_names # push Globals.nondet_int_rel_name in
+    let proc_decl = parse_c_aux_proc "tnt_prim_proc" proc_src in
+    { prog with
+      Iast.prog_rel_decls = prog.Iast.prog_rel_decls @ [nondet_rel];
+      Iast.prog_proc_decls = prog.Iast.prog_proc_decls @ [proc_decl]; }
+  else if String.compare id "__VERIFIER_error" == 0 then 
+    let proc_src =
       "int __VERIFIER_error()\n" ^
       "  requires true\n" ^
-      "  ensures res = 0;\n")
-    else None
-  in map_opt (parse_c_aux_proc "tnt_prim_proc") proc_source  
+      "  ensures res = 0;\n"
+    in
+    let proc_decl = parse_c_aux_proc "tnt_prim_proc" proc_src in
+    { prog with Iast.prog_proc_decls = prog.Iast.prog_proc_decls @ [proc_decl]; }
+  else prog
   
 let create_tnt_stdlib_proc () : Iast.proc_decl list =
   let alloca_proc =
@@ -4203,5 +4321,4 @@ let create_tnt_prim_proc_list ids : Iast.proc_decl list =
   List.concat (List.map (fun id -> 
     match (create_tnt_prim_proc id) with
     | None -> [] | Some pd -> [pd]) ids)
-
 

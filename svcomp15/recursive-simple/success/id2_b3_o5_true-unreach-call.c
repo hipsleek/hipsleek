@@ -13,14 +13,24 @@ void __error()
   ensures emp & true & flow __Error;
 */;
 
-int id(int x)
 /*@
+relation P1(int x).
+relation Q1(int x, int y).
+ */
+
+int id(int x)
+/*
   case {
   x>=0 & x<=3 -> ensures emp & res=x;
   x>3 -> ensures emp & res=3;
   x<0 -> requires Loop ensures false;
   }
  */
+/*@
+infer [P1,Q1]
+  requires P1(x) ensures Q1(x,res);
+ */
+
 {
   if (x==0) return 0;
   int ret = id2(x-1) + 1;
@@ -28,13 +38,22 @@ int id(int x)
   return ret;
 }
 
-int id2(int x)
 /*@
+relation P2(int x).
+relation Q2(int x, int y).
+ */
+
+int id2(int x)
+/*
   case {
   x>=0 & x<=3 -> ensures emp & res=x;
   x>3 -> ensures emp & res=3;
   x<0 -> requires Loop ensures false;
   }
+ */
+/*@
+infer [P2,Q2]
+  requires P2(x) ensures Q2(x,res);
  */
 {
   if (x==0) return 0;

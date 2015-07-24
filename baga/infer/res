@@ -1,0 +1,74 @@
+sll.slk
+!!! **astsimp.ml#2866:infered baga inv(sll):[([], self=null & n=0),([self], 1<=n)]
+ sll.slk delay
+!!! **astsimp.ml#2866:infered baga inv(sll):[([], self=null & n=0),([self], 1<=n)]
+
+
+dll.slk
+!!! **astsimp.ml#2866:infered baga inv(dll):[([], self=null & n=0),([self], 1<=n)]
+ dll.slk delay
+!!! **astsimp.ml#2866:infered baga inv(dll):[([], self=null & n=0),([self], 1<=n)]
+
+
+cll.slk
+!!! **astsimp.ml#2866:infered baga inv(lseg):[([], self=p & n=0),([self], 1<=n)]
+!!! **astsimp.ml#2866:infered baga inv(cll):[([], self=null & n=0),([self], n=1),([self], 2<=n)]
+ cll.slk delay
+!!! **astsimp.ml#2866:infered baga inv(lseg):[([], self=p & n=0),([self], 1<=n)]
+!!! **astsimp.ml#2866:infered baga inv(cll):[([], self=null & n=0),([self], n=1),([self], 2<=n)]
+
+
+ell.slk
+!!! **astsimp.ml#2866:infered baga inv(ell):[([], self=null & n=0),([self], 2<=n & exists(alpha:2*alpha=n))]
+ell.slk delay
+!!! **astsimp.ml#2866:infered baga inv(ell):[([], self=null & n=0),([self], 2<=n & exists(alpha:2*alpha=n))]
+
+
+oll.slk
+!!! **astsimp.ml#2866:infered baga inv(oll):[([self], exists(alpha:2*alpha=1+n) & 1<=n)]
+oll.slk delay
+!!! **astsimp.ml#2866:infered baga inv(oll):[([self], exists(alpha:2*alpha=1+n) & 1<=n)]
+
+
+sortll.slk
+!!! **astsimp.ml#2866:infered baga inv(sortll):[([self], n>=1)]
+sortll.slk delay
+!!! **astsimp.ml#2866:infered baga inv(sortll):[([self], n>=1)]
+
+
+bndll.slk
+!!! **astsimp.ml#2866:infered baga inv(bndll):[([], self=null & n=0),([self], p<u & n=1 & l<=u),([self], l<=(p-1) & n=1 & l<=u),([self], l<u & 2<=n)]
+bndll.slk delay
+!!! **astsimp.ml#2866:infered baga inv(bndll):[([], self=null & n=0),([self], p<u & n=1 & l<=u),([self], l<=(p-1) & n=1 & l<=u),([self], l<u & 2<=n)]
+
+
+lseg.slk
+!!! **astsimp.ml#2866:infered baga inv(lseg):[([], self=p & n=0),([self], 1<=n)]
+lseg.slk delay
+!!! **astsimp.ml#2866:infered baga inv(lseg):[([], self=p & n=0),([self], 1<=n)]
+
+
+btree.slk
+!!! **astsimp.ml#2866:infered baga inv(btree):[([], self=null & n=0),([self], 1<=n)]
+btree.slk delay
+!!! **astsimp.ml#2866:infered baga inv(btree):[([], self=null & n=0),([self], 1<=n)]
+
+
+bst.slk
+!!! **astsimp.ml#2866:infered baga inv(bst):[([self], lg>=sm),([], lg>=sm & self=null)]
+bst.slk delay
+!!! **astsimp.ml#2866:infered baga inv(bst):[([self], lg>=sm),([], lg>=sm & self=null)]
+
+
+rose-tree.slk
+!!! **astsimp.ml#2866:infered baga inv(dll):[([self], true),([], self=null)]
+!!! **astsimp.ml#2866:infered baga inv(treep):[([self], true)]
+rose-tree.slk delay
+!!! **astsimp.ml#2866:infered baga inv(dll):[([self], true),([], self=null)]
+!!! **astsimp.ml#2866:infered baga inv(treep):[([self], true)]
+
+
+tll.slk
+!!! **astsimp.ml#2866:infered baga inv(tll):[([ll,self], true),([self], self=ll)]
+tll.slk delay
+!!! **astsimp.ml#2866:infered baga inv(tll):[([ll,self], true),([self], self=ll)]

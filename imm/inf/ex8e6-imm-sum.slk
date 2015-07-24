@@ -1,0 +1,24 @@
+data cell{
+ int fst;
+}.
+
+checkentail c=@A+a & a=@M |- c=@A.
+print residue.
+expect Fail.
+
+checkentail c=@A+a & a=@M |- c=@M.
+print residue.
+expect Valid.
+
+/**
+
+   c  =     a     +    b
+-----------------------------
+false     a<:@L       b<:@Lx
+   v        v          @A
+   v       @A           v
+   c        v           w
+
+v&w are unconstrained vars
+
+*/

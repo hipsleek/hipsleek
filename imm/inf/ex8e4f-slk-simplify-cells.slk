@@ -1,0 +1,17 @@
+data cell{
+ int val;
+}.
+
+slk_simplify x::cell<_> * y::cell<_>.
+
+slk_simplify x::cell<_> * x::cell<_>. 
+/*
+GOT:
+Simplify  (2): x::cell<Anon_13>@M * x::cell<Anon_14>@M&{FLOW,(20,21)=__norm#E}[]
+
+should we generate false?
+*/
+
+slk_simplify x::cell<_> * y::cell<_> & x=y.
+
+slk_simplify x::cell<a> * y::cell<_> & x!=y & a>3.

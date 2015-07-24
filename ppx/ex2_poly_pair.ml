@@ -38,4 +38,4 @@ print_endline (show_tree_f t5);;
 
 print_endline (show_tree pp_point2d t1);;
 
-(* ocamlfind ocamlc -package ppx_deriving.std -o ex2 ppx/ex2_poly_pair.ml *)
+(* ocamlfind ocamlc -package ppx_deriving.std -c ex2 ppx/ex2_poly_pair.ml *)

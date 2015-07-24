@@ -246,7 +246,7 @@ let norm_free_vars f0 args=
           ) ([],[]) fr_svl
         in
         let nf0 = if ss = [] then (Base fb) else
-            subst ss (Base fb)
+            x_add subst ss (Base fb)
         in
         let () = Debug.ninfo_hprint (add_str "       nf0:" !print_formula) nf0 no_pos in
         let nf = add_quantifiers fr_svl1 nf0 in
@@ -308,7 +308,7 @@ let rec collect_baga_models_heap prog hf0=
       let from_svs = CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed) :: vdef.Cast.view_vars in
       let to_svs = p :: vs in
       let ss = List.combine from_svs to_svs in
-      let fs = List.map (fun (f,_) -> subst ss f) vdef.Cast.view_un_struc_formula in
+      let fs = List.map (fun (f,_) -> x_add subst ss f) vdef.Cast.view_un_struc_formula in
       List.fold_left (fun r f ->
           let m1 =  collect_consit_models prog f in
           let m12 = List.map (fun ls -> CP.intersect_svl ls to_svs) m1 in
@@ -1070,7 +1070,7 @@ let check_tail_rec_rec_lemma_x prog lhs rhs l_reach_dns l_reach_vns r_reach_dns 
       let rec_def_heaps = List.fold_left (fun r (f,_) ->
           let views = Cformula.get_views f in
           if List.exists (fun vn -> String.compare vn.Cformula.h_formula_view_name rvdcl.Cast.view_name = 0) views then
-            let f1 = (subst sst (elim_exists f)) in
+            let f1 = (x_add subst sst (elim_exists f)) in
             let () = Debug.ninfo_hprint (add_str "f1" !print_formula) f1 no_pos in
             let hfs = heaps_of_formula [rvn.h_formula_view_node] f1 in
             let pure = get_pure f1 in
@@ -1139,14 +1139,14 @@ let need_cycle_checkpoint_x prog lvnode lhs0 rvnode rhs0 reqset=
     (* let null_neq_svl = (get_neqNull lhs)@(get_null_svl lhs) in *)
     (* if CP.mem_svl lvnode.h_formula_view_node null_neq_svl then -1 else *)
     let () = Debug.ninfo_hprint (add_str "rhs0" !print_formula) rhs0 no_pos in
-    let rhs1 = subst (reqset) rhs0 in
+    let rhs1 = x_add subst (reqset) rhs0 in
     let ( _,mix_f,_,_,_,_) = split_components rhs1 in
     let reqs = (MCP.ptr_equations_without_null mix_f) in
     let () = Debug.ninfo_hprint (add_str "reqs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) reqs no_pos in
-    let rhs = subst (reqs) rhs1 in
+    let rhs = x_add subst (reqs) rhs1 in
     let ( _,lmf,_,_,_,_) = split_components lhs0 in
     let leqs = (MCP.ptr_equations_without_null lmf) in
-    let lhs = subst (leqs) lhs0 in
+    let lhs = x_add subst (leqs) lhs0 in
     let leqNulls = ( MCP.get_null_ptrs lmf) in
     let reqNulls = ( MCP.get_null_ptrs mix_f) in
     let is_ident = checkeq_view_node_with_null lvnode.h_formula_view_node lvnode.h_formula_view_arguments rvnode.h_formula_view_node rvnode.h_formula_view_arguments (find_close leqNulls leqs) (find_close reqNulls (reqset@reqs))  in
@@ -1256,7 +1256,7 @@ let need_cycle_checkpoint_fold_helper prog lroots lhs rroots rhs=
 
 let need_cycle_checkpoint_fold_x prog ldnode lhs0 rvnode rhs0 reqset=
   if not (!Globals.lemma_syn && is_lem_syn_in_bound() )
-     || (check_separation_unsat rhs0) || (check_separation_unsat lhs0) then -1 else
+  || (check_separation_unsat rhs0) || (check_separation_unsat lhs0) then -1 else
     (* let _, l_reach_dns,l_reach_vns = look_up_reachable_ptrs_w_alias prog lhs [ldnode.h_formula_data_node] 3 in *)
     (* let _, r_reach_dns,r_reach_vns = look_up_reachable_ptrs_w_alias prog rhs [rvnode.h_formula_view_node] 3 in *)
     (* (\* let lnlength = List.length l_reach_dns in *\) *)
@@ -1267,13 +1267,13 @@ let need_cycle_checkpoint_fold_x prog ldnode lhs0 rvnode rhs0 reqset=
     (*   1 *)
     (* else -1 *)
   if not (CP.eq_spec_var ldnode.h_formula_data_node rvnode.h_formula_view_node) then -1 else
-    let rhs1 = subst (reqset) rhs0 in
+    let rhs1 = x_add subst (reqset) rhs0 in
     let ( _,mix_f,_,_,_,_) = split_components rhs1 in
     let eqs = (MCP.ptr_equations_without_null mix_f) in
     let ( _,lmf,_,_,_,_) = split_components lhs0 in
     let leqs = (MCP.ptr_equations_without_null lmf) in
-    let rhs = subst (leqs@eqs) rhs1 in
-    let lhs = subst (leqs) lhs0 in
+    let rhs = x_add subst (leqs@eqs) rhs1 in
+    let lhs = x_add subst (leqs) lhs0 in
     let _, l_hvs,_ = Cformula.get_hp_rel_formula lhs in
     let is_same,_ = Checkeq.checkeq_formulas [(CP.name_of_spec_var ldnode.h_formula_data_node)] lhs rhs in
     if is_same then -1 else
@@ -1305,10 +1305,10 @@ let is_seg_fold_form_helper prog lroot largs lhs0 rroot rargs rhs0 remap conseq_
     ((List.exists (fun hd -> CP.intersect_svl cl_sv hd.h_formula_data_arguments != []) hds)
      || List.exists (fun hv -> CP.intersect_svl cl_sv hv.h_formula_view_arguments != []) hvs)
   in
-  let rhs1 = subst (remap) rhs0 in
+  let rhs1 = x_add subst (remap) rhs0 in
   let ( _,mix_f,_,_,_,_) = split_components rhs1 in
   let eqs = (MCP.ptr_equations_without_null mix_f) in
-  let rhs = subst (eqs) rhs1 in
+  let rhs = x_add subst (eqs) rhs1 in
   let reqNulls0 = find_close (MCP.get_null_ptrs mix_f) eqs in
   let extra_reqNulls = match conseq_pure_opt with
     | None -> []
@@ -1317,7 +1317,7 @@ let is_seg_fold_form_helper prog lroot largs lhs0 rroot rargs rhs0 remap conseq_
   let reqNulls = reqNulls0@extra_reqNulls in
   let ( _,lmf,_,_,_,_) = split_components lhs0 in
   let leqs = (MCP.ptr_equations_without_null lmf) in
-  let lhs = subst (leqs) lhs0 in
+  let lhs = x_add subst (leqs) lhs0 in
   let leqNulls = find_close (MCP.get_null_ptrs lmf) leqs in
   if is_full_match leqNulls reqNulls leqs (remap@eqs) then false
   else
@@ -1407,7 +1407,7 @@ let is_seg_view_br_fold_form_x prog ldnode lhs0 rvnode rhs0 remap conseq_pure_op
         if List.exists (fun dn -> CP.eq_spec_var self_sv dn.h_formula_data_node) dns then
           let f1 = elim_exists f in
           let _,new_f = split_quantifiers f1 in
-          let f2 = subst sst new_f in
+          let f2 = x_add subst sst new_f in
           let f3 = formula_of_heap (join_star_conjunctions (heap_of f2)) (pos_of_formula f) in
           let (r,diffs) = Checkeq.checkeq_formulas_with_diff_mt ivars ([],[]) lhs f3 init_mtl in
           if r then true else
@@ -1569,7 +1569,7 @@ let seg_fold_view_br_x prog ldnode rvnode ante conseq rhs_b=
         (* let f12 = Cformula.force_elim_exists new_f quans in *)
         (* let () = Debug.ninfo_hprint (add_str "f12" (!print_formula)) f12 no_pos in *)
         let f2 = formula_of_heap (join_star_conjunctions (heap_of new_f)) (pos_of_formula f) in
-        r@[(subst sst f2)]
+        r@[(x_add subst sst f2)]
       else r
     ) [] vdecl.Cast.view_un_struc_formula in
   let ivars = [(CP.name_of_spec_var rvnode.h_formula_view_node)] in
@@ -1652,14 +1652,14 @@ let seg_fold_view_br prog ldnode rvnode ante conseq rhs_b=
 
 let need_cycle_checkpoint_unfold_x prog lvnode lhs0 rdnode rhs0 reqset=
   if not (!Globals.lemma_syn && is_lem_syn_in_bound() )
-     || (check_separation_unsat rhs0) || (check_separation_unsat lhs0)  then -1 else
-    let rhs1 = subst (reqset) rhs0 in
+  || (check_separation_unsat rhs0) || (check_separation_unsat lhs0)  then -1 else
+    let rhs1 = x_add subst (reqset) rhs0 in
     let ( _,mix_f,_,_,_,_) = split_components rhs1 in
     let eqs = (MCP.ptr_equations_without_null mix_f) in
-    let rhs = subst (eqs) rhs1 in
+    let rhs = x_add subst (eqs) rhs1 in
     let ( _,lmf,_,_,_,_) = split_components lhs0 in
     let leqs = (MCP.ptr_equations_without_null lmf) in
-    let lhs = subst (leqs) lhs0 in
+    let lhs = x_add subst (leqs) lhs0 in
     let is_same,_ = Checkeq.checkeq_formulas [(CP.name_of_spec_var lvnode.h_formula_view_node)] lhs rhs in
     if is_same then -1 else
       let _, l_reach_dns,l_reach_vns = look_up_reachable_ptrs_w_alias prog lhs [lvnode.h_formula_view_node] 3 in

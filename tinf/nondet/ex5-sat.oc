@@ -1,0 +1,38 @@
+{[x,tx,z]: exists(v_nd: 0<=x & x<=(tx+z) &
+  (v_nd+1)>0 & ((0>v_nd | (x+z)>v_nd)))};
+
+
+{[x,tx,z]: exists(v_nd: 
+  (v_nd+1)>0 & ((0>v_nd | (x+z)>v_nd)))};
+  
+{[x,y,z,tx]: exists(v_nd, v_nd_1:
+  ((v_nd<=0 & v_nd_1<=(-1+x+z)) | 
+  ((x+z)<=v_nd_1 & x<=(tx+z) & v_nd<=0 & y<=x) | 
+  (y<=v_nd_1 & x<=(tx+z) & 1<=v_nd & v_nd_1<=(-1+x+z)))
+)
+};
+
+{[x,y,z,tx]: exists(v_nd, v_nd_1:
+  ((v_nd<=0) | 
+  (y<=v_nd_1 & x<=(tx+z) & 1<=v_nd & v_nd_1<=(-1+x+z)))
+)
+};
+
+{[x,y,z,tx]: exists(v_nd, v_nd_1:
+  (v_nd<=0 & v_nd_1<=(-1+x+z))
+)
+};
+
+{[x,y,z,tx]: exists(v_nd, v_nd_1:
+  ((x+z)<=v_nd_1 & x<=(tx+z) & v_nd<=0 & y<=x)
+)
+};
+
+{[x,y,z,tx]: exists(v_nd, v_nd_1:
+  (y<=v_nd_1 & x<=(tx+z) & 1<=v_nd & v_nd_1<=(-1+x+z))
+)
+};
+
+
+
+

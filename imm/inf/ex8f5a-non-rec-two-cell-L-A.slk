@@ -1,0 +1,14 @@
+data cell{
+ int fst;
+}.
+
+relation Pimm(ann v1,ann v2).
+relation P(ann v1,ann v2).
+  relation Q(ann v1,ann v2,ann v3,ann v4).
+
+infer [Pimm,Q] x::cell<v>@a * y::cell<w>@c&v_bool_13_1472' & n'<0 & Pimm(a,c) & y'=y & x'=x & 
+n'=n & a<:@L & v_int_13_1471'=v & res=v_int_13_1471'
+ |-  (exists b_1483,d_1484: x::cell<v_1481>@b_1483 * y::cell<w_1482>@d_1484&
+Q(a,c,b_1483,d_1484) & v_1481=v & w_1482=w).
+
+print residue.

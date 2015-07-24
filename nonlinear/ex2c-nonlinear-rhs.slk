@@ -1,0 +1,25 @@
+// non-linear RHS is harder to handle..
+
+checkentail true |- (exists b: 0<=b*a<=1).
+print residue.
+// fail?
+
+/*
+# ex2b.slk -tp oc -dre ".*nonlinear"
+
+checkentail true |- (exists b: 0<b*a<=1).
+
+(==omega.ml#520==)
+drop_nonlinear_formula@24
+drop_nonlinear_formula inp1 : not(exists(b_33:(b_33*a)<=1 & 0<(b_33*a)))
+drop_nonlinear_formula@24 EXIT: not(exists(b_33:false & false))
+
+checkentail true |- (exists b: b*a>=0).
+print residue.
+// valid?
+
+checkentail true |- (exists b: 0<=b*a<=1).
+print residue.
+// valid?
+
+*/

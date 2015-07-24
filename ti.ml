@@ -47,7 +47,7 @@ let merge_trrels rec_trrels =
   merge_trrels
 
 let solve_rec_trrel rtr conds = 
-  let rec_cond = simplify 4 rtr.ret_ctx rtr.termr_rhs_params in
+  let rec_cond = x_add simplify rtr.ret_ctx rtr.termr_rhs_params in
   let rec_cond =
     if CP.is_disjunct rec_cond
     then pairwisecheck rec_cond
@@ -78,7 +78,7 @@ let solve_rec_trrel rtr conds =
   else conds 
 
 let solve_base_trrel btr turels =
-  let base_cond = simplify 5 btr.ret_ctx btr.termr_rhs_params in
+  let base_cond = x_add simplify btr.ret_ctx btr.termr_rhs_params in
   let base_cond =
     if CP.is_disjunct base_cond
     then pairwisecheck base_cond
@@ -91,9 +91,9 @@ let solve_base_trrel btr turels =
 
 let solve_base_trrels params base_trrels turels =
   let base_ctx = List.map (fun btr ->
-      simplify 7 btr.ret_ctx btr.termr_rhs_params) base_trrels in
+      x_add simplify btr.ret_ctx btr.termr_rhs_params) base_trrels in
   let not_term_cond = List.fold_left (fun ac tu ->
-      let ctx = simplify 9 tu.call_ctx params in
+      let ctx = x_add simplify tu.call_ctx params in
       (* let () = print_endline_quiet ("ctx: " ^ (!CP.print_formula ctx)) in *)
       mkOr ac ctx) (CP.mkFalse no_pos) turels in
   let not_term_cond = om_simplify not_term_cond in
@@ -144,7 +144,7 @@ let solve_trrel_list params trrels turels =
   (* let () = print_endline_quiet ("not_rec_cond: " ^ (!CP.print_formula not_rec_cond)) in *)
 
   let rec_conds = List.fold_left (fun acc rtr ->
-      let rec_cond = simplify 4 rtr.ret_ctx ((* remove_nondet_vars *) rtr.termr_rhs_params) in
+      let rec_cond = x_add simplify rtr.ret_ctx ((* remove_nondet_vars *) rtr.termr_rhs_params) in
       let rec_cond =
         if CP.is_disjunct rec_cond
         then pairwisecheck rec_cond
@@ -157,7 +157,7 @@ let solve_trrel_list params trrels turels =
   let loop_conds = List.fold_left (fun acc tu ->
       match tu.termu_rhs with
       | Loop _ ->
-        let loop_cond = simplify 10 tu.call_ctx params in
+        let loop_cond = x_add simplify tu.call_ctx params in
         let loop_cond = mkAnd loop_cond (mkNot not_rec_cond) in
         if is_sat loop_cond then acc @ [loop_cond] else acc
       | _ -> acc) [] turels 
@@ -179,7 +179,7 @@ let solve_trrel_list params trrels turels =
   (* else conds                                                                   *)
   let rem_cond = om_simplify (mkNot (join_disjs (List.map get_cond conds))) in
   let pre_cond = CP.join_conjunctions (List.fold_left (fun acc tu ->
-      let cond = simplify 11 tu.call_ctx params in
+      let cond = x_add simplify tu.call_ctx params in
       acc @ [cond]) [] turels) in
   let unk_cond = om_simplify (mkAnd pre_cond rem_cond) in
   let may_cond = om_simplify (mkAnd rem_cond (mkNot unk_cond)) in 
@@ -191,19 +191,27 @@ let solve_trrel_list params trrels turels =
 (* let conds = List.concat (List.map split_disj_trrel_sol conds) in *)
 (* conds                                                            *)
 
+let pr_cond_w_ids f =
+  let pr_cond (i, c) = "[" ^ (string_of_int i) ^ "]" ^ (print_trrel_sol c) in 
+  (pr_list (fun ((fn, _), s) -> 
+      "\t" ^ (if fn = "" then "" else fn ^ ": ") ^ 
+          (pr_list pr_cond s) ^ "\n")) f
+
 let case_split_init prog trrels turels = 
   let fn_rels = partition_trels_by_proc trrels turels in
   let fn_cond_w_ids = List.map (fun (fn, trrels, turels) ->
       let params = snd fn in
       (fn, List.map (fun c -> tnt_fresh_int (), c) (solve_trrel_list params trrels turels))) fn_rels in
   let () = 
-    let pr_cond (i, c) = "[" ^ (string_of_int i) ^ "]" ^ (print_trrel_sol c) in 
     print_endline_quiet ("\nBase/Rec Case Splitting:\n" ^ 
-                         (pr_list (fun ((fn, _), s) -> 
-                              "\t" ^ (if fn = "" then "" else fn ^ ": ") ^ 
-                              (pr_list pr_cond s) ^ "\n") fn_cond_w_ids))
+                         (pr_cond_w_ids fn_cond_w_ids))
   in fn_cond_w_ids 
 
+let case_split_init prog trrels turels = 
+  Debug.no_2 "case_split_init" 
+      pr_none pr_none pr_cond_w_ids 
+      (fun _ _ -> case_split_init prog trrels turels) trrels turels
+  
 (*****************************)
 (* Temporal Relation at Call *)
 (*****************************)
@@ -301,10 +309,11 @@ let solve_turel_one_unknown_scc prog trrels tg scc =
       then update_ann scc (subst (CP.Term, [CP.mkIConst (scc_fresh_int ()) no_pos]))
       else
         try
+          (* Loop with nondet *)
           let nd_trrel = List.find (fun rel -> CP.has_nondet_cond rel.ret_ctx) trrels in
           let nd_pos = nd_trrel.termr_pos in
-          update_ann scc (subst (CP.MayLoop (Some { CP.tcex_trace = [CP.TCall nd_pos] }), [])) (* Loop with nondet *)
-        with _ -> 
+          update_ann scc (subst (CP.MayLoop (Some { CP.tcex_trace = [CP.TCall nd_pos] }), []))
+        with _ ->
           (* update_ann scc (subst (CP.Loop None, [])) (* Loop without nondet *) *)
           proving_non_termination_scc prog trrels tg scc
 
@@ -320,7 +329,7 @@ let solve_turel_one_unknown_scc prog trrels tg scc =
     else if List.for_all (fun (_, v) -> CP.is_Term v) outside_scc_succ then
       if is_acyclic_scc tg scc 
       then update_ann scc (subst (CP.Term, [CP.mkIConst (scc_fresh_int ()) no_pos])) (* Term *)
-      else aux_solve_turel_one_scc prog trrels tg scc
+      else proving_termination_scc prog trrels tg scc
 
     else if (List.exists (fun (_, v) -> CP.is_Loop v) outside_scc_succ)
     then proving_non_termination_scc prog trrels tg scc
@@ -395,10 +404,12 @@ and solve_turel_graph_one_group iter_num prog trrels tg scc_list =
       (*   print_endline_quiet (print_graph_by_rel tg)                       *)
       (* in                                                                  *)
       (* let () = print_endline_quiet (print_scc_list_num scc_list) in       *)
-      let tg = List.fold_left (fun tg -> solve_turel_one_scc prog trrels tg) tg scc_list in
+      let tg = List.fold_left (fun tg scc -> 
+          try solve_turel_one_scc prog trrels tg scc
+          with Should_Finalize -> tg) tg scc_list in
       ()
     with
-    | Restart_with_Cond tg -> solve_turel_graph (iter_num + 1) prog trrels tg
+    | Restart_with_Cond (_, tg) -> solve_turel_graph (iter_num + 1) prog trrels tg
     | _ -> ()
   else ()
 
@@ -407,8 +418,9 @@ let solve_turel_graph_init prog trrels tg =
   finalize_turel_graph prog tg
 
 let solve_trel_init prog trrels turels =
-  (* Transform nondet relations into vars *)
-  let trrels, turels = trans_nondet_trels prog trrels turels in
+  (* (* Transform nondet relations into vars *)                       *)
+  (* Unsound: termination-crafted/NonTermination2_false-termination.c *)
+  (* let trrels, turels = trans_nondet_trels prog trrels turels in    *)
   let fn_cond_w_ids = case_split_init prog trrels turels in 
   (* Update TNT case spec with base condition *)
   let () = List.iter (add_case_spec_of_trrel_sol_proc prog)
@@ -445,8 +457,7 @@ let solve no_verification_errors should_infer_tnt prog =
   if turels = [] && trrels = [] then 
     x_tinfo_pp ("\n\n!!! Termination Inference is not performed due to empty set of relational assumptions.\n\n") no_pos
   else if not no_verification_errors then
-    let () = x_tinfo_pp ("\n\n!!! Termination Inference is not performed due to errors in verification process.\n\n") no_pos in
-    ()
+    x_tinfo_pp ("\n\n!!! Termination Inference is not performed due to errors in verification process.\n\n") no_pos
   else if not should_infer_tnt then ()
   else
     let () = print_endline_quiet "\n\n*****************************" in

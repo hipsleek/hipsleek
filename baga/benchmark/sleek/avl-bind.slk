@@ -1,0 +1,2091 @@
+data node {
+  int val;
+  int height;
+  node left;
+  node right;
+}.
+ pred avl<m:int,n:int> == 
+  emp&self=null & m=0 & n=0 or
+(exists n_33: self::node<Anon_14,n_33,p,q> * 
+  p::avl{}<m1,n1> * q::avl{}<m2,n2>&m=m2+1+m1 & (0+n2)<=(n1+1) & n1<=(1+
+  n2) & exists(max_31:n=1+max_31 & max_31=max(n1,n2)) & n_33=n)
+  inv 0<=m & 0<=n.
+
+/*
+// id: 0; line: 12; kind: Pred_Check_Inv
+ checkentail emp&((self=null & m=0 & n=0) | (1<=n & 1<=m & self!=null))
+ |-  emp&0<=n & 0<=m.
+expect Valid.
+
+// id: 1; line: 12; kind: Pred_Check_Inv
+ checkentail emp&((self=null & m=0 & n=0) | (1<=n & 1<=m & self!=null))
+ |-  emp&0<=n & 0<=m.
+expect Valid.
+*/
+
+// id: 2; line: 136; kind: BIND
+ checkentail (exists n1,Anon,p,m1,n2,q,m2,n3,nx1: x'::node<Anon,n1,p,q> * 
+p::avl{}<m1,n2> * q::avl{}<m2,n3> * y::avl{}<my,nx1> & mx=m2+1+
+m1 & (0+n3)<=(n2+1) & n2<=(1+n3) & exists(max_31:nx=1+max_31 & max_31=max(n2,
+n3)) & n1=nx & x'=x & y'=y & x!=null & nx1=nx & v'=0)
+ |-  x'::node<val',height',left',right'>@L.
+expect Valid.
+ 
+// id: 4; line: 137; kind: PRE
+ checkentail x'::node<Anon1,n6,p1,q1> * p1::avl{}<m4,n4> * q1::avl{}<m3,n5> * 
+y::avl{}<my,nx2> & v1'=1 & tmp'=n6 & mx=m3+1+m4 & (0+n5)<=(n4+1) & 
+n4<=(1+n5) & exists(max_31:nx=1+max_31 & max_31=max(n4,n5)) & n6=nx & x'=x & 
+y'=y & x!=null & nx2=nx & v'=0
+ |-  htrue.
+expect Valid.
+ 
+// id: 5; line: 137; kind: PRE
+ checkentail x'::node<Anon1,n6,p1,q1> * p1::avl{}<m4,n4> * q1::avl{}<m3,n5> * 
+y::avl{}<my,nx2> & v1'=1 & tmp'=n6 & mx=m3+1+m4 & (0+n5)<=(n4+1) & 
+n4<=(1+n5) & exists(max_31:nx=1+max_31 & max_31=max(n4,n5)) & n6=nx & x'=x & 
+y'=y & x!=null & nx2=nx & v'=0
+ |-  emp.
+expect Valid.
+ 
+// id: 6; line: 0; kind: POST
+ checkentail (exists v',tmp': x'::node<Anon1,n6,p1,q1> * p1::avl{}<m4,n4> * 
+q1::avl{}<m3,n5> * y::avl{}<my,nx2> * v2'::node<v',tmp',x',y'> & 
+v'=0 & nx2=nx & x!=null & y'=y & x'=x & n6=nx & exists(max_31:nx=1+max_31 & 
+max_31=max(n4,n5)) & n4<=(1+n5) & (0+n5)<=(n4+1) & mx=m3+1+m4 & tmp=n6 & 
+tmp'=1+tmp & res=v2')
+ |-  (exists flted,flted1: res::avl{}<flted1,flted>&flted=nx+1 & flted1=my+1+
+mx & 0<=my & 0<=nx & 0<=mx & exists(nx_79:0<=nx_79)).
+expect Valid.
+ 
+// id: 18; line: 149; kind: BIND
+ checkentail (exists ny1: y::avl{}<my,ny> * z::avl{}<mz,ny1> * 
+x::node<Anon2,Anon3,Anon4,Anon5> & x'=x & y'=y & z'=z & y!=null & 
+ny1=ny)
+ |-  x'::node<val1',height1',left1',right1'>.
+expect Valid.
+ 
+// id: 20; line: 150; kind: BIND
+ checkentail y::avl{}<my,ny> * z::avl{}<mz,ny2> * x'::node<Anon2,Anon3,y',Anon5>&
+MayLoop[] & left=Anon4 & x'=x & y'=y & z'=z & y!=null & ny2=ny
+ |-  x'::node<val2',height2',left2',right2'>.
+expect Valid.
+ 
+// id: 22; line: 151; kind: BIND
+ checkentail (exists n7,Anon6,p2,m5,n8,q2,m6,n9: y'::node<Anon6,n7,p2,q2> * 
+p2::avl{}<m5,n8> * q2::avl{}<m6,n9> * z::avl{}<mz,ny2> * 
+x'::node<Anon2,Anon3,y',z'> & right=Anon5 & left=Anon4 & x'=x & 
+y'=y & z'=z & y!=null & ny2=ny & n7=ny & exists(max_31:ny=1+max_31 & 
+max_31=max(n8,n9)) & n8<=(1+n9) & (0+n9)<=(n8+1) & my=m6+1+m5)
+ |-  y'::node<val3',height3',left3',right3'>@L.
+expect Valid.
+ 
+// id: 24; line: 151; kind: PRE
+ checkentail y'::node<Anon7,n10,p3,q3> * p3::avl{}<m8,n12> * q3::avl{}<m7,n11> * 
+z::avl{}<mz,ny2> * x'::node<Anon2,Anon3,y',z'> & v3'=1 & v4'=n10 & 
+right=Anon5 & left=Anon4 & x'=x & y'=y & z'=z & y!=null & ny2=ny & n10=ny & 
+exists(max_31:ny=1+max_31 & max_31=max(n12,n11)) & n12<=(1+n11) & (0+
+n11)<=(n12+1) & my=m7+1+m8
+ |-  htrue.
+expect Valid.
+ 
+// id: 25; line: 151; kind: PRE
+ checkentail y'::node<Anon7,n10,p3,q3> * p3::avl{}<m8,n12> * q3::avl{}<m7,n11> * 
+z::avl{}<mz,ny2> * x'::node<Anon2,Anon3,y',z'> & v3'=1 & v4'=n10 & 
+right=Anon5 & left=Anon4 & x'=x & y'=y & z'=z & y!=null & ny2=ny & n10=ny & 
+exists(max_31:ny=1+max_31 & max_31=max(n12,n11)) & n12<=(1+n11) & (0+
+n11)<=(n12+1) & my=m7+1+m8
+ |-  emp.
+expect Valid.
+ 
+// id: 26; line: 151; kind: BIND
+ checkentail y'::node<Anon7,n10,p3,q3> * p3::avl{}<m8,n12> * q3::avl{}<m7,n11> * 
+z::avl{}<mz,ny2> * x'::node<Anon2,Anon3,y',z'> & v5'=1+n10 & 
+right=Anon5 & left=Anon4 & x'=x & y'=y & z'=z & y!=null & ny2=ny & n10=ny & 
+exists(max_31:ny=1+max_31 & max_31=max(n12,n11)) & n12<=(1+n11) & (0+
+n11)<=(n12+1) & my=m7+1+m8
+ |-  x'::node<val4',height4',left4',right4'>.
+expect Valid.
+ 
+// id: 28; line: 0; kind: POST
+ checkentail (exists v5': y'::node<Anon7,n10,p3,q3> * p3::avl{}<m8,n12> * 
+q3::avl{}<m7,n11> * z::avl{}<mz,ny2> * x'::node<Anon2,v5',y',z'> & 
+height=Anon3 & v5'=1+n10 & right=Anon5 & left=Anon4 & x'=x & y'=y & z'=z & 
+y!=null & ny2=ny & n10=ny & exists(max_31:ny=1+max_31 & max_31=max(n12,
+n11)) & n12<=(1+n11) & (0+n11)<=(n12+1) & my=m7+1+m8)
+ |-  (exists flted2,flted3: x::avl{}<flted3,flted2>&flted2=ny+1 & flted3=mz+1+
+my & 0<=mz & 0<=ny & 0<=my & exists(ny_70:0<=ny_70)).
+expect Valid.
+
+/*
+// id: 40; line: 68; kind: PRE
+ checkentail htrue & b'<=a' & b'=b & a'=a
+ |-  emp.
+expect Valid.
+
+// id: 41; line: 68; kind: PRE
+ checkentail htrue & a'<b' & b'=b & a'=a
+ |-  emp.
+expect Valid.
+
+// id: 42; line: 0; kind: POST
+ checkentail htrue & res=a' & a'=a & b'=b & b'<=a' & v6'
+ |-  emp&res=max(a,b).
+expect Valid.
+
+// id: 43; line: 0; kind: POST
+ checkentail htrue & res=b' & a'=a & b'=b & a'<b' & !(v6')
+ |-  emp&res=max(a,b).
+expect Valid.
+*/
+
+// id: 44; line: 23; kind: PRE
+ checkentail x::avl{}<m,n> & x'=null & x'=x
+ |-  htrue.
+expect Valid.
+
+// id: 45; line: 23; kind: PRE
+ checkentail x::avl{}<m,n> & x'=null & x'=x
+ |-  emp.
+expect Valid.
+
+/*
+// id: 46; line: 23; kind: PRE
+ checkentail x::avl{}<m,n> & x'!=null & x'=x
+ |-  htrue.
+expect Valid.
+
+// id: 47; line: 23; kind: PRE
+ checkentail x::avl{}<m,n> & x'!=null & x'=x
+ |-  emp.
+expect Valid.
+*/
+
+// id: 48; line: 26; kind: BIND
+ checkentail (exists n13,Anon8,p4,m9,n14,q4,m10,n15: x'::node<Anon8,n13,p4,q4> * 
+p4::avl{}<m9,n14> * q4::avl{}<m10,n15> & x'=x & x'!=null & 
+!(v7') & n13=n & exists(max_31:n=1+max_31 & max_31=max(n14,n15)) & n14<=(1+
+n15) & (0+n15)<=(n14+1) & m=m10+1+m9)
+ |-  x'::node<val5',height5',left5',right5'>@L.
+expect Valid.
+
+// id: 50; line: 0; kind: POST
+ checkentail x::avl{}<m,n> & res=v8' & v8'=0 & x'=x & x'=null & v7'
+ |-  (exists m11,n16: x::avl{}<m11,n16>&n16=n & m11=m & res=n & 0<=n & 0<=m).
+expect Valid.
+
+// id: 54; line: 0; kind: POST
+ checkentail x'::node<Anon9,n17,p5,q5> * p5::avl{}<m13,n19> * q5::avl{}<m12,n18>&
+MayLoop[] & res=v9' & v9'=n17 & x'=x & x'!=null & !(v7') & n17=n & 
+exists(max_31:n=1+max_31 & max_31=max(n19,n18)) & n19<=(1+n18) & (0+
+n18)<=(n19+1) & m=m12+1+m13
+ |-  (exists m11,n16: x::avl{}<m11,n16>&n16=n & m11=m & res=n & 0<=n & 0<=m).
+expect Valid.
+
+// id: 61; line: 86; kind: PRE
+ checkentail (exists an1: a::avl{}<am,an> * b::avl{}<bm,bn> * c::avl{}<cm,cn> * 
+d::avl{}<dm,an1> & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & 
+v3'=v3 & an=max(bn,cn) & (0+cn)<=(bn+1) & bn<=(1+cn) & an1=an)
+ |-  a'::avl{}<m,n>.
+expect Valid.
+
+// id: 63; line: 86; kind: PRE
+ checkentail b::avl{}<bm,bn> * c::avl{}<cm,cn> * d::avl{}<dm,an2> & n=an & 
+m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,
+cn) & (0+cn)<=(bn+1) & bn<=(1+cn) & an2=an
+ |-  emp.
+expect Valid.
+
+// id: 64; line: 86; kind: PRE
+ checkentail b::avl{}<bm,bn> * c::avl{}<cm,cn> * d::avl{}<dm,an2> * a'::avl{}<m,n>&
+MayLoop[] & 0<=n & 0<=m & v10'=n & 0<=an & 0<=am & n=an & m=am & a'=a & 
+b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+cn)<=(bn+
+1) & bn<=(1+cn) & an2=an
+ |-  b'::avl{}<m14,n20>.
+expect Valid.
+
+// id: 66; line: 86; kind: PRE
+ checkentail c::avl{}<cm,cn> * d::avl{}<dm,an2> * a'::avl{}<m,n> & n20=bn & 
+m14=bm & 0<=n & 0<=m & v10'=n & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & 
+c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+cn)<=(bn+1) & 
+bn<=(1+cn) & an2=an
+ |-  emp.
+expect Valid.
+
+// id: 67; line: 86; kind: PRE
+ checkentail c::avl{}<cm,cn> * d::avl{}<dm,an2> * a'::avl{}<m,n> * b'::avl{}<m14,n20>&
+MayLoop[] & 0<=n20 & 0<=m14 & v11'=n20 & 0<=bn & 0<=bm & n20=bn & m14=bm & 
+0<=n & 0<=m & v10'=n & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & c'=c & 
+d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+cn)<=(bn+1) & bn<=(1+
+cn) & an2=an
+ |-  htrue.
+expect Valid.
+
+// id: 68; line: 86; kind: PRE
+ checkentail c::avl{}<cm,cn> * d::avl{}<dm,an2> * a'::avl{}<m,n> * b'::avl{}<m14,n20>&
+MayLoop[] & 0<=n20 & 0<=m14 & v11'=n20 & 0<=bn & 0<=bm & n20=bn & m14=bm & 
+0<=n & 0<=m & v10'=n & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & c'=c & 
+d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+cn)<=(bn+1) & bn<=(1+
+cn) & an2=an
+ |-  emp.
+expect Valid.
+
+// id: 69; line: 87; kind: PRE
+ checkentail c::avl{}<cm,cn> * d::avl{}<dm,an2> * a'::avl{}<m,n> * b'::avl{}<m14,n20>&
+MayLoop[] & v12'=1 & h'=max(n,n20) & 0<=n20 & 0<=m14 & 0<=bn & 0<=bm & 
+n20=bn & m14=bm & 0<=n & 0<=m & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & 
+c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+cn)<=(bn+1) & 
+bn<=(1+cn) & an2=an
+ |-  htrue.
+expect Valid.
+
+// id: 70; line: 87; kind: PRE
+ checkentail c::avl{}<cm,cn> * d::avl{}<dm,an2> * a'::avl{}<m,n> * b'::avl{}<m14,n20>&
+MayLoop[] & v12'=1 & h'=max(n,n20) & 0<=n20 & 0<=m14 & 0<=bn & 0<=bm & 
+n20=bn & m14=bm & 0<=n & 0<=m & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & 
+c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+cn)<=(bn+1) & 
+bn<=(1+cn) & an2=an
+ |-  emp.
+expect Valid.
+
+// id: 71; line: 90; kind: PRE
+ checkentail c::avl{}<cm,cn> * d::avl{}<dm,an2> * a'::avl{}<m,n> * b'::avl{}<m14,n20> * 
+tmp1'::node<v1',h',a',b'> & h'=1+h & h=max(n,n20) & 0<=n20 & 
+0<=m14 & 0<=bn & 0<=bm & n20=bn & m14=bm & 0<=n & 0<=m & 0<=an & 0<=am & 
+n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & 
+an=max(bn,cn) & (0+cn)<=(bn+1) & bn<=(1+cn) & an2=an
+ |-  c'::avl{}<m15,n21>.
+expect Valid.
+
+// id: 73; line: 90; kind: PRE
+ checkentail d::avl{}<dm,an2> * a'::avl{}<m,n> * b'::avl{}<m14,n20> * 
+tmp1'::node<v1',h',a',b'> & n21=cn & m15=cm & h'=1+h & h=max(n,
+n20) & 0<=n20 & 0<=m14 & 0<=bn & 0<=bm & n20=bn & m14=bm & 0<=n & 0<=m & 
+0<=an & 0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & 
+v3'=v3 & an=max(bn,cn) & (0+cn)<=(bn+1) & bn<=(1+cn) & an2=an
+ |-  emp.
+expect Valid.
+
+// id: 74; line: 90; kind: PRE
+ checkentail d::avl{}<dm,an2> * a'::avl{}<m,n> * b'::avl{}<m14,n20> * 
+tmp1'::node<v1',h',a',b'> * c'::avl{}<m15,n21> & 0<=n21 & 0<=m15 & 
+v13'=n21 & 0<=cn & 0<=cm & n21=cn & m15=cm & h'=1+h & h=max(n,n20) & 
+0<=n20 & 0<=m14 & 0<=bn & 0<=bm & n20=bn & m14=bm & 0<=n & 0<=m & 0<=an & 
+0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & 
+an=max(bn,cn) & (0+cn)<=(bn+1) & bn<=(1+cn) & an2=an
+ |-  d'::avl{}<m16,n22>.
+expect Valid.
+
+// id: 76; line: 90; kind: PRE
+ checkentail tmp1'::node<v1',h',a',b'> * a'::avl{}<m,n> * b'::avl{}<m14,n20> * 
+c'::avl{}<m15,n21> & n22=an2 & m16=dm & 0<=n21 & 0<=m15 & 
+v13'=n21 & 0<=cn & 0<=cm & n21=cn & m15=cm & h'=1+h & h=max(n,n20) & 
+0<=n20 & 0<=m14 & 0<=bn & 0<=bm & n20=bn & m14=bm & 0<=n & 0<=m & 0<=an & 
+0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & 
+an=max(bn,cn) & (0+cn)<=(bn+1) & bn<=(1+cn) & an2=an
+ |-  emp.
+expect Valid.
+
+// id: 77; line: 90; kind: PRE
+ checkentail tmp1'::node<v1',h',a',b'> * a'::avl{}<m,n> * b'::avl{}<m14,n20> * 
+c'::avl{}<m15,n21> * d'::avl{}<m16,n22> & 0<=n22 & 0<=m16 & 
+v14'=n22 & 0<=an2 & 0<=dm & n22=an2 & m16=dm & 0<=n21 & 0<=m15 & v13'=n21 & 
+0<=cn & 0<=cm & n21=cn & m15=cm & h'=1+h & h=max(n,n20) & 0<=n20 & 0<=m14 & 
+0<=bn & 0<=bm & n20=bn & m14=bm & 0<=n & 0<=m & 0<=an & 0<=am & n=an & 
+m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,
+cn) & (0+cn)<=(bn+1) & bn<=(1+cn) & an2=an
+ |-  htrue.
+expect Valid.
+
+// id: 78; line: 90; kind: PRE
+ checkentail tmp1'::node<v1',h',a',b'> * a'::avl{}<m,n> * b'::avl{}<m14,n20> * 
+c'::avl{}<m15,n21> * d'::avl{}<m16,n22> & 0<=n22 & 0<=m16 & 
+v14'=n22 & 0<=an2 & 0<=dm & n22=an2 & m16=dm & 0<=n21 & 0<=m15 & v13'=n21 & 
+0<=cn & 0<=cm & n21=cn & m15=cm & h'=1+h & h=max(n,n20) & 0<=n20 & 0<=m14 & 
+0<=bn & 0<=bm & n20=bn & m14=bm & 0<=n & 0<=m & 0<=an & 0<=am & n=an & 
+m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,
+cn) & (0+cn)<=(bn+1) & bn<=(1+cn) & an2=an
+ |-  emp.
+expect Valid.
+
+// id: 79; line: 91; kind: PRE
+ checkentail tmp1'::node<v1',h1,a',b'> * a'::avl{}<m,n> * b'::avl{}<m14,n20> * 
+c'::avl{}<m15,n21> * d'::avl{}<m16,n22> & v15'=1 & h'=max(n21,
+n22) & 0<=n22 & 0<=m16 & 0<=an2 & 0<=dm & n22=an2 & m16=dm & 0<=n21 & 
+0<=m15 & 0<=cn & 0<=cm & n21=cn & m15=cm & h1=1+h & h=max(n,n20) & 0<=n20 & 
+0<=m14 & 0<=bn & 0<=bm & n20=bn & m14=bm & 0<=n & 0<=m & 0<=an & 0<=am & 
+n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & 
+an=max(bn,cn) & (0+cn)<=(bn+1) & bn<=(1+cn) & an2=an
+ |-  htrue.
+expect Valid.
+
+// id: 80; line: 91; kind: PRE
+ checkentail tmp1'::node<v1',h1,a',b'> * a'::avl{}<m,n> * b'::avl{}<m14,n20> * 
+c'::avl{}<m15,n21> * d'::avl{}<m16,n22> & v15'=1 & h'=max(n21,
+n22) & 0<=n22 & 0<=m16 & 0<=an2 & 0<=dm & n22=an2 & m16=dm & 0<=n21 & 
+0<=m15 & 0<=cn & 0<=cm & n21=cn & m15=cm & h1=1+h & h=max(n,n20) & 0<=n20 & 
+0<=m14 & 0<=bn & 0<=bm & n20=bn & m14=bm & 0<=n & 0<=m & 0<=an & 0<=am & 
+n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & 
+an=max(bn,cn) & (0+cn)<=(bn+1) & bn<=(1+cn) & an2=an
+ |-  emp.
+expect Valid.
+
+// id: 81; line: 94; kind: PRE
+ checkentail tmp1'::node<v1',h1,a',b'> * a'::avl{}<m,n> * b'::avl{}<m14,n20> * 
+c'::avl{}<m15,n21> * d'::avl{}<m16,n22> * tmp2'::node<v3',h',c',d'>&
+MayLoop[] & h'=1+h2 & h2=max(n21,n22) & 0<=n22 & 0<=m16 & 0<=an2 & 0<=dm & 
+n22=an2 & m16=dm & 0<=n21 & 0<=m15 & 0<=cn & 0<=cm & n21=cn & m15=cm & h1=1+
+h & h=max(n,n20) & 0<=n20 & 0<=m14 & 0<=bn & 0<=bm & n20=bn & m14=bm & 
+0<=n & 0<=m & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & 
+v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+cn)<=(bn+1) & bn<=(1+cn) & 
+an2=an
+ |-  tmp1'::avl{}<m17,n23>.
+expect Valid.
+
+// id: 88; line: 94; kind: PRE
+ checkentail tmp2'::node<v3',h',c',d'> * c'::avl{}<m15,n21> * d'::avl{}<m16,n22>&
+MayLoop[] & h'=1+h2 & h2=max(n21,n22) & 0<=n22 & 0<=m16 & 0<=an2 & 0<=dm & 
+n22=an2 & m16=dm & 0<=n21 & 0<=m15 & 0<=cn & 0<=cm & n21=cn & m15=cm & h1=1+
+h & h=max(n,n20) & 0<=n20 & 0<=m14 & 0<=bn & 0<=bm & n20=bn & m14=bm & 
+0<=n & 0<=m & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & 
+v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+cn)<=(bn+1) & bn<=(1+cn) & 
+an2=an & Anon10=v1' & p6=a' & q6=b' & m19=m & n24=n & m18=m14 & n25=n20 & 
+n24<=(1+n25) & (0+n25)<=(n24+1) & (((h1=n24+1 & n25<=n24) | (h1=n25+1 & 
+n24<n25))) & h1=n23 & exists(max_31:n23=1+max_31 & max_31=max(n24,n25)) & 
+m17=m18+1+m19
+ |-  emp.
+expect Valid.
+
+// id: 89; line: 94; kind: PRE
+ checkentail tmp2'::node<v3',h',c',d'> * c'::avl{}<m15,n21> * d'::avl{}<m16,n22> * 
+tmp1'::avl{}<m17,n23> & 0<=n23 & 0<=m17 & v16'=n23 & tmp1'!=null & 
+0<=n & 0<=m & 0<=n20 & 0<=m14 & h'=1+h2 & h2=max(n21,n22) & 0<=n22 & 
+0<=m16 & 0<=an2 & 0<=dm & n22=an2 & m16=dm & 0<=n21 & 0<=m15 & 0<=cn & 
+0<=cm & n21=cn & m15=cm & h1=1+h & h=max(n,n20) & 0<=bn & 0<=bm & n20=bn & 
+m14=bm & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & 
+v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+cn)<=(bn+1) & bn<=(1+cn) & an2=an & 
+Anon10=v1' & p6=a' & q6=b' & m19=m & n24=n & m18=m14 & n25=n20 & n24<=(1+
+n25) & (0+n25)<=(n24+1) & (((h1=n24+1 & n25<=n24) | (h1=n25+1 & n24<n25))) & 
+h1=n23 & exists(max_31:n23=1+max_31 & max_31=max(n24,n25)) & m17=m18+1+m19
+ |-  tmp2'::avl{}<m20,n26>.
+expect Valid.
+
+// id: 96; line: 94; kind: PRE
+ checkentail tmp1'::avl{}<m17,n23> & 0<=n23 & 0<=m17 & v16'=n23 & 
+tmp1'!=null & 0<=n & 0<=m & 0<=n20 & 0<=m14 & h'=1+h2 & h2=max(n21,n22) & 
+0<=n22 & 0<=m16 & 0<=an2 & 0<=dm & n22=an2 & m16=dm & 0<=n21 & 0<=m15 & 
+0<=cn & 0<=cm & n21=cn & m15=cm & h1=1+h & h=max(n,n20) & 0<=bn & 0<=bm & 
+n20=bn & m14=bm & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & 
+v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+cn)<=(bn+1) & bn<=(1+cn) & 
+an2=an & Anon10=v1' & p6=a' & q6=b' & m19=m & n24=n & m18=m14 & n25=n20 & 
+n24<=(1+n25) & (0+n25)<=(n24+1) & (((h1=n24+1 & n25<=n24) | (h1=n25+1 & 
+n24<n25))) & h1=n23 & exists(max_31:n23=1+max_31 & max_31=max(n24,n25)) & 
+m17=m18+1+m19 & Anon11=v3' & p7=c' & q7=d' & m22=m15 & n27=n21 & m21=m16 & 
+n28=n22 & n27<=(1+n28) & (0+n28)<=(n27+1) & (((h'=n27+1 & n28<=n27) | 
+(h'=n28+1 & n27<n28))) & h'=n26 & exists(max_31:n26=1+max_31 & 
+max_31=max(n27,n28)) & m20=m21+1+m22
+ |-  emp.
+expect Valid.
+
+// id: 97; line: 94; kind: PRE
+ checkentail tmp1'::avl{}<m17,n23> * tmp2'::avl{}<m20,n26> & 0<=n26 & 0<=m20 & 
+v17'=n26 & tmp2'!=null & 0<=n21 & 0<=m15 & 0<=n22 & 0<=m16 & 0<=n23 & 
+0<=m17 & v16'=n23 & tmp1'!=null & 0<=n & 0<=m & 0<=n20 & 0<=m14 & h'=1+h2 & 
+h2=max(n21,n22) & 0<=an2 & 0<=dm & n22=an2 & m16=dm & 0<=cn & 0<=cm & 
+n21=cn & m15=cm & h1=1+h & h=max(n,n20) & 0<=bn & 0<=bm & n20=bn & m14=bm & 
+0<=an & 0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & 
+v3'=v3 & an=max(bn,cn) & (0+cn)<=(bn+1) & bn<=(1+cn) & an2=an & Anon10=v1' & 
+p6=a' & q6=b' & m19=m & n24=n & m18=m14 & n25=n20 & n24<=(1+n25) & (0+
+n25)<=(n24+1) & (((h1=n24+1 & n25<=n24) | (h1=n25+1 & n24<n25))) & h1=n23 & 
+exists(max_31:n23=1+max_31 & max_31=max(n24,n25)) & m17=m18+1+m19 & 
+Anon11=v3' & p7=c' & q7=d' & m22=m15 & n27=n21 & m21=m16 & n28=n22 & n27<=(1+
+n28) & (0+n28)<=(n27+1) & (((h'=n27+1 & n28<=n27) | (h'=n28+1 & n27<n28))) & 
+h'=n26 & exists(max_31:n26=1+max_31 & max_31=max(n27,n28)) & m20=m21+1+m22
+ |-  htrue.
+expect Valid.
+
+// id: 98; line: 94; kind: PRE
+ checkentail tmp1'::avl{}<m17,n23> * tmp2'::avl{}<m20,n26> & 0<=n26 & 0<=m20 & 
+v17'=n26 & tmp2'!=null & 0<=n21 & 0<=m15 & 0<=n22 & 0<=m16 & 0<=n23 & 
+0<=m17 & v16'=n23 & tmp1'!=null & 0<=n & 0<=m & 0<=n20 & 0<=m14 & h'=1+h2 & 
+h2=max(n21,n22) & 0<=an2 & 0<=dm & n22=an2 & m16=dm & 0<=cn & 0<=cm & 
+n21=cn & m15=cm & h1=1+h & h=max(n,n20) & 0<=bn & 0<=bm & n20=bn & m14=bm & 
+0<=an & 0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & 
+v3'=v3 & an=max(bn,cn) & (0+cn)<=(bn+1) & bn<=(1+cn) & an2=an & Anon10=v1' & 
+p6=a' & q6=b' & m19=m & n24=n & m18=m14 & n25=n20 & n24<=(1+n25) & (0+
+n25)<=(n24+1) & (((h1=n24+1 & n25<=n24) | (h1=n25+1 & n24<n25))) & h1=n23 & 
+exists(max_31:n23=1+max_31 & max_31=max(n24,n25)) & m17=m18+1+m19 & 
+Anon11=v3' & p7=c' & q7=d' & m22=m15 & n27=n21 & m21=m16 & n28=n22 & n27<=(1+
+n28) & (0+n28)<=(n27+1) & (((h'=n27+1 & n28<=n27) | (h'=n28+1 & n27<n28))) & 
+h'=n26 & exists(max_31:n26=1+max_31 & max_31=max(n27,n28)) & m20=m21+1+m22
+ |-  emp.
+expect Valid.
+
+// id: 99; line: 95; kind: PRE
+ checkentail tmp1'::avl{}<m17,n23> * tmp2'::avl{}<m20,n26> & v18'=1 & 
+h'=max(n23,n26) & 0<=n26 & 0<=m20 & tmp2'!=null & 0<=n21 & 0<=m15 & 0<=n22 & 
+0<=m16 & 0<=n23 & 0<=m17 & tmp1'!=null & 0<=n & 0<=m & 0<=n20 & 0<=m14 & 
+h3=1+h2 & h2=max(n21,n22) & 0<=an2 & 0<=dm & n22=an2 & m16=dm & 0<=cn & 
+0<=cm & n21=cn & m15=cm & h1=1+h & h=max(n,n20) & 0<=bn & 0<=bm & n20=bn & 
+m14=bm & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & 
+v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+cn)<=(bn+1) & bn<=(1+cn) & an2=an & 
+Anon10=v1' & p6=a' & q6=b' & m19=m & n24=n & m18=m14 & n25=n20 & n24<=(1+
+n25) & (0+n25)<=(n24+1) & (((h1=n24+1 & n25<=n24) | (h1=n25+1 & n24<n25))) & 
+h1=n23 & exists(max_31:n23=1+max_31 & max_31=max(n24,n25)) & m17=m18+1+m19 & 
+Anon11=v3' & p7=c' & q7=d' & m22=m15 & n27=n21 & m21=m16 & n28=n22 & n27<=(1+
+n28) & (0+n28)<=(n27+1) & (((h3=n27+1 & n28<=n27) | (h3=n28+1 & n27<n28))) & 
+h3=n26 & exists(max_31:n26=1+max_31 & max_31=max(n27,n28)) & m20=m21+1+m22
+ |-  htrue.
+expect Valid.
+
+// id: 100; line: 95; kind: PRE
+ checkentail tmp1'::avl{}<m17,n23> * tmp2'::avl{}<m20,n26> & v18'=1 & 
+h'=max(n23,n26) & 0<=n26 & 0<=m20 & tmp2'!=null & 0<=n21 & 0<=m15 & 0<=n22 & 
+0<=m16 & 0<=n23 & 0<=m17 & tmp1'!=null & 0<=n & 0<=m & 0<=n20 & 0<=m14 & 
+h3=1+h2 & h2=max(n21,n22) & 0<=an2 & 0<=dm & n22=an2 & m16=dm & 0<=cn & 
+0<=cm & n21=cn & m15=cm & h1=1+h & h=max(n,n20) & 0<=bn & 0<=bm & n20=bn & 
+m14=bm & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & 
+v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+cn)<=(bn+1) & bn<=(1+cn) & an2=an & 
+Anon10=v1' & p6=a' & q6=b' & m19=m & n24=n & m18=m14 & n25=n20 & n24<=(1+
+n25) & (0+n25)<=(n24+1) & (((h1=n24+1 & n25<=n24) | (h1=n25+1 & n24<n25))) & 
+h1=n23 & exists(max_31:n23=1+max_31 & max_31=max(n24,n25)) & m17=m18+1+m19 & 
+Anon11=v3' & p7=c' & q7=d' & m22=m15 & n27=n21 & m21=m16 & n28=n22 & n27<=(1+
+n28) & (0+n28)<=(n27+1) & (((h3=n27+1 & n28<=n27) | (h3=n28+1 & n27<n28))) & 
+h3=n26 & exists(max_31:n26=1+max_31 & max_31=max(n27,n28)) & m20=m21+1+m22
+ |-  emp.
+expect Valid.
+
+// id: 101; line: 0; kind: POST
+ checkentail (exists tmp2',tmp1',h': tmp1'::avl{}<m17,n23> * tmp2'::avl{}<m20,n26> * 
+v19'::node<v2',h',tmp1',tmp2'> & m20=m21+1+m22 & 
+exists(max_31:n26=1+max_31 & max_31=max(n27,n28)) & h3=n26 & (((h3=n27+1 & 
+n28<=n27) | (h3=n28+1 & n27<n28))) & (0+n28)<=(n27+1) & n27<=(1+n28) & 
+n28=n22 & m21=m16 & n27=n21 & m22=m15 & q7=d' & p7=c' & Anon11=v3' & m17=m18+
+1+m19 & exists(max_31:n23=1+max_31 & max_31=max(n24,n25)) & h1=n23 & 
+(((h1=n24+1 & n25<=n24) | (h1=n25+1 & n24<n25))) & (0+n25)<=(n24+1) & 
+n24<=(1+n25) & n25=n20 & m18=m14 & n24=n & m19=m & q6=b' & p6=a' & 
+Anon10=v1' & an2=an & bn<=(1+cn) & (0+cn)<=(bn+1) & an=max(bn,cn) & v3'=v3 & 
+v2'=v2 & v1'=v1 & d'=d & c'=c & b'=b & a'=a & m=am & n=an & 0<=am & 0<=an & 
+m14=bm & n20=bn & 0<=bm & 0<=bn & h=max(n,n20) & h1=1+h & m15=cm & n21=cn & 
+0<=cm & 0<=cn & m16=dm & n22=an2 & 0<=dm & 0<=an2 & h2=max(n21,n22) & h3=1+
+h2 & 0<=m14 & 0<=n20 & 0<=m & 0<=n & tmp1'!=null & 0<=m17 & 0<=n23 & 
+0<=m16 & 0<=n22 & 0<=m15 & 0<=n21 & tmp2'!=null & 0<=m20 & 0<=n26 & 
+h4=max(n23,n26) & h'=1+h4 & res=v19')
+ |-  (exists flted4,flted5: res::avl{}<flted5,flted4>&flted4=2+an & flted5=dm+bm+
+3+am+cm & 0<=dm & 0<=cn & 0<=cm & 0<=bn & 0<=bm & 0<=an & 0<=am & 
+exists(an_97:0<=an_97)).
+expect Valid.
+
+// id: 108; line: 111; kind: PRE
+ checkentail (exists an3: a::avl{}<am,an> * b::avl{}<bm,bn> * c::avl{}<cm,cn> * 
+d::avl{}<dm,an3> & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & 
+v3'=v3 & an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+bn) & an3=an)
+ |-  a'::avl{}<m,n>.
+expect Valid.
+
+// id: 110; line: 111; kind: PRE
+ checkentail b::avl{}<bm,bn> * c::avl{}<cm,cn> * d::avl{}<dm,an4> & n=an & 
+m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,
+cn) & (0+bn)<=(cn+1) & cn<=(1+bn) & an4=an
+ |-  emp.
+expect Valid.
+
+// id: 111; line: 111; kind: PRE
+ checkentail b::avl{}<bm,bn> * c::avl{}<cm,cn> * d::avl{}<dm,an4> * a'::avl{}<m,n>&
+MayLoop[] & 0<=n & 0<=m & v20'=n & 0<=an & 0<=am & n=an & m=am & a'=a & 
+b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+bn)<=(cn+
+1) & cn<=(1+bn) & an4=an
+ |-  b'::avl{}<m23,n29>.
+expect Valid.
+
+// id: 113; line: 111; kind: PRE
+ checkentail c::avl{}<cm,cn> * d::avl{}<dm,an4> * a'::avl{}<m,n> & n29=bn & 
+m23=bm & 0<=n & 0<=m & v20'=n & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & 
+c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+bn)<=(cn+1) & 
+cn<=(1+bn) & an4=an
+ |-  emp.
+expect Valid.
+
+// id: 114; line: 111; kind: PRE
+ checkentail c::avl{}<cm,cn> * d::avl{}<dm,an4> * a'::avl{}<m,n> * b'::avl{}<m23,n29>&
+MayLoop[] & 0<=n29 & 0<=m23 & v21'=n29 & 0<=bn & 0<=bm & n29=bn & m23=bm & 
+0<=n & 0<=m & v20'=n & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & c'=c & 
+d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+
+bn) & an4=an
+ |-  htrue.
+expect Valid.
+
+// id: 115; line: 111; kind: PRE
+ checkentail c::avl{}<cm,cn> * d::avl{}<dm,an4> * a'::avl{}<m,n> * b'::avl{}<m23,n29>&
+MayLoop[] & 0<=n29 & 0<=m23 & v21'=n29 & 0<=bn & 0<=bm & n29=bn & m23=bm & 
+0<=n & 0<=m & v20'=n & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & c'=c & 
+d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+
+bn) & an4=an
+ |-  emp.
+expect Valid.
+
+// id: 116; line: 112; kind: PRE
+ checkentail c::avl{}<cm,cn> * d::avl{}<dm,an4> * a'::avl{}<m,n> * b'::avl{}<m23,n29>&
+MayLoop[] & v22'=1 & h'=max(n,n29) & 0<=n29 & 0<=m23 & 0<=bn & 0<=bm & 
+n29=bn & m23=bm & 0<=n & 0<=m & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & 
+c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+bn)<=(cn+1) & 
+cn<=(1+bn) & an4=an
+ |-  htrue.
+expect Valid.
+
+// id: 117; line: 112; kind: PRE
+ checkentail c::avl{}<cm,cn> * d::avl{}<dm,an4> * a'::avl{}<m,n> * b'::avl{}<m23,n29>&
+MayLoop[] & v22'=1 & h'=max(n,n29) & 0<=n29 & 0<=m23 & 0<=bn & 0<=bm & 
+n29=bn & m23=bm & 0<=n & 0<=m & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & 
+c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+bn)<=(cn+1) & 
+cn<=(1+bn) & an4=an
+ |-  emp.
+expect Valid.
+
+// id: 118; line: 115; kind: PRE
+ checkentail c::avl{}<cm,cn> * d::avl{}<dm,an4> * a'::avl{}<m,n> * b'::avl{}<m23,n29> * 
+tmp1'::node<v3',h',a',b'> & h'=1+h5 & h5=max(n,n29) & 0<=n29 & 
+0<=m23 & 0<=bn & 0<=bm & n29=bn & m23=bm & 0<=n & 0<=m & 0<=an & 0<=am & 
+n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & 
+an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+bn) & an4=an
+ |-  c'::avl{}<m24,n30>.
+expect Valid.
+
+// id: 120; line: 115; kind: PRE
+ checkentail d::avl{}<dm,an4> * a'::avl{}<m,n> * b'::avl{}<m23,n29> * 
+tmp1'::node<v3',h',a',b'> & n30=cn & m24=cm & h'=1+h5 & h5=max(n,
+n29) & 0<=n29 & 0<=m23 & 0<=bn & 0<=bm & n29=bn & m23=bm & 0<=n & 0<=m & 
+0<=an & 0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & 
+v3'=v3 & an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+bn) & an4=an
+ |-  emp.
+expect Valid.
+
+// id: 121; line: 115; kind: PRE
+ checkentail d::avl{}<dm,an4> * a'::avl{}<m,n> * b'::avl{}<m23,n29> * 
+tmp1'::node<v3',h',a',b'> * c'::avl{}<m24,n30> & 0<=n30 & 0<=m24 & 
+v23'=n30 & 0<=cn & 0<=cm & n30=cn & m24=cm & h'=1+h5 & h5=max(n,n29) & 
+0<=n29 & 0<=m23 & 0<=bn & 0<=bm & n29=bn & m23=bm & 0<=n & 0<=m & 0<=an & 
+0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & 
+an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+bn) & an4=an
+ |-  d'::avl{}<m25,n31>.
+expect Valid.
+
+// id: 123; line: 115; kind: PRE
+ checkentail tmp1'::node<v3',h',a',b'> * a'::avl{}<m,n> * b'::avl{}<m23,n29> * 
+c'::avl{}<m24,n30> & n31=an4 & m25=dm & 0<=n30 & 0<=m24 & 
+v23'=n30 & 0<=cn & 0<=cm & n30=cn & m24=cm & h'=1+h5 & h5=max(n,n29) & 
+0<=n29 & 0<=m23 & 0<=bn & 0<=bm & n29=bn & m23=bm & 0<=n & 0<=m & 0<=an & 
+0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & 
+an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+bn) & an4=an
+ |-  emp.
+expect Valid.
+
+// id: 124; line: 115; kind: PRE
+ checkentail tmp1'::node<v3',h',a',b'> * a'::avl{}<m,n> * b'::avl{}<m23,n29> * 
+c'::avl{}<m24,n30> * d'::avl{}<m25,n31> & 0<=n31 & 0<=m25 & 
+v24'=n31 & 0<=an4 & 0<=dm & n31=an4 & m25=dm & 0<=n30 & 0<=m24 & v23'=n30 & 
+0<=cn & 0<=cm & n30=cn & m24=cm & h'=1+h5 & h5=max(n,n29) & 0<=n29 & 
+0<=m23 & 0<=bn & 0<=bm & n29=bn & m23=bm & 0<=n & 0<=m & 0<=an & 0<=am & 
+n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & 
+an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+bn) & an4=an
+ |-  htrue.
+expect Valid.
+
+// id: 125; line: 115; kind: PRE
+ checkentail tmp1'::node<v3',h',a',b'> * a'::avl{}<m,n> * b'::avl{}<m23,n29> * 
+c'::avl{}<m24,n30> * d'::avl{}<m25,n31> & 0<=n31 & 0<=m25 & 
+v24'=n31 & 0<=an4 & 0<=dm & n31=an4 & m25=dm & 0<=n30 & 0<=m24 & v23'=n30 & 
+0<=cn & 0<=cm & n30=cn & m24=cm & h'=1+h5 & h5=max(n,n29) & 0<=n29 & 
+0<=m23 & 0<=bn & 0<=bm & n29=bn & m23=bm & 0<=n & 0<=m & 0<=an & 0<=am & 
+n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & 
+an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+bn) & an4=an
+ |-  emp.
+expect Valid.
+
+// id: 126; line: 116; kind: PRE
+ checkentail tmp1'::node<v3',h6,a',b'> * a'::avl{}<m,n> * b'::avl{}<m23,n29> * 
+c'::avl{}<m24,n30> * d'::avl{}<m25,n31> & v25'=1 & h'=max(n30,
+n31) & 0<=n31 & 0<=m25 & 0<=an4 & 0<=dm & n31=an4 & m25=dm & 0<=n30 & 
+0<=m24 & 0<=cn & 0<=cm & n30=cn & m24=cm & h6=1+h5 & h5=max(n,n29) & 
+0<=n29 & 0<=m23 & 0<=bn & 0<=bm & n29=bn & m23=bm & 0<=n & 0<=m & 0<=an & 
+0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & 
+an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+bn) & an4=an
+ |-  htrue.
+expect Valid.
+
+// id: 127; line: 116; kind: PRE
+ checkentail tmp1'::node<v3',h6,a',b'> * a'::avl{}<m,n> * b'::avl{}<m23,n29> * 
+c'::avl{}<m24,n30> * d'::avl{}<m25,n31> & v25'=1 & h'=max(n30,
+n31) & 0<=n31 & 0<=m25 & 0<=an4 & 0<=dm & n31=an4 & m25=dm & 0<=n30 & 
+0<=m24 & 0<=cn & 0<=cm & n30=cn & m24=cm & h6=1+h5 & h5=max(n,n29) & 
+0<=n29 & 0<=m23 & 0<=bn & 0<=bm & n29=bn & m23=bm & 0<=n & 0<=m & 0<=an & 
+0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & v2'=v2 & v3'=v3 & 
+an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+bn) & an4=an
+ |-  emp.
+expect Valid.
+
+// id: 128; line: 119; kind: PRE
+ checkentail tmp1'::node<v3',h6,a',b'> * a'::avl{}<m,n> * b'::avl{}<m23,n29> * 
+c'::avl{}<m24,n30> * d'::avl{}<m25,n31> * tmp2'::node<v1',h',c',d'>&
+MayLoop[] & h'=1+h7 & h7=max(n30,n31) & 0<=n31 & 0<=m25 & 0<=an4 & 0<=dm & 
+n31=an4 & m25=dm & 0<=n30 & 0<=m24 & 0<=cn & 0<=cm & n30=cn & m24=cm & h6=1+
+h5 & h5=max(n,n29) & 0<=n29 & 0<=m23 & 0<=bn & 0<=bm & n29=bn & m23=bm & 
+0<=n & 0<=m & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & 
+v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+bn) & 
+an4=an
+ |-  tmp1'::avl{}<m26,n32>.
+expect Valid.
+
+// id: 135; line: 119; kind: PRE
+ checkentail tmp2'::node<v1',h',c',d'> * c'::avl{}<m24,n30> * d'::avl{}<m25,n31>&
+MayLoop[] & h'=1+h7 & h7=max(n30,n31) & 0<=n31 & 0<=m25 & 0<=an4 & 0<=dm & 
+n31=an4 & m25=dm & 0<=n30 & 0<=m24 & 0<=cn & 0<=cm & n30=cn & m24=cm & h6=1+
+h5 & h5=max(n,n29) & 0<=n29 & 0<=m23 & 0<=bn & 0<=bm & n29=bn & m23=bm & 
+0<=n & 0<=m & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & 
+v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+bn) & 
+an4=an & Anon12=v3' & p8=a' & q8=b' & m28=m & n33=n & m27=m23 & n34=n29 & 
+n33<=(1+n34) & (0+n34)<=(n33+1) & (((h6=n33+1 & n34<=n33) | (h6=n34+1 & 
+n33<n34))) & h6=n32 & exists(max_31:n32=1+max_31 & max_31=max(n33,n34)) & 
+m26=m27+1+m28
+ |-  emp.
+expect Valid.
+
+// id: 136; line: 119; kind: PRE
+ checkentail tmp2'::node<v1',h',c',d'> * c'::avl{}<m24,n30> * d'::avl{}<m25,n31> * 
+tmp1'::avl{}<m26,n32> & 0<=n32 & 0<=m26 & v26'=n32 & tmp1'!=null & 
+0<=n & 0<=m & 0<=n29 & 0<=m23 & h'=1+h7 & h7=max(n30,n31) & 0<=n31 & 
+0<=m25 & 0<=an4 & 0<=dm & n31=an4 & m25=dm & 0<=n30 & 0<=m24 & 0<=cn & 
+0<=cm & n30=cn & m24=cm & h6=1+h5 & h5=max(n,n29) & 0<=bn & 0<=bm & n29=bn & 
+m23=bm & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & 
+v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+bn) & an4=an & 
+Anon12=v3' & p8=a' & q8=b' & m28=m & n33=n & m27=m23 & n34=n29 & n33<=(1+
+n34) & (0+n34)<=(n33+1) & (((h6=n33+1 & n34<=n33) | (h6=n34+1 & n33<n34))) & 
+h6=n32 & exists(max_31:n32=1+max_31 & max_31=max(n33,n34)) & m26=m27+1+m28
+ |-  tmp2'::avl{}<m29,n35>.
+expect Valid.
+
+// id: 143; line: 119; kind: PRE
+ checkentail tmp1'::avl{}<m26,n32> & 0<=n32 & 0<=m26 & v26'=n32 & 
+tmp1'!=null & 0<=n & 0<=m & 0<=n29 & 0<=m23 & h'=1+h7 & h7=max(n30,n31) & 
+0<=n31 & 0<=m25 & 0<=an4 & 0<=dm & n31=an4 & m25=dm & 0<=n30 & 0<=m24 & 
+0<=cn & 0<=cm & n30=cn & m24=cm & h6=1+h5 & h5=max(n,n29) & 0<=bn & 0<=bm & 
+n29=bn & m23=bm & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & 
+v1'=v1 & v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+bn) & 
+an4=an & Anon12=v3' & p8=a' & q8=b' & m28=m & n33=n & m27=m23 & n34=n29 & 
+n33<=(1+n34) & (0+n34)<=(n33+1) & (((h6=n33+1 & n34<=n33) | (h6=n34+1 & 
+n33<n34))) & h6=n32 & exists(max_31:n32=1+max_31 & max_31=max(n33,n34)) & 
+m26=m27+1+m28 & Anon13=v1' & p9=c' & q9=d' & m31=m24 & n36=n30 & m30=m25 & 
+n37=n31 & n36<=(1+n37) & (0+n37)<=(n36+1) & (((h'=n36+1 & n37<=n36) | 
+(h'=n37+1 & n36<n37))) & h'=n35 & exists(max_31:n35=1+max_31 & 
+max_31=max(n36,n37)) & m29=m30+1+m31
+ |-  emp.
+expect Valid.
+
+// id: 144; line: 119; kind: PRE
+ checkentail tmp1'::avl{}<m26,n32> * tmp2'::avl{}<m29,n35> & 0<=n35 & 0<=m29 & 
+v27'=n35 & tmp2'!=null & 0<=n30 & 0<=m24 & 0<=n31 & 0<=m25 & 0<=n32 & 
+0<=m26 & v26'=n32 & tmp1'!=null & 0<=n & 0<=m & 0<=n29 & 0<=m23 & h'=1+h7 & 
+h7=max(n30,n31) & 0<=an4 & 0<=dm & n31=an4 & m25=dm & 0<=cn & 0<=cm & 
+n30=cn & m24=cm & h6=1+h5 & h5=max(n,n29) & 0<=bn & 0<=bm & n29=bn & 
+m23=bm & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & 
+v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+bn) & an4=an & 
+Anon12=v3' & p8=a' & q8=b' & m28=m & n33=n & m27=m23 & n34=n29 & n33<=(1+
+n34) & (0+n34)<=(n33+1) & (((h6=n33+1 & n34<=n33) | (h6=n34+1 & n33<n34))) & 
+h6=n32 & exists(max_31:n32=1+max_31 & max_31=max(n33,n34)) & m26=m27+1+m28 & 
+Anon13=v1' & p9=c' & q9=d' & m31=m24 & n36=n30 & m30=m25 & n37=n31 & n36<=(1+
+n37) & (0+n37)<=(n36+1) & (((h'=n36+1 & n37<=n36) | (h'=n37+1 & n36<n37))) & 
+h'=n35 & exists(max_31:n35=1+max_31 & max_31=max(n36,n37)) & m29=m30+1+m31
+ |-  htrue.
+expect Valid.
+
+// id: 145; line: 119; kind: PRE
+ checkentail tmp1'::avl{}<m26,n32> * tmp2'::avl{}<m29,n35> & 0<=n35 & 0<=m29 & 
+v27'=n35 & tmp2'!=null & 0<=n30 & 0<=m24 & 0<=n31 & 0<=m25 & 0<=n32 & 
+0<=m26 & v26'=n32 & tmp1'!=null & 0<=n & 0<=m & 0<=n29 & 0<=m23 & h'=1+h7 & 
+h7=max(n30,n31) & 0<=an4 & 0<=dm & n31=an4 & m25=dm & 0<=cn & 0<=cm & 
+n30=cn & m24=cm & h6=1+h5 & h5=max(n,n29) & 0<=bn & 0<=bm & n29=bn & 
+m23=bm & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & 
+v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+bn) & an4=an & 
+Anon12=v3' & p8=a' & q8=b' & m28=m & n33=n & m27=m23 & n34=n29 & n33<=(1+
+n34) & (0+n34)<=(n33+1) & (((h6=n33+1 & n34<=n33) | (h6=n34+1 & n33<n34))) & 
+h6=n32 & exists(max_31:n32=1+max_31 & max_31=max(n33,n34)) & m26=m27+1+m28 & 
+Anon13=v1' & p9=c' & q9=d' & m31=m24 & n36=n30 & m30=m25 & n37=n31 & n36<=(1+
+n37) & (0+n37)<=(n36+1) & (((h'=n36+1 & n37<=n36) | (h'=n37+1 & n36<n37))) & 
+h'=n35 & exists(max_31:n35=1+max_31 & max_31=max(n36,n37)) & m29=m30+1+m31
+ |-  emp.
+expect Valid.
+
+// id: 146; line: 120; kind: PRE
+ checkentail tmp1'::avl{}<m26,n32> * tmp2'::avl{}<m29,n35> & v28'=1 & 
+h'=max(n32,n35) & 0<=n35 & 0<=m29 & tmp2'!=null & 0<=n30 & 0<=m24 & 0<=n31 & 
+0<=m25 & 0<=n32 & 0<=m26 & tmp1'!=null & 0<=n & 0<=m & 0<=n29 & 0<=m23 & 
+h8=1+h7 & h7=max(n30,n31) & 0<=an4 & 0<=dm & n31=an4 & m25=dm & 0<=cn & 
+0<=cm & n30=cn & m24=cm & h6=1+h5 & h5=max(n,n29) & 0<=bn & 0<=bm & n29=bn & 
+m23=bm & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & 
+v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+bn) & an4=an & 
+Anon12=v3' & p8=a' & q8=b' & m28=m & n33=n & m27=m23 & n34=n29 & n33<=(1+
+n34) & (0+n34)<=(n33+1) & (((h6=n33+1 & n34<=n33) | (h6=n34+1 & n33<n34))) & 
+h6=n32 & exists(max_31:n32=1+max_31 & max_31=max(n33,n34)) & m26=m27+1+m28 & 
+Anon13=v1' & p9=c' & q9=d' & m31=m24 & n36=n30 & m30=m25 & n37=n31 & n36<=(1+
+n37) & (0+n37)<=(n36+1) & (((h8=n36+1 & n37<=n36) | (h8=n37+1 & n36<n37))) & 
+h8=n35 & exists(max_31:n35=1+max_31 & max_31=max(n36,n37)) & m29=m30+1+m31
+ |-  htrue.
+expect Valid.
+
+// id: 147; line: 120; kind: PRE
+ checkentail tmp1'::avl{}<m26,n32> * tmp2'::avl{}<m29,n35> & v28'=1 & 
+h'=max(n32,n35) & 0<=n35 & 0<=m29 & tmp2'!=null & 0<=n30 & 0<=m24 & 0<=n31 & 
+0<=m25 & 0<=n32 & 0<=m26 & tmp1'!=null & 0<=n & 0<=m & 0<=n29 & 0<=m23 & 
+h8=1+h7 & h7=max(n30,n31) & 0<=an4 & 0<=dm & n31=an4 & m25=dm & 0<=cn & 
+0<=cm & n30=cn & m24=cm & h6=1+h5 & h5=max(n,n29) & 0<=bn & 0<=bm & n29=bn & 
+m23=bm & 0<=an & 0<=am & n=an & m=am & a'=a & b'=b & c'=c & d'=d & v1'=v1 & 
+v2'=v2 & v3'=v3 & an=max(bn,cn) & (0+bn)<=(cn+1) & cn<=(1+bn) & an4=an & 
+Anon12=v3' & p8=a' & q8=b' & m28=m & n33=n & m27=m23 & n34=n29 & n33<=(1+
+n34) & (0+n34)<=(n33+1) & (((h6=n33+1 & n34<=n33) | (h6=n34+1 & n33<n34))) & 
+h6=n32 & exists(max_31:n32=1+max_31 & max_31=max(n33,n34)) & m26=m27+1+m28 & 
+Anon13=v1' & p9=c' & q9=d' & m31=m24 & n36=n30 & m30=m25 & n37=n31 & n36<=(1+
+n37) & (0+n37)<=(n36+1) & (((h8=n36+1 & n37<=n36) | (h8=n37+1 & n36<n37))) & 
+h8=n35 & exists(max_31:n35=1+max_31 & max_31=max(n36,n37)) & m29=m30+1+m31
+ |-  emp.
+expect Valid.
+
+// id: 148; line: 0; kind: POST
+ checkentail (exists tmp2',tmp1',h': tmp1'::avl{}<m26,n32> * tmp2'::avl{}<m29,n35> * 
+v29'::node<v2',h',tmp1',tmp2'> & m29=m30+1+m31 & 
+exists(max_31:n35=1+max_31 & max_31=max(n36,n37)) & h8=n35 & (((h8=n36+1 & 
+n37<=n36) | (h8=n37+1 & n36<n37))) & (0+n37)<=(n36+1) & n36<=(1+n37) & 
+n37=n31 & m30=m25 & n36=n30 & m31=m24 & q9=d' & p9=c' & Anon13=v1' & m26=m27+
+1+m28 & exists(max_31:n32=1+max_31 & max_31=max(n33,n34)) & h6=n32 & 
+(((h6=n33+1 & n34<=n33) | (h6=n34+1 & n33<n34))) & (0+n34)<=(n33+1) & 
+n33<=(1+n34) & n34=n29 & m27=m23 & n33=n & m28=m & q8=b' & p8=a' & 
+Anon12=v3' & an4=an & cn<=(1+bn) & (0+bn)<=(cn+1) & an=max(bn,cn) & v3'=v3 & 
+v2'=v2 & v1'=v1 & d'=d & c'=c & b'=b & a'=a & m=am & n=an & 0<=am & 0<=an & 
+m23=bm & n29=bn & 0<=bm & 0<=bn & h5=max(n,n29) & h6=1+h5 & m24=cm & 
+n30=cn & 0<=cm & 0<=cn & m25=dm & n31=an4 & 0<=dm & 0<=an4 & h7=max(n30,
+n31) & h8=1+h7 & 0<=m23 & 0<=n29 & 0<=m & 0<=n & tmp1'!=null & 0<=m26 & 
+0<=n32 & 0<=m25 & 0<=n31 & 0<=m24 & 0<=n30 & tmp2'!=null & 0<=m29 & 0<=n35 & 
+h9=max(n32,n35) & h'=1+h9 & res=v29')
+ |-  (exists flted6,flted7: res::avl{}<flted7,flted6>&flted6=an+2 & flted7=dm+bm+
+3+am+cm & 0<=dm & 0<=cn & 0<=cm & 0<=bn & 0<=bm & 0<=an & 0<=am & 
+exists(an_88:0<=an_88)).
+expect Valid.
+
+// id: 155; line: 39; kind: PRE
+ checkentail (exists ln1,flted8: l::avl{}<lm,ln> * rl::avl{}<rlm,ln1> * 
+rr::avl{}<rrm,flted8> & l'=l & rl'=rl & rr'=rr & flted8=1+ln & 
+ln1=ln & v'=10)
+ |-  l'::avl{}<m,n>.
+expect Valid.
+
+// id: 157; line: 39; kind: PRE
+ checkentail rl::avl{}<rlm,ln2> * rr::avl{}<rrm,flted9> & n=ln & m=lm & l'=l & 
+rl'=rl & rr'=rr & flted9=1+ln & ln2=ln & v'=10
+ |-  emp.
+expect Valid.
+
+// id: 158; line: 39; kind: PRE
+ checkentail rl::avl{}<rlm,ln2> * rr::avl{}<rrm,flted9> * l'::avl{}<m,n> & 
+v30'=1 & 0<=n & 0<=m & v31'=n & 0<=ln & 0<=lm & n=ln & m=lm & l'=l & 
+rl'=rl & rr'=rr & flted9=1+ln & ln2=ln & v'=10
+ |-  htrue.
+expect Valid.
+
+// id: 159; line: 39; kind: PRE
+ checkentail rl::avl{}<rlm,ln2> * rr::avl{}<rrm,flted9> * l'::avl{}<m,n> & 
+v30'=1 & 0<=n & 0<=m & v31'=n & 0<=ln & 0<=lm & n=ln & m=lm & l'=l & 
+rl'=rl & rr'=rr & flted9=1+ln & ln2=ln & v'=10
+ |-  emp.
+expect Valid.
+
+// id: 160; line: 41; kind: PRE
+ checkentail rl::avl{}<rlm,ln2> * rr::avl{}<rrm,flted9> * l'::avl{}<m,n> * 
+tmp'::node<v',h',l',rl'> & v32'=1 & h'=1+n & 0<=n & 0<=m & 0<=ln & 
+0<=lm & n=ln & m=lm & l'=l & rl'=rl & rr'=rr & flted9=1+ln & ln2=ln & v'=10
+ |-  htrue.
+expect Valid.
+
+// id: 161; line: 41; kind: PRE
+ checkentail rl::avl{}<rlm,ln2> * rr::avl{}<rrm,flted9> * l'::avl{}<m,n> * 
+tmp'::node<v',h',l',rl'> & v32'=1 & h'=1+n & 0<=n & 0<=m & 0<=ln & 
+0<=lm & n=ln & m=lm & l'=l & rl'=rl & rr'=rr & flted9=1+ln & ln2=ln & v'=10
+ |-  emp.
+expect Valid.
+
+// id: 162; line: 0; kind: POST
+ checkentail (exists v',tmp',h': rl::avl{}<rlm,ln2> * rr::avl{}<rrm,flted9> * 
+l'::avl{}<m,n> * tmp'::node<v',h10,l',rl'> * v33'::node<v',h',tmp',rr'>&
+MayLoop[] & v'=10 & ln2=ln & flted9=1+ln & rr'=rr & rl'=rl & l'=l & m=lm & 
+n=ln & 0<=lm & 0<=ln & 0<=m & 0<=n & h10=1+n & h'=1+h10 & res=v33')
+ |-  (exists flted10,flted11: res::avl{}<flted11,flted10>&flted10=ln+2 & 
+flted11=rrm+lm+2+rlm & 0<=rrm & 0<=rlm & 0<=ln & 0<=lm & 
+exists(ln_120:0<=ln_120) & exists(flted_32_119:0<=flted_32_119)).
+expect Valid.
+
+// id: 174; line: 56; kind: PRE
+ checkentail (exists flted12,flted13: ll::avl{}<llm,lln> * lr::avl{}<lrm,flted13> * 
+r::avl{}<rm,flted12> & ll'=ll & lr'=lr & r'=r & flted13+1=lln & 
+flted12+1=lln & v'=10)
+ |-  r'::avl{}<m,n>.
+expect Valid.
+
+// id: 176; line: 56; kind: PRE
+ checkentail ll::avl{}<llm,lln> * lr::avl{}<lrm,flted14> & n=flted15 & m=rm & 
+ll'=ll & lr'=lr & r'=r & flted14+1=lln & flted15+1=lln & v'=10
+ |-  emp.
+expect Valid.
+
+// id: 177; line: 56; kind: PRE
+ checkentail ll::avl{}<llm,lln> * lr::avl{}<lrm,flted14> * r'::avl{}<m,n> & 
+v34'=1 & 0<=n & 0<=m & v35'=n & 0<=flted15 & 0<=rm & n=flted15 & m=rm & 
+ll'=ll & lr'=lr & r'=r & flted14+1=lln & flted15+1=lln & v'=10
+ |-  htrue.
+expect Valid.
+
+// id: 178; line: 56; kind: PRE
+ checkentail ll::avl{}<llm,lln> * lr::avl{}<lrm,flted14> * r'::avl{}<m,n> & 
+v34'=1 & 0<=n & 0<=m & v35'=n & 0<=flted15 & 0<=rm & n=flted15 & m=rm & 
+ll'=ll & lr'=lr & r'=r & flted14+1=lln & flted15+1=lln & v'=10
+ |-  emp.
+expect Valid.
+
+// id: 179; line: 58; kind: PRE
+ checkentail ll::avl{}<llm,lln> * lr::avl{}<lrm,flted14> * r'::avl{}<m,n> * 
+tmp'::node<v',h',lr',r'> & v36'=1 & h'=1+n & 0<=n & 0<=m & 
+0<=flted15 & 0<=rm & n=flted15 & m=rm & ll'=ll & lr'=lr & r'=r & flted14+
+1=lln & flted15+1=lln & v'=10
+ |-  htrue.
+expect Valid.
+
+// id: 180; line: 58; kind: PRE
+ checkentail ll::avl{}<llm,lln> * lr::avl{}<lrm,flted14> * r'::avl{}<m,n> * 
+tmp'::node<v',h',lr',r'> & v36'=1 & h'=1+n & 0<=n & 0<=m & 
+0<=flted15 & 0<=rm & n=flted15 & m=rm & ll'=ll & lr'=lr & r'=r & flted14+
+1=lln & flted15+1=lln & v'=10
+ |-  emp.
+expect Valid.
+
+// id: 181; line: 0; kind: POST
+ checkentail (exists v',tmp',h': ll::avl{}<llm,lln> * lr::avl{}<lrm,flted14> * 
+r'::avl{}<m,n> * tmp'::node<v',h11,lr',r'> * v37'::node<v',h',ll',tmp'>&
+MayLoop[] & v'=10 & flted15+1=lln & flted14+1=lln & r'=r & lr'=lr & ll'=ll & 
+m=rm & n=flted15 & 0<=rm & 0<=flted15 & 0<=m & 0<=n & h11=1+n & h'=1+h11 & 
+res=v37')
+ |-  (exists flted16,flted17: res::avl{}<flted17,flted16>&flted16=lln+1 & 
+flted17=rm+llm+2+lrm & 0<=rm & 0<=lrm & 0<=lln & 0<=llm & 
+exists(flted_49_108:0<=flted_49_108) & exists(flted_49_109:0<=flted_49_109)).
+expect Valid.
+
+// id: 193; line: 165; kind: PRE
+ checkentail x::avl{}<m,n> & x'=null & tmp1'=null & a'=a & x'=x
+ |-  htrue.
+expect Valid.
+
+// id: 194; line: 165; kind: PRE
+ checkentail x::avl{}<m,n> & x'=null & tmp1'=null & a'=a & x'=x
+ |-  emp.
+expect Valid.
+
+// id: 195; line: 165; kind: PRE
+ checkentail x::avl{}<m,n> & x'!=null & tmp1'=null & a'=a & x'=x
+ |-  htrue.
+expect Valid.
+
+// id: 196; line: 165; kind: PRE
+ checkentail x::avl{}<m,n> & x'!=null & tmp1'=null & a'=a & x'=x
+ |-  emp.
+expect Valid.
+
+// id: 197; line: 169; kind: BIND
+ checkentail (exists n38,Anon14,p10,m32,n39,q10,m33,n40: x'::node<Anon14,n38,p10,q10> * 
+p10::avl{}<m32,n39> * q10::avl{}<m33,n40> & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n38=n & exists(max_31:n=1+max_31 & 
+max_31=max(n39,n40)) & n39<=(1+n40) & (0+n40)<=(n39+1) & m=m33+1+m32)
+ |-  x'::node<xval',xheight',xleft',xright'>.
+expect Valid.
+
+// id: 199; line: 170; kind: PRE
+ checkentail p11::avl{}<m35,n41> * q11::avl{}<m34,n42> & m=m34+1+m35 & (0+
+n42)<=(n41+1) & n41<=(1+n42) & exists(max_31:n=1+max_31 & max_31=max(n41,
+n42)) & n43=n & !(v38') & x'!=null & tmp1'=null & a'=a & x'=x & 
+xval'=Anon15 & xheight'=n43 & xleft'=p11 & xright'=q11 & a'<=xval'
+ |-  emp.
+expect Valid.
+
+// id: 200; line: 170; kind: PRE
+ checkentail p11::avl{}<m35,n41> * q11::avl{}<m34,n42> & m=m34+1+m35 & (0+
+n42)<=(n41+1) & n41<=(1+n42) & exists(max_31:n=1+max_31 & max_31=max(n41,
+n42)) & n43=n & !(v38') & x'!=null & tmp1'=null & a'=a & x'=x & 
+xval'=Anon15 & xheight'=n43 & xleft'=p11 & xright'=q11 & xval'<a'
+ |-  emp.
+expect Valid.
+
+// id: 201; line: 173; kind: PRE_REC
+ checkentail p11::avl{}<m35,n41> * q11::avl{}<m34,n42> & tmp'=xleft' & 
+xright'=q11 & xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+a'<=xval' & v39'
+ |-  tmp'::avl{}<m36,n44>.
+expect Valid.
+
+// id: 203; line: 173; kind: PRE_REC
+ checkentail q11::avl{}<m34,n42> & n44=n41 & m36=m35 & tmp'=xleft' & 
+xright'=q11 & xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+a'<=xval' & v39'
+ |-  emp.
+expect Valid.
+
+// id: 204; line: 175; kind: PRE
+ checkentail (exists flted18,Anon16: xleft'::avl{}<flted18,Anon16> * q11::avl{}<m34,n42>&
+MayLoop[] & 0<=n44 & 0<=m36 & flted18=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & 
+m36=m35 & tmp'=xleft & xright'=q11 & xleft=p11 & xheight'=n43 & 
+xval'=Anon15 & x'=x & a'=a & tmp1'=null & x'!=null & !(v38') & n43=n & 
+exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+n42) & (0+
+n42)<=(n41+1) & m=m34+1+m35 & a'<=xval' & v39')
+ |-  xleft'::avl{}<m37,n45>.
+expect Valid.
+
+// id: 206; line: 175; kind: PRE
+ checkentail q11::avl{}<m34,n42> & n45=Anon17 & m37=flted19 & 0<=n44 & 
+0<=m36 & flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & m36=m35 & tmp'=xleft & 
+xright'=q11 & xleft=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+a'<=xval' & v39'
+ |-  emp.
+expect Valid.
+
+// id: 207; line: 175; kind: PRE
+ checkentail xleft'::avl{}<m37,n45> * q11::avl{}<m34,n42> & 0<=n45 & 0<=m37 & 
+v40'=n45 & 0<=Anon17 & 0<=flted19 & n45=Anon17 & m37=flted19 & 0<=n44 & 
+0<=m36 & flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & m36=m35 & tmp'=xleft & 
+xright'=q11 & xleft=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+a'<=xval' & v39'
+ |-  xright'::avl{}<m38,n46>.
+expect Valid.
+
+// id: 209; line: 175; kind: PRE
+ checkentail xleft'::avl{}<m37,n45> & n46=n42 & m38=m34 & 0<=n45 & 0<=m37 & 
+v40'=n45 & 0<=Anon17 & 0<=flted19 & n45=Anon17 & m37=flted19 & 0<=n44 & 
+0<=m36 & flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & m36=m35 & tmp'=xleft & 
+xright'=q11 & xleft=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+a'<=xval' & v39'
+ |-  emp.
+expect Valid.
+
+// id: 210; line: 175; kind: PRE
+ checkentail xleft'::avl{}<m37,n45> * xright'::avl{}<m38,n46> & 0<=n46 & 
+0<=m38 & v41'=n46 & 0<=n42 & 0<=m34 & n46=n42 & m38=m34 & 0<=n45 & 0<=m37 & 
+v40'=n45 & 0<=Anon17 & 0<=flted19 & n45=Anon17 & m37=flted19 & 0<=n44 & 
+0<=m36 & flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & m36=m35 & tmp'=xleft & 
+xright'=q11 & xleft=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+a'<=xval' & v39'
+ |-  htrue.
+expect Valid.
+
+// id: 211; line: 175; kind: PRE
+ checkentail xleft'::avl{}<m37,n45> * xright'::avl{}<m38,n46> & 0<=n46 & 
+0<=m38 & v41'=n46 & 0<=n42 & 0<=m34 & n46=n42 & m38=m34 & 0<=n45 & 0<=m37 & 
+v40'=n45 & 0<=Anon17 & 0<=flted19 & n45=Anon17 & m37=flted19 & 0<=n44 & 
+0<=m36 & flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & m36=m35 & tmp'=xleft & 
+xright'=q11 & xleft=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+a'<=xval' & v39'
+ |-  emp.
+expect Valid.
+
+// id: 212; line: 175; kind: PRE
+ checkentail xleft'::avl{}<m37,n45> * xright'::avl{}<m38,n46> & v39' & 
+a'<=xval' & m=m34+1+m35 & (0+n42)<=(n41+1) & n41<=(1+n42) & 
+exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n43=n & !(v38') & 
+x'!=null & tmp1'=null & a'=a & x'=x & xval'=Anon15 & xheight'=n43 & 
+xleft=p11 & xright'=q11 & tmp'=xleft & m36=m35 & n44=n41 & 0<=m35 & 0<=n41 & 
+flted19=1+m36 & 0<=m36 & 0<=n44 & m37=flted19 & n45=Anon17 & 0<=flted19 & 
+0<=Anon17 & 0<=m37 & 0<=n45 & m38=m34 & n46=n42 & 0<=m34 & 0<=n42 & 0<=m38 & 
+0<=n46 & v42'+n46=n45 & v43'=2 & v42'=v43'
+ |-  emp.
+expect Valid.
+
+// id: 213; line: 175; kind: PRE
+ checkentail xleft'::avl{}<m37,n45> * xright'::avl{}<m38,n46> & v39' & 
+a'<=xval' & m=m34+1+m35 & (0+n42)<=(n41+1) & n41<=(1+n42) & 
+exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n43=n & !(v38') & 
+x'!=null & tmp1'=null & a'=a & x'=x & xval'=Anon15 & xheight'=n43 & 
+xleft=p11 & xright'=q11 & tmp'=xleft & m36=m35 & n44=n41 & 0<=m35 & 0<=n41 & 
+flted19=1+m36 & 0<=m36 & 0<=n44 & m37=flted19 & n45=Anon17 & 0<=flted19 & 
+0<=Anon17 & 0<=m37 & 0<=n45 & m38=m34 & n46=n42 & 0<=m34 & 0<=n42 & 0<=m38 & 
+0<=n46 & v42'+n46=n45 & v43'=2 & v42'!=v43'
+ |-  emp.
+expect Valid.
+
+// id: 214; line: 177; kind: BIND
+ checkentail (exists n47,Anon18,p12,m39,n48,q12,m40,
+n49: xleft'::node<Anon18,n47,p12,q12> * p12::avl{}<m39,n48> * 
+q12::avl{}<m40,n49> * xright'::avl{}<m38,n46> & 2+n46=n45 & 
+0<=n46 & 0<=m38 & 0<=n42 & 0<=m34 & n46=n42 & m38=m34 & 0<=n45 & 0<=m37 & 
+0<=Anon17 & 0<=flted19 & n45=Anon17 & m37=flted19 & 0<=n44 & 0<=m36 & 
+flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & m36=m35 & tmp'=xleft & 
+xright'=q11 & xleft=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+a'<=xval' & v39' & v44' & n47=n45 & exists(max_31:n45=1+max_31 & 
+max_31=max(n48,n49)) & n48<=(1+n49) & (0+n49)<=(n48+1) & m37=m40+1+m39)
+ |-  xleft'::node<xleftval',xleftheight',xleftleft',xleftright'>.
+expect Valid.
+
+// id: 216; line: 178; kind: PRE
+ checkentail p13::avl{}<m42,n52> * q13::avl{}<m41,n51> * xright'::avl{}<m38,n46>&
+MayLoop[] & xleftright'=q13 & xleftleft'=p13 & xleftheight'=n50 & 
+xleftval'=Anon19 & 2+n46=n45 & 0<=n46 & 0<=m38 & 0<=n42 & 0<=m34 & n46=n42 & 
+m38=m34 & 0<=n45 & 0<=m37 & 0<=Anon17 & 0<=flted19 & n45=Anon17 & 
+m37=flted19 & 0<=n44 & 0<=m36 & flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & 
+m36=m35 & tmp'=xleft & xright'=q11 & xleft=p11 & xheight'=n43 & 
+xval'=Anon15 & x'=x & a'=a & tmp1'=null & x'!=null & !(v38') & n43=n & 
+exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+n42) & (0+
+n42)<=(n41+1) & m=m34+1+m35 & a'<=xval' & v39' & v44' & n50=n45 & 
+exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n52<=(1+n51) & (0+
+n51)<=(n52+1) & m37=m41+1+m42
+ |-  xleftleft'::avl{}<m43,n53>.
+expect Valid.
+
+// id: 218; line: 178; kind: PRE
+ checkentail q13::avl{}<m41,n51> * xright'::avl{}<m38,n46> & n53=n52 & 
+m43=m42 & xleftright'=q13 & xleftleft'=p13 & xleftheight'=n50 & 
+xleftval'=Anon19 & 2+n46=n45 & 0<=n46 & 0<=m38 & 0<=n42 & 0<=m34 & n46=n42 & 
+m38=m34 & 0<=n45 & 0<=m37 & 0<=Anon17 & 0<=flted19 & n45=Anon17 & 
+m37=flted19 & 0<=n44 & 0<=m36 & flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & 
+m36=m35 & tmp'=xleft & xright'=q11 & xleft=p11 & xheight'=n43 & 
+xval'=Anon15 & x'=x & a'=a & tmp1'=null & x'!=null & !(v38') & n43=n & 
+exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+n42) & (0+
+n42)<=(n41+1) & m=m34+1+m35 & a'<=xval' & v39' & v44' & n50=n45 & 
+exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n52<=(1+n51) & (0+
+n51)<=(n52+1) & m37=m41+1+m42
+ |-  emp.
+expect Valid.
+
+// id: 219; line: 178; kind: PRE
+ checkentail q13::avl{}<m41,n51> * xright'::avl{}<m38,n46> * xleftleft'::avl{}<m43,n53>&
+MayLoop[] & 0<=n53 & 0<=m43 & v45'=n53 & 0<=n52 & 0<=m42 & n53=n52 & 
+m43=m42 & xleftright'=q13 & xleftleft'=p13 & xleftheight'=n50 & 
+xleftval'=Anon19 & 2+n46=n45 & 0<=n46 & 0<=m38 & 0<=n42 & 0<=m34 & n46=n42 & 
+m38=m34 & 0<=n45 & 0<=m37 & 0<=Anon17 & 0<=flted19 & n45=Anon17 & 
+m37=flted19 & 0<=n44 & 0<=m36 & flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & 
+m36=m35 & tmp'=xleft & xright'=q11 & xleft=p11 & xheight'=n43 & 
+xval'=Anon15 & x'=x & a'=a & tmp1'=null & x'!=null & !(v38') & n43=n & 
+exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+n42) & (0+
+n42)<=(n41+1) & m=m34+1+m35 & a'<=xval' & v39' & v44' & n50=n45 & 
+exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n52<=(1+n51) & (0+
+n51)<=(n52+1) & m37=m41+1+m42
+ |-  xleftright'::avl{}<m44,n54>.
+expect Valid.
+
+// id: 221; line: 178; kind: PRE
+ checkentail xright'::avl{}<m38,n46> * xleftleft'::avl{}<m43,n53> & n54=n51 & 
+m44=m41 & 0<=n53 & 0<=m43 & v45'=n53 & 0<=n52 & 0<=m42 & n53=n52 & m43=m42 & 
+xleftright'=q13 & xleftleft'=p13 & xleftheight'=n50 & xleftval'=Anon19 & 2+
+n46=n45 & 0<=n46 & 0<=m38 & 0<=n42 & 0<=m34 & n46=n42 & m38=m34 & 0<=n45 & 
+0<=m37 & 0<=Anon17 & 0<=flted19 & n45=Anon17 & m37=flted19 & 0<=n44 & 
+0<=m36 & flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & m36=m35 & tmp'=xleft & 
+xright'=q11 & xleft=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+a'<=xval' & v39' & v44' & n50=n45 & exists(max_31:n45=1+max_31 & 
+max_31=max(n52,n51)) & n52<=(1+n51) & (0+n51)<=(n52+1) & m37=m41+1+m42
+ |-  emp.
+expect Valid.
+
+// id: 222; line: 178; kind: PRE
+ checkentail xright'::avl{}<m38,n46> * xleftleft'::avl{}<m43,n53> * 
+xleftright'::avl{}<m44,n54> & m37=m41+1+m42 & (0+n51)<=(n52+1) & 
+n52<=(1+n51) & exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n50=n45 & 
+v44' & v39' & a'<=xval' & m=m34+1+m35 & (0+n42)<=(n41+1) & n41<=(1+n42) & 
+exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n43=n & !(v38') & 
+x'!=null & tmp1'=null & a'=a & x'=x & xval'=Anon15 & xheight'=n43 & 
+xleft=p11 & xright'=q11 & tmp'=xleft & m36=m35 & n44=n41 & 0<=m35 & 0<=n41 & 
+flted19=1+m36 & 0<=m36 & 0<=n44 & m37=flted19 & n45=Anon17 & 0<=flted19 & 
+0<=Anon17 & 0<=m37 & 0<=n45 & m38=m34 & n46=n42 & 0<=m34 & 0<=n42 & 0<=m38 & 
+0<=n46 & 2+n46=n45 & xleftval'=Anon19 & xleftheight'=n50 & xleftleft'=p13 & 
+xleftright'=q13 & m43=m42 & n53=n52 & 0<=m42 & 0<=n52 & v45'=n53 & 0<=m43 & 
+0<=n53 & m44=m41 & n54=n51 & 0<=m41 & 0<=n51 & v46'=n54 & 0<=m44 & 0<=n54 & 
+v46'<v45'
+ |-  emp.
+expect Valid.
+
+// id: 223; line: 178; kind: PRE
+ checkentail xright'::avl{}<m38,n46> * xleftleft'::avl{}<m43,n53> * 
+xleftright'::avl{}<m44,n54> & m37=m41+1+m42 & (0+n51)<=(n52+1) & 
+n52<=(1+n51) & exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n50=n45 & 
+v44' & v39' & a'<=xval' & m=m34+1+m35 & (0+n42)<=(n41+1) & n41<=(1+n42) & 
+exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n43=n & !(v38') & 
+x'!=null & tmp1'=null & a'=a & x'=x & xval'=Anon15 & xheight'=n43 & 
+xleft=p11 & xright'=q11 & tmp'=xleft & m36=m35 & n44=n41 & 0<=m35 & 0<=n41 & 
+flted19=1+m36 & 0<=m36 & 0<=n44 & m37=flted19 & n45=Anon17 & 0<=flted19 & 
+0<=Anon17 & 0<=m37 & 0<=n45 & m38=m34 & n46=n42 & 0<=m34 & 0<=n42 & 0<=m38 & 
+0<=n46 & 2+n46=n45 & xleftval'=Anon19 & xleftheight'=n50 & xleftleft'=p13 & 
+xleftright'=q13 & m43=m42 & n53=n52 & 0<=m42 & 0<=n52 & v45'=n53 & 0<=m43 & 
+0<=n53 & m44=m41 & n54=n51 & 0<=m41 & 0<=n51 & v46'=n54 & 0<=m44 & 0<=n54 & 
+v45'<=v46'
+ |-  emp.
+expect Valid.
+
+// id: 224; line: 180; kind: PRE
+ checkentail xright'::avl{}<m38,n46> * xleftleft'::avl{}<m43,n53> * 
+xleftright'::avl{}<m44,n54> & 0<=n54 & 0<=m44 & 0<=n51 & 0<=m41 & 
+n54=n51 & m44=m41 & 0<=n53 & 0<=m43 & 0<=n52 & 0<=m42 & n53=n52 & m43=m42 & 
+xleftright'=q13 & xleftleft'=p13 & xleftheight'=n50 & xleftval'=Anon19 & 2+
+n46=n45 & 0<=n46 & 0<=m38 & 0<=n42 & 0<=m34 & n46=n42 & m38=m34 & 0<=n45 & 
+0<=m37 & 0<=Anon17 & 0<=flted19 & n45=Anon17 & m37=flted19 & 0<=n44 & 
+0<=m36 & flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & m36=m35 & tmp'=xleft & 
+xright'=q11 & xleft=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+a'<=xval' & v39' & v44' & n50=n45 & exists(max_31:n45=1+max_31 & 
+max_31=max(n52,n51)) & n52<=(1+n51) & (0+n51)<=(n52+1) & m37=m41+1+m42 & 
+n54<n53 & v47'
+ |-  (exists flted12,flted13: xleftleft'::avl{}<llm,lln> * 
+xleftright'::avl{}<lrm,flted13> * xright'::avl{}<rm,flted12>&flted12+1=lln & 
+flted13+1=lln).
+expect Valid.
+
+/*
+// id: 228; line: 180; kind: PRE
+ checkentail emp & rm=m38 & lrm=m44 & lln=n53 & llm=m43 & 0<=n54 & 0<=m44 & 
+0<=n51 & 0<=m41 & n54=n51 & m44=m41 & 0<=n53 & 0<=m43 & 0<=n52 & 0<=m42 & 
+n53=n52 & m43=m42 & xleftright'=q13 & xleftleft'=p13 & xleftheight'=n50 & 
+xleftval'=Anon19 & 2+n46=n45 & 0<=n46 & 0<=m38 & 0<=n42 & 0<=m34 & n46=n42 & 
+m38=m34 & 0<=n45 & 0<=m37 & 0<=Anon17 & 0<=flted19 & n45=Anon17 & 
+m37=flted19 & 0<=n44 & 0<=m36 & flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & 
+m36=m35 & tmp'=xleft & xright'=q11 & xleft=p11 & xheight'=n43 & 
+xval'=Anon15 & x'=x & a'=a & tmp1'=null & x'!=null & !(v38') & n43=n & 
+exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+n42) & (0+
+n42)<=(n41+1) & m=m34+1+m35 & a'<=xval' & v39' & v44' & n50=n45 & 
+exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n52<=(1+n51) & (0+
+n51)<=(n52+1) & m37=m41+1+m42 & n54<n53 & v47'
+ |-  emp.
+expect Valid.
+*/
+
+// id: 229; line: 184; kind: PRE
+ checkentail xright'::avl{}<m38,n46> * xleftleft'::avl{}<m43,n53> * 
+xleftright'::avl{}<m44,n54> & 0<=n54 & 0<=m44 & 0<=n51 & 0<=m41 & 
+n54=n51 & m44=m41 & 0<=n53 & 0<=m43 & 0<=n52 & 0<=m42 & n53=n52 & m43=m42 & 
+xleftright'=q13 & xleftleft'=p13 & xleftheight'=n50 & xleftval'=Anon19 & 2+
+n46=n45 & 0<=n46 & 0<=m38 & 0<=n42 & 0<=m34 & n46=n42 & m38=m34 & 0<=n45 & 
+0<=m37 & 0<=Anon17 & 0<=flted19 & n45=Anon17 & m37=flted19 & 0<=n44 & 
+0<=m36 & flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & m36=m35 & tmp'=xleft & 
+xright'=q11 & xleft=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+a'<=xval' & v39' & v44' & n50=n45 & exists(max_31:n45=1+max_31 & 
+max_31=max(n52,n51)) & n52<=(1+n51) & (0+n51)<=(n52+1) & m37=m41+1+m42 & 
+n53<=n54 & !(v47')
+ |-  xleftleft'::avl{}<m45,n55>.
+expect Valid.
+
+// id: 231; line: 184; kind: PRE
+ checkentail xright'::avl{}<m38,n46> * xleftright'::avl{}<m44,n54> & n55=n53 & 
+m45=m43 & 0<=n54 & 0<=m44 & 0<=n51 & 0<=m41 & n54=n51 & m44=m41 & 0<=n53 & 
+0<=m43 & 0<=n52 & 0<=m42 & n53=n52 & m43=m42 & xleftright'=q13 & 
+xleftleft'=p13 & xleftheight'=n50 & xleftval'=Anon19 & 2+n46=n45 & 0<=n46 & 
+0<=m38 & 0<=n42 & 0<=m34 & n46=n42 & m38=m34 & 0<=n45 & 0<=m37 & 0<=Anon17 & 
+0<=flted19 & n45=Anon17 & m37=flted19 & 0<=n44 & 0<=m36 & flted19=1+m36 & 
+0<=n41 & 0<=m35 & n44=n41 & m36=m35 & tmp'=xleft & xright'=q11 & xleft=p11 & 
+xheight'=n43 & xval'=Anon15 & x'=x & a'=a & tmp1'=null & x'!=null & 
+!(v38') & n43=n & exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+
+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & a'<=xval' & v39' & v44' & n50=n45 & 
+exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n52<=(1+n51) & (0+
+n51)<=(n52+1) & m37=m41+1+m42 & n53<=n54 & !(v47')
+ |-  emp.
+expect Valid.
+
+// id: 232; line: 184; kind: PRE
+ checkentail xright'::avl{}<m38,n46> * xleftright'::avl{}<m44,n54> * 
+xleftleft'::avl{}<m45,n55> & 0<=n55 & 0<=m45 & v48'=n55 & 0<=n53 & 
+0<=m43 & n55=n53 & m45=m43 & 0<=n54 & 0<=m44 & 0<=n51 & 0<=m41 & n54=n51 & 
+m44=m41 & 0<=n52 & 0<=m42 & n53=n52 & m43=m42 & xleftright'=q13 & 
+xleftleft'=p13 & xleftheight'=n50 & xleftval'=Anon19 & 2+n46=n45 & 0<=n46 & 
+0<=m38 & 0<=n42 & 0<=m34 & n46=n42 & m38=m34 & 0<=n45 & 0<=m37 & 0<=Anon17 & 
+0<=flted19 & n45=Anon17 & m37=flted19 & 0<=n44 & 0<=m36 & flted19=1+m36 & 
+0<=n41 & 0<=m35 & n44=n41 & m36=m35 & tmp'=xleft & xright'=q11 & xleft=p11 & 
+xheight'=n43 & xval'=Anon15 & x'=x & a'=a & tmp1'=null & x'!=null & 
+!(v38') & n43=n & exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+
+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & a'<=xval' & v39' & v44' & n50=n45 & 
+exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n52<=(1+n51) & (0+
+n51)<=(n52+1) & m37=m41+1+m42 & n53<=n54 & !(v47')
+ |-  xleftright'::avl{}<m46,n56>.
+expect Valid.
+
+// id: 234; line: 184; kind: PRE
+ checkentail xright'::avl{}<m38,n46> * xleftleft'::avl{}<m45,n55> & n56=n54 & 
+m46=m44 & 0<=n55 & 0<=m45 & v48'=n55 & 0<=n53 & 0<=m43 & n55=n53 & m45=m43 & 
+0<=n54 & 0<=m44 & 0<=n51 & 0<=m41 & n54=n51 & m44=m41 & 0<=n52 & 0<=m42 & 
+n53=n52 & m43=m42 & xleftright'=q13 & xleftleft'=p13 & xleftheight'=n50 & 
+xleftval'=Anon19 & 2+n46=n45 & 0<=n46 & 0<=m38 & 0<=n42 & 0<=m34 & n46=n42 & 
+m38=m34 & 0<=n45 & 0<=m37 & 0<=Anon17 & 0<=flted19 & n45=Anon17 & 
+m37=flted19 & 0<=n44 & 0<=m36 & flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & 
+m36=m35 & tmp'=xleft & xright'=q11 & xleft=p11 & xheight'=n43 & 
+xval'=Anon15 & x'=x & a'=a & tmp1'=null & x'!=null & !(v38') & n43=n & 
+exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+n42) & (0+
+n42)<=(n41+1) & m=m34+1+m35 & a'<=xval' & v39' & v44' & n50=n45 & 
+exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n52<=(1+n51) & (0+
+n51)<=(n52+1) & m37=m41+1+m42 & n53<=n54 & !(v47')
+ |-  emp.
+expect Valid.
+
+// id: 235; line: 184; kind: PRE
+ checkentail xright'::avl{}<m38,n46> * xleftleft'::avl{}<m45,n55> * 
+xleftright'::avl{}<m46,n56> & v49'=1 & 0<=n56 & 0<=m46 & 
+v50'=n56 & 0<=n54 & 0<=m44 & n56=n54 & m46=m44 & 0<=n55 & 0<=m45 & 
+v48'=n55 & 0<=n53 & 0<=m43 & n55=n53 & m45=m43 & 0<=n51 & 0<=m41 & n54=n51 & 
+m44=m41 & 0<=n52 & 0<=m42 & n53=n52 & m43=m42 & xleftright'=q13 & 
+xleftleft'=p13 & xleftheight'=n50 & xleftval'=Anon19 & 2+n46=n45 & 0<=n46 & 
+0<=m38 & 0<=n42 & 0<=m34 & n46=n42 & m38=m34 & 0<=n45 & 0<=m37 & 0<=Anon17 & 
+0<=flted19 & n45=Anon17 & m37=flted19 & 0<=n44 & 0<=m36 & flted19=1+m36 & 
+0<=n41 & 0<=m35 & n44=n41 & m36=m35 & tmp'=xleft & xright'=q11 & xleft=p11 & 
+xheight'=n43 & xval'=Anon15 & x'=x & a'=a & tmp1'=null & x'!=null & 
+!(v38') & n43=n & exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+
+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & a'<=xval' & v39' & v44' & n50=n45 & 
+exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n52<=(1+n51) & (0+
+n51)<=(n52+1) & m37=m41+1+m42 & n53<=n54 & !(v47')
+ |-  htrue.
+expect Valid.
+
+// id: 236; line: 184; kind: PRE
+ checkentail xright'::avl{}<m38,n46> * xleftleft'::avl{}<m45,n55> * 
+xleftright'::avl{}<m46,n56> & v49'=1 & 0<=n56 & 0<=m46 & 
+v50'=n56 & 0<=n54 & 0<=m44 & n56=n54 & m46=m44 & 0<=n55 & 0<=m45 & 
+v48'=n55 & 0<=n53 & 0<=m43 & n55=n53 & m45=m43 & 0<=n51 & 0<=m41 & n54=n51 & 
+m44=m41 & 0<=n52 & 0<=m42 & n53=n52 & m43=m42 & xleftright'=q13 & 
+xleftleft'=p13 & xleftheight'=n50 & xleftval'=Anon19 & 2+n46=n45 & 0<=n46 & 
+0<=m38 & 0<=n42 & 0<=m34 & n46=n42 & m38=m34 & 0<=n45 & 0<=m37 & 0<=Anon17 & 
+0<=flted19 & n45=Anon17 & m37=flted19 & 0<=n44 & 0<=m36 & flted19=1+m36 & 
+0<=n41 & 0<=m35 & n44=n41 & m36=m35 & tmp'=xleft & xright'=q11 & xleft=p11 & 
+xheight'=n43 & xval'=Anon15 & x'=x & a'=a & tmp1'=null & x'!=null & 
+!(v38') & n43=n & exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+
+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & a'<=xval' & v39' & v44' & n50=n45 & 
+exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n52<=(1+n51) & (0+
+n51)<=(n52+1) & m37=m41+1+m42 & n53<=n54 & !(v47')
+ |-  emp.
+expect Valid.
+
+// id: 237; line: 184; kind: PRE
+ checkentail xright'::avl{}<m38,n46> * xleftleft'::avl{}<m45,n55> * 
+xleftright'::avl{}<m46,n56> & !(v47') & n53<=n54 & m37=m41+1+m42 & 
+(0+n51)<=(n52+1) & n52<=(1+n51) & exists(max_31:n45=1+max_31 & 
+max_31=max(n52,n51)) & n50=n45 & v44' & v39' & a'<=xval' & m=m34+1+m35 & (0+
+n42)<=(n41+1) & n41<=(1+n42) & exists(max_31:n=1+max_31 & max_31=max(n41,
+n42)) & n43=n & !(v38') & x'!=null & tmp1'=null & a'=a & x'=x & 
+xval'=Anon15 & xheight'=n43 & xleft=p11 & xright'=q11 & tmp'=xleft & 
+m36=m35 & n44=n41 & 0<=m35 & 0<=n41 & flted19=1+m36 & 0<=m36 & 0<=n44 & 
+m37=flted19 & n45=Anon17 & 0<=flted19 & 0<=Anon17 & 0<=m37 & 0<=n45 & 
+m38=m34 & n46=n42 & 0<=m34 & 0<=n42 & 0<=m38 & 0<=n46 & 2+n46=n45 & 
+xleftval'=Anon19 & xleftheight'=n50 & xleftleft'=p13 & xleftright'=q13 & 
+m43=m42 & n53=n52 & 0<=m42 & 0<=n52 & m44=m41 & n54=n51 & 0<=m41 & 0<=n51 & 
+m45=m43 & n55=n53 & 0<=m43 & 0<=n53 & v48'=n55 & 0<=m45 & 0<=n55 & m46=m44 & 
+n56=n54 & 0<=m44 & 0<=n54 & 0<=m46 & 0<=n56 & v51'+1=n56 & v48'=v51'
+ |-  emp.
+expect Valid.
+
+// id: 238; line: 184; kind: PRE
+ checkentail xright'::avl{}<m38,n46> * xleftleft'::avl{}<m45,n55> * 
+xleftright'::avl{}<m46,n56> & !(v47') & n53<=n54 & m37=m41+1+m42 & 
+(0+n51)<=(n52+1) & n52<=(1+n51) & exists(max_31:n45=1+max_31 & 
+max_31=max(n52,n51)) & n50=n45 & v44' & v39' & a'<=xval' & m=m34+1+m35 & (0+
+n42)<=(n41+1) & n41<=(1+n42) & exists(max_31:n=1+max_31 & max_31=max(n41,
+n42)) & n43=n & !(v38') & x'!=null & tmp1'=null & a'=a & x'=x & 
+xval'=Anon15 & xheight'=n43 & xleft=p11 & xright'=q11 & tmp'=xleft & 
+m36=m35 & n44=n41 & 0<=m35 & 0<=n41 & flted19=1+m36 & 0<=m36 & 0<=n44 & 
+m37=flted19 & n45=Anon17 & 0<=flted19 & 0<=Anon17 & 0<=m37 & 0<=n45 & 
+m38=m34 & n46=n42 & 0<=m34 & 0<=n42 & 0<=m38 & 0<=n46 & 2+n46=n45 & 
+xleftval'=Anon19 & xleftheight'=n50 & xleftleft'=p13 & xleftright'=q13 & 
+m43=m42 & n53=n52 & 0<=m42 & 0<=n52 & m44=m41 & n54=n51 & 0<=m41 & 0<=n51 & 
+m45=m43 & n55=n53 & 0<=m43 & 0<=n53 & v48'=n55 & 0<=m45 & 0<=n55 & m46=m44 & 
+n56=n54 & 0<=m44 & 0<=n54 & 0<=m46 & 0<=n56 & v51'+1=n56 & v48'!=v51'
+ |-  emp.
+expect Valid.
+
+// id: 239; line: 185; kind: BIND
+ checkentail (exists n57,Anon20,p14,m47,n58,q14,m48,n59: xright'::avl{}<m38,n46> * 
+xleftleft'::avl{}<m45,n55> * xleftright'::node<Anon20,n57,p14,q14> * 
+p14::avl{}<m47,n58> * q14::avl{}<m48,n59> & n55+1=n56 & 0<=n56 & 
+0<=m46 & 0<=n54 & 0<=m44 & n56=n54 & m46=m44 & 0<=n55 & 0<=m45 & 0<=n53 & 
+0<=m43 & n55=n53 & m45=m43 & 0<=n51 & 0<=m41 & n54=n51 & m44=m41 & 0<=n52 & 
+0<=m42 & n53=n52 & m43=m42 & xleftright'=q13 & xleftleft'=p13 & 
+xleftheight'=n50 & xleftval'=Anon19 & 2+n46=n45 & 0<=n46 & 0<=m38 & 0<=n42 & 
+0<=m34 & n46=n42 & m38=m34 & 0<=n45 & 0<=m37 & 0<=Anon17 & 0<=flted19 & 
+n45=Anon17 & m37=flted19 & 0<=n44 & 0<=m36 & flted19=1+m36 & 0<=n41 & 
+0<=m35 & n44=n41 & m36=m35 & tmp'=xleft & xright'=q11 & xleft=p11 & 
+xheight'=n43 & xval'=Anon15 & x'=x & a'=a & tmp1'=null & x'!=null & 
+!(v38') & n43=n & exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+
+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & a'<=xval' & v39' & v44' & n50=n45 & 
+exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n52<=(1+n51) & (0+
+n51)<=(n52+1) & m37=m41+1+m42 & n53<=n54 & !(v47') & v52' & n57=n56 & 
+exists(max_31:n56=1+max_31 & max_31=max(n58,n59)) & n58<=(1+n59) & (0+
+n59)<=(n58+1) & m46=m48+1+m47)
+ |-  xleftright'::node<val6',height6',left6',right6'>@L.
+expect Valid.
+
+// id: 241; line: 185; kind: BIND
+ checkentail xright'::avl{}<m38,n46> * xleftleft'::avl{}<m45,n55> * 
+xleftright'::node<Anon21,n60,p15,q15> * p15::avl{}<m50,n62> * 
+q15::avl{}<m49,n61> & v53'=p15 & n55+1=n56 & 0<=n56 & 0<=m46 & 
+0<=n54 & 0<=m44 & n56=n54 & m46=m44 & 0<=n55 & 0<=m45 & 0<=n53 & 0<=m43 & 
+n55=n53 & m45=m43 & 0<=n51 & 0<=m41 & n54=n51 & m44=m41 & 0<=n52 & 0<=m42 & 
+n53=n52 & m43=m42 & xleftright'=q13 & xleftleft'=p13 & xleftheight'=n50 & 
+xleftval'=Anon19 & 2+n46=n45 & 0<=n46 & 0<=m38 & 0<=n42 & 0<=m34 & n46=n42 & 
+m38=m34 & 0<=n45 & 0<=m37 & 0<=Anon17 & 0<=flted19 & n45=Anon17 & 
+m37=flted19 & 0<=n44 & 0<=m36 & flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & 
+m36=m35 & tmp'=xleft & xright'=q11 & xleft=p11 & xheight'=n43 & 
+xval'=Anon15 & x'=x & a'=a & tmp1'=null & x'!=null & !(v38') & n43=n & 
+exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+n42) & (0+
+n42)<=(n41+1) & m=m34+1+m35 & a'<=xval' & v39' & v44' & n50=n45 & 
+exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n52<=(1+n51) & (0+
+n51)<=(n52+1) & m37=m41+1+m42 & n53<=n54 & !(v47') & v52' & n60=n56 & 
+exists(max_31:n56=1+max_31 & max_31=max(n62,n61)) & n62<=(1+n61) & (0+
+n61)<=(n62+1) & m46=m49+1+m50
+ |-  xleftright'::node<val7',height7',left7',right7'>@L.
+expect Valid.
+
+// id: 243; line: 185; kind: PRE
+ checkentail xright'::avl{}<m38,n46> * xleftleft'::avl{}<m45,n55> * 
+xleftright'::node<Anon21,n60,p15,q15> * p15::avl{}<m50,n62> * 
+q15::avl{}<m49,n61> & v54'=1 & v55'=1 & v56'=1 & v57'=q15 & 
+v53'=p15 & n55+1=n56 & 0<=n56 & 0<=m46 & 0<=n54 & 0<=m44 & n56=n54 & 
+m46=m44 & 0<=n55 & 0<=m45 & 0<=n53 & 0<=m43 & n55=n53 & m45=m43 & 0<=n51 & 
+0<=m41 & n54=n51 & m44=m41 & 0<=n52 & 0<=m42 & n53=n52 & m43=m42 & 
+xleftright'=q13 & xleftleft'=p13 & xleftheight'=n50 & xleftval'=Anon19 & 2+
+n46=n45 & 0<=n46 & 0<=m38 & 0<=n42 & 0<=m34 & n46=n42 & m38=m34 & 0<=n45 & 
+0<=m37 & 0<=Anon17 & 0<=flted19 & n45=Anon17 & m37=flted19 & 0<=n44 & 
+0<=m36 & flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & m36=m35 & tmp'=xleft & 
+xright'=q11 & xleft=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+a'<=xval' & v39' & v44' & n50=n45 & exists(max_31:n45=1+max_31 & 
+max_31=max(n52,n51)) & n52<=(1+n51) & (0+n51)<=(n52+1) & m37=m41+1+m42 & 
+n53<=n54 & !(v47') & v52' & n60=n56 & exists(max_31:n56=1+max_31 & 
+max_31=max(n62,n61)) & n62<=(1+n61) & (0+n61)<=(n62+1) & m46=m49+1+m50
+ |-  (exists an1: xleftleft'::avl{}<am,an> * v53'::avl{}<bm,bn> * 
+v57'::avl{}<cm,cn> * xright'::avl{}<dm,an1>&an1=an & bn<=(1+cn) & (0+
+cn)<=(bn+1) & an=max(bn,cn)).
+expect Valid.
+
+// id: 248; line: 185; kind: PRE
+ checkentail xleftright'::node<Anon21,n60,p15,q15> & dm=m38 & cn=n61 & 
+cm=m49 & bn=n62 & bm=m50 & an=n55 & am=m45 & v54'=1 & v55'=1 & v56'=1 & 
+v57'=q15 & v53'=p15 & n55+1=n56 & 0<=n56 & 0<=m46 & 0<=n54 & 0<=m44 & 
+n56=n54 & m46=m44 & 0<=n55 & 0<=m45 & 0<=n53 & 0<=m43 & n55=n53 & m45=m43 & 
+0<=n51 & 0<=m41 & n54=n51 & m44=m41 & 0<=n52 & 0<=m42 & n53=n52 & m43=m42 & 
+xleftright'=q13 & xleftleft'=p13 & xleftheight'=n50 & xleftval'=Anon19 & 2+
+n46=n45 & 0<=n46 & 0<=m38 & 0<=n42 & 0<=m34 & n46=n42 & m38=m34 & 0<=n45 & 
+0<=m37 & 0<=Anon17 & 0<=flted19 & n45=Anon17 & m37=flted19 & 0<=n44 & 
+0<=m36 & flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & m36=m35 & tmp'=xleft & 
+xright'=q11 & xleft=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+a'<=xval' & v39' & v44' & n50=n45 & exists(max_31:n45=1+max_31 & 
+max_31=max(n52,n51)) & n52<=(1+n51) & (0+n51)<=(n52+1) & m37=m41+1+m42 & 
+n53<=n54 & !(v47') & v52' & n60=n56 & exists(max_31:n56=1+max_31 & 
+max_31=max(n62,n61)) & n62<=(1+n61) & (0+n61)<=(n62+1) & m46=m49+1+m50
+ |-  emp.
+expect Valid.
+
+// id: 249; line: 187; kind: PRE
+ checkentail (exists v51': xright'::avl{}<m38,n46> * xleftleft'::avl{}<m45,n55> * 
+xleftright'::avl{}<m46,n56> & v51'+1=n56 & 0<=n56 & 0<=m46 & 
+0<=n54 & 0<=m44 & n56=n54 & m46=m44 & 0<=n55 & 0<=m45 & 0<=n53 & 0<=m43 & 
+n55=n53 & m45=m43 & 0<=n51 & 0<=m41 & n54=n51 & m44=m41 & 0<=n52 & 0<=m42 & 
+n53=n52 & m43=m42 & xleftright'=q13 & xleftleft'=p13 & xleftheight'=n50 & 
+xleftval'=Anon19 & 2+n46=n45 & 0<=n46 & 0<=m38 & 0<=n42 & 0<=m34 & n46=n42 & 
+m38=m34 & 0<=n45 & 0<=m37 & 0<=Anon17 & 0<=flted19 & n45=Anon17 & 
+m37=flted19 & 0<=n44 & 0<=m36 & flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & 
+m36=m35 & tmp'=xleft & xright'=q11 & xleft=p11 & xheight'=n43 & 
+xval'=Anon15 & x'=x & a'=a & tmp1'=null & x'!=null & !(v38') & n43=n & 
+exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+n42) & (0+
+n42)<=(n41+1) & m=m34+1+m35 & a'<=xval' & v39' & v44' & n50=n45 & 
+exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n52<=(1+n51) & (0+
+n51)<=(n52+1) & m37=m41+1+m42 & n53<=n54 & !(v47') & n55!=v51' & !(v52'))
+ |-  htrue.
+expect Valid.
+
+// id: 250; line: 187; kind: PRE
+ checkentail xright'::avl{}<m38,n46> * xleftleft'::avl{}<m45,n55> * 
+xleftright'::avl{}<m46,n56> & v+1=n56 & 0<=n56 & 0<=m46 & 0<=n54 & 
+0<=m44 & n56=n54 & m46=m44 & 0<=n55 & 0<=m45 & 0<=n53 & 0<=m43 & n55=n53 & 
+m45=m43 & 0<=n51 & 0<=m41 & n54=n51 & m44=m41 & 0<=n52 & 0<=m42 & n53=n52 & 
+m43=m42 & xleftright'=q13 & xleftleft'=p13 & xleftheight'=n50 & 
+xleftval'=Anon19 & 2+n46=n45 & 0<=n46 & 0<=m38 & 0<=n42 & 0<=m34 & n46=n42 & 
+m38=m34 & 0<=n45 & 0<=m37 & 0<=Anon17 & 0<=flted19 & n45=Anon17 & 
+m37=flted19 & 0<=n44 & 0<=m36 & flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & 
+m36=m35 & tmp'=xleft & xright'=q11 & xleft=p11 & xheight'=n43 & 
+xval'=Anon15 & x'=x & a'=a & tmp1'=null & x'!=null & !(v38') & n43=n & 
+exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+n42) & (0+
+n42)<=(n41+1) & m=m34+1+m35 & a'<=xval' & v39' & v44' & n50=n45 & 
+exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n52<=(1+n51) & (0+
+n51)<=(n52+1) & m37=m41+1+m42 & n53<=n54 & !(v47') & n55!=v & !(v52')
+ |-  emp.
+expect Valid.
+
+// id: 251; line: 192; kind: PRE
+ checkentail (exists v42': xleft'::avl{}<m37,n45> * xright'::avl{}<m38,n46> & 
+v42'+n46=n45 & 0<=n46 & 0<=m38 & 0<=n42 & 0<=m34 & n46=n42 & m38=m34 & 
+0<=n45 & 0<=m37 & 0<=Anon17 & 0<=flted19 & n45=Anon17 & m37=flted19 & 
+0<=n44 & 0<=m36 & flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & m36=m35 & 
+tmp'=xleft & xright'=q11 & xleft=p11 & xheight'=n43 & xval'=Anon15 & x'=x & 
+a'=a & tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+a'<=xval' & v39' & v42'!=2 & !(v44'))
+ |-  htrue.
+expect Valid.
+
+// id: 252; line: 192; kind: PRE
+ checkentail xleft'::avl{}<m37,n45> * xright'::avl{}<m38,n46> & v1+n46=n45 & 
+0<=n46 & 0<=m38 & 0<=n42 & 0<=m34 & n46=n42 & m38=m34 & 0<=n45 & 0<=m37 & 
+0<=Anon17 & 0<=flted19 & n45=Anon17 & m37=flted19 & 0<=n44 & 0<=m36 & 
+flted19=1+m36 & 0<=n41 & 0<=m35 & n44=n41 & m36=m35 & tmp'=xleft & 
+xright'=q11 & xleft=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+a'<=xval' & v39' & v1!=2 & !(v44')
+ |-  emp.
+expect Valid.
+
+// id: 253; line: 197; kind: PRE_REC
+ checkentail p11::avl{}<m35,n41> * q11::avl{}<m34,n42> & tmp'=xright' & 
+xright'=q11 & xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+xval'<a' & !(v39')
+ |-  tmp'::avl{}<m51,n63>.
+expect Valid.
+
+// id: 255; line: 197; kind: PRE_REC
+ checkentail p11::avl{}<m35,n41> & n63=n42 & m51=m34 & tmp'=xright' & 
+xright'=q11 & xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+xval'<a' & !(v39')
+ |-  emp.
+expect Valid.
+
+// id: 256; line: 198; kind: PRE
+ checkentail (exists flted20,Anon22: xright'::avl{}<flted20,Anon22> * 
+p11::avl{}<m35,n41> & 0<=n63 & 0<=m51 & flted20=1+m51 & 0<=n42 & 
+0<=m34 & n63=n42 & m51=m34 & tmp'=xright & xright=q11 & xleft'=p11 & 
+xheight'=n43 & xval'=Anon15 & x'=x & a'=a & tmp1'=null & x'!=null & 
+!(v38') & n43=n & exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+
+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & xval'<a' & !(v39'))
+ |-  xright'::avl{}<m52,n64>.
+expect Valid.
+
+// id: 258; line: 198; kind: PRE
+ checkentail p11::avl{}<m35,n41> & n64=Anon23 & m52=flted21 & 0<=n63 & 
+0<=m51 & flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & m51=m34 & tmp'=xright & 
+xright=q11 & xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+xval'<a' & !(v39')
+ |-  emp.
+expect Valid.
+
+// id: 259; line: 198; kind: PRE
+ checkentail xright'::avl{}<m52,n64> * p11::avl{}<m35,n41> & 0<=n64 & 0<=m52 & 
+v58'=n64 & 0<=Anon23 & 0<=flted21 & n64=Anon23 & m52=flted21 & 0<=n63 & 
+0<=m51 & flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & m51=m34 & tmp'=xright & 
+xright=q11 & xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+xval'<a' & !(v39')
+ |-  xleft'::avl{}<m53,n65>.
+expect Valid.
+
+// id: 261; line: 198; kind: PRE
+ checkentail xright'::avl{}<m52,n64> & n65=n41 & m53=m35 & 0<=n64 & 0<=m52 & 
+v58'=n64 & 0<=Anon23 & 0<=flted21 & n64=Anon23 & m52=flted21 & 0<=n63 & 
+0<=m51 & flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & m51=m34 & tmp'=xright & 
+xright=q11 & xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+xval'<a' & !(v39')
+ |-  emp.
+expect Valid.
+
+// id: 262; line: 198; kind: PRE
+ checkentail xright'::avl{}<m52,n64> * xleft'::avl{}<m53,n65> & 0<=n65 & 
+0<=m53 & v59'=n65 & 0<=n41 & 0<=m35 & n65=n41 & m53=m35 & 0<=n64 & 0<=m52 & 
+v58'=n64 & 0<=Anon23 & 0<=flted21 & n64=Anon23 & m52=flted21 & 0<=n63 & 
+0<=m51 & flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & m51=m34 & tmp'=xright & 
+xright=q11 & xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+xval'<a' & !(v39')
+ |-  htrue.
+expect Valid.
+
+// id: 263; line: 198; kind: PRE
+ checkentail xright'::avl{}<m52,n64> * xleft'::avl{}<m53,n65> & 0<=n65 & 
+0<=m53 & v59'=n65 & 0<=n41 & 0<=m35 & n65=n41 & m53=m35 & 0<=n64 & 0<=m52 & 
+v58'=n64 & 0<=Anon23 & 0<=flted21 & n64=Anon23 & m52=flted21 & 0<=n63 & 
+0<=m51 & flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & m51=m34 & tmp'=xright & 
+xright=q11 & xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+xval'<a' & !(v39')
+ |-  emp.
+expect Valid.
+
+// id: 264; line: 198; kind: PRE
+ checkentail xright'::avl{}<m52,n64> * xleft'::avl{}<m53,n65> & !(v39') & 
+xval'<a' & m=m34+1+m35 & (0+n42)<=(n41+1) & n41<=(1+n42) & exists(max_31:n=1+
+max_31 & max_31=max(n41,n42)) & n43=n & !(v38') & x'!=null & tmp1'=null & 
+a'=a & x'=x & xval'=Anon15 & xheight'=n43 & xleft'=p11 & xright=q11 & 
+tmp'=xright & m51=m34 & n63=n42 & 0<=m34 & 0<=n42 & flted21=1+m51 & 0<=m51 & 
+0<=n63 & m52=flted21 & n64=Anon23 & 0<=flted21 & 0<=Anon23 & 0<=m52 & 
+0<=n64 & m53=m35 & n65=n41 & 0<=m35 & 0<=n41 & 0<=m53 & 0<=n65 & v60'+
+n65=n64 & v61'=2 & v60'=v61'
+ |-  emp.
+expect Valid.
+
+// id: 265; line: 198; kind: PRE
+ checkentail xright'::avl{}<m52,n64> * xleft'::avl{}<m53,n65> & !(v39') & 
+xval'<a' & m=m34+1+m35 & (0+n42)<=(n41+1) & n41<=(1+n42) & exists(max_31:n=1+
+max_31 & max_31=max(n41,n42)) & n43=n & !(v38') & x'!=null & tmp1'=null & 
+a'=a & x'=x & xval'=Anon15 & xheight'=n43 & xleft'=p11 & xright=q11 & 
+tmp'=xright & m51=m34 & n63=n42 & 0<=m34 & 0<=n42 & flted21=1+m51 & 0<=m51 & 
+0<=n63 & m52=flted21 & n64=Anon23 & 0<=flted21 & 0<=Anon23 & 0<=m52 & 
+0<=n64 & m53=m35 & n65=n41 & 0<=m35 & 0<=n41 & 0<=m53 & 0<=n65 & v60'+
+n65=n64 & v61'=2 & v60'!=v61'
+ |-  emp.
+expect Valid.
+
+// id: 266; line: 200; kind: BIND
+ checkentail (exists n66,Anon24,p16,m54,n67,q16,m55,
+n68: xright'::node<Anon24,n66,p16,q16> * p16::avl{}<m54,n67> * 
+q16::avl{}<m55,n68> * xleft'::avl{}<m53,n65> & 2+n65=n64 & 
+0<=n65 & 0<=m53 & 0<=n41 & 0<=m35 & n65=n41 & m53=m35 & 0<=n64 & 0<=m52 & 
+0<=Anon23 & 0<=flted21 & n64=Anon23 & m52=flted21 & 0<=n63 & 0<=m51 & 
+flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & m51=m34 & tmp'=xright & 
+xright=q11 & xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+xval'<a' & !(v39') & v62' & n66=n64 & exists(max_31:n64=1+max_31 & 
+max_31=max(n67,n68)) & n67<=(1+n68) & (0+n68)<=(n67+1) & m52=m55+1+m54)
+ |-  xright'::node<xrightval',xrightheight',xrightleft',xrightright'>.
+expect Valid.
+
+// id: 268; line: 201; kind: PRE
+ checkentail p17::avl{}<m57,n71> * q17::avl{}<m56,n70> * xleft'::avl{}<m53,n65>&
+MayLoop[] & xrightright'=q17 & xrightleft'=p17 & xrightheight'=n69 & 
+xrightval'=Anon25 & 2+n65=n64 & 0<=n65 & 0<=m53 & 0<=n41 & 0<=m35 & 
+n65=n41 & m53=m35 & 0<=n64 & 0<=m52 & 0<=Anon23 & 0<=flted21 & n64=Anon23 & 
+m52=flted21 & 0<=n63 & 0<=m51 & flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & 
+m51=m34 & tmp'=xright & xright=q11 & xleft'=p11 & xheight'=n43 & 
+xval'=Anon15 & x'=x & a'=a & tmp1'=null & x'!=null & !(v38') & n43=n & 
+exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+n42) & (0+
+n42)<=(n41+1) & m=m34+1+m35 & xval'<a' & !(v39') & v62' & n69=n64 & 
+exists(max_31:n64=1+max_31 & max_31=max(n71,n70)) & n71<=(1+n70) & (0+
+n70)<=(n71+1) & m52=m56+1+m57
+ |-  xrightright'::avl{}<m58,n72>.
+expect Valid.
+
+// id: 270; line: 201; kind: PRE
+ checkentail p17::avl{}<m57,n71> * xleft'::avl{}<m53,n65> & n72=n70 & 
+m58=m56 & xrightright'=q17 & xrightleft'=p17 & xrightheight'=n69 & 
+xrightval'=Anon25 & 2+n65=n64 & 0<=n65 & 0<=m53 & 0<=n41 & 0<=m35 & 
+n65=n41 & m53=m35 & 0<=n64 & 0<=m52 & 0<=Anon23 & 0<=flted21 & n64=Anon23 & 
+m52=flted21 & 0<=n63 & 0<=m51 & flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & 
+m51=m34 & tmp'=xright & xright=q11 & xleft'=p11 & xheight'=n43 & 
+xval'=Anon15 & x'=x & a'=a & tmp1'=null & x'!=null & !(v38') & n43=n & 
+exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+n42) & (0+
+n42)<=(n41+1) & m=m34+1+m35 & xval'<a' & !(v39') & v62' & n69=n64 & 
+exists(max_31:n64=1+max_31 & max_31=max(n71,n70)) & n71<=(1+n70) & (0+
+n70)<=(n71+1) & m52=m56+1+m57
+ |-  emp.
+expect Valid.
+
+// id: 271; line: 201; kind: PRE
+ checkentail p17::avl{}<m57,n71> * xleft'::avl{}<m53,n65> * xrightright'::avl{}<m58,n72>&
+MayLoop[] & 0<=n72 & 0<=m58 & v63'=n72 & 0<=n70 & 0<=m56 & n72=n70 & 
+m58=m56 & xrightright'=q17 & xrightleft'=p17 & xrightheight'=n69 & 
+xrightval'=Anon25 & 2+n65=n64 & 0<=n65 & 0<=m53 & 0<=n41 & 0<=m35 & 
+n65=n41 & m53=m35 & 0<=n64 & 0<=m52 & 0<=Anon23 & 0<=flted21 & n64=Anon23 & 
+m52=flted21 & 0<=n63 & 0<=m51 & flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & 
+m51=m34 & tmp'=xright & xright=q11 & xleft'=p11 & xheight'=n43 & 
+xval'=Anon15 & x'=x & a'=a & tmp1'=null & x'!=null & !(v38') & n43=n & 
+exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+n42) & (0+
+n42)<=(n41+1) & m=m34+1+m35 & xval'<a' & !(v39') & v62' & n69=n64 & 
+exists(max_31:n64=1+max_31 & max_31=max(n71,n70)) & n71<=(1+n70) & (0+
+n70)<=(n71+1) & m52=m56+1+m57
+ |-  xrightleft'::avl{}<m59,n73>.
+expect Valid.
+
+// id: 273; line: 201; kind: PRE
+ checkentail xleft'::avl{}<m53,n65> * xrightright'::avl{}<m58,n72> & n73=n71 & 
+m59=m57 & 0<=n72 & 0<=m58 & v63'=n72 & 0<=n70 & 0<=m56 & n72=n70 & m58=m56 & 
+xrightright'=q17 & xrightleft'=p17 & xrightheight'=n69 & xrightval'=Anon25 & 
+2+n65=n64 & 0<=n65 & 0<=m53 & 0<=n41 & 0<=m35 & n65=n41 & m53=m35 & 0<=n64 & 
+0<=m52 & 0<=Anon23 & 0<=flted21 & n64=Anon23 & m52=flted21 & 0<=n63 & 
+0<=m51 & flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & m51=m34 & tmp'=xright & 
+xright=q11 & xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+xval'<a' & !(v39') & v62' & n69=n64 & exists(max_31:n64=1+max_31 & 
+max_31=max(n71,n70)) & n71<=(1+n70) & (0+n70)<=(n71+1) & m52=m56+1+m57
+ |-  emp.
+expect Valid.
+
+// id: 274; line: 201; kind: PRE
+ checkentail xleft'::avl{}<m53,n65> * xrightright'::avl{}<m58,n72> * 
+xrightleft'::avl{}<m59,n73> & m52=m56+1+m57 & (0+n70)<=(n71+1) & 
+n71<=(1+n70) & exists(max_31:n64=1+max_31 & max_31=max(n71,n70)) & n69=n64 & 
+v62' & !(v39') & xval'<a' & m=m34+1+m35 & (0+n42)<=(n41+1) & n41<=(1+n42) & 
+exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n43=n & !(v38') & 
+x'!=null & tmp1'=null & a'=a & x'=x & xval'=Anon15 & xheight'=n43 & 
+xleft'=p11 & xright=q11 & tmp'=xright & m51=m34 & n63=n42 & 0<=m34 & 
+0<=n42 & flted21=1+m51 & 0<=m51 & 0<=n63 & m52=flted21 & n64=Anon23 & 
+0<=flted21 & 0<=Anon23 & 0<=m52 & 0<=n64 & m53=m35 & n65=n41 & 0<=m35 & 
+0<=n41 & 0<=m53 & 0<=n65 & 2+n65=n64 & xrightval'=Anon25 & 
+xrightheight'=n69 & xrightleft'=p17 & xrightright'=q17 & m58=m56 & n72=n70 & 
+0<=m56 & 0<=n70 & v63'=n72 & 0<=m58 & 0<=n72 & m59=m57 & n73=n71 & 0<=m57 & 
+0<=n71 & v64'=n73 & 0<=m59 & 0<=n73 & v64'<v63'
+ |-  emp.
+expect Valid.
+
+// id: 275; line: 201; kind: PRE
+ checkentail xleft'::avl{}<m53,n65> * xrightright'::avl{}<m58,n72> * 
+xrightleft'::avl{}<m59,n73> & m52=m56+1+m57 & (0+n70)<=(n71+1) & 
+n71<=(1+n70) & exists(max_31:n64=1+max_31 & max_31=max(n71,n70)) & n69=n64 & 
+v62' & !(v39') & xval'<a' & m=m34+1+m35 & (0+n42)<=(n41+1) & n41<=(1+n42) & 
+exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n43=n & !(v38') & 
+x'!=null & tmp1'=null & a'=a & x'=x & xval'=Anon15 & xheight'=n43 & 
+xleft'=p11 & xright=q11 & tmp'=xright & m51=m34 & n63=n42 & 0<=m34 & 
+0<=n42 & flted21=1+m51 & 0<=m51 & 0<=n63 & m52=flted21 & n64=Anon23 & 
+0<=flted21 & 0<=Anon23 & 0<=m52 & 0<=n64 & m53=m35 & n65=n41 & 0<=m35 & 
+0<=n41 & 0<=m53 & 0<=n65 & 2+n65=n64 & xrightval'=Anon25 & 
+xrightheight'=n69 & xrightleft'=p17 & xrightright'=q17 & m58=m56 & n72=n70 & 
+0<=m56 & 0<=n70 & v63'=n72 & 0<=m58 & 0<=n72 & m59=m57 & n73=n71 & 0<=m57 & 
+0<=n71 & v64'=n73 & 0<=m59 & 0<=n73 & v63'<=v64'
+ |-  emp.
+expect Valid.
+
+// id: 276; line: 203; kind: PRE
+ checkentail xleft'::avl{}<m53,n65> * xrightright'::avl{}<m58,n72> * 
+xrightleft'::avl{}<m59,n73> & 0<=n73 & 0<=m59 & 0<=n71 & 0<=m57 & 
+n73=n71 & m59=m57 & 0<=n72 & 0<=m58 & 0<=n70 & 0<=m56 & n72=n70 & m58=m56 & 
+xrightright'=q17 & xrightleft'=p17 & xrightheight'=n69 & xrightval'=Anon25 & 
+2+n65=n64 & 0<=n65 & 0<=m53 & 0<=n41 & 0<=m35 & n65=n41 & m53=m35 & 0<=n64 & 
+0<=m52 & 0<=Anon23 & 0<=flted21 & n64=Anon23 & m52=flted21 & 0<=n63 & 
+0<=m51 & flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & m51=m34 & tmp'=xright & 
+xright=q11 & xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+xval'<a' & !(v39') & v62' & n69=n64 & exists(max_31:n64=1+max_31 & 
+max_31=max(n71,n70)) & n71<=(1+n70) & (0+n70)<=(n71+1) & m52=m56+1+m57 & 
+n73<n72 & v65'
+ |-  (exists ln1,flted8: xleft'::avl{}<lm,ln> * xrightleft'::avl{}<rlm,ln1> * 
+xrightright'::avl{}<rrm,flted8>&ln1=ln & flted8=1+ln).
+expect Valid.
+
+/*
+// id: 280; line: 203; kind: PRE
+ checkentail emp & rrm=m58 & rlm=m59 & ln=n65 & lm=m53 & 0<=n73 & 0<=m59 & 
+0<=n71 & 0<=m57 & n73=n71 & m59=m57 & 0<=n72 & 0<=m58 & 0<=n70 & 0<=m56 & 
+n72=n70 & m58=m56 & xrightright'=q17 & xrightleft'=p17 & xrightheight'=n69 & 
+xrightval'=Anon25 & 2+n65=n64 & 0<=n65 & 0<=m53 & 0<=n41 & 0<=m35 & 
+n65=n41 & m53=m35 & 0<=n64 & 0<=m52 & 0<=Anon23 & 0<=flted21 & n64=Anon23 & 
+m52=flted21 & 0<=n63 & 0<=m51 & flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & 
+m51=m34 & tmp'=xright & xright=q11 & xleft'=p11 & xheight'=n43 & 
+xval'=Anon15 & x'=x & a'=a & tmp1'=null & x'!=null & !(v38') & n43=n & 
+exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+n42) & (0+
+n42)<=(n41+1) & m=m34+1+m35 & xval'<a' & !(v39') & v62' & n69=n64 & 
+exists(max_31:n64=1+max_31 & max_31=max(n71,n70)) & n71<=(1+n70) & (0+
+n70)<=(n71+1) & m52=m56+1+m57 & n73<n72 & v65'
+ |-  emp.
+expect Valid.
+*/
+
+// id: 281; line: 207; kind: PRE
+ checkentail xleft'::avl{}<m53,n65> * xrightright'::avl{}<m58,n72> * 
+xrightleft'::avl{}<m59,n73> & 0<=n73 & 0<=m59 & 0<=n71 & 0<=m57 & 
+n73=n71 & m59=m57 & 0<=n72 & 0<=m58 & 0<=n70 & 0<=m56 & n72=n70 & m58=m56 & 
+xrightright'=q17 & xrightleft'=p17 & xrightheight'=n69 & xrightval'=Anon25 & 
+2+n65=n64 & 0<=n65 & 0<=m53 & 0<=n41 & 0<=m35 & n65=n41 & m53=m35 & 0<=n64 & 
+0<=m52 & 0<=Anon23 & 0<=flted21 & n64=Anon23 & m52=flted21 & 0<=n63 & 
+0<=m51 & flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & m51=m34 & tmp'=xright & 
+xright=q11 & xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+xval'<a' & !(v39') & v62' & n69=n64 & exists(max_31:n64=1+max_31 & 
+max_31=max(n71,n70)) & n71<=(1+n70) & (0+n70)<=(n71+1) & m52=m56+1+m57 & 
+n72<=n73 & !(v65')
+ |-  xrightleft'::avl{}<m60,n74>.
+expect Valid.
+
+// id: 283; line: 207; kind: PRE
+ checkentail xleft'::avl{}<m53,n65> * xrightright'::avl{}<m58,n72> & n74=n73 & 
+m60=m59 & 0<=n73 & 0<=m59 & 0<=n71 & 0<=m57 & n73=n71 & m59=m57 & 0<=n72 & 
+0<=m58 & 0<=n70 & 0<=m56 & n72=n70 & m58=m56 & xrightright'=q17 & 
+xrightleft'=p17 & xrightheight'=n69 & xrightval'=Anon25 & 2+n65=n64 & 
+0<=n65 & 0<=m53 & 0<=n41 & 0<=m35 & n65=n41 & m53=m35 & 0<=n64 & 0<=m52 & 
+0<=Anon23 & 0<=flted21 & n64=Anon23 & m52=flted21 & 0<=n63 & 0<=m51 & 
+flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & m51=m34 & tmp'=xright & 
+xright=q11 & xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+xval'<a' & !(v39') & v62' & n69=n64 & exists(max_31:n64=1+max_31 & 
+max_31=max(n71,n70)) & n71<=(1+n70) & (0+n70)<=(n71+1) & m52=m56+1+m57 & 
+n72<=n73 & !(v65')
+ |-  emp.
+expect Valid.
+
+// id: 284; line: 207; kind: PRE
+ checkentail xleft'::avl{}<m53,n65> * xrightright'::avl{}<m58,n72> * 
+xrightleft'::avl{}<m60,n74> & v66'=1 & 0<=n74 & 0<=m60 & 
+v67'=n74 & 0<=n73 & 0<=m59 & n74=n73 & m60=m59 & 0<=n71 & 0<=m57 & n73=n71 & 
+m59=m57 & 0<=n72 & 0<=m58 & 0<=n70 & 0<=m56 & n72=n70 & m58=m56 & 
+xrightright'=q17 & xrightleft'=p17 & xrightheight'=n69 & xrightval'=Anon25 & 
+2+n65=n64 & 0<=n65 & 0<=m53 & 0<=n41 & 0<=m35 & n65=n41 & m53=m35 & 0<=n64 & 
+0<=m52 & 0<=Anon23 & 0<=flted21 & n64=Anon23 & m52=flted21 & 0<=n63 & 
+0<=m51 & flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & m51=m34 & tmp'=xright & 
+xright=q11 & xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+xval'<a' & !(v39') & v62' & n69=n64 & exists(max_31:n64=1+max_31 & 
+max_31=max(n71,n70)) & n71<=(1+n70) & (0+n70)<=(n71+1) & m52=m56+1+m57 & 
+n72<=n73 & !(v65')
+ |-  htrue.
+expect Valid.
+
+// id: 285; line: 207; kind: PRE
+ checkentail xleft'::avl{}<m53,n65> * xrightright'::avl{}<m58,n72> * 
+xrightleft'::avl{}<m60,n74> & v66'=1 & 0<=n74 & 0<=m60 & 
+v67'=n74 & 0<=n73 & 0<=m59 & n74=n73 & m60=m59 & 0<=n71 & 0<=m57 & n73=n71 & 
+m59=m57 & 0<=n72 & 0<=m58 & 0<=n70 & 0<=m56 & n72=n70 & m58=m56 & 
+xrightright'=q17 & xrightleft'=p17 & xrightheight'=n69 & xrightval'=Anon25 & 
+2+n65=n64 & 0<=n65 & 0<=m53 & 0<=n41 & 0<=m35 & n65=n41 & m53=m35 & 0<=n64 & 
+0<=m52 & 0<=Anon23 & 0<=flted21 & n64=Anon23 & m52=flted21 & 0<=n63 & 
+0<=m51 & flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & m51=m34 & tmp'=xright & 
+xright=q11 & xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+xval'<a' & !(v39') & v62' & n69=n64 & exists(max_31:n64=1+max_31 & 
+max_31=max(n71,n70)) & n71<=(1+n70) & (0+n70)<=(n71+1) & m52=m56+1+m57 & 
+n72<=n73 & !(v65')
+ |-  emp.
+expect Valid.
+
+// id: 286; line: 207; kind: PRE
+ checkentail xleft'::avl{}<m53,n65> * xrightright'::avl{}<m58,n72> * 
+xrightleft'::avl{}<m60,n74> & v68'+1=n74 & 0<=n74 & 0<=m60 & 
+0<=n73 & 0<=m59 & n74=n73 & m60=m59 & 0<=n71 & 0<=m57 & n73=n71 & m59=m57 & 
+0<=n72 & 0<=m58 & 0<=n70 & 0<=m56 & n72=n70 & m58=m56 & xrightright'=q17 & 
+xrightleft'=p17 & xrightheight'=n69 & xrightval'=Anon25 & 2+n65=n64 & 
+0<=n65 & 0<=m53 & 0<=n41 & 0<=m35 & n65=n41 & m53=m35 & 0<=n64 & 0<=m52 & 
+0<=Anon23 & 0<=flted21 & n64=Anon23 & m52=flted21 & 0<=n63 & 0<=m51 & 
+flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & m51=m34 & tmp'=xright & 
+xright=q11 & xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+xval'<a' & !(v39') & v62' & n69=n64 & exists(max_31:n64=1+max_31 & 
+max_31=max(n71,n70)) & n71<=(1+n70) & (0+n70)<=(n71+1) & m52=m56+1+m57 & 
+n72<=n73 & !(v65')
+ |-  xrightright'::avl{}<m61,n75>.
+expect Valid.
+
+// id: 288; line: 207; kind: PRE
+ checkentail xleft'::avl{}<m53,n65> * xrightleft'::avl{}<m60,n74> & n75=n72 & 
+m61=m58 & v68'+1=n74 & 0<=n74 & 0<=m60 & 0<=n73 & 0<=m59 & n74=n73 & 
+m60=m59 & 0<=n71 & 0<=m57 & n73=n71 & m59=m57 & 0<=n72 & 0<=m58 & 0<=n70 & 
+0<=m56 & n72=n70 & m58=m56 & xrightright'=q17 & xrightleft'=p17 & 
+xrightheight'=n69 & xrightval'=Anon25 & 2+n65=n64 & 0<=n65 & 0<=m53 & 
+0<=n41 & 0<=m35 & n65=n41 & m53=m35 & 0<=n64 & 0<=m52 & 0<=Anon23 & 
+0<=flted21 & n64=Anon23 & m52=flted21 & 0<=n63 & 0<=m51 & flted21=1+m51 & 
+0<=n42 & 0<=m34 & n63=n42 & m51=m34 & tmp'=xright & xright=q11 & 
+xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & tmp1'=null & 
+x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & max_31=max(n41,
+n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & xval'<a' & !(v39') & 
+v62' & n69=n64 & exists(max_31:n64=1+max_31 & max_31=max(n71,n70)) & n71<=(1+
+n70) & (0+n70)<=(n71+1) & m52=m56+1+m57 & n72<=n73 & !(v65')
+ |-  emp.
+expect Valid.
+
+// id: 289; line: 207; kind: PRE
+ checkentail xleft'::avl{}<m53,n65> * xrightleft'::avl{}<m60,n74> * 
+xrightright'::avl{}<m61,n75> & !(v65') & n72<=n73 & m52=m56+1+
+m57 & (0+n70)<=(n71+1) & n71<=(1+n70) & exists(max_31:n64=1+max_31 & 
+max_31=max(n71,n70)) & n69=n64 & v62' & !(v39') & xval'<a' & m=m34+1+m35 & 
+(0+n42)<=(n41+1) & n41<=(1+n42) & exists(max_31:n=1+max_31 & max_31=max(n41,
+n42)) & n43=n & !(v38') & x'!=null & tmp1'=null & a'=a & x'=x & 
+xval'=Anon15 & xheight'=n43 & xleft'=p11 & xright=q11 & tmp'=xright & 
+m51=m34 & n63=n42 & 0<=m34 & 0<=n42 & flted21=1+m51 & 0<=m51 & 0<=n63 & 
+m52=flted21 & n64=Anon23 & 0<=flted21 & 0<=Anon23 & 0<=m52 & 0<=n64 & 
+m53=m35 & n65=n41 & 0<=m35 & 0<=n41 & 0<=m53 & 0<=n65 & 2+n65=n64 & 
+xrightval'=Anon25 & xrightheight'=n69 & xrightleft'=p17 & xrightright'=q17 & 
+m58=m56 & n72=n70 & 0<=m56 & 0<=n70 & m59=m57 & n73=n71 & 0<=m57 & 0<=n71 & 
+m60=m59 & n74=n73 & 0<=m59 & 0<=n73 & 0<=m60 & 0<=n74 & v68'+1=n74 & 
+m61=m58 & n75=n72 & 0<=m58 & 0<=n72 & v69'=n75 & 0<=m61 & 0<=n75 & v68'=v69'
+ |-  emp.
+expect Valid.
+
+// id: 290; line: 207; kind: PRE
+ checkentail xleft'::avl{}<m53,n65> * xrightleft'::avl{}<m60,n74> * 
+xrightright'::avl{}<m61,n75> & !(v65') & n72<=n73 & m52=m56+1+
+m57 & (0+n70)<=(n71+1) & n71<=(1+n70) & exists(max_31:n64=1+max_31 & 
+max_31=max(n71,n70)) & n69=n64 & v62' & !(v39') & xval'<a' & m=m34+1+m35 & 
+(0+n42)<=(n41+1) & n41<=(1+n42) & exists(max_31:n=1+max_31 & max_31=max(n41,
+n42)) & n43=n & !(v38') & x'!=null & tmp1'=null & a'=a & x'=x & 
+xval'=Anon15 & xheight'=n43 & xleft'=p11 & xright=q11 & tmp'=xright & 
+m51=m34 & n63=n42 & 0<=m34 & 0<=n42 & flted21=1+m51 & 0<=m51 & 0<=n63 & 
+m52=flted21 & n64=Anon23 & 0<=flted21 & 0<=Anon23 & 0<=m52 & 0<=n64 & 
+m53=m35 & n65=n41 & 0<=m35 & 0<=n41 & 0<=m53 & 0<=n65 & 2+n65=n64 & 
+xrightval'=Anon25 & xrightheight'=n69 & xrightleft'=p17 & xrightright'=q17 & 
+m58=m56 & n72=n70 & 0<=m56 & 0<=n70 & m59=m57 & n73=n71 & 0<=m57 & 0<=n71 & 
+m60=m59 & n74=n73 & 0<=m59 & 0<=n73 & 0<=m60 & 0<=n74 & v68'+1=n74 & 
+m61=m58 & n75=n72 & 0<=m58 & 0<=n72 & v69'=n75 & 0<=m61 & 0<=n75 & v68'!=v69'
+ |-  emp.
+expect Valid.
+
+// id: 291; line: 208; kind: BIND
+ checkentail (exists n76,Anon26,p18,m62,n77,q18,m63,n78: xleft'::avl{}<m53,n65> * 
+xrightleft'::node<Anon26,n76,p18,q18> * p18::avl{}<m62,n77> * 
+q18::avl{}<m63,n78> * xrightright'::avl{}<m61,n75> & 0<=n75 & 
+0<=m61 & 0<=n72 & 0<=m58 & n75=n72 & m61=m58 & n75+1=n74 & 0<=n74 & 0<=m60 & 
+0<=n73 & 0<=m59 & n74=n73 & m60=m59 & 0<=n71 & 0<=m57 & n73=n71 & m59=m57 & 
+0<=n70 & 0<=m56 & n72=n70 & m58=m56 & xrightright'=q17 & xrightleft'=p17 & 
+xrightheight'=n69 & xrightval'=Anon25 & 2+n65=n64 & 0<=n65 & 0<=m53 & 
+0<=n41 & 0<=m35 & n65=n41 & m53=m35 & 0<=n64 & 0<=m52 & 0<=Anon23 & 
+0<=flted21 & n64=Anon23 & m52=flted21 & 0<=n63 & 0<=m51 & flted21=1+m51 & 
+0<=n42 & 0<=m34 & n63=n42 & m51=m34 & tmp'=xright & xright=q11 & 
+xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & tmp1'=null & 
+x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & max_31=max(n41,
+n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & xval'<a' & !(v39') & 
+v62' & n69=n64 & exists(max_31:n64=1+max_31 & max_31=max(n71,n70)) & n71<=(1+
+n70) & (0+n70)<=(n71+1) & m52=m56+1+m57 & n72<=n73 & !(v65') & v70' & 
+n76=n74 & exists(max_31:n74=1+max_31 & max_31=max(n77,n78)) & n77<=(1+n78) & 
+(0+n78)<=(n77+1) & m60=m63+1+m62)
+ |-  xrightleft'::node<val8',height8',left8',right8'>@L.
+expect Valid.
+
+// id: 293; line: 208; kind: BIND
+ checkentail xleft'::avl{}<m53,n65> * xrightleft'::node<Anon27,n79,p19,q19> * 
+p19::avl{}<m65,n81> * q19::avl{}<m64,n80> * xrightright'::avl{}<m61,n75>&
+MayLoop[] & v71'=p19 & 0<=n75 & 0<=m61 & 0<=n72 & 0<=m58 & n75=n72 & 
+m61=m58 & n75+1=n74 & 0<=n74 & 0<=m60 & 0<=n73 & 0<=m59 & n74=n73 & 
+m60=m59 & 0<=n71 & 0<=m57 & n73=n71 & m59=m57 & 0<=n70 & 0<=m56 & n72=n70 & 
+m58=m56 & xrightright'=q17 & xrightleft'=p17 & xrightheight'=n69 & 
+xrightval'=Anon25 & 2+n65=n64 & 0<=n65 & 0<=m53 & 0<=n41 & 0<=m35 & 
+n65=n41 & m53=m35 & 0<=n64 & 0<=m52 & 0<=Anon23 & 0<=flted21 & n64=Anon23 & 
+m52=flted21 & 0<=n63 & 0<=m51 & flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & 
+m51=m34 & tmp'=xright & xright=q11 & xleft'=p11 & xheight'=n43 & 
+xval'=Anon15 & x'=x & a'=a & tmp1'=null & x'!=null & !(v38') & n43=n & 
+exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+n42) & (0+
+n42)<=(n41+1) & m=m34+1+m35 & xval'<a' & !(v39') & v62' & n69=n64 & 
+exists(max_31:n64=1+max_31 & max_31=max(n71,n70)) & n71<=(1+n70) & (0+
+n70)<=(n71+1) & m52=m56+1+m57 & n72<=n73 & !(v65') & v70' & n79=n74 & 
+exists(max_31:n74=1+max_31 & max_31=max(n81,n80)) & n81<=(1+n80) & (0+
+n80)<=(n81+1) & m60=m64+1+m65
+ |-  xrightleft'::node<val9',height9',left9',right9'>@L.
+expect Valid.
+
+// id: 295; line: 208; kind: PRE
+ checkentail xleft'::avl{}<m53,n65> * xrightleft'::node<Anon27,n79,p19,q19> * 
+p19::avl{}<m65,n81> * q19::avl{}<m64,n80> * xrightright'::avl{}<m61,n75>&
+MayLoop[] & v72'=1 & v73'=1 & v74'=1 & v75'=q19 & v71'=p19 & 0<=n75 & 
+0<=m61 & 0<=n72 & 0<=m58 & n75=n72 & m61=m58 & n75+1=n74 & 0<=n74 & 0<=m60 & 
+0<=n73 & 0<=m59 & n74=n73 & m60=m59 & 0<=n71 & 0<=m57 & n73=n71 & m59=m57 & 
+0<=n70 & 0<=m56 & n72=n70 & m58=m56 & xrightright'=q17 & xrightleft'=p17 & 
+xrightheight'=n69 & xrightval'=Anon25 & 2+n65=n64 & 0<=n65 & 0<=m53 & 
+0<=n41 & 0<=m35 & n65=n41 & m53=m35 & 0<=n64 & 0<=m52 & 0<=Anon23 & 
+0<=flted21 & n64=Anon23 & m52=flted21 & 0<=n63 & 0<=m51 & flted21=1+m51 & 
+0<=n42 & 0<=m34 & n63=n42 & m51=m34 & tmp'=xright & xright=q11 & 
+xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & tmp1'=null & 
+x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & max_31=max(n41,
+n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & xval'<a' & !(v39') & 
+v62' & n69=n64 & exists(max_31:n64=1+max_31 & max_31=max(n71,n70)) & n71<=(1+
+n70) & (0+n70)<=(n71+1) & m52=m56+1+m57 & n72<=n73 & !(v65') & v70' & 
+n79=n74 & exists(max_31:n74=1+max_31 & max_31=max(n81,n80)) & n81<=(1+n80) & 
+(0+n80)<=(n81+1) & m60=m64+1+m65
+ |-  (exists an3: xleft'::avl{}<am,an> * v71'::avl{}<bm,bn> * 
+v75'::avl{}<cm,cn> * xrightright'::avl{}<dm,an3>&an3=an & cn<=(1+bn) & (0+
+bn)<=(cn+1) & an=max(bn,cn)).
+expect Valid.
+
+// id: 300; line: 208; kind: PRE
+ checkentail xrightleft'::node<Anon27,n79,p19,q19> & dm=m61 & cn=n80 & 
+cm=m64 & bn=n81 & bm=m65 & an=n65 & am=m53 & v72'=1 & v73'=1 & v74'=1 & 
+v75'=q19 & v71'=p19 & 0<=n75 & 0<=m61 & 0<=n72 & 0<=m58 & n75=n72 & 
+m61=m58 & n75+1=n74 & 0<=n74 & 0<=m60 & 0<=n73 & 0<=m59 & n74=n73 & 
+m60=m59 & 0<=n71 & 0<=m57 & n73=n71 & m59=m57 & 0<=n70 & 0<=m56 & n72=n70 & 
+m58=m56 & xrightright'=q17 & xrightleft'=p17 & xrightheight'=n69 & 
+xrightval'=Anon25 & 2+n65=n64 & 0<=n65 & 0<=m53 & 0<=n41 & 0<=m35 & 
+n65=n41 & m53=m35 & 0<=n64 & 0<=m52 & 0<=Anon23 & 0<=flted21 & n64=Anon23 & 
+m52=flted21 & 0<=n63 & 0<=m51 & flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & 
+m51=m34 & tmp'=xright & xright=q11 & xleft'=p11 & xheight'=n43 & 
+xval'=Anon15 & x'=x & a'=a & tmp1'=null & x'!=null & !(v38') & n43=n & 
+exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+n42) & (0+
+n42)<=(n41+1) & m=m34+1+m35 & xval'<a' & !(v39') & v62' & n69=n64 & 
+exists(max_31:n64=1+max_31 & max_31=max(n71,n70)) & n71<=(1+n70) & (0+
+n70)<=(n71+1) & m52=m56+1+m57 & n72<=n73 & !(v65') & v70' & n79=n74 & 
+exists(max_31:n74=1+max_31 & max_31=max(n81,n80)) & n81<=(1+n80) & (0+
+n80)<=(n81+1) & m60=m64+1+m65
+ |-  emp.
+expect Valid.
+
+// id: 301; line: 210; kind: PRE
+ checkentail (exists v68': xleft'::avl{}<m53,n65> * xrightleft'::avl{}<m60,n74> * 
+xrightright'::avl{}<m61,n75> & 0<=n75 & 0<=m61 & 0<=n72 & 0<=m58 & 
+n75=n72 & m61=m58 & v68'+1=n74 & 0<=n74 & 0<=m60 & 0<=n73 & 0<=m59 & 
+n74=n73 & m60=m59 & 0<=n71 & 0<=m57 & n73=n71 & m59=m57 & 0<=n70 & 0<=m56 & 
+n72=n70 & m58=m56 & xrightright'=q17 & xrightleft'=p17 & xrightheight'=n69 & 
+xrightval'=Anon25 & 2+n65=n64 & 0<=n65 & 0<=m53 & 0<=n41 & 0<=m35 & 
+n65=n41 & m53=m35 & 0<=n64 & 0<=m52 & 0<=Anon23 & 0<=flted21 & n64=Anon23 & 
+m52=flted21 & 0<=n63 & 0<=m51 & flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & 
+m51=m34 & tmp'=xright & xright=q11 & xleft'=p11 & xheight'=n43 & 
+xval'=Anon15 & x'=x & a'=a & tmp1'=null & x'!=null & !(v38') & n43=n & 
+exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+n42) & (0+
+n42)<=(n41+1) & m=m34+1+m35 & xval'<a' & !(v39') & v62' & n69=n64 & 
+exists(max_31:n64=1+max_31 & max_31=max(n71,n70)) & n71<=(1+n70) & (0+
+n70)<=(n71+1) & m52=m56+1+m57 & n72<=n73 & !(v65') & v68'!=n75 & !(v70'))
+ |-  htrue.
+expect Valid.
+
+// id: 302; line: 210; kind: PRE
+ checkentail xleft'::avl{}<m53,n65> * xrightleft'::avl{}<m60,n74> * 
+xrightright'::avl{}<m61,n75> & 0<=n75 & 0<=m61 & 0<=n72 & 0<=m58 & 
+n75=n72 & m61=m58 & v2+1=n74 & 0<=n74 & 0<=m60 & 0<=n73 & 0<=m59 & n74=n73 & 
+m60=m59 & 0<=n71 & 0<=m57 & n73=n71 & m59=m57 & 0<=n70 & 0<=m56 & n72=n70 & 
+m58=m56 & xrightright'=q17 & xrightleft'=p17 & xrightheight'=n69 & 
+xrightval'=Anon25 & 2+n65=n64 & 0<=n65 & 0<=m53 & 0<=n41 & 0<=m35 & 
+n65=n41 & m53=m35 & 0<=n64 & 0<=m52 & 0<=Anon23 & 0<=flted21 & n64=Anon23 & 
+m52=flted21 & 0<=n63 & 0<=m51 & flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & 
+m51=m34 & tmp'=xright & xright=q11 & xleft'=p11 & xheight'=n43 & 
+xval'=Anon15 & x'=x & a'=a & tmp1'=null & x'!=null & !(v38') & n43=n & 
+exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n41<=(1+n42) & (0+
+n42)<=(n41+1) & m=m34+1+m35 & xval'<a' & !(v39') & v62' & n69=n64 & 
+exists(max_31:n64=1+max_31 & max_31=max(n71,n70)) & n71<=(1+n70) & (0+
+n70)<=(n71+1) & m52=m56+1+m57 & n72<=n73 & !(v65') & v2!=n75 & !(v70')
+ |-  emp.
+expect Valid.
+
+// id: 303; line: 215; kind: PRE
+ checkentail (exists v60': xright'::avl{}<m52,n64> * xleft'::avl{}<m53,n65> & 
+v60'+n65=n64 & 0<=n65 & 0<=m53 & 0<=n41 & 0<=m35 & n65=n41 & m53=m35 & 
+0<=n64 & 0<=m52 & 0<=Anon23 & 0<=flted21 & n64=Anon23 & m52=flted21 & 
+0<=n63 & 0<=m51 & flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & m51=m34 & 
+tmp'=xright & xright=q11 & xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & 
+a'=a & tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+xval'<a' & !(v39') & v60'!=2 & !(v62'))
+ |-  htrue.
+expect Valid.
+
+// id: 304; line: 215; kind: PRE
+ checkentail xright'::avl{}<m52,n64> * xleft'::avl{}<m53,n65> & v3+n65=n64 & 
+0<=n65 & 0<=m53 & 0<=n41 & 0<=m35 & n65=n41 & m53=m35 & 0<=n64 & 0<=m52 & 
+0<=Anon23 & 0<=flted21 & n64=Anon23 & m52=flted21 & 0<=n63 & 0<=m51 & 
+flted21=1+m51 & 0<=n42 & 0<=m34 & n63=n42 & m51=m34 & tmp'=xright & 
+xright=q11 & xleft'=p11 & xheight'=n43 & xval'=Anon15 & x'=x & a'=a & 
+tmp1'=null & x'!=null & !(v38') & n43=n & exists(max_31:n=1+max_31 & 
+max_31=max(n41,n42)) & n41<=(1+n42) & (0+n42)<=(n41+1) & m=m34+1+m35 & 
+xval'<a' & !(v39') & v3!=2 & !(v62')
+ |-  emp.
+expect Valid.
+
+// id: 305; line: 0; kind: POST
+ checkentail (exists v77',tmp1': x::avl{}<m,n> * v76'::node<a',v77',tmp1',tmp1'>&
+MayLoop[] & res=v76' & v77'=1 & x'=x & a'=a & tmp1'=null & x'=null & v38')
+ |-  (exists flted22,Anon28: res::avl{}<flted22,Anon28>&flted22=1+m & 0<=n & 
+0<=m).
+expect Valid.
+
+// id: 314; line: 0; kind: POST
+ checkentail (exists xleft',flted23,flted24: v78'::avl{}<flted23,flted24> * 
+xleft'::node<Anon_3699,n50,p13,q13> * x'::node<Anon15,n43,xleft',q11>&
+MayLoop[] & v47' & n54<n53 & m37=m41+1+m42 & (0+n51)<=(n52+1) & n52<=(1+
+n51) & exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n50=n45 & v44' & 
+v39' & a'<=Anon15 & m=m34+1+m35 & (0+n42)<=(n41+1) & n41<=(1+n42) & 
+exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n43=n & !(v38') & 
+x'!=null & a'=a & x'=x & xleft=p11 & m36=m35 & n44=n41 & 0<=m35 & 0<=n41 & 
+flted19=1+m36 & 0<=m36 & 0<=n44 & m37=flted19 & n45=Anon17 & 0<=flted19 & 
+0<=Anon17 & 0<=m37 & 0<=n45 & m38=m34 & n46=n42 & 0<=m34 & 0<=n42 & 2+
+n46=n45 & m43=m42 & n53=n52 & 0<=m42 & 0<=n52 & m44=m41 & n54=n51 & 0<=m41 & 
+0<=n51 & llm=m43 & lln=n53 & lrm=m44 & rm=m38 & 0<=m38 & 0<=n46 & 0<=m44 & 
+0<=n54 & 0<=m43 & 0<=n53 & flted23=rm+llm+2+lrm & flted24=lln+1 & 
+exists(flted_49_109:0<=flted_49_109) & 
+exists(flted_49_108:0<=flted_49_108) & 0<=llm & 0<=lln & 0<=lrm & 0<=rm & 
+res=v78')
+ |-  (exists flted22,Anon28: res::avl{}<flted22,Anon28>&flted22=1+m & 0<=n & 
+0<=m).
+expect Valid.
+
+// id: 316; line: 0; kind: POST
+ checkentail (exists xleft',flted25,flted26: q13::node<Anon21,n60,p15,q15> * 
+v79'::avl{}<flted26,flted25> * xleft'::node<Anon_3699,n50,p13,q13> * 
+x'::node<Anon15,n43,xleft',q11> & m46=m49+1+m50 & (0+n61)<=(n62+
+1) & n62<=(1+n61) & exists(max_31:n56=1+max_31 & max_31=max(n62,n61)) & 
+n60=n56 & v52' & !(v47') & n53<=n54 & m37=m41+1+m42 & (0+n51)<=(n52+1) & 
+n52<=(1+n51) & exists(max_31:n45=1+max_31 & max_31=max(n52,n51)) & n50=n45 & 
+v44' & v39' & a'<=Anon15 & m=m34+1+m35 & (0+n42)<=(n41+1) & n41<=(1+n42) & 
+exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n43=n & !(v38') & 
+x'!=null & a'=a & x'=x & xleft=p11 & m36=m35 & n44=n41 & 0<=m35 & 0<=n41 & 
+flted19=1+m36 & 0<=m36 & 0<=n44 & m37=flted19 & n45=Anon17 & 0<=flted19 & 
+0<=Anon17 & 0<=m37 & 0<=n45 & m38=m34 & n46=n42 & 0<=m34 & 0<=n42 & 2+
+n46=n45 & m43=m42 & n53=n52 & 0<=m42 & 0<=n52 & m44=m41 & n54=n51 & 0<=m41 & 
+0<=n51 & m45=m43 & n55=n53 & 0<=m43 & 0<=n53 & m46=m44 & n56=n54 & 0<=m44 & 
+0<=n54 & 0<=m46 & 0<=n56 & n55+1=n56 & am=m45 & an=n55 & bm=m50 & bn=n62 & 
+cm=m49 & cn=n61 & dm=m38 & 0<=m38 & 0<=n46 & 0<=m49 & 0<=n61 & 0<=m50 & 
+0<=n62 & 0<=m45 & 0<=n55 & flted26=dm+bm+3+am+cm & flted25=2+an & 
+exists(an_97:0<=an_97) & 0<=am & 0<=an & 0<=bm & 0<=bn & 0<=cm & 0<=cn & 
+0<=dm & res=v79')
+ |-  (exists flted22,Anon28: res::avl{}<flted22,Anon28>&flted22=1+m & 0<=n & 
+0<=m).
+expect Valid.
+
+// id: 318; line: 0; kind: POST
+ checkentail (exists xright',flted27,flted28: v80'::avl{}<flted27,flted28> * 
+xright'::node<Anon_3947,n69,p17,q17> * x'::node<Anon15,n43,p11,xright'>&
+MayLoop[] & v65' & n73<n72 & m52=m56+1+m57 & (0+n70)<=(n71+1) & n71<=(1+
+n70) & exists(max_31:n64=1+max_31 & max_31=max(n71,n70)) & n69=n64 & v62' & 
+!(v39') & Anon15<a' & m=m34+1+m35 & (0+n42)<=(n41+1) & n41<=(1+n42) & 
+exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n43=n & !(v38') & 
+x'!=null & a'=a & x'=x & xright=q11 & m51=m34 & n63=n42 & 0<=m34 & 0<=n42 & 
+flted21=1+m51 & 0<=m51 & 0<=n63 & m52=flted21 & n64=Anon23 & 0<=flted21 & 
+0<=Anon23 & 0<=m52 & 0<=n64 & m53=m35 & n65=n41 & 0<=m35 & 0<=n41 & 2+
+n65=n64 & m58=m56 & n72=n70 & 0<=m56 & 0<=n70 & m59=m57 & n73=n71 & 0<=m57 & 
+0<=n71 & lm=m53 & ln=n65 & rlm=m59 & rrm=m58 & 0<=m58 & 0<=n72 & 0<=m59 & 
+0<=n73 & 0<=m53 & 0<=n65 & flted27=rrm+lm+2+rlm & flted28=ln+2 & 
+exists(flted_32_119:0<=flted_32_119) & exists(ln_120:0<=ln_120) & 0<=lm & 
+0<=ln & 0<=rlm & 0<=rrm & res=v80')
+ |-  (exists flted22,Anon28: res::avl{}<flted22,Anon28>&flted22=1+m & 0<=n & 
+0<=m).
+expect Valid.
+
+// id: 320; line: 0; kind: POST
+ checkentail (exists xright',flted29,flted30: p17::node<Anon27,n79,p19,q19> * 
+v81'::avl{}<flted30,flted29> * xright'::node<Anon_3947,n69,p17,q17> * 
+x'::node<Anon15,n43,p11,xright'> & m60=m64+1+m65 & (0+n80)<=(n81+
+1) & n81<=(1+n80) & exists(max_31:n74=1+max_31 & max_31=max(n81,n80)) & 
+n79=n74 & v70' & !(v65') & n72<=n73 & m52=m56+1+m57 & (0+n70)<=(n71+1) & 
+n71<=(1+n70) & exists(max_31:n64=1+max_31 & max_31=max(n71,n70)) & n69=n64 & 
+v62' & !(v39') & Anon15<a' & m=m34+1+m35 & (0+n42)<=(n41+1) & n41<=(1+n42) & 
+exists(max_31:n=1+max_31 & max_31=max(n41,n42)) & n43=n & !(v38') & 
+x'!=null & a'=a & x'=x & xright=q11 & m51=m34 & n63=n42 & 0<=m34 & 0<=n42 & 
+flted21=1+m51 & 0<=m51 & 0<=n63 & m52=flted21 & n64=Anon23 & 0<=flted21 & 
+0<=Anon23 & 0<=m52 & 0<=n64 & m53=m35 & n65=n41 & 0<=m35 & 0<=n41 & 2+
+n65=n64 & m58=m56 & n72=n70 & 0<=m56 & 0<=n70 & m59=m57 & n73=n71 & 0<=m57 & 
+0<=n71 & m60=m59 & n74=n73 & 0<=m59 & 0<=n73 & 0<=m60 & 0<=n74 & n75+1=n74 & 
+m61=m58 & n75=n72 & 0<=m58 & 0<=n72 & am=m53 & an=n65 & bm=m65 & bn=n81 & 
+cm=m64 & cn=n80 & dm=m61 & 0<=m61 & 0<=n75 & 0<=m64 & 0<=n80 & 0<=m65 & 
+0<=n81 & 0<=m53 & 0<=n65 & flted30=dm+bm+3+am+cm & flted29=an+2 & 
+exists(an_88:0<=an_88) & 0<=am & 0<=an & 0<=bm & 0<=bn & 0<=cm & 0<=cn & 
+0<=dm & res=v81')
+ |-  (exists flted22,Anon28: res::avl{}<flted22,Anon28>&flted22=1+m & 0<=n & 
+0<=m).
+expect Valid.

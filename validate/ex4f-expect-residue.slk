@@ -1,0 +1,39 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+//(4)
+checkentail x::node<aaa,q>*q::node<aaa,null> |- false.
+//expect Fail.
+expect Valid.
+checkentail x::node<aaa,q>*q::node<aaa,null> |- emp.
+print residue.
+expect Valid.
+expect_infer Valid R{x::node<bb,q>*q::node<bb,null>}. //Valid 1
+expect_infer Valid R{x::node<bb,q>*q::node<bb,_>}.//Valid
+expect_infer Valid R{x::node<bb,q1>*q1::node<bb,_>}.//Valid
+expect_infer Fail R{x::node<bb,q>*q::node<bb+1,_>}. //Invalid
+expect_infer Valid R{x::node<bb,_>*qq::node<bb,_>}. //Invalid
+expect_infer Valid R{x::node<bb,_>*q::node<bb,_>}. //Valid??
+
+/*
+ex4f.slk
+
+# new format
+
+checkentail x::node<aaa,q>*q::node<aaa,null> |- emp.
+print residue.
+expect Valid.
+expect_infer Valid R{x::node<bb,q>*q::node<bb,null>}. //Valid
+expect_infer Valid R{x::node<bb,q>*q::node<bb,_>}.//Valid
+expect_infer Valid R{x::node<bb,q1>*q1::node<bb,_>}.//Valid
+expect_infer Fail R{x::node<bb,q>*q::node<bb+1,_>}. //Invalid
+expect_infer Fail R{x::node<bb,_>*qq::node<bb,_>}. //Invalid
+expect_infer Valid R{x::node<bb,_>*q::node<bb,_>}. //Valid??
+
+*/

@@ -131,6 +131,7 @@ and spass_dfg_of_p_formula (pf : Cpure.p_formula) : (string * string list * stri
   | ListNotIn _
   | ListAllN _
   | ListPerm _
+  | ImmRel _
   | RelForm _       -> illegal_format "SPASS don't support List p_formula"
   | XPure _ -> Error.report_no_pattern()
 
@@ -257,6 +258,7 @@ and spass_tptp_of_p_formula (pf : Cpure.p_formula) : string =
   | ListNotIn _
   | ListAllN _
   | ListPerm _
+  | ImmRel _
   | RelForm _       -> illegal_format "SPASS don't support List p_formula"
   | XPure _ -> Error.report_no_pattern()
 
@@ -342,6 +344,7 @@ and can_spass_handle_p_formula (pf : Cpure.p_formula) : bool =
   | ListNotIn _
   | ListAllN _
   | ListPerm _
+  | ImmRel _
   | RelForm _            -> false
   | XPure _ -> Error.report_no_pattern()
 

@@ -24,6 +24,70 @@ Successful States:
 
 assert:fail/ex1-id2-b3.c:29: 1:  : ok
 
+============================================
+#succ/afterrec_true: OK
+
+-------
+note:
+query = forall
+
+============================================
+#succ/afterrec_2true: OK
+
+-------
+note:
+query = forall
+
+============================================
+#succ/fibo_5_true
+#succ/fibo_7_true
+#succ/fibo_10_true
+#succ/fibo_15_true
+#succ/fibo_2call_*_true
+
+!!! **pi.ml#775:>>>>>>>>>>> (bef postprocess): <<<<<<<<<
+!!! **pi.ml#776:>>REL POST:  Q1(n,res)
+!!! **pi.ml#777:>>POST:  (((res+1)>=n & res>=1) | (0>=n & 0=res))
+!!! **pi.ml#778:>>REL PRE :  P1(n)
+!!! **pi.ml#779:>>PRE :  RECn>=0 & n>=(1+RECn) & n>=2
+
+
+Post Inference result:
+fibo$int
+ EBase 
+   emp&0<=RECn & RECn<n & 2<=n & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+   EAssume 
+     emp&(((res+1)>=n & res>=1) | (0>=n & 0=res))&{FLOW,(4,5)=__norm#E}[]
+
+-------
+note:
+query = instantiation + forall
+
+============================================
+#succ/id2_b3_05_true
+#succ/id2_b2_03_true
+
+
+!!! **pi.ml#775:>>>>>>>>>>> (bef postprocess): <<<<<<<<<
+!!! **pi.ml#776:>>REL POST:  Q1(x,res)
+!!! **pi.ml#777:>>POST:  res>=0 & x>=res
+!!! **pi.ml#778:>>REL PRE :  P1(x)
+!!! **pi.ml#779:>>PRE :  true
+!!! **pi.ml#775:>>>>>>>>>>> (bef postprocess): <<<<<<<<<
+!!! **pi.ml#776:>>REL POST:  Q2(x,res)
+!!! **pi.ml#777:>>POST:  res>=0 & x>=res
+!!! **pi.ml#778:>>REL PRE :  P2(x)
+!!! **pi.ml#779:>>PRE :  true
+
+-------
+note:
+query = instantiation + forall
+
+============================================
+# sum_2x3_true
+
+============================================
+#sum_non_eq_true
 
 ============================================
 #fail/id2_b3_o2_false-unreach-call.c: should be FAIL

@@ -1,0 +1,14 @@
+data cell{
+ int val;
+}.
+
+slk_simplify x::cell<_> * x::cell<_>. 
+/*
+# ex8e4af.slk (FIXED)
+
+GOT:
+Simplify  (2): x::cell<Anon_13>@M * x::cell<Anon_14>@M&{FLOW,(20,21)=__norm#E}[]
+
+should we generate false?
+*/
+

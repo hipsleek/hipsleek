@@ -1,0 +1,91 @@
+
+
+    P(w) & w<:v & P(v)
+
+ choose a smallest v=@c that is satisfiable
+ and can prove P(v)
+
+     P(w) & inst(w,v) |- P(v) & w<:v
+
+  infer [v,w] P(w) |- P(v) & w<:v
+
+
+checkentail x::cell<_>@w & P(w) |- x::cell<_>@v & P(v).
+
+
+
+checkentail x::cell<_>@w & P(w) |- x::cell<_>@v & Q(v).
+
+     P(w) & inst(w,v) |- Q(v) & to_prove(w,v)
+
+ALGO 3:
+P(w) <--- relevant(P(w))         Q(v) <--- relevant(Q(v))
+
+
+1. if {Q(v)&P(w) contains the proof that v=IConst} then 
+   inst(w,v) = [v=IConst]; to_prove(w,v) = [w<:v] END Else GOTO 3
+/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
+(a) x::cell<_>@w & w=@L |- x::cell<_>@v & v=@L. --> inst(v,w)=[v=@L]
+(b) x::cell<_>@w & w=@L |- x::cell<_>@v & v=w.  --> inst(v,w)=[v=@L]
+/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
+2. let Q2(v) = simplify (mkExists qvars Q1(v)) in
+3. if {Q2(v) = true} then inst(w,v) = [w<:v]; to_prove(w,v) = []. END. 
+   Else GOTO 4
+/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
+(c) x::cell<_>@w |- x::cell<_>@v. -----------> inst(v,w)=[w<:v]
+/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
+4   let qvars3 =  (fv(P)\/fv(Q2) - v) in
+5  let Q3(v) = simplify ( \exists qvars2  Q2(v) & P(w) & w<:v ) in
+6  upper_bound = find the constant upper bound of v, given Q3(v) in
+7. if {no explicit upper bound candidate found} then GOTO10. Else GOTO 9
+9. inst(w,v) = [v=upper_bound] ?or <: ?, to_prove = [w<:v] END 
+/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
+(d) x::cell<_>@w |- x::cell<_>@v & v<:@L  ---------> inst(v,w)=[v=@L] NOT OK
+!!!!!! v=@L is insufficient FIX: if {P(w)=true} then additional inst(v,w)=[w<:v]
+(e) x::cell<_>@w & w<:@L |- x::cell<_>@v & v<:@L --> inst(v,w)=[v=@L]        OK
+(f) x::cell<_>@w & w<:@L & u<:@L |- x::cell<_>@v & v<:u --> inst(v,w)=[v=@L] OK
+/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
+10. lower_bound = find the constant lower bound of v, given Q3(v) in
+11. if {no explicit lower bound candidate found} then GOTO13. Else GOTO 12
+12. inst(w,v) = [v=lower_bound] ?or <: ?, to_prove = [w<:v] END 
+13. let qvars4 = qvars in 
+14. let Q4(v,w) = simplify ( \exists qvars4  Q2(v) & P(w) & w<:v ) in
+15. if v has a global alias, given Q4(v) then inst=[v=global_alias_var]. END Else GOTO16
+16. repeat 4-12 searching for poly bound, in Q4(v,w)
+(g) x::cell<_>@w & w<:@L & u=ww |- x::cell<_>@v & v<:u --> inst(v,w)=[v=u] OK
+
+ALGO 2:
+
+1. if {Q(v) contains the proof that v=IConst} then inst(w,v) = [v=IConst]; to_prove(w,v) = [w<:v]. Else GOTO 2
+###2. if {simplify Q(v) = true} then inst(w,v) = [w<:v]; to_prove(w,v) = []. Else GOTO 3
+3. let simpl(v,w) = simplify ( P(w) & w<:v & Q(v)). GOTO 4
+###4. if {simpl(v,w) == false} then inst(w,v) = Q(v), to_prove = [w<:v]. END Else GOTO 5
+/* the verifier will later detect lhs-rhs contra TODO should i trigger a fail now? */
+5. if {simpl(v,w) contains the proof that v=IConst} then inst(w,v) = [v=IConst]; to_prove(w,v) = [w<:v]. Else GOTO 6
+6. max_candidates = collect all the possible upper bounds of v, given simpl(v,w). GOTO 7
+###7. if {no explicit upper bound candidate found} then inst(w,v) = [v=@A], to_prove = [w<:v] END. Else GOTO 8
+/* 6. can be replaced by  inst(w,v) = [v=@A], to_prove = [w<:v] for a stronger instantiation END.  Else GOTO 7 */
+8. filter the bounds list so that the upper bounds list comprises only global vars and/or imm constants. GOTO 9
+9. if [there are multiple upper bounds] then inst(w,v) = [v=max(upper_bounds)], to_prove = [w<:v]. END Else GOTO 10
+10. inst(w,v) = [v=bound], to_prove = [w<:v]. END
+
+
+ALGO 1 (depricated):
+
+1. if {Q(v) contains the proof that v=IConst} then inst(w,v) = [v=IConst]; to_prove(w,v) = [w<:v]. Else GOTO 2
+2. let simpl(v,w) = simplify ( P(w) & w<:v & Q(v)). GOTO 3
+3. if simpl(v,w) == false then inst(w,v) = [w<:v], to_prove = []. END Else GOTO 4
+/* the verifier will later detect lhs-rhs contra TODO should i trigger a fail now? */
+4. if {simpl(v,w) contains the proof that v=IConst} then inst(w,v) = [v=IConst]; to_prove(w,v) = [w<:v]. Else GOTO 5
+5. max_candidates = collect all the possible upper bounds of v, given simpl(v,w). GOTO 6
+6. if {no explicit upper bound candidate found} then inst(w,v) = [w<:v], to_prove = [] END. Else GOTO 7
+/* 6. can be replaced by  inst(w,v) = [v=@A], to_prove = [w<:v] for a stronger instantiation END.  Else GOTO 7 */
+7. filter the bounds list so that the upper bounds list comprises only global vars and/or imm constants. GOTO 8
+8. if [there are multiple upper bounds] then inst(w,v) = [v=max(upper_bounds)], to_prove = [w<:v]. END Else GOTO 9
+9. inst(w,v) = [v=bound], to_prove = [w<:v]. END

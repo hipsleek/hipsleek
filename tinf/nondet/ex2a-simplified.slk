@@ -1,0 +1,15 @@
+
+
+checkentail  x>=0 & v=x-1  & !(v>=0) |-   !(x>=0).
+
+checkentail  x>=0 & v=x+1  & !(v>=0) |-   !(x>=0).
+
+
+infer [b,c]  b>0 & x>=0 & v=x-1  & !(v>=0) |-   !(x>=0).
+print residue.
+
+infer [b,c]  b>0 & x>=0 & v=x-1  & (v<0) |-   (x<0).
+print residue.
+
+infer [b,c]  b>0 & x>=0 & v=x-1  & (x>=0) |-   (v>=0).
+print residue.
