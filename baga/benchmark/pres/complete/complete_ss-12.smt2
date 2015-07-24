@@ -1,0 +1,33 @@
+(set-info :source  loris-7.ddns.comp.nus.edu.sg/~project/hip/) 
+;Variables declarations
+(declare-fun nmin_1675 () Int)
+(declare-fun n_1674 () Int)
+(declare-fun v_node2_62_1510_primed () Int)
+(declare-fun l_1667 () Int)
+(declare-fun t () Int)
+(declare-fun v_bool_61_1524_primed () Int)
+(declare-fun nmin () Int)
+(declare-fun nmin1_1668 () Int)
+(declare-fun flted_26_1665 () Int)
+(declare-fun n () Int)
+(declare-fun t_primed () Int)
+(declare-fun nmin2_1670 () Int)
+(declare-fun flted_26_1664 () Int)
+(declare-fun r_1669 () Int)
+;Relations declarations
+;Axioms assertions
+;Antecedent
+(assert (= nmin_1675 nmin1_1668))
+(assert (= n_1674 flted_26_1665))
+(assert (= v_node2_62_1510_primed l_1667))
+(assert (= t_primed t))
+(assert (> t_primed 0))
+(assert (> v_bool_61_1524_primed 0))
+(assert (exists ((min_32 Int)) (and (= nmin (+ 1 min_32)) (or (and (= min_32 nmin1_1668) (< nmin1_1668 nmin2_1670)) (and (= min_32 nmin2_1670) (>= nmin1_1668 nmin2_1670))))))
+(assert (= (+ flted_26_1664 1) n))
+(assert (= (+ flted_26_1665 1) n))
+(assert (= t_primed 1))
+(assert (or (and (and (<= 1 nmin2_1670) (<= nmin2_1670 flted_26_1664)) (> r_1669 0)) (or (and (and (< r_1669 1) (= flted_26_1664 0)) (= nmin2_1670 0)) (and (and (<= 1 nmin2_1670) (< nmin2_1670 flted_26_1664)) (> r_1669 0)))))
+;Negation of Consequence
+(assert (not false))
+(check-sat)

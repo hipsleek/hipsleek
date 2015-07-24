@@ -490,10 +490,13 @@ struct
   (*write e into file_name*)
   let write_one_query (lt) file_name=
     let e_body = string_of_log_type lt in
-    let e =  "(set-logic " ^ (string_of_logic (if !Globals.gen_pres_sat then QF_LIA else QF_S)) ^ ")\n" ^ e_body in
+    let logic_header = 
+    "(set-info :source  loris-7.ddns.comp.nus.edu.sg/~project/hip/) \n"
+  in
+    let e =  logic_header ^ e_body in
     x_tinfo_hp (add_str "write_one_query" (pr_pair pr_elt pr_id)) (e, file_name) no_pos;
     (*open to write*)
-    let full_fn = ("logs/"^file_name ^".smt2") in
+    let full_fn = ((*"logs/" ^ *)file_name ^".smt2") in
     let oc = 
         (try Unix.mkdir "logs" 0o750 with _ -> ());
       open_out full_fn in
@@ -508,13 +511,20 @@ struct
   let log_pres_queries prefix_fn=
     if !Globals.gen_pres_sat then
       let lgs = (List.rev (proof_log_stk # get_stk)) in
+      let lgs1 = List.filter (fun log -> begin
+        match log.Log.log_type with
+          | PT_IMPLY (ante, conseq) -> (Cpure.size_formula ante) + (Cpure.size_formula conseq) > 20
+          | PT_SAT f -> (Cpure.size_formula f) > 20
+          | _ -> false
+      end
+      ) lgs in
        let todo_unk = List.fold_left
           (fun id log ->
               if log.log_proving_kind !=  Others.PK_Trans_Proc then
                 let () = write_one_query log (prefix_fn ^ "-"^(string_of_int id)) in
                 (id+1)
               else id
-          ) 0 lgs in
+          ) 0 lgs1 in
        ()
     else ()
 

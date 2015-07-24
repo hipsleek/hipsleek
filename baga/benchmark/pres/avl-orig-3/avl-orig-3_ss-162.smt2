@@ -1,0 +1,30 @@
+(set-info :source  loris-7.ddns.comp.nus.edu.sg/~project/hip/) 
+;Variables declarations
+(declare-fun l () Int)
+(declare-fun am_3231 () Int)
+(declare-fun ba1 () Int)
+(declare-fun Anon_23 () Int)
+(declare-fun am () Int)
+(declare-fun a () Int)
+(declare-fun an_3232 () Int)
+(declare-fun an () Int)
+(declare-fun rl () Int)
+(declare-fun Anon_26 () Int)
+(declare-fun bm () Int)
+(declare-fun bn () Int)
+(declare-fun b () Int)
+;Relations declarations
+;Axioms assertions
+;Antecedent
+(assert (= l a))
+(assert (= am_3231 am))
+(assert (= ba1 Anon_23))
+(assert (or (and (and (and (< a 1) (= am 0)) (= an 0)) (= Anon_23 1)) (and (and (and (and (and (<= 0 Anon_23) (<= (+ (- 0 an) 2) Anon_23)) (<= Anon_23 an)) (<= Anon_23 2)) (<= 1 am)) (> a 0))))
+(assert (= an_3232 an))
+(assert (<= an (+ bn 1)))
+(assert (<= bn (+ an 1)))
+(assert (= rl b))
+(assert (or (and (and (and (< b 1) (= bm 0)) (= bn 0)) (= Anon_26 1)) (and (and (and (and (and (<= 0 Anon_26) (<= (+ (- 0 bn) 2) Anon_26)) (<= Anon_26 bn)) (<= Anon_26 2)) (<= 1 bm)) (> b 0))))
+;Negation of Consequence
+(assert (not (or (= bm 0) (or (= bn 0) (< b 1)))))
+(check-sat)

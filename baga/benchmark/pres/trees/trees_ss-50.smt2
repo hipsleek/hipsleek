@@ -1,0 +1,31 @@
+(set-info :source  loris-7.ddns.comp.nus.edu.sg/~project/hip/) 
+;Variables declarations
+(declare-fun v_1948 () Int)
+(declare-fun s () Int)
+(declare-fun b () Int)
+(declare-fun x () Int)
+(declare-fun v_bool_217_1466_primed () Int)
+(declare-fun x_primed () Int)
+(declare-fun sm_1944 () Int)
+(declare-fun pl_1946 () Int)
+(declare-fun p_1949 () Int)
+(declare-fun qs_1947 () Int)
+(declare-fun lg_1945 () Int)
+(declare-fun q_1950 () Int)
+;Relations declarations
+;Axioms assertions
+;Antecedent
+(assert (<= pl_1946 v_1948))
+(assert (<= v_1948 qs_1947))
+(assert (= sm_1944 s))
+(assert (= lg_1945 b))
+(assert (= x_primed x))
+(assert (> x 0))
+(assert (> p_1949 0))
+(assert (not (> v_bool_217_1466_primed 0)))
+(assert (= x_primed 1))
+(assert (or (and (< p_1949 1) (<= sm_1944 pl_1946)) (and (<= sm_1944 pl_1946) (> p_1949 0))))
+(assert (or (and (< q_1950 1) (<= qs_1947 lg_1945)) (and (<= qs_1947 lg_1945) (> q_1950 0))))
+;Negation of Consequence
+(assert (not false))
+(check-sat)

@@ -1,0 +1,30 @@
+(set-info :source  loris-7.ddns.comp.nus.edu.sg/~project/hip/) 
+;Variables declarations
+(declare-fun res () Int)
+(declare-fun b () Int)
+(declare-fun n2_2564 () Int)
+(declare-fun n1_2560 () Int)
+(declare-fun n () Int)
+(declare-fun v_int_31_2348_primed () Int)
+(declare-fun n_2556 () Int)
+(declare-fun n1_2581 () Int)
+(declare-fun n2_2585 () Int)
+;Relations declarations
+;Axioms assertions
+;Antecedent
+(assert (<= 0 n1_2560))
+(assert (<= 0 n2_2564))
+(assert (= res v_int_31_2348_primed))
+(assert (<= n1_2560 (+ n2_2564 1)))
+(assert (<= n2_2564 (+ 1 n1_2560)))
+(assert (= (+ b n2_2564) (+ 1 n1_2560)))
+(assert (exists ((max_2620 Int)) (and (= n (+ 1 max_2620)) (or (and (= max_2620 n1_2560) (>= n1_2560 n2_2564)) (and (= max_2620 n2_2564) (< n1_2560 n2_2564))))))
+(assert (exists ((b_2622 Int)) (= (+ b_2622 n2_2585) (+ 1 n1_2581))))
+(assert (exists ((max_2621 Int)) (and (= n_2556 (+ 1 max_2621)) (or (and (= max_2621 n1_2581) (>= n1_2581 n2_2585)) (and (= max_2621 n2_2585) (< n1_2581 n2_2585))))))
+(assert (= n2_2585 n2_2564))
+(assert (= n1_2581 n1_2560))
+(assert (= n_2556 n))
+(assert (= v_int_31_2348_primed n_2556))
+;Negation of Consequence
+(assert (not (or (and (= n_2556 (+ 1 n1_2581)) (<= n2_2585 n1_2581)) (and (= n_2556 (+ 1 n2_2585)) (< n1_2581 n2_2585)))))
+(check-sat)

@@ -1,0 +1,33 @@
+(set-info :source  loris-7.ddns.comp.nus.edu.sg/~project/hip/) 
+;Variables declarations
+(declare-fun l_primed () Int)
+(declare-fun r_primed () Int)
+(declare-fun m1 () Int)
+(declare-fun m2 () Int)
+(declare-fun m2_primed () Int)
+(declare-fun m1_primed () Int)
+(declare-fun mx1 () Int)
+(declare-fun m1_70 () Int)
+(declare-fun l () Int)
+(declare-fun mx2 () Int)
+(declare-fun m2_71 () Int)
+(declare-fun r () Int)
+;Relations declarations
+;Axioms assertions
+;Antecedent
+(assert (= m1_primed m1))
+(assert (= m2_primed m2))
+(assert (= l_primed l))
+(assert (= r_primed r))
+(assert (< 0 (+ m2 m1)))
+(assert (<= (+ 0 m2) m1))
+(assert (<= m1 (+ 1 m2)))
+(assert (= m1_70 m1))
+(assert (= m2_71 m2))
+(assert true)
+(assert (< m2_primed m1_primed))
+(assert (or (and (and (< l 1) (= m1_70 0)) (= mx1 0)) (and (and (<= 0 mx1) (<= 1 m1_70)) (> l 0))))
+(assert (or (and (and (< r 1) (= m2_71 0)) (= mx2 0)) (and (and (<= 0 mx2) (<= 1 m2_71)) (> r 0))))
+;Negation of Consequence
+(assert (not false))
+(check-sat)

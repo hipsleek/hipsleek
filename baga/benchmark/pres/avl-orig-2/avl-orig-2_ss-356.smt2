@@ -1,0 +1,30 @@
+(set-info :source  loris-7.ddns.comp.nus.edu.sg/~project/hip/) 
+;Variables declarations
+(declare-fun Anon_3755 () Int)
+(declare-fun p_3752 () Int)
+(declare-fun n_3750 () Int)
+(declare-fun tm () Int)
+(declare-fun m1_3753 () Int)
+(declare-fun tn () Int)
+(declare-fun b () Int)
+(declare-fun n1_3754 () Int)
+(declare-fun v_node_107_2140_primed () Int)
+(declare-fun Anon_3759 () Int)
+(declare-fun m2_3757 () Int)
+(declare-fun n2_3758 () Int)
+(declare-fun q_3756 () Int)
+;Relations declarations
+;Axioms assertions
+;Antecedent
+(assert (or (and (and (and (< p_3752 1) (= m1_3753 0)) (= n1_3754 0)) (= Anon_3755 1)) (and (and (and (and (and (<= 0 Anon_3755) (<= (+ (- 0 n1_3754) 2) Anon_3755)) (<= Anon_3755 n1_3754)) (<= Anon_3755 2)) (<= 1 m1_3753)) (> p_3752 0))))
+(assert (= n_3750 tn))
+(assert (= tm (+ (+ m2_3757 1) m1_3753)))
+(assert (exists ((max_4073 Int)) (and (= tn (+ max_4073 1)) (or (and (= max_4073 n1_3754) (>= n1_3754 n2_3758)) (and (= max_4073 n2_3758) (< n1_3754 n2_3758))))))
+(assert (<= (+ 0 n2_3758) (+ n1_3754 1)))
+(assert (<= n1_3754 (+ 1 n2_3758)))
+(assert (= (+ b n2_3758) (+ 1 n1_3754)))
+(assert (= v_node_107_2140_primed q_3756))
+(assert (or (and (and (and (< q_3756 1) (= m2_3757 0)) (= n2_3758 0)) (= Anon_3759 1)) (and (and (and (and (and (<= 0 Anon_3759) (<= (+ (- 0 n2_3758) 2) Anon_3759)) (<= Anon_3759 n2_3758)) (<= Anon_3759 2)) (<= 1 m2_3757)) (> q_3756 0))))
+;Negation of Consequence
+(assert (not (or (= m2_3757 0) (or (= n2_3758 0) (< q_3756 1)))))
+(check-sat)

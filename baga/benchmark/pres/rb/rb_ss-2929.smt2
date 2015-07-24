@@ -1,0 +1,31 @@
+(set-info :source  loris-7.ddns.comp.nus.edu.sg/~project/hip/) 
+;Variables declarations
+(declare-fun x () Int)
+(declare-fun n () Int)
+(declare-fun cl () Int)
+(declare-fun bh () Int)
+(declare-fun cl2_16558 () Int)
+(declare-fun bh_16556 () Int)
+(declare-fun flted_380_16557 () Int)
+(declare-fun x_primed () Int)
+;Relations declarations
+;Axioms assertions
+;Antecedent
+(assert (or (= n 0) (< x 1)))
+(assert (= x_primed x))
+(assert (<= 0 cl))
+(assert (<= cl 1))
+(assert (< x_primed 1))
+(assert (= cl 0))
+(assert (= bh 1))
+(assert (= n 0))
+(assert (< x 1))
+(assert (= (+ flted_380_16557 1) n))
+(assert (= cl 1))
+(assert (<= 0 cl2_16558))
+(assert (<= cl2_16558 1))
+(assert (= bh_16556 bh))
+(assert (or (and (and (and (= cl2_16558 0) (<= 2 bh_16556)) (<= 1 flted_380_16557)) (> x_primed 0)) (or (and (and (and (< x_primed 1) (= flted_380_16557 0)) (= bh_16556 1)) (= cl2_16558 0)) (and (and (and (= cl2_16558 1) (<= 1 bh_16556)) (<= 1 flted_380_16557)) (> x_primed 0)))))
+;Negation of Consequence
+(assert (not false))
+(check-sat)

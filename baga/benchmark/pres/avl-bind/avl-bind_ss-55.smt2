@@ -1,0 +1,31 @@
+(set-info :source  loris-7.ddns.comp.nus.edu.sg/~project/hip/) 
+;Variables declarations
+(declare-fun m () Int)
+(declare-fun n_2745 () Int)
+(declare-fun n () Int)
+(declare-fun v_bool_23_2400_primed () Int)
+(declare-fun x () Int)
+(declare-fun x_primed () Int)
+(declare-fun n1_2749 () Int)
+(declare-fun m1_2748 () Int)
+(declare-fun p_2747 () Int)
+(declare-fun n2_2752 () Int)
+(declare-fun m2_2751 () Int)
+(declare-fun q_2750 () Int)
+;Relations declarations
+;Axioms assertions
+;Antecedent
+(assert (= m (+ (+ m2_2751 1) m1_2748)))
+(assert (<= (+ 0 n2_2752) (+ n1_2749 1)))
+(assert (<= n1_2749 (+ 1 n2_2752)))
+(assert (exists ((max_32 Int)) (and (= n (+ 1 max_32)) (or (and (= max_32 n1_2749) (>= n1_2749 n2_2752)) (and (= max_32 n2_2752) (< n1_2749 n2_2752))))))
+(assert (= n_2745 n))
+(assert (not (> v_bool_23_2400_primed 0)))
+(assert (> x_primed 0))
+(assert (= x_primed x))
+(assert (= x_primed 1))
+(assert (or (and (and (< p_2747 1) (= m1_2748 0)) (= n1_2749 0)) (and (and (<= 1 n1_2749) (<= 1 m1_2748)) (> p_2747 0))))
+(assert (or (and (and (< q_2750 1) (= m2_2751 0)) (= n2_2752 0)) (and (and (<= 1 n2_2752) (<= 1 m2_2751)) (> q_2750 0))))
+;Negation of Consequence
+(assert (not false))
+(check-sat)

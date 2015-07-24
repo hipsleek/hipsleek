@@ -14342,4 +14342,17 @@ let collect_nondet_rel f =
   in
   fold_formula f (nonef, f_bf, nonef) List.concat
 
+
+let size_formula f0=
+  let rec recf f= match f with
+    | BForm _ -> 1
+    | And (f1,f2,_)
+    | Or (f1,f2,_,_) -> (recf f1) + (recf f2)
+    | AndList fs -> List.fold_left (fun acc (_,f1) -> acc+ recf f1) 0 fs
+    | Not (f1, _, _)
+    | Forall (_,f1,_,_)
+    | Exists (_,f1,_,_) -> (recf f1) + 1
+  in
+  recf f0
+
 let syn_checkeq = ref(fun (ls:ident list) (a:formula) (c:formula) (m: ((spec_var * spec_var) list) list) -> (true,([]: ((spec_var * spec_var) list) list)))

@@ -1,0 +1,32 @@
+(set-info :source  loris-7.ddns.comp.nus.edu.sg/~project/hip/) 
+;Variables declarations
+(declare-fun l_17277 () Int)
+(declare-fun tmp_17262 () Int)
+(declare-fun v_int_536_17261 () Int)
+(declare-fun Anon_17264 () Int)
+(declare-fun flted_529_17263 () Int)
+(declare-fun nl_17278 () Int)
+(declare-fun bh1_17265 () Int)
+(declare-fun bhl_17280 () Int)
+(declare-fun Anon_17283 () Int)
+(declare-fun bhr_17284 () Int)
+(declare-fun nr_17282 () Int)
+(declare-fun r_17281 () Int)
+;Relations declarations
+;Axioms assertions
+;Antecedent
+(assert (= l_17277 tmp_17262))
+(assert (< tmp_17262 1))
+(assert (= nl_17278 0))
+(assert (= bhl_17280 1))
+(assert (= v_int_536_17261 1))
+(assert (= r_17281 tmp_17262))
+(assert (= v_int_536_17261 0))
+(assert (= Anon_17264 0))
+(assert (= flted_529_17263 (+ (+ nr_17282 1) nl_17278)))
+(assert (= bhl_17280 bhr_17284))
+(assert (= bh1_17265 (+ bhl_17280 1)))
+(assert (or (and (and (and (= Anon_17283 0) (<= 2 bhr_17284)) (<= 1 nr_17282)) (> r_17281 0)) (or (and (and (and (< r_17281 1) (= nr_17282 0)) (= bhr_17284 1)) (= Anon_17283 0)) (and (and (and (= Anon_17283 1) (<= 1 bhr_17284)) (<= 1 nr_17282)) (> r_17281 0)))))
+;Negation of Consequence
+(assert (not false))
+(check-sat)

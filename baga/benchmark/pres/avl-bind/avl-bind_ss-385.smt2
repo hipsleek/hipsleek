@@ -1,0 +1,32 @@
+(set-info :source  loris-7.ddns.comp.nus.edu.sg/~project/hip/) 
+;Variables declarations
+(declare-fun xleft_primed () Int)
+(declare-fun p_3369 () Int)
+(declare-fun tmp_primed () Int)
+(declare-fun xheight_primed () Int)
+(declare-fun n_3367 () Int)
+(declare-fun m () Int)
+(declare-fun m1_3370 () Int)
+(declare-fun n () Int)
+(declare-fun n1_3371 () Int)
+(declare-fun xright_primed () Int)
+(declare-fun m2_3373 () Int)
+(declare-fun n2_3374 () Int)
+(declare-fun q_3372 () Int)
+;Relations declarations
+;Axioms assertions
+;Antecedent
+(assert (= xleft_primed p_3369))
+(assert (or (and (and (< p_3369 1) (= m1_3370 0)) (= n1_3371 0)) (and (and (<= 1 n1_3371) (<= 1 m1_3370)) (> p_3369 0))))
+(assert (= tmp_primed xright_primed))
+(assert (= xheight_primed n_3367))
+(assert (= n_3367 n))
+(assert (= m (+ (+ m2_3373 1) m1_3370)))
+(assert (<= (+ 0 n2_3374) (+ n1_3371 1)))
+(assert (<= n1_3371 (+ 1 n2_3374)))
+(assert (exists ((max_3636 Int)) (and (= n (+ 1 max_3636)) (or (and (= max_3636 n1_3371) (>= n1_3371 n2_3374)) (and (= max_3636 n2_3374) (< n1_3371 n2_3374))))))
+(assert (= xright_primed q_3372))
+(assert (or (and (and (< q_3372 1) (= m2_3373 0)) (= n2_3374 0)) (and (and (<= 1 n2_3374) (<= 1 m2_3373)) (> q_3372 0))))
+;Negation of Consequence
+(assert (not (or (= m2_3373 0) (or (= n2_3374 0) (< q_3372 1)))))
+(check-sat)

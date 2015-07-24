@@ -1,0 +1,30 @@
+(set-info :source  loris-7.ddns.comp.nus.edu.sg/~project/hip/) 
+;Variables declarations
+(declare-fun r () Int)
+(declare-fun cm_3457 () Int)
+(declare-fun Anon_46 () Int)
+(declare-fun Anon_36 () Int)
+(declare-fun dm () Int)
+(declare-fun d () Int)
+(declare-fun cn_3458 () Int)
+(declare-fun dn () Int)
+(declare-fun lr () Int)
+(declare-fun Anon_40 () Int)
+(declare-fun cm () Int)
+(declare-fun cn () Int)
+(declare-fun c () Int)
+;Relations declarations
+;Axioms assertions
+;Antecedent
+(assert (= r d))
+(assert (= cm_3457 dm))
+(assert (= Anon_46 Anon_36))
+(assert (or (and (and (and (< d 1) (= dm 0)) (= dn 0)) (= Anon_36 1)) (and (and (and (and (and (<= 0 Anon_36) (<= (+ (- 0 dn) 2) Anon_36)) (<= Anon_36 dn)) (<= Anon_36 2)) (<= 1 dm)) (> d 0))))
+(assert (= cn_3458 dn))
+(assert (<= dn (+ cn 1)))
+(assert (<= cn (+ dn 1)))
+(assert (= lr c))
+(assert (or (and (and (and (< c 1) (= cm 0)) (= cn 0)) (= Anon_40 1)) (and (and (and (and (and (<= 0 Anon_40) (<= (+ (- 0 cn) 2) Anon_40)) (<= Anon_40 cn)) (<= Anon_40 2)) (<= 1 cm)) (> c 0))))
+;Negation of Consequence
+(assert (not (or (= cm 0) (or (= cn 0) (< c 1)))))
+(check-sat)

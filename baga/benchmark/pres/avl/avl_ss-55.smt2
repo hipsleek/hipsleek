@@ -1,0 +1,31 @@
+(set-info :source  loris-7.ddns.comp.nus.edu.sg/~project/hip/) 
+;Variables declarations
+(declare-fun m () Int)
+(declare-fun height_3923 () Int)
+(declare-fun n () Int)
+(declare-fun v_bool_24_3566_primed () Int)
+(declare-fun x () Int)
+(declare-fun x_primed () Int)
+(declare-fun height1_3927 () Int)
+(declare-fun size1_3926 () Int)
+(declare-fun p_3925 () Int)
+(declare-fun height2_3930 () Int)
+(declare-fun size2_3929 () Int)
+(declare-fun q_3928 () Int)
+;Relations declarations
+;Axioms assertions
+;Antecedent
+(assert (= m (+ (+ size2_3929 1) size1_3926)))
+(assert (<= height2_3930 (+ 1 height1_3927)))
+(assert (<= height1_3927 (+ 1 height2_3930)))
+(assert (exists ((max_33 Int)) (and (= n (+ 1 max_33)) (or (and (= max_33 height1_3927) (>= height1_3927 height2_3930)) (and (= max_33 height2_3930) (< height1_3927 height2_3930))))))
+(assert (= height_3923 n))
+(assert (not (> v_bool_24_3566_primed 0)))
+(assert (> x_primed 0))
+(assert (= x_primed x))
+(assert (= x_primed 1))
+(assert (or (and (and (< p_3925 1) (= size1_3926 0)) (= height1_3927 0)) (and (and (<= 1 height1_3927) (<= 1 size1_3926)) (> p_3925 0))))
+(assert (or (and (and (< q_3928 1) (= size2_3929 0)) (= height2_3930 0)) (and (and (<= 1 height2_3930) (<= 1 size2_3929)) (> q_3928 0))))
+;Negation of Consequence
+(assert (not false))
+(check-sat)
