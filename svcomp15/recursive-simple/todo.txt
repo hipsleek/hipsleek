@@ -24,6 +24,31 @@ Successful States:
 
 assert:fail/ex1-id2-b3.c:29: 1:  : ok
 
+============================================
+#succ/afterrec_true: OK
+
+-------
+note:
+query = forall
+
+============================================
+#succ/afterrec_2true: OK
+
+-------
+note:
+query = forall
+
+============================================
+#succ/fibo_10_true
+#succ/fibo_15_true
+
+!!! PROBLEM with fix-point calculation
+ExceptionLoc.Exc_located(_, _)Occurred!
+
+-------
+note:
+query = instantiation + forall
+
 
 ============================================
 #fail/id2_b3_o2_false-unreach-call.c: should be FAIL
