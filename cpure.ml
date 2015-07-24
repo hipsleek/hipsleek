@@ -10946,6 +10946,22 @@ let add_to_em_set eq_list em_set =
           | _,_ ->
             None
         )
+      | Mult (e1,e2,_) ->
+        (
+          match eval_one em e1, eval_one em e2 with
+          | Some i1, Some i2 ->
+            Some (i1*i2)
+          | _,_ ->
+            None
+        )
+      |  Subtract (e1,e2,_) ->
+        (
+          match eval_one em e1, eval_one em e2 with
+          | Some i1, Some i2 ->
+            Some (i1-i2)
+          | _,_ ->
+            None
+        )
       | Var (sv,l) ->
         (
           match spec_with_const em sv l with
