@@ -1,8 +1,22 @@
 extern int __VERIFIER_nondet_int();
 extern void __VERIFIER_error();
 
+void __error()
+/*@
+  requires emp & true
+  ensures emp & true & flow __Error;
+*/;
 
-int fibo1(int n) {
+/*@
+relation P1(int x).
+relation Q1(int x, int y).
+ */
+int fibo1(int n)
+/*@
+infer [P1,Q1]
+  requires P1(n) ensures Q1(n,res);
+ */
+ {
     if (n < 1) {
         return 0;
     } else if (n == 1) {
@@ -12,7 +26,16 @@ int fibo1(int n) {
     }
 }
 
-int fibo2(int n) {
+/*@
+relation P2(int x).
+relation Q2(int x, int y).
+ */
+int fibo2(int n)
+/*@
+infer [P2,Q2]
+  requires P2(n) ensures Q2(n,res);
+ */
+ {
     if (n < 1) {
         return 0;
     } else if (n == 1) {
@@ -34,7 +57,8 @@ int main() {
     int x = 4;
     int result = fibo1(x);
     if (result != 3) {
-        __VERIFIER_error();
+      //__VERIFIER_error();
+      __error();
     }
     return 0;
 }
