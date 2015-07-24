@@ -1,10 +1,6 @@
 (set-info :source  loris-7.ddns.comp.nus.edu.sg/~project/hip/) 
 ;Variables declarations
-(declare-fun right_240_1515_primed () Int)
-(declare-fun left_240_1514_primed () Int)
-(declare-fun height_240_1513_primed () Int)
-(declare-fun ele_240_1512_primed () Int)
-(declare-fun Anon_56 () Int)
+(declare-fun v_int_240_1518_primed () Int)
 (declare-fun v_int_240_1519_primed () Int)
 (declare-fun Anon_62 () Int)
 (declare-fun cn () Int)
@@ -21,9 +17,7 @@
 (declare-fun left_238_2907 () Int)
 (declare-fun right_237_2904 () Int)
 (declare-fun r () Int)
-(declare-fun k1_primed () Int)
 (declare-fun k1 () Int)
-(declare-fun k2_primed () Int)
 (declare-fun n () Int)
 (declare-fun b () Int)
 (declare-fun m () Int)
@@ -36,13 +30,12 @@
 (declare-fun b_2961 () Int)
 (declare-fun m_2959 () Int)
 (declare-fun rr () Int)
+(declare-fun k2_primed () Int)
+(declare-fun k1_primed () Int)
 ;Relations declarations
 ;Axioms assertions
 ;Antecedent
-(assert (= right_240_1515_primed rl))
-(assert (= left_240_1514_primed l))
-(assert (= height_240_1513_primed v_int_239_2955))
-(assert (= ele_240_1512_primed Anon_56))
+(assert (= v_int_240_1518_primed v_int_239_2955))
 (assert (<= b_2961 2))
 (assert (<= 0 b_2961))
 (assert (<= 0 n_2960))
@@ -87,7 +80,9 @@
 (assert (= k2_primed 1))
 (assert (or (and (and (and (< l 1) (= m 0)) (= n 0)) (= b 1)) (and (and (and (and (and (<= 0 b) (<= (+ (- 0 n) 2) b)) (<= b n)) (<= b 2)) (<= 1 m)) (> l 0))))
 (assert (or (and (and (and (< rl 1) (= m_2922 0)) (= n_2923 0)) (= b_2924 1)) (and (and (and (and (and (<= 0 b_2924) (<= (+ (- 0 n_2923) 2) b_2924)) (<= b_2924 n_2923)) (<= b_2924 2)) (<= 1 m_2922)) (> rl 0))))
+(assert (= k1_primed 2))
 (assert (or (and (and (and (< rr 1) (= m_2959 0)) (= n_2960 0)) (= b_2961 1)) (and (and (and (and (and (<= 0 b_2961) (<= (+ (- 0 n_2960) 2) b_2961)) (<= b_2961 n_2960)) (<= b_2961 2)) (<= 1 m_2959)) (> rr 0))))
+(assert (not (= k2_primed k1_primed)))
 ;Negation of Consequence
 (assert (not false))
 (check-sat)

@@ -1,7 +1,8 @@
 (set-info :source  loris-7.ddns.comp.nus.edu.sg/~project/hip/) 
 ;Variables declarations
-(declare-fun v_int_62_1517_primed () Int)
-(declare-fun v_int_62_1518_primed () Int)
+(declare-fun res () Int)
+(declare-fun v_int_62_1522_primed () Int)
+(declare-fun v_int_62_1719 () Int)
 (declare-fun t () Int)
 (declare-fun v_bool_61_1524_primed () Int)
 (declare-fun nmin () Int)
@@ -20,16 +21,18 @@
 ;Relations declarations
 ;Axioms assertions
 ;Antecedent
+(assert (= res v_int_62_1522_primed))
+(assert (= v_int_62_1522_primed (+ 1 v_int_62_1719)))
+(assert (or (<= n_1692 n_1674) (= v_int_62_1719 n_1692)))
+(assert (or (< n_1674 n_1692) (= v_int_62_1719 n_1674)))
 (assert (<= nmin_1693 n_1692))
 (assert (<= 0 nmin_1693))
-(assert (= v_int_62_1517_primed n_1692))
 (assert (<= nmin2_1662 flted_25_1656))
 (assert (<= 0 nmin2_1662))
 (assert (= nmin_1693 nmin2_1662))
 (assert (= n_1692 flted_25_1656))
 (assert (<= nmin_1675 n_1674))
 (assert (<= 0 nmin_1675))
-(assert (= v_int_62_1518_primed n_1674))
 (assert (<= nmin1_1660 flted_25_1657))
 (assert (<= 0 nmin1_1660))
 (assert (= nmin_1675 nmin1_1660))

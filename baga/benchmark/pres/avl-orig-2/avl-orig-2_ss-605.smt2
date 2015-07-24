@@ -1,7 +1,10 @@
 (set-info :source  loris-7.ddns.comp.nus.edu.sg/~project/hip/) 
 ;Variables declarations
-(declare-fun v_int_118_2236_primed () Int)
-(declare-fun v_int_118_2237_primed () Int)
+(declare-fun right_118_2242_primed () Int)
+(declare-fun left_118_2241_primed () Int)
+(declare-fun height_118_2240_primed () Int)
+(declare-fun ele_118_2239_primed () Int)
+(declare-fun v_int_118_2238_primed () Int)
 (declare-fun b_4129 () Int)
 (declare-fun Anon_3755 () Int)
 (declare-fun n_4128 () Int)
@@ -21,6 +24,7 @@
 (declare-fun t () Int)
 (declare-fun x () Int)
 (declare-fun tmp_primed () Int)
+(declare-fun t_primed () Int)
 (declare-fun v_bool_80_2243_primed () Int)
 (declare-fun n_3750 () Int)
 (declare-fun b () Int)
@@ -35,7 +39,6 @@
 (declare-fun v_bool_86_2211_primed () Int)
 (declare-fun v_int_108_4474 () Int)
 (declare-fun v_bool_108_2210_primed () Int)
-(declare-fun t_primed () Int)
 (declare-fun n_4487 () Int)
 (declare-fun b_4488 () Int)
 (declare-fun m_4486 () Int)
@@ -47,9 +50,12 @@
 ;Relations declarations
 ;Axioms assertions
 ;Antecedent
-(assert (= v_int_118_2236_primed 1))
-(assert (<= n_4598 n_4487))
-(assert (= v_int_118_2237_primed n_4487))
+(assert (= right_118_2242_primed v_node_107_4102))
+(assert (= left_118_2241_primed p_3752))
+(assert (= height_118_2240_primed n_3750))
+(assert (= ele_118_2239_primed Anon_3751))
+(assert (= v_int_118_2238_primed (+ 1 n_4598)))
+(assert (< n_4487 n_4598))
 (assert (<= b_4599 2))
 (assert (<= 0 b_4599))
 (assert (<= 0 n_4598))
@@ -119,7 +125,6 @@
 (assert (not (> v_bool_86_2211_primed 0)))
 (assert (not (= v_int_108_4474 2)))
 (assert (not (> v_bool_108_2210_primed 0)))
-(assert (= t_primed 1))
 (assert (or (and (and (and (< p_3752 1) (= m_4486 0)) (= n_4487 0)) (= b_4488 1)) (and (and (and (and (and (<= 0 b_4488) (<= (+ (- 0 n_4487) 2) b_4488)) (<= b_4488 n_4487)) (<= b_4488 2)) (<= 1 m_4486)) (> p_3752 0))))
 (assert (or (and (and (and (< v_node_107_4102 1) (= m_4597 0)) (= n_4598 0)) (= b_4599 1)) (and (and (and (and (and (<= 0 b_4599) (<= (+ (- 0 n_4598) 2) b_4599)) (<= b_4599 n_4598)) (<= b_4599 2)) (<= 1 m_4597)) (> v_node_107_4102 0))))
 ;Negation of Consequence

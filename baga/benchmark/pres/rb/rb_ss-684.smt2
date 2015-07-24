@@ -1,13 +1,14 @@
 (set-info :source  loris-7.ddns.comp.nus.edu.sg/~project/hip/) 
 ;Variables declarations
+(declare-fun v_bool_109_4804_primed () Int)
+(declare-fun flted_12_8049 () Int)
 (declare-fun cl () Int)
 (declare-fun n () Int)
 (declare-fun bh () Int)
 (declare-fun v_bool_105_4805_primed () Int)
 (declare-fun x () Int)
-(declare-fun flted_12_8049 () Int)
-(declare-fun v_int_109_4801_primed () Int)
-(declare-fun v_int_109_4800_primed () Int)
+(declare-fun res () Int)
+(declare-fun v_boolean_112_4803_primed () Int)
 (declare-fun x_primed () Int)
 (declare-fun flted_12_8048 () Int)
 (declare-fun bhl_8053 () Int)
@@ -20,6 +21,8 @@
 ;Relations declarations
 ;Axioms assertions
 ;Antecedent
+(assert (not (> v_bool_109_4804_primed 0)))
+(assert (not (= flted_12_8049 0)))
 (assert (= flted_12_8049 1))
 (assert (= flted_12_8048 0))
 (assert (= flted_12_8047 0))
@@ -30,9 +33,8 @@
 (assert (not (> v_bool_105_4805_primed 0)))
 (assert (> x_primed 0))
 (assert (= x_primed x))
-(assert (= v_int_109_4801_primed flted_12_8049))
-(assert (= v_int_109_4800_primed 0))
-(assert (= v_int_109_4801_primed v_int_109_4800_primed))
+(assert (not (> v_boolean_112_4803_primed 0)))
+(assert (= res v_boolean_112_4803_primed))
 (assert (= x_primed 1))
 (assert (or (and (and (and (= flted_12_8048 0) (<= 2 bhl_8053)) (<= 1 nl_8052)) (> l_8051 0)) (or (and (and (and (< l_8051 1) (= nl_8052 0)) (= bhl_8053 1)) (= flted_12_8048 0)) (and (and (and (= flted_12_8048 1) (<= 1 bhl_8053)) (<= 1 nl_8052)) (> l_8051 0)))))
 (assert (or (and (and (and (= flted_12_8047 0) (<= 2 bhr_8056)) (<= 1 nr_8055)) (> r_8054 0)) (or (and (and (and (< r_8054 1) (= nr_8055 0)) (= bhr_8056 1)) (= flted_12_8047 0)) (and (and (and (= flted_12_8047 1) (<= 1 bhr_8056)) (<= 1 nr_8055)) (> r_8054 0)))))

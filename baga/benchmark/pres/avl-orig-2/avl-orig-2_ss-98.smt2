@@ -1,10 +1,10 @@
 (set-info :source  loris-7.ddns.comp.nus.edu.sg/~project/hip/) 
 ;Variables declarations
-(declare-fun v_int_239_1494_primed () Int)
+(declare-fun v_int_239_1498_primed () Int)
+(declare-fun v_int_239_1499_primed () Int)
 (declare-fun Anon_61 () Int)
 (declare-fun bn () Int)
 (declare-fun bm () Int)
-(declare-fun v_int_239_1495_primed () Int)
 (declare-fun Anon_58 () Int)
 (declare-fun an () Int)
 (declare-fun am () Int)
@@ -29,11 +29,13 @@
 ;Relations declarations
 ;Axioms assertions
 ;Antecedent
+(assert (= v_int_239_1498_primed 1))
+(assert (<= n_2923 n))
+(assert (= v_int_239_1499_primed n))
 (assert (<= b_2924 2))
 (assert (<= 0 b_2924))
 (assert (<= 0 n_2923))
 (assert (<= 0 m_2922))
-(assert (= v_int_239_1494_primed n_2923))
 (assert (<= Anon_61 2))
 (assert (<= 0 Anon_61))
 (assert (<= 0 bn))
@@ -45,7 +47,6 @@
 (assert (<= 0 b))
 (assert (<= 0 n))
 (assert (<= 0 m))
-(assert (= v_int_239_1495_primed n))
 (assert (<= Anon_58 2))
 (assert (<= 0 Anon_58))
 (assert (<= 0 an))

@@ -1,10 +1,10 @@
 (set-info :source  loris-7.ddns.comp.nus.edu.sg/~project/hip/) 
 ;Variables declarations
-(declare-fun v_int_202_1665_primed () Int)
+(declare-fun v_int_202_1669_primed () Int)
+(declare-fun v_int_202_1670_primed () Int)
 (declare-fun Anon_46 () Int)
 (declare-fun cn () Int)
 (declare-fun cm () Int)
-(declare-fun v_int_202_1666_primed () Int)
 (declare-fun Anon_50 () Int)
 (declare-fun bn () Int)
 (declare-fun bm () Int)
@@ -29,11 +29,13 @@
 ;Relations declarations
 ;Axioms assertions
 ;Antecedent
+(assert (= v_int_202_1669_primed 1))
+(assert (<= n_2627 n))
+(assert (= v_int_202_1670_primed n))
 (assert (<= b_2628 2))
 (assert (<= 0 b_2628))
 (assert (<= 0 n_2627))
 (assert (<= 0 m_2626))
-(assert (= v_int_202_1665_primed n_2627))
 (assert (<= Anon_46 2))
 (assert (<= 0 Anon_46))
 (assert (<= 0 cn))
@@ -45,7 +47,6 @@
 (assert (<= 0 b))
 (assert (<= 0 n))
 (assert (<= 0 m))
-(assert (= v_int_202_1666_primed n))
 (assert (<= Anon_50 2))
 (assert (<= 0 Anon_50))
 (assert (<= 0 bn))

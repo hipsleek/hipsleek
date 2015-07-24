@@ -513,8 +513,8 @@ struct
       let lgs = (List.rev (proof_log_stk # get_stk)) in
       let lgs1 = List.filter (fun log -> begin
         match log.Log.log_type with
-          | PT_IMPLY (ante, conseq) -> (Cpure.size_formula ante) + (Cpure.size_formula conseq) > 20
-          | PT_SAT f -> (Cpure.size_formula f) > 20
+          | PT_IMPLY (ante, conseq) -> (Cpure.size_formula ante) + (Cpure.size_formula conseq) > 30
+          | PT_SAT f -> (Cpure.size_formula f) > 30
           | _ -> false
       end
       ) lgs in

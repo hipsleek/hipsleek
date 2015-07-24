@@ -1,8 +1,8 @@
 (set-info :source  loris-7.ddns.comp.nus.edu.sg/~project/hip/) 
 ;Variables declarations
-(declare-fun r_16334 () Int)
+(declare-fun r_16429 () Int)
 (declare-fun r_15074 () Int)
-(declare-fun l_16330 () Int)
+(declare-fun l_16425 () Int)
 (declare-fun l_15071 () Int)
 (declare-fun nr_15075 () Int)
 (declare-fun nl_15072 () Int)
@@ -17,19 +17,17 @@
 (declare-fun n_14953 () Int)
 (declare-fun nr_14921 () Int)
 (declare-fun nl_14917 () Int)
-(declare-fun nr_16335 () Int)
-(declare-fun nl_16331 () Int)
 (declare-fun n () Int)
 ;Relations declarations
 ;Axioms assertions
 ;Antecedent
 (assert (< r_15074 1))
-(assert (= r_16334 r_15074))
+(assert (= r_16429 r_15074))
 (assert (or (= nr_15075 0) (< r_15074 1)))
 (assert (< l_15071 1))
 (assert (= nl_15072 0))
 (assert (= bhl_15073 1))
-(assert (= l_16330 l_15071))
+(assert (= l_16425 l_15071))
 (assert (= nr_15075 0))
 (assert (= bhr_15076 1))
 (assert (or (= nl_15072 0) (< l_15071 1)))
@@ -47,8 +45,6 @@
 (assert (= n_14953 nl_14917))
 (assert (<= 0 nl_14917))
 (assert (= n (+ (+ nr_14921 1) nl_14917)))
-(assert (= nl_16331 0))
-(assert (= nr_16335 0))
 ;Negation of Consequence
-(assert (not (= (+ (+ (+ 1 1) nr_16335) nl_16331) n)))
+(assert (not (<= 0 n)))
 (check-sat)

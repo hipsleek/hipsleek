@@ -1,7 +1,11 @@
 (set-info :source  loris-7.ddns.comp.nus.edu.sg/~project/hip/) 
 ;Variables declarations
-(declare-fun v_int_118_2236_primed () Int)
-(declare-fun v_int_118_2237_primed () Int)
+(declare-fun right_118_2242_primed () Int)
+(declare-fun left_118_2241_primed () Int)
+(declare-fun height_118_2240_primed () Int)
+(declare-fun ele_118_2239_primed () Int)
+(declare-fun Anon_4462 () Int)
+(declare-fun v_int_118_2238_primed () Int)
 (declare-fun Anon_4466 () Int)
 (declare-fun Anon_4464 () Int)
 (declare-fun t2_4472 () Int)
@@ -98,7 +102,6 @@
 (declare-fun n_4220 () Int)
 (declare-fun Anon_36 () Int)
 (declare-fun b_4221 () Int)
-(declare-fun t_primed () Int)
 (declare-fun n_4487 () Int)
 (declare-fun b_4488 () Int)
 (declare-fun m_4486 () Int)
@@ -110,9 +113,12 @@
 ;Relations declarations
 ;Axioms assertions
 ;Antecedent
-(assert (= v_int_118_2236_primed 1))
+(assert (= right_118_2242_primed ss3_4465))
+(assert (= left_118_2241_primed ss1_4463))
+(assert (= height_118_2240_primed h_4467))
+(assert (= ele_118_2239_primed Anon_4462))
+(assert (= v_int_118_2238_primed (+ 1 n_4487)))
 (assert (<= n_4598 n_4487))
-(assert (= v_int_118_2237_primed n_4487))
 (assert (<= b_4599 2))
 (assert (<= 0 b_4599))
 (assert (<= 0 n_4598))
@@ -283,7 +289,6 @@
 (assert (= dm m_4219))
 (assert (= dn n_4220))
 (assert (= Anon_36 b_4221))
-(assert (= t_primed 1))
 (assert (or (and (and (and (< ss1_4463 1) (= m_4486 0)) (= n_4487 0)) (= b_4488 1)) (and (and (and (and (and (<= 0 b_4488) (<= (+ (- 0 n_4487) 2) b_4488)) (<= b_4488 n_4487)) (<= b_4488 2)) (<= 1 m_4486)) (> ss1_4463 0))))
 (assert (or (and (and (and (< ss3_4465 1) (= m_4597 0)) (= n_4598 0)) (= b_4599 1)) (and (and (and (and (and (<= 0 b_4599) (<= (+ (- 0 n_4598) 2) b_4599)) (<= b_4599 n_4598)) (<= b_4599 2)) (<= 1 m_4597)) (> ss3_4465 0))))
 ;Negation of Consequence

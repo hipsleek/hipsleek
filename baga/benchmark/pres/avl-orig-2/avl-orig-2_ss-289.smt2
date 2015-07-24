@@ -1,8 +1,6 @@
 (set-info :source  loris-7.ddns.comp.nus.edu.sg/~project/hip/) 
 ;Variables declarations
-(declare-fun v_int_89_2087_primed () Int)
 (declare-fun Anon_3759 () Int)
-(declare-fun v_int_89_2088_primed () Int)
 (declare-fun left_87_3803 () Int)
 (declare-fun resn_3797 () Int)
 (declare-fun resb_3798 () Int)
@@ -27,6 +25,7 @@
 (declare-fun x_primed () Int)
 (declare-fun Anon_3751 () Int)
 (declare-fun v_bool_86_2211_primed () Int)
+(declare-fun v_bool_89_2132_primed () Int)
 (declare-fun t_primed () Int)
 (declare-fun n () Int)
 (declare-fun b_3814 () Int)
@@ -39,11 +38,11 @@
 ;Relations declarations
 ;Axioms assertions
 ;Antecedent
+(assert (= (+ 2 n_3834) n))
 (assert (<= b_3835 2))
 (assert (<= 0 b_3835))
 (assert (<= 0 n_3834))
 (assert (<= 0 m_3833))
-(assert (= v_int_89_2087_primed n_3834))
 (assert (<= Anon_3759 2))
 (assert (<= 0 Anon_3759))
 (assert (<= 0 n2_3758))
@@ -55,7 +54,6 @@
 (assert (<= 0 b_3814))
 (assert (<= 0 n))
 (assert (<= 0 m))
-(assert (= v_int_89_2088_primed n))
 (assert (<= resb_3798 2))
 (assert (<= 0 resb_3798))
 (assert (<= 0 resn_3797))
@@ -93,6 +91,8 @@
 (assert (= tm (+ (+ m2_3757 1) m1_3753)))
 (assert (< x_primed Anon_3751))
 (assert (> v_bool_86_2211_primed 0))
+(assert (= 2 2))
+(assert (> v_bool_89_2132_primed 0))
 (assert (= t_primed 1))
 (assert (or (and (and (and (< v_node_87_3808 1) (= m 0)) (= n 0)) (= b_3814 1)) (and (and (and (and (and (<= 0 b_3814) (<= (+ (- 0 n) 2) b_3814)) (<= b_3814 n)) (<= b_3814 2)) (<= 1 m)) (> v_node_87_3808 0))))
 (assert (or (and (and (and (< q_3756 1) (= m_3833 0)) (= n_3834 0)) (= b_3835 1)) (and (and (and (and (and (<= 0 b_3835) (<= (+ (- 0 n_3834) 2) b_3835)) (<= b_3835 n_3834)) (<= b_3835 2)) (<= 1 m_3833)) (> q_3756 0))))
