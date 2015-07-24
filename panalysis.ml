@@ -328,6 +328,21 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
       then uniq
       else pflows::uniq) [] frm_assumes in
 
+  (* param_flow will only be of form like IND at this point, 
+   * not FLOW,CONST. Convert if applicable. *)
+  let specialise_flow f =
+    match f with
+    | CP.IND([],exp) ->
+      CP.CONST exp
+      (* because of manipulation by normalisation to termlist exp,
+       * sv will have explicit coeff of 1. *)
+    | CP.IND(svs,CP.Mult(CP.IConst(1,_),CP.Var(sv,_),_)) ->
+      CP.FLOW sv
+    | _ -> f in
+
+  let frm_assumes = List.map (fun flows ->
+    List.map specialise_flow flows) frm_assumes in
+
   let () = Debug.binfo_pprint "analyse_param summary:" no_pos in
   let () = Debug.binfo_hprint (add_str "relations (normalised)" pr1) lst_assume no_pos in
   let () = Debug.binfo_hprint (add_str "args" pr2) args no_pos in
