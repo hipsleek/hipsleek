@@ -41,5 +41,17 @@ int id(int x)
 }
 
 /*
+PHASE 1
+1. pre_1440(x) & x=1+v_int_25_1413' & (v_int_25_1413'+1)!=0 -->  pre_1440(v_int_25_1413')
+
+2. (v_int_25_1465+1)!=0 & 3<=tmp' & res=3 & x=1+v_int_25_1465 & pre_1440(x) & post_1441(v_int_25_1465,tmp',flow) -->  post_1441(x,res,flow),
+
+3. x=0 & res=0 & pre_1440(x)) -->  post_1441(x,res,flow),
+
+4. (v_int_25_1465+1)!=0 & tmp_1478<=2 & res=1+tmp_1478 & x=1+v_int_25_1465 &
+pre_1440(x) & post_1441(v_int_25_1465,tmp_1478,flow) -->  post_1441(x,res,flow)
+
+
+
 !!! **pi.ml#631:fixpoint:[( post_1441(x,res,flow), res>=0 & x>=res, pre_1440(x), 0<=x)]
  */

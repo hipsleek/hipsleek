@@ -1,0 +1,80 @@
+
+define
+==============================================================
+memsafety/test-0102_false-valid-memtrack.c:     ((type *)((char *)(ptr)-(unsigned long)(&((type *)0)->member)))
+memsafety/test-0102_true-valid-memsafety.c:     ((type *)((char *)(ptr)-(unsigned long)(&((type *)0)->member)))
+memsafety/test-0134_true-valid-memsafety.c:     ((type *)((char *)(ptr)-(unsigned long)(&((type *)0)->member)))
+memsafety/test-0137_false-valid-deref.c:        ((type *)((char *)(ptr)-(unsigned long)(&((type *)0)->member)))
+
+==============================================================
+union
+
+
+
+
+==============================================================
+string
+
+termination-crafted-lit/cstrcmp_true-termination.c:/* Returns some null-terminated string. */
+termination-crafted-lit/cstrcmp_true-termination.c:        in each string, or the ends of the strings if they
+termination-crafted-lit/cstrcspn_true-termination.c:/* Returns some null-terminated string. */
+termination-crafted-lit/cstrlen_true-termination.c:/* Returns some null-terminated string. */
+termination-crafted-lit/cstrncmp_true-termination.c:/* Returns some null-terminated string. */
+termination-crafted-lit/cstrpbrk_true-termination.c:/* Returns some null-terminated string. */
+termination-crafted-lit/cstrspn_true-termination.c:/* Returns some null-terminated string. */
+termination-crafted-lit/strchr_true-termination.c:/* Returns some null-terminated string. */
+termination-crafted-lit/strchr_true-termination.c:        s will either point to the end of the string or the
+termination-memory-alloca/cstrcat-alloca_true-termination.c:     /* Return the destination string.  */
+termination-memory-alloca/cstrchr-alloca_true-termination.c:        s will either point to the end of the string or the
+termination-memory-alloca/cstrcmp-alloca_true-termination.c:        in each string, or the ends of the strings if they
+termination-memory-alloca/cstrcpy-alloca_true-termination.c:     /* Return the destination string.  */
+termination-memory-alloca/openbsd_cstrcmp-alloca_true-termination.c: * Compare strings.
+termination-memory-alloca/openbsd_cstrcspn-alloca_true-termination.c: * Span the complement of string s2.
+termination-memory-alloca/openbsd_cstrlcpy-alloca_true-termination.c: * Copy src to string dst of size siz.  At most siz-1 characters
+termination-memory-alloca/openbsd_cstrspn-alloca_true-termination.c: * Span the string s2 (skip characters that are in s2).
+termination-memory-alloca/substring-alloca_true-termination.c:int (substring)(char *s, char *t)
+termination-memory-alloca/substring-alloca_true-termination.c:  return substring(nondetString1,nondetString2);
+
+
+list-ext-properties/test-0214_1_true-valid-memsafety.c:#include <string.h>
+list-ext-properties/test-0217_1_true-valid-memsafety.c:#include <string.h>
+memsafety/test-0158_false-valid-free.c:#include <string.h>
+memsafety/test-0214_true-valid-memsafety.c:#include <string.h>
+memsafety/test-0217_true-valid-memsafety.c:#include <string.h>
+memsafety/test-0218_true-valid-memsafety.c:#include <string.h>
+memsafety/test-0219_true-valid-memsafety.c:#include <string.h>
+memsafety/test-0220_false-valid-memtrack.c:#include <string.h>
+memsafety/test-0234_false-valid-memtrack.c:#include <string.h>
+memsafety/test-0234_true-valid-memsafety.c:#include <string.h>
+memsafety/test-0235_false-valid-deref.c:#include <string.h>
+memsafety/test-0235_false-valid-memtrack.c:#include <string.h>
+memsafety/test-0235_true-valid-memsafety.c:#include <string.h>
+memsafety/test-0236_true-valid-memsafety.c:#include <string.h>
+memsafety/test-0237_true-valid-memsafety.c:#include <string.h>
+memsafety/test-memleak_nexttime-valid-memtrack.c:#include <string.h>
+
+
+
+memsafety/test-0214_true-valid-memsafety.c:    char text[0x100 + /* terminating zero */ 1];
+memsafety/test-0217_true-valid-memsafety.c:    char text[0x100 + /* terminating zero */ 1];
+memsafety/test-memleak_nexttime-valid-memtrack.c:char a[sizeof(int*)];
+
+==============================================================
+array
+
+list-ext-properties/test-0158_1_false-valid-free.c
+list-ext-properties/test-0158_1_false-valid-memtrack.c
+list-ext-properties/test-0158_1_true-valid-memsafety.c
+list-ext-properties/test-0214_1_true-valid-memsafety.c
+list-ext-properties/test-0217_1_true-valid-memsafety.c
+
+memsafety/test-0158_false-valid-free.c:            char c[2];
+memsafety/test-0158_false-valid-memtrack.c:            char c[2];
+memsafety/test-0158_true-valid-memsafety.c:            char c[2];
+
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
