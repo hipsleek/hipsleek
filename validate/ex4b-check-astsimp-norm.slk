@@ -1,0 +1,88 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+//(4)
+checkentail x::node<aaa,q>*q::node<aaa,null> |- x::ll<n> & n>0.
+print residue.
+expect Valid.
+expect_infer R{x!=null & n=1}.
+
+/*
+ex4b.slk
+
+
+(==solver.ml#5085==)
+heap_entail@2@1
+heap_entail inp1 : [
+  emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,26)=__flow#E}[]
+  ]
+heap_entail inp2 : emp&0<=n&{FLOW,(1,26)=__flow#E}[]
+heap_entail@2 EXIT: [
+  emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,26)=__flow#E}[]
+  ]
+
+(==astsimp.ml#2006==)
+heap_entail_init@1
+heap_entail_init inp1 : [
+  emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,26)=__flow#E}[]
+  ]
+heap_entail_init inp2 : emp&0<=n&{FLOW,(1,26)=__flow#E}[]
+heap_entail_init@1 EXIT: [
+  emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,26)=__flow#E}[]
+  ]
+
+These info may be needed by heap_entail_init based on the
+RHS to be proven..
+
+      pr_vwrap_nocut "es_heap(consumed):" pr_h_formula  es.es_heap;
+      pr_wrap_test "es_evars:"  Gen.is_empty (pr_seq "" pr_spec_var)  es.es_evars;
+      pr_wrap_test "es_ante_evars:"  Gen.is_empty (pr_seq "" pr_spec_var)  es.es_ante_evars;
+      pr_wrap_test "es_gen_expl_vars:"  Gen.is_empty (pr_seq "" pr_spec_var)  es.es_gen_expl_vars;
+      pr_wrap_test "es_gen_impl_vars:"  Gen.is_empty (pr_seq "" pr_spec_var)  es.es_gen_impl_vars;
+
+*/
+
+/*
+# ex4a.slk --print-extra
+
+Some(( [
+  emp&0+1=n & q_45=flted_11_35 & Anon_44=Anon_13 & flted_11_35=null&{FLOW,(20,21)=__norm#E}[]
+  es_heap(consumed):
+  x::node<Anon_13,flted_11_35>
+  ],true))Stop z3... 39 invocations Stop Omega... 16 invocations 
+
+Can printing be improved to:
+  es_heap(consumed): x::node<Anon_13,flted_11_35>
+------
+
+--pcp
+
+GOT:
+Expected Residue :  emp&x!=null & n=1&{FLOW,(20,21)=__norm#E}[]
+
+Can we have:
+
+expect_infer: 
+ R{emp&x!=null & n=1&{FLOW,(20,21)=__norm#E}[]}
+ ..
+
+# ex4a.slk
+
+# Need to check
+   current residue |- expected residue
+
+# It seems that consumed heap is missing
+
+!!! **sleekengine.ml#1599:expected residue: emp&x!=null & n=1&{FLOW,(20,21)=__norm#E}[]
+!!! **sleekengine.ml#1602:current residue:
+Some(( [
+  emp&0+1=n & q_45=flted_11_35 & Anon_44=Anon_13 & flted_11_35=null&{FLOW,(20,21)=__norm#E}[]
+
+
+*/

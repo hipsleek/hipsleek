@@ -797,16 +797,16 @@ and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
   with Not_found -> (
       let proc_str = (
         match t1, t2 with
-        (* | Cil.TInt _, Cil.TPtr _ ->                                                        *)
-        (*     typ2_name ^ " " ^ proc_name ^ " (" ^ typ1_name ^ " i, " ^ typ2_name ^ " p)\n"  *)
-        (*     ^ "  requires p::" ^ typ2_name^ "<val, offset>\n"                              *)
-        (*     ^ "  ensures p::" ^ typ2_name^ "<val, offset>"                                 *)
-        (*        ^ " * res::" ^ typ2_name^ "<_, offset " ^ op_str ^ " i>;\n"                 *)
-        (* | Cil.TPtr _, Cil.TInt _ ->                                                        *)
-        (*     typ1_name ^ " " ^ proc_name ^ "(" ^ typ1_name ^ " p, " ^ typ2_name ^ " i)\n"   *)
-        (*     ^ "  requires p::" ^ typ1_name^ "<val, offset>\n"                              *)
-        (*     ^ "  ensures p::" ^ typ1_name^ "<val, offset>"                                 *)
-        (*        ^ " * res::" ^ typ1_name^ "<_, offset " ^ op_str ^ " i>;\n"                 *)
+        | Cil.TInt _, Cil.TPtr _ ->
+            typ2_name ^ " " ^ proc_name ^ " (" ^ typ1_name ^ " i, " ^ typ2_name ^ " p)\n"
+            ^ "  requires p::" ^ typ2_name^ "<val, offset>\n"
+            ^ "  ensures p::" ^ typ2_name^ "<val, offset>"
+               ^ " * res::" ^ typ2_name^ "<_, offset " ^ op_str ^ " i>;\n"
+        | Cil.TPtr _, Cil.TInt _ ->
+            typ1_name ^ " " ^ proc_name ^ "(" ^ typ1_name ^ " p, " ^ typ2_name ^ " i)\n"
+            ^ "  requires p::" ^ typ1_name^ "<val, offset>\n"
+            ^ "  ensures p::" ^ typ1_name^ "<val, offset>"
+               ^ " * res::" ^ typ1_name^ "<_, offset " ^ op_str ^ " i>;\n"
         | Cil.TPtr _, Cil.TPtr _ when (cmp_typ typ1 typ2) ->
           let tn = typ1_name in
           tn ^ " " ^ proc_name ^ "(" ^ tn ^ " p, " ^ tn ^ " q)\n" 
@@ -1869,6 +1869,8 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
       Ipure.ListAllN (helper_exp e1, helper_exp e2, pos)
     | Ipure.ListPerm (e1, e2, pos) ->
       Ipure.ListPerm (helper_exp e1, helper_exp e2, pos)
+    | Ipure.ImmRel (an, cond, pos) ->
+      Ipure.ImmRel (helper_p_formula an, cond, pos)
     | Ipure.RelForm (id, el, pos) ->
       Ipure.RelForm (id, List.map (fun e -> helper_exp e) el, pos) (* TODO *)
   )
@@ -2201,6 +2203,7 @@ and merge_iast_prog (main_prog: Iast.prog_decl) (aux_prog: Iast.prog_decl)
     Iast.prog_templ_decls = main_prog.Iast.prog_templ_decls @ aux_prog.Iast.prog_templ_decls;
     Iast.prog_test_comps = [];
     Iast.prog_ut_decls = main_prog.Iast.prog_ut_decls @ aux_prog.Iast.prog_ut_decls;
+    Iast.prog_ui_decls = main_prog.Iast.prog_ui_decls @ aux_prog.Iast.prog_ui_decls;
   } in
   newprog
 
@@ -2216,6 +2219,7 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
   let rel_ids : (typ * ident) list ref = ref [] in
   let templ_decls: Iast.templ_decl list ref = ref [] in
   let ut_decls: Iast.ut_decl list ref = ref [] in
+  let ui_decls: Iast.ui_decl list ref = ref [] in
   let axiom_decls : Iast.axiom_decl list ref = ref [] in
   let hopred_decls : Iast.hopred_decl list ref = ref [] in
   let proc_decls : Iast.proc_decl list ref = ref [] in
@@ -2306,6 +2310,7 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
     Iast.prog_rel_ids = !rel_ids;
     Iast.prog_templ_decls = !templ_decls;
     Iast.prog_ut_decls = !ut_decls;
+    Iast.prog_ui_decls = !ui_decls;
     Iast.prog_axiom_decls = !axiom_decls;
     Iast.prog_hopred_decls = !hopred_decls;
     Iast.prog_proc_decls = !proc_decls;

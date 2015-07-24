@@ -25,26 +25,25 @@ void foo(cell c)
 /*
 
 
-  P1(a) --> a<:@M
-  a<:@M & a<:b --> P2(a,b) 
+ [RELASS [P1]: ( P1(a)) -->  a=@M,
+RELDEFN P2: ( a=@M & b_1459=@M & P1(a)) -->  P2(a,b_1459)]
+*************************************
 
-
-  P1(a) :- a=@M
-  P2(a,b) :- a=@M & a=b
+Post Inference result:
+foo$cell
+ EBase exists (Expl)[](Impl)[a; v](ex)[]c::cell<v>@L&a=@M & a=@M & MayLoop[]&
+       {FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           (exists flted_11_1458,b_1459: emp&flted_11_1458=2 & a=@M & 
+           b_1459=@M&{FLOW,(4,5)=__norm#E}[]
 
 
  requires c::cell<v>@M
  ensures  c::cell<2>@M;
 
 
-
 # cell-2.ss
 
-# Why b is free?
-# Why did not infer for P1?
-
-!!!WARNING : uninterpreted free variables [b] in specification.
-Checking procedure foo$cell... check 1 fail
 
 !!! >>>>>> HIP gather infer pre <<<<<<
 !!!Inferred Heap: []

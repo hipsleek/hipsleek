@@ -1,0 +1,28 @@
+data cell{
+ int fst;
+}.
+
+relation P1(ann v1).
+
+
+infer [P1] c::cell<_>@L |-  c::cell<_>@ww&P1(ww).
+print residue.
+
+infer [P1] c::cell<_>@v & v=@L |-  c::cell<_>@ww&P1(ww).
+print residue.
+
+//(3)
+infer [P1] c::cell<_>@M |-  c::cell<_>@ww&P1(ww).
+print residue.
+
+infer [P1] c::cell<_>@v & v=@M |-  c::cell<_>@ww&P1(ww).
+print residue.
+
+infer [] c::cell<_>@M |-  c::cell<_>@ww.
+print residue.
+
+/*
+# ex10a1.slk 
+
+
+*/

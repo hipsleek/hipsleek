@@ -1186,7 +1186,7 @@ let subst_phase_num_struc rp subst (struc: struc_formula) : struc_formula =
 let subst_phase_num_proc rp subst (proc: Cast.proc_decl) : Cast.proc_decl =
   let s_specs = subst_phase_num_struc rp subst proc.Cast.proc_static_specs in
   let d_specs = subst_phase_num_struc rp subst proc.Cast.proc_dynamic_specs in
-  let () = proc.Cast.proc_stk_of_static_specs # push s_specs in 
+  let () = proc.Cast.proc_stk_of_static_specs # push_pr "term:1189" s_specs in 
   { proc with
     Cast.proc_static_specs = s_specs;
     Cast.proc_dynamic_specs = d_specs; }
@@ -1328,7 +1328,10 @@ let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) check_fals
             let rs, _ = wrap_proving_kind PK_NonTerm_Falsify check_falsify (Ctx es) in
             let infer_assume_conds = Infer.collect_pre_pure_list_context rs in
             let () = x_tinfo_hp (add_str "Check falsity res" Cprinter.string_of_list_context) rs pos in
-            let () = x_binfo_hp (add_str "Inferred assume" (pr_list Cprinter.string_of_pure_formula)) infer_assume_conds pos in
+            let () =
+              if not (is_empty infer_assume_conds) then
+                x_binfo_hp (add_str "Inferred assume" (pr_list Cprinter.string_of_pure_formula)) infer_assume_conds pos 
+            in
             (isFailCtx rs)
           else false
         ) loop_es in

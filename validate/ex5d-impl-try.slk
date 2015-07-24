@@ -1,0 +1,32 @@
+
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+infer [] x::node<a,_> & a=5 |- x::node<bbb,_> & bbb>0.
+
+/*
+# ex5d.slk -dre "heap_entail_conjunct"
+
+implicit vars printed..
+
+(==solver.ml#7181==)
+heap_entail_conjunct_helper#3@4@3@2@1
+heap_entail_conjunct_helper#3 inp1 :  x::node<a,Anon_12>&a=5&{FLOW,(20,21)=__norm#E}[]
+ es_heap(consumed): emp
+ es_gen_impl_vars: [Anon_13; bbb]
+ es_gen_impl_vars: [Anon_13; bbb]
+ 
+heap_entail_conjunct_helper#3 inp2 : x::node<bbb,Anon_13>&0<bbb&{FLOW,(20,21)=__norm#E}[]
+heap_entail_conjunct_helper#3@4 EXIT: [
+   emp&a=5 & bbb=a & Anon_13=Anon_12&{FLOW,(20,21)=__norm#E}[]
+  es_heap(consumed): x::node<a,Anon_12>
+  es_gen_impl_vars: []
+  ]
+
+
+
+*/

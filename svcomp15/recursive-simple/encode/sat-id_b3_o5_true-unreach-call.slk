@@ -1,0 +1,84 @@
+// extern int __VERIFIER_nondet_int();
+// extern void __VERIFIER_error();
+
+/*
+int __nondet_int()
+/*@
+  requires true
+  ensures true;
+*/;
+*/
+
+/*
+void __error()
+/*@
+  requires emp & true
+  ensures emp & true & flow __Error;
+*/;
+*/
+
+/*
+int id(int x)
+/*@
+  case {
+  x>=0 & x<=3 -> ensures emp & res=x;
+  x>3 -> ensures emp & res=3;
+  x<0 -> requires Loop ensures false;
+  }
+ */
+{
+  if (x==0) return 0;
+  int ret = id(x-1) + 1;
+  if (ret > 3) return 3;
+  return ret;
+}
+*/
+
+pred id_v(x, r, e) == x=0 & r=0 & e=1
+   or x!=0 & id_v(x-1, r1, e1) & & e1=1 & r2=r1+1 & r2>3 & r=3 & e = 1.
+   or x!=0 & id_v(x-1, r1, e1) & & e1=1 & r2=r1+1 & r2<=3 & r=r2 & e = 1.
+   or x!=0 & id_v(x-1, r1, e1) & & e1=0 & e = 0.
+
+/*
+void main()
+/*@
+  requires true
+  ensures true;
+*/
+{
+  int input = __nondet_int();
+  int result = id(input);
+  if (result == 5) {
+    __error();
+  }
+}
+*/
+
+pred main(e) == id_v(input,result, e1) & e1=1 & result=5 & e=0
+  \/ id_v(input,result, e1) & e1=1 & result!=5 & e=1
+  \/ id_v(input,result, e1) & e1=0 & e=0
+
+
+checksat main_v(e) & e=0 .
+
+expect sat.
+
+/*
+    main_v(e) & e=0
+ ==  (1) id_v(input,result, e1) & e1=1 & result=5 & e=0 & e=0
+  \/ (2) id_v(input,result, e1) & e1=1 & result!=5 & e=1 & e=0 // unsat
+                                                     ^^^^^^^^^
+  \/ (3) id_v(input,result, e1) & e1=0 & e=0 & e=0
+
+==   (1.1) (1.1) x=0 & result=0 & e1=1 & e1=1 & result=5 & e=0 & e=0 // unsat
+                       ^^^^^^^^                 ^^^^^^^^
+   \/ (1.2) x!=0 & id_v(x-1, r1, e11) & & e11=1 & r2=r1+1 & r2>3 & result=3 & e1=1 & e1=1 & result=5 & e=0 & e=0. //unsat
+                                                                   ^^^^^^^^                 ^^^^^^^^
+   \/ (1.3) x!=0 & id_v(x-1, r1, e11) & & e11=1 & r2=r1+1 & r2<=3 & result=r2 & e1=1 & e1=1 & result=5 & e=0 & e=0.
+   \/ (1.4) x!=0 & id_v(x-1, r1, e11) & & e11=0 & e1=0 & e1=1 & result=5 & e=0 & e=0. //unsat
+                                                  ^^^^^^^^^^^
+   .....
+
+== (bound=5)
+
+*/

@@ -1064,6 +1064,7 @@ and mona_of_b_formula_x b f vs =
     | CP.ListPerm _ -> failwith ("Lists are not supported in Mona")
     | CP.LexVar _ -> failwith ("LexVar is not supported in Mona")
     (* | CP.VarPerm _ -> failwith ("VarPerm is not supported in Mona") *)
+    | CP.ImmRel _ -> failwith ("Imm Relations are not supported in Mona")
     | CP.RelForm _ -> failwith ("Relations are not supported in Mona") (* An Hoa *) 
   in
   ret
@@ -1166,6 +1167,7 @@ and print_b_formula b f = match b with
   | CP.ListAllN _
   | CP.ListPerm _ -> failwith ("Lists are not supported in Mona")
   | CP.LexVar _ -> failwith ("LexVar is not supported in Mona")
+  | CP.ImmRel _ -> failwith ("Imm Relations are not supported in Mona")
   (* | CP.VarPerm _ -> failwith ("VarPerm not suported in Mona") *)
   | CP.RelForm _ -> failwith ("Arrays are not supported in Mona") (* An Hoa *)
   | CP.XPure _ -> failwith ("XPure are not supported in Mona")
@@ -1253,7 +1255,7 @@ let set_process (proc: prover_process_t) =
   process := proc
 
 let rec check_prover_existence prover_cmd_str: bool =
-  let exit_code = Sys.command ("which "^prover_cmd_str^">/dev/null") in
+  let exit_code = Sys.command ("which " ^ prover_cmd_str ^ " >/dev/null 2>&1") in
   if exit_code > 0 then
     let () = print_string_if (not !compete_mode)  ("WARNING: Command for starting mona interactively (" ^ prover_cmd_str ^ ") not found!\n") in
     false

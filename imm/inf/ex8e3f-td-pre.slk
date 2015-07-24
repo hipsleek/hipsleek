@@ -1,0 +1,60 @@
+data cell{
+ int val;
+}.
+
+relation Q(ann r).
+
+infer [Q] x::cell<_>@a & a<:@L |- x::cell<_>@r & Q(r).
+print residue.
+
+infer [Q] x::cell<_>@a & Q(a) & a<:@L |- x::cell<_>@r & Q(r).
+print residue.
+/*
+[RELASS [Q]: ( Q(a)) -->  a<:@L,
+RELDEFN Q: ( Q(a) & a<:@L & a<:a_1491) -->  Q(a_1491)]
+
+
+Residue:
+ <1>
+ x::cell<Anon_13>@[@a, @r]&a<:@L & Q(a) & a<:r 
+   & Anon_14=Anon_13&{FLOW,(20,21)=__norm#E}[]
+ inferred rel: [RELDEFN Q: ( Q(a) & a<:@L & a<:r) -->  Q(r)]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+ x::cell<Anon_13>@[@a, @r]&a<:@L & Q(a) & a<:r 
+ * x::cell<_>@b
+ ==> x::cell<Anon_13>@k & k=a-r
+    * x::cell<_>@B
+ ==> x::cell<
+*/
+
+slk_simplify x=1 | x=2.
+
+//(4)
+slk_simplify x::cell<_>@a & a=@L.
+
+//(5)
+slk_simplify x::cell<_> * x::cell<2>.
+
+//(6)
+slk_simplify x::cell<v> & v=2.
+
+//(7)
+slk_simplify x::cell<v> * x::cell<w>@A & v=2.
+
+
+/*
+# ex8e3f.slk
+
+slk_simplify x::cell<_>@a & a=@L.
+
+slk_simplify x::cell<_> * x::cell<2>.
+
+why did slk_simplify remove heap nodes?
+
+Simplify  (4): a=@L
+
+Simplify  (5): flted_36_44=2
+
+*/
+

@@ -175,6 +175,46 @@ ref/t/slk-exc3a.slk.ref: error: Stream.Error("IDENTIFIER _ expected after [typ] 
 ref/t/slk-exc3a.slk.ref: at:error at: 
 ref/t/slk-exc3a.slk.ref:SLEEK FAILURE (END)
 ===========================================================
+# ex29a.ss
+
+-fixcalc-disj 1
+
+# post_1216:={ ... };
+((0 >= PRIy && 0 >= PRIx) && y + x >= PRIy + PRIx)
+# Total CPU time: 0.265681 seconds
+
+-fixcalc-disj 2
+
+# post_1216:={ ... };
+(((0 >= PRIy && 0 >= PRIx) && y + x >= 2 + PRIy + PRIx) 
+  || ((0 >= y && 0 >= x) && y = PRIy && x = PRIx))
+# Total CPU time: 0.26917 seconds
+
+-fixcalc-disj 3
+
+# post_1216:={ ... };
+(((0 >= PRIy && 0 >= PRIx) && y + x >= 2 + PRIy + PRIx) 
+  || ((0 >= y && 0 >= x) && y = PRIy && x = PRIx))
+# Total CPU time: 0.968779 seconds
+
+-fixcalc-disj 3
+# expect 3 disjuncts
+# post_1216:={ ... };
+(((0 >= PRIy && 0 >= PRIx) && y + x >= 2 + PRIy + PRIx) || ((0 >= y && 0 >= x) && y = PRIy && x = PRIx))
+# Total CPU time: 1.223589 seconds
+
+-fixcalc-disj 4
+# how come 4 become worse..
+# post_1216:={ ... };
+0 >= PRIx
+# Total CPU time: 1.257247 seconds
+
+-fixcalc-disj 5
+ERROR:
+An attempt was made to set the number of available inequality constraints to 1025.
+The maximum number of inequality constraints in a conjunction is 1024.
+This limit can be changed by redefining maxmaxGEQs in oc.h and recompiling.
+
 ===========================================================
 ===========================================================
 ===========================================================

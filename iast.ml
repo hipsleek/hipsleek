@@ -34,6 +34,7 @@ type prog_decl = {
   mutable prog_rel_decls : rel_decl list; 
   mutable prog_templ_decls: templ_decl list;
   mutable prog_ut_decls: ut_decl list;
+  mutable prog_ui_decls: ui_decl list;
   mutable prog_hp_decls : hp_decl list; 
   mutable prog_rel_ids : (typ * ident) list; 
   mutable prog_hp_ids : (typ * ident) list; 
@@ -143,6 +144,12 @@ and ut_decl = {
   ut_pos: loc;
 }
 
+(* Unknown Imm Declaration *)
+and ui_decl = {
+  ui_rel: rel_decl;
+  ui_is_pre: bool;
+  ui_pos: loc;
+}
 
 and hp_decl = { hp_name : ident; 
                 (* rel_vars : ident list; *)
@@ -390,11 +397,13 @@ and exp_bool_lit = { exp_bool_lit_val : bool;
 
 and exp_barrier = {exp_barrier_recv : ident; exp_barrier_pos : loc}
 
+(* WN : why do we have two kinds of calls? should unify *)
+
 and exp_call_nrecv = { 
   exp_call_nrecv_method : ident;
   exp_call_nrecv_lock : ident option;
-  exp_call_nrecv_arguments : exp list;
   exp_call_nrecv_ho_arg : Iformula.formula option;
+  exp_call_nrecv_arguments : exp list;
   exp_call_nrecv_path_id : control_path_id;
   exp_call_nrecv_pos : loc }
 
@@ -1667,7 +1676,7 @@ and expand_inline_fields ddefs fls =
                             let fn  = get_field_name fld in
                             let ft = get_field_typ fld in
                             try
-                              let ddef = look_up_data_def_raw ddefs (string_of_typ ft) in
+                              let ddef = x_add look_up_data_def_raw ddefs (string_of_typ ft) in
                               let fld_fs = List.map (fun y -> augment_field_with_prefix y (fn ^ Globals.inline_field_expand)) ddef.data_fields in
                               fld_fs
                             with
@@ -1697,7 +1706,7 @@ and look_up_all_fields_x (prog : prog_decl) (c : data_decl) =
 *)
 
 and look_up_all_fields_cname (prog : prog_decl) (c : ident) = 
-  let ddef = look_up_data_def_raw prog.prog_data_decls c
+  let ddef = x_add look_up_data_def_raw prog.prog_data_decls c
   in look_up_all_fields prog ddef
 
 and subs_heap_type_env_x (henv: (ident * typ) list) old_typ new_typ =
@@ -1845,7 +1854,7 @@ and collect_data_view_from_h_formula_x (h0 : F.h_formula) (data_decls: data_decl
       done;
       let c = c ^ !deref_str in
       try
-        let ddecl = look_up_data_def_raw data_decls c in
+        let ddecl = x_add look_up_data_def_raw data_decls c in
         let dl, vl = (
           if (String.compare v self = 0) then ([c], [])
           else ([], [])
@@ -2021,7 +2030,7 @@ and collect_data_view_from_pure_bformula_x (bf : P.b_formula) (data_decls: data_
   | P.EqMax _ | P.EqMin _ | P.LexVar _ -> ([], [], henv)
   | P.BagIn _ | P.BagNotIn _ | P.BagSub _ | P.BagMin _ | P.BagMax _ -> ([], [], henv)
   | P.ListIn _ | P.ListNotIn _ | P.ListAllN _ | P.ListPerm _ -> ([], [], henv)
-  (* | P.VarPerm _ *) | P.RelForm _ -> ([], [], henv)
+  (* | P.VarPerm _ *) | P.RelForm _ | P.ImmRel _ -> ([], [], henv)
 
 and collect_data_view_from_pure_bformula (bf : P.b_formula) (data_decls: data_decl list)
     (henv: (ident * typ) list)
@@ -2044,7 +2053,7 @@ and find_data_view_x (vdecl: view_decl) (data_decls: data_decl list) pos
         (* find type of self in the heap type env *)
         let typ, _ = get_heap_type henv self in
         let tname = string_of_typ typ in
-        let todo_unknown = look_up_data_def_raw data_decls tname in
+        let todo_unknown = x_add look_up_data_def_raw data_decls tname in
         ([tname], el)
       with Not_found ->
         ([], el)
@@ -2851,6 +2860,7 @@ let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) :
       prog_rel_ids = hd.prog_rel_ids @ iprims.prog_rel_ids; (* An Hoa *)
       prog_templ_decls = hd.prog_templ_decls @ iprims.prog_templ_decls;
       prog_ut_decls = hd.prog_ut_decls @ iprims.prog_ut_decls;
+      prog_ui_decls = hd.prog_ui_decls @ iprims.prog_ui_decls;
       prog_hp_decls = hd.prog_hp_decls @ iprims.prog_hp_decls;
       prog_hp_ids = hd.prog_hp_ids @ iprims.prog_hp_ids; 
       prog_axiom_decls = hd.prog_axiom_decls @ iprims.prog_axiom_decls; (* [4/10/2011] An Hoa *)
@@ -2877,6 +2887,7 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
       prog_rel_ids = [];
       prog_templ_decls = [];
       prog_ut_decls = [];
+      prog_ui_decls = [];
       prog_hp_decls = [];
       prog_hp_ids = [];
       prog_axiom_decls = [];
@@ -2896,7 +2907,7 @@ let get_field_from_typ ddefs data_typ field_name = match data_typ with
   | Named data_name -> 
     (* let () = print_endline ("1: " ^ data_name) in *)
     (* let () = print_endline ("2: " ^ field_name) in *)
-    let ddef = look_up_data_def_raw ddefs data_name in
+    let ddef = x_add look_up_data_def_raw ddefs data_name in
     (try
        let field = List.find (fun x -> (get_field_name x = field_name)) ddef.data_fields in
        (* let () = print_endline ("3: " ^ (snd (fst3 field))) in*)
@@ -2927,7 +2938,7 @@ let rec get_type_of_field_seq ddefs root_type field_seq =
   | [] -> root_type
   | f::t -> (match root_type with
       | Named c -> (try
-                      let ddef = look_up_data_def_raw ddefs c in
+                      let ddef = x_add look_up_data_def_raw ddefs c in
                       let ft = get_type_of_field ddef f in
                       (match ft with
                        | UNK -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[get_type_of_field_seq] Compound type " ^ c ^ " has no field " ^ f ^ "!" }
@@ -2959,7 +2970,7 @@ let rec compute_typ_size ddefs t =
   (* let () = print_endline ("[compute_typ_size] input = " ^ (string_of_typ t)) in *)
   let res = match t with
     | Named data_name -> (try 
-                            let ddef = look_up_data_def_raw ddefs data_name in
+                            let ddef = x_add look_up_data_def_raw ddefs data_name in
                             List.fold_left (fun a f -> 
                                 let fs = if (is_inline_field f) then 
                                     compute_typ_size ddefs (get_field_typ f) 
@@ -2984,7 +2995,7 @@ let rec compute_field_offset ddefs data_name accessed_field =
   try 
     (* let () = print_endline ("[compute_field_offset] input = { " ^ data_name ^ " , " ^ accessed_field ^ " }") in *)
     let found = ref false in
-    let ddef = look_up_data_def_raw ddefs data_name in
+    let ddef = x_add look_up_data_def_raw ddefs data_name in
     (* Accumulate the offset along the way *)
     let offset = List.fold_left (fun a f -> 
         if (!found) then a (* Once found, just keep constant*)
@@ -3018,7 +3029,7 @@ and compute_field_seq_offset ddefs data_name field_sequence =
         let offset = compute_field_offset ddefs !dname field_name in
         (* Update the dname to the data type of the field_name *)
         try
-          let ddef = look_up_data_def_raw ddefs !dname in
+          let ddef = x_add look_up_data_def_raw ddefs !dname in
           let field_type = get_type_of_field ddef field_name in
           begin
             dname := string_of_typ field_type;
@@ -3180,7 +3191,7 @@ let look_up_field_ann_x prog data_name sel_anns=
         ann_w_pos rest (n+1) (res@[((data_name,n),anns)])
       else ann_w_pos rest (n+1) res
   in
-  let dd = look_up_data_def_raw prog.prog_data_decls data_name in
+  let dd = x_add look_up_data_def_raw prog.prog_data_decls data_name in
   let ls_anns = List.map (fun (_,_,_,anns) -> anns) dd.data_fields in
   let ann_w_pos,ls_anns_only = List.split (ann_w_pos ls_anns 0 []) in
   let anns_only = List.concat ls_anns_only in
@@ -3398,11 +3409,23 @@ let get_return_exp e0=
   Debug.no_1 "get_return_exp" pr1 pr2
     (fun _ -> get_return_exp_x e0) e0
 
-let trans_to_exp_form exp0=
-  let rec helper exp=
+let trans_to_exp_form exp0 =
+  let rec helper exp =
     match exp with
     | Var v -> P.Var ((v.exp_var_name, Primed), v.exp_var_pos)
     | IntLit i -> P.IConst (i.exp_int_lit_val, i.exp_int_lit_pos)
+    | Binary b -> 
+      (begin
+        let oper1 = b.exp_binary_oper1 in
+        let oper2 = b.exp_binary_oper2 in
+        let pos = b.exp_binary_pos in
+        match b.exp_binary_op with
+        | OpPlus -> P.mkAdd (helper oper1) (helper oper2) pos
+        | OpMinus -> P.mkSubtract (helper oper1) (helper oper2) pos
+        | OpMult -> P.mkMult (helper oper1) (helper oper2) pos
+        | OpDiv -> P.mkDiv (helper oper1) (helper oper2) pos
+        | _ -> report_error no_pos "iast.trans_exp_to_form: unexpected exp"
+      end)
     | _ -> report_error no_pos "iast.trans_exp_to_form: not handle yet"
   in
   helper exp0
@@ -3593,3 +3616,42 @@ let find_all_num_trailer iprog =
     ) [] body_list in
   (* use fold_exp_args .. *)
   id_list
+
+let prim_sanity_check_x iprog=
+  let basic_prims = ["is_not_null___$String"; "is_null___$String";"neq___$String~String";"eq___$String~String";
+  "is_not_null___$Object";"is_null___$Object";"neq___$Object~Object";"eq___$Object~Object";
+  "is_not_null___$__DivByZeroErr";"is_null___$__DivByZeroErr";"is_not_null___$__ArrBoundErr";"is_null___$__ArrBoundErr";
+  "is_not_null___$thrd";"is_null___$thrd";"is_not_null___$barrier";"is_null___$barrier";
+  "neq___$barrier~barrier";"eq___$barrier~barrier";"is_not_null___$lock";"is_null___$lock";
+  "neq___$lock~lock";"eq___$lock~lock";"is_not_null___$int_ptr";"is_null___$int_ptr";
+  "neq___$int_ptr~int_ptr";"eq___$int_ptr~int_ptr";"is_not_null___$int_ptr_ptr";"is_null___$int_ptr_ptr";
+  "neq___$int_ptr_ptr~int_ptr_ptr";"eq___$int_ptr_ptr~int_ptr_ptr";"is_not_null___$__Fail";
+  "is_null___$__Fail";"neq___$__Fail~__Fail";"eq___$__Fail~__Fail";"rand_bool$";"rand_int$";
+  "aalloc___$int";"update___2d$int~int[][]~int~int";"update___1d$boolean~boolean[]~int";
+  "update___1d$int~int[]~int";"delete_ptr$int_ptr_ptr";"delete_ptr$int_ptr";"release$";
+  "acquire$";"finalize$";"init$";"join$";"fork$";"array_get_elm_at___2d$int[][]~int~int";
+  "array_get_elm_at___1d$boolean[]~int";"array_get_elm_at___1d$int[]~int";"pow___$int~int";
+  "not___$boolean";"lor___$boolean~boolean";"land___$boolean~boolean";"gte___$int~int";
+  "gt___$int~int";"lte___$int~int";"lt___$int~int";"neq___$boolean~boolean";"neq___$int~int";"eq___$int~int";
+  "mult___$float~float";"mult___$float~int";"mult___$int~float";"minus___$float~float";"minus___$float~int";
+  "minus___$int~float";"add___$float~float";"add___$float~int";"add___$int~float";"mod___$int~int";
+  "div4$int~int";"div3$int~int";"div2$int~int";"div___$int~int";"mult___$int~int";
+  "minus___$int~int";"add___$int~int"] in
+  let basic_prims_with_mults =  if !Globals.prelude_is_mult then basic_prims else
+    basic_prims @["mults___$int~int"] in
+  let () = List.iter (fun proc_mn -> begin
+    try
+      let _ = look_up_proc_def_mingled_name iprog.prog_proc_decls proc_mn in
+      ()
+    with Not_found ->
+         Error.report_error {Error.error_loc = no_pos;
+         Error.error_text = ("Missing " ^  proc_mn ^ " in prelude")}
+  end
+  ) basic_prims_with_mults in
+  ()
+
+let prim_sanity_check iprog=
+  let pr_proc p = pr_id p.proc_mingled_name in
+  let pr_procs prog= (pr_list pr_proc) prog.prog_proc_decls in
+  Debug.no_1 "prim_sanity_check" pr_procs pr_none
+      (fun _ -> prim_sanity_check_x iprog) iprog

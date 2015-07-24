@@ -1,0 +1,17 @@
+checkentail a*b>=1 |- a*b>=1.
+print residue.
+// valid
+
+checkentail z=a*b & z>=1 |- z>=1.
+print residue.
+
+/*
+# ex4a.slk
+
+checkentail a*b>=1 |- a*b>=0.
+
+
+
+checkentail z=a*b & z>=1 |- z>=1.
+
+*/

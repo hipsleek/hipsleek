@@ -1,0 +1,1615 @@
+data node {
+  int val;
+  int nleft;
+  int nright;
+  node left;
+  node right;
+}.
+ pred pq<n:int,mx:int> == 
+  emp&self=null & n=0 & mx=0 or
+(exists m1_28,m2_29,
+  m3_27: self::node<d,m1,m2,l,r> * l::pq{}<m1_28,mx1> * r::pq{}<m2_29,mx2>&
+  n=m2+1+m1 & 0<=d & mx1<=d & mx2<=d & d<=mx & m3_27+m2=m1 & 0<=m3_27 & 
+  m3_27<=1 & m1_28=m1 & m2_29=m2)
+  inv 0<=n & 0<=mx.
+
+/*
+// id: 0; line: 12; kind: Pred_Check_Inv
+ checkentail emp&((self=null & n=0 & mx=0) | (0<=mx & 1<=n & self!=null))
+ |-  emp&0<=mx & 0<=n.
+expect Valid.
+
+// id: 1; line: 12; kind: Pred_Check_Inv
+ checkentail emp&((self=null & n=0 & mx=0) | (0<=mx & 1<=n & self!=null))
+ |-  emp&0<=mx & 0<=n.
+expect Valid.
+*/
+
+// id: 2; line: 82; kind: BIND
+ checkentail (exists m,m1,m2,d,l,m3,mx1,r,m4,mx2: l::pq{}<m,mx1> * 
+t'::node<d,m3,m4,l,r> * r::pq{}<m1,mx2> & n=m4+1+m3 & 0<=d & 
+mx1<=d & mx2<=d & d<=mx & m2+m4=m3 & 0<=m2 & m2<=1 & m=m3 & m1=m4 & t'=t & 
+0<n)
+ |-  t'::node<val',nleft',nright',left',right'>@L.
+expect Valid.
+ 
+// id: 4; line: 82; kind: PRE
+ checkentail l1::pq{}<m6,mx4> * t'::node<d1,m9,m8,l1,r1> * r1::pq{}<m5,mx3> & 
+0<n & t'=t & m5=m8 & m6=m9 & m7<=1 & 0<=m7 & m7+m8=m9 & d1<=mx & mx3<=d1 & 
+mx4<=d1 & 0<=d1 & n=m8+1+m9 & v'=m9 & v1'=0 & v'=v1'
+ |-  emp.
+expect Valid.
+ 
+// id: 5; line: 82; kind: PRE
+ checkentail l1::pq{}<m6,mx4> * t'::node<d1,m9,m8,l1,r1> * r1::pq{}<m5,mx3> & 
+0<n & t'=t & m5=m8 & m6=m9 & m7<=1 & 0<=m7 & m7+m8=m9 & d1<=mx & mx3<=d1 & 
+mx4<=d1 & 0<=d1 & n=m8+1+m9 & v'=m9 & v1'=0 & v'!=v1'
+ |-  emp.
+expect Valid.
+ 
+// id: 6; line: 82; kind: BIND
+ checkentail l1::pq{}<m6,mx4> * t'::node<d1,m9,m8,l1,r1> * r1::pq{}<m5,mx3> & 
+v2' & 0<n & t'=t & m5=m8 & m6=m9 & m7<=1 & 0<=m7 & m7+m8=m9 & d1<=mx & 
+mx3<=d1 & mx4<=d1 & 0<=d1 & n=m8+1+m9 & m9=0
+ |-  t'::node<val1',nleft1',nright1',left1',right1'>@L.
+expect Valid.
+ 
+// id: 8; line: 82; kind: BIND
+ checkentail l1::pq{}<m6,mx4> * t'::node<d1,m9,m8,l1,r1> * r1::pq{}<m5,mx3> & 
+m9!=0 & !(v2') & 0<n & t'=t & m5=m8 & m6=m9 & m7<=1 & 0<=m7 & m7+m8=m9 & 
+d1<=mx & mx3<=d1 & mx4<=d1 & 0<=d1 & n=m8+1+m9
+ |-  t'::node<val1',nleft1',nright1',left1',right1'>@L.
+expect Valid.
+ 
+// id: 10; line: 82; kind: PRE
+ checkentail l1::pq{}<m6,mx4> * t'::node<d1,m9,m8,l1,r1> * r1::pq{}<m5,mx3> & 
+m9=0 & n=m8+1+m9 & 0<=d1 & mx4<=d1 & mx3<=d1 & d1<=mx & m7+m8=m9 & 0<=m7 & 
+m7<=1 & m6=m9 & m5=m8 & t'=t & 0<n & v2' & v3'=m8 & v4'=0 & v3'=v4'
+ |-  emp.
+expect Valid.
+ 
+// id: 11; line: 82; kind: PRE
+ checkentail l1::pq{}<m6,mx4> * t'::node<d1,m9,m8,l1,r1> * r1::pq{}<m5,mx3> & 
+n=m8+1+m9 & 0<=d1 & mx4<=d1 & mx3<=d1 & d1<=mx & m7+m8=m9 & 0<=m7 & m7<=1 & 
+m6=m9 & m5=m8 & t'=t & 0<n & !(v2') & m9!=0 & v3'=m8 & v4'=0 & v3'=v4'
+ |-  emp.
+expect Valid.
+ 
+// id: 12; line: 82; kind: PRE
+ checkentail l1::pq{}<m6,mx4> * t'::node<d1,m9,m8,l1,r1> * r1::pq{}<m5,mx3> & 
+n=m8+1+m9 & 0<=d1 & mx4<=d1 & mx3<=d1 & d1<=mx & m7+m8=m9 & 0<=m7 & m7<=1 & 
+m6=m9 & m5=m8 & t'=t & 0<n & !(v2') & m9!=0 & v3'=m8 & v4'=0 & v3'!=v4'
+ |-  emp.
+expect Valid.
+ 
+// id: 13; line: 82; kind: PRE
+ checkentail l1::pq{}<m6,mx4> * t'::node<d1,m9,m8,l1,r1> * r1::pq{}<m5,mx3> & 
+v5' & m9=0 & n=m8+1+m9 & 0<=d1 & mx4<=d1 & mx3<=d1 & d1<=mx & m7+m8=m9 & 
+0<=m7 & m7<=1 & m6=m9 & m5=m8 & t'=t & 0<n & v2' & m8=0
+ |-  emp.
+expect Valid.
+ 
+// id: 14; line: 82; kind: PRE
+ checkentail l1::pq{}<m6,mx4> * t'::node<d1,m9,m8,l1,r1> * r1::pq{}<m5,mx3> & 
+v5' & n=m8+1+m9 & 0<=d1 & mx4<=d1 & mx3<=d1 & d1<=mx & m7+m8=m9 & 0<=m7 & 
+m7<=1 & m6=m9 & m5=m8 & t'=t & 0<n & !(v2') & m9!=0 & m8=0
+ |-  emp.
+expect Valid.
+ 
+// id: 15; line: 82; kind: PRE
+ checkentail l1::pq{}<m6,mx4> * t'::node<d1,m9,m8,l1,r1> * r1::pq{}<m5,mx3> & 
+m8!=0 & !(v5') & n=m8+1+m9 & 0<=d1 & mx4<=d1 & mx3<=d1 & d1<=mx & m7+m8=m9 & 
+0<=m7 & m7<=1 & m6=m9 & m5=m8 & t'=t & 0<n & !(v2') & m9!=0
+ |-  emp.
+expect Valid.
+ 
+// id: 16; line: 84; kind: BIND
+ checkentail (exists v,v1: l1::pq{}<m6,mx4> * t'::node<d1,m9,m8,l1,r1> * 
+r1::pq{}<m5,mx3> & m8=0 & 0<n & t'=t & m5=m8 & m6=m9 & m7<=1 & 
+0<=m7 & m7+m8=m9 & d1<=mx & mx3<=d1 & mx4<=d1 & 0<=d1 & n=m8+1+m9 & m9=0 & 
+v1 & v & v6')
+ |-  t'::node<val2',nleft2',nright2',left2',right2'>@L.
+expect Valid.
+ 
+// id: 18; line: 92; kind: BIND
+ checkentail (exists v2,v3: l1::pq{}<m6,mx4> * t'::node<d1,m9,m8,l1,r1> * 
+r1::pq{}<m5,mx3> & m8=0 & m9!=0 & 0<n & t'=t & m5=m8 & m6=m9 & 
+m7<=1 & 0<=m7 & m7+m8=m9 & d1<=mx & mx3<=d1 & mx4<=d1 & 0<=d1 & n=m8+1+m9 & 
+v3 & !(v2) & !(v6'))
+ |-  t'::node<tval',tnleft',tnright',tleft',tright'>.
+expect Valid.
+ 
+// id: 20; line: 92; kind: BIND
+ checkentail (exists v4,v5: l1::pq{}<m6,mx4> * t'::node<d1,m9,m8,l1,r1> * 
+r1::pq{}<m5,mx3> & m9!=0 & 0<n & t'=t & m5=m8 & m6=m9 & m7<=1 & 
+0<=m7 & m7+m8=m9 & d1<=mx & mx3<=d1 & mx4<=d1 & 0<=d1 & n=m8+1+m9 & !(v5) & 
+m8!=0 & !(v4) & !(v6'))
+ |-  t'::node<tval',tnleft',tnright',tleft',tright'>.
+expect Valid.
+ 
+// id: 22; line: 93; kind: PRE_REC
+ checkentail l1::pq{}<m6,mx4> * r1::pq{}<m5,mx3> & tright'=r1 & tleft'=l1 & 
+tnright'=m8 & tnleft'=m9 & tval'=d1 & m8=0 & m9!=0 & 0<n & t'=t & m5=m8 & 
+m6=m9 & m7<=1 & 0<=m7 & m7+m8=m9 & d1<=mx & mx3<=d1 & mx4<=d1 & 0<=d1 & n=m8+
+1+m9 & v6 & !(v7) & !(v6')
+ |-  (exists m10,m11: tleft'::pq{}<m10,mx1> * tright'::pq{}<m11,mx2>&
+m11=tnright' & m10=tnleft' & tnleft'<=(1+tnright') & (0+tnright')<=tnleft' & 
+0<(tnright'+tnleft')).
+expect Valid.
+
+/*
+// id: 27; line: 93; kind: PRE_REC
+ checkentail emp & r1=null & m5=0 & mx3=0 & !(v6') & !(v7) & v6 & n=m8+1+m9 & 
+0<=d1 & mx4<=d1 & mx3<=d1 & d1<=mx & m7+m8=m9 & 0<=m7 & m7<=1 & m6=m9 & 
+m5=m8 & t'=t & 0<n & m9!=0 & m8=0 & tval'=d1 & tnleft'=m9 & tnright'=m8 & 
+tleft'=l1 & tright'=r1 & mx1=mx4 & ((m5=0 | r1=null)) & 
+exists(m2_2360:m2_2360=0) & mx2=0
+ |-  emp.
+expect Valid.
+*/
+
+// id: 28; line: 93; kind: PRE_REC
+ checkentail l1::pq{}<m6,mx4> * r1::pq{}<m5,mx3> & tright'=r1 & tleft'=l1 & 
+tnright'=m8 & tnleft'=m9 & tval'=d1 & m9!=0 & 0<n & t'=t & m5=m8 & m6=m9 & 
+m7<=1 & 0<=m7 & m7+m8=m9 & d1<=mx & mx3<=d1 & mx4<=d1 & 0<=d1 & n=m8+1+m9 & 
+!(v8) & m8!=0 & !(v9) & !(v6')
+ |-  (exists m10,m11: tleft'::pq{}<m10,mx1> * tright'::pq{}<m11,mx2>&
+m11=tnright' & m10=tnleft' & tnleft'<=(1+tnright') & (0+tnright')<=tnleft' & 
+0<(tnright'+tnleft')).
+expect Valid.
+
+/*
+// id: 31; line: 93; kind: PRE_REC
+ checkentail emp & mx2=mx3 & mx1=mx4 & tright'=r1 & tleft'=l1 & tnright'=m8 & 
+tnleft'=m9 & tval'=d1 & m9!=0 & 0<n & t'=t & m5=m8 & m6=m9 & m7<=1 & 0<=m7 & 
+m7+m8=m9 & d1<=mx & mx3<=d1 & mx4<=d1 & 0<=d1 & n=m8+1+m9 & !(v8) & m8!=0 & 
+!(v9) & !(v6')
+ |-  emp.
+expect Valid.
+*/
+
+// id: 32; line: 0; kind: POST
+ checkentail l1::pq{}<m6,mx4> * t1::node<d1,m9,m8,l1,r1> * r1::pq{}<m5,mx3> & 
+res=d1 & t'=null & m8=0 & 0<n & t1=t & m5=m8 & m6=m9 & m7<=1 & 0<=m7 & m7+
+m8=m9 & d1<=mx & mx3<=d1 & mx4<=d1 & 0<=d1 & n=m8+1+m9 & m9=0 & v10 & v11 & 
+v6'
+ |-  (exists flted,mx5: t'::pq{}<flted,mx5>&mx5<=mx & res<=mx & 0<=res & flted+
+1=n & 0<=mx & 0<=n).
+expect Valid.
+ 
+// id: 35; line: 0; kind: POST
+ checkentail (exists mx6,mx7,maxi,tnleft',tnright',tleft',
+tright': tleft'::pq{}<tnleft',mx6> * tright'::pq{}<tnright',mx7> * 
+t'::node<d1,tnleft',tnright',tleft',tright'> & mx2=0 & 
+exists(m2_2360:m2_2360=0) & ((m5=0 | r1=null)) & mx1=mx4 & m8=0 & m9!=0 & 
+0<n & t'=t & m5=m8 & m6=m9 & m7<=1 & 0<=m7 & m7+m8=m9 & d1<=mx & mx3<=d1 & 
+mx4<=d1 & 0<=d1 & n=m8+1+m9 & v6 & !(v7) & !(v6') & mx3=0 & m5=0 & r1=null & 
+0<=m6 & 0<=mx4 & 1+tnleft'+tnright'=m8+m9 & (0+tnright')<=tnleft' & 
+tnleft'<=(1+tnright') & mx6<=mx1 & mx7<=mx2 & maxi=max(mx1,mx2) & 0<=res & 
+res<=maxi & exists(m2_68:0<=m2_68) & exists(m1_67:0<=m1_67) & 0<=mx1 & 
+0<=mx2)
+ |-  (exists flted,mx5: t'::pq{}<flted,mx5>&mx5<=mx & res<=mx & 0<=res & flted+
+1=n & 0<=mx & 0<=n).
+expect Valid.
+ 
+// id: 46; line: 0; kind: POST
+ checkentail (exists mx8,mx9,maxi1,tnleft',tnright',tleft',
+tright': tleft'::pq{}<tnleft',mx8> * tright'::pq{}<tnright',mx9> * 
+t'::node<d1,tnleft',tnright',tleft',tright'> & !(v6') & !(v9) & 
+m8!=0 & !(v8) & n=m8+1+m9 & 0<=d1 & mx4<=d1 & mx3<=d1 & d1<=mx & m7+m8=m9 & 
+0<=m7 & m7<=1 & m6=m9 & m5=m8 & t'=t & 0<n & m9!=0 & mx1=mx4 & mx2=mx3 & 
+0<=m5 & 0<=mx3 & 0<=m6 & 0<=mx4 & 1+tnleft'+tnright'=m8+m9 & (0+
+tnright')<=tnleft' & tnleft'<=(1+tnright') & mx8<=mx1 & mx9<=mx2 & 
+maxi1=max(mx1,mx2) & 0<=res & res<=maxi1 & exists(m2_68:0<=m2_68) & 
+exists(m1_67:0<=m1_67) & 0<=mx1 & 0<=mx2)
+ |-  (exists flted,mx5: t'::pq{}<flted,mx5>&mx5<=mx & res<=mx & 0<=res & flted+
+1=n & 0<=mx & 0<=n).
+expect Valid.
+ 
+// id: 53; line: 109; kind: PRE
+ checkentail (exists m10,m11: l2::pq{}<m10,mx1> * r2::pq{}<m11,mx2> & 
+m2'<m1' & m11=m2 & m10=m1 & m1<=(1+m2) & (0+m2)<=m1 & 0<(m2+m1) & r'=r2 & 
+l'=l2 & m2'=m2 & m1'=m1)
+ |-  emp.
+expect Valid.
+ 
+// id: 54; line: 109; kind: PRE
+ checkentail (exists m10,m11: l2::pq{}<m10,mx1> * r2::pq{}<m11,mx2> & 
+m1'<=m2' & m11=m2 & m10=m1 & m1<=(1+m2) & (0+m2)<=m1 & 0<(m2+m1) & r'=r2 & 
+l'=l2 & m2'=m2 & m1'=m1)
+ |-  emp.
+expect Valid.
+ 
+// id: 55; line: 111; kind: PRE
+ checkentail l2::pq{}<m12,mx1> * r2::pq{}<m13,mx2> & v7'=1 & m1'=m1 & m2'=m2 & 
+l'=l2 & r'=r2 & 0<(m2+m1) & (0+m2)<=m1 & m1<=(1+m2) & m12=m1 & m13=m2 & 
+m2'<m1' & v8'
+ |-  htrue.
+expect Valid.
+ 
+// id: 56; line: 111; kind: PRE
+ checkentail l2::pq{}<m12,mx1> * r2::pq{}<m13,mx2> & v7'=1 & m1'=m1 & m2'=m2 & 
+l'=l2 & r'=r2 & 0<(m2+m1) & (0+m2)<=m1 & m1<=(1+m2) & m12=m1 & m13=m2 & 
+m2'<m1' & v8'
+ |-  emp.
+expect Valid.
+ 
+// id: 57; line: 112; kind: PRE_REC
+ checkentail l2::pq{}<m12,mx1> * r2::pq{}<m13,mx2> & m1'+1=m14 & m14=m1 & 
+m2'=m2 & l'=l2 & r'=r2 & 0<(m2+m1) & (0+m2)<=m1 & m1<=(1+m2) & m12=m1 & 
+m13=m2 & m2'<m14 & v8'
+ |-  l'::pq{}<n,mx>&0<n.
+expect Valid.
+ 
+// id: 59; line: 112; kind: PRE_REC
+ checkentail r2::pq{}<m13,mx2> & mx=mx1 & n=m12 & m1'+1=m14 & m14=m1 & 
+m2'=m2 & l'=l2 & r'=r2 & 0<(m2+m1) & (0+m2)<=m1 & m1<=(1+m2) & m12=m1 & 
+m13=m2 & m2'<m14 & v8'
+ |-  emp.
+expect Valid.
+ 
+// id: 60; line: 116; kind: PRE
+ checkentail l2::pq{}<m15,mx1> * r2::pq{}<m16,mx2> & v9'=1 & m1'=m1 & m2'=m2 & 
+l'=l2 & r'=r2 & 0<(m2+m1) & (0+m2)<=m1 & m1<=(1+m2) & m15=m1 & m16=m2 & 
+m1'<=m2' & !(v8')
+ |-  htrue.
+expect Valid.
+ 
+// id: 61; line: 116; kind: PRE
+ checkentail l2::pq{}<m15,mx1> * r2::pq{}<m16,mx2> & v9'=1 & m1'=m1 & m2'=m2 & 
+l'=l2 & r'=r2 & 0<(m2+m1) & (0+m2)<=m1 & m1<=(1+m2) & m15=m1 & m16=m2 & 
+m1'<=m2' & !(v8')
+ |-  emp.
+expect Valid.
+ 
+// id: 62; line: 117; kind: PRE_REC
+ checkentail l2::pq{}<m15,mx1> * r2::pq{}<m16,mx2> & m2'+1=m17 & m1'=m1 & 
+m17=m2 & l'=l2 & r'=r2 & 0<(m2+m1) & (0+m2)<=m1 & m1<=(1+m2) & m15=m1 & 
+m16=m2 & m1'<=m17 & !(v8')
+ |-  r'::pq{}<n,mx>&0<n.
+expect Valid.
+ 
+// id: 64; line: 117; kind: PRE_REC
+ checkentail l2::pq{}<m15,mx1> & mx=mx2 & n=m16 & m2'+1=m17 & m1'=m1 & 
+m17=m2 & l'=l2 & r'=r2 & 0<(m2+m1) & (0+m2)<=m1 & m1<=(1+m2) & m15=m1 & 
+m16=m2 & m1'<=m17 & !(v8')
+ |-  emp.
+expect Valid.
+ 
+// id: 65; line: 0; kind: POST
+ checkentail (exists flted1,mx10: r2::pq{}<m13,mx2> * l'::pq{}<flted1,mx10> & 
+v8' & m2'<m14 & m13=m2 & m12=m1 & m1<=(1+m2) & (0+m2)<=m1 & 0<(m2+m1) & 
+r'=r2 & m2'=m2 & m14=m1 & m1'+1=m14 & n=m12 & mx=mx1 & 0<=m12 & 0<=mx1 & 
+flted1+1=n & 0<=v10' & v10'<=mx & mx10<=mx & 0<=n & 0<=mx & res=v10')
+ |-  (exists mx11,mx12,maxi2: l'::pq{}<m1',mx11> * r'::pq{}<m2',mx12>&
+res<=maxi2 & 0<=res & maxi2=max(mx1,mx2) & mx12<=mx2 & mx11<=mx1 & m1'<=(1+
+m2') & (0+m2')<=m1' & 1+m1'+m2'=m2+m1 & 0<=mx2 & 0<=mx1 & 
+exists(m1_67:0<=m1_67) & exists(m2_68:0<=m2_68)).
+expect Valid.
+ 
+// id: 68; line: 0; kind: POST
+ checkentail (exists flted2,mx13: l2::pq{}<m15,mx1> * r'::pq{}<flted2,mx13> & 
+!(v8') & m1'<=m17 & m16=m2 & m15=m1 & m1<=(1+m2) & (0+m2)<=m1 & 0<(m2+m1) & 
+l'=l2 & m17=m2 & m1'=m1 & m2'+1=m17 & n=m16 & mx=mx2 & 0<=m16 & 0<=mx2 & 
+flted2+1=n & 0<=v11' & v11'<=mx & mx13<=mx & 0<=n & 0<=mx & res=v11')
+ |-  (exists mx11,mx12,maxi2: l'::pq{}<m1',mx11> * r'::pq{}<m2',mx12>&
+res<=maxi2 & 0<=res & maxi2=max(mx1,mx2) & mx12<=mx2 & mx11<=mx1 & m1'<=(1+
+m2') & (0+m2')<=m1' & 1+m1'+m2'=m2+m1 & 0<=mx2 & 0<=mx1 & 
+exists(m1_67:0<=m1_67) & exists(m2_68:0<=m2_68)).
+expect Valid.
+ 
+// id: 71; line: 132; kind: PRE
+ checkentail (exists m18,m19: l2::pq{}<m18,mx1> * r2::pq{}<m19,mx2> & 
+m1'=v12' & v12'=0 & m19=m2 & m18=m1 & v12<=d2 & 0<=v12 & mx2<=d2 & mx1<=d2 & 
+m1<=(1+m2) & (0+m2)<=m1 & r'=r2 & l'=l2 & m2'=m2 & m1'=m1 & v13'=v12 & d'=d2)
+ |-  emp.
+expect Valid.
+ 
+// id: 72; line: 132; kind: PRE
+ checkentail (exists m18,m19: l2::pq{}<m18,mx1> * r2::pq{}<m19,mx2> & 
+m1'!=v12' & v12'=0 & m19=m2 & m18=m1 & v12<=d2 & 0<=v12 & mx2<=d2 & 
+mx1<=d2 & m1<=(1+m2) & (0+m2)<=m1 & r'=r2 & l'=l2 & m2'=m2 & m1'=m1 & 
+v13'=v12 & d'=d2)
+ |-  emp.
+expect Valid.
+ 
+// id: 73; line: 134; kind: PRE
+ checkentail l2::pq{}<m21,mx1> * r2::pq{}<m20,mx2> & v14' & m1'=0 & m20=m2 & 
+m21=m1 & v12<=d2 & 0<=v12 & mx2<=d2 & mx1<=d2 & m1<=(1+m2) & (0+m2)<=m1 & 
+r'=r2 & l'=l2 & m2'=m2 & m1'=m1 & v13'=v12 & d'=d2 & v15'=0 & m2'=v15'
+ |-  emp.
+expect Valid.
+ 
+// id: 74; line: 141; kind: PRE
+ checkentail l2::pq{}<m23,mx1> * r2::pq{}<m22,mx2> & !(v14') & m1'!=0 & 
+m22=m2 & m23=m1 & v12<=d2 & 0<=v12 & mx2<=d2 & mx1<=d2 & m1<=(1+m2) & (0+
+m2)<=m1 & r'=r2 & l'=l2 & m2'=m2 & m1'=m1 & v13'=v12 & d'=d2 & v16'=0 & 
+m2'=v16'
+ |-  emp.
+expect Valid.
+ 
+// id: 75; line: 141; kind: PRE
+ checkentail l2::pq{}<m23,mx1> * r2::pq{}<m22,mx2> & !(v14') & m1'!=0 & 
+m22=m2 & m23=m1 & v12<=d2 & 0<=v12 & mx2<=d2 & mx1<=d2 & m1<=(1+m2) & (0+
+m2)<=m1 & r'=r2 & l'=l2 & m2'=m2 & m1'=m1 & v13'=v12 & d'=d2 & v16'=0 & 
+m2'!=v16'
+ |-  emp.
+expect Valid.
+ 
+// id: 76; line: 144; kind: BIND
+ checkentail (exists m24,m25,m26,d3,l3,m27,mx14,r3,m28,mx15: l3::pq{}<m24,mx14> * 
+l'::node<d3,m27,m28,l3,r3> * r3::pq{}<m25,mx15> * r2::pq{}<m22,mx2>&
+MayLoop[] & m2'=0 & d'=d2 & v13'=v12 & m1'=m1 & m2'=m2 & l'=l2 & r'=r2 & (0+
+m2)<=m1 & m1<=(1+m2) & mx1<=d2 & mx2<=d2 & 0<=v12 & v12<=d2 & m23=m1 & 
+m22=m2 & m1'!=0 & !(v14') & v17' & m25=m28 & m24=m27 & m26<=1 & 0<=m26 & m26+
+m28=m27 & d3<=mx1 & mx15<=d3 & mx14<=d3 & 0<=d3 & m23=m28+1+m27)
+ |-  l'::node<val3',nleft3',nright3',left3',right3'>@L.
+expect Valid.
+ 
+// id: 78; line: 144; kind: PRE
+ checkentail l4::pq{}<m30,mx16> * l'::node<d4,m31,m33,l4,r4> * r4::pq{}<m32,mx17> * 
+r2::pq{}<m22,mx2> & m23=m33+1+m31 & 0<=d4 & mx16<=d4 & mx17<=d4 & 
+d4<=mx1 & m29+m33=m31 & 0<=m29 & m29<=1 & m30=m31 & m32=m33 & v17' & 
+!(v14') & m1'!=0 & m22=m2 & m23=m1 & v12<=d2 & 0<=v12 & mx2<=d2 & mx1<=d2 & 
+m1<=(1+m2) & (0+m2)<=m1 & r'=r2 & l'=l2 & m2'=m2 & m1'=m1 & v13'=v12 & 
+d'=d2 & m2'=0 & v18'=d4 & v18'<=v13'
+ |-  emp.
+expect Valid.
+ 
+// id: 79; line: 144; kind: PRE
+ checkentail l4::pq{}<m30,mx16> * l'::node<d4,m31,m33,l4,r4> * r4::pq{}<m32,mx17> * 
+r2::pq{}<m22,mx2> & m23=m33+1+m31 & 0<=d4 & mx16<=d4 & mx17<=d4 & 
+d4<=mx1 & m29+m33=m31 & 0<=m29 & m29<=1 & m30=m31 & m32=m33 & v17' & 
+!(v14') & m1'!=0 & m22=m2 & m23=m1 & v12<=d2 & 0<=v12 & mx2<=d2 & mx1<=d2 & 
+m1<=(1+m2) & (0+m2)<=m1 & r'=r2 & l'=l2 & m2'=m2 & m1'=m1 & v13'=v12 & 
+d'=d2 & m2'=0 & v18'=d4 & v13'<v18'
+ |-  emp.
+expect Valid.
+ 
+// id: 80; line: 148; kind: BIND
+ checkentail l4::pq{}<m30,mx16> * l'::node<d4,m31,m33,l4,r4> * r4::pq{}<m32,mx17> * 
+r2::pq{}<m22,mx2> & m2'=0 & d'=d2 & v13'=v12 & m1'=m1 & m2'=m2 & 
+l'=l2 & r'=r2 & (0+m2)<=m1 & m1<=(1+m2) & mx1<=d2 & mx2<=d2 & 0<=v12 & 
+v12<=d2 & m23=m1 & m22=m2 & m1'!=0 & !(v14') & v17' & m32=m33 & m30=m31 & 
+m29<=1 & 0<=m29 & m29+m33=m31 & d4<=mx1 & mx17<=d4 & mx16<=d4 & 0<=d4 & 
+m23=m33+1+m31 & v13'<d4 & !(v19')
+ |-  l'::node<val4',nleft4',nright4',left4',right4'>@L.
+expect Valid.
+ 
+// id: 82; line: 149; kind: BIND
+ checkentail l4::pq{}<m30,mx16> * l'::node<d4,m31,m33,l4,r4> * r4::pq{}<m32,mx17> * 
+r2::pq{}<m22,mx2> & d'=d4 & m2'=0 & d5=d2 & v13'=v12 & m1'=m1 & 
+m2'=m2 & l'=l2 & r'=r2 & (0+m2)<=m1 & m1<=(1+m2) & mx1<=d2 & mx2<=d2 & 
+0<=v12 & v12<=d2 & m23=m1 & m22=m2 & m1'!=0 & !(v14') & v17' & m32=m33 & 
+m30=m31 & m29<=1 & 0<=m29 & m29+m33=m31 & d4<=mx1 & mx17<=d4 & mx16<=d4 & 
+0<=d4 & m23=m33+1+m31 & v13'<d4 & !(v19')
+ |-  l'::node<val5',nleft5',nright5',left5',right5'>.
+expect Valid.
+ 
+// id: 84; line: 154; kind: BIND
+ checkentail (exists m34,m35,m36,d6,l5,m37,mx18,r5,m38,mx19: l5::pq{}<m34,mx18> * 
+l'::node<d6,m37,m38,l5,r5> * r5::pq{}<m35,mx19> * r2::pq{}<m22,mx2>&
+MayLoop[] & d'=d2 & v13'=v12 & m1'=m1 & m2'=m2 & l'=l2 & r'=r2 & (0+
+m2)<=m1 & m1<=(1+m2) & mx1<=d2 & mx2<=d2 & 0<=v12 & v12<=d2 & m23=m1 & 
+m22=m2 & m1'!=0 & !(v14') & m2'!=0 & !(v17') & m35=m38 & m34=m37 & m36<=1 & 
+0<=m36 & m36+m38=m37 & d6<=mx1 & mx19<=d6 & mx18<=d6 & 0<=d6 & m23=m38+1+m37)
+ |-  l'::node<val6',nleft6',nright6',left6',right6'>@L.
+expect Valid.
+ 
+// id: 86; line: 154; kind: BIND
+ checkentail (exists m44,m45,m46,d8,l7,m47,mx22,r7,m48,mx23: l6::pq{}<m40,mx21> * 
+l'::node<d7,m43,m42,l6,r6> * r6::pq{}<m39,mx20> * 
+r'::node<d8,m47,m48,l7,r7> * l7::pq{}<m44,mx22> * r7::pq{}<m45,mx23>&
+MayLoop[] & v20'=d7 & d'=d2 & v13'=v12 & m1'=m1 & m2'=m2 & l'=l2 & r'=r2 & 
+(0+m2)<=m1 & m1<=(1+m2) & mx1<=d2 & mx2<=d2 & 0<=v12 & v12<=d2 & m23=m1 & 
+m22=m2 & m1'!=0 & !(v14') & m2'!=0 & !(v17') & m39=m42 & m40=m43 & m41<=1 & 
+0<=m41 & m41+m42=m43 & d7<=mx1 & mx20<=d7 & mx21<=d7 & 0<=d7 & m23=m42+1+
+m43 & m45=m48 & m44=m47 & m46<=1 & 0<=m46 & m46+m48=m47 & d8<=mx2 & 
+mx23<=d8 & mx22<=d8 & 0<=d8 & m22=m48+1+m47)
+ |-  r'::node<val7',nleft7',nright7',left7',right7'>@L.
+expect Valid.
+ 
+// id: 88; line: 154; kind: PRE
+ checkentail l6::pq{}<m40,mx21> * l'::node<d7,m43,m42,l6,r6> * r6::pq{}<m39,mx20> * 
+r'::node<d9,m51,m53,l8,r8> * l8::pq{}<m50,mx24> * r8::pq{}<m52,mx25>&
+MayLoop[] & m22=m53+1+m51 & 0<=d9 & mx24<=d9 & mx25<=d9 & d9<=mx2 & m49+
+m53=m51 & 0<=m49 & m49<=1 & m50=m51 & m52=m53 & m23=m42+1+m43 & 0<=d7 & 
+mx21<=d7 & mx20<=d7 & d7<=mx1 & m41+m42=m43 & 0<=m41 & m41<=1 & m40=m43 & 
+m39=m42 & !(v17') & m2'!=0 & !(v14') & m1'!=0 & m22=m2 & m23=m1 & v12<=d2 & 
+0<=v12 & mx2<=d2 & mx1<=d2 & m1<=(1+m2) & (0+m2)<=m1 & r'=r2 & l'=l2 & 
+m2'=m2 & m1'=m1 & v13'=v12 & d'=d2 & v20'=d7 & v21'=d9 & v21'<=v20'
+ |-  emp.
+expect Valid.
+ 
+// id: 89; line: 154; kind: PRE
+ checkentail l6::pq{}<m40,mx21> * l'::node<d7,m43,m42,l6,r6> * r6::pq{}<m39,mx20> * 
+r'::node<d9,m51,m53,l8,r8> * l8::pq{}<m50,mx24> * r8::pq{}<m52,mx25>&
+MayLoop[] & m22=m53+1+m51 & 0<=d9 & mx24<=d9 & mx25<=d9 & d9<=mx2 & m49+
+m53=m51 & 0<=m49 & m49<=1 & m50=m51 & m52=m53 & m23=m42+1+m43 & 0<=d7 & 
+mx21<=d7 & mx20<=d7 & d7<=mx1 & m41+m42=m43 & 0<=m41 & m41<=1 & m40=m43 & 
+m39=m42 & !(v17') & m2'!=0 & !(v14') & m1'!=0 & m22=m2 & m23=m1 & v12<=d2 & 
+0<=v12 & mx2<=d2 & mx1<=d2 & m1<=(1+m2) & (0+m2)<=m1 & r'=r2 & l'=l2 & 
+m2'=m2 & m1'=m1 & v13'=v12 & d'=d2 & v20'=d7 & v21'=d9 & v20'<v21'
+ |-  emp.
+expect Valid.
+ 
+// id: 90; line: 156; kind: BIND
+ checkentail l6::pq{}<m40,mx21> * l'::node<d7,m43,m42,l6,r6> * r6::pq{}<m39,mx20> * 
+r'::node<d9,m51,m53,l8,r8> * l8::pq{}<m50,mx24> * r8::pq{}<m52,mx25>&
+MayLoop[] & d'=d2 & v13'=v12 & m1'=m1 & m2'=m2 & l'=l2 & r'=r2 & (0+
+m2)<=m1 & m1<=(1+m2) & mx1<=d2 & mx2<=d2 & 0<=v12 & v12<=d2 & m23=m1 & 
+m22=m2 & m1'!=0 & !(v14') & m2'!=0 & !(v17') & m39=m42 & m40=m43 & m41<=1 & 
+0<=m41 & m41+m42=m43 & d7<=mx1 & mx20<=d7 & mx21<=d7 & 0<=d7 & m23=m42+1+
+m43 & m52=m53 & m50=m51 & m49<=1 & 0<=m49 & m49+m53=m51 & d9<=mx2 & 
+mx25<=d9 & mx24<=d9 & 0<=d9 & m22=m53+1+m51 & d9<=d7 & v22'
+ |-  l'::node<val8',nleft8',nright8',left8',right8'>@L.
+expect Valid.
+ 
+// id: 92; line: 156; kind: PRE
+ checkentail l6::pq{}<m40,mx21> * l'::node<d7,m43,m42,l6,r6> * r6::pq{}<m39,mx20> * 
+r'::node<d9,m51,m53,l8,r8> * l8::pq{}<m50,mx24> * r8::pq{}<m52,mx25>&
+MayLoop[] & v22' & d9<=d7 & m22=m53+1+m51 & 0<=d9 & mx24<=d9 & mx25<=d9 & 
+d9<=mx2 & m49+m53=m51 & 0<=m49 & m49<=1 & m50=m51 & m52=m53 & m23=m42+1+
+m43 & 0<=d7 & mx21<=d7 & mx20<=d7 & d7<=mx1 & m41+m42=m43 & 0<=m41 & 
+m41<=1 & m40=m43 & m39=m42 & !(v17') & m2'!=0 & !(v14') & m1'!=0 & m22=m2 & 
+m23=m1 & v12<=d2 & 0<=v12 & mx2<=d2 & mx1<=d2 & m1<=(1+m2) & (0+m2)<=m1 & 
+r'=r2 & l'=l2 & m2'=m2 & m1'=m1 & v13'=v12 & d'=d2 & v23'=d7 & v23'<=v13'
+ |-  emp.
+expect Valid.
+ 
+// id: 93; line: 156; kind: PRE
+ checkentail l6::pq{}<m40,mx21> * l'::node<d7,m43,m42,l6,r6> * r6::pq{}<m39,mx20> * 
+r'::node<d9,m51,m53,l8,r8> * l8::pq{}<m50,mx24> * r8::pq{}<m52,mx25>&
+MayLoop[] & v22' & d9<=d7 & m22=m53+1+m51 & 0<=d9 & mx24<=d9 & mx25<=d9 & 
+d9<=mx2 & m49+m53=m51 & 0<=m49 & m49<=1 & m50=m51 & m52=m53 & m23=m42+1+
+m43 & 0<=d7 & mx21<=d7 & mx20<=d7 & d7<=mx1 & m41+m42=m43 & 0<=m41 & 
+m41<=1 & m40=m43 & m39=m42 & !(v17') & m2'!=0 & !(v14') & m1'!=0 & m22=m2 & 
+m23=m1 & v12<=d2 & 0<=v12 & mx2<=d2 & mx1<=d2 & m1<=(1+m2) & (0+m2)<=m1 & 
+r'=r2 & l'=l2 & m2'=m2 & m1'=m1 & v13'=v12 & d'=d2 & v23'=d7 & v13'<v23'
+ |-  emp.
+expect Valid.
+ 
+// id: 94; line: 160; kind: BIND
+ checkentail l6::pq{}<m40,mx21> * l'::node<d7,m43,m42,l6,r6> * r6::pq{}<m39,mx20> * 
+r'::node<d9,m51,m53,l8,r8> * l8::pq{}<m50,mx24> * r8::pq{}<m52,mx25>&
+MayLoop[] & d'=d2 & v13'=v12 & m1'=m1 & m2'=m2 & l'=l2 & r'=r2 & (0+
+m2)<=m1 & m1<=(1+m2) & mx1<=d2 & mx2<=d2 & 0<=v12 & v12<=d2 & m23=m1 & 
+m22=m2 & m1'!=0 & !(v14') & m2'!=0 & !(v17') & m39=m42 & m40=m43 & m41<=1 & 
+0<=m41 & m41+m42=m43 & d7<=mx1 & mx20<=d7 & mx21<=d7 & 0<=d7 & m23=m42+1+
+m43 & m52=m53 & m50=m51 & m49<=1 & 0<=m49 & m49+m53=m51 & d9<=mx2 & 
+mx25<=d9 & mx24<=d9 & 0<=d9 & m22=m53+1+m51 & d9<=d7 & v22' & v13'<d7 & 
+!(v24')
+ |-  l'::node<val9',nleft9',nright9',left9',right9'>@L.
+expect Valid.
+ 
+// id: 96; line: 161; kind: BIND
+ checkentail l6::pq{}<m40,mx21> * l'::node<d7,m43,m42,l6,r6> * r6::pq{}<m39,mx20> * 
+r'::node<d9,m51,m53,l8,r8> * l8::pq{}<m50,mx24> * r8::pq{}<m52,mx25>&
+MayLoop[] & d'=d7 & d10=d2 & v13'=v12 & m1'=m1 & m2'=m2 & l'=l2 & r'=r2 & (0+
+m2)<=m1 & m1<=(1+m2) & mx1<=d2 & mx2<=d2 & 0<=v12 & v12<=d2 & m23=m1 & 
+m22=m2 & m1'!=0 & !(v14') & m2'!=0 & !(v17') & m39=m42 & m40=m43 & m41<=1 & 
+0<=m41 & m41+m42=m43 & d7<=mx1 & mx20<=d7 & mx21<=d7 & 0<=d7 & m23=m42+1+
+m43 & m52=m53 & m50=m51 & m49<=1 & 0<=m49 & m49+m53=m51 & d9<=mx2 & 
+mx25<=d9 & mx24<=d9 & 0<=d9 & m22=m53+1+m51 & d9<=d7 & v22' & v13'<d7 & 
+!(v24')
+ |-  l'::node<val10',nleft10',nright10',left10',right10'>@L.
+expect Valid.
+ 
+// id: 98; line: 161; kind: BIND
+ checkentail l6::pq{}<m40,mx21> * l'::node<d7,m43,m42,l6,r6> * r6::pq{}<m39,mx20> * 
+r'::node<d9,m51,m53,l8,r8> * l8::pq{}<m50,mx24> * r8::pq{}<m52,mx25>&
+MayLoop[] & v25'=d7 & d'=d7 & d10=d2 & v13'=v12 & m1'=m1 & m2'=m2 & l'=l2 & 
+r'=r2 & (0+m2)<=m1 & m1<=(1+m2) & mx1<=d2 & mx2<=d2 & 0<=v12 & v12<=d2 & 
+m23=m1 & m22=m2 & m1'!=0 & !(v14') & m2'!=0 & !(v17') & m39=m42 & m40=m43 & 
+m41<=1 & 0<=m41 & m41+m42=m43 & d7<=mx1 & mx20<=d7 & mx21<=d7 & 0<=d7 & 
+m23=m42+1+m43 & m52=m53 & m50=m51 & m49<=1 & 0<=m49 & m49+m53=m51 & 
+d9<=mx2 & mx25<=d9 & mx24<=d9 & 0<=d9 & m22=m53+1+m51 & d9<=d7 & v22' & 
+v13'<d7 & !(v24')
+ |-  l'::node<val11',nleft11',nright11',left11',right11'>@L.
+expect Valid.
+ 
+// id: 100; line: 161; kind: BIND
+ checkentail l6::pq{}<m40,mx21> * l'::node<d7,m43,m42,l6,r6> * r6::pq{}<m39,mx20> * 
+r'::node<d9,m51,m53,l8,r8> * l8::pq{}<m50,mx24> * r8::pq{}<m52,mx25>&
+MayLoop[] & v26'=m43 & v25'=d7 & d'=d7 & d10=d2 & v13'=v12 & m1'=m1 & 
+m2'=m2 & l'=l2 & r'=r2 & (0+m2)<=m1 & m1<=(1+m2) & mx1<=d2 & mx2<=d2 & 
+0<=v12 & v12<=d2 & m23=m1 & m22=m2 & m1'!=0 & !(v14') & m2'!=0 & !(v17') & 
+m39=m42 & m40=m43 & m41<=1 & 0<=m41 & m41+m42=m43 & d7<=mx1 & mx20<=d7 & 
+mx21<=d7 & 0<=d7 & m23=m42+1+m43 & m52=m53 & m50=m51 & m49<=1 & 0<=m49 & m49+
+m53=m51 & d9<=mx2 & mx25<=d9 & mx24<=d9 & 0<=d9 & m22=m53+1+m51 & d9<=d7 & 
+v22' & v13'<d7 & !(v24')
+ |-  l'::node<val12',nleft12',nright12',left12',right12'>@L.
+expect Valid.
+ 
+// id: 102; line: 161; kind: BIND
+ checkentail l6::pq{}<m40,mx21> * l'::node<d7,m43,m42,l6,r6> * r6::pq{}<m39,mx20> * 
+r'::node<d9,m51,m53,l8,r8> * l8::pq{}<m50,mx24> * r8::pq{}<m52,mx25>&
+MayLoop[] & v27'=m42 & v26'=m43 & v25'=d7 & d'=d7 & d10=d2 & v13'=v12 & 
+m1'=m1 & m2'=m2 & l'=l2 & r'=r2 & (0+m2)<=m1 & m1<=(1+m2) & mx1<=d2 & 
+mx2<=d2 & 0<=v12 & v12<=d2 & m23=m1 & m22=m2 & m1'!=0 & !(v14') & m2'!=0 & 
+!(v17') & m39=m42 & m40=m43 & m41<=1 & 0<=m41 & m41+m42=m43 & d7<=mx1 & 
+mx20<=d7 & mx21<=d7 & 0<=d7 & m23=m42+1+m43 & m52=m53 & m50=m51 & m49<=1 & 
+0<=m49 & m49+m53=m51 & d9<=mx2 & mx25<=d9 & mx24<=d9 & 0<=d9 & m22=m53+1+
+m51 & d9<=d7 & v22' & v13'<d7 & !(v24')
+ |-  l'::node<val13',nleft13',nright13',left13',right13'>@L.
+expect Valid.
+ 
+// id: 104; line: 161; kind: BIND
+ checkentail r6::pq{}<m39,mx20> * l'::node<d7,m43,m42,l6,r6> * l6::pq{}<m40,mx21> * 
+r'::node<d9,m51,m53,l8,r8> * l8::pq{}<m50,mx24> * r8::pq{}<m52,mx25>&
+MayLoop[] & v28'=l6 & v27'=m42 & v26'=m43 & v25'=d7 & d'=d7 & d10=d2 & 
+v13'=v12 & m1'=m1 & m2'=m2 & l'=l2 & r'=r2 & (0+m2)<=m1 & m1<=(1+m2) & 
+mx1<=d2 & mx2<=d2 & 0<=v12 & v12<=d2 & m23=m1 & m22=m2 & m1'!=0 & !(v14') & 
+m2'!=0 & !(v17') & m39=m42 & m40=m43 & m41<=1 & 0<=m41 & m41+m42=m43 & 
+d7<=mx1 & mx20<=d7 & mx21<=d7 & 0<=d7 & m23=m42+1+m43 & m52=m53 & m50=m51 & 
+m49<=1 & 0<=m49 & m49+m53=m51 & d9<=mx2 & mx25<=d9 & mx24<=d9 & 0<=d9 & 
+m22=m53+1+m51 & d9<=d7 & v22' & v13'<d7 & !(v24')
+ |-  l'::node<val14',nleft14',nright14',left14',right14'>@L.
+expect Valid.
+ 
+// id: 106; line: 161; kind: PRE_REC
+ checkentail l8::pq{}<m50,mx24> * l'::node<d7,m43,m42,l6,r6> * l6::pq{}<m40,mx21> * 
+r6::pq{}<m39,mx20> * r'::node<d9,m51,m53,l8,r8> * r8::pq{}<m52,mx25>&
+MayLoop[] & v29'=r6 & v28'=l6 & v27'=m42 & v26'=m43 & v25'=d7 & d'=d7 & 
+d10=d2 & v13'=v12 & m1'=m1 & m2'=m2 & l'=l2 & r'=r2 & (0+m2)<=m1 & m1<=(1+
+m2) & mx1<=d2 & mx2<=d2 & 0<=v12 & v12<=d2 & m23=m1 & m22=m2 & m1'!=0 & 
+!(v14') & m2'!=0 & !(v17') & m39=m42 & m40=m43 & m41<=1 & 0<=m41 & m41+
+m42=m43 & d7<=mx1 & mx20<=d7 & mx21<=d7 & 0<=d7 & m23=m42+1+m43 & m52=m53 & 
+m50=m51 & m49<=1 & 0<=m49 & m49+m53=m51 & d9<=mx2 & mx25<=d9 & mx24<=d9 & 
+0<=d9 & m22=m53+1+m51 & d9<=d7 & v22' & v13'<d7 & !(v24')
+ |-  (exists m18,m19: v28'::pq{}<m18,mx27> * v29'::pq{}<m19,mx26>&m19=v27' & 
+m18=v26' & v13'<=v25' & 0<=v13' & mx26<=v25' & mx27<=v25' & v26'<=(1+v27') & 
+(0+v27')<=v26').
+expect Valid.
+ 
+// id: 109; line: 161; kind: PRE_REC
+ checkentail l8::pq{}<m50,mx24> * l'::node<d7,m43,m42,l6,r6> * 
+r'::node<d9,m51,m53,l8,r8> * r8::pq{}<m52,mx25> & mx26=mx20 & 
+mx27=mx21 & v29'=r6 & v28'=l6 & v27'=m42 & v26'=m43 & v25'=d7 & d'=d7 & 
+d10=d2 & v13'=v12 & m1'=m1 & m2'=m2 & l'=l2 & r'=r2 & (0+m2)<=m1 & m1<=(1+
+m2) & mx1<=d2 & mx2<=d2 & 0<=v12 & v12<=d2 & m23=m1 & m22=m2 & m1'!=0 & 
+!(v14') & m2'!=0 & !(v17') & m39=m42 & m40=m43 & m41<=1 & 0<=m41 & m41+
+m42=m43 & d7<=mx1 & mx20<=d7 & mx21<=d7 & 0<=d7 & m23=m42+1+m43 & m52=m53 & 
+m50=m51 & m49<=1 & 0<=m49 & m49+m53=m51 & d9<=mx2 & mx25<=d9 & mx24<=d9 & 
+0<=d9 & m22=m53+1+m51 & d9<=d7 & v22' & v13'<d7 & !(v24')
+ |-  emp.
+expect Valid.
+ 
+// id: 110; line: 166; kind: BIND
+ checkentail l6::pq{}<m40,mx21> * l'::node<d7,m43,m42,l6,r6> * r6::pq{}<m39,mx20> * 
+r'::node<d9,m51,m53,l8,r8> * l8::pq{}<m50,mx24> * r8::pq{}<m52,mx25>&
+MayLoop[] & d'=d2 & v13'=v12 & m1'=m1 & m2'=m2 & l'=l2 & r'=r2 & (0+
+m2)<=m1 & m1<=(1+m2) & mx1<=d2 & mx2<=d2 & 0<=v12 & v12<=d2 & m23=m1 & 
+m22=m2 & m1'!=0 & !(v14') & m2'!=0 & !(v17') & m39=m42 & m40=m43 & m41<=1 & 
+0<=m41 & m41+m42=m43 & d7<=mx1 & mx20<=d7 & mx21<=d7 & 0<=d7 & m23=m42+1+
+m43 & m52=m53 & m50=m51 & m49<=1 & 0<=m49 & m49+m53=m51 & d9<=mx2 & 
+mx25<=d9 & mx24<=d9 & 0<=d9 & m22=m53+1+m51 & d7<d9 & !(v22')
+ |-  r'::node<val15',nleft15',nright15',left15',right15'>@L.
+expect Valid.
+ 
+// id: 112; line: 166; kind: PRE
+ checkentail l6::pq{}<m40,mx21> * l'::node<d7,m43,m42,l6,r6> * r6::pq{}<m39,mx20> * 
+r'::node<d9,m51,m53,l8,r8> * l8::pq{}<m50,mx24> * r8::pq{}<m52,mx25>&
+MayLoop[] & !(v22') & d7<d9 & m22=m53+1+m51 & 0<=d9 & mx24<=d9 & mx25<=d9 & 
+d9<=mx2 & m49+m53=m51 & 0<=m49 & m49<=1 & m50=m51 & m52=m53 & m23=m42+1+
+m43 & 0<=d7 & mx21<=d7 & mx20<=d7 & d7<=mx1 & m41+m42=m43 & 0<=m41 & 
+m41<=1 & m40=m43 & m39=m42 & !(v17') & m2'!=0 & !(v14') & m1'!=0 & m22=m2 & 
+m23=m1 & v12<=d2 & 0<=v12 & mx2<=d2 & mx1<=d2 & m1<=(1+m2) & (0+m2)<=m1 & 
+r'=r2 & l'=l2 & m2'=m2 & m1'=m1 & v13'=v12 & d'=d2 & v30'=d9 & v30'<=v13'
+ |-  emp.
+expect Valid.
+ 
+// id: 113; line: 166; kind: PRE
+ checkentail l6::pq{}<m40,mx21> * l'::node<d7,m43,m42,l6,r6> * r6::pq{}<m39,mx20> * 
+r'::node<d9,m51,m53,l8,r8> * l8::pq{}<m50,mx24> * r8::pq{}<m52,mx25>&
+MayLoop[] & !(v22') & d7<d9 & m22=m53+1+m51 & 0<=d9 & mx24<=d9 & mx25<=d9 & 
+d9<=mx2 & m49+m53=m51 & 0<=m49 & m49<=1 & m50=m51 & m52=m53 & m23=m42+1+
+m43 & 0<=d7 & mx21<=d7 & mx20<=d7 & d7<=mx1 & m41+m42=m43 & 0<=m41 & 
+m41<=1 & m40=m43 & m39=m42 & !(v17') & m2'!=0 & !(v14') & m1'!=0 & m22=m2 & 
+m23=m1 & v12<=d2 & 0<=v12 & mx2<=d2 & mx1<=d2 & m1<=(1+m2) & (0+m2)<=m1 & 
+r'=r2 & l'=l2 & m2'=m2 & m1'=m1 & v13'=v12 & d'=d2 & v30'=d9 & v13'<v30'
+ |-  emp.
+expect Valid.
+ 
+// id: 114; line: 171; kind: BIND
+ checkentail l6::pq{}<m40,mx21> * l'::node<d7,m43,m42,l6,r6> * r6::pq{}<m39,mx20> * 
+r'::node<d9,m51,m53,l8,r8> * l8::pq{}<m50,mx24> * r8::pq{}<m52,mx25>&
+MayLoop[] & d'=d2 & v13'=v12 & m1'=m1 & m2'=m2 & l'=l2 & r'=r2 & (0+
+m2)<=m1 & m1<=(1+m2) & mx1<=d2 & mx2<=d2 & 0<=v12 & v12<=d2 & m23=m1 & 
+m22=m2 & m1'!=0 & !(v14') & m2'!=0 & !(v17') & m39=m42 & m40=m43 & m41<=1 & 
+0<=m41 & m41+m42=m43 & d7<=mx1 & mx20<=d7 & mx21<=d7 & 0<=d7 & m23=m42+1+
+m43 & m52=m53 & m50=m51 & m49<=1 & 0<=m49 & m49+m53=m51 & d9<=mx2 & 
+mx25<=d9 & mx24<=d9 & 0<=d9 & m22=m53+1+m51 & d7<d9 & !(v22') & v13'<d9 & 
+!(v31')
+ |-  r'::node<val16',nleft16',nright16',left16',right16'>@L.
+expect Valid.
+ 
+// id: 116; line: 172; kind: BIND
+ checkentail l6::pq{}<m40,mx21> * l'::node<d7,m43,m42,l6,r6> * r6::pq{}<m39,mx20> * 
+r'::node<d9,m51,m53,l8,r8> * l8::pq{}<m50,mx24> * r8::pq{}<m52,mx25>&
+MayLoop[] & d'=d9 & d11=d2 & v13'=v12 & m1'=m1 & m2'=m2 & l'=l2 & r'=r2 & (0+
+m2)<=m1 & m1<=(1+m2) & mx1<=d2 & mx2<=d2 & 0<=v12 & v12<=d2 & m23=m1 & 
+m22=m2 & m1'!=0 & !(v14') & m2'!=0 & !(v17') & m39=m42 & m40=m43 & m41<=1 & 
+0<=m41 & m41+m42=m43 & d7<=mx1 & mx20<=d7 & mx21<=d7 & 0<=d7 & m23=m42+1+
+m43 & m52=m53 & m50=m51 & m49<=1 & 0<=m49 & m49+m53=m51 & d9<=mx2 & 
+mx25<=d9 & mx24<=d9 & 0<=d9 & m22=m53+1+m51 & d7<d9 & !(v22') & v13'<d9 & 
+!(v31')
+ |-  r'::node<val17',nleft17',nright17',left17',right17'>@L.
+expect Valid.
+ 
+// id: 118; line: 172; kind: BIND
+ checkentail l6::pq{}<m40,mx21> * l'::node<d7,m43,m42,l6,r6> * r6::pq{}<m39,mx20> * 
+r'::node<d9,m51,m53,l8,r8> * l8::pq{}<m50,mx24> * r8::pq{}<m52,mx25>&
+MayLoop[] & v32'=d9 & d'=d9 & d11=d2 & v13'=v12 & m1'=m1 & m2'=m2 & l'=l2 & 
+r'=r2 & (0+m2)<=m1 & m1<=(1+m2) & mx1<=d2 & mx2<=d2 & 0<=v12 & v12<=d2 & 
+m23=m1 & m22=m2 & m1'!=0 & !(v14') & m2'!=0 & !(v17') & m39=m42 & m40=m43 & 
+m41<=1 & 0<=m41 & m41+m42=m43 & d7<=mx1 & mx20<=d7 & mx21<=d7 & 0<=d7 & 
+m23=m42+1+m43 & m52=m53 & m50=m51 & m49<=1 & 0<=m49 & m49+m53=m51 & 
+d9<=mx2 & mx25<=d9 & mx24<=d9 & 0<=d9 & m22=m53+1+m51 & d7<d9 & !(v22') & 
+v13'<d9 & !(v31')
+ |-  r'::node<val18',nleft18',nright18',left18',right18'>@L.
+expect Valid.
+ 
+// id: 120; line: 172; kind: BIND
+ checkentail l6::pq{}<m40,mx21> * l'::node<d7,m43,m42,l6,r6> * r6::pq{}<m39,mx20> * 
+r'::node<d9,m51,m53,l8,r8> * l8::pq{}<m50,mx24> * r8::pq{}<m52,mx25>&
+MayLoop[] & v33'=m51 & v32'=d9 & d'=d9 & d11=d2 & v13'=v12 & m1'=m1 & 
+m2'=m2 & l'=l2 & r'=r2 & (0+m2)<=m1 & m1<=(1+m2) & mx1<=d2 & mx2<=d2 & 
+0<=v12 & v12<=d2 & m23=m1 & m22=m2 & m1'!=0 & !(v14') & m2'!=0 & !(v17') & 
+m39=m42 & m40=m43 & m41<=1 & 0<=m41 & m41+m42=m43 & d7<=mx1 & mx20<=d7 & 
+mx21<=d7 & 0<=d7 & m23=m42+1+m43 & m52=m53 & m50=m51 & m49<=1 & 0<=m49 & m49+
+m53=m51 & d9<=mx2 & mx25<=d9 & mx24<=d9 & 0<=d9 & m22=m53+1+m51 & d7<d9 & 
+!(v22') & v13'<d9 & !(v31')
+ |-  r'::node<val19',nleft19',nright19',left19',right19'>@L.
+expect Valid.
+ 
+// id: 122; line: 172; kind: BIND
+ checkentail l6::pq{}<m40,mx21> * l'::node<d7,m43,m42,l6,r6> * r6::pq{}<m39,mx20> * 
+r'::node<d9,m51,m53,l8,r8> * l8::pq{}<m50,mx24> * r8::pq{}<m52,mx25>&
+MayLoop[] & v34'=m53 & v33'=m51 & v32'=d9 & d'=d9 & d11=d2 & v13'=v12 & 
+m1'=m1 & m2'=m2 & l'=l2 & r'=r2 & (0+m2)<=m1 & m1<=(1+m2) & mx1<=d2 & 
+mx2<=d2 & 0<=v12 & v12<=d2 & m23=m1 & m22=m2 & m1'!=0 & !(v14') & m2'!=0 & 
+!(v17') & m39=m42 & m40=m43 & m41<=1 & 0<=m41 & m41+m42=m43 & d7<=mx1 & 
+mx20<=d7 & mx21<=d7 & 0<=d7 & m23=m42+1+m43 & m52=m53 & m50=m51 & m49<=1 & 
+0<=m49 & m49+m53=m51 & d9<=mx2 & mx25<=d9 & mx24<=d9 & 0<=d9 & m22=m53+1+
+m51 & d7<d9 & !(v22') & v13'<d9 & !(v31')
+ |-  r'::node<val20',nleft20',nright20',left20',right20'>@L.
+expect Valid.
+ 
+// id: 124; line: 172; kind: BIND
+ checkentail l6::pq{}<m40,mx21> * l'::node<d7,m43,m42,l6,r6> * r6::pq{}<m39,mx20> * 
+r'::node<d9,m51,m53,l8,r8> * l8::pq{}<m50,mx24> * r8::pq{}<m52,mx25>&
+MayLoop[] & v35'=l8 & v34'=m53 & v33'=m51 & v32'=d9 & d'=d9 & d11=d2 & 
+v13'=v12 & m1'=m1 & m2'=m2 & l'=l2 & r'=r2 & (0+m2)<=m1 & m1<=(1+m2) & 
+mx1<=d2 & mx2<=d2 & 0<=v12 & v12<=d2 & m23=m1 & m22=m2 & m1'!=0 & !(v14') & 
+m2'!=0 & !(v17') & m39=m42 & m40=m43 & m41<=1 & 0<=m41 & m41+m42=m43 & 
+d7<=mx1 & mx20<=d7 & mx21<=d7 & 0<=d7 & m23=m42+1+m43 & m52=m53 & m50=m51 & 
+m49<=1 & 0<=m49 & m49+m53=m51 & d9<=mx2 & mx25<=d9 & mx24<=d9 & 0<=d9 & 
+m22=m53+1+m51 & d7<d9 & !(v22') & v13'<d9 & !(v31')
+ |-  r'::node<val21',nleft21',nright21',left21',right21'>@L.
+expect Valid.
+ 
+// id: 126; line: 172; kind: PRE_REC
+ checkentail l6::pq{}<m40,mx21> * l'::node<d7,m43,m42,l6,r6> * r6::pq{}<m39,mx20> * 
+r'::node<d9,m51,m53,l8,r8> * l8::pq{}<m50,mx24> * r8::pq{}<m52,mx25>&
+MayLoop[] & v36'=r8 & v35'=l8 & v34'=m53 & v33'=m51 & v32'=d9 & d'=d9 & 
+d11=d2 & v13'=v12 & m1'=m1 & m2'=m2 & l'=l2 & r'=r2 & (0+m2)<=m1 & m1<=(1+
+m2) & mx1<=d2 & mx2<=d2 & 0<=v12 & v12<=d2 & m23=m1 & m22=m2 & m1'!=0 & 
+!(v14') & m2'!=0 & !(v17') & m39=m42 & m40=m43 & m41<=1 & 0<=m41 & m41+
+m42=m43 & d7<=mx1 & mx20<=d7 & mx21<=d7 & 0<=d7 & m23=m42+1+m43 & m52=m53 & 
+m50=m51 & m49<=1 & 0<=m49 & m49+m53=m51 & d9<=mx2 & mx25<=d9 & mx24<=d9 & 
+0<=d9 & m22=m53+1+m51 & d7<d9 & !(v22') & v13'<d9 & !(v31')
+ |-  (exists m18,m19: v35'::pq{}<m18,mx29> * v36'::pq{}<m19,mx28>&m19=v34' & 
+m18=v33' & v13'<=v32' & 0<=v13' & mx28<=v32' & mx29<=v32' & v33'<=(1+v34') & 
+(0+v34')<=v33').
+expect Valid.
+ 
+// id: 129; line: 172; kind: PRE_REC
+ checkentail l6::pq{}<m40,mx21> * l'::node<d7,m43,m42,l6,r6> * r6::pq{}<m39,mx20> * 
+r'::node<d9,m51,m53,l8,r8> & mx28=mx25 & mx29=mx24 & v36'=r8 & 
+v35'=l8 & v34'=m53 & v33'=m51 & v32'=d9 & d'=d9 & d11=d2 & v13'=v12 & 
+m1'=m1 & m2'=m2 & l'=l2 & r'=r2 & (0+m2)<=m1 & m1<=(1+m2) & mx1<=d2 & 
+mx2<=d2 & 0<=v12 & v12<=d2 & m23=m1 & m22=m2 & m1'!=0 & !(v14') & m2'!=0 & 
+!(v17') & m39=m42 & m40=m43 & m41<=1 & 0<=m41 & m41+m42=m43 & d7<=mx1 & 
+mx20<=d7 & mx21<=d7 & 0<=d7 & m23=m42+1+m43 & m52=m53 & m50=m51 & m49<=1 & 
+0<=m49 & m49+m53=m51 & d9<=mx2 & mx25<=d9 & mx24<=d9 & 0<=d9 & m22=m53+1+
+m51 & d7<d9 & !(v22') & v13'<d9 & !(v31')
+ |-  emp.
+expect Valid.
+ 
+// id: 130; line: 0; kind: POST
+ checkentail l2::pq{}<m21,mx1> * r2::pq{}<m20,mx2> & d'=v13' & m2'=0 & 
+d12=d2 & v13'=v12 & m1'=m1 & m2'=m2 & l'=l2 & r'=r2 & (0+m2)<=m1 & m1<=(1+
+m2) & mx1<=d2 & mx2<=d2 & 0<=v12 & v12<=d2 & m21=m1 & m20=m2 & m1'=0 & 
+v14' & v37'
+ |-  (exists m54,m55,maxx,max1,mx30,mx31: l2::pq{}<m54,mx30> * r2::pq{}<m55,mx31>&
+m55=m2 & m54=m1 & 0<=d' & mx31<=d' & mx30<=d' & d'<=max1 & max1=max(mx2,
+maxx) & maxx=max(mx1,v12) & mx31<=mx2 & mx30<=mx1 & 0<=mx2 & 0<=mx1 & 
+exists(m1_61:0<=m1_61) & exists(m2_62:0<=m2_62)).
+expect Valid.
+ 
+// id: 137; line: 0; kind: POST
+ checkentail l4::pq{}<m30,mx16> * l'::node<d4,m31,m33,l4,r4> * r4::pq{}<m32,mx17> * 
+r2::pq{}<m22,mx2> & d'=v13' & m2'=0 & d13=d2 & v13'=v12 & m1'=m1 & 
+m2'=m2 & l'=l2 & r'=r2 & (0+m2)<=m1 & m1<=(1+m2) & mx1<=d2 & mx2<=d2 & 
+0<=v12 & v12<=d2 & m23=m1 & m22=m2 & m1'!=0 & !(v14') & v17' & m32=m33 & 
+m30=m31 & m29<=1 & 0<=m29 & m29+m33=m31 & d4<=mx1 & mx17<=d4 & mx16<=d4 & 
+0<=d4 & m23=m33+1+m31 & d4<=v13' & v19'
+ |-  (exists m54,m55,maxx,max1,mx30,mx31: l2::pq{}<m54,mx30> * r2::pq{}<m55,mx31>&
+m55=m2 & m54=m1 & 0<=d' & mx31<=d' & mx30<=d' & d'<=max1 & max1=max(mx2,
+maxx) & maxx=max(mx1,v12) & mx31<=mx2 & mx30<=mx1 & 0<=mx2 & 0<=mx1 & 
+exists(m1_61:0<=m1_61) & exists(m2_62:0<=m2_62)).
+expect Valid.
+ 
+// id: 151; line: 0; kind: POST
+ checkentail l4::pq{}<m30,mx16> * r4::pq{}<m32,mx17> * r2::pq{}<m22,mx2> * 
+l'::node<v13',m31,m33,l4,r4> & val=d4 & d'=d4 & m2'=0 & d5=d2 & 
+v13'=v12 & m1'=m1 & m2'=m2 & l'=l2 & r'=r2 & (0+m2)<=m1 & m1<=(1+m2) & 
+mx1<=d2 & mx2<=d2 & 0<=v12 & v12<=d2 & m23=m1 & m22=m2 & m1'!=0 & !(v14') & 
+v17' & m32=m33 & m30=m31 & m29<=1 & 0<=m29 & m29+m33=m31 & d4<=mx1 & 
+mx17<=d4 & mx16<=d4 & 0<=d4 & m23=m33+1+m31 & v13'<d4 & !(v19')
+ |-  (exists m54,m55,maxx,max1,mx30,mx31: l2::pq{}<m54,mx30> * r2::pq{}<m55,mx31>&
+m55=m2 & m54=m1 & 0<=d' & mx31<=d' & mx30<=d' & d'<=max1 & max1=max(mx2,
+maxx) & maxx=max(mx1,v12) & mx31<=mx2 & mx30<=mx1 & 0<=mx2 & 0<=mx1 & 
+exists(m1_61:0<=m1_61) & exists(m2_62:0<=m2_62)).
+expect Valid.
+ 
+// id: 165; line: 0; kind: POST
+ checkentail l6::pq{}<m40,mx21> * l'::node<d7,m43,m42,l6,r6> * r6::pq{}<m39,mx20> * 
+r'::node<d9,m51,m53,l8,r8> * l8::pq{}<m50,mx24> * r8::pq{}<m52,mx25>&
+MayLoop[] & d'=v13' & d14=d2 & v13'=v12 & m1'=m1 & m2'=m2 & l'=l2 & r'=r2 & 
+(0+m2)<=m1 & m1<=(1+m2) & mx1<=d2 & mx2<=d2 & 0<=v12 & v12<=d2 & m23=m1 & 
+m22=m2 & m1'!=0 & !(v14') & m2'!=0 & !(v17') & m39=m42 & m40=m43 & m41<=1 & 
+0<=m41 & m41+m42=m43 & d7<=mx1 & mx20<=d7 & mx21<=d7 & 0<=d7 & m23=m42+1+
+m43 & m52=m53 & m50=m51 & m49<=1 & 0<=m49 & m49+m53=m51 & d9<=mx2 & 
+mx25<=d9 & mx24<=d9 & 0<=d9 & m22=m53+1+m51 & d9<=d7 & v22' & d7<=v13' & v24'
+ |-  (exists m54,m55,maxx,max1,mx30,mx31: l2::pq{}<m54,mx30> * r2::pq{}<m55,mx31>&
+m55=m2 & m54=m1 & 0<=d' & mx31<=d' & mx30<=d' & d'<=max1 & max1=max(mx2,
+maxx) & maxx=max(mx1,v12) & mx31<=mx2 & mx30<=mx1 & 0<=mx2 & 0<=mx1 & 
+exists(m1_61:0<=m1_61) & exists(m2_62:0<=m2_62)).
+expect Valid.
+ 
+// id: 178; line: 0; kind: POST
+ checkentail (exists max2,max3,mx32,mx33,v25': l8::pq{}<m50,mx24> * 
+l'::node<d7,m43,m42,l6,r6> * r'::node<d9,m51,m53,l8,r8> * 
+r8::pq{}<m52,mx25> * l6::pq{}<m43,mx32> * r6::pq{}<m42,mx33> & 
+!(v24') & v13'<d7 & v22' & d9<=d7 & m22=m53+1+m51 & 0<=d9 & mx24<=d9 & 
+mx25<=d9 & d9<=mx2 & m49+m53=m51 & 0<=m49 & m49<=1 & m50=m51 & m52=m53 & 
+m23=m42+1+m43 & 0<=d7 & mx21<=d7 & mx20<=d7 & d7<=mx1 & m41+m42=m43 & 
+0<=m41 & m41<=1 & m40=m43 & m39=m42 & !(v17') & m2'!=0 & !(v14') & m1'!=0 & 
+m22=m2 & m23=m1 & v12<=d2 & 0<=v12 & mx2<=d2 & mx1<=d2 & m1<=(1+m2) & (0+
+m2)<=m1 & r'=r2 & l'=l2 & m2'=m2 & m1'=m1 & v13'=v12 & d10=d2 & d'=d7 & 
+mx27=mx21 & mx26=mx20 & 0<=m39 & 0<=mx20 & 0<=m40 & 0<=mx21 & mx32<=mx27 & 
+mx33<=mx26 & max2=max(mx27,v13') & max3=max(mx26,max2) & v25'<=max3 & 
+mx32<=v25' & mx33<=v25' & 0<=v25' & exists(m2_62:0<=m2_62) & 
+exists(m1_61:0<=m1_61) & 0<=mx27 & 0<=mx26)
+ |-  (exists m54,m55,maxx,max1,mx30,mx31: l2::pq{}<m54,mx30> * r2::pq{}<m55,mx31>&
+m55=m2 & m54=m1 & 0<=d' & mx31<=d' & mx30<=d' & d'<=max1 & max1=max(mx2,
+maxx) & maxx=max(mx1,v12) & mx31<=mx2 & mx30<=mx1 & 0<=mx2 & 0<=mx1 & 
+exists(m1_61:0<=m1_61) & exists(m2_62:0<=m2_62)).
+expect Valid.
+ 
+// id: 191; line: 0; kind: POST
+ checkentail l6::pq{}<m40,mx21> * l'::node<d7,m43,m42,l6,r6> * r6::pq{}<m39,mx20> * 
+r'::node<d9,m51,m53,l8,r8> * l8::pq{}<m50,mx24> * r8::pq{}<m52,mx25>&
+MayLoop[] & d'=v13' & d15=d2 & v13'=v12 & m1'=m1 & m2'=m2 & l'=l2 & r'=r2 & 
+(0+m2)<=m1 & m1<=(1+m2) & mx1<=d2 & mx2<=d2 & 0<=v12 & v12<=d2 & m23=m1 & 
+m22=m2 & m1'!=0 & !(v14') & m2'!=0 & !(v17') & m39=m42 & m40=m43 & m41<=1 & 
+0<=m41 & m41+m42=m43 & d7<=mx1 & mx20<=d7 & mx21<=d7 & 0<=d7 & m23=m42+1+
+m43 & m52=m53 & m50=m51 & m49<=1 & 0<=m49 & m49+m53=m51 & d9<=mx2 & 
+mx25<=d9 & mx24<=d9 & 0<=d9 & m22=m53+1+m51 & d7<d9 & !(v22') & d9<=v13' & 
+v31'
+ |-  (exists m54,m55,maxx,max1,mx30,mx31: l2::pq{}<m54,mx30> * r2::pq{}<m55,mx31>&
+m55=m2 & m54=m1 & 0<=d' & mx31<=d' & mx30<=d' & d'<=max1 & max1=max(mx2,
+maxx) & maxx=max(mx1,v12) & mx31<=mx2 & mx30<=mx1 & 0<=mx2 & 0<=mx1 & 
+exists(m1_61:0<=m1_61) & exists(m2_62:0<=m2_62)).
+expect Valid.
+ 
+// id: 204; line: 0; kind: POST
+ checkentail (exists max4,max5,mx34,mx35,v32': l6::pq{}<m40,mx21> * 
+l'::node<d7,m43,m42,l6,r6> * r6::pq{}<m39,mx20> * 
+r'::node<d9,m51,m53,l8,r8> * l8::pq{}<m51,mx34> * r8::pq{}<m53,mx35>&
+MayLoop[] & !(v31') & v13'<d9 & !(v22') & d7<d9 & m22=m53+1+m51 & 0<=d9 & 
+mx24<=d9 & mx25<=d9 & d9<=mx2 & m49+m53=m51 & 0<=m49 & m49<=1 & m50=m51 & 
+m52=m53 & m23=m42+1+m43 & 0<=d7 & mx21<=d7 & mx20<=d7 & d7<=mx1 & m41+
+m42=m43 & 0<=m41 & m41<=1 & m40=m43 & m39=m42 & !(v17') & m2'!=0 & !(v14') & 
+m1'!=0 & m22=m2 & m23=m1 & v12<=d2 & 0<=v12 & mx2<=d2 & mx1<=d2 & m1<=(1+
+m2) & (0+m2)<=m1 & r'=r2 & l'=l2 & m2'=m2 & m1'=m1 & v13'=v12 & d11=d2 & 
+d'=d9 & mx29=mx24 & mx28=mx25 & 0<=m52 & 0<=mx25 & 0<=m50 & 0<=mx24 & 
+mx34<=mx29 & mx35<=mx28 & max4=max(mx29,v13') & max5=max(mx28,max4) & 
+v32'<=max5 & mx34<=v32' & mx35<=v32' & 0<=v32' & exists(m2_62:0<=m2_62) & 
+exists(m1_61:0<=m1_61) & 0<=mx29 & 0<=mx28)
+ |-  (exists m54,m55,maxx,max1,mx30,mx31: l2::pq{}<m54,mx30> * r2::pq{}<m55,mx31>&
+m55=m2 & m54=m1 & 0<=d' & mx31<=d' & mx30<=d' & d'<=max1 & max1=max(mx2,
+maxx) & maxx=max(mx1,v12) & mx31<=mx2 & mx30<=mx1 & 0<=mx2 & 0<=mx1 & 
+exists(m1_61:0<=m1_61) & exists(m2_62:0<=m2_62)).
+expect Valid.
+ 
+// id: 217; line: 189; kind: BIND
+ checkentail (exists m56,m57,m58,d16,l9,m59,mx36,r9,m60,mx37: l9::pq{}<m56,mx36> * 
+t'::node<d16,m59,m60,l9,r9> * r9::pq{}<m57,mx37> & n=m60+1+m59 & 
+0<=d16 & mx36<=d16 & mx37<=d16 & d16<=mx & m58+m60=m59 & 0<=m58 & m58<=1 & 
+m56=m59 & m57=m60 & t'=t & 0<n)
+ |-  t'::node<val22',nleft22',nright22',left22',right22'>@L.
+expect Valid.
+ 
+// id: 219; line: 189; kind: PRE
+ checkentail l10::pq{}<m62,mx39> * t'::node<d17,m65,m64,l10,r10> * r10::pq{}<m61,mx38>&
+MayLoop[] & 0<n & t'=t & m61=m64 & m62=m65 & m63<=1 & 0<=m63 & m63+m64=m65 & 
+d17<=mx & mx38<=d17 & mx39<=d17 & 0<=d17 & n=m64+1+m65 & v38'=m65 & v39'=0 & 
+v38'=v39'
+ |-  emp.
+expect Valid.
+ 
+// id: 220; line: 189; kind: PRE
+ checkentail l10::pq{}<m62,mx39> * t'::node<d17,m65,m64,l10,r10> * r10::pq{}<m61,mx38>&
+MayLoop[] & 0<n & t'=t & m61=m64 & m62=m65 & m63<=1 & 0<=m63 & m63+m64=m65 & 
+d17<=mx & mx38<=d17 & mx39<=d17 & 0<=d17 & n=m64+1+m65 & v38'=m65 & v39'=0 & 
+v38'!=v39'
+ |-  emp.
+expect Valid.
+ 
+// id: 221; line: 189; kind: BIND
+ checkentail l10::pq{}<m62,mx39> * t'::node<d17,m65,m64,l10,r10> * r10::pq{}<m61,mx38>&
+MayLoop[] & v40' & 0<n & t'=t & m61=m64 & m62=m65 & m63<=1 & 0<=m63 & m63+
+m64=m65 & d17<=mx & mx38<=d17 & mx39<=d17 & 0<=d17 & n=m64+1+m65 & m65=0
+ |-  t'::node<val23',nleft23',nright23',left23',right23'>@L.
+expect Valid.
+ 
+// id: 223; line: 189; kind: BIND
+ checkentail l10::pq{}<m62,mx39> * t'::node<d17,m65,m64,l10,r10> * r10::pq{}<m61,mx38>&
+MayLoop[] & m65!=0 & !(v40') & 0<n & t'=t & m61=m64 & m62=m65 & m63<=1 & 
+0<=m63 & m63+m64=m65 & d17<=mx & mx38<=d17 & mx39<=d17 & 0<=d17 & n=m64+1+m65
+ |-  t'::node<val23',nleft23',nright23',left23',right23'>@L.
+expect Valid.
+ 
+// id: 225; line: 189; kind: PRE
+ checkentail l10::pq{}<m62,mx39> * t'::node<d17,m65,m64,l10,r10> * r10::pq{}<m61,mx38>&
+MayLoop[] & m65=0 & n=m64+1+m65 & 0<=d17 & mx39<=d17 & mx38<=d17 & d17<=mx & 
+m63+m64=m65 & 0<=m63 & m63<=1 & m62=m65 & m61=m64 & t'=t & 0<n & v40' & 
+v41'=m64 & v42'=0 & v41'=v42'
+ |-  emp.
+expect Valid.
+ 
+// id: 226; line: 189; kind: PRE
+ checkentail l10::pq{}<m62,mx39> * t'::node<d17,m65,m64,l10,r10> * r10::pq{}<m61,mx38>&
+MayLoop[] & n=m64+1+m65 & 0<=d17 & mx39<=d17 & mx38<=d17 & d17<=mx & m63+
+m64=m65 & 0<=m63 & m63<=1 & m62=m65 & m61=m64 & t'=t & 0<n & !(v40') & 
+m65!=0 & v41'=m64 & v42'=0 & v41'=v42'
+ |-  emp.
+expect Valid.
+ 
+// id: 227; line: 189; kind: PRE
+ checkentail l10::pq{}<m62,mx39> * t'::node<d17,m65,m64,l10,r10> * r10::pq{}<m61,mx38>&
+MayLoop[] & n=m64+1+m65 & 0<=d17 & mx39<=d17 & mx38<=d17 & d17<=mx & m63+
+m64=m65 & 0<=m63 & m63<=1 & m62=m65 & m61=m64 & t'=t & 0<n & !(v40') & 
+m65!=0 & v41'=m64 & v42'=0 & v41'!=v42'
+ |-  emp.
+expect Valid.
+ 
+// id: 228; line: 189; kind: PRE
+ checkentail l10::pq{}<m62,mx39> * t'::node<d17,m65,m64,l10,r10> * r10::pq{}<m61,mx38>&
+MayLoop[] & v43' & m65=0 & n=m64+1+m65 & 0<=d17 & mx39<=d17 & mx38<=d17 & 
+d17<=mx & m63+m64=m65 & 0<=m63 & m63<=1 & m62=m65 & m61=m64 & t'=t & 0<n & 
+v40' & m64=0
+ |-  emp.
+expect Valid.
+ 
+// id: 229; line: 189; kind: PRE
+ checkentail l10::pq{}<m62,mx39> * t'::node<d17,m65,m64,l10,r10> * r10::pq{}<m61,mx38>&
+MayLoop[] & v43' & n=m64+1+m65 & 0<=d17 & mx39<=d17 & mx38<=d17 & d17<=mx & 
+m63+m64=m65 & 0<=m63 & m63<=1 & m62=m65 & m61=m64 & t'=t & 0<n & !(v40') & 
+m65!=0 & m64=0
+ |-  emp.
+expect Valid.
+ 
+// id: 230; line: 189; kind: PRE
+ checkentail l10::pq{}<m62,mx39> * t'::node<d17,m65,m64,l10,r10> * r10::pq{}<m61,mx38>&
+MayLoop[] & m64!=0 & !(v43') & n=m64+1+m65 & 0<=d17 & mx39<=d17 & 
+mx38<=d17 & d17<=mx & m63+m64=m65 & 0<=m63 & m63<=1 & m62=m65 & m61=m64 & 
+t'=t & 0<n & !(v40') & m65!=0
+ |-  emp.
+expect Valid.
+ 
+// id: 231; line: 191; kind: BIND
+ checkentail (exists v13,v14: l10::pq{}<m62,mx39> * t'::node<d17,m65,m64,l10,r10> * 
+r10::pq{}<m61,mx38> & m64=0 & 0<n & t'=t & m61=m64 & m62=m65 & 
+m63<=1 & 0<=m63 & m63+m64=m65 & d17<=mx & mx38<=d17 & mx39<=d17 & 0<=d17 & 
+n=m64+1+m65 & m65=0 & v14 & v13 & v44')
+ |-  t'::node<val24',nleft24',nright24',left24',right24'>@L.
+expect Valid.
+ 
+// id: 233; line: 197; kind: BIND
+ checkentail (exists v15,v16: l10::pq{}<m62,mx39> * t'::node<d17,m65,m64,l10,r10> * 
+r10::pq{}<m61,mx38> & m64=0 & m65!=0 & 0<n & t'=t & m61=m64 & 
+m62=m65 & m63<=1 & 0<=m63 & m63+m64=m65 & d17<=mx & mx38<=d17 & mx39<=d17 & 
+0<=d17 & n=m64+1+m65 & v16 & !(v15) & !(v44'))
+ |-  t'::node<tval',tnleft',tnright',tleft',tright'>.
+expect Valid.
+ 
+// id: 235; line: 197; kind: BIND
+ checkentail (exists v17,v18: l10::pq{}<m62,mx39> * t'::node<d17,m65,m64,l10,r10> * 
+r10::pq{}<m61,mx38> & m65!=0 & 0<n & t'=t & m61=m64 & m62=m65 & 
+m63<=1 & 0<=m63 & m63+m64=m65 & d17<=mx & mx38<=d17 & mx39<=d17 & 0<=d17 & 
+n=m64+1+m65 & !(v18) & m64!=0 & !(v17) & !(v44'))
+ |-  t'::node<tval',tnleft',tnright',tleft',tright'>.
+expect Valid.
+ 
+// id: 237; line: 198; kind: PRE
+ checkentail l10::pq{}<m62,mx39> * r10::pq{}<m61,mx38> & tright'=r10 & 
+tleft'=l10 & tnright'=m64 & tnleft'=m65 & tval'=d17 & m64=0 & m65!=0 & 0<n & 
+t'=t & m61=m64 & m62=m65 & m63<=1 & 0<=m63 & m63+m64=m65 & d17<=mx & 
+mx38<=d17 & mx39<=d17 & 0<=d17 & n=m64+1+m65 & v19 & !(v20) & !(v44')
+ |-  (exists m10,m11: tleft'::pq{}<m10,mx1> * tright'::pq{}<m11,mx2>&
+m11=tnright' & m10=tnleft' & tnleft'<=(1+tnright') & (0+tnright')<=tnleft' & 
+0<(tnright'+tnleft')).
+expect Valid.
+
+/*
+// id: 242; line: 198; kind: PRE
+ checkentail emp & r10=null & m61=0 & mx38=0 & !(v44') & !(v20) & v19 & n=m64+
+1+m65 & 0<=d17 & mx39<=d17 & mx38<=d17 & d17<=mx & m63+m64=m65 & 0<=m63 & 
+m63<=1 & m62=m65 & m61=m64 & t'=t & 0<n & m65!=0 & m64=0 & tval'=d17 & 
+tnleft'=m65 & tnright'=m64 & tleft'=l10 & tright'=r10 & mx1=mx39 & ((m61=0 | 
+r10=null)) & exists(m2_3556:m2_3556=0) & mx2=0
+ |-  emp.
+expect Valid.
+*/
+
+// id: 243; line: 198; kind: PRE
+ checkentail l10::pq{}<m62,mx39> * r10::pq{}<m61,mx38> & tright'=r10 & 
+tleft'=l10 & tnright'=m64 & tnleft'=m65 & tval'=d17 & m65!=0 & 0<n & t'=t & 
+m61=m64 & m62=m65 & m63<=1 & 0<=m63 & m63+m64=m65 & d17<=mx & mx38<=d17 & 
+mx39<=d17 & 0<=d17 & n=m64+1+m65 & !(v21) & m64!=0 & !(v22) & !(v44')
+ |-  (exists m10,m11: tleft'::pq{}<m10,mx1> * tright'::pq{}<m11,mx2>&
+m11=tnright' & m10=tnleft' & tnleft'<=(1+tnright') & (0+tnright')<=tnleft' & 
+0<(tnright'+tnleft')).
+expect Valid.
+
+/*
+// id: 246; line: 198; kind: PRE
+ checkentail emp & mx2=mx38 & mx1=mx39 & tright'=r10 & tleft'=l10 & 
+tnright'=m64 & tnleft'=m65 & tval'=d17 & m65!=0 & 0<n & t'=t & m61=m64 & 
+m62=m65 & m63<=1 & 0<=m63 & m63+m64=m65 & d17<=mx & mx38<=d17 & mx39<=d17 & 
+0<=d17 & n=m64+1+m65 & !(v21) & m64!=0 & !(v22) & !(v44')
+ |-  emp.
+expect Valid.
+*/
+
+// id: 247; line: 202; kind: PRE
+ checkentail (exists mx42,mx43,maxi3: tleft'::pq{}<tnleft',mx42> * 
+tright'::pq{}<tnright',mx43> & tmp'=tval' & 0<=mx2 & 0<=mx1 & 
+exists(m1_67:0<=m1_67) & exists(m2_68:0<=m2_68) & v13'<=maxi3 & 0<=v13' & 
+maxi3=max(mx1,mx2) & mx43<=mx2 & mx42<=mx1 & tnleft'<=(1+tnright') & (0+
+tnright')<=tnleft' & 1+tnleft'+tnright'=m64+m65 & 0<=mx39 & 0<=m62 & 
+r10=null & m61=0 & mx38=0 & !(v44') & !(v20) & v19 & n=m64+1+m65 & 0<=d17 & 
+mx39<=d17 & mx38<=d17 & d17<=mx & m63+m64=m65 & 0<=m63 & m63<=1 & m62=m65 & 
+m61=m64 & t'=t & 0<n & m65!=0 & m64=0 & tval'=d17 & mx1=mx39 & ((m61=0 | 
+r10=null)) & exists(m2_3556:m2_3556=0) & mx2=0)
+ |-  (exists m18,m19: tleft'::pq{}<m18,mx41> * tright'::pq{}<m19,mx40>&
+m19=tnright' & m18=tnleft' & v13'<=tval' & 0<=v13' & mx40<=tval' & 
+mx41<=tval' & tnleft'<=(1+tnright') & (0+tnright')<=tnleft').
+expect Valid.
+
+/*
+// id: 254; line: 202; kind: PRE
+ checkentail emp & tright'=null & tnright'=0 & mx44=0 & ((tnleft'=0 | 
+tleft'=null)) & tmp'=tval' & 0<=mx2 & 0<=mx1 & exists(m1_67:0<=m1_67) & 
+exists(m2_68:0<=m2_68) & v13'<=maxi4 & 0<=v13' & maxi4=max(mx1,mx2) & 
+mx44<=mx2 & mx45<=mx1 & tnleft'<=(1+tnright') & (0+tnright')<=tnleft' & 1+
+tnleft'+tnright'=m64+m65 & 0<=mx39 & 0<=m62 & r10=null & m61=0 & mx38=0 & 
+!(v44') & !(v20) & v19 & n=m64+1+m65 & 0<=d17 & mx39<=d17 & mx38<=d17 & 
+d17<=mx & m63+m64=m65 & 0<=m63 & m63<=1 & m62=m65 & m61=m64 & t'=t & 0<n & 
+m65!=0 & m64=0 & tval'=d17 & mx1=mx39 & ((m61=0 | r10=null)) & 
+exists(m2_3556:m2_3556=0) & mx2=0 & mx45=0 & tnleft'=0 & tleft'=null & 
+((tnright'=0 | tright'=null)) & exists(m1_3604:m1_3604=0) & mx41=0 & 
+exists(m2_3605:m2_3605=0) & mx40=0
+ |-  emp.
+expect Valid.
+*/
+
+// id: 255; line: 202; kind: PRE
+ checkentail (exists mx46,mx47,maxi5: tleft'::pq{}<tnleft',mx46> * 
+tright'::pq{}<tnright',mx47> & tmp'=tval' & 0<=mx2 & 0<=mx1 & 
+exists(m1_67:0<=m1_67) & exists(m2_68:0<=m2_68) & v13'<=maxi5 & 0<=v13' & 
+maxi5=max(mx1,mx2) & mx47<=mx2 & mx46<=mx1 & tnleft'<=(1+tnright') & (0+
+tnright')<=tnleft' & 1+tnleft'+tnright'=m64+m65 & 0<=mx39 & 0<=m62 & 
+0<=mx38 & 0<=m61 & mx2=mx38 & mx1=mx39 & tval'=d17 & m65!=0 & 0<n & t'=t & 
+m61=m64 & m62=m65 & m63<=1 & 0<=m63 & m63+m64=m65 & d17<=mx & mx38<=d17 & 
+mx39<=d17 & 0<=d17 & n=m64+1+m65 & !(v21) & m64!=0 & !(v22) & !(v44'))
+ |-  (exists m18,m19: tleft'::pq{}<m18,mx41> * tright'::pq{}<m19,mx40>&
+m19=tnright' & m18=tnleft' & v13'<=tval' & 0<=v13' & mx40<=tval' & 
+mx41<=tval' & tnleft'<=(1+tnright') & (0+tnright')<=tnleft').
+expect Valid.
+
+/*
+// id: 258; line: 202; kind: PRE
+ checkentail emp & mx40=mx48 & mx41=mx49 & tmp'=tval' & 0<=mx2 & 0<=mx1 & 
+exists(m1_67:0<=m1_67) & exists(m2_68:0<=m2_68) & v13'<=maxi6 & 0<=v13' & 
+maxi6=max(mx1,mx2) & mx48<=mx2 & mx49<=mx1 & tnleft'<=(1+tnright') & (0+
+tnright')<=tnleft' & 1+tnleft'+tnright'=m64+m65 & 0<=mx39 & 0<=m62 & 
+0<=mx38 & 0<=m61 & mx2=mx38 & mx1=mx39 & tval'=d17 & m65!=0 & 0<n & t'=t & 
+m61=m64 & m62=m65 & m63<=1 & 0<=m63 & m63+m64=m65 & d17<=mx & mx38<=d17 & 
+mx39<=d17 & 0<=d17 & n=m64+1+m65 & !(v21) & m64!=0 & !(v22) & !(v44')
+ |-  emp.
+expect Valid.
+*/
+
+// id: 259; line: 0; kind: POST
+ checkentail l10::pq{}<m62,mx39> * t2::node<d17,m65,m64,l10,r10> * r10::pq{}<m61,mx38>&
+MayLoop[] & res=d17 & t'=null & m64=0 & 0<n & t2=t & m61=m64 & m62=m65 & 
+m63<=1 & 0<=m63 & m63+m64=m65 & d17<=mx & mx38<=d17 & mx39<=d17 & 0<=d17 & 
+n=m64+1+m65 & m65=0 & v23 & v24 & v44'
+ |-  (exists flted3,mx50: t'::pq{}<flted3,mx50>&res<=mx & mx50<=res & flted3+
+1=n & 0<=mx & 0<=n).
+expect Valid.
+ 
+// id: 262; line: 0; kind: POST
+ checkentail (exists max6,max7,mx51,mx52,tval,tnleft,tnright,tleft,tright,
+v25: t'::node<tval,tnleft,tnright,tleft,tright> & mx51=0 & 
+mx52=0 & res=d17 & 0<=mx40 & 0<=mx41 & exists(m1_61:0<=m1_61) & 
+exists(m2_62:0<=m2_62) & 0<=tval & mx52<=tval & mx51<=tval & tval<=max7 & 
+max7=max(mx40,max6) & max6=max(mx41,v25) & mx52<=mx40 & mx51<=mx41 & 
+tright=null & tnright=0 & mx44=0 & ((tnleft=0 | tleft=null)) & 0<=mx2 & 
+0<=mx1 & exists(m1_67:0<=m1_67) & exists(m2_68:0<=m2_68) & v25<=maxi4 & 
+0<=v25 & maxi4=max(mx1,mx2) & mx44<=mx2 & mx45<=mx1 & tnleft<=(1+tnright) & 
+(0+tnright)<=tnleft & 1+tnleft+tnright=m64+m65 & 0<=mx39 & 0<=m62 & 
+r10=null & m61=0 & mx38=0 & !(v44') & !(v20) & v19 & n=m64+1+m65 & 0<=d17 & 
+mx39<=d17 & mx38<=d17 & d17<=mx & m63+m64=m65 & 0<=m63 & m63<=1 & m62=m65 & 
+m61=m64 & t'=t & 0<n & m65!=0 & m64=0 & mx1=mx39 & ((m61=0 | r10=null)) & 
+exists(m2_3556:m2_3556=0) & mx2=0 & mx45=0 & tnleft=0 & tleft=null & 
+((tnright=0 | tright=null)) & exists(m1_3604:m1_3604=0) & mx41=0 & 
+exists(m2_3605:m2_3605=0) & mx40=0)
+ |-  (exists flted3,mx50: t'::pq{}<flted3,mx50>&res<=mx & mx50<=res & flted3+
+1=n & 0<=mx & 0<=n).
+expect Valid.
+ 
+// id: 271; line: 0; kind: POST
+ checkentail (exists max8,max9,mx53,mx54,tval',tnleft',tnright',tleft',tright',
+v13': tleft'::pq{}<tnleft',mx53> * tright'::pq{}<tnright',mx54> * 
+t'::node<tval',tnleft',tnright',tleft',tright'> & !(v44') & 
+!(v22) & m64!=0 & !(v21) & n=m64+1+m65 & 0<=d17 & mx39<=d17 & mx38<=d17 & 
+d17<=mx & m63+m64=m65 & 0<=m63 & m63<=1 & m62=m65 & m61=m64 & t'=t & 0<n & 
+m65!=0 & mx1=mx39 & mx2=mx38 & 0<=m61 & 0<=mx38 & 0<=m62 & 0<=mx39 & 1+
+tnleft'+tnright'=m64+m65 & (0+tnright')<=tnleft' & tnleft'<=(1+tnright') & 
+mx49<=mx1 & mx48<=mx2 & maxi6=max(mx1,mx2) & 0<=v13' & v13'<=maxi6 & 
+exists(m2_68:0<=m2_68) & exists(m1_67:0<=m1_67) & 0<=mx1 & 0<=mx2 & 
+mx41=mx49 & mx40=mx48 & 0<=tnright' & 0<=mx48 & 0<=tnleft' & 0<=mx49 & 
+mx53<=mx41 & mx54<=mx40 & max8=max(mx41,v13') & max9=max(mx40,max8) & 
+tval'<=max9 & mx53<=tval' & mx54<=tval' & 0<=tval' & 
+exists(m2_62:0<=m2_62) & exists(m1_61:0<=m1_61) & 0<=mx41 & 0<=mx40 & 
+res=d17)
+ |-  (exists flted3,mx50: t'::pq{}<flted3,mx50>&res<=mx & mx50<=res & flted3+
+1=n & 0<=mx & 0<=n).
+expect Valid.
+ 
+// id: 278; line: 27; kind: PRE
+ checkentail t::pq{}<n,mx> & t'=null & tmp1'=null & 0<=v12 & v13'=v12 & t'=t
+ |-  htrue.
+expect Valid.
+ 
+// id: 279; line: 27; kind: PRE
+ checkentail t::pq{}<n,mx> & t'=null & tmp1'=null & 0<=v12 & v13'=v12 & t'=t
+ |-  emp.
+expect Valid.
+ 
+// id: 280; line: 27; kind: PRE
+ checkentail t::pq{}<n,mx> & t'!=null & tmp1'=null & 0<=v12 & v13'=v12 & t'=t
+ |-  htrue.
+expect Valid.
+ 
+// id: 281; line: 27; kind: PRE
+ checkentail t::pq{}<n,mx> & t'!=null & tmp1'=null & 0<=v12 & v13'=v12 & t'=t
+ |-  emp.
+expect Valid.
+ 
+// id: 282; line: 30; kind: BIND
+ checkentail (exists m66,m67,m68,d18,l11,m69,mx55,r11,m70,mx56: l11::pq{}<m66,mx55> * 
+t'::node<d18,m69,m70,l11,r11> * r11::pq{}<m67,mx56> & t'=t & 
+v13'=v12 & 0<=v12 & tmp1'=null & t'!=null & !(v45') & m67=m70 & m66=m69 & 
+m68<=1 & 0<=m68 & m68+m70=m69 & d18<=mx & mx56<=d18 & mx55<=d18 & 0<=d18 & 
+n=m70+1+m69)
+ |-  t'::node<val25',nleft25',nright25',left25',right25'>@L.
+expect Valid.
+ 
+// id: 284; line: 30; kind: PRE
+ checkentail l12::pq{}<m72,mx57> * t'::node<d19,m73,m75,l12,r12> * r12::pq{}<m74,mx58>&
+MayLoop[] & n=m75+1+m73 & 0<=d19 & mx57<=d19 & mx58<=d19 & d19<=mx & m71+
+m75=m73 & 0<=m71 & m71<=1 & m72=m73 & m74=m75 & !(v45') & t'!=null & 
+tmp1'=null & 0<=v12 & v13'=v12 & t'=t & v46'=d19 & v46'<v13'
+ |-  emp.
+expect Valid.
+ 
+// id: 285; line: 30; kind: PRE
+ checkentail l12::pq{}<m72,mx57> * t'::node<d19,m73,m75,l12,r12> * r12::pq{}<m74,mx58>&
+MayLoop[] & n=m75+1+m73 & 0<=d19 & mx57<=d19 & mx58<=d19 & d19<=mx & m71+
+m75=m73 & 0<=m71 & m71<=1 & m72=m73 & m74=m75 & !(v45') & t'!=null & 
+tmp1'=null & 0<=v12 & v13'=v12 & t'=t & v46'=d19 & v13'<=v46'
+ |-  emp.
+expect Valid.
+ 
+// id: 286; line: 32; kind: BIND
+ checkentail l12::pq{}<m72,mx57> * t'::node<d19,m73,m75,l12,r12> * r12::pq{}<m74,mx58>&
+MayLoop[] & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & t'!=null & !(v45') & 
+m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & d19<=mx & mx58<=d19 & 
+mx57<=d19 & 0<=d19 & n=m75+1+m73 & d19<v13' & v47'
+ |-  t'::node<val26',nleft26',nright26',left26',right26'>@L.
+expect Valid.
+ 
+// id: 288; line: 32; kind: BIND
+ checkentail l12::pq{}<m72,mx57> * t'::node<d19,m73,m75,l12,r12> * r12::pq{}<m74,mx58>&
+MayLoop[] & v48'=m73 & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & t'!=null & 
+!(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & d19<=mx & 
+mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & d19<v13' & v47'
+ |-  t'::node<val27',nleft27',nright27',left27',right27'>@L.
+expect Valid.
+ 
+// id: 290; line: 32; kind: PRE
+ checkentail l12::pq{}<m72,mx57> * t'::node<d19,m73,m75,l12,r12> * r12::pq{}<m74,mx58>&
+MayLoop[] & v47' & d19<v13' & n=m75+1+m73 & 0<=d19 & mx57<=d19 & mx58<=d19 & 
+d19<=mx & m71+m75=m73 & 0<=m71 & m71<=1 & m72=m73 & m74=m75 & !(v45') & 
+t'!=null & tmp1'=null & 0<=v12 & v13'=v12 & t'=t & v48'=m73 & v49'=m75 & 
+v48'<=v49'
+ |-  emp.
+expect Valid.
+ 
+// id: 291; line: 32; kind: PRE
+ checkentail l12::pq{}<m72,mx57> * t'::node<d19,m73,m75,l12,r12> * r12::pq{}<m74,mx58>&
+MayLoop[] & v47' & d19<v13' & n=m75+1+m73 & 0<=d19 & mx57<=d19 & mx58<=d19 & 
+d19<=mx & m71+m75=m73 & 0<=m71 & m71<=1 & m72=m73 & m74=m75 & !(v45') & 
+t'!=null & tmp1'=null & 0<=v12 & v13'=v12 & t'=t & v48'=m73 & v49'=m75 & 
+v49'<v48'
+ |-  emp.
+expect Valid.
+ 
+// id: 292; line: 34; kind: BIND
+ checkentail l12::pq{}<m72,mx57> * t'::node<d19,m73,m75,l12,r12> * r12::pq{}<m74,mx58>&
+MayLoop[] & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & t'!=null & !(v45') & 
+m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & d19<=mx & mx58<=d19 & 
+mx57<=d19 & 0<=d19 & n=m75+1+m73 & d19<v13' & v47' & m73<=m75 & v50'
+ |-  t'::node<val28',nleft28',nright28',left28',right28'>@L.
+expect Valid.
+ 
+// id: 294; line: 35; kind: BIND
+ checkentail r12::pq{}<m74,mx58> * t'::node<d19,m73,m75,l12,r12> * l12::pq{}<m72,mx57>&
+MayLoop[] & tmp'=l12 & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & t'!=null & 
+!(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & d19<=mx & 
+mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & d19<v13' & v47' & m73<=m75 & 
+v50'
+ |-  t'::node<val29',nleft29',nright29',left29',right29'>@L.
+expect Valid.
+ 
+// id: 296; line: 36; kind: PRE_REC
+ checkentail r12::pq{}<m74,mx58> * t'::node<d19,m73,m75,l12,r12> * l12::pq{}<m72,mx57>&
+MayLoop[] & tmpv'=d19 & tmp'=l12 & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & 
+t'!=null & !(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & 
+d19<=mx & mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & d19<v13' & v47' & 
+m73<=m75 & v50'
+ |-  tmp'::pq{}<n1,mx59>&0<=tmpv'.
+expect Valid.
+ 
+// id: 298; line: 36; kind: PRE_REC
+ checkentail r12::pq{}<m74,mx58> * t'::node<d19,m73,m75,l12,r12> & mx59=mx57 & 
+n1=m72 & tmpv'=d19 & tmp'=l12 & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & 
+t'!=null & !(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & 
+d19<=mx & mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & d19<v13' & v47' & 
+m73<=m75 & v50'
+ |-  emp.
+expect Valid.
+ 
+// id: 299; line: 36; kind: BIND
+ checkentail (exists n2,ma: r12::pq{}<m74,mx58> * t'::node<d19,m73,m75,l12,r12> * 
+v51'::pq{}<n2,ma> & 0<=mx59 & 0<=n1 & (((mx59<=tmpv' & ma=tmpv') | 
+ma=mx59)) & n2=1+n1 & 0<=mx57 & 0<=m72 & mx59=mx57 & n1=m72 & tmpv'=d19 & 
+tmp'=l12 & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & t'!=null & !(v45') & 
+m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & d19<=mx & mx58<=d19 & 
+mx57<=d19 & 0<=d19 & n=m75+1+m73 & d19<v13' & v47' & m73<=m75 & v50')
+ |-  t'::node<val30',nleft30',nright30',left30',right30'>.
+expect Valid.
+ 
+// id: 301; line: 37; kind: BIND
+ checkentail (exists v26: v26::pq{}<n3,ma1> * r12::pq{}<m74,mx58> * 
+t'::node<d19,m73,m75,v26,r12> & left=l12 & 0<=mx59 & 0<=n1 & 
+(((mx59<=tmpv' & ma1=tmpv') | ma1=mx59)) & n3=1+n1 & 0<=mx57 & 0<=m72 & 
+mx59=mx57 & n1=m72 & tmpv'=d19 & tmp'=l12 & t'=t & v13'=v12 & 0<=v12 & 
+tmp1'=null & t'!=null & !(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+
+m75=m73 & d19<=mx & mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & 
+d19<v13' & v47' & m73<=m75 & v50')
+ |-  t'::node<val31',nleft31',nright31',left31',right31'>@L.
+expect Valid.
+ 
+// id: 303; line: 38; kind: PRE
+ checkentail v27::pq{}<n3,ma1> * r12::pq{}<m74,mx58> * t'::node<d19,m73,m75,v27,r12>&
+MayLoop[] & v52'=1 & tmpv'=m73 & left=l12 & 0<=mx59 & 0<=n1 & 
+(((mx59<=tmpv & ma1=tmpv) | ma1=mx59)) & n3=1+n1 & 0<=mx57 & 0<=m72 & 
+mx59=mx57 & n1=m72 & tmpv=d19 & tmp'=l12 & t'=t & v13'=v12 & 0<=v12 & 
+tmp1'=null & t'!=null & !(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+
+m75=m73 & d19<=mx & mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & 
+d19<v13' & v47' & m73<=m75 & v50'
+ |-  htrue.
+expect Valid.
+ 
+// id: 304; line: 38; kind: PRE
+ checkentail v27::pq{}<n3,ma1> * r12::pq{}<m74,mx58> * t'::node<d19,m73,m75,v27,r12>&
+MayLoop[] & v52'=1 & tmpv'=m73 & left=l12 & 0<=mx59 & 0<=n1 & 
+(((mx59<=tmpv & ma1=tmpv) | ma1=mx59)) & n3=1+n1 & 0<=mx57 & 0<=m72 & 
+mx59=mx57 & n1=m72 & tmpv=d19 & tmp'=l12 & t'=t & v13'=v12 & 0<=v12 & 
+tmp1'=null & t'!=null & !(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+
+m75=m73 & d19<=mx & mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & 
+d19<v13' & v47' & m73<=m75 & v50'
+ |-  emp.
+expect Valid.
+ 
+// id: 305; line: 38; kind: BIND
+ checkentail v27::pq{}<n3,ma1> * r12::pq{}<m74,mx58> * t'::node<d19,m73,m75,v27,r12>&
+MayLoop[] & v53'=1+tmpv' & tmpv'=m73 & left=l12 & 0<=mx59 & 0<=n1 & 
+(((mx59<=tmpv & ma1=tmpv) | ma1=mx59)) & n3=1+n1 & 0<=mx57 & 0<=m72 & 
+mx59=mx57 & n1=m72 & tmpv=d19 & tmp'=l12 & t'=t & v13'=v12 & 0<=v12 & 
+tmp1'=null & t'!=null & !(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+
+m75=m73 & d19<=mx & mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & 
+d19<v13' & v47' & m73<=m75 & v50'
+ |-  t'::node<val32',nleft32',nright32',left32',right32'>.
+expect Valid.
+ 
+// id: 307; line: 42; kind: BIND
+ checkentail l12::pq{}<m72,mx57> * t'::node<d19,m73,m75,l12,r12> * r12::pq{}<m74,mx58>&
+MayLoop[] & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & t'!=null & !(v45') & 
+m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & d19<=mx & mx58<=d19 & 
+mx57<=d19 & 0<=d19 & n=m75+1+m73 & d19<v13' & v47' & m75<m73 & !(v50')
+ |-  t'::node<val33',nleft33',nright33',left33',right33'>@L.
+expect Valid.
+ 
+// id: 309; line: 43; kind: BIND
+ checkentail l12::pq{}<m72,mx57> * t'::node<d19,m73,m75,l12,r12> * r12::pq{}<m74,mx58>&
+MayLoop[] & tmp'=r12 & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & t'!=null & 
+!(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & d19<=mx & 
+mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & d19<v13' & v47' & m75<m73 & 
+!(v50')
+ |-  t'::node<val34',nleft34',nright34',left34',right34'>@L.
+expect Valid.
+ 
+// id: 311; line: 44; kind: PRE_REC
+ checkentail l12::pq{}<m72,mx57> * t'::node<d19,m73,m75,l12,r12> * r12::pq{}<m74,mx58>&
+MayLoop[] & tmpv'=d19 & tmp'=r12 & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & 
+t'!=null & !(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & 
+d19<=mx & mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & d19<v13' & v47' & 
+m75<m73 & !(v50')
+ |-  tmp'::pq{}<n4,mx60>&0<=tmpv'.
+expect Valid.
+ 
+// id: 313; line: 44; kind: PRE_REC
+ checkentail l12::pq{}<m72,mx57> * t'::node<d19,m73,m75,l12,r12> & mx60=mx58 & 
+n4=m74 & tmpv'=d19 & tmp'=r12 & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & 
+t'!=null & !(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & 
+d19<=mx & mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & d19<v13' & v47' & 
+m75<m73 & !(v50')
+ |-  emp.
+expect Valid.
+ 
+// id: 314; line: 44; kind: BIND
+ checkentail (exists n5,ma2: l12::pq{}<m72,mx57> * t'::node<d19,m73,m75,l12,r12> * 
+v54'::pq{}<n5,ma2> & 0<=mx60 & 0<=n4 & (((mx60<=tmpv' & 
+ma2=tmpv') | ma2=mx60)) & n5=1+n4 & 0<=mx58 & 0<=m74 & mx60=mx58 & n4=m74 & 
+tmpv'=d19 & tmp'=r12 & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & t'!=null & 
+!(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & d19<=mx & 
+mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & d19<v13' & v47' & m75<m73 & 
+!(v50'))
+ |-  t'::node<val35',nleft35',nright35',left35',right35'>.
+expect Valid.
+ 
+// id: 316; line: 45; kind: BIND
+ checkentail (exists v28: l12::pq{}<m72,mx57> * v28::pq{}<n6,ma3> * 
+t'::node<d19,m73,m75,l12,v28> & right=r12 & 0<=mx60 & 0<=n4 & 
+(((mx60<=tmpv' & ma3=tmpv') | ma3=mx60)) & n6=1+n4 & 0<=mx58 & 0<=m74 & 
+mx60=mx58 & n4=m74 & tmpv'=d19 & tmp'=r12 & t'=t & v13'=v12 & 0<=v12 & 
+tmp1'=null & t'!=null & !(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+
+m75=m73 & d19<=mx & mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & 
+d19<v13' & v47' & m75<m73 & !(v50'))
+ |-  t'::node<val36',nleft36',nright36',left36',right36'>@L.
+expect Valid.
+ 
+// id: 318; line: 46; kind: PRE
+ checkentail l12::pq{}<m72,mx57> * v29::pq{}<n6,ma3> * t'::node<d19,m73,m75,l12,v29>&
+MayLoop[] & v55'=1 & tmpv'=m75 & right=r12 & 0<=mx60 & 0<=n4 & 
+(((mx60<=tmpv1 & ma3=tmpv1) | ma3=mx60)) & n6=1+n4 & 0<=mx58 & 0<=m74 & 
+mx60=mx58 & n4=m74 & tmpv1=d19 & tmp'=r12 & t'=t & v13'=v12 & 0<=v12 & 
+tmp1'=null & t'!=null & !(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+
+m75=m73 & d19<=mx & mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & 
+d19<v13' & v47' & m75<m73 & !(v50')
+ |-  htrue.
+expect Valid.
+ 
+// id: 319; line: 46; kind: PRE
+ checkentail l12::pq{}<m72,mx57> * v29::pq{}<n6,ma3> * t'::node<d19,m73,m75,l12,v29>&
+MayLoop[] & v55'=1 & tmpv'=m75 & right=r12 & 0<=mx60 & 0<=n4 & 
+(((mx60<=tmpv1 & ma3=tmpv1) | ma3=mx60)) & n6=1+n4 & 0<=mx58 & 0<=m74 & 
+mx60=mx58 & n4=m74 & tmpv1=d19 & tmp'=r12 & t'=t & v13'=v12 & 0<=v12 & 
+tmp1'=null & t'!=null & !(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+
+m75=m73 & d19<=mx & mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & 
+d19<v13' & v47' & m75<m73 & !(v50')
+ |-  emp.
+expect Valid.
+ 
+// id: 320; line: 46; kind: BIND
+ checkentail l12::pq{}<m72,mx57> * v29::pq{}<n6,ma3> * t'::node<d19,m73,m75,l12,v29>&
+MayLoop[] & v56'=1+tmpv' & tmpv'=m75 & right=r12 & 0<=mx60 & 0<=n4 & 
+(((mx60<=tmpv1 & ma3=tmpv1) | ma3=mx60)) & n6=1+n4 & 0<=mx58 & 0<=m74 & 
+mx60=mx58 & n4=m74 & tmpv1=d19 & tmp'=r12 & t'=t & v13'=v12 & 0<=v12 & 
+tmp1'=null & t'!=null & !(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+
+m75=m73 & d19<=mx & mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & 
+d19<v13' & v47' & m75<m73 & !(v50')
+ |-  t'::node<val37',nleft37',nright37',left37',right37'>.
+expect Valid.
+ 
+// id: 322; line: 48; kind: BIND
+ checkentail (exists v30: v27::pq{}<n3,ma1> * r12::pq{}<m74,mx58> * 
+t'::node<d19,v30,m75,v27,r12> & nleft=m73 & v30=1+tmpv' & 
+tmpv'=m73 & left=l12 & 0<=mx59 & 0<=n1 & (((mx59<=tmpv & ma1=tmpv) | 
+ma1=mx59)) & n3=1+n1 & 0<=mx57 & 0<=m72 & mx59=mx57 & n1=m72 & tmpv=d19 & 
+tmp'=l12 & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & t'!=null & !(v45') & 
+m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & d19<=mx & mx58<=d19 & 
+mx57<=d19 & 0<=d19 & n=m75+1+m73 & d19<v13' & v47' & m73<=m75 & v50')
+ |-  t'::node<val38',nleft38',nright38',left38',right38'>.
+expect Valid.
+ 
+// id: 324; line: 48; kind: BIND
+ checkentail (exists v31: l12::pq{}<m72,mx57> * v29::pq{}<n6,ma3> * 
+t'::node<d19,m73,v31,l12,v29> & nright=m75 & v31=1+tmpv' & 
+tmpv'=m75 & right=r12 & 0<=mx60 & 0<=n4 & (((mx60<=tmpv1 & ma3=tmpv1) | 
+ma3=mx60)) & n6=1+n4 & 0<=mx58 & 0<=m74 & mx60=mx58 & n4=m74 & tmpv1=d19 & 
+tmp'=r12 & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & t'!=null & !(v45') & 
+m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & d19<=mx & mx58<=d19 & 
+mx57<=d19 & 0<=d19 & n=m75+1+m73 & d19<v13' & v47' & m75<m73 & !(v50'))
+ |-  t'::node<val38',nleft38',nright38',left38',right38'>.
+expect Valid.
+ 
+// id: 326; line: 53; kind: BIND
+ checkentail l12::pq{}<m72,mx57> * t'::node<d19,m73,m75,l12,r12> * r12::pq{}<m74,mx58>&
+MayLoop[] & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & t'!=null & !(v45') & 
+m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & d19<=mx & mx58<=d19 & 
+mx57<=d19 & 0<=d19 & n=m75+1+m73 & v13'<=d19 & !(v47')
+ |-  t'::node<val39',nleft39',nright39',left39',right39'>@L.
+expect Valid.
+ 
+// id: 328; line: 53; kind: BIND
+ checkentail l12::pq{}<m72,mx57> * t'::node<d19,m73,m75,l12,r12> * r12::pq{}<m74,mx58>&
+MayLoop[] & v57'=m73 & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & t'!=null & 
+!(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & d19<=mx & 
+mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & v13'<=d19 & !(v47')
+ |-  t'::node<val40',nleft40',nright40',left40',right40'>@L.
+expect Valid.
+ 
+// id: 330; line: 53; kind: PRE
+ checkentail l12::pq{}<m72,mx57> * t'::node<d19,m73,m75,l12,r12> * r12::pq{}<m74,mx58>&
+MayLoop[] & !(v47') & v13'<=d19 & n=m75+1+m73 & 0<=d19 & mx57<=d19 & 
+mx58<=d19 & d19<=mx & m71+m75=m73 & 0<=m71 & m71<=1 & m72=m73 & m74=m75 & 
+!(v45') & t'!=null & tmp1'=null & 0<=v12 & v13'=v12 & t'=t & v57'=m73 & 
+v58'=m75 & v57'<=v58'
+ |-  emp.
+expect Valid.
+ 
+// id: 331; line: 53; kind: PRE
+ checkentail l12::pq{}<m72,mx57> * t'::node<d19,m73,m75,l12,r12> * r12::pq{}<m74,mx58>&
+MayLoop[] & !(v47') & v13'<=d19 & n=m75+1+m73 & 0<=d19 & mx57<=d19 & 
+mx58<=d19 & d19<=mx & m71+m75=m73 & 0<=m71 & m71<=1 & m72=m73 & m74=m75 & 
+!(v45') & t'!=null & tmp1'=null & 0<=v12 & v13'=v12 & t'=t & v57'=m73 & 
+v58'=m75 & v58'<v57'
+ |-  emp.
+expect Valid.
+ 
+// id: 332; line: 55; kind: BIND
+ checkentail l12::pq{}<m72,mx57> * t'::node<d19,m73,m75,l12,r12> * r12::pq{}<m74,mx58>&
+MayLoop[] & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & t'!=null & !(v45') & 
+m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & d19<=mx & mx58<=d19 & 
+mx57<=d19 & 0<=d19 & n=m75+1+m73 & v13'<=d19 & !(v47') & m73<=m75 & v59'
+ |-  t'::node<val41',nleft41',nright41',left41',right41'>@L.
+expect Valid.
+ 
+// id: 334; line: 56; kind: PRE_REC
+ checkentail r12::pq{}<m74,mx58> * t'::node<d19,m73,m75,l12,r12> * l12::pq{}<m72,mx57>&
+MayLoop[] & tmp'=l12 & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & t'!=null & 
+!(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & d19<=mx & 
+mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & v13'<=d19 & !(v47') & 
+m73<=m75 & v59'
+ |-  tmp'::pq{}<n7,mx61>&0<=v13'.
+expect Valid.
+ 
+// id: 336; line: 56; kind: PRE_REC
+ checkentail r12::pq{}<m74,mx58> * t'::node<d19,m73,m75,l12,r12> & mx61=mx57 & 
+n7=m72 & tmp'=l12 & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & t'!=null & 
+!(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & d19<=mx & 
+mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & v13'<=d19 & !(v47') & 
+m73<=m75 & v59'
+ |-  emp.
+expect Valid.
+ 
+// id: 337; line: 56; kind: BIND
+ checkentail (exists n8,ma4: r12::pq{}<m74,mx58> * t'::node<d19,m73,m75,l12,r12> * 
+v60'::pq{}<n8,ma4> & 0<=mx61 & 0<=n7 & (((mx61<=v13' & ma4=v13') | 
+ma4=mx61)) & n8=1+n7 & 0<=mx57 & 0<=m72 & mx61=mx57 & n7=m72 & tmp'=l12 & 
+t'=t & v13'=v12 & 0<=v12 & tmp1'=null & t'!=null & !(v45') & m74=m75 & 
+m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & d19<=mx & mx58<=d19 & mx57<=d19 & 
+0<=d19 & n=m75+1+m73 & v13'<=d19 & !(v47') & m73<=m75 & v59')
+ |-  t'::node<val42',nleft42',nright42',left42',right42'>.
+expect Valid.
+ 
+// id: 339; line: 57; kind: BIND
+ checkentail (exists v32: v32::pq{}<n9,ma5> * r12::pq{}<m74,mx58> * 
+t'::node<d19,m73,m75,v32,r12> & left1=l12 & 0<=mx61 & 0<=n7 & 
+(((mx61<=v13' & ma5=v13') | ma5=mx61)) & n9=1+n7 & 0<=mx57 & 0<=m72 & 
+mx61=mx57 & n7=m72 & tmp'=l12 & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & 
+t'!=null & !(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & 
+d19<=mx & mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & v13'<=d19 & 
+!(v47') & m73<=m75 & v59')
+ |-  t'::node<val43',nleft43',nright43',left43',right43'>@L.
+expect Valid.
+ 
+// id: 341; line: 58; kind: PRE
+ checkentail v33::pq{}<n9,ma5> * r12::pq{}<m74,mx58> * t'::node<d19,m73,m75,v33,r12>&
+MayLoop[] & v61'=1 & tmpv'=m73 & left1=l12 & 0<=mx61 & 0<=n7 & 
+(((mx61<=v13' & ma5=v13') | ma5=mx61)) & n9=1+n7 & 0<=mx57 & 0<=m72 & 
+mx61=mx57 & n7=m72 & tmp'=l12 & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & 
+t'!=null & !(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & 
+d19<=mx & mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & v13'<=d19 & 
+!(v47') & m73<=m75 & v59'
+ |-  htrue.
+expect Valid.
+ 
+// id: 342; line: 58; kind: PRE
+ checkentail v33::pq{}<n9,ma5> * r12::pq{}<m74,mx58> * t'::node<d19,m73,m75,v33,r12>&
+MayLoop[] & v61'=1 & tmpv'=m73 & left1=l12 & 0<=mx61 & 0<=n7 & 
+(((mx61<=v13' & ma5=v13') | ma5=mx61)) & n9=1+n7 & 0<=mx57 & 0<=m72 & 
+mx61=mx57 & n7=m72 & tmp'=l12 & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & 
+t'!=null & !(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & 
+d19<=mx & mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & v13'<=d19 & 
+!(v47') & m73<=m75 & v59'
+ |-  emp.
+expect Valid.
+ 
+// id: 343; line: 58; kind: BIND
+ checkentail v33::pq{}<n9,ma5> * r12::pq{}<m74,mx58> * t'::node<d19,m73,m75,v33,r12>&
+MayLoop[] & v62'=1+tmpv' & tmpv'=m73 & left1=l12 & 0<=mx61 & 0<=n7 & 
+(((mx61<=v13' & ma5=v13') | ma5=mx61)) & n9=1+n7 & 0<=mx57 & 0<=m72 & 
+mx61=mx57 & n7=m72 & tmp'=l12 & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & 
+t'!=null & !(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & 
+d19<=mx & mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & v13'<=d19 & 
+!(v47') & m73<=m75 & v59'
+ |-  t'::node<val44',nleft44',nright44',left44',right44'>.
+expect Valid.
+ 
+// id: 345; line: 62; kind: BIND
+ checkentail l12::pq{}<m72,mx57> * t'::node<d19,m73,m75,l12,r12> * r12::pq{}<m74,mx58>&
+MayLoop[] & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & t'!=null & !(v45') & 
+m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & d19<=mx & mx58<=d19 & 
+mx57<=d19 & 0<=d19 & n=m75+1+m73 & v13'<=d19 & !(v47') & m75<m73 & !(v59')
+ |-  t'::node<val45',nleft45',nright45',left45',right45'>@L.
+expect Valid.
+ 
+// id: 347; line: 63; kind: PRE_REC
+ checkentail l12::pq{}<m72,mx57> * t'::node<d19,m73,m75,l12,r12> * r12::pq{}<m74,mx58>&
+MayLoop[] & tmp'=r12 & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & t'!=null & 
+!(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & d19<=mx & 
+mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & v13'<=d19 & !(v47') & 
+m75<m73 & !(v59')
+ |-  tmp'::pq{}<n10,mx62>&0<=v13'.
+expect Valid.
+ 
+// id: 349; line: 63; kind: PRE_REC
+ checkentail l12::pq{}<m72,mx57> * t'::node<d19,m73,m75,l12,r12> & mx62=mx58 & 
+n10=m74 & tmp'=r12 & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & t'!=null & 
+!(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & d19<=mx & 
+mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & v13'<=d19 & !(v47') & 
+m75<m73 & !(v59')
+ |-  emp.
+expect Valid.
+ 
+// id: 350; line: 63; kind: BIND
+ checkentail (exists n11,ma6: l12::pq{}<m72,mx57> * t'::node<d19,m73,m75,l12,r12> * 
+v63'::pq{}<n11,ma6> & 0<=mx62 & 0<=n10 & (((mx62<=v13' & 
+ma6=v13') | ma6=mx62)) & n11=1+n10 & 0<=mx58 & 0<=m74 & mx62=mx58 & 
+n10=m74 & tmp'=r12 & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & t'!=null & 
+!(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & d19<=mx & 
+mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & v13'<=d19 & !(v47') & 
+m75<m73 & !(v59'))
+ |-  t'::node<val46',nleft46',nright46',left46',right46'>.
+expect Valid.
+ 
+// id: 352; line: 64; kind: BIND
+ checkentail (exists v34: l12::pq{}<m72,mx57> * v34::pq{}<n12,ma7> * 
+t'::node<d19,m73,m75,l12,v34> & right1=r12 & 0<=mx62 & 0<=n10 & 
+(((mx62<=v13' & ma7=v13') | ma7=mx62)) & n12=1+n10 & 0<=mx58 & 0<=m74 & 
+mx62=mx58 & n10=m74 & tmp'=r12 & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & 
+t'!=null & !(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & 
+d19<=mx & mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & v13'<=d19 & 
+!(v47') & m75<m73 & !(v59'))
+ |-  t'::node<val47',nleft47',nright47',left47',right47'>@L.
+expect Valid.
+ 
+// id: 354; line: 65; kind: PRE
+ checkentail l12::pq{}<m72,mx57> * v35::pq{}<n12,ma7> * t'::node<d19,m73,m75,l12,v35>&
+MayLoop[] & v64'=1 & tmpv'=m75 & right1=r12 & 0<=mx62 & 0<=n10 & 
+(((mx62<=v13' & ma7=v13') | ma7=mx62)) & n12=1+n10 & 0<=mx58 & 0<=m74 & 
+mx62=mx58 & n10=m74 & tmp'=r12 & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & 
+t'!=null & !(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & 
+d19<=mx & mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & v13'<=d19 & 
+!(v47') & m75<m73 & !(v59')
+ |-  htrue.
+expect Valid.
+ 
+// id: 355; line: 65; kind: PRE
+ checkentail l12::pq{}<m72,mx57> * v35::pq{}<n12,ma7> * t'::node<d19,m73,m75,l12,v35>&
+MayLoop[] & v64'=1 & tmpv'=m75 & right1=r12 & 0<=mx62 & 0<=n10 & 
+(((mx62<=v13' & ma7=v13') | ma7=mx62)) & n12=1+n10 & 0<=mx58 & 0<=m74 & 
+mx62=mx58 & n10=m74 & tmp'=r12 & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & 
+t'!=null & !(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & 
+d19<=mx & mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & v13'<=d19 & 
+!(v47') & m75<m73 & !(v59')
+ |-  emp.
+expect Valid.
+ 
+// id: 356; line: 65; kind: BIND
+ checkentail l12::pq{}<m72,mx57> * v35::pq{}<n12,ma7> * t'::node<d19,m73,m75,l12,v35>&
+MayLoop[] & v65'=1+tmpv' & tmpv'=m75 & right1=r12 & 0<=mx62 & 0<=n10 & 
+(((mx62<=v13' & ma7=v13') | ma7=mx62)) & n12=1+n10 & 0<=mx58 & 0<=m74 & 
+mx62=mx58 & n10=m74 & tmp'=r12 & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & 
+t'!=null & !(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & 
+d19<=mx & mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & v13'<=d19 & 
+!(v47') & m75<m73 & !(v59')
+ |-  t'::node<val48',nleft48',nright48',left48',right48'>.
+expect Valid.
+ 
+// id: 358; line: 0; kind: POST
+ checkentail (exists v67',v68',tmp1': t::pq{}<n,mx> * 
+v66'::node<v13',v67',v68',tmp1',tmp1'> & res=v66' & v68'=0 & 
+v67'=0 & t'=t & v13'=v12 & 0<=v12 & tmp1'=null & t'=null & v45')
+ |-  (exists n13,ma8: res::pq{}<n13,ma8>&(((mx<=v12 & ma8=v12) | ma8=mx)) & 
+n13=1+n & 0<=mx & 0<=n).
+expect Valid.
+ 
+// id: 367; line: 0; kind: POST
+ checkentail v27::pq{}<n3,ma1> * r12::pq{}<m74,mx58> * t'::node<v13',v36,m75,v27,r12>&
+MayLoop[] & res=t' & val1=d19 & nleft=m73 & v36=1+m73 & left=l12 & 0<=mx59 & 
+0<=n1 & (((mx59<=tmpv & ma1=tmpv) | ma1=mx59)) & n3=1+n1 & 0<=mx57 & 
+0<=m72 & mx59=mx57 & n1=m72 & tmpv=d19 & t'=t & v13'=v12 & 0<=v12 & 
+t'!=null & !(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & 
+d19<=mx & mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & d19<v13' & v47' & 
+m73<=m75 & v50'
+ |-  (exists n13,ma8: res::pq{}<n13,ma8>&(((mx<=v12 & ma8=v12) | ma8=mx)) & 
+n13=1+n & 0<=mx & 0<=n).
+expect Valid.
+ 
+// id: 374; line: 0; kind: POST
+ checkentail l12::pq{}<m72,mx57> * v29::pq{}<n6,ma3> * t'::node<v13',m73,v37,l12,v29>&
+MayLoop[] & res=t' & val2=d19 & nright=m75 & v37=1+m75 & right=r12 & 
+0<=mx60 & 0<=n4 & (((mx60<=tmpv1 & ma3=tmpv1) | ma3=mx60)) & n6=1+n4 & 
+0<=mx58 & 0<=m74 & mx60=mx58 & n4=m74 & tmpv1=d19 & t'=t & v13'=v12 & 
+0<=v12 & t'!=null & !(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+
+m75=m73 & d19<=mx & mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & 
+d19<v13' & v47' & m75<m73 & !(v50')
+ |-  (exists n13,ma8: res::pq{}<n13,ma8>&(((mx<=v12 & ma8=v12) | ma8=mx)) & 
+n13=1+n & 0<=mx & 0<=n).
+expect Valid.
+ 
+// id: 381; line: 0; kind: POST
+ checkentail (exists v62': v33::pq{}<n9,ma5> * r12::pq{}<m74,mx58> * 
+t'::node<d19,v62',m75,v33,r12> & res=t' & nleft1=m73 & v62'=1+
+m73 & left1=l12 & 0<=mx61 & 0<=n7 & (((mx61<=v13' & ma5=v13') | ma5=mx61)) & 
+n9=1+n7 & 0<=mx57 & 0<=m72 & mx61=mx57 & n7=m72 & t'=t & v13'=v12 & 0<=v12 & 
+t'!=null & !(v45') & m74=m75 & m72=m73 & m71<=1 & 0<=m71 & m71+m75=m73 & 
+d19<=mx & mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+m73 & v13'<=d19 & 
+!(v47') & m73<=m75 & v59')
+ |-  (exists n13,ma8: res::pq{}<n13,ma8>&(((mx<=v12 & ma8=v12) | ma8=mx)) & 
+n13=1+n & 0<=mx & 0<=n).
+expect Valid.
+ 
+// id: 388; line: 0; kind: POST
+ checkentail (exists v65': l12::pq{}<m72,mx57> * v35::pq{}<n12,ma7> * 
+t'::node<d19,m73,v65',l12,v35> & res=t' & nright1=m75 & v65'=1+
+m75 & right1=r12 & 0<=mx62 & 0<=n10 & (((mx62<=v13' & ma7=v13') | 
+ma7=mx62)) & n12=1+n10 & 0<=mx58 & 0<=m74 & mx62=mx58 & n10=m74 & t'=t & 
+v13'=v12 & 0<=v12 & t'!=null & !(v45') & m74=m75 & m72=m73 & m71<=1 & 
+0<=m71 & m71+m75=m73 & d19<=mx & mx58<=d19 & mx57<=d19 & 0<=d19 & n=m75+1+
+m73 & v13'<=d19 & !(v47') & m75<m73 & !(v59'))
+ |-  (exists n13,ma8: res::pq{}<n13,ma8>&(((mx<=v12 & ma8=v12) | ma8=mx)) & 
+n13=1+n & 0<=mx & 0<=n).
+expect Valid.

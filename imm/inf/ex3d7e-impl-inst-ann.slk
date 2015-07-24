@@ -1,0 +1,68 @@
+data cell {
+  int val;
+}.
+
+
+checkentail x::cell<a>@u & u=@L |- x::cell<b>@v & v=@A.
+print residue.
+// <1>x::cell<a>@[@u, @v]&u=@L & v=@A & b=a&{FLOW,(20,21)=__norm#E}[]
+// should normalize to @L
+
+checkentail x::cell<a>@u & u=@L |- x::cell<b>@v & v=@M.
+print residue.
+// <1>x::cell<a>@[@u, @v]&u=@L & v=@M & b=a&{FLOW,(20,21)=__norm#E}[]
+// should fail
+
+
+checkentail x::cell<a>@u & u=@L |- x::cell<b>@v & v=@L.
+print residue.
+// <1>x::cell<a>@[@u, @v]&u=@L & v=@L & b=a&{FLOW,(20,21)=__norm#E}[]
+// should normalize to @A
+
+//(4)
+checkentail x::cell<a>@u & u=@L |- x::cell<b>@v.
+print residue.
+// <1>x::cell<a>@[@u, @v]&u=@L & u=v & b=a&{FLOW,(20,21)=__norm#E}[]
+// inst to v=@L
+// better to instantiate to @L
+
+/*
+# ex3d7e.slk
+
+Residue:
+ <1>x::cell<a>@[@u, @ann_f_r_53]&u=@L & u=v & ann_f_r_53=v & u<:ann_f_r_53 & b=a&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+*/
+
+//(5)
+checkentail x::cell<a>@u & u=@M |- x::cell<b>@v.
+print residue.
+/* inst (i) u=v (ii) u<:v
+(i) is a stronger instantiation that may be helpful
+subsequently.
+*/
+
+//(5)
+checkentail x::cell<a>@u & u=@M |- x::cell<b>@v & v=@A.
+print residue.
+// <1>x::cell<a>@[@u, @v]&u=@L & u=v & b=a&{FLOW,(20,21)=__norm#E}[]
+// should normalize to @L
+
+//(6)
+checkentail x::cell<a>@u & u=@L  |- x::cell<b>@v & v=@A.
+print residue.
+// <1>x::cell<a>@[@u, @v]&u=@M & v=@A & b=a&{FLOW,(20,21)=__norm#E}[]
+
+
+/*
+# ex3d7e.slk 
+
+Entail 6: Fail.(must) cause: @L<:v & @L=v |-  v=@A. LOCS:[0;32] (must-bug)
+
+instantiated: u=v which gave a wrong instantiation
+
+# soln : change to instantiate v=@A which is present on the RHS before
+proceeding to prove u<:v
+
+*/
+

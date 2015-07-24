@@ -1,0 +1,9 @@
+
+
+checkentail true |- x<:@A.
+
+checkentail true |- x<:@L.
+
+checkentail true |- x<:@M.
+
+

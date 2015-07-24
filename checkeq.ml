@@ -1768,8 +1768,8 @@ let check_equiv_def_x hvars (def1: (CF.formula * CF.formula)) (def2: (CF.formula
   let rec find_ovars spairs = match spairs with
     | [] -> []
     | (v,o)::y -> let h = match o with
-        | None -> []
-        | Some x -> [CP.string_of_spec_var x] 
+      | None -> []
+      | Some x -> [CP.string_of_spec_var x] 
       in
       h@(find_ovars y)
   in
@@ -2237,7 +2237,7 @@ let gen_cpfile prog proc hp_lst_assume ls_inferred_hps dropped_hps old_hpdecls s
   let simplify_varname  sel_hp_rels hp_lst_assume ls_inferred_hps hpdecls name_mtb =
     (* print_string " simplify_varname\n"; *)
     let  hp_lst_assume = List.map (fun hp -> (hp.CF.hprel_lhs,hp.CF.hprel_rhs)) hp_lst_assume in
-    let change_hp f = CF.subst name_mtb f in
+    let change_hp f = x_add CF.subst name_mtb f in
     let ls_inferred_hps =   List.map (fun (_,hf,f2) -> (change_hp (CF.formula_of_heap hf no_pos), change_hp f2))  ls_inferred_hps  in
     let sim_each_ass (f1,f2) mtb vnames =
       let all_vars = CP.remove_dups_svl (CF.fv f1 @ CF.fv f2) in
@@ -2246,7 +2246,7 @@ let gen_cpfile prog proc hp_lst_assume ls_inferred_hps dropped_hps old_hpdecls s
           let (new_var,new_vnames) = get_new_var var curr_vnames in
           ((var,new_var)::curr_mtb, new_vnames) ) ([],vnames) all_vars 
       in
-      let rename_hp f = CF.subst new_mtb f in
+      let rename_hp f = x_add CF.subst new_mtb f in
       let filter_hp vnames = List.filter (fun (v,_) -> CP.is_hprel_typ v) vnames in
       let filter_mtb mtb = List.filter (fun (v,_) -> CP.is_hprel_typ v) mtb in
       ((rename_hp f1,rename_hp f2),(filter_mtb new_mtb)@mtb,filter_hp vns)
@@ -2468,4 +2468,6 @@ let update_lib hpdefs hp_defs sel_hps=
   let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
   Debug.no_3 "update_lib" pr1 pr2 !CP.print_svl pr2
     (fun _ _ _ -> update_lib_x hpdefs hp_defs sel_hps)
-    hpdefs hp_defs sel_hps
+    hpdefs hp_defs sel_hps;;
+
+Cpure.syn_checkeq := checkeq_p_formula;

@@ -1,0 +1,73 @@
+data node {
+  int val;
+  node next;
+}.
+ pred ll<n:int> == 
+  emp&self=null & n=0 or
+(exists flted_13_27: self::node<Anon_12,q> * 
+  q::ll{}<flted_13_27>&flted_13_27+1=n)
+  inv 0<=n.
+ pred lseg<p:node,n:int> == 
+  emp&self=p & n=0 or
+(exists p_25,flted_18_24: self::node<Anon_13,q> * 
+  q::lseg{}<p_25,flted_18_24>&flted_18_24+1=n & p_25=p)
+  inv 0<=n.
+
+/*
+// id: 0; line: 12; kind: Pred_Check_Inv
+ checkentail emp&((self=null & n=0) | (1<=n & self!=null))
+ |-  emp&0<=n.
+expect Valid.
+
+// id: 1; line: 12; kind: Pred_Check_Inv
+ checkentail emp&((self=null & n=0) | (1<=n & self!=null))
+ |-  emp&0<=n.
+expect Valid.
+
+// id: 2; line: 17; kind: Pred_Check_Inv
+ checkentail emp&((self=p & n=0) | (1<=n & self!=null))
+ |-  emp&0<=n.
+expect Valid.
+
+// id: 3; line: 17; kind: Pred_Check_Inv
+ checkentail emp&((self=p & n=0) | (1<=n & self!=null))
+ |-  emp&0<=n.
+expect Valid.
+*/
+
+// id: 4; line: 25; kind: BIND
+ checkentail (exists flted,Anon,q,flted1: x'::node<Anon,q> * q::ll{}<flted> & 
+flted+1=flted1 & x'=x & flted1=1)
+ |-  x'::node<val',next'>@L.
+expect Valid.
+ 
+// id: 6; line: 26; kind: Assert
+ checkentail x'::node<Anon1,q1> * q1::ll{}<flted2> & t'=q1 & flted2+1=flted3 & 
+x'=x & flted3=1
+ |-  emp&t'=null.
+expect Valid.
+ 
+// id: 7; line: 0; kind: POST
+ checkentail x'::node<Anon1,q1> * q1::ll{}<flted2> & res=q1 & flted2+
+1=flted3 & x'=x & flted3=1
+ |-  emp&res=null & exists(flted_22_56:0<=flted_22_56).
+expect Valid.
+ 
+// id: 8; line: 35; kind: BIND
+ checkentail (exists p1,flted4,Anon2,q2,flted5: x'::node<Anon2,q2> * 
+q2::lseg{}<p1,flted4> & flted4+1=flted5 & p1=r & x'=x & flted5=2)
+ |-  x'::node<val1',next1'>@L.
+expect Valid.
+ 
+// id: 10; line: 35; kind: BIND
+ checkentail (exists p3,flted8,Anon4,q4: x'::node<Anon3,q3> * v'::node<Anon4,q4> * 
+q4::lseg{}<p3,flted8> & v'=q3 & flted7+1=flted6 & p2=r & x'=x & 
+flted6=2 & p3=p2 & flted8+1=flted7)
+ |-  v'::node<val2',next2'>@L.
+expect Valid.
+ 
+// id: 12; line: 0; kind: POST
+ checkentail x'::node<Anon3,q3> * q3::node<Anon5,q5> * q5::lseg{}<p4,flted9> & 
+res=q5 & flted7+1=flted6 & p2=r & x'=x & flted6=2 & p4=p2 & flted9+1=flted7
+ |-  emp&res=r & exists(flted_32_54:0<=flted_32_54).
+expect Valid.
