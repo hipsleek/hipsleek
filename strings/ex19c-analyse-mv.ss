@@ -4,32 +4,23 @@ data char_star {
   char_star next;
 }
 
-WFS<n:int,k:int,m:int> ==
-  self::char_star<0,q>*q::EXTRA<m> & n=k
-  or self::char_star<v,q>*q::WFS<n+1,k,m> & v>0 & n<k
-  inv n<=k & m>=0;
 
-WFSeg<n:int,p> ==
-  self=p & n=0
-  or self::char_star<v,q>*q::WFSeg<n-1,p> & v>0 
-  inv n>=0;
-
-EXTRA<m> ==
-  self=null & m=0 or
-  self::char_star<v,q>*q::EXTRA<m-1> & v>=0 
-  inv m>=0;
+pred_prim SA<y:char_star,rw:int> 
+  inv 0<=rw<=2;
 
 char_star plus_plus_char(char_star x)
-  requires x::char_star<_,q>@L & Term[]
-  ensures  res=q ;
+  requires x::SA<y,rw>@L
+  ensures  res::SA<y,rw> & res!=x;
 
 void assign_char(char_star x,int v)
-  requires x::char_star<_,q> & Term[]
-  ensures  x::char_star<v,q> ;
+  requires x::SA<y,rw>
+  ensures  x::SA<y,2> ;
 
 int get_char(char_star x)
-  requires x::char_star<v,q>@L & Term[]
-  ensures res=v ;
+  requires x::SA<y,rw>@L
+  ensures  x::SA<y,1> ;
+
+lemma self::SA<y,r1>*self::SA<y,r2> -> self::SA<y,max(r1,r2)>.
  
 /*
      while (*s != '\0')
@@ -42,8 +33,8 @@ int get_char(char_star x)
 */
 
 void while1(ref char_star s)
-  requires s::WFS<n,k,m> 
-  ensures s::WFSeg<k-n,s'>*s'::char_star<0,q>*q::EXTRA<m> ;
+  requires s::SA<y,rw>
+  ensures  s::SA<y,max(1,rw)>;
 {
   int x=get_char(s);
   if (x!=0) {

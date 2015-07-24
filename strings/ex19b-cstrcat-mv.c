@@ -16,6 +16,11 @@ int main() {
 /*
 # ex19b.s --pip
 
+# (member access s~~>value != 0)
+
+      change to __get_char
+        and     __write_char
+
 # should use char_star instead of int_star
 # also instead of
     s = (104, ):__pointer_add__int_star__int__(s, 1)}
