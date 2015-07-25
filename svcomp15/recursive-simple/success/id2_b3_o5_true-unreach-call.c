@@ -62,6 +62,11 @@ infer [P2,Q2]
   return ret;
 }
 
+/*@
+relation P3(int x).
+relation Q3(int x, int y).
+ */
+
 void main()
 /*@
   requires true
@@ -74,3 +79,25 @@ void main()
     __error();
   }
 }
+
+
+/*
+*************************************
+******pure relation assumption 1 *******
+*************************************
+[RELDEFN P2: ( P1(x) & x=1+v_int_36_1414' & (v_int_36_1414'+1)!=0) -->  P2(v_int_36_1414'),
+RELDEFN Q1: ( 3<=tmp' & Q2(v_int_36_1497,tmp') & (v_int_36_1497+1)!=0 & res=3 & 
+ x=1+v_int_36_1497 & P1(x)) -->  Q1(x,res),
+RELDEFN Q1: ( x=0 & res=0 & P1(x)) -->  Q1(x,res),
+RELDEFN Q1: ( Q2(v_int_36_1497,tmp_1510) & (v_int_36_1497+1)!=0 & tmp_1510+1=res & 
+ x=1+v_int_36_1497 & res<=3 & P1(x)) -->  Q1(x,res),
+RELDEFN P1: ( P2(x) & x=1+v_int_60_1443' & (v_int_60_1443'+1)!=0) -->  P1(v_int_60_1443'),
+RELDEFN Q2: ( 3<=tmp' & Q1(v_int_60_1536,tmp') & (v_int_60_1536+1)!=0 & res=3 & 
+ x=1+v_int_60_1536 & P2(x)) -->  Q2(x,res),
+RELDEFN Q2: ( x=0 & res=0 & P2(x)) -->  Q2(x,res),
+RELDEFN Q2: ( Q1(v_int_60_1536,tmp_1549) & (v_int_60_1536+1)!=0 & tmp_1549+1=res & 
+ x=1+v_int_60_1536 & res<=3 & P2(x)) -->  Q2(x,res)]
+*************************************
+
+
+ */
