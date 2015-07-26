@@ -6540,17 +6540,17 @@ and compute_constraint_relation_x f_sat f_imply ((a1,a3,a4):(int* b_formula *(sp
     else Contradicting
   | _ -> r
 (*| (Lt (e1,e2,_), Lt  (d1,d2,_))
-  	    | (Lt (e1,e2,_), Lte (d1,d2,_))
-  	    | (Lt (e1,e2,_), Eq  (d1,d2,_))
-  	    | (Lt (e1,e2,_), Neq (d1,d2,_))
-  	    | (Lte (e1,e2,_), Lt  (d1,d2,_))
-  	    | (Lte (e1,e2,_), Lte (d1,d2,_))
-  	    | (Lte (e1,e2,_), Eq  (d1,d2,_))
-  	    | (Lte (e1,e2,_), Neq (d1,d2,_))
-  	    | (Eq (e1,e2,_), Lt  (d1,d2,_))
-  	    | (Eq (e1,e2,_), Lte (d1,d2,_))
-  	    | (Neq (e1,e2,_), Lt  (d1,d2,_))
-  	    | (Neq (e1,e2,_), Lte (d1,d2,_)) -> Unknown*)
+  | (Lt (e1,e2,_), Lte (d1,d2,_))
+  | (Lt (e1,e2,_), Eq  (d1,d2,_))
+  | (Lt (e1,e2,_), Neq (d1,d2,_))
+  | (Lte (e1,e2,_), Lt  (d1,d2,_))
+  | (Lte (e1,e2,_), Lte (d1,d2,_))
+  | (Lte (e1,e2,_), Eq  (d1,d2,_))
+  | (Lte (e1,e2,_), Neq (d1,d2,_))
+  | (Eq (e1,e2,_), Lt  (d1,d2,_))
+  | (Eq (e1,e2,_), Lte (d1,d2,_))
+  | (Neq (e1,e2,_), Lt  (d1,d2,_))
+  | (Neq (e1,e2,_), Lte (d1,d2,_)) -> Unknown*)
 
 and compute_constraint_relation f_sat f_imply a b =
   let pr1 = pr_triple string_of_int !print_b_formula !print_svl in
@@ -6964,6 +6964,10 @@ and b_form_simplify_x (b:b_formula) :b_formula =
     let lh = purge_mult lh in
     let rh = purge_mult rh in
     (lh, rh) in
+  let do_all_eq e1 e2 l = 
+    let pr = !print_exp in
+      Debug.no_2 "do_all_eq" pr pr (pr_pair pr pr) (fun _ _ -> do_all e1 e2 l) e1 e2
+  in
   let do_all3 e1 e2 e3 l =
     let t1 = simp_mult e1 in
     let t2 = simp_mult e2 in
@@ -6980,6 +6984,10 @@ and b_form_simplify_x (b:b_formula) :b_formula =
     let rh = purge_mult rh in
     let qh = purge_mult qh in
     (lh, rh, qh,flag) in
+  let do_all3_eq e1 e2 e3 l = 
+    let pr = !print_exp in
+      Debug.no_3 "do_all3_eq" pr pr pr (pr_quad pr pr pr string_of_bool) (fun _ _ _ -> do_all3 e1 e2 e3 l) e1 e2 e3
+  in
   let (pf,il) = b in
   let npf = let rec helper pf = 
               match pf with
@@ -7002,13 +7010,13 @@ and b_form_simplify_x (b:b_formula) :b_formula =
               |  Eq (e1, e2, l) ->
                 if !perm=Dperm && (perm_bounds e1 || perm_bounds e2) then  BConst (false, l)
                 else
-                  let lh, rh = do_all e1 e2 l in
+                  let lh, rh = x_add do_all_eq e1 e2 l in
                   Eq (lh, rh, l)		
               |  Neq (e1, e2, l) ->
                 let lh, rh = do_all e1 e2 l in
                 Neq (lh, rh, l)
               |  EqMax (e1, e2, e3, l) ->
-                let lh,rh,qh,flag = do_all3 e1 e2 e3 l in
+                let lh,rh,qh,flag = x_add do_all3_eq e1 e2 e3 l in
                 if flag then EqMax (lh,rh,qh,l)
                 else EqMin (lh,rh,qh,l)
               (* let ne1 = simp_mult e1 in *)
@@ -7038,9 +7046,9 @@ and b_form_simplify_x (b:b_formula) :b_formula =
               (*    			  EqMax (ne1, ne2, ne3, l) *)
               (*    	end *)
               (*else 
-                     	 EqMax (ne1, ne2, ne3, l)*)
+                     EqMax (ne1, ne2, ne3, l)*)
               |  EqMin (e1, e2, e3, l) ->
-                let lh,rh,qh,flag = do_all3 e1 e2 e3 l in
+                let lh,rh,qh,flag = x_add do_all3_eq e1 e2 e3 l in
                 if flag then EqMin (lh,rh,qh,l)
                 else EqMax (lh,rh,qh,l)
               (* let ne1 = simp_mult e1 in *)
@@ -7069,7 +7077,7 @@ and b_form_simplify_x (b:b_formula) :b_formula =
               (*    		| _ ->  EqMin (ne1, ne2, ne3, l) *)
               (*    	end *)
               (*else
-                     	 EqMin (ne1, ne2, ne3, l)*)
+                     EqMin (ne1, ne2, ne3, l)*)
               |  BagIn (v, e1, l) ->  BagIn (v, purge_mult (simp_mult e1), l)
               |  BagNotIn (v, e1, l) ->  BagNotIn (v, purge_mult (simp_mult e1), l)
               |  ListIn (e1, e2, l) -> ListIn (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
