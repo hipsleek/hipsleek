@@ -1457,7 +1457,7 @@ Entail (1) : Fail.(must) cause: x<0 |-  x!=null. LOCS:[4] (must-bug)
 */
 
 ==========================================================================
-# ex23c.slk
+# ex23c.slk: FIXED
 
 infer [@err_must] x<0 & flow __MayError |- x=3 & flow __Error.
 
