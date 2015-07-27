@@ -41,8 +41,8 @@ str incStr(str x)
   requires x::str<_,q>@L & Term[]
   ensures  res=q ;
 */
-requires x::str<_,q>
-  ensures  x::str<_,q> & res=q ;
+requires x::str<v,q>
+  ensures  x::str<v,q> & res=q ;
 /*
   requires x::WFS<n,k> & Term[]
   case { 
@@ -82,7 +82,9 @@ void while1(ref str s)
 {
   int x=getChar(s);
   if (x!=0) {
+    // dprint;
     s = incStr(s);
+    //dprint;
     while1(s);
   }
 }
@@ -96,4 +98,23 @@ void while1(ref str s)
  or s_1573::str<Anon_1575,q_1557> * Q(q_1557,s_1574)
  (4,5)]
 *************************************
+                                       */
+
+
+                                      /*
+*********************************************************
+//  ../hip ex8d-w1.ss --sa-en-pure-field
+*******relational definition ********
+*********************************************************
+[ P(s_1599) ::= s_1599::str<v_1576,q_1577> * HP_1578(q_1577,v_1576)(4,5),
+ Q(s_1604,s_1605) ::=
+ s_1605::str<v,q>&s_1605=s_1604 //?? v=0
+ or s_1604::str<v_1589,q_1590> * Q(q_1590,s_1605)&v_1589!=0
+ (4,5),
+ HP_1578(q_1602,v_1603) ::=
+ q_1602::str<v_1576,q_1577> * HP_1578(q_1577,v_1576)&v_1603!=0
+ or emp&v_1603=0
+ (4,5)]
+*************************************
+
                                        */

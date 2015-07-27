@@ -5652,18 +5652,20 @@ and get_ptrs_w_args_f (f: formula)=
     CP.remove_dups_svl (get_ptrs_w_args fe.formula_exists_heap)
   | _ -> report_error no_pos "CF.get_ptrs_w_args_f: not handle yet"
 
-and get_ptrs_w_args (f: h_formula): CP.spec_var list = match f with
+and get_ptrs_w_args ?(en_pure_args = false) (f: h_formula): CP.spec_var list =
+  let filter_pure args= if en_pure_args then args else List.filter CP.is_node_typ args in
+  match f with
   | DataNode {h_formula_data_node = c;
-              h_formula_data_arguments = args} -> [c]@(List.filter CP.is_node_typ args)
+              h_formula_data_arguments = args} -> [c]@ (filter_pure args) (* (List.filter CP.is_node_typ args) *)
   | ViewNode {h_formula_view_node = c;
               h_formula_view_ho_arguments = ho_args;
               h_formula_view_arguments = args} ->
     let hovars = List.concat (List.map (apply_rflow_formula get_ptrs_w_args_f) ho_args) in
-    [c]@(List.filter CP.is_node_typ args)@hovars
+    [c]@ (filter_pure args) (* (List.filter CP.is_node_typ args) *)@hovars
   | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
   | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2}
   | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2}
-    -> (get_ptrs_w_args h1)@(get_ptrs_w_args h2)
+    -> (get_ptrs_w_args ~en_pure_args:en_pure_args h1)@(get_ptrs_w_args ~en_pure_args:en_pure_args h2)
   | HRel (_,eargs,_) -> (List.fold_left List.append [] (List.map CP.afv eargs))
   | _ -> []
 
@@ -5747,9 +5749,10 @@ let filter_var_pure r (f0:formula) =
 let prune_irr_neq_formula_x must_kept_svl lhs_b rhs_b =
   let r_svl = fv (Base rhs_b) in
   let rec helper fb=
-    let ptrs = get_ptrs_w_args fb.formula_base_heap in
-    let keep_svl = (ptrs@r_svl@must_kept_svl) in
-    let _,np2 = CP.prune_irr_neq (MCP.pure_of_mix fb.formula_base_pure) (CP.remove_dups_svl keep_svl) in
+    let ptrs = get_ptrs_w_args ~en_pure_args:(!Globals.sa_pure_field) fb.formula_base_heap in
+    let () = Debug.ninfo_hprint (add_str "ptrs" !CP.print_svl) ptrs no_pos in
+    let keep_svl = CP.remove_dups_svl (ptrs@r_svl@must_kept_svl) in
+    let _,np2 = CP.prune_irr_neq (MCP.pure_of_mix fb.formula_base_pure) (keep_svl) in
     let np3 = CP.filter_var_new np2 keep_svl in
     let np4 = MCP.mix_of_pure np3 in
     {fb with formula_base_pure = np4;}
