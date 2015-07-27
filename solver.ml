@@ -8228,9 +8228,8 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
   x_tinfo_hp (add_str "curr_lhs_h" (Cprinter.string_of_h_formula)) curr_lhs_h pos;
   x_tinfo_hp (add_str "lhs_p" !Cast.print_mix_formula) lhs_p no_pos;
   let curr_lhs_h, lhs_p = normalize_frac_heap prog curr_lhs_h lhs_p lhs_vp in
-  x_binfo_hp (add_str "estate_orig" (Cprinter.string_of_entail_state)) estate_orig pos;
-  x_binfo_hp (add_str "curr_lhs_h0" (Cprinter.string_of_h_formula)) curr_lhs_h pos;
-  x_binfo_hp (add_str "curr_lhs_h0" (Cprinter.string_of_h_formula)) curr_lhs_h pos;
+  x_tinfo_hp (add_str "estate_orig" (Cprinter.string_of_entail_state)) estate_orig pos;
+  x_tinfo_hp (add_str "curr_lhs_h0" (Cprinter.string_of_h_formula)) curr_lhs_h pos;
   let unk_heaps = CF.keep_hrel curr_lhs_h in
   (* Debug.info_hprint (add_str "curr_lhs_h" Cprinter.string_of_h_formula) curr_lhs_h no_pos; *)
   (* Debug.info_hprint (add_str "unk_heaps" (pr_list Cprinter.string_of_h_formula)) unk_heaps no_pos; *)
@@ -8243,6 +8242,9 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
     else ()
   in
   (* WN:TODO can we invoke a single xpure if the formula are identical? *)
+  (* it's sound to restore hols for curr_lhs_h at this point as this expression is only used for computing the different xpures *)
+  let curr_lhs_h = Immutable.apply_subs_h_formula estate_orig.es_crt_holes curr_lhs_h in
+  (* below merges and normalizes aliased nodes *)
   let curr_lhs_h, lhs_p = Norm.imm_norm_h_formula prog curr_lhs_h lhs_p unfold_for_abs_merge pos in
   let (xpure_lhs_h1, yy, memset) as xp1a = 
     x_add xpure_heap 9 prog curr_lhs_h lhs_p 1 in
