@@ -2138,19 +2138,20 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
                   not(check_under 3 uf body_under vdef.view_name)
                 ) ufl
         else under_fail in
-      let do_test_inv msg inv fail_res =
+      let do_test_inv pos vn msg inv fail_res =
         if !Globals.do_test_inv then
           match inv with
           | Some f ->
             if fail_res then
-              print_endline_quiet ("\nInv Check: Fail.("^msg^")")
+              (* print_endline_quiet ("\nInv Check: Fail.(View "^vn^":"^msg^")") *)
+              report_error pos  ("\nInv Check: Fail.(View "^vn^":"^msg^")")
           (* else *)
           (*   print_endline_quiet ("\nInv Check: Valid.("^msg^")") *)
           | None -> ()
         else ()
       in
-      let () = do_test_inv "Over" over_f over_fail in
-      let () = do_test_inv "Under" under_f under_fail in
+      let () = do_test_inv vdef.view_pos vdef.view_name "Over" over_f over_fail in
+      let () = do_test_inv vdef.view_pos vdef.view_name "Under" under_f under_fail in
       (* let () = print_endline (string_of_bool (not(CF.isFailCtx rs))) in *)
       (* let () = print_endline (string_of_bool (not(CF.isFailCtx baga_rs1))) in *)
       (* let () = print_endline (string_of_bool (not(CF.isFailCtx baga_rs2))) in *)
