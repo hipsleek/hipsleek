@@ -5711,7 +5711,7 @@ let elim_unused_pure_x (f0:formula) rhs =
   let rec helper f=
     match f with
     | Base b->
-      let lhs_ptrs= get_ptrs_w_args b.formula_base_heap in
+      let lhs_ptrs= get_ptrs_w_args ~en_pure_args:(!Globals.sa_pure_field) b.formula_base_heap in
       let keep_svl = CP.remove_dups_svl (lhs_ptrs@rhs_ptrs) in
       let _,np1 = CP.prune_irr_neq (MCP.pure_of_mix b.formula_base_pure) keep_svl in
       let np2 = CP.filter_var np1 keep_svl in
