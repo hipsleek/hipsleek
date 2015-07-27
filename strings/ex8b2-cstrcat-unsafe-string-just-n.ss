@@ -59,7 +59,7 @@ int getChar(str x)
   ensures res=v;
  
 void while2(ref str s1,ref str s2)
-  requires s1::str<_,q>*q::BADS<> * s2::WFS<nnn> & Term[nnn] & nnn>=0
+  requires s1::str<_,q>*q::BADS<> * s2::WFS<nnn> & Term[nnn] //& nnn>=0
   ensures s2::WFS<nnn> * s1::WFSeg<nnn,s1a>*s1a::str<0,ppp>*ppp::BADS<> & s1'=ppp;
 /*
   requires s1::str<_,q>*q::BADS<> * s2::WFS<n,k> & Term[k-n]
