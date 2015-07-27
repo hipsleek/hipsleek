@@ -1,3 +1,37 @@
+
+sleek/hip parser : parser.ml
+tokenizer : lexer.mll
+
+sleek : sleek.ml
+hip   : main.ml
+
+input language : iast.ml, iformula.ml, ipure.ml
+core language : cast.mk, cformula.ml, cpure.ml
+
+transformer from input --> core language : 
+
+globals :
+   globals.ml (hip/sleek specific globals) 
+   VarGen.ml (global vars)
+   gen.ml (general utility)
+   debug.ml (debug utilities)
+
+debugging commands : 
+   x_add (add line tracing to debug call, at least 2 para)
+   x_add_1 (add line tracing to debug call, at least 1 para)
+   x_binfo_hprint (always print)
+   x_ninfo_hprint  (no printing)
+   x_tinfo_hprint  (selective trace printing)
+
+running sleek:
+ sleek demo.slk
+selective debugging
+ sleek demo.slk -dre "..regular expr on method name.."
+dumping all trace:
+ sleek demo.slk -dd
+dumping proof log:
+ sleek demo.slk --esl
+
 Compilation
 ===========
 

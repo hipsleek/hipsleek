@@ -1,0 +1,4 @@
+#elim_heap,Trace
+#simplify_relation
+heap_entail_empty_rhs_heap,Trace
+xpure_heap

@@ -396,11 +396,13 @@ and exp_bool_lit = { exp_bool_lit_val : bool;
 
 and exp_barrier = {exp_barrier_recv : ident; exp_barrier_pos : loc}
 
+(* WN : why do we have two kinds of calls? should unify *)
+
 and exp_call_nrecv = { 
   exp_call_nrecv_method : ident;
   exp_call_nrecv_lock : ident option;
-  exp_call_nrecv_arguments : exp list;
   exp_call_nrecv_ho_arg : Iformula.formula option;
+  exp_call_nrecv_arguments : exp list;
   exp_call_nrecv_path_id : control_path_id;
   exp_call_nrecv_pos : loc }
 
@@ -3404,11 +3406,23 @@ let get_return_exp e0=
   Debug.no_1 "get_return_exp" pr1 pr2
     (fun _ -> get_return_exp_x e0) e0
 
-let trans_to_exp_form exp0=
-  let rec helper exp=
+let trans_to_exp_form exp0 =
+  let rec helper exp =
     match exp with
     | Var v -> P.Var ((v.exp_var_name, Primed), v.exp_var_pos)
     | IntLit i -> P.IConst (i.exp_int_lit_val, i.exp_int_lit_pos)
+    | Binary b -> 
+      (begin
+        let oper1 = b.exp_binary_oper1 in
+        let oper2 = b.exp_binary_oper2 in
+        let pos = b.exp_binary_pos in
+        match b.exp_binary_op with
+        | OpPlus -> P.mkAdd (helper oper1) (helper oper2) pos
+        | OpMinus -> P.mkSubtract (helper oper1) (helper oper2) pos
+        | OpMult -> P.mkMult (helper oper1) (helper oper2) pos
+        | OpDiv -> P.mkDiv (helper oper1) (helper oper2) pos
+        | _ -> report_error no_pos "iast.trans_exp_to_form: unexpected exp"
+      end)
     | _ -> report_error no_pos "iast.trans_exp_to_form: not handle yet"
   in
   helper exp0
@@ -3599,3 +3613,42 @@ let find_all_num_trailer iprog =
     ) [] body_list in
   (* use fold_exp_args .. *)
   id_list
+
+let prim_sanity_check_x iprog=
+  let basic_prims = ["is_not_null___$String"; "is_null___$String";"neq___$String~String";"eq___$String~String";
+  "is_not_null___$Object";"is_null___$Object";"neq___$Object~Object";"eq___$Object~Object";
+  "is_not_null___$__DivByZeroErr";"is_null___$__DivByZeroErr";"is_not_null___$__ArrBoundErr";"is_null___$__ArrBoundErr";
+  "is_not_null___$thrd";"is_null___$thrd";"is_not_null___$barrier";"is_null___$barrier";
+  "neq___$barrier~barrier";"eq___$barrier~barrier";"is_not_null___$lock";"is_null___$lock";
+  "neq___$lock~lock";"eq___$lock~lock";"is_not_null___$int_ptr";"is_null___$int_ptr";
+  "neq___$int_ptr~int_ptr";"eq___$int_ptr~int_ptr";"is_not_null___$int_ptr_ptr";"is_null___$int_ptr_ptr";
+  "neq___$int_ptr_ptr~int_ptr_ptr";"eq___$int_ptr_ptr~int_ptr_ptr";"is_not_null___$__Fail";
+  "is_null___$__Fail";"neq___$__Fail~__Fail";"eq___$__Fail~__Fail";"rand_bool$";"rand_int$";
+  "aalloc___$int";"update___2d$int~int[][]~int~int";"update___1d$boolean~boolean[]~int";
+  "update___1d$int~int[]~int";"delete_ptr$int_ptr_ptr";"delete_ptr$int_ptr";"release$";
+  "acquire$";"finalize$";"init$";"join$";"fork$";"array_get_elm_at___2d$int[][]~int~int";
+  "array_get_elm_at___1d$boolean[]~int";"array_get_elm_at___1d$int[]~int";"pow___$int~int";
+  "not___$boolean";"lor___$boolean~boolean";"land___$boolean~boolean";"gte___$int~int";
+  "gt___$int~int";"lte___$int~int";"lt___$int~int";"neq___$boolean~boolean";"neq___$int~int";"eq___$int~int";
+  "mult___$float~float";"mult___$float~int";"mult___$int~float";"minus___$float~float";"minus___$float~int";
+  "minus___$int~float";"add___$float~float";"add___$float~int";"add___$int~float";"mod___$int~int";
+  "div4$int~int";"div3$int~int";"div2$int~int";"div___$int~int";"mult___$int~int";
+  "minus___$int~int";"add___$int~int"] in
+  let basic_prims_with_mults =  if !Globals.prelude_is_mult then basic_prims else
+    basic_prims @["mults___$int~int"] in
+  let () = List.iter (fun proc_mn -> begin
+    try
+      let _ = look_up_proc_def_mingled_name iprog.prog_proc_decls proc_mn in
+      ()
+    with Not_found ->
+         Error.report_error {Error.error_loc = no_pos;
+         Error.error_text = ("Missing " ^  proc_mn ^ " in prelude")}
+  end
+  ) basic_prims_with_mults in
+  ()
+
+let prim_sanity_check iprog=
+  let pr_proc p = pr_id p.proc_mingled_name in
+  let pr_procs prog= (pr_list pr_proc) prog.prog_proc_decls in
+  Debug.no_1 "prim_sanity_check" pr_procs pr_none
+      (fun _ -> prim_sanity_check_x iprog) iprog

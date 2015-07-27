@@ -1,0 +1,48 @@
+# ex5.ss -infer "@term" --trace-exc
+
+typechecker.ml
+    (* QUICK FIX : why did we remove pre/post? *)
+    (* let () = prog.prog_rel_decls # reset in *)
+    (* let () = prog.prog_rel_decls # push_list rem_pure_inf_prog_rel_decls in *)
+
+located:
+chinwn@loris-7:~/hg/sl_term$ hg bisect -b
+The first bad revision is:
+changeset:   15047:ff304d1db0cd
+branch:      arr_infer
+parent:      15031:07290769e28c
+user:        caizh@loris-5
+date:        Tue May 19 10:34:06 2015 +0800
+summary:     fixed type preservation, fix type setting in Fixcalc.substitute_args
+
+Using @post_n
+=============
+(==fixcalc.ml#848==)
+look_up_rel_args_type_from_prog@2
+look_up_rel_args_type_from_prog inp1 :post_1521
+look_up_rel_args_type_from_prog@2 EXIT:[int,int,int,int,int,int,int]
+
+Using @term
+============
+(==fixcalc.ml#848==)
+look_up_rel_args_type_from_prog@2
+look_up_rel_args_type_from_prog inp1 :post_1558
+look_up_rel_args_type_from_prog@2 EXIT ExceptionNot_foundOccurred!
+
+Exception(substitute_args):Not_found
+Exception(extract_inv_helper):Not_found
+Exception(compute_fixpoint_xx):Not_found
+Exception(compute_fixpoint_x2):Not_found
+Exception(compute_fixpoint_2):Not_found
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================

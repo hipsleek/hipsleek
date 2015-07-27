@@ -461,7 +461,7 @@ let main () =
   with
   | End_of_file ->
     begin
-      print_string ("\n")
+      print_string_quiet ("\n")
     end
   | _ ->
     begin

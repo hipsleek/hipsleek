@@ -163,7 +163,7 @@ let pr_proof_log_entry e =
   if e.log_cache then fmt_string ("; prover : CACHED ")
   else fmt_string ("; prover: " ^ (string_of_prover e.log_prover));
   let x = if e.log_timeout then "(TIMEOUT)" else "" in
-  if e.log_time > 0.5 then fmt_string ("; TIME: "^ (string_of_float e.log_time)^x);
+  if e.log_time > !time_limit_large then fmt_string ("; TIME: "^ (string_of_float e.log_time)^x);
   fmt_string ("; loc: "^(string_of_loc e.log_loc));
   fmt_string ("; kind: "^(Others.string_of_proving_kind e.log_proving_kind));
   (* fmt_string ("; "^((pr_list pr_id) e.log_other_properties)); *)

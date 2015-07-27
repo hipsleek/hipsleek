@@ -183,7 +183,8 @@ let cprog = ref {
     Cast.prog_view_decls = [];
     Cast.prog_logical_vars = [];
     (*	Cast.prog_func_decls = [];*)
-    Cast.prog_rel_decls = []; (* An Hoa *)
+    (* Cast.prog_rel_decls = []; (\* An Hoa *\) *)
+    Cast.prog_rel_decls = (let s = new Gen.stack_pr Cprinter.string_of_rel_decl (=) in s);
     Cast.prog_templ_decls = [];
     Cast.prog_ui_decls = [];
     Cast.prog_ut_decls = [];
@@ -226,7 +227,8 @@ let clear_iprog () =
 let clear_cprog () =
   !cprog.Cast.prog_data_decls <- [];
   !cprog.Cast.prog_view_decls <- [];
-  !cprog.Cast.prog_rel_decls <- [];
+  (* !cprog.Cast.prog_rel_decls <- []; *)
+  (!cprog.Cast.prog_rel_decls # reset);
   !cprog.Cast.prog_hp_decls <- [];
   !cprog.Cast.prog_templ_decls <- [];
   !cprog.Cast.prog_ut_decls <- [];
@@ -444,7 +446,9 @@ let process_rel_def rdef =
         		let  ()= if !Globals.print_core || !Globals.print_core_all then print_string (Cprinter.string_of_view_decl n_crdef ^"\n") else () in
         		cprog.Cast.prog_view_decls <- (n_crdef :: old_vdec) *)
       iprog.I.prog_rel_decls <- ( rdef :: iprog.I.prog_rel_decls);
-      let crdef = Astsimp.trans_rel iprog rdef in !cprog.Cast.prog_rel_decls <- (crdef :: !cprog.Cast.prog_rel_decls);
+      let crdef = Astsimp.trans_rel iprog rdef 
+      (* in !cprog.Cast.prog_rel_decls <- (crdef :: !cprog.Cast.prog_rel_decls); *)
+      in !cprog.Cast.prog_rel_decls # push crdef;
       (*L2: duplicate with trans_rel *)
       (* Forward the relation to the smt solver. *)
       (* let _ = Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula in *)
@@ -480,7 +484,8 @@ let process_ui_def uidef =
       iprog.I.prog_rel_decls <- (uidef.Iast.ui_rel::iprog.I.prog_rel_decls);
       let cuidef = Astsimp.trans_ui iprog uidef in
       !cprog.Cast.prog_ui_decls <- cuidef::!cprog.Cast.prog_ui_decls;
-      !cprog.Cast.prog_rel_decls <- cuidef.Cast.ui_rel::!cprog.Cast.prog_rel_decls;
+      (* !cprog.Cast.prog_rel_decls <- cuidef.Cast.ui_rel::!cprog.Cast.prog_rel_decls; *)
+      !cprog.Cast.prog_rel_decls # push cuidef.Cast.ui_rel;
     with _ -> dummy_exception (); iprog.I.prog_ui_decls <- tmp 
   else print_endline_quiet (uidef.I.ui_rel.rel_name ^ " is already defined.")
 
@@ -494,7 +499,8 @@ let process_hp_def hpdef =
       iprog.I.prog_hp_decls <- ( hpdef :: iprog.I.prog_hp_decls);
       let chpdef, p_chpdef = Astsimp.trans_hp iprog hpdef in
       let _ = !cprog.Cast.prog_hp_decls <- (chpdef :: !cprog.Cast.prog_hp_decls) in
-      let _ = !cprog.Cast.prog_rel_decls <- (p_chpdef::!cprog.Cast.prog_rel_decls) in
+      (* let _ = !cprog.Cast.prog_rel_decls <- (p_chpdef::!cprog.Cast.prog_rel_decls) in *)
+      let _ = !cprog.Cast.prog_rel_decls # push p_chpdef in
       (* Forward the relation to the smt solver. *)
       let args = fst (List.split chpdef.Cast.hp_vars_inst) in
       let _ = Smtsolver.add_hp_relation chpdef.Cast.hp_name args chpdef.Cast.hp_formula in
@@ -1226,7 +1232,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
     ) [] fvs
   in
   (*let _ = print_endline "run_infer_one_pass" in*)
-  let ante1 = CF.subst sst ante in
+  let ante1 = x_add CF.subst sst ante in
   let ante = Cfutil.transform_bexpr ante1 in
   let conseq = CF.struc_formula_trans_heap_node [] Cfutil.transform_bexpr conseq in
   let pr = Cprinter.string_of_struc_formula in
@@ -1313,7 +1319,7 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
       (* let _ = Debug.info_pprint (Cprinter.string_of_formula guard) no_pos in *)
       let p = CF.get_pure guard in
       let eq = (Mcpure.ptr_equations_without_null (Mcpure.mix_of_pure p)) in
-      let guard1 = CF.subst eq guard in
+      let guard1 = x_add CF.subst eq guard in
       (* if CP.isConstTrue p then *)
       (* let hfs = CF.heap_of guard1 in *)
       (* CF.join_star_conjunctions_opt hfs *)
@@ -1629,7 +1635,7 @@ let process_shape_rec sel_hps=
     | (hp,args0,f)::rest ->
       let fs = List.map (fun (_,args1, f1) ->
           let sst = List.combine args1 args0 in
-          CF.subst sst f1
+          x_add CF.subst sst f1
         ) rest in
       {CF.def_cat= (CP.HPRelDefn (hp, List.hd args0, List.tl args0));
        CF.def_lhs= (CF.HRel (hp, List.map (fun sv -> CP.mkVar sv no_pos) args0, no_pos));

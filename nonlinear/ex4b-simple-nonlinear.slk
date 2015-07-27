@@ -1,0 +1,49 @@
+checkentail b>=1 & a=1 |- a*b>=1.
+print residue.
+
+
+checkentail forall(b:a*b>=1) & a=1 |- b>=1.
+print residue.
+
+checkentail forall(b:a*b>=1) & c=1 & a=c |- b>=1.
+print residue.
+
+checkentail forall(a:a*b>=1) & a=1 |- b>=1.
+print residue.
+
+/*
+2*a = a+1+2
+2*a -a -1 -2 = 0
+a-3=0
+*/
+
+checkentail forall(b:a*b>=1) & a=1+2 |- b>=1.
+print residue.
+
+checkentail a*b>=1 & a=1 |- b>=1.
+print residue.
+// valid
+
+checkentail 1*b>=1 & a=1 |- b>=1.
+print residue.
+// valid
+
+checkentail a*b>=1 & b=1 |- a>=1.
+print residue.
+
+checkentail true |- true & exists(a:a*b=0).
+checkentail true |- true & exists(a:a*b>0).
+checkentail true |- true & exists(a:a*a=16).
+checkentail true |- true & exists(a:a*a=15).
+
+
+/*
+# ex4b.slk
+
+checkentail a*b>=1 |- a*b>=0.
+
+
+
+checkentail z=a*b & z>=1 |- z>=1.
+
+*/

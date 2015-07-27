@@ -1255,7 +1255,7 @@ let set_process (proc: prover_process_t) =
   process := proc
 
 let rec check_prover_existence prover_cmd_str: bool =
-  let exit_code = Sys.command ("which "^prover_cmd_str^">/dev/null") in
+  let exit_code = Sys.command ("which " ^ prover_cmd_str ^ " >/dev/null 2>&1") in
   if exit_code > 0 then
     let () = print_string_if (not !compete_mode)  ("WARNING: Command for starting mona interactively (" ^ prover_cmd_str ^ ") not found!\n") in
     false
