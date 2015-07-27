@@ -91,9 +91,11 @@ void while1(ref str s)
   requires s::BADS<>
   ensures s::WFSeg<s'>*s'::str<0,q>*q::BADS<>;
 */
+/* //s3
 requires s::P_v<> 
   ensures s::Q_v<s'>; //'
-//infer [P,Q] requires P(s) ensures Q(s,s');//'
+*/
+infer [P,Q] requires P(s) ensures Q(s,s');//'
 {
   int x=getChar(s);
   if (x!=0) {

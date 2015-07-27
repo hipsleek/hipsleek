@@ -1836,7 +1836,12 @@ let simplify_constrs prog unk_hps constrs=
 (*
 TODO: should remove split_spatial, now it always be true
 *)
-let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_ptrs lhsb split_spatial pos=
+(*
+  split_nemp:
+ -  only true during base_split. do not use during constrainst generating since this step does not capture danling infor properly
+ - for testing --sa-en-sp-split
+*)
+let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_ptrs lhsb split_spatial ?(split_nemp=false) pos=
   let do_spit fb rhs new_hps=
     let f = keep_data_view_hrel_nodes_fb prog fb hds hvs args [(hp,args)] in
     (*we do NOT want to keep heap in LHS*)
@@ -1888,7 +1893,7 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
           (*hip or shape infer*)
           if not split_spatial then (lhsb, [],[(hp,args)], []) else
             let n_lhsb, new_ass, wdf_hpargs, ls_rhs=
-              if !Globals.sa_sp_split_base then
+              if !Globals.sa_sp_split_base || (split_nemp && hds<> []) then
                 (*generate new hp decl for pre-preds*)
                 let new_hf, new_hp = add_raw_hp_rel prog true true undef_args_inst pos in
                 let nlhsb = CF.mkAnd_fb_hf lhsb new_hf pos in
@@ -1925,7 +1930,7 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
  do not do split_spatial, we need capture link_hps
 *)
 let find_well_defined_hp prog hds hvs ls_r_hpargs prog_vars post_hps 
-    (hp,args) def_ptrs lhsb split_spatial pos=
+    (hp,args) def_ptrs lhsb split_spatial ?(split_nemp=false) pos=
   let pr1 = !CP.print_sv in
   let pr2 = !CP.print_svl in
   let pr3 = pr_quad pr1 pr2 Cprinter.string_of_formula_base  Cprinter.prtt_string_of_formula in
@@ -1934,7 +1939,7 @@ let find_well_defined_hp prog hds hvs ls_r_hpargs prog_vars post_hps
   Debug.no_4 "find_well_defined_hp" Cprinter.string_of_formula_base pr4 pr2 pr2
     (pr_quad Cprinter.string_of_formula_base (pr_list_ln pr3) (pr_list pr4) pr5)
     (fun _ _  _ _ -> find_well_defined_hp_x prog hds hvs ls_r_hpargs
-        prog_vars post_hps (hp,args) def_ptrs lhsb split_spatial pos)
+        prog_vars post_hps (hp,args) def_ptrs lhsb split_spatial ~split_nemp:split_nemp pos)
     lhsb (hp,args) def_ptrs prog_vars
 
 (*
