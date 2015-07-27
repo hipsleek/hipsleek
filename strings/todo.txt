@@ -425,8 +425,62 @@ s = (104, ):__pointer_add__int_star__int__(s, 1)}
 (105, ):return s1}}
 }
 ==================================================================
+# ex8d.slk
+
+void while1(ref str s)
+  requires s::WFS<> 
+  ensures s::WFSeg<s'>*s'::str<0,q>*q::BADS<>;
+{
+  int x=getChar(s);
+  if (x!=0) {
+    s = incStr(s);
+    while1(s);
+  }
+}
+
+Can shape infer handle this using
+ infer [P,Q]
+ requires P(s)
+ ensures Q(s,s');
+
 ==================================================================
+# ex8b.slk --esl (explore2)
+
+Got a TNT error for:
+
+  requires s1::str<_,q>*q::BADS<> * s2::WFS<n>@L & Term[n]
+  ensures s1::WFSeg<n,s1a>*s1a::str<0,ppp>*ppp::BADS<> & s1'=ppp;
+
+Termination checking result: 
+(83)->(95) (MayTerm ERR: not bounded)[n]
+
+However, there does not seem to be any logging of TNT-related
+sleek proofs. 
 ==================================================================
+# ex5a.slk -dre "arith_simpl"
+
+checkentail b>=1 & aaa=1*2+3-1 |- aaa*b>=1.
+print residue.
+
+Need to change arithmetic simplify.
+Below was required for mona formual to eliminate
+- operator.
+
+arith_simplify LHS@1
+arith_simplify LHS inp1 : b>=1 & aaa=((1*2)+3)-1
+arith_simplify LHS@1 EXIT: 1<=b & aaa+1=2+3
+========================================================
+# ex5a.slk -dre "do_all"
+
+# do_all_eq and do_all3_eq are for more aggressive reduction
+ of constants for equalities. It could be further improved.
+
+(====)
+do_all_eq@2@1
+do_all_eq inp1 : aaa
+do_all_eq inp2 : ((1*2)+3)-1
+do_all_eq@2 EXIT:( aaa+1, 2+3)
+
 ==================================================================
 ==================================================================
 ==================================================================
