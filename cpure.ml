@@ -6964,9 +6964,18 @@ and b_form_simplify_x (b:b_formula) :b_formula =
     let lh = purge_mult lh in
     let rh = purge_mult rh in
     (lh, rh) in
+  let build_eq lhs rhs = 
+    (* to simplify to v=rhs *)
+    (lhs,rhs) in
+  let do_all_eq e1 e2 l = 
+    let (lhs,rhs) as r = do_all e1 e2 l in
+    let new_r = 
+      if !Globals.oc_non_linear then build_eq lhs rhs 
+      else r in
+    new_r in
   let do_all_eq e1 e2 l = 
     let pr = !print_exp in
-      Debug.no_2 "do_all_eq" pr pr (pr_pair pr pr) (fun _ _ -> do_all e1 e2 l) e1 e2
+      Debug.no_2 "do_all_eq" pr pr (pr_pair pr pr) (fun _ _ -> do_all_eq e1 e2 l) e1 e2
   in
   let do_all3 e1 e2 e3 l =
     let t1 = simp_mult e1 in

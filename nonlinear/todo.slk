@@ -253,8 +253,13 @@ arith_simplify LHS@1 EXIT: 1<=b & aaa+1=2+3
 # ex5a.slk -dre "do_all"
 
 # do_all_eq and do_all3_eq are for more aggressive reduction
- of eqaulities.
+ of equalities.
 
+(====)
+do_all_eq@2@1
+do_all_eq inp1 : aaa
+do_all_eq inp2 : ((1*2)+3)-1
+do_all_eq@2 EXIT:( aaa+1, 2+3)
 
 
 ========================================================
