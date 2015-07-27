@@ -403,13 +403,13 @@ let collect_infer_post_procs_for_tnt_acc acc prog proc =
       let sdg, trans_sdg = Hashtbl.find sdg_proc_tbl mn in
       CG.fold_vertex (fun (src, index) infer_post_procs ->
           if (index == root_index) then
-            (* (* Find procs which the conditional conditions depend on *)
-            let cond_depend_procs = collect_cond_depend_procs (src, index) sdg in
-            let () = if not (is_empty cond_depend_procs) then x_binfo_pp (
-                  "@post is added into " ^ (pr_list print_num_ident cond_depend_procs) ^ 
-                  " for conditions in " ^ (print_num_ident (src, index))) no_pos 
-            in
-            infer_post_procs @ (List.map fst cond_depend_procs) *)
+            (* (* Find procs which the conditional conditions depend on *)                   *)
+            (* let cond_depend_procs = collect_cond_depend_procs (src, index) sdg in         *)
+            (* let () = if not (is_empty cond_depend_procs) then x_binfo_pp (                *)
+            (*       "@post is added into " ^ (pr_list print_num_ident cond_depend_procs) ^  *)
+            (*       " for conditions in " ^ (print_num_ident (src, index))) no_pos          *)
+            (* in                                                                            *)
+            (* infer_post_procs @ (List.map fst cond_depend_procs)                           *)
             infer_post_procs
           (* If a method has already been marked as @post, we do not need to work on it again *)
           else if (index == var_index) || (List.exists (fun mn -> eq_str mn src) infer_post_procs) 
