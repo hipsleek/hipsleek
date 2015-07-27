@@ -544,10 +544,43 @@ Expecting:
   prune baga conditions: 
   prune invs:0:,[]
 
-# Not a valid base-case if primitive predicate present..
 # Why no direct unfolding?
 
 ==================================================================
+# strings/ex8d6.slk --pcp
+
+# Not a valid base-case if primitive predicate present..
+
+pred H1<v> == self::str<v2,q>*q::H1<v2> & v!=0
+   or self::D<> & v=0
+  inv self!=null.
+
+  base case: {v=0->v=0 & self!=null}
+
+# base-case unfold should only be for emp base-cases ..
+
+(====)
+compute_base_case_part@2@1
+compute_base_case_part inp1 : (* lbl: *){2}->(exists v2_13,q,
+v2: (* lbl: *){2}->self::str<v2,q>@M * q::H1<v2_13>@M&vvv!=0 & v2_13=v2&
+{FLOW,(1,26)=__flow#E}[]
+compute_base_case_part@2 EXIT:([],[ vvv!=0 & self!=null])
+
+(==omega.ml#1151==)
+compute_base_case_part@3@1
+compute_base_case_part inp1 : (* lbl: *){3}->self::D<>@M&vvv=0&{FLOW,(1,26)=__flow#E}[]
+compute_base_case_part@3 EXIT:([ vvv=0 & self!=null],[])
+
+(==cvutil.ml#1167==)
+compute_base_case@1
+compute_base_case inp1 :H1
+compute_base_case inp2 : (* lbl: *){2}->(exists v2_13,q,
+ v2: (* lbl: *){2}->self::str<v2,q>@M * q::H1<v2_13>@M&vvv!=0 & v2_13=v2&
+ {FLOW,(1,26)=__flow#E}[]
+ (* lbl: *){3}->self::D<>@M&vvv=0&{FLOW,(1,26)=__flow#E}[]
+compute_base_case inp3 :[self,vvv]
+compute_base_case@1 EXIT:Some( vvv=0)
+
 ==================================================================
 ==================================================================
 ==================================================================
