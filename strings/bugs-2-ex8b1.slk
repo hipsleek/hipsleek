@@ -20,10 +20,16 @@ pred BADS<> ==
   self::str<v,q>*q::BADS<> & v>=0
   inv true.
 
-checkentail x::WFS<n> |- x::WFS<n> & n>=0.
+checkentail x::WFS<nnn> |- x::WFS<nnn> & nnn>=0.
 print residue.
 
-checkentail x::WFS<n>@L |- x::WFS<n>@L & n>=0.
+checkentail x::WFS<nnn> |-  nnn>=0.
+print residue.
+
+checkentail x::WFS<nnn>@L |-  nnn>=0.
+print residue.
+
+checkentail x::WFS<nnn>@L |- x::WFS<nnn>@L & nnn>=0.
 print residue.
 
 

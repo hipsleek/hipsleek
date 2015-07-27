@@ -1,0 +1,15 @@
+
+data str {
+  int val;
+  str next;
+}.
+
+pred WFS<n:int> ==
+  self::str<0,q> & n=0
+  or self::str<v,q>*q::WFS<n-1> & v>0 //& n>0
+  inv n>=0.
+
+checkentail x::WFS<nnn>@L |- x::WFS<nnn>@L & nnn>=0.
+print residue.
+
+
