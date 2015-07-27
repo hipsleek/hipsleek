@@ -207,6 +207,7 @@ let rec get_core_cil_typ (t: Cil.typ) : Cil.typ = (
   let core_typ = (
     match t with
     | Cil.TVoid _ -> Cil.TVoid []
+    | Cil.TInt (Cil.IChar, _) -> Cil.TInt(Cil.IChar, [])
     | Cil.TInt (ik, _) -> Cil.TInt (Cil.IInt, [])
     | Cil.TFloat (fk, _) -> Cil.TFloat (Cil.FFloat, [])
     | Cil.TPtr (ty, _) -> Cil.TPtr (get_core_cil_typ ty, [])
@@ -802,6 +803,10 @@ and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
             ^ "  requires p::" ^ typ2_name^ "<val, offset>\n"
             ^ "  ensures p::" ^ typ2_name^ "<val, offset>"
                ^ " * res::" ^ typ2_name^ "<_, offset " ^ op_str ^ " i>;\n"
+        | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), _ ->
+            "char_star __plus_plus_char(char_star x)\n"
+          ^ "requires x::str<_,q>@L & Term[] \n"
+          ^ "ensures  res=q ;\n"
         | Cil.TPtr _, Cil.TInt _ ->
             typ1_name ^ " " ^ proc_name ^ "(" ^ typ1_name ^ " p, " ^ typ2_name ^ " i)\n"
             ^ "  requires p::" ^ typ1_name^ "<val, offset>\n"
@@ -1045,7 +1050,10 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
               let value_field = ((value_typ, str_value), no_pos, false, [gen_field_ann value_typ] (* Iast.F_NO_ANN *)) in
               let offset_field = ((Int, str_offset), no_pos, false, [gen_field_ann Int]) in
               let dfields = [value_field; offset_field] in
-              let dname = (Globals.string_of_typ value_typ) ^ "_star" in
+              let dname = match ty with
+		| Cil.TInt(Cil.IChar, _) -> "char_star"
+                | _ -> (Globals.string_of_typ value_typ) ^ "_star" 
+              in
               let dtype = Globals.Named dname in
               Hashtbl.add tbl_pointer_typ core_type dtype;
               let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in
@@ -1411,6 +1419,12 @@ and translate_exp_binary (op: Cil.binop) (exp1: Cil.exp) (exp2: Cil.exp)
   let t2 = typ_of_cil_exp exp2 in
   match (t1, t2) with
   (* pointer arithmetic *)
+  | Cil.TPtr(Cil.TInt(Cil.IChar, _), _) , _ ->
+    let _ =  Debug.ninfo_hprint (add_str "e1" !Iast.print_exp) e1 no_pos in
+    let pointer_arith_proc = create_pointer_arithmetic_proc op t1 t2 in
+    let proc_name = pointer_arith_proc.Iast.proc_name in
+    let _ =  Debug.ninfo_hprint (add_str "proc_name" (pr_id)) proc_name no_pos in
+    Iast.mkCallNRecv proc_name None [e1] None None pos
   | Cil.TPtr _, Cil.TInt _
   | Cil.TInt _, Cil.TPtr _ ->
     (* | Cil.TPtr _, Cil.TPtr _ -> *)

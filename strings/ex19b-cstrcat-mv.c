@@ -1,4 +1,10 @@
+/*@
 
+data char_star {
+  int val;
+  char_star next;
+}
+*/
  char *(cstrcat)(char *s1)
  {
      char *s = s1;
