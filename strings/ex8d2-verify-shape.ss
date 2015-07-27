@@ -68,13 +68,19 @@ requires x::str<v,q>
 
 HeapPred P(str a).
 HeapPred Q(str a, str b).
+//HeapPred U(str a).
 
-/*
-  P<> == self::str<v,q> * q::H<v>;
+U<> == true;
 
-H<v> == self::str<..
+P_v<> == self::str<v,q> * q::H_v<v>;
 
-*/
+H_v<v> == self::str<v1,q> * q::H_v<v1> & v!=0
+  or self::U<> & v=0;
+
+Q_v<s> == self::str<v,q> * q::U<> & self=s & v=0
+  or self::str<v,q> * q::Q_v<s> & v!=0;
+
+
 
 void while1(ref str s)
 /* //s1
@@ -85,6 +91,8 @@ void while1(ref str s)
   requires s::BADS<>
   ensures s::WFSeg<s'>*s'::str<0,q>*q::BADS<>;
 */
+requires s::P_v<> 
+  ensures s::Q_v<s'>; //'
 //infer [P,Q] requires P(s) ensures Q(s,s');//'
 {
   int x=getChar(s);
