@@ -3,9 +3,9 @@ data str {
   str next;
 }.
 
-  pred_prim D<> inv self!=null.
+pred_prim D<> inv self!=null.
 
- pred P1<> == self::str<v,q> * q::H1<v>
+pred P1<> == self::str<v,q> * q::H1<v>
   inv self!=null.
 
 pred H1<v> == self::str<v2,q>*q::H1<v2> & v!=0
@@ -24,17 +24,38 @@ s'=s & v_1646=v & q_1647=q & s!=null & v_1646=0 & MayLoop[]&
  |-  s::Q1{}<s'>&q!=null&{FLOW,(4,5)=__norm#E}[]. 
 */
 
+/*
 checkentail s'::str<v,q>*q::H1<v> & v=0 & s=s' |- s::Q1<s'>.
+print residue.
+*/
+
+checkentail q::H1<v> & v=0  |- q::D<>.
 print residue.
 
 /*
-# ex8d5.slk 
+# strings/ex8d6.slk --pcp
 
-Inv Check: Fail.(Over)
+printing problem ..
 
-# print view failing
+  base case: 
+  v=0->v=0 & self!=nullview_complex_inv: None
+  prune branches: ,[]
+  prune conditions: 
+    {
+[]}
+  prune baga conditions: 
+  prune invs:0:,[]
 
-# make it a serious error
+Expecting:
 
+  base case: {v=0->v=0 & self!=null}
+  view_complex_inv: None
+  prune branches: ,[]
+  prune conditions: {[]}
+  prune baga conditions: 
+  prune invs:0:,[]
+
+# Not a valid base-case if primitive predicate present..
+# Why no direct unfolding?
 
 */

@@ -3,7 +3,7 @@ data str {
   str next;
 }.
 
-  pred_prim D<> inv self!=null.
+  pred_prim D<> inv true.
 
  pred P1<> == self::str<v,q> * q::H1<v>
   inv self!=null.
