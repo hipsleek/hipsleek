@@ -3794,7 +3794,7 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
     let es = get_estate_from_ctx bot_ctx in
     let (_,cseq) = base_formula_of_struc_formula conseq in
     (* WN: this may not log RHS conseq formula properly *)
-    let () = new_slk_log_g cseq 2 (* hec_num *) pos r es in
+    let () = x_add new_slk_log_g cseq 2 (* hec_num *) pos r es in
     (r, UnsatAnte)
   else(* if isConstFalse conseq then
          (--[], UnsatConseq)
@@ -5161,7 +5161,7 @@ and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool) (ctx : co
   if (isAnyFalseCtx ctx)  then (* check this first so that false => false is true (with false residual) *)
     let r = SuccCtx [ctx] in
     let es = get_estate_from_ctx ctx in
-    let () = new_slk_log_g conseq 2 (* hec_num *) pos r es in
+    let () = x_add new_slk_log_g conseq 2 (* hec_num *) pos r es in
     (r, UnsatAnte)
   else
   if (not !Globals.do_classic_frame_rule) && (isStrictConstTrue conseq) then (SuccCtx [ctx], TrueConseq)
@@ -5486,7 +5486,7 @@ and early_pure_contra_detection_x hec_num prog estate conseq pos msg is_folding 
   let h_inf_args, hinf_args_map = get_heap_inf_args estate in
   let esv = estate.es_infer_vars in
 
-  let new_slk_log result es = new_slk_log_g conseq hec_num pos result es in
+  let new_slk_log result es = x_add new_slk_log_g conseq hec_num pos result es in
     (* let it = CF.infer_type_of_entail_state es in *)
     (* let avoid = CF.is_emp_term conseq in *)
     (* let avoid = avoid || (not (hec_stack # is_empty)) in *)
@@ -5897,13 +5897,13 @@ and new_slk_log_g (conseq:formula) hec_num pos result es  =
       | None   -> es.es_formula in
     let it = CF.infer_type_of_entail_state es in
     let esv = es.es_infer_vars in
-    let () = x_add Log.add_sleek_logging (Some es) false 0. it esv !Globals.do_classic_frame_rule caller 
+    let () = (* x_add *) Log.add_sleek_logging (Some es) false 0. it esv !Globals.do_classic_frame_rule caller 
       (* avoid *) false hec_num slk_no es.es_formula (* orig_ante *) conseq es.es_heap es.es_evars (Some result) pos in
     ()
 
 
 and log_contra_detect hec_num conseq result pos =
-  let new_slk_log result es = new_slk_log_g conseq hec_num pos result es in
+  let new_slk_log result es = x_add new_slk_log_g conseq hec_num pos result es in
   (*   let avoid = CF.is_emp_term conseq in *)
   (*   let avoid = avoid || (not (hec_stack # is_empty)) in *)
   (*   let caller = hec_stack # string_of_no_ln in *)
@@ -8228,6 +8228,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
   x_tinfo_hp (add_str "curr_lhs_h" (Cprinter.string_of_h_formula)) curr_lhs_h pos;
   x_tinfo_hp (add_str "lhs_p" !Cast.print_mix_formula) lhs_p no_pos;
   let curr_lhs_h, lhs_p = normalize_frac_heap prog curr_lhs_h lhs_p lhs_vp in
+  x_tinfo_hp (add_str "estate_orig" (Cprinter.string_of_entail_state)) estate_orig pos;
   x_tinfo_hp (add_str "curr_lhs_h0" (Cprinter.string_of_h_formula)) curr_lhs_h pos;
   let unk_heaps = CF.keep_hrel curr_lhs_h in
   (* Debug.info_hprint (add_str "curr_lhs_h" Cprinter.string_of_h_formula) curr_lhs_h no_pos; *)
@@ -8241,6 +8242,9 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
     else ()
   in
   (* WN:TODO can we invoke a single xpure if the formula are identical? *)
+  (* it's sound to restore hols for curr_lhs_h at this point as this expression is only used for computing the different xpures *)
+  let curr_lhs_h = Immutable.apply_subs_h_formula estate_orig.es_crt_holes curr_lhs_h in
+  (* below merges and normalizes aliased nodes *)
   let curr_lhs_h, lhs_p = Norm.imm_norm_h_formula prog curr_lhs_h lhs_p unfold_for_abs_merge pos in
   let (xpure_lhs_h1, yy, memset) as xp1a = 
     x_add xpure_heap 9 prog curr_lhs_h lhs_p 1 in

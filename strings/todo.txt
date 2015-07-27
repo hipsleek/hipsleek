@@ -377,11 +377,150 @@ Error3(s) detected at main
 
 [4]+  Done                    ../hip ex18a-infer-cstrcat-memsafe.ss e todo.txt
 ==================================================================
+# ex19a1.ss
+
+  how to handle pointer arithmetic?
+
+char_star plus_plus_char(char_star x)
+  requires x::char_star<_,q>@L & Term[]
+  ensures  res=q & q=x+1;
+
+Last Proving Location: ex19a-cstrcat-mv.ss_22:0_24:25
+
+ERROR: at ex19a-cstrcat-mv.ss_24:23_24:24
+Message: TYPE ERROR 1 : Found int but expecting char_star
+
+!!! **main.ml#1177:WARNING : Logging not done on finalize
+Stop Omega... 49 invocations caught
+
+Exception occurred: Failure("TYPE ERROR 1 : Found int but expecting char_star")
+Error3(s) detected at main 
+
 ==================================================================
+# ex19b.s --pip
+
+# should use char_star instead of int_star
+# also instead of
+    s = (104, ):__pointer_add__int_star__int__(s, 1)}
+  need to generate
+    s = (104, ):__plus_plus_char(s)}
+
+int_star cstrcat(int_star s1)[]
+static EInfer [HP_14,GP_15] EBase: [][](HRel HP_14(s1)) * ([] & true)( FLOW __norm) {EAssume: 2,:(HRel GP_15(s1,res)) * ([] & true)( FLOW __norm)}
+dynamic EBase: [][](hfalse) * ([] & false)( FLOW __false) 
+{
+{local: int_star s
+int_star s
+{s = s1
+ while (true) 
+ 
+{
+{(99, ):if (member access s~~>value != 0) { 
+  (99, ):;
+} else { 
+  (99, ):(100, ):break 
+}
+s = (104, ):__pointer_add__int_star__int__(s, 1)}
+}
+(105, ):return s1}}
+}
 ==================================================================
+# ex8d.slk
+
+void while1(ref str s)
+  requires s::WFS<> 
+  ensures s::WFSeg<s'>*s'::str<0,q>*q::BADS<>;
+{
+  int x=getChar(s);
+  if (x!=0) {
+    s = incStr(s);
+    while1(s);
+  }
+}
+
+Can shape infer handle this using
+ infer [P,Q]
+ requires P(s)
+ ensures Q(s,s');
+
 ==================================================================
+# ex8b.ss --esl (explore2) (FIXED with subs hole prior to xpure)
+
+Got a TNT error for:
+
+  requires s1::str<_,q>*q::BADS<> * s2::WFS<n>@L & Term[n]
+  ensures s1::WFSeg<n,s1a>*s1a::str<0,ppp>*ppp::BADS<> & s1'=ppp;
+
+Termination checking result: 
+(83)->(95) (MayTerm ERR: not bounded)[n]
+
+However, there does not seem to be any logging of TNT-related
+sleek proofs. 
 ==================================================================
+# ex5a.slk -dre "arith_simpl"
+
+checkentail b>=1 & aaa=1*2+3-1 |- aaa*b>=1.
+print residue.
+
+Need to change arithmetic simplify.
+Below was required for mona formual to eliminate
+- operator.
+
+arith_simplify LHS@1
+arith_simplify LHS inp1 : b>=1 & aaa=((1*2)+3)-1
+arith_simplify LHS@1 EXIT: 1<=b & aaa+1=2+3
+========================================================
+# ex5a.slk -dre "do_all"
+
+# do_all_eq and do_all3_eq are for more aggressive reduction
+ of constants for equalities. It could be further improved.
+
+(====)
+do_all_eq@2@1
+do_all_eq inp1 : aaa
+do_all_eq inp2 : ((1*2)+3)-1
+do_all_eq@2 EXIT:( aaa+1, 2+3)
+
 ==================================================================
+# ex5a.slk 
+
+# must subs hole before calling xpure..
+
+@11! **solver.ml#8231:estate_orig:
+  Hole[45]&{FLOW,(20,21)=__norm#E}[]
+ es_evars: [nnn_44]
+ es_rhs_eqset: [nnn:nnn; nnn:nnn]
+ es_crt_holes: [x::WFS<nnn>@L:45]
+ es_trace:  COND ==>  Match(x,x)
+@11! **solver.ml#8232:curr_lhs_h0: Hole[45]
+@11! **solver.ml#8233:curr_lhs_h0: Hole[45]
+(==solver.ml#8248==)
+xpure_heap#9@12@11
+xpure_heap#9 inp1 : Hole[45]
+xpure_heap#9 inp2 : true
+xpure_heap#9 inp3 :1
+xpure_heap#9@12 EXIT:( true,[], [])#true
+
+(==solver.ml#7619==)
+heap_entail_empty_rhs_heap#1@11
+heap_entail_empty_rhs_heap#1 inp1 :es:
+  Hole[45]&{FLOW,(20,21)=__norm#E}[]
+ es_evars: [nnn_44]
+ es_rhs_eqset: [nnn:nnn; nnn:nnn]
+ es_crt_holes: [x::WFS<nnn>@L:45]
+ es_trace:  COND ==>  Match(x,x)
+heap_entail_empty_rhs_heap#1 inp2 :lhs: Hole[45]&{FLOW,(20,21)=__norm#E}[]
+heap_entail_empty_rhs_heap#1 inp3 :rhs: 0<=nnn & nnn=nnn
+heap_entail_empty_rhs_heap#1 inp4 :is_folding:false
+heap_entail_empty_rhs_heap#1@11 EXIT: MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: logical bug
+   fe_locs: {
+     fc_message:  true |-  0<=nnn. LOCS:[0;12] (may-bug)
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ COND ==>  Match(x,x)]]
+ CEX:false
 ==================================================================
 ==================================================================
 ==================================================================
