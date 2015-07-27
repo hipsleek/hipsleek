@@ -1876,7 +1876,10 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
         wdef_ni_svl: if not empty, do not split.
         TODO: forward hp defs to post-preds
       *)
-      if wdef_ni_svl <> [] then
+      let wdef_ni_svl0 = if !Globals.sa_pure_field then
+        List.filter (fun (sv,_) -> (CP.is_node_typ sv)) wdef_ni_svl
+      else wdef_ni_svl in
+      if wdef_ni_svl0 <> [] then
         (lhsb, [],[(hp,args)], [])
       else begin
         (*not all args are well defined and in SHAPE INFER. do split*)
