@@ -2134,20 +2134,27 @@ and update_fixpt_x iprog (vl:(view_decl * ident list *ident list) list)  =
       v.view_pt_by_self<-tl;
       if (List.length a==0) then 
         if v.view_is_prim || v.view_kind = View_EXTN then
+          let () = x_dinfo_hp (add_str "XXX:0v.view_name" pr_id) v.view_name no_pos in
           v.view_data_name <- (v.view_name) (* TODO WN : to add pred name *)
         else if v.view_kind = View_DERV  then
           match v.view_derv_info with
           | ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args))::_ ->
             let orig_vdecl = look_up_view_def_raw 52 iprog.prog_view_decls orig_view_name in
+            let () = x_dinfo_hp (add_str "XXX:view" pr_id) v.view_name no_pos in
+            let () = x_dinfo_hp (add_str "XXX:orig_vdecl" pr_id) orig_vdecl.view_data_name no_pos in
             v.view_data_name <- orig_vdecl.view_data_name
           | [] ->
             let () = report_warning no_pos ("derv view "^(v.view_name)^" does not have derv info") in
+            let () = x_dinfo_hp (add_str "XXX:v.view_name" pr_id) v.view_name no_pos in
             v.view_data_name <- (v.view_name)
         else if String.length v.view_data_name = 0 then
           () (* self has unknown type *)
           (* report_warning no_pos ("self of "^(v.view_name)^" cannot have its type determined") *)
         else ()
-      else v.view_data_name <- List.hd a) vl
+      else 
+        let () = x_dinfo_hp (add_str "XXX:view" pr_id) v.view_name no_pos in
+        let () = x_dinfo_hp (add_str "XXX:a" (pr_list pr_id)) a no_pos in
+        v.view_data_name <- List.hd a) vl
 
 and update_fixpt (iprog:prog_decl) (vl:(view_decl * ident list *ident list) list)  =
   let pr_idl = pr_list pr_id in

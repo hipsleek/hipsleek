@@ -1675,6 +1675,14 @@ and is_simple_formula (f:formula) =
   | ViewNode _ -> true
   | _ -> false
 
+and is_emp_formula (f:formula) =
+  let h, _, _, _, _, _ = split_components f in
+  match h with
+  | HTrue | HEmp -> true
+  (* | DataNode _ -> true *)
+  (* | ViewNode _ -> true *)
+  | _ -> false
+
 (*TO CHECK: formula_*_and *)
 (* WN : free var should not need to depend on flags *)
 and fv_simple_formula (f:formula) = 

@@ -11265,6 +11265,8 @@ let rec subs_const_var_formula ?(em=None) (f:formula) : formula =
           Some (join_disjunctions (new_lhs::new_rhs))
     else None
   in
+
+
   let f_bf a ((pf,ann) as f) =
     match pf with
     | Eq (e1,e2,pos) ->

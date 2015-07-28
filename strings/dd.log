@@ -1,2 +1,6 @@
-elim_heap,Trace
-simplify_relation
+#elim_heap,Trace
+#simplify_relation
+#heap_entail_empty_rhs_heap,Trace
+#xpure_heap
+compute_base_case,Trace
+compute_base_case_part

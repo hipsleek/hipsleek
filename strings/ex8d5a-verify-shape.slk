@@ -1,0 +1,40 @@
+data str {
+  int val;
+  str next;
+}.
+
+  pred_prim D<> inv true.
+
+ pred P1<> == self::str<v,q> * q::H1<v>
+  inv self!=null.
+
+pred H1<v> == self::str<v2,q>*q::H1<v2> & v!=0
+   or self::D<> & v=0
+  inv self!=null.
+
+pred Q1<s> == self::str<v,q>*q::D<> & v=0 & s=self
+  or self::str<v,q>*q::Q1<s> & v!=0
+  inv self!=null & s!=null.
+
+/*
+id: 32; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [] globals: [@flow,@ver_post]
+ checkentail q::H1{}<v_1650> * s'::str<v_1646,q_1647>&!(v_bool_130_1561') & v_1650=v & 
+s'=s & v_1646=v & q_1647=q & s!=null & v_1646=0 & MayLoop[]&
+{FLOW,(4,5)=__norm#E}[]
+ |-  s::Q1{}<s'>&q!=null&{FLOW,(4,5)=__norm#E}[]. 
+*/
+
+checkentail s'::str<v,q>*q::H1<v> & v=0 & s=s' |- s::Q1<s'>.
+print residue.
+
+/*
+# ex8d5.slk 
+
+Inv Check: Fail.(Over)
+
+# print view failing
+
+# make it a serious error
+
+
+*/
