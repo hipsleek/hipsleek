@@ -42,6 +42,7 @@ type command =
   | RelDef of I.rel_decl (* An Hoa *)
   | TemplDef of I.templ_decl
   | UtDef of I.ut_decl
+  | UiDef of I.ui_decl
   | HpDef of I.hp_decl
   | AxiomDef of I.axiom_decl (* [4/10/2011] An Hoa *)
   | LemmaDef of I.coercion_decl_list
@@ -84,6 +85,7 @@ type command =
   | TemplSolv of ident list
   | TermInfer
   | TermAssume of (meta_formula * meta_formula)
+  | ExpectInfer of (validate_result * validation)
   | EmptyCmd
 
 and print_cmd =
@@ -103,7 +105,16 @@ and validate_result =
   | VR_Valid
   | VR_Fail of int (* 0 - any; -1 may; +1 must *) 
   | VR_Unknown of string
+  | VR_Sat
+  | VR_Unsat
 
+and validation =
+  (* R{..} *)
+  | V_Residue of meta_formula option
+  (* I{..} *)
+  | V_Infer   of meta_formula option
+  (* RA{..} *)
+  | V_RelAssume  of (cond_path_type * meta_formula * meta_formula option * meta_formula) option
 (*
   The second component is IF.formula and not CF.formula since
   depending on how the formula is used (in negative or positive
@@ -111,6 +122,7 @@ and validate_result =
   Therefore we keep the original version and do the translations
   according to different usage.
 *)
+
 
 type var_table_t = (ident, meta_formula) H.t
 
@@ -123,6 +135,7 @@ let string_of_command c = match c with
   | RelDef  _ -> "RelDef" 
   | TemplDef _ -> "TemplDef"
   | UtDef _ -> "UtDef"
+  | UiDef _ -> "UiDef"
   | HpDef  _ -> "HpDef"  
   | AxiomDef  _ -> "AxiomDef"  
   | LemmaDef  _ -> "LemmaDef"
@@ -165,6 +178,7 @@ let string_of_command c = match c with
   | TemplSolv _ -> "TemplSolv"
   | TermInfer -> "TermInfer"
   | TermAssume _ -> "TermAssume"
+  | ExpectInfer (_,_) -> "ExpectInfer"
   | EmptyCmd -> "EmptyCmd"
 
 let put_var (v : ident) (info : meta_formula) = H.add var_tab v info
@@ -197,6 +211,16 @@ let rec fv_meta_formula (mf: meta_formula) =
   | MetaCompose (idl, m1, m2) -> 
     (List.map (fun i -> (i, Unprimed)) idl) @ 
     (fv_meta_formula m1) @ (fv_meta_formula m2)
+
+let string_of_validation v=
+  let pr_omf = Gen.pr_option string_of_meta_formula in
+  let pr_orel = Gen.pr_option (Gen.pr_quad Cprinter.string_of_cond_path
+      string_of_meta_formula pr_omf string_of_meta_formula) in
+  match v with
+    | V_Residue o_mf -> "R{" ^ (pr_omf o_mf) ^"}"
+    | V_Infer o_mf -> "I{" ^ (pr_omf o_mf) ^"}"
+    | V_RelAssume o_vrels -> "RA{" ^ (pr_orel o_vrels) ^ "}"
+
 
 let clear_var_table () = H.clear var_tab
 

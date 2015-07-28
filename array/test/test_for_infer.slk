@@ -1,0 +1,136 @@
+// 1
+slk_simplify x=1 | x=2.
+
+// 2
+slk_simplify x=1 & x>0.
+
+// 3
+slk_simplify a[i]=1 & a[i]>0.
+
+// 4
+infer [a,@arrvar]
+   true
+   |- emp& a[5]>0.
+print residue.
+
+/*
+Entail (4) : Valid. 
+
+Residue:
+ <1>htrue&1<=(a[5])&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [1<=(a[5])]
+*/
+
+
+// 5
+infer [a,@arrvar]
+   true
+   |- a[5]<0.
+print residue.
+
+/*
+Entail (5) : Valid. 
+
+Residue:
+ <1>htrue&(a[5] )<0&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [(a[5])<=-1]
+*/
+
+
+// 6
+infer [a,i,@arrvar]
+   true
+   |- a[i]=0 & i=5.
+print residue.
+
+/*
+Entail (6) : Valid. 
+
+Residue:
+ <1>htrue&i=5 & a[i]=0&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [a[i]=0; i=5]
+*/
+
+
+// Why this will fail?? Because we do not have a way to check the validity of forall i: a[i]...
+// 7
+infer [a]
+  true
+  |- a[i] + 5 > 3.
+print residue.
+
+/*
+Entail (7) : Valid. 
+
+Residue:
+ <1>htrue&forall(i:3<((a[i])+5))&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [forall(i:-1<=(a[i]))]
+*/
+
+
+// Why fail?
+// 8
+infer [a,@arrvar]
+  true
+  |- a[i] > 10.
+print residue.
+
+
+
+
+
+
+
+// 9
+infer [a,@arrvar]
+  true
+  |- a[3] + 6 > 6.
+print residue.
+
+
+// 10
+infer [a,i,@arrvar]
+  true
+  |- a[5]>i & i> 5.
+print residue.
+
+
+// 11
+infer [a,i,@arrvar]
+  i>5
+  |- a[5]>i & a[5]>6.
+print residue.
+
+/*
+// 12
+infer [a]
+  true
+  |- a[2+3]>5.
+print residue.
+
+// 13
+infer [a,i]
+  true
+  |- a[i+5]>0.
+print residue.
+
+// 14
+infer [a]
+  true
+  |- 6 + a[3] > 1.
+print residue.
+
+
+// 15
+infer [a]
+  true
+  |- 6 + (a[3]) > 1.
+print residue.
+
+// 16
+infer [a]
+  i=2
+  |- a[i] = 5.
+print residue.
+
+*/

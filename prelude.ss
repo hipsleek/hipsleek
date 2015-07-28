@@ -5,22 +5,19 @@ class __ArrBoundErr extends __Error {}
 /* class ret_bool extends __RET { bool val } */
 class __RET extends __Exc {}
 
-void throw_err()
-  requires true
-  ensures true & flow __Error;
-
 int add___(int a, int b)
   requires true
   ensures res = a + b;
 
- int minus___(int a, int b)
+int minus___(int a, int b)
   requires true
   ensures res = a - b;
 
 int mult___(int a, int b) 
   requires true 
   ensures res = a * b;
-  
+
+
 int mults___(int a, int b)
   //requires true 
   //ensures res = a * b;
@@ -37,10 +34,15 @@ int mults___(int a, int b)
       b > 0 -> ensures res < 0 & res < a & res < -b;
     }
   }
+/*
+r=a*b & b=c*d
+-->  (a=0 & r=0 | b=0 & r=0 |
+      a>0&b>0&r>a&r>b | a>0&b<0&r<-a&r<b | a<0&b>0&r<a&r<-b 
+      | a<0&b<0&r>-a,r>-b)
+*/
 
 int div___(int a, int b) 
-
-case {
+ case {
   a >= 0 -> case {
     b >= 1 -> ensures (exists r: a = b*res + r & res >= 0 & 0 <= r <= b-1);
     b <= -1 -> ensures (exists r: a = b*res + r & res <= 0 & 0 <= r <= -b-1);
@@ -53,56 +55,7 @@ case {
     /* -1 < b < 1 -> requires false ensures false; */
     -1 < b < 1 -> ensures true & flow __DivByZeroErr;
     }
-  }
-
-/*
-case {
-  a >= 0 -> case {
-    b = 1 -> ensures res = a;
-    b > 1 -> ensures (exists r: a = b*res + r & 0 <= r <= b-1 & res >= 0 & res < a);
-    b <= -1 -> ensures (exists r: a = b*res + r & 0 <= r <= -b-1 & res <= 0);
-    /* -1 < b < 1 -> requires false ensures false; */
-    -1 < b < 1 -> ensures true & flow __DivByZeroErr;
-  }
-  a < 0 -> case {
-    b >= 1 -> ensures (exists r: a = b*res + r & res <= -1 & 0 <= r <= b-1);
-    b <= -1 -> ensures (exists r: a = b*res + r & res >= 1 & 0 <= r <= -b-1);
-    /* -1 < b < 1 -> requires false ensures false; */
-    -1 < b < 1 -> ensures true & flow __DivByZeroErr;
-    }
-  }
-*/
-/*
-case {
-  a = 0 -> case {
-    b >= 1 -> ensures res = 0;
-    b <= -1 -> ensures res = 0;
-    -1 < b < 1 -> ensures true & flow __DivByZeroErr;
-  }
-  a > 0 -> case {
-    b = 1 -> ensures res = a;
-    b = -1 -> ensures res = -a;
-    b > 1 -> case {
-      a < b -> ensures res = 0;
-      a >= b -> ensures res >= 1 & res < a;
-    }
-    b < -1 -> case {
-      -a > b -> ensures res = 0;
-      -a <= b -> ensures res <= 1 & a + res > 0;
-    }
-    /* -1 < b < 1 -> requires false ensures false; */
-    -1 < b < 1 -> ensures true & flow __DivByZeroErr;
-  }
-  a < 0 -> case {
-    b = 1 -> ensures res = a;
-    b = -1 -> ensures res = -a;
-    b > 1 -> ensures res <= 0 & res > a;
-    b < -1 -> ensures res >= 0 & a + res < 0;
-    /* -1 < b < 1 -> requires false ensures false; */
-    -1 < b < 1 -> ensures true & flow __DivByZeroErr;
-  }
 }
-*/
 
 int divs___(int a, int b) 
   case {
@@ -365,6 +318,8 @@ relation bnd(int[] a, int i, int j, int low, int high) ==
 //////////////////////////////////////////////////////////////////
 
 int array_get_elm_at___1d(int[] a, int i) 
+  requires true
+  ensures res = a[i];
   /* requires [ahalb,ahaub]
 				dom(a,ahalb,ahaub) 
 				& ahalb <= i 
@@ -373,11 +328,11 @@ int array_get_elm_at___1d(int[] a, int i)
   requires true
   ensures res = a[i];
 	*/
-	requires [ahalb,ahaub]
+  /*	requires [ahalb,ahaub]
 				dom(a,ahalb,ahaub) 
 				& ahalb <= i 
 				& i <= ahaub
-	ensures res = a[i];
+                                ensures res = a[i];*/
 	
 bool array_get_elm_at___1d(bool[] a, int i) 
 	requires [ahalb,ahaub]
@@ -461,7 +416,10 @@ void delete_ptr(int_ptr_ptr@R x)
 /* Pointer translation  */
 /* ************************/
 
-int[] update___1d(int v, int[] a, int i)
+int[] update___1d(int v, ref int[] a, int i)
+  requires true
+//ensures a'[i]=v;
+ensures update_array_1d(a,res,v,i);
 //void update___(ref int[] a, int i, int v) 
 	/* requires [ahalb,ahaub]
 				dom(a,ahalb,ahaub) 
@@ -473,14 +431,14 @@ int[] update___1d(int v, int[] a, int i)
 	*/
      /* requires [s,b,low,high] bnd(a,s,b,low,high) & s<=i<=b & low<=v<=high */
      /* ensures bnd(res,s,b,low,high); */
-	requires [ahalb,ahaub]
+/*	requires [ahalb,ahaub]
 				dom(a,ahalb,ahaub) 
 				& ahalb <= i 
 				& i <= ahaub
 	ensures dom(res,ahalb,ahaub) 
-				& update_array_1d(a,res,v,i);
-				
-				
+        & update_array_1d(a,res,v,i);*/
+		  	
+			       
 bool[] update___1d(bool v, bool[] a, int i)
 	requires [ahalb,ahaub] domb(a,ahalb,ahaub) & ahalb <= i & i <= ahaub
 	ensures domb(res,ahalb,ahaub) & update_array_1d_b(a,res,v,i);
@@ -547,22 +505,28 @@ RS_mem malloc1(int n)
  ensures  res=null or res::RS_mem<n>;
 */
 
-/* pred_prim WAIT<b:bag((Object,Object))>; */
-/* pred_prim WAITS<G:bag((Object,Object)), S:bag(Object), d:Object>; */
+pred_prim WAIT<b:bag((Object,Object))>;
+pred_prim WAITS<G:bag((Object,Object)), S:bag(Object), d:Object>;
 
 relation set_comp(bag((Object,Object)) g, bag(Object) S, Object d).
 relation concrete(bag(Object) g).
 relation cyclic(bag((Object,Object)) g).
 relation acyclic(bag((Object,Object)) g).
 relation waitS(bag((Object,Object)) g, bag(Object) S, Object d).
+
+/*
+//Now added automatically by add_tnt_prim_proc in parser.ml
 relation nondet_int__(int x).
 relation nondet_bool__(bool x).
+*/
 
+relation nondet_int__(int r).
 
 int rand_int ()
-  requires true
-  ensures true;
+requires true
+ensures true;
 
 bool rand_bool ()
-  requires true
-  ensures res or !res;
+requires true
+ensures res or !res;
+

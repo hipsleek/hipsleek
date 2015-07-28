@@ -137,20 +137,20 @@ let pr_match_type (e:match_type):unit =
 
 
 let pr_match_res (c:match_res):unit =
-  fmt_open_vbox 1;
-  pr_vwrap "Type: " pr_match_type c.match_res_type;
-  pr_vwrap "LHS: " pr_h_formula c.match_res_lhs_node;
-  pr_vwrap "RHS: " pr_h_formula c.match_res_rhs_node;
-  fmt_string "\n lhs_rest: "; pr_h_formula c.match_res_lhs_rest;
-  fmt_string "\n rhs_rest: "; pr_h_formula c.match_res_rhs_rest;
+  fmt_open_vbox 0;
+  pr_hwrap "Type: " pr_match_type c.match_res_type; fmt_cut ();
+  pr_hwrap "LHS: " pr_h_formula c.match_res_lhs_node; fmt_cut ();
+  pr_hwrap "RHS: " pr_h_formula c.match_res_rhs_node; fmt_cut ();
+  fmt_string "lhs_rest: "; pr_h_formula c.match_res_lhs_rest; fmt_cut ();
+  fmt_string "rhs_rest: "; pr_h_formula c.match_res_rhs_rest;
   (* fmt_string "\n res_holes: "; pr_seq "" (Cprinter.pr_pair_aux  pr_h_formula pr_int) c.match_res_holes;   *)
   (* fmt_string "}" *)
   fmt_close ()
 
 let pr_simpl_match_res (c:match_res):unit = 
-  fmt_open_vbox 1;
-  pr_vwrap "LHS: " pr_h_formula c.match_res_lhs_node;
-  pr_vwrap "RHS: " pr_h_formula c.match_res_rhs_node;
+  fmt_open_vbox 0;
+  pr_hwrap "LHS: " pr_h_formula c.match_res_lhs_node; fmt_cut ();
+  pr_hwrap "RHS: " pr_h_formula c.match_res_rhs_node;
   fmt_close ()
 (* fmt_string "("; *)
 (*   fmt_string "\n LHS "; pr_h_formula c.match_res_lhs_node; *)
@@ -191,38 +191,44 @@ let rec pr_action_name a = match a with
   | M_lhs_case e -> fmt_string "LHSCaseAnalysis"
   | M_cyclic _ -> fmt_string "Match cyclic"
 
-let rec pr_action_res pr_mr a = match a with
-  | Undefined_action e -> fmt_string "Undefined_action =>"; pr_mr e
-  | M_match e -> fmt_string "Match =>"; pr_mr e
-  | M_split_match e -> fmt_string "SplitMatch =>"; pr_mr e
-  | M_fold e -> fmt_string "Fold =>"; pr_mr e
-  | M_unfold (e,i) -> fmt_string ("Unfold "^(string_of_int i)^" =>"); pr_mr e
-  | M_base_case_unfold e -> fmt_string "BaseCaseUnfold =>"; pr_mr e
-  | M_base_case_fold e -> fmt_string "BaseCaseFold =>"; pr_mr e
-  | M_seg_fold (e,_) -> fmt_string "SegFold =>"; pr_mr e
+let rec pr_action_res pr_mr a =
+  fmt_open_vbox 1;
+  match a with
+  | Undefined_action e -> pr_add_str "Undefined_action =>" pr_mr e
+  | M_match e -> pr_add_str "Match =>" pr_mr e
+  | M_split_match e -> pr_add_str "SplitMatch =>" pr_mr e
+  | M_fold e -> pr_add_str "Fold =>" pr_mr e
+  | M_unfold (e,i) -> pr_add_str ("Unfold "^(string_of_int i)^" =>") pr_mr e
+  | M_base_case_unfold e -> pr_add_str "BaseCaseUnfold =>" pr_mr e
+  | M_base_case_fold e -> pr_add_str "BaseCaseFold =>" pr_mr e
+  | M_seg_fold (e,_) -> pr_add_str "SegFold =>" pr_mr e
   | M_acc_fold (e,steps) ->
     let pr_steps s = fmt_string ("\n fold steps:" ^ (pr_list Acc_fold.print_fold_type s)) in
-    fmt_string "AccFold =>"; pr_mr e; pr_steps steps
-  | M_rd_lemma e -> fmt_string "RD_Lemma =>"; pr_mr e
-  | M_ramify_lemma e -> fmt_string "Ramify_Lemma =>"; pr_mr e
-  | M_lemma (e,s) -> fmt_string ((match s with | None -> "AnyLemma" | Some c-> "(Lemma "
-                                                                               ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name)^") =>"); pr_mr e
-  | M_Nothing_to_do s -> fmt_string ("NothingToDo => "^s)
+    pr_add_str "AccFold =>" pr_mr e; pr_steps steps
+  | M_rd_lemma e -> pr_add_str "RD_Lemma =>" pr_mr e
+  | M_ramify_lemma e -> pr_add_str "Ramify_Lemma =>" pr_mr e
+  | M_lemma (e,s) -> pr_add_str ((match s with | None -> "AnyLemma" | Some c-> "(Lemma "
+                                                                               ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name)^") =>") pr_mr e
+  | M_Nothing_to_do s -> pr_add_str "NothingToDo => " fmt_string s
   | M_infer_heap p ->
     let pr = string_of_h_formula in
-    fmt_string ("InferHeap => "^(pr_pair pr pr p))
-  | M_unmatched_rhs_data_node (h,_,_) -> fmt_string ("UnmatchedRHSData => "^(string_of_h_formula h))
-  | Cond_action l -> pr_seq_nocut "COND =>" (pr_action_wt_res pr_mr) l
+    fmt_string_cut ("InferHeap => "^(pr_pair pr pr p))
+  | M_unmatched_rhs_data_node (h,_,_) -> pr_add_str "UnmatchedRHSData => " fmt_string (string_of_h_formula h)
+  | Cond_action l -> pr_seq_vbox "COND =>" (pr_action_wt_res pr_mr) l
   | Seq_action l -> pr_seq_vbox "SEQ =>" (pr_action_wt_res pr_mr) l
-  | Search_action l -> 
+  | Search_action l ->
     fmt_open_vbox 1;
     pr_seq_vbox "SEARCH =>" (pr_action_wt_res pr_mr) l;
     fmt_close();
-  | M_lhs_case e -> fmt_string "LHSCaseAnalysis =>"; pr_mr e
-  | M_cyclic (e,_,_,_,_) -> fmt_string "Match cyclic =>"; pr_mr e
+  | M_lhs_case e -> pr_add_str "LHSCaseAnalysis =>" pr_mr e
+  | M_cyclic (e,_,_,_,_) -> pr_add_str "Match cyclic =>" pr_mr e;
+  fmt_close_box ();
 
-and pr_action_wt_res pr_mr (w,a) = 
-  fmt_string ("Prio:"^(string_of_int w)^" "); (pr_action_res pr_mr a)
+and pr_action_wt_res pr_mr (w,a) =
+  fmt_open_vbox 0;
+  fmt_string_cut ("Prio:"^(string_of_int w));
+  (pr_action_res pr_mr a);
+  fmt_close_box ()
 
 let string_of_action_name (e:action) = poly_string_of_pr pr_action_name e
 
@@ -368,10 +374,10 @@ let convert_starminus ls =
                        h_formula_starminus_aliasing = al;
                        h_formula_starminus_pos = pos}) ->
            (let h1 =  match al with
-               | Not_Aliased -> mkStarH h2 h1 pos 
-               | May_Aliased -> mkConjH h2 h1 pos
-               | Must_Aliased -> mkConjConjH h2 h1 pos
-               | Partial_Aliased -> mkConjStarH h2 h1 pos in 
+              | Not_Aliased -> mkStarH h2 h1 pos 
+              | May_Aliased -> mkConjH h2 h1 pos
+              | Must_Aliased -> mkConjConjH h2 h1 pos
+              | Partial_Aliased -> mkConjStarH h2 h1 pos in 
             (mkStarMinusH h1 h2 al pos 111))
          | Star({h_formula_star_h1 = h1;
                  h_formula_star_h2 = h2;
@@ -638,7 +644,7 @@ and update_field_imm_x (f : h_formula) (new_fann: CP.ann list) (consumed_ann: CP
         DataNode ( {d with h_formula_data_param_imm = new_fann; 
                            h_formula_data_arguments = new_args;
                    } )
-      | ViewNode v -> ViewNode ( {v with h_formula_view_annot_arg =  CP.update_positions_for_imm_view_params  new_fann v.h_formula_view_annot_arg} )
+      | ViewNode v -> ViewNode ( {v with h_formula_view_annot_arg = CP.update_positions_for_imm_view_params  new_fann v.h_formula_view_annot_arg} )
       | _          -> report_error no_pos ("[context.ml] : only data node should allow field annotations \n")
     in
     updated_f
@@ -1305,6 +1311,7 @@ and check_lemma_not_exist vl vr=
       else false in
     b_left && b_right &&(left_ls@right_ls)=[]
 
+(* WN : how is this diff from process_one_match? *)
 and process_one_match_accfold_x (prog: C.prog_decl) (mt_res: match_res)
     (lhs_h: CF.h_formula) (lhs_p: MCP.mix_formula) (rhs_p: MCP.mix_formula)
   : action_wt list =
@@ -1671,13 +1678,27 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                    [(1,M_cyclic (m_res,uf_i,0, syn_lem_typ, None))(* ;(1,M_unfold (m_res, uf_i)) *)]
                  else
                    let acts = [(3,M_base_case_unfold m_res) (* ;(1,M_cyclic m_res) *)] in
+                   (* TODO:WN Is infinite unfolding possible? *)
+                   let acts2 = if vl_view_orig && vr_is_prim && not(vl_is_prim) then [(2,M_unfold (m_res,uf_i))] else [] in
+                   let flag = !dis_base_case_unfold || vl_vdef.view_base_case==None in
+                   let () = if flag then 
+                       begin
+                         x_dinfo_pp "Base-Case Unfold Problem" no_pos;
+                         x_dinfo_pp "========================" no_pos;
+                         x_dinfo_hp (add_str "LHS pred" pr_id) vl_name no_pos;
+                         x_dinfo_hp (add_str "RHS pred" pr_id) vr_name no_pos;
+                       end
+                   in
                    (* let acts1= *)
                    (*   if !do_classic_frame_rule && (Cfutil.is_fold_form  prog vl estate.CF.es_formula vr rhs reqset) then *)
                    (*     acts@[(1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))] *)
                    (*   else *)
                    (*     acts *)
                    (* in *)
-                   acts
+                     if flag (* & !Globals.adhoc_flag_1 *) then  
+                       if acts2==[] then [(9,M_Nothing_to_do "no base case nor unfold here")]
+                       else acts2
+                     else acts2@acts
                in
                (*let lst = [(1,M_base_case_unfold m_res);(1,M_unmatched_rhs_data_node (rhs_node,m_res.match_res_rhs_rest))] in*)
                (*L2: change here for cyclic*)
@@ -1722,7 +1743,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          (*   | _ -> false                                      *)
          (* ) a in                                              *)
          (* try accelerated folding *)
-         let a_accfold = process_one_match_accfold prog m_res lhs_h lhs_p rhs_p in
+         let a_accfold = x_add process_one_match_accfold prog m_res lhs_h lhs_p rhs_p in
          Debug.ninfo_hprint (add_str "a_accfold length" (fun x -> string_of_int (List.length x))) a_accfold no_pos;
          Debug.ninfo_hprint (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
          (* return *)
@@ -1747,7 +1768,9 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          let new_orig_r = if !ann_derv then not(vr_view_derv) else vr_view_orig in
          let new_orig_l = if !ann_derv then not(dl_derv) else dl_orig in
          let sub_ann  = if (!Globals.allow_field_ann) then 
-             let r,_,_,_ = Immutable.subtype_ann_list [] [] dl.h_formula_data_param_imm (CP.annot_arg_to_imm_ann_list (get_node_annot_args rhs_node)) in
+             let rhs_no_h = CF.add_mix_formula_to_formula rhs_p (CF.mkTrue_nf no_pos) in
+             let rhs_for_imm_inst = map_opt_def rhs_no_h (fun x ->  CF.add_pure_formula_to_formula x rhs) estate.es_rhs_pure in
+             let r,_,_,_ = x_add (Immutable.subtype_ann_list ~rhs:rhs_for_imm_inst ~lhs:estate.es_formula) [] [] dl.h_formula_data_param_imm (CP.annot_arg_to_imm_ann_list (get_node_annot_args rhs_node)) in
              let isAccs  = Immutable.isAccsList dl.h_formula_data_param_imm in
              r && not(isAccs)
            else true in
@@ -1847,7 +1870,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          (*   | _ -> false                                      *)
          (* ) a in                                              *)
          (* try accelerated folding *)
-         let a_accfold = process_one_match_accfold prog m_res lhs_h lhs_p rhs_p in
+         let a_accfold = x_add process_one_match_accfold prog m_res lhs_h lhs_p rhs_p in
          Debug.ninfo_hprint (add_str "a_accfold length" (fun x -> string_of_int (List.length x))) a_accfold no_pos;
          Debug.ninfo_hprint (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
          (* return *)
@@ -1877,7 +1900,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          (* let a1 = if (new_orig || vl_self_pts==[]) then [(1,M_unfold (m_res,uf_i))] else [] in *)
          (* let () = pr_hdebug (add_str "left_ls" (pr_list pr_none)) left_ls in *)
          let sub_ann  = if (!Globals.allow_field_ann) then 
-             let r,_,_,_ = Immutable.subtype_ann_list [] []  (CP.annot_arg_to_imm_ann_list (get_node_annot_args lhs_node)) dr.h_formula_data_param_imm in
+             let r,_,_,_ = x_add Immutable.subtype_ann_list [] []  (CP.annot_arg_to_imm_ann_list (get_node_annot_args lhs_node)) dr.h_formula_data_param_imm in
              r
            else true in
          let a1 = 
@@ -1944,6 +1967,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
        | DataNode dl, _ -> (1,M_Nothing_to_do ("matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
        | ThreadNode dt, _ -> (1,M_Nothing_to_do ("matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
        | ViewNode vl, ViewNode vr ->
+         let vdef = x_add C.look_up_view_def_raw 43 prog.C.prog_view_decls vl.CF.h_formula_view_name in
          let vl_name = vl.h_formula_view_name in
          let vr_name = vr.h_formula_view_name in
          let vl_view_orig = vl.h_formula_view_original in
@@ -2306,13 +2330,17 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
       ->
       (*drop ummatched actions if possible*)
       (* let l = drop_unmatched_action l in *)
-      let l = List.map recalibrate_wt l in
-      let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
-      (rw,Cond_action l)
+      if l==[] then (0,Cond_action l)
+      else
+        let l = List.map recalibrate_wt l in
+        let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
+        (rw,Cond_action l)
     | Seq_action l ->
-      let l = List.map recalibrate_wt l in
-      let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
-      (rw,Seq_action l)
+      if l==[] then (0,Seq_action l)
+      else
+        let l = List.map recalibrate_wt l in
+        let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
+        (rw,Seq_action l)
     | _ -> if (w == -1) then (0,a) else (w,a) in
   let ls = List.map recalibrate_wt ys in
   let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) ls in
@@ -2371,10 +2399,10 @@ and group_equal_actions_x (ys: action_wt list) (running:action_wt list) (running
   (action_wt list)=
   match ys with
   | [] -> let new_rs =
-            match running with
-            | [] -> rs
-            | [a] -> rs @ [a]
-            | _ -> rs @ [(running_w, Cond_action running)]
+    match running with
+    | [] -> rs
+    | [a] -> rs @ [a]
+    | _ -> rs @ [(running_w, Cond_action running)]
     in new_rs
   | (w, act)::ss ->
     if (w > running_w) then
@@ -2478,10 +2506,11 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
   | [] -> M_Nothing_to_do "no nodes on RHS"
   | xs -> 
     (*  imm/imm1.slk imm/imm3.slk fails if sort_wt not done *)
-    let () = x_tinfo_hp (add_str "weighted action" (pr_list_num 
-                                                      (string_of_action_wt_res_simpl))) r no_pos in
+    let () = x_tinfo_hp (add_str "weighted action"
+      (pr_list_num_vert (string_of_action_wt_res_simpl))) r no_pos in
     let ys = sort_wt_match opt r in
-    let () = x_tinfo_hp (add_str "sorted action" (pr_list_num string_of_action_wt_res_simpl)) ys no_pos in
+    let () = x_tinfo_hp (add_str "sorted action"
+      (pr_list_num_vert string_of_action_wt_res_simpl)) ys no_pos in
     let ys2 = drop_low ys in
     (* let ys2 = snd (List.split ys) in *)
     (*Cond_action  ys *)

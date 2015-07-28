@@ -6,6 +6,8 @@ let debug_on = ref false
 let devel_debug_on = ref false
 let debug_print = ref false (* to support more printing for debugging *)
 let devel_debug_print_orig_conseq = ref false
+let debug_pattern_on = ref false
+let debug_pattern = ref (Str.regexp ".*")
 let trace_on = ref true
 let call_threshold = ref 10
 let dump_calls = ref false
@@ -152,8 +154,6 @@ let ninfo_pprint m p = ()
   -- -v:-1 (minimal tracing)
   -- -v:-2..(exact tracing)
 *)
-
-let add_str s f xs = s^":"^(f xs)
 
 let gen_vv_flags d =
   let m = !VarGen.verbose_num in
@@ -483,6 +483,19 @@ struct
   let debug_calls  =
     let len = 61 in
     let prefix = "%%%" in
+    let pr_cnt (s, cnt) = s ^ (if cnt > 1 then " (" ^ (string_of_int cnt) ^ ")" else "") in
+    let summarized_stack stk =
+      let new_stk = new Gen.stack_pr pr_cnt (==) in
+      match (List.rev stk#get_stk) with
+        | [] -> new_stk
+        | hd::tl ->
+            let ctr = ref 1 in
+            let now = ref hd in
+            List.iter (fun y ->
+              if y = !now then incr ctr
+              else (new_stk#push (!now, !ctr); ctr := 1; now := y)) tl;
+            new_stk
+    in
     object (self)
       val len_act = len -1
       val arr =  Array.make (len+1) prefix
@@ -495,6 +508,7 @@ struct
       val mutable rgx = None
       val stk = new Gen.stack_pr pr_id (==)
       val mutable offset = -1
+      val mutable last_matched_len = max_int
       method dump =
         let cnt = hash_to_list hcalls in
         let rcnt = hash_to_list rec_calls in
@@ -502,10 +516,10 @@ struct
         let cnt = list_cnt_sort_dec cnt in
         let rcnt = list_cnt_sort_dec rcnt in
         let pr = pr_list_brk_sep "" "" "\n" (pr_pair pr_id string_of_int) in
-        if !dump_calls_all then 
+        if !dump_calls_all then
           begin
             stk # push (lastline^"\n");
-            (stk # dump_no_ln) 
+            (summarized_stack stk) # dump_no_ln
           end;
         print_endline "\nDEBUGGED CALLS";
         print_endline "==============";
@@ -518,9 +532,10 @@ struct
             print_endline (pr rcnt)
           end
       method init =
-        for i = 1 to len_act do
-          arr.(i) <- arr.(i-1)^" "
-        done;
+        if (not !debug_pattern_on) then
+            for i = 1 to len_act do
+                arr.(i) <- arr.(i-1)^" "
+            done;
         let cs = !call_str in
         if not(cs="") 
         then 
@@ -563,20 +578,36 @@ struct
             arr.(n)
           end
       method print_call s =
+        let spaces n = String.init n (fun _ -> ' ') in
+        let is_match s = Str.string_match !debug_pattern s 0 in
+        let matched_call s =
+          let is_callee = (debug_stk # len) > last_matched_len in
+          let is_match_s = is_match s in
+          if is_match_s && !debug_pattern_on then
+            (lastline <- (lastline ^ "\n...");
+            last_matched_len <- (debug_stk#len));
+          is_match_s || is_callee
+        in
         begin
           try
-            let deb_len = debug_stk # len in
-            let len = self # get (deb_len) s in
-            if !dump_calls_all then 
-              begin
-                stk # push lastline;
-                lastline <- ("\n"^len^s)
-              end
+            if (!debug_pattern_on && not (matched_call s))
+            then last_matched_len <- max_int
+            else (
+              let deb_len = debug_stk # len in
+              let len = if !debug_pattern_on then
+                (self#get (deb_len) s) ^ (spaces (deb_len - last_matched_len))
+              else self # get (deb_len) s
+              in
+              if !dump_calls_all then
+                begin
+                  stk # push lastline;
+                  lastline <- "\n"^len^s
+              end)
           with _ -> ()
         end
       method add_id id =
         begin
-          if !dump_calls_all then 
+          if !dump_calls_all then
             lastline <- lastline^id^"."
         end
     end

@@ -1,6 +1,5 @@
 
 int f91(int n)
-
   infer[@post_n,@term] 
   requires true
   ensures true;

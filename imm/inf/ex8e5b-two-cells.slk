@@ -1,0 +1,21 @@
+data cell {
+ int v;
+}.
+
+
+checkentail x::cell<m>@a*x::cell<n>@b  |- x!=null.
+print residue.
+expect Valid.
+/*
+# ex8e5b.slk 
+
+Why m=n and a=b not in residue.?
+
+checkentail x::cell<m>@a*x::cell<n>@b  |- x!=null.
+
+GOT
+===
+Residue:
+ <1>x::cell<m>@m_21&{FLOW,(20,21)=__norm#E}[]
+
+*/

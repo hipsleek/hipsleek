@@ -1,0 +1,41 @@
+data node {
+  int val;
+  node next;
+}.
+ pred bndl<n:int,sm:int,bg:int> == 
+  emp&self=null & n=0 & sm<=bg or
+(exists sm_23,bg_24,
+  flted_11_22: self::node<d,p> * p::bndl{}<flted_11_22,sm_23,bg_24>&
+  flted_11_22+1=n & sm<=d & d<=bg & sm_23=sm & bg_24=bg)
+  inv sm<=bg & 0<=n.
+
+/*
+// id: 0; line: 10; kind: Pred_Check_Inv
+ checkentail emp&((self=null & n=0 & sm<=bg) | (sm<=bg & 1<=n & sm<=bg & self!=null))
+ |-  emp&0<=n & sm<=bg.
+expect Valid.
+
+// id: 1; line: 10; kind: Pred_Check_Inv
+ checkentail emp&((self=null & n=0 & sm<=bg) | (sm<=bg & 1<=n & sm<=bg & self!=null))
+ |-  emp&0<=n & sm<=bg.
+expect Valid.
+*/
+
+// id: 2; line: 31; kind: BIND
+ checkentail (exists sm1,bg1,flted,d,p: p::bndl{}<flted,sm1,bg1> * x'::node<d,p> & flted+1=n & sm<=d & d<=bg & sm1=sm & bg1=bg & x'=x & x!=null)
+ |-  x'::node<val',next'>@L.
+expect Valid.
+ 
+// id: 4; line: 0; kind: POST
+ checkentail x'::node<d1,p1> * p1::bndl{}<flted1,sm2,bg2>&MayLoop[] & res=v' & v'=p1 & 
+flted1+1=n & sm<=d1 & d1<=bg & sm2=sm & bg2=bg & x'=x & x!=null
+ |-  (exists sm3,bg3,flted2: res::bndl{}<flted2,sm3,bg3>&bg3=bg & sm3=sm & 
+flted2+1=n & 0<=n & sm<=bg).
+expect Valid.
+ 
+// id: 6; line: 0; kind: POST
+ checkentail x::bndl{}<n,sm,bg> * v1'::node<v2',x'> & res=v1' & v<=bg & 
+sm<=v & v2'=v & x'=x
+ |-  (exists sm4,bg4,flted3: res::bndl{}<flted3,sm4,bg4>&bg4=bg & sm4=sm & 
+flted3=1+n & 0<=n & sm<=bg).
+expect Valid.

@@ -192,6 +192,7 @@ and coq_of_b_formula b =
   | CP.RelForm _ -> 
     (* failwith ("No relations in Coq yet") (\* An Hoa *\) *)
     illegal_format "coq_of_exp : relation cannot be handled"
+  | CP.ImmRel _ -> illegal_format "coq_of_exp : ImmRel cannot be handled"
   | CP.LexVar _ -> illegal_format "coq_of_exp : lexvar cannot be handled"
                      (* | CP.VarPerm _ -> *)
                      illegal_format "coq_of_exp : VarPerm cannot be handled"
@@ -312,12 +313,12 @@ let rec send_formula (f : string) (nr : int) : bool =
         print_string("\n[coq.ml]:Timeout exception\n");flush stdout;
         false;
       end
-  with
-    _ -> ignore (Unix.close_process !coq_channels);
-    coq_running := false;
-    print_string "\nCoq crashed\n"; flush stdout;
-    start ();
-    if nr > 1 then send_formula f (nr - 1) else false
+    with
+      _ -> ignore (Unix.close_process !coq_channels);
+      coq_running := false;
+      print_string "\nCoq crashed\n"; flush stdout;
+      start ();
+      if nr > 1 then send_formula f (nr - 1) else false
 
 
 (* writing the Coq file *)

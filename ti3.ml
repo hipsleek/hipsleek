@@ -138,13 +138,14 @@ let eq_base_rank rnk1 rnk2 =
 
 let eq_tnt_case_spec sp1 sp2 =
   match sp1, sp2 with
-  | Unknown _, Unknown _ -> true
-  | Unknown _, Sol (CP.MayLoop _, _) -> true
-  | Sol (CP.MayLoop _, _), Unknown _ -> true
+  (* Do not merge MayLoop with cex *)
+  | Unknown None, Unknown None -> true
+  | Unknown None, Sol (CP.MayLoop None, _) -> true
+  | Sol (CP.MayLoop None, _), Unknown None -> true
   | Sol (ann1, rnk1), Sol (ann2, rnk2) ->
     begin match ann1, ann2 with
       | CP.Loop _, CP.Loop _ -> true
-      | CP.MayLoop _, CP.MayLoop _ -> true
+      | CP.MayLoop None, CP.MayLoop None -> true
       (* | CP.Term, CP.Term ->                          *)
       (*   (* is_base_rank rnk1 && is_base_rank rnk2 *) *)
       (*   eq_base_rank rnk1 rnk2                       *)
@@ -285,7 +286,7 @@ let add_term_relation_scc prog scc =
   List.iter (fun proc ->
       let spec = proc.proc_stk_of_static_specs # top in
       let new_spec = add_term_relation_proc prog proc spec in
-      proc.proc_stk_of_static_specs # push new_spec) scc
+      proc.proc_stk_of_static_specs # push_pr "ti3:288" new_spec) scc
 
 let partition_trels_by_proc trrels turels =
   let fn_trrels = 
@@ -327,7 +328,7 @@ let trans_nondet_formula prog f =
         let svn = CP.name_of_spec_var sv in
         match args with
         | e::[] ->
-          let nd_rel_def = look_up_rel_def_raw prog.prog_rel_decls svn in
+          let nd_rel_def = look_up_rel_def_raw (prog.prog_rel_decls # get_stk) svn in
           (try
              let param = List.hd nd_rel_def.rel_vars in
              let svp = CP.SpecVar (CP.type_of_spec_var param, svn ^ (string_of_nondet_pos pos), Unprimed) in
@@ -367,19 +368,21 @@ let trans_nondet_trels_proc prog trrels turels =
   let nd_args = List.map (fun (nd, ndp) -> CP.Var (nd, ndp)) nd_vars in
   let primed_nd_args = List.map (fun (nd, ndp) -> CP.Var (CP.to_primed nd, ndp)) nd_vars in
 
-  let trans_trrels_w_rname = List.map (fun tr -> { tr with
-                                                   termr_lhs = List.map (fun ann -> CP.add_args_term_ann ann primed_nd_args) tr.termr_lhs;
-                                                   termr_rhs = CP.add_args_term_ann tr.termr_rhs nd_args; 
-                                                   termr_rhs_params = tr.termr_rhs_params @ nd_sv_lst; }, tr.termr_fname) trans_trrels
+  let trans_trrels_w_rname = List.map (
+      fun tr -> { tr with
+                  termr_lhs = List.map (fun ann -> CP.add_args_term_ann ann primed_nd_args) tr.termr_lhs;
+                  termr_rhs = CP.add_args_term_ann tr.termr_rhs nd_args; 
+                  termr_rhs_params = tr.termr_rhs_params @ nd_sv_lst; }, tr.termr_fname) trans_trrels
   in
   let trans_trrels, rname = List.split trans_trrels_w_rname in
 
-  let trans_turels_w_uname = List.map (fun tu -> { tu with
-                                                   call_ctx = fst (trans_nondet_ctx prog tu.call_ctx tu.termu_pos);
-                                                   termu_lhs = CP.add_args_term_ann tu.termu_lhs nd_args;
-                                                   termu_rhs = CP.add_args_term_ann tu.termu_rhs primed_nd_args;
-                                                   termu_rhs_params = tu.termu_rhs_params @ nd_sv_lst;
-                                                   termu_rhs_args = tu.termu_rhs_args @ primed_nd_args; }, tu.termu_fname) turels 
+  let trans_turels_w_uname = List.map (
+      fun tu -> { tu with
+                  call_ctx = fst (trans_nondet_ctx prog tu.call_ctx tu.termu_pos);
+                  termu_lhs = CP.add_args_term_ann tu.termu_lhs nd_args;
+                  termu_rhs = CP.add_args_term_ann tu.termu_rhs primed_nd_args;
+                  termu_rhs_params = tu.termu_rhs_params @ nd_sv_lst;
+                  termu_rhs_args = tu.termu_rhs_args @ primed_nd_args; }, tu.termu_fname) turels 
   in
   let trans_turels, uname = List.split trans_turels_w_uname in
 
