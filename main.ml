@@ -351,7 +351,7 @@ let reverify_with_hp_rel old_cprog iprog =
         end
       | _ -> (r_hp_defs, r_unk_hps)
     ) ([],[]) hp_defs in
-  (* let () = Debug.info_hprint (add_str "unk_hps " !Cpure.print_svl) unk_hps no_pos in *)
+  let () = Debug.ninfo_hprint (add_str "unk_hps " !Cpure.print_svl) unk_hps no_pos in
   let need_trans_hprels1 = (* List.map (fun def -> *)
     (*     let new_rhs = List.map (fun (f, og) -> *)
     (*         let nf, esvl= (Cformula.drop_hrel_f f unk_hps) in *)

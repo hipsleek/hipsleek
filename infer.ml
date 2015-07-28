@@ -2438,29 +2438,30 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
       let () = Debug.ninfo_zprint (lazy  ("     niu_svl_ni:" ^((pr_list (pr_pair !CP.print_sv print_arg_kind) ) niu_svl_ni))) no_pos in
       (*old: args1@not_in_used_svl*)
       (*not_in_used_svl: NI*)
-      let args11 = if !Globals.sa_pure_field then
-          let args11 = List.map (fun sv ->
-              if CP.is_node_typ sv then (sv, I)
-              else (sv, NI)
-            ) args1 in
-          args11
-        else
+      let args11 = (*  if !Globals.sa_pure_field then *)
+        (*   let args11 = List.map (fun sv -> *)
+        (*       if CP.is_node_typ sv then (sv, I) *)
+        (*       else (sv, NI) *)
+        (*     ) args1 in *)
+        (*   args11 *)
+        (* else *)
           let args10 = List.filter CP.is_node_typ args1 in
           let args11 = List.map (fun sv -> (sv, I)) args10 in
           args11
+      in
+      let pure_fields_ni = if !Globals.sa_pure_field then
+        List.fold_left (fun acc sv ->
+            if CP.is_node_typ sv then acc
+            else acc@[(sv, NI)]
+        ) [] args1
+      else []
       in
       let niu_svl_i_ni = List.map (fun (sv,_) -> (sv, NI)) niu_svl_i in
       let niu_svl_ni_total = niu_svl_i_ni@niu_svl_ni in
       (*for view, filter i var that is classified as NI in advance*)
       let args12 = List.filter (fun (sv,_) -> List.for_all (fun (sv1,_) -> not(CP.eq_spec_var sv1 sv)) niu_svl_ni_total) args11 in
       let _ = Debug.ninfo_hprint (add_str "args12"  (pr_list (pr_pair !CP.print_sv print_arg_kind) )) args12 no_pos in
-      let ls_fwd_svl =(*  if args12 =[] then *)
-        (*   if is_view then *)
-        (*     (\* if is view, we add root of view as NI to find precise constraints. duplicate with cicular data structure case?*\) *)
-        (*     [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)] *)
-        (*   else [] *)
-        (* else *) (List.map (fun sv -> (is_pre, sv::niu_svl_ni_total)) args12)
-      in
+      let ls_fwd_svl = (List.map (fun sv -> (is_pre, sv::niu_svl_ni_total@pure_fields_ni)) args12) in
       (*generate extra hp for cll*)
       let extra_clls = if niu_svl_i = [] then  [] (* [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)] *)
         else

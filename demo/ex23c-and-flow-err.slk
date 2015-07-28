@@ -5,10 +5,13 @@ infer [] x<0 & flow __MayError |- x=3 & flow __Error.
 expect Fail_Must.
 print residue.
 
+
 //(2)
 infer [@err_must] true & flow __MayError |- true & flow __Error.
 expect Fail_May.
 print residue.
+
+
 
 //(3)
 infer [@err_must] x<0 & flow __MayError |- x=3 & flow __Error.
@@ -20,6 +23,7 @@ print residue.
 infer [@err_must] true & flow __MayError |- x=3 & flow __Error.
 expect Fail_May.
 print residue.
+
 
 /*
 # ex23c.slk

@@ -511,7 +511,7 @@ let pre_calculate fp_func input_fml pre_vars proc_spec
 
 let pre_calculate fp_func input_fml pre_vars proc_spec
     pre pure_oblg_to_check (rel_posts,pre_rel)
-    pre_fmls pre_rel_vars pre_rel_df reloblgs=
+    pre_fmls pre_rel_vars pre_rel_df reloblgs =
   let pr1 = Cprinter.string_of_pure_formula in
   let pr2 = pr_list_ln pr1 in
   let pr3 = pr_list_ln (pr_pair pr1 pr1) in
@@ -525,7 +525,7 @@ let pre_calculate fp_func input_fml pre_vars proc_spec
     (add_str "pre_fmls" pr2)
     (pr_pair (add_str "pre_rel_vars" !CP.print_svl) (add_str "pre_rel_df" pr3)) pr4
       (fun _ _ _ _ _ _ _ -> pre_calculate fp_func input_fml pre_vars proc_spec
-        pre pure_oblg_to_check (rel_posts,pre_rel)  pre_fmls pre_rel_vars pre_rel_df reloblgs)
+    pre pure_oblg_to_check (rel_posts,pre_rel)  pre_fmls pre_rel_vars pre_rel_df reloblgs)
     input_fml pre_vars pre pure_oblg_to_check (rel_posts,pre_rel) pre_fmls (pre_rel_vars, pre_rel_df)
 
 let update_rel rel pre_rel new_args old_rhs =

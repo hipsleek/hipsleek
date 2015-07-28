@@ -482,7 +482,7 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
         List.fold_left (fun (lfb, r_defined_preds, r_rems, r_link_hps) hpargs ->
             let n_lfb,def_hps, rem_hps, ls_link_hps=
               Sautil.find_well_defined_hp (* split_base *) prog lhds lhvs r_hps
-                prog_vars post_hps hpargs (l_def_vs@unk_svl1) lfb true no_pos
+                prog_vars post_hps hpargs (l_def_vs@unk_svl1) lfb true ~split_nemp:true no_pos
             in
             (n_lfb, r_defined_preds@def_hps, r_rems@rem_hps, r_link_hps@(snd (List.split ls_link_hps)))
           ) (lfb1, [], [], []) ls_lhp_args1

@@ -3794,7 +3794,7 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
     let es = get_estate_from_ctx bot_ctx in
     let (_,cseq) = base_formula_of_struc_formula conseq in
     (* WN: this may not log RHS conseq formula properly *)
-    let () = new_slk_log_g cseq 2 (* hec_num *) pos r es in
+    let () = x_add new_slk_log_g cseq 2 (* hec_num *) pos r es in
     (r, UnsatAnte)
   else(* if isConstFalse conseq then
          (--[], UnsatConseq)
@@ -5169,7 +5169,7 @@ and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool) (ctx : co
   if (isAnyFalseCtx ctx)  then (* check this first so that false => false is true (with false residual) *)
     let r = SuccCtx [ctx] in
     let es = get_estate_from_ctx ctx in
-    let () = new_slk_log_g conseq 2 (* hec_num *) pos r es in
+    let () = x_add new_slk_log_g conseq 2 (* hec_num *) pos r es in
     (r, UnsatAnte)
   else
   if (not !Globals.do_classic_frame_rule) && (isStrictConstTrue conseq) then (SuccCtx [ctx], TrueConseq)
@@ -5494,7 +5494,7 @@ and early_pure_contra_detection_x hec_num prog estate conseq pos msg is_folding 
   let h_inf_args, hinf_args_map = get_heap_inf_args estate in
   let esv = estate.es_infer_vars in
 
-  let new_slk_log result es = new_slk_log_g conseq hec_num pos result es in
+  let new_slk_log result es = x_add new_slk_log_g conseq hec_num pos result es in
     (* let it = CF.infer_type_of_entail_state es in *)
     (* let avoid = CF.is_emp_term conseq in *)
     (* let avoid = avoid || (not (hec_stack # is_empty)) in *)
@@ -5521,7 +5521,7 @@ and early_pure_contra_detection_x hec_num prog estate conseq pos msg is_folding 
       let () = x_tinfo_hp (add_str "ctx1"  Cprinter.string_of_context) ctx1 pos in
       let r1, prf = x_add heap_entail_one_context 9 prog is_folding ctx1 conseq None None None pos in
       let () = x_tinfo_hp (add_str "r1"  Cprinter.string_of_list_context) r1 pos in
-      let () = Debug.info_pprint ("*********2********") no_pos in
+      let () = Debug.ninfo_pprint ("*********2********") no_pos in
       let slk_no = Log.last_cmd # start_sleek 1 in
       let rhs_xpure,_,_ = x_add xpure 4 prog conseq in
       let p_rhs_xpure = MCP.pure_of_mix rhs_xpure in
@@ -5905,13 +5905,13 @@ and new_slk_log_g (conseq:formula) hec_num pos result es  =
       | None   -> es.es_formula in
     let it = CF.infer_type_of_entail_state es in
     let esv = es.es_infer_vars in
-    let () = x_add Log.add_sleek_logging (Some es) false 0. it esv !Globals.do_classic_frame_rule caller 
+    let () = (* x_add *) Log.add_sleek_logging (Some es) false 0. it esv !Globals.do_classic_frame_rule caller 
       (* avoid *) false hec_num slk_no es.es_formula (* orig_ante *) conseq es.es_heap es.es_evars (Some result) pos in
     ()
 
 
 and log_contra_detect hec_num conseq result pos =
-  let new_slk_log result es = new_slk_log_g conseq hec_num pos result es in
+  let new_slk_log result es = x_add new_slk_log_g conseq hec_num pos result es in
   (*   let avoid = CF.is_emp_term conseq in *)
   (*   let avoid = avoid || (not (hec_stack # is_empty)) in *)
   (*   let caller = hec_stack # string_of_no_ln in *)
@@ -7160,13 +7160,15 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
       (*      but fails for ex21e7d.slk *)
       (* How was conversion to __Error done for ex21a51.ss without
          this conversion? *) 
+      let b = CF.is_en_error_exc_ctx ctx0 in
+      (* let () = x_binfo_pp ("is_en_error_exc_ctx: " ^ string_of_bool b) no_pos in *)
       if (* false *)
-        CF.is_en_error_exc_ctx ctx0
+        b
         (* (!Globals.enable_error_as_exc || CF.is_en_error_exc_ctx ctx0) *)
         (*           && not (CF.is_dis_error_exc_ctx ctx0) *)
       then        
         if not(!Globals.temp_opt_flag) then
-          (* let () = x_binfo_pp "temp_opt:convert_maymust" no_pos in *)
+          let () = x_tinfo_pp "temp_opt:convert_maymust" no_pos in
           (x_add_0 CF.convert_maymust_failure_to_value_orig) ~mark:true res
         else
           (*   let () = x_binfo_pp "temp_opt:no convert_maymust" no_pos in *)
@@ -7465,15 +7467,17 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                         (* | (s,_,_)::_ -> s *)
                         (* | [] -> "1.2b: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types" *)
                     in
+                    let () = x_tinfo_pp ("is_must: " ^ (string_of_bool is_must)) no_pos in
                     if is_must then
                       let fe = mk_failure_must err_msg undefined_error in
                       let must_flow_failure =
+                        let must_estate = convert_to_must_es estate in
                         FailCtx ((Basic_Reason ({fc_message = err_msg;
-                                               fc_current_lhs = estate;
+                                               fc_current_lhs = must_estate;
                                                fc_orig_conseq = struc_formula_of_formula conseq pos;
                                                fc_prior_steps = estate.es_prior_steps;
                                                fc_current_conseq = CF.formula_of_heap HFalse pos;
-                                               fc_failure_pts =[];}, fe, estate.es_trace)), Ctx (convert_to_must_es estate), mk_cex true) in
+                                               fc_failure_pts =[];}, fe, estate.es_trace)), Ctx (must_estate), mk_cex true) in
                       (must_flow_failure, UnsatConseq)
                     else
                       let fe = mk_failure_may err_msg undefined_error in
@@ -8264,6 +8268,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
   x_tinfo_hp (add_str "curr_lhs_h" (Cprinter.string_of_h_formula)) curr_lhs_h pos;
   x_tinfo_hp (add_str "lhs_p" !Cast.print_mix_formula) lhs_p no_pos;
   let curr_lhs_h, lhs_p = normalize_frac_heap prog curr_lhs_h lhs_p lhs_vp in
+  x_tinfo_hp (add_str "estate_orig" (Cprinter.string_of_entail_state)) estate_orig pos;
   x_tinfo_hp (add_str "curr_lhs_h0" (Cprinter.string_of_h_formula)) curr_lhs_h pos;
   let unk_heaps = CF.keep_hrel curr_lhs_h in
   (* Debug.info_hprint (add_str "curr_lhs_h" Cprinter.string_of_h_formula) curr_lhs_h no_pos; *)
@@ -8277,6 +8282,9 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
     else ()
   in
   (* WN:TODO can we invoke a single xpure if the formula are identical? *)
+  (* it's sound to restore hols for curr_lhs_h at this point as this expression is only used for computing the different xpures *)
+  let curr_lhs_h = Immutable.apply_subs_h_formula estate_orig.es_crt_holes curr_lhs_h in
+  (* below merges and normalizes aliased nodes *)
   let curr_lhs_h, lhs_p = Norm.imm_norm_h_formula prog curr_lhs_h lhs_p unfold_for_abs_merge pos in
   let (xpure_lhs_h1, yy, memset) as xp1a = 
     x_add xpure_heap 9 prog curr_lhs_h lhs_p 1 in
@@ -12254,7 +12262,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
        | None ->
          let err_msg = "base_case_unfold failed" in
          (CF.mkFailCtx_in(Basic_Reason(mkFailContext (* "base_case_unfold failed" *) err_msg estate conseq (get_node_label rhs_node) pos
-                                      , CF.mk_failure_must "base case unfold failed" Globals.sl_error, estate.es_trace)) ((convert_to_must_es estate), err_msg, Failure_Must err_msg) (mk_cex true),NoAlias)
+                                      , CF.mk_failure_may "base case unfold failed" Globals.sl_error, estate.es_trace)) ((convert_to_may_es estate), err_msg, Failure_May err_msg) (mk_cex false),NoAlias)
        (*use UNION, so return MUST, final res = latter case*)
        | Some x -> x)
     | Context.M_base_case_fold {

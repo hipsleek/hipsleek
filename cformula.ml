@@ -1675,6 +1675,14 @@ and is_simple_formula (f:formula) =
   | ViewNode _ -> true
   | _ -> false
 
+and is_emp_formula (f:formula) =
+  let h, _, _, _, _, _ = split_components f in
+  match h with
+  | HTrue | HEmp -> true
+  (* | DataNode _ -> true *)
+  (* | ViewNode _ -> true *)
+  | _ -> false
+
 (*TO CHECK: formula_*_and *)
 (* WN : free var should not need to depend on flags *)
 and fv_simple_formula (f:formula) = 
@@ -5688,18 +5696,20 @@ and get_ptrs_w_args_f (f: formula)=
     CP.remove_dups_svl (get_ptrs_w_args fe.formula_exists_heap)
   | _ -> report_error no_pos "CF.get_ptrs_w_args_f: not handle yet"
 
-and get_ptrs_w_args (f: h_formula): CP.spec_var list = match f with
+and get_ptrs_w_args ?(en_pure_args = false) (f: h_formula): CP.spec_var list =
+  let filter_pure args= if en_pure_args then args else List.filter CP.is_node_typ args in
+  match f with
   | DataNode {h_formula_data_node = c;
-              h_formula_data_arguments = args} -> [c]@(List.filter CP.is_node_typ args)
+              h_formula_data_arguments = args} -> [c]@ (filter_pure args) (* (List.filter CP.is_node_typ args) *)
   | ViewNode {h_formula_view_node = c;
               h_formula_view_ho_arguments = ho_args;
               h_formula_view_arguments = args} ->
     let hovars = List.concat (List.map (apply_rflow_formula get_ptrs_w_args_f) ho_args) in
-    [c]@(List.filter CP.is_node_typ args)@hovars
+    [c]@ (filter_pure args) (* (List.filter CP.is_node_typ args) *)@hovars
   | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
   | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2}
   | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2}
-    -> (get_ptrs_w_args h1)@(get_ptrs_w_args h2)
+    -> (get_ptrs_w_args ~en_pure_args:en_pure_args h1)@(get_ptrs_w_args ~en_pure_args:en_pure_args h2)
   | HRel (_,eargs,_) -> (List.fold_left List.append [] (List.map CP.afv eargs))
   | _ -> []
 
@@ -5745,7 +5755,7 @@ let elim_unused_pure_x (f0:formula) rhs =
   let rec helper f=
     match f with
     | Base b->
-      let lhs_ptrs= get_ptrs_w_args b.formula_base_heap in
+      let lhs_ptrs= get_ptrs_w_args ~en_pure_args:(!Globals.sa_pure_field) b.formula_base_heap in
       let keep_svl = CP.remove_dups_svl (lhs_ptrs@rhs_ptrs) in
       let _,np1 = CP.prune_irr_neq (MCP.pure_of_mix b.formula_base_pure) keep_svl in
       let np2 = CP.filter_var np1 keep_svl in
@@ -5783,9 +5793,10 @@ let filter_var_pure r (f0:formula) =
 let prune_irr_neq_formula_x must_kept_svl lhs_b rhs_b =
   let r_svl = fv (Base rhs_b) in
   let rec helper fb=
-    let ptrs = get_ptrs_w_args fb.formula_base_heap in
-    let keep_svl = (ptrs@r_svl@must_kept_svl) in
-    let _,np2 = CP.prune_irr_neq (MCP.pure_of_mix fb.formula_base_pure) (CP.remove_dups_svl keep_svl) in
+    let ptrs = get_ptrs_w_args ~en_pure_args:(!Globals.sa_pure_field) fb.formula_base_heap in
+    let () = Debug.ninfo_hprint (add_str "ptrs" !CP.print_svl) ptrs no_pos in
+    let keep_svl = CP.remove_dups_svl (ptrs@r_svl@must_kept_svl) in
+    let _,np2 = CP.prune_irr_neq (MCP.pure_of_mix fb.formula_base_pure) (keep_svl) in
     let np3 = CP.filter_var_new np2 keep_svl in
     let np4 = MCP.mix_of_pure np3 in
     {fb with formula_base_pure = np4;}
@@ -10391,22 +10402,6 @@ let rec get_final_error_ctx ctx=
       (* else e1 *)
     end
 
-let get_final_error cl=
-  let rec get_failure_ctx_list cs=
-    match cs with
-    | ctx::rest -> begin
-        let r = get_final_error_ctx ctx in
-        if r = None then get_failure_ctx_list rest else r
-      end
-    | [] -> None
-  in
-  match cl with
-  | FailCtx (ft,_,_) -> Some (get_short_str_fail_type ft, ft, Failure_Must "??")
-  | SuccCtx cs -> if cs = [] then Some ("empty states",
-                                        Trivial_Reason ({fe_kind = Failure_Must  "empty states"; fe_name = "empty states"; fe_locs=[]}, []),
-                                        Failure_Must "empty states") else
-      (* ((get_must_error_from_ctx cs) !=None) || ((get_may_error_from_ctx cs) !=None) *)
-      get_failure_ctx_list cs
 
 let rec get_failure_es_ft_x (ft:fail_type) : (failure_kind * (entail_state option)) =
   let rec helper ft = 
@@ -10884,6 +10879,34 @@ let convert_maymust_failure_to_value_orig ?(mark=true) (l:list_context) : list_c
 
 (* let add_must_err (s:string) (fme:branch_ctx list) (e:esc_stack) : esc_stack = *)
 (*   ((-1,"Must Err @"^s),fme) :: e *)
+
+let get_final_error cl=
+  let rec get_failure_ctx_list cs=
+    match cs with
+    | ctx::rest -> begin
+        let r = get_final_error_ctx ctx in
+        if r = None then get_failure_ctx_list rest else r
+      end
+    | [] -> None
+  in
+  match cl with
+  | FailCtx (ft,_,_) -> (
+        let fk = match get_must_ctx_msg_ft ft with
+          | Some (_, msg) -> Failure_Must msg
+          | None -> (
+                match get_may_ctx_msg_ft ft with
+                  | Some (_, msg) -> Failure_May msg
+                  | _ -> Failure_Valid
+            )
+        in
+        Some (get_short_str_fail_type ft, ft, fk(* Failure_Must "??" *))
+    )
+  | SuccCtx cs -> if cs = [] then Some ("empty states",
+                                        Trivial_Reason ({fe_kind = Failure_Must  "empty states"; fe_name = "empty states"; fe_locs=[]}, []),
+                                        Failure_Must "empty states") else
+      (* ((get_must_error_from_ctx cs) !=None) || ((get_may_error_from_ctx cs) !=None) *)
+      get_failure_ctx_list cs
+
 
 let add_must_err_to_pc (s:string) (fme:branch_ctx list) (e:branch_ctx list) : branch_ctx list =
   fme @ e

@@ -1,0 +1,54 @@
+data str {
+  int val;
+  str next;
+}.
+
+pred_prim D<> inv self!=null.
+
+pred H1<vvv> == self::str<v2,q>*q::H1<v2> & vvv!=0
+   or self::D<> & vvv=0
+  inv self!=null.
+
+checkentail q::H1<v> & v=0  |- q::D<>.
+print residue.
+
+/*
+# strings/ex8e6.slk --pcp
+
+# Should we force an unfolding, but will this go into a loop?>
+
+(==context.ml#1731==)
+process_one_match_accfold@3@2@1
+process_one_match_accfold inp1 :match_res:
+ Type: Root
+ LHS: q::H1<v>@M
+ RHS: q::D<>@M
+ lhs_rest: emp
+ rhs_rest: emp
+process_one_match_accfold inp2 :lhs_h: q::H1<v>@M
+process_one_match_accfold inp3 :lhs_p: v=0
+process_one_match_accfold inp4 :rhs_p: true
+process_one_match_accfold@3 EXIT:[]
+
+(==mcpure.ml#2282==)
+process_one_match@2@1
+process_one_match inp1 :match_res:
+ Type: Root
+ LHS: q::H1<v>@M
+ RHS: q::D<>@M
+ lhs_rest: emp
+ rhs_rest: emp
+process_one_match inp2 :lhs_h: q::H1<v>@M
+process_one_match inp3 :lhs_p: v=0
+process_one_match inp4 :rhs_node: q::D<>@M
+process_one_match inp5 :rhs_rest: emp
+process_one_match inp6 :rhs_p: true
+process_one_match inp7 :([],None)
+process_one_match@2 EXIT: Prio:1
+ COND =>[
+  Prio:3
+  BaseCaseUnfold =>
+  ]
+
+
+*/

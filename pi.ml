@@ -800,6 +800,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
               x_tinfo_zp (lazy ((">>REL PRE : "^Cprinter.string_of_pure_formula rel_pre))) no_pos;
               x_tinfo_zp (lazy ((">>PRE : "^Cprinter.string_of_pure_formula pre))) no_pos
             ) tuples in
+          let triples = List.map (fun (a,b,c,d) -> (a,b,c,d)) tuples in
           (* WN : Why add post into pre if rel_pre is true ? *)
           (* removed pre inf unless explicitly requested *)
           (* let tuples = List.map (fun (rel_post,post,rel_pre,pre) -> *)
@@ -825,7 +826,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
           else
               let _ = Debug.info_hprint (add_str "proc_specs" (pr_list Cprinter.string_of_struc_formula)) proc_specs no_pos in
               let new_specs1 = List.map (fun proc_spec -> CF.transform_spec proc_spec (CF.list_of_posts proc_spec)) proc_specs in
-              (* let _ = x_binfo_hp (add_str "new_specs1" (pr_list Cprinter.string_of_struc_formula)) new_specs1 no_pos in *)
+              let _ = Debug.info_hprint (add_str "new_specs1" (pr_list Cprinter.string_of_struc_formula)) new_specs1 no_pos in
               (* =============== imm rel norm ================== *)
               let lst_assume = norm_rel_oblgs lst_assume in (* TODOIMM - to check if this can be done at an earlier point *)
               let lst_assume = List.map (fun (a,b,c) -> (a,b,Immutable.postprocess_pre b c)) lst_assume in
@@ -835,7 +836,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
               (* =============== END imm rel norm ================== *)
               let new_specs2 = List.map (fun new_spec1 -> fst (x_add_1 wrap (Fixpoint.simplify_relation new_spec1
                                                                                (Some triples) pre_vars post_vars_wo_rel prog true (* inf_post_flag *) evars) lst_assume)) new_specs1 in
-              (* let _ = x_binfo_hp (add_str "new_specs2" (pr_list Cprinter.string_of_struc_formula)) new_specs2 no_pos in *)
+              let _ = Debug.info_hprint (add_str "new_specs2" (pr_list Cprinter.string_of_struc_formula)) new_specs2 no_pos in
               new_specs2
           in 
           (* let proc_specs = infer_specs_post_process new_specs in  *)

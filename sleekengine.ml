@@ -1574,19 +1574,21 @@ let process_rel_infer pre_rels post_rels =
 
   let pre_rel_ids = List.map (fun id -> CP.mk_typed_spec_var (RelT []) id) pre_rels in
   let post_rel_ids = List.map (fun id -> CP.mk_typed_spec_var (RelT []) id) post_rels in
+
   let post_rel_constrs, pre_rel_constrs = List.partition (fun (_,x) -> Pi.is_post_rel x post_rel_ids) reldefns in
-  let _ = x_binfo_hp (add_str "post_rel_constrs" (pr_list (pr_pair pr1 pr1))) post_rel_constrs no_pos in
+    let _ = x_binfo_hp (add_str "post_rel_constrs" (pr_list (pr_pair pr1 pr1))) post_rel_constrs no_pos in
   (* let post_rel_constrs = post_rel_constrs@pre_rel_constrs in *)
 
   (* let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in *)
 
-  (* let () = x_binfo_hp (add_str "pre_invs0" (pr_list (pr_pair pr1 pr1))) pre_rel_constrs no_pos in *)
-  (* let () = x_binfo_hp (add_str "pre_rel_constrs" (pr_list (pr_pair pr1 pr1))) pre_rel_constrs no_pos in *)
-  (* let () = x_binfo_hp (add_str "post_rel_constrs" (pr_list (pr_pair pr1 pr1))) post_rel_constrs no_pos in *)
-  (* let () = x_binfo_hp (add_str "pre_rel_ids" (pr_list pr2)) pre_rel_ids no_pos in *)
-  (* let () = x_binfo_hp (add_str "post_rel_ids" (pr_list pr2)) post_rel_ids no_pos in *)
+  let () = x_binfo_hp (add_str "pre_invs0" (pr_list (pr_pair pr1 pr1))) pre_rel_constrs no_pos in
+  let () = x_binfo_hp (add_str "pre_rel_constrs" (pr_list (pr_pair pr1 pr1))) pre_rel_constrs no_pos in
+  let () = x_binfo_hp (add_str "post_rel_constrs" (pr_list (pr_pair pr1 pr1))) post_rel_constrs no_pos in
+  let () = x_binfo_hp (add_str "pre_rel_ids" (pr_list pr2)) pre_rel_ids no_pos in
+  let () = x_binfo_hp (add_str "post_rel_ids" (pr_list pr2)) post_rel_ids no_pos in
 
   let r = Fixpoint.rel_fixpoint_wrapper [] [] pre_rel_constrs post_rel_constrs pre_rel_ids post_rel_ids proc_spec 1 in
+
   let _ = Debug.info_hprint (add_str "fixpoint2"
       (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in
   (* let _ = print_endline "process_rel_infer" in *)
