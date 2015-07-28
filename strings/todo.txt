@@ -547,7 +547,8 @@ Expecting:
 # Why no direct unfolding?
 
 ==================================================================
-# strings/ex8d6.slk --pcp
+# strings/ex8d6.slk --pcp (FIXED)
+           by requiring base cases to be emp or true
 
 # Not a valid base-case if primitive predicate present..
 
@@ -582,7 +583,39 @@ compute_base_case inp3 :[self,vvv]
 compute_base_case@1 EXIT:Some( vvv=0)
 
 ==================================================================
+# strings/ex8d6.slk --pcp
+
+checkentail q::H1<v> & v=0  |- q::D<>.
+print residue.
+
+# How can this be a must failure?
+# Should we force an unfolding, but will this go into a loop?>
+
+Entail 1: Fail.(must) cause:base case unfold failed
+
+Residue:
+ MustErr Context: 
+   fe_kind: MUST
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: base_case_unfold failed
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ COND ==>  BaseCaseUnfold]]
+ CEX:true
 ==================================================================
+# ex8e3/ss
+
+ERROR: at _0:0_0:0
+Message: Can not find flow of str
+
+ERROR: at ex8e3-verify-shape.ss_79:5_79:14
+Message: gather_type_info_var : unexpected exception Failure("Can not find flow of str")g
+
+# Why type error for below?
+
+D<> == true;
+// pred_prim D<> inv self!=null;
 ==================================================================
 ==================================================================
 ==================================================================

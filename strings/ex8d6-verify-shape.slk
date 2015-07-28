@@ -34,7 +34,20 @@ print residue.
 /*
 # strings/ex8d6.slk --pcp
 
+# How can this be a must failure?
+# Should we force an unfolding, but will this go into a loop?>
 
-# Why no direct unfolding?
+Entail 1: Fail.(must) cause:base case unfold failed
+
+Residue:
+ MustErr Context: 
+   fe_kind: MUST
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: base_case_unfold failed
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ COND ==>  BaseCaseUnfold]]
+ CEX:true
 
 */
