@@ -1396,15 +1396,42 @@ Total number of errors: 2 in files:
 # rft slk (is this caused by new base-case classification?)
 
 Total number of errors: 11 in files:
-  sleek9.slk({E3#Valid},{E4#Valid}) lst-under2.slk(no result  for {E}) baga-test-2.slk({E15#Fail}) infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) inflem.slk({E2#Valid}) lemmas/sort2.slk({L10#Valid},{L2#Valid},{L3#Valid},{L4#Valid},{L5#Valid},{L7#Valid},{L8#Valid}) lemmas/app-tail.slk({E1#Valid}) lemmas/ll_tail.slk({E2#Valid}) lemmas/dseg-new.slk({L1#Valid}) fracperm/split_simple.slk({E6#Valid},{E7#Valid}).
+  sleek9.slk({E3#Valid},{E4#Valid})
+  (FIXED) lst-under2.slk(no result  for {E}) 
+  (FIXED testscript to better result)   baga-test-2.slk({E15#Fail})
+  infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid})
+  inflem.slk({E2#Valid})
+  lemmas/sort2.slk({L10#Valid},{L2#Valid},{L3#Valid},{L4#Valid},{L5#Valid},{L7#Valid},{L8#Valid}) 
+  lemmas/app-tail.slk({E1#Valid}) 
+  lemmas/ll_tail.slk({E2#Valid}) 
+  lemmas/dseg-new.slk({L1#Valid}) 
+  fracperm/split_simple.slk({E6#Valid},{E7#Valid}).
 
 Older version (16012)
 =====================
 Total number of errors: 4 in files:
-  lst-under2.slk(no result  for {E}) baga-test-2.slk({E15#Fail}) infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}).
+  (FIXED) lst-under2.slk(no result  for {E})
+  (FIXED testscript to better result) baga-test-2.slk({E15#Fail})
+  infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}).
 !!! WARNING: for "no result" errors please check the script's options, provers' se
 
 ====================================================================
+rft sleek
+
+Total number of errors: 9 in files:
+  sleek9.slk({E3#Valid},{E4#Valid})
+  inflem.slk({E2#Valid})
+  lemmas/sort2.slk({L10#Valid},{L2#Valid},{L3#Valid},{L4#Valid},{L5#Valid},{L7#Valid},{L8#Valid}) 
+  lemmas/app-tail.slk({E1#Valid}) 
+  lemmas/ll_tail.slk({E2#Valid}) 
+  lemmas/dseg-new.slk({L1#Valid}) 
+  fracperm/split_simple.slk({E6#Valid},{E7#Valid}).
+old errors:
+  infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid})
+
+Total number of errors: 9 in files:
+  sleek9.slk({E3#Valid},{E4#Valid}) infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) inflem.slk({E2#Valid}) lemmas/sort2.slk({L10#Valid},{L2#Valid},{L3#Valid},{L4#Valid},{L5#Valid},{L7#Valid},{L8#Valid}) lemmas/app-tail.slk({E1#Valid}) lemmas/ll_tail.slk({E2#Valid}) lemmas/dseg-new.slk({L1#Valid}) fracperm/split_simple.slk({E6#Valid},{E7#Valid}).
+
 ====================================================================
 ====================================================================
 ====================================================================
