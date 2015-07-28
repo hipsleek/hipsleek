@@ -2117,6 +2117,11 @@ and fixpt_data_name_x (view_ans:(view_decl * ident list *ident list) list) =
   else r
 
 and incr_fixpt_view iprog (dl:data_decl list) (view_decls: view_decl list)  = 
+  let pr1 = pr_list (fun v -> v.data_name) in
+  let pr2 = pr_list (fun v -> v.view_name) in
+  Debug.no_2 "incr_fixpt_view" pr1 pr2 pr_id (fun _ _ -> incr_fixpt_view_x iprog dl view_decls) dl view_decls 
+
+and incr_fixpt_view_x iprog (dl:data_decl list) (view_decls: view_decl list)  = 
   let create n = if n="" then [] else [n] in
   match view_decls with
   | [] -> ""
