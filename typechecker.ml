@@ -4294,11 +4294,11 @@ let rec check_prog iprog (prog : prog_decl) =
 
     let has_infer_pre_proc = Pi.is_infer_pre_scc scc in
     let () = if (not(has_infer_shape_proc) && has_infer_pre_proc) then Pi.add_pre_relation_scc prog scc in
-    let () = Infer.infer_rel_stk # dump curr_file_loc in
+    (* let () = Infer.infer_rel_stk # dump curr_file_loc in *)
 
     let has_infer_post_proc = Pi.is_infer_post_scc scc in
     let () = if (not(has_infer_shape_proc)) then Pi.add_post_relation_scc prog scc in
-    let () = Infer.infer_rel_stk # dump curr_file_loc in
+    (* let () = Infer.infer_rel_stk # dump curr_file_loc in *)
 
     (* let () = List.iter (fun proc -> *)
     (*     DD.info_hprint (add_str "spec before infer post" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in *)
@@ -4308,7 +4308,7 @@ let rec check_prog iprog (prog : prog_decl) =
 
     (* let () = List.iter (fun proc -> *)
     (*     x_binfo_hp (add_str "spec before phase inference for mutual-recursive groups" Cprinter.string_of_struc_formula) (proc.proc_static_specs) no_pos) scc in *)
-    let () = Infer.infer_rel_stk # dump curr_file_loc  in
+    (* let () = Infer.infer_rel_stk # dump curr_file_loc  in *)
     let is_all_verified1, prog =
       let call_order = (List.hd scc).proc_call_order in
       (* perform phase inference for mutual-recursive groups captured by stk_scc_with_phases *)
@@ -4339,14 +4339,14 @@ let rec check_prog iprog (prog : prog_decl) =
     let rel_count = ref 0 in
 
     x_tinfo_hp (add_str "MG"  (pr_list (fun p -> p.proc_name))) !mutual_grp no_pos;
-    let () = Infer.infer_rel_stk # dump curr_file_loc  in
+    (* let () = Infer.infer_rel_stk # dump curr_file_loc  in *)
     let is_all_verified2 = proc_mutual_scc prog scc (fun prog proc1 ->
         begin
          mutual_grp := List.filter (fun x -> x.proc_name != proc1.proc_name) !mutual_grp;
           Debug.ninfo_hprint (add_str "SCC"  (pr_list (fun p -> p.proc_name))) scc no_pos;
           Debug.ninfo_hprint (add_str "MG_new"  (pr_list (fun p -> p.proc_name))) !mutual_grp no_pos;
           let () =  Debug.ninfo_hprint (add_str "before check_proc_wrapper" (Cprinter.string_of_struc_formula )) proc1.Cast.proc_static_specs  no_pos in
-          let () = Infer.infer_rel_stk # dump curr_file_loc in
+          (* let () = Infer.infer_rel_stk # dump curr_file_loc in *)
           (* Richard: location where rel_def are inferred *)
           (* dump:(0)**typechecker.ml#4344: *)
           (* dump:(6)**typechecker.ml#4346: *)
@@ -4365,7 +4365,7 @@ let rec check_prog iprog (prog : prog_decl) =
         end
       ) in
 
-    let () = Infer.infer_rel_stk # dump curr_file_loc in
+    (* let () = Infer.infer_rel_stk # dump curr_file_loc in *)
     let should_print_term_res = List.fold_left (fun acc proc ->
         if not acc then CF.has_known_pre_lexvar_struc (proc.Cast.proc_stk_of_static_specs # top)
         else acc) false scc in
@@ -4406,11 +4406,11 @@ let rec check_prog iprog (prog : prog_decl) =
 
     (* Pure inference *)
     let () = if (has_infer_shape_proc && has_infer_pre_proc) then Pi.add_pre_relation_scc prog scc in
-    let () = Infer.infer_rel_stk # dump curr_file_loc in
+    (* let () = Infer.infer_rel_stk # dump curr_file_loc in *)
     let () = if (has_infer_shape_proc && has_infer_post_proc) then Pi.add_post_relation_scc prog scc in
-    let () = Infer.infer_rel_stk # dump curr_file_loc in
+    (* let () = Infer.infer_rel_stk # dump curr_file_loc in *)
     let () = if (has_infer_shape_proc && (has_infer_pre_proc || has_infer_post_proc)) then wrap_reverify_scc reverify_scc prog scc true in
-    let () = Infer.infer_rel_stk # dump curr_file_loc in
+    (* let () = Infer.infer_rel_stk # dump curr_file_loc in *)
     let () = if (has_infer_pre_proc || has_infer_post_proc) then Pi.extr_infer_pure prog scc in
     (* let () = List.iter (fun proc -> *)
     (*     DD.ninfo_hprint (add_str "spec after infer post" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in *)

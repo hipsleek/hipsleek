@@ -10,7 +10,7 @@ module TL = Tlutils
 (* e.g. given x', x=x'+a'-b'+1 return x+a'-b'+1 *)
 let extract_ind_exp sv form : CP.param_flow =
   (* norm should be a sum of terms *)
-  let () = x_binfo_hp (add_str "specvar: " CP.string_of_spec_var) sv no_pos in
+  let () = x_tinfo_hp (add_str "specvar: " CP.string_of_spec_var) sv no_pos in
 
   (* term will be of form coe*sv^1  *)
   let is_term_for_sv (term : TL.term) : bool =
@@ -34,9 +34,9 @@ let extract_ind_exp sv form : CP.param_flow =
   | CP.BForm ((CP.Gte (lhs, rhs, _) as pf, _), _)
   | CP.BForm ((CP.Eq (lhs, rhs, _) as pf, _), _) ->
     let lhs_tl = TL.term_list_of_exp (CP.afv lhs) lhs in
-    let () = x_binfo_hp (add_str "lhs terms: " TL.print_term_list) lhs_tl no_pos in
+    let () = x_tinfo_hp (add_str "lhs terms: " TL.print_term_list) lhs_tl no_pos in
     let rhs_tl = TL.term_list_of_exp (CP.afv rhs) rhs in
-    let () = x_binfo_hp (add_str "rhs terms: " TL.print_term_list) rhs_tl no_pos in
+    let () = x_tinfo_hp (add_str "rhs terms: " TL.print_term_list) rhs_tl no_pos in
     (* move lhs terms to rhs *)
     let tl = rhs_tl @ (List.map negate_term lhs_tl) in
     (* move the *sv* given to the 'lhs',
@@ -44,7 +44,7 @@ let extract_ind_exp sv form : CP.param_flow =
     let (s,rest) = List.partition is_term_for_sv tl in
     let s = List.map negate_term s in
     let new_form = CP.BForm ((CP.mkEq (TL.exp_of_term_list s no_pos) (TL.exp_of_term_list rest no_pos) no_pos, None), None) in
-    let () = x_binfo_hp (add_str "rearranged: " !CP.print_formula) new_form no_pos in
+    let () = x_tinfo_hp (add_str "rearranged: " !CP.print_formula) new_form no_pos in
     (match s with
      | [] -> failwith "extract_ind_exp: expected formula to contain given spec_var"
      | [s] ->
@@ -136,7 +136,7 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
            CP.EMapSV.add_equiv emap sv1 sv2
          | _ -> emap)
       | _ -> emap) CP.EMapSV.mkEmpty lhs_formulae in
-    let () = Debug.binfo_hprint (add_str "EMap" CP.EMapSV.string_of) emap no_pos in
+    let () = Debug.tinfo_hprint (add_str "EMap" CP.EMapSV.string_of) emap no_pos in
 
     (* assumes that at least one RelForm in the list of formulae,
      * assumes it is *the* relation we're looking for. *)
@@ -171,7 +171,7 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
                           let spec_vars = CP.fv f in
                           CP.EMapSV.mem sv spec_vars)
                        fs) in
-      let () = x_binfo_hp (add_str ("constraints of " ^ (Cprinter.string_of_spec_var arg)) (pr_list !CP.print_formula)) constraints no_pos in
+      let () = x_tinfo_hp (add_str ("constraints of " ^ (Cprinter.string_of_spec_var arg)) (pr_list !CP.print_formula)) constraints no_pos in
       (arg,constraints) in
     let res = List.map constraits_of_arg post_r_args in
     let analysis = List.map (fun (arg,constr) ->
@@ -194,7 +194,7 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
 
   (* debug output initial results (before removing primes) *)
   let frm_assumes = List.map snd zipped_frm_assumes in
-  let () = Debug.binfo_hprint (add_str "initial result" pr_out) frm_assumes no_pos in
+  let () = Debug.tinfo_hprint (add_str "initial result" pr_out) frm_assumes no_pos in
 
   (* eliminate the primed specvars from the expressions
    * of the param flows. *)
@@ -308,7 +308,7 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
     let res = simplify (args,pa) in
     res) zipped_frm_assumes in
 
-  let () = Debug.binfo_hprint (add_str "interim result" pr_out) frm_assumes no_pos in
+  let () = Debug.tinfo_hprint (add_str "interim result" pr_out) frm_assumes no_pos in
 
   (* combine various param-flow lists, reduce duplication. *)
   let is_param_flows_same (pf1:CP.param_flow list) (pf2:CP.param_flow list) : bool =

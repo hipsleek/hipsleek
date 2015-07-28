@@ -18,6 +18,18 @@ void loo (ref int x, ref int y,int a, int b)
 /*
 # ex21.ss
 
+!!! analyse_param summary:
+!!! relations (normalised):[( x=(b'-a')+x'+1 & y=(y'-b')+a'+1 & (b'+x')<a' & b'<=(y'+a') & a'=a & b'=b & 
+ R(x,y,a,b), R(x',y',a',b')),( y=(y'-b')+a'+1 & x=(b'-a')+x'+1 & (y'+a')<b' & a'<=(b'+x') & a'=a & b'=b & 
+ R(x,y,a,b), R(x',y',a',b')),( x=(b'-a')+x'+1 & y=(y'-b')+a'+1 & a'<=(b'+x') & b'<=(y'+a') & a'=a & b'=b & 
+ R(x,y,a,b), R(x',y',a',b'))]
+!!! args:[(int,x),(int,y),(int,a),(int,b)]
+!!! result:[[IND([b,a,x], (-1*b)+(1*a)+-1+(1*x))
+      ,IND([b,a,y],(1*b)+(-1*a)+-1+(1*y))
+      ,FLOW(a)
+      ,FLOW(b)]]
+
+
 This produced:
 
   x=(b'-a')+x'+1 & y=(y'-b')+a'+1 & a'<=(b'+x') & b'<=(y'+a') 

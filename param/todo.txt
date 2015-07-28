@@ -335,6 +335,23 @@ analyse_param@1 EXIT:[[FLO(x')]]
     !!! result:[[DEC(y),FLO(x)]]
 
 ================================================================
+Steps for Parameter Analysis
+----------------------------
+- tidy up
+- mutual-recursion (see ex26.ss)
+- @analyse_param (see ex22.ss)
+- SCP examples (tricky example for termination analysis)
+    (examples from the literature of SCP)
+- other applications?
+
+# Parameters Analysis via Hoare Logic 
+# Numeric parameters of recursive methods?
+  - linear, non-linear?
+  - increasing/decreassing
+  - swapping, permuting, synchronizing?
+  - constants?
+  - also for loops..
+
 ================================================================
 ================================================================
 ================================================================

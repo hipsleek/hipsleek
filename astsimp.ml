@@ -4053,6 +4053,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
            C.proc_source = proc.I.proc_source;
            C.proc_flags = proc.I.proc_flags;
            C.proc_args = args;
+           C.proc_param_results = [];
            C.proc_ho_arg = ho_arg;
            C.proc_args_wi = args_wi;
            C.proc_imm_args = List.map (fun (id,_) -> (id,false)) args_wi;
