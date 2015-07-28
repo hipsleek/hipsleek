@@ -1680,14 +1680,25 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                    let acts = [(3,M_base_case_unfold m_res) (* ;(1,M_cyclic m_res) *)] in
                    (* TODO:WN Is infinite unfolding possible? *)
                    let acts2 = if vl_view_orig && vr_is_prim && not(vl_is_prim) then [(2,M_unfold (m_res,uf_i))] else [] in
+                   let flag = !dis_base_case_unfold || vl_vdef.view_base_case==None in
+                   let () = if flag then 
+                       begin
+                         x_dinfo_pp "Base-Case Unfold Problem" no_pos;
+                         x_dinfo_pp "========================" no_pos;
+                         x_dinfo_hp (add_str "LHS pred" pr_id) vl_name no_pos;
+                         x_dinfo_hp (add_str "RHS pred" pr_id) vr_name no_pos;
+                       end
+                   in
                    (* let acts1= *)
                    (*   if !do_classic_frame_rule && (Cfutil.is_fold_form  prog vl estate.CF.es_formula vr rhs reqset) then *)
                    (*     acts@[(1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))] *)
                    (*   else *)
                    (*     acts *)
                    (* in *)
-                     (* if !dis_base_case_unfold || vl_vdef.view_base_case==None then  acts2 *)
-                     (* else *) acts2@acts
+                     if flag (* & !Globals.adhoc_flag_1 *) then  
+                       if acts2==[] then [(9,M_Nothing_to_do "no base case nor unfold here")]
+                       else acts2
+                     else acts2@acts
                in
                (*let lst = [(1,M_base_case_unfold m_res);(1,M_unmatched_rhs_data_node (rhs_node,m_res.match_res_rhs_rest))] in*)
                (*L2: change here for cyclic*)
