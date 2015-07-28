@@ -1696,7 +1696,9 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                    (*     acts *)
                    (* in *)
                      if flag (* & !Globals.adhoc_flag_1 *) then  
-                       if acts2==[] then [(9,M_Nothing_to_do "no base case nor unfold here")]
+                       if acts2==[] then 
+                         if true (* !Globals.adhoc_flag_1 *) then []
+                         else [(9,M_Nothing_to_do "no base case nor unfold here")]
                        else acts2
                      else acts2@acts
                in
@@ -2330,14 +2332,15 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
       ->
       (*drop ummatched actions if possible*)
       (* let l = drop_unmatched_action l in *)
-      if l==[] then (0,Cond_action l)
+      if l==[] then (9,M_Nothing_to_do "Cond_action []")
       else
         let l = List.map recalibrate_wt l in
         let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
         (rw,Cond_action l)
     | Seq_action l ->
-      if l==[] then (0,Seq_action l)
-      else
+      if l==[] then (9,M_Nothing_to_do "Seq_action []")
+            (* (0,Seq_action l) *)
+        else
         let l = List.map recalibrate_wt l in
         let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
         (rw,Seq_action l)
