@@ -2299,7 +2299,10 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
   let data_name = if (String.length vdef.I.view_data_name) = 0  then
       I.incr_fixpt_view prog  prog.I.prog_data_decls prog.I.prog_view_decls
     else vdef.I.view_data_name in
-  (vdef.I.view_data_name <- data_name;
+  (
+    let () = x_binfo_hp (add_str "XXX:data_name" pr_id) data_name no_pos in 
+    let () = x_binfo_hp (add_str "XXX:view_name" pr_id) vdef.I.view_name no_pos in
+   vdef.I.view_data_name <- data_name;
    let vtv = vdef.I.view_typed_vars in
    let tlist = List.map (fun (t,c) -> (c,{sv_info_kind=t; id=fresh_int() })) vtv in
    let tlist = ([(self,{ sv_info_kind = (Named data_name);id = fresh_int () })]@tlist) in

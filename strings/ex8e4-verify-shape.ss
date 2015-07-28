@@ -19,14 +19,41 @@ H_v<v> == self::str<v1,q> * q::H_v<v1> & v!=0
 
 # Why WAITS occur twice?
 
+# ex8e4.ss
+
 !!! **iast.ml#2137:XXX:0v.view_name:WAITS
 !!! **iast.ml#2137:XXX:0v.view_name:WAIT
 !!! **iast.ml#2137:XXX:0v.view_name:memLoc
+!!! **astsimp.ml#2303:XXX:data_name:WAITS
+!!! **astsimp.ml#2304:XXX:view_name:WAITS
+!!! **astsimp.ml#2303:XXX:data_name:WAIT
+!!! **astsimp.ml#2304:XXX:view_name:WAIT
+!!! **astsimp.ml#2303:XXX:data_name:memLoc
+!!! **astsimp.ml#2304:XXX:view_name:memLoc
 !!! **iast.ml#2137:XXX:0v.view_name:WAITS
 !!! **iast.ml#2155:XXX:view:WAIT
 !!! **iast.ml#2156:XXX:a:[WAIT]
 !!! **iast.ml#2155:XXX:view:memLoc
 !!! **iast.ml#2156:XXX:a:[memLoc]
+!!! **astsimp.ml#2303:XXX:data_name:WAITS
+!!! **astsimp.ml#2304:XXX:view_name:DDD
+
+# ex8e4a.ss
+
+!!! **iast.ml#2137:XXX:0v.view_name:WAITS
+!!! **iast.ml#2137:XXX:0v.view_name:WAIT
+!!! **iast.ml#2137:XXX:0v.view_name:memLoc
+!!! **iast.ml#2155:XXX:view:DDD
+!!! **iast.ml#2156:XXX:a:[str]
+!!! **astsimp.ml#2303:XXX:data_name:WAITS
+!!! **astsimp.ml#2304:XXX:view_name:WAITS
+!!! **astsimp.ml#2303:XXX:data_name:WAIT
+!!! **astsimp.ml#2304:XXX:view_name:WAIT
+!!! **astsimp.ml#2303:XXX:data_name:memLoc
+!!! **astsimp.ml#2304:XXX:view_name:memLoc
+!!! **astsimp.ml#2303:XXX:data_name:str
+!!! **astsimp.ml#2304:XXX:view_name:DDD
+
 
 */
 
