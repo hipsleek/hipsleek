@@ -318,6 +318,8 @@ let common_arguments = [
   ("--dis-seg-opt", Arg.Clear Globals.graph_norm,"disable the graph-based optimization for segment data structures");
   ("--oc-dis-simp", Arg.Clear Globals.oc_simplify,"disable oc simplification");
   ("--oc-en-simp", Arg.Set Globals.oc_simplify,"enable oc simplification");
+  ("--oc-en-nonlinear", Arg.Set Globals.oc_non_linear,"enable oc non-linear processing");
+  ("--oc-dis-nonlinear", Arg.Clear Globals.oc_non_linear,"disable oc non-linear processing");
   ("--oc-dis-adv-simp", Arg.Clear Globals.oc_adv_simplify,"disable oc advancde simplification");
   ("--oc-en-adv-simp", Arg.Set Globals.oc_adv_simplify,"enable oc advanced simplification");
   ("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");

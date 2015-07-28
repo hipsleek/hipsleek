@@ -223,7 +223,7 @@ What is the diff between baga_over and baga_over (unfolded)?
   baga over inv (unfolded): [([self], n>=1),([self], n>=1)]
   baga under inv: [([self], n>=1),([self], n>=1)]
 ========================================================
-# ex4c.slk
+# ex4c.slk (FIXED - to follow Trung's suggestion)
 
 Can we use eqmap of LHS for conseq but
 how far can we go?
@@ -237,7 +237,31 @@ subs_const_var_formula inp1 : (not((a=1 & 1<=b)) | 1<=(a*b))
 subs_const_var_formula@2 EXIT: (not((a=1 & 1<=b)) | 1<=(a*b))
 
 ========================================================
+# ex5a.slk -dre "arith_simpl"
+
+checkentail b>=1 & aaa=1*2+3-1 |- aaa*b>=1.
+print residue.
+
+Need to change arithmetic simplify.
+Below was required for mona formual to eliminate
+- operator.
+
+arith_simplify LHS@1
+arith_simplify LHS inp1 : b>=1 & aaa=((1*2)+3)-1
+arith_simplify LHS@1 EXIT: 1<=b & aaa+1=2+3
 ========================================================
+# ex5a.slk -dre "do_all"
+
+# do_all_eq and do_all3_eq are for more aggressive reduction
+ of equalities.
+
+(====)
+do_all_eq@2@1
+do_all_eq inp1 : aaa
+do_all_eq inp2 : ((1*2)+3)-1
+do_all_eq@2 EXIT:( aaa+1, 2+3)
+
+
 ========================================================
 ========================================================
 ========================================================
