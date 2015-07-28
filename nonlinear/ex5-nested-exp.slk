@@ -1,4 +1,4 @@
-checkentail b>=1 & a=1 |- a*b>=1.
+checkentail b>=1 & a=2 & c=3|- a*b>=1.
 print residue.
 
 checkentail b>=1 & a=1+2 |- a*b>=1.
@@ -23,7 +23,7 @@ checkentail b>=1 & a=1*2*3 |- a*b>=1.
 print residue.
 
 // (8) ???
-checkentail b>=1 & a=1*2+3-1 |- a*b>=1.
+checkentail b=1 & a=1*2+3+b |- a*b>=1.
 print residue.
 /*
 (==omega.ml#632==)

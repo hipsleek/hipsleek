@@ -886,6 +886,8 @@ let rec exp_contains_spec_var (e : exp) : bool =
   | ArrayAt _ -> true
   | _ -> false
 
+
+
 let eq_spec_var_rec (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (_, v1, p1), SpecVar (_, v2, p2)) ->
     (* translation has ensured well-typedness.
@@ -3136,6 +3138,25 @@ let trans_exp (e:exp) (arg:'a) (f:'a->exp->(exp * 'b) option)
 let fold_exp (e: exp) (f: exp -> 'b option) (f_comb: 'b list -> 'b) : 'b =
   let new_f a e = push_opt_val_rev (f e) e in
   snd (trans_exp e () new_f voidf2 f_comb)
+
+
+let var_list_exp (e:exp) =
+  let f_e e =
+    match e with
+    | Var (v,_) -> Some [v]
+    | _ -> None
+  in
+  fold_exp e f_e List.concat
+;;
+
+let const_exp_list_exp (e:exp) =
+  let f_e e =
+    match e with
+    | IConst (i,_) -> Some [i]
+    | _ -> None
+  in
+  fold_exp e f_e List.concat
+;;
 
 let rec transform_exp f e  =
   let r =  f e in
@@ -7020,7 +7041,7 @@ and b_form_simplify_x (b:b_formula) :b_formula =
                 if !perm=Dperm && (perm_bounds e1 || perm_bounds e2) then  BConst (false, l)
                 else
                   let lh, rh = x_add do_all_eq e1 e2 l in
-                  Eq (lh, rh, l)		
+                  Eq (lh, rh, l)
               |  Neq (e1, e2, l) ->
                 let lh, rh = do_all e1 e2 l in
                 Neq (lh, rh, l)
@@ -10898,6 +10919,49 @@ let add_to_eqmap eq_list eqset =
     ) eqset eq_list in eqset 
 ;;
 
+
+(* Assuming that there is no subtraction and multipication, because of the arith_simplify *)
+let equality_to_matrix eq_list =
+  let sv_set =
+    List.fold_left (
+      fun r (e1,e2) ->
+        SVarSet.union r (SVarSet.of_list ((var_list_exp e1)@(var_list_exp e2)))
+    ) SVarSet.empty eq_list
+  in
+  let sv_list =
+    SVarSet.fold (fun sv l->sv::l) sv_set []
+  in
+  let () = x_tinfo_pp ("sv_list:"^((pr_list (fun sv -> string_of_spec_var sv)) sv_list)) no_pos in
+  let matrix =
+    List.map (
+      fun (e1,e2) ->
+        let svLHS = var_list_exp e1 in
+        let svRHS = var_list_exp e2 in
+        let constLHS = List.fold_left (fun r i -> r+i) 0 (const_exp_list_exp e1) in
+        let constRHS = List.fold_left (fun r i -> r+i) 0 (const_exp_list_exp e2) in
+        (List.map (
+            fun sv ->
+              let lhsN = List.length (List.filter (fun item -> eq_spec_var item sv) svLHS) in
+              let rhsN = List.length (List.filter (fun item -> eq_spec_var item sv) svRHS) in
+              lhsN-rhsN
+          ) sv_list)@[constRHS-constLHS]
+    ) eq_list
+  in
+  (matrix,sv_list)
+;;
+
+let enhance_eq_list eq_list =
+  let (matrix,svlst) = equality_to_matrix eq_list in
+  let res_list = Matrix.solve_equation matrix in
+  let () = x_tinfo_pp ("res_list"^((pr_list (pr_pair string_of_int string_of_int)) res_list)) no_pos in
+  (List.map (fun (pos,v) -> (Var (List.nth svlst pos,no_pos),IConst (v,no_pos))) res_list)@eq_list
+;;
+
+let enhance_eq_list eq_list =
+  Debug.no_1 "enhance_eq_list" (pr_list (pr_pair !print_exp !print_exp)) (pr_list (pr_pair !print_exp !print_exp)) enhance_eq_list eq_list
+;;
+
+
 let build_eqmap eq_list =
   let eqset = EMapSV.mkEmpty in
   add_to_eqmap eq_list eqset
@@ -10943,67 +11007,90 @@ let spec_with_const em sv l =
   | None -> Var (sv,l)
 ;;
 
+(* let add_to_em_set eq_list em_set = *)
+(*   let matrix = equality_to_matrix eq_list in *)
+(*   let () = x_binfo_pp ("matrix: "^(Matrix.print_matrix string_of_int matrix)) no_pos in *)
+(*   let (em,eset) = List.fold_left (fun (em,set) (e1,e2) -> *)
+(*          (match e1,e2 with *)
+(*           | Var(sv1,_),Var(sv2,_) -> (EMapSV.add_equiv em sv1 sv2, set) *)
+(*           | Var(sv,_),IConst(i,_)  | IConst(i,_),Var(sv,_) -> (EMapSV.add_equiv em sv (mk_sp_const i), set) *)
+(*           | Var(sv,_),e  | e,Var(sv,_) -> (em, (sv,e)::set) *)
+(*           | _  -> em_set) *)
+(*     ) em_set eq_list *)
+(*   in *)
+(*   let eval_set (em,eset) = *)
+(*     let rec eval_one em e = *)
+(*       match e with *)
+(*       | Add (e1,e2,_) -> *)
+(*         ( *)
+(*           match eval_one em e1, eval_one em e2 with *)
+(*           | Some i1, Some i2 -> *)
+(*             Some (i1+i2) *)
+(*           | _,_ -> *)
+(*             None *)
+(*         ) *)
+(*       | Mult (e1,e2,_) -> *)
+(*         ( *)
+(*           match eval_one em e1, eval_one em e2 with *)
+(*           | Some i1, Some i2 -> *)
+(*             Some (i1*i2) *)
+(*           | _,_ -> *)
+(*             None *)
+(*         ) *)
+(*       |  Subtract (e1,e2,_) -> *)
+(*         ( *)
+(*           match eval_one em e1, eval_one em e2 with *)
+(*           | Some i1, Some i2 -> *)
+(*             Some (i1-i2) *)
+(*           | _,_ -> *)
+(*             None *)
+(*         ) *)
+(*       | Var (sv,l) -> *)
+(*         ( *)
+(*           match spec_with_const em sv l with *)
+(*           | IConst (i,_) -> Some i *)
+(*           | _ -> None *)
+(*         ) *)
+(*       | IConst (i,_) -> *)
+(*         Some i *)
+(*       | _ -> *)
+(*         None *)
+(*     in *)
+(*     let process (em,signal,neset) (sv,e) = *)
+(*       match eval_one em e with *)
+(*       | None -> (em,signal||false,(sv,e)::neset) *)
+(*       | Some iconst -> *)
+(*         (EMapSV.add_equiv em sv (mk_sp_const iconst), true, neset) *)
+(*     in *)
+(*     List.fold_left process (em,false,[]) eset *)
+(*   in *)
+(*   let rec iterator em eset = *)
+(*     let (rem,rsignal,neset) = eval_set (em,eset) in *)
+(*     if rsignal then iterator rem neset *)
+(*     else rem *)
+(*   in *)
+(*   iterator em eset *)
+(* ;; *)
+
 let add_to_em_set eq_list em_set =
-  let (em,eset) = List.fold_left (fun (em,set) (e1,e2) ->
-         (match e1,e2 with
-          | Var(sv1,_),Var(sv2,_) -> (EMapSV.add_equiv em sv1 sv2, set)
-          | Var(sv,_),IConst(i,_)  | IConst(i,_),Var(sv,_) -> (EMapSV.add_equiv em sv (mk_sp_const i), set)
-          | Var(sv,_),e  | e,Var(sv,_) -> (em, (sv,e)::set)
-          | _  -> em_set)
-    ) em_set eq_list
+  let (em,eset) =
+    List.fold_left (fun (em,set) (e1,e2) ->
+        (
+          match e1,e2 with
+          | Var(sv1,_),Var(sv2,_) ->
+            (EMapSV.add_equiv em sv1 sv2, set)
+          | Var(sv,_),IConst(i,_)
+          | IConst(i,_),Var(sv,_) ->
+            (EMapSV.add_equiv em sv (mk_sp_const i), set)
+          | Var(sv,_),e
+          | e,Var(sv,_) ->
+            (em, (sv,e)::set)
+          | _  -> (em,set)
+        )
+      ) em_set eq_list
   in
-  let eval_set (em,eset) =
-    let rec eval_one em e =
-      match e with
-      | Add (e1,e2,_) ->
-        (
-          match eval_one em e1, eval_one em e2 with
-          | Some i1, Some i2 ->
-            Some (i1+i2)
-          | _,_ ->
-            None
-        )
-      | Mult (e1,e2,_) ->
-        (
-          match eval_one em e1, eval_one em e2 with
-          | Some i1, Some i2 ->
-            Some (i1*i2)
-          | _,_ ->
-            None
-        )
-      |  Subtract (e1,e2,_) ->
-        (
-          match eval_one em e1, eval_one em e2 with
-          | Some i1, Some i2 ->
-            Some (i1-i2)
-          | _,_ ->
-            None
-        )
-      | Var (sv,l) ->
-        (
-          match spec_with_const em sv l with
-          | IConst (i,_) -> Some i
-          | _ -> None
-        )
-      | IConst (i,_) ->
-        Some i
-      | _ ->
-        None
-    in
-    let process (em,signal,neset) (sv,e) =
-      match eval_one em e with
-      | None -> (em,signal||false,(sv,e)::neset)
-      | Some iconst ->
-        (EMapSV.add_equiv em sv (mk_sp_const iconst), true, neset)
-    in
-    List.fold_left process (em,false,[]) eset
-  in
-  let rec iterator em eset =
-    let (rem,rsignal,neset) = eval_set (em,eset) in
-    if rsignal then iterator rem neset
-    else rem
-  in
-  iterator em eset
+  let () = x_tinfo_pp ("em "^(EMapSV.string_of em)) no_pos in
+  em
 ;;
 
 let build_eqmap_at_toplevel e =
@@ -11012,8 +11099,15 @@ let build_eqmap_at_toplevel e =
 
 let add_eqmap_at_toplevel em e =
   let eq_list = find_eq_at_toplevel e in
-  let new_em = add_to_em_set eq_list (em,[]) in
-  let () = x_tinfo_pp ("new_em "^(EMapSV.string_of new_em)) no_pos in
+  (* let matrix = equality_to_matrix eq_list in *)
+  (* let () = x_tinfo_pp ("matrix: "^(Matrix.print_matrix string_of_int matrix)) no_pos in *)
+  (* let new_matrix = Matrix.gaussian_elimination_int matrix in *)
+  (* let () = x_tinfo_pp ("new_matrix: "^(Matrix.print_matrix string_of_float new_matrix)) no_pos in *)
+  (* let res_list = Matrix.solve_equations matrix in *)
+  (* let extra_eq_list = List.fold_left  *)
+  let new_eq_list = x_add_1 enhance_eq_list eq_list in
+  let new_em = add_to_em_set new_eq_list (em,[]) in
+  
   (*add_to_eqmap eq_list em*)
   new_em
 
@@ -11191,21 +11285,20 @@ let rec subs_const_var_formula ?(em=None) (f:formula) : formula =
       else Some e
     | _ -> None
   in
-  let f_arg_f (start_flag,emap,nonlinear) e = 
+  let f_arg_f (start_flag,emap,nonlinear) e =
     match e with
-    | And _ | AndList _ -> 
+    | And _
+    | AndList _ ->
       if start_flag then (* add to eqmap *)
         let eqlist = find_eq_at_toplevel e in
-        (* let _ = add_eqmap_at_toplevel emap e in *)
-        (* (false,add_to_eqmap eqlist emap) *)
         (false,add_eqmap_at_toplevel emap e,nonlinear)
       else (* inside ; no change to eqmap *)
         (false,emap,nonlinear)
     | Or _ | Not _ ->  (* re-start *)
-      (true,emap,nonlinear) 
-    | Forall (v,_,_,_) | Exists (v,_,_,_) -> 
+      (true,emap,nonlinear)
+    | Forall (v,_,_,_) | Exists (v,_,_,_) ->
       (* change vs_set vs-v *)
-      (true,EMapSV.elim_elems_one emap v,nonlinear) 
+      (true,EMapSV.elim_elems_one emap v,nonlinear)
     | BForm _ -> (false,emap,nonlinear)
   in
   let f_arg_bf (s,em,nonlinear) e =
@@ -14752,7 +14845,9 @@ let rec nonlinear_var_list_exp (e: exp) =
       in Some p
     | Var (v, _) -> Some ([[v]])
     | _ -> None
-  in fold_exp e f_e List.concat 
+  in fold_exp e f_e List.concat
+
+
 
 let nonlinear_var_list_formula (f: formula) =
   let f_e e = Some (nonlinear_var_list_exp e) in
