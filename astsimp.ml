@@ -3136,11 +3136,23 @@ and compute_base_case_x prog vn cf vars = (*flatten_base_case cf s self_c_var *)
       let pr = Cprinter.string_of_formula in
       let pr2 = pr_pair (pr_list Cprinter.string_of_mix_formula)  (pr_list Cprinter.string_of_pure_formula) in
       Debug.no_1 "compute_base_case_part" pr pr2 part f in
-    let sim,co = List.split (List.map (fun (c,_)->
-        let _=proving_loc #set (CF.pos_of_formula c) in
+    let lst = List.map (fun (c,_)->
+        let _= proving_loc #set (CF.pos_of_formula c) in
         let () = Debug.tinfo_hprint (add_str "c" ( Cprinter.string_of_formula)) c no_pos in
         x_add_1 part c
-      ) cf) in
+      ) cf in
+    let cf_f = List.map fst cf in
+    let is_base_pure = List.map (fun (f,_) -> CF.is_emp_formula f) cf in
+    let lst2 = List.combine lst is_base_pure in
+    let lst3 = List.map (fun ((l1,l2) as k,b)-> 
+        if b || l2!=[] then k else ([],(List.map MCP.pure_of_mix l1)@l2)) lst2 in
+    let pr_mf = Cprinter.string_of_mix_formula in
+    let pr_pf = Cprinter.string_of_pure_formula in
+    let () = Debug.tinfo_hprint (add_str "cf_f" (pr_list Cprinter.string_of_formula)) cf_f no_pos in
+    let () = Debug.tinfo_hprint (add_str "lst3" (pr_list (pr_pair (pr_list pr_mf) (pr_list pr_pf)))) lst3 no_pos in
+    let () = Debug.tinfo_hprint (add_str "lst" (pr_list (pr_pair (pr_list pr_mf) (pr_list pr_pf)))) lst no_pos in
+    let () = Debug.tinfo_hprint (add_str "is_base_pure" (pr_list string_of_bool)) is_base_pure no_pos in
+    let sim,co = List.split lst3 in
     let sim,co = List.concat sim, List.concat co in
     let () = Debug.tinfo_hprint (add_str "sim" (pr_list Cprinter.string_of_mix_formula)) sim no_pos in
     let () = Debug.tinfo_hprint (add_str "co" (pr_list Cprinter.string_of_pure_formula)) co no_pos in
@@ -3539,7 +3551,7 @@ and rename_proc (proc: I.proc_decl) : I.proc_decl =
   let p_pos = List.map search p_vs in
   let new_vs = List.combine p_vs p_pos in
   let new_vs = List.filter (fun (_,n) -> n>0) new_vs in
-  (* let _ = x_binfo_hp (add_str "proc params" Iprinter.string_of_param_list) vs no_pos in *)
+  (* let _ = x_tinfo_hp (add_str "proc params" Iprinter.string_of_param_list) vs no_pos in *)
   let body = proc.I.proc_body in
   if new_vs==[] || body==None then proc
   else
@@ -3548,7 +3560,7 @@ and rename_proc (proc: I.proc_decl) : I.proc_decl =
         Some body ->IastUtil.find_free_vars_only body 
       | None -> IS.empty in 
     (* let el = IS.elements exp_vs in *)
-    (* let _ = x_binfo_hp (add_str "free vars body" (pr_list pr_id)) el no_pos in *)
+    (* let _ = x_tinfo_hp (add_str "free vars body" (pr_list pr_id)) el no_pos in *)
     let vs2 = List.map (fun (v,n) -> (v,String.sub v 0 n)) new_vs in 
     let clash_flag = IS.exists (fun v -> List.exists (fun (_,n) -> v=n) vs2) exp_vs in
     let _ = x_tinfo_hp (add_str "clash_flag" (string_of_bool)) clash_flag no_pos in
@@ -3562,7 +3574,7 @@ and rename_proc (proc: I.proc_decl) : I.proc_decl =
       let new_static_specs = Iformula.subst_struc sst proc.I.proc_static_specs in
       let new_vs = List.map (fun s ->
           {s with I.param_name = rename_var vs2 s.I.param_name}) vs in
-      let _ = x_binfo_hp (add_str "renaming proc" (pr_list (pr_pair pr_id pr_id))) vs2 no_pos in
+      let _ = x_tinfo_hp (add_str "renaming proc" (pr_list (pr_pair pr_id pr_id))) vs2 no_pos in
       let _ = x_tinfo_hp (add_str "renamed specs" Iprinter.string_of_struc_formula) new_static_specs no_pos in
       let _ = x_tinfo_hp (add_str "renamed body" (pr_opt Iprinter.string_of_exp)) new_body no_pos in
       let _ = x_tinfo_hp (add_str "renamed proc params" Iprinter.string_of_param_list) new_vs no_pos in

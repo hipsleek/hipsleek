@@ -27,55 +27,13 @@ checkentail s'::str<v,q>*q::H1<v> & v=0 & s=s' |- s::Q1<s'>.
 print residue.
 */
 
-/*
+
 checkentail q::H1<v> & v=0  |- q::D<>.
 print residue.
-*/
 
 /*
 # strings/ex8d6.slk --pcp
 
-# Not a valid base-case if primitive predicate present..
-
-  base case: {v=0->v=0 & self!=null}
-
-pred H1<v> == self::str<v2,q>*q::H1<v2> & v!=0
-   or self::D<> & v=0
-  inv self!=null.
-
-(====)
-compute_base_case_part@2@1
-compute_base_case_part inp1 : (* lbl: *){2}->(exists v2_13,q,
-v2: (* lbl: *){2}->self::str<v2,q>@M * q::H1<v2_13>@M&vvv!=0 & v2_13=v2&
-{FLOW,(1,26)=__flow#E}[]
-compute_base_case_part@2 EXIT:([],[ vvv!=0 & self!=null])
-
-(==omega.ml#1151==)
-compute_base_case_part@3@1
-compute_base_case_part inp1 : (* lbl: *){3}->self::D<>@M&vvv=0&{FLOW,(1,26)=__flow#E}[]
-compute_base_case_part@3 EXIT:([ vvv=0 & self!=null],[])
-
-
-
-printing problem ..
-
-  base case: 
-  v=0->v=0 & self!=nullview_complex_inv: None
-  prune branches: ,[]
-  prune conditions: 
-    {
-[]}
-  prune baga conditions: 
-  prune invs:0:,[]
-
-Expecting:
-
-  base case: {v=0->v=0 & self!=null}
-  view_complex_inv: None
-  prune branches: ,[]
-  prune conditions: {[]}
-  prune baga conditions: 
-  prune invs:0:,[]
 
 # Why no direct unfolding?
 
