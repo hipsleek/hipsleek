@@ -1979,7 +1979,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                | Coerc_mater s -> 
                  let () = pr_debug "selected lemma XX\n" in  
                  M_lemma (m_res,Some s)) in
-           let l1 = if !dis_base_case_unfold || vdef.view_base_case==None then  [] else [(4,M_base_case_unfold m_res)] in
+           let l1 = if !dis_base_case_unfold then  [] else [(4,M_base_case_unfold m_res)] in
            (-1, (Search_action ((1,a1)::l1)))
        | HRel (h_name, _, _), ViewNode vl ->
          let h_name = Cpure.name_of_spec_var h_name in
