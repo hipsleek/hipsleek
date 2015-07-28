@@ -1311,6 +1311,7 @@ and check_lemma_not_exist vl vr=
       else false in
     b_left && b_right &&(left_ls@right_ls)=[]
 
+(* WN : how is this diff from process_one_match? *)
 and process_one_match_accfold_x (prog: C.prog_decl) (mt_res: match_res)
     (lhs_h: CF.h_formula) (lhs_p: MCP.mix_formula) (rhs_p: MCP.mix_formula)
   : action_wt list =
@@ -1676,14 +1677,17 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                    let uf_i = if new_orig then 0 else 1 in
                    [(1,M_cyclic (m_res,uf_i,0, syn_lem_typ, None))(* ;(1,M_unfold (m_res, uf_i)) *)]
                  else
+                   (* TODO:WN Is infinite unfolding possible? *)
                    let acts = [(3,M_base_case_unfold m_res) (* ;(1,M_cyclic m_res) *)] in
+                   let acts2 = if vr_is_prim && not(vl_is_prim) then [(2,M_unfold (m_res,uf_i))] else [] in
                    (* let acts1= *)
                    (*   if !do_classic_frame_rule && (Cfutil.is_fold_form  prog vl estate.CF.es_formula vr rhs reqset) then *)
                    (*     acts@[(1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))] *)
                    (*   else *)
                    (*     acts *)
                    (* in *)
-                   acts
+                     if !dis_base_case_unfold || vl_vdef.view_base_case==None then  acts2
+                     else acts2@acts
                in
                (*let lst = [(1,M_base_case_unfold m_res);(1,M_unmatched_rhs_data_node (rhs_node,m_res.match_res_rhs_rest))] in*)
                (*L2: change here for cyclic*)
@@ -1728,7 +1732,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          (*   | _ -> false                                      *)
          (* ) a in                                              *)
          (* try accelerated folding *)
-         let a_accfold = process_one_match_accfold prog m_res lhs_h lhs_p rhs_p in
+         let a_accfold = x_add process_one_match_accfold prog m_res lhs_h lhs_p rhs_p in
          Debug.ninfo_hprint (add_str "a_accfold length" (fun x -> string_of_int (List.length x))) a_accfold no_pos;
          Debug.ninfo_hprint (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
          (* return *)
@@ -1855,7 +1859,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          (*   | _ -> false                                      *)
          (* ) a in                                              *)
          (* try accelerated folding *)
-         let a_accfold = process_one_match_accfold prog m_res lhs_h lhs_p rhs_p in
+         let a_accfold = x_add process_one_match_accfold prog m_res lhs_h lhs_p rhs_p in
          Debug.ninfo_hprint (add_str "a_accfold length" (fun x -> string_of_int (List.length x))) a_accfold no_pos;
          Debug.ninfo_hprint (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
          (* return *)
@@ -1952,6 +1956,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
        | DataNode dl, _ -> (1,M_Nothing_to_do ("matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
        | ThreadNode dt, _ -> (1,M_Nothing_to_do ("matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
        | ViewNode vl, ViewNode vr ->
+         let vdef = x_add C.look_up_view_def_raw 43 prog.C.prog_view_decls vl.CF.h_formula_view_name in
          let vl_name = vl.h_formula_view_name in
          let vr_name = vr.h_formula_view_name in
          let vl_view_orig = vl.h_formula_view_original in
@@ -1974,7 +1979,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                | Coerc_mater s -> 
                  let () = pr_debug "selected lemma XX\n" in  
                  M_lemma (m_res,Some s)) in
-           let l1 = if !dis_base_case_unfold then  [] else [(4,M_base_case_unfold m_res)] in
+           let l1 = if !dis_base_case_unfold || vdef.view_base_case==None then  [] else [(4,M_base_case_unfold m_res)] in
            (-1, (Search_action ((1,a1)::l1)))
        | HRel (h_name, _, _), ViewNode vl ->
          let h_name = Cpure.name_of_spec_var h_name in
@@ -2314,13 +2319,17 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
       ->
       (*drop ummatched actions if possible*)
       (* let l = drop_unmatched_action l in *)
-      let l = List.map recalibrate_wt l in
-      let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
-      (rw,Cond_action l)
+      if l==[] then (0,Cond_action l)
+      else
+        let l = List.map recalibrate_wt l in
+        let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
+        (rw,Cond_action l)
     | Seq_action l ->
-      let l = List.map recalibrate_wt l in
-      let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
-      (rw,Seq_action l)
+      if l==[] then (0,Seq_action l)
+      else
+        let l = List.map recalibrate_wt l in
+        let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
+        (rw,Seq_action l)
     | _ -> if (w == -1) then (0,a) else (w,a) in
   let ls = List.map recalibrate_wt ys in
   let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) ls in
