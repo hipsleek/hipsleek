@@ -5,49 +5,27 @@ data str {
 
 pred_prim D<> inv self!=null.
 
+pred P1<> == self::str<v,q> * q::H1<v>
+  inv self!=null.
+
 pred H1<vvv> == self::str<v2,q>*q::H1<v2> & vvv!=0
    or self::D<> & vvv=0
   inv self!=null.
 
-
-/*
 pred Q1<s> == self::str<v,q>*q::D<> & v=0 & s=self
   or self::str<v,q>*q::Q1<s> & v!=0
   inv self!=null & s!=null.
-
-id: 32; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [] globals: [@flow,@ver_post]
- checkentail q::H1{}<v_1650> * s'::str<v_1646,q_1647>&!(v_bool_130_1561') & v_1650=v & 
-s'=s & v_1646=v & q_1647=q & s!=null & v_1646=0 & MayLoop[]&
-{FLOW,(4,5)=__norm#E}[]
- |-  s::Q1{}<s'>&q!=null&{FLOW,(4,5)=__norm#E}[]. 
-*/
-
-/*
-checkentail s'::str<v,q>*q::H1<v> & v=0 & s=s' |- s::Q1<s'>.
-print residue.
-*/
 
 
 checkentail q::H1<v> & v=0  |- q::D<>.
 print residue.
 
+checkentail s'::str<v,q>*q::H1<v> & v=0 & s=s' |- s::Q1<s'>.
+print residue.
+
+
 /*
 # strings/ex8d6.slk --pcp
 
-# How can this be a must failure?
-# Should we force an unfolding, but will this go into a loop?>
-
-Entail 1: Fail.(must) cause:base case unfold failed
-
-Residue:
- MustErr Context: 
-   fe_kind: MUST
-   fe_name: separation entailment
-   fe_locs: {
-     fc_message: base_case_unfold failed
-     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
-   }
- [[ COND ==>  BaseCaseUnfold]]
- CEX:true
 
 */

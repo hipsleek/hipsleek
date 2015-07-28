@@ -1677,8 +1677,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                    let uf_i = if new_orig then 0 else 1 in
                    [(1,M_cyclic (m_res,uf_i,0, syn_lem_typ, None))(* ;(1,M_unfold (m_res, uf_i)) *)]
                  else
-                   (* TODO:WN Is infinite unfolding possible? *)
                    let acts = [(3,M_base_case_unfold m_res) (* ;(1,M_cyclic m_res) *)] in
+                   (* TODO:WN Is infinite unfolding possible? *)
                    let acts2 = if vr_is_prim && not(vl_is_prim) then [(2,M_unfold (m_res,uf_i))] else [] in
                    (* let acts1= *)
                    (*   if !do_classic_frame_rule && (Cfutil.is_fold_form  prog vl estate.CF.es_formula vr rhs reqset) then *)
