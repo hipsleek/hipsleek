@@ -954,7 +954,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                     let dname = (Globals.string_of_typ ftyp) ^ "_star" in
                     let dtyp = Globals.Named dname in
                     Hashtbl.add tbl_pointer_typ refined_ty dtyp;
-                    let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in
+                    let ddecl = Iast.mkDataDecl dname dfields "Object1c" [] false [] in
                     Hashtbl.add tbl_data_decl dtyp ddecl;
                     (dtyp, dname, ddecl)
                   )
@@ -1056,7 +1056,7 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
               in
               let dtype = Globals.Named dname in
               Hashtbl.add tbl_pointer_typ core_type dtype;
-              let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in
+              let ddecl = Iast.mkDataDecl dname dfields "Object2c" [] false [] in
               Debug.ninfo_hprint (add_str "core_type" string_of_cil_typ)
                 core_type no_pos;
               Debug.ninfo_hprint (add_str "new ddecl for pointer type"
@@ -1173,7 +1173,7 @@ and translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option) : unit =
   let name = comp.Cil.cname in
   let _ = Debug.ninfo_hprint (add_str "name" pr_id) name no_pos in
   let fields = List.map (fun x -> translate_fieldinfo x lopt) comp.Cil.cfields in
-  let datadecl = Iast.mkDataDecl name fields "Object" [] false [] in
+  let datadecl = Iast.mkDataDecl name fields "Object3c" [] false [] in
   Hashtbl.add tbl_data_decl (Globals.Named name) datadecl;
 
 
@@ -2292,7 +2292,7 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
       | Cil.GHipProgSpec (hipprog, _) ->
         aux_progs := !aux_progs @ [hipprog]
     ) globals;
-  let obj_def = {Iast.data_name = "Object";
+  let obj_def = {Iast.data_name = "Object4c";
                  Iast.data_fields = [];
                  Iast.data_pos = no_pos;
                  Iast.data_parent_name = "";
@@ -2302,7 +2302,7 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
   let string_def = {Iast.data_name = "String";
                     Iast.data_pos = no_pos;
                     Iast.data_fields = [];
-                    Iast.data_parent_name = "Object";
+                    Iast.data_parent_name = "Object5c";
                     Iast.data_invs = [];
                     Iast.data_is_template = false;
                     Iast.data_methods = []} in
