@@ -803,10 +803,10 @@ and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
             ^ "  requires p::" ^ typ2_name^ "<val, offset>\n"
             ^ "  ensures p::" ^ typ2_name^ "<val, offset>"
                ^ " * res::" ^ typ2_name^ "<_, offset " ^ op_str ^ " i>;\n"
-        | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), _ ->
-            "char_star __plus_plus_char(char_star x)\n"
-          ^ "requires x::str<_,q>@L & Term[] \n"
-          ^ "ensures  res=q ;\n"
+        (* | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), _ -> *)
+        (*     "char_star __plus_plus_char(char_star x)\n" *)
+        (*   ^ "requires x::str<_,q>@L & Term[] \n" *)
+        (*   ^ "ensures  res=q ;\n" *)
         | Cil.TPtr _, Cil.TInt _ ->
             typ1_name ^ " " ^ proc_name ^ "(" ^ typ1_name ^ " p, " ^ typ2_name ^ " i)\n"
             ^ "  requires p::" ^ typ1_name^ "<val, offset>\n"
@@ -1061,7 +1061,7 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
                 core_type no_pos;
               Debug.ninfo_hprint (add_str "new ddecl for pointer type"
                                     !Iast.print_data_decl) ddecl no_pos;
-              Hashtbl.add tbl_data_decl dtype ddecl;
+              (* Hashtbl.add tbl_data_decl dtype ddecl; *)
               (* return new type*)
               dtype
             )
@@ -2292,27 +2292,27 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
       | Cil.GHipProgSpec (hipprog, _) ->
         aux_progs := !aux_progs @ [hipprog]
     ) globals;
-  let obj_def = {Iast.data_name = "Object4c";
-                 Iast.data_fields = [];
-                 Iast.data_pos = no_pos;
-                 Iast.data_parent_name = "";
-                 Iast.data_invs = [];
-                 Iast.data_is_template = false;
-                 Iast.data_methods = []} in
-  let string_def = {Iast.data_name = "String";
-                    Iast.data_pos = no_pos;
-                    Iast.data_fields = [];
-                    Iast.data_parent_name = "Object5c";
-                    Iast.data_invs = [];
-                    Iast.data_is_template = false;
-                    Iast.data_methods = []} in
+  (* let obj_def = {Iast.data_name = "Object"; *)
+  (*                Iast.data_fields = []; *)
+  (*                Iast.data_pos = no_pos; *)
+  (*                Iast.data_parent_name = ""; *)
+  (*                Iast.data_invs = []; *)
+  (*                Iast.data_is_template = false; *)
+  (*                Iast.data_methods = []} in *)
+  (* let string_def = {Iast.data_name = "String"; *)
+  (*                   Iast.data_pos = no_pos; *)
+  (*                   Iast.data_fields = []; *)
+  (*                   Iast.data_parent_name = "Object"; *)
+  (*                   Iast.data_invs = []; *)
+  (*                   Iast.data_is_template = false; *)
+  (*                   Iast.data_methods = []} in *)
   (* update some global settings *)
   Hashtbl.iter (fun _ data -> data_decls := !data_decls @ [data]) tbl_data_decl;
   (* aux procs *)
   Hashtbl.iter (fun _ p -> proc_decls := !proc_decls @ [p]) tbl_aux_proc;
   (* return *)
   let newprog : Iast.prog_decl = {
-    Iast.prog_data_decls = obj_def :: string_def :: !data_decls;
+    Iast.prog_data_decls = (* obj_def :: string_def ::  *)!data_decls;
     Iast.prog_include_decls = []; (*WN : need to fill *)
     Iast.prog_global_var_decls = !global_var_decls;
     Iast.prog_logical_var_decls = !logical_var_decls;

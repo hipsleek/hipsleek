@@ -3067,7 +3067,7 @@ hprogn:
               proc_defs := pdef :: !proc_defs 
         | Coercion_list cdef -> coercion_defs := cdef :: !coercion_defs in
     let todo_unk = List.map choose t in
-    let obj_def = { data_name = "Object3";
+    let obj_def = { data_name = "Object";
                     data_pos = no_pos;
                     data_fields = [];
                     data_parent_name = "";
@@ -3077,7 +3077,7 @@ hprogn:
     let string_def = { data_name = "String";
                        data_fields = [];
                        data_pos = no_pos;
-                       data_parent_name = "Object4";
+                       data_parent_name = "Object";
                        data_invs = []; (* F.mkTrue no_pos; *)
                        data_is_template = false;
                        data_methods = [] } in
