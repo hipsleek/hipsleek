@@ -29,20 +29,23 @@ requires x::str<v,q>
 HeapPred P(str a).
 HeapPred Q(str a, str b).
 
-pred_prim D<> inv self!=null;
 
 P_v<> == self::str<v,q> * q::H_v<v>;
 
 H_v<v> == self::str<v1,q> * q::H_v<v1> & v!=0
   or self::D<> & v=0;
 
+pred_prim D<> inv self!=null;
+
+P<> == self::str<v,q> * q::P<> & v!=0
+  or self::str<v,q> * q::D<> & v=0;
+
 Q_v<s> == self::str<v,q> * q::D<> & self=s & v=0
   or self::str<v,q> * q::Q_v<s> & v!=0;
 
-
 void while1(ref str s)
-requires s::P_v<> 
-  ensures s::Q_v<s'>; //'
+requires s::P<> ensures s::Q_v<s'>; //'
+//requires s::P_v<> ensures s::Q_v<s'>; //'
 //infer [P,Q] requires P(s) ensures Q(s,s');//'
 {
   int x=getChar(s);
@@ -53,3 +56,24 @@ requires s::P_v<>
     while1(s);
   }
 }
+
+/*
+# ex9e1.ss
+
+Better spec:
+ requires s::P2<> ensures s::Q_v<s'>; //'
+
+Can we transform:
+
+ P_v<> == self::str<v,q> * q::H_v<v>;
+
+ H_v<v> == self::str<v1,q> * q::H_v<v1> & v!=0
+  or self::D<> & v=0;
+
+===>
+
+ P<> == self::str<v,q> * q::P<> & v!=0
+  or self::str<v,q> * q::D<> & v=0;
+
+
+*/

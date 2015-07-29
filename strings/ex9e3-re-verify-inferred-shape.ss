@@ -4,19 +4,6 @@ data str {
   str next;
 }
 
-WFS<> ==
-  self::str<0,q>*q::BADS<> 
-  or self::str<v,q>*q::WFS<> & v>0 
-  inv true;
-
-WFSeg<p> ==
-  self=p 
-  or self::str<v,q>*q::WFSeg<p> & v>0
-  inv true;
-
-BADS<> ==
-  self::str<v,q>*q::BADS<> & v>=0
-  inv true;
 
 str incStr(str x)
 requires x::str<v,q>
