@@ -3,15 +3,19 @@ data node{
 }.
 
 relation R(node a).
+relation R2(int a,int b).
 HeapPred H(node a).
 
+//infer [R2] R2(x,y) & x+y>0 |- y>5.
+//print residue.
 
 // (5) valid
+//infer[z,inf_p]
 infer[R,z,inf_p]
-R(fld5) & inf_p=null & x!=null
-|-x!=z & inf_p=z & fld5=null
+ R(fld5) & inf_p=null & x!=null
+     |- x!=z & inf_p=z & fld5=null
   .
-//print residue.
+print residue.
 
 /*
 # ex52a2.slk

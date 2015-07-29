@@ -1744,7 +1744,7 @@ Total number of errors: 2 in files:
   infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}).
 !!! WARNING: for "no result" errors please check the script's options, provers' 
 ===================================================================
-# ex52a2.slk
+# ex52a2.slk (-debug dd.log or -dre "infer")
 
 $ compare with ex52a3.slk and ex52a4.slk
 

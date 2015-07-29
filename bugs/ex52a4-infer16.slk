@@ -10,10 +10,7 @@ HeapPred H(node a).
 //infer[R,z,inf_p]
 //infer[fld5,z,inf_p]
 infer[R,z]
-R(fld5) &
-//q_34=z & //inf_ann_39=@M & 
- inf_p=null //& inf_p!=x 
- & x!=null
+R(fld5) & inf_p=null  & x!=null
 |-x!=z & inf_p=z & fld5=null
   .
 print residue.
