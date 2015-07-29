@@ -4510,6 +4510,7 @@ let rec check_prog iprog (prog : prog_decl) =
     (*for each, incrementally infer*)
     (* let map_views = Iincr.extend_views iprog prog "size" scc in *)
     (* let new_scc = List.map (Iincr.extend_inf iprog prog "size") scc in *)
+    let _ = List.map (Iincr.extend_pure_props_view iprog prog Rev_ast.rev_trans_formula Astsimp.trans_view) scc in
     let r = verify_scc_helper prog verified_sccs scc in
     let () = Globals.sae := old_infer_err_flag in
     r
