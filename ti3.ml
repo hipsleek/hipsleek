@@ -31,8 +31,13 @@ let rec partition_eq eq ls =
 let nondet_vars_stk: CP.spec_var Gen.stack = new Gen.stack
 
 let is_nondet_cond f =
-  let svf = CP.fv f in
-  Gen.BList.overlap_eq CP.eq_spec_var svf (nondet_vars_stk # get_stk)
+  (* let svf = CP.fv f in *)
+  (* Gen.BList.overlap_eq CP.eq_spec_var svf (nondet_vars_stk # get_stk) *)
+  CP.has_nondet_cond f
+  
+let is_nondet_cond f =
+  let pr = !CP.print_formula in
+  Debug.no_1 "is_nondet_cond" pr string_of_bool is_nondet_cond f
 
 let is_nondet_var sv = 
   Gen.BList.mem_eq CP.eq_spec_var sv (nondet_vars_stk # get_stk)

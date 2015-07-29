@@ -460,6 +460,11 @@ let rec add_cex_tnt_case_spec_cond turels c f =
 let add_cex_tnt_case_spec f = 
   let turels = call_trel_stk # get_stk in
   add_cex_tnt_case_spec_cond turels (CP.mkTrue no_pos) f
+  
+let add_cex_tnt_case_spec f = 
+  let pr = print_tnt_case_spec in
+  Debug.no_1 "add_cex_tnt_case_spec" pr pr
+    (fun _ -> add_cex_tnt_case_spec f) f
 
 (* From TNT spec to struc formula *)
 (* For SLEEK *)
