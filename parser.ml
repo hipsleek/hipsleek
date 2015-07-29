@@ -1049,7 +1049,7 @@ data_decl:
         -> {data_name = dh;
             data_pos = get_pos_camlp4 _loc 1;
             data_fields = db;
-            data_parent_name="Object1"; (* Object; *)
+            data_parent_name="Object"; (* Object; *)
             data_invs = [];
             data_is_template = false;
             data_methods = [];} ]];
@@ -1059,7 +1059,7 @@ template_data_decl:
         -> {data_name = dh;
             data_pos = get_pos_camlp4 _loc 1;
             data_fields = db;
-            data_parent_name="Object2"; (* Object; *)
+            data_parent_name="Object"; (* Object; *)
             data_invs = [];
             data_is_template = true;
             data_methods = [];} ]];
@@ -3200,7 +3200,7 @@ class_decl:
 		let t1 = List.map (fun ((t,id), p) -> ((t,id), p, false, [gen_field_ann t] (* F_NO_ANN *))) t1 in
       let cdef = { data_name = id;
                    data_pos = get_pos_camlp4 _loc 2;
-                   data_parent_name = un_option par "Object5";
+                   data_parent_name = un_option par "Object";
                    data_fields = t1;
                    data_invs = t2;
                    data_is_template = false;
