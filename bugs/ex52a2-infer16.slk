@@ -11,16 +11,31 @@ HeapPred H(node a).
 
 // (5) valid
 //infer[z,inf_p]
-infer[R,z,inf_p]
+infer[z,inf_p]
+//infer[R,z]
  R(fld5) & inf_p=null & x!=null
-     |- x!=z & inf_p=z & fld5=null
+     |- x!=z & inf_p=z //& fld5=null
   .
+
+//infer [x] x=y+1 |- y>0.
+
 print residue.
 
 /*
 # ex52a2.slk
 
 $ compare with ex52a3.slk and ex52a4.slk
+
+Got:
+   ((z=0 & fld5=null) 
+   | (fld5!=null & inf_p!=0) 
+   | (fld5=null & inf_p!=0 & z!=0)))
+
+Expected solution:
+  R(fld5)--> fld5=null
+ inferred pure [z,inf_p]: [(z=0 | (z!=0 & inf_p!=0))]
+
+
 
 Entail (1) : Fail.(may) cause:AndR[ x!=null |-  x!=z. LOCS:[15;16;17];  inf_p=null & x!=null |-  inf_p=z. LOCS:[15;16;17];  R(fld5) |-  fld5=null. LOCS:[13;17] (may-bug).]
 

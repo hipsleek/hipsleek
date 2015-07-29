@@ -1217,10 +1217,12 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                   let rels,others = List.partition CP.is_RelForm (CP.list_of_conjs rhs_xpure) in
                   MCP.mix_of_pure (CP.conj_of_list others pos), rels
               in
-              Debug.ninfo_hprint (add_str "iv_orig: " !CP.print_svl) iv_orig no_pos;
+              Debug.binfo_hprint (add_str "iv_orig: " !CP.print_svl) iv_orig no_pos;
               let not_rel_vars = List.filter 
                   (fun x -> not (CP.is_rel_var x || CP.is_hp_rel_var x)) iv_orig in
-              Debug.ninfo_hprint (add_str "not_rel_vars: " !CP.print_svl) not_rel_vars no_pos;
+              Debug.binfo_hprint (add_str "not_rel_vars: " !CP.print_svl) not_rel_vars no_pos;
+              Debug.binfo_hprint (add_str "vs_lhs: " !CP.print_svl) vs_lhs no_pos;
+              Debug.binfo_pprint "XXX calling infer_pure_m " no_pos;
               let (ip1,ip2,rs) = infer_pure_m unk_heaps estate  lhs_heap_xpure1 None 
                   (CP.drop_rel_formula lhs_xpure_orig) lhs_xpure0 
                   lhs_wo_heap_orig rhs_xpure_orig (vs_lhs@not_rel_vars) pos in
