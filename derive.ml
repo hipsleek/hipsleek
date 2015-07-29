@@ -620,14 +620,14 @@ let expose_pure_extn_x iprog cprog rev_trans_formula trans_view views extn_views
       let lst_view = List.fold_left (fun r extn_view ->
           expose_pure_extn_one_view iprog cprog rev_trans_formula trans_view v extn_view
       ) v extn_views in
-      (v.Cast.view_name, lst_view.Cast.view_name)
+      ((v.Cast.view_name, v.Cast.view_vars), (lst_view.Cast.view_name, lst_view.Cast.view_vars))
     ) views
 
 let expose_pure_extn iprog cprog rev_trans_formula trans_view views extn_views=
   let pr1 = pr_list (pr_triple pr_id string_of_int string_of_int) in
   let pr2 v = v.Cast.view_name ^ "<" ^ (!CP.print_svl v.Cast.view_vars) ^ ">, "
               ^ (pr1 v.Cast.view_domains) in
-  let pr3 =  pr_pair pr_id pr_id in
+  let pr3 =  pr_pair (pr_pair pr_id !CP.print_svl) (pr_pair pr_id !CP.print_svl) in
   Debug.no_2 "expose_pure_extn" (pr_list_ln pr2) (pr_list_ln pr2) (pr_list pr3)
       (fun _ _ -> expose_pure_extn_x iprog cprog rev_trans_formula trans_view views extn_views)
       views extn_views
