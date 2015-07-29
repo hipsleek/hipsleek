@@ -1783,6 +1783,26 @@ infer_pure_m_1@5 EXIT:(new es,inf pure,rel_ass) :(None,None,[])
  inferred pure: [z:TVar[28]=0]
  inferred rel: [RELASS [R:RelT([])]: ( R:RelT([])(fld5:node)) -->  fld5:node=null]
 ===================================================================
+# ex52c2.slk -dre "infer_pure"
+
+# Why is this not working?
+
+infer[R,z,inf_p]  
+ R(fld5) & inf_p=null & x!=null
+     |-  fld5=null
+  .
+
+(==omega.ml#1151==)
+infer_pure_m_1@4@3@2@1
+infer_pure_m_1 inp1 :estate :( pr_entail_state_short : emp&x!=null & inf_p=null & R(fld5)&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ es_infer_vars: [z; inf_p]
+ es_infer_vars_rel: [R],[z,inf_p])
+infer_pure_m_1 inp2 :lhs xpure : true & x!=null & inf_p=null
+infer_pure_m_1 inp3 :lhs xpure0 : x!=null & inf_p=null & R(fld5)
+infer_pure_m_1 inp4 :rhs xpure : fld5=null
+infer_pure_m_1 inp5 :inf vars :[fld5,z,inf_p]
+infer_pure_m_1@4 EXIT:(new es,inf pure,rel_ass) :(None,Some( (inf_p!=0 | fld5=null)),[])
 ===================================================================
 ===================================================================
 ===================================================================
