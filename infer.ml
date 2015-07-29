@@ -1226,19 +1226,24 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
               let (ip1,ip2,rs) = infer_pure_m unk_heaps estate  lhs_heap_xpure1 None 
                   (CP.drop_rel_formula lhs_xpure_orig) lhs_xpure0 
                   lhs_wo_heap_orig rhs_xpure_orig (vs_lhs@not_rel_vars) pos in
+              let () = x_binfo_hp (add_str "rels (old)" (pr_list !CP.print_formula)) rels pos in
               let rels = List.filter (fun r -> CP.subset (CP.fv_wo_rel_r r) vs_lhs) rels in
+              (* TODO:WN below is an attempt to split rel_assume and pures from infer_pure_m *)
               let p_ass,ipures = (match ip2 with
                   | None -> ([],rels),[]
                   | Some a -> 
                     if (CP.fv a == []) then ([],rels),[]
                     else
+                      (* WN : to make into a procedure *)
                       let conjs_of_a = CP.list_of_conjs a in
                       let new_conjs_of_a,inferred_pure = List.partition 
                           (fun x -> CP.subset (CP.fv x) vs_lhs) conjs_of_a in
                       (new_conjs_of_a, rels),inferred_pure)
               in
-              let () = x_dinfo_hp (add_str "rel_ass : " (pr_pair (pr_list !CP.print_formula) 
+              let () = x_binfo_hp (add_str "vs_lhs" !CP.print_svl) vs_lhs pos in
+              let () = x_binfo_hp (add_str "(rel_ass,rels)" (pr_pair (pr_list !CP.print_formula) 
                                                            (pr_list !CP.print_formula))) p_ass pos in
+              let () = x_binfo_hp (add_str "ipures" (pr_list !CP.print_formula)) ipures pos in
               let remove_redudant_neq lhs_neq_null_svl p=
                 let lhs_neq = find_close lhs_neq_null_svl (MCP.ptr_equations_without_null (MCP.mix_of_pure p)) in
                 let p1 = CF.remove_neqNull_redundant_hnodes lhs_neq p in
