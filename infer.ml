@@ -1217,16 +1217,16 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                   let rels,others = List.partition CP.is_RelForm (CP.list_of_conjs rhs_xpure) in
                   MCP.mix_of_pure (CP.conj_of_list others pos), rels
               in
-              Debug.binfo_hprint (add_str "iv_orig: " !CP.print_svl) iv_orig no_pos;
+              x_tinfo_hp (add_str "iv_orig: " !CP.print_svl) iv_orig no_pos;
               let not_rel_vars = List.filter 
                   (fun x -> not (CP.is_rel_var x || CP.is_hp_rel_var x)) iv_orig in
-              Debug.binfo_hprint (add_str "not_rel_vars: " !CP.print_svl) not_rel_vars no_pos;
-              Debug.binfo_hprint (add_str "vs_lhs: " !CP.print_svl) vs_lhs no_pos;
-              Debug.binfo_pprint "XXX calling infer_pure_m " no_pos;
+              x_tinfo_hp (add_str "not_rel_vars: " !CP.print_svl) not_rel_vars no_pos;
+              x_tinfo_hp (add_str "vs_lhs: " !CP.print_svl) vs_lhs no_pos;
+              x_tinfo_pp "XXX calling infer_pure_m " no_pos;
               let (ip1,ip2,rs) = infer_pure_m unk_heaps estate  lhs_heap_xpure1 None 
                   (CP.drop_rel_formula lhs_xpure_orig) lhs_xpure0 
                   lhs_wo_heap_orig rhs_xpure_orig (vs_lhs@not_rel_vars) pos in
-              let () = x_binfo_hp (add_str "rels (old)" (pr_list !CP.print_formula)) rels pos in
+              let () = x_tinfo_hp (add_str "rels (old)" (pr_list !CP.print_formula)) rels pos in
               let rels = List.filter (fun r -> CP.subset (CP.fv_wo_rel_r r) vs_lhs) rels in
               (* WN : to make into a procedure *)
               let proc_conj vs_lhs rels a =
@@ -1239,7 +1239,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
               let proc_disj vs_lhs rels a =
                 let disj_lst = CP.split_disjunctions a in
                 List.map (proc_conj vs_lhs rels) disj_lst in
-              (* WN : is rels really needed? why not leave outside? *)
+              (* WN : is rels really needed? why not leave  *)
               let proc_disj vs_lhs rels a =
                 let pr1 = !CP.print_svl in
                 let pr2 = !CP.print_formula in
@@ -1258,13 +1258,28 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                       (*     (fun x -> CP.subset (CP.fv x) vs_lhs) conjs_of_a in *)
                       (* (new_conjs_of_a, rels),inferred_pure *)
                       let lst = proc_disj vs_lhs rels a in
-                      proc_conj vs_lhs rels a
+                      let rhs = MCP.pure_of_mix rhs_xpure_orig in
+                      let lst_pre_rel = List.map (fun ((l,_),_) -> l) lst in
+                      let lst_pre_rel_no_contra = List.filter (fun pre -> 
+                          let x = CP.join_conjunctions (rhs::pre) in
+                          let b = TP.is_sat_raw (MCP.mix_of_pure x) in
+                          b) lst_pre_rel in
+                      let pre_rel = CP.join_conjunctions (List.concat lst_pre_rel_no_contra) in 
+                      let pure_gist = TP.om_gist a pre_rel in
+                      let () = x_tinfo_hp (add_str "rhs_xpure_orig" !print_mix_formula) rhs_xpure_orig no_pos in
+                      let () = x_tinfo_hp (add_str "lst_pre_rel" (pr_list (pr_list !CP.print_formula))) lst_pre_rel no_pos in
+                      let () = x_tinfo_hp (add_str "lst_pre_rel_no_contra" (pr_list (pr_list !CP.print_formula))) lst_pre_rel_no_contra no_pos in
+                      let () = x_tinfo_hp (add_str "pre_rel" !CP.print_formula) pre_rel no_pos in
+                      let () = x_tinfo_hp (add_str "orig pre" !CP.print_formula) a no_pos in
+                      let () = x_tinfo_hp (add_str "pure_gist" !CP.print_formula) pure_gist no_pos in
+                      (* proc_conj vs_lhs rels a *)
+                      (([pre_rel],rels),[pure_gist])
                 )
               in
-              let () = x_binfo_hp (add_str "vs_lhs" !CP.print_svl) vs_lhs pos in
-              let () = x_binfo_hp (add_str "(rel_ass,rels)" (pr_pair (pr_list !CP.print_formula) 
+              let () = x_tinfo_hp (add_str "vs_lhs" !CP.print_svl) vs_lhs pos in
+              let () = x_tinfo_hp (add_str "(rel_ass,rels)" (pr_pair (pr_list !CP.print_formula) 
                                                                (pr_list !CP.print_formula))) p_ass pos in
-              let () = x_binfo_hp (add_str "ipures" (pr_list !CP.print_formula)) ipures pos in
+              let () = x_tinfo_hp (add_str "ipures" (pr_list !CP.print_formula)) ipures pos in
               let remove_redudant_neq lhs_neq_null_svl p=
                 let lhs_neq = find_close lhs_neq_null_svl (MCP.ptr_equations_without_null (MCP.mix_of_pure p)) in
                 let p1 = CF.remove_neqNull_redundant_hnodes lhs_neq p in
