@@ -1145,6 +1145,9 @@ let dis_ln_z3 = ref false
 
 let oc_non_linear = ref true
 
+(* eqn solving to be false by default until it is stable or proven*)
+let oc_matrix_eqn = ref false 
+
 let allow_ls = ref false (*enable lockset during verification*)
 
 let allow_locklevel = ref false (*enable locklevel during verification*)
@@ -1158,6 +1161,9 @@ let allow_threads_as_resource = ref false
 (* let has_locklevel = ref false *)
 
 let adhoc_flag_1 = ref false
+let adhoc_flag_2 = ref false
+let adhoc_flag_3 = ref false
+let weaker_pre_flag = ref false
 
 let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
 
