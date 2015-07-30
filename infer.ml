@@ -1249,6 +1249,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                   | None -> ([],rels),[]
                   | Some a ->
                     let free_vs = CP.fv a in
+                    let not_rel_vars = CP.diff_svl not_rel_vars vs_lhs in
                     let overlap_rel = CP.overlap_svl free_vs vs_lhs in
                     let overlap_pure = CP.overlap_svl free_vs not_rel_vars in
                     let () = x_binfo_hp (add_str "orig pre" !CP.print_formula) a no_pos in
