@@ -2138,19 +2138,20 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
                   not(check_under 3 uf body_under vdef.view_name)
                 ) ufl
         else under_fail in
-      let do_test_inv msg inv fail_res =
+      let do_test_inv pos vn msg inv fail_res =
         if !Globals.do_test_inv then
           match inv with
           | Some f ->
             if fail_res then
-              print_endline_quiet ("\nInv Check: Fail.("^msg^")")
+              (* print_endline_quiet ("\nInv Check: Fail.(View "^vn^":"^msg^")") *)
+              report_error pos  ("\nInv Check: Fail.(View "^vn^":"^msg^")")
           (* else *)
           (*   print_endline_quiet ("\nInv Check: Valid.("^msg^")") *)
           | None -> ()
         else ()
       in
-      let () = do_test_inv "Over" over_f over_fail in
-      let () = do_test_inv "Under" under_f under_fail in
+      let () = do_test_inv vdef.view_pos vdef.view_name "Over" over_f over_fail in
+      let () = do_test_inv vdef.view_pos vdef.view_name "Under" under_f under_fail in
       (* let () = print_endline (string_of_bool (not(CF.isFailCtx rs))) in *)
       (* let () = print_endline (string_of_bool (not(CF.isFailCtx baga_rs1))) in *)
       (* let () = print_endline (string_of_bool (not(CF.isFailCtx baga_rs2))) in *)
@@ -2948,7 +2949,8 @@ and fill_one_base_case_x prog vd =
       {vd with C.view_base_case = (* WN : smt-compete problem : can be large! *)
                  (* if !Globals.smt_compete_mode then None *)
                  (* else *)
-              if !Globals.dis_baga_inv_check then None else
+              if !Globals.dis_baga_inv_check then None 
+              else
                  compute_base_case prog vd.C.view_name vd.C.view_un_struc_formula (Cpure.SpecVar ((Named vd.C.view_data_name), self, Unprimed) ::vd.C.view_vars)
       }
     end
@@ -3108,7 +3110,7 @@ and compute_base_case_x prog vn cf vars = (*flatten_base_case cf s self_c_var *)
         let (d1,d2) = part b.CF.formula_or_f2 in
         (c1@d1,c2@d2)
       | CF.Base b -> 
-        let () = Debug.ninfo_hprint (add_str "f (base)" ( Cprinter.string_of_formula)) f no_pos in
+        let () = Debug.tinfo_hprint (add_str "f (base)" ( Cprinter.string_of_formula)) f no_pos in
         if (CF.is_complex_heap b.CF.formula_base_heap) then
           if (CF.is_rec_br vn f) then
             xpuring f
@@ -3117,25 +3119,43 @@ and compute_base_case_x prog vn cf vars = (*flatten_base_case cf s self_c_var *)
             (List.map MCP.mix_of_pure l2,l1)
         else ([b.CF.formula_base_pure],[])
       | CF.Exists e ->
-        let () = Debug.ninfo_hprint (add_str "f (exists)" ( Cprinter.string_of_formula)) f no_pos in
+        let () = Debug.tinfo_hprint (add_str "f (exists)" ( Cprinter.string_of_formula)) f no_pos in
         if (CF.is_complex_heap e.CF.formula_exists_heap) then
           if (CF.is_rec_br vn f) then
             xpuring f
           else
             let l1, l2 = xpuring f in
-            let () = Debug.ninfo_hprint (add_str "l2" (pr_list !CP.print_formula )) l2 no_pos in
+            let () = Debug.tinfo_hprint (add_str "l2" (pr_list !CP.print_formula )) l2 no_pos in
             (List.map MCP.mix_of_pure l2,l1)
         else
           let l1,qv = e.CF.formula_exists_pure, e.CF.formula_exists_qvars in
           ([MCP.memo_pure_push_exists qv l1],[])
     in
-    let sim,co = List.split (List.map (fun (c,_)->
-        let _=proving_loc #set (CF.pos_of_formula c) in
-        let () = Debug.ninfo_hprint (add_str "c" ( Cprinter.string_of_formula)) c no_pos in
-        part c
-      ) cf) in
+    (* CF.formula -> MCP.mix_formula list * Cpure.formula list *)
+    let part f = 
+      let pr = Cprinter.string_of_formula in
+      let pr2 = pr_pair (pr_list Cprinter.string_of_mix_formula)  (pr_list Cprinter.string_of_pure_formula) in
+      Debug.no_1 "compute_base_case_part" pr pr2 part f in
+    let lst = List.map (fun (c,_)->
+        let _= proving_loc #set (CF.pos_of_formula c) in
+        let () = Debug.tinfo_hprint (add_str "c" ( Cprinter.string_of_formula)) c no_pos in
+        x_add_1 part c
+      ) cf in
+    let cf_f = List.map fst cf in
+    let is_base_pure = List.map (fun (f,_) -> CF.is_emp_formula f) cf in
+    let lst2 = List.combine lst is_base_pure in
+    let lst3 = List.map (fun ((l1,l2) as k,b)-> 
+        if b || l2!=[] then k else ([],(List.map MCP.pure_of_mix l1)@l2)) lst2 in
+    let pr_mf = Cprinter.string_of_mix_formula in
+    let pr_pf = Cprinter.string_of_pure_formula in
+    let () = Debug.tinfo_hprint (add_str "cf_f" (pr_list Cprinter.string_of_formula)) cf_f no_pos in
+    let () = Debug.tinfo_hprint (add_str "lst3" (pr_list (pr_pair (pr_list pr_mf) (pr_list pr_pf)))) lst3 no_pos in
+    let () = Debug.tinfo_hprint (add_str "lst" (pr_list (pr_pair (pr_list pr_mf) (pr_list pr_pf)))) lst no_pos in
+    let () = Debug.tinfo_hprint (add_str "is_base_pure" (pr_list string_of_bool)) is_base_pure no_pos in
+    let sim,co = List.split lst3 in
     let sim,co = List.concat sim, List.concat co in
-    let () = Debug.ninfo_hprint (add_str "sim" (pr_list Cprinter.string_of_mix_formula)) sim no_pos in
+    let () = Debug.tinfo_hprint (add_str "sim" (pr_list Cprinter.string_of_mix_formula)) sim no_pos in
+    let () = Debug.tinfo_hprint (add_str "co" (pr_list Cprinter.string_of_pure_formula)) co no_pos in
     if (sim==[]) then None 
     else
       let guards = List.map (fold_mem_lst (CP.mkTrue no_pos) true true) sim in
@@ -3531,7 +3551,7 @@ and rename_proc (proc: I.proc_decl) : I.proc_decl =
   let p_pos = List.map search p_vs in
   let new_vs = List.combine p_vs p_pos in
   let new_vs = List.filter (fun (_,n) -> n>0) new_vs in
-  (* let _ = x_binfo_hp (add_str "proc params" Iprinter.string_of_param_list) vs no_pos in *)
+  (* let _ = x_tinfo_hp (add_str "proc params" Iprinter.string_of_param_list) vs no_pos in *)
   let body = proc.I.proc_body in
   if new_vs==[] || body==None then proc
   else
@@ -3540,7 +3560,7 @@ and rename_proc (proc: I.proc_decl) : I.proc_decl =
         Some body ->IastUtil.find_free_vars_only body 
       | None -> IS.empty in 
     (* let el = IS.elements exp_vs in *)
-    (* let _ = x_binfo_hp (add_str "free vars body" (pr_list pr_id)) el no_pos in *)
+    (* let _ = x_tinfo_hp (add_str "free vars body" (pr_list pr_id)) el no_pos in *)
     let vs2 = List.map (fun (v,n) -> (v,String.sub v 0 n)) new_vs in 
     let clash_flag = IS.exists (fun v -> List.exists (fun (_,n) -> v=n) vs2) exp_vs in
     let _ = x_tinfo_hp (add_str "clash_flag" (string_of_bool)) clash_flag no_pos in
@@ -3554,7 +3574,7 @@ and rename_proc (proc: I.proc_decl) : I.proc_decl =
       let new_static_specs = Iformula.subst_struc sst proc.I.proc_static_specs in
       let new_vs = List.map (fun s ->
           {s with I.param_name = rename_var vs2 s.I.param_name}) vs in
-      let _ = x_binfo_hp (add_str "renaming proc" (pr_list (pr_pair pr_id pr_id))) vs2 no_pos in
+      let _ = x_tinfo_hp (add_str "renaming proc" (pr_list (pr_pair pr_id pr_id))) vs2 no_pos in
       let _ = x_tinfo_hp (add_str "renamed specs" Iprinter.string_of_struc_formula) new_static_specs no_pos in
       let _ = x_tinfo_hp (add_str "renamed body" (pr_opt Iprinter.string_of_exp)) new_body no_pos in
       let _ = x_tinfo_hp (add_str "renamed proc params" Iprinter.string_of_param_list) new_vs no_pos in
@@ -3626,10 +3646,10 @@ and comp_vp_add_pre_post f p_ref p_val =
     let res_ref =  Cpure.diff_svl p_ref vp_ref in
     let res_val =  Cpure.diff_svl p_val vp_val in
     let pr_svl = Cprinter.string_of_spec_var_list in
-    let () = Debug.ninfo_hprint (add_str "orig_full" pr_svl) orig_full no_pos in
-    let () = Debug.ninfo_hprint (add_str "orig_val" pr_svl) orig_val no_pos in
-    let () = Debug.ninfo_hprint (add_str "add_full" pr_svl) res_ref no_pos in
-    let () = Debug.ninfo_hprint (add_str "add_val" pr_svl) res_val no_pos in
+    let () = Debug.tinfo_hprint (add_str "orig_full" pr_svl) orig_full no_pos in
+    let () = Debug.tinfo_hprint (add_str "orig_val" pr_svl) orig_val no_pos in
+    let () = Debug.tinfo_hprint (add_str "add_full" pr_svl) res_ref no_pos in
+    let () = Debug.tinfo_hprint (add_str "add_val" pr_svl) res_val no_pos in
     let new_vp = { vp with vperm_full_vars = orig_full @ res_ref; vperm_value_vars = orig_val@res_val; } in
     new_vp,res_ref
   in
@@ -3690,8 +3710,8 @@ and add_perm_to_spec_x p_ref p_val (expr : CF.struc_formula) : CF.struc_formula 
             (* let assume_simpl = f.CF.formula_assume_simpl in (\* TODO : must add vperm here *\) *)
             let (assume_simpl,_) = comp_vp_add_pre_post (f.CF.formula_assume_simpl) post_perm [] in
             let assume_struc = helper (Some(true,post_perm)) f.CF.formula_assume_struc in (* need to add vperm if we have classic/exact post *)
-            let () = Debug.ninfo_hprint (add_str "assume_simpl" Cprinter.string_of_formula) assume_simpl no_pos in
-            let () = Debug.ninfo_hprint (add_str "assume_struc" Cprinter.string_of_struc_formula) assume_struc no_pos in
+            let () = Debug.tinfo_hprint (add_str "assume_simpl" Cprinter.string_of_formula) assume_simpl no_pos in
+            let () = Debug.tinfo_hprint (add_str "assume_struc" Cprinter.string_of_struc_formula) assume_struc no_pos in
             Some (CF.EAssume 
                     {f with CF.formula_assume_struc=assume_struc;
                             CF.formula_assume_simpl=assume_simpl},None) 
@@ -3716,9 +3736,9 @@ and add_perm_proc  p =
     let p_ref = p.C.proc_by_name_params in
     let p_val = p.C.proc_by_value_params @ p.C.proc_by_copy_params in
     let ss = p.C.proc_static_specs in
-    let () = Debug.ninfo_hprint (add_str "spec" Cprinter.string_of_struc_formula) ss no_pos in
-    let () = Debug.ninfo_hprint (add_str "ref" Cprinter.string_of_spec_var_list) p.C.proc_by_name_params no_pos in
-    let () = Debug.ninfo_hprint (add_str "value" Cprinter.string_of_spec_var_list) p.C.proc_by_value_params no_pos in
+    let () = Debug.tinfo_hprint (add_str "spec" Cprinter.string_of_struc_formula) ss no_pos in
+    let () = Debug.tinfo_hprint (add_str "ref" Cprinter.string_of_spec_var_list) p.C.proc_by_name_params no_pos in
+    let () = Debug.tinfo_hprint (add_str "value" Cprinter.string_of_spec_var_list) p.C.proc_by_value_params no_pos in
     let ns = add_perm_to_spec p_ref p_val ss in
     { p with C.proc_static_specs = ns}
 
@@ -8415,7 +8435,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
         let ho_args = b.IF.h_formula_heap_ho_arguments in
         x_tinfo_hp (add_str "ty_vars" (pr_list (pr_pair string_of_typ pr_id))) tp_vars pos;
         x_tinfo_hp (add_str "heap args" (pr_list (Iprinter.string_of_formula_exp))) args pos;
-        x_dinfo_hp (add_str "ho_args" (pr_list (Iprinter.string_of_rflow_formula))) ho_args pos;
+        x_tinfo_hp (add_str "ho_args" (pr_list (Iprinter.string_of_rflow_formula))) ho_args pos;
         (* add a flag to indicate if it is a relational parameter or higher-order predicate
            to disable renaming under these two scenarios *)
         let new_args = 

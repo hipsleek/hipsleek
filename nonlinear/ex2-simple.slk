@@ -1,0 +1,64 @@
+
+checkentail aaa*b>=1 |- aaa>=0.
+print residue.
+
+/*
+checkentail a>=1 |- a>=0.
+checkentail a*b>=1 |- a>=0.
+print residue.
+
+checkentail a*b>=2 & a=1 |- b>=2.
+print residue.
+*/
+
+/*
+# ex2.slk -dre ".*nonlinear\|.*Omega.is_"
+
+Why below called twice?
+
+
+(==omega.ml#631==)
+drop_nonlinear_formula_rev@34@33@32@29@28@27@26@24@23@22@21@20@19@18
+drop_nonlinear_formula_rev inp1 : (not(1<=(aaa*b)) | 0<=aaa)
+drop_nonlinear_formula_rev@34 EXIT: (not(true) | 0<=aaa)
+
+(==omega.ml#631==)
+drop_nonlinear_formula_rev@51@50@49@46@45@44@43@41@40@39@38@37@36@35
+drop_nonlinear_formula_rev inp1 : (not(1<=(aaa*b)) | 0<=aaa)
+drop_nonlinear_formula_rev@51 EXIT: (not(true) | 0<=aaa)
+
+
+Why below called twice?
+
+(==omega.ml#518==)
+drop_nonlinear_formula@8@7
+drop_nonlinear_formula inp1 : 0<=aaa
+drop_nonlinear_formula@8 EXIT: 0<=aaa
+
+(==tpdispatcher.ml#1736==)
+Omega.is_sat_ops@7
+Omega.is_sat_ops inp1 : 0<=aaa
+Omega.is_sat_ops@7 EXIT:true
+
+(==omega.ml#518==)
+drop_nonlinear_formula@10@9
+drop_nonlinear_formula inp1 : 1<=(aaa*b) & 0<=aaa
+drop_nonlinear_formula@10 EXIT: true & 0<=aaa
+
+(==tpdispatcher.ml#1736==)
+Omega.is_sat_ops@9
+Omega.is_sat_ops inp1 : 1<=(aaa*b) & 0<=aaa
+Omega.is_sat_ops@9 EXIT:true
+
+
+(==omega.ml#518==)
+drop_nonlinear_formula@14@13
+drop_nonlinear_formula inp1 : 0<=aaa
+drop_nonlinear_formula@14 EXIT: 0<=aaa
+
+(==tpdispatcher.ml#1736==)
+Omega.is_sat_ops@13
+Omega.is_sat_ops inp1 : 0<=aaa
+Omega.is_sat_ops@13 EXIT:true
+
+*/
