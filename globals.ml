@@ -1160,7 +1160,7 @@ let allow_threads_as_resource = ref false
 let adhoc_flag_1 = ref false
 let adhoc_flag_2 = ref false
 let adhoc_flag_3 = ref false
-let weaker_pre_flag = ref false
+let weaker_pre_flag = ref true
 
 let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
 
