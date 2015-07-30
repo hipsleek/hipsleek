@@ -1228,6 +1228,24 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                   lhs_wo_heap_orig rhs_xpure_orig (vs_lhs@not_rel_vars) pos in
               let () = x_binfo_hp (add_str "rels (old)" (pr_list !CP.print_formula)) rels pos in
               let rels = List.filter (fun r -> CP.subset (CP.fv_wo_rel_r r) vs_lhs) rels in
+              (* WN : to make into a procedure *)
+              let proc_conj vs_lhs rels a =
+                let conjs_of_a = CP.list_of_conjs a in
+                let new_conjs_of_a,inferred_pure = List.partition 
+                    (fun x -> CP.subset (CP.fv x) vs_lhs) conjs_of_a in
+                (new_conjs_of_a, rels),inferred_pure in
+              (* type: CP.spec_var list -> *)
+              (*   'b -> CP.formula -> ((CP.formula list * 'b) * CP.formula list) list *)
+              let proc_disj vs_lhs rels a =
+                let disj_lst = CP.split_disjunctions a in
+                List.map (proc_conj vs_lhs rels) disj_lst in
+              (* WN : is rels really needed? why not leave outside? *)
+              let proc_disj vs_lhs rels a =
+                let pr1 = !CP.print_svl in
+                let pr2 = !CP.print_formula in
+                let pr2a = pr_list !CP.print_formula in
+                let pr3 ((a,_),b) = pr_pair pr2a pr2a (a,b) in
+                Debug.no_2 "proc_disj(infer_pure)" pr1 pr2 (pr_list pr3) (fun _ _ -> proc_disj vs_lhs rels a)  vs_lhs a in
               (* TODO:WN below is an attempt to split rel_assume and pures from infer_pure_m *)
               let p_ass,ipures = (match ip2 with
                   | None -> ([],rels),[]
@@ -1235,14 +1253,17 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                     if (CP.fv a == []) then ([],rels),[]
                     else
                       (* WN : to make into a procedure *)
-                      let conjs_of_a = CP.list_of_conjs a in
-                      let new_conjs_of_a,inferred_pure = List.partition 
-                          (fun x -> CP.subset (CP.fv x) vs_lhs) conjs_of_a in
-                      (new_conjs_of_a, rels),inferred_pure)
+                      (* let conjs_of_a = CP.list_of_conjs a in *)
+                      (* let new_conjs_of_a,inferred_pure = List.partition  *)
+                      (*     (fun x -> CP.subset (CP.fv x) vs_lhs) conjs_of_a in *)
+                      (* (new_conjs_of_a, rels),inferred_pure *)
+                      let lst = proc_disj vs_lhs rels a in
+                      proc_conj vs_lhs rels a
+                )
               in
               let () = x_binfo_hp (add_str "vs_lhs" !CP.print_svl) vs_lhs pos in
               let () = x_binfo_hp (add_str "(rel_ass,rels)" (pr_pair (pr_list !CP.print_formula) 
-                                                           (pr_list !CP.print_formula))) p_ass pos in
+                                                               (pr_list !CP.print_formula))) p_ass pos in
               let () = x_binfo_hp (add_str "ipures" (pr_list !CP.print_formula)) ipures pos in
               let remove_redudant_neq lhs_neq_null_svl p=
                 let lhs_neq = find_close lhs_neq_null_svl (MCP.ptr_equations_without_null (MCP.mix_of_pure p)) in
