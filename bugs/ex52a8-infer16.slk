@@ -4,27 +4,41 @@ data node{
 
 relation R(node a).
 HeapPred H(node a).
+HeapPred K(node a,node b,node c).
 
 // (5) valid
-infer[R,z,inf_p_40]
+infer[K,z]
 //infer[R,z]
-R(fld5) &
-q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & x!=null
+K(fld5,z,inf_p_40) &
+ inf_p_40=null & inf_p_40!=x & x!=null
 |-x!=z & inf_p_40=z &fld5=null.
 print residue.
 
 /*
-# ex52a1.slk --print-type
+# ex52a7.slk --print-type
 
-# Why isn't z of object type?
+# why is there a contradiction inferred?
+
+((z!=null & inf_p_40!=null & fld5=null) 
+| (fld5!=null & inf_p_40!=null) 
+| (fld5=null & z=null))
+
+
+ R(...)  ##  pure
+
+ inferred hprel: [K(fld5,z,inf_p_40)&true --> emp&
+( (z!=null & inf_p_40!=null & fld5=null) | 
+  (fld5!=null & inf_p_40!=null) 
+|  (fld5=null & z=null))]
+
+
+
 
 Residue:
- <1>emp&x:TVar[32]!=null & inf_p_40:TVar[32]!=x:TVar[32] & 
-        inf_p_40:TVar[32]=null & inf_ann_39:AnnT=@M & 
-        q_34:TVar[17]=z:TVar[32] & R:RelT([])(fld5:node) & z:TVar[32]=0 & 
-        fld5:node=null&{FLOW,(20,21)=__norm#E}[]
- inferred pure: [z:TVar[32]=0]
- inferred rel: [RELASS [R:RelT([])]: ( R:RelT([])(fld5:node)) -->  fld5:node=null]
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [K(fld5,z,inf_p_40)&true --> emp&
+                   z=null & fld5=null & inf_p_40!=null & z!=null]
+
 
 
 */
