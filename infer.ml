@@ -1220,8 +1220,6 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
               x_tinfo_hp (add_str "iv_orig: " !CP.print_svl) iv_orig no_pos;
               let not_rel_vars = List.filter 
                   (fun x -> not (CP.is_rel_var x || CP.is_hp_rel_var x)) iv_orig in
-              x_tinfo_hp (add_str "not_rel_vars: " !CP.print_svl) not_rel_vars no_pos;
-              x_tinfo_hp (add_str "vs_lhs: " !CP.print_svl) vs_lhs no_pos;
               x_tinfo_pp "XXX calling infer_pure_m " no_pos;
               let (ip1,ip2,rs) = infer_pure_m unk_heaps estate  lhs_heap_xpure1 None 
                   (CP.drop_rel_formula lhs_xpure_orig) lhs_xpure0 
@@ -1249,8 +1247,19 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
               (* TODO:WN below is an attempt to split rel_assume and pures from infer_pure_m *)
               let p_ass,ipures = (match ip2 with
                   | None -> ([],rels),[]
-                  | Some a -> 
-                    if (CP.fv a == []) then ([],rels),[]
+                  | Some a ->
+                    let free_vs = CP.fv a in
+                    let overlap_rel = CP.overlap_svl free_vs vs_lhs in
+                    let overlap_pure = CP.overlap_svl free_vs not_rel_vars in
+                    let () = x_binfo_hp (add_str "orig pre" !CP.print_formula) a no_pos in
+                    let () = x_binfo_hp (add_str "free_vs (orig_pre)" !CP.print_svl) free_vs pos in
+                    let () = x_binfo_hp (add_str "vs_lhs" !CP.print_svl) vs_lhs pos in
+                    let () = x_binfo_hp (add_str "not_rel_vars" !CP.print_svl) not_rel_vars no_pos in
+                    let () = x_binfo_hp (add_str "overlap_rel" string_of_bool) overlap_rel no_pos in
+                    let () = x_binfo_hp (add_str "overlap_pure" string_of_bool) overlap_pure no_pos in
+                    if (free_vs == []) then ([],rels),[]
+                    else if not overlap_pure then ([a],rels),[]
+                    else if not overlap_rel then  ([],rels),[a]
                     else
                       (* WN : to make into a procedure *)
                       (* let conjs_of_a = CP.list_of_conjs a in *)
@@ -1266,11 +1275,10 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                           b) lst_pre_rel in
                       let pre_rel = CP.join_conjunctions (List.concat lst_pre_rel_no_contra) in 
                       let pure_gist = TP.om_gist a pre_rel in
-                      let () = x_binfo_hp (add_str "rhs_xpure_orig" !print_mix_formula) rhs_xpure_orig no_pos in
+                       let () = x_binfo_hp (add_str "rhs_xpure_orig" !print_mix_formula) rhs_xpure_orig no_pos in
                       let () = x_binfo_hp (add_str "lst_pre_rel" (pr_list (pr_list !CP.print_formula))) lst_pre_rel no_pos in
                       let () = x_binfo_hp (add_str "lst_pre_rel_no_contra" (pr_list (pr_list !CP.print_formula))) lst_pre_rel_no_contra no_pos in
                       let () = x_binfo_hp (add_str "pre_rel" !CP.print_formula) pre_rel no_pos in
-                      let () = x_binfo_hp (add_str "orig pre" !CP.print_formula) a no_pos in
                       let () = x_binfo_hp (add_str "pure_gist" !CP.print_formula) pure_gist no_pos in
                       (* proc_conj vs_lhs rels a *)
                       (([pre_rel],rels),[pure_gist])
