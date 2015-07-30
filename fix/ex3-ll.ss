@@ -45,7 +45,7 @@ Warning: False precondition detected in procedure foo$
 # Find location of this pre-cond warning and add it to
     !Globals.false_ctx_line_list
 
-chin@loris-7:~/hg/sl_imm/fix$ grep "false contexts" ../*.ml
+chin@loris-7:~/hg/sl_imm/fix$ grep "false contexts" ../ *.ml
 ../maingui.ml:    print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
 ../main.ml:    print_string_quiet ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
 ../main.ml:    print_string_quiet ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
