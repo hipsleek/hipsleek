@@ -599,8 +599,12 @@ let expose_pure_extn_one_view_x iprog cprog rev_formula_fnc trans_view_fnc (view
   }
   in
   let _ = iprog.Iast.prog_view_decls <- iprog.Iast.prog_view_decls@[der_view_dclr] in
+  let old_flag = !Globals.do_infer_inv in
+  let () = Globals.do_infer_inv := true in
   let nc_view = trans_view_dervs iprog rev_formula_fnc trans_view_fnc cprog.Cast.prog_view_decls der_view_dclr in
+  let () = Globals.do_infer_inv := old_flag in
   let nc_view = {nc_view with Cast.view_domains = view.Cast.view_domains@[(extn_view.Cast.view_name,0,List.length vars -1)]} in
+  let _ = cprog.Cast.prog_view_decls <- cprog.Cast.prog_view_decls@[nc_view] in
   nc_view
 
 let expose_pure_extn_one_view iprog cprog rev_trans_formula trans_view view extn_view=
