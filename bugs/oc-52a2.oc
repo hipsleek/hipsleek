@@ -13,7 +13,6 @@ R:= {[z,fld5,inf_p]:
 X subset Y;
 Y subset X;
 
-
 G := gist X given R;
 
 X2:= {[z,fld5,inf_p]:   
