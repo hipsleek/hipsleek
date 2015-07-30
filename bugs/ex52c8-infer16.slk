@@ -4,11 +4,11 @@ HeapPred H(int a).
 HeapPred K(int a,int b,int c).
 
 // (5) valid
-infer[fld5,z,inf]
-//infer[R,z]
-K(fld5,z,inf) &
+infer[fld5,zzz,inf]
+//infer[R,zzz]
+K(fld5,zzz,inf) &
  inf=0 & inf!=x & x!=0
-|-x!=z & inf=z &fld5=0.
+|-x!=zzz & inf=zzz &fld5=0.
 print residue.
 
 /*
@@ -17,22 +17,22 @@ print residue.
 # why is there a contradiction inferred?
 
  inferred pure: [
-  ( (fld5=0 & z=0) 
-  | (z!=0 & inf!=0) 
-  | (z=0 & inf!=0 & fld5!=0)
+  ( (fld5=0 & zzz=0) 
+  | (zzz!=0 & inf!=0) 
+  | (zzz=0 & inf!=0 & fld5!=0)
 )]
 
-P1 := {[fld5,z,inf]:
-(fld5=0 & z=0)
+P1 := {[fld5,zzz,inf]:
+(fld5=0 & zzz=0)
 };
-P2 := {[fld5,z,inf]:
-(z!=0 & inf!=0)
+P2 := {[fld5,zzz,inf]:
+(zzz!=0 & inf!=0)
 };
-P3 := {[fld5,z,inf]:
-(z=0 & inf!=0 & fld5!=0)
+P3 := {[fld5,zzz,inf]:
+(zzz=0 & inf!=0 & fld5!=0)
 };
 
-S := {[fld5,z,inf]:
+S := {[fld5,zzz,inf]:
  exists(x:inf=0 & inf!=x & x!=0)
 };
 
@@ -41,11 +41,11 @@ S intersection P2; # false
 S intersection P3; # false
 
 {[0,0,0]}
-{[fld5,z,inf]  : FALSE }
-{[fld5,z,inf]  : FALSE }
+{[fld5,zzz,inf]  : FALSE }
+{[fld5,zzz,inf]  : FALSE }
 
-R := {[fld5,z,inf]:
- exists(x:x!=z & inf=z &fld5=0)
+R := {[fld5,zzz,inf]:
+ exists(x:x!=zzz & inf=zzz &fld5=0)
 };
 
 R intersection P1;
@@ -53,9 +53,9 @@ R intersection P2;
 R intersection P3; # false
 
 {[0,0,0]}
-{[0,z,z]: 1 <= z} union
- {[0,z,z]: z <= -1}
-{[fld5,z,inf]  : FALSE }
+{[0,zzz,zzz]: 1 <= zzz} union
+ {[0,zzz,zzz]: zzz <= -1}
+{[fld5,zzz,inf]  : FALSE }
 
 
 
