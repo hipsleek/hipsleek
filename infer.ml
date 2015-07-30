@@ -1266,18 +1266,18 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                           b) lst_pre_rel in
                       let pre_rel = CP.join_conjunctions (List.concat lst_pre_rel_no_contra) in 
                       let pure_gist = TP.om_gist a pre_rel in
-                      let () = x_tinfo_hp (add_str "rhs_xpure_orig" !print_mix_formula) rhs_xpure_orig no_pos in
-                      let () = x_tinfo_hp (add_str "lst_pre_rel" (pr_list (pr_list !CP.print_formula))) lst_pre_rel no_pos in
-                      let () = x_tinfo_hp (add_str "lst_pre_rel_no_contra" (pr_list (pr_list !CP.print_formula))) lst_pre_rel_no_contra no_pos in
-                      let () = x_tinfo_hp (add_str "pre_rel" !CP.print_formula) pre_rel no_pos in
-                      let () = x_tinfo_hp (add_str "orig pre" !CP.print_formula) a no_pos in
-                      let () = x_tinfo_hp (add_str "pure_gist" !CP.print_formula) pure_gist no_pos in
+                      let () = x_binfo_hp (add_str "rhs_xpure_orig" !print_mix_formula) rhs_xpure_orig no_pos in
+                      let () = x_binfo_hp (add_str "lst_pre_rel" (pr_list (pr_list !CP.print_formula))) lst_pre_rel no_pos in
+                      let () = x_binfo_hp (add_str "lst_pre_rel_no_contra" (pr_list (pr_list !CP.print_formula))) lst_pre_rel_no_contra no_pos in
+                      let () = x_binfo_hp (add_str "pre_rel" !CP.print_formula) pre_rel no_pos in
+                      let () = x_binfo_hp (add_str "orig pre" !CP.print_formula) a no_pos in
+                      let () = x_binfo_hp (add_str "pure_gist" !CP.print_formula) pure_gist no_pos in
                       (* proc_conj vs_lhs rels a *)
                       (([pre_rel],rels),[pure_gist])
                 )
               in
-              let () = x_tinfo_hp (add_str "vs_lhs" !CP.print_svl) vs_lhs pos in
-              let () = x_tinfo_hp (add_str "(rel_ass,rels)" (pr_pair (pr_list !CP.print_formula) 
+              let () = x_binfo_hp (add_str "vs_lhs" !CP.print_svl) vs_lhs pos in
+              let () = x_binfo_hp (add_str "(rel_ass,rels)" (pr_pair (pr_list !CP.print_formula) 
                                                                (pr_list !CP.print_formula))) p_ass pos in
               let () = x_tinfo_hp (add_str "ipures" (pr_list !CP.print_formula)) ipures pos in
               let remove_redudant_neq lhs_neq_null_svl p=
