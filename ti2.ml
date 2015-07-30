@@ -40,6 +40,10 @@ let is_sat f =
 
 let imply a c = Tpdispatcher.imply_raw a c
 
+let imply a c =
+  let pr = !CP.print_formula in
+  Debug.no_2 "Ti2.imply" pr pr string_of_bool imply a c
+
 let pairwisecheck = Tpdispatcher.tp_pairwisecheck
 
 let simplify_disj f = 
@@ -99,7 +103,7 @@ let rec partition_cond_list is_disj cond_list =
       | [] -> [c]
       | d::ds -> 
         if not (is_sat (mkAnd c d)) then d::(helper c ds)
-        else if is_disj && (imply c d) then dcs
+        else if is_disj && (x_add imply c d) then dcs
         else (mkAnd c d)::(mkAnd (mkNot c) d)::(helper (mkAnd c (mkNot d)) ds)
     in helper c dcs
 
@@ -265,7 +269,7 @@ let rec update_case_spec spec cond sol =
       match cases with
       | [] -> cases
       | (c, case)::rem ->
-        if imply cond c then (c, (update_case_spec case cond sol))::rem
+        if x_add imply cond c then (c, (update_case_spec case cond sol))::rem
         else (c, case)::(helper rem)
     in Cases (helper cases)
 
@@ -1125,7 +1129,7 @@ let subst_by_ctx vars ctx f =
   let simpl_f = x_add simplify (mkAnd ctx f) vars in
   Tpdispatcher.om_gist simpl_f (x_add simplify ctx vars)
   (* try                                                                          *)
-  (*   List.find (fun c -> imply (mkAnd ctx c) f) (CP.split_conjunctions simpl_f) *)
+  (*   List.find (fun c -> x_add imply (mkAnd ctx c) f) (CP.split_conjunctions simpl_f) *)
   (* with _ -> simpl_f                                                            *)
 
 (* Abductive Inference *)
@@ -1208,12 +1212,12 @@ let infer_abductive_cond_templ prog ann abd_ante abd_conseq =
   | _ -> None
 
 let infer_abductive_cond abd_f prog ann ante conseq =
-  if imply ante conseq then Some (CP.mkTrue no_pos) (* None *)
+  if x_add imply ante conseq then Some (CP.mkTrue no_pos) (* None *)
   else
     (* Handle boolean formulas in consequent *)
     let bool_conseq, conseq = List.partition CP.is_bool_formula 
         (CP.split_conjunctions conseq) in
-    if not (imply ante (CP.join_conjunctions bool_conseq)) then None
+    if not (x_add imply ante (CP.join_conjunctions bool_conseq)) then None
     else
       let abd_ante = CP.join_conjunctions (List.filter (fun f -> 
           not (CP.is_bool_formula f)) (CP.split_conjunctions ante)) in
@@ -1246,7 +1250,7 @@ let infer_abductive_icond_edge prog g e =
     (* let bool_abd_conseq, abd_conseq = List.partition CP.is_bool_formula                      *)
     (*   (CP.split_conjunctions abd_conseq) in                                                  *)
   
-    (* if not (imply eh_ctx (CP.join_conjunctions bool_abd_conseq)) then None                   *)
+    (* if not (x_add imply eh_ctx (CP.join_conjunctions bool_abd_conseq)) then None                   *)
     (* else                                                                                     *)
     (*   let abd_conseq = CP.join_conjunctions abd_conseq in                                    *)
     (*   let abd_templ, abd_templ_id, _, abd_templ_decl = templ_of_term_ann rel.termu_lhs in    *)
@@ -1256,7 +1260,7 @@ let infer_abductive_icond_edge prog g e =
     (*   (* let () = print_endline ("ABD LHS: " ^ (!CP.print_formula abd_ctx)) in    *)         *)
     (*   (* let () = print_endline ("ABD RHS: " ^ (!CP.print_formula abd_conseq)) in *)         *)
   
-    (*   if imply eh_ctx abd_conseq then                                                        *)
+    (*   if x_add imply eh_ctx abd_conseq then                                                        *)
     (*     let icond = CP.mkTrue no_pos in (* The node has an edge looping on itself *)         *)
     (*     Some (uid, icond)                                                                    *)
     (*   else                                                                                   *)
@@ -1477,7 +1481,7 @@ let uid_of_loop trel =
 
 let infer_abductive_contra abd_f prog rhs_uid ante cons =
   let cl = CP.split_conjunctions cons in
-  let cl = List.filter (fun c -> not (imply ante c)) cl in
+  let cl = List.filter (fun c -> not (x_add imply ante c)) cl in
   if is_empty cl then [CP.mkTrue no_pos]
   else
     List.fold_left (
@@ -1491,7 +1495,7 @@ let rec infer_abductive_cond_list abd_f prog rhs_uid ante conds =
   match conds with
   | [] -> []
   | cl::cs -> 
-    let cl = List.filter (fun c -> not (imply ante (mkNot c.ntc_cond))) cl in
+    let cl = List.filter (fun c -> not (x_add imply ante (mkNot c.ntc_cond))) cl in
     if is_empty cl then infer_abductive_cond_list abd_f prog rhs_uid ante cs
     else
       try
@@ -1569,8 +1573,8 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
   let cond = rhs_uid.CP.tu_cond in 
   let ctx = trrel.ret_ctx in
   (* For tinf/paper/ex-2.ss vs Velroyen_false-termination.c *) 
-  let irrel_vars_lst = List.map (fun ann -> CP.fv_of_term_ann ann) trrel.termr_lhs in
-  let ctx = elim_irrel_formula irrel_vars_lst ctx in
+  (* let irrel_vars_lst = List.map (fun ann -> CP.fv_of_term_ann ann) trrel.termr_lhs in *)
+  (* let ctx = elim_irrel_formula irrel_vars_lst ctx in                                  *)
   let eh_ctx = mkAnd ctx cond in
   if not (is_sat eh_ctx) then 
     NT_Yes (* Everything is satisfied by false *) 
@@ -1594,21 +1598,21 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
       (* let () = print_endline_quiet ("self_conds: " ^ (pr_list !CP.print_formula self_conds)) in *)
       (* let () = print_endline_quiet ("eh_ctx: " ^ (!CP.print_formula eh_ctx)) in                 *)
 
-      (* if List.exists (fun c -> (imply eh_ctx c)) loop_conds then NT_Yes      *)
+      (* if List.exists (fun c -> (x_add imply eh_ctx c)) loop_conds then NT_Yes      *)
       (* (* For self loop on the same condition *)                              *)
-      (* else if List.exists (fun c -> (imply eh_ctx c)) self_conds then NT_Yes *)
+      (* else if List.exists (fun c -> (x_add imply eh_ctx c)) self_conds then NT_Yes *)
       (* else if (self_conds != []) &&                                          *)
-      (*         (imply eh_ctx (CP.join_disjunctions self_conds))               *)
+      (*         (x_add imply eh_ctx (CP.join_disjunctions self_conds))               *)
       (*      then NT_Yes                                                       *)
 
       let disj_loop_conds = join_disjs (self_conds @ loop_conds) in
-      if (imply eh_ctx disj_loop_conds) then NT_Yes
+      if (x_add imply eh_ctx disj_loop_conds) then NT_Yes
       (* For relations to other methods' conditions *)
       else 
         let other_groups = partition_by_key (fun c -> c.ntc_fn) eq_str other_conds in
         if List.exists (fun (gn, gc) -> 
             (* not (eq_str fn gn) && (gc != []) && *)
-            (imply eh_ctx (join_disjs (List.map (fun c -> c.ntc_cond) gc)))) other_groups 
+            (x_add imply eh_ctx (join_disjs (List.map (fun c -> c.ntc_cond) gc)))) other_groups 
         then NT_Partial_Yes
         else 
           (* Infer the conditions for to-loop nodes *)
@@ -1729,7 +1733,7 @@ let proving_non_termination_nondet_trrels prog lhs_uids rhs_uid trrels =
         let () = x_binfo_hp (add_str "Simplified nondet condition: " !CP.print_formula) infer_nd_cond no_pos in
         let () = x_binfo_hp (add_str "Current case: " !CP.print_formula) curr_case no_pos in
         if not (is_sat (mkAnd curr_case infer_nd_cond)) ||
-           not (imply curr_case infer_nd_cond)
+           not (x_add imply curr_case infer_nd_cond)
         then (false, [])
         else (true, infer_nd_conds)
 
@@ -1758,7 +1762,7 @@ let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
         (* We should terminate the analysis when there is no new inferred condition *)
         let cond = rhs_uid.CP.tu_cond in 
         let feasible_disj_ic_list = List.filter (fun c -> 
-            (is_sat (mkAnd c cond)) && not (imply cond c)) full_disj_ic_list in
+            (is_sat (mkAnd c cond)) && not (x_add imply cond c)) full_disj_ic_list in
         (* if is_empty feasible_disj_ic_list then NT_No []          *)
         (* else NT_No feasible_disj_ic_list (* full_disj_ic_list *) *)
         NT_No feasible_disj_ic_list
@@ -1870,7 +1874,7 @@ let proving_trivial_termination_one_vertex prog tg scc v =
       (* let () = print_endline (pr_list !CP.print_formula term_conds) in *)
       let term_conds = List.map (fun f -> x_add simplify f params) term_conds in
       (* Only keep the new conditions *)
-      let term_conds = List.filter (fun c -> not (imply eh_ctx c)) term_conds in
+      let term_conds = List.filter (fun c -> not (x_add imply eh_ctx c)) term_conds in
       if (is_empty term_conds) then (None, [])
       else
         let term_conds = get_full_disjoint_cond_list_with_ctx eh_ctx term_conds in
