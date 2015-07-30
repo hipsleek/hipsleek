@@ -295,7 +295,11 @@ let common_arguments = [
   ("--use-isabelle-bag", Arg.Set Isabelle.bag_flag,
    "Use the bag theory from Isabelle, instead of the set theory");
   ("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
+  ("--en-weaker-pre", Arg.Set Globals.weaker_pre_flag,"Enable Weaker Pre-Condition to be Inferred");
+  ("--dis-weaker-pre", Arg.Clear Globals.weaker_pre_flag,"Disable Weaker Pre-Condition to be Inferred");
   ("--adhoc-1", Arg.Set Globals.adhoc_flag_1,"Enable Adhoc Flag 1");
+  ("--adhoc-2", Arg.Set Globals.adhoc_flag_2,"Enable Adhoc Flag 2");
+  ("--adhoc-3", Arg.Set Globals.adhoc_flag_3,"Enable Adhoc Flag 3");
   ("--ann-vp", Arg.Set Globals.ann_vp,"manual annotation of variable permissions");
   ("--dis-ann-vp", Arg.Clear Globals.ann_vp,"disable manual annotation of variable permissions");
   ("--ls", Arg.Set Globals.allow_ls,"enable locksets during verification");
@@ -318,6 +322,8 @@ let common_arguments = [
   ("--dis-seg-opt", Arg.Clear Globals.graph_norm,"disable the graph-based optimization for segment data structures");
   ("--oc-dis-simp", Arg.Clear Globals.oc_simplify,"disable oc simplification");
   ("--oc-en-simp", Arg.Set Globals.oc_simplify,"enable oc simplification");
+  ("--oc-en-nonlinear", Arg.Set Globals.oc_non_linear,"enable oc non-linear processing");
+  ("--oc-dis-nonlinear", Arg.Clear Globals.oc_non_linear,"disable oc non-linear processing");
   ("--oc-dis-adv-simp", Arg.Clear Globals.oc_adv_simplify,"disable oc advancde simplification");
   ("--oc-en-adv-simp", Arg.Set Globals.oc_adv_simplify,"enable oc advanced simplification");
   ("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");

@@ -2069,8 +2069,12 @@ and find_data_view (vdecl: view_decl) (data_decls: data_decl list) pos
 
 and syn_data_name  (data_decls : data_decl list)  (view_decls : view_decl list)
   : (view_decl * (ident list) * (ident list)) list =
-  Debug.no_1 "syn_data_name" pr_no pr_no
-    (fun _ -> syn_data_name_x data_decls view_decls) () 
+  let pr_idl = pr_list pr_id in
+  let pr2 = (fun v -> v.view_name^":"^v.view_data_name^"@") in
+  let pr1 = pr_list (fun v -> v.view_name^":"^v.view_data_name^"@") in
+  let pr_out = pr_list (pr_triple (* !print_view_decl *) pr2 pr_idl pr_idl) in
+  Debug.no_1 "syn_data_name" pr1 pr_out
+    (fun _ -> syn_data_name_x data_decls view_decls) view_decls
 
 and syn_data_name_x  (data_decls : data_decl list)  (view_decls : view_decl list)
   : (view_decl * (ident list) * (ident list)) list =
@@ -2084,9 +2088,12 @@ and syn_data_name_x  (data_decls : data_decl list)  (view_decls : view_decl list
   rl
 
 and fixpt_data_name (view_ans)  =
-  let pr1 vd = vd.view_name in
-  let pr2 = pr_list (fun x -> x) in
-  let pr = pr_list (pr_triple pr1 pr2 pr2)  in 
+  (* let pr1 vd = vd.view_name in *)
+  (* let pr2 = pr_list (fun x -> x) in *)
+  (* let pr = pr_list (pr_triple pr1 pr2 pr2)  in  *)
+  let pr_idl = pr_list pr_id in
+  let pr2 = (fun v -> v.view_name^":"^v.view_data_name^"@") in
+  let pr = pr_list (pr_triple (* !print_view_decl *) pr2 pr_idl pr_idl) in
   Debug.no_1 "fixpt_data_name" pr pr fixpt_data_name_x view_ans
 
 (* TODO : cater to aliasing with SELF; cater to mutual-recursion *)
@@ -2118,9 +2125,10 @@ and fixpt_data_name_x (view_ans:(view_decl * ident list *ident list) list) =
 
 and incr_fixpt_view iprog (dl:data_decl list) (view_decls: view_decl list)  = 
   let pr1 = pr_list (fun v -> v.data_name) in
-  let pr2 = pr_list (fun v -> v.view_name) in
-  Debug.no_2 "incr_fixpt_view" pr1 pr2 pr_id (fun _ _ -> incr_fixpt_view_x iprog dl view_decls) dl view_decls 
+  let pr2 = pr_list (fun v -> v.view_name^":"^v.view_data_name^"@") in
+  Debug.no_eff_2 "incr_fixpt_view" [false;true] pr1 pr2 pr_id (fun _ _ -> incr_fixpt_view_x iprog dl view_decls) dl view_decls 
 
+(* What is the purpose of this procedure? Is it to identify the type of self?  *)
 and incr_fixpt_view_x iprog (dl:data_decl list) (view_decls: view_decl list)  = 
   let create n = if n="" then [] else [n] in
   match view_decls with
@@ -2153,8 +2161,8 @@ and update_fixpt_x iprog (vl:(view_decl * ident list *ident list) list)  =
             let () = x_binfo_hp (add_str "XXX:v.view_name" pr_id) v.view_name no_pos in
             v.view_data_name <- (v.view_name)
         else if String.length v.view_data_name = 0 then
-          () (* self has unknown type *)
-          (* report_warning no_pos ("self of "^(v.view_name)^" cannot have its type determined") *)
+          (* self has unknown type *)
+          report_warning no_pos ("self of "^(v.view_name)^" cannot have its type determined")
         else ()
       else 
         let () = x_binfo_hp (add_str "XXX:view" pr_id) v.view_name no_pos in
@@ -2163,21 +2171,23 @@ and update_fixpt_x iprog (vl:(view_decl * ident list *ident list) list)  =
 
 and update_fixpt (iprog:prog_decl) (vl:(view_decl * ident list *ident list) list)  =
   let pr_idl = pr_list pr_id in
-  let pr = pr_list (pr_triple !print_view_decl pr_idl pr_idl) in
-  Debug.no_1 "update_fixpt" pr pr_none (fun _ -> update_fixpt_x iprog vl) vl
+  let pr2 = (fun v -> v.view_name^":"^v.view_data_name^"@") in
+  let pr = pr_list (pr_triple (* !print_view_decl *) pr2 pr_idl pr_idl) in
+  Debug.no_eff_1 "update_fixpt" [true] pr pr_unit (fun _ -> update_fixpt_x iprog vl) vl
 
 and set_check_fixpt (iprog:prog_decl) (data_decls : data_decl list) (view_decls: view_decl list)  =
   let pr = pr_list_ln !print_data_decl in 
-  let pr2 = pr_list_ln !print_view_decl in 
-  Debug.no_2 "set_check_fixpt" pr pr2 pr_none (fun _ _ -> set_check_fixpt_x iprog data_decls view_decls )
+  (* let pr2 = pr_list_ln !print_view_decl in  *)
+  let pr2 = pr_list (fun v -> v.view_name^":"^v.view_data_name^"@") in
+  Debug.no_eff_2 "set_check_fixpt" [false;true] pr_none pr2 pr_unit (fun _ _ -> set_check_fixpt_x iprog data_decls view_decls )
     data_decls view_decls
 
 and set_check_fixpt_x iprog (data_decls : data_decl list) (view_decls : view_decl list)  =
-  let vl = syn_data_name data_decls view_decls in
-  let vl = fixpt_data_name vl in
+  let vl = x_add_1 syn_data_name data_decls view_decls in
+  let vl = x_add_1 fixpt_data_name vl in
   (* An Hoa *)
   (* let () = print_endline "Call update_fixpt from set_check_fixpt_x" in *)
-  update_fixpt iprog vl
+  x_add_1 update_fixpt iprog vl
 
 
 and data_name_of_view (view_decls : view_decl list) (f0 : F.struc_formula) : ident = 

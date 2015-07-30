@@ -617,6 +617,8 @@ Message: gather_type_info_var : unexpected exception Failure("Can not find flow 
 D<> == true;
 // pred_prim D<> inv self!=null;
 
+# Why WAITS occur twice?
+
 !!! **iast.ml#2137:XXX:0v.view_name:WAITS
 !!! **iast.ml#2137:XXX:0v.view_name:WAIT
 !!! **iast.ml#2137:XXX:0v.view_name:memLoc

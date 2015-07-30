@@ -1,0 +1,49 @@
+data node{
+ node next;
+}.
+
+relation R(node a).
+HeapPred H(node a).
+
+// (5) valid
+infer[R,z,inf_p]
+R(fld5) & inf_p=null  & x!=null
+|-x!=z & inf_p=z //& fld5=null
+  .
+print residue.
+
+
+/*
+# ex52a3.slk 
+
+Entail (1) : Valid. 
+
+Residue:
+ <1>emp&x!=null & inf_p=null & R(fld5) & ((z=0 | (z!=0 & inf_p!=0)))&{FLOW,(20,21)=__norm#E}[]
+ inferred pure: [(z=0 | (z!=0 & inf_p!=0))]
+
+(==infer.ml#1572==)
+infer_pure_m_1@5@4@3
+infer_pure_m_1 inp1 :estate :( pr_entail_state_short : emp&x!=null & inf_p=null & R(fld5)&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ es_infer_vars: [z; inf_p]
+ es_infer_vars_rel: [R],[z,inf_p])
+infer_pure_m_1 inp2 :lhs xpure : R(fld5) & x!=null & inf_p=null
+infer_pure_m_1 inp3 :lhs xpure0 : x!=null & inf_p=null & R(fld5)
+infer_pure_m_1 inp4 :rhs xpure : inf_p=z & x!=z
+infer_pure_m_1 inp5 :inf vars :[z,inf_p]
+infer_pure_m_1@5 EXIT:(new es,inf pure,rel_ass) :(None,Some( (z=0 | (z!=0 & inf_p!=0))),[])
+
+(==infer.ml#1648==)
+infer_pure_m_2#1@4@3
+infer_pure_m_2#1 inp1 :estate :(  emp&x!=null & inf_p=null & R(fld5)&{FLOW,(20,21)=__norm#E}[]
+ es_rhs_eqset: [inf_p:z]
+ 
+ es_infer_vars: [z; inf_p]
+ es_infer_vars_rel: [R],[z,inf_p])
+infer_pure_m_2#1 inp2 :lhs xpure : x!=null & inf_p=null & R(fld5)
+infer_pure_m_2#1 inp3 :lhs xpure0 : x!=null & inf_p=null & R(fld5)
+infer_pure_m_2#1 inp4 :rhs xpure : inf_p=z & x!=z
+infer_pure_m_2#1@4 EXIT:(new es,inf pure,rel_ass) :(None,Some( (z=0 | (z!=0 & inf_p!=0))),[])
+
+*/

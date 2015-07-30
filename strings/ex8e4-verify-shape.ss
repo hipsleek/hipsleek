@@ -4,7 +4,9 @@ data str {
   str next;
 }
 
-DDD<> == true inv true;
+DDD<> == self::EEE<> inv true;
+
+EEE<> == self::str<_,_> inv true;
 
 /*
 # ex8e4.slk -dre "incr_fixpt_view"
