@@ -479,10 +479,19 @@ struct
   let string_of_log_type lt =
     match lt.Log.log_type with
       | PT_IMPLY (ante, conseq) |PT_IMPLY_TOP (ante, conseq) ->
+            let logic_header = match lt.Log.log_res with
+              | Log.PR_BOOL b -> (if b then "(set-info :status  unsat) \n" else "(set-info :status sat)\n")
+              | _ -> ""
+            in
             let (pr_w,pr_s) = Cpure.drop_complex_ops in
-            Smtsolver.to_smt pr_w pr_s ante (Some conseq) Smtsolver.Z3
-      | PT_SAT f-> let (pr_w,pr_s) = Cpure.drop_complex_ops in
-            Smtsolver.to_smt pr_w pr_s f (None) Smtsolver.Z3
+            logic_header ^ (Smtsolver.to_smt pr_w pr_s ante (Some conseq) Smtsolver.Z3)
+      | PT_SAT f->
+            let logic_header = match lt.Log.log_res with
+              | Log.PR_BOOL b -> (if b then "(set-info :status  sat) \n" else "(set-info :status unsat)\n")
+              | _ -> ""
+            in
+            let (pr_w,pr_s) = Cpure.drop_complex_ops in
+            logic_header ^ (Smtsolver.to_smt pr_w pr_s f (None) Smtsolver.Z3)
       | PT_SIMPLIFY f -> ";Simplify"
       | PT_HULL f -> ";Hull"
       | PT_PAIRWISE f -> ";PairWise"
@@ -491,8 +500,9 @@ struct
   let write_one_query (lt) file_name=
     let e_body = string_of_log_type lt in
     let logic_header = 
-    "(set-info :source  loris-7.ddns.comp.nus.edu.sg/~project/hip/) \n"
-  in
+    "(set-info :source loris-7.ddns.comp.nus.edu.sg/~project/hip/) \n" ^
+        "(set-info :smt-lib-version 2.0) \n"
+    in
     let e =  logic_header ^ e_body in
     x_tinfo_hp (add_str "write_one_query" (pr_pair pr_elt pr_id)) (e, file_name) no_pos;
     (*open to write*)
