@@ -6,6 +6,24 @@ data str {
 
 DDD<> == self::str<_,_> inv true;
 
+D1<> == self::D2<> inv true;
+D2<> == self::str<_,_> inv true;
+
+
+E<> == emp inv true;
+
+F1<> == self::F2<> inv true;
+F2<> == self::F1<> inv true;
+
+G1<> == self::G2<> 
+  or self::str<_,_> inv true;
+G2<> == self::G1<> inv true;
+
+
+H<> == self::E<> 
+  or self::str<_,_> inv true;
+
+
 /*
 H_v<v> == self::str<v1,q> * q::H_v<v1> & v!=0
   or self::DDD<> & v=0;
