@@ -101,7 +101,9 @@ let rec new_string_of_typ (x:typ) : string = match x with
 let is_view_recursive (n:ident) = 
   if (!view_scc)==[] then (
     (* report_warning no_pos "view_scc is empty : not processed yet?"; *)
-    false)
+    (* false *)
+      raise Not_found
+  )
   else List.mem n !view_rec 
 
 (** An Hoa : List of undefined data types **)
@@ -2405,7 +2407,14 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
              | None -> Some fc) None n_un_str 
      in
      (* TODO : This has to be generalised to mutual-recursion *)
-     let ir = not(is_prim_v) && is_view_recursive vdef.I.view_name in
+     let ir = try
+       not(is_prim_v) && is_view_recursive vdef.I.view_name
+     with Not_found ->
+         List.exists ( fun (f,_) ->
+         let dep_vns = CF.get_views f in
+         List.exists (fun vn -> string_compare vn.CF.h_formula_view_name vdef.I.view_name) dep_vns
+         ) n_un_str
+     in
      let sf = find_pred_by_self vdef data_name in
      let () = Debug.ninfo_hprint (add_str "cf 1" Cprinter.string_of_struc_formula) cf no_pos in
      let cf = CF.struc_formula_set_lhs_case false cf in
@@ -2955,7 +2964,9 @@ and fill_one_base_case_x prog vd =
       }
     end
 
-and  fill_base_case prog =  {prog with C.prog_view_decls = List.map (fill_one_base_case prog) prog.C.prog_view_decls }
+and  fill_base_case prog =
+  let () = prog.C.prog_view_decls <- List.map (fill_one_base_case prog) prog.C.prog_view_decls in
+  prog
 
 (* An Hoa : trans_rel *)
 and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =

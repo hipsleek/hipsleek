@@ -200,7 +200,8 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
   let ls_dname_pos = Iast.look_up_field_ann prog orig_view.Cast.view_data_name extn_props in
   (*formula: extend with new args*)
   let fs,labels = List.split orig_view.Cast.view_un_struc_formula in
-  let fs = List.map Cformula.elim_exists (List.map (Cfutil.subst_views_form lower_map_views) fs) in
+  let fs1 = List.map (Cfutil.subst_views_form lower_map_views) fs in
+  let fs = List.map Cformula.elim_exists (List.map Cfutil.fresh_exists fs1) in
   let pos = view_derv.Iast.view_pos in
   let () =  Debug.ninfo_hprint (add_str "   orig_view.Cast.view_data_name: " (pr_id )) orig_view.Cast.view_data_name pos in
   let self_sv = (CP.SpecVar (Named (orig_view.Cast.view_data_name),self, Unprimed)) in
@@ -317,7 +318,7 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
                   Iast.view_is_prim = false;
                   Iast.view_invariant = Ipure.mkTrue no_pos;
                   Iast.view_mem = None;
-                  Iast.view_materialized_vars = [];
+                  Iast.view_materialized_vars = List.map (fun mp -> CP.name_of_spec_var mp.Cast.mater_var) orig_view.Cast.view_materialized_vars;
                   Iast.try_case_inference = false; }
   in
   let () = try
@@ -605,7 +606,7 @@ let expose_pure_extn_one_view_x iprog cprog rev_formula_fnc trans_view_fnc lower
   let _ = iprog.Iast.prog_view_decls <- iprog.Iast.prog_view_decls@[der_view_dclr] in
   let old_flag = !Globals.do_infer_inv in
   let () = Globals.do_infer_inv := true in
-  let () =  Debug.info_hprint (add_str "orig_view_name" pr_id) orig_view_name no_pos in
+  let () =  Debug.ninfo_hprint (add_str "orig_view_name" pr_id) orig_view_name no_pos in
   let nc_view = trans_view_dervs iprog rev_formula_fnc trans_view_fnc lower_map_views cprog.Cast.prog_view_decls der_view_dclr in
   let () = Globals.do_infer_inv := old_flag in
   let nc_view = {nc_view with Cast.view_domains = view.Cast.view_domains@[(extn_view.Cast.view_name,0,List.length vars -1)]} in

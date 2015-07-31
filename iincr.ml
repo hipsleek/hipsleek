@@ -41,19 +41,6 @@ let proc_extract_inf_props prog proc_name=
     extract_inf_props prog [proc.Cast.proc_static_specs]
   with _ -> []
 
-let get_closed_view prog (init_vns: string list)=
-  let rec dfs_find_closure working_vns done_vns=
-    match working_vns with
-      | [] -> done_vns
-      | vn::rest -> if List.exists (fun vn1 -> string_compare vn vn1) done_vns then
-          dfs_find_closure rest done_vns
-        else
-          let vdclr = Cast.look_up_view_def_raw 65 prog.Cast.prog_view_decls vn in
-          let dep_hviews = CF.get_views_struc vdclr.Cast.view_formula in
-          let vns1 = Gen.BList.remove_dups_eq string_compare (List.map (fun vn -> vn.h_formula_view_name) dep_hviews) in
-          dfs_find_closure (Gen.BList.remove_dups_eq string_compare (rest@vns1)) (done_vns@[vn])
-  in
-  dfs_find_closure init_vns []
 
 (*
   for each view in scc: extd with ext_pred_name
@@ -62,14 +49,18 @@ let get_closed_view prog (init_vns: string list)=
 let extend_views iprog prog rev_formula_fnc trans_view_fnc ext_pred_names proc=
   let vns = get_views_struc proc.Cast.proc_stk_of_static_specs # top in
   let vns1 = Gen.BList.remove_dups_eq string_compare (List.map (fun vn -> vn.h_formula_view_name) vns) in
-  let () =  Debug.info_hprint (add_str "vns1" (pr_list pr_id)) vns1 no_pos in
-  let cl_vns1 = get_closed_view prog vns1 in
+  let () =  Debug.ninfo_hprint (add_str "vns1" (pr_list pr_id)) vns1 no_pos in
+  let cl_vns1 = Cfutil.get_closed_view prog vns1 in
   let rev_cl_vns1 = List.rev cl_vns1 in
-  let () =  Debug.info_hprint (add_str "rev_cl_vns1" (pr_list pr_id)) rev_cl_vns1 no_pos in
+  let () =  Debug.ninfo_hprint (add_str "rev_cl_vns1" (pr_list pr_id)) rev_cl_vns1 no_pos in
   let vdcls = List.map (x_add Cast.look_up_view_def_raw 65 prog.Cast.prog_view_decls) ( rev_cl_vns1) in
   let pure_extn_views = List.map (Cast.look_up_view_def_raw 65 prog.Cast.prog_view_decls) ext_pred_names in
   (* (orig_view, der_view) list *)
+  let old_view_scc = !Astsimp.view_scc in
+  let () = Astsimp.view_scc := [] in
   let map_ext_views = Derive.expose_pure_extn iprog prog rev_formula_fnc trans_view_fnc vdcls pure_extn_views in
+  let () = Astsimp.view_scc := old_view_scc in
+  let prog = Astsimp.fill_base_case prog in
   map_ext_views
 
 (* subst original view_formual by the new ones with quantifiers *)
@@ -99,7 +90,7 @@ let extend_pure_props_view_x iprog cprog rev_formula_fnc trans_view_fnc proc=
   ) [] inf_props in
   if props = [] then proc else
     let map_views = extend_views iprog cprog rev_formula_fnc trans_view_fnc props proc in
-    let () =  Debug.info_hprint (add_str "extend" pr_id) "3" no_pos in
+    let () =  Debug.ninfo_hprint (add_str "extend" pr_id) "3" no_pos in
     let new_proc = (extend_inf iprog cprog  map_views) proc in
     new_proc
 

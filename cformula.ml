@@ -6825,7 +6825,7 @@ let do_unfold_view_hf cprog pr_views hf0 =
 (*     | EInfer b -> EInfer {b with formula_inf_continuation = recf b.formula_inf_continuation} *)
 (*     | EList l -> EList (Gen.map_l_snd recf l) *)
 
-let fresh_data_v f0=
+let fresh_data_v is_pre f0=
   let rec helper f= match f with
     | Base _
     | Exists _ ->
@@ -6833,20 +6833,25 @@ let fresh_data_v f0=
       let hds, hvs, hrs = get_hp_rel_formula f0 in
       let v_sps1 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_data_arguments)) [] hds in
       let v_sps2 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_view_arguments)) v_sps1 hvs in
-      let fr_v_sps2 = CP.diff_svl (CP.remove_dups_svl v_sps2) quans in
-      fr_v_sps2
+      if is_pre then
+        let quans = CP.diff_svl quans v_sps2 in
+        add_quantifiers quans f0, v_sps2
+      else
+        f, CP.diff_svl v_sps2 quans
     | Or orf ->
-      CP.remove_dups_svl ((helper orf.formula_or_f1)@(helper orf.formula_or_f2))
+          let n_f1, impl_svl1 = (helper orf.formula_or_f1) in
+          let n_f2, impl_svl2 = (helper orf.formula_or_f2) in
+          Or {orf with formula_or_f1 = n_f1; formula_or_f2 = n_f2}, CP.remove_dups_svl (impl_svl1@impl_svl2)
   in
   helper f0
 
-let fresh_data_v_no_change f= []
+let fresh_data_v_no_change is_pre f= f,[]
 
 let rec struc_formula_trans_heap_node pre_quans formula_fct f=
   let recf pre_quans1 = struc_formula_trans_heap_node pre_quans1 formula_fct in
   let process_post_disj f0=
     let cur_quans, f1_bare = split_quantifiers f0 in
-    let quans0 = CP.diff_svl (cur_quans@(fresh_data_v f0)) pre_quans in
+    let quans0 = CP.diff_svl (cur_quans@ (snd (fresh_data_v false f0))) pre_quans in
     let quans = List.filter (fun (CP.SpecVar (_,id,_)) -> not(string_compare id res_name)) quans0 in
     add_quantifiers quans f1_bare
   in
@@ -6857,14 +6862,15 @@ let rec struc_formula_trans_heap_node pre_quans formula_fct f=
     let () =  Debug.ninfo_hprint (add_str " b.formula_struc_base pre" (!print_formula)) b.formula_struc_base no_pos in
     let () =  Debug.ninfo_hprint (add_str "f1 pre" (!print_formula)) f1 no_pos in
     (* Loc: to split into case spec *)
-    let new_pre_quans = fresh_data_v  b.formula_struc_base in
+    let f2, new_pre_quans = fresh_data_v true f1(* b.formula_struc_base *) in
     let pre_cur_quans = CP.remove_dups_svl (b.formula_struc_implicit_inst@(new_pre_quans)) in
     let pre_quans1 = CP.remove_dups_svl (pre_quans@pre_cur_quans) in
     let () =  Debug.ninfo_hprint (add_str "pre_quans1" (!CP.print_svl)) pre_quans1 no_pos in
+    let () =  Debug.ninfo_hprint (add_str "pre_cur_quans" (!CP.print_svl)) pre_cur_quans no_pos in
     EBase {b with
            formula_struc_continuation = Gen.map_opt (recf pre_quans1) b.formula_struc_continuation;
            formula_struc_implicit_inst =  pre_cur_quans ;
-           formula_struc_base=(* formula_trans_heap_node fct *)f1;
+           formula_struc_base=(* formula_trans_heap_node fct *)f2;
           }
   | EAssume ea-> begin
       let f1 = formula_fct ea.formula_assume_simpl in
@@ -9152,8 +9158,8 @@ let extract_abs_formula_branch_x fs v_base_name v_new_name extn_args ls_ann_info
     let hds,hvs, hrels= flatten_nodes f1 in
     let sel_svl = CP.remove_dups_svl ( List.concat (List.map get_sel_args_from_dnode hds)) in
     (*process null pointer*)
-    (* let () =  Debug.info_pprint ("  f1: "^ (!print_formula f1)) no_pos in *)
-    (* let () =  Debug.info_pprint ("  sel_svl: "^ (!CP.print_svl sel_svl)) no_pos in *)
+    let () =  Debug.ninfo_pprint ("  f1: "^ (!print_formula f1)) no_pos in
+    let () =  Debug.ninfo_pprint ("  sel_svl: "^ (!CP.print_svl sel_svl)) no_pos in
     let null_svl,null_paired_svl = classify_sel_null_svl f1 sel_svl in
     (* let () =  Debug.info_pprint ("  null_svl: "^ (!CP.print_svl null_svl)) no_pos in *)
     let sel_svl_rest = CP.diff_svl sel_svl null_svl in

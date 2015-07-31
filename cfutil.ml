@@ -2478,15 +2478,16 @@ let is_view_node_segmented vn prog =
   let vdcl = Cast.look_up_view_def_raw 62 prog.Cast.prog_view_decls vn.h_formula_view_name in
   vdcl.Cast.view_is_segmented
 
-let subst_views_form map_views f=
+let subst_views_form_x map_views f=
   (***************INTERNAL****************)
-  let rec refresh_der_args args orig_args res=
+  let rec refresh_der_args args orig_args (pure_r,res)=
     match args with
-      | [] -> res
+      | [] -> (pure_r,res)
       | sv::rest -> if CP.mem_svl sv orig_args then
-          refresh_der_args rest orig_args res@[sv]
+          refresh_der_args rest orig_args (pure_r,res@[sv])
         else
-          refresh_der_args rest orig_args res@[CP.fresh_spec_var sv]
+          let n_sv = CP.fresh_spec_var sv in
+          refresh_der_args rest orig_args (pure_r@[n_sv],res@[n_sv])
   in
   let rec lookup_map map vn v_args=
     match map with
@@ -2494,13 +2495,14 @@ let subst_views_form map_views f=
       | ((orig_vn,orig_v_args),(der_vn,der_v_args))::rest ->
             if string_compare vn orig_vn then
               let sst = List.combine orig_v_args v_args in
-              (der_vn, CP.subst_var_list sst (refresh_der_args der_v_args orig_v_args []))
+              let pure_svl, svl = (refresh_der_args der_v_args orig_v_args ([],[])) in
+              (der_vn, pure_svl, CP.subst_var_list sst svl)
             else lookup_map rest vn v_args
   in
-  let hview_subst_trans hn = match hn with
+  let rec hview_subst_trans hn = match hn with
     | ViewNode vn -> begin
         try
-          let der_vn,der_args = lookup_map map_views vn.h_formula_view_name vn.h_formula_view_arguments in
+          let der_vn,impl_vars, der_args = lookup_map map_views vn.h_formula_view_name vn.h_formula_view_arguments in
           let () =  Debug.ninfo_hprint (add_str "der_args" (!CP.print_svl)) der_args no_pos in
           let args_orig,_ = List.fold_left (fun (r,i) sv -> (r@[(CP.SVArg sv, i)], i+1)) ([],0) der_args in
           let args_annot,_ = List.fold_left (fun (r,i) sv -> (r@[(CP.ImmAnn (CP.ConstAnn Mutable),i)], i+1) ) ([],0) der_args in
@@ -2510,12 +2512,47 @@ let subst_views_form map_views f=
           h_formula_view_args_orig = args_orig;}
         with Not_found -> hn
       end
+    | Star { h_formula_star_h1 = hf1;
+      h_formula_star_h2 = hf2;
+      h_formula_star_pos = pos} ->
+          Star {h_formula_star_h1 = hview_subst_trans hf1;
+          h_formula_star_h2 = hview_subst_trans hf2;
+          h_formula_star_pos = pos}
     | _ -> hn
   in
   (*************END**INTERNAL****************)
   (formula_map (hview_subst_trans)) f
 
+let subst_views_form map_views f=
+  let pr1 = !print_formula in
+  let pr2 =  pr_pair (pr_pair pr_id !CP.print_svl) (pr_pair pr_id !CP.print_svl) in
+  Debug.no_2 "subst_views_form" (pr_list pr2) pr1 pr1
+      (fun _ _ -> subst_views_form_x map_views f) map_views f
+
 let subst_views_struc map_views cf=
   struc_formula_trans_heap_node [] (subst_views_form map_views) cf
 
+let get_closed_view prog (init_vns: string list)=
+  let rec dfs_find_closure working_vns done_vns=
+    match working_vns with
+      | [] -> done_vns
+      | vn::rest -> if List.exists (fun vn1 -> string_compare vn vn1) done_vns then
+          dfs_find_closure rest done_vns
+        else
+          let vdclr = Cast.look_up_view_def_raw 65 prog.Cast.prog_view_decls vn in
+          let dep_hviews = get_views_struc vdclr.Cast.view_formula in
+          let vns1 = Gen.BList.remove_dups_eq string_compare (List.map (fun vn -> vn.h_formula_view_name) dep_hviews) in
+          dfs_find_closure (Gen.BList.remove_dups_eq string_compare (rest@vns1)) (done_vns@[vn])
+  in
+  dfs_find_closure init_vns []
 
+let fresh_exists f0=
+  let rec recf f= match f with
+    | Base _ -> f
+    | Exists _ -> let quans, base_f = split_quantifiers f in
+      let new_quans = CP.fresh_spec_vars quans in
+      add_quantifiers new_quans (subst (List.combine quans new_quans) base_f)
+    | Or orf -> Or {orf with formula_or_f1 =  (recf orf.formula_or_f1);
+          formula_or_f2 = (recf orf.formula_or_f2)}
+  in
+  recf f0
