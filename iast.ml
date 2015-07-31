@@ -1707,15 +1707,15 @@ and look_up_all_fields_cname (prog : prog_decl) (c : ident) =
   let ddef = x_add look_up_data_def_raw prog.prog_data_decls c
   in look_up_all_fields prog ddef
 
-and subs_heap_type_env_x (henv: (ident * typ) list) old_typ new_typ =
+and subs_heap_type_env_x pos (henv: (ident * typ) list) old_typ new_typ =
   if (cmp_typ old_typ new_typ) then henv
   else (
     List.map (fun (id, t) ->
         if not (is_type_var old_typ) then (
-          let msg = "type substitution error: cannot substitute '"
-                    ^ (string_of_typ old_typ) ^ "' by '"
+          let msg = "type conflict between '"
+                    ^ (string_of_typ old_typ) ^ "' and '"
                     ^ (string_of_typ new_typ) ^ "'" in
-          report_error no_pos msg
+          report_error pos msg
         )
         else (
           if (cmp_typ t old_typ) then (id, new_typ)
@@ -1724,13 +1724,13 @@ and subs_heap_type_env_x (henv: (ident * typ) list) old_typ new_typ =
       ) henv
   )
 
-and subs_heap_type_env (henv: (ident * typ) list) old_typ new_typ =
+and subs_heap_type_env pos (henv: (ident * typ) list) old_typ new_typ =
   let pr_typ = string_of_typ in
   let pr_henv = pr_list (fun (id,t) ->
       "(" ^ id ^ "," ^ (string_of_typ t) ^ ")"
     ) in 
-  Debug.no_3 "subs_heap_type_env" pr_henv pr_typ pr_typ pr_henv
-    (fun _ _ _ -> subs_heap_type_env_x henv old_typ new_typ)
+  Debug.no_3 "subs_heap_type_env" pr_henv (add_str "old" pr_typ) (add_str "new" pr_typ) pr_henv
+    (fun _ _ _ -> subs_heap_type_env_x pos henv old_typ new_typ)
     henv old_typ new_typ
 
 and get_heap_type (henv: (ident * typ) list) id : (typ * (ident * typ) list) =
@@ -1858,20 +1858,20 @@ and collect_data_view_from_h_formula_x (h0 : F.h_formula) (data_decls: data_decl
           else ([], [])
         ) in
         let vtyp, henv = get_heap_type henv v in
-        let henv = subs_heap_type_env henv vtyp (Named c) in
+        let henv = x_add subs_heap_type_env no_pos henv  vtyp (Named c) in
         let henv = List.fold_left2 (fun henv1 arg field ->
             let ((t1,_), _, _, _) = field in
             match arg with
-            | P.Var ((id,_),_) ->
+            | P.Var ((id,_),pos) ->
               let t2, henv = get_heap_type henv id in
-              subs_heap_type_env henv t2 t1
-            | P.Ann_Exp (P.Var ((id,_),_), t2, _) ->
+              x_add subs_heap_type_env pos henv t2 t1
+            | P.Ann_Exp (P.Var ((id,_),pos), t2, _) ->
               if not (cmp_typ t1 t2) then
                 let msg = " type error in h_formula: " ^ (!print_h_formula h0) in
                 report_error h.F.h_formula_heap_pos msg
               else
                 let t3, henv = get_heap_type henv id in
-                subs_heap_type_env henv t3 t1
+                x_add subs_heap_type_env pos henv t3 t1
             | _ -> henv
           ) henv h.F.h_formula_heap_arguments ddecl.data_fields in
         (dl, vl, henv)
@@ -1995,29 +1995,29 @@ and collect_data_view_from_pure_bformula_x (bf : P.b_formula) (data_decls: data_
           let t1, henv = get_heap_type henv id1 in
           let t2, henv = get_heap_type henv id2 in
           Some (t1, t2, henv)
-        | P.Ann_Exp (P.Var ((id1,_),_), typ, _), P.Var ((id2,_),_) ->
+        | P.Ann_Exp (P.Var ((id1,_),_), typ, pos), P.Var ((id2,_),_) ->
           let t1, henv = get_heap_type henv id1 in
-          let henv = subs_heap_type_env henv t1 typ in
+          let henv = x_add subs_heap_type_env pos henv t1 typ in
           let t2, henv = get_heap_type henv id2 in
           Some (typ, t2, henv)
-        | P.Var ((id1,_),_), P.Ann_Exp (P.Var ((id2,_),_), typ, _) ->
+        | P.Var ((id1,_),_), P.Ann_Exp (P.Var ((id2,_),_), typ, pos) ->
           let t1, henv = get_heap_type henv id1 in
           let t2, henv = get_heap_type henv id2 in
-          let henv = subs_heap_type_env henv t2 typ in
+          let henv = x_add subs_heap_type_env pos henv t2 typ in
           Some (t1, typ, henv)
-        | P.Ann_Exp (P.Var ((id1,_),_), typ1, _), P.Ann_Exp (P.Var ((id2,_),_), typ2, _) ->
+        | P.Ann_Exp (P.Var ((id1,_),_), typ1, pos1), P.Ann_Exp (P.Var ((id2,_),_), typ2, pos2) ->
           let t1, henv = get_heap_type henv id1 in
-          let henv = subs_heap_type_env henv t1 typ1 in
+          let henv = x_add subs_heap_type_env pos1 henv t1 typ1 in
           let t2, henv = get_heap_type henv id2 in
-          let henv = subs_heap_type_env henv t1 typ2 in
+          let henv = x_add subs_heap_type_env pos2 henv t1 typ2 in
           Some (typ1, typ2, henv)
         | _ -> None
       ) in
       let henv = (match typ_info with
           | None -> henv
           | Some (t1, t2, henv) ->
-            if (is_type_var t1) then subs_heap_type_env henv t1 t2
-            else if (is_type_var t2) then subs_heap_type_env henv t2 t1
+            if (is_type_var t1) then x_add subs_heap_type_env no_pos henv t1 t2
+            else if (is_type_var t2) then x_add subs_heap_type_env no_pos henv t2 t1
             else if not (cmp_typ t1 t2) then
               let msg = "type error in bformula: " ^ (!P.print_b_formula bf) in
               report_error pos msg
@@ -2147,26 +2147,26 @@ and update_fixpt_x iprog (vl:(view_decl * ident list *ident list) list)  =
       v.view_pt_by_self<-tl;
       if (List.length a==0) then 
         if v.view_is_prim || v.view_kind = View_EXTN then
-          let () = x_binfo_hp (add_str "XXX:0v.view_name" pr_id) v.view_name no_pos in
+          let () = x_tinfo_hp (add_str "XXX:0v.view_name" pr_id) v.view_name no_pos in
           v.view_data_name <- (v.view_name) (* TODO WN : to add pred name *)
         else if v.view_kind = View_DERV  then
           match v.view_derv_info with
           | ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args))::_ ->
             let orig_vdecl = look_up_view_def_raw 52 iprog.prog_view_decls orig_view_name in
-            let () = x_binfo_hp (add_str "XXX:view" pr_id) v.view_name no_pos in
-            let () = x_binfo_hp (add_str "XXX:orig_vdecl" pr_id) orig_vdecl.view_data_name no_pos in
+            let () = x_tinfo_hp (add_str "XXX:view" pr_id) v.view_name no_pos in
+            let () = x_tinfo_hp (add_str "XXX:orig_vdecl" pr_id) orig_vdecl.view_data_name no_pos in
             v.view_data_name <- orig_vdecl.view_data_name
           | [] ->
             let () = report_warning no_pos ("derv view "^(v.view_name)^" does not have derv info") in
-            let () = x_binfo_hp (add_str "XXX:v.view_name" pr_id) v.view_name no_pos in
+            let () = x_tinfo_hp (add_str "XXX:v.view_name" pr_id) v.view_name no_pos in
             v.view_data_name <- (v.view_name)
         else if String.length v.view_data_name = 0 then
           (* self has unknown type *)
           report_warning no_pos ("self of "^(v.view_name)^" cannot have its type determined")
         else ()
       else 
-        let () = x_binfo_hp (add_str "XXX:view" pr_id) v.view_name no_pos in
-        let () = x_binfo_hp (add_str "XXX:a" (pr_list pr_id)) a no_pos in
+        let () = x_tinfo_hp (add_str "XXX:view" pr_id) v.view_name no_pos in
+        let () = x_tinfo_hp (add_str "XXX:a" (pr_list pr_id)) a no_pos in
         v.view_data_name <- List.hd a) vl
 
 and update_fixpt (iprog:prog_decl) (vl:(view_decl * ident list *ident list) list)  =
