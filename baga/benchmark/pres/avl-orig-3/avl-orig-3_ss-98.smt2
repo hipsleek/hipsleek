@@ -1,10 +1,12 @@
-(set-info :source  loris-7.ddns.comp.nus.edu.sg/~project/hip/) 
+(set-info :source loris-7.ddns.comp.nus.edu.sg/~project/hip/) 
+(set-info :smt-lib-version 2.0) 
+(set-info :status  sat) 
 ;Variables declarations
-(declare-fun v_int_161_1510_primed () Int)
+(declare-fun v_int_161_1514_primed () Int)
+(declare-fun v_int_161_1515_primed () Int)
 (declare-fun ba2 () Int)
 (declare-fun bn () Int)
 (declare-fun bm () Int)
-(declare-fun v_int_161_1511_primed () Int)
 (declare-fun ba1 () Int)
 (declare-fun an () Int)
 (declare-fun am () Int)
@@ -29,11 +31,13 @@
 ;Relations declarations
 ;Axioms assertions
 ;Antecedent
+(assert (= v_int_161_1514_primed 1))
+(assert (<= n_2960 n))
+(assert (= v_int_161_1515_primed n))
 (assert (<= b_2961 2))
 (assert (<= 0 b_2961))
 (assert (<= 0 n_2960))
 (assert (<= 0 m_2959))
-(assert (= v_int_161_1510_primed n_2960))
 (assert (<= ba2 2))
 (assert (<= 0 ba2))
 (assert (<= 0 bn))
@@ -45,7 +49,6 @@
 (assert (<= 0 b))
 (assert (<= 0 n))
 (assert (<= 0 m))
-(assert (= v_int_161_1511_primed n))
 (assert (<= ba1 2))
 (assert (<= 0 ba1))
 (assert (<= 0 an))

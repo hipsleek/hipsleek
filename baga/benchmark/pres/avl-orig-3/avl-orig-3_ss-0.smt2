@@ -1,4 +1,6 @@
-(set-info :source  loris-7.ddns.comp.nus.edu.sg/~project/hip/) 
+(set-info :source loris-7.ddns.comp.nus.edu.sg/~project/hip/) 
+(set-info :smt-lib-version 2.0) 
+(set-info :status  sat) 
 ;Variables declarations
 (declare-fun m () Int)
 (declare-fun n () Int)
