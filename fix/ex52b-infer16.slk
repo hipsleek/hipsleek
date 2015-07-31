@@ -22,7 +22,7 @@ infer[R,z]
 print residue.
 
 /*
-# ex52b.slk
+# ex52b.slk --print-type
 
 # Why is x not Object type?
 

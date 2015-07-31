@@ -25,15 +25,14 @@ print residue.
 
 
 /*
-# ex52a5.slk
+# ex52a.slk
 
-# Why is x not Object type?
+# Why aren't the TVars unified?
 
- <1>emp&x:TVar[28]!=null & inf_p:TVar[28]=null & R:RelT([])(fld5:node) & 
-        z:TVar[28]=0 & fld5:node=null&{FLOW,(20,21)=__norm#E}[]
- inferred pure: [z:TVar[28]=0]
- inferred rel: [RELASS [R:RelT([])]: ( R:RelT([])(fld5:node)) -->  fld5:node=null]
+checkentail inf_p=null & x!=inf_p |- x!=null.
 
+# <1>emp&x:TVar[24]!=inf_p:TVar[20] & inf_p:TVar[20]=null&{FLOW,(20,21)=__norm#E}[]
 
+checkentail inf_p=null & x=inf_p |- x=null.
 
 */
