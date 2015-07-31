@@ -27,6 +27,33 @@ pred llN<n:int> == extends ll<> with size[REC]<n> .
 /*
 //check duplicate
 pred llN1<n:int> == extends llN<> with size[REC]<n> .
+
+
+# ex9e.slk
+
+# WHere us the base-case?
+
+ view ll_one_exN{}[]<n:int>= 
+  view_domains: (size,0,1)
+   view ll_one_exN<n:int>= 
+    EList
+          exists (Expl)[](Impl)[Anon_96; 
+         q_97](ex)[](* lbl: *){11}->(exists n_98: (* lbl: *){11}->self::node<Anon_96,q_97>@M * 
+                                                                  q_97::lln<n_98>@M&
+         n=n_98+1 & 0<=n_98&{FLOW,(1,26)=__flow#E}[]
+      
+  view vars: n
+  ann vars (0 - not a posn): (@M,0),(@M,0)
+  cont vars: 
+  inv: true
+  
+  baga over inv: [([], true)]
+  baga over inv (unfolded): [([self], 1<=n)]
+  
+
+
+# WHere is the inv n>=0?
+
 */
 
 
