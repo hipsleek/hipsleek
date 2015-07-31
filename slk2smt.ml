@@ -496,6 +496,18 @@ struct
       | PT_HULL f -> ";Hull"
       | PT_PAIRWISE f -> ";PairWise"
 
+  let string_of_simpl_log_type lt =
+    match lt.Log.log_type with
+      | Log.PT_SIMPLIFY f-> begin
+          let inp = "input:\n" ^ (!CP.print_formula f) ^ "\n\n" in
+          let out = match lt.Log.log_res with
+            | Log.PR_FORMULA f -> "output:\n" ^ (!CP.print_formula f) ^ "\n"
+            | _ -> "\n"
+          in
+          inp ^ out
+        end
+      | _ -> ";other"
+
   (*write e into file_name*)
   let write_one_query (lt) file_name=
     let e_body = string_of_log_type lt in
@@ -503,10 +515,11 @@ struct
     "(set-info :source loris-7.ddns.comp.nus.edu.sg/~project/hip/) \n" ^
         "(set-info :smt-lib-version 2.0) \n"
     in
-    let e =  logic_header ^ e_body in
+    let e = if !Globals.gen_pres_sat then logic_header ^ e_body
+    else string_of_simpl_log_type lt in
     x_tinfo_hp (add_str "write_one_query" (pr_pair pr_elt pr_id)) (e, file_name) no_pos;
     (*open to write*)
-    let full_fn = ((*"logs/" ^ *)file_name ^".smt2") in
+    let full_fn = ((*"logs/" ^ *)file_name ^  (if !Globals.gen_pres_sat then ".smt2" else ".slk")) in
     let oc = 
         (try Unix.mkdir "logs" 0o750 with _ -> ());
       open_out full_fn in
@@ -519,15 +532,25 @@ struct
 
   (*iterate pres_stk, each entry write into a file*)
   let log_pres_queries prefix_fn=
-    if !Globals.gen_pres_sat then
-      let lgs = (List.rev (proof_log_stk # get_stk)) in
-      let lgs1 = List.filter (fun log -> begin
+    let sat_filter log =
+       begin
         match log.Log.log_type with
           | PT_IMPLY (ante, conseq) -> (Cpure.size_formula ante) + (Cpure.size_formula conseq) > 30
           | PT_SAT f -> (Cpure.size_formula f) > 30
           | _ -> false
       end
-      ) lgs in
+    in
+    let simpl_filter log =
+      begin
+        match log.Log.log_type with
+          | PT_SIMPLIFY f -> (Cpure.size_formula f) > 10
+          | _ -> false
+      end
+in
+    if !Globals.gen_pres_sat || !Globals.gen_pres_simpl then
+      let lgs = (List.rev (proof_log_stk # get_stk)) in
+      let filter_fnc = if !Globals.gen_pres_sat then sat_filter else simpl_filter in
+      let lgs1 = List.filter filter_fnc lgs in
        let todo_unk = List.fold_left
           (fun id log ->
               if log.log_proving_kind !=  Others.PK_Trans_Proc then

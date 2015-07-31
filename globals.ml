@@ -479,8 +479,7 @@ let sleek_gen_vc_exact = ref false
 let sleek_gen_sat = ref false
 
 let gen_pres_sat = ref false
-
-
+let gen_pres_simpl = ref false
 
 
 (*Some global vars for logging*)

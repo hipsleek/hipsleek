@@ -753,6 +753,10 @@ let common_arguments = [
       Globals.proof_logging_txt:=true; Globals.proof_logging:=true;
       Globals.gen_pres_sat:=true
      ), "Generate Presbuger  sat pure formula");
+  ("--gen-pres-simpl", Arg.Unit (fun _ ->
+      Globals.proof_logging_txt:=true; Globals.proof_logging:=true;
+      Globals.gen_pres_simpl:=true
+  ), "Generate Presbuger  simplified pure formula");
   (* abduce pre from post *)
   ("--abdfpost", Arg.Set Globals.do_abd_from_post, "Enable abduction from post-condition");
   (* incremental spec *)
