@@ -3869,7 +3869,7 @@ and are_same_types (t1 : typ) (t2 : typ) = match t1 with
   | _ -> t1 = t2
 
 and is_otype (t : typ) : bool = match t with
-  | Named _ -> true
+  | TVar _ | Named _ -> true
   | _ -> false (* | _ -> false *) (* An Hoa *)
 
 and name_of_type (t : typ) : ident = 
