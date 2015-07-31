@@ -150,5 +150,9 @@ let extract_answer input =
 ;;
 
 let solve_equation input =
-  extract_answer (gaussian_elimination_int input)
+  if !Globals.oc_matrix_eqn
+  then
+    extract_answer (gaussian_elimination_int input)
+  else
+    []
 ;;
