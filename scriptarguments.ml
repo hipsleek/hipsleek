@@ -323,8 +323,10 @@ let common_arguments = [
   ("--oc-dis-simp", Arg.Clear Globals.oc_simplify,"disable oc simplification");
   ("--oc-en-simp", Arg.Set Globals.oc_simplify,"enable oc simplification");
   ("--oc-en-nonlinear", Arg.Set Globals.oc_non_linear,"enable oc non-linear processing");
-  ("--oc-en-matrix", Arg.Set Globals.oc_matrix_eqn,"enable oc matrix equational solving of constants");
-  ("--oc-dis-matrix", Arg.Clear Globals.oc_matrix_eqn,"enable oc matrix equational solving of constants");
+  (* ("--oc-en-matrix", Arg.Set Globals.oc_matrix_eqn,"enable oc matrix equational solving of constants"); *)
+  (* ("--oc-dis-matrix", Arg.Clear Globals.oc_matrix_eqn,"enable oc matrix equational solving of constants"); *)
+  ("--oc-en-warning", Arg.Set Globals.oc_warning,"Enable Omega warning");
+  ("--oc-dis-warning", Arg.Clear Globals.oc_warning,"Disable Omega warning");
   ("--oc-dis-nonlinear", Arg.Clear Globals.oc_non_linear,"disable oc non-linear processing");
   ("--oc-dis-adv-simp", Arg.Clear Globals.oc_adv_simplify,"disable oc advancde simplification");
   ("--oc-en-adv-simp", Arg.Set Globals.oc_adv_simplify,"enable oc advanced simplification");

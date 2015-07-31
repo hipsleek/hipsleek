@@ -1442,6 +1442,8 @@ Total verification time: 168.22 second
 	Number of false contexts: 0
 
 ====================================================================
+Total number of errors: 14 in files:
+  label-dll.slk({E1#Valid}) sleek7.slk({E1#Valid},{E10#Valid},{E2#Valid},{E3#Valid},{E6#Valid},{E7#Valid},{E8#Valid}) sleek8.slk({E1#Valid},{E12#Valid},{E13#Valid},{E14#Valid},{E16#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) sleek8.slk({E1#Valid},{E12#Valid},{E13#Valid},{E14#Valid},{E16#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) sleek9.slk({E1#Valid},{E3#Valid},{E4#Valid}) sleek-err-exc.slk({E1#Fail},{E2#Fail},{E3#Fail},{E4#Fail}) lemmas/lseg.slk({L3#Valid}) lemmas/app-tail.slk(no result  for {E}) lemmas/lseg_case.slk({L2#Valid},{L3#Valid},{L4#Valid},{L5#Valid},{L6#Valid}) lemmas/ll_tail.slk({E1#Valid}) lemmas/sll_tailL.slk({L1#Valid}) fracperm/split_simple.slk({E6#Valid},{E7#Valid},{E8#Valid}) veribsync/barrier-static.slk({E4#Valid}) veribsync/barrier-dynamic2.slk({E1#Valid},{E13#Valid},{E2#Fail},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid},{E9#Fail}).
 ====================================================================
 ====================================================================
 ====================================================================

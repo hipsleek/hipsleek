@@ -512,6 +512,8 @@ let print_svl = ref (fun (c:spec_var list) -> "cpure printer has not been initia
 let print_sv = ref (fun (c:spec_var) -> "cpure printer has not been initialized")
 let print_annot_arg = ref (fun (c:annot_arg) -> "cpure printer has not been initialized")
 let print_term_ann = ref (fun (t:term_ann) -> "cpure printer has not been initialized")
+let tp_imply = ref (fun (lhs:formula) (rhs:formula) -> ((failwith "tp_imply not yet initialized"):bool))
+
 let print_view_arg v= match v with
   | SVArg sv -> "SVArg " ^ (!print_sv sv)
   | AnnotArg asv -> "AnnotArg " ^ (!print_annot_arg asv)
@@ -10953,10 +10955,26 @@ let equality_to_matrix eq_list =
 ;;
 
 let enhance_eq_list eq_list =
-  let (matrix,svlst) = equality_to_matrix eq_list in
-  let res_list = Matrix.solve_equation matrix in
-  let () = x_tinfo_pp ("res_list"^((pr_list (pr_pair string_of_int string_of_int)) res_list)) no_pos in
-  (List.map (fun (pos,v) -> (Var (List.nth svlst pos,no_pos),IConst (v,no_pos))) res_list)@eq_list
+  if !Globals.oc_non_linear then
+    let (matrix,svlst) = equality_to_matrix eq_list in
+    let res_list = Matrix.solve_equation matrix in
+    let () = x_tinfo_pp ("res_list"^((pr_list (pr_pair string_of_int string_of_int)) res_list)) no_pos in
+    let new_eq = (List.map (fun (pos,v) -> (Var (List.nth svlst pos,no_pos),IConst (v,no_pos))) res_list) in
+    let new_pure = join_conjunctions (List.map (fun (l,r) -> mkEqExp l r no_pos) new_eq) in
+    let orig_pure = join_conjunctions (List.map (fun (l,r) -> mkEqExp l r no_pos) eq_list) in
+    let () = if !Globals.adhoc_flag_2 then 
+        let b = !tp_imply orig_pure new_pure in
+        if not(b) then 
+          let () = x_binfo_hp (add_str "XXX:orig_eqn" !print_formula) orig_pure no_pos in
+          let () = x_binfo_hp (add_str "XXX:new_eqn" !print_formula) new_pure no_pos in
+          let () = x_binfo_pp "XXX:UNSOUND enhance_eq_list" no_pos in
+          failwith "UNSOUND enhance_eq_list"
+        else  () (* failwith "SOUND enhance_eq_list" *)
+            (* () *) (* x_binfo_pp "XXX:OK enhance_eq_list" no_pos *)  
+      else ()
+    in
+    new_eq@eq_list
+  else eq_list
 ;;
 
 let enhance_eq_list eq_list =

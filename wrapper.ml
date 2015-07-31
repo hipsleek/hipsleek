@@ -278,6 +278,9 @@ let wrap_wo_int_to_imm f a =
 let wrap_with_int_to_imm f a =
   wrap_one_bool  Globals.int2imm_conv true f a
 
+let wrap_dis_non_linear f a =
+  wrap_one_bool  Globals.oc_non_linear false f a
+
 (* let wrap_redlog_only f a = *)
 (*   wrap_one_bool Redlog.dis_omega true f a *)
 

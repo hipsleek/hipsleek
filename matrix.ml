@@ -1,3 +1,5 @@
+open Gen.Basic
+
 (* This module is used to solve linear equation set *)
 
 let print_lst pr lst =
@@ -150,9 +152,14 @@ let extract_answer input =
 ;;
 
 let solve_equation input =
-  if !Globals.oc_matrix_eqn
+  if true (* !Globals.oc_matrix_eqn *)
   then
     extract_answer (gaussian_elimination_int input)
   else
     []
 ;;
+
+let solve_equation input =
+  let pr1 = pr_list (pr_list string_of_int) in
+  let pr2 = pr_list (pr_pair string_of_int string_of_int) in
+  Debug.no_1 "solve_equation" pr1 pr2 solve_equation input 
