@@ -464,14 +464,16 @@ and trans_type_back (te : typ) : typ =
   | Array (t, d) -> Array (trans_type_back t, d) (* An Hoa *) 
   | p -> p 
 
-and sub_type (t1 : typ) (t2 : typ) =
-  let it1 = trans_type_back t1 in
-  let it2 = trans_type_back t2 in
-  I.sub_type it1 it2
+and sub_type_x (t1 : typ) (t2 : typ) =
+  try
+    let it1 = trans_type_back t1 in
+    let it2 = trans_type_back t2 in
+    I.sub_type it1 it2
+  with _ -> false
 
-(* and sub_type (t1 : typ) (t2 : typ) = *)
-(*   let pr = string_of_typ in *)
-(*   Debug.no_2 "sub_type" pr pr string_of_bool sub_type_x t1 t2  *)
+and sub_type (t1 : typ) (t2 : typ) =
+  let pr = string_of_typ in
+  Debug.no_2 "sub_type" pr pr string_of_bool sub_type_x t1 t2
 
 and gather_type_info_var (var : ident) tlist (ex_t : typ) pos : (spec_var_type_list*typ) =
   let pr = string_of_typ in
@@ -1073,13 +1075,13 @@ and gather_type_info_formula_x prog f0 tlist filter_res =
     let (n_tl,rl) = res_retrieve tlist filter_res b.IF.formula_exists_flow in
     let n_tl = List.fold_left (fun tl f -> x_add gather_type_info_one_formula prog f tl filter_res) n_tl b.IF.formula_exists_and in
     let n_tl = helper b.IF.formula_exists_pure b.IF.formula_exists_heap n_tl in   
-    let n_tl = res_replace n_tl rl filter_res b.IF.formula_exists_flow in
+    let n_tl = x_add res_replace n_tl rl filter_res b.IF.formula_exists_flow in
     n_tl 
   | IF.Base b ->
     let (n_tl,rl) = res_retrieve tlist filter_res b.IF.formula_base_flow in
     let todo_unk = List.fold_left (fun tl f -> x_add gather_type_info_one_formula prog f tl filter_res) n_tl b.IF.formula_base_and in
     let n_tl = helper b.IF.formula_base_pure b.IF.formula_base_heap n_tl in
-    let n_tl = res_replace n_tl rl filter_res b.IF.formula_base_flow  in
+    let n_tl = x_add res_replace n_tl rl filter_res b.IF.formula_base_flow  in
     n_tl
 
 and gather_type_info_struc_f prog (f0:IF.struc_formula) tlist =
