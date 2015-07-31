@@ -5833,13 +5833,23 @@ let rec eq_pure_formula (f1 : formula) (f2 : formula) : bool = equalFormula f1 f
   (more and more aggressive filtering)
 *)
 
+(* This module cannot distinguish between primed and unprimed variables *)
 module SVar = struct
   type t = spec_var
   let compare = fun sv1 -> fun sv2 -> (* compare_sv sv1 sv2 *)
     compare (name_of_spec_var sv1) (name_of_spec_var sv2)
 end
 
+(* This module can distinguish between primed and unprimed variables *)
+module SVar_eq = struct
+  type t = spec_var
+  let compare = fun sv1 -> fun sv2 -> (* compare_sv sv1 sv2 *)
+    compare (full_name_of_spec_var sv1) (full_name_of_spec_var sv2)
+end
+
 module SVarSet = Set.Make(SVar)
+
+module SVarSet_eq = Set.Make(SVar_eq)
 
 let set_of_list (ids : spec_var list) : SVarSet.t =
   List.fold_left (fun s -> fun i -> SVarSet.add i s) (SVarSet.empty) ids
@@ -10907,6 +10917,10 @@ let find_eq_at_toplevel e =
   let eq_list = find_eq e in
   eq_list
 
+let find_eq_at_toplevel e =
+  Debug.no_1 "find_eq_at_toplevel" !print_formula (pr_list (pr_pair !print_exp !print_exp)) find_eq_at_toplevel e
+;;
+
 let add_to_eqmap eq_list eqset =
   (* ZH:TODO use EMapSV to build an equality map involving variable  *)
   let eqset = List.fold_left (fun eset (e1,e2) -> 
@@ -10929,13 +10943,12 @@ let equality_to_matrix eq_list =
   let sv_set =
     List.fold_left (
       fun r (e1,e2) ->
-        SVarSet.union r (SVarSet.of_list ((var_list_exp e1)@(var_list_exp e2)))
-    ) SVarSet.empty eq_list
+        SVarSet_eq.union r (SVarSet_eq.of_list ((var_list_exp e1)@(var_list_exp e2)))
+    ) SVarSet_eq.empty eq_list
   in
   let sv_list =
-    SVarSet.fold (fun sv l->sv::l) sv_set []
+    SVarSet_eq.fold (fun sv l->sv::l) sv_set []
   in
-  let () = x_tinfo_pp ("sv_list:"^((pr_list (fun sv -> string_of_spec_var sv)) sv_list)) no_pos in
   let matrix =
     List.map (
       fun (e1,e2) ->
@@ -10954,8 +10967,11 @@ let equality_to_matrix eq_list =
   (matrix,sv_list)
 ;;
 
+let equality_to_matrix eq_list =
+  Debug.no_1 "equality_to_matrix" (pr_list (pr_pair !print_exp !print_exp)) (pr_pair (pr_list (pr_list string_of_int)) !print_svl)  equality_to_matrix eq_list
+;;
+
 let enhance_eq_list eq_list =
-  if !Globals.oc_non_linear then
     let (matrix,svlst) = equality_to_matrix eq_list in
     let res_list = Matrix.solve_equation matrix in
     let () = x_tinfo_pp ("res_list"^((pr_list (pr_pair string_of_int string_of_int)) res_list)) no_pos in
@@ -10974,11 +10990,13 @@ let enhance_eq_list eq_list =
       else ()
     in
     new_eq@eq_list
-  else eq_list
 ;;
 
 let enhance_eq_list eq_list =
-  Debug.no_1 "enhance_eq_list" (pr_list (pr_pair !print_exp !print_exp)) (pr_list (pr_pair !print_exp !print_exp)) enhance_eq_list eq_list
+  if !Globals.oc_non_linear then
+    Debug.no_1 "enhance_eq_list" (pr_list (pr_pair !print_exp !print_exp)) (pr_list (pr_pair !print_exp !print_exp)) enhance_eq_list eq_list
+  else
+    eq_list
 ;;
 
 

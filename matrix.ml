@@ -131,10 +131,19 @@ let extract_answer input =
       )
     | [] -> -1
   in
+  let has_solution input =
+    match (List.rev input) with
+    | h::rest ->
+      let c = List.fold_left (fun r i -> if i=0. then r else r+1) 0 rest in
+      if c=1
+      then true
+      else false
+    | [] -> false
+  in
   let extract_anwer_helper line =
     let sum = List.fold_left (fun r i -> r+.i) 0. line in
     let last = List.nth line ((List.length line)-1) in
-    if sum-.last = 1.0 && is_int last
+    if has_solution line && is_int last
     then
       let p = find_pos line 0 in
       if p = -1 then None
