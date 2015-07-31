@@ -2477,3 +2477,45 @@ let look_up_first_field prog lsctx0 dname=
 let is_view_node_segmented vn prog =
   let vdcl = Cast.look_up_view_def_raw 62 prog.Cast.prog_view_decls vn.h_formula_view_name in
   vdcl.Cast.view_is_segmented
+
+let subst_views_form map_views f=
+  (***************INTERNAL****************)
+  let rec refresh_der_args args orig_args res=
+    match args with
+      | [] -> res
+      | sv::rest -> if CP.mem_svl sv orig_args then
+          refresh_der_args rest orig_args res@[sv]
+        else
+          refresh_der_args rest orig_args res@[CP.fresh_spec_var sv]
+  in
+  let rec lookup_map map vn v_args=
+    match map with
+      | [] -> raise Not_found
+      | ((orig_vn,orig_v_args),(der_vn,der_v_args))::rest ->
+            if string_compare vn orig_vn then
+              let sst = List.combine orig_v_args v_args in
+              (der_vn, CP.subst_var_list sst (refresh_der_args der_v_args orig_v_args []))
+            else lookup_map rest vn v_args
+  in
+  let hview_subst_trans hn = match hn with
+    | ViewNode vn -> begin
+        try
+          let der_vn,der_args = lookup_map map_views vn.h_formula_view_name vn.h_formula_view_arguments in
+          let () =  Debug.ninfo_hprint (add_str "der_args" (!CP.print_svl)) der_args no_pos in
+          let args_orig,_ = List.fold_left (fun (r,i) sv -> (r@[(CP.SVArg sv, i)], i+1)) ([],0) der_args in
+          let args_annot,_ = List.fold_left (fun (r,i) sv -> (r@[(CP.ImmAnn (CP.ConstAnn Mutable),i)], i+1) ) ([],0) der_args in
+          ViewNode {vn with h_formula_view_name = der_vn;
+          h_formula_view_arguments = der_args ;
+          h_formula_view_annot_arg = args_annot;
+          h_formula_view_args_orig = args_orig;}
+        with Not_found -> hn
+      end
+    | _ -> hn
+  in
+  (*************END**INTERNAL****************)
+  (formula_map (hview_subst_trans)) f
+
+let subst_views_struc map_views cf=
+  struc_formula_trans_heap_node [] (subst_views_form map_views) cf
+
+

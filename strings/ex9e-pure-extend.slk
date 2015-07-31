@@ -1,0 +1,36 @@
+data node {
+	int val#VAL;
+	node next#REC;
+}.
+
+pred ll<> == self=null
+  or self::node<_,p> * p::ll<> & self!=null
+inv true.
+
+pred lln<n> == self = null & n = 0
+	or self::node<_, q> * q::lln<n-1>
+  inv n >= 0.
+
+pred ll_one<> == self::node<_, q> * q::ll<>.
+
+pred ll_one_ex<> == self::node<_, q> * q::lln<n_1>.
+
+pred_extn size[R]<n> ==
+      n=0 // base case
+   or R::size<m> & n=1+m 
+   inv n>=0.
+
+/*
+pred llN<n:int> == extends ll<> with size[REC]<n> .
+*/
+
+/*
+pred llN1<n:int> == extends llN<> with size[REC]<n> .
+*/
+
+pred ll_one_exN<n:int> == extends ll_one_ex<> with size[REC]<n> .
+
+/*
+pred ll_oneN<n:int> == extends ll_one<> with size[REC]<n> .
+
+*/
