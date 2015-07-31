@@ -18,7 +18,10 @@ HeapPred H(node a).
 checkentail inf_p=null & x!=inf_p |- x!=null.
 print residue.
 
-checkentail inf_p=null & x=inf_p |- x=null.
+checkentail inf_p=null & x=inf_p & a=b|- x=null & a=b.
+print residue.
+
+checkentail inf_p=null  |- x=null .
 print residue.
 
 //infer [x] x=y+1 |- y>0.
