@@ -667,6 +667,20 @@ process_one_match@2 EXIT: Prio:1
   ]
 
 ==================================================================
+# ex8e4.slk -dre "incr_fixpt_view"
+
+# bug with proc below..
+
+!!! **iast.ml#2142:XXX:0v.view_name:WAITS
+!!! **iast.ml#2160:XXX:view:WAIT
+!!! **iast.ml#2161:XXX:a:[WAIT]
+!!! **iast.ml#2160:XXX:view:memLoc
+!!! **iast.ml#2161:XXX:a:[memLoc]
+(==astsimp.ml#2575==)
+incr_fixpt_view@1
+incr_fixpt_view inp1 :[__Exc,__Error,__MayError,__Fail,int_ptr_ptr,int_ptr,lock,barrier,thrd,__RET,__ArrBoundErr,__DivByZeroErr,Object,String,str]
+incr_fixpt_view inp2 :[WAITS,WAIT,memLoc,DDD]
+incr_fixpt_view@1 EXIT:WAITS
 ==================================================================
 ==================================================================
 ==================================================================

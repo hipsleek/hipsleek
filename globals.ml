@@ -1161,6 +1161,9 @@ let allow_threads_as_resource = ref false
 
 (* let has_locklevel = ref false *)
 
+(* let assert_matrix = ref false *)
+let assert_nonlinear = ref false
+
 let adhoc_flag_1 = ref false
 let adhoc_flag_2 = ref false
 let adhoc_flag_3 = ref false

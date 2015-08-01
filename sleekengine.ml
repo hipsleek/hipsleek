@@ -1217,20 +1217,34 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   (* need to make ivars be global *)
   (* let conseq = if (!Globals.allow_field_ann) then meta_to_struc_formula iconseq0 false fv_idents None stab  *)
   let (n_tl,conseq) = meta_to_struc_formula iconseq0 false fv_idents  n_tl in
-  let () = x_tinfo_hp (add_str "type-table" Typeinfer.string_of_tlist) n_tl no_pos in
   (* let _ = print_endline ("conseq: " ^ (Cprinter.string_of_struc_formula conseq)) in *)
   (* let ante,conseq = transfrom_bexpr ante conseq n_tl in *)
   (* let conseq1 = meta_to_struc_formula iconseq0 false fv_idents stab in *)
   let conseq_fvs = CF.struc_fv conseq in
-  let sst = List.fold_left (fun sst0 ((CP.SpecVar (t1, id1, p1)) as sv1) ->
-      try
-        let sv2 = List.find (fun (CP.SpecVar (t2, id2, p2)) -> String.compare id1 id2 = 0 &&
-                                                               p1=p2 && t1!=t2) conseq_fvs
-        in
-        sst0@[(sv1,sv2)]
-      with _ ->  sst0
-    ) [] fvs
-  in
+  let () = x_tinfo_hp (add_str "fvs" !CP.print_svl) fvs no_pos in
+  let () = x_tinfo_hp (add_str "conseq_fvs" !CP.print_svl) conseq_fvs no_pos in
+  let () = x_tinfo_hp (add_str "type-table" Typeinfer.string_of_tlist) n_tl no_pos in
+  (* let sst = List.fold_left (fun sst0 ((CP.SpecVar (t1, id1, p1)) as sv1) -> *)
+  (*     try *)
+  (*       let sv2 = List.find (fun (CP.SpecVar (t2, id2, p2)) -> String.compare id1 id2 = 0 && *)
+  (*                                                              p1=p2 && t1!=t2) conseq_fvs *)
+  (*       in *)
+  (*       sst0@[(sv1,sv2)] *)
+  (*     with _ ->  sst0 *)
+  (*   ) [] fvs *)
+  (* in *)
+  (* WN:TODO - c*)
+  let sst0 = List.map (fun (CP.SpecVar (t,i,p) as sv) -> 
+      let sv2 = Typeinfer.get_spec_var_type_list_infer ~d_tt:n_tl (i,p) [] no_pos 
+      in (sv,sv2)) fvs in
+  let sst = List.filter (fun (CP.SpecVar (t1,_,_), CP.SpecVar (t2,_,_)) -> t1!=t2 ) sst0 in
+  (* if List.length sst != List.length sst0 then *)
+  (*   begin *)
+  (*     let pr = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
+  (*     let () = x_binfo_hp (add_str "XXX sst(old)" pr) sst0 no_pos in *)
+  (*     let () = x_binfo_hp (add_str "XXX sst(new)" pr) sst no_pos in *)
+  (*     () *)
+  (*    end; *)
   (*let _ = print_endline "run_infer_one_pass" in*)
   let ante1 = x_add CF.subst sst ante in
   let ante = Cfutil.transform_bexpr ante1 in

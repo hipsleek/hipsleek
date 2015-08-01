@@ -3871,7 +3871,7 @@ and are_same_types (t1 : typ) (t2 : typ) = match t1 with
   | _ -> t1 = t2
 
 and is_otype (t : typ) : bool = match t with
-  | Named _ -> true
+  | TVar _ | Named _ -> true
   | _ -> false (* | _ -> false *) (* An Hoa *)
 
 and name_of_type (t : typ) : ident = 
@@ -11083,7 +11083,7 @@ let enhance_eq_list eq_list =
     let new_eq = (List.map (fun (pos,v) -> (Var (List.nth svlst pos,no_pos),IConst (v,no_pos))) res_list) in
     let new_pure = join_conjunctions (List.map (fun (l,r) -> mkEqExp l r no_pos) new_eq) in
     let orig_pure = join_conjunctions (List.map (fun (l,r) -> mkEqExp l r no_pos) eq_list) in
-    let () = if !Globals.adhoc_flag_2 then 
+    let () = if !Globals.assert_nonlinear then 
         let b = !tp_imply orig_pure new_pure in
         if not(b) then 
           let () = x_binfo_hp (add_str "XXX:orig_eqn" !print_formula) orig_pure no_pos in
