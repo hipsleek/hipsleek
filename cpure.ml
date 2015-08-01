@@ -10939,6 +10939,104 @@ let add_to_eqmap eq_list eqset =
 
 
 (* Assuming that there is no subtraction and multipication, because of the arith_simplify *)
+(* let equality_to_matrix eq_list = *)
+(*   let sv_set = *)
+(*     List.fold_left ( *)
+(*       fun r (e1,e2) -> *)
+(*         SVarSet_eq.union r (SVarSet_eq.of_list ((var_list_exp e1)@(var_list_exp e2))) *)
+(*     ) SVarSet_eq.empty eq_list *)
+(*   in *)
+(*   let sv_list = *)
+(*     SVarSet_eq.fold (fun sv l->sv::l) sv_set [] *)
+(*   in *)
+(*   let matrix = *)
+(*     List.map ( *)
+(*       fun (e1,e2) -> *)
+(*         let svLHS = var_list_exp e1 in *)
+(*         let svRHS = var_list_exp e2 in *)
+(*         let constLHS = List.fold_left (fun r i -> r+i) 0 (const_exp_list_exp e1) in *)
+(*         let constRHS = List.fold_left (fun r i -> r+i) 0 (const_exp_list_exp e2) in *)
+(*         (List.map ( *)
+(*             fun sv -> *)
+(*               let lhsN = List.length (List.filter (fun item -> eq_spec_var item sv) svLHS) in *)
+(*               let rhsN = List.length (List.filter (fun item -> eq_spec_var item sv) svRHS) in *)
+(*               lhsN-rhsN *)
+(*           ) sv_list)@[constRHS-constLHS] *)
+(*     ) eq_list *)
+(*   in *)
+(*   (matrix,sv_list) *)
+(* ;; *)
+
+let collect_variable_list e arg=
+  let rec helper e arg =
+    match e with
+    | Add (e1,e2,_) ->
+      (helper e1 arg)@(helper e2 arg)
+    | Subtract (e1,e2,_) ->
+      (helper e1 arg)@(helper e2 (-arg))
+    | Mult (e1,e2,_) ->
+      (
+        match e1,e2 with
+        | IConst (i,_),othere
+        | othere,IConst (i,_) ->
+          helper othere (i*arg)
+        | _,_ -> (helper e1 arg)@(helper e2 arg)
+      )
+    | Div (e1,e2,_) ->
+      (
+        match e1,e2 with
+        | IConst (i,_),othere
+        | othere,IConst (i,_) ->
+          helper othere (arg/i)
+        | _,_ -> (helper e1 arg)@(helper e2 arg)
+      )
+    | Var (sv,_) ->
+      [(sv,arg)]
+    | _ -> []
+  in
+  helper e arg
+;;
+
+let fold_variable_list vclist =
+  let fold_one (sv,const) vclist =
+    List.filter (fun (nsv,nconst) -> if eq_spec_var sv nsv then true else false) vclist
+  in
+  List.map (
+    fun ((sv,const) as vc) ->
+      let lst = List.filter (fun (nsv,nconst) -> if eq_spec_var sv nsv then true else false) vclist in
+      List.fold_left (fun (sv,const) (nsv,nconst) -> (sv,nconst+const)) (List.hd lst) (List.tl lst)
+  ) vclist
+;;
+
+let rec eval_constant_exp e =
+  match e with
+  | Add (e1,e2,_) ->
+    (eval_constant_exp e1)+(eval_constant_exp e2)
+  | Subtract (e1,e2,_) ->
+    (eval_constant_exp e1)-(eval_constant_exp e2)
+  | Mult (e1,e2,_) ->
+    (eval_constant_exp e1)*(eval_constant_exp e2)
+  | Div (e1,e2,_) ->
+    (eval_constant_exp e1)*(eval_constant_exp e2)
+  | IConst (i,_) ->
+      i
+  | _ -> failwith "eval_constant_exp: Invalid input"
+;;
+
+let rec constantize_exp e=
+  match e with
+  | Add (e1,e2,l) ->
+    Add (constantize_exp e1,constantize_exp e2,l)
+  | Subtract (e1,e2,l) ->
+    Subtract (constantize_exp e1,constantize_exp e2,l)
+  | Mult (e1,e2,l) ->
+    Mult (constantize_exp e1,constantize_exp e2,l)
+  | Div (e1,e2,l) ->
+    Div (constantize_exp e1,constantize_exp e2,l)
+  | IConst _ -> e
+  | _ -> IConst (0,no_pos)
+;;
+
 let equality_to_matrix eq_list =
   let sv_set =
     List.fold_left (
@@ -10952,20 +11050,27 @@ let equality_to_matrix eq_list =
   let matrix =
     List.map (
       fun (e1,e2) ->
-        let svLHS = var_list_exp e1 in
-        let svRHS = var_list_exp e2 in
-        let constLHS = List.fold_left (fun r i -> r+i) 0 (const_exp_list_exp e1) in
-        let constRHS = List.fold_left (fun r i -> r+i) 0 (const_exp_list_exp e2) in
+        let var_info = fold_variable_list ((collect_variable_list e1 1)@(collect_variable_list e2 (-1))) in
+        let () = x_tinfo_pp ("var_info "^((pr_list (pr_pair !print_sv string_of_int)) var_info)) no_pos in
+        let () = x_tinfo_pp ("sv_list "^((pr_list !print_sv) sv_list)) no_pos in
+        let constLHS = eval_constant_exp (constantize_exp e1) in
+        let constRHS = eval_constant_exp (constantize_exp e2) in
         (List.map (
             fun sv ->
-              let lhsN = List.length (List.filter (fun item -> eq_spec_var item sv) svLHS) in
-              let rhsN = List.length (List.filter (fun item -> eq_spec_var item sv) svRHS) in
-              lhsN-rhsN
+              let (old_sv,v) =
+                try
+                  List.find (fun (nsv,nv) -> if eq_spec_var nsv sv then true else false) var_info
+                with _ ->
+                  (sv,0)
+              in
+              v
           ) sv_list)@[constRHS-constLHS]
     ) eq_list
   in
   (matrix,sv_list)
 ;;
+
+
 
 let equality_to_matrix eq_list =
   Debug.no_1 "equality_to_matrix" (pr_list (pr_pair !print_exp !print_exp)) (pr_pair (pr_list (pr_list string_of_int)) !print_svl)  equality_to_matrix eq_list
