@@ -189,6 +189,43 @@ RELDEFN PPP: ( b=p & n=0 & a=s' & s'!=null) -->  PPP(a,p,s',b,n)]
 !!! **pi.ml#777:>>POST:  a!=null & a=s' & p=b & 0=n
 
 =======================================================================
+# ex10a3.ss
+
+!!! **typechecker.ml#2145:Dprint:[x,p,s]
+dprint(orig): ex10a3-verify-dangling.ss:46: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+ Successful States:
+ [
+  Label: [(,0 ); (,1 )]
+  State:
+     (exists flted_40_1612: 
+    s::str<v_1590,q_1591>@M * q_1603::WFSeg<s'>@M * 
+    s'::str<flted_40_1612,p_1608>@M & flted_40_1612=0 & q_1591!=null 
+    & p_1608=p_1589 & q_1603=q_1591 & Anon_12=v_1590 & x'!=0 & x'=v 
+   & q=q_1591 & v=v_1590 & v_1590!=0 & p_1589=p 
+   & s_1607=s & v_bool_43_1521'&{FLOW,(4,5)=__norm#E}[]
+    es_cond_path: [1; 0]
+    es_var_measures 1: Some(MayLoop[]{})
+    
+  Exc:None
+  ]
+ 
+dprint(simpl): ex10a3-verify-dangling.ss:46: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+ Successful States:
+ [
+  Label: [(,0 ); (,1 )]
+  State:
+     (exists flted_40_1612: 
+    s::str<v_1590,q_1591>@M * q_1603::WFSeg<s'>@M * 
+    s'::str<flted_40_1612,p_1608>@M
+    & flted_40_1612=0 & q_1591=q_1603 & v_1590=x' 
+    & p=p_1608 & q_1603!=null & x'!=0&
+{FLOW,(4,5)=__norm#E}[]
+    es_cond_path: [1; 0]
+    es_var_measures 1: Some(MayLoop[]{})
+    
+  Exc:None
+  ]
+
 =======================================================================
 =======================================================================
 =======================================================================

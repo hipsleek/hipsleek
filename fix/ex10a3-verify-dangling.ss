@@ -43,11 +43,49 @@ void while1(ref str s)
   if (x!=0) {
     s = incStr(s);
     while1(s);
-    //dprint;
+    dprint;
   }
 }
 
 /*
+# ex10a3.ss
+
+!!! **typechecker.ml#2145:Dprint:[x,p,s]
+dprint(orig): ex10a3-verify-dangling.ss:46: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+ Successful States:
+ [
+  Label: [(,0 ); (,1 )]
+  State:
+     (exists flted_40_1612: 
+    s::str<v_1590,q_1591>@M * q_1603::WFSeg<s'>@M * 
+    s'::str<flted_40_1612,p_1608>@M & flted_40_1612=0 & q_1591!=null 
+    & p_1608=p_1589 & q_1603=q_1591 & Anon_12=v_1590 & x'!=0 & x'=v 
+   & q=q_1591 & v=v_1590 & v_1590!=0 & p_1589=p 
+   & s_1607=s & v_bool_43_1521'&{FLOW,(4,5)=__norm#E}[]
+    es_cond_path: [1; 0]
+    es_var_measures 1: Some(MayLoop[]{})
+    
+  Exc:None
+  ]
+ 
+dprint(simpl): ex10a3-verify-dangling.ss:46: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+ Successful States:
+ [
+  Label: [(,0 ); (,1 )]
+  State:
+     (exists flted_40_1612: 
+    s::str<v_1590,q_1591>@M * q_1603::WFSeg<s'>@M * 
+    s'::str<flted_40_1612,p_1608>@M
+    & flted_40_1612=0 & q_1591=q_1603 & v_1590=x' 
+    & p=p_1608 & q_1603!=null & x'!=0&
+{FLOW,(4,5)=__norm#E}[]
+    es_cond_path: [1; 0]
+    es_var_measures 1: Some(MayLoop[]{})
+    
+  Exc:None
+  ]
+
+
 # ex10a3.ss
 
 # What happen to aaa and bbb? Seems to have been eliminated
@@ -71,40 +109,6 @@ q_1591!=null & flted_40_1612=0&{FLOW,(4,5)=__norm#E}[]
 
 
 
-# ex10a3.ss
-
-# why is there inference when we did not have infer_command!
-
-!!! **typechecker.ml#3719:SPECS (before add_pre):
- EBase 
-   exists (Expl)[](Impl)[p](ex)[]s::WFS<p>@M&{FLOW,(4,5)=__norm#E}[]
-   EBase 
-     emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
-     EAssume 
-       ref [s]
-       (exists flted_40_65,aaa,
-       bbb: s::WFSeg<aaa>@M * aaa::str<flted_40_65,bbb>@M&
-       flted_40_65=0 & aaa=s' & bbb=p&{FLOW,(4,5)=__norm#E}[]
-!!! **typechecker.ml#3720:NEW SPECS(B4):
- EBase 
-   exists (Expl)[](Impl)[p](ex)[]s::WFS<p>@M&{FLOW,(4,5)=__norm#E}[]
-   EBase 
-     emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
-     EAssume 
-       ref [s]
-       (exists flted_40_65,aaa,
-       bbb: s::WFSeg<aaa>@M * aaa::str<flted_40_65,bbb>@M&
-       flted_40_65=0 & aaa=s' & bbb=p&{FLOW,(4,5)=__norm#E}[]
-!!! **typechecker.ml#3722:NEW SPECS(AF):
- EBase 
-   exists (Expl)[](Impl)[p](ex)[]s::WFS<p>@M&{FLOW,(4,5)=__norm#E}[]
-   EBase 
-     emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
-     EAssume 
-       ref [s]
-       (exists flted_40_65,aaa,
-       bbb: s::WFSeg<aaa>@M * aaa::str<flted_40_65,bbb>@M&
-       flted_40_65=0 & aaa=s' & bbb=p&{FLOW,(4,5)=__norm#E}[]
 
 */
 

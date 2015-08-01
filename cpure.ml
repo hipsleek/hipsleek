@@ -651,7 +651,7 @@ let ident_of_spec_var (sv: spec_var) = match sv with
 let string_of_spec_var ?(print_typ=false) (sv: spec_var) = match sv with
   | SpecVar (t, v, p) -> 
     if print_typ then
-      if p==Primed then (v^"#':"^(string_of_typ t)) 
+      if p==Primed then (v^"':"^(string_of_typ t)) 
       else (v^":"^(string_of_typ t))
     else if p==Primed then (v^"'") else v
 
@@ -905,6 +905,12 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
        We need only to compare names and primedness *)
     (String.compare v1 v2 = 0) && (p1 = p2)
 
+let eq_ident_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
+  | (SpecVar (_, v1, p1), SpecVar (_, v2, p2)) ->
+    (* translation has ensured well-typedness.
+       We need only to compare names and primedness *)
+    (String.compare v1 v2 = 0) 
+
 let overlap_svl = Gen.BList.overlap_eq eq_spec_var
 
 (* let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) =  *)
@@ -992,6 +998,8 @@ let remove_dups_svl vl = Gen.BList.remove_dups_eq eq_spec_var vl
 let remove_dups_svl_stable vl = Gen.BList.remove_dups_eq_stable eq_spec_var vl
 
 let diff_svl vl rl = Gen.BList.difference_eq eq_spec_var vl rl
+
+let diff_svl_ident vl rl = Gen.BList.difference_eq eq_ident_var vl rl
 
 let mem_svl1 v rl = Gen.BList.mem_eq eq_spec_var1 v rl
 
@@ -1984,6 +1992,10 @@ and is_int_type (t : typ) = match t with
   | Int -> true
   | _ -> false
 
+and is_int_convertible_type (t : typ) = match t with
+  | Int | Bool | TVar _ | Named _ -> true
+  | _ -> false
+
 and is_num_type (t : typ) = match t with
   | NUM -> true
   | _ -> false
@@ -1999,6 +2011,9 @@ and is_float_type (t : typ) = match t with
 and is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
 
 and is_int_var (sv : spec_var) : bool = is_int_type (type_of_spec_var sv)
+
+(* WN : int/bool/ptr type that can be converted to int *)
+and is_int_convertible_var (sv : spec_var) : bool = is_int_convertible_type (type_of_spec_var sv)
 
 and is_list_var (sv : spec_var) : bool = is_list_type (type_of_spec_var sv)
 

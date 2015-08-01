@@ -411,8 +411,8 @@ let simplify_branch_context (pt, ctx, fail_type) =
     match ctx with
     | Ctx en -> Ctx {en with
                      es_formula =
-                       let () = x_tinfo_hp (add_str "formula" !print_formula) en.es_formula no_pos in
-                       let () = x_tinfo_hp (add_str "renamed_vars" pr_id) (stk_renamed_vars # string_of_no_ln) no_pos in
+                       let () = x_binfo_hp (add_str "formula" !print_formula) en.es_formula no_pos in
+                       let () = x_binfo_hp (add_str "renamed_vars" pr_id) (stk_renamed_vars # string_of_no_ln) no_pos in
                        let h,mf,vp,fl,t,a = split_components en.es_formula in
                        let exists_svl = match en.es_formula with
                          | Exists ef -> ef.formula_exists_qvars
@@ -421,21 +421,24 @@ let simplify_branch_context (pt, ctx, fail_type) =
                        let free_svl = fv en.es_formula in
                        let curr_svl = stk_vars # get_stk in
                        let heap_svl = h_fv h in
-                       let () = x_tinfo_hp (add_str "exists variables" (pr_list !print_sv)) exists_svl no_pos in
-                       let () = x_tinfo_hp (add_str "free variables" (pr_list !print_sv)) free_svl no_pos in
-                       let () = x_tinfo_hp (add_str "curr variables" (pr_list !print_sv)) curr_svl no_pos in
-                       let () = x_tinfo_hp (add_str "heap variables" (pr_list !print_sv)) heap_svl no_pos in
+                       let () = x_binfo_hp (add_str "exists variables" (pr_list !print_sv)) exists_svl no_pos in
+                       let () = x_binfo_hp (add_str "free variables" (pr_list !print_sv)) free_svl no_pos in
+                       let () = x_binfo_hp (add_str "curr variables" (pr_list !print_sv)) curr_svl no_pos in
+                       let () = x_binfo_hp (add_str "heap variables" (pr_list !print_sv)) heap_svl no_pos in
+                       let heap_svl2 = CP.diff_svl_ident heap_svl curr_svl in
+                       let () = x_binfo_hp (add_str "heap2 variables" (pr_list !print_sv)) heap_svl2 no_pos in
                        let all_svl = exists_svl@free_svl in
                        let imp_svl = curr_svl@heap_svl in
                        let elim_svl = List.filter (fun sv ->
                            not (Gen.BList.mem_eq Cpure.eq_spec_var_unp sv imp_svl)
                          ) all_svl in
-                       let () = x_tinfo_hp (add_str "elim variables" (pr_list !print_sv)) elim_svl no_pos in
+                       let () = x_binfo_hp (add_str "elim variables" (pr_list !print_sv)) elim_svl no_pos in
                        let elim_svl, bag_exists_svl = List.partition (fun sv ->
-                           (Cpure.type_of_spec_var sv = Int) || (Cpure.type_of_spec_var sv = Bool)
+                           Cpure.is_int_convertible_var sv
+                             (* (Cpure.type_of_spec_var sv = Int) || (Cpure.type_of_spec_var sv = Bool) *)
                          ) elim_svl in
-                       let () = x_tinfo_hp (add_str "elim variables" (pr_list !print_sv)) elim_svl no_pos in
-                       let () = x_tinfo_hp (add_str "bag exists variables" (pr_list !print_sv)) bag_exists_svl no_pos in
+                       let () = x_binfo_hp (add_str "elim variables" (pr_list !print_sv)) elim_svl no_pos in
+                       let () = x_binfo_hp (add_str "bag exists variables" (pr_list !print_sv)) bag_exists_svl no_pos in
                        if (List.length elim_svl = 0)
                        then
                          en.es_formula
