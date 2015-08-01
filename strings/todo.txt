@@ -482,7 +482,7 @@ do_all_eq inp2 : ((1*2)+3)-1
 do_all_eq@2 EXIT:( aaa+1, 2+3)
 
 ==================================================================
-# ex5a.slk 
+# ex5a.slk (FIXED by Andreea)
 
 # must subs hole before calling xpure..
 
@@ -604,7 +604,7 @@ Residue:
  [[ COND ==>  BaseCaseUnfold]]
  CEX:true
 ==================================================================
-# ex8e4.ss
+# ex8e4.ss (FIXED)
 
 ERROR: at _0:0_0:0
 Message: Can not find flow of str
@@ -667,7 +667,7 @@ process_one_match@2 EXIT: Prio:1
   ]
 
 ==================================================================
-# ex8e4.slk -dre "incr_fixpt_view"
+# ex8e4.slk -dre "incr_fixpt_view" (FIXED)
 
 # bug with proc below..
 
