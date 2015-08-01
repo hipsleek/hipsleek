@@ -790,7 +790,7 @@ let convert_data_and_pred_to_cast_x () =
   let tmp_views_derv1 = Astsimp.mark_rec_and_der_order tmp_views_derv in
   let cviews_derv = List.fold_left (fun norm_views v ->
       let der_view = Derive.trans_view_dervs iprog Rev_ast.rev_trans_formula Astsimp.trans_view [] norm_views v in
-      (cviews0@[der_view])
+      (norm_views@[der_view])
     ) cviews0 tmp_views_derv1 in
   let _ = x_tinfo_hp (add_str "derv length" (fun ls -> string_of_int (List.length ls))) tmp_views_derv1 no_pos in
   let cviews = (* cviews0a@ *)cviews_derv in

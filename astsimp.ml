@@ -11036,7 +11036,7 @@ let convert_pred_to_cast_x ls_pr_new_view_tis is_add_pre iprog cprog do_pure_ext
       let tmp_views_derv1 = mark_rec_and_der_order tmp_views_derv in
       let cviews_derv = List.fold_left (fun norm_views v ->
           let der_view = x_add_1 Derive.trans_view_dervs iprog Rev_ast.rev_trans_formula trans_view [] norm_views v in
-          (cviews0a@[der_view])
+          (norm_views@[der_view])
         ) cviews0a tmp_views_derv1 in
       let cviews0 = (* cviews0a@ *)cviews_derv in
       cviews0
