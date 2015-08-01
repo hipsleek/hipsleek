@@ -1,3 +1,5 @@
+open Gen.Basic
+
 (* This module is used to solve linear equation set *)
 
 let print_lst pr lst =
@@ -129,10 +131,19 @@ let extract_answer input =
       )
     | [] -> -1
   in
+  let has_solution input =
+    match (List.rev input) with
+    | h::rest ->
+      let c = List.fold_left (fun r i -> if i=0. then r else r+1) 0 rest in
+      if c=1
+      then true
+      else false
+    | [] -> false
+  in
   let extract_anwer_helper line =
     let sum = List.fold_left (fun r i -> r+.i) 0. line in
     let last = List.nth line ((List.length line)-1) in
-    if sum-.last = 1.0 && is_int last
+    if has_solution line && is_int last
     then
       let p = find_pos line 0 in
       if p = -1 then None
@@ -150,5 +161,14 @@ let extract_answer input =
 ;;
 
 let solve_equation input =
-  extract_answer (gaussian_elimination_int input)
+  if true (* !Globals.oc_matrix_eqn *)
+  then
+    extract_answer (gaussian_elimination_int input)
+  else
+    []
 ;;
+
+let solve_equation input =
+  let pr1 = pr_list (pr_list string_of_int) in
+  let pr2 = pr_list (pr_pair string_of_int string_of_int) in
+  Debug.no_1 "solve_equation" pr1 pr2 solve_equation input 
