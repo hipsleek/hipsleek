@@ -11110,6 +11110,7 @@ let add_to_em_set eq_list em_set =
   em
 ;;
 
+(* building an eq_map for pure of top-level *)
 let build_eqmap_at_toplevel e =
   let eq_list = find_eq_at_toplevel e in
    build_eqmap eq_list

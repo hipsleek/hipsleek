@@ -189,7 +189,21 @@ RELDEFN PPP: ( b=p & n=0 & a=s' & s'!=null) -->  PPP(a,p,s',b,n)]
 !!! **pi.ml#777:>>POST:  a!=null & a=s' & p=b & 0=n
 
 =======================================================================
-# ex10a3.ss
+# ex10a3.ss (FIXED - using stk var; shorter names)
+
+simplified --> 
+
+dprint(simpl): ex10a3-verify-dangling.ss:46: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+ Successful States:
+ [
+  Label: [(,0 ); (,1 )]
+  State:
+     (exists flted_40_1612: s::str<v_1590,q_1591>@M * q_1603::WFSeg<s'>@M * 
+                        s'::str<flted_40_1612,p_1608>@M&
+p=p_1608 & flted_40_1612=0 & q_1591=q_1603 & v_1590=x' & q_1603!=null & x'!=0&
+{FLOW,(4,5)=__norm#E}[]
+    es_cond_path: [1; 0]
+    es_var_measures 1: Some(MayLoop[]{})
 
 !!! **typechecker.ml#2145:Dprint:[x,p,s]
 dprint(orig): ex10a3-verify-dangling.ss:46: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]

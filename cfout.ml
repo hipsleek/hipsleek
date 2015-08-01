@@ -406,39 +406,81 @@ let rec shorten_formula f =
 (* let rearrange_failesc_context_list fcl = *)
 (*   List.map rearrange_failesc_context fcl *)
 
+(* use program variables; use shorter variables *)
+let build_subs lst svl =
+  if (List.length lst) <= 1 then []
+  else
+    let (cv,rest) = List.partition (fun x -> List.exists (CP.eq_ident_var x) svl) lst in
+    match cv with
+    | h::_ -> 
+      (* let e = CP.Var(h,no_pos) in *)
+      List.map (fun v -> (v,h)) rest
+    | [] -> 
+      begin
+        let (const,rest) = List.partition (fun x -> CP.is_const x) lst in
+        match const with
+        | h::_ -> []
+        (* let e = CP.conv_var_to_exp h in *)
+        (* List.map (fun v -> (v,e)) rest *)
+        | [] -> 
+          begin
+            match (List.sort (fun sv1 sv2 -> 
+                let v1=String.length (CP.ident_of_spec_var sv1) in
+                let v2=String.length (CP.ident_of_spec_var sv2) in
+                if v1<v2 then -1
+                else if v1==v2 then 0
+                else 1
+              ) lst) with
+            | h::rest -> 
+              (* let e = CP.Var(h,no_pos) in *)
+              List.map (fun v -> (v,h)) rest
+            | [] -> []
+          end
+      end
+ 
 let simplify_branch_context (pt, ctx, fail_type) =
   let rec helper ctx =
     match ctx with
     | Ctx en -> Ctx {en with
                      es_formula =
-                       let () = x_binfo_hp (add_str "formula" !print_formula) en.es_formula no_pos in
-                       let () = x_binfo_hp (add_str "renamed_vars" pr_id) (stk_renamed_vars # string_of_no_ln) no_pos in
+                       let () = x_tinfo_hp (add_str "formula" !print_formula) en.es_formula no_pos in
+                       let () = x_tinfo_hp (add_str "renamed_vars" pr_id) (stk_renamed_vars # string_of_no_ln) no_pos in
                        let h,mf,vp,fl,t,a = split_components en.es_formula in
+                       let curr_svl = stk_vars # get_stk in
+                       let pure_f = MCP.pure_of_mix mf in
+                       let eqmap = CP.build_eqmap_at_toplevel pure_f in
+                       let eq_part = CP.EMapSV.partition eqmap in
+                       let sst = List.concat (List.map (fun lst -> build_subs lst curr_svl) eq_part) in
+                       let new_formula = subst sst en.es_formula in
+                       let h,mf,vp,fl,t,a = split_components new_formula in
+                       let () = x_tinfo_hp (add_str "sst" (pr_list (pr_pair !print_sv !print_sv))) sst no_pos in
+                       let () = x_tinfo_hp (add_str "new_formula" !print_formula) new_formula no_pos in
                        let exists_svl = match en.es_formula with
                          | Exists ef -> ef.formula_exists_qvars
                          | _ -> []
                        in
                        let free_svl = fv en.es_formula in
-                       let curr_svl = stk_vars # get_stk in
                        let heap_svl = h_fv h in
-                       let () = x_binfo_hp (add_str "exists variables" (pr_list !print_sv)) exists_svl no_pos in
-                       let () = x_binfo_hp (add_str "free variables" (pr_list !print_sv)) free_svl no_pos in
-                       let () = x_binfo_hp (add_str "curr variables" (pr_list !print_sv)) curr_svl no_pos in
-                       let () = x_binfo_hp (add_str "heap variables" (pr_list !print_sv)) heap_svl no_pos in
-                       let heap_svl2 = CP.diff_svl_ident heap_svl curr_svl in
-                       let () = x_binfo_hp (add_str "heap2 variables" (pr_list !print_sv)) heap_svl2 no_pos in
+                       let () = x_tinfo_hp (add_str "exists variables" (pr_list !print_sv)) exists_svl no_pos in
+                       let () = x_tinfo_hp (add_str "free variables" (pr_list !print_sv)) free_svl no_pos in
+                       let () = x_tinfo_hp (add_str "curr variables" (pr_list !print_sv)) curr_svl no_pos in
+                       let () = x_tinfo_hp (add_str "heap variables" (pr_list !print_sv)) heap_svl no_pos in
+                       let heap_svl = CP.diff_svl_ident heap_svl curr_svl in
+                       let () = x_tinfo_hp (add_str "heap variables(new)" (pr_list !print_sv)) heap_svl no_pos in
+                       let () = x_ninfo_hp (add_str "pure formula" !CP.print_formula) pure_f no_pos in
+                       let () = x_ninfo_hp (add_str "eqmap" (CP.EMapSV.string_of)) eqmap no_pos in
                        let all_svl = exists_svl@free_svl in
                        let imp_svl = curr_svl@heap_svl in
                        let elim_svl = List.filter (fun sv ->
                            not (Gen.BList.mem_eq Cpure.eq_spec_var_unp sv imp_svl)
                          ) all_svl in
-                       let () = x_binfo_hp (add_str "elim variables" (pr_list !print_sv)) elim_svl no_pos in
+                       let () = x_tinfo_hp (add_str "elim variables" (pr_list !print_sv)) elim_svl no_pos in
                        let elim_svl, bag_exists_svl = List.partition (fun sv ->
                            Cpure.is_int_convertible_var sv
-                             (* (Cpure.type_of_spec_var sv = Int) || (Cpure.type_of_spec_var sv = Bool) *)
+                           (* (Cpure.type_of_spec_var sv = Int) || (Cpure.type_of_spec_var sv = Bool) *)
                          ) elim_svl in
-                       let () = x_binfo_hp (add_str "elim variables" (pr_list !print_sv)) elim_svl no_pos in
-                       let () = x_binfo_hp (add_str "bag exists variables" (pr_list !print_sv)) bag_exists_svl no_pos in
+                       let () = x_tinfo_hp (add_str "elim variables" (pr_list !print_sv)) elim_svl no_pos in
+                       let () = x_tinfo_hp (add_str "bag exists variables" (pr_list !print_sv)) bag_exists_svl no_pos in
                        if (List.length elim_svl = 0)
                        then
                          en.es_formula
