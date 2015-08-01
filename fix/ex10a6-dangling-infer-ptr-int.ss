@@ -35,11 +35,11 @@ int getChar(str x)
          s++;
  no guarantee it reaches the end of string ..
 */
-relation PPP(str s, str a, str b, str c).
+relation PPP(str s, str a, str b, str c,int n).
 void while1(ref str s)
-  infer [PPP]
+  infer [PPP,@leak]
   requires s::WFS<p> 
-  ensures s::WFSeg<a>*a::str<0,b> & PPP(a,p,s',b) ;
+  ensures s::WFSeg<a>*a::str<n,b> & PPP(a,p,s',b,n) ;
 {
   int x=getChar(s);
   if (x!=0) {
@@ -50,26 +50,23 @@ void while1(ref str s)
 }
 
 /*
-# ex10a1.ss
+# ex10a6.ss
 
- infer [PPP]
+  infer [PPP]
   requires s::WFS<p> 
-  ensures s::WFSeg<a>*a::str<0,b> & PPP(a,p,s',b) ;
-
-GOT
-===
-!!! **infer.ml#2210:RelInferred (simplified):[RELDEFN PPP: ( a!=null & PPP(a,p,s',b)) -->  PPP(a,p,s',b)]
-!!! **infer.ml#2210:RelInferred (simplified):[RELDEFN PPP: ( b=p & a=s' & s'!=null) -->  PPP(a,p,s',b)]
+  ensures s::WFSeg<a>*a::str<n,b> & PPP(a,p,s',b,n) ;
 
 
-Expects
-=======
-  s'=a  & b=p
+Inferring "n" seems hard. Is there residue?
 
-GOT a better result:
+[RELDEFN PPP: ( PPP(a_1598,p,s',b_1599,n_1600) & b!=null & n!=0 & a!=null & a<a_1598) -->  PPP(a,p,s',b,n),
+RELDEFN PPP: ( a_1598!=null & PPP(a_1598,p,s',b_1599,n_1600) & b!=null & n!=0 & a_1598<a) -->  PPP(a,p,s',b,n),
+RELDEFN PPP: ( a!=null & PPP(a,p,s',b,n)) -->  PPP(a,p,s',b,n),
+RELDEFN PPP: ( b=p & n=0 & a=s' & s'!=null) -->  PPP(a,p,s',b,n)]
 
-!!! **pi.ml#776:>>REL POST:  PPP(p,a,s',b)
-!!! **pi.ml#777:>>POST:  a!=null & a=s' & p=b
+# @leak inference gave better results:
+
+!!! **pi.ml#777:>>POST:  a!=null & a=s' & p=b & 0=n
 
 
 */
