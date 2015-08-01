@@ -18,6 +18,12 @@ HHH<> == self::EEE<>
 /*
 # ex8e4d.ss
 
+# Fixed with a better error message:
+
+Exception occurred: Failure("gather_type_info_var : unexpected exception Failure(\"UNIFICATION ERROR : at location {(Line:14,Col:9),(Line:14,Col:20)} types str and cell are inconsistent\")")
+Error3(s) detected at main 
+
+
 !!! **iast.ml#2168:XXX:view:HHH
 !!! **iast.ml#2169:XXX:a:[str,cell]
 !!! **iast.ml#2168:XXX:view:EEE

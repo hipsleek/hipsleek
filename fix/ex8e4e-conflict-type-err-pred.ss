@@ -16,7 +16,12 @@ HHH<> == self::cell<_>
 
 
 /*
-# ex8e4d.ss
+# ex8e4e.ss
+
+# Fixed with a better error message ..
+
+ERROR: at _0:0_0:0
+Message: type conflict between 'cell' and 'str'
 
 !!! **iast.ml#2168:XXX:view:HHH
 !!! **iast.ml#2169:XXX:a:[str,cell]
