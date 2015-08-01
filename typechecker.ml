@@ -2148,7 +2148,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         (* let ctx1 = prune_ctx_failesc_list prog ctx in *)
         let ctx2 = list_failesc_context_and_unsat_now prog ctx in
         let ctx = ctx2 in
-        let ctx_simp = x_add_1 Cfout.simplify_failesc_context_list ctx in
+        let ctx_simp = 
+          if !Globals.simplify_dprint then x_add_1 Cfout.simplify_failesc_context_list ctx 
+          else ctx 
+        in
         (* let ctx1 = if !Globals.print_en_tidy then CF.rearrange_failesc_context_list ctx else ctx in *)
         (* Debug.info_hprint (add_str "dprint ctx0:" Cprinter.string_of_list_failesc_context) ctx0 pos; *)
         (* Debug.info_hprint (add_str "dprint ctx1:" Cprinter.string_of_list_failesc_context) ctx1 pos; *)
@@ -2165,8 +2168,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                else "\ndprint(orig): " ^ pos.start_pos.Lexing.pos_fname
                     ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str1 ^ "\n" in
              let tmp1 = if (previous_failure ()) then ("failesc context: "^tmp1) else tmp1 in
-             let tmp2 = "\ndprint(simpl): " ^ pos.start_pos.Lexing.pos_fname
-                        ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str2 ^ "\n" in
+             let tmp2 = 
+               if !Globals.simplify_dprint then 
+                   "\ndprint(simpl): " ^ pos.start_pos.Lexing.pos_fname
+                          ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str2 ^ "\n"
+               else ""
+             in
              let tmp2 = if (previous_failure ()) then ("failesc context: "^tmp2) else tmp2 in
              print_string_quiet (tmp1 ^ tmp2));
           ctx

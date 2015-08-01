@@ -870,7 +870,7 @@ let simpl_unfold2 = ref false
 let simpl_unfold1 = ref false
 let simpl_memset = ref false
 
-let simplify_dprint = ref false
+let simplify_dprint = ref true
 
 let print_heap_pred_decl = ref true
 
@@ -1144,7 +1144,7 @@ let dis_norm = ref false
 let dis_ln_z3 = ref false
 
 (* WN : should this flag be for tpdispatcher, rather than just Omega *)
-let oc_non_linear = ref true
+let oc_non_linear = ref false
 let oc_warning = ref false
 
 (* eqn solving to be false by default until it is stable or proven*)
@@ -1168,7 +1168,7 @@ let assert_nonlinear = ref false
 let adhoc_flag_1 = ref false
 let adhoc_flag_2 = ref false
 let adhoc_flag_3 = ref false
-let weaker_pre_flag = ref false
+let weaker_pre_flag = ref true
 
 let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
 
