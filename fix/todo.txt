@@ -151,42 +151,12 @@ Inferred:
 
 Can we tidy name printing to use a,b instead?
 =======================================================================
-# ex10a3.ss
+# ex10a3.ss (OK - no inference printing)
 
-# why is there inference when we did not have infer_command!
+# why is there inference printing when we did not have any infer_command!
 
-!!! **typechecker.ml#3719:SPECS (before add_pre):
- EBase 
-   exists (Expl)[](Impl)[p](ex)[]s::WFS<p>@M&{FLOW,(4,5)=__norm#E}[]
-   EBase 
-     emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
-     EAssume 
-       ref [s]
-       (exists flted_40_65,aaa,
-       bbb: s::WFSeg<aaa>@M * aaa::str<flted_40_65,bbb>@M&
-       flted_40_65=0 & aaa=s' & bbb=p&{FLOW,(4,5)=__norm#E}[]
-!!! **typechecker.ml#3720:NEW SPECS(B4):
- EBase 
-   exists (Expl)[](Impl)[p](ex)[]s::WFS<p>@M&{FLOW,(4,5)=__norm#E}[]
-   EBase 
-     emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
-     EAssume 
-       ref [s]
-       (exists flted_40_65,aaa,
-       bbb: s::WFSeg<aaa>@M * aaa::str<flted_40_65,bbb>@M&
-       flted_40_65=0 & aaa=s' & bbb=p&{FLOW,(4,5)=__norm#E}[]
-!!! **typechecker.ml#3722:NEW SPECS(AF):
- EBase 
-   exists (Expl)[](Impl)[p](ex)[]s::WFS<p>@M&{FLOW,(4,5)=__norm#E}[]
-   EBase 
-     emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
-     EAssume 
-       ref [s]
-       (exists flted_40_65,aaa,
-       bbb: s::WFSeg<aaa>@M * aaa::str<flted_40_65,bbb>@M&
-       flted_40_65=0 & aaa=s' & bbb=p&{FLOW,(4,5)=__norm#E}[]
 =======================================================================
-# ex10a5.slk
+# ex10a5.slk (FIXED by print suppresion)
 
 # Why is there a contradiction detected? Why is it printed?
 
@@ -217,7 +187,6 @@ RELDEFN PPP: ( b=p & n=0 & a=s' & s'!=null) -->  PPP(a,p,s',b,n)]
 # @leak inference gave better results:
 
 !!! **pi.ml#777:>>POST:  a!=null & a=s' & p=b & 0=n
-
 
 =======================================================================
 =======================================================================
