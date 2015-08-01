@@ -1143,7 +1143,7 @@ let dis_norm = ref false
 
 let dis_ln_z3 = ref false
 
-let oc_non_linear = ref true
+let oc_non_linear = ref false
 
 let allow_ls = ref false (*enable lockset during verification*)
 
