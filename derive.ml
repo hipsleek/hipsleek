@@ -494,6 +494,9 @@ let do_sanity_check derv=
 let trans_view_dervs_x (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower_map_views
       (cviews (*orig _extn*): Cast.view_decl list) derv : Cast.view_decl =
   let () = do_sanity_check derv in
+  let old_flag = !Globals.do_infer_inv in
+  let () = Globals.do_infer_inv := true in
+  let res =
   match derv.Iast.view_derv_info with
   | [] -> report_error no_pos "astsimp.trans_view_dervs: 1"
   | [((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args))] ->
@@ -519,6 +522,9 @@ let trans_view_dervs_x (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower
     (* in *)
     der_view
   | _ -> report_error no_pos "astsimp.trans_view_dervs: not handle yet"
+  in
+  let () = Globals.do_infer_inv := old_flag in
+  res
 
 
 let trans_view_dervs (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower_map_views
@@ -604,11 +610,11 @@ let expose_pure_extn_one_view_x iprog cprog rev_formula_fnc trans_view_fnc lower
   }
   in
   let _ = iprog.Iast.prog_view_decls <- iprog.Iast.prog_view_decls@[der_view_dclr] in
-  let old_flag = !Globals.do_infer_inv in
-  let () = Globals.do_infer_inv := true in
+  (* let old_flag = !Globals.do_infer_inv in *)
+  (* let () = Globals.do_infer_inv := true in *)
   let () =  Debug.ninfo_hprint (add_str "orig_view_name" pr_id) orig_view_name no_pos in
   let nc_view = trans_view_dervs iprog rev_formula_fnc trans_view_fnc lower_map_views cprog.Cast.prog_view_decls der_view_dclr in
-  let () = Globals.do_infer_inv := old_flag in
+  (* let () = Globals.do_infer_inv := old_flag in *)
   let nc_view = {nc_view with Cast.view_domains = view.Cast.view_domains@[(extn_view.Cast.view_name,0,List.length vars -1)]} in
   let _ = cprog.Cast.prog_view_decls <- cprog.Cast.prog_view_decls@[nc_view] in
   nc_view
