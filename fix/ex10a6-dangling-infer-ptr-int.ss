@@ -45,7 +45,7 @@ void while1(ref str s)
   if (x!=0) {
     s = incStr(s);
     while1(s);
-    //dprint;
+    dprint;
   }
 }
 
