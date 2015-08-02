@@ -442,7 +442,7 @@ let build_subs lst svl =
           end
       end
  
-let simplify_branch_context ?(prog_vs=None) (pt, ctx, fail_type) =
+let simplify_context ?(prog_vs=None) ctx =
   let rec helper ctx =
     match ctx with
     | Ctx en -> Ctx {en with
@@ -505,11 +505,27 @@ let simplify_branch_context ?(prog_vs=None) (pt, ctx, fail_type) =
                          new_f
                     }
     | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
-  in (pt, helper ctx, fail_type)
+  in helper ctx
+
+let simplify_context ?(prog_vs=None) ctx =
+  let pr = !print_context in
+  Debug.no_1 "simplify_context" pr pr (simplify_context ~prog_vs:prog_vs)  ctx
+
+let simplify_branch_context ?(prog_vs=None) (pt, ctx, fail_type) =
+  let ctx = simplify_context ~prog_vs:prog_vs ctx in
+  (pt,ctx,fail_type)
 
 let simplify_failesc_context ?(prog_vs=None) fc =
   match fc with
   | (bfl, esc, bcl) -> (bfl, esc, List.map (simplify_branch_context ~prog_vs:prog_vs) bcl)
+
+let simplify_context_list ?(prog_vs=None) ctx =
+  List.map (fun x -> simplify_context ~prog_vs:prog_vs x) ctx
+
+let simplify_list_context ?(prog_vs=None) ctx =
+  match ctx with
+  | FailCtx (ft,c,cex) -> FailCtx (ft,simplify_context ~prog_vs:prog_vs c,cex)
+  | SuccCtx lst ->  SuccCtx (simplify_context_list ~prog_vs:prog_vs lst)
 
 let simplify_failesc_context_list ?(prog_vs=None) ctx =
   List.map (fun x -> simplify_failesc_context ~prog_vs:prog_vs x) ctx

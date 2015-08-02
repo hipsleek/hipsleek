@@ -590,6 +590,14 @@ let name_of_spec_var (sv : spec_var) : ident = match sv with
 let name_of_sv (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, _) -> v
 
+let flted_rgx = Str.regexp "flted_[1-9][0-9]*_[1-9][0-9]*" 
+
+let check_is_field x =
+  Str.string_match flted_rgx x 0 
+
+let check_is_field_sv x =
+  check_is_field (name_of_spec_var x)
+
 let exp_to_name_spec_var e = 
   match e with
   | Var(sv,_) -> name_of_spec_var sv 

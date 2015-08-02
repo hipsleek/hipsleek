@@ -22,7 +22,7 @@ relation PPP(str s, str a, str b, str c).
 infer [PPP]
  s::str<v,q>@M * q::WFSeg<aa>@M * 
         aa::str<0,bb>@M & PPP(aa,p,s',bb)  & q!=null & v!=0  
- |-  s::WFSeg<a>@M * a::str<0,b>@M & PPP(a,p,s',b). 
+ |-  (exists a: s::WFSeg<a>@M * a::str<0,b>@M & PPP(a,p,s',b)). 
 print residue.
 
 /*
