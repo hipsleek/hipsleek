@@ -406,12 +406,22 @@ let rec shorten_formula f =
 (* let rearrange_failesc_context_list fcl = *)
 (*   List.map rearrange_failesc_context fcl *)
 
+(* sort specvar with shorter in front *)
+let sort_svl vs =
+  List.sort (fun sv1 sv2 -> 
+      let v1=String.length (CP.ident_of_spec_var sv1) in
+      let v2=String.length (CP.ident_of_spec_var sv2) in
+      if v1<v2 then -1
+      else if v1==v2 then 0
+      else 1
+    ) vs
+
 (* use program variables; use shorter variables *)
 let build_subs lst svl =
   if (List.length lst) <= 1 then []
   else
     let (cv,rest) = List.partition (fun x -> List.exists (CP.eq_ident_var x) svl) lst in
-    match cv with
+    match (sort_svl cv) with
     | h::_ -> 
       (* let e = CP.Var(h,no_pos) in *)
       List.map (fun v -> (v,h)) rest
@@ -424,13 +434,7 @@ let build_subs lst svl =
         (* List.map (fun v -> (v,e)) rest *)
         | [] -> 
           begin
-            match (List.sort (fun sv1 sv2 -> 
-                let v1=String.length (CP.ident_of_spec_var sv1) in
-                let v2=String.length (CP.ident_of_spec_var sv2) in
-                if v1<v2 then -1
-                else if v1==v2 then 0
-                else 1
-              ) lst) with
+            match (sort_svl lst) with
             | h::rest -> 
               (* let e = CP.Var(h,no_pos) in *)
               List.map (fun v -> (v,h)) rest
@@ -438,7 +442,7 @@ let build_subs lst svl =
           end
       end
  
-let simplify_branch_context (pt, ctx, fail_type) =
+let simplify_context ?(prog_vs=None) ctx =
   let rec helper ctx =
     match ctx with
     | Ctx en -> Ctx {en with
@@ -446,7 +450,10 @@ let simplify_branch_context (pt, ctx, fail_type) =
                        let () = x_tinfo_hp (add_str "formula" !print_formula) en.es_formula no_pos in
                        let () = x_tinfo_hp (add_str "renamed_vars" pr_id) (stk_renamed_vars # string_of_no_ln) no_pos in
                        let h,mf,vp,fl,t,a = split_components en.es_formula in
-                       let curr_svl = stk_vars # get_stk in
+                       let curr_svl = match prog_vs with
+                         | None -> stk_vars # get_stk 
+                         | Some vs -> vs
+                       in
                        let pure_f = MCP.pure_of_mix mf in
                        let eqmap = CP.build_eqmap_at_toplevel pure_f in
                        let eq_part = CP.EMapSV.partition eqmap in
@@ -498,18 +505,34 @@ let simplify_branch_context (pt, ctx, fail_type) =
                          new_f
                     }
     | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
-  in (pt, helper ctx, fail_type)
+  in helper ctx
 
-let simplify_failesc_context fc =
+let simplify_context ?(prog_vs=None) ctx =
+  let pr = !print_context in
+  Debug.no_1 "simplify_context" pr pr (simplify_context ~prog_vs:prog_vs)  ctx
+
+let simplify_branch_context ?(prog_vs=None) (pt, ctx, fail_type) =
+  let ctx = simplify_context ~prog_vs:prog_vs ctx in
+  (pt,ctx,fail_type)
+
+let simplify_failesc_context ?(prog_vs=None) fc =
   match fc with
-  | (bfl, esc, bcl) -> (bfl, esc, List.map simplify_branch_context bcl)
+  | (bfl, esc, bcl) -> (bfl, esc, List.map (simplify_branch_context ~prog_vs:prog_vs) bcl)
 
-let simplify_failesc_context_list ctx =
-  List.map (fun x -> simplify_failesc_context x) ctx
+let simplify_context_list ?(prog_vs=None) ctx =
+  List.map (fun x -> simplify_context ~prog_vs:prog_vs x) ctx
 
-let simplify_failesc_context_list ctx =
+let simplify_list_context ?(prog_vs=None) ctx =
+  match ctx with
+  | FailCtx (ft,c,cex) -> FailCtx (ft,simplify_context ~prog_vs:prog_vs c,cex)
+  | SuccCtx lst ->  SuccCtx (simplify_context_list ~prog_vs:prog_vs lst)
+
+let simplify_failesc_context_list ?(prog_vs=None) ctx =
+  List.map (fun x -> simplify_failesc_context ~prog_vs:prog_vs x) ctx
+
+let simplify_failesc_context_list ?(prog_vs=None) ctx =
   let pr = !print_list_failesc_context in
-  Debug.no_1 "simplify_failesc_context_list" pr pr simplify_failesc_context_list ctx
+  Debug.no_1 "simplify_failesc_context_list" pr pr (simplify_failesc_context_list ~prog_vs:prog_vs)  ctx
 
 let inline_print e =
   if (!Globals.print_en_inline) then elim_imm_vars_f e

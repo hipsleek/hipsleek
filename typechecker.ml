@@ -2149,7 +2149,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         let ctx2 = list_failesc_context_and_unsat_now prog ctx in
         let ctx = ctx2 in
         let ctx_simp = 
-          if !Globals.simplify_dprint then x_add_1 Cfout.simplify_failesc_context_list ctx 
+          if !Globals.simplify_dprint then x_add_1 (Cfout.simplify_failesc_context_list ~prog_vs:(Some curr_svl)) ctx 
           else ctx 
         in
         (* let ctx1 = if !Globals.print_en_tidy then CF.rearrange_failesc_context_list ctx else ctx in *)

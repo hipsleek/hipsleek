@@ -241,7 +241,43 @@ dprint(simpl): ex10a3-verify-dangling.ss:46: ctx:  List of Failesc Context: [FEC
   ]
 
 =======================================================================
+# ex10a6.ss (OK)
+
+dprint(simpl): ex10a6-dangling-infer-ptr-int.ss:48: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+ Successful States:
+ [
+  Label: [(,0 ); (,1 )]
+  State:
+     (exists n_1597,b_1596,
+a_1595: s::str<x',q>@M * q::WFSeg<a_1595>@M * a_1595::str<n_1597,b_1596>@M&
+PPP(a_1595,p,s',b_1596,n_1597) & q!=null & x'!=0&{FLOW,(4,5)=__norm#E}[]
+    es_infer_obj: [@leak]
+    es_cond_path: [1; 0]
+    es_var_measures 1: Some(MayLoop[]{})
+    
+    es_infer_vars_rel: [PPP]
+  Exc:None
+  ]
 =======================================================================
+# ex10a5.slk
+
+infer [PPP]
+ s::str<v,q>@M * q::WFSeg<aa>@M * 
+        aa::str<0,bb>@M & PPP(aa,p,s',bb)  & q!=null & v!=0  
+ |-  s::WFSeg<a>@M * a::str<0,b>@M & PPP(a,p,s',b). 
+print residue.
+
+INPUT 0: [][PPP] 
+ ### ante =  s::str<v,q>@M * q::WFSeg<aa>@M * aa::str<flted_24_70,bb>@M&
+flted_24_70=0 & PPP(aa,p,s',bb) & q!=null & v!=0&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   exists (Expl)[](Impl)[a; 
+   b](ex)[](exists flted_25_88: s::WFSeg<a>@M * a::str<flted_25_88,b>@M&
+   flted_25_88=0 & PPP(a,p,s',b)&{FLOW,(20,21)=__norm#E}[]
+
+Residue:
+ <1>emp&aa=a & q_96=q & v_95=v & v!=0 & q!=null & PPP(aa,p,s',bb) & 
+        flted_24_70=0 & b=bb&{FLOW,(20,21)=__norm#E}[]
 =======================================================================
 =======================================================================
 =======================================================================

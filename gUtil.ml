@@ -351,6 +351,8 @@ module SleekHelper = struct
       in
       let residue = match SE.get_residue () with
         | Some residue ->
+          let vs = stk_vars # get_stk in
+          let () = x_binfo_hp (add_str "curr vars" !CP.print_svl) vs no_pos in
           let formulas = Cformula.list_formula_of_list_context residue in
           let fstring = Cprinter.string_of_list_formula formulas in
           "Residue:\n" ^ fstring ^ "\n"
