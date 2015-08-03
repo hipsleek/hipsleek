@@ -4,7 +4,7 @@ data char_star {
   char_star next;
 }
 
-char_star __plus_plus_char(char_star x)
+char_star __plus_plus_char(char_star x,int v)
 requires x::char_star<_,q>@L & Term[] 
 ensures  res=q ;
 */

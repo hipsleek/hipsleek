@@ -773,7 +773,7 @@ and create_bool_casting_proc (typ: Globals.typ) : Iast.proc_decl =
       proc_decl
     )
 
-
+(* c++   c+1   1+c *)
 and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
   let typ1 = translate_typ t1 no_pos in
   let typ2 = translate_typ t2 no_pos in
@@ -805,6 +805,11 @@ and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
   try
     Hashtbl.find tbl_aux_proc proc_name
   with Not_found -> (
+      Debug.binfo_hprint (add_str "proc_name" pr_id) proc_name no_pos;
+      Debug.binfo_hprint (add_str "op_name" pr_id) op_name no_pos;
+      Debug.binfo_hprint (add_str "op_str" pr_id) op_str no_pos;
+      Debug.binfo_hprint (add_str "t1" Cil.string_of_typ) t1 no_pos;
+      Debug.binfo_hprint (add_str "t2" Cil.string_of_typ) t2 no_pos;
       let proc_str = (
         match t1, t2 with
         | Cil.TInt _, Cil.TPtr _ ->
@@ -1074,10 +1079,8 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
               let dtype = Globals.Named dname in
               Hashtbl.add tbl_pointer_typ core_type dtype;
               let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in
-              Debug.ninfo_hprint (add_str "core_type" string_of_cil_typ)
-                core_type no_pos;
-              Debug.ninfo_hprint (add_str "new ddecl for pointer type"
-                                    !Iast.print_data_decl) ddecl no_pos;
+              Debug.binfo_hprint (add_str "core_type" string_of_cil_typ) core_type no_pos;
+              Debug.binfo_hprint (add_str "new ddecl for pointer type" !Iast.print_data_decl) ddecl no_pos;
               Hashtbl.add tbl_data_decl dtype ddecl;
               (* return new type*)
               dtype
@@ -2318,9 +2321,9 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
                     Iast.data_is_template = false;
                     Iast.data_methods = []} in*)
   (* update some global settings *)
-  Hashtbl.iter (fun _ data -> data_decls := !data_decls @ [data]) tbl_data_decl;
+  Hashtbl.iter (fun _ data -> if (String.compare  data.Iast.data_name "char_star")!=0 then data_decls := data::!data_decls) tbl_data_decl;
   (* aux procs *)
-  Hashtbl.iter (fun _ p -> proc_decls := !proc_decls @ [p]) tbl_aux_proc;
+  Hashtbl.iter (fun _ p -> if (String.compare p.Iast.proc_name "__plus_plus_char")!=0 then  proc_decls := p::!proc_decls) tbl_aux_proc;
   (* return *)
   let newprog : Iast.prog_decl = {
     Iast.prog_data_decls = (*obj_def :: string_def ::*) !data_decls;
