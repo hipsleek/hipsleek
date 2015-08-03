@@ -87,7 +87,7 @@ let extract_ind_exp sv form : CP.param_flow =
   let pr_out = Cprinter.string_of_param_flow in
   Debug.no_2 "extract_ind_exp" pr1 pr2 pr_out extract_ind_exp sv form
 
-let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident list) : CP.param_flow list list =
+let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident list) : (CP.formula * CP.param_flow list) list =
   (* group together which have relations  *)
   let primed_args = List.map (fun (t,i) -> CP.sp_add_prime (CP.mk_typed_spec_var t i) Primed) args in
   let unprimed_args = List.map (fun (t,i) -> CP.sp_rm_prime (CP.mk_typed_spec_var t i)) args in
@@ -138,9 +138,11 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
       | _ -> emap) CP.EMapSV.mkEmpty lhs_formulae in
     let () = Debug.tinfo_hprint (add_str "EMap" CP.EMapSV.string_of) emap no_pos in
 
-    (* assumes that at least one RelForm in the list of formulae,
-     * assumes it is *the* relation we're looking for. *)
-    let post_r = rhs in
+    (* assumes that at least one RelForm in the list of formulae, *)
+    let post_r = match CP.get_RelForm rhs with
+                 (* assumes it is *the* relation we're looking for. *)
+                 | r::_ -> r
+                 | _ -> failwith "Assumes RHS contains a RelForm" in
     let post_r_args = CP.get_rel_args post_r in
     let constraits_of_arg arg =
       (* all the (in)equalities are on the LHS, the entailed relation on RHS *)
@@ -182,7 +184,7 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
          (* am assuming there is only one x'=f(x) form per infer_rel_ass *)
          extract_ind_exp arg form
        | _ -> failwith "more constraints than assumed")) res in
-    (post_r_args,analysis)) lst_assume in
+    (post_r,analysis)) lst_assume in
 
   (* Print summary of results
    * (for convenience, so -dre analyse isn't needed). *)
@@ -190,11 +192,11 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
   let pr_def = pr_list (pr_pair pr pr) in
   let pr1 = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in
   let pr2 = pr_list (pr_pair string_of_typ pr_id) in
-  let pr_out = pr_list (pr_list Cprinter.string_of_param_flow) in
+  let pr_out_item = pr_pair Cprinter.string_of_pure_formula (pr_list Cprinter.string_of_param_flow) in
+  let pr_out = pr_list pr_out_item in
 
   (* debug output initial results (before removing primes) *)
-  let frm_assumes = List.map snd zipped_frm_assumes in
-  let () = Debug.tinfo_hprint (add_str "initial result" pr_out) frm_assumes no_pos in
+  let () = Debug.tinfo_hprint (add_str "initial result" pr_out) zipped_frm_assumes no_pos in
 
   (* eliminate the primed specvars from the expressions
    * of the param flows. *)
@@ -304,14 +306,15 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
     let (_,simpl_flows) = List.split res in
     simpl_flows in
 
-  let frm_assumes = List.map (fun (args,pa) ->
-    let res = simplify (args,pa) in
-    res) zipped_frm_assumes in
+  let frm_assumes = List.map (fun (rel,pa) ->
+    let args = CP.get_rel_args rel in
+    let simpl = simplify (args,pa) in
+    (rel,simpl)) zipped_frm_assumes in
 
   let () = Debug.tinfo_hprint (add_str "interim result" pr_out) frm_assumes no_pos in
 
   (* combine various param-flow lists, reduce duplication. *)
-  let is_param_flows_same (pf1:CP.param_flow list) (pf2:CP.param_flow list) : bool =
+  let is_param_flows_same (r1,pf1) (r2,pf2) : bool =
     (* if two pflows are the same, each exp will have same TL *)
     let is_pflow_same p q =
       let e1 = CP.exp_of_param_flow p in
@@ -340,8 +343,8 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
       CP.FLOW sv
     | _ -> f in
 
-  let frm_assumes = List.map (fun flows ->
-    List.map specialise_flow flows) frm_assumes in
+  let frm_assumes = List.map (fun (rel,flows) ->
+    (rel,List.map specialise_flow flows)) frm_assumes in
 
   let () = Debug.binfo_pprint "analyse_param summary:" no_pos in
   let () = Debug.binfo_hprint (add_str "relations (normalised)" pr1) lst_assume no_pos in
@@ -351,11 +354,12 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
 
   frm_assumes
 
-let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident list) : (CP.param_flow list list) =
+let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident list) : (CP.formula * CP.param_flow list) list =
   let pr = Cprinter.string_of_pure_formula in
   let pr_def = pr_list (pr_pair pr pr) in
   let pr_oblg = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in
   let pr1 = pr_oblg in
   let pr2 = pr_list (pr_pair string_of_typ pr_id) in
-  let pr_out = pr_list (pr_list Cprinter.string_of_param_flow) in
+  let pr_out_item = pr_pair Cprinter.string_of_pure_formula (pr_list Cprinter.string_of_param_flow) in
+  let pr_out = pr_list pr_out_item in
   Debug.no_2 "analyse_param" pr1 pr2 pr_out analyse_param lst_assume args
