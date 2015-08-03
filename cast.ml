@@ -201,7 +201,7 @@ and proc_decl = {
   proc_name : ident;
   proc_args : typed_ident list;
   (* results of parameter analysis from --en-analyse_param *)
-  mutable proc_param_results : bool list;
+  mutable proc_param_results : (P.formula * P.param_flow list) list;
   proc_ho_arg : typed_ident option;
   proc_args_wi: (ident*hp_arg_kind) list;
   proc_imm_args : (ident * bool) list;
