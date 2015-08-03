@@ -11121,7 +11121,7 @@ let enhance_eq_list eq_list =
 ;;
 
 let enhance_eq_list eq_list =
-  if !Globals.oc_non_linear then
+  if true (* !Globals.oc_non_linear *) then
     Debug.no_1 "enhance_eq_list" (pr_list (pr_pair !print_exp !print_exp)) (pr_list (pr_pair !print_exp !print_exp)) enhance_eq_list eq_list
   else
     eq_list
@@ -11432,8 +11432,6 @@ let rec subs_const_var_formula ?(em=None) (f:formula) : formula =
           Some (join_disjunctions (new_lhs::new_rhs))
     else None
   in
-
-
   let f_bf a ((pf,ann) as f) =
     match pf with
     | Eq (e1,e2,pos) ->
@@ -11486,7 +11484,8 @@ let rec subs_const_var_formula ?(em=None) (f:formula) : formula =
     | Some em -> em (* add_emap_at_toplevel em f *)
   in
   (* let () = x_binfo_pp ((add_str "subs_const(emap)" EMapSV.string_of) eq_map) no_pos in *)
-  map_formula_arg f init_arg ff f_arg
+  if !Globals.oc_non_linear then map_formula_arg f init_arg ff f_arg
+  else f
 
 let subs_const_var_formula (f:formula) : formula =
   let pr = !print_formula in

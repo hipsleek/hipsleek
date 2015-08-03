@@ -1144,11 +1144,11 @@ let dis_norm = ref false
 let dis_ln_z3 = ref false
 
 (* WN : should this flag be for tpdispatcher, rather than just Omega *)
-let oc_non_linear = ref false
+let oc_non_linear = ref true
 let oc_warning = ref false
 
 (* eqn solving to be false by default until it is stable or proven*)
-let oc_matrix_eqn = ref false 
+(* let oc_matrix_eqn = ref false  *)
 
 let allow_ls = ref false (*enable lockset during verification*)
 

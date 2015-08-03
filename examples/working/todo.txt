@@ -1492,6 +1492,23 @@ Total verification time: 357.17 second
 	Time spent in child processes: 191.48 second
 	Number of false contexts: 413
 ====================================================================
+-tp z3
+
+Starting hip-sleek tests:
+All test results were as expected.
+Total verification time: 164.17 second
+	Time spent in main process: 105.60 second
+	Time spent in child processes: 58.57 second
+	Number of false contexts: 0
+
+-tp oc
+All test results were as expected.
+Total verification time: 169.47 second
+	Time spent in main process: 109.52 second
+	Time spent in child processes: 59.95 second
+	Number of false contexts: 0
+
+
 ====================================================================
 ====================================================================
 ====================================================================

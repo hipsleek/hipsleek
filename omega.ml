@@ -281,7 +281,7 @@ let prelude () =
   done
 
 (* start omega system in a separated process and load redlog package *)
-let start() =
+let start_prover() =
   try (
     if not !is_omega_running then begin
       (* if (not !Globals.web_compile_flag) then  *)
@@ -316,7 +316,7 @@ let stop () =
 let restart reason =
   if !is_omega_running then begin
     let () = print_string_if !Globals.enable_count_stats (reason^" Restarting Omega after ... "^(string_of_int !omega_call_count)^" invocations ") in
-    Procutils.PrvComms.restart !log_all_flag log_all reason "omega" start stop
+    Procutils.PrvComms.restart !log_all_flag log_all reason "omega" start_prover stop
   end
   else begin
     let () = print_string_if !Globals.enable_count_stats (reason^" not restarting Omega ... "^(string_of_int !omega_call_count)^" invocations ") in ()
@@ -384,7 +384,7 @@ let check_formula f timeout =
 (*  try*)
   begin
     (* let () = x_binfo_pp f no_pos in *)
-    if not !is_omega_running then start ()
+    if not !is_omega_running then start_prover ()
     else if (!omega_call_count = !omega_restart_interval) then
       begin
         restart("Regularly restart:1 ");
@@ -437,7 +437,7 @@ let check_formula i f timeout =
 let rec send_and_receive f timeout=
   begin
     if not !is_omega_running then
-      start (); 
+      start_prover (); 
     if (!omega_call_count = !omega_restart_interval) then
       begin
         restart ("Regularly restart:2");
@@ -515,7 +515,7 @@ let is_sat_ops_x pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
     (*  Lash.write pe; *)
     (* let pe0 = drop_varperm_formula pe in *)
     let pe = x_add_1 Cpure.subs_const_var_formula pe in
-    let pe = if !Globals.oc_non_linear then x_add_1 Cpure.drop_nonlinear_formula pe else pe in
+    let pe = if true (* !Globals.oc_non_linear *) then x_add_1 Cpure.drop_nonlinear_formula pe else pe in
 
     let pe = Trans_arr.translate_array_one_formula pe in
     let svl0 = Cpure.fv pe in
@@ -632,7 +632,7 @@ let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
   begin
     (* let pe0 = drop_varperm_formula pe in *)
     let pe = x_add_1 Cpure.subs_const_var_formula pe in
-    let pe = if !Globals.oc_non_linear then x_add_1 drop_nonlinear_formula_rev pe else pe in
+    let pe = if true (* !Globals.oc_non_linear *) then x_add_1 drop_nonlinear_formula_rev pe else pe in
     let svl0 = Cpure.fv pe in
     let svl,fr_svl = mkSpecVarList 0 svl0 in
     let ss = List.combine svl fr_svl in
