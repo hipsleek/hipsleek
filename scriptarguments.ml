@@ -324,11 +324,11 @@ let common_arguments = [
   ("--oc-dis-simp", Arg.Clear Globals.oc_simplify,"disable oc simplification");
   ("--oc-en-simp", Arg.Set Globals.oc_simplify,"enable oc simplification");
   ("--oc-en-nonlinear", Arg.Set Globals.oc_non_linear,"enable oc non-linear processing");
-  (* ("--oc-en-matrix", Arg.Set Globals.oc_matrix_eqn,"enable oc matrix equational solving of constants"); *)
+  ("--oc-dis-nonlinear", Arg.Clear Globals.oc_non_linear,"disable oc non-linear processing");
+  (* ("--oc-en-matrix", Arg.Set Globals.oc_matrix_eqn,"enable oc matrix equational solvingline of constants"); *)
   (* ("--oc-dis-matrix", Arg.Clear Globals.oc_matrix_eqn,"enable oc matrix equational solving of constants"); *)
   ("--oc-en-warning", Arg.Set Globals.oc_warning,"Enable Omega warning");
   ("--oc-dis-warning", Arg.Clear Globals.oc_warning,"Disable Omega warning");
-  ("--oc-dis-nonlinear", Arg.Clear Globals.oc_non_linear,"disable oc non-linear processing");
   ("--oc-dis-adv-simp", Arg.Clear Globals.oc_adv_simplify,"disable oc advancde simplification");
   ("--oc-en-adv-simp", Arg.Set Globals.oc_adv_simplify,"enable oc advanced simplification");
   ("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
@@ -536,7 +536,9 @@ let common_arguments = [
    "Match logged methods from a regular expression");
   ("-dre", Arg.String (fun s ->
        let _ = print_endline ("!!!-dre "^s) in
-       Debug.z_debug_file:=("$"^s); z_debug_flag:=true),
+       Debug.z_debug_file:=("$"^s); z_debug_flag:=true;
+       Debug.read_main ()
+     ),
    "Shorthand for -debug-regexp");
   ("-drea", Arg.String (fun s ->
        Debug.z_debug_file:=("$.*"); z_debug_flag:=true;

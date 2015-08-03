@@ -1,0 +1,85 @@
+data str {
+  int val;
+  str next;
+}.
+
+pred WFS<p> ==
+  self::str<0,p> 
+  or self::str<v,q>*q::WFS<p> & v!=0 
+  inv self!=null.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::str<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred BADS<> ==
+  self::str<v,q>*q::BADS<> 
+  inv true.
+
+relation PPP(str s, str a, str b, str c).
+
+infer [PPP]
+ s::str<v,q>@M * q::WFSeg<aa>@M * 
+        aa::str<0,bb>@M & PPP(aa,p,s',bb)  & q!=null & v!=0  
+ |-  (exists a: s::WFSeg<a>@M * a::str<0,b>@M & PPP(a,p,s',b)). 
+print residue.
+
+/*
+# ex10a5.slk
+
+infer [PPP]
+ s::str<v,q>@M * q::WFSeg<aa>@M * 
+        aa::str<0,bb>@M & PPP(aa,p,s',bb)  & q!=null & v!=0  
+ |-  s::WFSeg<a>@M * a::str<0,b>@M & PPP(a,p,s',b). 
+print residue.
+
+INPUT 0: [][PPP] 
+ ### ante =  s::str<v,q>@M * q::WFSeg<aa>@M * aa::str<flted_24_70,bb>@M&
+flted_24_70=0 & PPP(aa,p,s',bb) & q!=null & v!=0&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   exists (Expl)[](Impl)[a; 
+   b](ex)[](exists flted_25_88: s::WFSeg<a>@M * a::str<flted_25_88,b>@M&
+   flted_25_88=0 & PPP(a,p,s',b)&{FLOW,(20,21)=__norm#E}[]
+
+Residue:
+ <1>emp&aa=a & q_96=q & v_95=v & v!=0 & q!=null & PPP(aa,p,s',bb) & 
+        flted_24_70=0 & b=bb&{FLOW,(20,21)=__norm#E}[]
+*/
+
+/*
+# ex10a5.slk
+
+# Why is there a contradiction detected? Why is it printed?
+
+!!! **infer.ml#2001:>>>>>> infer_collect_rel <<<<<<
+!!! **infer.ml#2002:LHS and RHS Contradiction detected for:
+!!! **infer.ml#2003:lhs: s=a & v!=0 & q!=null & PPP(a_71,p,s',b_72) & flted_24_70=0 & 
+ flted_42_65=v & b=q & ((q!=null | a_71=q)) & a_71!=null & s!=null & a_71!=s
+!!! **infer.ml#2004:rhs: flted_42_65=0 & s=a
+!!! **infer.ml#2005:Skip collection of following RELDEFN:
+!!! **infer.ml#2006:rel defns:[ PPP(a,p,s',b)]infer_pure_m_x 3
+
+!!! **infer.ml#2210:RelInferred (simplified):[RELDEFN PPP: ( a!=null & PPP(a,p,s',b)) -->  PPP(a,p,s',b)]
+
+id: 14; caller: []; line: 42; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ PPP]; c_heap: emp; others: [] globals: [@flow,@ver_post]
+ checkentail (exists flted_42_1605,aa,
+bb: s::str<v_1583,q_1584>@M * q_1596::WFSeg<aa>@M * 
+        aa::str<flted_42_1605,bb>@M&
+PPP(aa,p_1601,s',bb) & flted_42_1605=0 & q_1584!=null & 
+p_1601=p_1582 & q_1596=q_1584 & Anon_12=v_1583 & v!=0 & q=q_1584 & 
+v=v_1583 & v_1583!=0 & p_1582=p & s_1600=s & v_bool_45_1514' & MayLoop[]&
+{FLOW,(4,5)=__norm#E}[]
+ |-  (exists : s::WFSeg<a>@M * a::str<flted_42_65,b>@M&
+flted_42_65=0 & PPP(a,p,s',b)&{FLOW,(4,5)=__norm#E}[]. 
+pure rel_ass: [RELDEFN PPP: ( a!=null & PPP(a,p,s',b)) -->  PPP(a,p,s',b)]
+ho_vars: nothing?
+res:  1[
+    emp&
+a_1610=a & q_1613=q_1584 & v_1612=v_1583 & PPP(a_1610,p_1601,s',b_1611) & 
+flted_42_1609=0 & q_1584!=null & p_1601=p_1582 & q_1596=q_1584 & 
+Anon_12=v_1583 & v!=0 & q=q_1584 & v=v_1583 & v_1583!=0 & p_1582=p & 
+s_1600=s & v_bool_45_1514' & flted_42_65=flted_42_1609 & b=b_1611&
+{FLOW,(4,5)=__norm#E}[]
+   ]
+*/

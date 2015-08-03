@@ -109,46 +109,175 @@ checkentail inf_p=null & x=inf_p |- x=null.
 
 
 =======================================================================
-# ex10a1.ss
+# ex10a1.ss (OK)
 
  infer [PP]
   requires s::WFS<p> 
   ensures s::WFSeg<a>*a::str<0,b> & PP(s,p,s',b) ;
 
-Expects
-=======
-  s'=a  & b=p
+Compare with # ex10a.ss verified spec:
 
-GOT:
-!!! **pi.ml#777:>>POST:  s!=null & s'!=null & p=b
+  requires s::WFS<p> 
+  ensures s::WFSeg<a>*a::str<0,p> & a=s';
 
-****** Before putting into fixcalc*******
-pre_vars: s,p
-post_vars: s',b
-*************************************
-formula:  ((b=p & s=s' & s'!=null) | 
-  (exists(q_1596:q_1596!=null & PP(q_1596,p,s',b)) & s!=null))
-*************************************
-
-!!! **fixcalc.ml#1032:Input of fixcalc: :PP:={[NODs,NODp] -> [NODPRIs,NODb] -> []: (NODb=NODp && NODs=NODPRIs && NODPRIs>0 ||  (exists (NODq_1596:NODq_1596>0 && PP(NODq_1596,NODp,NODPRIs,NODb)))  && NODs>0)
-};
-bottomupgen([PP], [2], SimHeur);
-!!! **fixcalc.ml#390:svls (orig):[PP,p,s',b,s]
-!!! **fixcalc.ml#391:svls (from parse_fix):[s,s',p,b]
-!!! **fixcalc.ml#1060:Result of fixcalc (parsed): :[ s!=null & s'!=null & p=b]
+Compare also with inferred
 !!! **pi.ml#775:>>>>>>>>>>> (bef postprocess): <<<<<<<<<
-!!! **pi.ml#776:>>REL POST:  PP(s,p,s',b)
-!!! **pi.ml#777:>>POST:  s!=null & s'!=null & p=b
+!!! **pi.ml#776:>>REL POST:  PP(p,a_68,s',b_69)
+!!! **pi.ml#777:>>POST:  a_68!=null & a_68=s' & p=b_69
+
+Below seems OK:
+=================
+
+[RELDEFN PP: ( a!=null & PP(a,p,s',b)) -->  PP(a,p,s',b),
+RELDEFN PP: ( b=p & a=s' & s'!=null) -->  PP(a,p,s',b)]
+
+Fixcalc seems to produce correct result here..
+
+
+=======================================================================
+# ex10a2.ss
+
+  infer [PP]
+  requires s::WFS<p> 
+  ensures (exists a,b: s::WFSeg<a>*a::str<0,b> & PP(a,p,s',b)) ;
+
+Inferred:
+
+!!! **pi.ml#775:>>>>>>>>>>> (bef postprocess): <<<<<<<<<
+!!! **pi.ml#776:>>REL POST:  PP(p,a_68,s',b_69)
+!!! **pi.ml#777:>>POST:  a_68!=null & a_68=s' & p=b_69
 !!! **pi.ml#778:>>REL PRE :  true
 !!! **pi.ml#779:>>PRE :  true
 
+Can we tidy name printing to use a,b instead?
 =======================================================================
+# ex10a3.ss (OK - no inference printing)
+
+# why is there inference printing when we did not have any infer_command!
+
 =======================================================================
+# ex10a5.slk (FIXED by print suppresion)
+
+# Why is there a contradiction detected? Why is it printed?
+
+!!! **infer.ml#2001:>>>>>> infer_collect_rel <<<<<<
+!!! **infer.ml#2002:LHS and RHS Contradiction detected for:
+!!! **infer.ml#2003:lhs: s=a & v!=0 & q!=null & PPP(a_71,p,s',b_72) & flted_24_70=0 & 
+ flted_42_65=v & b=q & ((q!=null | a_71=q)) & a_71!=null & s!=null & a_71!=s
+!!! **infer.ml#2004:rhs: flted_42_65=0 & s=a
+!!! **infer.ml#2005:Skip collection of following RELDEFN:
+!!! **infer.ml#2006:rel defns:[ PPP(a,p,s',b)]infer_pure_m_x 3
+
+!!! **infer.ml#2210:RelInferred (simplified):[RELDEFN PPP: ( a!=null & PPP(a,p,s',b)) -->  PPP(a,p,s',b)]
 =======================================================================
+# ex10a6.ss (OK)
+
+  infer [PPP]
+  requires s::WFS<p> 
+  ensures s::WFSeg<a>*a::str<n,b> & PPP(a,p,s',b,n) ;
+
+
+Inferring "n" seems hard. Is there residue?
+
+[RELDEFN PPP: ( PPP(a_1598,p,s',b_1599,n_1600) & b!=null & n!=0 & a!=null & a<a_1598) -->  PPP(a,p,s',b,n),
+RELDEFN PPP: ( a_1598!=null & PPP(a_1598,p,s',b_1599,n_1600) & b!=null & n!=0 & a_1598<a) -->  PPP(a,p,s',b,n),
+RELDEFN PPP: ( a!=null & PPP(a,p,s',b,n)) -->  PPP(a,p,s',b,n),
+RELDEFN PPP: ( b=p & n=0 & a=s' & s'!=null) -->  PPP(a,p,s',b,n)]
+
+# @leak inference gave better results:
+
+!!! **pi.ml#777:>>POST:  a!=null & a=s' & p=b & 0=n
+
 =======================================================================
+# ex10a3.ss (FIXED - using stk var; shorter names)
+
+simplified --> 
+
+dprint(simpl): ex10a3-verify-dangling.ss:46: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+ Successful States:
+ [
+  Label: [(,0 ); (,1 )]
+  State:
+     (exists flted_40_1612: s::str<v_1590,q_1591>@M * q_1603::WFSeg<s'>@M * 
+                        s'::str<flted_40_1612,p_1608>@M&
+p=p_1608 & flted_40_1612=0 & q_1591=q_1603 & v_1590=x' & q_1603!=null & x'!=0&
+{FLOW,(4,5)=__norm#E}[]
+    es_cond_path: [1; 0]
+    es_var_measures 1: Some(MayLoop[]{})
+
+!!! **typechecker.ml#2145:Dprint:[x,p,s]
+dprint(orig): ex10a3-verify-dangling.ss:46: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+ Successful States:
+ [
+  Label: [(,0 ); (,1 )]
+  State:
+     (exists flted_40_1612: 
+    s::str<v_1590,q_1591>@M * q_1603::WFSeg<s'>@M * 
+    s'::str<flted_40_1612,p_1608>@M & flted_40_1612=0 & q_1591!=null 
+    & p_1608=p_1589 & q_1603=q_1591 & Anon_12=v_1590 & x'!=0 & x'=v 
+   & q=q_1591 & v=v_1590 & v_1590!=0 & p_1589=p 
+   & s_1607=s & v_bool_43_1521'&{FLOW,(4,5)=__norm#E}[]
+    es_cond_path: [1; 0]
+    es_var_measures 1: Some(MayLoop[]{})
+    
+  Exc:None
+  ]
+ 
+dprint(simpl): ex10a3-verify-dangling.ss:46: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+ Successful States:
+ [
+  Label: [(,0 ); (,1 )]
+  State:
+     (exists flted_40_1612: 
+    s::str<v_1590,q_1591>@M * q_1603::WFSeg<s'>@M * 
+    s'::str<flted_40_1612,p_1608>@M
+    & flted_40_1612=0 & q_1591=q_1603 & v_1590=x' 
+    & p=p_1608 & q_1603!=null & x'!=0&
+{FLOW,(4,5)=__norm#E}[]
+    es_cond_path: [1; 0]
+    es_var_measures 1: Some(MayLoop[]{})
+    
+  Exc:None
+  ]
+
 =======================================================================
+# ex10a6.ss (OK)
+
+dprint(simpl): ex10a6-dangling-infer-ptr-int.ss:48: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+ Successful States:
+ [
+  Label: [(,0 ); (,1 )]
+  State:
+     (exists n_1597,b_1596,
+a_1595: s::str<x',q>@M * q::WFSeg<a_1595>@M * a_1595::str<n_1597,b_1596>@M&
+PPP(a_1595,p,s',b_1596,n_1597) & q!=null & x'!=0&{FLOW,(4,5)=__norm#E}[]
+    es_infer_obj: [@leak]
+    es_cond_path: [1; 0]
+    es_var_measures 1: Some(MayLoop[]{})
+    
+    es_infer_vars_rel: [PPP]
+  Exc:None
+  ]
 =======================================================================
-=======================================================================
+# ex10a5.slk
+
+infer [PPP]
+ s::str<v,q>@M * q::WFSeg<aa>@M * 
+        aa::str<0,bb>@M & PPP(aa,p,s',bb)  & q!=null & v!=0  
+ |-  s::WFSeg<a>@M * a::str<0,b>@M & PPP(a,p,s',b). 
+print residue.
+
+INPUT 0: [][PPP] 
+ ### ante =  s::str<v,q>@M * q::WFSeg<aa>@M * aa::str<flted_24_70,bb>@M&
+flted_24_70=0 & PPP(aa,p,s',bb) & q!=null & v!=0&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   exists (Expl)[](Impl)[a; 
+   b](ex)[](exists flted_25_88: s::WFSeg<a>@M * a::str<flted_25_88,b>@M&
+   flted_25_88=0 & PPP(a,p,s',b)&{FLOW,(20,21)=__norm#E}[]
+
+Residue:
+ <1>emp&aa=a & q_96=q & v_95=v & v!=0 & q!=null & PPP(aa,p,s',bb) & 
+        flted_24_70=0 & b=bb&{FLOW,(20,21)=__norm#E}[]
 =======================================================================
 =======================================================================
 =======================================================================
