@@ -322,6 +322,37 @@ id: 1<-1; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
  Sat:  r=b*x & b=2
  res: SAT
 ========================================================
+# ex12z-simple.slk -tp mona --esl
+
+chin@loris-7:~/hg/sl_imm/nonlinear$ ../sleek ex12z-simple.slk -tp mona 
+!!! init_tp by default: 
+!!! set_tp z3
+
+!!! **tpdispatcher.ml#344:check prover:z3!!! init_tp by user: 
+!!! set_tp mona
+
+!!! **tpdispatcher.ml#344:check prover:mona
+
+# Has mona started? Why isn't there a start mona session?
+
+# is MONA called?
+
+ id: 1<-1; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:no proof raw result:no result
+ Sat:  r=x+x
+ res: SAT
+ -------------------- 
+ id: 2<0; prover: MONA; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:no proof raw result:no result
+ Imply: ante: r=x+x
+	     conseq:  r=x+x
+ res: true
+ -------------------- 
+ id: 3<0; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:no proof raw result:no result
+ Sat:  r=x+x
+ res: SAT
+
 ========================================================
 ========================================================
 ========================================================

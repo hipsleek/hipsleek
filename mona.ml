@@ -1265,10 +1265,21 @@ let start () =
   last_test_number := !test_number;
   (* let () = print_endline mona_prog in *)
   if(check_prover_existence mona_prog)then begin
-    let () = Procutils.PrvComms.start !log_all_flag log_all ("mona", mona_prog, [|mona_prog; "-v";|]) set_process prelude in
-    (* let () = print_endline (mona_prog ^ "end") in *)
-    is_mona_running := true
+    try
+      print_endline_quiet  ("\nStarting MONA..."^mona_prog); flush stdout;
+      let () = Procutils.PrvComms.start !log_all_flag log_all ("mona", mona_prog, [|mona_prog; "-v";|]) set_process prelude in
+      (* let () = print_endline (mona_prog ^ "end") in *)
+      is_mona_running := true
+    with e ->
+      begin
+        print_endline "Unable to run the prover MONA!";
+        print_endline "Please make sure its executable file (mona) is installed";
+        raise e
+      end
   end
+  else 
+    (print_endline  ("\nCannot find MONA code..."); flush stdout;)
+
 
 let start () =
   let pr = (fun _ -> "") in

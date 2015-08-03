@@ -36,17 +36,17 @@ let test_db = false
 (* let pure_tp = ref OmegaCalc *)
 (* let tp = ref OmegaCalc *)
 
-(* WN : why do we have pure_tp and tp and prover_arg??? *)
+(* WN : why do we have pure_tp (prover-code) and prover_arg (string) *)
 (* let pure_tp = ref OM *)
 let pure_tp = ref Z3
-let tp = ref Redlog
+(* let tp = ref Redlog *)
 (* let tp = ref AUTO *)
 (*For conc-r, z3 for relations, mona for bags, redlog for fractions *)
 (* let tp = ref PARAHIP *)
 (* let tp = ref Z3 *)
 
 let get_tp_code () = 
-  let pr = !tp in
+  let pr = !pure_tp in
   string_of_prover_code pr
 
 
@@ -385,7 +385,7 @@ let set_tp tp_str =
   (******we allow normalization/simplification that may not hold
          in the presence of floating point constraints*)
   (* let () = print_endline ("solver:" ^ tp_str) in *)
-  let () = print_endline ("!!! Using " ^ tp_str) in 
+  let () = print_endline_quiet ("!!! set_tp " ^ tp_str) in 
   if tp_str = "parahip" || tp_str = "rm" then allow_norm := false else allow_norm:=true;
   (**********************************************)
   let redcsl_str = if !Globals.web_compile_flag then "/usr/local/etc/reduce/bin/redcsl" else "redcsl" in
@@ -453,7 +453,7 @@ let set_tp tp_str =
     (pure_tp := AUTO; prover_str := "oc"::!prover_str;
      prover_str := "z3"::!prover_str;
      prover_str := "mona"::!prover_str;
-     prover_str := "coqtop"::!prover_str;
+     (* prover_str := "coqtop"::!prover_str; *)
     )
   else if tp_str = "oz" then
     (pure_tp := AUTO; prover_str := "oc"::!prover_str;
@@ -472,7 +472,7 @@ let set_tp tp_str =
   if not !Globals.is_solver_local then check_prover_existence !prover_str else ()
 
 let set_tp tp_str =
-  (* print_endline "XXX"; *)
+  (* print_endline_quiet ("set_tp "^tp_str); *)
   Debug.no_1 "set_tp" pr_id pr_none set_tp tp_str
 
 let init_tp () =
