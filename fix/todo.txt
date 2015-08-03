@@ -279,6 +279,37 @@ Residue:
  <1>emp&aa=a & q_96=q & v_95=v & v!=0 & q!=null & PPP(aa,p,s',bb) & 
         flted_24_70=0 & b=bb&{FLOW,(20,21)=__norm#E}[]
 =======================================================================
+# ex10a5.slk -dre ".*simplify_imm\|TP.simpl" 
+
+# why 3 simplify_imm for one call?
+
+(==tpdispatcher.ml#970==)
+simplify_imm_addition@6@5@4
+simplify_imm_addition inp1 : self!=null
+simplify_imm_addition@6 EXIT: self!=null
+
+Starting Omega.../usr/local/bin/oc
+
+(==tpdispatcher.ml#970==)
+simplify_imm_addition@7@5@4
+simplify_imm_addition inp1 : self!=null
+simplify_imm_addition@7 EXIT: self!=null
+
+(====)
+TP.simplify@5@4
+TP.simplify inp1 : self!=null
+TP.simplify@5 EXIT: self!=null
+
+(==tpdispatcher.ml#970==)
+simplify_imm_addition@8@4
+simplify_imm_addition inp1 : self!=null
+simplify_imm_addition@8 EXIT: self!=null
+
+(==astsimp.ml#1878==)
+TP.simplify_with_pairwise#1@4
+TP.simplify_with_pairwise#1 inp1 : self!=null
+TP.simplify_with_pairwise#1@4 EXIT: self!=null
+
 =======================================================================
 =======================================================================
 =======================================================================
