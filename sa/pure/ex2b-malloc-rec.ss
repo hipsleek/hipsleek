@@ -19,5 +19,4 @@ void new_node2 (ref node p)
 {
   p.next = malloc_n();
   p = p.next;
-  new_node2 (p);
  }
