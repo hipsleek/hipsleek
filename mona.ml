@@ -1557,6 +1557,8 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   let (ante_fv, ante) = prepare_formula_for_mona pr_w pr_s ante !test_number in
   let (conseq_fv, conseq) = prepare_formula_for_mona pr_s pr_w conseq !test_number in
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
+  let tmp_form = x_add_1 CP.subs_const_var_formula tmp_form in
+  let tmp_form = if true (* !Globals.non_linear_flag *) then x_add_1 CP.drop_nonlinear_formula_rev tmp_form else tmp_form in
   (* let vs = Hashtbl.create 10 in *)
   (* let () = find_order tmp_form vs in    (\* deprecated *\) *)
   let (var1,var2,var0) = new_order_formula tmp_form in
@@ -1584,6 +1586,7 @@ let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   sat_optimize := true;
   incr test_number;
   (* let f = CP.drop_varperm_formula f in *)
+  let f = if true (* !Globals.non_linear_flag *) then x_add_1 Cpure.drop_nonlinear_formula f else f in
   let (f_fv, f) = prepare_formula_for_mona pr_w pr_s f !test_number in
   (* let vs = Hashtbl.create 10 in *)
   (* let () = find_order f vs in (\* deprecated *\) *)

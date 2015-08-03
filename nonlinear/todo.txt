@@ -272,9 +272,9 @@ Starting Omega...oc
 Entail 1: EXCast. Failure("UNSOUND enhance_eq_list")
 : no residue 
 ========================================================
-# ex13d.slk -tp oc --oc-dis-nonlinear --esl
+# ex12d.slk -tp oc --dis-nonlinear --esl
 
-# why is error message doing non-linear subs?
+# why is error message doing some non-linear substitution?
 
 checkentail r=b*x & b=2 |- r=2*x.
 
@@ -322,7 +322,34 @@ id: 1<-1; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
  Sat:  r=b*x & b=2
  res: SAT
 ========================================================
-# ex12z-simple.slk -tp mona --esl
+# ex12z-simple.slk -tp z3 --esl
+
+# why is z3 calls not counted?
+
+!!! Number of MONA calls:0
+!!! Number of Omega calls:0
+
+-tp mona
+
+# why so many MONA calls?
+
+!!! Number of MONA calls:201
+!!! Number of Omega calls:0
+
+-tp oc
+
+# why so many OC calls?
+
+!!! Number of MONA calls:0
+!!! Number of Omega calls:204
+
+# Why is there Lemma_Prop?
+
+ id: 201<-1; prover: OMEGA CALCULATOR; loc: ex12a-simple_ss_10:10_10:21; kind: Lemma_Prop
+ raw proof:SAT:{[v_int_10_1331PRMD, xxx, res, xxxPRMD] : ((((v_int_10_1331PRMD = 2) & (xxxPRMD = xxx)) & (res = 2(xxxPRMD))))};
+ raw result:{[2,xxx,2xxx,xxx]}
+ Sat:  v_int_10_1331'=2 & xxx'=xxx & res=xxx'*v_int_10_1331'
+ res: SAT
 
 chin@loris-7:~/hg/sl_imm/nonlinear$ ../sleek ex12z-simple.slk -tp mona 
 !!! init_tp by default: 
@@ -332,28 +359,15 @@ chin@loris-7:~/hg/sl_imm/nonlinear$ ../sleek ex12z-simple.slk -tp mona
 !!! set_tp mona
 
 !!! **tpdispatcher.ml#344:check prover:mona
-
-# Has mona started? Why isn't there a start mona session?
-
-# is MONA called?
-
- id: 1<-1; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
- raw proof:no proof raw result:no result
- Sat:  r=x+x
- res: SAT
- -------------------- 
- id: 2<0; prover: MONA; loc: _0:0_0:0; kind: Sleek_Entail(1)
- raw proof:no proof raw result:no result
- Imply: ante: r=x+x
-	     conseq:  r=x+x
- res: true
- -------------------- 
- id: 3<0; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
- raw proof:no proof raw result:no result
- Sat:  r=x+x
- res: SAT
-
 ========================================================
+# ex12z-simple.slk -tp mona (OK for OC and MONA)
+
+# to succeed if non-linear transform handled in general 
+
+non-linear pre-process of SAT for all provers
+non-linear pre-process of IMPLY for just OC/MOBA
+ need to add Cpure.subs_const_var_formula to specific provers
+
 ========================================================
 ========================================================
 ========================================================

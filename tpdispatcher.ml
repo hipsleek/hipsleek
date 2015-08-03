@@ -58,7 +58,9 @@ type result_type = Timeout | Result of string | Failure of string
 let print_pure = ref (fun (c:CP.formula)-> Cprinter.string_of_pure_formula c(*" printing not initialized"*))
 
 (* let prover_arg = ref "oc" *)
-let prover_arg = ref "z3"
+let prover_arg = ref "z3" (* default prover *)
+let user_choice = ref false
+
 (* let prover_arg = ref "om" *)
 let external_prover = ref false
 let tp_batch_mode = ref true
@@ -341,7 +343,7 @@ let rec check_prover_existence prover_cmd_str =
   | [] -> ()
   | "log"::rest -> check_prover_existence rest
   | prover::rest -> 
-    let _ = x_binfo_hp (add_str "check prover" pr_id) prover no_pos in
+    let _ = x_dinfo_hp (add_str "check prover" pr_id) prover no_pos in
     (* let exit_code = Sys.command ("which "^prover) in *)
     (* Do not display system info in the website *)
     (* let () = print_endline ("prover:" ^ prover) in *)
@@ -380,8 +382,9 @@ let is_smtsolver_z3 tp_str=
   String.compare tp_str "./z3" = 0 || String.compare tp_str "z3" = 0
 
 
-let set_tp tp_str =
+let set_tp user_flag tp_str =
   prover_arg := tp_str;
+  user_choice := user_flag;
   (******we allow normalization/simplification that may not hold
          in the presence of floating point constraints*)
   (* let () = print_endline ("solver:" ^ tp_str) in *)
@@ -471,22 +474,25 @@ let set_tp tp_str =
     ();
   if not !Globals.is_solver_local then check_prover_existence !prover_str else ()
 
-let set_tp tp_str =
+let set_tp user_flag tp_str =
   (* print_endline_quiet ("set_tp "^tp_str); *)
-  Debug.no_1 "set_tp" pr_id pr_none set_tp tp_str
+  Debug.no_1 "set_tp" pr_id pr_none (set_tp user_flag) tp_str
 
 let init_tp () =
-  (* WN : this seems to be invoked by sleek only *)
-  let () = (if !Globals.is_solver_local then
-              let () = Smtsolver.is_local_solver := true in
-              let () = Smtsolver.smtsolver_name := "z3" in
-              let () = Omega.is_local_solver := true in
-              let () = Omega.omegacalc := "./oc" in
-              ()
-            else ()) in
-  let () = print_endline_quiet ("!!! init_tp by default: ") in 
-  set_tp !Smtsolver.smtsolver_name (* "z3" *)
-(* set_tp "parahip" *)
+  let () = x_dinfo_hp (add_str "init_tp:user_choice" string_of_bool) !user_choice no_pos in
+  if not(!user_choice) then
+    begin
+      let () = (if !Globals.is_solver_local then
+                  let () = Smtsolver.is_local_solver := true in
+                  let () = Smtsolver.smtsolver_name := "z3" in
+                  let () = Omega.is_local_solver := true in
+                  let () = Omega.omegacalc := "./oc" in
+                  ()
+                else ()) in
+      let () = print_endline_quiet ("!!! init_tp by default: ") in 
+      x_add_1 set_tp false !Smtsolver.smtsolver_name (* "z3" *)
+      (* set_tp "parahip" *)
+    end
 
 let pr_p = pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula_exp
 
@@ -1774,6 +1780,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let z3n_is_sat f = Z3.is_sat_ops_cex pr_weak_z3 pr_strong_z3 f sat_no in
 
   (* let () = Gen.Profiling.push_time "tp_is_sat" in *)
+  let f = x_add_1 Cpure.subs_const_var_formula f in
   let res = (
     match !pure_tp with
     | DP -> 
@@ -1970,26 +1977,34 @@ let last_prover () =
   if !cache_status then "CACHED"
   else  Others.last_tp_used # string_of
 
+let find_cache ht fstring fstring_prover =
+  try
+     Hashtbl.find ht fstring  (* sound generic answer *)
+  with Not_found ->
+     Hashtbl.find ht (fstring_prover) (* provers-specific answer *)
+
 let sat_cache is_sat (f:CP.formula) : bool  = 
   let () = Gen.Profiling.push_time_always "cache overhead" in
   let sf = norm_var_name f in
+  let prover = string_of_prover !pure_tp  in
   let fstring = Cprinter.string_of_pure_formula sf in
+  let fstring_with_prover = prover^fstring in
   let () = cache_sat_count := !cache_sat_count+1 in
   let () = cache_status := true in
   let () = Gen.Profiling.pop_time_always "cache overhead" in
   let res =
     try
-      Hashtbl.find !sat_cache fstring
+      find_cache !sat_cache fstring fstring_with_prover
     with Not_found ->
+      let () = cache_status := false in
       let r = is_sat f in
-      if r then r
-      else
-        let () = Gen.Profiling.push_time_always "cache overhead" in
-        let () = cache_status := false in
-        let () = cache_sat_miss := !cache_sat_miss+1 in
-        let () = Hashtbl.add !sat_cache fstring r in
-        let () = Gen.Profiling.pop_time_always "cache overhead" in
-        r
+      let prover_str = if r then fstring_with_prover else fstring in
+      (* cache only sound outcomes : unless we add prover name to it *)
+      let () = Gen.Profiling.push_time_always "cache overhead" in
+      let () = cache_sat_miss := !cache_sat_miss+1 in
+      let () = Hashtbl.add !sat_cache prover_str r in
+      let () = Gen.Profiling.pop_time_always "cache overhead" in
+      r
   in res
 
 let sat_cache is_sat (f:CP.formula) : bool = 
@@ -3151,25 +3166,26 @@ let imply_cache fn_imply ante conseq : bool  =
   let () = Gen.Profiling.push_time_always "cache overhead" in
   let f = CP.mkOr conseq (CP.mkNot ante None no_pos) None no_pos in
   let sf = norm_var_name f in
+  let prover = string_of_prover !pure_tp  in
   let fstring = Cprinter.string_of_pure_formula sf in
+  let fstring_with_prover = prover^fstring in
   let () = cache_imply_count := !cache_imply_count+1 in
   let () = cache_status := true in
   let () = Gen.Profiling.pop_time_always "cache overhead" in
   let res =
     try
-      Hashtbl.find !imply_cache fstring
+      find_cache !imply_cache fstring fstring_with_prover
+      (* Hashtbl.find !imply_cache fstring *)
     with Not_found ->
+      let () = cache_status := false in
       let r = fn_imply ante conseq in
-      if r then (* cache only sound outcomes *)
-        begin
-          let () = Gen.Profiling.push_time "cache overhead" in
-          let () = cache_status := false in
-          let () = cache_imply_miss := !cache_imply_miss+1 in
-          let () = Hashtbl.add !imply_cache fstring r in
-          let () = Gen.Profiling.pop_time "cache overhead" in
-          r
-        end
-      else r
+      (* cache only sound outcomes : unless we add prover name to it *)
+      let prover_str = if r then fstring else fstring_with_prover in
+      let () = Gen.Profiling.push_time "cache overhead" in
+      let () = cache_imply_miss := !cache_imply_miss+1 in
+      let () = Hashtbl.add !imply_cache prover_str r in
+      let () = Gen.Profiling.pop_time "cache overhead" in
+      r
   in res
 
 let imply_cache fn_imply ante conseq : bool  = 

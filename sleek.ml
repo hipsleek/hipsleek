@@ -518,8 +518,8 @@ let sleek_proof_log_Z3 src_files =
 
 let _ =
   wrap_exists_implicit_explicit := false ;
-  Tpdispatcher.init_tp();
   process_cmd_line ();
+  Tpdispatcher.init_tp();
   let () = Debug.read_main () in
   Scriptarguments.check_option_consistency ();
   sleek_prologue ();
