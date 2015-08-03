@@ -234,8 +234,8 @@ let modifies (e:exp) (bvars:ident list) prog : (ident list) * (ident list) * (id
       let _,fvars,fw1 = accumulate c.exp_call_nrecv_arguments bvars in
       let proc = look_up_proc_def_raw prog.prog_proc_decls c.exp_call_nrecv_method in
       let args = 
-        let () = x_binfo_hp (add_str "proc_args" (pr_list string_of_param))  proc.proc_args no_pos in
-        let () = x_binfo_hp (add_str "call arguments" (pr_list string_of_exp))  c.exp_call_nrecv_arguments no_pos in
+        (*let () = x_binfo_hp (add_str "proc_args" (pr_list string_of_param))  proc.proc_args no_pos in
+        let () = x_binfo_hp (add_str "call arguments" (pr_list string_of_exp))  c.exp_call_nrecv_arguments no_pos in*)
         List.combine proc.proc_args c.exp_call_nrecv_arguments in
       let fw2 = List.map (fun (_,arg) -> 
           match get_ident arg with

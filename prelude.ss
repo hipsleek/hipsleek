@@ -530,3 +530,19 @@ bool rand_bool ()
 requires true
 ensures res or !res;
 
+
+/* ********>>>*************/
+/* String translation  */
+/* ************************/
+data char_star {
+  int value;
+  char_star next;
+}
+char_star __plus_plus_char(char_star x)
+requires x::char_star<_,q>@L & Term[] 
+ensures  res=q ;
+
+int __get_char(char_star x)
+  requires x::char_star<v,q>@L & Term[]
+  ensures res=v;
+

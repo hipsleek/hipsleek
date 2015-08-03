@@ -1,13 +1,3 @@
-/*@
-data char_star {
-  int val;
-  char_star next;
-}
-
-char_star __plus_plus_char(char_star x,int v)
-requires x::char_star<_,q>@L & Term[] 
-ensures  res=q ;
-*/
  char *(cstrcat)(char *s1)
  {
      char *s = s1;

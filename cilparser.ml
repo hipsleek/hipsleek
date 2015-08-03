@@ -208,7 +208,7 @@ let rec get_core_cil_typ (t: Cil.typ) : Cil.typ = (
     match t with
     | Cil.TVoid _ -> Cil.TVoid []
     | Cil.TInt (Cil.IChar, _) -> Cil.TInt(Cil.IChar, [])
-    | Cil.TInt (ik, _) -> Cil.TInt (ik, [])
+    | Cil.TInt (ik, _) -> Cil.TInt (Cil.IInt, [])
     | Cil.TFloat (fk, _) -> Cil.TFloat (Cil.FFloat, [])
     | Cil.TPtr (ty, _) -> Cil.TPtr (get_core_cil_typ ty, [])
     | Cil.TArray (ty, e, _) -> Cil.TArray (get_core_cil_typ ty, e, [])
@@ -805,11 +805,11 @@ and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
   try
     Hashtbl.find tbl_aux_proc proc_name
   with Not_found -> (
-      Debug.binfo_hprint (add_str "proc_name" pr_id) proc_name no_pos;
-      Debug.binfo_hprint (add_str "op_name" pr_id) op_name no_pos;
-      Debug.binfo_hprint (add_str "op_str" pr_id) op_str no_pos;
-      Debug.binfo_hprint (add_str "t1" Cil.string_of_typ) t1 no_pos;
-      Debug.binfo_hprint (add_str "t2" Cil.string_of_typ) t2 no_pos;
+      Debug.ninfo_hprint (add_str "proc_name" pr_id) proc_name no_pos;
+      Debug.ninfo_hprint (add_str "op_name" pr_id) op_name no_pos;
+      Debug.ninfo_hprint (add_str "op_str" pr_id) op_str no_pos;
+      Debug.ninfo_hprint (add_str "t1" Cil.string_of_typ) t1 no_pos;
+      Debug.ninfo_hprint (add_str "t2" Cil.string_of_typ) t2 no_pos;
       let proc_str = (
         match t1, t2 with
         | Cil.TInt _, Cil.TPtr _ ->
@@ -817,6 +817,10 @@ and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
             ^ "  requires p::" ^ typ2_name^ "<val, offset>\n"
             ^ "  ensures p::" ^ typ2_name^ "<val, offset>"
                ^ " * res::" ^ typ2_name^ "<_, offset " ^ op_str ^ " i>;\n"
+        | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), _ ->
+             typ1_name ^ " " ^ proc_name ^ "(" ^ typ1_name ^ " x)\n"
+           ^ "requires x::char_star<_,q>@L & Term[] \n"
+           ^ "ensures res=q ;\n"
         | Cil.TPtr _, Cil.TInt _ ->
             typ1_name ^ " " ^ proc_name ^ "(" ^ typ1_name ^ " p, " ^ typ2_name ^ " i)\n"
             ^ "  requires p::" ^ typ1_name^ "<val, offset>\n"
@@ -833,7 +837,7 @@ and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
                     ^ typ1_name ^ " vs " ^ typ2_name in
           report_error no_pos msg
       ) in
-      Debug.binfo_hprint (add_str "pointer_arith_proc_str" pr_id) proc_str no_pos;
+      Debug.ninfo_hprint (add_str "pointer_arith_proc_str" pr_id) proc_str no_pos;
       let proc_decl = Parser.parse_c_aux_proc "pointer_arithmetic_proc" proc_str in
       let _ = Debug.ninfo_hprint (add_str "proc_decl" pr_id) proc_decl.Iast.proc_name no_pos in
       Hashtbl.add tbl_aux_proc proc_name proc_decl;
@@ -1045,18 +1049,7 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
     match t with
     | Cil.TVoid _ -> Globals.Void
     | Cil.TInt (Cil.IBool, _) -> Globals.Bool
-    (*| Cil.TInt (Cil.IChar, _) -> Globals.Named "char"(
-        let core_type = get_core_cil_typ t in
-        let value_typ = translate_typ core_type pos in
-        let value_field = ((value_typ, str_value), no_pos, false, [gen_field_ann value_typ] (* Iast.F_NO_ANN *)) in
-        let offset_field = ((Int, str_value), no_pos, false, [gen_field_ann Int]) in
-        let dfields = [offset_field] in
-        let dname = "char" in
-	let dtype = Globals.Named dname in
-        let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in
-        Hashtbl.add tbl_data_decl dtype ddecl;
-        dtype
-      *)
+    | Cil.TInt (Cil.IChar, _) -> Globals.Named "char"
     | Cil.TInt _ -> Globals.Int
     | Cil.TFloat _ -> Globals.Float
     | Cil.TPtr (ty, _) -> (
@@ -1072,9 +1065,9 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
               let value_field = ((value_typ, str_value), no_pos, false, [gen_field_ann value_typ] (* Iast.F_NO_ANN *)) in
               let offset_field = ((Int, str_offset), no_pos, false, [gen_field_ann Int]) in
               let dfields = [value_field; offset_field] in
-              let dname = match core_type with
-		| Cil.TInt(Cil.IChar, _) -> "char_star"
-                | _ -> (Globals.string_of_typ value_typ) ^ "_star"
+              let dname = match ty with
+		(*| Cil.TInt(Cil.IChar, _) -> "char_star"*)
+                | _ -> (Globals.string_of_typ value_typ) ^ "_star" 
               in
               let dtype = Globals.Named dname in
               Hashtbl.add tbl_pointer_typ core_type dtype;
@@ -1244,7 +1237,7 @@ and translate_lval_x (lv: Cil.lval) : Iast.exp =
       let rec create_complex_exp (base : Iast.exp) (offset : Cil.offset) 
           (found_fields : string list) pos
         : Iast.exp =
-        let _ = Debug.ninfo_hprint (add_str "base" Iprinter.string_of_exp) base no_pos in
+        (*let _ = Debug.ninfo_hprint (add_str "base" Iprinter.string_of_exp) base no_pos in*)
         (
           match offset with
           | Cil.NoOffset -> (
@@ -1264,7 +1257,7 @@ and translate_lval_x (lv: Cil.lval) : Iast.exp =
                   let b = Iast.mkMember base found_fields None p in
                   Iast.mkArrayAt b [(translate_exp e)] p
               ) in
-            let _ = Debug.ninfo_hprint (add_str "new_base" Iprinter.string_of_exp) new_base no_pos in
+            (*let _ = Debug.ninfo_hprint (add_str "new_base" Iprinter.string_of_exp) new_base no_pos in*)
             create_complex_exp new_base off [] pos
         ) in
       match lhost with
@@ -1280,11 +1273,11 @@ and translate_lval_x (lv: Cil.lval) : Iast.exp =
         | Cil.TPtr (Cil.TComp _, _) ->
           let base = translate_exp e  in
           create_complex_exp base offset [] pos
-        | Cil.TPtr (Cil.TNamed _, _) ->
+        (*| Cil.TPtr (Cil.TNamed _, _) ->
           let ptr_base = translate_exp e  in
           let data_fields = [str_value] in
           let base = Iast.mkMember ptr_base data_fields None pos in
-          create_complex_exp base offset [] pos
+          create_complex_exp base offset [] pos*)
         | _ -> (
             let data_base = translate_exp e  in
             let data_fields = [str_value] in
@@ -1439,6 +1432,16 @@ and translate_exp_binary (op: Cil.binop) (exp1: Cil.exp) (exp2: Cil.exp)
   let t2 = typ_of_cil_exp exp2 in
   match (t1, t2) with
   (* pointer arithmetic *)
+  | _, Cil.TPtr(Cil.TInt(Cil.IChar, _), _) ->
+    let pointer_arith_proc = create_pointer_arithmetic_proc op t1 t2 in
+    let proc_name = pointer_arith_proc.Iast.proc_name in
+    let _ =  Debug.ninfo_hprint (add_str "proc_name" (pr_id)) proc_name no_pos in
+    Iast.mkCallNRecv proc_name None [e2] None None pos
+  | Cil.TPtr(Cil.TInt(Cil.IChar, _), _) , _ ->
+    let pointer_arith_proc = create_pointer_arithmetic_proc op t1 t2 in
+    let proc_name = pointer_arith_proc.Iast.proc_name in
+    let _ =  Debug.ninfo_hprint (add_str "proc_name" (pr_id)) proc_name no_pos in
+    Iast.mkCallNRecv proc_name None [e1] None None pos
   | Cil.TPtr _, Cil.TInt _
   | Cil.TInt _, Cil.TPtr _ ->
     (* | Cil.TPtr _, Cil.TPtr _ -> *)
@@ -2306,27 +2309,27 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
       | Cil.GHipProgSpec (hipprog, _) ->
         aux_progs := !aux_progs @ [hipprog]
     ) globals;
-  (*let obj_def = {Iast.data_name = "Object";
-                 Iast.data_fields = [];
-                 Iast.data_pos = no_pos;
-                 Iast.data_parent_name = "";
-                 Iast.data_invs = [];
-                 Iast.data_is_template = false;
-                 Iast.data_methods = []} in
-  let string_def = {Iast.data_name = "String";
-                    Iast.data_pos = no_pos;
-                    Iast.data_fields = [];
-                    Iast.data_parent_name = "Object";
-                    Iast.data_invs = [];
-                    Iast.data_is_template = false;
-                    Iast.data_methods = []} in*)
+  (* let obj_def = {Iast.data_name = "Object"; *)
+  (*                Iast.data_fields = []; *)
+  (*                Iast.data_pos = no_pos; *)
+  (*                Iast.data_parent_name = ""; *)
+  (*                Iast.data_invs = []; *)
+  (*                Iast.data_is_template = false; *)
+  (*                Iast.data_methods = []} in *)
+  (* let string_def = {Iast.data_name = "String"; *)
+  (*                   Iast.data_pos = no_pos; *)
+  (*                   Iast.data_fields = []; *)
+  (*                   Iast.data_parent_name = "Object"; *)
+  (*                   Iast.data_invs = []; *)
+  (*                   Iast.data_is_template = false; *)
+  (*                   Iast.data_methods = []} in *)
   (* update some global settings *)
   Hashtbl.iter (fun _ data -> if (String.compare  data.Iast.data_name "char_star")!=0 then data_decls := data::!data_decls) tbl_data_decl;
   (* aux procs *)
   Hashtbl.iter (fun _ p -> if (String.compare p.Iast.proc_name "__plus_plus_char")!=0 then  proc_decls := p::!proc_decls) tbl_aux_proc;
   (* return *)
   let newprog : Iast.prog_decl = {
-    Iast.prog_data_decls = (*obj_def :: string_def ::*) !data_decls;
+    Iast.prog_data_decls = (* obj_def :: string_def ::  *)!data_decls;
     Iast.prog_include_decls = []; (*WN : need to fill *)
     Iast.prog_global_var_decls = !global_var_decls;
     Iast.prog_logical_var_decls = !logical_var_decls;
