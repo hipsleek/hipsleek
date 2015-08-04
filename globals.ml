@@ -1015,6 +1015,8 @@ let procs_verified = ref ([] : string list)
 
 let false_ctx_line_list = ref ([] : loc list)
 
+let add_false_ctx pos = false_ctx_line_list := pos::!false_ctx_line_list
+
 let b_datan = "barrier"
 
 let verify_callees = ref false
