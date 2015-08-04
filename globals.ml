@@ -1017,11 +1017,12 @@ let false_ctx_line_list = ref ([] : loc list)
 
 let add_false_ctx pos = false_ctx_line_list := pos::!false_ctx_line_list
 
-let rev_list list =
-    let rec aux acc = function
-      | [] -> acc
-      | h::t -> aux (h::acc) t in
-    aux [] list
+(* use List.rev *)
+(* let rev_list list = *)
+(*     let rec aux acc = function *)
+(*       | [] -> acc *)
+(*       | h::t -> aux (h::acc) t in *)
+(*     aux [] list *)
 
 
 let b_datan = "barrier"

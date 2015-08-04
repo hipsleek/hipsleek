@@ -592,7 +592,7 @@ let _ =
       else ()
     in
     if (not !Globals.web_compile_flag) then 
-      let rev_false_ctx_line_list = Globals.rev_list !Globals.false_ctx_line_list in
+      let rev_false_ctx_line_list = List.rev !Globals.false_ctx_line_list in
       print_string_quiet ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
                           (List.fold_left (fun a c-> a^" ("^(string_of_int c.VarGen.start_pos.Lexing.pos_lnum)^","^
                                                      ( string_of_int (c.VarGen.start_pos.Lexing.pos_cnum-c.VarGen.start_pos.Lexing.pos_bol))^") ") "" rev_false_ctx_line_list )^")\n")
