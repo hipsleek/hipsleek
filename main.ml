@@ -1124,6 +1124,8 @@ let main1 () =
   (* Cprinter.fmt_string "TEST7.................................."; *)
   (* Cprinter.fmt_cut (); *)
   process_cmd_line ();
+  Tpdispatcher.init_tp();
+  Scriptarguments.check_option_consistency ();
   let () = Debug.read_main () in
   Scriptarguments.check_option_consistency ();
   hip_prologue ();
@@ -1208,7 +1210,7 @@ let old_main () =
 
 let () = 
   if not(!Globals.do_infer_inc) then
-    (* let () = print_endline "I am executing old stuff?.." in *)
+    let () = x_dinfo_pp "Executing old_main() " no_pos in
     old_main ()
   else
     (* this part seems to be for incremental inference *)

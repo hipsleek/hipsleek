@@ -2667,7 +2667,7 @@ and mkNeqExp (ae1 : exp) (ae2 : exp) pos = match (ae1, ae2) with
 and mkNot_s f :formula = mkNot f None no_pos
 
 and mkNot_dumb f lbl1 pos0:formula = 
-  if (!Globals.oc_non_linear) || (not !Globals.allow_norm  && !Globals.allow_inf_qe_coq) then Not (f, lbl1,pos0)
+  if (!Globals.non_linear_flag) || (not !Globals.allow_norm  && !Globals.allow_inf_qe_coq) then Not (f, lbl1,pos0)
   else 
     match f with
     | BForm (bf,lbl) -> begin
@@ -7028,7 +7028,7 @@ and b_form_simplify_x (b:b_formula) :b_formula =
   let do_all_eq e1 e2 l = 
     let (lhs,rhs) as r = do_all e1 e2 l in
     let new_r = 
-      if !Globals.oc_non_linear then build_eq lhs rhs 
+      if !Globals.non_linear_flag then build_eq lhs rhs 
       else r in
     new_r in
   let do_all_eq e1 e2 l = 
@@ -11121,7 +11121,7 @@ let enhance_eq_list eq_list =
 ;;
 
 let enhance_eq_list eq_list =
-  if true (* !Globals.oc_non_linear *) then
+  if true (* !Globals.non_linear_flag *) then
     Debug.no_1 "enhance_eq_list" (pr_list (pr_pair !print_exp !print_exp)) (pr_list (pr_pair !print_exp !print_exp)) enhance_eq_list eq_list
   else
     eq_list
@@ -11484,7 +11484,7 @@ let rec subs_const_var_formula ?(em=None) (f:formula) : formula =
     | Some em -> em (* add_emap_at_toplevel em f *)
   in
   (* let () = x_binfo_pp ((add_str "subs_const(emap)" EMapSV.string_of) eq_map) no_pos in *)
-  if !Globals.oc_non_linear then map_formula_arg f init_arg ff f_arg
+  if !Globals.non_linear_flag then map_formula_arg f init_arg ff f_arg
   else f
 
 let subs_const_var_formula (f:formula) : formula =

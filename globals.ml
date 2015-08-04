@@ -1146,7 +1146,7 @@ let dis_norm = ref false
 let dis_ln_z3 = ref false
 
 (* WN : should this flag be for tpdispatcher, rather than just Omega *)
-let oc_non_linear = ref true
+let non_linear_flag = ref true
 let oc_warning = ref false
 
 (* eqn solving to be false by default until it is stable or proven*)

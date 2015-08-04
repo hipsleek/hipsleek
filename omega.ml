@@ -85,7 +85,7 @@ let rec omega_of_exp e0 = match e0 with
               | _ -> 
                     (* "0=0" *)
                     illegal_format "[omega.ml] Non-linear arithmetic is not supported by Omega."
-                    (* if (!Globals.oc_non_linear) then *)
+                    (* if (!Globals.non_linear_flag) then *)
                     (*   let () = report_warning no_pos "[omega.ml] Removing non-linear arithmetic expr." in *)
                     (*   (non_linear_detect # set ; "<non-linear>") *)
                     (* else *)
@@ -514,8 +514,8 @@ let is_sat_ops_x pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
     (*  Cvclite.write_CVCLite pe; *)
     (*  Lash.write pe; *)
     (* let pe0 = drop_varperm_formula pe in *)
-    let pe = x_add_1 Cpure.subs_const_var_formula pe in
-    let pe = if true (* !Globals.oc_non_linear *) then x_add_1 Cpure.drop_nonlinear_formula pe else pe in
+    (* let pe = x_add_1 Cpure.subs_const_var_formula pe in *)
+    let pe = if true (* !Globals.non_linear_flag *) then x_add_1 Cpure.drop_nonlinear_formula pe else pe in
 
     let pe = Trans_arr.translate_array_one_formula pe in
     let svl0 = Cpure.fv pe in
@@ -632,7 +632,7 @@ let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
   begin
     (* let pe0 = drop_varperm_formula pe in *)
     let pe = x_add_1 Cpure.subs_const_var_formula pe in
-    let pe = if true (* !Globals.oc_non_linear *) then x_add_1 drop_nonlinear_formula_rev pe else pe in
+    let pe = if true (* !Globals.non_linear_flag *) then x_add_1 drop_nonlinear_formula_rev pe else pe in
     let svl0 = Cpure.fv pe in
     let svl,fr_svl = mkSpecVarList 0 svl0 in
     let ss = List.combine svl fr_svl in
@@ -985,11 +985,11 @@ let simplify_ops pr_weak pr_strong (pe : formula) : formula =
 
 let simplify (pe : formula) : formula =
   let pr_w, pr_s = 
-    (* if !Globals.oc_non_linear then drop_nonlinear_formula_ops  *)
+    (* if !Globals.non_linear_flag then drop_nonlinear_formula_ops  *)
     (* else *) no_drop_ops in
   (* WN:todo - should not simplify with non-linear *)
   (* let pe =  *)
-  (*   if !Globals.oc_non_linear then drop_nonlinear_formula_rev pe *)
+  (*   if !Globals.non_linear_flag then drop_nonlinear_formula_rev pe *)
   (*   else pe in *)
   (* simplify_ops pr_w pr_s pe *)
   let f_memo, subs, bvars = memoise_rel_formula [] pe in

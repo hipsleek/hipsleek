@@ -1501,12 +1501,61 @@ Total verification time: 164.17 second
 	Time spent in child processes: 58.57 second
 	Number of false contexts: 0
 
+(Acer)
+Total verification time: 50.16 second
+	Time spent in main process: 33.91 second
+	Time spent in child processes: 16.25 second
+	Number of false contexts: 0
+
 -tp oc
 All test results were as expected.
 Total verification time: 169.47 second
 	Time spent in main process: 109.52 second
 	Time spent in child processes: 59.95 second
 	Number of false contexts: 0
+
+(Acer)
+All test results were as expected.
+Total verification time: 49.98 second
+	Time spent in main process: 33.68 second
+	Time spent in child processes: 16.30 second
+	Number of false contexts: 0
+
+hip -tp oc
+---
+Total verification time: 1008.97 second
+	Time spent in main process: 446.85 second
+	Time spent in child processes: 562.11 second
+	Number of false contexts: 413
+
+Total verification time: 1006.55 second (default)
+	Time spent in main process: 447.31 second
+	Time spent in child processes: 559.24 second
+	Number of false contexts: 413
+
+-tp z3
+Total verification time: 501.45 second
+	Time spent in main process: 461.00 second
+	Time spent in child processes: 40.45 second
+	Number of false contexts: 413
+
+hip with -tp oc --eps (26 failures on concurrency examples)
+---------------------
+Total verification time: 460.53 second
+	Time spent in main process: 406.09 second
+	Time spent in child processes: 54.44 second
+	Number of false contexts: 413
+
+Total verification time: 460.96 second (default)
+	Time spent in main process: 406.58 second
+	Time spent in child processes: 54.38 second
+	Number of false contexts: 413
+
+-tp z3
+Total verification time: 435.56 second
+	Time spent in main process: 404.59 second
+	Time spent in child processes: 30.98 second
+	Number of false contexts: 413
 
 
 ====================================================================
