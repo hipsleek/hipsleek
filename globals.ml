@@ -1079,7 +1079,7 @@ let aggresive_imm_inst = ref false
 
 let imm_add = ref true
 
-let param_analysis = ref true
+(* let param_analysis = ref false *)
 
 (*Since this flag is disabled by default if you use this ensure that 
   run-fast-test mem test cases pass *)
@@ -1432,6 +1432,7 @@ type infer_type =
   | INF_CLASSIC (* For infer[@leak] *)
   | INF_PAR (* For infer[@par] inside par *)
   | INF_VER_POST (* For infer[@ver_post] for post-checking *)
+  | INF_ANA_PARAM (* For infer[@ver_post] for post-checking *)
 
 (* let int_to_inf_const x = *)
 (*   if x==0 then INF_TERM *)
@@ -1464,6 +1465,7 @@ let string_of_inf_const x =
   | INF_CLASSIC -> "@leak"
   | INF_PAR -> "@par"
   | INF_VER_POST -> "@ver_post"
+  | INF_ANA_PARAM -> "@analyse_param"
 
 (* let inf_const_to_int x = *)
 (*   match x with *)
@@ -1573,6 +1575,7 @@ class inf_obj  =
         helper "@flow"          INF_FLOW;
         helper "@leak"          INF_CLASSIC;
         helper "@par"           INF_PAR;
+        helper "@analyse_param" INF_ANA_PARAM;
         helper "@ver_post"      INF_VER_POST; (* @ato, @arr_to_var *)
         (* let x = Array.fold_right (fun x r -> x || r) arr false in *)
         if arr==[] then failwith  ("empty -infer option :"^s) 
@@ -1597,6 +1600,7 @@ class inf_obj  =
     method is_post  = self # get INF_POST
     (* post-condition inference *)
     method is_ver_post  = self # get INF_VER_POST
+    method is_ana_param  = self # get INF_ANA_PARAM
     method is_field_imm = self # get INF_FIELD_IMM
     method is_arr_as_var  = self # get INF_ARR_AS_VAR
     method is_imm  = self # get INF_IMM

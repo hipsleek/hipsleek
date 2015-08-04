@@ -2039,7 +2039,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         try
           let vss = List.map (fun (t,i) -> CP.SpecVar (t, i, Unprimed)) local_vars in
           stk_vars # push_list vss;
-          let () = x_tinfo_hp (add_str "block" pr_id) (stk_vars # string_of_no_ln) no_pos in
+          let () = x_binfo_hp (add_str "block" pr_id) (stk_vars # string_of_no_ln) no_pos in
           let ctx1 = x_add check_exp prog proc ctx e post_start_label in
           stk_vars # pop_list vss;
           let ctx1 = VP.clear_vperm_sets_list_failesc_ctx [(VP_Full, vss)] ctx1 in
@@ -4368,7 +4368,7 @@ let rec check_prog iprog (prog : prog_decl) =
           (* dump:(6)**typechecker.ml#4346: *)
           let r = check_proc_wrapper iprog prog proc1 cout_option !mutual_grp in
           (* Param Analysis for the proc *)
-          let () = if !Globals.param_analysis then 
+          let () = if (* estate.CF.es_infer_obj *) Globals.infer_const_obj # is_ana_param (* !Globals.param_analysis *) then 
             let rels_orig = Infer.infer_rel_stk # get_stk_no_dupl in
             (* grab only the rels made since last call. *)
             let new_count = (List.length rels_orig) - (!rel_count) in

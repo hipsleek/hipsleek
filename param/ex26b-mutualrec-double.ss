@@ -33,6 +33,7 @@ void loo2 (ref int xx, ref int yy,int aa, int bb)
     aa=aa-1;
     yy = yy+bb-aa-1;
     loo(xx,yy,aa,bb);
+    dprint;
   };
 }
 
@@ -47,4 +48,26 @@ RELDEFN R: ( x=(b'-a')+x' & y=(a'-b')+y'+1 & a'<(b'+x') & b'<=(a'+y') & R(x,y,a'
 RELDEFN R: ( y=(a'-b')+y'+1 & x=(b'-a')+x' & (a'+y')<b' & a'<(b'+x') & R(x,y,a',b')) -->  R(x',y',a',b'),
 RELDEFN R: ( x=(b'-a')+x' & y=(a'-b')+y'+1 & (b'+x')<=a' & b'<=(a'+y') & R(x,y,a',b')) -->  R(x',y',a',b')]
 
+
+=============================================
+
+missing push for v_bool_30_1392
+  {((boolean v_bool_30_1392;
+  (v_bool_30_1392 = {((boolean v_boolean_30_1347;
+
+!!! **typechecker.ml#2042:block:[xx,yy,aa,bb]
+!!! **typechecker.ml#2042:block:[v_boolean_30_1347,v_boolean_30_1346,xx,yy,aa,bb]
+!!! **typechecker.ml#2042:block:[v_int_30_1336,v_boolean_30_1347,v_boolean_30_1346,xx,yy,aa,bb]
+!!! **typechecker.ml#2042:block:[v_int_30_1341,v_boolean_30_1347,v_boolean_30_1346,xx,yy,aa,bb]
+!!! **typechecker.ml#2042:block:[xx,yy,aa,bb]
+!!! **typechecker.ml#2042:block:[v_int_31_1352,xx,yy,aa,bb]
+!!! **typechecker.ml#2042:block:[v_int_32_1367,v_int_32_1366,xx,yy,aa,bb]
+!!! **typechecker.ml#2042:block:[v_int_32_1361,v_int_32_1367,v_int_32_1366,xx,yy,aa,bb]
+!!! **typechecker.ml#2042:block:[v_int_32_1361,v_int_32_1367,v_int_32_1366,xx,yy,aa,bb]
+!!! **typechecker.ml#2042:block:[v_int_33_1372,xx,yy,aa,bb]
+!!! **typechecker.ml#2042:block:[v_int_34_1387,v_int_34_1386,xx,yy,aa,bb]
+!!! **typechecker.ml#2042:block:[v_int_34_1381,v_int_34_1387,v_int_34_1386,xx,yy,aa,bb]
+!!! **typechecker.ml#2042:block:[v_int_34_1381,v_int_34_1387,v_int_34_1386,xx,yy,aa,bb]
+!!! **typechecker.ml#2042:block:[xx,yy,aa,bb]
+St
  */

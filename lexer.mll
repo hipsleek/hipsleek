@@ -404,6 +404,7 @@ rule tokenizer file_name = parse
   | "@pre_n" { INFER_AT_PRE }
   | "@post_n" { INFER_AT_POST }
   | "@ver_post" { INFER_AT_VER_POST }
+  | "@analyse_param" { INFER_AT_ANA_PARAM }
   | "@imm" { INFER_AT_IMM }
   | "@field_imm" { INFER_AT_FIELD_IMM }
   | "@arrvar" { INFER_AT_ARR_AS_VAR }

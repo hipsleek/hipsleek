@@ -223,6 +223,7 @@ let wrap_gen save_fn set_fn restore_fn flags f a =
      raise e)
 
 let wrap_ver_post f a = wrap_set_infer_type INF_VER_POST f a
+let wrap_ana_param f a = wrap_set_infer_type INF_ANA_PARAM f a
 
 (* let wrap_arr_as_var f a =  *)
 (*   let () = x_binfo_pp "inside wrap_as_var" no_pos in  *)
