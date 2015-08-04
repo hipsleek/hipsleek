@@ -782,14 +782,17 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       || (!Globals.allow_field_ann && Mem.is_lend post_cond) then
         Error.report_error {Error.error_loc = pos_spec; Error.error_text =  ("The postcondition cannot contain @L heap predicates/data nodes/field annotations\n")}
       else
-        let () = post_pos#set (CF.pos_of_formula post_cond) in
+        let pos_post = CF.pos_of_formula post_cond in
+        let () = post_pos#set (pos_post) in
         x_dinfo_zp (lazy ("check_specs: EAssume: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
         (* let () = print_endline  ("todo:check_specs: EAssume: " ^ (Cprinter.string_of_context ctx) ^ "\n") in *)
         let ctx1 = if !Globals.disable_pre_sat then ctx else CF.transform_context (elim_unsat_es 2 prog (ref 1)) ctx in
         if (CF.isAnyFalseCtx ctx1) then
-          let () = x_dinfo_zp (lazy ("\nFalse precondition detected in procedure "^proc.proc_name^"\n with context: "^
+          let () = x_ninfo_zp (lazy ("\nFalse precondition detected in procedure "^proc.proc_name^"\n with context: "^
                                      (Cprinter.string_of_context_short ctx))) no_pos in
-          let () = print_endline ("\n\nWarning: False precondition detected in procedure "^proc.proc_name^"\n with context: "^ (Cprinter.string_of_context_short ctx)) in
+          let () = x_dinfo_hp (add_str "pos_post" Cprinter.string_of_pos) pos_post no_pos in
+          let () = Globals.add_false_ctx pos_post in
+          let () = print_endline_quiet ("\n\nWarning: False precondition detected in procedure "^proc.proc_name^"\n with context: "^ (Cprinter.string_of_context_short ctx)) in
           (spec,[],[],[], [], [],[],true)
         else
           let () = Gen.Profiling.push_time ("method "^proc.proc_name) in
