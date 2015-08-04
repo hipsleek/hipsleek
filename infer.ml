@@ -939,14 +939,14 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
   if (iv_orig)==[] && unk_heaps==[] && ((no_infer_all_all estate) || (lhs_rels==None)) 
   then
     (* let () = Debug.info_pprint "exit" no_pos in *)
-    let () = print_endline "#####infer_pure_m_x 1" in
+    (* let () = print_endline "#####infer_pure_m_x 1" in *)
     (None,None,[])
   else
   if not (TP.is_sat_raw rhs_xpure_orig) then 
     (* (x_dinfo_pp "Cannot infer a precondition: RHS contradiction" pos; *)
     (* (None,None,[])) *)
     let p, rel_ass = infer_lhs_contra_estate 1 estate lhs_xpure0 pos "rhs contradiction" in
-    let () = print_endline "infer_pure_m_x 2" in
+    (* let () = print_endline "infer_pure_m_x 2" in *)
     (p,None,rel_ass)
   else
     let () = Debug.ninfo_hprint (add_str "iv_orig" (!CP.print_svl)) iv_orig no_pos in
@@ -1020,7 +1020,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
       (* let lhs_xpure0 = CP.filter_ante lhs_xpure0 rhs_xpure in *)
       (* let () = x_tinfo_hp (add_str "lhs0 (after filter_ante): " !CP.print_formula) lhs_xpure0 pos in *)
       let p, rel_ass = infer_lhs_contra_estate 2 estate lhs_xpure0 pos "ante contradict with conseq" in
-      let () = print_endline "infer_pure_m_x 3" in
+      (* let () = print_endline "infer_pure_m_x 3" in *)
       (p,None,rel_ass)
     else
       (*let invariants = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) estate.es_infer_invs in*)
@@ -1990,7 +1990,6 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
       let check_sat,rhs_p_new = detect_lhs_rhs_contra2 ivs lhs_c rhs_mix pos in
       let () = x_ninfo_hp (add_str "lhs" Cprinter.string_of_pure_formula) lhs_c no_pos in
       let () = x_ninfo_hp (add_str "rhs" Cprinter.string_of_mix_formula) rhs_mix no_pos in
-      let () = x_ninfo_hp (add_str "check_sat" string_of_bool) check_sat no_pos in
 
       (* let _ = print_endline("!!!!! rhs_p_new:"^(Cprinter.string_of_pure_formula rhs_p_new)) in *)
       let rhs_mix_new = MCP.mix_of_pure rhs_p_new in
@@ -1998,12 +1997,16 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
       if not(check_sat) && not(CP.is_False lhs_c) then
         begin
           let p, rel_ass = infer_lhs_contra_estate 3 estate lhs_mix pos "infer_collect_rel: ante contradict with conseq" in
-          x_binfo_pp ">>>>>> infer_collect_rel <<<<<<" pos;
-          x_binfo_pp "LHS and RHS Contradiction detected for:" pos;
-          x_binfo_hp (add_str "lhs" Cprinter.string_of_pure_formula) lhs_c no_pos;
-          x_binfo_hp (add_str "rhs" Cprinter.string_of_pure_formula) rhs_p_new no_pos;
-          x_binfo_pp "Skip collection of following RELDEFN:" pos;
-          x_binfo_hp (add_str "rel defns" (pr_list Cprinter.string_of_pure_formula)) rel_rhs no_pos;
+          x_tinfo_pp ">>>>>> infer_collect_rel <<<<<<" pos;
+          x_tinfo_pp "LHS and RHS Contradiction detected for:" pos;
+          x_tinfo_hp (add_str "check_sat" string_of_bool) check_sat no_pos;
+          x_tinfo_hp (add_str "lhs" Cprinter.string_of_pure_formula) lhs_c no_pos;
+          x_tinfo_hp (add_str "rhs" Cprinter.string_of_pure_formula) rhs_p_new no_pos;
+          x_tinfo_pp "Skip collection of following RELDEFN:" pos;
+          x_tinfo_hp (add_str "rel_rhs" (pr_list Cprinter.string_of_pure_formula)) rel_rhs no_pos;
+          let pr2 = !print_entail_state in
+          let pr_rel_ass = pr_list (fun (es,r,b) -> pr_pair pr2 (pr_list CP.print_lhs_rhs) (es,r)) in
+          x_tinfo_hp (add_str "rel_ass(collected)" (pr_rel_ass)) rel_ass no_pos;
           (* let _ = print_endline("output 2  rhs_mix_new "^(Cprinter.string_of_mix_formula rhs_mix_new)) in *)
           (* let _ = print_endline("output 2lhs_mix "^(Cprinter.string_of_mix_formula lhs_mix)) in *)
           (estate,lhs_mix,rhs_mix_new,p,rel_ass)

@@ -870,7 +870,7 @@ let simpl_unfold2 = ref false
 let simpl_unfold1 = ref false
 let simpl_memset = ref false
 
-let simplify_dprint = ref false
+let simplify_dprint = ref true
 
 let print_heap_pred_decl = ref true
 
@@ -1145,7 +1145,12 @@ let dis_norm = ref false
 
 let dis_ln_z3 = ref false
 
+(* WN : should this flag be for tpdispatcher, rather than just Omega *)
 let oc_non_linear = ref true
+let oc_warning = ref false
+
+(* eqn solving to be false by default until it is stable or proven*)
+(* let oc_matrix_eqn = ref false  *)
 
 let allow_ls = ref false (*enable lockset during verification*)
 
@@ -1159,10 +1164,13 @@ let allow_threads_as_resource = ref false
 
 (* let has_locklevel = ref false *)
 
+(* let assert_matrix = ref false *)
+let assert_nonlinear = ref false
+
 let adhoc_flag_1 = ref false
 let adhoc_flag_2 = ref false
 let adhoc_flag_3 = ref false
-let weaker_pre_flag = ref false
+let weaker_pre_flag = ref true
 
 let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
 
@@ -2326,3 +2334,6 @@ let prim_method_names = [ nondet_int_proc_name ]
 
 let is_prim_method pn = 
   List.exists (fun mn -> String.compare pn mn == 0) prim_method_names
+
+
+

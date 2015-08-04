@@ -522,6 +522,7 @@ sig
       (* val mutable cnt : counter *)
       method string_of : string
       method get_hash : ident -> nflow
+      method get_exc_hash : ident -> nflow option
       method add_edge : ident -> ident -> unit
       method compute_hierarchy : unit
       method get_closest : nflow -> string
@@ -722,6 +723,10 @@ struct
           let pr = pr_pair string_of_int string_of_int in
           Debug.no_1 "get_hash2" pr_id pr foo f
         end
+      method get_exc_hash (f:string) : nflow option =
+        try
+          Some (self # get_hash f)
+        with _ -> None
       method add_edge (n1:string)(n2:string):unit =
         begin
           (elist <- elist@ [(n1,n2,false_flow_int)])
@@ -1069,6 +1074,10 @@ struct
           (* let pr = pr_pair string_of_int string_of_int in *)
           Debug.no_1 "get_hash" pr_id (fun _ -> "?") foo f
         end
+      method get_exc_hash (f:string) : dflow option =
+        try
+          Some (self # get_hash f)
+        with _ -> None
       method add_edge (n1:string)(n2:string):unit =
         begin
           (elist <- elist@ [(n1,n2,false_flow_int)])

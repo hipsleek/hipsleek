@@ -512,6 +512,8 @@ let print_svl = ref (fun (c:spec_var list) -> "cpure printer has not been initia
 let print_sv = ref (fun (c:spec_var) -> "cpure printer has not been initialized")
 let print_annot_arg = ref (fun (c:annot_arg) -> "cpure printer has not been initialized")
 let print_term_ann = ref (fun (t:term_ann) -> "cpure printer has not been initialized")
+let tp_imply = ref (fun (lhs:formula) (rhs:formula) -> ((failwith "tp_imply not yet initialized"):bool))
+
 let print_view_arg v= match v with
   | SVArg sv -> "SVArg " ^ (!print_sv sv)
   | AnnotArg asv -> "AnnotArg " ^ (!print_annot_arg asv)
@@ -588,6 +590,14 @@ let name_of_spec_var (sv : spec_var) : ident = match sv with
 let name_of_sv (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, _) -> v
 
+let flted_rgx = Str.regexp "flted_[1-9][0-9]*_[1-9][0-9]*" 
+
+let check_is_field x =
+  Str.string_match flted_rgx x 0 
+
+let check_is_field_sv x =
+  check_is_field (name_of_spec_var x)
+
 let exp_to_name_spec_var e = 
   match e with
   | Var(sv,_) -> name_of_spec_var sv 
@@ -651,7 +661,7 @@ let ident_of_spec_var (sv: spec_var) = match sv with
 let string_of_spec_var ?(print_typ=false) (sv: spec_var) = match sv with
   | SpecVar (t, v, p) -> 
     if print_typ then
-      if p==Primed then (v^"#':"^(string_of_typ t)) 
+      if p==Primed then (v^"':"^(string_of_typ t)) 
       else (v^":"^(string_of_typ t))
     else if p==Primed then (v^"'") else v
 
@@ -905,6 +915,12 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
        We need only to compare names and primedness *)
     (String.compare v1 v2 = 0) && (p1 = p2)
 
+let eq_ident_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
+  | (SpecVar (_, v1, p1), SpecVar (_, v2, p2)) ->
+    (* translation has ensured well-typedness.
+       We need only to compare names and primedness *)
+    (String.compare v1 v2 = 0) 
+
 let overlap_svl = Gen.BList.overlap_eq eq_spec_var
 
 (* let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) =  *)
@@ -992,6 +1008,8 @@ let remove_dups_svl vl = Gen.BList.remove_dups_eq eq_spec_var vl
 let remove_dups_svl_stable vl = Gen.BList.remove_dups_eq_stable eq_spec_var vl
 
 let diff_svl vl rl = Gen.BList.difference_eq eq_spec_var vl rl
+
+let diff_svl_ident vl rl = Gen.BList.difference_eq eq_ident_var vl rl
 
 let mem_svl1 v rl = Gen.BList.mem_eq eq_spec_var1 v rl
 
@@ -1984,6 +2002,10 @@ and is_int_type (t : typ) = match t with
   | Int -> true
   | _ -> false
 
+and is_int_convertible_type (t : typ) = match t with
+  | Int | Bool | TVar _ | Named _ -> true
+  | _ -> false
+
 and is_num_type (t : typ) = match t with
   | NUM -> true
   | _ -> false
@@ -1999,6 +2021,9 @@ and is_float_type (t : typ) = match t with
 and is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
 
 and is_int_var (sv : spec_var) : bool = is_int_type (type_of_spec_var sv)
+
+(* WN : int/bool/ptr type that can be converted to int *)
+and is_int_convertible_var (sv : spec_var) : bool = is_int_convertible_type (type_of_spec_var sv)
 
 and is_list_var (sv : spec_var) : bool = is_list_type (type_of_spec_var sv)
 
@@ -3869,7 +3894,7 @@ and are_same_types (t1 : typ) (t2 : typ) = match t1 with
   | _ -> t1 = t2
 
 and is_otype (t : typ) : bool = match t with
-  | Named _ -> true
+  | TVar _ | Named _ -> true
   | _ -> false (* | _ -> false *) (* An Hoa *)
 
 and name_of_type (t : typ) : ident = 
@@ -5831,13 +5856,23 @@ let rec eq_pure_formula (f1 : formula) (f2 : formula) : bool = equalFormula f1 f
   (more and more aggressive filtering)
 *)
 
+(* This module cannot distinguish between primed and unprimed variables *)
 module SVar = struct
   type t = spec_var
   let compare = fun sv1 -> fun sv2 -> (* compare_sv sv1 sv2 *)
     compare (name_of_spec_var sv1) (name_of_spec_var sv2)
 end
 
+(* This module can distinguish between primed and unprimed variables *)
+module SVar_eq = struct
+  type t = spec_var
+  let compare = fun sv1 -> fun sv2 -> (* compare_sv sv1 sv2 *)
+    compare (full_name_of_spec_var sv1) (full_name_of_spec_var sv2)
+end
+
 module SVarSet = Set.Make(SVar)
+
+module SVarSet_eq = Set.Make(SVar_eq)
 
 let set_of_list (ids : spec_var list) : SVarSet.t =
   List.fold_left (fun s -> fun i -> SVarSet.add i s) (SVarSet.empty) ids
@@ -10905,6 +10940,10 @@ let find_eq_at_toplevel e =
   let eq_list = find_eq e in
   eq_list
 
+let find_eq_at_toplevel e =
+  Debug.no_1 "find_eq_at_toplevel" !print_formula (pr_list (pr_pair !print_exp !print_exp)) find_eq_at_toplevel e
+;;
+
 let add_to_eqmap eq_list eqset =
   (* ZH:TODO use EMapSV to build an equality map involving variable  *)
   let eqset = List.fold_left (fun eset (e1,e2) -> 
@@ -10923,44 +10962,169 @@ let add_to_eqmap eq_list eqset =
 
 
 (* Assuming that there is no subtraction and multipication, because of the arith_simplify *)
+(* let equality_to_matrix eq_list = *)
+(*   let sv_set = *)
+(*     List.fold_left ( *)
+(*       fun r (e1,e2) -> *)
+(*         SVarSet_eq.union r (SVarSet_eq.of_list ((var_list_exp e1)@(var_list_exp e2))) *)
+(*     ) SVarSet_eq.empty eq_list *)
+(*   in *)
+(*   let sv_list = *)
+(*     SVarSet_eq.fold (fun sv l->sv::l) sv_set [] *)
+(*   in *)
+(*   let matrix = *)
+(*     List.map ( *)
+(*       fun (e1,e2) -> *)
+(*         let svLHS = var_list_exp e1 in *)
+(*         let svRHS = var_list_exp e2 in *)
+(*         let constLHS = List.fold_left (fun r i -> r+i) 0 (const_exp_list_exp e1) in *)
+(*         let constRHS = List.fold_left (fun r i -> r+i) 0 (const_exp_list_exp e2) in *)
+(*         (List.map ( *)
+(*             fun sv -> *)
+(*               let lhsN = List.length (List.filter (fun item -> eq_spec_var item sv) svLHS) in *)
+(*               let rhsN = List.length (List.filter (fun item -> eq_spec_var item sv) svRHS) in *)
+(*               lhsN-rhsN *)
+(*           ) sv_list)@[constRHS-constLHS] *)
+(*     ) eq_list *)
+(*   in *)
+(*   (matrix,sv_list) *)
+(* ;; *)
+
+let collect_variable_list e arg=
+  let rec helper e arg =
+    match e with
+    | Add (e1,e2,_) ->
+      (helper e1 arg)@(helper e2 arg)
+    | Subtract (e1,e2,_) ->
+      (helper e1 arg)@(helper e2 (-arg))
+    | Mult (e1,e2,_) ->
+      (
+        match e1,e2 with
+        | IConst (i,_),othere
+        | othere,IConst (i,_) ->
+          helper othere (i*arg)
+        | _,_ -> (helper e1 arg)@(helper e2 arg)
+      )
+    | Div (e1,e2,_) ->
+      (
+        match e1,e2 with
+        | IConst (i,_),othere
+        | othere,IConst (i,_) ->
+          helper othere (arg/i)
+        | _,_ -> (helper e1 arg)@(helper e2 arg)
+      )
+    | Var (sv,_) ->
+      [(sv,arg)]
+    | _ -> []
+  in
+  helper e arg
+;;
+
+let fold_variable_list vclist =
+  let fold_one (sv,const) vclist =
+    List.filter (fun (nsv,nconst) -> if eq_spec_var sv nsv then true else false) vclist
+  in
+  List.map (
+    fun ((sv,const) as vc) ->
+      let lst = List.filter (fun (nsv,nconst) -> if eq_spec_var sv nsv then true else false) vclist in
+      List.fold_left (fun (sv,const) (nsv,nconst) -> (sv,nconst+const)) (List.hd lst) (List.tl lst)
+  ) vclist
+;;
+
+let rec eval_constant_exp e =
+  match e with
+  | Add (e1,e2,_) ->
+    (eval_constant_exp e1)+(eval_constant_exp e2)
+  | Subtract (e1,e2,_) ->
+    (eval_constant_exp e1)-(eval_constant_exp e2)
+  | Mult (e1,e2,_) ->
+    (eval_constant_exp e1)*(eval_constant_exp e2)
+  | Div (e1,e2,_) ->
+    (eval_constant_exp e1)*(eval_constant_exp e2)
+  | IConst (i,_) ->
+      i
+  | _ -> failwith "eval_constant_exp: Invalid input"
+;;
+
+let rec constantize_exp e=
+  match e with
+  | Add (e1,e2,l) ->
+    Add (constantize_exp e1,constantize_exp e2,l)
+  | Subtract (e1,e2,l) ->
+    Subtract (constantize_exp e1,constantize_exp e2,l)
+  | Mult (e1,e2,l) ->
+    Mult (constantize_exp e1,constantize_exp e2,l)
+  | Div (e1,e2,l) ->
+    Div (constantize_exp e1,constantize_exp e2,l)
+  | IConst _ -> e
+  | _ -> IConst (0,no_pos)
+;;
+
 let equality_to_matrix eq_list =
   let sv_set =
     List.fold_left (
       fun r (e1,e2) ->
-        SVarSet.union r (SVarSet.of_list ((var_list_exp e1)@(var_list_exp e2)))
-    ) SVarSet.empty eq_list
+        SVarSet_eq.union r (SVarSet_eq.of_list ((var_list_exp e1)@(var_list_exp e2)))
+    ) SVarSet_eq.empty eq_list
   in
   let sv_list =
-    SVarSet.fold (fun sv l->sv::l) sv_set []
+    SVarSet_eq.fold (fun sv l->sv::l) sv_set []
   in
-  let () = x_tinfo_pp ("sv_list:"^((pr_list (fun sv -> string_of_spec_var sv)) sv_list)) no_pos in
   let matrix =
     List.map (
       fun (e1,e2) ->
-        let svLHS = var_list_exp e1 in
-        let svRHS = var_list_exp e2 in
-        let constLHS = List.fold_left (fun r i -> r+i) 0 (const_exp_list_exp e1) in
-        let constRHS = List.fold_left (fun r i -> r+i) 0 (const_exp_list_exp e2) in
+        let var_info = fold_variable_list ((collect_variable_list e1 1)@(collect_variable_list e2 (-1))) in
+        let () = x_tinfo_pp ("var_info "^((pr_list (pr_pair !print_sv string_of_int)) var_info)) no_pos in
+        let () = x_tinfo_pp ("sv_list "^((pr_list !print_sv) sv_list)) no_pos in
+        let constLHS = eval_constant_exp (constantize_exp e1) in
+        let constRHS = eval_constant_exp (constantize_exp e2) in
         (List.map (
             fun sv ->
-              let lhsN = List.length (List.filter (fun item -> eq_spec_var item sv) svLHS) in
-              let rhsN = List.length (List.filter (fun item -> eq_spec_var item sv) svRHS) in
-              lhsN-rhsN
+              let (old_sv,v) =
+                try
+                  List.find (fun (nsv,nv) -> if eq_spec_var nsv sv then true else false) var_info
+                with _ ->
+                  (sv,0)
+              in
+              v
           ) sv_list)@[constRHS-constLHS]
     ) eq_list
   in
   (matrix,sv_list)
 ;;
 
-let enhance_eq_list eq_list =
-  let (matrix,svlst) = equality_to_matrix eq_list in
-  let res_list = Matrix.solve_equation matrix in
-  let () = x_tinfo_pp ("res_list"^((pr_list (pr_pair string_of_int string_of_int)) res_list)) no_pos in
-  (List.map (fun (pos,v) -> (Var (List.nth svlst pos,no_pos),IConst (v,no_pos))) res_list)@eq_list
+
+
+let equality_to_matrix eq_list =
+  Debug.no_1 "equality_to_matrix" (pr_list (pr_pair !print_exp !print_exp)) (pr_pair (pr_list (pr_list string_of_int)) !print_svl)  equality_to_matrix eq_list
 ;;
 
 let enhance_eq_list eq_list =
-  Debug.no_1 "enhance_eq_list" (pr_list (pr_pair !print_exp !print_exp)) (pr_list (pr_pair !print_exp !print_exp)) enhance_eq_list eq_list
+    let (matrix,svlst) = equality_to_matrix eq_list in
+    let res_list = Matrix.solve_equation matrix in
+    let () = x_tinfo_pp ("res_list"^((pr_list (pr_pair string_of_int string_of_int)) res_list)) no_pos in
+    let new_eq = (List.map (fun (pos,v) -> (Var (List.nth svlst pos,no_pos),IConst (v,no_pos))) res_list) in
+    let new_pure = join_conjunctions (List.map (fun (l,r) -> mkEqExp l r no_pos) new_eq) in
+    let orig_pure = join_conjunctions (List.map (fun (l,r) -> mkEqExp l r no_pos) eq_list) in
+    let () = if !Globals.assert_nonlinear then 
+        let b = !tp_imply orig_pure new_pure in
+        if not(b) then 
+          let () = x_binfo_hp (add_str "XXX:orig_eqn" !print_formula) orig_pure no_pos in
+          let () = x_binfo_hp (add_str "XXX:new_eqn" !print_formula) new_pure no_pos in
+          let () = x_binfo_pp "XXX:UNSOUND enhance_eq_list" no_pos in
+          failwith "UNSOUND enhance_eq_list"
+        else  () (* failwith "SOUND enhance_eq_list" *)
+            (* () *) (* x_binfo_pp "XXX:OK enhance_eq_list" no_pos *)  
+      else ()
+    in
+    new_eq@eq_list
+;;
+
+let enhance_eq_list eq_list =
+  if true (* !Globals.oc_non_linear *) then
+    Debug.no_1 "enhance_eq_list" (pr_list (pr_pair !print_exp !print_exp)) (pr_list (pr_pair !print_exp !print_exp)) enhance_eq_list eq_list
+  else
+    eq_list
 ;;
 
 
@@ -11095,6 +11259,7 @@ let add_to_em_set eq_list em_set =
   em
 ;;
 
+(* building an eq_map for pure of top-level *)
 let build_eqmap_at_toplevel e =
   let eq_list = find_eq_at_toplevel e in
    build_eqmap eq_list
@@ -11267,8 +11432,6 @@ let rec subs_const_var_formula ?(em=None) (f:formula) : formula =
           Some (join_disjunctions (new_lhs::new_rhs))
     else None
   in
-
-
   let f_bf a ((pf,ann) as f) =
     match pf with
     | Eq (e1,e2,pos) ->
@@ -11321,7 +11484,8 @@ let rec subs_const_var_formula ?(em=None) (f:formula) : formula =
     | Some em -> em (* add_emap_at_toplevel em f *)
   in
   (* let () = x_binfo_pp ((add_str "subs_const(emap)" EMapSV.string_of) eq_map) no_pos in *)
-  map_formula_arg f init_arg ff f_arg
+  if !Globals.oc_non_linear then map_formula_arg f init_arg ff f_arg
+  else f
 
 let subs_const_var_formula (f:formula) : formula =
   let pr = !print_formula in
