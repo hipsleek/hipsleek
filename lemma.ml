@@ -766,7 +766,7 @@ let do_unfold_view_hf cprog hf0 =
           let f_args = (CP.SpecVar (Named vdcl.C.view_name,self, Unprimed))::vdcl.C.view_vars in
           let a_args = hv.CF.h_formula_view_node::hv.CF.h_formula_view_arguments in
           let ss = List.combine f_args  a_args in
-          let fs1 = List.map (CF.subst ss) fs in
+          let fs1 = List.map (x_add CF.subst ss) fs in
           List.map (fun f -> (List.hd (CF.heap_of f), MCP.mix_of_pure (CF.get_pure f))) fs1
         with _ -> let () = report_warning no_pos ("LEM.do_unfold_view_hf: can not find view " ^ hv.CF.h_formula_view_name) in
           [(CF.HTrue, MCP.mix_of_pure (CP.mkTrue no_pos))]
@@ -1399,7 +1399,7 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
               true
               (* TRUNG TODO: below should be included, uncomment later *)
               (* let reduced_induct_f = remove_view_node_from_formula induct_f induct_vnode in             *)
-              (* let new_induct_f = CF.subst base_subs reduced_induct_f in                                 *)
+              (* let new_induct_f = x_add CF.subst base_subs reduced_induct_f in                                 *)
               (* (* let (hf,mf,fl,t,a) = CF.split_components new_induct_f in *)                            *)
               (* (* let pos = CF.pos_of_formula new_induct_f in              *)                            *)
               (* (* let new_induct_f = CF.mkBase hf mf t fl a pos in         *)                            *)

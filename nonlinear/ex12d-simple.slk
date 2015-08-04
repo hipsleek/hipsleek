@@ -1,0 +1,54 @@
+
+checkentail r=b*x & b=2 |- r=2*x.
+
+/*
+# ex13d.slk -tp oc --oc-dis-nonlinear --esl
+
+# why is error message doing non-linear subs?
+
+checkentail r=b*x & b=2 |- r=2*x.
+
+Entail 2: Fail.(may) cause: r=2*x |-  r=x+x. LOCS:[3] (may-bug)
+
+# Why CACHED and not Omega? Why duplicate calls?
+
+-------------------- 
+ id: 2<0; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:IMPLY:complement {[b, r, x] : (( (not (((b = 2) & ((1=1)))))  | (r = x + x)))};
+ raw result: {[2,r,x]: 2x < r}
+ Imply: ante: b=2 & r=b*x
+	     conseq:  r=x+x
+ res: false
+ -------------------- 
+ id: 3<0; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:IMPLY:complement {[b, r, x] : (( (not (((b = 2) & ((1=1)))))  | (r = x + x)))};
+ raw result: {[2,r,x]: 2x < r}
+ Imply: ante: b=2 & r=b*x
+	     conseq:  r=x+x
+ res: false
+ -
+
+# ex13d.slk -tp oc -esl
+
+# Why is SAT cached twice?
+# can we move non-linear out of Omega?
+
+id: 1<-1; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:SAT:{[r, x, b] : (((r = 2(x)) & (b = 2)))};
+ raw result:{[r,x,2]: r = 2x}
+ Sat:  r=b*x & b=2
+ res: SAT
+ -------------------- 
+ id: 2<0; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:IMPLY:complement {[b, r, x] : (( (not (((b = 2) & (r = 2(x)))))  | (r = x + x)))};
+ raw result:{[b,r,x]  : FALSE }
+ Imply: ante: b=2 & r=b*x
+	     conseq:  r=x+x
+ res: true
+ -------------------- 
+ id: 3<0; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:SAT:{[r, x, b] : (((r = 2(x)) & (b = 2)))};
+ raw result:{[r,x,2]: r = 2x}
+ Sat:  r=b*x & b=2
+ res: SAT
+*/

@@ -1,0 +1,23 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+
+pred ll<n> == self = null & n= 0
+  or self::node<_,x> * x::ll<n-1>
+  inv n >= 0.
+
+pred llinf<> == //self = null or
+  self::node<_,x> * x::llinf<>.
+
+lemma_safe "i1" self::llinf<> -> self::ll<\inf>.
+print residue.
+
+/*
+# ex51a.slk
+
+# why is lemma proving failing ..
+
+Entailing lemma i1: Fail. (cex)(must) cause:  self_i1!=x_58 & self_i1=2 |-  self_i1=null. LOCS:[0;13;8] (must-bug)
+*/

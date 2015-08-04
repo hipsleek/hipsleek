@@ -1,0 +1,2517 @@
+ 
+ id: 219<-1; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[] : ( (exists (v:(0 <= v))) )};
+ raw result:{ TRUE }
+ Simplify:  exists(v:0<=v)
+ res:  true
+ -------------------- 
+ id: 220<-1; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 221<-1; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[m] : ( (exists (flted_37_24:((flted_37_24 + 1 = m) & (0 <= flted_37_24)))) )};
+ raw result:{[m]: 1 <= m}
+ Simplify:  exists(flted_37_24:flted_37_24+1=m & 0<=flted_37_24)
+ res:  1<=m
+ -------------------- 
+ id: 222<-1; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[m] : ((1 <= m))};
+ raw result:{[m]: 1 <= m}
+ PairWise:  1<=m
+ res:  1<=m
+ -------------------- 
+ id: 223<-1; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[] : ( (exists (v:(0 <= v))) )};
+ raw result:{ TRUE }
+ Simplify:  exists(v:0<=v)
+ res:  true
+ -------------------- 
+ id: 224<-1; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 225<-1; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[m] : ( (exists (flted_37_24:((flted_37_24 + 1 = m) & (0 <= flted_37_24)))) )};
+ raw result:{[m]: 1 <= m}
+ Simplify:  exists(flted_37_24:flted_37_24+1=m & 0<=flted_37_24)
+ res:  1<=m
+ -------------------- 
+ id: 226<-1; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[m] : ((1 <= m))};
+ raw result:{[m]: 1 <= m}
+ PairWise:  1<=m
+ res:  1<=m
+ -------------------- 
+ id: 227<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, m] : (((self = 0) & (m = 0)))};
+ raw result:{[0,0]}
+ Sat:  self=null & m=0
+ res: SAT
+ -------------------- 
+ id: 228<0; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, m] : (((self = 0) & (m = 0)))};
+ raw result:{[0,0]}
+ Sat:  self=null & m=0
+ res: SAT
+ -------------------- 
+ id: 229<0; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:SAT:{[m, self] : (((1 <= m) & (self > 0)))};
+ raw result:{[m,self]: 1 <= m && 1 <= self}
+ Sat:  1<=m & self!=null
+ res: SAT
+ -------------------- 
+ id: 230<0; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:IMPLY:complement {[m] : (((m != 0) | (0 <= m)))};
+ raw result:{[m]  : FALSE }
+ Imply: ante: m=0
+	     conseq:  0<=m
+ res: true
+ -------------------- 
+ id: 231<0; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:IMPLY:complement {[m] : (((1 > m) | (0 <= m)))};
+ raw result:{[m]  : FALSE }
+ Imply: ante: 1<=m
+	     conseq:  0<=m
+ res: true
+ -------------------- 
+ id: 232<0; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, m] : (((self = 0) & (m = 0)))};
+ raw result:{[0,0]}
+ Sat:  self=null & m=0
+ res: SAT
+ -------------------- 
+ id: 233<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, m] : (((self = 0) & (m = 0)))};
+ raw result:{[0,0]}
+ Sat:  self=null & m=0
+ res: SAT
+ -------------------- 
+ id: 234<1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, m] : (((self = 0) & (m = 0)))};
+ raw result:{[0,0]}
+ Sat:  self=null & m=0
+ res: SAT
+ -------------------- 
+ id: 235<1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:SAT:{[m, self] : (((1 <= m) & (self > 0)))};
+ raw result:{[m,self]: 1 <= m && 1 <= self}
+ Sat:  1<=m & self!=null
+ res: SAT
+ -------------------- 
+ id: 236<1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: m=0
+	     conseq:  0<=m
+ res: true
+ -------------------- 
+ id: 237<1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: 1<=m
+	     conseq:  0<=m
+ res: true
+ -------------------- 
+ id: 238<1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, m] : (((self = 0) & (m = 0)))};
+ raw result:{[0,0]}
+ Sat:  self=null & m=0
+ res: SAT
+ -------------------- 
+ id: 239<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[] : ( (exists (v:(0 <= v))) )};
+ raw result:{ TRUE }
+ Simplify:  exists(v:0<=v)
+ res:  true
+ -------------------- 
+ id: 240<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 241<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[m] : ( (exists (flted_37_24:((flted_37_24 + 1 = m) & (0 <= flted_37_24)))) )};
+ raw result:{[m]: 1 <= m}
+ Simplify:  exists(flted_37_24:flted_37_24+1=m & 0<=flted_37_24)
+ res:  1<=m
+ -------------------- 
+ id: 242<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[m] : ((1 <= m))};
+ raw result:{[m]: 1 <= m}
+ PairWise:  1<=m
+ res:  1<=m
+ -------------------- 
+ id: 243<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[self, m] : (((self = 0) & (m = 0)))};
+ raw result:{[0,0]}
+ Simplify:  self=null & m=0
+ res:  self=null & m=0
+ -------------------- 
+ id: 244<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[self, m] : (((self = 0) & (m = 0)))};
+ raw result:{[0,0]}
+ PairWise:  self=null & m=0
+ res:  self=null & m=0
+ -------------------- 
+ id: 245<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[self, m] : (((self = 0) & (m = 0)))};
+ raw result:{[0,0]}
+ PairWise:  self=null & m=0
+ res:  self=null & m=0
+ -------------------- 
+ id: 246<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[m, self] : (((1 <= m) & (self > 0)))};
+ raw result:{[m,self]: 1 <= m && 1 <= self}
+ Simplify:  1<=m & self!=null
+ res:  1<=m & self!=null
+ -------------------- 
+ id: 247<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[m, self] : (((1 <= m) & (self > 0)))};
+ raw result:{[m,self]: 1 <= m && 1 <= self}
+ PairWise:  1<=m & self!=null
+ res:  1<=m & self!=null
+ -------------------- 
+ id: 248<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[m, self] : (((1 <= m) & (self > 0)))};
+ raw result:{[m,self]: 1 <= m && 1 <= self}
+ PairWise:  1<=m & self!=null
+ res:  1<=m & self!=null
+ -------------------- 
+ id: 249<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, m] : (((self = 0) & (m = 0)))};
+ raw result:{[0,0]}
+ Sat:  self=null & m=0
+ res: SAT
+ -------------------- 
+ id: 250<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, flted_37_24, m, v] : (((self = 1) & ((flted_37_24 + 1 = m) & (0 <= v))))};
+ raw result:{[1,flted_37_24,flted_37_24+1,v]: 0 <= v}
+ Sat:  self=1 & flted_37_24+1=m & 0<=v
+ res: SAT
+ -------------------- 
+ id: 251<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:SAT:{[flted_37_24] : ((0 <= flted_37_24))};
+ raw result:{[flted_37_24]: 0 <= flted_37_24}
+ Sat:  0<=flted_37_24
+ res: SAT
+ -------------------- 
+ id: 252<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, m, v, flted_37_24] : (((self = 1) & (((flted_37_24 + 1 = m) & (0 <= v)) & (0 <= flted_37_24))))};
+ raw result:{[1,m,v,m-1]: 0 <= v && 1 <= m}
+ Sat:  self=1 & flted_37_24+1=m & 0<=v & 0<=flted_37_24
+ res: SAT
+ -------------------- 
+ id: 253<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[m] : (( (exists (v:(0 <= v)))  &  (exists (flted_37_24:((flted_37_24 + 1 = m) & (0 <= flted_37_24)))) ))};
+ raw result:{[m]: 1 <= m}
+ Simplify:  exists(v:0<=v) & exists(flted_37_24:flted_37_24+1=m & 0<=flted_37_24)
+ res:  1<=m
+ -------------------- 
+ id: 254<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[m] : ((1 <= m))};
+ raw result:{[m]: 1 <= m}
+ PairWise:  1<=m
+ res:  1<=m
+ -------------------- 
+ id: 255<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, m] : (((self = 0) & (m = 0)))};
+ raw result:{[0,0]}
+ Sat:  self=null & m=0
+ res: SAT
+ -------------------- 
+ id: 256<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, m] : (((self = 1) & (1 <= m)))};
+ raw result:{[1,m]: 1 <= m}
+ Sat:  self=1 & 1<=m
+ res: SAT
+ -------------------- 
+ id: 257<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_36:2_36:17; kind: Pred_Check_Inv
+ raw proof:IMPLY:complement {[m, self] : (((0 > m) | (((self <= 0) & (m = 0)) | ((1 <= m) & (self != 0)))))};
+ raw result: {[m,0]: 1 <= m}
+ Imply: ante: 0<=m
+	     conseq:  ((self=null & m=0) | (1<=m & self!=null))
+ res: false
+ -------------------- 
+ id: 258<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[] : ( (exists (v:(0 < v))) )};
+ raw result:{ TRUE }
+ Simplify:  exists(v:0<v)
+ res:  true
+ -------------------- 
+ id: 259<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 260<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[n] : ( (exists (flted_32_26:((flted_32_26 + 1 = n) & (0 <= flted_32_26)))) )};
+ raw result:{[n]: 1 <= n}
+ Simplify:  exists(flted_32_26:flted_32_26+1=n & 0<=flted_32_26)
+ res:  1<=n
+ -------------------- 
+ id: 261<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[n] : ((1 <= n))};
+ raw result:{[n]: 1 <= n}
+ PairWise:  1<=n
+ res:  1<=n
+ -------------------- 
+ id: 262<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[] : ( (exists (v:(0 < v))) )};
+ raw result:{ TRUE }
+ Simplify:  exists(v:0<v)
+ res:  true
+ -------------------- 
+ id: 263<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 264<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[n] : ( (exists (flted_32_26:((flted_32_26 + 1 = n) & (0 <= flted_32_26)))) )};
+ raw result:{[n]: 1 <= n}
+ Simplify:  exists(flted_32_26:flted_32_26+1=n & 0<=flted_32_26)
+ res:  1<=n
+ -------------------- 
+ id: 265<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[n] : ((1 <= n))};
+ raw result:{[n]: 1 <= n}
+ PairWise:  1<=n
+ res:  1<=n
+ -------------------- 
+ id: 266<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, p, n] : (((self = p) & (n = 0)))};
+ raw result:{[self,self,0]}
+ Sat:  self=p & n=0
+ res: SAT
+ -------------------- 
+ id: 267<2; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, p, n] : (((self = p) & (n = 0)))};
+ raw result:{[self,self,0]}
+ Sat:  self=p & n=0
+ res: SAT
+ -------------------- 
+ id: 268<2; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:SAT:{[n, self] : (((1 <= n) & (self > 0)))};
+ raw result:{[n,self]: 1 <= n && 1 <= self}
+ Sat:  1<=n & self!=null
+ res: SAT
+ -------------------- 
+ id: 269<2; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: n=0
+	     conseq:  0<=n
+ res: true
+ -------------------- 
+ id: 270<2; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: 1<=n
+	     conseq:  0<=n
+ res: true
+ -------------------- 
+ id: 271<2; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, p, n] : (((self = p) & (n = 0)))};
+ raw result:{[self,self,0]}
+ Sat:  self=p & n=0
+ res: SAT
+ -------------------- 
+ id: 272<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, p, n] : (((self = p) & (n = 0)))};
+ raw result:{[self,self,0]}
+ Sat:  self=p & n=0
+ res: SAT
+ -------------------- 
+ id: 273<3; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, p, n] : (((self = p) & (n = 0)))};
+ raw result:{[self,self,0]}
+ Sat:  self=p & n=0
+ res: SAT
+ -------------------- 
+ id: 274<3; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:SAT:{[n, self] : (((1 <= n) & (self > 0)))};
+ raw result:{[n,self]: 1 <= n && 1 <= self}
+ Sat:  1<=n & self!=null
+ res: SAT
+ -------------------- 
+ id: 275<3; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: n=0
+	     conseq:  0<=n
+ res: true
+ -------------------- 
+ id: 276<3; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: 1<=n
+	     conseq:  0<=n
+ res: true
+ -------------------- 
+ id: 277<3; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, p, n] : (((self = p) & (n = 0)))};
+ raw result:{[self,self,0]}
+ Sat:  self=p & n=0
+ res: SAT
+ -------------------- 
+ id: 278<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[] : ( (exists (v:(0 < v))) )};
+ raw result:{ TRUE }
+ Simplify:  exists(v:0<v)
+ res:  true
+ -------------------- 
+ id: 279<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 280<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[n] : ( (exists (flted_32_26:((flted_32_26 + 1 = n) & (0 <= flted_32_26)))) )};
+ raw result:{[n]: 1 <= n}
+ Simplify:  exists(flted_32_26:flted_32_26+1=n & 0<=flted_32_26)
+ res:  1<=n
+ -------------------- 
+ id: 281<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[n] : ((1 <= n))};
+ raw result:{[n]: 1 <= n}
+ PairWise:  1<=n
+ res:  1<=n
+ -------------------- 
+ id: 282<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[self, p, n] : (((self = p) & (n = 0)))};
+ raw result:{[self,self,0]}
+ Simplify:  self=p & n=0
+ res:  p=self & n=0
+ -------------------- 
+ id: 283<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[p, self, n] : (((p = self) & (n = 0)))};
+ raw result:{[p,p,0]}
+ PairWise:  p=self & n=0
+ res:  self=p & n=0
+ -------------------- 
+ id: 284<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[self, p, n] : (((self = p) & (n = 0)))};
+ raw result:{[self,self,0]}
+ PairWise:  self=p & n=0
+ res:  p=self & n=0
+ -------------------- 
+ id: 285<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[n, self] : (((1 <= n) & (self > 0)))};
+ raw result:{[n,self]: 1 <= n && 1 <= self}
+ Simplify:  1<=n & self!=null
+ res:  1<=n & self!=null
+ -------------------- 
+ id: 286<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[n, self] : (((1 <= n) & (self > 0)))};
+ raw result:{[n,self]: 1 <= n && 1 <= self}
+ PairWise:  1<=n & self!=null
+ res:  1<=n & self!=null
+ -------------------- 
+ id: 287<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[n, self] : (((1 <= n) & (self > 0)))};
+ raw result:{[n,self]: 1 <= n && 1 <= self}
+ PairWise:  1<=n & self!=null
+ res:  1<=n & self!=null
+ -------------------- 
+ id: 288<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, p, n] : (((self = p) & (n = 0)))};
+ raw result:{[self,self,0]}
+ Sat:  self=p & n=0
+ res: SAT
+ -------------------- 
+ id: 289<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, flted_32_26, n, v, p_27, p] : (((self = 1) & (((flted_32_26 + 1 = n) & (0 < v)) & (p_27 = p))))};
+ raw result:{[1,flted_32_26,flted_32_26+1,v,p_27,p_27]: 1 <= v}
+ Sat:  self=1 & flted_32_26+1=n & 0<v & p_27=p
+ res: SAT
+ -------------------- 
+ id: 290<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:SAT:{[flted_32_26] : ((0 <= flted_32_26))};
+ raw result:{[flted_32_26]: 0 <= flted_32_26}
+ Sat:  0<=flted_32_26
+ res: SAT
+ -------------------- 
+ id: 291<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, n, v, p_27, p, flted_32_26] : (((self = 1) & ((((flted_32_26 + 1 = n) & (0 < v)) & (p_27 = p)) & (0 <= flted_32_26))))};
+ raw result:{[1,n,v,p_27,p_27,n-1]: 1 <= v && 1 <= n}
+ Sat:  self=1 & flted_32_26+1=n & 0<v & p_27=p & 0<=flted_32_26
+ res: SAT
+ -------------------- 
+ id: 292<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[n, p] : ((( (exists (v:(0 < v)))  &  (exists (flted_32_26:((flted_32_26 + 1 = n) & (0 <= flted_32_26)))) ) &  (exists (p_27:(p_27 = p))) ))};
+ raw result:{[n,p]: 1 <= n}
+ Simplify:  exists(v:0<v) & exists(flted_32_26:flted_32_26+1=n & 0<=flted_32_26) & 
+ exists(p_27:p_27=p)
+ res:  1<=n
+ -------------------- 
+ id: 293<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[n] : ((1 <= n))};
+ raw result:{[n]: 1 <= n}
+ PairWise:  1<=n
+ res:  1<=n
+ -------------------- 
+ id: 294<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, p, n] : (((self = p) & (n = 0)))};
+ raw result:{[self,self,0]}
+ Sat:  self=p & n=0
+ res: SAT
+ -------------------- 
+ id: 295<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, n] : (((self = 1) & (1 <= n)))};
+ raw result:{[1,n]: 1 <= n}
+ Sat:  self=1 & 1<=n
+ res: SAT
+ -------------------- 
+ id: 296<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_31:2_31:14; kind: Pred_Check_Inv
+ raw proof:IMPLY:complement {[p, n, self] : (((0 > n) | (((p = self) & (n = 0)) | ((1 <= n) & (self != 0)))))};
+ raw result: {[p,n,0]: 1 <= n}
+ Imply: ante: 0<=n
+	     conseq:  ((p=self & n=0) | (1<=n & self!=null))
+ res: false
+ -------------------- 
+ id: 297<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[] : ( (exists (q:(q = 0))) )};
+ raw result:{ TRUE }
+ Simplify:  exists(q:q=null)
+ res:  true
+ -------------------- 
+ id: 298<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 299<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[] : ( (exists (q:(q > 0))) )};
+ raw result:{ TRUE }
+ Simplify:  exists(q:q!=null)
+ res:  true
+ -------------------- 
+ id: 300<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 301<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[] : ( (exists (v:(0 < v))) )};
+ raw result:{ TRUE }
+ Simplify:  exists(v:0<v)
+ res:  true
+ -------------------- 
+ id: 302<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 303<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[] : ( (exists (q:(q = 0))) )};
+ raw result:{ TRUE }
+ Simplify:  exists(q:q=null)
+ res:  true
+ -------------------- 
+ id: 304<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 305<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[] : ( (exists (q:(q > 0))) )};
+ raw result:{ TRUE }
+ Simplify:  exists(q:q!=null)
+ res:  true
+ -------------------- 
+ id: 306<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 307<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[] : ( (exists (v:(0 < v))) )};
+ raw result:{ TRUE }
+ Simplify:  exists(v:0<v)
+ res:  true
+ -------------------- 
+ id: 308<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 309<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SAT:{[m, n, k, self] : (((((m = 0) | (1 <= m)) & (n = k)) & (self > 0)))};
+ raw result: {[m,n,n,self]: 1 <= self && 1 <= m}
+ Sat:  ((m=0 | 1<=m)) & n=k & self!=null
+ res: SAT
+ -------------------- 
+ id: 310<4; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SAT:{[m, n, k, self] : (((((m = 0) | (1 <= m)) & (n = k)) & (self > 0)))};
+ raw result: {[m,n,n,self]: 1 <= self && 1 <= m}
+ Sat:  ((m=0 | 1<=m)) & n=k & self!=null
+ res: SAT
+ -------------------- 
+ id: 311<4; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SAT:{[m, n, k, self] : (((((1 + n <= k) & (0 <= m)) & (n < k)) & (self > 0)))};
+ raw result:{[m,n,k,self]: n < k && 0 <= m && 1 <= self}
+ Sat:  (1+n)<=k & 0<=m & n<k & self!=null
+ res: SAT
+ -------------------- 
+ id: 312<4; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:IMPLY:complement {[m] : (( (not (((m = 0) | (1 <= m))))  | (0 <= m)))};
+ raw result:{[m]  : FALSE }
+ Imply: ante: (m=0 | 1<=m)
+	     conseq:  0<=m
+ res: true
+ -------------------- 
+ id: 313<4; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: 0<=m
+	     conseq:  0<=m
+ res: true
+ -------------------- 
+ id: 314<4; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SAT:{[m, n, k, self] : (((((m = 0) | (1 <= m)) & (n = k)) & (self > 0)))};
+ raw result: {[m,n,n,self]: 1 <= self && 1 <= m}
+ Sat:  ((m=0 | 1<=m)) & n=k & self!=null
+ res: SAT
+ -------------------- 
+ id: 315<4; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SAT:{[m, n, k, self] : (((((1 + n <= k) & (0 <= m)) & (n < k)) & (self > 0)))};
+ raw result:{[m,n,k,self]: n < k && 0 <= m && 1 <= self}
+ Sat:  (1+n)<=k & 0<=m & n<k & self!=null
+ res: SAT
+ -------------------- 
+ id: 316<4; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:IMPLY:complement {[n, k] : (((n != k) | (n <= k)))};
+ raw result:{[n,k]  : FALSE }
+ Imply: ante: n=k
+	     conseq:  n<=k
+ res: true
+ -------------------- 
+ id: 317<4; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:IMPLY:complement {[n, k] : (( (not (((1 + n <= k) & (n < k))))  | (n <= k)))};
+ raw result:{[n,k]  : FALSE }
+ Imply: ante: (1+n)<=k & n<k
+	     conseq:  n<=k
+ res: true
+ -------------------- 
+ id: 318<4; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SAT:{[m, n, k, self] : (((((m = 0) | (1 <= m)) & (n = k)) & (self > 0)))};
+ raw result: {[m,n,n,self]: 1 <= self && 1 <= m}
+ Sat:  ((m=0 | 1<=m)) & n=k & self!=null
+ res: SAT
+ -------------------- 
+ id: 319<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SAT:{[m, n, k, self] : (((((m = 0) | (1 <= m)) & (n = k)) & (self > 0)))};
+ raw result: {[m,n,n,self]: 1 <= self && 1 <= m}
+ Sat:  ((m=0 | 1<=m)) & n=k & self!=null
+ res: SAT
+ -------------------- 
+ id: 320<5; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SAT:{[m, n, k, self] : (((((m = 0) | (1 <= m)) & (n = k)) & (self > 0)))};
+ raw result: {[m,n,n,self]: 1 <= self && 1 <= m}
+ Sat:  ((m=0 | 1<=m)) & n=k & self!=null
+ res: SAT
+ -------------------- 
+ id: 321<5; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SAT:{[m, n, k, self] : (((((1 + n <= k) & (0 <= m)) & (n < k)) & (self > 0)))};
+ raw result:{[m,n,k,self]: n < k && 0 <= m && 1 <= self}
+ Sat:  (1+n)<=k & 0<=m & n<k & self!=null
+ res: SAT
+ -------------------- 
+ id: 322<5; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: (m=0 | 1<=m)
+	     conseq:  0<=m
+ res: true
+ -------------------- 
+ id: 323<5; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: 0<=m
+	     conseq:  0<=m
+ res: true
+ -------------------- 
+ id: 324<5; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SAT:{[m, n, k, self] : (((((m = 0) | (1 <= m)) & (n = k)) & (self > 0)))};
+ raw result: {[m,n,n,self]: 1 <= self && 1 <= m}
+ Sat:  ((m=0 | 1<=m)) & n=k & self!=null
+ res: SAT
+ -------------------- 
+ id: 325<5; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SAT:{[m, n, k, self] : (((((1 + n <= k) & (0 <= m)) & (n < k)) & (self > 0)))};
+ raw result:{[m,n,k,self]: n < k && 0 <= m && 1 <= self}
+ Sat:  (1+n)<=k & 0<=m & n<k & self!=null
+ res: SAT
+ -------------------- 
+ id: 326<5; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: n=k
+	     conseq:  n<=k
+ res: true
+ -------------------- 
+ id: 327<5; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: (1+n)<=k & n<k
+	     conseq:  n<=k
+ res: true
+ -------------------- 
+ id: 328<5; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SAT:{[m, n, k, self] : (((((m = 0) | (1 <= m)) & (n = k)) & (self > 0)))};
+ raw result: {[m,n,n,self]: 1 <= self && 1 <= m}
+ Sat:  ((m=0 | 1<=m)) & n=k & self!=null
+ res: SAT
+ -------------------- 
+ id: 329<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[] : ( (exists (q:(q = 0))) )};
+ raw result:{ TRUE }
+ Simplify:  exists(q:q=null)
+ res:  true
+ -------------------- 
+ id: 330<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 331<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[] : ( (exists (q:(q > 0))) )};
+ raw result:{ TRUE }
+ Simplify:  exists(q:q!=null)
+ res:  true
+ -------------------- 
+ id: 332<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 333<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[] : ( (exists (v:(0 < v))) )};
+ raw result:{ TRUE }
+ Simplify:  exists(v:0<v)
+ res:  true
+ -------------------- 
+ id: 334<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 335<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[m, n, k, self] : (((((m = 0) | (1 <= m)) & (n = k)) & (self > 0)))};
+ raw result:{[0,n,n,self]: 1 <= self} union {[m,n,n,self]: 1 <= self && 1 <= m}
+ Simplify:  ((m=0 | 1<=m)) & n=k & self!=null
+ res:  k=n & self!=null & ((m=0 | 1<=m))
+ -------------------- 
+ id: 336<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[k, n, self, m] : ((((k = n) & (self > 0)) & ((m = 0) | (1 <= m))))};
+ raw result:{[k,k,self,m]: 1 <= self && 0 <= m}
+ PairWise:  k=n & self!=null & ((m=0 | 1<=m))
+ res:  n=k & self!=null & 0<=m
+ -------------------- 
+ id: 337<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[n, k, self, m] : ((((n = k) & (self > 0)) & (0 <= m)))};
+ raw result:{[n,n,self,m]: 1 <= self && 0 <= m}
+ PairWise:  n=k & self!=null & 0<=m
+ res:  k=n & self!=null & 0<=m
+ -------------------- 
+ id: 338<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[m, n, k, self] : (((((1 + n <= k) & (0 <= m)) & (n < k)) & (self > 0)))};
+ raw result:{[m,n,k,self]: n < k && 0 <= m && 1 <= self}
+ Simplify:  (1+n)<=k & 0<=m & n<k & self!=null
+ res:  n<k & 0<=m & self!=null
+ -------------------- 
+ id: 339<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[n, k, m, self] : ((((n < k) & (0 <= m)) & (self > 0)))};
+ raw result:{[n,k,m,self]: n < k && 0 <= m && 1 <= self}
+ PairWise:  n<k & 0<=m & self!=null
+ res:  n<k & 0<=m & self!=null
+ -------------------- 
+ id: 340<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[n, k, m, self] : ((((n < k) & (0 <= m)) & (self > 0)))};
+ raw result:{[n,k,m,self]: n < k && 0 <= m && 1 <= self}
+ PairWise:  n<k & 0<=m & self!=null
+ res:  n<k & 0<=m & self!=null
+ -------------------- 
+ id: 341<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, flted_26_30, n, k, m_32, m] : (((self = 1) & (((flted_26_30 = 0) & (n = k)) & (m_32 = m))))};
+ raw result:{[1,0,n,n,m_32,m_32]}
+ Sat:  self=1 & flted_26_30=0 & n=k & m_32=m
+ res: SAT
+ -------------------- 
+ id: 342<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SAT:{[q, m_32] : (((q = 1) & (1 <= m_32)))};
+ raw result:{[1,m_32]: 1 <= m_32}
+ Sat:  q=1 & 1<=m_32
+ res: SAT
+ -------------------- 
+ id: 343<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SAT:{[q, m_32] : (((q = 0) & (m_32 = 0)))};
+ raw result:{[0,0]}
+ Sat:  q=null & m_32=0
+ res: SAT
+ -------------------- 
+ id: 344<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SAT:{[q, self, flted_26_30, n, k, m, m_32] : ((((q = 1) & (self = 2)) & ((((flted_26_30 = 0) & (n = k)) & (m_32 = m)) & (1 <= m_32))))};
+ raw result:{[1,2,0,n,n,m,m]: 1 <= m}
+ Sat:  q=1 & self=2 & flted_26_30=0 & n=k & m_32=m & 1<=m_32
+ res: SAT
+ -------------------- 
+ id: 345<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, flted_26_30, n, k, m, q, m_32] : (((self = 1) & ((((flted_26_30 = 0) & (n = k)) & (m_32 = m)) & ((q = 0) & (m_32 = 0)))))};
+ raw result:{[1,0,n,n,0,0,0]}
+ Sat:  self=1 & flted_26_30=0 & n=k & m_32=m & q=null & m_32=0
+ res: SAT
+ -------------------- 
+ id: 346<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[m, n, k] : ((( (exists (flted_26_30:(flted_26_30 = 0)))  &  (exists (m_32:((m_32 = m) & (1 <= m_32)))) ) & (n = k)))};
+ raw result:{[m,n,n]: 1 <= m}
+ Simplify:  exists(flted_26_30:flted_26_30=0) & exists(m_32:m_32=m & 1<=m_32) & n=k
+ res:  k=n & 1<=m
+ -------------------- 
+ id: 347<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[k, n, m] : (((k = n) & (1 <= m)))};
+ raw result:{[k,k,m]: 1 <= m}
+ PairWise:  k=n & 1<=m
+ res:  n=k & 1<=m
+ -------------------- 
+ id: 348<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[m, n, k] : (((( (exists (q:(q = 0)))  &  (exists (flted_26_30:(flted_26_30 = 0))) ) &  (exists (m_32:((m_32 = m) & (m_32 = 0)))) ) & (n = k)))};
+ raw result:{[0,n,n]}
+ Simplify:  exists(q:q=null) & exists(flted_26_30:flted_26_30=0) & 
+ exists(m_32:m_32=m & m_32=0) & n=k
+ res:  m=0 & k=n
+ -------------------- 
+ id: 349<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[m, k, n] : (((m = 0) & (k = n)))};
+ raw result:{[0,k,k]}
+ PairWise:  m=0 & k=n
+ res:  m=0 & n=k
+ -------------------- 
+ id: 350<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, flted_27_31, v, n, k_33, k, m_34, m] : (((self = 1) & (((flted_27_31 = 1 + n) & ((0 < v) & (n < k))) & ((k_33 = k) & (m_34 = m)))))};
+ raw result:{[1,flted_27_31,v,flted_27_31-1,k_33,k_33,m_34,m_34]: flted_27_31 <= k_33 && 1 <= v}
+ Sat:  self=1 & flted_27_31=1+n & 0<v & n<k & k_33=k & m_34=m
+ res: SAT
+ -------------------- 
+ id: 351<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SAT:{[flted_27_31, k_33, m_34] : (((flted_27_31 <= k_33) & (0 <= m_34)))};
+ raw result:{[flted_27_31,k_33,m_34]: flted_27_31 <= k_33 && 0 <= m_34}
+ Sat:  flted_27_31<=k_33 & 0<=m_34
+ res: SAT
+ -------------------- 
+ id: 352<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, v, n, k, m, flted_27_31, k_33, m_34] : (((self = 1) & ((((flted_27_31 = 1 + n) & ((0 < v) & (n < k))) & ((k_33 = k) & (m_34 = m))) & ((flted_27_31 <= k_33) & (0 <= m_34)))))};
+ raw result:{[1,v,n,k,m,n+1,k,m]: n < k && 1 <= v && 0 <= m}
+ Sat:  self=1 & flted_27_31=1+n & 0<v & n<k & k_33=k & m_34=m & 
+ flted_27_31<=k_33 & 0<=m_34
+ res: SAT
+ -------------------- 
+ id: 353<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[m, n, k] : (((( (exists (v:(0 < v)))  &  (exists (flted_27_31:( (exists (k_33:((k_33 = k) & (flted_27_31 <= k_33))))  & (flted_27_31 = 1 + n)))) ) &  (exists (m_34:((m_34 = m) & (0 <= m_34)))) ) & (n < k)))};
+ raw result:{[m,n,k]: n < k && 0 <= m}
+ Simplify:  exists(v:0<v) & 
+ exists(flted_27_31:exists(k_33:k_33=k & flted_27_31<=k_33) & flted_27_31=1+n) & 
+ exists(m_34:m_34=m & 0<=m_34) & n<k
+ res:  n<k & 0<=m
+ -------------------- 
+ id: 354<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[n, k, m] : (((n < k) & (0 <= m)))};
+ raw result:{[n,k,m]: n < k && 0 <= m}
+ PairWise:  n<k & 0<=m
+ res:  n<k & 0<=m
+ -------------------- 
+ id: 355<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, m, n, k] : (((self = 1) & ((1 <= m) & (n = k))))};
+ raw result:{[1,m,n,n]: 1 <= m}
+ Sat:  self=1 & 1<=m & n=k
+ res: SAT
+ -------------------- 
+ id: 356<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, n, k, m] : (((self = 1) & ((n = k) & (m = 0))))};
+ raw result:{[1,n,n,0]}
+ Sat:  self=1 & n=k & m=0
+ res: SAT
+ -------------------- 
+ id: 357<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, m, n, k] : (((self = 1) & ((0 <= m) & (n < k))))};
+ raw result:{[1,m,n,k]: n < k && 0 <= m}
+ Sat:  self=1 & 0<=m & n<k
+ res: SAT
+ -------------------- 
+ id: 358<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, n, k, m] : ((((self = 1) & ((1 <= m) & (n = k))) &  (not (((n = k) & (m = 0)))) ))};
+ raw result:{[1,n,n,m]: 1 <= m}
+ Sat:  self=1 & 1<=m & n=k & not((n=k & m=0))
+ res: SAT
+ -------------------- 
+ id: 359<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, m, n, k] : ((((self = 1) & ((1 <= m) & (n = k))) &  (not (((0 <= m) & (n < k)))) ))};
+ raw result:{[1,m,n,n]: 1 <= m}
+ Sat:  self=1 & 1<=m & n=k & not((0<=m & n<k))
+ res: SAT
+ -------------------- 
+ id: 360<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:SAT:{[self, m, n, k] : ((((self = 1) & ((n = k) & (m = 0))) &  (not (((0 <= m) & (n < k)))) ))};
+ raw result:{[1,0,n,n]}
+ Sat:  self=1 & n=k & m=0 & not((0<=m & n<k))
+ res: SAT
+ -------------------- 
+ id: 361<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck ({[n, k, m] : (((1 <= m) & (n = k)))} union {[n, k, m] : (((n = k) & (m = 0)))});
+ raw result:{[n,n,m]: 0 <= m}
+ PairWise:  ((1<=m & n=k) | (n=k & m=0))
+ res:  k=n & 0<=m
+ -------------------- 
+ id: 362<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck ({[m, n, k] : (((k = n) & (0 <= m)))} union {[m, n, k] : (((0 <= m) & (n < k)))});
+ raw result:{[m,n,k]: n <= k && 0 <= m}
+ PairWise:  ((k=n & 0<=m) | (0<=m & n<k))
+ res:  n<=k & 0<=m
+ -------------------- 
+ id: 363<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Pred_Check_Inv
+ raw proof:IMPLY:complement {[n, k, m, self] : (( (not (((n <= k) & (0 <= m))))  | ((((k = n) & (self != 0)) & (0 <= m)) | (((n < k) & (0 <= m)) & (self != 0)))))};
+ raw result:{[n,k,m,0]: n <= k && 0 <= m}
+ Imply: ante: n<=k & 0<=m
+	     conseq:  ((k=n & self!=null & 0<=m) | (n<k & 0<=m & self!=null))
+ res: false
+ -------------------- 
+ id: 364<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_37:2_37:36; kind: Compute_Base_Case
+ raw proof:SIMPLIFY:{[m] : ( (exists (q: (exists (flted_37_24:((flted_37_24 + 1 = m) & (((q = 0) & (flted_37_24 = 0)) | ((1 <= flted_37_24) & (q > 0)))))) )) )};
+ raw result:{[1]} union {[m]: 2 <= m}
+ Simplify:  exists(q:exists(flted_37_24:flted_37_24+1=m & 
+                             (((q=null & flted_37_24=0) | 
+                               (1<=flted_37_24 & q!=null)))))
+ res:  (m=1 | 2<=m)
+ -------------------- 
+ id: 365<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_37:2_37:36; kind: Compute_Base_Case
+ raw proof:PAIRWISE:pairwisecheck {[m] : (((m = 1) | (2 <= m)))};
+ raw result:{[m]: 1 <= m}
+ PairWise:  (m=1 | 2<=m)
+ res:  1<=m
+ -------------------- 
+ id: 366<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_37:2_37:36; kind: Compute_Base_Case
+ raw proof:SIMPLIFY:{[] : ( (exists (v:(0 <= v))) )};
+ raw result:{ TRUE }
+ Simplify:  exists(v:0<=v)
+ res:  true
+ -------------------- 
+ id: 367<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_37:2_37:36; kind: Compute_Base_Case
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 368<-1; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_37:2_37:36; kind: Compute_Base_Case
+ raw proof:IMPLY:complement {[self] : (((self != 0) | (self <= 0)))};
+ raw result:{[self]  : FALSE }
+ Imply: ante: self=null
+	     conseq:  self=null
+ res: true
+ -------------------- 
+ id: 369<-1; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_37:2_37:36; kind: Compute_Base_Case
+ raw proof:SAT:{[m, self] : (((self = 0) & ((1 <= m) & (self > 0))))};
+ raw result:{[m,self]  : FALSE }
+ Sat:  self=null & 1<=m & self!=null
+ res: UNSAT
+ -------------------- 
+ id: 370<-1; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_37:2_37:36; kind: Compute_Base_Case
+ raw proof:IMPLY:complement {[m] : (((m != 0) | (m = 0)))};
+ raw result:{[m]  : FALSE }
+ Imply: ante: m=0
+	     conseq:  m=0
+ res: true
+ -------------------- 
+ id: 371<-1; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_37:2_37:36; kind: Compute_Base_Case
+ raw proof:SAT:{[m, self] : (((m = 0) & ((1 <= m) & (self > 0))))};
+ raw result:{[m,self]  : FALSE }
+ Sat:  m=0 & 1<=m & self!=null
+ res: UNSAT
+ -------------------- 
+ id: 372<-1; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_32:5_32:41; kind: Compute_Base_Case
+ raw proof:SIMPLIFY:{[p, n] : ( (exists (q: (exists (flted_32_26:((((p = q) & (flted_32_26 = 0)) | ((1 <= flted_32_26) & (q > 0))) & (flted_32_26 + 1 = n)))) )) )};
+ raw result:{[p,1]} union {[p,n]: 2 <= n}
+ Simplify:  exists(q:exists(flted_32_26:(((p=q & flted_32_26=0) | 
+                               (1<=flted_32_26 & q!=null))) & 
+                             flted_32_26+1=n))
+ res:  (n=1 | 2<=n)
+ -------------------- 
+ id: 373<-1; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_32:5_32:41; kind: Compute_Base_Case
+ raw proof:PAIRWISE:pairwisecheck {[n] : (((n = 1) | (2 <= n)))};
+ raw result:{[n]: 1 <= n}
+ PairWise:  (n=1 | 2<=n)
+ res:  1<=n
+ -------------------- 
+ id: 374<-1; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_32:5_32:41; kind: Compute_Base_Case
+ raw proof:SIMPLIFY:{[] : ( (exists (v:(0 < v))) )};
+ raw result:{ TRUE }
+ Simplify:  exists(v:0<v)
+ res:  true
+ -------------------- 
+ id: 375<-1; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_32:5_32:41; kind: Compute_Base_Case
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 376<-1; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_32:5_32:41; kind: Compute_Base_Case
+ raw proof:IMPLY:complement {[self, p] : (((self != p) | (self = p)))};
+ raw result:{[self,p]  : FALSE }
+ Imply: ante: self=p
+	     conseq:  self=p
+ res: true
+ -------------------- 
+ id: 377<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_32:5_32:41; kind: Compute_Base_Case
+ raw proof:SAT:{[p, n, self] : (((self = p) & ((1 <= n) & (self > 0))))};
+ raw result:{[p,n,p]: 1 <= n && 1 <= p}
+ Sat:  self=p & 1<=n & self!=null
+ res: SAT
+ -------------------- 
+ id: 378<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_32:5_32:41; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Imply: ante: n=0
+	     conseq:  n=0
+ res: true
+ -------------------- 
+ id: 379<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_32:5_32:41; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  n=0 & 1<=n & self!=null
+ res: UNSAT
+ -------------------- 
+ id: 380<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Compute_Base_Case
+ raw proof:SIMPLIFY:{[] : ( (exists (q:(q = 0))) )};
+ raw result:{ TRUE }
+ Simplify:  exists(q:q=null)
+ res:  true
+ -------------------- 
+ id: 381<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Compute_Base_Case
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 382<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Compute_Base_Case
+ raw proof:SIMPLIFY:{[] : ( (exists (q:(q > 0))) )};
+ raw result:{ TRUE }
+ Simplify:  exists(q:q!=null)
+ res:  true
+ -------------------- 
+ id: 383<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Compute_Base_Case
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 384<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_27:5_27:47; kind: Compute_Base_Case
+ raw proof:SIMPLIFY:{[] : ( (exists (q:(q > 0))) )};
+ raw result:{ TRUE }
+ Simplify:  exists(q:q!=null)
+ res:  true
+ -------------------- 
+ id: 385<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_27:5_27:47; kind: Compute_Base_Case
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 386<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_27:5_27:47; kind: Compute_Base_Case
+ raw proof:SIMPLIFY:{[] : ( (exists (q:(q > 0))) )};
+ raw result:{ TRUE }
+ Simplify:  exists(q:q!=null)
+ res:  true
+ -------------------- 
+ id: 387<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_27:5_27:47; kind: Compute_Base_Case
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 388<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_27:5_27:47; kind: Compute_Base_Case
+ raw proof:SIMPLIFY:{[] : ( (exists (v:(0 < v))) )};
+ raw result:{ TRUE }
+ Simplify:  exists(v:0<v)
+ res:  true
+ -------------------- 
+ id: 389<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_27:5_27:47; kind: Compute_Base_Case
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 390<-1; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_27:5_27:47; kind: Compute_Base_Case
+ raw proof:IMPLY:complement {[m] : (( (not (((m = 0) | (1 <= m))))  | ((m = 0) | (1 <= m))))};
+ raw result:{[m]  : FALSE }
+ Imply: ante: (m=0 | 1<=m)
+	     conseq:  (m=0 | 1<=m)
+ res: true
+ -------------------- 
+ id: 391<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_27:5_27:47; kind: Compute_Base_Case
+ raw proof:SAT:{[m, n, k, self] : ((((m = 0) | (1 <= m)) & (((((k = 1 + n) & (0 <= m)) | ((1 + n < k) & (0 <= m))) & (n < k)) & (self > 0))))};
+ raw result: {[m,n,k,self]: n <= k-2 && 1 <= self && 1 <= m}
+ Sat:  ((m=0 | 1<=m)) & (((k=1+n & 0<=m) | ((1+n)<k & 0<=m))) & n<k & self!=null
+ res: SAT
+ -------------------- 
+ id: 392<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_27:5_27:47; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Imply: ante: n=k
+	     conseq:  n=k
+ res: true
+ -------------------- 
+ id: 393<-1; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_27:5_27:47; kind: Compute_Base_Case
+ raw proof:SAT:{[m, n, k, self] : (((n = k) & (((((k = 1 + n) & (0 <= m)) | ((1 + n < k) & (0 <= m))) & (n < k)) & (self > 0))))};
+ raw result:{[m,n,k,self]  : FALSE }
+ Sat:  n=k & (((k=1+n & 0<=m) | ((1+n)<k & 0<=m))) & n<k & self!=null
+ res: UNSAT
+ -------------------- 
+ id: 394<-1; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_27:5_27:47; kind: Compute_Base_Case
+ raw proof:IMPLY:complement {[self] : (((self <= 0) | (self != 0)))};
+ raw result:{[self]  : FALSE }
+ Imply: ante: self!=null
+	     conseq:  self!=null
+ res: true
+ -------------------- 
+ id: 395<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_27:5_27:47; kind: Compute_Base_Case
+ raw proof:SAT:{[m, n, k, self] : (((self > 0) & (((((k = 1 + n) & (0 <= m)) | ((1 + n < k) & (0 <= m))) & (n < k)) & (self > 0))))};
+ raw result: {[m,n,k,self]: n <= k-2 && 1 <= self && 0 <= m}
+ Sat:  self!=null & (((k=1+n & 0<=m) | ((1+n)<k & 0<=m))) & n<k & self!=null
+ res: SAT
+ -------------------- 
+ id: 396<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_37:2_37:36; kind: Sat_Warning
+ raw proof:SAT:{[m, self] : ((( (exists (q: (exists (flted_37_24:((flted_37_24 + 1 = m) & (((q = 0) & (flted_37_24 = 0)) | ((1 <= flted_37_24) & (q > 0)))))) ))  &  (exists (v:(0 <= v))) ) & (self = 1)))};
+ raw result: {[m,1]: 2 <= m}
+ Sat:  exists(q:exists(flted_37_24:flted_37_24+1=m & 
+                             (((q=null & flted_37_24=0) | 
+                               (1<=flted_37_24 & q!=null))))) & 
+ exists(v:0<=v) & self=1
+ res: SAT
+ -------------------- 
+ id: 397<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_37:2_37:36; kind: Sat_Warning
+ raw proof:SAT:{[self, m] : (((self = 0) & (m = 0)))};
+ raw result:{[0,0]}
+ Sat:  self=null & m=0
+ res: SAT
+ -------------------- 
+ id: 398<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_37:2_37:36; kind: Sat_Warning
+ raw proof:SAT:{[m, q, v, self] : ((( (exists (flted_37_24:((flted_37_24 + 1 = m) & (((q = 0) & (flted_37_24 = 0)) | ((1 <= flted_37_24) & (q > 0))))))  & (0 <= v)) & (self = 1)))};
+ raw result: {[m,q,v,1]: 0 <= v && 2 <= m && 1 <= q}
+ Sat:  exists(flted_37_24:flted_37_24+1=m & 
+                    (((q=null & flted_37_24=0) | (1<=flted_37_24 & q!=null)))) & 
+ 0<=v & self=1
+ res: SAT
+ -------------------- 
+ id: 399<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_32:5_32:41; kind: Sat_Warning
+ raw proof:SAT:{[p, n, self] : ((( (exists (q: (exists (flted_32_26:((((p = q) & (flted_32_26 = 0)) | ((1 <= flted_32_26) & (q > 0))) & (flted_32_26 + 1 = n)))) ))  &  (exists (v:(0 < v))) ) & (self = 1)))};
+ raw result: {[p,n,1]: 2 <= n}
+ Sat:  exists(q:exists(flted_32_26:(((p=q & flted_32_26=0) | 
+                               (1<=flted_32_26 & q!=null))) & 
+                             flted_32_26+1=n)) & 
+ exists(v:0<v) & self=1
+ res: SAT
+ -------------------- 
+ id: 400<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_32:5_32:41; kind: Sat_Warning
+ raw proof:SAT:{[self, p, n] : (((self = p) & (n = 0)))};
+ raw result:{[self,self,0]}
+ Sat:  self=p & n=0
+ res: SAT
+ -------------------- 
+ id: 401<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_32:5_32:41; kind: Sat_Warning
+ raw proof:SAT:{[p, q, n, v, self] : ((( (exists (flted_32_26:((((p = q) & (flted_32_26 = 0)) | ((1 <= flted_32_26) & (q > 0))) & (flted_32_26 + 1 = n))))  & (0 < v)) & (self = 1)))};
+ raw result: {[p,q,n,v,1]: 1 <= v && 2 <= n && 1 <= q}
+ Sat:  exists(flted_32_26:(((p=q & flted_32_26=0) | (1<=flted_32_26 & q!=null))) & 
+                    flted_32_26+1=n) & 
+ 0<v & self=1
+ res: SAT
+ -------------------- 
+ id: 402<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_26:2_26:33; kind: Sat_Warning
+ raw proof:SAT:{[m, n, k, self] : ((((( (exists (q:(q = 0)))  & (m = 0)) | ( (exists (q:(q > 0)))  & (1 <= m))) & (n = k)) & (self = 1)))};
+ raw result: {[m,n,n,1]: 1 <= m}
+ Sat:  (((exists(q:q=null) & m=0) | (exists(q:q!=null) & 1<=m))) & n=k & self=1
+ res: SAT
+ -------------------- 
+ id: 403<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_27:5_27:47; kind: Sat_Warning
+ raw proof:SAT:{[m, n, k, self] : ((((((( (exists (q:(q > 0)))  & (k = 1 + n)) & (0 <= m)) | (( (exists (q:(q > 0)))  & (1 + n < k)) & (0 <= m))) &  (exists (v:(0 < v))) ) & (n < k)) & (self = 1)))};
+ raw result: {[m,n,k,1]: n <= k-2 && 0 <= m}
+ Sat:  (((exists(q:q!=null) & k=1+n & 0<=m) | (exists(q:q!=null) & (1+n)<k & 0<=m))) & 
+ exists(v:0<v) & n<k & self=1
+ res: SAT
+ -------------------- 
+ id: 404<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_27:5_27:47; kind: Sat_Warning
+ raw proof:SAT:{[m, q, n, k, self] : ((((((q = 0) & (m = 0)) | ((1 <= m) & (q > 0))) & (n = k)) & (self = 1)))};
+ raw result: {[m,q,n,n,1]: 1 <= m && 1 <= q}
+ Sat:  (((q=null & m=0) | (1<=m & q!=null))) & n=k & self=1
+ res: SAT
+ -------------------- 
+ id: 405<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_27:5_27:47; kind: Sat_Warning
+ raw proof:SAT:{[m, v, n, k, self, q] : (((((((((k = 1 + n) & (q > 0)) & (0 <= m)) | (((1 + n < k) & (0 <= m)) & (q > 0))) & (0 < v)) & (n < k)) & (self = 1)) & (self != q)))};
+ raw result: {[m,v,n,k,1,q]: n <= k-2 && 1 <= v && 2 <= q && 0 <= m}
+ Sat:  (((k=1+n & q!=null & 0<=m) | ((1+n)<k & 0<=m & q!=null))) & 0<v & n<k & 
+ self=1 & self!=q
+ res: SAT
+ -------------------- 
+ id: 406<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_73:8_73:18; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[] : (((0>0)))};
+ raw result:{ TRUE }
+ Imply: ante: true
+	     conseq:  Term[36]
+ res: false
+ -------------------- 
+ id: 407<-1; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_73:8_73:18; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[n, k, m, s, sPRMD] : (( (not (((sPRMD = s) & ((((k = n) & (s > 0)) & (0 <= m)) | (((n < k) & (0 <= m)) & (s > 0))))))  | (sPRMD != 0)))};
+ raw result:{[n,k,m,s,sPRMD]  : FALSE }
+ Imply: ante: s'=s & (((k=n & s!=null & 0<=m) | (n<k & 0<=m & s!=null)))
+	     conseq:  s'!=null
+ res: true
+ -------------------- 
+ id: 408<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_73:8_73:18; kind: Early_Contra_Detect
+ raw proof:SAT:{[] : (((0=0)))};
+ raw result:{ TRUE }
+ Sat:  Term[36]
+ res: SAT
+ -------------------- 
+ id: 409<6; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_73:8_73:18; kind: PRE
+ raw proof:SAT:{[flted_26_1626, n, k, m, sPRMD, s, m_1625, q_1627] : ((((((flted_26_1626 = 0) & (n = k)) & (m_1625 = m)) & (sPRMD = s)) & ((s = 1) & (((q_1627 = 0) & (m_1625 = 0)) | ((1 <= m_1625) & (q_1627 > 0))))))};
+ raw result: {[0,n,n,m,1,1,m,q_1627]: 1 <= m && 1 <= q_1627}
+ Sat:  flted_26_1626=0 & n=k & m_1625=m & s'=s & s=1 & 
+ (((q_1627=null & m_1625=0) | (1<=m_1625 & q_1627!=null)))
+ res: SAT
+ -------------------- 
+ id: 410<6; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_73:8_73:18; kind: PRE
+ raw proof:SAT:{[v_1631, n, k, m, sPRMD, flted_27_1630, k_1628, m_1629, s, q_1632] : ((((((flted_27_1630 = 1 + n) & ((0 < v_1631) & (n < k))) & ((k_1628 = k) & (m_1629 = m))) & (sPRMD = s)) & (((s = 1) & ((((k_1628 = flted_27_1630) & (q_1632 > 0)) & (0 <= m_1629)) | (((flted_27_1630 < k_1628) & (0 <= m_1629)) & (q_1632 > 0)))) & (s != q_1632))))};
+ raw result: {[v_1631,n,k,m,1,n+1,k,m,1,q_1632]: n <= k-2 && 1 <= v_1631 && 2 <= q_1632 && 0 <= m}
+ Sat:  flted_27_1630=1+n & 0<v_1631 & n<k & k_1628=k & m_1629=m & s'=s & s=1 & 
+ (((k_1628=flted_27_1630 & q_1632!=null & 0<=m_1629) | 
+   (flted_27_1630<k_1628 & 0<=m_1629 & q_1632!=null))) & 
+ s!=q_1632
+ res: SAT
+ -------------------- 
+ id: 411<6; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_73:8_73:18; kind: PRE
+ raw proof:SAT:{[v_1631, n, k, m, sPRMD, flted_27_1630, k_1628, m_1629, s, q_1632] : ((((((flted_27_1630 = 1 + n) & ((0 < v_1631) & (n < k))) & ((k_1628 = k) & (m_1629 = m))) & (sPRMD = s)) & (((s = 1) & ((((k_1628 = flted_27_1630) & (q_1632 > 0)) & (0 <= m_1629)) | (((flted_27_1630 < k_1628) & (0 <= m_1629)) & (q_1632 > 0)))) & (s != q_1632))))};
+ raw result: {[v_1631,n,k,m,1,n+1,k,m,1,q_1632]: n <= k-2 && 1 <= v_1631 && 2 <= q_1632 && 0 <= m}
+ Sat:  flted_27_1630=1+n & 0<v_1631 & n<k & k_1628=k & m_1629=m & s'=s & s=1 & 
+ (((k_1628=flted_27_1630 & q_1632!=null & 0<=m_1629) | 
+   (flted_27_1630<k_1628 & 0<=m_1629 & q_1632!=null))) & 
+ s!=q_1632
+ res: SAT
+ -------------------- 
+ id: 412<6; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_73:8_73:18; kind: PRE
+ raw proof:SAT:{[flted_26_1626, n, k, m, sPRMD, s, m_1625, q_1627] : ((((((flted_26_1626 = 0) & (n = k)) & (m_1625 = m)) & (sPRMD = s)) & ((s = 1) & (((q_1627 = 0) & (m_1625 = 0)) | ((1 <= m_1625) & (q_1627 > 0))))))};
+ raw result: {[0,n,n,m,1,1,m,q_1627]: 1 <= m && 1 <= q_1627}
+ Sat:  flted_26_1626=0 & n=k & m_1625=m & s'=s & s=1 & 
+ (((q_1627=null & m_1625=0) | (1<=m_1625 & q_1627!=null)))
+ res: SAT
+ -------------------- 
+ id: 413<6; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_73:8_73:18; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[] : (((0>0)))};
+ raw result:{ TRUE }
+ Imply: ante: true
+	     conseq:  Term[36]
+ res: false
+ -------------------- 
+ id: 414<6; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_73:8_73:18; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[s, sPRMD] : (( (not (((sPRMD = s) & (s = 2))))  | (sPRMD != 0)))};
+ raw result:{[s,sPRMD]  : FALSE }
+ Imply: ante: s'=s & s=2
+	     conseq:  s'!=null
+ res: true
+ -------------------- 
+ id: 415<6; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_73:8_73:18; kind: Early_Contra_Detect
+ raw proof:SAT:{[] : (((0=0)))};
+ raw result:{ TRUE }
+ Sat:  Term[36]
+ res: SAT
+ -------------------- 
+ id: 416<8; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_73:8_73:18; kind: PRE
+ raw proof:SAT:{[q, v, flted_26_1634, n, k, m, sPRMD, s, m_1633, q_1635] : ((((((((q = q_1635) & (v = flted_26_1634)) & (flted_26_1634 = 0)) & (n = k)) & (m_1633 = m)) & (sPRMD = s)) & (((q_1635 = 0) & (m_1633 = 0)) | ((1 <= m_1633) & (q_1635 > 0)))))};
+ raw result: {[q,0,0,n,n,m,sPRMD,sPRMD,m,q]: 1 <= m && 1 <= q}
+ Sat:  q=q_1635 & v=flted_26_1634 & flted_26_1634=0 & n=k & m_1633=m & s'=s & 
+ (((q_1635=null & m_1633=0) | (1<=m_1633 & q_1635!=null)))
+ res: SAT
+ -------------------- 
+ id: 417<6; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_73:8_73:18; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[] : (((0>0)))};
+ raw result:{ TRUE }
+ Imply: ante: true
+	     conseq:  Term[36]
+ res: false
+ -------------------- 
+ id: 418<6; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_73:8_73:18; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[s, sPRMD] : (( (not (((sPRMD = s) & (s = 1))))  | (sPRMD != 0)))};
+ raw result:{[s,sPRMD]  : FALSE }
+ Imply: ante: s'=s & s=1
+	     conseq:  s'!=null
+ res: true
+ -------------------- 
+ id: 419<6; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_73:8_73:18; kind: Early_Contra_Detect
+ raw proof:SAT:{[] : (((0=0)))};
+ raw result:{ TRUE }
+ Sat:  Term[36]
+ res: SAT
+ -------------------- 
+ id: 420<10; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_73:8_73:18; kind: PRE
+ raw proof:SAT:{[q, v, v_1640, n, k, m, sPRMD, s, flted_27_1639, k_1637, m_1638, q_1641] : ((((((((((q = q_1641) & (v = v_1640)) & (flted_27_1639 = 1 + n)) & (0 < v_1640)) & (n < k)) & (k_1637 = k)) & (m_1638 = m)) & (sPRMD = s)) & ((((k_1637 = flted_27_1639) & (q_1641 > 0)) & (0 <= m_1638)) | (((flted_27_1639 < k_1637) & (0 <= m_1638)) & (q_1641 > 0)))))};
+ raw result: {[q,v,v,n,k,m,sPRMD,sPRMD,n+1,k,m,q]: n <= k-2 && 1 <= v && 1 <= q && 0 <= m}
+ Sat:  q=q_1641 & v=v_1640 & flted_27_1639=1+n & 0<v_1640 & n<k & k_1637=k & 
+ m_1638=m & s'=s & 
+ (((k_1637=flted_27_1639 & q_1641!=null & 0<=m_1638) | 
+   (flted_27_1639<k_1637 & 0<=m_1638 & q_1641!=null)))
+ res: SAT
+ -------------------- 
+ id: 421<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_73:8_73:18; kind: Lemma_Prop
+ raw proof:SAT:{[sPRMD, s, m, n, k, flted_26_1634, q, res, v, m_1633, q_1635] : (((((((((sPRMD = s) & (m_1633 = m)) & (n = k)) & (flted_26_1634 = 0)) & (v = flted_26_1634)) & (q = q_1635)) & (res = v)) & (((q_1635 = 0) & (m_1633 = 0)) | ((1 <= m_1633) & (q_1635 > 0)))))};
+ raw result: {[sPRMD,sPRMD,m,n,n,0,q,0,0,m,q]: 1 <= m && 1 <= q}
+ Sat:  s'=s & m_1633=m & n=k & flted_26_1634=0 & v=flted_26_1634 & q=q_1635 & 
+ res=v & (((q_1635=null & m_1633=0) | (1<=m_1633 & q_1635!=null)))
+ res: SAT
+ -------------------- 
+ id: 422<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_73:8_73:18; kind: Lemma_Prop
+ raw proof:SAT:{[sPRMD, s, m, k, n, v_1640, q, res, v, flted_27_1639, k_1637, m_1638, q_1641] : (((((((((((sPRMD = s) & (m_1638 = m)) & (k_1637 = k)) & (n < k)) & (0 < v_1640)) & (flted_27_1639 = 1 + n)) & (v = v_1640)) & (q = q_1641)) & (res = v)) & ((((k_1637 = flted_27_1639) & (q_1641 > 0)) & (0 <= m_1638)) | (((flted_27_1639 < k_1637) & (0 <= m_1638)) & (q_1641 > 0)))))};
+ raw result: {[sPRMD,sPRMD,m,k,n,v_1640,q,v_1640,v_1640,n+1,k,m,q]: n <= k-2 && 1 <= v_1640 && 1 <= q && 0 <= m}
+ Sat:  s'=s & m_1638=m & k_1637=k & n<k & 0<v_1640 & flted_27_1639=1+n & 
+ v=v_1640 & q=q_1641 & res=v & 
+ (((k_1637=flted_27_1639 & q_1641!=null & 0<=m_1638) | 
+   (flted_27_1639<k_1637 & 0<=m_1638 & q_1641!=null)))
+ res: SAT
+ -------------------- 
+ id: 423<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_74:6_74:10; kind: PRE
+ raw proof:SAT:{[sPRMD, m, n, k, flted_26_1634, q, v, xPRMD, v_int_74_1555PRMD, s, m_1633, q_1635] : (((((((((((sPRMD = s) & (m_1633 = m)) & (n = k)) & (flted_26_1634 = 0)) & (v = flted_26_1634)) & (q = q_1635)) & (xPRMD = v)) & (v_int_74_1555PRMD = 0)) & (xPRMD = v_int_74_1555PRMD)) & ((s = 1) & (((q_1635 = 0) & (m_1633 = 0)) | ((1 <= m_1633) & (q_1635 > 0))))))};
+ raw result: {[1,m,n,n,0,q,0,0,0,1,m,q]: 1 <= m && 1 <= q}
+ Sat:  s'=s & m_1633=m & n=k & flted_26_1634=0 & v=flted_26_1634 & q=q_1635 & 
+ x'=v & v_int_74_1555'=0 & x'=v_int_74_1555' & s=1 & 
+ (((q_1635=null & m_1633=0) | (1<=m_1633 & q_1635!=null)))
+ res: SAT
+ -------------------- 
+ id: 424<11; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_74:6_74:10; kind: PRE
+ raw proof:SAT:{[sPRMD, m, n, k, flted_26_1634, q, v, xPRMD, v_int_74_1555PRMD, s, m_1633, q_1635] : (((((((((((sPRMD = s) & (m_1633 = m)) & (n = k)) & (flted_26_1634 = 0)) & (v = flted_26_1634)) & (q = q_1635)) & (xPRMD = v)) & (v_int_74_1555PRMD = 0)) & (xPRMD = v_int_74_1555PRMD)) & ((s = 1) & (((q_1635 = 0) & (m_1633 = 0)) | ((1 <= m_1633) & (q_1635 > 0))))))};
+ raw result: {[1,m,n,n,0,q,0,0,0,1,m,q]: 1 <= m && 1 <= q}
+ Sat:  s'=s & m_1633=m & n=k & flted_26_1634=0 & v=flted_26_1634 & q=q_1635 & 
+ x'=v & v_int_74_1555'=0 & x'=v_int_74_1555' & s=1 & 
+ (((q_1635=null & m_1633=0) | (1<=m_1633 & q_1635!=null)))
+ res: SAT
+ -------------------- 
+ id: 425<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_74:6_74:10; kind: Lemma_Prop
+ raw proof:SAT:{[v_int_74_1555PRMD, xPRMD, q, v, flted_26_1634, n, k, m, sPRMD, res, s, m_1633, q_1635] : ((((((((((((xPRMD = v_int_74_1555PRMD) & (v_int_74_1555PRMD = 0)) & (xPRMD = v)) & (q = q_1635)) & (v = flted_26_1634)) & (flted_26_1634 = 0)) & (n = k)) & (m_1633 = m)) & (sPRMD = s)) &  (not ((res > 0))) ) & ((s = 1) & (((q_1635 = 0) & (m_1633 = 0)) | ((1 <= m_1633) & (q_1635 > 0))))))};
+ raw result: {[0,0,q,0,0,n,n,m,1,res,1,m,q]: res <= 0 && 1 <= m && 1 <= q}
+ Sat:  x'=v_int_74_1555' & v_int_74_1555'=0 & x'=v & q=q_1635 & v=flted_26_1634 & 
+ flted_26_1634=0 & n=k & m_1633=m & s'=s & not(res) & s=1 & 
+ (((q_1635=null & m_1633=0) | (1<=m_1633 & q_1635!=null)))
+ res: SAT
+ -------------------- 
+ id: 426<-1; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_74:6_74:10; kind: PRE
+ raw proof:SAT:{[sPRMD, m, n, k, flted_26_1634, q, v, xPRMD, v_int_74_1555PRMD, s, m_1633, q_1635] : (((((((((((sPRMD = s) & (m_1633 = m)) & (n = k)) & (flted_26_1634 = 0)) & (v = flted_26_1634)) & (q = q_1635)) & (xPRMD = v)) & (v_int_74_1555PRMD = 0)) & (xPRMD != v_int_74_1555PRMD)) & ((s = 1) & (((q_1635 = 0) & (m_1633 = 0)) | ((1 <= m_1633) & (q_1635 > 0))))))};
+ raw result:{[sPRMD,m,n,k,flted_26_1634,q,v,xPRMD,v_int_74_1555PRMD,s,m_1633,q_1635]  : FALSE }
+ Sat:  s'=s & m_1633=m & n=k & flted_26_1634=0 & v=flted_26_1634 & q=q_1635 & 
+ x'=v & v_int_74_1555'=0 & x'!=v_int_74_1555' & s=1 & 
+ (((q_1635=null & m_1633=0) | (1<=m_1633 & q_1635!=null)))
+ res: UNSAT
+ -------------------- 
+ id: 427<-1; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_74:6_74:10; kind: PRE
+ raw proof:SAT:{[sPRMD, m, k, n, v_1640, q, v, xPRMD, v_int_74_1555PRMD, flted_27_1639, k_1637, m_1638, s, q_1641] : (((((((((((((sPRMD = s) & (m_1638 = m)) & (k_1637 = k)) & (n < k)) & (0 < v_1640)) & (flted_27_1639 = 1 + n)) & (v = v_1640)) & (q = q_1641)) & (xPRMD = v)) & (v_int_74_1555PRMD = 0)) & (xPRMD = v_int_74_1555PRMD)) & (((s = 1) & ((((k_1637 = flted_27_1639) & (q_1641 > 0)) & (0 <= m_1638)) | (((flted_27_1639 < k_1637) & (0 <= m_1638)) & (q_1641 > 0)))) & (s != q_1641))))};
+ raw result:{[sPRMD,m,k,n,v_1640,q,v,xPRMD,v_int_74_1555PRMD,flted_27_1639,k_1637,m_1638,s,q_1641]  : FALSE }
+ Sat:  s'=s & m_1638=m & k_1637=k & n<k & 0<v_1640 & flted_27_1639=1+n & 
+ v=v_1640 & q=q_1641 & x'=v & v_int_74_1555'=0 & x'=v_int_74_1555' & s=1 & 
+ (((k_1637=flted_27_1639 & q_1641!=null & 0<=m_1638) | 
+   (flted_27_1639<k_1637 & 0<=m_1638 & q_1641!=null))) & 
+ s!=q_1641
+ res: UNSAT
+ -------------------- 
+ id: 428<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_74:6_74:10; kind: PRE
+ raw proof:SAT:{[sPRMD, m, k, n, v_1640, q, v, xPRMD, v_int_74_1555PRMD, flted_27_1639, k_1637, m_1638, s, q_1641] : (((((((((((((sPRMD = s) & (m_1638 = m)) & (k_1637 = k)) & (n < k)) & (0 < v_1640)) & (flted_27_1639 = 1 + n)) & (v = v_1640)) & (q = q_1641)) & (xPRMD = v)) & (v_int_74_1555PRMD = 0)) & (xPRMD != v_int_74_1555PRMD)) & (((s = 1) & ((((k_1637 = flted_27_1639) & (q_1641 > 0)) & (0 <= m_1638)) | (((flted_27_1639 < k_1637) & (0 <= m_1638)) & (q_1641 > 0)))) & (s != q_1641))))};
+ raw result: {[1,m,k,n,v_1640,q,v_1640,v_1640,0,n+1,k,m,1,q]: n <= k-2 && 1 <= v_1640 && 2 <= q && 0 <= m}
+ Sat:  s'=s & m_1638=m & k_1637=k & n<k & 0<v_1640 & flted_27_1639=1+n & 
+ v=v_1640 & q=q_1641 & x'=v & v_int_74_1555'=0 & x'!=v_int_74_1555' & s=1 & 
+ (((k_1637=flted_27_1639 & q_1641!=null & 0<=m_1638) | 
+   (flted_27_1639<k_1637 & 0<=m_1638 & q_1641!=null))) & 
+ s!=q_1641
+ res: SAT
+ -------------------- 
+ id: 429<12; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_74:6_74:10; kind: PRE
+ raw proof:SAT:{[sPRMD, m, k, n, v_1640, q, v, xPRMD, v_int_74_1555PRMD, flted_27_1639, k_1637, m_1638, s, q_1641] : (((((((((((((sPRMD = s) & (m_1638 = m)) & (k_1637 = k)) & (n < k)) & (0 < v_1640)) & (flted_27_1639 = 1 + n)) & (v = v_1640)) & (q = q_1641)) & (xPRMD = v)) & (v_int_74_1555PRMD = 0)) & (xPRMD != v_int_74_1555PRMD)) & (((s = 1) & ((((k_1637 = flted_27_1639) & (q_1641 > 0)) & (0 <= m_1638)) | (((flted_27_1639 < k_1637) & (0 <= m_1638)) & (q_1641 > 0)))) & (s != q_1641))))};
+ raw result: {[1,m,k,n,v_1640,q,v_1640,v_1640,0,n+1,k,m,1,q]: n <= k-2 && 1 <= v_1640 && 2 <= q && 0 <= m}
+ Sat:  s'=s & m_1638=m & k_1637=k & n<k & 0<v_1640 & flted_27_1639=1+n & 
+ v=v_1640 & q=q_1641 & x'=v & v_int_74_1555'=0 & x'!=v_int_74_1555' & s=1 & 
+ (((k_1637=flted_27_1639 & q_1641!=null & 0<=m_1638) | 
+   (flted_27_1639<k_1637 & 0<=m_1638 & q_1641!=null))) & 
+ s!=q_1641
+ res: SAT
+ -------------------- 
+ id: 430<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_74:6_74:10; kind: Lemma_Prop
+ raw proof:SAT:{[v_int_74_1555PRMD, xPRMD, q, v, v_1640, n, k, m, sPRMD, res, flted_27_1639, k_1637, m_1638, s, q_1641] : ((((((((((((((xPRMD != v_int_74_1555PRMD) & (v_int_74_1555PRMD = 0)) & (xPRMD = v)) & (q = q_1641)) & (v = v_1640)) & (flted_27_1639 = 1 + n)) & (0 < v_1640)) & (n < k)) & (k_1637 = k)) & (m_1638 = m)) & (sPRMD = s)) & (res > 0)) & (((s = 1) & ((((k_1637 = flted_27_1639) & (q_1641 > 0)) & (0 <= m_1638)) | (((flted_27_1639 < k_1637) & (0 <= m_1638)) & (q_1641 > 0)))) & (s != q_1641))))};
+ raw result: {[0,xPRMD,q,xPRMD,xPRMD,n,k,m,1,res,n+1,k,m,1,q]: n <= k-2 && 1 <= xPRMD && 1 <= res && 2 <= q && 0 <= m}
+ Sat:  x'!=v_int_74_1555' & v_int_74_1555'=0 & x'=v & q=q_1641 & v=v_1640 & 
+ flted_27_1639=1+n & 0<v_1640 & n<k & k_1637=k & m_1638=m & s'=s & res & 
+ s=1 & 
+ (((k_1637=flted_27_1639 & q_1641!=null & 0<=m_1638) | 
+   (flted_27_1639<k_1637 & 0<=m_1638 & q_1641!=null))) & 
+ s!=q_1641
+ res: SAT
+ -------------------- 
+ id: 431<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_74:2_77:3; kind: If_Stmt
+ raw proof:SAT:{[xPRMD, q, v, v_1640, n, k, m, sPRMD, v_bool_74_1560PRMD, flted_27_1639, k_1637, m_1638, s, q_1641] : ((((((((((((((xPRMD != 0) & (xPRMD = v)) & (q = q_1641)) & (v = v_1640)) & (flted_27_1639 = 1 + n)) & (0 < v_1640)) & (n < k)) & (k_1637 = k)) & (m_1638 = m)) & (sPRMD = s)) & (v_bool_74_1560PRMD > 0)) & (v_bool_74_1560PRMD > 0)) & (((s = 1) & ((((k_1637 = flted_27_1639) & (q_1641 > 0)) & (0 <= m_1638)) | (((flted_27_1639 < k_1637) & (0 <= m_1638)) & (q_1641 > 0)))) & (s != q_1641))))};
+ raw result: {[xPRMD,q,xPRMD,xPRMD,n,k,m,1,v_bool_74_1560PRMD,n+1,k,m,1,q]: n <= k-2 && 1 <= xPRMD && 1 <= v_bool_74_1560PRMD && 2 <= q && 0 <= m}
+ Sat:  x'!=0 & x'=v & q=q_1641 & v=v_1640 & flted_27_1639=1+n & 0<v_1640 & n<k & 
+ k_1637=k & m_1638=m & s'=s & v_bool_74_1560' & v_bool_74_1560' & s=1 & 
+ (((k_1637=flted_27_1639 & q_1641!=null & 0<=m_1638) | 
+   (flted_27_1639<k_1637 & 0<=m_1638 & q_1641!=null))) & 
+ s!=q_1641
+ res: SAT
+ -------------------- 
+ id: 432<-1; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_74:2_77:3; kind: If_Stmt
+ raw proof:SAT:{[xPRMD, q, v, flted_26_1634, n, k, m, sPRMD, v_bool_74_1560PRMD, s, m_1633, q_1635] : ((((((((((((xPRMD = 0) & (xPRMD = v)) & (q = q_1635)) & (v = flted_26_1634)) & (flted_26_1634 = 0)) & (n = k)) & (m_1633 = m)) & (sPRMD = s)) &  (not ((v_bool_74_1560PRMD > 0))) ) & (v_bool_74_1560PRMD > 0)) & ((s = 1) & (((q_1635 = 0) & (m_1633 = 0)) | ((1 <= m_1633) & (q_1635 > 0))))))};
+ raw result:{[xPRMD,q,v,flted_26_1634,n,k,m,sPRMD,v_bool_74_1560PRMD,s,m_1633,q_1635]  : FALSE }
+ Sat:  x'=0 & x'=v & q=q_1635 & v=flted_26_1634 & flted_26_1634=0 & n=k & 
+ m_1633=m & s'=s & not(v_bool_74_1560') & v_bool_74_1560' & s=1 & 
+ (((q_1635=null & m_1633=0) | (1<=m_1633 & q_1635!=null)))
+ res: UNSAT
+ -------------------- 
+ id: 433<-1; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_74:2_77:3; kind: If_Stmt
+ raw proof:SAT:{[xPRMD, q, v, v_1640, n, k, m, sPRMD, v_bool_74_1560PRMD, flted_27_1639, k_1637, m_1638, s, q_1641] : ((((((((((((((xPRMD != 0) & (xPRMD = v)) & (q = q_1641)) & (v = v_1640)) & (flted_27_1639 = 1 + n)) & (0 < v_1640)) & (n < k)) & (k_1637 = k)) & (m_1638 = m)) & (sPRMD = s)) & (v_bool_74_1560PRMD > 0)) &  (not ((v_bool_74_1560PRMD > 0))) ) & (((s = 1) & ((((k_1637 = flted_27_1639) & (q_1641 > 0)) & (0 <= m_1638)) | (((flted_27_1639 < k_1637) & (0 <= m_1638)) & (q_1641 > 0)))) & (s != q_1641))))};
+ raw result:{[xPRMD,q,v,v_1640,n,k,m,sPRMD,v_bool_74_1560PRMD,flted_27_1639,k_1637,m_1638,s,q_1641]  : FALSE }
+ Sat:  x'!=0 & x'=v & q=q_1641 & v=v_1640 & flted_27_1639=1+n & 0<v_1640 & n<k & 
+ k_1637=k & m_1638=m & s'=s & v_bool_74_1560' & not(v_bool_74_1560') & s=1 & 
+ (((k_1637=flted_27_1639 & q_1641!=null & 0<=m_1638) | 
+   (flted_27_1639<k_1637 & 0<=m_1638 & q_1641!=null))) & 
+ s!=q_1641
+ res: UNSAT
+ -------------------- 
+ id: 434<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_74:2_77:3; kind: If_Stmt
+ raw proof:SAT:{[xPRMD, q, v, flted_26_1634, n, k, m, sPRMD, v_bool_74_1560PRMD, s, m_1633, q_1635] : ((((((((((((xPRMD = 0) & (xPRMD = v)) & (q = q_1635)) & (v = flted_26_1634)) & (flted_26_1634 = 0)) & (n = k)) & (m_1633 = m)) & (sPRMD = s)) &  (not ((v_bool_74_1560PRMD > 0))) ) &  (not ((v_bool_74_1560PRMD > 0))) ) & ((s = 1) & (((q_1635 = 0) & (m_1633 = 0)) | ((1 <= m_1633) & (q_1635 > 0))))))};
+ raw result: {[0,q,0,0,n,n,m,1,v_bool_74_1560PRMD,1,m,q]: v_bool_74_1560PRMD <= 0 && 1 <= m && 1 <= q}
+ Sat:  x'=0 & x'=v & q=q_1635 & v=flted_26_1634 & flted_26_1634=0 & n=k & 
+ m_1633=m & s'=s & not(v_bool_74_1560') & not(v_bool_74_1560') & s=1 & 
+ (((q_1635=null & m_1633=0) | (1<=m_1633 & q_1635!=null)))
+ res: SAT
+ -------------------- 
+ id: 435<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_75:8_75:17; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[] : (((0>0)))};
+ raw result:{ TRUE }
+ Imply: ante: true
+	     conseq:  Term[39]
+ res: false
+ -------------------- 
+ id: 436<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_75:8_75:17; kind: Early_Contra_Detect
+ raw proof:no proof raw result:no result
+ Imply: ante: s'=s & s=2
+	     conseq:  s'!=null
+ res: true
+ -------------------- 
+ id: 437<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_75:8_75:17; kind: Early_Contra_Detect
+ raw proof:SAT:{[] : (((0=0)))};
+ raw result:{ TRUE }
+ Sat:  Term[39]
+ res: SAT
+ -------------------- 
+ id: 438<14; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_75:8_75:17; kind: PRE
+ raw proof:SAT:{[q_1653, Anon_12, xPRMD, q, v, v_1640, n, k, m, sPRMD, s, v_bool_74_1560PRMD, flted_27_1639, k_1637, m_1638, q_1641] : (((((((((((((((q_1653 = q_1641) & (Anon_12 = v_1640)) & (xPRMD != 0)) & (xPRMD = v)) & (q = q_1641)) & (v = v_1640)) & (flted_27_1639 = 1 + n)) & (0 < v_1640)) & (n < k)) & (k_1637 = k)) & (m_1638 = m)) & (sPRMD = s)) & (v_bool_74_1560PRMD > 0)) & ((((k_1637 = flted_27_1639) & (q_1641 > 0)) & (0 <= m_1638)) | (((flted_27_1639 < k_1637) & (0 <= m_1638)) & (q_1641 > 0)))))};
+ raw result: {[q_1653,Anon_12,Anon_12,q_1653,Anon_12,Anon_12,n,k,m,sPRMD,sPRMD,v_bool_74_1560PRMD,n+1,k,m,q_1653]: n <= k-2 && 1 <= Anon_12 && 1 <= v_bool_74_1560PRMD && 1 <= q_1653 && 0 <= m}
+ Sat:  q_1653=q_1641 & Anon_12=v_1640 & x'!=0 & x'=v & q=q_1641 & v=v_1640 & 
+ flted_27_1639=1+n & 0<v_1640 & n<k & k_1637=k & m_1638=m & s'=s & 
+ v_bool_74_1560' & 
+ (((k_1637=flted_27_1639 & q_1641!=null & 0<=m_1638) | 
+   (flted_27_1639<k_1637 & 0<=m_1638 & q_1641!=null)))
+ res: SAT
+ -------------------- 
+ id: 439<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_75:8_75:17; kind: Lemma_Prop
+ raw proof:SAT:{[v_bool_74_1560PRMD, sPRMD, s, m, k, n, q, v, xPRMD, Anon_12, v_1640, res, q_1653, flted_27_1639, k_1637, m_1638, q_1641] : ((((((((((((((((v_bool_74_1560PRMD > 0) & (sPRMD = s)) & (m_1638 = m)) & (k_1637 = k)) & (n < k)) & (0 < v_1640)) & (flted_27_1639 = 1 + n)) & (v = v_1640)) & (q = q_1641)) & (xPRMD = v)) & (xPRMD != 0)) & (Anon_12 = v_1640)) & (q_1653 = q_1641)) & (res = q_1653)) & ((((k_1637 = flted_27_1639) & (q_1641 > 0)) & (0 <= m_1638)) | (((flted_27_1639 < k_1637) & (0 <= m_1638)) & (q_1641 > 0)))))};
+ raw result: {[v_bool_74_1560PRMD,sPRMD,sPRMD,m,k,n,q,v,v,v,v,q,q,n+1,k,m,q]: n <= k-2 && 1 <= v_bool_74_1560PRMD && 1 <= v && 1 <= q && 0 <= m}
+ Sat:  v_bool_74_1560' & s'=s & m_1638=m & k_1637=k & n<k & 0<v_1640 & 
+ flted_27_1639=1+n & v=v_1640 & q=q_1641 & x'=v & x'!=0 & Anon_12=v_1640 & 
+ q_1653=q_1641 & res=q_1653 & 
+ (((k_1637=flted_27_1639 & q_1641!=null & 0<=m_1638) | 
+   (flted_27_1639<k_1637 & 0<=m_1638 & q_1641!=null)))
+ res: SAT
+ -------------------- 
+ id: 440<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[m, k, n, q, flted_27_1639, k_1637, m_1638, q_1641, s_1657, q_1653, s, n_1658, k_1659, m_1660, sPRMD] : (( (not (((((((((((m_1638 = m) & (k_1637 = k)) & (n < k)) & (flted_27_1639 = 1 + n)) & (q = q_1641)) & ((((k_1637 = flted_27_1639) & (q_1641 > 0)) & (0 <= m_1638)) | (((flted_27_1639 < k_1637) & (0 <= m_1638)) & (q_1641 > 0)))) & (q_1653 = q_1641)) & (s_1657 = s)) & (sPRMD = q_1653)) & (s = 1))))  | ((((k_1659 = n_1658) & (sPRMD != 0)) & (0 <= m_1660)) | (((n_1658 < k_1659) & (0 <= m_1660)) & (sPRMD != 0)))))};
+ raw result: {[m,k,n,q,n+1,k,m,q,1,q,1,n_1658,k_1659,m_1660,q]: n <= k-2 && m_1660 <= -1 && n_1658 < k_1659 && 1 <= q && 0 <= m}
+ Imply: ante: m_1638=m & k_1637=k & n<k & flted_27_1639=1+n & q=q_1641 & 
+ (((k_1637=flted_27_1639 & q_1641!=null & 0<=m_1638) | 
+   (flted_27_1639<k_1637 & 0<=m_1638 & q_1641!=null))) & 
+ q_1653=q_1641 & s_1657=s & s'=q_1653 & s=1
+	     conseq:  ((k_1659=n_1658 & s'!=null & 0<=m_1660) | 
+  (n_1658<k_1659 & 0<=m_1660 & s'!=null))
+ res: false
+ -------------------- 
+ id: 441<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:SAT:{[m, k, n, q, flted_27_1639, k_1637, m_1638, q_1641, s_1657, q_1653, s, n_1658, k_1659, m_1660, sPRMD] : ((((((((((((m_1638 = m) & (k_1637 = k)) & (n < k)) & (flted_27_1639 = 1 + n)) & (q = q_1641)) & ((((k_1637 = flted_27_1639) & (q_1641 > 0)) & (0 <= m_1638)) | (((flted_27_1639 < k_1637) & (0 <= m_1638)) & (q_1641 > 0)))) & (q_1653 = q_1641)) & (s_1657 = s)) & (sPRMD = q_1653)) & (s = 1)) & ((((k_1659 = n_1658) & (sPRMD > 0)) & (0 <= m_1660)) | (((n_1658 < k_1659) & (0 <= m_1660)) & (sPRMD > 0)))))};
+ raw result: {[m,k,n,q,n+1,k,m,q,1,q,1,n_1658,k_1659,m_1660,q]: n <= k-2 && n_1658 < k_1659 && 1 <= q && 0 <= m && 0 <= m_1660}
+ Sat:  m_1638=m & k_1637=k & n<k & flted_27_1639=1+n & q=q_1641 & 
+ (((k_1637=flted_27_1639 & q_1641!=null & 0<=m_1638) | 
+   (flted_27_1639<k_1637 & 0<=m_1638 & q_1641!=null))) & 
+ q_1653=q_1641 & s_1657=s & s'=q_1653 & s=1 & 
+ (((k_1659=n_1658 & s'!=null & 0<=m_1660) | 
+   (n_1658<k_1659 & 0<=m_1660 & s'!=null)))
+ res: SAT
+ -------------------- 
+ id: 442<15; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: PRE_REC
+ raw proof:IMPLY:complement {[s_1657, s, m_1660, sPRMD, q_1653, q, m, k, n, n_1658, k_1659, m_1638, q_1641, flted_27_1639, k_1637] : (( (not (((((((((((((((s_1657 = s) & (s != q_1641)) & (s = 1)) & (m_1638 = m_1660)) & (sPRMD = q_1653)) & (q_1653 = q_1641)) & (q = q_1641)) & (n < k)) & (m_1638 = m)) & (k_1637 = k)) & (flted_27_1639 = 1 + n)) & (flted_27_1639 = n_1658)) & (k_1637 = k_1659)) & ((((k_1637 = flted_27_1639) & (q_1641 > 0)) & (0 <= m_1638)) | (((flted_27_1639 < k_1637) & (0 <= m_1638)) & (q_1641 > 0))))))  | (flted_27_1639 = k_1637)))};
+ raw result:{[1,1,m_1660,sPRMD,sPRMD,sPRMD,m_1660,k,n,n+1,k,m_1660,sPRMD,n+1,k]: n <= k-2 && 2 <= sPRMD && 0 <= m_1660}
+ Imply: ante: s_1657=s & s!=q_1641 & s=1 & m_1638=m_1660 & s'=q_1653 & q_1653=q_1641 & 
+ q=q_1641 & n<k & m_1638=m & k_1637=k & flted_27_1639=1+n & 
+ flted_27_1639=n_1658 & k_1637=k_1659 & 
+ (((k_1637=flted_27_1639 & q_1641!=null & 0<=m_1638) | 
+   (flted_27_1639<k_1637 & 0<=m_1638 & q_1641!=null)))
+	     conseq:  flted_27_1639=k_1637
+ res: false
+ -------------------- 
+ id: 443<16; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: PRE_REC
+ raw proof:SAT:{[m_1660, k_1659, n_1658, sPRMD, q_1653, Anon_12, xPRMD, q, q_1641, v, flted_27_1639, v_1640, n, k_1637, k, m_1638, m, s_1657, v_bool_74_1560PRMD, s] : (((((((((((((((((((m_1660 = m_1638) & (k_1659 = k_1637)) & (n_1658 = flted_27_1639)) & (sPRMD = q_1653)) & (q_1653 = q_1641)) & (Anon_12 = v_1640)) & (xPRMD != 0)) & (xPRMD = v)) & (q = q_1641)) & (v = v_1640)) & (flted_27_1639 = 1 + n)) & (0 < v_1640)) & (n < k)) & (k_1637 = k)) & (m_1638 = m)) & (s_1657 = s)) & (v_bool_74_1560PRMD > 0)) & (s = 1)))};
+ raw result:{[m_1660,k_1659,n_1658,sPRMD,sPRMD,Anon_12,Anon_12,sPRMD,sPRMD,Anon_12,n_1658,Anon_12,n_1658-1,k_1659,k_1659,m_1660,m_1660,1,v_bool_74_1560PRMD,1]: n_1658 <= k_1659 && 1 <= Anon_12 && 1 <= v_bool_74_1560PRMD}
+ Sat:  m_1660=m_1638 & k_1659=k_1637 & n_1658=flted_27_1639 & s'=q_1653 & 
+ q_1653=q_1641 & Anon_12=v_1640 & x'!=0 & x'=v & q=q_1641 & v=v_1640 & 
+ flted_27_1639=1+n & 0<v_1640 & n<k & k_1637=k & m_1638=m & s_1657=s & 
+ v_bool_74_1560' & s=1
+ res: SAT
+ -------------------- 
+ id: 444<17; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: PRE_REC
+ raw proof:SAT:{[m_1660, k_1659, n_1658, sPRMD, q_1653, Anon_12, xPRMD, q, q_1641, v, flted_27_1639, v_1640, n, k_1637, k, m_1638, m, s_1657, v_bool_74_1560PRMD, s] : (((((((((((((((((((m_1660 = m_1638) & (k_1659 = k_1637)) & (n_1658 = flted_27_1639)) & (sPRMD = q_1653)) & (q_1653 = q_1641)) & (Anon_12 = v_1640)) & (xPRMD != 0)) & (xPRMD = v)) & (q = q_1641)) & (v = v_1640)) & (flted_27_1639 = 1 + n)) & (0 < v_1640)) & (n < k)) & (k_1637 = k)) & (m_1638 = m)) & (s_1657 = s)) & (v_bool_74_1560PRMD > 0)) & (s = 1)))};
+ raw result:{[m_1660,k_1659,n_1658,sPRMD,sPRMD,Anon_12,Anon_12,sPRMD,sPRMD,Anon_12,n_1658,Anon_12,n_1658-1,k_1659,k_1659,m_1660,m_1660,1,v_bool_74_1560PRMD,1]: n_1658 <= k_1659 && 1 <= Anon_12 && 1 <= v_bool_74_1560PRMD}
+ Sat:  m_1660=m_1638 & k_1659=k_1637 & n_1658=flted_27_1639 & s'=q_1653 & 
+ q_1653=q_1641 & Anon_12=v_1640 & x'!=0 & x'=v & q=q_1641 & v=v_1640 & 
+ flted_27_1639=1+n & 0<v_1640 & n<k & k_1637=k & m_1638=m & s_1657=s & 
+ v_bool_74_1560' & s=1
+ res: SAT
+ -------------------- 
+ id: 445<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Lemma_Prop
+ raw proof:SAT:{[v_bool_74_1560PRMD, s_1657, m, k, n, q, v, xPRMD, Anon_12, v_1640, q_1641, q_1653, flted_27_1639, k_1637, m_1638, flted_71_1667, P, n_1658, k_1659, m_1660, s_1666, n1_1670, s_1665, mmmm_1669, q_1668, s, sPRMD] : (((((((((((((((((((((v_bool_74_1560PRMD > 0) & (s_1657 = s)) & (m_1638 = m)) & (k_1637 = k)) & (n < k)) & (0 < v_1640)) & (flted_27_1639 = 1 + n)) & (v = v_1640)) & (q = q_1641)) & (xPRMD = v)) & (xPRMD != 0)) & (Anon_12 = v_1640)) & (q_1653 = q_1641)) & (s_1665 = q_1653)) & (n_1658 = flted_27_1639)) & (k_1659 = k_1637)) & (m_1660 = m_1638)) & ((flted_27_1639 <= k_1637) & (0 <= m_1638))) & (((flted_71_1667 = 0) & ((0=0))) & (s_1666 = sPRMD))) & (((s = 1) & (((((s_1666 = s_1665) & (n1_1670 = 0)) | ((1 <= n1_1670) & (s_1665 > 0))) & (sPRMD = 2)) & (((q_1668 = 0) & (mmmm_1669 = 0)) | ((1 <= mmmm_1669) & (q_1668 > 0))))) & (s != sPRMD))))};
+ raw result: {[v_bool_74_1560PRMD,1,m,k,n,q,v,v,v,v,q,q,n+1,k,m,0,P,n+1,k,m,2,n1_1670,q,mmmm_1669,q_1668,1,2]: n < k && 1 <= v_bool_74_1560PRMD && 1 <= v && 0 <= m && 1 <= n1_1670 && 1 <= q && 1 <= mmmm_1669 && 1 <= q_1668}
+ Sat:  v_bool_74_1560' & s_1657=s & m_1638=m & k_1637=k & n<k & 0<v_1640 & 
+ flted_27_1639=1+n & v=v_1640 & q=q_1641 & x'=v & x'!=0 & Anon_12=v_1640 & 
+ q_1653=q_1641 & s_1665=q_1653 & n_1658=flted_27_1639 & k_1659=k_1637 & 
+ m_1660=m_1638 & flted_27_1639<=k_1637 & 0<=m_1638 & flted_71_1667=0 & 
+ P(mmmm_1669,n1_1670,n_1658,k_1659,m_1660) & s_1666=s' & s=1 & 
+ (((s_1666=s_1665 & n1_1670=0) | (1<=n1_1670 & s_1665!=null))) & s'=2 & 
+ (((q_1668=null & mmmm_1669=0) | (1<=mmmm_1669 & q_1668!=null))) & s!=s'
+ res: SAT
+ -------------------- 
+ id: 446<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:SAT:{[v_bool_74_1560PRMD, s_1657, m, k, n, q, v, Anon_12, v_1640, q_1641, flted_27_1639, k_1637, m_1638, flted_71_1667, P, n_1658, k_1659, m_1660, n1_1670, q_1653, mmmm_1669, q_1668, s, sPRMD] : (((((((((((((((((((v_bool_74_1560PRMD > 0) & (s_1657 = s)) & (m_1638 = m)) & (k_1637 = k)) & (n < k)) & (0 < v_1640)) & (flted_27_1639 = 1 + n)) & (v = v_1640)) & (q = q_1641)) & (v != 0)) & (Anon_12 = v_1640)) & (q_1653 = q_1641)) & (n_1658 = flted_27_1639)) & (k_1659 = k_1637)) & (m_1660 = m_1638)) & ((flted_27_1639 <= k_1637) & (0 <= m_1638))) & ((flted_71_1667 = 0) & ((0=0)))) & (((s = 1) & (((((sPRMD = q_1653) & (n1_1670 = 0)) | ((1 <= n1_1670) & (q_1653 > 0))) & (sPRMD = 2)) & (((q_1668 = 0) & (mmmm_1669 = 0)) | ((1 <= mmmm_1669) & (q_1668 > 0))))) & (s != sPRMD))))};
+ raw result: {[v_bool_74_1560PRMD,1,m,k,n,q,v,v,v,q,n+1,k,m,0,P,n+1,k,m,n1_1670,q,mmmm_1669,q_1668,1,2]: n < k && 1 <= v_bool_74_1560PRMD && 1 <= v && 0 <= m && 1 <= n1_1670 && 1 <= q && 1 <= mmmm_1669 && 1 <= q_1668}
+ Sat:  v_bool_74_1560' & s_1657=s & m_1638=m & k_1637=k & n<k & 0<v_1640 & 
+ flted_27_1639=1+n & v=v_1640 & q=q_1641 & v!=0 & Anon_12=v_1640 & 
+ q_1653=q_1641 & n_1658=flted_27_1639 & k_1659=k_1637 & m_1660=m_1638 & 
+ flted_27_1639<=k_1637 & 0<=m_1638 & flted_71_1667=0 & 
+ P(mmmm_1669,n1_1670,n_1658,k_1659,m_1660) & s=1 & 
+ (((s'=q_1653 & n1_1670=0) | (1<=n1_1670 & q_1653!=null))) & s'=2 & 
+ (((q_1668=null & mmmm_1669=0) | (1<=mmmm_1669 & q_1668!=null))) & s!=s'
+ res: SAT
+ -------------------- 
+ id: 447<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[flted_71_74] : ((flted_71_74 = 0))};
+ raw result: {[flted_71_74]: 1 <= flted_71_74}
+ Imply: ante: true
+	     conseq:  flted_71_74=0
+ res: false
+ -------------------- 
+ id: 448<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[q, q_1641, s_1657, s, q_1668, sPRMD, q_1653, mmmm_1669, n1_1670, n_1658, k_1659, m_1660, flted_27_1639, k_1637, m_1638, P, mmmm, n1, n, k, m] : (( (not ((((((((((((((((((q = q_1641) & (q_1653 = q_1641)) & (s_1657 = s)) & (s = 3)) & (((q_1668 = 0) & (mmmm_1669 = 0)) | ((1 <= mmmm_1669) & (q_1668 > 0)))) & (sPRMD = 4)) & (((sPRMD = q_1653) & (n1_1670 = 0)) | ((1 <= n1_1670) & (q_1653 > 0)))) & ((0=0))) & (n_1658 = flted_27_1639)) & (k_1659 = k_1637)) & (m_1660 = m_1638)) & (flted_27_1639 <= k_1637)) & (0 <= m_1638)) & (flted_27_1639 = 1 + n)) & (n < k)) & (k_1637 = k)) & (m_1638 = m))))  | ((0>0))))};
+ raw result: {[q,q,3,3,q_1668,4,q,mmmm_1669,n1_1670,n_1658,k_1659,m_1660,n_1658,k_1659,m_1660,P,mmmm,n1,n_1658-1,k_1659,m_1660]: n_1658 <= k_1659 && 0 <= m_1660 && 1 <= n1_1670 && 1 <= q && 1 <= mmmm_1669 && 1 <= q_1668}
+ Imply: ante: q=q_1641 & q_1653=q_1641 & s_1657=s & s=3 & 
+ (((q_1668=null & mmmm_1669=0) | (1<=mmmm_1669 & q_1668!=null))) & s'=4 & 
+ (((s'=q_1653 & n1_1670=0) | (1<=n1_1670 & q_1653!=null))) & 
+ P(mmmm_1669,n1_1670,n_1658,k_1659,m_1660) & n_1658=flted_27_1639 & 
+ k_1659=k_1637 & m_1660=m_1638 & flted_27_1639<=k_1637 & 0<=m_1638 & 
+ flted_27_1639=1+n & n<k & k_1637=k & m_1638=m
+	     conseq:  P(mmmm,n1,n,k,m)
+ res: false
+ -------------------- 
+ id: 449<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[q_1668, m, k, n, q, q_1641, flted_27_1639, k_1637, m_1638, P, mmmm_1669, n_1658, k_1659, m_1660, s_1657, n1_1670, q_1653, sPRMD, n1, s] : (( (not ((((((((((((((((((0 <= m_1638) & (flted_27_1639 <= k_1637)) & (((q_1668 = 0) & (mmmm_1669 = 0)) | ((1 <= mmmm_1669) & (q_1668 > 0)))) & (m_1638 = m)) & (k_1637 = k)) & (n < k)) & (flted_27_1639 = 1 + n)) & (q = q_1641)) & (q_1653 = q_1641)) & (n_1658 = flted_27_1639)) & (k_1659 = k_1637)) & (m_1660 = m_1638)) & ((0=0))) & (s_1657 = s)) & (s = 3)) & (((sPRMD = q_1653) & (n1_1670 = 0)) | ((1 <= n1_1670) & (q_1653 > 0)))) & (sPRMD = 4))))  | (((sPRMD = s) & (n1 = 0)) | ((1 <= n1) & (s != 0)))))};
+ raw result: {[q_1668,m,k,n,q,q,n+1,k,m,P,mmmm_1669,n+1,k,m,3,n1_1670,q,4,n1,3]: n < k && n1 <= 0 && 0 <= m && 1 <= n1_1670 && 1 <= q && 1 <= mmmm_1669 && 1 <= q_1668}
+ Imply: ante: 0<=m_1638 & flted_27_1639<=k_1637 & 
+ (((q_1668=null & mmmm_1669=0) | (1<=mmmm_1669 & q_1668!=null))) & 
+ m_1638=m & k_1637=k & n<k & flted_27_1639=1+n & q=q_1641 & q_1653=q_1641 & 
+ n_1658=flted_27_1639 & k_1659=k_1637 & m_1660=m_1638 & 
+ P(mmmm_1669,n1_1670,n_1658,k_1659,m_1660) & s_1657=s & s=3 & 
+ (((s'=q_1653 & n1_1670=0) | (1<=n1_1670 & q_1653!=null))) & s'=4
+	     conseq:  ((s'=s & n1=0) | (1<=n1 & s!=null))
+ res: false
+ -------------------- 
+ id: 450<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[q_1668, m, k, n, q, q_1641, flted_27_1639, k_1637, m_1638, P, mmmm_1669, n_1658, k_1659, m_1660, s_1657, n1_1670, q_1653, sPRMD, n1, s] : (( (not ((((((((((((((((((0 <= m_1638) & (flted_27_1639 <= k_1637)) & (((q_1668 = 0) & (mmmm_1669 = 0)) | ((1 <= mmmm_1669) & (q_1668 > 0)))) & (m_1638 = m)) & (k_1637 = k)) & (n < k)) & (flted_27_1639 = 1 + n)) & (q = q_1641)) & (q_1653 = q_1641)) & (n_1658 = flted_27_1639)) & (k_1659 = k_1637)) & (m_1660 = m_1638)) & ((0=0))) & (s_1657 = s)) & (s = 3)) & (((sPRMD = q_1653) & (n1_1670 = 0)) | ((1 <= n1_1670) & (q_1653 > 0)))) & (sPRMD = 4))))  | (((sPRMD = s) & (n1 = 0)) | ((1 <= n1) & (s != 0)))))};
+ raw result: {[q_1668,m,k,n,q,q,n+1,k,m,P,mmmm_1669,n+1,k,m,3,n1_1670,q,4,n1,3]: n < k && n1 <= 0 && 0 <= m && 1 <= n1_1670 && 1 <= q && 1 <= mmmm_1669 && 1 <= q_1668}
+ Imply: ante: 0<=m_1638 & flted_27_1639<=k_1637 & 
+ (((q_1668=null & mmmm_1669=0) | (1<=mmmm_1669 & q_1668!=null))) & 
+ m_1638=m & k_1637=k & n<k & flted_27_1639=1+n & q=q_1641 & q_1653=q_1641 & 
+ n_1658=flted_27_1639 & k_1659=k_1637 & m_1660=m_1638 & 
+ P(mmmm_1669,n1_1670,n_1658,k_1659,m_1660) & s_1657=s & s=3 & 
+ (((s'=q_1653 & n1_1670=0) | (1<=n1_1670 & q_1653!=null))) & s'=4
+	     conseq:  ((s'=s & n1=0) | (1<=n1 & s!=null))
+ res: false
+ -------------------- 
+ id: 451<-1; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[q_1668, m, k, n, q, q_1641, flted_27_1639, k_1637, m_1638, P, mmmm_1669, n_1658, k_1659, m_1660, s_1657, s, n1_1670, q_1653, sPRMD] : (( (not ((((((((((((((((((0 <= m_1638) & (flted_27_1639 <= k_1637)) & (((q_1668 = 0) & (mmmm_1669 = 0)) | ((1 <= mmmm_1669) & (q_1668 > 0)))) & (m_1638 = m)) & (k_1637 = k)) & (n < k)) & (flted_27_1639 = 1 + n)) & (q = q_1641)) & (q_1653 = q_1641)) & (n_1658 = flted_27_1639)) & (k_1659 = k_1637)) & (m_1660 = m_1638)) & ((0=0))) & (s_1657 = s)) & (s = 3)) & (((sPRMD = q_1653) & (n1_1670 = 0)) | ((1 <= n1_1670) & (q_1653 > 0)))) & (sPRMD = 4))))  | (sPRMD != 0)))};
+ raw result:{[q_1668,m,k,n,q,q_1641,flted_27_1639,k_1637,m_1638,P,mmmm_1669,n_1658,k_1659,m_1660,s_1657,s,n1_1670,q_1653,sPRMD]  : FALSE }
+ Imply: ante: 0<=m_1638 & flted_27_1639<=k_1637 & 
+ (((q_1668=null & mmmm_1669=0) | (1<=mmmm_1669 & q_1668!=null))) & 
+ m_1638=m & k_1637=k & n<k & flted_27_1639=1+n & q=q_1641 & q_1653=q_1641 & 
+ n_1658=flted_27_1639 & k_1659=k_1637 & m_1660=m_1638 & 
+ P(mmmm_1669,n1_1670,n_1658,k_1659,m_1660) & s_1657=s & s=3 & 
+ (((s'=q_1653 & n1_1670=0) | (1<=n1_1670 & q_1653!=null))) & s'=4
+	     conseq:  s'!=null
+ res: true
+ -------------------- 
+ id: 452<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[q_1668, m, k, n, flted_27_1639, k_1637, m_1638, P, mmmm_1669, n_1658, k_1659, m_1660, s_1657, s, sPRMD, n1_1670, q_1653, q_1641, mmmm, q] : (( (not ((((((((((((((((((0 <= m_1638) & (flted_27_1639 <= k_1637)) & (((q_1668 = 0) & (mmmm_1669 = 0)) | ((1 <= mmmm_1669) & (q_1668 > 0)))) & (m_1638 = m)) & (k_1637 = k)) & (n < k)) & (flted_27_1639 = 1 + n)) & (n_1658 = flted_27_1639)) & (k_1659 = k_1637)) & (m_1660 = m_1638)) & ((0=0))) & (s_1657 = s)) & (s = 3)) & (sPRMD = 4)) & (((sPRMD = q_1653) & (n1_1670 = 0)) | ((1 <= n1_1670) & (q_1653 > 0)))) & (q_1653 = q_1641)) & (q = q_1641))))  | (((q <= 0) & (mmmm = 0)) | ((1 <= mmmm) & (q != 0)))))};
+ raw result: {[q_1668,m,k,n,n+1,k,m,P,mmmm_1669,n+1,k,m,3,3,4,n1_1670,q_1653,q_1653,mmmm,q_1653]: n < k && mmmm <= 0 && 1 <= q_1653 && 0 <= m && 1 <= n1_1670 && 1 <= mmmm_1669 && 1 <= q_1668}
+ Imply: ante: 0<=m_1638 & flted_27_1639<=k_1637 & 
+ (((q_1668=null & mmmm_1669=0) | (1<=mmmm_1669 & q_1668!=null))) & 
+ m_1638=m & k_1637=k & n<k & flted_27_1639=1+n & n_1658=flted_27_1639 & 
+ k_1659=k_1637 & m_1660=m_1638 & P(mmmm_1669,n1_1670,n_1658,k_1659,m_1660) & 
+ s_1657=s & s=3 & s'=4 & 
+ (((s'=q_1653 & n1_1670=0) | (1<=n1_1670 & q_1653!=null))) & q_1653=q_1641 & 
+ q=q_1641
+	     conseq:  ((q=null & mmmm=0) | (1<=mmmm & q!=null))
+ res: false
+ -------------------- 
+ id: 453<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[q_1668, m, k, n, flted_27_1639, k_1637, m_1638, P, mmmm_1669, n_1658, k_1659, m_1660, s_1657, s, sPRMD, n1_1670, q_1653, q_1641, mmmm, q] : (( (not ((((((((((((((((((0 <= m_1638) & (flted_27_1639 <= k_1637)) & (((q_1668 = 0) & (mmmm_1669 = 0)) | ((1 <= mmmm_1669) & (q_1668 > 0)))) & (m_1638 = m)) & (k_1637 = k)) & (n < k)) & (flted_27_1639 = 1 + n)) & (n_1658 = flted_27_1639)) & (k_1659 = k_1637)) & (m_1660 = m_1638)) & ((0=0))) & (s_1657 = s)) & (s = 3)) & (sPRMD = 4)) & (((sPRMD = q_1653) & (n1_1670 = 0)) | ((1 <= n1_1670) & (q_1653 > 0)))) & (q_1653 = q_1641)) & (q = q_1641))))  | (((q <= 0) & (mmmm = 0)) | ((1 <= mmmm) & (q != 0)))))};
+ raw result: {[q_1668,m,k,n,n+1,k,m,P,mmmm_1669,n+1,k,m,3,3,4,n1_1670,q_1653,q_1653,mmmm,q_1653]: n < k && mmmm <= 0 && 1 <= q_1653 && 0 <= m && 1 <= n1_1670 && 1 <= mmmm_1669 && 1 <= q_1668}
+ Imply: ante: 0<=m_1638 & flted_27_1639<=k_1637 & 
+ (((q_1668=null & mmmm_1669=0) | (1<=mmmm_1669 & q_1668!=null))) & 
+ m_1638=m & k_1637=k & n<k & flted_27_1639=1+n & n_1658=flted_27_1639 & 
+ k_1659=k_1637 & m_1660=m_1638 & P(mmmm_1669,n1_1670,n_1658,k_1659,m_1660) & 
+ s_1657=s & s=3 & s'=4 & 
+ (((s'=q_1653 & n1_1670=0) | (1<=n1_1670 & q_1653!=null))) & q_1653=q_1641 & 
+ q=q_1641
+	     conseq:  ((q=null & mmmm=0) | (1<=mmmm & q!=null))
+ res: false
+ -------------------- 
+ id: 454<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:SAT:{[mmmm_1669, q_1668, n_1658, k_1659, m_1660, q_1641, flted_27_1639, n, k_1637, k, m_1638, m, s_1657, n1_1670, q_1653, flted_71_74, sPRMD, n1, s, mmmm, q] : ((((((((((((((((((((q_1668 = 0) & (mmmm_1669 = 0)) | ((1 <= mmmm_1669) & (q_1668 > 0))) & (q_1653 = q_1641)) & (n_1658 = flted_27_1639)) & (k_1659 = k_1637)) & (m_1660 = m_1638)) & (flted_27_1639 <= k_1637)) & (0 <= m_1638)) & (q = q_1641)) & (flted_27_1639 = 1 + n)) & (n < k)) & (k_1637 = k)) & (m_1638 = m)) & (s_1657 = s)) & (s = 3)) & (((sPRMD = q_1653) & (n1_1670 = 0)) | ((1 <= n1_1670) & (q_1653 > 0)))) & (sPRMD = 4)) & (((flted_71_74 = 0) & (((sPRMD = s) & (n1 = 0)) | ((1 <= n1) & (s > 0)))) & (((q = 0) & (mmmm = 0)) | ((1 <= mmmm) & (q > 0))))))};
+ raw result: {[mmmm_1669,q_1668,n_1658,k_1659,m_1660,q_1641,n_1658,n_1658-1,k_1659,k_1659,m_1660,m_1660,3,n1_1670,q_1641,0,4,n1,3,mmmm,q_1641]: n_1658 <= k_1659 && 0 <= m_1660 && 1 <= q_1668 && 1 <= mmmm_1669 && 1 <= n1_1670 && 1 <= q_1641 && 1 <= n1 && 1 <= mmmm}
+ Sat:  (((q_1668=null & mmmm_1669=0) | (1<=mmmm_1669 & q_1668!=null))) & 
+ q_1653=q_1641 & n_1658=flted_27_1639 & k_1659=k_1637 & m_1660=m_1638 & 
+ flted_27_1639<=k_1637 & 0<=m_1638 & q=q_1641 & flted_27_1639=1+n & n<k & 
+ k_1637=k & m_1638=m & s_1657=s & s=3 & 
+ (((s'=q_1653 & n1_1670=0) | (1<=n1_1670 & q_1653!=null))) & s'=4 & 
+ flted_71_74=0 & (((s'=s & n1=0) | (1<=n1 & s!=null))) & 
+ (((q=null & mmmm=0) | (1<=mmmm & q!=null)))
+ res: SAT
+ -------------------- 
+ id: 455<18; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:SAT:{[P, flted_71_1671, m_1660, k_1659, n_1658, Anon_12, q, q_1641, v, flted_27_1639, v_1640, n, k_1637, k, m_1638, m, s_1657, v_bool_74_1560PRMD, n1_1674, q_1653, mmmm_1673, q_1672, s, sPRMD] : ((((((((((((((((((((((0=0)) & (flted_71_1671 = 0)) & (0 <= m_1638)) & (flted_27_1639 <= k_1637)) & (m_1660 = m_1638)) & (k_1659 = k_1637)) & (n_1658 = flted_27_1639)) & (q_1653 = q_1641)) & (Anon_12 = v_1640)) & (v != 0)) & (q = q_1641)) & (v = v_1640)) & (flted_27_1639 = 1 + n)) & (0 < v_1640)) & (n < k)) & (k_1637 = k)) & (m_1638 = m)) & (s_1657 = s)) & (v_bool_74_1560PRMD > 0)) & (((s = 1) & (((((sPRMD = q_1653) & (n1_1674 = 0)) | ((1 <= n1_1674) & (q_1653 > 0))) & (sPRMD = 2)) & (((q_1672 = 0) & (mmmm_1673 = 0)) | ((1 <= mmmm_1673) & (q_1672 > 0))))) & (s != sPRMD))))};
+ raw result: {[P,0,m_1660,k_1659,n_1658,Anon_12,q,q,Anon_12,n_1658,Anon_12,n_1658-1,k_1659,k_1659,m_1660,m_1660,1,v_bool_74_1560PRMD,n1_1674,q,mmmm_1673,q_1672,1,2]: n_1658 <= k_1659 && 0 <= m_1660 && 1 <= Anon_12 && 1 <= v_bool_74_1560PRMD && 1 <= n1_1674 && 1 <= q && 1 <= mmmm_1673 && 1 <= q_1672}
+ Sat:  P(mmmm_1673,n1_1674,n_1658,k_1659,m_1660) & flted_71_1671=0 & 0<=m_1638 & 
+ flted_27_1639<=k_1637 & m_1660=m_1638 & k_1659=k_1637 & 
+ n_1658=flted_27_1639 & q_1653=q_1641 & Anon_12=v_1640 & v!=0 & q=q_1641 & 
+ v=v_1640 & flted_27_1639=1+n & 0<v_1640 & n<k & k_1637=k & m_1638=m & 
+ s_1657=s & v_bool_74_1560' & s=1 & 
+ (((s'=q_1653 & n1_1674=0) | (1<=n1_1674 & q_1653!=null))) & s'=2 & 
+ (((q_1672=null & mmmm_1673=0) | (1<=mmmm_1673 & q_1672!=null))) & s!=s'
+ res: SAT
+ -------------------- 
+ id: 456<18; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[m, k, n, q, flted_27_1639, k_1637, m_1638, q_1672, P, mmmm_1673, n_1658, k_1659, m_1660, q_1641, s_1657, n1_1674, q_1653, s, sPRMD] : (( (not ((((((((((((((((((0 <= m_1638) & (flted_27_1639 <= k_1637)) & (m_1638 = m)) & (k_1637 = k)) & (n < k)) & (flted_27_1639 = 1 + n)) & (q = q_1641)) & (n_1658 = flted_27_1639)) & (k_1659 = k_1637)) & (m_1660 = m_1638)) & (((q_1672 = 0) & (mmmm_1673 = 0)) | ((1 <= mmmm_1673) & (q_1672 > 0)))) & ((0=0))) & (q_1653 = q_1641)) & (s_1657 = s)) & (s = 3)) & (((sPRMD = q_1653) & (n1_1674 = 0)) | ((1 <= n1_1674) & (q_1653 > 0)))) & (sPRMD = 4))))  | (s = sPRMD)))};
+ raw result: {[m,k,n,q,n+1,k,m,q_1672,P,mmmm_1673,n+1,k,m,q,3,n1_1674,q,3,4]: n < k && 0 <= m && 1 <= n1_1674 && 1 <= q && 1 <= mmmm_1673 && 1 <= q_1672}
+ Imply: ante: 0<=m_1638 & flted_27_1639<=k_1637 & m_1638=m & k_1637=k & n<k & 
+ flted_27_1639=1+n & q=q_1641 & n_1658=flted_27_1639 & k_1659=k_1637 & 
+ m_1660=m_1638 & 
+ (((q_1672=null & mmmm_1673=0) | (1<=mmmm_1673 & q_1672!=null))) & 
+ P(mmmm_1673,n1_1674,n_1658,k_1659,m_1660) & q_1653=q_1641 & s_1657=s & 
+ s=3 & (((s'=q_1653 & n1_1674=0) | (1<=n1_1674 & q_1653!=null))) & s'=4
+	     conseq:  s=s'
+ res: false
+ -------------------- 
+ id: 457<18; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[m, k, n, q, flted_27_1639, k_1637, m_1638, q_1672, P, mmmm_1673, n_1658, k_1659, m_1660, q_1641, s_1657, n1_1674, q_1653, s, sPRMD] : (( (not ((((((((((((((((((0 <= m_1638) & (flted_27_1639 <= k_1637)) & (m_1638 = m)) & (k_1637 = k)) & (n < k)) & (flted_27_1639 = 1 + n)) & (q = q_1641)) & (n_1658 = flted_27_1639)) & (k_1659 = k_1637)) & (m_1660 = m_1638)) & (((q_1672 = 0) & (mmmm_1673 = 0)) | ((1 <= mmmm_1673) & (q_1672 > 0)))) & ((0=0))) & (q_1653 = q_1641)) & (s_1657 = s)) & (s = 3)) & (((sPRMD = q_1653) & (n1_1674 = 0)) | ((1 <= n1_1674) & (q_1653 > 0)))) & (sPRMD = 4))))  | (s = sPRMD)))};
+ raw result: {[m,k,n,q,n+1,k,m,q_1672,P,mmmm_1673,n+1,k,m,q,3,n1_1674,q,3,4]: n < k && 0 <= m && 1 <= n1_1674 && 1 <= q && 1 <= mmmm_1673 && 1 <= q_1672}
+ Imply: ante: 0<=m_1638 & flted_27_1639<=k_1637 & m_1638=m & k_1637=k & n<k & 
+ flted_27_1639=1+n & q=q_1641 & n_1658=flted_27_1639 & k_1659=k_1637 & 
+ m_1660=m_1638 & 
+ (((q_1672=null & mmmm_1673=0) | (1<=mmmm_1673 & q_1672!=null))) & 
+ P(mmmm_1673,n1_1674,n_1658,k_1659,m_1660) & q_1653=q_1641 & s_1657=s & 
+ s=3 & (((s'=q_1653 & n1_1674=0) | (1<=n1_1674 & q_1653!=null))) & s'=4
+	     conseq:  s=s'
+ res: false
+ -------------------- 
+ id: 458<18; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[n1] : ((n1 = 0))};
+ raw result: {[n1]: 1 <= n1}
+ Imply: ante: true
+	     conseq:  n1=0
+ res: false
+ -------------------- 
+ id: 459<18; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:SAT:{[m, k, n, q, n_1658, flted_27_1639, k_1659, k_1637, m_1660, m_1638, mmmm_1673, q_1672, q_1641, s_1657, n1_1674, q_1653, s, sPRMD, n1] : ((((((((((((((((((0 <= m_1638) & (flted_27_1639 <= k_1637)) & (m_1638 = m)) & (k_1637 = k)) & (n < k)) & (flted_27_1639 = 1 + n)) & (q = q_1641)) & (n_1658 = flted_27_1639)) & (k_1659 = k_1637)) & (m_1660 = m_1638)) & (((q_1672 = 0) & (mmmm_1673 = 0)) | ((1 <= mmmm_1673) & (q_1672 > 0)))) & (q_1653 = q_1641)) & (s_1657 = s)) & (s = 3)) & (((sPRMD = q_1653) & (n1_1674 = 0)) | ((1 <= n1_1674) & (q_1653 > 0)))) & (sPRMD = 4)) & ((s = sPRMD) & (n1 = 0))))};
+ raw result:{[m,k,n,q,n_1658,flted_27_1639,k_1659,k_1637,m_1660,m_1638,mmmm_1673,q_1672,q_1641,s_1657,n1_1674,q_1653,s,sPRMD,n1]  : FALSE }
+ Sat:  0<=m_1638 & flted_27_1639<=k_1637 & m_1638=m & k_1637=k & n<k & 
+ flted_27_1639=1+n & q=q_1641 & n_1658=flted_27_1639 & k_1659=k_1637 & 
+ m_1660=m_1638 & 
+ (((q_1672=null & mmmm_1673=0) | (1<=mmmm_1673 & q_1672!=null))) & 
+ q_1653=q_1641 & s_1657=s & s=3 & 
+ (((s'=q_1653 & n1_1674=0) | (1<=n1_1674 & q_1653!=null))) & s'=4 & s=s' & 
+ n1=0
+ res: UNSAT
+ -------------------- 
+ id: 460<18; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:SAT:{[v_bool_74_1560PRMD, s_1657, m, k, n, q, v, Anon_12, v_1640, q_1641, n_1658, k_1659, m_1660, flted_27_1639, k_1637, m_1638, flted_71_1671, s, sPRMD, q_1653, n1_1674, q_1672, mmmm_1673] : (((((((((((((((((((((((v_bool_74_1560PRMD > 0) & (s_1657 = s)) & (m_1638 = m)) & (k_1637 = k)) & (n < k)) & (0 < v_1640)) & (flted_27_1639 = 1 + n)) & (v = v_1640)) & (q = q_1641)) & (v != 0)) & (Anon_12 = v_1640)) & (q_1653 = q_1641)) & (n_1658 = flted_27_1639)) & (k_1659 = k_1637)) & (m_1660 = m_1638)) & (flted_27_1639 <= k_1637)) & (0 <= m_1638)) & (flted_71_1671 = 0)) & (s > 0)) & (sPRMD > 0)) & (((1 <= n1_1674) & (q_1653 > 0)) | ((sPRMD = q_1653) & (n1_1674 = 0)))) & (((1 <= mmmm_1673) & (q_1672 > 0)) | ((q_1672 = 0) & (mmmm_1673 = 0)))))};
+ raw result: {[v_bool_74_1560PRMD,s_1657,m,k,n,q,v,v,v,q,n+1,k,m,n+1,k,m,0,s_1657,q,q,0,0,0]: n < k && 1 <= v_bool_74_1560PRMD && 1 <= v && 1 <= q && 0 <= m && 1 <= s_1657}
+ Sat:  v_bool_74_1560' & s_1657=s & m_1638=m & k_1637=k & n<k & 0<v_1640 & 
+ flted_27_1639=1+n & v=v_1640 & q=q_1641 & v!=0 & Anon_12=v_1640 & 
+ q_1653=q_1641 & n_1658=flted_27_1639 & k_1659=k_1637 & m_1660=m_1638 & 
+ flted_27_1639<=k_1637 & 0<=m_1638 & flted_71_1671=0 & s!=null & s'!=null & 
+ (((1<=n1_1674 & q_1653!=null) | (s'=q_1653 & n1_1674=0))) & 
+ (((1<=mmmm_1673 & q_1672!=null) | (q_1672=null & mmmm_1673=0)))
+ res: SAT
+ -------------------- 
+ id: 461<18; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:SAT:{[v_bool_74_1560PRMD, s_1657, m, k, n, q, v, Anon_12, v_1640, q_1641, n_1658, k_1659, m_1660, flted_27_1639, k_1637, m_1638, flted_71_1671, s, sPRMD, q_1653, n1_1674, q_1672, mmmm_1673] : (((((((((((((((((((((((v_bool_74_1560PRMD > 0) & (s_1657 = s)) & (m_1638 = m)) & (k_1637 = k)) & (n < k)) & (0 < v_1640)) & (flted_27_1639 = 1 + n)) & (v = v_1640)) & (q = q_1641)) & (v != 0)) & (Anon_12 = v_1640)) & (q_1653 = q_1641)) & (n_1658 = flted_27_1639)) & (k_1659 = k_1637)) & (m_1660 = m_1638)) & (flted_27_1639 <= k_1637)) & (0 <= m_1638)) & (flted_71_1671 = 0)) & (s > 0)) & (sPRMD > 0)) & (((1 <= n1_1674) & (q_1653 > 0)) | ((sPRMD = q_1653) & (n1_1674 = 0)))) & (((1 <= mmmm_1673) & (q_1672 > 0)) | ((q_1672 = 0) & (mmmm_1673 = 0)))))};
+ raw result: {[v_bool_74_1560PRMD,s_1657,m,k,n,q,v,v,v,q,n+1,k,m,n+1,k,m,0,s_1657,q,q,0,0,0]: n < k && 1 <= v_bool_74_1560PRMD && 1 <= v && 1 <= q && 0 <= m && 1 <= s_1657}
+ Sat:  v_bool_74_1560' & s_1657=s & m_1638=m & k_1637=k & n<k & 0<v_1640 & 
+ flted_27_1639=1+n & v=v_1640 & q=q_1641 & v!=0 & Anon_12=v_1640 & 
+ q_1653=q_1641 & n_1658=flted_27_1639 & k_1659=k_1637 & m_1660=m_1638 & 
+ flted_27_1639<=k_1637 & 0<=m_1638 & flted_71_1671=0 & s!=null & s'!=null & 
+ (((1<=n1_1674 & q_1653!=null) | (s'=q_1653 & n1_1674=0))) & 
+ (((1<=mmmm_1673 & q_1672!=null) | (q_1672=null & mmmm_1673=0)))
+ res: SAT
+ -------------------- 
+ id: 462<18; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:SIMPLIFY:{[n1_1674, k_1659, n_1658, m_1660, mmmm_1673] : (((( (exists (q_1641: (exists (sPRMD:((sPRMD > 0) & (((1 <= n1_1674) & (q_1641 > 0)) | ((sPRMD = q_1641) & (n1_1674 = 0)))))) ))  &  (exists (n:( (exists (k:(((n < k) & (n_1658 <= k)) & (k_1659 = k))))  & (n_1658 = 1 + n)))) ) &  (exists (m:((0 <= m) & (m_1660 = m)))) ) &  (exists (q_1672:(((1 <= mmmm_1673) & (q_1672 > 0)) | ((q_1672 = 0) & (mmmm_1673 = 0))))) ))};
+ raw result:{[n1_1674,k_1659,n_1658,m_1660,mmmm_1673]: n_1658 <= k_1659 && 1 <= mmmm_1673 && 0 <= m_1660 && 1 <= n1_1674} union {[n1_1674,k_1659,n_1658,m_1660,0]: n_1658 <= k_1659 && 0 <= m_1660 && 1 <= n1_1674} union {[0,k_1659,n_1658,m_1660,mmmm_1673]: n_1658 <= k_1659 && 1 <= mmmm_1673 && 0 <= m_1660} union {[0,k_1659,n_1658,m_1660,0]: n_1658 <= k_1659 && 0 <= m_1660}
+ Simplify:  exists(q_1641:exists(s':s'!=null & 
+                         (((1<=n1_1674 & q_1641!=null) | 
+                           (s'=q_1641 & n1_1674=0))))) & 
+ exists(n:exists(k:n<k & n_1658<=k & k_1659=k) & n_1658=1+n) & 
+ exists(m:0<=m & m_1660=m) & 
+ exists(q_1672:((1<=mmmm_1673 & q_1672!=null) | (q_1672=null & mmmm_1673=0)))
+ res:  n_1658<=k_1659 & 0<=m_1660 & 
+ (((mmmm_1673=0 & 1<=n1_1674) | (1<=mmmm_1673 & 1<=n1_1674) | 
+   (n1_1674=0 & 1<=mmmm_1673) | (n1_1674=0 & mmmm_1673=0)))
+ -------------------- 
+ id: 463<18; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:PAIRWISE:pairwisecheck {[n_1658, k_1659, m_1660, n1_1674, mmmm_1673] : ((((n_1658 <= k_1659) & (0 <= m_1660)) & (((mmmm_1673 = 0) & (1 <= n1_1674)) | (((1 <= mmmm_1673) & (1 <= n1_1674)) | (((n1_1674 = 0) & (1 <= mmmm_1673)) | ((n1_1674 = 0) & (mmmm_1673 = 0)))))))};
+ raw result:{[n_1658,k_1659,m_1660,n1_1674,mmmm_1673]: n_1658 <= k_1659 && 0 <= m_1660 && 0 <= n1_1674 && 0 <= mmmm_1673}
+ PairWise:  n_1658<=k_1659 & 0<=m_1660 & 
+ (((mmmm_1673=0 & 1<=n1_1674) | (1<=mmmm_1673 & 1<=n1_1674) | 
+   (n1_1674=0 & 1<=mmmm_1673) | (n1_1674=0 & mmmm_1673=0)))
+ res:  n_1658<=k_1659 & 0<=m_1660 & 0<=n1_1674 & 0<=mmmm_1673
+ -------------------- 
+ id: 464<18; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:PAIRWISE:pairwisecheck {[n_1658, k_1659, m_1660, n1_1674, mmmm_1673] : (((((n_1658 <= k_1659) & (0 <= m_1660)) & (0 <= n1_1674)) & (0 <= mmmm_1673)))};
+ raw result:{[n_1658,k_1659,m_1660,n1_1674,mmmm_1673]: n_1658 <= k_1659 && 0 <= m_1660 && 0 <= n1_1674 && 0 <= mmmm_1673}
+ PairWise:  n_1658<=k_1659 & 0<=m_1660 & 0<=n1_1674 & 0<=mmmm_1673
+ res:  n_1658<=k_1659 & 0<=m_1660 & 0<=n1_1674 & 0<=mmmm_1673
+ -------------------- 
+ id: 465<18; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:SAT:{[P, flted_71_1671, m_1660, k_1659, n_1658, Anon_12, q, q_1641, v, flted_27_1639, v_1640, n, k_1637, k, m_1638, m, s_1657, v_bool_74_1560PRMD, n1_1674, q_1653, mmmm_1673, q_1672, s, sPRMD] : ((((((((((((((((((((((0=0)) & (flted_71_1671 = 0)) & (0 <= m_1638)) & (flted_27_1639 <= k_1637)) & (m_1660 = m_1638)) & (k_1659 = k_1637)) & (n_1658 = flted_27_1639)) & (q_1653 = q_1641)) & (Anon_12 = v_1640)) & (v != 0)) & (q = q_1641)) & (v = v_1640)) & (flted_27_1639 = 1 + n)) & (0 < v_1640)) & (n < k)) & (k_1637 = k)) & (m_1638 = m)) & (s_1657 = s)) & (v_bool_74_1560PRMD > 0)) & (((s = 1) & (((((sPRMD = q_1653) & (n1_1674 = 0)) | ((1 <= n1_1674) & (q_1653 > 0))) & (sPRMD = 2)) & (((q_1672 = 0) & (mmmm_1673 = 0)) | ((1 <= mmmm_1673) & (q_1672 > 0))))) & (s != sPRMD))))};
+ raw result: {[P,0,m_1660,k_1659,n_1658,Anon_12,q,q,Anon_12,n_1658,Anon_12,n_1658-1,k_1659,k_1659,m_1660,m_1660,1,v_bool_74_1560PRMD,n1_1674,q,mmmm_1673,q_1672,1,2]: n_1658 <= k_1659 && 0 <= m_1660 && 1 <= Anon_12 && 1 <= v_bool_74_1560PRMD && 1 <= n1_1674 && 1 <= q && 1 <= mmmm_1673 && 1 <= q_1672}
+ Sat:  P(mmmm_1673,n1_1674,n_1658,k_1659,m_1660) & flted_71_1671=0 & 0<=m_1638 & 
+ flted_27_1639<=k_1637 & m_1660=m_1638 & k_1659=k_1637 & 
+ n_1658=flted_27_1639 & q_1653=q_1641 & Anon_12=v_1640 & v!=0 & q=q_1641 & 
+ v=v_1640 & flted_27_1639=1+n & 0<v_1640 & n<k & k_1637=k & m_1638=m & 
+ s_1657=s & v_bool_74_1560' & s=1 & 
+ (((s'=q_1653 & n1_1674=0) | (1<=n1_1674 & q_1653!=null))) & s'=2 & 
+ (((q_1672=null & mmmm_1673=0) | (1<=mmmm_1673 & q_1672!=null))) & s!=s'
+ res: SAT
+ -------------------- 
+ id: 466<18; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:SIMPLIFY:{[sPRMD, q_1676, n1] : ( (exists (flted_32_1678:((((sPRMD = q_1676) & (flted_32_1678 = 0)) | ((1 <= flted_32_1678) & (q_1676 > 0))) & (flted_32_1678 + 1 = n1)))) )};
+ raw result:{[sPRMD,sPRMD,1]} union {[sPRMD,q_1676,n1]: 2 <= n1 && 1 <= q_1676}
+ Simplify:  exists(flted_32_1678:(((s'=q_1676 & flted_32_1678=0) | 
+                        (1<=flted_32_1678 & q_1676!=null))) & 
+                      flted_32_1678+1=n1)
+ res:  ((q_1676=s' & n1=1) | (2<=n1 & q_1676!=null))
+ -------------------- 
+ id: 467<18; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:PAIRWISE:pairwisecheck {[sPRMD, n1, q_1676] : ((((q_1676 = sPRMD) & (n1 = 1)) | ((2 <= n1) & (q_1676 > 0))))};
+ raw result:{[sPRMD,1,sPRMD]} union {[sPRMD,n1,q_1676]: 2 <= n1 && 1 <= q_1676}
+ PairWise:  ((q_1676=s' & n1=1) | (2<=n1 & q_1676!=null))
+ res:  ((n1=1 & q_1676=s') | (2<=n1 & q_1676!=null))
+ -------------------- 
+ id: 468<18; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[m, k, n, q, flted_27_1639, k_1637, m_1638, q_1672, P, mmmm_1673, n_1658, k_1659, m_1660, q_1641, s_1657, s, n1_1674, q_1653, sPRMD, n1, q_1676] : (( (not ((((((((((((((((((0 <= m_1638) & (flted_27_1639 <= k_1637)) & (m_1638 = m)) & (k_1637 = k)) & (n < k)) & (flted_27_1639 = 1 + n)) & (q = q_1641)) & (n_1658 = flted_27_1639)) & (k_1659 = k_1637)) & (m_1660 = m_1638)) & (((q_1672 = 0) & (mmmm_1673 = 0)) | ((1 <= mmmm_1673) & (q_1672 > 0)))) & ((0=0))) & (q_1653 = q_1641)) & (s_1657 = s)) & (s = 3)) & (((sPRMD = q_1653) & (n1_1674 = 0)) | ((1 <= n1_1674) & (q_1653 > 0)))) & (sPRMD = 4))))  | (((n1 = 1) & (q_1676 = sPRMD)) | ((2 <= n1) & (q_1676 != 0)))))};
+ raw result: {[m,k,n,q,n+1,k,m,q_1672,P,mmmm_1673,n+1,k,m,q,3,3,n1_1674,q,4,n1,0]: n < k && 2 <= n1 && 0 <= m && 1 <= n1_1674 && 1 <= q && 1 <= mmmm_1673 && 1 <= q_1672}
+ Imply: ante: 0<=m_1638 & flted_27_1639<=k_1637 & m_1638=m & k_1637=k & n<k & 
+ flted_27_1639=1+n & q=q_1641 & n_1658=flted_27_1639 & k_1659=k_1637 & 
+ m_1660=m_1638 & 
+ (((q_1672=null & mmmm_1673=0) | (1<=mmmm_1673 & q_1672!=null))) & 
+ P(mmmm_1673,n1_1674,n_1658,k_1659,m_1660) & q_1653=q_1641 & s_1657=s & 
+ s=3 & (((s'=q_1653 & n1_1674=0) | (1<=n1_1674 & q_1653!=null))) & s'=4
+	     conseq:  ((n1=1 & q_1676=s') | (2<=n1 & q_1676!=null))
+ res: false
+ -------------------- 
+ id: 469<18; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[m, k, n, q, flted_27_1639, k_1637, m_1638, q_1672, P, mmmm_1673, n_1658, k_1659, m_1660, q_1641, s_1657, s, n1_1674, q_1653, sPRMD, n1, q_1676] : (( (not ((((((((((((((((((0 <= m_1638) & (flted_27_1639 <= k_1637)) & (m_1638 = m)) & (k_1637 = k)) & (n < k)) & (flted_27_1639 = 1 + n)) & (q = q_1641)) & (n_1658 = flted_27_1639)) & (k_1659 = k_1637)) & (m_1660 = m_1638)) & (((q_1672 = 0) & (mmmm_1673 = 0)) | ((1 <= mmmm_1673) & (q_1672 > 0)))) & ((0=0))) & (q_1653 = q_1641)) & (s_1657 = s)) & (s = 3)) & (((sPRMD = q_1653) & (n1_1674 = 0)) | ((1 <= n1_1674) & (q_1653 > 0)))) & (sPRMD = 4))))  | (((n1 = 1) & (q_1676 = sPRMD)) | ((2 <= n1) & (q_1676 != 0)))))};
+ raw result: {[m,k,n,q,n+1,k,m,q_1672,P,mmmm_1673,n+1,k,m,q,3,3,n1_1674,q,4,n1,0]: n < k && 2 <= n1 && 0 <= m && 1 <= n1_1674 && 1 <= q && 1 <= mmmm_1673 && 1 <= q_1672}
+ Imply: ante: 0<=m_1638 & flted_27_1639<=k_1637 & m_1638=m & k_1637=k & n<k & 
+ flted_27_1639=1+n & q=q_1641 & n_1658=flted_27_1639 & k_1659=k_1637 & 
+ m_1660=m_1638 & 
+ (((q_1672=null & mmmm_1673=0) | (1<=mmmm_1673 & q_1672!=null))) & 
+ P(mmmm_1673,n1_1674,n_1658,k_1659,m_1660) & q_1653=q_1641 & s_1657=s & 
+ s=3 & (((s'=q_1653 & n1_1674=0) | (1<=n1_1674 & q_1653!=null))) & s'=4
+	     conseq:  ((n1=1 & q_1676=s') | (2<=n1 & q_1676!=null))
+ res: false
+ -------------------- 
+ id: 470<18; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[v_1675] : ((0 < v_1675))};
+ raw result:{[v_1675]: v_1675 <= 0}
+ Imply: ante: true
+	     conseq:  0<v_1675
+ res: false
+ -------------------- 
+ id: 471<18; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[m, k, n, q, flted_27_1639, k_1637, m_1638, q_1672, P, mmmm_1673, n_1658, k_1659, m_1660, q_1641, s_1657, n1_1674, q_1653, sPRMD, s] : (( (not ((((((((((((((((((0 <= m_1638) & (flted_27_1639 <= k_1637)) & (m_1638 = m)) & (k_1637 = k)) & (n < k)) & (flted_27_1639 = 1 + n)) & (q = q_1641)) & (n_1658 = flted_27_1639)) & (k_1659 = k_1637)) & (m_1660 = m_1638)) & (((q_1672 = 0) & (mmmm_1673 = 0)) | ((1 <= mmmm_1673) & (q_1672 > 0)))) & ((0=0))) & (q_1653 = q_1641)) & (s_1657 = s)) & (s = 3)) & (((sPRMD = q_1653) & (n1_1674 = 0)) | ((1 <= n1_1674) & (q_1653 > 0)))) & (sPRMD = 4))))  | (s != 0)))};
+ raw result:{[m,k,n,q,flted_27_1639,k_1637,m_1638,q_1672,P,mmmm_1673,n_1658,k_1659,m_1660,q_1641,s_1657,n1_1674,q_1653,sPRMD,s]  : FALSE }
+ Imply: ante: 0<=m_1638 & flted_27_1639<=k_1637 & m_1638=m & k_1637=k & n<k & 
+ flted_27_1639=1+n & q=q_1641 & n_1658=flted_27_1639 & k_1659=k_1637 & 
+ m_1660=m_1638 & 
+ (((q_1672=null & mmmm_1673=0) | (1<=mmmm_1673 & q_1672!=null))) & 
+ P(mmmm_1673,n1_1674,n_1658,k_1659,m_1660) & q_1653=q_1641 & s_1657=s & 
+ s=3 & (((s'=q_1653 & n1_1674=0) | (1<=n1_1674 & q_1653!=null))) & s'=4
+	     conseq:  s!=null
+ res: true
+ -------------------- 
+ id: 472<18; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:SAT:{[m, k, n, q, n_1658, flted_27_1639, k_1659, k_1637, m_1660, m_1638, mmmm_1673, q_1672, q_1641, s_1657, s, n1_1674, q_1653, sPRMD, q_1676, n1, v_1675] : ((((((((((((((((((0 <= m_1638) & (flted_27_1639 <= k_1637)) & (m_1638 = m)) & (k_1637 = k)) & (n < k)) & (flted_27_1639 = 1 + n)) & (q = q_1641)) & (n_1658 = flted_27_1639)) & (k_1659 = k_1637)) & (m_1660 = m_1638)) & (((q_1672 = 0) & (mmmm_1673 = 0)) | ((1 <= mmmm_1673) & (q_1672 > 0)))) & (q_1653 = q_1641)) & (s_1657 = s)) & (s = 3)) & (((sPRMD = q_1653) & (n1_1674 = 0)) | ((1 <= n1_1674) & (q_1653 > 0)))) & (sPRMD = 4)) & ( (exists (flted_32_1678:((((sPRMD = q_1676) & (flted_32_1678 = 0)) | ((1 <= flted_32_1678) & (q_1676 > 0))) & (flted_32_1678 + 1 = n1))))  & (0 < v_1675))))};
+ raw result: {[m,k,n,q,n+1,n+1,k,k,m,m,mmmm_1673,q_1672,q,3,3,n1_1674,q,4,q_1676,n1,v_1675]: n < k && 0 <= m && 1 <= q_1672 && 1 <= v_1675 && 1 <= mmmm_1673 && 1 <= n1_1674 && 1 <= q && 2 <= n1 && 1 <= q_1676}
+ Sat:  0<=m_1638 & flted_27_1639<=k_1637 & m_1638=m & k_1637=k & n<k & 
+ flted_27_1639=1+n & q=q_1641 & n_1658=flted_27_1639 & k_1659=k_1637 & 
+ m_1660=m_1638 & 
+ (((q_1672=null & mmmm_1673=0) | (1<=mmmm_1673 & q_1672!=null))) & 
+ q_1653=q_1641 & s_1657=s & s=3 & 
+ (((s'=q_1653 & n1_1674=0) | (1<=n1_1674 & q_1653!=null))) & s'=4 & 
+ exists(flted_32_1678:(((s'=q_1676 & flted_32_1678=0) | 
+                        (1<=flted_32_1678 & q_1676!=null))) & 
+                      flted_32_1678+1=n1) & 
+ 0<v_1675
+ res: SAT
+ -------------------- 
+ id: 473<21; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:IMPLY:complement {[m, k, n, q, q_1672, p_1682, q_1676, m_1638, k_1637, flted_27_1639, q_1641, s_1657, s, P, mmmm_1673, n_1658, k_1659, m_1660, flted_32_1683, sPRMD, q_1653, n1_1674] : (( (not ((((((((((((((((((((((m_1638 = m) & (k_1637 = k)) & (n < k)) & (flted_27_1639 = 1 + n)) & (q = q_1641)) & (sPRMD != s)) & (s = 2)) & (((q_1672 = 0) & (mmmm_1673 = 0)) | ((1 <= mmmm_1673) & (q_1672 > 0)))) & (sPRMD = 1)) & (sPRMD = p_1682)) & (q_1676 = q_1641)) & (0 <= m_1638)) & (flted_27_1639 <= k_1637)) & (m_1660 = m_1638)) & (k_1659 = k_1637)) & (n_1658 = flted_27_1639)) & (q_1653 = q_1641)) & (s_1657 = s)) & ((0=0))) & (n1_1674 = flted_32_1683)) & (((sPRMD = q_1653) & (n1_1674 = 0)) | ((1 <= n1_1674) & (q_1653 > 0))))))  | (n1_1674 = 0)))};
+ raw result: {[m,k,n,q,q_1672,1,q,m,k,n+1,q,2,2,P,mmmm_1673,n+1,k,m,flted_32_1683,1,q,flted_32_1683]: n < k && 1 <= flted_32_1683 && 0 <= m && 1 <= q && 1 <= mmmm_1673 && 1 <= q_1672}
+ Imply: ante: m_1638=m & k_1637=k & n<k & flted_27_1639=1+n & q=q_1641 & s'!=s & s=2 & 
+ (((q_1672=null & mmmm_1673=0) | (1<=mmmm_1673 & q_1672!=null))) & s'=1 & 
+ s'=p_1682 & q_1676=q_1641 & 0<=m_1638 & flted_27_1639<=k_1637 & 
+ m_1660=m_1638 & k_1659=k_1637 & n_1658=flted_27_1639 & q_1653=q_1641 & 
+ s_1657=s & P(mmmm_1673,n1_1674,n_1658,k_1659,m_1660) & 
+ n1_1674=flted_32_1683 & 
+ (((s'=q_1653 & n1_1674=0) | (1<=n1_1674 & q_1653!=null)))
+	     conseq:  n1_1674=0
+ res: false
+ -------------------- 
+ id: 474<21; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:IMPLY:complement {[m, k, n, q, q_1672, p_1682, q_1676, m_1638, k_1637, flted_27_1639, q_1641, s_1657, s, P, mmmm_1673, n_1658, k_1659, m_1660, flted_32_1683, sPRMD, q_1653, n1_1674] : (( (not ((((((((((((((((((((((m_1638 = m) & (k_1637 = k)) & (n < k)) & (flted_27_1639 = 1 + n)) & (q = q_1641)) & (sPRMD != s)) & (s = 2)) & (((q_1672 = 0) & (mmmm_1673 = 0)) | ((1 <= mmmm_1673) & (q_1672 > 0)))) & (sPRMD = 1)) & (sPRMD = p_1682)) & (q_1676 = q_1641)) & (0 <= m_1638)) & (flted_27_1639 <= k_1637)) & (m_1660 = m_1638)) & (k_1659 = k_1637)) & (n_1658 = flted_27_1639)) & (q_1653 = q_1641)) & (s_1657 = s)) & ((0=0))) & (n1_1674 = flted_32_1683)) & (((sPRMD = q_1653) & (n1_1674 = 0)) | ((1 <= n1_1674) & (q_1653 > 0))))))  | (n1_1674 = 0)))};
+ raw result: {[m,k,n,q,q_1672,1,q,m,k,n+1,q,2,2,P,mmmm_1673,n+1,k,m,flted_32_1683,1,q,flted_32_1683]: n < k && 1 <= flted_32_1683 && 0 <= m && 1 <= q && 1 <= mmmm_1673 && 1 <= q_1672}
+ Imply: ante: m_1638=m & k_1637=k & n<k & flted_27_1639=1+n & q=q_1641 & s'!=s & s=2 & 
+ (((q_1672=null & mmmm_1673=0) | (1<=mmmm_1673 & q_1672!=null))) & s'=1 & 
+ s'=p_1682 & q_1676=q_1641 & 0<=m_1638 & flted_27_1639<=k_1637 & 
+ m_1660=m_1638 & k_1659=k_1637 & n_1658=flted_27_1639 & q_1653=q_1641 & 
+ s_1657=s & P(mmmm_1673,n1_1674,n_1658,k_1659,m_1660) & 
+ n1_1674=flted_32_1683 & 
+ (((s'=q_1653 & n1_1674=0) | (1<=n1_1674 & q_1653!=null)))
+	     conseq:  n1_1674=0
+ res: false
+ -------------------- 
+ id: 475<22; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:SIMPLIFY:{[] : ( (exists (sPRMD:(sPRMD = sPRMD))) )};
+ raw result:{ TRUE }
+ Simplify:  exists(s':s'=s')
+ res:  true
+ -------------------- 
+ id: 476<22; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 477<22; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:IMPLY:complement {[Anon_12, v, v_1640, v_1675] : (( (not ((((((Anon_12 = v_1640) & (v != 0)) & (v = v_1640)) & (0 < v_1640)) & (v_1675 = v_1640))))  | (0 < v_1675)))};
+ raw result:{[Anon_12,v,v_1640,v_1675]  : FALSE }
+ Imply: ante: Anon_12=v_1640 & v!=0 & v=v_1640 & 0<v_1640 & v_1675=v_1640
+	     conseq:  0<v_1675
+ res: true
+ -------------------- 
+ id: 478<22; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:SAT:{[q_1676, v_1675, P, n1_1674, flted_71_1671, m_1660, k_1659, n_1658, q_1653, Anon_12, q, q_1641, v, flted_27_1639, v_1640, n, k_1637, k, m_1638, m, s_1657, s, v_bool_74_1560PRMD, sPRMD, mmmm_1673, q_1672] : (((((((((((((((((((((((q_1676 = q_1641) & (v_1675 = v_1640)) & ((0=0))) & (flted_71_1671 = 0)) & (0 <= m_1638)) & (flted_27_1639 <= k_1637)) & (m_1660 = m_1638)) & (k_1659 = k_1637)) & (n_1658 = flted_27_1639)) & (q_1653 = q_1641)) & (Anon_12 = v_1640)) & (v != 0)) & (q = q_1641)) & (v = v_1640)) & (flted_27_1639 = 1 + n)) & (0 < v_1640)) & (n < k)) & (k_1637 = k)) & (m_1638 = m)) & (s_1657 = s)) & (v_bool_74_1560PRMD > 0)) & ((sPRMD = 1) & (((q_1672 = 0) & (mmmm_1673 = 0)) | ((1 <= mmmm_1673) & (q_1672 > 0))))))};
+ raw result: {[q_1676,v_1675,P,n1_1674,0,m_1660,k_1659,n_1658,q_1676,v_1675,q_1676,q_1676,v_1675,n_1658,v_1675,n_1658-1,k_1659,k_1659,m_1660,m_1660,s_1657,s_1657,v_bool_74_1560PRMD,1,mmmm_1673,q_1672]: n_1658 <= k_1659 && 0 <= m_1660 && 1 <= v_1675 && 1 <= v_bool_74_1560PRMD && 1 <= mmmm_1673 && 1 <= q_1672}
+ Sat:  q_1676=q_1641 & v_1675=v_1640 & P(mmmm_1673,n1_1674,n_1658,k_1659,m_1660) & 
+ flted_71_1671=0 & 0<=m_1638 & flted_27_1639<=k_1637 & m_1660=m_1638 & 
+ k_1659=k_1637 & n_1658=flted_27_1639 & q_1653=q_1641 & Anon_12=v_1640 & 
+ v!=0 & q=q_1641 & v=v_1640 & flted_27_1639=1+n & 0<v_1640 & n<k & 
+ k_1637=k & m_1638=m & s_1657=s & v_bool_74_1560' & s'=1 & 
+ (((q_1672=null & mmmm_1673=0) | (1<=mmmm_1673 & q_1672!=null)))
+ res: SAT
+ -------------------- 
+ id: 479<18; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:SAT:{[v_bool_74_1560PRMD, s_1657, s, m, k, n, q, v, Anon_12, q_1653, flted_27_1639, k_1637, m_1638, flted_71_1671, P, n_1658, k_1659, m_1660, v_1675, v_1640, q_1676, q_1641, n1_1674, n1, sPRMD, mmmm_1673, q_1672] : ((((((((((((((((((((((((v_bool_74_1560PRMD > 0) & (s_1657 = s)) & (m_1638 = m)) & (k_1637 = k)) & (n < k)) & (0 < v_1640)) & (flted_27_1639 = 1 + n)) & (v = v_1640)) & (q = q_1641)) & (v != 0)) & (Anon_12 = v_1640)) & (q_1653 = q_1641)) & (n_1658 = flted_27_1639)) & (k_1659 = k_1637)) & (m_1660 = m_1638)) & (flted_27_1639 <= k_1637)) & (0 <= m_1638)) & (flted_71_1671 = 0)) & ((0=0))) & (v_1675 = v_1640)) & (q_1676 = q_1641)) & ((sPRMD = sPRMD) & (n1_1674 + 1 = n1))) & ((sPRMD = 1) & (((q_1672 = 0) & (mmmm_1673 = 0)) | ((1 <= mmmm_1673) & (q_1672 > 0))))))};
+ raw result: {[v_bool_74_1560PRMD,s_1657,s_1657,m,k,n,q,v,v,q,n+1,k,m,0,P,n+1,k,m,v,v,q,q,n1_1674,n1_1674+1,1,mmmm_1673,q_1672]: n < k && 1 <= v_bool_74_1560PRMD && 1 <= v && 0 <= m && 1 <= mmmm_1673 && 1 <= q_1672}
+ Sat:  v_bool_74_1560' & s_1657=s & m_1638=m & k_1637=k & n<k & 0<v_1640 & 
+ flted_27_1639=1+n & v=v_1640 & q=q_1641 & v!=0 & Anon_12=v_1640 & 
+ q_1653=q_1641 & n_1658=flted_27_1639 & k_1659=k_1637 & m_1660=m_1638 & 
+ flted_27_1639<=k_1637 & 0<=m_1638 & flted_71_1671=0 & 
+ P(mmmm_1673,n1_1674,n_1658,k_1659,m_1660) & v_1675=v_1640 & q_1676=q_1641 & 
+ s'=s' & n1_1674+1=n1 & s'=1 & 
+ (((q_1672=null & mmmm_1673=0) | (1<=mmmm_1673 & q_1672!=null)))
+ res: SAT
+ -------------------- 
+ id: 480<18; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[flted_71_74] : ((flted_71_74 = 0))};
+ raw result: {[flted_71_74]: 1 <= flted_71_74}
+ Imply: ante: true
+	     conseq:  flted_71_74=0
+ res: false
+ -------------------- 
+ id: 481<18; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[q_1672, mmmm_1673, n_1658, k_1659, m_1660, n1_1674, flted_27_1639, k_1637, m_1638, P, mmmm, n1, n, k, m] : (( (not (((((((((((((((q_1672 = 0) & (mmmm_1673 = 0)) | ((1 <= mmmm_1673) & (q_1672 > 0))) & (n_1658 = flted_27_1639)) & (k_1659 = k_1637)) & (m_1660 = m_1638)) & (flted_27_1639 <= k_1637)) & (0 <= m_1638)) & ((0=0))) & (n1_1674 + 1 = n1)) & (flted_27_1639 = 1 + n)) & (n < k)) & (k_1637 = k)) & (m_1638 = m))))  | ((0>0))))};
+ raw result: {[q_1672,mmmm_1673,n_1658,k_1659,m_1660,n1_1674,n_1658,k_1659,m_1660,P,mmmm,n1_1674+1,n_1658-1,k_1659,m_1660]: n_1658 <= k_1659 && 0 <= m_1660 && 1 <= mmmm_1673 && 1 <= q_1672}
+ Imply: ante: (((q_1672=null & mmmm_1673=0) | (1<=mmmm_1673 & q_1672!=null))) & 
+ n_1658=flted_27_1639 & k_1659=k_1637 & m_1660=m_1638 & 
+ flted_27_1639<=k_1637 & 0<=m_1638 & 
+ P(mmmm_1673,n1_1674,n_1658,k_1659,m_1660) & n1_1674+1=n1 & 
+ flted_27_1639=1+n & n<k & k_1637=k & m_1638=m
+	     conseq:  P(mmmm,n1,n,k,m)
+ res: false
+ -------------------- 
+ id: 482<18; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[q_1672, m, k, n, flted_27_1639, k_1637, m_1638, P, mmmm_1673, n_1658, k_1659, m_1660, n1_1674, n1] : (( (not (((((((((((((0 <= m_1638) & (flted_27_1639 <= k_1637)) & (((q_1672 = 0) & (mmmm_1673 = 0)) | ((1 <= mmmm_1673) & (q_1672 > 0)))) & (m_1638 = m)) & (k_1637 = k)) & (n < k)) & (flted_27_1639 = 1 + n)) & (n_1658 = flted_27_1639)) & (k_1659 = k_1637)) & (m_1660 = m_1638)) & (n1_1674 + 1 = n1)) & ((0=0)))))  | (n1_1674 + 1 = n1)))};
+ raw result:{[q_1672,m,k,n,flted_27_1639,k_1637,m_1638,P,mmmm_1673,n_1658,k_1659,m_1660,n1_1674,n1]  : FALSE }
+ Imply: ante: 0<=m_1638 & flted_27_1639<=k_1637 & 
+ (((q_1672=null & mmmm_1673=0) | (1<=mmmm_1673 & q_1672!=null))) & 
+ m_1638=m & k_1637=k & n<k & flted_27_1639=1+n & n_1658=flted_27_1639 & 
+ k_1659=k_1637 & m_1660=m_1638 & n1_1674+1=n1 & 
+ P(mmmm_1673,n1_1674,n_1658,k_1659,m_1660)
+	     conseq:  n1_1674+1=n1
+ res: true
+ -------------------- 
+ id: 483<18; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[s_1657, s, sPRMD] : (( (not (((s_1657 = s) & (sPRMD = 2))))  | (sPRMD != 0)))};
+ raw result:{[s_1657,s,sPRMD]  : FALSE }
+ Imply: ante: s_1657=s & s'=2
+	     conseq:  s'!=null
+ res: true
+ -------------------- 
+ id: 484<18; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[q_1653, q_1676, q_1641, mmmm, q] : (( (not ((((q_1653 = q_1641) & (q_1676 = q_1641)) & (q = q_1641))))  | (((q <= 0) & (mmmm = 0)) | ((1 <= mmmm) & (q != 0)))))};
+ raw result: {[0,0,0,mmmm,0]: 1 <= mmmm}
+ Imply: ante: q_1653=q_1641 & q_1676=q_1641 & q=q_1641
+	     conseq:  ((q=null & mmmm=0) | (1<=mmmm & q!=null))
+ res: false
+ -------------------- 
+ id: 485<18; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:SAT:{[mmmm_1673, q_1672, q_1653, n_1658, k_1659, m_1660, q_1676, n1_1674, n1, q_1641, flted_27_1639, n, k_1637, k, m_1638, m, flted_71_74, mmmm, q] : ((((((((((((((((((q_1672 = 0) & (mmmm_1673 = 0)) | ((1 <= mmmm_1673) & (q_1672 > 0))) & (q_1653 = q_1641)) & (n_1658 = flted_27_1639)) & (k_1659 = k_1637)) & (m_1660 = m_1638)) & (flted_27_1639 <= k_1637)) & (0 <= m_1638)) & (q_1676 = q_1641)) & (n1_1674 + 1 = n1)) & (q = q_1641)) & (flted_27_1639 = 1 + n)) & (n < k)) & (k_1637 = k)) & (m_1638 = m)) & ((flted_71_74 = 0) & (((q = 0) & (mmmm = 0)) | ((1 <= mmmm) & (q > 0))))))};
+ raw result: {[mmmm_1673,q_1672,q_1653,n_1658,k_1659,m_1660,q_1653,n1_1674,n1_1674+1,q_1653,n_1658,n_1658-1,k_1659,k_1659,m_1660,m_1660,0,mmmm,q_1653]: n_1658 <= k_1659 && 0 <= m_1660 && 1 <= q_1672 && 1 <= mmmm_1673 && 1 <= mmmm && 1 <= q_1653}
+ Sat:  (((q_1672=null & mmmm_1673=0) | (1<=mmmm_1673 & q_1672!=null))) & 
+ q_1653=q_1641 & n_1658=flted_27_1639 & k_1659=k_1637 & m_1660=m_1638 & 
+ flted_27_1639<=k_1637 & 0<=m_1638 & q_1676=q_1641 & n1_1674+1=n1 & 
+ q=q_1641 & flted_27_1639=1+n & n<k & k_1637=k & m_1638=m & flted_71_74=0 & 
+ (((q=null & mmmm=0) | (1<=mmmm & q!=null)))
+ res: SAT
+ -------------------- 
+ id: 486<24; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:IMPLY:complement {[q_1676, s_1657, s, sPRMD, q_1653, m, k, n, q_1641, flted_27_1639, k_1637, m_1638, n1, P, n1_1674, n_1658, k_1659, m_1660, q, mmmm, mmmm_1673, q_1672] : (( (not (((((((((((((((((((((((q_1676 = q_1641) & (0 <= m_1638)) & (flted_27_1639 <= k_1637)) & (q_1653 = q_1641)) & (s_1657 = s)) & (sPRMD = 1)) & (sPRMD != s)) & (s = 2)) & (((sPRMD = q_1653) & (n1_1674 = 0)) | ((1 <= n1_1674) & (q_1653 > 0)))) & (m_1638 = m)) & (k_1637 = k)) & (n < k)) & (flted_27_1639 = 1 + n)) & (q = q_1641)) & (n_1658 = flted_27_1639)) & (k_1659 = k_1637)) & (m_1660 = m_1638)) & (n1_1674 + 1 = n1)) & ((0=0))) & (q = q_1672)) & (mmmm_1673 = mmmm)) & (((q_1672 = 0) & (mmmm_1673 = 0)) | ((1 <= mmmm_1673) & (q_1672 > 0))))))  | ((mmmm_1673 = 0) | (q_1672 <= 0))))};
+ raw result: {[q_1676,2,2,1,q_1676,m,k,n,q_1676,n+1,k,m,n1,P,n1-1,n+1,k,m,q_1676,mmmm,mmmm,q_1676]: n < k && 1 <= mmmm && 0 <= m && 1 <= q_1676 && 2 <= n1}
+ Imply: ante: q_1676=q_1641 & 0<=m_1638 & flted_27_1639<=k_1637 & q_1653=q_1641 & 
+ s_1657=s & s'=1 & s'!=s & s=2 & 
+ (((s'=q_1653 & n1_1674=0) | (1<=n1_1674 & q_1653!=null))) & m_1638=m & 
+ k_1637=k & n<k & flted_27_1639=1+n & q=q_1641 & n_1658=flted_27_1639 & 
+ k_1659=k_1637 & m_1660=m_1638 & n1_1674+1=n1 & 
+ P(mmmm_1673,n1_1674,n_1658,k_1659,m_1660) & q=q_1672 & mmmm_1673=mmmm & 
+ (((q_1672=null & mmmm_1673=0) | (1<=mmmm_1673 & q_1672!=null)))
+	     conseq:  (mmmm_1673=0 | q_1672=null)
+ res: false
+ -------------------- 
+ id: 487<24; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:IMPLY:complement {[q_1676, s_1657, s, sPRMD, q_1653, m, k, n, q_1641, flted_27_1639, k_1637, m_1638, n1, P, n1_1674, n_1658, k_1659, m_1660, q, mmmm, mmmm_1673, q_1672] : (( (not (((((((((((((((((((((((q_1676 = q_1641) & (0 <= m_1638)) & (flted_27_1639 <= k_1637)) & (q_1653 = q_1641)) & (s_1657 = s)) & (sPRMD = 1)) & (sPRMD != s)) & (s = 2)) & (((sPRMD = q_1653) & (n1_1674 = 0)) | ((1 <= n1_1674) & (q_1653 > 0)))) & (m_1638 = m)) & (k_1637 = k)) & (n < k)) & (flted_27_1639 = 1 + n)) & (q = q_1641)) & (n_1658 = flted_27_1639)) & (k_1659 = k_1637)) & (m_1660 = m_1638)) & (n1_1674 + 1 = n1)) & ((0=0))) & (q = q_1672)) & (mmmm_1673 = mmmm)) & (((q_1672 = 0) & (mmmm_1673 = 0)) | ((1 <= mmmm_1673) & (q_1672 > 0))))))  | ((mmmm_1673 = 0) | (q_1672 <= 0))))};
+ raw result: {[q_1676,2,2,1,q_1676,m,k,n,q_1676,n+1,k,m,n1,P,n1-1,n+1,k,m,q_1676,mmmm,mmmm,q_1676]: n < k && 1 <= mmmm && 0 <= m && 1 <= q_1676 && 2 <= n1}
+ Imply: ante: q_1676=q_1641 & 0<=m_1638 & flted_27_1639<=k_1637 & q_1653=q_1641 & 
+ s_1657=s & s'=1 & s'!=s & s=2 & 
+ (((s'=q_1653 & n1_1674=0) | (1<=n1_1674 & q_1653!=null))) & m_1638=m & 
+ k_1637=k & n<k & flted_27_1639=1+n & q=q_1641 & n_1658=flted_27_1639 & 
+ k_1659=k_1637 & m_1660=m_1638 & n1_1674+1=n1 & 
+ P(mmmm_1673,n1_1674,n_1658,k_1659,m_1660) & q=q_1672 & mmmm_1673=mmmm & 
+ (((q_1672=null & mmmm_1673=0) | (1<=mmmm_1673 & q_1672!=null)))
+	     conseq:  (mmmm_1673=0 | q_1672=null)
+ res: false
+ -------------------- 
+ id: 488<25; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:SAT:{[q_1676, v_1675, m_1660, k_1659, n_1658, Anon_12, q_1641, v, flted_27_1639, v_1640, n, k_1637, k, m_1638, m, s_1657, v_bool_74_1560PRMD, flted_71_1671, q, mmmm, mmmm_1673, q_1672, q_1653, sPRMD, s, flted_71_74, n1_1674, n1] : ((((((((((((((((((((((((((n1_1674 + 1 = n1) & (q_1676 = q_1641)) & (v_1675 = v_1640)) & (flted_71_1671 = 0)) & (0 <= m_1638)) & (flted_27_1639 <= k_1637)) & (m_1660 = m_1638)) & (k_1659 = k_1637)) & (n_1658 = flted_27_1639)) & (q_1653 = q_1641)) & (Anon_12 = v_1640)) & (v != 0)) & (q = q_1641)) & (v = v_1640)) & (flted_27_1639 = 1 + n)) & (0 < v_1640)) & (n < k)) & (k_1637 = k)) & (m_1638 = m)) & (s_1657 = s)) & (v_bool_74_1560PRMD > 0)) & ((flted_71_74 = flted_71_1671) & (q = q_1672))) & (mmmm = mmmm_1673)) & (((((q_1672 = 0) & (mmmm_1673 = 0)) | ((1 <= mmmm_1673) & (q_1672 > 0))) & ((sPRMD > 0) & ((((sPRMD = q_1653) & (n1_1674 = 0)) | ((1 <= n1_1674) & (q_1653 > 0))) & (s > 0)))) & (sPRMD != s))) & ((flted_71_74 = 0) & (n1_1674 + 1 = n1))))};
+ raw result: {[q_1676,v_1675,m_1660,k_1659,n_1658,v_1675,q_1676,v_1675,n_1658,v_1675,n_1658-1,k_1659,k_1659,m_1660,m_1660,s_1657,v_bool_74_1560PRMD,0,q_1676,mmmm,mmmm,q_1676,q_1676,sPRMD,s_1657,0,n1_1674,n1_1674+1]: 1 <= sPRMD < s_1657 && n_1658 <= k_1659 && 0 <= m_1660 && 1 <= v_1675 && 1 <= v_bool_74_1560PRMD && 1 <= mmmm && 1 <= q_1676 && 1 <= n1_1674}
+ Sat:  n1_1674+1=n1 & q_1676=q_1641 & v_1675=v_1640 & flted_71_1671=0 & 
+ 0<=m_1638 & flted_27_1639<=k_1637 & m_1660=m_1638 & k_1659=k_1637 & 
+ n_1658=flted_27_1639 & q_1653=q_1641 & Anon_12=v_1640 & v!=0 & q=q_1641 & 
+ v=v_1640 & flted_27_1639=1+n & 0<v_1640 & n<k & k_1637=k & m_1638=m & 
+ s_1657=s & v_bool_74_1560' & flted_71_74=flted_71_1671 & q=q_1672 & 
+ mmmm=mmmm_1673 & 
+ (((q_1672=null & mmmm_1673=0) | (1<=mmmm_1673 & q_1672!=null))) & 
+ s'!=null & (((s'=q_1653 & n1_1674=0) | (1<=n1_1674 & q_1653!=null))) & 
+ s!=null & s'!=s & flted_71_74=0 & n1_1674+1=n1
+ res: SAT
+ -------------------- 
+ id: 489<25; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:SIMPLIFY:{[sPRMD, n1_1674, n1, q_1676, v_1675, memo_rel_hole_1686, m_1660, k_1659, n_1658, q_1653, Anon_12, q_1641, v, flted_27_1639, v_1640, n, k_1637, k, m_1638, m, s_1657, s, v_bool_74_1560PRMD, flted_71_74, flted_71_1671, q, q_1672, mmmm, mmmm_1673] : (((((((q_1672 = 0) & (mmmm_1673 = 0)) | ((1 <= mmmm_1673) & (q_1672 > 0))) & ((sPRMD > 0) & ((((sPRMD = q_1653) & (n1_1674 = 0)) | ((1 <= n1_1674) & (q_1653 > 0))) & (s > 0)))) & (sPRMD != s)) & ((((((((((((((((((((((((n1_1674 + 1 = n1) & (q_1676 = q_1641)) & (v_1675 = v_1640)) & (memo_rel_hole_1686 > 0)) & (flted_71_1671 = 0)) & (0 <= m_1638)) & (flted_27_1639 <= k_1637)) & (m_1660 = m_1638)) & (k_1659 = k_1637)) & (n_1658 = flted_27_1639)) & (q_1653 = q_1641)) & (Anon_12 = v_1640)) & (v != 0)) & (q = q_1641)) & (v = v_1640)) & (flted_27_1639 = 1 + n)) & (0 < v_1640)) & (n < k)) & (k_1637 = k)) & (m_1638 = m)) & (s_1657 = s)) & (v_bool_74_1560PRMD > 0)) & ((flted_71_74 = flted_71_1671) & (q = q_1672))) & (mmmm = mmmm_1673))))};
+ raw result:{[sPRMD,0,1,sPRMD,v_1675,memo_rel_hole_1686,m_1660,k_1659,n_1658,sPRMD,v_1675,sPRMD,v_1675,n_1658,v_1675,n_1658-1,k_1659,k_1659,m_1660,m_1660,s_1657,s_1657,v_bool_74_1560PRMD,0,0,sPRMD,sPRMD,mmmm,mmmm]: 1 <= s_1657 < sPRMD && n_1658 <= k_1659 && 1 <= memo_rel_hole_1686 && 0 <= m_1660 && 1 <= v_1675 && 1 <= mmmm && 1 <= v_bool_74_1560PRMD} union {[sPRMD,n1_1674,n1_1674+1,q_1676,v_1675,memo_rel_hole_1686,m_1660,k_1659,n_1658,q_1676,v_1675,q_1676,v_1675,n_1658,v_1675,n_1658-1,k_1659,k_1659,m_1660,m_1660,s_1657,s_1657,v_bool_74_1560PRMD,0,0,q_1676,q_1676,mmmm,mmmm]: 1 <= s_1657 < sPRMD && n_1658 <= k_1659 && 1 <= memo_rel_hole_1686 && 0 <= m_1660 && 1 <= v_1675 && 1 <= q_1676 && 1 <= v_bool_74_1560PRMD && 1 <= mmmm && 1 <= n1_1674} union {[sPRMD,0,1,sPRMD,v_1675,memo_rel_hole_1686,m_1660,k_1659,n_1658,sPRMD,v_1675,sPRMD,v_1675,n_1658,v_1675,n_1658-1,k_1659,k_1659,m_1660,m_1660,s_1657,s_1657,v_bool_74_1560PRMD,0,0,sPRMD,sPRMD,mmmm,mmmm]: 1 <= sPRMD < s_1657 && n_1658 <= k_1659 && 1 <= memo_rel_hole_1686 && 0 <= m_1660 && 1 <= v_1675 && 1 <= mmmm && 1 <= v_bool_74_1560PRMD} union {[sPRMD,n1_1674,n1_1674+1,q_1676,v_1675,memo_rel_hole_1686,m_1660,k_1659,n_1658,q_1676,v_1675,q_1676,v_1675,n_1658,v_1675,n_1658-1,k_1659,k_1659,m_1660,m_1660,s_1657,s_1657,v_bool_74_1560PRMD,0,0,q_1676,q_1676,mmmm,mmmm]: 1 <= sPRMD < s_1657 && n_1658 <= k_1659 && 1 <= memo_rel_hole_1686 && 0 <= m_1660 && 1 <= v_1675 && 1 <= q_1676 && 1 <= v_bool_74_1560PRMD && 1 <= mmmm && 1 <= n1_1674}
+ Simplify:  (((q_1672=null & mmmm_1673=0) | (1<=mmmm_1673 & q_1672!=null))) & 
+ s'!=null & (((s'=q_1653 & n1_1674=0) | (1<=n1_1674 & q_1653!=null))) & 
+ s!=null & s'!=s & n1_1674+1=n1 & q_1676=q_1641 & v_1675=v_1640 & 
+ memo_rel_hole_1686 & flted_71_1671=0 & 0<=m_1638 & flted_27_1639<=k_1637 & 
+ m_1660=m_1638 & k_1659=k_1637 & n_1658=flted_27_1639 & q_1653=q_1641 & 
+ Anon_12=v_1640 & v!=0 & q=q_1641 & v=v_1640 & flted_27_1639=1+n & 
+ 0<v_1640 & n<k & k_1637=k & m_1638=m & s_1657=s & v_bool_74_1560' & 
+ flted_71_74=flted_71_1671 & q=q_1672 & mmmm=mmmm_1673
+ res:  Anon_12=v_1675 & v=v_1675 & flted_27_1639=n_1658 & v_1640=v_1675 & 
+ n+1=n_1658 & k_1637=k_1659 & k=k_1659 & m_1638=m_1660 & m=m_1660 & 
+ s=s_1657 & flted_71_74=0 & flted_71_1671=0 & mmmm_1673=mmmm & 
+ n_1658<=k_1659 & memo_rel_hole_1686 & 0<=m_1660 & 1<=v_1675 & 1<=mmmm & 
+ v_bool_74_1560' & 
+ (((n1=1+n1_1674 & q_1653=q_1676 & q_1641=q_1676 & q=q_1676 & 
+    q_1672=q_1676 & q_1676!=null & 1<=n1_1674 & s_1657!=null & s_1657<s') | 
+   (n1_1674=0 & n1=1 & q_1676=s' & q_1653=s' & q_1641=s' & q=s' & 
+    q_1672=s' & s_1657!=null & s_1657<s') | 
+   (n1_1674=0 & n1=1 & q_1676=s' & q_1653=s' & q_1641=s' & q=s' & 
+    q_1672=s' & s'!=null & s'<s_1657) | 
+   (n1=1+n1_1674 & q_1653=q_1676 & q_1641=q_1676 & q=q_1676 & 
+    q_1672=q_1676 & s'!=null & s'<s_1657 & q_1676!=null & 1<=n1_1674))) & 
+ s'!=s
+ -------------------- 
+ id: 490<25; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:PAIRWISE:pairwisecheck {[Anon_12, v, flted_27_1639, v_1640, n, k_1637, k, m_1638, m, flted_71_74, flted_71_1671, mmmm_1673, n_1658, k_1659, memo_rel_hole_1686, m_1660, v_1675, mmmm, v_bool_74_1560PRMD, n1, q_1653, q_1641, q, q_1672, s_1657, q_1676, n1_1674, sPRMD, s] : ((((((((((((((((((((((Anon_12 = v_1675) & (v = v_1675)) & (flted_27_1639 = n_1658)) & (v_1640 = v_1675)) & (n + 1 = n_1658)) & (k_1637 = k_1659)) & (k = k_1659)) & (m_1638 = m_1660)) & (m = m_1660)) & (s = s_1657)) & (flted_71_74 = 0)) & (flted_71_1671 = 0)) & (mmmm_1673 = mmmm)) & (n_1658 <= k_1659)) & (memo_rel_hole_1686 > 0)) & (0 <= m_1660)) & (1 <= v_1675)) & (1 <= mmmm)) & (v_bool_74_1560PRMD > 0)) & ((((((((((n1 = 1 + n1_1674) & (q_1653 = q_1676)) & (q_1641 = q_1676)) & (q = q_1676)) & (q_1672 = q_1676)) & (q_1676 > 0)) & (1 <= n1_1674)) & (s_1657 > 0)) & (s_1657 < sPRMD)) | ((((((((((n1_1674 = 0) & (n1 = 1)) & (q_1676 = sPRMD)) & (q_1653 = sPRMD)) & (q_1641 = sPRMD)) & (q = sPRMD)) & (q_1672 = sPRMD)) & (s_1657 > 0)) & (s_1657 < sPRMD)) | ((((((((((n1_1674 = 0) & (n1 = 1)) & (q_1676 = sPRMD)) & (q_1653 = sPRMD)) & (q_1641 = sPRMD)) & (q = sPRMD)) & (q_1672 = sPRMD)) & (sPRMD > 0)) & (sPRMD < s_1657)) | (((((((((n1 = 1 + n1_1674) & (q_1653 = q_1676)) & (q_1641 = q_1676)) & (q = q_1676)) & (q_1672 = q_1676)) & (sPRMD > 0)) & (sPRMD < s_1657)) & (q_1676 > 0)) & (1 <= n1_1674)))))) & (sPRMD != s)))};
+ raw result:{[Anon_12,Anon_12,flted_27_1639,Anon_12,flted_27_1639-1,k_1637,k_1637,m_1638,m_1638,0,0,mmmm_1673,flted_27_1639,k_1637,memo_rel_hole_1686,m_1638,Anon_12,mmmm_1673,v_bool_74_1560PRMD,n1,q_1653,q_1653,q_1653,q_1653,s_1657,q_1653,n1-1,sPRMD,s_1657]: 1 <= s_1657 < sPRMD && flted_27_1639 <= k_1637 && 1 <= memo_rel_hole_1686 && 0 <= m_1638 && 1 <= Anon_12 && 1 <= mmmm_1673 && 1 <= v_bool_74_1560PRMD && 1 <= q_1653 && 2 <= n1} union {[Anon_12,Anon_12,flted_27_1639,Anon_12,flted_27_1639-1,k_1637,k_1637,m_1638,m_1638,0,0,mmmm_1673,flted_27_1639,k_1637,memo_rel_hole_1686,m_1638,Anon_12,mmmm_1673,v_bool_74_1560PRMD,1,q_1653,q_1653,q_1653,q_1653,s_1657,q_1653,0,q_1653,s_1657]: 1 <= s_1657 < q_1653 && flted_27_1639 <= k_1637 && 1 <= memo_rel_hole_1686 && 0 <= m_1638 && 1 <= Anon_12 && 1 <= mmmm_1673 && 1 <= v_bool_74_1560PRMD} union {[Anon_12,Anon_12,flted_27_1639,Anon_12,flted_27_1639-1,k_1637,k_1637,m_1638,m_1638,0,0,mmmm_1673,flted_27_1639,k_1637,memo_rel_hole_1686,m_1638,Anon_12,mmmm_1673,v_bool_74_1560PRMD,1,q_1653,q_1653,q_1653,q_1653,s_1657,q_1653,0,q_1653,s_1657]: 1 <= q_1653 < s_1657 && flted_27_1639 <= k_1637 && 1 <= memo_rel_hole_1686 && 0 <= m_1638 && 1 <= Anon_12 && 1 <= mmmm_1673 && 1 <= v_bool_74_1560PRMD} union {[Anon_12,Anon_12,flted_27_1639,Anon_12,flted_27_1639-1,k_1637,k_1637,m_1638,m_1638,0,0,mmmm_1673,flted_27_1639,k_1637,memo_rel_hole_1686,m_1638,Anon_12,mmmm_1673,v_bool_74_1560PRMD,n1,q_1653,q_1653,q_1653,q_1653,s_1657,q_1653,n1-1,sPRMD,s_1657]: 1 <= sPRMD < s_1657 && flted_27_1639 <= k_1637 && 1 <= memo_rel_hole_1686 && 0 <= m_1638 && 1 <= Anon_12 && 1 <= mmmm_1673 && 1 <= v_bool_74_1560PRMD && 1 <= q_1653 && 2 <= n1}
+ PairWise:  Anon_12=v_1675 & v=v_1675 & flted_27_1639=n_1658 & v_1640=v_1675 & 
+ n+1=n_1658 & k_1637=k_1659 & k=k_1659 & m_1638=m_1660 & m=m_1660 & 
+ s=s_1657 & flted_71_74=0 & flted_71_1671=0 & mmmm_1673=mmmm & 
+ n_1658<=k_1659 & memo_rel_hole_1686 & 0<=m_1660 & 1<=v_1675 & 1<=mmmm & 
+ v_bool_74_1560' & 
+ (((n1=1+n1_1674 & q_1653=q_1676 & q_1641=q_1676 & q=q_1676 & 
+    q_1672=q_1676 & q_1676!=null & 1<=n1_1674 & s_1657!=null & s_1657<s') | 
+   (n1_1674=0 & n1=1 & q_1676=s' & q_1653=s' & q_1641=s' & q=s' & 
+    q_1672=s' & s_1657!=null & s_1657<s') | 
+   (n1_1674=0 & n1=1 & q_1676=s' & q_1653=s' & q_1641=s' & q=s' & 
+    q_1672=s' & s'!=null & s'<s_1657) | 
+   (n1=1+n1_1674 & q_1653=q_1676 & q_1641=q_1676 & q=q_1676 & 
+    q_1672=q_1676 & s'!=null & s'<s_1657 & q_1676!=null & 1<=n1_1674))) & 
+ s'!=s
+ res:  Anon_12=v_1675 & v=v_1675 & flted_27_1639=n_1658 & v_1640=v_1675 & 
+ n+1=n_1658 & k_1637=k_1659 & k=k_1659 & m_1638=m_1660 & m=m_1660 & 
+ s=s_1657 & flted_71_74=0 & flted_71_1671=0 & mmmm_1673=mmmm & 
+ n_1658<=k_1659 & memo_rel_hole_1686 & 0<=m_1660 & 1<=v_1675 & 1<=mmmm & 
+ v_bool_74_1560' & 
+ (((n1=1+n1_1674 & q_1653=q_1676 & q_1641=q_1676 & q=q_1676 & 
+    q_1672=q_1676 & q_1676!=null & 1<=n1_1674 & s_1657!=null & s_1657<s') | 
+   (n1_1674=0 & n1=1 & q_1676=s' & q_1653=s' & q_1641=s' & q=s' & 
+    q_1672=s' & s_1657!=null & s_1657<s') | 
+   (n1_1674=0 & n1=1 & q_1676=s' & q_1653=s' & q_1641=s' & q=s' & 
+    q_1672=s' & s'!=null & s'<s_1657) | 
+   (n1=1+n1_1674 & q_1653=q_1676 & q_1641=q_1676 & q=q_1676 & 
+    q_1672=q_1676 & s'!=null & s'<s_1657 & q_1676!=null & 1<=n1_1674))) & 
+ s'!=s
+ -------------------- 
+ id: 491<25; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:SAT:{[Anon_12, v, flted_27_1639, v_1640, n, k_1637, k, m_1638, m, flted_71_74, flted_71_1671, P, mmmm_1673, n_1658, k_1659, m_1660, v_1675, mmmm, v_bool_74_1560PRMD, n1, q_1653, q_1641, q, q_1672, s_1657, q_1676, n1_1674, sPRMD, s] : ((((((((((((((((((((((Anon_12 = v_1675) & (v = v_1675)) & (flted_27_1639 = n_1658)) & (v_1640 = v_1675)) & (n + 1 = n_1658)) & (k_1637 = k_1659)) & (k = k_1659)) & (m_1638 = m_1660)) & (m = m_1660)) & (s = s_1657)) & (flted_71_74 = 0)) & (flted_71_1671 = 0)) & (mmmm_1673 = mmmm)) & (n_1658 <= k_1659)) & ((0=0))) & (0 <= m_1660)) & (1 <= v_1675)) & (1 <= mmmm)) & (v_bool_74_1560PRMD > 0)) & ((((((((((n1 = 1 + n1_1674) & (q_1653 = q_1676)) & (q_1641 = q_1676)) & (q = q_1676)) & (q_1672 = q_1676)) & (q_1676 > 0)) & (1 <= n1_1674)) & (s_1657 > 0)) & (s_1657 < sPRMD)) | ((((((((((n1_1674 = 0) & (n1 = 1)) & (q_1676 = sPRMD)) & (q_1653 = sPRMD)) & (q_1641 = sPRMD)) & (q = sPRMD)) & (q_1672 = sPRMD)) & (s_1657 > 0)) & (s_1657 < sPRMD)) | ((((((((((n1_1674 = 0) & (n1 = 1)) & (q_1676 = sPRMD)) & (q_1653 = sPRMD)) & (q_1641 = sPRMD)) & (q = sPRMD)) & (q_1672 = sPRMD)) & (sPRMD > 0)) & (sPRMD < s_1657)) | (((((((((n1 = 1 + n1_1674) & (q_1653 = q_1676)) & (q_1641 = q_1676)) & (q = q_1676)) & (q_1672 = q_1676)) & (sPRMD > 0)) & (sPRMD < s_1657)) & (q_1676 > 0)) & (1 <= n1_1674)))))) & (sPRMD != s)))};
+ raw result: {[Anon_12,Anon_12,flted_27_1639,Anon_12,flted_27_1639-1,k_1637,k_1637,m_1638,m_1638,0,0,P,mmmm_1673,flted_27_1639,k_1637,m_1638,Anon_12,mmmm_1673,v_bool_74_1560PRMD,n1,q_1653,q_1653,q_1653,q_1653,s_1657,q_1653,n1-1,sPRMD,s_1657]: 1 <= sPRMD < s_1657 && flted_27_1639 <= k_1637 && 0 <= m_1638 && 1 <= Anon_12 && 1 <= mmmm_1673 && 1 <= v_bool_74_1560PRMD && 1 <= q_1653 && 2 <= n1}
+ Sat:  Anon_12=v_1675 & v=v_1675 & flted_27_1639=n_1658 & v_1640=v_1675 & 
+ n+1=n_1658 & k_1637=k_1659 & k=k_1659 & m_1638=m_1660 & m=m_1660 & 
+ s=s_1657 & flted_71_74=0 & flted_71_1671=0 & mmmm_1673=mmmm & 
+ n_1658<=k_1659 & P(mmmm_1673,n1_1674,n_1658,k_1659,m_1660) & 0<=m_1660 & 
+ 1<=v_1675 & 1<=mmmm & v_bool_74_1560' & 
+ (((n1=1+n1_1674 & q_1653=q_1676 & q_1641=q_1676 & q=q_1676 & 
+    q_1672=q_1676 & q_1676!=null & 1<=n1_1674 & s_1657!=null & s_1657<s') | 
+   (n1_1674=0 & n1=1 & q_1676=s' & q_1653=s' & q_1641=s' & q=s' & 
+    q_1672=s' & s_1657!=null & s_1657<s') | 
+   (n1_1674=0 & n1=1 & q_1676=s' & q_1653=s' & q_1641=s' & q=s' & 
+    q_1672=s' & s'!=null & s'<s_1657) | 
+   (n1=1+n1_1674 & q_1653=q_1676 & q_1641=q_1676 & q=q_1676 & 
+    q_1672=q_1676 & s'!=null & s'<s_1657 & q_1676!=null & 1<=n1_1674))) & 
+ s'!=s
+ res: SAT
+ -------------------- 
+ id: 492<25; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:SIMPLIFY:{[n1, n1_1674, n, n_1658, k, k_1659, m, m_1660, mmmm_1673, mmmm] : ((((((((((( (exists (q_1676: (exists (s_1657: (exists (sPRMD:( (exists (q_1672: (exists (q: (exists (q_1641: (exists (q_1653:((((((((((n1 = 1 + n1_1674) & (q_1653 = q_1676)) & (q_1641 = q_1676)) & (q = q_1676)) & (q_1672 = q_1676)) & (q_1676 > 0)) & (1 <= n1_1674)) & (s_1657 > 0)) & (s_1657 < sPRMD)) | ((((((((((n1_1674 = 0) & (n1 = 1)) & (q_1676 = sPRMD)) & (q_1653 = sPRMD)) & (q_1641 = sPRMD)) & (q = sPRMD)) & (q_1672 = sPRMD)) & (s_1657 > 0)) & (s_1657 < sPRMD)) | ((((((((((n1_1674 = 0) & (n1 = 1)) & (q_1676 = sPRMD)) & (q_1653 = sPRMD)) & (q_1641 = sPRMD)) & (q = sPRMD)) & (q_1672 = sPRMD)) & (sPRMD > 0)) & (sPRMD < s_1657)) | (((((((((n1 = 1 + n1_1674) & (q_1653 = q_1676)) & (q_1641 = q_1676)) & (q = q_1676)) & (q_1672 = q_1676)) & (sPRMD > 0)) & (sPRMD < s_1657)) & (q_1676 > 0)) & (1 <= n1_1674))))))) )) )) ))  &  (exists (s:((sPRMD != s) & (s = s_1657)))) ))) )) ))  &  (exists (flted_27_1639:(flted_27_1639 = n_1658))) ) &  (exists (k_1637:(k_1637 = k_1659))) ) &  (exists (m_1638:(m_1638 = m_1660))) ) & (0 <= m_1660)) & (n_1658 <= k_1659)) & (n + 1 = n_1658)) & (k = k_1659)) & (m = m_1660)) & (mmmm_1673 = mmmm)) & (1 <= mmmm)))};
+ raw result:{[1,0,n,n+1,k,k,m,m,mmmm_1673,mmmm_1673]: n < k && 0 <= m && 1 <= mmmm_1673} union {[n1,n1-1,n,n+1,k,k,m,m,mmmm_1673,mmmm_1673]: n < k && 0 <= m && 1 <= mmmm_1673 && 2 <= n1}
+ Simplify:  exists(q_1676:exists(s_1657:exists(s':exists(q_1672:exists(q:exists(q_1641:exists(q_1653:(
+                                       (n1=1+n1_1674 & q_1653=q_1676 & 
+                                        q_1641=q_1676 & q=q_1676 & 
+                                        q_1672=q_1676 & q_1676!=null & 
+                                        1<=n1_1674 & s_1657!=null & s_1657<s') | 
+                                       (n1_1674=0 & n1=1 & q_1676=s' & 
+                                        q_1653=s' & q_1641=s' & q=s' & 
+                                        q_1672=s' & s_1657!=null & s_1657<s') | 
+                                       (n1_1674=0 & n1=1 & q_1676=s' & 
+                                        q_1653=s' & q_1641=s' & q=s' & 
+                                        q_1672=s' & s'!=null & s'<s_1657) | 
+                                       (n1=1+n1_1674 & q_1653=q_1676 & 
+                                        q_1641=q_1676 & q=q_1676 & 
+                                        q_1672=q_1676 & s'!=null & 
+                                        s'<s_1657 & q_1676!=null & 1<=n1_1674)))))) & 
+                                       exists(s:s'!=s & s=s_1657)))) & 
+ exists(flted_27_1639:flted_27_1639=n_1658) & exists(k_1637:k_1637=k_1659) & 
+ exists(m_1638:m_1638=m_1660) & 0<=m_1660 & true & n_1658<=k_1659 & 
+ n+1=n_1658 & k=k_1659 & m=m_1660 & mmmm_1673=mmmm & 1<=mmmm
+ res:  n_1658=1+n & k_1659=k & m_1660=m & mmmm=mmmm_1673 & n<k & 0<=m & 
+ 1<=mmmm_1673 & (((n1=1 & n1_1674=0) | (n1_1674+1=n1 & 2<=n1)))
+ -------------------- 
+ id: 493<25; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:PAIRWISE:pairwisecheck {[n_1658, k_1659, m_1660, mmmm, n, k, m, mmmm_1673, n1_1674, n1] : (((((((((n_1658 = 1 + n) & (k_1659 = k)) & (m_1660 = m)) & (mmmm = mmmm_1673)) & (n < k)) & (0 <= m)) & (1 <= mmmm_1673)) & (((n1 = 1) & (n1_1674 = 0)) | ((n1_1674 + 1 = n1) & (2 <= n1)))))};
+ raw result:{[n_1658,k_1659,m_1660,mmmm,n_1658-1,k_1659,m_1660,mmmm,n1_1674,n1_1674+1]: n_1658 <= k_1659 && 0 <= m_1660 && 1 <= mmmm && 0 <= n1_1674}
+ PairWise:  n_1658=1+n & k_1659=k & m_1660=m & mmmm=mmmm_1673 & n<k & 0<=m & 
+ 1<=mmmm_1673 & (((n1=1 & n1_1674=0) | (n1_1674+1=n1 & 2<=n1)))
+ res:  n=n_1658-1 & k=k_1659 & m=m_1660 & mmmm_1673=mmmm & n1=n1_1674+1 & 
+ n_1658<=k_1659 & 0<=m_1660 & 1<=mmmm & 0<=n1_1674
+ -------------------- 
+ id: 494<25; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:IMPLY:complement {[mmmm, m, k, n, flted_27_1639, k_1637, m_1638, P, mmmm_1673, n_1658, k_1659, m_1660, n1_1674, n1] : (( (not (((((((((((((((0 <= m_1638) & (flted_27_1639 <= k_1637)) & (0 <= mmmm_1673)) & (mmmm = mmmm_1673)) & (m_1638 = m)) & (k_1637 = k)) & (n < k)) & (flted_27_1639 = 1 + n)) & (n_1658 = flted_27_1639)) & (k_1659 = k_1637)) & (m_1660 = m_1638)) & (n1_1674 + 1 = n1)) & ((0=0))) & (0 <= n1_1674))))  | (1 + n1_1674 = n1)))};
+ raw result:{[mmmm,m,k,n,flted_27_1639,k_1637,m_1638,P,mmmm_1673,n_1658,k_1659,m_1660,n1_1674,n1]  : FALSE }
+ Imply: ante: 0<=m_1638 & flted_27_1639<=k_1637 & 0<=mmmm_1673 & mmmm=mmmm_1673 & 
+ m_1638=m & k_1637=k & n<k & flted_27_1639=1+n & n_1658=flted_27_1639 & 
+ k_1659=k_1637 & m_1660=m_1638 & n1_1674+1=n1 & 
+ P(mmmm_1673,n1_1674,n_1658,k_1659,m_1660) & 0<=n1_1674
+	     conseq:  1+n1_1674=n1
+ res: true
+ -------------------- 
+ id: 495<25; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:IMPLY:complement {[flted_71_1671, flted_71_74] : (( (not (((flted_71_1671 = 0) & (flted_71_74 = flted_71_1671))))  | (flted_71_74 = 0)))};
+ raw result:{[flted_71_1671,flted_71_74]  : FALSE }
+ Imply: ante: flted_71_1671=0 & flted_71_74=flted_71_1671
+	     conseq:  flted_71_74=0
+ res: true
+ -------------------- 
+ id: 496<25; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:SAT:{[mmmm, q_1672, flted_71_74, v_bool_74_1560PRMD, s_1657, s, m, k, n, q, v, Anon_12, q_1653, flted_27_1639, k_1637, m_1638, flted_71_1671, P, mmmm_1673, n_1658, k_1659, m_1660, v_1675, v_1640, q_1676, q_1641, n1_1674, n1] : ((((((((((((((((((((((((((mmmm = mmmm_1673) & (q = q_1672)) & (flted_71_74 = flted_71_1671)) & (v_bool_74_1560PRMD > 0)) & (s_1657 = s)) & (m_1638 = m)) & (k_1637 = k)) & (n < k)) & (0 < v_1640)) & (flted_27_1639 = 1 + n)) & (v = v_1640)) & (q = q_1641)) & (v != 0)) & (Anon_12 = v_1640)) & (q_1653 = q_1641)) & (n_1658 = flted_27_1639)) & (k_1659 = k_1637)) & (m_1660 = m_1638)) & (flted_27_1639 <= k_1637)) & (0 <= m_1638)) & (flted_71_1671 = 0)) & ((0=0))) & (v_1675 = v_1640)) & (q_1676 = q_1641)) & (n1_1674 + 1 = n1)))};
+ raw result:{[mmmm,q_1672,0,v_bool_74_1560PRMD,s_1657,s_1657,m,k,n,q_1672,v,v,q_1672,n+1,k,m,0,P,mmmm,n+1,k,m,v,v,q_1672,q_1672,n1_1674,n1_1674+1]: n < k && 1 <= v_bool_74_1560PRMD && 1 <= v && 0 <= m}
+ Sat:  mmmm=mmmm_1673 & q=q_1672 & flted_71_74=flted_71_1671 & v_bool_74_1560' & 
+ s_1657=s & m_1638=m & k_1637=k & n<k & 0<v_1640 & flted_27_1639=1+n & 
+ v=v_1640 & q=q_1641 & v!=0 & Anon_12=v_1640 & q_1653=q_1641 & 
+ n_1658=flted_27_1639 & k_1659=k_1637 & m_1660=m_1638 & 
+ flted_27_1639<=k_1637 & 0<=m_1638 & flted_71_1671=0 & 
+ P(mmmm_1673,n1_1674,n_1658,k_1659,m_1660) & v_1675=v_1640 & q_1676=q_1641 & 
+ n1_1674+1=n1
+ res: SAT
+ -------------------- 
+ id: 497<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[flted_71_74] : ((flted_71_74 = 0))};
+ raw result: {[flted_71_74]: 1 <= flted_71_74}
+ Imply: ante: true
+	     conseq:  flted_71_74=0
+ res: false
+ -------------------- 
+ id: 498<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[q, q_1635, m_1633, P, mmmm, n1, n, k, m] : (( (not (((((q = q_1635) & (((q_1635 = 0) & (m_1633 = 0)) | ((1 <= m_1633) & (q_1635 > 0)))) & (m_1633 = m)) & (n = k))))  | ((0>0))))};
+ raw result: {[q,q,m_1633,P,mmmm,n1,n,n,m_1633]: 1 <= m_1633 && 1 <= q}
+ Imply: ante: q=q_1635 & (((q_1635=null & m_1633=0) | (1<=m_1633 & q_1635!=null))) & 
+ m_1633=m & n=k
+	     conseq:  P(mmmm,n1,n,k,m)
+ res: false
+ -------------------- 
+ id: 499<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[sPRMD, n1, s] : (( (not (((sPRMD = s) & (s = 1))))  | (((sPRMD = s) & (n1 = 0)) | ((1 <= n1) & (s != 0)))))};
+ raw result:{[1,n1,1]: n1 <= -1}
+ Imply: ante: s'=s & s=1
+	     conseq:  ((s'=s & n1=0) | (1<=n1 & s!=null))
+ res: false
+ -------------------- 
+ id: 500<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:no proof raw result:no result
+ Imply: ante: s'=s & s=1
+	     conseq:  s'!=null
+ res: true
+ -------------------- 
+ id: 501<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[m, m_1633, q_1635, mmmm, q] : (( (not ((((m_1633 = m) & (((q_1635 = 0) & (m_1633 = 0)) | ((1 <= m_1633) & (q_1635 > 0)))) & (q = q_1635))))  | (((q <= 0) & (mmmm = 0)) | ((1 <= mmmm) & (q != 0)))))};
+ raw result: {[m,m,q_1635,mmmm,q_1635]: mmmm <= 0 && 1 <= q_1635 && 1 <= m}
+ Imply: ante: m_1633=m & (((q_1635=null & m_1633=0) | (1<=m_1633 & q_1635!=null))) & 
+ q=q_1635
+	     conseq:  ((q=null & mmmm=0) | (1<=mmmm & q!=null))
+ res: false
+ -------------------- 
+ id: 502<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:SAT:{[m_1633, m, n, k, q_1635, flted_71_74, sPRMD, n1, s, mmmm, q] : ((((((((((q_1635 = 0) & (m_1633 = 0)) | ((1 <= m_1633) & (q_1635 > 0))) & (sPRMD = s)) & (m_1633 = m)) & (n = k)) & (q = q_1635)) & (s = 1)) & (((flted_71_74 = 0) & (((sPRMD = s) & (n1 = 0)) | ((1 <= n1) & (s > 0)))) & (((q = 0) & (mmmm = 0)) | ((1 <= mmmm) & (q > 0))))))};
+ raw result: {[m_1633,m_1633,n,n,q_1635,0,1,n1,1,mmmm,q_1635]: 1 <= m_1633 && 1 <= q_1635 && 1 <= n1 && 1 <= mmmm}
+ Sat:  (((q_1635=null & m_1633=0) | (1<=m_1633 & q_1635!=null))) & s'=s & 
+ m_1633=m & n=k & q=q_1635 & s=1 & flted_71_74=0 & 
+ (((s'=s & n1=0) | (1<=n1 & s!=null))) & 
+ (((q=null & mmmm=0) | (1<=mmmm & q!=null)))
+ res: SAT
+ -------------------- 
+ id: 503<26; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:SAT:{[v_bool_74_1560PRMD, sPRMD, m, n, k, flted_26_1634, q, v, s, m_1633, q_1635] : ((((((((( (not ((v_bool_74_1560PRMD > 0)))  & (sPRMD = s)) & (m_1633 = m)) & (n = k)) & (flted_26_1634 = 0)) & (v = flted_26_1634)) & (q = q_1635)) & (v = 0)) & ((s = 1) & (((q_1635 = 0) & (m_1633 = 0)) | ((1 <= m_1633) & (q_1635 > 0))))))};
+ raw result: {[v_bool_74_1560PRMD,1,m,n,n,0,q,0,1,m,q]: v_bool_74_1560PRMD <= 0 && 1 <= m && 1 <= q}
+ Sat:  not(v_bool_74_1560') & s'=s & m_1633=m & n=k & flted_26_1634=0 & 
+ v=flted_26_1634 & q=q_1635 & v=0 & s=1 & 
+ (((q_1635=null & m_1633=0) | (1<=m_1633 & q_1635!=null)))
+ res: SAT
+ -------------------- 
+ id: 504<26; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[s, sPRMD] : (( (not (((sPRMD = s) & (s = 2))))  | (s = sPRMD)))};
+ raw result:{[s,sPRMD]  : FALSE }
+ Imply: ante: s'=s & s=2
+	     conseq:  s=s'
+ res: true
+ -------------------- 
+ id: 505<26; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[n1] : ((n1 = 0))};
+ raw result: {[n1]: 1 <= n1}
+ Imply: ante: true
+	     conseq:  n1=0
+ res: false
+ -------------------- 
+ id: 506<26; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:SAT:{[n1] : ((n1 = 0))};
+ raw result:{[0]}
+ Sat:  n1=0
+ res: SAT
+ -------------------- 
+ id: 507<27; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:SAT:{[v_bool_74_1560PRMD, sPRMD, m, n, k, flted_26_1634, q, v, s, m_1633, q_1635] : ((((((((( (not ((v_bool_74_1560PRMD > 0)))  & (sPRMD = s)) & (m_1633 = m)) & (n = k)) & (flted_26_1634 = 0)) & (v = flted_26_1634)) & (q = q_1635)) & (v = 0)) & ((s = 1) & (((q_1635 = 0) & (m_1633 = 0)) | ((1 <= m_1633) & (q_1635 > 0))))))};
+ raw result: {[v_bool_74_1560PRMD,1,m,n,n,0,q,0,1,m,q]: v_bool_74_1560PRMD <= 0 && 1 <= m && 1 <= q}
+ Sat:  not(v_bool_74_1560') & s'=s & m_1633=m & n=k & flted_26_1634=0 & 
+ v=flted_26_1634 & q=q_1635 & v=0 & s=1 & 
+ (((q_1635=null & m_1633=0) | (1<=m_1633 & q_1635!=null)))
+ res: SAT
+ -------------------- 
+ id: 508<26; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:SAT:{[v_bool_74_1560PRMD, sPRMD, m, n, k, flted_26_1634, q, v, s, m_1633, q_1635] : ((((((((( (not ((v_bool_74_1560PRMD > 0)))  & (sPRMD = s)) & (m_1633 = m)) & (n = k)) & (flted_26_1634 = 0)) & (v = flted_26_1634)) & (q = q_1635)) & (v = 0)) & ((s = 1) & (((q_1635 = 0) & (m_1633 = 0)) | ((1 <= m_1633) & (q_1635 > 0))))))};
+ raw result: {[v_bool_74_1560PRMD,1,m,n,n,0,q,0,1,m,q]: v_bool_74_1560PRMD <= 0 && 1 <= m && 1 <= q}
+ Sat:  not(v_bool_74_1560') & s'=s & m_1633=m & n=k & flted_26_1634=0 & 
+ v=flted_26_1634 & q=q_1635 & v=0 & s=1 & 
+ (((q_1635=null & m_1633=0) | (1<=m_1633 & q_1635!=null)))
+ res: SAT
+ -------------------- 
+ id: 509<26; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:SIMPLIFY:{[sPRMD, q_1688, n1] : ( (exists (flted_32_1690:((((sPRMD = q_1688) & (flted_32_1690 = 0)) | ((1 <= flted_32_1690) & (q_1688 > 0))) & (flted_32_1690 + 1 = n1)))) )};
+ raw result:{[sPRMD,sPRMD,1]} union {[sPRMD,q_1688,n1]: 2 <= n1 && 1 <= q_1688}
+ Simplify:  exists(flted_32_1690:(((s'=q_1688 & flted_32_1690=0) | 
+                        (1<=flted_32_1690 & q_1688!=null))) & 
+                      flted_32_1690+1=n1)
+ res:  ((q_1688=s' & n1=1) | (2<=n1 & q_1688!=null))
+ -------------------- 
+ id: 510<26; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:PAIRWISE:pairwisecheck {[sPRMD, n1, q_1688] : ((((q_1688 = sPRMD) & (n1 = 1)) | ((2 <= n1) & (q_1688 > 0))))};
+ raw result:{[sPRMD,1,sPRMD]} union {[sPRMD,n1,q_1688]: 2 <= n1 && 1 <= q_1688}
+ PairWise:  ((q_1688=s' & n1=1) | (2<=n1 & q_1688!=null))
+ res:  ((n1=1 & q_1688=s') | (2<=n1 & q_1688!=null))
+ -------------------- 
+ id: 511<26; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[s, sPRMD, n1, q_1688] : (( (not (((sPRMD = s) & (s = 2))))  | (((n1 = 1) & (q_1688 = sPRMD)) | ((2 <= n1) & (q_1688 != 0)))))};
+ raw result: {[2,2,n1,0]: 2 <= n1}
+ Imply: ante: s'=s & s=2
+	     conseq:  ((n1=1 & q_1688=s') | (2<=n1 & q_1688!=null))
+ res: false
+ -------------------- 
+ id: 512<26; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[v_1687] : ((0 < v_1687))};
+ raw result:{[v_1687]: v_1687 <= 0}
+ Imply: ante: true
+	     conseq:  0<v_1687
+ res: false
+ -------------------- 
+ id: 513<26; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[sPRMD, s] : (( (not (((sPRMD = s) & (s = 2))))  | (s != 0)))};
+ raw result:{[sPRMD,s]  : FALSE }
+ Imply: ante: s'=s & s=2
+	     conseq:  s!=null
+ res: true
+ -------------------- 
+ id: 514<26; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:SAT:{[s, sPRMD, q_1688, n1, v_1687] : ((((sPRMD = s) & (s = 2)) & ( (exists (flted_32_1690:((((sPRMD = q_1688) & (flted_32_1690 = 0)) | ((1 <= flted_32_1690) & (q_1688 > 0))) & (flted_32_1690 + 1 = n1))))  & (0 < v_1687))))};
+ raw result: {[2,2,q_1688,n1,v_1687]: 1 <= v_1687 && 2 <= n1 && 1 <= q_1688}
+ Sat:  s'=s & s=2 & 
+ exists(flted_32_1690:(((s'=q_1688 & flted_32_1690=0) | 
+                        (1<=flted_32_1690 & q_1688!=null))) & 
+                      flted_32_1690+1=n1) & 
+ 0<v_1687
+ res: SAT
+ -------------------- 
+ id: 515<29; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:IMPLY:complement {[q, m, q_1688, m_1633, q_1635] : (( (not (((((q = q_1635) & (m_1633 = m)) & (q_1688 = q_1635)) & (((q_1635 = 0) & (m_1633 = 0)) | ((1 <= m_1633) & (q_1635 > 0))))))  | ((m_1633 = 0) | (q_1635 <= 0))))};
+ raw result:{[q,m,q,m,q]: 1 <= m && 1 <= q}
+ Imply: ante: q=q_1635 & m_1633=m & q_1688=q_1635 & 
+ (((q_1635=null & m_1633=0) | (1<=m_1633 & q_1635!=null)))
+	     conseq:  (m_1633=0 | q_1635=null)
+ res: false
+ -------------------- 
+ id: 516<26; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:SAT:{[q, v, flted_26_1634, n, k, m, v_bool_74_1560PRMD, sPRMD, n1, s, m_1633, q_1635] : (((((((((((v = 0) & (q = q_1635)) & (v = flted_26_1634)) & (flted_26_1634 = 0)) & (n = k)) & (m_1633 = m)) & (sPRMD = s)) &  (not ((v_bool_74_1560PRMD > 0))) ) & ((s = sPRMD) & (n1 = 0))) & ((s = 1) & (((q_1635 = 0) & (m_1633 = 0)) | ((1 <= m_1633) & (q_1635 > 0))))))};
+ raw result: {[q,0,0,n,n,m,v_bool_74_1560PRMD,1,0,1,m,q]: v_bool_74_1560PRMD <= 0 && 1 <= m && 1 <= q}
+ Sat:  v=0 & q=q_1635 & v=flted_26_1634 & flted_26_1634=0 & n=k & m_1633=m & 
+ s'=s & not(v_bool_74_1560') & s=s' & n1=0 & s=1 & 
+ (((q_1635=null & m_1633=0) | (1<=m_1633 & q_1635!=null)))
+ res: SAT
+ -------------------- 
+ id: 517<26; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[flted_71_74] : ((flted_71_74 = 0))};
+ raw result: {[flted_71_74]: 1 <= flted_71_74}
+ Imply: ante: true
+	     conseq:  flted_71_74=0
+ res: false
+ -------------------- 
+ id: 518<26; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[q, q_1635, m_1633, P, mmmm, n1, n, k, m] : (( (not ((((((q = q_1635) & (((q_1635 = 0) & (m_1633 = 0)) | ((1 <= m_1633) & (q_1635 > 0)))) & (n1 = 0)) & (m_1633 = m)) & (n = k))))  | ((0>0))))};
+ raw result: {[q,q,m_1633,P,mmmm,0,n,n,m_1633]: 1 <= m_1633 && 1 <= q}
+ Imply: ante: q=q_1635 & (((q_1635=null & m_1633=0) | (1<=m_1633 & q_1635!=null))) & 
+ n1=0 & m_1633=m & n=k
+	     conseq:  P(mmmm,n1,n,k,m)
+ res: false
+ -------------------- 
+ id: 519<26; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:no proof raw result:no result
+ Imply: ante: n1=0
+	     conseq:  n1=0
+ res: true
+ -------------------- 
+ id: 520<26; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[s, sPRMD] : (( (not (((s = sPRMD) & (s = 2))))  | (sPRMD != 0)))};
+ raw result:{[s,sPRMD]  : FALSE }
+ Imply: ante: s=s' & s=2
+	     conseq:  s'!=null
+ res: true
+ -------------------- 
+ id: 521<26; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[m, m_1633, q_1635, mmmm, q] : (( (not ((((m_1633 = m) & (((q_1635 = 0) & (m_1633 = 0)) | ((1 <= m_1633) & (q_1635 > 0)))) & (q = q_1635))))  | (((q <= 0) & (mmmm = 0)) | ((1 <= mmmm) & (q != 0)))))};
+ raw result: {[m,m,q_1635,mmmm,q_1635]: mmmm <= 0 && 1 <= q_1635 && 1 <= m}
+ Imply: ante: m_1633=m & (((q_1635=null & m_1633=0) | (1<=m_1633 & q_1635!=null))) & 
+ q=q_1635
+	     conseq:  ((q=null & mmmm=0) | (1<=mmmm & q!=null))
+ res: false
+ -------------------- 
+ id: 522<26; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: Early_Contra_Detect
+ raw proof:SAT:{[n1, m_1633, m, n, k, q_1635, flted_71_74, mmmm, q] : (((((((((q_1635 = 0) & (m_1633 = 0)) | ((1 <= m_1633) & (q_1635 > 0))) & (n1 = 0)) & (m_1633 = m)) & (n = k)) & (q = q_1635)) & ((flted_71_74 = 0) & (((q = 0) & (mmmm = 0)) | ((1 <= mmmm) & (q > 0))))))};
+ raw result: {[0,m_1633,m_1633,n,n,q_1635,0,mmmm,q_1635]: 1 <= m_1633 && 1 <= q_1635 && 1 <= mmmm}
+ Sat:  (((q_1635=null & m_1633=0) | (1<=m_1633 & q_1635!=null))) & n1=0 & 
+ m_1633=m & n=k & q=q_1635 & flted_71_74=0 & 
+ (((q=null & mmmm=0) | (1<=mmmm & q!=null)))
+ res: SAT
+ -------------------- 
+ id: 523<31; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:IMPLY:complement {[m, q, mmmm, m_1633, q_1635] : (( (not (((((m_1633 = m) & (q = q_1635)) & (m_1633 = mmmm)) & (((q_1635 = 0) & (m_1633 = 0)) | ((1 <= m_1633) & (q_1635 > 0))))))  | ((m_1633 = 0) | (q_1635 <= 0))))};
+ raw result:{[m,q,m,m,q]: 1 <= m && 1 <= q}
+ Imply: ante: m_1633=m & q=q_1635 & m_1633=mmmm & 
+ (((q_1635=null & m_1633=0) | (1<=m_1633 & q_1635!=null)))
+	     conseq:  (m_1633=0 | q_1635=null)
+ res: false
+ -------------------- 
+ id: 524<32; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:SAT:{[sPRMD, v_bool_74_1560PRMD, m, n, k, v, flted_26_1634, q, mmmm, m_1633, q_1635, s, flted_71_74, n1] : ((((((((((((((n1 = 0) & (s = sPRMD)) &  (not ((v_bool_74_1560PRMD > 0))) ) & (m_1633 = m)) & (n = k)) & (flted_26_1634 = 0)) & (v = flted_26_1634)) & (q = q_1635)) & (v = 0)) & ((flted_71_74 = flted_26_1634) & (q = q_1635))) & (mmmm = m_1633)) & ((((q_1635 = 0) & (m_1633 = 0)) | ((1 <= m_1633) & (q_1635 > 0))) & (s > 0))) & ((flted_71_74 = 0) & (n1 = 0))))};
+ raw result: {[sPRMD,v_bool_74_1560PRMD,m,n,n,0,0,q,m,m,q,sPRMD,0,0]: v_bool_74_1560PRMD <= 0 && 1 <= sPRMD && 1 <= m && 1 <= q}
+ Sat:  n1=0 & s=s' & not(v_bool_74_1560') & m_1633=m & n=k & flted_26_1634=0 & 
+ v=flted_26_1634 & q=q_1635 & v=0 & flted_71_74=flted_26_1634 & q=q_1635 & 
+ mmmm=m_1633 & (((q_1635=null & m_1633=0) | (1<=m_1633 & q_1635!=null))) & 
+ s!=null & flted_71_74=0 & n1=0
+ res: SAT
+ -------------------- 
+ id: 525<32; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:SIMPLIFY:{[n1, s, sPRMD, v_bool_74_1560PRMD, m, n, k, v, flted_71_74, flted_26_1634, q, q_1635, mmmm, m_1633] : ((((((q_1635 = 0) & (m_1633 = 0)) | ((1 <= m_1633) & (q_1635 > 0))) & (s > 0)) & (((((((((((n1 = 0) & (s = sPRMD)) &  (not ((v_bool_74_1560PRMD > 0))) ) & (m_1633 = m)) & (n = k)) & (flted_26_1634 = 0)) & (v = flted_26_1634)) & (q = q_1635)) & (v = 0)) & ((flted_71_74 = flted_26_1634) & (q = q_1635))) & (mmmm = m_1633))))};
+ raw result:{[0,s,s,v_bool_74_1560PRMD,0,n,n,0,0,0,0,0,0,0]: v_bool_74_1560PRMD <= 0 && 1 <= s} union {[0,s,s,v_bool_74_1560PRMD,m,n,n,0,0,0,q,q,m,m]: v_bool_74_1560PRMD <= 0 && 1 <= s && 1 <= m && 1 <= q}
+ Simplify:  (((q_1635=null & m_1633=0) | (1<=m_1633 & q_1635!=null))) & s!=null & 
+ n1=0 & s=s' & not(v_bool_74_1560') & m_1633=m & n=k & flted_26_1634=0 & 
+ v=flted_26_1634 & q=q_1635 & v=0 & flted_71_74=flted_26_1634 & q=q_1635 & 
+ mmmm=m_1633
+ res:  n1=0 & s'=s & k=n & v=0 & flted_71_74=0 & flted_26_1634=0 & 
+ not(v_bool_74_1560') & s!=null & 
+ (((m=0 & q=null & q_1635=null & mmmm=0 & m_1633=0) | 
+   (q_1635=q & mmmm=m & m_1633=m & 1<=m & q!=null)))
+ -------------------- 
+ id: 526<32; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:PAIRWISE:pairwisecheck {[n1, sPRMD, k, n, v, flted_71_74, flted_26_1634, v_bool_74_1560PRMD, s, q_1635, mmmm, m_1633, m, q] : ((((((((((n1 = 0) & (sPRMD = s)) & (k = n)) & (v = 0)) & (flted_71_74 = 0)) & (flted_26_1634 = 0)) &  (not ((v_bool_74_1560PRMD > 0))) ) & (s > 0)) & ((((((m = 0) & (q = 0)) & (q_1635 = 0)) & (mmmm = 0)) & (m_1633 = 0)) | (((((q_1635 = q) & (mmmm = m)) & (m_1633 = m)) & (1 <= m)) & (q > 0)))))};
+ raw result:{[0,sPRMD,k,k,0,0,0,v_bool_74_1560PRMD,sPRMD,0,0,0,0,0]: v_bool_74_1560PRMD <= 0 && 1 <= sPRMD} union {[0,sPRMD,k,k,0,0,0,v_bool_74_1560PRMD,sPRMD,q_1635,mmmm,mmmm,mmmm,q_1635]: v_bool_74_1560PRMD <= 0 && 1 <= sPRMD && 1 <= mmmm && 1 <= q_1635}
+ PairWise:  n1=0 & s'=s & k=n & v=0 & flted_71_74=0 & flted_26_1634=0 & 
+ not(v_bool_74_1560') & s!=null & 
+ (((m=0 & q=null & q_1635=null & mmmm=0 & m_1633=0) | 
+   (q_1635=q & mmmm=m & m_1633=m & 1<=m & q!=null)))
+ res:  n1=0 & s'=s & k=n & v=0 & flted_71_74=0 & flted_26_1634=0 & 
+ not(v_bool_74_1560') & s!=null & 
+ (((m=0 & q=null & q_1635=null & mmmm=0 & m_1633=0) | 
+   (q_1635=q & mmmm=m & m_1633=m & 1<=m & q!=null)))
+ -------------------- 
+ id: 527<32; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:SAT:{[n1, sPRMD, k, n, v, flted_71_74, flted_26_1634, v_bool_74_1560PRMD, s, q_1635, mmmm, m_1633, m, q] : ((((((((((n1 = 0) & (sPRMD = s)) & (k = n)) & (v = 0)) & (flted_71_74 = 0)) & (flted_26_1634 = 0)) &  (not ((v_bool_74_1560PRMD > 0))) ) & (s > 0)) & ((((((m = 0) & (q = 0)) & (q_1635 = 0)) & (mmmm = 0)) & (m_1633 = 0)) | (((((q_1635 = q) & (mmmm = m)) & (m_1633 = m)) & (1 <= m)) & (q > 0)))))};
+ raw result: {[0,sPRMD,k,k,0,0,0,v_bool_74_1560PRMD,sPRMD,q_1635,mmmm,mmmm,mmmm,q_1635]: v_bool_74_1560PRMD <= 0 && 1 <= sPRMD && 1 <= mmmm && 1 <= q_1635}
+ Sat:  n1=0 & s'=s & k=n & v=0 & flted_71_74=0 & flted_26_1634=0 & 
+ not(v_bool_74_1560') & s!=null & 
+ (((m=0 & q=null & q_1635=null & mmmm=0 & m_1633=0) | 
+   (q_1635=q & mmmm=m & m_1633=m & 1<=m & q!=null)))
+ res: SAT
+ -------------------- 
+ id: 528<32; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:SIMPLIFY:{[mmmm, m, n1, k, n] : ((( (exists (q: (exists (m_1633: (exists (q_1635:((((((m = 0) & (q = 0)) & (q_1635 = 0)) & (mmmm = 0)) & (m_1633 = 0)) | (((((q_1635 = q) & (mmmm = m)) & (m_1633 = m)) & (1 <= m)) & (q > 0))))) )) ))  & (n1 = 0)) & (k = n)))};
+ raw result:{[0,0,0,k,k]} union {[mmmm,mmmm,0,k,k]: 1 <= mmmm}
+ Simplify:  exists(q:exists(m_1633:exists(q_1635:((m=0 & q=null & q_1635=null & 
+                                        mmmm=0 & m_1633=0) | 
+                                       (q_1635=q & mmmm=m & m_1633=m & 
+                                        1<=m & q!=null))))) & 
+ n1=0 & k=n
+ res:  n1=0 & n=k & (((mmmm=0 & m=0) | (m=mmmm & 1<=mmmm)))
+ -------------------- 
+ id: 529<32; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:PAIRWISE:pairwisecheck {[n1, n, k, m, mmmm] : ((((n1 = 0) & (n = k)) & (((mmmm = 0) & (m = 0)) | ((m = mmmm) & (1 <= mmmm)))))};
+ raw result:{[0,n,n,m,m]: 0 <= m}
+ PairWise:  n1=0 & n=k & (((mmmm=0 & m=0) | (m=mmmm & 1<=mmmm)))
+ res:  n1=0 & k=n & mmmm=m & 0<=m
+ -------------------- 
+ id: 530<32; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:no proof raw result:no result
+ Imply: ante: n1=0
+	     conseq:  n1=0
+ res: true
+ -------------------- 
+ id: 531<32; prover: OMEGA CALCULATOR; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:IMPLY:complement {[v, flted_26_1634, flted_71_74] : (( (not (((((v = 0) & (v = flted_26_1634)) & (flted_26_1634 = 0)) & (flted_71_74 = flted_26_1634))))  | (flted_71_74 = 0)))};
+ raw result:{[v,flted_26_1634,flted_71_74]  : FALSE }
+ Imply: ante: v=0 & v=flted_26_1634 & flted_26_1634=0 & flted_71_74=flted_26_1634
+	     conseq:  flted_71_74=0
+ res: true
+ -------------------- 
+ id: 532<32; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:SAT:{[mmmm, q, q_1635, flted_71_74, v, flted_26_1634, n, k, m_1633, m, v_bool_74_1560PRMD, s, sPRMD, n1] : ((((((((((((mmmm = m_1633) & (q = q_1635)) & (flted_71_74 = flted_26_1634)) & (v = 0)) & (v = flted_26_1634)) & (flted_26_1634 = 0)) & (n = k)) & (m_1633 = m)) &  (not ((v_bool_74_1560PRMD > 0))) ) & (s = sPRMD)) & (n1 = 0)))};
+ raw result:{[mmmm,q,q,0,0,0,n,n,mmmm,mmmm,v_bool_74_1560PRMD,s,s,0]: v_bool_74_1560PRMD <= 0}
+ Sat:  mmmm=m_1633 & q=q_1635 & flted_71_74=flted_26_1634 & v=0 & 
+ v=flted_26_1634 & flted_26_1634=0 & n=k & m_1633=m & not(v_bool_74_1560') & 
+ s=s' & n1=0
+ res: SAT
+ -------------------- 
+ id: 533<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: UNKNOWN
+ raw proof:SIMPLIFY:{[m, k, n, n_1658, n1, n1_1674, mmmm] : (((((((0 <= n1_1674) & (0 <= m)) & (n_1658 <= k)) & (n = n_1658 - (1))) & (n1 = n1_1674 + 1)) & (1 <= mmmm)))};
+ raw result:{[m,k,n,n+1,n1,n1-1,mmmm]: n < k && 1 <= n1 && 0 <= m && 1 <= mmmm}
+ Simplify:  0<=n1_1674 & 0<=m & n_1658<=k & n=n_1658-1 & n1=n1_1674+1 & 1<=mmmm & true
+ res:  n_1658=1+n & n1_1674+1=n1 & n<k & 1<=n1 & 0<=m & 1<=mmmm
+ -------------------- 
+ id: 534<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: UNKNOWN
+ raw proof:PAIRWISE:pairwisecheck {[n_1658, n1_1674, n, k, n1, m, mmmm] : (((((((n_1658 = 1 + n) & (n1_1674 + 1 = n1)) & (n < k)) & (1 <= n1)) & (0 <= m)) & (1 <= mmmm)))};
+ raw result:{[n_1658,n1_1674,n_1658-1,k,n1_1674+1,m,mmmm]: n_1658 <= k && 0 <= n1_1674 && 0 <= m && 1 <= mmmm}
+ PairWise:  n_1658=1+n & n1_1674+1=n1 & n<k & 1<=n1 & 0<=m & 1<=mmmm
+ res:  n=n_1658-1 & n1=n1_1674+1 & n_1658<=k & 0<=n1_1674 & 0<=m & 1<=mmmm
+ -------------------- 
+ id: 535<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: UNKNOWN
+ raw proof:SIMPLIFY:{[n1, k, n, mmmm, m] : (((((n1 = 0) & (k = n)) & (mmmm = m)) & (0 <= m)))};
+ raw result:{[0,k,k,mmmm,mmmm]: 0 <= mmmm}
+ Simplify:  n1=0 & k=n & mmmm=m & 0<=m
+ res:  n1=0 & n=k & m=mmmm & 0<=mmmm
+ -------------------- 
+ id: 536<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: UNKNOWN
+ raw proof:PAIRWISE:pairwisecheck {[n1, n, k, m, mmmm] : (((((n1 = 0) & (n = k)) & (m = mmmm)) & (0 <= mmmm)))};
+ raw result:{[0,n,n,m,m]: 0 <= m}
+ PairWise:  n1=0 & n=k & m=mmmm & 0<=mmmm
+ res:  n1=0 & k=n & mmmm=m & 0<=m
+ -------------------- 
+ id: 537<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: UNKNOWN
+ raw proof:SIMPLIFY:{[n, k, memo_rel_hole_1696, n1, m, mmmm] : ((( (exists (n1_1674:(( (exists (n_1658:(((n = n_1658 - (1)) & (n_1658 <= k)) & (memo_rel_hole_1696 > 0))))  & (n1 = n1_1674 + 1)) & (0 <= n1_1674))))  & (0 <= m)) & (1 <= mmmm)))};
+ raw result:{[n,k,memo_rel_hole_1696,n1,m,mmmm]: n < k && 0 <= m && 1 <= mmmm && 1 <= n1 && 1 <= memo_rel_hole_1696}
+ Simplify:  exists(n1_1674:exists(n_1658:n=n_1658-1 & n_1658<=k & memo_rel_hole_1696) & 
+                n1=n1_1674+1 & 0<=n1_1674) & 
+ 0<=m & 1<=mmmm
+ res:  n<k & 0<=m & 1<=mmmm & 1<=n1 & memo_rel_hole_1696
+ -------------------- 
+ id: 538<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: UNKNOWN
+ raw proof:PAIRWISE:pairwisecheck {[n, k, m, mmmm, n1, memo_rel_hole_1696] : ((((((n < k) & (0 <= m)) & (1 <= mmmm)) & (1 <= n1)) & (memo_rel_hole_1696 > 0)))};
+ raw result:{[n,k,m,mmmm,n1,memo_rel_hole_1696]: n < k && 0 <= m && 1 <= mmmm && 1 <= n1 && 1 <= memo_rel_hole_1696}
+ PairWise:  n<k & 0<=m & 1<=mmmm & 1<=n1 & memo_rel_hole_1696
+ res:  n<k & 0<=m & 1<=mmmm & 1<=n1 & 1<=memo_rel_hole_1696
+ -------------------- 
+ id: 539<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: UNKNOWN
+ raw proof:SIMPLIFY:{[] : (((0=0)))};
+ raw result:{ TRUE }
+ Simplify:  true
+ res:  true
+ -------------------- 
+ id: 540<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: UNKNOWN
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 541<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: UNKNOWN
+ raw proof:SIMPLIFY:{[] : (((0=0)))};
+ raw result:{ TRUE }
+ Simplify:  true
+ res:  true
+ -------------------- 
+ id: 542<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: UNKNOWN
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 543<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: UNKNOWN
+ raw proof:SIMPLIFY:{[] : (((0=0)))};
+ raw result:{ TRUE }
+ Simplify:  true
+ res:  true
+ -------------------- 
+ id: 544<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: UNKNOWN
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 545<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: UNKNOWN
+ raw proof:SIMPLIFY:{[] : (((0=0)))};
+ raw result:{ TRUE }
+ Simplify:  true
+ res:  true
+ -------------------- 
+ id: 546<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: UNKNOWN
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 547<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: UNKNOWN
+ raw proof:SIMPLIFY:{[] : (((0=0)))};
+ raw result:{ TRUE }
+ Simplify:  true
+ res:  true
+ -------------------- 
+ id: 548<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: UNKNOWN
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 549<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: UNKNOWN
+ raw proof:SIMPLIFY:{[] : (((0=0)))};
+ raw result:{ TRUE }
+ Simplify:  true
+ res:  true
+ -------------------- 
+ id: 550<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: UNKNOWN
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 551<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: UNKNOWN
+ raw proof:SAT:{[] : (((0=0)))};
+ raw result:{ TRUE }
+ Sat:  MayLoop[]
+ res: SAT
+ -------------------- 
+ id: 552<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: UNKNOWN
+ raw proof:SIMPLIFY:{[] : (((0=0)))};
+ raw result:{ TRUE }
+ Simplify:  true
+ res:  true
+ -------------------- 
+ id: 553<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: UNKNOWN
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 554<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: UNKNOWN
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 555<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: UNKNOWN
+ raw proof:SIMPLIFY:{[] : (((0=0)))};
+ raw result:{ TRUE }
+ Simplify:  true
+ res:  true
+ -------------------- 
+ id: 556<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: UNKNOWN
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 557<-1; prover : CACHED ; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: UNKNOWN
+ raw proof:PAIRWISE:pairwisecheck {[] : (((0=0)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ --------------------
