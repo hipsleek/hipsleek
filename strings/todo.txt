@@ -397,7 +397,7 @@ Exception occurred: Failure("TYPE ERROR 1 : Found int but expecting char_star")
 Error3(s) detected at main 
 
 ==================================================================
-# ex19b.s --pip
+# ex19b.s --pip (FIXED)
 
 # should use char_star instead of int_star
 # also instead of

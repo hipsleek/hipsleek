@@ -786,7 +786,13 @@ let rec string_of_exp = function
             if (need_parenthesis2 e) then ("(" ^ (string_of_exp e) ^ ")")
             else (string_of_exp e)
         ) in
-        "__get_char_(" ^ base_str ^ ")" (*^ (concatenate_string_list idl "~~>")*)
+        let newexp = (
+          match idl with 
+            | ["val"] -> "__get_char_(" ^ base_str ^ ")"
+            | _ -> "member access " ^ base_str ^ "~~>" ^ (concatenate_string_list idl "~~>")
+        ) in
+        newexp
+        (*"__get_char_(" ^ base_str ^ ")" (*^ (concatenate_string_list idl "~~>")*)*)
   | Assign ({exp_assign_op = op;
     exp_assign_lhs = e1;
     exp_assign_rhs = e2})  -> (string_of_exp e1) ^ (string_of_assign_op op) ^ (string_of_exp e2)

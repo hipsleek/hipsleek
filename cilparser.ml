@@ -12,6 +12,7 @@ module IF = Iformula
 
 let str_addr = "addr_"
 let str_value = "value"
+let str_char = "val" (*the value field of char* a.k.a string*)
 let str_offset = "offset"
 
 let eq_str s1 s2 = String.compare s1 s2 == 0
@@ -773,16 +774,17 @@ and create_bool_casting_proc (typ: Globals.typ) : Iast.proc_decl =
       proc_decl
     )
 
-(* c++   c+1   1+c *)
+(* c++   c+1   1+c Fixed*)
 and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
   let typ1 = translate_typ t1 no_pos in
   let typ2 = translate_typ t2 no_pos in
   let (op_name, op_str) = (match op with
       | Cil.MinusPI | Cil.MinusPP -> ("minus", "-")
       | Cil.PlusPI | Cil.IndexPI -> (
-	match t1 with
-          | Cil.TPtr(Cil.TInt(Cil.IChar,_),_) -> ("plus", "+")
-          | _ -> ("add", "+")
+	match t1, t2 with
+          | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), _ -> ("plus", "+")
+          | _, Cil.TPtr(Cil.TInt(Cil.IChar,_),_) -> ("plus", "+")
+          | _, _ -> ("add", "+")
       )
       | Cil.Lt -> ("lt", "<")
       | Cil.Le -> ("le", "<=")
@@ -797,9 +799,10 @@ and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
   let typ1_name = string_of_typ typ1 in
   let typ2_name = string_of_typ typ2 in
   let proc_name = (
-    match t1 with
-      | Cil.TPtr(Cil.TInt(Cil.IChar,_),_) -> "__plus_" ^ op_name ^ "_char"
-      | _ -> "__pointer_" ^ op_name ^ "__" ^ typ1_name ^ "__" ^ typ2_name ^ "__"
+    match t1, t2 with
+      | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), _ -> "__plus_" ^ op_name ^ "_char"
+      | _, Cil.TPtr(Cil.TInt(Cil.IChar,_),_) -> "__plus_" ^ op_name ^ "_char"
+      | _, _ -> "__pointer_" ^ op_name ^ "__" ^ typ1_name ^ "__" ^ typ2_name ^ "__"
     )
   in
   try
@@ -812,6 +815,10 @@ and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
       Debug.ninfo_hprint (add_str "t2" Cil.string_of_typ) t2 no_pos;
       let proc_str = (
         match t1, t2 with
+        | _, Cil.TPtr(Cil.TInt(Cil.IChar,_),_) ->
+             typ2_name ^ " " ^ proc_name ^ "(" ^ typ2_name ^ " x)\n"
+           ^ "requires x::char_star<_,q>@L & Term[] \n"
+           ^ "ensures res=q ;\n"
         | Cil.TInt _, Cil.TPtr _ ->
             typ2_name ^ " " ^ proc_name ^ " (" ^ typ1_name ^ " i, " ^ typ2_name ^ " p)\n"
             ^ "  requires p::" ^ typ2_name^ "<val, offset>\n"
@@ -1063,13 +1070,16 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
               (* create new Globals.typ and Iast.data_decl update to hash tables *)
               let value_typ = translate_typ core_type pos in
               let value_field = ((value_typ, str_value), no_pos, false, [gen_field_ann value_typ] (* Iast.F_NO_ANN *)) in
-              let offset_field = ((Int, str_offset), no_pos, false, [gen_field_ann Int]) in
-              let dfields = [value_field; offset_field] in
               let dname = match ty with
 		(*| Cil.TInt(Cil.IChar, _) -> "char_star"*)
                 | _ -> (Globals.string_of_typ value_typ) ^ "_star" 
               in
               let dtype = Globals.Named dname in
+              let offset_field = match ty with
+                   | Cil.TInt(Cil.IChar, _) -> ((dtype, str_offset), no_pos, false, [gen_field_ann dtype])
+                   |_ ->((Int, str_offset), no_pos, false, [gen_field_ann Int]) 
+              in
+              let dfields = [value_field; offset_field] in
               Hashtbl.add tbl_pointer_typ core_type dtype;
               let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in
               Debug.binfo_hprint (add_str "core_type" string_of_cil_typ) core_type no_pos;
@@ -1237,7 +1247,7 @@ and translate_lval_x (lv: Cil.lval) : Iast.exp =
       let rec create_complex_exp (base : Iast.exp) (offset : Cil.offset) 
           (found_fields : string list) pos
         : Iast.exp =
-        (*let _ = Debug.ninfo_hprint (add_str "base" Iprinter.string_of_exp) base no_pos in*)
+        let _ = Debug.ninfo_hprint (add_str "base" Iprinter.string_of_exp) base no_pos in
         (
           match offset with
           | Cil.NoOffset -> (
@@ -1257,18 +1267,19 @@ and translate_lval_x (lv: Cil.lval) : Iast.exp =
                   let b = Iast.mkMember base found_fields None p in
                   Iast.mkArrayAt b [(translate_exp e)] p
               ) in
-            (*let _ = Debug.ninfo_hprint (add_str "new_base" Iprinter.string_of_exp) new_base no_pos in*)
+            let _ = Debug.ninfo_hprint (add_str "new_base" Iprinter.string_of_exp) new_base no_pos in
             create_complex_exp new_base off [] pos
         ) in
       match lhost with
       | Cil.Var (v, l) ->
         let base = translate_var v (Some l) in
         let newexp = create_complex_exp base offset [] pos in
+        let _ = Debug.ninfo_hprint (add_str "new exp" Iprinter.string_of_exp) base no_pos in
         newexp
       | Cil.Mem e ->
         (* access to data in pointer variable *)
         let base_typ = typ_of_cil_exp e in
-        let _ = Debug.ninfo_hprint (add_str "base_typ" string_of_cil_typ) base_typ no_pos in
+        let _ = Debug.info_hprint (add_str "base_typ" string_of_cil_typ) base_typ no_pos in
         match base_typ with
         | Cil.TPtr (Cil.TComp _, _) ->
           let base = translate_exp e  in
@@ -1278,9 +1289,16 @@ and translate_lval_x (lv: Cil.lval) : Iast.exp =
           let data_fields = [str_value] in
           let base = Iast.mkMember ptr_base data_fields None pos in
           create_complex_exp base offset [] pos*)
+        | Cil.TPtr(Cil.TInt(Cil.IChar, _), _) -> (
+            let data_base = translate_exp e  in
+            let data_fields = [str_char] in
+            let base = Iast.mkMember data_base data_fields None pos in
+            create_complex_exp base offset [] pos
+          )
         | _ -> (
             let data_base = translate_exp e  in
             let data_fields = [str_value] in
+            let typ = translate_typ base_typ in
             let base = Iast.mkMember data_base data_fields None pos in
             create_complex_exp base offset [] pos
           )

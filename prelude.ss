@@ -537,7 +537,7 @@ ensures res or !res;
 /* String translation  */
 /* ************************/
 data char_star {
-  int value;
+  int val;
   char_star next;
 }
 char_star __plus_plus_char(char_star x)
