@@ -36,9 +36,9 @@ let test_db = false
 (* let pure_tp = ref OmegaCalc *)
 (* let tp = ref OmegaCalc *)
 
-(* WN : why do we have pure_tp and tp??? *)
-let pure_tp = ref OM
-(* let pure_tp = ref Z3 *)
+(* WN : why do we have pure_tp and tp and prover_arg??? *)
+(* let pure_tp = ref OM *)
+let pure_tp = ref Z3
 let tp = ref Redlog
 (* let tp = ref AUTO *)
 (*For conc-r, z3 for relations, mona for bags, redlog for fractions *)
@@ -472,6 +472,7 @@ let set_tp tp_str =
   if not !Globals.is_solver_local then check_prover_existence !prover_str else ()
 
 let set_tp tp_str =
+  (* print_endline "XXX"; *)
   Debug.no_1 "set_tp" pr_id pr_none set_tp tp_str
 
 let init_tp () =
@@ -576,17 +577,17 @@ let start_prover () =
       let () = match !provers_process with 
         |Some proc ->  !incremMethodsO#set_process proc
         | _ -> () in
-      Omega.start ();
+      Omega.start_prover ();
     )
   | Mona -> Mona.start()
   | Mathematica -> Mathematica.start()
   | Isabelle -> (
       Isabelle.start();
-      Omega.start();
+      Omega.start_prover();
     )
   | OM -> (
       Mona.start();
-      Omega.start();
+      Omega.start_prover();
     )
   | ZM -> (
       Mona.start();
@@ -598,7 +599,7 @@ let start_prover () =
   | SPASS -> Spass.start();
   | LOG -> file_to_proof_log !Globals.source_files
   | MINISAT -> Minisat.start ()
-  | _ -> Omega.start()
+  | _ -> Omega.start_prover()
 
 let start_prover () =
   Gen.Profiling.do_1 "TP.start_prover" start_prover ()
@@ -2237,7 +2238,7 @@ let om_pairwisecheck f =
   Debug.no_1 "om_pairwisecheck" pr pr om_pairwisecheck f
 
 let tp_pairwisecheck2_x (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
-  if not !tp_batch_mode then Omega.start ();
+  if not !tp_batch_mode then Omega.start_prover ();
   let simpl_num = next_proof_no () in
   let simpl_no = (string_of_int simpl_num) in
   let f = CP.mkOr f1 f2 None no_pos in
@@ -2536,7 +2537,7 @@ let om_pairwisecheck f =
   Debug.no_1 "om_pairwisecheck(2)" pr pr om_pairwisecheck f
 
 let tp_pairwisecheck2_x (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
-  if not !tp_batch_mode then Omega.start ();
+  if not !tp_batch_mode then Omega.start_prover ();
   let simpl_num = next_proof_no () in
   let simpl_no = (string_of_int simpl_num) in
   let f = CP.mkOr f1 f2 None no_pos in
@@ -4274,8 +4275,15 @@ let check_diff xp0 xp1 =
 let () = 
   CP.simplify := simplify;
   Cast.imply_raw := imply_raw;
+  CP.tp_imply := (fun l r -> Wrapper.wrap_dis_non_linear (imply_raw l) r);
   Excore.is_sat_raw := is_sat_raw;
   Excore.simplify_raw := simplify_raw;
   Excore.pairwisecheck := pairwisecheck;
   Cformula.simplify_omega := (x_add_1 simplify_omega);
   Cfout.simplify_raw := simplify_raw;
+
+
+(* type: CP.formula -> *)
+(*   CP.formula -> *)
+(*   string -> *)
+(*   float -> (GlobProver.prover_process_t option * bool) option -> bool *)

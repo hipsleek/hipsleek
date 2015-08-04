@@ -1675,6 +1675,14 @@ and is_simple_formula (f:formula) =
   | ViewNode _ -> true
   | _ -> false
 
+and is_emp_formula (f:formula) =
+  let h, _, _, _, _, _ = split_components f in
+  match h with
+  | HTrue | HEmp -> true
+  (* | DataNode _ -> true *)
+  (* | ViewNode _ -> true *)
+  | _ -> false
+
 (*TO CHECK: formula_*_and *)
 (* WN : free var should not need to depend on flags *)
 and fv_simple_formula (f:formula) = 
@@ -2624,13 +2632,17 @@ and subst_pos_formula (p:loc) (f: formula): formula=
                 formula_or_pos = p}
   | Exists ef -> Exists {ef with formula_exists_pos =  p}
 
-and struc_fv (f: struc_formula) : CP.spec_var list =
+and struc_fv ?(vartype=Global_var.var_with_none) (f: struc_formula) : CP.spec_var list =
   let rdv = Gen.BList.remove_dups_eq CP.eq_spec_var in
   let dsvl l1 l2 = Gen.BList.difference_eq CP.eq_spec_var (rdv l1) l2 in
   match f with
   | ECase b -> (* dsvl *) (List.concat (List.map (fun (c1,c2) -> (CP.fv c1)@(struc_fv c2) ) b.formula_case_branches)) (* b.formula_case_exists *)
-  | EBase b -> dsvl ((fold_opt struc_fv b.formula_struc_continuation)@(fv b.formula_struc_base))
-                 (b.formula_struc_explicit_inst @ b.formula_struc_implicit_inst@ b.formula_struc_exists)
+  | EBase b -> 
+    let impl_vs = if vartype # is_implicit then [] else b.formula_struc_implicit_inst in
+    let expl_vs = if vartype # is_explicit then [] else b.formula_struc_explicit_inst in
+    let exists_vs = if vartype # is_exists then [] else b.formula_struc_exists in
+    dsvl ((fold_opt struc_fv b.formula_struc_continuation)@(fv b.formula_struc_base))
+                 (impl_vs @ expl_vs @ exists_vs)
   | EAssume b -> fv b.formula_assume_simpl
   | EInfer b -> Gen.BList.remove_dups_eq CP.eq_spec_var (struc_fv b.formula_inf_continuation)
   | EList b -> rdv (fold_l_snd struc_fv b)

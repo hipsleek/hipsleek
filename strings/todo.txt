@@ -482,7 +482,7 @@ do_all_eq inp2 : ((1*2)+3)-1
 do_all_eq@2 EXIT:( aaa+1, 2+3)
 
 ==================================================================
-# ex5a.slk 
+# ex5a.slk (FIXED by Andreea)
 
 # must subs hole before calling xpure..
 
@@ -522,11 +522,165 @@ heap_entail_empty_rhs_heap#1@11 EXIT: MaybeErr Context:
  [[ COND ==>  Match(x,x)]]
  CEX:false
 ==================================================================
+# strings/ex8d6.slk --pcp
+
+printing problem ..
+
+  base case: 
+  v=0->v=0 & self!=nullview_complex_inv: None
+  prune branches: ,[]
+  prune conditions: 
+    {
+[]}
+  prune baga conditions: 
+  prune invs:0:,[]
+
+Expecting:
+
+  base case: {v=0->v=0 & self!=null}
+  view_complex_inv: None
+  prune branches: ,[]
+  prune conditions: {[]}
+  prune baga conditions: 
+  prune invs:0:,[]
+
+# Why no direct unfolding?
+
 ==================================================================
+# strings/ex8d6.slk --pcp (FIXED)
+           by requiring base cases to be emp or true
+
+# Not a valid base-case if primitive predicate present..
+
+pred H1<v> == self::str<v2,q>*q::H1<v2> & v!=0
+   or self::D<> & v=0
+  inv self!=null.
+
+  base case: {v=0->v=0 & self!=null}
+
+# base-case unfold should only be for emp base-cases ..
+
+(====)
+compute_base_case_part@2@1
+compute_base_case_part inp1 : (* lbl: *){2}->(exists v2_13,q,
+v2: (* lbl: *){2}->self::str<v2,q>@M * q::H1<v2_13>@M&vvv!=0 & v2_13=v2&
+{FLOW,(1,26)=__flow#E}[]
+compute_base_case_part@2 EXIT:([],[ vvv!=0 & self!=null])
+
+(==omega.ml#1151==)
+compute_base_case_part@3@1
+compute_base_case_part inp1 : (* lbl: *){3}->self::D<>@M&vvv=0&{FLOW,(1,26)=__flow#E}[]
+compute_base_case_part@3 EXIT:([ vvv=0 & self!=null],[])
+
+(==cvutil.ml#1167==)
+compute_base_case@1
+compute_base_case inp1 :H1
+compute_base_case inp2 : (* lbl: *){2}->(exists v2_13,q,
+ v2: (* lbl: *){2}->self::str<v2,q>@M * q::H1<v2_13>@M&vvv!=0 & v2_13=v2&
+ {FLOW,(1,26)=__flow#E}[]
+ (* lbl: *){3}->self::D<>@M&vvv=0&{FLOW,(1,26)=__flow#E}[]
+compute_base_case inp3 :[self,vvv]
+compute_base_case@1 EXIT:Some( vvv=0)
+
 ==================================================================
+# strings/ex8d6.slk --pcp (FIXED by Loc)
+
+checkentail q::H1<v> & v=0  |- q::D<>.
+print residue.
+
+# How can this be a must failure?
+# Should we force an unfolding, but will this go into a loop?>
+
+Entail 1: Fail.(must) cause:base case unfold failed
+
+Residue:
+ MustErr Context: 
+   fe_kind: MUST
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: base_case_unfold failed
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ COND ==>  BaseCaseUnfold]]
+ CEX:true
 ==================================================================
+# ex8e4.ss (FIXED)
+
+ERROR: at _0:0_0:0
+Message: Can not find flow of str
+
+ERROR: at ex8e3-verify-shape.ss_79:5_79:14
+Message: gather_type_info_var : unexpected exception Failure("Can not find flow of str")g
+
+# Why type error for below?
+
+D<> == true;
+// pred_prim D<> inv self!=null;
+
+# Why WAITS occur twice?
+
+!!! **iast.ml#2137:XXX:0v.view_name:WAITS
+!!! **iast.ml#2137:XXX:0v.view_name:WAIT
+!!! **iast.ml#2137:XXX:0v.view_name:memLoc
+!!! **iast.ml#2137:XXX:0v.view_name:WAITS
+!!! **iast.ml#2155:XXX:view:WAIT
+!!! **iast.ml#2156:XXX:a:[WAIT]
+!!! **iast.ml#2155:XXX:view:memLoc
+!!! **iast.ml#2156:XXX:a:[memLoc]
+
 ==================================================================
+# strings/ex8e6.slk --pcp (FIXED)
+
+# Should we force an unfolding, but will this go into a loop?>
+
+(==context.ml#1731==)
+process_one_match_accfold@3@2@1
+process_one_match_accfold inp1 :match_res:
+ Type: Root
+ LHS: q::H1<v>@M
+ RHS: q::D<>@M
+ lhs_rest: emp
+ rhs_rest: emp
+process_one_match_accfold inp2 :lhs_h: q::H1<v>@M
+process_one_match_accfold inp3 :lhs_p: v=0
+process_one_match_accfold inp4 :rhs_p: true
+process_one_match_accfold@3 EXIT:[]
+
+(==mcpure.ml#2282==)
+process_one_match@2@1
+process_one_match inp1 :match_res:
+ Type: Root
+ LHS: q::H1<v>@M
+ RHS: q::D<>@M
+ lhs_rest: emp
+ rhs_rest: emp
+process_one_match inp2 :lhs_h: q::H1<v>@M
+process_one_match inp3 :lhs_p: v=0
+process_one_match inp4 :rhs_node: q::D<>@M
+process_one_match inp5 :rhs_rest: emp
+process_one_match inp6 :rhs_p: true
+process_one_match inp7 :([],None)
+process_one_match@2 EXIT: Prio:1
+ COND =>[
+  Prio:3
+  BaseCaseUnfold =>
+  ]
+
 ==================================================================
+# ex8e4.slk -dre "incr_fixpt_view" (FIXED)
+
+# bug with proc below..
+
+!!! **iast.ml#2142:XXX:0v.view_name:WAITS
+!!! **iast.ml#2160:XXX:view:WAIT
+!!! **iast.ml#2161:XXX:a:[WAIT]
+!!! **iast.ml#2160:XXX:view:memLoc
+!!! **iast.ml#2161:XXX:a:[memLoc]
+(==astsimp.ml#2575==)
+incr_fixpt_view@1
+incr_fixpt_view inp1 :[__Exc,__Error,__MayError,__Fail,int_ptr_ptr,int_ptr,lock,barrier,thrd,__RET,__ArrBoundErr,__DivByZeroErr,Object,String,str]
+incr_fixpt_view inp2 :[WAITS,WAIT,memLoc,DDD]
+incr_fixpt_view@1 EXIT:WAITS
 ==================================================================
 ==================================================================
 ==================================================================
