@@ -322,16 +322,27 @@ id: 1<-1; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
  Sat:  r=b*x & b=2
  res: SAT
 ========================================================
-# ex12z-simple.slk -tp z3 --esl
+# ex12za -tp oc --esl 
 
-# why is z3 calls not counted?
+# Why is there Lemma_Prop?
+
+ id: 201<-1; prover: OMEGA CALCULATOR; loc: ex12a-simple_ss_10:10_10:21; kind: Lemma_Prop
+ raw proof:SAT:{[v_int_10_1331PRMD, xxx, res, xxxPRMD] : ((((v_int_10_1331PRMD = 2) & (xxxPRMD = xxx)) & (res = 2(xxxPRMD))))};
+ raw result:{[2,xxx,2xxx,xxx]}
+ Sat:  v_int_10_1331'=2 & xxx'=xxx & res=xxx'*v_int_10_1331'
+ res: SAT
+
+========================================================
+# ex12z-simple.slk -tp z3 --esl (FIXED)
+
+# why aren't z3 calls counted?
 
 !!! Number of MONA calls:0
 !!! Number of Omega calls:0
 
 -tp mona
 
-# why so many MONA calls?
+# why so many MONA calls? (from prelude)
 
 !!! Number of MONA calls:201
 !!! Number of Omega calls:0
@@ -342,14 +353,6 @@ id: 1<-1; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
 
 !!! Number of MONA calls:0
 !!! Number of Omega calls:204
-
-# Why is there Lemma_Prop?
-
- id: 201<-1; prover: OMEGA CALCULATOR; loc: ex12a-simple_ss_10:10_10:21; kind: Lemma_Prop
- raw proof:SAT:{[v_int_10_1331PRMD, xxx, res, xxxPRMD] : ((((v_int_10_1331PRMD = 2) & (xxxPRMD = xxx)) & (res = 2(xxxPRMD))))};
- raw result:{[2,xxx,2xxx,xxx]}
- Sat:  v_int_10_1331'=2 & xxx'=xxx & res=xxx'*v_int_10_1331'
- res: SAT
 
 chin@loris-7:~/hg/sl_imm/nonlinear$ ../sleek ex12z-simple.slk -tp mona 
 !!! init_tp by default: 
