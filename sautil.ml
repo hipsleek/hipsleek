@@ -5692,6 +5692,36 @@ let mkConjH_and_norm_x prog hp args unk_hps unk_svl f1 f2 pos=
       (pure_f1, CF.formula_of_disjuncts fs1)
     else (pure_f1, f2)
   in
+  let rec hf_strengthen_conj hn=
+    match hn with
+      | CF.Star hfs -> CF.Star {hfs with CF.h_formula_star_h1 = hf_strengthen_conj hfs.CF.h_formula_star_h1;
+            CF.h_formula_star_h2 = hf_strengthen_conj hfs.CF.h_formula_star_h2;}
+      | CF.ConjStar{h_formula_conjstar_h1 = hf1;
+        h_formula_conjstar_h2 = hf2;
+        h_formula_conjstar_pos = p;
+        } -> CF.ConjStar {h_formula_conjstar_h1 = hf_strengthen_conj hf1;
+        h_formula_conjstar_h2 = hf_strengthen_conj hf2;
+        h_formula_conjstar_pos = p;
+        }
+      | CF.ConjConj {h_formula_conjconj_h1 = hf1;
+        h_formula_conjconj_h2 = hf2;
+        h_formula_conjconj_pos = p;
+        } -> CF.ConjConj {h_formula_conjconj_h1 = hf_strengthen_conj hf1;
+        h_formula_conjconj_h2 = hf_strengthen_conj hf2;
+        h_formula_conjconj_pos = p;
+        }
+      | CF.Conj {h_formula_conj_h1 = hf1;
+        h_formula_conj_h2 = hf2;
+        h_formula_conj_pos = p;
+        } -> begin
+        match hf2 with
+          | HRel (hp,_,_) -> if CP.mem_svl hp unk_hps then
+              hf1
+            else hn
+          | _ -> hn
+        end
+      | _ -> hn
+  in
   let is_unsat f=
     CF.isAnyConstFalse f1 || is_unsat f
   in
@@ -5710,7 +5740,8 @@ let mkConjH_and_norm_x prog hp args unk_hps unk_svl f1 f2 pos=
         | false,true -> try_unfold_view f2 f1
         | true,false -> try_unfold_view f1 f2
       in
-      (CF.mkConj_combine nf1 nf2 CF.Flow_combine pos)
+      let f = (CF.mkConj_combine nf1 nf2 CF.Flow_combine pos) in
+      CF.formula_map hf_strengthen_conj f
     else
       match n_fs with
       | [] -> CF.mkFalse_nf pos
