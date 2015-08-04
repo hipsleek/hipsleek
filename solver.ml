@@ -9566,13 +9566,13 @@ and do_match_inst_perm_vars l_perm r_perm l_args r_args label_list evars ivars i
   Debug.no_6 "do_match_inst_perm_vars" 
     (string_of_cperm ())
     (string_of_cperm ())
-    string_of_spec_var_list
-    string_of_spec_var_list
-    string_of_spec_var_list
-    string_of_spec_var_list
+    (add_str "evars" string_of_spec_var_list)
+    (add_str "impl_vars" string_of_spec_var_list)
+    (add_str "l_args" string_of_spec_var_list)
+    (add_str "r_args" string_of_spec_var_list)
     pr_out
     (fun _ _ _ _ _ _ -> do_match_inst_perm_vars_x l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars) 
-    l_perm r_perm evars ivars l_args r_args
+    l_perm r_perm evars impl_vars l_args r_args
 
 (*Modified a set of vars in estate to reflect instantiation
   when matching 2 perm vars*)
@@ -9862,9 +9862,17 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
   (* print_endline ("\n\n(andreeac)[do_match] input LHS = "^ (Cprinter.string_of_entail_state estate)); *)
   (* print_endline ("[do_match] RHS = "^ (Cprinter.string_of_formula rhs)); *)
   (* print_endline ("[do_match] matching " ^ (Cprinter.string_of_h_formula l_node) ^ " |- " ^ (Cprinter.string_of_h_formula r_node)); *)
-  let () = x_dinfo_zp (lazy ("do_match: using " ^
-                             (Cprinter.string_of_h_formula l_node) ^ " to prove " ^
-                             (Cprinter.string_of_h_formula r_node))) pos in
+  let m_str = (Cprinter.string_of_h_formula l_node) ^ " to prove " ^
+                             (Cprinter.string_of_h_formula r_node) in
+  let () = x_tinfo_zp (lazy ("do_match: using " ^m_str)) no_pos in
+  let lhs_self,rhs_self = match l_node,r_node with
+    | DataNode {h_formula_data_node = l}, DataNode {h_formula_data_node = r} 
+      -> (l,r)
+    | ViewNode {h_formula_view_node = l}, ViewNode {h_formula_view_node = r} 
+      -> (l,r)
+    | _, _ -> failwith ("do match failure: "^m_str)
+  in
+  let () = x_tinfo_hp (add_str "[LHS,RHS]" !print_svl) [lhs_self;rhs_self] no_pos in
   let () = x_dinfo_zp (lazy ("do_match: source LHS: " ^ (Cprinter.string_of_entail_state estate))) pos in
   let () = x_dinfo_zp (lazy ("do_match: source RHS: " ^ (Cprinter.string_of_formula rhs))) pos in 
   let () = x_tinfo_hp (add_str "es_aux_conseq" !CP.print_formula) estate.es_aux_conseq no_pos in
@@ -10153,8 +10161,13 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
         let ivars = estate.es_ivars in
         let expl_vars = estate.es_gen_expl_vars in
         let impl_vars = estate.es_gen_impl_vars in
+        let () = x_tinfo_hp (add_str "impl_vars" !print_svl) impl_vars no_pos in
+        let l_args,r_args,label_list = if CP.eq_spec_var lhs_self rhs_self then l_args,r_args,label_list
+          else lhs_self::l_args, rhs_self::r_args, LO.unlabelled::label_list in
+        let () = x_tinfo_hp (add_str "l_args" !print_svl) l_args no_pos in
+        let () = x_tinfo_hp (add_str "r_args" !print_svl) r_args no_pos in
         let rho_0, label_list, p_ante, p_conseq =
-          do_match_inst_perm_vars l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars 
+          x_add do_match_inst_perm_vars l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars 
         in
         (* let rho_0, label_list =                                                                                  *)
         (*   if (Perm.allow_perm ()) then                                                                           *)

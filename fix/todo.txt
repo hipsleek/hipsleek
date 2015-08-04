@@ -331,7 +331,16 @@ Residue:
  <1>emp&aa=a & q_96=q & v_95=v & v!=0 & q!=null & PPP(aa,p,s',bb) & 
         flted_24_70=0 & b=bb&{FLOW,(20,21)=__norm#E}[]
 =======================================================================
+# bug6d.slk (FIXED by adding self to LHS inst)
+
+# why did match fail?
 =======================================================================
+base-case fold fix induced some errors here:
+
+Total number of errors: 2 in files:
+  sleek13-lend.slk({E1#Valid}) sleek13-lend.slk({E1#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+
 =======================================================================
 =======================================================================
 =======================================================================
