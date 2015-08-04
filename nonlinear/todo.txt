@@ -272,8 +272,105 @@ Starting Omega...oc
 Entail 1: EXCast. Failure("UNSOUND enhance_eq_list")
 : no residue 
 ========================================================
+# ex12d.slk -tp oc --dis-nonlinear --esl
+
+# why is error message doing some non-linear substitution?
+
+checkentail r=b*x & b=2 |- r=2*x.
+
+Entail 2: Fail.(may) cause: r=2*x |-  r=x+x. LOCS:[3] (may-bug)
+
+# Why CACHED and not Omega? Why duplicate calls?
+
+-------------------- 
+ id: 2<0; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:IMPLY:complement {[b, r, x] : (( (not (((b = 2) & ((1=1)))))  | (r = x + x)))};
+ raw result: {[2,r,x]: 2x < r}
+ Imply: ante: b=2 & r=b*x
+	     conseq:  r=x+x
+ res: false
+ -------------------- 
+ id: 3<0; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:IMPLY:complement {[b, r, x] : (( (not (((b = 2) & ((1=1)))))  | (r = x + x)))};
+ raw result: {[2,r,x]: 2x < r}
+ Imply: ante: b=2 & r=b*x
+	     conseq:  r=x+x
+ res: false
+ -
+
+# ex13d.slk -tp oc -esl
+
+# Why is SAT cached twice?
+# can we move non-linear out of Omega?
+
+id: 1<-1; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:SAT:{[r, x, b] : (((r = 2(x)) & (b = 2)))};
+ raw result:{[r,x,2]: r = 2x}
+ Sat:  r=b*x & b=2
+ res: SAT
+ -------------------- 
+ id: 2<0; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:IMPLY:complement {[b, r, x] : (( (not (((b = 2) & (r = 2(x)))))  | (r = x + x)))};
+ raw result:{[b,r,x]  : FALSE }
+ Imply: ante: b=2 & r=b*x
+	     conseq:  r=x+x
+ res: true
+ -------------------- 
+ id: 3<0; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:SAT:{[r, x, b] : (((r = 2(x)) & (b = 2)))};
+ raw result:{[r,x,2]: r = 2x}
+ Sat:  r=b*x & b=2
+ res: SAT
 ========================================================
+# ex12za -tp oc --esl 
+
+# Why is there Lemma_Prop?
+
+ id: 201<-1; prover: OMEGA CALCULATOR; loc: ex12a-simple_ss_10:10_10:21; kind: Lemma_Prop
+ raw proof:SAT:{[v_int_10_1331PRMD, xxx, res, xxxPRMD] : ((((v_int_10_1331PRMD = 2) & (xxxPRMD = xxx)) & (res = 2(xxxPRMD))))};
+ raw result:{[2,xxx,2xxx,xxx]}
+ Sat:  v_int_10_1331'=2 & xxx'=xxx & res=xxx'*v_int_10_1331'
+ res: SAT
+
 ========================================================
+# ex12z-simple.slk -tp z3 --esl (FIXED)
+
+# why aren't z3 calls counted?
+
+!!! Number of MONA calls:0
+!!! Number of Omega calls:0
+
+-tp mona
+
+# why so many MONA calls? (from prelude)
+
+!!! Number of MONA calls:201
+!!! Number of Omega calls:0
+
+-tp oc
+
+# why so many OC calls?
+
+!!! Number of MONA calls:0
+!!! Number of Omega calls:204
+
+chin@loris-7:~/hg/sl_imm/nonlinear$ ../sleek ex12z-simple.slk -tp mona 
+!!! init_tp by default: 
+!!! set_tp z3
+
+!!! **tpdispatcher.ml#344:check prover:z3!!! init_tp by user: 
+!!! set_tp mona
+
+!!! **tpdispatcher.ml#344:check prover:mona
+========================================================
+# ex12z-simple.slk -tp mona (OK for OC and MONA)
+
+# to succeed if non-linear transform handled in general 
+
+non-linear pre-process of SAT for all provers
+non-linear pre-process of IMPLY for just OC/MOBA
+ need to add Cpure.subs_const_var_formula to specific provers
+
 ========================================================
 ========================================================
 ========================================================

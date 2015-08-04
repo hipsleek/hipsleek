@@ -1015,6 +1015,8 @@ let procs_verified = ref ([] : string list)
 
 let false_ctx_line_list = ref ([] : loc list)
 
+let add_false_ctx pos = false_ctx_line_list := pos::!false_ctx_line_list
+
 let b_datan = "barrier"
 
 let verify_callees = ref false
@@ -1144,11 +1146,11 @@ let dis_norm = ref false
 let dis_ln_z3 = ref false
 
 (* WN : should this flag be for tpdispatcher, rather than just Omega *)
-let oc_non_linear = ref false
+let non_linear_flag = ref true
 let oc_warning = ref false
 
 (* eqn solving to be false by default until it is stable or proven*)
-let oc_matrix_eqn = ref false 
+(* let oc_matrix_eqn = ref false  *)
 
 let allow_ls = ref false (*enable lockset during verification*)
 

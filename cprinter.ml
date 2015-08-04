@@ -4539,6 +4539,20 @@ let string_of_read_only ro = match ro with
   | true -> "read"
   | false -> "write" (*write is conservative*)
 
+(* pretty printing for one data declaration*)
+let string_of_decl (t,id) = (* An Hoa : un-hard-code *)
+  (string_of_typ t)^" "^id
+;;
+
+(* function to print a list of typed_ident *)
+let rec string_of_decl_list l c = match l with
+  | [] -> ""
+  | h::[] -> string_of_decl h
+  | h::t -> (string_of_decl h) ^ c ^ (string_of_decl_list t c)
+;;
+
+let string_of_typed_ident_list l = "["^(string_of_decl_list l ",")^"]"
+
 (* pretty printing for expressions *)
 let rec string_of_exp = function
   | Label l-> "LABEL! "^( (string_of_int_label_opt (fst  l.exp_label_path_id) (","^((string_of_int (snd l.exp_label_path_id))^": "^(string_of_exp l.exp_label_exp)))))
@@ -4575,8 +4589,8 @@ let rec string_of_exp = function
     string_of_control_path_id pid ("bind " ^ id ^ " to (" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ") [" ^ (string_of_read_only ro)^ "] in \n" ^ (string_of_exp e))
   | Block ({exp_block_type = _;
             exp_block_body = e;
-            exp_block_local_vars = _;
-            exp_block_pos = _}) -> "{" ^ (string_of_exp e) ^ "}"
+            exp_block_local_vars = vs;
+            exp_block_pos = _}) -> "{BLK" ^( string_of_typed_ident_list  vs)^(string_of_exp e) ^ "}"
   | Barrier b -> "barrier "^(string_of_ident (snd b.exp_barrier_recv))
   | ICall ({exp_icall_type = _;
             exp_icall_receiver = r;
@@ -4705,22 +4719,12 @@ let string_of_field_ann ann =
     (* | F_NO_ANN -> "" *)
     String.concat "@" ann
 
-(* pretty printing for one data declaration*)
-let string_of_decl (t,id) = (* An Hoa : un-hard-code *)
-  (string_of_typ t) ^ " " ^ (id)
-;;
 
 (* pretty printing for one data declaration*)
 let string_of_data_decl ((t,id),ann) = (* An Hoa : un-hard-code *)
   (string_of_typ t) ^ " " ^ (id) ^ (string_of_field_ann ann)
 ;;
 
-(* function to print a list of typed_ident *)
-let rec string_of_decl_list l c = match l with
-  | [] -> ""
-  | h::[] -> "  " ^ string_of_decl h
-  | h::t -> "  " ^ (string_of_decl h) ^ c ^ (string_of_decl_list t c)
-;;
 
 (* function to print a list of typed_ident *)
 let rec string_of_data_decl_list l c = match l with

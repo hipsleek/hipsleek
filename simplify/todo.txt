@@ -199,9 +199,31 @@ Can we print existential variables that are not heap variables?
 Why aren't they eliminated?
 
 How about heap var: h_39'::cell<flted_48_47>
-
-
 ===================================================================
+# ex0b.ss
+
+Checking procedure append$node~node... 
+!!! **typechecker.ml#2148:Dprint:[tmp,nnn,mmm,xxx,yyyy]
+dprint(simpl): ex0b-gen-bool-append.ss:21: ctx:  List of Failesc Context: [FE
+
+# it seems that some generated vars are not placed \
+  in local vars of BLK (except v_node_20_1405)
+
+{BLK[node tmp]((node tmp;
+tmp = bind xxx to (val_17_1392,next_17_1393) [read] in 
+next_17_1393);
+(boolean v_bool_19_1405;
+(v_bool_19_1405 = {BLK[]is_not_null___$node(tmp)};
+if (v_bool_19_1405) [LABEL! 93,0: {BLK[](({BLK[node v_node_20_1402]((node v_node_20_1402;
+v_node_20_1402 = bind xxx to (val_20_1397,next_20_1398) [read] in 
+next_20_1398);
+append$node~node(v_node_20_1402,yyyy) rec)};
+dprint);
+ret#)}]
+else [LABEL! 93,1: {BLK[](bind xxx to (val_25_1403,next_25_1404) [write] in 
+next_25_1404 = yyyy;
+ret#)}]
+)))}
 ===================================================================
 ===================================================================
 ===================================================================
