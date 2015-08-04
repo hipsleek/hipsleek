@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+
 open VarGen
 open Globals
 open Exc.GTable
@@ -1082,8 +1084,8 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
               let dfields = [value_field; offset_field] in
               Hashtbl.add tbl_pointer_typ core_type dtype;
               let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in
-              Debug.binfo_hprint (add_str "core_type" string_of_cil_typ) core_type no_pos;
-              Debug.binfo_hprint (add_str "new ddecl for pointer type" !Iast.print_data_decl) ddecl no_pos;
+              x_binfo_hp (add_str "core_type" string_of_cil_typ) core_type no_pos;
+              x_binfo_hp (add_str "new ddecl for pointer type" !Iast.print_data_decl) ddecl no_pos;
               Hashtbl.add tbl_data_decl dtype ddecl;
               (* return new type*)
               dtype
@@ -1279,7 +1281,7 @@ and translate_lval_x (lv: Cil.lval) : Iast.exp =
       | Cil.Mem e ->
         (* access to data in pointer variable *)
         let base_typ = typ_of_cil_exp e in
-        let _ = Debug.info_hprint (add_str "base_typ" string_of_cil_typ) base_typ no_pos in
+        let _ = x_binfo_hp (add_str "base_typ" string_of_cil_typ) base_typ no_pos in
         match base_typ with
         | Cil.TPtr (Cil.TComp _, _) ->
           let base = translate_exp e  in
