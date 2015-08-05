@@ -342,6 +342,17 @@ Total number of errors: 2 in files:
 !!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
 
 =======================================================================
+# ex32.ss
+
+Context of Verification Failure: ex32-swap-dec.ss_5:37_5:41
+
+Last Proving Location: ex32-swap-dec.ss_16:4_16:12
+
+ERROR: at _0:0_0:0
+Message: process_tables expecting relation but got: true
+
+!!! PROBLEM with fix-point calculation
+ExceptionFailure("process_tables expecting relation but got: true")Occurred!
 =======================================================================
 =======================================================================
 =======================================================================

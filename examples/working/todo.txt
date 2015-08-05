@@ -1559,6 +1559,18 @@ Total verification time: 435.56 second
 
 
 ====================================================================
+All test results were as expected.
+Total verification time: 99.18 second
+	Time spent in main process: 67.60 second
+	Time spent in child processes: 31.58 second
+	Number of false contexts: 61
+
+--eps -tp z3
+Total verification time: 878.75 second
+	Time spent in main process: 813.09 second
+	Time spent in child processes: 65.66 second
+	Number of false contexts: 413
+
 ====================================================================
 ====================================================================
 ====================================================================
