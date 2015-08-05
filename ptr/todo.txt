@@ -90,12 +90,31 @@ Total verification time: 126.21 second
 
 # Why is there VAL_11?
 
-data arr_int {
-  int valVAL_11;
-  arr_int nextREC_25;
-}inv Some( self+1=next)
+
+class arr_int extends Object {
+int val@VAL_11;
+arr_int next@
+}pure inv (self+1) = next
 
 ===========================================================
+# ex7d.slk
+
+# to fix xpure_enumerate + symbolic, so as to
+  support ptr arithmetic below
+
+ ("--en-ptr-arith", Arg.Set Globals.ptr_arith_flag,
+   "Enable use of Ptr Arithmetic (incl type checking).");
+
+checkentail x::arr_int<_,p> |- x!=p.
+expect Valid.
+//Entail 3: Fail.(may) cause: x=1 |-  x!=p. LOCS:[17] (may-bug)
+//Validate 3: Expecting(3)Valid BUT got : Fail_May
+
+checkentail x::arr_int<_,p> |- x=p+1.
+expect Valid.
+
+//Entail 4: Fail.(may) cause: x=1 |-  x=p+1. LOCS:[20] (may-bug)
+//Validate 4: Expecting(3)Valid BUT got : Fail_May
 ===========================================================
 ===========================================================
 ===========================================================
