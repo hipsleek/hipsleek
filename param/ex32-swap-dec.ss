@@ -2,7 +2,8 @@
 relation R(int x,int y).
 
   void loo (int x,int y)
-  infer [R]  requires R(x,y) ensures true;
+  infer [R
+         ,@analyse_param]  requires R(x,y) ensures true;
 {
   int t;
   int t2;

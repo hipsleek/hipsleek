@@ -48,7 +48,7 @@ let set_lib_file arg =
 
 let set_tp solver=
   let () = print_endline ("!!! init_tp by user: ") in 
-  Tpdispatcher.set_tp solver
+  Tpdispatcher.set_tp true solver
 
 let set_frontend fe_str = match fe_str  with
   | "native" -> fe := NativeFE
@@ -116,6 +116,10 @@ let common_arguments = [
   (* ("--dis-label-aggr-sat", Arg.Clear Globals.label_aggressive_sat, "disable aggressive splitting of labels during unsat"); *)
   (* ("--en-label-aggr", Arg.Set Globals.label_aggressive_flag, "enable aggressive splitting of labels"); *)
   (* ("--dis-label-aggr", Arg.Clear Globals.label_aggressive_flag, "disable aggressive splitting of labels"); *)
+  ("--en-mult", Arg.Set Globals.prelude_is_mult,
+   "Enable using mult as prim.");
+  ("--dis-mult", Arg.Clear Globals.prelude_is_mult,
+   "Enable using mult as prim.");
   ("--dis-ufdp", Arg.Clear Solver.unfold_duplicated_pointers,
    "Disable unfolding of predicates with duplicated pointers."); (* An Hoa *)
   ("--ahwytdi", Arg.Set Smtsolver.try_induction,
@@ -291,6 +295,12 @@ let common_arguments = [
   ("--use-isabelle-bag", Arg.Set Isabelle.bag_flag,
    "Use the bag theory from Isabelle, instead of the set theory");
   ("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
+  ("--en-weaker-pre", Arg.Set Globals.weaker_pre_flag,"Enable Weaker Pre-Condition to be Inferred");
+  ("--dis-weaker-pre", Arg.Clear Globals.weaker_pre_flag,"Disable Weaker Pre-Condition to be Inferred");
+  ("--adhoc-1", Arg.Set Globals.adhoc_flag_1,"Enable Adhoc Flag 1");
+  ("--adhoc-2", Arg.Set Globals.adhoc_flag_2,"Enable Adhoc Flag 2");
+  ("--adhoc-3", Arg.Set Globals.adhoc_flag_3,"Enable Adhoc Flag 3");
+  ("--assert-nonlinear", Arg.Set Globals.assert_nonlinear,"Enable Asserting Testing of Nonlnear Pre-Processing");
   ("--ann-vp", Arg.Set Globals.ann_vp,"manual annotation of variable permissions");
   ("--dis-ann-vp", Arg.Clear Globals.ann_vp,"disable manual annotation of variable permissions");
   ("--ls", Arg.Set Globals.allow_ls,"enable locksets during verification");
@@ -313,6 +323,12 @@ let common_arguments = [
   ("--dis-seg-opt", Arg.Clear Globals.graph_norm,"disable the graph-based optimization for segment data structures");
   ("--oc-dis-simp", Arg.Clear Globals.oc_simplify,"disable oc simplification");
   ("--oc-en-simp", Arg.Set Globals.oc_simplify,"enable oc simplification");
+  ("--en-nonlinear", Arg.Set Globals.non_linear_flag,"enable non-linear pre-processing");
+  ("--dis-nonlinear", Arg.Clear Globals.non_linear_flag,"disable non-linear pre-processing");
+  (* ("--oc-en-matrix", Arg.Set Globals.oc_matrix_eqn,"enable oc matrix equational solvingline of constants"); *)
+  (* ("--oc-dis-matrix", Arg.Clear Globals.oc_matrix_eqn,"enable oc matrix equational solving of constants"); *)
+  ("--oc-en-warning", Arg.Set Globals.oc_warning,"Enable Omega warning");
+  ("--oc-dis-warning", Arg.Clear Globals.oc_warning,"Disable Omega warning");
   ("--oc-dis-adv-simp", Arg.Clear Globals.oc_adv_simplify,"disable oc advancde simplification");
   ("--oc-en-adv-simp", Arg.Set Globals.oc_adv_simplify,"enable oc advanced simplification");
   ("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
@@ -335,8 +351,8 @@ let common_arguments = [
   ("--dis-aggresive-immf-inst", Arg.Clear Globals.aggresive_imm_inst,"don't add lhs_imm<:rhs_imm, when lhs_imm is unrestricted");
   ("--en-imm-simpl", Arg.Set Globals.imm_add,"simplify imm addition");
   ("--dis-imm-simpl", Arg.Clear Globals.imm_add,"disable imm addition simplification");
-  ("--en-analyse-param", Arg.Set Globals.param_analysis, "analyse input parameters for relation/transition");
-  ("--dis-analyse-param", Arg.Clear Globals.param_analysis, "analyse input parameters for relation/transition");
+  (* ("--en-analyse-param", Arg.Set Globals.param_analysis, "analyse input parameters for relation/transition"); *)
+  (* ("--dis-analyse-param", Arg.Clear Globals.param_analysis, "analyse input parameters for relation/transition"); *)
   ("--mem", Arg.Unit (fun _ -> 
        Globals.allow_mem := true; 
        Globals.allow_field_ann := true;),
@@ -494,7 +510,7 @@ let common_arguments = [
   ("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
    "Build the image theory in Isabelle - default false");
   ("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-2.19"; "z3n"; "z3-4.3.1"; "zm"; "om";
-                       "oi"; "set"; "cm"; "OCRed"; "redlog"; "rm"; "prm"; "spass";"parahip"; "math"; "minisat" ;"auto";"log"; "dp"], set_tp (* Tpdispatcher.set_tp *)),
+                       "oi"; "set"; "cm"; "OCRed"; "redlog"; "rm"; "prm"; "spass";"parahip"; "math"; "minisat" ;"auto";"log"; "dp"], (set_tp) (* Tpdispatcher.set_tp *)),
    "Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
   ("--dis-tp-batch-mode", Arg.Clear Tpdispatcher.tp_batch_mode,"disable batch-mode processing of external theorem provers");
   ("-perm", Arg.Symbol (["fperm"; "cperm"; "dperm"; "bperm"; "none"], Perm.set_perm),
@@ -522,7 +538,9 @@ let common_arguments = [
    "Match logged methods from a regular expression");
   ("-dre", Arg.String (fun s ->
        let _ = print_endline ("!!!-dre "^s) in
-       Debug.z_debug_file:=("$"^s); z_debug_flag:=true),
+       Debug.z_debug_file:=("$"^s); z_debug_flag:=true;
+       Debug.read_main ()
+     ),
    "Shorthand for -debug-regexp");
   ("-drea", Arg.String (fun s ->
        Debug.z_debug_file:=("$.*"); z_debug_flag:=true;
@@ -545,7 +563,7 @@ let common_arguments = [
    "<host:port>: use external prover via loris-7:8888");
   ("--socket", Arg.String Tpdispatcher.Netprover.set_use_socket,
    "<host:port>: use external prover via socket");
-  ("--prover", Arg.String Tpdispatcher.set_tp,
+  ("--prover", Arg.String (Tpdispatcher.set_tp true),
    "<p,q,..> comma-separated list of provers to try in parallel");
   (* ("--enable-sat-stat", Arg.Set Globals.enable_sat_statistics,  *)
   (* "enable sat statistics"); *)
@@ -676,6 +694,8 @@ let common_arguments = [
   ("--dis-term-msg", Arg.Set Globals.dis_term_msg, "turn off the printing of termination messages");
   ("--dis-post-check", Arg.Set Globals.dis_post_chk, "turn off the post_condition and loop checking");
   ("--post-eres", Arg.Set Globals.post_add_eres, "add res=eres.val for post-condition proving");
+  ("--add-pre", Arg.Set Globals.add_pre, "to add pre of case-spec into post-cond");
+  ("--dis-add-pre", Arg.Clear Globals.add_pre, "not to add pre of case-spec into post-cond");
   ("--post-flow", Arg.Set Globals.post_infer_flow, "add exception flow as a post-cond parameter for inference");
   ("--dis-post-flow", Arg.Clear Globals.post_infer_flow, "add exception flow as a post-cond parameter for inference");
   ("--dis-assert-check", Arg.Set Globals.dis_ass_chk, "turn off the assertion checking");
@@ -690,8 +710,20 @@ let common_arguments = [
    "level of detail in termination inference printing 0-verbose 1-standard (default)");
   ("--infer-lex", Arg.Set Globals.tnt_infer_lex,
    "enable lexicographic ranking function inference");
+  ("--en-infer-lex", Arg.Set Globals.tnt_infer_lex,
+   "enable lexicographic ranking function inference");
+  ("--dis-infer-lex", Arg.Clear Globals.tnt_infer_lex,
+   "disable lexicographic ranking function inference");
   ("--term-add-post", Arg.Set Globals.tnt_add_post, "Automatically infer necessary postcondition");
   ("--dis-term-add-post", Arg.Clear Globals.tnt_add_post, "Automatically infer necessary postcondition");
+  ("--abd-strategy", Arg.Set_int Globals.tnt_abd_strategy,
+   "level of detail in termination printing 0-template(default) 1-size-change");
+  ("--en-infer-nondet", Arg.Set Globals.tnt_infer_nondet,
+   "enable local inference for nondeterminism");
+  ("--dis-infer-nondet", Arg.Clear Globals.tnt_infer_nondet,
+   "disable local inference for nondeterminism");
+  ("--tnt-max-iter", Arg.Set_int Globals.tnt_thres,
+   "maximum number of iteration on TNT algorithm");
 
   (* Slicing *)
   ("--eps", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization");
@@ -1157,6 +1189,8 @@ let hip_specific_arguments = [ ("-cp", Arg.String set_pred,
                                 "Print procedures being checked");
                                ("--dis-pgbv", Arg.Clear Globals.pass_global_by_value, 
                                 "disable pass read global variables by value");
+                               ("--en-pgbv", Arg.Set Globals.pass_global_by_value, 
+                                "enable pass read global variables by value");
                                ("--sqt", Arg.Set Globals.seq_to_try,
                                 "translate seq to try");
                                ("-validate", Arg.String set_validate_config,

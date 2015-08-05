@@ -1,0 +1,22 @@
+data arr_int {
+  int val;
+  arr_int next;
+}.
+
+pred arr_seg<p,n> == self=p & n=0
+  or self::arr_int<_,q>*q::arr_seg<p,n-1>
+  inv n>=0.
+
+pred arr_seg2<p,n> == self=p & n=0
+  or self::arr_int<5,q>*q::arr_seg2<p,n-1>
+  inv n>=0.
+
+
+
+ checkentail 
+  // emp
+   aaa::arr_seg<p,n> 
+  |-  aaa::arr_seg2<q,0> 
+  .
+
+print residue.

@@ -1,0 +1,24 @@
+
+
+infer[y] x!=null & x=y  |- x=null .
+print residue.
+
+
+infer[y] x!=null & y=null  |- x=null .
+print residue.
+
+infer[y] x!=null & y=null  |- x=null .
+print residue.
+
+/*
+# ex52f.slk
+
+# Why aren't the TVars unified?
+
+checkentail inf_p=null & x!=inf_p |- x!=null.
+
+# <1>emp&x:TVar[24]!=inf_p:TVar[20] & inf_p:TVar[20]=null&{FLOW,(20,21)=__norm#E}[]
+
+checkentail inf_p=null & x=inf_p |- x=null.
+
+*/

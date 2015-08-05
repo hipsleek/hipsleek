@@ -223,6 +223,7 @@ let wrap_gen save_fn set_fn restore_fn flags f a =
      raise e)
 
 let wrap_ver_post f a = wrap_set_infer_type INF_VER_POST f a
+let wrap_ana_param f a = wrap_set_infer_type INF_ANA_PARAM f a
 
 (* let wrap_arr_as_var f a =  *)
 (*   let () = x_binfo_pp "inside wrap_as_var" no_pos in  *)
@@ -277,6 +278,9 @@ let wrap_wo_int_to_imm f a =
 
 let wrap_with_int_to_imm f a =
   wrap_one_bool  Globals.int2imm_conv true f a
+
+let wrap_dis_non_linear f a =
+  wrap_two_bools  Globals.non_linear_flag Globals.filtering_flag false f a
 
 (* let wrap_redlog_only f a = *)
 (*   wrap_one_bool Redlog.dis_omega true f a *)

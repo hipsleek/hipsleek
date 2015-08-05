@@ -346,7 +346,8 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
   let frm_assumes = List.map (fun (rel,flows) ->
     (rel,List.map specialise_flow flows)) frm_assumes in
 
-  let () = Debug.binfo_pprint "analyse_param summary:" no_pos in
+  let () = Debug.binfo_pprint "ANALYSE PARAMETERS RESULT" no_pos in
+  let () = Debug.binfo_pprint "=========================" no_pos in
   let () = Debug.binfo_hprint (add_str "relations (normalised)" pr1) lst_assume no_pos in
   let () = Debug.binfo_hprint (add_str "args" pr2) args no_pos in
   let () = Debug.binfo_hprint (add_str "result" pr_out) frm_assumes no_pos in

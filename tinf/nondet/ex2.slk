@@ -1,0 +1,54 @@
+relation nondet_int__(int x).
+
+infer [bbb_1497, ccc_1498]
+  !v_bool_16_1419' & !v_bool_9_1420' & 0<=x' & x'=x & 
+  nondet_int__(bbb_1497) & nondet_int__(ccc_1498) & bbb_1497<=0 & 
+  v_int_20_1499=1+x' & 
+  x >= 0 |- v_int_20_1499 >= 0.
+  
+infer [bbb_1494, ccc_1495]
+  v_bool_16_1419' & !v_bool_9_1420' & 0<=x' & x'=x & 
+  nondet_int__(bbb_1494) & nondet_int__(ccc_1495) & 0<bbb_1494 & 
+  v_int_18_1496+1=x' & 
+  x >= 0 |- v_int_18_1496 >= 0.
+
+infer []
+  v_bool_9_1420' & x'<0 & x'=x &
+  x >= 0 |- true.
+
+/*
+void f(int x) 
+{
+  if (x < 0) return;
+  else {
+    int bbb = __VERIFIER_nondet_int();
+    int ccc = __VERIFIER_nondet_int();
+    //infer_assume [bbb, ccc];
+    if (bbb > 0)
+    //if (__VERIFIER_nondet_int() > 0)
+      f(x - 1);
+    else
+      f(x + 1);
+  }
+}
+
+ termAssume not(v_bool_16_1419') & not(v_bool_9_1420') & 0<=x' & x'=x & 
+            nondet_int__(bbb_1497) & nondet_int__(ccc_1498) & bbb_1497<=0 & 
+            v_int_20_1499=1+x' & fpost{1461}(v_int_20_1499) --> fpost{1461}(x).
+
+ termAssume v_bool_16_1419' & not(v_bool_9_1420') & 0<=x' & x'=x & 
+            nondet_int__(bbb_1494) & nondet_int__(ccc_1495) & 0<bbb_1494 & 
+            v_int_18_1496+1=x' & fpost{1461}(v_int_18_1496) --> fpost{1461}(x).
+
+ termAssume v_bool_9_1420' & x'<0 & x'=x --> fpost{1461}(x).
+
+ termAssume not(v_bool_16_1419') & not(v_bool_9_1420') & 0<=x' & x'=x & 
+            nondet_int__(bbb') & nondet_int__(ccc') & bbb'<=0 & 
+            v_int_20_1418'=1+x' & fpre{0}(x) --> fpre{0}(v_int_20_1418').
+
+ termAssume v_bool_16_1419' & not(v_bool_9_1420') & 0<=x' & x'=x & 
+            nondet_int__(bbb') & nondet_int__(ccc') & 0<bbb' & 
+            v_int_18_1410'+1=x' & fpre{0}(x) --> fpre{0}(v_int_18_1410').
+
+
+*/

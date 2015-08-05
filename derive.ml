@@ -417,7 +417,7 @@ let trans_view_one_spec_x (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.
   let ls_dname_pos = Iast.look_up_field_ann prog orig_view.Cast.view_data_name extn_props in
   let orig_fs,labels = List.split orig_view.Cast.view_un_struc_formula in
   let ss = List.combine orig_view.Cast.view_vars spec_view.Cast.view_vars in
-  let spec_fs = List.map (CF.subst ss) orig_fs in
+  let spec_fs = List.map (x_add CF.subst ss) orig_fs in
   let pure_extn_svl = [ (CP.SpecVar (Named (view_derv.Iast.view_data_name),self, Unprimed))] in
   let (orig_b_brs,orig_ind_brs) = CF.extract_abs_formula_branch spec_fs orig_view.Cast.view_name view_derv.Iast.view_name spec_view.Cast.view_vars ls_dname_pos pure_extn_svl true true in
   (* let orig_inv_p = (MCP.pure_of_mix spec_view.Cast.view_user_inv) in *)
@@ -550,39 +550,87 @@ let leverage_self_info xform formulas anns data_name=
 (*     BUILD PURE EXTN MAP  *)
 (*****************************************************************************************)
 
-let expose_pure_extn_one_view_x iprog cprog view extn_view=
-  []
+let expose_pure_extn_one_view_x iprog cprog rev_formula_fnc trans_view_fnc (view: Cast.view_decl) extn_view=
+  let get_extns d_name=
+    let d_dclr = Iast.look_up_data_def 67 no_pos iprog.Iast.prog_data_decls d_name in
+    let extn_fields = List.fold_left (fun acc ((t,_),_,_,props) -> begin
+        match t with
+          | Named id -> if string_compare id d_name then acc@props else acc
+          | _ -> acc
+        end
+    ) [] d_dclr.Iast.data_fields in
+    Gen.BList.remove_dups_eq string_compare extn_fields
+  in
+  let iview_dclr = Iast.look_up_view_def_raw 66 iprog.Iast.prog_view_decls view.Cast.view_name in
+  let orig_view_name = view.Cast.view_name in
+  let orig_args = iview_dclr.Iast.view_vars in
+  let extn_view_name = extn_view.Cast.view_name in
+  let extn_props = get_extns view.Cast.view_data_name in
+  let n_arg = fresh_any_name extn_view.Cast.view_name in
+  let extn_args = [n_arg] in
+  let vars = iview_dclr.Iast.view_vars@extn_args in
+  let extn_targs = [(Int,n_arg)] in
+  let der_view_dclr = { Iast.view_name = iview_dclr.Iast.view_name ^"_"^extn_view.Cast.view_name;
+          Iast.view_pos = no_pos;
+          Iast.view_data_name = "";
+          view_type_of_self = None;
+          Iast.view_imm_map = [];
+          Iast.view_vars = vars;
+          Iast.view_ho_vars = []; 
+          Iast.view_derv = true;
+          Iast.view_parent_name = None;
+          Iast.view_labels =  List.map (fun _ ->  Label_only.LOne.unlabelled) vars,false;
+          Iast.view_modes = iview_dclr.Iast.view_modes;
+          Iast.view_typed_vars = iview_dclr.Iast.view_typed_vars@extn_targs;
+          Iast.view_pt_by_self  = [];
+          Iast.view_formula = Iformula.mkETrue top_flow no_pos;
+          Iast.view_inv_lock = None;
+          Iast.view_is_prim = false;
+          Iast.view_kind = View_DERV;
+          Iast.view_prop_extns = [];
+          Iast.view_derv_info = [((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args))];
+          Iast.view_invariant = Ipure.mkTrue no_pos;
+          Iast.view_baga_inv = None;
+          Iast.view_baga_over_inv = None;
+          Iast.view_baga_under_inv = None;
+          Iast.view_mem = None;
+	  Iast.view_materialized_vars = iview_dclr.Iast.view_materialized_vars;
+          Iast.try_case_inference = false;
+  }
+  in
+  let _ = iprog.Iast.prog_view_decls <- iprog.Iast.prog_view_decls@[der_view_dclr] in
+  let nc_view = trans_view_dervs iprog rev_formula_fnc trans_view_fnc cprog.Cast.prog_view_decls der_view_dclr in
+  let nc_view = {nc_view with Cast.view_domains = view.Cast.view_domains@[(extn_view.Cast.view_name,0,List.length vars -1)]} in
+  nc_view
 
-let expose_pure_extn_one_view iprog cprog view extn_view=
+let expose_pure_extn_one_view iprog cprog rev_trans_formula trans_view view extn_view=
   let pr1 = pr_list (pr_triple pr_id string_of_int string_of_int) in
   let pr2 v = v.Cast.view_name ^ "<" ^ (!CP.print_svl v.Cast.view_vars) ^ ">, "
               ^ (pr1 v.Cast.view_domains) in
   let pr3 v =  v.Cast.view_name ^ "<" ^ (!CP.print_svl v.Cast.view_vars) ^ ">" in
-  Debug.no_2 "expose_pure_extn_one_view" pr2 pr3 pr1
-    (fun _ _ -> expose_pure_extn_one_view_x iprog cprog view extn_view)
+  Debug.no_2 "expose_pure_extn_one_view" pr2 pr3 pr2
+    (fun _ _ -> expose_pure_extn_one_view_x iprog cprog rev_trans_formula trans_view view extn_view)
     view extn_view
 (*
   build extn map.
   pair extn prop in views with view_extn
 *)
-let expose_pure_extn_x iprog cprog views extn_views=
+let expose_pure_extn_x iprog cprog rev_trans_formula trans_view views extn_views=
   List.map (fun v ->
-      let map = List.fold_left (fun r extn_view ->
-          let pairs =  expose_pure_extn_one_view iprog cprog v extn_view in
-          r@pairs
-        ) [] extn_views in
-      {v with Cast.view_domains = v.Cast.view_domains@map}
+      let lst_view = List.fold_left (fun r extn_view ->
+          expose_pure_extn_one_view iprog cprog rev_trans_formula trans_view v extn_view
+      ) v extn_views in
+      (v.Cast.view_name, lst_view.Cast.view_name)
     ) views
 
-let expose_pure_extn iprog cprog views extn_views=
+let expose_pure_extn iprog cprog rev_trans_formula trans_view views extn_views=
   let pr1 = pr_list (pr_triple pr_id string_of_int string_of_int) in
   let pr2 v = v.Cast.view_name ^ "<" ^ (!CP.print_svl v.Cast.view_vars) ^ ">, "
               ^ (pr1 v.Cast.view_domains) in
-  let pr3 v =  v.Cast.view_name ^ "<" ^ (!CP.print_svl v.Cast.view_vars) ^ ">" in
-  Debug.no_2 "expose_pure_extn" (pr_list_ln pr2) (pr_list_ln pr3)
-    (pr_list_ln pr2)
-    (fun _ _ -> expose_pure_extn_x iprog cprog views extn_views)
-    views extn_views
+  let pr3 =  pr_pair pr_id pr_id in
+  Debug.no_2 "expose_pure_extn" (pr_list_ln pr2) (pr_list_ln pr2) (pr_list pr3)
+      (fun _ _ -> expose_pure_extn_x iprog cprog rev_trans_formula trans_view views extn_views)
+      views extn_views
 
 (*****************************************************************************************)
 (*    END BUILD PURE EXTN MAP  *)
