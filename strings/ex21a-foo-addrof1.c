@@ -1,6 +1,6 @@
 
 void foo(int* x)
-/*@
+/*
   requires x::int*<n>
   ensures x::int*<n+1>;
 */
@@ -10,9 +10,9 @@ void foo(int* x)
 
 
 int* foo2(int* x)
-/*@
-  requires x::int*<n,o>
-  ensures x::int*<n,o> * res::int*<_,o+1> ;
+/*
+  requires x::int*<n>
+  ensures x::int*<n> * res::int*<__> ;
 */
 {
   x++;

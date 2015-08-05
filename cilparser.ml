@@ -802,8 +802,10 @@ and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
   let typ2_name = string_of_typ typ2 in
   let proc_name = (
     match t1, t2 with
-      | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), _ -> "__plus_" ^ op_name ^ "_char"
+      | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), _
       | _, Cil.TPtr(Cil.TInt(Cil.IChar,_),_) -> "__plus_" ^ op_name ^ "_char"
+      (*| Cil.TPtr(Cil.TInt,_), _ -> "__pointer_" ^ op_name ^ "__" ^ typ1_name ^ "__"
+      | _, Cil.TPtr(Cil.TInt,_) -> "__pointer_" ^ op_name ^ "__" ^ typ1_name ^ "__"*)
       | _, _ -> "__pointer_" ^ op_name ^ "__" ^ typ1_name ^ "__" ^ typ2_name ^ "__"
     )
   in
@@ -823,18 +825,18 @@ and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
            ^ "ensures res=q ;\n"
         | Cil.TInt _, Cil.TPtr _ ->
             typ2_name ^ " " ^ proc_name ^ " (" ^ typ1_name ^ " i, " ^ typ2_name ^ " p)\n"
-            ^ "  requires p::" ^ typ2_name^ "<val, offset>\n"
-            ^ "  ensures p::" ^ typ2_name^ "<val, offset>"
-               ^ " * res::" ^ typ2_name^ "<_, offset " ^ op_str ^ " i>;\n"
+            ^ "  requires p::" ^ typ2_name^ "<val>\n"
+            ^ "  ensures p::" ^ typ2_name^ "<val>"
+               ^ " * res::" ^ typ2_name^ "<val " ^ op_str ^ " i>;\n"
         | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), _ ->
              typ1_name ^ " " ^ proc_name ^ "(" ^ typ1_name ^ " x)\n"
            ^ "requires x::char_star<_,q>@L & Term[] \n"
            ^ "ensures res=q ;\n"
         | Cil.TPtr _, Cil.TInt _ ->
             typ1_name ^ " " ^ proc_name ^ "(" ^ typ1_name ^ " p, " ^ typ2_name ^ " i)\n"
-            ^ "  requires p::" ^ typ1_name^ "<val, offset>\n"
-            ^ "  ensures p::" ^ typ1_name^ "<val, offset>"
-               ^ " * res::" ^ typ1_name^ "<_, offset " ^ op_str ^ " i>;\n"
+            ^ "  requires p::" ^ typ1_name^ "<val>\n"
+            ^ "  ensures p::" ^ typ1_name^ "<val>"
+               ^ " * res::" ^ typ1_name^ "<val " ^ op_str ^ " i>;\n"
         | Cil.TPtr _, Cil.TPtr _ when (cmp_typ typ1 typ2) ->
           let tn = typ1_name in
           tn ^ " " ^ proc_name ^ "(" ^ tn ^ " p, " ^ tn ^ " q)\n" 
@@ -1078,10 +1080,13 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
               in
               let dtype = Globals.Named dname in
               let offset_field = match ty with
-                   | Cil.TInt(Cil.IChar, _) -> ((dtype, str_offset), no_pos, false, [gen_field_ann dtype])
-                   |_ ->((Int, str_offset), no_pos, false, [gen_field_ann Int]) 
+                | Cil.TInt(Cil.IChar, _) -> ((dtype, str_offset), no_pos, false, [gen_field_ann dtype])
+                | _ -> ((Int, str_offset), no_pos, false, [gen_field_ann Int]) (*other types have an integer offset*)
               in
-              let dfields = [value_field; offset_field] in
+              let dfields = match ty with
+                | Cil.TInt(Cil.IInt, _) -> [value_field] (* int_star type stores only one value *)
+                | _ -> [value_field; offset_field] 
+              in
               Hashtbl.add tbl_pointer_typ core_type dtype;
               let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in
               x_binfo_hp (add_str "core_type" string_of_cil_typ) core_type no_pos;
@@ -2344,9 +2349,9 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
   (*                   Iast.data_is_template = false; *)
   (*                   Iast.data_methods = []} in *)
   (* update some global settings *)
-  Hashtbl.iter (fun _ data -> if (String.compare  data.Iast.data_name "char_star")!=0 then data_decls := data::!data_decls) tbl_data_decl;
+  Hashtbl.iter (fun _ data -> if ((String.compare  data.Iast.data_name "char_star")!=0) && ((String.compare  data.Iast.data_name "int_star")!=0)  then data_decls := data::!data_decls) tbl_data_decl;
   (* aux procs *)
-  Hashtbl.iter (fun _ p -> if (String.compare p.Iast.proc_name "__plus_plus_char")!=0 then  proc_decls := p::!proc_decls) tbl_aux_proc;
+  Hashtbl.iter (fun _ p -> if ((String.compare p.Iast.proc_name "__plus_plus_char")!=0) && ((String.compare p.Iast.proc_name "__pointer_add__int_star__int__")!=0) then  proc_decls := p::!proc_decls) tbl_aux_proc;
   (* return *)
   let newprog : Iast.prog_decl = {
     Iast.prog_data_decls = (* obj_def :: string_def ::  *)!data_decls;

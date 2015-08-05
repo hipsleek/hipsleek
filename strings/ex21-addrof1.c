@@ -1,9 +1,9 @@
 int a;
 
 void foo(int* x)
-/*@
-  requires x::int^<n>
-  ensures x::int^<n+1>;
+/*
+  requires x::int*<n>
+  ensures x::int*<n+1>;
 */
 {
   *x = *x+1;
@@ -11,7 +11,7 @@ void foo(int* x)
 
 
 void main()
-/*@
+/*
   requires true
   ensures a' = 2;
 */

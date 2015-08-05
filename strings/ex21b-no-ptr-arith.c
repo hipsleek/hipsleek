@@ -1,11 +1,7 @@
 
 void foo(int* x)
-/*@
-  requires x::int*<n>
-  ensures x::int*<n+1>;
-*/
 {
-  *x = *x+1;
+  x = x + 1;
 }
 
 
