@@ -342,6 +342,16 @@ Total number of errors: 2 in files:
 !!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
 
 =======================================================================
+# ex32.ss (FIXED by returning (true,[],[]) if exception)
+
+Context of Verification Failure: ex32-swap-dec.ss_5:37_5:41
+
+ERROR: at _0:0_0:0
+Message: process_tables expecting relation but got: true
+Exception(simplify_post_helper):Failure("process_tables expecting relation but got: true")
+Exception(simplify_post):Failure("process_tables expecting relation but got: true")
+Exception(simplify_relation):Failure("process_tables expecting relation but got: true")
+
 =======================================================================
 =======================================================================
 =======================================================================
