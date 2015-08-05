@@ -118,6 +118,10 @@ let common_arguments = [
   (* ("--dis-label-aggr", Arg.Clear Globals.label_aggressive_flag, "disable aggressive splitting of labels"); *)
   ("--en-mult", Arg.Set Globals.prelude_is_mult,
    "Enable using mult as prim.");
+  ("--en-ptr-arith", Arg.Set Globals.ptr_arith_flag,
+   "Enable use of Ptr Arithmetic (incl type checking).");
+  ("--dis-ptr-arith", Arg.Clear Globals.ptr_arith_flag,
+   "Disable use of Ptr Arithmetic (incl type checking).");
   ("--dis-mult", Arg.Clear Globals.prelude_is_mult,
    "Enable using mult as prim.");
   ("--dis-ufdp", Arg.Clear Solver.unfold_duplicated_pointers,

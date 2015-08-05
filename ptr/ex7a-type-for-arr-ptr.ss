@@ -11,10 +11,20 @@ pred_prim arr_int<n:int,next:arr_int>
 inv self+1=next;
 */
 
+lemma_safe self::arr_seg<p,n>&n=a+b & a>=0 & b>=0 & p=self+n
+  <->  (exists q: self::arr_seg<q,a>*q::arr_seg<p,b>);
+
+arr_seg<p,n> == case {
+   n=0 -> [] self=p & n=0;
+   n!=0 -> [] self::arr_int<_,q>*q::arr_seg<p,n-1> & q=self+1;
+   }
+inv n>=0 &  self+n=p;
+    /*
 arr_seg<p,n> == self=p & n=0
   or self::arr_int<_,q>*q::arr_seg<p,n-1> & q=self+1
   inv n>=0 
   &  self+n=p;
+    */
 
 arr_seg2<p,n> == self=p & n=0
   or self::arr_int<5,q>*q::arr_seg2<p,n-1> & q=self+1

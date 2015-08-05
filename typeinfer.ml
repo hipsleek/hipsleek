@@ -561,10 +561,12 @@ and gather_type_info_exp_x prog a0 tlist et =
     (n_tl, Bptyp)
   | IP.Add (a1, a2, pos) ->
     let unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos =
-      if is_node_typ t1 then
+      if is_node_typ t1 && !Globals.ptr_arith_flag then
+        let (n_tl2,_) = must_unify_expect t1 et n_tl2 pos in
         let (n_tlist2,t2) = must_unify_expect t2 Int n_tl2 pos in
         (n_tlist2,t1)        
-      else if is_node_typ t2 then
+      else if is_node_typ t2 && !Globals.ptr_arith_flag then
+        let (n_tl2,_) = must_unify_expect t2 et n_tl2 pos in
         let (n_tlist2,t2) = must_unify_expect t1 Int n_tl2 pos in
         (n_tlist2,t2)
       else 
