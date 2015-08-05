@@ -1043,15 +1043,19 @@ non_empty_command:
       | t = term_assume_cmd -> TermAssume t
       | t = expect_infer -> t
       | t=macro	-> EmptyCmd]];
-  
+
+pure_inv: [[`INV; pf=pure_constr -> pf]];
+
+opt_pure_inv: [[t=OPT pure_inv -> t ]];
+
 data_decl:
-    [[ dh=data_header ; db = data_body 
+    [[ dh=data_header ; db = data_body ; dinv = opt_pure_inv
         -> {data_name = dh;
             data_pos = get_pos_camlp4 _loc 1;
             data_fields = db;
             data_parent_name="Object"; (* Object; *)
             data_invs = [];
-            data_pure_inv = None;
+            data_pure_inv = dinv;
             data_is_template = false;
             data_methods = [];} ]];
 

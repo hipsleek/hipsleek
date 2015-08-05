@@ -4,7 +4,7 @@
 data arr_int {
   int val;
   arr_int next; /* this is virtual link */
-}  //inv self+1=next;
+}  inv self+1=next
 
 /*
 pred_prim arr_int<n:int,next:arr_int>
