@@ -16,14 +16,18 @@ checkentail
 Entail 3: Fail.(may) cause:base case unfold failed
 
 ===========================================================
-# ex7c1.slk
+# ex7c1.slk (FIXED)
 
 # why isn't process_action and folding traced tgt?
+  ==> due to nested process_actions
 
 # how come we have funny matches .. like q1,self?
   can we filter them out based on LHS and RHS?
+  ==> fixed with overlap check at coerc_mater_match_gen
+      --adhoc-1 to disable it
 
 # can we print method header to determine calling sequence?
+  ==> done with --trace-loop
 
 (==solver.ml#10756==)
 compute_actions@1
@@ -53,6 +57,34 @@ compute_actions@1 EXIT: SEARCH =>[
     ]
     ]
    ]
+
+---
+# with overlap_test
+
+All test results were as expected.
+Total verification time: 50.80 second
+	Time spent in main process: 34.37 second
+	Time spent in child processes: 16.43 second
+	Number of false contexts: 61
+
+(26 Failures)
+Total verification time: 122.97 second
+	Time spent in main process: 79.12 second
+	Time spent in child processes: 43.85 second
+	Number of false contexts: 413
+
+# without overlap test --adhoc-1
+
+Total verification time: 51.31 second
+	Time spent in main process: 34.76 second
+	Time spent in child processes: 16.55 second
+	Number of false contexts: 61
+
+Total verification time: 126.21 second
+	Time spent in main process: 80.95 second
+	Time spent in child processes: 45.27 second
+	Number of false contexts: 413
+
 ===========================================================
 ===========================================================
 ===========================================================

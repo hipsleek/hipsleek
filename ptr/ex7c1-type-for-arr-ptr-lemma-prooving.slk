@@ -13,23 +13,50 @@ lemma_unsafe self::arr_seg<p,n>&n=a+b & a>=0 & b>=0 & p=self+n
 
   pred arr_seg<p,n> == case {
    n=0 -> [] self=p & n=0;
-   n!=0 -> [] self::arr_int<_,q>*q::arr_seg<p,n-1> & q=self+1;
+   n!=0 -> [] (exists qq: self::arr_int<_,qq>*qq::arr_seg<p,n-1> & qq=self+1);
    }
   inv n>=0 &  self+n=p.
 
 
 checkentail
   self::arr_int<_,q1>*q1::arr_seg<p,n-1> //& q1=self+1 
+     & a>0 & n=a+b & b>=0 & p=self+n
+  |- self::arr_seg<q,a>*q::arr_seg<p,b>
+.
+print residue.
+
+/*
+checkentail
+  self::arr_int<_,q1>*q1::arr_seg<q3,aa>*q3::arr_seg<p,bb> 
+     & aa+bb=n-1 //& q1=self+1 
      & a>0 & n=a+b & b>=0 
-  |- self::arr_seg<q,a>
+  |- self::arr_int<_,q2>*q2::arr_seg<q,a-1>*q::arr_seg<p,b>
 .
 
+checkentail
+  self::arr_int<_,q1>*q1::arr_seg<q3,aa>*q3::arr_seg<p,bb> 
+     & aa=a-1 & bb=b
+     & aa+bb=n-1 //& q1=self+1 
+     & a>0 & n=a+b & b>=0 
+  |- self::arr_int<_,q2>*q2::arr_seg<q,a-1>*q::arr_seg<p,b>
+.
+print residue.
+
+
+checkentail
+  self::arr_int<_,q1>*q1::arr_seg<p,nn> //& q1=self+1 
+     & a>0 & n=a+b & b>=0 & nn=n-1
+  |- self::arr_int<_,q2>*q2::arr_seg<q,a-1>*q::arr_seg<p,b>
+.
+*/
+
+/*
 checkentail
   self::arr_int<_,q1>*q1::arr_seg<p,n-1> //& q1=self+1 
      & a>0 & n=a+b & b>=0 
   |- self!=q1
 .
-
+*/
   /*
 # ex7c.slk
 
