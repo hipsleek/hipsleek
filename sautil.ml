@@ -5710,7 +5710,7 @@ let mkConjH_and_norm_x prog hp args unk_hps unk_svl f1 f2 pos=
       | [nf1;nf2] -> begin
           (*check pure*)
           let b1 = Cfutil.is_empty_heap_f nf1 in
-          let b2 = Cfutil.is_empty_heap_f nf2 in
+          let b2 = Cfutil.is_empty_heap_f nf2  in
           match b1,b2 with
           | true, true ->
             CF.mkStar sharing_f (CF.mkStar nf1 nf2 CF.Flow_combine pos) CF.Flow_combine pos

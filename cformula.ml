@@ -5005,6 +5005,29 @@ let is_unknown_f f=
   Debug.no_1 "is_unknown_f" pr1 string_of_bool
     (fun _ -> is_unknown_f_x f) f
 
+let is_htrue_or_unknown hf unk_hps=
+  match hf with
+    | HTrue -> true
+    | HRel (hp,_,_) -> CP.mem_svl hp unk_hps
+    | _ -> false
+
+let is_htrue_or_unknown_x f0 unk_hps=
+  let rec helper f=  match f with
+    | Base fb ->
+      (is_htrue_or_unknown fb.formula_base_heap unk_hps) &&
+      (CP.isConstTrue (MCP.pure_of_mix fb.formula_base_pure))
+    | Exists _ -> let _, base1 = split_quantifiers f in
+      helper base1
+    | Or {formula_or_f1 = o11; formula_or_f2 = o12;} -> (helper o11) && (helper o12)
+  in
+  helper f0
+
+let is_htrue_or_unknown f0 unk_hps=
+  let pr1 = !print_formula in
+  let pr2 = !CP.print_svl in
+  Debug.no_2 "is_htrue_or_unknown" pr1 pr2 string_of_bool
+      (fun _ _ -> is_htrue_or_unknown_x f0 unk_hps) f0 unk_hps
+
 let get_hpdef_name hpdef=
   match hpdef with
   | CP.HPRelDefn (hp,_,_) -> hp
