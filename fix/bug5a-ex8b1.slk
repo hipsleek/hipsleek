@@ -1,0 +1,56 @@
+
+data str {
+  int val;
+  str next;
+}.
+
+pred WFS<n:int> ==
+  self::str<0,q> & n=0
+  or self::str<v,q>*q::WFS<n-1> & v>0 //& n>0
+  inv n>=0.
+
+checkentail x::WFS<nnn>@L |- x::WFS<nnn>@L & nnn>=0.
+print residue.
+
+/*
+# ex5a.slk 
+
+# must subs hole before calling xpure..
+
+@11! **solver.ml#8231:estate_orig:
+  Hole[45]&{FLOW,(20,21)=__norm#E}[]
+ es_evars: [nnn_44]
+ es_rhs_eqset: [nnn:nnn; nnn:nnn]
+ es_crt_holes: [x::WFS<nnn>@L:45]
+ es_trace:  COND ==>  Match(x,x)
+@11! **solver.ml#8232:curr_lhs_h0: Hole[45]
+@11! **solver.ml#8233:curr_lhs_h0: Hole[45]
+(==solver.ml#8248==)
+xpure_heap#9@12@11
+xpure_heap#9 inp1 : Hole[45]
+xpure_heap#9 inp2 : true
+xpure_heap#9 inp3 :1
+xpure_heap#9@12 EXIT:( true,[], [])#true
+
+(==solver.ml#7619==)
+heap_entail_empty_rhs_heap#1@11
+heap_entail_empty_rhs_heap#1 inp1 :es:
+  Hole[45]&{FLOW,(20,21)=__norm#E}[]
+ es_evars: [nnn_44]
+ es_rhs_eqset: [nnn:nnn; nnn:nnn]
+ es_crt_holes: [x::WFS<nnn>@L:45]
+ es_trace:  COND ==>  Match(x,x)
+heap_entail_empty_rhs_heap#1 inp2 :lhs: Hole[45]&{FLOW,(20,21)=__norm#E}[]
+heap_entail_empty_rhs_heap#1 inp3 :rhs: 0<=nnn & nnn=nnn
+heap_entail_empty_rhs_heap#1 inp4 :is_folding:false
+heap_entail_empty_rhs_heap#1@11 EXIT: MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: logical bug
+   fe_locs: {
+     fc_message:  true |-  0<=nnn. LOCS:[0;12] (may-bug)
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ COND ==>  Match(x,x)]]
+ CEX:false
+
+*/

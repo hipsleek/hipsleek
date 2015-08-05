@@ -174,8 +174,9 @@ let rec dim_unify d1 d2 = if (d1 = d2) then Some d1 else None
 
 and must_unify (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
   let pr = string_of_typ in
-  let pr_out (_, t) = string_of_typ t in
-  Debug.no_2 "must_unify" pr pr pr_out (fun _ _ -> must_unify_x k1 k2 tlist pos) k1 k2
+  let pr_tl =  string_of_tlist in
+  let pr_out = pr_pair pr_tl string_of_typ in
+  Debug.no_3 "must_unify" pr pr pr_tl pr_out (fun _ _ _ -> must_unify_x k1 k2 tlist pos) k1 k2 tlist
 
 and must_unify_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
   let (n_tlist,k) = unify_type k1 k2 tlist in
@@ -464,14 +465,16 @@ and trans_type_back (te : typ) : typ =
   | Array (t, d) -> Array (trans_type_back t, d) (* An Hoa *) 
   | p -> p 
 
-and sub_type (t1 : typ) (t2 : typ) =
-  let it1 = trans_type_back t1 in
-  let it2 = trans_type_back t2 in
-  I.sub_type it1 it2
+and sub_type_x (t1 : typ) (t2 : typ) =
+  try
+    let it1 = trans_type_back t1 in
+    let it2 = trans_type_back t2 in
+    I.sub_type it1 it2
+  with _ -> false
 
-(* and sub_type (t1 : typ) (t2 : typ) = *)
-(*   let pr = string_of_typ in *)
-(*   Debug.no_2 "sub_type" pr pr string_of_bool sub_type_x t1 t2  *)
+and sub_type (t1 : typ) (t2 : typ) =
+  let pr = string_of_typ in
+  Debug.no_2 "sub_type" pr pr string_of_bool sub_type_x t1 t2
 
 and gather_type_info_var (var : ident) tlist (ex_t : typ) pos : (spec_var_type_list*typ) =
   let pr = string_of_typ in
@@ -1073,13 +1076,13 @@ and gather_type_info_formula_x prog f0 tlist filter_res =
     let (n_tl,rl) = res_retrieve tlist filter_res b.IF.formula_exists_flow in
     let n_tl = List.fold_left (fun tl f -> x_add gather_type_info_one_formula prog f tl filter_res) n_tl b.IF.formula_exists_and in
     let n_tl = helper b.IF.formula_exists_pure b.IF.formula_exists_heap n_tl in   
-    let n_tl = res_replace n_tl rl filter_res b.IF.formula_exists_flow in
+    let n_tl = x_add res_replace n_tl rl filter_res b.IF.formula_exists_flow in
     n_tl 
   | IF.Base b ->
     let (n_tl,rl) = res_retrieve tlist filter_res b.IF.formula_base_flow in
     let todo_unk = List.fold_left (fun tl f -> x_add gather_type_info_one_formula prog f tl filter_res) n_tl b.IF.formula_base_and in
     let n_tl = helper b.IF.formula_base_pure b.IF.formula_base_heap n_tl in
-    let n_tl = res_replace n_tl rl filter_res b.IF.formula_base_flow  in
+    let n_tl = x_add res_replace n_tl rl filter_res b.IF.formula_base_flow  in
     n_tl
 
 and gather_type_info_struc_f prog (f0:IF.struc_formula) tlist =
@@ -1330,6 +1333,10 @@ and get_spec_var_type_list ?(lprime=Unprimed) (v : ident) tlist pos =
   with
   | Not_found -> Err.report_error { Err.error_loc = pos;
                                     Err.error_text = v ^ " is undefined"; }
+
+(* type: ?d_tt:spec_var_type_list -> *)
+(*   Globals.ident * VarGen.primed -> *)
+(*   CP.spec_var list -> VarGen.loc -> Cformula.CP.spec_var *)
 
 and get_spec_var_type_list_infer ?(d_tt = []) (v : ident * primed) fvs pos =
   let pr_sv = Cprinter.string_of_spec_var in

@@ -478,6 +478,8 @@ let proof_logging_txt = ref false
 let log_proof_details = ref true
 let proof_logging_time = ref 0.000
 (* let sleek_src_files = ref ([]: string list) *)
+let time_limit_large = ref 0.5
+
 
 let prelude_file = ref (None: string option) (* Some "prelude.ss" *)
 
@@ -851,10 +853,12 @@ let dis_show_diff = ref false
 (* sap has moved to VarGen; needed by debug.ml *)
 let fo_iheap = ref true
 
+let prelude_is_mult = ref false
+
 let sae = ref false
 let sac = ref false
 (* transform a predicate to case formula *)
-let sa_pred_case = ref true
+let sa_pred_case = ref false
 
 let sags = ref true
 
@@ -1012,6 +1016,16 @@ let procs_verified = ref ([] : string list)
 
 let false_ctx_line_list = ref ([] : loc list)
 
+let add_false_ctx pos = false_ctx_line_list := pos::!false_ctx_line_list
+
+(* use List.rev *)
+(* let rev_list list = *)
+(*     let rec aux acc = function *)
+(*       | [] -> acc *)
+(*       | h::t -> aux (h::acc) t in *)
+(*     aux [] list *)
+
+(* WN : should this flag be for tpdispatcher, rather than just Omega *)
 let b_datan = "barrier"
 
 let verify_callees = ref false
@@ -1149,6 +1163,13 @@ let dis_norm = ref false
 
 let dis_ln_z3 = ref false
 
+(* WN : should this flag be for tpdispatcher, rather than just Omega *)
+let non_linear_flag = ref true
+let oc_warning = ref false
+
+(* eqn solving to be false by default until it is stable or proven*)
+(* let oc_matrix_eqn = ref false  *)
+
 let allow_ls = ref false (*enable lockset during verification*)
 
 let allow_locklevel = ref false (*enable locklevel during verification*)
@@ -1160,6 +1181,14 @@ let allow_locklevel = ref false (*enable locklevel during verification*)
 let allow_threads_as_resource = ref false
 
 (* let has_locklevel = ref false *)
+
+(* let assert_matrix = ref false *)
+let assert_nonlinear = ref false
+
+let adhoc_flag_1 = ref false
+let adhoc_flag_2 = ref false
+let adhoc_flag_3 = ref false
+let weaker_pre_flag = ref true
 
 let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
 
@@ -1320,7 +1349,7 @@ let enable_constraint_based_filtering = ref false
 
 let enulalias = ref false
 
-let pass_global_by_value = ref false
+let pass_global_by_value = ref true
 
 let exhaust_match = ref false
 
@@ -1375,6 +1404,7 @@ let dis_bnd_chk = ref false
 let dis_term_msg = ref false
 let dis_post_chk = ref false
 let post_add_eres = ref false
+let add_pre = ref false
 let post_infer_flow = ref false
 let dis_ass_chk = ref false
 let log_filter = ref true
@@ -1386,10 +1416,15 @@ let infer_const = ref ""
 
 (* TNT Inference *)
 let tnt_verbosity = ref 1
-let tnt_infer_lex = ref false
+let tnt_infer_lex = ref true
 let tnt_add_post = ref true (* disabled with @term_wo_post or --dis-term-add-post *)
+let tnt_abd_strategy = ref 0 (* by default: abd_templ *)
+let tnt_infer_nondet = ref true
 
 let nondet_int_proc_name = "__VERIFIER_nondet_int"
+let nondet_int_rel_name = "nondet_int__"
+
+let hip_sleek_keywords = ["res"]
 
 type infer_type =
   | INF_TERM (* For infer[@term] *)
@@ -1575,7 +1610,6 @@ class inf_obj  =
     method get c  = List.mem c arr
     (* method get_int i  = Array.get arr i *)
     method is_term = (self # get INF_TERM) || (self # get INF_TERM_WO_POST)
-    (* termination inference *)
     (* termination inference *)
     method is_term_wo_post = self # get INF_TERM_WO_POST
     (* termination inference wo post-condition *)
@@ -1985,14 +2019,18 @@ let fresh_int () =
   seq_number := helper (!seq_number + 1);
   !seq_number
 
-let seq_number2 = ref 0
 
-let fresh_int2 () =
-  seq_number2 := !seq_number2 + 1;
-  !seq_number2
+(* let seq_number2 = ref 0 *)
 
-let reset_int2 () =
-  seq_number2 := 0
+(* let fresh_int2 () = *)
+(*   seq_number2 := !seq_number2 + 1; *)
+(*   !seq_number2 *)
+
+(* let reset_int2 () = *)
+(*   seq_number2 := 0 *)
+
+(* let get_int2 () = *)
+(*   !seq_number2 *)
 
 (* let fresh_int () = *)
 (*   seq_number := !seq_number + 1; *)
@@ -2316,3 +2354,11 @@ let string_of_lemma_kind (l: lemma_kind) =
 
 type debug_lvl = Short | Normal | Long
 let debug_level = ref Normal
+
+let prim_method_names = [ nondet_int_proc_name ]
+
+let is_prim_method pn = 
+  List.exists (fun mn -> String.compare pn mn == 0) prim_method_names
+
+
+

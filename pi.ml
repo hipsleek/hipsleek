@@ -56,7 +56,8 @@ let rec add_post_relation prog proc sf rel_name rel_type rel_vars = match sf wit
     (* let rel_vars = (List.map (fun (t,id) -> CP.mk_typed_spec_var t id) proc.proc_args)@[CP.mk_typed_spec_var proc.proc_return res_name] in *)
     let rel_formula = CP.mkTrue no_pos in
     let rel_decl = {rel_name = rel_name; rel_vars = rel_vars; rel_formula = rel_formula} in
-    let () = prog.prog_rel_decls <- prog.prog_rel_decls@[rel_decl] in
+    (* let () = prog.prog_rel_decls <- prog.prog_rel_decls@[rel_decl] in *)
+    let () = prog.prog_rel_decls # push rel_decl in
     let rel_spec_var = CP.mk_typed_spec_var rel_type rel_name in
     (* let rel_args = (List.map (fun (_,id) -> CP.mkVar (CP.mk_spec_var id) no_pos) proc.proc_args)@[CP.mkVar (CP.mk_spec_var res_name) no_pos] in *)
     let rel_args = List.map (fun sv -> CP.mkVar sv no_pos) rel_vars in
@@ -105,7 +106,8 @@ let rec add_pre_relation prog proc sf rel_name rel_type rel_vars = match sf with
   | CF.EBase eb ->
     let rel_formula = CP.mkTrue no_pos in
     let rel_decl = {rel_name = rel_name; rel_vars = rel_vars; rel_formula = rel_formula} in
-    let () = prog.prog_rel_decls <- prog.prog_rel_decls@[rel_decl] in
+    (* let () = prog.prog_rel_decls <- prog.prog_rel_decls@[rel_decl] in *)
+    let () = prog.prog_rel_decls # push rel_decl in
     let rel_spec_var = CP.mk_typed_spec_var rel_type rel_name in
     let rel_args = List.map (fun sv -> CP.mkVar sv no_pos) rel_vars in
     let new_rel = CP.mkRel rel_spec_var rel_args no_pos in
@@ -223,7 +225,7 @@ let is_infer_pre_scc scc =
 
 let rec is_infer_others sf = match sf with
   | CF.EList el -> List.exists (fun (lbl,sf) ->
-      x_add_1 is_infer_post sf) el
+      x_add_1 is_infer_others sf) el
   | CF.EInfer ei ->
     let inf_obj = ei.CF.formula_inf_obj in
     let inf_vars = ei.CF.formula_inf_vars in
@@ -261,7 +263,7 @@ let add_post_relation_scc prog scc =
       let spec = proc.proc_stk_of_static_specs # top in
       let () = if is_need_to_add_post_rel spec then
           let new_spec = add_post_relation prog proc spec in
-          proc.proc_stk_of_static_specs # push new_spec
+          proc.proc_stk_of_static_specs # push_pr "pi:256" new_spec
       in ()
     ) scc in
   let () = if List.length scc > 1 then
@@ -272,7 +274,7 @@ let add_post_relation_scc prog scc =
       List.iter (fun proc ->
           let spec = proc.proc_stk_of_static_specs # top in
           let new_spec = modify_infer_vars spec infer_vars in
-          proc.proc_stk_of_static_specs # push new_spec
+          proc.proc_stk_of_static_specs # push_pr "pi:267" new_spec
         ) scc
   in ()
 
@@ -280,7 +282,7 @@ let add_pre_relation_scc prog scc =
   let () = List.iter (fun proc ->
       let spec = proc.proc_stk_of_static_specs # top in
       let new_spec = add_pre_relation prog proc spec in
-      proc.proc_stk_of_static_specs # push new_spec
+      proc.proc_stk_of_static_specs # push_pr "pi:275" new_spec
     ) scc in
   let () = if List.length scc > 1 then
       let infer_vars = List.fold_left (fun acc proc ->
@@ -290,7 +292,7 @@ let add_pre_relation_scc prog scc =
       List.iter (fun proc ->
           let spec = proc.proc_stk_of_static_specs # top in
           let new_spec = modify_infer_vars spec infer_vars in
-          proc.proc_stk_of_static_specs # push new_spec
+          proc.proc_stk_of_static_specs # push_pr "pi:285" new_spec
         ) scc
   in ()
 
@@ -347,7 +349,7 @@ let rec turn_off_infer_pure spec old_spec =
 let resume_infer_obj_proc proc old_spec =
   let spec = turn_off_infer_pure (proc.proc_stk_of_static_specs # top) old_spec in
   let () = x_tinfo_hp (add_str "spec" Cprinter.string_of_struc_formula) spec no_pos in
-  let () = proc.proc_stk_of_static_specs # push spec in
+  let () = proc.proc_stk_of_static_specs # push_pr "pi:342" spec in
   proc
 
 let resume_infer_obj_scc scc old_specs =
@@ -380,7 +382,7 @@ let rec filter_infer_pure_struc_formula sf =
 let filter_infer_pure_proc proc =
   let spec = proc.proc_stk_of_static_specs # top in
   let new_spec = filter_infer_pure_struc_formula spec in
-  let () = proc.proc_stk_of_static_specs # push new_spec in
+  let () = proc.proc_stk_of_static_specs # push_pr "pi:377" new_spec in
   let () = x_tinfo_hp (add_str "new_spec" Cprinter.string_of_struc_formula) new_spec no_pos in
   (proc,new_spec)                       (* spec or new_spec *)
 
@@ -663,19 +665,19 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let pr = Cprinter.string_of_pure_formula in
             let pr_def = pr_list (pr_pair pr pr) in
             let pr_oblg = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in
-            let () = x_binfo_hp (add_str "post_rel_ids" pr_svl) post_rel_ids no_pos in
-            let () = x_binfo_hp (add_str "reldefns" pr_def) reldefns no_pos in
+            (* let () = x_binfo_hp (add_str "post_rel_ids" pr_svl) post_rel_ids no_pos in *)
+            (* let () = x_binfo_hp (add_str "reldefns" pr_def) reldefns no_pos in *)
             (* let () = x_binfo_hp (add_str "reldefns_from_oblgs" pr_def) reldefns_from_oblgs no_pos in *)
-            let () = x_binfo_hp (add_str "initial reloblgs" pr_oblg) reloblgs_init no_pos in
-            let () = x_binfo_hp (add_str "reloblgs" pr_oblg) reloblgs no_pos in
-            let () = x_binfo_hp (add_str "lst_assume" pr_oblg) lst_assume no_pos in
-            let () = x_binfo_hp (add_str "pre_rel_fmls" (pr_list pr)) pre_rel_fmls no_pos in
-            let () = x_binfo_hp (add_str "pre_ref_df" pr_def) pre_rel_df no_pos in
-            let () = x_binfo_pp "WN: Need to form initial pre from reloblgs, namely P1(a) = a=@M" no_pos in
-            let () = x_binfo_hp (add_str "pre_ref_df" pr_def) pre_rel_df no_pos in
-            let () = x_binfo_hp (add_str "post_ref_df" pr_def) post_rel_df no_pos in
-            let () = x_binfo_hp (add_str "post_vars" pr_svl) post_vars no_pos in
-            let () = x_binfo_hp (add_str "pre_vars" pr_svl) pre_vars no_pos in
+            (* let () = x_binfo_hp (add_str "initial reloblgs" pr_oblg) reloblgs_init no_pos in *)
+            (* let () = x_binfo_hp (add_str "reloblgs" pr_oblg) reloblgs no_pos in *)
+            (* let () = x_binfo_hp (add_str "lst_assume" pr_oblg) lst_assume no_pos in *)
+            (* let () = x_binfo_hp (add_str "pre_rel_fmls" (pr_list pr)) pre_rel_fmls no_pos in *)
+            (* let () = x_binfo_hp (add_str "pre_ref_df" pr_def) pre_rel_df no_pos in *)
+            (* let () = x_binfo_pp "WN: Need to form initial pre from reloblgs, namely P1(a) = a=@M" no_pos in *)
+            (* let () = x_binfo_hp (add_str "pre_ref_df" pr_def) pre_rel_df no_pos in *)
+            (* let () = x_binfo_hp (add_str "post_ref_df" pr_def) post_rel_df no_pos in *)
+            (* let () = x_binfo_hp (add_str "post_vars" pr_svl) post_vars no_pos in *)
+            (* let () = x_binfo_hp (add_str "pre_vars" pr_svl) pre_vars no_pos in *)
             (**************** END Debugging ****************)
 
             let post_rel_df_new = x_add norm_post_rel_def post_rel_df pre_rel_ids reldefns in
@@ -690,7 +692,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             (*         if tmp=[] then [] else [(CP.conj_of_list tmp no_pos,f2)] *)
             (*     ) post_rel_df) *)
             (* in *)
-            let () = x_binfo_hp (add_str "post_ref_df_new" pr_def) post_rel_df_new no_pos in
+            (* let () = x_binfo_hp (add_str "post_ref_df_new" pr_def) post_rel_df_new no_pos in *)
             let pre_invs,post_invs =
               List.fold_left (fun (pre_invs,post_invs) proc ->
                   let new_pre_invs,new_post_invs =
@@ -700,8 +702,8 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             in
             let post_inv = CP.join_disjunctions post_invs in
             let pre_inv = CP.join_disjunctions pre_invs in
-            let () = x_binfo_hp (add_str "pre_inv" pr) pre_inv no_pos in
-            let () = x_binfo_hp (add_str "post_inv" pr) post_inv no_pos in
+            (* let () = x_binfo_hp (add_str "pre_inv" pr) pre_inv no_pos in *)
+            (* let () = x_binfo_hp (add_str "post_inv" pr) post_inv no_pos in *)
             let (s1,s2) =
               if List.length post_rel_df_new = 0 then ("","")
               else
@@ -710,9 +712,9 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                 List.fold_left (fun (s1,s2) (pf1,_) ->
                     (s1 ^ " \/ (" ^ (pr pf1) ^ ")",s2)
                   ) ("(" ^ (pr pf1) ^")",(pr pf2) ^ " = ") tl in
-            let () = x_binfo_pp "WN: need to process pre first" no_pos in
-            let () = x_binfo_hp (add_str "sp:compute_fixpoint" (pr_list (pr_pair pr pr))) post_rel_df_new no_pos in
-            let () = x_binfo_pp (s2 ^ s1) no_pos in
+            (* let () = x_binfo_pp "WN: need to process pre first" no_pos in *)
+            (* let () = x_binfo_hp (add_str "sp:compute_fixpoint" (pr_list (pr_pair pr pr))) post_rel_df_new no_pos in *)
+            (* let () = x_binfo_pp (s2 ^ s1) no_pos in *)
             (* let _ = x_binfo_pp ("Pi.infer_pure") no_pos in *)
             let () = x_tinfo_hp (add_str "sp:compute_fixpoint" Cprinter.string_of_struc_formula) proc_spec no_pos in
             let fn x = x_add_1 (Fixcalc.compute_fixpoint 5 post_rel_df_new pre_vars) x in
@@ -728,8 +730,8 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let bottom_up_fp = bottom_up_fp0 in
             (* let () = x_binfo_hp (add_str "bottom_up_fp(after gist)" (pr_list (pr_pair pr pr))) bottom_up_fp no_pos in *)
             (* let () = DD.binfo_hprint (add_str "pre_rel_fmls" (pr_list pr)) pre_rel_fmls no_pos in *)
-            let () = x_binfo_hp (add_str "pre_rel_fmls" (pr_list pr)) pre_rel_fmls no_pos in
-            let () = x_binfo_hp (add_str "pre_fmls" (pr_list pr)) pre_fmls no_pos in
+            (* let () = x_binfo_hp (add_str "pre_rel_fmls" (pr_list pr)) pre_rel_fmls no_pos in *)
+            (* let () = x_binfo_hp (add_str "pre_fmls" (pr_list pr)) pre_fmls no_pos in *)
             let res = wrap (x_add Fixpoint.update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs
                               (x_add Fixcalc.compute_fixpoint_td)
                               Fixcalc.fixc_preprocess reloblgs pre_rel_df post_rel_df_new post_rel_df pre_vars proc_spec) grp_post_rel_flag
@@ -794,7 +796,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
               let _ = x_binfo_hp (add_str "new_specs1" (pr_list Cprinter.string_of_struc_formula)) new_specs1 no_pos in
               let new_specs2 = List.map (fun new_spec1 -> fst (x_add_1 wrap (Fixpoint.simplify_relation new_spec1
                                                                                (Some triples) pre_vars post_vars_wo_rel prog true (* inf_post_flag *) evars) lst_assume)) new_specs1 in
-              let _ = x_binfo_hp (add_str "new_specs2" (pr_list Cprinter.string_of_struc_formula)) new_specs2 no_pos in
+              (* let _ = x_binfo_hp (add_str "new_specs2" (pr_list Cprinter.string_of_struc_formula)) new_specs2 no_pos in *)
               new_specs2
           in 
           (* let proc_specs = infer_specs_post_process new_specs in  *)
@@ -813,7 +815,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
     let new_specs = List.map (fun new_spec -> Immutable.remove_abs_nodes_struc new_spec) new_specs in
     (* let new_specs = List.map (fun new_spec -> Immutable.infer_specs_imm_post_process new_spec) new_specs in *)
     let () = List.iter (fun (proc,new_spec) ->
-        let () = proc.proc_stk_of_static_specs # push new_spec in
+        let () = proc.proc_stk_of_static_specs # push_pr "pi:854" new_spec in
         print_endline_quiet "\nPost Inference result:";
         print_endline_quiet proc.proc_name;
         print_endline_quiet (Cprinter.string_of_struc_formula new_spec);

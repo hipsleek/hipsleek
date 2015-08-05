@@ -533,7 +533,7 @@ let pr_fn_args ?(lvl=(!glob_lvl)) op f xs = match xs with
 
 (** print infix form : x1 op .. op xn *)
 let pr_list_op ?(lvl=(!glob_lvl)) sep f xs =
-  pr_args ~lvl None (Some "A") "" "" "" sep f xs
+  pr_args ~lvl (Some ("HOV", 0)) (Some "A") "" "" "" sep f xs
 
 (** print infix form : x1 op .. op xn *)
 let pr_list_op_vbox ?(lvl=(!glob_lvl)) sep f xs =
@@ -1165,6 +1165,8 @@ let string_of_var_measures = poly_string_of_pr pr_var_measures
 let string_of_term_id = poly_string_of_pr (pr_term_id true)
 
 let string_of_term_ann = poly_string_of_pr (pr_term_ann true)
+
+let string_of_tcex_cmd = poly_string_of_pr pr_tcex_cmd
 
 let string_of_term_cex  = poly_string_of_pr pr_term_cex
 
@@ -4900,7 +4902,7 @@ let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ 
                           (string_of_view_decl_list p.prog_view_decls) ^ "\n\n" ^
                           (string_of_barrier_decl_list p.prog_barrier_decls) ^ "\n\n" ^
                           (string_of_ut_decl_list p.prog_ut_decls) ^ "\n\n" ^
-                          (string_of_rel_decl_list p.prog_rel_decls) ^ "\n\n" ^
+                          (string_of_rel_decl_list (p.prog_rel_decls # get_stk)) ^ "\n\n" ^
                           (string_of_axiom_decl_list p.prog_axiom_decls) ^ "\n\n" ^
                           (* WN_all_lemma - override usage? *)
                           (string_of_coerc_decl_list (*p.prog_left_coercions*) (Lem_store.all_lemma # get_left_coercion))^"\n\n"^
@@ -4960,7 +4962,7 @@ let string_of_program_separate_prelude p (iprims:Iast.prog_decl)=
   let datastr= (string_of_data_decl_list (remove_prim_data_decls p.prog_data_decls)) in
   let viewstr=(string_of_view_decl_list p.prog_view_decls) in
   let barrierstr=(string_of_barrier_decl_list p.prog_barrier_decls) in
-  let relstr=(string_of_rel_decl_list (remove_prim_rel_decls p.prog_rel_decls)) in
+  let relstr=(string_of_rel_decl_list (remove_prim_rel_decls (p.prog_rel_decls # get_stk))) in
   let axiomstr=(string_of_axiom_decl_list (remove_prim_axiom_decls p.prog_axiom_decls)) in
   let left_coerstr=(string_of_coerc_decl_list (Lem_store.all_lemma # get_left_coercion) (*p.prog_left_coercions*)) in
   let right_coerstr=(string_of_coerc_decl_list (Lem_store.all_lemma # get_right_coercion) (*p.prog_right_coercions*)) in
@@ -5528,6 +5530,7 @@ Cast.print_proc_decl_no_body := string_of_proc_decl_no_body;;
 Cast.print_program := string_of_program;;
 Cast.slk_of_data_decl := slk_of_data_decl;;
 Cast.slk_of_view_decl := slk_of_view_decl;;
+Cast.print_ef_pure_disj := string_of_ef_pure_disj;;
 Omega.print_pure := string_of_pure_formula;;
 Omega.print_exp := string_of_formula_exp;
 Smtsolver.print_pure := string_of_pure_formula;;

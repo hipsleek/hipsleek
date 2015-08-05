@@ -53,7 +53,7 @@ let cleanUpFormulas_x (ante:CF.formula) (conseq:CF.formula) : (CF.formula*CF.for
     let keep,elim = get_substs v2elim a_alias in
     let ap = List.fold_left (fun a (v1,v2)-> Mcpure.memoise_add_pure_N a (CP.mkEqVar v1 v2 pos)) ap keep in
     let ante = CF.mkBase ah ap avp CF.TypeTrue (CF.mkTrueFlow ()) [] pos in
-    let ante = CF.subst elim ante in
+    let ante = x_add CF.subst elim ante in
     (*let conseq = subst fr t conseq in*)
     let svs = get_new_vars (CF.fv ante) (CF.fv conseq) in
     CF.subst_all svs ante, CF.subst_all svs conseq 

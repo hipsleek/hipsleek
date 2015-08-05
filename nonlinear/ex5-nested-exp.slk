@@ -1,0 +1,76 @@
+checkentail b>=1 & a=2 & c=3|- a*b>=1.
+print residue.
+
+checkentail b>=1 & a=1+2 |- a*b>=1.
+print residue.
+
+checkentail b>=1 & a=1+2 & c=2|- a*b>=c.
+print residue.
+
+//(4)
+checkentail b>=1 & a=1+c & c=2 |- a*b>=1.
+print residue.
+
+checkentail b>=1 & a=d+c & c=2 & d=1+c |- a*b>=1.
+print residue.
+
+//(6)
+checkentail b>=1 & a=1*2+3 |- a*b>=1.
+print residue.
+
+//(7)
+checkentail b>=1 & a=1*2*3 |- a*b>=1.
+print residue.
+
+// (8) ???
+checkentail b=1 & a=1*2+3+b |- a*b>=1.
+print residue.
+/*
+(==omega.ml#632==)
+subs_const_var_formula@23
+subs_const_var_formula inp1 : (not((a+1=2+3 & 1<=b)) | 1<=(a*b))
+subs_const_var_formula@23 EXIT: (not((a+1=2+3 & 1<=b)) | 1<=(a*b))
+*/
+
+//(9) 
+checkentail forall(b:a*b>=1) & a=1+2 |- b>=1.
+print residue.
+
+//(10)
+checkentail forall(a:a*b>=1) & a=1+c & c=2 |- b>=1.
+print residue.
+
+
+
+/*
+checkentail forall(b:a*b>=1) & c=1 & a=c |- b>=1.
+print residue.
+
+checkentail forall(a:a*b>=1) & a=1 |- b>=1.
+print residue.
+
+checkentail forall(a:a*b>=1) & a=1+2 |- b>=1.
+print residue.
+
+checkentail a*b>=1 & a=1 |- b>=1.
+print residue.
+// valid
+
+checkentail 1*b>=1 & a=1 |- b>=1.
+print residue.
+// valid
+
+checkentail a*b>=1 & b=1 |- a>=1.
+print residue.
+*/
+
+/*
+# ex4b.slk
+
+checkentail a*b>=1 |- a*b>=0.
+
+
+
+checkentail z=a*b & z>=1 |- z>=1.
+
+*/

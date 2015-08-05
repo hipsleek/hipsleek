@@ -614,8 +614,34 @@ heap_entail_one_context_struc inp1 : es_formula:
 @16! to_be_updated: 2
 @16! hargs: 2
 heap_entail_conjunct_lhs_struc@17@16@15@14@13@12@11@7@6@5@4@3@2@1 ENTRY :Ctx  r::cll<self,flted>@M * tmp'::node<v',r>@M&0<m & n=1+flted & self=x' & 0<n & v=v' & x=x' & next=r & Anon=Anon1 & r1=tmp'&{FLOW,(21,22)=__norm}[]
+====================================================================
+# ex3.ss
+
+# Missing mults__ manifest as following message.
+# Please make an explicit check, and report this error at beginng
+  for all expected built-in primitives
+
+!!! **main.ml#1162:WARNING : Logging not done on finalizeStop Omega... 26 invocations caught
+
+Exception occurred: Not_found
+Error3(s) detected at main 
+
+# Add mults__ to prelude.ss
+# Please add option --en-mult to support non-linear mult (mult__)
+# Please add option --dis-mult to support linear mult (mults)
 
 ====================================================================
+# ex3.ss
+
+# I guess multiplication has been stripped off by Omega. I wonder
+if we can put it back into the inference result.
+
+WARNING: _0:0_0:0:[omega.ml] Non-linear arithmetic is not supported by Omega.
+
+!!! **infer.ml#2149:RelInferred (simplified):[
+RELDEFN ff: ( ff(v_int_10_1198,v_int_10_1200) & res=0 
+  & v_int_10_1198=n-1 & 1<=n) -->  ff(n,res)]
+WARNING: _0:0_0:0:[omega.ml] Non-linear arithmetic is not supported by Omega.
 ====================================================================
 ====================================================================
 ====================================================================

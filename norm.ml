@@ -423,7 +423,7 @@ let norm_extract_common_one_view_x iprog cprog cur_m cviews vdecl=
         let self_var2 = Cpure.SpecVar ((Named vname2), self, Unprimed) in
         let ss = [(List.hd args2, self_var2)] in
         let n_f21 = hprel_to_view f2 in
-        let n_f22 = CF.subst ss n_f21 in
+        let n_f22 = x_add CF.subst ss n_f21 in
         let n_vdecl2 = recover_view_decl vdecl vname2 (List.tl args2) vdecl.C.view_is_rec n_f22 in
         ([n_vdecl2],None)
       else

@@ -1,0 +1,35 @@
+
+data str {
+  int val;
+  str next;
+}.
+
+pred WFS<n:int> ==
+  self::str<0,q>*q::BADS<> & n=0
+  or self::str<v,q>*q::WFS<n-1> & v>0 //& n>0
+  inv n>=0.
+
+/*
+WFSeg<n:int,p> ==
+  self=p & n=0
+  or self::str<v,q>*q::WFSeg<n-1,p> & v>0 
+  inv n>=0;
+*/
+
+pred BADS<> ==
+  self::str<v,q>*q::BADS<> & v>=0
+  inv true.
+
+checkentail x::WFS<nnn> |- x::WFS<nnn> & nnn>=0.
+print residue.
+
+checkentail x::WFS<nnn> |-  nnn>=0.
+print residue.
+
+checkentail x::WFS<nnn>@L |-  nnn>=0.
+print residue.
+
+checkentail x::WFS<nnn>@L |- x::WFS<nnn>@L & nnn>=0.
+print residue.
+
+
