@@ -450,6 +450,7 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
       let leqNulls = MCP.get_null_ptrs mix_lf in
       let leqs = (MCP.ptr_equations_without_null mix_lf) in
       let ls_rhp_args = Cformula.get_HRels_f (Cformula.Base rhs_b1) in
+      let rhds, _, _ = Cformula.get_hp_rel_bformula rhs_b1 in
       let r_hps = List.map fst ls_rhp_args in
       let l_def_vs = leqNulls @ (List.map (fun hd -> hd.Cformula.h_formula_data_node) lhds)
                      @ (List.map (fun hv -> hv.Cformula.h_formula_view_node) lhvs) in
@@ -481,7 +482,7 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
       let lfb2, defined_preds,rems_hpargs,link_hps =
         List.fold_left (fun (lfb, r_defined_preds, r_rems, r_link_hps) hpargs ->
             let n_lfb,def_hps, rem_hps, ls_link_hps=
-              Sautil.find_well_defined_hp (* split_base *) prog lhds lhvs r_hps
+              Sautil.find_well_defined_hp (* split_base *) prog lhds lhvs r_hps (List.map (fun dn -> dn.CF.h_formula_data_node) rhds)
                 prog_vars post_hps hpargs (l_def_vs@unk_svl1) lfb true ~split_nemp:true no_pos
             in
             (n_lfb, r_defined_preds@def_hps, r_rems@rem_hps, r_link_hps@(snd (List.split ls_link_hps)))
@@ -522,7 +523,7 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
           let new_lhs1 = Cformula.add_quantifiers l_qvars new_lhs in
           let new_lhs2 = Cformula.elim_unused_pure new_lhs1 new_cs.Cformula.hprel_rhs in
           let new_cs = {new_cs with Cformula.hprel_lhs = new_lhs2;} in
-          let () = Debug.ninfo_zprint (lazy (("  refined cs: " ^ (Cprinter.string_of_hprel_short new_cs)))) no_pos in
+          let () = Debug.info_zprint (lazy (("  refined cs: " ^ (Cprinter.string_of_hprel_short new_cs)))) no_pos in
           (* let rf = Cformula.mkTrue (Cformula.mkTrueFlow()) no_pos in *)
           let () = Debug.ninfo_pprint ("  generate pre-preds-based constraints: " ) no_pos in
           let defined_hprels = List.map (x_add Sautil.generate_hp_ass 2 unk_svl1 new_cs.CF.hprel_path) defined_preds0 in

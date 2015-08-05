@@ -328,6 +328,7 @@ let split_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps link_
       let leqNulls = MCP.get_null_ptrs mix_lf in
       let leqs = (MCP.ptr_equations_without_null mix_lf) in
       let ls_rhp_args = CF.get_HRels_f (CF.Base rhs_b1) in
+      let rhds, rhvs, rhrs = CF.get_hp_rel_bformula rhs_b1 in
       let r_hps = List.map fst ls_rhp_args in
       let l_def_vs = leqNulls @ (List.map (fun hd -> hd.CF.h_formula_data_node) lhds)
                      @ (List.map (fun hv -> hv.CF.h_formula_view_node) lhvs) in
@@ -358,7 +359,7 @@ let split_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps link_
       let lfb2, defined_preds,rems_hpargs,link_hps =
         List.fold_left (fun (lfb, r_defined_preds, r_rems, r_link_hps) hpargs ->
             let n_lfb,def_hps, rem_hps, ls_link_hps=
-              Sautil.find_well_defined_hp (* split_base *) prog lhds lhvs r_hps
+              Sautil.find_well_defined_hp (* split_base *) prog lhds lhvs r_hps (List.map (fun dn -> dn.CF.h_formula_data_node) rhds)
                 prog_vars post_hps hpargs (l_def_vs@unk_svl1) lfb true no_pos
             in
             (n_lfb, r_defined_preds@def_hps, r_rems@rem_hps, r_link_hps@(snd (List.split ls_link_hps)))
