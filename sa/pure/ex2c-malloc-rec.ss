@@ -17,7 +17,7 @@ HeapPred H(node a).
 
 
 
-  void new_node2 (int i, ref node p)
+  void new_node2 (ref int i, ref node p)
 
     infer [H,G] requires H(p) ensures G(p,p'); //'
 /*
@@ -25,8 +25,8 @@ HeapPred H(node a).
   ensures p::node<p'> * p'::lseg<_>;//'
 */
 {
-  if (i<0) return;
-  else {
+  if (i<10) {
+    i++;
     p.next = malloc_n();
     p = p.next;
     new_node2 (i, p);
