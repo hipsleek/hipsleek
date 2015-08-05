@@ -4361,7 +4361,7 @@ let rec check_prog iprog (prog : prog_decl) =
          mutual_grp := List.filter (fun x -> x.proc_name != proc1.proc_name) !mutual_grp;
           Debug.ninfo_hprint (add_str "SCC"  (pr_list (fun p -> p.proc_name))) scc no_pos;
           Debug.ninfo_hprint (add_str "MG_new"  (pr_list (fun p -> p.proc_name))) !mutual_grp no_pos;
-          let () =  Debug.ninfo_hprint (add_str "before check_proc_wrapper" (Cprinter.string_of_struc_formula )) proc1.Cast.proc_static_specs  no_pos in
+          let () =  Debug.binfo_hprint (add_str "before check_proc_wrapper" (Cprinter.string_of_struc_formula )) proc1.Cast.proc_static_specs  no_pos in
           (* let () = Infer.infer_rel_stk # dump curr_file_loc in *)
           (* Richard: location where rel_def are inferred *)
           (* dump:(0)**typechecker.ml#4344: *)
