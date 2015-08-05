@@ -1017,6 +1017,14 @@ let false_ctx_line_list = ref ([] : loc list)
 
 let add_false_ctx pos = false_ctx_line_list := pos::!false_ctx_line_list
 
+(* use List.rev *)
+(* let rev_list list = *)
+(*     let rec aux acc = function *)
+(*       | [] -> acc *)
+(*       | h::t -> aux (h::acc) t in *)
+(*     aux [] list *)
+
+(* WN : should this flag be for tpdispatcher, rather than just Omega *)
 let b_datan = "barrier"
 
 let verify_callees = ref false

@@ -4358,24 +4358,27 @@ let rec check_prog iprog (prog : prog_decl) =
     (* let () = Infer.infer_rel_stk # dump curr_file_loc  in *)
     let is_all_verified2 = proc_mutual_scc prog scc (fun prog proc1 ->
         begin
-         mutual_grp := List.filter (fun x -> x.proc_name != proc1.proc_name) !mutual_grp;
+          mutual_grp := List.filter (fun x -> x.proc_name != proc1.proc_name) !mutual_grp;
           Debug.ninfo_hprint (add_str "SCC"  (pr_list (fun p -> p.proc_name))) scc no_pos;
           Debug.ninfo_hprint (add_str "MG_new"  (pr_list (fun p -> p.proc_name))) !mutual_grp no_pos;
-          let () =  Debug.binfo_hprint (add_str "before check_proc_wrapper" (Cprinter.string_of_struc_formula )) proc1.Cast.proc_static_specs  no_pos in
+          let spec = proc1.Cast.proc_static_specs  in
+          let () =  Debug.ninfo_hprint (add_str "before check_proc_wrapper" (Cprinter.string_of_struc_formula )) spec  no_pos in
           (* let () = Infer.infer_rel_stk # dump curr_file_loc in *)
           (* Richard: location where rel_def are inferred *)
           (* dump:(0)**typechecker.ml#4344: *)
           (* dump:(6)**typechecker.ml#4346: *)
           let r = check_proc_wrapper iprog prog proc1 cout_option !mutual_grp in
           (* Param Analysis for the proc *)
-          let () = if (* estate.CF.es_infer_obj *) Globals.infer_const_obj # is_ana_param (* !Globals.param_analysis *) then 
-            let rels_orig = Infer.infer_rel_stk # get_stk_no_dupl in
-            (* grab only the rels made since last call. *)
-            let new_count = (List.length rels_orig) - (!rel_count) in
-            let rels_orig = Gen.BList.take new_count rels_orig in
-            let () = rel_count := (List.length rels_orig) in
-            let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels_orig) in
-            let _ = Panalysis.analyse_param rels (proc1.Cast.proc_args) in () in
+          let inf_lst = CF.extr_infer_obj spec in
+          let flag = List.exists (fun o -> o # is_ana_param) inf_lst in
+          let () = if (* estate.CF.es_infer_obj *) Globals.infer_const_obj # is_ana_param || flag (* !Globals.param_analysis *) then 
+              let rels_orig = Infer.infer_rel_stk # get_stk_no_dupl in
+              (* grab only the rels made since last call. *)
+              let new_count = (List.length rels_orig) - (!rel_count) in
+              let rels_orig = Gen.BList.take new_count rels_orig in
+              let () = rel_count := (List.length rels_orig) in
+              let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels_orig) in
+              let _ = Panalysis.analyse_param rels (proc1.Cast.proc_args) in () in
           (* add rel_assumption of r to relass_grp *)
           r
         end
@@ -4494,7 +4497,7 @@ let rec check_prog iprog (prog : prog_decl) =
     let () = Ti.solve verify_res should_infer_tnt prog in
     let prog = if verify_res && should_infer_tnt then Ti2.update_specs_prog prog else prog in
     let () = Ti.finalize () in
-    
+
     let scc_ids = List.map (fun proc -> proc.Cast.proc_name) scc in
     let updated_scc = List.fold_left (fun r proc_id ->
         try

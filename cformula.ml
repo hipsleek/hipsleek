@@ -14876,6 +14876,27 @@ let propagate_perm_struc_formula e (permvar:cperm_var)=
     propagate_perm_struc_formula_x  e permvar
 
 
+let extr_infer_obj e =
+  let result = ref [] in
+  let add x = result := x::!result in
+  let f_e_f e = match e with
+    | EInfer e -> 
+      let () = add e.formula_inf_obj in
+      None
+    | _ -> None
+  in
+  let f_f e = Some e in
+  let f_h_f f = Some f in
+  let f_p_t1 e = Some e in
+  let f_p_t2 e = Some e in
+  let f_p_t3 e = Some e in
+  let f_p_t4 e = Some e in
+  let f_p_t5 e = Some e in
+  let f=(f_e_f,f_f,f_h_f,(f_p_t1,f_p_t2,f_p_t3,f_p_t4,f_p_t5)) in
+  let _ = transform_struc_formula f e in
+  !result
+
+
 let propagate_perm_struc_formula_x e (permvar:cperm_var)=
   let f_e_f e = None in
   let f_f e = Some (propagate_perm_formula e permvar) in
