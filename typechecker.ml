@@ -490,7 +490,6 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
   : CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *(CF.hprel list) * (CP.spec_var list)* (CP.spec_var list) * ((CP.spec_var * int list)  *CP.xpure_view ) list * bool =
   let rec helper (ctx : CF.context) (spec: CF.struc_formula) :  CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *(CF.hprel list) * (CP.spec_var list)* (CP.spec_var list) *
                                                                 ((CP.spec_var * int list)  *CP.xpure_view) list * bool =
-    let () = x_tinfo_hp (add_str "rels:" (pr_list (fun r -> r.rel_name))) prog.prog_rel_decls no_pos in
     let pos_spec = CF.pos_of_struc_formula spec in
     let _= proving_loc # set pos_spec in
     log_spec := (Cprinter.string_of_struc_formula spec) ^ ", Line " ^ (string_of_int pos_spec.start_pos.Lexing.pos_lnum);

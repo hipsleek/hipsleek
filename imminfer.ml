@@ -218,26 +218,26 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
               (Cprinter.poly_string_of_pr_gen 0 pr_infer_imm_ann_result) infer_imm_ann_proc
              proc_static_specs
 
-let infer_imm_ann (prog: C.prog_decl) (proc_decls: C.proc_decl list) : C.proc_decl list =
-  (** Infer immutability annotation variables for one proc,
-      @return (new proc, precondition relation, postcondition relation) **)
-  (* let pre = false in  *)
-  let (new_proc_decls, rel_list) =
-    let helper proc (proc_decls, rel_list) =
-      let pss_stk = new Gen.stack in
-      (* TODOIMM to refrain from modifying the whole stack *)
-      let old_specs = proc.C.proc_stk_of_static_specs # get_stk in
-      let (pre_rels, post_rels) = List.fold_right (fun spec (pre_rels, post_rels) ->
-        let (pss, pre_rel, post_rel) = x_add_1 infer_imm_ann_proc spec in
-        let pre_rels = map_opt_def pre_rels (fun r -> r::pre_rels) pre_rel in
-        let post_rels = map_opt_def post_rels (fun r -> r::pre_rels) post_rel in
-        pss_stk # push pss;
-        (pre_rels, post_rels)) old_specs ([], []) in
-      (({proc with C.proc_stk_of_static_specs = pss_stk; C.proc_static_specs = (pss_stk # top) })
-       ::proc_decls, pre_rels@post_rels@rel_list) in
-    List.fold_right helper proc_decls ([], []) in
-  prog.C.prog_rel_decls <- prog.C.prog_rel_decls @ rel_list;
-  new_proc_decls
+(* let infer_imm_ann (prog: C.prog_decl) (proc_decls: C.proc_decl list) : C.proc_decl list = *)
+(*   (\** Infer immutability annotation variables for one proc, *)
+(*       @return (new proc, precondition relation, postcondition relation) **\) *)
+(*   (\* let pre = false in  *\) *)
+(*   let (new_proc_decls, rel_list) = *)
+(*     let helper proc (proc_decls, rel_list) = *)
+(*       let pss_stk = new Gen.stack in *)
+(*       (\* TODOIMM to refrain from modifying the whole stack *\) *)
+(*       let old_specs = proc.C.proc_stk_of_static_specs # get_stk in *)
+(*       let (pre_rels, post_rels) = List.fold_right (fun spec (pre_rels, post_rels) -> *)
+(*         let (pss, pre_rel, post_rel) = x_add_1 infer_imm_ann_proc spec in *)
+(*         let pre_rels = map_opt_def pre_rels (fun r -> r::pre_rels) pre_rel in *)
+(*         let post_rels = map_opt_def post_rels (fun r -> r::pre_rels) post_rel in *)
+(*         pss_stk # push pss; *)
+(*         (pre_rels, post_rels)) old_specs ([], []) in *)
+(*       (({proc with C.proc_stk_of_static_specs = pss_stk; C.proc_static_specs = (pss_stk # top) }) *)
+(*        ::proc_decls, pre_rels@post_rels@rel_list) in *)
+(*     List.fold_right helper proc_decls ([], []) in *)
+(*   prog.C.prog_rel_decls <- prog.C.prog_rel_decls @ rel_list; *)
+(*   new_proc_decls *)
 
 
 let infer_imm_ann (prog: C.prog_decl) (proc_decls: C.proc_decl list) : C.proc_decl list =
@@ -257,7 +257,7 @@ let infer_imm_ann (prog: C.prog_decl) (proc_decls: C.proc_decl list) : C.proc_de
       in
       (({proc with C.proc_stk_of_static_specs = proc.C.proc_stk_of_static_specs; C.proc_static_specs = pss })::proc_decls, pre_rels@post_rels@rel_list) in
     List.fold_right helper proc_decls ([], []) in
-  prog.C.prog_rel_decls <- prog.C.prog_rel_decls @ rel_list;
+  prog.C.prog_rel_decls # push_list (* prog.C.prog_rel_decls @ *) rel_list;
   new_proc_decls
 
 let infer_imm_ann (prog: C.prog_decl) (proc_decls: C.proc_decl list) : C.proc_decl list =
@@ -289,7 +289,7 @@ let infer_imm_ann_prog (prog: C.prog_decl) : C.prog_decl =
   let proc_decls = Hashtbl.create (Hashtbl.length prog.C.new_proc_decls) in
   let (new_proc_decls, rel_list) =
     let helper id proc (proc_decls, rel_list) =
-      let pss_stk = new Gen.stack in
+      let pss_stk = new Gen.stack_pr Cprinter.string_of_struc_formula (==) in 
       let old_specs = proc.C.proc_stk_of_static_specs # get_stk in
       let (pre_rels, post_rels) = List.fold_right (fun spec (pre_rels, post_rels) ->
         let (pss, pre_rel, post_rel) = x_add_1 infer_imm_ann_proc spec in
@@ -300,7 +300,7 @@ let infer_imm_ann_prog (prog: C.prog_decl) : C.prog_decl =
       ((id, {proc with C.proc_stk_of_static_specs = pss_stk;
                        C.proc_static_specs = (pss_stk # top) })::proc_decls, pre_rels@post_rels@rel_list) in
     Hashtbl.fold helper prog.new_proc_decls ([], []) in
-  prog.C.prog_rel_decls <- prog.C.prog_rel_decls @ rel_list;
+  prog.C.prog_rel_decls # push_list  rel_list;
   List.iter (fun (id, proc_decl) -> Hashtbl.add proc_decls id proc_decl) new_proc_decls;
   { prog with C.new_proc_decls = proc_decls }
 
