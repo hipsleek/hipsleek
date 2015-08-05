@@ -4363,15 +4363,34 @@ let rec check_prog iprog (prog : prog_decl) =
           Debug.ninfo_hprint (add_str "MG_new"  (pr_list (fun p -> p.proc_name))) !mutual_grp no_pos;
           let spec = proc1.Cast.proc_static_specs  in
           let () =  Debug.ninfo_hprint (add_str "before check_proc_wrapper" (Cprinter.string_of_struc_formula )) spec  no_pos in
+          let inf_lst = CF.extr_infer_obj spec in
+          let local_ana_param = List.exists (fun o -> o # is_ana_param) inf_lst in
+          let is_ana_param = Globals.infer_const_obj # is_ana_param || local_ana_param in
+          (* may need to add in relation, precondition
+           * if using @analyse_param *)
+          let _ = if is_ana_param then
+              let rels = prog.prog_rel_decls # get_stk in
+              let inf_f_lst = CF.extr_infer_formula spec in
+              let rels_ids = List.map (fun r -> r.rel_name) rels in
+              (* check inf_lst for any inferred vars are in rels. *)
+              let inf_rels = List.flatten (List.map
+                                           (fun if_f -> if_f.CF.formula_inf_vars)
+                                           inf_f_lst) in
+              let inf_rels_ids = List.map CP.ident_of_spec_var inf_rels in
+              (* assume that the rel has same # args, etc. as proc1. *)
+              let has_rel = List.exists (fun id -> List.mem id rels_ids) inf_rels_ids in
+              if not has_rel then
+                  (* TODO: Need to add the relation to prog, proc1 *)
+                  ()
+              else ()
+          else () in
           (* let () = Infer.infer_rel_stk # dump curr_file_loc in *)
           (* Richard: location where rel_def are inferred *)
           (* dump:(0)**typechecker.ml#4344: *)
           (* dump:(6)**typechecker.ml#4346: *)
           let r = check_proc_wrapper iprog prog proc1 cout_option !mutual_grp in
           (* Param Analysis for the proc *)
-          let inf_lst = CF.extr_infer_obj spec in
-          let flag = List.exists (fun o -> o # is_ana_param) inf_lst in
-          let () = if Globals.infer_const_obj # is_ana_param || flag then
+          let () = if is_ana_param then
             let rels_orig = Infer.infer_rel_stk # get_stk_no_dupl in
             (* grab only the rels made since last call. *)
             let new_count = (List.length rels_orig) - (!rel_count) in
