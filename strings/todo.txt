@@ -482,7 +482,7 @@ do_all_eq inp2 : ((1*2)+3)-1
 do_all_eq@2 EXIT:( aaa+1, 2+3)
 
 ==================================================================
-# ex5a.slk 
+# ex5a.slk (FIXED by Andreea)
 
 # must subs hole before calling xpure..
 
@@ -583,7 +583,7 @@ compute_base_case inp3 :[self,vvv]
 compute_base_case@1 EXIT:Some( vvv=0)
 
 ==================================================================
-# strings/ex8d6.slk --pcp
+# strings/ex8d6.slk --pcp (FIXED by Loc)
 
 checkentail q::H1<v> & v=0  |- q::D<>.
 print residue.
@@ -604,7 +604,7 @@ Residue:
  [[ COND ==>  BaseCaseUnfold]]
  CEX:true
 ==================================================================
-# ex8e3/ss
+# ex8e4.ss (FIXED)
 
 ERROR: at _0:0_0:0
 Message: Can not find flow of str
@@ -616,8 +616,20 @@ Message: gather_type_info_var : unexpected exception Failure("Can not find flow 
 
 D<> == true;
 // pred_prim D<> inv self!=null;
+
+# Why WAITS occur twice?
+
+!!! **iast.ml#2137:XXX:0v.view_name:WAITS
+!!! **iast.ml#2137:XXX:0v.view_name:WAIT
+!!! **iast.ml#2137:XXX:0v.view_name:memLoc
+!!! **iast.ml#2137:XXX:0v.view_name:WAITS
+!!! **iast.ml#2155:XXX:view:WAIT
+!!! **iast.ml#2156:XXX:a:[WAIT]
+!!! **iast.ml#2155:XXX:view:memLoc
+!!! **iast.ml#2156:XXX:a:[memLoc]
+
 ==================================================================
-# strings/ex8e6.slk --pcp
+# strings/ex8e6.slk --pcp (FIXED)
 
 # Should we force an unfolding, but will this go into a loop?>
 
@@ -655,6 +667,20 @@ process_one_match@2 EXIT: Prio:1
   ]
 
 ==================================================================
+# ex8e4.slk -dre "incr_fixpt_view" (FIXED)
+
+# bug with proc below..
+
+!!! **iast.ml#2142:XXX:0v.view_name:WAITS
+!!! **iast.ml#2160:XXX:view:WAIT
+!!! **iast.ml#2161:XXX:a:[WAIT]
+!!! **iast.ml#2160:XXX:view:memLoc
+!!! **iast.ml#2161:XXX:a:[memLoc]
+(==astsimp.ml#2575==)
+incr_fixpt_view@1
+incr_fixpt_view inp1 :[__Exc,__Error,__MayError,__Fail,int_ptr_ptr,int_ptr,lock,barrier,thrd,__RET,__ArrBoundErr,__DivByZeroErr,Object,String,str]
+incr_fixpt_view inp2 :[WAITS,WAIT,memLoc,DDD]
+incr_fixpt_view@1 EXIT:WAITS
 ==================================================================
 ==================================================================
 ==================================================================

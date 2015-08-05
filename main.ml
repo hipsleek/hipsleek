@@ -870,9 +870,10 @@ let process_source_full source =
   (*let () = print_endline_quiet (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
   hip_epilogue ();
   if (not !Globals.web_compile_flag) then 
+    let rev_false_ctx_line_list = List.rev !Globals.false_ctx_line_list in 
     print_string_quiet ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
                         (List.fold_left (fun a c-> a^" ("^(string_of_int c.VarGen.start_pos.Lexing.pos_lnum)^","^
-                                                   ( string_of_int (c.VarGen.start_pos.Lexing.pos_cnum-c.VarGen.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n")
+                                                   ( string_of_int (c.VarGen.start_pos.Lexing.pos_cnum-c.VarGen.start_pos.Lexing.pos_bol))^") ") "" rev_false_ctx_line_list )^")\n")
   else ();
   Timelog.logtime # dump;
   silenced_print print_string ("\nTotal verification time: " 
@@ -1124,6 +1125,8 @@ let main1 () =
   (* Cprinter.fmt_string "TEST7.................................."; *)
   (* Cprinter.fmt_cut (); *)
   process_cmd_line ();
+  Tpdispatcher.init_tp();
+  Scriptarguments.check_option_consistency ();
   let () = Debug.read_main () in
   Scriptarguments.check_option_consistency ();
   hip_prologue ();
@@ -1208,7 +1211,7 @@ let old_main () =
 
 let () = 
   if not(!Globals.do_infer_inc) then
-    (* let () = print_endline "I am executing old stuff?.." in *)
+    let () = x_dinfo_pp "Executing old_main() " no_pos in
     old_main ()
   else
     (* this part seems to be for incremental inference *)

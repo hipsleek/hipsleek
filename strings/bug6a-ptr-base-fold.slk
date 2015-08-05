@@ -1,0 +1,37 @@
+data arr_int {
+  int val;
+  arr_int next;
+}.
+
+pred arr_seg<p,n> == self=p & n=0
+  or self::arr_int<_,q>*q::arr_seg<p,n-1>
+  inv n>=0.
+
+pred arr_seg2<p,n> == self=p & n=0
+  or self::arr_int<5,q>*q::arr_seg2<p,n-1>
+  inv n>=0.
+
+ checkentail 
+  a::arr_seg<p,n> 
+   & 10<=i' 
+   & i<=10 & 0<=i & n+i=5+10 & i'=i 
+  |-  a::arr_seg2<q,10-i> * q::arr_seg<p,6> 
+  .
+
+ checkentail 
+  a::arr_seg<p,n> 
+   & 10<=i' 
+   & i<=10 & 0<=i & n+i=5+10 & i'=i 
+   |- 10-i=0.
+
+/*
+ checkentail 
+  a::arr_seg<p,n> 
+  //& not(v_bool_32_1482') 
+  & 10<=i' 
+  & i<=10 & 0<=i & n+i=5+10 & i'=i & a'=a 
+  |-  (exists p_71,flted_28_66,flted_28_67, q: 
+   a::arr_seg2<q,flted_28_67> * q::arr_seg<p_71,flted_28_66> 
+   & flted_28_67+i=10 & flted_28_66=5 & p_71=p
+
+*/

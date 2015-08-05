@@ -70,8 +70,8 @@ HeapPred P(str a).
 HeapPred Q(str a, str b).
 //HeapPred U(str a).
 
-//pU<> == true;
-  pred_prim D<> inv self!=null;
+D<> == true;
+//pred_prim D<> inv self!=null;
 
 P_v<> == self::str<v,q> * q::H_v<v>;
 

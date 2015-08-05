@@ -2297,9 +2297,13 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
   let () = IF.has_top_flow_struc view_formula1 in
   (*let recs = rec_grp prog in*)
   let data_name = if (String.length vdef.I.view_data_name) = 0  then
-      I.incr_fixpt_view prog  prog.I.prog_data_decls prog.I.prog_view_decls
+      if not(!Globals.adhoc_flag_1) then ""
+      else I.incr_fixpt_view prog  prog.I.prog_data_decls prog.I.prog_view_decls
     else vdef.I.view_data_name in
-  (vdef.I.view_data_name <- data_name;
+  (
+    (* let () = x_binfo_hp (add_str "XXX:data_name" pr_id) data_name no_pos in  *)
+    (* let () = x_binfo_hp (add_str "XXX:view_name" pr_id) vdef.I.view_name no_pos in *)
+   vdef.I.view_data_name <- data_name;
    let vtv = vdef.I.view_typed_vars in
    let tlist = List.map (fun (t,c) -> (c,{sv_info_kind=t; id=fresh_int() })) vtv in
    let tlist = ([(self,{ sv_info_kind = (Named data_name);id = fresh_int () })]@tlist) in
@@ -7225,7 +7229,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             ) else n_tl
           else n_tl
         ) in 
-        (res_replace n_tlist rl clean_res fl, ch))
+        (x_add res_replace n_tlist rl clean_res fl, ch))
     | IF.Exists   {
         IF.formula_exists_qvars = qvars;
         IF.formula_exists_heap = h;
@@ -7277,7 +7281,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             copy_list fvars n_tl
           else n_tl
         ) in
-        (res_replace n_tlist rl clean_res fl, ch)) 
+        (x_add res_replace n_tlist rl clean_res fl, ch)) 
   in (* An Hoa : Add measure to combine partial heaps into a single heap *)
   let (n_tl,cf) = helper f0 tlist in
   let pr = Cprinter.string_of_formula in

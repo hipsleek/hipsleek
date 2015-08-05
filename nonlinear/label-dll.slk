@@ -1,0 +1,43 @@
+
+data node2 {
+	int val; 
+	node2 next;	
+}.
+
+/* view for a doubly linked list with size */
+pred dll<"n":n> == 
+	self = null & ["n":n = 0] or 
+	self::node2<_ , q> * q::dll<n1> & ["n":n1=n-1]
+	inv true & ["n":n >= 0].
+
+// Fail.Valid.Valid.Valid
+
+checkentail
+  x::dll<m>@M &
+  ["": x=x' & t_31'=0 & v_int_22_859'=1;
+   "n":0<m] 
+  |- emp & Term.
+print residue.
+
+
+checkentail x::dll<m> |- m>=0.
+print residue.
+
+checkentail x::dll<m> |- true & ["n":m>=0].
+
+
+checkentail x::dll<m> & x!=null |- true & ["n":m>0].
+//expect Valid.
+
+/*
+# label-dll.slk -tp oc --adhoc-2
+
+Starting Omega...oc
+
+!!! **cpure.ml#10968:XXX:orig_eqn: x=x' & t_31'=0 & v_int_22_859'=1 & x=1
+!!! **cpure.ml#10969:XXX:new_eqn: v_int_22_859'=1 & t_31'=0 & x=0
+!!! **cpure.ml#10970:XXX:UNSOUND enhance_eq_list
+!!! WARNING logtime exception:0.001325
+Entail 1: EXCast. Failure("UNSOUND enhance_eq_list")
+: no residue 
+*/
