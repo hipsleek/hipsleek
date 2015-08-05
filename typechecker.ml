@@ -4254,7 +4254,6 @@ let rec check_prog iprog (prog : prog_decl) =
   (*     check_coercion prog; *)
   (*     print_string_quiet "DONE.\n" *)
   (*   end; *)
-  (* let prog = Imminfer.infer_imm_ann_prog prog in *)
   ignore (List.map (check_data iprog prog) prog.prog_data_decls);
   (* Sort the proc_decls by proc_call_order *)
   let l_proc = Cast.list_of_procs prog in
@@ -4290,12 +4289,6 @@ let rec check_prog iprog (prog : prog_decl) =
   (***************************INTERNAL**************************)
   (******************************************************************)
   let verify_scc_helper prog verified_sccs scc =
-
-    (* Imminfer starts here *)
-    let scc = Imminfer.infer_imm_ann prog scc in
-    let reloblgs = Imminfer.collect_reloblgs scc in
-    let () = Infer.infer_rel_stk # push_list reloblgs in
-    (* End of Imminfer *)
 
     let scc, ini_hpdefs =
       Da.find_rel_args_groups_scc prog scc
@@ -4339,6 +4332,7 @@ let rec check_prog iprog (prog : prog_decl) =
     let mutual_grp = ref scc in
 
     x_tinfo_hp (add_str "MG"  (pr_list (fun p -> p.proc_name))) !mutual_grp no_pos;
+    let _ = x_binfo_pp "imm infer end20" no_pos in
     let is_all_verified2 = proc_mutual_scc prog scc (fun prog proc1 ->
         begin
           mutual_grp := List.filter (fun x -> x.proc_name != proc1.proc_name) !mutual_grp;
@@ -4410,7 +4404,6 @@ let rec check_prog iprog (prog : prog_decl) =
     let scc = if (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) 
               then Pi.resume_infer_obj_scc scc old_specs else scc in
 
-    (* let () = if (!Imminfer.has_infer_imm_pre || !Imminfer.has_infer_imm_post) then Pi.infer_pure prog scc in *)
     (* Reverify *)
     (* let has_infer_others_proc = (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) && Pi.is_infer_others_scc scc in *)
     (* let () = if has_infer_others_proc then wrap_reverify_scc reverify_scc prog scc false in                                           *)
@@ -4460,9 +4453,14 @@ let rec check_prog iprog (prog : prog_decl) =
         with _ -> r
       ) [] scc_ids in
     let () = Term.term_res_stk # reset in
+    let () = x_ninfo_hp (add_str "updated_scc" (pr_list (fun p -> (Cprinter.string_of_struc_formula p.Cast.proc_static_specs)))) updated_scc no_pos in
     let n_verified_sccs = verified_sccs@[updated_scc] in
     (prog,n_verified_sccs)
   in
+
+  let verify_scc_helper prog verified_sccs scc = 
+    Imminfer.wrapper_infer_imm_pre_post Infer.infer_rel_stk verify_scc_helper prog verified_sccs scc in
+
   let case_verify_scc_helper prog verified_sccs scc=
     match scc with
     | [] -> (prog, verified_sccs)

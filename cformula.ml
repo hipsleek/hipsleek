@@ -224,7 +224,6 @@ and h_formula = (* heap formula *)
   | HEmp (* emp for classical logic *)
   | HVar of CP.spec_var * (CP.spec_var list)
 
-
 and h_formula_star = {  h_formula_star_h1 : h_formula;
                         h_formula_star_h2 : h_formula;
                         h_formula_star_pos : loc }

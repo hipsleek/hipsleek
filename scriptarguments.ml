@@ -338,6 +338,12 @@ let common_arguments = [
   ("--dis-aggresive-immf-inst", Arg.Clear Globals.aggresive_imm_inst,"don't add lhs_imm<:rhs_imm, when lhs_imm is unrestricted");
   ("--en-imm-simpl", Arg.Set Globals.imm_add,"simplify imm addition");
   ("--dis-imm-simpl", Arg.Clear Globals.imm_add,"disable imm addition simplification");
+  ("--imm-inf-seq", Arg.Unit (fun _ ->
+       Globals.imm_seq := true; 
+       Globals.imm_sim := false;), "infer imm pre/post sequentially");
+  ("--imm-inf-sim",  Arg.Unit (fun _ ->
+       Globals.imm_sim := true; 
+       Globals.imm_seq := false;), "infer imm pre/post simultaneously ");
   ("--mem", Arg.Unit (fun _ -> 
        Globals.allow_mem := true; 
        Globals.allow_field_ann := true;),

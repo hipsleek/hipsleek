@@ -17,8 +17,8 @@ let fresh_pred loc = fresh_any_name rel_default_prefix_name
 let fresh loc = fresh_any_name imm_var_prefix
 let fresh_ann loc = CP.SpecVar (AnnT, fresh loc, Unprimed)
 
-let has_infer_imm_pre = ref false
-let has_infer_imm_post = ref false
+let should_infer_imm_pre = ref false
+let should_infer_imm_post = ref false
 
 let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula * C.rel_decl option * C.rel_decl option) =
   let open Cformula in
@@ -99,6 +99,8 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
       let rel = CP.mkPure p_formula in 
       rel
     in add_pure_formula_to_formula rel_pure formula in
+  let and_pure_with_rel relname rel_params formula loc =
+    Debug.no_3 "and_pure_with_rel" pr_id !CP.print_svl !CF.print_formula !CF.print_formula (fun _ _ _ -> and_pure_with_rel relname rel_params formula loc) relname rel_params formula in
   let mk_rel rel_params loc =
     let rn = fresh_pred loc in
     match rel_params with
@@ -113,10 +115,11 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
   in
   let rec ann_struc_formula_1 = function
     | EInfer ff ->
-       imm_pre_is_set := ff.formula_inf_obj # is_pre_imm;
-       has_infer_imm_pre := (!has_infer_imm_pre || !imm_pre_is_set);
+       imm_pre_is_set := ff.formula_inf_obj # is_pre_imm && !should_infer_imm_pre;
+       (* has_infer_imm_pre := (!has_infer_imm_pre || !imm_pre_is_set) && !should_infer_imm_pre; *)
        imm_post_is_set := ff.formula_inf_obj # is_post_imm;
-       has_infer_imm_post := (!has_infer_imm_post || !imm_post_is_set);
+       should_infer_imm_post := !imm_post_is_set && (not(!imm_pre_is_set) || !should_infer_imm_post);
+       (* has_infer_imm_post := (!has_infer_imm_post || !imm_post_is_set) && !should_infer_imm_post; *)
        x_tinfo_hp (add_str "imm_pre_flag" string_of_bool) !imm_pre_is_set no_pos;
        x_tinfo_hp (add_str "imm_post_flag" string_of_bool) !imm_post_is_set no_pos;
        use_mutable := (not !imm_pre_is_set && not !imm_post_is_set);
@@ -139,9 +142,9 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
        let postcondition_add_qvars =
          CF.push_exists (post_stack # get_stk) postcondition in
        (* And the pure part with relation *)
-       if ((not (post_stack # is_empty)) && (not (!post_rel = None))) then
+       if ((not (post_stack # is_empty)) && (not (!post_rel = None)) && !should_infer_imm_post) then
          let post_rel = match !post_rel with Some p -> p | None -> failwith "Not possible (infer_imm_ann_proc)" in
-         let rel_params = (pre_stack # get_stk) @ (post_stack # get_stk) in
+         let rel_params = (* (pre_stack # get_stk) @ *) (post_stack # get_stk) in
          let postcondition_with_rel = and_pure_with_rel post_rel.C.rel_name rel_params
                                                         postcondition_add_qvars loc in
          Some (EAssume { ff with formula_assume_simpl = postcondition_with_rel;
@@ -168,7 +171,7 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
               if (not (pre_stack # is_empty) && not (!pre_rel = None)) then
                 let pre_rel = match !pre_rel with Some p -> p | None -> failwith "Not possible (infer_imm_ann_proc)" in
                 let rel_params = pre_stack # get_stk in
-                let precondition_with_rel = and_pure_with_rel pre_rel.C.rel_name rel_params precondition loc in
+                let precondition_with_rel = if (!should_infer_imm_pre) then and_pure_with_rel pre_rel.C.rel_name rel_params precondition loc else precondition in 
                 { ebase with formula_struc_base = precondition_with_rel }
               else { ebase with formula_struc_base = precondition } in
             let new_continuation =
@@ -178,11 +181,12 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
                 EBase { new_ebase with formula_struc_continuation = base_continuation }
               else EBase new_ebase in
             let new_inf_vars =
-              let rel_to_var rel = match rel with
-                (* the relation var *)
-                | Some p -> [CP.SpecVar (RelT (CP.type_of_spec_var_list  p.C.rel_vars), p.C.rel_name, Unprimed)]
-                | None -> [] in
-              (rel_to_var !post_rel)@(rel_to_var !pre_rel)@ff.formula_inf_vars in
+              let rel_to_var rel en = if not(en) then [] else 
+                  match rel with
+                  (* the relation var *)
+                  | Some p -> [CP.SpecVar (RelT (CP.type_of_spec_var_list  p.C.rel_vars), p.C.rel_name, Unprimed)]
+                  | None -> [] in
+              (rel_to_var !post_rel !should_infer_imm_post)@(rel_to_var !pre_rel !should_infer_imm_pre)@ff.formula_inf_vars in
             Some (EInfer { ff with formula_inf_continuation = new_continuation;
                                    formula_inf_vars = new_inf_vars })
          | _ -> None
@@ -195,7 +199,7 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
     (pre_norm_stack # push_list (n_stack # get_stk_and_reset);
      if !imm_pre_is_set then pre_rel := mk_rel (pre_stack # get_stk) no_pos;
      if !imm_post_is_set then post_rel :=
-                                mk_rel ((pre_stack # get_stk)@(post_stack # get_stk)) no_pos;
+                                mk_rel ((* (pre_stack # get_stk)@ *)(post_stack # get_stk)) no_pos;
      transform_struc_formula transform_2 pss_1) in
   (pss, !pre_rel, !post_rel)
 
@@ -217,12 +221,14 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
 let infer_imm_ann (prog: C.prog_decl) (proc_decls: C.proc_decl list) : C.proc_decl list =
   (** Infer immutability annotation variables for one proc,
       @return (new proc, precondition relation, postcondition relation) **)
+  (* let pre = false in  *)
   let (new_proc_decls, rel_list) =
     let helper proc (proc_decls, rel_list) =
       let pss_stk = new Gen.stack in
+      (* TODOIMM to refrain from modifying the whole stack *)
       let old_specs = proc.C.proc_stk_of_static_specs # get_stk in
       let (pre_rels, post_rels) = List.fold_right (fun spec (pre_rels, post_rels) ->
-        let (pss, pre_rel, post_rel) = infer_imm_ann_proc spec in
+        let (pss, pre_rel, post_rel) = x_add_1 infer_imm_ann_proc spec in
         let pre_rels = map_opt_def pre_rels (fun r -> r::pre_rels) pre_rel in
         let post_rels = map_opt_def post_rels (fun r -> r::pre_rels) post_rel in
         pss_stk # push pss;
@@ -234,6 +240,51 @@ let infer_imm_ann (prog: C.prog_decl) (proc_decls: C.proc_decl list) : C.proc_de
   new_proc_decls
 
 
+let infer_imm_ann (prog: C.prog_decl) (proc_decls: C.proc_decl list) : C.proc_decl list =
+  (** Infer immutability annotation variables for one proc,
+      @return (new proc, precondition relation, postcondition relation) **)
+  (* let pre = false in  *)
+  let (new_proc_decls, rel_list) =
+    let helper proc (proc_decls, rel_list) =
+      let old_specs = proc.C.proc_stk_of_static_specs # pop_top in
+      let (pre_rels, post_rels,pss) = (* List.fold_right (fun spec (pre_rels, post_rels) -> *)
+        let (pss, pre_rel, post_rel) = x_add_1 infer_imm_ann_proc old_specs in
+        let pre_rels = map_opt_def []  (fun r -> [r]) pre_rel in
+        let post_rels = map_opt_def [] (fun r -> [r]) post_rel in
+        proc.C.proc_stk_of_static_specs # push pss;
+        (* pss_stk # push pss; *)
+        (pre_rels, post_rels, pss)(* ) old_specs ([], []) *)
+      in
+      (({proc with C.proc_stk_of_static_specs = proc.C.proc_stk_of_static_specs; C.proc_static_specs = pss })::proc_decls, pre_rels@post_rels@rel_list) in
+    List.fold_right helper proc_decls ([], []) in
+  prog.C.prog_rel_decls <- prog.C.prog_rel_decls @ rel_list;
+  new_proc_decls
+
+let infer_imm_ann (prog: C.prog_decl) (proc_decls: C.proc_decl list) : C.proc_decl list =
+  let pr = pr_list (fun p -> Cprinter.string_of_struc_formula p.Cast.proc_static_specs) in
+  Debug.no_1 "infer_imm" pr pr (fun _ -> infer_imm_ann prog proc_decls) proc_decls 
+
+let infer_imm_pre (prog: C.prog_decl) (proc_decls: C.proc_decl list) : C.proc_decl list =
+  (** Infer immutability annotation variables for one proc,
+      @return (new proc, precondition relation, postcondition relation) **)
+  (* let pre = false in  *)
+  let _ = should_infer_imm_pre := true in
+  x_add infer_imm_ann (prog: C.prog_decl) (proc_decls: C.proc_decl list)
+
+let infer_imm_post (prog: C.prog_decl) (proc_decls: C.proc_decl list) : C.proc_decl list =
+  (** Infer immutability annotation variables for one proc,
+      @return (new proc, precondition relation, postcondition relation) **)
+  (* let pre = false in  *)
+  let _ = should_infer_imm_post := true in
+  x_add infer_imm_ann (prog: C.prog_decl) (proc_decls: C.proc_decl list)
+
+let infer_imm_pre_post (prog: C.prog_decl) (proc_decls: C.proc_decl list) : C.proc_decl list =
+  let _ = should_infer_imm_pre := true in
+  let _ = should_infer_imm_post := true in
+  x_add infer_imm_ann (prog: C.prog_decl) (proc_decls: C.proc_decl list)
+
+(* let wrapp_inf_imm (prog: C.prog_decl) (proc_decls: C.proc_decl list) : C.proc_decl list = *)
+
 let infer_imm_ann_prog (prog: C.prog_decl) : C.prog_decl =
   let proc_decls = Hashtbl.create (Hashtbl.length prog.C.new_proc_decls) in
   let (new_proc_decls, rel_list) =
@@ -241,7 +292,7 @@ let infer_imm_ann_prog (prog: C.prog_decl) : C.prog_decl =
       let pss_stk = new Gen.stack in
       let old_specs = proc.C.proc_stk_of_static_specs # get_stk in
       let (pre_rels, post_rels) = List.fold_right (fun spec (pre_rels, post_rels) ->
-        let (pss, pre_rel, post_rel) = infer_imm_ann_proc spec in
+        let (pss, pre_rel, post_rel) = x_add_1 infer_imm_ann_proc spec in
         let pre_rels = map_opt_def pre_rels (fun r -> r::pre_rels) pre_rel in
         let post_rels = map_opt_def post_rels (fun r -> r::post_rels) post_rel in
         pss_stk # push pss;
@@ -265,18 +316,19 @@ let should_infer_imm prog inf_vars inf_obj =
   let has_imm_rel = List.fold_right (fun (id,_) acc -> (arg_is_ann id) || acc) inf_vars false in
   inf_obj # is_pre_imm ||  inf_obj # is_post_imm || !Globals.allow_noann || has_imm_rel
 
+(* collects the guard reloblgs. eg, for P(a:AnnT,b:AnnT) ~> a<:@A & b<:@A -> P(a,b) *)
 let collect_reloblgs_spec (spec: CF.struc_formula) =
   let infer_rel_stk = new Gen.stack in
   let collect_reloblgs_b (p_formula, _) =
     match p_formula with
     | CP.RelForm (rel_sv, args, _) ->
-       let () = x_binfo_hp (add_str "args" Cprinter.string_of_typed_spec_var_list)
+       let () = x_ninfo_hp (add_str "args" Cprinter.string_of_typed_spec_var_list)
                            (List.map CP.exp_to_spec_var args) no_pos in
        let guards = List.fold_right (fun exp guards -> 
                                       if CP.is_ann_typ (CP.exp_to_spec_var exp) then
                                         (CP.mkSubAnn exp CP.const_ann_top)::guards
                                       else guards) args [] in
-       let () = x_binfo_hp (add_str "guards" (pr_list Cprinter.string_of_pure_formula)) guards no_pos in
+       let () = x_ninfo_hp (add_str "guards" (pr_list Cprinter.string_of_pure_formula)) guards no_pos in
        let reloblg = CP.RelAssume [rel_sv], CP.mkPure p_formula,
                      (CP.join_conjunctions guards) in
        let () = if guards != [] then infer_rel_stk # push reloblg in
@@ -294,3 +346,46 @@ let collect_reloblgs_proc (proc : C.proc_decl) =
 
 let collect_reloblgs (proc_decls: C.proc_decl list) =
   List.concat (List.map collect_reloblgs_proc proc_decls)
+
+let wrapper_infer_imm_pre_post_seq infer_stk verify_scc prog verified_scc scc =
+  let _ = should_infer_imm_pre := true in
+  let _ = should_infer_imm_post := false in
+  let helper prog scc = 
+    let scc = x_add infer_imm_ann prog scc in
+    let _ = x_binfo_pp "imm infer start" no_pos in
+    let reloblgs = collect_reloblgs scc in
+    let () = infer_stk # push_list reloblgs in
+    let _ = x_binfo_pp "imm infer end" no_pos in
+    scc in
+  (* pre-process for pre or post only *)
+  let scc1 = helper prog scc in
+  let res = verify_scc prog verified_scc scc1 in
+  let _ = should_infer_imm_pre := false in
+  let _ = should_infer_imm_post := not(!should_infer_imm_post) in
+  let res = if (!should_infer_imm_post) then 
+      (* pre-process for post only *)
+      let prog, vscc = res in
+      let scc = List.hd (List.rev vscc) in
+      let verified_scc = List.rev (List.tl (List.rev vscc)) in
+      verify_scc prog verified_scc (helper prog scc)
+    else res in
+  res 
+
+let wrapper_infer_imm_pre_post_sim infer_stk verify_scc prog verified_scc scc =
+  let _ = should_infer_imm_pre := true in
+  let _ = should_infer_imm_post := true in
+  let helper prog scc = 
+    let scc = x_add infer_imm_ann prog scc in
+    let _ = x_binfo_pp "imm infer start" no_pos in
+    let reloblgs = collect_reloblgs scc in
+    let () = infer_stk # push_list reloblgs in
+    let _ = x_binfo_pp "imm infer end" no_pos in
+    scc in
+  (* pre-process for pre and post *)
+  let scc1 = helper prog scc in
+  let res = verify_scc prog verified_scc scc1 in
+  res 
+
+let wrapper_infer_imm_pre_post infer_stk verify_scc prog verified_scc scc =
+  if not (!Globals.imm_seq) then wrapper_infer_imm_pre_post_sim infer_stk verify_scc prog verified_scc scc
+  else wrapper_infer_imm_pre_post_seq infer_stk verify_scc prog verified_scc scc

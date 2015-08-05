@@ -1077,6 +1077,12 @@ let imm_add = ref true
 
 let allow_noann = ref false
 
+(* infer imm sequatially: first pre, then post *)
+let imm_seq = ref true 
+
+(* infer imm pre/post simultaneously *)
+let imm_sim = ref false
+
 (*Since this flag is disabled by default if you use this ensure that 
   run-fast-test mem test cases pass *)
 (* let allow_field_ann = ref false  *)
