@@ -2337,6 +2337,7 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
       if l==[] then (9,M_Nothing_to_do "Cond_action []")
       else
         let l = List.map recalibrate_wt l in
+        let l = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) l in
         let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
         (rw,Cond_action l)
     | Seq_action l ->
