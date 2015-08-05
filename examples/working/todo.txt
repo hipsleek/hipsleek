@@ -1557,6 +1557,17 @@ Total verification time: 435.56 second
 	Time spent in child processes: 30.98 second
 	Number of false contexts: 413
 
+--eps -tp oc loris-7
+Total verification time: 839.46 second
+	Time spent in main process: 752.19 second
+	Time spent in child processes: 87.27 second
+	Number of false contexts: 413
+
+--eps -tp z3 loris-7
+Total verification time: 818.88 second
+	Time spent in main process: 761.41 second
+	Time spent in child processes: 57.47 second
+	Number of false contexts: 413
 
 ====================================================================
 ====================================================================

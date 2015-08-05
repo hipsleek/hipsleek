@@ -18,6 +18,8 @@ type print_set =
 let compete_mode = ref false
 let trace_failure = ref false
 let trace_exc = ref false
+let trace_loop = ref false
+let trace_loop_all = ref false
 let verbose_num = ref 0
 
 let last_posn = ref (None:string option)
