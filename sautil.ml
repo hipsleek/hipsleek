@@ -1843,6 +1843,11 @@ TODO: should remove split_spatial, now it always be true
  - for testing --sa-en-sp-split
 *)
 let find_well_defined_hp_x prog hds hvs r_hps r_dptrs prog_vars post_hps (hp,args) def_ptrs lhsb split_spatial ?(split_nemp=false) pos=
+  let gen_rhs_base null_ptrs args=
+    if CP.intersect_svl args null_ptrs = [] then (CF.mkHTrue (CF.mkTrueFlow()) pos)
+    else
+      (CF.mkTrue (CF.mkTrueFlow()) pos)
+  in
   let do_spit fb rhs new_hps=
     let f = keep_data_view_hrel_nodes_fb prog fb hds hvs args [(hp,args)] in
     (*we do NOT want to keep heap in LHS*)
@@ -1870,6 +1875,7 @@ let find_well_defined_hp_x prog hds hvs r_hps r_dptrs prog_vars post_hps (hp,arg
   in
   (*check hp is recursive or post_hp?*)
   if (CP.mem_svl hp r_hps || CP.mem_svl hp post_hps) || CP.intersect_svl r_dptrs args != [] then (lhsb, [], [(hp,args)], []) else
+    let leqNulls = CP.remove_dups_svl (MCP.get_null_ptrs lhsb.CF.formula_base_pure) in
     let closed_args = CF.look_up_reachable_ptr_args prog hds hvs args in
     let undef_args = lookup_undef_args closed_args [] def_ptrs in
     if undef_args<> [] then
@@ -1900,7 +1906,7 @@ let find_well_defined_hp_x prog hds hvs r_hps r_dptrs prog_vars post_hps (hp,arg
                 let nlhsb = CF.mkAnd_fb_hf lhsb new_hf pos in
                 do_spit nlhsb (CF.formula_of_heap new_hf pos) [(new_hf,(new_hp, List.map fst undef_args_inst))]
               else
-                do_spit lhsb (CF.mkTrue (CF.mkTrueFlow()) pos) []
+                do_spit lhsb (gen_rhs_base leqNulls closed_args) []
             in
             match new_ass with
             | [(hp1,args1,n_lhsb1, rhs)] -> begin
@@ -1920,11 +1926,11 @@ let find_well_defined_hp_x prog hds hvs r_hps r_dptrs prog_vars post_hps (hp,arg
             | [] -> (lhsb, [],[(hp,args)], [])
             | _ -> report_error no_pos "sau.find_well_defined_hp"
         else
-          do_spit lhsb (CF.mkTrue (CF.mkTrueFlow()) pos) []
+          do_spit lhsb (gen_rhs_base leqNulls closed_args) []
       end
     else
       (*all args are well defined*)
-      do_spit lhsb (CF.mkTrue (CF.mkTrueFlow()) pos) []
+      do_spit lhsb (gen_rhs_base leqNulls closed_args) []
 
 (*
   split_spatial: during assumption generating,

@@ -301,6 +301,7 @@ let split_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps link_
     let (_ ,mix_lf,_,_,_,_) = CF.split_components cs.CF.hprel_lhs in
     let l_qvars, lhs = CF.split_quantifiers cs.CF.hprel_lhs in
     let r_qvars, rhs = CF.split_quantifiers cs.CF.hprel_rhs in
+     let leqNulls = CP.remove_dups_svl ((MCP.get_null_ptrs mix_lf) ) in
     let l_hpargs = CF.get_HRels_f lhs in
     let r_hpargs = CF.get_HRels_f rhs in
     if (List.exists (fun (hp,_) -> CP.mem_svl hp post_hps) r_hpargs) &&
@@ -367,10 +368,10 @@ let split_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps link_
       in
       (* let defined_preds = List.concat ls_defined_hps in *)
       (* let () = if defined_preds!=[] then step_change # i else () in *)
-      let rf = CF.mkTrue (CF.mkTrueFlow()) no_pos in
+      let emp_rf = CF.mkTrue (CF.mkTrueFlow()) no_pos in
       let defined_preds0 = List.fold_left (fun (defined_preds) hpargs ->
           let def_hps, _ = (Sautil.find_well_eq_defined_hp prog lhds lhvs lfb2 leqs hpargs) in
-          (defined_preds@(List.map (fun (a,b,c) -> (a,b,c,rf)) def_hps))
+          (defined_preds@(List.map (fun (a,b,c) -> (a,b,c,emp_rf)) def_hps))
         ) (defined_preds) (rems_hpargs@ls_lhs_non_node_hpargs) in
       let new_cs = {cs with CF.hprel_lhs = CF.add_quantifiers l_qvars (CF.Base lfb2);
                             CF.unk_svl = unk_svl1;
