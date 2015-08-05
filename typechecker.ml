@@ -4391,16 +4391,17 @@ let rec check_prog iprog (prog : prog_decl) =
           let r = check_proc_wrapper iprog prog proc1 cout_option !mutual_grp in
           (* Param Analysis for the proc *)
           let () = if is_ana_param then
-            let rels_orig = Infer.infer_rel_stk # get_stk_no_dupl in
-            (* grab only the rels made since last call. *)
-            let new_count = (List.length rels_orig) - (!rel_count) in
-            if new_count > 0 then
-              let rels_orig = Gen.BList.take new_count rels_orig in
-              let () = rel_count := (List.length rels_orig) in
-              let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels_orig) in
-              let res = Panalysis.analyse_param rels (proc1.Cast.proc_args) in
-              proc1.Cast.proc_param_results <- res
-            else () in
+              let rels_orig = Infer.infer_rel_stk # get_stk_no_dupl in
+              (* grab only the rels made since last call. *)
+              let new_count = (List.length rels_orig) - (!rel_count) in
+              if new_count > 0 then
+                  let rels_orig = Gen.BList.take new_count rels_orig in
+                  let () = rel_count := (List.length rels_orig) in
+                  let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels_orig) in
+                  let res = Panalysis.analyse_param rels (proc1.Cast.proc_args) in
+                  proc1.Cast.proc_param_results <- res
+              else ()
+          else () in
           (* add rel_assumption of r to relass_grp *)
           r
         end
