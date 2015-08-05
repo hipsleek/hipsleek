@@ -152,22 +152,32 @@ let helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_var
             | _ -> report_error no_pos ("process_tables expecting relation but got:"^(!CP.print_formula r))
           ) results 
       in
-      let res_table = process_tables triples in
+      (* type: (CP.formula * 'd * 'e) list -> *)
+      (*   (CP.spec_var * CP.exp list * bool list option * 'd * 'e) list *)
+      let process_tables results =
+        let pr = pr_list (fun (f,_,_) -> !CP.print_formula f) in
+        let pr2 = pr_list (fun (sv,args,blst,_,_) -> pr_triple !CP.print_sv (pr_list !CP.print_exp) 
+                              (pr_option (pr_list string_of_bool))  (sv,args,blst)) in
+        Debug.no_1 "process_tables" pr pr2 process_tables results
+      in
       if inf_post then
-        (* let rels = CP.get_RelForm p in *)
-        let pr = !CP.print_formula in
-        let () = x_tinfo_hp (add_str "triples" (pr_list (pr_triple pr pr pr)) ) triples no_pos in
-        let p = x_add_1 CP.subs_rel_formula res_table p in
-        (* let ps = List.filter (fun x -> not (CP.isConstTrue x)) (CP.list_of_conjs p) in  *)
-        (* WN : code below seems redundant *)
-        (* let pres,posts = List.split (List.concat (List.map (fun (a1,a2,a3) ->  *)
-        (*     if Gen.BList.mem_eq CP.equalFormula a1 rels *)
-        (*     then [(a3,a2)] else []) triples)) in *)
-        let post = p in
-        let pre = CP.conj_of_list (List.map (fun (_,_,pre) -> pre) triples) no_pos in
-        let () = x_tinfo_hp (add_str "pre" (!CP.print_formula)) pre no_pos in
-        let () = x_tinfo_hp (add_str "post" (!CP.print_formula)) post no_pos in
-        (post,[pre],[])
+        try
+          let res_table = process_tables triples in
+          (* let rels = CP.get_RelForm p in *)
+          let pr = !CP.print_formula in
+          let () = x_tinfo_hp (add_str "triples" (pr_list (pr_triple pr pr pr)) ) triples no_pos in
+          let p = x_add_1 CP.subs_rel_formula res_table p in
+          (* let ps = List.filter (fun x -> not (CP.isConstTrue x)) (CP.list_of_conjs p) in  *)
+          (* WN : code below seems redundant *)
+          (* let pres,posts = List.split (List.concat (List.map (fun (a1,a2,a3) ->  *)
+          (*     if Gen.BList.mem_eq CP.equalFormula a1 rels *)
+          (*     then [(a3,a2)] else []) triples)) in *)
+          let post = p in
+          let pre = CP.conj_of_list (List.map (fun (_,_,pre) -> pre) triples) no_pos in
+          let () = x_tinfo_hp (add_str "pre" (!CP.print_formula)) pre no_pos in
+          let () = x_tinfo_hp (add_str "post" (!CP.print_formula)) post no_pos in
+          (post,[pre],[])
+        with _ -> (CP.mkTrue no_pos,[],[])
       else
         let rels = CP.get_RelForm p in
         let pres,posts = List.split (List.concat (List.map (fun (a1,a2,a3) -> 

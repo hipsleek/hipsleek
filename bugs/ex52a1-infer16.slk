@@ -6,8 +6,8 @@ relation R(node a).
 HeapPred H(node a).
 
 // (5) valid
-//infer[R,z,inf_p_40]
-infer[R,z]
+infer[R,z,inf_p_40]
+//infer[R,z]
 R(fld5) &
 q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & x!=null
 |-x!=z & inf_p_40=z &fld5=null.

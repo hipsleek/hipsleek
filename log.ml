@@ -312,6 +312,7 @@ class last_commands =
     val mutable last_is_sleek = false
     val mutable sleek_no = -1
     val mutable mona_cnt = 0
+    val mutable z3_cnt = 0
     val mutable oc_cnt = 0
     val mutable cache_cnt = 0
     val sleek_stk = new Gen.stack_noexc (-1,-1) (fun (a,_) -> string_of_int a) (fun (a,_) (b,_) -> a==b)
@@ -321,18 +322,23 @@ class last_commands =
       match last_proof with
       | None -> 0
       | Some n -> n.log_id
-    method count_prover pt =
-      match pt with
-      | OmegaCalc -> oc_cnt <- oc_cnt+1 
-      | Mona -> mona_cnt <- mona_cnt+1
-      | _ -> ()
+    method count_prover e pt =
+      if (e.log_cache) then cache_cnt <- cache_cnt+1
+      else
+        begin
+          match pt with
+          | OmegaCalc -> oc_cnt <- oc_cnt+1 
+          | Mona -> mona_cnt <- mona_cnt+1
+          | Z3 -> z3_cnt <- z3_cnt+1
+          | _ -> ()
+        end
     method set entry =
       let () = last_is_sleek <- false in
       let cmd = entry.log_type in
       let ans = Some entry in
       let () = last_proof <- ans in
       let res = entry.log_res in
-      self # count_prover entry.log_prover;
+      self # count_prover entry entry.log_prover;
       let () = match res with
         | PR_exception | PR_timeout -> 
           begin
@@ -400,9 +406,15 @@ class last_commands =
         | _ -> Debug.info_pprint ("Cannot find sleek failure for "^no) no_pos
     (* print_endline ("!!!! WARNING : last sleek log " ^ (pr_id no)); *)
     method dump_prover_cnt =
+      let print_cnt info cnt =
+        if cnt>0 then
+          Debug.info_hprint (add_str info string_of_int) cnt no_pos
+      in
       begin
-        Debug.info_hprint (add_str "Number of MONA calls" string_of_int) mona_cnt no_pos;
-        Debug.info_hprint (add_str "Number of Omega calls" string_of_int) oc_cnt no_pos;
+        print_cnt "Number of MONA calls" mona_cnt;
+        print_cnt "Number of Omega calls" oc_cnt;
+        print_cnt "Number of Z3 calls" z3_cnt;
+        print_cnt "Number of Cache calls" cache_cnt;
         print_endline_quiet ""
       end
 

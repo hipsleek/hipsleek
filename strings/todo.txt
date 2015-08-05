@@ -482,7 +482,7 @@ do_all_eq inp2 : ((1*2)+3)-1
 do_all_eq@2 EXIT:( aaa+1, 2+3)
 
 ==================================================================
-# ex5a.slk 
+# ex5a.slk (FIXED by Andreea)
 
 # must subs hole before calling xpure..
 
@@ -604,7 +604,7 @@ Residue:
  [[ COND ==>  BaseCaseUnfold]]
  CEX:true
 ==================================================================
-# ex8e4.ss
+# ex8e4.ss (FIXED)
 
 ERROR: at _0:0_0:0
 Message: Can not find flow of str
@@ -667,20 +667,20 @@ process_one_match@2 EXIT: Prio:1
   ]
 
 ==================================================================
-# ex9e1.slk
+# ex8e4.slk -dre "incr_fixpt_view" (FIXED)
 
-Given:
+# bug with proc below..
 
- pred llN<n:int> == extends ll<> with size[REC]<n> .
-
-Derived:
-
-   view llN<n:int>= 
-    EList
-      :EBase 
-         (* lbl: *){10}->emp&self=null & n=0&{FLOW,(1,26)=__flow#E}[]
-      || :EBase 
-            exists (Expl)[](Impl)[Anon_85; 
+!!! **iast.ml#2142:XXX:0v.view_name:WAITS
+!!! **iast.ml#2160:XXX:view:WAIT
+!!! **iast.ml#2161:XXX:a:[WAIT]
+!!! **iast.ml#2160:XXX:view:memLoc
+!!! **iast.ml#2161:XXX:a:[memLoc]
+(==astsimp.ml#2575==)
+incr_fixpt_view@1
+incr_fixpt_view inp1 :[__Exc,__Error,__MayError,__Fail,int_ptr_ptr,int_ptr,lock,barrier,thrd,__RET,__ArrBoundErr,__DivByZeroErr,Object,String,str]
+incr_fixpt_view inp2 :[WAITS,WAIT,memLoc,DDD]
+incr_fixpt_view@1 EXIT:WAITS
             p_86](ex)[](* lbl: *){11}->(exists n_87: (* lbl: *){11}->
             self::node<Anon_85,p_86>@M * p_86::llN<n_87>@M&
             self!=null & n=n_87+1 & 0<=n_87&{FLOW,(1,26)=__flow#E}[]

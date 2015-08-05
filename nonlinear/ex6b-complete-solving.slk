@@ -1,0 +1,24 @@
+
+
+//(2)
+checkentail b>=1 & a=1*2+3 |- a*b>=1.
+print residue.
+
+checkentail b>=1 & a=5 |- a*b>=1.
+print residue.
+
+checkentail b>=1 & a=c |- a*b>=1.
+print residue.
+
+checkentail b>=1 & a=c & a=1 & c=2 |- a*b>=1.
+print residue.
+
+checkentail b>=1 & a+1=4 |- a*b>=1.
+print residue.
+
+
+checkentail b>=1 & a+1=2*a+4 |- a*b>=1.
+print residue.
+
+checkentail b>=1 & a+b=2*a+4 & b=2 |- a*b>=1.
+print residue.

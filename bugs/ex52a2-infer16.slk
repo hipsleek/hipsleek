@@ -1,0 +1,65 @@
+data node{
+ node next;
+}.
+
+relation R(node a).
+relation R2(int a,int b).
+HeapPred H(node a).
+
+//infer [R2] R2(x,y) & x+y>0 |- y>5.
+//print residue.
+
+// (5) valid
+//infer[z,inf_p]
+infer[z,inf_p]
+//infer[R,z]
+ R(fld5) & inf_p=null & x!=null
+     |- x!=z & inf_p=z //& fld5=null
+  .
+
+//infer [x] x=y+1 |- y>0.
+
+print residue.
+
+/*
+# ex52a2.slk
+
+$ compare with ex52a3.slk and ex52a4.slk
+
+Got:
+   ((z=0 & fld5=null) 
+   | (fld5!=null & inf_p!=0) 
+   | (fld5=null & inf_p!=0 & z!=0)))
+
+Expected solution:
+  R(fld5)--> fld5=null
+ inferred pure [z,inf_p]: [(z=0 | (z!=0 & inf_p!=0))]
+
+
+
+Entail (1) : Fail.(may) cause:AndR[ x!=null |-  x!=z. LOCS:[15;16;17];  inf_p=null & x!=null |-  inf_p=z. LOCS:[15;16;17];  R(fld5) |-  fld5=null. LOCS:[13;17] (may-bug).]
+
+==omega.ml#1151==)
+infer_pure_m_1@6@5@4@3
+infer_pure_m_1 inp1 :estate :( pr_entail_state_short : emp&x!=null & inf_p=null & R(fld5)&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ es_infer_vars: [z; inf_p]
+ es_infer_vars_rel: [R],[z,inf_p])
+infer_pure_m_1 inp2 :lhs xpure : true & x!=null & inf_p=null
+infer_pure_m_1 inp3 :lhs xpure0 : x!=null & inf_p=null & R(fld5)
+infer_pure_m_1 inp4 :rhs xpure : fld5=null & inf_p=z & x!=z
+infer_pure_m_1 inp5 :inf vars :[fld5,z,inf_p]
+infer_pure_m_1@6 EXIT:(new es,inf pure,rel_ass) :(None,Some( ((z=0 & fld5=null) | (fld5!=null & inf_p!=0) | (fld5=null & inf_p!=0 & z!=0))),[])
+
+(==infer.ml#1572==)
+infer_pure_m_1@5@4@3
+infer_pure_m_1 inp1 :estate :( pr_entail_state_short : emp&x!=null & inf_p=null & R(fld5)&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ es_infer_vars: [z; inf_p]
+ es_infer_vars_rel: [R],[z,inf_p])
+infer_pure_m_1 inp2 :lhs xpure : R(fld5) & x!=null & inf_p=null
+infer_pure_m_1 inp3 :lhs xpure0 : x!=null & inf_p=null & R(fld5)
+infer_pure_m_1 inp4 :rhs xpure : fld5=null & inf_p=z & x!=z
+infer_pure_m_1 inp5 :inf vars :[z,inf_p]
+infer_pure_m_1@5 EXIT:(new es,inf pure,rel_ass) :(None,None,[])
+*/

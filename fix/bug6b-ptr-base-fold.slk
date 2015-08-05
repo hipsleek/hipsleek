@@ -1,0 +1,32 @@
+data arr_int {
+  int val;
+  arr_int next;
+}.
+
+pred arr_seg<p,n> == self=p & n=0
+  or self::arr_int<_,q>*q::arr_seg<p,n-1>
+  inv n>=0.
+
+pred arr_seg2<p,n> == self=p & n=0
+  or self::arr_int<5,q>*q::arr_seg2<p,n-1>
+  inv n>=0.
+
+ checkentail 
+  aaa::arr_seg<p,n> 
+   |-  (exists nn: q::arr_seg<p,n> & aaa=q & nn=0) 
+  .
+expect Valid.
+
+ checkentail 
+  aaa::arr_seg<p,n> 
+   |-  (exists nn: aaa::arr_seg<p,n> & nn=0) 
+  .
+expect Valid.
+
+print residue.
+
+ checkentail 
+  aaa::arr_seg<p,n> 
+   |-  (exists nn: bbb::arr_seg<p,n> & nn=0) 
+  .
+expect Fail. 

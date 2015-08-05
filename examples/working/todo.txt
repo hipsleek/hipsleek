@@ -1442,8 +1442,135 @@ Total verification time: 168.22 second
 	Number of false contexts: 0
 
 ====================================================================
+Total number of errors: 14 in files:
+  label-dll.slk({E1#Valid}) sleek7.slk({E1#Valid},{E10#Valid},{E2#Valid},{E3#Valid},{E6#Valid},{E7#Valid},{E8#Valid}) sleek8.slk({E1#Valid},{E12#Valid},{E13#Valid},{E14#Valid},{E16#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) sleek8.slk({E1#Valid},{E12#Valid},{E13#Valid},{E14#Valid},{E16#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) sleek9.slk({E1#Valid},{E3#Valid},{E4#Valid}) sleek-err-exc.slk({E1#Fail},{E2#Fail},{E3#Fail},{E4#Fail}) lemmas/lseg.slk({L3#Valid}) lemmas/app-tail.slk(no result  for {E}) lemmas/lseg_case.slk({L2#Valid},{L3#Valid},{L4#Valid},{L5#Valid},{L6#Valid}) lemmas/ll_tail.slk({E1#Valid}) lemmas/sll_tailL.slk({L1#Valid}) fracperm/split_simple.slk({E6#Valid},{E7#Valid},{E8#Valid}) veribsync/barrier-static.slk({E4#Valid}) veribsync/barrier-dynamic2.slk({E1#Valid},{E13#Valid},{E2#Fail},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid},{E9#Fail}).
+bytecode
+========
+All test results were as expected.
+Total verification time: 80.47 second
+	Time spent in main process: 50.68 second
+	Time spent in child processes: 29.79 second
+	Number of false contexts: 0
+native
+======
+All test results were as expected.
+Total verification time: 42.11 second
+	Time spent in main process: 13.39 second
+	Time spent in child processes: 28.72 second
+	Number of false contexts: 0
+
+Total number of errors: 26 in files:
+ error at: vperm/ho_vperm_check.ss test1
+error at: vperm/ho_vperm_check.ss test3
+error at: vperm/task_decompose.ss creator
+error at: parahip/ordered-locking.ss main
+error at: parahip/unordered-locking.ss main
+error at: veribsync/barrier-static-consistency.ss main
+error at: conchip/mapreduce.ss count_helper
+error at: conchip/mapreduce.ss countList
+error at: conchip/mapreduce.ss destroyList
+error at: conchip/mapreduce.ss main
+error at: conchip/mapreduce.ss mapper_helper
+error at: conchip/mapreduce.ss mapper
+error at: conchip/mapreduce.ss reducer1
+error at: conchip/mapreduce.ss reducer2
+error at: conchip/multi-join2.ss main
+error at: conchip/multi-join2.ss thread1
+error at: conchip/multi-join2.ss thread2
+error at: conchip/latch-exp2.ss main
+error at: conchip/latch-exp2.ss thread1
+error at: conchip/deadpool.ss destroyDeadPool
+error at: conchip/deadpool.ss forkHelper
+error at: conchip/deadpool.ss forkThreads
+error at: conchip/deadpool.ss joinHelper
+error at: conchip/deadpool.ss joinThreads
+error at: conchip/deadpool.ss main
+error at: conchip/deadpool.ss thread
+.
+Total verification time: 357.17 second
+	Time spent in main process: 165.69 second
+	Time spent in child processes: 191.48 second
+	Number of false contexts: 413
 ====================================================================
+-tp z3
+
+Starting hip-sleek tests:
+All test results were as expected.
+Total verification time: 164.17 second
+	Time spent in main process: 105.60 second
+	Time spent in child processes: 58.57 second
+	Number of false contexts: 0
+
+(Acer)
+Total verification time: 50.16 second
+	Time spent in main process: 33.91 second
+	Time spent in child processes: 16.25 second
+	Number of false contexts: 0
+
+-tp oc
+All test results were as expected.
+Total verification time: 169.47 second
+	Time spent in main process: 109.52 second
+	Time spent in child processes: 59.95 second
+	Number of false contexts: 0
+
+(Acer)
+All test results were as expected.
+Total verification time: 49.98 second
+	Time spent in main process: 33.68 second
+	Time spent in child processes: 16.30 second
+	Number of false contexts: 0
+
+hip -tp oc
+---
+Total verification time: 1008.97 second
+	Time spent in main process: 446.85 second
+	Time spent in child processes: 562.11 second
+	Number of false contexts: 413
+
+Total verification time: 1006.55 second (default)
+	Time spent in main process: 447.31 second
+	Time spent in child processes: 559.24 second
+	Number of false contexts: 413
+
+-tp z3
+Total verification time: 501.45 second
+	Time spent in main process: 461.00 second
+	Time spent in child processes: 40.45 second
+	Number of false contexts: 413
+
+hip with -tp oc --eps (26 failures on concurrency examples)
+---------------------
+Total verification time: 460.53 second
+	Time spent in main process: 406.09 second
+	Time spent in child processes: 54.44 second
+	Number of false contexts: 413
+
+Total verification time: 460.96 second (default)
+	Time spent in main process: 406.58 second
+	Time spent in child processes: 54.38 second
+	Number of false contexts: 413
+
+-tp z3
+Total verification time: 435.56 second
+	Time spent in main process: 404.59 second
+	Time spent in child processes: 30.98 second
+	Number of false contexts: 413
+
+
 ====================================================================
+All test results were as expected.
+Total verification time: 99.18 second
+	Time spent in main process: 67.60 second
+	Time spent in child processes: 31.58 second
+	Number of false contexts: 61
+
+--eps -tp z3
+Total verification time: 878.75 second
+	Time spent in main process: 813.09 second
+	Time spent in child processes: 65.66 second
+	Number of false contexts: 413
+
 ====================================================================
 ====================================================================
 ====================================================================

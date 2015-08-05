@@ -1,0 +1,19 @@
+data node {
+  node f0;
+}.
+
+
+pred foo<y:node> ==
+  self::node<y> * y::node<_>@L.
+
+checkentail x::node<a>*a::node<b> |- (exists ccc: x::foo<ccc> * ccc::node<_>).
+print residue.
+// fail due to x::node<..> being matched first?
+expect Valid.
+
+/*
+# ex13a.slk
+
+
+*/
+
