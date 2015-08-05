@@ -224,7 +224,6 @@ and h_formula = (* heap formula *)
   | HEmp (* emp for classical logic *)
   | HVar of CP.spec_var * (CP.spec_var list)
 
-
 and h_formula_star = {  h_formula_star_h1 : h_formula;
                         h_formula_star_h2 : h_formula;
                         h_formula_star_pos : loc }
@@ -16051,8 +16050,8 @@ let norm_struc_with_lexvar is_primitive is_tnt_inf uid_opt struc_f =
   if is_primitive then norm_struc_with_lexvar is_primitive is_tnt_inf uid_opt struc_f
   else
     let pr = !print_struc_formula in
-    Debug.no_1 "norm_struc_with_lexvar" pr pr 
-      (fun _ -> norm_struc_with_lexvar is_primitive is_tnt_inf uid_opt struc_f) struc_f
+    Debug.no_2 "norm_struc_with_lexvar" string_of_bool pr pr
+      (fun _ _ -> norm_struc_with_lexvar is_primitive is_tnt_inf uid_opt struc_f) is_tnt_inf struc_f
 
 (* TNT: Add inf_obj from cmd line *)
 let rec add_inf_cmd_struc is_primitive f =

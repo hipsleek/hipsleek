@@ -171,6 +171,7 @@ let rec string_of_typed_var_list l = match l with
   | h::t -> (string_of_typed_var h) ^ ";" ^ (string_of_typed_var_list t)
 
 let string_of_imm imm = match imm with
+  | P.NoAnn -> ""
   | P.ConstAnn(Accs) -> "@A"
   | P.ConstAnn(Imm) -> "@I"
   | P.ConstAnn(Lend) -> "@L"

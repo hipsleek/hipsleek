@@ -15,7 +15,7 @@ let trailer_num_list = ref []
 
 let change_flow = ref false
 
-let abs_int = ref 7
+let abs_int = ref 3
 let lend_int = ref 2
 let imm_int = ref 1
 let mut_int = ref 0
@@ -250,6 +250,7 @@ let is_type_var t =
 
 
 let imm_var_sufix = "_imm"
+let imm_var_prefix = "ann"
 
 let is_program_pointer (name:ident) = 
   let slen = (String.length name) in
@@ -1055,6 +1056,7 @@ let allow_imm = ref false (*imm will delay checking guard conditions*)
 let allow_imm_inv = ref true (*imm inv to add of form @M<:v<:@A*)
 let allow_imm_subs_rhs = ref true (*imm rhs subs from do_match*)
 let allow_field_ann = ref false
+let allow_imm_norm = ref false
 
 let remove_abs = ref true
 let allow_array_inst = ref false
@@ -1072,6 +1074,14 @@ let int2imm_conv = ref true
 let aggresive_imm_inst = ref false 
 
 let imm_add = ref true
+
+let allow_noann = ref false
+
+(* infer imm sequatially: first pre, then post *)
+let imm_seq = ref true 
+
+(* infer imm pre/post simultaneously *)
+let imm_sim = ref false
 
 (*Since this flag is disabled by default if you use this ensure that 
   run-fast-test mem test cases pass *)
@@ -1403,6 +1413,8 @@ type infer_type =
   | INF_CLASSIC (* For infer[@leak] *)
   | INF_PAR (* For infer[@par] inside par *)
   | INF_VER_POST (* For infer[@ver_post] for post-checking *)
+  | INF_IMM_PRE (* For infer [@imm_pre] for inferring imm annotation on pre *)
+  | INF_IMM_POST (* For infer [@imm_post] for inferring imm annotation on post *)
 
 (* let int_to_inf_const x = *)
 (*   if x==0 then INF_TERM *)
@@ -1435,7 +1447,8 @@ let string_of_inf_const x =
   | INF_CLASSIC -> "@leak"
   | INF_PAR -> "@par"
   | INF_VER_POST -> "@ver_post"
-
+  | INF_IMM_PRE -> "@imm_pre"
+  | INF_IMM_POST -> "@imm_post"
 (* let inf_const_to_int x = *)
 (*   match x with *)
 (*   | INF_TERM -> 0 *)
@@ -1545,6 +1558,8 @@ class inf_obj  =
         helper "@leak"          INF_CLASSIC;
         helper "@par"           INF_PAR;
         helper "@ver_post"      INF_VER_POST; (* @ato, @arr_to_var *)
+        helper "@imm_pre"       INF_IMM_PRE;
+        helper "@imm_post"      INF_IMM_POST;
         (* let x = Array.fold_right (fun x r -> x || r) arr false in *)
         if arr==[] then failwith  ("empty -infer option :"^s) 
       end
@@ -1565,8 +1580,10 @@ class inf_obj  =
     method is_term_wo_post = self # get INF_TERM_WO_POST
     (* termination inference wo post-condition *)
     method is_pre  = self # get INF_PRE
+    method is_pre_imm = self # get INF_IMM_PRE
     (* pre-condition inference *)
     method is_post  = self # get INF_POST
+    method is_post_imm = self # get INF_IMM_POST
     (* post-condition inference *)
     method is_ver_post  = self # get INF_VER_POST
     method is_field_imm = self # get INF_FIELD_IMM

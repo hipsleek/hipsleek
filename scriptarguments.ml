@@ -316,6 +316,8 @@ let common_arguments = [
   ("--oc-dis-adv-simp", Arg.Clear Globals.oc_adv_simplify,"disable oc advancde simplification");
   ("--oc-en-adv-simp", Arg.Set Globals.oc_adv_simplify,"enable oc advanced simplification");
   ("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
+  ("--en-imm-norm", Arg.Set Globals.allow_imm_norm, "enable normalization of immutability annotations (default)");
+  ("--dis-imm-norm", Arg.Clear Globals.allow_imm_norm, "disable normalization of immutability annotations");
   ("--field-imm", Arg.Unit ( fun _ ->
        Globals.allow_field_ann := true;
        Globals.imm_merge := true;
@@ -324,7 +326,8 @@ let common_arguments = [
   ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
   ("--dis-field-imm", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
   ("--allow-array-inst", Arg.Set Globals.allow_array_inst,"Allow instantiation of existential arrays");
-  ("--imm-remove-abs", Arg.Set Globals.remove_abs,"remove @A nodes from formula (incl nodes with all fields ann with @A)");
+  ("--en-remove-abs", Arg.Set Globals.remove_abs,"remove @A nodes from formula (incl nodes with all fields ann with @A)");
+  ("--dis-remove-abs", Arg.Clear Globals.remove_abs,"disable removing @A nodes from formula (incl nodes with all fields ann with @A)");
   ("--en-imm-merge", Arg.Set Globals.imm_merge,"try to merge aliased nodes");
   ("--dis-imm-merge", Arg.Clear Globals.imm_merge,"don't merge aliased nodes");
   ("--en-weak-imm", Arg.Set Globals.imm_weak,"enable weak instatiation (<:)");
@@ -335,6 +338,12 @@ let common_arguments = [
   ("--dis-aggresive-immf-inst", Arg.Clear Globals.aggresive_imm_inst,"don't add lhs_imm<:rhs_imm, when lhs_imm is unrestricted");
   ("--en-imm-simpl", Arg.Set Globals.imm_add,"simplify imm addition");
   ("--dis-imm-simpl", Arg.Clear Globals.imm_add,"disable imm addition simplification");
+  ("--imm-inf-seq", Arg.Unit (fun _ ->
+       Globals.imm_seq := true; 
+       Globals.imm_sim := false;), "infer imm pre/post sequentially");
+  ("--imm-inf-sim",  Arg.Unit (fun _ ->
+       Globals.imm_sim := true; 
+       Globals.imm_seq := false;), "infer imm pre/post simultaneously ");
   ("--mem", Arg.Unit (fun _ -> 
        Globals.allow_mem := true; 
        Globals.allow_field_ann := true;),

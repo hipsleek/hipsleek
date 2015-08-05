@@ -1101,7 +1101,7 @@ let extend_proc (temp_procs : I.proc_decl list) (decl : I.proc_decl) : I.proc_de
   in
   { decl with I.proc_body = new_body }
 
-(** Translate an input program into an intermediate input program with global variables as parameters 
+(** Translate an input program into an intermediate input program with global variables as parameters
     	@param prog current program declaration
     	@return new program declaration *)
 let trans_global_to_param (prog : I.prog_decl) : I.prog_decl =

@@ -2966,3 +2966,6 @@ let partition_mix_formula (mf: mix_formula) ff : mix_formula * mix_formula =
     let mf = memoise_add_pure_N_m (mkMTrue_no_mix ()) f in
     let fmf, omf = List.partition (fun m -> ff m) mf in
     OnePF (pure_of_mix (MemoF fmf)), OnePF (pure_of_mix (MemoF omf))
+
+let update_pure_of_mix f (mf: mix_formula) =
+  transform_mix_formula (nonef, nonef, f, somef, somef) mf
