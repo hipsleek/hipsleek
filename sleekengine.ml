@@ -130,6 +130,7 @@ let iobj_def =  {I.data_name = "Object";
                  I.data_pos = no_pos;
                  I.data_parent_name = "";
                  I.data_invs = []; (* F.mkTrue no_pos; *)
+                 I.data_pure_inv = None;
                  I.data_is_template = false;
                  I.data_methods = [] }
 
@@ -138,6 +139,7 @@ let iexc_def =  {I.data_name = raisable_class;
                  I.data_pos = no_pos;
                  I.data_parent_name = "Object";
                  I.data_invs = []; (* F.mkTrue no_pos; *)
+                 I.data_pure_inv = None;
                  I.data_is_template = false;
                  I.data_methods = [] }
 
@@ -146,6 +148,7 @@ let ithrd_def =  {I.data_name = Globals.thrd_name ;
                   I.data_pos = no_pos;
                   I.data_parent_name = "Object";
                   I.data_invs = []; (* F.mkTrue no_pos; *)
+                  I.data_pure_inv = None;
                   I.data_is_template = false;
                   I.data_methods = [] }
 
@@ -176,6 +179,7 @@ let cobj_def = { Cast.data_name = "Object";
                  Cast.data_pos = no_pos;
                  Cast.data_parent_name = "";
                  Cast.data_invs = [];
+                 Cast.data_pure_inv = None;
                  Cast.data_methods = [] }
 
 let cprog = ref { 

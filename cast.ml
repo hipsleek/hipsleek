@@ -59,6 +59,7 @@ and data_decl = {
   data_fields : (typed_ident * (ident list) (* data_field_ann *)) list;
   data_parent_name : ident;
   data_invs : F.formula list;
+  data_pure_inv : P.formula option;
   data_methods : proc_decl list; }
 
 and ba_prun_cond = Gen.Baga(P.PtrSV).baga * formula_label

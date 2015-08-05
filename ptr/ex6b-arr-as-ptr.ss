@@ -3,11 +3,11 @@
 data arr_int {
   int val;
   arr_int next; (* this is virtual link *)
-}  inv self=next+1;
+}  inv self+1=next;
 
 arr_seg<p,n> == self=p & n=0
   or self::arr_int<_,q>*q::arr_seg<p,n-1>
-  inv n>=0  & self=p+n;
+  inv n>=0  &  self+n=p;
 
 lemma self::arr_seg<p,n> & n=a+b & a,b>=0 <--> 
   exists(q: self::arr_seq<q,a> * q::arr_seq<p,b>)
@@ -25,7 +25,7 @@ int get_arr(arr_int a)
   ensures res=v;
 
 arr_int arr_add(arr_int a, int i)
-  requires a::arr_int<v,_>@L
+  requires a::arr_int<v,_>@L & i>=0
   ensures res=a+i
 
 arr_seg2<p,n> == self=p & n=0

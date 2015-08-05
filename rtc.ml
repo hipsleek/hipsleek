@@ -251,6 +251,7 @@ and compile_pre (prog : C.prog_decl) (proc : C.proc_decl) (pre : CF.formula) jav
                  I.data_pos = no_pos;
                  I.data_parent_name = "Object";
                  I.data_invs = [];
+                 I.data_pure_inv = None;
                  I.data_is_template = false;
                  I.data_methods = check_proc :: disj_procs } in
     let () = check_proc.I.proc_data_decl <- Some ddef in
@@ -334,6 +335,7 @@ and compile_post (prog : C.prog_decl) (proc : C.proc_decl) (post : CF.formula) (
                  I.data_pos = no_pos;
                  I.data_parent_name = "Object";
                  I.data_invs = [];
+                 I.data_pure_inv = None;
                  I.data_is_template = false;
                  I.data_methods = check_proc :: disj_procs } in
     let () = check_proc.I.proc_data_decl <- Some ddef in

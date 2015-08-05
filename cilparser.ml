@@ -2283,12 +2283,14 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
                  Iast.data_pos = no_pos;
                  Iast.data_parent_name = "";
                  Iast.data_invs = [];
+                 Iast.data_pure_inv = None;
                  Iast.data_is_template = false;
                  Iast.data_methods = []} in
   let string_def = {Iast.data_name = "String";
                     Iast.data_pos = no_pos;
                     Iast.data_fields = [];
                     Iast.data_parent_name = "Object";
+                    Iast.data_pure_inv = None;
                     Iast.data_invs = [];
                     Iast.data_is_template = false;
                     Iast.data_methods = []} in

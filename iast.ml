@@ -59,6 +59,7 @@ and data_decl = {
   data_parent_name : ident;
   data_invs : F.formula list;
   data_pos : loc;
+  data_pure_inv : P.formula option;
   data_is_template: bool;
   data_methods : proc_decl list }
 
@@ -2289,11 +2290,12 @@ and contains_field_ho (e:exp) : bool =
 (* smart constructors *)
 
 (* WN : may want to add pos info *)
-let mkDataDecl name fields parent_name invs is_template methods =
+let mkDataDecl ?(pure_inv=None) name fields parent_name invs is_template methods =
   { data_name = name;
     data_fields = fields;
     data_parent_name = parent_name;
     data_invs = invs;
+    data_pure_inv = pure_inv;
     data_pos = no_pos;
     data_is_template = is_template;
     data_methods = methods }
@@ -3068,6 +3070,7 @@ let b_data_constr bn larg=
       data_fields = List.map (fun c-> c,no_pos,false,[] (*F_NO_ANN *)) larg ;
       data_parent_name = if bn = b_datan then "Object" else b_datan;
       data_invs =[];
+      data_pure_inv = None;
       data_is_template = false;
       data_methods =[]; }
   else report_error no_pos ("the first field of barrier "^bn^" is not state")

@@ -559,15 +559,31 @@ and gather_type_info_exp_x prog a0 tlist et =
     let (n_tlist3,_) = must_unify_expect t3 Int n_tlist2 pos in
     let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tlist3 in
     (n_tl, Bptyp)
-  | IP.Add (a1, a2, pos) -> 
+  | IP.Add (a1, a2, pos) ->
+    let unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos =
+      if is_node_typ t1 then
+        let (n_tlist2,t2) = must_unify_expect t2 Int n_tl2 pos in
+        (n_tlist2,t1)        
+      else if is_node_typ t2 then
+        let (n_tlist2,t2) = must_unify_expect t1 Int n_tl2 pos in
+        (n_tlist2,t2)
+      else 
+        let (n_tlist1,t1) = must_unify_expect t1 et n_tl2 pos in
+        let (n_tlist2,t2) = must_unify_expect t2 t1 n_tlist1 pos in
+        (n_tlist2,t2)
+    in
     let todo_unk:Globals.typ = must_unify_expect_test_2 et NUM Tree_sh tlist pos in (* UNK, Int, Float, NUm, Tvar *)
     let (new_et, n_tl) = fresh_tvar tlist in          
+    let (new_et2, n_tl) = fresh_tvar n_tl in          
     let nt = List.find (fun (v,en) -> en.sv_info_kind = new_et) n_tl in 
     let (tmp1,tmp2)=nt in           
+    let () = x_tinfo_hp (add_str "add(et)" string_of_typ) et no_pos in
+    let () = x_tinfo_hp (add_str "add(new_et)" string_of_typ) new_et no_pos in
     let (n_tl1,t1) = gather_type_info_exp_x prog a1 n_tl new_et in (* tvar, Int, Float *)
-    let (n_tl2,t2) = gather_type_info_exp_x prog a2 n_tl1 new_et in
-    let (n_tlist1,t1) = must_unify_expect t1 et n_tl2 pos in
-    let (n_tlist2,t2) = must_unify_expect t2 t1 n_tlist1 pos in
+    let () = x_tinfo_hp (add_str "add(t1)" string_of_typ) t1 no_pos in
+    let (n_tl2,t2) = gather_type_info_exp_x prog a2 n_tl1 new_et2 in
+    let () = x_tinfo_hp (add_str "add(t2)" string_of_typ) t2 no_pos in
+    let (n_tlist2,t2) = unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos in
     let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tlist2 in
     (n_tl,t2)
   | IP.Subtract (a1, a2, pos) | IP.Max (a1, a2, pos) | IP.Min (a1, a2, pos) 

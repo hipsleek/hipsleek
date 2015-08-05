@@ -1051,6 +1051,7 @@ data_decl:
             data_fields = db;
             data_parent_name="Object"; (* Object; *)
             data_invs = [];
+            data_pure_inv = None;
             data_is_template = false;
             data_methods = [];} ]];
 
@@ -1061,6 +1062,7 @@ template_data_decl:
             data_fields = db;
             data_parent_name="Object"; (* Object; *)
             data_invs = [];
+            data_pure_inv = None;
             data_is_template = true;
             data_methods = [];} ]];
 
@@ -3072,12 +3074,14 @@ hprogn:
                     data_fields = [];
                     data_parent_name = "";
                     data_invs = []; (* F.mkTrue no_pos; *)
+                    data_pure_inv = None;
                     data_is_template = false;
                     data_methods = [] } in
     let string_def = { data_name = "String";
                        data_fields = [];
                        data_pos = no_pos;
                        data_parent_name = "Object";
+                       data_pure_inv = None;
                        data_invs = []; (* F.mkTrue no_pos; *)
                        data_is_template = false;
                        data_methods = [] } in
@@ -3203,6 +3207,7 @@ class_decl:
                    data_parent_name = un_option par "Object";
                    data_fields = t1;
                    data_invs = t2;
+                   data_pure_inv = None;
                    data_is_template = false;
                    data_methods = t3 } in
       let todo_unk = List.map (fun d -> set_proc_data_decl d cdef) t3 in
