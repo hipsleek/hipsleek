@@ -6860,13 +6860,13 @@ let fresh_data_v is_pre f0=
       let hds, hvs, hrs = get_hp_rel_formula f0 in
       let v_sps1 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_data_arguments)) [] hds in
       let v_sps2 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_view_arguments)) v_sps1 hvs in
-      (* sleek7. strings/ex9ec*)
-      (* if is_pre then *)
-      (*   let quans = CP.diff_svl quans v_sps2 in *)
-      (*   add_quantifiers quans f0, v_sps2 *)
-      (* else *)
+      (* sleek7. strings/ex9ec *)
+      if is_pre then
+        let quans = CP.diff_svl quans v_sps2 in
+        add_quantifiers quans f0, v_sps2
+      else
       (*   f, CP.diff_svl v_sps2 quans *)
-      f, CP.diff_svl (CP.remove_dups_svl v_sps2) quans
+        f, CP.diff_svl (CP.remove_dups_svl v_sps2) quans
     | Or orf ->
           let n_f1, impl_svl1 = (helper orf.formula_or_f1) in
           let n_f2, impl_svl2 = (helper orf.formula_or_f2) in
@@ -6891,7 +6891,7 @@ let rec struc_formula_trans_heap_node pre_quans formula_fct f=
     let () =  Debug.ninfo_hprint (add_str " b.formula_struc_base pre" (!print_formula)) b.formula_struc_base no_pos in
     let () =  Debug.ninfo_hprint (add_str "f1 pre" (!print_formula)) f1 no_pos in
     (* Loc: to split into case spec *)
-    let f2, new_pre_quans = fresh_data_v true f1(* b.formula_struc_base *) in
+    let _, new_pre_quans = fresh_data_v true f1(* b.formula_struc_base *) in
     let pre_cur_quans = CP.remove_dups_svl (b.formula_struc_implicit_inst@(new_pre_quans)) in
     let pre_quans1 = CP.remove_dups_svl (pre_quans@pre_cur_quans) in
     let () =  Debug.ninfo_hprint (add_str "pre_quans1" (!CP.print_svl)) pre_quans1 no_pos in
@@ -6899,7 +6899,7 @@ let rec struc_formula_trans_heap_node pre_quans formula_fct f=
     EBase {b with
            formula_struc_continuation = Gen.map_opt (recf pre_quans1) b.formula_struc_continuation;
            formula_struc_implicit_inst =  pre_cur_quans ;
-           formula_struc_base=(* formula_trans_heap_node fct *)f2;
+           formula_struc_base=(* formula_trans_heap_node fct *)f1;
           }
   | EAssume ea-> begin
       let f1 = formula_fct ea.formula_assume_simpl in
