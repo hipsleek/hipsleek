@@ -100,7 +100,31 @@ WARNING: _0:0_0:0:Z3 error message: (error "line 3427 column 29: unknown functio
 # maybe we can try with simpler examples involving
   2nd-order verification..
 =====================================================================
+# ex3b2.ss
+
+  infer [R]
+  requires x::ll<>
+  ensures x::lseg<p>*p::ll<> & R(res,p);
+
+GOT
+===
+!!! **pi.ml#775:>>>>>>>>>>> (bef postprocess): <<<<<<<<<
+!!! **pi.ml#776:>>REL POST:  R(res,p)
+!!! **pi.ml#777:>>POST:  (not(res) | (p=null & res))
+!!! **pi.ml#778:>>REL PRE :  true
+!!! **pi.ml#779:>>PRE :  true
+
+Can we get a stronger:
+    !!! **pi.ml#777:>>POST:  (not(res) & p!=null | (p=null & res))
 =====================================================================
+# ex3b1.ss
+
+  requires x::ll<>
+  ensures x::lseg<p>*p::ll<> & (res & p=null | !res & p!=null);
+
+Above verifies!
+
+Above seems a more concise spec to aim for ..
 =====================================================================
 =====================================================================
 =====================================================================

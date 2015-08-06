@@ -13,11 +13,20 @@ sortll<n> == self=null
  inv true; 
 */
 
+  ll<> == self=null or self::node<_,q>*q::ll<>;
+
+  lseg<p> == self=p or self::node<_,q>*q::lseg<p>;
+
+  gg<p> == self=null or self=p or self::node<_,q>*q::gg<p>;
+
+relation R1(bool r).
+relation R2(bool r).
+
+
 bool check_ones(node x)
-  infer [H,G]
-  requires H(x)
-  ensures G(x);
-//requires x::sortll<v>@L ensures  res;
+  infer [R1,R2]
+  requires x::ll<>
+  ensures x::ll<> & R1(res) or x::lseg<p>*p::ll<> & R2(res);
 { 
   if (x==null) return true;
   else {
@@ -31,38 +40,32 @@ bool check_ones(node x)
 } 
 
 /*
-# check-ones.ss 
+# ex3c.ss
 
-Given:
-
-  infer [H,G]
-  requires H(x)
-  ensures G(x);
-
-Obtained:
-
-[ H(x_1414) ::= H(next_24_1412) * x_1414::node<val_24_1415,next_24_1412>@M
- or emp&x_1414=null
- (4,5),
- G(x_1416) ::= x_1416::node<val_24_1417,next_24_1391>@M * G(next_24_1391)
- or x_1416::node<val_24_1418,next_24_1391>@M * H(next_24_1391)
- or emp&x_1416=null
- (4,5)]
-
-Do we need to refactor G ?
-
-  H<> == self::ll<>
-  G<p> == self=null or self=p or self::node<_,q>*q::G<p>
- 
+  infer [R1,R2]
   requires x::ll<>
-  ensures  x::G<p> * p::ll<>
+  ensures x::ll<> & R1(res) or x::lseg<p>*p::ll<> & R2(res);
 
-This can be further re-factored as:
+# pure bi-abduction is not working here. is it due
+  to mutual recursion?
 
-  H<> == self::ll<>
-  G<p> == self::ll<> or self::lseg<p>*p::ll<>;
+We need to investigate. Is it due to fixcalc 
+or some other problems..
 
-  in order to reuse x::ll<> and x::lseg<p>
+*************************************
+******pure relation assumption 1 *******
+*************************************
+[RELDEFN R1: ( 1<=res) -->  R1(res),
+RELDEFN R2: ( 1<=res) -->  R2(res),
+RELDEFN R1: ( R1(res)) -->  R1(res),
+RELDEFN R2: ( R1(res)) -->  R2(res),
+RELDEFN R2: ( R2(res)) -->  R2(res),
+RELDEFN R1: ( not(res)) -->  R1(res),
+RELDEFN R2: ( not(res)) -->  R2(res)]
+*************************************
+
+!!! PROBLEM with fix-point calculation
+ExceptionFailure("split_quantifiers: invalid argument (formula_or)")Occurred!
 
 
 */
