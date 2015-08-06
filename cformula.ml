@@ -53,14 +53,17 @@ let string_of_ann_list xs = pr_list string_of_ann xs
 
 let view_prim_lst = new Gen.stack_pr pr_id (=)
 
-type typed_ident = (typ * ident)
+(* moved to globals.ml *)
+(* type typed_ident = (typ * ident) *)
 
-and mem_perm_formula = {mem_formula_exp : CP.exp;
+type mem_perm_formula = {mem_formula_exp : CP.exp;
                         mem_formula_exact : bool;
                         mem_formula_field_values : (ident * (CP.exp list)) list;
                         mem_formula_field_layout : (ident * (ann list)) list;
                         mem_formula_guards : CP.formula list;
                        }
+
+let string_of_typed_ident = pr_pair string_of_typ pr_id
 
 (* and formula_type = *)
 (*   | Simple *)

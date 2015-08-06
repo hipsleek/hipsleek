@@ -1392,6 +1392,7 @@ let mk_new_return_data_decl_from_typ (t:typ):(I.data_decl) =
     I.data_fields = new_data_fields;
     I.data_parent_name = "__RET";
     I.data_invs = [];
+    I.data_pure_inv = None;
     I.data_is_template = false;
     I.data_methods = [];
     I.data_pos = no_pos;
@@ -1457,10 +1458,10 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 
   (*let () = print_endline ("@@prog3\n"^Iprinter.string_of_program prog3^"@@prog3\n") in*)
   let prog2 = { prog3 with I.prog_data_decls =
-                             ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
-                             ::({I.data_name = error_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
-                             ::({I.data_name = mayerror_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
-                             ::({I.data_name = bfail_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
+                             ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_pure_inv = None;I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
+                             ::({I.data_name = error_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_pure_inv = None;I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
+                             ::({I.data_name = mayerror_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_pure_inv = None;I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
+                             ::({I.data_name = bfail_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_pure_inv = None;I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
                              :: prog3.I.prog_data_decls;} in
   (* let () = print_endline (exlist # string_of ) in *)
   (* let () = I.find_empty_static_specs prog2 in *)
@@ -1804,11 +1805,17 @@ and trans_data_x (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
   in
   (* let () = Debug.info_hprint (add_str "    fields:" (pr_list (pr_pair (pr_pair string_of_typ pr_id) (pr_list pr_id)))) *)
   (*     fields no_pos in *)
+  let inv_pf = match ddef.I.data_pure_inv with
+      Some f -> Some (x_add trans_pure_formula f [])  (* WN : where is type table? *)
+    | None -> None
+  in   
   let res = {
     C.data_name = ddef.I.data_name;
     C.data_pos = ddef.I.data_pos;
-    C.data_fields = fields;
+    C.data_fields = fields; (* to be made obsolete later *)
+    C.data_fields_new = List.map (fun ((t,i),v) -> (CP.mk_typed_spec_var t i,v)) fields;
     C.data_parent_name = ddef.I.data_parent_name;
+    C.data_pure_inv = inv_pf; 
     C.data_methods = List.map (trans_proc prog) ddef.I.data_methods;
     C.data_invs = [];
   } in
@@ -6443,8 +6450,8 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
       else C.Unit pos in
     let dname = CP.name_of_type base_t in
     let ddef = I.look_up_data_def 2 pos prog.I.prog_data_decls dname in
-    let rec gen_names (fn : ident) (flist : I.typed_ident list) :
-      ((I.typed_ident option) * (ident list)) =
+    let rec gen_names (fn : ident) (flist : typed_ident list) :
+      ((typed_ident option) * (ident list)) =
       (match flist with
        | [] -> (None, [])
        | f :: rest ->
@@ -6521,7 +6528,7 @@ and trans_args args =
 and trans_args_x args = trans_args_gen (List.map (fun (a,b,c) -> (Some a,b,c)) args)
 
 and trans_args_gen (args : ((C.exp option) * typ * loc) list) :
-  ((C.typed_ident list) * C.exp * (ident list)) =
+  ((typed_ident list) * C.exp * (ident list)) =
   match args with
   | arg :: rest ->
     let (rest_local_vars, rest_e, rest_names) = trans_args_gen rest
