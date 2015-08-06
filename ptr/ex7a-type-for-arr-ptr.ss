@@ -43,8 +43,11 @@ int get_arr(arr_int a)
   ensures res=v;
 
 void foo2(arr_int a,int i)
-  requires a::arr_seg<p,n> & n=10-i+5 & i>=0 & i<=10
-  ensures a::arr_seg2<q,10-i> *q::arr_seg<p,5> & q=a+(10-i)
+  requires a::arr_seg<p,n> & n=10-i+mm & i>=0 & i<=10 & mm>=0
+  ensures a::arr_seg2<q,10-i> *q::arr_seg<p,mm> & q=a+(10-i)
+  ;
+  requires a::arr_seg<p,n> & n=10-i & i>=0 & i<=10 
+  ensures a::arr_seg2<q,10-i> & q=a+(10-i) & q=p
   ;
 
 {

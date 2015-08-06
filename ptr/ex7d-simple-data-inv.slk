@@ -27,3 +27,7 @@ expect Valid.
 
 //Entail 4: Fail.(may) cause: x=1 |-  x=p+1. LOCS:[20] (may-bug)
 //Validate 4: Expecting(3)Valid BUT got : Fail_May
+
+
+checkentail x::arr_int<_,p> |- p!=null.
+expect Valid.
