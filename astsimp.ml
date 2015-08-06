@@ -2968,7 +2968,7 @@ and fill_one_base_case_x prog vd =
       }
     end
 
-and  fill_base_case prog =
+and  fill_base_case prog = (* {prog with C.prog_view_decls = List.map (fill_one_base_case prog) prog.C.prog_view_decls } *)
   let () = prog.C.prog_view_decls <- List.map (fill_one_base_case prog) prog.C.prog_view_decls in
   prog
 

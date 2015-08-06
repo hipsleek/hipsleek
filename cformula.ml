@@ -6860,11 +6860,13 @@ let fresh_data_v is_pre f0=
       let hds, hvs, hrs = get_hp_rel_formula f0 in
       let v_sps1 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_data_arguments)) [] hds in
       let v_sps2 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_view_arguments)) v_sps1 hvs in
-      if is_pre then
-        let quans = CP.diff_svl quans v_sps2 in
-        add_quantifiers quans f0, v_sps2
-      else
-        f, CP.diff_svl v_sps2 quans
+      (* sleek7. strings/ex9ec*)
+      (* if is_pre then *)
+      (*   let quans = CP.diff_svl quans v_sps2 in *)
+      (*   add_quantifiers quans f0, v_sps2 *)
+      (* else *)
+      (*   f, CP.diff_svl v_sps2 quans *)
+      f, CP.diff_svl (CP.remove_dups_svl v_sps2) quans
     | Or orf ->
           let n_f1, impl_svl1 = (helper orf.formula_or_f1) in
           let n_f2, impl_svl2 = (helper orf.formula_or_f2) in
