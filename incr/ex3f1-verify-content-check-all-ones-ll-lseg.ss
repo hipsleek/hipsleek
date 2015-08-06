@@ -30,7 +30,9 @@ bool check_ones(node x)
   if (x==null) return true;
   else {
    int t = x.val;
-   if (t==1) return check_ones(x.next);
+   if (t==1){
+     return check_ones(x.next);
+   }
    else {
       //dprint;
        return false;

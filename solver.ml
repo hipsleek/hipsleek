@@ -7358,10 +7358,19 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                       formula_exists_and = qa;
                       formula_exists_pos = pos} -> (
                 (* quantifiers on the RHS. Keep them for later processing *)
+                  let qvars_fo = List.filter (fun (CP.SpecVar (t,_,_)) ->
+                      match t with
+                        | RelT _ | HpT -> false
+                        | _ -> true
+                  ) qvars in
                 let ws = CP.fresh_spec_vars qvars in
+                let ws_fo = CP.fresh_spec_vars qvars_fo in
                 let st = List.combine qvars ws in
+                let st_fo = List.combine qvars_fo ws_fo in
                 let baref = mkBase qh qp qvp qt qfl qa pos in
-                let new_baref = x_add subst st baref in
+                let new_baref = x_add subst (* st *) st_fo baref in
+                Debug.ninfo_hprint (add_str " baref " Cprinter.string_of_formula) baref no_pos;
+                Debug.ninfo_hprint (add_str " new_baref " Cprinter.string_of_formula) new_baref no_pos;
                 let new_ctx = Ctx {estate with es_evars = ws @ estate.es_evars} in
                 x_tinfo_hp (add_str "new_ctx match" (Cprinter.string_of_context)) new_ctx no_pos;
                 let tmp_rs, tmp_prf = heap_entail_conjunct_helper_x (* 5 *) prog is_folding  new_ctx new_baref rhs_h_matched_set pos in
