@@ -16,7 +16,7 @@ lemma_safe self::arr_seg<p,n>&n=a+b & a>=0 & b>=0 & p=self+n
 
 arr_seg<p,n> == case {
    n=0 -> [] self=p & n=0;
-   n!=0 -> [] self::arr_int<_,q>*q::arr_seg<p,n-1> & q=self+1;
+   n!=0 -> [] self::arr_int<_,q>*q::arr_seg<p,n-1>;
    }
 inv n>=0 &  self+n=p;
     /*
@@ -27,7 +27,7 @@ arr_seg<p,n> == self=p & n=0
     */
 
 arr_seg2<p,n> == self=p & n=0
-  or self::arr_int<5,q>*q::arr_seg2<p,n-1> & q=self+1
+  or self::arr_int<5,q>*q::arr_seg2<p,n-1> //& q=self+1
   inv n>=0 &  self+n=p;
 
 void upd_arr(arr_int a, int v)
