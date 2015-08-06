@@ -28,6 +28,25 @@ sll_to_dll_rev_BUG.c - sll_to_dll_rev.c with an injected bug
 list-properties/*_false-unreach-call*.i
 list-properties/*_true-unreach-call*.i
 
+1.
+/* Build a list of the form (1->2)*->3
+   * with 1,2 depending on some flag
+*/
+
+alternating_list*.c
+list_flag*.c
+splice_*.c
+
+2.
+/* Build a list of the form 1->...->1->2->....->2->3 */
+list_false*.c
+list_true*.c
+
+3. build-list-search (e.g. /* Build a list of the form 1->...->1->0 */)
+list_search_*.c
+simple_built*
+simple_true
+
 ==============
 ldv-regression/*_false-unreach-call*.i
 ldv-regression/*_true-unreach-call*.i
