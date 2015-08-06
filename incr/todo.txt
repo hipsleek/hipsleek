@@ -126,6 +126,20 @@ Above verifies!
 
 Above seems a more concise spec to aim for ..
 =====================================================================
+# ex3b4.ss
+
+  lseg_one<p> == self=p or self::node<1,q>*q::lseg_one<p>;
+  ll_not_one<> == self=null or self::node<v,q>*q::ll<> & v!=1;
+
+
+  requires x::lseg_one<p>*p::ll_not_one<>
+  ensures x::lseg_one<p>*p::ll_not_one<> & (res & p=null | !res & p!=null);
+
+
+This strongest spec verifies and could be our target for inference
+
+# Can we check if 2nd-order predicates based on them can be verified
+  first ..
 =====================================================================
 =====================================================================
 =====================================================================
