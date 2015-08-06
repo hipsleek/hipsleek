@@ -1552,6 +1552,21 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   if !log_all_flag == true then
     output_string log_all ("\n\n[mona.ml]: imply # " ^ imp_no ^ "\n");
   incr test_number;
+
+  let pe = Cpure.mkOr (Cpure.mkNot ante None no_pos) conseq None no_pos in
+  let pe = x_add_1 Cpure.subs_const_var_formula pe in
+    let pe = if true (* !Globals.non_linear_flag *) then x_add_1 Cpure.drop_nonlinear_formula_rev pe else pe in
+    let svl0 = Cpure.fv pe in
+    let svl,fr_svl = Omega.mkSpecVarList 0 svl0 in
+    let ss = List.combine svl fr_svl in
+    let pe = Cpure.subst ss pe in
+    let pe = Trans_arr.translate_array_one_formula_for_validity pe in
+    let pvars = Omega.get_vars_formula pe in
+ let vstr = Omega.omega_of_var_list (Gen.BList.remove_dups_eq (=) pvars) in
+      (* let () = x_binfo_pp vstr no_pos in *)
+      let fstr = Omega.omega_of_formula 1 pr_w pr_s pe in
+      let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
+ let () = Omega.set_proof_string ("SAT:"^fomega) in
   (* let ante = CP.drop_varperm_formula ante in     *)
   (* let conseq = CP.drop_varperm_formula conseq in *)
   let (ante_fv, ante) = prepare_formula_for_mona pr_w pr_s ante !test_number in
@@ -1594,6 +1609,19 @@ let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   let () = set_prover_type () in (* change to MONA logging *)
   (* WN : what if var0 is non-empty? *)
   (* print_endline ("Mona.is_sat: " ^ (string_of_int !test_number) ^ " : " ^ (string_of_bool !is_mona_running)); *)
+
+  let f = Trans_arr.translate_array_one_formula f in
+  let svl0 = Cpure.fv f in
+  let svl,fr_svl = Omega.mkSpecVarList 0 svl0 in
+  let ss = List.combine svl fr_svl in
+  let pe = Cpure.subst ss f in
+  let pvars = Omega.get_vars_formula f in
+  let vstr = Omega.omega_of_var_list (Gen.BList.remove_dups_eq (=) pvars) in
+  (* let () = x_binfo_pp vstr no_pos in *)
+  let fstr = Omega.omega_of_formula 1 pr_w pr_s f in
+  let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
+  let () = Omega.set_proof_string ("SAT:"^fomega) in
+
   let sat = 
     if not !is_mona_running then
       begin
