@@ -21,12 +21,14 @@ module Err = Error
 module LO = Label_only.LOne
 module CVP = CvpermUtils
 
+open Cformula
+
 (*used in Predicate*)
 let pure_hprel_map = ref ([]: (ident * ident) list)
 
-type typed_ident = (typ * ident)
+(* type typed_ident = (typ * ident) *)
 
-and prog_decl = {
+type prog_decl = {
   mutable prog_data_decls : data_decl list;
   mutable prog_logical_vars : P.spec_var list;
   mutable prog_view_decls : view_decl list;

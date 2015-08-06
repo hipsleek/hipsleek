@@ -20,7 +20,8 @@ module CP = Cpure
 module LO = Label_only.LOne
 module VP = IvpermUtils
 
-type typed_ident = (typ * ident)
+(* moved to globals.ml *)
+(* type typed_ident = (typ * ident) *)
 
 
 type prog_decl = { 

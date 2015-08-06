@@ -6449,8 +6449,8 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
       else C.Unit pos in
     let dname = CP.name_of_type base_t in
     let ddef = I.look_up_data_def 2 pos prog.I.prog_data_decls dname in
-    let rec gen_names (fn : ident) (flist : I.typed_ident list) :
-      ((I.typed_ident option) * (ident list)) =
+    let rec gen_names (fn : ident) (flist : typed_ident list) :
+      ((typed_ident option) * (ident list)) =
       (match flist with
        | [] -> (None, [])
        | f :: rest ->
@@ -6527,7 +6527,7 @@ and trans_args args =
 and trans_args_x args = trans_args_gen (List.map (fun (a,b,c) -> (Some a,b,c)) args)
 
 and trans_args_gen (args : ((C.exp option) * typ * loc) list) :
-  ((C.typed_ident list) * C.exp * (ident list)) =
+  ((typed_ident list) * C.exp * (ident list)) =
   match args with
   | arg :: rest ->
     let (rest_local_vars, rest_e, rest_names) = trans_args_gen rest

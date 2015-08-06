@@ -1010,11 +1010,23 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
   let rec xpure_heap_helper (prog : prog_decl) (h0 : h_formula) (which_xpure :int) memset: MCP.mix_formula =
     match h0 with
     | DataNode ({h_formula_data_node = p;
+                 h_formula_data_name = n;
+                 h_formula_data_arguments = arg;
                  h_formula_data_perm = perm;
                  h_formula_data_pos = pos}) ->
       let ii = fresh_int2 () in
       (* let non_null = CP.mkNeqNull p pos in *)
       (* let non_null = CP.mkEqVarInt p i pos in *)
+      let () = x_binfo_hp (add_str "data_node" !CP.print_sv) p no_pos in
+      let () = x_binfo_hp (add_str "data_name" pr_id) n no_pos in
+      let () = x_binfo_hp (add_str "data_arguments" !CP.print_svl) arg no_pos in
+      (* FATAL ERROR if not found here *)
+      let def = look_up_data_def_raw prog.prog_data_decls n in
+      let p_inv = def.data_pure_inv in
+      let fields = def.data_fields in
+      let pr_f = pr_list (pr_pair string_of_typed_ident (pr_list pr_id)) in
+      let () = x_binfo_hp (add_str "data pure_inv" (pr_option !CP.print_formula)) p_inv no_pos in
+      let () = x_binfo_hp (add_str "fields" pr_f) fields no_pos in
       if not (Perm.allow_perm ()) then
         let non_null = CP.mkEqVarInt p ii pos in
         MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_null

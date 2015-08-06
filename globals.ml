@@ -193,6 +193,8 @@ type typ =
   | Pointer of typ (* base type and dimension *)
 (* | SLTyp (* type of ho formula *) *)
 
+type typed_ident = (typ * ident)
+
 let is_undef_typ t =
   match t with
   |UNK |RelT _ |HpT |UtT _ -> true

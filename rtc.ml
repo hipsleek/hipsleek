@@ -546,7 +546,7 @@ and push_assignment_in (lhs : ident) (rhs : C.exp) pos : C.exp = match rhs with
                C.exp_assign_rhs = rhs;
                C.exp_assign_pos = pos})
 
-and find_binds (e0 : C.exp) : C.typed_ident list = match e0 with
+and find_binds (e0 : C.exp) : typed_ident list = match e0 with
   | C.Seq ({C.exp_seq_exp1 = e1;
             C.exp_seq_exp2 = e2}) 
   | C.Cond ({C.exp_cond_then_arm = e1;
