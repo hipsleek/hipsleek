@@ -170,12 +170,13 @@ let iprog = { I.prog_include_decls =[];
               I.prog_proc_decls = [];
               I.prog_coercion_decls = [];
               I.prog_hopred_decls = [];
-              I. prog_barrier_decls = [];
+              I.prog_barrier_decls = [];
               I.prog_test_comps = [];
             }
 
 let cobj_def = { Cast.data_name = "Object";
                  Cast.data_fields = [];
+                 Cast.data_fields_new = [];
                  Cast.data_pos = no_pos;
                  Cast.data_parent_name = "";
                  Cast.data_invs = [];

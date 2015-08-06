@@ -116,6 +116,16 @@ expect Valid.
 //Entail 4: Fail.(may) cause: x=1 |-  x=p+1. LOCS:[20] (may-bug)
 //Validate 4: Expecting(3)Valid BUT got : Fail_May
 ===========================================================
+# ex7d.slk
+
+# Below does not seem to be used by sleek with z3
+
+(==cvutil.ml#1779==)
+xpure_heap_mem_enum#6@11@10
+xpure_heap_mem_enum#6 inp1 : x::arr_int<Anon_12,p>@M
+xpure_heap_mem_enum#6 inp2 : true
+xpure_heap_mem_enum#6 inp3 :1
+xpure_heap_mem_enum#6@11 EXIT: x+1=p & p!=null & x!=null #  [[x]]
 ===========================================================
 ===========================================================
 ===========================================================
