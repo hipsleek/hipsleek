@@ -23,9 +23,8 @@ relation R2(bool r).
 
 
 bool check_ones(node x)
-  infer [R1,R2]
-  requires x::ll<>
-  ensures x::ll<> & R1(res) or x::lseg<p>*p::ll<> & R2(res);
+  requires x::lseg<p>@L*p::ll<>@L
+  ensures true;
 { 
   if (x==null) return true;
   else {
