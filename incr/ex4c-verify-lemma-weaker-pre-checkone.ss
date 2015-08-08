@@ -3,18 +3,30 @@ data node {
  node next;
 }
 
-  ll<> == self=null or self::node<_,q>*q::ll<>;
+  ll3<> == self=null 
+          or self::node<1,q>*q::ll3<>
+          or self::node<v,q>*q::ll3<> & v!=1;
+
+  ll<> == self=null 
+    or self::node<_,q>*q::ll<>;
 
   lseg<p> == self=p or self::node<_,q>*q::lseg<p>;
   lseg_one<p> == self=p or self::node<1,q>*q::lseg_one<p>;
 
+/*
+  lseg_one<p> == self=p or self::node<1,q>*q::lseg_one<p>;
+
+*/
+
   gg<p> == self=null or self=p or self::node<_,q>*q::gg<p>;
 
-  ll2<q> == self=null or self::node<_,q>;
+//  ll2<q> == self=null or self::node<_,q>;
   ll_not_one<pp> == self=null or self::node<v,pp> & v!=1;
-  ll_not_one2<> == self=null or self::node<v,pp>*pp::ll<> & v!=1;
+  ll_not_one2<> == self=null or self::node<v,pp>*pp::ll3<> & v!=1;
 
-  ll_one<> == self=null or self::node<1,q>*q::ll_one<>;
+lemma_safe self::ll<> <-> self::lseg<p>*p::ll<>.
+
+lemma_safe self::ll3<> <-> self::lseg_one<p>*p::ll_not_one2<>.
 
 
 bool check_ones(node x)
@@ -55,7 +67,7 @@ bool check_ones(node x)
   requires x::lseg_one<p>@L*p::ll_not_one2<>@L
   ensures res & p=null | !res & p!=null;
 
-  requires x::lseg_one<p>@L*p::ll_not_one<q>@L*q::ll<>@A
+  requires x::lseg_one<p>@L*p::ll_not_one<q>@L
   ensures res & p=null | !res & p!=null;
 
 { 
@@ -82,25 +94,28 @@ If we strengthen the post with content, we can proceed
 to derive:
 
   requires x::ll<>
-  ensures x::lseg_one<p>*p::ll_not_one2<> 
-          & (res & p=null | !res & p!=null);
+  ensures x::lseg_one<p>*p::ll_not_one2<> & (res & p=null | !res & p!=null);
 
-With immutability, we can change the pre-spec 
+With immutability, we can strengthen the pre-spec 
 with the heap information from post-spec:
 
-  requires x::lseg_one<p>@L*p::ll_not_one<q>*q::ll<>@L
+  requires x::lseg_one<p>@L*p::ll_not_one2<>@L
   ensures res & p=null | !res & p!=null;
 
 and later weaken slightly to:
   requires x::lseg_one<p>@L*p::ll_not_one<q>@L
   ensures res & p=null | !res & p!=null;
 
-Note that the new pre is not stronger, as we have
-the following provable lemma:
+Though it makes the pre stronger, it also helps
+to make the post stronger through immutability
+of its heap state.
+
+Lastly, we may also have the lemma:
    x::ll<> <-> x::lseg_one<p>*p::ll_not_one<q>*q::ll<>
-With this lemma, the final pre-condition is 
+With this lemma, the current pre-condition is 
 actually weaker than the original x::ll<>.
-It had been made weaker by dropping the unaccessed
+
+It was made weaker by dropping the unaccessed
 q::ll<> portion.
 
 */
