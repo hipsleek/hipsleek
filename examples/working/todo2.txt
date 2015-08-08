@@ -1,0 +1,61 @@
+==================================================================
+# why sleek --eps has more false context and failure.
+Default 16167
+
+Checking conchip/latch.slk (runs with extra options:  -tp parahip)
+Starting hip-sleek tests:
+All test results were as expected.
+Total verification time: 84.90 second
+	Time spent in main process: 61.66 second
+	Time spent in child processes: 23.24 second
+	Number of false contexts: 61
+
+Total number of errors: 1 in files:
+  imm/norm/norm7.slk({E3#Valid},{E5#Valid},{E6#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 103.32 second
+	Time spent in main process: 92.03 second
+	Time spent in child processes: 11.29 second
+	Number of false contexts: 66
+
+ann2
+---
+Checking conchip/latch.slk (runs with extra options:  -tp parahip)
+Starting hip-sleek tests:
+All test results were as expected.
+Total verification time: 96.25 second
+	Time spent in main process: 73.73 second
+	Time spent in child processes: 22.52 second
+	Number of false contexts: 61
+
+with --eps
+Total number of errors: 1 in files:
+  imm/norm/norm7.slk({E3#Valid},{E5#Valid},{E6#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 103.32 second
+	Time spent in main process: 92.03 second
+	Time spent in child processes: 11.29 second
+	Number of false contexts: 66
+-
+
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
