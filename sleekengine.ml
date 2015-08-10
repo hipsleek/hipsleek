@@ -932,7 +932,7 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typein
         with
         | Not_found ->
           dummy_exception() ;
-          print_string (mvar ^ " is undefined.\n");
+          print_string (mvar ^ " is undefined (1).\n");
           raise SLEEK_Exception
       end
     | MetaCompose (vs, mf1, mf2) -> 
@@ -1036,7 +1036,7 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
       with
       | Not_found ->
         dummy_exception() ;
-        print_string (mvar ^ " is undefined.\n");
+        print_string (mvar ^ " is undefined (2).\n");
         raise SLEEK_Exception
     end
   | MetaCompose (vs, mf1, mf2) -> begin
@@ -1084,7 +1084,7 @@ let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:T
       with
       | Not_found ->
         dummy_exception() ;
-        print_string (mvar ^ " is undefined.\n");
+        print_string (mvar ^ " is undefined (3).\n");
         raise SLEEK_Exception
     end
   | MetaCompose (vs, mf1, mf2) -> begin
@@ -1259,7 +1259,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   (* in *)
   (* WN:TODO - c*)
   let sst0 = List.map (fun (CP.SpecVar (t,i,p) as sv) -> 
-      let sv2 = Typeinfer.get_spec_var_type_list_infer ~d_tt:n_tl (i,p) [] no_pos 
+      let sv2 = x_add (Typeinfer.get_spec_var_type_list_infer ~d_tt:n_tl) (i,p) [] no_pos 
       in (sv,sv2)) fvs in
   let sst = List.filter (fun (CP.SpecVar (t1,_,_), CP.SpecVar (t2,_,_)) -> t1!=t2 ) sst0 in
   (* if List.length sst != List.length sst0 then *)

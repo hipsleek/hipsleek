@@ -1323,16 +1323,19 @@ and get_spec_var_ident (tlist:spec_var_type_list) (var : ident) p =
   | Not_found -> CP.SpecVar(UNK,var,p)
 
 
-and get_spec_var_type_list ?(lprime=Unprimed) (v : ident) tlist pos =
+and get_spec_var_type_list_x ?(lprime=Unprimed) (v : ident) tlist pos =
   try
     let v_info = snd(List.find (fun (tv,en) -> tv=v) tlist) in
     match v_info.sv_info_kind with
     | UNK -> Err.report_error { Err.error_loc = pos;
-                                Err.error_text = v ^ " is undefined"; }
+                                Err.error_text = v ^ " is undefined (7)"; }
     | t -> let sv = CP.SpecVar (t, v, lprime) in sv
   with
   | Not_found -> Err.report_error { Err.error_loc = pos;
-                                    Err.error_text = v ^ " is undefined"; }
+                                    Err.error_text = v ^ " is undefined (8)"; }
+
+and get_spec_var_type_list ?(lprime=Unprimed) (v : ident) tlist pos =
+  Debug.no_1 "get_spec_var_type_list" pr_id pr_none (fun _ -> get_spec_var_type_list_x ~lprime:lprime (v : ident) tlist pos) v
 
 (* type: ?d_tt:spec_var_type_list -> *)
 (*   Globals.ident * VarGen.primed -> *)
@@ -1370,9 +1373,10 @@ and get_spec_var_type_list_infer_x d_tt ((v, p) : ident * primed) fvs pos =
       (*   } *)
   in
   try 
-    (get_spec_var_type_list ~lprime:p v d_tt pos)
+    (x_add (get_spec_var_type_list ~lprime:p) v d_tt pos)
   with _ ->
     let vtyp, check = get_var_type v in
+    let () = x_binfo_hp (add_str "TODO: fix quick patch to type infer" pr_id) v pos in
     (* WN TODO : this is a quick patch to type infer problem *)
     (* if check = false then *)
     (*   Err.report_error { Err.error_loc = pos; *)
@@ -1380,7 +1384,7 @@ and get_spec_var_type_list_infer_x d_tt ((v, p) : ident * primed) fvs pos =
     (* else *)
     match vtyp with
     | UNK -> Err.report_error { Err.error_loc = pos;
-                                Err.error_text = v ^ " is undefined"; }
+                                Err.error_text = v ^ " is undefined (9)"; }
     | t -> CP.SpecVar (t, v, p (* Unprimed *))
 
 and gather_type_info_heap prog (h0 : IF.h_formula) tlist =

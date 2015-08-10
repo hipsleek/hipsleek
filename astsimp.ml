@@ -8292,7 +8292,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
              else
                ((v :: used_names), [ e ], [],IP.mkTrue pos_e)
            with
-           | Not_found -> Err.report_error{ Err.error_loc = pos_e; Err.error_text = (fst v) ^ " is undefined"; })
+           | Not_found -> Err.report_error{ Err.error_loc = pos_e; Err.error_text = (fst v) ^ " is undefined (4)"; })
         | _ -> Err.report_error { Err.error_loc = (IF.pos_of_formula f); Err.error_text = "malfunction with float out exp in normalizing"; } in
       let rest_used_names, rest_hvars, rest_evars, rest_link = match_exp new_used_names rest pos in
       let hvars = e_hvars @ rest_hvars in

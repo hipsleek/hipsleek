@@ -178,6 +178,20 @@ This strongest spec verifies and could be our target for inference
   requires x::ll<>
   ensures x::lseg<p>*p::ll<> & R(p,res);
 
+Derived:
+
+[RELDEFN R: ( p=null & 1<=res) -->  R(p,res),
+RELDEFN R: ( R(p,res)) -->  R(p,res),
+RELDEFN R: ( not(res) & p!=null) -->  R(p,res),
+RELDEFN R: ( not(res)) -->  R(p,res)] // drop this for stronger p
+
+# Is it safe to strengthen:
+ RELDEFN R: ( not(res)) -->  R(p,res)]
+to:
+ RELDEFN R: ( not(res) & p!=null) -->  R(p,res),
+
+# How is this needed?
+
 # Obtain:
 
 !!! **pi.ml#775:>>>>>>>>>>> (bef postprocess): <<<<<<<<<
@@ -216,6 +230,31 @@ RELDEFN R2(__norm#E): ( true) -->  R2(v_1517)]
 
 # Why did we have spurious relations?
 =====================================================================
+# ex5c4.slk
+
+ERROR: at _0:0_0:0
+Message: R1 is undefined (8)
+
+  try 
+    (x_add (get_spec_var_type_list ~lprime:p) v d_tt pos)
+  with _ ->
+    let vtyp, check = get_var_type v in
+    (* WN TODO : this is a quick patch to type infer problem *)
+    (* if check = false then *)
+    (*   Err.report_error { Err.error_loc = pos; *)
+    (*                      Err.error_text = v ^ " is not found in both sides"; } *)
+    (* else *)
+    match vtyp with
+    | UNK -> Err.report_error { Err.error_loc = pos;
+                                Err.error_text = v ^ " is undefined (9)"; }
+    | t -> CP.SpecVar (t, v, p (* Unprimed *))
+
+(==typeinfer.ml#1376==)
+get_spec_var_type_list@20@19
+get_spec_var_type_list inp1 :R1
+get_spec_var_type_list@20 EXIT ExceptionFailure("R1 is undefined (8)")Occurred!
+
+!!! **typeinfer.ml#1379:TODO: fix quick patch to type infer:R1
 =====================================================================
 =====================================================================
 =====================================================================
