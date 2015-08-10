@@ -1,0 +1,42 @@
+data node {
+ int val;
+ node next;
+}.
+
+pred  ll<> == self=null or self::node<_,q>*q::ll<>.
+
+pred  lseg<p> == self=p or self::node<_,q>*q::lseg<p>.
+
+
+checkentail x::node<_,_>@A |- x!=null.
+expect Valid.
+print residue.
+checkentail x!=null  |- x!=null.
+
+checkentail x::node<_,_>@A |- x=null.
+expect Fail.
+print residue.
+checkentail x!=null  |- x=null.
+
+checkentail x::node<_,_>@A * y::node<_,_> |- x!=y.
+expect Fail.
+//@A is the same as zero permission
+print residue.
+checkentail y::node<_,_> & x!=null  |- emp.
+
+checkentail x::node<_,_>@A * y::node<_,_>@A |- x!=y.
+expect Fail.
+//@A is the same as zero permission
+print residue.
+checkentail x!=null & y!=null |- emp.
+
+checkentail x::node<_,_>@A * x::node<_,_>@A |- false.
+expect Fail.
+//Got Fail_Must, should be Fail_May.
+print residue.
+checkentail_exact x!=null & x!=null |- emp.
+
+checkentail_exact x::node<_,_>@A |- emp.
+expect Valid.
+print residue.
+checkentail_exact x!=null |- emp.
