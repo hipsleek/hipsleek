@@ -45,6 +45,10 @@ type ann = ConstAnn of heap_ann
          | TempRes of (ann * ann) (* | Norm of (ann * ann) *)
          | NoAnn
 
+let is_absent_ann a = match a with
+  | ConstAnn h -> is_absent h
+  | _ -> false
+
 (* type view_arg = SVArg of spec_var | AnnArg of ann *)
 
 (* annotation argument type *)

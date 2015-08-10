@@ -389,6 +389,11 @@ let int_of_heap_ann a =
   | Imm -> !imm_int
   | Mutable -> !mut_int
 
+let is_absent a =
+  match a with
+  | Accs -> true
+  | _ -> false
+
 let heap_ann_of_int i =
   if i = !mut_int then Mutable
   else if i = !imm_int then Imm

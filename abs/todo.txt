@@ -3,9 +3,13 @@
 
 @A should be treated as zero permission.
 
-The way to handle this is to convert each of them to its
-pure counterpart and then removing them from the heap state.
-Is this being done?
+The way is to first 
+ (i)   normalize both LHS + RHS by merging aliased nodes
+ (ii)  perform matching via imm rules
+ (iii) use special rule to convert at xpure stage
+      (which replace them by their pure equiv).
+
+I think (iii) needs to be added.
 
 checkentail x::node<_,_>@A * y::node<_,_> |- x!=y.
 expect Fail_May.
@@ -24,6 +28,38 @@ expect Valid.
 // Got Fail_Must
 //Entail 6: Fail.(must) cause: x::node<Anon_30,Anon_31>@A&{FLOW,(20,21)=__norm#E}[]:memory leak failure : residue is forbidden.
 ===============================================================
+# ex6a1.slk
+
+# use --adhoc-3 to get old version
+
+checkentail x::node<_,_>@A * y::node<_,_> |- x!=y.
+expect Fail.
+
+# this entailment should fail..
+# some TODO at cvutil.ml for elim_absent_nodes and xpure*
+
+# to add a drop @A nodes during xpure and replace by its xpure
+
+!!! **cvutil.ml#129:DataNode(absent): x::node<Anon_12,Anon_13>@A
+!!! **cvutil.ml#1585:TODO: Need to add pure collected into p0
+!!! **cvutil.ml#1587:elim_abs (pure):[ x!=null]
+
+!!! **cvutil.ml#129:DataNode(absent): x::node<Anon_12,Anon_13>@A
+!!! **cvutil.ml#1588:TODO: Need to add pure collected into p0
+!!! **cvutil.ml#1590:elim_abs (pure):[ x!=null]
+
+(==cvutil.ml#1590==)
+xpure_heap_symbolic_i@2@1
+xpure_heap_symbolic_i inp1 :0
+xpure_heap_symbolic_i inp2 : y::node<Anon_14,Anon_15>@M
+xpure_heap_symbolic_i@2 EXIT:( y!=null,[y],true)
+
+(==astsimp.ml#7286==)
+xpure_heap_symbolic#999@1
+xpure_heap_symbolic#999 inp1 :0
+xpure_heap_symbolic#999 inp2 : x::node<Anon_12,Anon_13>@A * y::node<Anon_14,Anon_15>@M
+xpure_heap_symbolic#999 inp3 : true
+xpure_heap_symbolic#999@1 EXIT: y!=null#[y]# [[y]]true
 ===============================================================
 ===============================================================
 ===============================================================

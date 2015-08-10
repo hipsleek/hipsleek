@@ -2896,15 +2896,15 @@ and fv (f : formula) : CP.spec_var list = match f with
     let res = Gen.BList.difference_eq CP.eq_spec_var fvars qvars in
     res
 
-and is_absent imm =
-  match imm with
-  | CP.ConstAnn(Accs) -> true
-  | _ -> false
+(* and is_absent imm = *)
+(*   match imm with *)
+(*   | CP.ConstAnn(Accs) -> true *)
+(*   | _ -> false *)
 
 and remove_absent ann vs =
   if List.length ann = List.length vs then
     let com_ls = List.combine ann vs in
-    let res_ls = List.filter (fun (a,_) -> not(is_absent a)) com_ls in
+    let res_ls = List.filter (fun (a,_) -> not(CP.is_absent_ann a)) com_ls in
     List.split res_ls
   else (ann,vs)
 

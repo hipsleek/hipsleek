@@ -111,15 +111,67 @@ let rec simpl_pure_formula (f : CP.formula) : CP.formula = match f with
       	  let () = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_pure_formula simpl_f ^ "\n") in*)
     simpl_f
 
+let pr_sv = Cprinter.string_of_spec_var 
+let pr_svl = pr_list pr_sv 
+
+let elim_absent_nodes h0 which_xpure =
+  if !Globals.adhoc_flag_3 then (h0,[])
+  else
+    let pf = CP.mkTrue no_pos in
+    let f a hf = match hf with
+      | DataNode ({ h_formula_data_node = pn;
+                    (* h_formula_data_arguments = args; *)
+                    (* h_formula_data_perm = perm; *)
+                    h_formula_data_name = name;
+                    h_formula_data_imm = ann;
+                    h_formula_data_label = lbl;
+                    h_formula_data_pos = pos}) -> 
+        if CP.is_absent_ann ann then 
+          begin
+            let () = x_binfo_hp (add_str "DataNode(absent)" !print_h_formula) hf no_pos in
+            let () = x_dinfo_hp (add_str "DataNode.ann" CP.string_of_ann) ann no_pos in
+            let () = x_dinfo_hp (add_str "DataNode.name" pr_id) name no_pos in
+            let () = x_dinfo_hp (add_str "DataNode.node" pr_sv) pn no_pos in
+            (* let () = x_binfo_pp "TODO: Need to add XPure of absent data node" no_pos in *)
+            let non_null = CP.BForm ((CP.Neq (CP.Var (pn, pos), CP.Null pos, pos), None), lbl) in
+
+            Some (HEmp,[non_null])
+          end
+        else None
+      | ViewNode ({ h_formula_view_node = pn;
+                    (* h_formula_data_arguments = args; *)
+                    (* h_formula_data_perm = perm; *)
+                    h_formula_view_name = name;
+                    h_formula_view_imm = ann;
+                    h_formula_view_label = lbl;
+                    h_formula_view_pos = pos}) -> 
+        (* let ann = f.h_formula_view_imm in *)
+        (* let name = f.h_formula_view_name in *)
+        if CP.is_absent_ann ann then 
+          begin
+            let () = x_binfo_hp (add_str "ViewNode(absent)" !print_h_formula) hf no_pos in
+            let () = x_dinfo_hp (add_str "ViewNode.ann" CP.string_of_ann) ann no_pos in
+            let () = x_dinfo_hp (add_str "ViewNode.name" pr_id) name no_pos in
+            let () = x_dinfo_hp (add_str "ViewNode.node" pr_sv) pn no_pos in
+            let () = x_binfo_pp "TODO: Need to add XPure by xpure_int" no_pos in
+            Some (HEmp,[])
+          end
+        else None
+      | _ -> None
+    in
+    let f_comb fs = List.concat fs in
+    let f_args a h = a in
+    let (n_hf,fs) = CF.trans_h_formula h0 () f f_args f_comb in 
+    (n_hf,fs) 
+
 (* find a subs that eliminates evars *)
 (* remove identity subs *)
+
 let build_subs_4_evars evars eset =
   let subs=CP.EMapSV.build_subs_4_evars evars eset in
   List.filter (fun (v1,v2) -> not(CP.eq_spec_var v1 v2)) subs
 
 let build_subs_4_evars evars eset =
-  let pr_sv = Cprinter.string_of_spec_var in
-  let pr_svl = pr_list pr_sv in
   let pr_subs = pr_list (pr_pair pr_sv pr_sv) in
   let pr_eset = CP.EMapSV.string_of in
   Debug.no_2 "build_subs_4_evars" pr_svl pr_eset pr_subs build_subs_4_evars evars eset
@@ -993,13 +1045,13 @@ and xpure_heap_mem_enum_new
   (*       (\*   (\\* using mcpure slicing - to fix *\\) *\) *)
   (*       (\*   xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) *\) *)
   (* else *)
-    (* to call xpure_heap_enum_baga *)
-    (* if !Globals.baga_xpure then *)
-    (*   let disj = x_add xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) in *)
-    (*   let ans = conv_from_ef_disj disj in *)
-    (*   ans *)
-    (* else *)
-    xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int)
+  (* to call xpure_heap_enum_baga *)
+  (* if !Globals.baga_xpure then *)
+  (*   let disj = x_add xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) in *)
+  (*   let ans = conv_from_ef_disj disj in *)
+  (*   ans *)
+  (* else *)
+  xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int)
 
 and xpure_heap_mem_enum(*_debug*) i (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CF.mem_formula) =
   let pr =  (fun (a1,a2)-> (Cprinter.string_of_mix_formula a1)^" # "^(Cprinter.string_of_mem_formula a2)) in
@@ -1131,8 +1183,8 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
              h_formula_star_h2 = h2;
              h_formula_star_pos = pos})
     (*| StarMinus ({h_formula_starminus_h1 = h1;
-      	        h_formula_starminus_h2 = h2;
-      	        h_formula_starminus_pos = pos})*)
+      h_formula_starminus_h2 = h2;
+      h_formula_starminus_pos = pos})*)
     | Phase ({h_formula_phase_rd = h1;
               h_formula_phase_rw = h2;
               h_formula_phase_pos = pos})
@@ -1160,6 +1212,9 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
     | FrmHole _ -> MCP.mkMTrue no_pos
   in
   (* to build a subs here *)
+  let (h0,pf) = elim_absent_nodes h0 which_xpure in
+  let () = x_binfo_pp "TODO: Need to add pure collected into p0" no_pos in
+  let () = x_binfo_hp (add_str "elim_abs (pure)" (pr_list !CP.print_formula)) pf no_pos in
   let memset = x_add h_formula_2_mem h0 p0 [] prog in
   (* let () = x_binfo_hp (add_str "h0" Cprinter.string_of_h_formula) h0 no_pos in *)
   (* let () = x_binfo_hp (add_str "p0" Cprinter.string_of_mix_formula) p0 no_pos in *)
@@ -1529,7 +1584,13 @@ and xpure_heap_symbolic i (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
 
 and xpure_heap_symbolic_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CP.spec_var list * CF.mem_formula) = 
   (*TODOIMM - I cannot cannot perform an alias merge at this point because I do not have an unfold_heap func*)
-  (* let h0 = Norm.imm_norm_h_formula prog h0 () in *) 
+  (* let h2 = Norm.imm_norm_h_formula prog h0 () in  *)
+  let () = x_tinfo_hp (add_str "elim_abs (b4)" !print_h_formula) h0 no_pos in
+  let (h0,pf) = elim_absent_nodes h0 which_xpure in
+  let () = x_binfo_pp "TODO: Need to add pure collected into p0" no_pos in
+  let () = x_dinfo_hp (add_str "elim_abs (af)" !print_h_formula) h0 no_pos in
+  let () = x_binfo_hp (add_str "elim_abs (pure)" (pr_list !CP.print_formula)) pf no_pos in
+  (* let () = x_binfo_hp (add_str "imm_norm (af)" !print_h_formula) h2 no_pos in *)
   let memset = x_add h_formula_2_mem h0 p0 [] prog in
   let ph, pa = x_add xpure_heap_symbolic_i prog h0 p0 which_xpure in
   if (is_sat_mem_formula memset) then (ph, pa, memset)
@@ -1563,7 +1624,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) p0 xp_no: (MCP.m
       let rdels = prog.C.prog_rel_decls # get_stk in
       (* Add update relation during XPure *)
       let update_rel = List.filter (fun r -> if r.rel_name = "update"
-                                             || r.rel_name = "cons"
+                                                || r.rel_name = "cons"
                                      then true else false) rdels in
       let rec last = function
         | [] -> failwith "No Last Element in list"
