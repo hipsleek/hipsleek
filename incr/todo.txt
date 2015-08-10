@@ -229,8 +229,41 @@ RELDEFN R2(__norm#E): ( true) -->  R2(v_1517)]
    v!=1 --> R2(v)
 
 # Why did we have spurious relations?
+
+# double relations:
+pure rel_ass: [RELDEFN R1(__norm#E): ( v_1495=1) -->  R1(v_1495),
+RELDEFN R1(__norm#E): ( v_1495=1) -->  R1(v_1495)]
+
+# multiple relations:
+
+id: 29; caller: []; line: 27; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ R1,R2]; c_heap: emp; others: [] globals: [@flow,@ver_post]
+ checkentail x'::node<Anon_1471,q_1472>@M * q_1472::ll<>@M&
+not(v_bool_34_1449') & not(v_bool_31_1450') & x'!=null & x'=x & 
+Anon_1471!=1 & not(v_boolean_37_1448') & res=v_boolean_37_1448' & MayLoop[]&
+{FLOW,(4,5)=__norm#E}[]
+ |-  (exists : x::lseg_ones<p>@M * p::ll_not_one<>@M&
+((not(res) & p!=null) | (p=null & res))&{FLOW,(4,5)=__norm#E}[]. 
+pure rel_ass: [RELDEFN R2(__norm#E): ( true) -->  R2(v_1517),
+RELDEFN R2(__norm#E): ( v_1514!=1) -->  R2(v_1514),
+RELDEFN R2(__norm#E): ( v_1514!=1) -->  R2(v_1514),
+RELDEFN R1(__norm#E): ( v_1505!=1) -->  R1(v_1505),
+RELDEFN R1(__norm#E): ( v_1505!=1) -->  R1(v_1505)]
+
+--------------------
+# ex5b4.ss
+
+Contrast this to: 
+
+ ex5c4.slk and x5c5.slk
+
+ inferred rel: [RELDEFN R1: ( v_84=1) -->  R1(v_84)]
+ inferred rel: [RELDEFN R2: ( v_86!=1) -->  R2(v_86)]
+
+# Were Spurious relations from failed attempts?
+
+
 =====================================================================
-# ex5c4.slk
+# ex5c4.slk (FIXED)
 
 ERROR: at _0:0_0:0
 Message: R1 is undefined (8)
@@ -256,6 +289,7 @@ get_spec_var_type_list@20 EXIT ExceptionFailure("R1 is undefined (8)")Occurred!
 
 !!! **typeinfer.ml#1379:TODO: fix quick patch to type infer:R1
 =====================================================================
+
 =====================================================================
 =====================================================================
 =====================================================================
