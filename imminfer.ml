@@ -240,7 +240,7 @@ let infer_imm_ann (prog: C.prog_decl) (proc_decls: C.proc_decl list) : C.prog_de
       in
       (({proc with C.proc_stk_of_static_specs = proc.C.proc_stk_of_static_specs; C.proc_static_specs = pss })::proc_decls, pre_rels@post_rels@rel_list) in
     List.fold_right helper proc_decls ([], []) in
-  prog.C.prog_rel_decls # push_list (* prog.C.prog_rel_decls @ *) rel_list;
+  let () = prog.C.prog_rel_decls # push_list (* prog.C.prog_rel_decls @ *) rel_list in 
   (prog, new_proc_decls)
 
 let infer_imm_ann (prog: C.prog_decl) (proc_decls: C.proc_decl list) : C.prog_decl * C.proc_decl list  =
@@ -266,7 +266,7 @@ let infer_imm_ann_prog (prog: C.prog_decl) : C.prog_decl =
       ((id, {proc with C.proc_stk_of_static_specs = pss_stk;
                        C.proc_static_specs = (pss_stk # top) })::proc_decls, pre_rels@post_rels@rel_list) in
     Hashtbl.fold helper prog.new_proc_decls ([], []) in
-  prog.C.prog_rel_decls # push_list  rel_list;
+  let () = prog.C.prog_rel_decls # push_list  rel_list in
   List.iter (fun (id, proc_decl) -> Hashtbl.add proc_decls id proc_decl) new_proc_decls;
   { prog with C.new_proc_decls = proc_decls }
 
@@ -357,3 +357,12 @@ let wrapper_infer_imm_pre_post_sim infer_stk verify_scc prog verified_scc scc =
 let wrapper_infer_imm_pre_post infer_stk verify_scc prog verified_scc scc =
   if not (!Globals.imm_seq) then wrapper_infer_imm_pre_post_sim infer_stk verify_scc prog verified_scc scc
   else wrapper_infer_imm_pre_post_seq infer_stk verify_scc prog verified_scc scc
+
+let wrapper_infer_imm_pre_post infer_stk verify_scc prog verified_scc scc =
+ let pr = pr_list (fun p -> Cprinter.string_of_struc_formula p.Cast.proc_static_specs) in
+  let pr_out (a,b) = (pr_pair
+    (fun a -> a.Cast.prog_rel_decls # string_of) 
+    (pr_list (pr_list (add_str "proc_decls" (fun p -> Cprinter.string_of_struc_formula p.Cast.proc_static_specs)))))  (a,b)
+  in 
+ (* let pr_out = pr_none in *)
+ Debug.no_1 "wrapper_infer_imm_pre_post" pr pr_out (fun _ ->  wrapper_infer_imm_pre_post infer_stk verify_scc prog verified_scc scc) scc

@@ -9,7 +9,7 @@ data node {
 
 
 bool check_ones(node x)
-
+  infer [@imm_pre,@imm_post] 
   requires x::ll<>
   ensures x::ll<>;
   requires x::lseg<p>*p::ll<>
