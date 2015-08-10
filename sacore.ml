@@ -4132,3 +4132,80 @@ let pred_norm_disj iprog prog unk_hps hp_defs=
   Debug.no_2 "pred_norm_disj" pr2 pr1 (pr_pair string_of_int pr1)
     (fun _ _ -> pred_norm_disj_x iprog prog unk_hps hp_defs)
     unk_hps hp_defs
+
+(*
+a pred may have a cutpoint in the middle. somehow expose this cutpoint
+steps:
+ 1- dectect
+ 2- generate seg pred
+ 3- generate the link
+*)
+let pred_norm_seg_x iprog prog unk_hps hp_defs=
+  (****************INTERNAL***************)
+  let need_cutpoint def=
+    let hp,args = CF.extract_HRel def.CF.def_lhs in
+    let () = Debug.info_hprint (add_str "checking for hp"  (!CP.print_sv)) hp no_pos in
+    if CP.mem_svl hp unk_hps then None else
+      (*split base cases and rec-cases*)
+      let bfs,rfs, dep_fs = List.fold_left ( fun (acc_bfs, acc_rfs, dep_fs) (f,_) ->
+          let hps = Cformula.get_hp_rel_name_formula f in
+          if hps = [] then
+            (acc_bfs@[f], acc_rfs, dep_fs)
+          else if CP.mem_svl hp hps then
+            (acc_bfs, acc_rfs@[f], dep_fs)
+          else (acc_bfs, acc_rfs, dep_fs@[(f,hps)])
+      ) ([],[],[]) def.CF.def_rhs in
+      match bfs,rfs with
+        | [bf],[rec_f] -> (* adhoc *) begin
+            (* rec_f should be progressing *)
+            let dep_fs,dep_hps = List.fold_left (fun (acc_fs, acc_hps) (f,hps) ->
+                acc_fs@[f],acc_hps@hps
+            ) ([],[]) dep_fs in
+            (* dep_fs should be progressing *)
+            match dep_hps with
+              | [dep_hp] -> begin
+                  try
+                    let () = Debug.info_hprint (add_str "dep_hp"  (!CP.print_sv)) dep_hp no_pos in
+                    let dep_def = CF.look_up_hp_def hp_defs dep_hp in
+                    (* todo: check whether dep_def == bf \/ rec_f *)
+                    let dep_fs0 = List.fold_left (fun acc (f,_) -> acc@[f]) [] dep_def.CF.def_rhs in
+                    let rec_f0 = CF.subst_hprel rec_f [hp] dep_hp in
+                    let _,dep_args = CF.extract_HRel dep_def.CF.def_lhs in
+                    let sst = List.combine args dep_args in
+                    let bf1 = CF.subst sst bf in
+                    let rec_f1 = CF.subst sst rec_f0 in
+                    let is_equiv= Syn_checkeq.checkeq_formula_list_w_args dep_args [bf1;rec_f1] dep_fs0 in
+                    if is_equiv then
+                      Some (hp, bf, rec_f, dep_hp)
+                    else None
+                  with _ -> None
+                end
+              | _ -> None
+          end
+        | _ -> None
+  in
+  let generate_seg (hp, bf, rec_f, dep_hp)=
+    let () = Debug.info_hprint (add_str "generating for hp"  (!CP.print_sv)) hp no_pos in
+    []
+  in
+
+  (****************END**INTERNAL***************)
+  let () = Debug.info_hprint (add_str " step 1" pr_id) "checking" no_pos in
+  let to_norm_def, rest = List.fold_left (fun (acc_to, acc_rest) def -> begin
+      let need_seg_opt = need_cutpoint def in
+      match need_seg_opt with
+        | Some conf ->
+              (acc_to@[conf], acc_rest)
+        | None -> (acc_to, acc_rest@[def])
+  end
+  ) ([],[]) hp_defs in
+  let () = Debug.info_hprint (add_str " step 2" pr_id) "generating" no_pos in
+  let seg_preds = List.fold_left (fun acc conf -> acc@(generate_seg conf)) [] to_norm_def in
+  (* rest *) hp_defs
+
+let pred_norm_seg iprog prog unk_hps hp_defs=
+  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  let pr2 = !CP.print_svl in
+  Debug.no_2 "pred_norm_seg" pr2 pr1 pr1
+    (fun _ _ -> pred_norm_seg_x iprog prog unk_hps hp_defs)
+    unk_hps hp_defs

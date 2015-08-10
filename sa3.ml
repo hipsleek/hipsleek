@@ -2618,6 +2618,16 @@ and infer_process_pre_preds iprog prog proc_name callee_hps b_is_pre is (pre_fix
 (*       Cformula.is_constrs = n_constrs; *)
 (*   } *)
 
+and infer_shapes_norm_seg_x iprog prog iflow proc_name callee_hps is_pre is need_preprocess detect_dang=
+  let defs = is.CF.is_hp_defs in
+  let defs1 = Sacore.pred_norm_seg iprog prog (IC.get_unk_hps is) defs in
+  {is with CF.is_hp_defs = defs1 }
+
+and infer_shapes_norm_seg iprog prog iflow proc_name callee_hps is_pre is need_preprocess detect_dang=
+  let pr1 = Cprinter.string_of_infer_state_short in
+  Debug.no_1 "infer_shapes_norm_seg" pr1 pr1
+    (fun _ -> infer_shapes_norm_seg_x iprog prog iflow proc_name callee_hps is_pre is need_preprocess detect_dang) is
+
 and infer_shapes_proper_x iprog prog proc_name callee_hps is need_preprocess detect_dang=
   let unk_hps = List.map fst is.Cformula.is_dang_hpargs in
   let link_hps = List.map fst is.Cformula.is_link_hpargs in
@@ -2721,10 +2731,14 @@ and infer_shapes_proper_x iprog prog proc_name callee_hps is need_preprocess det
       (defs3a, remain_links@(List.filter (fun (hp,_) -> CP.mem_svl hp is_post_oblg1.CF.is_sel_hps) is_post_oblg1.CF.is_link_hpargs))
     else (Sacore.elim_dangling_conj_heap prog defs2 (List.map fst (is_post_oblg1.CF.is_link_hpargs@is_post_oblg1.CF.is_dang_hpargs@htrue_hpargs)),is_post_oblg1.CF.is_link_hpargs@htrue_hpargs)
   in
-  {is_post_oblg1 with Cformula.is_link_hpargs = link_hpargs3;
+  let is_post = {is_post_oblg1 with Cformula.is_link_hpargs = link_hpargs3;
                       CF.is_prefix_hps = pre_fix_hps;
                       Cformula.is_hp_defs = defs3;
   }
+  in
+  if !Globals.pred_norm_seg then
+    iprocess_action iprog prog proc_name callee_hps is_post IC.I_norm_seg need_preprocess detect_dang
+  else is_post
 
 and infer_shapes_proper iprog prog proc_name callee_hps is need_preprocess detect_dang=
   let pr1= Cprinter.string_of_infer_state_short in
@@ -2747,6 +2761,7 @@ and iprocess_action_x iprog prog proc_name callee_hps is act need_preprocess det
   | IC.I_post_synz -> infer_post_synthesize prog proc_name callee_hps is need_preprocess detect_dang
   | IC.I_post_fix hps -> infer_post_fix iprog prog proc_name callee_hps false is need_preprocess detect_dang hps
   | IC.I_post_oblg -> infer_shapes_from_obligation iprog prog is.Cformula.is_flow proc_name callee_hps false is need_preprocess  detect_dang
+  | IC.I_norm_seg -> infer_shapes_norm_seg iprog prog is.Cformula.is_flow proc_name callee_hps false is need_preprocess  detect_dang
   | IC.I_seq ls_act -> List.fold_left (fun is (_,act) -> rec_fct is act) is ls_act
 
 

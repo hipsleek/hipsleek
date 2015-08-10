@@ -946,6 +946,8 @@ let common_arguments = [
   ("--pred-conj-unify", Arg.Set Globals.pred_conj_unify, "attempt to conj-unify among inferred assumption");
   ("--pred-en-equiv", Arg.Set Globals.pred_equiv, "attempt to reuse predicates with identical definition");
   ("--pred-dis-equiv", Arg.Clear Globals.pred_equiv, "disable reuse of predicates with identical definition");
+   ("--pred-en-seg", Arg.Set Globals.pred_norm_seg, "attempt to seg predicates");
+  ("--pred-dis-seg", Arg.Clear Globals.pred_norm_seg, "disable seg of predicates");
   ("--pred-unify-post", Arg.Set Globals.pred_unify_post, "unify (branches, syntax) definition of post-predicates");
   ("--pred-unify-inter", Arg.Set Globals.pred_unify_inter, "unify inter definition of predicates. before inlining");
   ("--pred-dis-unify-inter", Arg.Clear Globals.pred_unify_inter, "disable unify inter definition of predicates. before inlining");

@@ -978,6 +978,8 @@ let pred_seg_unify = ref false
 
 let pred_equiv = ref false
 
+let pred_norm_seg = ref true
+
 let pred_equiv_one = ref true
 
 let pred_unify_post = ref false
