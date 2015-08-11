@@ -25,5 +25,7 @@ infer_exact [R] x'::node<Anon_1453,q>@M
  & !(v_boolean_63_1433') & res=v_boolean_63_1433' 
  |-   x::lseg<p>@M * p::ll<>@M & R(p,res). 
 print residue.
+expect Valid.
+expect Fail.
 
 // why do we not have info on p?
