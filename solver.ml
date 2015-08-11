@@ -225,7 +225,7 @@ let clear_entailment_history_es (es :entail_state) :context =
     es_infer_vars_rel = es.es_infer_vars_rel;
     es_infer_vars_templ = es.es_infer_vars_templ;
     es_infer_term_rel = es.es_infer_term_rel;
-    es_infer_rel = es.es_infer_rel;
+    es_infer_rel = es.es_infer_rel # clone;
     es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
     es_infer_vars_sel_hp_rel = es.es_infer_vars_sel_hp_rel;
     es_infer_vars_sel_post_hp_rel = es.es_infer_vars_sel_post_hp_rel;
@@ -2509,7 +2509,7 @@ and process_fold_result_x (ivars,ivars_rel) prog is_folding estate
                                  es_infer_pure = fold_es.es_infer_pure;
                                  es_infer_pure_thus = fold_es.es_infer_pure_thus;
                                  es_infer_term_rel = fold_es.es_infer_term_rel;
-                                 es_infer_rel = fold_es.es_infer_rel;
+                                 es_infer_rel = fold_es.es_infer_rel # clone;
                                  es_infer_hp_rel = fold_es.es_infer_hp_rel;
                                  es_imm_last_phase = fold_es.es_imm_last_phase;
                                  es_group_lbl = fold_es.es_group_lbl;
@@ -3654,6 +3654,22 @@ and wrap_collect_rel f a =
   let (lc,_) as ans = f a in
   let () = x_binfo_hp (add_str "XXXX lc" Cprinter.string_of_list_context_short) lc no_pos in
   ans
+
+and wrap_collect_rel_lpc f a =
+  let (lc,_) as ans = f a in
+  let inf_lst = CF.collect_infer_rel_list_partial_context lc in
+  let () = Infer.infer_rel_stk # push_list inf_lst in
+  let () = x_binfo_hp (add_str "XXXX lpc" (pr_list CP.print_lhs_rhs)) inf_lst no_pos in
+  (* let () = x_binfo_hp (add_str "XXXX lpc" Cprinter.string_of_list_partial_context_short) lc no_pos in *)
+  ans
+
+and wrap_collect_rel_lfc f a =
+  let (lc,_) as ans = f a in
+  let inf_lst = CF.collect_infer_rel_list_failesc_context lc in
+  let () = Infer.infer_rel_stk # push_list inf_lst in
+  let () = x_binfo_hp (add_str "XXXX lfc" (pr_list CP.print_lhs_rhs)) inf_lst no_pos in
+  ans
+
 
 (* this is called mainly by sleek, and in hip for barrier entailment *)
 and heap_entail_struc_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) =
@@ -8172,14 +8188,14 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
   (* An Hoa note: RHS has no heap so that we only have to consider whether "pure of LHS" |- RHS *)
   let rel_w_defs = List.filter (fun rel -> not (CP.isConstTrue rel.Cast.rel_formula)) (prog.Cast.prog_rel_decls # get_stk) in
   (* Changed for merge.ss on 9/3/2013 *)
-  let rhs_p = if (estate_orig.es_infer_rel!=[]) then subst_rel_by_def_mix rel_w_defs rhs_p else rhs_p in
+  let rhs_p = if not(estate_orig.es_infer_rel # is_empty_recent) then subst_rel_by_def_mix rel_w_defs rhs_p else rhs_p in
   (*TODO: let estate_orig = {estate_orig with CF.subst_rel_by_def_formula estate_orig.CF.es_formula}*)
   let smart_unsat_estate = ref None in
   let lhs_h = lhs.formula_base_heap in
   let lhs_p = lhs.formula_base_pure in
   let lhs_vp = lhs.formula_base_vperm in
   (* Changed for merge.ss on 9/3/2013 *)
-  let lhs_p = if (estate_orig.es_infer_rel!=[]) then subst_rel_by_def_mix rel_w_defs lhs_p else lhs_p in
+  let lhs_p = if not (estate_orig.es_infer_rel # is_empty_recent) then subst_rel_by_def_mix rel_w_defs lhs_p else lhs_p in
   (* memo slices that may not have been unsat *)
   let lhs_t = lhs.formula_base_type in
   let lhs_fl = lhs.formula_base_flow in
@@ -9273,7 +9289,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
                         es_infer_pure = estate.es_infer_pure;
                         es_infer_pure_thus = estate.es_infer_pure_thus;
                         es_infer_term_rel = estate.es_infer_term_rel;
-                        es_infer_rel = estate.es_infer_rel;
+                        es_infer_rel = estate.es_infer_rel # clone;
                         es_infer_hp_rel = estate.es_infer_hp_rel;
                         es_group_lbl = estate.es_group_lbl;
                         es_term_err = estate.es_term_err;
@@ -9462,7 +9478,7 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
                                                                                    es_infer_pure = estate.es_infer_pure;
                                                                                    es_var_zero_perm = estate.es_var_zero_perm;
                                                                                    es_infer_pure_thus = estate.es_infer_pure_thus;
-                                                                                   es_infer_rel = estate.es_infer_rel;
+                                                                                   es_infer_rel = estate.es_infer_rel # clone;
                                                                                    (* WN Check : do we need to restore infer_heap/pure
                                                                                       here *)
                                                                                    es_var_measures = estate.es_var_measures;
@@ -15193,11 +15209,11 @@ let heap_entail_struc_list_partial_context_init (prog : prog_decl) (is_folding :
 (* this isn't called by hip at all *)
 let heap_entail_struc_list_partial_context_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_partial_context)
     (conseq:struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (pid:control_path_id) : (list_partial_context * proof) =
-  let pr1 = Cprinter.string_of_list_partial_context in
+  let pr1 = Cprinter.string_of_list_partial_context_short in
   let pr2 = Cprinter.string_of_struc_formula in
   let pr3 (l,_)  = pr1 l in
   Debug.no_2 "heap_entail_struc_list_partial_context_init" pr1 pr2 pr3
-    (fun _ _ -> heap_entail_struc_list_partial_context_init prog is_folding has_post cl conseq tid delayed_f join_id pos pid) cl conseq
+    (fun _ _ -> wrap_collect_rel_lpc (heap_entail_struc_list_partial_context_init prog is_folding has_post cl conseq tid delayed_f join_id pos) pid) cl conseq
 
 let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)
     (cl : list_failesc_context) (conseq:struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (pid:control_path_id) : (list_failesc_context * proof) = 
@@ -15214,11 +15230,12 @@ let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding :
 let heap_entail_struc_list_failesc_context_init i (prog : prog_decl) (is_folding : bool)  (has_post: bool)
     (cl : list_failesc_context) (conseq:struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (pid:control_path_id) : (list_failesc_context * proof) =
   (* let slk_entail cl conseq = heap_entail_struc_list_failesc_context_init prog is_folding has_post cl conseq tid delayed_f join_id pos pid in *)
+  let pr_lfc = Cprinter.string_of_list_failesc_context_short in
   Debug.no_2_num i "heap_entail_struc_list_failesc_context_init"
-    Cprinter.string_of_list_failesc_context
+    pr_lfc
     Cprinter.string_of_struc_formula
-    (fun (cl, _) -> Cprinter.string_of_list_failesc_context cl)
-    (fun _ _ -> heap_entail_struc_list_failesc_context_init prog is_folding has_post cl conseq tid delayed_f join_id pos pid) cl conseq
+    (fun (cl, _) -> pr_lfc cl)
+    (fun _ _ -> wrap_collect_rel_lfc (heap_entail_struc_list_failesc_context_init prog is_folding has_post cl conseq tid delayed_f join_id pos) pid) cl conseq
 
 let heap_entail_list_partial_context_init_x (prog : prog_decl) (is_folding : bool)  (cl : list_partial_context)
     (conseq:formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (pid:control_path_id) : (list_partial_context * proof) = 
