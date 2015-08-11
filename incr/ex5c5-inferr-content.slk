@@ -12,10 +12,21 @@ pred lseg_ones<p> == self=p or self::node<v,q>*q::lseg_ones<p> & R1(v).
 
 pred ll_not_one<> == self=null or self::node<v,q>*q::ll<> & R2(v).
 
+pred lseg_ones_X<p> == self=p or self::node<v,q>*q::lseg_ones_X<p> & v=1.
+
+pred ll_not_one_X<> == self=null or self::node<v,q>*q::ll<> & v!=1.
+
 infer [R1,R2]  x'::node<Anon_1471,q_1472>@M * q_1472::ll<>@M&
 !(v_bool_34_1449') & !(v_bool_31_1450') & x'!=null & x'=x & 
 Anon_1471!=1 & !(v_boolean_37_1448') & res=v_boolean_37_1448'
  |-  x::lseg_ones<p>@M * p::ll_not_one<>@M&
+((!(res) & p!=null) | (p=null & res)). 
+print residue.
+
+infer []  x'::node<Anon_1471,q_1472>@M * q_1472::ll<>@M&
+!(v_bool_34_1449') & !(v_bool_31_1450') & x'!=null & x'=x & 
+Anon_1471!=1 & !(v_boolean_37_1448') & res=v_boolean_37_1448'
+ |-  x::lseg_ones<p>@M * p::ll_not_one_X<>@M&
 ((!(res) & p!=null) | (p=null & res)). 
 print residue.
 
@@ -28,6 +39,7 @@ print residue.
 !!! **infer.ml#2213:RelInferred (simplified):[RELDEFN R2: ( v_85!=1) -->  R2(v_85)]
 !!! **infer.ml#2213:RelInferred (simplified):[RELDEFN R2: ( true) -->  R2(v_88)]
 
+# Why only the 2nd relational assume kept?
 
  <1>emp&x=p & x'=p & not(res) & not(v_boolean_37_1448') & 
         not(v_bool_31_1450') & not(v_bool_34_1449') & p!=null & Anon_1471!=1&{FLOW,(20,21)=__norm#E}[]

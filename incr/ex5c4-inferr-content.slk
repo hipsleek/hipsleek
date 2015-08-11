@@ -12,6 +12,10 @@ pred lseg_ones<p> == self=p or self::node<v,q>*q::lseg_ones<p> & R1(v).
 
 pred ll_not_one<> == self=null or self::node<v,q>*q::ll<> & R2(v).
 
+pred lseg_ones_X<p> == self=p or self::node<v,q>*q::lseg_ones_X<p> & v=1.
+
+pred ll_not_one_X<> == self=null or self::node<v,q>*q::ll<> & v!=1.
+
 infer [R1,R2] (exists p_1488: x'::node<Anon_1471,q_1472>@M * 
                  q_1472::lseg_ones<p_1488>@M * p_1488::ll_not_one<>@M&
 res=v_boolean_34_1447' & 
@@ -23,7 +27,22 @@ Anon_1471=1 & x'=x & x'!=null & !(v_bool_31_1450') & v_bool_34_1449' )
 print residue.
 
 /*
+infer [] (exists p_1488: x'::node<Anon_1471,q_1472>@M * 
+                 q_1472::lseg_ones_X<p_1488>@M * p_1488::ll_not_one<>@M&
+res=v_boolean_34_1447' & 
+(((!(v_boolean_34_1447') & p_1488!=null) | 
+  (p_1488=null & v_boolean_34_1447'))) & 
+Anon_1471=1 & x'=x & x'!=null & !(v_bool_31_1450') & v_bool_34_1449' )
+ |-  x::lseg_ones_X<p>@M * p::ll_not_one<>@M&
+((!(res) & p!=null) | (p=null & res)). 
+print residue.
+*/
+/*
 # ex5c4.slk
+
+!!! **infer.ml#2213:RelInferred (simplified):
+   [RELDEFN R1: ( v_112=1) -->  R1(v_112)]
+
 
 # Why is R1, R2 undefined? Where is this message printed?
 
