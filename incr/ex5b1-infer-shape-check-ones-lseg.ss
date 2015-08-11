@@ -1,3 +1,4 @@
+// $ ../hip ex5b1-infer-shape-check-ones-lseg.ss --pred-en-seg
 
 data node {
  int val;

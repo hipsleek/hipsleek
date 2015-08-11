@@ -3235,6 +3235,9 @@ let rec elim_irr_eq_exps prog args f=
     CF.add_quantifiers qvars nf
   | _ -> report_error no_pos "sau. elim_irr_eq_exps: not handle yet"
 
+(*
+syntax equiv check has problem with field-sensitive. (tree)
+*)
 let remove_dups_pardefs_x grp=
   let eq_pardefs (_,args1,_,f1,_) (_,args2,_,f2,_)=
     let ss = List.combine args1 args2 in
@@ -3617,7 +3620,7 @@ let constr_cmp cs1 cs2=
 let remove_dups_constr constrs=
   Gen.BList.remove_dups_eq constr_cmp constrs
 
-let subst_equiv_hprel equivs constrs=
+let subst_equiv_hprel_x equivs constrs=
   let subst_one parts cs=
     let nlhs = List.fold_left (fun f0 (from_hps, to_hp) ->
         CF.subst_hprel f0 from_hps to_hp
@@ -3633,6 +3636,13 @@ let subst_equiv_hprel equivs constrs=
   if equivs = [] then constrs else
     let parts = partition_subst_hprel equivs [] in
     List.map (subst_one parts) constrs
+
+let subst_equiv_hprel equivs constrs=
+  let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  let pr2 = pr_list_ln Cprinter.string_of_hprel_short in
+  Debug.no_2 "subst_equiv_hprel" pr1 pr2 pr2
+      (fun _ _ -> subst_equiv_hprel_x equivs constrs)
+      equivs constrs
 
 let is_inconsistent_heap f =
   let ( hf,mix_f,_,_,_,_) = CF.split_components f in

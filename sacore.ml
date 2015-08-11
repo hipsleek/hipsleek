@@ -4144,7 +4144,7 @@ let pred_norm_seg_x iprog prog unk_hps hp_defs=
   (****************INTERNAL***************)
   let need_cutpoint def=
     let hp,args = CF.extract_HRel def.CF.def_lhs in
-    let () = Debug.info_hprint (add_str "checking for hp"  (!CP.print_sv)) hp no_pos in
+    let () = Debug.ninfo_hprint (add_str "checking for hp"  (!CP.print_sv)) hp no_pos in
     if CP.mem_svl hp unk_hps then None else
       (*split base cases and rec-cases*)
       let bfs,rfs, dep_fs = List.fold_left ( fun (acc_bfs, acc_rfs, dep_fs) (f,_) ->
@@ -4155,28 +4155,25 @@ let pred_norm_seg_x iprog prog unk_hps hp_defs=
             (acc_bfs, acc_rfs@[f], dep_fs)
           else (acc_bfs, acc_rfs, dep_fs@[(f,hps)])
       ) ([],[],[]) def.CF.def_rhs in
-      match bfs,rfs with
-        | [bf],[rec_f] -> (* adhoc *) begin
-            (* rec_f should be progressing *)
-            let dep_fs,dep_hps = List.fold_left (fun (acc_fs, acc_hps) (f,hps) ->
-                acc_fs@[f],acc_hps@hps
-            ) ([],[]) dep_fs in
-            (* dep_fs should be progressing *)
+      match bfs,dep_fs with
+        | [bf],[(dep_f, dep_hps)] -> (* adhoc *) begin
+            (* TODO: rfs should be progressing *)
+            (* TODO: dep_f should be progressing *)
             match dep_hps with
               | [dep_hp] -> begin
                   try
-                    let () = Debug.info_hprint (add_str "dep_hp"  (!CP.print_sv)) dep_hp no_pos in
+                    let () = Debug.ninfo_hprint (add_str "dep_hp"  (!CP.print_sv)) dep_hp no_pos in
                     let dep_def = CF.look_up_hp_def hp_defs dep_hp in
-                    (* todo: check whether dep_def == bf \/ rec_f *)
+                    (* todo: check whether dep_def == bf \/ dep_f *)
                     let dep_fs0 = List.fold_left (fun acc (f,_) -> acc@[f]) [] dep_def.CF.def_rhs in
-                    let rec_f0 = CF.subst_hprel rec_f [hp] dep_hp in
+                    (* let rec_f0 = CF.subst_hprel rec_f [hp] dep_hp in *)
                     let _,dep_args = CF.extract_HRel dep_def.CF.def_lhs in
                     let sst = List.combine args dep_args in
                     let bf1 = CF.subst sst bf in
-                    let rec_f1 = CF.subst sst rec_f0 in
-                    let is_equiv= Syn_checkeq.checkeq_formula_list_w_args dep_args [bf1;rec_f1] dep_fs0 in
+                    let dep_f1 = CF.subst sst dep_f in
+                    let is_equiv= Syn_checkeq.checkeq_formula_list_w_args dep_args [bf1;dep_f1] dep_fs0 in
                     if is_equiv then
-                      Some (hp, bf, rec_f, dep_hp)
+                      Some (hp, args, bf, rfs, dep_hp, dep_f)
                     else None
                   with _ -> None
                 end
@@ -4184,13 +4181,72 @@ let pred_norm_seg_x iprog prog unk_hps hp_defs=
           end
         | _ -> None
   in
-  let generate_seg (hp, bf, rec_f, dep_hp)=
-    let () = Debug.info_hprint (add_str "generating for hp"  (!CP.print_sv)) hp no_pos in
-    []
+  let extract_root hp def=
+    match def.CF.def_cat with
+        | CP.HPRelDefn (_,r,others) ->  r, others
+        | _ -> raise Not_found
+  in
+  let extend_seg_arg target_hp new_hp seg_earg hf0=
+    let rec recf hf= match hf with
+      | CF.HRel (hp, eargs, pos) ->
+            if CP.eq_spec_var target_hp hp then
+              CF.HRel (new_hp, eargs@[seg_earg], pos)
+            else hf
+      | CF.Star({CF.h_formula_star_h1 = h1;
+        CF.h_formula_star_h2 = h2;
+        CF.h_formula_star_pos = pos;}) -> 
+            let new_f1 =  recf h1 in
+            let new_f2 = recf h2 in
+            CF.mkStarH new_f1 new_f2 pos
+      | _ -> hf
+    in
+    recf hf0
+  in
+  let generate_seg_pred orig_hp orig_all_args orig_root orig_args rec_fs dep_hp=
+    let seg_arg = fresh_any_name Globals.seg_arg in
+    let seg_sv = CP.SpecVar (CP.type_of_spec_var orig_root, seg_arg ,Unprimed) in
+    let orig_hpcl = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var orig_hp) in
+    let seg_def_lhs0, n_hp = Sautil.add_raw_hp_rel prog true false (orig_hpcl.Cast.hp_vars_inst@[(seg_sv,NI)]) no_pos in
+    let sst0 = List.combine (List.map fst orig_hpcl.Cast.hp_vars_inst) orig_all_args in
+    let seg_def_lhs = CF.h_subst sst0 seg_def_lhs0 in
+    let n_hpcl = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var n_hp) in
+    let todo_unk = Iast.mkhp_decl iprog n_hpcl.Cast.hp_name
+          (List.map (fun (CP.SpecVar (t,id,_) ,ins) -> (t,id, ins)) n_hpcl.Cast.hp_vars_inst)
+          n_hpcl.Cast.hp_part_vars n_hpcl.Cast.hp_root_pos n_hpcl.Cast.hp_is_pre (IF.mkTrue IF.n_flow no_pos)
+    in
+    let seg_earg = CP.mkVarNull seg_sv no_pos in
+    let seg_def_rec_rhs = List.map (fun f ->
+        CF.formula_map (extend_seg_arg orig_hp n_hp seg_earg) f
+    ) rec_fs in
+    let seg_base_rhs = CF.formula_of_pure_formula (CP.mkPtrEqn orig_root seg_sv no_pos) no_pos in
+    let seg_def_rhs = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 no_pos) seg_base_rhs seg_def_rec_rhs in
+    let seg_def_cat = CP.HPRelDefn (n_hp, orig_root, orig_args@[seg_sv]) in
+    let seg_pred = CF.mk_hp_rel_def1 seg_def_cat seg_def_lhs [(seg_def_rhs, None)] None in
+    (seg_pred, seg_def_lhs, seg_sv)
+  in
+  let generate_seg (orig_def,hp, args, bf, rec_fs, dep_hp,dep_f)=
+    let () = Debug.ninfo_hprint (add_str "generating for hp"  (!CP.print_sv)) hp no_pos in
+    try
+      let orig_root, orig_args = extract_root hp orig_def in
+      (* generate seg pred *)
+      let (seg_def, seg_def_lhs, seg_sv) = generate_seg_pred hp args orig_root orig_args rec_fs dep_hp in
+      let () = Debug.ninfo_hprint (add_str "seg_def"  Cprinter.string_of_hp_rel_def) seg_def no_pos in
+      let () = Debug.ninfo_hprint (add_str "seg_def_lhs"  !CF.print_h_formula) seg_def_lhs no_pos in
+      (* generate linking pred *)
+      let hprels = CF.get_hprel dep_f in
+      let ((ter_hp, ter_eargs,_) as hprel) = List.hd (List.filter (fun (hp,_,_) -> CP.eq_spec_var hp dep_hp) hprels) in
+      let dep_root,_ = Cast.get_root_args_hprel prog.Cast.prog_hp_decls (CP.name_of_spec_var ter_hp) (List.concat (List.map CP.afv ter_eargs)) in
+      let sst1 = [dep_root,seg_sv] in
+      let ter_seg = CF.h_subst sst1 (CF.HRel hprel) in
+      let link_rhs_f = CF.formula_of_heap (CF.mkStarH seg_def_lhs ter_seg no_pos) no_pos in
+      let link_def = {orig_def with def_rhs = [(link_rhs_f, None)]} in
+      let () = Debug.ninfo_hprint (add_str "link_def"  Cprinter.string_of_hp_rel_def) link_def no_pos in
+      [link_def;seg_def]
+    with _ -> [orig_def]
   in
 
   (****************END**INTERNAL***************)
-  let () = Debug.info_hprint (add_str " step 1" pr_id) "checking" no_pos in
+  let () = Debug.ninfo_hprint (add_str " step 1" pr_id) "checking" no_pos in
   let to_norm_def, rest = List.fold_left (fun (acc_to, acc_rest) def -> begin
       let need_seg_opt = need_cutpoint def in
       match need_seg_opt with
@@ -4199,9 +4255,14 @@ let pred_norm_seg_x iprog prog unk_hps hp_defs=
         | None -> (acc_to, acc_rest@[def])
   end
   ) ([],[]) hp_defs in
-  let () = Debug.info_hprint (add_str " step 2" pr_id) "generating" no_pos in
-  let seg_preds = List.fold_left (fun acc conf -> acc@(generate_seg conf)) [] to_norm_def in
-  (* rest *) hp_defs
+  let () = Debug.ninfo_hprint (add_str " step 2" pr_id) "generating" no_pos in
+  let seg_defs = List.fold_left (fun acc (hp, args, bf, rec_fs, dep_hp,dep_f) ->
+      let orig_def = CF.look_up_hp_def hp_defs hp in
+      let conf1 = (orig_def,hp, args, bf, rec_fs, dep_hp,dep_f) in
+      let new_defs = generate_seg conf1 in
+      acc@new_defs
+  ) [] to_norm_def in
+  rest@seg_defs
 
 let pred_norm_seg iprog prog unk_hps hp_defs=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
