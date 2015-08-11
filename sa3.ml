@@ -671,12 +671,24 @@ let get_par_defs_pre_fix pre_fix_hps post_hps constrs0 =
   Debug.no_1 "get_par_defs_pre_fix" pr1 (pr_pair pr2 pr2)
     (fun _ -> get_par_defs_pre_fix_x pre_fix_hps post_hps constrs0) constrs0
 
-let get_par_defs_post constrs0 =
+let get_par_defs_post_x constrs0 =
   let mk_par_def cs=
     let hp, args = Cformula.extract_HRel_f cs.Cformula.hprel_rhs in
     mk_pdef hp args cs.Cformula.unk_svl (CP.mkTrue no_pos) (Some cs.Cformula.hprel_lhs) None None
   in
   List.map mk_par_def constrs0
+
+let get_par_defs_post constrs0 =
+  let pr0 = pr_list_ln Cprinter.string_of_hprel_short in
+  let pr1 = !CP.print_svl in
+  let pr2 = !CP.print_formula in
+  let pr3 oform= match oform with
+    | None -> "None"
+    | Some f -> Cprinter.prtt_string_of_formula f
+  in
+  let pr4 = pr_hepta !CP.print_sv pr1 pr1 pr2 pr3 pr3 pr3 in
+  Debug.no_1 "get_par_defs_post" pr0 (pr_list_ln pr4)
+      (fun _ -> get_par_defs_post_x constrs0) constrs0
 
 let get_par_defs_pre constrs0 =
   let mk_par_def cs=
@@ -1055,6 +1067,7 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *Cformula.hp_rel_def) 
           in
           let defs = List.map fst defs_wg in
           let () = DD.ninfo_hprint (add_str "defs0: " pr1) defs0_wg no_pos in
+          let () = DD.ninfo_hprint (add_str "defs0a: " pr1) defs0a_wg no_pos in
           let () = DD.ninfo_hprint (add_str "defs: " pr1) defs_wg no_pos in
           let r,non_r_args = Sautil.find_root prog (hp::skip_hps) args0 defs in
           (*make explicit root*)
@@ -1363,7 +1376,7 @@ let pardef_subst_fix_x prog unk_hps groups=
       (* let pr1 = pr_list_ln (pr_list_ln (pr_quad !CP.print_sv !CP.print_svl Cprinter.prtt_string_of_formula !CP.print_svl)) in *)
       (* let () = DD.info_pprint ("      new_cur: " ^ (pr1 new_cur)) no_pos in *)
       (*subs new_cur with new_rec_indps (new_nrec_indps is substed already)*)
-      let new_cur1 = List.map Sautil.remove_dups_pardefs new_cur in
+      let new_cur1 =  List.map Sautil.remove_dups_pardefs new_cur in
       let new_cur2 = Sautil.succ_subst_with_rec_indp prog new_rec_indps unk_hps new_cur1 in
       (new_cur2@new_rec_indps@new_nrec_indps)
   in

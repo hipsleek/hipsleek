@@ -330,6 +330,7 @@ let dang_hp_default_prefix_name = "DP_DP"
 let ex_first = "v"
 let size_rel_name = "size"
 let size_rel_arg = "n"
+let seg_arg = "p"
 let field_rec_ann = "REC"
 let field_val_ann = "VAL"
 
@@ -978,7 +979,7 @@ let pred_seg_unify = ref false
 
 let pred_equiv = ref false
 
-let pred_norm_seg = ref true
+let pred_norm_seg = ref false
 
 let pred_equiv_one = ref true
 
