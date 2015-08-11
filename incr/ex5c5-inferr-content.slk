@@ -20,11 +20,19 @@ Anon_1471!=1 & !(v_boolean_37_1448') & res=v_boolean_37_1448'
 print residue.
 
 /*
-# ex5c4.slk 
+# ex5c5.slk 
+
+# Why below?
+
+!!! **infer.ml#2213:RelInferred (simplified):[RELDEFN R1: ( v_77!=1) -->  R1(v_77)]
+!!! **infer.ml#2213:RelInferred (simplified):[RELDEFN R2: ( v_85!=1) -->  R2(v_85)]
+!!! **infer.ml#2213:RelInferred (simplified):[RELDEFN R2: ( true) -->  R2(v_88)]
+
 
  <1>emp&x=p & x'=p & not(res) & not(v_boolean_37_1448') & 
         not(v_bool_31_1450') & not(v_bool_34_1449') & p!=null & Anon_1471!=1&{FLOW,(20,21)=__norm#E}[]
  inferred rel: [RELDEFN R2: ( v_86!=1) -->  R2(v_86)]
+
 [[ Fold ==>  Fold ==>  SEARCH ==>  Match(x',p) ==>  COND ==>  Match(q_1472,q_87)]]
 
 id: 29; caller: []; line: 27; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ R1,R2]; c_heap: emp; others: [] globals: [@flow,@ver_post]

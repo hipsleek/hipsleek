@@ -20,6 +20,9 @@ bool check_ones(node x)
   requires x::ll<>
   ensures x::lseg<p>*p::ll<> & (res & p=null | !res & p!=null);
 
+  requires x::ll<>@L
+  ensures emp;
+
   requires x::ll<>
   ensures x::lseg<p>*p::ll<> ;
 

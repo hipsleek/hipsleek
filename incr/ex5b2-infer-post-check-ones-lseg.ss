@@ -32,6 +32,13 @@ bool check_ones(node x)
   requires x::ll<>@L
   ensures x::lseg<p>@A*p::ll<>@A & (res & p=null | !res & p!=null);
 
+  // free lemma
+  x::ll<> <--> x::lseg<p>*p::ll<>
+          <--> x::lseg_ones<p>*p::ll_not_one<>
+
+  requires x::lseg<p>@*p::ll<>@L
+  ensures (res & p=null | !res & p!=null);
+
    requires x::ll<>@L
   ensures x::lseg_ones<p>@A*p::ll_not_one<>@A 
            & (res & p=null | !res & p!=null);
