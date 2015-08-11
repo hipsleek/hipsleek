@@ -9366,7 +9366,7 @@ type entail_state = {
       | RankDec [rid] | RankBounded id
   *)
   (* es_infer_rel : (CP.formula * CP.formula) list; *)
-  es_infer_rel : CP.infer_rel_type list;
+  es_infer_rel : CP.infer_rel_type Gen.stack_pr; (* CP.infer_rel_type list; *)
   es_infer_hp_rel : hprel list; (*(CP.rel_cat * formula * formula) list;*)
   (* output : pre pure assumed to infer relation *)
   (* es_infer_pures : CP.formula list; *)
@@ -9541,7 +9541,7 @@ let is_dfa_ctx_list lc=
   | SuccCtx cs -> List.exists is_dfa_ctx cs
 
 let is_infer_none_es es =
-  (es.es_infer_heap==[] && es.es_infer_templ_assume==[] && es.es_infer_pure==[] && es.es_infer_rel==[] && es.es_infer_hp_rel==[])
+  (es.es_infer_heap==[] && es.es_infer_templ_assume==[] && es.es_infer_pure==[] && es.es_infer_rel # is_empty_recent && es.es_infer_hp_rel==[])
 
 let is_infer_none_ctx c =
   let rec aux c =
@@ -9814,7 +9814,7 @@ let empty_es flowt grp_lbl pos =
     es_infer_templ = [];
     es_infer_templ_assume = [];
     es_infer_pure = []; (* (CP.mkTrue no_pos); *)
-    es_infer_rel = [] ;
+    es_infer_rel = new Gen.stack_pr (* "es_infer_rel" *)  CP.print_lhs_rhs (==);
     es_infer_hp_rel = [] ;
     es_infer_pure_thus = CP.mkTrue no_pos ;
     es_var_zero_perm = [];
@@ -9835,7 +9835,7 @@ let flatten_context ctx0=
 
 let es_fv es=
   CP.remove_dups_svl ((fv es.es_formula)@(es.es_infer_vars_rel)@es.es_infer_vars_hp_rel@es.es_infer_vars_templ@
-                      (List.fold_left (fun ls (_,p1,p2) -> ls@(CP.fv p1)@(CP.fv p2)) [] es.es_infer_rel)@
+                      (List.fold_left (fun ls (_,p1,p2) -> ls@(CP.fv p1)@(CP.fv p2)) [] es.es_infer_rel # get_stk)@
                       (List.fold_left (fun ls hprel -> ls@(fv hprel.hprel_lhs)@(fv hprel.hprel_rhs)) [] es.es_infer_hp_rel))
 
 let is_one_context (c:context) =
@@ -11005,7 +11005,8 @@ let isFalseBranchCtxL (ss:branch_ctx list) =
   (ss!=[]) && (List.for_all (fun (_,c,_) -> isAnyFalseCtx c) ss )
 
 let is_inferred_pre estate = 
-  not(estate.es_infer_heap==[] && estate.es_infer_pure==[] && estate.es_infer_rel==[])
+  not(estate.es_infer_heap==[] && estate.es_infer_pure==[] && 
+      estate.es_infer_rel # is_empty_recent)
 (* let r = (List.length (estate.es_infer_heap))+(List.length (estate.es_infer_pure)) in *)
 (* if r>0 then true else false *)
 
@@ -11126,7 +11127,7 @@ let rec collect_tu_rel ctx =
 
 let rec collect_rel ctx = 
   match ctx with
-  | Ctx estate -> estate.es_infer_rel 
+  | Ctx estate -> estate.es_infer_rel # get_stk_recent
   | OCtx (ctx1, ctx2) -> (collect_rel ctx1) @ (collect_rel ctx2)
 
 let rec collect_hole ctx = 
@@ -11245,13 +11246,13 @@ let add_infer_pure_thus_estate cp es =
   }
 
 let add_infer_rel_to_estate cp es =
-  let old_cp = es.es_infer_rel in
-  let new_cp = cp@old_cp in
+  let new_cp = es.es_infer_rel # clone in
+  let () = new_cp # push_list cp in
   {es with es_infer_rel = new_cp;}
 
 let add_infer_rel_to_estate cp es =
   let pr = pr_list CP.print_lhs_rhs in
-  let pr2 es = pr es.es_infer_rel in
+  let pr2 es = pr es.es_infer_rel # get_stk in
   Debug.no_1 "add_infer_rel_to_estate" pr pr2 
     (fun _ -> add_infer_rel_to_estate cp es) cp
 
@@ -11509,7 +11510,7 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
    es_infer_templ = es.es_infer_templ;
    es_infer_templ_assume = es.es_infer_templ_assume;
    es_infer_pure = es.es_infer_pure;
-   es_infer_rel = es.es_infer_rel;
+   es_infer_rel = es.es_infer_rel # clone;
    es_infer_term_rel = es.es_infer_term_rel;
    es_infer_hp_rel = es.es_infer_hp_rel;
    es_infer_pure_thus = es.es_infer_pure_thus;
@@ -13924,6 +13925,10 @@ let trans_failesc_context (c: failesc_context) (arg: 'a) f_c f_c_arg f_comb : (f
   let n_bc, acc = List.split (List.map (fun c -> trans_branch_ctx c arg f_c f_c_arg f_comb) bc) in 
   ((bf, es, n_bc), f_comb acc)
 
+(* type: list_failesc_context -> *)
+(*   'a -> *)
+(*   ('a -> context -> (context * 'b) option) -> *)
+(*   ('a -> context -> 'a) -> ('b list -> 'b) -> list_failesc_context * 'b *)
 let trans_list_failesc_context (c: list_failesc_context)
     (arg: 'a) f_c f_c_arg f_comb : (list_failesc_context * 'b) =
   let n_c, acc = List.split (List.map (fun ctx -> trans_failesc_context ctx arg f_c f_c_arg f_comb) c) in
@@ -14377,7 +14382,7 @@ let clear_entailment_history_es2 xp (es :entail_state) :entail_state =
    es_infer_hp_unk_map = es.es_infer_hp_unk_map;
    es_infer_heap = es.es_infer_heap;
    es_infer_pure = es.es_infer_pure;
-   es_infer_rel = es.es_infer_rel;
+   es_infer_rel = es.es_infer_rel # clone;
    es_infer_term_rel = es.es_infer_term_rel;
    es_infer_templ_assume = es.es_infer_templ_assume;
    es_infer_hp_rel = es.es_infer_hp_rel;
@@ -14435,7 +14440,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
     es_infer_heap = es.es_infer_heap;
     es_infer_templ = es.es_infer_templ;
     es_infer_pure = es.es_infer_pure;
-    es_infer_rel = es.es_infer_rel;
+    es_infer_rel = es.es_infer_rel # clone;
     es_infer_term_rel = es.es_infer_term_rel;
     es_infer_templ_assume = es.es_infer_templ_assume;
     es_infer_hp_rel = es.es_infer_hp_rel;
@@ -19033,3 +19038,22 @@ let collect_nondet_vars_list_failesc_context c =
     (snd (trans_list_failesc_context c () f_c voidf2 List.concat))
 
 (* End of Nondeterminism variables *)
+
+let collect_infer_rel_context c =
+   (fold_context (fun xs es -> (es.es_infer_rel # get_stk) @ xs) [] c)
+
+let collect_infer_rel_list_context lfc =
+  let f_a a _ = a in
+  let f_b _ c = Some (c,collect_infer_rel_context c) in
+  Gen.Basic.remove_dups (snd(trans_list_context lfc () f_b f_a List.concat))
+
+let collect_infer_rel_list_partial_context lfc =
+  let f_a a _ = a in
+  let f_b _ c = Some (c,collect_infer_rel_context c) in
+  Gen.Basic.remove_dups (snd(trans_list_partial_context lfc () f_b f_a List.concat))
+
+let collect_infer_rel_list_failesc_context lfc =
+  let f_a a _ = a in
+  let f_b _ c = Some (c,collect_infer_rel_context c) in
+  Gen.Basic.remove_dups (snd(trans_list_failesc_context lfc () f_b f_a List.concat))
+
