@@ -668,8 +668,11 @@ class ['a] stack_pr nn (epr:'a->string) (eq:'a->'a->bool)  =
     val elem_eq = eq 
     method push_list_pr (ls:'a list) =  
       (* WN : below is to be removed later *)
-      let () = print_endline ("\nXXXX push_list("^name^"}"^(Basic.pr_list epr ls)) in
-      super # push_list ls 
+      let n = List.length ls in
+      if n=0 then ()
+      else 
+        let () = print_endline ("\nXXXX push_list("^name^":"^(string_of_int n)^")"^(Basic.pr_list epr ls)) in
+        super # push_list ls 
     method push_pr (s:string) (ls:'a) =  
       (* let () = print_endline ("push_pr("^s^"):"^(epr ls)) in *)
       super # push ls 
