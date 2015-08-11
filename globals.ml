@@ -334,6 +334,7 @@ let dang_hp_default_prefix_name = "DP_DP"
 let ex_first = "v"
 let size_rel_name = "size"
 let size_rel_arg = "n"
+let seg_arg = "p"
 let field_rec_ann = "REC"
 let field_val_ann = "VAL"
 
@@ -982,6 +983,8 @@ let pred_seg_unify = ref false
 
 let pred_equiv = ref false
 
+let pred_norm_seg = ref false
+
 let pred_equiv_one = ref true
 
 let pred_unify_post = ref false
@@ -1179,6 +1182,7 @@ let allow_threads_as_resource = ref false
 (* let assert_matrix = ref false *)
 let assert_nonlinear = ref false
 
+let old_infer_collect = ref false
 let adhoc_flag_1 = ref false
 let adhoc_flag_2 = ref false
 let adhoc_flag_3 = ref false

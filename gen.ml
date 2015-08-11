@@ -606,18 +606,23 @@ class change_flag =
 
 class ['a] stack  =
   object (self)
+    val mutable recent = 0
     val mutable stk = []
     method push (i:'a) = 
       begin
-        stk <- i::stk
+        stk <- i::stk;
+        recent <- recent+1
       end
     method get_stk  = stk (* return entire content of stack *)
-    method get_stk_and_reset  = let s=stk in (stk<-[];s) (* return entire content of stack & clear *)
-    method get_stk_no_dupl  = 
-      (* remove dupl *)
-      let s = self # get_stk in
-      Basic.remove_dups s
-    method set_stk newstk  = stk <- newstk 
+    method get_stk_recent  = 
+      if recent<=0 then []
+      else BList.take recent stk 
+    (* return recent content of stack *)
+    method get_stk_and_reset  = 
+      let s=stk in 
+      (self # reset;s) (* return entire content of stack & clear *)
+    method set_stk newstk  = 
+      stk <- newstk 
     (* override with a new stack *)
     method pop = match stk with 
       | [] -> print_string "ERROR : popping empty stack"; 
@@ -626,19 +631,23 @@ class ['a] stack  =
     method pop_top = match stk with 
       | [] -> print_string "ERROR : popping empty stack"; 
         raise Stack_Error
-      | x::xs -> stk <- xs; x
+      | x::xs -> (stk <- xs;recent<-recent-1; x)
     method top : 'a = match stk with 
       | [] -> print_string "ERROR : top of empty stack"; 
         raise Stack_Error
       | x::xs -> x
     method pop_no_exc = match stk with 
       | [] -> () 
-      | x::xs -> stk <- xs
+      | x::xs -> (stk <- xs; recent<-recent-1)
+    method map f = 
+      stk <- List.map f stk
     method is_empty = stk == []
+    method is_empty_recent = recent<=0
     method is_avail = not(stk == [])
     method get = self # top
     (* method set x = self # push x *)
     method len = List.length stk
+    method len_recent = recent
     method reverse = stk <- List.rev stk
     method reverse_of = List.rev stk
     method mem (i:'a) = List.mem i stk 
@@ -647,12 +656,28 @@ class ['a] stack  =
     (* method exists (i:'a) = List.mem i stk  *)
     (* method exists_eq eq (i:'a) = List.exists (fun b -> eq i b) stk  *)
     method exists f = List.exists f stk 
-    method push_list (ls:'a list) =  stk <- ls@stk
+    method push_list (ls:'a list) = 
+      begin
+        stk <- ls@stk;
+        recent <- (List.length ls)+recent
+      end
     method pop_list (ls:'a list) = 
-      stk <- BList.drop (List.length ls) stk
-    method pop_list_n (n: int) = 
-      stk <- BList.drop n stk
-    method reset = stk <- []
+      begin
+        stk <- BList.drop (List.length ls) stk;
+        recent <- recent - (List.length ls)
+      end
+    method pop_list_n (n: int) =
+      begin
+        stk <- BList.drop n stk;
+        recent <- recent - n
+      end
+    method reset = 
+      begin
+        stk <- []; 
+        recent <- 0
+      end
+    method reset_recent = 
+      recent <- 0
     method clone =
       Oo.copy self
       (* let n = new Gen.stack in *)
@@ -662,10 +687,14 @@ class ['a] stack  =
   end;;
 
 class ['a] stack_pr (epr:'a->string) (eq:'a->'a->bool)  =
-  object 
+  object (self)
     inherit ['a] stack as super
     val elem_pr = epr 
     val elem_eq = eq 
+    method get_stk_no_dupl  = 
+      (* remove dupl *)
+      let s = super # get_stk in
+      BList.remove_dups_eq eq s
     method push_list_pr (ls:'a list) =  
       (* WN : below is to be removed later *)
       (* let () = print_endline ("push_list:"^(Basic.pr_list epr ls)) in *)

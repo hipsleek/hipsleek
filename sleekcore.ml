@@ -550,7 +550,7 @@ let validate_x ls_ex_es0 ls_act_es0=
           let ls_act_ass = (List.map (fun hp -> (hp.CF.hprel_lhs, hp.CF.hprel_rhs)) es.CF.es_infer_hp_rel)@
                            (List.map (fun (_,lhs,rhs) ->
                                 (CF.formula_of_pure_P lhs no_pos,
-                                 CF.formula_of_pure_P rhs no_pos)) es.CF.es_infer_rel) in
+                                 CF.formula_of_pure_P rhs no_pos)) es.CF.es_infer_rel # get_stk_recent) in
           let b2a,_ = checkeq_ass guide_vars ls_ex_ass ls_act_ass in
           b2a
       in

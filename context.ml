@@ -1563,6 +1563,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          let () = Debug.ninfo_hprint (add_str "vl_view_orig" string_of_bool) vl_view_orig no_pos in
          let () = Debug.ninfo_hprint (add_str "vr_view_orig" string_of_bool) vr_view_orig no_pos in
          let () = Debug.ninfo_hprint (add_str "vr_view_derv" string_of_bool) vr_view_derv no_pos in
+         let () = Debug.ninfo_hprint (add_str "en_self_fold" string_of_bool) en_self_fold no_pos in
          let flag_lem = (
            if !ann_derv then (not(vl_view_derv) && not(vr_view_derv)) 
            (* else (vl_view_orig || vr_view_orig) *)
@@ -1641,9 +1642,17 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
              ) in
              let a4 = (
                (*Do not fold/unfold LOCKs*)
-               if (is_l_lock || is_r_lock) then None else 
-               if not(vl_is_rec) && not(vl_is_prim) then Some (2,M_unfold (m_res,0))
-               else if not(vr_is_rec) && not(vl_is_prim) && not(vr_is_prim)  then Some (2,M_fold m_res) 
+               if (is_l_lock || is_r_lock) then None else
+                 let () = Debug.ninfo_hprint (add_str " vl_is_rec" string_of_bool) vl_is_rec no_pos in
+                 let () = Debug.ninfo_hprint (add_str " vl_is_prim" string_of_bool) vl_is_prim no_pos in
+                 let () = Debug.ninfo_hprint (add_str " vr_is_rec" string_of_bool) vr_is_rec no_pos in
+                 let () = Debug.ninfo_hprint (add_str " vr_is_prim" string_of_bool) vr_is_prim no_pos in
+               if not(vl_is_rec) && not(vl_is_prim) then
+                 let () = Debug.ninfo_hprint (add_str "unfold vl_is_rec" string_of_bool) vl_is_rec no_pos in
+                 Some (2,M_unfold (m_res,0))
+               else if not(vr_is_rec) && not(vl_is_prim) && not(vr_is_prim)  then
+                 let () = Debug.ninfo_hprint (add_str "fold vr_is_rec" string_of_bool) vr_is_rec no_pos in
+                 Some (2,M_fold m_res) 
                else None
              ) in
              let a5 = (
@@ -1653,13 +1662,15 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                      (*Do not fold/unfold LOCKs*)
                      if (is_l_lock) then [] else 
                      if (vl_view_orig && vr_view_orig && not(vr_is_prim) && en_self_fold && Gen.BList.mem_eq (=) vl_name vr_self_pts) 
-                     then  [(2,M_fold m_res)] 
+                     then
+                       [(2,M_fold m_res)] 
                      else [] in
                    let l2 =
                      (*Do not fold/unfold LOCKs*)
                      if (is_r_lock) then [] else
                      if (vl_view_orig && vr_view_orig && en_self_fold && Gen.BList.mem_eq (=) vr_name vl_self_pts) 
-                     then [(2,M_unfold (m_res,0))]
+                     then
+                       [(2,M_unfold (m_res,0))]
                      else [] in
                    let l = l1@l2 in
                    if l=[] then None
