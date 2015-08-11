@@ -1066,9 +1066,9 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *Cformula.hp_rel_def) 
               List.filter (fun (f,_) -> not (CF.isAnyConstFalse f)) defs0a_wg
           in
           let defs = List.map fst defs_wg in
-          let () = DD.info_hprint (add_str "defs0: " pr1) defs0_wg no_pos in
-          let () = DD.info_hprint (add_str "defs0a: " pr1) defs0a_wg no_pos in
-          let () = DD.info_hprint (add_str "defs: " pr1) defs_wg no_pos in
+          let () = DD.ninfo_hprint (add_str "defs0: " pr1) defs0_wg no_pos in
+          let () = DD.ninfo_hprint (add_str "defs0a: " pr1) defs0a_wg no_pos in
+          let () = DD.ninfo_hprint (add_str "defs: " pr1) defs_wg no_pos in
           let r,non_r_args = Sautil.find_root prog (hp::skip_hps) args0 defs in
           (*make explicit root*)
           (* (\*for temporal*\) *)
