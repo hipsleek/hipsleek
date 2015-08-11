@@ -115,7 +115,7 @@ let pr_sv = Cprinter.string_of_spec_var
 let pr_svl = pr_list pr_sv 
 
 let elim_absent_nodes h0 which_xpure =
-  if !Globals.adhoc_flag_3 then (h0,[])
+  if !Globals.old_keep_absent then (h0,[])
   else
     let pf = CP.mkTrue no_pos in
     let f a hf = match hf with
@@ -128,7 +128,7 @@ let elim_absent_nodes h0 which_xpure =
                     h_formula_data_pos = pos}) -> 
         if CP.is_absent_ann ann then 
           begin
-            let () = x_binfo_hp (add_str "DataNode(absent)" !print_h_formula) hf no_pos in
+            let () = x_dinfo_hp (add_str "DataNode(absent)" !print_h_formula) hf no_pos in
             let () = x_dinfo_hp (add_str "DataNode.ann" CP.string_of_ann) ann no_pos in
             let () = x_dinfo_hp (add_str "DataNode.name" pr_id) name no_pos in
             let () = x_dinfo_hp (add_str "DataNode.node" pr_sv) pn no_pos in
@@ -1213,13 +1213,22 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
   in
   (* to build a subs here *)
   let (h0,pf) = elim_absent_nodes h0 which_xpure in
-  let () = x_binfo_pp "TODO: Need to add pure collected into p0" no_pos in
-  let () = x_binfo_hp (add_str "elim_abs (pure)" (pr_list !CP.print_formula)) pf no_pos in
+  let pf = CP.join_conjunctions pf in
+  (* let p0 = MCP.merge_mix_w_pure p0 pf in *)
+  (* let () = x_dinfo_pp "TODO: Need to add pure collected into p0" no_pos in *)
+  (* let mf_p0 = MCP.pure_of_mix p0 in *)
+  (* let () = x_dinfo_hp (add_str "elim_abs (p0)" !CP.print_formula) mf_p0 no_pos in *)
+  let () = x_dinfo_hp (add_str "elim_abs (pure)" !CP.print_formula) pf no_pos in
   let memset = x_add h_formula_2_mem h0 p0 [] prog in
-  (* let () = x_binfo_hp (add_str "h0" Cprinter.string_of_h_formula) h0 no_pos in *)
-  (* let () = x_binfo_hp (add_str "p0" Cprinter.string_of_mix_formula) p0 no_pos in *)
+  (* let () = x_dinfo_hp (add_str "h0" Cprinter.string_of_h_formula) h0 no_pos in *)
+  (* let () = x_dinfo_hp (add_str "p0" Cprinter.string_of_mix_formula) p0 no_pos in *)
   let () = x_tinfo_hp (add_str "memset" Cprinter.string_of_mem_formula) memset no_pos in
-  if (is_sat_mem_formula memset) then (x_add xpure_heap_helper prog h0 which_xpure memset, memset)
+  if (is_sat_mem_formula memset) then 
+    let pure_of_memset = x_add xpure_heap_helper prog h0 which_xpure memset in
+    let pure_of_memset = 
+      if !Globals.old_keep_absent then pure_of_memset 
+      else MCP.merge_mix_w_pure pure_of_memset pf in
+    (pure_of_memset, memset)
   else
     (MCP.mkMFalse no_pos, memset)
 
@@ -1587,13 +1596,20 @@ and xpure_heap_symbolic_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
   (* let h2 = Norm.imm_norm_h_formula prog h0 () in  *)
   let () = x_tinfo_hp (add_str "elim_abs (b4)" !print_h_formula) h0 no_pos in
   let (h0,pf) = elim_absent_nodes h0 which_xpure in
-  let () = x_binfo_pp "TODO: Need to add pure collected into p0" no_pos in
+  let pf = CP.join_conjunctions pf in
+  (* let p0 = MCP.merge_mix_w_pure p0 pf in *)
+  (* let () = x_dinfo_pp "TODO: Need to add pure collected into p0" no_pos in *)
+  (* let mf_p0 = MCP.pure_of_mix p0 in *)
+  (* let () = x_dinfo_hp (add_str "elim_abs (p0)" !CP.print_formula) mf_p0 no_pos in *)
   let () = x_dinfo_hp (add_str "elim_abs (af)" !print_h_formula) h0 no_pos in
-  let () = x_binfo_hp (add_str "elim_abs (pure)" (pr_list !CP.print_formula)) pf no_pos in
-  (* let () = x_binfo_hp (add_str "imm_norm (af)" !print_h_formula) h2 no_pos in *)
+  let () = x_dinfo_hp (add_str "elim_abs (pure)" !CP.print_formula) pf no_pos in
+  (* let () = x_dinfo_hp (add_str "imm_norm (af)" !print_h_formula) h2 no_pos in *)
   let memset = x_add h_formula_2_mem h0 p0 [] prog in
   let ph, pa = x_add xpure_heap_symbolic_i prog h0 p0 which_xpure in
-  if (is_sat_mem_formula memset) then (ph, pa, memset)
+  if (is_sat_mem_formula memset) then 
+    let ph =  if !Globals.old_keep_absent then ph
+      else MCP.merge_mix_w_pure ph pf in
+    (ph, pa, memset)
   else (MCP.mkMFalse no_pos, pa, memset)
 
 

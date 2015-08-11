@@ -1557,8 +1557,7 @@ Total verification time: 435.56 second
 	Time spent in child processes: 30.98 second
 	Number of false contexts: 413
 
-
-====================================================================
+===================================================================
 All test results were as expected.
 Total verification time: 99.18 second
 	Time spent in main process: 67.60 second
@@ -1572,7 +1571,23 @@ Total verification time: 878.75 second
 	Number of false contexts: 413
 
 ====================================================================
-====================================================================
+# ann_2
+
+# timing seems worse in this branch. need to check performance issues..
+
+Total verification time: 514.66 second
+	Time spent in main process: 455.60 second
+	Time spent in child processes: 59.06 second
+	Number of false contexts: 413
+
+# native..
+
+Total verification time: 148.53 second
+	Time spent in main process: 91.67 second
+	Time spent in child processes: 56.86 second
+	Number of false contexts: 413
+
+=====================================================================
 ====================================================================
 ====================================================================
 ====================================================================
