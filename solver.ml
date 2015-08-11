@@ -7363,10 +7363,12 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                         | RelT _ | HpT -> false
                         | _ -> true
                   ) qvars in
-                let ws = CP.fresh_spec_vars qvars in
-                let ws_fo = CP.fresh_spec_vars qvars_fo in
-                let st = List.combine qvars ws in
-                let st_fo = List.combine qvars_fo ws_fo in
+                Debug.ninfo_hprint (add_str "qvars " !CP.print_svl) qvars no_pos;
+                Debug.ninfo_hprint (add_str "qvars_fo " !CP.print_svl) qvars_fo no_pos;
+                (* let ws = CP.fresh_spec_vars qvars in *)
+                let ws = CP.fresh_spec_vars qvars_fo in
+                (* let st = List.combine qvars ws in *)
+                let st_fo = List.combine qvars_fo ws in
                 let baref = mkBase qh qp qvp qt qfl qa pos in
                 let new_baref = x_add subst (* st *) st_fo baref in
                 Debug.ninfo_hprint (add_str " baref " Cprinter.string_of_formula) baref no_pos;
