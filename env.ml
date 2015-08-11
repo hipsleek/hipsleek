@@ -130,7 +130,7 @@ and name_clash (v : ident) : bool =
     will occur.
 *)
 
-and names_on_top () : I.typed_ident list = 
+and names_on_top () : typed_ident list = 
   if Gen.is_empty !scopes then
     []
   else
@@ -138,12 +138,12 @@ and names_on_top () : I.typed_ident list =
     let top_names = List.map name_of_info top_infos in
     top_names
 
-and visible_names () : I.typed_ident list = 
+and visible_names () : typed_ident list = 
   let all_infos = List.concat (List.map Gen.HashUti.list_of_hash_values !scopes) in
   let all_names = List.map name_of_info all_infos in
   all_names
 
-and name_of_info (i : ident_info) : I.typed_ident = match i with
+and name_of_info (i : ident_info) : typed_ident = match i with
   | VarInfo vi -> (vi.var_type, vi.var_alpha) (*JUSTFIX: just changed from var_name to var_alpha *)
   | ConstInfo ci -> (ci.const_type, ci.const_name)
   | EnumInfo ei -> (ei.enum_type, ei.enum_name)

@@ -47,6 +47,8 @@ let reverify_flag = ref false
 let reverify_all_flag = ref false
 let ineq_opt_flag = ref false
 
+let ptr_arith_flag = ref false
+
 let illegal_format s = raise (Illegal_Prover_Format s)
 
 type lemma_kind = LEM_PROP| LEM_SPLIT | LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER | LEM_INFER_PRED | RLEM
@@ -190,6 +192,8 @@ type typ =
   | Bptyp
   | Pointer of typ (* base type and dimension *)
 (* | SLTyp (* type of ho formula *) *)
+
+type typed_ident = (typ * ident)
 
 let is_undef_typ t =
   match t with

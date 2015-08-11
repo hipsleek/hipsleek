@@ -677,7 +677,10 @@ struct
     let lc = (Gen.StackTrace.ctr # get_last_call) in
     let () = debug_calls # add_id lc in
     let h = pre_str^"\n"^h in
-    (if loop_d then print_string ("\n"^h^" ENTRY :"^(String.concat "  " (pick_front 80 args))^"\n"));
+    let arg = if loop_d || !VarGen.trace_loop_all 
+      then String.concat "  " (pick_front 80 args) else "" in
+    (if loop_d || !VarGen.trace_loop 
+     then print_string ("\n"^h^" ENTRY :"^arg^"\n"));
     flush stdout;
     let r = (try
                pop_aft_apply_with_exc s f e

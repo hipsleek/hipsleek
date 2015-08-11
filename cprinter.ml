@@ -4698,12 +4698,13 @@ let rec string_of_exp = function
     Can't we use None inside fields to control it?
 *)
 let string_of_field_ann ann =
-  if (* not !print_ann || *) !Globals.sleek_gen_vc || !Globals.sleek_gen_vc_exact then ""
+  if (* not !print_ann || *) !Globals.sleek_gen_vc || !Globals.sleek_gen_vc_exact 
+  then ""
   else (* match ann with *)
     (* | VAL -> "@VAL" *)
     (* | REC -> "@REC" *)
     (* | F_NO_ANN -> "" *)
-    String.concat "@" ann
+    "@"^(String.concat "@" ann)
 
 (* pretty printing for one data declaration*)
 let string_of_decl (t,id) = (* An Hoa : un-hard-code *)
@@ -4736,8 +4737,14 @@ let rec string_of_data_decl_list l c = match l with
 (*   | h::t -> "  " ^ (string_of_decl h) ^ c ^ (string_of_decl_list t c) *)
 (* ;; *)
 
+let string_of_data_pure_inv inv =
+  match inv with
+  | None -> "\n"
+  | Some pf -> "inv "^((string_of_pure_formula) pf)^"\n"
+;;
+
 (* pretty printing for a data declaration *)
-let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_data_decl_list d.data_fields ";\n") ^ ";\n}"
+let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_data_decl_list d.data_fields ";\n") ^ ";\n}"^(string_of_data_pure_inv d.data_pure_inv)
 ;;
 
 let slk_of_data_decl = string_of_data_decl

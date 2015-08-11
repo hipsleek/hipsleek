@@ -84,6 +84,8 @@ let is_void_typ sv = match sv with
 let is_self_spec_var sv = match sv with
   | SpecVar (_,n,_) -> n = self
 
+let self_sv = mk_spec_var self 
+
 let is_res_spec_var sv = match sv with
   | SpecVar (_,n,_) -> n = res_name
 
