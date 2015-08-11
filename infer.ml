@@ -2210,9 +2210,12 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
         (* -------------------------------------------------------------- *)
         (* below causes non-linear LHS for relation *)
         (* let inf_rel_ls = List.map (simp_lhs_rhs vars) inf_rel_ls in *)
-        x_binfo_hp (add_str "RelInferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos;
-        infer_rel_stk # push_list_pr inf_rel_ls;
-        Log.current_infer_rel_stk # push_list inf_rel_ls;
+        if !Globals.adhoc_flag_2 then 
+          begin
+            x_binfo_hp (add_str "RelInferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos;
+            infer_rel_stk # push_list_pr inf_rel_ls;
+            Log.current_infer_rel_stk # push_list inf_rel_ls;
+          end;
         let estate = { estate with es_infer_rel = estate.es_infer_rel@inf_rel_ls;} in
         if inf_rel_ls != [] then
           begin
@@ -2256,7 +2259,7 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
     let pr_neg_lhs = pr_option (pr_pair pr2 !CP.print_formula) in
     let pr3 (es,l,r,p,a) = 
       pr_penta pr1 pr1 (pr_list CP.print_lhs_rhs) pr_neg_lhs pr_rel_ass (l,r,es.es_infer_rel,p,a) in
-    Debug.no_5 "infer_collect_rel" pr2 pr0 pr1 pr1 pr1 pr3
+    Debug.no_5 "infer_collect_rel" pr2 pr0 (add_str "lhs_heap" pr1) (add_str "lhs" pr1) (add_str "rhs" pr1) pr3
       (fun _ _ _ _ _ -> 
          infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos) 
       estate estate.es_infer_vars_rel lhs_h_mix lhs_mix rhs_mix

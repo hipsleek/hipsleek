@@ -2373,10 +2373,13 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
         let rs0, fold_prf = contra_wrapper heap_enatil rhs_p in
 
         let rels = Infer.collect_rel_list_context rs0 in
-        let () = Infer.infer_rel_stk # push_list_pr rels in
-        let () = x_tinfo_hp (add_str "RelInferred (simplified)" (pr_list Cprinter.string_of_lhs_rhs)) rels no_pos in
-        let () = Log.current_infer_rel_stk # push_list rels in
-
+        if rels!=[] && !Globals.adhoc_flag_2 then
+          begin
+            let () = x_binfo_hp (add_str "RelInferred (simplified/solver.ml)" (pr_list Cprinter.string_of_lhs_rhs)) rels no_pos in
+            let () = Infer.infer_rel_stk # push_list_pr rels in
+            let () = Log.current_infer_rel_stk # push_list rels in
+            ()
+          end;
         (* let rs0 = remove_impl_evars rs0 impl_vars in *)
         (* let () = print_string ("\nbefore fold: " ^ (Cprinter.string_of_context new_ctx)) in *)
         (* let () = print_string ("\nview: " ^ (Cprinter.string_of_h_formula view)) in *)
@@ -3647,6 +3650,11 @@ and heap_entail_struc_init_x (prog : prog_decl) (is_folding : bool)  (has_post: 
     let (ans,prf) = heap_entail_agressive_prunning entail_fct (prune_list_ctx prog) (fun (c,_)-> not (isFailCtx c)) cl_new in
     (ans,prf)
 
+and wrap_collect_rel f a =
+  let (lc,_) as ans = f a in
+  let () = x_binfo_hp (add_str "XXXX lc" Cprinter.string_of_list_context_short) lc no_pos in
+  ans
+
 (* this is called mainly by sleek, and in hip for barrier entailment *)
 and heap_entail_struc_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) =
   (*print just length of residue ctx list*)
@@ -3657,7 +3665,7 @@ and heap_entail_struc_init (prog : prog_decl) (is_folding : bool)  (has_post: bo
   let pr2 = Cprinter.string_of_struc_formula in
   (* let pr_out (ctx_lst, pf) = string_of_int (length_ctx ctx_lst) in  *)
   let pr_out (ctx_lst, pf) = Cprinter.string_of_list_context ctx_lst in
-  Debug.no_2 "heap_entail_struc_init" pr pr2 pr_out (fun _ _ -> heap_entail_struc_init_x prog is_folding has_post cl conseq pos pid) cl conseq
+  Debug.no_2 "heap_entail_struc_init" pr pr2 pr_out (fun _ _ -> wrap_collect_rel (heap_entail_struc_init_x prog is_folding has_post cl conseq pos) pid) cl conseq
 
 (* check entailment:                                          *)
 (* each entailment should produce one proof, be it failure or *)
