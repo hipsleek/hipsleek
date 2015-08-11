@@ -26,6 +26,7 @@ type par_def_w_name =  CP.spec_var * CP.spec_var list * CP.spec_var list * CP.fo
 
 let check_stricteq_h_fomula = SY_CEQ.check_stricteq_h_fomula
 let check_relaxeq_formula = SY_CEQ.check_relaxeq_formula
+let check_stricteq_formula = SY_CEQ.check_stricteq_formula
 let checkeq_pair_formula = SY_CEQ.checkeq_pair_formula
 let checkeq_formula_list = SY_CEQ.checkeq_formula_list
 let checkeq_formula_list_w_args = SY_CEQ.checkeq_formula_list_w_args
@@ -3235,11 +3236,14 @@ let rec elim_irr_eq_exps prog args f=
     CF.add_quantifiers qvars nf
   | _ -> report_error no_pos "sau. elim_irr_eq_exps: not handle yet"
 
+(*
+syntax equiv check has problem with field-sensitive. (tree)
+*)
 let remove_dups_pardefs_x grp=
   let eq_pardefs (_,args1,_,f1,_) (_,args2,_,f2,_)=
     let ss = List.combine args1 args2 in
     let nf1 = x_add CF.subst ss f1 in
-    SY_CEQ.check_relaxeq_formula args1 nf1 f2
+    SY_CEQ.check_stricteq_formula args1 nf1 f2
   in
   Gen.BList.remove_dups_eq eq_pardefs grp
 
@@ -3617,7 +3621,7 @@ let constr_cmp cs1 cs2=
 let remove_dups_constr constrs=
   Gen.BList.remove_dups_eq constr_cmp constrs
 
-let subst_equiv_hprel equivs constrs=
+let subst_equiv_hprel_x equivs constrs=
   let subst_one parts cs=
     let nlhs = List.fold_left (fun f0 (from_hps, to_hp) ->
         CF.subst_hprel f0 from_hps to_hp
@@ -3633,6 +3637,13 @@ let subst_equiv_hprel equivs constrs=
   if equivs = [] then constrs else
     let parts = partition_subst_hprel equivs [] in
     List.map (subst_one parts) constrs
+
+let subst_equiv_hprel equivs constrs=
+  let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  let pr2 = pr_list_ln Cprinter.string_of_hprel_short in
+  Debug.no_2 "subst_equiv_hprel" pr1 pr2 pr2
+      (fun _ _ -> subst_equiv_hprel_x equivs constrs)
+      equivs constrs
 
 let is_inconsistent_heap f =
   let ( hf,mix_f,_,_,_,_) = CF.split_components f in
@@ -5710,7 +5721,7 @@ let mkConjH_and_norm_x prog hp args unk_hps unk_svl f1 f2 pos=
       | [nf1;nf2] -> begin
           (*check pure*)
           let b1 = Cfutil.is_empty_heap_f nf1 in
-          let b2 = Cfutil.is_empty_heap_f nf2 in
+          let b2 = Cfutil.is_empty_heap_f nf2  in
           match b1,b2 with
           | true, true ->
             CF.mkStar sharing_f (CF.mkStar nf1 nf2 CF.Flow_combine pos) CF.Flow_combine pos

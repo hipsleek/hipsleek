@@ -130,6 +130,7 @@ let iobj_def =  {I.data_name = "Object";
                  I.data_pos = no_pos;
                  I.data_parent_name = "";
                  I.data_invs = []; (* F.mkTrue no_pos; *)
+                 I.data_pure_inv = None;
                  I.data_is_template = false;
                  I.data_methods = [] }
 
@@ -138,6 +139,7 @@ let iexc_def =  {I.data_name = raisable_class;
                  I.data_pos = no_pos;
                  I.data_parent_name = "Object";
                  I.data_invs = []; (* F.mkTrue no_pos; *)
+                 I.data_pure_inv = None;
                  I.data_is_template = false;
                  I.data_methods = [] }
 
@@ -146,6 +148,7 @@ let ithrd_def =  {I.data_name = Globals.thrd_name ;
                   I.data_pos = no_pos;
                   I.data_parent_name = "Object";
                   I.data_invs = []; (* F.mkTrue no_pos; *)
+                  I.data_pure_inv = None;
                   I.data_is_template = false;
                   I.data_methods = [] }
 
@@ -167,15 +170,17 @@ let iprog = { I.prog_include_decls =[];
               I.prog_proc_decls = [];
               I.prog_coercion_decls = [];
               I.prog_hopred_decls = [];
-              I. prog_barrier_decls = [];
+              I.prog_barrier_decls = [];
               I.prog_test_comps = [];
             }
 
 let cobj_def = { Cast.data_name = "Object";
                  Cast.data_fields = [];
+                 Cast.data_fields_new = [];
                  Cast.data_pos = no_pos;
                  Cast.data_parent_name = "";
                  Cast.data_invs = [];
+                 Cast.data_pure_inv = None;
                  Cast.data_methods = [] }
 
 let cprog = ref { 
@@ -801,8 +806,8 @@ let convert_data_and_pred_to_cast_x () =
   (*derv and spec views*)
   let tmp_views_derv1 = Astsimp.mark_rec_and_der_order tmp_views_derv in
   let cviews_derv = List.fold_left (fun norm_views v ->
-      let der_view = Derive.trans_view_dervs iprog Rev_ast.rev_trans_formula Astsimp.trans_view norm_views v in
-      (cviews0@[der_view])
+      let der_view = Derive.trans_view_dervs iprog Rev_ast.rev_trans_formula Astsimp.trans_view [] norm_views v in
+      (norm_views@[der_view])
     ) cviews0 tmp_views_derv1 in
   let _ = x_tinfo_hp (add_str "derv length" (fun ls -> string_of_int (List.length ls))) tmp_views_derv1 no_pos in
   let cviews = (* cviews0a@ *)cviews_derv in
@@ -932,7 +937,7 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typein
         with
         | Not_found ->
           dummy_exception() ;
-          print_string (mvar ^ " is undefined.\n");
+          print_string (mvar ^ " is undefined (1).\n");
           raise SLEEK_Exception
       end
     | MetaCompose (vs, mf1, mf2) -> 
@@ -1041,7 +1046,7 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
       with
       | Not_found ->
         dummy_exception() ;
-        print_string (mvar ^ " is undefined.\n");
+        print_string (mvar ^ " is undefined (2).\n");
         raise SLEEK_Exception
     end
   | MetaCompose (vs, mf1, mf2) -> begin
@@ -1093,7 +1098,7 @@ let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:T
       with
       | Not_found ->
         dummy_exception() ;
-        print_string (mvar ^ " is undefined.\n");
+        print_string (mvar ^ " is undefined (3).\n");
         raise SLEEK_Exception
     end
   | MetaCompose (vs, mf1, mf2) -> begin
@@ -1273,7 +1278,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   (* in *)
   (* WN:TODO - c*)
   let sst0 = List.map (fun (CP.SpecVar (t,i,p) as sv) -> 
-      let sv2 = Typeinfer.get_spec_var_type_list_infer ~d_tt:n_tl (i,p) [] no_pos 
+      let sv2 = x_add (Typeinfer.get_spec_var_type_list_infer ~d_tt:n_tl) (i,p) [] no_pos 
       in (sv,sv2)) fvs in
   let sst = List.filter (fun (CP.SpecVar (t1,_,_), CP.SpecVar (t2,_,_)) -> t1!=t2 ) sst0 in
   (* if List.length sst != List.length sst0 then *)
@@ -1410,7 +1415,9 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
       let rrels = CP.get_rel_id_list rhs_p in
       let rel_ids = CP.remove_dups_svl (lrels@rrels) in
       let new_rel_ass =  (CP.RelDefn (List.hd rel_ids, None), lhs_p, rhs_p)  in
-      let _ = Infer.infer_rel_stk # push_list [new_rel_ass] in
+      let lr = [new_rel_ass] in
+      let () = x_binfo_hp (add_str "WARNING : Spurious RelInferred (not collected)" (pr_list CP.print_lhs_rhs)) lr no_pos in
+      let _ = Infer.infer_rel_stk # push_list_pr lr in
       ()
   in
   ()

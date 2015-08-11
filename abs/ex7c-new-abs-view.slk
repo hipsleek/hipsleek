@@ -1,0 +1,39 @@
+// Valid.Valid.Valid.Fail.Valid.Valid.
+
+data node{
+ int val;
+ node next;
+}.
+
+pred ll<n> == self=null & n=0 or
+  self::node<_,q>*q::ll<n-1> //& self!=p
+  inv n>=0.
+
+//1
+checkentail x::ll<n>@A |- n>=0.
+print residue.
+expect Valid.
+
+//2
+checkentail x::ll<n>@A & n=0 |- x!=null.
+print residue.
+expect Fail_Must.
+
+//3
+checkentail x::ll<n>@A & n=0 |- x=null.
+print residue.
+expect Valid.
+
+/*
+# ex7c.slk
+
+Need todo following:
+
+!!! **cvutil.ml#152:ViewNode(absent): x::ll<n>@A
+!!! **cvutil.ml#156:TODO: Need to add XPure by xpure_int
+!!! **cvutil.ml#152:ViewNode(absent): x::ll<n>@A
+!!! **cvutil.ml#156:TODO: Need to add XPure by xpure_int
+!!! **cvutil.ml#152:ViewNode(absent): x::ll<n>@A
+!!! **cvutil.ml#156:TODO: Need to add XPure by xpure_int
+
+*/

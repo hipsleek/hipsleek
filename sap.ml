@@ -51,7 +51,7 @@ let view_pure_ext iprog cprog view_ext extn_sv view=
                              Iast.view_labels = List.map (fun _ ->  Label_only.LOne.unlabelled) vars, false;
                              Iast.view_modes = List.map (fun _ -> ModeOut) vars ;
                  } in
-  let is_exted, der_view1 = Derive.trans_view_one_derv iprog Rev_ast.rev_trans_formula Astsimp.trans_view
+  let is_exted, der_view1 = Derive.trans_view_one_derv iprog Rev_ast.rev_trans_formula Astsimp.trans_view []
       cprog.Cast.prog_view_decls der_view extn_info in
   if is_exted then [(view, der_view1)] else []
 

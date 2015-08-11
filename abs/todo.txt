@@ -79,7 +79,32 @@ WARNING: _0:0_0:0:Z3 error message: (error "line 1724 column 31: unknown functio
 # ex5b2.slk did not have any WARNINGs for z3..
 
 ===============================================================
+# ex7b --field-imm --en-imm-merge --eps
+
+# this error needs to be fixed from run-fast-test
+  the problem disappears without --eps. why?
+
+Validate 3: Expecting(3)Valid BUT got : Fail_May
+
+Unexpected List: [1,2,3]
+
+# Could it be due to views that are to be added?
+
+!!! **cvutil.ml#152:ViewNode(absent): q::ll<v>@A
+!!! **cvutil.ml#156:TODO: Need to add XPure by xpure_int
+!!! **cvutil.ml#152:ViewNode(absent): q::ll<v>@A@ rem br[{1,2}]
+!!! **cvutil.ml#156:TODO: Need to add XPure by xpure_int
 ===============================================================
+# ex7c.slk
+
+Need todo following:
+
+!!! **cvutil.ml#152:ViewNode(absent): x::ll<n>@A
+!!! **cvutil.ml#156:TODO: Need to add XPure by xpure_int
+!!! **cvutil.ml#152:ViewNode(absent): x::ll<n>@A
+!!! **cvutil.ml#156:TODO: Need to add XPure by xpure_int
+!!! **cvutil.ml#152:ViewNode(absent): x::ll<n>@A
+!!! **cvutil.ml#156:TODO: Need to add XPure by xpure_int
 ===============================================================
 ===============================================================
 ===============================================================

@@ -101,7 +101,9 @@ let rec new_string_of_typ (x:typ) : string = match x with
 let is_view_recursive (n:ident) = 
   if (!view_scc)==[] then (
     (* report_warning no_pos "view_scc is empty : not processed yet?"; *)
-    false)
+    (* false *)
+      raise Not_found
+  )
   else List.mem n !view_rec 
 
 (** An Hoa : List of undefined data types **)
@@ -1392,6 +1394,7 @@ let mk_new_return_data_decl_from_typ (t:typ):(I.data_decl) =
     I.data_fields = new_data_fields;
     I.data_parent_name = "__RET";
     I.data_invs = [];
+    I.data_pure_inv = None;
     I.data_is_template = false;
     I.data_methods = [];
     I.data_pos = no_pos;
@@ -1457,10 +1460,10 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 
   (*let () = print_endline ("@@prog3\n"^Iprinter.string_of_program prog3^"@@prog3\n") in*)
   let prog2 = { prog3 with I.prog_data_decls =
-                             ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
-                             ::({I.data_name = error_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
-                             ::({I.data_name = mayerror_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
-                             ::({I.data_name = bfail_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
+                             ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_pure_inv = None;I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
+                             ::({I.data_name = error_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_pure_inv = None;I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
+                             ::({I.data_name = mayerror_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_pure_inv = None;I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
+                             ::({I.data_name = bfail_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_pure_inv = None;I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
                              :: prog3.I.prog_data_decls;} in
   (* let () = print_endline (exlist # string_of ) in *)
   (* let () = I.find_empty_static_specs prog2 in *)
@@ -1559,7 +1562,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
          let tmp_views_derv1 = mark_rec_and_der_order tmp_views_derv in
          let () = x_tinfo_hp (add_str "derv length" (fun ls -> string_of_int (List.length ls))) tmp_views_derv1 no_pos in
          let cviews_derv = List.fold_left (fun norm_views v ->
-             let der_view = x_add_1 Derive.trans_view_dervs prog Rev_ast.rev_trans_formula trans_view norm_views v in
+             let der_view = x_add_1 Derive.trans_view_dervs prog Rev_ast.rev_trans_formula trans_view [] norm_views v in
              (norm_views@[der_view])
            ) cviewsa tmp_views_derv1 in
          let cviews = (* cviews_orig@ *)cviews_derv in
@@ -1804,11 +1807,17 @@ and trans_data_x (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
   in
   (* let () = Debug.info_hprint (add_str "    fields:" (pr_list (pr_pair (pr_pair string_of_typ pr_id) (pr_list pr_id)))) *)
   (*     fields no_pos in *)
+  let inv_pf = match ddef.I.data_pure_inv with
+      Some f -> Some (x_add trans_pure_formula f [])  (* WN : where is type table? *)
+    | None -> None
+  in   
   let res = {
     C.data_name = ddef.I.data_name;
     C.data_pos = ddef.I.data_pos;
-    C.data_fields = fields;
+    C.data_fields = fields; (* to be made obsolete later *)
+    C.data_fields_new = List.map (fun ((t,i),v) -> (CP.mk_typed_spec_var t i,v)) fields;
     C.data_parent_name = ddef.I.data_parent_name;
+    C.data_pure_inv = inv_pf; 
     C.data_methods = List.map (trans_proc prog) ddef.I.data_methods;
     C.data_invs = [];
   } in
@@ -2409,7 +2418,14 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
              | None -> Some fc) None n_un_str 
      in
      (* TODO : This has to be generalised to mutual-recursion *)
-     let ir = not(is_prim_v) && is_view_recursive vdef.I.view_name in
+     let ir = try
+       not(is_prim_v) && is_view_recursive vdef.I.view_name
+     with Not_found ->
+         List.exists ( fun (f,_) ->
+         let dep_vns = CF.get_views f in
+         List.exists (fun vn -> string_compare vn.CF.h_formula_view_name vdef.I.view_name) dep_vns
+         ) n_un_str
+     in
      let sf = find_pred_by_self vdef data_name in
      let () = Debug.ninfo_hprint (add_str "cf 1" Cprinter.string_of_struc_formula) cf no_pos in
      let cf = CF.struc_formula_set_lhs_case false cf in
@@ -2959,7 +2975,9 @@ and fill_one_base_case_x prog vd =
       }
     end
 
-and  fill_base_case prog =  {prog with C.prog_view_decls = List.map (fill_one_base_case prog) prog.C.prog_view_decls }
+and  fill_base_case prog = (* {prog with C.prog_view_decls = List.map (fill_one_base_case prog) prog.C.prog_view_decls } *)
+  let () = prog.C.prog_view_decls <- List.map (fill_one_base_case prog) prog.C.prog_view_decls in
+  prog
 
 (* An Hoa : trans_rel *)
 and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
@@ -6443,8 +6461,8 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
       else C.Unit pos in
     let dname = CP.name_of_type base_t in
     let ddef = I.look_up_data_def 2 pos prog.I.prog_data_decls dname in
-    let rec gen_names (fn : ident) (flist : I.typed_ident list) :
-      ((I.typed_ident option) * (ident list)) =
+    let rec gen_names (fn : ident) (flist : typed_ident list) :
+      ((typed_ident option) * (ident list)) =
       (match flist with
        | [] -> (None, [])
        | f :: rest ->
@@ -6521,7 +6539,7 @@ and trans_args args =
 and trans_args_x args = trans_args_gen (List.map (fun (a,b,c) -> (Some a,b,c)) args)
 
 and trans_args_gen (args : ((C.exp option) * typ * loc) list) :
-  ((C.typed_ident list) * C.exp * (ident list)) =
+  ((typed_ident list) * C.exp * (ident list)) =
   match args with
   | arg :: rest ->
     let (rest_local_vars, rest_e, rest_names) = trans_args_gen rest
@@ -8285,7 +8303,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
              else
                ((v :: used_names), [ e ], [],IP.mkTrue pos_e)
            with
-           | Not_found -> Err.report_error{ Err.error_loc = pos_e; Err.error_text = (fst v) ^ " is undefined"; })
+           | Not_found -> Err.report_error{ Err.error_loc = pos_e; Err.error_text = (fst v) ^ " is undefined (4)"; })
         | _ -> Err.report_error { Err.error_loc = (IF.pos_of_formula f); Err.error_text = "malfunction with float out exp in normalizing"; } in
       let rest_used_names, rest_hvars, rest_evars, rest_link = match_exp new_used_names rest pos in
       let hvars = e_hvars @ rest_hvars in
@@ -11032,8 +11050,8 @@ let convert_pred_to_cast_x ls_pr_new_view_tis is_add_pre iprog cprog do_pure_ext
   let cviews0 = if do_pure_extn then
       let tmp_views_derv1 = mark_rec_and_der_order tmp_views_derv in
       let cviews_derv = List.fold_left (fun norm_views v ->
-          let der_view = x_add_1 Derive.trans_view_dervs iprog Rev_ast.rev_trans_formula trans_view norm_views v in
-          (cviews0a@[der_view])
+          let der_view = x_add_1 Derive.trans_view_dervs iprog Rev_ast.rev_trans_formula trans_view [] norm_views v in
+          (norm_views@[der_view])
         ) cviews0a tmp_views_derv1 in
       let cviews0 = (* cviews0a@ *)cviews_derv in
       cviews0
