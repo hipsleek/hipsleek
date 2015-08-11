@@ -2944,17 +2944,26 @@ let norm_imm_rel_formula ?post_vars:(vars_post=[]) ?rel_head:(rel=CP.mkTrue no_p
 (*   let pr_lst = Cprinter.string_of_spec_var_list in *)
 (*   Debug.no_2 "weaken_imm_rel_formula" pr_lst pr pr  weaken_imm_rel_formula vars_post rel *)
 
-let norm_rel_list lst =
-  List.map (fun (rel_ct,rel1,rel2) ->
+let norm_fn (rel_ct,rel1,rel2) =
       match rel_ct with
       | CP.RelAssume _ -> 
         let rel2 = (* x_add_1 *) norm_imm_rel_formula ~rel_head:rel1 rel2  in
         (rel_ct, rel1, rel2)
       | _ -> (rel_ct,rel1,rel2) 
-    ) lst
+
+let norm_rel_list lst =
+  List.map norm_fn lst
+    (* (fun (rel_ct,rel1,rel2) -> *)
+    (*   match rel_ct with *)
+    (*   | CP.RelAssume _ ->  *)
+    (*     let rel2 = (\* x_add_1 *\) norm_imm_rel_formula ~rel_head:rel1 rel2  in *)
+    (*     (rel_ct, rel1, rel2) *)
+    (*   | _ -> (rel_ct,rel1,rel2)  *)
+    (* ) lst *)
 
 let weaken_infer_rel_in_es es =
-  {es with es_infer_rel =  norm_rel_list es.es_infer_rel}
+  let () =  es.es_infer_rel # map norm_fn in
+  es
 
 (* ==================== END norm inferred pre/post ======================== *)
 
