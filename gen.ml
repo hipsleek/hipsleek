@@ -671,10 +671,10 @@ class ['a] stack_pr nn (epr:'a->string) (eq:'a->'a->bool)  =
       let n = List.length ls in
       if n=0 then ()
       else 
-        let () = print_endline ("\nXXXX push_list("^name^":"^(string_of_int n)^")"^(Basic.pr_list epr ls)) in
+        (* let () = print_endline ("\nXXXX push_list("^name^":"^(string_of_int n)^")"^(Basic.pr_list epr ls)) in *)
         super # push_list ls 
     method reset_pr  =  
-        let () = print_endline ("\nXXXX reset("^name) in
+        (* let () = print_endline ("\nXXXX reset("^name) in *)
         super # reset 
     method push_pr (s:string) (ls:'a) =  
       (* let () = print_endline ("push_pr("^s^"):"^(epr ls)) in *)

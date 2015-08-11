@@ -350,22 +350,24 @@ let post_process_subtype_answer v emap unk_fnc rec_fnc =
     ) imm_l  
 
 (* result: res:bool * (ann constraint = relation between lhs_ann and rhs_ann) *)
-let subtype_ann_pair_x  elhs erhs (imm1 : CP.ann) (imm2 : CP.ann) : bool * ((CP.exp * CP.exp) option) =
+let subtype_ann_pair_x  elhs erhs strong_subtype (imm1 : CP.ann) (imm2 : CP.ann) : bool * ((CP.exp * CP.exp) option) =
   let rec helper imm1 imm2 = 
     match imm1 with
     | CP.PolyAnn v1 ->
       let unk_sv () =
         match imm2 with
         | CP.PolyAnn v2 -> (true, Some (CP.Var(v1, no_pos), CP.Var(v2, no_pos)))
-        | CP.ConstAnn k2 -> 
-          (true, Some (CP.Var(v1,no_pos), CP.AConst(k2,no_pos)))
+        | CP.ConstAnn k2 -> if strong_subtype then (false, None)
+          else (true, Some (CP.Var(v1,no_pos), CP.AConst(k2,no_pos)))
         | CP.TempAnn _ | CP.NoAnn -> (helper imm1 (CP.ConstAnn(Accs)))
         | CP.TempRes (al,ar) -> (helper imm1 ar)  (* andreeac should it be Accs? *) in
       post_process_subtype_answer v1 elhs unk_sv (fun imm -> helper imm imm2 )
     | CP.ConstAnn k1 ->
       (match imm2 with
        | CP.PolyAnn v2 -> 
-         let unk_sv () =  (true, Some (CP.AConst(k1,no_pos), CP.Var(v2,no_pos))) in
+         let unk_sv () = 
+           if strong_subtype then (true, None) 
+           else (true, Some (CP.AConst(k1,no_pos), CP.Var(v2,no_pos))) in
          post_process_subtype_answer v2 erhs unk_sv (fun imm -> helper imm1 imm )
        | CP.ConstAnn k2 -> ((int_of_heap_ann k1)<=(int_of_heap_ann k2),None) 
        | CP.TempAnn _ | CP.NoAnn -> (helper imm1 (CP.ConstAnn(Accs)))
@@ -378,26 +380,27 @@ let subtype_ann_pair_x  elhs erhs (imm1 : CP.ann) (imm2 : CP.ann) : bool * ((CP.
 let subtype_ann_pair 
     ?emap_lhs:(elhs = CP.EMapSV.mkEmpty)
     ?emap_rhs:(erhs = CP.EMapSV.mkEmpty)
+    ?strong_subtype:(ss=false)
     (imm1 : CP.ann) (imm2 : CP.ann) : bool * ((CP.exp * CP.exp) option) =
   let pr_imm = Cprinter.string_of_imm in
   let pr1 (imm1,imm2) =  (pr_imm imm1) ^ " <: " ^ (pr_imm imm2) ^ "?" in
   let pr2 = CP.EMapSV.string_of in
   let pr_exp = CP.ArithNormalizer.string_of_exp in
   let pr_out = pr_pair string_of_bool (pr_option (pr_pair (add_str "l(subtype)" pr_exp) (add_str "r(subtype_" pr_exp)) ) in
-  Debug.no_3 "subtype_ann_pair" pr1 (add_str "emap_lhs" pr2) (add_str "emap_rhs" pr2) pr_out (fun _ _ _ -> subtype_ann_pair_x elhs erhs imm1 imm2) (imm1,imm2) elhs erhs
+  Debug.no_3 "subtype_ann_pair" pr1 (add_str "emap_lhs" pr2) (add_str "emap_rhs" pr2) pr_out (fun _ _ _ -> subtype_ann_pair_x elhs erhs ss imm1 imm2) (imm1,imm2) elhs erhs
 
 (* bool denotes possible subyping *)
 (* return true if imm1 <: imm2 *)	
 (* M <: I <: L <: A*)
-let subtype_ann_x (imm1 : CP.ann) (imm2 : CP.ann) : bool =
-  let (r,op) = x_add subtype_ann_pair imm1 imm2 in r
+let subtype_ann_x ?strong_subtype:(ss=false)  (imm1 : CP.ann) (imm2 : CP.ann) : bool =
+  let (r,op) = x_add (subtype_ann_pair ~strong_subtype:ss) imm1 imm2 in r
 
 (* return true if imm1 <: imm2 *)	
 (* M <: I <: L <: A*)
-let subtype_ann caller (imm1 : CP.ann) (imm2 : CP.ann) : bool = 
+let subtype_ann caller ?strong_subtype:(ss=false) (imm1 : CP.ann) (imm2 : CP.ann) : bool = 
   let pr_imm = Cprinter.string_of_imm in
   let pr1 (imm1,imm2) =  (pr_imm imm1) ^ " <: " ^ (pr_imm imm2) ^ "?" in
-  Debug.no_1_num caller "subtype_ann"  pr1 string_of_bool (fun _ -> subtype_ann_x imm1 imm2) (imm1,imm2)
+  Debug.no_1_num caller "subtype_ann"  pr1 string_of_bool (fun _ -> subtype_ann_x ~strong_subtype:ss imm1 imm2) (imm1,imm2)
 
 let subtype_ann_gen_x lhs_f rhs_f elhs erhs impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann): 
   bool * (CP.formula list) * (CP.formula list) * (CP.formula list) =
@@ -501,12 +504,12 @@ let get_strongest_imm  (ann_lst: CP.ann list): CP.ann option =
 let get_strongest_imm  (ann_lst: CP.ann list): CP.ann = 
   map_opt_def (CP.ConstAnn(Accs)) (fun x -> x) (get_strongest_imm ann_lst)
 
-let get_weakest_imm  (ann_lst: CP.ann list): CP.ann = 
+let get_weakest_imm  ?strong_subtype:(ss = false) (ann_lst: CP.ann list)  : CP.ann = 
   let rec helper ann ann_lst = 
     match ann_lst with
     | []   -> ann
     | (CP.ConstAnn(Accs)) :: t -> (CP.ConstAnn(Accs))
-    | x::t -> if subtype_ann 4 ann x then helper x t else helper ann t
+    | x::t -> if subtype_ann 4 ~strong_subtype:ss ann x  then helper x t else helper ann t
   in helper (CP.ConstAnn(Mutable)) ann_lst
 
 let rec remove_true_rd_phase (h : h_formula) : h_formula = 
@@ -1178,7 +1181,7 @@ and propagate_imm_h_formula_x (f : h_formula) view_name (imm : CP.ann)  (imm_p: 
         			It should behave similar to the datanode...
         			*)
       (*f*)
-      ViewNode({f1 with h_formula_view_imm = get_weakest_imm (imm::[f1.CF.h_formula_view_imm]);})
+      ViewNode({f1 with h_formula_view_imm = get_weakest_imm ~strong_subtype:true (imm::[f1.CF.h_formula_view_imm]);})
     else
       let new_node_imm = imm in
       let new_args_imm = List.fold_left (fun acc (fr,t) ->
@@ -1192,14 +1195,14 @@ and propagate_imm_h_formula_x (f : h_formula) view_name (imm : CP.ann)  (imm_p: 
       (*             | CP.ConstAnn _ -> imm *)
       (*             | _ -> f1.Cformula.h_formula_view_imm  *)
       (*         end *)
-      ViewNode({f1 with h_formula_view_imm = get_weakest_imm (imm::[f1.CF.h_formula_view_imm]);(* new_node_imm; <--- andreeac: this is not correct when field-ann is enabled, to adjust *)
+      ViewNode({f1 with h_formula_view_imm = get_weakest_imm ~strong_subtype:true (imm::[f1.CF.h_formula_view_imm]);(* new_node_imm; <--- andreeac: this is not correct when field-ann is enabled, to adjust *)
                         h_formula_view_annot_arg = CP.update_positions_for_annot_view_params new_args_imm f1.h_formula_view_annot_arg;
                })
   | DataNode f1 -> 
     (* if not(CP.is_self_spec_var f1.CF.h_formula_data_node) then f *)
     (* else *)
     let new_param_imm = List.map (fun a -> replace_imm a imm_p emap) f1.CF.h_formula_data_param_imm in
-    DataNode({f1 with h_formula_data_imm =  get_weakest_imm (imm::[f1.CF.h_formula_data_imm]);
+    DataNode({f1 with h_formula_data_imm =  get_weakest_imm ~strong_subtype:true (imm::[f1.CF.h_formula_data_imm]);
                       h_formula_data_param_imm = new_param_imm;})
 
   (* andreeac: why was below needed? *)

@@ -10,12 +10,12 @@ data cell {
 }
 
 relation P(ann a).
-
-void simple_read_write(cell c)
+int simple_read_write(cell c)
   infer [P]
   requires c::cell<f,h>@b & P(b)
   ensures c::cell<g,h>@a;
 {
-  c.fst = c.fst + 1;
+  int i = c.fst + 1;
+  return i;
 }
 

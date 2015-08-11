@@ -56,7 +56,8 @@ Fails
   ensures x::lseg<p>@A*p::ll<>@A & (res & p!=null | !res & p=null);
 */
 
-  infer [RRR]
+  infer [RRR,@imm_pre,@imm_post]
+//  infer [RRR]
   requires x::ll<>
   ensures x::lseg<p>*p::ll<> & RRR(p,res);
 

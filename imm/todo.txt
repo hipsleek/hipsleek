@@ -276,7 +276,7 @@ RELASS [R]: ( R(z1,z2)) -->  ((z2=@M & z1=@M) | z1=@A)]
 !!! top_down_fp:[( R(z1,z2,pz1,pz2), z2=@M & z1=@M)]
 
 =============================================================
-# ex6a.ss
+# ex6a.ss [FIXED]
 
 # need to fix this warning..
 
