@@ -2373,7 +2373,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
         let rs0, fold_prf = contra_wrapper heap_enatil rhs_p in
 
         let rels = Infer.collect_rel_list_context rs0 in
-        let () = Infer.infer_rel_stk # push_list_pr rels in
+        let () = Infer.infer_rel_stk # push_list rels in
         let () = x_tinfo_hp (add_str "RelInferred (simplified)" (pr_list Cprinter.string_of_lhs_rhs)) rels no_pos in
         let () = Log.current_infer_rel_stk # push_list rels in
 
@@ -7140,7 +7140,7 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
 (* snd res is the constraint that causes  *)
 (* the check to fail.                     *)
 
-and hec_stack = new Gen.stack_pr (string_of_int) (==)
+and hec_stack = new Gen.stack_pr "hec-stk" (string_of_int) (==)
 
 (* hec_num denotes particular id of caller *)
 and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
@@ -8303,7 +8303,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
     else lhs_p
   in
   let stk_inf_pure = new Gen.stack in (* of xpure *)
-  let stk_rel_ass = new Gen.stack_pr (add_str "(stk_rel_ass)" CP.string_of_infer_rel) (==) in (* of rel_ass *)
+  let stk_rel_ass = new Gen.stack_pr "stk-rel-ass" (add_str "(stk_rel_ass)" CP.string_of_infer_rel) (==) in (* of rel_ass *)
   let stk_estate = new Gen.stack in (* of estate *)
   (* let () = print_string ("lhs_p2 : " ^ (Cprinter.string_of_mix_formula lhs_p2) ^ "\n\n") in *)
   (* infer must NOT use baga_enum outcome *)
@@ -8319,7 +8319,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
     | None,[] -> ()
     | None,[(h1,h2,_)] ->
       let () = Debug.ninfo_pprint "WARNING : pushing stk_estate (1)" pos in
-      (stk_rel_ass # push_list_pr h2;
+      (stk_rel_ass # push_list h2;
        stk_estate # push h1)
     | Some (es,p),[] ->
       let () = Debug.ninfo_pprint "WARNING : pushing stk_estate (2)" pos in
@@ -8328,7 +8328,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
     | Some (es,p),[(h1,h2,_)] ->
       let () = Debug.ninfo_pprint "WARNING : pushing stk_estate (3)" pos in
       (stk_inf_pure # push p;
-       stk_rel_ass # push_list_pr h2;
+       stk_rel_ass # push_list h2;
        stk_estate # push es)
     | _,_ -> report_error pos "Length of relational assumption list > 1"
   in
@@ -8534,7 +8534,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
                         | [] -> 
                           i_res1,i_res2,i_res3
                         | _ -> (* stk_inf_pure # push pf; *)
-                          stk_rel_ass # push_list_pr relass;
+                          stk_rel_ass # push_list relass;
                           let () = 
                             if entail_states = [] then 
                               report_error pos "Expecting a non-empty list of entail states"
@@ -8561,7 +8561,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
                         | _ ->
                           (* TODO: to check the implication of new ante *)
                           stk_inf_pure # push pf;
-                          stk_rel_ass # push_list_pr relass;
+                          stk_rel_ass # push_list relass;
                           let () = 
                             if entail_states = [] then 
                               report_error pos "Expecting a non-empty list of entail states"

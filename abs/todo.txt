@@ -61,6 +61,23 @@ xpure_heap_symbolic#999 inp2 : x::node<Anon_12,Anon_13>@A * y::node<Anon_14,Anon
 xpure_heap_symbolic#999 inp3 : true
 xpure_heap_symbolic#999@1 EXIT: y!=null#[y]# [[y]]true
 ===============================================================
+# ex16a4.ss
+
+# Why did we have three push?
+# Why is there WARNING after push. Did the relation
+  table for z3 came from somewhere else?
+
+XXXX push_list(rel_decls}[ relation P__1395(AnnT ann_1396:AnnT).
+, relation P__1397(AnnT ann_1398:AnnT).
+]
+
+XXXX push_list(rel_decls}[ relation P__1419(AnnT ann_1420:AnnT).
+]
+
+WARNING: _0:0_0:0:Z3 error message: (error "line 1724 column 31: unknown function/constant P__1419")
+
+# ex5b2.slk did not have any WARNINGs for z3..
+
 ===============================================================
 ===============================================================
 ===============================================================

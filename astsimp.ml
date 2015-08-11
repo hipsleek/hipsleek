@@ -1631,7 +1631,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
            C.prog_barrier_decls = bdecls;
            C.prog_logical_vars = log_vars;
            (* C.prog_rel_decls = xrels (\* crels@extra_rels *\); (\* An Hoa *\) *)
-           C.prog_rel_decls = (let s = new Gen.stack_pr Cprinter.string_of_rel_decl (=) in (s # push_list xrels ; s));
+           C.prog_rel_decls = (let s = new Gen.stack_pr "rel_decls" Cprinter.string_of_rel_decl (=) in (s # push_list_pr xrels ; s));
            C.prog_templ_decls = ctempls;
            C.prog_ut_decls = (ut_vs);
            C.prog_ui_decls = (ui_vs);
@@ -4089,7 +4089,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
            C.proc_static_specs = (* if proc.I.proc_is_main then CF.elim_exists_struc_preserve_pre_evars [] final_static_specs_list else *) final_static_specs_list;
            C.proc_dynamic_specs = final_dynamic_specs_list;
            (* C.proc_static_specs_with_pre =  []; *)
-           C.proc_stk_of_static_specs = new Gen.stack_pr Cprinter.string_of_struc_formula (==);
+           C.proc_stk_of_static_specs = new Gen.stack_pr "static-specs" Cprinter.string_of_struc_formula (==);
            C.proc_hprel_ass = [];
            C.proc_hprel_unkmap = [];
            C.proc_sel_hps = [];

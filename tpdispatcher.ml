@@ -496,7 +496,7 @@ let init_tp () =
 
 let pr_p = pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula_exp
 
-let imm_stk = new Gen.stack_pr pr_p (fun (x,_) (y,_) -> CP.eq_spec_var x y )
+let imm_stk = new Gen.stack_pr "imm-stk" pr_p (fun (x,_) (y,_) -> CP.eq_spec_var x y )
 
 let string_of_tp tp = match tp with
   | OmegaCalc -> "omega"

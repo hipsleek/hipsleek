@@ -660,14 +660,15 @@ class ['a] stack  =
       (* n *)
   end;;
 
-class ['a] stack_pr (epr:'a->string) (eq:'a->'a->bool)  =
+class ['a] stack_pr nn (epr:'a->string) (eq:'a->'a->bool)  =
   object 
     inherit ['a] stack as super
+    val name = nn (* name of stack *)
     val elem_pr = epr 
     val elem_eq = eq 
     method push_list_pr (ls:'a list) =  
       (* WN : below is to be removed later *)
-      let () = print_endline ("push_list:"^(Basic.pr_list epr ls)) in
+      let () = print_endline ("\nXXXX push_list("^name^"}"^(Basic.pr_list epr ls)) in
       super # push_list ls 
     method push_pr (s:string) (ls:'a) =  
       (* let () = print_endline ("push_pr("^s^"):"^(epr ls)) in *)
@@ -695,9 +696,9 @@ class ['a] stack_pr (epr:'a->string) (eq:'a->'a->bool)  =
   end;;
 
 
-class ['a] stack_filter (epr:'a->string) (eq:'a->'a->bool) (fil:'a->bool)  =
+class ['a] stack_filter nn (epr:'a->string) (eq:'a->'a->bool) (fil:'a->bool)  =
   object 
-    inherit ['a] stack_pr epr eq as super
+    inherit ['a] stack_pr nn epr eq as super
     val filter_fn = fil
     method filter = stk <- List.filter fil stk
     method string_of_reverse_log_filter = 
@@ -706,9 +707,9 @@ class ['a] stack_filter (epr:'a->string) (eq:'a->'a->bool) (fil:'a->bool)  =
       (* string_of_reverse_log *)
   end;;
 
-class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  =
+class ['a] stack_noexc nn (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  =
   object 
-    inherit ['a] stack_pr epr eq
+    inherit ['a] stack_pr nn epr eq
     val emp_val = x_init
     method top_no_exc : 'a = match stk with 
       | [] ->  emp_val
@@ -867,7 +868,7 @@ struct
 
   (* let (stkint:int stack3) = new stack3  *)
 
-  let error_list = new stack_noexc "error - stack underflow" (fun x -> x) (=)
+  let error_list = new stack_noexc "error_list" "error - stack underflow" (fun x -> x) (=)
 
   let warning_no  = new counter 0
 
@@ -1342,10 +1343,10 @@ struct
 
   (* type stack = int list *)
   (* stack of calls being traced by ho_debug *)
-  let debug_stk = new stack_noexc (-2) string_of_int (=)
+  let debug_stk = new stack_noexc "debug_stk" (-2) string_of_int (=)
 
   (* stack of calls with detailed tracing *)
-  let dd_stk = new stack_pr string_of_int (=)
+  let dd_stk = new stack_pr "dd_stk" string_of_int (=)
 
   let force_dd_print () =
     (* let d = dd_stk # get_stk in *)
@@ -1743,7 +1744,7 @@ module Profiling =
 struct
   let counters = new mult_counters
   let tasks = new task_table
-  let profiling_stack = new stack_noexc ("stack underflow",0.,false) 
+  let profiling_stack = new stack_noexc "profiling_stk" ("stack underflow",0.,false) 
     (fun (s,v,b)-> "("^s^","^(string_of_float v)^","^(string_of_bool b) ^")") (=)
 
   let add_to_counter (s:string) i = 

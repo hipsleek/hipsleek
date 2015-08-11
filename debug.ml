@@ -485,7 +485,7 @@ struct
     let prefix = "%%%" in
     let pr_cnt (s, cnt) = s ^ (if cnt > 1 then " (" ^ (string_of_int cnt) ^ ")" else "") in
     let summarized_stack stk =
-      let new_stk = new Gen.stack_pr pr_cnt (==) in
+      let new_stk = new Gen.stack_pr "debug-calls" pr_cnt (==) in
       match (List.rev stk#get_stk) with
         | [] -> new_stk
         | hd::tl ->
@@ -506,7 +506,7 @@ struct
       val overflow = prefix^"****************************************"
       val mutable lastline = "\n"
       val mutable rgx = None
-      val stk = new Gen.stack_pr pr_id (==)
+      val stk = new Gen.stack_pr "debug-calls(2)" pr_id (==)
       val mutable offset = -1
       val mutable last_matched_len = max_int
       method dump =

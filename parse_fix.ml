@@ -15,7 +15,7 @@ let loc = no_pos
 
 class ['a] type_stack_pr (epr:'a->string) (eq:'a->'a->bool)  =
   object (self)
-    inherit ['a] stack_pr epr eq as super
+    inherit ['a] stack_pr "type_stack_pr" epr eq as super
     method get_spec_var_ident var p =
       let same_sv sv =
         match sv,p with

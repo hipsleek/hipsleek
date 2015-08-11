@@ -118,7 +118,7 @@ module TP = Tpdispatcher
 
 let sleek_proof_counter = new Gen.ctr_with_aux 0
 
-let unexpected_cmd = new Gen.stack_pr pr_id (=) 
+let unexpected_cmd = new Gen.stack_pr "unexpected-cmd" pr_id (=) 
 (* let unexpected_cmd = ref [] *)
 
 (*
@@ -184,7 +184,7 @@ let cprog = ref {
     Cast.prog_logical_vars = [];
     (*	Cast.prog_func_decls = [];*)
     (* Cast.prog_rel_decls = []; (\* An Hoa *\) *)
-    Cast.prog_rel_decls = (let s = new Gen.stack_pr Cprinter.string_of_rel_decl (=) in s);
+    Cast.prog_rel_decls = (let s = new Gen.stack_pr "prog_rel_decls(CAST)" Cprinter.string_of_rel_decl (=) in s);
     Cast.prog_templ_decls = [];
     Cast.prog_ui_decls = [];
     Cast.prog_ut_decls = [];
@@ -1410,7 +1410,7 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
       let rrels = CP.get_rel_id_list rhs_p in
       let rel_ids = CP.remove_dups_svl (lrels@rrels) in
       let new_rel_ass =  (CP.RelDefn (List.hd rel_ids, None), lhs_p, rhs_p)  in
-      let _ = Infer.infer_rel_stk # push_list_pr [new_rel_ass] in
+      let _ = Infer.infer_rel_stk # push_list [new_rel_ass] in
       ()
   in
   ()

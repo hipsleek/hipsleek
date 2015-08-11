@@ -63,14 +63,14 @@ let pr = !CP.print_formula
 let pr_ty = !CP.Label_Pure.ref_string_of_exp
 type fc_type = CP.formula * CP.formula * CP.formula * CP.formula
 
-let fixcalc_rel_stk : fc_type Gen.stack_pr = new Gen.stack_pr (pr_quad pr pr pr pr) (==)
+let fixcalc_rel_stk : fc_type Gen.stack_pr = new Gen.stack_pr "fixcalc_rel-stk" (pr_quad pr pr pr pr) (==)
 
-let infer_rel_stk : CP.infer_rel_type Gen.stack_pr = new Gen.stack_pr CP.string_of_infer_rel (==)
+let infer_rel_stk : CP.infer_rel_type Gen.stack_pr = new Gen.stack_pr "infer_rel_stk" CP.string_of_infer_rel (==)
 
-let rel_ass_stk : hprel Gen.stack_pr = new Gen.stack_pr
+let rel_ass_stk : hprel Gen.stack_pr = new Gen.stack_pr "rel_ass_stk"
   Cprinter.string_of_hprel_short (==)
 
-let scc_rel_ass_stk : hprel Gen.stack_pr = new Gen.stack_pr
+let scc_rel_ass_stk : hprel Gen.stack_pr = new Gen.stack_pr "scc_rel_ass_stk"
   Cprinter.string_of_hprel_short (==)
 
 (* let dump_rel_ass s =  *)
@@ -1426,7 +1426,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                     then (Some (new_estate, CP.mkTrue pos),None,[]) 
                     else
                       let () = x_binfo_hp (add_str "RelInferred (rel_ass)" (pr_list print_lhs_rhs)) rel_ass pos in
-                      let () = infer_rel_stk # push_list_pr rel_ass in
+                      let () = infer_rel_stk # push_list rel_ass in
                       let () = Log.current_infer_rel_stk # push_list rel_ass in
                       (None,Some inferred_pure,[(new_estate,rel_ass,false)])
               end
@@ -2212,7 +2212,7 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
         (* below causes non-linear LHS for relation *)
         (* let inf_rel_ls = List.map (simp_lhs_rhs vars) inf_rel_ls in *)
         x_tinfo_hp (add_str "RelInferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos;
-        infer_rel_stk # push_list_pr inf_rel_ls;
+        infer_rel_stk # push_list inf_rel_ls;
         Log.current_infer_rel_stk # push_list inf_rel_ls;
         let estate = { estate with es_infer_rel = estate.es_infer_rel@inf_rel_ls;} in
         if inf_rel_ls != [] then

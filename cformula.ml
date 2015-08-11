@@ -51,7 +51,7 @@ let string_of_ann a = CP.string_of_ann a
 
 let string_of_ann_list xs = pr_list string_of_ann xs
 
-let view_prim_lst = new Gen.stack_pr pr_id (=)
+let view_prim_lst = new Gen.stack_pr "view-prim" pr_id (=)
 
 type typed_ident = (typ * ident)
 
@@ -352,7 +352,7 @@ let print_infer_rel(l,r) = (!print_pure_f l)^" --> "^(!print_pure_f r)
 let print_mem_formula = ref (fun (c:mem_formula) -> "printer has not been initialized")
 let print_imm = ref (fun (c:ann) -> "printer has not been initialized")
 
-let sat_stk = new Gen.stack_pr !print_formula  (=)
+let sat_stk = new Gen.stack_pr "sat-stk"  !print_formula  (=)
 
 (* let print_failesc = ref (fun (c:failesc) -> "printer has not been initialized") *)
 
@@ -4877,7 +4877,7 @@ let print_hprel_def_short = ref (fun (c:hprel_def) -> "printer has not been init
 let print_hprel_short = ref (fun (c:hprel) -> "printer has not been initialized")
 
 (* outcome from shape_infer *)
-let rel_def_stk : hprel_def Gen.stack_pr = new Gen.stack_pr
+let rel_def_stk : hprel_def Gen.stack_pr = new Gen.stack_pr "rel_def (shape-infer)"
   !print_hprel_def_short (==)
 
 let print_flow = ref(fun (c:nflow) -> "printer not initialized")
