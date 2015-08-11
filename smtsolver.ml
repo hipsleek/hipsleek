@@ -336,7 +336,7 @@ let add_axiom h dir c =
             related_axioms = x.related_axioms @ [aindex]; }
         else x
       ) global_rel_defs # get_stk in
-    global_rel_defs # reset;
+    global_rel_defs # reset_pr;
     global_rel_defs # push_list_pr new_rel_defs;
     (* Cache the SMT input for 'h dir c' so that we do not have to generate this over and over again *)
     let params = List.append (CP.fv h) (CP.fv c) in
