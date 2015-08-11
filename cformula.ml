@@ -19042,6 +19042,11 @@ let collect_nondet_vars_list_failesc_context c =
 let collect_infer_rel_context c =
    (fold_context (fun xs es -> (es.es_infer_rel # get_stk) @ xs) [] c)
 
+let collect_infer_rel_list_context lfc =
+  let f_a a _ = a in
+  let f_b _ c = Some (c,collect_infer_rel_context c) in
+  Gen.Basic.remove_dups (snd(trans_list_context lfc () f_b f_a List.concat))
+
 let collect_infer_rel_list_partial_context lfc =
   let f_a a _ = a in
   let f_b _ c = Some (c,collect_infer_rel_context c) in

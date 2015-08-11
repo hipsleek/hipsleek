@@ -2210,7 +2210,7 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
         (* -------------------------------------------------------------- *)
         (* below causes non-linear LHS for relation *)
         (* let inf_rel_ls = List.map (simp_lhs_rhs vars) inf_rel_ls in *)
-        if !Globals.adhoc_flag_2 then 
+        if !Globals.old_infer_collect then 
           begin
             x_binfo_hp (add_str "RelInferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos;
             infer_rel_stk # push_list_pr inf_rel_ls;
