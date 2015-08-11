@@ -202,8 +202,8 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
   let pss =
     let pss_1 = transform_struc_formula (transform_1 false) proc_static_specs in
     (pre_norm_stack # push_list (n_stack # get_stk_and_reset);
-     if !imm_pre_is_set then pre_rel := mk_rel (pre_stack # get_stk) no_pos;
-     if !imm_post_is_set then post_rel :=
+     if (!imm_pre_is_set && !should_infer_imm_pre) then pre_rel := mk_rel (pre_stack # get_stk) no_pos;
+     if (!imm_post_is_set && !should_infer_imm_post) then post_rel :=
                                 mk_rel ((* (pre_stack # get_stk)@ *)(post_stack # get_stk)) no_pos;
      transform_struc_formula transform_2 pss_1) in
   (pss, !pre_rel, !post_rel)
