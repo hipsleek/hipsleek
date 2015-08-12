@@ -663,6 +663,9 @@ let maybe_replace_w_empty h =
   (* in new_h *)
   | _ -> h
 
+let maybe_replace_w_empty h =
+  let pr = Cprinter.string_of_h_formula in
+  Debug.no_1 "maybe_replace_w_empty" pr pr maybe_replace_w_empty h 
 
 (* let maybe_replace_w_empty h = *)
 (*   match h with *)
