@@ -1040,7 +1040,7 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *Cformula.hp_rel_def) 
       let is_put_top_guarded, hpdefs,subst_useless=
         if CP.mem_svl hp skip_hps then
           let fs = List.map (fun (a1,args,og,f,unk_args) -> fst (Cformula.drop_hrel_f f [hp]) ) par_defs in
-          let fs1 = Gen.BList.remove_dups_eq (fun f1 f2 -> Sautil.check_relaxeq_formula args f1 f2) fs in
+          let fs1 = Gen.BList.remove_dups_eq (fun f1 f2 -> Sautil.check_stricteq_formula args f1 f2) fs in
           (* let fs2 = try *)
           (*   let res_sv = List.find (fun sv -> String.compare res_name (CP.name_of_spec_var sv) =0) args in *)
           (*   let fr_res = CP.fresh_spec_var res_sv in *)
@@ -1061,7 +1061,7 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *Cformula.hp_rel_def) 
             ) ([],[],[],[]) par_defs in
           let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula (pr_option Cprinter.prtt_string_of_formula)) in
           (* let defs = Gen.BList.remove_dups_eq (fun f1 f2 -> Sautil.check_relaxeq_formula args0 f1 f2) defs0 in *)
-          let defs0a_wg = Gen.BList.remove_dups_eq (fun (f1,_) (f2,_) -> Sautil.check_relaxeq_formula args0 f1 f2) defs0_wg in
+          let defs0a_wg = Gen.BList.remove_dups_eq (fun (f1,_) (f2,_) -> Sautil.check_stricteq_formula args0 f1 f2) defs0_wg in
           let defs_wg = if is_pre && List.length defs0a_wg > 1 then defs0a_wg else
               List.filter (fun (f,_) -> not (CF.isAnyConstFalse f)) defs0a_wg
           in

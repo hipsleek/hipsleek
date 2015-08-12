@@ -26,6 +26,7 @@ let to_data xml : I.data_decl =
     I.data_fields = [];
     I.data_parent_name = "";
     I.data_invs = [];
+    I.data_pure_inv = None;
     I.data_is_template = false;
     I.data_methods = [] }
 

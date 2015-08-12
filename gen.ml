@@ -179,6 +179,7 @@ struct
 
   let fold_pair2f f1 f2 (x1,x2) = f1 x1, f2 x2
 
+  (* isn't this un_opt *)
   let map_opt_def def f x = match x with
     | None -> def
     | Some v -> f v
