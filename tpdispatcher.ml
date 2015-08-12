@@ -971,8 +971,9 @@ let cnv_imm_to_int_p_formula pf lbl =
   ====
   x=null  --> x<=0
   x!=null --> x>0  (to avoid inequality)
-*)
 
+  bv  --> 1<=bv
+*)
 let cnv_ptr_to_int (ex_flag,st_flag) f = 
   let f = x_add_1 Immutils.simplify_imm_addition f in
   let f_f arg e = None in
@@ -980,6 +981,7 @@ let cnv_ptr_to_int (ex_flag,st_flag) f =
     let (pf, l) = bf in
     (* let pf = cnv_imm_to_int_p_formula pf in *)
     match pf with
+    | BVar (v, ll)  ->  Some (Lte(IConst(1,ll),Var(v,ll),ll),l)
     | Eq (a1, a2, ll) -> 
       let (is_null_flag,a1,a2) = comm_null a1 a2 in
       if is_null_flag then
@@ -1045,9 +1047,11 @@ x<=-1
 let comm_is_null a1 a2 =
   match a1,a2 with
   | Var(v,_),IConst(0,_) ->
-    (is_otype (type_of_spec_var v),a1,a2)
+    let t=type_of_spec_var v in
+    (is_otype t,a1,a2)
   | IConst(0,_),Var(v,_) ->
-    (is_otype (type_of_spec_var v),a2,a1)
+    let t=type_of_spec_var v in
+    (is_otype t,a2,a1)
   | _ -> (false,a1,a2)
 
 let comm_is_ann a1 a2 =
@@ -1062,6 +1066,47 @@ let comm_is_ann a1 a2 =
     (is_ann_type (type_of_spec_var v),a2,1, a1) 
   | _ -> (false, a1, 0, a2)
 
+let is_bool_ctr  a1 a2 =
+  match a1,a2 with
+  | Var(v,_),IConst(i,_) ->
+    (* assumes v<=0 or v<1 *)
+    begin
+      match v with 
+        SpecVar(t,i,p) -> 
+        (* Void this is encoding of not(v) *)
+        let neg_v = SpecVar(Void,i,p) in
+        if is_btype t then Some(neg_v)
+        else None
+    end
+  | IConst(i,_),Var(v,_) ->
+    (* assumes 1<=v or 0<v *)
+    begin
+      match v with 
+        SpecVar(t,i,p) -> 
+        (* Void this is encoding of not(v) *)
+        (* let neg_v = SpecVar(Void,i,p) in *)
+        if is_btype t then Some(v)
+        else None
+    end
+  | _ -> None
+
+let is_bool_eq_ctr ?(eq=true)  a1 a2 =
+  match a1,a2 with
+  | Var(v,_),IConst(i,_) | IConst(i,_),Var(v,_)  ->
+    (* assumes v=0 : false; v!=0 : true *)
+    begin
+      match v with 
+        SpecVar(t,id,p) -> 
+        (* let t=type_of_spec_var v in *)
+        (* Void this is encoding of not(v) *)
+        let neg_v = SpecVar(Void,id,p) in
+        if (is_btype t) then 
+          if eq then if i=0 then Some(neg_v) else Some(v)
+          else if i=0 then Some(v) else Some(neg_v) 
+        else None
+    end
+  | _ -> None
+
 let is_ptr_ctr a1 a2 =
   match a1,a2 with
   | Var(v,_),_ ->
@@ -1075,7 +1120,8 @@ let is_ptr_ctr a1 a2 =
 let is_ptr_ctr a1 a2 =
   let pr = Cprinter.string_of_formula_exp in
   let pb = string_of_bool in
-  Debug.no_2 "is_ptr_ctr" pr pr (pr_pair pb pb) is_ptr_ctr a1 a2
+  Debug.no_2 "is_ptr_ctr" pr pr
+    (pr_pair (add_str "ptr" pb) (add_str "ann" pb)) is_ptr_ctr a1 a2
 
 let is_valid_ann v = (int_of_heap_ann imm_bot)<=v && v<=(int_of_heap_ann imm_top)
 
@@ -1190,8 +1236,7 @@ let to_ptr ptr_flag pf =
   Debug.no_1 "to_ptr" pr pr (to_ptr ptr_flag)  pf
 
 
-let cnv_int_to_ptr f = 
-  let f_f e = None in
+let rec cnv_int_to_ptr f = 
   let f_bf bf = 
     let (pf, l) = bf in
     match pf with
@@ -1199,33 +1244,75 @@ let cnv_int_to_ptr f =
       let (is_null_flag,a1,a2) = comm_is_null a1 a2 in
       if is_null_flag then
         Some(Eq(a1,Null ll,ll),l)
+        (* else if bool_flag then *)
+        (*   Some(CP.mkNot (BVar(a1,ll).l) None ll) *)
       else 
-        let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
-        if (ptr_flag || ann_flag) then   Some(x_add to_ptr is_null_flag pf,l)
-        (* let (is_ann_flag,_,_,_) = comm_is_ann a1 a2 in *)
-        (* if is_ann_flag then  Some(x_add to_ptr is_null_flag pf,l) *)
-          (* map_opt_def (Some bf) (fun x -> Some (x,l)) (change_to_imm_rel_p_formula pf) *)
-        else Some bf
+        begin
+          match (is_bool_eq_ctr a1 a2) with
+          | Some(vv) -> 
+            let bv = BVar(vv,ll),l in Some(bv)
+          | None ->
+            let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
+            if (ptr_flag || ann_flag) then Some(x_add to_ptr is_null_flag pf,l)
+            (* let (is_ann_flag,_,_,_) = comm_is_ann a1 a2 in *)
+            (* if is_ann_flag then  Some(x_add to_ptr is_null_flag pf,l) *)
+            (* map_opt_def (Some bf) (fun x -> Some (x,l))
+               (change_to_imm_rel_p_formula pf) *)
+            else Some bf
+        end
     | Neq (a1, a2, ll) -> 
       let (is_null_flag,a1,a2) = comm_is_null a1 a2 in
       if is_null_flag then
         Some(Neq(a1,Null ll,ll),l)
       else
-        let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
-        if (ptr_flag || ann_flag) then   Some(x_add to_ptr is_null_flag pf,l)
-        (* let (is_ann_flag,_,_,_) = comm_is_ann a1 a2 in *)
-        (* if is_ann_flag then Some(x_add to_ptr is_null_flag pf,l) *)
-        (* map_opt_def (Some bf) (fun x -> Some (x,l)) (change_to_imm_rel_p_formula pf) *)
-        else Some bf
+        begin
+          match (is_bool_eq_ctr ~eq:false a1 a2) with
+          | Some(vv) -> 
+            let bv = BVar(vv,ll),l in Some(bv)
+          | None ->
+            let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
+            if (ptr_flag || ann_flag) then   Some(x_add to_ptr is_null_flag pf,l)
+            (* let (is_ann_flag,_,_,_) = comm_is_ann a1 a2 in *)
+            (* if is_ann_flag then Some(x_add to_ptr is_null_flag pf,l) *)
+            (* map_opt_def (Some bf) (fun x -> Some (x,l)) (change_to_imm_rel_p_formula pf) *)
+            else Some bf
+        end
     | Gt(a2,a1,ll) | Lt(a1,a2,ll) ->
-      let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
-      if ptr_flag || ann_flag then Some(x_add to_ptr ptr_flag pf,l)
-      (*else if CP.is_inf a2 then Some(Neq(a1,mkInfConst ll,ll),l)*)
-      else Some bf
-    | Lte (a1, a2,_) | Gte(a1,a2,_) ->
-      let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
-      if ptr_flag || ann_flag then Some(x_add to_ptr ptr_flag pf,l)
-      else Some bf
+      begin
+        match (is_bool_ctr a1 a2) with
+        | Some(vv) -> 
+            let bv = BVar(vv,ll),l in Some(bv)
+        | None ->
+          let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
+          if ptr_flag || ann_flag then Some(x_add to_ptr ptr_flag pf,l)
+          (*else if CP.is_inf a2 then Some(Neq(a1,mkInfConst ll,ll),l)*)
+          else Some bf
+      end
+    | Lte (a1, a2,ll) | Gte(a2,a1,ll) ->
+      begin
+        match (is_bool_ctr a1 a2) with
+        | Some(vv) -> 
+            let bv = BVar(vv,ll),l in Some(bv)
+        | None ->
+          let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
+          if ptr_flag || ann_flag then Some(x_add to_ptr ptr_flag pf,l)
+          else Some bf
+      end
+    | _ -> Some bf
+  in
+  let f_f e = match e with
+    | BForm (bf,l) -> 
+      let res = f_bf bf in
+      begin
+        match res with
+        | Some ((BVar(SpecVar(t,id,p1),p2),ll) as ans) ->
+          if t==Void then 
+            Some (mkNot (BForm ((BVar(SpecVar(Bool,id,p1),p2),ll),l)) None p2)
+          else Some (BForm(ans,l))
+        | Some(nb) -> Some(BForm(nb,l))
+        | None -> Some(e)
+      end
+    | _ -> None 
     (* | Lte ((Var(v,_) as a1), IConst(0,_), ll) | Gte (IConst(0,_), (Var(v,_) as a1), ll)  *)
     (* | Lt ((Var(v,_) as a1), IConst(1,_), ll) | Gt (IConst(1,_), (Var(v,_) as a1), ll) ->  *)
     (*     if is_otype (type_of_spec_var v) then *)
@@ -1237,14 +1324,13 @@ let cnv_int_to_ptr f =
     (*         Some(Neq(a1,Null ll,ll),l) *)
     (*       else Some bf *)
     (* | Gte (Var(v,_), IConst(0,_), ll) | Lte (IConst(0,_), Var(v,_), ll) ->  *)
-    (*     if is_otype (type_of_spec_var v) then *)
+    (* if is_otype (type_of_spec_var v) then *)
     (*         Some(BConst(true,ll),l) *)
-    (*     else Some bf *)
+    (* else Some bf *)
     (* | Lt (Var(v,_), IConst(0,_), ll) | Gt (IConst(0,_), Var(v,_), ll) ->  *)
     (*     if is_otype (type_of_spec_var v) then *)
-    (*         Some (BConst(false,ll),l) *)
+    (* Some (BConst(false,ll),l) *)
     (*     else Some bf *)
-    | _ -> Some bf
   in
   let f_e e = (Some e) in
   map_formula f (f_f, f_bf, f_e) 
@@ -1282,7 +1368,7 @@ let norm_pure_result f =
     else f in 
   let f = if !Globals.allow_norm_disj then NM.norm_disj f else f in
   let () = imm_stk # reset in
-  Omega.trans_bool f
+  (* Omega.trans_bool *) f
 
 let norm_pure_result f =
   let pr = Cprinter.string_of_pure_formula in
