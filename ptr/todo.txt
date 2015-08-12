@@ -127,7 +127,28 @@ xpure_heap_mem_enum#6 inp2 : true
 xpure_heap_mem_enum#6 inp3 :1
 xpure_heap_mem_enum#6@11 EXIT: x+1=p & p!=null & x!=null #  [[x]]
 ===========================================================
+# ex7e.slk
+
+data arr_int {
+  int val;
+  //int val2;
+  arr_int next#RR; /* this is virtual link automatically generated*/
+}  inv self+1=next & next!=null // inv to be automatically generated
+.
+
+# Why is there a VAL_11 default annotation?
+
+data arr_int {
+  int val@VAL_11;
+  arr_int next@RR;
+}inv  self+1=next & next!=null
 ===========================================================
+# ex8a.ss --ato
+
+Why is --ato not working?
+
+ERROR: at ex8a-simple3.ss_3:10_3:53
+Message: Post condition cannot be derived.
 ===========================================================
 ===========================================================
 ===========================================================

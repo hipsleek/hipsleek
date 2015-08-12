@@ -1,0 +1,58 @@
+// Valid.Valid.Valid.Fail.Valid.Valid.
+
+data node{
+ int val;
+ node next;
+}.
+
+pred ll<p> == self=p or
+  self::node<_,q>*q::ll<p> //& self!=p
+  inv true.
+
+
+//3
+checkentail x::ll<n> * y::node<_, q>@A * q::ll<m>@A &x=y |- x::ll<n>.
+print residue.
+expect Valid.
+
+/*
+# ex7a3.slk (from norm/norm7.slk) --field-imm -dre "compute_a\|process_a --trace-loop"
+
+# Why did this fold succeed when @A on LHS?
+
+(==solver.ml#10756==)
+compute_actions@1
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: y::node<Anon_13@M,q@M>@M * q::ll<n>@M
+compute_actions inp3 :LHS pure: x=y
+compute_actions inp4 :RHS cand:[ x::ll<n_56>@M]
+compute_actions inp5 :RHS pure: n_56=n
+compute_actions inp6 :right alias:[n_56]
+compute_actions@1 EXIT: Fold =>
+   LHS: y::node<Anon_13@M,q@M>@M
+   RHS: x::ll<n_56>@M
+
+(==solver.ml#10773==)
+process_action#1@2 ENTRY :
+
+(==solver.ml#10773==)
+process_action#1@2
+process_action#1 inp1 : Fold =>
+   LHS: y::node<Anon_13@M,q@M>@M
+   RHS: x::ll<n_56>@M
+process_action#1 inp2 :estate:  y::node<Anon_13@M,q@M>@M * q::ll<n>@M&x=y&{FLOW,(20,21)=__norm#E}[]
+ es_evars: [n_56]
+ 
+ es_proof_traces: 
+   [x::node<Anon_13,q>@M * q::ll<n>@M:x::ll<n_56>@M&n_56=n&
+    {FLOW,(20,21)=__norm#E}[]]
+process_action#1 inp3 :conseq: x::ll<n_56>@M&n_56=n&{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp4 :lhs_b: y::node<Anon_13@M,q@M>@M * q::ll<n>@M&x=y&{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp5 :rhs_b: x::ll<n_56>@M&n_56=n&{FLOW,(20,21)=__norm#E}[]
+process_action#1@2 EXIT:
+ctx length:1 
+ Context: [
+   emp&q_58=q & Anon_57=Anon_13 & x=y&{FLOW,(20,21)=__norm#E}[]
+  ]
+
+*/

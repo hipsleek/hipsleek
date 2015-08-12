@@ -101,7 +101,9 @@ let rec new_string_of_typ (x:typ) : string = match x with
 let is_view_recursive (n:ident) = 
   if (!view_scc)==[] then (
     (* report_warning no_pos "view_scc is empty : not processed yet?"; *)
-    false)
+    (* false *)
+      raise Not_found
+  )
   else List.mem n !view_rec 
 
 (** An Hoa : List of undefined data types **)
@@ -1560,7 +1562,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
          let tmp_views_derv1 = mark_rec_and_der_order tmp_views_derv in
          let () = x_tinfo_hp (add_str "derv length" (fun ls -> string_of_int (List.length ls))) tmp_views_derv1 no_pos in
          let cviews_derv = List.fold_left (fun norm_views v ->
-             let der_view = x_add_1 Derive.trans_view_dervs prog Rev_ast.rev_trans_formula trans_view norm_views v in
+             let der_view = x_add_1 Derive.trans_view_dervs prog Rev_ast.rev_trans_formula trans_view [] norm_views v in
              (norm_views@[der_view])
            ) cviewsa tmp_views_derv1 in
          let cviews = (* cviews_orig@ *)cviews_derv in
@@ -2416,7 +2418,14 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
              | None -> Some fc) None n_un_str 
      in
      (* TODO : This has to be generalised to mutual-recursion *)
-     let ir = not(is_prim_v) && is_view_recursive vdef.I.view_name in
+     let ir = try
+       not(is_prim_v) && is_view_recursive vdef.I.view_name
+     with Not_found ->
+         List.exists ( fun (f,_) ->
+         let dep_vns = CF.get_views f in
+         List.exists (fun vn -> string_compare vn.CF.h_formula_view_name vdef.I.view_name) dep_vns
+         ) n_un_str
+     in
      let sf = find_pred_by_self vdef data_name in
      let () = Debug.ninfo_hprint (add_str "cf 1" Cprinter.string_of_struc_formula) cf no_pos in
      let cf = CF.struc_formula_set_lhs_case false cf in
@@ -2966,7 +2975,9 @@ and fill_one_base_case_x prog vd =
       }
     end
 
-and  fill_base_case prog =  {prog with C.prog_view_decls = List.map (fill_one_base_case prog) prog.C.prog_view_decls }
+and  fill_base_case prog = (* {prog with C.prog_view_decls = List.map (fill_one_base_case prog) prog.C.prog_view_decls } *)
+  let () = prog.C.prog_view_decls <- List.map (fill_one_base_case prog) prog.C.prog_view_decls in
+  prog
 
 (* An Hoa : trans_rel *)
 and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
@@ -8288,7 +8299,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
              else
                ((v :: used_names), [ e ], [],IP.mkTrue pos_e)
            with
-           | Not_found -> Err.report_error{ Err.error_loc = pos_e; Err.error_text = (fst v) ^ " is undefined"; })
+           | Not_found -> Err.report_error{ Err.error_loc = pos_e; Err.error_text = (fst v) ^ " is undefined (4)"; })
         | _ -> Err.report_error { Err.error_loc = (IF.pos_of_formula f); Err.error_text = "malfunction with float out exp in normalizing"; } in
       let rest_used_names, rest_hvars, rest_evars, rest_link = match_exp new_used_names rest pos in
       let hvars = e_hvars @ rest_hvars in
@@ -11035,8 +11046,8 @@ let convert_pred_to_cast_x ls_pr_new_view_tis is_add_pre iprog cprog do_pure_ext
   let cviews0 = if do_pure_extn then
       let tmp_views_derv1 = mark_rec_and_der_order tmp_views_derv in
       let cviews_derv = List.fold_left (fun norm_views v ->
-          let der_view = x_add_1 Derive.trans_view_dervs iprog Rev_ast.rev_trans_formula trans_view norm_views v in
-          (cviews0a@[der_view])
+          let der_view = x_add_1 Derive.trans_view_dervs iprog Rev_ast.rev_trans_formula trans_view [] norm_views v in
+          (norm_views@[der_view])
         ) cviews0a tmp_views_derv1 in
       let cviews0 = (* cviews0a@ *)cviews_derv in
       cviews0

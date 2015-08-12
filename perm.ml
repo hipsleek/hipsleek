@@ -177,7 +177,7 @@ struct
        let f12 = Cpure.mkAnd f1 f2 no_pos in
        let f123 = Cpure.mkAnd f12 f3 no_pos in
        f123
-     | _ -> failwith ("[perm.ml] BPERM.mkPermInv : bounded permission is undefined"))
+     | _ -> failwith ("[perm.ml] BPERM.mkPermInv : bounded permission is undefined (6)"))
 
   (*THIS METHOD SHOULD BE REMOVED in the end*)
   let mkPermInv_var (f:cperm_var) : Cpure.formula = (*TOCHECK*)
