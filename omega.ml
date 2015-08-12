@@ -940,7 +940,7 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
                 let () = is_complex_form := false in
                 (* let () = print_endline ("after simplification: " ^ (Cpure.string_of_relation rel)) in *)
                 let r = Cpure.subst ss2 (match_vars sv_list rel) in
-                trans_bool r
+                (* trans_bool *) r
               end
             with
             | Procutils.PrvComms.Timeout as exc ->
@@ -1147,7 +1147,7 @@ let pairwisecheck (pe : formula) : formula =
       end;
       let rel = send_and_receive fomega !in_timeout (* 0. *) in
       let r = match_vars (fv pe) rel in
-      trans_bool r
+      (* trans_bool *) r
   end
 ;;
 

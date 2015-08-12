@@ -1282,7 +1282,7 @@ let norm_pure_result f =
     else f in 
   let f = if !Globals.allow_norm_disj then NM.norm_disj f else f in
   let () = imm_stk # reset in
-  f
+  Omega.trans_bool f
 
 let norm_pure_result f =
   let pr = Cprinter.string_of_pure_formula in
