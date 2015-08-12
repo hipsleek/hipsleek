@@ -2646,7 +2646,7 @@ let translate_array_one_formula f=
 
 let translate_array_one_formula_for_validity
       (f:formula):formula =
-
+  let f = translate_array_equality_to_forall f in
   let f = translate_array_relation f in
   let f = constantize_ex_q f in
   let f = process_exists_array f in
