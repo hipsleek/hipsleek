@@ -878,6 +878,13 @@ let trans_bool (f: formula): formula =
     | _ -> None
   in transform_formula (nonef, nonef, f_f, somef, somef) f
 
+(* (==omega.ml#1156==) *)
+(* Omega.trans_bool@559 *)
+(* Omega.trans_bool inp1 : p=null & x=null & x'=null & res=v_boolean_64_1463' &  *)
+(*  1<=v_boolean_64_1463' & 1<=v_bool_64_1477' *)
+(* Omega.trans_bool@559 EXIT: p=null & x=null & x'=null & res=v_boolean_64_1463' & v_boolean_64_1463' &  *)
+(*  v_bool_64_1477' *)
+
 let trans_bool (f: formula): formula =
   let pr = !print_formula in
   Debug.no_1 "Omega.trans_bool" pr pr trans_bool f
