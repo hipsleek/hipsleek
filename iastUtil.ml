@@ -1002,6 +1002,11 @@ let rename_proc gvs proc : proc_decl =
     proc_body = ne;
   }
 
+let rename_proc gvs proc : proc_decl =
+  let pr1 = Iprinter.string_of_proc_decl in
+  let pr2  = string_of_IS in
+  Debug.no_2 "rename_proc(iastUtil)" pr2 pr1 pr1
+    rename_proc gvs proc
 
 (* let rename_prog prog : prog_decl =  *)
 (*   let gvs = to_IS (List.concat ( *)
@@ -1024,7 +1029,7 @@ let rename_prog prog : prog_decl =
     let fun0 (proc: proc_decl) : ident = proc.proc_name in
     List.map fun0 prog.prog_proc_decls
   in
-  let gvs = to_IS (var_idents@proc_idents) in
+  let gvs = to_IS (var_idents@proc_idents@Globals.hip_sleek_keywords) in
   let prog = float_var_decl_prog prog in
   map_proc prog (rename_proc gvs)
 

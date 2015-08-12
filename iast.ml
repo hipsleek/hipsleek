@@ -34,6 +34,7 @@ type prog_decl = {
   mutable prog_rel_decls : rel_decl list; 
   mutable prog_templ_decls: templ_decl list;
   mutable prog_ut_decls: ut_decl list;
+  mutable prog_ui_decls: ui_decl list;
   mutable prog_hp_decls : hp_decl list; 
   mutable prog_rel_ids : (typ * ident) list; 
   mutable prog_hp_ids : (typ * ident) list; 
@@ -143,6 +144,12 @@ and ut_decl = {
   ut_pos: loc;
 }
 
+(* Unknown Imm Declaration *)
+and ui_decl = {
+  ui_rel: rel_decl;
+  ui_is_pre: bool;
+  ui_pos: loc;
+}
 
 and hp_decl = { hp_name : ident; 
                 (* rel_vars : ident list; *)
@@ -389,11 +396,13 @@ and exp_bool_lit = { exp_bool_lit_val : bool;
 
 and exp_barrier = {exp_barrier_recv : ident; exp_barrier_pos : loc}
 
+(* WN : why do we have two kinds of calls? should unify *)
+
 and exp_call_nrecv = { 
   exp_call_nrecv_method : ident;
   exp_call_nrecv_lock : ident option;
-  exp_call_nrecv_arguments : exp list;
   exp_call_nrecv_ho_arg : Iformula.formula option;
+  exp_call_nrecv_arguments : exp list;
   exp_call_nrecv_path_id : control_path_id;
   exp_call_nrecv_pos : loc }
 
@@ -1698,15 +1707,15 @@ and look_up_all_fields_cname (prog : prog_decl) (c : ident) =
   let ddef = x_add look_up_data_def_raw prog.prog_data_decls c
   in look_up_all_fields prog ddef
 
-and subs_heap_type_env_x (henv: (ident * typ) list) old_typ new_typ =
+and subs_heap_type_env_x pos (henv: (ident * typ) list) old_typ new_typ =
   if (cmp_typ old_typ new_typ) then henv
   else (
     List.map (fun (id, t) ->
         if not (is_type_var old_typ) then (
-          let msg = "type substitution error: cannot substitute '"
-                    ^ (string_of_typ old_typ) ^ "' by '"
+          let msg = "type conflict between '"
+                    ^ (string_of_typ old_typ) ^ "' and '"
                     ^ (string_of_typ new_typ) ^ "'" in
-          report_error no_pos msg
+          report_error pos msg
         )
         else (
           if (cmp_typ t old_typ) then (id, new_typ)
@@ -1715,13 +1724,13 @@ and subs_heap_type_env_x (henv: (ident * typ) list) old_typ new_typ =
       ) henv
   )
 
-and subs_heap_type_env (henv: (ident * typ) list) old_typ new_typ =
+and subs_heap_type_env pos (henv: (ident * typ) list) old_typ new_typ =
   let pr_typ = string_of_typ in
   let pr_henv = pr_list (fun (id,t) ->
       "(" ^ id ^ "," ^ (string_of_typ t) ^ ")"
     ) in 
-  Debug.no_3 "subs_heap_type_env" pr_henv pr_typ pr_typ pr_henv
-    (fun _ _ _ -> subs_heap_type_env_x henv old_typ new_typ)
+  Debug.no_3 "subs_heap_type_env" pr_henv (add_str "old" pr_typ) (add_str "new" pr_typ) pr_henv
+    (fun _ _ _ -> subs_heap_type_env_x pos henv old_typ new_typ)
     henv old_typ new_typ
 
 and get_heap_type (henv: (ident * typ) list) id : (typ * (ident * typ) list) =
@@ -1849,20 +1858,20 @@ and collect_data_view_from_h_formula_x (h0 : F.h_formula) (data_decls: data_decl
           else ([], [])
         ) in
         let vtyp, henv = get_heap_type henv v in
-        let henv = subs_heap_type_env henv vtyp (Named c) in
+        let henv = x_add subs_heap_type_env no_pos henv  vtyp (Named c) in
         let henv = List.fold_left2 (fun henv1 arg field ->
             let ((t1,_), _, _, _) = field in
             match arg with
-            | P.Var ((id,_),_) ->
+            | P.Var ((id,_),pos) ->
               let t2, henv = get_heap_type henv id in
-              subs_heap_type_env henv t2 t1
-            | P.Ann_Exp (P.Var ((id,_),_), t2, _) ->
+              x_add subs_heap_type_env pos henv t2 t1
+            | P.Ann_Exp (P.Var ((id,_),pos), t2, _) ->
               if not (cmp_typ t1 t2) then
                 let msg = " type error in h_formula: " ^ (!print_h_formula h0) in
                 report_error h.F.h_formula_heap_pos msg
               else
                 let t3, henv = get_heap_type henv id in
-                subs_heap_type_env henv t3 t1
+                x_add subs_heap_type_env pos henv t3 t1
             | _ -> henv
           ) henv h.F.h_formula_heap_arguments ddecl.data_fields in
         (dl, vl, henv)
@@ -1986,29 +1995,29 @@ and collect_data_view_from_pure_bformula_x (bf : P.b_formula) (data_decls: data_
           let t1, henv = get_heap_type henv id1 in
           let t2, henv = get_heap_type henv id2 in
           Some (t1, t2, henv)
-        | P.Ann_Exp (P.Var ((id1,_),_), typ, _), P.Var ((id2,_),_) ->
+        | P.Ann_Exp (P.Var ((id1,_),_), typ, pos), P.Var ((id2,_),_) ->
           let t1, henv = get_heap_type henv id1 in
-          let henv = subs_heap_type_env henv t1 typ in
+          let henv = x_add subs_heap_type_env pos henv t1 typ in
           let t2, henv = get_heap_type henv id2 in
           Some (typ, t2, henv)
-        | P.Var ((id1,_),_), P.Ann_Exp (P.Var ((id2,_),_), typ, _) ->
+        | P.Var ((id1,_),_), P.Ann_Exp (P.Var ((id2,_),_), typ, pos) ->
           let t1, henv = get_heap_type henv id1 in
           let t2, henv = get_heap_type henv id2 in
-          let henv = subs_heap_type_env henv t2 typ in
+          let henv = x_add subs_heap_type_env pos henv t2 typ in
           Some (t1, typ, henv)
-        | P.Ann_Exp (P.Var ((id1,_),_), typ1, _), P.Ann_Exp (P.Var ((id2,_),_), typ2, _) ->
+        | P.Ann_Exp (P.Var ((id1,_),_), typ1, pos1), P.Ann_Exp (P.Var ((id2,_),_), typ2, pos2) ->
           let t1, henv = get_heap_type henv id1 in
-          let henv = subs_heap_type_env henv t1 typ1 in
+          let henv = x_add subs_heap_type_env pos1 henv t1 typ1 in
           let t2, henv = get_heap_type henv id2 in
-          let henv = subs_heap_type_env henv t1 typ2 in
+          let henv = x_add subs_heap_type_env pos2 henv t1 typ2 in
           Some (typ1, typ2, henv)
         | _ -> None
       ) in
       let henv = (match typ_info with
           | None -> henv
           | Some (t1, t2, henv) ->
-            if (is_type_var t1) then subs_heap_type_env henv t1 t2
-            else if (is_type_var t2) then subs_heap_type_env henv t2 t1
+            if (is_type_var t1) then x_add subs_heap_type_env no_pos henv t1 t2
+            else if (is_type_var t2) then x_add subs_heap_type_env no_pos henv t2 t1
             else if not (cmp_typ t1 t2) then
               let msg = "type error in bformula: " ^ (!P.print_b_formula bf) in
               report_error pos msg
@@ -2019,7 +2028,7 @@ and collect_data_view_from_pure_bformula_x (bf : P.b_formula) (data_decls: data_
   | P.EqMax _ | P.EqMin _ | P.LexVar _ -> ([], [], henv)
   | P.BagIn _ | P.BagNotIn _ | P.BagSub _ | P.BagMin _ | P.BagMax _ -> ([], [], henv)
   | P.ListIn _ | P.ListNotIn _ | P.ListAllN _ | P.ListPerm _ -> ([], [], henv)
-  (* | P.VarPerm _ *) | P.RelForm _ -> ([], [], henv)
+  (* | P.VarPerm _ *) | P.RelForm _ | P.ImmRel _ -> ([], [], henv)
 
 and collect_data_view_from_pure_bformula (bf : P.b_formula) (data_decls: data_decl list)
     (henv: (ident * typ) list)
@@ -2060,8 +2069,12 @@ and find_data_view (vdecl: view_decl) (data_decls: data_decl list) pos
 
 and syn_data_name  (data_decls : data_decl list)  (view_decls : view_decl list)
   : (view_decl * (ident list) * (ident list)) list =
-  Debug.no_1 "syn_data_name" pr_no pr_no
-    (fun _ -> syn_data_name_x data_decls view_decls) () 
+  let pr_idl = pr_list pr_id in
+  let pr2 = (fun v -> v.view_name^":"^v.view_data_name^"@") in
+  let pr1 = pr_list (fun v -> v.view_name^":"^v.view_data_name^"@") in
+  let pr_out = pr_list (pr_triple (* !print_view_decl *) pr2 pr_idl pr_idl) in
+  Debug.no_1 "syn_data_name" pr1 pr_out
+    (fun _ -> syn_data_name_x data_decls view_decls) view_decls
 
 and syn_data_name_x  (data_decls : data_decl list)  (view_decls : view_decl list)
   : (view_decl * (ident list) * (ident list)) list =
@@ -2075,9 +2088,12 @@ and syn_data_name_x  (data_decls : data_decl list)  (view_decls : view_decl list
   rl
 
 and fixpt_data_name (view_ans)  =
-  let pr1 vd = vd.view_name in
-  let pr2 = pr_list (fun x -> x) in
-  let pr = pr_list (pr_triple pr1 pr2 pr2)  in 
+  (* let pr1 vd = vd.view_name in *)
+  (* let pr2 = pr_list (fun x -> x) in *)
+  (* let pr = pr_list (pr_triple pr1 pr2 pr2)  in  *)
+  let pr_idl = pr_list pr_id in
+  let pr2 = (fun v -> v.view_name^":"^v.view_data_name^"@") in
+  let pr = pr_list (pr_triple (* !print_view_decl *) pr2 pr_idl pr_idl) in
   Debug.no_1 "fixpt_data_name" pr pr fixpt_data_name_x view_ans
 
 (* TODO : cater to aliasing with SELF; cater to mutual-recursion *)
@@ -2108,6 +2124,12 @@ and fixpt_data_name_x (view_ans:(view_decl * ident list *ident list) list) =
   else r
 
 and incr_fixpt_view iprog (dl:data_decl list) (view_decls: view_decl list)  = 
+  let pr1 = pr_list (fun v -> v.data_name) in
+  let pr2 = pr_list (fun v -> v.view_name^":"^v.view_data_name^"@") in
+  Debug.no_eff_2 "incr_fixpt_view" [false;true] pr1 pr2 pr_id (fun _ _ -> incr_fixpt_view_x iprog dl view_decls) dl view_decls 
+
+(* What is the purpose of this procedure? Is it to identify the type of self?  *)
+and incr_fixpt_view_x iprog (dl:data_decl list) (view_decls: view_decl list)  = 
   let create n = if n="" then [] else [n] in
   match view_decls with
   | [] -> ""
@@ -2125,38 +2147,47 @@ and update_fixpt_x iprog (vl:(view_decl * ident list *ident list) list)  =
       v.view_pt_by_self<-tl;
       if (List.length a==0) then 
         if v.view_is_prim || v.view_kind = View_EXTN then
+          let () = x_tinfo_hp (add_str "XXX:0v.view_name" pr_id) v.view_name no_pos in
           v.view_data_name <- (v.view_name) (* TODO WN : to add pred name *)
         else if v.view_kind = View_DERV  then
           match v.view_derv_info with
           | ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args))::_ ->
             let orig_vdecl = look_up_view_def_raw 52 iprog.prog_view_decls orig_view_name in
+            let () = x_tinfo_hp (add_str "XXX:view" pr_id) v.view_name no_pos in
+            let () = x_tinfo_hp (add_str "XXX:orig_vdecl" pr_id) orig_vdecl.view_data_name no_pos in
             v.view_data_name <- orig_vdecl.view_data_name
           | [] ->
             let () = report_warning no_pos ("derv view "^(v.view_name)^" does not have derv info") in
+            let () = x_tinfo_hp (add_str "XXX:v.view_name" pr_id) v.view_name no_pos in
             v.view_data_name <- (v.view_name)
         else if String.length v.view_data_name = 0 then
-          () (* self has unknown type *)
-          (* report_warning no_pos ("self of "^(v.view_name)^" cannot have its type determined") *)
+          (* self has unknown type *)
+          report_warning no_pos ("self of "^(v.view_name)^" cannot have its type determined")
         else ()
-      else v.view_data_name <- List.hd a) vl
+      else 
+        let () = x_tinfo_hp (add_str "XXX:view" pr_id) v.view_name no_pos in
+        let () = x_tinfo_hp (add_str "XXX:a" (pr_list pr_id)) a no_pos in
+        v.view_data_name <- List.hd a) vl
 
 and update_fixpt (iprog:prog_decl) (vl:(view_decl * ident list *ident list) list)  =
   let pr_idl = pr_list pr_id in
-  let pr = pr_list (pr_triple !print_view_decl pr_idl pr_idl) in
-  Debug.no_1 "update_fixpt" pr pr_none (fun _ -> update_fixpt_x iprog vl) vl
+  let pr2 = (fun v -> v.view_name^":"^v.view_data_name^"@") in
+  let pr = pr_list (pr_triple (* !print_view_decl *) pr2 pr_idl pr_idl) in
+  Debug.no_eff_1 "update_fixpt" [true] pr pr_unit (fun _ -> update_fixpt_x iprog vl) vl
 
 and set_check_fixpt (iprog:prog_decl) (data_decls : data_decl list) (view_decls: view_decl list)  =
   let pr = pr_list_ln !print_data_decl in 
-  let pr2 = pr_list_ln !print_view_decl in 
-  Debug.no_2 "set_check_fixpt" pr pr2 pr_none (fun _ _ -> set_check_fixpt_x iprog data_decls view_decls )
+  (* let pr2 = pr_list_ln !print_view_decl in  *)
+  let pr2 = pr_list (fun v -> v.view_name^":"^v.view_data_name^"@") in
+  Debug.no_eff_2 "set_check_fixpt" [false;true] pr_none pr2 pr_unit (fun _ _ -> set_check_fixpt_x iprog data_decls view_decls )
     data_decls view_decls
 
 and set_check_fixpt_x iprog (data_decls : data_decl list) (view_decls : view_decl list)  =
-  let vl = syn_data_name data_decls view_decls in
-  let vl = fixpt_data_name vl in
+  let vl = x_add_1 syn_data_name data_decls view_decls in
+  let vl = x_add_1 fixpt_data_name vl in
   (* An Hoa *)
   (* let () = print_endline "Call update_fixpt from set_check_fixpt_x" in *)
-  update_fixpt iprog vl
+  x_add_1 update_fixpt iprog vl
 
 
 and data_name_of_view (view_decls : view_decl list) (f0 : F.struc_formula) : ident = 
@@ -2849,6 +2880,7 @@ let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) :
       prog_rel_ids = hd.prog_rel_ids @ iprims.prog_rel_ids; (* An Hoa *)
       prog_templ_decls = hd.prog_templ_decls @ iprims.prog_templ_decls;
       prog_ut_decls = hd.prog_ut_decls @ iprims.prog_ut_decls;
+      prog_ui_decls = hd.prog_ui_decls @ iprims.prog_ui_decls;
       prog_hp_decls = hd.prog_hp_decls @ iprims.prog_hp_decls;
       prog_hp_ids = hd.prog_hp_ids @ iprims.prog_hp_ids; 
       prog_axiom_decls = hd.prog_axiom_decls @ iprims.prog_axiom_decls; (* [4/10/2011] An Hoa *)
@@ -2875,6 +2907,7 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
       prog_rel_ids = [];
       prog_templ_decls = [];
       prog_ut_decls = [];
+      prog_ui_decls = [];
       prog_hp_decls = [];
       prog_hp_ids = [];
       prog_axiom_decls = [];
@@ -3395,11 +3428,23 @@ let get_return_exp e0=
   Debug.no_1 "get_return_exp" pr1 pr2
     (fun _ -> get_return_exp_x e0) e0
 
-let trans_to_exp_form exp0=
-  let rec helper exp=
+let trans_to_exp_form exp0 =
+  let rec helper exp =
     match exp with
     | Var v -> P.Var ((v.exp_var_name, Primed), v.exp_var_pos)
     | IntLit i -> P.IConst (i.exp_int_lit_val, i.exp_int_lit_pos)
+    | Binary b -> 
+      (begin
+        let oper1 = b.exp_binary_oper1 in
+        let oper2 = b.exp_binary_oper2 in
+        let pos = b.exp_binary_pos in
+        match b.exp_binary_op with
+        | OpPlus -> P.mkAdd (helper oper1) (helper oper2) pos
+        | OpMinus -> P.mkSubtract (helper oper1) (helper oper2) pos
+        | OpMult -> P.mkMult (helper oper1) (helper oper2) pos
+        | OpDiv -> P.mkDiv (helper oper1) (helper oper2) pos
+        | _ -> report_error no_pos "iast.trans_exp_to_form: unexpected exp"
+      end)
     | _ -> report_error no_pos "iast.trans_exp_to_form: not handle yet"
   in
   helper exp0
@@ -3590,3 +3635,42 @@ let find_all_num_trailer iprog =
     ) [] body_list in
   (* use fold_exp_args .. *)
   id_list
+
+let prim_sanity_check_x iprog=
+  let basic_prims = ["is_not_null___$String"; "is_null___$String";"neq___$String~String";"eq___$String~String";
+  "is_not_null___$Object";"is_null___$Object";"neq___$Object~Object";"eq___$Object~Object";
+  "is_not_null___$__DivByZeroErr";"is_null___$__DivByZeroErr";"is_not_null___$__ArrBoundErr";"is_null___$__ArrBoundErr";
+  "is_not_null___$thrd";"is_null___$thrd";"is_not_null___$barrier";"is_null___$barrier";
+  "neq___$barrier~barrier";"eq___$barrier~barrier";"is_not_null___$lock";"is_null___$lock";
+  "neq___$lock~lock";"eq___$lock~lock";"is_not_null___$int_ptr";"is_null___$int_ptr";
+  "neq___$int_ptr~int_ptr";"eq___$int_ptr~int_ptr";"is_not_null___$int_ptr_ptr";"is_null___$int_ptr_ptr";
+  "neq___$int_ptr_ptr~int_ptr_ptr";"eq___$int_ptr_ptr~int_ptr_ptr";"is_not_null___$__Fail";
+  "is_null___$__Fail";"neq___$__Fail~__Fail";"eq___$__Fail~__Fail";"rand_bool$";"rand_int$";
+  "aalloc___$int";"update___2d$int~int[][]~int~int";"update___1d$boolean~boolean[]~int";
+  "update___1d$int~int[]~int";"delete_ptr$int_ptr_ptr";"delete_ptr$int_ptr";"release$";
+  "acquire$";"finalize$";"init$";"join$";"fork$";"array_get_elm_at___2d$int[][]~int~int";
+  "array_get_elm_at___1d$boolean[]~int";"array_get_elm_at___1d$int[]~int";"pow___$int~int";
+  "not___$boolean";"lor___$boolean~boolean";"land___$boolean~boolean";"gte___$int~int";
+  "gt___$int~int";"lte___$int~int";"lt___$int~int";"neq___$boolean~boolean";"neq___$int~int";"eq___$int~int";
+  "mult___$float~float";"mult___$float~int";"mult___$int~float";"minus___$float~float";"minus___$float~int";
+  "minus___$int~float";"add___$float~float";"add___$float~int";"add___$int~float";"mod___$int~int";
+  "div4$int~int";"div3$int~int";"div2$int~int";"div___$int~int";"mult___$int~int";
+  "minus___$int~int";"add___$int~int"] in
+  let basic_prims_with_mults =  if !Globals.prelude_is_mult then basic_prims else
+    basic_prims @["mults___$int~int"] in
+  let () = List.iter (fun proc_mn -> begin
+    try
+      let _ = look_up_proc_def_mingled_name iprog.prog_proc_decls proc_mn in
+      ()
+    with Not_found ->
+         Error.report_error {Error.error_loc = no_pos;
+         Error.error_text = ("Missing " ^  proc_mn ^ " in prelude")}
+  end
+  ) basic_prims_with_mults in
+  ()
+
+let prim_sanity_check iprog=
+  let pr_proc p = pr_id p.proc_mingled_name in
+  let pr_procs prog= (pr_list pr_proc) prog.prog_proc_decls in
+  Debug.no_1 "prim_sanity_check" pr_procs pr_none
+      (fun _ -> prim_sanity_check_x iprog) iprog

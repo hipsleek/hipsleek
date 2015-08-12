@@ -62,7 +62,7 @@ let transform_hp_rels_to_iviews iprog cprog (hp_rels:( CF.hp_rel_def) list):((id
           let () = Debug.ninfo_hprint (add_str "f_body1: " Cprinter.prtt_string_of_formula) f_body1 no_pos in
           let no_prm_body = CF.elim_prm f_body1 in
           let new_body = CF.set_flow_in_formula_override {CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link =None} no_prm_body in
-          (* let new_body = CF.subst [] new_body0 in *)
+          (* let new_body = x_add CF.subst [] new_body0 in *)
           let i_body = Rev_ast.rev_trans_formula new_body in
           let i_body = IF.subst [((slf,Unprimed),(self,Unprimed))] i_body in
           let () = Debug.ninfo_hprint (add_str "i_body1: " Iprinter.string_of_formula) i_body no_pos in
@@ -286,7 +286,7 @@ let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs view_equ
     match rest with
     | [] -> res
     | sv1::rest ->let n_res=
-                    if Gen.BList.mem_eq (=) n  inter_pos then res@[sv1] else res
+      if Gen.BList.mem_eq (=) n  inter_pos then res@[sv1] else res
       in
       retreive_svl_of_inter_svl rest (n+1) inter_pos n_res
   in
@@ -495,8 +495,8 @@ let rec case_struc_formula_trans_x prog dang_hps to_unfold_hps pre_hps post_hps 
                 let _,fm_args = CF.extract_HRel def.CF.def_lhs in
                 let fs1= List.map (fun f1 ->
                     let ss = List.combine fm_args args in
-                    let f2 =  (CF.subst ss f1) in
-                    let basef2 = CF.subst ss basef1 in
+                    let f2 =  (x_add CF.subst ss f1) in
+                    let basef2 = x_add CF.subst ss basef1 in
                     let f4 = CF.mkStar f2 basef2 CF.Flow_combine (CF.pos_of_formula f2) in
                     let f5,ls_equans = CF.drop_hrel_f f4 dang_hps in
                     (fl, f5)
@@ -581,7 +581,7 @@ let rec case_struc_formula_trans_x prog dang_hps to_unfold_hps pre_hps post_hps 
               let f1 = CF.disj_of_list (List.map fst hp_def.CF.def_rhs) no_pos in
               let _,fm_args = CF.extract_HRel hp_def.CF.def_lhs in
               let ss = List.combine fm_args args in
-              let f2 =  (CF.subst ss f1) in
+              let f2 =  (x_add CF.subst ss f1) in
               let f3= (* if CP.mem_svl hp post_hps then fresh_data_v f2 else *) f2 in
               let p2 = CP.subst ss p in
               let f4 = CF. mkAnd_pure f3 (MCP.mix_of_pure p2) pos in
@@ -597,7 +597,7 @@ let rec case_struc_formula_trans_x prog dang_hps to_unfold_hps pre_hps post_hps 
             let f1,_ = CF.drop_hrel_f f0 [hp] in
             let f2 = CF.substitute_flow_into_f iflow f1 in
             f2
-    with _ -> f0
+          with _ -> f0
   in
   let elim_dup_with_guard_x g sf=
     match sf with
@@ -792,7 +792,7 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps
           let f1 = CF.disj_of_list (List.map fst hp_def.CF.def_rhs) no_pos in
           let _,fm_args = CF.extract_HRel hp_def.CF.def_lhs in
           let ss = List.combine fm_args args in
-          let f2 =  (CF.subst ss f1) in
+          let f2 =  (x_add CF.subst ss f1) in
           let f3= (* if CP.mem_svl hp post_hps then fresh_data_v f2 else *) f2 in
           let p2 = CP.subst ss p in
           let f4 = CF. mkAnd_pure f3 (MCP.mix_of_pure p2) pos in
@@ -902,7 +902,7 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps
       let n_stk_spec = update_infer_objs n_stk_spec in
       let n_stk_specs = proc.C.proc_stk_of_static_specs in
       let _ = n_stk_specs # pop in
-      let _ =  n_stk_specs # push n_stk_spec in
+      let _ =  n_stk_specs # push_pr "saout:905" n_stk_spec in
       (* let proc_stk_of_static_specs = proc.C.proc_stk_of_static_specs  in *)
       (* let n_proc_stk_of_static_specs = List.map (fun s -> *)
       (*     CF.struc_formula_trans_heap_node [] hn_trans_formula (CF.struc_formula_drop_infer unk_hps s) *)

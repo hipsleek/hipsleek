@@ -22,10 +22,3 @@ checkentail x::llinf<> |- false.
 checkentail x = null & n=0 & n= \inf 
                or x::node<_,r> * r::ll<n-1> & n= \inf 
  |- x::node<_,z> * z::llinf<>.
-
-/*
-
-does not work with --inv-baga as it
-infers false for llinf due to least fixed point
-
-*/

@@ -174,8 +174,9 @@ let rec dim_unify d1 d2 = if (d1 = d2) then Some d1 else None
 
 and must_unify (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
   let pr = string_of_typ in
-  let pr_out (_, t) = string_of_typ t in
-  Debug.no_2 "must_unify" pr pr pr_out (fun _ _ -> must_unify_x k1 k2 tlist pos) k1 k2
+  let pr_tl =  string_of_tlist in
+  let pr_out = pr_pair pr_tl string_of_typ in
+  Debug.no_3 "must_unify" pr pr pr_tl pr_out (fun _ _ _ -> must_unify_x k1 k2 tlist pos) k1 k2 tlist
 
 and must_unify_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
   let (n_tlist,k) = unify_type k1 k2 tlist in
@@ -215,8 +216,10 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
     | _, UNK -> (tl,Some k1)
     | Int, NUM -> (tl,Some Int) (* HACK here : give refined type *)
     | Float, NUM -> (tl,Some Float) (* give refined type *)
+    | AnnT, NUM -> (tl,Some AnnT) (* give refined type *)
     | NUM, Int -> (tl,Some Int)
     | NUM, Float -> (tl,Some Float)
+    | NUM, AnnT -> (tl,Some AnnT)
     | Int, Float -> (tl,Some Float) (*LDK: support floating point*)
     | Float, Int -> (tl,Some Float) (*LDK*)
     | Tree_sh, Tree_sh -> (tl,Some Tree_sh)
@@ -462,14 +465,16 @@ and trans_type_back (te : typ) : typ =
   | Array (t, d) -> Array (trans_type_back t, d) (* An Hoa *) 
   | p -> p 
 
-and sub_type (t1 : typ) (t2 : typ) =
-  let it1 = trans_type_back t1 in
-  let it2 = trans_type_back t2 in
-  I.sub_type it1 it2
+and sub_type_x (t1 : typ) (t2 : typ) =
+  try
+    let it1 = trans_type_back t1 in
+    let it2 = trans_type_back t2 in
+    I.sub_type it1 it2
+  with _ -> false
 
-(* and sub_type (t1 : typ) (t2 : typ) = *)
-(*   let pr = string_of_typ in *)
-(*   Debug.no_2 "sub_type" pr pr string_of_bool sub_type_x t1 t2  *)
+and sub_type (t1 : typ) (t2 : typ) =
+  let pr = string_of_typ in
+  Debug.no_2 "sub_type" pr pr string_of_bool sub_type_x t1 t2
 
 and gather_type_info_var (var : ident) tlist (ex_t : typ) pos : (spec_var_type_list*typ) =
   let pr = string_of_typ in
@@ -743,6 +748,7 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
     let n_tl = List.fold_left (fun tl e -> fst(x_add gather_type_info_exp prog e tl (Int))) n_tl ls1 in
     let n_tl = List.fold_left (fun tl e -> fst(x_add gather_type_info_exp prog e tl (Int))) n_tl ls2 in
     n_tl
+  | IP.ImmRel(r, cond, pos) ->  gather_type_info_p_formula prog r tlist
   | IP.Lt (a1, a2, pos) | IP.Lte (a1, a2, pos) | IP.Gt (a1, a2, pos) | IP.Gte (a1, a2, pos) ->
     let (new_et,n_tl) = fresh_tvar tlist in
     let (n_tl,t1) = x_add gather_type_info_exp prog a1 n_tl new_et in (* tvar, Int, Float *)
@@ -756,9 +762,13 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
     let (n_tl,t1) = x_add gather_type_info_exp prog a1 n_tl new_et in (* tvar, Int, Float *)
     let (n_tl,t2) = x_add gather_type_info_exp prog a2 n_tl new_et in
     let (n_tl,t3) = x_add gather_type_info_exp prog a3 n_tl new_et in (* tvar, Int, Float *)
-    let (n_tl,t1) = must_unify_expect t1 NUM n_tl pos in
-    let (n_tl,t2) = must_unify_expect t2 NUM n_tl pos in
-    let (n_tl,t3) = must_unify_expect t3 NUM n_tl pos in
+    (* let (n_tl,t1) = must_unify_expect t1 NUM n_tl pos in *)
+    (* let (n_tl,t2) = must_unify_expect t2 NUM n_tl pos in *)
+    (* let (n_tl,t3) = must_unify_expect t3 NUM n_tl pos in *)
+    let unif_t = if (t1 == AnnT || t2 == AnnT || t3 == AnnT) then AnnT else NUM in
+    let (n_tl,t1) = must_unify_expect t1 unif_t n_tl pos in
+    let (n_tl,t2) = must_unify_expect t2 unif_t n_tl pos in
+    let (n_tl,t3) = must_unify_expect t3 unif_t n_tl pos in
     let (n_tl,t) = must_unify t1 t2 n_tl pos  in (* UNK, Int, Float, TVar *) 
     let (n_tl,t) = must_unify t t3 n_tl pos  in (* UNK, Int, Float, TVar *) 
     n_tl
@@ -808,21 +818,25 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
     let (n_tl,_) = must_unify t1 t2 n_tl pos in
     n_tl
   | IP.RelForm (r, args, pos) -> 
-    (try
-       let rdef = I.look_up_rel_def_raw prog.I.prog_rel_decls r in
-       let args_ctypes = List.map (fun (t,n) -> trans_type prog t pos) rdef.I.rel_typed_vars in
-       let args_exp_types = List.map (fun t -> (t)) args_ctypes in
-       let (n_tl,n_typ) = x_add gather_type_info_var r tlist (RelT []) pos in (*Need to consider about pos*)
-       let tmp_list = List.combine args args_exp_types in
-       let n_tlist = List.fold_left (fun tl (arg,et) ->
-           fst(x_add gather_type_info_exp prog arg tl et )) n_tl tmp_list in
-       n_tlist             
-     with
-     | Not_found ->    failwith ("gather_type_info_b_formula: relation "^r^" cannot be found")
-     | Invalid_argument _ -> failwith ("number of arguments for relation " ^ r ^ " does not match")
-     | e -> raise e;
-       (* WN : error due to mismatched types here *)
-       (* print_endline_quiet ("gather_type_info_b_formula: relation " ^ r);tlist        *)
+    (
+      let helper rdef = 
+        let args_ctypes = List.map (fun (t,n) -> trans_type prog t pos) rdef.I.rel_typed_vars in
+        let args_exp_types = List.map (fun t -> (t)) args_ctypes in
+        let (n_tl,n_typ) = x_add gather_type_info_var r tlist (RelT []) pos in (*Need to consider about pos*)
+        let tmp_list = List.combine args args_exp_types in
+        let n_tlist = List.fold_left (fun tl (arg,et) ->
+            fst(x_add gather_type_info_exp prog arg tl et )) n_tl tmp_list in
+        n_tlist   
+      in
+      try
+        let rdef = I.look_up_rel_def_raw prog.I.prog_rel_decls r in
+        helper rdef
+      with
+      | Not_found ->    failwith ("gather_type_info_b_formula: relation "^r^" cannot be found")
+      | Invalid_argument _ -> failwith ("number of arguments for relation " ^ r ^ " does not match")
+      | e -> raise e;
+        (* WN : error due to mismatched types here *)
+        (* print_endline_quiet ("gather_type_info_b_formula: relation " ^ r);tlist        *)
     )
   | IP.XPure({IP.xpure_view_node = vn ;
               IP.xpure_view_name = r;
@@ -1062,13 +1076,13 @@ and gather_type_info_formula_x prog f0 tlist filter_res =
     let (n_tl,rl) = res_retrieve tlist filter_res b.IF.formula_exists_flow in
     let n_tl = List.fold_left (fun tl f -> x_add gather_type_info_one_formula prog f tl filter_res) n_tl b.IF.formula_exists_and in
     let n_tl = helper b.IF.formula_exists_pure b.IF.formula_exists_heap n_tl in   
-    let n_tl = res_replace n_tl rl filter_res b.IF.formula_exists_flow in
+    let n_tl = x_add res_replace n_tl rl filter_res b.IF.formula_exists_flow in
     n_tl 
   | IF.Base b ->
     let (n_tl,rl) = res_retrieve tlist filter_res b.IF.formula_base_flow in
     let todo_unk = List.fold_left (fun tl f -> x_add gather_type_info_one_formula prog f tl filter_res) n_tl b.IF.formula_base_and in
     let n_tl = helper b.IF.formula_base_pure b.IF.formula_base_heap n_tl in
-    let n_tl = res_replace n_tl rl filter_res b.IF.formula_base_flow  in
+    let n_tl = x_add res_replace n_tl rl filter_res b.IF.formula_base_flow  in
     n_tl
 
 and gather_type_info_struc_f prog (f0:IF.struc_formula) tlist =
@@ -1197,15 +1211,15 @@ and try_unify_view_type_args prog c vdef v deref ies hoa tlist pos =
   Debug.no_4 "try_unify_view_type_args" pr1 pr2 pr3 pr4 pr3
     (fun _ _ _ _ -> try_unify_view_type_args_x prog c vdef v deref ies hoa tlist pos)
     vdef.I.view_is_prim (c,v) tlist ies
-(*
-type: I.prog_decl ->
-  c: view_name : Globals.ident ->
-  I.view_decl ->
-  v : var ptr : Globals.ident ->
-  int ->
-  tlist : arg list : Iprinter.P.exp list ->
-  spec_var_type_list -> VarGen.loc -> spec_var_type_list
-*)
+      (*
+        type: I.prog_decl ->
+        c: view_name : Globals.ident ->
+        I.view_decl ->
+        v : var ptr : Globals.ident ->
+        int ->
+        tlist : arg list : Iprinter.P.exp list ->
+        spec_var_type_list -> VarGen.loc -> spec_var_type_list
+      *)
 (* ident, args, table *)
 and try_unify_view_type_args_x prog c vdef v deref ies hoa tlist pos =
   let dname = vdef.I.view_data_name in
@@ -1320,6 +1334,10 @@ and get_spec_var_type_list ?(lprime=Unprimed) (v : ident) tlist pos =
   | Not_found -> Err.report_error { Err.error_loc = pos;
                                     Err.error_text = v ^ " is undefined"; }
 
+(* type: ?d_tt:spec_var_type_list -> *)
+(*   Globals.ident * VarGen.primed -> *)
+(*   CP.spec_var list -> VarGen.loc -> Cformula.CP.spec_var *)
+
 and get_spec_var_type_list_infer ?(d_tt = []) (v : ident * primed) fvs pos =
   let pr_sv = Cprinter.string_of_spec_var in
   let pr_v = pr_pair pr_id string_of_primed in
@@ -1344,12 +1362,12 @@ and get_spec_var_type_list_infer_x d_tt ((v, p) : ident * primed) fvs pos =
     match res_list with
     | [] -> (Void ,false)
     | sv::lst ->
-          let () = warning_if_non_empty lst res_list in
-          (CP.type_of_spec_var sv,true)
-    (* | _ -> Err.report_error { *)
-    (*     Err.error_loc = pos; *)
-    (*     Err.error_text = "could not find a coherent " ^ v ^ " type"; *)
-    (*   } *)
+      let () = warning_if_non_empty lst res_list in
+      (CP.type_of_spec_var sv,true)
+      (* | _ -> Err.report_error { *)
+      (*     Err.error_loc = pos; *)
+      (*     Err.error_text = "could not find a coherent " ^ v ^ " type"; *)
+      (*   } *)
   in
   try 
     (get_spec_var_type_list ~lprime:p v d_tt pos)

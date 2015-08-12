@@ -1,0 +1,380 @@
+# ex2a.slk -tp oc --esl (FIXED)
+
+(==omega.ml#634==)
+drop_nonlinear_formula_rev@11
+drop_nonlinear_formula_rev inp1 : (not((6<a & 1<=(a*b))) | 0<=a)
+drop_nonlinear_formula_rev@11 EXIT: (not((6<a & true)) | 0<=a)
+
+ id: 1<-1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:SAT:{[a, b] : ((1 <= 0=0))};
+ raw result:{[a,b]  : FALSE }
+ Sat:  1<=(a*b)
+ res: UNSAT
+
+------
+
+At worst, we should replace a*b>=1 by true
+as a weakening measure.
+
+However, I like to suggest the following algorithm, we do this:
+
+(1)  subs all constants (maybe use eqmap)
+
+  checkentail b=1  & a*b>=1 |- a>=0
+  ==>
+  checkentail b=1  & a*1>=1 |- a>=0
+
+
+(2)  extract non-linear term to place on LHS, if possible.
+
+   checkentail a*b>=1 |- a>=0.
+   ==>
+   checkentail z=a*b & z>=1 |- a>=0.
+
+(3)  weaken LHS & strengthen RHS
+
+
+   checkentail z=a*b & z>=1 |- a>=0.
+   ==>
+   checkentail true & z>=1 |- a>=0.
+
+Examples
+========
+Using the above algorithm, we can support the following examples:
+
+   checkentail a*b>=1 |- b*a>=0.
+   ==> Step 2 (z is a fresh var)
+   checkentail z=a*b & z>=1 |- z>=0.
+   ==> Step 3
+   checkentail true & z>=1 |- z>=0.
+
+   checkentail true |- b*a>=0.
+   ==> Step 2
+   checkentail z=b*a & true |- z>=0.
+   ==> Step 3
+   checkentail true & true |- z>=0.
+
+   checkentail true |- (exists b: b*a>=0).
+   ==> Step 2 // fail to linearize as b is not free
+   checkentail true |- (exists b: b*a>=0).
+   ==> Step 3
+   checkentail true |- (exists b: false).
+
+========================================================
+
+# ex2b.slk -tp oc
+
+-tp z3
+
+seems to perform correctly but not -tp oc
+========================================================
+# ex2c.slk -tp oc
+
+-tp z3
+========================================================
+# ex2c1.slk -tp z3 (FIXED: changeed to x_dinfo_pp)
+
+Can messages be suppressed or are they from simplify?
+
+!!! **solver.ml#8270:super_smart_xpure:falseOmega Error Exp:Globals.Illegal_Prover_Format("[omega.ml] Non-linear arithmetic is not supported by Omega.")
+ Formula: exists(b_17:(b_17*a)<=1 & 0<=(b_17*a))
+Omega Error Exp:Globals.Illegal_Prover_Format("[omega.ml] Non-linear arithmetic is not supported by Omega.")
+ Formula: exists(b_17:(b_17*a)<=1 & 0<=(b_17*a))
+
+!!! split_ante1 : true
+!!! split_ante1_sym : trueOmega Error Exp:Globals.Illegal_Prover_Format("[omega.ml] Non-linear arithmetic is not supported by Omega.")
+ Formula: exists(b_17:(b_17*a)<=1 & 0<=(b_17*a))
+
+========================================================
+
+print_endline_q in VarGen.ml
+print_endline_quiet in Gen.ml
+
+========================================================
+# ex2.slk -dre ".*nonlinear\|.*Omega.is_"
+
+Why below called twice?
+
+(==omega.ml#631==)
+drop_nonlinear_formula_rev@34@33@32@29@28@27@26@24@23@22@21@20@19@18
+drop_nonlinear_formula_rev inp1 : (not(1<=(aaa*b)) | 0<=aaa)
+drop_nonlinear_formula_rev@34 EXIT: (not(true) | 0<=aaa)
+
+(==omega.ml#631==)
+drop_nonlinear_formula_rev@51@50@49@46@45@44@43@41@40@39@38@37@36@35
+drop_nonlinear_formula_rev inp1 : (not(1<=(aaa*b)) | 0<=aaa)
+drop_nonlinear_formula_rev@51 EXIT: (not(true) | 0<=aaa)
+
+
+Why below called twice?
+
+(==omega.ml#518==)
+drop_nonlinear_formula@8@7
+drop_nonlinear_formula inp1 : 0<=aaa
+drop_nonlinear_formula@8 EXIT: 0<=aaa
+
+(==tpdispatcher.ml#1736==)
+Omega.is_sat_ops@7
+Omega.is_sat_ops inp1 : 0<=aaa
+Omega.is_sat_ops@7 EXIT:true
+
+(==omega.ml#518==)
+drop_nonlinear_formula@10@9
+drop_nonlinear_formula inp1 : 1<=(aaa*b) & 0<=aaa
+drop_nonlinear_formula@10 EXIT: true & 0<=aaa
+
+(==tpdispatcher.ml#1736==)
+Omega.is_sat_ops@9
+Omega.is_sat_ops inp1 : 1<=(aaa*b) & 0<=aaa
+Omega.is_sat_ops@9 EXIT:true
+
+
+(==omega.ml#518==)
+drop_nonlinear_formula@14@13
+drop_nonlinear_formula inp1 : 0<=aaa
+drop_nonlinear_formula@14 EXIT: 0<=aaa
+
+(==tpdispatcher.ml#1736==)
+Omega.is_sat_ops@13
+Omega.is_sat_ops inp1 : 0<=aaa
+Omega.is_sat_ops@13 EXIT:true
+========================================================
+# ex3b.slk -tp oc --esl
+
+-tp z3
+
+seems to perform correctly but not -tp oc
+
+WhY (5-7) VALID WITH drop_nonlinear?
+
+dangerous to simplify RHS ..
+
+ id: 5<0; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:SIMPLIFY:{[a] : ( (exists (bbbb_15:((0=0)))) )};
+ raw result:{[a]}
+ Simplify:  exists(bbbb_15:0<=(bbbb_15*a))
+ res:  true
+========================================================
+# ex3d1.slk
+
+Why is there x!=y?
+
+!!! **solver.ml#8263:xpure_lhs_h1: x=1 & y=2 & x!=y
+!!! **solver.ml#8264:xpure_lhs_h1_sym: x!=null & y!=null & x!=y
+========================================================
+# ex3d2.slk -dre "xpure_heap"
+
+# Why did we not enumerate y=2?
+
+(==cvutil.ml#1532==)
+h_formula_2_mem@61@60
+h_formula_2_mem inp1 : xxx::node<y>@M * y::ll<n>@M
+h_formula_2_mem inp2 : 0<n
+h_formula_2_mem inp3 :[]
+h_formula_2_mem@61 EXIT: [[xxx,y]]
+
+!!! **cast.ml#1315:look_up_view_baga: baga= :[]
+!!! **cast.ml#1318:look_up_view_baga: baga= :Some([([self], 1<=n),([], self=null & n=0)])
+!!! **cast.ml#1326:baga (subst)= :[([y], 1<=n),([], y=null & n=0)]
+!!! **cast.ml#1335:baga (filtered)= :[]
+(==cvutil.ml#1533==)
+xpure_heap_symbolic_i@62@60
+xpure_heap_symbolic_i inp1 :0
+xpure_heap_symbolic_i inp2 : xxx::node<y>@M * y::ll<n>@M
+xpure_heap_symbolic_i@62 EXIT:( xxx!=null & 0<=n,[xxx],false)
+
+(==astsimp.ml#7795==)
+xpure_heap_symbolic#999@60
+xpure_heap_symbolic#999 inp1 :0
+xpure_heap_symbolic#999 inp2 : xxx::node<y>@M * y::ll<n>@M
+xpure_heap_symbolic#999 inp3 : 0<n
+xpure_heap_symbolic#999@60 EXIT: xxx!=null & 0<=n#[xxx]# [[xxx,y]]true
+
+----
+(==cvutil.ml#1162==)
+h_formula_2_mem@65@64@63
+h_formula_2_mem inp1 : xxx::node<y>@M * y::ll<n>@M
+h_formula_2_mem inp2 : 0<n
+h_formula_2_mem inp3 :[]
+h_formula_2_mem@65 EXIT: [[xxx,y]]
+
+!!! **cvutil.ml#1165:memset: [[xxx,y]]
+(==cvutil.ml#1734==)
+xpure_heap_mem_enum#6@64@63
+xpure_heap_mem_enum#6 inp1 : xxx::node<y>@M * y::ll<n>@M
+xpure_heap_mem_enum#6 inp2 : 0<n
+xpure_heap_mem_enum#6 inp3 :1
+xpure_heap_mem_enum#6@64 EXIT: xxx=1 & (((y=null & n=0) | (1<=n & y!=null))) #  [[xxx,y]]
+
+(==solver.ml#2794==)
+xpure_heap#1@63
+xpure_heap#1 inp1 : xxx::node<y>@M * y::ll<n>@M
+xpure_heap#1 inp2 : 0<n
+xpure_heap#1 inp3 :1
+xpure_heap#1@63 EXIT:( xxx=1 & (((y=null & n=0) | (1<=n & y!=null))) & xxx!=y,[], [])#true
+========================================================
+# ex3d4.slk --inv-baga
+
+Why isn't there a normalization?
+What is the diff between baga_over and baga_over (unfolded)?
+
+  baga inv: [([self], n>=1),([self], n>=1)]
+  baga over inv: [([self], n>=1),([self], n>=1)]
+  baga over inv (unfolded): [([self], n>=1),([self], n>=1)]
+  baga under inv: [([self], n>=1),([self], n>=1)]
+========================================================
+# ex4c.slk (FIXED - to follow Trung's suggestion)
+
+Can we use eqmap of LHS for conseq but
+how far can we go?
+
+Fails for implication
+=====================
+!!! **cpure.ml#11034:emap[]
+(==omega.ml#632==)
+subs_const_var_formula@2
+subs_const_var_formula inp1 : (not((a=1 & 1<=b)) | 1<=(a*b))
+subs_const_var_formula@2 EXIT: (not((a=1 & 1<=b)) | 1<=(a*b))
+
+========================================================
+# ex5a.slk -dre "arith_simpl"
+
+checkentail b>=1 & aaa=1*2+3-1 |- aaa*b>=1.
+print residue.
+
+Need to change arithmetic simplify.
+Below was required for mona formual to eliminate
+- operator.
+
+arith_simplify LHS@1
+arith_simplify LHS inp1 : b>=1 & aaa=((1*2)+3)-1
+arith_simplify LHS@1 EXIT: 1<=b & aaa+1=2+3
+========================================================
+# ex5a.slk -dre "do_all"
+
+# do_all_eq and do_all3_eq are for more aggressive reduction
+ of equalities.
+
+(====)
+do_all_eq@2@1
+do_all_eq inp1 : aaa
+do_all_eq inp2 : ((1*2)+3)-1
+do_all_eq@2 EXIT:( aaa+1, 2+3)
+========================================================
+# label-dll.slk -tp oc --adhoc-2
+
+Starting Omega...oc
+
+!!! **cpure.ml#10968:XXX:orig_eqn: x=x' & t_31'=0 & v_int_22_859'=1 & x=1
+!!! **cpure.ml#10969:XXX:new_eqn: v_int_22_859'=1 & t_31'=0 & x=0
+!!! **cpure.ml#10970:XXX:UNSOUND enhance_eq_list
+!!! WARNING logtime exception:0.001325
+Entail 1: EXCast. Failure("UNSOUND enhance_eq_list")
+: no residue 
+========================================================
+# ex12d.slk -tp oc --dis-nonlinear --esl
+
+# why is error message doing some non-linear substitution?
+
+checkentail r=b*x & b=2 |- r=2*x.
+
+Entail 2: Fail.(may) cause: r=2*x |-  r=x+x. LOCS:[3] (may-bug)
+
+# Why CACHED and not Omega? Why duplicate calls?
+
+-------------------- 
+ id: 2<0; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:IMPLY:complement {[b, r, x] : (( (not (((b = 2) & ((1=1)))))  | (r = x + x)))};
+ raw result: {[2,r,x]: 2x < r}
+ Imply: ante: b=2 & r=b*x
+	     conseq:  r=x+x
+ res: false
+ -------------------- 
+ id: 3<0; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:IMPLY:complement {[b, r, x] : (( (not (((b = 2) & ((1=1)))))  | (r = x + x)))};
+ raw result: {[2,r,x]: 2x < r}
+ Imply: ante: b=2 & r=b*x
+	     conseq:  r=x+x
+ res: false
+ -
+
+# ex13d.slk -tp oc -esl
+
+# Why is SAT cached twice?
+# can we move non-linear out of Omega?
+
+id: 1<-1; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:SAT:{[r, x, b] : (((r = 2(x)) & (b = 2)))};
+ raw result:{[r,x,2]: r = 2x}
+ Sat:  r=b*x & b=2
+ res: SAT
+ -------------------- 
+ id: 2<0; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:IMPLY:complement {[b, r, x] : (( (not (((b = 2) & (r = 2(x)))))  | (r = x + x)))};
+ raw result:{[b,r,x]  : FALSE }
+ Imply: ante: b=2 & r=b*x
+	     conseq:  r=x+x
+ res: true
+ -------------------- 
+ id: 3<0; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:SAT:{[r, x, b] : (((r = 2(x)) & (b = 2)))};
+ raw result:{[r,x,2]: r = 2x}
+ Sat:  r=b*x & b=2
+ res: SAT
+========================================================
+# ex12za -tp oc --esl 
+
+# Why is there Lemma_Prop?
+
+ id: 201<-1; prover: OMEGA CALCULATOR; loc: ex12a-simple_ss_10:10_10:21; kind: Lemma_Prop
+ raw proof:SAT:{[v_int_10_1331PRMD, xxx, res, xxxPRMD] : ((((v_int_10_1331PRMD = 2) & (xxxPRMD = xxx)) & (res = 2(xxxPRMD))))};
+ raw result:{[2,xxx,2xxx,xxx]}
+ Sat:  v_int_10_1331'=2 & xxx'=xxx & res=xxx'*v_int_10_1331'
+ res: SAT
+
+========================================================
+# ex12z-simple.slk -tp z3 --esl (FIXED)
+
+# why aren't z3 calls counted?
+
+!!! Number of MONA calls:0
+!!! Number of Omega calls:0
+
+-tp mona
+
+# why so many MONA calls? (from prelude)
+
+!!! Number of MONA calls:201
+!!! Number of Omega calls:0
+
+-tp oc
+
+# why so many OC calls?
+
+!!! Number of MONA calls:0
+!!! Number of Omega calls:204
+
+chin@loris-7:~/hg/sl_imm/nonlinear$ ../sleek ex12z-simple.slk -tp mona 
+!!! init_tp by default: 
+!!! set_tp z3
+
+!!! **tpdispatcher.ml#344:check prover:z3!!! init_tp by user: 
+!!! set_tp mona
+
+!!! **tpdispatcher.ml#344:check prover:mona
+========================================================
+# ex12z-simple.slk -tp mona (OK for OC and MONA)
+
+# to succeed if non-linear transform handled in general 
+
+non-linear pre-process of SAT for all provers
+non-linear pre-process of IMPLY for just OC/MOBA
+ need to add Cpure.subs_const_var_formula to specific provers
+
+========================================================
+========================================================
+========================================================
+========================================================
+========================================================
+========================================================
+========================================================

@@ -738,6 +738,16 @@ check_under inp3 :tree
 check_under@1 EXIT:true
 
 ==============================================
+#bst.slk
+
+----------
+GOT
+infered baga inv(bst):[([], self=null & sm<=lg),([self], true)]
+
+---------
+EXPECTED
+:infered baga inv(bst):[([], self=null & sm<=lg),([self], sm<=lg)]
+
 ==============================================
 ==============================================
 ==============================================

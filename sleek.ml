@@ -90,6 +90,7 @@ module M = Lexer.Make(Token.Token)
 
   let proc_one_cmd c = 
     match c with
+  | UiDef uidef -> process_ui_def uidef
     | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype; ())
     (* let pr_op () = process_entail_check_common iante iconseq in  *)
     (* Log.wrap_calculate_time pr_op !Globals.source_files ()               *)
@@ -153,7 +154,7 @@ module M = Lexer.Make(Token.Token)
     | TermInfer -> process_term_infer ()
     | TermAssume (iante, iconseq) -> process_term_assume iante iconseq
     | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ 
-    | TemplDef _ | UtDef _  -> ()
+    | TemplDef _ | UtDef _ -> ()
     | ExpectInfer (t, e) -> process_validate_infer t e
     | EmptyCmd -> () 
 
@@ -239,6 +240,7 @@ let parse_file (parse) (source_file : string) =
     | RelDef rdef -> process_rel_def rdef
     | TemplDef tdef -> process_templ_def tdef
     | UtDef utdef -> process_ut_def utdef
+    | UiDef uidef -> process_ui_def uidef
     | HpDef hpdef -> process_hp_def hpdef
     | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
     (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
@@ -363,7 +365,7 @@ let parse_file (parse) (source_file : string) =
   let cviews = List.map (Cast.add_uni_vars_to_view !cprog (Lem_store.all_lemma # get_left_coercion) (*!cprog.C.prog_left_coercions*)) cviews in
   !cprog.C.prog_view_decls <- cviews;
   (*Long: reset unexpected_cmd = [] *)
-  Sleekengine.unexpected_cmd := [];
+  Sleekengine.unexpected_cmd # reset (* := [] *);
   List.iter proc_one_cmd cmds
 
 let main () =
@@ -379,6 +381,7 @@ let main () =
                 I.prog_rel_ids = [];
                 I.prog_templ_decls = [];
                 I.prog_ut_decls = [];
+                I.prog_ui_decls = [];
                 I.prog_hp_decls = [];
                 I.prog_hp_ids = [];
                 I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
@@ -441,12 +444,12 @@ let main () =
                   (* Log.last_proof_command # dump; *)
                   Buffer.clear buffer;
                   if !inter then prompt := "SLEEK> "
-            with
-            | SLEEK_Exception
-            | Not_found -> dummy_exception();
-              Buffer.add_string buffer input;
-              Buffer.add_char buffer '\n';
-              if !inter then prompt := "- "
+                with
+                | SLEEK_Exception
+                | Not_found -> dummy_exception();
+                  Buffer.add_string buffer input;
+                  Buffer.add_char buffer '\n';
+                  if !inter then prompt := "- "
         done
       end
     else
@@ -458,7 +461,7 @@ let main () =
   with
   | End_of_file ->
     begin
-      print_string ("\n")
+      print_string_quiet ("\n")
     end
   | _ ->
     begin
@@ -515,8 +518,8 @@ let sleek_proof_log_Z3 src_files =
 
 let _ =
   wrap_exists_implicit_explicit := false ;
-  Tpdispatcher.init_tp();
   process_cmd_line ();
+  Tpdispatcher.init_tp();
   let () = Debug.read_main () in
   Scriptarguments.check_option_consistency ();
   sleek_prologue ();
@@ -529,12 +532,13 @@ let _ =
     (* let () = print_endline "before main" in *)
     main ();
     let _ =
-      if !Globals.show_unexpected_ents && ((List.length !unexpected_cmd) > 0)
+      print_endline_quiet "";
+      if !Globals.show_unexpected_ents && ((unexpected_cmd # len) > 0)
       then (
-        let () = print_string "Unexpected: " in
-        let () = List.iter (fun id_cmd ->
-            print_string_quiet ((string_of_int id_cmd) ^ " ")) !unexpected_cmd in
-        print_string_quiet "\n\n"
+        let () = print_endline_quiet ("Unexpected List: "^(unexpected_cmd # string_of_no_ln_rev)) in
+        (* let () = List.iter (fun id_cmd -> *)
+        (*     print_string_quiet ((string_of_int id_cmd) ^ " ")) !unexpected_cmd in *)
+        print_endline_quiet ""
       ) else
         ()
     in
@@ -587,6 +591,11 @@ let _ =
         print_endline_quiet (str_res)
       else ()
     in
+    if (not !Globals.web_compile_flag) then 
+      print_string_quiet ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
+                          (List.fold_left (fun a c-> a^" ("^(string_of_int c.VarGen.start_pos.Lexing.pos_lnum)^","^
+                                                     ( string_of_int (c.VarGen.start_pos.Lexing.pos_cnum-c.VarGen.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n")
+    else ();
     (* based on last residue - Valid -> UNSAT, Fail -> SAT *)
     let () = if !Globals.enable_time_stats then
         begin

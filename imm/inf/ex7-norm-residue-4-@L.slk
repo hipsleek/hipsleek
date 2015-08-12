@@ -1,0 +1,33 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n, v1> == self = null & n = 0 
+	or self::node<a@v1, q> * 
+    q::ll<n-1, v1>
+  inv n >= 0.
+
+
+
+// (7) Valid
+checkentail x::node<p,q> * q::ll<n,a> & n > 1 & a=@A|- x::ll<n+1,b> & n > 1.
+print residue.
+
+/*
+ //no norm
+ checkentail b=@M |- a<:b.
+
+ //with norm
+ checkentail x::node<p,q> * q::ll<n,a> & n > 1 |- x::node<_@b,y>* y::ll<n,b> & n > 1.
+ checkentail x::node<p@[@M,@fresh_var],q> * q::ll<n,a> & n > 1 & fresh_var=b & @M<:fresh_var |- y::ll<n,b> & n > 1.
+ checkentail x::node<p@[@M,@fresh_var],q> * q::ll<n,a> & n > 1 & fresh_var=b & @M<:fresh_var |- y::ll<n,b> & n > 1.
+ checkentail x::node<p@[@M,@fresh_var],q> * q::ll<n,[@a,@fresh_var2]> & n > 1 & 
+             fresh_var=b & @M<:fresh_var & fresh_var2=b & a<:fresh_var2 |- a<:b.
+
+*/
+
+
+// (12) Valid
+checkentail x::node<_, r> * r::node<_, r2> * r2::ll<n,a> |- x::ll<n + 2,b>.
+print residue.

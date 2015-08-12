@@ -8,6 +8,10 @@ let eq_pair_id = fun (x1,y1) (x2,y2) -> (x1=x2) && (y1=y2)
 
 let stk_vars = new Gen.stack_pr (pr_sv) CP.eq_spec_var_nop
 
+let set_stk_vars vs = 
+  let () = stk_vars # reset in
+  stk_vars # push_list vs
+
 let stk_renamed_vars = new Gen.stack_pr pr_pair_id eq_pair_id
 
 let stk_evars = new Gen.stack_pr (pr_sv) CP.eq_spec_var_nop
@@ -15,3 +19,31 @@ let stk_evars = new Gen.stack_pr (pr_sv) CP.eq_spec_var_nop
 let stk_var_ident = new Gen.stack_pr (Gen.pr_id) (=)
 
 let in_vars = new VarGen.store [] pr_svl
+
+class var_types =
+  object
+    val mutable vars_implicit = false
+    val mutable vars_explicit = false
+    val mutable vars_exists = false
+    method is_implicit : bool = vars_implicit
+    method is_explicit : bool = vars_explicit
+    method is_exists : bool = vars_exists
+    method set_implicit : unit = vars_implicit <- true
+    method set_explicit : unit = vars_explicit <- true
+    method set_exists : unit = vars_exists <- true
+  end;;
+
+let var_with_implicit =
+  let v = new var_types in
+  let () = v # set_implicit in
+  v
+
+let var_with_implicit_explicit =
+  let v = new var_types in
+  let () = v # set_implicit in
+  let () = v # set_explicit in
+  v
+
+let var_with_none =
+  let v = new var_types in
+  v

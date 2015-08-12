@@ -1,0 +1,11 @@
+ 
+
+X:={[b,a]: b=a & (a=b-1 | a<=(b-2)|  b<a)};
+X;
+
+X:={[b,a,x,y]: ((a=b-1 & 1<=y) | (a<=(b-2) & 1<=y) | (b<a & 1<=x))};
+Y:={[b,a,x,y]: a=b};
+gist X given Y;
+
+X2:={[b,a,x,y]: b=a & y<=0 & 1<=x };
+gist X2 given Y;

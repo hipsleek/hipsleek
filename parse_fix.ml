@@ -145,13 +145,13 @@ expression:
 or_formula:
     [ "or_formula" LEFTA
         [ x = SELF; "||"; y = SELF -> mkOr x y None loc
-          | x = and_formula -> x ]
+        | x = and_formula -> x ]
     ];
 
 and_formula:
     [ "and_formula" LEFTA
         [ x = SELF; "&&"; y = SELF -> mkAnd x y loc
-          | x = formula -> x ]
+        | x = formula -> x ]
     ];
 
 formula:

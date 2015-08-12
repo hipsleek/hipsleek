@@ -1,0 +1,128 @@
+// Valid.Valid.Fail.Fail.Fail.Valid.Fail.Fail.Fail.Fail.Valid.Fail.
+data cell{
+ int fst;
+}.
+
+
+//(1) OK
+checkentail c::cell<v>@a & a<:@L |-  c::cell<w>@b & b<:@L.
+print residue.
+expect Valid. // with b inst to @L
+/*
+expect_infer I{} R{c::cell<v>@a & a<:@L & b=@L & w=v}
+*/
+
+
+//(2) 
+checkentail c::cell<v>@a |-  c::cell<w>@b.
+print residue.
+expect Valid.
+/*
+expect_infer I{} R{c::cell<v>@[@a, @b]&a<:b & w=v}
+*/
+
+
+//(3)
+checkentail c::cell<v>@a & @L<:a |-  c::cell<w>@b & @M<:b.
+print residue.
+expect Fail.
+/*
+Fail.(may) cause:AndR[ @L<:a |-  @M<:b. LOCS:[30];  @L<:a |-  a<:b. LOCS:[30;0] (may-bug).]
+
+
+pick_bounds@16@13@11
+pick_bounds inp1 :[@M]
+pick_bounds@16 EXIT:(Some( b=@M),None)
+
+*/
+
+
+//(4)
+checkentail c::cell<v>@a & @L<:a |-  c::cell<w>@b & @L<:b.
+print residue.
+expect Fail.
+/*
+Not sure if here it would makes sens to find an instantiation which would make the ent succeed. eg (@L<:b & a<:b) ?
+Fail.(may) cause: b=@L & @L<:a |-  a<:b. LOCS:[22;0] (may-bug)
+*/
+
+//5
+checkentail c::cell<a>@w & @L<:w |-  c::cell<b>@v & v<:@M.
+expect Fail.
+print residue.
+/**
+Fail.(must) cause: @L<:w |-  v<:@M & w<:v.
+
+pick_equality_instantiation@32@31@29
+pick_equality_instantiation inp1 : @L<:w & v<:@M
+pick_equality_instantiation@32 EXIT:Some( v=@M)
+
+*/
+
+//6
+checkentail c::cell<a>@w & w<:@M |-  c::cell<b>@v & @L<:v.
+expect Valid.
+print residue.
+/**
+expect_infer I{} R{c::cell<a>@M&w<:@M & v=@L & b=a}.
+*/
+
+
+//7
+checkentail c::cell<a>@w & w<:@L |-  c::cell<b>@v & @M<:v.
+expect Fail.
+print residue.
+/*
+Fail.(may) cause: v=@M & w<:@L |-  w<:v.
+*/
+
+
+//8
+checkentail c::cell<a>@w & w<:@L & u=@M|-  c::cell<b>@v & u<:v.
+expect Fail.
+print residue.
+/*
+Fail.(may) cause: v=@M & w<:@L |-  w<:v.
+*/
+
+
+//9
+checkentail c::cell<a>@w & u=ww |-  c::cell<b>@v & v=u.
+expect Fail.
+print residue.
+/**
+c::cell<a>@[@w, @v]&u=ww & w<:v & ww=v & b=a
+
+pick_wekeast_instatiation@53@51
+pick_wekeast_instatiation inp1 : c::cell<a>@[@w, @v]&u=ww&{FLOW,(20,21)=__norm#E}[]
+pick_wekeast_instatiation inp2 : emp&v=u&{FLOW,(20,21)=__norm#E}[]
+pick_wekeast_instatiation@53 EXIT:(Some( w<:v & ww=v),Some([]))
+
+*/
+
+
+//10
+checkentail c::cell<a>@w & w<:@L & u=ww |-  c::cell<b>@v & v=u.
+expect Fail.
+print residue.
+/**
+Fail.(may) cause: w<:@L |-  w<:v. 
+*/
+
+
+//11
+checkentail c::cell<a>@w & w<:@L |-  c::cell<b>@v & v<:@A.
+expect Valid.
+print residue.
+/**
+expect_infer I{} R{c::cell<a>@w&w<:@L & v=@A & b=a}.
+*/
+
+
+//12
+checkentail c::cell<a>@w & w<:@A |-  c::cell<b>@v & v<:@L.
+expect Fail.
+print residue.
+/**
+Fail.(may) cause: v=@L & w<:@A |-  w<:v
+*/

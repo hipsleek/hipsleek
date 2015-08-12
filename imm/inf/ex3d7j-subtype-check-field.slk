@@ -1,0 +1,85 @@
+data cell {
+  int val;
+}.
+
+//11 
+checkentail x::cell<a>@u & u=@L & u=v |- x::cell<b>@v & v=@A.
+print residue.
+expect Fail.
+
+
+
+/*
+FIXED but need to test further
+
+../../sleek ex3d7j.slk --field-imm
+Valid but it should fail
+
+
+../../sleek ex3d7j-subtype-check-field.slk --field-imm -dre "heap_entail_empty.*\|imm_norm\|imply_disj_orig" -dd
+UNSOUND (why ante becomes false? ):
+!!!:0: 0: **solver.ml#8237:>>>>>> entail_empty_heap: cp1 <<<<<<
+!!!:0: 0: **solver.ml#8238:ante0 : : false
+!!!:0: 0: **solver.ml#8239:ante1 : : false
+!!!:0: 0: **solver.ml#8240:conseq : : u<:v & v=@A
+
+Is it because I call imm_norm too early? Or maybe i need better rules for checking the compatibility between 
+x::cell<a@L>@M * x::cell<a@v>@M
+or
+x::cell<a@[@L]>@M * x::cell<a@v>@M
+
+imm_norm_for_entail_empty_rhs@2@1
+imm_norm_for_entail_empty_rhs inp1 :lhs_h: x::cell<a@[@L]>@M
+imm_norm_for_entail_empty_rhs inp2 :lhs_p: u=v & u=@L & b=a
+imm_norm_for_entail_empty_rhs inp3 :es: pr_entail_state_shortx::cell<a@[@L]>@M&u=v & u=@L & b=a&{FLOW,(20,21)=__norm#E}[]
+  es_heap:x::cell<a@v>@M
+imm_norm_for_entail_empty_rhs@2 EXIT:(lhs_h: x::cell<a@L>@M,lhs_p: pr_entail_state_shortx::cell<a@L>@M&u=v & u=@L & b=a&{FLOW,(20,21)=__norm#E}[]
+  es_heap:x::cell<a@v>@M)
+
+!!! **solver.ml#8066:lhs_h: x::cell<a@L>@M
+!!! **solver.ml#8067:estate_orig.es_heap: x::cell<a@v>@M
+!!! **solver.ml#8087:curr_lhs_h: x::cell<a@L>@M * x::cell<a@v>@M
+!!! **solver.ml#8088:lhs_p: u=v & u=@L & b=a
+!!! **solver.ml#8090:curr_lhs_h0: x::cell<a@L>@M * x::cell<a@v>@M
+!!! **cvutil.ml#514:f:#Star# x::cell<a@L>@M * x::cell<a@v>@M
+!!! **cvutil.ml#535:h1:#DN# x::cell<a@L>@M
+!!! **cvutil.ml#542:h2:#DN# x::cell<a@v>@M
+!!! **cvutil.ml#514:f:#Star# x::cell<a@L>@M * x::cell<a@v>@M
+!!! **cvutil.ml#535:h1:#DN# x::cell<a@L>@M
+!!! **cvutil.ml#542:h2:#DN# x::cell<a@v>@M
+!!! **cvutil.ml#514:f:#Star# x::cell<a@L>@M * x::cell<a@v>@M
+!!! **cvutil.ml#535:h1:#DN# x::cell<a@L>@M
+!!! **cvutil.ml#542:h2:#DN# x::cell<a@v>@M
+!!! **cvutil.ml#514:f:#Star# x::cell<a@L>@M * x::cell<a@v>@M
+!!! **cvutil.ml#535:h1:#DN# x::cell<a@L>@M
+!!! **cvutil.ml#542:h2:#DN# x::cell<a@v>@M
+
+
+
+!!! **solver.ml#7530:conseq:?
+!!!:0: 0: **solver.ml#8060:rhs_p : : v=@A & u<:v
+!!! **solver.ml#8066:lhs_h: x::cell<a@[@L]>@M
+!!! **solver.ml#8067:estate_orig.es_heap: x::cell<a@v>@M
+!!! **solver.ml#8087:curr_lhs_h: x::cell<a@[@L]>@M * x::cell<a@v>@M
+!!! **solver.ml#8088:lhs_p: u=v & u=@L & b=a
+!!! **solver.ml#8090:curr_lhs_h0: x::cell<a@[@L]>@M * x::cell<a@v>@M
+!!! **cvutil.ml#514:f:#Star# x::cell<a@[@L]>@M * x::cell<a@v>@M
+!!! **cvutil.ml#535:h1:#DN# x::cell<a@[@L]>@M
+!!! **cvutil.ml#542:h2:#DN# x::cell<a@v>@M
+!!! **cvutil.ml#514:f:#Star# x::cell<a@[@L]>@M * x::cell<a@v>@M
+!!! **cvutil.ml#535:h1:#DN# x::cell<a@[@L]>@M
+!!! **cvutil.ml#542:h2:#DN# x::cell<a@v>@M
+!!! **cvutil.ml#514:f:#Star# x::cell<a@[@L]>@M * x::cell<a@v>@M
+!!! **cvutil.ml#535:h1:#DN# x::cell<a@[@L]>@M
+!!! **cvutil.ml#542:h2:#DN# x::cell<a@v>@M
+!!! **cvutil.ml#514:f:#Star# x::cell<a@[@L]>@M * x::cell<a@v>@M
+!!! **cvutil.ml#535:h1:#DN# x::cell<a@[@L]>@M
+!!! **cvutil.ml#542:h2:#DN# x::cell<a@v>@M
+!!! **solver.ml#8111:diff_flag:false
+!!! **solver.ml#8112:super_smart_xpure:false
+!!! **solver.ml#8118:xpure_lhs_h1(bef merge): false
+!!! **solver.ml#8122:xpure_lhs_h1: false
+!!! **solver.ml#8145:xpure_lhs_h1: false
+
+
+*/

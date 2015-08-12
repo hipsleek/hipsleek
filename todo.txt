@@ -137,8 +137,22 @@ unsound
     termination-numeric/rec_counter3_true-termination
 
 ==================================================================
+./hip svcomp14/termination-crafted-lit/Masse-VMCAI2014-Fig1b_true-termination.c -infer "@post" -dre "fixcalc_of" > 1
+
+(==cpure.ml#6292==)
+fixcalc_of_pure_formula@1
+fixcalc_of_pure_formula inp1 : ((tmp___0'=tmp___0 & x'=x & 101<=x) | (exists(tmp___1527:exists(x_1526:2+
+x_1526+(3*x)=0 & post_1475(x_1526,tmp___1527,x',tmp___0',flow)) & 
+tmp___1527<=0) & x<=100) | (exists(fc_1529:exists(tmp___1524:1<=tmp___1524 & 
+post_1475(fc_1529,tmp___1524,x',tmp___0',flow)) & fc_1529=2+(-2*x)) & 
+x<=100))
+fixcalc_of_pure_formula@1 EXIT ExceptionStack overflowOccurred!
 ==================================================================
-==================================================================
+- fix type of pointers.
+- type of view without any self.
+- check how x=null & x!=null is being translated for  Omega
+- count false context
+ ==================================================================
 ==================================================================
 ==================================================================
 ==================================================================

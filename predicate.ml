@@ -379,7 +379,7 @@ let generate_extn_ho_procs prog cviews extn_view_name extn_args=
       let n_sv = CP.SpecVar (t, new_id, p) in
       (r1@[n_sv], r2@[(CP.SpecVar (t, id, p), n_sv)])
     ) ([],[]) pr_ext_vars in
-  let extn_fs = List.map (fun f -> CF.subst ss f) extn_fs0 in
+  let extn_fs = List.map (fun f -> x_add CF.subst ss f) extn_fs0 in
   let inv_p = CP.subst ss inv_p0 in
   let (brs, val_extns) = CF.classify_formula_branch extn_fs inv_p extn_view_name
       fr_extn_args (* extn_v.Cast.view_vars *) extn_v.Cast.view_prop_extns in
@@ -449,7 +449,7 @@ let extend_pred_one_derv_x (prog : I.prog_decl) cprog hp_defs hp args ((orig_pre
   let ls_dname_pos = I.look_up_field_ann prog orig_pred_data_name extn_props in
   (*formula: extend with new args*)
   let fs0 = List.fold_left (fun r (f,_) -> r@(CF.list_of_disjs f)) [] orig_pred.CF.def_rhs in
-  let fs = List.map (CF.subst orig_ss) fs0 in
+  let fs = List.map (x_add CF.subst orig_ss) fs0 in
   let pure_extn_svl = CF.retrieve_args_from_locs orig_args ls_extn_pos in
   let (base_brs,ind_brs) = CF.extract_abs_formula_branch fs orig_pred_name (CP.name_of_spec_var hp) n_args ls_dname_pos pure_extn_svl false false in
   (*extend base cases*)

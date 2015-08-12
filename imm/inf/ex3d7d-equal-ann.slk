@@ -1,0 +1,96 @@
+data cell {
+  int val;
+}.
+
+
+checkentail x::cell<a>@u & u=@L |- x::cell<b>@v & v=@A.
+print residue.
+
+checkentail x::cell<a>@u & u=@L |- x::cell<b>@v & v=@M.
+print residue.
+
+checkentail x::cell<a>@u & u=@L |- x::cell<b>@v & v=@L.
+print residue.
+
+checkentail x::cell<a>@u & u=@L |- x::cell<b>@v.
+print residue.
+
+
+checkentail x::cell<a>@L |- x::cell<b>@A.
+print residue.
+//succeed
+
+checkentail x::cell<a>@L |- x::cell<b>@v & v=@A.
+print residue.
+/*
+# ex3d7c.slk
+
+checkentail x::cell<a>@L |- x::cell<b>@v & v=@A.
+print residue.
+
+Entail 2: Fail.(must) cause: @L=v |-  v=@A. LOCS:[0;9] (must-bug)
+
+Solution : either (i) substitute (ii) use explicit
+instantation (iii) post-process
+*/
+
+checkentail x::cell<a>@L |- (exists v: x::cell<b>@v & v=@A).
+print residue.
+/*
+Residue:
+ <1>x::cell<a>@L&b=a&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+*/
+
+//checkentail x::cell<a>@w  & w=@L |- x::cell<b>@v & v=@A.
+//print residue.
+
+checkentail u=@L |- (exists v: u<:v & v=@A).
+print residue.
+
+
+checkentail u=@L & u=v |- v=@A.
+print residue.
+
+checkentail u=@L & u<:v |- v=@A.
+print residue.
+
+
+checkentail u=@L |- (exists v: u<:v & v=@A).
+print residue.
+
+checkentail u=@L & v=@A |- u<:v.
+print residue.
+
+
+checkentail x::cell<a>@L |- x::cell<b>@v & v=@A.
+print residue.
+
+
+checkentail x::cell<a>@L |- x::cell<b>@A .
+print residue.
+
+checkentail x::cell<a>@L & v=@M |- x::cell<b>@v.
+print residue.
+
+
+checkentail x::cell<a>@u & u=@L |- x::cell<b>@v & v=@A.
+print residue.
+
+checkentail x::cell<a>@u & u=@L & u=v |- x::cell<b>@v & v=@A.
+
+
+checkentail x::cell<a>@u & u=@L & v=@A |- x::cell<b>@v & v=@A.
+
+checkentail x::cell<a>@u & u=@L |-(exists z: z=@M & z=@A).
+
+checkentail x::cell<a>@u & u=@L & z=@M |- z=@M & z=@A.
+
+/*
+checkentail x::cell<a>@u & u=@L |- x::cell<b>@v & v=@A.
+checkentail x::cell<a>@u & u=@L & v=u |- x::cell<b>@v & v=@A.
+
+checkentail x::cell<a>@u & u=@L & v=@M |- x::cell<b>@v & v=@A.
+
+
+*/

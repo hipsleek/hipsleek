@@ -1,0 +1,11 @@
+data node2 {
+	int val;
+	node2 left;
+	node2 right; 
+}.
+
+
+pred bst <sm, lg> == self = null & sm <= lg 
+	or (exists pl,qs: self::node2<v, p, q> * p::bst<sm, pl> * q::bst<qs, lg> & pl <= v & qs >= v)
+	inv sm <= lg.
+
