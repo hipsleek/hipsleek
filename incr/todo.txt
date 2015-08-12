@@ -289,7 +289,26 @@ get_spec_var_type_list@20 EXIT ExceptionFailure("R1 is undefined (8)")Occurred!
 
 !!! **typeinfer.ml#1379:TODO: fix quick patch to type infer:R1
 =====================================================================
+# solver.ml
 
+# write a script that would find examples that trigger the
+  following code.
+
+                      let () = x_winfo_pp "To add this to new_estate.es_infer_rel" pos in
+                      let () = x_binfo_hp (add_str "RelInferred (rel_ass)" (pr_list print_lhs_rhs)) rel_ass pos in
+                      let () = infer_rel_stk # push_list_pr rel_ass in
+                      let () = Log.current_infer_rel_stk # push_list rel_ass in
+                      (None,Some inferred_pure,[(new_estate,rel_ass,false)])
+
+# typechecker.ml
+                if lr!=[] then
+                  begin
+                    x_winfo_pp "if important : need to add to estate.es_infer_rel" no_pos;
+                    x_binfo_hp (add_str "WARNING : Spurious RelInferred (not collected)" (pr_list CP.print_lhs_rhs)) lr pos;
+                    (* lr seems to be spurious RelInferred which have already been collected? *)
+                    let () = Infer.infer_rel_stk # push_list_pr lr in
+                    ()
+                  end;
 =====================================================================
 =====================================================================
 =====================================================================
