@@ -289,13 +289,14 @@ get_spec_var_type_list@20 EXIT ExceptionFailure("R1 is undefined (8)")Occurred!
 
 !!! **typeinfer.ml#1379:TODO: fix quick patch to type infer:R1
 =====================================================================
-# ex5b2.ss --print-type -dre ".*conv"
+# ex5b2.ss --print-type -dre ".*conv": FIXED
 
-Why 1<=res not translated to true?
+Why 1<=res not translated to true? FIXED. trans_bool after pairwise + fixcalc output
 
 RELDEFN R:RelT([]): ( p:node=null & 1<=res:boolean) -->  R:RelT([])(p:node,res:boolean),
 
 # Why norm procedure here did not convert boolean <--> integer?
+===> convert at Omega.omega_of_b_formula
 
 # why inference did not use these normalization transformations?
 

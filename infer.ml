@@ -2079,14 +2079,14 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
               pairwise_proc (CP.arith_simplify_new (CP.remove_red_primed_vars new_lhs)),rel_lhs
             else
               let new_lhs_drop_rel = x_add_1 TP.simplify_raw (CP.drop_rel_formula new_lhs) in
-              x_binfo_hp (add_str "new_lhs_drop_rel" !CP.print_formula) new_lhs_drop_rel pos;
+              x_tinfo_hp (add_str "new_lhs_drop_rel" !CP.print_formula) new_lhs_drop_rel pos;
               let new_lhs_drop_rel = pairwise_proc new_lhs_drop_rel in
               DD.ninfo_hprint (add_str "rel_lhs(b4):" (pr_list !CP.print_formula)) rel_lhs pos;
               let rel_lhs_new = List.filter (fun x -> not(Gen.BList.mem_eq CP.equalFormula x rel_to_del)) rel_lhs in
               DD.ninfo_hprint (add_str "rel_lhs(af):" (pr_list !CP.print_formula)) rel_lhs_new pos;
               CP.conj_of_list (new_lhs_drop_rel::rel_lhs_new) no_pos,rel_lhs_new
           in
-          x_binfo_hp (add_str "new_lhs (aft elim_exists)" !CP.print_formula) new_lhs pos;
+          x_tinfo_hp (add_str "new_lhs (aft elim_exists)" !CP.print_formula) new_lhs pos;
           (* Simplification steps *)
           let lhs_list = CP.split_disjunctions_deep new_lhs in
           let new_lhs_list = List.map (fun new_lhs_local ->

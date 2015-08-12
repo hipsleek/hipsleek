@@ -402,7 +402,8 @@ let parse_fix_rel_defs rel_defs res =
       acc@(CP.fv pf1)@(CP.fv pf2)
   ) [] rel_defs in
   let svl = CP.remove_dups_svl svl in
-  parse_fix_svl svl res
+  let fs = parse_fix_svl svl res in
+  List.map Omega.trans_bool fs
 
 (******************************************************************************)
 

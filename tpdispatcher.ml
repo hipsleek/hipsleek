@@ -2407,7 +2407,7 @@ let rec simplify_raw (f: CP.formula) =
       if CP.has_template_formula f_memo then f
       else
         let res_memo = simplify_tp f_memo in
-        let () = Debug.info_hprint (add_str "bvars" (!CP.print_svl)) bvars no_pos in
+        let () = Debug.ninfo_hprint (add_str "bvars" (!CP.print_svl)) bvars no_pos in
         CP.restore_memo_formula subs bvars res_memo
 
 let simplify_raw_w_rel (f: CP.formula) = 
