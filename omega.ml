@@ -1146,7 +1146,8 @@ let pairwisecheck (pe : formula) : formula =
         flush log_all;
       end;
       let rel = send_and_receive fomega !in_timeout (* 0. *) in
-      match_vars (fv pe) rel 
+      let r = match_vars (fv pe) rel in
+      trans_bool r
   end
 ;;
 
