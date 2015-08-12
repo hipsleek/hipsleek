@@ -981,11 +981,13 @@ let pred_disj_unify = ref false
 
 let pred_seg_unify = ref false
 
-let pred_equiv = ref false
+let pred_equiv = ref true
 
-let pred_norm_seg = ref false
-
+(* what is below for? not used! *)
 let pred_equiv_one = ref true
+
+(* this is to enable automatic list segment *)
+let pred_norm_seg = ref true
 
 let pred_unify_post = ref false
 
