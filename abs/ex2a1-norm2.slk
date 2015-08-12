@@ -1,4 +1,4 @@
-data cell{int f1}.
+../data cell{int f1}.
 
 //1
 checkentail x::cell<v>@A * x::cell<w>@A & x=y |- y!=null.

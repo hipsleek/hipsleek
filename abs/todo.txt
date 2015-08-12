@@ -106,6 +106,56 @@ Need todo following:
 !!! **cvutil.ml#152:ViewNode(absent): x::ll<n>@A
 !!! **cvutil.ml#156:TODO: Need to add XPure by xpure_int
 ===============================================================
+# ex2a1-norm2.slk -dre "merge_alias_nodes_f" --en-imm-merge
+
+checkentail x::cell<v>@A * x::cell<w>@A & x=y |- y!=null.
+
+# Why is below invoked so many times?
+
+(==norm.ml#1053==)
+merge_alias_nodes_formula@1
+merge_alias_nodes_formula inp1 : x::cell<v>@A * x::cell<w>@A&x=y&{FLOW,(20,21)=__norm#E}[]
+merge_alias_nodes_formula@1 EXIT: x::cell<v>@A&x=y & v=w&{FLOW,(20,21)=__norm#E}[]
+
+(==norm.ml#1053==)
+merge_alias_nodes_formula@2
+merge_alias_nodes_formula inp1 : x::cell<v>@A&x=y & v=w&{FLOW,(20,21)=__norm#E}[]
+merge_alias_nodes_formula@2 EXIT: x::cell<v>@A&x=y & v=w&{FLOW,(20,21)=__norm#E}[]
+
+(==norm.ml#1053==)
+merge_alias_nodes_formula@3
+merge_alias_nodes_formula inp1 : x::cell<v>@A&x=y & v=w&{FLOW,(20,21)=__norm#E}[]
+merge_alias_nodes_formula@3 EXIT: x::cell<v>@A&x=y & v=w&{FLOW,(20,21)=__norm#E}[]
+
+(==immutable.ml#2854==)
+merge_alias_nodes_formula@4
+merge_alias_nodes_formula inp1 : emp&y!=null&{FLOW,(20,21)=__norm#E}[]
+merge_alias_nodes_formula@4 EXIT: emp&y!=null&{FLOW,(20,21)=__norm#E}[]
+
+(==norm.ml#1053==)
+merge_alias_nodes_formula@5
+merge_alias_nodes_formula inp1 : x::cell<v>@A&v=w & x=y&{FLOW,(20,21)=__norm#E}[]
+merge_alias_nodes_formula@5 EXIT: x::cell<v>@A&v=w & x=y&{FLOW,(20,21)=__norm#E}[]
+
+(==norm.ml#1053==)
+merge_alias_nodes_formula@6
+merge_alias_nodes_formula inp1 : x::cell<v>@A&v=w & x=y&{FLOW,(20,21)=__norm#E}[]
+merge_alias_nodes_formula@6 EXIT: x::cell<v>@A&v=w & x=y&{FLOW,(20,21)=__norm#E}[]
+
+(==norm.ml#1053==)
+merge_alias_nodes_formula@7
+merge_alias_nodes_formula inp1 : x::cell<v>@A&v=w & x=y&{FLOW,(20,21)=__norm#E}[]
+merge_alias_nodes_formula@7 EXIT: x::cell<v>@A&v=w & x=y&{FLOW,(20,21)=__norm#E}[]
+
+(==norm.ml#1053==)
+merge_alias_nodes_formula@8
+merge_alias_nodes_formula inp1 : x::cell<v>@A&x=y & v=w&{FLOW,(20,21)=__norm#E}[]
+merge_alias_nodes_formula@8 EXIT: x::cell<v>@A&x=y & v=w&{FLOW,(20,21)=__norm#E}[]
+
+(==norm.ml#1053==)
+merge_alias_nodes_formula@9
+merge_alias_nodes_formula inp1 : x::cell<v>@A&x=y & v=w&{FLOW,(20,21)=__norm#E}[]
+merge_alias_nodes_formula@9 EXIT: x::cell<v>@A&x=y & v=w&{FLOW,(20,21)=__norm#E}[]
 ===============================================================
 ===============================================================
 ===============================================================
