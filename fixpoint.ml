@@ -149,7 +149,7 @@ let helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_var
             | CP.BForm ((CP.RelForm (name,args,_),_),_) -> 
               let (_,pc,_) = List.find (fun (n,_,_) -> n=name) sd in
               (name,args,pc,post,pre)
-            | _ -> report_error no_pos ("process_tables expecting relation but got:"^(!CP.print_formula r))
+            | _ -> failwith (* report_error no_pos *) ("process_tables expecting relation but got:"^(!CP.print_formula r))
           ) results 
       in
       (* type: (CP.formula * 'd * 'e) list -> *)
