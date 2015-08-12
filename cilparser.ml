@@ -210,7 +210,7 @@ let rec get_core_cil_typ (t: Cil.typ) : Cil.typ = (
   let core_typ = (
     match t with
     | Cil.TVoid _ -> Cil.TVoid []
-    | Cil.TInt (Cil.IChar, _) -> Cil.TInt(Cil.IChar, [])
+    (*| Cil.TInt (Cil.IChar, _) -> Cil.TInt(Cil.IChar, [])*)
     | Cil.TInt (ik, _) -> Cil.TInt (Cil.IInt, [])
     | Cil.TFloat (fk, _) -> Cil.TFloat (Cil.FFloat, [])
     | Cil.TPtr (ty, _) -> Cil.TPtr (get_core_cil_typ ty, [])
@@ -1060,7 +1060,7 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
     match t with
     | Cil.TVoid _ -> Globals.Void
     | Cil.TInt (Cil.IBool, _) -> Globals.Bool
-    | Cil.TInt (Cil.IChar, _) -> Globals.Named "char"
+    (*| Cil.TInt (Cil.IChar, _) -> Globals.Named "char"*)
     | Cil.TInt _ -> Globals.Int
     | Cil.TFloat _ -> Globals.Float
     | Cil.TPtr (ty, _) -> (
@@ -1075,7 +1075,7 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
               let value_typ = translate_typ core_type pos in
               let value_field = ((value_typ, str_value), no_pos, false, [gen_field_ann value_typ] (* Iast.F_NO_ANN *)) in
               let dname = match ty with
-		(*| Cil.TInt(Cil.IChar, _) -> "char_star"*)
+		| Cil.TInt(Cil.IChar, _) -> "char_star"
                 | _ -> (Globals.string_of_typ value_typ) ^ "_star" 
               in
               let dtype = Globals.Named dname in
