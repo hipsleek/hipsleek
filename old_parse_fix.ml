@@ -131,22 +131,6 @@ let initialize_tlist f =
 
 (* TODO:WN : does this affect ptr arithmetic later ? *)
 (* some of the convertion already handled by norm_pure_result *)
-(* incr/ex5b2.ss output problem if is_node stuff removed *)
-(* < !!! **fixcalc.ml#393:svls (from parse_fix):[p:node,res:Unknown] *)
-(* < !!! **fixcalc.ml#1063:Result of fixcalc (parsed): :[ (not(res:boolean) | (p:node=null & res:boolean))] *)
-(* --- *)
-(* > !!! **fixcalc.ml#393:svls (from parse_fix):[NODp:Unknown,res:Unknown] *)
-(* > !!! **fixcalc.ml#1063:Result of fixcalc (parsed): :[ (not(res:boolean) | (0>=NODp:Unknown & res:boolean))] *)
-(* 66c66 *)
-(* < !!! **pi.ml#781:>>POST:  (not(res:boolean) | (p:node=null & res:boolean)) *)
-(* --- *)
-(* > !!! **pi.ml#781:>>POST:  (not(res:boolean) | (0>=NODp:Unknown & res:boolean)) *)
-(* 75c75,76 *)
-(* <      (not(res:boolean) | (p:node=null & res:boolean))&{FLOW,(4,5)=__norm#E}[] *)
-(* --- *)
-(* >      (not(res:boolean) | (0>=NODp:Unknown & res:boolean))& *)
-(* >      {FLOW,(4,5)=__norm#E}[] *)
-
 let initialize_tlist_from_fpairlist fpairlst =
   tlist # push_list ( List.fold_left (fun r (f1,f2,_) -> r@(get_type_list_for_fixcalc_output f1)@(get_type_list_for_fixcalc_output f2)) []  fpairlst)
 ;;
