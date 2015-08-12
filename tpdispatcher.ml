@@ -1046,12 +1046,12 @@ x<=-1
 
 let comm_is_null a1 a2 =
   match a1,a2 with
-  | Var(v,_),IConst(c,_) ->
+  | Var(v,_),IConst(0,_) ->
     let t=type_of_spec_var v in
-    (is_otype t && c==0,a1,a2)
-  | IConst(c,_),Var(v,_) ->
+    (is_otype t,a1,a2)
+  | IConst(0,_),Var(v,_) ->
     let t=type_of_spec_var v in
-    (is_otype t && c==0,a2,a1)
+    (is_otype t,a2,a1)
   | _ -> (false,a1,a2)
 
 let comm_is_ann a1 a2 =
@@ -1309,7 +1309,8 @@ let rec cnv_int_to_ptr f =
           if t==Void then 
             Some (mkNot (BForm ((BVar(SpecVar(Bool,id,p1),p2),ll),l)) None p2)
           else Some (BForm(ans,l))
-        | _ -> Some(e)
+        | Some(nb) -> Some(BForm(nb,l))
+        | None -> Some(e)
       end
     | _ -> None 
     (* | Lte ((Var(v,_) as a1), IConst(0,_), ll) | Gte (IConst(0,_), (Var(v,_) as a1), ll)  *)

@@ -372,6 +372,8 @@ let syscall cmd =
   let todo_unk = Unix.close_process (ic, oc) in
   (Buffer.contents buf)
 
+(* TODO(WN): this already performs some feature of norm_pure_result *)
+(* mainly for pointers; need to remove this redundancy for performance *)
 let parse_fix_svl svl res =
   let fixpoints = x_add_1 Parse_fix.parse_fix res in
   let svl1 = List.fold_left (fun acc pf ->
@@ -1057,7 +1059,7 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
   (* x_binfo_pp ("Result of fixcalc: " ^ res) no_pos; *)
 (* let parse_fix_with_type_from_rel_defs rel_defs res = *)
   let fixpoints = x_add_1 parse_fix_rel_defs rel_defs res in
-
+  let fixpoints = List.map TP.norm_pure_result fixpoints in
   x_binfo_hp (add_str "Result of fixcalc (parsed): "
                      (pr_list !CP.print_formula)) fixpoints no_pos;
 
