@@ -1,0 +1,20 @@
+data arr_int {
+  int val;
+  arr_int next;
+}.
+
+
+ checkentail 
+  aaa::arr_int<p,n> 
+   |-  q::arr_int<p,n> 
+  .
+
+print residue.
+
+/*
+# bug6d.slk
+
+# why did match fail?
+
+
+*/

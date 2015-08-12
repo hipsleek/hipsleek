@@ -1,0 +1,75 @@
+data node {
+	int val;
+	node next#REC;
+}.
+
+/* view for a singly linked list */
+pred lseg<p> == self = p
+	or self::node<_, q> * q::lseg<p> & self!=p
+  .
+
+pred lseg_one<p> == self = p
+	or self::node<v, q> * q::lseg_one<p> & v=1 & self!=p
+  .
+
+pred lseg_one_d<p> == self = p
+	or self::node<v, q> * q::lseg_one_d<p> & v=1 & self!=p
+  .
+
+pred lseg_two<p> == self = p
+	or self::node<v, q> * q::lseg_two<p> & v=2 & self!=p
+  .
+
+pred lseg_two_d<p> == self = p
+	or self::node<v, q> * q::lseg_two_d<p> & v=2 & self!=p
+  .
+
+
+pred lln<n> == self = null & n = 0
+	or self::node<_, q> * q::lln<n-1>
+  inv n >= 0.
+
+
+//1
+checkentail x::lseg_one<y> * y::lseg<null> |- x::lseg_one<p>.
+print residue.
+
+/*
+//2
+checkentail x::lseg_one<y> * y::lseg<null> |- x::lseg_one_d<p>.
+print residue.
+*/
+
+/*
+base case
+
+x=y * y::lseg<null> |- x::lseg_one_d<p>.
+
+*/
+
+
+//2
+checkentail x::lseg_one<y> * y::lseg_two<null> |- x::lseg_one<p>.
+print residue.
+
+//2a
+checkentail x::lseg_one<y> * y::lseg_two<null> |- x::lseg_one_d<p>.
+print residue.
+
+/*
+base case
+
+x=y * y::lseg_two<null> |- x::lseg_one_d<p>.
+
+b1
+x=y * y=null |- x=p
+b2
+x=y * x::node<v2,p1>*p1::lseg_two<null> & v2=2 |- x::lseg_one_d<p>.
+
+
+x::node<v1, p1> * p1::lseg_one<y> * y::lseg_two<null> & v1=1 & x!=y |-
+
+x::node<v2, p1> * p1::lseg_one_d<p> & v2=1 & x!=p
+
+*/
+

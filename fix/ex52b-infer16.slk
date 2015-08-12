@@ -1,0 +1,36 @@
+data node{
+ node next;
+}.
+
+relation R(node a).
+relation R2(int a,int b).
+HeapPred H(node a).
+
+//infer [R2] R2(x,y) & x+y>0 |- y>5.
+//print residue.
+
+// (5) valid
+//infer[z,inf_p]
+//infer[R,z,inf_p]
+infer[R,z]
+ R(fld5) & inf_p=null & x!=null
+     |- x!=z & inf_p=z & fld5=null
+  .
+
+//infer [x] x=y+1 |- y>0.
+
+print residue.
+
+/*
+# ex52b.slk --print-type
+
+# Why is x not Object type?
+
+ <1>emp&x:TVar[28]!=null & inf_p:TVar[28]=null & R:RelT([])(fld5:node) & 
+        z:TVar[28]=0 & fld5:node=null&{FLOW,(20,21)=__norm#E}[]
+ inferred pure: [z:TVar[28]=0]
+ inferred rel: [RELASS [R:RelT([])]: ( R:RelT([])(fld5:node)) -->  fld5:node=null]
+
+
+
+*/

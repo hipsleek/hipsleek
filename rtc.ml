@@ -251,6 +251,7 @@ and compile_pre (prog : C.prog_decl) (proc : C.proc_decl) (pre : CF.formula) jav
                  I.data_pos = no_pos;
                  I.data_parent_name = "Object";
                  I.data_invs = [];
+                 I.data_pure_inv = None;
                  I.data_is_template = false;
                  I.data_methods = check_proc :: disj_procs } in
     let () = check_proc.I.proc_data_decl <- Some ddef in
@@ -334,6 +335,7 @@ and compile_post (prog : C.prog_decl) (proc : C.proc_decl) (post : CF.formula) (
                  I.data_pos = no_pos;
                  I.data_parent_name = "Object";
                  I.data_invs = [];
+                 I.data_pure_inv = None;
                  I.data_is_template = false;
                  I.data_methods = check_proc :: disj_procs } in
     let () = check_proc.I.proc_data_decl <- Some ddef in
@@ -544,7 +546,7 @@ and push_assignment_in (lhs : ident) (rhs : C.exp) pos : C.exp = match rhs with
                C.exp_assign_rhs = rhs;
                C.exp_assign_pos = pos})
 
-and find_binds (e0 : C.exp) : C.typed_ident list = match e0 with
+and find_binds (e0 : C.exp) : typed_ident list = match e0 with
   | C.Seq ({C.exp_seq_exp1 = e1;
             C.exp_seq_exp2 = e2}) 
   | C.Cond ({C.exp_cond_then_arm = e1;

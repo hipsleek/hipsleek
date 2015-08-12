@@ -782,14 +782,17 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       || (!Globals.allow_field_ann && Mem.is_lend post_cond) then
         Error.report_error {Error.error_loc = pos_spec; Error.error_text =  ("The postcondition cannot contain @L heap predicates/data nodes/field annotations\n")}
       else
-        let () = post_pos#set (CF.pos_of_formula post_cond) in
+        let pos_post = CF.pos_of_formula post_cond in
+        let () = post_pos#set (pos_post) in
         x_dinfo_zp (lazy ("check_specs: EAssume: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
         (* let () = print_endline  ("todo:check_specs: EAssume: " ^ (Cprinter.string_of_context ctx) ^ "\n") in *)
         let ctx1 = if !Globals.disable_pre_sat then ctx else CF.transform_context (elim_unsat_es 2 prog (ref 1)) ctx in
         if (CF.isAnyFalseCtx ctx1) then
-          let () = x_dinfo_zp (lazy ("\nFalse precondition detected in procedure "^proc.proc_name^"\n with context: "^
+          let () = x_ninfo_zp (lazy ("\nFalse precondition detected in procedure "^proc.proc_name^"\n with context: "^
                                      (Cprinter.string_of_context_short ctx))) no_pos in
-          let () = print_endline ("\n\nWarning: False precondition detected in procedure "^proc.proc_name^"\n with context: "^ (Cprinter.string_of_context_short ctx)) in
+          let () = x_dinfo_hp (add_str "pos_post" Cprinter.string_of_pos) pos_post no_pos in
+          let () = Globals.add_false_ctx pos_post in
+          let () = print_endline_quiet ("\n\nWarning: False precondition detected in procedure "^proc.proc_name^"\n with context: "^ (Cprinter.string_of_context_short ctx)) in
           (spec,[],[],[], [], [],[],true)
         else
           let () = Gen.Profiling.push_time ("method "^proc.proc_name) in
@@ -830,9 +833,13 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                 let lp = Infer.collect_pre_pure_list_partial_context res_ctx in
                 let lr = x_add_1 Infer.collect_rel_list_partial_context res_ctx in
                 if lr!=[] then
-                  x_binfo_hp (add_str "WARNING : Spurious RelInferred (not collected)" (pr_list CP.print_lhs_rhs)) lr pos;
-                (* lr seems to be spurious RelInferred which have already been collected? *)
-                let () = Infer.infer_rel_stk # push_list_pr lr in
+                  begin
+                    x_winfo_pp "if important : need to add to estate.es_infer_rel" no_pos;
+                    x_binfo_hp (add_str "WARNING : Spurious RelInferred (not collected)" (pr_list CP.print_lhs_rhs)) lr pos;
+                    (* lr seems to be spurious RelInferred which have already been collected? *)
+                    let () = Infer.infer_rel_stk # push_list_pr lr in
+                    ()
+                  end;
                 (* let () = Log.current_infer_rel_stk # push_list lr in *)
                 let post_iv = Infer.collect_infer_vars_list_partial_context res_ctx in
                 (* Why? Bug cll-count-base.ss *)
@@ -2148,7 +2155,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         (* let ctx1 = prune_ctx_failesc_list prog ctx in *)
         let ctx2 = list_failesc_context_and_unsat_now prog ctx in
         let ctx = ctx2 in
-        let ctx_simp = x_add_1 Cfout.simplify_failesc_context_list ctx in
+        let ctx_simp = 
+          if !Globals.simplify_dprint then x_add_1 (Cfout.simplify_failesc_context_list ~prog_vs:(Some curr_svl)) ctx 
+          else ctx 
+        in
         (* let ctx1 = if !Globals.print_en_tidy then CF.rearrange_failesc_context_list ctx else ctx in *)
         (* Debug.info_hprint (add_str "dprint ctx0:" Cprinter.string_of_list_failesc_context) ctx0 pos; *)
         (* Debug.info_hprint (add_str "dprint ctx1:" Cprinter.string_of_list_failesc_context) ctx1 pos; *)
@@ -2165,8 +2175,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                else "\ndprint(orig): " ^ pos.start_pos.Lexing.pos_fname
                     ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str1 ^ "\n" in
              let tmp1 = if (previous_failure ()) then ("failesc context: "^tmp1) else tmp1 in
-             let tmp2 = "\ndprint(simpl): " ^ pos.start_pos.Lexing.pos_fname
-                        ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str2 ^ "\n" in
+             let tmp2 = 
+               if !Globals.simplify_dprint then 
+                   "\ndprint(simpl): " ^ pos.start_pos.Lexing.pos_fname
+                          ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str2 ^ "\n"
+               else ""
+             in
              let tmp2 = if (previous_failure ()) then ("failesc context: "^tmp2) else tmp2 in
              print_string_quiet (tmp1 ^ tmp2));
           ctx
@@ -4510,6 +4524,7 @@ let rec check_prog iprog (prog : prog_decl) =
     (*for each, incrementally infer*)
     (* let map_views = Iincr.extend_views iprog prog "size" scc in *)
     (* let new_scc = List.map (Iincr.extend_inf iprog prog "size") scc in *)
+    let _ = List.map (Iincr.extend_pure_props_view iprog prog Rev_ast.rev_trans_formula Astsimp.trans_view) scc in
     let r = verify_scc_helper prog verified_sccs scc in
     let () = Globals.sae := old_infer_err_flag in
     r

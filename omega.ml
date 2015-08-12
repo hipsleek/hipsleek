@@ -85,7 +85,7 @@ let rec omega_of_exp e0 = match e0 with
               | _ -> 
                     (* "0=0" *)
                     illegal_format "[omega.ml] Non-linear arithmetic is not supported by Omega."
-                    (* if (!Globals.oc_non_linear) then *)
+                    (* if (!Globals.non_linear_flag) then *)
                     (*   let () = report_warning no_pos "[omega.ml] Removing non-linear arithmetic expr." in *)
                     (*   (non_linear_detect # set ; "<non-linear>") *)
                     (* else *)
@@ -281,7 +281,7 @@ let prelude () =
   done
 
 (* start omega system in a separated process and load redlog package *)
-let start() =
+let start_prover() =
   try (
     if not !is_omega_running then begin
       (* if (not !Globals.web_compile_flag) then  *)
@@ -316,7 +316,7 @@ let stop () =
 let restart reason =
   if !is_omega_running then begin
     let () = print_string_if !Globals.enable_count_stats (reason^" Restarting Omega after ... "^(string_of_int !omega_call_count)^" invocations ") in
-    Procutils.PrvComms.restart !log_all_flag log_all reason "omega" start stop
+    Procutils.PrvComms.restart !log_all_flag log_all reason "omega" start_prover stop
   end
   else begin
     let () = print_string_if !Globals.enable_count_stats (reason^" not restarting Omega ... "^(string_of_int !omega_call_count)^" invocations ") in ()
@@ -384,7 +384,7 @@ let check_formula f timeout =
 (*  try*)
   begin
     (* let () = x_binfo_pp f no_pos in *)
-    if not !is_omega_running then start ()
+    if not !is_omega_running then start_prover ()
     else if (!omega_call_count = !omega_restart_interval) then
       begin
         restart("Regularly restart:1 ");
@@ -437,7 +437,7 @@ let check_formula i f timeout =
 let rec send_and_receive f timeout=
   begin
     if not !is_omega_running then
-      start (); 
+      start_prover (); 
     if (!omega_call_count = !omega_restart_interval) then
       begin
         restart ("Regularly restart:2");
@@ -514,8 +514,8 @@ let is_sat_ops_x pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
     (*  Cvclite.write_CVCLite pe; *)
     (*  Lash.write pe; *)
     (* let pe0 = drop_varperm_formula pe in *)
-    let pe = x_add_1 Cpure.subs_const_var_formula pe in
-    let pe = if !Globals.oc_non_linear then x_add_1 Cpure.drop_nonlinear_formula pe else pe in
+    (* let pe = x_add_1 Cpure.subs_const_var_formula pe in *)
+    let pe = if true (* !Globals.non_linear_flag *) then x_add_1 Cpure.drop_nonlinear_formula pe else pe in
 
     let pe = Trans_arr.translate_array_one_formula pe in
     let svl0 = Cpure.fv pe in
@@ -576,10 +576,12 @@ let is_sat_ops_x pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
 let is_sat_ops_x pw ps pe sat_no =
   try
     Wrapper.wrap_silence_output (is_sat_ops_x pw ps pe) sat_no
-  with _ ->
+  with e ->
     begin
-      let () = x_binfo_pp "WARNING: exception from Omega.is_sat_ops" no_pos in
-      true
+      if !Globals.oc_warning then
+        let () = x_binfo_pp "WARNING: exception from Omega.is_sat_ops" no_pos in
+        true
+      else raise e;
     end
 
 
@@ -630,7 +632,7 @@ let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
   begin
     (* let pe0 = drop_varperm_formula pe in *)
     let pe = x_add_1 Cpure.subs_const_var_formula pe in
-    let pe = if !Globals.oc_non_linear then x_add_1 drop_nonlinear_formula_rev pe else pe in
+    let pe = if true (* !Globals.non_linear_flag *) then x_add_1 drop_nonlinear_formula_rev pe else pe in
     let svl0 = Cpure.fv pe in
     let svl,fr_svl = mkSpecVarList 0 svl0 in
     let ss = List.combine svl fr_svl in
@@ -691,10 +693,12 @@ let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
 let is_valid_ops p e pe tm =
   try
     Wrapper.wrap_silence_output (is_valid_ops p e pe) tm
-  with _ -> 
+  with e -> 
     begin
-      let () = x_binfo_pp "WARNING: exception from Omega.is_valid" no_pos in
-      false
+      if !Globals.oc_warning then
+        let () = x_binfo_pp "WARNING: exception from Omega.is_valid" no_pos in
+        false
+      else raise e;
     end
 
 (* let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool = *)
@@ -981,11 +985,11 @@ let simplify_ops pr_weak pr_strong (pe : formula) : formula =
 
 let simplify (pe : formula) : formula =
   let pr_w, pr_s = 
-    (* if !Globals.oc_non_linear then drop_nonlinear_formula_ops  *)
+    (* if !Globals.non_linear_flag then drop_nonlinear_formula_ops  *)
     (* else *) no_drop_ops in
   (* WN:todo - should not simplify with non-linear *)
   (* let pe =  *)
-  (*   if !Globals.oc_non_linear then drop_nonlinear_formula_rev pe *)
+  (*   if !Globals.non_linear_flag then drop_nonlinear_formula_rev pe *)
   (*   else pe in *)
   (* simplify_ops pr_w pr_s pe *)
   let f_memo, subs, bvars = memoise_rel_formula [] pe in

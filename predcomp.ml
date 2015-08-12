@@ -1889,6 +1889,7 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
                data_pos = vdef.C.view_pos;
                data_parent_name = "Object";
                data_invs = [];
+               data_pure_inv = None;
                data_is_template = false;
                data_methods = check_proc :: disj_procs } in
   check_proc.proc_data_decl <- Some ddef;
@@ -1998,6 +1999,7 @@ and gen_partially_bound_type ((CP.SpecVar (t, v, p)) : CP.spec_var) pos : data_d
                  data_pos = no_pos;
                  data_parent_name = "Object";
                  data_invs = [];
+                 data_pure_inv  = None;
                  data_is_template = false;
                  data_methods = [] }
     in

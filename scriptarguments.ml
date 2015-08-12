@@ -48,7 +48,7 @@ let set_lib_file arg =
 
 let set_tp solver=
   let () = print_endline ("!!! init_tp by user: ") in 
-  Tpdispatcher.set_tp solver
+  Tpdispatcher.set_tp true solver
 
 let set_frontend fe_str = match fe_str  with
   | "native" -> fe := NativeFE
@@ -118,6 +118,10 @@ let common_arguments = [
   (* ("--dis-label-aggr", Arg.Clear Globals.label_aggressive_flag, "disable aggressive splitting of labels"); *)
   ("--en-mult", Arg.Set Globals.prelude_is_mult,
    "Enable using mult as prim.");
+  ("--en-ptr-arith", Arg.Set Globals.ptr_arith_flag,
+   "Enable use of Ptr Arithmetic (incl type checking).");
+  ("--dis-ptr-arith", Arg.Clear Globals.ptr_arith_flag,
+   "Disable use of Ptr Arithmetic (incl type checking).");
   ("--dis-mult", Arg.Clear Globals.prelude_is_mult,
    "Enable using mult as prim.");
   ("--dis-ufdp", Arg.Clear Solver.unfold_duplicated_pointers,
@@ -266,6 +270,13 @@ let common_arguments = [
    "Enable trace all failure (and exception). Use make gbyte");
   ("--trace-exc", Arg.Set VarGen.trace_exc,
    "Enable trace of exceptions invoked by methods");
+  ("--trace-loop", Arg.Set VarGen.trace_loop,
+   "Enable trace of method header duriong debugging");
+  ("--trace-loop-all", Arg.Unit (fun _ ->
+       VarGen.trace_loop_all :=true;
+       VarGen.trace_loop :=true;
+     ),
+   "Enable trace of method header duriong debugging (with details on arg)");
   (* Exception(fixcalc_of_pure_formula):Stack overflow *)
   (* Exception(compute_def@6):Failure("compute_def:Error in translating the input for fixcalc") *)
   (* Exception(compute_fixpoint_aux@5):Failure("compute_def:Error in translating the input for fixcalc") *)
@@ -295,7 +306,13 @@ let common_arguments = [
   ("--use-isabelle-bag", Arg.Set Isabelle.bag_flag,
    "Use the bag theory from Isabelle, instead of the set theory");
   ("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
+  ("--en-weaker-pre", Arg.Set Globals.weaker_pre_flag,"Enable Weaker Pre-Condition to be Inferred");
+  ("--dis-weaker-pre", Arg.Clear Globals.weaker_pre_flag,"Disable Weaker Pre-Condition to be Inferred");
+  ("--old-infer-collect", Arg.Set Globals.old_infer_collect,"Enable Old Infer Collect Method");
   ("--adhoc-1", Arg.Set Globals.adhoc_flag_1,"Enable Adhoc Flag 1");
+  ("--adhoc-2", Arg.Set Globals.adhoc_flag_2,"Enable Adhoc Flag 2");
+  ("--adhoc-3", Arg.Set Globals.adhoc_flag_3,"Enable Adhoc Flag 3");
+  ("--assert-nonlinear", Arg.Set Globals.assert_nonlinear,"Enable Asserting Testing of Nonlnear Pre-Processing");
   ("--ann-vp", Arg.Set Globals.ann_vp,"manual annotation of variable permissions");
   ("--dis-ann-vp", Arg.Clear Globals.ann_vp,"disable manual annotation of variable permissions");
   ("--ls", Arg.Set Globals.allow_ls,"enable locksets during verification");
@@ -318,6 +335,12 @@ let common_arguments = [
   ("--dis-seg-opt", Arg.Clear Globals.graph_norm,"disable the graph-based optimization for segment data structures");
   ("--oc-dis-simp", Arg.Clear Globals.oc_simplify,"disable oc simplification");
   ("--oc-en-simp", Arg.Set Globals.oc_simplify,"enable oc simplification");
+  ("--en-nonlinear", Arg.Set Globals.non_linear_flag,"enable non-linear pre-processing");
+  ("--dis-nonlinear", Arg.Clear Globals.non_linear_flag,"disable non-linear pre-processing");
+  (* ("--oc-en-matrix", Arg.Set Globals.oc_matrix_eqn,"enable oc matrix equational solvingline of constants"); *)
+  (* ("--oc-dis-matrix", Arg.Clear Globals.oc_matrix_eqn,"enable oc matrix equational solving of constants"); *)
+  ("--oc-en-warning", Arg.Set Globals.oc_warning,"Enable Omega warning");
+  ("--oc-dis-warning", Arg.Clear Globals.oc_warning,"Disable Omega warning");
   ("--oc-dis-adv-simp", Arg.Clear Globals.oc_adv_simplify,"disable oc advancde simplification");
   ("--oc-en-adv-simp", Arg.Set Globals.oc_adv_simplify,"enable oc advanced simplification");
   ("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
@@ -497,7 +520,7 @@ let common_arguments = [
   ("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
    "Build the image theory in Isabelle - default false");
   ("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-2.19"; "z3n"; "z3-4.3.1"; "zm"; "om";
-                       "oi"; "set"; "cm"; "OCRed"; "redlog"; "rm"; "prm"; "spass";"parahip"; "math"; "minisat" ;"auto";"log"; "dp"], set_tp (* Tpdispatcher.set_tp *)),
+                       "oi"; "set"; "cm"; "OCRed"; "redlog"; "rm"; "prm"; "spass";"parahip"; "math"; "minisat" ;"auto";"log"; "dp"], (set_tp) (* Tpdispatcher.set_tp *)),
    "Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
   ("--dis-tp-batch-mode", Arg.Clear Tpdispatcher.tp_batch_mode,"disable batch-mode processing of external theorem provers");
   ("-perm", Arg.Symbol (["fperm"; "cperm"; "dperm"; "bperm"; "none"], Perm.set_perm),
@@ -525,7 +548,9 @@ let common_arguments = [
    "Match logged methods from a regular expression");
   ("-dre", Arg.String (fun s ->
        let _ = print_endline ("!!!-dre "^s) in
-       Debug.z_debug_file:=("$"^s); z_debug_flag:=true),
+       Debug.z_debug_file:=("$"^s); z_debug_flag:=true;
+       Debug.read_main ()
+     ),
    "Shorthand for -debug-regexp");
   ("-drea", Arg.String (fun s ->
        Debug.z_debug_file:=("$.*"); z_debug_flag:=true;
@@ -548,7 +573,7 @@ let common_arguments = [
    "<host:port>: use external prover via loris-7:8888");
   ("--socket", Arg.String Tpdispatcher.Netprover.set_use_socket,
    "<host:port>: use external prover via socket");
-  ("--prover", Arg.String Tpdispatcher.set_tp,
+  ("--prover", Arg.String (Tpdispatcher.set_tp true),
    "<p,q,..> comma-separated list of provers to try in parallel");
   (* ("--enable-sat-stat", Arg.Set Globals.enable_sat_statistics,  *)
   (* "enable sat statistics"); *)
@@ -933,6 +958,8 @@ let common_arguments = [
   ("--pred-conj-unify", Arg.Set Globals.pred_conj_unify, "attempt to conj-unify among inferred assumption");
   ("--pred-en-equiv", Arg.Set Globals.pred_equiv, "attempt to reuse predicates with identical definition");
   ("--pred-dis-equiv", Arg.Clear Globals.pred_equiv, "disable reuse of predicates with identical definition");
+  ("--pred-en-seg", Arg.Set Globals.pred_norm_seg, "attempt to seg predicates");
+  ("--pred-dis-seg", Arg.Clear Globals.pred_norm_seg, "disable seg of predicates");
   ("--pred-unify-post", Arg.Set Globals.pred_unify_post, "unify (branches, syntax) definition of post-predicates");
   ("--pred-unify-inter", Arg.Set Globals.pred_unify_inter, "unify inter definition of predicates. before inlining");
   ("--pred-dis-unify-inter", Arg.Clear Globals.pred_unify_inter, "disable unify inter definition of predicates. before inlining");
