@@ -2730,6 +2730,7 @@ let translate_array_one_formula_for_validity
       (f:formula):formula =
 
   let f = standarize_one_formula f in
+  let f = translate_array_equality_to_forall f in
   let f = translate_array_relation f in
   let f = constantize_ex_q f in
 

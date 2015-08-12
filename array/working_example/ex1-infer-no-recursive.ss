@@ -6,9 +6,9 @@ int foo(ref int[] a)
 {
   if (a[5]>0) {
     a[5] = a[5]-1;
-    return a[5]; }
+    return foo(a); }
   else {
-    return a[3]+1;
+    return a[5];
   }
 }
 
