@@ -2907,7 +2907,7 @@ and fv (f : formula) : CP.spec_var list = match f with
 and remove_absent ann vs =
   if List.length ann = List.length vs then
     let com_ls = List.combine ann vs in
-    let res_ls = List.filter (fun (a,_) -> not(CP.is_absent_ann a)) com_ls in
+    let res_ls = List.filter (fun (a,_) -> not((* CP.is_absent_ann *)Immutils.is_abs a)) com_ls in
     List.split res_ls
   else (ann,vs)
 

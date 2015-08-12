@@ -6,7 +6,7 @@ open Globals
 open VarGen
 open Gen.Basic
 open Cpure
-open Imminfer
+(* open Imminfer *)
 
 (* assumption: f is in CNF *)
 let build_eset_of_imm_formula f =
@@ -154,6 +154,11 @@ let isImm(a : ann) : bool = is_immutable a
 let isPoly(a : ann) : bool = 
   match a with
   | PolyAnn v -> true
+  | _ -> false
+
+let isNoAnn(a : ann) : bool = 
+  match a with
+  | NoAnn -> true
   | _ -> false
 
 let is_const_imm ?emap:(em=[]) (a:ann) : bool =
@@ -550,14 +555,3 @@ let prune_eq_min_max_imm f =
 
 (* ===================== END imm addition utils ========================= *)
 
-(* below should preserve the old annotation, and only set NoAnn to Mutable *)
-let ann_heap_with_m = function
-  | CF.DataNode hp -> Some (CF.DataNode { hp with h_formula_data_imm = CP.ConstAnn(Mutable) })
-  | CF.ViewNode hp -> Some (CF.ViewNode { hp with h_formula_view_imm = CP.ConstAnn(Mutable) })
-  | _ -> None
-
-let annotate_imm_struc_formula (constr: CF.struc_formula) : CF.struc_formula =
-  CF.transform_struc_formula (nonef, nonef, ann_heap_with_m, (somef, somef, somef, somef, somef)) constr
-
-let annotate_imm_formula (constr: CF.formula) : CF.formula =
-  CF.transform_formula (nonef, nonef, ann_heap_with_m, (somef, somef, somef, somef, somef)) constr

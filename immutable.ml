@@ -2782,7 +2782,10 @@ let merge_alias_nodes_h_formula prog f p emap quantif xpure unfold_fun qvars = (
     let new_pure = MCP.memoise_add_pure new_pure (CP.join_conjunctions pf) in
     let new_pure = MCP.subst_avoid_capture_memo fr t new_pure in
     (updated_f, new_pure, fixpoint, struc)
-  (* | DataNode _ | ViewNode _ -> norm_abs_node f p xpure *) (* andreeac: uncommnet this line if you wnat to replace @A node with HEmp & xpure*)
+  (* | DataNode _ | ViewNode _ ->  *)   (* andreeac: uncommnet this line if you wnat to replace @A node with HEmp & xpure*)
+  (*   let new_h, new_pf = norm_abs_node f p xpure emap in *)
+  (*   let new_pf = map_opt_def p (MCP.memoise_add_pure p) new_pf in *)
+  (*   (new_h, new_pf, true, []) *)
   | _ -> (f, p, true, [])
 
 let merge_alias_nodes_h_formula prog f p emap quantif xpure unfold_fun qvars = 

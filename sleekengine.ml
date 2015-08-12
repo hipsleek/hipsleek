@@ -1113,7 +1113,7 @@ let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:T
 let meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list)
         : (Typeinfer.spec_var_type_list*CF.formula) =
   let (tvl, f) = meta_to_formula_not_rename mf0 quant fv_idents tlist in
-  (tvl, Immutils.annotate_imm_formula f)
+  (tvl, Cfimmutils.annotate_imm_formula f)
 
 let run_simplify (iante0 : meta_formula) =
   let (n_tl,ante) = x_add meta_to_formula iante0 false [] [] in
