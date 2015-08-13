@@ -308,6 +308,7 @@ let common_arguments = [
   ("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
   ("--en-weaker-pre", Arg.Set Globals.weaker_pre_flag,"Enable Weaker Pre-Condition to be Inferred");
   ("--dis-weaker-pre", Arg.Clear Globals.weaker_pre_flag,"Disable Weaker Pre-Condition to be Inferred");
+  ("--old-collect-false", Arg.Set Globals.old_collect_false,"Enable Old False Collection Method (to detect unsoundness)");
   ("--old-infer-collect", Arg.Set Globals.old_infer_collect,"Enable Old Infer Collect Method");
   ("--old-parse-fix", Arg.Set Globals.old_parse_fix,"Enable Old Parser for FixCalc (to handle self/REC)");
   ("--adhoc-1", Arg.Set Globals.adhoc_flag_1,"Enable Adhoc Flag 1");

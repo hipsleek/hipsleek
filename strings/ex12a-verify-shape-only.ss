@@ -6,12 +6,12 @@ data str {
 
 WFS<p> ==
   self::str<0,p>
-  or self::str<v,q>*q::WFS<p> & v!=0 
+  or self::str<v,q>*q::WFS<p> & v!=0
   inv self!=null;
 
 WFSeg<p> ==
   self=p 
-  or self::str<v,q>*q::WFSeg<p> & v>1
+  or self::str<v,q>*q::WFSeg<p> & v>0
   inv true;
 
 str incStr(str x)
@@ -25,6 +25,10 @@ int getChar(str x)
 void while1(ref str s)
   requires s::WFS<p> 
   ensures s::WFSeg<s'>*s'::str<0,p>;
+/*
+  requires s::WFS<p> 
+  ensures s::WFSeg<ss>*ss::str<0,p> & ss=s';
+*/
 {
   int x=getChar(s);
   if (x!=0) {

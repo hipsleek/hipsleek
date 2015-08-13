@@ -14,6 +14,10 @@ checkentail x::str<v,q>*q::WFSeg<yyy'>*yyy'::str<0,p> & v>0
 print residue.
 
 
+checkentail n=5 & n>7
+            |- x::WFSeg<yyy'>*yyy'::str<0,p>.
+print residue.
+
 
 /*
 # ex12c.ss
