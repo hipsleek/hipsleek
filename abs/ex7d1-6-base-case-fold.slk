@@ -10,19 +10,10 @@ pred ll<p> == self=p or
   inv true.
 
 
-//6
-checkentail x::ll<u> * y::node<_, q>@A * q::ll<v>@A &x=y |- q::ll<_>.
-print residue.
-expect Valid.
-
-checkentail x::node<_, q>@A * q::ll<v>@A  |- q::ll<_>.
-print residue.
-expect Valid.
-
 checkentail x=y |- q::ll<_>.
 print residue.
 expect Valid.
 
-checkentail  q::ll<v>@A  |- q::ll<_>.
+checkentail  q::ll<v>@A  |- q::ll<uuu>.
 print residue.
 expect Valid.

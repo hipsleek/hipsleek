@@ -13600,6 +13600,43 @@ let rec trans2_formula f (e:formula):formula =
             formula_exists_heap = transform_h_formula f_h_f e.formula_exists_heap;
             formula_exists_pure = MCP.transform_mix_formula f_p_t e.formula_exists_pure;}
 
+let foldheap (h:h_formula -> 'a) (f_comb: 'a list -> 'a)  (e:h_formula) : 'a =
+  let rec helper e = 
+    match e with
+    | Star s ->
+      let new_a1 = helper s.h_formula_star_h1 in
+      let new_a2 = helper s.h_formula_star_h2 in
+      f_comb [new_a1;new_a2]
+    | StarMinus s ->
+      let new_a1 = helper s.h_formula_starminus_h1 in
+      let new_a2 = helper s.h_formula_starminus_h2 in
+      f_comb [new_a1;new_a2]
+    | Conj s ->
+      let new_a1 = helper s.h_formula_conj_h1 in
+      let new_a2 = helper s.h_formula_conj_h2 in
+      f_comb [new_a1;new_a2]
+    | ConjStar s ->
+      let new_a1 = helper s.h_formula_conjstar_h1 in
+      let new_a2 = helper s.h_formula_conjstar_h2 in
+      f_comb [new_a1;new_a2]
+    | ConjConj s ->
+      let new_a1 = helper s.h_formula_conjconj_h1 in
+      let new_a2 = helper s.h_formula_conjconj_h2 in
+      f_comb [new_a1;new_a2]
+    | Phase s -> 
+      let new_a1 = helper s.h_formula_phase_rd in
+      let new_a2 = helper s.h_formula_phase_rw in
+      f_comb [new_a1;new_a2]
+    | DataNode _
+    | ViewNode _ 
+    | ThreadNode _
+    | HRel _
+    | Hole _ | FrmHole _
+    | HTrue
+    | HFalse 
+    | HEmp | HVar _ -> h e
+  in helper e
+
 
 let foldheap_formula (h:h_formula -> 'a) (f_comb: 'a list -> 'a)  (e:formula) : 'a =
   let rec helper e =

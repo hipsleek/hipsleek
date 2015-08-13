@@ -1599,7 +1599,12 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
            if flag then
              [(0,M_match m_res)],-1 (*force a MATCH after each lemma*)
            else
-             let a1 = (3,M_base_case_unfold m_res) in
+             (* TODOIMM: treat the case where the lhs node is abs as if lhs=emp *)
+             let a1 =  (3,M_base_case_unfold m_res) in
+             let a1 = 
+               let a11 = (3,M_base_case_fold m_res) in
+               if not(Cfimmutils.is_imm_subtype ~pure:(MCP.pure_of_mix lhs_p) lhs_node rhs_node) then (3, Cond_action [a11;a1])
+               else a1 in
              (*gen tail-rec <-> non_tail_rec: but only ONE lemma_tail_rec_count *)
              (* todo: check exist tail-rec <-> non_tail_rec ?? instead of lemma_tail_rec_count *)
              let a2 = (
@@ -2143,7 +2148,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
   else r
 
 
-and process_infer_heap_match ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs_h lhs_p is_normalizing rhs reqset (rhs_node,rhs_rest) =
+and process_infer_heap_match_x ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs_h lhs_p is_normalizing rhs reqset (rhs_node,rhs_rest) =
   let r0 = (4,M_unmatched_rhs_data_node (rhs_node,rhs_rest,vperm_set)) in
   let ptr_vs = estate.es_infer_vars in
   let ptr_vs = List.filter (fun v -> CP.is_otype(CP.type_of_spec_var v)) ptr_vs in
@@ -2235,6 +2240,30 @@ and process_infer_heap_match ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs_h
     (-1, (Cond_action (rs@cyc_acts@[r;r0])))
   else (-1, Cond_action (rs@[r0]))
 (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
+
+(*
+?vperm_set:Cprinter.CVP.vperm_sets ->
+  Immutable.C.prog_decl ->
+  CF.entail_state ->
+  CF.h_formula ->
+  Immutable.MCP.mix_formula ->
+  bool ->
+  CF.formula ->
+  (Cformula.CP.spec_var * Cformula.CP.spec_var) list ->
+  CF.h_formula * CF.h_formula -> action_wt
+*)
+and process_infer_heap_match ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs_h lhs_p is_normalizing rhs reqset (rhs_node,rhs_rest) =
+  let pr = Cprinter.string_of_h_formula in
+  let pr_p = !Mcpure.print_mix_formula   in
+  let pr_out = string_of_action_wt_res0 in
+  Debug.no_4 "process_infer_heap_match" 
+    (add_str "lhs_h" pr)
+    (add_str "lhs_p" pr_p)
+    (add_str "rhs_node" pr) 
+    (add_str "rhs_rest" pr)
+    pr_out
+    (fun _ _ _ _ -> process_infer_heap_match_x ~vperm_set:vperm_set prog estate lhs_h lhs_p is_normalizing rhs reqset (rhs_node,rhs_rest)) lhs_h lhs_p rhs_node rhs_rest 
+
 
 and process_matches prog estate lhs_h lhs_p conseq is_normalizing reqset (((l:match_res list),(rhs_node,rhs_rest,rhs_p)) as ks) =
   let pr = Cprinter.string_of_h_formula   in

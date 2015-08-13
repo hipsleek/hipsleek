@@ -457,8 +457,12 @@ let subtype_ann_gen
 let subtype_ann_list_x 
     ?lhs:(lhs_f = CF.mkTrue (mkTrueFlow ()) no_pos )
     ?rhs:(rhs_f = CF.mkTrue (mkTrueFlow ()) no_pos )
+    ?emap_lhs:(elhs = CP.EMapSV.mkEmpty)
+    ?emap_rhs:(erhs = CP.EMapSV.mkEmpty)
     impl_vars evars (ann1 : CP.ann list) (ann2 : CP.ann list) : bool * (CP.formula  list) * (CP.formula  list) * (CP.formula  list) =
-  let elhs,erhs = get_emaps lhs_f rhs_f [] [] in
+  let elhs0,erhs0 = get_emaps lhs_f rhs_f [] [] in
+  let elhs = CP.EMapSV.merge_eset elhs0 elhs in
+  let erhs = CP.EMapSV.merge_eset erhs0 erhs in
   let rec helper impl_vars evars (ann1 : CP.ann list) (ann2 : CP.ann list) =
     match (ann1, ann2) with
     | ([], [])         -> (true, [], [], [])
@@ -476,6 +480,8 @@ let subtype_ann_list_x
 let subtype_ann_list 
     ?lhs:(lhs_f = CF.mkTrue (mkTrueFlow ()) no_pos )
     ?rhs:(rhs_f = CF.mkTrue (mkTrueFlow ()) no_pos )
+    ?emap_lhs:(elhs = CP.EMapSV.mkEmpty)
+    ?emap_rhs:(erhs = CP.EMapSV.mkEmpty)
     impl_vars evars (ann1 : CP.ann list) (ann2 : CP.ann list) : bool * (CP.formula  list) * (CP.formula  list) * (CP.formula  list) =
   let pr1 = !CP.print_svl in
   let pr2 = pr_list (Cprinter.string_of_imm)  in
@@ -485,7 +491,7 @@ let subtype_ann_list
   let pr_f =  Cprinter.string_of_formula in
   Debug.no_6 "subtype_ann_list" (add_str "impl" pr1) (add_str "evars" pr1) pr2 pr2
     (add_str "lhs_f" pr_f) (add_str "rhs_f" pr_f) pr3 
-    (fun _ _ _ _ _ _ -> subtype_ann_list_x ~lhs:lhs_f ~rhs:rhs_f impl_vars evars (ann1 : CP.ann list) (ann2 : CP.ann list) )  impl_vars evars ann1 ann2 lhs_f rhs_f
+    (fun _ _ _ _ _ _ -> subtype_ann_list_x ~lhs:lhs_f ~rhs:rhs_f ~emap_lhs:elhs ~emap_rhs:erhs impl_vars evars (ann1 : CP.ann list) (ann2 : CP.ann list) )  impl_vars evars ann1 ann2 lhs_f rhs_f
 
 
 let get_strongest_imm  (ann_lst: CP.ann list): CP.ann option = 
