@@ -1587,6 +1587,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          let vr_new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
          let () = Debug.ninfo_hprint (add_str "vl_new_orig" string_of_bool) vl_new_orig no_pos in
          let () = Debug.ninfo_hprint (add_str "vr_new_orig" string_of_bool) vr_new_orig no_pos in
+         let imm_subtype_flag = (Cfimmutils.is_imm_subtype ~pure:(MCP.pure_of_mix lhs_p) lhs_node rhs_node) in
          let seg_fold_type = 
            if !Globals.seg_fold then 
              (Cfutil.is_seg_view2_fold_form prog vl estate.CF.es_formula vr rhs reqset estate.es_folding_conseq_pure) 
@@ -1599,11 +1600,11 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
            if flag then
              [(0,M_match m_res)],-1 (*force a MATCH after each lemma*)
            else
-             (* TODOIMM: treat the case where the lhs node is abs as if lhs=emp *)
-             let a1 =  (3,M_base_case_unfold m_res) in
-             let a1 = 
-               let a11 = (3,M_base_case_fold m_res) in
-               if not(Cfimmutils.is_imm_subtype ~pure:(MCP.pure_of_mix lhs_p) lhs_node rhs_node) then (3, Cond_action [a11;a1])
+             let base_case_prio = 3 in
+             let a1 =  (base_case_prio,M_base_case_unfold m_res) in
+             let a1 =  
+               (* treat the case where the lhs node is abs as if lhs=emp, thus try a base case fold *)
+               if not(imm_subtype_flag) then (base_case_prio, Cond_action [(base_case_prio,M_base_case_fold m_res);a1])
                else a1 in
              (*gen tail-rec <-> non_tail_rec: but only ONE lemma_tail_rec_count *)
              (* todo: check exist tail-rec <-> non_tail_rec ?? instead of lemma_tail_rec_count *)
@@ -1629,8 +1630,9 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                  match split_act with
                  | Some a -> a
                  | None ->
-                   (*allow matching*)
-                   let m_act = (1,M_match m_res) in
+                   (* allow matching only if (lhs_imm <: rhs_imm) *)
+                   let m_act = if (imm_subtype_flag) then (1,M_match m_res) 
+                     else (base_case_prio, M_Nothing_to_do ("not(lhs_imm <: rhs_imm)")) in
                    (* (1,Search_action [m_act; (1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))]) *)
                    if !Globals.seg_fold then (
                      let seg_acts = if seg_fold_type>= 0 then
