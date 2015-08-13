@@ -8248,14 +8248,14 @@ and case_normalize_renamed_struc_formula prog avail_vars posibl_expl f =
 (*moved the liniarization to case_normalize_renamed_formula*)
 and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_expl (f:IF.formula) ann_vars : IF.formula* ((ident*primed)list) * ((ident*primed)list) =
   let pr1 prog = (add_str "view_decls" pr_v_decls) prog.I.prog_view_decls in
-  let pr = (pr_list (fun (i,p) -> i)) in
+  let pr = pr_primed_ident_list (* (pr_list (fun (i,p) -> i)) *) in
   let pr_out (f,h,expl) = 
     ("\n ### f = " ^ (Iprinter.string_of_formula f)
      ^"\n ### h = " ^ (pr h)
      ^"\n ### expl = " ^ (pr expl)) 
   in 
   Debug.no_5 "case_normalize_renamed_formula" 
-    pr1 pr pr pr  Iprinter.string_of_formula pr_out
+    pr1 (add_str "avail_vs" pr) (add_str "expl" pr) (add_str "ann_vs" pr)  Iprinter.string_of_formula pr_out
     (fun _ _ _ _ _ -> case_normalize_renamed_formula_x prog avail_vars posib_expl f ann_vars) prog avail_vars posib_expl  ann_vars f
 
 and hack_filter_global_rel prog ls =
@@ -8316,7 +8316,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
     let pr1 = pr_list (fun (i,_) -> i) in
     let pre = Iprinter.string_of_formula_exp in
     let pr2 = pr_list (fun (p,_) -> (pr_pair pre string_of_bool) p) in
-    let pr3 (l1,l2,l3,f) = pr_triple pr1 (pr_list pre) pr1 (l1,l2,l3) in
+    let pr3 (l1,l2,l3,f) = pr_triple (add_str "impl" pr1) (pr_list pre) (add_str "ex" pr1) (l1,l2,l3) in
     Debug.no_2 "match_exp" pr1 pr2 pr3 (fun _ _ -> match_exp used_names hargs pos) used_names hargs
   in
   let rec flatten f = match f with
@@ -8579,10 +8579,8 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
     (((ident*primed) list) * ((ident*primed) list) * IF.h_formula * Ipure.formula) =
     let pr1 = Iprinter.string_of_h_formula in
     let pr2 (vl1,vl2,h, p) = (pr_ident_list vl1)^(pr_ident_list vl2)^(Iprinter.string_of_h_formula h)^"&&$"^(Iprinter.string_of_pure_formula p) in
-    let pr0 (vs:((ident*primed) list))= 
-      let idents, _ = List.split vs in
-      (string_of_ident_list idents) in
-    Debug.no_2 "linearize_heap" pr0 pr1 pr2 (fun _ _ -> linearize_heap used_names f) used_names f in
+    let pr0 = pr_primed_ident_list in
+    Debug.no_2 "linearize_heap" (add_str "used" pr0) pr1 pr2 (fun _ _ -> linearize_heap used_names f) used_names f in
 
   let rec normalize_base heap cp vp fl a evs pos : IF.formula* ((ident*primed)list)* ((ident*primed)list) =
     (*let () = print_string("Before Normalization : "^(Iprinter.string_of_h_formula heap)^"\n") in*)

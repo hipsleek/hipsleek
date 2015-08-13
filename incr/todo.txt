@@ -289,6 +289,27 @@ get_spec_var_type_list@20 EXIT ExceptionFailure("R1 is undefined (8)")Occurred!
 
 !!! **typeinfer.ml#1379:TODO: fix quick patch to type infer:R1
 =====================================================================
+# solver.ml
+
+# infer.ml
+                if lr!=[] then
+                  begin
+                    x_winfo_pp "if important : need to add to estate.es_infer_rel" no_pos;
+                    x_binfo_hp (add_str "WARNING : Spurious RelInferred (not collected)" (pr_list CP.print_lhs_rhs)) lr pos;
+                    (* lr seems to be spurious RelInferred which have already been collected? *)
+                    let () = Infer.infer_rel_stk # push_list_pr lr in
+                    ()
+                  end;
+
+# write a script that would find examples that trigger the
+  following code.
+
+                      let () = x_winfo_pp "To add this to new_estate.es_infer_rel" pos in
+                      let () = x_binfo_hp (add_str "RelInferred (rel_ass)" (pr_list print_lhs_rhs)) rel_ass pos in
+                      let () = infer_rel_stk # push_list_pr rel_ass in
+                      let () = Log.current_infer_rel_stk # push_list rel_ass in
+                      (None,Some inferred_pure,[(new_estate,rel_ass,false)])
+=====================================================================
 # ex5b2.ss --print-type -dre ".*conv": FIXED
 
 Why 1<=res not translated to true? FIXED. trans_bool after pairwise + fixcalc output
@@ -311,9 +332,43 @@ norm_pure_input@123
 norm_pure_input inp1 : a:boolean & not(a:boolean)
 norm_pure_input@123 EXIT: a:boolean & not(a:boolean)
 =====================================================================
+# ex8b
+
+
+TODO 1:
+ - detect pre in pre-fix form)
+ - infer pre -> weaken
+ - re-verify + infer post
+
+TODO 2:
+  - segmentation
+  ll(x) == lseg(x,null)
+  lseg_base_dangling(x) = lseg(x, p)
+
 =====================================================================
+#ex7b2
+
+post is duplicate
+*********************************************************
+*******relational definition ********
+*********************************************************
+[ H(p_1578,flag_1579) ::= p_1578::node<h_44_1580,next_44_1536>@M&flag_1579(4,5),
+ G(p_1581,p_1582,flag_1583,flag_1584) ::= p_1581::node<h_44_1585,next_44_1536>@M *
+ G(next_44_1536,p_1582,flag_1567,flag_1584)&flag_1567 & flag_1583
+ or p_1582::node<h_44_1587,next_44_1536>@M&
+    flag_1584=flag_1583 & p_1582=p_1581 & flag_1583
+ or p_1581::node<h_44_1585,next_44_1536>@M *
+    G(next_44_1536,p_1582,flag_1566,flag_1584)&flag_1566 & flag_1583
+ (4,5)]
+*************************************
+
+
 =====================================================================
-=====================================================================
+# ex9a
+
+how to handle dll?
+
+
 =====================================================================
 =====================================================================
 =====================================================================

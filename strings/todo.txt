@@ -714,7 +714,50 @@ llN: extend ll to size
                                                                     q_111::lln<n_112>@M&
          n=n_112+1 & 0<=n_112&{FLOW,(1,26)=__flow#E}[]
 ==================================================================
+# ex12c.ss
+
+# Why the use of ' var caused problem?
+
+checkentail x::str<w,q>*q::WFSeg<s2>*s2::str<0,p>
+            |- x::WFSeg<s2>*s2::str<0,p>.
+
+WARNING: _0:0_0:0:* between overlapping heaps: ( x::str<v,q>@M, yyy'::str<flted_12_36,p>@M)
+
+Entail 1: Valid. 
+
+Residue:
+
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+
+
+# Why wasn't false counted?
+
+0 false contexts at: ()
 ==================================================================
+# ex12e.ss
+
+checkentail x::str<yyy,_> |- x::str<yyy,_> .
+
+# Why is yyy_19 implicit & existential???
+
+ x::str<yyy,Anon_12>@M&{FLOW,(20,21)=__norm#E}[] [] |-  EBase 
+   exists (Expl)[](Impl)[Anon_13; 
+   yyy_19](ex)[](exists yyy_19: x::str<yyy_19,Anon_13>@M&yyy_19=yyy&
+   {FLOW,(20,21)=__norm#E}[]
+
+(==astsimp.ml#8591==)
+linearize_heap@4
+linearize_heap inp1 :[]
+linearize_heap inp2 :emp ; (emp ; (x::str{}<yyy,Anon_13>@M[HeapNode1]))
+linearize_heap@4 EXIT:[(Anon_13,)][(yyy_19,)]x::str{}<yyy_19,Anon_13>@M[HeapNode1]&&$yyy_19 = yyy
+
+(==astsimp.ml#7282==)
+linearize_formula@5
+linearize_formula inp1 :view_decls:[]
+linearize_formula inp2 :(x::str{}<yyy_19,Anon_13>@M[HeapNode1]) * ([] & yyy_19 = yyy)( FLOW __norm)
+linearize_formula inp3 :[(yyy:16:int)(TVar__23:23:int)(yyy_19:20:int)(TVar__22:22:int)(Anon_13:21:str)(x:15:str)(Anon_full_perm:18:float)(Anon_12:17:str)]
+linearize_formula@5 EXIT:( x::str<yyy_19,Anon_13>@M&yyy_19=yyy&{FLOW,(20,21)=__norm#E}[],
+ qvars::[])
 ==================================================================
 ==================================================================
 ==================================================================

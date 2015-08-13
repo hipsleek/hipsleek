@@ -645,6 +645,7 @@ let string_of_primed_ident (id,p) =
 (* let pr_ident_list = pr_list (fun (i,p) -> i^(string_of_primed p)) *)
 
 let pr_ident_list = pr_list string_of_primed_ident
+let pr_primed_ident_list = pr_list string_of_primed_ident
 
 let rec s_p_i_list l c = match l with 
   | [] -> ""
@@ -1024,7 +1025,14 @@ let procs_verified = ref ([] : string list)
 
 let false_ctx_line_list = ref ([] : loc list)
 
-let add_false_ctx pos = false_ctx_line_list := pos::!false_ctx_line_list
+let last_sat_ctx = ref None
+
+let add_false_ctx pos = 
+  last_sat_ctx := None;
+  false_ctx_line_list := pos::!false_ctx_line_list
+
+let set_last_ctx (pos:loc) = last_sat_ctx := Some pos 
+
 
 (* use List.rev *)
 (* let rev_list list = *)
@@ -1184,7 +1192,9 @@ let allow_threads_as_resource = ref false
 (* let assert_matrix = ref false *)
 let assert_nonlinear = ref false
 
+let old_collect_false = ref false
 let old_infer_collect = ref false
+let old_parse_fix = ref false
 let adhoc_flag_1 = ref false
 let adhoc_flag_2 = ref false
 let adhoc_flag_3 = ref false

@@ -816,15 +816,15 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                 else () in
               let res_ctx = x_add check_exp prog proc lfe e0 post_label in
               (* let () = Debug.info_hprint (add_str "EAssume xxxxxxxxxxx" pr_id) "2" no_pos in  *)
-              (* let () = Debug.info_zprint (lazy (("res_ctx 0: " ^ (Cprinter.string_of_list_failesc_context_short res_ctx) ^ "\n"))) no_pos in *)
+              let () = x_ninfo_zp (lazy (("res_ctx 0: " ^ (Cprinter.string_of_list_failesc_context_short res_ctx) ^ "\n"))) no_pos in
               (*Clear es_pure before check_post*)
               let res_ctx =  CF.transform_list_failesc_context (idf,idf, (fun es -> CF.Ctx (CF.clear_entailment_es_pure es))) res_ctx in
               let res_ctx = CF.list_failesc_to_partial res_ctx in
               (* let () = Gen.Profiling.pop_time "typechecker : check_exp" in *)
               (* let () = print_string_quiet ("\n WN 1 :"^(Cprinter.string_of_list_partial_context res_ctx)) in *)
               let res_ctx = CF.change_ret_flow_partial_ctx res_ctx in
-              (* let () = print_string_quiet ("\n WN 2 : "^(Cprinter.string_of_list_partial_context res_ctx)) in*)
               let pos = CF.pos_of_formula post_cond in
+              let () = x_ninfo_pp ("\n WN 2 : "^(Cprinter.string_of_list_partial_context res_ctx)) pos in
               if (CF.isFailListPartialCtx_new res_ctx)
               then (spec, [], [],[], [],[],[], false)
               else
@@ -833,9 +833,13 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                 let lp = Infer.collect_pre_pure_list_partial_context res_ctx in
                 let lr = x_add_1 Infer.collect_rel_list_partial_context res_ctx in
                 if lr!=[] then
-                  x_binfo_hp (add_str "WARNING : Spurious RelInferred (not collected)" (pr_list CP.print_lhs_rhs)) lr pos;
-                (* lr seems to be spurious RelInferred which have already been collected? *)
-                let () = Infer.infer_rel_stk # push_list_pr lr in
+                  begin
+                    x_winfo_pp "if important : need to add to estate.es_infer_rel" no_pos;
+                    x_binfo_hp (add_str "WARNING : Spurious RelInferred (not collected)" (pr_list CP.print_lhs_rhs)) lr pos;
+                    (* lr seems to be spurious RelInferred which have already been collected? *)
+                    let () = Infer.infer_rel_stk # push_list_pr lr in
+                    ()
+                  end;
                 (* let () = Log.current_infer_rel_stk # push_list lr in *)
                 let post_iv = Infer.collect_infer_vars_list_partial_context res_ctx in
                 (* Why? Bug cll-count-base.ss *)
@@ -912,7 +916,21 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                 (* let hp_rels1 = Gen.BList.remove_dups_eq (=) (Infer.collect_hp_rel_list_partial_context res_ctx) in *)
                 (*  let () = print_string_quiet ("\n WN 2 : "^(Cprinter.prtt_string_of_formula post_cond)) in *)
                 let tmp_ctx = check_post prog proc res_ctx (post_cond,post_struc) pos_post post_label etype in
+                let cnt_before = CF.count_sat_pc_list res_ctx in
+                let cnt_after = CF.count_sat_pc_list tmp_ctx in
+                let () = x_ninfo_pp ("\n Before CheckPost : "^(Cprinter.string_of_list_partial_context res_ctx)) no_pos in
+                let () = x_ninfo_pp ("\n After CheckPost : "^(Cprinter.string_of_list_partial_context tmp_ctx)) no_pos in
+                let () = x_tinfo_pp ("\n Before CheckPost : "^(string_of_int cnt_before)) no_pos in
+                let () = x_tinfo_pp ("\n After CheckPost : "^(string_of_int cnt_after)) no_pos in
                 (*                      x_dinfo_pp ">>>>> Performing check_post ENDS" no_pos;*)
+                if cnt_before>cnt_after && not(!Globals.old_collect_false) then
+                  begin
+                    (* need to do the same for pre-condition proving ? *)
+                    (* detected new False from post-condition proving *)
+                    (* potential unsoundness *)
+                    let () = add_false_ctx (post_pos # get) in
+                    print_endline_quiet ("\n[UNSOUNDNESS] WARNING : new unsatisfiable state from post-proving of "^(post_pos # string_of))
+                  end;
                 (* Termination: collect error messages from successful states *)
                 let term_err_msg = CF.collect_term_err_list_partial_context tmp_ctx in 
                 let () = List.iter (fun m -> Term.add_term_err_stk m) term_err_msg in
@@ -4303,7 +4321,7 @@ let rec check_prog iprog (prog : prog_decl) =
   (******************************************************************)
   let verify_scc_helper prog verified_sccs scc =
     let scc, ini_hpdefs =
-      Da.find_rel_args_groups_scc prog scc
+      Da.find_rel_args_groups_scc prog scc (* scc,[] *)
     in
 
     let has_infer_shape_proc = x_add_1 Pi.is_infer_shape_scc scc in
