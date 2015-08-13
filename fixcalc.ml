@@ -59,8 +59,8 @@ let gen_fixcalc_file str_fc=
 (******************************************************************************)
 
 let fixcalc_of_spec_var x = match x with
-  | CP.SpecVar (Named _, id, Unprimed) -> if String.compare id self =0 then id else "NOD" ^ id
-  | CP.SpecVar (Named _, id, Primed) -> "NODPRI" ^ id
+  (* | CP.SpecVar (Named _, id, Unprimed) -> if String.compare id self =0 then id else "NOD" ^ id *)
+  (* | CP.SpecVar (Named _, id, Primed) -> "NODPRI" ^ id *)
   (* TODO: Handle mixture of non-numerical and numerical variables *)
   (* Still have problem with the order of parameters of relation *)
   (*  | CP.SpecVar (Named _, id, Unprimed)*)
@@ -372,6 +372,9 @@ let syscall cmd =
   let todo_unk = Unix.close_process (ic, oc) in
   (Buffer.contents buf)
 
+(* TODO(WN): this already performs some feature of norm_pure_result *)
+(* mainly for pointers; need to remove this redundancy for performance *)
+(* need to handle SELF and REC variables (top-down fixcalc) *)
 let parse_fix_svl svl res =
   let fixpoints = x_add_1 Parse_fix.parse_fix res in
   let svl1 = List.fold_left (fun acc pf ->
@@ -386,10 +389,11 @@ let parse_fix_svl svl res =
             | hd::tl -> CP.SpecVar(CP.type_of_spec_var hd, id1, pr1)
   ) svl1 in
   let sst = List.combine svl1 svl2 in
-  let pr = Cprinter.string_of_spec_var_list in
+  let pr = Cprinter.string_of_typed_spec_var_list in
   let () = x_binfo_hp (add_str "svls (orig)" pr) svl no_pos in
-  let () = x_binfo_hp (add_str "svls (from parse_fix)" pr) svl1 no_pos in
-  let fixpoints = List.map (fun fp -> CP.subst sst fp) fixpoints in
+  let () = x_binfo_hp (add_str "svl1 (from parse_fix)" pr) svl1 no_pos in
+  let () = x_binfo_hp (add_str "svl2 (from parse_fix)" pr) svl2 no_pos in
+   let fixpoints = List.map (fun fp -> CP.subst sst fp) fixpoints in
   fixpoints
 
 let parse_fix_svl svl res =
@@ -402,7 +406,8 @@ let parse_fix_rel_defs rel_defs res =
       acc@(CP.fv pf1)@(CP.fv pf2)
   ) [] rel_defs in
   let svl = CP.remove_dups_svl svl in
-  parse_fix_svl svl res
+  let fs = parse_fix_svl svl res in
+  List.map Omega.trans_bool fs
 
 (******************************************************************************)
 
@@ -1056,7 +1061,7 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
   (* x_binfo_pp ("Result of fixcalc: " ^ res) no_pos; *)
 (* let parse_fix_with_type_from_rel_defs rel_defs res = *)
   let fixpoints = x_add_1 parse_fix_rel_defs rel_defs res in
-
+  let fixpoints = List.map TP.norm_pure_result fixpoints in
   x_binfo_hp (add_str "Result of fixcalc (parsed): "
                      (pr_list !CP.print_formula)) fixpoints no_pos;
 

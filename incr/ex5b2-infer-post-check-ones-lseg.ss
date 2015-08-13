@@ -92,4 +92,26 @@ Fails
 
   (not(res) & p!=null | (p=null & res))
 
+===============================================
+# ex5b2.ss --print-type -dre ".*conv"
+
+Why 1<=res not translated to true?
+
+RELDEFN R:RelT([]): ( p:node=null & 1<=res:boolean) -->  R:RelT([])(p:node,res:boolean),
+
+# Why norm procedure here did not convert boolean <--> integer?
+
+# why inference did not use these normalization transformations?
+
+(==tpdispatcher.ml#1691==)
+norm_pure_result@121
+norm_pure_result inp1 : v0:boolean & not(v0:boolean)
+norm_pure_result inp2 :[]
+norm_pure_result@121 EXIT: v0:boolean & not(v0:boolean)
+
+(==astsimp.ml#6772==)
+norm_pure_input@123
+norm_pure_input inp1 : a:boolean & not(a:boolean)
+norm_pure_input@123 EXIT: a:boolean & not(a:boolean)
+
 */

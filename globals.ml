@@ -981,11 +981,13 @@ let pred_disj_unify = ref false
 
 let pred_seg_unify = ref false
 
-let pred_equiv = ref false
+let pred_equiv = ref true
 
-let pred_norm_seg = ref false
-
+(* what is below for? not used! *)
 let pred_equiv_one = ref true
+
+(* this is to enable automatic list segment *)
+let pred_norm_seg = ref true
 
 let pred_unify_post = ref false
 
@@ -1022,7 +1024,14 @@ let procs_verified = ref ([] : string list)
 
 let false_ctx_line_list = ref ([] : loc list)
 
-let add_false_ctx pos = false_ctx_line_list := pos::!false_ctx_line_list
+let last_sat_ctx = ref None
+
+let add_false_ctx pos = 
+  last_sat_ctx := None;
+  false_ctx_line_list := pos::!false_ctx_line_list
+
+let set_last_ctx (pos:loc) = last_sat_ctx := Some pos 
+
 
 (* use List.rev *)
 (* let rev_list list = *)
@@ -1182,7 +1191,9 @@ let allow_threads_as_resource = ref false
 (* let assert_matrix = ref false *)
 let assert_nonlinear = ref false
 
+let old_collect_false = ref false
 let old_infer_collect = ref false
+let old_parse_fix = ref false
 let adhoc_flag_1 = ref false
 let adhoc_flag_2 = ref false
 let adhoc_flag_3 = ref false
