@@ -559,15 +559,33 @@ and gather_type_info_exp_x prog a0 tlist et =
     let (n_tlist3,_) = must_unify_expect t3 Int n_tlist2 pos in
     let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tlist3 in
     (n_tl, Bptyp)
-  | IP.Add (a1, a2, pos) -> 
+  | IP.Add (a1, a2, pos) ->
+    let unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos =
+      if is_node_typ t1 && !Globals.ptr_arith_flag then
+        let (n_tl2,_) = must_unify_expect t1 et n_tl2 pos in
+        let (n_tlist2,t2) = must_unify_expect t2 Int n_tl2 pos in
+        (n_tlist2,t1)        
+      else if is_node_typ t2 && !Globals.ptr_arith_flag then
+        let (n_tl2,_) = must_unify_expect t2 et n_tl2 pos in
+        let (n_tlist2,t2) = must_unify_expect t1 Int n_tl2 pos in
+        (n_tlist2,t2)
+      else 
+        let (n_tlist1,t1) = must_unify_expect t1 et n_tl2 pos in
+        let (n_tlist2,t2) = must_unify_expect t2 t1 n_tlist1 pos in
+        (n_tlist2,t2)
+    in
     let todo_unk:Globals.typ = must_unify_expect_test_2 et NUM Tree_sh tlist pos in (* UNK, Int, Float, NUm, Tvar *)
     let (new_et, n_tl) = fresh_tvar tlist in          
+    let (new_et2, n_tl) = fresh_tvar n_tl in          
     let nt = List.find (fun (v,en) -> en.sv_info_kind = new_et) n_tl in 
     let (tmp1,tmp2)=nt in           
+    let () = x_tinfo_hp (add_str "add(et)" string_of_typ) et no_pos in
+    let () = x_tinfo_hp (add_str "add(new_et)" string_of_typ) new_et no_pos in
     let (n_tl1,t1) = gather_type_info_exp_x prog a1 n_tl new_et in (* tvar, Int, Float *)
-    let (n_tl2,t2) = gather_type_info_exp_x prog a2 n_tl1 new_et in
-    let (n_tlist1,t1) = must_unify_expect t1 et n_tl2 pos in
-    let (n_tlist2,t2) = must_unify_expect t2 t1 n_tlist1 pos in
+    let () = x_tinfo_hp (add_str "add(t1)" string_of_typ) t1 no_pos in
+    let (n_tl2,t2) = gather_type_info_exp_x prog a2 n_tl1 new_et2 in
+    let () = x_tinfo_hp (add_str "add(t2)" string_of_typ) t2 no_pos in
+    let (n_tlist2,t2) = unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos in
     let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tlist2 in
     (n_tl,t2)
   | IP.Subtract (a1, a2, pos) | IP.Max (a1, a2, pos) | IP.Min (a1, a2, pos) 
@@ -1323,16 +1341,21 @@ and get_spec_var_ident (tlist:spec_var_type_list) (var : ident) p =
   | Not_found -> CP.SpecVar(UNK,var,p)
 
 
-and get_spec_var_type_list ?(lprime=Unprimed) (v : ident) tlist pos =
+and get_spec_var_type_list_x ?(lprime=Unprimed) (v : ident) tlist pos =
   try
     let v_info = snd(List.find (fun (tv,en) -> tv=v) tlist) in
     match v_info.sv_info_kind with
     | UNK -> Err.report_error { Err.error_loc = pos;
-                                Err.error_text = v ^ " is undefined"; }
+                                Err.error_text = v ^ " is undefined (7)"; }
     | t -> let sv = CP.SpecVar (t, v, lprime) in sv
   with
-  | Not_found -> Err.report_error { Err.error_loc = pos;
-                                    Err.error_text = v ^ " is undefined"; }
+  | Not_found -> let () = x_ninfo_pp (v^" not found in tlist ") pos in
+    raise Not_found
+(* ;Err.report_error { Err.error_loc = pos; *)
+(*                                   Err.error_text = v ^ " is undefined (8)"; } *)
+
+and get_spec_var_type_list ?(lprime=Unprimed) (v : ident) tlist pos =
+  Debug.no_1 "get_spec_var_type_list" pr_id pr_none (fun _ -> get_spec_var_type_list_x ~lprime:lprime (v : ident) tlist pos) v
 
 (* type: ?d_tt:spec_var_type_list -> *)
 (*   Globals.ident * VarGen.primed -> *)
@@ -1344,35 +1367,47 @@ and get_spec_var_type_list_infer ?(d_tt = []) (v : ident * primed) fvs pos =
   Debug.no_2 "get_spec_var_type_list_infer" pr_v string_of_tlist ( pr_sv)
     (fun _ _ -> get_spec_var_type_list_infer_x d_tt v fvs pos) v  d_tt
 
-and get_spec_var_type_list_infer_x d_tt ((v, p) : ident * primed) fvs pos =
+and get_var_type fvs v : (typ * bool) = 
   let warning_if_non_empty lst tlst =
     if lst != [] then
       let () = x_binfo_pp "WARNING : free_vars_list contains duplicates" no_pos in
       x_binfo_hp (add_str "fvs" Cprinter.string_of_typed_spec_var_list) tlst no_pos
   in
-  let get_var_type v : (typ * bool) = 
-    (* let res_list =  *)
-    (*   CP.remove_dups_svl (List.filter ( *)
-    (*       fun c -> (v = CP.name_of_spec_var c) && (p = CP.primed_of_spec_var c) *)
-    (*     ) fv_list ) in *)
-    let res_list = 
-      (List.filter (
-          fun c -> (v = CP.name_of_spec_var c) (* && (p = CP.primed_of_spec_var c) *)
-        ) fvs ) in
-    match res_list with
-    | [] -> (Void ,false)
-    | sv::lst ->
-      let () = warning_if_non_empty lst res_list in
-      (CP.type_of_spec_var sv,true)
-      (* | _ -> Err.report_error { *)
-      (*     Err.error_loc = pos; *)
-      (*     Err.error_text = "could not find a coherent " ^ v ^ " type"; *)
-      (*   } *)
-  in
+  (* let () = x_binfo_hp (add_str "fvs" !CP.print_svl) fvs no_pos in *)
+  (* let res_list = *)
+  (*   CP.remove_dups_svl (List.filter ( *)
+  (*       fun c -> (v = CP.name_of_spec_var c) && (p = CP.primed_of_spec_var c) *)
+  (*     ) fv_list ) in *)
+  let res_list = 
+    (List.filter (
+        fun c -> (v = CP.name_of_spec_var c) (* && (p = CP.primed_of_spec_var c) *)
+      ) fvs ) in
+  match res_list with
+  | [] ->   
+
+    let prog = I.get_iprog () in
+    begin
+      try
+        let rdef = I.look_up_rel_def_raw prog.I.prog_rel_decls v in
+        (RelT (List.map fst rdef.I.rel_typed_vars),false)
+      with _ ->
+        let () = x_winfo_pp ("Cannot find "^v^" in fvs, TODO: fail?")  no_pos in
+        (Void ,false)
+    end
+  | sv::lst ->
+    let () = warning_if_non_empty lst res_list in
+    (CP.type_of_spec_var sv,true)
+(* | _ -> Err.report_error { *)
+(*     Err.error_loc = pos; *)
+(*     Err.error_text = "could not find a coherent " ^ v ^ " type"; *)
+(*   } *)
+
+and get_spec_var_type_list_infer_x d_tt ((v, p) : ident * primed) fvs pos =
   try 
-    (get_spec_var_type_list ~lprime:p v d_tt pos)
+    (x_add (get_spec_var_type_list ~lprime:p) v d_tt pos)
   with _ ->
-    let vtyp, check = get_var_type v in
+    let vtyp, check = get_var_type fvs v in
+    let () = x_ninfo_hp (add_str "TODO: fix quick patch to type infer" pr_id) v pos in
     (* WN TODO : this is a quick patch to type infer problem *)
     (* if check = false then *)
     (*   Err.report_error { Err.error_loc = pos; *)
@@ -1380,7 +1415,7 @@ and get_spec_var_type_list_infer_x d_tt ((v, p) : ident * primed) fvs pos =
     (* else *)
     match vtyp with
     | UNK -> Err.report_error { Err.error_loc = pos;
-                                Err.error_text = v ^ " is undefined"; }
+                                Err.error_text = v ^ " is undefined (9)"; }
     | t -> CP.SpecVar (t, v, p (* Unprimed *))
 
 and gather_type_info_heap prog (h0 : IF.h_formula) tlist =

@@ -87,7 +87,7 @@ let extract_ind_exp sv form : CP.param_flow =
   let pr_out = Cprinter.string_of_param_flow in
   Debug.no_2 "extract_ind_exp" pr1 pr2 pr_out extract_ind_exp sv form
 
-let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident list) : (CP.formula * CP.param_flow list) list =
+let analyse_param (lst_assume : CP.infer_rel_type list) (args : typed_ident list) : (CP.formula * CP.param_flow list) list =
   (* group together which have relations  *)
   let primed_args = List.map (fun (t,i) -> CP.sp_add_prime (CP.mk_typed_spec_var t i) Primed) args in
   let unprimed_args = List.map (fun (t,i) -> CP.sp_rm_prime (CP.mk_typed_spec_var t i)) args in
@@ -355,7 +355,7 @@ let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident
 
   frm_assumes
 
-let analyse_param (lst_assume : CP.infer_rel_type list) (args : Cast.typed_ident list) : (CP.formula * CP.param_flow list) list =
+let analyse_param (lst_assume : CP.infer_rel_type list) (args : typed_ident list) : (CP.formula * CP.param_flow list) list =
   let pr = Cprinter.string_of_pure_formula in
   let pr_def = pr_list (pr_pair pr pr) in
   let pr_oblg = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in

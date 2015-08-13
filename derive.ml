@@ -148,7 +148,10 @@ let generate_extn_ho_procs prog cviews extn_view_name=
   (* let () =  Debug.info_pprint ("   extn_v.Cast.view_vars: "^ (!CP.print_svl extn_v.Cast.view_vars)) no_pos in *)
   (extn_view_name, ho_bs, ho_inds(* , CP.filter_var inv_p extn_v.Cast.view_vars *))
 
-let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc 
+(*
+lower_map_views: a map of the transformation of lower views in the hierachy
+*)
+let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc lower_map_views
     (cviews (*orig _extn*) : Cast.view_decl list) view_derv
     ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) :
   Cast.view_decl =
@@ -197,7 +200,8 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
   let ls_dname_pos = Iast.look_up_field_ann prog orig_view.Cast.view_data_name extn_props in
   (*formula: extend with new args*)
   let fs,labels = List.split orig_view.Cast.view_un_struc_formula in
-  let fs = List.map Cformula.elim_exists fs in
+  let fs1 = List.map (Cfutil.subst_views_form lower_map_views) fs in
+  let fs = List.map Cformula.elim_exists (List.map Cfutil.fresh_exists fs1) in
   let pos = view_derv.Iast.view_pos in
   let () =  Debug.ninfo_hprint (add_str "   orig_view.Cast.view_data_name: " (pr_id )) orig_view.Cast.view_data_name pos in
   let self_sv = (CP.SpecVar (Named (orig_view.Cast.view_data_name),self, Unprimed)) in
@@ -314,7 +318,7 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
                   Iast.view_is_prim = false;
                   Iast.view_invariant = Ipure.mkTrue no_pos;
                   Iast.view_mem = None;
-                  Iast.view_materialized_vars = [];
+                  Iast.view_materialized_vars = List.map (fun mp -> CP.name_of_spec_var mp.Cast.mater_var) orig_view.Cast.view_materialized_vars;
                   Iast.try_case_inference = false; }
   in
   let () = try
@@ -329,26 +333,26 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
   let der_view = {der_view0 with Cast.view_domains = orig_view.Cast.view_domains@n_pure_domains;} in
   der_view
 
-let trans_view_one_derv_wrapper prog rev_form_fnc trans_view_fnc cviews derv
+let trans_view_one_derv_wrapper prog rev_form_fnc trans_view_fnc lower_map_views cviews derv
     (((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) as view_derv)=
   let orig_view = x_add Cast.look_up_view_def_raw 52 cviews orig_view_name in
   if List.for_all (fun (l_extn_view,_,_) ->
       String.compare l_extn_view extn_view_name !=0) orig_view.Cast.view_domains then
-    let r = trans_view_one_derv_x prog rev_form_fnc trans_view_fnc cviews derv view_derv in
+    let r = trans_view_one_derv_x prog rev_form_fnc trans_view_fnc lower_map_views cviews derv view_derv in
     let () =  Debug.info_hprint (add_str "   pure extension" pr_id) (derv.Iast.view_name ^ ": extend " ^ orig_view_name ^ " to " ^ extn_view_name ^"\n") no_pos in
     (true,r)
   else
     let () =  Debug.info_hprint (add_str "   pure extension" pr_id) (orig_view_name ^ " has been extended to " ^ extn_view_name^ " already \n") no_pos in
     (false,orig_view)
 
-let trans_view_one_derv (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc (cviews (*orig _extn*) :
-                                                                               Cast.view_decl list) derv view_derv
-  : (bool*Cast.view_decl) =
+let trans_view_one_derv (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower_map_views
+      (cviews (*orig _extn*) :  Cast.view_decl list) derv view_derv: (bool*Cast.view_decl) =
   let pr1= pr_list pr_id in
   let pr = (pr_pair (pr_pair pr_id pr1) (pr_triple pr_id pr1 pr1)) in
   let pr_r = Cprinter.string_of_view_decl in
   Debug.no_1 "trans_view_one_derv" pr (pr_pair string_of_bool pr_r)
-    (fun _ -> trans_view_one_derv_wrapper prog rev_form_fnc trans_view_fnc cviews derv view_derv) view_derv
+    (fun _ -> trans_view_one_derv_wrapper prog rev_form_fnc trans_view_fnc lower_map_views
+        cviews derv view_derv) view_derv
 
 let trans_view_one_spec_x (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.view_decl list) view_derv ((orig_view_name,orig_args),(spec_view_name,extn_props,extn_args)) :
   Cast.view_decl =
@@ -487,9 +491,12 @@ let do_sanity_check derv=
                          (String.concat ", " diff) ^ " are not declared.")
   else ()
 
-let trans_view_dervs_x (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc (cviews (*orig _extn*):
-                                                                              Cast.view_decl list) derv : Cast.view_decl =
+let trans_view_dervs_x (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower_map_views
+      (cviews (*orig _extn*): Cast.view_decl list) derv : Cast.view_decl =
   let () = do_sanity_check derv in
+  let old_flag = !Globals.do_infer_inv in
+  let () = Globals.do_infer_inv := true in
+  let res =
   match derv.Iast.view_derv_info with
   | [] -> report_error no_pos "astsimp.trans_view_dervs: 1"
   | [((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args))] ->
@@ -499,7 +506,7 @@ let trans_view_dervs_x (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc (cvie
         let der_view = trans_view_one_spec prog cviews derv ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) in
         (der_view(*,("************VIEW_SPECIFIED*************")*))
       else
-        let _,der_view = trans_view_one_derv prog rev_form_fnc trans_view_fnc
+        let _,der_view = trans_view_one_derv prog rev_form_fnc trans_view_fnc lower_map_views
             cviews derv ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) in
         let iderv_view = Iast.look_up_view_def_raw 53 prog.Iast.prog_view_decls derv.Iast.view_name in
         let () = iderv_view.Iast.view_data_name <- der_view.Cast.view_data_name in
@@ -515,13 +522,17 @@ let trans_view_dervs_x (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc (cvie
     (* in *)
     der_view
   | _ -> report_error no_pos "astsimp.trans_view_dervs: not handle yet"
+  in
+  let () = Globals.do_infer_inv := old_flag in
+  res
 
 
-let trans_view_dervs (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc (cviews (*orig _extn*) :
-                                                                            Cast.view_decl list) derv : Cast.view_decl =
+let trans_view_dervs (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower_map_views
+      (cviews (*orig _extn*): Cast.view_decl list) derv : Cast.view_decl =
   let pr_r = Cprinter.string_of_view_decl in
   let pr = Iprinter.string_of_view_decl in
-  Debug.no_1 "trans_view_dervs" pr pr_r  (fun _ -> trans_view_dervs_x prog rev_form_fnc trans_view_fnc cviews derv) derv
+  Debug.no_1 "trans_view_dervs" pr pr_r  (fun _ -> trans_view_dervs_x prog rev_form_fnc trans_view_fnc
+      lower_map_views cviews derv) derv
 
 
 let leverage_self_info_x xform formulas anns data_name=
@@ -550,7 +561,7 @@ let leverage_self_info xform formulas anns data_name=
 (*     BUILD PURE EXTN MAP  *)
 (*****************************************************************************************)
 
-let expose_pure_extn_one_view_x iprog cprog rev_formula_fnc trans_view_fnc (view: Cast.view_decl) extn_view=
+let expose_pure_extn_one_view_x iprog cprog rev_formula_fnc trans_view_fnc lower_map_views (view: Cast.view_decl) extn_view=
   let get_extns d_name=
     let d_dclr = Iast.look_up_data_def 67 no_pos iprog.Iast.prog_data_decls d_name in
     let extn_fields = List.fold_left (fun acc ((t,_),_,_,props) -> begin
@@ -599,35 +610,41 @@ let expose_pure_extn_one_view_x iprog cprog rev_formula_fnc trans_view_fnc (view
   }
   in
   let _ = iprog.Iast.prog_view_decls <- iprog.Iast.prog_view_decls@[der_view_dclr] in
-  let nc_view = trans_view_dervs iprog rev_formula_fnc trans_view_fnc cprog.Cast.prog_view_decls der_view_dclr in
+  (* let old_flag = !Globals.do_infer_inv in *)
+  (* let () = Globals.do_infer_inv := true in *)
+  let () =  Debug.ninfo_hprint (add_str "orig_view_name" pr_id) orig_view_name no_pos in
+  let nc_view = trans_view_dervs iprog rev_formula_fnc trans_view_fnc lower_map_views cprog.Cast.prog_view_decls der_view_dclr in
+  (* let () = Globals.do_infer_inv := old_flag in *)
   let nc_view = {nc_view with Cast.view_domains = view.Cast.view_domains@[(extn_view.Cast.view_name,0,List.length vars -1)]} in
+  let _ = cprog.Cast.prog_view_decls <- cprog.Cast.prog_view_decls@[nc_view] in
   nc_view
 
-let expose_pure_extn_one_view iprog cprog rev_trans_formula trans_view view extn_view=
+let expose_pure_extn_one_view iprog cprog rev_trans_formula trans_view lower_map_views view extn_view=
   let pr1 = pr_list (pr_triple pr_id string_of_int string_of_int) in
   let pr2 v = v.Cast.view_name ^ "<" ^ (!CP.print_svl v.Cast.view_vars) ^ ">, "
               ^ (pr1 v.Cast.view_domains) in
   let pr3 v =  v.Cast.view_name ^ "<" ^ (!CP.print_svl v.Cast.view_vars) ^ ">" in
   Debug.no_2 "expose_pure_extn_one_view" pr2 pr3 pr2
-    (fun _ _ -> expose_pure_extn_one_view_x iprog cprog rev_trans_formula trans_view view extn_view)
+    (fun _ _ -> expose_pure_extn_one_view_x iprog cprog rev_trans_formula trans_view lower_map_views view extn_view)
     view extn_view
 (*
   build extn map.
   pair extn prop in views with view_extn
 *)
 let expose_pure_extn_x iprog cprog rev_trans_formula trans_view views extn_views=
-  List.map (fun v ->
+  List.fold_left (fun acc v ->
       let lst_view = List.fold_left (fun r extn_view ->
-          expose_pure_extn_one_view iprog cprog rev_trans_formula trans_view v extn_view
+          expose_pure_extn_one_view iprog cprog rev_trans_formula trans_view acc v extn_view
       ) v extn_views in
-      (v.Cast.view_name, lst_view.Cast.view_name)
-    ) views
+      let new_map = ((v.Cast.view_name, v.Cast.view_vars), (lst_view.Cast.view_name, lst_view.Cast.view_vars)) in
+      acc@[new_map]
+    ) [] views
 
 let expose_pure_extn iprog cprog rev_trans_formula trans_view views extn_views=
   let pr1 = pr_list (pr_triple pr_id string_of_int string_of_int) in
   let pr2 v = v.Cast.view_name ^ "<" ^ (!CP.print_svl v.Cast.view_vars) ^ ">, "
               ^ (pr1 v.Cast.view_domains) in
-  let pr3 =  pr_pair pr_id pr_id in
+  let pr3 =  pr_pair (pr_pair pr_id !CP.print_svl) (pr_pair pr_id !CP.print_svl) in
   Debug.no_2 "expose_pure_extn" (pr_list_ln pr2) (pr_list_ln pr2) (pr_list pr3)
       (fun _ _ -> expose_pure_extn_x iprog cprog rev_trans_formula trans_view views extn_views)
       views extn_views
