@@ -1015,8 +1015,8 @@ let solve_templ_assume prog templ_decls inf_templs =
   res
 
 let solve_templ_assume prog templ_decls inf_templs =
-  Debug.no_1 "solve_templ_assume" (fun _ -> "") Tlutils.print_solver_res
-    (fun _ -> solve_templ_assume prog templ_decls inf_templs) ()
+  Debug.no_1 "solve_templ_assume" !CP.print_svl Tlutils.print_solver_res
+    (fun _ -> solve_templ_assume prog templ_decls inf_templs) inf_templs
 
 (* Ranking function synthesis *)
 let templ_rank_constr_of_rel for_lex rel =
