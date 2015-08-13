@@ -3,23 +3,24 @@ data str {
   str next;
 }.
 
-checkentail x::str<yyy',aaa> |- x::str<yyy',bbb> .
+checkentail x::str<yyy,aaa> |- x::str<yyy,bbb> .
 
 print residue.
 
 /*
-# ex12d.ss
+# ex12d1.slk (OK now)
 
-# fixed primed vars
+# why is yyy_17 not classified as EX, rather than IMPL
 
-# why is yy_17 not classified as EX, rather than IMPL
-
-run_infer:
- x::str<yyy',aaa>@M&{FLOW,(20,21)=__norm#E}[] [] |-  EBase 
+INPUT 0: [][] 
+ ### ante =  x::str<yyy',aaa>@M&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
    exists (Expl)[](Impl)[bbb; 
    yyy_17](ex)[](exists yyy_17: x::str<yyy_17,bbb>@M&yyy_17=yyy'&
    {FLOW,(20,21)=__norm#E}[]
 
+
+# fixed primed vars
 
 # What happen to the primed?
 

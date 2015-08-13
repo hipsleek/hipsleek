@@ -6891,23 +6891,30 @@ let rec struc_formula_trans_heap_node pre_quans formula_fct f=
   | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd (recf pre_quans) b.formula_case_branches}
   | EBase b ->
     let f1= formula_fct b.formula_struc_base in
-    let () =  Debug.ninfo_hprint (add_str " b.formula_struc_base pre" (!print_formula)) b.formula_struc_base no_pos in
-    let () =  Debug.ninfo_hprint (add_str "f1 pre" (!print_formula)) f1 no_pos in
+    let () =  x_tinfo_hp (add_str " b.formula_struc_base pre" (!print_formula)) b.formula_struc_base no_pos in
+    let () =  x_tinfo_hp (add_str "f1 pre" (!print_formula)) f1 no_pos in
     (* Loc: to split into case spec *)
-    let _, new_pre_quans = fresh_data_v true f1(* b.formula_struc_base *) in
+    let _, new_pre_quans =  fresh_data_v true f1(* b.formula_struc_base *) in
+    (* WN : Why must this new_pre_quans be added to implicit_inst?? *)
+    let () =  x_tinfo_hp (add_str "new_pre_quans" (!CP.print_svl)) new_pre_quans no_pos in
     let pre_cur_quans = CP.remove_dups_svl (b.formula_struc_implicit_inst@(new_pre_quans)) in
     let pre_quans1 = CP.remove_dups_svl (pre_quans@pre_cur_quans) in
-    let () =  Debug.ninfo_hprint (add_str "pre_quans1" (!CP.print_svl)) pre_quans1 no_pos in
-    let () =  Debug.ninfo_hprint (add_str "pre_cur_quans" (!CP.print_svl)) pre_cur_quans no_pos in
+    let () =  x_tinfo_hp (add_str "pre_quans" (!CP.print_svl)) pre_quans no_pos in
+    let () =  x_tinfo_hp (add_str "pre_quans1" (!CP.print_svl)) pre_quans1 no_pos in
+    let () =  x_tinfo_hp (add_str "new impl?" (!CP.print_svl)) pre_cur_quans no_pos in
     EBase {b with
+           (* what is this map_opt recf for? *)
            formula_struc_continuation = Gen.map_opt (recf pre_quans1) b.formula_struc_continuation;
-           formula_struc_implicit_inst =  pre_cur_quans ;
+           formula_struc_implicit_inst =  if !Globals.old_impl_gather then pre_cur_quans
+             else b.formula_struc_implicit_inst ;
+           formula_struc_exists =  if !Globals.old_impl_gather then b.formula_struc_exists
+             else CP.remove_dups_svl (b.formula_struc_exists@(new_pre_quans));
            formula_struc_base=(* formula_trans_heap_node fct *)f1;
           }
   | EAssume ea-> begin
       let f1 = formula_fct ea.formula_assume_simpl in
-      let () =  Debug.ninfo_hprint (add_str "f1 post" (!print_formula)) f1 no_pos in
-      let () =  Debug.ninfo_hprint (add_str "pre_quans:post" (!CP.print_svl)) pre_quans no_pos in
+      let () =  x_tinfo_hp (add_str "f1 post" (!print_formula)) f1 no_pos in
+      let () =  x_tinfo_hp (add_str "pre_quans:post" (!CP.print_svl)) pre_quans no_pos in
       let fs = list_of_disjs f1 in
       let ass_sf =  (recf pre_quans) ea.formula_assume_struc in
       let sfs1 = List.map (fun f ->

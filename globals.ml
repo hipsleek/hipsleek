@@ -193,6 +193,35 @@ type typ =
   | Pointer of typ (* base type and dimension *)
 (* | SLTyp (* type of ho formula *) *)
 
+(* let eq_type t1 t2 = match *)
+(*     | FORM, FORM  *)
+(*     | UNK, UNK *)
+(*   | AnnT *)
+(*   | Bool *)
+(*   | Float *)
+(*   | Int *)
+(*   | INFInt *)
+(*   | Tup2 of typ * typ *)
+(*   | NUM *)
+(*   | Void *)
+(*   | List of typ *)
+(*   | BagT of typ *)
+(*   (\* | Prim of prim_type *\) *)
+(*   | Named of ident (\* named type, could be enumerated or object *\) *)
+(*   (\* Named "R" *\) *)
+(*   | Array of (typ * int) (\* base type and dimension *\) *)
+(*   | RelT of (typ list) (\* relation type *\) *)
+(*   | HpT (\* heap predicate relation type *\) *)
+(*   | Tree_sh *)
+(*   | FuncT of typ * typ *)
+(*   | UtT of bool (\* unknown temporal type - pre(true)/post(false)*\) *)
+(*   | Bptyp *)
+(*   | Pointer of typ (\* base type and dimension *\) *)
+(*     | ,   *)
+(*       -> true *)
+(*     | TVar i1, TVar i2 -> i1=i2 *)
+(*     | _, _ -> false *)
+
 type typed_ident = (typ * ident)
 
 let is_undef_typ t =
@@ -1194,6 +1223,7 @@ let assert_nonlinear = ref false
 
 let old_collect_false = ref false
 let old_infer_collect = ref false
+let old_impl_gather = ref false
 let old_parse_fix = ref false
 let adhoc_flag_1 = ref false
 let adhoc_flag_2 = ref false

@@ -1225,7 +1225,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   (* let () = x_dinfo_hp (add_str "ante vars (i)" (pr_list (fun (i,p) -> i))) fvs_mf no_pos in *)
   (* Disable putting implicit existentials on unbound heap variables *)
   let ivars_new = List.map (fun v -> (v,Unprimed)) ivars in
-  let () = x_binfo_hp (add_str "ivars" (pr_primed_ident_list)) ivars_new no_pos in
+  let () = x_tinfo_hp (add_str "ivars" (pr_primed_ident_list)) ivars_new no_pos in
   (* WN : ivars - these are idents rather than spec_var *)
   (* TODO : shouldn't we be transforming to spec_vars instead ?? *)
   let fv_idents = (List.map CP.name_of_spec_var fvs)@ivars in
@@ -1242,8 +1242,8 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
       Gen.BList.remove_dups_eq (fun (v1,p1) (v2,p2) -> String.compare v1 v2 == 0 && p1==p2) (fv_idents_new @ conseq_idents)
     else fv_idents_new
   in
-  let () = x_binfo_hp (add_str "fv_idents" (pr_list pr_id)) fv_idents no_pos in
-  let () = x_binfo_hp (add_str "fv_idents_new" (pr_primed_ident_list)) fv_idents_new no_pos in
+  let () = x_tinfo_hp (add_str "fv_idents" (pr_list pr_id)) fv_idents no_pos in
+  let () = x_tinfo_hp (add_str "fv_idents_new" (pr_primed_ident_list)) fv_idents_new no_pos in
   (* need to make ivars be global *)
   (* let conseq = if (!Globals.allow_field_ann) then x_add meta_to_struc_formula iconseq0 false fv_idents None stab  *)
   let (n_tl,conseq) = x_add meta_to_struc_formula iconseq0 false fv_idents_new  n_tl in
@@ -1256,12 +1256,12 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   (* let conseq_post_fvs = CF.struc_post_fv conseq in *)
   (* let conseq_all_fvs = CF.struc_all_vars conseq in *)
   (* let conseq_infer_fvs = CF.struc_fv_infer conseq in *)
-  let () = x_dinfo_hp (add_str "ante_fvs" !CP.print_svl) fvs no_pos in
-  let () = x_dinfo_hp (add_str "conseq" Cprinter.string_of_struc_formula) conseq no_pos in
-  let () = x_dinfo_hp (add_str "conseq_fvs" !CP.print_svl) conseq_fvs no_pos in
-  (* let () = x_binfo_hp (add_str "conseq_infer_fvs" !CP.print_svl) conseq_infer_fvs no_pos in *)
-  (* let () = x_binfo_hp (add_str "conseq_all_fvs" !CP.print_svl) conseq_all_fvs no_pos in *)
-  (* let () = x_binfo_hp (add_str "conseq_post_fvs" !CP.print_svl) conseq_post_fvs no_pos in *)
+  let () = x_tinfo_hp (add_str "ante_fvs" !CP.print_svl) fvs no_pos in
+  let () = x_tinfo_hp (add_str "conseq" Cprinter.string_of_struc_formula) conseq no_pos in
+  let () = x_tinfo_hp (add_str "conseq_fvs" !CP.print_svl) conseq_fvs no_pos in
+  (* let () = x_tinfo_hp (add_str "conseq_infer_fvs" !CP.print_svl) conseq_infer_fvs no_pos in *)
+  (* let () = x_tinfo_hp (add_str "conseq_all_fvs" !CP.print_svl) conseq_all_fvs no_pos in *)
+  (* let () = x_tinfo_hp (add_str "conseq_post_fvs" !CP.print_svl) conseq_post_fvs no_pos in *)
   let () = x_dinfo_hp (add_str "type-table" Typeinfer.string_of_tlist) n_tl no_pos in
   (* let sst = List.fold_left (fun sst0 ((CP.SpecVar (t1, id1, p1)) as sv1) -> *)
   (*     try *)
@@ -1276,7 +1276,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   let sst0 = List.map (fun (CP.SpecVar (t,i,p) as sv) -> 
       let sv2 = x_add (Typeinfer.get_spec_var_type_list_infer ~d_tt:n_tl) (i,p) [] no_pos 
       in (sv,sv2)) fvs in
-  let sst = List.filter (fun (CP.SpecVar (t1,_,_), CP.SpecVar (t2,_,_)) -> t1!=t2 ) sst0 in
+  let sst = List.filter (fun (CP.SpecVar (t1,_,_), CP.SpecVar (t2,_,_)) -> not(t1=t2) ) sst0 in
   (* if List.length sst != List.length sst0 then *)
   (*   begin *)
   (*     let pr = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
@@ -1285,7 +1285,10 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   (*     () *)
   (*    end; *)
   (*let _ = print_endline "run_infer_one_pass" in*)
-  let ante1 = x_add CF.subst sst ante in
+  let pr = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  let () = x_tinfo_hp (add_str "XXX sst(old)" pr) sst0 no_pos in
+  let () = x_tinfo_hp (add_str "XXX sst(new)" pr) sst no_pos in
+  let ante1 = if sst==[] then ante else x_add CF.subst sst ante in
   let ante = Cfutil.transform_bexpr ante1 in
   let conseq = CF.struc_formula_trans_heap_node [] Cfutil.transform_bexpr conseq in
   let pr = Cprinter.string_of_struc_formula in
