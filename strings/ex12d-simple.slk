@@ -10,6 +10,17 @@ print residue.
 /*
 # ex12c.ss
 
+# fixed primed vars
+
+# why is yy_17 not classified as EX, rather than IMPL
+
+run_infer:
+ x::str<yyy',aaa>@M&{FLOW,(20,21)=__norm#E}[] [] |-  EBase 
+   exists (Expl)[](Impl)[bbb; 
+   yyy_17](ex)[](exists yyy_17: x::str<yyy_17,bbb>@M&yyy_17=yyy'&
+   {FLOW,(20,21)=__norm#E}[]
+
+
 # What happen to the primed?
 
 (==iformula.ml#1795==)

@@ -759,6 +759,17 @@ linearize_formula inp3 :[(yyy:16:int)(TVar__23:23:int)(yyy_19:20:int)(TVar__22:2
 linearize_formula@5 EXIT:( x::str<yyy_19,Anon_13>@M&yyy_19=yyy&{FLOW,(20,21)=__norm#E}[],
  qvars::[])
 ==================================================================
+# ex12d.ss
+
+# partially fixed primed vars
+
+# why is yy_17 not classified as EX, rather than IMPL
+
+run_infer:
+ x::str<yyy',aaa>@M&{FLOW,(20,21)=__norm#E}[] [] |-  EBase 
+   exists (Expl)[](Impl)[bbb; 
+   yyy_17](ex)[](exists yyy_17: x::str<yyy_17,bbb>@M&yyy_17=yyy'&
+   {FLOW,(20,21)=__norm#E}[]
 ==================================================================
 ==================================================================
 ==================================================================

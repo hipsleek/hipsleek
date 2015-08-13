@@ -924,11 +924,11 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typein
     | MetaFormLCF mf -> 
       (tl,(Cformula.formula_to_struc_formula (List.hd mf)))
     | MetaForm mf -> 
-      let h = List.map (fun c-> (c,Unprimed)) fv_idents in
-      let p = List.map (fun c-> (c,Primed)) fv_idents in
+      let h,p = (* List.map (fun c-> (c,Unprimed)) *) List.partition (fun (_,p) -> p==Unprimed) fv_idents in
+      (* let p = List.map (fun c-> (c,Primed)) fv_idents in *)
       let wf,_ = x_add Astsimp.case_normalize_struc_formula 12 iprog h p (Iformula.formula_to_struc_formula mf) true 
           true (*allow_post_vars*) true [] in
-      Astsimp.trans_I2C_struc_formula 8 iprog false quant fv_idents wf tl false (*(Cpure.Prim Void) []*) false (*check_pre*) 
+      Astsimp.trans_I2C_struc_formula 8 ~idpl:fv_idents iprog false quant [] wf tl false (*(Cpure.Prim Void) []*) false (*check_pre*) 
     | MetaVar mvar -> 
       begin
         try 
@@ -949,11 +949,11 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typein
         (n_tl,res)
       end
     | MetaEForm b -> 
-      let h = List.map (fun c-> (c,Unprimed)) fv_idents in
-      let p = List.map (fun c-> (c,Primed)) fv_idents in
+      let h,p = List.partition (fun (c,p) -> p==Unprimed) fv_idents in
+      (* let p = List.map (fun c-> (c,Primed)) fv_idents in *)
       let wf,_ = x_add Astsimp.case_normalize_struc_formula 13 iprog h p b true (* allow_primes *) 
           true (*allow_post_vars*) true [] in
-      let (n_tl,res) = Astsimp.trans_I2C_struc_formula 9 iprog false quant fv_idents wf tl false 
+      let (n_tl,res) = Astsimp.trans_I2C_struc_formula 9 ~idpl:fv_idents iprog false quant  [] wf tl false 
           false (*check_pre*) (*(Cpure.Prim Void) [] *) in
       (* let _ = print_string ("\n1 before meta: " ^(Iprinter.string_of_struc_formula b)^"\n") in *)
       (* let _ = print_string ("\n2 before meta: " ^(Iprinter.string_of_struc_formula wf)^"\n") in *)
@@ -967,7 +967,7 @@ let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.
   = Debug.no_4 "meta_to_struc_formula"
     string_of_meta_formula
     string_of_bool
-    string_of_ident_list
+    pr_primed_ident_list
     Typeinfer.string_of_tlist
     (pr_pair Typeinfer.string_of_tlist Cprinter.string_of_struc_formula)
     (fun _ _ _ _  ->  meta_to_struc_formula mf0 quant fv_idents tlist )mf0 quant fv_idents tlist
@@ -1224,22 +1224,32 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   let () = x_dinfo_hp (add_str "ante_vars" Cprinter.string_of_spec_var_list) fvs no_pos in
   (* let () = x_dinfo_hp (add_str "ante vars (i)" (pr_list (fun (i,p) -> i))) fvs_mf no_pos in *)
   (* Disable putting implicit existentials on unbound heap variables *)
-  let () = x_dinfo_hp (add_str "ivars" (pr_list pr_id)) ivars no_pos in
+  let ivars_new = List.map (fun v -> (v,Unprimed)) ivars in
+  let () = x_binfo_hp (add_str "ivars" (pr_primed_ident_list)) ivars_new no_pos in
   (* WN : ivars - these are idents rather than spec_var *)
   (* TODO : shouldn't we be transforming to spec_vars instead ?? *)
   let fv_idents = (List.map CP.name_of_spec_var fvs)@ivars in
+  let fv_idents_new = (List.map CP.primed_ident_of_spec_var fvs)@ivars_new in
   let fv_idents =
     if !Globals.dis_impl_var then
       let conseq_idents = List.map (fun (v, _) -> v) (fv_meta_formula iconseq0) in
       Gen.BList.remove_dups_eq (fun v1 v2 -> String.compare v1 v2 == 0) (fv_idents @ conseq_idents)
     else fv_idents
   in
+  let fv_idents_new =
+    if !Globals.dis_impl_var then
+      let conseq_idents =(fv_meta_formula iconseq0) in
+      Gen.BList.remove_dups_eq (fun (v1,p1) (v2,p2) -> String.compare v1 v2 == 0 && p1==p2) (fv_idents_new @ conseq_idents)
+    else fv_idents_new
+  in
+  let () = x_binfo_hp (add_str "fv_idents" (pr_list pr_id)) fv_idents no_pos in
+  let () = x_binfo_hp (add_str "fv_idents_new" (pr_primed_ident_list)) fv_idents_new no_pos in
   (* need to make ivars be global *)
-  (* let conseq = if (!Globals.allow_field_ann) then meta_to_struc_formula iconseq0 false fv_idents None stab  *)
-  let (n_tl,conseq) = meta_to_struc_formula iconseq0 false fv_idents  n_tl in
+  (* let conseq = if (!Globals.allow_field_ann) then x_add meta_to_struc_formula iconseq0 false fv_idents None stab  *)
+  let (n_tl,conseq) = x_add meta_to_struc_formula iconseq0 false fv_idents_new  n_tl in
   (* let _ = print_endline ("conseq: " ^ (Cprinter.string_of_struc_formula conseq)) in *)
   (* let ante,conseq = transfrom_bexpr ante conseq n_tl in *)
-  (* let conseq1 = meta_to_struc_formula iconseq0 false fv_idents stab in *)
+  (* let conseq1 = x_add meta_to_struc_formula iconseq0 false fv_idents stab in *)
   let conseq_fvs = CF.struc_fv ~vartype:Global_var.var_with_implicit_explicit conseq in
   let vs = CP.remove_dups_svl (fvs@conseq_fvs) in
   let () = Global_var.set_stk_vars vs in 
@@ -2721,7 +2731,7 @@ let process_print_command pcmd0 =
         Error.error_loc = no_pos;
         Error.error_text = "couldn't find " ^ pvar;
       }in
-    let (n_tl,pf) = meta_to_struc_formula mf false [] [] in
+    let (n_tl,pf) = x_add meta_to_struc_formula mf false [] [] in
     print_string ((Cprinter.string_of_struc_formula pf) ^ "XXXHello\n")
   | PCmd pcmd ->
     if pcmd = "lemmas" then

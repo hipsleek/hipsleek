@@ -597,6 +597,9 @@ let primed_of_spec_var (sv : spec_var) : primed = match sv with
 let name_of_spec_var (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, _) -> v
 
+let primed_ident_of_spec_var (sv : spec_var) = match sv with
+  | SpecVar (_, v, p) -> (v,p)
+
 let name_of_sv (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, _) -> v
 
