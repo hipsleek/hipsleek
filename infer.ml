@@ -1425,6 +1425,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                     if rel_ass = [] 
                     then (Some (new_estate, CP.mkTrue pos),None,[]) 
                     else
+                      let () = x_winfo_pp "To add this to new_estate.es_infer_rel" pos in
                       let () = x_binfo_hp (add_str "RelInferred (rel_ass)" (pr_list print_lhs_rhs)) rel_ass pos in
                       let () = infer_rel_stk # push_list rel_ass in
                       let () = Log.current_infer_rel_stk # push_list rel_ass in

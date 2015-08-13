@@ -834,9 +834,13 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                 let lp = Infer.collect_pre_pure_list_partial_context res_ctx in
                 let lr = x_add_1 Infer.collect_rel_list_partial_context res_ctx in
                 if lr!=[] then
-                  x_binfo_hp (add_str "WARNING : Spurious RelInferred (not collected)" (pr_list CP.print_lhs_rhs)) lr pos;
-                (* lr seems to be spurious RelInferred which have already been collected? *)
-                let () = Infer.infer_rel_stk # push_list lr in
+                  begin
+                    x_winfo_pp "if important : need to add to estate.es_infer_rel" no_pos;
+                    x_binfo_hp (add_str "WARNING : Spurious RelInferred (not collected)" (pr_list CP.print_lhs_rhs)) lr pos;
+                    (* lr seems to be spurious RelInferred which have already been collected? *)
+                    let () = Infer.infer_rel_stk # push_list_pr lr in
+                    ()
+                  end;
                 (* let () = Log.current_infer_rel_stk # push_list lr in *)
                 let post_iv = Infer.collect_infer_vars_list_partial_context res_ctx in
                 (* Why? Bug cll-count-base.ss *)
