@@ -714,6 +714,25 @@ llN: extend ll to size
                                                                     q_111::lln<n_112>@M&
          n=n_112+1 & 0<=n_112&{FLOW,(1,26)=__flow#E}[]
 ==================================================================
+# ex12c.ss
+
+# Why the use of ' var caused problem?
+
+checkentail x::str<w,q>*q::WFSeg<s2>*s2::str<0,p>
+            |- x::WFSeg<s2>*s2::str<0,p>.
+
+WARNING: _0:0_0:0:* between overlapping heaps: ( x::str<v,q>@M, yyy'::str<flted_12_36,p>@M)
+
+Entail 1: Valid. 
+
+Residue:
+
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+
+
+# Why wasn't false counted?
+
+0 false contexts at: ()
 ==================================================================
 ==================================================================
 ==================================================================
