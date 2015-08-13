@@ -8,35 +8,23 @@ data node {
 HeapPred H(node x). // non-ptrs are @NI by default
 PostPred G(node x). // non-ptrs are @NI by default
 
-/*
-sortll<n> == self=null
- or self::node<v,q>*q::sortll<v> & n<=v
- inv true; 
-*/
 
-  /* ll<> == self=null or self::node<_,q>*q::ll<>; */
+ bt<> == self=null or self::node<_,l,r>*l::bt<>*r::bt<>;
 
-  /* lseg<p> == self=p or self::node<_,q>*q::lseg<p>; */
+ tseg<p> == self=p
+   or self::node<_,l,r>*l::bt<> * r::tseg<p>
+   or self::node<_,l,r>*l::tseg<p> * r::bt<>;
 
   /* gg<p> == self=null or self=p or self::node<_,q>*q::gg<p>; */
 
 
 bool search(node x, int v)
 /*
-  requires x::ll<>
-  ensures x::ll<> or x::lseg<p>*p::ll<>;
-*/
-/*
-  requires x::ll<>
-  ensures x::gg<p>*p::ll<>;
-*/
-/*
-requires x::ll<>
-  ensures x::lseg<p>*p::ll<>;
+  requires x::bt<>
+  ensures x::tseg<p>*p::bt<>;
 */
 
 infer [H,G] requires H(x) ensures G(x);
-
 
 {
   if (x==null) return false;

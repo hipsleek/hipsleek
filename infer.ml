@@ -61,9 +61,6 @@ let simp_lhs_rhs vars (c,lhs,rhs) =
 
 let pr = !CP.print_formula
 let pr_ty = !CP.Label_Pure.ref_string_of_exp
-type fc_type = CP.formula * CP.formula * CP.formula * CP.formula
-
-let fixcalc_rel_stk : fc_type Gen.stack_pr = new Gen.stack_pr (pr_quad pr pr pr pr) (==)
 
 let infer_rel_stk : CP.infer_rel_type Gen.stack_pr = new Gen.stack_pr CP.string_of_infer_rel (==)
 
@@ -2076,13 +2073,14 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
           x_tinfo_hp (add_str "diff_vs" !print_svl) diff_vs pos;
           x_tinfo_hp (add_str "new_lhs (b4 wrap_exists)" !CP.print_formula) lhs pos;
           let new_lhs = CP.wrap_exists_svl lhs diff_vs in
-          x_tinfo_hp (add_str "new_lhs (b4 elim_exists)" !CP.print_formula) new_lhs pos;
+          x_binfo_hp (add_str "new_lhs (b4 elim_exists)" !CP.print_formula) new_lhs pos;
           let new_lhs,lhs_rel_list =
             if is_bag_cnt then
               (* TODO: The better is to avoid generating redundant primed vars *)
               pairwise_proc (CP.arith_simplify_new (CP.remove_red_primed_vars new_lhs)),rel_lhs
             else
               let new_lhs_drop_rel = x_add_1 TP.simplify_raw (CP.drop_rel_formula new_lhs) in
+              x_tinfo_hp (add_str "new_lhs_drop_rel" !CP.print_formula) new_lhs_drop_rel pos;
               let new_lhs_drop_rel = pairwise_proc new_lhs_drop_rel in
               DD.ninfo_hprint (add_str "rel_lhs(b4):" (pr_list !CP.print_formula)) rel_lhs pos;
               let rel_lhs_new = List.filter (fun x -> not(Gen.BList.mem_eq CP.equalFormula x rel_to_del)) rel_lhs in
