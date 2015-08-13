@@ -1185,6 +1185,7 @@ let allow_threads_as_resource = ref false
 let assert_nonlinear = ref false
 
 let old_infer_collect = ref false
+let old_parse_fix = ref false
 let adhoc_flag_1 = ref false
 let adhoc_flag_2 = ref false
 let adhoc_flag_3 = ref false
