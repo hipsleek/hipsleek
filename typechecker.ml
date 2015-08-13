@@ -4365,8 +4365,8 @@ let rec check_prog iprog (prog : prog_decl) =
           mutual_grp := List.filter (fun x -> x.proc_name != proc1.proc_name) !mutual_grp;
           Debug.ninfo_hprint (add_str "SCC"  (pr_list (fun p -> p.proc_name))) scc no_pos;
           Debug.ninfo_hprint (add_str "MG_new"  (pr_list (fun p -> p.proc_name))) !mutual_grp no_pos;
-          let spec = proc1.Cast.proc_static_specs  in
-          let () =  Debug.ninfo_hprint (add_str "before check_proc_wrapper" (Cprinter.string_of_struc_formula )) spec  no_pos in
+          let spec = proc1.proc_static_specs  in
+          let () =  Debug.binfo_hprint (add_str "before check_proc_wrapper" (Cprinter.string_of_struc_formula )) spec  no_pos in
           let inf_lst = CF.extr_infer_obj spec in
           let local_ana_param = List.exists (fun o -> o # is_ana_param) inf_lst in
           let is_ana_param = Globals.infer_const_obj # is_ana_param || local_ana_param in
@@ -4385,6 +4385,23 @@ let rec check_prog iprog (prog : prog_decl) =
               let has_rel = List.exists (fun id -> List.mem id rels_ids) inf_rels_ids in
               if not has_rel then
                   (* TODO: Need to add the relation to prog, proc1 *)
+                  (* add the relation to prog, so infer[R] can work. *)
+                  (* ident for rel derived from the proc name. *)
+                  let rel_ident = (proc1.proc_name) ^ "R" in
+                  let proc_args = proc1.proc_args in
+                  let args = List.map (fun (t,i) -> CP.mk_typed_spec_var t i) proc_args in
+                  (* new rel (of the proc1) is untyped. *)
+                  let relf = CP.mkRel (CP.mk_spec_var rel_ident)
+                                      (List.map (fun a -> CP.mkVar a no_pos) args)
+                                      no_pos in
+                  let reldecl = { rel_name = rel_ident;
+                                  rel_vars = args;
+                                  rel_formula = relf;
+                                } in
+                  let () = prog.prog_rel_decls # push reldecl in
+                  (* add the relation to proc1. *)
+                  let nspec = CF.insert_relation_to_struc relf spec in
+                  let () =  Debug.binfo_hprint (add_str "with relation inserted" (Cprinter.string_of_struc_formula )) nspec  no_pos in
                   ()
               else ()
           else () in

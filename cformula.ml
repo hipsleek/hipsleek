@@ -14915,6 +14915,86 @@ let propagate_perm_struc_formula e (permvar:cperm_var)=
     propagate_perm_struc_formula_x  e permvar
 
 
+(* for @analyse_param,
+ * need to insert relation R into EInfer,
+ * and a relation into EBase *)
+let insert_relation_to_struc relf e =
+  let rel_sv = match CP.get_rel_id relf with
+               | Some sv -> sv
+               | None -> failwith "expected relf to be relation" in
+  let f_e_f_infer e = match e with
+    (* need to
+     * - keep the @analyse_param,
+     * - need to add on 'R' to list of inferred. *)
+    | EInfer e ->
+      (* assumes this EInfer has @analyse_param *)
+      let inf_vars = e.formula_inf_vars in
+      if EMapSV.mem rel_sv inf_vars
+      then Some (EInfer e)
+      else Some (EInfer { e with formula_inf_vars = rel_sv::inf_vars })
+    | _ -> None
+  in
+  let cpf_has_relation cpf =
+    (* check if RelForm is in the cpf *)
+    let rels = get_RelForm cpf in
+    List.exists (fun r ->
+                 match CP.get_rel_id r with
+                 | Some sv -> sv == rel_sv
+                 | _ -> false)
+                rels in
+  let f_e_f e = match e with
+    (* Need to add to the *first* EBase we see
+     * - adding involves replacing HTrue w/ HEmp,
+     *   + and adding R(x,y,..) to the formula *)
+    | EBase e ->
+      let f = e.formula_struc_base in
+      begin
+        match f with
+        | Base fb ->
+          let hf = fb.formula_base_heap in
+          (* If heap formula was HTrue, replace with HEmp,
+           * since we add R(x) to the pure formula. *)
+          let hf = match hf with
+                   | HTrue -> HEmp
+                   | _ -> hf in
+          let pf = fb.formula_base_pure in
+          begin
+            match pf with
+            | MCP.OnePF cpf ->
+              (* if RelForm already in the pure formula, leave as is,
+               * otherwise add it in. *)
+              let pf = if cpf_has_relation cpf then
+                pf
+              else
+                let cpf = CP.mkAnd relf cpf (CP.pos_of_formula cpf) in
+                MCP.mix_of_pure cpf in
+              let fb = { fb with formula_base_heap = hf;
+                                 formula_base_pure = pf; } in
+              Some (EBase { e with formula_struc_base = (Base fb)})
+            (* don't deal with non-CPure mix formula for now. *)
+            | MCP.MemoF _ -> Some (EBase e)
+          end
+        (* don't deal with Or, Exists for now. *)
+        | Or _
+        | Exists _ -> Some (EBase e)
+      end
+    | _ -> None
+  in
+  let f_f e = Some e in
+  let f_h_f f = Some f in
+  let f_p_t1 e = Some e in
+  let f_p_t2 e = Some e in
+  let f_p_t3 e = Some e in
+  let f_p_t4 e = Some e in
+  let f_p_t5 e = Some e in
+  (* insert relation into EInfer *)
+  let f = (f_e_f_infer,f_f,f_h_f,(f_p_t1,f_p_t2,f_p_t3,f_p_t4,f_p_t5)) in
+  let e = transform_struc_formula f e in
+  (* insert relation into EBase, etc. *)
+  let f = (f_e_f,f_f,f_h_f,(f_p_t1,f_p_t2,f_p_t3,f_p_t4,f_p_t5)) in
+  let e = transform_struc_formula f e in
+  e
+
 let extr_infer_formula e =
   let result = ref [] in
   let add x = result := x::!result in
