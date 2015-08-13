@@ -2393,14 +2393,19 @@ let crop_incompatible_disjuncts unfolded_f dn emap =
 
   in helper unfolded_f
 
+let crop_incompatible_disjuncts unfolded_f dn emap =
+  let pr = !CF.print_formula in
+  let pr1 = CP.EMapSV.string_of in
+  Debug.no_2 "crop_incompatible_disjuncts" pr pr1 (pr_opt pr) (fun _ _ -> crop_incompatible_disjuncts unfolded_f dn emap) unfolded_f emap
+
 let unfold_and_norm vn vh dn emap unfold_fun qvars emap =
   let v =  vn.h_formula_view_node in
   let aset = v::(CP.EMapSV.find_equiv_all v emap) in           
   let uf = 0 in               (* is 0 ok or can it cause infinite unroll? *)
-  let unfolded_f = unfold_fun vh aset v uf in
-  let ret_f = push_exists qvars unfolded_f in
-  let ret_f = crop_incompatible_disjuncts unfolded_f dn emap in
-  ret_f
+  let unfolded_f = unfold_fun vh v uf in
+  (* let ret_f = push_exists qvars unfolded_f in *)
+  (* let ret_f = crop_incompatible_disjuncts unfolded_f dn emap in *)
+  Some unfolded_f (* ret_f *)
 
 (*  @imm1=max(imm2,imm3) *)
 let max_guard emap imm1 imm2 imm3 =
@@ -2824,9 +2829,9 @@ let merge_alias_nodes_formula_helper prog heapf puref quantif xpure unfold_fun q
 (*   merge_alias_nodes_formula_helper prog heap pure quantif xpure (unfold_fun fl) qvars *)
 
 let merge_and_combine prog f heap pure quantif xpure unfold_fun qvars mk_new_f rec_fun =
-  let fl  = flow_formula_of_formula f in 
+  let _, _, vperm, fl, _, a = split_components f in
   let pos = pos_of_formula f in
-  let new_h, new_p, unfold_f_lst = merge_alias_nodes_formula_helper prog heap pure quantif xpure (unfold_fun fl) qvars in
+  let new_h, new_p, unfold_f_lst = merge_alias_nodes_formula_helper prog heap pure quantif xpure (unfold_fun fl qvars vperm pure a) qvars in
   let new_f =  mk_new_f new_h new_p in
   let ret_f = match unfold_f_lst with
     | [] -> new_f

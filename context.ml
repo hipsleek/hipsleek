@@ -2243,17 +2243,6 @@ and process_infer_heap_match_x ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs
   else (-1, Cond_action (rs@[r0]))
 (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
 
-(*
-?vperm_set:Cprinter.CVP.vperm_sets ->
-  Immutable.C.prog_decl ->
-  CF.entail_state ->
-  CF.h_formula ->
-  Immutable.MCP.mix_formula ->
-  bool ->
-  CF.formula ->
-  (Cformula.CP.spec_var * Cformula.CP.spec_var) list ->
-  CF.h_formula * CF.h_formula -> action_wt
-*)
 and process_infer_heap_match ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs_h lhs_p is_normalizing rhs reqset (rhs_node,rhs_rest) =
   let pr = Cprinter.string_of_h_formula in
   let pr_p = !Mcpure.print_mix_formula   in

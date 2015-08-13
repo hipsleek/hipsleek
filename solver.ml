@@ -1775,9 +1775,7 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_un
   let new_f = x_add_1 Immutable.normalize_field_ann_formula new_f in
   new_f,ss0
 
-
-
-and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) a (fl:flow_formula) (v : CP.spec_var) pos qvars already_unsat (uf:int) =
+and unfold_baref_x prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) a (fl:flow_formula) (v : CP.spec_var) pos qvars already_unsat (uf:int) =
   let asets = Csvutil.alias_nth 6 (MCP.ptr_equations_with_null p) in
   let aset' = x_add Csvutil.get_aset asets v in
   let aset = if CP.mem v aset' then aset' else v :: aset' in
@@ -1796,6 +1794,14 @@ and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets)
        Gen.Profiling.pop_time "unfold_unsat";r)    
     | _ -> resform
   else resform
+
+and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) a (fl:flow_formula) (v : CP.spec_var) pos qvars already_unsat (uf:int) =
+  let pr1 = Cprinter.string_of_h_formula in
+  let pr_out = Cprinter.string_of_formula in
+  Debug.no_1 "unfold_baref" 
+    (add_str "lhs heap:" pr1)
+    pr_out
+    (fun _ -> unfold_baref_x prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) a (fl:flow_formula) (v : CP.spec_var) pos qvars already_unsat (uf:int) ) h 
 
 and unfold_heap (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var) fl (uf:int) pos : formula = 
   let pr1 = Cprinter.string_of_h_formula in
@@ -1937,7 +1943,9 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
   | _ -> formula_of_heap_fl f fl pos
 
 and unfold_for_abs_merge prog pos = 
-  let unfold_fun fl h aset v uf =  unfold_heap (prog, None) h aset v fl uf pos in
+(* unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) a (fl:flow_formula) (v : CP.spec_var) pos qvars already_unsat (uf:int) *)
+  let unfold_fun fl qvars vp p a h v uf  =  unfold_baref (prog, None) h p vp a fl v pos qvars false uf in
+  (* let unfold_fun fl h aset v uf =  unfold_heap (prog, None) h aset v fl uf pos in *)
   unfold_fun
 
 (*
