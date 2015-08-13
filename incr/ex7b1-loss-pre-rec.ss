@@ -42,24 +42,30 @@ infer [H,G]
 // requires p::ll_alter_data<flag> ensures p::lseg_alter_data<p',_> * p'::node<_,_>;
 {
   if (p.h != 3) {
-
     if (flag) {
       flag=false;
       if (p.h != 2)
-        assert false;
+        // assert false;
         return false;
     }
     else {
       flag=true;
       if (p.h != 1)
-        assert false;
+        //      assert false;
         return false;
     }
 
+    //dprint;
     p = p.next;
-    dprint;
     return check_one_two_ok(p,flag);
   }
   return true;
 }
 
+/*
+
+loss // PRE_REC
+it seems assert false = = assert false assume false;
+
+
+ */

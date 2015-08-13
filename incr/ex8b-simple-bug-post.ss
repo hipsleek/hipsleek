@@ -11,14 +11,22 @@ bool bool_nondet()
 node new_node()
   requires emp & true ensures res::node<_,_>;
 
-//HeapPred H(node x, node b). // non-ptrs are @NI by default
-//  PostPred G(node x,  node b,  node c, node d). // non-ptrs are @NI by default
+HeapPred H1(node x, node b). // non-ptrs are @NI by default
+ PostPred G1(node x,  node b,  node c, node d). // non-ptrs are @NI by default
 
 HeapPred H(node x). // non-ptrs are @NI by default
 PostPred G(node x,  node b).
 
 ll_one<> == self=null
   or self::node<1,q>*q::ll_one<>
+  ;
+
+lseg<> == true
+  or self::node<_,q>*q::lseg<>
+  ;
+
+lseg1<p> == self=p
+  or self::node<_,q>*q::lseg1<p>
   ;
 
 lseg_one<p> == self=p
@@ -28,9 +36,13 @@ lseg_one<p> == self=p
 
 void create_one (ref node p, ref node t)
 
-//  infer [G] requires p::lseg_one<_>   ensures G(p,p');
+//  infer [G] requires p::lseg<>   ensures G(p,p');
+//  infer [G] requires p::lseg1<_>   ensures G(p,p');
+//  infer [G1] requires p::lseg1<_>   ensures G1(p,p',t,t');
   infer [H,G] requires H(p)   ensures G(p,p');
-//  requires p::lseg_one<_> ensures p'::lseg_one<_> ; //'
+// infer [H] requires H(p)   ensures true;
+//  infer [H1] requires H1(p,t)   ensures true;
+//  requires p::lseg_one<q> ensures p'::lseg_one<q> ; //'
 {
   if (bool_nondet()) {
     t = new_node();
@@ -43,6 +55,20 @@ void create_one (ref node p, ref node t)
 
 
 /*
+*************************************
+*******shape relational assumptions ********
+*************************************
+[ // PRE_REC
+(1;0)H(p) * p'::node<v_int_49_1507,p>@M&true --> H(p')&
+true,
+ // POST
+(1;0)G(t_1516,p')&t_1516!=null --> G(p,p')&
+true,
+ // POST
+(2;0)H(p)&p'=p --> G(p,p')&
+true]
+
+
 can not reverify
 *********************************************************
 *******relational definition ********
@@ -56,4 +82,16 @@ can not reverify
  (4,5)]
 *************************************
 
+TODO:
+ - detect this scheme (i.e. pre in pre-fix form)
+ - infer pre -> weaken
+ - re-verify + infer post
  */
+
+
+                                        /*
+pred rlseg<p> == self=p
+  or self::node<_,q> * q::rlseg<p>.
+
+
+                                         */

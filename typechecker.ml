@@ -4303,7 +4303,7 @@ let rec check_prog iprog (prog : prog_decl) =
   (******************************************************************)
   let verify_scc_helper prog verified_sccs scc =
     let scc, ini_hpdefs =
-      (* Da.find_rel_args_groups_scc prog scc *) scc,[]
+      Da.find_rel_args_groups_scc prog scc (* scc,[] *)
     in
 
     let has_infer_shape_proc = x_add_1 Pi.is_infer_shape_scc scc in
