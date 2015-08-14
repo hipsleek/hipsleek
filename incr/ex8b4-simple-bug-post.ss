@@ -46,7 +46,7 @@ void create_one (ref node p)
 // infer [H] requires H(p)   ensures true;
 //  infer [H1] requires H1(p,t)   ensures true;
   requires p::lseg_one<q> 
-  ensures p'::lseg_one<q>  ; //'
+  ensures p'::lseg_one<r> & r!=q  ; //'
 //  requires emp
 //  ensures p'::lseg_one<p>  ; //'
 {
