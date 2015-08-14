@@ -1,0 +1,31 @@
+
+data str {
+  int val;
+  str next;
+}.
+
+
+pred WFSeg<p> ==
+  self=p 
+  or self::str<v,q>*q::WFSeg<p> & v!=0 //& self!=p
+  inv true.
+
+checkentail x::str<v,q>*q::WFSeg<yyy>*yyy::str<0,p> & v>0
+            |- x::WFSeg<yyy>*yyy::str<0,p>.
+print residue.
+
+
+/*
+# ex12b.ss
+
+Below succeed with a residue but not ex12c.ss
+
+checkentail x::str<w,q>*q::WFSeg<s2>*s2::str<0,p>
+            |- x::WFSeg<s2>*s2::str<0,p>.
+
+ <1>emp&1<=v&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  Fold ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  Match(q,q_64) ==>  SEARCH ==>  Match(yyy,yyy)]]
+
+
+
+*/

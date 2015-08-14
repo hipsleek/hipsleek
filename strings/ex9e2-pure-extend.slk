@@ -1,0 +1,56 @@
+data node {
+	int val#VAL;
+	node next#REC;
+}.
+
+pred ll<> == self=null
+  or self::node<_,p> * p::ll<> & self!=null
+inv true.
+
+pred lln<n> == self = null & n = 0
+	or self::node<_, q> * q::lln<n-1>
+  inv n >= 0.
+
+pred ll_one<> == self::node<_, q> * q::ll<>.
+
+pred ll_one_ex<> == self::node<_, q> * q::lln<n>.
+
+pred ll_one_exn<n> == self::node<_, q> * q::lln<n-1>.
+
+pred_extn size[R]<n> ==
+      n=0 // base case
+   or R::size<m> & n=1+m 
+   inv n>=0.
+
+
+pred llN<n:int> == extends ll<> with size[REC]<n> .
+
+pred ll_one_exN<n:int> == extends ll_one_ex<> with size[REC]<n> .
+
+
+/*
+# ex9e2.slk
+
+Given:
+
+pred llN<n:int> == extends ll<> with size[REC]<n> .
+pred ll_one_exN<n:int> == extends ll_one_ex<> with size[REC]<n> .
+
+# Where is llN? Where did beloe come from?
+
+llN: extend ll to size
+
+# It seems that only the last command is derived.
+
+ view ll_one_exN{}[]<n:int>= 
+  view_domains: (size,0,1)
+   view ll_one_exN<n:int>= 
+    EList
+      :EBase 
+         exists (Expl)[](Impl)[Anon_110; 
+         q_111](ex)[](* lbl: *){12}->(exists n_112: (* lbl: *){12}->self::node<Anon_110,q_111>@M * 
+                                                                    q_111::lln<n_112>@M&
+         n=n_112+1 & 0<=n_112&{FLOW,(1,26)=__flow#E}[]
+      
+
+*/

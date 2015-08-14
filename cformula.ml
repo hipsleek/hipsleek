@@ -53,14 +53,17 @@ let string_of_ann_list xs = pr_list string_of_ann xs
 
 let view_prim_lst = new Gen.stack_pr pr_id (=)
 
-type typed_ident = (typ * ident)
+(* moved to globals.ml *)
+(* type typed_ident = (typ * ident) *)
 
-and mem_perm_formula = {mem_formula_exp : CP.exp;
+type mem_perm_formula = {mem_formula_exp : CP.exp;
                         mem_formula_exact : bool;
                         mem_formula_field_values : (ident * (CP.exp list)) list;
                         mem_formula_field_layout : (ident * (ann list)) list;
                         mem_formula_guards : CP.formula list;
                        }
+
+let string_of_typed_ident = pr_pair string_of_typ pr_id
 
 (* and formula_type = *)
 (*   | Simple *)
@@ -5009,6 +5012,29 @@ let is_unknown_f f=
   Debug.no_1 "is_unknown_f" pr1 string_of_bool
     (fun _ -> is_unknown_f_x f) f
 
+let is_htrue_or_unknown hf unk_hps=
+  match hf with
+    | HTrue -> true
+    | HRel (hp,_,_) -> CP.mem_svl hp unk_hps
+    | _ -> false
+
+let is_htrue_or_unknown_x f0 unk_hps=
+  let rec helper f=  match f with
+    | Base fb ->
+      (is_htrue_or_unknown fb.formula_base_heap unk_hps) &&
+      (CP.isConstTrue (MCP.pure_of_mix fb.formula_base_pure))
+    | Exists _ -> let _, base1 = split_quantifiers f in
+      helper base1
+    | Or {formula_or_f1 = o11; formula_or_f2 = o12;} -> (helper o11) && (helper o12)
+  in
+  helper f0
+
+let is_htrue_or_unknown f0 unk_hps=
+  let pr1 = !print_formula in
+  let pr2 = !CP.print_svl in
+  Debug.no_2 "is_htrue_or_unknown" pr1 pr2 string_of_bool
+      (fun _ _ -> is_htrue_or_unknown_x f0 unk_hps) f0 unk_hps
+
 let get_hpdef_name hpdef=
   match hpdef with
   | CP.HPRelDefn (hp,_,_) -> hp
@@ -6829,7 +6855,7 @@ let do_unfold_view_hf cprog pr_views hf0 =
 (*     | EInfer b -> EInfer {b with formula_inf_continuation = recf b.formula_inf_continuation} *)
 (*     | EList l -> EList (Gen.map_l_snd recf l) *)
 
-let fresh_data_v f0=
+let fresh_data_v is_pre f0=
   let rec helper f= match f with
     | Base _
     | Exists _ ->
@@ -6837,20 +6863,27 @@ let fresh_data_v f0=
       let hds, hvs, hrs = get_hp_rel_formula f0 in
       let v_sps1 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_data_arguments)) [] hds in
       let v_sps2 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_view_arguments)) v_sps1 hvs in
-      let fr_v_sps2 = CP.diff_svl (CP.remove_dups_svl v_sps2) quans in
-      fr_v_sps2
+      (* sleek7. strings/ex9ec *)
+      if is_pre then
+        let quans = CP.diff_svl quans v_sps2 in
+        add_quantifiers quans f0, v_sps2
+      else
+      (*   f, CP.diff_svl v_sps2 quans *)
+        f, CP.diff_svl (CP.remove_dups_svl v_sps2) quans
     | Or orf ->
-      CP.remove_dups_svl ((helper orf.formula_or_f1)@(helper orf.formula_or_f2))
+          let n_f1, impl_svl1 = (helper orf.formula_or_f1) in
+          let n_f2, impl_svl2 = (helper orf.formula_or_f2) in
+          Or {orf with formula_or_f1 = n_f1; formula_or_f2 = n_f2}, CP.remove_dups_svl (impl_svl1@impl_svl2)
   in
   helper f0
 
-let fresh_data_v_no_change f= []
+let fresh_data_v_no_change is_pre f= f,[]
 
 let rec struc_formula_trans_heap_node pre_quans formula_fct f=
   let recf pre_quans1 = struc_formula_trans_heap_node pre_quans1 formula_fct in
   let process_post_disj f0=
     let cur_quans, f1_bare = split_quantifiers f0 in
-    let quans0 = CP.diff_svl (cur_quans@(fresh_data_v f0)) pre_quans in
+    let quans0 = CP.diff_svl (cur_quans@ (snd (fresh_data_v false f0))) pre_quans in
     let quans = List.filter (fun (CP.SpecVar (_,id,_)) -> not(string_compare id res_name)) quans0 in
     add_quantifiers quans f1_bare
   in
@@ -6858,22 +6891,38 @@ let rec struc_formula_trans_heap_node pre_quans formula_fct f=
   | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd (recf pre_quans) b.formula_case_branches}
   | EBase b ->
     let f1= formula_fct b.formula_struc_base in
-    let () =  Debug.ninfo_hprint (add_str " b.formula_struc_base pre" (!print_formula)) b.formula_struc_base no_pos in
-    let () =  Debug.ninfo_hprint (add_str "f1 pre" (!print_formula)) f1 no_pos in
+    let () =  x_tinfo_hp (add_str " b.formula_struc_base pre" (!print_formula)) b.formula_struc_base no_pos in
+    let () =  x_tinfo_hp (add_str "f1 pre" (!print_formula)) f1 no_pos in
     (* Loc: to split into case spec *)
-    let new_pre_quans = fresh_data_v  b.formula_struc_base in
-    let pre_cur_quans = CP.remove_dups_svl (b.formula_struc_implicit_inst@(new_pre_quans)) in
+    let _, new_pre_quans =  fresh_data_v true f1(* b.formula_struc_base *) in
+    (* WN : Why must this new_pre_quans be added to implicit_inst?? *)
+    (* I think this is probably not needed, as it is focussed on non-ptr fields *)
+    let impl_vs = b.formula_struc_implicit_inst in
+    let new_pre_quans = 
+      if !Globals.old_impl_gather then CP.diff_svl new_pre_quans impl_vs 
+      else []
+    in
+    let pre_cur_quans = CP.remove_dups_svl (impl_vs@(new_pre_quans)) in
     let pre_quans1 = CP.remove_dups_svl (pre_quans@pre_cur_quans) in
-    let () =  Debug.ninfo_hprint (add_str "pre_quans1" (!CP.print_svl)) pre_quans1 no_pos in
+    let () =  x_tinfo_hp (add_str "new_pre_quans" (!CP.print_svl)) new_pre_quans no_pos in
+    let () =  x_tinfo_hp (add_str "pre_quans" (!CP.print_svl)) pre_quans no_pos in
+    let () =  x_tinfo_hp (add_str "pre_quans1" (!CP.print_svl)) pre_quans1 no_pos in
+    let () =  x_tinfo_hp (add_str "new impl?" (!CP.print_svl)) pre_cur_quans no_pos in
     EBase {b with
+           (* what is this map_opt recf for? *)
            formula_struc_continuation = Gen.map_opt (recf pre_quans1) b.formula_struc_continuation;
-           formula_struc_implicit_inst =  pre_cur_quans ;
+           formula_struc_implicit_inst =  
+             if !Globals.old_impl_gather then pre_cur_quans
+             else impl_vs ;
+           formula_struc_exists =  
+             if !Globals.old_impl_gather then b.formula_struc_exists
+             else CP.remove_dups_svl (b.formula_struc_exists@(new_pre_quans));
            formula_struc_base=(* formula_trans_heap_node fct *)f1;
           }
   | EAssume ea-> begin
       let f1 = formula_fct ea.formula_assume_simpl in
-      let () =  Debug.ninfo_hprint (add_str "f1 post" (!print_formula)) f1 no_pos in
-      let () =  Debug.ninfo_hprint (add_str "pre_quans:post" (!CP.print_svl)) pre_quans no_pos in
+      let () =  x_tinfo_hp (add_str "f1 post" (!print_formula)) f1 no_pos in
+      let () =  x_tinfo_hp (add_str "pre_quans:post" (!CP.print_svl)) pre_quans no_pos in
       let fs = list_of_disjs f1 in
       let ass_sf =  (recf pre_quans) ea.formula_assume_struc in
       let sfs1 = List.map (fun f ->
@@ -9156,8 +9205,8 @@ let extract_abs_formula_branch_x fs v_base_name v_new_name extn_args ls_ann_info
     let hds,hvs, hrels= flatten_nodes f1 in
     let sel_svl = CP.remove_dups_svl ( List.concat (List.map get_sel_args_from_dnode hds)) in
     (*process null pointer*)
-    (* let () =  Debug.info_pprint ("  f1: "^ (!print_formula f1)) no_pos in *)
-    (* let () =  Debug.info_pprint ("  sel_svl: "^ (!CP.print_svl sel_svl)) no_pos in *)
+    let () =  Debug.ninfo_pprint ("  f1: "^ (!print_formula f1)) no_pos in
+    let () =  Debug.ninfo_pprint ("  sel_svl: "^ (!CP.print_svl sel_svl)) no_pos in
     let null_svl,null_paired_svl = classify_sel_null_svl f1 sel_svl in
     (* let () =  Debug.info_pprint ("  null_svl: "^ (!CP.print_svl null_svl)) no_pos in *)
     let sel_svl_rest = CP.diff_svl sel_svl null_svl in
@@ -9335,7 +9384,7 @@ type entail_state = {
       | RankDec [rid] | RankBounded id
   *)
   (* es_infer_rel : (CP.formula * CP.formula) list; *)
-  es_infer_rel : CP.infer_rel_type list;
+  es_infer_rel : CP.infer_rel_type Gen.stack_pr; (* CP.infer_rel_type list; *)
   es_infer_hp_rel : hprel list; (*(CP.rel_cat * formula * formula) list;*)
   (* output : pre pure assumed to infer relation *)
   (* es_infer_pures : CP.formula list; *)
@@ -9510,7 +9559,7 @@ let is_dfa_ctx_list lc=
   | SuccCtx cs -> List.exists is_dfa_ctx cs
 
 let is_infer_none_es es =
-  (es.es_infer_heap==[] && es.es_infer_templ_assume==[] && es.es_infer_pure==[] && es.es_infer_rel==[] && es.es_infer_hp_rel==[])
+  (es.es_infer_heap==[] && es.es_infer_templ_assume==[] && es.es_infer_pure==[] && es.es_infer_rel # is_empty_recent && es.es_infer_hp_rel==[])
 
 let is_infer_none_ctx c =
   let rec aux c =
@@ -9783,7 +9832,7 @@ let empty_es flowt grp_lbl pos =
     es_infer_templ = [];
     es_infer_templ_assume = [];
     es_infer_pure = []; (* (CP.mkTrue no_pos); *)
-    es_infer_rel = [] ;
+    es_infer_rel = new Gen.stack_pr (* "es_infer_rel" *)  CP.print_lhs_rhs (==);
     es_infer_hp_rel = [] ;
     es_infer_pure_thus = CP.mkTrue no_pos ;
     es_var_zero_perm = [];
@@ -9804,7 +9853,7 @@ let flatten_context ctx0=
 
 let es_fv es=
   CP.remove_dups_svl ((fv es.es_formula)@(es.es_infer_vars_rel)@es.es_infer_vars_hp_rel@es.es_infer_vars_templ@
-                      (List.fold_left (fun ls (_,p1,p2) -> ls@(CP.fv p1)@(CP.fv p2)) [] es.es_infer_rel)@
+                      (List.fold_left (fun ls (_,p1,p2) -> ls@(CP.fv p1)@(CP.fv p2)) [] es.es_infer_rel # get_stk)@
                       (List.fold_left (fun ls hprel -> ls@(fv hprel.hprel_lhs)@(fv hprel.hprel_rhs)) [] es.es_infer_hp_rel))
 
 let is_one_context (c:context) =
@@ -10974,7 +11023,8 @@ let isFalseBranchCtxL (ss:branch_ctx list) =
   (ss!=[]) && (List.for_all (fun (_,c,_) -> isAnyFalseCtx c) ss )
 
 let is_inferred_pre estate = 
-  not(estate.es_infer_heap==[] && estate.es_infer_pure==[] && estate.es_infer_rel==[])
+  not(estate.es_infer_heap==[] && estate.es_infer_pure==[] && 
+      estate.es_infer_rel # is_empty_recent)
 (* let r = (List.length (estate.es_infer_heap))+(List.length (estate.es_infer_pure)) in *)
 (* if r>0 then true else false *)
 
@@ -11015,6 +11065,10 @@ let remove_dupl_false_pc (fl,sl) = (fl,remove_dupl_false sl)
 
 let remove_dupl_false_fe (fl,ec,sl) = (fl,ec,remove_dupl_false sl)
 
+let count_sat_pc_list (fs_list:list_partial_context) = 
+  (* let ns = List.filter (fun (fl,sl) -> not(fl==[] && isFalseBranchCtxL sl)) fs_list in *)
+  let cnt_list = List.map (fun (a,b)->(List.length a)+(List.length b)) fs_list in
+  List.fold_left (+) 0 cnt_list
 
 let remove_dupl_false_pc_list (fs_list:list_partial_context) = 
   let ns = List.filter (fun (fl,sl) -> not(fl==[] && isFalseBranchCtxL sl)) fs_list in
@@ -11095,7 +11149,7 @@ let rec collect_tu_rel ctx =
 
 let rec collect_rel ctx = 
   match ctx with
-  | Ctx estate -> estate.es_infer_rel 
+  | Ctx estate -> estate.es_infer_rel # get_stk_recent
   | OCtx (ctx1, ctx2) -> (collect_rel ctx1) @ (collect_rel ctx2)
 
 let rec collect_hole ctx = 
@@ -11214,13 +11268,13 @@ let add_infer_pure_thus_estate cp es =
   }
 
 let add_infer_rel_to_estate cp es =
-  let old_cp = es.es_infer_rel in
-  let new_cp = cp@old_cp in
+  let new_cp = es.es_infer_rel # clone in
+  let () = new_cp # push_list cp in
   {es with es_infer_rel = new_cp;}
 
 let add_infer_rel_to_estate cp es =
   let pr = pr_list CP.print_lhs_rhs in
-  let pr2 es = pr es.es_infer_rel in
+  let pr2 es = pr es.es_infer_rel # get_stk in
   Debug.no_1 "add_infer_rel_to_estate" pr pr2 
     (fun _ -> add_infer_rel_to_estate cp es) cp
 
@@ -11478,7 +11532,7 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
    es_infer_templ = es.es_infer_templ;
    es_infer_templ_assume = es.es_infer_templ_assume;
    es_infer_pure = es.es_infer_pure;
-   es_infer_rel = es.es_infer_rel;
+   es_infer_rel = es.es_infer_rel # clone;
    es_infer_term_rel = es.es_infer_term_rel;
    es_infer_hp_rel = es.es_infer_hp_rel;
    es_infer_pure_thus = es.es_infer_pure_thus;
@@ -13893,6 +13947,10 @@ let trans_failesc_context (c: failesc_context) (arg: 'a) f_c f_c_arg f_comb : (f
   let n_bc, acc = List.split (List.map (fun c -> trans_branch_ctx c arg f_c f_c_arg f_comb) bc) in 
   ((bf, es, n_bc), f_comb acc)
 
+(* type: list_failesc_context -> *)
+(*   'a -> *)
+(*   ('a -> context -> (context * 'b) option) -> *)
+(*   ('a -> context -> 'a) -> ('b list -> 'b) -> list_failesc_context * 'b *)
 let trans_list_failesc_context (c: list_failesc_context)
     (arg: 'a) f_c f_c_arg f_comb : (list_failesc_context * 'b) =
   let n_c, acc = List.split (List.map (fun ctx -> trans_failesc_context ctx arg f_c f_c_arg f_comb) c) in
@@ -14346,7 +14404,7 @@ let clear_entailment_history_es2 xp (es :entail_state) :entail_state =
    es_infer_hp_unk_map = es.es_infer_hp_unk_map;
    es_infer_heap = es.es_infer_heap;
    es_infer_pure = es.es_infer_pure;
-   es_infer_rel = es.es_infer_rel;
+   es_infer_rel = es.es_infer_rel # clone;
    es_infer_term_rel = es.es_infer_term_rel;
    es_infer_templ_assume = es.es_infer_templ_assume;
    es_infer_hp_rel = es.es_infer_hp_rel;
@@ -14404,7 +14462,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
     es_infer_heap = es.es_infer_heap;
     es_infer_templ = es.es_infer_templ;
     es_infer_pure = es.es_infer_pure;
-    es_infer_rel = es.es_infer_rel;
+    es_infer_rel = es.es_infer_rel # clone;
     es_infer_term_rel = es.es_infer_term_rel;
     es_infer_templ_assume = es.es_infer_templ_assume;
     es_infer_hp_rel = es.es_infer_hp_rel;
@@ -19002,3 +19060,22 @@ let collect_nondet_vars_list_failesc_context c =
     (snd (trans_list_failesc_context c () f_c voidf2 List.concat))
 
 (* End of Nondeterminism variables *)
+
+let collect_infer_rel_context c =
+   (fold_context (fun xs es -> (es.es_infer_rel # get_stk) @ xs) [] c)
+
+let collect_infer_rel_list_context lfc =
+  let f_a a _ = a in
+  let f_b _ c = Some (c,collect_infer_rel_context c) in
+  Gen.Basic.remove_dups (snd(trans_list_context lfc () f_b f_a List.concat))
+
+let collect_infer_rel_list_partial_context lfc =
+  let f_a a _ = a in
+  let f_b _ c = Some (c,collect_infer_rel_context c) in
+  Gen.Basic.remove_dups (snd(trans_list_partial_context lfc () f_b f_a List.concat))
+
+let collect_infer_rel_list_failesc_context lfc =
+  let f_a a _ = a in
+  let f_b _ c = Some (c,collect_infer_rel_context c) in
+  Gen.Basic.remove_dups (snd(trans_list_failesc_context lfc () f_b f_a List.concat))
+

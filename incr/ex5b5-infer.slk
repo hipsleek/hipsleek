@@ -1,0 +1,31 @@
+/*
+id: 29; caller: []; line: 54; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ R]; c_heap: emp; others: [] globals: [@flow,@ver_post]
+ checkentail x'::node<Anon_1453,q_1454>@M * q_1454::ll<>@M&
+not(v_bool_60_1434') & not(v_bool_57_1435') & x'!=null & x'=x & 
+Anon_1453!=1 & not(v_boolean_63_1433') & res=v_boolean_63_1433' & MayLoop[]&
+{FLOW,(4,5)=__norm#E}[]
+ |-  (exists : x::lseg<p>@M * p::ll<>@M&R(p,res)&{FLOW,(4,5)=__norm#E}[]. 
+pure rel_ass: [RELDEFN R: ( not(res)) -->  R(p,res),
+RELDEFN R: ( not(res) & p!=null) -->  R(p,res)]
+*/
+
+data node {
+ int val;
+ node next;
+}.
+
+relation R(node x,bool y).
+
+pred  ll<> == self=null or self::node<_,q>*q::ll<>.
+
+pred lseg<p> == self=p or self::node<_,q>*q::lseg<p>.
+
+infer_exact [R] x'::node<Anon_1453,q>@M 
+ * q::ll<>@M & x'!=null & x'=x & Anon_1453!=1 
+ & !(v_boolean_63_1433') & res=v_boolean_63_1433' 
+ |-   x::lseg<p>@M * p::ll<>@M & R(p,res). 
+print residue.
+expect Valid.
+expect Fail.
+
+// why do we not have info on p?

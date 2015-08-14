@@ -130,6 +130,7 @@ let iobj_def =  {I.data_name = "Object";
                  I.data_pos = no_pos;
                  I.data_parent_name = "";
                  I.data_invs = []; (* F.mkTrue no_pos; *)
+                 I.data_pure_inv = None;
                  I.data_is_template = false;
                  I.data_methods = [] }
 
@@ -138,6 +139,7 @@ let iexc_def =  {I.data_name = raisable_class;
                  I.data_pos = no_pos;
                  I.data_parent_name = "Object";
                  I.data_invs = []; (* F.mkTrue no_pos; *)
+                 I.data_pure_inv = None;
                  I.data_is_template = false;
                  I.data_methods = [] }
 
@@ -146,6 +148,7 @@ let ithrd_def =  {I.data_name = Globals.thrd_name ;
                   I.data_pos = no_pos;
                   I.data_parent_name = "Object";
                   I.data_invs = []; (* F.mkTrue no_pos; *)
+                  I.data_pure_inv = None;
                   I.data_is_template = false;
                   I.data_methods = [] }
 
@@ -167,15 +170,17 @@ let iprog = { I.prog_include_decls =[];
               I.prog_proc_decls = [];
               I.prog_coercion_decls = [];
               I.prog_hopred_decls = [];
-              I. prog_barrier_decls = [];
+              I.prog_barrier_decls = [];
               I.prog_test_comps = [];
             }
 
 let cobj_def = { Cast.data_name = "Object";
                  Cast.data_fields = [];
+                 Cast.data_fields_new = [];
                  Cast.data_pos = no_pos;
                  Cast.data_parent_name = "";
                  Cast.data_invs = [];
+                 Cast.data_pure_inv = None;
                  Cast.data_methods = [] }
 
 let cprog = ref { 
@@ -565,7 +570,7 @@ let print_residue residue =
       end
     | Some (ls_ctx, print(* , local_dfa, dis_lerr_exc, en_lerr_exc *)) -> begin
         let curr_vs = Global_var.stk_vars # get_stk in
-        (* let () = x_binfo_hp (add_str "curr vars" !CP.print_svl) curr_vs no_pos in *)
+        (* let () = x_tinfo_hp (add_str "curr vars" !CP.print_svl) curr_vs no_pos in *)
         (* let () = print_string_quiet "\n" in *)
         let () = print_endline_quiet "Residue:" in
         (* let is_empty_states = match ls_ctx with *)
@@ -801,8 +806,8 @@ let convert_data_and_pred_to_cast_x () =
   (*derv and spec views*)
   let tmp_views_derv1 = Astsimp.mark_rec_and_der_order tmp_views_derv in
   let cviews_derv = List.fold_left (fun norm_views v ->
-      let der_view = Derive.trans_view_dervs iprog Rev_ast.rev_trans_formula Astsimp.trans_view norm_views v in
-      (cviews0@[der_view])
+      let der_view = Derive.trans_view_dervs iprog Rev_ast.rev_trans_formula Astsimp.trans_view [] norm_views v in
+      (norm_views@[der_view])
     ) cviews0 tmp_views_derv1 in
   let _ = x_tinfo_hp (add_str "derv length" (fun ls -> string_of_int (List.length ls))) tmp_views_derv1 no_pos in
   let cviews = (* cviews0a@ *)cviews_derv in
@@ -919,11 +924,11 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typein
     | MetaFormLCF mf -> 
       (tl,(Cformula.formula_to_struc_formula (List.hd mf)))
     | MetaForm mf -> 
-      let h = List.map (fun c-> (c,Unprimed)) fv_idents in
-      let p = List.map (fun c-> (c,Primed)) fv_idents in
+      let h,p = (* List.map (fun c-> (c,Unprimed)) *) List.partition (fun (_,p) -> p==Unprimed) fv_idents in
+      (* let p = List.map (fun c-> (c,Primed)) fv_idents in *)
       let wf,_ = x_add Astsimp.case_normalize_struc_formula 12 iprog h p (Iformula.formula_to_struc_formula mf) true 
           true (*allow_post_vars*) true [] in
-      Astsimp.trans_I2C_struc_formula 8 iprog false quant fv_idents wf tl false (*(Cpure.Prim Void) []*) false (*check_pre*) 
+      Astsimp.trans_I2C_struc_formula 8 ~idpl:fv_idents iprog false quant [] wf tl false (*(Cpure.Prim Void) []*) false (*check_pre*) 
     | MetaVar mvar -> 
       begin
         try 
@@ -932,7 +937,7 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typein
         with
         | Not_found ->
           dummy_exception() ;
-          print_string (mvar ^ " is undefined.\n");
+          print_string (mvar ^ " is undefined (1).\n");
           raise SLEEK_Exception
       end
     | MetaCompose (vs, mf1, mf2) -> 
@@ -944,11 +949,11 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typein
         (n_tl,res)
       end
     | MetaEForm b -> 
-      let h = List.map (fun c-> (c,Unprimed)) fv_idents in
-      let p = List.map (fun c-> (c,Primed)) fv_idents in
+      let h,p = List.partition (fun (c,p) -> p==Unprimed) fv_idents in
+      (* let p = List.map (fun c-> (c,Primed)) fv_idents in *)
       let wf,_ = x_add Astsimp.case_normalize_struc_formula 13 iprog h p b true (* allow_primes *) 
           true (*allow_post_vars*) true [] in
-      let (n_tl,res) = Astsimp.trans_I2C_struc_formula 9 iprog false quant fv_idents wf tl false 
+      let (n_tl,res) = Astsimp.trans_I2C_struc_formula 9 ~idpl:fv_idents iprog false quant  [] wf tl false 
           false (*check_pre*) (*(Cpure.Prim Void) [] *) in
       (* let _ = print_string ("\n1 before meta: " ^(Iprinter.string_of_struc_formula b)^"\n") in *)
       (* let _ = print_string ("\n2 before meta: " ^(Iprinter.string_of_struc_formula wf)^"\n") in *)
@@ -962,7 +967,7 @@ let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.
   = Debug.no_4 "meta_to_struc_formula"
     string_of_meta_formula
     string_of_bool
-    string_of_ident_list
+    pr_primed_ident_list
     Typeinfer.string_of_tlist
     (pr_pair Typeinfer.string_of_tlist Cprinter.string_of_struc_formula)
     (fun _ _ _ _  ->  meta_to_struc_formula mf0 quant fv_idents tlist )mf0 quant fv_idents tlist
@@ -1036,7 +1041,7 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
       with
       | Not_found ->
         dummy_exception() ;
-        print_string (mvar ^ " is undefined.\n");
+        print_string (mvar ^ " is undefined (2).\n");
         raise SLEEK_Exception
     end
   | MetaCompose (vs, mf1, mf2) -> begin
@@ -1084,7 +1089,7 @@ let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:T
       with
       | Not_found ->
         dummy_exception() ;
-        print_string (mvar ^ " is undefined.\n");
+        print_string (mvar ^ " is undefined (3).\n");
         raise SLEEK_Exception
     end
   | MetaCompose (vs, mf1, mf2) -> begin
@@ -1219,34 +1224,44 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   let () = x_dinfo_hp (add_str "ante_vars" Cprinter.string_of_spec_var_list) fvs no_pos in
   (* let () = x_dinfo_hp (add_str "ante vars (i)" (pr_list (fun (i,p) -> i))) fvs_mf no_pos in *)
   (* Disable putting implicit existentials on unbound heap variables *)
-  let () = x_dinfo_hp (add_str "ivars" (pr_list pr_id)) ivars no_pos in
+  let ivars_new = List.map (fun v -> (v,Unprimed)) ivars in
+  let () = x_tinfo_hp (add_str "ivars" (pr_primed_ident_list)) ivars_new no_pos in
   (* WN : ivars - these are idents rather than spec_var *)
   (* TODO : shouldn't we be transforming to spec_vars instead ?? *)
   let fv_idents = (List.map CP.name_of_spec_var fvs)@ivars in
+  let fv_idents_new = (List.map CP.primed_ident_of_spec_var fvs)@ivars_new in
   let fv_idents =
     if !Globals.dis_impl_var then
       let conseq_idents = List.map (fun (v, _) -> v) (fv_meta_formula iconseq0) in
       Gen.BList.remove_dups_eq (fun v1 v2 -> String.compare v1 v2 == 0) (fv_idents @ conseq_idents)
     else fv_idents
   in
+  let fv_idents_new =
+    if !Globals.dis_impl_var then
+      let conseq_idents =(fv_meta_formula iconseq0) in
+      Gen.BList.remove_dups_eq (fun (v1,p1) (v2,p2) -> String.compare v1 v2 == 0 && p1==p2) (fv_idents_new @ conseq_idents)
+    else fv_idents_new
+  in
+  let () = x_tinfo_hp (add_str "fv_idents" (pr_list pr_id)) fv_idents no_pos in
+  let () = x_tinfo_hp (add_str "fv_idents_new" (pr_primed_ident_list)) fv_idents_new no_pos in
   (* need to make ivars be global *)
-  (* let conseq = if (!Globals.allow_field_ann) then meta_to_struc_formula iconseq0 false fv_idents None stab  *)
-  let (n_tl,conseq) = meta_to_struc_formula iconseq0 false fv_idents  n_tl in
+  (* let conseq = if (!Globals.allow_field_ann) then x_add meta_to_struc_formula iconseq0 false fv_idents None stab  *)
+  let (n_tl,conseq) = x_add meta_to_struc_formula iconseq0 false fv_idents_new  n_tl in
   (* let _ = print_endline ("conseq: " ^ (Cprinter.string_of_struc_formula conseq)) in *)
   (* let ante,conseq = transfrom_bexpr ante conseq n_tl in *)
-  (* let conseq1 = meta_to_struc_formula iconseq0 false fv_idents stab in *)
+  (* let conseq1 = x_add meta_to_struc_formula iconseq0 false fv_idents stab in *)
   let conseq_fvs = CF.struc_fv ~vartype:Global_var.var_with_implicit_explicit conseq in
   let vs = CP.remove_dups_svl (fvs@conseq_fvs) in
   let () = Global_var.set_stk_vars vs in 
   (* let conseq_post_fvs = CF.struc_post_fv conseq in *)
   (* let conseq_all_fvs = CF.struc_all_vars conseq in *)
   (* let conseq_infer_fvs = CF.struc_fv_infer conseq in *)
-  let () = x_dinfo_hp (add_str "ante_fvs" !CP.print_svl) fvs no_pos in
-  let () = x_dinfo_hp (add_str "conseq" Cprinter.string_of_struc_formula) conseq no_pos in
-  let () = x_dinfo_hp (add_str "conseq_fvs" !CP.print_svl) conseq_fvs no_pos in
-  (* let () = x_binfo_hp (add_str "conseq_infer_fvs" !CP.print_svl) conseq_infer_fvs no_pos in *)
-  (* let () = x_binfo_hp (add_str "conseq_all_fvs" !CP.print_svl) conseq_all_fvs no_pos in *)
-  (* let () = x_binfo_hp (add_str "conseq_post_fvs" !CP.print_svl) conseq_post_fvs no_pos in *)
+  let () = x_tinfo_hp (add_str "ante_fvs" !CP.print_svl) fvs no_pos in
+  let () = x_tinfo_hp (add_str "conseq" Cprinter.string_of_struc_formula) conseq no_pos in
+  let () = x_tinfo_hp (add_str "conseq_fvs" !CP.print_svl) conseq_fvs no_pos in
+  (* let () = x_tinfo_hp (add_str "conseq_infer_fvs" !CP.print_svl) conseq_infer_fvs no_pos in *)
+  (* let () = x_tinfo_hp (add_str "conseq_all_fvs" !CP.print_svl) conseq_all_fvs no_pos in *)
+  (* let () = x_tinfo_hp (add_str "conseq_post_fvs" !CP.print_svl) conseq_post_fvs no_pos in *)
   let () = x_dinfo_hp (add_str "type-table" Typeinfer.string_of_tlist) n_tl no_pos in
   (* let sst = List.fold_left (fun sst0 ((CP.SpecVar (t1, id1, p1)) as sv1) -> *)
   (*     try *)
@@ -1259,9 +1274,9 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   (* in *)
   (* WN:TODO - c*)
   let sst0 = List.map (fun (CP.SpecVar (t,i,p) as sv) -> 
-      let sv2 = Typeinfer.get_spec_var_type_list_infer ~d_tt:n_tl (i,p) [] no_pos 
+      let sv2 = x_add (Typeinfer.get_spec_var_type_list_infer ~d_tt:n_tl) (i,p) [] no_pos 
       in (sv,sv2)) fvs in
-  let sst = List.filter (fun (CP.SpecVar (t1,_,_), CP.SpecVar (t2,_,_)) -> t1!=t2 ) sst0 in
+  let sst = List.filter (fun (CP.SpecVar (t1,_,_), CP.SpecVar (t2,_,_)) -> not(t1=t2) ) sst0 in
   (* if List.length sst != List.length sst0 then *)
   (*   begin *)
   (*     let pr = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
@@ -1270,7 +1285,10 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   (*     () *)
   (*    end; *)
   (*let _ = print_endline "run_infer_one_pass" in*)
-  let ante1 = x_add CF.subst sst ante in
+  let pr = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  let () = x_tinfo_hp (add_str "XXX sst(old)" pr) sst0 no_pos in
+  let () = x_tinfo_hp (add_str "XXX sst(new)" pr) sst no_pos in
+  let ante1 = if sst==[] then ante else x_add CF.subst sst ante in
   let ante = Cfutil.transform_bexpr ante1 in
   let conseq = CF.struc_formula_trans_heap_node [] Cfutil.transform_bexpr conseq in
   let pr = Cprinter.string_of_struc_formula in
@@ -1396,7 +1414,9 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
       let rrels = CP.get_rel_id_list rhs_p in
       let rel_ids = CP.remove_dups_svl (lrels@rrels) in
       let new_rel_ass =  (CP.RelDefn (List.hd rel_ids, None), lhs_p, rhs_p)  in
-      let _ = Infer.infer_rel_stk # push_list_pr [new_rel_ass] in
+      let lr = [new_rel_ass] in
+      let () = x_binfo_hp (add_str "WARNING : Spurious RelInferred (not collected)" (pr_list CP.print_lhs_rhs)) lr no_pos in
+      let _ = Infer.infer_rel_stk # push_list_pr lr in
       ()
   in
   ()
@@ -2714,7 +2734,7 @@ let process_print_command pcmd0 =
         Error.error_loc = no_pos;
         Error.error_text = "couldn't find " ^ pvar;
       }in
-    let (n_tl,pf) = meta_to_struc_formula mf false [] [] in
+    let (n_tl,pf) = x_add meta_to_struc_formula mf false [] [] in
     print_string ((Cprinter.string_of_struc_formula pf) ^ "XXXHello\n")
   | PCmd pcmd ->
     if pcmd = "lemmas" then

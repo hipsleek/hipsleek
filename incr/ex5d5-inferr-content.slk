@@ -1,0 +1,59 @@
+data node {
+ int val;
+ node next;
+}.
+
+relation R1(int n).
+relation RRR2(int n).
+
+pred  ll<> == self=null or self::node<_,q>*q::ll<>.
+
+pred lseg_ones<p> == self=p or self::node<v,q>*q::lseg_ones<p> & R1(v).
+
+pred ll_not_one<> == self=null or self::node<v,q>*q::ll<> & RRR2(v).
+
+pred lseg_ones_X<p> == self=p or self::node<v,q>*q::lseg_ones_X<p> & v=1.
+
+pred ll_not_one_X<> == self=null or self::node<v,q>*q::ll<> & v!=1.
+
+infer [R1,RRR2]  x::node<aa,q> * q::ll<> & aa!=1 & !(res) 
+ |-  x::lseg_ones<p> * p::ll_not_one<> & ((!(res) & p!=null) | (p=null & res)). 
+print residue.
+
+/*
+# ex5d5.slk -dre "infer_collect"
+
+# Why below?
+
+# Why only the 2nd relational assume kept?
+
+!!! **infer.ml#2213:RelInferred (simplified):[RELDEFN R1: ( v_96!=1) -->  R1(v_96)]
+!!! **infer.ml#2213:RelInferred (simplified):[RELDEFN RRR2: ( v_104!=1) -->  RRR2(v_104)]
+!!! **infer.ml#2213:RelInferred (simplified):[RELDEFN RRR2: ( true) -->  RRR2(v_107)]
+Entail (1) : Valid. 
+
+Residue:
+
+ <1>emp&p=x & not(res) & aa!=1&{FLOW,(20,21)=__norm#E}[]
+ inferred rel: [RELDEFN RRR2: ( v_104!=1) -->  RRR2(v_104)]
+[[ Fold ==>  Fold ==>  SEARCH ==>  Match(x,p) ==>  COND ==>  Match(q,q_105)]]
+
+
+
+
+[[ Fold ==>  Fold ==>  SEARCH ==>  Match(x',p) ==>  COND ==>  Match(q_1472,q_87)]]
+
+id: 29; caller: []; line: 27; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ R1,RRR2]; c_heap: emp; others: [] globals: [@flow,@ver_post]
+ checkentail x'::node<Anon_1471,q_1472>@M * q_1472::ll<>@M&
+not(v_bool_34_1449') & not(v_bool_31_1450') & x'!=null & x'=x & 
+Anon_1471!=1 & not(v_boolean_37_1448') & res=v_boolean_37_1448' & MayLoop[]&
+{FLOW,(4,5)=__norm#E}[]
+ |-  (exists : x::lseg_ones<p>@M * p::ll_not_one<>@M&
+((not(res) & p!=null) | (p=null & res))&{FLOW,(4,5)=__norm#E}[]. 
+pure rel_ass: [RELDEFN RRR2(__norm#E): ( true) -->  RRR2(v_1517),
+RELDEFN RRR2(__norm#E): ( v_1514!=1) -->  RRR2(v_1514),
+RELDEFN RRR2(__norm#E): ( v_1514!=1) -->  RRR2(v_1514),
+RELDEFN R1(__norm#E): ( v_1505!=1) -->  R1(v_1505),
+RELDEFN R1(__norm#E): ( v_1505!=1) -->  R1(v_1505)]
+
+*/

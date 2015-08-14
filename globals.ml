@@ -47,6 +47,8 @@ let reverify_flag = ref false
 let reverify_all_flag = ref false
 let ineq_opt_flag = ref false
 
+let ptr_arith_flag = ref false
+
 let illegal_format s = raise (Illegal_Prover_Format s)
 
 type lemma_kind = LEM_PROP| LEM_SPLIT | LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER | LEM_INFER_PRED | RLEM
@@ -191,6 +193,37 @@ type typ =
   | Pointer of typ (* base type and dimension *)
 (* | SLTyp (* type of ho formula *) *)
 
+(* let eq_type t1 t2 = match *)
+(*     | FORM, FORM  *)
+(*     | UNK, UNK *)
+(*   | AnnT *)
+(*   | Bool *)
+(*   | Float *)
+(*   | Int *)
+(*   | INFInt *)
+(*   | Tup2 of typ * typ *)
+(*   | NUM *)
+(*   | Void *)
+(*   | List of typ *)
+(*   | BagT of typ *)
+(*   (\* | Prim of prim_type *\) *)
+(*   | Named of ident (\* named type, could be enumerated or object *\) *)
+(*   (\* Named "R" *\) *)
+(*   | Array of (typ * int) (\* base type and dimension *\) *)
+(*   | RelT of (typ list) (\* relation type *\) *)
+(*   | HpT (\* heap predicate relation type *\) *)
+(*   | Tree_sh *)
+(*   | FuncT of typ * typ *)
+(*   | UtT of bool (\* unknown temporal type - pre(true)/post(false)*\) *)
+(*   | Bptyp *)
+(*   | Pointer of typ (\* base type and dimension *\) *)
+(*     | ,   *)
+(*       -> true *)
+(*     | TVar i1, TVar i2 -> i1=i2 *)
+(*     | _, _ -> false *)
+
+type typed_ident = (typ * ident)
+
 let is_undef_typ t =
   match t with
   |UNK |RelT _ |HpT |UtT _ -> true
@@ -330,6 +363,7 @@ let dang_hp_default_prefix_name = "DP_DP"
 let ex_first = "v"
 let size_rel_name = "size"
 let size_rel_arg = "n"
+let seg_arg = "p"
 let field_rec_ann = "REC"
 let field_val_ann = "VAL"
 
@@ -640,6 +674,7 @@ let string_of_primed_ident (id,p) =
 (* let pr_ident_list = pr_list (fun (i,p) -> i^(string_of_primed p)) *)
 
 let pr_ident_list = pr_list string_of_primed_ident
+let pr_primed_ident_list = pr_list string_of_primed_ident
 
 let rec s_p_i_list l c = match l with 
   | [] -> ""
@@ -976,9 +1011,13 @@ let pred_disj_unify = ref false
 
 let pred_seg_unify = ref false
 
-let pred_equiv = ref false
+let pred_equiv = ref true
 
+(* what is below for? not used! *)
 let pred_equiv_one = ref true
+
+(* this is to enable automatic list segment *)
+let pred_norm_seg = ref true
 
 let pred_unify_post = ref false
 
@@ -1015,8 +1054,23 @@ let procs_verified = ref ([] : string list)
 
 let false_ctx_line_list = ref ([] : loc list)
 
-let add_false_ctx pos = false_ctx_line_list := pos::!false_ctx_line_list
+let last_sat_ctx = ref None
 
+let add_false_ctx pos = 
+  last_sat_ctx := None;
+  false_ctx_line_list := pos::!false_ctx_line_list
+
+let set_last_ctx (pos:loc) = last_sat_ctx := Some pos 
+
+
+(* use List.rev *)
+(* let rev_list list = *)
+(*     let rec aux acc = function *)
+(*       | [] -> acc *)
+(*       | h::t -> aux (h::acc) t in *)
+(*     aux [] list *)
+
+(* WN : should this flag be for tpdispatcher, rather than just Omega *)
 let b_datan = "barrier"
 
 let verify_callees = ref false
@@ -1167,6 +1221,10 @@ let allow_threads_as_resource = ref false
 (* let assert_matrix = ref false *)
 let assert_nonlinear = ref false
 
+let old_collect_false = ref false
+let old_infer_collect = ref false
+let old_impl_gather = ref false
+let old_parse_fix = ref false
 let adhoc_flag_1 = ref false
 let adhoc_flag_2 = ref false
 let adhoc_flag_3 = ref false

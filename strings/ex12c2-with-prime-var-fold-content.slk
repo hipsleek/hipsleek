@@ -1,0 +1,58 @@
+
+data str {
+  int val;
+  str next;
+}.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::str<v,q>*q::WFSeg<p> & v!=0 //& self!=p
+  inv true.
+
+checkentail x::str<v,q>*q::WFSeg<yyy'>*yyy'::str<0,p> & v>0
+            |- x::WFSeg<zz>*zz::str<0,p> & zz=yyy'.
+print residue.
+
+
+/*
+# ex12c2.ss
+
+
+# Why the use of ' var caused problem?
+
+vvv' is being instantiated!!!
+
+INPUT 0: [][] 
+ ### ante =  x::str<v,q>@M * q::WFSeg<yyy'>@M * yyy'::str<flted_12_36,p>@M&
+flted_12_36=0 & 0<v&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   exists (Expl)[](Impl)[yyy'; flted_13_48](ex)[](exists p_49,
+   flted_13_48: x::WFSeg<yyy'>@M * yyy'::str<flted_13_48,p_49>@M&
+   flted_13_48=0 & p_49=p&{FLOW,(20,21)=__norm#E}[]
+
+
+(==solver.ml#2797==)
+xpure_heap#1@52
+xpure_heap#1 inp1 : x::str<v,q>@M * yyy'::str<flted_12_36,p>@M * q::WFSeg<yyy'>@M
+xpure_heap#1 inp2 : flted_12_36=0 & 0<v & x=yyy'
+xpure_heap#1 inp3 :1
+xpure_heap#1@52 EXIT:( x=1 & yyy'=2 & ((q!=null | yyy'=q)) & x!=yyy',[], [])#true
+
+checkentail x::str<v,q>*q::WFSeg<yyy'>*yyy'::str<0,p> & v>0
+            |- x::WFSeg<yyy'>*yyy'::str<0,p>.
+
+
+WARNING: _0:0_0:0:* between overlapping heaps: ( x::str<v,q>@M, yyy'::str<flted_12_36,p>@M)
+
+Entail 1: Valid. 
+
+Residue:
+
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+
+
+# Why wasn't false counted?
+
+0 false contexts at: ()
+
+*/

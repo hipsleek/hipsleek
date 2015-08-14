@@ -1,0 +1,447 @@
+
+=====================================================================
+# ex3b.ss
+
+# Can we derive more reusable shape specification,
+  namely the 1st spec below.
+
+  ll<> == self=null or self::node<_,q>*q::ll<>;
+  lseg<p> == self=p or self::node<_,q>*q::lseg<p>;
+  gg<p> == self=null or self=p or self::node<_,q>*q::gg<p>;
+
+  requires x::ll<>
+  ensures x::ll<> or x::lseg<p>*p::ll<>;
+
+Above verifies!
+
+  requires x::ll<>
+  ensures x::gg<p>*p::ll<>;
+
+Above verifies!
+
+The former is better since it supports better re-use of
+specification and predicates.
+
+=====================================================================
+# ex3c.ss
+
+  infer [R1,R2]
+  requires x::ll<>
+  ensures x::ll<> & R1(res) or x::lseg<p>*p::ll<> & R2(res);
+
+# pure bi-abduction is not working here. is it due
+  to mutual recursion?
+
+# see ex3d.ss as our target spec ..
+  requires x::ll<>
+  ensures x::ll<> & res or x::lseg<p>*p::ll<> & !res;
+
+We need to investigate. Is it due to fixcalc 
+or some other problems..
+
+*************************************
+******pure relation assumption 1 *******
+*************************************
+[RELDEFN R1: ( 1<=res) -->  R1(res),
+RELDEFN R2: ( 1<=res) -->  R2(res),
+RELDEFN R1: ( R1(res)) -->  R1(res),
+RELDEFN R2: ( R1(res)) -->  R2(res),
+RELDEFN R2: ( R2(res)) -->  R2(res),
+RELDEFN R1: ( not(res)) -->  R1(res),
+RELDEFN R2: ( not(res)) -->  R2(res)]
+*************************************
+
+!!! PROBLEM with fix-point calculation
+ExceptionFailure("split_quantifiers: invalid argument (formula_or)")Occurred!
+
+=====================================================================
+# ex3f1.ss
+
+  requires x::ll<>
+  ensures x::llR<R1> & res or x::lsegR<R1,p>*p::ll<> & !res;
+
+# not sure why fail. need to check if pred built correctly.
+
+Context of Verification Failure: ex3f1-verify-content-check-all-ones-ll-lseg.ss_28:10_28:26
+
+Last Proving Location: ex3f1-verify-content-check-all-ones-ll-lseg.ss_36:14_36:19
+
+ERROR: at ex3f1-verify-content-check-all-ones-ll-lseg.ss_28:10_28:26
+Message: Post condition cannot be derived.
+
+Procedure check_ones$node FAIL.(2)
+
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+==========================
+# ex3f1.ss --pcp
+
+# Not enough type info for relation..
+
+ view lsegR{}[]<R:RelT([]),p:node>= 
+  view_domains: 
+   view lsegR<R:RelT([]),p:node>= 
+    EList
+      :EBase 
+         (* lbl: *){222}->emp&self=p&{FLOW,(1,28)=__flow#E}[]
+      || :EBase 
+            exists (Expl)[](Impl)[v; 
+            q](ex)[](* lbl: *){223}->(exists p_24: (* lbl: *){223}->self::node<v,q>@M * 
+                                                                    q::lsegR<R,p_24>@M&
+            R(v) & p_24=p&{FLOW,(1,28)=__flow#E}[]
+
+# Did R1 capture r=1? Can print?
+
+ relation R1(int r).
+
+# what are these warnings for?
+
+WARNING: _0:0_0:0:Z3 error message: (error "line 3427 column 29: unknown function/constant R1_1553")
+
+# maybe we can try with simpler examples involving
+  2nd-order verification..
+=====================================================================
+# ex3b2.ss
+
+  infer [R]
+  requires x::ll<>
+  ensures x::lseg<p>*p::ll<> & R(res,p);
+
+GOT
+===
+!!! **pi.ml#775:>>>>>>>>>>> (bef postprocess): <<<<<<<<<
+!!! **pi.ml#776:>>REL POST:  R(res,p)
+!!! **pi.ml#777:>>POST:  (not(res) | (p=null & res))
+!!! **pi.ml#778:>>REL PRE :  true
+!!! **pi.ml#779:>>PRE :  true
+
+Can we get a stronger:
+    !!! **pi.ml#777:>>POST:  (not(res) & p!=null | (p=null & res))
+=====================================================================
+# ex3b1.ss
+
+  requires x::ll<>
+  ensures x::lseg<p>*p::ll<> & (res & p=null | !res & p!=null);
+
+Above verifies!
+
+Above seems a more concise spec to aim for ..
+=====================================================================
+# ex3b4.ss
+
+  lseg_one<p> == self=p or self::node<1,q>*q::lseg_one<p>;
+  ll_not_one<> == self=null or self::node<v,q>*q::ll<> & v!=1;
+
+
+  requires x::lseg_one<p>*p::ll_not_one<>
+  ensures x::lseg_one<p>*p::ll_not_one<> & (res & p=null | !res & p!=null);
+
+
+This strongest spec verifies and could be our target for inference
+
+# Can we check if 2nd-order predicates based on them can be verified
+  first ..
+=====================================================================
+# ex5b1.ss
+
+  infer [H,G]
+  requires H(x)
+  ensures G(x);
+
+# Obtain:
+
+[ H(x_1470) ::= H(next_58_1468) * x_1470::node<val_58_1471,next_58_1468>@M
+ or emp&x_1470=null
+ (4,5),
+ G(x_1472) ::= x_1472::node<val_58_1473,next_58_1447>@M * G(next_58_1447)
+ or x_1472::node<val_58_1474,next_58_1447>@M * H(next_58_1447)
+ or emp&x_1472=null
+ (4,5)]
+*************************************
+
+!!! INFERRED SHAPE SPEC:
+ EBase 
+   x::H<>@M&{FLOW,(4,5)=__norm#E}[]
+   EBase 
+     emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+     EAssume 
+       x::G<>@M&{FLOW,(4,5)=__norm#E}[]Stop z3... 108 invocations 
+
+# Can we transform to:
+
+  requires x::ll<>
+  ensures x::lseg<p>*p::ll<> ;
+
+=====================================================================
+# ex5b2.ss
+
+  infer [R]
+  requires x::ll<>
+  ensures x::lseg<p>*p::ll<> & R(p,res);
+
+Derived:
+
+[RELDEFN R: ( p=null & 1<=res) -->  R(p,res),
+RELDEFN R: ( R(p,res)) -->  R(p,res),
+RELDEFN R: ( not(res) & p!=null) -->  R(p,res),
+RELDEFN R: ( not(res)) -->  R(p,res)] // drop this for stronger p
+
+# Is it safe to strengthen:
+ RELDEFN R: ( not(res)) -->  R(p,res)]
+to:
+ RELDEFN R: ( not(res) & p!=null) -->  R(p,res),
+
+# How is this needed?
+
+# Obtain:
+
+!!! **pi.ml#775:>>>>>>>>>>> (bef postprocess): <<<<<<<<<
+!!! **pi.ml#776:>>REL POST:  R(p,res)
+!!! **pi.ml#777:>>POST:  (not(res) | (p=null & res))
+!!! **pi.ml#778:>>REL PRE :  true
+!!! **pi.ml#779:>>PRE :  true
+
+
+# Can we derive a stronger:
+
+  (not(res) & p!=null | (p=null & res))
+=====================================================================
+# ex5b4.ss
+
+  infer [R1,R2]
+  requires x::ll<>
+  ensures x::lseg_ones<p>*p::ll_not_one<> 
+      & (!(res) & p!=null | (p=null & res));
+lseg_ones<p> == self=p or self::node<v,q>*q::lseg_ones<p> & R1(v);
+ll_not_one<> == self=null or self::node<v,q>*q::ll<> & R2(v);
+
+
+# Obtain:
+
+[RELDEFN R1(__norm#E): ( v_1495=1) -->  R1(v_1495),
+RELDEFN R1(__norm#E): ( v_1505!=1) -->  R1(v_1505),
+RELDEFN R2(__norm#E): ( v_1514!=1) -->  R2(v_1514),
+RELDEFN R2(__norm#E): ( true) -->  R2(v_1517)]
+
+# Is this correct?
+# Should it be just:
+
+   v=1 --> R1(v)
+   v!=1 --> R2(v)
+
+# Why did we have spurious relations?
+
+# double relations:
+pure rel_ass: [RELDEFN R1(__norm#E): ( v_1495=1) -->  R1(v_1495),
+RELDEFN R1(__norm#E): ( v_1495=1) -->  R1(v_1495)]
+
+# multiple relations:
+
+id: 29; caller: []; line: 27; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ R1,R2]; c_heap: emp; others: [] globals: [@flow,@ver_post]
+ checkentail x'::node<Anon_1471,q_1472>@M * q_1472::ll<>@M&
+not(v_bool_34_1449') & not(v_bool_31_1450') & x'!=null & x'=x & 
+Anon_1471!=1 & not(v_boolean_37_1448') & res=v_boolean_37_1448' & MayLoop[]&
+{FLOW,(4,5)=__norm#E}[]
+ |-  (exists : x::lseg_ones<p>@M * p::ll_not_one<>@M&
+((not(res) & p!=null) | (p=null & res))&{FLOW,(4,5)=__norm#E}[]. 
+pure rel_ass: [RELDEFN R2(__norm#E): ( true) -->  R2(v_1517),
+RELDEFN R2(__norm#E): ( v_1514!=1) -->  R2(v_1514),
+RELDEFN R2(__norm#E): ( v_1514!=1) -->  R2(v_1514),
+RELDEFN R1(__norm#E): ( v_1505!=1) -->  R1(v_1505),
+RELDEFN R1(__norm#E): ( v_1505!=1) -->  R1(v_1505)]
+
+--------------------
+# ex5b4.ss
+
+Contrast this to: 
+
+ ex5c4.slk and x5c5.slk
+
+ inferred rel: [RELDEFN R1: ( v_84=1) -->  R1(v_84)]
+ inferred rel: [RELDEFN R2: ( v_86!=1) -->  R2(v_86)]
+
+# Were Spurious relations from failed attempts?
+
+
+=====================================================================
+# ex5c4.slk (FIXED)
+
+ERROR: at _0:0_0:0
+Message: R1 is undefined (8)
+
+  try 
+    (x_add (get_spec_var_type_list ~lprime:p) v d_tt pos)
+  with _ ->
+    let vtyp, check = get_var_type v in
+    (* WN TODO : this is a quick patch to type infer problem *)
+    (* if check = false then *)
+    (*   Err.report_error { Err.error_loc = pos; *)
+    (*                      Err.error_text = v ^ " is not found in both sides"; } *)
+    (* else *)
+    match vtyp with
+    | UNK -> Err.report_error { Err.error_loc = pos;
+                                Err.error_text = v ^ " is undefined (9)"; }
+    | t -> CP.SpecVar (t, v, p (* Unprimed *))
+
+(==typeinfer.ml#1376==)
+get_spec_var_type_list@20@19
+get_spec_var_type_list inp1 :R1
+get_spec_var_type_list@20 EXIT ExceptionFailure("R1 is undefined (8)")Occurred!
+
+!!! **typeinfer.ml#1379:TODO: fix quick patch to type infer:R1
+=====================================================================
+# solver.ml
+
+# infer.ml
+                if lr!=[] then
+                  begin
+                    x_winfo_pp "if important : need to add to estate.es_infer_rel" no_pos;
+                    x_binfo_hp (add_str "WARNING : Spurious RelInferred (not collected)" (pr_list CP.print_lhs_rhs)) lr pos;
+                    (* lr seems to be spurious RelInferred which have already been collected? *)
+                    let () = Infer.infer_rel_stk # push_list_pr lr in
+                    ()
+                  end;
+
+# write a script that would find examples that trigger the
+  following code.
+
+                      let () = x_winfo_pp "To add this to new_estate.es_infer_rel" pos in
+                      let () = x_binfo_hp (add_str "RelInferred (rel_ass)" (pr_list print_lhs_rhs)) rel_ass pos in
+                      let () = infer_rel_stk # push_list_pr rel_ass in
+                      let () = Log.current_infer_rel_stk # push_list rel_ass in
+                      (None,Some inferred_pure,[(new_estate,rel_ass,false)])
+=====================================================================
+# ex5b2.ss --print-type -dre ".*conv": FIXED
+
+Why 1<=res not translated to true? FIXED. trans_bool after pairwise + fixcalc output
+
+RELDEFN R:RelT([]): ( p:node=null & 1<=res:boolean) -->  R:RelT([])(p:node,res:boolean),
+
+# Why norm procedure here did not convert boolean <--> integer?
+===> convert at Omega.omega_of_b_formula
+
+# why inference did not use these normalization transformations?
+
+(==tpdispatcher.ml#1691==)
+norm_pure_result@121
+norm_pure_result inp1 : v0:boolean & not(v0:boolean)
+norm_pure_result inp2 :[]
+norm_pure_result@121 EXIT: v0:boolean & not(v0:boolean)
+
+(==astsimp.ml#6772==)
+norm_pure_input@123
+norm_pure_input inp1 : a:boolean & not(a:boolean)
+norm_pure_input@123 EXIT: a:boolean & not(a:boolean)
+=====================================================================
+# ex8b
+
+
+TODO 1:
+ - detect pre in pre-fix form)
+ - infer pre -> weaken
+ - re-verify + infer post
+
+TODO 2:
+  - segmentation
+  ll(x) == lseg(x,null)
+  lseg_base_dangling(x) = lseg(x, p)
+
+=====================================================================
+#ex7b2
+
+post is duplicate
+*********************************************************
+*******relational definition ********
+*********************************************************
+[ H(p_1578,flag_1579) ::= p_1578::node<h_44_1580,next_44_1536>@M&flag_1579(4,5),
+ G(p_1581,p_1582,flag_1583,flag_1584) ::= p_1581::node<h_44_1585,next_44_1536>@M *
+ G(next_44_1536,p_1582,flag_1567,flag_1584)&flag_1567 & flag_1583
+ or p_1582::node<h_44_1587,next_44_1536>@M&
+    flag_1584=flag_1583 & p_1582=p_1581 & flag_1583
+ or p_1581::node<h_44_1585,next_44_1536>@M *
+    G(next_44_1536,p_1582,flag_1566,flag_1584)&flag_1566 & flag_1583
+ (4,5)]
+*************************************
+
+
+=====================================================================
+# ex9a1
+
+
+*************************************
+*******shape relational assumptions ********
+*************************************
+[ // BIND
+(1;0)H(list,t@NI)&
+true --> list::node<next_50_1535,prev_50_1536>@M *
+         HP_1537(next_50_1535,t@NI) * HP_1538(prev_50_1536,t@NI)&
+true,
+ // PRE_REC
+(1;0)list'::node<list_1540,Anon_1531>@M * HP_1537(next_50_1535,t@NI) *
+     list_1540::node<next_50_1535,list'>@M&t'=list' --> H(list',t'@NI)&
+true]
+
+
+!!! WARNING logtime exception:0.000379
+!!! WARNING logtime exception:0.001051
+ --error:  at:
+
+
+
+=====================================================================
+# ex8c1.slk
+
+# Why no lemma message?
+
+Entail 4: Valid. 
+Residue:
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  COND ==>  Match(p',p')]]
+=====================================================================
+# ex8b2
+
+*************************************
+*******shape relational assumptions ********
+*************************************
+[ // POST
+(1;0)(htrue) * t_1668::node<v_int_69_1662,p>@M * G(t_1668,p')&
+true --> G(p,p')&
+true,
+ // POST
+(2;0)htrue&p'=p --> G(p,p')&
+true]
+
+*********************************************************
+*******relational definition ********
+*********************************************************
+[ G(p_1669,p_1670) ::= htrue&p_1670=p_1669(4,5)]
+*************************************
+
+
+
+
+=====================================================================
+# ex8b3  (FIXED by summing failures)
+
+  requires p::lseg_one<q> 
+  ensures p'::lseg_one<q>  ; //'
+
+# Was a false generated for post-condition proving?
+
+Checking procedure create_one$node... 
+[UNSOUNDNESS] WARNING : new unsatisfiable state from post-proving of ex8b3-simple-bug-post.ss_49:10_49:25
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
