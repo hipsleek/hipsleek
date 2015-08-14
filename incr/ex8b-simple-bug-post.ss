@@ -33,25 +33,31 @@ lseg_one<p> == self=p
   or self::node<1,q>*q::lseg_one<p>
   ;
 
+lemma_safe self::lseg_one<t> * t::node<1,p> -> self::lseg_one<p>.
+
 
 // please tighthen input/output consideration for method
 // which are input only and which are output only, or both.
-void create_one (ref node p, ref node t)
+void create_one (ref node p)
 
 //  infer [G] requires p::lseg<>   ensures G(p,p');
 //  infer [G] requires p::lseg1<_>   ensures G(p,p');
 //  infer [G1] requires p::lseg1<_>   ensures G1(p,p',t,t');
-  infer [H,G] requires H(p,t)   ensures G(p,p',t,t');
+// infer [H,G] requires H(p,t)   ensures G(p,p',t,t');
 // infer [H] requires H(p)   ensures true;
 //  infer [H1] requires H1(p,t)   ensures true;
-//  requires p::lseg_one<q> ensures p'::lseg_one<q> ; //'
+//  requires p::lseg_one<q> 
+//  ensures p'::lseg_one<q>  ; //'
+  requires emp
+  ensures p'::lseg_one<p>  ; //'
 {
+  node t;
   if (bool_nondet()) {
     t = new_node();
     t.h = 1;
     t.next = p;
     p = t;
-    create_one(p,t);
+    create_one(p);
   }
 }
 
