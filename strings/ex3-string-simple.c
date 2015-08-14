@@ -17,10 +17,10 @@ int main() {
 }
 */
 
- char *(cstrcat)(char *s1, const char *s2)
+char *(cstrcat)(char *s1, const char *s2)
  /*@ 
-     requires true
-     ensures true;
+     requires s1::char_star<_,_>*s2::char_star<_,q>
+     ensures s1::char_star<_,q>*q::char_star<_,_>;
  */
  {
      char *s = s1;
@@ -32,17 +32,17 @@ int main() {
      return s1;
  }
 
-int main() 
-/*@ 
+/*int main() 
+/*
      requires true
      ensures true;
- */
+
 
 {
   char *s1;
   char *s2;
   cstrcat(s1, s2);
   return 0;
-}
+}*/
 
 

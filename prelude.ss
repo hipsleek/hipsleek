@@ -556,3 +556,7 @@ int __get_char(char_star x)
   requires x::char_star<v,q>@L & Term[]
   ensures res=v;
 
+void __write_char(char_star x, int v)
+  requires x::char_star<_,_>@L & Term[]
+  ensures x::char_star<v,_>;
+
