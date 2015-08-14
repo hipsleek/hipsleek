@@ -918,18 +918,18 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                 let tmp_ctx = check_post prog proc res_ctx (post_cond,post_struc) pos_post post_label etype in
                 let cnt_before = CF.count_sat_pc_list res_ctx in
                 let cnt_after = CF.count_sat_pc_list tmp_ctx in
-                let () = x_ninfo_pp ("\n Before CheckPost : "^(Cprinter.string_of_list_partial_context res_ctx)) no_pos in
-                let () = x_ninfo_pp ("\n After CheckPost : "^(Cprinter.string_of_list_partial_context tmp_ctx)) no_pos in
-                let () = x_tinfo_pp ("\n Before CheckPost : "^(string_of_int cnt_before)) no_pos in
-                let () = x_tinfo_pp ("\n After CheckPost : "^(string_of_int cnt_after)) no_pos in
                 (*                      x_dinfo_pp ">>>>> Performing check_post ENDS" no_pos;*)
                 if cnt_before>cnt_after && not(!Globals.old_collect_false) then
                   begin
                     (* need to do the same for pre-condition proving ? *)
                     (* detected new False from post-condition proving *)
                     (* potential unsoundness *)
+                    let () = x_binfo_pp ("\n Before CheckPost : "^(Cprinter.string_of_list_partial_context res_ctx)) no_pos in
+                    let () = x_binfo_pp ("\n After CheckPost : "^(Cprinter.string_of_list_partial_context tmp_ctx)) no_pos in
+                    let () = x_binfo_pp ("\n Before CheckPost : "^(string_of_int cnt_before)) no_pos in
+                    let () = x_binfo_pp ("\n After CheckPost : "^(string_of_int cnt_after)) no_pos in
                     let () = add_false_ctx (post_pos # get) in
-                    print_endline_quiet ("\n[UNSOUNDNESS] WARNING : new unsatisfiable state from post-proving of "^(post_pos # string_of))
+                    print_endline_quiet ("\n[UNSOUNDNESS] WARNING : possible new unsatisfiable state from post-proving of "^(post_pos # string_of))
                   end;
                 (* Termination: collect error messages from successful states *)
                 let term_err_msg = CF.collect_term_err_list_partial_context tmp_ctx in 

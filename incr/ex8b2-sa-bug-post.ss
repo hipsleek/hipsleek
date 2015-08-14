@@ -57,7 +57,7 @@ void create_one (ref node p)
   ensures p'::lseg_one<p>  ; //'
                             */
 // infer [H] requires H(p)   ensures true;
-// infer [G] requires true   ensures G(p,p');
+ infer [G] requires true   ensures G(p,p');
   /*
  requires true
   ensures p'::rlseg<p>  ;
@@ -73,50 +73,29 @@ void create_one (ref node p)
   }
 }
 
-/*
-sol 1:
- - pre is a fix point,
- - post base case requires p'=p
-
-sol 2:
- - pre = true
- - post: rlseg
-
- */
-
 
 /*
-
 *************************************
 *******shape relational assumptions ********
 *************************************
-[ // PRE_REC
-(1;0)H(p) * p'::node<v_int_49_1507,p>@M&true --> H(p')&
+[ // POST
+(1;0)(htrue) * t_1668::node<v_int_69_1662,p>@M * G(t_1668,p')&
+true --> G(p,p')&
 true,
  // POST
-(1;0)G(t_1516,p')&t_1516!=null --> G(p,p')&
-true,
- // POST
-(2;0)H(p)&p'=p --> G(p,p')&
+(2;0)htrue&p'=p --> G(p,p')&
 true]
 
-
-can not reverify
 *********************************************************
 *******relational definition ********
 *********************************************************
-[ H(p') ::= H(p) * p'::node<v_int_37_1478,p>@M
- or emp&p'=DP_DP_DP_1489'
- (4,5),
- G(p,p') ::= DP_1488(p)&p'=p(4,5),
- DP_1488(p_1508) ::= H(p_1507) * p_1508::node<v_int_37_1509,p_1507>@M
- or emp&p_1508=DP_DP_DP_1489'
- (4,5)]
+[ G(p_1669,p_1670) ::= htrue&p_1670=p_1669(4,5)]
 *************************************
+
 
 TODO:
  - detect this scheme (i.e. pre in pre-fix form)
- - infer pre -> weaken
+ - infer pre -> true
  - re-verify + infer post
  */
 

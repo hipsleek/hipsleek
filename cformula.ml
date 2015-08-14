@@ -11067,7 +11067,8 @@ let remove_dupl_false_fe (fl,ec,sl) = (fl,ec,remove_dupl_false sl)
 
 let count_sat_pc_list (fs_list:list_partial_context) = 
   (* let ns = List.filter (fun (fl,sl) -> not(fl==[] && isFalseBranchCtxL sl)) fs_list in *)
-  List.length (List.concat (List.map snd fs_list))
+  let cnt_list = List.map (fun (a,b)->(List.length a)+(List.length b)) fs_list in
+  List.fold_left (+) 0 cnt_list
 
 let remove_dupl_false_pc_list (fs_list:list_partial_context) = 
   let ns = List.filter (fun (fl,sl) -> not(fl==[] && isFalseBranchCtxL sl)) fs_list in
