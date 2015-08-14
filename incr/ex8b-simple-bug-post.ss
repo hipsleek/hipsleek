@@ -34,12 +34,14 @@ lseg_one<p> == self=p
   ;
 
 
+// please tighthen input/output consideration for method
+// which are input only and which are output only, or both.
 void create_one (ref node p, ref node t)
 
 //  infer [G] requires p::lseg<>   ensures G(p,p');
 //  infer [G] requires p::lseg1<_>   ensures G(p,p');
 //  infer [G1] requires p::lseg1<_>   ensures G1(p,p',t,t');
-  infer [H,G] requires H(p)   ensures G(p,p');
+  infer [H,G] requires H(p,t)   ensures G(p,p',t,t');
 // infer [H] requires H(p)   ensures true;
 //  infer [H1] requires H1(p,t)   ensures true;
 //  requires p::lseg_one<q> ensures p'::lseg_one<q> ; //'
@@ -55,6 +57,7 @@ void create_one (ref node p, ref node t)
 
 
 /*
+
 *************************************
 *******shape relational assumptions ********
 *************************************
