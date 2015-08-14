@@ -380,6 +380,15 @@ Residue:
  <1>emp&{FLOW,(20,21)=__norm#E}[]
 [[ SEARCH ==>  COND ==>  Match(p',p')]]
 =====================================================================
+# ex8b3
+
+  requires p::lseg_one<q> 
+  ensures p'::lseg_one<q>  ; //'
+
+# Was a false generated for post-condition proving?
+
+Checking procedure create_one$node... 
+[UNSOUNDNESS] WARNING : new unsatisfiable state from post-proving of ex8b3-simple-bug-post.ss_49:10_49:25
 =====================================================================
 =====================================================================
 =====================================================================
