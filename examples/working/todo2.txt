@@ -23,10 +23,10 @@ Total verification time: 96.83 second
 	Number of false contexts: 90
 
 hip --eps
-Total verification time: 209.34 second
-	Time spent in main process: 128.23 second
-	Time spent in child processes: 81.11 second
-	Number of false contexts: 415
+Total verification time: 219.37 second
+	Time spent in main process: 132.98 second
+	Time spent in child processes: 86.40 second
+	Number of false contexts: 414
 
 ==================================================================
 ==================================================================
