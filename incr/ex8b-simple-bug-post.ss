@@ -57,7 +57,7 @@ void create_one (ref node p)
   ensures p'::lseg_one<p>  ; //'
                             */
 // infer [H] requires H(p)   ensures true;
- infer [G] requires true   ensures G(p,p');
+// infer [G] requires true   ensures G(p,p');
   /*
  requires true
   ensures p'::rlseg<p>  ;
@@ -72,6 +72,17 @@ void create_one (ref node p)
     create_one(p);
   }
 }
+
+/*
+sol 1:
+ - pre is a fix point,
+ - post base case requires p'=p
+
+sol 2:
+ - pre = true
+ - post: rlseg
+
+ */
 
 
 /*
