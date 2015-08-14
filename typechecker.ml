@@ -4348,6 +4348,51 @@ let rec check_prog iprog (prog : prog_decl) =
         end
       else true,prog
     in
+
+    (* for @analyse_param command, may need to adjust static specs. *)
+    (* TODO: need to check _here_ for any of the procs in SCC has ana_param... *)
+    let proc_correct_specs proc1 =
+        let spec = proc1.proc_static_specs  in
+        let () = Debug.binfo_hprint (add_str "in proc_correct_specs" (Cprinter.string_of_struc_formula )) spec  no_pos in
+        let inf_lst = CF.extr_infer_obj spec in
+        let local_ana_param = List.exists (fun o -> o # is_ana_param) inf_lst in
+        let is_ana_param = Globals.infer_const_obj # is_ana_param || local_ana_param in
+
+        if is_ana_param then
+            let rels = prog.prog_rel_decls # get_stk in
+            let inf_f_lst = CF.extr_infer_formula spec in
+            let rels_ids = List.map (fun r -> r.rel_name) rels in
+            (* check inf_lst for any inferred vars are in rels. *)
+            let inf_rels = List.flatten (List.map
+                                         (fun if_f -> if_f.CF.formula_inf_vars)
+                                         inf_f_lst) in
+            let inf_rels_ids = List.map CP.ident_of_spec_var inf_rels in
+            (* assume that the rel has same # args, etc. as proc1. *)
+            let has_rel = List.exists (fun id -> List.mem id rels_ids) inf_rels_ids in
+            if not has_rel then
+                (* TODO: Need to add the relation to prog, proc1 *)
+                (* add the relation to prog, so infer[R] can work. *)
+                (* ident for rel derived from the proc name. *)
+                let rel_ident = (proc1.proc_name) ^ "R" in
+                let proc_args = proc1.proc_args in
+                let args = List.map (fun (t,i) -> CP.mk_typed_spec_var t i) proc_args in
+                (* new rel (of the proc1) is untyped. *)
+                let relf = CP.mkRel (CP.mk_spec_var rel_ident)
+                                    (List.map (fun a -> CP.mkVar a no_pos) args)
+                                    no_pos in
+                let reldecl = { rel_name = rel_ident;
+                                rel_vars = args;
+                                rel_formula = relf;
+                              } in
+                let () = prog.prog_rel_decls # push reldecl in
+                (* add the relation to proc1. *)
+                let nspec = CF.insert_relation_to_struc relf spec in
+                let () =  Debug.binfo_hprint (add_str "with relation inserted" (Cprinter.string_of_struc_formula )) nspec  no_pos in
+                { proc1 with proc_static_specs = nspec }
+            else proc1
+        else proc1 in
+    let scc = List.map proc_correct_specs scc in
+
     (* let () = List.iter (fun proc -> *)
     (*    x_binfo_hp (add_str "spec after phase inference for mutual-recursive groups" Cprinter.string_of_struc_formula) (proc.proc_static_specs) no_pos) scc in *)
     (* let () = Debug.info_hprint (add_str "is_all_verified1" string_of_bool) is_all_verified1 no_pos in *)
@@ -4372,39 +4417,6 @@ let rec check_prog iprog (prog : prog_decl) =
           let is_ana_param = Globals.infer_const_obj # is_ana_param || local_ana_param in
           (* may need to add in relation, precondition
            * if using @analyse_param *)
-          let _ = if is_ana_param then
-              let rels = prog.prog_rel_decls # get_stk in
-              let inf_f_lst = CF.extr_infer_formula spec in
-              let rels_ids = List.map (fun r -> r.rel_name) rels in
-              (* check inf_lst for any inferred vars are in rels. *)
-              let inf_rels = List.flatten (List.map
-                                           (fun if_f -> if_f.CF.formula_inf_vars)
-                                           inf_f_lst) in
-              let inf_rels_ids = List.map CP.ident_of_spec_var inf_rels in
-              (* assume that the rel has same # args, etc. as proc1. *)
-              let has_rel = List.exists (fun id -> List.mem id rels_ids) inf_rels_ids in
-              if not has_rel then
-                  (* TODO: Need to add the relation to prog, proc1 *)
-                  (* add the relation to prog, so infer[R] can work. *)
-                  (* ident for rel derived from the proc name. *)
-                  let rel_ident = (proc1.proc_name) ^ "R" in
-                  let proc_args = proc1.proc_args in
-                  let args = List.map (fun (t,i) -> CP.mk_typed_spec_var t i) proc_args in
-                  (* new rel (of the proc1) is untyped. *)
-                  let relf = CP.mkRel (CP.mk_spec_var rel_ident)
-                                      (List.map (fun a -> CP.mkVar a no_pos) args)
-                                      no_pos in
-                  let reldecl = { rel_name = rel_ident;
-                                  rel_vars = args;
-                                  rel_formula = relf;
-                                } in
-                  let () = prog.prog_rel_decls # push reldecl in
-                  (* add the relation to proc1. *)
-                  let nspec = CF.insert_relation_to_struc relf spec in
-                  let () =  Debug.binfo_hprint (add_str "with relation inserted" (Cprinter.string_of_struc_formula )) nspec  no_pos in
-                  ()
-              else ()
-          else () in
           (* let () = Infer.infer_rel_stk # dump curr_file_loc in *)
           (* Richard: location where rel_def are inferred *)
           (* dump:(0)**typechecker.ml#4344: *)
