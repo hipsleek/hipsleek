@@ -39,6 +39,7 @@ void create_dll (ref node list, ref node t)
 
   requires list::dllseg<_,_> ensures list'::dllseg<_,l> ; //'
 
+
 {
   if (bool_nondet()) {
     //list::node<_,q> * q::lseg<l>
