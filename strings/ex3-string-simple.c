@@ -20,7 +20,7 @@ int main() {
 char *(cstrcat)(char *s1, const char *s2)
  /*@ 
      requires s1::char_star<_,_>*s2::char_star<_,q>
-     ensures s1::char_star<_,q>*q::char_star<_,_>;
+     ensures s1::char_star<_,q>;
  */
  {
      char *s = s1;

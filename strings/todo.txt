@@ -15,7 +15,7 @@ Procedure while2$STR~STR SUCCESS.
 Termination checking result: 
 (70)->(70) (ERR: invalid transition)  Term[101; k-n] ->  MayLoop[]
 ==================================================================
-# ex3.c
+# ex3.c (FIXED)
 
 Currently translate char* to int*.
 Perhaps, we should use string type?
@@ -682,6 +682,18 @@ incr_fixpt_view inp1 :[__Exc,__Error,__MayError,__Fail,int_ptr_ptr,int_ptr,lock,
 incr_fixpt_view inp2 :[WAITS,WAIT,memLoc,DDD]
 incr_fixpt_view@1 EXIT:WAITS
 ==================================================================
+# ex3-string-simple.c
+
+# Why precondition in method __write_char$char_star~int failed?
+
+# prelude.ss
+void __write_char(char_star x, int v)
+  requires x::char_star<_,_>@L & Term[]
+  ensures x::char_star<v,_>;
+
+Checking procedure cstrcat$char_star~char_star... 
+Proving precondition in method __write_char$char_star~int Failed.
+  (may) cause: do_unmatched_rhs : s'::char_star<Anon_26,Anon_27>@L(may)
 ==================================================================
 ==================================================================
 ==================================================================
