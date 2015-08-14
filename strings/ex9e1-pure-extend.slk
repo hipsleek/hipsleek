@@ -1,0 +1,65 @@
+data node {
+	int val#VAL;
+	node next#REC;
+}.
+
+pred ll<> == self=null
+  or self::node<_,p> * p::ll<> & self!=null
+inv true.
+
+pred lln<n> == self = null & n = 0
+	or self::node<_, q> * q::lln<n-1>
+  inv n >= 0.
+
+pred ll_one<> == self::node<_, q> * q::ll<>.
+
+pred ll_one_ex<> == self::node<_, q> * q::lln<n>.
+
+pred ll_one_exn<n> == self::node<_, q> * q::lln<n-1>.
+
+pred_extn size[R]<n> ==
+      n=0 // base case
+   or R::size<m> & n=1+m 
+   inv n>=0.
+
+
+pred llN<n:int> == extends ll<> with size[REC]<n> .
+
+//pred ll_one_exN<n:int> == extends ll_one_ex<> with size[REC]<n> .
+
+
+/*
+//check duplicate
+pred llN1<n:int> == extends llN<> with size[REC]<n> .
+
+# ex9e1.slk
+
+Given:
+
+ pred llN<n:int> == extends ll<> with size[REC]<n> .
+
+Derived:
+
+   view llN<n:int>= 
+    EList
+      :EBase 
+         (* lbl: *){10}->emp&self=null & n=0&{FLOW,(1,26)=__flow#E}[]
+      || :EBase 
+            exists (Expl)[](Impl)[Anon_85; 
+            p_86](ex)[](* lbl: *){11}->(exists n_87: (* lbl: *){11}->
+            self::node<Anon_85,p_86>@M * p_86::llN<n_87>@M&
+            self!=null & n=n_87+1 & 0<=n_87&{FLOW,(1,26)=__flow#E}[]
+  inv: true
+  baga over inv: [([], true)]
+  baga over inv (unfolded): [([self], 1<=n & self!=null),([], self=null & n=0)]
+
+# Why true? Can we get n>=0 from baga inv computation?
+
+*/
+
+
+
+
+//pred ll_oneN<n:int> == extends ll_one<> with size[REC]<n> .
+
+

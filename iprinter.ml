@@ -952,7 +952,7 @@ and
 
 ;;
 
-let string_of_field_ann ann= String.concat "@" ann
+let string_of_field_ann ann= "@" ^ (String.concat "@" ann)
 (* match ann with *)
 (*   | VAL -> "@VAL" *)
 (*   | REC -> "@REC" *)
@@ -970,8 +970,15 @@ let rec string_of_decl_list l c = match l with
   | h::t             -> "  " ^ (string_of_decl h) ^ ";" ^ c ^ (string_of_decl_list t c)
 ;;
 
+
+let string_of_data_pure_inv inv =
+  match inv with
+  | None -> "\n"
+  | Some pf -> "pure inv "^((string_of_pure_formula) pf)^"\n"
+;;
+
 (* pretty printing for a data declaration *)
-let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_decl_list d.data_fields "\n") ^ "\n}"
+let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_decl_list d.data_fields "\n") ^ "\n}"^(string_of_data_pure_inv d.data_pure_inv)
 ;;
 
 (* pretty printing for a global variable declaration *)
@@ -1169,13 +1176,21 @@ let string_of_hp_decl hpdecl =
 let string_of_axiom_decl_list adecls = 
   String.concat "\n" (List.map (fun a -> "axiom " ^ (string_of_pure_formula a.axiom_hypothesis) ^ " |- " ^ (string_of_pure_formula a.axiom_conclusion)) adecls)
 
+
 let string_of_data cdef = 
-  let meth_str = String.concat "\n" (List.map string_of_proc_decl cdef.data_methods) in
+  let meth_str = 
+    let dd=cdef.data_methods in
+    if dd==[] then ""
+    else "\n"^(String.concat "\n" (List.map string_of_proc_decl dd)) in
   let field_str = String.concat ";\n" 
       (List.map (fun f -> string_of_decl f) cdef.data_fields) in
-  let inv_str = String.concat ";\n" (List.map (fun i -> "inv " ^ (string_of_formula i)) cdef.data_invs) in
+  let inv_str = 
+    let dd=cdef.data_invs in
+    if dd==[] then ""
+    else "\n"^(String.concat ";\n" (List.map (fun i -> "inv " ^ (string_of_formula i)) cdef.data_invs)) in
   "class " ^ cdef.data_name ^ " extends " ^ cdef.data_parent_name ^ " {\n"
-  ^ field_str ^ "\n" ^ inv_str ^ "\n" ^ meth_str ^ "\n}"
+  ^ field_str ^ inv_str ^ meth_str ^ "\n}"
+  ^(string_of_data_pure_inv cdef.data_pure_inv)
 
 (* pretty printing for program *)
 let string_of_program p = (* "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^  *)

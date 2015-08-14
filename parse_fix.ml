@@ -57,7 +57,7 @@ let add_prefix var prefix = match var with
   | SpecVar (t,id,p) -> SpecVar (t,prefix ^ id,p)
 
 let is_node var = match var with 
-  | Var (SpecVar (_,id,_), _) -> is_substr "NOD" id || id=self
+  | Var (SpecVar (_,id,_), _) -> (* is_substr "NOD" id || *) id=self
   | _ -> false
 
 let get_node var = match var with 
@@ -67,7 +67,7 @@ let get_node var = match var with
   | _ -> report_error no_pos "Expected a pointer variable"
 
 let is_rec_node var = match var with 
-  | Var (SpecVar (_,id,_), _) -> is_substr "RECNOD" id
+  (* | Var (SpecVar (_,id,_), _) -> is_substr "RECNOD" id *)
   | _ -> false
 
 let get_rec_node var = match var with 
@@ -129,6 +129,24 @@ let initialize_tlist f =
   tlist # push_list (get_type_list_for_fixcalc_output f)
 ;;
 
+(* TODO:WN : does this affect ptr arithmetic later ? *)
+(* some of the convertion already handled by norm_pure_result *)
+(* incr/ex5b2.ss output problem if is_node stuff removed *)
+(* < !!! **fixcalc.ml#393:svls (from parse_fix):[p:node,res:Unknown] *)
+(* < !!! **fixcalc.ml#1063:Result of fixcalc (parsed): :[ (not(res:boolean) | (p:node=null & res:boolean))] *)
+(* --- *)
+(* > !!! **fixcalc.ml#393:svls (from parse_fix):[NODp:Unknown,res:Unknown] *)
+(* > !!! **fixcalc.ml#1063:Result of fixcalc (parsed): :[ (not(res:boolean) | (0>=NODp:Unknown & res:boolean))] *)
+(* 66c66 *)
+(* < !!! **pi.ml#781:>>POST:  (not(res:boolean) | (p:node=null & res:boolean)) *)
+(* --- *)
+(* > !!! **pi.ml#781:>>POST:  (not(res:boolean) | (0>=NODp:Unknown & res:boolean)) *)
+(* 75c75,76 *)
+(* <      (not(res:boolean) | (p:node=null & res:boolean))&{FLOW,(4,5)=__norm#E}[] *)
+(* --- *)
+(* >      (not(res:boolean) | (0>=NODp:Unknown & res:boolean))& *)
+(* >      {FLOW,(4,5)=__norm#E}[] *)
+
 let initialize_tlist_from_fpairlist fpairlst =
   tlist # push_list ( List.fold_left (fun r (f1,f2,_) -> r@(get_type_list_for_fixcalc_output f1)@(get_type_list_for_fixcalc_output f2)) []  fpairlst)
 ;;
@@ -183,64 +201,71 @@ formula:
           | x = exp; "<"; y = exp ->
                 (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) x no_pos in *)
                 (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) y no_pos in *)
-                if is_bool_res_var y && is_zero x then
-                  BForm ((BVar (get_var "res" tlist, loc), None), None)
-                else if is_bool_res_var x && is_one y then
-                  Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc) 
-                else
+                (* if is_bool_res_var y && is_zero x then *)
+                (*   BForm ((BVar (get_var "res" tlist, loc), None), None) *)
+                (* else if is_bool_res_var x && is_one y then *)
+                (*   Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc)  *)
+                (* else *)
                   let tmp = 
-                    if is_node y && is_zero x then 
-                      Neq (Var(get_var (get_node y) tlist, loc), Null loc, loc)
-                    else if is_node x && is_one y then 
-                      Eq (Var(get_var (get_node x) tlist, loc), Null loc, loc)
-                    else if is_self_var y then 
-                      Neq (Var(get_var "self" tlist, loc), Null loc, loc)
+                    if !Globals.old_parse_fix then
+                      if is_node y && is_zero x then 
+                        Neq (Var(get_var (get_node y) tlist, loc), Null loc, loc)
+                      else if is_node x && is_one y then 
+                        Eq (Var(get_var (get_node x) tlist, loc), Null loc, loc)
+                      else if is_self_var y then 
+                        Neq (Var(get_var "self" tlist, loc), Null loc, loc)
+                      else Lt (x, y, loc) 
                     else Lt (x, y, loc) 
                   in BForm ((tmp, None), None)
           | x = exp; ">"; y = exp ->
                 (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) x no_pos in *)
                 (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) y no_pos in *)
-                if is_bool_res_var x && is_zero y then 
-                  BForm ((BVar (get_var "res" tlist, loc), None), None) 
-                else if is_bool_res_var y && is_one x then 
-                  Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc) 
-                else
+                (* if is_bool_res_var x && is_zero y then  *)
+                (*   BForm ((BVar (get_var "res" tlist, loc), None), None)  *)
+                (* else if is_bool_res_var y && is_one x then  *)
+                (*   Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc)  *)
+                (* else *)
                   let tmp = 
-                    if is_node x && is_zero y then 
-                      Neq (Var(get_var (get_node x) tlist, loc), Null loc, loc)
-                    else if is_node y && is_one x then 
-                      Eq (Var(get_var (get_node y) tlist, loc), Null loc, loc)
-                    else if is_self_var x then 
-                      Neq (Var(get_var "self" tlist, loc), Null loc, loc)
-                    else Gt (x, y, loc) 
+                    if !Globals.old_parse_fix then
+                      if is_node x && is_zero y then 
+                        Neq (Var(get_var (get_node x) tlist, loc), Null loc, loc)
+                      else if is_node y && is_one x then 
+                        Eq (Var(get_var (get_node y) tlist, loc), Null loc, loc)
+                      else if is_self_var x then 
+                        Neq (Var(get_var "self" tlist, loc), Null loc, loc)
+                      else Gt (x, y, loc)
+                    else Gt (x, y, loc)
                   in BForm ((tmp, None), None)
           | x = exp; "<="; y = exp ->
                 (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) x no_pos in *)
                 (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) y no_pos in *)
-                if is_bool_res_var x && is_zero y then 
-                  Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc) 
-                else if is_bool_res_var y && is_one x then 
-                  BForm ((BVar (get_var "res" tlist, loc), None), None) 
-                else
+                (* if is_bool_res_var x && is_zero y then  *)
+                (*   Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc)  *)
+                (* else if is_bool_res_var y && is_one x then  *)
+                (*   BForm ((BVar (get_var "res" tlist, loc), None), None)  *)
+                (* else *)
                   let tmp = 
-                    if is_node x && is_zero y then 
-                      Eq (Var(get_var (get_node x) tlist, loc), Null loc, loc)
-                    else if is_node y && is_one x then 
-                      Neq (Var(get_var (get_node y) tlist, loc), Null loc, loc)
-                    else if is_self_var x then 
-                      Eq (Var(get_var "self" tlist, loc), Null loc, loc)
+                    if !Globals.old_parse_fix then
+                      if is_node x && is_zero y then 
+                        Eq (Var(get_var (get_node x) tlist, loc), Null loc, loc)
+                      else if is_node y && is_one x then 
+                        Neq (Var(get_var (get_node y) tlist, loc), Null loc, loc)
+                      else if is_self_var x then 
+                        Eq (Var(get_var "self" tlist, loc), Null loc, loc)
+                      else Lte (x, y, loc)
                     else Lte (x, y, loc)
                   in BForm ((tmp, None), None)
           | x = exp; ">="; y = exp ->
                 (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) x no_pos in *)
                 (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) y no_pos in *)
-                if is_bool_res_var y && is_zero x then 
-                  Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc) 
-                else
-                  if is_bool_res_var x && is_one y then 
-                    BForm ((BVar (get_var "res" tlist, loc), None), None) 
-                  else
+                (* if is_bool_res_var y && is_zero x then  *)
+                (*   Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc)  *)
+                (* else *)
+                (*   if is_bool_res_var x && is_one y then  *)
+                (*     BForm ((BVar (get_var "res" tlist, loc), None), None)  *)
+                (*   else *)
                     let tmp = 
+                    if !Globals.old_parse_fix then
                       if is_node y && is_zero x then 
                         Eq (Var(get_var (get_node y) tlist, loc), Null loc, loc)
                       else
@@ -250,27 +275,30 @@ formula:
                           if is_self_var y then 
                             Eq (Var(get_var "self" tlist, loc), Null loc, loc)
                           else Gte (x, y, loc)
+                    else Gte (x, y, loc)
                     in BForm ((tmp, None), None)
           | x = exp; "="; y = exp ->
                 (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) x no_pos in *)
                 (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) y no_pos in *)
                 let tmp = 
-                  if is_node x && is_node y then 
-                    Eq (Var(get_var (get_node x) tlist, loc), 
-                    Var(get_var (get_node y) tlist, loc), loc)
-                  else
-                    if is_node x && is_rec_node y then 
-                      Eq (Var(get_var (get_node x) tlist, loc), 
-                      Var(add_prefix (get_var (get_rec_node y) tlist) "REC", loc), loc)
-                    else
+                    if !Globals.old_parse_fix then
+                      if is_node x && is_node y then 
+                        Eq (Var(get_var (get_node x) tlist, loc), 
+                        Var(get_var (get_node y) tlist, loc), loc)
+                      else
+                      if is_node x && is_rec_node y then 
+                        Eq (Var(get_var (get_node x) tlist, loc), 
+                            Var(add_prefix (get_var (get_rec_node y) tlist) "REC", loc), loc)
+                      else
                       if is_node y && is_rec_node x then 
                         Eq (Var(get_var (get_node y) tlist, loc), 
-                        Var(add_prefix (get_var (get_rec_node x) tlist) "REC", loc), loc)
+                            Var(add_prefix (get_var (get_rec_node x) tlist) "REC", loc), loc)
                       else
-                        if is_rec_node x && is_rec_node y then 
-                          Eq (Var(add_prefix (get_var (get_rec_node x) tlist) "REC", loc), 
-                          Var(add_prefix (get_var (get_rec_node y) tlist) "REC", loc), loc)
-                        else Eq (x, y, loc)
+                      if is_rec_node x && is_rec_node y then 
+                        Eq (Var(add_prefix (get_var (get_rec_node x) tlist) "REC", loc), 
+                            Var(add_prefix (get_var (get_rec_node y) tlist) "REC", loc), loc)
+                      else Eq (x, y, loc)
+                    else Eq (x, y, loc)
                 in BForm ((tmp, None), None)
           | x = exp; "!="; y = exp ->
                 let tmp = Neq (x, y, loc) in

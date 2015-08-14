@@ -101,7 +101,9 @@ let rec new_string_of_typ (x:typ) : string = match x with
 let is_view_recursive (n:ident) = 
   if (!view_scc)==[] then (
     (* report_warning no_pos "view_scc is empty : not processed yet?"; *)
-    false)
+    (* false *)
+      raise Not_found
+  )
   else List.mem n !view_rec 
 
 (** An Hoa : List of undefined data types **)
@@ -1392,6 +1394,7 @@ let mk_new_return_data_decl_from_typ (t:typ):(I.data_decl) =
     I.data_fields = new_data_fields;
     I.data_parent_name = "__RET";
     I.data_invs = [];
+    I.data_pure_inv = None;
     I.data_is_template = false;
     I.data_methods = [];
     I.data_pos = no_pos;
@@ -1457,10 +1460,10 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 
   (*let () = print_endline ("@@prog3\n"^Iprinter.string_of_program prog3^"@@prog3\n") in*)
   let prog2 = { prog3 with I.prog_data_decls =
-                             ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
-                             ::({I.data_name = error_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
-                             ::({I.data_name = mayerror_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
-                             ::({I.data_name = bfail_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
+                             ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_pure_inv = None;I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
+                             ::({I.data_name = error_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_pure_inv = None;I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
+                             ::({I.data_name = mayerror_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_pure_inv = None;I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
+                             ::({I.data_name = bfail_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_pure_inv = None;I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
                              :: prog3.I.prog_data_decls;} in
   (* let () = print_endline (exlist # string_of ) in *)
   (* let () = I.find_empty_static_specs prog2 in *)
@@ -1559,7 +1562,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
          let tmp_views_derv1 = mark_rec_and_der_order tmp_views_derv in
          let () = x_tinfo_hp (add_str "derv length" (fun ls -> string_of_int (List.length ls))) tmp_views_derv1 no_pos in
          let cviews_derv = List.fold_left (fun norm_views v ->
-             let der_view = x_add_1 Derive.trans_view_dervs prog Rev_ast.rev_trans_formula trans_view norm_views v in
+             let der_view = x_add_1 Derive.trans_view_dervs prog Rev_ast.rev_trans_formula trans_view [] norm_views v in
              (norm_views@[der_view])
            ) cviewsa tmp_views_derv1 in
          let cviews = (* cviews_orig@ *)cviews_derv in
@@ -1804,11 +1807,17 @@ and trans_data_x (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
   in
   (* let () = Debug.info_hprint (add_str "    fields:" (pr_list (pr_pair (pr_pair string_of_typ pr_id) (pr_list pr_id)))) *)
   (*     fields no_pos in *)
+  let inv_pf = match ddef.I.data_pure_inv with
+      Some f -> Some (x_add trans_pure_formula f [])  (* WN : where is type table? *)
+    | None -> None
+  in   
   let res = {
     C.data_name = ddef.I.data_name;
     C.data_pos = ddef.I.data_pos;
-    C.data_fields = fields;
+    C.data_fields = fields; (* to be made obsolete later *)
+    C.data_fields_new = List.map (fun ((t,i),v) -> (CP.mk_typed_spec_var t i,v)) fields;
     C.data_parent_name = ddef.I.data_parent_name;
+    C.data_pure_inv = inv_pf; 
     C.data_methods = List.map (trans_proc prog) ddef.I.data_methods;
     C.data_invs = [];
   } in
@@ -2409,7 +2418,14 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
              | None -> Some fc) None n_un_str 
      in
      (* TODO : This has to be generalised to mutual-recursion *)
-     let ir = not(is_prim_v) && is_view_recursive vdef.I.view_name in
+     let ir = try
+       not(is_prim_v) && is_view_recursive vdef.I.view_name
+     with Not_found ->
+         List.exists ( fun (f,_) ->
+         let dep_vns = CF.get_views f in
+         List.exists (fun vn -> string_compare vn.CF.h_formula_view_name vdef.I.view_name) dep_vns
+         ) n_un_str
+     in
      let sf = find_pred_by_self vdef data_name in
      let () = Debug.ninfo_hprint (add_str "cf 1" Cprinter.string_of_struc_formula) cf no_pos in
      let cf = CF.struc_formula_set_lhs_case false cf in
@@ -2959,7 +2975,9 @@ and fill_one_base_case_x prog vd =
       }
     end
 
-and  fill_base_case prog =  {prog with C.prog_view_decls = List.map (fill_one_base_case prog) prog.C.prog_view_decls }
+and  fill_base_case prog = (* {prog with C.prog_view_decls = List.map (fill_one_base_case prog) prog.C.prog_view_decls } *)
+  let () = prog.C.prog_view_decls <- List.map (fill_one_base_case prog) prog.C.prog_view_decls in
+  prog
 
 (* An Hoa : trans_rel *)
 and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
@@ -3834,12 +3852,12 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
          (* let () = print_endline ("trans_proc: "^ proc.I.proc_name ^": before set_pre_flow: specs = " ^ (Iprinter.string_of_struc_formula (proc.I.proc_static_specs@proc.I.proc_dynamic_specs))) in *)
          (* let () = Debug.info_zprint (lazy (("  transform I2C: " ^  proc.I.proc_name ))) no_pos in *)
          (* let () = Debug.info_zprint (lazy (("   static spec" ^(Iprinter.string_of_struc_formula proc.I.proc_static_specs)))) no_pos in *)
-         let (n_tl,cf) = x_add trans_I2C_struc_formula 2 prog false true free_vars proc.I.proc_static_specs n_tl true true (*check_pre*) in
+         let (n_tl,cf) = trans_I2C_struc_formula 2 prog false true free_vars proc.I.proc_static_specs n_tl true true (*check_pre*) in
          let cf = CF.add_inf_cmd_struc is_primitive cf in
          let static_specs_list = set_pre_flow cf in
          (* let () = Debug.info_zprint (lazy (("   static spec" ^(Cprinter.string_of_struc_formula static_specs_list)))) no_pos in *)
          (* let () = print_string "trans_proc :: set_pre_flow PASSED 1\n" in *)
-         let (n_tl,cf) = x_add trans_I2C_struc_formula 3 prog false true free_vars proc.I.proc_dynamic_specs n_tl true true (*check_pre*) in
+         let (n_tl,cf) = trans_I2C_struc_formula 3 prog false true free_vars proc.I.proc_dynamic_specs n_tl true true (*check_pre*) in
          let cf = CF.add_inf_cmd_struc is_primitive cf in
          let dynamic_specs_list = set_pre_flow cf in
          (****** Infering LSMU from LS if there is LS in spec >>*********)
@@ -4211,7 +4229,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
     let p = List.map (fun c-> (c,Primed)) fnames in
     let wf,_ = case_normalize_struc_formula 2 prog h p (IF.formula_to_struc_formula new_head) false 
         false (*allow_post_vars*) true [] in
-    let (n_tl,cs_head_norm) = x_add trans_I2C_struc_formula 5 prog false quant (* fv_names  *) fnames  wf n_tl false 
+    let (n_tl,cs_head_norm) = trans_I2C_struc_formula 5 prog false quant (* fv_names  *) fnames  wf n_tl false 
         true (*check_pre*) in
     let c_head_norm = CF.struc_to_formula cs_head_norm in
     (n_tl,c_head_norm)
@@ -4333,7 +4351,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let wf,_ = case_normalize_struc_formula 1 prog h p (IF.formula_to_struc_formula i_rhs (* coer.I.coercion_body *)) false 
       false (*allow_post_vars*) true [] in
   let quant = true in
-  let (n_tl,cs_body_norm) = x_add trans_I2C_struc_formula 4 prog false quant (* fv_names *) lhs_fnames0 wf n_tl false 
+  let (n_tl,cs_body_norm) = trans_I2C_struc_formula 4 prog false quant (* fv_names *) lhs_fnames0 wf n_tl false 
       true (*check_pre*) in
   let cs_body_norm =
     if (coer.I.coercion_kind = LEM_PROP) then
@@ -4641,7 +4659,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
       let n_tl = List.map (fun (t, n) -> (n,{ sv_info_kind = t;id = fresh_int () })) all_names in
       let (n_tl,assert_cf_o) = match assert_f_o with
         | Some f -> 
-          let (n_tl,cf) = x_add trans_I2C_struc_formula 6 prog false false free_vars (fst f) n_tl false true in  
+          let (n_tl,cf) = trans_I2C_struc_formula 6 prog false false free_vars (fst f) n_tl false true in  
           (n_tl,Some cf)
         | None -> (n_tl,None) in
       let (n_tl,assume_cf_o) = match assume_f_o with
@@ -6443,8 +6461,8 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
       else C.Unit pos in
     let dname = CP.name_of_type base_t in
     let ddef = I.look_up_data_def 2 pos prog.I.prog_data_decls dname in
-    let rec gen_names (fn : ident) (flist : I.typed_ident list) :
-      ((I.typed_ident option) * (ident list)) =
+    let rec gen_names (fn : ident) (flist : typed_ident list) :
+      ((typed_ident option) * (ident list)) =
       (match flist with
        | [] -> (None, [])
        | f :: rest ->
@@ -6521,7 +6539,7 @@ and trans_args args =
 and trans_args_x args = trans_args_gen (List.map (fun (a,b,c) -> (Some a,b,c)) args)
 
 and trans_args_gen (args : ((C.exp option) * typ * loc) list) :
-  ((C.typed_ident list) * C.exp * (ident list)) =
+  ((typed_ident list) * C.exp * (ident list)) =
   match args with
   | arg :: rest ->
     let (rest_local_vars, rest_e, rest_names) = trans_args_gen rest
@@ -6927,7 +6945,7 @@ and trans_copy_spec_4caller copy_params sf=
   let pr = Cprinter.string_of_struc_formula in
   Debug.no_2 "trans_copy_spec_4caller" !Cpure.print_svl pr pr trans_copy_spec_4caller_x copy_params sf
 
-and trans_I2C_struc_formula i (prog : I.prog_decl) (prepost_flag:bool) (quantify : bool) (fvars : ident list) (f0 : IF.struc_formula) 
+and trans_I2C_struc_formula i ?(idpl=[]) (prog : I.prog_decl) (prepost_flag:bool) (quantify : bool) (fvars : ident list) (f0 : IF.struc_formula) 
     (tlist:spec_var_type_list) (check_self_sp:bool) (*disallow self in sp*) (check_pre:bool) : (spec_var_type_list*CF.struc_formula) = 
   let prb = string_of_bool in
   let pr_out  = pr_pair Typeinfer.string_of_tlist Cprinter.string_of_struc_formula in
@@ -6936,11 +6954,11 @@ and trans_I2C_struc_formula i (prog : I.prog_decl) (prepost_flag:bool) (quantify
     "trans_I2C_struc_formula" [true] string_of_tlist prb (add_str "check_pre" prb) Cprinter.str_ident_list 
     (add_str "Input Struc:" Iprinter.string_of_struc_formula) 
     (add_str "Output Struc:" pr_out)
-    (fun _ _ _ _ _ -> trans_I2C_struc_formula_x prog prepost_flag quantify  fvars f0 tlist check_self_sp (check_pre:bool)) 
+    (fun _ _ _ _ _ -> trans_I2C_struc_formula_x ~idpl:idpl prog prepost_flag quantify  fvars f0 tlist check_self_sp (check_pre:bool)) 
     tlist (* type table *) quantify (* quantified flag *) check_pre
     fvars (* free vars *) f0 (*struc formula *)
 
-and trans_I2C_struc_formula_x (prog : I.prog_decl) (prepost_flag:bool) (quantify : bool) (fvars : ident list)
+and trans_I2C_struc_formula_x ?(idpl=[]) (prog : I.prog_decl) (prepost_flag:bool) (quantify : bool) (fvars : ident list)
     (f0 : IF.struc_formula) (tlist:spec_var_type_list) (check_self_sp:bool) (check_pre:bool): (spec_var_type_list*CF.struc_formula) = 
   let rec trans_struc_formula (fvars : ident list) (tl:spec_var_type_list) (f0 : IF.struc_formula) : (spec_var_type_list*CF.struc_formula) = (
     match f0 with
@@ -8230,14 +8248,14 @@ and case_normalize_renamed_struc_formula prog avail_vars posibl_expl f =
 (*moved the liniarization to case_normalize_renamed_formula*)
 and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_expl (f:IF.formula) ann_vars : IF.formula* ((ident*primed)list) * ((ident*primed)list) =
   let pr1 prog = (add_str "view_decls" pr_v_decls) prog.I.prog_view_decls in
-  let pr = (pr_list (fun (i,p) -> i)) in
+  let pr = pr_primed_ident_list (* (pr_list (fun (i,p) -> i)) *) in
   let pr_out (f,h,expl) = 
     ("\n ### f = " ^ (Iprinter.string_of_formula f)
      ^"\n ### h = " ^ (pr h)
      ^"\n ### expl = " ^ (pr expl)) 
   in 
   Debug.no_5 "case_normalize_renamed_formula" 
-    pr1 pr pr pr  Iprinter.string_of_formula pr_out
+    pr1 (add_str "avail_vs" pr) (add_str "expl" pr) (add_str "ann_vs" pr)  Iprinter.string_of_formula pr_out
     (fun _ _ _ _ _ -> case_normalize_renamed_formula_x prog avail_vars posib_expl f ann_vars) prog avail_vars posib_expl  ann_vars f
 
 and hack_filter_global_rel prog ls =
@@ -8281,7 +8299,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
              else
                ((v :: used_names), [ e ], [],IP.mkTrue pos_e)
            with
-           | Not_found -> Err.report_error{ Err.error_loc = pos_e; Err.error_text = (fst v) ^ " is undefined"; })
+           | Not_found -> Err.report_error{ Err.error_loc = pos_e; Err.error_text = (fst v) ^ " is undefined (4)"; })
         | _ -> Err.report_error { Err.error_loc = (IF.pos_of_formula f); Err.error_text = "malfunction with float out exp in normalizing"; } in
       let rest_used_names, rest_hvars, rest_evars, rest_link = match_exp new_used_names rest pos in
       let hvars = e_hvars @ rest_hvars in
@@ -8298,7 +8316,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
     let pr1 = pr_list (fun (i,_) -> i) in
     let pre = Iprinter.string_of_formula_exp in
     let pr2 = pr_list (fun (p,_) -> (pr_pair pre string_of_bool) p) in
-    let pr3 (l1,l2,l3,f) = pr_triple pr1 (pr_list pre) pr1 (l1,l2,l3) in
+    let pr3 (l1,l2,l3,f) = pr_triple (add_str "impl" pr1) (pr_list pre) (add_str "ex" pr1) (l1,l2,l3) in
     Debug.no_2 "match_exp" pr1 pr2 pr3 (fun _ _ -> match_exp used_names hargs pos) used_names hargs
   in
   let rec flatten f = match f with
@@ -8561,10 +8579,8 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
     (((ident*primed) list) * ((ident*primed) list) * IF.h_formula * Ipure.formula) =
     let pr1 = Iprinter.string_of_h_formula in
     let pr2 (vl1,vl2,h, p) = (pr_ident_list vl1)^(pr_ident_list vl2)^(Iprinter.string_of_h_formula h)^"&&$"^(Iprinter.string_of_pure_formula p) in
-    let pr0 (vs:((ident*primed) list))= 
-      let idents, _ = List.split vs in
-      (string_of_ident_list idents) in
-    Debug.no_2 "linearize_heap" pr0 pr1 pr2 (fun _ _ -> linearize_heap used_names f) used_names f in
+    let pr0 = pr_primed_ident_list in
+    Debug.no_2 "linearize_heap" (add_str "used" pr0) pr1 pr2 (fun _ _ -> linearize_heap used_names f) used_names f in
 
   let rec normalize_base heap cp vp fl a evs pos : IF.formula* ((ident*primed)list)* ((ident*primed)list) =
     (*let () = print_string("Before Normalization : "^(Iprinter.string_of_h_formula heap)^"\n") in*)
@@ -8668,7 +8684,7 @@ and case_normalize_formula_not_rename prog (h:(ident*primed) list)(f:IF.formula)
 and case_normalize_struc_formula i prog (h:(ident*primed) list)(p:(ident*primed) list)(f:IF.struc_formula) allow_primes
     allow_post_vars  (lax_implicit:bool)
     strad_vs :IF.struc_formula* ((ident*primed)list) =
-  let pr0 = pr_list (fun (i,p) -> i) in
+  let pr0 = pr_primed_ident_list (* pr_list (fun (i,p) -> i) *) in
   let pr1 = Iprinter.string_of_struc_formula in
   let pr2 (x,_) = pr1 x in
   Debug.no_3_num i "case_normalize_struc_formula" pr0 pr0 pr1 pr2 
@@ -8812,7 +8828,7 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
         (IF.EList ll1, rdups (List.concat ll2))
     in    
     let pr = fun _ -> 
-      let prl = pr_list !IP.print_id in
+      let prl = pr_primed_ident_list (* pr_list !IP.print_id *) in
       "h_vars: "^(prl h_vars)^
       "\n p_vars: "^(prl p_vars)^
       "\n form: "^(!IF.print_struc_formula nf)^
@@ -8821,10 +8837,11 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
       "\n lax_implicit: "^(string_of_bool lax_implicit)
       ^"\n strad_vs: "^(prl strad_vs)^"\n" in
     Debug.no_1 "case_normalize_helper2" pr (pr_pair !IF.print_struc_formula (fun _ -> "")) (helper h_vars strad_vs [])  nf 
-  in helper2 h_vars p_vars nf allow_primes allow_post_vars lax_implicit strad_vs
-
-
-
+  in
+  (* Question : What is purpose of straddle vars? *)
+  let h_vars = h_vars@p_vars in
+  let p_vars = [] in
+  helper2 h_vars p_vars nf allow_primes allow_post_vars lax_implicit strad_vs
 
 and simpl_case_normalize_struc_formula id prog (h_vars:(ident*primed) list)(f:IF.struc_formula) 
   :IF.struc_formula = 	
@@ -11028,8 +11045,8 @@ let convert_pred_to_cast_x ls_pr_new_view_tis is_add_pre iprog cprog do_pure_ext
   let cviews0 = if do_pure_extn then
       let tmp_views_derv1 = mark_rec_and_der_order tmp_views_derv in
       let cviews_derv = List.fold_left (fun norm_views v ->
-          let der_view = x_add_1 Derive.trans_view_dervs iprog Rev_ast.rev_trans_formula trans_view norm_views v in
-          (cviews0a@[der_view])
+          let der_view = x_add_1 Derive.trans_view_dervs iprog Rev_ast.rev_trans_formula trans_view [] norm_views v in
+          (norm_views@[der_view])
         ) cviews0a tmp_views_derv1 in
       let cviews0 = (* cviews0a@ *)cviews_derv in
       cviews0

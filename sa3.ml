@@ -671,12 +671,24 @@ let get_par_defs_pre_fix pre_fix_hps post_hps constrs0 =
   Debug.no_1 "get_par_defs_pre_fix" pr1 (pr_pair pr2 pr2)
     (fun _ -> get_par_defs_pre_fix_x pre_fix_hps post_hps constrs0) constrs0
 
-let get_par_defs_post constrs0 =
+let get_par_defs_post_x constrs0 =
   let mk_par_def cs=
     let hp, args = Cformula.extract_HRel_f cs.Cformula.hprel_rhs in
     mk_pdef hp args cs.Cformula.unk_svl (CP.mkTrue no_pos) (Some cs.Cformula.hprel_lhs) None None
   in
   List.map mk_par_def constrs0
+
+let get_par_defs_post constrs0 =
+  let pr0 = pr_list_ln Cprinter.string_of_hprel_short in
+  let pr1 = !CP.print_svl in
+  let pr2 = !CP.print_formula in
+  let pr3 oform= match oform with
+    | None -> "None"
+    | Some f -> Cprinter.prtt_string_of_formula f
+  in
+  let pr4 = pr_hepta !CP.print_sv pr1 pr1 pr2 pr3 pr3 pr3 in
+  Debug.no_1 "get_par_defs_post" pr0 (pr_list_ln pr4)
+      (fun _ -> get_par_defs_post_x constrs0) constrs0
 
 let get_par_defs_pre constrs0 =
   let mk_par_def cs=
@@ -1028,7 +1040,7 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *Cformula.hp_rel_def) 
       let is_put_top_guarded, hpdefs,subst_useless=
         if CP.mem_svl hp skip_hps then
           let fs = List.map (fun (a1,args,og,f,unk_args) -> fst (Cformula.drop_hrel_f f [hp]) ) par_defs in
-          let fs1 = Gen.BList.remove_dups_eq (fun f1 f2 -> Sautil.check_relaxeq_formula args f1 f2) fs in
+          let fs1 = Gen.BList.remove_dups_eq (fun f1 f2 -> Sautil.check_stricteq_formula args f1 f2) fs in
           (* let fs2 = try *)
           (*   let res_sv = List.find (fun sv -> String.compare res_name (CP.name_of_spec_var sv) =0) args in *)
           (*   let fr_res = CP.fresh_spec_var res_sv in *)
@@ -1049,12 +1061,13 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *Cformula.hp_rel_def) 
             ) ([],[],[],[]) par_defs in
           let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula (pr_option Cprinter.prtt_string_of_formula)) in
           (* let defs = Gen.BList.remove_dups_eq (fun f1 f2 -> Sautil.check_relaxeq_formula args0 f1 f2) defs0 in *)
-          let defs0a_wg = Gen.BList.remove_dups_eq (fun (f1,_) (f2,_) -> Sautil.check_relaxeq_formula args0 f1 f2) defs0_wg in
+          let defs0a_wg = Gen.BList.remove_dups_eq (fun (f1,_) (f2,_) -> Sautil.check_stricteq_formula args0 f1 f2) defs0_wg in
           let defs_wg = if is_pre && List.length defs0a_wg > 1 then defs0a_wg else
               List.filter (fun (f,_) -> not (CF.isAnyConstFalse f)) defs0a_wg
           in
           let defs = List.map fst defs_wg in
           let () = DD.ninfo_hprint (add_str "defs0: " pr1) defs0_wg no_pos in
+          let () = DD.ninfo_hprint (add_str "defs0a: " pr1) defs0a_wg no_pos in
           let () = DD.ninfo_hprint (add_str "defs: " pr1) defs_wg no_pos in
           let r,non_r_args = Sautil.find_root prog (hp::skip_hps) args0 defs in
           (*make explicit root*)
@@ -1363,7 +1376,7 @@ let pardef_subst_fix_x prog unk_hps groups=
       (* let pr1 = pr_list_ln (pr_list_ln (pr_quad !CP.print_sv !CP.print_svl Cprinter.prtt_string_of_formula !CP.print_svl)) in *)
       (* let () = DD.info_pprint ("      new_cur: " ^ (pr1 new_cur)) no_pos in *)
       (*subs new_cur with new_rec_indps (new_nrec_indps is substed already)*)
-      let new_cur1 = List.map Sautil.remove_dups_pardefs new_cur in
+      let new_cur1 =  List.map Sautil.remove_dups_pardefs new_cur in
       let new_cur2 = Sautil.succ_subst_with_rec_indp prog new_rec_indps unk_hps new_cur1 in
       (new_cur2@new_rec_indps@new_nrec_indps)
   in
@@ -2618,6 +2631,16 @@ and infer_process_pre_preds iprog prog proc_name callee_hps b_is_pre is (pre_fix
 (*       Cformula.is_constrs = n_constrs; *)
 (*   } *)
 
+and infer_shapes_norm_seg_x iprog prog iflow proc_name callee_hps is_pre is need_preprocess detect_dang=
+  let defs = is.CF.is_hp_defs in
+  let defs1 = Sacore.pred_norm_seg iprog prog (IC.get_unk_hps is) defs in
+  {is with CF.is_hp_defs = defs1 }
+
+and infer_shapes_norm_seg iprog prog iflow proc_name callee_hps is_pre is need_preprocess detect_dang=
+  let pr1 = Cprinter.string_of_infer_state_short in
+  Debug.no_1 "infer_shapes_norm_seg" pr1 pr1
+    (fun _ -> infer_shapes_norm_seg_x iprog prog iflow proc_name callee_hps is_pre is need_preprocess detect_dang) is
+
 and infer_shapes_proper_x iprog prog proc_name callee_hps is need_preprocess detect_dang=
   let unk_hps = List.map fst is.Cformula.is_dang_hpargs in
   let link_hps = List.map fst is.Cformula.is_link_hpargs in
@@ -2721,10 +2744,14 @@ and infer_shapes_proper_x iprog prog proc_name callee_hps is need_preprocess det
       (defs3a, remain_links@(List.filter (fun (hp,_) -> CP.mem_svl hp is_post_oblg1.CF.is_sel_hps) is_post_oblg1.CF.is_link_hpargs))
     else (Sacore.elim_dangling_conj_heap prog defs2 (List.map fst (is_post_oblg1.CF.is_link_hpargs@is_post_oblg1.CF.is_dang_hpargs@htrue_hpargs)),is_post_oblg1.CF.is_link_hpargs@htrue_hpargs)
   in
-  {is_post_oblg1 with Cformula.is_link_hpargs = link_hpargs3;
+  let is_post = {is_post_oblg1 with Cformula.is_link_hpargs = link_hpargs3;
                       CF.is_prefix_hps = pre_fix_hps;
                       Cformula.is_hp_defs = defs3;
   }
+  in
+  if !Globals.pred_norm_seg then
+    iprocess_action iprog prog proc_name callee_hps is_post IC.I_norm_seg need_preprocess detect_dang
+  else is_post
 
 and infer_shapes_proper iprog prog proc_name callee_hps is need_preprocess detect_dang=
   let pr1= Cprinter.string_of_infer_state_short in
@@ -2747,6 +2774,7 @@ and iprocess_action_x iprog prog proc_name callee_hps is act need_preprocess det
   | IC.I_post_synz -> infer_post_synthesize prog proc_name callee_hps is need_preprocess detect_dang
   | IC.I_post_fix hps -> infer_post_fix iprog prog proc_name callee_hps false is need_preprocess detect_dang hps
   | IC.I_post_oblg -> infer_shapes_from_obligation iprog prog is.Cformula.is_flow proc_name callee_hps false is need_preprocess  detect_dang
+  | IC.I_norm_seg -> infer_shapes_norm_seg iprog prog is.Cformula.is_flow proc_name callee_hps false is need_preprocess  detect_dang
   | IC.I_seq ls_act -> List.fold_left (fun is (_,act) -> rec_fct is act) is ls_act
 
 

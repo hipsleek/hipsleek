@@ -22,6 +22,10 @@ module M = Lexer.Make(Token.Token)
 module H = Hashtbl
 module LO2 = Label_only.Lab2_List
 
+let pr = !CP.print_formula
+type fc_type = CP.formula * CP.formula * CP.formula * CP.formula
+let fixcalc_rel_stk : fc_type Gen.stack_pr = new Gen.stack_pr (pr_quad pr pr pr pr) (==)
+
 let rec add_relation_to_formula f rel =
   match f with
   | CF.Base b ->
@@ -783,7 +787,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             res
           in
 
-          Infer.fixcalc_rel_stk # push_list tuples;
+          fixcalc_rel_stk # push_list tuples;
           (* if not(Infer.fixcalc_rel_stk # is_empty || !Globals.print_min) then *)
           (*   begin *)
           (*     print_endline_quiet "\n*************************************"; *)
@@ -792,7 +796,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
           (*     print_endline_quiet (Infer.fixcalc_rel_stk # string_of_reverse); *)
           (*     print_endline_quiet "*************************************" *)
           (*   end; *)
-          Infer.fixcalc_rel_stk # reset;
+          fixcalc_rel_stk # reset;
           (* let tuples = infer_imm_post_process_tuple tuples in *)
           let () = List.iter (fun (rel_post,post,rel_pre,pre) ->
               x_tinfo_zp (lazy ((">>REL POST : "^Cprinter.string_of_pure_formula rel_post))) no_pos;

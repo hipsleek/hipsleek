@@ -1183,7 +1183,7 @@ and translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp 
 (* translate a field of a struct                       *)
 (*     return: field type * location * inline property *)
 and translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option) 
-  : (Iast.typed_ident * loc * bool * (ident list)(* Iast.data_field_ann *)) =
+  : (typed_ident * loc * bool * (ident list)(* Iast.data_field_ann *)) =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let name = field.Cil.fname in
   let ftyp = field.Cil.ftype in
@@ -2384,6 +2384,7 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
   (*                Iast.data_parent_name = ""; *)
   (*                Iast.data_invs = []; *)
   (*                Iast.data_is_template = false; *)
+   (*              Iast.data_pure_inv = None;*)
   (*                Iast.data_methods = []} in *)
   (* let string_def = {Iast.data_name = "String"; *)
   (*                   Iast.data_pos = no_pos; *)
@@ -2391,6 +2392,7 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
   (*                   Iast.data_parent_name = "Object"; *)
   (*                   Iast.data_invs = []; *)
   (*                   Iast.data_is_template = false; *)
+(*                    Iast.data_pure_inv = None;*)
   (*                   Iast.data_methods = []} in *)
   (* update some global settings *)
   Hashtbl.iter (fun _ data -> if ((String.compare  data.Iast.data_name "char_star")!=0) && ((String.compare  data.Iast.data_name "int_star")!=0)  then data_decls := data::!data_decls) tbl_data_decl;

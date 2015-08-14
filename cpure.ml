@@ -84,6 +84,8 @@ let is_void_typ sv = match sv with
 let is_self_spec_var sv = match sv with
   | SpecVar (_,n,_) -> n = self
 
+let self_sv = mk_spec_var self 
+
 let is_res_spec_var sv = match sv with
   | SpecVar (_,n,_) -> n = res_name
 
@@ -114,6 +116,14 @@ let is_hprel_typ sv = match sv with
 let is_form_typ sv = match sv with
   | SpecVar (FORM, _, _) -> true
   | _ -> false
+
+let is_otype (t : typ) : bool = match t with
+  | TVar _ | Named _ -> true
+  | _ -> false (* | _ -> false *) (* An Hoa *)
+
+let is_btype (t : typ) : bool = match t with
+  | Bool -> true
+  | _ -> false (* | _ -> false *) (* An Hoa *)
 
 let is_node_typ sv = match sv with
   | SpecVar (Named _,_,_) -> true
@@ -586,6 +596,9 @@ let primed_of_spec_var (sv : spec_var) : primed = match sv with
 
 let name_of_spec_var (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, _) -> v
+
+let primed_ident_of_spec_var (sv : spec_var) = match sv with
+  | SpecVar (_, v, p) -> (v,p)
 
 let name_of_sv (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, _) -> v
@@ -2667,7 +2680,7 @@ and mkNeqExp (ae1 : exp) (ae2 : exp) pos = match (ae1, ae2) with
 and mkNot_s f :formula = mkNot f None no_pos
 
 and mkNot_dumb f lbl1 pos0:formula = 
-  if (!Globals.oc_non_linear) || (not !Globals.allow_norm  && !Globals.allow_inf_qe_coq) then Not (f, lbl1,pos0)
+  if (!Globals.non_linear_flag) || (not !Globals.allow_norm  && !Globals.allow_inf_qe_coq) then Not (f, lbl1,pos0)
   else 
     match f with
     | BForm (bf,lbl) -> begin
@@ -3892,10 +3905,6 @@ and are_same_types (t1 : typ) (t2 : typ) = match t1 with
       | _ -> false  
     end
   | _ -> t1 = t2
-
-and is_otype (t : typ) : bool = match t with
-  | TVar _ | Named _ -> true
-  | _ -> false (* | _ -> false *) (* An Hoa *)
 
 and name_of_type (t : typ) : ident = 
   string_of_typ t
@@ -7028,7 +7037,7 @@ and b_form_simplify_x (b:b_formula) :b_formula =
   let do_all_eq e1 e2 l = 
     let (lhs,rhs) as r = do_all e1 e2 l in
     let new_r = 
-      if !Globals.oc_non_linear then build_eq lhs rhs 
+      if !Globals.non_linear_flag then build_eq lhs rhs 
       else r in
     new_r in
   let do_all_eq e1 e2 l = 
@@ -11121,7 +11130,7 @@ let enhance_eq_list eq_list =
 ;;
 
 let enhance_eq_list eq_list =
-  if true (* !Globals.oc_non_linear *) then
+  if true (* !Globals.non_linear_flag *) then
     Debug.no_1 "enhance_eq_list" (pr_list (pr_pair !print_exp !print_exp)) (pr_list (pr_pair !print_exp !print_exp)) enhance_eq_list eq_list
   else
     eq_list
@@ -11484,7 +11493,7 @@ let rec subs_const_var_formula ?(em=None) (f:formula) : formula =
     | Some em -> em (* add_emap_at_toplevel em f *)
   in
   (* let () = x_binfo_pp ((add_str "subs_const(emap)" EMapSV.string_of) eq_map) no_pos in *)
-  if !Globals.oc_non_linear then map_formula_arg f init_arg ff f_arg
+  if !Globals.non_linear_flag then map_formula_arg f init_arg ff f_arg
   else f
 
 let subs_const_var_formula (f:formula) : formula =

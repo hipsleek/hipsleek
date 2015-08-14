@@ -518,8 +518,8 @@ let sleek_proof_log_Z3 src_files =
 
 let _ =
   wrap_exists_implicit_explicit := false ;
-  Tpdispatcher.init_tp();
   process_cmd_line ();
+  Tpdispatcher.init_tp();
   let () = Debug.read_main () in
   Scriptarguments.check_option_consistency ();
   sleek_prologue ();
@@ -592,9 +592,10 @@ let _ =
       else ()
     in
     if (not !Globals.web_compile_flag) then 
+      let rev_false_ctx_line_list = List.rev !Globals.false_ctx_line_list in
       print_string_quiet ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
                           (List.fold_left (fun a c-> a^" ("^(string_of_int c.VarGen.start_pos.Lexing.pos_lnum)^","^
-                                                     ( string_of_int (c.VarGen.start_pos.Lexing.pos_cnum-c.VarGen.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n")
+                                                     ( string_of_int (c.VarGen.start_pos.Lexing.pos_cnum-c.VarGen.start_pos.Lexing.pos_bol))^") ") "" rev_false_ctx_line_list )^")\n")
     else ();
     (* based on last residue - Valid -> UNSAT, Fail -> SAT *)
     let () = if !Globals.enable_time_stats then
