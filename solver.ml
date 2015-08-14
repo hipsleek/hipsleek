@@ -14331,17 +14331,21 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
         estate,h,p,vp,fl
       | (anode,rest)::xs ->
         (*for each pair (anode,rest), find a list of coercions*)
-        let name = match anode with
-          | ViewNode vn -> vn.h_formula_view_name
-          | DataNode dn -> dn.h_formula_data_name
-          | ThreadNode tn -> tn.h_formula_thread_name
-          (* TODO:WN:HVar *)
-          | HVar (v,hvar_vs) -> (CP.name_of_spec_var v)
-          | HTrue -> "htrue"
-          | _ -> let () = print_string("[solver.ml] Warning: normalize_w_coers expecting DataNode, ViewNode or HTrue\n") in
-            ""
+            let c_lst =
+              try
+                let name = match anode with
+                  | ViewNode vn -> vn.h_formula_view_name
+                  | DataNode dn -> dn.h_formula_data_name
+                  | ThreadNode tn -> tn.h_formula_thread_name
+                        (* TODO:WN:HVar *)
+                  | HVar (v,hvar_vs) -> (CP.name_of_spec_var v)
+                  | HTrue -> "htrue"
+                  | _ -> raise Not_found(*  let () = print_string("[solver.ml] Warning: normalize_w_coers expecting DataNode, ViewNode or HTrue\n") in *)
+                    (* "" *)
+                in look_up_coercion_def_raw coers name
+              with Not_found -> []
         in
-        let c_lst = look_up_coercion_def_raw coers name in (*list of coercions*)
+                (* let c_lst = look_up_coercion_def_raw coers name in  *)(*list of coercions*)
         let lst = List.map (fun c -> (c,anode,rest)) c_lst in
         (*process a triple (coer,anode,res)*)
         let rec process_one_coerc lst =
