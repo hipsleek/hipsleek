@@ -2350,7 +2350,7 @@ and prtt_pr_formula_base_inst prog e =
       formula_base_pos = pos}) ->
     (match lbl with | None -> fmt_string  ( (* "(\* <NoLabel> *\)" *) "" ) | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
     prtt_pr_h_formula_inst prog h;
-    (if not( MP.isTrivMTerm p) then
+    ((* if not( MP.isTrivMTerm p) then *) (*L2: we should print what it is*)
        (pr_cut_after "&" ; pr_mix_formula p))
 (* pr_cut_after "&" ; pr_mix_formula p;() *)
 
@@ -2365,7 +2365,7 @@ and prtt_pr_formula_base_inst_html prog post_hps e =
       formula_base_pos = pos}) ->
     (match lbl with | None -> fmt_string  ( (* "(\* <NoLabel> *\)" *) "" ) | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
     prtt_pr_h_formula_inst_html prog post_hps h ;
-    (if not( MP.isTrivMTerm p) then
+    ((* if not( MP.isTrivMTerm p) then *) (*L2: we should print what it is*)
        (pr_cut_after "&" ; pr_mix_formula p))
 (* pr_cut_after "&" ; pr_mix_formula p;() *)
 
