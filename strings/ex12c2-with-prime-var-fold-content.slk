@@ -10,12 +10,12 @@ pred WFSeg<p> ==
   inv true.
 
 checkentail x::str<v,q>*q::WFSeg<yyy'>*yyy'::str<0,p> & v>0
-            |- x::WFSeg<yyy'>*yyy'::str<0,p>.
+            |- x::WFSeg<zz>*zz::str<0,p> & zz=yyy'.
 print residue.
 
 
 /*
-# ex12c.ss
+# ex12c2.ss
 
 
 # Why the use of ' var caused problem?
