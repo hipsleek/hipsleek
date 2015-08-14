@@ -11,7 +11,7 @@ WFS<p> ==
 
 WFSeg<p> ==
   self=p 
-  or self::str<v,q>*q::WFSeg<p> & v!=0
+  or self::str<v,q>*q::WFSeg<p> & v>0
   inv true;
 
 str incStr(str x)
@@ -23,14 +23,12 @@ int getChar(str x)
   ensures res=v;
  
 void while1(ref str s)
-
-  requires s::WFS<p> 
-  ensures s::WFSeg<s'>*s'::str<c,p> & c=0;
-
 /*
   requires s::WFS<p> 
-  ensures s::WFSeg<ss>*ss::str<0,p> & ss=s';
+  ensures s::WFSeg<s'>*s'::str<0,p>;
 */
+  requires s::WFS<p> 
+  ensures s::WFSeg<ss>*ss::str<0,p> & ss=s';
 {
   int x=getChar(s);
   if (x!=0) {
@@ -40,8 +38,7 @@ void while1(ref str s)
 }
 
 /*
-# ex12a.ss
-
+# ex12a2.ss
 
 Why isn't ss implicit?
 
