@@ -570,7 +570,7 @@ let print_residue residue =
       end
     | Some (ls_ctx, print(* , local_dfa, dis_lerr_exc, en_lerr_exc *)) -> begin
         let curr_vs = Global_var.stk_vars # get_stk in
-        (* let () = x_binfo_hp (add_str "curr vars" !CP.print_svl) curr_vs no_pos in *)
+        (* let () = x_tinfo_hp (add_str "curr vars" !CP.print_svl) curr_vs no_pos in *)
         (* let () = print_string_quiet "\n" in *)
         let () = print_endline_quiet "Residue:" in
         (* let is_empty_states = match ls_ctx with *)

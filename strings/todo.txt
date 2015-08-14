@@ -771,7 +771,7 @@ run_infer:
    yyy_17](ex)[](exists yyy_17: x::str<yyy_17,bbb>@M&yyy_17=yyy'&
    {FLOW,(20,21)=__norm#E}[]
 ==================================================================
-# ex12a2.ss
+# ex12a2.ss 
 
 Why isn't ss implicit?
 

@@ -6896,18 +6896,26 @@ let rec struc_formula_trans_heap_node pre_quans formula_fct f=
     (* Loc: to split into case spec *)
     let _, new_pre_quans =  fresh_data_v true f1(* b.formula_struc_base *) in
     (* WN : Why must this new_pre_quans be added to implicit_inst?? *)
-    let () =  x_tinfo_hp (add_str "new_pre_quans" (!CP.print_svl)) new_pre_quans no_pos in
-    let pre_cur_quans = CP.remove_dups_svl (b.formula_struc_implicit_inst@(new_pre_quans)) in
+    (* I think this is probably not needed, as it is focussed on non-ptr fields *)
+    let impl_vs = b.formula_struc_implicit_inst in
+    let new_pre_quans = 
+      if !Globals.old_impl_gather then CP.diff_svl new_pre_quans impl_vs 
+      else []
+    in
+    let pre_cur_quans = CP.remove_dups_svl (impl_vs@(new_pre_quans)) in
     let pre_quans1 = CP.remove_dups_svl (pre_quans@pre_cur_quans) in
+    let () =  x_tinfo_hp (add_str "new_pre_quans" (!CP.print_svl)) new_pre_quans no_pos in
     let () =  x_tinfo_hp (add_str "pre_quans" (!CP.print_svl)) pre_quans no_pos in
     let () =  x_tinfo_hp (add_str "pre_quans1" (!CP.print_svl)) pre_quans1 no_pos in
     let () =  x_tinfo_hp (add_str "new impl?" (!CP.print_svl)) pre_cur_quans no_pos in
     EBase {b with
            (* what is this map_opt recf for? *)
            formula_struc_continuation = Gen.map_opt (recf pre_quans1) b.formula_struc_continuation;
-           formula_struc_implicit_inst =  if !Globals.old_impl_gather then pre_cur_quans
-             else b.formula_struc_implicit_inst ;
-           formula_struc_exists =  if !Globals.old_impl_gather then b.formula_struc_exists
+           formula_struc_implicit_inst =  
+             if !Globals.old_impl_gather then pre_cur_quans
+             else impl_vs ;
+           formula_struc_exists =  
+             if !Globals.old_impl_gather then b.formula_struc_exists
              else CP.remove_dups_svl (b.formula_struc_exists@(new_pre_quans));
            formula_struc_base=(* formula_trans_heap_node fct *)f1;
           }
