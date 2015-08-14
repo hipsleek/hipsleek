@@ -570,6 +570,10 @@ let iget_answer chn input =
   { original_output_text = output;
     sat_result =  st; }
 
+let iget_answer chn input =
+  Debug.no_1 "Z3.iget_answer" idf (fun o -> pr_list idf o.original_output_text)
+    (fun _ -> iget_answer chn input) input
+
 let get_answer chn input =
   let output = collect_output chn [] in
   let solver_sat_result = List.nth output (List.length output - 1) in
