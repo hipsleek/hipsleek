@@ -16,7 +16,9 @@ infer [H] H(p) & p=null |- htrue.
 print residue.
 expect Valid.
 /*
-# ex10d.alk
+# ex10e.alk
+
+infer_exact [H] H(p) & p=null |- htrue.
 
 Entail (1) : Valid. 
 Residue:

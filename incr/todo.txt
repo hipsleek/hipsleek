@@ -520,13 +520,17 @@ checkentail t'::node<1,p>@M * p'::Q3<t'>@M
 =====================================================================
 # ex10c.alk
 
+infer_exact [] H(p) & p=null |- emp.
+
 GOT:
   <1>H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
 
 # This need to FAIL!
 
 =====================================================================
-# ex10d.alk
+# ex10e.alk
+
+infer_exact [H] H(p) & p=null |- htrue.
 
 Entail (1) : Valid. 
 Residue:
