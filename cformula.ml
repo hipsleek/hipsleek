@@ -19079,3 +19079,10 @@ let collect_infer_rel_list_failesc_context lfc =
   let f_b _ c = Some (c,collect_infer_rel_context c) in
   Gen.Basic.remove_dups (snd(trans_list_failesc_context lfc () f_b f_a List.concat))
 
+(* type: list_partial_context -> *)
+(*   (entail_state -> entail_state) -> (branch_fail list * branch_ctx list) list *)
+
+(* let map_unsat_partial_context ctx = *)
+(*   let f e = e *)
+(*   in *)
+(*   map_list_partial_context ctx f  *)
