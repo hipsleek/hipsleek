@@ -1166,6 +1166,8 @@ let string_of_term_id = poly_string_of_pr (pr_term_id true)
 
 let string_of_term_ann = poly_string_of_pr (pr_term_ann true)
 
+let string_of_tcex_cmd = poly_string_of_pr pr_tcex_cmd
+
 let string_of_term_cex  = poly_string_of_pr pr_term_cex
 
 let pr_prune_status st = match st with
@@ -2348,7 +2350,7 @@ and prtt_pr_formula_base_inst prog e =
       formula_base_pos = pos}) ->
     (match lbl with | None -> fmt_string  ( (* "(\* <NoLabel> *\)" *) "" ) | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
     prtt_pr_h_formula_inst prog h;
-    (if not( MP.isTrivMTerm p) then
+    ((* if not( MP.isTrivMTerm p) then *) (*L2: we should print what it is*)
        (pr_cut_after "&" ; pr_mix_formula p))
 (* pr_cut_after "&" ; pr_mix_formula p;() *)
 
@@ -2363,7 +2365,7 @@ and prtt_pr_formula_base_inst_html prog post_hps e =
       formula_base_pos = pos}) ->
     (match lbl with | None -> fmt_string  ( (* "(\* <NoLabel> *\)" *) "" ) | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
     prtt_pr_h_formula_inst_html prog post_hps h ;
-    (if not( MP.isTrivMTerm p) then
+    ((* if not( MP.isTrivMTerm p) then *) (*L2: we should print what it is*)
        (pr_cut_after "&" ; pr_mix_formula p))
 (* pr_cut_after "&" ; pr_mix_formula p;() *)
 
@@ -3674,10 +3676,10 @@ let pr_estate ?(nshort=true) (es : entail_state) =
       pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pure;
       pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) es.es_infer_heap;
       pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es.es_infer_hp_rel;
-      pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) es.es_infer_rel;
       pr_wrap_test "es_infer_templ: " Gen.is_empty  (pr_seq "" pr_formula_exp) es.es_infer_templ;
       pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) es.es_infer_templ_assume;
     end;
+  pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) (es.es_infer_rel # get_stk_recent);
   pr_wrap_test "es_ho_vars_map: " Gen.is_empty  (pr_seq "" (pr_map_aux pr_spec_var pr_formula)) (es.es_ho_vars_map);
   pr_wrap_test "es_conc_err: " Gen.is_empty (pr_seq "" (fun (msg, pos) -> fmt_string (msg ^ ":" ^ (string_of_pos pos)))) es.es_conc_err;
   pr_wrap_test "es_final_error:" Gen.is_empty
@@ -3744,7 +3746,7 @@ let pr_estate ?(nshort=true) (es : entail_state) =
       pr_wrap_test ~below:true "es_infer_term_rel: " Gen.is_empty  (pr_seq "" print_tntrel) es.es_infer_term_rel;
       pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pure;
       pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es.es_infer_hp_rel;
-      pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) es.es_infer_rel;
+      pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) es.es_infer_rel # get_stk_recent;
       (* pr_wrap_test "es_infer_pures: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pures;  *)
       (* pr_wrap_test "es_infer_invs: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_invs;  *)
       if (es.es_var_zero_perm!=[]) then
@@ -3769,7 +3771,7 @@ let pr_estate_infer_hp (es : entail_state) =
   pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) es.es_infer_templ_assume;
   pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pure;
   pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es.es_infer_hp_rel;
-  pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) es.es_infer_rel;
+  pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) es.es_infer_rel# get_stk_recent;
   fmt_close ()
 
 let string_of_estate (es : entail_state) : string =  poly_string_of_pr  pr_estate es
@@ -3850,7 +3852,7 @@ let pr_context_short (ctx : context) =
       (*     (\*pr_wrap (fun _ -> fmt_string "es_aux_conseq: "; pr_pure_formula ac) ();*\) *)
       (*     pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih;  *)
       (*     pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip; *)
-      (*     pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) ir;   *)
+      pr_wrap_test "es_infer_rel: " (fun _ -> false) (* Gen.is_empty *)  (pr_seq "" pr_lhs_rhs) ir;
       (* pr_wrap_test "es_ho_vars_map: " (fun _ -> false) (* Gen.is_empty *)  (pr_seq "" (fun (sv,f) -> pr_spec_var sv; pr_formula f)) ho_map; *)
       pr_wrap_test "es_ho_vars_map: " Gen.is_empty (pr_seq "" (pr_map_aux pr_spec_var pr_formula)) ho_map;
       pr_wrap_test "es_conc_err: " Gen.is_empty (pr_seq "" (fun (msg, pos) -> fmt_string (msg ^ ":" ^ (string_of_pos pos)))) conc_err;
@@ -3959,21 +3961,21 @@ let pr_context_list_short (ctx : context list) =
     (* (e.es_formula,e.es_infer_vars@e.es_infer_vars_rel@e.es_infer_vars_templ,e.es_infer_templ_assume,e.es_infer_term_rel,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,e.es_var_zero_perm,e.es_final_error)] *)
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
   (*  let pr (f,(* ac, *)iv,ta,ih,ip,ir,vperms,exc) = *)
-  let pr (f,(* ac, *)iv,ta,tr,ih,ip,ir,vperms,exc) =
-    fmt_open_vbox 0;
-    pr_formula_wrap f;
-    pr_wrap_test "es_var_zero_perm: " Gen.is_empty  (pr_seq "" pr_spec_var) vperms;
-    (* pr_wrap_test "vperm_sets:" (fun _ -> not (!Globals.ann_vp)) (fun vps -> pr_vperm_sets vps) vps; *)
-    pr_wrap_test "es_infer_vars/rel/templ: " Gen.is_empty  (pr_seq "" pr_spec_var) iv;
-    (*pr_wrap (fun _ -> fmt_string "es_aux_conseq: "; pr_pure_formula ac) ();*)
-    pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih;
-    pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip;
-    pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) ta;
-    pr_wrap_test "es_infer_term_rel: " Gen.is_empty  (pr_seq "" print_tntrel) tr;
-    pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) ir;
-    (* pr_vwrap "es_final_error: " fmt_string  (match exc with | Some (c,_,_) -> "Some " ^ c | None -> "None"); *)
-    fmt_close_box();
-  in
+  (* let pr (f,(\* ac, *\)iv,ta,tr,ih,ip,ir,vperms,exc) = *)
+  (*   fmt_open_vbox 0; *)
+  (*   pr_formula_wrap f; *)
+  (*   pr_wrap_test "es_var_zero_perm: " Gen.is_empty  (pr_seq "" pr_spec_var) vperms; *)
+  (*   (\* pr_wrap_test "vperm_sets:" (fun _ -> not (!Globals.ann_vp)) (fun vps -> pr_vperm_sets vps) vps; *\) *)
+  (*   pr_wrap_test "es_infer_vars/rel/templ: " Gen.is_empty  (pr_seq "" pr_spec_var) iv; *)
+  (*   (\*pr_wrap (fun _ -> fmt_string "es_aux_conseq: "; pr_pure_formula ac) ();*\) *)
+  (*   pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih; *)
+  (*   pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip; *)
+  (*   pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) ta; *)
+  (*   pr_wrap_test "es_infer_term_rel: " Gen.is_empty  (pr_seq "" print_tntrel) tr; *)
+  (*   pr_wrap_test "es_infer_rel: " (fun _ -> false) (\* Gen.is_empty *\)  (pr_seq "" pr_lhs_rhs) ir; *)
+  (*   (\* pr_vwrap "es_final_error: " fmt_string  (match exc with | Some (c,_,_) -> "Some " ^ c | None -> "None"); *\) *)
+  (*   fmt_close_box(); *)
+  (* in *)
   let pr e = pr_estate ~nshort:false e in
   let lls = List.map f ctx in
   let pr_disj ls =
@@ -3989,7 +3991,7 @@ let pr_list_context_short (ctx:list_context) =
 
 let pr_entail_state_short e =
   fmt_open_vbox 0;
-  pr_hwrap "pr_entail_state_short : " pr_formula_wrap e.es_formula;
+  pr_hwrap "ex_formula : " pr_formula_wrap e.es_formula;
   pr_wrap_test "es_heap:" (fun _ -> false)  (pr_h_formula) e.es_heap;
   pr_wrap_test "@zero:" Gen.is_empty (pr_seq "" pr_spec_var) e.es_var_zero_perm;
   pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) e.es_infer_vars;
@@ -4002,7 +4004,7 @@ let pr_entail_state_short e =
   pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) e.es_infer_pure;
   pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) e.es_infer_templ_assume;
   pr_wrap_test "es_infer_term_rel: " Gen.is_empty  (pr_seq "" print_tntrel) e.es_infer_term_rel;
-  pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) e.es_infer_rel;
+  pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) e.es_infer_rel # get_stk_recent;
   (* pr_wrap_test "es_subst_ref: " Gen.is_empty  (pr_seq "a" (pr_pair_aux pr_spec_var pr_spec_var)) e.es_subst_ref;  *)
   pr_wrap_test "es_cond_path: " Gen.is_empty (pr_seq "" (fun s -> fmt_int s)) e.es_cond_path;
   pr_wrap_opt "es_var_measures 3: " pr_var_measures e.es_var_measures;
@@ -4696,12 +4698,13 @@ let rec string_of_exp = function
     Can't we use None inside fields to control it?
 *)
 let string_of_field_ann ann =
-  if (* not !print_ann || *) !Globals.sleek_gen_vc || !Globals.sleek_gen_vc_exact then ""
+  if (* not !print_ann || *) !Globals.sleek_gen_vc || !Globals.sleek_gen_vc_exact 
+  then ""
   else (* match ann with *)
     (* | VAL -> "@VAL" *)
     (* | REC -> "@REC" *)
     (* | F_NO_ANN -> "" *)
-    String.concat "@" ann
+    "@"^(String.concat "@" ann)
 
 (* pretty printing for one data declaration*)
 let string_of_decl (t,id) = (* An Hoa : un-hard-code *)
@@ -4734,8 +4737,14 @@ let rec string_of_data_decl_list l c = match l with
 (*   | h::t -> "  " ^ (string_of_decl h) ^ c ^ (string_of_decl_list t c) *)
 (* ;; *)
 
+let string_of_data_pure_inv inv =
+  match inv with
+  | None -> "\n"
+  | Some pf -> "inv "^((string_of_pure_formula) pf)^"\n"
+;;
+
 (* pretty printing for a data declaration *)
-let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_data_decl_list d.data_fields ";\n") ^ ";\n}"
+let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_data_decl_list d.data_fields ";\n") ^ ";\n}"^(string_of_data_pure_inv d.data_pure_inv)
 ;;
 
 let slk_of_data_decl = string_of_data_decl
@@ -4900,7 +4909,7 @@ let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ 
                           (string_of_view_decl_list p.prog_view_decls) ^ "\n\n" ^
                           (string_of_barrier_decl_list p.prog_barrier_decls) ^ "\n\n" ^
                           (string_of_ut_decl_list p.prog_ut_decls) ^ "\n\n" ^
-                          (string_of_rel_decl_list p.prog_rel_decls) ^ "\n\n" ^
+                          (string_of_rel_decl_list (p.prog_rel_decls # get_stk)) ^ "\n\n" ^
                           (string_of_axiom_decl_list p.prog_axiom_decls) ^ "\n\n" ^
                           (* WN_all_lemma - override usage? *)
                           (string_of_coerc_decl_list (*p.prog_left_coercions*) (Lem_store.all_lemma # get_left_coercion))^"\n\n"^
@@ -4960,7 +4969,7 @@ let string_of_program_separate_prelude p (iprims:Iast.prog_decl)=
   let datastr= (string_of_data_decl_list (remove_prim_data_decls p.prog_data_decls)) in
   let viewstr=(string_of_view_decl_list p.prog_view_decls) in
   let barrierstr=(string_of_barrier_decl_list p.prog_barrier_decls) in
-  let relstr=(string_of_rel_decl_list (remove_prim_rel_decls p.prog_rel_decls)) in
+  let relstr=(string_of_rel_decl_list (remove_prim_rel_decls (p.prog_rel_decls # get_stk))) in
   let axiomstr=(string_of_axiom_decl_list (remove_prim_axiom_decls p.prog_axiom_decls)) in
   let left_coerstr=(string_of_coerc_decl_list (Lem_store.all_lemma # get_left_coercion) (*p.prog_left_coercions*)) in
   let right_coerstr=(string_of_coerc_decl_list (Lem_store.all_lemma # get_right_coercion) (*p.prog_right_coercions*)) in
@@ -5528,6 +5537,7 @@ Cast.print_proc_decl_no_body := string_of_proc_decl_no_body;;
 Cast.print_program := string_of_program;;
 Cast.slk_of_data_decl := slk_of_data_decl;;
 Cast.slk_of_view_decl := slk_of_view_decl;;
+Cast.print_ef_pure_disj := string_of_ef_pure_disj;;
 Omega.print_pure := string_of_pure_formula;;
 Omega.print_exp := string_of_formula_exp;
 Smtsolver.print_pure := string_of_pure_formula;;

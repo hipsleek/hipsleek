@@ -1,0 +1,19 @@
+
+// (8) ???
+checkentail b>=1 & a=1*2+3-1 |- a*b>=1.
+print residue.
+
+checkentail b>=1 & a+1=1*2+3 |- a*b>=1.
+print residue.
+
+
+
+/*
+# ex5a.slk -dre "do_all"
+
+(==omega.ml#632==)
+subs_const_var_formula@23
+subs_const_var_formula inp1 : (not((a+1=2+3 & 1<=b)) | 1<=(a*b))
+subs_const_var_formula@23 EXIT: (not((a+1=2+3 & 1<=b)) | 1<=(a*b))
+*/
+

@@ -47,6 +47,8 @@ let reverify_flag = ref false
 let reverify_all_flag = ref false
 let ineq_opt_flag = ref false
 
+let ptr_arith_flag = ref false
+
 let illegal_format s = raise (Illegal_Prover_Format s)
 
 type lemma_kind = LEM_PROP| LEM_SPLIT | LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER | LEM_INFER_PRED | RLEM
@@ -191,6 +193,37 @@ type typ =
   | Pointer of typ (* base type and dimension *)
 (* | SLTyp (* type of ho formula *) *)
 
+(* let eq_type t1 t2 = match *)
+(*     | FORM, FORM  *)
+(*     | UNK, UNK *)
+(*   | AnnT *)
+(*   | Bool *)
+(*   | Float *)
+(*   | Int *)
+(*   | INFInt *)
+(*   | Tup2 of typ * typ *)
+(*   | NUM *)
+(*   | Void *)
+(*   | List of typ *)
+(*   | BagT of typ *)
+(*   (\* | Prim of prim_type *\) *)
+(*   | Named of ident (\* named type, could be enumerated or object *\) *)
+(*   (\* Named "R" *\) *)
+(*   | Array of (typ * int) (\* base type and dimension *\) *)
+(*   | RelT of (typ list) (\* relation type *\) *)
+(*   | HpT (\* heap predicate relation type *\) *)
+(*   | Tree_sh *)
+(*   | FuncT of typ * typ *)
+(*   | UtT of bool (\* unknown temporal type - pre(true)/post(false)*\) *)
+(*   | Bptyp *)
+(*   | Pointer of typ (\* base type and dimension *\) *)
+(*     | ,   *)
+(*       -> true *)
+(*     | TVar i1, TVar i2 -> i1=i2 *)
+(*     | _, _ -> false *)
+
+type typed_ident = (typ * ident)
+
 let is_undef_typ t =
   match t with
   |UNK |RelT _ |HpT |UtT _ -> true
@@ -330,6 +363,7 @@ let dang_hp_default_prefix_name = "DP_DP"
 let ex_first = "v"
 let size_rel_name = "size"
 let size_rel_arg = "n"
+let seg_arg = "p"
 let field_rec_ann = "REC"
 let field_val_ann = "VAL"
 
@@ -477,6 +511,8 @@ let proof_logging_txt = ref false
 let log_proof_details = ref true
 let proof_logging_time = ref 0.000
 (* let sleek_src_files = ref ([]: string list) *)
+let time_limit_large = ref 0.5
+
 
 let prelude_file = ref (None: string option) (* Some "prelude.ss" *)
 
@@ -638,6 +674,7 @@ let string_of_primed_ident (id,p) =
 (* let pr_ident_list = pr_list (fun (i,p) -> i^(string_of_primed p)) *)
 
 let pr_ident_list = pr_list string_of_primed_ident
+let pr_primed_ident_list = pr_list string_of_primed_ident
 
 let rec s_p_i_list l c = match l with 
   | [] -> ""
@@ -850,10 +887,12 @@ let dis_show_diff = ref false
 (* sap has moved to VarGen; needed by debug.ml *)
 let fo_iheap = ref true
 
+let prelude_is_mult = ref false
+
 let sae = ref false
 let sac = ref false
 (* transform a predicate to case formula *)
-let sa_pred_case = ref true
+let sa_pred_case = ref false
 
 let sags = ref true
 
@@ -972,9 +1011,13 @@ let pred_disj_unify = ref false
 
 let pred_seg_unify = ref false
 
-let pred_equiv = ref false
+let pred_equiv = ref true
 
+(* what is below for? not used! *)
 let pred_equiv_one = ref true
+
+(* this is to enable automatic list segment *)
+let pred_norm_seg = ref true
 
 let pred_unify_post = ref false
 
@@ -1011,6 +1054,34 @@ let procs_verified = ref ([] : string list)
 
 let false_ctx_line_list = ref ([] : loc list)
 
+let pr_option f x = match x with
+  | None -> "None"
+  | Some v -> "Some("^(f v)^")"
+
+let last_sat_ctx = new store None (pr_option string_of_loc)
+let last_infer_lhs_contra = new store false string_of_bool 
+
+(* let is_last_infer_lhs_contra () =  *)
+(*   !last_infer_lhs_contra *)
+(* let set_last_infer_lhs_contra () =  *)
+(*   last_infer_lhs_contra:=false *)
+
+let add_false_ctx pos = 
+  last_sat_ctx # set None;
+  last_infer_lhs_contra # reset;
+  false_ctx_line_list := pos::!false_ctx_line_list
+
+(* let set_last_ctx (pos:loc) = last_sat_ctx := Some pos  *)
+
+
+(* use List.rev *)
+(* let rev_list list = *)
+(*     let rec aux acc = function *)
+(*       | [] -> acc *)
+(*       | h::t -> aux (h::acc) t in *)
+(*     aux [] list *)
+
+(* WN : should this flag be for tpdispatcher, rather than just Omega *)
 let b_datan = "barrier"
 
 let verify_callees = ref false
@@ -1139,6 +1210,13 @@ let dis_norm = ref false
 
 let dis_ln_z3 = ref false
 
+(* WN : should this flag be for tpdispatcher, rather than just Omega *)
+let non_linear_flag = ref true
+let oc_warning = ref false
+
+(* eqn solving to be false by default until it is stable or proven*)
+(* let oc_matrix_eqn = ref false  *)
+
 let allow_ls = ref false (*enable lockset during verification*)
 
 let allow_locklevel = ref false (*enable locklevel during verification*)
@@ -1150,6 +1228,19 @@ let allow_locklevel = ref false (*enable locklevel during verification*)
 let allow_threads_as_resource = ref false
 
 (* let has_locklevel = ref false *)
+
+(* let assert_matrix = ref false *)
+let assert_nonlinear = ref false
+let assert_unsound_false = ref false
+
+let old_collect_false = ref false
+let old_infer_collect = ref false
+let old_impl_gather = ref false
+let old_parse_fix = ref false
+let adhoc_flag_1 = ref false
+let adhoc_flag_2 = ref false
+let adhoc_flag_3 = ref false
+let weaker_pre_flag = ref true
 
 let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
 
@@ -1230,7 +1321,9 @@ let dump_lem_proc = ref false
 let num_self_fold_search = ref 0
 let array_expansion = ref false;;
 let array_translate = ref false;;
-let self_fold_search_flag = ref false
+
+let self_fold_search_flag = ref true 
+(* performance not affected see incr/fix-todo.txt *)
 
 let show_gist = ref false
 let imply_top_flag = ref false
@@ -1310,7 +1403,7 @@ let enable_constraint_based_filtering = ref false
 
 let enulalias = ref false
 
-let pass_global_by_value = ref false
+let pass_global_by_value = ref true
 
 let exhaust_match = ref false
 
@@ -1365,6 +1458,7 @@ let dis_bnd_chk = ref false
 let dis_term_msg = ref false
 let dis_post_chk = ref false
 let post_add_eres = ref false
+let add_pre = ref false
 let post_infer_flow = ref false
 let dis_ass_chk = ref false
 let log_filter = ref true
@@ -1376,10 +1470,15 @@ let infer_const = ref ""
 
 (* TNT Inference *)
 let tnt_verbosity = ref 1
-let tnt_infer_lex = ref false
+let tnt_infer_lex = ref true
 let tnt_add_post = ref true (* disabled with @term_wo_post or --dis-term-add-post *)
+let tnt_abd_strategy = ref 0 (* by default: abd_templ *)
+let tnt_infer_nondet = ref true
 
 let nondet_int_proc_name = "__VERIFIER_nondet_int"
+let nondet_int_rel_name = "nondet_int__"
+
+let hip_sleek_keywords = ["res"]
 
 type infer_type =
   | INF_TERM (* For infer[@term] *)
@@ -1560,7 +1659,6 @@ class inf_obj  =
     method get c  = List.mem c arr
     (* method get_int i  = Array.get arr i *)
     method is_term = (self # get INF_TERM) || (self # get INF_TERM_WO_POST)
-    (* termination inference *)
     (* termination inference *)
     method is_term_wo_post = self # get INF_TERM_WO_POST
     (* termination inference wo post-condition *)
@@ -1968,14 +2066,18 @@ let fresh_int () =
   seq_number := helper (!seq_number + 1);
   !seq_number
 
-let seq_number2 = ref 0
 
-let fresh_int2 () =
-  seq_number2 := !seq_number2 + 1;
-  !seq_number2
+(* let seq_number2 = ref 0 *)
 
-let reset_int2 () =
-  seq_number2 := 0
+(* let fresh_int2 () = *)
+(*   seq_number2 := !seq_number2 + 1; *)
+(*   !seq_number2 *)
+
+(* let reset_int2 () = *)
+(*   seq_number2 := 0 *)
+
+(* let get_int2 () = *)
+(*   !seq_number2 *)
 
 (* let fresh_int () = *)
 (*   seq_number := !seq_number + 1; *)
@@ -2299,3 +2401,11 @@ let string_of_lemma_kind (l: lemma_kind) =
 
 type debug_lvl = Short | Normal | Long
 let debug_level = ref Normal
+
+let prim_method_names = [ nondet_int_proc_name ]
+
+let is_prim_method pn = 
+  List.exists (fun mn -> String.compare pn mn == 0) prim_method_names
+
+
+

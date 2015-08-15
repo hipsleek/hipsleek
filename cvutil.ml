@@ -7,6 +7,7 @@ open VarGen
 *)
 
 open Globals
+open Gen
 open Others
 open Stat_global
 open Exc.GTable
@@ -370,7 +371,7 @@ let process_vis_x prog term_first_sat (vname,p_root,p_args,p_eqs,p_neqs,p_null_s
     (* local info *)
     let f0a = CF.elim_exists f in
     let _,f0 = CF.split_quantifiers f0a in
-    let f1 = Cformula.subst arg_sst f0 in
+    let f1 = x_add Cformula.subst arg_sst f0 in
     let is_unsat, is_sat, new_vis, (br_eqs, br_neqs, br_null_svl, br_neqNull_svl) = build_vis prog f1 in
     if is_unsat then
       ([(vname,p_root,p_args,br_eqs, br_neqs, br_null_svl, br_neqNull_svl)],[],[])
@@ -512,7 +513,10 @@ let dlist_2_pure diff =
   mf
 
 (* WN : this calculation on mem_formula need to be revamped *) 
-let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var list) prog : CF.mem_formula = 
+let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var list) prog : CF.mem_formula =
+  let pure_f = MCP.pure_of_mix p0 in
+  let () = x_tinfo_hp (add_str "pure f" Cprinter.string_of_pure_formula) (pure_f) no_pos in
+  let () = x_tinfo_hp (add_str "evars" Cprinter.string_of_spec_var_list) (evars) no_pos in
   let  baga_helper imm sv = 
     if ((Immutable.isLend imm) && !Globals.baga_imm) then CP.DisjSetSV.mkEmpty
     else CP.DisjSetSV.singleton_dset sv in
@@ -674,9 +678,9 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
              (*prove that p0 |- var=full_perm*)
              let full_f = Perm.mkFullPerm_pure () (Cpure.get_var var) in
              let f0 = MCP.pure_of_mix p0 in
-             x_dinfo_zp (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
+             x_tinfo_zp (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
              let res,_,_ = CP.imply_disj_orig [f0] full_f (x_add TP.imply_one 24) imp_no in
-             x_dinfo_zp (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
+             x_tinfo_zp (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
              if (res) then
                CP.DisjSetSV.singleton_dset (p(*, CP.mkTrue pos*))
              else [])
@@ -817,7 +821,8 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
         (*   		  lookup_view_baga_with_subs ls vdef from_svs to_svs) in *)
         (*   	{mem_formula_mset = CP.DisjSetSV.one_list_dset new_mset;} *)
         (*   ) *)
-        let ba = look_up_view_baga prog c p vs in
+        (* get specialized baga based on pure_f *)
+        let ba = get_spec_baga pure_f prog c p vs in
         let vdef = look_up_view_def pos prog.prog_view_decls c in
         let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
         let to_svs = p :: vs in
@@ -1005,20 +1010,43 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
   let rec xpure_heap_helper (prog : prog_decl) (h0 : h_formula) (which_xpure :int) memset: MCP.mix_formula =
     match h0 with
     | DataNode ({h_formula_data_node = p;
+                 h_formula_data_name = n;
+                 h_formula_data_arguments = arg;
                  h_formula_data_perm = perm;
                  h_formula_data_pos = pos}) ->
-      let i = fresh_int2 () in
+      let ii = fresh_int2 () in
       (* let non_null = CP.mkNeqNull p pos in *)
       (* let non_null = CP.mkEqVarInt p i pos in *)
+      let pr_f = pr_list (pr_pair !CP.print_sv (pr_list pr_id)) in
+      let pr_sv = !print_sv in
+      let () = x_tinfo_hp (add_str "data_node" !CP.print_sv) p no_pos in
+      let () = x_tinfo_hp (add_str "data_name" pr_id) n no_pos in
+      let () = x_tinfo_hp (add_str "data_arguments" !CP.print_svl) arg no_pos in
+      (* FATAL ERROR if not found here *)
+      let def = look_up_data_def_raw prog.prog_data_decls n in
+      let p_inv = def.data_pure_inv in
+      let fields = def.data_fields_new in
+      let () = x_tinfo_hp (add_str "data pure_inv" (pr_option !CP.print_formula)) p_inv no_pos in
+      let () = x_tinfo_hp (add_str "fields" pr_f) fields no_pos in
+      let subs = (CP.self_sv,p)::(List.combine (List.map fst fields) arg) in 
+      let () = x_tinfo_hp (add_str "fields" (pr_list (pr_pair pr_sv pr_sv))) subs no_pos in
+      let new_p_inv = map_opt (CP.subst subs) p_inv in
+      let () = x_tinfo_hp (add_str "data pure_inv(new)" (pr_option !CP.print_formula)) new_p_inv no_pos in
+      let non_null = CP.mkNeqNull p pos in
       if not (Perm.allow_perm ()) then
-        let non_null = CP.mkEqVarInt p i pos in
-        MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_null
+        let () = x_ninfo_pp "making new data pure inv here" no_pos in
+        let non_null_dist = 
+          if !Globals.ptr_arith_flag then non_null 
+          else CP.mkEqVarInt p ii pos in
+        let non_null_dist = map_opt_def non_null_dist (fun f -> CP.mkAnd f non_null_dist no_pos) new_p_inv in
+        MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_null_dist
       else
         (*WITH PERMISSION*)
-        let non_null = CP.mkNeqNull p pos in
+        let () = x_winfo_pp "Data Pure Inv (not tested) " no_pos in
         (* let eq_i = CP.mkEqVarInt p i pos in *)
         (*TO CHECK: temporarily change from eq_i to non_null *)
         let eq_i = non_null in
+        let eq_i = map_opt_def eq_i (fun f -> CP.mkAnd f eq_i no_pos) new_p_inv in
         (*LDK: add fractional invariant 0<f<=1, if applicable*)
         (match perm with
          | None -> MCP.memoise_add_pure_N (MCP.mkMTrue pos) eq_i (* full permission -> p=i*)
@@ -1156,9 +1184,9 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
   in
   (* to build a subs here *)
   let memset = x_add h_formula_2_mem h0 p0 [] prog in
-  (* let () = x_binfo_hp (add_str "h0" Cprinter.string_of_h_formula) h0 no_pos in *)
-  (* let () = x_binfo_hp (add_str "p0" Cprinter.string_of_mix_formula) p0 no_pos in *)
-  (* let () = x_binfo_hp (add_str "memset" Cprinter.string_of_mem_formula) memset no_pos in *)
+  (* let () = x_tinfo_hp (add_str "h0" Cprinter.string_of_h_formula) h0 no_pos in *)
+  (* let () = x_tinfo_hp (add_str "p0" Cprinter.string_of_mix_formula) p0 no_pos in *)
+  let () = x_tinfo_hp (add_str "memset" Cprinter.string_of_mem_formula) memset no_pos in
   if (is_sat_mem_formula memset) then (x_add xpure_heap_helper prog h0 which_xpure memset, memset)
   else
     (MCP.mkMFalse no_pos, memset)
@@ -1463,7 +1491,7 @@ and xpure_symbolic_new_orig (prog : prog_decl) (f0 : formula) =
     (* let ans = xpure_symbolic_orig prog f0 in *)
     (* if !Globals.do_under_baga_approx then *)
     let nb = x_add xpure_symbolic_baga prog f0 in
-    (* let () = x_binfo_hp (add_str "f(using under)" Excore.EPureI.string_of_disj) nb no_pos in *)
+    (* let () = x_tinfo_hp (add_str "f(using under)" Excore.EPureI.string_of_disj) nb no_pos in *)
     (* let () = Debug.ninfo_hprint (add_str "old" (pr_triple Cprinter.string_of_mix_formula  Cprinter.string_of_spec_var_list Cprinter.string_of_mem_formula)) ans no_pos in *)
     (* Long : to perform conversion here *)
     let f = Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj nb) in
@@ -1507,9 +1535,9 @@ and xpure_symbolic_orig (prog : prog_decl) (f0 : formula) :
       let () = Debug.ninfo_hprint (add_str "pure res_form" Cprinter.string_of_mix_formula) res_form no_pos in
       (res_form, addrs) in
   let pf, pa = xpure_symbolic_helper prog f0 in
-  (* let () = x_binfo_hp (add_str "pure pf" Cprinter.string_of_mix_formula) pf no_pos in *)
-  (* let () = x_binfo_hp (add_str "pa" Cprinter.string_of_spec_var_list) pa no_pos in *)
-  (* let () = x_binfo_hp (add_str "mset" Cprinter.string_of_mem_formula) mset no_pos in *)
+  (* let () = x_tinfo_hp (add_str "pure pf" Cprinter.string_of_mix_formula) pf no_pos in *)
+  (* let () = x_tinfo_hp (add_str "pa" Cprinter.string_of_spec_var_list) pa no_pos in *)
+  (* let () = x_tinfo_hp (add_str "mset" Cprinter.string_of_mem_formula) mset no_pos in *)
   (pf, pa, mset)
 
 and xpure_heap_symbolic i (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CP.spec_var list * CF.mem_formula) = 
@@ -1550,12 +1578,27 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) p0 xp_no: (MCP.m
       let mf,svl,_ = x_add xpure_symbolic 5 prog rsr in
       (mf,svl)
     | DataNode ({ h_formula_data_node = p;
+                  h_formula_data_name = n;
                   h_formula_data_arguments = args;
                   h_formula_data_perm = perm;
                   h_formula_data_label = lbl;
                   h_formula_data_pos = pos}) ->
+      let pr_f = pr_list (pr_pair !CP.print_sv (pr_list pr_id)) in
+      let pr_sv = !print_sv in
       let non_zero = CP.BForm ((CP.Neq (CP.Var (p, pos), CP.Null pos, pos), None), lbl) in
-      let rdels = prog.C.prog_rel_decls in
+      let () = x_tinfo_hp (add_str "data_name" pr_id) n no_pos in
+      let () = x_tinfo_hp (add_str "data_arguments" !CP.print_svl) args no_pos in
+      (* FATAL ERROR if not found here *)
+      let def = look_up_data_def_raw prog.prog_data_decls n in
+      let p_inv = def.data_pure_inv in
+      let fields = def.data_fields_new in
+      let () = x_tinfo_hp (add_str "data pure_inv" (pr_option !CP.print_formula)) p_inv no_pos in
+      let () = x_tinfo_hp (add_str "fields" pr_f) fields no_pos in
+      let subs = (CP.self_sv,p)::(List.combine (List.map fst fields) args) in 
+      let () = x_tinfo_hp (add_str "fields" (pr_list (pr_pair pr_sv pr_sv))) subs no_pos in
+      let new_p_inv = map_opt (CP.subst subs) p_inv in
+      let () = x_tinfo_hp (add_str "data pure_inv(new)" (pr_option !CP.print_formula)) new_p_inv no_pos in
+      let rdels = prog.C.prog_rel_decls # get_stk in
       (* Add update relation during XPure *)
       let update_rel = List.filter (fun r -> if r.rel_name = "update"
                                              || r.rel_name = "cons"
@@ -1605,9 +1648,17 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) p0 xp_no: (MCP.m
         else non_zero in
       (*LDK: add fractional invariant 0<f<=1, if applicable*)
       (match perm with
-       | None -> (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_zero , [p])
+       | None -> 
+         begin
+           let () = x_ninfo_pp "making new data pure inv here" no_pos in
+           let non_null_dist = non_zero in
+           let non_null_dist = map_opt_def non_null_dist (fun f -> CP.mkAnd f non_null_dist no_pos) new_p_inv in
+           (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_null_dist , [p])
+         end
        | Some f ->
-         let res = CP.mkAnd non_zero (mkPermInv () f) no_pos in
+         let () = x_winfo_pp "Data Pure Inv (not tested)" no_pos in
+         let non_zero = map_opt_def non_zero (fun f -> CP.mkAnd f non_zero no_pos) new_p_inv in
+        let res = CP.mkAnd non_zero (mkPermInv () f) no_pos in
          (MCP.memoise_add_pure_N (MCP.mkMTrue pos) res , [p]))
 
     | ViewNode ({ h_formula_view_node = p;
@@ -1691,7 +1742,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) p0 xp_no: (MCP.m
     | HFalse -> (mkMFalse no_pos, [])
     | HEmp | HVar _  -> (mkMTrue no_pos, []) in
   (* Add lookup relation during XPure *)
-  let rdels = prog.C.prog_rel_decls in
+  let rdels = prog.C.prog_rel_decls # get_stk in
   let lookup_rel = List.filter (fun r -> if r.rel_name = "lookup" then true else false) rdels in
   if (List.length lookup_rel = 1) then
     let lookup = List.hd lookup_rel in
@@ -1842,7 +1893,7 @@ let heap_baga (prog : prog_decl) (h0 : h_formula): CP.spec_var list =
                   h_formula_view_remaining_branches = lbl_lst;
                   h_formula_view_pos = pos}) ->
       (match lbl_lst with
-       | None -> look_up_view_baga prog c p vs
+       | None -> x_add look_up_view_baga prog c p vs
        | Some ls ->  
          let vdef = look_up_view_def pos prog.prog_view_decls c in
          let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in

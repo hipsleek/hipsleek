@@ -1740,9 +1740,69 @@ Exception(process_action):Failure("Cpure.ml currently we do not provide support 
 Exception(heap_entail_non_empty_rhs_heap):Failure("Cpure.ml currently we do not provide support for nested TempAnn/TempRes")
 Exception(heap_entail_conjunct_helper):Failure("Cpure.ml currently we do not provide support for nested TempAnn/TempRes")
 ===================================================================
+Total number of errors: 2 in files:
+  infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' 
 ===================================================================
+# ex52a2.slk (-debug dd.log or -dre "infer")
+
+$ compare with ex52a3.slk and ex52a4.slk
+
+Entail (1) : Fail.(may) cause:AndR[ x!=null |-  x!=z. LOCS:[15;16;17];  inf_p=null & x!=null |-  inf_p=z. LOCS:[15;16;17];  R(fld5) |-  fld5=null. LOCS:[13;17] (may-bug).]
+
+==omega.ml#1151==)
+infer_pure_m_1@6@5@4@3
+infer_pure_m_1 inp1 :estate :( pr_entail_state_short : emp&x!=null & inf_p=null & R(fld5)&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ es_infer_vars: [z; inf_p]
+ es_infer_vars_rel: [R],[z,inf_p])
+infer_pure_m_1 inp2 :lhs xpure : true & x!=null & inf_p=null
+infer_pure_m_1 inp3 :lhs xpure0 : x!=null & inf_p=null & R(fld5)
+infer_pure_m_1 inp4 :rhs xpure : fld5=null & inf_p=z & x!=z
+infer_pure_m_1 inp5 :inf vars :[fld5,z,inf_p]
+infer_pure_m_1@6 EXIT:(new es,inf pure,rel_ass) :(None,Some( ((z=0 & fld5=null) | (fld5!=null & inf_p!=0) | (fld5=null & inf_p!=0 & z!=0))),[])
+
+(==infer.ml#1572==)
+infer_pure_m_1@5@4@3
+infer_pure_m_1 inp1 :estate :( pr_entail_state_short : emp&x!=null & inf_p=null & R(fld5)&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ es_infer_vars: [z; inf_p]
+ es_infer_vars_rel: [R],[z,inf_p])
+infer_pure_m_1 inp2 :lhs xpure : R(fld5) & x!=null & inf_p=null
+infer_pure_m_1 inp3 :lhs xpure0 : x!=null & inf_p=null & R(fld5)
+infer_pure_m_1 inp4 :rhs xpure : fld5=null & inf_p=z & x!=z
+infer_pure_m_1 inp5 :inf vars :[z,inf_p]
+infer_pure_m_1@5 EXIT:(new es,inf pure,rel_ass) :(None,None,[])
 ===================================================================
+# ex52a5.slk --print-type
+
+# Why is x not Object type?
+
+ <1>emp&x:TVar[28]!=null & inf_p:TVar[28]=null & R:RelT([])(fld5:node) & 
+        z:TVar[28]=0 & fld5:node=null&{FLOW,(20,21)=__norm#E}[]
+ inferred pure: [z:TVar[28]=0]
+ inferred rel: [RELASS [R:RelT([])]: ( R:RelT([])(fld5:node)) -->  fld5:node=null]
 ===================================================================
+# ex52c2.slk -dre "infer_pure"
+
+# Why is this not working?
+
+infer[R,z,inf_p]  
+ R(fld5) & inf_p=null & x!=null
+     |-  fld5=null
+  .
+
+(==omega.ml#1151==)
+infer_pure_m_1@4@3@2@1
+infer_pure_m_1 inp1 :estate :( pr_entail_state_short : emp&x!=null & inf_p=more enull & R(fld5)&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ es_infer_vars: [z; inf_p]
+ es_infer_vars_rel: [R],[z,inf_p])
+infer_pure_m_1 inp2 :lhs xpure : true & x!=null & inf_p=null
+infer_pure_m_1 inp3 :lhs xpure0 : x!=null & inf_p=null & R(fld5)
+infer_pure_m_1 inp4 :rhs xpure : fld5=null
+infer_pure_m_1 inp5 :inf vars :[fld5,z,inf_p]
+infer_pure_m_1@4 EXIT:(new es,inf pure,rel_ass) :(None,Some( (inf_p!=0 | fld5=null)),[])
 ===================================================================
 ===================================================================
 ===================================================================

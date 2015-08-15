@@ -797,16 +797,16 @@ and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
   with Not_found -> (
       let proc_str = (
         match t1, t2 with
-        (* | Cil.TInt _, Cil.TPtr _ ->                                                        *)
-        (*     typ2_name ^ " " ^ proc_name ^ " (" ^ typ1_name ^ " i, " ^ typ2_name ^ " p)\n"  *)
-        (*     ^ "  requires p::" ^ typ2_name^ "<val, offset>\n"                              *)
-        (*     ^ "  ensures p::" ^ typ2_name^ "<val, offset>"                                 *)
-        (*        ^ " * res::" ^ typ2_name^ "<_, offset " ^ op_str ^ " i>;\n"                 *)
-        (* | Cil.TPtr _, Cil.TInt _ ->                                                        *)
-        (*     typ1_name ^ " " ^ proc_name ^ "(" ^ typ1_name ^ " p, " ^ typ2_name ^ " i)\n"   *)
-        (*     ^ "  requires p::" ^ typ1_name^ "<val, offset>\n"                              *)
-        (*     ^ "  ensures p::" ^ typ1_name^ "<val, offset>"                                 *)
-        (*        ^ " * res::" ^ typ1_name^ "<_, offset " ^ op_str ^ " i>;\n"                 *)
+        | Cil.TInt _, Cil.TPtr _ ->
+            typ2_name ^ " " ^ proc_name ^ " (" ^ typ1_name ^ " i, " ^ typ2_name ^ " p)\n"
+            ^ "  requires p::" ^ typ2_name^ "<val, offset>\n"
+            ^ "  ensures p::" ^ typ2_name^ "<val, offset>"
+               ^ " * res::" ^ typ2_name^ "<_, offset " ^ op_str ^ " i>;\n"
+        | Cil.TPtr _, Cil.TInt _ ->
+            typ1_name ^ " " ^ proc_name ^ "(" ^ typ1_name ^ " p, " ^ typ2_name ^ " i)\n"
+            ^ "  requires p::" ^ typ1_name^ "<val, offset>\n"
+            ^ "  ensures p::" ^ typ1_name^ "<val, offset>"
+               ^ " * res::" ^ typ1_name^ "<_, offset " ^ op_str ^ " i>;\n"
         | Cil.TPtr _, Cil.TPtr _ when (cmp_typ typ1 typ2) ->
           let tn = typ1_name in
           tn ^ " " ^ proc_name ^ "(" ^ tn ^ " p, " ^ tn ^ " q)\n" 
@@ -1137,7 +1137,7 @@ and translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp 
 (* translate a field of a struct                       *)
 (*     return: field type * location * inline property *)
 and translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option) 
-  : (Iast.typed_ident * loc * bool * (ident list)(* Iast.data_field_ann *)) =
+  : (typed_ident * loc * bool * (ident list)(* Iast.data_field_ann *)) =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let name = field.Cil.fname in
   let ftyp = field.Cil.ftype in
@@ -2283,12 +2283,14 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
                  Iast.data_pos = no_pos;
                  Iast.data_parent_name = "";
                  Iast.data_invs = [];
+                 Iast.data_pure_inv = None;
                  Iast.data_is_template = false;
                  Iast.data_methods = []} in
   let string_def = {Iast.data_name = "String";
                     Iast.data_pos = no_pos;
                     Iast.data_fields = [];
                     Iast.data_parent_name = "Object";
+                    Iast.data_pure_inv = None;
                     Iast.data_invs = [];
                     Iast.data_is_template = false;
                     Iast.data_methods = []} in

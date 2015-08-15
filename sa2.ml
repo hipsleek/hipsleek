@@ -82,7 +82,7 @@ let rec find_imply_subst_x prog unk_hps link_hps frozen_hps complex_hps constrs 
                 let n_cs_hprel_guard =
                   match cs2.CF.hprel_guard with
                   | None -> None
-                  | Some hf -> Some (CF.subst lhs_ss hf)
+                  | Some hf -> Some (x_add CF.subst lhs_ss hf)
                 in
                 let new_cs = {cs2 with
                               CF.predef_svl = CP.remove_dups_svl
@@ -630,14 +630,14 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
     match of1,of2 with
     | Some f1, Some f2 ->
       let pos = CF.pos_of_formula f1 in
-      let new_f2 = (*CF.subst ss*) f2 in
+      let new_f2 = (*x_add CF.subst ss*) f2 in
       let f = Sautil.mkConjH_and_norm prog hp args unk_hps [] f1 new_f2 pos in
       (* let f = (CF.mkConj_combine f1 new_f2 CF.Flow_combine no_pos) in *)
       if CF.isAnyConstFalse f || Sautil.is_unsat f then
         false, Some f
       else true, Some f
     | None, None -> true, None
-    | None, Some f2 -> true, (Some ( (*CF.subst ss*) f2))
+    | None, Some f2 -> true, (Some ( (*x_add CF.subst ss*) f2))
     | Some f1, None -> true, of1
   in
   (*nav code. to improve*)
@@ -713,7 +713,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
     let subst = List.combine args args0 in
     let cond1 = (CP.subst subst cond) in
     let norhs, cond1 = match orhs with
-      | Some f -> let nf = (CF.subst subst f) in
+      | Some f -> let nf = (x_add CF.subst subst f) in
         let cond2 =
           (* if Sautil.is_empty_heap_f nf then *)
           (*   CP.mkAnd cond1 (CF.get_pure nf) (CP.pos_of_formula cond1) *)
@@ -725,11 +725,11 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
     in
     let nolhs = match olhs with
       | None -> None
-      | Some f -> Some (CF.subst subst f)
+      | Some f -> Some (x_add CF.subst subst f)
     in
     let nog = match og with
       | None -> None
-      | Some f -> Some (CF.subst subst f)
+      | Some f -> Some (x_add CF.subst subst f)
     in
     ((hp,args0,CP.subst_var_list subst unk_svl, cond1, nolhs,nog, norhs), (*TODO: subst*)cs)
   in
@@ -864,7 +864,7 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
   let obtain_and_norm_def hp args0 quan_null_svl0 (a1,args,og,f,unk_args)=
     (*normalize args*)
     let subst = List.combine args args0 in
-    let f1 = (CF.subst subst f) in
+    let f1 = (x_add CF.subst subst f) in
     (* let f2 = *)
     (*   if !Globals.sa_dangling then *)
     (*     CF.annotate_dl f1 (List.filter (fun hp1 -> not (CP.eq_spec_var hp hp1)) unk_hps) *)
@@ -876,7 +876,7 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
     let f3=
       if List.length quan_null_svl = List.length quan_null_svl0 then
         let ss = List.combine quan_null_svl quan_null_svl0 in
-        CF.add_quantifiers quan_null_svl0 (CF.subst ss base_f2)
+        CF.add_quantifiers quan_null_svl0 (x_add CF.subst ss base_f2)
       else f2
     in
     let unk_args1 = List.map (CP.subs_one subst) unk_args in

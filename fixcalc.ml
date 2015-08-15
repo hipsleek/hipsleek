@@ -59,8 +59,8 @@ let gen_fixcalc_file str_fc=
 (******************************************************************************)
 
 let fixcalc_of_spec_var x = match x with
-  | CP.SpecVar (Named _, id, Unprimed) -> if String.compare id self =0 then id else "NOD" ^ id
-  | CP.SpecVar (Named _, id, Primed) -> "NODPRI" ^ id
+  (* | CP.SpecVar (Named _, id, Unprimed) -> if String.compare id self =0 then id else "NOD" ^ id *)
+  (* | CP.SpecVar (Named _, id, Primed) -> "NODPRI" ^ id *)
   (* TODO: Handle mixture of non-numerical and numerical variables *)
   (* Still have problem with the order of parameters of relation *)
   (*  | CP.SpecVar (Named _, id, Unprimed)*)
@@ -105,6 +105,10 @@ and fixcalc_of_exp e = match e with
   | _ ->
         let () = x_binfo_hp (add_str "fixcalc_of_exp error :" (fun _ -> "" )) e no_pos in
         illegal_format ("Fixcalc.fixcalc_of_exp: Not supported expression")
+
+let fixcalc_of_exp f=
+  DD.no_1 "fixcalc_of_exp" !CP.print_exp (fun s->s) (fun f-> fixcalc_of_exp f) f
+;;
 
 let fixcalc_of_exp f=
   DD.no_1 "fixcalc_of_exp" !CP.print_exp (fun s->s) (fun f-> fixcalc_of_exp f) f
@@ -368,6 +372,9 @@ let syscall cmd =
   let todo_unk = Unix.close_process (ic, oc) in
   (Buffer.contents buf)
 
+(* TODO(WN): this already performs some feature of norm_pure_result *)
+(* mainly for pointers; need to remove this redundancy for performance *)
+(* need to handle SELF and REC variables (top-down fixcalc) *)
 let parse_fix_svl svl res =
   let fixpoints = x_add_1 Parse_fix.parse_fix res in
   let svl1 = List.fold_left (fun acc pf ->
@@ -382,10 +389,11 @@ let parse_fix_svl svl res =
             | hd::tl -> CP.SpecVar(CP.type_of_spec_var hd, id1, pr1)
   ) svl1 in
   let sst = List.combine svl1 svl2 in
-  let pr = Cprinter.string_of_spec_var_list in
+  let pr = Cprinter.string_of_typed_spec_var_list in
   let () = x_binfo_hp (add_str "svls (orig)" pr) svl no_pos in
-  let () = x_binfo_hp (add_str "svls (from parse_fix)" pr) svl1 no_pos in
-  let fixpoints = List.map (fun fp -> CP.subst sst fp) fixpoints in
+  let () = x_binfo_hp (add_str "svl1 (from parse_fix)" pr) svl1 no_pos in
+  let () = x_binfo_hp (add_str "svl2 (from parse_fix)" pr) svl2 no_pos in
+   let fixpoints = List.map (fun fp -> CP.subst sst fp) fixpoints in
   fixpoints
 
 let parse_fix_svl svl res =
@@ -398,7 +406,8 @@ let parse_fix_rel_defs rel_defs res =
       acc@(CP.fv pf1)@(CP.fv pf2)
   ) [] rel_defs in
   let svl = CP.remove_dups_svl svl in
-  parse_fix_svl svl res
+  let fs = parse_fix_svl svl res in
+  List.map Omega.trans_bool fs
 
 (******************************************************************************)
 
@@ -529,7 +538,7 @@ let slk2fix_body lower_invs fml0 vname dataname para_names=
   let fr_vars = CP.fresh_spec_vars (vars) in
   let sst = List.combine vars fr_vars in
   let rev_sst = List.combine fr_vars vars in
-  let fs = List.map (fun (f,_) -> Cformula.subst sst (x_add subst_inv_lower_view lower_invs f)) fml0 in
+  let fs = List.map (fun (f,_) -> x_add Cformula.subst sst (x_add subst_inv_lower_view lower_invs f)) fml0 in
   let input_fixcalc =
     try
       vname ^ ":={[" ^ (self) ^ (if (List.length fr_vars > 0) then "," else "") ^ (string_of_elems fr_vars fixcalc_of_spec_var ",") ^
@@ -841,14 +850,19 @@ let substitute_args_x a_rel = match a_rel with
         | Some p -> p
         | None -> failwith "substitute_args: Initialize globas_prog first!"
       in
-      let typed_args = List.combine (Cast.look_up_rel_args_type_from_prog prog id) args in
+      let typed_args = 
+        try
+          List.combine (x_add_1 Cast.look_up_rel_args_type_from_prog prog id) args 
+        with _ ->  (* args *)
+            failwith "substitute_args: failure with look_up_rel_args_type"
+      in
       List.split
         (List.map (fun (t,e) ->
              match e with
              | CP.Var _ -> (e, [])
              | _ ->
                (try
-                  (* Must refine the renaming method. It is really awkward now... *)
+                  (* TODO: Must refine the renaming method. It is really awkward now... *)
                   let fvs = CP.afv e in
                   let arb =
                     if List.length fvs > 0 then
@@ -965,8 +979,8 @@ let compute_def (rel_fml, pf, no) ante_vars =
       ^ (string_of_elems post_vars fixcalc_of_spec_var ",") ^ "] -> []: "
       ^ rhs ^ "\n};"
     in input_fixcalc
-  with _ ->
-    report_error no_pos "compute_def:Error in translating the input for fixcalc"
+  with e ->
+    report_error ~exc:(Some e) no_pos "compute_def:Error in translating the input for fixcalc"
 ;;
 
 let compute_def (rel_fml, pf, no) ante_vars =
@@ -1047,7 +1061,7 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
   (* x_binfo_pp ("Result of fixcalc: " ^ res) no_pos; *)
 (* let parse_fix_with_type_from_rel_defs rel_defs res = *)
   let fixpoints = x_add_1 parse_fix_rel_defs rel_defs res in
-
+  let fixpoints = List.map TP.norm_pure_result fixpoints in
   x_binfo_hp (add_str "Result of fixcalc (parsed): "
                      (pr_list !CP.print_formula)) fixpoints no_pos;
 
@@ -1155,12 +1169,29 @@ let arrange_para input_pairs ante_vars =
   in 
   pairs, List.concat subs
 
-let arrange_para_of_rel rhs_rel lhs_rel_name (old_args, new_args) bottom_up = 
+(* let reorder old_args new_args args = *)
+(*       let pairs = List.combine old_args args in *)
+(*       let args = List.map (fun a -> List.assoc a pairs) new_args in *)
+(*       args *)
+
+(* let reorder_rev old_args new_args args = *)
+(*   reorder new_args old_args args *)
+
+(* let re_order_new args inp_bool_args = *)
+(*        let dec_args = List.combine args inp_bool_args in *)
+(*        let pre_args, post_args = List.partition (fun (_,b) -> b) dec_args in *)
+(*        let pre_args = List.map fst pre_args in *)
+(*        let post_args = List.map fst post_args in *)
+(*        (pre_args@post_args) *)
+
+
+let arrange_para_of_rel rhs_rel lhs_rel_name inp_bool_args bottom_up = 
   match rhs_rel with
   | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->
     if name = lhs_rel_name then 
-      let pairs = List.combine old_args args in
-      let args = List.map (fun a -> List.assoc a pairs) new_args in
+      let args = CP.re_order_new args inp_bool_args in
+      (* let pairs = List.combine old_args args in *)
+      (* let args = List.map (fun a -> List.assoc a pairs) new_args in *)
       CP.BForm ((CP.RelForm (name,args,o1),o2),o3)
     else 
     if bottom_up then rhs_rel
@@ -1173,33 +1204,136 @@ let arrange_para_of_pure fml lhs_rel_name subst bottom_up =
   let new_rel_conjs = List.map (fun x -> arrange_para_of_rel x lhs_rel_name subst bottom_up) rel_conjs in
   CP.conj_of_list (others @ new_rel_conjs) no_pos
 
-let rec re_order_para rels pfs ante_vars = match rels with
-  | [] -> ([],pfs)
-  | r::rs ->
-    let res_rs,res_pfs = re_order_para rs pfs ante_vars in
-    (match r with
-     | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->
-       let pre_args, post_args = List.partition 
-           (fun e -> Gen.BList.subset_eq CP.eq_spec_var (CP.afv e) ante_vars) args 
-       in
-       let new_args = pre_args @ post_args in
-       if new_args = args then (r::res_rs,res_pfs)
-       else
-         let subst_arg = args, new_args in
-         let new_pfs = List.map (fun pf_lst ->
-             List.map (fun pf -> arrange_para_of_pure pf name subst_arg true) pf_lst) res_pfs
-         in ([CP.BForm ((CP.RelForm (name,new_args,o1),o2),o3)]@res_rs, new_pfs)
-     | _ -> report_error no_pos "re_order_para: Expected a relation")
+(* type: CP.formula -> CP.spec_var -> 'a list * 'a list -> bool -> CP.formula *)
+let arrange_para_of_pure fml lhs_rel_name subst bottom_up =
+  let pr_pf = !CP.print_formula in
+  Debug.no_3 "arrange_para_of_pure" pr_pf !CP.print_sv (pr_list string_of_bool) pr_pf
+    (fun _ _ _ -> arrange_para_of_pure fml lhs_rel_name subst bottom_up) fml lhs_rel_name subst
+
+let no_change bool_lst =
+  let rec aux_false lst = match lst with
+    | [] -> true
+    | f::l -> if f then false
+      else aux_false l in
+  let rec aux_true lst = match lst with
+    | [] -> true
+    | f::l -> if f then aux_true l
+      else aux_false l in
+  aux_true bool_lst
+
+let no_change bool_lst =
+  Debug.no_1 "no_change" (pr_list string_of_bool) string_of_bool no_change bool_lst
+
+let build_inp_bool_args ante_vars args =
+  List.map (fun e -> Gen.BList.subset_eq CP.eq_spec_var (CP.afv e) ante_vars) args
+
+(* (==fixcalc.ml#1254==) *)
+(* re_order_para@2@1 *)
+(* re_order_para inp1 :[ PPP(mmmm_1371,n1_1372,n,k,m)] *)
+(* re_order_para inp2 :[[ PPP(mmmm_1371,n1_1460,n_1446,k,m) & 0<=n1_1460 & 0<=m & n_1446<=k &  *)
+(*  n=n_1446-1 & n1_1372=n1_1460+1 & 0<=mmmm_1371, n1_1372=0 & k=n & mmmm_1371=m & 0<=m]] *)
+(* re_order_para inp3 :[n,k,m,s] *)
+(* re_order_para@2 EXIT:([ PPP(n,k,m,mmmm_1371,n1_1372)],[[ 0<=n1_1460 & 0<=m & n_1446<=k & n=n_1446-1 & n1_1372=n1_1460+1 &  *)
+(*  0<=mmmm_1371 & PPP(mmmm_1371,n1_1460,n_1446,k,m), n1_1372=0 & k=n & mmmm_1371=m & 0<=m]]) *)
+(* WN : Obsolete as cannot handle mutual rec *)
+(* type: CP.formula list -> *)
+(*   CP.formula list list -> *)
+(*   CP.spec_var list -> CP.formula list * CP.formula list list *)
+(* let rec re_order_para rels pfs ante_vars = match rels with *)
+(*   | [] -> ([],pfs) *)
+(*   | r::rs -> *)
+(*     let res_rs,res_pfs = re_order_para rs pfs ante_vars in *)
+(*     (match r with *)
+(*      | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) -> *)
+(*        let inp_bool_args = build_inp_bool_args ante_vars args in *)
+(*        let new_args = x_add CP.re_order_new args inp_bool_args in *)
+(*        (\* let pre_args, post_args = List.partition  *\) *)
+(*        (\*     (fun e -> Gen.BList.subset_eq CP.eq_spec_var (CP.afv e) ante_vars) args  *\) *)
+(*        (\* in *\) *)
+(*        if x_add_1 no_change inp_bool_args (\* new_args = args *\) then (r::res_rs,res_pfs) *)
+(*        else *)
+(*          let subst_arg = inp_bool_args (\* args, new_args *\) in *)
+(*          let new_pfs = List.map (fun pf_lst -> *)
+(*              List.map (fun pf -> x_add arrange_para_of_pure pf name subst_arg true) pf_lst) res_pfs *)
+(*          in ([CP.BForm ((CP.RelForm (name,new_args,o1),o2),o3)]@res_rs, new_pfs) *)
+(*      | _ -> report_error no_pos "re_order_para: Expected a relation") *)
+
+let find_rel lst name =
+  let (_,r,_) = List.find (fun (a,_,_) -> CP.eq_spec_var a name) lst in
+  r
+
+let subs_rel lst_bool_args f =
+  match f with
+  | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->
+    begin
+    try
+      let r = find_rel lst_bool_args name in
+      begin
+        match r with
+        | None -> f
+        | Some b_args ->
+          let args = CP.re_order_new args b_args in
+          CP.BForm ((CP.RelForm (name,args,o1),o2),o3)
+      end
+    with _ -> 
+      let () = x_binfo_pp ("Cannot find relation "^(!CP.print_sv name)) no_pos in
+      f
+    end
+  | _ -> f
+
+let save_data = ref None
+let save_reorder f = save_data := Some f 
+let get_reorder () = 
+  match !save_data with
+  | None -> []
+  | Some f -> f 
+
+let process_body_pure lst_bool_args fml =
+  let conjs = CP.list_of_conjs fml in
+  let new_conjs = List.map (subs_rel lst_bool_args) conjs in
+  CP.conj_of_list (new_conjs) no_pos
+
+(* type: CP.formula list -> *)
+(*   CP.formula list list -> *)
+(*   CP.spec_var list -> CP.formula list * CP.formula list list *)
+let re_order_para rels pfs ante_vars = 
+  let to_bool_args r = match r with
+    | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) -> 
+      let b_arg = build_inp_bool_args ante_vars args in
+      let nc = no_change b_arg in
+      if nc then (name,None,r)
+      else 
+        let new_args = x_add CP.re_order_new args b_arg in
+        (name,Some b_arg,CP.BForm ((CP.RelForm (name,new_args,o1),o2),o3))
+    | _ -> report_error no_pos "re_order_para: rels should have only relations" 
+  in let lst_bool_args = List.map to_bool_args rels in
+  let () = save_reorder lst_bool_args in
+  let pfs = List.map (List.map (process_body_pure lst_bool_args)) pfs in
+  (List.map (fun (_,_,r)->r) lst_bool_args, pfs)
+
+let re_order_para rels pfs ante_vars = 
+  let pr_pf = !CP.print_formula in
+  let pr1 = pr_list pr_pf in
+  let pr2 = pr_list pr1 in
+  let pr3 = !CP.print_svl in
+  Debug.no_3 "re_order_para" pr1 pr2 pr3 (pr_pair pr1 pr2) re_order_para rels pfs ante_vars
 
 let arrange_para_new input_pairs ante_vars =
   let rels,pfs = List.split input_pairs in
-  let () = Debug.ninfo_hprint (add_str "rels(b4):" (pr_list !CP.print_formula)) rels no_pos in
-  let () = Debug.ninfo_hprint (add_str "pfs(b4):" (pr_list (pr_list !CP.print_formula))) pfs no_pos in
-  let rels,pfs = re_order_para rels pfs ante_vars in
-  let () = Debug.ninfo_hprint (add_str "rels(af):" (pr_list !CP.print_formula)) rels no_pos in
-  let () = Debug.ninfo_hprint (add_str "pfs(af):" (pr_list (pr_list !CP.print_formula))) pfs no_pos in
+  let () = Debug.binfo_hprint (add_str "rels(b4):" (pr_list !CP.print_formula)) rels no_pos in
+  let () = Debug.binfo_hprint (add_str "pfs(b4):" (pr_list (pr_list !CP.print_formula))) pfs no_pos in
+  let rels,pfs = x_add re_order_para rels pfs ante_vars in
+  let () = Debug.binfo_hprint (add_str "rels(af):" (pr_list !CP.print_formula)) rels no_pos in
+  let () = Debug.binfo_hprint (add_str "pfs(af):" (pr_list (pr_list !CP.print_formula))) pfs no_pos in
   try List.combine rels pfs
   with _ -> report_error no_pos "Error in re_order_para"
+
+(* type: (CP.formula * CP.formula list) list -> *)
+(*   CP.spec_var list -> (CP.formula * CP.formula list) list *)
+let arrange_para_new input_pairs ante_vars =
+  let pr_pf = !CP.print_formula in
+  let pr1 = pr_list (pr_pair pr_pf (pr_list pr_pf)) in
+  Debug.no_2 "arrange_para_new" pr1 !CP.print_svl pr1 arrange_para_new input_pairs ante_vars
 
 (*  let pairs, subs = List.split *)
 (*    (List.map (fun (r,pfs) ->*)
@@ -1227,17 +1361,19 @@ let arrange_para_td input_pairs ante_vars =
   let pairs = List.map (fun (r,pfs) ->
       match r with
       | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->
-        let pre_args, post_args = 
-          List.partition 
-            (fun e -> Gen.BList.subset_eq CP.eq_spec_var (CP.afv e) ante_vars) 
-            args
-        in
-        let new_args = pre_args @ post_args in
-        if new_args = args then (r,pfs)
+        let inp_bool_args = build_inp_bool_args ante_vars args in
+        let new_args = x_add CP.re_order_new args inp_bool_args in
+        (* let pre_args, post_args =  *)
+        (*   List.partition  *)
+        (*     (fun e -> Gen.BList.subset_eq CP.eq_spec_var (CP.afv e) ante_vars)  *)
+        (*     args *)
+        (* in *)
+        (* let new_args = pre_args @ post_args in *)
+        if x_add_1 no_change inp_bool_args (* ew_args = args *) then (r,pfs)
         else
-          let subst_arg = args, new_args in
+          let subst_arg = inp_bool_args (* args, new_args *) in
           CP.BForm ((CP.RelForm (name,new_args,o1),o2),o3), 
-          List.map (fun x -> arrange_para_of_pure x name subst_arg false) pfs
+          List.map (fun x -> x_add arrange_para_of_pure x name subst_arg false) pfs
       | _ -> report_error no_pos "arrange_para_td: Expected a relation"
     ) input_pairs
   in 
