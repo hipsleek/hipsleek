@@ -19,9 +19,11 @@ print residue.
   H(p) & p=null --> emp
 */
 
-
+/*
 infer_exact [H] H(p) & p=null |- true.
 print residue.
+*/
+
 /*
 
   <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
@@ -29,11 +31,12 @@ print residue.
 # Can we force the inference..
 
 */
-
+/*
 infer_exact [] H(p) & p=null |- emp.
 print residue.
 checkentail_exact H(p) & p=null |- emp.
 print residue.
+*/
 /*
 
 Entail (3) : Valid. 
