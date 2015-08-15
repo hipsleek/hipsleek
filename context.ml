@@ -1553,10 +1553,12 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          let s_eq = (String.compare vl_name vr_name)==0 in
          let vl_b = vl_view_origs!=[] in
          let vr_b = vr_view_origs!=[] in
-         let flag = (s_eq && 
+         let force_flag = (s_eq && 
                      ((vl_view_orig==false && vl_b) 
                       || ((vr_view_orig==false && vr_b)))) in
-         let () = Debug.tinfo_hprint (add_str "force_match" string_of_bool) flag no_pos in
+         let sf_force_match_flag = (vl_view_orig && not(vr_view_orig) || vr_view_orig && not(vl_view_orig)) && en_self_fold && Gen.BList.mem_eq (=) vr_name vl_self_pts in
+         let () = Debug.tinfo_hprint (add_str "force_match" string_of_bool) force_flag no_pos in
+         let () = Debug.tinfo_hprint (add_str "sf_force_match" string_of_bool) sf_force_match_flag no_pos in
          let () = Debug.ninfo_hprint (add_str "s_eq" string_of_bool) s_eq no_pos in
          let () = Debug.ninfo_hprint (add_str "vl_b" string_of_bool) vl_b no_pos in
          let () = Debug.ninfo_hprint (add_str "vr_b" string_of_bool) vr_b no_pos in
@@ -1590,8 +1592,9 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
            let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
            let uf_i = if new_orig then 0 else 1 in
            let syn_lem_typ = if seg_fold_type>=0 then -1 else CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
-           if flag then
-             [(0,M_match m_res)],-1 (*force a MATCH after each lemma*)
+           if force_flag || sf_force_match_flag then
+             let () = x_tinfo_pp "choosing forced matching" no_pos in
+             [(0,M_match m_res)],-1 (*force a MATCH after each lemma or self-fold unfold/fold*)
            else
              let a1 = (3,M_base_case_unfold m_res) in
              (*gen tail-rec <-> non_tail_rec: but only ONE lemma_tail_rec_count *)
@@ -1619,6 +1622,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                  | Some a -> a
                  | None ->
                    (*allow matching*)
+                   let () = x_tinfo_pp "choosing matching" no_pos in
                    let m_act = (1,M_match m_res) in
                    (* (1,Search_action [m_act; (1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))]) *)
                    if !Globals.seg_fold then (
@@ -1647,13 +1651,13 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                  let () = Debug.tinfo_hprint (add_str " vl_is_prim" string_of_bool) vl_is_prim no_pos in
                  let () = Debug.tinfo_hprint (add_str " vr_is_rec" string_of_bool) vr_is_rec no_pos in
                  let () = Debug.tinfo_hprint (add_str " vr_is_prim" string_of_bool) vr_is_prim no_pos in
-               if not(vl_is_rec) && not(vl_is_prim) then
-                 let () = Debug.tinfo_hprint (add_str "unfold vl_is_rec" string_of_bool) vl_is_rec no_pos in
-                 Some (2,M_unfold (m_res,0))
-               else if not(vr_is_rec) && not(vl_is_prim) && not(vr_is_prim)  then
-                 let () = Debug.ninfo_hprint (add_str "fold vr_is_rec" string_of_bool) vr_is_rec no_pos in
-                 Some (2,M_fold m_res) 
-               else None
+                 if not(vl_is_rec) && not(vl_is_prim) then
+                   let () = Debug.tinfo_hprint (add_str "unfold vl_is_rec" string_of_bool) vl_is_rec no_pos in
+                   Some (2,M_unfold (m_res,0))
+                 else if not(vr_is_rec) && not(vl_is_prim) && not(vr_is_prim)  then
+                   let () = Debug.ninfo_hprint (add_str "fold vr_is_rec" string_of_bool) vr_is_rec no_pos in
+                   Some (2,M_fold m_res) 
+                 else None
              ) in
              let a5 = (
                if a4==None then
@@ -1668,10 +1672,16 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                    let l2 =
                      (*Do not fold/unfold LOCKs*)
                      if (is_r_lock) then [] else
-                     if (vl_view_orig && vr_view_orig && en_self_fold && Gen.BList.mem_eq (=) vr_name vl_self_pts) 
-                     then
-                       [(2,M_unfold (m_res,0))]
-                     else [] in
+                       let uflag = (vl_view_orig && vr_view_orig && en_self_fold && Gen.BList.mem_eq (=) vr_name vl_self_pts) in
+                       let () = x_tinfo_hp (add_str "unfold on self-fold defn (rev-seg)" string_of_bool) uflag no_pos in
+                       if uflag
+                       then
+                         (* how to force a match after an unfold on self-rec *)
+                         if false (* !Globals.adhoc_flag_3 *) then
+                           let () = x_winfo_pp "unfold on self-rec" no_pos in
+                           failwith "unfold on self-rec"
+                         else [(1,M_unfold (m_res,0))]
+                       else [] in
                    let l = l1@l2 in
                    if l=[] then None
                    else Some (2,Cond_action l) 
