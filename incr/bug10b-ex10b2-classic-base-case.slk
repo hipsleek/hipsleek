@@ -1,0 +1,42 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+HeapPred H(node a).
+
+
+checkentail H(p) & p=null |- H(p) & p=null.
+print residue.
+
+
+/*
+# bug10b.slk
+
+# Why does't unknown pred matching itself?
+
+Entail 1: Fail.(may) cause:do_unmatched_rhs : H(p)
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: do_unmatched_rhs : H(p)
+     fc_current_lhs_flow: {FLOW,(18,22)=__MayError#E}
+   }
+ [[ COND ==>  UnmatchedRHSData]]
+ CEX:false
+
+---------
+//(3)
+infer [] H(p) & p=null |- emp.
+print residue.
+// expect H(p) as residue
+expect_infer Valid R{H(p) & p=null}.
+
+*/
+
