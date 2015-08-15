@@ -261,7 +261,9 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
     let () = match !last_sat_ctx with
       | Some p -> if (CF.isAnyFalseListCtx rs) && not(!Globals.old_collect_false) then
           let () = add_false_ctx p in
-          print_endline_quiet ("[UNSOUNDNESS] WARNING : satisfiable state at "^(string_of_loc p)^" became hfalse")
+          let () = print_endline_quiet ("[UNSOUNDNESS] WARNING : satisfiable state at "^(string_of_loc p)^" became hfalse") in
+          if !Globals.assert_unsound_false then failwith "Unsound false in SLEEK?" 
+          else ()
       | None -> () 
     in
     let () = x_tinfo_pp ("WN# 2:"^(Cprinter.string_of_list_context rs)) no_pos in
