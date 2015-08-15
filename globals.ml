@@ -1220,6 +1220,7 @@ let allow_threads_as_resource = ref false
 
 (* let assert_matrix = ref false *)
 let assert_nonlinear = ref false
+let assert_unsound_false = ref false
 
 let old_collect_false = ref false
 let old_infer_collect = ref false
@@ -1309,7 +1310,9 @@ let dump_lem_proc = ref false
 let num_self_fold_search = ref 0
 let array_expansion = ref false;;
 let array_translate = ref false;;
-let self_fold_search_flag = ref false
+
+let self_fold_search_flag = ref true 
+(* performance not affected see incr/fix-todo.txt *)
 
 let show_gist = ref false
 let imply_top_flag = ref false

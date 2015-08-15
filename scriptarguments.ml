@@ -317,6 +317,7 @@ linput.rl");
   ("--adhoc-1", Arg.Set Globals.adhoc_flag_1,"Enable Adhoc Flag 1");
   ("--adhoc-2", Arg.Set Globals.adhoc_flag_2,"Enable Adhoc Flag 2");
   ("--adhoc-3", Arg.Set Globals.adhoc_flag_3,"Enable Adhoc Flag 3");
+  ("--assert-unsound-false", Arg.Set Globals.assert_unsound_false, "Enable Adhoc Flag 3");
   ("--assert-nonlinear", Arg.Set Globals.assert_nonlinear,"Enable Asserting Testing of Nonlnear Pre-Processing");
   ("--ann-vp", Arg.Set Globals.ann_vp,"manual annotation of variable permissions");
   ("--dis-ann-vp", Arg.Clear Globals.ann_vp,"disable manual annotation of variable permissions");
@@ -495,8 +496,10 @@ linput.rl");
      pre_residue_lvl ==0 *)
   ("-num-self-fold-search", Arg.Set_int Globals.num_self_fold_search,
    "Allow Depth of Unfold/Fold Self Search");
-  ("--en-self-fold-search", Arg.Set Globals.self_fold_search_flag,
+  ("--en-self-fold", Arg.Set Globals.self_fold_search_flag,
    "Enable Limited Search with Self Unfold/Fold");
+  ("--dis-self-fold", Arg.Clear Globals.self_fold_search_flag,
+   "Disable Limited Search with Self Unfold/Fold");
   ("-parse", Arg.Set parse_only,"Parse only");
   ("--parser", Arg.Symbol (["default"; "cil"], Parser.set_parser), "Choose different parser: default; cil");
   ("--dump-ss", Arg.Set dump_ss, "Dump ss files");
@@ -978,8 +981,8 @@ linput.rl");
   ("--sa-dis-print-decl" , Arg.Clear Globals.print_heap_pred_decl, "disable predicates declaration printing");
   ("--en-print-ann" , Arg.Set Globals.print_ann, "enable annotation printing (default)");
   ("--dis-print-clean", Arg.Clear Globals.print_clean_flag, "disable cleaner printing");
-  ("--en-print-clean" , Arg.Set Globals.print_clean_flag, "enable cleaner printing (default)");
-  ("--en-print-derv" , Arg.Set Globals.print_derv, "enable [derv,orig] annotation printing");
+  ("--print-clean" , Arg.Set Globals.print_clean_flag, "enable cleaner printing (not default)");
+  ("--print-derv" , Arg.Set Globals.print_derv, "enable [derv,orig] annotation printing");
   ("--dis-print-derv" , Arg.Clear Globals.print_derv, "disable [derv,orig] annotation printing (default)");
   ("--en-texify", Arg.Set Globals.texify, "output latex formulas");
   ("--en-testing", Arg.Set Globals.testing_flag, "generate for testing comparison with start/stop markers");
