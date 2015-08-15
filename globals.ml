@@ -1054,13 +1054,24 @@ let procs_verified = ref ([] : string list)
 
 let false_ctx_line_list = ref ([] : loc list)
 
-let last_sat_ctx = ref None
+let pr_option f x = match x with
+  | None -> "None"
+  | Some v -> "Some("^(f v)^")"
+
+let last_sat_ctx = new store None (pr_option string_of_loc)
+let last_infer_lhs_contra = new store false string_of_bool 
+
+(* let is_last_infer_lhs_contra () =  *)
+(*   !last_infer_lhs_contra *)
+(* let set_last_infer_lhs_contra () =  *)
+(*   last_infer_lhs_contra:=false *)
 
 let add_false_ctx pos = 
-  last_sat_ctx := None;
+  last_sat_ctx # set None;
+  last_infer_lhs_contra # reset;
   false_ctx_line_list := pos::!false_ctx_line_list
 
-let set_last_ctx (pos:loc) = last_sat_ctx := Some pos 
+(* let set_last_ctx (pos:loc) = last_sat_ctx := Some pos  *)
 
 
 (* use List.rev *)

@@ -228,7 +228,7 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
         let () = x_dinfo_hp (add_str "pos of conseq" Cprinter.string_of_pos) pos3 no_pos in
         let () = add_false_ctx pos3 in
         print_endline_quiet ("[Warning] False ctx")
-      else set_last_ctx pos3
+      else last_sat_ctx # set (Some pos3)
     in
     (* let is_arrvar_flag = CF.is_arr_as_var_ctx ctx in *)
     (* let () = x_dinfo_hp (add_str "arrvar_flag" string_of_bool) is_arrvar_flag no_pos in *)
@@ -258,12 +258,15 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
     (* let () = print_endline ("WN# 1:"^(Cprinter.string_of_list_context rs1)) in *)
     (* tut/ex1/bugs-ex31-match.slk *)
     let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
-    let () = match !last_sat_ctx with
+    let () = match last_sat_ctx # get with
       | Some p -> if (CF.isAnyFalseListCtx rs) && not(!Globals.old_collect_false) then
+          let contra_flag = last_infer_lhs_contra # get in
           let () = add_false_ctx p in
-          let () = print_endline_quiet ("[UNSOUNDNESS] WARNING : satisfiable state at "^(string_of_loc p)^" became hfalse") in
-          if !Globals.assert_unsound_false then failwith "Unsound false in SLEEK?" 
-          else ()
+          if contra_flag then ()
+          else
+            let () = print_endline_quiet ("[UNSOUNDNESS] WARNING : satisfiable state at "^(string_of_loc p)^" became hfalse") in
+            if !Globals.assert_unsound_false then failwith "Unsound false in SLEEK?" 
+            else ()
       | None -> () 
     in
     let () = x_tinfo_pp ("WN# 2:"^(Cprinter.string_of_list_context rs)) no_pos in
