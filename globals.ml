@@ -1220,6 +1220,7 @@ let allow_threads_as_resource = ref false
 
 (* let assert_matrix = ref false *)
 let assert_nonlinear = ref false
+let assert_unsound_false = ref false
 
 let old_collect_false = ref false
 let old_infer_collect = ref false
