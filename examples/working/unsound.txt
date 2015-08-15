@@ -1,4 +1,5 @@
 ./run-fast-tests.pl sleek -flags "--assert-unsound-false"
+(FIXED by marking lhs_contra false as sound *)
 
 Total number of errors: 9 in files:
   infer/infer1.slk({E12#Valid},{E13#Valid}) 
@@ -14,8 +15,9 @@ Total number of errors: 9 in files:
 # these false were from infer_contra ..
 
 ===========================================
-
 ./run-fast-tests.pl hip -flags "--eps --assert-unsound-false"
+
+# to remedy fix/ex4b.ss
 
  error at: trees.ss delete
 
