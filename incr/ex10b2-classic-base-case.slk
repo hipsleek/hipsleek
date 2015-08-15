@@ -8,19 +8,22 @@ data node {
 
 HeapPred H(node a).
 
+//(1)
 infer_exact [H] H(p) & p=null |- emp.
 print residue.
-expect Valid.
+expect_infer Valid R{emp}.
 
+//(2)
 infer [H] H(p) & p=null |- emp.
 print residue.
 // expect H(p) as residue
-expect Valid.
+expect_infer Valid R{H(p) & p=null}.
 
+//(3)
 infer [] H(p) & p=null |- emp.
 print residue.
 // expect H(p) as residue
-expect Valid.
+expect_infer Valid R{H(p) & p=null}.
 
 infer_exact [] H(p) & p=null |- emp.
 print residue.

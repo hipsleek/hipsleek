@@ -18,7 +18,7 @@ HeapPred H1(node a).
 
 int size_helper(node x, ref int n)
   infer[H,H1]
-  requires H(x)  ensures  true;//H1(x);
+  requires H(x)  ensures  emp;//H1(x);
 {
   if (x==null) 
     return n;
