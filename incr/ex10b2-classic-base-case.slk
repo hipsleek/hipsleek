@@ -32,44 +32,18 @@ expect Fail.
 
 
 /*
-# ex10b.alk
+# ex10b2.alk
 
-infer_exact [] H(p) & p=null |- emp.
-print residue.
-// expect H(p) as residue
-expect Fail.
+# Why did 3.1 fail?
 
-Entail (4) : Valid. 
-Residue:
- <1>H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
-Validate 4: Expecting(3)Fail BUT got : Valid
-
-*/
-
-/*
-infer_exact [H] H(p) & p=null |- true.
-print residue.
-*/
-
-/*
-
-  <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
-
-# Can we force the inference..
-
-*/
-/*
-infer_exact [] H(p) & p=null |- emp.
-print residue.
-checkentail_exact H(p) & p=null |- emp.
-print residue.
-*/
-/*
-
-Entail (3) : Valid. 
 Residue:
  <1>H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
 
-# Why no failure for above!
+
+!!! **sleekengine.ml#1741:str:
+Expect_Infer 3.1: 
+!!! **sleekengine.ml#1742:res_f_str:( H(p)&p=null&{FLOW,(20,21)=__norm#E}[])
+Expect_Infer 3.1: Expected Valid but got Fail ( H(p)&p=null&{FLOW,(20,21)=__norm#E}[])
+
 */
 
