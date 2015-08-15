@@ -779,7 +779,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       (* Debug.info_hprint (add_str "fv post" !CP.print_svl) ovars no_pos; *)
       (* Debug.info_hprint (add_str "out vars" !CP.print_svl) ov no_pos; *)
       if ((Immutable.is_lend post_cond) && not(!Globals.allow_field_ann))
-      || (!Globals.allow_field_ann && Mem.is_lend post_cond) then
+         || (!Globals.allow_field_ann && Mem.is_lend post_cond) then
         Error.report_error {Error.error_loc = pos_spec; Error.error_text =  ("The postcondition cannot contain @L heap predicates/data nodes/field annotations\n")}
       else
         let pos_post = CF.pos_of_formula post_cond in
@@ -915,21 +915,42 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                 (*                      x_dinfo_zp (lazy (">>>>> Performing check_post STARTS")) no_pos;*)
                 (* let hp_rels1 = Gen.BList.remove_dups_eq (=) (Infer.collect_hp_rel_list_partial_context res_ctx) in *)
                 (*  let () = print_string_quiet ("\n WN 2 : "^(Cprinter.prtt_string_of_formula post_cond)) in *)
+                let tmp_false_cnt  = new Gen.counter 0 in
+                let elim_unsat e = 
+                  let already_unsat_flag = e.CF.es_unsat_flag in
+                  if already_unsat_flag then e
+                  else
+                    let () = x_ninfo_hp (add_str "es_unsat_flag" string_of_bool) already_unsat_flag no_pos in
+                    let (b,_,e) = elim_unsat_estate prog e in
+                    if b then tmp_false_cnt # inc;
+                    let () = x_ninfo_hp (add_str "elim_unsat(b)" string_of_bool) b no_pos in
+                    e 
+                in
+                let res_ctx = CF.map_list_partial_context res_ctx elim_unsat  in
+                let new_false_cnt = tmp_false_cnt # get in
+                let () = x_tinfo_hp (add_str "new_false_cnt" string_of_int) new_false_cnt no_pos in
                 let tmp_ctx = check_post prog proc res_ctx (post_cond,post_struc) pos_post post_label etype in
                 let cnt_before = CF.count_sat_pc_list res_ctx in
-                let cnt_after = CF.count_sat_pc_list tmp_ctx in
+                let cnt_after = CF.count_sat_pc_list tmp_ctx + new_false_cnt in
                 (*                      x_dinfo_pp ">>>>> Performing check_post ENDS" no_pos;*)
                 if cnt_before>cnt_after && not(!Globals.old_collect_false) then
                   begin
                     (* need to do the same for pre-condition proving ? *)
                     (* detected new False from post-condition proving *)
                     (* potential unsoundness *)
-                    let () = x_binfo_pp ("\n Before CheckPost : "^(Cprinter.string_of_list_partial_context res_ctx)) no_pos in
-                    let () = x_binfo_pp ("\n After CheckPost : "^(Cprinter.string_of_list_partial_context tmp_ctx)) no_pos in
+                    (* to count false detected in elim_unsat_estate *)
+                    (* let cnt_elim_unsat = CF.count_sat_pc_list new_res_ctx in *)
+                    let () = x_tinfo_pp ("\n Before CheckPost : "^(Cprinter.string_of_list_partial_context res_ctx)) no_pos in
+                    let () = x_tinfo_pp ("\n After CheckPost : "^(Cprinter.string_of_list_partial_context tmp_ctx)) no_pos in
                     let () = x_binfo_pp ("\n Before CheckPost : "^(string_of_int cnt_before)) no_pos in
+                    (* inside cnt_after *)
+                    (* let () = x_binfo_pp ("\n Elim Unsat (new_false_cnt) : "^(string_of_int new_false_cnt)) no_pos in *)
                     let () = x_binfo_pp ("\n After CheckPost : "^(string_of_int cnt_after)) no_pos in
                     let () = add_false_ctx (post_pos # get) in
-                    print_endline_quiet ("\n[UNSOUNDNESS] WARNING : possible new unsatisfiable state from post-proving of "^(post_pos # string_of))
+                    let () = print_endline_quiet ("\n[UNSOUNDNESS] WARNING : possible new unsatisfiable state from post-proving of "^(post_pos # string_of)) in
+                    if !Globals.assert_unsound_false then failwith "Unsound false in SLEEK?" 
+                    else ()
+
                   end;
                 (* Termination: collect error messages from successful states *)
                 let term_err_msg = CF.collect_term_err_list_partial_context tmp_ctx in 
@@ -1131,7 +1152,7 @@ and check_scall_fork prog ctx e0 (post_start_label:formula_label) ret_t mn lock 
     (* Internal function to check pre/post condition of the fork call. *)
     let check_pre_post org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
       (* Termination: Stripping the "variance" feature from org_spec
-         	   if the call is not a recursive call *)
+         if the call is not a recursive call *)
       (*TO CHECK: neccessary -> YES*)
       (*fork is not a recursive call*)
       let stripped_spec = org_spec in
@@ -2016,7 +2037,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   if not(CP.isLend imm_node) && not(CP.isAccs imm_node) (* asankhs: Do not change this please&& not(!Globals.allow_field_ann)*) then 
                     CF.normalize_max_renaming_list_failesc_context_4_bind pid vheap pos true tmp_res1 
                     (* for Lend, Accs it should not be added back and 
-                       				     field level annotations should be added back and compacted *)
+                       field level annotations should be added back and compacted *)
                   else tmp_res1 
                 in 
                 x_tinfo_pp "WN : adding vheap to exception too" no_pos;
@@ -2191,8 +2212,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
              let tmp1 = if (previous_failure ()) then ("failesc context: "^tmp1) else tmp1 in
              let tmp2 = 
                if !Globals.simplify_dprint then 
-                   "\ndprint(simpl): " ^ pos.start_pos.Lexing.pos_fname
-                          ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str2 ^ "\n"
+                 "\ndprint(simpl): " ^ pos.start_pos.Lexing.pos_fname
+                 ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str2 ^ "\n"
                else ""
              in
              let tmp2 = if (previous_failure ()) then ("failesc context: "^tmp2) else tmp2 in

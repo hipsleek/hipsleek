@@ -1,0 +1,59 @@
+/* Build a list of the form 1->...->1->0 */
+
+data node {
+ int h;
+ node next;
+}.
+
+// needs --en-self-fold
+
+pred rev_lseg<p> == self=p or self::rev_lseg<t>*t::node<_,p>.
+
+// can schedule an unfold?
+checkentail ppp::rev_lseg<p> & ppp!=p
+|- ppp::rev_lseg<q> & ppp!=q & q!=p
+.
+print residue.
+expect Fail.
+
+/*
+# ex8d9.slk
+
+checkentail ppp::rev_lseg<p> & ppp!=p
+|- ppp::rev_lseg<q> & p!=q
+
+# Why folding result in below?
+
+ <1>ppp::rev_lseg<p>@M&ppp=q & ppp!=p&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  COND ==>  Fold]]
+
+
+----------------------------------
+
+Unfold here needs to be followed by forced matching ..
+Can they be scheduled in sequence? Shouldn't they?
+
+checkentail tt::node<1,p>@M * ppp::rev_lseg<tt>@M
+ |-  ppp::rev_lseg<p>
+.
+
+# Can we make it work by scheduling a "fold" operation?
+  for such rev-lseg specification?
+
+  self preds: [rev_lseg]
+
+# Can we also include a fold at priority 2?
+
+compute_actions@1 EXIT: COND =>[
+  Prio:1
+  Match =>
+    LHS: ppp::rev_lseg<tt>@M
+    RHS: ppp::rev_lseg<p_42>@M;
+  Prio:3
+  BaseCaseUnfold =>
+    LHS: ppp::rev_lseg<tt>@M
+    RHS: ppp::rev_lseg<p_42>@M
+  ]
+
+*/
+

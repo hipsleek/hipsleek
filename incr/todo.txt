@@ -509,7 +509,7 @@ res:  failctxfe_kind: MAY
   for such rev-lseg specification?
 
 =====================================================================
-# ex8d8.slk (WN to fix)
+# ex8d8.slk (FIXED)
 
 checkentail t'::node<1,p>@M * p'::Q3<t'>@M
  |-  p'::Q3<p>

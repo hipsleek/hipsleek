@@ -6,18 +6,24 @@ data node {
 }.
 
 
-pred Q3<p> == self=p or self::Q3<t>*t::node<_,p>
-  .
-checkentail t'::node<1,p>@M * p'::Q3<t'>@M
- |-  p'::Q3<p>
+pred lseg<p> == self=p or self::node<_,q> * q::lseg<p>.
+
+pred rev_lseg<p> == self=p or self::rev_lseg<t>*t::node<_,p>.
+
+checkentail t'::node<1,p>@M * p'::rev_lseg<t'>@M
+ |-  p'::rev_lseg<p>
 .
 print residue.
+
+checkentail p'::node<1,t>@M * t::lseg<p>@M
+ |-  p'::lseg<p>
+.
 
 /*
 # ex8d8.slk
 
-checkentail t'::node<1,p>@M * p'::Q3<t'>@M
- |-  p'::Q3<p>
+checkentail t'::node<1,p>@M * p'::rev_lseg<t'>@M
+ |-  p'::rev_lseg<p>
 .
 
 # Can we make it work by scheduling a "fold" operation?

@@ -770,7 +770,7 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
     else
       let ivars = estate.es_infer_vars in
       let p_thus = estate.es_infer_pure_thus in
-      let r = infer_lhs_contra 1 p_thus lhs_xpure ivars pos msg in
+      let r = x_add infer_lhs_contra 1 p_thus lhs_xpure ivars pos msg in
       match r with
       | None -> 
         begin
@@ -779,7 +779,7 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
             x_dinfo_pp ">>>>>> infer_lhs_contra_estate <<<<<<" pos;
             x_dinfo_pp "Add relational assumption" pos;
             let (vs_rel,vs_lhs) = List.partition CP.is_rel_var (CP.fv f) in
-            let rel_ass = infer_lhs_contra 2 p_thus lhs_xpure vs_lhs pos "relational assumption" in
+            let rel_ass = x_add infer_lhs_contra 2 p_thus lhs_xpure vs_lhs pos "relational assumption" in
             let () = x_dinfo_hp (add_str "rel_ass(unsat) : " (pr_opt !CP.print_formula)) rel_ass pos in
             begin
               match rel_ass with
@@ -815,6 +815,21 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
         let new_estate = CF.false_es_with_orig_ante estate estate.es_formula pos in
         (Some (new_estate,pf),[])
 
+let wrap_check_lhs_contra f a = 
+  let pr0 = !print_entail_state_short in
+  let pr1 = !print_mix_formula in
+  (* let pr_f = Cprinter.string_of_formula in *)
+  let pr_es (es,e) =  pr_pair pr0 Cprinter.string_of_pure_formula (es,e) in
+  let pr = CP.print_lhs_rhs in
+  let pr3 (es,lr,b) =  pr_triple pr0 (pr_list pr) string_of_bool (es,lr,b) in
+  let pr_res = (pr_pair (pr_option pr_es) (pr_list pr3)) in
+  let (fst,_) as res = f a in
+  let () = x_ninfo_hp (pr_option pr_es) fst no_pos in
+  let () = match fst with
+    | Some _ -> last_infer_lhs_contra # set true
+    | _ -> () in
+  res
+
 (* estate is present twice in result *)
 let infer_lhs_contra_estate i estate lhs_xpure pos msg =
   let pr0 = !print_entail_state_short in
@@ -825,7 +840,8 @@ let infer_lhs_contra_estate i estate lhs_xpure pos msg =
   let pr3 (es,lr,b) =  pr_triple pr0 (pr_list pr) string_of_bool (es,lr,b) in
   let pr_res = (pr_pair (pr_option pr_es) (pr_list pr3)) in
   Debug.no_3_num i "infer_lhs_contra_estate" (add_str "estate" pr0) 
-    (add_str "lhs_xpure" pr1) pr_id pr_res (fun _ _ _ -> infer_lhs_contra_estate estate lhs_xpure pos msg) estate lhs_xpure msg
+    (add_str "lhs_xpure" pr1) pr_id pr_res (fun _ _ _ -> 
+        wrap_check_lhs_contra (infer_lhs_contra_estate estate lhs_xpure pos) msg) estate lhs_xpure msg
 
 (*
   should this be done by ivars?
