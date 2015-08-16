@@ -220,7 +220,7 @@ and h_formula = (* heap formula *)
   | ThreadNode of h_formula_thread
   | Hole of int | FrmHole of int
   (* | TempHole of int * h_formula *)
-  | HRel of (CP.spec_var * ((CP.exp) list) * loc) (*placeh older for heap predicates*)
+  | HRel of (CP.spec_var * ((CP.exp) list) * loc) (*place holder for unknown heap predicates*)
   (* | HRel of ((CP.spec_var * cond_path_type) * ((CP.exp) list) * loc) (\*placeh older for heap predicates*\) *)
   | HTrue
   | HFalse
@@ -330,6 +330,41 @@ and approx_disj_or = { approx_disj_or_d1 : approx_disj;
 
 and approx_formula_and = { approx_formula_and_a1 : approx_formula;
                            approx_formula_and_a2 : approx_formula }
+
+(* !!! **cformula.ml#335:HPRel(n):H *)
+(* !!! **cformula.ml#336:HPRel(args):[ p, q] *)
+let mk_HRel_as_view n args loc =
+  let () = x_binfo_hp (add_str "HPRel(n)" !CP.print_sv) n no_pos in
+  let () = x_binfo_hp (add_str "HPRel(args)" (pr_list !CP.print_exp)) args no_pos in
+  let vn = name_of_spec_var n in
+  let (hd,tails) = (n,[n]) in
+  ViewNode {
+    h_formula_view_name = vn;
+    h_formula_view_node = hd; (* root *)
+    h_formula_view_arguments = tails; (* rest of argument *)
+    h_formula_view_pos = loc;
+    h_formula_view_label = None;
+
+    (* prim_view *)
+    h_formula_view_split = SPLIT0;
+
+    (* view with defn *)
+    h_formula_view_unfold_num = 0; (* to prevent infinite unfolding *)
+    h_formula_view_remaining_branches =  None;
+    h_formula_view_pruning_conditions =  [];
+    h_formula_view_derv = false;
+    h_formula_view_args_orig = [];
+    h_formula_view_origins = [];
+    h_formula_view_original = false;
+    h_formula_view_lhs_case = false; (* to allow LHS case analysis prior to unfolding and lemma *)
+
+    h_formula_view_imm = CP.NoAnn;
+    h_formula_view_perm = None;
+    h_formula_view_ho_arguments = [];
+    h_formula_view_annot_arg = [];
+    h_formula_view_modes = [];
+    h_formula_view_coercible = false;
+  }
 
 (* this will be set to TPdispatcher.simplify_omega later *)
 let simplify_omega = ref(fun (c:Cpure.formula) -> c)
