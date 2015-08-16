@@ -730,6 +730,8 @@ let pr_list_of_annot_arg_posn ?(lvl=(!glob_lvl)) xs = pr_list_none ~lvl pr_annot
 
 let pr_imm ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (string_of_imm x)
 
+let pr_list_of_imm ?(lvl=(!glob_lvl)) xs = pr_list_none ~lvl pr_imm xs
+
 let pr_derv ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (string_of_derv x)
 
 let pr_split ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (string_of_split_ann x)
@@ -1422,6 +1424,7 @@ let rec pr_h_formula h =
         fmt_string "::"; (* to distinguish pred from data *)
         pr_angle (c^ho_arg_str^perm_str) pr_view_arg params;
         pr_imm imm;
+        if (!Globals.allow_field_ann) then begin fmt_string "@IFP["; pr_list_of_imm (get_node_param_imm h); fmt_string "]"; end;
         pr_derv dr;
         pr_split split;
         (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)

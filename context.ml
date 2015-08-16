@@ -1820,13 +1820,13 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          in
          let new_orig_r = if !ann_derv then not(vr_view_derv) else vr_view_orig in
          let new_orig_l = if !ann_derv then not(dl_derv) else dl_orig in
-         let sub_ann  = if (!Globals.allow_field_ann) then 
-             let rhs_no_h = CF.add_mix_formula_to_formula rhs_p (CF.mkTrue_nf no_pos) in
-             let rhs_for_imm_inst = map_opt_def rhs_no_h (fun x ->  CF.add_pure_formula_to_formula x rhs) estate.es_rhs_pure in
-             let r,_,_,_ = x_add (Immutable.subtype_ann_list ~rhs:rhs_for_imm_inst ~lhs:estate.es_formula) [] [] dl.h_formula_data_param_imm (CP.annot_arg_to_imm_ann_list (get_node_annot_args rhs_node)) in
-             let isAccs  = Immutable.isAccsList dl.h_formula_data_param_imm in
-             r && not(isAccs)
-           else true in
+         let sub_ann  =(*  if (!Globals.allow_field_ann) then  *)
+           (*   let rhs_no_h = CF.add_mix_formula_to_formula rhs_p (CF.mkTrue_nf no_pos) in *)
+           (*   let rhs_for_imm_inst = map_opt_def rhs_no_h (fun x ->  CF.add_pure_formula_to_formula x rhs) estate.es_rhs_pure in *)
+           (*   let r,_,_,_ = x_add (Immutable.subtype_ann_list ~rhs:rhs_for_imm_inst ~lhs:estate.es_formula) [] [] dl.h_formula_data_param_imm (CP.annot_arg_to_imm_ann_list (get_node_annot_args rhs_node)) in *)
+           (*   (\* let isAccs  = Immutable.isAccsList dl.h_formula_data_param_imm in *\) *)
+           (*   r (\* && not(isAccs) *\) *)
+           (* else  *)(Cfimmutils.is_imm_subtype ~pure:(MCP.pure_of_mix lhs_p) lhs_node rhs_node)  (* true *) in
          (* let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr_name dl.h_formula_data_name in *)
          (* let a1 = if (new_orig || vr_self_pts==[]) then [(1,M_fold m_res)] else [] in *)
          let () = Debug.ninfo_hprint (add_str "new_orig_r" string_of_bool) new_orig_r no_pos in
@@ -1853,6 +1853,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                        (CF.formula_of_heap lhs_h no_pos) [dl.CF.h_formula_data_node] in
                    let uf_i = if new_orig_r then 0 else 1 in
                    if lvs = [] then
+                     let () = x_binfo_pp "folding..." no_pos in
                      [(1,M_fold m_res)]
                    else
                      let vl = List.hd lvs in
@@ -1864,7 +1865,9 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                          else Some (CF.ViewNode vl)
                        in
                        [(1,M_cyclic( m_res, uf_i, 0, syn_lem_typ, unfold_view_opt))]
-                     else [(1,M_fold m_res)]
+                     else
+                       let () = x_binfo_pp "folding..." no_pos in
+                       [(1,M_fold m_res)]
                  else
                    let () = Debug.ninfo_hprint (add_str "cyclic:add_checkpoint" pr_id) "fold 3" no_pos in
                    let cyc_tail_rec_lemmas=
@@ -1873,13 +1876,16 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                        [(1,M_cyclic( m_res, uf_i, 0, syn_lem_typ, None))]
                      else []
                    in
+                   let () = x_binfo_pp "folding..." no_pos in
                    cyc_tail_rec_lemmas@[(1,M_fold m_res)]
                in
                acts
              else
                (* fold to activate/change  *)
              if (vr_is_prim) then [] else
+               let () = x_binfo_pp "folding..." no_pos in
                [(1,M_fold m_res)]
+           else if not(sub_ann) then [(3,M_base_case_fold m_res)]
            else []
          ) in
          (* WN : what is M_rd_lemma for?? *)
