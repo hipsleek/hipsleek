@@ -453,7 +453,7 @@ Hence, best pre-spec is:
  P1(p) ::= emp
 
 =====================================================================
-# ex8d6.ss
+# ex8d6.ss: FIXED
 
 We now proceed with post-shape inference using:
 
