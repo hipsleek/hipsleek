@@ -1554,9 +1554,11 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   incr test_number;
   (* let ante = CP.drop_varperm_formula ante in     *)
   (* let conseq = CP.drop_varperm_formula conseq in *)
+  let (ante,conseq) = Trans_arr.translate_array_imply ante conseq in
   let (ante_fv, ante) = prepare_formula_for_mona pr_w pr_s ante !test_number in
   let (conseq_fv, conseq) = prepare_formula_for_mona pr_s pr_w conseq !test_number in
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
+  (*let tmp_form = Trans_arr.translate_array_one_formula_for_validity tmp_form in*)
   let tmp_form = x_add_1 CP.subs_const_var_formula tmp_form in
   let tmp_form = if true (* !Globals.non_linear_flag *) then x_add_1 CP.drop_nonlinear_formula_rev tmp_form else tmp_form in
   (* let vs = Hashtbl.create 10 in *)
@@ -1579,6 +1581,7 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
     (imply_ops pr_w pr_s ante conseq) imp_no
 
 let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
+  let f = Trans_arr.translate_array_one_formula f in
   let () = if not !is_mona_running then start () else () in
   let () = Gen.Profiling.inc_counter "stat_mona_count_sat" in
   if !log_all_flag == true then

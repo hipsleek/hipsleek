@@ -1582,7 +1582,7 @@ let rec mk_array_free_formula
     | Var _
     | Null _->
       e
-    | _ -> failwith ("mk_array_free_exp: "^(string_of_exp e)^" To Be Implemented")
+    | _ -> e
   in
   let mk_array_free_b_formula
       ((p,ba):b_formula):b_formula=
@@ -1800,7 +1800,7 @@ let collect_free_array_index f:exp list =
     | Var _
     | IConst _ ->
       []
-    | _ -> failwith "is_valid_forall_helper_exp: To Be Implemented"
+    | _ -> []
   in
   let helper_b (p,ba) notfv =
     match p with
@@ -2250,7 +2250,7 @@ let rec extend_env old_env (nfv:not_free_var) f:arr2index_env =
       | Var _
       | IConst _ ->
             old_env
-      | _ -> failwith "is_valid_forall_helper_exp: To Be Implemented"
+      | _ -> old_env
   in
   let extend_env_b old_env nfv ((p,ba):b_formula) =
     match p with
@@ -2672,6 +2672,10 @@ let translate_array_one_formula_for_validity f=
   if !Globals.array_translate
   then translate_array_one_formula_for_validity f
   else f
+;;
+
+let translate_array_imply ante conseq =
+  (translate_array_one_formula ante, translate_array_one_formula conseq)
 ;;
 
 let translate_preprocess_helper
