@@ -124,8 +124,8 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
        imm_post_is_set := ff.formula_inf_obj # is_post_imm;
        should_infer_imm_post := !imm_post_is_set && (not(!imm_pre_is_set) || !should_infer_imm_post);
        (* has_infer_imm_post := (!has_infer_imm_post || !imm_post_is_set) && !should_infer_imm_post; *)
-       x_tinfo_hp (add_str "imm_pre_flag" string_of_bool) !imm_pre_is_set no_pos;
-       x_tinfo_hp (add_str "imm_post_flag" string_of_bool) !imm_post_is_set no_pos;
+       x_ninfo_hp (add_str "imm_pre_flag" string_of_bool) !imm_pre_is_set no_pos;
+       x_ninfo_hp (add_str "imm_post_flag" string_of_bool) !imm_post_is_set no_pos;
        use_mutable := (not !imm_pre_is_set && not !imm_post_is_set);
        None
     | EAssume ff ->
@@ -340,8 +340,10 @@ let wrapper_infer_imm_pre_post_seq infer_stk verify_scc prog verified_scc scc =
       let prog, vscc = res in
       let scc = List.hd (List.rev vscc) in
       let verified_scc = List.rev (List.tl (List.rev vscc)) in
-      let prog, scc = helper prog scc in 
-      verify_scc prog verified_scc scc
+      let prog0, scc0 = helper prog scc in 
+      if !should_infer_imm_post then
+        verify_scc prog0 verified_scc scc0
+      else res
     else res in
   res 
 
@@ -366,9 +368,11 @@ let wrapper_infer_imm_pre_post infer_stk verify_scc prog verified_scc scc =
 
 let wrapper_infer_imm_pre_post infer_stk verify_scc prog verified_scc scc =
  let pr = pr_list (fun p -> Cprinter.string_of_struc_formula p.Cast.proc_static_specs) in
+ let pr2 =  (pr_list (pr_list (add_str "proc_decls" (fun p -> Cprinter.string_of_struc_formula p.Cast.proc_static_specs)))) in
   let pr_out (a,b) = (pr_pair
     (fun a -> a.Cast.prog_rel_decls # string_of) 
-    (pr_list (pr_list (add_str "proc_decls" (fun p -> Cprinter.string_of_struc_formula p.Cast.proc_static_specs)))))  (a,b)
+    pr2 )  (a,b)
   in 
+  let pr_out (a,b) = pr2 b in
  (* let pr_out = pr_none in *)
  Debug.no_1 "wrapper_infer_imm_pre_post" pr pr_out (fun _ ->  wrapper_infer_imm_pre_post infer_stk verify_scc prog verified_scc scc) scc

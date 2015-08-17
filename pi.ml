@@ -369,7 +369,7 @@ let rec filter_infer_pure_struc_formula sf =
   | CF.EInfer ei ->
     let inf_obj = ei.CF.formula_inf_obj in
     let new_inf_obj = inf_obj # clone in
-    let () = new_inf_obj # reset INF_IMM in
+    (* let () = new_inf_obj # reset INF_IMM in *)
     let () = new_inf_obj # reset INF_SHAPE in
     CF.EInfer {ei with
                CF.formula_inf_obj = new_inf_obj}
