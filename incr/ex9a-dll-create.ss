@@ -1,8 +1,8 @@
 /* Build a list of the form 1->...->1->0 */
 
 data node {
- node next;
- node prev;
+  node prev;
+  node next;
 }
 
 bool bool_nondet()
@@ -12,9 +12,9 @@ node new_node()
   requires emp & true ensures res::node<_,_>;
 
 //HeapPred H(node x, node b). // non-ptrs are @NI by default
-//  PostPred G(node x,  node b,  node c, node d). // non-ptrs are @NI by default
+  PostPred G1(node x,  node b,  node@NI c, node@NI d). // non-ptrs are @NI by default
 
-HeapPred H(node x, node@NI y). // non-ptrs are @NI by default
+HeapPred H(node x). // non-ptrs are @NI by default
 PostPred G(node x,  node b).
 
 
@@ -23,24 +23,31 @@ PostPred G(node x,  node b).
   or self::node<p,q>*q::dllseg<self,l>
   ;
 
- dllseg1<p,l> == self::node<p,l>
-  or self::node<p,q>*q::dllseg1<self,l>
+ dllseg1<p> == self::node<_,_> & self=p
+  or p::node<prev,_>*self::dllseg1<prev>
   ;
 
 lseg<p> == self::node<_,p>
   or self::node<_,q>*q::lseg<p>
   ;
 
+rlseg<p> == self=p
+  or p::node<q,_>*self::rlseg<q>
+  ;
 
-void create_dll (ref node list, ref node t)
+lemma_safe self::dllseg1<list>  -> self::rlseg<list> * list::node<_,_>.
+
+void create_dll (ref node list)
 
 //infer [H,G] requires H(list)   ensures G(list,list');
-//  infer [H] requires H(list,t)   ensures true;
-
-  requires list::dllseg<_,_> ensures list'::dllseg<_,l> ; //'
-
+//  infer [H] requires H(list)   ensures true;
+//  infer [G1] requires list::node<pre,n>   ensures G1(list,list',pre,n);
+//infer [G] requires list::node<pre,n>   ensures G(list,list');
+  requires list::node<_,_> ensures list'::dllseg1<list> ; //'
+// requires list::node<_,_> ensures list'::rlseg<list> * list::node<_,_> ;
 
 {
+  node t;
   if (bool_nondet()) {
     //list::node<_,q> * q::lseg<l>
     t = new_node();
@@ -52,7 +59,7 @@ void create_dll (ref node list, ref node t)
     list = t;
     // list'::node<_,list> * list::node<t',q> * q::lseg<l> & list'=t'
     // pre-rec list'::node<_,list> * list::node<t',q> * q::lseg<l> & list'=t' |- list'::lseg<l>
-    create_dll(list,t);
+    create_dll(list);
   }
 }
 
