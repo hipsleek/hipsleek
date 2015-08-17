@@ -37,14 +37,15 @@ lseg<p> == self=p
   or self::node<_,q>*q::lseg<p>
   ;
 
-lemma_safe self::dllseg1<null> -> self::node<_,q> * q::ll<>.
+lemma_unsafe "bwd" self::dllseg1<list>  -> self::rlseg<list> * list::node<_,_>.
+
 
 void create_dll (ref node list)
 
 //infer [H,G] requires H(list)   ensures G(list,list');
 //  infer [H] requires H(list)   ensures true;
 //  infer [G] requires list::node<pre,n>   ensures G(list,list');
-//  requires list::node<_,_> ensures list'::rlseg<list> * list::node<_,_> ; //'
+  requires list::node<_,_> ensures list'::rlseg<list> * list::node<_,_> ; //'
 
 
 {

@@ -541,6 +541,14 @@ Residue:
 # expects H(p) & p=null --> emp to be inferred.
 
 =====================================================================
+# ex9a-lemma
+
+Entailing lemma bwd: Fail. (cex)(may) cause: Nothing_to_do?Cond_action []
+
+Failed to prove bwd:==> in current context.
+Removing invalid lemma ---> lemma store restored.
+
+
 =====================================================================
 =====================================================================
 =====================================================================
