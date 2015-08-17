@@ -1628,9 +1628,13 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
          let extra_rels = List.map (fun ui -> ui.Cast.ui_rel) ui_vs in
          let () = Debug.ninfo_hprint (add_str "ut_vs added" (pr_list (fun ut -> ut.C.ut_name))) ut_vs no_pos in
          let xrels = crels@extra_rels in
+         let () = x_binfo_hp (add_str "chps" string_of_int) (List.length chps) no_pos in
+         let new_v_d = List.filter (fun x -> x!=None) (List.map (fun x -> x.Cast.hp_view) chps) in
+         let new_v_d = List.map (fun x -> match x with Some a -> a | None -> failwith "impossible") new_v_d in
+         let () = x_binfo_hp (add_str "chps" string_of_int) (List.length chps) no_pos in
          let cprog = {
            C.prog_data_decls = cdata;
-           C.prog_view_decls = cviews2;
+           C.prog_view_decls = cviews2@new_v_d;
            C.prog_barrier_decls = bdecls;
            C.prog_logical_vars = log_vars;
            (* C.prog_rel_decls = xrels (\* crels@extra_rels *\); (\* An Hoa *\) *)
@@ -3065,16 +3069,20 @@ and trans_hp_x (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_dec
     ) hp_sv_vars in
     (* let nview = x_add trans_view iprog mutrec_views transed_views typ_infos view in *)
   (* let new_view = map_opt (fun v -> x_add trans_view prog [] [] n_tl v) hpdef.I.hp_view in *)
+  let hp_n = hpdef.I.hp_name in
+  let is_pre = hpdef.I.hp_is_pre in
   let new_view = 
     if !Globals.hrel_as_view_flag then 
-      x_report_error no_pos "hpdel --> view_decl"
+      let view_d = Cast.mk_view_decl_for_hp_rel hp_n hp_sv_vars1 is_pre pos  in
+      Some view_d
+        (* x_report_error no_pos "hpdel --> view_decl" *)
     else None in
-  let chprel = {C.hp_name = hpdef.I.hp_name; 
+  let chprel = {C.hp_name = hp_n;
                 C.hp_vars_inst = hp_sv_vars1;
                 C.hp_part_vars = hpdef.I.hp_part_vars;
                 Cast.hp_root_pos = 0; (*default, reset when def is inferred*)
-                C.hp_is_pre = hpdef.I.hp_is_pre;
-                C.hp_view = new_view (* hpdef.I.hp_view *);
+                C.hp_is_pre = is_pre;
+                C.hp_view = new_view;
                 C.hp_formula = crf; }
   in
   let c_p_hprel = Cast.generate_pure_rel chprel in

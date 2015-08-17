@@ -341,31 +341,32 @@ let mk_HRel_as_view n args loc =
     | _ -> x_report_error loc "HREL -> View : need at least one parameter"
   in
   ViewNode {
+    (* HRel *)
     h_formula_view_name = vn;
     h_formula_view_node = hd; (* root *)
-    h_formula_view_arguments = tails; (* rest of argument *)
-    h_formula_view_pos = loc;
-    h_formula_view_label = None;
+    h_formula_view_arguments = tails; (* rest of argument *) (* 220 *)
+    h_formula_view_pos = loc; (* 57 *)
+    h_formula_view_label = None; (* 29*)
 
     (* prim_view *)
-    h_formula_view_split = SPLIT0;
+    h_formula_view_split = SPLIT0; (*21*)
+    h_formula_view_imm = CP.NoAnn; (* 87 *)
+    h_formula_view_perm = None; (* 60*)
+    h_formula_view_ho_arguments = []; (* 29 *)
+    h_formula_view_annot_arg = []; (* 49 *)
+    h_formula_view_modes = []; (* 17 *)
+    h_formula_view_coercible = false; (* 14 *)
 
     (* view with defn *)
-    h_formula_view_unfold_num = 0; (* to prevent infinite unfolding *)
-    h_formula_view_remaining_branches =  None;
+    h_formula_view_unfold_num = 0; (* to prevent infinite unfolding *) (* 20*)
+    h_formula_view_remaining_branches =  None; (*48*)
     h_formula_view_pruning_conditions =  [];
-    h_formula_view_derv = false;
-    h_formula_view_args_orig = [];
+    h_formula_view_derv = false; (* 36 *)
+    h_formula_view_args_orig = []; (* 24 *)
     h_formula_view_origins = [];
     h_formula_view_original = false;
     h_formula_view_lhs_case = false; (* to allow LHS case analysis prior to unfolding and lemma *)
 
-    h_formula_view_imm = CP.NoAnn;
-    h_formula_view_perm = None;
-    h_formula_view_ho_arguments = [];
-    h_formula_view_annot_arg = [];
-    h_formula_view_modes = [];
-    h_formula_view_coercible = false;
   }
 
 (* this will be set to TPdispatcher.simplify_omega later *)

@@ -89,6 +89,7 @@ and barrier_decl = {
 
 and view_kind =
   | View_PRIM
+  | View_HREL
   | View_NORM
   | View_EXTN
   | View_SPEC
@@ -101,7 +102,7 @@ and view_decl = {
   view_pos : loc;
 
   view_is_prim : bool;
-  view_is_hrel : bool option; (* bool is for PostHeap *)
+  view_is_hrel : bool option; (* bool is PreHeap *)
 
   view_data_name : ident;
   view_ho_vars : (ho_flow_kind * P.spec_var * ho_split_kind) list;
@@ -608,6 +609,73 @@ let slk_of_data_decl = ref (fun (c:data_decl) -> "cast printer has not been init
 (* imply function has not been initialized yet *)
 let imply_raw = ref (fun (ante: P.formula) (conseq: P.formula) -> false)
 
+
+let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
+  let mix_true = MP.mkMTrue pos in
+  let vs = List.map fst vars in (* where to store annoation? *)
+  {
+    view_name = hp_n; (* CP.name_of_spec_var hp_n; *)
+    view_vars = vs;
+    view_pos = pos;
+    view_is_hrel = Some (is_pre);
+
+    view_is_prim = false;
+    view_data_name = "";
+    view_ho_vars = [];
+
+    view_cont_vars = [];
+    view_seg_opz = None;
+    view_case_vars = [];
+    view_uni_vars = [];
+    view_labels = [];
+    view_modes = [];
+    view_type_of_self = None;
+    view_is_touching = false;
+    view_is_segmented = false;
+    view_is_tail_recursive= false;        (* true if view is tail-recursively defined *)
+    view_residents= [];
+    view_forward_ptrs= [];
+    view_forward_fields= [];
+    view_backward_ptrs= [];
+    view_backward_fields= [];
+    view_kind = View_HREL;
+    view_prop_extns=  [];
+    view_parent_name= None;
+    view_domains= [];
+    view_contains_L_ann = false;
+    view_ann_params = [];
+    view_params_orig= [];
+    view_partially_bound_vars = [];
+    view_materialized_vars = [];
+    view_formula = F.mkETrue (F.mkTrueFlow ()) pos;
+    view_user_inv = mix_true;
+    view_mem = None;
+    view_inv_lock = None;
+    view_fixcalc = None;
+    view_x_formula = mix_true;
+    (* exact baga *)
+    view_baga_inv = None;
+    (* over-approx baga *)
+    view_baga_over_inv = None;
+    view_baga_x_over_inv = None;
+    (* necessary baga *)
+    view_baga_under_inv = None;
+    view_xpure_flag = false; (* flag to indicate if XPURE0 <=> XPURE1 *)
+    view_baga = CP.BagaSV.mkEmpty;
+    view_addr_vars = [];
+    view_complex_inv = None;
+    view_un_struc_formula = [];
+    view_linear_formula = [];
+    view_base_case = None;
+    view_prune_branches= [];
+    view_is_rec = false;
+    view_pt_by_self = [];
+    view_prune_conditions= [];
+    view_prune_conditions_baga= [];
+    view_prune_invariants = [];
+    view_raw_base_case= None;
+    view_ef_pure_disj = None;
+  }
 
 (** An Hoa [22/08/2011] Extract data field information **)
 

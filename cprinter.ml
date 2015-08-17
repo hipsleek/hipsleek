@@ -4270,6 +4270,7 @@ let pr_view_decl v =
   fmt_open_vbox 1;
   let s = match v.view_kind with
     | View_NORM -> " "
+    | View_HREL -> "_hrel "
     | View_PRIM -> "_prim "
     | View_EXTN -> "_extn "
     | View_SPEC -> "_spec "

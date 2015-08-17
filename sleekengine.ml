@@ -504,6 +504,16 @@ let process_hp_def hpdef =
       iprog.I.prog_hp_decls <- ( hpdef :: iprog.I.prog_hp_decls);
       let chpdef, p_chpdef = Astsimp.trans_hp iprog hpdef in
       let _ = !cprog.Cast.prog_hp_decls <- (chpdef :: !cprog.Cast.prog_hp_decls) in
+      if !Globals.hrel_as_view_flag then
+        begin
+          match chpdef.Cast.hp_view with
+          | Some v -> 
+            let () = x_binfo_hp (add_str "view_name" pr_id) v.Cast.view_name no_pos in
+            !cprog.Cast.prog_view_decls <- v::!cprog.Cast.prog_view_decls
+          | None -> 
+            let () = x_binfo_pp "NONE" no_pos in
+            ()
+        end;
       (* let _ = !cprog.Cast.prog_rel_decls <- (p_chpdef::!cprog.Cast.prog_rel_decls) in *)
       let _ = !cprog.Cast.prog_rel_decls # push p_chpdef in
       (* Forward the relation to the smt solver. *)
@@ -519,6 +529,9 @@ let process_hp_def hpdef =
       end
   else
     print_string (hpdef.I.hp_name ^ " is already defined.\n")
+
+let process_hp_def hpdef =
+  Debug.no_1 "process_hp_def" pr_none pr_none process_hp_def hpdef
 
 (** An Hoa : process axiom
 *)
