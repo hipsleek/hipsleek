@@ -16,14 +16,13 @@ HeapPred H(node a).
 HeapPred H1(node a).
 
 
-int size_helper(node x, ref int n)
-  infer[H,H1]
+int size_helper(node x)
+  infer[H]
   requires H(x)  ensures  emp;//H1(x);
 {
   if (x==null) 
-    return n;
+    return 0;
   else {
-    n = n+1;
-    return size_helper(x.next, n);
+    return 1+ size_helper(x.next);
   }
 }

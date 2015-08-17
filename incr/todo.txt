@@ -389,7 +389,9 @@ true]
 
 
 =====================================================================
-# ex8c1.slk
+# ex8c1.slk: FIXED
+
+added --del (disable eager lemma).
 
 # Why no lemma message?
 
@@ -399,7 +401,7 @@ Residue:
  <1>emp&{FLOW,(20,21)=__norm#E}[]
 [[ SEARCH ==>  COND ==>  Match(p',p')]]
 =====================================================================
-# ex8b2
+# ex8b2 duplicate with ex8d6
 
 *************************************
 *******shape relational assumptions ********
@@ -518,7 +520,7 @@ checkentail t'::node<1,p>@M * p'::Q3<t'>@M
 # Can we make it work by scheduling a "fold" operation?
   for such rev-lseg specification?
 =====================================================================
-# ex10c.alk
+# ex10c.slk: FIXED
 
 infer_exact [] H(p) & p=null |- emp.
 
@@ -528,7 +530,7 @@ GOT:
 # This need to FAIL!
 
 =====================================================================
-# ex10e.alk
+# ex10e.slk: FIXED
 
 infer_exact [H] H(p) & p=null |- htrue.
 

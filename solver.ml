@@ -14322,7 +14322,8 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
                  { new_es with es_conc_err = new_es.es_conc_err @ [(coer.coercion_name, pos)]; }
                else new_es 
              in
-             x_tinfo_zp (lazy ("normalize_w_coers: lemma matching succeeded")) no_pos;
+             let () = print_endline_quiet ("normalize_w_coers: lemma " ^ coer.Cast.coercion_name ^" " ^" matching succeeded") in
+             x_tinfo_zp (lazy ("lemma " ^ coer.Cast.coercion_name ^" " ^" matching succeeded")) no_pos;
              x_tinfo_zp (lazy ("normalize_w_coers: new ctx: \n" ^ (Cprinter.string_of_entail_state new_es))) no_pos;
              (true,new_es,h1,p1,vp1,fl1))
     in
@@ -14542,11 +14543,17 @@ and normalize_es_formula_w_coers prog estate (f: formula) (coers: coercion_decl 
       end
 
 and normalize_estate_w_coers prog estate (coers: coercion_decl list) pos: CF.entail_state =
-  let es, f = normalize_es_formula_w_coers prog estate estate.CF.es_formula coers pos in
-  { es with es_formula = f; }
+  if !Globals.eager_coercions then
+    let es, f = normalize_es_formula_w_coers prog estate estate.CF.es_formula coers pos in
+    { es with es_formula = f; }
+  else
+    estate
 
 and normalize_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl list): formula =
-  snd (normalize_es_formula_w_coers prog estate f coers no_pos)
+  if !Globals.eager_coercions then
+    snd (normalize_es_formula_w_coers prog estate f coers no_pos)
+  else
+    f
 
 and normalize_formula_w_coers i prog estate (f:formula) (coers:coercion_decl list): formula =
   let fn = wrap_proving_kind  PK_Lemma_Norm (normalize_formula_w_coers_x  prog estate f) in
