@@ -895,6 +895,7 @@ let sac = ref false
 let sa_pred_case = ref false
 
 let sags = ref true
+let sa_prefix_emp = ref true
 
 let sa_gen_slk = ref false
 let gen_fixcalc = ref false

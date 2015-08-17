@@ -9,7 +9,7 @@ pred lseg_one<p> == self=p
 
 lemma_safe self::lseg_one<t> * t::node<1,p> -> self::lseg_one<p>.
 
-/*
+
 checkentail t::node<1,q>*q::lseg_one<p> & t=p' |- p'::lseg_one<p>.
 print residue.
 
@@ -19,7 +19,7 @@ print residue.
 
 checkentail emp & p'=p |- p'::lseg_one<p>.
 print residue.
-*/
+
 
 checkentail p'::lseg_one<t> * t::node<1,p> |- p'::lseg_one<p>.
 print residue.
