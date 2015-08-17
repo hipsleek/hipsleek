@@ -364,6 +364,10 @@ let get_rel_from_imm_ann p = match p with
   | PostImm f
   | PreImm  f -> f
 
+let extr_spec_var e = match e with 
+  | Var(v,_) -> v
+  | _ -> x_report_error no_pos "extr_spec_var : did not encounter var" 
+
 let rec compare_term_ann a1 a2 =
   match a1, a2 with 
   | Term, Term -> 0

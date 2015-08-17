@@ -156,6 +156,10 @@ let print_arg_kind i= match i with
   | I -> ""
   | NI -> "#"
 
+let string_of_arg_kind i= match i with
+  | I -> "@I"
+  | NI -> "@NI"
+
 (* and prim_type =  *)
 (*   | TVar of int *)
 (*   | Bool *)
@@ -1237,6 +1241,7 @@ let old_collect_false = ref false
 let old_infer_collect = ref false
 let old_impl_gather = ref false
 let old_parse_fix = ref false
+let hrel_as_view_flag = ref false
 let adhoc_flag_1 = ref false
 let adhoc_flag_2 = ref false
 let adhoc_flag_3 = ref false

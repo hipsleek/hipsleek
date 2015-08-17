@@ -2408,6 +2408,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
        | CF.Exists b -> mf f b.CF.formula_exists_heap b.CF.formula_exists_flow b.CF.formula_exists_pos
        | CF.Or b -> CF.mkOr (f_tr_base b.CF.formula_or_f1) (f_tr_base b.CF.formula_or_f2) no_pos in
      let is_prim_v = vdef.I.view_is_prim in
+     let is_hrel_v = vdef.I.view_is_hrel in
      let rbc = 
        if is_prim_v then None
        else List.fold_left (fun a (c,l)-> 
@@ -2504,6 +2505,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
        C.view_name = vn;
        C.view_pos = vdef.I.view_pos;
        C.view_is_prim = is_prim_v;
+       C.view_is_hrel = is_hrel_v;
        C.view_is_touching = false;           (* temporarily assigned *)
        C.view_is_segmented = false;          (* temporarily assigned *)
        C.view_is_tail_recursive = false;     (* temporarily assigned *)
@@ -3061,11 +3063,18 @@ and trans_hp_x (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_dec
       let n_i_kind = if not (CP.is_node_typ sv) then NI else i_kind in
       (sv, n_i_kind)
     ) hp_sv_vars in
+    (* let nview = x_add trans_view iprog mutrec_views transed_views typ_infos view in *)
+  (* let new_view = map_opt (fun v -> x_add trans_view prog [] [] n_tl v) hpdef.I.hp_view in *)
+  let new_view = 
+    if !Globals.hrel_as_view_flag then 
+      x_report_error no_pos "hpdel --> view_decl"
+    else None in
   let chprel = {C.hp_name = hpdef.I.hp_name; 
                 C.hp_vars_inst = hp_sv_vars1;
                 C.hp_part_vars = hpdef.I.hp_part_vars;
                 Cast.hp_root_pos = 0; (*default, reset when def is inferred*)
                 C.hp_is_pre = hpdef.I.hp_is_pre;
+                C.hp_view = new_view (* hpdef.I.hp_view *);
                 C.hp_formula = crf; }
   in
   let c_p_hprel = Cast.generate_pure_rel chprel in
@@ -7766,7 +7775,17 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
         let nv = trans_var_safe (r,Unprimed) HpT tl pos in
         (* Match types of arguments with relation signature *)
         let cpargs = trans_pure_exp_list args tl in
-        (CF.HRel (nv, cpargs, pos), CF.TypeTrue, [], tl)
+        if !Globals.hrel_as_view_flag then
+          let () = x_binfo_hp (add_str "HRel(nv)" !CP.print_sv) nv no_pos in
+          let () = x_binfo_hp (add_str "HRel(cpargs)" (pr_list !CP.print_exp)) cpargs no_pos in
+          try
+            let vs = List.map CP.extr_spec_var cpargs in
+              (CF.mk_HRel_as_view nv vs pos,CF.TypeTrue, [], tl)
+            (* x_report_error pos "HREL -> View : to be implemented (5)" *)
+          with _ ->
+            x_report_error pos "HREL -> View : encounter non-vars"
+        else 
+          (CF.HRel (nv, cpargs, pos), CF.TypeTrue, [], tl)
       | IF.ConjStar {IF.h_formula_conjstar_h1 = f1;
                      IF.h_formula_conjstar_h2 = f2;
                      IF.h_formula_conjstar_pos = pos} ->

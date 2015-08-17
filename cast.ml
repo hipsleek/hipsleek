@@ -96,15 +96,22 @@ and view_kind =
 
 and view_decl = {
   view_name : ident;
-  view_ho_vars : (ho_flow_kind * P.spec_var * ho_split_kind)list;
+
   view_vars : P.spec_var list;
+  view_pos : loc;
+
+  view_is_prim : bool;
+  view_is_hrel : bool option; (* bool is for PostHeap *)
+
+  view_data_name : ident;
+  view_ho_vars : (ho_flow_kind * P.spec_var * ho_split_kind) list;
+
   view_cont_vars : P.spec_var list;
   view_seg_opz : P.formula option; (*pred is seg + base case is emp heap*)
   view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
   view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
   view_labels : LO.t list;
   view_modes : mode list;
-  view_is_prim : bool;
   view_type_of_self : typ option;
   view_is_touching : bool;
   view_is_segmented : bool;
@@ -126,7 +133,6 @@ and view_decl = {
   view_params_orig: (P.view_arg * int) list;
   mutable view_partially_bound_vars : bool list;
   mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
-  view_data_name : ident;
   view_formula : F.struc_formula; (* case-structured formula *)
   mutable view_user_inv : MP.mix_formula; (* XPURE 0 -> revert to P.formula*)
   view_mem : F.mem_perm_formula option; (* Memory Region Spec *)
@@ -154,7 +160,6 @@ and view_decl = {
   view_prune_conditions: (P.b_formula * (formula_label list)) list;
   view_prune_conditions_baga: ba_prun_cond list;
   view_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
-  view_pos : loc;
   view_raw_base_case: Cformula.formula option;
   view_ef_pure_disj : Excore.ef_pure_disj option
 }
@@ -194,6 +199,7 @@ and hp_decl = {
   hp_part_vars: (int list) list; (*partition vars into groups e.g. pointer + pure properties*)
   mutable hp_root_pos: int;
   hp_is_pre: bool;
+  hp_view: view_decl option;
   hp_formula : F.formula;}
 
 (** An Hoa : axiom *)
@@ -1196,6 +1202,7 @@ let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos=
         hp_root_pos = 0; (*default, reset when def is inferred*)
         hp_vars_inst = unknown_ptrs;
         hp_is_pre = is_pre;
+        hp_view = None;
         hp_formula = F.mkBase F.HEmp (MP.mkMTrue pos) CVP.empty_vperm_sets F.TypeTrue (F.mkTrueFlow()) [] pos;}
     in
     let unk_args = (fst (List.split hp_decl.hp_vars_inst)) in

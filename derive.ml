@@ -316,6 +316,7 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
                   Iast.view_formula = struc_body;
                   Iast.view_inv_lock = None;
                   Iast.view_is_prim = false;
+                  Iast.view_is_hrel = None;
                   Iast.view_invariant = Ipure.mkTrue no_pos;
                   Iast.view_mem = None;
                   Iast.view_materialized_vars = List.map (fun mp -> CP.name_of_spec_var mp.Cast.mater_var) orig_view.Cast.view_materialized_vars;
@@ -597,6 +598,7 @@ let expose_pure_extn_one_view_x iprog cprog rev_formula_fnc trans_view_fnc lower
           Iast.view_formula = Iformula.mkETrue top_flow no_pos;
           Iast.view_inv_lock = None;
           Iast.view_is_prim = false;
+          Iast.view_is_hrel = None;
           Iast.view_kind = View_DERV;
           Iast.view_prop_extns = [];
           Iast.view_derv_info = [((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args))];

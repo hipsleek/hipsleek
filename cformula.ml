@@ -335,9 +335,11 @@ and approx_formula_and = { approx_formula_and_a1 : approx_formula;
 (* !!! **cformula.ml#336:HPRel(args):[ p, q] *)
 let mk_HRel_as_view n args loc =
   let () = x_binfo_hp (add_str "HPRel(n)" !CP.print_sv) n no_pos in
-  let () = x_binfo_hp (add_str "HPRel(args)" (pr_list !CP.print_exp)) args no_pos in
   let vn = name_of_spec_var n in
-  let (hd,tails) = (n,[n]) in
+  let (hd,tails) = match args with
+      n::ns -> (n,ns)
+    | _ -> x_report_error loc "HREL -> View : need at least one parameter"
+  in
   ViewNode {
     h_formula_view_name = vn;
     h_formula_view_node = hd; (* root *)
@@ -4907,7 +4909,7 @@ and infer_state = {
   is_prefix_hps: CP.spec_var list;
   is_cond_path: cond_path_type;
   is_flow: nflow;
-  is_hp_equivs: (CP.spec_var*CP.spec_var) list;
+ is_hp_equivs: (CP.spec_var*CP.spec_var) list;
   is_hp_defs: hp_rel_def list;
 }
 

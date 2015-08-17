@@ -80,13 +80,19 @@ and view_kind =
 and ibaga_pure = (ident list * P.formula) list
 
 and view_decl = 
-  { view_name : ident; 
+  { 
+    view_name : ident; 
+    mutable view_vars : ident list;
+    view_pos : loc;
+
+    view_is_prim : bool;
+    view_is_hrel : bool option; (* bool is for PostHeap *)
+
     mutable view_data_name : ident;
     (* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
     mutable view_ho_vars : (ho_flow_kind * ident * ho_split_kind) list;
-    mutable view_vars : ident list;
+
     mutable view_imm_map: (P.ann * int) list;
-    view_pos : loc;
     view_labels : LO.t list * bool;
     view_modes : mode list;
     mutable view_typed_vars : (typ * ident) list;
@@ -96,7 +102,6 @@ and view_decl =
     view_kind : view_kind;
     view_prop_extns:  (typ * ident) list;
     view_derv_info: ((ident*ident list)*(ident*ident list*ident list)) list;
-    view_is_prim : bool;
     view_invariant : P.formula;
     view_baga_inv : ibaga_pure option;
     view_baga_over_inv : ibaga_pure option;
@@ -159,9 +164,11 @@ and hp_decl = { hp_name : ident;
                 mutable hp_typed_inst_vars : (typ * ident * hp_arg_kind) list;
                 hp_part_vars: (int list) list; (*partition vars into groups e.g. pointer + pure properties*)
                 mutable hp_root_pos: int;
-                hp_is_pre: bool;
+                hp_is_pre : bool;
                 hp_formula : Iformula.formula ;
-                (* try_case_inference: bool *)}
+                (* try_case_inference: bool *)
+                (* hp_view : view_decl option *)
+              }
 
 and hopred_decl = { 
   hopred_name : ident;
@@ -618,6 +625,19 @@ let print_param_list = ref (fun (x: param list) -> "Uninitialised printer")
 let print_hp_decl = ref (fun (x: hp_decl) -> "Uninitialised printer")
 let print_coerc_decl_list = ref (fun (c:coercion_decl_list) -> "cast printer has not been initialized")
 let print_coerc_decl = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
+
+
+let mk_hp_decl ?(is_pre=true) ?(view_d=None) id tl root_pos parts pos1 =
+     {
+        hp_name = id;
+        hp_typed_inst_vars = tl;
+        hp_root_pos = root_pos;
+        hp_part_vars = parts;
+        hp_is_pre = is_pre;
+        hp_formula =  F.mkBase F.HEmp (P.mkTrue (pos1)) VP.empty_vperm_sets top_flow [] (pos1);
+        (* hp_view = view_d; *)
+    }
+
 
 let norm_par_case_list pl pos = 
   let pl, else_pl = List.partition (fun c -> not c.exp_par_case_else) pl in
@@ -1193,14 +1213,56 @@ let rec look_up_hp_def_raw (defs : hp_decl list) (name : ident) = match defs wit
   | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw rest name
   | [] -> raise Not_found
 
+let mk_hp_decl_0 ?(is_pre=true) ?(view_d=None) id tl (root_pos:int) parts body =
+     {
+        hp_name = id;
+        hp_typed_inst_vars = tl;
+        hp_root_pos = root_pos;
+        hp_part_vars = parts;
+        hp_is_pre = is_pre;
+        hp_formula =  body;
+        (* hp_view = view_d; *)
+    }
+(* type: ?is_pre:bool -> *)
+(*   ?view_d:view_decl option -> *)
+(*   Globals.ident -> *)
+(*   (Globals.typ * Globals.ident * Globals.hp_arg_kind) list -> *)
+(*   int -> int list list -> Iformula.formula -> hp_decl *)
+
+let mk_hp_decl ?(is_pre=true) ?(view_d=None) id tl root_pos parts pos1 =
+  let hp_f = F.mkBase F.HEmp (P.mkTrue (pos1)) VP.empty_vperm_sets top_flow [] (pos1) in
+  mk_hp_decl_0 ~is_pre:is_pre ~view_d:view_d id tl root_pos parts hp_f
+    (*  { *)
+    (*     hp_name = id; *)
+    (*     hp_typed_inst_vars = tl; *)
+    (*     hp_root_pos = root_pos; *)
+    (*     hp_part_vars = parts; *)
+    (*     hp_is_pre = is_pre; *)
+    (*     hp_formula =  F.mkBase F.HEmp (P.mkTrue (pos1)) VP.empty_vperm_sets top_flow [] (pos1); *)
+    (*     hp_view = view_d; *)
+    (* } *)
+
+let mk_hp_view id tl root_pos parts pos1 =
+  let pr = pr_triple string_of_typ pr_id string_of_arg_kind in
+  let () = x_binfo_hp (add_str "id" pr_id) id no_pos in
+  let () = x_binfo_hp (add_str "tl" (pr_list pr)) tl no_pos in
+  None
+
+let mk_hp_decl_w_view ?(is_pre=true) id tl root_pos parts pos1 =
+  (* TODO : build view_decl for hp_decl *)
+  let view_d = mk_hp_view id tl root_pos parts pos1 in
+  mk_hp_decl ~is_pre:is_pre ~view_d:view_d id tl root_pos parts pos1 
+
 let mkhp_decl iprog hp_id vars parts rpos is_pre body=
-  let nhp_dclr = { hp_name = hp_id;
-                   hp_typed_inst_vars = vars;
-                   hp_part_vars = [];
-                   hp_root_pos = rpos;
-                   hp_is_pre = is_pre;
-                   hp_formula =  body;
-                 } in
+  let nhp_dclr = mk_hp_decl_0 ~is_pre:is_pre hp_id vars rpos [] body
+      (* { hp_name = hp_id; *)
+      (*   hp_typed_inst_vars = vars; *)
+      (*   hp_part_vars = []; *)
+      (*   hp_root_pos = rpos; *)
+      (*   hp_is_pre = is_pre; *)
+      (*   hp_formula =  body; *)
+      (* }  *)
+  in
   let () = iprog.prog_hp_decls <- iprog.prog_hp_decls@[nhp_dclr] in
   nhp_dclr
 
@@ -1314,6 +1376,7 @@ let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 infer_type infer_lst 
           hp_root_pos = 0;
           hp_is_pre = true;
           hp_formula = F.mkBase F.HEmp (P.mkTrue pos) VP.empty_vperm_sets top_flow [] pos;
+          (* hp_view = None *)
         }
         in
         let () = Debug.info_hprint (add_str ("generate unknown predicate for Pre synthesis of " ^ pname ^ ": ") pr_id)
@@ -1350,6 +1413,7 @@ let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 infer_type infer_lst 
       hp_part_vars = [];
       hp_root_pos = 0;
       hp_is_pre = false;
+      (* hp_view = None; *)
       hp_formula = F.mkBase F.HEmp (P.mkTrue pos) VP.empty_vperm_sets top_flow [] pos;}
     in
     let () = Debug.ninfo_hprint (add_str ("generate unknown predicate for Post synthesis of " ^ pname ^ ": ") pr_id) hp_post_decl.hp_name no_pos in
