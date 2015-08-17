@@ -264,7 +264,7 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
   (* (\*always generate the new arg to the end, root is 0*\) *)
   (* let der_view = {orig_view with *)
   (*     Cast.view_name = view_derv.Iast.view_name; *)
-  (*       (\* Cast.view_kind = Cast.View_DERV; *\) *)
+  (*       (\* Cast.view_kind = View_DERV; *\) *)
   (*     Cast.view_vars = view_sv ; *)
   (*     Cast.view_labels = labels; *)
   (*     Cast.view_ann_params  = ann_params; *)
@@ -307,7 +307,7 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
                   Iast.view_labels = List.map (fun _ ->  Label_only.LOne.unlabelled) vars, false;
                   Iast.view_modes = List.map (fun _ -> ModeOut) vars ;
                   Iast.view_typed_vars =  tvars;
-                  Iast.view_kind = Iast.View_NORM;
+                  Iast.view_kind = View_NORM;
                   Iast.view_derv = false;
                   Iast.view_parent_name = None;
                   Iast.view_prop_extns = [];
@@ -466,7 +466,7 @@ let trans_view_one_spec_x (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.
   (* let () =  Debug.info_pprint ("   n_user_inv: "^ (!CP.print_formula (MCP.pure_of_mix n_user_inv))) no_pos in *)
   let spec_view = {orig_view with
                    Cast.view_name = view_derv.Iast.view_name;
-                   (* Cast.view_kind = Cast.View_DERV; *)
+                   (* Cast.view_kind = View_DERV; *)
                    Cast.view_vars = spec_view.Cast.view_vars;
                    Cast.view_formula = new_struct_f;
                    Cast.view_un_struc_formula = new_un_struc_formulas;
@@ -503,7 +503,7 @@ let trans_view_dervs_x (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower
   | [((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args))] ->
     let der_view(*,s*) =
       let extn_view = x_add Cast.look_up_view_def_raw 51 cviews extn_view_name in
-      if extn_view.Cast.view_kind = Cast.View_SPEC then
+      if extn_view.Cast.view_kind = View_SPEC then
         let der_view = trans_view_one_spec prog cviews derv ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) in
         (der_view(*,("************VIEW_SPECIFIED*************")*))
       else

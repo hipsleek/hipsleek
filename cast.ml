@@ -87,13 +87,13 @@ and barrier_decl = {
   barrier_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
 }
 
-and view_kind =
-  | View_PRIM
-  | View_HREL
-  | View_NORM
-  | View_EXTN
-  | View_SPEC
-  | View_DERV
+(* and view_kind = *)
+(*   | View_PRIM *)
+(*   | View_HREL *)
+(*   | View_NORM *)
+(*   | View_EXTN *)
+(*   | View_SPEC *)
+(*   | View_DERV *)
 
 and view_decl = {
   view_name : ident;
@@ -200,7 +200,7 @@ and hp_decl = {
   hp_part_vars: (int list) list; (*partition vars into groups e.g. pointer + pure properties*)
   mutable hp_root_pos: int;
   hp_is_pre: bool;
-  hp_view: view_decl option;
+  hp_view: (Iast.view_decl * view_decl) option;
   hp_formula : F.formula;}
 
 (** An Hoa : axiom *)
@@ -612,7 +612,8 @@ let imply_raw = ref (fun (ante: P.formula) (conseq: P.formula) -> false)
 
 let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
   let mix_true = MP.mkMTrue pos in
-  let vs = List.map fst vars in (* where to store annoation? *)
+  let vs = List.map fst vars in (* where to store annotation? *)
+  let vs = match vs with _::ts -> ts | _ -> failwith "impossible" in
   {
     view_name = hp_n; (* CP.name_of_spec_var hp_n; *)
     view_vars = vs;
@@ -1405,6 +1406,8 @@ let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var li
   let () = x_tinfo_hp (add_str "look_up_view_baga: baga= " (pr_option !print_ef_pure_disj)) ba_oinv no_pos in
   let from_svs = (self_param vdef) :: vdef.view_vars in
   let to_svs = root :: args in
+  let () = x_tinfo_hp (add_str "from_svs" !CP.print_svl) from_svs no_pos in
+  let () = x_tinfo_hp (add_str "to_svs" !CP.print_svl) to_svs no_pos in
   let baga_lst = match ba_oinv with
     | None -> []
     | Some bl -> 

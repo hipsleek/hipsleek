@@ -507,11 +507,12 @@ let process_hp_def hpdef =
       if !Globals.hrel_as_view_flag then
         begin
           match chpdef.Cast.hp_view with
-          | Some v -> 
-            let () = x_binfo_hp (add_str "view_name" pr_id) v.Cast.view_name no_pos in
-            !cprog.Cast.prog_view_decls <- v::!cprog.Cast.prog_view_decls
+          | Some (i_vd,vd) -> 
+            let () = x_tinfo_hp (add_str "adding view decls" pr_id) vd.Cast.view_name no_pos in
+            let () = !cprog.Cast.prog_view_decls <- vd::!cprog.Cast.prog_view_decls in
+            iprog.Iast.prog_view_decls <- i_vd::iprog.Iast.prog_view_decls
           | None -> 
-            let () = x_binfo_pp "NONE" no_pos in
+            let () = x_tinfo_pp "NONE" no_pos in
             ()
         end;
       (* let _ = !cprog.Cast.prog_rel_decls <- (p_chpdef::!cprog.Cast.prog_rel_decls) in *)
@@ -601,7 +602,7 @@ let print_residue residue =
           let () = x_tinfo_hp (add_str "dis_lerr_exc?" string_of_bool) dis_lerr_exc no_pos in
           let () = x_tinfo_hp (add_str "en_lerr_exc?" string_of_bool) dis_lerr_exc no_pos in
           (* let bool_vs = List.map (fun sv -> check_is_field (CP.name_of_spec_var sv)) curr_vs in *)
-          (* let () = x_binfo_hp (add_str "fields" (pr_list string_of_bool)) bool_vs no_pos in *)
+          (* let () = x_tinfo_hp (add_str "fields" (pr_list string_of_bool)) bool_vs no_pos in *)
           let f_vs,curr_vs = List.partition (CP.check_is_field_sv) curr_vs in
           let () = x_dinfo_hp (add_str "fields (elim)" !CP.print_svl) f_vs no_pos in
           let () = print_endline_quiet "" in
@@ -1199,7 +1200,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
                       ^ "\n ### iconseq0 = "^(string_of_meta_formula iconseq0)
                       ^"\n\n") no_pos in
   let (n_tl,ante) = x_add meta_to_formula iante0 false [] [] in
-  (* let () = x_binfo_hp (add_str "last_entail_lhs" !CF.print_formula) ante no_pos in *)
+  (* let () = x_tinfo_hp (add_str "last_entail_lhs" !CF.print_formula) ante no_pos in *)
   (* WN : ante maybe a disjunction! *)
   (* need a better solution here *)
   let xpure_all f = 
@@ -1293,8 +1294,8 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   (* if List.length sst != List.length sst0 then *)
   (*   begin *)
   (*     let pr = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
-  (*     let () = x_binfo_hp (add_str "XXX sst(old)" pr) sst0 no_pos in *)
-  (*     let () = x_binfo_hp (add_str "XXX sst(new)" pr) sst no_pos in *)
+  (*     let () = x_tinfo_hp (add_str "XXX sst(old)" pr) sst0 no_pos in *)
+  (*     let () = x_tinfo_hp (add_str "XXX sst(new)" pr) sst no_pos in *)
   (*     () *)
   (*    end; *)
   (*let _ = print_endline "run_infer_one_pass" in*)

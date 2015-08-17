@@ -169,6 +169,14 @@ let string_of_arg_kind i= match i with
 (*   | BagT of prim_type *)
 (*   | List *)
 
+type view_kind =
+  | View_PRIM
+  | View_HREL
+  | View_NORM
+  | View_EXTN
+  | View_DERV
+  | View_SPEC
+
 (* TODO : move typ here in future *)
 type typ =
   | FORM (* Type for formula *)

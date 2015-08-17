@@ -1175,13 +1175,13 @@ view_decl:
               view_mem = mpb;
               view_is_prim = false;
               view_is_hrel = None;
-              view_kind = Iast.View_NORM; (* TODO : *)
+              view_kind = View_NORM; (* TODO : *)
               view_inv_lock = li;
               try_case_inference = (snd vb) }
     |  vh = view_header; `EQEQ; `EXTENDS; orig_v = derv_view; `WITH ; extn = prop_extn ->
            { vh with view_derv = true;
                view_derv_info = [(orig_v,extn)];
-               view_kind = Iast.View_DERV;
+               view_kind = View_DERV;
            }
  ]];
 
@@ -1194,7 +1194,7 @@ prim_view_decl:
           view_baga_inv = obi;
           view_baga_over_inv = oboi;
           view_baga_under_inv = obui;
-          view_kind = Iast.View_PRIM;
+          view_kind = View_PRIM;
           view_is_prim = true;
           view_is_hrel = None;
           view_inv_lock = li} ]];
@@ -1207,7 +1207,7 @@ view_decl_ext:
           view_baga_inv = obi;
           view_baga_over_inv = oboi;
           view_baga_under_inv = obui;
-          view_kind = Iast.View_EXTN;
+          view_kind = View_EXTN;
           view_inv_lock = li;
           try_case_inference = (snd vb) } ]];
 
@@ -1239,7 +1239,7 @@ view_decl_ext:
 (*             view_baga_inv = obi;                                                                                                                             *)
 (*             view_baga_over_inv = oboi;                                                                                                                       *)
 (*             view_baga_under_inv = obui;                                                                                                                      *)
-(*             view_kind = Iast.View_SPEC;                                                                                                                      *)
+(*             view_kind = View_SPEC;                                                                                                                      *)
 (*             view_parent_name = Some va.view_name;                                                                                                            *)
 (*             view_inv_lock = li;                                                                                                                              *)
 (*             try_case_inference = (snd vb) } ]];                                                                                                              *)

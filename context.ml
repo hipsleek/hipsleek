@@ -444,17 +444,17 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
     in
     let eqns = (p, p) :: eqns' in
     let emap = CP.EMapSV.build_eset eqns' in
-    let () = x_binfo_hp (add_str "emap" CP.EMapSV.string_of) emap no_pos in
+    let () = x_tinfo_hp (add_str "emap" CP.EMapSV.string_of) emap no_pos in
     (* let emap = CP.EMapSV.build_eset eqns in *)
     (* let paset = CP.EMapSV.find_equiv_all p emap in *)
     (* let paset = p::paset in *)
     let asets = Csvutil.alias_nth 3 (eqns@r_eqns) in
     let paset = Csvutil.get_aset asets p in (* find the alias set containing p *)
-    let () = x_binfo_hp (add_str "paset" !CP.print_svl) paset no_pos in
+    let () = x_tinfo_hp (add_str "paset" !CP.print_svl) paset no_pos in
     if Gen.is_empty paset then
       failwith ("choose_context: Error in getting aliases for " ^ (string_of_spec_var p))
     else if (* not(CP.mem p lhs_fv) ||  *)(!Globals.enable_syn_base_case && (CP.mem CP.null_var paset)) then
-      (x_binfo_zp (lazy ("choose_context: " ^ (string_of_spec_var p) ^ " is not mentioned in lhs\n\n")) pos; [] )
+      (x_tinfo_zp (lazy ("choose_context: " ^ (string_of_spec_var p) ^ " is not mentioned in lhs\n\n")) pos; [] )
     else 
       (* (* TRUNG TODO: to insert acc_fold context here *)                  *)
       (* let accfold_res = (                                                *)
@@ -879,9 +879,9 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
     (aset : CP.spec_var list) (imm : CP.ann) (pimm : CP.ann list)
     rhs_node rhs_rest emap
   : match_res list  =
-  let () = x_binfo_hp (add_str "lhs?" !CF.print_h_formula) f0 no_pos in
-  let () = x_binfo_hp (add_str "rhs" !CF.print_h_formula) rhs_node no_pos in
-  let () = x_binfo_hp (add_str "aset" !CP.print_svl) aset no_pos in
+  let () = x_tinfo_hp (add_str "lhs?" !CF.print_h_formula) f0 no_pos in
+  let () = x_tinfo_hp (add_str "rhs" !CF.print_h_formula) rhs_node no_pos in
+  let () = x_tinfo_hp (add_str "aset" !CP.print_svl) aset no_pos in
   let rec helper f = match f with    (* f is formula in LHS *)
     | HTrue -> []
     | HFalse -> []

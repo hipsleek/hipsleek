@@ -232,7 +232,7 @@ let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ide
                          I.view_labels = List.map (fun _ -> LO.unlabelled) vars, false;
                          I.view_modes = List.map (fun _ -> ModeOut) vars ;
                          I.view_typed_vars =  tvars;
-                         I.view_kind = I.View_NORM;
+                         I.view_kind = View_NORM;
                          I.view_prop_extns = [];
                          I.view_derv_info = [];
                          I.view_pt_by_self  = [];

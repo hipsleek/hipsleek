@@ -2263,7 +2263,10 @@ let split_view_args view_args vdef:  CP.spec_var list * 'a list * (CP.annot_arg 
   (* retrieve imm_map from I.view_decl *)
   (* let view_vars_gen = CP.sv_to_view_arg_list sv in *)
   let view_arg_lbl =  try (List.combine view_args (fst vdef.I.view_labels))
-    with  Invalid_argument _ -> failwith "Immutable.ml, split_view_args: error while combining view args with labels 1" in
+    with  Invalid_argument _ -> 
+      List.map (fun v -> (v,LO.unlabelled)) view_args 
+      (* failwith "Immutable.ml, split_view_args: error while combining view args with labels 1"  *)
+  in
   let ann_map_pos = vdef.I.view_imm_map in
   (* let () = x_binfo_hp (add_str "imm_map:" (pr_list (pr_pair Iprinter.string_of_imm string_of_int))) ann_map_pos no_pos in *)
   (* let () = x_binfo_hp (add_str " view_arg_lbl:" (pr_list (pr_pair pr_none pr_label))) view_arg_lbl no_pos in *)

@@ -539,6 +539,35 @@ Residue:
 # expects H(p) & p=null --> emp to be inferred.
 
 =====================================================================
+# bug10b.slk --en-hrel-as-view
+
+checkentail x::G<p,q> & p=null & q=p |- x::G<p,p>.
+
+!!! **WARNING****typeinfer.ml#1394:Cannot find x in fvs, TODO: fail?
+Entail 2: Valid. 
+
+# Why Unknown?
+
+ view_hrel H{}[]<a:Unknown,b:Unknown>= 
+  view_domains: 
+   view_hrel H<a:Unknown,b:Unknown>= 
+    EBase 
+      (* lbl: *){2}->emp&{FLOW,(1,26)=__flow#E}[]
+
+checkentail H(p,q) & p=null & q=p |- H(p,p) .
+
+# Why arguments not printed? (FIXED due to List.combine *)
+
+!!! **cformula.ml#337:HPRel(n):H:HpT
+INPUT 0: [][] 
+ ### ante =  p:node::H<>&p:node=null & q:node=p:node&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   p:node::H<>&{FLOW,(20,21)=__norm#E}[]
+
+run_infer:
+ p:node::H<>&p:node=null & q:node=p:node&{FLOW,(20,21)=__norm#E}[] [] |-  EBase 
+   p:node::H<>&{FLOW,(20,21)=__norm#E}[]
+
 =====================================================================
 =====================================================================
 =====================================================================
