@@ -21,7 +21,7 @@ let print_ty_sv = ref (fun (c:CP.spec_var) -> " printing not initialized")
                   GLOBAL VARIABLES & TYPES
  **************************************************************)
 
-(* Types for relations and ax(ioms*)
+(* Types for relations and axioms*)
 type rel_def = {
   rel_name : ident;
   rel_vars : CP.spec_var list;
@@ -801,7 +801,16 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars0 info =
   let used_rels = info.relations in
   let rel_decls = String.concat "" (List.map (fun x -> x.rel_cache_smt_declare_fun) !global_rel_defs) in
   (* let _ = Debug.info_hprint (add_str "rel_decls" (pr_id)) rel_decls no_pos in *)
-  let rel_decls = String.concat "" (List.map (fun x -> if (List.mem x.rel_name used_rels) then x.rel_cache_smt_declare_fun else "") !global_rel_defs) in
+  let eq_rel_def r1 r2 = 
+    try
+      let prototype_pair = List.combine (List.map CP.type_of_spec_var r1.rel_vars) (List.map CP.type_of_spec_var r2.rel_vars) in
+      (String.compare r1.rel_name r2.rel_name == 0) &&
+      (List.for_all (fun (t1, t2) -> t1 = t2) prototype_pair)
+    with _ -> false
+  in 
+  let rel_decls = String.concat "" 
+      (List.map (fun x -> if (List.mem x.rel_name used_rels) then x.rel_cache_smt_declare_fun else "") 
+      (Gen.BList.remove_dups_eq eq_rel_def !global_rel_defs)) in
   (* Necessary axioms *)
   (* let axiom_asserts = String.concat "" (List.map (fun x -> x.axiom_cache_smt_assert) !global_axiom_defs) in *) (* Add all axioms; in case there are bugs! *)
   let axiom_asserts = String.concat "" (List.map (fun ax_id ->
