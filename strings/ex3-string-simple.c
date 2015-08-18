@@ -17,21 +17,41 @@ BADS<> ==
 
 char *(cstrcat)(char *s1, const char *s2)
  /*@
-    requires s1::char_star<_,q>*q::BADS<> * s2::WFS<>@L 
-    ensures s1::WFSeg<s1a>*s1a::char_star<0,s1'>*s1'::BADS<> & s1'=ppp;
+    requires s1::WFS<> * s2::WFS<> 
+    ensures res::WFSeg<s>*s::WFSeg<x>*x::char_star<0,qq>*qq::BADS<>;
  */
+
  {
      char *s = s1;
      while (*s != '\0')
+       /*@
+          requires s::WFS<> 
+          ensures s::WFSeg<s'>*s'::char_star<0,q>*q::BADS<>;
+       */
          s++;
      while ((*s++ = *s2++) != '\0')
+       /*@
+          requires s::char_star<_,q>*q::BADS<> * s2::WFS<> 
+          ensures s::WFSeg<q2>*q2::char_star<0,qq>*qq::BADS<> 
+                  * s2'::char_star<0,_> & s'=q2; 
+       */
          ;               
      return s1;
  }
-
-int main() {
-  char *s1;
-  char *s2;
+char* new_str()
+  /*@
+     requires emp
+     ensures res::WFS<>;
+  */
+ {}
+int main()
+  /*@
+     requires true
+     ensures res=0;
+  */ 
+{
+  char *s1 = new_str();
+  char *s2 = new_str();
   cstrcat(s1, s2);
   return 0;
 }

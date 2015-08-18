@@ -67,7 +67,7 @@ int main()
 
 
 /*==================================================
-call-by-value parameters should not be primed, so how can we put the right specifications?
+Pass-by-value parameters should not be primed, so how can we put the right specifications?
 
 ensures s::WFSeg<s'>*s'::char_star<0,q>*q::BADS<>;
 
