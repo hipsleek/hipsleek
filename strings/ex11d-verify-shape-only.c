@@ -47,7 +47,8 @@ void while2(char* s1,char* s2)
   /*@dprint;*/
 }
 
-int main() {
+int main() 
+{
   char *s1;
   char *s2;
   while1(s1);

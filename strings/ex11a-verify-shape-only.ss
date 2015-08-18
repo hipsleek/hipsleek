@@ -43,8 +43,8 @@ void while1(ref char_star s)
 */
 void while2(ref char_star s1,ref char_star s2)
   requires s1::char_star<_,q>*q::BADS<> * s2::WFS<> 
-  ensures s1::WFSeg<q>*q::char_star<0,qq>*qq::BADS<> 
-    * s2'::char_star<0,_> & s1'=q; 
+  ensures s1::WFSeg<q2>*q2::char_star<0,qq>*qq::BADS<> 
+    * s2'::char_star<0,_> & s1'=q2; 
 {
   int x=__get_char(s2);
   __write_char(s1,x);
@@ -57,3 +57,17 @@ void while2(ref char_star s1,ref char_star s2)
 
 }
 
+char_star new_str()
+  requires emp
+  ensures res::WFS<>;
+
+int main()
+  requires true
+  ensures res=0;
+{
+  char_star s1 = new_str();
+  char_star s2 = new_str();
+  while1(s1);
+  while2(s1, s2);
+  return 0;
+}
