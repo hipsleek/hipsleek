@@ -35,6 +35,7 @@ void while1(ref char_star s)
     //dprint;
     while1(s);
   }
+  dprint;
 }
 
 /*
@@ -49,7 +50,6 @@ void while2(ref char_star s1,ref char_star s2)
   int x=__get_char(s2);
   __write_char(s1,x);
   if (x!=0) {
-    dprint;
     s2 = __plus_plus_char(s2);
     s1 = __plus_plus_char(s1);
     while2(s1,s2);
