@@ -3,7 +3,7 @@ pred_prim read<b:bag(int)>;
 //pred_prim read<b:int>;
 
 int read_arr(int[] a, int i)
-  requires a::read<{i}>@L
+  requires a::read<J>@L & J={i}
   ensures  res=a[i];
 
 int foo2(int[] a)
