@@ -52,11 +52,12 @@ void while1(ref chr_star s)
   // s::chr_star<0,q>*q::BADS<> & x=0
   // or s::chr_star<w,q>*q::WFS<> & w!=0  & x=w
   if (x!=0) {
-    // dprint;
+    dprint;
     // s::chr_star<w,q>*q::WFS<> & w!=0  & x=w
     s = plus_plus_char(s);
-    //dprint;
+    dprint;
     while1(s);
+    dprint;
   }
 }
 
@@ -72,7 +73,7 @@ void while2(ref chr_star s1,ref chr_star s2)
   int x=get_char(s2);
   write_char(s1,x);
   if (x!=0) {
-    dprint;
+    //dprint;
     s2 = plus_plus_char(s2);
     s1 = plus_plus_char(s1);
     while2(s1,s2);

@@ -1,4 +1,3 @@
-
 /*@
 WFS<> ==
   self::char_star<0,q>*q::BADS<> 
@@ -15,17 +14,36 @@ BADS<> ==
   inv true;
 */
 
-int main() 
-{  
-  char* s;
-  /*@ assume s'::char_star<_,_>;*/
-  /*@ dprint;*/
-  while (*s != '\0')
+void while1(char* s)
   /*@
-     requires s::WFS<>
+    requires s::WFS<> 
+    ensures s::WFSeg<p>*p::char_star<0,q>*q::BADS<>;
+  */
+{ 
+  while (*s!='\0') 
+  /*@
+     requires s::WFS<> 
      ensures s::WFSeg<s'>*s'::char_star<0,q>*q::BADS<>;
   */
-  s++;
-  return 0;
+  {
+    s++;
+  }
+}
+
+void while2(char* s1,char* s2)
+  /*@
+    requires s1::char_star<_,q>*q::BADS<> * s2::WFS<> 
+    ensures s1::WFSeg<q2>*q2::char_star<0,qq>*qq::BADS<>;
+            //* s2::char_star<0,_> & s1=q2; 
+  */
+{
+  while ((*s1++ = *s2++) != '\0')
+     /*@
+        requires s1::char_star<_,q>*q::BADS<> * s2::WFS<> 
+        ensures s1::WFSeg<q2>*q2::char_star<0,qq>*qq::BADS<> 
+                * s2'::char_star<0,_> & s1'=q2; 
+     */
+         ;
+  /*@dprint;*/
 }
 
