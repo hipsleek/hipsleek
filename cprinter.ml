@@ -2353,7 +2353,7 @@ and prtt_pr_formula_base_inst prog e =
       formula_base_pos = pos}) ->
     (match lbl with | None -> fmt_string  ( (* "(\* <NoLabel> *\)" *) "" ) | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
     prtt_pr_h_formula_inst prog h;
-    (if not( MP.isTrivMTerm p) then
+    ((* if not( MP.isTrivMTerm p) then *) (*L2: we should print what it is*)
        (pr_cut_after "&" ; pr_mix_formula p))
 (* pr_cut_after "&" ; pr_mix_formula p;() *)
 
@@ -2368,7 +2368,7 @@ and prtt_pr_formula_base_inst_html prog post_hps e =
       formula_base_pos = pos}) ->
     (match lbl with | None -> fmt_string  ( (* "(\* <NoLabel> *\)" *) "" ) | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
     prtt_pr_h_formula_inst_html prog post_hps h ;
-    (if not( MP.isTrivMTerm p) then
+    ((* if not( MP.isTrivMTerm p) then *) (*L2: we should print what it is*)
        (pr_cut_after "&" ; pr_mix_formula p))
 (* pr_cut_after "&" ; pr_mix_formula p;() *)
 
@@ -3994,7 +3994,7 @@ let pr_list_context_short (ctx:list_context) =
 
 let pr_entail_state_short e =
   fmt_open_vbox 0;
-  pr_hwrap "pr_entail_state_short : " pr_formula_wrap e.es_formula;
+  pr_hwrap "ex_formula : " pr_formula_wrap e.es_formula;
   pr_wrap_test "es_heap:" (fun _ -> false)  (pr_h_formula) e.es_heap;
   pr_wrap_test "@zero:" Gen.is_empty (pr_seq "" pr_spec_var) e.es_var_zero_perm;
   pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) e.es_infer_vars;

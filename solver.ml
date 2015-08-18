@@ -51,6 +51,8 @@ let manage_unsafe_lemmas = ref (fun (repo: Iast.coercion_decl list) (iprog:Iast.
     let () = print_endline_quiet ("Solver.manage_unsafe_lemmas: not int " ) in
     (None: CF.list_context list option))
 
+let vv_ref = ref 9999
+
 (*
 : (fun int ->
   Sautility.C.prog_decl ->
@@ -2874,13 +2876,12 @@ and elim_unsat_es_now i (prog : prog_decl) (sat_subno:  int ref) (es : entail_st
   let pr2 = Cprinter.string_of_context_short in
   Debug.no_1_num i "elim_unsat_es_now" pr1 pr2 (fun _ -> elim_unsat_es_now_x prog sat_subno es) es
 
-and elim_unsat_es_now_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
+and elim_unsat_estate ?(sat_subno=vv_ref) prog es =
   (* let f = CF.normalize_combine_heap es.es_formula es.es_heap in *)
   let temp_f = if !Globals.unsat_consumed_heap then 
       CF.mkStar_combine_heap es.es_formula es.es_heap CF.Flow_combine no_pos 
     else es.es_formula
   in
-
   (* added consumed heap for unsat_now checking *)
   (* match es.es_orig_ante with *)
   (* | Some f -> f *)
@@ -2897,6 +2898,10 @@ and elim_unsat_es_now_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_st
   let f = reset_unsat_flag_formula f in
   x_tinfo_hp (add_str "es_formula(2)" Cprinter.string_of_formula) f no_pos;
   let es = { es with es_formula = f; es_unsat_flag = true } in
+  (b,f,es)
+
+and elim_unsat_es_now_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
+  let (b,f,es) = elim_unsat_estate ~sat_subno:sat_subno prog es in
   if not b then Ctx es else
     false_ctx_with_orig_ante es f no_pos
 
@@ -14340,17 +14345,21 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
         estate,h,p,vp,fl
       | (anode,rest)::xs ->
         (*for each pair (anode,rest), find a list of coercions*)
-        let name = match anode with
-          | ViewNode vn -> vn.h_formula_view_name
-          | DataNode dn -> dn.h_formula_data_name
-          | ThreadNode tn -> tn.h_formula_thread_name
-          (* TODO:WN:HVar *)
-          | HVar (v,hvar_vs) -> (CP.name_of_spec_var v)
-          | HTrue -> "htrue"
-          | _ -> let () = print_string("[solver.ml] Warning: normalize_w_coers expecting DataNode, ViewNode or HTrue\n") in
-            ""
+            let c_lst =
+              try
+                let name = match anode with
+                  | ViewNode vn -> vn.h_formula_view_name
+                  | DataNode dn -> dn.h_formula_data_name
+                  | ThreadNode tn -> tn.h_formula_thread_name
+                        (* TODO:WN:HVar *)
+                  | HVar (v,hvar_vs) -> (CP.name_of_spec_var v)
+                  | HTrue -> "htrue"
+                  | _ -> raise Not_found(*  let () = print_string("[solver.ml] Warning: normalize_w_coers expecting DataNode, ViewNode or HTrue\n") in *)
+                    (* "" *)
+                in look_up_coercion_def_raw coers name
+              with Not_found -> []
         in
-        let c_lst = look_up_coercion_def_raw coers name in (*list of coercions*)
+                (* let c_lst = look_up_coercion_def_raw coers name in  *)(*list of coercions*)
         let lst = List.map (fun c -> (c,anode,rest)) c_lst in
         (*process a triple (coer,anode,res)*)
         let rec process_one_coerc lst =

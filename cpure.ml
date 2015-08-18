@@ -117,6 +117,14 @@ let is_form_typ sv = match sv with
   | SpecVar (FORM, _, _) -> true
   | _ -> false
 
+let is_otype (t : typ) : bool = match t with
+  | TVar _ | Named _ -> true
+  | _ -> false (* | _ -> false *) (* An Hoa *)
+
+let is_btype (t : typ) : bool = match t with
+  | Bool -> true
+  | _ -> false (* | _ -> false *) (* An Hoa *)
+
 let is_node_typ sv = match sv with
   | SpecVar (Named _,_,_) -> true
   | _ -> false
@@ -588,6 +596,9 @@ let primed_of_spec_var (sv : spec_var) : primed = match sv with
 
 let name_of_spec_var (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, _) -> v
+
+let primed_ident_of_spec_var (sv : spec_var) = match sv with
+  | SpecVar (_, v, p) -> (v,p)
 
 let name_of_sv (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, _) -> v
@@ -3901,10 +3912,6 @@ and are_same_types (t1 : typ) (t2 : typ) = match t1 with
       | _ -> false  
     end
   | _ -> t1 = t2
-
-and is_otype (t : typ) : bool = match t with
-  | TVar _ | Named _ -> true
-  | _ -> false (* | _ -> false *) (* An Hoa *)
 
 and name_of_type (t : typ) : ident = 
   string_of_typ t

@@ -1599,6 +1599,43 @@ Total verification time: 148.53 second
 	Number of false contexts: 413
 
 =====================================================================
+
+./run-fast-tests.pl sleek -flags "--eps"
+All test results were as expected.
+Total verification time: 36.24 second
+	Time spent in main process: 19.71 second
+	Time spent in child processes: 16.53 second
+	Number of false contexts: 98
+
+
+./run-fast-tests.pl sleek -flags "--eps --assert-unsound-false"
+98 false contexts
+Total number of errors: 1 in files:
+  imm/imm9-early-inst.slk({E11#Valid},{E7#Valid},{E8#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 35.68 second
+	Time spent in main process: 19.35 second
+	Time spent in child processes: 16.33 second
+	Number of false contexts: 98
+
+
+./run-fast-tests.pl sleek -flags "--assert-unsound-false"
+Total number of errors: 1 in files:
+  imm/imm9-early-inst.slk({E11#Valid},{E7#Valid},{E8#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 47.91 second
+	Time spent in main process: 17.09 second
+	Time spent in child processes: 30.82 second
+	Number of false contexts: 93
+
+./run-fast-tests.pl sleek 
+
+All test results were as expected.
+Total verification time: 47.84 second
+	Time spent in main process: 17.13 second
+	Time spent in child processes: 30.71 second
+	Number of false contexts: 93
+
 ====================================================================
 ====================================================================
 ====================================================================

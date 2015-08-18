@@ -193,6 +193,35 @@ type typ =
   | Pointer of typ (* base type and dimension *)
 (* | SLTyp (* type of ho formula *) *)
 
+(* let eq_type t1 t2 = match *)
+(*     | FORM, FORM  *)
+(*     | UNK, UNK *)
+(*   | AnnT *)
+(*   | Bool *)
+(*   | Float *)
+(*   | Int *)
+(*   | INFInt *)
+(*   | Tup2 of typ * typ *)
+(*   | NUM *)
+(*   | Void *)
+(*   | List of typ *)
+(*   | BagT of typ *)
+(*   (\* | Prim of prim_type *\) *)
+(*   | Named of ident (\* named type, could be enumerated or object *\) *)
+(*   (\* Named "R" *\) *)
+(*   | Array of (typ * int) (\* base type and dimension *\) *)
+(*   | RelT of (typ list) (\* relation type *\) *)
+(*   | HpT (\* heap predicate relation type *\) *)
+(*   | Tree_sh *)
+(*   | FuncT of typ * typ *)
+(*   | UtT of bool (\* unknown temporal type - pre(true)/post(false)*\) *)
+(*   | Bptyp *)
+(*   | Pointer of typ (\* base type and dimension *\) *)
+(*     | ,   *)
+(*       -> true *)
+(*     | TVar i1, TVar i2 -> i1=i2 *)
+(*     | _, _ -> false *)
+
 type typed_ident = (typ * ident)
 
 let is_undef_typ t =
@@ -651,6 +680,7 @@ let string_of_primed_ident (id,p) =
 (* let pr_ident_list = pr_list (fun (i,p) -> i^(string_of_primed p)) *)
 
 let pr_ident_list = pr_list string_of_primed_ident
+let pr_primed_ident_list = pr_list string_of_primed_ident
 
 let rec s_p_i_list l c = match l with 
   | [] -> ""
@@ -987,11 +1017,13 @@ let pred_disj_unify = ref false
 
 let pred_seg_unify = ref false
 
-let pred_equiv = ref false
+let pred_equiv = ref true
 
-let pred_norm_seg = ref false
-
+(* what is below for? not used! *)
 let pred_equiv_one = ref true
+
+(* this is to enable automatic list segment *)
+let pred_norm_seg = ref true
 
 let pred_unify_post = ref false
 
@@ -1028,7 +1060,25 @@ let procs_verified = ref ([] : string list)
 
 let false_ctx_line_list = ref ([] : loc list)
 
-let add_false_ctx pos = false_ctx_line_list := pos::!false_ctx_line_list
+let pr_option f x = match x with
+  | None -> "None"
+  | Some v -> "Some("^(f v)^")"
+
+let last_sat_ctx = new store None (pr_option string_of_loc)
+let last_infer_lhs_contra = new store false string_of_bool 
+
+(* let is_last_infer_lhs_contra () =  *)
+(*   !last_infer_lhs_contra *)
+(* let set_last_infer_lhs_contra () =  *)
+(*   last_infer_lhs_contra:=false *)
+
+let add_false_ctx pos = 
+  last_sat_ctx # set None;
+  last_infer_lhs_contra # reset;
+  false_ctx_line_list := pos::!false_ctx_line_list
+
+(* let set_last_ctx (pos:loc) = last_sat_ctx := Some pos  *)
+
 
 (* use List.rev *)
 (* let rev_list list = *)
@@ -1196,8 +1246,12 @@ let allow_threads_as_resource = ref false
 
 (* let assert_matrix = ref false *)
 let assert_nonlinear = ref false
+let assert_unsound_false = ref false
 
+let old_collect_false = ref false
 let old_infer_collect = ref false
+let old_impl_gather = ref false
+let old_parse_fix = ref false
 let adhoc_flag_1 = ref false
 let adhoc_flag_2 = ref false
 let adhoc_flag_3 = ref false
@@ -1283,7 +1337,9 @@ let dump_lem_proc = ref false
 let num_self_fold_search = ref 0
 let array_expansion = ref false;;
 let array_translate = ref false;;
-let self_fold_search_flag = ref false
+
+let self_fold_search_flag = ref true 
+(* performance not affected see incr/fix-todo.txt *)
 
 let show_gist = ref false
 let imply_top_flag = ref false

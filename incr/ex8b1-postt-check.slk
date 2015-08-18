@@ -1,0 +1,23 @@
+data node {
+ int h;
+ node next;
+}.
+
+pred lseg_one<p> == self=p
+  or self::node<1,q>*q::lseg_one<p>
+  .
+
+//  requires p::lseg_one<q> 
+//  ensures p'::lseg_one<q>  ; //'
+
+//lemma_safe self::lseg_one<t> * t::node<1,p> -> self::lseg_one<p>.
+
+//pre-rec
+checkentail p'::node<1,p> *  p::lseg_one<q> |- p'::lseg_one<q>.
+print residue.
+
+//post
+checkentail p2::lseg_one<q> |- p2::lseg_one<q>.
+print residue.
+
+

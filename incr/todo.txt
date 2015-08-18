@@ -1,3 +1,4 @@
+
 =====================================================================
 # ex3b.ss
 
@@ -291,16 +292,7 @@ get_spec_var_type_list@20 EXIT ExceptionFailure("R1 is undefined (8)")Occurred!
 =====================================================================
 # solver.ml
 
-# write a script that would find examples that trigger the
-  following code.
-
-                      let () = x_winfo_pp "To add this to new_estate.es_infer_rel" pos in
-                      let () = x_binfo_hp (add_str "RelInferred (rel_ass)" (pr_list print_lhs_rhs)) rel_ass pos in
-                      let () = infer_rel_stk # push_list_pr rel_ass in
-                      let () = Log.current_infer_rel_stk # push_list rel_ass in
-                      (None,Some inferred_pure,[(new_estate,rel_ass,false)])
-
-# typechecker.ml
+# infer.ml
                 if lr!=[] then
                   begin
                     x_winfo_pp "if important : need to add to estate.es_infer_rel" no_pos;
@@ -309,15 +301,222 @@ get_spec_var_type_list@20 EXIT ExceptionFailure("R1 is undefined (8)")Occurred!
                     let () = Infer.infer_rel_stk # push_list_pr lr in
                     ()
                   end;
+
+# write a script that would find examples that trigger the
+  following code.
+
+                      let () = x_winfo_pp "To add this to new_estate.es_infer_rel" pos in
+                      let () = x_binfo_hp (add_str "RelInferred (rel_ass)" (pr_list print_lhs_rhs)) rel_ass pos in
+                      let () = infer_rel_stk # push_list_pr rel_ass in
+                      let () = Log.current_infer_rel_stk # push_list rel_ass in
+                      (None,Some inferred_pure,[(new_estate,rel_ass,false)])
 =====================================================================
+# ex5b2.ss --print-type -dre ".*conv": FIXED
+
+Why 1<=res not translated to true? FIXED. trans_bool after pairwise + fixcalc output
+
+RELDEFN R:RelT([]): ( p:node=null & 1<=res:boolean) -->  R:RelT([])(p:node,res:boolean),
+
+# Why norm procedure here did not convert boolean <--> integer?
+===> convert at Omega.omega_of_b_formula
+
+# why inference did not use these normalization transformations?
+
+(==tpdispatcher.ml#1691==)
+norm_pure_result@121
+norm_pure_result inp1 : v0:boolean & not(v0:boolean)
+norm_pure_result inp2 :[]
+norm_pure_result@121 EXIT: v0:boolean & not(v0:boolean)
+
+(==astsimp.ml#6772==)
+norm_pure_input@123
+norm_pure_input inp1 : a:boolean & not(a:boolean)
+norm_pure_input@123 EXIT: a:boolean & not(a:boolean)
 =====================================================================
+# ex8b
+
+
+TODO 1:
+ - detect pre in pre-fix form)
+ - infer pre -> weaken
+ - re-verify + infer post
+
+TODO 2:
+  - segmentation
+  ll(x) == lseg(x,null)
+  lseg_base_dangling(x) = lseg(x, p)
+
 =====================================================================
+#ex7b2
+
+post is duplicate
+*********************************************************
+*******relational definition ********
+*********************************************************
+[ H(p_1578,flag_1579) ::= p_1578::node<h_44_1580,next_44_1536>@M&flag_1579(4,5),
+ G(p_1581,p_1582,flag_1583,flag_1584) ::= p_1581::node<h_44_1585,next_44_1536>@M *
+ G(next_44_1536,p_1582,flag_1567,flag_1584)&flag_1567 & flag_1583
+ or p_1582::node<h_44_1587,next_44_1536>@M&
+    flag_1584=flag_1583 & p_1582=p_1581 & flag_1583
+ or p_1581::node<h_44_1585,next_44_1536>@M *
+    G(next_44_1536,p_1582,flag_1566,flag_1584)&flag_1566 & flag_1583
+ (4,5)]
+*************************************
+
+
 =====================================================================
+# ex9a1
+
+
+*************************************
+*******shape relational assumptions ********
+*************************************
+[ // BIND
+(1;0)H(list,t@NI)&
+true --> list::node<next_50_1535,prev_50_1536>@M *
+         HP_1537(next_50_1535,t@NI) * HP_1538(prev_50_1536,t@NI)&
+true,
+ // PRE_REC
+(1;0)list'::node<list_1540,Anon_1531>@M * HP_1537(next_50_1535,t@NI) *
+     list_1540::node<next_50_1535,list'>@M&t'=list' --> H(list',t'@NI)&
+true]
+
+
+!!! WARNING logtime exception:0.000379
+!!! WARNING logtime exception:0.001051
+ --error:  at:
+
+
+
 =====================================================================
+# ex8c1.slk
+
+# Why no lemma message?
+
+Entail 4: Valid. 
+Residue:
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  COND ==>  Match(p',p')]]
 =====================================================================
+# ex8b2
+
+*************************************
+*******shape relational assumptions ********
+*************************************
+[ // POST
+(1;0)(htrue) * t_1668::node<v_int_69_1662,p>@M * G(t_1668,p')&
+true --> G(p,p')&
+true,
+ // POST
+(2;0)htrue&p'=p --> G(p,p')&
+true]
+
+*********************************************************
+*******relational definition ********
+*********************************************************
+[ G(p_1669,p_1670) ::= htrue&p_1670=p_1669(4,5)]
+*************************************
+
+
+
+
 =====================================================================
+# ex8b3  (FIXED by summing failures)
+
+  requires p::lseg_one<q> 
+  ensures p'::lseg_one<q>  ; //'
+
+# Was a false generated for post-condition proving?
+
+Checking procedure create_one$node... 
+[UNSOUNDNESS] WARNING : new unsatisfiable state from post-proving of ex8b3-simple-bug-post.ss_49:10_49:25
 =====================================================================
+# ex8d5.ss
+
+We introduce a phase to infer pre-shape first,
+as follows:
+
+  infer [P1]
+  requires P1(p)
+  ensures true;
+
+[ // PRE_REC
+(1;0)P1(p) * p'::node<v_int_70_1682,p>@M&true --> P1(p')&
+true]
+
+This seems to indicate that P1 is un-accessed
+Hence, best pre-spec is:
+
+ P1(p) ::= emp
+
 =====================================================================
+# ex8d6.ss
+
+We now proceed with post-shape inference using:
+
+  infer [P2]
+  requires emp
+  ensures P2(p',p);
+
+We derived:
+
+[ // POST
+(1;0)t_1688::node<v_int_66_1682,p>@M * P2(p',t_1688)&true --> P2(p',p)&
+true,
+ // POST
+(2;0)emp&p'=p --> P2(p',p)&
+true]
+
+This should generate:
+
+ t::node<_,p>@M * P2(p',t) \/ p'=p--> P2(p',p)
+
+# Why did we just get:
+
+  [ P2(p_1689,p_1690) ::= emp&p_1689=p_1690(4,5)]
+
+=====================================================================
+# ex8d7.ss (WN to fix)
+
+Given:
+
+  requires emp
+  ensures p'::Q3<p>;
+
+  Q3<p> == self=p or self::Q3<t>*t::node<_,p>
+
+Verification currently fails:
+
+!!!dumping for create_one$node FAIL2
+!!!  
+id: 10; caller: []; line: 25; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [] globals: [@flow,@ver_post]
+ checkentail (exists t': t'::node<v_int_31_1472,p_1474>@M * p'::Q3<t'>@M&
+next_32_1473=Anon_1467 & h_31_1468=Anon_1466 & v_int_31_1472=1 & p_1474=p & 
+v_bool_29_1445' & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  (exists p_50: p'::Q3<p_50>@M&p_50=p&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  failctxfe_kind: MAY
+        fe_name: separation entailment
+        fe_locs: {
+    fc_message: base_case_unfold failed
+    fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}
+  }
+[[ COND ==>  BaseCaseUnfold]]falseStop z3... 71 invocations 
+
+
+# Can we make it work by scheduling a "fold" operation?
+  for such rev-lseg specification?
+
+=====================================================================
+# ex8d8.slk (WN to fix)
+
+checkentail t'::node<1,p>@M * p'::Q3<t'>@M
+ |-  p'::Q3<p>
+.
+
+# Can we make it work by scheduling a "fold" operation?
+  for such rev-lseg specification?
 =====================================================================
 =====================================================================
 =====================================================================

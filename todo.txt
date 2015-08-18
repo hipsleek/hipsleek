@@ -152,7 +152,12 @@ fixcalc_of_pure_formula@1 EXIT ExceptionStack overflowOccurred!
 - type of view without any self.
 - check how x=null & x!=null is being translated for  Omega
 - count false context
- ==================================================================
+==================================================================
+# parse_fix.ml & fixcalc.ml
+
+(* TODO(WN): this already performs some feature of norm_pure_result *)
+(* mainly for pointers; need to remove this redundancy for performance *)
+(* need to handle SELF and REC variables (top-down fixcalc) *)
 ==================================================================
 ==================================================================
 ==================================================================
