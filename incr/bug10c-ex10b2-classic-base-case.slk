@@ -20,17 +20,18 @@ print residue.
 /*
 # bug10c.slk
 
-!!! **sleekengine.ml#834:view_decls (pre):[H]
-WARNING: bug10c-ex10b2-classic-base-case.slk_9:0_9:26:compute_view_fw_bw: data name in view is empty
+# why did we have p=null?
 
-ERROR: at bug10c-ex10b2-classic-base-case.slk_9:0_9:26
-Message: compute_view_fw_bw: data not found: 
+!!! **sleekengine.ml#834:view_decls (pre):[]
+!!! **solver.ml#7471:p1(after xpure_perm): p=null
+!!! **solver.ml#8290:lhs_p: p=null
 
-!!! WARNING logtime exception:4.5e-05
-!!! WARNING logtime exception:0.000325
-Entail 1: EXCast. Failure("Cpure.ml currently we do not provide support for TempAnn/TempRes exp")
-: no residue 
+Entail (1) : Valid. 
+Residue:
 
+ <1>H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
+
+# Why aen't there two arguments for H?
 
 */
 

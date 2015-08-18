@@ -1902,12 +1902,12 @@ and mkPhase_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
 (* 	let h1, p1, fl1, t1, a1 = split_components f1 in		                        *)
 (*     if (MCP.isConstMTrue p1) then mkBase h1 p2 t1 fl1 a1 pos                 *)
 (* 	  else                                                                      *)
-(*       mkBase h1 (MCP.merge_mems p1 p2 true) t1 fl1 a1 pos                    *)
+(*       mkBase h1 (x_add MCP.merge_mems p1 p2 true) t1 fl1 a1 pos                    *)
 
 and mkAnd_base_pure (fb: formula_base) (p2: MCP.mix_formula) (pos: loc): formula_base =
   if (MCP.isConstMTrue p2) then fb
   else
-    { fb with formula_base_pure = MCP.merge_mems fb.formula_base_pure  p2 true; }
+    { fb with formula_base_pure = x_add MCP.merge_mems fb.formula_base_pure  p2 true; }
 
 and mkAnd_pure_x (f1: formula) (p2: MCP.mix_formula) (pos: loc): formula =
   if (isAnyConstFalse f1) then f1
@@ -3252,7 +3252,7 @@ and add_mix_formula_to_formula_x (f1_mix: MCP.mix_formula) (f2_f:formula)  : for
 
 (*add f1 into p*)
 and add_mix_formula_to_mix_formula (f1: MCP.mix_formula) (f2: MCP.mix_formula) :MCP.mix_formula = 
-  (MCP.merge_mems f1 f2 true)
+  (x_add MCP.merge_mems f1 f2 true)
 
 and one_formula_subst sst (f : one_formula) = 
   let sst = List.filter (fun (fr,t) -> 
@@ -6776,7 +6776,7 @@ let do_unfold_view_hf cprog pr_views hf0 =
   let fold_fnc ls1 ls2 aux_fnc = List.fold_left (fun r (hf2, p2) ->
       let in_r = List.map (fun (hf1, p1) ->
           let nh = aux_fnc hf1 hf2 in
-          let np = MCP.merge_mems p1 p2 true in
+          let np = x_add MCP.merge_mems p1 p2 true in
           (nh, np)
         ) ls1 in
       r@in_r
@@ -6990,7 +6990,7 @@ let do_unfold_view_x cprog pr_views (f0: formula) =
     | Base fb ->
       let ls_hf_pure = do_unfold_view_hf cprog  pr_views fb.formula_base_heap in
       let fs = List.map (fun (hf, p) -> Base {fb with formula_base_heap = hf;
-                                                      formula_base_pure = MCP.merge_mems p fb.formula_base_pure true;
+                                                      formula_base_pure = x_add MCP.merge_mems p fb.formula_base_pure true;
                                              }) ls_hf_pure in
       disj_of_list fs fb.formula_base_pos
     | Exists _ ->
@@ -7013,7 +7013,7 @@ let do_unfold_hp_def_hf cprog pr_hp_defs hf0 =
   let fold_fnc ls1 ls2 aux_fnc = List.fold_left (fun r (hf2, p2) ->
       let in_r = List.map (fun (hf1, p1) ->
           let nh = aux_fnc hf1 hf2 in
-          let np = MCP.merge_mems p1 p2 true in
+          let np = x_add MCP.merge_mems p1 p2 true in
           (nh, np)
         ) ls1 in
       r@in_r
@@ -7120,7 +7120,7 @@ let do_unfold_hp_def_x cprog pr_hp_defs (f0: formula) =
     | Base fb ->
       let ls_hf_pure = do_unfold_hp_def_hf cprog pr_hp_defs fb.formula_base_heap in
       let fs = List.map (fun (hf, p) -> Base {fb with formula_base_heap = hf;
-                                                      formula_base_pure = MCP.merge_mems p fb.formula_base_pure true;
+                                                      formula_base_pure = x_add MCP.merge_mems p fb.formula_base_pure true;
                                              }) ls_hf_pure in
       disj_of_list fs fb.formula_base_pos
     | Exists _ ->
@@ -12534,8 +12534,8 @@ and combine_and (f1:formula) (f2:MCP.mix_formula) :formula*bool = match f1 with
 
 and normalize_no_rename_context_formula (ctx : context) (p : MCP.mix_formula) : context = 
   let rec push_pure (f:formula):formula = match f with
-    | Base b-> Base {b with formula_base_pure = MCP.merge_mems p b.formula_base_pure true;}
-    | Exists b -> Exists {b with formula_exists_pure = MCP.merge_mems p b.formula_exists_pure true;}
+    | Base b-> Base {b with formula_base_pure = x_add MCP.merge_mems p b.formula_base_pure true;}
+    | Exists b -> Exists {b with formula_exists_pure = x_add MCP.merge_mems p b.formula_exists_pure true;}
     | Or b -> Or {
         formula_or_f1 = push_pure b.formula_or_f1;
         formula_or_f2 = push_pure b.formula_or_f2;
@@ -12590,7 +12590,7 @@ and formula_of_context_x ctx0 = match ctx0 with
     mkOr f1 f2 no_pos
   | Ctx es -> 
     (* let m = CP.mk_varperm_zero es.es_var_zero_perm no_pos in          *)
-    (* let mix_f = MCP.merge_mems es.es_pure (MCP.mix_of_pure m) true in *)
+    (* let mix_f = x_add MCP.merge_mems es.es_pure (MCP.mix_of_pure m) true in *)
     let mix_f = es.es_pure in
     add_mix_formula_to_formula mix_f es.es_formula
 
@@ -12610,14 +12610,14 @@ and formula_trace_of_context_x ctx0 = match ctx0 with
     let orig_f = es.es_formula in
     let esvm = es.es_var_measures in  (* (term_ann * CP.exp list * CP.exp list) option;  *)
     (* let m = CP.mk_varperm_zero es.es_var_zero_perm no_pos in          *)
-    (* let mix_f = MCP.merge_mems es.es_pure (MCP.mix_of_pure m) true in *)
+    (* let mix_f = x_add MCP.merge_mems es.es_pure (MCP.mix_of_pure m) true in *)
     let mix_f = es.es_pure in
     let mix_f = match esvm with
       | None -> mix_f
       | Some (ta,l1,l2) ->
         let m = CP.mkPure (CP.mkLexVar ta l1 l2 no_pos) in
         x_tinfo_hp (add_str "es_var_measures:" !CP.print_formula) m no_pos;
-        MCP.merge_mems mix_f (MCP.mix_of_pure m) true in
+        x_add MCP.merge_mems mix_f (MCP.mix_of_pure m) true in
     (*TO CHECK*)
     let f = add_mix_formula_to_formula mix_f orig_f in
     let trace = es.es_trace in
@@ -15711,12 +15711,12 @@ let rec get_pre_pure_fml xpure_heap prog fml = match fml with
   | Base b -> 
     let pure = b.formula_base_pure in
     let xpured,_,_ = x_add xpure_heap 11 prog (b.formula_base_heap) pure 1 in 
-    [MCP.pure_of_mix (MCP.merge_mems pure xpured true)]
+    [MCP.pure_of_mix (x_add MCP.merge_mems pure xpured true)]
   | Or o -> (get_pre_pure_fml xpure_heap prog o.formula_or_f1) @ (get_pre_pure_fml xpure_heap prog o.formula_or_f2)
   | Exists e -> 
     let pure = e.formula_exists_pure in
     let xpured,_,_ = x_add xpure_heap 12 prog (e.formula_exists_heap) pure 1 in 
-    [MCP.pure_of_mix (MCP.merge_mems pure xpured true)]
+    [MCP.pure_of_mix (x_add MCP.merge_mems pure xpured true)]
 
 let rec get_grp_post_rel_flag fml = match fml with
   | Base b -> if List.exists CP.is_rel_var (CP.fv (MCP.pure_of_mix b.formula_base_pure)) then 1 else 0
@@ -17131,7 +17131,7 @@ and extractLS_x (evars : CP.spec_var list) (f : formula): MCP.mix_formula  =
       (*excl_vars are those who should not be delayed-checked*)
       let excl_vars = full_vars@evars in
       let p_pure = MCP.drop_svl_mix_formula p_pure excl_vars in
-      MCP.merge_mems p_delayed p_pure true
+      x_add MCP.merge_mems p_delayed p_pure true
     | Exists{formula_exists_pure = p;
              formula_exists_vperm = vp;
              formula_exists_qvars =qvars} ->
@@ -17153,7 +17153,7 @@ and extractLS_x (evars : CP.spec_var list) (f : formula): MCP.mix_formula  =
       (*excl_vars are those who should not be delayed-checked*)
       let excl_vars = full_vars@qvars@evars in
       let p_pure = MCP.drop_svl_mix_formula p_pure excl_vars in
-      MCP.merge_mems p_delayed p_pure true
+      x_add MCP.merge_mems p_delayed p_pure true
     | Or {formula_or_f1 = f1; formula_or_f2 =f2} ->
       let pf1 = helper f1 in
       let pf2 = helper f2 in

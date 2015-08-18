@@ -575,7 +575,41 @@ run_infer:
 
 !!! **WARNING****typeinfer.ml#1394:Cannot find x in fvs, TODO: fail?
 =====================================================================
+# bug10c.slk
+
+(FIXED)
+
+WARNING: bug10c-ex10b2-classic-base-case.slk_9:0_9:26:compute_view_fw_bw: data name in view is empty
+ERROR: at bug10c-ex10b2-classic-base-case.slk_9:0_9:26
+Message: compute_view_fw_bw: data not found: 
+Exception(compute_view_forward_backward_info):Failure("compute_view_fw_bw: data not found: ")
+!!! **solver.ml#7471:p1(after xpure_perm): true
+!!! **solver.ml#7471:p1(after xpure_perm): true
+
+!!! **solver.ml#8290:lhs_p: true
+Exception(merge_guards):Failure("Cpure.ml currently we do not provide support for TempAnn/TempRes exp")
+Exception(compatible_nodes):Failure("Cpure.ml currently we do not provide support for TempAnn/TempRes exp")
+Exception(merge_alias_nodes_h_formula):Failure("Cpure.ml currently we do not provide support for TempAnn/TempRes exp")
+Exception(merge_alias_nodes_formula):Failure("Cpure.ml currently we do not provide support for TempAnn/TempRes exp")
+Exception(heap_entail_empty_rhs_heap):Failure("Cpure.ml currently we do not provide support for TempAnn/TempRes exp")
+Exception(heap_entail_conjunct_helper):Failure("Cpure.ml currently we do not provide support for TempAnn/TempRes exp")
 =====================================================================
+# bug10c.slk (using hp_repl)
+
+!!! **solver.ml#7471:p1(after xpure_perm): true
+!!! **solver.ml#8290:lhs_p: true
+(====)
+merge_guards@22@21@20
+merge_guards inp1 :emap[]
+merge_guards inp2 :@[NOANN]
+merge_guards inp3 :@[NOANN]
+merge_guards@22 EXIT ExceptionFailure("Cpure.ml currently we do not provide support for TempAnn/TempRes exp")Occurred!
+
+(==immutable.ml#2822==)
+merge_alias_nodes_h_formula@21@20
+merge_alias_nodes_h_formula inp1 : p::H<p,p>NOANN * p::H<p,p>NOANN
+merge_alias_nodes_h_formula inp2 : true
+merge_alias_nodes_h_formula@21 EXIT ExceptionFailure("Cpure.ml currently we do not provide support for TempAnn/TempRes exp")Occurred!
 =====================================================================
 =====================================================================
 =====================================================================

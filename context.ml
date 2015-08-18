@@ -660,13 +660,15 @@ and update_field_imm_x (f : h_formula) (new_fann: CP.ann list) (consumed_ann: CP
 and update_imm (f : h_formula) (imm1 : CP.ann) (imm2 : CP.ann) es(* : h_formula *) = 
   let pr = Cprinter.string_of_imm in
   let pr_out = pr_triple (Cprinter.string_of_h_formula) pr_none pr_none in
-  Debug.no_3 "update_ann" (Cprinter.string_of_h_formula) pr pr  pr_out  (fun _ _ _-> update_imm_x f imm1 imm2  es) f imm1 imm2
+  Debug.no_3 "update_ann" (Cprinter.string_of_h_formula) (add_str "lhs_ann" pr) (add_str "rhs_ann" pr)  pr_out  (fun _ _ _-> update_imm_x f imm1 imm2  es) f imm1 imm2
 
 and update_imm_x (f : h_formula) (imm1 : CP.ann) (imm2 : CP.ann)  es = 
   (* let new_imm_lnode, niv, constr = Immutable.remaining_ann imm1 imm2 impl_vars evars in *)
   let (res_ann, cons_ann), niv, constr = Immutable.replace_list_ann 1 [imm1] [imm2]  es in
   (* asankhs: If node has all field annotations as @A make it HEmp *)
-  if (isAccsList res_ann) && (!Globals.remove_abs) then (HEmp, [], (([],[],[]),[]) )else
+  if (isAccsList res_ann) && (!Globals.remove_abs) 
+  then (HEmp, [], (([],[],[]),[]) )
+  else
     let updated_f = match f with 
       | DataNode d -> DataNode ( {d with h_formula_data_imm = List.hd res_ann} )
       | ViewNode v -> ViewNode ( {v with h_formula_view_imm = List.hd res_ann} )
@@ -709,13 +711,15 @@ and imm_split_lhs_node_x estate l_node r_node = match l_node, r_node with
                               (* es_gen_impl_vars =estate.es_gen_impl_vars@niv *) } in
       (n_es, constr)
     else
-    if not(produces_hole  vr.h_formula_view_imm) then
-      let n_f, niv, constr = update_imm l_node vl.h_formula_view_imm vr.h_formula_view_imm estate in
-      let n_es = {estate with es_formula = mkStar (formula_of_heap n_f no_pos) estate.es_formula Flow_combine no_pos;
-                              (* es_gen_impl_vars = estate.es_gen_impl_vars@niv  *)} in
-      (n_es, constr)
-    else  (estate,(([],[],[]),[]))
-  | _ -> (estate,(([],[],[]),[]))
+      let hole_flag = produces_hole  vr.h_formula_view_imm in
+      let () = x_binfo_hp (add_str "hole flag" string_of_bool) hole_flag no_pos in
+        if not(hole_flag) then
+          let n_f, niv, constr = update_imm l_node vl.h_formula_view_imm vr.h_formula_view_imm estate in
+          let n_es = {estate with es_formula = mkStar (formula_of_heap n_f no_pos) estate.es_formula Flow_combine no_pos;
+                                  (* es_gen_impl_vars = estate.es_gen_impl_vars@niv  *)} in
+          (n_es, constr)
+        else  (estate,(([],[],[]),[]))
+      | _ -> (estate,(([],[],[]),[]))
 
 and imm_split_lhs_node estate l_node r_node =
   let pr_node = Cprinter.string_of_h_formula in
@@ -829,15 +833,15 @@ and form_match_on_two_hrel args c vs1 prog hp e rhs_node aset (lhs_node: Cformul
   (*              h_formula_view_arguments = vs1; *)
   (*              h_formula_view_name = c}) ->  *)
   (*   let args = CP.diff_svl (get_all_sv lhs_node) [hp] in *)
-    (* let () = DD.info_zprint (lazy (("  args: " ^ (!CP.print_svl args)))) no_pos in *)
-    (* if args = [] then [] else *)
-      let root, _  = Sautil.find_root prog [hp] args  [] in
-      let root_aset = CP.EMapSV.find_equiv_all root emap in
-      let root_aset = root::root_aset in
-      (* let c = "" in *)
-      (* let e = List.fold_left (fun a v-> CP.is_var v then  a@[CP.exp_to_spec_var v] else a) []  e in *)
-      let cmm = coerc_mater_match_with_unk_hp prog (CP.name_of_spec_var hp) c args vs1 aset lhs_node l_f root_aset in 
-      cmm
+  (* let () = DD.info_zprint (lazy (("  args: " ^ (!CP.print_svl args)))) no_pos in *)
+  (* if args = [] then [] else *)
+  let root, _  = Sautil.find_root prog [hp] args  [] in
+  let root_aset = CP.EMapSV.find_equiv_all root emap in
+  let root_aset = root::root_aset in
+  (* let c = "" in *)
+  (* let e = List.fold_left (fun a v-> CP.is_var v then  a@[CP.exp_to_spec_var v] else a) []  e in *)
+  let cmm = coerc_mater_match_with_unk_hp prog (CP.name_of_spec_var hp) c args vs1 aset lhs_node l_f root_aset in 
+  cmm
 
 and spatial_ctx_extract_hrel_on_lhs prog hp e rhs_node aset (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) emap =
   match rhs_node with
@@ -1590,8 +1594,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          let vl_b = vl_view_origs!=[] in
          let vr_b = vr_view_origs!=[] in
          let force_flag = (s_eq && 
-                     ((vl_view_orig==false && vl_b) 
-                      || ((vr_view_orig==false && vr_b)))) in
+                           ((vl_view_orig==false && vl_b) 
+                            || ((vr_view_orig==false && vr_b)))) in
          let sf_force_match_flag = (vl_view_orig && not(vr_view_orig) || vr_view_orig && not(vl_view_orig)) && en_self_fold && Gen.BList.mem_eq (=) vr_name vl_self_pts in
          let () = Debug.tinfo_hprint (add_str "force_match" string_of_bool) force_flag no_pos in
          let () = Debug.tinfo_hprint (add_str "sf_force_match" string_of_bool) sf_force_match_flag no_pos in
