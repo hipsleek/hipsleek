@@ -297,6 +297,32 @@ join$node~node
 # What happen to res=a1+a2?
 
 =============================================================
+Why no es_heap at node level?
+
+../../sleek imm/bugs/imm9-early-inst.slk --field-imm
+(==solver.ml#9944==)
+imm_split_lhs_node@13@12
+imm_split_lhs_node inp1 :  emp&w<:@L&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars: [v; b]
+ es_trace:  SEARCH ==>  Match(c,c)
+imm_split_lhs_node inp2 : c::cell<a@w>@M
+imm_split_lhs_node inp3 : c::cell<b@v>@M
+imm_split_lhs_node@13 EXIT:(  c::cell<a@[@w, @v]>@M&w<:@L&{FLOW,(20,21)=__norm#E}[]
+ es_heap: c::cell<a@v>@M
+ es_gen_impl_vars: [v; b]
+ es_trace:  SEARCH ==>  Match(c,c),((to_lhs:[],to_rhs:[],to_rhs_ex:[]),subst:[]))
+
+
+../../sleek  imm/bugs/imm9-early-inst.slk
+imm_split_lhs_node@13@12
+imm_split_lhs_node inp1 :  emp&w<:@L&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars: [v; b]
+ es_trace:  SEARCH ==>  Match(c,c)
+imm_split_lhs_node inp2 : c::cell<a>@w
+imm_split_lhs_node inp3 : c::cell<b>@v
+imm_split_lhs_node@13 EXIT:(  c::cell<a>@[@w, @v]&w<:@L&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars: [v; b]
+ es_trace:  SEARCH ==>  Match(c,c),((to_lhs:[],to_rhs:[],to_rhs_ex:[]),subst:[]))
 =============================================================
 =============================================================
 =============================================================

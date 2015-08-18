@@ -3274,8 +3274,12 @@ let remove_abs_nodes_and_collect_imm_h_formula emap h =
 let remove_abs_nodes_formula_helper form =
   let emap = Imm.build_eset_of_imm_formula (CF.get_pure_ignore_exists form) in
   let exp_to_eq_a not_relevant e = match e with
-    | CP.Var (sv, loc) -> Some (if CP.EMapSV.mem sv not_relevant then CP.AConst(Accs,loc) else e)
+    (* TODOIMM why is this needed? what if sv is int? *)
+    (* | CP.Var (sv, loc) -> Some (if CP.EMapSV.mem sv not_relevant then CP.AConst(Accs,loc) else e) *)
     | _ -> None in
+  let exp_to_eq_a not_relevant e = 
+    let pr = !CP.print_exp in
+    Debug.no_2 "exp_to_eq_a" !CP.print_svl pr (pr_opt pr) exp_to_eq_a not_relevant e in
   let prune_a_eq_a formula =
     let aux = function
       | CP.BForm ((CP.Eq (CP.AConst (Accs,_), CP.AConst (Accs, _), _),_),_) -> None
