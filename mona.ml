@@ -1552,21 +1552,6 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   if !log_all_flag == true then
     output_string log_all ("\n\n[mona.ml]: imply # " ^ imp_no ^ "\n");
   incr test_number;
-
-  let pe = Cpure.mkOr (Cpure.mkNot ante None no_pos) conseq None no_pos in
-  let pe = x_add_1 Cpure.subs_const_var_formula pe in
-    let pe = if true (* !Globals.non_linear_flag *) then x_add_1 Cpure.drop_nonlinear_formula_rev pe else pe in
-    let svl0 = Cpure.fv pe in
-    let svl,fr_svl = Omega.mkSpecVarList 0 svl0 in
-    let ss = List.combine svl fr_svl in
-    let pe = Cpure.subst ss pe in
-    let pe = Trans_arr.translate_array_one_formula_for_validity pe in
-    let pvars = Omega.get_vars_formula pe in
- let vstr = Omega.omega_of_var_list (Gen.BList.remove_dups_eq (=) pvars) in
-      (* let () = x_binfo_pp vstr no_pos in *)
-      let fstr = Omega.omega_of_formula 1 pr_w pr_s pe in
-      let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
- let () = Omega.set_proof_string ("SAT:"^fomega) in
   (* let ante = CP.drop_varperm_formula ante in     *)
   (* let conseq = CP.drop_varperm_formula conseq in *)
   let (ante_fv, ante) = prepare_formula_for_mona pr_w pr_s ante !test_number in
@@ -1577,6 +1562,13 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   (* let vs = Hashtbl.create 10 in *)
   (* let () = find_order tmp_form vs in    (\* deprecated *\) *)
   let (var1,var2,var0) = new_order_formula tmp_form in
+  let fstr = mona_of_formula tmp_form tmp_form (var1,var2) in
+  let pvars = Omega.get_vars_formula tmp_form in
+  let vstr = Omega.omega_of_var_list (Gen.BList.remove_dups_eq (=) pvars) in
+  let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
+  let () = Omega.set_proof_string ("SAT:"^fomega) in
+
+
   let () = set_prover_type () in (* change to MONA logging *)
   if not !is_mona_running then
     write_to_file false (ante_fv @ conseq_fv) tmp_form imp_no (var1,var2)
