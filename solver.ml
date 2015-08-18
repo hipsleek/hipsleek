@@ -7647,7 +7647,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                   if res then new_estate,rels else estate,[]
                                 else estate,[]
                               in
-                              let h1, p1, vp1, fl1, t1, a1 = split_components estate.CF.es_formula in
+                              let h1, p1, _, _, _, _ = split_components estate.CF.es_formula in
                               if (h2 = HEmp && CF.get_hprel_h_formula h1 != [] && !Globals.do_classic_frame_rule) then
                                 let fail_ctx = mkFailContext mem_leak estate conseq None pos in
                                   let es_string = Cprinter.string_of_formula estate.es_formula in

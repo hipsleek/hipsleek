@@ -37,7 +37,7 @@ lseg<p> == self=p
   or self::node<_,q>*q::lseg<p>
   ;
 
-lemma_unsafe "bwd" self::dllseg1<list>  -> self::rlseg<list> * list::node<_,_>.
+//lemma_unsafe "bwd" self::dllseg1<list>  -> self::rlseg<list> * list::node<_,_>.
 
 
 void create_dll (ref node list)

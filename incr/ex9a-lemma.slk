@@ -3,14 +3,14 @@ data node {
   node next;
 }.
 
- pred rlseg_one<p> == self::node<_,_> & self=p
+pred rlseg_one<p> == self::node<_,_> & self=p
   or p::node<prev,_>*self::rlseg_one<prev>.
 
 pred rlseg<p> == self=p
   or p::node<q,_>*self::rlseg<q>
   .
 
- pred lseg_one<p> == self::node<_,_> & self=p
+pred lseg_one<p> == self::node<_,_> & self=p
   or self::node<prev,_>*prev::lseg_one<p>.
 
 pred lseg<p> == self=p
