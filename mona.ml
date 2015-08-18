@@ -1602,18 +1602,12 @@ let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   (* WN : what if var0 is non-empty? *)
   (* print_endline ("Mona.is_sat: " ^ (string_of_int !test_number) ^ " : " ^ (string_of_bool !is_mona_running)); *)
 
-  let f = Trans_arr.translate_array_one_formula f in
-  let svl0 = Cpure.fv f in
-  let svl,fr_svl = Omega.mkSpecVarList 0 svl0 in
-  let ss = List.combine svl fr_svl in
-  let pe = Cpure.subst ss f in
+  let fstr = mona_of_formula f f (var1,var2) in
   let pvars = Omega.get_vars_formula f in
   let vstr = Omega.omega_of_var_list (Gen.BList.remove_dups_eq (=) pvars) in
-  (* let () = x_binfo_pp vstr no_pos in *)
-  let fstr = Omega.omega_of_formula 1 pr_w pr_s f in
   let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
-  let () = Omega.set_proof_string ("SAT:"^fomega) in
-
+  let () = Omega.set_proof_string ("SAT:"^fomega) in  
+	
   let sat = 
     if not !is_mona_running then
       begin

@@ -515,7 +515,7 @@ let is_sat_ops_x pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
     (*  Lash.write pe; *)
     (* let pe0 = drop_varperm_formula pe in *)
     (* let pe = x_add_1 Cpure.subs_const_var_formula pe in *)
-    let pe = if true (* !Globals.non_linear_flag *) then x_add_1 Cpure.drop_nonlinear_formula pe else pe in
+    let pe = if true (* !Globals.non_linear_flag *) then x_add_1 Cpure.drop_nonlinear_formula pe   else pe in
 
     let pe = Trans_arr.translate_array_one_formula pe in
     let svl0 = Cpure.fv pe in
