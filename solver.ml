@@ -1851,16 +1851,16 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
         let forms = match brs with 
           | None -> formula_of_unstruc_view_f vdef
           | Some s -> joiner (List.filter (fun (_,l)-> List.mem l s) vdef.view_un_struc_formula) in
+        let renamed_view_formula = x_add_1 rename_bound_vars forms in
         let from_ann = List.map fst vdef.view_ann_params in
         let anns = List.map fst anns in
         let to_ann = anns in 
-        let forms =
+        let renamed_view_formula =
           try
             let mpa = List.combine from_ann to_ann in
-            propagate_imm_formula forms lhs_name imm mpa
+            propagate_imm_formula renamed_view_formula (* forms *) lhs_name imm mpa
           with _ -> forms
         in
-        let renamed_view_formula = x_add_1 rename_bound_vars forms in
         (* let () = print_string ("renamed_view_formula: "^(Cprinter.string_of_formula renamed_view_formula)^"\n") in *)
         let renamed_view_formula = add_unfold_num renamed_view_formula uf in
         (* propagate the immutability annotation inside the definition *)
