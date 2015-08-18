@@ -106,7 +106,7 @@ let norm_elim_useless_x vdefs sel_vns=
     | vdef::rest -> let new_defs,new_rest = process_one_view vdef rest in
       interate_helper new_rest (done_vdefs@new_defs)
   in
-  let normal_view, rest_views = List.partition (fun vdcl -> vdcl.Cast.view_kind = Cast.View_NORM) vdefs in
+  let normal_view, rest_views = List.partition (fun vdcl -> vdcl.Cast.view_kind = View_NORM) vdefs in
   let n_normal_view = interate_helper normal_view [] in
   (rest_views@n_normal_view)
 

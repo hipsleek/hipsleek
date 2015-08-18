@@ -3561,7 +3561,7 @@ let infer_collect_hp_rel_empty_rhs_x prog (es0:entail_state) mix_rf pos =
         | x::_ -> x
       with _ ->
         PK_Unknown in
-    if no_infer_hp_rel es0 || MCP.isTrivMTerm mix_rf ||  pk != PK_POST then
+    if no_infer_hp_rel es0 || MCP.isTrivMTerm mix_rf || ( pk != PK_POST && not !Globals.do_classic_frame_rule) then
       (false, es0,[])
     else
       let ivs = es0.es_infer_vars_hp_rel in

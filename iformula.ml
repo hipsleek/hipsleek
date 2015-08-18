@@ -206,6 +206,9 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
                         h_formula_heap2_label : formula_label option;
                         h_formula_heap2_pos : loc }
 
+let mk_hrel id cl pos =
+  HRel(id,cl,pos)
+
 let mk_absent_ann = Ipure_D.ConstAnn Accs
 let print_pure_formula = ref(fun (c:Ipure.formula) -> "printer not initialized")
 (* Interactive command line *)

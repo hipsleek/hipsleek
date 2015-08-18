@@ -56,13 +56,13 @@ PostPred G1(node x,  node b,  node c, node d). // non-ptrs are @NI by default
 // please tighthen input/output consideration for method
 // which are input only and which are output only, or both.
 void create_one (ref node p)
-  /*
   infer [P1,P2]
   requires P1(p)
   ensures P2(p,p');
-  */
+  /*
   requires p::Q1<>
   ensures p'::Q2<p>;
+  */
 {
   node t;
   if (bool_nondet()) {

@@ -5078,7 +5078,7 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
       (*   let posib_r_alias = (estate.es_evars @ estate.es_gen_impl_vars @ estate.es_gen_expl_vars) in *)
       (*   let rhs_eqset = estate.es_rhs_eqset in *)
       (*   let actions = x_add Context.compute_actions prog estate rhs_eqset h1 p1 p2 posib_r_alias rhs_lst estate.es_is_normalizing pos in *)
-      (* (\*let r = List.map (fun (c1,c2) -> (Context.choose_context prog rhs_eqset h1 p1 p2 posib_r_alias c1 c2 pos,(c1,c2))) rhs_lst in*\) *)
+      (* (\*let r = List.map (fun (c1,c2) -> (x_add Context.choose_context prog rhs_eqset h1 p1 p2 posib_r_alias c1 c2 pos,(c1,c2))) rhs_lst in*\) *)
       (* (\* Filter only matching actions *\) *)
       (* (\*let match_actions  =  List.filter (fun c -> match c with  *)
       (*   | Context.M_match ma  -> true *)
@@ -7654,6 +7654,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                   if res then new_estate,rels else estate,[]
                                 else estate,[]
                               in
+                               let h1, p1, vp1, fl1, t1, a1 = split_components estate.CF.es_formula in
                               let b1 = {formula_base_heap = h1;
                                         formula_base_pure = p1;
                                         formula_base_vperm = vp1;

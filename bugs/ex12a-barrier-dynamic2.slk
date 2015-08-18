@@ -1,0 +1,76 @@
+/*
+  For static barriers, a=0 always.
+  Do dynamic barriers, a!=0 possibly (both negative and positive)
+
+--en-para -perm bperm -tp redlog
+*/
+
+//********************************************
+//********************************************
+lemma "D-SPLIT" self::barrier(c,t,a)<p> & 0<c<=t+a & c=c1+c2 & a=a1+a2 & 0<c1<t+a1 & 0<c2<t+a2 & a1*c=c1*a & a2*c=c2*a -> self::barrier(c1,t,a1)<p> * self::barrier(c2,t,a2)<p>.
+
+lemma "D-FULL" self::barrier(c,t,a)<p> & c=t+a & a!=0 & c>0 -> self::barrier(c,t+a,0)<p>.
+
+//combine successfully
+lemma "D-COMBINE-1" self::barrier(c1,t,a1)<p> * self::barrier(c2,t,a2)<p> & c1!=0 & c2!=0 -> self::barrier(c1+c2,t,a1+a2)<p>.
+
+//combine successfully, ordering is not important
+lemma "D-COMBINE-2" self::barrier(c1,t,a1)<p1> * self::barrier(c2,t,a2)<p2> & c1!=0 & c2=0 & p2<=p1 -> self::barrier(c1,t,a1+a2)<p1>.
+
+//combine successfully
+lemma "D-COMBINE-3" self::barrier(0,t,a1)<p1> * self::barrier(0,t,a2)<p2> -> self::barrier(0,t,a1+a2)<p> & p=max(p1,p2).
+
+
+//detect inconsistency
+lemma "D-FAIL-1" self::barrier(c1,t,a1)<p1> * self::barrier(c2,t,a2)<p2> & c1!=0 & c2!=0 & p1!=p2 -> true & flow __Fail.
+
+//detect inconsistency
+lemma "D-FAIL-2" self::barrier(c1,t,a1)<p1> * self::barrier(c2,t,a2)<p2> & c1!=0 & c2=0 & p1<p2 -> true & flow __Fail.
+
+//D-SEP is not implemented as a lemma
+//D-SEP is done automatically in xpure_perm
+//"D-SEP" b1::barrier(c1,t,a1)<p> * b2::barrier(c2,t,a2)<p> & (t1!=t2 || c1+c2>t1+a1+a2  -> b1!=b2.
+
+//********************************************
+//********************************************
+
+
+//(26)
+//Example of D-SEP, which is done automatically in xpure_perm
+checkentail b1::barrier(c1,t1,a1)<p1> * b2::barrier(c2,t2,a2)<p2> & t1!=t2 |- b1!=b2.
+print residue. //VALID, D-SEP
+
+
+/*
+# ex12a.slk --en-para -perm bperm -tp redlog
+
+# Why is b1!=b2 missing now? 
+# What is barrier?
+
+(==cvutil.ml#1186==)
+h_formula_2_mem@107@106@105
+h_formula_2_mem inp1 : b1::barrier( (c1,t1,a1))<p1>@M * b2::barrier( (c2,t2,a2))<p2>@M
+h_formula_2_mem inp2 : b2!=b1 & t1!=t2
+h_formula_2_mem inp3 :[]
+h_formula_2_mem@107 EXIT: []
+
+!!! **WARNING****cvutil.ml#1045:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1045:Data Pure Inv (not tested) 
+(==cvutil.ml#1781==)
+xpure_heap_mem_enum#6@106@105
+xpure_heap_mem_enum#6 inp1 : b1::barrier( (c1,t1,a1))<p1>@M * b2::barrier( (c2,t2,a2))<p2>@M
+xpure_heap_mem_enum#6 inp2 : b2!=b1 & t1!=t2
+xpure_heap_mem_enum#6 inp3 :1
+xpure_heap_mem_enum#6@106 EXIT: b1!=null & c1>=0 & (t1+a1)>=c1 & t1>=0 & b2!=null & c2>=0 & (t2+a2)>=c2 & 
+ t2>=0 #  []
+
+(==solver.ml#2797==)
+xpure_heap#1@105
+xpure_heap#1 inp1 : b1::barrier( (c1,t1,a1))<p1>@M * b2::barrier( (c2,t2,a2))<p2>@M
+xpure_heap#1 inp2 : b2!=b1 & t1!=t2
+xpure_heap#1 inp3 :1
+xpure_heap#1@105 EXIT:( b1!=null & c1>=0 & (t1+a1)>=c1 & t1>=0 & b2!=null & c2>=0 & (t2+a2)>=c2 & 
+ t2>=0,[], [])#true
+Nested Timer(stop)
+
+*/

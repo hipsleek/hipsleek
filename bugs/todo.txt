@@ -1804,6 +1804,36 @@ infer_pure_m_1 inp4 :rhs xpure : fld5=null
 infer_pure_m_1 inp5 :inf vars :[fld5,z,inf_p]
 infer_pure_m_1@4 EXIT:(new es,inf pure,rel_ass) :(None,Some( (inf_p!=0 | fld5=null)),[])
 ===================================================================
+# ex12a.slk --en-para -perm bperm -tp redlog
+
+# Why is b1!=b2 missing now? 
+# What is barrier?
+
+(==cvutil.ml#1186==)
+h_formula_2_mem@107@106@105
+h_formula_2_mem inp1 : b1::barrier( (c1,t1,a1))<p1>@M * b2::barrier( (c2,t2,a2))<p2>@M
+h_formula_2_mem inp2 : b2!=b1 & t1!=t2
+h_formula_2_mem inp3 :[]
+h_formula_2_mem@107 EXIT: []
+
+!!! **WARNING****cvutil.ml#1045:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1045:Data Pure Inv (not tested) 
+(==cvutil.ml#1781==)
+xpure_heap_mem_enum#6@106@105
+xpure_heap_mem_enum#6 inp1 : b1::barrier( (c1,t1,a1))<p1>@M * b2::barrier( (c2,t2,a2))<p2>@M
+xpure_heap_mem_enum#6 inp2 : b2!=b1 & t1!=t2
+xpure_heap_mem_enum#6 inp3 :1
+xpure_heap_mem_enum#6@106 EXIT: b1!=null & c1>=0 & (t1+a1)>=c1 & t1>=0 & b2!=null & c2>=0 & (t2+a2)>=c2 & 
+ t2>=0 #  []
+
+(==solver.ml#2797==)
+xpure_heap#1@105
+xpure_heap#1 inp1 : b1::barrier( (c1,t1,a1))<p1>@M * b2::barrier( (c2,t2,a2))<p2>@M
+xpure_heap#1 inp2 : b2!=b1 & t1!=t2
+xpure_heap#1 inp3 :1
+xpure_heap#1@105 EXIT:( b1!=null & c1>=0 & (t1+a1)>=c1 & t1>=0 & b2!=null & c2>=0 & (t2+a2)>=c2 & 
+ t2>=0,[], [])#true
+Nested Timer(stop)
 ===================================================================
 ===================================================================
 ===================================================================

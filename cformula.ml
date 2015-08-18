@@ -220,7 +220,7 @@ and h_formula = (* heap formula *)
   | ThreadNode of h_formula_thread
   | Hole of int | FrmHole of int
   (* | TempHole of int * h_formula *)
-  | HRel of (CP.spec_var * ((CP.exp) list) * loc) (*placeh older for heap predicates*)
+  | HRel of (CP.spec_var * ((CP.exp) list) * loc) (*place holder for unknown heap predicates*)
   (* | HRel of ((CP.spec_var * cond_path_type) * ((CP.exp) list) * loc) (\*placeh older for heap predicates*\) *)
   | HTrue
   | HFalse
@@ -329,6 +329,44 @@ and approx_disj_or = { approx_disj_or_d1 : approx_disj;
 
 and approx_formula_and = { approx_formula_and_a1 : approx_formula;
                            approx_formula_and_a2 : approx_formula }
+
+(* !!! **cformula.ml#335:HPRel(n):H *)
+(* !!! **cformula.ml#336:HPRel(args):[ p, q] *)
+let mk_HRel_as_view n args loc =
+  let () = x_tinfo_hp (add_str "HPRel(n)" !CP.print_sv) n no_pos in
+  let vn = name_of_spec_var n in
+  let hd,tails = match args with
+      n::ns -> (n,args)
+    | _ -> x_report_error loc "HREL -> View : need at least one parameter"
+  in
+  ViewNode {
+    (* HRel *)
+    h_formula_view_name = vn;
+    h_formula_view_node = hd; (* root *)
+    h_formula_view_arguments = tails; (* rest of argument *) (* 220 *)
+    h_formula_view_pos = loc; (* 57 *)
+    h_formula_view_label = None; (* 29*)
+
+    (* prim_view *)
+    h_formula_view_split = SPLIT0; (*21*)
+    h_formula_view_imm = CP.NoAnn; (* 87 *)
+    h_formula_view_perm = None; (* 60*)
+    h_formula_view_ho_arguments = []; (* 29 *)
+    h_formula_view_annot_arg = []; (* 49 *)
+    h_formula_view_modes = []; (* 17 *)
+    h_formula_view_coercible = false; (* 14 *)
+
+    (* view with defn *)
+    h_formula_view_unfold_num = 0; (* to prevent infinite unfolding *) (* 20*)
+    h_formula_view_remaining_branches =  None; (*48*)
+    h_formula_view_pruning_conditions =  [];
+    h_formula_view_derv = false; (* 36 *)
+    h_formula_view_args_orig = []; (* 24 *)
+    h_formula_view_origins = [];
+    h_formula_view_original = false;
+    h_formula_view_lhs_case = false; (* to allow LHS case analysis prior to unfolding and lemma *)
+
+  }
 
 (* this will be set to TPdispatcher.simplify_omega later *)
 let simplify_omega = ref(fun (c:Cpure.formula) -> c)
@@ -4871,7 +4909,7 @@ and infer_state = {
   is_prefix_hps: CP.spec_var list;
   is_cond_path: cond_path_type;
   is_flow: nflow;
-  is_hp_equivs: (CP.spec_var*CP.spec_var) list;
+ is_hp_equivs: (CP.spec_var*CP.spec_var) list;
   is_hp_defs: hp_rel_def list;
 }
 
