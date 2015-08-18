@@ -31,7 +31,7 @@ let pure_hprel_map = ref ([]: (ident * ident) list)
 type prog_decl = {
   mutable prog_data_decls : data_decl list;
   mutable prog_logical_vars : P.spec_var list;
-  mutable prog_view_decls : view_decl list;
+  mutable prog_view_decls : view_decl  list; (* WN : to change to Gen.stack_pr *)
   (* mutable prog_rel_decls : rel_decl list; (\* An Hoa : relation definitions *\) *)
   prog_rel_decls : rel_decl Gen.stack_pr; (* An Hoa : relation definitions *)
   mutable prog_templ_decls: templ_decl list;
@@ -87,24 +87,32 @@ and barrier_decl = {
   barrier_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
 }
 
-and view_kind =
-  | View_PRIM
-  | View_NORM
-  | View_EXTN
-  | View_SPEC
-  | View_DERV
+(* and view_kind = *)
+(*   | View_PRIM *)
+(*   | View_HREL *)
+(*   | View_NORM *)
+(*   | View_EXTN *)
+(*   | View_SPEC *)
+(*   | View_DERV *)
 
 and view_decl = {
   view_name : ident;
-  view_ho_vars : (ho_flow_kind * P.spec_var * ho_split_kind)list;
+
   view_vars : P.spec_var list;
+  view_pos : loc;
+
+  view_is_prim : bool;
+  view_is_hrel : bool option; (* bool is PreHeap *)
+
+  view_data_name : ident;
+  view_ho_vars : (ho_flow_kind * P.spec_var * ho_split_kind) list;
+
   view_cont_vars : P.spec_var list;
   view_seg_opz : P.formula option; (*pred is seg + base case is emp heap*)
   view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
   view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
   view_labels : LO.t list;
   view_modes : mode list;
-  view_is_prim : bool;
   view_type_of_self : typ option;
   view_is_touching : bool;
   view_is_segmented : bool;
@@ -126,7 +134,6 @@ and view_decl = {
   view_params_orig: (P.view_arg * int) list;
   mutable view_partially_bound_vars : bool list;
   mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
-  view_data_name : ident;
   view_formula : F.struc_formula; (* case-structured formula *)
   mutable view_user_inv : MP.mix_formula; (* XPURE 0 -> revert to P.formula*)
   view_mem : F.mem_perm_formula option; (* Memory Region Spec *)
@@ -154,7 +161,6 @@ and view_decl = {
   view_prune_conditions: (P.b_formula * (formula_label list)) list;
   view_prune_conditions_baga: ba_prun_cond list;
   view_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
-  view_pos : loc;
   view_raw_base_case: Cformula.formula option;
   view_ef_pure_disj : Excore.ef_pure_disj option
 }
@@ -194,6 +200,7 @@ and hp_decl = {
   hp_part_vars: (int list) list; (*partition vars into groups e.g. pointer + pure properties*)
   mutable hp_root_pos: int;
   hp_is_pre: bool;
+  hp_view: (Iast.view_decl * view_decl) option;
   hp_formula : F.formula;}
 
 (** An Hoa : axiom *)
@@ -602,6 +609,74 @@ let slk_of_data_decl = ref (fun (c:data_decl) -> "cast printer has not been init
 (* imply function has not been initialized yet *)
 let imply_raw = ref (fun (ante: P.formula) (conseq: P.formula) -> false)
 
+
+let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
+  let mix_true = MP.mkMTrue pos in
+  let vs = List.map fst vars in (* where to store annotation? *)
+  (* let vs = match vs with _::ts -> ts | _ -> failwith "impossible" in *)
+  {
+    view_name = hp_n; (* CP.name_of_spec_var hp_n; *)
+    view_vars = vs;
+    view_pos = pos;
+    view_is_hrel = Some (is_pre);
+
+    view_is_prim = false;
+    view_data_name = "";
+    view_ho_vars = [];
+
+    view_cont_vars = [];
+    view_seg_opz = None;
+    view_case_vars = [];
+    view_uni_vars = [];
+    view_labels = [];
+    view_modes = [];
+    view_type_of_self = None;
+    view_is_touching = false;
+    view_is_segmented = false;
+    view_is_tail_recursive= false;        (* true if view is tail-recursively defined *)
+    view_residents= [];
+    view_forward_ptrs= [];
+    view_forward_fields= [];
+    view_backward_ptrs= [];
+    view_backward_fields= [];
+    view_kind = View_HREL;
+    view_prop_extns=  [];
+    view_parent_name= None;
+    view_domains= [];
+    view_contains_L_ann = false;
+    view_ann_params = [];
+    view_params_orig= [];
+    view_partially_bound_vars = [];
+    view_materialized_vars = [];
+    view_formula = F.mkETrue (F.mkTrueFlow ()) pos;
+    view_user_inv = mix_true;
+    view_mem = None;
+    view_inv_lock = None;
+    view_fixcalc = None;
+    view_x_formula = mix_true;
+    (* exact baga *)
+    view_baga_inv = None;
+    (* over-approx baga *)
+    view_baga_over_inv = None;
+    view_baga_x_over_inv = None;
+    (* necessary baga *)
+    view_baga_under_inv = None;
+    view_xpure_flag = false; (* flag to indicate if XPURE0 <=> XPURE1 *)
+    view_baga = CP.BagaSV.mkEmpty;
+    view_addr_vars = [];
+    view_complex_inv = None;
+    view_un_struc_formula = [];
+    view_linear_formula = [];
+    view_base_case = None;
+    view_prune_branches= [];
+    view_is_rec = false;
+    view_pt_by_self = [];
+    view_prune_conditions= [];
+    view_prune_conditions_baga= [];
+    view_prune_invariants = [];
+    view_raw_base_case= None;
+    view_ef_pure_disj = None;
+  }
 
 (** An Hoa [22/08/2011] Extract data field information **)
 
@@ -1196,6 +1271,7 @@ let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos=
         hp_root_pos = 0; (*default, reset when def is inferred*)
         hp_vars_inst = unknown_ptrs;
         hp_is_pre = is_pre;
+        hp_view = None;
         hp_formula = F.mkBase F.HEmp (MP.mkMTrue pos) CVP.empty_vperm_sets F.TypeTrue (F.mkTrueFlow()) [] pos;}
     in
     let unk_args = (fst (List.split hp_decl.hp_vars_inst)) in
@@ -1327,28 +1403,36 @@ let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var li
   (* let () = x_tinfo_hp (add_str "look_up_view_baga: baga= " !print_svl) ba no_pos in *)
   (* Excore.ef_pure_disj option *)
   let ba_oinv = vdef.view_baga_x_over_inv in
-  let () = x_tinfo_hp (add_str "look_up_view_baga: baga= " (pr_option !print_ef_pure_disj)) ba_oinv no_pos in
-  let from_svs = (self_param vdef) :: vdef.view_vars in
-  let to_svs = root :: args in
-  let baga_lst = match ba_oinv with
-    | None -> []
-    | Some bl -> 
-      (* if Excore.EPureI.is_false bl then [root,root] *)
-      (* else *)
+  match ba_oinv with
+  | None -> []
+  | Some bl ->
+    begin
+      let () = x_tinfo_hp (add_str "look_up_view_baga: baga= " (pr_option !print_ef_pure_disj)) ba_oinv no_pos in
+      let from_svs = (self_param vdef) :: vdef.view_vars in
+      let to_svs = root :: args in
+      let () = x_tinfo_hp (add_str "from_svs" !CP.print_svl) from_svs no_pos in
+      let () = x_tinfo_hp (add_str "to_svs" !CP.print_svl) to_svs no_pos in
+      let baga_lst = (* match ba_oinv with *)
+        (* | None -> [] *)
+        (* | Some bl -> *)
+        (* if Excore.EPureI.is_false bl then [root,root] *)
+        (* else *)
         let sst = List.combine from_svs to_svs in
         List.map (Excore.EPureI.subst_epure sst) bl in
-  let () = x_tinfo_hp (add_str "baga (subst)= " ( !print_ef_pure_disj)) baga_lst no_pos in
-  let add_epure pf lst =
-    let ep = Excore.EPureI.mk_epure pf in
-    let lst = Excore.EPureI.mk_star_disj ep lst in
-    Excore.EPureI.elim_unsat_disj false lst
-  in
-  let baga_sp = (add_epure epure baga_lst) in
-  let () = x_tinfo_hp (add_str "baga (filtered)= " ( !print_ef_pure_disj)) baga_sp no_pos in
-  let r = Excore.EPureI.hull_memset baga_sp in
-  let () = x_tinfo_hp (add_str "baga (hulled)= " (!print_svl)) r no_pos in
-  if baga_sp==[] then [root;root]
-  else r
+      let () = x_tinfo_hp (add_str "baga (subst)= " ( !print_ef_pure_disj)) baga_lst no_pos in
+      let add_epure pf lst =
+        let ep = Excore.EPureI.mk_epure pf in
+        let lst = Excore.EPureI.mk_star_disj ep lst in
+        Excore.EPureI.elim_unsat_disj false lst
+      in
+      let baga_sp = (add_epure epure baga_lst) in
+      let () = x_tinfo_hp (add_str "baga (filtered)= " ( !print_ef_pure_disj)) baga_sp no_pos in
+      let r = Excore.EPureI.hull_memset baga_sp in
+      let () = x_tinfo_hp (add_str "baga (hulled)= " (!print_svl)) r no_pos in
+      if baga_sp==[] then [root;root]
+      else r
+    end
+
 
 let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
   Debug.no_3 "get_spec_baga" !P.print_formula (fun v -> !print_svl [v]) !print_svl !print_svl 
@@ -1363,6 +1447,8 @@ let look_up_view_baga ?(epure=None) prog (c : ident) (root:P.spec_var) (args : P
   let () = x_tinfo_hp (add_str "look_up_view_baga: baga= " (pr_option !print_ef_pure_disj)) ba_oinv no_pos in
   let from_svs = (self_param vdef) :: vdef.view_vars in
   let to_svs = root :: args in
+  let () = x_tinfo_hp (add_str "from_svs" !CP.print_svl) from_svs no_pos in
+  let () = x_tinfo_hp (add_str "to_svs" !CP.print_svl) to_svs no_pos in
   let baga_lst = match ba_oinv with
     | None -> []
     | Some bl -> 
@@ -1578,11 +1664,20 @@ let lookup_view_invs_with_subs rem_br v_def zip  =
     List.map (P.b_apply_subs zip) v
   with | Not_found -> []
 
+(* type: Globals.formula_label list -> *)
+(*   view_decl -> P.spec_var list -> P.spec_var list -> P.spec_var list *)
 let lookup_view_baga_with_subs rem_br v_def from_v to_v  = 
   try 
     let v=fst(snd (List.find (fun (c1,_)-> Gen.BList.list_setequal_eq (=) c1 rem_br) v_def.view_prune_invariants)) in
     P.subst_var_list_avoid_capture from_v to_v v
   with | Not_found -> []
+
+(* type: Globals.formula_label list -> *)
+(*   view_decl -> P.spec_var list -> P.spec_var list -> P.spec_var list *)
+let lookup_view_baga_with_subs rem_br v_def from_v to_v  = 
+  let pr v = v.view_name in
+  let pr2 = !CP.print_svl in
+  Debug.no_3 "lookup_view_baga_with_subs" pr pr2 pr2 pr2 (lookup_view_baga_with_subs rem_br) v_def from_v to_v 
 
 let look_up_coercion_def_raw coers (c : ident) : coercion_decl list = 
   List.filter (fun p ->  p.coercion_head_view = c ) coers

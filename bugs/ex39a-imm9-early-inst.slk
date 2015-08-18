@@ -1,0 +1,26 @@
+// Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Fail.
+data cell{
+ int fst;
+}.
+// --etcsu1
+
+//7
+checkentail c::cell<a>@w & w<:@L |-  c::cell<b>@v & @M<:v.
+expect Valid.
+print residue.
+
+//8
+checkentail c::cell<a>@w & w<:@L & u=@M|-  c::cell<b>@v & u<:v.
+expect Valid.
+print residue.
+
+
+//11
+checkentail c::cell<a>@w & w<:@L |-  c::cell<b>@v & v<:@A.
+expect Valid.
+print residue.
+/**
+expect_infer I{} R{c::cell<a>@w&w<:@L & v=@A & b=a}.
+*/
+
+

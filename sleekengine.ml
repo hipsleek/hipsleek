@@ -504,6 +504,17 @@ let process_hp_def hpdef =
       iprog.I.prog_hp_decls <- ( hpdef :: iprog.I.prog_hp_decls);
       let chpdef, p_chpdef = Astsimp.trans_hp iprog hpdef in
       let _ = !cprog.Cast.prog_hp_decls <- (chpdef :: !cprog.Cast.prog_hp_decls) in
+      if !Globals.hrel_as_view_flag then
+        begin
+          match chpdef.Cast.hp_view with
+          | Some (i_vd,vd) -> 
+            let () = x_tinfo_hp (add_str "adding view decls" pr_id) vd.Cast.view_name no_pos in
+            let () = !cprog.Cast.prog_view_decls <- vd::!cprog.Cast.prog_view_decls in
+            iprog.Iast.prog_view_decls <- i_vd::iprog.Iast.prog_view_decls
+          | None -> 
+            let () = x_tinfo_pp "NONE" no_pos in
+            ()
+        end;
       (* let _ = !cprog.Cast.prog_rel_decls <- (p_chpdef::!cprog.Cast.prog_rel_decls) in *)
       let _ = !cprog.Cast.prog_rel_decls # push p_chpdef in
       (* Forward the relation to the smt solver. *)
@@ -519,6 +530,9 @@ let process_hp_def hpdef =
       end
   else
     print_string (hpdef.I.hp_name ^ " is already defined.\n")
+
+let process_hp_def hpdef =
+  Debug.no_1 "process_hp_def" pr_none pr_none process_hp_def hpdef
 
 (** An Hoa : process axiom
 *)
@@ -588,7 +602,7 @@ let print_residue residue =
           let () = x_tinfo_hp (add_str "dis_lerr_exc?" string_of_bool) dis_lerr_exc no_pos in
           let () = x_tinfo_hp (add_str "en_lerr_exc?" string_of_bool) dis_lerr_exc no_pos in
           (* let bool_vs = List.map (fun sv -> check_is_field (CP.name_of_spec_var sv)) curr_vs in *)
-          (* let () = x_binfo_hp (add_str "fields" (pr_list string_of_bool)) bool_vs no_pos in *)
+          (* let () = x_tinfo_hp (add_str "fields" (pr_list string_of_bool)) bool_vs no_pos in *)
           let f_vs,curr_vs = List.partition (CP.check_is_field_sv) curr_vs in
           let () = x_dinfo_hp (add_str "fields (elim)" !CP.print_svl) f_vs no_pos in
           let () = print_endline_quiet "" in
@@ -801,7 +815,8 @@ let convert_data_and_pred_to_cast_x () =
   let cur_lem_syn = !Globals.lemma_syn in
   (*turn off generate lemma during trans views*)
   let _ = Globals.lemma_syn := false in
-  let cviews0 = Astsimp.trans_views iprog ls_mut_rec_views (List.map (fun v -> (v,[]))  tmp_views) in
+  let tmp_views = List.filter (fun v -> v.Iast.view_kind != View_HREL) tmp_views in
+  let cviews0 = x_add Astsimp.trans_views iprog ls_mut_rec_views (List.map (fun v -> (v,[]))  tmp_views) in
   (* x_tinfo_pp "after trans_view" no_pos; *)
   (*derv and spec views*)
   let tmp_views_derv1 = Astsimp.mark_rec_and_der_order tmp_views_derv in
@@ -816,7 +831,10 @@ let convert_data_and_pred_to_cast_x () =
       Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.Cast.view_name) cviews)
     else cviews
   in
-  let _ = !cprog.Cast.prog_view_decls <- cviews in
+  let () = x_binfo_hp (add_str "view_decls (pre)" (pr_list (fun v -> v.Cast.view_name))) (!cprog.Cast.prog_view_decls) no_pos in
+  let () = x_tinfo_hp (add_str "view_decls (cviews)" (pr_list (fun v -> v.Cast.view_name))) (cviews) no_pos in
+  let old_view_decls = !cprog.Cast.prog_view_decls in
+  let _ = !cprog.Cast.prog_view_decls <- old_view_decls@cviews in
   let cviews1 =
     if !Globals.norm_extract then
       Norm.norm_extract_common iprog !cprog cviews (List.map (fun vdef -> vdef.Cast.view_name) cviews)
@@ -829,12 +847,12 @@ let convert_data_and_pred_to_cast_x () =
     else
       cviews1
   in
-  let _ = !cprog.Cast.prog_view_decls <- cviews2 in
+  let _ = !cprog.Cast.prog_view_decls <- old_view_decls@cviews2 in
   let _ =  (List.map (fun vdef -> Astsimp.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews2) in
   x_tinfo_pp "after compute_view" no_pos;
   let _ = (List.map (fun vdef -> Astsimp.set_materialized_prop vdef) cviews2) in
   let cviews2 = (List.map (fun vdef -> Norm.norm_formula_for_unfold !cprog vdef) cviews2) in
-  let _ = !cprog.Cast.prog_view_decls <- cviews2 in
+  let _ = !cprog.Cast.prog_view_decls <-  old_view_decls@cviews2 in
   x_tinfo_pp "after materialzed_prop" no_pos;
   let cprog1 = Astsimp.fill_base_case !cprog in
   let cprog2 = Astsimp.sat_warnings cprog1 in
@@ -1200,7 +1218,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
                       ^ "\n ### iconseq0 = "^(string_of_meta_formula iconseq0)
                       ^"\n\n") no_pos in
   let (n_tl,ante) = x_add meta_to_formula iante0 false [] [] in
-  (* let () = x_binfo_hp (add_str "last_entail_lhs" !CF.print_formula) ante no_pos in *)
+  (* let () = x_tinfo_hp (add_str "last_entail_lhs" !CF.print_formula) ante no_pos in *)
   (* WN : ante maybe a disjunction! *)
   (* need a better solution here *)
   let xpure_all f = 
@@ -1294,8 +1312,8 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   (* if List.length sst != List.length sst0 then *)
   (*   begin *)
   (*     let pr = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
-  (*     let () = x_binfo_hp (add_str "XXX sst(old)" pr) sst0 no_pos in *)
-  (*     let () = x_binfo_hp (add_str "XXX sst(new)" pr) sst no_pos in *)
+  (*     let () = x_tinfo_hp (add_str "XXX sst(old)" pr) sst0 no_pos in *)
+  (*     let () = x_tinfo_hp (add_str "XXX sst(new)" pr) sst no_pos in *)
   (*     () *)
   (*    end; *)
   (*let _ = print_endline "run_infer_one_pass" in*)
@@ -1781,7 +1799,7 @@ let process_validate_infer (vr : validate_result) (validation: validation)  =
         let res = (match lc (* run_heap_entail lc res_f *) with
             | (CF.SuccCtx lctx) ->
               begin 
-                (* let () = x_binfo_hp (add_str "expected vr" string_of_vres) vr no_pos in *)
+                (* let () = x_tinfo_hp (add_str "expected vr" string_of_vres) vr no_pos in *)
                 match validation with
                 | V_Infer _ ->
                   let rec helper acc ctx =

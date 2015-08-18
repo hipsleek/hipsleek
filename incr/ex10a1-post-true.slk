@@ -1,0 +1,10 @@
+data node {
+	int val;
+	node next;
+}.
+
+
+HeapPred H(node a).
+
+infer [H] H(x) & x=null |- true.
+print residue.
