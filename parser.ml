@@ -1174,13 +1174,14 @@ view_decl:
               view_baga_under_inv = obui;
               view_mem = mpb;
               view_is_prim = false;
-          view_kind = Iast.View_NORM; (* TODO : *)
+              view_is_hrel = None;
+              view_kind = View_NORM; (* TODO : *)
               view_inv_lock = li;
               try_case_inference = (snd vb) }
     |  vh = view_header; `EQEQ; `EXTENDS; orig_v = derv_view; `WITH ; extn = prop_extn ->
            { vh with view_derv = true;
                view_derv_info = [(orig_v,extn)];
-               view_kind = Iast.View_DERV;
+               view_kind = View_DERV;
            }
  ]];
 
@@ -1193,8 +1194,9 @@ prim_view_decl:
           view_baga_inv = obi;
           view_baga_over_inv = oboi;
           view_baga_under_inv = obui;
-          view_kind = Iast.View_PRIM;
+          view_kind = View_PRIM;
           view_is_prim = true;
+          view_is_hrel = None;
           view_inv_lock = li} ]];
 
 view_decl_ext:
@@ -1205,7 +1207,7 @@ view_decl_ext:
           view_baga_inv = obi;
           view_baga_over_inv = oboi;
           view_baga_under_inv = obui;
-          view_kind = Iast.View_EXTN;
+          view_kind = View_EXTN;
           view_inv_lock = li;
           try_case_inference = (snd vb) } ]];
 
@@ -1237,7 +1239,7 @@ view_decl_ext:
 (*             view_baga_inv = obi;                                                                                                                             *)
 (*             view_baga_over_inv = oboi;                                                                                                                       *)
 (*             view_baga_under_inv = obui;                                                                                                                      *)
-(*             view_kind = Iast.View_SPEC;                                                                                                                      *)
+(*             view_kind = View_SPEC;                                                                                                                      *)
 (*             view_parent_name = Some va.view_name;                                                                                                            *)
 (*             view_inv_lock = li;                                                                                                                              *)
 (*             try_case_inference = (snd vb) } ]];                                                                                                              *)
@@ -1429,6 +1431,7 @@ view_header:
           view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
           view_inv_lock = None;
           view_is_prim = false;
+          view_is_hrel = None;
           view_kind = View_NORM;
           view_prop_extns = [];
           view_derv_info = [];
@@ -1509,6 +1512,7 @@ view_header_ext:
           view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
           view_inv_lock = None;
           view_is_prim = false;
+          view_is_hrel = None;
           view_kind = View_EXTN;
           view_prop_extns = sl;
           view_derv_info = [];
@@ -1939,10 +1943,16 @@ simple_heap_constr:
      (* High-order variables, e.g. %P*)
    | `PERCENT; `IDENTIFIER id -> F.HVar (id,[])
    | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN ->
-        if hp_names # mem id then
-           F.HRel(id, cl, (get_pos_camlp4 _loc 2))
-             (*P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))*)
-         else report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
+     let pos = get_pos_camlp4 _loc 2 in
+     if hp_names # mem id then
+       if !Globals.hrel_as_view_flag then
+         (* report_error (get_pos 1) "hrel_as_view : to be implemented (1)" *)
+         F.mk_hrel id cl pos 
+       else
+         F.mk_hrel id cl pos 
+           (* F.HRel(id, cl, (get_pos_camlp4 _loc 2)) *)
+         (*P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))*)
+     else report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
    | `HTRUE -> F.HTrue
    | `EMPTY -> F.HEmp
   ]];
@@ -2210,13 +2220,18 @@ cexp_w:
         (* Pure_c (P.Var (("#" ^ (string_of_int !hash_count),Unprimed),(get_pos_camlp4 _loc 1))) *)
         mk_purec_absent (P.Var (("Anon"^fresh_trailer(),Unprimed),(get_pos_camlp4 _loc 1)))
     | `IDENTIFIER id1;`OPAREN; `IDENTIFIER id; `OPAREN; cl = id_list; `CPAREN ; `CPAREN ->
-        if hp_names # mem id then Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
+      if hp_names # mem id then 
+        if !Globals.hrel_as_view_flag then
+          (* report_error (get_pos 1) "hrel_as_view : to be implemented (2)" *)
+          Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
         else
-          begin
-            if not(rel_names # mem id) then print_endline_quiet ("WARNING1 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (not in rel_names)")
-            else  print_endline_quiet ("WARNING2 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (in rel_names)") ;
-            Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
-          end
+          Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
+      else
+        begin
+          if not(rel_names # mem id) then print_endline_quiet ("WARNING1 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (not in rel_names)")
+          else  print_endline_quiet ("WARNING2 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (in rel_names)") ;
+          Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
+        end
     | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN ->
       (* AnHoa: relation constraint, for instance, given the relation 
        * s(a,b,c) == c = a + b.
@@ -2228,7 +2243,7 @@ cexp_w:
         else if templ_names # mem id then
           Pure_c (P.mkTemplate id cl (get_pos_camlp4 _loc 1))
         else if hp_names # mem id then (* Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None)) *)
-          report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
+          report_error (get_pos 1) ("should be a pure relation, and not a heap pred here")
         else if ui_names # mem_eq (fun (id1, _) (id2, _) ->  id1 = id2 ) (id, true) then 
           begin
             let _, is_pre = ui_names # find (fun (name,  _) -> name = id) in
@@ -3005,28 +3020,38 @@ hp_decl:[[
     let () = hp_names # push id in
     let tl, parts = pred_get_args_partition tl0 in
     let root_pos =  pred_get_root_pos !pred_root_id tl in
+    let pos1 = get_pos_camlp4 _loc 1 in
     let () = pred_root_id := "" in
-    {
-        hp_name = id;
-        hp_typed_inst_vars = tl;
-        hp_root_pos = root_pos;
-        hp_part_vars = parts;
-        hp_is_pre = true;
-        hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) VP.empty_vperm_sets top_flow [] (get_pos_camlp4 _loc 1);
-    }
+     if !Globals.hrel_as_view_flag then
+       mk_hp_decl_w_view id tl root_pos parts pos1 
+         (* report_error (get_pos 1) "hrel_as_view : to be implemented (3)" *)
+     else mk_hp_decl id tl root_pos parts pos1
+    (*  { *)
+    (*     hp_name = id; *)
+    (*     hp_typed_inst_vars = tl; *)
+    (*     hp_root_pos = root_pos; *)
+    (*     hp_part_vars = parts; *)
+    (*     hp_is_pre = true; *)
+    (*     hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) VP.empty_vperm_sets top_flow [] (get_pos_camlp4 _loc 1); *)
+    (* } *)
   | `HPPOST; `IDENTIFIER id; `OPAREN; tl0= typed_id_inst_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
     let () = hp_names # push id in
     let tl, parts = pred_get_args_partition tl0 in
     let root_pos =  pred_get_root_pos !pred_root_id tl in
+    let pos1 = get_pos_camlp4 _loc 1 in
     let () = pred_root_id := "" in
-    {
-        hp_name = id;
-        hp_typed_inst_vars = tl;
-        hp_part_vars = parts;
-        hp_root_pos = root_pos;
-        hp_is_pre = false;
-        hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) VP.empty_vperm_sets top_flow [] (get_pos_camlp4 _loc 1);
-    }
+     if !Globals.hrel_as_view_flag then
+       mk_hp_decl_w_view ~is_pre:false id tl root_pos parts pos1 
+       (* report_error (get_pos 1) "hrel_as_view : to be implemented (4)" *)
+     else mk_hp_decl ~is_pre:false id tl root_pos parts pos1
+    (* { *)
+    (*     hp_name = id; *)
+    (*     hp_typed_inst_vars = tl; *)
+    (*     hp_part_vars = parts; *)
+    (*     hp_root_pos = root_pos; *)
+    (*     hp_is_pre = false; *)
+    (*     hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) VP.empty_vperm_sets top_flow [] (get_pos_camlp4 _loc 1); *)
+    (* } *)
 ]];
 
  (*end of sleek part*)   

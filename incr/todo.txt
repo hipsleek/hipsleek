@@ -509,7 +509,7 @@ res:  failctxfe_kind: MAY
   for such rev-lseg specification?
 
 =====================================================================
-# ex8d8.slk (WN to fix)
+# ex8d8.slk (FIXED)
 
 checkentail t'::node<1,p>@M * p'::Q3<t'>@M
  |-  p'::Q3<p>
@@ -518,9 +518,62 @@ checkentail t'::node<1,p>@M * p'::Q3<t'>@M
 # Can we make it work by scheduling a "fold" operation?
   for such rev-lseg specification?
 =====================================================================
+# ex10c.alk
+
+infer_exact [] H(p) & p=null |- emp.
+
+GOT:
+  <1>H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
+
+# This need to FAIL!
+
 =====================================================================
+# ex10e.alk
+
+infer_exact [H] H(p) & p=null |- htrue.
+
+Entail (1) : Valid. 
+Residue:
+ <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+
+# expects H(p) & p=null --> emp to be inferred.
+
 =====================================================================
+# bug10b.slk --en-hrel-as-view (FIXED)
+
+checkentail x::G<p,q> & p=null & q=p |- x::G<p,p>.
+
+!!! **WARNING****typeinfer.ml#1394:Cannot find x in fvs, TODO: fail?
+Entail 2: Valid. 
+
+# Why Unknown?
+
+ view_hrel H{}[]<a:Unknown,b:Unknown>= 
+  view_domains: 
+   view_hrel H<a:Unknown,b:Unknown>= 
+    EBase 
+      (* lbl: *){2}->emp&{FLOW,(1,26)=__flow#E}[]
+
+checkentail H(p,q) & p=null & q=p |- H(p,p) .
+
+# Why arguments not printed? (FIXED due to List.combine *)
+
+!!! **cformula.ml#337:HPRel(n):H:HpT
+INPUT 0: [][] 
+ ### ante =  p:node::H<>&p:node=null & q:node=p:node&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   p:node::H<>&{FLOW,(20,21)=__norm#E}[]
+
+run_infer:
+ p:node::H<>&p:node=null & q:node=p:node&{FLOW,(20,21)=__norm#E}[] [] |-  EBase 
+   p:node::H<>&{FLOW,(20,21)=__norm#E}[]
+
 =====================================================================
+# bug10b.slk --en-hrel-as-view
+
+# where did this come from?
+
+!!! **WARNING****typeinfer.ml#1394:Cannot find x in fvs, TODO: fail?
 =====================================================================
 =====================================================================
 =====================================================================

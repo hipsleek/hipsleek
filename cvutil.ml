@@ -787,6 +787,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
             | Some ls ->
               lookup_view_baga_with_subs ls vdef from_svs to_svs))
       in
+      let () = x_tinfo_hp (fun e -> CP.BagaSV.string_of e) new_mset no_pos in
       {mem_formula_mset = CP.DisjSetSV.one_list_dset new_mset;} 
     | StarMinus _
     | Hole _ -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
@@ -850,7 +851,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
       | ViewNode ({ h_formula_view_node = p;h_formula_view_name = c;h_formula_view_arguments = vs; 
                     h_formula_view_imm = imm;
                     h_formula_view_remaining_branches = lbl_lst;h_formula_view_perm = perm;	h_formula_view_pos = pos}) ->
-        x_tinfo_hp (add_str "f" (fun f -> "#VN#" ^ Cprinter.string_of_h_formula f)) f pos;
+        x_tinfo_hp (add_str "f" (fun f -> "#VN2#" ^ Cprinter.string_of_h_formula f)) f pos;
         (* let vdef = look_up_view_def pos prog.prog_view_decls c in *)
         (* (\*TO DO: Temporarily ignore LOCK*\) *)
         (* if  perm<> None then {mem_formula_mset =[]} *)
@@ -889,9 +890,9 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
                let full_f = Perm.mkFullPerm_pure () (Cpure.get_var var) in
                (*prove that p0 |- var=full_perm*)
                let f0 = MCP.pure_of_mix p0 in
-               x_dinfo_zp (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
+               x_binfo_zp (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
                let res,_,_ = CP.imply_disj_orig [f0] full_f (x_add TP.imply_one 25) imp_no in
-               x_dinfo_zp (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
+               x_binfo_zp (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
                if (res) then
                  (match lbl_lst with
                   |None ->
@@ -912,6 +913,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
                 | Some ls -> 
                   lookup_view_baga_with_subs ls vdef from_svs to_svs))
         in
+        let () = x_tinfo_hp (add_str "baga(view_node)" (fun e -> CP.BagaSV.string_of e)) new_mset no_pos in
         {mem_formula_mset = CP.DisjSetSV.one_list_dset new_mset;}  
       | Star _  -> report_error no_pos "solver: h_mem should not get star at this point" in
     let r = List.fold_left (fun a c-> CP.DisjSetSV.star_disj_set a (mapper c).mem_formula_mset) CP.DisjSetSV.mkEmpty node_lst in
@@ -977,13 +979,13 @@ and xpure_mem_enum_x (prog : prog_decl) (f0 : formula) : (mix_formula * CF.mem_f
               formula_base_pure = p;
               formula_base_pos = pos}) ->
       let (ph,_) = x_add xpure_heap_mem_enum 2 prog h p 1 in
-      MCP.merge_mems p ph true
+      x_add MCP.merge_mems p ph true
     | Exists ({ formula_exists_qvars = qvars;
                 formula_exists_heap = qh;
                 formula_exists_pure = qp;
                 formula_exists_pos = pos}) ->
       let (pqh,_) = x_add xpure_heap_mem_enum 3 prog qh qp 1 in
-      let tmp1 = MCP.merge_mems qp pqh true in
+      let tmp1 = x_add MCP.merge_mems qp pqh true in
       MCP.memo_pure_push_exists qvars tmp1
   in
   (xpure_helper prog f0, formula_2_mem f0 prog)
@@ -1330,7 +1332,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
       let () = Debug.ninfo_hprint (add_str "ph1" !Cast.print_mix_formula) ph1 no_pos in
       let () = Debug.ninfo_hprint (add_str "ph2" !Cast.print_mix_formula) ph2 no_pos in
       let () = Debug.ninfo_hprint (add_str "memset" !CF.print_mem_formula) memset no_pos in
-      MCP.merge_mems ph1 ph2 true
+      x_add MCP.merge_mems ph1 ph2 true
     | StarMinus _
     | HTrue  -> MCP.mkMTrue no_pos
     | HFalse -> MCP.mkMFalse no_pos
@@ -1382,7 +1384,7 @@ and xpure_symbolic_slicing_x (prog : prog_decl) (f0 : formula) : (formula * CP.s
              formula_base_pure = p;
              formula_base_pos = pos }) = b in
       let ph, addrs, _ = x_add xpure_heap_symbolic 2 prog h p 1 in
-      let n_p = MCP.merge_mems p ph true in
+      let n_p = x_add MCP.merge_mems p ph true in
       (* Set a complex heap formula to a simpler one *)
       let n_f0 = mkBase HEmp n_p CvpermUtils.empty_vperm_sets TypeTrue (mkTrueFlow ()) [] pos in (* formula_of_mix_formula n_p *)
       (n_f0, addrs)
@@ -1393,7 +1395,7 @@ and xpure_symbolic_slicing_x (prog : prog_decl) (f0 : formula) : (formula * CP.s
              formula_exists_pos = pos}) = e in 
       let pqh, addrs', _ = x_add xpure_heap_symbolic 3 prog qh qp 1 in
       let addrs = Gen.BList.difference_eq CP.eq_spec_var addrs' qvars in
-      let n_qp = MCP.merge_mems qp pqh true in
+      let n_qp = x_add MCP.merge_mems qp pqh true in
       (* Set a complex heap formula to a simpler one *)
       let n_f0 = mkExists qvars HEmp n_qp CvpermUtils.empty_vperm_sets TypeTrue (mkTrueFlow ()) [] pos in
       (n_f0, addrs)
@@ -1578,7 +1580,7 @@ and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_f
               else MCP.mkMTrue no_pos
           ) (MCP.mkMTrue no_pos) (part2::ps) in
         (* END List.fold_left ( fun acc_f part -> *)
-        let nf = MCP.merge_mems res f1 true in
+        let nf = x_add MCP.merge_mems res f1 true in
         nf
     in
     let rec check parts =
@@ -1690,7 +1692,7 @@ and xpure_symbolic_orig (prog : prog_decl) (f0 : formula) :
               formula_base_pure = p;
               formula_base_pos = pos}) ->
       let ph, addrs, _ = x_add xpure_heap_symbolic 5 prog h p 1 in
-      let n_p = MCP.merge_mems p ph true in
+      let n_p = x_add MCP.merge_mems p ph true in
       (n_p, addrs)
     | Exists ({ formula_exists_qvars = qvars;
                 formula_exists_heap = qh;

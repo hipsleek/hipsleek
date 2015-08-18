@@ -1,0 +1,86 @@
+Checking conchip/threads.slk (runs with extra options:  -tp parahip)
+Checking conchip/latch.slk (runs with extra options:  -tp parahip)
+Starting hip-sleek tests:
+Total number of errors: 1 in files:
+  veribsync/barrier-dynamic2.slk({E26#Valid},{E27#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.c
+
+==================================================================
+Total number of errors: 1 in files:
+  veribsync/barrier-dynamic2.slk({E26#Valid},{E27#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 112.13 second
+	Time spent in main process: 80.99 second
+	Time spent in child processes: 31.14 second
+	Number of false contexts: 93
+
+Total number of errors: 1 in files:
+  veribsync/barrier-dynamic2.slk({E26#Valid},{E27#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 108.85 second
+	Time spent in main process: 93.21 second
+	Time spent in child processes: 15.64 second
+	Number of false contexts: 98
+
+ ./run-fast-tests.pl sleek -flags "--eps --assert-unsound-false"
+Total number of errors: 2 in files:
+  imm/imm9-early-inst.slk({E11#Valid},{E7#Valid},{E8#Valid}) veribsync/barrier-dynamic2.slk({E26#Valid},{E27#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 77.57 second
+	Time spent in main process: 63.82 second
+	Time spent in child processes: 13.75 second
+	Number of false contexts: 98
+==================================================================
+# bugs/ex39a-imm9-early-inst.slk --etcsu1 --assert-unsound-false
+
+Is there any problem with above?
+or is it a run-fast-test problem?
+
+Entail 1: Valid. 
+Validate 1: OK
+Residue:
+ <1>c::cell<a>@w&w<:@L & v=@A & b=a&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  Match(c,c)]]
+
+Entail 2: Valid. 
+Validate 2: OK
+Residue:
+ <1>c::cell<a>@w&u=@M & w<:@L & v=@A & b=a&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  Match(c,c)]]
+
+Entail 3: Valid. 
+Validate 3: OK
+Residue:
+ <1>c::cell<a>@w&w<:@L & v=@A & b=a&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  Match(c,c)]]
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
