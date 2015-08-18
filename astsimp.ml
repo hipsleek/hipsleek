@@ -2580,7 +2580,7 @@ and trans_views iprog ls_mut_rec_views ls_pr_view_typ =
 
 
 and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
-  let () = Debug.binfo_hprint (add_str "ls_mut_rec_views" (pr_list (pr_list pr_id))) ls_mut_rec_views no_pos in
+  let () = Debug.tinfo_hprint (add_str "ls_mut_rec_views" (pr_list (pr_list pr_id))) ls_mut_rec_views no_pos in
   let all_mutrec_vnames = (List.concat ls_mut_rec_views) in
   (*******************************)
   let cmp_id s1 s2=  String.compare s1 s2 = 0 in
@@ -2804,7 +2804,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
               old_invs
             else
               let () = unfold_cnt # inc in
-              (* let () = x_binfo_hp (add_str "old_invs" (pr_list Excore.EPureI.string_of_disj)) old_invs no_pos in *)
+              (* let () = x_tinfo_hp (add_str "old_invs" (pr_list Excore.EPureI.string_of_disj)) old_invs no_pos in *)
               let new_invs = List.map (fun vd ->
                   let new_inv = (* if !Globals.delay_eelim_baga_inv && !Globals.gen_baga_inv then *)
                   (*   let inv = List.concat combined_invs in *)
@@ -2845,9 +2845,9 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
           (* let precise_list = List.map (fun (vd, num_inv) -> *)
           (*     let is_precise_num = *)
           (*       let pr = Cprinter.string_of_mix_formula in *)
-          (*       let () = x_binfo_hp (add_str "precise? view_user_inv" pr) vd.Cast.view_user_inv no_pos in *)
-          (*       let () = x_binfo_hp (add_str "(2) view_x_formula" pr) vd.Cast.view_x_formula no_pos in *)
-          (*       let () = x_binfo_hp (add_str "view_fixcalc" (pr_option pr)) vd.Cast.view_fixcalc no_pos in *)
+          (*       let () = x_tinfo_hp (add_str "precise? view_user_inv" pr) vd.Cast.view_user_inv no_pos in *)
+          (*       let () = x_tinfo_hp (add_str "(2) view_x_formula" pr) vd.Cast.view_x_formula no_pos in *)
+          (*       let () = x_tinfo_hp (add_str "view_fixcalc" (pr_option pr)) vd.Cast.view_fixcalc no_pos in *)
           (*       if not(CP.isConstTrue (MCP.pure_of_mix vd.Cast.view_user_inv)) then true *)
           (*       else if CP.isConstTrue num_inv then true *)
           (*       else *)
@@ -2882,10 +2882,10 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
           (*               Excore.EPureI.imply_disj (Excore.EPureI.from_cpure_disj bi) uv *)
           (*   ) lst in *)
           (* let pr = pr_list (pr_pair (fun vd -> vd.Cast.view_name)  Cprinter.string_of_ef_pure_disj) in *)
-          (* x_binfo_hp pr lst no_pos; *)
+          (* x_tinfo_hp pr lst no_pos; *)
           (* if (not baga_stronger) then ( *)
           (*     () *)
-          (* x_binfo_pp "not baga_stronger\n" no_pos; *)
+          (* x_tinfo_pp "not baga_stronger\n" no_pos; *)
           (* Globals.dis_inv_baga () *)
           (* ) else *)
           (*   () *)
@@ -2913,7 +2913,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             let body = CF.project_body_num cv.Cast.view_un_struc_formula user_inv cv.Cast.view_vars in
             let is_sound = x_add Tpdispatcher.imply_raw body user_inv in
             let () = if not is_sound then
-                x_binfo_hp (add_str "User supplied inv is not sound: " !CP.print_formula) user_inv no_pos
+                x_winfo_pp ((add_str "User supplied inv is not sound: " !CP.print_formula) user_inv) no_pos
               else () in
             if precise then
               match cv.Cast.view_baga_inv with
@@ -3074,7 +3074,7 @@ and trans_hp_x (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_dec
   let is_pre = hpdef.I.hp_is_pre in
   let new_view = 
     if !Globals.hrel_as_view_flag then 
-      let () = x_binfo_hp (add_str "hp_s_vars" (pr_list (pr_pair !print_sv string_of_arg_kind))) hp_sv_vars1 no_pos in
+      let () = x_tinfo_hp (add_str "hp_s_vars" (pr_list (pr_pair !print_sv string_of_arg_kind))) hp_sv_vars1 no_pos in
       let vars2 = List.map (fun (sv,t) -> CP.name_of_spec_var sv,t) hp_sv_vars1 in
       let view_d = Cast.mk_view_decl_for_hp_rel hp_n hp_sv_vars1 is_pre pos  in
       let view_d2 = Iast.mk_view_decl_for_hp_rel hp_n vars2 is_pre pos  in

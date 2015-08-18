@@ -613,7 +613,7 @@ let imply_raw = ref (fun (ante: P.formula) (conseq: P.formula) -> false)
 let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
   let mix_true = MP.mkMTrue pos in
   let vs = List.map fst vars in (* where to store annotation? *)
-  let vs = match vs with _::ts -> ts | _ -> failwith "impossible" in
+  (* let vs = match vs with _::ts -> ts | _ -> failwith "impossible" in *)
   {
     view_name = hp_n; (* CP.name_of_spec_var hp_n; *)
     view_vars = vs;
@@ -1403,30 +1403,36 @@ let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var li
   (* let () = x_tinfo_hp (add_str "look_up_view_baga: baga= " !print_svl) ba no_pos in *)
   (* Excore.ef_pure_disj option *)
   let ba_oinv = vdef.view_baga_x_over_inv in
-  let () = x_tinfo_hp (add_str "look_up_view_baga: baga= " (pr_option !print_ef_pure_disj)) ba_oinv no_pos in
-  let from_svs = (self_param vdef) :: vdef.view_vars in
-  let to_svs = root :: args in
-  let () = x_tinfo_hp (add_str "from_svs" !CP.print_svl) from_svs no_pos in
-  let () = x_tinfo_hp (add_str "to_svs" !CP.print_svl) to_svs no_pos in
-  let baga_lst = match ba_oinv with
-    | None -> []
-    | Some bl -> 
-      (* if Excore.EPureI.is_false bl then [root,root] *)
-      (* else *)
+  match ba_oinv with
+  | None -> []
+  | Some bl ->
+    begin
+      let () = x_tinfo_hp (add_str "look_up_view_baga: baga= " (pr_option !print_ef_pure_disj)) ba_oinv no_pos in
+      let from_svs = (self_param vdef) :: vdef.view_vars in
+      let to_svs = root :: args in
+      let () = x_tinfo_hp (add_str "from_svs" !CP.print_svl) from_svs no_pos in
+      let () = x_tinfo_hp (add_str "to_svs" !CP.print_svl) to_svs no_pos in
+      let baga_lst = (* match ba_oinv with *)
+        (* | None -> [] *)
+        (* | Some bl -> *)
+        (* if Excore.EPureI.is_false bl then [root,root] *)
+        (* else *)
         let sst = List.combine from_svs to_svs in
         List.map (Excore.EPureI.subst_epure sst) bl in
-  let () = x_tinfo_hp (add_str "baga (subst)= " ( !print_ef_pure_disj)) baga_lst no_pos in
-  let add_epure pf lst =
-    let ep = Excore.EPureI.mk_epure pf in
-    let lst = Excore.EPureI.mk_star_disj ep lst in
-    Excore.EPureI.elim_unsat_disj false lst
-  in
-  let baga_sp = (add_epure epure baga_lst) in
-  let () = x_tinfo_hp (add_str "baga (filtered)= " ( !print_ef_pure_disj)) baga_sp no_pos in
-  let r = Excore.EPureI.hull_memset baga_sp in
-  let () = x_tinfo_hp (add_str "baga (hulled)= " (!print_svl)) r no_pos in
-  if baga_sp==[] then [root;root]
-  else r
+      let () = x_tinfo_hp (add_str "baga (subst)= " ( !print_ef_pure_disj)) baga_lst no_pos in
+      let add_epure pf lst =
+        let ep = Excore.EPureI.mk_epure pf in
+        let lst = Excore.EPureI.mk_star_disj ep lst in
+        Excore.EPureI.elim_unsat_disj false lst
+      in
+      let baga_sp = (add_epure epure baga_lst) in
+      let () = x_tinfo_hp (add_str "baga (filtered)= " ( !print_ef_pure_disj)) baga_sp no_pos in
+      let r = Excore.EPureI.hull_memset baga_sp in
+      let () = x_tinfo_hp (add_str "baga (hulled)= " (!print_svl)) r no_pos in
+      if baga_sp==[] then [root;root]
+      else r
+    end
+
 
 let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
   Debug.no_3 "get_spec_baga" !P.print_formula (fun v -> !print_svl [v]) !print_svl !print_svl 
@@ -1441,6 +1447,8 @@ let look_up_view_baga ?(epure=None) prog (c : ident) (root:P.spec_var) (args : P
   let () = x_tinfo_hp (add_str "look_up_view_baga: baga= " (pr_option !print_ef_pure_disj)) ba_oinv no_pos in
   let from_svs = (self_param vdef) :: vdef.view_vars in
   let to_svs = root :: args in
+  let () = x_tinfo_hp (add_str "from_svs" !CP.print_svl) from_svs no_pos in
+  let () = x_tinfo_hp (add_str "to_svs" !CP.print_svl) to_svs no_pos in
   let baga_lst = match ba_oinv with
     | None -> []
     | Some bl -> 
@@ -1656,11 +1664,20 @@ let lookup_view_invs_with_subs rem_br v_def zip  =
     List.map (P.b_apply_subs zip) v
   with | Not_found -> []
 
+(* type: Globals.formula_label list -> *)
+(*   view_decl -> P.spec_var list -> P.spec_var list -> P.spec_var list *)
 let lookup_view_baga_with_subs rem_br v_def from_v to_v  = 
   try 
     let v=fst(snd (List.find (fun (c1,_)-> Gen.BList.list_setequal_eq (=) c1 rem_br) v_def.view_prune_invariants)) in
     P.subst_var_list_avoid_capture from_v to_v v
   with | Not_found -> []
+
+(* type: Globals.formula_label list -> *)
+(*   view_decl -> P.spec_var list -> P.spec_var list -> P.spec_var list *)
+let lookup_view_baga_with_subs rem_br v_def from_v to_v  = 
+  let pr v = v.view_name in
+  let pr2 = !CP.print_svl in
+  Debug.no_3 "lookup_view_baga_with_subs" pr pr2 pr2 pr2 (lookup_view_baga_with_subs rem_br) v_def from_v to_v 
 
 let look_up_coercion_def_raw coers (c : ident) : coercion_decl list = 
   List.filter (fun p ->  p.coercion_head_view = c ) coers

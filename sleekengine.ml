@@ -815,7 +815,7 @@ let convert_data_and_pred_to_cast_x () =
   let cur_lem_syn = !Globals.lemma_syn in
   (*turn off generate lemma during trans views*)
   let _ = Globals.lemma_syn := false in
-  let tmp_views = List.filter (fun v -> true (* v.Iast.view_kind != View_HREL *)) tmp_views in
+  let tmp_views = List.filter (fun v -> v.Iast.view_kind != View_HREL) tmp_views in
   let cviews0 = x_add Astsimp.trans_views iprog ls_mut_rec_views (List.map (fun v -> (v,[]))  tmp_views) in
   (* x_tinfo_pp "after trans_view" no_pos; *)
   (*derv and spec views*)
@@ -831,9 +831,9 @@ let convert_data_and_pred_to_cast_x () =
       Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.Cast.view_name) cviews)
     else cviews
   in
-  let () = x_binfo_hp (add_str "view_decls (pre)" string_of_int) 
-      (List.length !cprog.Cast.prog_view_decls) no_pos in
-  let _ = !cprog.Cast.prog_view_decls <- !cprog.Cast.prog_view_decls @ cviews in
+  let () = x_tinfo_hp (add_str "view_decls (pre)" (pr_list (fun v -> v.Cast.view_name))) (!cprog.Cast.prog_view_decls) no_pos in
+  let () = x_tinfo_hp (add_str "view_decls (cviews)" (pr_list (fun v -> v.Cast.view_name))) (cviews) no_pos in
+  (* let _ = !cprog.Cast.prog_view_decls <- !cprog.Cast.prog_view_decls @ cviews in *)
   let cviews1 =
     if !Globals.norm_extract then
       Norm.norm_extract_common iprog !cprog cviews (List.map (fun vdef -> vdef.Cast.view_name) cviews)
@@ -846,12 +846,12 @@ let convert_data_and_pred_to_cast_x () =
     else
       cviews1
   in
-  let _ = !cprog.Cast.prog_view_decls <- !cprog.Cast.prog_view_decls@cviews2 in
+  (* let _ = !cprog.Cast.prog_view_decls <- !cprog.Cast.prog_view_decls@cviews2 in *)
   let _ =  (List.map (fun vdef -> Astsimp.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews2) in
   x_tinfo_pp "after compute_view" no_pos;
   let _ = (List.map (fun vdef -> Astsimp.set_materialized_prop vdef) cviews2) in
   let cviews2 = (List.map (fun vdef -> Norm.norm_formula_for_unfold !cprog vdef) cviews2) in
-  let _ = !cprog.Cast.prog_view_decls <- cviews2 in
+  let _ = !cprog.Cast.prog_view_decls <-  !cprog.Cast.prog_view_decls@cviews2 in
   x_tinfo_pp "after materialzed_prop" no_pos;
   let cprog1 = Astsimp.fill_base_case !cprog in
   let cprog2 = Astsimp.sat_warnings cprog1 in
@@ -1784,7 +1784,7 @@ let process_validate_infer (vr : validate_result) (validation: validation)  =
         let res = (match lc (* run_heap_entail lc res_f *) with
             | (CF.SuccCtx lctx) ->
               begin 
-                (* let () = x_binfo_hp (add_str "expected vr" string_of_vres) vr no_pos in *)
+                (* let () = x_tinfo_hp (add_str "expected vr" string_of_vres) vr no_pos in *)
                 match validation with
                 | V_Infer _ ->
                   let rec helper acc ctx =
