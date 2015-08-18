@@ -1157,7 +1157,7 @@ let imply_ops pr_weak pr_strong ante conseq timeout =
   let pvars = Omega.get_vars_formula smt_form in
   let vstr = Omega.omega_of_var_list (Gen.BList.remove_dups_eq (=) pvars) in
   let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
-  let () = Omega.set_proof_string ("SAT:"^fomega) in
+  let () = Omega.set_proof_string ("IMPLY:"^fomega) in
 
   (*let () = print_endline ("Ante2 : "^ !print_pure ante) in*)
   if (not f && !Globals.allow_array_inst) then instantiate_array_vars_before_imply pr_weak pr_strong ante conseq Z3 timeout

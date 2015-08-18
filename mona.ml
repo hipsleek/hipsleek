@@ -1566,7 +1566,7 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   let pvars = Omega.get_vars_formula tmp_form in
   let vstr = Omega.omega_of_var_list (Gen.BList.remove_dups_eq (=) pvars) in
   let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
-  let () = Omega.set_proof_string ("SAT:"^fomega) in
+  let () = Omega.set_proof_string ("IMPLY:"^fomega) in
 
 
   let () = set_prover_type () in (* change to MONA logging *)
