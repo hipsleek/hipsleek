@@ -7655,7 +7655,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                   if res then new_estate,rels else estate,[]
                                 else estate,[]
                               in
-                               let h1, p1, vp1, fl1, t1, a1 = split_components estate.CF.es_formula in
+                               (* let h1, p1, vp1, fl1, t1, a1 = split_components estate.CF.es_formula in *)
                               let b1 = {formula_base_heap = h1;
                                         formula_base_pure = p1;
                                         formula_base_vperm = vp1;

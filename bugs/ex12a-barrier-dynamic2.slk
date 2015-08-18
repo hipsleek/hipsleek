@@ -21,12 +21,23 @@ print residue. //VALID, D-SEP
 # Why is b1!=b2 missing now? 
 # What is barrier?
 
-(==cvutil.ml#1186==)
-h_formula_2_mem@107@106@105
-h_formula_2_mem inp1 : b1::barrier( (c1,t1,a1))<p1>@M * b2::barrier( (c2,t2,a2))<p2>@M
-h_formula_2_mem inp2 : b2!=b1 & t1!=t2
-h_formula_2_mem inp3 :[]
-h_formula_2_mem@107 EXIT: []
+(==solver.ml#7465==)
+xpure_perm@7@6
+xpure_perm inp1 : bbb1::barrier( (c1,t1,a1))<p1>@M * b2::barrier( (c2,t2,a2))<p2>@M
+xpure_perm inp2 : t1!=t2
+xpure_perm@7 EXIT: b2!=bbb1
+
+# Above did not propagate to xpure causing problem ..
+
+chin@loris-7:~/hg/sl_imm$ hg bisect -b
+The first bad revision is:
+changeset:   16340:5d191f8ce91b
+branch:      infer-incr
+parent:      16336:0aebdb4fdc34
+user:        locle <locle@laptop>
+date:        Sun Aug 16 00:42:04 2015 +0800
+summary:     infer_collect_hp_rel with emp rhs
+
 
 !!! **WARNING****cvutil.ml#1045:Data Pure Inv (not tested) 
 !!! **WARNING****cvutil.ml#1045:Data Pure Inv (not tested) 
