@@ -1,0 +1,36 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+HeapPred H(node a, node b).
+
+/*
+checkentail H(p,q) |- H(p,p) .
+print residue.
+*/
+
+checkentail H(p,p) |- H(p,p) .
+print residue.
+
+
+/*
+# bug10c.slk
+
+!!! **sleekengine.ml#834:view_decls (pre):[H]
+WARNING: bug10c-ex10b2-classic-base-case.slk_9:0_9:26:compute_view_fw_bw: data name in view is empty
+
+ERROR: at bug10c-ex10b2-classic-base-case.slk_9:0_9:26
+Message: compute_view_fw_bw: data not found: 
+
+!!! WARNING logtime exception:4.5e-05
+!!! WARNING logtime exception:0.000325
+Entail 1: EXCast. Failure("Cpure.ml currently we do not provide support for TempAnn/TempRes exp")
+: no residue 
+
+
+*/
+
