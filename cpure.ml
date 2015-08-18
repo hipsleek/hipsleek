@@ -625,6 +625,8 @@ let type_of_spec_var (sv : spec_var) : typ =
   match sv with
   | SpecVar (t, _, _) -> t
 
+let type_of_spec_var_list (sv : spec_var list) : typ list = List.map type_of_spec_var sv
+
 let is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
 
 (* RelT, uH_t *)
@@ -691,7 +693,7 @@ let string_of_ann a = match a with
   | PolyAnn v -> "PolyAnn"
   | TempAnn v -> "TempAnn"
   | TempRes _ -> "TempRes"
-  | NoAnn -> "@[]"
+  | NoAnn -> "@[NOANN]"
 
 let rec string_of_imm_helper imm = 
   match imm with
@@ -702,7 +704,7 @@ let rec string_of_imm_helper imm =
   | TempAnn(t) -> "@[" ^ (string_of_imm_helper t) ^ "]"
   | TempRes(l,r) -> "@[" ^ (string_of_imm_helper l) ^ ", " ^ (string_of_imm_helper r) ^ "]"
   | PolyAnn(v) -> "@" ^ (string_of_spec_var v)
-  | NoAnn -> "@[]"
+  | NoAnn -> "@[NOANN]"
 
 let rec string_of_imm imm = 
   if not !print_ann then ""
@@ -2293,6 +2295,11 @@ and is_formula_arith (f:formula) :bool =
   Debug.no_1 "is_formula_arith" !print_formula string_of_bool
     is_formula_arith_x f
 
+and is_exp_ann (e:exp) : bool =
+  match e with
+  | Var (sv, _) -> is_ann_typ sv
+  | AConst (_, _) -> true
+  | _ -> false
 (* smart constructor *)
 
 (*Create a locklevel of a lock sv*)
@@ -2997,7 +3004,7 @@ and split_conjunctions_x =  function
 
 and split_conjunctions f =  
   let pr = !print_formula in
-  Debug.DebugEmpty.no_1 "split_conjunctions" pr (pr_list pr) split_conjunctions_x f 
+  Debug.no_1 "split_conjunctions" pr (pr_list pr) split_conjunctions_x f 
 
 
 and join_conjunctions fl = conj_of_list fl no_pos
@@ -5767,6 +5774,7 @@ module PtrSV = Ptr(SV);;
 module BagaSV = Gen.Baga(PtrSV);;
 module EMapSV = Gen.EqMap(SV);;
 module DisjSetSV = Gen.DisjSet(PtrSV);;
+module SetSV = Set.Make(SV);;
 
 type baga_sv = BagaSV.baga
 
@@ -7552,6 +7560,8 @@ let exp_to_imm (e:exp) : ann =
   | AConst(a,loc) -> ConstAnn a
   | Var(v,loc)    -> PolyAnn v
   | _ -> NoAnn
+
+let mkSubAnn_from_imm ?pos1:(loc1=no_pos) ?pos2:(loc2=no_pos) a1  a2 = mkSubAnn (imm_to_exp a1 loc1) (imm_to_exp a2 loc2)
 
 (* get arguments of bformula and allowing constants *)
 let get_bform_eq_args_with_const (bf:b_formula) =

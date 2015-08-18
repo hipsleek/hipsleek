@@ -1,0 +1,54 @@
+data node {
+ int val;
+ node next;
+}.
+
+pred  ll<> == self=null or self::node<_,q>*q::ll<>.
+
+pred  lseg<p> == self=p or self::node<_,q>*q::lseg<p>.
+
+
+checkentail x::node<1,_>@A*x::node<2,_>@A |- false.
+expect Valid.
+print residue.
+// expects false
+
+checkentail x::node<v,_>@A*x::node<2,_>@A |- true.
+expect Valid.
+print residue.
+// expects x::node<v,_>@A & v=2
+
+checkentail x::node<v,_>@A*x::node<2,_>@M |- true.
+expect Valid.
+print residue.
+// expects x::node<v,_>@A & v=2
+
+checkentail x::node<v,_>@A*x::node<2,_>@M |- false.
+expect Fail.
+print residue.
+// expects x::node<v,_>@A & v=2
+
+checkentail x::node<5,_>@A |- x::node<w,_>@A & w>2.
+expect Valid.
+print residue.
+
+checkentail x::node<5,_>@A |- x::node<w,_>@A & w>8.
+expect Fail.
+print residue.
+
+  /*
+merge aliased nodes ..
+
+  */
+
+checkentail x::node<v,_>*x::node<3,_> |- true.
+expect Valid.
+print residue.
+
+checkentail x::node<v,_>*x::node<3,_>@A |- true.
+expect Valid.
+print residue.
+
+checkentail x::node<v,_>@A*y::node<3,_>@A |- x!=y.
+expect Fail.
+print residue.

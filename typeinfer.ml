@@ -1469,6 +1469,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
     in
     let gather_type_info_ann c tlist = (
       match c with
+      | IP.NoAnn -> tlist
       | IP.ConstAnn _ -> tlist
       | IP.PolyAnn ((i,_),_) -> (*ignore*)(let (n_tl,_) = (x_add gather_type_info_var i tlist AnnT pos ) in n_tl) (*remove ignore*)
     ) in

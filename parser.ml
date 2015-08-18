@@ -902,7 +902,7 @@ let rec get_heap_ann annl : P.ann =
   match annl with
     | (Some a) :: r -> a
     | None :: r -> get_heap_ann r
-    | [] ->  P.ConstAnn(Mutable)
+    | [] ->  P.NoAnn (* P.ConstAnn Mutable *)
 
 and get_heap_ann_opt annl : P.ann option = 
   match annl with
@@ -912,7 +912,7 @@ and get_heap_ann_opt annl : P.ann option =
 and get_heap_ann_list annl : P.ann list  = 
   match annl with
     | (Some a) :: r -> a :: get_heap_ann_list r
-    |  None :: r ->  P.ConstAnn(Mutable) :: get_heap_ann_list r
+    |  None :: r ->  P.NoAnn (* P.ConstAnn Mutable  *):: get_heap_ann_list r
     | [] -> []
 
 let stmt_list_to_block t pos = 
@@ -2573,6 +2573,8 @@ infer_type:
    | `INFER_AT_CLASSIC -> INF_CLASSIC
    | `INFER_AT_PAR -> INF_PAR
    | `INFER_AT_VER_POST -> INF_VER_POST
+   | `INFER_IMM_PRE -> INF_IMM_PRE
+   | `INFER_IMM_POST -> INF_IMM_POST
    | `INFER_AT_IMM -> INF_IMM
    | `INFER_AT_ARR_AS_VAR -> INF_ARR_AS_VAR
    | `INFER_AT_SHAPE -> INF_SHAPE

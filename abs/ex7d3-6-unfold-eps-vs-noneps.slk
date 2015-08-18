@@ -1,0 +1,40 @@
+// Valid.Valid.Valid.Fail.Valid.Valid.
+
+data node{
+ int val;
+ node next;
+}.
+
+pred ll<p> == self::node<_,_>  or
+  self::node<_,q>*q::ll<p> //& self!=p
+  inv true.
+
+
+//6
+checkentail x::ll<u> * y::node<_, q>@A * q::ll<v>@A &x=y |- q::ll<vvv>.
+print residue.
+expect Valid.
+
+/*
+//////// no eps
+////////////////
+Entail 1: Valid. 
+
+Residue:
+
+ <1>y::node<Anon_13,q>@A * q::ll<v>@A&q=vvv & x=y & x=u&
+    {FLOW,(20,21)=__norm#E}[]
+    or x::node<Anon_13,q>@M&x=y & vvv=u&{FLOW,(20,21)=__norm#E}[]
+    
+[[ COND ==>  Match(q,q) ==> ||OR|| ==>  COND ==>  COND ==>  BaseCaseFold]]
+
+//////// with eps
+////////////////
+Entail 1: Valid. 
+
+Residue:
+
+ <1>y::node<Anon_13,q>@A * q::ll<v>@A@ rem br[{1,2}]&(([q=vvv]
+                                                       [u=x & u=y & y!=null]))&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  COND ==>  BaseCaseFold]]
+*/

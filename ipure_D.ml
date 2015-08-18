@@ -39,7 +39,7 @@ type xpure_view = {
   (* xpure_view_label : formula_label option; *)
 }
 
-type ann = ConstAnn of heap_ann | PolyAnn of ((ident * primed) * loc)
+type ann = ConstAnn of heap_ann | PolyAnn of ((ident * primed) * loc) | NoAnn
 
 (*annotations *)
 let imm_ann_top = ConstAnn imm_top
@@ -187,3 +187,4 @@ let string_of_ann ann =
   match ann with
   | ConstAnn ha -> "ConstAnn " ^ (string_of_heap_ann ha)
   | PolyAnn _ -> "PolyAnn"
+  | NoAnn -> "NoAnn"

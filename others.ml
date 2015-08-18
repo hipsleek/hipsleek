@@ -77,9 +77,9 @@ let string_of_proving_kind pk =
   | PK_Pred_Split -> "PK_Pred_Split"
   | PK_Unknown -> "UNKNOWN"
 
-let sleek_kind = new Gen.stack_pr string_of_proving_kind (==)
+let sleek_kind = new Gen.stack_pr "sleek_kind" string_of_proving_kind (==)
 
-let proving_kind = new Gen.stack_noexc PK_Unknown string_of_proving_kind (==)
+let proving_kind = new Gen.stack_noexc "proving_kind" PK_Unknown string_of_proving_kind (==)
 
 let find_impt ls =
   let rec aux ls = match ls with

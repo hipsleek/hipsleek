@@ -10,10 +10,10 @@ let lem_eq = (==)
 
 class lemma_store =
   object (self)
-    val left_lem = new Gen.stack_pr !lem_pr lem_eq
-    val right_lem = new Gen.stack_pr !lem_pr lem_eq
-    val num_left_lem_stk = new Gen.stack_noexc 0 string_of_int (==)
-    val num_right_lem_stk = new Gen.stack_noexc 0 string_of_int (==)
+    val left_lem = new Gen.stack_pr "left-lem" !lem_pr lem_eq
+    val right_lem = new Gen.stack_pr "right-lem" !lem_pr lem_eq
+    val num_left_lem_stk = new Gen.stack_noexc "num_left_lem_stk" 0 string_of_int (==)
+    val num_right_lem_stk = new Gen.stack_noexc "num_right_lem_stk" 0 string_of_int (==)
     val mutable num_left_lem = 0
     val mutable num_right_lem = 0
 
@@ -154,7 +154,7 @@ let all_lemma = new lemma_store;;
 
 class lemma_list_store = 
   object (self)
-    val lst = new Gen.stack_pr !ilem_lst_pr Iast.eq_coercion_list
+    val lst = new Gen.stack_pr "lemma-list-store" !ilem_lst_pr Iast.eq_coercion_list
     (* prt empty at this time *)
 
     method add_ilemma lemma_list =
