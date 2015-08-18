@@ -1639,7 +1639,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
            C.prog_barrier_decls = bdecls;
            C.prog_logical_vars = log_vars;
            (* C.prog_rel_decls = xrels (\* crels@extra_rels *\); (\* An Hoa *\) *)
-           C.prog_rel_decls = (let s = new Gen.stack_pr Cprinter.string_of_rel_decl (=) in (s # push_list xrels ; s));
+           C.prog_rel_decls = (let s = new Gen.stack_pr "rel_decls" Cprinter.string_of_rel_decl (=) in (s # push_list_pr xrels ; s));
            C.prog_templ_decls = ctempls;
            C.prog_ut_decls = (ut_vs);
            C.prog_ui_decls = (ui_vs);
@@ -4128,7 +4128,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
            C.proc_static_specs = (* if proc.I.proc_is_main then CF.elim_exists_struc_preserve_pre_evars [] final_static_specs_list else *) final_static_specs_list;
            C.proc_dynamic_specs = final_dynamic_specs_list;
            (* C.proc_static_specs_with_pre =  []; *)
-           C.proc_stk_of_static_specs = new Gen.stack_pr Cprinter.string_of_struc_formula (==);
+           C.proc_stk_of_static_specs = new Gen.stack_pr "static-specs" Cprinter.string_of_struc_formula (==);
            C.proc_hprel_ass = [];
            C.proc_hprel_unkmap = [];
            C.proc_sel_hps = [];
@@ -7027,30 +7027,34 @@ and trans_I2C_struc_formula_x ?(idpl=[]) (prog : I.prog_decl) (prepost_flag:bool
       )
     | IF.EInfer b -> 
       (* TODO : check iv - fvars = {} *)
-      let pos = b.IF.formula_inf_pos in
-      let ivs = b.IF.formula_inf_vars in
-      let (n_tl,ct) = trans_struc_formula fvars tl b.IF.formula_inf_continuation in
-      let new_ivs = ident_list_to_spec_var_list ivs n_tl prog in
-      (* TODO : any warning below should be fixed *)
-      let ivs_unk = List.filter (fun v -> (CP.type_of_spec_var v)==UNK) new_ivs in
-      if ivs_unk!=[] then 
-        begin
-          let s = (Cprinter.string_of_spec_var_list ivs_unk) in
-          print_endline_quiet ("WARNING (must fix): Vars from"^s^"has type UNK")
-        end;
-      if ivs_unk!=[] then
-        Err.report_error { Err.error_loc = pos;
-                           Err.error_text = ("infer vars with unknown type "^(Cprinter.string_of_spec_var_list ivs_unk)) }
-      else
-        (n_tl, CF.EInfer {
-            (* CF.formula_inf_tnt = b.IF.formula_inf_tnt; *)
-            CF.formula_inf_obj = b.IF.formula_inf_obj;
-            CF.formula_inf_post = b.IF.formula_inf_post;
-            CF.formula_inf_xpost = b.IF.formula_inf_xpost;
-            CF.formula_inf_transpec = b.IF.formula_inf_transpec;
-            CF.formula_inf_vars = new_ivs;
-            CF.formula_inf_continuation = ct;
-            CF.formula_inf_pos = pos})
+       let infer_helper () = 
+        let pos = b.IF.formula_inf_pos in
+        let (n_tl,ct) = trans_struc_formula fvars tl b.IF.formula_inf_continuation in
+        (* TODO : any warning below should be fixed *)
+        let ivs = b.IF.formula_inf_vars in
+        let new_ivs = ident_list_to_spec_var_list ivs n_tl prog in
+         let ivs_unk = List.filter (fun v -> (CP.type_of_spec_var v)==UNK) new_ivs in
+         if ivs_unk!=[] then 
+           begin
+             let s = (Cprinter.string_of_spec_var_list ivs_unk) in
+             print_endline_quiet ("WARNING (must fix): Vars from"^s^"has type UNK")
+           end;
+         if ivs_unk!=[] then
+           Err.report_error { Err.error_loc = pos;
+                              Err.error_text = ("infer vars with unknown type "^(Cprinter.string_of_spec_var_list ivs_unk)) }
+         else
+           (n_tl, CF.EInfer {
+                      (* CF.formula_inf_tnt = b.IF.formula_inf_tnt; *)
+                      CF.formula_inf_obj = b.IF.formula_inf_obj;
+                      CF.formula_inf_post = b.IF.formula_inf_post;
+                      CF.formula_inf_xpost = b.IF.formula_inf_xpost;
+                      CF.formula_inf_transpec = b.IF.formula_inf_transpec;
+                      CF.formula_inf_vars = new_ivs;
+                      CF.formula_inf_continuation = ct;
+                      CF.formula_inf_pos = pos})
+       in
+       wrap_one_bool Globals.allow_noann (Imminfer.should_infer_imm prog
+                                        b.IF.formula_inf_vars b.IF.formula_inf_obj) infer_helper ()
     | IF.EList b ->
       let rec aux tlist clist = (
         match clist with
@@ -7625,7 +7629,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                 CF.h_formula_data_name = rootptr_type_name;
                 CF.h_formula_data_derv = dr;
                 CF.h_formula_data_split = split;
-                CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
+                CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann_node_level imm;
                 CF.h_formula_data_param_imm = Immutable.iformula_ann_opt_to_cformula_ann_lst ann_param1;
                 CF.h_formula_data_perm = permvar; (*??? TO CHECK: temporarily*)
                 CF.h_formula_data_origins = []; (*??? temporarily*)
@@ -7680,7 +7684,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   CF.h_formula_view_name = c;
                   CF.h_formula_view_derv = dr;
                   CF.h_formula_view_split = split;
-                  CF.h_formula_view_imm = Immutable.iformula_ann_to_cformula_ann imm;
+                  CF.h_formula_view_imm = Immutable.iformula_ann_to_cformula_ann_node_level imm;
                   CF.h_formula_view_perm = permvar; (*LDK: TO CHECK*)
                   CF.h_formula_view_arguments = hvars;
                   CF.h_formula_view_ho_arguments = ho_args; (* TODO:HO *)
@@ -7736,7 +7740,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                              CF.h_formula_data_name = c;
                              CF.h_formula_data_derv = dr;
                              CF.h_formula_data_split = split;
-                             CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
+                             CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann_node_level imm;
                              CF.h_formula_data_param_imm = Immutable.iformula_ann_opt_to_cformula_ann_lst ann_param;
                              CF.h_formula_data_perm = permvar; (*LDK*)
                              CF.h_formula_data_origins = [];

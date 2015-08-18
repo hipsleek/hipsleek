@@ -17,7 +17,7 @@ module TP = Tpdispatcher
 (* the results are never picked from the stack,*)
 (* rather they are returned by the inference method however the height of the stack is used*)
 (* as an indicator of the inference success*)
-let rel_def_stk : CF.hprel_def Gen.stack_pr = new Gen.stack_pr
+let rel_def_stk : CF.hprel_def Gen.stack_pr = new Gen.stack_pr "rel-def-stk"
   Cprinter.string_of_hprel_def_lib (==)
 
 let rec elim_redundant_paras_lst_constr_x prog constrs =

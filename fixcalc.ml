@@ -885,13 +885,16 @@ let substitute_args_x a_rel = match a_rel with
   | _ -> report_error no_pos "substitute_args_x Expected a relation"
 
 let substitute_args rcase =
-  let rels = CP.get_RelForm rcase in
-  let rcase_wo_rel = x_add_1 TP.simplify_raw (CP.drop_rel_formula rcase) in
-  let rels, subs = 
-    List.split (List.map (fun rel -> substitute_args_x rel) rels) in
-  let res = [rcase_wo_rel]@rels@(List.concat subs) in
-  CP.conj_of_list res no_pos
-
+  (* TODOIMM this throws an exception for imm ex8e1f.ss. To fix *)
+  try
+    let rels = CP.get_RelForm rcase in
+    let rcase_wo_rel = x_add_1 TP.simplify_raw (CP.drop_rel_formula rcase) in
+    let rels, subs = 
+      List.split (List.map (fun rel -> substitute_args_x rel) rels) in
+    let res = [rcase_wo_rel]@rels@(List.concat subs) in
+    CP.conj_of_list res no_pos
+  with Invalid_argument _ -> rcase
+  
 let substitute_args rcase =
   let pr = !CP.print_formula in
   Debug.no_1 "substitute_args" pr pr substitute_args rcase

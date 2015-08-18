@@ -118,7 +118,7 @@ module TP = Tpdispatcher
 
 let sleek_proof_counter = new Gen.ctr_with_aux 0
 
-let unexpected_cmd = new Gen.stack_pr pr_id (=) 
+let unexpected_cmd = new Gen.stack_pr "unexpected-cmd" pr_id (=) 
 (* let unexpected_cmd = ref [] *)
 
 (*
@@ -189,7 +189,7 @@ let cprog = ref {
     Cast.prog_logical_vars = [];
     (*	Cast.prog_func_decls = [];*)
     (* Cast.prog_rel_decls = []; (\* An Hoa *\) *)
-    Cast.prog_rel_decls = (let s = new Gen.stack_pr Cprinter.string_of_rel_decl (=) in s);
+    Cast.prog_rel_decls = (let s = new Gen.stack_pr "prog_rel_decls(CAST)" Cprinter.string_of_rel_decl (=) in s);
     Cast.prog_templ_decls = [];
     Cast.prog_ui_decls = [];
     Cast.prog_ut_decls = [];
@@ -980,7 +980,12 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typein
     | MetaEFormCF b ->       (* let _ = print_string ("\n (andreeac) meta_to_struc_formula 6") in *) (tl,b) (* assume it has already been normalized *)
   in helper mf0 quant fv_idents tlist 
 
-let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list) 
+(* let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list) *)
+(*         : (Typeinfer.spec_var_type_list*CF.struc_formula) = *)
+(*   let (tvl, f) = meta_to_struc_formula mf0 quant fv_idents tlist in *)
+(*   (tvl, Immutils.annotate_imm_struc_formula f) *)
+
+let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list)
   : (Typeinfer.spec_var_type_list*CF.struc_formula) 
   = Debug.no_4 "meta_to_struc_formula"
     string_of_meta_formula
@@ -1078,6 +1083,10 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
 (*   let res_f = x_add Norm.imm_abs_norm_formula res_f !cprog (Solver.unfold_for_abs_merge !cprog no_pos) in *)
 (*   svtl, res_f *)
   
+(* let meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list) *)
+(*         : (Typeinfer.spec_var_type_list*CF.formula) = *)
+(*   let (tvl, f) = meta_to_formula mf0 quant fv_idents tlist in *)
+(*   (tvl, Immutils.annotate_imm_formula f) *)
 
 let meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list) : (Typeinfer.spec_var_type_list*CF.formula) = 
   let pr_meta = string_of_meta_formula in
@@ -1118,6 +1127,11 @@ let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:T
       (n_tl,res)
     end
   | MetaEForm _ | MetaEFormCF _ -> report_error no_pos ("cannot have structured formula in antecedent")
+
+let meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list)
+        : (Typeinfer.spec_var_type_list*CF.formula) =
+  let (tvl, f) = meta_to_formula_not_rename mf0 quant fv_idents tlist in
+  (tvl, Cfimmutils.annotate_imm_formula f)
 
 let run_simplify (iante0 : meta_formula) =
   let (n_tl,ante) = x_add meta_to_formula iante0 false [] [] in
@@ -2688,6 +2702,8 @@ let process_pairwise (f : meta_formula) =
 let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) etype =
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let is_tnt_flag = List.mem INF_TERM itype in
+  let is_infer_imm_pre_flag = List.mem INF_IMM_PRE itype in
+  let is_infer_imm_post_flag = List.mem INF_IMM_POST itype in
   let is_field_imm_flag = List.mem INF_FIELD_IMM itype in
   (* combine local vs. global of failure explaining *)
   let dfailure_anlysis = if List.mem INF_EFA itype then false else
@@ -2827,8 +2843,7 @@ let get_residue () =
 (*| Some s -> Cprinter.string_of_list_formula (CF.list_formula_of_list_context s)*)
 
 let meta_constr_to_constr (meta_constr: meta_formula * meta_formula): (CF.formula * CF.formula) = 
-  let if1, if2 = meta_constr in  
+  let if1, if2 = meta_constr in
   let (n_tl,f1) = meta_to_formula_not_rename if1 false [] []  in
   let (n_tl,f2) = meta_to_formula_not_rename if2 false [] n_tl  in
   (f1,f2)
-

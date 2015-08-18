@@ -51,7 +51,7 @@ let string_of_ann a = CP.string_of_ann a
 
 let string_of_ann_list xs = pr_list string_of_ann xs
 
-let view_prim_lst = new Gen.stack_pr pr_id (=)
+let view_prim_lst = new Gen.stack_pr "view-prim" pr_id (=)
 
 (* moved to globals.ml *)
 (* type typed_ident = (typ * ident) *)
@@ -227,7 +227,6 @@ and h_formula = (* heap formula *)
   | HEmp (* emp for classical logic *)
   | HVar of CP.spec_var * (CP.spec_var list)
 
-
 and h_formula_star = {  h_formula_star_h1 : h_formula;
                         h_formula_star_h2 : h_formula;
                         h_formula_star_pos : loc }
@@ -394,7 +393,7 @@ let print_infer_rel(l,r) = (!print_pure_f l)^" --> "^(!print_pure_f r)
 let print_mem_formula = ref (fun (c:mem_formula) -> "printer has not been initialized")
 let print_imm = ref (fun (c:ann) -> "printer has not been initialized")
 
-let sat_stk = new Gen.stack_pr !print_formula  (=)
+let sat_stk = new Gen.stack_pr "sat-stk"  !print_formula  (=)
 
 (* let print_failesc = ref (fun (c:failesc) -> "printer has not been initialized") *)
 
@@ -2938,15 +2937,15 @@ and fv (f : formula) : CP.spec_var list = match f with
     let res = Gen.BList.difference_eq CP.eq_spec_var fvars qvars in
     res
 
-and is_absent imm =
-  match imm with
-  | CP.ConstAnn(Accs) -> true
-  | _ -> false
+(* and is_absent imm = *)
+(*   match imm with *)
+(*   | CP.ConstAnn(Accs) -> true *)
+(*   | _ -> false *)
 
 and remove_absent ann vs =
   if List.length ann = List.length vs then
     let com_ls = List.combine ann vs in
-    let res_ls = List.filter (fun (a,_) -> not(is_absent a)) com_ls in
+    let res_ls = List.filter (fun (a,_) -> not((* CP.is_absent_ann *)Immutils.is_abs a)) com_ls in
     List.split res_ls
   else (ann,vs)
 
@@ -4919,7 +4918,7 @@ let print_hprel_def_short = ref (fun (c:hprel_def) -> "printer has not been init
 let print_hprel_short = ref (fun (c:hprel) -> "printer has not been initialized")
 
 (* outcome from shape_infer *)
-let rel_def_stk : hprel_def Gen.stack_pr = new Gen.stack_pr
+let rel_def_stk : hprel_def Gen.stack_pr = new Gen.stack_pr "rel_def (shape-infer)"
   !print_hprel_def_short (==)
 
 let print_flow = ref(fun (c:nflow) -> "printer not initialized")
@@ -9870,7 +9869,7 @@ let empty_es flowt grp_lbl pos =
     es_infer_templ = [];
     es_infer_templ_assume = [];
     es_infer_pure = []; (* (CP.mkTrue no_pos); *)
-    es_infer_rel = new Gen.stack_pr (* "es_infer_rel" *)  CP.print_lhs_rhs (==);
+    es_infer_rel = new Gen.stack_pr "es_infer_rel"  CP.print_lhs_rhs (==);
     es_infer_hp_rel = [] ;
     es_infer_pure_thus = CP.mkTrue no_pos ;
     es_var_zero_perm = [];
@@ -13658,6 +13657,43 @@ let rec trans2_formula f (e:formula):formula =
             formula_exists_heap = transform_h_formula f_h_f e.formula_exists_heap;
             formula_exists_pure = MCP.transform_mix_formula f_p_t e.formula_exists_pure;}
 
+let foldheap (h:h_formula -> 'a) (f_comb: 'a list -> 'a)  (e:h_formula) : 'a =
+  let rec helper e = 
+    match e with
+    | Star s ->
+      let new_a1 = helper s.h_formula_star_h1 in
+      let new_a2 = helper s.h_formula_star_h2 in
+      f_comb [new_a1;new_a2]
+    | StarMinus s ->
+      let new_a1 = helper s.h_formula_starminus_h1 in
+      let new_a2 = helper s.h_formula_starminus_h2 in
+      f_comb [new_a1;new_a2]
+    | Conj s ->
+      let new_a1 = helper s.h_formula_conj_h1 in
+      let new_a2 = helper s.h_formula_conj_h2 in
+      f_comb [new_a1;new_a2]
+    | ConjStar s ->
+      let new_a1 = helper s.h_formula_conjstar_h1 in
+      let new_a2 = helper s.h_formula_conjstar_h2 in
+      f_comb [new_a1;new_a2]
+    | ConjConj s ->
+      let new_a1 = helper s.h_formula_conjconj_h1 in
+      let new_a2 = helper s.h_formula_conjconj_h2 in
+      f_comb [new_a1;new_a2]
+    | Phase s -> 
+      let new_a1 = helper s.h_formula_phase_rd in
+      let new_a2 = helper s.h_formula_phase_rw in
+      f_comb [new_a1;new_a2]
+    | DataNode _
+    | ViewNode _ 
+    | ThreadNode _
+    | HRel _
+    | Hole _ | FrmHole _
+    | HTrue
+    | HFalse 
+    | HEmp | HVar _ -> h e
+  in helper e
+
 
 let foldheap_formula (h:h_formula -> 'a) (f_comb: 'a list -> 'a)  (e:formula) : 'a =
   let rec helper e =
@@ -16218,8 +16254,8 @@ let norm_struc_with_lexvar is_primitive is_tnt_inf uid_opt struc_f =
   if is_primitive then norm_struc_with_lexvar is_primitive is_tnt_inf uid_opt struc_f
   else
     let pr = !print_struc_formula in
-    Debug.no_1 "norm_struc_with_lexvar" pr pr 
-      (fun _ -> norm_struc_with_lexvar is_primitive is_tnt_inf uid_opt struc_f) struc_f
+    Debug.no_2 "norm_struc_with_lexvar" string_of_bool pr pr
+      (fun _ _ -> norm_struc_with_lexvar is_primitive is_tnt_inf uid_opt struc_f) is_tnt_inf struc_f
 
 (* TNT: Add inf_obj from cmd line *)
 let rec add_inf_cmd_struc is_primitive f =
