@@ -2865,11 +2865,15 @@ and elim_unsat_es_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state)
   else elim_unsat_es_now 4 prog sat_subno es
 
 
-and elim_unsat_ctx (prog : prog_decl) (sat_subno:  int ref) (ctx : context) : context =
+and elim_unsat_ctx_x (prog : prog_decl) (sat_subno:  int ref) (ctx : context) : context =
   let rec helper c = match c with
     | Ctx es -> let exec ()= elim_unsat_es 1 prog sat_subno es in wrap_trace es.es_path_label exec ()
     | OCtx(c1,c2) -> OCtx(helper c1,helper c2)
   in helper ctx
+
+and elim_unsat_ctx (prog : prog_decl) (sat_subno:  int ref) (ctx : context) : context =
+  let pr = Cprinter.string_of_context in
+  Debug.no_1 "elim_unsat_ctx" pr pr (fun _ -> elim_unsat_ctx_x (prog : prog_decl) (sat_subno:  int ref) (ctx : context)) ctx
 
 and elim_unsat_es_now i (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   let pr1 = Cprinter.string_of_entail_state_short in

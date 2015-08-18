@@ -1228,14 +1228,14 @@ let to_ptr ptr_flag pf =
         if i<=(-1) then BConst(false,ll)   (* v<=0 --> v=M; v<=1 --> @L<:v *)
         else if i>0 then BConst(true,ll)
         else Eq(a1,Null ll,ll)
-      else (* ann_flag *)  change_to_imm_rel pf 
+      else (* ann_flag *)  x_add_1 change_to_imm_rel pf 
     | Lte(IConst(i,_),(Var(v,_) as a1),ll) ->
       if ptr_flag then
         if i>=1 then Neq(a1,Null ll,ll)
         else BConst(true,ll)
-      else (* ann_flag *) change_to_imm_rel pf 
-    | Lte(Var(_,_),Var(_,_),ll) ->  change_to_imm_rel pf
-    | _ -> change_to_imm_rel pf 
+      else (* ann_flag *) x_add_1 change_to_imm_rel pf 
+    | Lte(Var(_,_),Var(_,_),ll) ->  x_add_1 change_to_imm_rel pf
+    | _ -> x_add_1 change_to_imm_rel pf 
   in norm (norm0 pf)
 
 let to_ptr ptr_flag pf =

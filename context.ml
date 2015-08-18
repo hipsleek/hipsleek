@@ -686,6 +686,7 @@ and imm_split_lhs_node_x estate l_node r_node = match l_node, r_node with
     else (* if(!Globals.allow_imm) then *)
     if not(produces_hole  dr.h_formula_data_imm) then
       let n_f, niv, constr = update_imm l_node dl.h_formula_data_imm dr.h_formula_data_imm estate in
+      (* TODOIMM why we don;t update the es_heap here? *)
       let n_es = {estate with es_formula = mkStar (formula_of_heap n_f no_pos) estate.es_formula Flow_combine no_pos;
                               (* es_gen_impl_vars = estate.es_gen_impl_vars@niv  *)} in
       (n_es, constr)

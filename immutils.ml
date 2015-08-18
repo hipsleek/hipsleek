@@ -111,6 +111,10 @@ let norm_emap_imm  (a: ann) emap : ann  =
   | PolyAnn sv -> map_opt_def a (fun x -> x) (get_imm_emap_ann_opt sv emap)
   | _ -> a
 
+let norm_emap_imm  (a: ann) emap : ann  =
+  let pr1 = string_of_imm in 
+  let pr2 = EMapSV.string_of in 
+  Debug.no_2 "norm_emap_imm" pr1 pr2 pr1  norm_emap_imm a emap
 
 let eq_const_ann const_imm em sv = 
   match const_imm with
@@ -198,6 +202,7 @@ let simple_subtype emap imm1 imm2 =
 
 (* norm of imml = max(immr1,immr2) 
    @A = max(immr1,@M)  ----> immr1 = @A
+   @CONST = max(immr1,@CONST)  ----> immr1 <: @CONST
    @M = max(immr1,@A)  ----> false
 
  *)
@@ -217,15 +222,23 @@ let norm_eqmax emap imml immr1 immr2 def =
           mkFalse no_pos
         else if not(helper_is_const_imm emap imml a) then 
           mkPure (mkEq (imm_to_exp imml no_pos) (imm_to_exp v2 no_pos) no_pos) 
-        else def
+        else 
+          (mkSubAnn (imm_to_exp v2 no_pos) (imm_to_exp imml no_pos) ) 
     | _ -> def
 
 let norm_eqmax emap imml immr1 immr2 def = 
   if not(!Globals.imm_add)  then def
   else  norm_eqmax emap imml immr1 immr2 def
 
+let norm_eqmax emap imml immr1 immr2 def = 
+  let pr1 = EMapSV.string_of in
+  let pr2 = string_of_imm in
+  let pr3 = !print_formula in
+  Debug.no_5 "norm_eqmax" pr1 pr2 pr2 pr2 pr3 pr3 norm_eqmax emap imml immr1 immr2 def
+
 (* norm of imml = min(immr1,immr2) 
    imml = min(immr1,@M)  ----> imml = @M
+   imml = min(immr1,@A)  ----> imml = immr1
    @L = min(immr1,@M)    ----> false
    @M = min(immr1,@L)    ----> immr1=@M
 
@@ -236,6 +249,8 @@ let norm_eqmin emap imml immr1 immr2 def =
     match immr1, immr2 with
     | (ConstAnn Mutable), v2
     | v2, (ConstAnn Mutable) -> mkPure (mkEq (imm_to_exp imml no_pos) (imm_to_exp (ConstAnn Mutable) no_pos) no_pos)
+    | (ConstAnn Accs), v2
+    | v2, (ConstAnn Accs) -> mkPure (mkEq (imm_to_exp imml no_pos) (imm_to_exp v2 no_pos) no_pos)
     | _ -> def
   else
     match immr1, immr2 with
@@ -246,12 +261,19 @@ let norm_eqmin emap imml immr1 immr2 def =
           mkFalse no_pos
         else if not(helper_is_const_imm emap imml a) then 
           mkPure (mkEq (imm_to_exp v2 no_pos) (imm_to_exp imml no_pos) no_pos)
-        else def
+        else 
+          (mkSubAnn (imm_to_exp imml no_pos) (imm_to_exp v2 no_pos) ) 
     | _ -> def
 
 let norm_eqmin emap imml immr1 immr2 def = 
   if not(!Globals.imm_add)  then def
   else  norm_eqmin emap imml immr1 immr2 def
+
+let norm_eqmin emap imml immr1 immr2 def = 
+  let pr1 = EMapSV.string_of in
+  let pr2 = string_of_imm in
+  let pr3 = !print_formula in
+  Debug.no_5 "norm_eqmin" pr1 pr2 pr2 pr2 pr3 pr3 norm_eqmin emap imml immr1 immr2 def
 
 (* assume e is Add(..) *)
 let get_imm_var_cts_operands e =
