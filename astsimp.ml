@@ -2570,7 +2570,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
 
 and trans_views iprog ls_mut_rec_views ls_pr_view_typ =
   let pr = pr_list (fun v -> v.Cast.view_name) in
-  let pr2 = pr_list (fun (v,_) -> v.Iast.view_name) in
+  let pr2 = pr_list (fun (v,p) -> (pr_pair pr_id (pr_list (pr_pair pr_id pr_none))) (v.Iast.view_name,p)) in
   Debug.no_2 "trans_views" (pr_list (pr_list pr_id)) pr2 pr (fun _ _ -> trans_views_x iprog ls_mut_rec_views ls_pr_view_typ) ls_mut_rec_views ls_pr_view_typ
 
 (* type: I.prog_decl ->
@@ -2580,7 +2580,7 @@ and trans_views iprog ls_mut_rec_views ls_pr_view_typ =
 
 
 and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
-  let () = Debug.ninfo_hprint (add_str "ls_mut_rec_views" (pr_list (pr_list pr_id))) ls_mut_rec_views no_pos in
+  let () = Debug.binfo_hprint (add_str "ls_mut_rec_views" (pr_list (pr_list pr_id))) ls_mut_rec_views no_pos in
   let all_mutrec_vnames = (List.concat ls_mut_rec_views) in
   (*******************************)
   let cmp_id s1 s2=  String.compare s1 s2 = 0 in
@@ -3074,6 +3074,7 @@ and trans_hp_x (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_dec
   let is_pre = hpdef.I.hp_is_pre in
   let new_view = 
     if !Globals.hrel_as_view_flag then 
+      let () = x_binfo_hp (add_str "hp_s_vars" (pr_list (pr_pair !print_sv string_of_arg_kind))) hp_sv_vars1 no_pos in
       let vars2 = List.map (fun (sv,t) -> CP.name_of_spec_var sv,t) hp_sv_vars1 in
       let view_d = Cast.mk_view_decl_for_hp_rel hp_n hp_sv_vars1 is_pre pos  in
       let view_d2 = Iast.mk_view_decl_for_hp_rel hp_n vars2 is_pre pos  in
@@ -11071,7 +11072,7 @@ let convert_pred_to_cast_x ls_pr_new_view_tis is_add_pre iprog cprog do_pure_ext
   (* (\* Loc: to compute invs for mut-rec views *\) *)
   (* let () = Debug.ninfo_hprint (add_str "ls_mut_rec_views" (pr_list (pr_list pr_id))) ls_mut_rec_views no_pos in *)
   (* let cviews0a = Fixcalc.compute_inv_mutrec ls_mut_rec_views cviews0b in *)
-  let cviews0a =  trans_views iprog ls_mut_rec_views tmp_new_views in
+  let cviews0a =  x_add trans_views iprog ls_mut_rec_views tmp_new_views in
   (*derv and spec views*)
   let cviews0 = if do_pure_extn then
       let tmp_views_derv1 = mark_rec_and_der_order tmp_views_derv in

@@ -815,7 +815,8 @@ let convert_data_and_pred_to_cast_x () =
   let cur_lem_syn = !Globals.lemma_syn in
   (*turn off generate lemma during trans views*)
   let _ = Globals.lemma_syn := false in
-  let cviews0 = Astsimp.trans_views iprog ls_mut_rec_views (List.map (fun v -> (v,[]))  tmp_views) in
+  let tmp_views = List.filter (fun v -> true (* v.Iast.view_kind != View_HREL *)) tmp_views in
+  let cviews0 = x_add Astsimp.trans_views iprog ls_mut_rec_views (List.map (fun v -> (v,[]))  tmp_views) in
   (* x_tinfo_pp "after trans_view" no_pos; *)
   (*derv and spec views*)
   let tmp_views_derv1 = Astsimp.mark_rec_and_der_order tmp_views_derv in
@@ -830,7 +831,9 @@ let convert_data_and_pred_to_cast_x () =
       Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.Cast.view_name) cviews)
     else cviews
   in
-  let _ = !cprog.Cast.prog_view_decls <- cviews in
+  let () = x_binfo_hp (add_str "view_decls (pre)" string_of_int) 
+      (List.length !cprog.Cast.prog_view_decls) no_pos in
+  let _ = !cprog.Cast.prog_view_decls <- !cprog.Cast.prog_view_decls @ cviews in
   let cviews1 =
     if !Globals.norm_extract then
       Norm.norm_extract_common iprog !cprog cviews (List.map (fun vdef -> vdef.Cast.view_name) cviews)
@@ -843,7 +846,7 @@ let convert_data_and_pred_to_cast_x () =
     else
       cviews1
   in
-  let _ = !cprog.Cast.prog_view_decls <- cviews2 in
+  let _ = !cprog.Cast.prog_view_decls <- !cprog.Cast.prog_view_decls@cviews2 in
   let _ =  (List.map (fun vdef -> Astsimp.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews2) in
   x_tinfo_pp "after compute_view" no_pos;
   let _ = (List.map (fun vdef -> Astsimp.set_materialized_prop vdef) cviews2) in

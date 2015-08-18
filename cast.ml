@@ -31,7 +31,7 @@ let pure_hprel_map = ref ([]: (ident * ident) list)
 type prog_decl = {
   mutable prog_data_decls : data_decl list;
   mutable prog_logical_vars : P.spec_var list;
-  mutable prog_view_decls : view_decl list;
+  mutable prog_view_decls : view_decl  list; (* WN : to change to Gen.stack_pr *)
   (* mutable prog_rel_decls : rel_decl list; (\* An Hoa : relation definitions *\) *)
   prog_rel_decls : rel_decl Gen.stack_pr; (* An Hoa : relation definitions *)
   mutable prog_templ_decls: templ_decl list;
