@@ -44,9 +44,16 @@ void while1(ref chr_star s)
   requires s::WFS<> 
   ensures s::WFSeg<s'>*s'::chr_star<0,q>*q::BADS<>;
 {
+  // s::WFS<> 
+ // s::WFS<>  --> s::chr_star<v,_>@L 
+ // s::chr_star<0,q>*q::BADS<> 
+ // or s::chr_star<w,q>*q::WFS<> & w!=0 --> s::chr_star<v,_>@L 
   int x=get_char(s);
+  // s::chr_star<0,q>*q::BADS<> & x=0
+  // or s::chr_star<w,q>*q::WFS<> & w!=0  & x=w
   if (x!=0) {
     // dprint;
+    // s::chr_star<w,q>*q::WFS<> & w!=0  & x=w
     s = plus_plus_char(s);
     //dprint;
     while1(s);

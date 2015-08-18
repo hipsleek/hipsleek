@@ -553,10 +553,10 @@ requires x::char_star<_,q>@L & Term[]
 ensures  res=q ;
 
 int __get_char(char_star x)
-  requires x::char_star<v,q>@L & Term[]
+  requires x::char_star<v,_>@L & Term[]
   ensures res=v;
 
 void __write_char(char_star x, int v)
-  requires x::char_star<_,_>@L & Term[]
-  ensures x::char_star<v,_>;
+  requires x::char_star<_,q> & Term[]
+  ensures x::char_star<v,q>;
 
