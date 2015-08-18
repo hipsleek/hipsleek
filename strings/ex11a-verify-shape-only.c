@@ -47,3 +47,10 @@ void while2(char* s1,char* s2)
   /*@dprint;*/
 }
 
+int main() {
+  char *s1;
+  char *s2;
+  while1(s1);
+  while2(s1, s2);
+  return 0;
+}
