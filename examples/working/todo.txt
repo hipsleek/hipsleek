@@ -1557,6 +1557,7 @@ Total verification time: 435.56 second
 	Time spent in child processes: 30.98 second
 	Number of false contexts: 413
 
+===================================================================
 --eps -tp oc loris-7
 Total verification time: 839.46 second
 	Time spent in main process: 752.19 second
@@ -1568,8 +1569,6 @@ Total verification time: 818.88 second
 	Time spent in main process: 761.41 second
 	Time spent in child processes: 57.47 second
 	Number of false contexts: 413
-
-====================================================================
 All test results were as expected.
 Total verification time: 99.18 second
 	Time spent in main process: 67.60 second
@@ -1583,7 +1582,60 @@ Total verification time: 878.75 second
 	Number of false contexts: 413
 
 ====================================================================
-====================================================================
+# ann_2
+
+# timing seems worse in this branch. need to check performance issues..
+
+Total verification time: 514.66 second
+	Time spent in main process: 455.60 second
+	Time spent in child processes: 59.06 second
+	Number of false contexts: 413
+
+# native..
+
+Total verification time: 148.53 second
+	Time spent in main process: 91.67 second
+	Time spent in child processes: 56.86 second
+	Number of false contexts: 413
+
+=====================================================================
+
+./run-fast-tests.pl sleek -flags "--eps"
+All test results were as expected.
+Total verification time: 36.24 second
+	Time spent in main process: 19.71 second
+	Time spent in child processes: 16.53 second
+	Number of false contexts: 98
+
+
+./run-fast-tests.pl sleek -flags "--eps --assert-unsound-false"
+98 false contexts
+Total number of errors: 1 in files:
+  imm/imm9-early-inst.slk({E11#Valid},{E7#Valid},{E8#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 35.68 second
+	Time spent in main process: 19.35 second
+	Time spent in child processes: 16.33 second
+	Number of false contexts: 98
+
+
+./run-fast-tests.pl sleek -flags "--assert-unsound-false"
+Total number of errors: 1 in files:
+  imm/imm9-early-inst.slk({E11#Valid},{E7#Valid},{E8#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 47.91 second
+	Time spent in main process: 17.09 second
+	Time spent in child processes: 30.82 second
+	Number of false contexts: 93
+
+./run-fast-tests.pl sleek 
+
+All test results were as expected.
+Total verification time: 47.84 second
+	Time spent in main process: 17.13 second
+	Time spent in child processes: 30.71 second
+	Number of false contexts: 93
+
 ====================================================================
 ====================================================================
 ====================================================================

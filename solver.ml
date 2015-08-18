@@ -1777,9 +1777,7 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_un
   let new_f = x_add_1 Immutable.normalize_field_ann_formula new_f in
   new_f,ss0
 
-
-
-and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) a (fl:flow_formula) (v : CP.spec_var) pos qvars already_unsat (uf:int) =
+and unfold_baref_x prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) a (fl:flow_formula) (v : CP.spec_var) pos qvars already_unsat (uf:int) =
   let asets = Csvutil.alias_nth 6 (MCP.ptr_equations_with_null p) in
   let aset' = x_add Csvutil.get_aset asets v in
   let aset = if CP.mem v aset' then aset' else v :: aset' in
@@ -1798,6 +1796,14 @@ and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets)
        Gen.Profiling.pop_time "unfold_unsat";r)    
     | _ -> resform
   else resform
+
+and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) a (fl:flow_formula) (v : CP.spec_var) pos qvars already_unsat (uf:int) =
+  let pr1 = Cprinter.string_of_h_formula in
+  let pr_out = Cprinter.string_of_formula in
+  Debug.no_1 "unfold_baref" 
+    (add_str "lhs heap:" pr1)
+    pr_out
+    (fun _ -> unfold_baref_x prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) a (fl:flow_formula) (v : CP.spec_var) pos qvars already_unsat (uf:int) ) h 
 
 and unfold_heap (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var) fl (uf:int) pos : formula = 
   let pr1 = Cprinter.string_of_h_formula in
@@ -1939,7 +1945,9 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
   | _ -> formula_of_heap_fl f fl pos
 
 and unfold_for_abs_merge prog pos = 
-  let unfold_fun fl h aset v uf =  unfold_heap (prog, None) h aset v fl uf pos in
+(* unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) a (fl:flow_formula) (v : CP.spec_var) pos qvars already_unsat (uf:int) *)
+  let unfold_fun fl qvars vp p a h v uf  =  unfold_baref (prog, None) h p vp a fl v pos qvars false uf in
+  (* let unfold_fun fl h aset v uf =  unfold_heap (prog, None) h aset v fl uf pos in *)
   unfold_fun
 
 (*
@@ -5070,7 +5078,7 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
       (*   let posib_r_alias = (estate.es_evars @ estate.es_gen_impl_vars @ estate.es_gen_expl_vars) in *)
       (*   let rhs_eqset = estate.es_rhs_eqset in *)
       (*   let actions = x_add Context.compute_actions prog estate rhs_eqset h1 p1 p2 posib_r_alias rhs_lst estate.es_is_normalizing pos in *)
-      (* (\*let r = List.map (fun (c1,c2) -> (Context.choose_context prog rhs_eqset h1 p1 p2 posib_r_alias c1 c2 pos,(c1,c2))) rhs_lst in*\) *)
+      (* (\*let r = List.map (fun (c1,c2) -> (x_add Context.choose_context prog rhs_eqset h1 p1 p2 posib_r_alias c1 c2 pos,(c1,c2))) rhs_lst in*\) *)
       (* (\* Filter only matching actions *\) *)
       (* (\*let match_actions  =  List.filter (fun c -> match c with  *)
       (*   | Context.M_match ma  -> true *)
@@ -7178,7 +7186,7 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
 (* snd res is the constraint that causes  *)
 (* the check to fail.                     *)
 
-and hec_stack = new Gen.stack_pr (string_of_int) (==)
+and hec_stack = new Gen.stack_pr "hec-stk" (string_of_int) (==)
 
 (* hec_num denotes particular id of caller *)
 and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
@@ -7454,12 +7462,13 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                 let p1 =
                   (*This could introduce UNSAT*)
                   if (Perm.allow_perm ()) then
-                    let nodes_f = xpure_perm prog h1 p1 in
+                    let nodes_f = x_add xpure_perm prog h1 p1 in
                     let p1 = MCP.merge_mems p1 nodes_f true in
                     let p1 = MCP.remove_dupl_conj_mix_formula p1 in
                     p1
                   else p1
                 in
+                let () = x_binfo_hp (add_str "p1(after xpure_perm)" Cprinter.string_of_mix_formula) p1 no_pos in
                 (*******************)
                 (* WN : another false to remove *)
                 (* if (isAnyConstFalse ante)&&(CF.subsume_flow_ff fl2 fl1) then *)
@@ -7647,7 +7656,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                   if res then new_estate,rels else estate,[]
                                 else estate,[]
                               in
-                              let h1, p1, _, _, _, _ = split_components estate.CF.es_formula in
+                              let h1, _, _, _, _, _ = split_components estate.CF.es_formula in
                               if (h2 = HEmp && CF.get_hprel_h_formula h1 != [] && !Globals.do_classic_frame_rule) then
                                 let fail_ctx = mkFailContext mem_leak estate conseq None pos in
                                   let es_string = Cprinter.string_of_formula estate.es_formula in
@@ -8288,7 +8297,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
   (* let curr_lhs_h, new_lhs_p = x_add Mem.compact_nodes_with_same_name_in_h_formula curr_lhs_h [[]] in (\*andreeac TODO check more on this*\) *)
   (* let lhs_p = MCP.mix_of_pure (CP.mkAnd (MCP.pure_of_mix lhs_p) new_lhs_p no_pos) in (\* andreeac temp *\) *)
   x_tinfo_hp (add_str "curr_lhs_h" (Cprinter.string_of_h_formula)) curr_lhs_h pos;
-  x_tinfo_hp (add_str "lhs_p" !Cast.print_mix_formula) lhs_p no_pos;
+  x_binfo_hp (add_str "lhs_p" !Cast.print_mix_formula) lhs_p no_pos;
   let curr_lhs_h, lhs_p = normalize_frac_heap prog curr_lhs_h lhs_p lhs_vp in
   x_tinfo_hp (add_str "estate_orig" (Cprinter.string_of_entail_state)) estate_orig pos;
   x_tinfo_hp (add_str "curr_lhs_h0" (Cprinter.string_of_h_formula)) curr_lhs_h pos;
@@ -8363,7 +8372,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
     else lhs_p
   in
   let stk_inf_pure = new Gen.stack in (* of xpure *)
-  let stk_rel_ass = new Gen.stack_pr (add_str "(stk_rel_ass)" CP.string_of_infer_rel) (==) in (* of rel_ass *)
+  let stk_rel_ass = new Gen.stack_pr "stk-rel-ass" (add_str "(stk_rel_ass)" CP.string_of_infer_rel) (==) in (* of rel_ass *)
   let stk_estate = new Gen.stack in (* of estate *)
   (* let () = print_string ("lhs_p2 : " ^ (Cprinter.string_of_mix_formula lhs_p2) ^ "\n\n") in *)
   (* infer must NOT use baga_enum outcome *)
@@ -8379,7 +8388,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
     | None,[] -> ()
     | None,[(h1,h2,_)] ->
       let () = Debug.ninfo_pprint "WARNING : pushing stk_estate (1)" pos in
-      (stk_rel_ass # push_list_pr h2;
+      (stk_rel_ass # push_list h2;
        stk_estate # push h1)
     | Some (es,p),[] ->
       let () = Debug.ninfo_pprint "WARNING : pushing stk_estate (2)" pos in
@@ -8388,7 +8397,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
     | Some (es,p),[(h1,h2,_)] ->
       let () = Debug.ninfo_pprint "WARNING : pushing stk_estate (3)" pos in
       (stk_inf_pure # push p;
-       stk_rel_ass # push_list_pr h2;
+       stk_rel_ass # push_list h2;
        stk_estate # push es)
     | _,_ -> report_error pos "Length of relational assumption list > 1"
   in
@@ -8594,7 +8603,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
                         | [] -> 
                           i_res1,i_res2,i_res3
                         | _ -> (* stk_inf_pure # push pf; *)
-                          stk_rel_ass # push_list_pr relass;
+                          stk_rel_ass # push_list relass;
                           let () = 
                             if entail_states = [] then 
                               report_error pos "Expecting a non-empty list of entail states"
@@ -8621,7 +8630,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
                         | _ ->
                           (* TODO: to check the implication of new ante *)
                           stk_inf_pure # push pf;
-                          stk_rel_ass # push_list_pr relass;
+                          stk_rel_ass # push_list relass;
                           let () = 
                             if entail_states = [] then 
                               report_error pos "Expecting a non-empty list of entail states"
@@ -10107,6 +10116,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
      NoAlias)
   else 
     let l_h, l_p, l_vp, l_fl, l_t, l_a = split_components estate.es_formula in
+    x_tinfo_hp (add_str "l_h" (Cprinter.string_of_h_formula)) l_h pos;
     let restore_hole h estate = 
       let restore_hole_b = ((* isPoly r_ann && *) (isMutable l_ann || isImm l_ann)) || (CP.isPoly r_ann && CP.isPoly l_ann) in
       x_tinfo_hp (add_str "restore_hole_b" (string_of_bool)) restore_hole_b pos;

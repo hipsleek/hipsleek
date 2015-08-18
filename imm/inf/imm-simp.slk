@@ -1,0 +1,27 @@
+data node{
+	int val;
+	node next;
+}.
+
+//1
+checkentail x::node<_,_> |- x::node<_,_>.
+
+//2
+checkentail x::node<_,_@I> |- x::node<_,_>.
+
+//3
+infer [a] x::node<_,_@a> |- x::node<_,_>.
+print residue.
+
+//4
+infer [a,b] x::node<_@b,_@a> |- x::node<_,_@A>.
+print residue.
+
+//5
+infer [b] x::node<x1@b,y@a> |- x::node<z,t@A>.
+print residue.
+
+//
+infer [a] @M<:a & a<:@A |-  a<:@M.
+print residue.
+

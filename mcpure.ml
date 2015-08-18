@@ -2234,6 +2234,10 @@ let merge_mems f1 f2 slice_dup = match (f1,f2) with
   | MemoF f1_m, OnePF f2_f ->
     MemoF (memoise_add_pure_N f1_m f2_f)
 
+let merge_mix_w_pure mf pf = match mf with
+  | MemoF f1 -> MemoF (memoise_add_pure_N f1 pf) 
+  | OnePF f1 -> OnePF (mkAnd f1 pf no_pos) 
+
 (* let merge_mems f1 f2 slice_dup = match (f1,f2) with *)
 (*   | MemoF f1, MemoF f2 -> MemoF (merge_mems f1 f2 slice_dup) *)
 (*   | OnePF f1, OnePF f2 -> OnePF (mkAnd f1 f2 no_pos) *)
@@ -2966,3 +2970,6 @@ let partition_mix_formula (mf: mix_formula) ff : mix_formula * mix_formula =
     let mf = memoise_add_pure_N_m (mkMTrue_no_mix ()) f in
     let fmf, omf = List.partition (fun m -> ff m) mf in
     OnePF (pure_of_mix (MemoF fmf)), OnePF (pure_of_mix (MemoF omf))
+
+let update_pure_of_mix f (mf: mix_formula) =
+  transform_mix_formula (nonef, nonef, f, somef, somef) mf

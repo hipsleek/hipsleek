@@ -932,7 +932,7 @@ let unfold_non_rec_views prog unfold_fnc is_view_rec_fnc f=
     f
 let check_inconsistency hf mixf=
   let new_mf = xpure_for_hnodes hf in
-  let cmb_mf = MCP.merge_mems new_mf mixf true in
+  let cmb_mf = x_add MCP.merge_mems new_mf mixf true in
   not (TP.is_sat_raw cmb_mf)
 
 let check_inconsistency_f f0 pure_f=

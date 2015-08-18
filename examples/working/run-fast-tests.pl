@@ -2290,7 +2290,7 @@ sub sleek_process_file  {
           }
           $script_args = $script_arguments." ".$extra_options;
           $output = `$sleek $script_args $exempl_path_full/$test->[0] 2>&1`;
-          print LOGFILE "\n======================================\n";
+          print LOGFILE "\n=================$test->[0]=====================\n";
           print LOGFILE "$output";
           #print "\n!!!output: $output";
           my $lemmas_results = "";

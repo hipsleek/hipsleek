@@ -12,6 +12,21 @@ Expect_Infer 3.1:
 Expect_Infer 3.1: Expected Valid but got Fail ( H(p)&p=null&{FLOW,(20,21)=__norm#E}[])
 
 ==============================================================
+# bug10b.slk
+
+# Why does't unknown pred matching itself?
+
+Entail 1: Fail.(may) cause:do_unmatched_rhs : H(p)
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: do_unmatched_rhs : H(p)
+     fc_current_lhs_flow: {FLOW,(18,22)=__MayError#E}
+   }
+ [[ COND ==>  UnmatchedRHSData]]
 ==============================================================
 ==============================================================
 ==============================================================

@@ -17,7 +17,7 @@ module TP = Tpdispatcher
 (* the results are never picked from the stack,*)
 (* rather they are returned by the inference method however the height of the stack is used*)
 (* as an indicator of the inference success*)
-let rel_def_stk : CF.hprel_def Gen.stack_pr = new Gen.stack_pr
+let rel_def_stk : CF.hprel_def Gen.stack_pr = new Gen.stack_pr "rel-def-stk"
   Cprinter.string_of_hprel_def_lib (==)
 
 let rec elim_redundant_paras_lst_constr_x prog constrs =
@@ -3964,33 +3964,48 @@ let build_horm_view_x templ_view_decls horm_dd=
       | None -> None
       | Some f -> Some (Iformula.subst ss f)
     in
-    { Iast.view_name = n_view_name;
+    { view with
+      Iast.view_name = n_view_name;
       Iast.view_pos = no_pos;
       Iast.view_data_name = data_name;
       Iast.view_type_of_self = None;
-      Iast.view_vars = view.Iast.view_vars;
-      Iast.view_ho_vars = view.Iast.view_ho_vars;
-      Iast.view_imm_map = view.Iast.view_imm_map;
-      Iast.view_labels = view.Iast.view_labels;
-      Iast.view_modes = view.Iast.view_modes;
-      Iast.view_is_prim = view.Iast.view_is_prim;
-      Iast.view_kind = view.Iast.view_kind;
-      Iast.view_derv = view.Iast.view_derv;
-      Iast.view_parent_name = view.Iast.view_parent_name;
-      Iast.view_prop_extns = view.Iast.view_prop_extns;
-      Iast.view_derv_info = view.Iast.view_derv_info;
       Iast.view_typed_vars = view.Iast.view_typed_vars;
       Iast.view_invariant = n_view_invariant;
       Iast.view_baga_inv = None;
       Iast.view_baga_over_inv = None;
       Iast.view_baga_under_inv = None;
-      Iast.view_mem = view.Iast.view_mem;
       Iast.view_formula = n_view_formula;
       Iast.view_inv_lock = n_view_inv_lock;
-      Iast.view_pt_by_self = view.Iast.view_pt_by_self;
-      Iast.try_case_inference = view.Iast.try_case_inference;
-      Iast.view_materialized_vars = view.Iast.view_materialized_vars;
     }
+  (*   {  *)
+  (*     Iast.view_name = n_view_name; *)
+  (*     Iast.view_pos = no_pos; *)
+  (*     Iast.view_data_name = data_name; *)
+  (*     Iast.view_type_of_self = None; *)
+  (*     Iast.view_typed_vars = view.Iast.view_typed_vars; *)
+  (*     Iast.view_invariant = n_view_invariant; *)
+  (*     Iast.view_baga_inv = None; *)
+  (*     Iast.view_baga_over_inv = None; *)
+  (*     Iast.view_baga_under_inv = None; *)
+  (*     Iast.view_formula = n_view_formula; *)
+  (*     Iast.view_inv_lock = n_view_inv_lock; *)
+  (*     Iast.view_vars = view.Iast.view_vars; *)
+  (*     Iast.view_ho_vars = view.Iast.view_ho_vars; *)
+  (*     Iast.view_imm_map = view.Iast.view_imm_map; *)
+  (*     Iast.view_labels = view.Iast.view_labels; *)
+  (*     Iast.view_modes = view.Iast.view_modes; *)
+  (*     Iast.view_is_prim = view.Iast.view_is_prim; *)
+  (*     Iast.view_is_hrel = view.Iast.view_is_hrel; *)
+  (*     Iast.view_kind = view.Iast.view_kind; *)
+  (*     Iast.view_derv = view.Iast.view_derv; *)
+  (*     Iast.view_parent_name = view.Iast.view_parent_name; *)
+  (*     Iast.view_prop_extns = view.Iast.view_prop_extns; *)
+  (*     Iast.view_derv_info = view.Iast.view_derv_info; *)
+  (*     Iast.view_mem = view.Iast.view_mem; *)
+  (*     Iast.view_pt_by_self = view.Iast.view_pt_by_self; *)
+  (*     Iast.try_case_inference = view.Iast.try_case_inference; *)
+  (*     Iast.view_materialized_vars = view.Iast.view_materialized_vars; *)
+  (*   } *)
   in
   let (tmp_data_name,tmp_data_fields),(data_name,data_fields) = horm_dd in
   let cand_views = look_up_views tmp_data_name templ_view_decls in

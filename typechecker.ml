@@ -631,13 +631,14 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       let new_fml_fv = CF.struc_fv new_formula_inf_continuation in
       (* let (vars_rel,vars_inf) = List.partition (fun v -> is_RelT(CP.type_of_spec_var v) ) vars in *)
       (* let (vars_templ, vars_inf) = List.partition (fun v -> is_FuncT (CP.type_of_spec_var v)) vars_inf in *)
+      let () = x_tinfo_hp (add_str "vars" !print_svl) vars no_pos in
       let vars_rel, vars_templ, vars_inf = List.fold_left (fun (vr, vt, vi) v -> 
           let typ = CP.type_of_spec_var v in
           if is_RelT typ then (vr@[v], vt, vi)
           else if is_UtT typ then (vr@[v], vt, vi)
           else if is_FuncT typ then (vr, vt@[v], vi)
           else (vr, vt, vi@[v])) ([], [], []) vars in
-      let () = Debug.ninfo_hprint (add_str "vars_rel" !print_svl) vars_rel no_pos in
+      let () = x_tinfo_hp (add_str "vars_rel" !print_svl) vars_rel no_pos in
       let _ =
         (*              if old_vars=[] then *)
         (*                Debug.info_hprint (add_str "TRANSLATED SPECS" pr_spec) einfer no_pos *)
@@ -3658,7 +3659,9 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
               (*   | _ -> sf *)
               (* in *)
               (* Long: end TODO here *)
-              let spec = proc.proc_stk_of_static_specs # top in
+              (* Evan: we use proc0 instead of proc here because the inference result
+                  may not be reflected on the prog *)
+              let spec = proc0.proc_stk_of_static_specs # top in
               (* let new_spec = if Pi.is_infer_post spec then Pi.add_post_relation prog proc spec "" UNK else spec in *)
               (* let () = proc.proc_stk_of_static_specs # push new_spec in *)
               let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx spec body true in
@@ -4306,7 +4309,6 @@ let rec check_prog iprog (prog : prog_decl) =
   (*     check_coercion prog; *)
   (*     print_string_quiet "DONE.\n" *)
   (*   end; *)
-
   ignore (List.map (check_data iprog prog) prog.prog_data_decls);
   (* Sort the proc_decls by proc_call_order *)
   let l_proc = Cast.list_of_procs prog in
@@ -4342,17 +4344,15 @@ let rec check_prog iprog (prog : prog_decl) =
   (***************************INTERNAL**************************)
   (******************************************************************)
   let verify_scc_helper prog verified_sccs scc =
+
     let scc, ini_hpdefs =
       Da.find_rel_args_groups_scc prog scc (* scc,[] *)
     in
-
     let has_infer_shape_proc = x_add_1 Pi.is_infer_shape_scc scc in
-
     let has_infer_pre_proc = Pi.is_infer_pre_scc scc in
     let () = if (not(has_infer_shape_proc) && has_infer_pre_proc) then Pi.add_pre_relation_scc prog scc in
-
     let has_infer_post_proc = Pi.is_infer_post_scc scc in
-    let () = if (not(has_infer_shape_proc)) then Pi.add_post_relation_scc prog scc in
+    let () = if (not(has_infer_shape_proc)) then x_add Pi.add_post_relation_scc prog scc in
 
     (* let () = List.iter (fun proc -> *)
     (*     DD.info_hprint (add_str "spec before infer post" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in *)
@@ -4360,8 +4360,8 @@ let rec check_prog iprog (prog : prog_decl) =
     (* Only infer post *)
     let (scc,old_specs) = if (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) then List.split (Pi.filter_infer_pure_scc scc) else (scc,[]) in
 
-    (* let () = List.iter (fun proc -> *)
-    (*     x_binfo_hp (add_str "spec before phase inference for mutual-recursive groups" Cprinter.string_of_struc_formula) (proc.proc_static_specs) no_pos) scc in *)
+    let () = List.iter (fun proc ->
+         x_tinfo_hp (add_str "spec before phase inference for mutual-recursive groups" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in
     let is_all_verified1, prog =
       let call_order = (List.hd scc).proc_call_order in
       (* perform phase inference for mutual-recursive groups captured by stk_scc_with_phases *)
@@ -4387,6 +4387,7 @@ let rec check_prog iprog (prog : prog_decl) =
     let mutual_grp = ref scc in
 
     x_tinfo_hp (add_str "MG"  (pr_list (fun p -> p.proc_name))) !mutual_grp no_pos;
+    let _ = x_binfo_pp "imm infer end20" no_pos in
     let is_all_verified2 = proc_mutual_scc prog scc (fun prog proc1 ->
         begin
           mutual_grp := List.filter (fun x -> x.proc_name != proc1.proc_name) !mutual_grp;
@@ -4415,6 +4416,7 @@ let rec check_prog iprog (prog : prog_decl) =
         (*if fail, give up; if succ, move fwd*)
         n_scc
     in
+
     let () = Debug.ninfo_hprint (add_str "is_all_verified2" string_of_bool) is_all_verified2 no_pos in
     let () = if (* is_all_verified1 && *) is_all_verified2 then
         let () = Infer.scc_rel_ass_stk # reverse in
@@ -4440,7 +4442,7 @@ let rec check_prog iprog (prog : prog_decl) =
 
     (* Pure inference *)
     let () = if (has_infer_shape_proc && has_infer_pre_proc) then Pi.add_pre_relation_scc prog scc in
-    let () = if (has_infer_shape_proc && has_infer_post_proc) then Pi.add_post_relation_scc prog scc in
+    let () = if (has_infer_shape_proc && has_infer_post_proc) then x_add Pi.add_post_relation_scc prog scc in
     let () = if (has_infer_shape_proc && (has_infer_pre_proc || has_infer_post_proc)) then wrap_reverify_scc reverify_scc prog scc true in
     let () = if (has_infer_pre_proc || has_infer_post_proc) then Pi.infer_pure prog scc in
     (* let () = List.iter (fun proc -> *)
@@ -4457,9 +4459,9 @@ let rec check_prog iprog (prog : prog_decl) =
     (* let () = prog.prog_rel_decls # push_list rem_pure_inf_prog_rel_decls in *)
     let () = DD.ninfo_hprint (add_str "has_infer_post_proc" string_of_bool) has_infer_post_proc no_pos in
     (* Resume other infer *)
-    let scc = if (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) then Pi.resume_infer_obj_scc scc old_specs else scc in
-    (* let () = List.iter (fun proc -> *)
-    (*     DD.ninfo_hprint (add_str "spec" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in *)
+
+    let scc = if (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) 
+              then Pi.resume_infer_obj_scc scc old_specs else scc in
 
     (* Reverify *)
     (* let has_infer_others_proc = (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) && Pi.is_infer_others_scc scc in *)
@@ -4518,9 +4520,14 @@ let rec check_prog iprog (prog : prog_decl) =
         with _ -> r
       ) [] scc_ids in
     let () = Term.term_res_stk # reset in
+    let () = x_ninfo_hp (add_str "updated_scc" (pr_list (fun p -> (Cprinter.string_of_struc_formula p.Cast.proc_static_specs)))) updated_scc no_pos in
     let n_verified_sccs = verified_sccs@[updated_scc] in
     (prog,n_verified_sccs)
   in
+
+  let verify_scc_helper prog verified_sccs scc = 
+    Imminfer.wrapper_infer_imm_pre_post Infer.infer_rel_stk verify_scc_helper prog verified_sccs scc in
+
   let case_verify_scc_helper prog verified_sccs scc=
     match scc with
     | [] -> (prog, verified_sccs)

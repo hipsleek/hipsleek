@@ -632,7 +632,7 @@ let string_of_subst stt = pr_list (pr_pair string_of_spec_var string_of_spec_var
 
 let rec string_of_imm_helper imm =
   match imm with
-  | CP.NoAnn -> ""
+  | CP.NoAnn -> "NOANN"
   | CP.ConstAnn(Accs) -> "@A"
   | CP.ConstAnn(Imm) -> "@I"
   | CP.ConstAnn(Lend) -> "@L"
@@ -729,6 +729,8 @@ let pr_list_of_annot_arg ?(lvl=(!glob_lvl)) xs = pr_list_none ~lvl pr_annot_arg 
 let pr_list_of_annot_arg_posn ?(lvl=(!glob_lvl)) xs = pr_list_none ~lvl pr_annot_arg_posn xs
 
 let pr_imm ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (string_of_imm x)
+
+let pr_list_of_imm ?(lvl=(!glob_lvl)) xs = pr_list_none ~lvl pr_imm xs
 
 let pr_derv ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (string_of_derv x)
 
@@ -1093,7 +1095,7 @@ and pr_pure_formula  (e:P.formula) =
     (fmt_string "("; pr_list_op op_or f_b args; fmt_string ")")
   | P.Not (f, lbl, l) ->
     pr_formula_label_opt lbl;
-    fmt_string "not(";f_b f;fmt_string ")"
+    fmt_string "!(";f_b f;fmt_string ")"
   | P.Forall (x, f,lbl, l) ->
     pr_formula_label_opt lbl;
     fmt_string "forall("; pr_spec_var x; fmt_string ":";
@@ -1422,6 +1424,7 @@ let rec pr_h_formula h =
         fmt_string "::"; (* to distinguish pred from data *)
         pr_angle (c^ho_arg_str^perm_str) pr_view_arg params;
         pr_imm imm;
+        if (!Globals.allow_field_ann) then begin fmt_string "@IFP["; pr_list_of_imm (get_node_param_imm h); fmt_string "]"; end;
         pr_derv dr;
         pr_split split;
         (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
@@ -4270,6 +4273,7 @@ let pr_view_decl v =
   fmt_open_vbox 1;
   let s = match v.view_kind with
     | View_NORM -> " "
+    | View_HREL -> "_hrel "
     | View_PRIM -> "_prim "
     | View_EXTN -> "_extn "
     | View_SPEC -> "_spec "

@@ -318,9 +318,12 @@ linput.rl");
   ("--old-infer-collect", Arg.Set Globals.old_infer_collect,"Enable Old Infer Collect Method");
   ("--old-impl-gather", Arg.Set Globals.old_impl_gather,"Enable Extra Impl Gather at CF.struc_formula_trans_heap_node");
   ("--old-parse-fix", Arg.Set Globals.old_parse_fix,"Enable Old Parser for FixCalc (to handle self/REC)");
+  ("--en-hrel-as-view", Arg.Set Globals.hrel_as_view_flag,"Enable HRel as view");
+  ("--dis-hrel-as-view", Arg.Clear Globals.hrel_as_view_flag,"Disable HRel as view");
   ("--adhoc-1", Arg.Set Globals.adhoc_flag_1,"Enable Adhoc Flag 1");
   ("--adhoc-2", Arg.Set Globals.adhoc_flag_2,"Enable Adhoc Flag 2");
   ("--adhoc-3", Arg.Set Globals.adhoc_flag_3,"Enable Adhoc Flag 3");
+  ("--old-keep-absent", Arg.Set Globals.old_keep_absent,"Keep absent nodes during expure - unsound");
   ("--assert-unsound-false", Arg.Set Globals.assert_unsound_false, "Enable Adhoc Flag 3");
   ("--assert-nonlinear", Arg.Set Globals.assert_nonlinear,"Enable Asserting Testing of Nonlnear Pre-Processing");
   ("--ann-vp", Arg.Set Globals.ann_vp,"manual annotation of variable permissions");
@@ -354,6 +357,8 @@ linput.rl");
   ("--oc-dis-adv-simp", Arg.Clear Globals.oc_adv_simplify,"disable oc advancde simplification");
   ("--oc-en-adv-simp", Arg.Set Globals.oc_adv_simplify,"enable oc advanced simplification");
   ("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
+  ("--en-imm-norm", Arg.Set Globals.allow_imm_norm, "enable normalization of immutability annotations (default)");
+  ("--dis-imm-norm", Arg.Clear Globals.allow_imm_norm, "disable normalization of immutability annotations");
   ("--field-imm", Arg.Unit ( fun _ ->
        Globals.allow_field_ann := true;
        Globals.imm_merge := true;
@@ -362,7 +367,8 @@ linput.rl");
   ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
   ("--dis-field-imm", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
   ("--allow-array-inst", Arg.Set Globals.allow_array_inst,"Allow instantiation of existential arrays");
-  ("--imm-remove-abs", Arg.Set Globals.remove_abs,"remove @A nodes from formula (incl nodes with all fields ann with @A)");
+  ("--en-remove-abs", Arg.Set Globals.remove_abs,"remove @A nodes from formula (incl nodes with all fields ann with @A)");
+  ("--dis-remove-abs", Arg.Clear Globals.remove_abs,"disable removing @A nodes from formula (incl nodes with all fields ann with @A)");
   ("--en-imm-merge", Arg.Set Globals.imm_merge,"try to merge aliased nodes");
   ("--dis-imm-merge", Arg.Clear Globals.imm_merge,"don't merge aliased nodes");
   ("--en-weak-imm", Arg.Set Globals.imm_weak,"enable weak instatiation (<:)");
@@ -373,6 +379,12 @@ linput.rl");
   ("--dis-aggresive-immf-inst", Arg.Clear Globals.aggresive_imm_inst,"don't add lhs_imm<:rhs_imm, when lhs_imm is unrestricted");
   ("--en-imm-simpl", Arg.Set Globals.imm_add,"simplify imm addition");
   ("--dis-imm-simpl", Arg.Clear Globals.imm_add,"disable imm addition simplification");
+  ("--imm-inf-seq", Arg.Unit (fun _ ->
+       Globals.imm_seq := true; 
+       Globals.imm_sim := false;), "infer imm pre/post sequentially");
+  ("--imm-inf-sim",  Arg.Unit (fun _ ->
+       Globals.imm_sim := true; 
+       Globals.imm_seq := false;), "infer imm pre/post simultaneously ");
   ("--mem", Arg.Unit (fun _ -> 
        Globals.allow_mem := true; 
        Globals.allow_field_ann := true;),
