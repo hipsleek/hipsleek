@@ -15,9 +15,15 @@ open Ti3
 let diff = Gen.BList.difference_eq CP.eq_spec_var
 let subset = Gen.BList.subset_eq CP.eq_spec_var
 
-let om_simplify f = (* Omega.simplify *) (* Tpdispatcher.simplify_raw *)
+let om_simplify f = 
+  let () = x_binfo_hp (add_str "om_simplify" !CP.print_formula) f no_pos in
+  (* Tpdispatcher.simplify_raw f *)
   if CP.is_linear_formula f then x_add_1 Omega.simplify f
   else Redlog.simplify f
+
+let om_simplify f =
+  let pr = !CP.print_formula in
+  Debug.no_1 "Ti2.om_simplify" pr pr om_simplify f
 
 let eq_str s1 s2 = String.compare s1 s2 = 0
 
@@ -30,13 +36,17 @@ let simplify f args =
 let simplify f args =
   let pr1 = !CP.print_formula in
   let pr2 = pr_list !CP.print_sv in
-  Debug.no_2 "Ti.simplify" pr1 pr2 pr1
+  Debug.no_2 "Ti2.simplify" pr1 pr2 pr1
     (fun _ _ -> simplify f args) f args
 
 let is_sat f = 
-  (* Tpdispatcher.is_sat_raw (MCP.mix_of_pure f) *)
-  let (pr_weak, pr_strong) = CP.drop_complex_ops in
-  Omega.is_sat_ops pr_weak pr_strong f ""
+  Tpdispatcher.is_sat_raw (MCP.mix_of_pure f)
+  (* let (pr_weak, pr_strong) = CP.drop_complex_ops in *)
+  (* Omega.is_sat_ops pr_weak pr_strong f ""           *)
+
+let is_sat f = 
+  let pr = !CP.print_formula in
+  Debug.no_1 "Ti2.is_sat" pr string_of_bool is_sat f
 
 let imply a c = Tpdispatcher.imply_raw a c
 
@@ -102,20 +112,28 @@ let rec partition_cond_list is_disj cond_list =
       match dcs with
       | [] -> [c]
       | d::ds -> 
-        if not (is_sat (mkAnd c d)) then d::(helper c ds)
+        if not (x_add_1 is_sat (mkAnd c d)) then d::(helper c ds)
         else if is_disj && (x_add imply c d) then dcs
         else (mkAnd c d)::(mkAnd (mkNot c) d)::(helper (mkAnd c (mkNot d)) ds)
     in helper c dcs
 
+let partition_cond_list is_disj cond_list = 
+  let pr = pr_list !CP.print_formula in
+  Debug.no_1 "partition_cond_list" pr pr
+    (fun _ -> partition_cond_list is_disj cond_list) cond_list
+
 let get_full_disjoint_cond_list is_disj cond_list = 
   let disj_cond_lst = partition_cond_list is_disj cond_list in
+  let () = x_tinfo_hp (add_str "disj_cond_lst" (pr_list !CP.print_formula)) disj_cond_lst no_pos in
   let rem_cond = mkNot (CP.join_disjunctions disj_cond_lst) in
   let rem_cond_lst =
-    if is_sat rem_cond then CP.split_disjunctions (om_simplify rem_cond)
+    if x_add_1 is_sat rem_cond then CP.split_disjunctions (om_simplify rem_cond)
     else [] 
   in
   (* let rem_cond_lst = List.filter is_sat (CP.split_disjunctions (om_simplify rem_cond)) in *)
-  (List.map om_simplify disj_cond_lst) @ rem_cond_lst
+  let r = (List.map om_simplify disj_cond_lst) @ rem_cond_lst in
+  let () = x_binfo_hp (add_str "full_disjoint_cond_list" (pr_list !CP.print_formula)) r no_pos in
+  r
 
 let get_full_disjoint_cond_list is_disj cond_list = 
   let pr = pr_list !CP.print_formula in
@@ -1689,25 +1707,27 @@ let proving_non_termination_nondet_trrel (prog: Cast.prog_decl) lhs_uids rhs_uid
   in
   let assume_ctx = CF.Ctx assume_ctx_es in
   let conseq_f = CF.mkAnd_pure empty_es.CF.es_formula (Mcpure.mix_of_pure (mkNot conseq)) pos in
-  let rs = x_add !entail_inf prog assume_ctx conseq_f in
-  match rs with
-  | None -> (false, [])
-  | Some rs ->
-    (match rs with
-    | CF.FailCtx _ -> (false, [])
-    | CF.SuccCtx lst -> 
-      let infer_assume = List.concat (List.map CF.collect_pre_pure lst) in
-      let infer_assume_nd = List.fold_left (fun acc c ->
-          let norm_c = norm_nondet_assume nd_vars ctx conseq c in
-          if is_empty norm_c then acc
-          else acc @ [(join_disjs norm_c)]
-        ) [] infer_assume
-      in
-      let () = x_binfo_hp (add_str "assume_nondet" (pr_list !CP.print_formula)) infer_assume_nd pos in
-      if is_empty infer_assume then (true, []) (* true means the entailment is successful *)
-      else if is_empty infer_assume_nd then (false, [])
-      else (true, [(join_disjs infer_assume_nd)]) 
-    )
+  try
+    let rs = x_add !entail_inf prog assume_ctx conseq_f in
+    match rs with
+    | None -> (false, [])
+    | Some rs ->
+      (match rs with
+      | CF.FailCtx _ -> (false, [])
+      | CF.SuccCtx lst -> 
+        let infer_assume = List.concat (List.map CF.collect_pre_pure lst) in
+        let infer_assume_nd = List.fold_left (fun acc c ->
+            let norm_c = norm_nondet_assume nd_vars ctx conseq c in
+            if is_empty norm_c then acc
+            else acc @ [(join_disjs norm_c)]
+          ) [] infer_assume
+        in
+        let () = x_binfo_hp (add_str "assume_nondet" (pr_list !CP.print_formula)) infer_assume_nd pos in
+        if is_empty infer_assume then (true, []) (* true means the entailment is successful *)
+        else if is_empty infer_assume_nd then (false, [])
+        else (true, [(join_disjs infer_assume_nd)]) 
+      )
+  with _ -> (false, [])
 
 let proving_non_termination_nondet_trrel prog lhs_uids rhs_uid trrel =
   let pr = Cprinter.string_of_term_id in
@@ -1769,12 +1789,21 @@ let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
       in
       (* gen_disj_conds ntres *)
 
+      let gen_disj_conds ntres =
+        let pr = print_nt_res in
+        Debug.no_1 "gen_disj_conds" (pr_list pr) pr
+          gen_disj_conds ntres
+      in
+
       if !Globals.tnt_infer_nondet then
         (* Attemp to infer_assume on nondet vars *)
         let res, assume_nondet = proving_non_termination_nondet_trrels prog lhs_uids rhs_uid trrels in
+        let () = x_binfo_hp (add_str "infer_nondet_res" string_of_bool) res no_pos in
         if res then 
           NT_Nondet_May (List.map (fun c -> CP.TAssume c) assume_nondet)
-        else gen_disj_conds ntres
+        else
+          let () = x_binfo_hp (add_str "gen_disj_conds" (pr_list print_nt_res)) ntres no_pos in 
+          x_add_1 gen_disj_conds ntres
       else gen_disj_conds ntres
 
 let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =

@@ -1333,7 +1333,10 @@ let simplify (f: CP.formula) : CP.formula =
       log ERROR (Printexc.to_string e);
       f
 
-
+let simplify (f: CP.formula) : CP.formula =
+  let pr = !CP.print_formula in
+  Debug.no_1 "Redlog.simplify" pr pr simplify f
+  
 (* unimplemented *)
 
 let hull (f: CP.formula) : CP.formula = 
