@@ -204,6 +204,7 @@ let simple_subtype emap imm1 imm2 =
    @A = max(immr1,@M)  ----> immr1 = @A
    @CONST = max(immr1,@CONST)  ----> immr1 <: @CONST
    @M = max(immr1,@A)  ----> false
+   @v = max(immr1,@M) -----> @v=@immr1
 
  *)
 let norm_eqmax emap imml immr1 immr2 def = 
@@ -212,6 +213,8 @@ let norm_eqmax emap imml immr1 immr2 def =
     match immr1, immr2 with
     | (ConstAnn Accs), v2
     | v2, (ConstAnn Accs) -> mkPure (mkEq (imm_to_exp imml no_pos) (imm_to_exp (ConstAnn Accs) no_pos) no_pos)
+    | (ConstAnn Mutable), v2
+    | v2, (ConstAnn Mutable) -> mkPure (mkEq (imm_to_exp imml no_pos) (imm_to_exp v2 no_pos) no_pos)
     | _ -> def
   else
     match immr1, immr2 with
