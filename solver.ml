@@ -7462,12 +7462,13 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                 let p1 =
                   (*This could introduce UNSAT*)
                   if (Perm.allow_perm ()) then
-                    let nodes_f = xpure_perm prog h1 p1 in
+                    let nodes_f = x_add xpure_perm prog h1 p1 in
                     let p1 = MCP.merge_mems p1 nodes_f true in
                     let p1 = MCP.remove_dupl_conj_mix_formula p1 in
                     p1
                   else p1
                 in
+                let () = x_binfo_hp (add_str "p1(after xpure_perm)" Cprinter.string_of_mix_formula) p1 no_pos in
                 (*******************)
                 (* WN : another false to remove *)
                 (* if (isAnyConstFalse ante)&&(CF.subsume_flow_ff fl2 fl1) then *)
@@ -8286,7 +8287,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
   (* let curr_lhs_h, new_lhs_p = x_add Mem.compact_nodes_with_same_name_in_h_formula curr_lhs_h [[]] in (\*andreeac TODO check more on this*\) *)
   (* let lhs_p = MCP.mix_of_pure (CP.mkAnd (MCP.pure_of_mix lhs_p) new_lhs_p no_pos) in (\* andreeac temp *\) *)
   x_tinfo_hp (add_str "curr_lhs_h" (Cprinter.string_of_h_formula)) curr_lhs_h pos;
-  x_tinfo_hp (add_str "lhs_p" !Cast.print_mix_formula) lhs_p no_pos;
+  x_binfo_hp (add_str "lhs_p" !Cast.print_mix_formula) lhs_p no_pos;
   let curr_lhs_h, lhs_p = normalize_frac_heap prog curr_lhs_h lhs_p lhs_vp in
   x_tinfo_hp (add_str "estate_orig" (Cprinter.string_of_entail_state)) estate_orig pos;
   x_tinfo_hp (add_str "curr_lhs_h0" (Cprinter.string_of_h_formula)) curr_lhs_h pos;
