@@ -335,7 +335,7 @@ let read_from_in_channel chn : string =
     let n = String.length line in
     (* print_endline (line^"\n"); flush stdout; *)
     if n > 0 then begin
-      (* print_string (line^"\n"); flush stdout;*)
+      (* print_string (line^"\n"); flush stdout; *)
       (if !log_all_flag then
          output_string log_all ("[omega.ml]: >> "^line^"\n") );
       if line.[0] != '#' then
@@ -451,12 +451,14 @@ let rec send_and_receive f timeout=
           else
           f *)
       in
-      (* let () = print_endline ("before omega: " ^ new_f) in *)
+      let () = x_tinfo_hp (add_str "omega inp" idf) new_f no_pos in
       output_string (!process.outchannel) new_f;
+      (* x_binfo_pp "after sending to omega" no_pos; *)
       flush (!process.outchannel);
+      (* x_binfo_pp "after flushing to omega" no_pos; *)
       (* try *)
       let str = read_from_in_channel (!process.inchannel) in
-      (* let () = print_endline ("string from omega: " ^ str) in *)
+      let () = x_tinfo_hp (add_str "omega out" idf) str no_pos in
       let () = set_proof_result str in
       let lex_buf = Lexing.from_string str in
       (*print_string (line^"\n"); flush stdout;*)
@@ -887,7 +889,7 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
   (* let () = print_string ("\nomega_simplify: f
      before"^(!print_formula pe)) in *)
   let pe = Trans_arr.translate_array_one_formula pe in
-  (* let () = x_binfo_hp (add_str "simplify_ops_x(after trans_arr):" !print_formula) pe no_pos in *)
+  let () = x_tinfo_hp (add_str "simplify_ops_x(after trans_arr):" !print_formula) pe no_pos in
   begin
     let svl0 = Cpure.fv pe in	
     let svl,fr_svl = mkSpecVarList 0 svl0 in
@@ -1134,19 +1136,26 @@ let pairwisecheck (pe : formula) : formula =
     match (omega_of_formula_old 21 pe) with
     | None -> pe
     | Some fstr ->
-      let vars_list = get_vars_formula pe in
-      let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) vars_list) in
-      let fomega =  "pairwisecheck {[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
-      let () = set_proof_string ("PAIRWISE:"^fomega) in
-      (*test*)
-      (*print_endline (Gen.break_lines fomega);*)
-      if !log_all_flag then begin
-        output_string log_all ("#pairwisecheck" ^ Gen.new_line_str ^ Gen.new_line_str);
-        output_string log_all ((Gen.break_lines_1024 fomega) ^ Gen.new_line_str ^ Gen.new_line_str);
-        flush log_all;
-      end;
-      let rel = send_and_receive fomega !in_timeout (* 0. *) in
-      match_vars (fv pe) rel 
+      try
+        let vars_list = get_vars_formula pe in
+        let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) vars_list) in
+        let fomega =  "pairwisecheck {[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
+        let () = set_proof_string ("PAIRWISE:"^fomega) in
+        (*test*)
+        (*print_endline (Gen.break_lines fomega);*)
+        if !log_all_flag then begin
+          output_string log_all ("#pairwisecheck" ^ Gen.new_line_str ^ Gen.new_line_str);
+          output_string log_all ((Gen.break_lines_1024 fomega) ^ Gen.new_line_str ^ Gen.new_line_str);
+          flush log_all;
+        end;
+        let rel = send_and_receive fomega !in_timeout (* 0. *) in
+        match_vars (fv pe) rel 
+      with 
+      | End_of_file ->
+          let () = set_proof_result ("END_OF_FILE") in
+          restart ("PAIRWISECHECK: End_of_file exception occurs!\n");
+          pe
+      | exc -> raise exc
   end
 ;;
 

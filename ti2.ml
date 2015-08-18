@@ -16,10 +16,15 @@ let diff = Gen.BList.difference_eq CP.eq_spec_var
 let subset = Gen.BList.subset_eq CP.eq_spec_var
 
 let om_simplify f = 
-  let () = x_binfo_hp (add_str "om_simplify" !CP.print_formula) f no_pos in
+  (* let () = x_tinfo_hp (add_str "om_simplify" !CP.print_formula) f no_pos in *)
   (* Tpdispatcher.simplify_raw f *)
-  if CP.is_linear_formula f then x_add_1 Omega.simplify f
-  else Redlog.simplify f
+  try
+    if CP.is_linear_formula f then
+      (* let () = x_binfo_hp (add_str "is_omega_running" string_of_bool) !Omega.is_omega_running no_pos in *)
+      x_add_1 Omega.simplify f
+    else if !VarGen.compete_mode then f
+    else Redlog.simplify f
+  with _ -> f
 
 let om_simplify f =
   let pr = !CP.print_formula in
@@ -132,7 +137,7 @@ let get_full_disjoint_cond_list is_disj cond_list =
   in
   (* let rem_cond_lst = List.filter is_sat (CP.split_disjunctions (om_simplify rem_cond)) in *)
   let r = (List.map om_simplify disj_cond_lst) @ rem_cond_lst in
-  let () = x_binfo_hp (add_str "full_disjoint_cond_list" (pr_list !CP.print_formula)) r no_pos in
+  let () = x_tinfo_hp (add_str "full_disjoint_cond_list" (pr_list !CP.print_formula)) r no_pos in
   r
 
 let get_full_disjoint_cond_list is_disj cond_list = 
@@ -1722,7 +1727,7 @@ let proving_non_termination_nondet_trrel (prog: Cast.prog_decl) lhs_uids rhs_uid
             else acc @ [(join_disjs norm_c)]
           ) [] infer_assume
         in
-        let () = x_binfo_hp (add_str "assume_nondet" (pr_list !CP.print_formula)) infer_assume_nd pos in
+        let () = x_tinfo_hp (add_str "assume_nondet" (pr_list !CP.print_formula)) infer_assume_nd pos in
         if is_empty infer_assume then (true, []) (* true means the entailment is successful *)
         else if is_empty infer_assume_nd then (false, [])
         else (true, [(join_disjs infer_assume_nd)]) 
@@ -1749,9 +1754,9 @@ let proving_non_termination_nondet_trrels prog lhs_uids rhs_uid trrels =
         let curr_case = rhs_uid.CP.tu_cond in
         let params = List.concat (List.map CP.afv rhs_uid.CP.tu_args) in
         let infer_nd_cond = simplify (CP.join_conjunctions infer_nd_conds) params in
-        let () = x_binfo_hp (add_str "Nondet conditions: " (pr_list !CP.print_formula)) infer_nd_conds no_pos in
-        let () = x_binfo_hp (add_str "Simplified nondet condition: " !CP.print_formula) infer_nd_cond no_pos in
-        let () = x_binfo_hp (add_str "Current case: " !CP.print_formula) curr_case no_pos in
+        let () = x_tinfo_hp (add_str "Nondet conditions: " (pr_list !CP.print_formula)) infer_nd_conds no_pos in
+        let () = x_tinfo_hp (add_str "Simplified nondet condition: " !CP.print_formula) infer_nd_cond no_pos in
+        let () = x_tinfo_hp (add_str "Current case: " !CP.print_formula) curr_case no_pos in
         if not (is_sat (mkAnd curr_case infer_nd_cond)) ||
            not (x_add imply curr_case infer_nd_cond)
         then (false, [])
@@ -1798,11 +1803,11 @@ let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
       if !Globals.tnt_infer_nondet then
         (* Attemp to infer_assume on nondet vars *)
         let res, assume_nondet = proving_non_termination_nondet_trrels prog lhs_uids rhs_uid trrels in
-        let () = x_binfo_hp (add_str "infer_nondet_res" string_of_bool) res no_pos in
+        let () = x_tinfo_hp (add_str "infer_nondet_res" string_of_bool) res no_pos in
         if res then 
           NT_Nondet_May (List.map (fun c -> CP.TAssume c) assume_nondet)
         else
-          let () = x_binfo_hp (add_str "gen_disj_conds" (pr_list print_nt_res)) ntres no_pos in 
+          let () = x_tinfo_hp (add_str "gen_disj_conds" (pr_list print_nt_res)) ntres no_pos in 
           x_add_1 gen_disj_conds ntres
       else gen_disj_conds ntres
 
