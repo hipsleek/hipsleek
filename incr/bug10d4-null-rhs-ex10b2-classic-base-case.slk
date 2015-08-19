@@ -11,9 +11,6 @@ HeapPred H(node a, node b).
 // implicit f?
 checkentail H(p,qqq) |- H(p,f) .
 
-//checkentail H(p,qqq) |- [f] H(p,f) .
-//expect Valid.
-
 print residue.
 
 

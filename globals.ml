@@ -2225,8 +2225,7 @@ let path_trace_gt p1 p2 =
     | ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> (a1>a2) || (a1=a2 && b1>b2) || (a1=a2 && b1=b2 && gt zt1 zt2)
   in gt (List.rev p1) (List.rev p2)
 
-
-let dummy_exception () = ()
+let dummy_exception e = ()
 
 (* convert a tree-like binary object into a list of objects *)
 let bin_op_to_list (op:string)

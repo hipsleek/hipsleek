@@ -9568,6 +9568,10 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
     let () = x_tinfo_hp (add_str "impl_inst(subs)" pr_subs) lst_impl no_pos in
     let () = x_tinfo_hp (add_str "ex_subs" pr_subs) lst_ex no_pos in
     let () = if !Globals.assert_no_glob_vars && lst_glob!=[] then 
+        let () = x_binfo_hp (add_str "impl_vars" !print_svl) impl_vars no_pos in
+        let () = x_binfo_hp (add_str "glob_vs" !print_svl) glob_vs no_pos in
+        let () = x_binfo_hp (add_str "evars" !print_svl) evars no_pos in
+        let () = x_binfo_hp (add_str "ivars" !print_svl) ivars no_pos in
         failwith ("non-empty global vars "^msg) 
     in
     let to_conseq = List.fold_left  (fun e (l,r) -> CP.mkAnd e (CP.mkEqVar l r no_pos) no_pos) (CP.mkTrue no_pos) lst_glob in
