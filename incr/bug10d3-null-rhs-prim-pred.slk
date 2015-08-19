@@ -1,0 +1,39 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+//HeapPred H(node a, node b).
+pred_prim G<a:node,n:node>.
+
+//checkentail H(p,qqq) |- H(p,null) .
+checkentail x::G<p,qqq> |- x::G<p,null> .
+print residue.
+
+
+/*
+# bug10c3.slk --pcp
+
+
+# Is null handled properly?
+
+ p::H<p,qqq>NOANN&{FLOW,(20,21)=__norm#E}[] [] |-  EBase 
+   (exists flted_11_21: p::H<p,flted_11_21>NOANN&flted_11_21=null&
+   {FLOW,(20,21)=__norm#E}[]
+
+!!! **solver.ml#9565:to_conseq(glob):[]
+!!! **solver.ml#9566:impl_inst(subs):[]
+!!! **solver.ml#9567:ex_subs:[(flted_11_26,qqq)]
+
+!!! **solver.ml#9565:to_conseq(glob):[]
+!!! **solver.ml#9566:impl_inst(subs):[]
+!!! **solver.ml#9567:ex_subs:[(flted_11_26,qqq)]
+!!! **solver.ml#9643:to_ante: true
+!!! **solver.ml#9644:to_conseq: true
+!!! **solver.ml#7471:p1(after xpure_perm): true
+
+*/
+

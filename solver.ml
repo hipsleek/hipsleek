@@ -7655,6 +7655,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                   if res then new_estate,rels else estate,[]
                                 else estate,[]
                               in
+                              (* this overwrites things computed earlier *)
                                (* let h1, p1, vp1, fl1, t1, a1 = split_components estate.CF.es_formula in *)
                               let b1 = {formula_base_heap = h1;
                                         formula_base_pure = p1;
@@ -9544,9 +9545,9 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
 
 (*match and instatiate perm vars*)
 (*Return a substitution, labels, to_ante,to_conseq*)
-and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_args:P.spec_var list) (r_args:P.spec_var list) label_list (evars:P.spec_var list) ivars impl_vars expl_vars =
+and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_args:P.spec_var list) (r_args:P.spec_var list) label_list (evars:P.spec_var list) ivars impl_vars expl_vars glob_vs =
   let pr_subs = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
-  let prep_subs left right impl =
+  let prep_subs left right impl glob_vs =
     let subs = 
       try
         List.combine left right
@@ -9554,13 +9555,23 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
         let () = x_binfo_hp (add_str "WARNING: not same length" (pr_pair !print_svl !print_svl)) (left,right) no_pos in
         []
     in 
-    let (lst_impl,lst_ex) = List.partition (fun (l,_) -> CP.mem l impl_vars) subs in
+    let subs = List.filter (fun (l,r) -> not(CP.eq_spec_var l r)) subs in
+    let (lst_impl,lst_ex) = List.partition (fun (l,_) -> CP.mem_svl l impl_vars) subs in
+    let (lst_glob,lst_ex) = List.partition (fun (l,_) -> CP.mem_svl l glob_vs) lst_ex in
+    let subs = lst_impl @ lst_ex in
+    let pr_subs = pr_list (pr_pair !print_sv !print_sv) in
     let to_ante = List.fold_left  (fun e (l,r) -> CP.mkAnd e (CP.mkEqVar l r no_pos) no_pos) (CP.mkTrue no_pos) lst_impl in
-    (* let to_conseq = List.fold_left  (fun e (l,r) -> CP.mkAnd e (CP.mkEqVar l r no_pos) no_pos) (CP.mkTrue no_pos) lst_ex in *)
-    (to_ante, CP.mkTrue no_pos (* to_conseq *), subs) in
+    let () = x_binfo_hp (add_str "impl_vars" !print_svl) impl_vars no_pos in
+    let () = x_binfo_hp (add_str "glob_vs" !print_svl) glob_vs no_pos in
+    let () = x_binfo_hp (add_str "to_conseq(glob)" pr_subs) lst_glob no_pos in
+    let () = x_binfo_hp (add_str "impl_inst(subs)" pr_subs) lst_impl no_pos in
+    let () = x_binfo_hp (add_str "ex_subs" pr_subs) lst_ex no_pos in
+    let to_conseq = List.fold_left  (fun e (l,r) -> CP.mkAnd e (CP.mkEqVar l r no_pos) no_pos) (CP.mkTrue no_pos) lst_glob in
+    (to_ante, (* CP.mkTrue no_pos *) to_conseq, subs) in
   begin
     (* to_ante & to_conseq not properly built below *)
     if (Perm.allow_perm ()) then
+      let () = x_winfo_pp "impl_inst and to_conseq not properly built" no_pos in
       (match l_perm, r_perm with
        | Some f1, Some f2 ->
          let ls1 = Perm.get_cperm_var l_perm in
@@ -9625,22 +9636,23 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
          (rho_0, label_list, CP.mkTrue no_pos,CP.mkTrue no_pos)
       )
     else
-      let (to_ante,to_conseq,rho_0) = prep_subs r_args l_args impl_vars in
+      let (to_ante,to_conseq,rho_0) = prep_subs r_args l_args impl_vars glob_vs in
       (* try *)
       (*   List.combine r_args l_args *)
       (* with _ -> [] (\*matching with cyclic proof is not the same predicate*\) in *)
       let () = x_tinfo_hp (add_str "rho_0" pr_subs) rho_0 no_pos in
-      let () = x_tinfo_hp (add_str "to_ante" !CP.print_formula) to_ante no_pos in
+      let () = x_binfo_hp (add_str "to_ante" !CP.print_formula) to_ante no_pos in
+      let () = x_binfo_hp (add_str "to_conseq" !CP.print_formula) to_conseq no_pos in
       (* without branch label *)
       (* let to_ante =(\*  List.fold_left (fun acc_p p -> CP.mkAnd acc_p p no_pos) (CP.mkTrue no_pos) *\) *)
       (*   (\* (List.map (fun (sv1,sv2) -> CP.mkEqVar sv1 sv2 no_pos) rho_0) *\) *)
       (*   CP.mkTrue no_pos *)
       (* in *)
-      (rho_0, label_list, to_ante (* CP.mkTrue no_pos *),(* to_conseq *) CP.mkTrue no_pos)
+      (rho_0, label_list, to_ante (* CP.mkTrue no_pos *),to_conseq (* CP.mkTrue no_pos *))
 
   end
 
-and do_match_inst_perm_vars l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars =
+and do_match_inst_perm_vars l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars glob_vs =
   let pr_out (rho,lbl,ante,conseq) =
     let s1 = pr_pair Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula (ante,conseq) in
     let s2 = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var) rho in
@@ -9654,7 +9666,7 @@ and do_match_inst_perm_vars l_perm r_perm l_args r_args label_list evars ivars i
     (add_str "l_args" string_of_spec_var_list)
     (add_str "r_args" string_of_spec_var_list)
     pr_out
-    (fun _ _ _ _ _ _ -> do_match_inst_perm_vars_x l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars) 
+    (fun _ _ _ _ _ _ -> do_match_inst_perm_vars_x l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars glob_vs) 
     l_perm r_perm evars impl_vars l_args r_args
 
 (*Modified a set of vars in estate to reflect instantiation
@@ -10245,15 +10257,20 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
         let ivars = estate.es_ivars in
         let expl_vars = estate.es_gen_expl_vars in
         let impl_vars = estate.es_gen_impl_vars in
-        let () = x_tinfo_hp (add_str "impl_vars" !print_svl) impl_vars no_pos in
+        let glob_vs = CP.diff_svl r_args (evars@impl_vars@expl_vars) in
+        let () = x_binfo_hp (add_str "evars" !print_svl) evars no_pos in
+        let () = x_binfo_hp (add_str "ivars" !print_svl) ivars no_pos in
+        let () = x_binfo_hp (add_str "expl_vars" !print_svl) expl_vars no_pos in
+        let () = x_binfo_hp (add_str "impl_vars" !print_svl) impl_vars no_pos in
+        let () = x_binfo_hp (add_str "glob_vs" !print_svl) glob_vs no_pos in
         (* existentially matched var need not be placed in subs *)
         let l_args,r_args,label_list = 
           if (CP.eq_spec_var lhs_self rhs_self) || not(CP.mem rhs_self impl_vars) then l_args,r_args,label_list
           else lhs_self::l_args, rhs_self::r_args, LO.unlabelled::label_list in
-        let () = x_tinfo_hp (add_str "l_args" !print_svl) l_args no_pos in
-        let () = x_tinfo_hp (add_str "r_args" !print_svl) r_args no_pos in
+        let () = x_binfo_hp (add_str "l_args" !print_svl) l_args no_pos in
+        let () = x_binfo_hp (add_str "r_args" !print_svl) r_args no_pos in
         let rho_0, label_list, p_ante, p_conseq =
-          x_add do_match_inst_perm_vars l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars 
+          x_add do_match_inst_perm_vars l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars glob_vs
         in
         (* let rho_0, label_list =                                                                                  *)
         (*   if (Perm.allow_perm ()) then                                                                           *)

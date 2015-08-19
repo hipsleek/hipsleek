@@ -18,6 +18,7 @@ checkentail H(p,qqq) & qqq=p |- H(p,null) .
 
 checkentail H(p,qqq) |- (exists r: H(p,r)) .
 
+// why no explicit instantiation?
 checkentail H(p,qqq) |- [r] H(p,r) .
 
 //checkentail H(p,p) |- H(p,p) .
