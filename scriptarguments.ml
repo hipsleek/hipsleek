@@ -866,6 +866,7 @@ linput.rl");
    (* Arg.Clear Globals.opt_classic,  *)
    "Disable classical reasoning in separation logic");  
   ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");
+  ("--lem-norm-w-coerc", Arg.Set Globals.lemma_norm_w_coerc, "Allow normalize formula with coercions");
   ("--lem-en-norm", Arg.Set Globals.allow_lemma_norm, "Allow case-normalize for lemma");
   ("--lem-dis-norm", Arg.Clear Globals.allow_lemma_norm, "Disallow case-normalize for lemma");
   ("--lem-en-fold", Arg.Set Globals.allow_lemma_fold, "Allow do_fold with right lemma");

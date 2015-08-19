@@ -896,6 +896,7 @@ let allow_lemma_fold = ref true
 (* unsound if false for lemma/bugs/app-t2c1.slk *)
 
 let allow_lemma_norm = ref false
+let lemma_norm_w_coerc = ref false
 
 (* Enable exhaustive normalization using lemmas *)
 let allow_exhaustive_norm = ref true

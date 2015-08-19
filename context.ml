@@ -1916,15 +1916,20 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                        [(1,M_cyclic( m_res, uf_i, 0, syn_lem_typ, None))]
                      else []
                    in
-                   let () = x_binfo_pp "folding..." no_pos in
+                   (* let () = if !Globals.x_binfo_pp "folding..." no_pos in *)
                    cyc_tail_rec_lemmas@[(1,M_fold m_res)]
                in
                acts
              else
                (* fold to activate/change  *)
-             if (vr_is_prim) then [] else
-               let () = x_binfo_pp "folding..." no_pos in
-               [(1,M_fold m_res)]
+             if (vr_is_prim) 
+             then [] 
+             else
+               begin
+                 if !Globals.lemma_norm_w_coerc 
+                 then x_binfo_pp "folding..." no_pos;
+                 [(1,M_fold m_res)]
+               end
            else if not(sub_ann) then [(3,M_base_case_fold m_res)]
            else []
          ) in
