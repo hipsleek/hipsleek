@@ -39,7 +39,7 @@ lemma_safe self::dll_seg3<a,last,pp>
 void create_dll (ref node list)
 //infer [H] requires H(list)   ensures true;
   requires list::node<_,pp>
-  ensures list'::dll_seg3<_,list,pp>;
+  ensures list'::dll_seg3<_,r,list> * list::node<r,pp>;
 {
   node t;
   if (bool_nondet()) {
@@ -63,9 +63,8 @@ void create_dll (ref node list)
 
 # Best verifiable spec
 
-  void create_dll (ref node list)
   requires list::node<_,pp>
-  ensures list'::dll_seg3<_,list,pp>;
+  ensures list'::dll_seg3<_,r,list> * list::node<r,pp>;
 
 dll_seg3<a,last,pp> == self=pp & a=last
   or self::node<a,q>*q::dll_seg3<self,last,pp>;
