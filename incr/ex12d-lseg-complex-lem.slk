@@ -1,15 +1,15 @@
 //Valid.Valid.Valid.Valid
 data node { int val ; node next }.
 
-pred lseg<n, p> == 
+pred lseg<n, pq> == 
   case {
-    n=0 -> [] self = p & n = 0;
-    n!=0 -> [] self::node<next = r> * r::lseg<n - 1, p>;
+    n=0 -> [] self = pq & n = 0;
+    n!=0 -> [] self::node<next = r> * r::lseg<n - 1, pq>;
   }  inv n >= 0.
 
 
-lemma_safe "V22" self::lseg<a, r> * r::lseg<b, p>  
-     -> self::lseg<n, p> & n = a + b & a,b >=0.
+lemma_safe "V22" self::lseg<a, r> * r::lseg<bbb, ppp>  
+     -> self::lseg<n, ppp> & n = a + bbb & a,bbb >=0.
 
 //lemma_safe "V21" self::lseg<n, p> & n = a + b & a,b >=0 
 //     <- self::lseg<a, r> * r::lseg<b, p>.
