@@ -1156,7 +1156,7 @@ let imply_ops pr_weak pr_strong ante conseq timeout =
   let fstr = smt_of_formula pr_weak pr_strong smt_form in
   let pvars = Omega.get_vars_formula smt_form in
   let vstr = Omega.omega_of_var_list (Gen.BList.remove_dups_eq (=) pvars) in
-  let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
+  let fomega =  "{complement {[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
   let () = Omega.set_proof_string ("IMPLY:"^fomega) in
 
   (*let () = print_endline ("Ante2 : "^ !print_pure ante) in*)

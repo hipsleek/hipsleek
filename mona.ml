@@ -1565,7 +1565,7 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   let fstr = mona_of_formula tmp_form tmp_form (var1,var2) in
   let pvars = Omega.get_vars_formula tmp_form in
   let vstr = Omega.omega_of_var_list (Gen.BList.remove_dups_eq (=) pvars) in
-  let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
+  let fomega =  "complement {[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
   let () = Omega.set_proof_string ("IMPLY:"^fomega) in
 
 
