@@ -3670,7 +3670,7 @@ and wrap_collect_rel f a =
     let inf_lst = CF.collect_infer_rel_list_context lc in
     let () = Infer.infer_rel_stk # push_list inf_lst in
     let () =  if inf_lst!=[] then if inf_lst!=[] then x_tinfo_hp (add_str "collect_rel (SLEEK)" (pr_list CP.print_lhs_rhs)) inf_lst no_pos in
-    (* let () = x_binfo_hp (add_str "XXXX lc" Cprinter.string_of_list_context_short) lc no_pos in *)
+    (* let () = x_tinfo_hp (add_str "XXXX lc" Cprinter.string_of_list_context_short) lc no_pos in *)
     ans
 
 and wrap_collect_rel_lpc f a =
@@ -3680,7 +3680,7 @@ and wrap_collect_rel_lpc f a =
     let inf_lst = CF.collect_infer_rel_list_partial_context lc in
     let () = Infer.infer_rel_stk # push_list inf_lst in
     let () =  if inf_lst!=[] then if inf_lst!=[] then x_binfo_hp (add_str "collect_rel (HIP)" (pr_list CP.print_lhs_rhs)) inf_lst no_pos in
-    (* let () = x_binfo_hp (add_str "XXXX lpc" Cprinter.string_of_list_partial_context_short) lc no_pos in *)
+    (* let () = x_tinfo_hp (add_str "XXXX lpc" Cprinter.string_of_list_partial_context_short) lc no_pos in *)
     ans
 
 and wrap_collect_rel_lfc f a =
@@ -5782,8 +5782,8 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
           (* WN : check lhs_contra if infer_vars present *)
           (* check if ctx0 /\ conseq = false *)
           (* DD.binfo_start "Earlier LHS CONTRA check"; *)
-          (* x_binfo_hp (add_str "ctx" Cprinter.string_of_context_short) ctx no_pos; *)
-          (* x_binfo_hp (add_str "conseq" Cprinter.string_of_formula) conseq no_pos; *)
+          (* x_tinfo_hp (add_str "ctx" Cprinter.string_of_context_short) ctx no_pos; *)
+          (* x_tinfo_hp (add_str "conseq" Cprinter.string_of_formula) conseq no_pos; *)
           (* DD.binfo_end "LHS CONTRA check"; *)
           let heap_entail () = 
             (* TODOIMM phases split messes up with the early imm mismatch detection ie. 
@@ -7468,7 +7468,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                     p1
                   else p1
                 in
-                let () = x_binfo_hp (add_str "p1(after xpure_perm)" Cprinter.string_of_mix_formula) p1 no_pos in
+                let () = x_tinfo_hp (add_str "p1(after xpure_perm)" Cprinter.string_of_mix_formula) p1 no_pos in
                 (*******************)
                 (* WN : another false to remove *)
                 (* if (isAnyConstFalse ante)&&(CF.subsume_flow_ff fl2 fl1) then *)
@@ -8287,7 +8287,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
   (* let curr_lhs_h, new_lhs_p = x_add Mem.compact_nodes_with_same_name_in_h_formula curr_lhs_h [[]] in (\*andreeac TODO check more on this*\) *)
   (* let lhs_p = MCP.mix_of_pure (CP.mkAnd (MCP.pure_of_mix lhs_p) new_lhs_p no_pos) in (\* andreeac temp *\) *)
   x_tinfo_hp (add_str "curr_lhs_h" (Cprinter.string_of_h_formula)) curr_lhs_h pos;
-  x_binfo_hp (add_str "lhs_p" !Cast.print_mix_formula) lhs_p no_pos;
+  x_tinfo_hp (add_str "lhs_p" !Cast.print_mix_formula) lhs_p no_pos;
   let curr_lhs_h, lhs_p = normalize_frac_heap prog curr_lhs_h lhs_p lhs_vp in
   x_tinfo_hp (add_str "estate_orig" (Cprinter.string_of_entail_state)) estate_orig pos;
   x_tinfo_hp (add_str "curr_lhs_h0" (Cprinter.string_of_h_formula)) curr_lhs_h pos;
@@ -9550,7 +9550,7 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
       try
         List.combine left right
       with _ -> 
-        let () = x_binfo_hp (add_str "WARNING: not same length" (pr_pair !print_svl !print_svl)) (left,right) no_pos in
+        let () = x_winfo_pp ((add_str "WARNING: not same length" (pr_pair !print_svl !print_svl)) (left,right)) no_pos in
         []
     in 
     let (lst_impl,lst_ex) = List.partition (fun (l,_) -> CP.mem l impl_vars) subs in
@@ -9565,7 +9565,7 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
          let ls1 = Perm.get_cperm_var l_perm in
          let ls2 = Perm.get_cperm_var r_perm in
          let rho_0 = List.combine (ls2@r_args) (ls1@l_args) in
-         let () = x_binfo_hp (add_str "rho_0" pr_subs) rho_0 no_pos in
+         let () = x_tinfo_hp (add_str "rho_0" pr_subs) rho_0 no_pos in
          let label_list1 =
            match !Globals.perm with
            | Bperm -> [LO.unlabelled; LO.unlabelled; LO.unlabelled]
@@ -9579,7 +9579,7 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
           | _ ->
             let f2 = Cpure.get_var f2 in
             let rho_0 = List.combine (f2::r_args) (full_perm_var ()::l_args) in
-            let () = x_binfo_hp (add_str "rho_0" pr_subs) rho_0 no_pos in
+            let () = x_tinfo_hp (add_str "rho_0" pr_subs) rho_0 no_pos in
             let label_list = (LO.unlabelled::label_list) in
             (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos))
 
@@ -9614,13 +9614,13 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
             (*f1 is either ivar or global
               if it is ivar, REMEMBER to convert it to expl_var*)
             let rho_0 = List.combine r_args l_args in
-            let () = x_binfo_hp (add_str "rho_0" pr_subs) rho_0 no_pos in
+            let () = x_tinfo_hp (add_str "rho_0" pr_subs) rho_0 no_pos in
             let label_list = (label_list) in
             let t_conseq = 
               mkFullPerm_pure () f1 in
             (rho_0, label_list,CP.mkTrue no_pos,t_conseq))
        | _ -> let rho_0 = List.combine r_args l_args in
-         let () = x_binfo_hp (add_str "rho_0" pr_subs) rho_0 no_pos in
+         let () = x_tinfo_hp (add_str "rho_0" pr_subs) rho_0 no_pos in
          (rho_0, label_list, CP.mkTrue no_pos,CP.mkTrue no_pos)
       )
     else
