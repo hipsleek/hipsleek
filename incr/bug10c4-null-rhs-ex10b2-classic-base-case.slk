@@ -8,8 +8,11 @@ data node {
 
 HeapPred H(node a, node b).
 
+// implicit f?
 checkentail H(p,qqq) |- H(p,f) .
-expect Valid.
+
+//checkentail H(p,qqq) |- [f] H(p,f) .
+//expect Valid.
 
 print residue.
 
@@ -28,6 +31,7 @@ INPUT 0: [][]
  ### ante =  p::H<p,qqq>NOANN&{FLOW,(20,21)=__norm#E}[]
  ### conseq =  EBase 
    p::H<p,f>NOANN&{FLOW,(20,21)=__norm#E}[]
+
 
 
 */

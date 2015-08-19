@@ -1,0 +1,36 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+HeapPred H(node a, node b).
+
+checkentail H(p,qqq) |- [f] H(p,f) .
+expect Valid.
+
+print residue.
+
+
+/*
+# bug10c5.slk --en-hrel-as-view
+
+checkentail H(p,qqq) |- [f] H(p,f) .
+
+# Emplicit instantiation can be supported
+  for HRel views..
+
+INPUT 0: [][] 
+ ### ante =  p::H<p,qqq>NOANN&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   exists (Expl)[f](Impl)[](ex)[]p::H<p,f>NOANN&{FLOW,(20,21)=__norm#E}[]
+
+run_infer:
+ p::H<p,qqq>NOANN&{FLOW,(20,21)=__norm#E}[] [] |-  EBase 
+   exists (Expl)[f](Impl)[](ex)[]p::H<p,f>NOANN&{FLOW,(20,21)=__norm#E}[]
+
+
+*/
+
