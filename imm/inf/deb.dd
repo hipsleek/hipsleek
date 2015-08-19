@@ -3,3 +3,6 @@
 early_hp_contra_detection,Trace
 merge_alias_nodes_formula,Trace
 merge_two_view_nodes,Trace
+prune_eq_min_max_imm,Trace
+prune_eq_top_bot_imm,Trace
+prune_eq_top_bot_imm_disjunct,Trace

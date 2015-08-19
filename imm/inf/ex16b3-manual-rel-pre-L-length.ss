@@ -11,9 +11,9 @@ ll<n> == self=null & n=0 or
 relation P(ann a).
 
 int length(node x)
-  infer [@imm]
-  requires x::ll<n>@b //& P(b)
-  ensures  x::ll<n>;
+  infer [P]
+  requires x::ll<n>@b & P(b)
+  ensures  x::ll<n>@a;
 {
   if (x == null) return 0;
   else{
@@ -27,13 +27,26 @@ int length(node x)
 
 
 /**
-splify below:
+simplify below:
 @A=max(imm_1486,a_1495) & b=min(imm_1486,b_1475) & imm_1485=max(b,b_1475) & 
  @L<:imm_1485 & imm_1487=min(imm_1486,a_1495) & flted_8_1468=n_1476 & 
  b<:b_1475 & b<:@L & x'=x & P(b) & x'!=null & !(v_bool_18_1446') & 
  flted_8_1468+1=n & v_int_24_1445'=1+tmp_1497 & res=v_int_24_1445' & 
  (((1<=flted_8_1468 & q_1470!=null) | (q_1470=null & flted_8_1468=0))) & x'=2
 
+
+@A=max(imm_1486,a_1495) & b=min(imm_1486,b_1475) & imm_1485=b_1475 &  //because b<:b_1475
+ @L<:imm_1485 & imm_1487=min(imm_1486,a_1495) 
+ b<:b_1475 & b<:@L
+
+
+@A=imm_1486 & a_1495<:imm_1486 & b=min(imm_1486,b_1475) & imm_1485=b_1475 &  //because b<:b_1475
+ @L<:imm_1485 & imm_1487=min(imm_1486,a_1495) 
+ b<:b_1475 & b<:@L
+or
+@A=a_1495 & imm_1486<:a_1495 & b=min(imm_1486,b_1475) & imm_1485=b_1475 &  //because b<:b_1475
+ @L<:imm_1485 & imm_1487=min(imm_1486,a_1495) 
+ b<:b_1475 & b<:@L
 
 =======================================================
 from where do i get RELASS [P]: ( P(b)) -->  not(b<:@L)] ? (FIXED) - forgot to add the merge guards for view nodes

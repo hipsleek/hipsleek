@@ -1839,7 +1839,7 @@ Total verification time: 2.598301 second(s)
 	Time spent in child processes: 1.468193 second(s)
 
 =======================================================
-# ex15a1  why  yyy:int=@A?? 
+# ex15a1  why  yyy:int=@A?? (FIXED)
 
 remove_abs_nodes_struc@1
 remove_abs_nodes_struc inp1 : EBase 
@@ -1863,7 +1863,55 @@ remove_abs_nodes_struc@1 EXIT: EBase
      {FLOW,(4,5)=__norm#E}[]
 
 =======================================================
+# ex16b3.ss
+ prune_eq_top_bot_imm_disjunct should make use of emap to
+test for top/bot. 
+
+why @I instead of @L when using emap?
+
+>>>>>>>>>>>>without emap
+Post Inference result:
+length$node
+ EBase 
+   exists (Expl)[](Impl)[b; n](ex)[]x::ll<n>@b&b=@L & MayLoop[]&
+   {FLOW,(4,5)=__norm#E}[]
+   EAssume 
+     (exists n_46,a: x::ll<n_46>@a&{FLOW,(4,5)=__norm#E}[]
+
+
+>>>>>>>>>>>>with emap
+Post Inference result:
+length$node
+ EBase 
+   exists (Expl)[](Impl)[b; n](ex)[]x::ll<n>@b&b=@I & MayLoop[]&
+   {FLOW,(4,5)=__norm#E}[]
+   EAssume 
+     (exists n_46,a: x::ll<n_46>@a&{FLOW,(4,5)=__norm#E}[]
+
+
 =======================================================
+# ex16b3.ss
+ prune_eq_top_bot_imm_disjunct should push exists outer.
+
+
+prune_eq_top_bot_imm_disjunct@2786@2785@2629
+prune_eq_top_bot_imm_disjunct inp1 : exists(a_1495:exists(imm_1486:exists(b_1475:exists(imm_1485:@L<:imm_1485 & 
+                                                             imm_1485=b_1475) & 
+                                             b<:b_1475 & 
+                                             (((b=imm_1486 & imm_1486<:b_1475) | 
+                                               (b=b_1475 & 
+                                                b_1475<:imm_1486 & 
+                                                b_1475!=imm_1486)))) & 
+                               exists(imm_1487:((imm_1487=imm_1486 & 
+                                                 imm_1486<:a_1495) | 
+                                                (imm_1487=a_1495 & 
+                                                 a_1495<:imm_1486 & 
+                                                 a_1495!=imm_1486))) & 
+                               (((@A=a_1495 & a_1495<:imm_1486) | 
+                                 (@A=imm_1486 & imm_1486<:a_1495 & 
+                                  imm_1486!=a_1495))))) & 
+ b<:@L
+prune_eq_top_bot_imm_disjunct@2786 EXIT:true
 =======================================================
 =======================================================
 =======================================================

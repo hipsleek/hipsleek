@@ -508,6 +508,7 @@ let prune_imm_min_max_conjunct poset f =
   3. a=bot & b <: a & a != b
 *)
 let prune_eq_top_bot_imm_disjunct f =
+  let emap = build_eset_of_imm_formula f in 
   let collect_subann p_f =
     match p_f with
     | SubAnn (Var(sv1,_), Var(sv2,_),_) -> [(sv1, sv2)]
@@ -532,7 +533,8 @@ let prune_eq_top_bot_imm_disjunct f =
     let p = SVPoset.create () in
     (List.iter (SVPoset.add p) subanns; p) in
   let ( <: ) a b = SVPoset.is_lt poset a b in
-  let ( := ) a b = SetSV.mem a (if b = imm_top then eq_top else eq_bot) in
+  let ( := ) a b =                     (* eq_const_ann b emap a in *)  (*TODOIMM: should use emap *)
+    SetSV.mem a (if b = imm_top then eq_top else eq_bot) in
   let prune_if_top a b = ((a := imm_top) && (a <: b)) || ((b := imm_top) && (b <: a)) in
   let prune_if_bot a b = ((a := imm_bot) && (b <: a)) || ((b := imm_bot) && (a <: b)) in
   let prune_if_match (sv1, sv2) = prune_if_top sv1 sv2 || prune_if_bot sv1 sv2 in
@@ -543,9 +545,13 @@ let prune_eq_top_bot_imm_disjunct f =
   Debug.no_1 "prune_eq_top_bot_imm_disjunct" pr string_of_bool prune_eq_top_bot_imm_disjunct f
 
 let prune_eq_top_bot_imm f =
-  let ds = split_disjunctions_deep f in
+  let conj_lst = split_conjunctions f in
+  let imm, non_imm = List.partition contains_imm conj_lst in
+  let non_imm_part = join_conjunctions non_imm in
+  let imm_part = join_conjunctions imm in
+  let ds = split_disjunctions_deep imm_part in
   let new_disjunctions = List.filter (fun f -> not (prune_eq_top_bot_imm_disjunct f)) ds in
-  join_disjunctions new_disjunctions
+  join_conjunctions ([join_disjunctions new_disjunctions]@[non_imm_part])
 
 let prune_eq_top_bot_imm f =
   let pr = !print_formula in
