@@ -852,7 +852,20 @@ let substitute_args_x a_rel = match a_rel with
       in
       let typed_args = 
         try
-          List.combine (x_add_1 Cast.look_up_rel_args_type_from_prog prog id) args 
+          let typ_args = x_add_1 Cast.look_up_rel_args_type_from_prog prog id in
+          let () = x_binfo_hp (add_str "typ_args" (pr_list string_of_typ)) typ_args no_pos in
+          let () = x_binfo_hp (add_str "args" (pr_list !CP.print_exp)) args no_pos in
+          let dupl_type ty n =
+            let n_ty = List.length ty in
+            let rec aux m =
+              if m<n_ty then 
+                failwith "dupl_type requires in whole multiples"
+                  (* BList.take n ty *)
+              else if m==n_ty then ty
+              else ty@(aux (m-n_ty))
+            in aux n
+          in
+          List.combine (dupl_type typ_args (List.length args)) args 
         with _ ->  (* args *)
             failwith "substitute_args: failure with look_up_rel_args_type"
       in

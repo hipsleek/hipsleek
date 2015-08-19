@@ -11,9 +11,9 @@ ll<n> == self=null & n=0 or
 relation P(ann a).
 
 int length(node x)
-  infer [P]
-  requires x::ll<n>@b & P(b)
-  ensures  x::ll<n>@a;
+  infer [@imm]
+  requires x::ll<n>@b //& P(b)
+  ensures  x::ll<n>;
 {
   if (x == null) return 0;
   else{

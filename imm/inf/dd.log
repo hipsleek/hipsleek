@@ -3,3 +3,6 @@ simplify##,Trace
 tp_pairwisecheck,Trace
 to_ptr
 add_imm_inv
+compute_fixpoint_td
+compute_fixpoint_x
+compute_fixpoint_xx

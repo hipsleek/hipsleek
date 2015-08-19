@@ -1201,53 +1201,56 @@ let old_main () =
       print_string_quiet ("\nException occurred: " ^ (Printexc.to_string e));
       print_string_quiet ("\nError3(s) detected at main \n");
       (* print result for svcomp 2015 *)
-      (
+      begin
         if !Globals.tnt_web_mode then
           print_web_mode ("\nError: " ^ (Printexc.to_string e))
         else if (!Globals.svcomp_compete_mode) then
           print_endline "UNKNOWN" (* UNKNOWN(5) *)
-      )
-    end
+      end;
+      (* hip_epilogue () *)
+   end
 
 let () = 
-  if not(!Globals.do_infer_inc) then
-    let () = x_dinfo_pp "Executing old_main() " no_pos in
-    old_main ()
-  else
-    (* this part seems to be for incremental inference *)
-    let res = pre_main () in
-    while true do
-      try
-        (* let () = print_endline "I am executing here.." in *)
-        let () = print_string "# " in
-        let s = Parse_cmd.parse_cmd (read_line ()) in
-        match s with
-        | (_,(false, None, None)) -> exit 0;
-        | _ ->
-          Iformula.cmd := s;
-          loop_cmd res;
-          (* let () =  *)
-          (*   if !Global.enable_counters then *)
-          (*     print_string (Gen.Profiling.string_of_counters ()) *)
-          (*   else () in *)
-          let () = Gen.Profiling.print_counters_info () in
-          let () = Gen.Profiling.print_info () in
-          ()
-      with _ as e -> begin
-          finalize_bug ();
-          print_string_quiet "caught\n"; Printexc.print_backtrace stdout;
-          print_string_quiet ("\nException occurred: " ^ (Printexc.to_string e));
-          print_string_quiet ("\nError4(s) detected at main \n");
-          (* print result for svcomp 2015 *)
-          (
-            if !Globals.tnt_web_mode then
-              print_web_mode ("\nError: " ^ (Printexc.to_string e))
-            else if (!Globals.svcomp_compete_mode) then
-              print_endline "UNKNOWN" (* UNKNOWN(7) *)
-          )
-        end
-    done;
-    hip_epilogue ()
+  begin
+    if not(!Globals.do_infer_inc) then
+      let () = x_dinfo_pp "Executing old_main() " no_pos in
+      old_main ()
+    else
+      (* this part seems to be for incremental inference *)
+      let res = pre_main () in
+      while true do
+        try
+          (* let () = print_endline "I am executing here.." in *)
+          let () = print_string "# " in
+          let s = Parse_cmd.parse_cmd (read_line ()) in
+          match s with
+          | (_,(false, None, None)) -> exit 0;
+          | _ ->
+            Iformula.cmd := s;
+            loop_cmd res;
+            (* let () =  *)
+            (*   if !Global.enable_counters then *)
+            (*     print_string (Gen.Profiling.string_of_counters ()) *)
+            (*   else () in *)
+            let () = Gen.Profiling.print_counters_info () in
+            let () = Gen.Profiling.print_info () in
+            ()
+        with _ as e -> begin
+            finalize_bug ();
+            print_string_quiet "caught\n"; Printexc.print_backtrace stdout;
+            print_string_quiet ("\nException occurred: " ^ (Printexc.to_string e));
+            print_string_quiet ("\nError4(s) detected at main \n");
+            (* print result for svcomp 2015 *)
+            (
+              if !Globals.tnt_web_mode then
+                print_web_mode ("\nError: " ^ (Printexc.to_string e))
+              else if (!Globals.svcomp_compete_mode) then
+                print_endline "UNKNOWN" (* UNKNOWN(7) *)
+            )
+          end
+      done
+  end;
+  hip_epilogue ()
 
 
 
