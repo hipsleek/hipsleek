@@ -424,7 +424,7 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
       | HRel (hp, e, _) ->
         let args = CP.diff_svl (get_all_sv rhs_node) [hp] in
         let root, _ = Sautil.find_root prog [hp] args [] in
-        let () = x_binfo_hp (add_str "root" Cprinter.string_of_spec_var) root pos in
+        let () = x_tinfo_hp (add_str "root" Cprinter.string_of_spec_var) root pos in
         (CP.ConstAnn(Mutable), [], root)
       | _ -> report_error no_pos "choose_context unexpected rhs formula\n"
     in
@@ -712,7 +712,7 @@ and imm_split_lhs_node_x estate l_node r_node = match l_node, r_node with
       (n_es, constr)
     else
       let hole_flag = produces_hole  vr.h_formula_view_imm in
-      let () = x_binfo_hp (add_str "hole flag" string_of_bool) hole_flag no_pos in
+      let () = x_tinfo_hp (add_str "hole flag" string_of_bool) hole_flag no_pos in
         if not(hole_flag) then
           let n_f, niv, constr = update_imm l_node vl.h_formula_view_imm vr.h_formula_view_imm estate in
           let n_es = {estate with es_formula = mkStar (formula_of_heap n_f no_pos) estate.es_formula Flow_combine no_pos;
@@ -1578,10 +1578,10 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          let vr_view_derv = vr.h_formula_view_derv in
          let vr_view_split = vr.h_formula_view_split in
          let () = x_ninfo_hp (add_str "cyclic " pr_id) " 1" no_pos in
-         let () = x_binfo_hp (add_str "vl_name: " pr_id) vl_name no_pos in
-         let () = x_binfo_hp (add_str "vl_kind: " string_of_view_kind) vl_kind no_pos in
-         let () = x_binfo_hp (add_str "vr_kind: " string_of_view_kind) vr_kind no_pos in
-         let () = x_binfo_hp (add_str "vr_name: " pr_id) vr_name no_pos in
+         let () = x_tinfo_hp (add_str "vl_name: " pr_id) vl_name no_pos in
+         let () = x_tinfo_hp (add_str "vl_kind: " string_of_view_kind) vl_kind no_pos in
+         let () = x_tinfo_hp (add_str "vr_kind: " string_of_view_kind) vr_kind no_pos in
+         let () = x_tinfo_hp (add_str "vr_name: " pr_id) vr_name no_pos in
          let is_l_lock = match vl_vdef.view_inv_lock with
            | Some _ -> true
            | None -> false

@@ -9,6 +9,29 @@ data node {
 HeapPred H(node a, node b).
 
 checkentail H(p,qqq) |- H(p,null) .
+expect Fail.
+
+checkentail H(p,qqq) & qqq=null |- H(p,null) .
+expect Valid.
+
+checkentail H(p,qqq) & qqq=p |- H(p,null) .
+expect Fail.
+
+checkentail H(p,qqq) & qqq=p |- H(p,p) .
+expect Valid.
+
+checkentail H(p,qqq) |- (exists f: H(p,f) & f=null) .
+expect Fail.
+
+checkentail H(p,qqq) |- (exists f: H(p,f) & f=qqq) .
+expect Valid.
+
+checkentail H(p,qqq) |- (exists f: H(p,f)) .
+expect Valid.
+
+checkentail H(p,qqq) |- H(p,f) .
+expect Valid.
+
 print residue.
 
 

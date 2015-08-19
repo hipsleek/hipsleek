@@ -725,7 +725,35 @@ Total number of errors: 3 in files:
   lemmas/rlseg.slk({L1#Valid},{L2#Valid},{L3#Valid})
   lemmas/dseg-new.slk({L3#Valid}) lemmas/lseg_complex.slk({E1#Valid},{E2#Valid}).
 
+--assert-no-glob-vars
+
+Total number of errors: 4 in files:
+  lemmas/lseg.slk({L4#Valid}) 
+  lemmas/rlseg.slk({L1#Valid},{L2#Valid},{L3#Valid}) 
+  lemmas/dseg-new.slk({L3#Valid}) 
+  lemmas/lseg_complex.slk({E1#Valid},{E2#Valid}).
+
+--old-empty-to-conseq
+All test results were as expected.
+Total verification time: 54.72 second
+	Time spent in main process: 39.34 second
+	Time spent in child processes: 15.38 second
+	Number of false contexts: 93
+
 =====================================================================
+# bug10c4.slk --en-hrel-as-view
+
+# Can implicit instantiation be supported
+  for HRel views?
+
+# Can we at least give a warning, if not supported.
+
+checkentail H(p,qqq) |- H(p,f) .
+
+INPUT 0: [][] 
+ ### ante =  p::H<p,qqq>NOANN&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   p::H<p,f>NOANN&{FLOW,(20,21)=__norm#E}[]
 =====================================================================
 =====================================================================
 =====================================================================
