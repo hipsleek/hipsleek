@@ -15,25 +15,36 @@ print residue.
 
 
 /*
-# bug10c3.slk --pcp
+# bug10d3.slk 
+
+Entail 1: Fail.(may) cause:base case unfold failed
+
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: base_case_unfold failed
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ COND ==>  BaseCaseUnfold]]
+ CEX:false
 
 
-# Is null handled properly?
+# Why this message below not there? Is it because of
+  conditional search?
 
- p::H<p,qqq>NOANN&{FLOW,(20,21)=__norm#E}[] [] |-  EBase 
-   (exists flted_11_21: p::H<p,flted_11_21>NOANN&flted_11_21=null&
-   {FLOW,(20,21)=__norm#E}[]
+do_match@1 EXIT: MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: logical bug
+   fe_locs: {
+     fc_message:  true |-  qqq=null. LOCS:[0;13] (may-bug)
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ COND ==>  Match(x,x)]]
+ CEX:false
 
-!!! **solver.ml#9565:to_conseq(glob):[]
-!!! **solver.ml#9566:impl_inst(subs):[]
-!!! **solver.ml#9567:ex_subs:[(flted_11_26,qqq)]
-
-!!! **solver.ml#9565:to_conseq(glob):[]
-!!! **solver.ml#9566:impl_inst(subs):[]
-!!! **solver.ml#9567:ex_subs:[(flted_11_26,qqq)]
-!!! **solver.ml#9643:to_ante: true
-!!! **solver.ml#9644:to_conseq: true
-!!! **solver.ml#7471:p1(after xpure_perm): true
 
 */
 

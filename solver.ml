@@ -8259,13 +8259,12 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
   (* if smart_xpure then try 0, then 1
      else try 1
   *)
-  x_dinfo_hp (add_str "rhs_p : " Cprinter.string_of_mix_formula) rhs_p pos;
   (* ========== Immutability normalization ======== *)
   (* let lhs_h, estate_orig = Immutable.imm_norm_for_entail_empty_rhs lhs_h lhs_p  estate_orig in *)
   (* ========== end - Immutability normalization ======== *)
 
   let () = Gen.reset_int2 () in
-  x_tinfo_hp (add_str "rhs_p" (Cprinter.string_of_mix_formula)) rhs_p pos;
+  x_binfo_hp (add_str "rhs_p" (Cprinter.string_of_mix_formula)) rhs_p pos;
   x_binfo_hp (add_str "lhs_h" (Cprinter.string_of_h_formula)) lhs_h pos;
   x_binfo_hp (add_str "estate_orig.es_heap" (Cprinter.string_of_h_formula)) estate_orig.es_heap pos;
   (* TODO-EXPURE lhs heap here *)
@@ -10284,7 +10283,11 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
         let rho = 
           try
             List.combine rho_0 label_list
-          with _ -> [] (* matching with cyclic proof is not the same predicate *)
+          with _ -> 
+            let dummy_label = List.map (fun _ -> Cast.LO.unlabelled) rho_0 in
+            List.combine rho_0 dummy_label
+            (* failwith "rho mismatched label_list" *)
+            (* matching with cyclic proof is not the same predicate *)
         in (* with branch label *)
         let evars, ivars, impl_vars, expl_vars = 
           do_match_perm_vars l_perm r_perm evars ivars impl_vars expl_vars 

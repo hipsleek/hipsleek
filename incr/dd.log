@@ -3,11 +3,13 @@
 #lookup_view_baga_with_subs
 #merge_alias_nodes_formula
 #heap_entail_empty_rhs_heap
-do_match
-do_match_inst_perm_vars,Trace
+do_match,Trace
+subs_to_inst_vars
+#do_match_inst_perm_vars,Trace
 #process_action
 #imm_split_lhs_node
 #update_ann
 #replace_list_ann
 #subtract_ann
+heap_entail_conjunct
 

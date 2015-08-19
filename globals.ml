@@ -177,6 +177,7 @@ type view_kind =
   | View_DERV
   | View_SPEC
 
+
 (* TODO : move typ here in future *)
 type typ =
   | FORM (* Type for formula *)
@@ -235,6 +236,14 @@ type typ =
 (*     | _, _ -> false *)
 
 type typed_ident = (typ * ident)
+
+let string_of_view_kind k = match k with
+  | View_PRIM -> "View_PRIM"
+  | View_HREL -> "View_HREL"
+  | View_NORM -> "View_NORM"
+  | View_EXTN -> "View_EXTN"
+  | View_DERV -> "View_DERV"
+  | View_SPEC -> "View_SPEC"
 
 let is_undef_typ t =
   match t with

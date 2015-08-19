@@ -1565,6 +1565,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          let vl_is_rec = vl_vdef.view_is_rec in
          let vl_is_prim = vl_vdef.view_is_prim in
          let vr_is_prim = vr_vdef.view_is_prim in
+         let vl_kind = vl_vdef.view_kind in
+         let vr_kind = vr_vdef.view_kind in
          let vr_is_rec = vr_vdef.view_is_rec in
          let vl_self_pts = vl_vdef.view_pt_by_self in
          let vr_self_pts = vr_vdef.view_pt_by_self in
@@ -1575,9 +1577,11 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          let vl_view_derv =  vl.h_formula_view_derv in
          let vr_view_derv = vr.h_formula_view_derv in
          let vr_view_split = vr.h_formula_view_split in
-         let () = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 1" no_pos in
-         let () = Debug.ninfo_hprint (add_str "vl_name: " pr_id) vl_name no_pos in
-         let () = Debug.ninfo_hprint (add_str "vr_name: " pr_id) vr_name no_pos in
+         let () = x_ninfo_hp (add_str "cyclic " pr_id) " 1" no_pos in
+         let () = x_binfo_hp (add_str "vl_name: " pr_id) vl_name no_pos in
+         let () = x_binfo_hp (add_str "vl_kind: " string_of_view_kind) vl_kind no_pos in
+         let () = x_binfo_hp (add_str "vr_kind: " string_of_view_kind) vr_kind no_pos in
+         let () = x_binfo_hp (add_str "vr_name: " pr_id) vr_name no_pos in
          let is_l_lock = match vl_vdef.view_inv_lock with
            | Some _ -> true
            | None -> false
@@ -1638,10 +1642,12 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
              [(0,M_match m_res)],-1 (*force a MATCH after each lemma or self-fold unfold/fold*)
            else
              let base_case_prio = 3 in
-             let a1 =  (base_case_prio,M_base_case_unfold m_res) in
+             let a1 = if (!dis_base_case_unfold || vl_kind==View_HREL || vl_kind==View_PRIM)  
+               then (-1,M_Nothing_to_do "base_case_unfold not selected")
+               else (base_case_prio,M_base_case_unfold m_res) in
              let a1 =  
                (* treat the case where the lhs node is abs as if lhs=emp, thus try a base case fold *)
-               if not(imm_subtype_flag) then (base_case_prio, Cond_action [(base_case_prio,M_base_case_fold m_res);a1])
+               if not(imm_subtype_flag) && vr_kind!=View_HREL && vr_kind!=View_PRIM  then (base_case_prio, Cond_action [(base_case_prio,M_base_case_fold m_res);a1])
                else a1 in
              (*gen tail-rec <-> non_tail_rec: but only ONE lemma_tail_rec_count *)
              (* todo: check exist tail-rec <-> non_tail_rec ?? instead of lemma_tail_rec_count *)
@@ -1688,7 +1694,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
              let a3 = (
                (*Do not fold/unfold LOCKs, only match*)
                if (is_l_lock || is_r_lock) then Some a2 else 
-               if (String.compare vl_name vr_name)==0 then Some (if !dis_base_case_unfold then a2 else (1, Cond_action [a1;a2]))
+               if (String.compare vl_name vr_name)==0 then Some (1,Cond_action [a1;a2]) (* if !dis_base_case_unfold then a2 else (1, Cond_action [a1;a2]) *)
                else None
              ) in
              let a4 = (
