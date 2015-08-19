@@ -8,9 +8,11 @@ pred lseg<n, p> ==
   }  inv n >= 0.
 
 
-lemma_safe "V22" self::lseg<a, r> * r::lseg<b, p>  -> self::lseg<n, p> & n = a + b & a,b >=0.
+lemma_safe "V22" self::lseg<a, r> * r::lseg<b, p>  
+     -> self::lseg<n, p> & n = a + b & a,b >=0.
 
-//lemma_safe "V21" self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
+//lemma_safe "V21" self::lseg<n, p> & n = a + b & a,b >=0 
+//     <- self::lseg<a, r> * r::lseg<b, p>.
 
 /*
 # ex12d.slk --assert-no-glob-vars
@@ -18,12 +20,33 @@ lemma_safe "V22" self::lseg<a, r> * r::lseg<b, p>  -> self::lseg<n, p> & n = a +
 lemma_safe "V22" self::lseg<a, r> * r::lseg<b, p> 
    -> self::lseg<n, p> & n = a + b & a,b >=0.
 
-!!! WARNING logtime exception:0.000242error at: 
-SLEEK FAILURE (END)
+!!! **solver.ml#9571:impl_vars:[]
+!!! **solver.ml#9572:glob_vs:[b_113,p_114]
+!!! **solver.ml#9573:evars:[]
+!!! **solver.ml#9574:ivars:[]
+!!! WARNING logtime exception:0.000236
+Exception processed: Failure("non-empty global vars to_conseq(glob):
+[(b_113,b_87),(p_114,p_88)]")
+
+
+INPUT 0: [][] 
+ ### ante =  (exists a_86,b_87,p_88,r_89: r_89::lseg<b_87,p_88>@M&
+ self_V22=r_89 & a_86=0 & a_86=a & b_87=b & p_88=p&{FLOW,(20,21)=__norm#E}[]
+ or (exists p_101,flted_7_102,Anon_103,r_104,a_86,b_87,p_88,
+    r_89: self_V22::node<Anon_103,r_104>@M * 
+          r_104::lseg<flted_7_102,p_101>@M * r_89::lseg<b_87,p_88>@M&
+    a_86!=0 & flted_7_102+1=a_86 & p_101=r_89 & a_86=a & b_87=b & p_88=p&
+    {FLOW,(20,21)=__norm#E}[]
+  ### conseq =  EBase 
+   exists (Expl)[](Impl)[n](ex)[]
+  (exists p_64,n: self_V22::lseg<n,p_64>@M&
+   n=b+a & 0<=a & 0<=b & p_64=p&{FLOW,(20,21)=__norm#E}[]
 
 # can we print more better messages ..
+# Why is n implicit and existential at the same time?
 
-lemma_safe "V21" self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
+lemma_safe "V21" self::lseg<n, p> & n = a + b & a,b >=0 
+     <- self::lseg<a, r> * r::lseg<b, p>.
 
 # V21 is mirror of V22
   Why only V22 fails by itself?
