@@ -424,7 +424,7 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
       | HRel (hp, e, _) ->
         let args = CP.diff_svl (get_all_sv rhs_node) [hp] in
         let root, _ = Sautil.find_root prog [hp] args [] in
-        let () = x_binfo_hp (add_str "root" Cprinter.string_of_spec_var) root pos in
+        let () = x_tinfo_hp (add_str "root" Cprinter.string_of_spec_var) root pos in
         (CP.ConstAnn(Mutable), [], root)
       | _ -> report_error no_pos "choose_context unexpected rhs formula\n"
     in
@@ -987,7 +987,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
         match rhs_node with
         | HRel (hp2,e2,_) -> 
           if CP.eq_spec_var hp hp2 then
-            let () = x_binfo_pp "same HRel in LHS & RHS" no_pos in
+            let () = x_tinfo_pp "same HRel in LHS & RHS" no_pos in
             (* WN : this needs to be properly implemented *)
             [] (* form_match_on_two_hrel [hp] "" [hp2] prog hp e rhs_node aset f f0 emap  *)
           else []
@@ -1923,7 +1923,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
              else
                (* fold to activate/change  *)
              if (vr_is_prim) then [] else
-               let () = x_binfo_pp "folding..." no_pos in
+               let () = x_tinfo_pp "folding..." no_pos in
                [(1,M_fold m_res)]
            else if not(sub_ann) then [(3,M_base_case_fold m_res)]
            else []
