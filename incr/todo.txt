@@ -1,4 +1,4 @@
-
+cd 
 =====================================================================
 # ex3b.ss
 
@@ -676,7 +676,7 @@ heap_entail_build_mix_formula_check#2 inp2 :ante: true
 heap_entail_build_mix_formula_check#2 inp3 :conseq: p=p & qqq=null
 heap_entail_build_mix_formula_check#2@19 EXIT:( true, p=p & qqq=null)
 =====================================================================
-# bug10d3.slk 
+# bug10d3.slk --old-base-case-unfold
 
 Entail 1: Fail.(may) cause:base case unfold failed
 
@@ -716,7 +716,15 @@ Total number of errors: 3 in files:
   lemmas/rlseg.slk({L1#Valid},{L2#Valid},{L3#Valid})
 lemmas/dseg-new.slk({L3#Valid})
 lemmas/lseg_complex.slk({E1#Valid},{E2#Valid}).
-!
+
+--old-base-case-unfold
+# has same set of errors. change may have come from improvement to
+ LHS and RHS substititions done.
+
+Total number of errors: 3 in files:
+  lemmas/rlseg.slk({L1#Valid},{L2#Valid},{L3#Valid})
+  lemmas/dseg-new.slk({L3#Valid}) lemmas/lseg_complex.slk({E1#Valid},{E2#Valid}).
+
 =====================================================================
 =====================================================================
 =====================================================================

@@ -1642,12 +1642,12 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
              [(0,M_match m_res)],-1 (*force a MATCH after each lemma or self-fold unfold/fold*)
            else
              let base_case_prio = 3 in
-             let a1 = if (!dis_base_case_unfold || vl_kind==View_HREL || vl_kind==View_PRIM)  
+             let a1 = if (!dis_base_case_unfold || not(!Globals.old_base_case_unfold) && (vl_kind==View_HREL || vl_kind==View_PRIM))  
                then (-1,M_Nothing_to_do "base_case_unfold not selected")
                else (base_case_prio,M_base_case_unfold m_res) in
              let a1 =  
                (* treat the case where the lhs node is abs as if lhs=emp, thus try a base case fold *)
-               if not(imm_subtype_flag) && vr_kind!=View_HREL && vr_kind!=View_PRIM  then (base_case_prio, Cond_action [(base_case_prio,M_base_case_fold m_res);a1])
+               if not(imm_subtype_flag) && (!Globals.old_base_case_unfold || (vr_kind!=View_HREL && vr_kind!=View_PRIM))  then (base_case_prio, Cond_action [(base_case_prio,M_base_case_fold m_res);a1])
                else a1 in
              (*gen tail-rec <-> non_tail_rec: but only ONE lemma_tail_rec_count *)
              (* todo: check exist tail-rec <-> non_tail_rec ?? instead of lemma_tail_rec_count *)

@@ -1271,6 +1271,7 @@ let assert_unsound_false = ref false
 
 let old_collect_false = ref false
 let old_infer_collect = ref false
+let old_base_case_unfold = ref false
 let old_impl_gather = ref false
 let old_parse_fix = ref false
 let hrel_as_view_flag = ref false
