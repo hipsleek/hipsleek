@@ -27,8 +27,16 @@ int length(node x)
 
 
 /**
+splify below:
+@A=max(imm_1486,a_1495) & b=min(imm_1486,b_1475) & imm_1485=max(b,b_1475) & 
+ @L<:imm_1485 & imm_1487=min(imm_1486,a_1495) & flted_8_1468=n_1476 & 
+ b<:b_1475 & b<:@L & x'=x & P(b) & x'!=null & !(v_bool_18_1446') & 
+ flted_8_1468+1=n & v_int_24_1445'=1+tmp_1497 & res=v_int_24_1445' & 
+ (((1<=flted_8_1468 & q_1470!=null) | (q_1470=null & flted_8_1468=0))) & x'=2
 
-from where do i get RELASS [P]: ( P(b)) -->  not(b<:@L)] ?
+
+=======================================================
+from where do i get RELASS [P]: ( P(b)) -->  not(b<:@L)] ? (FIXED) - forgot to add the merge guards for view nodes
 
 !!! **cvutil.ml#1217:elim_abs (pure):[]
 *************************************
@@ -47,5 +55,14 @@ RELASS [P]: ( P(b)) -->  not(b<:@L)]
 *****************************************
 [RELASS [P]: ( P(b)) -->  true]
 *****************************************
+
+
+ @A=max(imm_1486,a_1495) & b=min(imm_1486,b_1475) & imm_1485=max(b,b_1475) & 
+ @L<:imm_1485 & imm_1487=min(imm_1486,a_1495) & flted_8_1468=n_1476 & 
+ b<:b_1475 & b<:@L & x'=x & P(b) & x'!=null & !(v_bool_18_1446') & 
+ flted_8_1468+1=n & v_int_24_1445'=1+tmp_1497 & res=v_int_24_1445' & 
+ (((1<=flted_8_1468 & q_1470!=null) | (q_1470=null & flted_8_1468=0))) & x'=2
+
+
 
 */

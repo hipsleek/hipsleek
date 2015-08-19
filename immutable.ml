@@ -2689,7 +2689,7 @@ let merge_two_view_nodes prog vn1 vn2 h1 h2 quantif unfold_fun qvars emap =
   (* comp_view ---> true when views are compatible (same view def + view def is not segmented) *)
   if comp  && comp_view then
     let (eqs, subs) = partition_eqs_subs vn1.h_formula_view_arguments vn2.h_formula_view_arguments quantif in
-    ([ret_h], eqs, subs, [], [])                      (* should I also add the pure of merged (@A) node? *)
+    ([ret_h], eqs, subs, [], guards)                      (* should I also add the pure of merged (@A) node? *)
     (* ([], []) *)
   else
     (* let xpure1 =  *)
@@ -2697,6 +2697,21 @@ let merge_two_view_nodes prog vn1 vn2 h1 h2 quantif unfold_fun qvars emap =
   if (Imm.is_abs ~emap:emap vn1.h_formula_view_imm) then  ([h2], [], [], [], [])
   else if (Imm.is_abs ~emap:emap vn2.h_formula_view_imm) then  ([h1], [], [], [], [])
   else ([h1;h2], [], [], [], [])
+
+let merge_two_view_nodes prog vn1 vn2 h1 h2 quantif unfold_fun qvars emap =
+  let pr1 = Cprinter.string_of_h_formula in
+  let pr_pair_svl = (pr_list (pr_pair !CP.print_sv !CP.print_sv)) in
+  let pr_out = pr_penta (pr_list pr1)
+      (add_str "equalities" pr_pair_svl)
+      (add_str "substitutions" pr_pair_svl)
+      pr_none 
+      (add_str "merge guards" (pr_list !CP.print_formula)) in
+  Debug.no_3 "merge_two_view_nodes" 
+    (add_str "view candidate 1" pr1)
+    (add_str "view candidate 2" pr1)
+    (add_str "aliases" CP.EMapSV.string_of)
+    pr_out
+    (fun _ _ _ -> merge_two_view_nodes prog vn1 vn2 h1 h2 quantif unfold_fun qvars emap) h1 h2 emap
 
 (* assume nodes are aliased *)
 let merge_data_node_w_view_node prog dn1 vn2 h1 h2 quantif unfold_fun qvars emap =
