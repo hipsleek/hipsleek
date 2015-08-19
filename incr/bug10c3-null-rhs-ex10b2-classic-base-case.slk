@@ -1,0 +1,105 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+HeapPred H(node a, node b).
+
+checkentail H(p,qqq) |- H(p,null) .
+expect Fail.
+
+checkentail H(p,qqq) & qqq=null |- H(p,null) .
+expect Valid.
+
+checkentail H(p,qqq) & qqq=p |- H(p,null) .
+expect Fail.
+
+checkentail H(p,qqq) & qqq=p |- H(p,p) .
+expect Valid.
+
+checkentail H(p,qqq) |- (exists f: H(p,f) & f=null) .
+expect Fail.
+
+checkentail H(p,qqq) |- (exists f: H(p,f) & f=qqq) .
+expect Valid.
+
+checkentail H(p,qqq) |- (exists f: H(p,f)) .
+expect Valid.
+
+checkentail H(p,qqq) |- H(p,f) .
+expect Valid.
+
+print residue.
+
+
+/*
+# bug10c3.slk --en-hrel-as-view
+
+# Is null handled properly?
+
+ p::H<p,qqq>NOANN&{FLOW,(20,21)=__norm#E}[] [] |-  EBase 
+   (exists flted_11_21: p::H<p,flted_11_21>NOANN&flted_11_21=null&
+   {FLOW,(20,21)=__norm#E}[]
+
+(==solver.ml#10272==)
+do_match_inst_perm_vars@14@13@12@11@10@9@8@7@6@5@4@3@2@1
+do_match_inst_perm_vars inp1 :None
+do_match_inst_perm_vars inp2 :None
+do_match_inst_perm_vars inp3 :evars:flted_11_26
+do_match_inst_perm_vars inp4 :impl_vars:
+do_match_inst_perm_vars inp5 :l_args:p,qqq
+do_match_inst_perm_vars inp6 :r_args:p,flted_11_26
+do_match_inst_perm_vars@14 EXIT:rho: [(flted_11_26,qqq)]
+ to_ante; to_conseq: ( true, true)
+
+!!! **solver.ml#7471:p1(after xpure_perm): true
+!!! **solver.ml#8268:lhs_h: emp
+!!! **solver.ml#8269:estate_orig.es_heap: p::H<p,qqq>NOANN
+!!! **solver.ml#8290:curr_lhs_h: p::H<p,qqq>NOANN
+!!! **solver.ml#8291:lhs_p: true
+!!! **solver.ml#8294:curr_lhs_h0: p::H<p,qqq>NOANN
+(==solver.ml#8444==)
+heap_entail_build_mix_formula_check#2@18@17@16@15@13@12@11@10@9@8@7@6@5@4@3@2@1
+heap_entail_build_mix_formula_check#2 inp1 :evars:[flted_11_26]
+heap_entail_build_mix_formula_check#2 inp2 :ante: true
+heap_entail_build_mix_formula_check#2 inp3 :conseq: flted_11_26=null
+heap_entail_build_mix_formula_check#2@18 EXIT:( true, true)
+
+---- bug10d3.slk
+
+==solver.ml#10272==)
+do_match_inst_perm_vars@14@13@12@11@10@9@8@7@6@5@4@3@2@1
+do_match_inst_perm_vars inp1 :None
+do_match_inst_perm_vars inp2 :None
+do_match_inst_perm_vars inp3 :evars:p_30,flted_13_31
+do_match_inst_perm_vars inp4 :impl_vars:
+do_match_inst_perm_vars inp5 :l_args:p,qqq
+do_match_inst_perm_vars inp6 :r_args:p_30,flted_13_31
+do_match_inst_perm_vars@14 EXIT:rho: [(p_30,p),(flted_13_31,qqq)]
+ to_ante; to_conseq: ( true, true)
+
+!!! **solver.ml#7471:p1(after xpure_perm): true
+!!! **solver.ml#8268:lhs_h: emp
+!!! **solver.ml#8269:estate_orig.es_heap: x::G<p,qqq>@M
+!!! **solver.ml#8290:curr_lhs_h: x::G<p,qqq>@M
+!!! **solver.ml#8291:lhs_p: true
+!!! **solver.ml#8294:curr_lhs_h0: x::G<p,qqq>@M
+(==solver.ml#8444==)
+heap_entail_build_mix_formula_check#2@18@17@16@15@13@12@11@10@9@8@7@6@5@4@3@2@1
+heap_entail_build_mix_formula_check#2 inp1 :evars:[p_30,flted_13_31]
+heap_entail_build_mix_formula_check#2 inp2 :ante: true
+heap_entail_build_mix_formula_check#2 inp3 :conseq: p=p & qqq=null
+heap_entail_build_mix_formula_check#2@18 EXIT:( true, p=p & qqq=null)
+
+(==solver.ml#8445==)
+heap_entail_build_mix_formula_check#2@19@17@16@15@13@12@11@10@9@8@7@6@5@4@3@2@1
+heap_entail_build_mix_formula_check#2 inp1 :evars:[p_30,flted_13_31]
+heap_entail_build_mix_formula_check#2 inp2 :ante: true
+heap_entail_build_mix_formula_check#2 inp3 :conseq: p=p & qqq=null
+heap_entail_build_mix_formula_check#2@19 EXIT:( true, p=p & qqq=null)
+
+*/
+

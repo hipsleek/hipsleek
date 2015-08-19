@@ -1,4 +1,4 @@
-
+cd 
 =====================================================================
 # ex3b.ss
 
@@ -574,6 +574,192 @@ run_infer:
 # where did this come from?
 
 !!! **WARNING****typeinfer.ml#1394:Cannot find x in fvs, TODO: fail?
+=====================================================================
+# bug10c.slk
+
+(FIXED)
+
+WARNING: bug10c-ex10b2-classic-base-case.slk_9:0_9:26:compute_view_fw_bw: data name in view is empty
+ERROR: at bug10c-ex10b2-classic-base-case.slk_9:0_9:26
+Message: compute_view_fw_bw: data not found: 
+Exception(compute_view_forward_backward_info):Failure("compute_view_fw_bw: data not found: ")
+!!! **solver.ml#7471:p1(after xpure_perm): true
+!!! **solver.ml#7471:p1(after xpure_perm): true
+
+!!! **solver.ml#8290:lhs_p: true
+Exception(merge_guards):Failure("Cpure.ml currently we do not provide support for TempAnn/TempRes exp")
+Exception(compatible_nodes):Failure("Cpure.ml currently we do not provide support for TempAnn/TempRes exp")
+Exception(merge_alias_nodes_h_formula):Failure("Cpure.ml currently we do not provide support for TempAnn/TempRes exp")
+Exception(merge_alias_nodes_formula):Failure("Cpure.ml currently we do not provide support for TempAnn/TempRes exp")
+Exception(heap_entail_empty_rhs_heap):Failure("Cpure.ml currently we do not provide support for TempAnn/TempRes exp")
+Exception(heap_entail_conjunct_helper):Failure("Cpure.ml currently we do not provide support for TempAnn/TempRes exp")
+=====================================================================
+# bug10c.slk (FIXED : using hp_repl)
+
+!!! **solver.ml#7471:p1(after xpure_perm): true
+!!! **solver.ml#8290:lhs_p: true
+(====)
+merge_guards@22@21@20
+merge_guards inp1 :emap[]
+merge_guards inp2 :@[NOANN]
+merge_guards inp3 :@[NOANN]
+merge_guards@22 EXIT ExceptionFailure("Cpure.ml currently we do not provide support for TempAnn/TempRes exp")Occurred!
+
+(==immutable.ml#2822==)
+merge_alias_nodes_h_formula@21@20
+merge_alias_nodes_h_formula inp1 : p::H<p,p>NOANN * p::H<p,p>NOANN
+merge_alias_nodes_h_formula inp2 : true
+merge_alias_nodes_h_formula@21 EXIT ExceptionFailure("Cpure.ml currently we do not provide support for TempAnn/TempRes exp")Occurred!
+=====================================================================
+# bug10c3.slk --en-hrel-as-view
+
+# Is null handled properly?
+
+ p::H<p,qqq>NOANN&{FLOW,(20,21)=__norm#E}[] [] |-  EBase 
+   (exists flted_11_21: p::H<p,flted_11_21>NOANN&flted_11_21=null&
+   {FLOW,(20,21)=__norm#E}[]
+
+(==solver.ml#10272==)
+do_match_inst_perm_vars@14@13@12@11@10@9@8@7@6@5@4@3@2@1
+do_match_inst_perm_vars inp1 :None
+do_match_inst_perm_vars inp2 :None
+do_match_inst_perm_vars inp3 :evars:flted_11_26
+do_match_inst_perm_vars inp4 :impl_vars:
+do_match_inst_perm_vars inp5 :l_args:p,qqq
+do_match_inst_perm_vars inp6 :r_args:p,flted_11_26
+do_match_inst_perm_vars@14 EXIT:rho: [(flted_11_26,qqq)]
+ to_ante; to_conseq: ( true, true)
+
+!!! **solver.ml#7471:p1(after xpure_perm): true
+!!! **solver.ml#8268:lhs_h: emp
+!!! **solver.ml#8269:estate_orig.es_heap: p::H<p,qqq>NOANN
+!!! **solver.ml#8290:curr_lhs_h: p::H<p,qqq>NOANN
+!!! **solver.ml#8291:lhs_p: true
+!!! **solver.ml#8294:curr_lhs_h0: p::H<p,qqq>NOANN
+(==solver.ml#8444==)
+heap_entail_build_mix_formula_check#2@18@17@16@15@13@12@11@10@9@8@7@6@5@4@3@2@1
+heap_entail_build_mix_formula_check#2 inp1 :evars:[flted_11_26]
+heap_entail_build_mix_formula_check#2 inp2 :ante: true
+heap_entail_build_mix_formula_check#2 inp3 :conseq: flted_11_26=null
+heap_entail_build_mix_formula_check#2@18 EXIT:( true, true)
+
+---- bug10d3.slk
+
+==solver.ml#10272==)
+do_match_inst_perm_vars@14@13@12@11@10@9@8@7@6@5@4@3@2@1
+do_match_inst_perm_vars inp1 :None
+do_match_inst_perm_vars inp2 :None
+do_match_inst_perm_vars inp3 :evars:p_30,flted_13_31
+do_match_inst_perm_vars inp4 :impl_vars:
+do_match_inst_perm_vars inp5 :l_args:p,qqq
+do_match_inst_perm_vars inp6 :r_args:p_30,flted_13_31
+do_match_inst_perm_vars@14 EXIT:rho: [(p_30,p),(flted_13_31,qqq)]
+ to_ante; to_conseq: ( true, true)
+
+!!! **solver.ml#7471:p1(after xpure_perm): true
+!!! **solver.ml#8268:lhs_h: emp
+!!! **solver.ml#8269:estate_orig.es_heap: x::G<p,qqq>@M
+!!! **solver.ml#8290:curr_lhs_h: x::G<p,qqq>@M
+!!! **solver.ml#8291:lhs_p: true
+!!! **solver.ml#8294:curr_lhs_h0: x::G<p,qqq>@M
+(==solver.ml#8444==)
+heap_entail_build_mix_formula_check#2@18@17@16@15@13@12@11@10@9@8@7@6@5@4@3@2@1
+heap_entail_build_mix_formula_check#2 inp1 :evars:[p_30,flted_13_31]
+heap_entail_build_mix_formula_check#2 inp2 :ante: true
+heap_entail_build_mix_formula_check#2 inp3 :conseq: p=p & qqq=null
+heap_entail_build_mix_formula_check#2@18 EXIT:( true, p=p & qqq=null)
+
+(==solver.ml#8445==)
+heap_entail_build_mix_formula_check#2@19@17@16@15@13@12@11@10@9@8@7@6@5@4@3@2@1
+heap_entail_build_mix_formula_check#2 inp1 :evars:[p_30,flted_13_31]
+heap_entail_build_mix_formula_check#2 inp2 :ante: true
+heap_entail_build_mix_formula_check#2 inp3 :conseq: p=p & qqq=null
+heap_entail_build_mix_formula_check#2@19 EXIT:( true, p=p & qqq=null)
+=====================================================================
+# bug10d3.slk --old-base-case-unfold
+
+Entail 1: Fail.(may) cause:base case unfold failed
+
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: base_case_unfold failed
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ COND ==>  BaseCaseUnfold]]
+ CEX:false
+
+
+# Why this message below not there? Is it because of
+  conditional search? 
+
+do_match@1 EXIT: MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: logical bug
+   fe_locs: {
+     fc_message:  true |-  qqq=null. LOCS:[0;13] (may-bug)
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ COND ==>  Match(x,x)]]
+ CEX:false
+=====================================================================
+# run-fast-test sleek
+
+# Validate branch has these new errors.
+I am not sure if it is due to substition or
+the base-case-unfolds scheduling.
+
+Total number of errors: 3 in files:
+  lemmas/rlseg.slk({L1#Valid},{L2#Valid},{L3#Valid})
+lemmas/dseg-new.slk({L3#Valid})
+lemmas/lseg_complex.slk({E1#Valid},{E2#Valid}).
+
+--old-base-case-unfold
+# has same set of errors. change may have come from improvement to
+ LHS and RHS substititions done.
+
+Total number of errors: 3 in files:
+  lemmas/rlseg.slk({L1#Valid},{L2#Valid},{L3#Valid})
+  lemmas/dseg-new.slk({L3#Valid}) lemmas/lseg_complex.slk({E1#Valid},{E2#Valid}).
+
+--assert-no-glob-vars
+
+Total number of errors: 4 in files:
+  lemmas/lseg.slk({L4#Valid}) 
+  lemmas/rlseg.slk({L1#Valid},{L2#Valid},{L3#Valid}) 
+  lemmas/dseg-new.slk({L3#Valid}) 
+  lemmas/lseg_complex.slk({E1#Valid},{E2#Valid}).
+
+--old-empty-to-conseq
+All test results were as expected.
+Total verification time: 54.72 second
+	Time spent in main process: 39.34 second
+	Time spent in child processes: 15.38 second
+	Number of false contexts: 93
+
+=====================================================================
+# bug10c4.slk --en-hrel-as-view
+
+# Can implicit instantiation be supported
+  for HRel views?
+
+# Can we at least give a warning, if not supported.
+
+checkentail H(p,qqq) |- H(p,f) .
+
+INPUT 0: [][] 
+ ### ante =  p::H<p,qqq>NOANN&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   p::H<p,f>NOANN&{FLOW,(20,21)=__norm#E}[]
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
 =====================================================================
 =====================================================================
 =====================================================================

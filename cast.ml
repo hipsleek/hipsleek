@@ -3443,197 +3443,202 @@ let collect_forward_backward_from_formula (f: F.formula) vdecl ddecl fwp fwf bwp
 (*   ) ) (!fwp,!fwf,!bwp,!bwf) no_pos;                                   *)
 
 
-
+(* type: view_decl -> *)
+(*   prog_decl -> *)
+(*   P.spec_var list * (data_decl * Globals.ident) list * P.spec_var list * *)
+(*   (data_decl * Globals.ident) list *)
 let compute_view_forward_backward_info_x (vdecl: view_decl) (prog: prog_decl)
   : (  P.spec_var list * (data_decl * ident) list
-       * P.spec_var list * (data_decl * ident) list ) =
-  let pos = vdecl.view_pos in
-  let vname = vdecl.view_name in
-  let dname = vdecl.view_data_name in
-  let self_sv = P.SpecVar (Named dname, self, Unprimed) in
-  let () = if (eq_str dname "") then (
-      report_warning pos "compute_view_fw_bw: data name in view is empty";
-    ) in
-  let ddecl = (
-    try look_up_data_def_raw prog.prog_data_decls dname 
-    with _ ->
-      if !compete_mode then raise Not_found else
-        report_error pos ("compute_view_fw_bw: data not found: " ^ dname)
-  ) in
-  let base_fs, induct_fs = split_view_branches vdecl in
-  if (List.length base_fs != 1) then ([],[],[],[])
-  (* consider only the predicates have 1 base case*)
-  else (
-    (* extract inductive information, nodes from head and tail part of formula *)
-    let extract_head_body_node f = (
-      let views = F.get_views f in
-      let induct_views = List.filter (fun vd ->
-          eq_str vd.F.h_formula_view_name vname
-        ) views in
-      if (List.length induct_views != 1) then None
-      (* consider only view has 1 inductive view in its formula definition *)
-      else (
-        let head_node = (
-          let is_self_node hf = (match hf with
-              | F.DataNode dn when (eq_str (P.name_of_sv dn.F.h_formula_data_node) self) -> [hf]
-              | F.ViewNode vn when (eq_str (P.name_of_sv vn.F.h_formula_view_node) self) -> [hf]
-              | _ -> []
-            ) in
-          let self_nodes = F.get_one_kind_heap is_self_node f in
-          if (self_nodes = []) then
-            let () = report_warning pos "compute_fw_bw: self points to nowhere" in F.HEmp
-          else (List.hd self_nodes)
-        ) in
-        let body_nodes = (
-          let is_body_node hf = (match hf with
-              | F.DataNode {F.h_formula_data_name = dn; F.h_formula_data_node = sv} ->
-                if (eq_str dn dname) && not (eq_str (P.name_of_sv sv) self) then [hf]
-                else []
-              | F.ViewNode {F.h_formula_view_name = vn; F.h_formula_view_node = sv} ->
-                if (eq_str vn vname) && not (eq_str (P.name_of_sv sv) self) then [hf]
-                else []
-              | _ -> []
-            ) in
-          F.get_one_kind_heap is_body_node f
-        ) in
-        Some (head_node, body_nodes)
-      )
-    ) in
-    let get_residents hf vd = (match hf with
-        | F.DataNode dn -> [dn.F.h_formula_data_node]
-        | F.ViewNode vn -> (* prerequisite: view_decl of vn must be vd *)
-          let residents = List.concat (List.map2 (fun v1 v2 ->
-              if (List.exists (fun v -> P.eq_spec_var v2 v) vd.view_residents) then [v1]
-              else []
-            ) vn.F.h_formula_view_arguments vd.view_vars) in
-          residents @ [vn.F.h_formula_view_node]
-        | _ -> [] 
+       * P.spec_var list * (data_decl * ident) list ) option =
+  if vdecl.view_kind != View_NORM then None
+  else 
+    let pos = vdecl.view_pos in
+    let vname = vdecl.view_name in
+    let dname = vdecl.view_data_name in
+    let self_sv = P.SpecVar (Named dname, self, Unprimed) in
+    let () = if (eq_str dname "") then (
+        report_warning pos "compute_view_fw_bw: data name in view is empty";
       ) in
-    let head_body_info = List.map extract_head_body_node induct_fs in
-    (* do fix point iteration to find forward, backward info *)
-    let fwp, fwf, bwp, bwf = ref [], ref [], ref [], ref [] in
-    let fwp_m, fwf_m, bwp_m, bwf_m = ref true, ref true, ref true, ref true in
-    while (!fwp_m || !fwf_m || !bwp_m || !bwf_m) do
-      fwp_m := false; fwf_m := false; bwp_m := false; bwf_m := false;
-      List.iter2 (fun f head_body ->
-          match head_body with
-          | None -> ()
-          | Some (head_node, body_nodes) -> (
-              (* find forward, backward info from head and body node *)
-              let head_ptrs = get_residents head_node vdecl in
-              let body_ptrs = List.concat (List.map (fun n -> get_residents n vdecl) body_nodes) in
-              Debug.ninfo_hprint (add_str "head_node" !F.print_h_formula) head_node no_pos;
-              Debug.ninfo_hprint (add_str "body_nodes" (pr_list !F.print_h_formula)) body_nodes no_pos;
-              Debug.ninfo_hprint (add_str "head_ptrs" (pr_list !P.print_sv)) head_ptrs no_pos;
-              Debug.ninfo_hprint (add_str "body_ptrs" (pr_list !P.print_sv)) body_ptrs no_pos;
-              let (hf,pf,_,_,_,_) = F.split_components f in
-              let eqs = MP.ptr_equations_without_null pf in
-              let () = match head_node with
-                | F.ViewNode vn -> 
-                  List.iter2 (fun sv1 sv2 ->
-                      let sv1_closure = F.find_close [sv1] eqs in
-                      let rch_ptrs = P.intersect_svl sv1_closure body_ptrs in
-                      Debug.ninfo_hprint (add_str "fwp - sv1" !print_sv) sv1 no_pos;
-                      Debug.ninfo_hprint (add_str "fwp - sv2" !print_sv) sv2 no_pos;
-                      Debug.ninfo_hprint (add_str "fwp - rch_ptrs" (pr_list !print_sv)) rch_ptrs no_pos;
-                      if (List.length rch_ptrs > 0) && (not (P.mem_svl sv2 !fwp)) then (
-                        fwp := sv2::!fwp; fwp_m := true;
-                      )
-                    ) vn.F.h_formula_view_arguments vdecl.view_vars;
-                | F.DataNode dn ->
-                  List.iter2 (fun sv1 ((_,fld),_) ->
-                      let sv1_closure = F.find_close [sv1] eqs in
-                      let rch_ptrs = P.intersect_svl sv1_closure body_ptrs in
-                      let rch_ptrs = P.intersect_svl rch_ptrs body_ptrs in
-                      Debug.ninfo_hprint (add_str "fwf - sv1" (!print_sv)) sv1 no_pos;
-                      Debug.ninfo_hprint (add_str "fwf - fld" idf) fld no_pos;
-                      Debug.ninfo_hprint (add_str "fwf - rch_ptrs" (pr_list !print_sv)) rch_ptrs no_pos;
-                      if (List.length rch_ptrs > 0) && (not (List.exists (fun s -> eq_str s fld) !fwf)) then (
-                        fwf := fld::!fwf; fwf_m := true;
-                      )
-                    ) dn.F.h_formula_data_arguments ddecl.data_fields;
-                | _ -> ()
-              in
-              let new_bwps, new_bwfs = ref [], ref [] in 
-              let () = List.iter (fun body_node ->
-                  match body_node with
-                  | F.ViewNode vn ->
-                    let p_bwps = List.concat (List.map2 (fun sv1 sv2 ->
+    let ddecl = (
+      try look_up_data_def_raw prog.prog_data_decls dname 
+      with _ ->
+        if !compete_mode then raise Not_found else
+          report_error pos ("compute_view_fw_bw: data not found: " ^ dname)
+    ) in
+    let base_fs, induct_fs = split_view_branches vdecl in
+    if (List.length base_fs != 1) then Some ([],[],[],[])
+    (* consider only the predicates have 1 base case*)
+    else (
+      (* extract inductive information, nodes from head and tail part of formula *)
+      let extract_head_body_node f = (
+        let views = F.get_views f in
+        let induct_views = List.filter (fun vd ->
+            eq_str vd.F.h_formula_view_name vname
+          ) views in
+        if (List.length induct_views != 1) then None
+        (* consider only view has 1 inductive view in its formula definition *)
+        else (
+          let head_node = (
+            let is_self_node hf = (match hf with
+                | F.DataNode dn when (eq_str (P.name_of_sv dn.F.h_formula_data_node) self) -> [hf]
+                | F.ViewNode vn when (eq_str (P.name_of_sv vn.F.h_formula_view_node) self) -> [hf]
+                | _ -> []
+              ) in
+            let self_nodes = F.get_one_kind_heap is_self_node f in
+            if (self_nodes = []) then
+              let () = report_warning pos "compute_fw_bw: self points to nowhere" in F.HEmp
+            else (List.hd self_nodes)
+          ) in
+          let body_nodes = (
+            let is_body_node hf = (match hf with
+                | F.DataNode {F.h_formula_data_name = dn; F.h_formula_data_node = sv} ->
+                  if (eq_str dn dname) && not (eq_str (P.name_of_sv sv) self) then [hf]
+                  else []
+                | F.ViewNode {F.h_formula_view_name = vn; F.h_formula_view_node = sv} ->
+                  if (eq_str vn vname) && not (eq_str (P.name_of_sv sv) self) then [hf]
+                  else []
+                | _ -> []
+              ) in
+            F.get_one_kind_heap is_body_node f
+          ) in
+          Some (head_node, body_nodes)
+        )
+      ) in
+      let get_residents hf vd = (match hf with
+          | F.DataNode dn -> [dn.F.h_formula_data_node]
+          | F.ViewNode vn -> (* prerequisite: view_decl of vn must be vd *)
+            let residents = List.concat (List.map2 (fun v1 v2 ->
+                if (List.exists (fun v -> P.eq_spec_var v2 v) vd.view_residents) then [v1]
+                else []
+              ) vn.F.h_formula_view_arguments vd.view_vars) in
+            residents @ [vn.F.h_formula_view_node]
+          | _ -> [] 
+        ) in
+      let head_body_info = List.map extract_head_body_node induct_fs in
+      (* do fix point iteration to find forward, backward info *)
+      let fwp, fwf, bwp, bwf = ref [], ref [], ref [], ref [] in
+      let fwp_m, fwf_m, bwp_m, bwf_m = ref true, ref true, ref true, ref true in
+      while (!fwp_m || !fwf_m || !bwp_m || !bwf_m) do
+        fwp_m := false; fwf_m := false; bwp_m := false; bwf_m := false;
+        List.iter2 (fun f head_body ->
+            match head_body with
+            | None -> ()
+            | Some (head_node, body_nodes) -> (
+                (* find forward, backward info from head and body node *)
+                let head_ptrs = get_residents head_node vdecl in
+                let body_ptrs = List.concat (List.map (fun n -> get_residents n vdecl) body_nodes) in
+                Debug.ninfo_hprint (add_str "head_node" !F.print_h_formula) head_node no_pos;
+                Debug.ninfo_hprint (add_str "body_nodes" (pr_list !F.print_h_formula)) body_nodes no_pos;
+                Debug.ninfo_hprint (add_str "head_ptrs" (pr_list !P.print_sv)) head_ptrs no_pos;
+                Debug.ninfo_hprint (add_str "body_ptrs" (pr_list !P.print_sv)) body_ptrs no_pos;
+                let (hf,pf,_,_,_,_) = F.split_components f in
+                let eqs = MP.ptr_equations_without_null pf in
+                let () = match head_node with
+                  | F.ViewNode vn -> 
+                    List.iter2 (fun sv1 sv2 ->
                         let sv1_closure = F.find_close [sv1] eqs in
-                        let rch_ptrs = P.intersect_svl sv1_closure head_ptrs in
-                        if (List.length rch_ptrs > 0) then [sv2] else []
-                      ) vn.F.h_formula_view_arguments vdecl.view_vars) in
-                    Debug.ninfo_hprint (add_str "p_bwps" (pr_list !P.print_sv)) p_bwps no_pos;
-                    if (!new_bwps = []) then new_bwps := p_bwps
-                    else if (p_bwps != []) then
-                      new_bwps := Cpure.intersect_svl !new_bwps p_bwps;
-                    Debug.ninfo_hprint (add_str "new_bwps" (pr_list !P.print_sv)) !new_bwps no_pos;
+                        let rch_ptrs = P.intersect_svl sv1_closure body_ptrs in
+                        Debug.ninfo_hprint (add_str "fwp - sv1" !print_sv) sv1 no_pos;
+                        Debug.ninfo_hprint (add_str "fwp - sv2" !print_sv) sv2 no_pos;
+                        Debug.ninfo_hprint (add_str "fwp - rch_ptrs" (pr_list !print_sv)) rch_ptrs no_pos;
+                        if (List.length rch_ptrs > 0) && (not (P.mem_svl sv2 !fwp)) then (
+                          fwp := sv2::!fwp; fwp_m := true;
+                        )
+                      ) vn.F.h_formula_view_arguments vdecl.view_vars;
                   | F.DataNode dn ->
-                    let p_bwfs = List.concat (List.map2 (fun sv1 ((_,fld),_) ->
+                    List.iter2 (fun sv1 ((_,fld),_) ->
                         let sv1_closure = F.find_close [sv1] eqs in
-                        let rch_ptrs = P.intersect_svl sv1_closure head_ptrs in
-                        Debug.ninfo_hprint (add_str "bwf - sv1" (!print_sv)) sv1 no_pos;
-                        Debug.ninfo_hprint (add_str "bwf - fld" idf) fld no_pos;
-                        Debug.ninfo_hprint (add_str "bwf - rch_ptrs" (pr_list !print_sv)) rch_ptrs no_pos;
-                        if (List.length rch_ptrs > 0) then [fld] else []
-                      ) dn.F.h_formula_data_arguments ddecl.data_fields) in
-                    Debug.ninfo_hprint (add_str "p_bwfs" (pr_list idf)) p_bwfs no_pos;
-                    if (!new_bwfs = []) then new_bwfs := p_bwfs
-                    else if (p_bwfs != []) then
-                      new_bwfs := Gen.BList.intersect_eq eq_str !new_bwfs p_bwfs;
-                    Debug.ninfo_hprint (add_str "new_bwfs" (pr_list idf)) !new_bwfs no_pos;
+                        let rch_ptrs = P.intersect_svl sv1_closure body_ptrs in
+                        let rch_ptrs = P.intersect_svl rch_ptrs body_ptrs in
+                        Debug.ninfo_hprint (add_str "fwf - sv1" (!print_sv)) sv1 no_pos;
+                        Debug.ninfo_hprint (add_str "fwf - fld" idf) fld no_pos;
+                        Debug.ninfo_hprint (add_str "fwf - rch_ptrs" (pr_list !print_sv)) rch_ptrs no_pos;
+                        if (List.length rch_ptrs > 0) && (not (List.exists (fun s -> eq_str s fld) !fwf)) then (
+                          fwf := fld::!fwf; fwf_m := true;
+                        )
+                      ) dn.F.h_formula_data_arguments ddecl.data_fields;
                   | _ -> ()
-                ) body_nodes in
-              let new_bwps = P.remove_dups_svl (!new_bwps @ !bwp) in
-              if (List.length new_bwps != List.length !bwp) then (
-                bwp := new_bwps; bwp_m := true;
-              );
-              let new_bwfs = Gen.BList.remove_dups_eq eq_str (!new_bwfs @ !bwf) in
-              if (List.length new_bwfs != List.length !bwf) then (
-                bwf := new_bwfs; bwf_m := true;
-              );
+                in
+                let new_bwps, new_bwfs = ref [], ref [] in 
+                let () = List.iter (fun body_node ->
+                    match body_node with
+                    | F.ViewNode vn ->
+                      let p_bwps = List.concat (List.map2 (fun sv1 sv2 ->
+                          let sv1_closure = F.find_close [sv1] eqs in
+                          let rch_ptrs = P.intersect_svl sv1_closure head_ptrs in
+                          if (List.length rch_ptrs > 0) then [sv2] else []
+                        ) vn.F.h_formula_view_arguments vdecl.view_vars) in
+                      Debug.ninfo_hprint (add_str "p_bwps" (pr_list !P.print_sv)) p_bwps no_pos;
+                      if (!new_bwps = []) then new_bwps := p_bwps
+                      else if (p_bwps != []) then
+                        new_bwps := Cpure.intersect_svl !new_bwps p_bwps;
+                      Debug.ninfo_hprint (add_str "new_bwps" (pr_list !P.print_sv)) !new_bwps no_pos;
+                    | F.DataNode dn ->
+                      let p_bwfs = List.concat (List.map2 (fun sv1 ((_,fld),_) ->
+                          let sv1_closure = F.find_close [sv1] eqs in
+                          let rch_ptrs = P.intersect_svl sv1_closure head_ptrs in
+                          Debug.ninfo_hprint (add_str "bwf - sv1" (!print_sv)) sv1 no_pos;
+                          Debug.ninfo_hprint (add_str "bwf - fld" idf) fld no_pos;
+                          Debug.ninfo_hprint (add_str "bwf - rch_ptrs" (pr_list !print_sv)) rch_ptrs no_pos;
+                          if (List.length rch_ptrs > 0) then [fld] else []
+                        ) dn.F.h_formula_data_arguments ddecl.data_fields) in
+                      Debug.ninfo_hprint (add_str "p_bwfs" (pr_list idf)) p_bwfs no_pos;
+                      if (!new_bwfs = []) then new_bwfs := p_bwfs
+                      else if (p_bwfs != []) then
+                        new_bwfs := Gen.BList.intersect_eq eq_str !new_bwfs p_bwfs;
+                      Debug.ninfo_hprint (add_str "new_bwfs" (pr_list idf)) !new_bwfs no_pos;
+                    | _ -> ()
+                  ) body_nodes in
+                let new_bwps = P.remove_dups_svl (!new_bwps @ !bwp) in
+                if (List.length new_bwps != List.length !bwp) then (
+                  bwp := new_bwps; bwp_m := true;
+                );
+                let new_bwfs = Gen.BList.remove_dups_eq eq_str (!new_bwfs @ !bwf) in
+                if (List.length new_bwfs != List.length !bwf) then (
+                  bwf := new_bwfs; bwf_m := true;
+                );
 
-              Debug.ninfo_hprint (add_str "forward, backward 1 " (fun (x,y,z,t) -> 
-                  "fwp: " ^ (pr_list !P.print_sv x) ^ "; "
-                  ^ "fwf: " ^ (pr_list idf y) ^ "; " 
-                  ^ "bwp: " ^ (pr_list !P.print_sv z) ^ "; "
-                  ^ "bwf: " ^ (pr_list idf t)
-                ) ) (!fwp,!fwf,!bwp,!bwf) no_pos;
-              (* unfold the inductive formulathen collect residents *)
-              let base_f = List.hd base_fs in
-              Debug.ninfo_hprint (add_str "f" (!F.print_formula)) f no_pos;
-              let f = unfold_base_case_formula f vdecl base_f in
-              Debug.ninfo_hprint (add_str "unfold_f" (!F.print_formula)) f no_pos;
-              let new_fwp, new_fwf, new_bwp, new_bwf = 
-                collect_forward_backward_from_formula f vdecl ddecl !fwp !fwf !bwp !bwf in
-              if (List.length new_fwp > List.length !fwp) then (fwp := new_fwp; fwp_m := true);
-              if (List.length new_fwf > List.length !fwf) then (fwf := new_fwf; fwf_m := true);
-              if (List.length new_bwp > List.length !bwp) then (bwp := new_bwp; bwp_m := true);
-              if (List.length new_bwf > List.length !bwf) then (bwf := new_bwf; bwf_m := true);
+                Debug.ninfo_hprint (add_str "forward, backward 1 " (fun (x,y,z,t) -> 
+                    "fwp: " ^ (pr_list !P.print_sv x) ^ "; "
+                    ^ "fwf: " ^ (pr_list idf y) ^ "; " 
+                    ^ "bwp: " ^ (pr_list !P.print_sv z) ^ "; "
+                    ^ "bwf: " ^ (pr_list idf t)
+                  ) ) (!fwp,!fwf,!bwp,!bwf) no_pos;
+                (* unfold the inductive formulathen collect residents *)
+                let base_f = List.hd base_fs in
+                Debug.ninfo_hprint (add_str "f" (!F.print_formula)) f no_pos;
+                let f = unfold_base_case_formula f vdecl base_f in
+                Debug.ninfo_hprint (add_str "unfold_f" (!F.print_formula)) f no_pos;
+                let new_fwp, new_fwf, new_bwp, new_bwf = 
+                  collect_forward_backward_from_formula f vdecl ddecl !fwp !fwf !bwp !bwf in
+                if (List.length new_fwp > List.length !fwp) then (fwp := new_fwp; fwp_m := true);
+                if (List.length new_fwf > List.length !fwf) then (fwf := new_fwf; fwf_m := true);
+                if (List.length new_bwp > List.length !bwp) then (bwp := new_bwp; bwp_m := true);
+                if (List.length new_bwf > List.length !bwf) then (bwf := new_bwf; bwf_m := true);
 
-              Debug.ninfo_hprint (add_str "forward, backward 2 " (fun (x,y,z,t) -> 
-                  "fwp: " ^ (pr_list !P.print_sv x) ^ "; "
-                  ^ "fwf: " ^ (pr_list idf y) ^ "; " 
-                  ^ "bwp: " ^ (pr_list !P.print_sv z) ^ "; "
-                  ^ "bwf: " ^ (pr_list idf t)
-                ) ) (!fwp,!fwf,!bwp,!bwf) no_pos;
-            )
-        ) induct_fs head_body_info;
-      Debug.ninfo_hprint (add_str "loop flag: " (fun (x,y,z,t) ->
-          "fwp_m: " ^ (string_of_bool x) ^ "; "
-          ^ "fwf_m: " ^ (string_of_bool y) ^ "; " 
-          ^ "bwp_m: " ^ (string_of_bool z) ^ "; "
-          ^ "bwf_m: " ^ (string_of_bool t)
-        )) (!fwp_m,!fwf_m,!bwp_m,!bwf_m) no_pos;
-    done;
-    let fwf = List.map (fun fld -> (ddecl,fld)) !fwf in
-    let bwf = List.map (fun fld -> (ddecl,fld)) !bwf in
-    (!fwp, fwf, !bwp, bwf)
-  )
+                Debug.ninfo_hprint (add_str "forward, backward 2 " (fun (x,y,z,t) -> 
+                    "fwp: " ^ (pr_list !P.print_sv x) ^ "; "
+                    ^ "fwf: " ^ (pr_list idf y) ^ "; " 
+                    ^ "bwp: " ^ (pr_list !P.print_sv z) ^ "; "
+                    ^ "bwf: " ^ (pr_list idf t)
+                  ) ) (!fwp,!fwf,!bwp,!bwf) no_pos;
+              )
+          ) induct_fs head_body_info;
+        Debug.ninfo_hprint (add_str "loop flag: " (fun (x,y,z,t) ->
+            "fwp_m: " ^ (string_of_bool x) ^ "; "
+            ^ "fwf_m: " ^ (string_of_bool y) ^ "; " 
+            ^ "bwp_m: " ^ (string_of_bool z) ^ "; "
+            ^ "bwf_m: " ^ (string_of_bool t)
+          )) (!fwp_m,!fwf_m,!bwp_m,!bwf_m) no_pos;
+      done;
+      let fwf = List.map (fun fld -> (ddecl,fld)) !fwf in
+      let bwf = List.map (fun fld -> (ddecl,fld)) !bwf in
+      Some (!fwp, fwf, !bwp, bwf)
+    )
 
 let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
   : (  P.spec_var list * (data_decl * ident) list
-       * P.spec_var list * (data_decl * ident) list ) =
+       * P.spec_var list * (data_decl * ident) list ) option =
   let pr_vd = !print_view_decl in
   let pr_svl = pr_list !P.print_sv in
   let pr_idl = pr_list idf in
@@ -3645,7 +3650,7 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
     ("(fwp = " ^ fwp_s ^ "  ;; fwf = " ^ fwf_s 
      ^ "  ;; bwp = " ^ bwp_s ^ "  ;; bwf = " ^ bwf_s ^ ")") 
   ) in
-  Debug.no_1 "compute_view_forward_backward_info" pr_vd pr_out
+  Debug.no_1 "compute_view_forward_backward_info" pr_vd (pr_option pr_out)
     (fun _ -> compute_view_forward_backward_info_x vdecl prog) vdecl
 
 let categorize_view (prog: prog_decl) : prog_decl =
@@ -3656,11 +3661,14 @@ let categorize_view (prog: prog_decl) : prog_decl =
       let residents = compute_view_residents vd in
       let vd = { vd with view_residents = residents } in
       (* forward & backward pointers, fields *)
-      let (fwp, fwf, bwp, bwf) = compute_view_forward_backward_info vd prog in
-      let vd = {vd with view_forward_ptrs = fwp;
-                        view_backward_ptrs = bwp;
-                        view_forward_fields = fwf;
-                        view_backward_fields = bwf;} in
+      let rr = x_add compute_view_forward_backward_info vd prog in
+      let vd = match rr with
+        | None -> vd
+        | Some (fwp, fwf, bwp, bwf) ->
+          {vd with view_forward_ptrs = fwp;
+                   view_backward_ptrs = bwp;
+                   view_forward_fields = fwf;
+                   view_backward_fields = bwf;} in
       (* touching & segmented is computed only when the forward and backward pointers is available *)
       let touching = is_touching_view vd in
       let segmented = is_segmented_view vd in
