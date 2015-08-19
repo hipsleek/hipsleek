@@ -47,7 +47,7 @@ dll_seg<a,pp> == self::node<a,pp>
 void create_dll (ref node list)
 //infer [H] requires H(list)   ensures true;
   requires list::dll_seg<a,pp>
-  ensures list'::dll_seg<_,pp>;
+  ensures list'::dll_seg<_,pp> ;
 {
   node t;
   if (bool_nondet()) {

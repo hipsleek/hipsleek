@@ -18,29 +18,17 @@ HeapPred H(node x). // non-ptrs are @NI by default
 PostPred G(node x,  node b).
 
 
-
   dllseg<p,l> == self::node<p,l>
   or self::node<p,q>*q::dllseg<self,l>
   ;
 
- dllseg1<p> == self::node<_,_> & self=p
-  or p::node<prev,_>*self::dllseg1<prev>
-  ;
-
-lseg<p> == self::node<_,p>
-  or self::node<_,q>*q::lseg<p>
-  ;
-
-rlseg<p> == self=p
-  or p::node<q,_>*self::rlseg<q>
-  ;
-
-rlseg1<prev> == self=prev
-  or self::node<prev,n>*n::rlseg1<self>
-  ;
 
 dll_seg<a,pp> == self::node<a,pp>
   or self::node<a,q>*q::dll_seg<self,pp>;
+
+
+dll_seg2<a,last,pp> == self::node<a,pp> & last=self
+  or self::node<a,q>*q::dll_seg2<self,last,pp>;
 
 //lemma_safe self::dllseg1<list>  -> self::rlseg<list> * list::node<_,_>.
 
@@ -65,10 +53,10 @@ void create_dll (ref node list)
 }
 
 /*
-# ex9b.ss
+# ex9b3.ss
 
   requires list::dll_seg<a,pp>
-  ensures true;
+  ensures list'::dll_seg<_,pp>;
 
  G(list_1568,list_1569) ::= list_1569::node<pre,n>@M&list_1569=list_1568
  or list_1568::node<t_1567,n>@M * G(t_1567,list_1569)&t_1567!=null
