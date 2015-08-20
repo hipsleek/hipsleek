@@ -1936,7 +1936,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
              then [] 
              else
                begin
-                 if !Globals.lemma_norm_w_coerc 
+                 if !Globals.old_norm_w_coerc 
                  then x_binfo_pp "folding..." no_pos;
                  [(1,M_fold m_res)]
                end

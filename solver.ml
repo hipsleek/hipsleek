@@ -14525,7 +14525,7 @@ and normalize_context_perm prog ctx = match ctx with
   | Ctx es -> Ctx{ es with es_formula = normalize_formula_perm prog es.es_formula;}
 
 and normalize_es_formula_w_coers prog estate (f: formula) (coers: coercion_decl list) pos: CF.entail_state * formula =
-  if not(!Globals.lemma_norm_w_coerc) 
+  if not(!Globals.old_norm_w_coerc) 
   then (estate, f) 
   else
     (* this part goes into a loop with ex61a.slk *)
