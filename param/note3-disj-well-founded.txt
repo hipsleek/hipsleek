@@ -36,3 +36,40 @@ while (x>=0 & y>=0
   if (*) (x=x-1;y=*)
   else (y =y-1;x=*)
 }
+
+Example 4 (ex42-disj-wf.ss)
+------------------------------
+while (x>0 && y>0) {
+  if (__VERIFIER_nondet_int() > 0) {
+    x, y = x-1, x; 
+  } else {
+    x, y = y-2, x+1;
+  }
+}
+
+Rank(x) = x>0 & x'<x
+
+Transition relation
+  R = R1 + R2
+where
+  R1 = x>0 & y>0 & x'=x-1 & y'=x
+  R2 = x>0 & y>0 & x'=y-2 & y'=x+1
+  
+Transitive closure of R
+  R+ 
+  = (R1 U R2)+
+  <= R1+ U R2+ U (R1+R2 U R2+R1)+
+  <= (R1+ U R2+ U (R1+R2)+ U (R2+R1)+)+
+  
+  R1+ = x>0 & y>0 & x'<x & y'<=x <= x>0 & x'<x = Rank(x)
+  
+  R2+ = x>0 & y>0 & x'<=y-2 & y'<=x+1 <= x+y>0 & x'+y'<x+y = Rank(x+y)
+  
+  (R1+R2)+ = (x>0 & y>0 & x'<x-1 & y'<=x+1)+ <= Rank(x)
+  
+  (R2+R1)+ = (x>0 & y>0 & x'<y-2 & y'<=y-2) <= Rank(y)
+  
+Given T = Rank(x) U Rank(y) U Rank(x+y), we have T . T <= T, and
+  R+ <= T+ <= T
+  
+==> Program terminates by dwf
