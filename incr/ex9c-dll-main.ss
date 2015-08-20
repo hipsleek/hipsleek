@@ -37,7 +37,16 @@ lseg<p> == self=p
   or self::node<_,q>*q::lseg<p>
   ;
 
+dll_seg3<a,last,pp> == self=pp & a=last
+  or self::node<a,q>*q::dll_seg3<self,last,pp>;
+
 //lemma_unsafe "bwd" self::dllseg1<list>  -> self::rlseg<list> * list::node<_,_>.
+
+lemma_safe self::dll_seg3<a,last,pp>  
+      <- self::dll_seg3<a,r,last>*last::node<r,pp>.
+
+lemma_safe self::dll_seg3<a,last,pp>  * pp::node<_,null>
+      -> self::ll<>.
 
 
 void create_dll (ref node list)
@@ -45,8 +54,9 @@ void create_dll (ref node list)
 //infer [H,G] requires H(list)   ensures G(list,list');
 //  infer [H] requires H(list)   ensures true;
 //  infer [G] requires list::node<pre,n>   ensures G(list,list');
-  requires list::node<_,_> ensures list'::rlseg<list> * list::node<_,_> ; //'
-
+//  requires list::node<_,_> ensures list'::rlseg<list> * list::node<_,_> ; //'
+ requires list::node<_,pp>
+  ensures list'::dll_seg3<_,r,list> * list::node<r,pp>; //'
 
 {
   node t;

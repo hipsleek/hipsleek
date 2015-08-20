@@ -33,8 +33,8 @@ dll_seg2<a,last,pp> == self::node<a,pp> & last=self
 dll_seg3<a,last,pp> == self=pp & a=last
   or self::node<a,q>*q::dll_seg3<self,last,pp>;
 
-lemma_safe self::dll_seg3<a,last,pp>  
-      <- self::dll_seg3<a,r,last>*last::node<r,pp>.
+//lemma_safe self::dll_seg3<a,last,pp>  
+//      <- self::dll_seg3<a,r,last>*last::node<r,pp>.
 
 void create_dll (ref node list)
 //infer [H] requires H(list)   ensures true;
