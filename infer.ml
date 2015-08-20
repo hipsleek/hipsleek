@@ -3636,7 +3636,7 @@ let infer_collect_hp_rel_empty_rhs_x prog (es0:entail_state) mix_rf pos =
 let infer_collect_hp_rel_empty_rhs i prog (es:entail_state) rhs_p pos =
   let pr1 = Cprinter.string_of_formula in
   let pr2 = Cprinter.string_of_mix_formula in
-  let pr3 (b, es,_) =  (pr_pair string_of_bool Cprinter.string_of_estate_infer_hp) (b, es) in
+  let pr3 =  (pr_triple string_of_bool Cprinter.string_of_estate_infer_hp (pr_list_ln Cprinter.string_of_hprel_short)) in
   Debug.no_2_num i "infer_collect_hp_rel_empty_rhs" pr1 pr2 pr3
     ( fun _ _ -> infer_collect_hp_rel_empty_rhs_x prog es rhs_p pos) es.CF.es_formula rhs_p
 

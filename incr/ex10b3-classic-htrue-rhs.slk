@@ -21,7 +21,14 @@ print residue.
  <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
  inferred hprel: [H(p)&p=null --> emp&true]
 
-# OK.
+
+(==solver.ml#7655==)
+infer_collect_hp_rel_empty_rhs#1@1
+infer_collect_hp_rel_empty_rhs#1 inp1 : H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel_empty_rhs#1 inp2 : true
+infer_collect_hp_rel_empty_rhs#1@1 EXIT:(true, es_formula: 
+ emp&p=null&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [H])
 
 */
 
