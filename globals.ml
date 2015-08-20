@@ -177,6 +177,7 @@ type view_kind =
   | View_DERV
   | View_SPEC
 
+
 (* TODO : move typ here in future *)
 type typ =
   | FORM (* Type for formula *)
@@ -235,6 +236,14 @@ type typ =
 (*     | _, _ -> false *)
 
 type typed_ident = (typ * ident)
+
+let string_of_view_kind k = match k with
+  | View_PRIM -> "View_PRIM"
+  | View_HREL -> "View_HREL"
+  | View_NORM -> "View_NORM"
+  | View_EXTN -> "View_EXTN"
+  | View_DERV -> "View_DERV"
+  | View_SPEC -> "View_SPEC"
 
 let is_undef_typ t =
   match t with
@@ -1260,9 +1269,11 @@ let allow_threads_as_resource = ref false
 (* let assert_matrix = ref false *)
 let assert_nonlinear = ref false
 let assert_unsound_false = ref false
+let assert_no_glob_vars = ref false
 
 let old_collect_false = ref false
 let old_infer_collect = ref false
+let old_base_case_unfold = ref false
 let old_impl_gather = ref false
 let old_parse_fix = ref false
 let hrel_as_view_flag = ref false
@@ -1270,6 +1281,7 @@ let adhoc_flag_1 = ref false
 let adhoc_flag_2 = ref false
 let adhoc_flag_3 = ref false
 let old_keep_absent = ref false
+let old_empty_to_conseq = ref false
 let weaker_pre_flag = ref true
 
 let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
