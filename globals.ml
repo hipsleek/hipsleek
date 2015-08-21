@@ -1532,6 +1532,7 @@ type infer_type =
   | INF_SHAPE (* For infer[@shape] *)
   | INF_SHAPE_PRE (* For infer[@shape_post] *)
   | INF_SHAPE_POST (* For infer[@shape_post] *)
+  | INF_SHAPE_PRE_POST (* For infer[@shape_prepost] *)
   | INF_ERROR (* For infer[@error] *)
   | INF_DE_EXC (* For infer[@dis_err] *)
   | INF_ERR_MUST (* For infer[@err_must] *)
@@ -1568,6 +1569,7 @@ let string_of_inf_const x =
   | INF_SHAPE -> "@shape"
   | INF_SHAPE_PRE -> "@shape_pre"
   | INF_SHAPE_POST -> "@shape_post"
+  | INF_SHAPE_PRE_POST -> "@shape_prepost"
   | INF_ERROR -> "@error"
   | INF_DE_EXC -> "@dis_err"
   | INF_ERR_MUST -> "@err_must"
@@ -1683,8 +1685,9 @@ class inf_obj  =
         helper "@field_imm"     INF_FIELD_IMM;
         helper "@arrvar"        INF_ARR_AS_VAR;
         helper "@shape"         INF_SHAPE;
-        helper "@shape_pre"         INF_SHAPE_PRE;
-        helper "@shape_post"         INF_SHAPE_POST;
+        helper "@shape_pre"     INF_SHAPE_PRE;
+        helper "@shape_post"    INF_SHAPE_POST;
+        helper "@shape_prepost" INF_SHAPE_PRE_POST;
         helper "@error"         INF_ERROR;
         helper "@dis_err"       INF_DE_EXC;
         helper "@err_may"       INF_ERR_MAY;
@@ -1732,6 +1735,7 @@ class inf_obj  =
     method is_shape  = self # get INF_SHAPE
     method is_shape_pre  = self # get INF_SHAPE_PRE
     method is_shape_post  = self # get INF_SHAPE_POST
+    method is_shape_pre_post  = self # get INF_SHAPE_PRE_POST
     (* shape inference *)
     method is_error  = self # get INF_ERROR
     method is_dis_err  = self # get INF_DE_EXC

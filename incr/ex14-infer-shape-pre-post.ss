@@ -25,7 +25,7 @@ int size_helper(node x)
   infer[H]
   requires H(x)  ensures true;//H1(x);
 */
-  infer[@shape_pre] requires true ensures true;
+  infer[@shape_prepost] requires true ensures true;
 
 {
   if (x==null) 
