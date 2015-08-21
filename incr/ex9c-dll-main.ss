@@ -40,8 +40,6 @@ lseg<p> == self=p
 dll_seg3<a,last,pp> == self=pp & a=last
   or self::node<a,q>*q::dll_seg3<self,last,pp>;
 
-//lemma_unsafe "bwd" self::dllseg1<list>  -> self::rlseg<list> * list::node<_,_>.
-
 lemma_safe self::dll_seg3<a,last,pp>  
       <- self::dll_seg3<a,r,last>*last::node<r,pp>.
 
