@@ -11,6 +11,9 @@ open GlobProver
 module CP = Cpure
 
 let set_prover_type () = Others.last_tp_used # set Others.Mona
+let set_proof_string str = Others.last_proof_string # set str
+let set_proof_result str = Others.last_proof_result # set str
+
 
 let is_mona_running = ref false
 (* let channels = ref (stdin, stdout, stdin) *)
@@ -1186,6 +1189,18 @@ let rec get_answer acc chn : string =
 (*   Debug.no_1 "get_answer" (fun _ -> "") (fun f -> f) *)
 (*       (fun _ -> get_answer acc chn) acc *)
 
+let wrap_collect_raw_result f x =
+  try 
+    set_prover_type();
+    set_proof_string x;
+    let out = f x in
+    set_proof_result out;
+    out
+  with e ->
+    set_proof_result ("Exception"^Printexc.to_string e);
+    raise e
+
+
 let send_cmd_with_answer str =
   if!log_all_flag==true then
     output_string log_all str;
@@ -1203,7 +1218,7 @@ let send_cmd_with_answer str =
 
 let send_cmd_with_answer str =
   let pr = fun f -> f in
-  Debug.no_1 "[Mona.ml]send_cmd_with_answer" pr pr send_cmd_with_answer str
+  Debug.no_1 "[Mona.ml]send_cmd_with_answer" pr pr (wrap_collect_raw_result send_cmd_with_answer) str
 
 let send_cmd_with_answer str =
   let pr = fun f -> f in
@@ -1213,6 +1228,7 @@ let send_cmd_with_answer str =
 let send_cmd_no_answer str =
   (* let () = (print_string ("\nsned_cmd_no_asnwer " ^ str ^"- end string\n"); flush stdout) in *)
   let (todo_unk:string) = send_cmd_with_answer str in
+  let () = x_binfo_hp (add_str "no_answer" pr_id) todo_unk no_pos in
   ()
 
 let write_to_mona_predicates_file mona_filename =
@@ -1477,6 +1493,7 @@ let write_to_file  (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_
   let () = Procutils.PrvComms.start !log_all_flag log_all ("mona", "mona", [|"mona"; "-q";  mona_filename|]) set_process (fun () -> ()) in
   let fnc () =
     let mona_answ = read_from_file !process.inchannel in
+    let () = x_ninfo_hp (add_str "mona_answ" pr_id) mona_answ no_pos in
     let res = check_answer file_content mona_answ is_sat_b in
     res
   in
@@ -1525,6 +1542,7 @@ let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (
       let () = maybe_restart_mona () in
       (* let _  = print_endline "sending to mona prover.." in *)
       let answer = send_cmd_with_answer !cmd_to_send in
+      let () = x_ninfo_hp (add_str "answer" pr_id) answer no_pos in
       check_answer content answer is_sat_b
     end
   with
@@ -1566,7 +1584,7 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   let pvars = Omega.get_vars_formula tmp_form in
   let vstr = Omega.omega_of_var_list (Gen.BList.remove_dups_eq (=) pvars) in
   let fomega =  "complement {[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
-  let () = Omega.set_proof_string ("IMPLY:"^fomega) in
+  let () = set_proof_string ("IMPLY:"^fomega) in
 
 
   let () = set_prover_type () in (* change to MONA logging *)
@@ -1606,7 +1624,7 @@ let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   let pvars = Omega.get_vars_formula f in
   let vstr = Omega.omega_of_var_list (Gen.BList.remove_dups_eq (=) pvars) in
   let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
-  let () = Omega.set_proof_string ("SAT:"^fomega) in  
+  let () = set_proof_string ("SAT:"^fomega) in  
 	
   let sat = 
     if not !is_mona_running then

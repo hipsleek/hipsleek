@@ -8,6 +8,9 @@ module CP = Cpure
 module StringSet = Set.Make(String)
 
 let set_prover_type () = Others.last_tp_used # set Others.Z3
+let set_proof_string str = Others.last_proof_string # set str
+let set_proof_result str = Others.last_proof_result # set str
+
 
 let set_generated_prover_input = ref (fun _ -> ())
 let set_prover_original_output = ref (fun _ -> ())
@@ -641,6 +644,7 @@ let command_for prover = (
   | _ -> illegal_format ("z3.command_for: ERROR, unexpected solver name")
 )
 
+
 (* Runs the specified prover and returns output *)
 let run st prover input timeout =
   (*let () = print_endline "z3-2.19" in*)
@@ -652,7 +656,7 @@ let run st prover input timeout =
   let set_process proc = prover_process := proc in
   let fnc () = (
     let () = Procutils.PrvComms.start false stdout (cmd, cmd, cmd_arg) set_process (fun () -> ()) in
-    get_answer !prover_process.inchannel input
+    get_answer !prover_process.inchannel input 
   ) in
   let res = (
     try
@@ -666,9 +670,12 @@ let run st prover input timeout =
       { original_output_text = []; sat_result = Aborted; }
   ) in
   let () = Procutils.PrvComms.stop false stdout !prover_process 0 9 (fun () -> ()) in
+ (* let () = set_proof_result (string_of_smt_output res) in *)
   remove_file infile;
   remove_file outfile;
   res
+
+
 
 (*for z3-3.2*)
 let rec prelude () = ()
@@ -747,9 +754,22 @@ let check_formula f timeout =
     { original_output_text = []; sat_result = Unknown; } 
   ) in
   let res = Procutils.PrvComms.maybe_raise_and_catch_timeout fnc f timeout fail_with_timeout in
+  let () = set_proof_result (string_of_smt_output res) in
   let tstoplog = Gen.Profiling.get_time () in
   let _= Globals.z3_time := !Globals.z3_time +. (tstoplog -. tstartlog) in 
   res
+
+let wrap_collect_raw_result f x =
+  try 
+    set_prover_type();
+    set_proof_string x;
+    let out = f x in
+    set_proof_result out;
+    out
+  with e ->
+    set_proof_result ("Exception"^Printexc.to_string e);
+    raise e
+
 
 let check_formula f timeout =
   Debug.no_2 "Z3:check_formula" idf string_of_float string_of_smt_output
@@ -1157,7 +1177,7 @@ let imply_ops pr_weak pr_strong ante conseq timeout =
   let pvars = Omega.get_vars_formula smt_form in
   let vstr = Omega.omega_of_var_list (Gen.BList.remove_dups_eq (=) pvars) in
   let fomega =  "{complement {[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
-  let () = Omega.set_proof_string ("IMPLY:"^fomega) in
+  let () = set_proof_string ("IMPLY:"^fomega) in
 
   (*let () = print_endline ("Ante2 : "^ !print_pure ante) in*)
   if (not f && !Globals.allow_array_inst) then instantiate_array_vars_before_imply pr_weak pr_strong ante conseq Z3 timeout
@@ -1203,7 +1223,7 @@ let smt_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) (prover: 
   let pvars = Omega.get_vars_formula f in
   let vstr = Omega.omega_of_var_list (Gen.BList.remove_dups_eq (=) pvars) in
   let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
-  let () = Omega.set_proof_string ("SAT:"^fomega) in
+  let () = set_proof_string ("SAT:"^fomega) in
 
   let res, should_run_smt = (
     (* (false, true) in *)
