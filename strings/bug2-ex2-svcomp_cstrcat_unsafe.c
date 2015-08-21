@@ -30,8 +30,8 @@ char *(cstrcat)(char *s1, const char *s2)
        }
      while ((*s1++ = *s2++) != '\0')
        /*@
-          requires s1::WFS<> * s2::WFS<> 
-          ensures s1'::char_star<_,q2> * q2::BADS<> * s2::WFSeg<qq>*qq::char_star<0,s2'>*s2'::BADS<>;
+          requires s1::char_star<_,q> * q::BADS<> * s2::WFS<>  
+          ensures s2::WFSeg<qq>*qq::char_star<0,s2'>*s2'::BADS<>;
        */
          ;   
      return s1;
