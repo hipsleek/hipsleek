@@ -28,14 +28,14 @@ void while1(ref char_star s)
   requires s::WFS<> 
   ensures s::WFSeg<s'>*s'::char_star<0,q>*q::BADS<>;
 {
+  
+  s = __plus_plus_char(s);
+  dprint;
   int x=__get_char(s);
+  dprint;
   if (x!=0) {
-    // dprint;
-    s = __plus_plus_char(s);
-    //dprint;
     while1(s);
   }
-  dprint;
 }
 
 /*

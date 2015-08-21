@@ -18,25 +18,31 @@ BADS<> ==
 char *(cstrcat)(char *s1, const char *s2)
  /*@
     requires s1::WFS<> * s2::WFS<> 
-    ensures res::WFSeg<s>*s::WFSeg<x>*x::char_star<0,qq>*qq::BADS<>;
+    ensures s2::WFSeg<q>*q::char_star<0,qq>*qq::BADS<>;
  */
 
  {
-     char *s = s1;
-     while (*s != '\0')
-       /*@
-          requires s::WFS<> 
-          ensures s::WFSeg<s'>*s'::char_star<0,q>*q::BADS<>;
-       */
-         s++;
-     while ((*s++ = *s2++) != '\0')
-       /*@
-          requires s::char_star<_,q>*q::BADS<> * s2::WFS<> 
-          ensures s::WFSeg<q2>*q2::char_star<0,qq>*qq::BADS<> 
-                  * s2'::char_star<0,_> & s'=q2; 
-       */
-         ;               
-     return s1;
+  while (*s1!='\0') 
+  /*@
+     requires s1::WFS<> 
+     ensures s1::WFSeg<s1'>*s1'::char_star<0,q>*q::BADS<>;
+  */
+  {
+   /*@dprint;*/
+    s1++;
+  }
+  //while2(s1, s2);
+  while (*s2!= '\0')
+  /*@
+     requires s1::char_star<_,q> * q::BADS<> * s2::WFS<> 
+     ensures s1'::char_star<_,q2> * q2::BADS<> * s2::WFSeg<s2'>*s2'::char_star<0,qq>*qq::BADS<>;
+  */
+  {
+     *s1 = *s2;
+     s1++;
+     s2++;
+  }      
+  return s1;
  }
 char* new_str()
   /*@

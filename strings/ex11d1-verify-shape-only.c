@@ -53,22 +53,3 @@ int main()
 
 
 
-/*==================================================
-
-# ex11d1.c (FIXED)
-
-  Why post-condition of 2nd loop cannot be derived?
-
-
-
-Pass-by-value parameters should not be primed, so how can we put the right specifications?
-
-ensures s::WFSeg<s'>*s'::char_star<0,q>*q::BADS<>;
-
-ERROR: at ex11d-verify-shape-only.c_21:12_21:53
-Message: Pass-by-value parameters and local variables can not escape out of scope: [(s,')]
-
-!!! **main.ml#1180:WARNING : Logging not done on finalizeStop z3... 0 invocations caught
-
-Exception occurred: Failure("Pass-by-value parameters and local variables can not escape out of scope: [(s,')]")
-*/

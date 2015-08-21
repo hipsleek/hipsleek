@@ -1,9 +1,3 @@
-
-data char_star {
-  int val;
-  char_star next;
-}
-
 WFS<n:int,k:int,m:int> ==
   self::char_star<0,q>*q::BADS<m> & n=k
   or self::char_star<v,q>*q::WFS<n+1,k,m> & v>0 & n<k
@@ -18,11 +12,6 @@ BADS<m> ==
   self=null & m=0 or
   self::char_star<v,q>*q::BADS<m-1> & v>=0 
   inv m>=0;
-
-char_star plus_plus_char(char_star x)
-  requires x::char_star<_,q>@L & Term[]
-  ensures  res=q & q=x+1;
-
 /* 
 # ex19a1.ss
 
@@ -66,9 +55,9 @@ void while1(ref char_star s)
   requires s::WFS<n,k,m> 
   ensures s::WFSeg<k-n,s'>*s'::char_star<0,q>*q::BADS<m>;
 {
-  int x=get_char(s);
+  int x=__get_char(s);
   if (x!=0) {
-    s = plus_plus_char(s);
+    s = __plus_plus_char(s);
     while1(s);
   }
 }

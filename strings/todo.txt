@@ -66,7 +66,7 @@ ret# s1)})}
 {(20,1),(33,2)}
 
 ==================================================================
-# bug4.ss -p while2
+# bug4.ss -p while2 (FIXED)
 
 void while2(ref str s1,ref str s2)
   requires s1::str<_,q>*q::BADS<> * s2::WFS<n,k> & Term[k-n]
@@ -377,7 +377,7 @@ Error3(s) detected at main
 
 [4]+  Done                    ../hip ex18a-infer-cstrcat-memsafe.ss e todo.txt
 ==================================================================
-# ex19a1.ss
+# ex19a1.ss (FIXED by Muoi)
 
   how to handle pointer arithmetic?
 

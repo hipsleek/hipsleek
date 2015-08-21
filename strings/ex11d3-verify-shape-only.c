@@ -18,16 +18,19 @@ BADS<> ==
 void while2(char* s1,char* s2)
   /*@
      requires s1::char_star<0,q1>*q1::BADS<> * s2::WFS<> 
-     ensures emp;
+     ensures s2::WFSeg<ss>*ss::char_star<0,qq>*qq::BADS<>;
   */
 {
- while ((*s1++ = *s2++) != '\0')
+ while (*s2!= '\0')
   /*@
-     requires s1::WFSeg<p>*p::char_star<0,q>*q::BADS<> * s2::WFS<> 
-     ensures s1::WFSeg<ss>*ss::WFSeg<q2>*q2::char_star<0,qq>*qq::BADS<>
-              * s2'::char_star<0,_> & s1'=ss;
+     requires s1::char_star<_,q> * q::BADS<> * s2::WFS<> 
+     ensures s1'::char_star<_,q2> * q2::BADS<> * s2::WFSeg<s2'>*s2'::char_star<0,qq>*qq::BADS<>;
   */
-         ;    
+  {
+     *s1 = *s2;
+     s1++;
+     s2++;
+  }    
 }
 
 
