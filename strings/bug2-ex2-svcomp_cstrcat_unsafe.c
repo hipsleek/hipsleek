@@ -23,15 +23,15 @@ char *(cstrcat)(char *s1, const char *s2)
      while (*s1++!='\0') 
        /*@
           requires s1::WFS<> 
-          ensures s1::WFSeg<s1'>*s1'::char_star<0,q>*q::BADS<>;
+          ensures s1::WFSeg<q>*q::char_star<0,s1'>*s1'::BADS<>;
        */
        {
          //s1++;
        }
      while ((*s1++ = *s2++) != '\0')
        /*@
-          requires s1::WFS<> * s2::WFS<> 
-          ensures s1'::char_star<_,q2> * q2::BADS<> * s2::WFSeg<s2'>*s2'::char_star<0,qq>*qq::BADS<>;
+          requires s1::char_star<_,q> * q::BADS<> * s2::WFS<>  
+          ensures s2::WFSeg<qq>*qq::char_star<0,s2'>*s2'::BADS<>;
        */
          ;   
      return s1;
@@ -67,3 +67,4 @@ Error(s) detected when checking procedure while_23_5$char_star~char_star
 
 
 --> while (*s++!='\0'){} is different from while(*s!='\0'){s++} --> How to solve?
+*/
