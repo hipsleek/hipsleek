@@ -71,7 +71,19 @@ Total verification time: 103.32 second
 imm/norm/norm2.slk({E1#Valid},{E2#Valid},{E3#Valid},{E5#Valid}) 
 imm/norm/field.slk({E12#Valid},{E2#Valid}).!
 ======================================================================
-======================================================================
+Use --old-empty-to-conseq
+
+Total number of errors: 7 in files:
+  lemmas/rlseg.slk({L1#Valid},{L2#Valid},{L3#Valid}) 
+  lemmas/dseg-new.slk({L3#Valid})  
+  lemmas/lseg_complex.slk({E1#Valid},{E2#Valid}) 
+
+Use --lem-norm-w-coerc
+  fracperm/split-combine.slk({E14#Valid}) 
+  veribsync/bperm-split-combine.slk({E5#Valid},{E6#Valid}) 
+  veribsync/barrier-static.slk({E2#Valid},{E3#Valid},{E4#Valid}) 
+  veribsync/barrier-dynamic2.slk({E10#Valid},{E11#Valid},{E14#Valid},{E15#Valid},{E18#Valid},{E19#Valid},{E20#Valid},{E22#Valid},{E23#Valid},{E24#Valid},{E25#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid}).
+=======================================================================
 ======================================================================
 ==================================================================
 ==================================================================

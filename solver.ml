@@ -1945,7 +1945,7 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
   | _ -> formula_of_heap_fl f fl pos
 
 and unfold_for_abs_merge prog pos = 
-(* unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) a (fl:flow_formula) (v : CP.spec_var) pos qvars already_unsat (uf:int) *)
+  (* unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) a (fl:flow_formula) (v : CP.spec_var) pos qvars already_unsat (uf:int) *)
   let unfold_fun fl qvars vp p a h v uf  =  unfold_baref (prog, None) h p vp a fl v pos qvars false uf in
   (* let unfold_fun fl h aset v uf =  unfold_heap (prog, None) h aset v fl uf pos in *)
   unfold_fun
@@ -4871,16 +4871,16 @@ and heap_entail_split_rhs_x (prog : prog_decl) (is_folding : bool) (ctx_0 : cont
         match after_h1_ctx with
         | FailCtx _ -> (after_h1_ctx,after_h1_prfs) 
         | SuccCtx (cl) -> let (ctx,prf) = 
-                            (match h2 with
-                             | HTrue -> (after_h1_ctx,after_h1_prfs)
-                             | _ -> let res = (* h2 may contain nested conjs *)
-                                      List.map 
-                                        (fun c -> heap_entail_split_rhs prog is_folding c (func h2 pure_rhs) rhs_h_matched_set pos) cl
-                               in
-                               let res_ctx,res_prf = List.split res in
-                               let res_prf = mkContextList cl (Cformula.struc_formula_of_formula conseq pos) res_prf in
-                               let res_ctx = fold_context_left 2 res_ctx in
-                               (res_ctx,res_prf))
+          (match h2 with
+           | HTrue -> (after_h1_ctx,after_h1_prfs)
+           | _ -> let res = (* h2 may contain nested conjs *)
+             List.map 
+               (fun c -> heap_entail_split_rhs prog is_folding c (func h2 pure_rhs) rhs_h_matched_set pos) cl
+             in
+             let res_ctx,res_prf = List.split res in
+             let res_prf = mkContextList cl (Cformula.struc_formula_of_formula conseq pos) res_prf in
+             let res_ctx = fold_context_left 2 res_ctx in
+             (res_ctx,res_prf))
           in ctx,prf
   in
 
@@ -4967,7 +4967,7 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
     let h1, h2 = x_add_1 Mem.split_heap h in
     if (is_empty_heap h1) && not (Mem.contains_conj h2) 
     then let final_ctx, final_prf = 
-           x_add heap_entail_conjunct 14 prog is_folding (CF.set_context_formula ctx0 (func h2)) conseq rhs_h_matched_set pos in
+      x_add heap_entail_conjunct 14 prog is_folding (CF.set_context_formula ctx0 (func h2)) conseq rhs_h_matched_set pos in
       match final_ctx with
       | SuccCtx(cl) ->
         (* substitute the holes due to the temporary removal of matched immutable nodes *) 
@@ -4978,7 +4978,7 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
     else
     if(is_empty_heap h1) && (Mem.contains_conj h2) 
     then let final_ctx, final_prf = 
-           heap_entail_split_lhs prog is_folding (CF.set_context_formula ctx0 (func h2)) conseq rhs_h_matched_set pos in
+      heap_entail_split_lhs prog is_folding (CF.set_context_formula ctx0 (func h2)) conseq rhs_h_matched_set pos in
       match final_ctx with
       | SuccCtx(cl) ->
         (* substitute the holes due to the temporary removal of matched immutable nodes *) 
@@ -5597,8 +5597,9 @@ and heap_entail_conjunct_lhs hec_num prog is_folding  (ctx:context) conseq pos :
   let pr4 = Cprinter.string_of_formula in
   let pr5 = string_of_loc in
   let pr_res (ctx,_) = ("\n ctx = "^(Cprinter.string_of_list_context ctx)) in
-  Debug.no_5_num hec_num "heap_entail_conjunct_lhs" pr1 pr2 pr3 pr4 pr5 pr_res 
-    (fun _ _ _ _ _ -> heap_entail_conjunct_lhs_x hec_num prog is_folding ctx conseq pos) prog is_folding ctx conseq pos
+  Debug.no_3_num hec_num "heap_entail_conjunct_lhs" (add_str "is_folding" pr2)
+    (add_str "ctx" pr3) (add_str "conseq" pr4) pr_res 
+    (fun _ _ _ -> heap_entail_conjunct_lhs_x hec_num prog is_folding ctx conseq pos) (* prog *) is_folding ctx conseq
 
 (* check entailment when lhs is normal-form, rhs is a conjunct *)
 and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF.formula) pos : (list_context * proof) =
@@ -7656,7 +7657,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                 else estate,[]
                               in
                               (* this overwrites things computed earlier *)
-                               (* let h1, p1, vp1, fl1, t1, a1 = split_components estate.CF.es_formula in *)
+                              (* let h1, p1, vp1, fl1, t1, a1 = split_components estate.CF.es_formula in *)
                               let b1 = {formula_base_heap = h1;
                                         formula_base_pure = p1;
                                         formula_base_vperm = vp1;
@@ -12863,7 +12864,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
           let () = x_tinfo_hp (add_str "rhs_als" Cprinter.string_of_spec_var_list) rhs_als no_pos in
           let r, relass = 
             if CP.intersect rhs_als estate.es_infer_vars = []
-               && List.exists CP.is_node_typ estate.es_infer_vars then None,[]
+            && List.exists CP.is_node_typ estate.es_infer_vars then None,[]
             else if (!Globals.pa) then None,[]  
             else 
               let lhs_rhs_contra_flag = 
@@ -13723,7 +13724,7 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
       | _ -> report_error no_pos ("Iast.Equiv detected - astsimpl should have eliminated it ")
   in 
   if ((List.length coers1)=0 && (List.length coers2)=0  && (List.length univ_coers)=0 )
-     || not(is_original_match anode ln2)
+  || not(is_original_match anode ln2)
   then
     let msg = "no lemma found in both LHS and RHS nodes (do coercion)" in
     (CF.mkFailCtx_in(Trivial_Reason (CF.mk_failure_must (* "no lemma found in both LHS and RHS nodes (do coercion)" *) msg
@@ -14403,21 +14404,21 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
         estate,h,p,vp,fl
       | (anode,rest)::xs ->
         (*for each pair (anode,rest), find a list of coercions*)
-            let c_lst =
-              try
-                let name = match anode with
-                  | ViewNode vn -> vn.h_formula_view_name
-                  | DataNode dn -> dn.h_formula_data_name
-                  | ThreadNode tn -> tn.h_formula_thread_name
-                        (* TODO:WN:HVar *)
-                  | HVar (v,hvar_vs) -> (CP.name_of_spec_var v)
-                  | HTrue -> "htrue"
-                  | _ -> raise Not_found(*  let () = print_string("[solver.ml] Warning: normalize_w_coers expecting DataNode, ViewNode or HTrue\n") in *)
-                    (* "" *)
-                in look_up_coercion_def_raw coers name
-              with Not_found -> []
+        let c_lst =
+          try
+            let name = match anode with
+              | ViewNode vn -> vn.h_formula_view_name
+              | DataNode dn -> dn.h_formula_data_name
+              | ThreadNode tn -> tn.h_formula_thread_name
+              (* TODO:WN:HVar *)
+              | HVar (v,hvar_vs) -> (CP.name_of_spec_var v)
+              | HTrue -> "htrue"
+              | _ -> raise Not_found(*  let () = print_string("[solver.ml] Warning: normalize_w_coers expecting DataNode, ViewNode or HTrue\n") in *)
+              (* "" *)
+            in look_up_coercion_def_raw coers name
+          with Not_found -> []
         in
-                (* let c_lst = look_up_coercion_def_raw coers name in  *)(*list of coercions*)
+        (* let c_lst = look_up_coercion_def_raw coers name in  *)(*list of coercions*)
         let lst = List.map (fun c -> (c,anode,rest)) c_lst in
         (*process a triple (coer,anode,res)*)
         let rec process_one_coerc lst =
@@ -14529,73 +14530,77 @@ and normalize_context_perm prog ctx = match ctx with
   | Ctx es -> Ctx{ es with es_formula = normalize_formula_perm prog es.es_formula;}
 
 and normalize_es_formula_w_coers prog estate (f: formula) (coers: coercion_decl list) pos: CF.entail_state * formula =
-  if (!Globals.check_coercions) then (estate, f) else
-  if (isAnyConstFalse f ) (* || (!Globals.perm = NoPerm) *) then (estate, f)
-  else if !Globals.perm = Dperm then (estate, normalize_formula_perm prog f) 
-  else if coers==[] then (estate, f)
+  if not(!Globals.old_norm_w_coerc) 
+  then (estate, f) 
   else
-    let coers = List.filter (fun c -> 
-        match c.coercion_case with
-        | Cast.Simple -> false
-        | Cast.Complex -> if (c.coercion_type = Iast.Left) then true else false
-        | Cast.Ramify -> false
-        | Cast.Normalize false -> false
-        | Cast.Normalize true -> true) coers
-    in
-    let rec helper f =
-      match f with
-      | Base b ->
-        let h = b.formula_base_heap in
-        let p = b.formula_base_pure in
-        let vp = b.formula_base_vperm in
-        (* let t = b.formula_base_type in *)
-        let fl = b.formula_base_flow in
-        (* let br = b.formula_base_branches in *)
-        let es,nh,np,nvp,nfl = normalize_w_coers prog estate coers h p vp (* t *) fl (* br *) pos in
-        let np = remove_dupl_conj_mix_formula np in
-        es, 
-        (Base { b with 
-                formula_base_heap=nh;
-                formula_base_pure=np;
-                formula_base_vperm=nvp;
-                formula_base_flow=nfl })
-      | Exists e ->
-        let h = e.formula_exists_heap in
-        let p = e.formula_exists_pure in
-        let vp = e.formula_exists_vperm in
-        (* let t = e.formula_exists_type in *)
-        let fl = e.formula_exists_flow in
-        (* let br = e.formula_exists_branches in *)
-        let es,nh,np,nvp,nfl = normalize_w_coers prog estate coers h p vp (* t *) fl (* br *) pos in
-        let np = remove_dupl_conj_mix_formula np in
-        es,
-        Exists {e with 
-                formula_exists_heap=nh; 
-                formula_exists_pure=np;
-                formula_exists_vperm=nvp;
-                formula_exists_flow=nfl }
-      | Or o ->
-        let es1, f1 = helper o.formula_or_f1 in
-        let es2, f2 = helper o.formula_or_f2 in
-        let es = estate in
-        es, Or {o with formula_or_f1 = f1; formula_or_f2 = f2}
-    in 
-    if coers ==[] then 
-      begin
-        (* let () = print_endline ("No combine lemma in left coercion?") in *)
-        Debug.ninfo_zprint (lazy  "No combine lemma in left coercion?") no_pos;
-        (estate, f)
-      end
-    else 
-      begin
-        (* let () = print_endline ("normalize_formula_w_coers: "   *)
-        (* ^ " ### coers = " ^ (Cprinter.string_of_coerc_list coers)  *)
-        (* ^ "\n\n") in *)
-        Debug.ninfo_zprint (lazy ("normalize_formula_w_coers: "  
-                                  ^ " ### coers = " ^ (Cprinter.string_of_coerc_list coers) 
-                                  ^ "\n\n")) no_pos;
-        helper f
-      end
+    (* this part goes into a loop with ex61a.slk *)
+    let () = x_winfo_pp "into normalization_with_coerc? why?" no_pos in
+    if (isAnyConstFalse f ) (* || (!Globals.perm = NoPerm) *) then (estate, f)
+    else if !Globals.perm = Dperm then (estate, normalize_formula_perm prog f) 
+    else if coers==[] then (estate, f)
+    else
+      let coers = List.filter (fun c -> 
+          match c.coercion_case with
+          | Cast.Simple -> false
+          | Cast.Complex -> if (c.coercion_type = Iast.Left) then true else false
+          | Cast.Ramify -> false
+          | Cast.Normalize false -> false
+          | Cast.Normalize true -> true) coers
+      in
+      let rec helper f =
+        match f with
+        | Base b ->
+          let h = b.formula_base_heap in
+          let p = b.formula_base_pure in
+          let vp = b.formula_base_vperm in
+          (* let t = b.formula_base_type in *)
+          let fl = b.formula_base_flow in
+          (* let br = b.formula_base_branches in *)
+          let es,nh,np,nvp,nfl = normalize_w_coers prog estate coers h p vp (* t *) fl (* br *) pos in
+          let np = remove_dupl_conj_mix_formula np in
+          es, 
+          (Base { b with 
+                  formula_base_heap=nh;
+                  formula_base_pure=np;
+                  formula_base_vperm=nvp;
+                  formula_base_flow=nfl })
+        | Exists e ->
+          let h = e.formula_exists_heap in
+          let p = e.formula_exists_pure in
+          let vp = e.formula_exists_vperm in
+          (* let t = e.formula_exists_type in *)
+          let fl = e.formula_exists_flow in
+          (* let br = e.formula_exists_branches in *)
+          let es,nh,np,nvp,nfl = normalize_w_coers prog estate coers h p vp (* t *) fl (* br *) pos in
+          let np = remove_dupl_conj_mix_formula np in
+          es,
+          Exists {e with 
+                  formula_exists_heap=nh; 
+                  formula_exists_pure=np;
+                  formula_exists_vperm=nvp;
+                  formula_exists_flow=nfl }
+        | Or o ->
+          let es1, f1 = helper o.formula_or_f1 in
+          let es2, f2 = helper o.formula_or_f2 in
+          let es = estate in
+          es, Or {o with formula_or_f1 = f1; formula_or_f2 = f2}
+      in 
+      if coers ==[] then 
+        begin
+          (* let () = print_endline ("No combine lemma in left coercion?") in *)
+          Debug.ninfo_zprint (lazy  "No combine lemma in left coercion?") no_pos;
+          (estate, f)
+        end
+      else 
+        begin
+          (* let () = print_endline ("normalize_formula_w_coers: "   *)
+          (* ^ " ### coers = " ^ (Cprinter.string_of_coerc_list coers)  *)
+          (* ^ "\n\n") in *)
+          Debug.ninfo_zprint (lazy ("normalize_formula_w_coers: "  
+                                    ^ " ### coers = " ^ (Cprinter.string_of_coerc_list coers) 
+                                    ^ "\n\n")) no_pos;
+          helper f
+        end
 
 and normalize_estate_w_coers prog estate (coers: coercion_decl list) pos: CF.entail_state =
   let es, f = normalize_es_formula_w_coers prog estate estate.CF.es_formula coers pos in

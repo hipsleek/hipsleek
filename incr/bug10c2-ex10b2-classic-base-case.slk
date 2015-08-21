@@ -11,6 +11,9 @@ HeapPred H(node a, node b).
 checkentail H(p,qqq) |- H(p,p) .
 // why above proving succeed; do we need to change HRel --> View at Iast-level?
 
+checkentail H(p,qqq) |- (exists pp: H(p,pp)) .
+
+
 checkentail H(p,qqq) & qqq=p |- H(p,p) .
 
 // bug
