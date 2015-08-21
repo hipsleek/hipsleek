@@ -1,4 +1,5 @@
 /* singly linked lists */
+a
 
 /* representation of a node */
 data node {
@@ -10,7 +11,8 @@ data node {
 pred_prim G<a:node,n:node>.
 
 //checkentail H(p,qqq) |- H(p,null) .
-checkentail x::G<p,qqq> |- x::G<p,null> .
+//checkentail x::G<p,qqq> |- x::G<p,null> .
+checkentail x::G<p,p> |- x::G<p,p> .
 print residue.
 
 
