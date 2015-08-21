@@ -158,4 +158,19 @@ prune_eq_top_bot_imm@3682 EXIT: (b<:a |
      (((b=imm_1486 & imm_1486<:b_1475) | 
        (b=b_1475 & b_1475<:imm_1486 & b_1475!=imm_1486))) & 
      imm_1485=b_1475 & b<:b_1475 & b<:@L & P(b) & b<:a)))
+
+
+#ex16b3 detecting contra (it shouldn't) why b!=@L??
+
+@3520! **solver.ml#5395:infer_vars_rel:[P]
+@3520! **solver.ml#5396:infer_vars_sel_hp_rel:[]
+@3520! **solver.ml#5397:infer_vars_sel_post_hp_rel:[]
+@3520! **solver.ml#5398:orig_inf_vars:[]
+@3520! **solver.ml#5498:WARNING: early_hp_contra_detection : :..in None
+XXXX push_list(es_infer_rel:1)[RELASS [P]: ( P(b)) -->  b!=@L]
+
+(==solver.ml#5502==)
+add_infer_rel_to_estate@3722@3520
+add_infer_rel_to_estate inp1 :[RELASS [P]: ( P(b)) -->  b!=@L]
+add_infer_rel_to_estate@3722 EXIT:[RELASS [P]: ( P(b)) -->  b!=@L,RELDEFN P: ( P(b) & b<:@L & b<:b_1475) -->  P(b_1475),RELASS [P]: ( P(b)) -->  b<:@L]
 */
