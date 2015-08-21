@@ -655,7 +655,7 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
       if (over_v ==[]) then None
       else 
         let exists_var = CP.diff_svl vf ivars in
-        let () = DD.ninfo_hprint (add_str "f (before simplify_helper): " !print_formula) f pos in
+        let () = x_tinfo_hp (add_str "f (before simplify_helper): " !print_formula) f pos in
         let qvars0, bare_f = split_ex_quantifiers f in
         let ptr_qvars0, non_ptrs0_qvars0 = List.partition CP.is_node_typ qvars0 in
         let ps = CP.list_of_conjs (CP.remove_redundant bare_f) in
@@ -2233,7 +2233,7 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
             infer_rel_stk # push_list_pr inf_rel_ls;
             Log.current_infer_rel_stk # push_list inf_rel_ls;
           end;
-        let () = estate.es_infer_rel # push_list inf_rel_ls in
+        let () = estate.es_infer_rel # push_list_pr inf_rel_ls in
         (* let estate = { estate with es_infer_rel = estate.es_infer_rel@inf_rel_ls;} in *)
         if inf_rel_ls != [] then
           begin

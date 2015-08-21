@@ -360,6 +360,8 @@ and rounding_func =
 
 and infer_rel_type =  (rel_cat * formula * formula)
 
+and quatif_type = TForall | TExists
+
 let get_rel_from_imm_ann p = match p with
   | PostImm f
   | PreImm  f -> f
@@ -1365,6 +1367,15 @@ let full_name_of_spec_var (sv : spec_var) : ident =
   | SpecVar (_, v, p) -> if (p==Primed) then (v^"\'") else v
 
 let is_void_type t = match t with | Void -> true | _ -> false
+
+let get_pure_label n =  match n with
+  | And _ 
+  | AndList _ ->  None
+  | BForm (_,l) 
+  | Or (_,_,l,_) 
+  | Not (_,l,_) 
+  | Forall (_,_,l,_) 
+  | Exists (_,_,l,_) -> l
 
 let rec fv (f : formula) : spec_var list =
   let tmp = fv_helper f in
@@ -2892,6 +2903,13 @@ and mkForall_disjs_deep (vs : spec_var list) (f : formula) lbl pos =
     ) ([],[]) ps in
   let quan_rele_ps = List.map (fun (p, quans) -> mkForall quans p lbl pos) rele_ps in
   disj_of_list (irr_ps@quan_rele_ps) pos
+
+and mkQuantif qs f lbl pos =
+  let f = List.fold_right (fun (sv,q) f1 -> match q with
+      | TForall -> mkForall [sv] f1 lbl pos
+      | TExists -> mkExists [sv] f1 lbl pos
+    ) qs f in
+  f
 
 and dperm_subst_simpl f =
   let comb l1 l2 = l1 @ l2 in
@@ -6451,30 +6469,94 @@ let rec drop_disjunct (f:formula) : formula =
   | Forall (q,f,lbl,l) -> Forall (q,(drop_disjunct f),lbl, l)
   | Exists (q,f,lbl,l) -> Exists (q,(drop_disjunct f),lbl, l) 
 
-and float_out_quantif f = match f with
-  | BForm b-> (f,[],[])
-  | And (b1,b2,l) -> 
-    let l1,l2,l3 = float_out_quantif b1 in
-    let q1,q2,q3 = float_out_quantif b2 in
-    ((mkAnd l1 q1 l), l2@q2, l3@q3)
-  | AndList b-> 
-    let (b1,l1,l2) = List.fold_left (fun (a1,a2,a3) (l,c)-> 
-        let l1,l2,l3 = float_out_quantif c in
-        (l,c)::a1,l2@a2,l3@a3)  ([],[],[]) b in
-    (AndList b1, l1, l2)
-  | Or (b1,b2,lbl,l) ->
-    let l1,l2,l3 = float_out_quantif b1 in
-    let q1,q2,q3 = float_out_quantif b2 in
-    ((mkOr l1 q1 lbl l), l2@q2, l3@q3)
-  | Not (b,lbl,l) ->
-    let l1,l2,l3 = float_out_quantif b in
-    (Not (l1,lbl,l), l2,l3)
-  | Forall (q,b,lbl,l)->
-    let l1,l2,l3 = float_out_quantif b in
-    (l1,q::l2,l3)
-  | Exists (q,b,lbl,l)->
-    let l1,l2,l3 = float_out_quantif b in
-    (l1,l2,q::l3)
+and float_out_quantif_x_old f = 
+  let rec helper f =
+    match f with
+    | BForm b-> (f,[],[])
+    | And (b1,b2,l) -> 
+      let l1,l2,l3 = helper b1 in
+      let q1,q2,q3 = helper b2 in
+      ((mkAnd l1 q1 l), l2@q2, l3@q3)
+    | AndList b-> 
+      let (b1,l1,l2) = List.fold_left (fun (a1,a2,a3) (l,c)-> 
+          let l1,l2,l3 = helper c in
+          (l,c)::a1,l2@a2,l3@a3)  ([],[],[]) b in
+      (AndList b1, l1, l2)
+    | Or (b1,b2,lbl,l) ->
+      let l1,l2,l3 = helper b1 in
+      let q1,q2,q3 = helper b2 in
+      ((mkOr l1 q1 lbl l), l2@q2, l3@q3)
+    | Not (b,lbl,l) ->
+      let l1,l2,l3 = helper b in
+      (* (Not (l1,lbl,l), l2,l3) *)
+      (Not (l1,lbl,l), l3,l2)
+    | Forall (q,b,lbl,l)->
+      let l1,l2,l3 = helper b in
+      (l1,q::l2,l3)
+    | Exists (q,b,lbl,l)->
+      let l1,l2,l3 = helper b in
+      (l1,l2,q::l3)
+  in helper f 
+
+and float_out_quantif f = 
+  Debug.no_1 "float_out_quantif_old" !print_formula 
+    (pr_triple (add_str "formula" !print_formula) 
+    (add_str "forall" !print_svl) 
+    (add_str "exists" !print_svl))
+    float_out_quantif_x_old f
+
+and float_out_quantif_helper f = 
+  let rec helper f =
+    match f with
+    | BForm b-> (f,[])
+    | And (b1,b2,l) -> 
+      let l1,l2 = helper b1 in
+      let q1,q2 = helper b2 in
+      ((mkAnd l1 q1 l), l2@q2)
+    | AndList b-> 
+      let (b1,l1) = List.fold_left (fun (a1,a2) (l,c)-> 
+          let l1,l2 = helper c in
+          (l,c)::a1,a2@l2)  ([],[]) b in
+      (AndList b1, l1)
+    | Or (b1,b2,lbl,l) ->
+      let l1,l2 = helper b1 in
+      let q1,q2 = helper b2 in
+      ((mkOr l1 q1 lbl l), l2@q2)
+    | Not (b,lbl,l) ->
+      let l1,l2 = helper b in
+      (* (Not (l1,lbl,l), l2,l3) *)
+      (Not (l1,lbl,l), List.map (fun (sv,t) -> match t with 
+           | TForall -> (sv,TExists) 
+           | TExists -> (sv, TForall)) l2)
+    | Forall (q,b,lbl,l)->
+      let l1,l2 = helper b in
+      (l1,(q,TForall)::l2)
+    | Exists (q,b,lbl,l)->
+      let l1,l2 = helper b in
+      (l1,(q,TExists)::l2)
+  in helper f 
+
+and float_out_quantif_x f = 
+  let f,q = float_out_quantif_helper f in
+  let f = List.fold_left (fun f1 (sv,q) -> match q with
+      | TForall -> mkForall [sv] f1 (get_pure_label f1) (pos_of_formula f1)
+      | TExists -> mkExists [sv] f1 (get_pure_label f1) (pos_of_formula f1)
+    ) f (List.rev q) in
+  f
+
+and float_out_quantif_new f = 
+  Debug.no_1 "float_out_quantif_new" !print_formula !print_formula float_out_quantif_x f
+
+and strip_out_quantif_x f = 
+  let f,q = float_out_quantif_helper f in
+  f, q
+
+and strip_out_quantif f =
+  let pr = pr_list (pr_pair !print_sv 
+                      (fun x -> match x with |TForall -> "forall" |TExists -> "exists" ) ) in
+  Debug.no_1 "strip_out_quantif" !print_formula 
+    (pr_pair(add_str "formula" !print_formula) pr)
+    strip_out_quantif_x f
 
 and check_not (f:formula):formula = 
   let rec inner (f:formula):formula*bool = match f with
@@ -7212,15 +7294,6 @@ and arith_simplify_x (pf : formula) :  formula =
       |  Forall (v, f1, lbl, loc) ->  Forall (v, helper f1, lbl, loc)
       |  Exists (v, f1, lbl, loc) ->  Exists (v, helper f1, lbl, loc)
     in helper pf
-
-let get_pure_label n =  match n with
-  | And _ 
-  | AndList _ ->  None
-  | BForm (_,l) 
-  | Or (_,_,l,_) 
-  | Not (_,l,_) 
-  | Forall (_,_,l,_) 
-  | Exists (_,_,l,_) -> l
 
 let select zs n = 
   let l = List.length zs in

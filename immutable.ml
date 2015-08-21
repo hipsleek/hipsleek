@@ -2502,7 +2502,8 @@ let check_for_trivial_merge emap imm1 imm2 =
   let pr2 = CP.string_of_ann in
   Debug.no_3 "check_for_trivial_merge" pr1 pr2 pr2 (pr_pair (pr_opt pr2) (pr_list !CP.print_formula)) check_for_trivial_merge emap imm1 imm2
 
-(* x::cell<>@imm1 * x::cell<>@imm2 ---> x::cell<>@imm & imm=imm1+imm2 & @A=max(imm1,imm2) *)
+(*[depricated] x::cell<>@imm1 * x::cell<>@imm2 ---> x::cell<>@imm & imm=imm1+imm2 & @A=max(imm1,imm2) *)
+(* x::cell<>@imm1 * x::cell<>@imm2 ---> x::cell<>@imm & imm=min(imm1,imm2) & @A=max(imm1,imm2) *)
 let merge_guards emap imm1 imm2 = 
   let imm, guards00 =  check_for_trivial_merge emap imm1 imm2 in
   match imm with
@@ -3056,6 +3057,11 @@ let norm_rel_list lst =
 let weaken_infer_rel_in_es es =
   let () =  es.es_infer_rel # map norm_fn in
   es
+
+let weaken_infer_rel_in_es es =
+  let pr es = es.es_infer_rel # string_of in
+  Debug.no_1 "weaken_infer_rel_in_es" pr pr weaken_infer_rel_in_es es
+
 (* below to move to immutable *)
 let is_imm_relation pure = 
   if not(CP.is_RelForm pure) then false

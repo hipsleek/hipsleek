@@ -27,6 +27,52 @@ int length(node x)
 
 
 /**
+
+FIXED by removing quatif and add it back after simplif
+prune_eq_top_bot_imm_disjunct@2812@2811@2629
+prune_eq_top_bot_imm_disjunct inp1 : exists(a_1495:exists(imm_1486:exists(b_1475:exists(imm_1485:@L<:imm_1485 & 
+                                                             imm_1485=b_1475) & 
+                                             b<:b_1475 & 
+                                             (((b=imm_1486 & imm_1486<:b_1475) | 
+                                               (b=b_1475 & 
+                                                b_1475<:imm_1486 & 
+                                                b_1475!=imm_1486)))) & 
+                               exists(imm_1487:((imm_1487=imm_1486 & 
+                                                 imm_1486<:a_1495) | 
+                                                (imm_1487=a_1495 & 
+                                                 a_1495<:imm_1486 & 
+                                                 a_1495!=imm_1486))) & 
+                               (((@A=a_1495 & a_1495<:imm_1486) | 
+                                 (@A=imm_1486 & imm_1486<:a_1495 & 
+                                  imm_1486!=a_1495))))) & 
+ b<:@L
+prune_eq_top_bot_imm_disjunct@2812 EXIT:true
+
+(====)
+is this really safe to prune?
+
+prune_eq_top_bot_imm@2811@2629
+prune_eq_top_bot_imm inp1 : exists(a_1495:exists(imm_1486:exists(b_1475:exists(imm_1485:@L<:imm_1485 & 
+                                                             imm_1485=b_1475) & 
+                                             b<:b_1475 & 
+                                             (((b=imm_1486 & imm_1486<:b_1475) | 
+                                               (b=b_1475 & 
+                                                b_1475<:imm_1486 & 
+                                                b_1475!=imm_1486)))) & 
+                               exists(imm_1487:((imm_1487=imm_1486 & 
+                                                 imm_1486<:a_1495) | 
+                                                (imm_1487=a_1495 & 
+                                                 a_1495<:imm_1486 & 
+                                                 a_1495!=imm_1486))) & 
+                               (((@A=a_1495 & a_1495<:imm_1486) | 
+                                 (@A=imm_1486 & imm_1486<:a_1495 & 
+                                  imm_1486!=a_1495))))) & 
+ b<:@L
+prune_eq_top_bot_imm@2811 EXIT: true
+
+
+=============================================
+
 simplify below:
 @A=max(imm_1486,a_1495) & b=min(imm_1486,b_1475) & imm_1485=max(b,b_1475) & 
  @L<:imm_1485 & imm_1487=min(imm_1486,a_1495) & flted_8_1468=n_1476 & 
@@ -76,6 +122,40 @@ RELASS [P]: ( P(b)) -->  not(b<:@L)]
  flted_8_1468+1=n & v_int_24_1445'=1+tmp_1497 & res=v_int_24_1445' & 
  (((1<=flted_8_1468 & q_1470!=null) | (q_1470=null & flted_8_1468=0))) & x'=2
 
+(====)
+HOW to solve simplif with ! not
+>>>>>>>>> without emap
+prune_eq_top_bot_imm@3682
+prune_eq_top_bot_imm inp1 : (b<:a | 
+  !(((((imm_1487=imm_1486 & imm_1486<:a_1495) | 
+       (imm_1487=a_1495 & a_1495<:imm_1486 & a_1495!=imm_1486))) & 
+     @L<:imm_1485 & 
+     (((@A=a_1495 & a_1495<:imm_1486) | 
+       (@A=imm_1486 & imm_1486<:a_1495 & imm_1486!=a_1495))) & 
+     (((b=imm_1486 & imm_1486<:b_1475) | 
+       (b=b_1475 & b_1475<:imm_1486 & b_1475!=imm_1486))) & 
+     imm_1485=b_1475 & b<:b_1475 & b<:@L & P(b) & b<:a)))
+prune_eq_top_bot_imm@3682 EXIT: b<:a
 
 
+>>>>>>>>.with emap
+prune_eq_top_bot_imm@3682
+prune_eq_top_bot_imm inp1 : (b<:a | 
+  !(((((imm_1487=imm_1486 & imm_1486<:a_1495) | 
+       (imm_1487=a_1495 & a_1495<:imm_1486 & a_1495!=imm_1486))) & 
+     @L<:imm_1485 & 
+     (((@A=a_1495 & a_1495<:imm_1486) | 
+       (@A=imm_1486 & imm_1486<:a_1495 & imm_1486!=a_1495))) & 
+     (((b=imm_1486 & imm_1486<:b_1475) | 
+       (b=b_1475 & b_1475<:imm_1486 & b_1475!=imm_1486))) & 
+     imm_1485=b_1475 & b<:b_1475 & b<:@L & P(b) & b<:a)))
+prune_eq_top_bot_imm@3682 EXIT: (b<:a | 
+  !(((((imm_1487=imm_1486 & imm_1486<:a_1495) | 
+       (imm_1487=a_1495 & a_1495<:imm_1486 & a_1495!=imm_1486))) & 
+     @L<:imm_1485 & 
+     (((@A=a_1495 & a_1495<:imm_1486) | 
+       (@A=imm_1486 & imm_1486<:a_1495 & imm_1486!=a_1495))) & 
+     (((b=imm_1486 & imm_1486<:b_1475) | 
+       (b=b_1475 & b_1475<:imm_1486 & b_1475!=imm_1486))) & 
+     imm_1485=b_1475 & b<:b_1475 & b<:@L & P(b) & b<:a)))
 */

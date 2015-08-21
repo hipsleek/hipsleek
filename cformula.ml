@@ -11306,7 +11306,7 @@ let add_infer_pure_thus_estate cp es =
 
 let add_infer_rel_to_estate cp es =
   let new_cp = es.es_infer_rel # clone in
-  let () = new_cp # push_list cp in
+  let () = new_cp # push_list_pr cp in
   {es with es_infer_rel = new_cp;}
 
 let add_infer_rel_to_estate cp es =

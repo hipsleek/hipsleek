@@ -6,3 +6,8 @@ merge_two_view_nodes,Trace
 prune_eq_min_max_imm,Trace
 prune_eq_top_bot_imm,Trace
 prune_eq_top_bot_imm_disjunct,Trace
+float_out_quantif
+simplify_imm_min_max
+early_hp_contra_detection,Trace
+add_infer_rel_to_estate,Trace
+is_sat_mix_sub_no

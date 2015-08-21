@@ -533,7 +533,7 @@ let prune_eq_top_bot_imm_disjunct f =
     let p = SVPoset.create () in
     (List.iter (SVPoset.add p) subanns; p) in
   let ( <: ) a b = SVPoset.is_lt poset a b in
-  let ( := ) a b =                     (* eq_const_ann b emap a in *)  (*TODOIMM: should use emap *)
+  let ( := ) a b =                     (* eq_const_ann b emap a in *)(*TODOIMM: should use emap *)
     SetSV.mem a (if b = imm_top then eq_top else eq_bot) in
   let prune_if_top a b = ((a := imm_top) && (a <: b)) || ((b := imm_top) && (b <: a)) in
   let prune_if_bot a b = ((a := imm_bot) && (b <: a)) || ((b := imm_bot) && (a <: b)) in
@@ -544,6 +544,10 @@ let prune_eq_top_bot_imm_disjunct f =
   let pr = !print_formula in
   Debug.no_1 "prune_eq_top_bot_imm_disjunct" pr string_of_bool prune_eq_top_bot_imm_disjunct f
 
+let improved_join_disjunctions old_ds new_ds = 
+  if ((List.length new_ds == 0) && (List.length old_ds != 0)) then mkFalse no_pos 
+  else join_disjunctions new_ds
+
 let prune_eq_top_bot_imm f =
   let conj_lst = split_conjunctions f in
   let imm, non_imm = List.partition contains_imm conj_lst in
@@ -551,7 +555,43 @@ let prune_eq_top_bot_imm f =
   let imm_part = join_conjunctions imm in
   let ds = split_disjunctions_deep imm_part in
   let new_disjunctions = List.filter (fun f -> not (prune_eq_top_bot_imm_disjunct f)) ds in
-  join_conjunctions ([join_disjunctions new_disjunctions]@[non_imm_part])
+  join_conjunctions ([improved_join_disjunctions ds new_disjunctions]@[non_imm_part])
+
+let wrapper_strip_exists f fnc =
+  let strippedf, quantif = strip_out_quantif f in
+  let new_f = fnc strippedf in
+  let new_f = mkQuantif quantif strippedf (get_pure_label f) (pos_of_formula f) in
+  new_f 
+
+let prune_eq_top_bot_imm_helper f = wrapper_strip_exists f prune_eq_top_bot_imm
+
+let rec prune_eq_top_bot_imm f =
+  let f_f form =
+    match form with
+    | BForm _   
+    | And   _   
+    | AndList _ 
+    | Or _      
+    | Forall _
+    | Exists _ -> Some (prune_eq_top_bot_imm_helper form)
+    | Not (not_f,lbl,pos) -> Some (mkNot (prune_eq_top_bot_imm_helper not_f) lbl pos )
+  in
+  transform_formula (nonef, nonef, f_f, somef, somef) f
+
+(* let rec prune_eq_top_bot_imm f = *)
+(*   let f_f (poset,emap) form = *)
+(*     match form with *)
+(*     | BForm _ -> Some form *)
+(*     | And   _ *)
+(*     | AndList _ *)
+(*     | Or _ *)
+(*     | Forall _ *)
+(*     | Exists _ -> Some (prune_eq_top_bot_imm_helper form) *)
+(*     | Not (not_f,lbl,pos) -> Some (mkNot (prune_eq_top_bot_imm_helper not_f) lbl pos ) *)
+(*   in *)
+(*   let p = SVPoset.create () in *)
+(*   let emap = CP.EMapSV.mkEmpty in *)
+(*   map_formula_arg f (p,emap) (f_f, somef, somef) (f_f_arg, idf2, idf2)  *)
 
 let prune_eq_top_bot_imm f =
   let pr = !print_formula in
@@ -583,6 +623,18 @@ let prune_eq_min_max_imm f =
 let prune_eq_min_max_imm f =
   let pr = !print_formula in
   Debug.no_1 "prune_eq_min_max_imm" pr pr prune_eq_min_max_imm f
+
+let simp_imm_min_max f = 
+  let allv = all_vars f in
+  if (List.exists is_ann_typ allv) then 
+    (* a=min(b,c) & some subtyping *)
+    let f_0 = prune_eq_min_max_imm f in
+    (* a=min(b,c) --> (... | ...) *)
+    let f_1 = simplify_imm_min_max f_0 in
+    (* a=top & a <: b & a != b *)
+    let f_2 = prune_eq_top_bot_imm f_1 in
+    f_2
+  else f
 
 (* ===================== END imm addition utils ========================= *)
 
