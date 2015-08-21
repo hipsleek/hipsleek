@@ -7,15 +7,9 @@ data node {
 }.
 
 HeapPred H(node a, node b).
-pred_prim G<a:node, b:node>.
 
 // implicit f?
 checkentail H(p,qqq) |- H(p,f) .
-
-checkentail x::G<ppp,qqq> |- x::G<ppp,f> .
-
-//checkentail H(p,qqq) |- [f] H(p,f) .
-//expect Valid.
 
 print residue.
 

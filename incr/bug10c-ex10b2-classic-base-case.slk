@@ -13,7 +13,7 @@ checkentail H(p,q) |- H(p,p) .
 print residue.
 */
 
-checkentail H(p,p) |- H(p,p) .
+checkentail H(p,q) |- H(p,p) .
 print residue.
 
 

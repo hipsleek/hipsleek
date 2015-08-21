@@ -94,6 +94,10 @@ struct
     if !silence_output (* compete_mode *) then () 
     else print_string s 
 
+  let warn_exception e = 
+    let s = Printexc.to_string e in
+    print_endline_quiet ("\nException processed: "^s)
+
   let print_web_mode s = 
     if !Globals.tnt_web_mode then print_endline s
     else print_endline_quiet s 
