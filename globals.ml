@@ -1272,6 +1272,8 @@ let assert_unsound_false = ref false
 let assert_no_glob_vars = ref false
 
 let old_collect_false = ref false
+let warn_nonempty_perm_vars = ref false
+let warn_free_vars_conseq = ref false
 let old_infer_collect = ref false
 let old_base_case_unfold = ref false
 let old_impl_gather = ref false

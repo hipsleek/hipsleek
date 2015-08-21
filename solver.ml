@@ -4219,7 +4219,18 @@ and heap_entail_conjunct_lhs_struc p is_folding  has_post ctx conseq (tid:CP.spe
 
 and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (has_post:bool) (ctx_00 : context) 
     (conseq : struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid : (list_context * proof) =
-
+  let fv_s = CF.struc_fv ~vartype:Global_var.var_with_heap_only conseq in
+  if fv_s!=[]  then
+    begin
+      let msg = ("FREE VAR IN HEAP RHS :"^(!CP.print_svl fv_s)) in
+      let () = x_winfo_pp msg no_pos in
+      let () = print_endline_quiet ((add_str "LHS" Cprinter.string_of_context_short) ctx_00) in
+      (* let () = x_binfo_hp (add_str "fv_conseq (heap only)" !CP.print_svl) fv_s no_pos in *)
+      let () = print_endline_quiet ((add_str "RHS" Cprinter.string_of_struc_formula) conseq) in
+      if !Globals.warn_free_vars_conseq then
+        failwith msg
+      else ()
+    end;
   let rec helper_inner i (ctx11: context) (f: struc_formula) : list_context * proof =
     (* let _= print_endline ("calling heap entail conjunct lhs") in			 *)
     Debug.no_2_num i (*loop*) "helper_inner" Cprinter.string_of_context Cprinter.string_of_struc_formula (fun (lc, _) -> Cprinter.string_of_list_context lc)
