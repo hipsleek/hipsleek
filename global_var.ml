@@ -25,17 +25,25 @@ class var_types =
     val mutable vars_implicit = false
     val mutable vars_explicit = false
     val mutable vars_exists = false
+    val mutable vars_heap_only = false
     method is_implicit : bool = vars_implicit
     method is_explicit : bool = vars_explicit
     method is_exists : bool = vars_exists
+    method is_heap_only : bool = vars_heap_only
     method set_implicit : unit = vars_implicit <- true
     method set_explicit : unit = vars_explicit <- true
     method set_exists : unit = vars_exists <- true
+    method set_heap_only : unit = vars_heap_only <- true
   end;;
 
 let var_with_implicit =
   let v = new var_types in
   let () = v # set_implicit in
+  v
+
+let var_with_heap_only =
+  let v = new var_types in
+  let () = v # set_heap_only in
   v
 
 let var_with_implicit_explicit =

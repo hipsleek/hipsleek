@@ -1272,6 +1272,8 @@ let assert_unsound_false = ref false
 let assert_no_glob_vars = ref false
 
 let old_collect_false = ref false
+let warn_nonempty_perm_vars = ref false
+let warn_free_vars_conseq = ref false
 let old_infer_collect = ref false
 let old_base_case_unfold = ref false
 let old_impl_gather = ref false
@@ -1281,7 +1283,7 @@ let adhoc_flag_1 = ref false
 let adhoc_flag_2 = ref false
 let adhoc_flag_3 = ref false
 let old_keep_absent = ref false
-let old_empty_to_conseq = ref true (* false *)
+let old_empty_to_conseq = ref false
 let weaker_pre_flag = ref true
 
 let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
@@ -2226,8 +2228,7 @@ let path_trace_gt p1 p2 =
     | ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> (a1>a2) || (a1=a2 && b1>b2) || (a1=a2 && b1=b2 && gt zt1 zt2)
   in gt (List.rev p1) (List.rev p2)
 
-
-let dummy_exception () = ()
+let dummy_exception e = ()
 
 (* convert a tree-like binary object into a list of objects *)
 let bin_op_to_list (op:string)
