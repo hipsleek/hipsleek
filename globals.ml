@@ -1281,7 +1281,7 @@ let adhoc_flag_1 = ref false
 let adhoc_flag_2 = ref false
 let adhoc_flag_3 = ref false
 let old_keep_absent = ref false
-let old_empty_to_conseq = ref false
+let old_empty_to_conseq = ref true (* false *)
 let weaker_pre_flag = ref true
 
 let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
