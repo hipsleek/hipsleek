@@ -47,14 +47,19 @@ lemma_safe self::dll_seg3<a,last,pp>
       <- self::dll_seg3<a,r,last>*last::node<r,pp>.
 
 
+
+
+//lemma_safe self::node<pre,n> * n::rlseg2<self>   -> self::rlseg2<list> * list::node<_,_>.
+
 void create_dll (ref node list)
 
 //infer [H,G] requires H(list)   ensures G(list,list');
 //  infer [H] requires H(list)   ensures true;
 //  infer [G1] requires list::node<pre,n>   ensures G1(list,list',pre,n);
-// infer [G] requires list::node<pre,n>   ensures G(list,list');
-
+ infer [G] requires list::node<pre,n>   ensures G(list,list');
+// requires list::rlseg2<p> ensures list'::rlseg2<list> * list::rlseg2<p> ;
 requires list::node<_,pp>   ensures list'::dll_seg3<_,r,list> * list::node<r,pp>;
+// requires list::node<pre,_>  ensures list'::rlseg3<list> * list::node<pre,_>;
 {
   node t;
   if (bool_nondet()) {

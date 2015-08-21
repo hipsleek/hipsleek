@@ -23,6 +23,10 @@ PostPred G(node x,  node b).
   or self::node<p,q>*q::dllseg<self,l>
   ;
 
+ dllseg2<p> == self::node<p,_>
+  or self::node<p,q>*q::dllseg2<self>
+  ;
+
  dllseg1<p> == self::node<_,_> & self=p
   or p::node<prev,_>*self::dllseg1<prev>
   ;
@@ -45,9 +49,12 @@ dll_seg<a,pp> == self::node<a,pp>
 //lemma_safe self::dllseg1<list>  -> self::rlseg<list> * list::node<_,_>.
 
 void create_dll (ref node list)
-//infer [H] requires H(list)   ensures true;
+// infer [H] requires H(list)   ensures true;
+/*
   requires list::dll_seg<a,pp>
   ensures list'::dll_seg<_,pp>;
+requires list::dllseg2<a>
+  ensures true;
 {
   node t;
   if (bool_nondet()) {
