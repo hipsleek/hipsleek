@@ -389,7 +389,9 @@ true]
 
 
 =====================================================================
-# ex8c1.slk
+# ex8c1.slk: FIXED
+
+added --del (disable eager lemma).
 
 # Why no lemma message?
 
@@ -399,7 +401,7 @@ Residue:
  <1>emp&{FLOW,(20,21)=__norm#E}[]
 [[ SEARCH ==>  COND ==>  Match(p',p')]]
 =====================================================================
-# ex8b2
+# ex8b2 duplicate with ex8d6
 
 *************************************
 *******shape relational assumptions ********
@@ -432,7 +434,7 @@ true]
 Checking procedure create_one$node... 
 [UNSOUNDNESS] WARNING : new unsatisfiable state from post-proving of ex8b3-simple-bug-post.ss_49:10_49:25
 =====================================================================
-# ex8d5.ss
+# ex8d5.ss: DONE
 
 We introduce a phase to infer pre-shape first,
 as follows:
@@ -451,7 +453,7 @@ Hence, best pre-spec is:
  P1(p) ::= emp
 
 =====================================================================
-# ex8d6.ss
+# ex8d6.ss: FIXED
 
 We now proceed with post-shape inference using:
 
@@ -518,7 +520,7 @@ checkentail t'::node<1,p>@M * p'::Q3<t'>@M
 # Can we make it work by scheduling a "fold" operation?
   for such rev-lseg specification?
 =====================================================================
-# ex10c.alk
+# ex10c.slk: FIXED
 
 infer_exact [] H(p) & p=null |- emp.
 
@@ -528,7 +530,7 @@ GOT:
 # This need to FAIL!
 
 =====================================================================
-# ex10e.alk
+# ex10e.slk: FIXED
 
 infer_exact [H] H(p) & p=null |- htrue.
 
@@ -755,6 +757,105 @@ INPUT 0: [][]
  ### ante =  p::H<p,qqq>NOANN&{FLOW,(20,21)=__norm#E}[]
  ### conseq =  EBase 
    p::H<p,f>NOANN&{FLOW,(20,21)=__norm#E}[]
+=====================================================================
+# ex10b3.slk (4)
+
+INPUT 0: [][H] 
+ ### ante =  H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   htrue&{FLOW,(20,21)=__norm#E}[]
+
+GOT
+ <1>H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
+
+# expects 
+  emp & p=null
+=====================================================================
+# ex10b4.slk (1)
+
+ ### ante =  H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   htrue&{FLOW,(20,21)=__norm#E}[]
+
+ <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null --> emp&true]
+
+# Why is the collection not printed?
+
+(==solver.ml#7655==)
+infer_collect_hp_rel_empty_rhs#1@1
+infer_collect_hp_rel_empty_rhs#1 inp1 : H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel_empty_rhs#1 inp2 : true
+infer_collect_hp_rel_empty_rhs#1@1 EXIT:(true, es_formula: 
+ emp&p=null&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [H])
+
+# What are h1_old and h1? Why did it suddently
+becoming emp; just base on current estate?
+
+!!! **solver.ml#7662:h1: emp
+!!! **solver.ml#7663:h1_old: H(p)
+
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+# ex9a1-dll-creat-infer
+
+GOT
+G(list_1568,list_1569) ::= list_1569::node<pre,n>@M&list_1569=list_1568
+ or list_1568::node<t_1567,n>@M * G(t_1567,list_1569)&t_1567!=null
+
+
+=====================================================================
+# ex9c
+
+generate lemma
+
+=====================================================================
+shape+pure
+
+#ex7b-alter-ok
+#ex11b
+
+
+
+=====================================================================
+#ex13a
+#ex13b
+
+GOT
+x::sll<>@M&x=null --> H(x)&true,
+
+EXPECTED
+x=null --> H(x)&true,
+
+
+
+=====================================================================
+#ex12: DONE
+
+to support @shape_pre
+
+#ex12*-c.c
+
+support for c program
+
+=====================================================================
+#ex13: DONE
+
+to support @shape_post
+
+#ex13*-c.c
+
+support for c program
+
+=====================================================================
+#ex14
+
+to support @shape_pre_post
+
 =====================================================================
 =====================================================================
 =====================================================================

@@ -45,7 +45,7 @@ Q1<> == self::Dang<>
 Q2<> == self::Q1<>
   ;
 
-lemma_safe self::lseg_one<t> * t::node<1,p> -> self::lseg_one<p>.
+//lemma_safe self::lseg_one<t> * t::node<1,p> -> self::lseg_one<p>.
 
 HeapPred H1(node x, node@NI b). // non-ptrs are @NI by default
 PostPred G1(node x,  node b,  node c, node d). // non-ptrs are @NI by default

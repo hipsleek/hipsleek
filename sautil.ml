@@ -3163,12 +3163,14 @@ let mk_expl_root r f0=
 
 (*fix subst*)
 let filter_unconnected_hf args hf=
-  let hds =  get_hdnodes_hf hf in
-  let ptrs = List.map (fun hd -> hd.CF.h_formula_data_node) hds in
-  let tail_ptrs = List.concat (List.map (fun hd ->
-      List.filter CP.is_node_typ hd.CF.h_formula_data_arguments) hds) in
-  let unconnected_ptr = CP.diff_svl ptrs (tail_ptrs@args) in
-  CF.drop_hnodes_hf hf unconnected_ptr
+  (*TOFIX: should consider both fwd and bwd *)
+  (* let hds =  get_hdnodes_hf hf in *)
+  (* let ptrs = List.map (fun hd -> hd.CF.h_formula_data_node) hds in *)
+  (* let tail_ptrs = List.concat (List.map (fun hd -> *)
+  (*     List.filter CP.is_node_typ hd.CF.h_formula_data_arguments) hds) in *)
+  (* let unconnected_ptr = CP.diff_svl ptrs (tail_ptrs@args) in *)
+  (* CF.drop_hnodes_hf hf unconnected_ptr *)
+  hf
 
 let filter_fn h_svl p=
   if CP.is_eq_exp p then
@@ -3591,9 +3593,10 @@ let weaken_strengthen_special_constr_pre_x is_pre cs=
     else
       {cs with CF.hprel_lhs = CF.mkFalse (CF.flow_formula_of_formula cs.CF.hprel_rhs) (CF.pos_of_formula cs.CF.hprel_rhs)}
   else
-  if not is_pre && is_not_left_rec_constr cs then
-    {cs with CF.hprel_lhs = CF.mkFalse (CF.flow_formula_of_formula cs.CF.hprel_rhs) (CF.pos_of_formula cs.CF.hprel_rhs)}
-  else
+  (* accept reverse lseg *)
+  (* if not is_pre && is_not_left_rec_constr cs then *)
+  (*   {cs with CF.hprel_lhs = CF.mkFalse (CF.flow_formula_of_formula cs.CF.hprel_rhs) (CF.pos_of_formula cs.CF.hprel_rhs)} *)
+  (* else *)
     cs
 
 let weaken_strengthen_special_constr_pre is_pre cs=
@@ -4699,7 +4702,7 @@ let simplify_set_of_formulas_wg_x prog is_pre cdefs hp args unk_hps unk_svl defs
   let helper (f,og)=
     let f1 = filter_var prog args f in
     let f2 = elim_irr_eq_exps prog (args@unk_svl) f1 in
-    let () = Debug.ninfo_zprint (lazy (("  f2: "^ (Cprinter.prtt_string_of_formula f)))) no_pos in
+    let () = Debug.ninfo_zprint (lazy (("  f2: "^ (Cprinter.prtt_string_of_formula f2)))) no_pos in
     if is_pre && ( (is_trivial f2 (hp,args)) || is_self_rec f2) then [] else [(f2,og)]
   in
   if List.length defs_wg < 2 then (false, defs_wg) else

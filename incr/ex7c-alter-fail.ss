@@ -43,16 +43,19 @@ infer [H,G]
 {
   if (p.h != 3) {
     if (flag) {
-      flag=false;
-      if (p.h == 2)
+      dprint;
+      if (p.h == 2){
         assert false;
         return false;
+      }
+      flag=false;
     }
     else {
-      flag=true;
-      if (p.h == 1)
+      if (p.h == 1) {
         assert false;
         return false;
+      }
+      flag=true;
     }
     p = p.next;
     return check_one_two_ok(p,flag);

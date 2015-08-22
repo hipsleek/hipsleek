@@ -18,25 +18,50 @@ HeapPred H1(node x, node@NI b). // non-ptrs are @NI by default
 Q3<p> == self=p or self::Q3<t>*t::node<_,p>
   ;
 
+lseg_one<p> == self=p
+  or self::node<_,q>*q::lseg_one<p>
+  ;
+
+
+HeapPred H2(node x). // non-ptrs are @NI by default
+
 // please tighthen input/output consideration for method
 // which are input only and which are output only, or both.
 void create_one (ref node p)
+/*
   requires emp
-  ensures p'::Q3<p>;
+  ensures p'::Q3<p>;  
+  requires p::lseg_one<rr>
+  ensures p'::lseg_one<rr>;
+*/
+  infer [H2]
+  requires H2(p)
+  ensures true;
 
 {
   node t;
   if (bool_nondet()) {
+    //assume false;
     t = new_node();
     t.h = 1;
     t.next = p;
     p = t;
+    // t::node<1,p>*p::Q3<rr>&p'=t |- p'::Q3<rr2>
     create_one(p);
+    // p'::Q3<rr2> & rr2=rr
   }
 }
 
 /*
 # ex8d7.ss
+
+  H2(p) = p::node<_,_> *...
+
+[ // PRE_REC
+(1;0)H2(p) * p'::node<v_int_46_1480,p>@M&true --> H2(p')&
+true]
+
+   infer [H2] H2(p) & p=p' |- true
 
 Given:
 
