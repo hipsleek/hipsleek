@@ -315,6 +315,7 @@ linput.rl");
   ("--en-weaker-pre", Arg.Set Globals.weaker_pre_flag,"Enable Weaker Pre-Condition to be Inferred");
   ("--dis-weaker-pre", Arg.Clear Globals.weaker_pre_flag,"Disable Weaker Pre-Condition to be Inferred");
   ("--warn-nonempty-perm-vars", Arg.Set Globals.warn_nonempty_perm_vars,"Enable Warning of Non-empty Perm Vars");
+  (* WN : this excludes ann_vars and ho_vars, but include perm_vars *)
   ("--warn-free-vars-conseq", Arg.Set Globals.warn_free_vars_conseq,"Enable Warning of Non-empty free heap vars in conseq");
   ("--old-collect-false", Arg.Set Globals.old_collect_false,"Enable Old False Collection Method (to detect unsoundness)");
   ("--old-base-case-unfold", Arg.Set Globals.old_base_case_unfold,"Enable Old BaseCaseUnfold Method");
@@ -971,7 +972,12 @@ linput.rl");
   (* ("--sa-inlining", Arg.Set Globals.sa_inlining, "inline dangling HP/pointers"); *)
   ("--pred-en-eup", Arg.Set Globals.pred_elim_unused_preds, "enable the elimination of unused hprel predicates");
   ("--pred-dis-eup", Arg.Clear Globals.pred_elim_unused_preds, "disable the elimination of unused hprel predicates");
-  ("--sa-en-pure-field", Arg.Set Globals.sa_pure_field, "enable the inference of pure field property");
+  ("--sa-en-pure-field", 
+   (*  Arg.Set Globals.sa_pure_field *)
+   Arg.Unit
+     ( fun _ -> 
+         Globals.infer_const_obj # set Globals.INF_PURE_FIELD
+     ), "enable the inference of pure field property");
   ("--sa-dis-pure-field", Arg.Clear Globals.sa_pure_field, "disable the inference of pure field property");
   ("--sa-ext", Arg.Set Globals.sa_ex, "enable the inference of shape and pure property (predicate level)");
   ("--sa-pure", Arg.Set Globals.sa_pure, "enable the inference of shape and pure property");

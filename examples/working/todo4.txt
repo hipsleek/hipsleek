@@ -65,7 +65,20 @@ error at: conchip/deadpool.ss joinThreads
 error at: conchip/deadpool.ss main
 error at: conchip/deadpool.ss thread
 ==================================================================
+./run-fast-tests.pl sleek -flags "--warn-free-vars-conseq"
+
+Examples with free vars in conseq:
+----------------------------------
+Total number of errors: 5 in files:
+ ann2.slk({E18#Valid}) 
+ imm/imm8-instantiation.slk({E11#Fail},{E12#Valid},{E21#Valid},{E22#Valid},{E23#Valid},{E9#Fail}) 
+ imm/imm8-instantiation.slk({E11#Fail},{E12#Valid},{E21#Valid},{E22#Valid},{E23#Valid},{E9#Fail}) 
+ imm-field/sleek02.slk({E12#Valid},{E13#Fail},{E7#Fail},{E8#Valid},{E9#Fail}) imm-field/sleek03.slk({E2#Fail}).
 ==================================================================
+./run-fast-tests.pl sleek -flags "--warn-nonempty-perm-vars"
+
+  fracperm/split_simple.slk(no result  for {E}) fracperm/split-combine.slk(no result  for {E}) veribsync/bperm-split-combine.slk(no result  for {E}) veribsync/barrier-static.slk(no result  for {E}) veribsync/barrier-dynamic2.slk(no result  for {E}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
 ==================================================================
 ==================================================================
 ==================================================================

@@ -2987,16 +2987,17 @@ and h_fv_node_x ?(vartype=Global_var.var_with_none) vv perm ann param_ann
           pvars
   in
   let hvars = Gen.BList.remove_dups_eq CP.eq_spec_var (List.concat (List.map rf_fv ho_vs)) in
-  let other_vs = avars@pvars@hvars in
-  let vs=vs@other_vs in
+  let vs = vs@pvars in
+  let other_vs = avars@hvars in
+  (* WN : is_heap_only excludes ann_vars and higher-order vars for now *)
   if vartype # is_heap_only then
     begin
-      if other_vs!=[] then x_winfo_pp ((add_str "other free vars?" !CP.print_svl) other_vs) no_pos;
+      (* if other_vs!=[] then x_winfo_pp ((add_str "other free vars?" !CP.print_svl) other_vs) no_pos; *)
       (* let () = x_binfo_hp (add_str "vs" !CP.print_svl) vs no_pos in *)
       (* let () = x_binfo_hp (add_str "v" !CP.print_sv) vv no_pos in *)
       vs
     end
-  else if CP.mem_svl vv vs then vs else vv :: vs
+  else (if CP.mem_svl vv vs then vs else vv :: vs)@other_vs
 
 and rf_fv (f: rflow_formula) = fv f.rflow_base 
 
@@ -3060,7 +3061,10 @@ and h_fv_x ?(vartype=Global_var.var_with_none) (h : h_formula) : CP.spec_var lis
       Gen.BList.remove_dups_eq (=) (v::(perm_vars@rsr_vars@dl_vars))
     | HRel (r, args, _) ->
       let vid = r in
-      vid::CP.remove_dups_svl (List.fold_left List.append [] (List.map CP.afv args))
+      let old_vs = vid::CP.remove_dups_svl (List.fold_left List.append [] (List.map CP.afv args)) in
+      let () = x_tinfo_hp (add_str "HRel(vs)" !CP.print_svl) old_vs no_pos in
+      if vartype # is_heap_only then []
+      else old_vs
     | HTrue | HFalse | HEmp | Hole _ | FrmHole _ -> []
     | HVar (v,ls) -> v::ls
   in aux h

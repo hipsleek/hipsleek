@@ -2386,7 +2386,8 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
       let () = Debug.ninfo_zprint (lazy  ("     niu_svl_ni:" ^((pr_list (pr_pair !CP.print_sv print_arg_kind) ) niu_svl_ni))) no_pos in
       (*old: args1@not_in_used_svl*)
       (*not_in_used_svl: NI*)
-      let args11 = if !Globals.sa_pure_field then
+      let args11 = if Globals.infer_const_obj # is_pure_field 
+      (* !Globals.sa_pure_field *) then
           let args11 = List.map (fun sv ->
               if CP.is_node_typ sv then (sv, I)
               else (sv, NI)

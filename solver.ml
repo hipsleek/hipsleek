@@ -4224,7 +4224,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
     begin
       let msg = ("FREE VAR IN HEAP RHS :"^(!CP.print_svl fv_s)) in
       let () = x_winfo_pp msg no_pos in
-      let () = print_endline_quiet ((add_str "LHS" Cprinter.string_of_context_short) ctx_00) in
+      let () = print_endline_quiet ((add_str "\nLHS" Cprinter.string_of_context_short) ctx_00) in
       (* let () = x_binfo_hp (add_str "fv_conseq (heap only)" !CP.print_svl) fv_s no_pos in *)
       let () = print_endline_quiet ((add_str "RHS" Cprinter.string_of_struc_formula) conseq) in
       if !Globals.warn_free_vars_conseq then

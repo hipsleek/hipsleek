@@ -1,0 +1,70 @@
+data chr_star {
+  int val;
+  chr_star next;
+}.
+
+pred WFS<> ==
+  self::chr_star<0,q>*q::BADS<> 
+  or self::chr_star<v,q>*q::WFS<> & v!=0 
+  inv true.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::chr_star<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred BADS<> ==
+  self::chr_star<v,q>*q::BADS<> 
+  inv true.
+
+/*
+checkentail 
+ q::BADS<>@M * s2::chr_star<flted_25_1681,q_1682>@M * q_1682::BADS<>@M * 
+ s1'::chr_star<v,q_1689>@M&
+//!(v_bool_67_1516') & 
+s1'=s1 & s2'=s2 & flted_25_1681=0 & v=flted_25_1681 & 
+Anon_13=q_1682 & Anon_14=Anon_15 & q_1689=q & s1!=null & v=0 
+ |-  (exists q_69,flted_63_64,flted_62_65,qq,
+Anon_16: s1::WFSeg<q_69>@M * q::chr_star<flted_62_65,qq>@M * qq::BADS<>@M * 
+         s2'::chr_star<flted_63_64,Anon_16>@M&
+flted_62_65=0 & flted_63_64=0 & s1'=q & q_69=q
+)
+.
+*/
+
+checkentail
+s1::chr_star<0,q>*q::BADS<> //* s2::chr_star<0,q1>
+ *q1::BADS<> & s1=s1' & s2=s2'
+|- s1::WFSeg<q>*q::chr_star<0,qq>*qq::BADS<> 
+    //* s2'::chr_star<0,_> 
+   & s1'=q .
+
+checkentail
+s1::chr_star<0,q>*q::BADS<> //* s2::chr_star<0,q1>
+ *q1::BADS<> & s1=s1' & s2=s2'
+|- //s1::WFSeg<q>*
+   q::chr_star<0,qq>*qq::BADS<> 
+    //* s2'::chr_star<0,_> 
+   & s1'=q & s1=q.
+
+print residue. 
+
+
+/*
+
+id: 694; caller: []; line: 62; TIME: 3.140202; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [] globals: [@flow,@ver_post]
+
+ checkentail q::BADS<>@M * s2::chr_star<flted_25_1681,q_1682>@M * q_1682::BADS<>@M * 
+ s1'::chr_star<v,q_1689>@M&
+not(v_bool_67_1516') & s1'=s1 & s2'=s2 & flted_25_1681=0 & v=flted_25_1681 & 
+Anon_13=q_1682 & Anon_14=Anon_15 & q_1689=q & s1!=null & v=0 & MayLoop[]&
+{FLOW,(4,5)=__norm#E}[]
+ |-  (exists q_69,flted_63_64,flted_62_65,qq,
+Anon_16: s1::WFSeg<q_69>@M * q::chr_star<flted_62_65,qq>@M * qq::BADS<>@M * 
+         s2'::chr_star<flted_63_64,Anon_16>@M&
+flted_62_65=0 & flted_63_64=0 & s1'=q & q_69=q&{FLOW,(4,5)=__norm#E}[].
+
+ [[ COND ==>  SEARCH ==>  Match(s2,s2') ==>  COND ==>  SEARCH ==>  COND ==>  SEARCH ==>  Match(s1',q) ==>  COND ==>  BaseCaseUnfold]]
+
+
+*/

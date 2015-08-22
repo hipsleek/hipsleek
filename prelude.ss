@@ -414,6 +414,14 @@ void delete_ptr(int_ptr_ptr@R x)
   requires x::int_ptr_ptr<v>
   ensures true;
 
+data int_star{
+  int value;
+}
+
+int_star __pointer_add__int_star__int__(int_star p, int i)
+  requires p::int_star<value>
+  ensures res::int_star<value+i>;
+
 /* ********<<<*************/
 /* Pointer translation  */
 /* ************************/
@@ -531,3 +539,35 @@ bool rand_bool ()
 requires true
 ensures res or !res;
 
+
+/* ********>>>*************/
+/* String translation  */
+/* ************************/
+data char_star {
+  int val;
+  char_star next;
+}
+
+char_star __plus_plus_char(char_star x)
+requires x::char_star<_,q>@L & Term[] 
+ensures  res=q ;
+
+int __get_char(char_star x)
+  requires x::char_star<v,_>@L & Term[]
+  ensures res=v;
+
+void __write_char(char_star x, int v)
+  requires x::char_star<_,q> & Term[]
+  ensures x::char_star<v,q>;
+
+char_star plus_plus_char(char_star x)
+requires x::char_star<_,q>@L & Term[] 
+ensures  res=q ;
+
+int get_char(char_star x)
+  requires x::char_star<v,_>@L & Term[]
+  ensures res=v;
+
+void write_char(char_star x, int v)
+  requires x::char_star<_,q> & Term[]
+  ensures x::char_star<v,q>;

@@ -1868,6 +1868,16 @@ Valid Lemmas : [SPLIT:<==>] added to lemma store.
 !!! **typechecker.ml#4392:imm infer end20
 
 ===================================================================
+# ex54a.slk --en-para -perm fperm -tp redlog --old-norm-w-coerc 
+
+# why does (Perm.allow_perm ()) need a different way of building
+  to_ante and to_conseq? Need to integrate properly.
+
+!!! **WARNING****solver.ml#9594:impl_inst and to_conseq not properly built
+WARNING: _0:0_0:0:* between overlapping heaps: ( x::cellp( f2_310)<v_319>@M, x::cellp( f1_309)<v1>@M)
+!!! **WARNING****solver.ml#14548:into normalization_with_coerc? why?
+
+# this is being investigated from --warn-nonempty-perm-vars
 ===================================================================
 ===================================================================
 ===================================================================

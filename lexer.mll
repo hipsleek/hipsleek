@@ -398,6 +398,7 @@ rule tokenizer file_name = parse
   | "@xpre" { XPRE } (* WN : what is this? *)
   | "@post" { POST } (* to be changed *)
   | "@leak" { INFER_AT_CLASSIC }
+  | "@classic" { INFER_AT_CLASSIC }
   | "@par" { INFER_AT_PAR }
   | "@term" { INFER_AT_TERM }
   | "@term_wo_post" { INFER_AT_TERM_WO_POST }
@@ -405,6 +406,7 @@ rule tokenizer file_name = parse
   | "@post_n" { INFER_AT_POST }
   | "@ver_post" { INFER_AT_VER_POST }
   | "@imm_pre" { INFER_IMM_PRE }
+  | "@pure_field" { INFER_AT_PURE_FIELD }
   | "@imm_post" { INFER_IMM_POST }
   | "@imm" { INFER_AT_IMM }
   | "@field_imm" { INFER_AT_FIELD_IMM }
