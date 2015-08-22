@@ -14,7 +14,7 @@ BADS<> ==
   inv true;
 */
 
-char *(cstrcat)(char *s1, const char *s2)
+char *(loop1)(char *s1, const char *s2)
   /*@
     requires s1::WFS<> * s2::WFS<> 
     ensures s1::WFSeg<q>*q::char_star<0,qq>*qq::BADS<> * s2::WFS<> & res=qq;

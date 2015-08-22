@@ -14,10 +14,12 @@ BADS<> ==
   inv true;
 */
 
+// s1 is now two strings one after another..
 char *(cstrcat)(char *s1, const char *s2)
   /*@
     requires s1::WFS<> * s2::WFS<> 
-    ensures s1::WFSeg<q2>*q2::char_star<0,q3> * res::BADS<> * s2::WFSeg<q>*q::char_star<0,qq>*qq::BADS<> ;
+    ensures s1::WFSeg<q2>*q2::char_star<0,res> *  s2::WFSeg<q>*q::char_star<0,qq>*qq::BADS<> 
+    * res::WFSeg<q4>*q4::char_star<0,q5>*q5::BADS<>;
   */
   {
      while (*s1++!='\0') 
@@ -28,13 +30,15 @@ char *(cstrcat)(char *s1, const char *s2)
        {
          //s1++;
        }
+     char *t1 = s1;
      while ((*s1++ = *s2++) != '\0')
        /*@
-          requires s1::char_star<_,q> * q::BADS<> * s2::WFS<>  
-          ensures s2::WFSeg<qq>*qq::char_star<0,s2'>*s2'::BADS<> * s1'::BADS<>;
+          requires s1::char_star<_,q> * q::BADS<> * s2::WFS<>   
+          ensures s2::WFSeg<qq>*qq::char_star<0,s2'>*s2'::BADS<> 
+              * s1::WFSeg<q4>*q4::char_star<0,s1'>*s1'::BADS<>;
        */
-         ;   
-     return s1;
+       ;
+     return t1;
   }
 
 char* new_str()
