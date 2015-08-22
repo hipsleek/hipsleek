@@ -15,7 +15,7 @@ let trailer_num_list = ref []
 
 let change_flow = ref false
 
-let abs_int = ref 7
+let abs_int = ref 3
 let lend_int = ref 2
 let imm_int = ref 1
 let mut_int = ref 0
@@ -156,6 +156,10 @@ let print_arg_kind i= match i with
   | I -> ""
   | NI -> "#"
 
+let string_of_arg_kind i= match i with
+  | I -> "@I"
+  | NI -> "@NI"
+
 (* and prim_type =  *)
 (*   | TVar of int *)
 (*   | Bool *)
@@ -164,6 +168,15 @@ let print_arg_kind i= match i with
 (*   | Void *)
 (*   | BagT of prim_type *)
 (*   | List *)
+
+type view_kind =
+  | View_PRIM
+  | View_HREL
+  | View_NORM
+  | View_EXTN
+  | View_DERV
+  | View_SPEC
+
 
 (* TODO : move typ here in future *)
 type typ =
@@ -224,6 +237,14 @@ type typ =
 
 type typed_ident = (typ * ident)
 
+let string_of_view_kind k = match k with
+  | View_PRIM -> "View_PRIM"
+  | View_HREL -> "View_HREL"
+  | View_NORM -> "View_NORM"
+  | View_EXTN -> "View_EXTN"
+  | View_DERV -> "View_DERV"
+  | View_SPEC -> "View_SPEC"
+
 let is_undef_typ t =
   match t with
   |UNK |RelT _ |HpT |UtT _ -> true
@@ -283,6 +304,7 @@ let is_type_var t =
 
 
 let imm_var_sufix = "_imm"
+let imm_var_prefix = "ann"
 
 let is_program_pointer (name:ident) = 
   let slen = (String.length name) in
@@ -421,6 +443,11 @@ let int_of_heap_ann a =
   | Lend -> !lend_int
   | Imm -> !imm_int
   | Mutable -> !mut_int
+
+let is_absent a =
+  match a with
+  | Accs -> true
+  | _ -> false
 
 let heap_ann_of_int i =
   if i = !mut_int then Mutable
@@ -878,6 +905,7 @@ let allow_lemma_fold = ref true
 (* unsound if false for lemma/bugs/app-t2c1.slk *)
 
 let allow_lemma_norm = ref false
+let old_norm_w_coerc = ref false
 
 (* Enable exhaustive normalization using lemmas *)
 let allow_exhaustive_norm = ref true
@@ -1054,13 +1082,24 @@ let procs_verified = ref ([] : string list)
 
 let false_ctx_line_list = ref ([] : loc list)
 
-let last_sat_ctx = ref None
+let pr_option f x = match x with
+  | None -> "None"
+  | Some v -> "Some("^(f v)^")"
+
+let last_sat_ctx = new store None (pr_option string_of_loc)
+let last_infer_lhs_contra = new store false string_of_bool 
+
+(* let is_last_infer_lhs_contra () =  *)
+(*   !last_infer_lhs_contra *)
+(* let set_last_infer_lhs_contra () =  *)
+(*   last_infer_lhs_contra:=false *)
 
 let add_false_ctx pos = 
-  last_sat_ctx := None;
+  last_sat_ctx # set None;
+  last_infer_lhs_contra # reset;
   false_ctx_line_list := pos::!false_ctx_line_list
 
-let set_last_ctx (pos:loc) = last_sat_ctx := Some pos 
+(* let set_last_ctx (pos:loc) = last_sat_ctx := Some pos  *)
 
 
 (* use List.rev *)
@@ -1115,11 +1154,12 @@ let allow_imm = ref false (*imm will delay checking guard conditions*)
 let allow_imm_inv = ref true (*imm inv to add of form @M<:v<:@A*)
 let allow_imm_subs_rhs = ref true (*imm rhs subs from do_match*)
 let allow_field_ann = ref false
+let allow_imm_norm = ref false
 
 let remove_abs = ref true
 let allow_array_inst = ref false
 
-let imm_merge = ref false                (* true *) (*TODOIMM set default to false when merging to default branch *)
+let imm_merge = ref true                (* true *) (*TODOIMM set default to false when merging to default branch *)
 
 let imm_weak = ref true
 
@@ -1132,6 +1172,14 @@ let int2imm_conv = ref true
 let aggresive_imm_inst = ref false 
 
 let imm_add = ref true
+
+let allow_noann = ref false
+
+(* infer imm sequatially: first pre, then post *)
+let imm_seq = ref true 
+
+(* infer imm pre/post simultaneously *)
+let imm_sim = ref false
 
 (*Since this flag is disabled by default if you use this ensure that 
   run-fast-test mem test cases pass *)
@@ -1220,14 +1268,22 @@ let allow_threads_as_resource = ref false
 
 (* let assert_matrix = ref false *)
 let assert_nonlinear = ref false
+let assert_unsound_false = ref false
+let assert_no_glob_vars = ref false
 
 let old_collect_false = ref false
+let warn_nonempty_perm_vars = ref false
+let warn_free_vars_conseq = ref false
 let old_infer_collect = ref false
+let old_base_case_unfold = ref false
 let old_impl_gather = ref false
 let old_parse_fix = ref false
+let hrel_as_view_flag = ref false
 let adhoc_flag_1 = ref false
 let adhoc_flag_2 = ref false
 let adhoc_flag_3 = ref false
+let old_keep_absent = ref false
+let old_empty_to_conseq = ref false
 let weaker_pre_flag = ref true
 
 let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
@@ -1309,7 +1365,9 @@ let dump_lem_proc = ref false
 let num_self_fold_search = ref 0
 let array_expansion = ref false;;
 let array_translate = ref false;;
-let self_fold_search_flag = ref false
+
+let self_fold_search_flag = ref true 
+(* performance not affected see incr/fix-todo.txt *)
 
 let show_gist = ref false
 let imply_top_flag = ref false
@@ -1488,6 +1546,8 @@ type infer_type =
   | INF_CLASSIC (* For infer[@leak] *)
   | INF_PAR (* For infer[@par] inside par *)
   | INF_VER_POST (* For infer[@ver_post] for post-checking *)
+  | INF_IMM_PRE (* For infer [@imm_pre] for inferring imm annotation on pre *)
+  | INF_IMM_POST (* For infer [@imm_post] for inferring imm annotation on post *)
 
 (* let int_to_inf_const x = *)
 (*   if x==0 then INF_TERM *)
@@ -1520,7 +1580,8 @@ let string_of_inf_const x =
   | INF_CLASSIC -> "@leak"
   | INF_PAR -> "@par"
   | INF_VER_POST -> "@ver_post"
-
+  | INF_IMM_PRE -> "@imm_pre"
+  | INF_IMM_POST -> "@imm_post"
 (* let inf_const_to_int x = *)
 (*   match x with *)
 (*   | INF_TERM -> 0 *)
@@ -1630,6 +1691,8 @@ class inf_obj  =
         helper "@leak"          INF_CLASSIC;
         helper "@par"           INF_PAR;
         helper "@ver_post"      INF_VER_POST; (* @ato, @arr_to_var *)
+        helper "@imm_pre"       INF_IMM_PRE;
+        helper "@imm_post"      INF_IMM_POST;
         (* let x = Array.fold_right (fun x r -> x || r) arr false in *)
         if arr==[] then failwith  ("empty -infer option :"^s) 
       end
@@ -1649,8 +1712,10 @@ class inf_obj  =
     method is_term_wo_post = self # get INF_TERM_WO_POST
     (* termination inference wo post-condition *)
     method is_pre  = self # get INF_PRE
+    method is_pre_imm = self # get INF_IMM_PRE || self # get INF_IMM
     (* pre-condition inference *)
     method is_post  = self # get INF_POST
+    method is_post_imm = self # get INF_IMM_POST ||  self # get INF_IMM
     (* post-condition inference *)
     method is_ver_post  = self # get INF_VER_POST
     method is_field_imm = self # get INF_FIELD_IMM
@@ -2163,8 +2228,7 @@ let path_trace_gt p1 p2 =
     | ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> (a1>a2) || (a1=a2 && b1>b2) || (a1=a2 && b1=b2 && gt zt1 zt2)
   in gt (List.rev p1) (List.rev p2)
 
-
-let dummy_exception () = ()
+let dummy_exception e = ()
 
 (* convert a tree-like binary object into a list of objects *)
 let bin_op_to_list (op:string)

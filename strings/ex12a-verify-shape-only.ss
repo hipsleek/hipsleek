@@ -25,7 +25,7 @@ int getChar(str x)
 void while1(ref str s)
 
   requires s::WFS<p> 
-  ensures s::WFSeg<s'>*s'::str<0,p>;
+  ensures s::WFSeg<s'>*s'::str<c,p> & c=0;
 
 /*
   requires s::WFS<p> 

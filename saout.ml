@@ -79,7 +79,7 @@ let transform_hp_rels_to_iviews iprog cprog (hp_rels:( CF.hp_rel_def) list):((id
                            I.view_labels = List.map (fun _ -> LO.unlabelled) vars, false;
                            I.view_modes = List.map (fun _ -> ModeOut) vars ;
                            I.view_typed_vars =  tvars;
-                           I.view_kind = I.View_NORM;
+                           I.view_kind = View_NORM;
                            I.view_derv = false;
                            I.view_parent_name = None;
                            I.view_prop_extns = [];
@@ -88,6 +88,7 @@ let transform_hp_rels_to_iviews iprog cprog (hp_rels:( CF.hp_rel_def) list):((id
                            I.view_formula = struc_body;
                            I.view_inv_lock = None;
                            I.view_is_prim = false;
+                           I.view_is_hrel = None;
                            I.view_invariant = IP.mkTrue no_pos;
                            I.view_baga_inv = None;
                            I.view_baga_over_inv = None;

@@ -461,8 +461,7 @@ int[] aalloc___(int dim)
 	requires true 
 	ensures dom(res,0,dim-1);
 
-pred_prim memLoc<heap:bool,size:int>
-  inv size>0;
+pred_prim memLoc<heap:bool,size:int> inv size>0;
 
                                   ///////////////
                                   /*
@@ -515,8 +514,8 @@ RS_mem malloc1(int n)
  ensures  res=null or res::RS_mem<n>;
 */
 
-pred_prim WAIT<b:bag((Object,Object))>;
-pred_prim WAITS<G:bag((Object,Object)), S:bag(Object), d:Object>;
+//pred_prim WAIT<b:bag((Object,Object))>;
+//pred_prim WAITS<G:bag((Object,Object)), S:bag(Object), d:Object>;
 
 relation set_comp(bag((Object,Object)) g, bag(Object) S, Object d).
 relation concrete(bag(Object) g).
@@ -548,6 +547,7 @@ data char_star {
   int val;
   char_star next;
 }
+
 char_star __plus_plus_char(char_star x)
 requires x::char_star<_,q>@L & Term[] 
 ensures  res=q ;
@@ -560,3 +560,14 @@ void __write_char(char_star x, int v)
   requires x::char_star<_,q> & Term[]
   ensures x::char_star<v,q>;
 
+char_star plus_plus_char(char_star x)
+requires x::char_star<_,q>@L & Term[] 
+ensures  res=q ;
+
+int get_char(char_star x)
+  requires x::char_star<v,_>@L & Term[]
+  ensures res=v;
+
+void write_char(char_star x, int v)
+  requires x::char_star<_,q> & Term[]
+  ensures x::char_star<v,q>;

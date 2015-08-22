@@ -1,0 +1,41 @@
+// Valid.Valid.Valid.Fail.Valid.Valid.
+
+data node{
+ int val;
+ node next;
+}.
+
+pred ll<p> == self=p or
+  self::node<_,q>*q::ll<p> //& self!=p
+  inv true.
+
+//1
+checkentail x::node<a,y>@A * y::ll<null>@A * x::ll<null> |- x::node<a,y> * y::ll<null>.
+print residue.
+expect Valid.
+
+//2
+checkentail x::node<a,y>@A * y::ll<null>@A & x=null or x::node<a,y>@A * y::ll<null>@A * x::node<a,z>*z::ll<null> |- x::node<a,y> * y::ll<null>.
+print residue.
+expect Valid.
+
+//3
+checkentail x::ll<n> * y::node<_, q>@A * q::ll<m>@A &x=y |- x::ll<n>.
+print residue.
+expect Valid.
+
+//4
+/* unfold to be triggered only for the branch which materializez the root */
+checkentail x::ll<u> * y::node<_, q>@A * q::ll<v>@A &x=y |- x::ll<v>.
+print residue.
+expect Fail.
+
+//5
+checkentail x::ll<u> * y::node<_, q>@A * q::ll<v>@A &x=y |- x::ll<u>.
+print residue.
+expect Valid.
+
+//6
+checkentail x::ll<u> * y::node<_, q>@A * q::ll<v>@A &x=y |- q::ll<_>.
+print residue.
+expect Valid.

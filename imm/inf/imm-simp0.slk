@@ -1,0 +1,36 @@
+data node{
+	int val;
+	node next;
+}.
+
+data cell{
+	int val;
+}.
+
+infer [a,b] x::node<x1@b,y@a> |- x::node<z,t@L>.
+print residue.
+
+infer [a] @M<:a & a<:@A |- a<:@L.
+print residue.
+// inferred pure: [a<:@L]
+
+infer [a] @M<:a & a<:@A |- a<:@A.
+print residue.
+//  inferred pure: []
+
+/*
+infer [a,b] x::node<x1@b,y@a> & @M<:a & a<:@A|- x::node<z,t@A>.
+print residue.
+*/
+/**
+ why nothing is inferred when t@A, but works ok for t@M ? at least the info abt b should have been inferred 
+
+ <1>x::node<x1@A,y@a>@M&@M<:a & a<:@A & x1=z & t=y&{FLOW,(21,22)=__norm}[]
+[[ Match ==> ]]
+
+
+*/
+/*
+infer [b] x::cell<x1@b> |- x::cell<z>.
+print residue.
+*/

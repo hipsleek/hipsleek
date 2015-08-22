@@ -57,7 +57,7 @@ infer [H,G]
     }
 
     p = p.next;
-    dprint;
+    // dprint;
     return check_one_two_ok(p,flag);
   }
   return true;

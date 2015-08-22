@@ -18,7 +18,7 @@ module IC = Icontext
 let step_change = new Gen.change_flag
 
 (* outcome from shape_infer *)
-let rel_def_stk : CF.hprel_def Gen.stack_pr = new Gen.stack_pr
+let rel_def_stk : CF.hprel_def Gen.stack_pr = new Gen.stack_pr "rel-def-stk"
   Cprinter.string_of_hprel_def_short (==)
 
 
