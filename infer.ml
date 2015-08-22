@@ -3536,15 +3536,33 @@ let infer_collect_hp_rel_empty_rhs_x prog (es0:entail_state) mix_rf pos =
   in
   if CF.isStrictConstTrue_wo_flow es0.CF.es_formula then (false, es0, []) else
     let es_cond_path = CF.get_es_cond_path es0 in
+    (* type: CF.formula_base -> *)
+    (*   CF.formula_base -> *)
+    (*   (Sautil.CP.spec_var * Sautil.CP.spec_var) list -> *)
+    (*   (Sautil.CP.spec_var * Sautil.CP.spec_var) list -> *)
+    (*   CF.h_formula_data list -> *)
+    (*   Sautil.CF.h_formula_view list -> *)
+    (*   (Sautil.CF.CP.spec_var * CP.exp list * 'a) list -> *)
+    (*   CP.spec_var * CF.CP.spec_var list -> CF.hprel option *)
     let generate_constrs lhs_b rhs_b leqs reqs hds hvs lhras (hp,args)=
+      (* WN : Why did this simplify_lhs_rhs has so many parameters? *)
       let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhras []
           [(hp,args)] [] [] [] [] [] [] [] in
       let lhs = CF.remove_neqNull_svl args (CF.Base new_lhs_b) in
-      if CF.extract_hrel_head lhs = None then
+      (* WN : Why do we extract hrel_head and then not use it? *)
+      let extr_hd = x_add_1 CF.extract_hrel_head lhs in
+      let () = x_binfo_hp (add_str " extr_hd" (pr_option !CP.print_sv)) extr_hd no_pos in
+      if  extr_hd != None then
         let knd = CP.RelAssume [hp] in
         let hprel_ass = CF.mkHprel knd [] [] args lhs None (CF.Base rhs_b) es_cond_path in
         (Some hprel_ass)
       else None
+    in
+    let generate_constrs lhs_b rhs_b leqs reqs hds hvs lhras p =
+      let pr1 = Cprinter.string_of_formula_base in
+      let pr2 = Cprinter.string_of_hprel_short  in
+      Debug.no_3 "generate_constrs" pr1 pr1 (pr_pair !CP.print_sv !CP.print_svl) (pr_option pr2)
+        (fun _ _ _ -> generate_constrs lhs_b rhs_b leqs reqs hds hvs lhras p) lhs_b rhs_b p
     in
     let lhs0 = es0.CF.es_formula in
     (**********END INTERNAL***********)
@@ -3588,8 +3606,8 @@ let infer_collect_hp_rel_empty_rhs_x prog (es0:entail_state) mix_rf pos =
           let r_emap0 = get_eqset (MCP.pure_of_mix mix_rf) in
           (* let () = DD.ninfo_hprint (add_str "   sst0: " pr) (sst0) pos in *)
           let _ =
-            x_tinfo_pp ">>>>>> infer_hp_rel <<<<<<" pos;
-            x_tinfo_hp (add_str  "  lhs " Cprinter.string_of_formula) lhs0 pos;
+            x_binfo_pp ">>>>>> infer_hp_rel <<<<<<" pos;
+            x_binfo_hp (add_str  "  lhs " Cprinter.string_of_formula) lhs0 pos;
             x_tinfo_hp (add_str  "  classic " string_of_bool) !Globals.do_classic_frame_rule pos
           in
           (*TOFIX: detect HEmp or HTrue *)
@@ -3607,13 +3625,17 @@ let infer_collect_hp_rel_empty_rhs_x prog (es0:entail_state) mix_rf pos =
           let leqs1 = (MCP.ptr_equations_without_null mix_lf1) in
           let reqs1 = (MCP.ptr_equations_without_null mix_rf1) in
           (********** END BASIC INFO LHS, RHS **********)
-          let sel_hprels = List.filter (fun (hp,_) -> CP.mem_svl hp ivs) (CF.get_HRels lhs_b1.CF.formula_base_heap) in
+          let tmp = CF.get_HRels lhs_b1.CF.formula_base_heap in
+          let pr_hp_lst = pr_list (pr_pair !CP.print_sv !CP.print_svl)in
+          let () = x_binfo_hp (add_str "tmp" pr_hp_lst) tmp no_pos in
+          let () = x_binfo_hp (add_str "ivs" !CP.print_svl) ivs no_pos in
+          let sel_hprels = List.filter (fun (hp,_) -> CP.mem_svl hp ivs) tmp  in
           if sel_hprels = [] then
             (false, es0,[])
           else
             let lhds, lhvs, lhrs = CF.get_hp_rel_bformula lhs_b1 in
             let sel_hpargs, hprel_ass0 = List.fold_left (fun (ls1,ls2) (hp,args) ->
-                let r_opt = generate_constrs lhs_b1 rhs_b1 leqs1 reqs1 lhds lhvs lhrs (hp,args) in
+                let r_opt = x_add generate_constrs lhs_b1 rhs_b1 leqs1 reqs1 lhds lhvs lhrs (hp,args) in
                 match r_opt with
                 | Some ass ->
                   (ls1@[(hp,args)],ls2@[ass])
@@ -3621,6 +3643,7 @@ let infer_collect_hp_rel_empty_rhs_x prog (es0:entail_state) mix_rf pos =
               ) ([],[]) sel_hprels in
             let ex_ass = (rel_ass_stk # get_stk) in
             let hprel_ass = Gen.BList.difference_eq Sautil.constr_cmp hprel_ass0 ex_ass in
+            let () = x_binfo_hp (add_str "sel_hpargs" pr_hp_lst) sel_hpargs no_pos in
             if sel_hpargs = [] || hprel_ass = [] then (false,es0,[]) else
               (*update residue*)
               let reqs0 = (MCP.ptr_equations_without_null mix_rf) in

@@ -5397,6 +5397,7 @@ let extract_unk_hprel (f0:formula) =
   Debug.no_1 "extract_unk_hprel" pr1 pr2
     (fun _ ->  extract_unk_hprel_x f0) f0
 
+(* WN : This needs to extract a list of hprel, and return its residue *)
 let extract_hrel_head (f0:formula) =
   let rec helper f=
     match f with
@@ -5405,19 +5406,23 @@ let extract_hrel_head (f0:formula) =
     | Exists ({ formula_exists_pure = p1;
                 formula_exists_heap = h1;}) ->
       (
-        let p2 = (MCP.pure_of_mix p1) in
-        if (CP.isConstTrue p2 || CP.is_xpure p2) then
+        (* Why the need to check for p2? *)
+        (* let p2 = (MCP.pure_of_mix p1) in *)
+        (* if (CP.isConstTrue p2 || CP.is_xpure p2) then *)
           match h1 with
           | HRel (hp, _, _ ) -> Some (hp)
           | _ -> None
-        else
-          None
+        (* else *)
+        (*   None *)
       )
     | Or _ -> None
   in
   helper f0
 
-let extract_hrel_head_w_args_x (f0:formula) =
+let extract_hrel_head (f0:formula) =
+  Debug.no_1 "extract_hrel_head" !print_formula (pr_option !CP.print_sv) extract_hrel_head f0
+
+let extract_hrel_head_w_args (f0:formula) =
   let rec helper f=
     match f with
     | Base ({ formula_base_pure = p1;
@@ -5444,7 +5449,7 @@ let extract_hrel_head_w_args (f0:formula) =
                            pr (hp,args)
   in
   Debug.no_1 "extract_hrel_head_w_args" pr1 pr2
-    (fun _ ->  extract_hrel_head_w_args_x f0) f0
+    (fun _ ->  extract_hrel_head_w_args f0) f0
 
 let is_top_guard rhs link_hps og=
   let hp_opt = extract_hrel_head rhs in

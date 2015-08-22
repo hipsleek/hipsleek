@@ -1,4 +1,3 @@
-cd 
 =====================================================================
 # ex3b.ss
 
@@ -877,6 +876,27 @@ Residue:
  CEX:true
 
 =====================================================================
+# ex10b7.slk -dre "generate_co\|extract_hre\|simplify_lhs_rhs" 
+
+infer_exact [H] H(p) * H(q) & p=null & n=5 |- emp.
+print residue.
+
+# Why did we not infer:
+    H(p) & p=null -> emp
+    H(q) -> emp
+
+Need to make below much more general to return
+a list of hprel & its residue.
+
+(* WN : This needs to extract a list of hprel, and return its residue *)
+let extract_hrel_head (f0:formula) =
+  let rec helper f=
+    match f with
+    | Base ({ formula_base_pure = p1;
+              formula_base_heap = h1;})
+    | Exists ({ formula_exists_pure = p1;
+                formula_exists_heap = h1;}) ->
+      (
 =====================================================================
 =====================================================================
 =====================================================================

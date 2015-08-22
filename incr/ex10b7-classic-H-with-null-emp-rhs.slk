@@ -1,0 +1,47 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+HeapPred H(node a).
+
+//(1)
+//infer_exact [H] H(p) & p=null |- emp.
+//print residue.
+//expect_infer Valid R{emp}.
+// <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H(p)&p=null --> emp&true]
+
+infer_exact [H] H(p) & p=null |- emp.
+print residue.
+
+infer_exact [H] H(p) & p=null & n=5 |- emp.
+print residue.
+
+infer_exact [H] H(p) * H(q) & p=null & n=5 |- emp.
+print residue.
+
+
+/*
+# ex10b7.slk -dre "generate_co\|extract_hre\|simplify_lhs_rhs" 
+
+ infer_exact [H] H(p) |- emp.
+
+# GOT below. Why did we not infer H(p) --> emp
+
+Need to make below much more general to return
+a list of hprel & its residue.
+
+(* WN : This needs to extract a list of hprel, and return its residue *)
+let extract_hrel_head (f0:formula) =
+  let rec helper f=
+    match f with
+    | Base ({ formula_base_pure = p1;
+              formula_base_heap = h1;})
+    | Exists ({ formula_exists_pure = p1;
+                formula_exists_heap = h1;}) ->
+      (
+*/
