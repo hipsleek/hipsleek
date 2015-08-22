@@ -42,47 +42,72 @@ void while1(ref char_star s)
 /*
 # ex13c.ss
 
+void while1(ref char_star s)
+  infer [P]
+  requires P(s)
+  ensures true;
+{
+  int x=get_char(s);
+  if (x!=0) {
+    s = plus_plus_char(s);
+    while1(s);
+  }
+}
+
+  // P(s) 
+  //   |- s::chr<v,q>@L
+  int x=get_char(s);
+  //   P(s) -> s::chr<v,q>*H1(q)
+  // s::chr<v,q>*H1(q) & x'=v & s'=s
+  if (x!=0) {
+    // s::chr<v,q>*H1(q) & x'=v & v!=0 & s'=s
+    //   |- s::chr<v,q>
+    s = plus_plus_char(s);
+    // s::chr<v,q>*H1(q) & x'=v & v!=0 & s'=q
+    //   |- P(s')
+    while1(s);
+    //   H1(q) | s::chr<v,q> & v!=0 --> P(q) 
+    // s::chr<v,q> & x'=v & v!=0 & s'=q
+    //   |- htrue
+    // emp & x'=v & v!=0 & s'=q
+  }
+  // s::chr<v,q>*H1(q) & x'=v & v=0
+  //   |- htrue
+  //   H1(q) | s::chr<v,q> & v=0 --> emp 
+  // emp & x'=v & v=0
+}
+
+  P(s) -> s::chr<v,q>*H1(q)
+  H1(q) | s::chr<v,q> & v!=0 --> P(q) 
+  H1(q) | s::chr<v,q> & v=0 --> emp
+
+==> add-dangling
+  P(s) -> s::chr<v,q>*H1(q)
+  H1(q) | s::chr<v,q> & v!=0 --> P(q) 
+  H1(q) | s::chr<v,q> & v=0 --> D(q)
+
+==> specialize
+  P(s) -> s::chr<v,q> * P(q) & v!=0
+  P(s) -> s::chr<v,q> * D(q) & v=0
+
+==> parameterize-dangling
+  P(s,d) -> s::chr<v,q> * P(q,d) & v!=0
+  P(s,d) -> s::chr<v,d> & v=0
+
+==> unknown segment
+  P(x,d) -> U(x,q) * q::chr<0,d>
+
+==> segmented-pred
+  P(x,d) -> U(x,q) * q::chr<v,d>
+  U(x,q) -> x=q
+  U(x,q) -> x::chr<v,q1>*U(q1,q) & v!=0
+
 [ // PRE
 (0)P(s)&true --> s::char_star<v_1601,Anon_1602>@M * HP_1603(Anon_1602)&
 true,
  // PRE_REC
 (1;0)HP_1603(Anon_1602)&true --> P(Anon_1602)&
 true]
-
-  int x=get_char(s);
-  // P(s) -> s::chr<v,q>*H1(q)
-  // s::chr<v,q>*H1(q) & x'=v & s'=s
-  if (x!=0) {
-    // s::chr<v,q>*H1(q) & x'=v & v!=0 & s'=s
-    s = plus_plus_char(s);
-    // s::chr<v,q>*H1(q) & x'=v & v!=0 & s'=q
-    while1(s);
-    //  H1(q) | s::chr<v,q> & v!=0 --> P(q) 
-  }
-  // s::chr<v,q>*H1(q) & x'=v & v=0
-  //  H1(q) | s::chr<v,q> & v=0 --> emp 
-  // 
-}
-
-  P(s) -> s::chr<v,q>*H1(q)
-  H1(q) | s::chr<v,q> & v!=0 --> P(q) 
-  H1(q) | s::chr<v,q> & v=0 --> D(q)
-
-==>
-  P(s) -> s::chr<v,q> * P(q) & v!=0
-  P(s) -> s::chr<v,q> * D(q) & v=0
-
-==>
-  P(s,d) -> s::chr<v,q> * P(q,d) & v!=0
-  P(s,d) -> s::chr<v,d> & v=0
-
-==>
-  P(x,d) -> U(x,q) * q::chr<0,d>
-
-==>
-  P(x,d) -> U(x,q) * q::chr<v,d>
-  U(x,q) -> x=q
-  U(x,q) -> x::chr<v,q1>*U(q1,q) & v!=0
 
 id: 12; caller: []; line: 29; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ P,HP_1603]; c_heap: emp; others: [] globals: [@flow,@ver_post]
  checkentail HP_1603(Anon_1602) * s::char_star<v_1601,Anon_1602>@M&
