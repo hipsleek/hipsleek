@@ -3061,7 +3061,10 @@ and h_fv_x ?(vartype=Global_var.var_with_none) (h : h_formula) : CP.spec_var lis
       Gen.BList.remove_dups_eq (=) (v::(perm_vars@rsr_vars@dl_vars))
     | HRel (r, args, _) ->
       let vid = r in
-      vid::CP.remove_dups_svl (List.fold_left List.append [] (List.map CP.afv args))
+      let old_vs = vid::CP.remove_dups_svl (List.fold_left List.append [] (List.map CP.afv args)) in
+      let () = x_tinfo_hp (add_str "HRel(vs)" !CP.print_svl) old_vs no_pos in
+      if vartype # is_heap_only then []
+      else old_vs
     | HTrue | HFalse | HEmp | Hole _ | FrmHole _ -> []
     | HVar (v,ls) -> v::ls
   in aux h
