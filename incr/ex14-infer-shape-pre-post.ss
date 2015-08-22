@@ -21,8 +21,12 @@ HeapPred H1(node a).
 
 
 int size_helper(node x)
+/*
   infer[H]
-  requires H(x)  ensures  emp;//H1(x);
+  requires H(x)  ensures true;//H1(x);
+*/
+  infer[@shape_prepost] requires true ensures true;
+
 {
   if (x==null) 
     return 0;
@@ -31,20 +35,4 @@ int size_helper(node x)
   }
 }
 
-/*
-# ex10a.ss
 
-  infer[H]
-  requires H(x)  ensures  emp;//H1(x);
-
-# Inferred ..
-
-!!! INFERRED SHAPE SPEC:
- EBase 
-   x::sll<>@M&{FLOW,(4,5)=__norm#E}[]
-   EBase 
-     emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
-     EAssume 
-       emp&{FLOW,(4,5)=__norm#E}[]Stop z3... 122 invocations 
-
- */

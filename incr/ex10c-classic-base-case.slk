@@ -10,6 +10,8 @@ HeapPred H(node a).
 
 infer_exact [] H(p) & p=null |- emp.
 print residue.
+
+
 /*
 # ex10c.alk
 
@@ -20,3 +22,9 @@ GOT:
 
 */
 
+infer [] H(p) & p=null |- emp.
+print residue.
+
+/*
+should OK
+*/

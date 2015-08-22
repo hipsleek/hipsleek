@@ -405,11 +405,15 @@ rule tokenizer file_name = parse
   | "@post_n" { INFER_AT_POST }
   | "@ver_post" { INFER_AT_VER_POST }
   | "@imm_pre" { INFER_IMM_PRE }
+  | "@pure_field" { INFER_AT_PURE_FIELD }
   | "@imm_post" { INFER_IMM_POST }
   | "@imm" { INFER_AT_IMM }
   | "@field_imm" { INFER_AT_FIELD_IMM }
   | "@arrvar" { INFER_AT_ARR_AS_VAR }
   | "@shape" { INFER_AT_SHAPE }
+  | "@shape_pre" { INFER_AT_SHAPE_PRE }
+  | "@shape_post" { INFER_AT_SHAPE_POST }
+  | "@shape_prepost" { INFER_AT_SHAPE_PRE_POST }
   | "@error" { INFER_AT_ERROR }
   | "@dis_err" { INFER_AT_DE_EXC }
   | "@err_must" { INFER_AT_ERRMUST }

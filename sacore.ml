@@ -2785,6 +2785,12 @@ let compute_gfp_x prog is_pre is predefs pdefs=
   (********INTERNAL*******)
   let skip_hps = List.map fst (is.CF.is_dang_hpargs@is.CF.is_link_hpargs) in
   (********END INTERNAL*******)
+  if !Globals.sa_prefix_emp then
+    let (hp0,args0,f0) = List.hd pdefs in
+    let r,non_r_args = List.hd args0, List.tl args0  in
+    let fixn = CF.formula_of_heap CF.HEmp no_pos in
+    CF.mk_hp_rel_def hp0 (args0, r, non_r_args) None fixn None no_pos,[]
+  else
   let hp,def,n_unk_hpargs=
     match pdefs with
     | (hp0,args0,f0)::rest ->

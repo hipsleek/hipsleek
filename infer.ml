@@ -2386,7 +2386,8 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
       let () = Debug.ninfo_zprint (lazy  ("     niu_svl_ni:" ^((pr_list (pr_pair !CP.print_sv print_arg_kind) ) niu_svl_ni))) no_pos in
       (*old: args1@not_in_used_svl*)
       (*not_in_used_svl: NI*)
-      let args11 = if !Globals.sa_pure_field then
+      let args11 = if Globals.infer_const_obj # is_pure_field 
+      (* !Globals.sa_pure_field *) then
           let args11 = List.map (fun sv ->
               if CP.is_node_typ sv then (sv, I)
               else (sv, NI)
@@ -3591,6 +3592,7 @@ let infer_collect_hp_rel_empty_rhs_x prog (es0:entail_state) mix_rf pos =
             x_tinfo_hp (add_str  "  lhs " Cprinter.string_of_formula) lhs0 pos;
             x_tinfo_hp (add_str  "  classic " string_of_bool) !Globals.do_classic_frame_rule pos
           in
+          (*TOFIX: detect HEmp or HTrue *)
           let rhs_b0 = formula_base_of_heap (CF.HEmp) pos in
           (********** BASIC INFO LHS, RHS **********)
           let l_hpargs = CF.get_HRels lhs_b0.CF.formula_base_heap in
@@ -3635,7 +3637,7 @@ let infer_collect_hp_rel_empty_rhs_x prog (es0:entail_state) mix_rf pos =
 let infer_collect_hp_rel_empty_rhs i prog (es:entail_state) rhs_p pos =
   let pr1 = Cprinter.string_of_formula in
   let pr2 = Cprinter.string_of_mix_formula in
-  let pr3 (b, es,_) =  (pr_pair string_of_bool Cprinter.string_of_estate_infer_hp) (b, es) in
+  let pr3 =  (pr_triple string_of_bool Cprinter.string_of_estate_infer_hp (pr_list_ln Cprinter.string_of_hprel_short)) in
   Debug.no_2_num i "infer_collect_hp_rel_empty_rhs" pr1 pr2 pr3
     ( fun _ _ -> infer_collect_hp_rel_empty_rhs_x prog es rhs_p pos) es.CF.es_formula rhs_p
 

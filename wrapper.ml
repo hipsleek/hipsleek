@@ -62,6 +62,20 @@ let wrap_norm flag norm f a =
   with _ as e ->
     raise e
 
+let wrap_pure_field et f a =
+  let flag = !Globals.sa_pure_field in
+  sa_pure_field := (match et with
+      | None -> infer_const_obj # get INF_PURE_FIELD  (* !opt_classic *)
+      | Some b -> b);
+  try
+    let res = f a in
+    (* restore flag sa_pure_field *)
+    Globals.sa_pure_field := flag;
+    res
+  with _ as e ->
+    (Globals.sa_pure_field := flag;
+     raise e)
+
 let wrap_classic et f a =
   let flag = !do_classic_frame_rule in
   do_classic_frame_rule := (match et with

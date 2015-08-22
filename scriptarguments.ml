@@ -175,6 +175,10 @@ let common_arguments = [
    "Sleek Log Filter Flag");
   ("--elp", Arg.Set Globals.check_coercions,
    "enable lemma proving");
+  ("--eel", Arg.Set Globals.eager_coercions,
+   "enable earger lemma applying");
+  ("--del", Arg.Clear Globals.eager_coercions,
+   "diable earger lemma applying");
   ("--dump-lemmas", Arg.Set Globals.dump_lemmas,
    "enable lemma printing");
   ("--dl", Arg.Set Globals.dump_lemmas,
@@ -903,13 +907,14 @@ linput.rl");
   ("--dis-cp-trace", Arg.Clear Globals.cond_path_trace, "Disable the tracing of conditional paths");
   (* WN: Please use longer meaningful variable names *)
   ("--sa-ep", Arg.Set VarGen.sap, "Print intermediate results of normalization");
+  ("--sa-dp", Arg.Clear VarGen.sap, "disable Printing intermediate results of normalization");
+  ("--sa-prefix-pred", Arg.Clear Globals.sa_prefix_emp, "disable pre-condition fixpoint as empty during shape analysis");
   ("--dis-infer-heap", Arg.Clear Globals.fo_iheap, "disable first-order infer_heap");
   ("--sa-error", Arg.Set Globals.sae, "infer error spec");
   ("--sa-dis-error", Arg.Clear Globals.sae, "disable to infer error spec");
   ("--sa-case", Arg.Set Globals.sac, "combine case spec");
   ("--sa-dis-case", Arg.Clear Globals.sac, "disable to combine case spec");
   ("--sa-gen-spec", Arg.Set Globals.sags, "enable generate spec with unknown preds for inference");
-  ("--sa-dp", Arg.Clear VarGen.sap, "disable Printing intermediate results of normalization");
   ("--gsf", Arg.Set Globals.sa_gen_slk, "shorthand for -sa-gen-sleek-file");
   ("--gff", Arg.Set Globals.gen_fixcalc, "shorthand for gen-fixcalc-file");
   ("--sa-gen-sleek-file", Arg.Set Globals.sa_gen_slk, "gen sleek file after split_base");
@@ -967,7 +972,12 @@ linput.rl");
   (* ("--sa-inlining", Arg.Set Globals.sa_inlining, "inline dangling HP/pointers"); *)
   ("--pred-en-eup", Arg.Set Globals.pred_elim_unused_preds, "enable the elimination of unused hprel predicates");
   ("--pred-dis-eup", Arg.Clear Globals.pred_elim_unused_preds, "disable the elimination of unused hprel predicates");
-  ("--sa-en-pure-field", Arg.Set Globals.sa_pure_field, "enable the inference of pure field property");
+  ("--sa-en-pure-field", 
+   (*  Arg.Set Globals.sa_pure_field *)
+   Arg.Unit
+     ( fun _ -> 
+         Globals.infer_const_obj # set Globals.INF_PURE_FIELD
+     ), "enable the inference of pure field property");
   ("--sa-dis-pure-field", Arg.Clear Globals.sa_pure_field, "disable the inference of pure field property");
   ("--sa-ext", Arg.Set Globals.sa_ex, "enable the inference of shape and pure property (predicate level)");
   ("--sa-pure", Arg.Set Globals.sa_pure, "enable the inference of shape and pure property");
