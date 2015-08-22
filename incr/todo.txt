@@ -857,6 +857,25 @@ support for c program
 to support @shape_pre_post
 
 =====================================================================
+# ex10b6.slk
+
+ infer_exact [H] H(p) |- emp.
+
+# GOT below. Why did we not infer H(p) --> emp
+
+Entail (2) : Fail.(may) cause: H(p)&{FLOW,(20,21)=__norm#E}[]: possible memory leak failure : residue is forbidden.
+
+Residue:
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: 
+   fe_locs: {
+     fc_message: memory leak
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[empty]]
+ CEX:true
+
 =====================================================================
 =====================================================================
 =====================================================================
