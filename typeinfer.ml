@@ -1153,8 +1153,9 @@ and add_last_diff ls1 ls2 res=
   | _ -> raise (Invalid_argument "first is longer than second")
 
 and try_unify_data_type_args prog c v deref ies tlist pos =
+  let pr_tl =  string_of_tlist in
   let pr = add_str "ies" (pr_list Iprinter.string_of_formula_exp) in
-  Debug.no_2 "try_unify_data_type_args" pr_none pr pr_none (fun _ _ -> try_unify_data_type_args_x prog c v deref ies tlist pos) c ies
+  Debug.no_3 "try_unify_data_type_args" pr_id pr pr_tl pr_tl (fun _ _ _ -> try_unify_data_type_args_x prog c v deref ies tlist pos) c ies tlist
 
 and try_unify_data_type_args_x prog c v deref ies tlist pos =
   (* An Hoa : problem detected - have to expand the inline fields as well, fix in look_up_all_fields. *)

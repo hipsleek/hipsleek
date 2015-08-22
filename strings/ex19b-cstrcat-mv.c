@@ -1,17 +1,38 @@
+/*@
 
- char *(cstrcat)(char *s1)
+ WFS<p> ==
+  self::char_star<0,p>
+  or self::char_star<v,q>*q::WFS<p> & v!=0 
+  inv self!=null;
+
+WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true;
+
+BADS<> ==
+  self::char_star<v,q>*q::BADS<> 
+  inv true;
+*/
+
+char *(cstrcat)(char *s1)
  {
      char *s = s1;
      while (*s != '\0')
+       /*@
+
+        */
          s++;
      return s1;
  }
 
+/*
 int main() {
   char *s1;
   cstrcat(s1);
   return 0;
 }
+*/
  
 /*
 # ex19b.s --pip
@@ -45,6 +66,7 @@ int_star s
 s = (104, ):__pointer_add__int_star__int__(s, 1)}
 }
 (105, ):return s1}}
+
 }
 
 int main()[]
