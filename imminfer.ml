@@ -325,10 +325,10 @@ let wrapper_infer_imm_pre_post_seq infer_stk verify_scc prog verified_scc scc =
   let _ = should_infer_imm_post := false in
   let helper prog scc = 
     let prog, scc = x_add infer_imm_ann prog scc in
-    let _ = x_binfo_pp "imm infer start" no_pos in
+    let _ = x_tinfo_pp "imm infer start" no_pos in
     let reloblgs = collect_reloblgs scc in
     let () = infer_stk # push_list reloblgs in
-    let _ = x_binfo_pp "imm infer end" no_pos in
+    let _ = x_tinfo_pp "imm infer end" no_pos in
     (prog,scc) in
   (* pre-process for pre or post only *)
   let prog, scc1 = helper prog scc in
@@ -352,10 +352,10 @@ let wrapper_infer_imm_pre_post_sim infer_stk verify_scc prog verified_scc scc =
   let _ = should_infer_imm_post := true in
   let helper prog scc = 
     let prog, scc = x_add infer_imm_ann prog scc in
-    let _ = x_binfo_pp "imm infer start" no_pos in
+    let _ = x_tinfo_pp "imm infer start" no_pos in
     let reloblgs = collect_reloblgs scc in
     let () = infer_stk # push_list reloblgs in
-    let _ = x_binfo_pp "imm infer end" no_pos in
+    let _ = x_tinfo_pp "imm infer end" no_pos in
     prog, scc in
   (* pre-process for pre and post *)
   let prog, scc1 = helper prog scc in

@@ -4389,7 +4389,7 @@ let rec check_prog iprog (prog : prog_decl) =
     let mutual_grp = ref scc in
 
     x_tinfo_hp (add_str "MG"  (pr_list (fun p -> p.proc_name))) !mutual_grp no_pos;
-    let _ = x_binfo_pp "imm infer end20" no_pos in
+    let _ = x_tinfo_pp "imm infer end20" no_pos in
     let is_all_verified2 = proc_mutual_scc prog scc (fun prog proc1 ->
         begin
           mutual_grp := List.filter (fun x -> x.proc_name != proc1.proc_name) !mutual_grp;

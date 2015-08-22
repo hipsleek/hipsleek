@@ -175,6 +175,10 @@ let common_arguments = [
    "Sleek Log Filter Flag");
   ("--elp", Arg.Set Globals.check_coercions,
    "enable lemma proving");
+  ("--eel", Arg.Set Globals.eager_coercions,
+   "enable earger lemma applying");
+  ("--del", Arg.Clear Globals.eager_coercions,
+   "diable earger lemma applying");
   ("--dump-lemmas", Arg.Set Globals.dump_lemmas,
    "enable lemma printing");
   ("--dl", Arg.Set Globals.dump_lemmas,
@@ -903,13 +907,14 @@ linput.rl");
   ("--dis-cp-trace", Arg.Clear Globals.cond_path_trace, "Disable the tracing of conditional paths");
   (* WN: Please use longer meaningful variable names *)
   ("--sa-ep", Arg.Set VarGen.sap, "Print intermediate results of normalization");
+  ("--sa-dp", Arg.Clear VarGen.sap, "disable Printing intermediate results of normalization");
+  ("--sa-prefix-pred", Arg.Clear Globals.sa_prefix_emp, "disable pre-condition fixpoint as empty during shape analysis");
   ("--dis-infer-heap", Arg.Clear Globals.fo_iheap, "disable first-order infer_heap");
   ("--sa-error", Arg.Set Globals.sae, "infer error spec");
   ("--sa-dis-error", Arg.Clear Globals.sae, "disable to infer error spec");
   ("--sa-case", Arg.Set Globals.sac, "combine case spec");
   ("--sa-dis-case", Arg.Clear Globals.sac, "disable to combine case spec");
   ("--sa-gen-spec", Arg.Set Globals.sags, "enable generate spec with unknown preds for inference");
-  ("--sa-dp", Arg.Clear VarGen.sap, "disable Printing intermediate results of normalization");
   ("--gsf", Arg.Set Globals.sa_gen_slk, "shorthand for -sa-gen-sleek-file");
   ("--gff", Arg.Set Globals.gen_fixcalc, "shorthand for gen-fixcalc-file");
   ("--sa-gen-sleek-file", Arg.Set Globals.sa_gen_slk, "gen sleek file after split_base");
