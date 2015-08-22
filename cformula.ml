@@ -19199,3 +19199,50 @@ let collect_infer_rel_list_failesc_context lfc =
 (*   let f e = e *)
 (*   in *)
 (*   map_list_partial_context ctx f  *)
+
+let extract_hrel_list (hf:h_formula) = 
+  let lst = new Gen.stack in
+  let f hf = match hf with
+    |  HRel (hp, eargs, _ ) -> 
+      let () = lst # push (hp,eargs) in
+      Some (HEmp)
+    | _ -> None 
+  in
+  let new_f = map_h_formula hf f in
+  (lst # get_stk,new_f)
+
+let extract_hrel_list (hf:h_formula) = 
+  Debug.no_1 "extract_hrel_list" !print_h_formula 
+    (pr_pair (pr_list (pr_pair !CP.print_sv (pr_list !CP.print_exp))) !print_h_formula) extract_hrel_list hf
+
+(* (==infer.ml#3554==) *)
+(* extract_hrel_head_list@9@6 *)
+(* extract_hrel_head_list inp1 : H(p)&p=null&{FLOW,(20,21)=__norm#E}[] *)
+(* extract_hrel_head_list@9 EXIT:Some(([(H,[ p])], emp&p=null&{FLOW,(20,21)=__norm#E}[])) *)
+let extract_hrel_head_list (f0:formula) =
+  let rec helper f =
+    match f with
+    | Base ({formula_base_heap = h1;} as r) ->
+      let (lst,new_h) = extract_hrel_list h1 in
+      if lst==[] then None
+      else Some(lst,Base {r with formula_base_heap = new_h})
+    | Exists ({ formula_exists_heap = h1;} as r) ->
+      let (lst,new_h) = extract_hrel_list h1 in
+      if lst==[] then None
+      else Some(lst,Exists {r with formula_exists_heap = new_h})
+    | Or ({formula_or_f1 = f1; formula_or_f2 = f2} as r) -> 
+      let new_1 = helper f1 in
+      let new_2 = helper f2 in
+      match new_1,new_2 with
+      | None,None -> None
+      | Some(l1,f1),None -> Some(l1, Or {r with formula_or_f1 = f1})
+      | None,Some(l2,f2) -> Some(l2, Or {r with formula_or_f2 = f2})
+      | Some(l1,f1),Some(l2,f2) ->
+         Some(l1@l2, Or {r with formula_or_f1 = f1; formula_or_f2 = f2})
+  in
+  helper f0
+
+let extract_hrel_head_list (f0:formula) =
+  let pr_hr = pr_list (pr_pair !CP.print_sv (pr_list !CP.print_exp)) in
+  let pr = pr_option (pr_pair pr_hr !print_formula) in
+  Debug.no_1 "extract_hrel_head_list" !print_formula pr extract_hrel_head_list  f0

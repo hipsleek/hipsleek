@@ -3551,7 +3551,11 @@ let infer_collect_hp_rel_empty_rhs_x prog (es0:entail_state) mix_rf pos =
       let lhs = CF.remove_neqNull_svl args (CF.Base new_lhs_b) in
       (* WN : Why do we extract hrel_head and then not use it? *)
       let extr_hd = x_add_1 CF.extract_hrel_head lhs in
-      let () = x_binfo_hp (add_str " extr_hd" (pr_option !CP.print_sv)) extr_hd no_pos in
+      let extr_ans = x_add_1 CF.extract_hrel_head_list lhs in
+      let pr_hr = pr_list (pr_pair !CP.print_sv (pr_list !CP.print_exp)) in
+      let pr6 = pr_option (pr_pair pr_hr !CF.print_formula) in
+      let () = x_binfo_hp (add_str "extr_ans(list)" pr6) extr_ans no_pos in
+      let () = x_binfo_hp (add_str "extr_hd" (pr_option !CP.print_sv)) extr_hd no_pos in
       if  extr_hd != None then
         let knd = CP.RelAssume [hp] in
         let hprel_ass = CF.mkHprel knd [] [] args lhs None (CF.Base rhs_b) es_cond_path in
