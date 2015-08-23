@@ -1939,7 +1939,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               CF.h_formula_data_pruning_conditions = [];
               CF.h_formula_data_pos = pos}) in
           let vheap = CF.formula_of_heap vdatanode pos in
-          let () = x_tinfo_hp (add_str "vheap" (Cprinter.string_of_formula)) vheap pos in
+          let () = x_tinfo_hp (add_str "vs_prim" (!CP.print_svl)) vs_prim pos in
+          let () = x_tinfo_hp (add_str "vheap(0)" (Cprinter.string_of_formula)) vheap pos in
           (*Test whether fresh_perm_exp is full permission or not
             writable -> fresh_perm_exp = full_perm => normally
             read-only -> fresh_perm_exp != full_perm => in order to 
@@ -1964,10 +1965,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           let vheap = x_add_1 Immutable.normalize_field_ann_formula vheap in
           let vheap = x_add Cvutil.prune_preds prog false vheap in
           let () = x_tinfo_hp (add_str "vheap 3" (Cprinter.string_of_formula)) vheap pos in
+          (* WN : provided implicit instantation to vs_prim *)
           let struc_vheap = CF.EBase { 
               CF.formula_struc_explicit_inst = [];
-              CF.formula_struc_implicit_inst = if (Perm.allow_perm ()) then perm_vars else [];  (*need to instantiate f*)
-              CF.formula_struc_exists = [];
+              CF.formula_struc_implicit_inst = (if (Perm.allow_perm ()) then perm_vars else [])@vs_prim;  (*need to instantiate f*)
+              CF.formula_struc_exists = [] ;
               CF.formula_struc_base = vheap;
               CF.formula_struc_is_requires = false;
               CF.formula_struc_continuation = None;
@@ -1980,9 +1982,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let () = consume_all := true in
             (* let () = DD.info_zprint (lazy (("       sleek-logging (binding):" ^ (to_print)))) pos in *)
             (* let () = Log.update_sleek_proving_kind Log.BINDING in *)
-            (* let () = Debug.info_pprint ("Andreea : we need to normalise struc_vheap") no_pos in *)
-            (* let () = Debug.info_pprint ("==========================================") no_pos in *)
-            (* let () = Debug.info_hprint (add_str "struc_vheap" Cprinter.string_of_struc_formula) struc_vheap no_pos in *)
+            (* let () = x_tinfo_pp ("Andreea : we need to normalise struc_vheap") no_pos in *)
+            (* let () = x_tinfo_pp ("==========================================") no_pos in *)
+            (* let () = x_tinfo_hp (add_str "struc_vheap" Cprinter.string_of_struc_formula) struc_vheap no_pos in *)
             (* let () = print_endline ("unfolded:" ^(Cprinter.string_of_list_failesc_context unfolded)) in *)
             (* do not allow leak detection in binding*)
             let do_classic_frame = !Globals.do_classic_frame_rule in
@@ -4387,7 +4389,7 @@ let rec check_prog iprog (prog : prog_decl) =
     let mutual_grp = ref scc in
 
     x_tinfo_hp (add_str "MG"  (pr_list (fun p -> p.proc_name))) !mutual_grp no_pos;
-    let _ = x_binfo_pp "imm infer end20" no_pos in
+    let _ = x_tinfo_pp "imm infer end20" no_pos in
     let is_all_verified2 = proc_mutual_scc prog scc (fun prog proc1 ->
         begin
           mutual_grp := List.filter (fun x -> x.proc_name != proc1.proc_name) !mutual_grp;

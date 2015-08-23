@@ -1,0 +1,41 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+HeapPred H(node a, node b).
+pred_prim G<a:node, b:node>.
+
+// implicit f?
+checkentail H(p,qqq) |- H(p,f) .
+
+checkentail x::G<ppp,qqq> |- x::G<ppp,f> .
+
+//checkentail H(p,qqq) |- [f] H(p,f) .
+//expect Valid.
+
+print residue.
+
+
+/*
+# bug10c4.slk --en-hrel-as-view
+
+# Can implicit instantiation be supported
+  for HRel views?
+
+# Can we at least give a warning, if not supported.
+
+checkentail H(p,qqq) |- H(p,f) .
+
+INPUT 0: [][] 
+ ### ante =  p::H<p,qqq>NOANN&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   p::H<p,f>NOANN&{FLOW,(20,21)=__norm#E}[]
+
+
+
+*/
+

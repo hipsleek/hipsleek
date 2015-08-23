@@ -177,6 +177,7 @@ type view_kind =
   | View_DERV
   | View_SPEC
 
+
 (* TODO : move typ here in future *)
 type typ =
   | FORM (* Type for formula *)
@@ -235,6 +236,14 @@ type typ =
 (*     | _, _ -> false *)
 
 type typed_ident = (typ * ident)
+
+let string_of_view_kind k = match k with
+  | View_PRIM -> "View_PRIM"
+  | View_HREL -> "View_HREL"
+  | View_NORM -> "View_NORM"
+  | View_EXTN -> "View_EXTN"
+  | View_DERV -> "View_DERV"
+  | View_SPEC -> "View_SPEC"
 
 let is_undef_typ t =
   match t with
@@ -896,6 +905,7 @@ let allow_lemma_fold = ref true
 (* unsound if false for lemma/bugs/app-t2c1.slk *)
 
 let allow_lemma_norm = ref false
+let old_norm_w_coerc = ref false
 
 (* Enable exhaustive normalization using lemmas *)
 let allow_exhaustive_norm = ref true
@@ -913,6 +923,7 @@ let sac = ref false
 let sa_pred_case = ref false
 
 let sags = ref true
+let sa_prefix_emp = ref true
 
 let sa_gen_slk = ref false
 let gen_fixcalc = ref false
@@ -1259,9 +1270,13 @@ let allow_threads_as_resource = ref false
 (* let assert_matrix = ref false *)
 let assert_nonlinear = ref false
 let assert_unsound_false = ref false
+let assert_no_glob_vars = ref false
 
 let old_collect_false = ref false
+let warn_nonempty_perm_vars = ref false
+let warn_free_vars_conseq = ref false
 let old_infer_collect = ref false
+let old_base_case_unfold = ref false
 let old_impl_gather = ref false
 let old_parse_fix = ref false
 let hrel_as_view_flag = ref false
@@ -1269,6 +1284,7 @@ let adhoc_flag_1 = ref false
 let adhoc_flag_2 = ref false
 let adhoc_flag_3 = ref false
 let old_keep_absent = ref false
+let old_empty_to_conseq = ref true (* false *)
 let weaker_pre_flag = ref true
 
 let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
@@ -1342,6 +1358,7 @@ let pre_residue_lvl = ref 0
 (* Lvl -1 - never add any pre to residue *)
 
 let check_coercions = ref false
+let eager_coercions = ref true
 let dump_lemmas = ref false
 let dump_lemmas_med = ref false
 
@@ -1515,6 +1532,9 @@ type infer_type =
   | INF_POST (* For infer[@post] *)
   | INF_PRE (* For infer[@pre] *)
   | INF_SHAPE (* For infer[@shape] *)
+  | INF_SHAPE_PRE (* For infer[@shape_post] *)
+  | INF_SHAPE_POST (* For infer[@shape_post] *)
+  | INF_SHAPE_PRE_POST (* For infer[@shape_prepost] *)
   | INF_ERROR (* For infer[@error] *)
   | INF_DE_EXC (* For infer[@dis_err] *)
   | INF_ERR_MUST (* For infer[@err_must] *)
@@ -1549,6 +1569,9 @@ let string_of_inf_const x =
   | INF_POST -> "@post"
   | INF_PRE -> "@pre"
   | INF_SHAPE -> "@shape"
+  | INF_SHAPE_PRE -> "@shape_pre"
+  | INF_SHAPE_POST -> "@shape_post"
+  | INF_SHAPE_PRE_POST -> "@shape_prepost"
   | INF_ERROR -> "@error"
   | INF_DE_EXC -> "@dis_err"
   | INF_ERR_MUST -> "@err_must"
@@ -1664,6 +1687,9 @@ class inf_obj  =
         helper "@field_imm"     INF_FIELD_IMM;
         helper "@arrvar"        INF_ARR_AS_VAR;
         helper "@shape"         INF_SHAPE;
+        helper "@shape_pre"     INF_SHAPE_PRE;
+        helper "@shape_post"    INF_SHAPE_POST;
+        helper "@shape_prepost" INF_SHAPE_PRE_POST;
         helper "@error"         INF_ERROR;
         helper "@dis_err"       INF_DE_EXC;
         helper "@err_may"       INF_ERR_MAY;
@@ -1709,6 +1735,9 @@ class inf_obj  =
     (* immutability inference *)
     method is_field = (self # get INF_FIELD_IMM)
     method is_shape  = self # get INF_SHAPE
+    method is_shape_pre  = self # get INF_SHAPE_PRE
+    method is_shape_post  = self # get INF_SHAPE_POST
+    method is_shape_pre_post  = self # get INF_SHAPE_PRE_POST
     (* shape inference *)
     method is_error  = self # get INF_ERROR
     method is_dis_err  = self # get INF_DE_EXC
@@ -2213,8 +2242,7 @@ let path_trace_gt p1 p2 =
     | ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> (a1>a2) || (a1=a2 && b1>b2) || (a1=a2 && b1=b2 && gt zt1 zt2)
   in gt (List.rev p1) (List.rev p2)
 
-
-let dummy_exception () = ()
+let dummy_exception e = ()
 
 (* convert a tree-like binary object into a list of objects *)
 let bin_op_to_list (op:string)

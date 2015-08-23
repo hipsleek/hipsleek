@@ -422,7 +422,7 @@ let process_func_def fdef =
       (*let cfdef = Astsimp.trans_func iprog fdef in !cprog.Cast.prog_func_decls <- (cfdef :: !cprog.Cast.prog_func_decls);*)
       (*Smtsolver.add_function cfdef.Cast.func_name cfdef.Cast.func_vars cfdef.Cast.func_formula;*)
     with
-    | _ ->  dummy_exception() ; iprog.I.prog_func_decls <- tmp
+    | e ->  dummy_exception e ; iprog.I.prog_func_decls <- tmp
   else
     print_string (fdef.I.func_name ^ " is already defined.\n")
 
@@ -459,7 +459,7 @@ let process_rel_def rdef =
       (* let _ = Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula in *)
       (* Z3.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula; *)
     with
-    | _ ->  dummy_exception() ; iprog.I.prog_rel_decls <- tmp
+    | e ->  dummy_exception e ; iprog.I.prog_rel_decls <- tmp
   else
     print_string (rdef.I.rel_name ^ " is already defined.\n")
 
@@ -469,7 +469,7 @@ let process_templ_def tdef =
     try
       iprog.I.prog_templ_decls <- (tdef::iprog.I.prog_templ_decls);
       !cprog.Cast.prog_templ_decls <- (Astsimp.trans_templ iprog tdef)::!cprog.Cast.prog_templ_decls
-    with _ -> dummy_exception (); iprog.I.prog_templ_decls <- tmp 
+    with e -> dummy_exception e; iprog.I.prog_templ_decls <- tmp 
   else print_endline_quiet (tdef.I.templ_name ^ " is already defined.")
 
 let process_ut_def utdef =
@@ -478,7 +478,7 @@ let process_ut_def utdef =
     try
       iprog.I.prog_ut_decls <- (utdef::iprog.I.prog_ut_decls);
       !cprog.Cast.prog_ut_decls <- (Astsimp.trans_ut iprog utdef)::!cprog.Cast.prog_ut_decls
-    with _ -> dummy_exception (); iprog.I.prog_ut_decls <- tmp 
+    with e -> dummy_exception e; iprog.I.prog_ut_decls <- tmp 
   else print_endline_quiet (utdef.I.ut_name ^ " is already defined.")
 
 let process_ui_def uidef =
@@ -491,7 +491,7 @@ let process_ui_def uidef =
       !cprog.Cast.prog_ui_decls <- cuidef::!cprog.Cast.prog_ui_decls;
       (* !cprog.Cast.prog_rel_decls <- cuidef.Cast.ui_rel::!cprog.Cast.prog_rel_decls; *)
       !cprog.Cast.prog_rel_decls # push cuidef.Cast.ui_rel;
-    with _ -> dummy_exception (); iprog.I.prog_ui_decls <- tmp 
+    with e -> dummy_exception e; iprog.I.prog_ui_decls <- tmp 
   else print_endline_quiet (uidef.I.ui_rel.rel_name ^ " is already defined.")
 
 let process_hp_def hpdef =
@@ -522,9 +522,9 @@ let process_hp_def hpdef =
       let _ = Smtsolver.add_hp_relation chpdef.Cast.hp_name args chpdef.Cast.hp_formula in
       Z3.add_hp_relation chpdef.Cast.hp_name args chpdef.Cast.hp_formula;
     with
-    | _ ->  
+    | e ->  
       begin
-        dummy_exception() ; 
+        dummy_exception e ; 
         (* why do we perform restoration here? *)
         iprog.I.prog_hp_decls <- tmp
       end
@@ -733,7 +733,7 @@ let process_data_def ddef =
         ()
     in ()
   else begin
-    dummy_exception() ;
+    (* dummy_exception() ; *)
     (* print_string (ddef.I.data_name ^ " is already defined.\n") *)
     report_error ddef.I.data_pos (ddef.I.data_name ^ " is already defined.")
   end
@@ -831,7 +831,7 @@ let convert_data_and_pred_to_cast_x () =
       Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.Cast.view_name) cviews)
     else cviews
   in
-  let () = x_binfo_hp (add_str "view_decls (pre)" (pr_list (fun v -> v.Cast.view_name))) (!cprog.Cast.prog_view_decls) no_pos in
+  let () = x_tinfo_hp (add_str "view_decls (pre)" (pr_list (fun v -> v.Cast.view_name))) (!cprog.Cast.prog_view_decls) no_pos in
   let () = x_tinfo_hp (add_str "view_decls (cviews)" (pr_list (fun v -> v.Cast.view_name))) (cviews) no_pos in
   let old_view_decls = !cprog.Cast.prog_view_decls in
   let _ = !cprog.Cast.prog_view_decls <- old_view_decls@cviews in
@@ -2534,7 +2534,7 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
 
 let print_exc (check_id: string) =
   print_backtrace_quiet ();
-  dummy_exception() ;
+  (* dummy_exception() ; *)
   print_string_quiet ("exception caught " ^ check_id ^ " check\n")
 
 let process_sat_check_x (f : meta_formula) =

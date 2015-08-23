@@ -420,36 +420,39 @@ let main () =
           match input with
           | "" -> ()
           | _ ->
-            try
+            begin
+              try
 
-              let term_indx = String.index input terminator in
-              let s = String.sub input 0 (term_indx+1) in
-              Buffer.add_string buffer s;
-              let cts = Buffer.contents buffer in
-              if cts = "quit" || cts = "quit\n" then quit := true
-              else try
-                  let cmd = parse cts in
-                  (* let () = Slk2smt.cmds := (!Slk2smt.cmds)@[cmd] in *)
-                  proc_gen_cmd cmd;
-                  Buffer.clear buffer;
-                  if !inter then
-                    prompt := "SLEEK> "
-                with
-                | _ -> dummy_exception();
-                  print_string_quiet ("Error.\n");
-                  print_endline_quiet "Last SLEEK FAILURE:";
-                  Log.last_cmd # dumping "sleek_dump(interactive)";
-                  (*     sleek_command # dump; *)
-                  (* print_endline "Last PURE PROOF FAILURE:"; *)
-                  (* Log.last_proof_command # dump; *)
-                  Buffer.clear buffer;
-                  if !inter then prompt := "SLEEK> "
-                with
-                | SLEEK_Exception
-                | Not_found -> dummy_exception();
-                  Buffer.add_string buffer input;
-                  Buffer.add_char buffer '\n';
-                  if !inter then prompt := "- "
+                let term_indx = String.index input terminator in
+                let s = String.sub input 0 (term_indx+1) in
+                Buffer.add_string buffer s;
+                let cts = Buffer.contents buffer in
+                if cts = "quit" || cts = "quit\n" then quit := true
+                else 
+                  try
+                    let cmd = parse cts in
+                    (* let () = Slk2smt.cmds := (!Slk2smt.cmds)@[cmd] in *)
+                    proc_gen_cmd cmd;
+                    Buffer.clear buffer;
+                    if !inter then
+                      prompt := "SLEEK> "
+                  with
+                  | e -> warn_exception e;
+                    print_string_quiet ("Error.\n");
+                    print_endline_quiet "Last SLEEK FAILURE:";
+                    Log.last_cmd # dumping "sleek_dump(interactive)";
+                    (*     sleek_command # dump; *)
+                    (* print_endline "Last PURE PROOF FAILURE:"; *)
+                    (* Log.last_proof_command # dump; *)
+                    Buffer.clear buffer;
+                    if !inter then prompt := "SLEEK> "
+              with
+              | SLEEK_Exception
+              | Not_found -> dummy_exception();
+                Buffer.add_string buffer input;
+                Buffer.add_char buffer '\n';
+                if !inter then prompt := "- "
+            end
         done
       end
     else
@@ -463,9 +466,9 @@ let main () =
     begin
       print_string_quiet ("\n")
     end
-  | _ ->
+  | e ->
     begin
-      dummy_exception();
+      warn_exception e;
       let () = print_string_quiet ( "error at: \n" ^ (get_backtrace_quiet ())) in
       print_endline_quiet "SLEEK FAILURE (END)";
       Log.last_cmd # dumping "sleek_dumEND)";

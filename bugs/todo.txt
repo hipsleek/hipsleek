@@ -1835,6 +1835,61 @@ xpure_heap#1@105 EXIT:( b1!=null & c1>=0 & (t1+a1)>=c1 & t1>=0 & b2!=null & c2>=
  t2>=0,[], [])#true
 Nested Timer(stop)
 ===================================================================
+# ex61a-lseg_complex.slk --lem-norm-w-coerc
+
+# Why does normalize with coercion go into a loop?
+
+ntailing lemma SPLIT: Valid.
+
+Valid Lemmas : [SPLIT:<==>] added to lemma store.
+
+!!! WARNING : split equiv lemma into two -> lemmas 
+!!! **WARNING****solver.ml#14480:into normalization_with_coerc? why?
+
+===================================================================
+# ex61a-lseg_complex.slk --lem-norm-w-coerc
+
+# Why does normalize with coercion go into a loop?
+
+ntailing lemma SPLIT: Valid.
+
+Valid Lemmas : [SPLIT:<==>] added to lemma store.
+
+!!! WARNING : split equiv lemma into two -> lemmas 
+!!! **WARNING****solver.ml#14480:into normalization_with_coerc? why?
+===================================================================
+# ex49a.ss
+
+# Why is there imm_inference even though there
+  isn't any @imm
+
+!!! **imminfer.ml#328:imm infer start
+!!! **imminfer.ml#331:imm infer end
+!!! **typechecker.ml#4392:imm infer end20
+
+===================================================================
+# ex54a.slk --en-para -perm fperm -tp redlog --old-norm-w-coerc 
+
+# why does (Perm.allow_perm ()) need a different way of building
+  to_ante and to_conseq? Need to integrate properly.
+
+!!! **WARNING****solver.ml#9594:impl_inst and to_conseq not properly built
+WARNING: _0:0_0:0:* between overlapping heaps: ( x::cellp( f2_310)<v_319>@M, x::cellp( f1_309)<v1>@M)
+!!! **WARNING****solver.ml#14548:into normalization_with_coerc? why?
+
+# this is being investigated from --warn-nonempty-perm-vars
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
 ===================================================================
 ===================================================================
 ===================================================================

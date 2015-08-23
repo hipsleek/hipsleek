@@ -1,0 +1,30 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+pred_prim G<a:node,n:node>.
+
+checkentail x::G<p,p> |- x::G<p,p> .
+print residue.
+
+
+/*
+# bug10d.slk
+
+# what does below mean?
+
+!!! **WARNING****typeinfer.ml#1394:Cannot find x in fvs, TODO: fail?
+
+INPUT 0: [][] 
+ ### ante =  x::G<p,p_17>@M&p_17=p&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   (exists p_23,p_24: x::G<p_23,p_24>@M&p_23=p & p_24=p&
+   {FLOW,(20,21)=__norm#E}[]
+
+
+*/
+

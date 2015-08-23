@@ -1277,14 +1277,16 @@ and param_ann_equals_node_ann (ann_lst : CP.ann list) (node_ann: CP.ann): bool =
 and subtract_ann_x (ann_l: CP.ann) (ann_r: CP.ann)  impl_vars expl_vars evars norm (* : ann *) =
   match ann_r with
   | CP.ConstAnn(Mutable)
+  | CP.NoAnn
   | CP.ConstAnn(Imm)     -> ((CP.ConstAnn(Accs), ann_r), [],(([],[],[]),[]))
   | CP.ConstAnn(Lend)    -> ((CP.TempAnn(ann_l), CP.ConstAnn(Accs)), [],(([],[],[]),[]))
-  | CP.TempAnn _ | CP.NoAnn
+  | CP.TempAnn _ 
   | CP.TempRes _  
   | CP.ConstAnn(Accs)    -> ((ann_l, CP.ConstAnn(Accs)), [],(([],[],[]),[]))
   | CP.PolyAnn(_)        ->
     match ann_l with
     | CP.ConstAnn(Mutable)
+    | CP.NoAnn
     | CP.ConstAnn(Imm)
     | CP.PolyAnn(_) -> 
       if norm then 
@@ -1292,6 +1294,7 @@ and subtract_ann_x (ann_l: CP.ann) (ann_r: CP.ann)  impl_vars expl_vars evars no
         ((res_ann, cons_ann),fv, ((to_lhs, to_rhs, to_rhs_ex),subst))
       else  ((CP.TempRes(ann_l, ann_r), ann_r), [], (([],[],[]),[]))
     (* TempRes(ann_l, ann_r) *)
+    (* better use explicit patterns below .. *)
     | _          -> ((ann_l, CP.ConstAnn(Accs)), [],(([],[],[]),[]))
 
 and subtract_ann (ann_l: CP.ann) (ann_r: CP.ann)  impl_vars expl_vars evars norm (* : ann *) =

@@ -1153,8 +1153,9 @@ and add_last_diff ls1 ls2 res=
   | _ -> raise (Invalid_argument "first is longer than second")
 
 and try_unify_data_type_args prog c v deref ies tlist pos =
+  let pr_tl =  string_of_tlist in
   let pr = add_str "ies" (pr_list Iprinter.string_of_formula_exp) in
-  Debug.no_2 "try_unify_data_type_args" pr_none pr pr_none (fun _ _ -> try_unify_data_type_args_x prog c v deref ies tlist pos) c ies
+  Debug.no_3 "try_unify_data_type_args" pr_id pr pr_tl pr_tl (fun _ _ _ -> try_unify_data_type_args_x prog c v deref ies tlist pos) c ies tlist
 
 and try_unify_data_type_args_x prog c v deref ies tlist pos =
   (* An Hoa : problem detected - have to expand the inline fields as well, fix in look_up_all_fields. *)
@@ -1367,7 +1368,12 @@ and get_spec_var_type_list_infer ?(d_tt = []) (v : ident * primed) fvs pos =
   Debug.no_2 "get_spec_var_type_list_infer" pr_v string_of_tlist ( pr_sv)
     (fun _ _ -> get_spec_var_type_list_infer_x d_tt v fvs pos) v  d_tt
 
+(* type: CP.spec_var list -> Globals.ident -> Globals.typ * bool *)
 and get_var_type fvs v : (typ * bool) = 
+  let pr_out = pr_pair string_of_typ string_of_bool in
+  Debug.no_2 "get_var_type" !CP.print_svl pr_id pr_out get_var_type_x fvs v
+
+and get_var_type_x fvs v : (typ * bool) = 
   let warning_if_non_empty lst tlst =
     if lst != [] then
       let () = x_binfo_pp "WARNING : free_vars_list contains duplicates" no_pos in
@@ -1391,7 +1397,7 @@ and get_var_type fvs v : (typ * bool) =
         let rdef = I.look_up_rel_def_raw prog.I.prog_rel_decls v in
         (RelT (List.map fst rdef.I.rel_typed_vars),false)
       with _ ->
-        let () = x_winfo_pp ("Cannot find "^v^" in fvs, TODO: fail?")  no_pos in
+        let () = x_tinfo_pp ("Cannot find "^v^" in rel_decls, use Void type?")  no_pos in
         (Void ,false)
     end
   | sv::lst ->

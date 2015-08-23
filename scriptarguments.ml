@@ -175,6 +175,10 @@ let common_arguments = [
    "Sleek Log Filter Flag");
   ("--elp", Arg.Set Globals.check_coercions,
    "enable lemma proving");
+  ("--eel", Arg.Set Globals.eager_coercions,
+   "enable earger lemma applying");
+  ("--del", Arg.Clear Globals.eager_coercions,
+   "diable earger lemma applying");
   ("--dump-lemmas", Arg.Set Globals.dump_lemmas,
    "enable lemma printing");
   ("--dl", Arg.Set Globals.dump_lemmas,
@@ -310,7 +314,11 @@ linput.rl");
   ("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
   ("--en-weaker-pre", Arg.Set Globals.weaker_pre_flag,"Enable Weaker Pre-Condition to be Inferred");
   ("--dis-weaker-pre", Arg.Clear Globals.weaker_pre_flag,"Disable Weaker Pre-Condition to be Inferred");
+  ("--warn-nonempty-perm-vars", Arg.Set Globals.warn_nonempty_perm_vars,"Enable Warning of Non-empty Perm Vars");
+  (* WN : this excludes ann_vars and ho_vars, but include perm_vars *)
+  ("--warn-free-vars-conseq", Arg.Set Globals.warn_free_vars_conseq,"Enable Warning of Non-empty free heap vars in conseq");
   ("--old-collect-false", Arg.Set Globals.old_collect_false,"Enable Old False Collection Method (to detect unsoundness)");
+  ("--old-base-case-unfold", Arg.Set Globals.old_base_case_unfold,"Enable Old BaseCaseUnfold Method");
   ("--old-infer-collect", Arg.Set Globals.old_infer_collect,"Enable Old Infer Collect Method");
   ("--old-impl-gather", Arg.Set Globals.old_impl_gather,"Enable Extra Impl Gather at CF.struc_formula_trans_heap_node");
   ("--old-parse-fix", Arg.Set Globals.old_parse_fix,"Enable Old Parser for FixCalc (to handle self/REC)");
@@ -320,7 +328,9 @@ linput.rl");
   ("--adhoc-2", Arg.Set Globals.adhoc_flag_2,"Enable Adhoc Flag 2");
   ("--adhoc-3", Arg.Set Globals.adhoc_flag_3,"Enable Adhoc Flag 3");
   ("--old-keep-absent", Arg.Set Globals.old_keep_absent,"Keep absent nodes during expure - unsound");
-  ("--assert-unsound-false", Arg.Set Globals.assert_unsound_false, "Enable Adhoc Flag 3");
+  ("--old-empty-to-conseq", Arg.Set Globals.old_empty_to_conseq,"Keep to_conseq empty");
+  ("--assert-unsound-false", Arg.Set Globals.assert_unsound_false, "Flag unsound false");
+  ("--assert-no-glob-vars", Arg.Set Globals.assert_no_glob_vars, "Flag if non-empty to_conseq");
   ("--assert-nonlinear", Arg.Set Globals.assert_nonlinear,"Enable Asserting Testing of Nonlnear Pre-Processing");
   ("--ann-vp", Arg.Set Globals.ann_vp,"manual annotation of variable permissions");
   ("--dis-ann-vp", Arg.Clear Globals.ann_vp,"disable manual annotation of variable permissions");
@@ -866,6 +876,7 @@ linput.rl");
    (* Arg.Clear Globals.opt_classic,  *)
    "Disable classical reasoning in separation logic");  
   ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");
+  ("--old-norm-w-coerc", Arg.Set Globals.old_norm_w_coerc, "Allow old normalize formula with coercions (may loop)");
   ("--lem-en-norm", Arg.Set Globals.allow_lemma_norm, "Allow case-normalize for lemma");
   ("--lem-dis-norm", Arg.Clear Globals.allow_lemma_norm, "Disallow case-normalize for lemma");
   ("--lem-en-fold", Arg.Set Globals.allow_lemma_fold, "Allow do_fold with right lemma");
@@ -896,13 +907,14 @@ linput.rl");
   ("--dis-cp-trace", Arg.Clear Globals.cond_path_trace, "Disable the tracing of conditional paths");
   (* WN: Please use longer meaningful variable names *)
   ("--sa-ep", Arg.Set VarGen.sap, "Print intermediate results of normalization");
+  ("--sa-dp", Arg.Clear VarGen.sap, "disable Printing intermediate results of normalization");
+  ("--sa-prefix-pred", Arg.Clear Globals.sa_prefix_emp, "disable pre-condition fixpoint as empty during shape analysis");
   ("--dis-infer-heap", Arg.Clear Globals.fo_iheap, "disable first-order infer_heap");
   ("--sa-error", Arg.Set Globals.sae, "infer error spec");
   ("--sa-dis-error", Arg.Clear Globals.sae, "disable to infer error spec");
   ("--sa-case", Arg.Set Globals.sac, "combine case spec");
   ("--sa-dis-case", Arg.Clear Globals.sac, "disable to combine case spec");
   ("--sa-gen-spec", Arg.Set Globals.sags, "enable generate spec with unknown preds for inference");
-  ("--sa-dp", Arg.Clear VarGen.sap, "disable Printing intermediate results of normalization");
   ("--gsf", Arg.Set Globals.sa_gen_slk, "shorthand for -sa-gen-sleek-file");
   ("--gff", Arg.Set Globals.gen_fixcalc, "shorthand for gen-fixcalc-file");
   ("--sa-gen-sleek-file", Arg.Set Globals.sa_gen_slk, "gen sleek file after split_base");
