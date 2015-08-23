@@ -24,7 +24,7 @@ BADS<> ==
 HeapPred P(char_star x).
 
 void while1(ref char_star s)
-  infer [P]
+  infer [P,@classic]
   requires P(s)
   ensures true;
 /*
@@ -41,6 +41,19 @@ void while1(ref char_star s)
 
 /*
 # ex13c.ss
+
+[ // PRE
+(0)P(s)&true --> s::char_star<v_1601,Anon_1602>@M * HP_1603(Anon_1602)&
+true,
+ // PRE_REC
+(1;0)HP_1603(Anon_1602)&true --> P(Anon_1602)&
+true,
+ // POST
+(2;0)HP_1603(Anon_1602)&true --> emp&
+true]
+----------------
+
+
 
 void while1(ref char_star s)
   infer [P]
