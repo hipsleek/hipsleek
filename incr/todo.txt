@@ -903,6 +903,18 @@ print residue.
 
 # WHY infer_collect not invoked at all
 =====================================================================
+# ex10b8.slk -dre "generate_co\|extract_hre\|simplify_lhs_rhs" 
+
+infer_exact [H] H(p) * H(q) & p=null & n=5 |- emp.
+print residue.
+
+# How come a diff way to infer_collect_hp_rel_classsic ??
+  Can merge with infer_collect_hp_rel_empty_rhs ?
+
+
+Residue:
+ <1>emp&n=5 & p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null --> emp&true; H(q)&true --> emp&true]
 =====================================================================
 =====================================================================
 =====================================================================
