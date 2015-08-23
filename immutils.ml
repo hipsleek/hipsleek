@@ -535,7 +535,7 @@ let prune_eq_top_bot_imm_disjunct f =
   let ( <: ) a b = SVPoset.is_lt poset a b in
   let ( := ) a b =                     eq_const_ann b emap a in(*TODOIMM: should use emap *)
     (* SetSV.mem a (if b = imm_top then eq_top else eq_bot) in *)
-  let prune_if_top a b = ((a := imm_top) && (a <: b)) || ((b := imm_top) && (b <: a) ||  ) in
+  let prune_if_top a b = ((a := imm_top) && (a <: b)) || ((b := imm_top) && (b <: a) ) in
   let prune_if_bot a b = ((a := imm_bot) && (b <: a)) || ((b := imm_bot) && (a <: b)) in
   let prune_if_match (sv1, sv2) = prune_if_top sv1 sv2 || prune_if_bot sv1 sv2 in
   List.fold_right (fun b acc -> acc || prune_if_match b) neq_sv false
