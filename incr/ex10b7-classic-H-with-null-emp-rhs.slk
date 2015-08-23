@@ -18,12 +18,13 @@ HeapPred H(node a).
 infer_exact [H] H(p) & p=null |- emp.
 print residue.
 
+/*
 infer_exact [H] H(p) & p=null & n=5 |- emp.
 print residue.
 
 infer_exact [H] H(p) * H(q) & p=null & n=5 |- emp.
 print residue.
-
+*/
 
 /*
 # ex10b7.slk -dre "generate_co\|extract_hre\|simplify_lhs_rhs" 

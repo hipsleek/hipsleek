@@ -3612,7 +3612,7 @@ let infer_collect_hp_rel_empty_rhs_x prog (es0:entail_state) mix_rf pos =
           let _ =
             x_binfo_pp ">>>>>> infer_hp_rel <<<<<<" pos;
             x_binfo_hp (add_str  "  lhs " Cprinter.string_of_formula) lhs0 pos;
-            x_tinfo_hp (add_str  "  classic " string_of_bool) !Globals.do_classic_frame_rule pos
+            x_binfo_hp (add_str  "  classic " string_of_bool) !Globals.do_classic_frame_rule pos
           in
           (*TOFIX: detect HEmp or HTrue *)
           let rhs_b0 = formula_base_of_heap (CF.HEmp) pos in

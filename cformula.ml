@@ -9839,6 +9839,18 @@ let rec context_fv (c:context) : CP.spec_var list =
 
 let empty_infer_rel () = new Gen.stack
 
+let mkEmp_formula f =
+  let rec aux f = match f with
+    | Base e -> Base {e with formula_base_heap = HEmp}
+    | Exists e -> Exists {e with formula_exists_heap = HEmp}
+    | Or ({formula_or_f1=f1; formula_or_f2=f2} as b) ->
+      Or {b with formula_or_f1=aux f1; formula_or_f2=aux f2}
+  in aux f
+
+let mkEmp_es es =
+  let emp_f = mkEmp_formula es.es_formula in
+  {es with es_formula = emp_f}
+
 let empty_es flowt grp_lbl pos = 
   let x = mkTrue flowt pos in
   {

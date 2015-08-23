@@ -16,8 +16,42 @@ HeapPred H(node a).
 // inferred hprel: [H(p)&p=null --> emp&true]
 
 
-infer_exact [H] H(p) * H(q) & p=null & n=5 |- emp.
+//infer_exact [H] H(p) * H(q) & p=null |- emp.
+// infer_classic, then infer_empty
+
+//infer_exact [H] H(p) * H(q) & p=null |- true.
+// infer_empty
+
+//infer_exact [H] H(p) & p=null |- emp.
+// infer_empty
+
+//infer_exact [H] H(p) & p=null |- true.
+// infer_empty
+
+//infer_exact [H] H(p) |- emp.
+// infer_empty
+
+//infer_exact [H] H(p) |- true.
+// infer_empty
+
+//infer_exact [H] H(p) * x::node<_,p> |- true.
+// <1>x::node<Anon_12,p>@M&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H(p)&true --> emp&true]
+
+//infer_exact [H] H(p) * x::node<_,p> & p=null |- true.
+// BUG:
+//<1>x::node<Anon_12,p>@M&p=null&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H(p)&p=null --> emp&true]
+// <1>x::node<Anon_12,p>@M&{FLOW,(20,21)=__norm#E}[]
+
+//infer_exact [H] H(p) * x::node<_,p> |- emp.
+//Entail (1) : Fail.(must) cause: x::node<Anon_12,p>@M&{FLOW,(20,21)=__norm#E}[]:memory leak failure : residue is forbidden.
+
+
+//infer_exact [H] H(p) * x::node<_,p> & p=null |- emp.
+//Entail (1) : Fail.(must) cause: x::node<Anon_12,p>@M&{FLOW,(20,21)=__norm#E}[]:memory leak failure : residue is forbidden.
 print residue.
+
 
 
 /*
