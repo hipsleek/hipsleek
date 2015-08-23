@@ -29,5 +29,15 @@ EXPECTS:
   H(p)&p=null | x::node<_,p> --> P(p)
 which shows the heap context of p..
 
+# need to fix find_guard
+
+(==infer.ml#2606==)
+find_guard@2@1
+find_guard inp1 :left heap:[ x::node<flted_12_16,p>@M]
+find_guard inp2 :[]
+find_guard inp3 :[(H,[p])]
+find_guard inp4 :[p]
+find_guard@2 EXIT:NONE
+
 
 */

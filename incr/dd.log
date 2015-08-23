@@ -15,5 +15,5 @@
 #heap_entail_conjunct_helper,Trace
 extract_hrel_head
 infer_collect_hp_rel_empty_rhs,Trace
-
-
+infer_collect_hp_rel,Trace
+check_guard

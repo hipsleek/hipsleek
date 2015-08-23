@@ -2605,7 +2605,7 @@ let prtt_string_of_formula (e:formula) : string =  poly_string_of_pr  prtt_pr_fo
 let prtt_string_of_formula_guard ((e,g):formula_guard) : string =
   let s1 = (poly_string_of_pr  prtt_pr_formula e) in
   match g with
-  | None -> s1
+  | None -> s1 ^ "|#|"
   | Some f -> s1 ^ "|#|" ^ (poly_string_of_pr  prtt_pr_formula f)
 
 let prtt_string_of_formula_guard_list ( es:formula_guard list) : string =
@@ -2676,6 +2676,7 @@ let pr_es_trace (trace:string list) : unit =
       | hd::tl -> fmt_string (hd ^ " ==> "); helper tl
     in helper trace
 
+(* type: Cformula.CP.rel_cat * Cformula.formula * Cformula.formula -> unit *)
 let pr_hp_rel hp_rel =
   let pr2 = prtt_string_of_formula in
   let pr3 = (pr_triple CP.print_rel_cat pr2 pr2) in
@@ -2703,6 +2704,7 @@ let string_of_hp_rel_def hp_rel =
     ( (CP.print_rel_cat def.def_cat)^ ": " ^(string_of_h_formula def.def_lhs) ^ " ::= "  ^(prtt_string_of_formula_guard_list def.def_rhs) ^  "(" ^ (pr_flow def.def_flow) ^ ")") in
   (str_of_hp_rel hp_rel)
 
+(* type: Cformula.hp_rel_def -> string *)
 let string_of_hp_rel_def_short hp_rel =
   let str_of_hp_rel def = ((string_of_h_formula def.def_lhs)
                            (* ^ (match guard with *)
@@ -2779,7 +2781,7 @@ let pr_hprel hpa=
   fmt_string "; ";
   prtt_pr_formula hpa.hprel_lhs;
   let () = match hpa.hprel_guard with
-    | None -> ()
+    | None -> fmt_string " |#| " (* () *)
     | Some hf ->
       begin
         fmt_string " |#| ";
@@ -2799,7 +2801,7 @@ let pr_hprel_short hpa=
   (* fmt_string (CP.print_rel_cat hpa.hprel_kind); *)
   prtt_pr_formula hpa.hprel_lhs;
   let () = match hpa.hprel_guard with
-    | None -> ()
+    | None -> fmt_string " |#| "(* () *)
     | Some hf ->
       begin
         fmt_string " |#| ";
@@ -2828,7 +2830,7 @@ let pr_hprel_short_inst cprog post_hps hpa=
     (fun p -> fmt_string ((pr_list_round_sep ";" (fun s -> string_of_int s)) p)) hpa.hprel_path;
   (* prtt_pr_formula_inst cprog *)print_formula hpa.hprel_lhs;
   let () = match hpa.hprel_guard with
-    | None -> ()
+    | None -> fmt_string " |#|3 " (* () *)
     (* fmt_string " NONE " *)
     | Some hf ->
       begin
@@ -5427,7 +5429,7 @@ let pr_html_hprel_short_inst cprog hpa=
   (* prtt_pr_formula_inst cprog hpa.hprel_lhs; *)
   fmt_string (html_of_formula hpa.hprel_lhs);
   let () = match hpa.hprel_guard with
-    | None -> ()
+    | None -> fmt_string " |#|5 "(* () *)
     (* fmt_string " NONE " *)
     | Some hf ->
       begin
