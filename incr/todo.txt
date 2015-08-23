@@ -1,4 +1,3 @@
-cd 
 =====================================================================
 # ex3b.ss
 
@@ -856,6 +855,107 @@ support for c program
 
 to support @shape_pre_post
 
+=====================================================================
+# ex10b6.slk
+
+ infer_exact [H] H(p) |- emp.
+
+# GOT below. Why did we not infer H(p) --> emp
+
+Entail (2) : Fail.(may) cause: H(p)&{FLOW,(20,21)=__norm#E}[]: possible memory leak failure : residue is forbidden.
+
+Residue:
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: 
+   fe_locs: {
+     fc_message: memory leak
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[empty]]
+ CEX:true
+
+=====================================================================
+# ex10b7.slk -dre "generate_co\|extract_hre\|simplify_lhs_rhs" 
+
+ infer_exact [H] H(p) |- emp.
+
+# GOT below. Why did we not infer H(p) --> emp
+
+Need to make below much more general to return
+a list of hprel & its residue.
+
+Implemeted as:
+
+(* (==infer.ml#3554==) *)
+(* extract_hrel_head_list@9@6 *)
+(* extract_hrel_head_list inp1 : H(p)&p=null&{FLOW,(20,21)=__norm#E}[] *)
+(* extract_hrel_head_list@9 EXIT:Some(([(H,[ p])], emp&p=null&{FLOW,(20,21)=__norm#E}[])) *)
+let extract_hrel_head_list (f0:formula) =
+  let rec helper f =
+    match f with
+
+=====================================================================
+# ex10b8.slk -dre "generate_co\|extract_hre\|simplify_lhs_rhs" 
+
+infer_exact [H] H(p) * H(q) & p=null & n=5 |- emp.
+print residue.
+
+# WHY infer_collect not invoked at all
+=====================================================================
+# ex10b8.slk -dre "generate_co\|extract_hre\|simplify_lhs_rhs" 
+
+infer_exact [H] H(p) * H(q) & p=null & n=5 |- emp.
+print residue.
+
+# How come a diff way to infer_collect_hp_rel_classsic ??
+  Can merge with infer_collect_hp_rel_empty_rhs ?
+
+
+Residue:
+ <1>emp&n=5 & p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null --> emp&true; H(q)&true --> emp&true]
+=====================================================================
+../sleek ex10b7-classic-H-with-null-emp-rhs.slk -dre "infer_co"
+
+infer_collect_hp_rel_empty_rhs#1@1
+infer_collect_hp_rel_empty_rhs#1 inp1 : H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel_empty_rhs#1 inp2 : true
+infer_collect_hp_rel_empty_rhs#1@1 EXIT:(true, es_formula: 
+ emp&p=null&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [H],[ H(p)&p=null --> emp])
+
+=====================================================================
+# ex15a.slk 
+
+infer [H,P] H(p) * x::node<1,p> & p=null |- P(p).
+
+ <1>x::node<Anon_12,p>@M&p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null --> P(p)&true]
+[[ COND ==>  InferHeap]]
+
+EXPECTS:
+  H(p)&p=null | x::node<_,p> --> P(p)
+which shows the heap context of p..
+=====================================================================
+# ex15b.slk 
+
+infer [H,P,@pure_field] H(p) * x::node<1,p> & p=null |- P(p).
+
+ <1>x::node<Anon_12,p>@M&p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null --> P(p)&true]
+[[ COND ==>  InferHeap]]
+
+EXPECTS:
+  H(p)&p=null | x::node<v,p> & v=1 --> P(p)
+which shows the heap context of p?
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
 =====================================================================
 =====================================================================
 =====================================================================

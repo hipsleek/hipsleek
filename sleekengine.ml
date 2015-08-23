@@ -2705,6 +2705,8 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
   let is_infer_imm_pre_flag = List.mem INF_IMM_PRE itype in
   let is_infer_imm_post_flag = List.mem INF_IMM_POST itype in
   let is_field_imm_flag = List.mem INF_FIELD_IMM itype in
+  let opt_pure_field = if List.mem INF_PURE_FIELD itype 
+    then Some true else None in
   (* combine local vs. global of failure explaining *)
   let dfailure_anlysis = if List.mem INF_EFA itype then false else
     if List.mem INF_DFA itype then true else !Globals.disable_failure_explaining
@@ -2730,6 +2732,8 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
   let run_infer x = 
     if is_arr_as_var_flag then wrap_arr_as_var run_infer x
     else run_infer x in
+  let run_infer x = 
+      wrap_pure_field (opt_pure_field) run_infer x in
   let r=  try
       let (valid, rs, sel_hps),_ = run_infer iconseq0 in
       let res = print_entail_result sel_hps valid rs num_id (List.mem INF_ERR_MUST itype || List.mem INF_ERR_MUST_ONLY itype || List.mem INF_ERR_MAY itype) in

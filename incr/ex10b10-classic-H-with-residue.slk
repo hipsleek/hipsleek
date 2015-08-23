@@ -1,0 +1,58 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+HeapPred H(node a).
+
+//infer_exact [H] H(p) * x::node<_,p> & p=null |- true.
+
+infer_exact [H] H(ppp) * x::node<_,ppp> & ppp!=null |- true.
+// inferred hprel: [H(p)&true --> emp&true]
+// expects H(p)&p!=null --> emp&true
+
+
+print residue.
+
+/*
+# ex10b10.slk infer_c\|extract_hrel_"
+
+infer_exact [H] H(p) * x::node<_,p> & p!=null |- true.
+
+GOT:
+ es_infer_vars_hp_rel: [H],[ H(p) --> emp])
+
+EXPECTS:
+ es_infer_vars_hp_rel: [H],[ H(p) & p!=null --> emp])
+
+(==infer.ml#3553==)
+extract_hrel_head@3@2@1
+extract_hrel_head inp1 : H(p)&{FLOW,(20,21)=__norm#E}[]
+extract_hrel_head@3 EXIT:Some(H)
+
+(====)
+extract_hrel_list@5@4@2@1
+extract_hrel_list inp1 : H(p)
+extract_hrel_list@5 EXIT:([(H,[ p])], emp)
+
+(==infer.ml#3554==)
+extract_hrel_head_list@4@2@1
+extract_hrel_head_list inp1 : H(p)&{FLOW,(20,21)=__norm#E}[]
+extract_hrel_head_list@4 EXIT:Some(([(H,[ p])], emp&{FLOW,(20,21)=__norm#E}[]))
+
+!!! **infer.ml#3557:extr_ans(list):Some(([(H,[ p])], emp&{FLOW,(20,21)=__norm#E}[]))
+!!! **infer.ml#3558:extr_hd:Some(H)
+!!! **infer.ml#3650:sel_hpargs:[(H,[p])]
+(==solver.ml#8232==)
+infer_collect_hp_rel_empty_rhs#1@2@1
+infer_collect_hp_rel_empty_rhs#1 inp1 : H(p) * x::node<Anon_12,p>@M&p!=null&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel_empty_rhs#1 inp2 : true
+infer_collect_hp_rel_empty_rhs#1@2 EXIT:(true, es_formula: 
+ x::node<Anon_12,p>@M&p!=null&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [H],[ H(p) --> emp])
+
+
+*/

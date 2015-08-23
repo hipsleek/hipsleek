@@ -11,19 +11,23 @@ HeapPred H(node a).
 //(1)
 infer_exact [H] H(p) & p=null |- emp.
 print residue.
-expect_infer Valid R{emp}.
+//expect_infer Valid R{emp}.
+// <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H(p)&p=null --> emp&true]
 
 //(2)
 infer [H] H(p) & p=null |- emp.
 print residue.
 // expect H(p) as residue
-expect_infer Valid R{H(p) & p=null}.
+// expect_infer Valid R{H(p) & p=null}.
+// <1>H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
 
 //(3)
 infer [] H(p) & p=null |- emp.
 print residue.
 // expect H(p) as residue
-expect_infer Valid R{H(p) & p=null}.
+//expect_infer Valid R{H(p) & p=null}.
+// <1>H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
 
 infer_exact [] H(p) & p=null |- emp.
 print residue.
