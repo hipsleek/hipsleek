@@ -62,19 +62,55 @@ let wrap_norm flag norm f a =
   with _ as e ->
     raise e
 
-let wrap_pure_field et f a =
-  let flag = !Globals.sa_pure_field in
-  sa_pure_field := (match et with
-      | None -> infer_const_obj # get INF_PURE_FIELD  (* !opt_classic *)
-      | Some b -> b);
+let toggle f flag =
+  if flag then infer_const_obj # set f
+  else infer_const_obj # reset f
+
+(* let wrap_pure_field et f a = *)
+(*   let old_flag = infer_const_obj # get INF_PURE_FIELD  in *)
+(*   let new_flag = (match et with *)
+(*       | None -> infer_const_obj # get INF_PURE_FIELD  (\* !opt_classic *\) *)
+(*       | Some b -> b) in *)
+(*   if new_flag!=old_flag then toggle INF_PURE_FIELD new_flag; *)
+(*   try *)
+(*     let res = f a in *)
+(*     (\* restore flag sa_pure_field *\) *)
+(*     toggle INF_PURE_FIELD old_flag; *)
+(*     res *)
+(*   with _ as e -> *)
+(*     (toggle INF_PURE_FIELD old_flag; *)
+(*      raise e) *)
+
+let wrap_gen attr et f a =
+  let old_flag = infer_const_obj # get attr  in
+  let new_flag = (match et with
+      | None -> infer_const_obj # get attr  (* !opt_classic *)
+      | Some b -> b) in
+  if new_flag!=old_flag then toggle attr new_flag;
   try
     let res = f a in
     (* restore flag sa_pure_field *)
-    Globals.sa_pure_field := flag;
+    toggle attr old_flag;
     res
   with _ as e ->
-    (Globals.sa_pure_field := flag;
+    (toggle attr old_flag;
      raise e)
+
+let wrap_pure_field et f a = wrap_gen INF_PURE_FIELD et f a
+
+(* let wrap_pure_field et f a = *)
+(*   let flag = !Globals.sa_pure_field in *)
+(*   sa_pure_field := (match et with *)
+(*       | None -> infer_const_obj # get INF_PURE_FIELD  (\* !opt_classic *\) *)
+(*       | Some b -> b); *)
+(*   try *)
+(*     let res = f a in *)
+(*     (\* restore flag sa_pure_field *\) *)
+(*     Globals.sa_pure_field := flag; *)
+(*     res *)
+(*   with _ as e -> *)
+(*     (Globals.sa_pure_field := flag; *)
+(*      raise e) *)
 
 let wrap_classic et f a =
   let flag = !do_classic_frame_rule in

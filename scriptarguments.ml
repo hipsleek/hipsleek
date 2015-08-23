@@ -286,9 +286,9 @@ let common_arguments = [
   (* Exception(compute_fixpoint_aux@5):Failure("compute_def:Error in translating the input for fixcalc") *)
   (* Exception(compute_fixpoint#5@4):Failure("compute_def:Error in translating the input for fixcalc") *)
   ("--trace-all", Arg.Set Globals.trace_all,
-  "Trace all proof paths");
+   "Trace all proof paths");
   ("--log-cvcl", Arg.String Cvclite.set_log_file,
-  "Log all CVC Lite formula to specified log file");
+   "Log all CVC Lite formula to specified log file");
   (* ("--log-cvc3", Arg.String Cvc3.set_log_file, *)
   ("--log-cvc3", Arg.Unit Cvc3.set_log_file,    "Log all formulae sent to CVC3 in file allinput.cvc3");
   ("--log-omega", Arg.Set Omega.log_all_flag,
@@ -432,8 +432,8 @@ linput.rl");
          Globals.simpl_unfold2 := true;
          Globals.simpl_unfold3 := true;*)
        (*Globals.elim_exists_flag := false;
-         	Globals.simplify_imply := false;
-         	Globals.filtering_flag := false;*)
+         Globals.simplify_imply := false;
+         Globals.filtering_flag := false;*)
        Globals.ann_vp := false;),
    "enable support for quantifier elimination in PAinfinity ");
   ("--en-inf-qe-coq", Arg.Unit( fun _ ->
@@ -978,7 +978,11 @@ linput.rl");
      ( fun _ -> 
          Globals.infer_const_obj # set Globals.INF_PURE_FIELD
      ), "enable the inference of pure field property");
-  ("--sa-dis-pure-field", Arg.Clear Globals.sa_pure_field, "disable the inference of pure field property");
+  ("--sa-dis-pure-field", 
+   Arg.Unit
+     ( fun _ -> 
+         Globals.infer_const_obj # reset Globals.INF_PURE_FIELD
+     ),"disable the inference of pure field property");
   ("--sa-ext", Arg.Set Globals.sa_ex, "enable the inference of shape and pure property (predicate level)");
   ("--sa-pure", Arg.Set Globals.sa_pure, "enable the inference of shape and pure property");
   ("--sa-dis-ext", Arg.Clear Globals.sa_ex, "disable the inference of shape and pure property");
