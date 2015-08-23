@@ -10,7 +10,7 @@ HeapPred H(node a).
 
 //infer_exact [H] H(p) * x::node<_,p> & p=null |- true.
 
-infer_exact [H] H(p) * x::node<_,p> & p!=null |- true.
+infer_exact [H] H(ppp) * x::node<_,ppp> & ppp!=null |- true.
 // inferred hprel: [H(p)&true --> emp&true]
 // expects H(p)&p!=null --> emp&true
 

@@ -9839,13 +9839,30 @@ let rec context_fv (c:context) : CP.spec_var list =
 
 let empty_infer_rel () = new Gen.stack
 
-let mkEmp_formula f =
+let repl_pure_formula pf f =
+  let mpf = MCP.mix_of_pure pf in
   let rec aux f = match f with
-    | Base e -> Base {e with formula_base_heap = HEmp}
-    | Exists e -> Exists {e with formula_exists_heap = HEmp}
+    | Base e -> Base {e with formula_base_pure = mpf}
+    | Exists e -> Exists {e with formula_exists_pure = mpf}
     | Or ({formula_or_f1=f1; formula_or_f2=f2} as b) ->
       Or {b with formula_or_f1=aux f1; formula_or_f2=aux f2}
   in aux f
+
+let repl_heap_formula h f =
+  let rec aux f = match f with
+    | Base e -> Base {e with formula_base_heap = h}
+    | Exists e -> Exists {e with formula_exists_heap = h}
+    | Or ({formula_or_f1=f1; formula_or_f2=f2} as b) ->
+      Or {b with formula_or_f1=aux f1; formula_or_f2=aux f2}
+  in aux f
+
+let mkEmp_formula f = repl_heap_formula HEmp f
+  (* let rec aux f = match f with *)
+  (*   | Base e -> Base {e with formula_base_heap = HEmp} *)
+  (*   | Exists e -> Exists {e with formula_exists_heap = HEmp} *)
+  (*   | Or ({formula_or_f1=f1; formula_or_f2=f2} as b) -> *)
+  (*     Or {b with formula_or_f1=aux f1; formula_or_f2=aux f2} *)
+  (* in aux f *)
 
 let mkEmp_es es =
   let emp_f = mkEmp_formula es.es_formula in
@@ -19212,20 +19229,21 @@ let collect_infer_rel_list_failesc_context lfc =
 (*   in *)
 (*   map_list_partial_context ctx f  *)
 
-let extract_hrel_list (hf:h_formula) = 
+let extract_hrel_list (hf:h_formula) pf = 
   let lst = new Gen.stack in
   let f hf = match hf with
     |  HRel (hp, eargs, _ ) -> 
-      let () = lst # push (hp,eargs) in
+      let () = lst # push (hp,eargs,pf) in
       Some (HEmp)
     | _ -> None 
   in
   let new_f = map_h_formula hf f in
   (lst # get_stk,new_f)
 
-let extract_hrel_list (hf:h_formula) = 
+let extract_hrel_list (hf:h_formula) p1 = 
   Debug.no_1 "extract_hrel_list" !print_h_formula 
-    (pr_pair (pr_list (pr_pair !CP.print_sv (pr_list !CP.print_exp))) !print_h_formula) extract_hrel_list hf
+    (pr_pair (pr_list (pr_triple !CP.print_sv (pr_list !CP.print_exp) !CP.print_formula)) !print_h_formula) 
+    (fun _ -> extract_hrel_list hf p1) hf
 
 (* (==infer.ml#3554==) *)
 (* extract_hrel_head_list@9@6 *)
@@ -19234,12 +19252,14 @@ let extract_hrel_list (hf:h_formula) =
 let extract_hrel_head_list (f0:formula) =
   let rec helper f =
     match f with
-    | Base ({formula_base_heap = h1;} as r) ->
-      let (lst,new_h) = extract_hrel_list h1 in
+    | Base ({formula_base_heap = h1; formula_base_pure = p1;} as r) ->
+      let p1 = MCP.pure_of_mix p1 in
+      let (lst,new_h) = extract_hrel_list h1 p1 in
       if lst==[] then None
       else Some(lst,Base {r with formula_base_heap = new_h})
-    | Exists ({ formula_exists_heap = h1;} as r) ->
-      let (lst,new_h) = extract_hrel_list h1 in
+    | Exists ({ formula_exists_heap = h1; formula_exists_pure = p1;} as r) ->
+      let p1 = MCP.pure_of_mix p1 in
+      let (lst,new_h) = extract_hrel_list h1 p1 in
       if lst==[] then None
       else Some(lst,Exists {r with formula_exists_heap = new_h})
     | Or ({formula_or_f1 = f1; formula_or_f2 = f2} as r) -> 
@@ -19255,6 +19275,6 @@ let extract_hrel_head_list (f0:formula) =
   helper f0
 
 let extract_hrel_head_list (f0:formula) =
-  let pr_hr = pr_list (pr_pair !CP.print_sv (pr_list !CP.print_exp)) in
+  let pr_hr = pr_list (pr_triple !CP.print_sv (pr_list !CP.print_exp) !CP.print_formula) in
   let pr = pr_option (pr_pair pr_hr !print_formula) in
   Debug.no_1 "extract_hrel_head_list" !print_formula pr extract_hrel_head_list  f0

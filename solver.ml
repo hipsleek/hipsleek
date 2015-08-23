@@ -7601,9 +7601,9 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                             ) 
                             else h1
                           ) in
-                          let () = x_binfo_hp (add_str "h1: " !CF.print_h_formula) h1 no_pos in
-                          let () = x_binfo_hp (add_str "h2: " !CF.print_h_formula) h2 no_pos in
-                          let () = x_binfo_hp (add_str "prep_h1: " !CF.print_h_formula) prep_h1 no_pos in
+                          let () = x_tinfo_hp (add_str "h1: " !CF.print_h_formula) h1 no_pos in
+                          let () = x_tinfo_hp (add_str "h2: " !CF.print_h_formula) h2 no_pos in
+                          let () = x_tinfo_hp (add_str "prep_h1: " !CF.print_h_formula) prep_h1 no_pos in
                           (* let () = x_tinfo_hp (add_str "rhs_rest_emp: " string_of_bool) (!rhs_rest_emp) no_pos in *)
                           (* let () = x_tinfo_hp (add_str "is_folding: " string_of_bool) (is_folding) no_pos in *)
                           (* let () = x_tinfo_hp (add_str "!Globals.do_classic_frame_rule" string_of_bool) (!Globals.do_classic_frame_rule) no_pos in *)
@@ -7623,7 +7623,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                               && (h2 = HEmp)) then (
                             (* WN : shouldn't we fail if no_infer_hp_rel *)
                             if  (* not *) (Infer.no_infer_hp_rel estate) then
-                              let () = x_binfo_pp "no_infer_hp_rel? " no_pos in
+                              let () = x_tinfo_pp "no_infer_hp_rel? " no_pos in
                               let err_msg =  "residue is forbidden.(1)" in
                               let fail_ctx = mkFailContext "classical separation logic" estate conseq None pos in
                               let ls_ctx = CF.mkFailCtx_in (Basic_Reason (fail_ctx, CF.mk_failure_must (* "residue is forbidden.(1)" *) err_msg "" , estate.es_trace)) ({estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.es_formula}, err_msg, Failure_Must err_msg) (mk_cex true) in
@@ -7631,7 +7631,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                               let () = x_tinfo_hp (add_str "ls_ctx" Cprinter.string_of_list_context) ls_ctx no_pos in
                               (ls_ctx, proof)
                             else
-                              let () = x_binfo_hp (add_str "h1 " !CF.print_h_formula) h1 no_pos in
+                              let () = x_tinfo_hp (add_str "h1 " !CF.print_h_formula) h1 no_pos in
                               let () = x_binfo_pp "WN : Why a diffrent way to infer_collect_hp_rel_classsic" no_pos in
                               let r, new_es = x_add Infer.infer_collect_hp_rel_classsic 0 prog estate h2 pos in
                               let l_h, l_p, l_vp, l_fl, l_t, l_a = CF.split_components new_es.es_formula in
@@ -7674,8 +7674,8 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                             (* (\* this overwrites things computed earlier *\) *)
                             (* let h1_old = h1 in *)
                             (* let h1, _, _, _, _, _ = split_components estate.CF.es_formula in *)
-                            (* let () = x_binfo_hp (add_str "h1" !CF.print_h_formula) h1 no_pos in *)
-                            (* let () = x_binfo_hp (add_str "h1_old" !CF.print_h_formula) h1_old no_pos in *)
+                            (* let () = x_tinfo_hp (add_str "h1" !CF.print_h_formula) h1 no_pos in *)
+                            (* let () = x_tinfo_hp (add_str "h1_old" !CF.print_h_formula) h1_old no_pos in *)
                             (* (\* let h1, p1, vp1, fl1, t1, a1 = split_components estate.CF.es_formula in *\) *)
                             (* if (h2 = HEmp && CF.get_hprel_h_formula h1 *)
                             (*                  != [] && !Globals.do_classic_frame_rule) then *)
@@ -8223,9 +8223,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
   let safe_exc () = 
     (* infer empty HP_Rel for classic reasoning *)
     let classic_flag = estate_orig.CF.es_infer_obj # is_classic_all in
-    let () = x_binfo_hp (add_str "lhs" Cprinter.string_of_formula_base) lhs no_pos in
-    let () = x_binfo_hp (add_str "conseq" !CF.print_formula) conseq no_pos in
-    let () = x_binfo_hp (add_str "classic_flag" string_of_bool) classic_flag no_pos in
+    let () = x_tinfo_hp (add_str "lhs" Cprinter.string_of_formula_base) lhs no_pos in
+    let () = x_tinfo_hp (add_str "conseq" !CF.print_formula) conseq no_pos in
+    let () = x_tinfo_hp (add_str "classic_flag" string_of_bool) classic_flag no_pos in
     let h2, p2, _, _, _, _ = split_components conseq in
     let estate_orig1, hprel_ass=
       if (h2 = HEmp || h2 = HTrue) && !Globals.do_classic_frame_rule then
@@ -8245,10 +8245,10 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
       let proof = mkClassicSepLogic (Ctx estate_orig1) conseq in
       (ls_ctx, proof)
     else
-      let () = x_binfo_pp ("Need to normalize h2 :"^(!print_h_formula h2)) no_pos in
-      let () = x_binfo_hp (add_str "classic_flag" string_of_bool) classic_flag no_pos in
-      let () = x_binfo_hp (add_str "do_classic_frame_rule" string_of_bool) !Globals.do_classic_frame_rule no_pos in
-      let () = x_binfo_hp (add_str "h2" !print_h_formula) h2 no_pos in
+      let () = x_tinfo_pp ("Need to normalize h2 :"^(!print_h_formula h2)) no_pos in
+      let () = x_tinfo_hp (add_str "TODO : not set classic_flag" string_of_bool) classic_flag no_pos in
+      let () = x_tinfo_hp (add_str "do_classic_frame_rule" string_of_bool) !Globals.do_classic_frame_rule no_pos in
+      let () = x_tinfo_hp (add_str "h2" !print_h_formula) h2 no_pos in
       let estate_orig1,lhs1 =
         if h2 == HTrue && !Globals.do_classic_frame_rule then 
           (* remove all heap components inside estate_orig1 *)

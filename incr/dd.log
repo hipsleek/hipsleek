@@ -2,7 +2,7 @@
 #get_spec_baga,Trace
 #lookup_view_baga_with_subs
 #merge_alias_nodes_formula
-heap_entail_empty_rhs_heap,Trace
+#heap_entail_empty_rhs_heap,Trace
 #do_match,Trace
 #subs_to_inst_vars
 #do_match_inst_perm_vars,Trace
@@ -13,4 +13,7 @@ heap_entail_empty_rhs_heap,Trace
 #subtract_ann
 #heap_entail_conjunct
 #heap_entail_conjunct_helper,Trace
+extract_hrel_head
+infer_collect_hp_rel_empty_rhs,Trace
+
 

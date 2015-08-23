@@ -287,7 +287,7 @@ let collect_hp_unk_map_list_partial_context (ctx:list_partial_context) =
   List.concat r
 
 let init_vars ctx infer_vars iv_rel iv_templ v_hp_rel orig_vars =
-  (* let () = x_binfo_hp Cprinter.string_of_spec_var_list iv_rel no_pos in *)
+  (* let () = x_tinfo_hp Cprinter.string_of_spec_var_list iv_rel no_pos in *)
   let rec helper ctx = 
     match ctx with
     | Ctx estate -> Ctx { estate with 
@@ -3548,26 +3548,53 @@ let infer_collect_hp_rel_empty_rhs_x prog (es0:entail_state) mix_rf pos =
       (* WN : Why did this simplify_lhs_rhs has so many parameters? *)
       let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhras []
           [(hp,args)] [] [] [] [] [] [] [] in
-      let lhs = CF.remove_neqNull_svl args (CF.Base new_lhs_b) in
+      let lhs0 = (CF.Base new_lhs_b) in
+      (* WN : Why do we remove !=null? *)
+      let lhs = (* CF.remove_neqNull_svl args *) lhs0  in
+      (* let () = x_tinfo_hp (add_str "lhs0" !CF.print_formula) lhs0 no_pos in *)
       (* WN : Why do we extract hrel_head and then not use it? *)
       let extr_hd = x_add_1 CF.extract_hrel_head lhs in
       let extr_ans = x_add_1 CF.extract_hrel_head_list lhs in
-      let pr_hr = pr_list (pr_pair !CP.print_sv (pr_list !CP.print_exp)) in
+      let pr_hr = pr_list (pr_triple !CP.print_sv (pr_list !CP.print_exp) !CP.print_formula) in
       let pr6 = pr_option (pr_pair pr_hr !CF.print_formula) in
-      let () = x_binfo_hp (add_str "extr_ans(list)" pr6) extr_ans no_pos in
-      let () = x_binfo_hp (add_str "extr_hd" (pr_option !CP.print_sv)) extr_hd no_pos in
-      if  extr_hd != None then
-        let knd = CP.RelAssume [hp] in
-        let hprel_ass = CF.mkHprel knd [] [] args lhs None (CF.Base rhs_b) es_cond_path in
-        (Some hprel_ass)
+      let () = x_tinfo_hp (add_str "extr_ans(list)" pr6) extr_ans no_pos in
+      let () = x_tinfo_hp (add_str "extr_hd" (pr_option !CP.print_sv)) extr_hd no_pos in
+      let rhs_f = (CF.Base rhs_b) in
+      let () = x_tinfo_hp (add_str "lhs(after)" !CF.print_formula) lhs no_pos in
+      let () = x_tinfo_hp (add_str "rhs" !CF.print_formula) rhs_f no_pos in
+      let () = x_tinfo_hp (add_str "(hp,args)"  (pr_pair !CP.print_sv !CP.print_svl)) (hp,args) no_pos in
+      let hprel_lst = match extr_ans with
+        | None -> []
+        | Some (lst,f) ->
+          List.map (fun (hp,args,p) -> 
+              let knd = CP.RelAssume [hp] in
+              let args2 = List.map (fun e -> 
+                  match e with Var (sv,_) -> sv
+                             | _ -> failwith "Expecting vars only for hp_rel args") args in
+              (* need to form new lhs from pure *)
+              let new_h = CF.HRel (hp,args,no_pos) in 
+              let lhs = CF.repl_heap_formula new_h lhs in
+              let () = x_tinfo_pp "TODO : pure formula should be assumption filtered" no_pos in
+              let lhs = CF.repl_pure_formula p lhs in
+              let hprel_ass = CF.mkHprel knd [] [] args2 lhs None rhs_f es_cond_path in
+              ((hp,args2),hprel_ass)
+            ) lst 
+      in
+      let () = x_tinfo_hp (add_str "hprel_lst"  (pr_list (pr_pair pr_none Cprinter.string_of_hprel_short))) hprel_lst no_pos in
+      if  extr_ans (* extr_hd *) != None then
+        (* let knd = CP.RelAssume [hp] in *)
+        (* let hprel_ass = CF.mkHprel knd [] [] args lhs None rhs_f es_cond_path in *)
+        (* let () = x_tinfo_hp (add_str "hprel_ass"  Cprinter.string_of_hprel_short) hprel_ass no_pos in *)
+        (* (Some hprel_ass) *)
+        Some hprel_lst
       else None
     in
-    let generate_constrs lhs_b rhs_b leqs reqs hds hvs lhras p =
-      let pr1 = Cprinter.string_of_formula_base in
-      let pr2 = Cprinter.string_of_hprel_short  in
-      Debug.no_3 "generate_constrs" pr1 pr1 (pr_pair !CP.print_sv !CP.print_svl) (pr_option pr2)
-        (fun _ _ _ -> generate_constrs lhs_b rhs_b leqs reqs hds hvs lhras p) lhs_b rhs_b p
-    in
+    (* let generate_constrs lhs_b rhs_b leqs reqs hds hvs lhras p = *)
+    (*   let pr1 = Cprinter.string_of_formula_base in *)
+    (*   let pr2 = pr_list Cprinter.string_of_hprel_short  in *)
+    (*   Debug.no_3 "generate_constrs" pr1 pr1 (pr_pair !CP.print_sv !CP.print_svl) (pr_option pr2) *)
+    (*     (fun _ _ _ -> generate_constrs lhs_b rhs_b leqs reqs hds hvs lhras p) lhs_b rhs_b p *)
+    (* in *)
     let lhs0 = es0.CF.es_formula in
     (**********END INTERNAL***********)
     (*for debugging*)
@@ -3610,9 +3637,9 @@ let infer_collect_hp_rel_empty_rhs_x prog (es0:entail_state) mix_rf pos =
           let r_emap0 = get_eqset (MCP.pure_of_mix mix_rf) in
           (* let () = DD.ninfo_hprint (add_str "   sst0: " pr) (sst0) pos in *)
           let _ =
-            x_binfo_pp ">>>>>> infer_hp_rel <<<<<<" pos;
-            x_binfo_hp (add_str  "  lhs " Cprinter.string_of_formula) lhs0 pos;
-            x_binfo_hp (add_str  "  classic " string_of_bool) !Globals.do_classic_frame_rule pos
+            x_tinfo_pp ">>>>>> infer_hp_rel <<<<<<" pos;
+            x_tinfo_hp (add_str  "  lhs " Cprinter.string_of_formula) lhs0 pos;
+            x_tinfo_hp (add_str  "  classic " string_of_bool) !Globals.do_classic_frame_rule pos
           in
           (*TOFIX: detect HEmp or HTrue *)
           let rhs_b0 = formula_base_of_heap (CF.HEmp) pos in
@@ -3631,8 +3658,8 @@ let infer_collect_hp_rel_empty_rhs_x prog (es0:entail_state) mix_rf pos =
           (********** END BASIC INFO LHS, RHS **********)
           let tmp = CF.get_HRels lhs_b1.CF.formula_base_heap in
           let pr_hp_lst = pr_list (pr_pair !CP.print_sv !CP.print_svl)in
-          let () = x_binfo_hp (add_str "tmp" pr_hp_lst) tmp no_pos in
-          let () = x_binfo_hp (add_str "ivs" !CP.print_svl) ivs no_pos in
+          let () = x_tinfo_hp (add_str "tmp" pr_hp_lst) tmp no_pos in
+          let () = x_tinfo_hp (add_str "ivs" !CP.print_svl) ivs no_pos in
           let sel_hprels = List.filter (fun (hp,_) -> CP.mem_svl hp ivs) tmp  in
           if sel_hprels = [] then
             (false, es0,[])
@@ -3641,13 +3668,14 @@ let infer_collect_hp_rel_empty_rhs_x prog (es0:entail_state) mix_rf pos =
             let sel_hpargs, hprel_ass0 = List.fold_left (fun (ls1,ls2) (hp,args) ->
                 let r_opt = x_add generate_constrs lhs_b1 rhs_b1 leqs1 reqs1 lhds lhvs lhrs (hp,args) in
                 match r_opt with
-                | Some ass ->
-                  (ls1@[(hp,args)],ls2@[ass])
+                | Some lst ->
+                  let (hp_arg_lst,ass_lst) = List.split lst in
+                  (ls1@hp_arg_lst (* [(hp,args)] *),ls2@ass_lst(* [ass] *))
                 | None -> (ls1,ls2)
               ) ([],[]) sel_hprels in
             let ex_ass = (rel_ass_stk # get_stk) in
             let hprel_ass = Gen.BList.difference_eq Sautil.constr_cmp hprel_ass0 ex_ass in
-            let () = x_binfo_hp (add_str "sel_hpargs" pr_hp_lst) sel_hpargs no_pos in
+            let () = x_tinfo_hp (add_str "sel_hpargs" pr_hp_lst) sel_hpargs no_pos in
             if sel_hpargs = [] || hprel_ass = [] then (false,es0,[]) else
               (*update residue*)
               let reqs0 = (MCP.ptr_equations_without_null mix_rf) in
