@@ -950,6 +950,21 @@ EXPECTS:
   H(p)&p=null | x::node<v,p> & v=1 --> P(p)
 which shows the heap context of p?
 =====================================================================
+# ex15c.slk 
+
+infer [H,P] H(p) * x::node<1,p> & p=null |- P1(p).
+// inferred hprel: [H(p)&p=null --> P1(p)&true]
+// # How come still inferring P1?
+
+infer [H,P1] H(p) * x::node<1,p> & p=null |- P1(p).
+// inferred hprel: [H(p)&p=null --> P1(p)&true]
+// # EXPECTS : [H(p)&p=null | x::node<_,p> --> P1(p)&true]
+
+infer [H,P] H(p) * x::node<1,p> & p=null |- P(p,x).
+// inferred hprel: [H(p)&p=null --> P1(p)&true]
+//<1>H(p) * x::node<flted_23_44,p>@M&p=null & flted_23_44=1&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [emp&p=null --> P(p,x@NI)&true]
+// # EXPECTS : [H(p)&p=null | x::node<_,p> --> P(p,x)&true]
 =====================================================================
 =====================================================================
 =====================================================================
