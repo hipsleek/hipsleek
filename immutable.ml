@@ -2875,7 +2875,10 @@ let merge_alias_nodes_formula prog f quantif xpure unfold_fun =
       Or {orf with formula_or_f1 = helper orf.formula_or_f1;  formula_or_f2 = helper orf.formula_or_f2;}
   in
   if not ((* !Globals.allow_field_ann *) !Globals.imm_merge) then f
-  else helper f
+  else 
+    let newf = helper f in
+    let newf = CF.transform_formula (nonef, nonef,nonef, (nonef, nonef, (fun p -> Some(Immutils.simp_imm_min_max p)), somef, somef)) newf in
+    newf
 
 let merge_alias_nodes_formula prog f quantif xpure unfold_fun =
   let pr = Cprinter.string_of_formula in

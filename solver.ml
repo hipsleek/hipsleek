@@ -11687,9 +11687,9 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
     let p_lhs_xpure = MCP.pure_of_mix lhs_xpure in
     let old_imm_flag = !Globals.allow_imm in
     let () = Globals.allow_imm := true in
-    let () = Debug.ninfo_hprint (add_str "[solver_detect_lhs_rhs_contra_all]:: conseq: " Cprinter.string_of_formula) conseq no_pos in
+    let () = x_tinfo_hp (add_str "[solver_detect_lhs_rhs_contra_all]:: conseq: " Cprinter.string_of_formula) conseq no_pos in
     let rhs_xpure,_,_ = x_add xpure 9 prog conseq in
-    let () = Debug.ninfo_hprint (add_str "[solver_detect_lhs_rhs_contra_all]::  p_rhs_xpure 0: " Cprinter.string_of_mix_formula) rhs_xpure no_pos in
+    let () = x_tinfo_hp (add_str "[solver_detect_lhs_rhs_contra_all]::  p_rhs_xpure 0: " Cprinter.string_of_mix_formula) rhs_xpure no_pos in
     let () = Globals.allow_imm := old_imm_flag in
     let p_rhs_xpure = MCP.pure_of_mix rhs_xpure in
     let p_lhs_xpure= (* if not !Globals.allow_imm then *)
@@ -11713,9 +11713,9 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
             MCP.mix_of_pure (CP.prune_relative_unsat_disj (MCP.pure_of_mix lhs_xpure0) (CF.xpure_for_hnodes_f conseq))
           else lhs_xpure0
         in
-        let () = Debug.ninfo_hprint (add_str "conseq" Cprinter.prtt_string_of_formula) conseq no_pos in
-        let () = Debug.ninfo_hprint (add_str "lhs_xpure0" Cprinter.string_of_mix_formula) lhs_xpure0 no_pos in
-        let () = Debug.ninfo_hprint (add_str "lhs_xpure" Cprinter.string_of_mix_formula) lhs_xpure no_pos in
+        let () = x_tinfo_hp (add_str "conseq" Cprinter.prtt_string_of_formula) conseq no_pos in
+        let () = x_tinfo_hp (add_str "lhs_xpure0" Cprinter.string_of_mix_formula) lhs_xpure0 no_pos in
+        let () = x_tinfo_hp (add_str "lhs_xpure" Cprinter.string_of_mix_formula) lhs_xpure no_pos in
         let r_inf_contr,relass = x_add Infer.infer_lhs_contra_estate 4 estate lhs_xpure pos msg  in
         let contra, c,r =
           match r_inf_contr with

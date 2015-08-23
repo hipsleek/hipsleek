@@ -1863,7 +1863,7 @@ remove_abs_nodes_struc@1 EXIT: EBase
      {FLOW,(4,5)=__norm#E}[]
 
 =======================================================
-# ex16b3.ss
+# ex16b3.ss (FIXED)
  prune_eq_top_bot_imm_disjunct should make use of emap to
 test for top/bot. 
 
@@ -1890,7 +1890,7 @@ length$node
 
 
 =======================================================
-# ex16b3.ss
+# ex16b3.ss (FIXED)
  prune_eq_top_bot_imm_disjunct should push exists outer.
 
 
@@ -1913,6 +1913,16 @@ prune_eq_top_bot_imm_disjunct inp1 : exists(a_1495:exists(imm_1486:exists(b_1475
  b<:@L
 prune_eq_top_bot_imm_disjunct@2786 EXIT:true
 =======================================================
+# ex16b3.ss
+why contra detected? why adding !(b<:@L)  as a rel assume? where did !(b<:@L) disappear?
+
+@1675!ex16b3-manual-rel-pre-L-length.ss:16: 11: [entail:16][post:16]**infer.ml#720:ovrlap inf vars: :[b]
+@1675!ex16b3-manual-rel-pre-L-length.ss:16: 11: [entail:16][post:16]**infer.ml#721:pre infer   : : !(b<:@L)
+@1675!ex16b3-manual-rel-pre-L-length.ss:16: 11: [entail:16][post:16]**infer.ml#722:new pre infer   : : !(b<:@L)
+@1675!ex16b3-manual-rel-pre-L-length.ss:16: 11: [entail:16][post:16]**infer.ml#723:pre thus   : : true
+@1675!ex16b3-manual-rel-pre-L-length.ss:16: 11: [entail:16][post:16]**infer.ml#784:rel_ass(unsat) : :Some( !(b<:@L))
+@1675!ex16b3-manual-rel-pre-L-length.ss:16: 11: [entail:16][post:16]**infer.ml#805:rel_ass_final(unsat) : :[RELASS [P]: ( P(b)) -->  !(b<:@L)]
+
 =======================================================
 =======================================================
 =======================================================

@@ -123,7 +123,7 @@ RELASS [P]: ( P(b)) -->  not(b<:@L)]
  (((1<=flted_8_1468 & q_1470!=null) | (q_1470=null & flted_8_1468=0))) & x'=2
 
 (====)
-HOW to solve simplif with ! not
+HOW to solve simplif with ! not (FIXED) by calling the simplification at the merge call site rather than while callling the prover
 >>>>>>>>> without emap
 prune_eq_top_bot_imm@3682
 prune_eq_top_bot_imm inp1 : (b<:a | 
@@ -173,4 +173,44 @@ XXXX push_list(es_infer_rel:1)[RELASS [P]: ( P(b)) -->  b!=@L]
 add_infer_rel_to_estate@3722@3520
 add_infer_rel_to_estate inp1 :[RELASS [P]: ( P(b)) -->  b!=@L]
 add_infer_rel_to_estate@3722 EXIT:[RELASS [P]: ( P(b)) -->  b!=@L,RELDEFN P: ( P(b) & b<:@L & b<:b_1475) -->  P(b_1475),RELASS [P]: ( P(b)) -->  b<:@L]
+
+==========================================================================
+# ex16b3.ss
+why contra detected? why adding !(b<:@L)  as a rel assume? where did !(b<:@L) disappear?
+
+@1675!ex16b3-manual-rel-pre-L-length.ss:16: 11: [entail:16][post:16]**infer.ml#720:ovrlap inf vars: :[b]
+@1675!ex16b3-manual-rel-pre-L-length.ss:16: 11: [entail:16][post:16]**infer.ml#721:pre infer   : : !(b<:@L)
+@1675!ex16b3-manual-rel-pre-L-length.ss:16: 11: [entail:16][post:16]**infer.ml#722:new pre infer   : : !(b<:@L)
+@1675!ex16b3-manual-rel-pre-L-length.ss:16: 11: [entail:16][post:16]**infer.ml#723:pre thus   : : true
+@1675!ex16b3-manual-rel-pre-L-length.ss:16: 11: [entail:16][post:16]**infer.ml#784:rel_ass(unsat) : :Some( !(b<:@L))
+@1675!ex16b3-manual-rel-pre-L-length.ss:16: 11: [entail:16][post:16]**infer.ml#805:rel_ass_final(unsat) : :[RELASS [P]: ( P(b)) -->  !(b<:@L)]
+(==solver.ml#11719==)
+infer_lhs_contra_estate#4@1675@1674@1673
+infer_lhs_contra_estate#4 inp1 :estate: ex_formula : x'::node<Anon_1469,q_1470>@b&flted_8_1468+1=n & 
+                                           !(v_bool_18_1446') & x'!=null & 
+                                           x'=x & n_1476=flted_8_1468 & 
+                                           n_1476=0 & q_1470=null & 
+                                           flted_8_1468=0 & 
+                                           v_int_24_1445'=1+tmp_1558 & 
+                                           res=v_int_24_1445' & P(b) & 
+                                           b<:@L & b<:b_1475&{FLOW,(4,5)=__norm#E}[]
+ es_heap:emp
+ es_infer_vars_rel: [P]
+ es_infer_rel: [RELDEFN P: ( P(b) & b<:@L & b<:b_1475) -->  P(b_1475); 
+                RELASS [P]: ( P(b)) -->  b<:@L]
+ es_cond_path: [2; 0]
+ es_var_measures 3: MayLoop
+infer_lhs_contra_estate#4 inp2 :lhs_xpure:
+ flted_8_1468+1=n & !(v_bool_18_1446') & x'!=null & x'=x & 
+ n_1476=flted_8_1468 & n_1476=0 & q_1470=null & flted_8_1468=0 & 
+ v_int_24_1445'=1+tmp_1558 & res=v_int_24_1445' & P(b) & b<:@L & b<:b_1475 & 
+ x'!=null
+infer_lhs_contra_estate#4 inp3 :EARLY CONTRA DETECTION
+infer_lhs_contra_estate#4@1675 EXIT:(None,[( ex_formula : hfalse&false&{FLOW,(4,5)=__norm#E}[]
+ es_heap:emp
+ es_infer_vars_rel: [P]
+ es_infer_rel: [RELDEFN P: ( P(b) & b<:@L & b<:b_1475) -->  P(b_1475); 
+                RELASS [P]: ( P(b)) -->  b<:@L]
+ es_var_measures 3: MayLoop,[RELASS [P]: ( P(b)) -->  !(b<:@L)],true)])
+
 */

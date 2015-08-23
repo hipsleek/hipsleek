@@ -533,9 +533,47 @@ let prune_eq_top_bot_imm_disjunct f =
     let p = SVPoset.create () in
     (List.iter (SVPoset.add p) subanns; p) in
   let ( <: ) a b = SVPoset.is_lt poset a b in
-  let ( := ) a b =                     (* eq_const_ann b emap a in *)(*TODOIMM: should use emap *)
-    SetSV.mem a (if b = imm_top then eq_top else eq_bot) in
-  let prune_if_top a b = ((a := imm_top) && (a <: b)) || ((b := imm_top) && (b <: a)) in
+  let ( := ) a b =                     eq_const_ann b emap a in(*TODOIMM: should use emap *)
+    (* SetSV.mem a (if b = imm_top then eq_top else eq_bot) in *)
+  let prune_if_top a b = ((a := imm_top) && (a <: b)) || ((b := imm_top) && (b <: a) ||  ) in
+  let prune_if_bot a b = ((a := imm_bot) && (b <: a)) || ((b := imm_bot) && (a <: b)) in
+  let prune_if_match (sv1, sv2) = prune_if_top sv1 sv2 || prune_if_bot sv1 sv2 in
+  List.fold_right (fun b acc -> acc || prune_if_match b) neq_sv false
+
+(* Pruned Case
+  1. a=min(b,c), given some ann subtyping relations, deduce a=b or a=c if possible
+  2. a=top & a <: b & a != b
+  3. a=bot & b <: a & a != b
+*)
+let prune_eq_top_bot_imm_disjunct f =
+  let emap = build_eset_of_imm_formula f in 
+  let collect_subann p_f =
+    match p_f with
+    | SubAnn (Var(sv1,_), Var(sv2,_),_) -> [(sv1, sv2)]
+    | _ -> [] in
+  let collect_eq_imm imm p_f = match p_f with
+    | Eq (Var(sv,_), AConst(imm, _), _) -> [sv]
+    | Eq (AConst(imm,_), Var(sv,_), _) -> [sv]
+    | _ -> [] in
+  let collect_eq_bot = collect_eq_imm imm_bot in
+  let collect_eq_top = collect_eq_imm imm_top in
+  let collect_neq_sv p_f = match p_f with
+    | Neq (Var(sv1,_), Var(sv2, _), _) -> [(sv1, sv2)]
+    | _ -> [] in
+  let get4 p_f = (collect_subann p_f, collect_eq_bot p_f,
+                  collect_eq_top p_f, collect_neq_sv p_f) in
+  let concat4 xs = List.fold_right (fun (a,b,c,d) (e,f,g,h) -> (a@e, b@f, c@g, d@h)) xs
+                                   ([],[],[],[]) in
+  let (subanns, eq_bot, eq_top, neq_sv) =
+    (fun (a,b,c,d) -> (a, SetSV.of_list b, SetSV.of_list c, d))
+    (fold_formula f (nonef, (fun (p_f,_) -> Some (get4 p_f)), nonef) concat4) in
+  let poset =
+    let p = SVPoset.create () in
+    (List.iter (SVPoset.add p) subanns; p) in
+  let ( <: ) a b = SVPoset.is_lt poset a b in
+  let ( := ) a b =                     eq_const_ann b emap a in(*TODOIMM: should use emap *)
+    (* SetSV.mem a (if b = imm_top then eq_top else eq_bot) in *)
+  let prune_if_top a b = ((a := imm_top) && (a <: b)) || ((b := imm_top) && (b <: a)  ) in
   let prune_if_bot a b = ((a := imm_bot) && (b <: a)) || ((b := imm_bot) && (a <: b)) in
   let prune_if_match (sv1, sv2) = prune_if_top sv1 sv2 || prune_if_bot sv1 sv2 in
   List.fold_right (fun b acc -> acc || prune_if_match b) neq_sv false
@@ -560,23 +598,25 @@ let prune_eq_top_bot_imm f =
 let wrapper_strip_exists f fnc =
   let strippedf, quantif = strip_out_quantif f in
   let new_f = fnc strippedf in
-  let new_f = mkQuantif quantif strippedf (get_pure_label f) (pos_of_formula f) in
+  let new_f = mkQuantif quantif new_f (get_pure_label f) (pos_of_formula f) in
   new_f 
 
 let prune_eq_top_bot_imm_helper f = wrapper_strip_exists f prune_eq_top_bot_imm
 
-let rec prune_eq_top_bot_imm f =
-  let f_f form =
-    match form with
-    | BForm _   
-    | And   _   
-    | AndList _ 
-    | Or _      
-    | Forall _
-    | Exists _ -> Some (prune_eq_top_bot_imm_helper form)
-    | Not (not_f,lbl,pos) -> Some (mkNot (prune_eq_top_bot_imm_helper not_f) lbl pos )
-  in
-  transform_formula (nonef, nonef, f_f, somef, somef) f
+let prune_eq_top_bot_imm f = prune_eq_top_bot_imm_helper f
+
+(* let rec prune_eq_top_bot_imm f = *)
+(*   let f_f form = *)
+(*     match form with *)
+(*     | BForm _    *)
+(*     | And   _    *)
+(*     | AndList _  *)
+(*     | Or _       *)
+(*     | Forall _ *)
+(*     | Exists _ -> Some (prune_eq_top_bot_imm_helper form) *)
+(*     | Not (not_f,lbl,pos) -> Some (mkNot (prune_eq_top_bot_imm_helper not_f) lbl pos ) *)
+(*   in *)
+(*   transform_formula (nonef, nonef, f_f, somef, somef) f *)
 
 (* let rec prune_eq_top_bot_imm f = *)
 (*   let f_f (poset,emap) form = *)
