@@ -2340,8 +2340,11 @@ let match_unk_preds prog lhs_hpargs rhs_hp rhs_args=
 let find_guard prog lhds lhvs leqs l_selhpargs rhs_args=
   let l_args = List.fold_left (fun ls (_,args) -> ls@args) [] l_selhpargs in
   let l_args1 = CF.find_close l_args leqs in
+  let () = Debug.ninfo_hprint (add_str "l_args1"  !CP.print_svl) l_args1 no_pos in
+  let () = Debug.ninfo_hprint (add_str "rhs_args"  !CP.print_svl) rhs_args no_pos in
   let diff = CP.diff_svl rhs_args l_args1 in
-  if diff = [] then None else (*check-tll-1*)
+  (* temporal fix for incr/ex15a/b. TODO *)
+  (* if diff = [] then None else *) (*check-tll-1*)
     (*Now we keep heap + pure as pattern (env)*)
     let guard_hds = List.filter (fun hd ->
         let svl = (* hd.CF.h_formula_data_node:: *)hd.CF.h_formula_data_arguments in
@@ -2389,7 +2392,7 @@ let find_guard_new prog lhds lhvs leqs l_selhpargs rhs_args=
     (* | None -> "NONE" *)
     (* | Some hf -> *) pr_option Cprinter.prtt_string_of_h_formula
   in
-  Debug.no_4 "find_guard" (add_str "left heap" (pr_list !CF.print_h_formula)) 
+  Debug.no_4 "find_guard_new" (add_str "left heap" (pr_list !CF.print_h_formula)) 
     pr1 pr2 !CP.print_svl pr3
     (fun _ _ _ _ -> find_guard_new prog lhds lhvs leqs l_selhpargs rhs_args)
     (List.map (fun x -> CF.DataNode x) lhds) leqs l_selhpargs rhs_args
@@ -3096,7 +3099,11 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
       match new_guard with
       | None -> None
       | Some hf ->
-        let g_svl = CF.get_node_args hf in
+        let g_svl0 = CF.get_node_args hf in
+        let () = DD.ninfo_hprint (add_str  "  g_svl0" !CP.print_svl) g_svl0 pos in
+        let g_svl = if es.CF.es_infer_obj # is_pure_field_all then g_svl0 else
+          List.filter (CP.is_node_typ) g_svl0
+        in
         let () = DD.ninfo_hprint (add_str  "  g_svl" !CP.print_svl) g_svl pos in
         let p = (MCP.pure_of_mix lhs_b.CF.formula_base_pure) in
         let () = DD.ninfo_hprint (add_str  "  p" !CP.print_formula) p pos in

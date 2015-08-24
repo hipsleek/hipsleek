@@ -9,9 +9,8 @@ data node {
 HeapPred H(node a).
 HeapPred P(node a).
 
+//1
 infer [H,P] H(p) * x::node<1,p> & p=null |- P(p).
-
-
 print residue.
 
 
@@ -41,3 +40,16 @@ find_guard@2 EXIT:NONE
 
 
 */
+
+/*
+//2
+infer [H,P] H(p) * x::node<1,p> & p=null |- P(x).
+print residue.
+//expected?
+
+//3
+infer [H,P] H(p) * x::node<1,t> & p=null |- P(p).
+print residue.
+//expected?
+*/
+
