@@ -8226,6 +8226,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
     let () = x_tinfo_hp (add_str "lhs" Cprinter.string_of_formula_base) lhs no_pos in
     let () = x_tinfo_hp (add_str "conseq" !CF.print_formula) conseq no_pos in
     let () = x_tinfo_hp (add_str "classic_flag" string_of_bool) classic_flag no_pos in
+    (* L2: why not classic enven post proving? incr/ex10a-ll-size *)
+    let () = x_binfo_hp (add_str "!Globals.do_classic_frame_rule" string_of_bool) !Globals.do_classic_frame_rule no_pos in
     let h2, p2, _, _, _, _ = split_components conseq in
     let estate_orig1, hprel_ass=
       if (h2 = HEmp || h2 = HTrue) && !Globals.do_classic_frame_rule then

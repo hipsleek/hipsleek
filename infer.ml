@@ -2366,7 +2366,7 @@ let find_guard prog lhds lhvs leqs l_selhpargs rhs_args=
   let pr3 = pr_option Cprinter.prtt_string_of_h_formula
   in
   Debug.no_4 "find_guard" (add_str "left heap" (pr_list !CF.print_h_formula)) 
-    pr1 pr2 !CP.print_svl pr3
+    pr1 (add_str "left selected preds" pr2) !CP.print_svl pr3
     (fun _ _ _ _ -> find_guard prog lhds lhvs leqs l_selhpargs rhs_args)
     (List.map (fun x -> CF.DataNode x) lhds) leqs l_selhpargs rhs_args
 
@@ -2477,7 +2477,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
         loop_helper rest svl r1
     in
     let process_one (hp,args)=
-      (* let () = Debug.info_zprint (lazy  ("  hp: " ^ (!CP.print_sv hp))) no_pos in *)
+      let () = Debug.ninfo_zprint (lazy  ("  hp: " ^ (!CP.print_sv hp))) no_pos in
       if Gen.BList.mem_eq (fun (hp1,args1) (hp2,args2) ->
           CP.eq_spec_var hp1 hp2 && (CP.eq_spec_var_order_list args1 args2)
         ) (hp,args) selected_hpargs then
@@ -2485,7 +2485,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
         let args_ins1 = fst (List.split args_ins) in
         let opto = loop_helper (*find_pt_new*) lhs_hds args_ins1 [] in
         (match opto with
-         | [] -> []
+         | [] -> let () = Debug.ninfo_zprint (lazy  ("    ptos: empty")) no_pos in []
          | ptos -> begin
              (* let () = Debug.info_zprint (lazy  ("    ptos:" ^(!CP.print_svl ptos))) no_pos in *)
              (* let () = Debug.info_zprint (lazy  ("    rhs_args:" ^(!CP.print_svl rhs_args))) no_pos in *)
@@ -2573,23 +2573,27 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   (*END selective*)
   (*get all args of hp_rel to check whether they are fully embbed*)
   (* let unmatched_hp_args = CF.get_HRels n_unmatched in *)
-  let selected_hp_args = List.filter (fun (hp, args) ->
-      let args_inst = Sautil.get_hp_args_inst prog hp args in
-      (*SHOUL NOT traverse NULL ptr. this may cause some base-case split to be automatically
-        done, but --classic will pick them up. sa/paper/last-obl3.slk
-      *)
-      let args_inst1 = CP.diff_svl args_inst leqNulls in
-      (CP.intersect_svl args_inst1 closed_unmatched_svl) != []) rem_lhpargs in
+  let () = Debug.ninfo_hprint (add_str "rem_lhpargs"  (pr_list (pr_pair !CP.print_sv !CP.print_svl))) rem_lhpargs no_pos in
+  (* example incr/ex15c(3): we do not split base case here. unify the design *)
+  let selected_hp_args = (* List.filter (fun (hp, args) -> *)
+      (* let args_inst = Sautil.get_hp_args_inst prog hp args in *)
+      (* (\*SHOUL NOT traverse NULL ptr. this may cause some base-case split to be automatically *)
+      (*   done, but --classic will pick them up. sa/paper/last-obl3.slk *)
+      (* *\) *)
+      (* let args_inst1 = CP.diff_svl args_inst leqNulls in *)
+      (* (CP.intersect_svl args_inst1 closed_unmatched_svl) != []) *) rem_lhpargs in
   let selected_hps0, hrel_args = List.split selected_hp_args in
   (*tricky here: do matching between two unk hps and we keep sth in rhs which not matched*)
-  let rest_svl = CF.get_hp_rel_vars_h_formula rhs_rest in
-  let rest_svl1 = CF.find_close rest_svl leqs in
-  let select_helper svl (hp,args)=
-    if CP.diff_svl args svl = [] then [(hp,args)]
-    else []
-  in
-  let drop_hpargs =  List.concat (List.map (select_helper rest_svl1) ls_lhp_args) in
-  let drop_hps =  (List.map fst drop_hpargs) in
+  (* example incr/ex15c(3): still keep both unk preds in lhs and rhs *)
+  (* let rest_svl = CF.get_hp_rel_vars_h_formula rhs_rest in *)
+  (* let rest_svl1 = CF.find_close rest_svl leqs in *)
+  (* let select_helper svl (hp,args)= *)
+  (*   if CP.diff_svl args svl = [] then [(hp,args)] *)
+  (*   else [] *)
+  (* in *)
+  (* let drop_hpargs =  List.concat (List.map (select_helper rest_svl1) ls_lhp_args)in *)
+  (* let drop_hps =  (List.map fst drop_hpargs) in *)
+   let drop_hps = [] in
   (******************************************)
   (*TODO: test with sa/demo/sll-dll-2.ss*)
   (******************************************)
@@ -2618,6 +2622,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   (* in *)
   let vioated_ni_hps, vioated_ni_svl = [],[] in
   (******************************************)
+  let () = Debug.ninfo_hprint (add_str "selected_hp_args"  (pr_list (pr_pair !CP.print_sv !CP.print_svl))) selected_hp_args no_pos in
   let selected_hpargs =
     let drop_hps1 = drop_hps@vioated_ni_hps in
     List.filter (fun (hp,_) -> not (CP.mem_svl hp drop_hps1)) selected_hp_args
@@ -2642,7 +2647,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
           ([], [(hp,rhs_args)], ass_guard1)
         | None ->
           let closed_rhs_hpargs = CF.find_close rhs_args leqs in
-          let () = DD.ninfo_zprint (lazy  ("selected_hpargs: " ^ (pr_list (pr_pair !CP.print_sv !CP.print_svl)) selected_hpargs)) pos in
+          let () = Debug.ninfo_hprint (add_str "selected_hpargs"  (pr_list (pr_pair !CP.print_sv !CP.print_svl)))  selected_hpargs no_pos in
           let r1,r2 = (get_lhs_fold_fwd_svl selected_hpargs def_vs closed_rhs_hpargs lhds lhvs ls_lhp_args,
                        selected_hpargs) in
           let ass_guard1 = if CP.mem_svl rhs_hp post_hps then
@@ -3573,7 +3578,7 @@ let infer_collect_hp_rel i prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
   let pr4 = Cprinter.string_of_estate_infer_hp in
   let pr5 =  pr_penta string_of_bool pr4 Cprinter.string_of_h_formula
       (pr_option Cprinter.string_of_h_formula) (pr_option pr2) in
-  Debug.no_2_num i "infer_collect_hp_rel" (* pr2 *) pr1 pr1 pr5
+  Debug.no_2_num i "infer_collect_hp_rel" (* pr2 *) (add_str "lhs" pr1) (add_str "rhs" pr1) pr5
     ( fun _ _ -> infer_collect_hp_rel prog es rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos) (* es *) lhs_b rhs_b
 
 
