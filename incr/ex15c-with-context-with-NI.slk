@@ -10,6 +10,7 @@ HeapPred H(node a).
 HeapPred P(node a,node@NI b).
 HeapPred P1(node a).
 
+
 //1a
 infer [H,P] H(p) * x::node<1,p> & p=null |- P1(p).
 // inferred hprel: [H(p)&p=null --> P1(p)&true]
@@ -27,6 +28,7 @@ infer [H,P1] H(p) * x::node<1,p> & p=null |- P1(p).
 // inferred hprel: [H(p)&p=null --> P1(p)&true]
 // # EXPECTS : [H(p)&p=null | x::node<_,p> --> P1(p)&true]
 print residue.
+
 
 //3
 infer [H,P] H(p) * x::node<1,p> & p=null |- P(p,x).

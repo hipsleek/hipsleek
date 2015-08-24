@@ -2575,25 +2575,25 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   (* let unmatched_hp_args = CF.get_HRels n_unmatched in *)
   let () = Debug.ninfo_hprint (add_str "rem_lhpargs"  (pr_list (pr_pair !CP.print_sv !CP.print_svl))) rem_lhpargs no_pos in
   (* example incr/ex15c(3): we do not split base case here. unify the design *)
-  let selected_hp_args = (* List.filter (fun (hp, args) -> *)
-      (* let args_inst = Sautil.get_hp_args_inst prog hp args in *)
-      (* (\*SHOUL NOT traverse NULL ptr. this may cause some base-case split to be automatically *)
-      (*   done, but --classic will pick them up. sa/paper/last-obl3.slk *)
-      (* *\) *)
-      (* let args_inst1 = CP.diff_svl args_inst leqNulls in *)
-      (* (CP.intersect_svl args_inst1 closed_unmatched_svl) != []) *) rem_lhpargs in
+  let selected_hp_args = List.filter (fun (hp, args) ->
+      let args_inst = Sautil.get_hp_args_inst prog hp args in
+      (*SHOULD NOT traverse NULL ptr. this may cause some base-case split to be automatically
+        done, but --classic will pick them up. sa/paper/last-obl3.slk
+      *)
+      let args_inst1 = (* CP.diff_svl args_inst leqNulls *) args_inst in
+      (CP.intersect_svl args_inst1 closed_unmatched_svl) != []) rem_lhpargs in
   let selected_hps0, hrel_args = List.split selected_hp_args in
   (*tricky here: do matching between two unk hps and we keep sth in rhs which not matched*)
   (* example incr/ex15c(3): still keep both unk preds in lhs and rhs *)
-  (* let rest_svl = CF.get_hp_rel_vars_h_formula rhs_rest in *)
-  (* let rest_svl1 = CF.find_close rest_svl leqs in *)
-  (* let select_helper svl (hp,args)= *)
-  (*   if CP.diff_svl args svl = [] then [(hp,args)] *)
-  (*   else [] *)
-  (* in *)
-  (* let drop_hpargs =  List.concat (List.map (select_helper rest_svl1) ls_lhp_args)in *)
-  (* let drop_hps =  (List.map fst drop_hpargs) in *)
-   let drop_hps = [] in
+  let rest_svl = CF.get_hp_rel_vars_h_formula rhs_rest in
+  let rest_svl1 = CF.find_close rest_svl leqs in
+  let select_helper svl (hp,args)=
+    if CP.diff_svl args svl = [] then [(hp,args)]
+    else []
+  in
+  let drop_hpargs =  List.concat (List.map (select_helper rest_svl1) ls_lhp_args)in
+  let drop_hps =  (List.map fst drop_hpargs) in
+  (* let drop_hps = [] in *)
   (******************************************)
   (*TODO: test with sa/demo/sll-dll-2.ss*)
   (******************************************)
@@ -2623,6 +2623,11 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   let vioated_ni_hps, vioated_ni_svl = [],[] in
   (******************************************)
   let () = Debug.ninfo_hprint (add_str "selected_hp_args"  (pr_list (pr_pair !CP.print_sv !CP.print_svl))) selected_hp_args no_pos in
+  let selected_hpargs =
+    let drop_hps1 = drop_hps@vioated_ni_hps in
+    List.filter (fun (hp,_) -> not (CP.mem_svl hp drop_hps1)) selected_hp_args
+  in
+  let () = Debug.ninfo_hprint (add_str "selected_hpargs"  (pr_list (pr_pair !CP.print_sv !CP.print_svl))) selected_hpargs no_pos in
   let selected_hpargs =
     let drop_hps1 = drop_hps@vioated_ni_hps in
     List.filter (fun (hp,_) -> not (CP.mem_svl hp drop_hps1)) selected_hp_args
