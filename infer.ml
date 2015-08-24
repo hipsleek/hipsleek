@@ -2337,7 +2337,7 @@ let match_unk_preds prog lhs_hpargs rhs_hp rhs_args=
 (* find_guard inp3 :[(H,[p])] *)
 (* find_guard inp4 rhs_args :[p] *)
 (* find_guard@2 EXIT:NONE *)
-let find_guard_x prog lhds lhvs leqs l_selhpargs rhs_args=
+let find_guard prog lhds lhvs leqs l_selhpargs rhs_args=
   let l_args = List.fold_left (fun ls (_,args) -> ls@args) [] l_selhpargs in
   let l_args1 = CF.find_close l_args leqs in
   let diff = CP.diff_svl rhs_args l_args1 in
@@ -2360,13 +2360,38 @@ let find_guard_x prog lhds lhvs leqs l_selhpargs rhs_args=
 let find_guard prog lhds lhvs leqs l_selhpargs rhs_args=
   let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
   let pr2 = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) in
-  let pr3 off= match off with
-    | None -> "NONE"
-    | Some hf -> Cprinter.prtt_string_of_h_formula hf
+  let pr3 = pr_option Cprinter.prtt_string_of_h_formula
   in
   Debug.no_4 "find_guard" (add_str "left heap" (pr_list !CF.print_h_formula)) 
     pr1 pr2 !CP.print_svl pr3
-    (fun _ _ _ _ -> find_guard_x prog lhds lhvs leqs l_selhpargs rhs_args)
+    (fun _ _ _ _ -> find_guard prog lhds lhvs leqs l_selhpargs rhs_args)
+    (List.map (fun x -> CF.DataNode x) lhds) leqs l_selhpargs rhs_args
+
+(* WN : new more generous find heap_guard condition *)
+(* do we need to consider predicates? incomplete .. *)
+let find_guard_new prog lhds lhvs leqs l_selhpargs rhs_args=
+  let g = match lhds with
+    | h::_ -> CF.DataNode h
+    | [] -> failwith "XX"
+  in Some g
+
+(* type: 'a -> *)
+(*   CF.h_formula_data list -> *)
+(*   'b -> *)
+(*   (CP.spec_var * CP.spec_var) list -> *)
+(*   (CP.spec_var * CP.spec_var list) list -> *)
+(*   CP.spec_var list -> CF.h_formula option *)
+
+let find_guard_new prog lhds lhvs leqs l_selhpargs rhs_args=
+  let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  let pr2 = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) in
+  let pr3 = (* match off with *)
+    (* | None -> "NONE" *)
+    (* | Some hf -> *) pr_option Cprinter.prtt_string_of_h_formula
+  in
+  Debug.no_4 "find_guard" (add_str "left heap" (pr_list !CF.print_h_formula)) 
+    pr1 pr2 !CP.print_svl pr3
+    (fun _ _ _ _ -> find_guard_new prog lhds lhvs leqs l_selhpargs rhs_args)
     (List.map (fun x -> CF.DataNode x) lhds) leqs l_selhpargs rhs_args
 
 (*
@@ -2609,7 +2634,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
           let ass_guard1 = if CP.mem_svl rhs_hp post_hps then
               None
             else
-              x_add find_guard prog lhds lhvs leqs [(hp,rhs_args)] rhs_args
+              x_add find_guard(* _new *) prog lhds lhvs leqs [(hp,rhs_args)] rhs_args
           in
           ([], [(hp,rhs_args)], ass_guard1)
         | None ->
@@ -3541,8 +3566,8 @@ let infer_collect_hp_rel i prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
   let pr4 = Cprinter.string_of_estate_infer_hp in
   let pr5 =  pr_penta string_of_bool pr4 Cprinter.string_of_h_formula
       (pr_option Cprinter.string_of_h_formula) (pr_option pr2) in
-  Debug.no_3_num i "infer_collect_hp_rel" pr2 pr1 pr1 pr5
-    ( fun _ _ _ -> infer_collect_hp_rel prog es rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos) es lhs_b rhs_b
+  Debug.no_2_num i "infer_collect_hp_rel" (* pr2 *) pr1 pr1 pr5
+    ( fun _ _ -> infer_collect_hp_rel prog es rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos) (* es *) lhs_b rhs_b
 
 
 (*******************************************************)
