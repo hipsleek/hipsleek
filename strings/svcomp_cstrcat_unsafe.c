@@ -12,6 +12,11 @@ WFSeg<p> ==
 BADS<> ==
   self::char_star<v,q>*q::BADS<> 
   inv true;
+
+lemma_safe self::WFSeg<p> <-> self::WFSeg<q>*q::WFSeg<p> .
+
+lemma_safe self::WFS<> <-> self::WFSeg<q>*q::char_star<0,q2>*q2::BADS<> .
+
 */
 
 char* new_str()
@@ -22,10 +27,14 @@ char* new_str()
  {}
 
 char *(cstrcat)(char *s1, const char *s2)
-   /*@
+   /*
     requires s1::WFS<> * s2::WFS<> 
-    ensures s1::WFSeg<q> * q::WFSeg<q2> * q2::char_star<0,q3> * q3::BADS<> * s2::WFSeg<qq>*qq::char_star<0,qq2>*qq2::BADS<>;
+    ensures s1::WFSeg<q> * q::WFSeg<q2> * q2::char_star<0,q3> * q3::BADS<> * s2::WFSeg<qq>*qq::char_star<0,qq2>*qq2::BADS<> & res=s1;
   */
+/*@
+    requires s1::WFS<> * s2::WFS<> 
+    ensures s1::WFS<> * s2::WFS<> & res=s1;
+*/
  {
      char *s = s1;
      /* Move s so that it points to the end of s1.  */
