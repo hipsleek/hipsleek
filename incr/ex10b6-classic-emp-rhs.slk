@@ -21,6 +21,12 @@ print residue.
 infer_exact [H] H(p) |- true.
 print residue.
 
+infer_inexact [H] H(p) |- true.
+print residue.
+
+infer_inexact [H] H(p) |- emp.
+print residue.
+
 /*
 # ex10b6.slk
 
