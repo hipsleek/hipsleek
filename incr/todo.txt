@@ -856,7 +856,7 @@ support for c program
 to support @shape_pre_post
 
 =====================================================================
-# ex10b6.slk
+# ex10b6.slk (FIXED)
 
  infer_exact [H] H(p) |- emp.
 
@@ -876,7 +876,7 @@ Residue:
  CEX:true
 
 =====================================================================
-# ex10b7.slk -dre "generate_co\|extract_hre\|simplify_lhs_rhs" 
+# ex10b7.slk -dre "generate_co\|extract_hre\|simplify_lhs_rhs" (FIXED)
 
  infer_exact [H] H(p) |- emp.
 
@@ -916,7 +916,7 @@ Residue:
  <1>emp&n=5 & p=null&{FLOW,(20,21)=__norm#E}[]
  inferred hprel: [H(p)&p=null --> emp&true; H(q)&true --> emp&true]
 =====================================================================
-../sleek ex10b7-classic-H-with-null-emp-rhs.slk -dre "infer_co"
+../sleek ex10b7-classic-H-with-null-emp-rhs.slk -dre "infer_co" (FIXED)
 
 infer_collect_hp_rel_empty_rhs#1@1
 infer_collect_hp_rel_empty_rhs#1 inp1 : H(p)&p=null&{FLOW,(20,21)=__norm#E}[]

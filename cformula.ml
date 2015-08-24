@@ -147,6 +147,7 @@ and formula =
   | Or of formula_or
   | Exists of formula_exists
 
+
 and rflow_formula = {
   rflow_kind: ho_flow_kind;
   rflow_base: formula;
@@ -397,6 +398,11 @@ let print_imm = ref (fun (c:ann) -> "printer has not been initialized")
 let sat_stk = new Gen.stack_pr "sat-stk"  !print_formula  (=)
 
 (* let print_failesc = ref (fun (c:failesc) -> "printer has not been initialized") *)
+
+let get_formula_base f =
+  match f with
+  | Base fb -> fb
+  | _ -> failwith "not a formula_base"
 
 let trans_rflow_formula f ff = { ff with rflow_base = f ff.rflow_base; }
 
@@ -13386,10 +13392,16 @@ let trans_h_formula (e:h_formula) (arg:'a) (f:'a->h_formula->(h_formula * 'b) op
       | Star s ->
         let (e1,r1)=helper s.h_formula_star_h1 new_arg in
         let (e2,r2)=helper s.h_formula_star_h2 new_arg in
+        let pr = !print_h_formula in
+        let () = x_tinfo_hp (add_str "star(h1)" pr) e1 no_pos in
+        let () = x_tinfo_hp (add_str "star(h2)" pr) e2 no_pos in
         let newhf = (match e1,e2 with
-            | (HEmp,HEmp) -> HEmp
+            (* | (HEmp,HEmp) -> HEmp *)
             | (HEmp,_) -> e2
             | (_,HEmp) -> e1
+            | (HFalse,_) -> HFalse
+            | (_,HFalse) -> HFalse
+            | (HTrue,HTrue) -> HTrue
             | _ -> Star {s with h_formula_star_h1 = e1;
                                 h_formula_star_h2 = e2;})
         in (newhf, f_comb [r1;r2])
@@ -13435,6 +13447,7 @@ let map_h_formula_args (e:h_formula) (arg:'a) (f:'a -> h_formula -> h_formula op
 (*this maps an expression without passing an argument*)
 let map_h_formula (e:h_formula) (f:h_formula->h_formula option) : h_formula = 
   map_h_formula_args e () (fun _ e -> f e) idf2 
+
 
 (*this computes a result from expression passing an argument*)
 let fold_h_formula_args (e:h_formula) (init_a:'a) (f:'a -> h_formula-> 'b option) (f_args: 'a -> h_formula -> 'a) (comb_f: 'b list->'b) : 'b =
@@ -14057,20 +14070,23 @@ let trans_context (c: context) (arg: 'a)
     (f_arg: 'a -> context -> 'a)
     (f_comb: 'b list -> 'b)
   : (context * 'b) =
-  let rec trans_c (c: context) (arg: 'a) : (context * 'b) =
-    let r = f arg c in
-    match r with
-    | Some c1 -> c1
-    | None ->
-      let new_arg = f_arg arg c in
-      match c with
-      | Ctx _ -> (c, f_comb [])
-      | OCtx (c1, c2) ->
-        let nc1, v1 = trans_c c1 new_arg in
-        let nc2, v2 = trans_c c2 new_arg in
-        (mkOCtx nc1 nc2 no_pos, f_comb [v1; v2])
-  in
-  trans_c c arg
+  (* let () = x_winfo_pp "trans_context not working" no_pos in *)
+  (* if !Globals.warn_trans_context then failwith "trans_context not working?" *)
+  (* else *)
+    let rec trans_c (c: context) (arg: 'a) : (context * 'b) =
+      let r = f arg c in
+      match r with
+      | Some c1 -> c1
+      | None ->
+        let new_arg = f_arg arg c in
+        match c with 
+        | Ctx _ -> (c, f_comb [])
+        | OCtx (c1, c2) ->
+          let nc1, v1 = trans_c c1 new_arg in
+          let nc2, v2 = trans_c c2 new_arg in
+          (mkOCtx nc1 nc2 no_pos, f_comb [v1; v2])
+    in
+    trans_c c arg
 
 let trans_list_context (c: list_context) (arg: 'a) f_c f_c_arg f_comb: (list_context * 'b) =
   match c with
@@ -19278,3 +19294,33 @@ let extract_hrel_head_list (f0:formula) =
   let pr_hr = pr_list (pr_triple !CP.print_sv (pr_list !CP.print_exp) !CP.print_formula) in
   let pr = pr_option (pr_pair pr_hr !print_formula) in
   Debug.no_1 "extract_hrel_head_list" !print_formula pr extract_hrel_head_list  f0
+
+let rec rm_htrue_heap hf =
+  let f nf = match hf with
+    | HTrue -> Some(HEmp)
+    (* | HFalse | HEmp | DataNode _ | Hole _ | HRel _ | HVar _ *)
+    (*   -> Some hf *)
+    | _ -> None
+  in map_h_formula hf f
+
+let rm_htrue_heap hf =
+  let pr = !print_h_formula in
+  Debug.no_1 "rm_htrue_heap" pr pr rm_htrue_heap hf
+
+(* TODO: implement and use a map_formula *)
+let rm_htrue_formula f =
+  let rec aux f = match f with
+    | Base bf -> Base {bf with formula_base_heap = rm_htrue_heap bf.formula_base_heap}
+    | Exists bf -> Exists {bf with formula_exists_heap = rm_htrue_heap bf.formula_exists_heap}
+    | Or bf -> Or {bf with formula_or_f1 = aux (bf.formula_or_f1); formula_or_f2 = aux (bf.formula_or_f2)}
+  in aux f
+
+let rm_htrue_estate es =
+  (* let () = x_binfo_pp "TODO : to be implemented .." no_pos in *)
+  let f = es.es_formula in
+  let f = rm_htrue_formula f in
+  {es with es_formula = f}
+
+(* let rm_htrue_context c = *)
+(*   let () = x_binfo_pp "TODO : to be implemented .." no_pos in *)
+(*   c *)

@@ -7448,7 +7448,9 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
               )
             | _ -> (
                 let h1, p1, vp1, fl1, t1, a1 = split_components ante in
+                let base_lhs = CF.get_formula_base ante in
                 let h2, p2, vp2, fl2, t2, a2 = split_components conseq in
+                let pure_rhs = p2 in
                 let () = x_dinfo_hp  (add_str "entail_conjunct h1" (Cprinter.string_of_h_formula)) h1 no_pos in
                 let () = x_dinfo_hp  (add_str "entail_conjunct h2" (Cprinter.string_of_h_formula)) h2 no_pos in
                 let () = x_dinfo_hp  (add_str "entail_conjunct p1" (Cprinter.string_of_mix_formula)) p1 no_pos in
@@ -7631,6 +7633,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                               let () = x_tinfo_hp (add_str "ls_ctx" Cprinter.string_of_list_context) ls_ctx no_pos in
                               (ls_ctx, proof)
                             else
+                            if !Globals.old_infer_hprel_classic then
                               let () = x_tinfo_hp (add_str "h1 " !CF.print_h_formula) h1 no_pos in
                               let () = x_binfo_pp "WN : Why a diffrent way to infer_collect_hp_rel_classsic" no_pos in
                               let r, new_es = x_add Infer.infer_collect_hp_rel_classsic 0 prog estate h2 pos in
@@ -7662,6 +7665,10 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                 in 
                                 let ctx, proof =  x_add heap_entail_conjunct_helper 4 prog is_folding (Ctx new_es) conseq rhs_h_matched_set pos in
                                 (ctx, proof)
+                            else (* not !Globals.old_infer_hp_rel_classic *)
+                              (* this is to make infer_collect_hp_rel_classsic  obsolete *)
+                              let ctx, proof = x_add heap_entail_empty_rhs_heap 3 prog conseq is_folding estate base_lhs pure_rhs rhs_h_matched_set pos in
+                              (ctx, proof)
                           )
                           else (
                             (*infer hprel. L2: moved the following code to heap_entail_empty_rhs*)
@@ -8187,12 +8194,20 @@ and subst_rel_by_def_mix rel_w_defs mf =
   let p =  subst_rel_by_def rel_w_defs (MCP.pure_of_mix mf) in
   (MCP.mix_of_pure p)
 
+(* type: int -> *)
+(*   Cast.prog_decl -> *)
+(*   Mem.CF.formula -> *)
+(*   bool -> *)
+(*   CF.entail_state -> *)
+(*   Cformula.formula_base -> *)
+(*   Cformula.MCP.mix_formula -> *)
+(*   Slsat.CP.spec_var list -> VarGen.loc -> CF.list_context * Prooftracer.proof *)
 and heap_entail_empty_rhs_heap i p conseq i_f es lhs rhs rhs_matched_set pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
   Debug.no_4_num i "heap_entail_empty_rhs_heap" 
     (add_str "es" Cprinter.string_of_entail_state)
-    (add_str "lhs" (fun c-> Cprinter.string_of_formula(Base c)))
-    (add_str "rhs" Cprinter.string_of_mix_formula)
+    (add_str "lhs-base-f" (fun c-> Cprinter.string_of_formula(Base c)))
+    (add_str "rhs-mix" Cprinter.string_of_mix_formula)
     (add_str "is_folding" string_of_bool) pr
     (fun _ _ _ _ -> heap_entail_empty_rhs_heap_x p conseq i_f es lhs rhs rhs_matched_set pos) es lhs rhs i_f
 
@@ -8231,7 +8246,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
     let h2, p2, _, _, _, _ = split_components conseq in
     let estate_orig1, hprel_ass=
       if (h2 = HEmp || h2 = HTrue) && 
-         (!Globals.old_collect_hp_rel || !Globals.do_classic_frame_rule)
+         (!Globals.old_collect_hprel || !Globals.do_classic_frame_rule)
       then 
         (*L2: should we need classic for emp inference?*)
         (* WN: I would think so. Any counter-example? *)
@@ -8241,7 +8256,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
     in
     let h1, _, _, _, _, _ = split_components estate_orig1.CF.es_formula in
     let lhs1 = {lhs with formula_base_heap = h1;} in
-    if (h2 = HEmp && CF.get_hprel_h_formula h1 != [] &&
+    if (h2 = HEmp && h1!=HEmp (* CF.get_hprel_h_formula h1 != [] *) &&
         !Globals.do_classic_frame_rule) then
       let fail_ctx = mkFailContext mem_leak estate_orig1 conseq None pos in
       let es_string = Cprinter.string_of_formula estate_orig1.es_formula in
@@ -8251,15 +8266,26 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
       let proof = mkClassicSepLogic (Ctx estate_orig1) conseq in
       (ls_ctx, proof)
     else
-      let () = x_tinfo_pp ("Need to normalize h2 :"^(!print_h_formula h2)) no_pos in
+      let () = x_binfo_pp ("else ..Need to normalize h2 :"^(!print_h_formula h2)) no_pos in
       let () = x_tinfo_hp (add_str "TODO : not set classic_flag" string_of_bool) classic_flag no_pos in
       let () = x_tinfo_hp (add_str "do_classic_frame_rule" string_of_bool) !Globals.do_classic_frame_rule no_pos in
       let () = x_tinfo_hp (add_str "h2" !print_h_formula) h2 no_pos in
+      let () = x_binfo_hp (add_str "estate_orig1" Cprinter.string_of_entail_state_short) estate_orig1 no_pos in
+      let () = x_binfo_hp (add_str "lhs1" !CF.print_formula) (CF.Base lhs1) no_pos in
       let estate_orig1,lhs1 =
-        if h2 == HTrue && !Globals.do_classic_frame_rule then 
-          (* remove all heap components inside estate_orig1 *)
-          CF.mkEmp_es estate_orig1,{lhs1 with formula_base_heap = HEmp}
-        else estate_orig1,lhs1 in
+        if h2 = HTrue then 
+          if !Globals.do_classic_frame_rule then
+            (* remove all heap components inside estate_orig1 *)
+            let () = x_binfo_pp "classic then-branch?" no_pos in
+            CF.mkEmp_es estate_orig1,{lhs1 with formula_base_heap = HEmp}
+          else 
+            (* remove all htrue from lhs *)
+            let () = x_binfo_pp "classic else-branch?" no_pos in
+            (CF.rm_htrue_estate estate_orig1
+            ,{lhs1 with formula_base_heap = CF.rm_htrue_heap lhs1.formula_base_heap})
+        else 
+          let () = x_binfo_pp "not HTrue branch?" no_pos in
+         estate_orig1,lhs1 in
       let ctx, proof = heap_entail_empty_rhs_heap_one_flow prog conseq is_folding estate_orig1 lhs1 rhs_p rhs_matched_set pos in
       let new_ctx =
         match ctx with
@@ -8280,8 +8306,10 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
   (**** END INTERNAL****)
 
   (* if must_error, and need to infer *)
-  let res = if (CF.is_en_error_exc estate_orig || CF.is_err_must_only_exc estate_orig) && not (Infer.no_infer_pure estate_orig) && not (CF.is_emp_term conseq) then
+  let res = 
+    if (CF.is_en_error_exc estate_orig || CF.is_err_must_only_exc estate_orig) && not (Infer.no_infer_pure estate_orig) && not (CF.is_emp_term conseq) then
       (* negation of rhs *)
+      let () = x_binfo_pp "first if-then" no_pos in
       let neg_conseq = neg_empty_heap_formula conseq in
       let err_conseq = if CF.is_err_must_exc estate_orig || CF.is_err_must_only_exc  estate_orig then
           CF.substitute_flow_into_f !error_flow_int neg_conseq
@@ -8290,10 +8318,16 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
       let neg_rhs_p = neg_mcp rhs_p in
       let error_lc, error_prf = heap_entail_empty_rhs_heap_one_flow prog err_conseq is_folding  estate_orig lhs neg_rhs_p rhs_matched_set pos in
       (* to add proof for error-infer *)
-      if CF.is_err_must_only_exc estate_orig then (error_lc, error_prf) else
+      if CF.is_err_must_only_exc estate_orig 
+      then 
+        let () = x_binfo_pp "Why are we skipping safe_exc?" no_pos in
+        (error_lc, error_prf) 
+      else
         let safe_lc, safe_prf = (safe_exc ()) in
         (list_context_union safe_lc error_lc, safe_prf)
-    else (safe_exc ())
+    else 
+      let () = x_binfo_pp "first if-else" no_pos in
+      (safe_exc ())
   in res
 
 and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) rhs_matched_set pos : (list_context * proof) =

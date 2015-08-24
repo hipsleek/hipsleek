@@ -1273,8 +1273,10 @@ let assert_unsound_false = ref false
 let assert_no_glob_vars = ref false
 
 let old_collect_false = ref false
-let old_collect_hp_rel = ref false
+let old_collect_hprel = ref false
+let old_infer_hprel_classic = ref false
 let warn_nonempty_perm_vars = ref false
+let warn_trans_context = ref false
 let warn_free_vars_conseq = ref false
 let old_infer_collect = ref false
 let old_base_case_unfold = ref false
