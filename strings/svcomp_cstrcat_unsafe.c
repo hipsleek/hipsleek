@@ -13,7 +13,7 @@ BADS<> ==
   self::char_star<v,q>*q::BADS<> 
   inv true;
 
-lemma_safe self::WFSeg<p> <-> self::WFSeg<q>*q::WFSeg<p> .
+lemma_safe self::WFSeg<p> <- self::WFSeg<q>*q::WFSeg<p> .
 
 lemma_safe self::WFS<> <-> self::WFSeg<q>*q::char_star<0,q2>*q2::BADS<> .
 
