@@ -1272,6 +1272,8 @@ let assert_nonlinear = ref false
 let assert_unsound_false = ref false
 let assert_no_glob_vars = ref false
 
+let new_rm_htrue = ref false
+
 let old_collect_false = ref false
 let old_collect_hprel = ref false
 let old_infer_hprel_classic = ref false

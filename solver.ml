@@ -8266,25 +8266,27 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
       let proof = mkClassicSepLogic (Ctx estate_orig1) conseq in
       (ls_ctx, proof)
     else
-      let () = x_binfo_pp ("else ..Need to normalize h2 :"^(!print_h_formula h2)) no_pos in
+      let () = x_tinfo_pp ("else ..Need to normalize h2 :"^(!print_h_formula h2)) no_pos in
       let () = x_tinfo_hp (add_str "TODO : not set classic_flag" string_of_bool) classic_flag no_pos in
       let () = x_tinfo_hp (add_str "do_classic_frame_rule" string_of_bool) !Globals.do_classic_frame_rule no_pos in
       let () = x_tinfo_hp (add_str "h2" !print_h_formula) h2 no_pos in
-      let () = x_binfo_hp (add_str "estate_orig1" Cprinter.string_of_entail_state_short) estate_orig1 no_pos in
-      let () = x_binfo_hp (add_str "lhs1" !CF.print_formula) (CF.Base lhs1) no_pos in
+      let () = x_tinfo_hp (add_str "estate_orig1" Cprinter.string_of_entail_state_short) estate_orig1 no_pos in
+      let () = x_tinfo_hp (add_str "lhs1" !CF.print_formula) (CF.Base lhs1) no_pos in
       let estate_orig1,lhs1 =
         if h2 = HTrue then 
           if !Globals.do_classic_frame_rule then
             (* remove all heap components inside estate_orig1 *)
-            let () = x_binfo_pp "classic then-branch?" no_pos in
+            let () = x_tinfo_pp "classic then-branch?" no_pos in
             CF.mkEmp_es estate_orig1,{lhs1 with formula_base_heap = HEmp}
           else 
             (* remove all htrue from lhs *)
-            let () = x_binfo_pp "classic else-branch?" no_pos in
-            (CF.rm_htrue_estate estate_orig1
-            ,{lhs1 with formula_base_heap = CF.rm_htrue_heap lhs1.formula_base_heap})
+            let () = x_tinfo_pp "non-classic branch?" no_pos in
+            if !Globals.new_rm_htrue then
+              (CF.rm_htrue_estate estate_orig1
+              ,{lhs1 with formula_base_heap = CF.rm_htrue_heap lhs1.formula_base_heap})
+            else estate_orig1,lhs1 
         else 
-          let () = x_binfo_pp "not HTrue branch?" no_pos in
+          let () = x_tinfo_pp "not HTrue branch?" no_pos in
          estate_orig1,lhs1 in
       let ctx, proof = heap_entail_empty_rhs_heap_one_flow prog conseq is_folding estate_orig1 lhs1 rhs_p rhs_matched_set pos in
       let new_ctx =
@@ -8309,7 +8311,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
   let res = 
     if (CF.is_en_error_exc estate_orig || CF.is_err_must_only_exc estate_orig) && not (Infer.no_infer_pure estate_orig) && not (CF.is_emp_term conseq) then
       (* negation of rhs *)
-      let () = x_binfo_pp "first if-then" no_pos in
+      let () = x_tinfo_pp "first if-then" no_pos in
       let neg_conseq = neg_empty_heap_formula conseq in
       let err_conseq = if CF.is_err_must_exc estate_orig || CF.is_err_must_only_exc  estate_orig then
           CF.substitute_flow_into_f !error_flow_int neg_conseq
@@ -8320,13 +8322,13 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
       (* to add proof for error-infer *)
       if CF.is_err_must_only_exc estate_orig 
       then 
-        let () = x_binfo_pp "Why are we skipping safe_exc?" no_pos in
+        let () = x_tinfo_pp "Why are we skipping safe_exc?" no_pos in
         (error_lc, error_prf) 
       else
         let safe_lc, safe_prf = (safe_exc ()) in
         (list_context_union safe_lc error_lc, safe_prf)
     else 
-      let () = x_binfo_pp "first if-else" no_pos in
+      let () = x_tinfo_pp "first if-else" no_pos in
       (safe_exc ())
   in res
 

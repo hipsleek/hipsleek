@@ -13381,9 +13381,11 @@ let get_node_label n =  match n with
 
 
 (* generic transform for heap formula *)
-let trans_h_formula (e:h_formula) (arg:'a) (f:'a->h_formula->(h_formula * 'b) option) 
+let trans_h_formula (e2:h_formula) (arg:'a) (f:'a->h_formula->(h_formula * 'b) option) 
     (f_args:'a->h_formula->'a)(f_comb:'b list -> 'b) :(h_formula * 'b) =
   let rec helper (e:h_formula) (arg:'a) =
+    let pr = !print_h_formula in
+    (* let () = x_binfo_hp (add_str "helper" pr) e no_pos in *)
     let r =  f arg e in 
     match r with
     | Some (e1,v) -> (e1,v)
@@ -13392,9 +13394,8 @@ let trans_h_formula (e:h_formula) (arg:'a) (f:'a->h_formula->(h_formula * 'b) op
       | Star s ->
         let (e1,r1)=helper s.h_formula_star_h1 new_arg in
         let (e2,r2)=helper s.h_formula_star_h2 new_arg in
-        let pr = !print_h_formula in
-        let () = x_tinfo_hp (add_str "star(h1)" pr) e1 no_pos in
-        let () = x_tinfo_hp (add_str "star(h2)" pr) e2 no_pos in
+        (* let () = x_binfo_hp (add_str "star(h1)" pr) e1 no_pos in *)
+        (* let () = x_binfo_hp (add_str "star(h2)" pr) e2 no_pos in *)
         let newhf = (match e1,e2 with
             (* | (HEmp,HEmp) -> HEmp *)
             | (HEmp,_) -> e2
@@ -13409,7 +13410,7 @@ let trans_h_formula (e:h_formula) (arg:'a) (f:'a->h_formula->(h_formula * 'b) op
         let (e1,r1)=helper s.h_formula_starminus_h1 new_arg in
         let (e2,r2)=helper s.h_formula_starminus_h2 new_arg in
         (StarMinus {s with h_formula_starminus_h1 = e1;
-                           h_formula_starminus_h2 = e2;},f_comb [r1;r2])                          
+                           h_formula_starminus_h2 = e2;},f_comb [r1;r2])
       | Conj s -> 
         let (e1,r1)=helper s.h_formula_conj_h1 new_arg in
         let (e2,r2)=helper s.h_formula_conj_h2 new_arg in
@@ -13424,7 +13425,7 @@ let trans_h_formula (e:h_formula) (arg:'a) (f:'a->h_formula->(h_formula * 'b) op
         let (e1,r1)=helper s.h_formula_conjconj_h1 new_arg in
         let (e2,r2)=helper s.h_formula_conjconj_h2 new_arg in
         (ConjConj {s with h_formula_conjconj_h1 = e1;
-                          h_formula_conjconj_h2 = e2;},f_comb [r1;r2])                                                    
+                          h_formula_conjconj_h2 = e2;},f_comb [r1;r2])
       | Phase s -> 
         let (e1,r1)=helper s.h_formula_phase_rd new_arg in
         let (e2,r2)=helper s.h_formula_phase_rw new_arg in
@@ -13438,7 +13439,7 @@ let trans_h_formula (e:h_formula) (arg:'a) (f:'a->h_formula->(h_formula * 'b) op
       | HTrue
       | HFalse 
       | HEmp | HVar _ -> (e, f_comb []) 
-  in (helper e arg)
+  in (helper e2 arg)
 
 let map_h_formula_args (e:h_formula) (arg:'a) (f:'a -> h_formula -> h_formula option) (f_args: 'a -> h_formula -> 'a) : h_formula =
   let f1 ac e = push_opt_void_pair (f ac e) in
@@ -19296,11 +19297,13 @@ let extract_hrel_head_list (f0:formula) =
   Debug.no_1 "extract_hrel_head_list" !print_formula pr extract_hrel_head_list  f0
 
 let rec rm_htrue_heap hf =
-  let f nf = match hf with
-    | HTrue -> Some(HEmp)
-    (* | HFalse | HEmp | DataNode _ | Hole _ | HRel _ | HVar _ *)
-    (*   -> Some hf *)
-    | _ -> None
+  let f hf = match hf with
+    | HTrue -> 
+      Some(HEmp)
+    | HFalse | HEmp | DataNode _ | Hole _ | HRel _ | HVar _
+      -> Some hf
+    | _ -> 
+      None
   in map_h_formula hf f
 
 let rm_htrue_heap hf =
