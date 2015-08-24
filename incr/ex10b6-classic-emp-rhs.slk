@@ -18,6 +18,9 @@ HeapPred H(node a).
 infer_exact [H] H(p) |- emp.
 print residue.
 
+infer_exact [H] H(p) |- true.
+print residue.
+
 /*
 # ex10b6.slk
 

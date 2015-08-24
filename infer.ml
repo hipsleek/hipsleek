@@ -3596,7 +3596,7 @@ let infer_collect_hp_rel i prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
 (*   MCP.mix_formula -> *)
 (*   VarGen.loc -> bool * CF.entail_state * Sautil.CF.hprel list *)
 
-let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) mix_rf pos =
+let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) rhs0 mix_rf pos =
   (*********INTERNAL**********)
   let get_eqset puref =
     let (subs,_) = CP.get_all_vv_eqs puref in
@@ -3630,7 +3630,7 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) mix_rf pos =
       (* let () = x_tinfo_hp (add_str "extr_hd" (pr_option !CP.print_sv)) extr_hd no_pos in *)
       let rhs_f = (CF.Base rhs_b) in
       let () = x_tinfo_hp (add_str "lhs(after)" !CF.print_formula) lhs no_pos in
-      let () = x_tinfo_hp (add_str "rhs" !CF.print_formula) rhs_f no_pos in
+      let () = x_binfo_hp (add_str "rhs" !CF.print_formula) rhs_f no_pos in
       let () = x_tinfo_hp (add_str "(hp,args)"  (pr_pair !CP.print_sv !CP.print_svl)) (hp,args) no_pos in
       let hprel_lst = match extr_ans with
         | None -> []
@@ -3712,6 +3712,7 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) mix_rf pos =
           in
           (*TOFIX: detect HEmp or HTrue *)
           let rhs_b0 = formula_base_of_heap (CF.HEmp) pos in
+          let rhs_htrue_b0 = formula_base_of_heap (CF.HTrue) pos in
           (********** BASIC INFO LHS, RHS **********)
           let l_hpargs = CF.get_HRels lhs_b0.CF.formula_base_heap in
           let l_non_infer_hps = CP.diff_svl lhrs ivs in
@@ -3734,8 +3735,14 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) mix_rf pos =
             (false, es0,[])
           else
             let lhds, lhvs, lhrs = CF.get_hp_rel_bformula lhs_b1 in
+            let leqNulls = MCP.get_null_ptrs mix_lf1 in
             let sel_hpargs, hprel_ass0 = List.fold_left (fun (ls1,ls2) (hp,args) ->
-                let r_opt = x_add generate_constrs lhs_b1 rhs_b1 leqs1 reqs1 lhds lhvs lhrs (hp,args) in
+                let rhs_b2 =
+                  (* if (rhs0 = CF.HTrue && List.exists (fun sv -> not (CP.mem_svl sv leqNulls)) args) then *)
+                  (* (\* hp /\ p ==> htrue *\) rhs_htrue_b0 *)
+                  (* else (\* hp /\ p ==> emp *\) *) rhs_b1
+                in
+                let r_opt = x_add generate_constrs lhs_b1 rhs_b2 leqs1 reqs1 lhds lhvs lhrs (hp,args) in
                 match r_opt with
                 | Some lst ->
                   let (hp_arg_lst,ass_lst) = List.split lst in
@@ -3758,12 +3765,13 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) mix_rf pos =
         end
 
 
-let infer_collect_hp_rel_empty_rhs i prog (es:entail_state) rhs_p pos =
+let infer_collect_hp_rel_empty_rhs i prog (es:entail_state) rhs0 rhs_p pos =
   let pr1 = Cprinter.string_of_formula in
   let pr2 = Cprinter.string_of_mix_formula in
   let pr3 =  (pr_triple string_of_bool Cprinter.string_of_estate_infer_hp (pr_list_ln Cprinter.string_of_hprel_short)) in
-  Debug.no_2_num i "infer_collect_hp_rel_empty_rhs" pr1 pr2 pr3
-    ( fun _ _ -> infer_collect_hp_rel_empty_rhs prog es rhs_p pos) es.CF.es_formula rhs_p
+  let pr4 = Cprinter.string_of_h_formula in
+  Debug.no_3_num i "infer_collect_hp_rel_empty_rhs" pr1 pr4 pr2 pr3
+    ( fun _ _ _ -> infer_collect_hp_rel_empty_rhs prog es rhs0 rhs_p pos) es.CF.es_formula rhs0 rhs_p
 
 (*******************************************************)
 (*******************************************************)
