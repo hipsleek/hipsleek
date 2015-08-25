@@ -38,6 +38,8 @@ module CVP = CvpermUtils
 module LO = Label_only.LOne
 (* module ME = Musterr *)
 
+let check_is_classic = Wrapper.check_is_classic
+
 let self_var vdn = CP.SpecVar (Named vdn (* v_def.view_data_name *), self, Unprimed)
 
 (*used for classic*)
@@ -5223,7 +5225,7 @@ and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool) (ctx : co
     let () = x_add new_slk_log_g conseq 2 (* hec_num *) pos r es in
     (r, UnsatAnte)
   else
-  if (not !Globals.do_classic_frame_rule) && (isStrictConstTrue conseq) then (SuccCtx [ctx], TrueConseq)
+  if (not (check_is_classic ())) && (isStrictConstTrue conseq) then (SuccCtx [ctx], TrueConseq)
   else 
     (* UNSAT check *)
     let ctx =
@@ -5368,7 +5370,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
   (*   (\* let r = hec a b c in *\) *)
   (*   (\* let () = hec_stack # pop in *\) *)
   (*   let () = x_add Log.add_sleek_logging false 0. estate.es_infer_vars *)
-  (*     !Globals.do_classic_frame_rule caller (\* avoid *\) false  *)
+  (*     (check_is_classic ()) caller (\* avoid *\) false  *)
   (*     hec_num slk_no estate.es_formula *)
   (*     conseq es.es_heap es.es_evars (Some result) pos *)
   (*   in *)
@@ -5554,7 +5556,7 @@ and early_pure_contra_detection_x hec_num prog estate conseq pos msg is_folding 
   (* (\* let () = hec_stack # push slk_no in *\) *)
   (* (\* let r = hec a b c in *\) *)
   (* (\* let () = hec_stack # pop in *\) *)
-  (* let () = x_add Log.add_sleek_logging (Some es) false 0. it esv !Globals.do_classic_frame_rule caller (\* avoid *\) false hec_num slk_no  *)
+  (* let () = x_add Log.add_sleek_logging (Some es) false 0. it esv (check_is_classic ()) caller (\* avoid *\) false hec_num slk_no  *)
   (*     es.es_formula conseq es.es_heap es.es_evars (Some result) pos in *)
   (* () in *)
 
@@ -5957,7 +5959,7 @@ and new_slk_log_g (conseq:formula) hec_num pos result es  =
     | None   -> es.es_formula in
   let it = CF.infer_type_of_entail_state es in
   let esv = es.es_infer_vars in
-  let () = (* x_add *) Log.add_sleek_logging (Some es) false 0. it esv !Globals.do_classic_frame_rule caller 
+  let () = (* x_add *) Log.add_sleek_logging (Some es) false 0. it esv (check_is_classic ()) caller 
     (* avoid *) false hec_num slk_no es.es_formula (* orig_ante *) conseq es.es_heap es.es_evars (Some result) pos in
   ()
 
@@ -5975,7 +5977,7 @@ and log_contra_detect hec_num conseq result pos =
   (*     | Some f -> f *)
   (*     | None   -> es.es_formula in *)
   (*   let it = CF.infer_type_of_entail_state es in *)
-  (*   let () = x_add Log.add_sleek_logging (Some es) false 0. it es.es_infer_vars !Globals.do_classic_frame_rule caller  *)
+  (*   let () = x_add Log.add_sleek_logging (Some es) false 0. it es.es_infer_vars (check_is_classic ()) caller  *)
   (*     (\* avoid *\) false hec_num slk_no orig_ante conseq es.es_heap es.es_evars (Some result) pos in *)
   (*   () *)
   (* in *)
@@ -7278,7 +7280,7 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     let () = hec_stack # push slk_no in
     let logger fr tt timeout =
       let () =
-        x_add Log.add_sleek_logging es_opt timeout tt infer_type infer_vars !Globals.do_classic_frame_rule 
+        x_add Log.add_sleek_logging es_opt timeout tt infer_type infer_vars (check_is_classic ()) 
           caller avoid hec_num slk_no ante conseq consumed_heap evars
           (match fr with Some (lc,_) -> Some lc | None -> None) pos in
       ("sleek",(string_of_int slk_no))
@@ -7290,7 +7292,7 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     (* let ttime = tstop -. tstart in *)
     let () = hec_stack # pop in
     let (lc,_) = r in
-    (* let () = x_add Log.add_sleek_logging false ttime infer_vars !Globals.do_classic_frame_rule caller avoid hec_num slk_no ante conseq consumed_heap evars lc pos in *)
+    (* let () = x_add Log.add_sleek_logging false ttime infer_vars (check_is_classic ()) caller avoid hec_num slk_no ante conseq consumed_heap evars lc pos in *)
     let () = x_tinfo_hp (add_str "avoid" string_of_bool) avoid no_pos in
     let () = x_tinfo_hp (add_str "slk no" string_of_int) slk_no no_pos in
     (* let () = Debug.ninfo_hprint (add_str "lc" Cprinter.string_of_list_context) lc no_pos in *)
@@ -7586,7 +7588,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                           (* in *)
                           (* infer hp_rel *)
                           (*consume htrue in RHS*)
-                          (* if (h2=HTrue || Cformula.is_HRel h2) && !Globals.do_classic_frame_rule && is_rhs_emp (\* not(is_folding) *\) then *)
+                          (* if (h2=HTrue || Cformula.is_HRel h2) && (check_is_classic ()) && is_rhs_emp (\* not(is_folding) *\) then *)
                           (*   let n_h1, n_h2, n_es,n_rhs_h_matched_set = x_add Classic.heap_entail_rhs_htrue prog estate h1 h2 rhs_h_matched_set in *)
                           (*   let new_ctx = Ctx n_es in *)
                           (*   let n_conseq = CF.mkBase n_h2 p2 vp2 t2 fl2 a2 (CF.pos_of_formula conseq) in *)
@@ -7595,9 +7597,10 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                           let base_lhs = CF.get_formula_base ante in
                           let prep_h1 = (
                             (* preproces h1 for checking HEmp in classic reasoning *)
-                            if (!Globals.do_classic_frame_rule && (h2 = HEmp)) then 
+                            if ((check_is_classic ()) && (h2 = HEmp)) then 
                               begin
                                 (* Why "do_unfold_for_classic_reasoning" could change !rhs_rest_emp?*)
+                                (* for ll<n> & n=0 cases *)
                                 let prep_ante = do_unfold_for_classic_reasoning prog ante pos in
                                 match prep_ante with
                                 | CF.Or _ -> h1
@@ -7606,7 +7609,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                             else h1
                           ) in
                           let is_lhs_emp =  
-                            if (!Globals.do_classic_frame_rule && (h2 = HEmp)) then
+                            if ((check_is_classic ()) && (h2 = HEmp)) then
                               Some (is_classic_lhs_emp prog h1 ante pos) 
                             else None
                           in
@@ -7618,7 +7621,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                           let () = x_binfo_hp (add_str "base_lhs " !CF.print_formula) (Base base_lhs) no_pos in
                          (* let () = x_tinfo_hp (add_str "rhs_rest_emp: " string_of_bool) (!rhs_rest_emp) no_pos in *)
                           (* let () = x_tinfo_hp (add_str "is_folding: " string_of_bool) (is_folding) no_pos in *)
-                          (* let () = x_tinfo_hp (add_str "!Globals.do_classic_frame_rule" string_of_bool) (!Globals.do_classic_frame_rule) no_pos in *)
+                          (* let () = x_tinfo_hp (add_str "(check_is_classic ())" string_of_bool) ((check_is_classic ())) no_pos in *)
                           (* let () = x_tinfo_hp (add_str "is_rhs_emp" string_of_bool) (is_rhs_emp) no_pos in *)
                           (* let is_classic_lend = (is_classic_lending_hformula (prep_h1)) in *)
                           (* let () = x_tinfo_hp (add_str "is_classic_lend" string_of_bool) (is_classic_lend) no_pos in *)
@@ -7633,7 +7636,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                             | None -> false
                             | Some f -> not f in
                           let is_rhs_emp = not is_folding && !rhs_rest_emp in
-                          if (!Globals.do_classic_frame_rule && (h2 = HEmp)
+                          if ((check_is_classic ()) && (h2 = HEmp)
                               && is_rhs_emp
                               && new_flag
                               && (not ( Cformula.is_HRel prep_h1))
@@ -7703,7 +7706,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                             (* let () = x_tinfo_hp (add_str "h1_old" !CF.print_h_formula) h1_old no_pos in *)
                             (* (\* let h1, p1, vp1, fl1, t1, a1 = split_components estate.CF.es_formula in *\) *)
                             (* if (h2 = HEmp && CF.get_hprel_h_formula h1 *)
-                            (*                  != [] && !Globals.do_classic_frame_rule) then *)
+                            (*                  != [] && (check_is_classic ())) then *)
                             (*   let fail_ctx = mkFailContext mem_leak estate conseq None pos in *)
                             (*   let es_string = Cprinter.string_of_formula estate.es_formula in *)
                             (*   let err_msg = es_string^ ": possible memory leak failure : residue is forbidden." in *)
@@ -7728,13 +7731,13 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                             let () = x_tinfo_hp (add_str "prep_h1: " !CF.print_h_formula) prep_h1 no_pos in
                             let () = x_tinfo_hp (add_str "rhs_rest_emp: " string_of_bool) (!rhs_rest_emp) no_pos in
                             let () = x_tinfo_hp (add_str "is_folding: " string_of_bool) (is_folding) no_pos in
-                            let () = x_tinfo_hp (add_str "!Globals.do_classic_frame_rule" string_of_bool) (!Globals.do_classic_frame_rule) no_pos in
+                            let () = x_tinfo_hp (add_str "(check_is_classic ())" string_of_bool) ((check_is_classic ())) no_pos in
                             let () = x_tinfo_hp (add_str "is_rhs_emp" string_of_bool) (is_rhs_emp) no_pos in
                             let () = x_tinfo_pp "\n" no_pos in
                             (* let () = x_tinfo_hp (add_str "" pr_id) ("\n") no_pos in *)
                             let () = x_tinfo_hp (add_str "conseq" !CF.print_formula) conseq no_pos in 
                             let ctx, proof = x_add heap_entail_empty_rhs_heap 1 prog conseq is_folding  estate b1 p2 rhs_h_matched_set pos in
-                            (* let () = x_tinfo_hp (add_str "!Globals.do_classic_frame_rule 2" string_of_bool) (!Globals.do_classic_frame_rule) no_pos in *)
+                            (* let () = x_tinfo_hp (add_str "(check_is_classic ()) 2" string_of_bool) ((check_is_classic ())) no_pos in *)
                             (* let p2 = MCP.drop_varperm_mix_formula p2 in *)
                             let new_ctx =
                               match ctx with
@@ -8261,11 +8264,11 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
     let () = x_tinfo_hp (add_str "conseq" !CF.print_formula) conseq no_pos in
     let () = x_tinfo_hp (add_str "classic_flag" string_of_bool) classic_flag no_pos in
     (* L2: why not classic enven post proving? incr/ex10a-ll-size, skip2,skip3 *)
-    let () = x_binfo_hp (add_str "!Globals.do_classic_frame_rule" string_of_bool) !Globals.do_classic_frame_rule no_pos in
+    let () = x_binfo_hp (add_str "(check_is_classic ())" string_of_bool) (check_is_classic ()) no_pos in
     let h2, p2, _, _, _, _ = split_components conseq in
     let estate_orig1, hprel_ass=
       if (h2 = HEmp || h2 = HTrue) && 
-         (!Globals.old_collect_hprel || !Globals.do_classic_frame_rule)
+         (!Globals.old_collect_hprel || (check_is_classic ()))
       then 
         (*L2: should we need classic for emp inference?*)
         (* WN: I would think so. Any counter-example? *)
@@ -8276,14 +8279,14 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
     let h1, _, _, _, _, _ = split_components estate_orig1.CF.es_formula in
     let lhs1 = {lhs with formula_base_heap = h1;} in
     (* TODO:WN : need to be careful with fix below *)
-    let flag = h2 = HEmp && !Globals.do_classic_frame_rule  && not(is_folding) in
+    let flag = h2 = HEmp && (check_is_classic ())  && not(is_folding) in
     let hprel_in_h1 = CF.get_hprel_h_formula h1 in
     let is_not_lhs_emp =
       if flag && (not(!Globals.old_classic_rhs_emp)) then
         begin
           let () = x_binfo_hp (add_str "XXXX(h1)" !CF.print_h_formula) h1 no_pos in
           let () = x_binfo_hp (add_str "XXXX(hp_rel)" (pr_list pr_none)) hprel_in_h1 no_pos in
-          let () = x_binfo_hp (add_str "do_classic_frame_rule" string_of_bool) !Globals.do_classic_frame_rule no_pos in
+          let () = x_binfo_hp (add_str "do_classic_frame_rule" string_of_bool) (check_is_classic ()) no_pos in
           let () = x_binfo_hp (add_str "is_folding" string_of_bool) is_folding no_pos  in
           not(is_classic_lhs_emp prog h1 ante pos)
         end
@@ -8305,7 +8308,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
       let () = x_tinfo_hp (add_str "lhs1" !CF.print_formula) (CF.Base lhs1) no_pos in
       let estate_orig1,lhs1 =
         if h2 = HTrue then 
-          if !Globals.do_classic_frame_rule then
+          if (check_is_classic ()) then
             (* remove all heap components inside estate_orig1 *)
             let () = x_tinfo_pp "classic then-branch?" no_pos in
             CF.mkEmp_es estate_orig1,{lhs1 with formula_base_heap = HEmp}
@@ -12902,7 +12905,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
         (*     (\* let () = hec_stack # push slk_no in *\) *)
         (*     (\* let r = hec a b c in *\) *)
         (*     (\* let () = hec_stack # pop in *\) *)
-        (*     let () = Log.add_sleek_logging_entry esv !Globals.do_classic_frame_rule caller (\* avoid *\) false hec_num slk_no estate.es_formula *)
+        (*     let () = Log.add_sleek_logging_entry esv (check_is_classic ()) caller (\* avoid *\) false hec_num slk_no estate.es_formula *)
         (*       conseq es.es_heap es.es_evars result pos in *)
         (*     () in *)
 
