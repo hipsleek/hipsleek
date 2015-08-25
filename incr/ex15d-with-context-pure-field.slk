@@ -11,10 +11,26 @@ HeapPred P(node a).
 
 infer [H,P,@classic] H(p) * x::node<1,p> & p=null |- true.
 print residue.
-
+/*
+ <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#|3  --> emp&true]
+*/
 
 /*
-# ex15d.slk 
+# ex15f.slk (working)
+
+infer [H,P,@classic] H(p) * x::node<1,p> & p=null 
+  |- P(p) * htrue.
+print residue.
+Entail (2) : Valid. 
+Residue:
+ <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#| x::node<flted_15_28,p>@M&true --> P(p)&true]
+[[ COND ==>  COND ==>  InferHeap]]
+*/
+
+/*
+# ex15d.slk vs ex15f.slk
 
 infer [H,P,@classic] H(p) * x::node<1,p> & p=null |- true.
 
@@ -24,5 +40,54 @@ Starting Omega.../usr/local/bin/oc
 
 # EXPECTS
 # inferred hprel: [H(p)&p=null |#| x::node<_,p> --> P(p)&true]
+
+# Please call find_undefined_selective_pointers from
+  infer_collect_hp_rel_empty_rhs 
+
+(==solver.ml#8275==)
+infer_collect_hp_rel_empty_rhs#1@1
+infer_collect_hp_rel_empty_rhs#1 inp1 : H(p) * x::node<flted_12_16,p>@M&p=null & flted_12_16=1&
+{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel_empty_rhs#1 inp2 : htrue
+infer_collect_hp_rel_empty_rhs#1 inp3 : true
+infer_collect_hp_rel_empty_rhs#1@1 EXIT:(Res:true,Sel HP:
+ es_formula: 
+ x::node<flted_12_16,p>@M&p=null & flted_12_16=1&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [H; P],Inferred Relations:[ H(p)&p=null |#|  --> emp])
+
+---------------------------------------------
+
+(==infer.ml#2650==)
+find_guard@6@5@4
+find_guard inp1 :left heap:[ x::node<flted_13_16,p>@M]
+find_guard inp2 :[]
+find_guard inp3 :left selected preds:[(H,[p])]
+find_guard inp4 :[p]
+find_guard@6 EXIT:Some( x::node<flted_13_16,p>@M)
+
+(==mcpure.ml#2286==)
+find_undefined_selective_pointers@5@4
+find_undefined_selective_pointers inp1 :unmatched: P(p)
+find_undefined_selective_pointers inp2 :rhs_h_matched_set:[]
+find_undefined_selective_pointers inp3 :lfb:
+ H(p) * x::node<flted_13_16,p>@M&flted_13_16=1 & p=null&
+{FLOW,(20,21)=__norm#E}[]
+find_undefined_selective_pointers@5 EXIT:(true,2:[],3:[(H,[p])],4:[(P,[p])],5:[],6: x::node<flted_13_16,p>@M)
+
+(==infer.ml#3211==)
+check_guard@7@4
+check_guard inp1 :Some( x::node<flted_13_16,p>@M)
+check_guard@7 EXIT:Some( x::node<flted_13_16,p>@M&{FLOW,(20,21)=__norm#E}[])
+
+(==solver.ml#12960==)
+infer_collect_hp_rel#1@4
+infer_collect_hp_rel#1 inp1 :lhs:
+ H(p) * x::node<flted_13_16,p>@M&p=null & flted_13_16=1&
+{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp2 :rhs: P(p) * (htrue)&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1@4 EXIT:(true,2: es_formula: 
+ x::node<flted_13_16,p>@M&p=null & flted_13_16=1&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [H; P]
+ es_infer_hp_rel: [H(p)&p=null |#| x::node<flted_13_16,p>@M --> P(p)],3: P(p),4:Some( H(p)),5:None)
 
 */

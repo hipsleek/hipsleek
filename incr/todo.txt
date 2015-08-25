@@ -1006,7 +1006,7 @@ Starting Omega.../usr/local/bin/oc
 # EXPECTS
 # inferred hprel: [H(p)&p=null |#| x::node<_,p> --> P(p)&true]
 =====================================================================
-# ex15e.slk 
+# ex15e.slk (FIXED)
 
 # _exact and @classic gives different outcomes..
 

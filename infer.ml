@@ -2403,7 +2403,7 @@ let find_guard_new prog lhds lhvs leqs l_selhpargs rhs_args=
   3.  x::<_,p> * H (p,p1) --> G(x): p and p1 are NOT forwarded
   3a. z::node2<_,l,r> * HP_577(l) * G1(r) --> G1(z) : l,r are NOT forwarded
 *)
-let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h_matched_set leqs reqs pos
+let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest rhs_h_matched_set leqs reqs pos
     total_unk_map post_hps prog_vars=
   let get_rhs_unfold_fwd_svl is_view h_node h_args def_svl leqNulls lhs_hpargs=
     let rec parition_helper node_name hpargs=
