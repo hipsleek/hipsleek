@@ -239,6 +239,7 @@ let wrap_par_case_check f c =
   with _ as e ->
     (ho_always_split := flag;
      raise e)
+    (* 1 *)
 
 let wrap_set_infer_type t f a =
   let flag = infer_const_obj # is_infer_type t in

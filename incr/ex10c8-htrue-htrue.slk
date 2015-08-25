@@ -1,0 +1,39 @@
+data cell {
+ int val;
+}.
+
+infer [] true |- true.
+print residue.
+// <1>htrue&{FLOW,(20,21)=__norm#E}[]
+// # EXPECTS
+// <1>emp&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
+
+infer [] htrue * x::cell<_> |- emp.
+print residue.
+
+
+infer [] htrue * htrue |- true.
+print residue.
+
+infer [] x::cell<_> * emp |- true.
+print residue.
+
+infer [] htrue * x::cell<_> |- true.
+print residue.
+
+infer [] x::cell<_> * htrue |- true.
+print residue.
+
+/*
+# ex10c8.slk -dre "generate_co\|extract_hre\|simplify_lhs_rhs" 
+
+//(15)
+infer [] true |- true.
+print residue.
+// <1>htrue&{FLOW,(20,21)=__norm#E}[]
+// # EXPECTS
+// <1>emp&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
+
+*/
