@@ -210,7 +210,7 @@ let rec get_core_cil_typ (t: Cil.typ) : Cil.typ = (
   let core_typ = (
     match t with
     | Cil.TVoid _ -> Cil.TVoid []
-    (*| Cil.TInt (Cil.IChar, _) -> Cil.TInt(Cil.IChar, [])*)
+    (*z| Cil.TInt (Cil.IChar, _) -> Cil.TInt(Cil.IChar, [])*)
     | Cil.TInt (ik, _) -> Cil.TInt (Cil.IInt, [])
     | Cil.TFloat (fk, _) -> Cil.TFloat (Cil.FFloat, [])
     | Cil.TPtr (ty, _) -> Cil.TPtr (get_core_cil_typ ty, [])
@@ -602,6 +602,7 @@ let rec create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
           | "bool"  -> "<_,o>"
           | "float" -> "<_,o>"
           | "void"  -> "<_,o>"
+          | "char"  -> "<_,o>"
           | _ -> (
               try 
                 let data_decl = Hashtbl.find tbl_data_decl (Globals.Named base_data) in
@@ -1294,7 +1295,7 @@ and translate_lval_x (lv: Cil.lval) : Iast.exp =
       | Cil.Mem e ->
         (* access to data in pointer variable *)
         let base_typ = typ_of_cil_exp e in
-        let _ = x_binfo_hp (add_str "base_typ" string_of_cil_typ) base_typ no_pos in
+        let _ = x_ninfo_hp (add_str "base_typ" string_of_cil_typ) base_typ no_pos in
         match base_typ with
         | Cil.TPtr (Cil.TComp _, _) ->
           let base = translate_exp e  in
