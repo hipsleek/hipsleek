@@ -10,9 +10,11 @@ HeapPred H(node a).
 HeapPred P(node a).
 
 //1
-infer [H,P] H(p) * x::node<1,p> & p=null |- P(p).
+infer [H,P,classic] H(p) * x::node<1,p> & p=null |- P(p).
 print residue.
 
+infer_exact [H,P,classic] H(p) * x::node<1,p> & p=null |- P(p).
+print residue.
 
 
 /*

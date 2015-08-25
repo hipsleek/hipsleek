@@ -995,6 +995,16 @@ Total number of errors: 13 in files:
   sleek7.slk({E1#Valid},{E10#Valid},{E2#Valid},{E3#Valid},{E6#Valid},{E7#Valid},{E8#Valid}) 
 sleek8.slk({E1#Valid},{E12#Valid},{E13#Valid},{E14#Valid},{E16#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) sleek8.slk({E1#Valid},{E12#Valid},{E13#Valid},{E14#Valid},{E16#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) sleek9.slk({E1#Valid},{E3#Valid},{E4#Valid}) sleek12-lend.slk({E1#Valid}) classic/classic4.slk({E1#Valid},{E3#Valid},{E5#Valid},{E7#Valid}) lemmas/lseg.slk({L1#Valid},{L2#Valid}) lemmas/rlseg.slk({L3#Valid}) lemmas/lseg_case.slk({L1#Valid},{L3#Valid}) lemmas/nlseg4e.slk({L2#Valid}) lemmas/nlseg4e1.slk({E1#Valid},{E2#Valid},{E3#Valid}) lemmas/sll_tailL.slk({L1#Valid}) lemmas/lseg_complex.slk({E1#Valid},{E2#Valid}).
 =====================================================================
+# ex15d.slk 
+
+infer [H,P,@classic] H(p) * x::node<1,p> & p=null |- true.
+
+Starting Omega.../usr/local/bin/oc
+ <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#|3  --> emp&true]
+
+# EXPECTS
+# inferred hprel: [H(p)&p=null |#| x::node<_,p> --> P(p)&true]
 =====================================================================
 =====================================================================
 =====================================================================
