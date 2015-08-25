@@ -12,6 +12,8 @@ WFSeg<p> ==
 BADS<> ==
   self::char_star<v,q>*q::BADS<> 
   inv true;
+
+lemma_safe self::WFS<> -> self::BADS<>.
 */
 
 char *(cstrcpy)(char *s1, const char *s2)
@@ -22,8 +24,8 @@ char *(cstrcpy)(char *s1, const char *s2)
   {
      while ((*s1++ = *s2++) != '\0')
        /*@
-          requires s1::WFS<> * s2::WFS<>  
-          ensures s2::WFSeg<qq>*qq::char_star<0,s2'>*s2'::BADS<> * s1::char_star<_,s1'>*s1'::char_star<_,q>*q::BADS<>;
+          requires s1::BADS<> * s2::WFS<>  
+          ensures s2::WFSeg<qq>*qq::char_star<0,s2'>*s2'::BADS<> * s1::WFSeg<pp>*pp::char_star<0,s1'>*s1'::BADS<>;
        */
        {
        } 
