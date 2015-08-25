@@ -2389,6 +2389,49 @@ module Make_DAG(Eq : EQ_TYPE) : DAG with type e := Eq.t =
     let fold t f init = List.fold_left f init (List.map fst (M.bindings t.tbl))
   end
 
+
+exception EqConflict
+
+(* module used for detecting conflicting info: 
+   (i) a!=b & a=b 
+   (ii) a<:b & b<:a & a!=b
+
+*)
+module GenRel 
+    (Eq : EQ_TYPE) 
+    (PEq : PTR_TYPE with type t = Eq.t) 
+    (Sub : EQ_TYPE with type t = Eq.t) =
+  struct
+    type t = Eq.t
+    (* support for emap *)
+    module EMap = EqMap(Eq)
+    (* support for disj set *)
+    module DSet = DisjSet(PEq)
+    (* support for subann *)
+    module SubP = Make_DAG(Sub)
+
+    let add_eq (emap: EMap.emap) (dset: DSet.dpart) (e1:t) (e2:t) =
+      if DSet.is_disj PEq.eq dset e1 e2 then raise EqConflict
+      else
+        EMap.add_equiv emap e1 e2
+
+    let add_disj (emap: EMap.emap) (dset: DSet.dpart) (e1:t) (e2:t) =
+      if EMap.is_equiv emap e1 e2 then raise EqConflict
+      else 
+        let ds1 = DSet.singleton_dset e1 in
+        let ds2 = DSet.singleton_dset e2 in
+        let ds12 = DSet.star_disj_set ds1 ds2 in
+        DSet.merge_disj_set dset ds12
+
+    (* let is_sub (emap: EMap.emap) (dset: DSet.dpart) (subp: SubP.t) (e1:t) (e2:t) = *)
+      (* check if e1 == e2 or if any of e1'<:e2' , e1' = alias(e1), e2'= alias(e2) *)
+
+    let add_subtype (emap: EMap.emap) (dset: DSet.dpart) (subp: SubP.t) (e1:t) (e2:t) =
+      match SubP.is_lt_opt subp e2 e1 with
+      | None   -> let () = SubP.add subp (e1,e2) in emap
+      | Some _ -> add_eq emap dset e1 e2 (* e1<:e2 & e2<:e1 ---> e1=e2 *)
+  end
+
 include Basic
 include SysUti
 

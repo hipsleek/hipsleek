@@ -477,6 +477,18 @@ module SubAnn : Gen.EQ_TYPE with type t = exp =
     let string_of = ArithNormalizer.string_of_exp
   end
 
+(* module SubAnn : Gen.EQ_TYPE with type t = spec_var = *)
+(*   struct *)
+(*     type t = spec_var *)
+(*     let zero = mkAnnSVar Mutable *)
+(*     let eq = eq_spec_var *)
+(*     let is_zero e1 = eq e1 zero  *)
+(*     let compare ~emap:em e1 e2 =  *)
+(*       if EMapSV.is_equiv em e1 e2 then 0 *)
+(*       else if simple_subtype em e1 e2 then 1 else -1 *)
+(*     let string_of = !print_sv *)
+(*   end *)
+
 module SubAnnPoset = Gen.Make_DAG(SubAnn)
 
 module SVEq : (Gen.EQ_TYPE with type t = spec_var) = SV
@@ -655,6 +667,13 @@ let prune_eq_min_max_imm f =
        let poset = SubAnnPoset.create () in
        let () = List.iter (SubAnnPoset.add poset) (collect_subann f1) in
        let () = List.iter (SubAnnPoset.add poset) (collect_subann f2) in
+       (* -------- test 4 poset ------------  *)
+       (* let afv1 = all_vars f1 in *)
+       (* let afv2 = all_vars f2 in *)
+       (* let afv = (afv1@afv2) in *)
+       (* let afv_p = List.fold_left (fun acc sv -> (List.fold_left (fun acc0 sv0 -> (sv,sv0)::acc0) [] afv)@acc ) [] afv in *)
+       (* let () = pr_list (fun (a1,a2) -> ((pr_pair !print_sv !print_sv) (a1,a2))^ (if SubAnnPoset.has_path poset a1 a2 then ": connected" else ": not connected")) afv_p in *)
+       (* -------- test 4 poset ------------  *)
        Some (mkAnd (prune_imm_min_max_conjunct poset f1)
                    (prune_imm_min_max_conjunct poset f2) pos)
     | other -> None in
