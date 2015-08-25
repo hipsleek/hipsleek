@@ -759,17 +759,6 @@ let check_formula f timeout =
   let _= Globals.z3_time := !Globals.z3_time +. (tstoplog -. tstartlog) in 
   res
 
-let wrap_collect_raw_result f x =
-  try 
-    set_prover_type();
-    set_proof_string x;
-    let out = f x in
-    set_proof_result out;
-    out
-  with e ->
-    set_proof_result ("Exception"^Printexc.to_string e);
-    raise e
-
 
 let check_formula f timeout =
   Debug.no_2 "Z3:check_formula" idf string_of_float string_of_smt_output
@@ -1169,17 +1158,10 @@ let imply ante conseq timeout =
 
 let imply_ops pr_weak pr_strong ante conseq timeout = 
   let f = x_add smt_imply pr_weak pr_strong ante conseq Z3 timeout in
-  
-  let smt_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
-  let smt_form = x_add_1 CP.subs_const_var_formula smt_form in
-  let smt_form = if true (* !Globals.non_linear_flag *) then x_add_1 CP.drop_nonlinear_formula_rev smt_form else smt_form in
-  let fstr = smt_of_formula pr_weak pr_strong smt_form in
-  let pvars = Omega.get_vars_formula smt_form in
-  let vstr = Omega.omega_of_var_list (Gen.BList.remove_dups_eq (=) pvars) in
-  let fomega =  "{complement {[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
-  let () = set_proof_string ("IMPLY:"^fomega) in
+ 
+  let input = to_smt pr_weak pr_strong ante (Some conseq) Z3 in
+  let () = set_proof_string ("IMPLY:"^input^"\n") in
 
-  (*let () = print_endline ("Ante2 : "^ !print_pure ante) in*)
   if (not f && !Globals.allow_array_inst) then instantiate_array_vars_before_imply pr_weak pr_strong ante conseq Z3 timeout
   else f
 
@@ -1219,11 +1201,8 @@ let smt_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) (prover: 
   (*--------------------------------------*)
   (* let () = print_endline ("#### [smt_is_sat] f = " ^ (!CP.print_formula f)) in *)
 
-  let fstr = smt_of_formula pr_weak pr_strong f in
-  let pvars = Omega.get_vars_formula f in
-  let vstr = Omega.omega_of_var_list (Gen.BList.remove_dups_eq (=) pvars) in
-  let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
-  let () = set_proof_string ("SAT:"^fomega) in
+  let sat_formula = to_smt pr_weak pr_strong f None prover in
+  let () = set_proof_string ("SAT:"^sat_formula^"\n") in
 
   let res, should_run_smt = (
     (* (false, true) in *)
