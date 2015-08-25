@@ -976,6 +976,24 @@ infer [H,P] H(p) * x::node<1,p> & p=null |- P(p,x).
 // inferred hprel: [emp&p=null --> P(p,x@NI)&true]
 // # EXPECTS : [H(p)&p=null | x::node<_,p> --> P(p,x)&true]
 =====================================================================
+--new-rm-htrue (FOUND problem in solver.ml)
+
+pls2nus@loris-laptop:~/hg/sl_spare/examples/working$ hg bisect -b
+The first bad revision is:
+changeset:   16501:2d85d0214410
+branch:      infer-incr
+parent:      16499:9253e46ab2ea
+user:        chinwn@loris-laptop
+date:        Tue Aug 25 06:40:58 2015 +0800
+summary:     debugging ex10c9 for htrue removal
+
+Total number of errors: 14 in files:
+  sleek7.slk({E1#Valid},{E10#Valid},{E2#Valid},{E3#Valid},{E6#Valid},{E7#Valid},{E8#Valid}) sleek8.slk({E1#Valid},{E12#Valid},{E13#Valid},{E14#Valid},{E16#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) sleek8.slk({E1#Valid},{E12#Valid},{E13#Valid},{E14#Valid},{E16#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) sleek9.slk({E1#Valid},{E3#Valid},{E4#Valid}) sleek12-lend.slk({E1#Valid}) classic/classic1b.slk({E19#Fail},{E22#Fail},{E23#Fail},{E25#Fail}) classic/classic4.slk({E1#Valid},{E3#Valid},{E5#Valid},{E7#Valid}) lemmas/lseg.slk({L1#Valid},{L2#Valid}) lemmas/rlseg.slk({L3#Valid}) lemmas/lseg_case.slk({L1#Valid},{L3#Valid}) lemmas/nlseg4e.slk({L2#Valid}) lemmas/nlseg4e1.slk({E1#Valid},{E2#Valid},{E3#Valid}) lemmas/sll_tailL.slk({L1#Valid}) lemmas/lseg_complex.slk({E1#Valid},{E2#Valid}).
+
+Starting hip-sleek tests:
+Total number of errors: 13 in files:
+  sleek7.slk({E1#Valid},{E10#Valid},{E2#Valid},{E3#Valid},{E6#Valid},{E7#Valid},{E8#Valid}) 
+sleek8.slk({E1#Valid},{E12#Valid},{E13#Valid},{E14#Valid},{E16#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) sleek8.slk({E1#Valid},{E12#Valid},{E13#Valid},{E14#Valid},{E16#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) sleek9.slk({E1#Valid},{E3#Valid},{E4#Valid}) sleek12-lend.slk({E1#Valid}) classic/classic4.slk({E1#Valid},{E3#Valid},{E5#Valid},{E7#Valid}) lemmas/lseg.slk({L1#Valid},{L2#Valid}) lemmas/rlseg.slk({L3#Valid}) lemmas/lseg_case.slk({L1#Valid},{L3#Valid}) lemmas/nlseg4e.slk({L2#Valid}) lemmas/nlseg4e1.slk({E1#Valid},{E2#Valid},{E3#Valid}) lemmas/sll_tailL.slk({L1#Valid}) lemmas/lseg_complex.slk({E1#Valid},{E2#Valid}).
 =====================================================================
 =====================================================================
 =====================================================================
