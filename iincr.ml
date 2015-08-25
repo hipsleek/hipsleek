@@ -30,6 +30,60 @@ let is_infer_const sf it =
 let is_infer_const_scc scc it=
   List.exists (fun proc -> is_infer_const (proc.Cast.proc_stk_of_static_specs # top) it) scc
 
+let get_infer_const sf0 =
+  let rec recf sf= match sf with
+    | CF.EList el -> List.fold_left (fun acc (lbl,sf) ->
+          acc@(recf sf)) [] el
+    | CF.EInfer ei ->
+          let inf_obj = ei.CF.formula_inf_obj in
+          (inf_obj # get_lst)
+  | _ -> []
+  in
+  recf sf0
+
+let get_infer_const_scc scc =
+  let infs = List.fold_left (fun acc proc -> acc@(get_infer_const proc.Cast.proc_stk_of_static_specs # top) ) [] scc in
+  Gen.BList.remove_dups_eq (=) infs
+
+
+let rec update_infer_const_struc_formula add_infs minus_infs sf0 =
+  let rec recf sf= match sf with
+    | CF.EList el -> CF.EList (List.map (fun (lbl,sf) ->
+          (lbl,recf sf)) el)
+    | CF.EBase eb ->
+          let cont = eb.CF.formula_struc_continuation in (
+              match cont with
+                | None -> sf
+                | Some cont -> CF.EBase {eb with CF.formula_struc_continuation = Some (recf cont)} )
+    | CF.EAssume ea -> sf
+    | CF.EInfer ei ->
+          let inf_obj = ei.CF.formula_inf_obj in
+          let new_inf_obj = inf_obj # clone in
+          let ()  = new_inf_obj # empty in
+          let infs = inf_obj # get_lst in
+          let infs1 = Gen.BList.difference_eq (=) infs minus_infs in
+          let () =  new_inf_obj # set_list ( Gen.BList.remove_dups_eq (=) (infs1@add_infs)) in
+          CF.EInfer {ei with
+              CF.formula_inf_obj = new_inf_obj}
+    | CF.ECase ec -> CF.ECase { ec with
+          CF.formula_case_branches = List.map (fun (pf,sf) ->
+              (pf,recf sf)
+          ) ec.CF.formula_case_branches
+      }
+  in
+  recf sf0
+
+let update_infer_const_proc add_infs minus_infs proc=
+  let spec = proc.Cast.proc_stk_of_static_specs # top in
+  let new_spec = update_infer_const_struc_formula add_infs minus_infs spec in
+  let () = proc.Cast.proc_stk_of_static_specs # push_pr "pi:377" new_spec in
+  let () = x_tinfo_hp (add_str "new_spec" Cprinter.string_of_struc_formula) new_spec no_pos in
+  (proc,new_spec)                       (* spec or new_spec *)
+
+let update_infer_const_scc add_infs minus_infs scc =
+  List.map (update_infer_const_proc add_infs minus_infs ) scc
+
+
 (**)
 let rec htrue2emp hf= match hf with
   | CF.HTrue -> CF.HEmp

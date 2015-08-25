@@ -907,6 +907,8 @@ let allow_lemma_fold = ref true
 let allow_lemma_norm = ref false
 let old_norm_w_coerc = ref false
 
+let old_incr_infer = ref false
+
 (* Enable exhaustive normalization using lemmas *)
 let allow_exhaustive_norm = ref true
 
@@ -1882,6 +1884,7 @@ class inf_obj_sub  =
       let () = no # set_list arr in
       (* let () = print_endline ("Cloning :"^(no #string_of)) in *)
       no
+    method empty = arr <- []
   end;;
 
 let clone_sub_infer_const_obj_all () =

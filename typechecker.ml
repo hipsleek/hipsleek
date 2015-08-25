@@ -4357,11 +4357,11 @@ let rec check_prog iprog (prog : prog_decl) =
       has_infer_shape_post_proc || has_infer_shape_prepost_proc in
     let has_infer_pre_proc = Pi.is_infer_pre_scc scc in
 
-    let () = if (has_infer_shape_pre_proc || has_infer_shape_prepost_proc) then
-      Iincr.add_prepost_shape_relation_scc prog Iincr.add_pre_shape_relation scc in
+    (* let () = if (has_infer_shape_pre_proc || has_infer_shape_prepost_proc) then *)
+    (*   Iincr.add_prepost_shape_relation_scc prog Iincr.add_pre_shape_relation scc in *)
 
-    let () = if (has_infer_shape_post_proc) then
-      Iincr.add_prepost_shape_relation_scc prog Iincr.add_post_shape_relation scc in
+    (* let () = if (has_infer_shape_post_proc) then *)
+    (*   Iincr.add_prepost_shape_relation_scc prog Iincr.add_post_shape_relation scc in *)
 
 
     let () = if (not(has_infer_shape_proc) && has_infer_pre_proc) then Pi.add_pre_relation_scc prog scc in
@@ -4590,6 +4590,14 @@ let rec check_prog iprog (prog : prog_decl) =
     (*   with Not_found -> scc *)
     (* in *)
   in
+  let rec process_cmd iprog cprog verified_sccs icmd=
+    match icmd with
+      | Icmd.I_Norm {cmd_res_scc = scc} ->
+            verify_scc_incr cprog verified_sccs scc
+      | Icmd.I_Seq cmds
+      | Icmd.I_Search cmds (*TOFIX*) ->
+            List.fold_left (fun _ (_, cmd) ->  process_cmd iprog cprog verified_sccs cmd) (cprog, verified_sccs) cmds
+  in
   (********************************************************)
   (********************************************************)
   (********************************************************)
@@ -4660,7 +4668,10 @@ let rec check_prog iprog (prog : prog_decl) =
         else
           (* let () = List.iter (fun proc -> *)
           (* DD.info_hprint (add_str "xxxx3  " Cprinter.string_of_struc_formula) (proc.proc_static_specs) no_pos) scc in *)
-          verify_scc_incr prog verified_sccs scc
+          if !Globals.old_incr_infer then verify_scc_incr prog verified_sccs scc
+            else
+              let icmd = Icmd.compute_cmd prog scc in
+              process_cmd iprog prog verified_sccs icmd
       in
       prog, n_verified_sccs
     ) (prog,[]) proc_scc

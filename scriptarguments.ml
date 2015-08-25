@@ -321,6 +321,7 @@ linput.rl");
   ("--new-rm-htrue", Arg.Set Globals.new_rm_htrue,"Enable removal of htrue from ante");
   ("--old-classic-rhs-emp", Arg.Set Globals.old_classic_rhs_emp,"Use old handling of classic rhs emp");
   ("--new-classic-rhs-emp", Arg.Clear Globals.old_classic_rhs_emp,"Use new handling of classic rhs emp");
+  ("--old-incr-infer", Arg.Set Globals.old_incr_infer,"Use old inference system");
   ("--old-rm-htrue", Arg.Clear Globals.new_rm_htrue,"Disable removal of htrue from ante");
   ("--old-infer-hprel-classic", Arg.Set Globals.old_infer_hprel_classic,"Enable infer hp_rel handling of classic (seems redundant)");
   ("--old-collect-hprel", Arg.Set Globals.old_collect_hprel,"Enable Old False which invokes infer_hp_rel without classic");
