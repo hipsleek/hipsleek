@@ -8267,25 +8267,18 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
     (* TODO:WN : need to be careful with fix below *)
     let flag = h2 = HEmp && !Globals.do_classic_frame_rule  && not(is_folding) in
     let hprel_in_h1 = CF.get_hprel_h_formula h1 in
-    let h1_unfold =
-      if flag then
-        let prep_ante = do_unfold_for_classic_reasoning prog ante pos in
-        match prep_ante with
-        | CF.Or _ -> h1
-        | _ -> let h,_,_,_,_,_ = split_components prep_ante in h
-      else h1
+    let is_not_lhs_emp =
+      if flag && (not(!Globals.old_classic_rhs_emp)) then
+        begin
+          let () = x_binfo_hp (add_str "XXXX(h1)" !CF.print_h_formula) h1 no_pos in
+          let () = x_binfo_hp (add_str "XXXX(hp_rel)" (pr_list pr_none)) hprel_in_h1 no_pos in
+          let () = x_binfo_hp (add_str "do_classic_frame_rule" string_of_bool) !Globals.do_classic_frame_rule no_pos in
+          let () = x_binfo_hp (add_str "is_folding" string_of_bool) is_folding no_pos  in
+          not(is_classic_lhs_emp prog h1 ante pos)
+        end
+      else false 
     in
-    let () = x_tinfo_hp (add_str "h1_unfold" !CF.print_h_formula) h1_unfold no_pos in
-    if flag && (h1_unfold!=HEmp && not(!Globals.old_classic_rhs_emp)) then
-      begin
-        let () = x_binfo_hp (add_str "XXXX(h1)" !CF.print_h_formula) h1 no_pos in
-        let () = x_binfo_hp (add_str "XXXX(hp_rel)" (pr_list pr_none)) hprel_in_h1 no_pos in
-        let () = x_binfo_hp (add_str "do_classic_frame_rule" string_of_bool) !Globals.do_classic_frame_rule no_pos in
-        let () = x_binfo_hp (add_str "is_folding" string_of_bool) is_folding no_pos  in
-        ()
-      end;
-    if flag &&  ((h1_unfold!=HEmp && not(!Globals.old_classic_rhs_emp)) 
-                 ||  (hprel_in_h1!= [] && !Globals.old_classic_rhs_emp))  then
+    if flag &&  (is_not_lhs_emp ||  (hprel_in_h1!= [] && !Globals.old_classic_rhs_emp))  then
       let fail_ctx = mkFailContext mem_leak estate_orig1 conseq None pos in
       let es_string = Cprinter.string_of_formula estate_orig1.es_formula in
       let err_msg = es_string^ ": possible memory leak failure : residue is forbidden." in
@@ -9523,6 +9516,19 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
       Some(do_fold_result,prf)
   end
 
+and is_classic_lhs_emp prog h1 ante pos =
+      let h1_unfold =
+          let prep_ante = do_unfold_for_classic_reasoning prog ante pos in
+          match prep_ante with
+          | CF.Or _ -> h1
+          | _ -> let h,_,_,_,_,_ = split_components prep_ante in h
+        (* if flag then *)
+        (* else h1 *)
+      in 
+      let () = x_binfo_hp (add_str "h1_unfold" !CF.print_h_formula) h1_unfold no_pos 
+      in
+      h1_unfold==HEmp || (is_resourceless_h_formula prog h1_unfold)
+         || (is_classic_lending_hformula h1_unfold)
 
 and do_unfold_for_classic_reasoning prog (f: CF.formula) (pos : loc) =
   let pr_in = Cprinter.string_of_formula in
