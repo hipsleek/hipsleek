@@ -2236,9 +2236,9 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
         end
         |  Iformula.EInfer i_sf ->
                let () =  Debug.info_hprint (add_str "infer_const_obj 2" (pr_id)) (Globals.infer_const_obj#string_of) no_pos in
-               if Globals.infer_const_obj # is_shape || i_sf.Iformula.formula_inf_obj # is_shape ||
-                 Globals.infer_const_obj # is_shape_pre || i_sf.Iformula.formula_inf_obj # is_shape_pre ||
-                 Globals.infer_const_obj # is_shape_post || i_sf.Iformula.formula_inf_obj # is_shape_post
+               if Globals.infer_const_obj # is_shape || i_sf.Iformula.formula_inf_obj # is_shape (* || *)
+                 (* Globals.infer_const_obj # is_shape_pre || i_sf.Iformula.formula_inf_obj # is_shape_pre || *)
+                 (* Globals.infer_const_obj # is_shape_post || i_sf.Iformula.formula_inf_obj # is_shape_post *)
                then
           let is_simpl, pre,post = Iformula.get_pre_post i_sf.Iformula.formula_inf_continuation in
           if is_simpl then

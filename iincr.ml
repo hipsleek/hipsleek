@@ -31,12 +31,11 @@ let is_infer_const_scc scc it=
   List.exists (fun proc -> is_infer_const (proc.Cast.proc_stk_of_static_specs # top) it) scc
 
 (**)
+let rec htrue2emp hf= match hf with
+  | CF.HTrue -> CF.HEmp
+  | _ -> hf
 
 let add_pre_shape_relation_x prog proc spec=
-  let rec htrue2emp hf= match hf with
-    | CF.HTrue -> CF.HEmp
-    | _ -> hf
-  in
   let pos = no_pos in
   let rec recf sf rel_name rel_vars=match sf with
     | CF.EList el -> CF.EList (List.map (fun (lbl,sf) ->
@@ -93,8 +92,72 @@ let add_pre_shape_relation prog proc sf =
   Debug.no_1 "add_pre_shape_relation" pr pr (fun _ -> add_pre_shape_relation_x prog proc sf) sf
 
 
-let add_post_shape_relation prog proc spec=
-  spec
+let add_post_shape_relation_x prog proc spec=
+   let pos = no_pos in
+   let rec recf sf rel_name rel_vars=match sf with
+    | CF.EList el -> CF.EList (List.map (fun (lbl,sf) ->
+          (lbl, recf sf rel_name rel_vars)) el)
+    | CF.EBase eb -> begin
+        match eb.CF.formula_struc_continuation with
+          | None -> sf
+          | Some cont -> CF.EBase {eb with CF.formula_struc_continuation = Some (recf cont rel_name rel_vars)}
+      end
+    | CF.EAssume ea ->
+          let args = rel_vars in
+          let post_eargs = List.map (fun sv -> CP.Var (sv,pos)) args in
+          let post_simpl0 = (CF.formula_of_heap (CF.HRel (CP.SpecVar (HpT, rel_name, Unprimed), post_eargs, pos)) pos) in
+          let cur_post = CF.formula_map htrue2emp  ea.CF.formula_assume_simpl in
+          let new_post = CF.mkStar cur_post post_simpl0 CF.Flow_combine pos in
+          let new_sf = CF.mkEBase new_post None pos in
+          CF.EAssume {ea with
+              CF.formula_assume_simpl = new_post;
+              CF.formula_assume_struc = new_sf}
+    | CF.EInfer ei ->
+          let rel_name = Globals.hppost_default_prefix_name ^ (string_of_int (Globals.fresh_int())) in
+          let proc_args = List.map (fun (t,id) -> CP.mk_typed_spec_var t id) proc.Cast.proc_args in
+          let rel_vars = List.filter CP.is_node_typ proc_args in
+          if rel_vars = [] &&  not (is_node_typ proc.Cast.proc_return) then sf else
+            let rel_unprimed_vars = CP.remove_dups_svl rel_vars in
+            let rel_primed_vars = List.map (fun  (CP.SpecVar (t,id,_))  ->
+                CP.SpecVar (t,id,Primed))
+              proc.Cast.proc_by_name_params in
+            let rel_res_vars = if is_node_typ proc.Cast.proc_return then [ (CP.SpecVar (proc.Cast.proc_return, res_name, Unprimed))] else [] in
+            let rel_vars = rel_unprimed_vars@rel_primed_vars@rel_res_vars in
+            let hp_post_decl = {
+                Cast.hp_name = rel_name;
+                Cast.hp_vars_inst = List.map (fun sv ->
+                    let in_info =  Globals.I in
+                    (sv, in_info)
+                ) rel_vars;
+                Cast.hp_part_vars = [];
+                Cast.hp_root_pos = 0;
+                Cast.hp_is_pre = true;
+                Cast.hp_view = None;
+                Cast.hp_formula = CF.mkHTrue_nf pos;
+            }
+            in
+            let () = Debug.info_hprint (add_str ("generate unknown predicate for Post synthesis of " ^ proc.Cast.proc_name ^ ": ") pr_id)
+              hp_post_decl.Cast.hp_name no_pos in
+            let post_inf_sv = (CP.SpecVar (HpT, hp_post_decl.Cast.hp_name, Unprimed)) in
+            let () = DD.ninfo_hprint (add_str "rel_args" Cprinter.string_of_typed_spec_var_list) rel_vars no_pos in
+            let new_cont = recf ei.CF.formula_inf_continuation rel_name rel_vars in
+            let () = prog.Cast.prog_hp_decls <- prog.Cast.prog_hp_decls@[hp_post_decl] in
+            let () = proc.Cast.proc_sel_hps <- proc.Cast.proc_sel_hps@[post_inf_sv] in
+            CF.EInfer {ei with
+                CF.formula_inf_vars = CP.remove_dups_svl (ei.CF.formula_inf_vars@[post_inf_sv]);
+                CF.formula_inf_continuation = new_cont}
+    | CF.ECase ec -> CF.ECase { ec with
+          CF.formula_case_branches = List.map (fun (pf,sf) ->
+              let rel_name = fresh_any_name rel_name in
+              (pf, recf sf rel_name rel_vars)
+          ) ec.CF.formula_case_branches
+      }
+   in
+   recf spec "" []
+
+let add_post_shape_relation prog proc sf =
+  let pr = Cprinter.string_of_struc_formula in
+  Debug.no_1 "add_post_shape_relation" pr pr (fun _ -> add_post_shape_relation_x prog proc sf) sf
 
 (*
   add_fnc:

@@ -4360,6 +4360,10 @@ let rec check_prog iprog (prog : prog_decl) =
     let () = if (has_infer_shape_pre_proc || has_infer_shape_prepost_proc) then
       Iincr.add_prepost_shape_relation_scc prog Iincr.add_pre_shape_relation scc in
 
+    let () = if (has_infer_shape_post_proc) then
+      Iincr.add_prepost_shape_relation_scc prog Iincr.add_post_shape_relation scc in
+
+
     let () = if (not(has_infer_shape_proc) && has_infer_pre_proc) then Pi.add_pre_relation_scc prog scc in
     let has_infer_post_proc = Pi.is_infer_post_scc scc in
     let () = if (not(has_infer_shape_proc)) then x_add Pi.add_post_relation_scc prog scc in
