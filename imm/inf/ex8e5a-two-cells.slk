@@ -1,0 +1,41 @@
+data cell {
+ int v;
+}.
+
+/*
+checkentail x::cell<_>*x::cell<_> |- false.
+print residue.
+expect Fail.
+
+checkentail x::cell<_>@a*x::cell<_>@A |- false.
+print residue.
+expect Fail.
+*/
+
+checkentail x::cell<_>@a*x::cell<_>@b |- false.
+print residue.
+expect Fail.
+/*
+# ex8e5a.slk
+
+  unsound to be false/valid.
+
+Entail 1: Valid. 
+Residue:
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+Validate 1: Expecting 3 Fail BUT got : Valid
+
+ x::cell<v>@a*x::cell<w>@b |- x!=null.
+ x::cell<v>@c & v=w & c=a+b |- x!=null.
+
+   c=@M+@M --> false
+*/
+
+
+//checkentail x::cell<_>@frac(1/2)*x::cell<_>@frac(1/2) |- x!=null.
+//print residue.
+
+
+checkentail x::cell<_>@a*x::cell<_>@b |- x!=null.
+print residue.
+expect Valid.

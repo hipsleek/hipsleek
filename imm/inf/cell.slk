@@ -2,21 +2,21 @@ data cell{
  int fst;
 }.
 
-/*
+
 infer [v] p::cell<f>@v |- p::cell<a>.
 print residue.
 
 infer [v] p::cell<f>@v |- p::cell<a>@L.
 print residue.
-*/
+
 
 infer [v] p::cell<f>@v |- p::cell<a>@I.
 print residue.
 
-/*
+
 infer [v] p::cell<f>@v |- p::cell<a>@A.
 print residue.
-*/
+
 /*
 # cell.slk 
 

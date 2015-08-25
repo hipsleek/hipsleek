@@ -90,6 +90,7 @@ module M = Lexer.Make(Token.Token)
 
   let proc_one_cmd c = 
     match c with
+  | UiDef uidef -> process_ui_def uidef
     | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype; ())
     (* let pr_op () = process_entail_check_common iante iconseq in  *)
     (* Log.wrap_calculate_time pr_op !Globals.source_files ()               *)
@@ -153,7 +154,7 @@ module M = Lexer.Make(Token.Token)
     | TermInfer -> process_term_infer ()
     | TermAssume (iante, iconseq) -> process_term_assume iante iconseq
     | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ 
-    | TemplDef _ | UtDef _  -> ()
+    | TemplDef _ | UtDef _ -> ()
     | ExpectInfer (t, e) -> process_validate_infer t e
     | EmptyCmd -> () 
 
@@ -239,6 +240,7 @@ let parse_file (parse) (source_file : string) =
     | RelDef rdef -> process_rel_def rdef
     | TemplDef tdef -> process_templ_def tdef
     | UtDef utdef -> process_ut_def utdef
+    | UiDef uidef -> process_ui_def uidef
     | HpDef hpdef -> process_hp_def hpdef
     | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
     (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
@@ -379,6 +381,7 @@ let main () =
                 I.prog_rel_ids = [];
                 I.prog_templ_decls = [];
                 I.prog_ut_decls = [];
+                I.prog_ui_decls = [];
                 I.prog_hp_decls = [];
                 I.prog_hp_ids = [];
                 I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
@@ -417,36 +420,39 @@ let main () =
           match input with
           | "" -> ()
           | _ ->
-            try
+            begin
+              try
 
-              let term_indx = String.index input terminator in
-              let s = String.sub input 0 (term_indx+1) in
-              Buffer.add_string buffer s;
-              let cts = Buffer.contents buffer in
-              if cts = "quit" || cts = "quit\n" then quit := true
-              else try
-                  let cmd = parse cts in
-                  (* let () = Slk2smt.cmds := (!Slk2smt.cmds)@[cmd] in *)
-                  proc_gen_cmd cmd;
-                  Buffer.clear buffer;
-                  if !inter then
-                    prompt := "SLEEK> "
-                with
-                | _ -> dummy_exception();
-                  print_string_quiet ("Error.\n");
-                  print_endline_quiet "Last SLEEK FAILURE:";
-                  Log.last_cmd # dumping "sleek_dump(interactive)";
-                  (*     sleek_command # dump; *)
-                  (* print_endline "Last PURE PROOF FAILURE:"; *)
-                  (* Log.last_proof_command # dump; *)
-                  Buffer.clear buffer;
-                  if !inter then prompt := "SLEEK> "
-                with
-                | SLEEK_Exception
-                | Not_found -> dummy_exception();
-                  Buffer.add_string buffer input;
-                  Buffer.add_char buffer '\n';
-                  if !inter then prompt := "- "
+                let term_indx = String.index input terminator in
+                let s = String.sub input 0 (term_indx+1) in
+                Buffer.add_string buffer s;
+                let cts = Buffer.contents buffer in
+                if cts = "quit" || cts = "quit\n" then quit := true
+                else 
+                  try
+                    let cmd = parse cts in
+                    (* let () = Slk2smt.cmds := (!Slk2smt.cmds)@[cmd] in *)
+                    proc_gen_cmd cmd;
+                    Buffer.clear buffer;
+                    if !inter then
+                      prompt := "SLEEK> "
+                  with
+                  | e -> warn_exception e;
+                    print_string_quiet ("Error.\n");
+                    print_endline_quiet "Last SLEEK FAILURE:";
+                    Log.last_cmd # dumping "sleek_dump(interactive)";
+                    (*     sleek_command # dump; *)
+                    (* print_endline "Last PURE PROOF FAILURE:"; *)
+                    (* Log.last_proof_command # dump; *)
+                    Buffer.clear buffer;
+                    if !inter then prompt := "SLEEK> "
+              with
+              | SLEEK_Exception
+              | Not_found -> dummy_exception();
+                Buffer.add_string buffer input;
+                Buffer.add_char buffer '\n';
+                if !inter then prompt := "- "
+            end
         done
       end
     else
@@ -458,11 +464,11 @@ let main () =
   with
   | End_of_file ->
     begin
-      print_string ("\n")
+      print_string_quiet ("\n")
     end
-  | _ ->
+  | e ->
     begin
-      dummy_exception();
+      warn_exception e;
       let () = print_string_quiet ( "error at: \n" ^ (get_backtrace_quiet ())) in
       print_endline_quiet "SLEEK FAILURE (END)";
       Log.last_cmd # dumping "sleek_dumEND)";
@@ -515,8 +521,8 @@ let sleek_proof_log_Z3 src_files =
 
 let _ =
   wrap_exists_implicit_explicit := false ;
-  Tpdispatcher.init_tp();
   process_cmd_line ();
+  Tpdispatcher.init_tp();
   let () = Debug.read_main () in
   Scriptarguments.check_option_consistency ();
   sleek_prologue ();
@@ -589,6 +595,12 @@ let _ =
         print_endline_quiet (str_res)
       else ()
     in
+    if (not !Globals.web_compile_flag) then 
+      let rev_false_ctx_line_list = List.rev !Globals.false_ctx_line_list in
+      print_string_quiet ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
+                          (List.fold_left (fun a c-> a^" ("^(string_of_int c.VarGen.start_pos.Lexing.pos_lnum)^","^
+                                                     ( string_of_int (c.VarGen.start_pos.Lexing.pos_cnum-c.VarGen.start_pos.Lexing.pos_bol))^") ") "" rev_false_ctx_line_list )^")\n")
+    else ();
     (* based on last residue - Valid -> UNSAT, Fail -> SAT *)
     let () = if !Globals.enable_time_stats then
         begin

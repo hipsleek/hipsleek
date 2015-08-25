@@ -17,7 +17,7 @@ module TP = Tpdispatcher
 (* the results are never picked from the stack,*)
 (* rather they are returned by the inference method however the height of the stack is used*)
 (* as an indicator of the inference success*)
-let rel_def_stk : CF.hprel_def Gen.stack_pr = new Gen.stack_pr
+let rel_def_stk : CF.hprel_def Gen.stack_pr = new Gen.stack_pr "rel-def-stk"
   Cprinter.string_of_hprel_def_lib (==)
 
 let rec elim_redundant_paras_lst_constr_x prog constrs =
@@ -1011,7 +1011,7 @@ let check_partial_def_eq_x (hp1, args1,_, cond1, olhs1, og1, orhs1) (hp2, args2,
       | None, Some _ -> false
       | Some f1, Some f2 ->
         (*subs*)
-        let f1_subst = CF.subst subst f1 in
+        let f1_subst = x_add CF.subst subst f1 in
         let hvars = List.map (fun c -> CP.full_name_of_spec_var c) (CF.get_hp_rel_name_formula f1_subst @ CF.get_hp_rel_name_formula f2) in
         let r,_ (*map*) =  CEQ.checkeq_formulas hvars f1_subst f2 in
         r
@@ -1793,7 +1793,7 @@ let do_simpl_nodes_match_x lhs rhs =
   let ss = get_subst sl_hds sr_hds [] in
   let n_rhs =
     if ss = [] then rhs
-    else CF.subst ss rhs
+    else x_add CF.subst ss rhs
   in
   n_rhs
 
@@ -1812,7 +1812,7 @@ let subst_one_cs_w_one_partial_def cs_unk_hps olhs f (hp_name, args,unk_svl, def
                      ^ (!CP.print_svl args)) no_pos;
     DD.ninfo_zprint (lazy (("   into " ^ (Cprinter.prtt_string_of_formula f)))) no_pos;
     let subst = (List.combine args args2) in
-    let def_f_subst = CF.subst subst def_f in
+    let def_f_subst = x_add CF.subst subst def_f in
     let unk_svl_subst = CP.subst_var_list subst unk_svl in
     DD.ninfo_zprint (lazy (("   body after subst " ^ (Cprinter.prtt_string_of_formula def_f_subst)))) no_pos;
     (*should remove duplicate*)
@@ -2254,13 +2254,13 @@ ss: subst from ldns -> ldns
 (*             (\*refresh it*\) *)
 (*             let fresh_diff2 = CP.fresh_spec_vars diff2 in *)
 (*             let ss2 = List.combine diff2 fresh_diff2 in *)
-(*             let n_lhs2 = CF.subst ss2 lhs2 in *)
+(*             let n_lhs2 = x_add CF.subst ss2 lhs2 in *)
 (*             (\*end refresh*\) *)
 (*             (\*combine l_res into lhs2*\) *)
 (*             let l =  CF.mkStar n_lhs2 (CF.Base l_res) CF.Flow_combine lpos in *)
-(*             let n_rhs1 = CF.subst subst1 rhs1 in *)
+(*             let n_rhs1 = x_add CF.subst subst1 rhs1 in *)
 (*             (\*avoid clashing --> should refresh remain svl of r_res*\) *)
-(*             let r_res1 = CF.subst ss2 (CF.Base r_res) in *)
+(*             let r_res1 = x_add CF.subst ss2 (CF.Base r_res) in *)
 (*             (\*elim duplicate hprel in r_res1 and n_rhs1*\) *)
 (*             let nr_hprel = CF.get_HRels_f n_rhs1 in *)
 (*             let nrest_hprel = CF.get_HRels_f r_res1 in *)
@@ -2458,7 +2458,7 @@ let generalize_one_hp_x prog hpdefs non_ptr_unk_hps unk_hps par_defs=
   let obtain_and_norm_def hp args0 (a1,args,og,f,unk_args)=
     (*normalize args*)
     let subst = List.combine args args0 in
-    let f1 = (CF.subst subst f) in
+    let f1 = (x_add CF.subst subst f) in
     let f2 =
       if !Globals.pred_elim_dangling then
         CF.annotate_dl f1 (List.filter (fun hp1 -> not (CP.eq_spec_var hp hp1)) unk_hps)
@@ -3343,7 +3343,7 @@ let generate_hp_def_from_split_x prog hpdefs hp_defs_split unk_hpargs=
       if CP.eq_spec_var hp1 hp then
         if is_rec_hpdef hp f then (true,[]) else
           let ss = List.combine args1 args0 in
-          let nf = CF.subst ss f in
+          let nf = x_add CF.subst ss f in
           (false,CF.list_of_disjs nf)
       else look_up_hp_def hp args0 defss
   in
@@ -3502,7 +3502,7 @@ let check_eq_hpdef_x unk_hpargs post_hps hp_defs =
           lookup_equiv_hpdef tl hp args f
         else
           let ss = List.combine args1 args in
-          let f10 = CF.subst ss f1 in
+          let f10 = x_add CF.subst ss f1 in
           let f11 = CF.subst_hprel f10 [hp1] hp in
           if Sautil.checkeq_formula_list (CF.list_of_disjs f) (CF.list_of_disjs f11) then
             (* if fst (CEQ.checkeq_formulas (List.map CP.name_of_spec_var args) f f11) then *)
@@ -3964,33 +3964,48 @@ let build_horm_view_x templ_view_decls horm_dd=
       | None -> None
       | Some f -> Some (Iformula.subst ss f)
     in
-    { Iast.view_name = n_view_name;
+    { view with
+      Iast.view_name = n_view_name;
       Iast.view_pos = no_pos;
       Iast.view_data_name = data_name;
       Iast.view_type_of_self = None;
-      Iast.view_vars = view.Iast.view_vars;
-      Iast.view_ho_vars = view.Iast.view_ho_vars;
-      Iast.view_imm_map = view.Iast.view_imm_map;
-      Iast.view_labels = view.Iast.view_labels;
-      Iast.view_modes = view.Iast.view_modes;
-      Iast.view_is_prim = view.Iast.view_is_prim;
-      Iast.view_kind = view.Iast.view_kind;
-      Iast.view_derv = view.Iast.view_derv;
-      Iast.view_parent_name = view.Iast.view_parent_name;
-      Iast.view_prop_extns = view.Iast.view_prop_extns;
-      Iast.view_derv_info = view.Iast.view_derv_info;
       Iast.view_typed_vars = view.Iast.view_typed_vars;
       Iast.view_invariant = n_view_invariant;
       Iast.view_baga_inv = None;
       Iast.view_baga_over_inv = None;
       Iast.view_baga_under_inv = None;
-      Iast.view_mem = view.Iast.view_mem;
       Iast.view_formula = n_view_formula;
       Iast.view_inv_lock = n_view_inv_lock;
-      Iast.view_pt_by_self = view.Iast.view_pt_by_self;
-      Iast.try_case_inference = view.Iast.try_case_inference;
-      Iast.view_materialized_vars = view.Iast.view_materialized_vars;
     }
+  (*   {  *)
+  (*     Iast.view_name = n_view_name; *)
+  (*     Iast.view_pos = no_pos; *)
+  (*     Iast.view_data_name = data_name; *)
+  (*     Iast.view_type_of_self = None; *)
+  (*     Iast.view_typed_vars = view.Iast.view_typed_vars; *)
+  (*     Iast.view_invariant = n_view_invariant; *)
+  (*     Iast.view_baga_inv = None; *)
+  (*     Iast.view_baga_over_inv = None; *)
+  (*     Iast.view_baga_under_inv = None; *)
+  (*     Iast.view_formula = n_view_formula; *)
+  (*     Iast.view_inv_lock = n_view_inv_lock; *)
+  (*     Iast.view_vars = view.Iast.view_vars; *)
+  (*     Iast.view_ho_vars = view.Iast.view_ho_vars; *)
+  (*     Iast.view_imm_map = view.Iast.view_imm_map; *)
+  (*     Iast.view_labels = view.Iast.view_labels; *)
+  (*     Iast.view_modes = view.Iast.view_modes; *)
+  (*     Iast.view_is_prim = view.Iast.view_is_prim; *)
+  (*     Iast.view_is_hrel = view.Iast.view_is_hrel; *)
+  (*     Iast.view_kind = view.Iast.view_kind; *)
+  (*     Iast.view_derv = view.Iast.view_derv; *)
+  (*     Iast.view_parent_name = view.Iast.view_parent_name; *)
+  (*     Iast.view_prop_extns = view.Iast.view_prop_extns; *)
+  (*     Iast.view_derv_info = view.Iast.view_derv_info; *)
+  (*     Iast.view_mem = view.Iast.view_mem; *)
+  (*     Iast.view_pt_by_self = view.Iast.view_pt_by_self; *)
+  (*     Iast.try_case_inference = view.Iast.try_case_inference; *)
+  (*     Iast.view_materialized_vars = view.Iast.view_materialized_vars; *)
+  (*   } *)
   in
   let (tmp_data_name,tmp_data_fields),(data_name,data_fields) = horm_dd in
   let cand_views = look_up_views tmp_data_name templ_view_decls in

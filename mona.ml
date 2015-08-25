@@ -11,6 +11,8 @@ open GlobProver
 module CP = Cpure
 
 let set_prover_type () = Others.last_tp_used # set Others.Mona
+let set_proof_string str = Others.last_proof_string # set str
+let set_proof_result str = Others.last_proof_result # set str
 
 let is_mona_running = ref false
 (* let channels = ref (stdin, stdout, stdin) *)
@@ -1064,6 +1066,7 @@ and mona_of_b_formula_x b f vs =
     | CP.ListPerm _ -> failwith ("Lists are not supported in Mona")
     | CP.LexVar _ -> failwith ("LexVar is not supported in Mona")
     (* | CP.VarPerm _ -> failwith ("VarPerm is not supported in Mona") *)
+    | CP.ImmRel _ -> failwith ("Imm Relations are not supported in Mona")
     | CP.RelForm _ -> failwith ("Relations are not supported in Mona") (* An Hoa *) 
   in
   ret
@@ -1166,6 +1169,7 @@ and print_b_formula b f = match b with
   | CP.ListAllN _
   | CP.ListPerm _ -> failwith ("Lists are not supported in Mona")
   | CP.LexVar _ -> failwith ("LexVar is not supported in Mona")
+  | CP.ImmRel _ -> failwith ("Imm Relations are not supported in Mona")
   (* | CP.VarPerm _ -> failwith ("VarPerm not suported in Mona") *)
   | CP.RelForm _ -> failwith ("Arrays are not supported in Mona") (* An Hoa *)
   | CP.XPure _ -> failwith ("XPure are not supported in Mona")
@@ -1199,9 +1203,20 @@ let send_cmd_with_answer str =
   let answ = Procutils.PrvComms.maybe_raise_timeout_num 1 fnc () !mona_timeout in
   answ
 
+let wrap_collect_raw_result f x =
+  try
+    set_prover_type ();
+    set_proof_string x;
+    let out = f x in
+    set_proof_result out;
+    out
+  with e ->
+    set_proof_result ("Exception "^Printexc.to_string e);
+    raise e
+
 let send_cmd_with_answer str =
   let pr = fun f -> f in
-  Debug.no_1 "[Mona.ml]send_cmd_with_answer" pr pr send_cmd_with_answer str
+  Debug.no_1 "[Mona.ml]send_cmd_with_answer" pr pr (wrap_collect_raw_result send_cmd_with_answer) str
 
 let send_cmd_with_answer str =
   let pr = fun f -> f in
@@ -1211,6 +1226,7 @@ let send_cmd_with_answer str =
 let send_cmd_no_answer str =
   (* let () = (print_string ("\nsned_cmd_no_asnwer " ^ str ^"- end string\n"); flush stdout) in *)
   let (todo_unk:string) = send_cmd_with_answer str in
+  let () = x_binfo_hp (add_str "no_answer" pr_id) todo_unk no_pos  in
   ()
 
 let write_to_mona_predicates_file mona_filename =
@@ -1253,7 +1269,7 @@ let set_process (proc: prover_process_t) =
   process := proc
 
 let rec check_prover_existence prover_cmd_str: bool =
-  let exit_code = Sys.command ("which "^prover_cmd_str^">/dev/null") in
+  let exit_code = Sys.command ("which " ^ prover_cmd_str ^ " >/dev/null 2>&1") in
   if exit_code > 0 then
     let () = print_string_if (not !compete_mode)  ("WARNING: Command for starting mona interactively (" ^ prover_cmd_str ^ ") not found!\n") in
     false
@@ -1263,10 +1279,21 @@ let start () =
   last_test_number := !test_number;
   (* let () = print_endline mona_prog in *)
   if(check_prover_existence mona_prog)then begin
-    let () = Procutils.PrvComms.start !log_all_flag log_all ("mona", mona_prog, [|mona_prog; "-v";|]) set_process prelude in
-    (* let () = print_endline (mona_prog ^ "end") in *)
-    is_mona_running := true
+    try
+      print_endline_quiet  ("\nStarting MONA..."^mona_prog); flush stdout;
+      let () = Procutils.PrvComms.start !log_all_flag log_all ("mona", mona_prog, [|mona_prog; "-v";|]) set_process prelude in
+      (* let () = print_endline (mona_prog ^ "end") in *)
+      is_mona_running := true
+    with e ->
+      begin
+        print_endline "Unable to run the prover MONA!";
+        print_endline "Please make sure its executable file (mona) is installed";
+        raise e
+      end
   end
+  else 
+    (print_endline  ("\nCannot find MONA code..."); flush stdout;)
+
 
 let start () =
   let pr = (fun _ -> "") in
@@ -1464,6 +1491,7 @@ let write_to_file  (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_
   let () = Procutils.PrvComms.start !log_all_flag log_all ("mona", "mona", [|"mona"; "-q";  mona_filename|]) set_process (fun () -> ()) in
   let fnc () =
     let mona_answ = read_from_file !process.inchannel in
+    let () = x_binfo_hp (add_str "mona_answ" pr_id) mona_answ no_pos  in
     let res = check_answer file_content mona_answ is_sat_b in
     res
   in
@@ -1512,6 +1540,7 @@ let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (
       let () = maybe_restart_mona () in
       (* let _  = print_endline "sending to mona prover.." in *)
       let answer = send_cmd_with_answer !cmd_to_send in
+      let () = x_binfo_hp (add_str "answer" pr_id) answer no_pos  in
       check_answer content answer is_sat_b
     end
   with
@@ -1544,6 +1573,8 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   let (ante_fv, ante) = prepare_formula_for_mona pr_w pr_s ante !test_number in
   let (conseq_fv, conseq) = prepare_formula_for_mona pr_s pr_w conseq !test_number in
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
+  let tmp_form = x_add_1 CP.subs_const_var_formula tmp_form in
+  let tmp_form = if true (* !Globals.non_linear_flag *) then x_add_1 CP.drop_nonlinear_formula_rev tmp_form else tmp_form in
   (* let vs = Hashtbl.create 10 in *)
   (* let () = find_order tmp_form vs in    (\* deprecated *\) *)
   let (var1,var2,var0) = new_order_formula tmp_form in
@@ -1571,6 +1602,7 @@ let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   sat_optimize := true;
   incr test_number;
   (* let f = CP.drop_varperm_formula f in *)
+  let f = if true (* !Globals.non_linear_flag *) then x_add_1 Cpure.drop_nonlinear_formula f else f in
   let (f_fv, f) = prepare_formula_for_mona pr_w pr_s f !test_number in
   (* let vs = Hashtbl.create 10 in *)
   (* let () = find_order f vs in (\* deprecated *\) *)

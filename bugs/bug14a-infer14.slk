@@ -1,0 +1,127 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+HeapPred H1(node x).
+
+//(1)
+infer[H1] H1(x) |- x::node<v,q>  .
+print residue.
+
+//(2)
+infer[H1] H1(x) |- x::ll<n>  .
+print residue.
+
+//(3)
+infer[H1] H1(p)*x::node<1,p> |- x::ll<n> .
+print residue.
+
+//(4)
+infer [n] x::ll<n> |- x::node<_,p> .
+print residue.
+
+//(5)
+infer [n] x::ll<n> |- x::node<_,null>.
+print residue.
+
+//(6)
+infer [n] x::ll<n> & x=null  |- x::node<_,null>.  //==> n!=0
+print residue.
+
+//(7)
+infer [n] x::ll<n> & n=0 |- x::node<_,null>.  //==> n!=0
+print residue.
+
+//(8)
+infer [n] x::ll<n> & n>0 |- x::node<_,null>.  //==> n=1
+print residue.
+
+//(9)
+infer [n] x::ll<n> & n<=1 |- x::node<_,null>.
+print residue.
+
+//(10)
+infer [n] x::ll<n> & n<=0 |- x::node<_,null>. // --> n>0
+print residue.
+
+//(11)
+infer [H1] H1(p)* x::node<1,x2>*x2::node<3,p> |- x::ll<n> .
+print residue.
+
+//(12)
+infer [n] x::ll<n> |- x::node<_,y>*y::node<_,p> .
+print residue.
+
+//(13)
+infer [H1] H1(p)* x::node<1,x2>*x2::node<3,p> |- x::ll<n> . // currently no shape and size & n=4 .
+print residue.
+
+//(14)
+infer [H1] H1(p)* x::node<1,p> |- x::node<a,x2>*x2::node<b,q> & q=null.
+print residue.
+
+//(15)
+infer [H1] H1(p)* x::node<1,p> |- x::node<2,x2>*x2::node<b,q> & q=null.
+print residue.
+
+//(16)
+infer [H1] H1(p)* x::node<1,p> |- x::node<1,x2>*x2::node<3,q> & q=null.
+print residue.
+
+//(17)
+infer [H1] H1(p)* x::node<1,p> |- x::node<1,x2>*x2::ll<m> . //no shape&size: & m>3.
+print residue.
+
+//(18)
+infer [H1] H1(p)* x::node<1,r>*r::node<a,p> |- x::node<1,x2>*x2::ll<m>. // no shape&size: & m>3.
+print residue.
+
+//(19)
+infer [n] x::ll<n> |- x::ll<m> & m>3.
+print residue.
+
+//(20)
+infer [n] x::ll<n> |- x::node<_,null>.
+print residue.
+
+//(21)
+infer [m] q::ll<m> |- q=null.
+print residue.
+
+//(22)
+infer [q] q=null |- q=null.
+print residue.
+
+//(23)
+infer [q] q::node<_,r>*r::ll<m2> |- q=null.
+print residue.
+
+//(24)
+infer [m] x::node<_,a>*a::ll<m> |- x::node<_,null> .
+print residue.
+
+//(25)
+infer [x] x::node<_,null> |- x=null.
+print residue.
+
+//(26)
+infer [x] x=null |- x!=null .
+print residue.
+
+//(27)
+infer [x] x=null |- x::node<_,null> .
+print residue.
+
+//(28)
+infer [x] x!=null |- x=null.
+print residue.
+
+//(29)
+infer [H1] H1(x) |- x::node<_,null> .
+print residue.
+

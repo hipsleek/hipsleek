@@ -1,0 +1,17 @@
+relation P(ann v1).
+
+infer [a] P(a) & a<:@L |-  a<:@M.
+//infer [a]  a<:L |-  a<:@M.
+print residue.
+
+/********************
+# ex8c2.slk
+
+Residue:
+ <1>emp&a<:L & a=@M&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [a=@M]
+
+*/
+
+
+

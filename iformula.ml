@@ -206,6 +206,9 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
                         h_formula_heap2_label : formula_label option;
                         h_formula_heap2_pos : loc }
 
+let mk_hrel id cl pos =
+  HRel(id,cl,pos)
+
 let mk_absent_ann = Ipure_D.ConstAnn Accs
 let print_pure_formula = ref(fun (c:Ipure.formula) -> "printer not initialized")
 (* Interactive command line *)
@@ -222,6 +225,7 @@ let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized"
 (* 		in Hashtbl.add !linking_exp_list zero 0 *)
 
 let apply_one_imm (fr,t) a = match a with
+  | P.NoAnn -> a
   | P.ConstAnn _ -> a
   | P.PolyAnn (sv, pos) -> P.PolyAnn ((if P.eq_var sv fr then t else sv), pos)
 
@@ -646,6 +650,7 @@ and ann_opt_to_ann_lst (ann_opt_lst: P.ann option list) (default_ann: P.ann): P.
   | (None) :: t      ->  default_ann :: (ann_opt_to_ann_lst t default_ann) 
 
 and fv_imm ann = match ann with
+  | P.NoAnn -> []
   | P.ConstAnn _ -> []
   | P.PolyAnn (id,_) -> [id]
 
@@ -751,7 +756,7 @@ and h_fv (f:h_formula):(ident*primed) list = match f with
     let perm_vars = (fv_iperm ()) perm in
     let imm_vars =  fv_imm imm in
     let prm_ann =  List.flatten (List.map fv_imm  (ann_opt_to_ann_lst ann_param imm)) in
-    let imm_vars = if (!Globals.allow_field_ann) then imm_vars@prm_ann else imm_vars in
+    let imm_vars = if true (* (!Globals.allow_field_ann) *) then imm_vars@prm_ann else imm_vars in
     let hvars = List.concat (List.map (fun ff -> heap_fv ff.rflow_base) ho_b) in
     Gen.BList.remove_dups_eq (=) (hvars@imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map Ipure.afv b))))
   | HeapNode2 { h_formula_heap2_node = name ;

@@ -1,0 +1,81 @@
+data str {
+  int val;
+  str next;
+}.
+
+checkentail x::str<yyy',aaa> |- x::str<yyy',bbb> .
+
+print residue.
+
+/*
+# ex12d.ss
+
+# fixed primed vars
+
+# why is yy_17 not classified as EX, rather than IMPL
+
+run_infer:
+ x::str<yyy',aaa>@M&{FLOW,(20,21)=__norm#E}[] [] |-  EBase 
+   exists (Expl)[](Impl)[bbb; 
+   yyy_17](ex)[](exists yyy_17: x::str<yyy_17,bbb>@M&yyy_17=yyy'&
+   {FLOW,(20,21)=__norm#E}[]
+
+
+# What happen to the primed?
+
+(==iformula.ml#1795==)
+case_normalize_renamed_formula@5
+case_normalize_renamed_formula inp1 :view_decls:[]
+case_normalize_renamed_formula inp2 :avail_vs:[(x,);(yyy,);(aaa,)]
+case_normalize_renamed_formula inp3 :expl:[]
+case_normalize_renamed_formula inp4 :ann_vs:[]
+case_normalize_renamed_formula inp5 :(emp ; (emp ; (x::str{}<yyy',bbb>@M[HeapNode1]))) * ([] & true)( FLOW __norm)
+case_normalize_renamed_formula@5 EXIT:
+ ### f = (EX  . (x::str{}<yyy',bbb>@M[HeapNode1])*([] & true)( FLOW __norm))
+ ### h = [(bbb,);(yyy,')]
+ ### expl = []
+
+
+pr_primed_ident_list
+checkentail n=5 & n>7
+            |- x::WFSeg<yyy'>*yyy'::str<0,p>.
+print residue.
+
+# Why the use of ' var caused problem?
+
+vvv' is being instantiated!!!
+
+INPUT 0: [][] 
+ ### ante =  x::str<v,q>@M * q::WFSeg<yyy'>@M * yyy'::str<flted_12_36,p>@M&
+flted_12_36=0 & 0<v&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   exists (Expl)[](Impl)[yyy'; flted_13_48](ex)[](exists p_49,
+   flted_13_48: x::WFSeg<yyy'>@M * yyy'::str<flted_13_48,p_49>@M&
+   flted_13_48=0 & p_49=p&{FLOW,(20,21)=__norm#E}[]
+
+
+(==solver.ml#2797==)
+xpure_heap#1@52
+xpure_heap#1 inp1 : x::str<v,q>@M * yyy'::str<flted_12_36,p>@M * q::WFSeg<yyy'>@M
+xpure_heap#1 inp2 : flted_12_36=0 & 0<v & x=yyy'
+xpure_heap#1 inp3 :1
+xpure_heap#1@52 EXIT:( x=1 & yyy'=2 & ((q!=null | yyy'=q)) & x!=yyy',[], [])#true
+
+checkentail x::str<v,q>*q::WFSeg<yyy'>*yyy'::str<0,p> & v>0
+            |- x::WFSeg<yyy'>*yyy'::str<0,p>.
+
+
+WARNING: _0:0_0:0:* between overlapping heaps: ( x::str<v,q>@M, yyy'::str<flted_12_36,p>@M)
+
+Entail 1: Valid. 
+
+Residue:
+
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+
+
+# Why wasn't false counted?
+
+0 false contexts at: ()
+
+*/

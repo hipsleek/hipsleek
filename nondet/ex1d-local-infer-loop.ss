@@ -12,10 +12,10 @@ void foo(int xxx)
   }
 { 
   if (xxx>=0) {
-    xxx = nondeterm();
+    int xxx2 = nondeterm();
     //assume xxx'>=0;
-    infer_assume [xxx];
-    foo(xxx);
+    //infer_assume [xxx2];
+    foo(xxx - 1);
   }
 }
 

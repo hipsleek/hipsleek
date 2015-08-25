@@ -1,17 +1,47 @@
+//class __cflow extends __Exc {}
 class __DivByZeroErr extends __Error {}
 class __ArrBoundErr extends __Error {}
+/* class ret_int extends __RET { int val } */
+/* class ret_bool extends __RET { bool val } */
+class __RET extends __Exc {}
 
-int add___(int a, int b) 
-  requires true 
-  ensures res = a + b ;
+int add___(int a, int b)
+  requires true
+  ensures res = a + b;
 
-int minus___(int a, int b) 
+int minus___(int a, int b)
   requires true
   ensures res = a - b;
 
 int mult___(int a, int b) 
   requires true 
   ensures res = a * b;
+
+
+int mults___(int a, int b)
+  requires true 
+  ensures res = a * b;
+/*
+  case {
+    a = 0 -> ensures res = 0;
+    a > 0 -> case {
+      b = 0 -> ensures res = 0;
+      b < 0 -> ensures res < 0 & res < -a & res < b;
+      b > 0 -> ensures res > 0 & res > a & res > b;
+    }
+    a < 0 -> case {
+      b = 0 -> ensures res = 0;
+      b < 0 -> ensures res > 0 & res > -a & res > -b;
+      b > 0 -> ensures res < 0 & res < a & res < -b;
+    }
+  }
+*/
+/*
+r=a*b & b=c*d
+-->  (a=0 & r=0 | b=0 & r=0 |
+      a>0&b>0&r>a&r>b | a>0&b<0&r<-a&r<b | a<0&b>0&r<a&r<-b 
+      | a<0&b<0&r>-a,r>-b)
+*/
 
 int div___(int a, int b) 
  case {
@@ -28,6 +58,37 @@ int div___(int a, int b)
     -1 < b < 1 -> ensures true & flow __DivByZeroErr;
     }
 }
+
+int divs___(int a, int b) 
+  case {
+    a = 0 -> case {
+      b >= 1 -> ensures res = 0;
+      b <= -1 -> ensures res = 0;
+      -1 < b < 1 -> ensures true & flow __DivByZeroErr;
+    }
+    a > 0 -> case {
+      b = 1 -> ensures res = a;
+      b = -1 -> ensures res = -a;
+      b > 1 -> case {
+        a < b -> ensures res = 0;
+        a >= b -> ensures res >= 1 & res < a;
+      }
+      b < -1 -> case {
+        -a > b -> ensures res = 0;
+        -a <= b -> ensures res <= 1 & a + res > 0;
+      }
+      /* -1 < b < 1 -> requires false ensures false; */
+      -1 < b < 1 -> ensures true & flow __DivByZeroErr;
+    }
+    a < 0 -> case {
+      b = 1 -> ensures res = a;
+      b = -1 -> ensures res = -a;
+      b > 1 -> ensures res <= 0 & res > a;
+      b < -1 -> ensures res >= 0 & a + res < 0;
+      /* -1 < b < 1 -> requires false ensures false; */
+      -1 < b < 1 -> ensures true & flow __DivByZeroErr;
+    }
+  }
 
 // why is flow of div2 __Error rather __DivByZeroErr?
 int div2(int a, int b)
@@ -353,6 +414,14 @@ void delete_ptr(int_ptr_ptr@R x)
   requires x::int_ptr_ptr<v>
   ensures true;
 
+data int_star{
+  int value;
+}
+
+int_star __pointer_add__int_star__int__(int_star p, int i)
+  requires p::int_star<value>
+  ensures res::int_star<value+i>;
+
 /* ********<<<*************/
 /* Pointer translation  */
 /* ************************/
@@ -392,8 +461,7 @@ int[] aalloc___(int dim)
 	requires true 
 	ensures dom(res,0,dim-1);
 
-pred_prim memLoc<heap:bool,size:int>
-  inv size>0;
+pred_prim memLoc<heap:bool,size:int> inv size>0;
 
                                   ///////////////
                                   /*
@@ -446,14 +514,22 @@ RS_mem malloc1(int n)
  ensures  res=null or res::RS_mem<n>;
 */
 
-pred_prim WAIT<b:bag((Object,Object))>;
-pred_prim WAITS<G:bag((Object,Object)), S:bag(Object), d:Object>;
+//pred_prim WAIT<b:bag((Object,Object))>;
+//pred_prim WAITS<G:bag((Object,Object)), S:bag(Object), d:Object>;
 
 relation set_comp(bag((Object,Object)) g, bag(Object) S, Object d).
 relation concrete(bag(Object) g).
 relation cyclic(bag((Object,Object)) g).
 relation acyclic(bag((Object,Object)) g).
 relation waitS(bag((Object,Object)) g, bag(Object) S, Object d).
+
+/*
+//Now added automatically by add_tnt_prim_proc in parser.ml
+relation nondet_int__(int x).
+relation nondet_bool__(bool x).
+*/
+
+relation nondet_int__(int r).
 
 int rand_int ()
 requires true
@@ -463,3 +539,35 @@ bool rand_bool ()
 requires true
 ensures res or !res;
 
+
+/* ********>>>*************/
+/* String translation  */
+/* ************************/
+data char_star {
+  int val;
+  char_star next;
+}
+
+char_star __plus_plus_char(char_star x)
+requires x::char_star<_,q>@L & Term[] 
+ensures  res=q ;
+
+int __get_char(char_star x)
+  requires x::char_star<v,_>@L & Term[]
+  ensures res=v;
+
+void __write_char(char_star x, int v)
+  requires x::char_star<_,q> & Term[]
+  ensures x::char_star<v,q>;
+
+char_star plus_plus_char(char_star x)
+requires x::char_star<_,q>@L & Term[] 
+ensures  res=q ;
+
+int get_char(char_star x)
+  requires x::char_star<v,_>@L & Term[]
+  ensures res=v;
+
+void write_char(char_star x, int v)
+  requires x::char_star<_,q> & Term[]
+  ensures x::char_star<v,q>;

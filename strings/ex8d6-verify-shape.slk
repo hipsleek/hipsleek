@@ -1,0 +1,31 @@
+data str {
+  int val;
+  str next;
+}.
+
+pred_prim D<> inv self!=null.
+
+pred P1<> == self::str<v,q> * q::H1<v>
+  inv self!=null.
+
+pred H1<vvv> == self::str<v2,q>*q::H1<v2> & vvv!=0
+   or self::D<> & vvv=0
+  inv self!=null.
+
+pred Q1<s> == self::str<v,q>*q::D<> & v=0 & s=self
+  or self::str<v,q>*q::Q1<s> & v!=0
+  inv self!=null & s!=null.
+
+
+checkentail q::H1<v> & v=0  |- q::D<>.
+print residue.
+
+checkentail s'::str<v,q>*q::H1<v> & v=0 & s=s' |- s::Q1<s'>.
+print residue.
+
+
+/*
+# strings/ex8d6.slk --pcp
+
+
+*/

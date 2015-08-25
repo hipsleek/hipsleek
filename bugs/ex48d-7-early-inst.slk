@@ -1,0 +1,91 @@
+/*
+@M - mutable   (0)
+@I - immutable (1)
+@L - lending   (2)
+@A - no access (3)
+*/
+
+//data cell {int val;}.
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n, v1> == self = null & n = 0 
+	or self::node<a@v1, q> * 
+    q::ll<n-1, v1>
+  inv n >= 0.
+
+// (7) Valid
+
+//checkentail x::node<p,q> * q::ll<n,ann1> & n > 1 |- x::ll<n+1,@A> & n > 1.
+//expect Valid.
+
+checkentail x::node<p,q> * q::ll<n,ann1> & n > 1 |- x::ll<n+1,axx2> & n > 1.
+print residue.
+expect Fail.
+// this should be Valid but early inst give less accurate inst
+
+
+checkentail x::node<p,q> * q::ll<n,ann1> & n > 1 |- [axx2] x::ll<n+1,axx2> & n > 1.
+print residue.
+expect Valid.
+// this should be Valid for late instantiation
+
+/*
+# ex48c.slk
+
+# I guess the renaming on RHS is caused by axx2 being global.
+
+ ### conseq =  EBase (exists axx2_44,flted_25_43: x::ll{}<flted_25_43,axx2_44>@M&
+       flted_25_43=1+n & 1<n & axx2_44=axx2&{FLOW,(20,21)=__norm#E}[]
+
+
+
+*/
+//checkentail x::node<p,q> * q::ll<n,ann1> & n > 1 |- [ann2] x::ll<n+1,ann2> & n > 1.
+//print residue.
+//expect Valid.
+
+//checkentail x::node<p,q> * q::ll<n,ann1> & n > 1 |- x::node<_,qq>@ann2 * qq::ll<n,ann2> & n > 1.
+
+/*
+# ex47c.slk
+
+It seems like instantiating @M<:ann2 not sufficient to guarantee
+ann1<:ann2 later.
+
+--field-imm 
+
+Entail 1: Fail.(may) cause: @M<:ann2 |-  ann1<:ann2. LOCS:[0] (may-bug)
+
+Residue:
+ 
+MaybeErr Context: 
+                   
+                    fe_kind: MUST
+                    fe_name: logical bug
+                    fe_locs: {
+                              fc_message:  x!=null |-  x=null. LOCS:[21;15] (must-bug)
+                              fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}}
+[[ Fold ==> ]]
+                  FAIL_UNION 
+                   
+                    fe_kind: MAY
+                    fe_name: logical bug
+                    fe_locs: {
+                              fc_message:  @M<:ann2 |-  ann1<:ann2. LOCS:[0] (may-bug)
+                              fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}}
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  Match(q,q_50) ==> ]]
+                  
+CEX:false
+
+Validate 1: Expecting 3 Valid BUT got : Fail_May
+
+Unexpected: 1 
+
+
+
+
+*/

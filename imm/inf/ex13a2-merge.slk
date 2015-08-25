@@ -1,0 +1,20 @@
+data cell{
+ int fst;
+}.
+
+
+checkentail x::cell<xx>@a * x::cell<yy>@L |- x!=null.
+expect Valid.
+print residue.
+
+checkentail x::cell<xx>@a * x::cell<yy>@L |- x::cell<yy>@b .
+expect Valid.
+print residue.
+
+checkentail x::cell<xx>@a * x::cell<yy>@M |- x::cell<yy>@b .
+expect Valid.
+print residue.
+
+checkentail x::cell<xx>@a * x::cell<yy>@c |- x::cell<yy>@b .
+expect Valid.
+print residue.

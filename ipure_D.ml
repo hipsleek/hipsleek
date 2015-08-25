@@ -39,7 +39,7 @@ type xpure_view = {
   (* xpure_view_label : formula_label option; *)
 }
 
-type ann = ConstAnn of heap_ann | PolyAnn of ((ident * primed) * loc)
+type ann = ConstAnn of heap_ann | PolyAnn of ((ident * primed) * loc) | NoAnn
 
 (*annotations *)
 let imm_ann_top = ConstAnn imm_top
@@ -88,6 +88,7 @@ and p_formula =
   | ListPerm of (exp * exp * loc)  (* perm L2 L2 *)
   (* | HRelForm of (ident * (exp list) * loc) *)
   | RelForm of (ident * (exp list) * loc)           (* An Hoa: Relational formula to capture relations, for instance, s(a,b,c) or t(x+1,y+2,z+3), etc. *)
+  | ImmRel of (p_formula * imm_ann * loc)
 
 and term_ann = 
   | Term    (* definite termination *)
@@ -109,6 +110,10 @@ and uid = {
 and term_fail =
   | TermErr_May
   | TermErr_Must
+
+and imm_ann = 
+  | PreImm of p_formula
+  | PostImm of p_formula
 
 (* Expression *)
 and exp = 
@@ -182,3 +187,4 @@ let string_of_ann ann =
   match ann with
   | ConstAnn ha -> "ConstAnn " ^ (string_of_heap_ann ha)
   | PolyAnn _ -> "PolyAnn"
+  | NoAnn -> "NoAnn"

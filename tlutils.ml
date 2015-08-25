@@ -135,6 +135,11 @@ type term = {
   term_var: (spec_var * int) list; (* [(x, 2)] -> x^2; [(x, 1), (y, 1)] -> xy *)
 }
 
+type linear_term = {
+  linear_term_coe: int;
+  linear_term_var: spec_var option;
+}
+
 let print_term (t: term) =
   List.fold_left (fun s (v, d) -> s ^ "*" ^ 
                                   (!print_sv v) ^ "^" ^ (string_of_int d)) 
@@ -178,6 +183,69 @@ let term_of_mult_exp svl (e: exp): term =
   let c = List.fold_left (fun a c -> a * (to_int_const c Ceil)) 1 cl in
   let coe = List.fold_left (fun a vc -> mkMult a vc pos) (mkIConst c pos) vcl in
   mkTerm coe vl
+
+let rec int_of_exp (e: exp) =
+  match e with
+  | IConst (i, _) -> i
+  | Add (e1, e2, _) -> (int_of_exp e1) + (int_of_exp e2)
+  | Subtract (e1, e2, _) -> (int_of_exp e1) - (int_of_exp e2)
+  | Mult (e1, e2, _) -> (int_of_exp e1) * (int_of_exp e2)
+  | Div (e1, e2, _) -> (int_of_exp e1) / (int_of_exp e2)
+  | Max (e1, e2, _) -> 
+    let i1 = int_of_exp e1 in
+    let i2 = int_of_exp e2 in
+    if i1 > i2 then i1 else i2
+  | Min (e1, e2, _) -> 
+    let i1 = int_of_exp e1 in
+    let i2 = int_of_exp e2 in
+    if i1 > i2 then i2 else i1
+  | _ -> report_error (pos_of_exp e) ("int_of_exp: Unexpected exp " ^ (!print_exp e))
+
+let linear_term_of_term t = 
+  let coe = int_of_exp t.term_coe in
+  let var = 
+    match t.term_var with 
+    | [] -> None
+    | (v, d)::[] -> 
+      if d = 1 then Some v 
+      else if d = 0 then None 
+      else report_error no_pos ("linear_term_of_term: Unexpected non-linear term " ^ (print_term t))
+    | _ -> report_error no_pos ("linear_term_of_term: Unexpected non-linear term " ^ (print_term t))
+  in 
+  { linear_term_coe = coe; linear_term_var = var }
+
+let exp_of_linear_term t pos = 
+  let coe_exp = mkIConst t.linear_term_coe pos in
+  match t.linear_term_var with
+  | None -> coe_exp
+  | Some v -> mkMult coe_exp (mkVar v pos) pos 
+
+let exp_of_linear_term_list tl pos: exp = 
+  match tl with
+  | [] -> mkIConst 0 pos
+  | t::ts -> List.fold_left (fun a t -> 
+      mkAdd a (exp_of_linear_term t pos) pos) (exp_of_linear_term t pos) ts
+
+let eq_linear_term_var v1 v2 =
+  match v1, v2 with
+  | None, None -> true
+  | Some v1, Some v2 -> eq_spec_var v1 v2
+  | _ -> false
+
+let rec add_linear_terms tl1 tl2 = 
+  match tl1 with
+  | [] -> tl2
+  | t1::rt1 -> 
+    try
+      let same_t1, rt2 = List.partition (fun t2 -> 
+          eq_linear_term_var t1.linear_term_var t2.linear_term_var) tl2 in
+      let nt1 = { t1 with 
+          linear_term_coe = List.fold_left (fun i t -> i + t.linear_term_coe) t1.linear_term_coe same_t1 }
+      in nt1::(add_linear_terms rt1 rt2)
+    with _ -> t1::(add_linear_terms rt1 tl2)
+
+let subt_linear_terms ts1 ts2 = 
+  add_linear_terms ts1 (List.map (fun t2 -> { t2 with linear_term_coe = -t2.linear_term_coe }) ts2)
 
 (* Syntactic check only *)
 let rec is_zero_exp (e: exp) =

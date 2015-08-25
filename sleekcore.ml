@@ -39,9 +39,11 @@ let generate_lemma = ref (fun (iprog: I.prog_decl) n t (ihps: ident list) iante 
   let sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante conseq=
 *)
 
+(* WN : Is this executed? *)
 let sleek_unsat_check isvl cprog ante=
   let () = Debug.ninfo_hprint (add_str "check unsat with graph" pr_id) "\n" no_pos in
   let () = Hgraph.reset_fress_addr () in
+  let pos = CF.pos_of_formula ante in
   let es = CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let lem = Lem_store.all_lemma # get_left_coercion in
   let ante = x_add Solver.normalize_formula_w_coers 11 cprog es ante (* cprog.C.prog_left_coercions *) lem in
@@ -80,7 +82,8 @@ let sleek_unsat_check isvl cprog ante=
   let ante0a = (CF.simplify_pure_f (CF.force_elim_exists bare quans)) in
   let r,fail_of = Frame.check_unsat_w_norm cprog ante0a false in
   if r then
-    let () = print_endline_quiet ("[Warning] False ctx") in
+    let () = print_endline_quiet ("[Warning] False ctx 0") in
+    let () = x_dinfo_hp (add_str "pos of false" Cprinter.string_of_pos) pos no_pos in
     (true, CF.SuccCtx [init_ctx], [])
   else
     (false, CF.FailCtx (CF.Trivial_Reason
@@ -97,14 +100,16 @@ let sleek_entail prog ante_ctx conseq pos=
 
 (* WN : why isn't itype added to estate? *)
 let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:CF.formula) (conseq:CF.struc_formula) =
+  let pos2 = CF.pos_of_formula ante in
+  let pos3 = CF.pos_of_struc_formula conseq in
   let () = Hgraph.reset_fress_addr () in
   let pr = Cprinter.string_of_struc_formula in
   let () = Debug.ninfo_hprint (add_str "ante(before rem @A)"  Cprinter.string_of_formula) ante no_pos in
-  let ante = if (!Globals.remove_abs && not(!Globals.imm_merge)) then 
+  let ante = if (!Globals.remove_abs && not((* !Globals.allow_field_ann *) !Globals.imm_merge)) then 
       Cvutil.remove_imm_from_formula cprog ante (CP.ConstAnn(Accs)) else ante in
   let () = x_tinfo_hp (add_str "ante(after rem @A)"  Cprinter.string_of_formula) ante no_pos in
   let ante = Norm.imm_abs_norm_formula ante cprog  (Solver.unfold_for_abs_merge cprog no_pos) in
-  let conseq = if ((!Globals.remove_abs)  && not(!Globals.imm_merge)) then Cvutil.remove_imm_from_struc_formula cprog conseq (CP.ConstAnn(Accs)) else conseq in
+  let conseq = if ((!Globals.remove_abs)  && not((* !Globals.allow_field_ann *) !Globals.imm_merge)) then Cvutil.remove_imm_from_struc_formula cprog conseq (CP.ConstAnn(Accs)) else conseq in
   let () = x_tinfo_hp (add_str "conseq(after rem @A)" pr) conseq no_pos in 
   (* Immutable.restore_tmp_ann_formula ante in *)
   (* let conseq = Immutable.restore_tmp_ann_struc_formula conseq in *)
@@ -214,11 +219,19 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
     let ctx =
       if !Globals.delay_proving_sat then ctx
       else CF.transform_context (x_add Solver.elim_unsat_es 9 cprog (ref 1)) ctx in
-    let () = if (CF.isAnyFalseCtx ctx) then
+    let () = 
+      if (CF.isAnyFalseCtx ctx) then
+        (* Why is pos of ante 0.0 ? *)
+        (* !!! **sleekcore.ml#222:pos of ante: 0:0 *)
+        (* !!! **sleekcore.ml#223:pos of conseq: 24:41[Warning] False ctx *)
+        let () = x_dinfo_hp (add_str "pos of ante" Cprinter.string_of_pos) pos2 no_pos in
+        let () = x_dinfo_hp (add_str "pos of conseq" Cprinter.string_of_pos) pos3 no_pos in
+        let () = add_false_ctx pos3 in
         print_endline_quiet ("[Warning] False ctx")
+      else last_sat_ctx # set (Some pos3)
     in
     (* let is_arrvar_flag = CF.is_arr_as_var_ctx ctx in *)
-    (* let () = x_binfo_hp (add_str "arrvar_flag" string_of_bool) is_arrvar_flag no_pos in *)
+    (* let () = x_dinfo_hp (add_str "arrvar_flag" string_of_bool) is_arrvar_flag no_pos in *)
     let conseq = Cfutil.elim_null_vnodes cprog conseq in
     (*****************)
     (* let is_base_conseq,conseq_f = CF.base_formula_of_struc_formula conseq in *)
@@ -245,7 +258,18 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
     (* let () = print_endline ("WN# 1:"^(Cprinter.string_of_list_context rs1)) in *)
     (* tut/ex1/bugs-ex31-match.slk *)
     let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
-    (* let () = print_endline ("WN# 2:"^(Cprinter.string_of_list_context rs)) in *)
+    let () = match last_sat_ctx # get with
+      | Some p -> if (CF.isAnyFalseListCtx rs) && not(!Globals.old_collect_false) then
+          let contra_flag = last_infer_lhs_contra # get in
+          let () = add_false_ctx p in
+          if contra_flag then ()
+          else
+            let () = print_endline_quiet ("[UNSOUNDNESS] WARNING : satisfiable state at "^(string_of_loc p)^" became hfalse") in
+            if !Globals.assert_unsound_false then failwith "Unsound false in SLEEK?" 
+            else ()
+      | None -> () 
+    in
+    let () = x_tinfo_pp ("WN# 2:"^(Cprinter.string_of_list_context rs)) no_pos in
     (* flush stdout; *)
     let res =
       if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs)))
@@ -539,7 +563,7 @@ let validate_x ls_ex_es0 ls_act_es0=
           let ls_act_ass = (List.map (fun hp -> (hp.CF.hprel_lhs, hp.CF.hprel_rhs)) es.CF.es_infer_hp_rel)@
                            (List.map (fun (_,lhs,rhs) ->
                                 (CF.formula_of_pure_P lhs no_pos,
-                                 CF.formula_of_pure_P rhs no_pos)) es.CF.es_infer_rel) in
+                                 CF.formula_of_pure_P rhs no_pos)) es.CF.es_infer_rel # get_stk_recent) in
           let b2a,_ = checkeq_ass guide_vars ls_ex_ass ls_act_ass in
           b2a
       in

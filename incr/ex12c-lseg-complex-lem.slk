@@ -1,0 +1,50 @@
+//Valid.Valid.Valid.Valid
+data node { int val ; node next }.
+
+/*
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+*/
+
+pred lseg<n, p> == 
+  case {
+    n=0 -> [] self = p & n = 0;
+    n!=0 -> [] self::node<next = r> * r::lseg<n - 1, p>;
+  }  inv n >= 0.
+
+/*
+lemma "V11" self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+
+lemma "V12" self::lseg<a, r> * r::lseg<b, p> <- self::lseg<n, p> & n = a + b & a,b >=0.
+
+lemma "V21" self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
+
+lemma "V22" self::lseg<a, r> * r::lseg<b, p> -> self::lseg<n, p> & n = a + b & a,b >=0.
+
+*/
+
+
+lemma_safe "V22" self::lseg<a, r> * r::lseg<b, p> 
+   -> self::lseg<n, p> & n = a + b & a,b >=0.
+
+lemma_safe "V21" self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
+
+/*
+# ex12c.slk
+
+lemma_safe "V22" self::lseg<a, r> * r::lseg<b, p> 
+   -> self::lseg<n, p> & n = a + b & a,b >=0.
+
+lemma_safe "V21" self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
+
+# V21 is mirror of V22
+  Why only V22 fails by itself?
+
+Entailing lemma V22: Fail. (cex)(may) cause: AndR[ (flted_13_451+1)!=0 & exists(n_456:n_456!=0 & flted_13_451+1=n_456) & 
+ (((1<=flted_13_451 & r_453!=null) | (r_454=r_453 & flted_13_451=0))) & 
+ (((1<=b & r_454!=null) | (p=r_454 & b=0))) & exists(p_455:r_454=p_455) |-  r_454=p. LOCS:[13;1;0;33];  exists(p_455:r_454=p_455) & 
+ (((1<=flted_13_451 & r_453!=null) | (r_454=r_453 & flted_13_451=0))) & 
+ (((1<=b & r_454!=null) | (p=r_454 & b=0))) & a!=0 & flted_13_451+1=a & 
+ exists(n_456:n_456!=0 & flted_13_451+1=n_456) |-  1+flted_13_451=a+b. LOCS:[1;0;13;33] (may-bug).]
+*/

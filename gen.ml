@@ -94,6 +94,10 @@ struct
     if !silence_output (* compete_mode *) then () 
     else print_string s 
 
+  let warn_exception e = 
+    let s = Printexc.to_string e in
+    print_endline_quiet ("\nException processed: "^s)
+
   let print_web_mode s = 
     if !Globals.tnt_web_mode then print_endline s
     else print_endline_quiet s 
@@ -179,6 +183,7 @@ struct
 
   let fold_pair2f f1 f2 (x1,x2) = f1 x1, f2 x2
 
+  (* isn't this un_opt *)
   let map_opt_def def f x = match x with
     | None -> def
     | Some v -> f v
@@ -199,6 +204,8 @@ struct
   let map_l_snd_res f x = List.split (List.map (fun (l,c) -> let r1,r2 = f c in ((l,r1),r2)) x)
   let exists_l_snd f x = List.exists (fun (_,c)-> f c) x
   let all_l_snd f x = List.for_all (fun (_,c)-> f c) x
+
+  let ite cond f1 f2 =  if cond then f1 else f2
 
   let line_break_threshold = 60
   exception Break_Found
@@ -285,7 +292,11 @@ struct
     if n <= 0 then []
     else v :: (repeat v (n-1))
 
-  let report_error pos msg = Error.report_error
+  let report_error ?(exc=None) pos msg = 
+    let msg = match exc with 
+      | None -> msg
+      | Some e -> (msg^">>from"^(Printexc.to_string e)) in
+    Error.report_error
       { Error.error_loc = pos; Error.error_text = msg}
 
   let report_warning pos msg = 
@@ -573,6 +584,14 @@ class ['a] mut_option =
       end
   end;;
 
+class mut_bool =
+  object (self)
+    val mutable flag = false
+    method get = flag
+    method set = flag <- true
+    method reset = flag <- false
+  end;;
+
 class change_flag =
   object 
     val mutable cnt = 0
@@ -591,13 +610,23 @@ class change_flag =
 
 class ['a] stack  =
   object (self)
+    val mutable recent = 0
     val mutable stk = []
     method push (i:'a) = 
       begin
-        stk <- i::stk
+        stk <- i::stk;
+        recent <- recent+1
       end
     method get_stk  = stk (* return entire content of stack *)
-    method set_stk newstk  = stk <- newstk 
+    method get_stk_recent  = 
+      if recent<=0 then []
+      else BList.take recent stk 
+    (* return recent content of stack *)
+    method get_stk_and_reset  = 
+      let s=stk in 
+      (self # reset;s) (* return entire content of stack & clear *)
+    method set_stk newstk  = 
+      stk <- newstk 
     (* override with a new stack *)
     method pop = match stk with 
       | [] -> print_string "ERROR : popping empty stack"; 
@@ -606,19 +635,23 @@ class ['a] stack  =
     method pop_top = match stk with 
       | [] -> print_string "ERROR : popping empty stack"; 
         raise Stack_Error
-      | x::xs -> stk <- xs; x
+      | x::xs -> (stk <- xs;recent<-recent-1; x)
     method top : 'a = match stk with 
       | [] -> print_string "ERROR : top of empty stack"; 
         raise Stack_Error
       | x::xs -> x
     method pop_no_exc = match stk with 
       | [] -> () 
-      | x::xs -> stk <- xs
+      | x::xs -> (stk <- xs; recent<-recent-1)
+    method map f = 
+      stk <- List.map f stk
     method is_empty = stk == []
+    method is_empty_recent = recent<=0
     method is_avail = not(stk == [])
     method get = self # top
     (* method set x = self # push x *)
     method len = List.length stk
+    method len_recent = recent
     method reverse = stk <- List.rev stk
     method reverse_of = List.rev stk
     method mem (i:'a) = List.mem i stk 
@@ -627,12 +660,28 @@ class ['a] stack  =
     (* method exists (i:'a) = List.mem i stk  *)
     (* method exists_eq eq (i:'a) = List.exists (fun b -> eq i b) stk  *)
     method exists f = List.exists f stk 
-    method push_list (ls:'a list) =  stk <- ls@stk
+    method push_list (ls:'a list) = 
+      begin
+        stk <- ls@stk;
+        recent <- (List.length ls)+recent
+      end
     method pop_list (ls:'a list) = 
-      stk <- BList.drop (List.length ls) stk
-    method pop_list_n (n: int) = 
-      stk <- BList.drop n stk
-    method reset = stk <- []
+      begin
+        stk <- BList.drop (List.length ls) stk;
+        recent <- recent - (List.length ls)
+      end
+    method pop_list_n (n: int) =
+      begin
+        stk <- BList.drop n stk;
+        recent <- recent - n
+      end
+    method reset = 
+      begin
+        stk <- []; 
+        recent <- 0
+      end
+    method reset_recent = 
+      recent <- 0
     method clone =
       Oo.copy self
       (* let n = new Gen.stack in *)
@@ -641,15 +690,29 @@ class ['a] stack  =
       (* n *)
   end;;
 
-class ['a] stack_pr (epr:'a->string) (eq:'a->'a->bool)  =
-  object 
+class ['a] stack_pr nn (epr:'a->string) (eq:'a->'a->bool)  =
+  object (self)
     inherit ['a] stack as super
+    val name = nn (* name of stack *)
     val elem_pr = epr 
     val elem_eq = eq 
+    method get_stk_no_dupl  = 
+      (* remove dupl *)
+      let s = super # get_stk in
+      BList.remove_dups_eq eq s
     method push_list_pr (ls:'a list) =  
       (* WN : below is to be removed later *)
-      (* let () = print_endline ("push_list:"^(Basic.pr_list epr ls)) in *)
-      super # push_list ls 
+      let n = List.length ls in
+      if n=0 then ()
+      else 
+        (* let () = print_endline ("\nXXXX push_list("^name^":"^(string_of_int n)^")"^(Basic.pr_list epr ls)) in *)
+        super # push_list ls 
+    method reset_pr  =  
+        (* let () = print_endline ("\nXXXX reset("^name) in *)
+        super # reset 
+    method push_pr (s:string) (ls:'a) =  
+      (* let () = print_endline ("push_pr("^s^"):"^(epr ls)) in *)
+      super # push ls 
     method string_of = Basic.pr_list_ln elem_pr stk
     method string_of_no_ln = Basic.pr_list elem_pr stk
     method string_of_no_ln_rev = 
@@ -664,8 +727,7 @@ class ['a] stack_pr (epr:'a->string) (eq:'a->'a->bool)  =
     method dump_no_ln =
       begin
         let s = super#reverse_of  in
-        List.iter (fun e -> print_string (elem_pr e)) s;
-        print_endline ""
+        List.iter (fun e -> print_string (elem_pr e)) s
       end
     method mem (i:'a) = List.exists (elem_eq i) stk
     method overlap (ls:'a list) = 
@@ -674,9 +736,9 @@ class ['a] stack_pr (epr:'a->string) (eq:'a->'a->bool)  =
   end;;
 
 
-class ['a] stack_filter (epr:'a->string) (eq:'a->'a->bool) (fil:'a->bool)  =
+class ['a] stack_filter nn (epr:'a->string) (eq:'a->'a->bool) (fil:'a->bool)  =
   object 
-    inherit ['a] stack_pr epr eq as super
+    inherit ['a] stack_pr nn epr eq as super
     val filter_fn = fil
     method filter = stk <- List.filter fil stk
     method string_of_reverse_log_filter = 
@@ -685,13 +747,14 @@ class ['a] stack_filter (epr:'a->string) (eq:'a->'a->bool) (fil:'a->bool)  =
       (* string_of_reverse_log *)
   end;;
 
-class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  =
+class ['a] stack_noexc nn (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  =
   object 
-    inherit ['a] stack_pr epr eq
+    inherit ['a] stack_pr nn epr eq
     val emp_val = x_init
     method top_no_exc : 'a = match stk with 
       | [] ->  emp_val
       | x::xs -> x
+    (* method top : 'a = self # top_no_exc  *)
     method last : 'a = match stk with 
       | [] -> emp_val
       | _ -> List.hd (List.rev stk)
@@ -717,18 +780,34 @@ class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  =
 (* (\* Gen.BList.overlap_eq elem_eq ls stk *\) *)
 (*    end;; *)
 
+class detect_obj =
+  object 
+    val mutable flag = false
+    method get : bool = flag
+    method set = flag <- true
+    method reset = flag <- false
+  end;;
+
+
 class counter x_init =
   object 
     val mutable ctr = x_init
     method get : int = ctr
     method inc = ctr <- ctr + 1
     method inc_and_get = ctr <- ctr + 1; ctr
+    method diff = ctr - x_init
     method add (i:int) = ctr <- ctr + i
-    method reset = ctr <- 0x0
+    method reset = ctr <- x_init (* 0x0 *)
     method string_of : string= (string_of_int ctr)
     method str_get_next : string 
       = ctr <- ctr + 1; string_of_int ctr
   end;;
+
+let seq_number2 = new counter 0
+
+let fresh_int2 () = seq_number2 # inc_and_get
+
+let reset_int2 () = seq_number2 # reset
 
 class ctr_with_aux x_init =
   object 
@@ -829,7 +908,7 @@ struct
 
   (* let (stkint:int stack3) = new stack3  *)
 
-  let error_list = new stack_noexc "error - stack underflow" (fun x -> x) (=)
+  let error_list = new stack_noexc "error_list" "error - stack underflow" (fun x -> x) (=)
 
   let warning_no  = new counter 0
 
@@ -1085,7 +1164,7 @@ module EqMap =
       let r =
         let (t1,t2) = order_two t1 t2 in
         List.fold_left (fun a (p1,p2) -> add_equiv a p1 p2) t2 (get_equiv t1) in
-      let pr = string_of_debug in
+      (* let pr = string_of_debug in *)
       (* let () = print_endline ("eset1 :"^ (pr t1)) in *)
       (* let () = print_endline ("eset2 :"^ (pr t2)) in *)
       (* let () = print_endline ("eset_out :"^ (pr r)) in *)
@@ -1098,12 +1177,13 @@ module EqMap =
     let elim_elems  (s:emap) (e:elem list) : emap = 
       List.filter (fun (a,k2) -> not(mem a e)) s
 
-    (* return all elements equivalent to e, including itself *)
+    (* return all elements equivalent to e, not including itself *)
     let find_equiv_all  (e:elem) (s:emap) : elist  =
       let r1 = find s e in
       if (r1==None) then []
       else List.map fst (List.filter (fun (a,k) -> k==r1) s)
 
+    (* return all elements equivalent to e, including itself *)
     let find_equiv_all_new  (e:elem) (s:emap) : elist  =
       let r1 = find s e in
       if (r1==None) then [e]
@@ -1303,10 +1383,10 @@ struct
 
   (* type stack = int list *)
   (* stack of calls being traced by ho_debug *)
-  let debug_stk = new stack_noexc (-2) string_of_int (=)
+  let debug_stk = new stack_noexc "debug_stk" (-2) string_of_int (=)
 
   (* stack of calls with detailed tracing *)
-  let dd_stk = new stack_pr string_of_int (=)
+  let dd_stk = new stack_pr "dd_stk" string_of_int (=)
 
   let force_dd_print () =
     (* let d = dd_stk # get_stk in *)
@@ -1704,7 +1784,7 @@ module Profiling =
 struct
   let counters = new mult_counters
   let tasks = new task_table
-  let profiling_stack = new stack_noexc ("stack underflow",0.,false) 
+  let profiling_stack = new stack_noexc "profiling_stk" ("stack underflow",0.,false) 
     (fun (s,v,b)-> "("^s^","^(string_of_float v)^","^(string_of_bool b) ^")") (=)
 
   let add_to_counter (s:string) i = 
@@ -2231,6 +2311,84 @@ struct
 
 end;;
 
+(* Efficient imperative DAG for implementing posets *)
+module type DAG =
+  sig
+    (* Element type *)
+    type e
+    (* DAG inner type *)
+    type t
+    (* Create an empty DAG *)
+    val create : unit -> t
+    (* Add a pair of < relation to DAG *)
+    val add : t -> (e * e) -> unit
+    (* Add a list of pairs of < relation to DAG *)
+    val add_list : t -> (e * e) list -> unit
+    (* Check whether an element exists in the DAG *)
+    val mem : t -> e -> bool
+    (* Check whether there is a path between two nodes *)
+    val has_path : t -> e -> e -> bool
+    (* Check whether lhs < rhs *)
+    val is_lt : t -> e -> e -> bool
+    (* Check whether lhs >= rhs *)
+    val is_gte : t -> e -> e -> bool
+    (* Check whether lhs < rhs or None if not found *)
+    val is_lt_opt : t -> e -> e -> bool option
+    (* Check whether lhs >= rhs, or None if not found *)
+    val is_gte_opt : t -> e -> e -> bool option
+    (* Standard unordered fold *)
+    val fold : t -> ('acc -> e -> 'acc) -> 'acc -> 'acc
+  end
+
+module Make_DAG(Eq : EQ_TYPE) : DAG with type e := Eq.t =
+  struct
+    module M = Map.Make(Eq)
+    type e = Eq.t
+    type node = Node of (e * vertex list)
+    and vertex = node ref
+    type t = {
+        mutable tbl : node ref M.t;
+        top : vertex;
+      }
+    let node_of v = match !v with Node (n,_) -> n
+    let adjacent_of v = match !v with Node (_,n) -> n
+    let mk_vertex e vs = ref (Node(e, vs))
+    let mk_dummy_vertex () = ref (Node(Eq.zero, []))
+    let add_vertex t e =
+      let v = mk_vertex e [] in
+      let () = t.tbl <- M.add e v t.tbl in v
+    let mem t e = M.mem e t.tbl
+    let find t e = M.find e t.tbl
+    let connect t v1 v2 =
+      let e1 = node_of v1 in
+      let vs = adjacent_of v1 in
+      let new_e1 = mk_vertex e1 (v2::vs) in
+      t.tbl <- M.remove e1 t.tbl;
+      t.tbl <- M.add e1 new_e1 t.tbl
+    let add t (e1, e2) =
+      let v1 = try find t e1 with Not_found -> add_vertex t e1 in
+      let v2 = try find t e2 with Not_found -> add_vertex t e2 in
+      connect t t.top v1;
+      connect t v1 v2
+    let add_list t xs = List.iter (add t) xs
+    let create () = { tbl = M.empty; top = mk_dummy_vertex () }
+    let vertex_eq v1 v2 = Eq.eq (node_of v1) (node_of v2)
+    let rec has_path_v v1 v2 =
+      List.fold_right (fun v acc -> (has_path_v v v2) || acc) (adjacent_of v1)
+                      (vertex_eq v1 v2)
+    let has_path_exc t e1 e2 =
+      has_path_v (find t e1) (find t e2)
+    let has_path t e1 e2 =
+      try has_path_v (find t e1) (find t e2) with Not_found -> false
+    let is_lt t e1 e2 = has_path t e1 e2
+    let is_gte t e1 e2 = not (is_lt t e1 e2)
+    let is_lt_opt t e1 e2 =
+      try Some (has_path_exc t e1 e2) with Not_found -> None
+    let is_gte_opt t e1 e2 = 
+      try Some (not (has_path_exc t e1 e2)) with Not_found -> None
+    let fold t f init = List.fold_left f init (List.map fst (M.bindings t.tbl))
+  end
+
 include Basic
 include SysUti
 
@@ -2247,4 +2405,3 @@ let range a b =
     if a > b then [] else a :: aux (a+1) b  in
   (* if a > b then List.rev (aux b a) else aux a b;; *)
   if a > b then [] else aux a b;;
-

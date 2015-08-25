@@ -1,0 +1,33 @@
+data node {
+  node f0;
+}.
+
+
+pred foo<y:node> ==
+  self::node<y> * y::node<_>@L.
+
+checkentail x::node<a>*a::node<b> |- (exists c: x::foo<c> * c::node<_>).
+print residue.
+// fail due to x::node<..> being matched first?
+expect Valid.
+
+checkentail x::node<a>*a::node<b> |- x::foo<a> * a::node<_>.
+print residue.
+// fail due to x::node<..> being matched first?
+expect Valid.
+
+checkentail x::node<a>*a::node<b> |- x::foo<c>.
+print residue.
+expect Valid.
+
+checkentail x::node<a> |- x::foo<c>.
+print residue.
+expect Fail.
+
+
+/*
+# 22-lend1.slk
+
+
+*/
+

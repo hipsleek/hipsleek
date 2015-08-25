@@ -1,0 +1,39 @@
+data cell{
+ int fst;
+}.
+
+relation P1(ann v1).
+
+
+infer [P1] true |-  P1(ww).
+print residue.
+
+infer [P1] c::cell<_>@M |-  c::cell<_>@ww&P1(ww).
+
+infer [P1] c::cell<_>@v & v=@M |-  c::cell<_>@ww&P1(ww).
+
+print residue.
+
+/*
+# ex10a3.slk 
+
+infer [P1] c::cell<_>@M |-  c::cell<_>@ww&P1(ww).
+
+GOT:
+
+ <1>c::cell<Anon_11>@[@M, @ww]&@M<:ww & Anon_12=Anon_11&{FLOW,(20,21)=__norm#E}[]
+ inferred rel: [RELDEFN P1: ( true) -->  P1(ww)]
+
+# As relation can be pre or post, we may want to obtain:
+
+ inferred rel: [RELDEFN P1: @M<:ww -->  P1(ww)]
+
+ This would tell us that P1(ww) = ww=@M so that we can
+ have that as the strongest post-condition.
+
+ This at least tell us that ww is being used.
+ If we had just true --> P(ww), it could be that 
+ ww is unused.
+
+
+*/

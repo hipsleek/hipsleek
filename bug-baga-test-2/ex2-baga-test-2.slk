@@ -1,0 +1,48 @@
+data node {
+  node next;
+}.
+
+// --eps
+
+
+pred l3a<> == 
+  self::node<q>*q::node<_>  & self=q
+inv self!=null.
+
+
+//(3) valid
+checkentail x::l3a<> |- false.
+expect Valid.
+
+
+/*
+# ex2.slk
+
+
+  inv: false
+  baga over inv: [([], self!=null)]
+  baga over inv (unfolded): []
+
+
+pls2nus@loris-laptop:~/hg/sl_def$ hg bisect -b
+Testing changeset 15920:135ad18b74ef (73 changesets remaining, ~6 tests)
+64 files updated, 0 files merged, 81 files removed, 0 files unresolved
+
+pls2nus@loris-laptop:~/hg/sl_def$ hg bisect -b
+Testing changeset 15919:15ae6223f3e3 (41 changesets remaining, ~5 tests)
+4 files updated, 0 files merged, 17 files removed, 0 files unresolved
+
+
+pls2nus@loris-laptop:~/hg/sl_def$ hg bisect -b
+Testing changeset 15895:b32bef2760b7 (20 changesets remaining, ~4 tests)
+32 files updated, 0 files merged, 3 files removed, 0 files unresolved
+
+pls2nus@loris-laptop:~/hg/sl_def$ hg bisect -g
+Testing changeset 15903:8d429d9b5c60 (10 changesets remaining, ~3 tests)
+24 files updated, 0 files merged, 1 files removed, 0 files unresolved
+
+pls2nus@loris-laptop:~/hg/sl_def$ hg bisect -b
+Testing changeset 15900:011efb838076 (5 changesets remaining, ~2 tests)
+9 files updated, 0 files merged, 3 files removed, 0 files unresolved
+
+*/

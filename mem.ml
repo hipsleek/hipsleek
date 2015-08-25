@@ -139,7 +139,7 @@ let rec fl_subtyping (fl1 : (ident * (CP.ann list)) list) (fl2: (ident * (CP.ann
     		    (fun c -> let () = print_string (String.concat "," (List.map string_of_imm (snd c))) in c) fl2*)
     in (*let todo_unk = List.map
          		    (fun c -> let () = print_string ("fl2: "^(String.concat "," (List.map string_of_imm (snd c)))^"\n") in c) fl2
-         		    in*) let tmp = (List.exists (fun c -> let b,_,_ ,_= (Imm.subtype_ann_list [] [] (snd x) (snd c)) in 
+         		    in*) let tmp = (List.exists (fun c -> let b,_,_ ,_= (x_add Imm.subtype_ann_list [] [] (snd x) (snd c)) in 
                                              (*let () = 
                                                		    print_string ("Ann Lists: "^ (*(string_of_bool b) ^*)(String.concat "," (List.map string_of_imm (snd c)))^" :> "^
                                                		    		(String.concat "," (List.map string_of_imm (snd x)))^ "\n")
@@ -161,7 +161,7 @@ let rec fl_subtyping_rev (fl1 : (ident * (CP.ann list)) list) (fl2: (ident * (CP
       if List.length matched_fields == 0 then  Err.report_error { Err.error_loc = pos;
                                                                   Err.error_text = "[mem.ml] : Memory Spec field layout doesn't have a matching field";}
       else let tmp = 
-        List.exists (fun c -> let b,_,_, _ = (Imm.subtype_ann_list [] [] (snd c) (snd (List.hd matched_fields))) in b ) fl1 in
+        List.exists (fun c -> let b,_,_, _ = (x_add Imm.subtype_ann_list [] [] (snd c) (snd (List.hd matched_fields))) in b ) fl1 in
         if  tmp then () else Err.report_error { Err.error_loc = pos;
                                                 Err.error_text = "[mem.ml] : Memory Spec field layout doesn't respect annotation subtyping";}
   in match fl2 with
@@ -484,14 +484,14 @@ let entail_mem_perm_formula (ante: CF.formula) (conseq: CF.formula) (vl: C.view_
   let pure_formulas = MCP.merge_mems ante_mem_pure conseq_mem_pure true in
   MCP.memo_pure_push_exists (ante_qvars@conseq_qvars) (MCP.merge_mems (MCP.mix_of_pure subset_formula) pure_formulas true)
 
-let get_data_fields (ddn : (ident * ((I.typed_ident * loc * bool) list)) list)  (name : ident) : ((I.typed_ident * loc * bool) list) = 
+let get_data_fields (ddn : (ident * ((typed_ident * loc * bool) list)) list)  (name : ident) : ((typed_ident * loc * bool) list) = 
   try (snd (List.find (fun c -> (*let () = print_string(" DD: "^(fst c)^ "N: "^name) in  *)
       if (String.compare (fst c) name) == 0 then true else false) ddn))
   with | _ -> Err.report_error {
       Err.error_loc = no_pos;
       Err.error_text = "[mem.ml] : Memory Region Field Layout not found in Data Decls";}
 
-let rec get_data_decl_names (ddf : I.data_decl list) : (ident * ((I.typed_ident * loc * bool) list)) list = 
+let rec get_data_decl_names (ddf : I.data_decl list) : (ident * ((typed_ident * loc * bool) list)) list = 
   match ddf with
   | x::xs -> (x.I.data_name, List.map (fun (a1,a2,a3,a4) -> (a1,a2,a3)) x.I.data_fields)::(get_data_decl_names xs)
   | [] -> []

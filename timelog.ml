@@ -7,11 +7,11 @@ let trace_timer = false
 
 class timelog =
   object (self)
-    val time_stk = new Gen.stack_noexc ("dummy",0.) (pr_pair pr_id string_of_float) (==)
-    val hist_big = new Gen.stack_pr (pr_pair pr_id string_of_float) (==) 
-    val hist_stk = new Gen.stack_pr (pr_pair pr_id string_of_float) (==) 
+    val time_stk = new Gen.stack_noexc "time_stk" ("dummy",0.) (pr_pair pr_id string_of_float) (==)
+    val hist_big = new Gen.stack_pr "hist-blg" (pr_pair pr_id string_of_float) (==) 
+    val hist_stk = new Gen.stack_pr "hist-stk" (pr_pair pr_id string_of_float) (==) 
     (* (fun (s,x) ->  s="kill" || x>=0.5 ) *)
-    val stk_t = new Gen.stack_noexc 0. string_of_float (==)
+    val stk_t = new Gen.stack_noexc "stk_t" 0. string_of_float (==)
     val mutable last_time = 0. 
     val mutable last_timeout_flag = false
     val mutable timer_val = None
@@ -98,16 +98,17 @@ class timelog =
       let c = hist_stk # len in
       let ls = List.rev (hist_stk # get_stk) in
       let bigger = List.rev (hist_big # get_stk) in
-      let (big,small) = List.partition (fun (_,x) -> x>=0.5) ls in
+      let (big,small) = List.partition (fun (_,x) -> x>=(!time_limit_large)) ls in
       (* let (bigger,big) = List.partition (fun (_,x) -> x>=5.0) big in *)
       let s_big = string_of_int (List.length big) in
       let s_bigger = string_of_int (List.length bigger) in
       let b = List.fold_left (fun c (_,x1) -> c +. x1) 0. big in 
       let bb = List.fold_left (fun c (_,x1) -> c +. x1) 0. bigger in 
       let s = List.fold_left (fun c (_,x1) -> c +. x1)  0. small in 
-      (* let (small_mona,small_others) = List.partition (fun (e,x) -> x>=0.5) ls in *)
+      (* let (small_mona,small_others) = List.partition (fun (e,x) -> x>=!time_limit_large) ls in *)
       if (not (!Globals.web_compile_flag || !Globals.print_min)) then Debug.info_hprint (add_str "log(small)" (pr_pair string_of_float string_of_int )) (s,List.length small) no_pos;
-      if not(big==[]) then if (not !Globals.web_compile_flag) then Debug.info_hprint (add_str ("log(big)(>0.5s)("^s_big^")") (pr_pair string_of_float prL)) (b,big) no_pos;
+      let tl_str = string_of_float (!time_limit_large) in
+      if not(big==[]) then if (not !Globals.web_compile_flag) then Debug.info_hprint (add_str ("log(big)(>"^tl_str^"s)("^s_big^")") (pr_pair string_of_float prL)) (b,big) no_pos;
       if not(bigger==[]) then if (not !Globals.web_compile_flag) then Debug.info_hprint (add_str ("\n log(bigger)(>4s)("^s_bigger^")") (pr_pair string_of_float prL2)) (bb,bigger) no_pos;
       ()
 

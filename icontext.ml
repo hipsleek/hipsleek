@@ -26,6 +26,7 @@ type iaction =
   | I_post_synz
   | I_post_fix of ( CP.spec_var list)
   | I_post_oblg
+  | I_norm_seg
   | I_seq of iaction_wt list
 
 and iaction_wt = (int * iaction)
@@ -44,6 +45,7 @@ let rec string_of_iaction act=
   | I_post_synz -> "post-preds synthesize"
   | I_post_fix hps -> ("(post fix) synthesize:" ^ (!CP.print_svl hps))
   | I_post_oblg -> "post-oblg"
+  | I_norm_seg -> "norm seg"
   | I_seq ls_act -> "seq:" ^ (String.concat ";" (List.map (pr_pair string_of_int string_of_iaction) ls_act))
 
 let mk_is constrs all_constrs link_hpargs dang_hpargs unk_map sel_hps post_hps cond_path iflow
@@ -77,6 +79,10 @@ let icompute_action_init need_preprocess detect_dang=
   in
   I_seq (pre_acts@[(0, I_partition)])
 
+let get_unk_hps is=
+  let unk_hps = List.map fst is.Cformula.is_dang_hpargs in
+  let link_hps = List.map fst is.Cformula.is_link_hpargs in
+  CP.remove_dups_svl (unk_hps@link_hps)
 
 (*
 That means the following priorities:

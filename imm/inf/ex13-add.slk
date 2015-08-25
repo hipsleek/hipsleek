@@ -1,0 +1,12 @@
+
+checkentail x=@M+@M |- x=@M.
+print residue.
+expect Fail.
+
+checkentail x=@A+@M |- x=@M.
+print residue.
+expect Valid.
+
+checkentail x=@A |- x=@M.
+print residue.
+expect Fail.

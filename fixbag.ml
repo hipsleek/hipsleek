@@ -836,6 +836,16 @@ let compute_fixpoint input_pairs ante_vars is_rec =
   x_tinfo_hp (add_str "input_pairs: " (pr_list (pr_pair !CP.print_formula !CP.print_formula))) input_pairs no_pos;
   List.map (fun (rel_fml,pf,no) -> compute_fixpoint_aux rel_fml pf no ante_vars is_rec) pairs
 
+(*call the wrappers for:
+1. trasnform imm formula to imm-free formula and back
+2. disable fixcalc inner imm-free to imm transformation (eg. calling simpilfy, etc)  *)
+let compute_fixpoint input_pairs ante_vars is_rec =
+  let fixpt input_pairs = compute_fixpoint input_pairs ante_vars is_rec in
+  let pre  = List.map (fold_pair1f (x_add_1 Immutable.map_imm_to_int_pure_formula)) in
+  let post = List.map (fold_pair1f (x_add_1 Immutable.map_int_to_imm_pure_formula)) in
+  let fixpt input_pairs = Wrapper.wrap_pre_post_process pre post fixpt input_pairs in
+  Wrapper.wrap_one_bool Globals.int2imm_conv false fixpt input_pairs
+
 let compute_fixpoint (i:int) input_pairs pre_vars is_rec =
   let pr0 = !CP.print_formula in
   let pr1 = pr_list (pr_pair pr0 pr0) in

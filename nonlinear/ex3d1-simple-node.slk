@@ -1,0 +1,47 @@
+data node {
+  node next;
+}.
+
+checkentail xxx::node<y> * y::node<_> |- (exists bbbb: bbbb>=0).
+print residue.
+// valid?
+
+
+
+/*
+# ex3d1.slk
+
+Why is here x!=y?
+
+!!! **solver.ml#8263:xpure_lhs_h1: x=1 & y=2 & x!=y
+!!! **solver.ml#8264:xpure_lhs_h1_sym: x!=null & y!=null & x!=y
+
+----------
+
+checkentail x::node<_> |- x::node<_>.
+print residue.
+// valid?
+
+checkentail true |- (exists bbbb: bbbb>=0).
+print residue.
+// valid?
+
+# ex3b.slk -tp z3 --eps
+
+!!! **solver.ml#8258:diff_flag:false
+!!! **solver.ml#8259:super_smart_xpure:false
+!!! **solver.ml#8258:diff_flag:false
+!!! **solver.ml#8259:super_smart_xpure:false
+// inv proving ??
+
+!!! **solver.ml#8258:diff_flag:true
+!!! **solver.ml#8259:super_smart_xpure:trueOmega Error Exp:Globals.Illegal_Prover_Format("[omega.ml] Non-linear arith
+
+Why is diff_flag printed 3 times?
+
+
+!!! **solver.ml#8258:diff_flag:false
+!!! **solver.ml#8259:super_smart_xpure:false
+
+
+*/

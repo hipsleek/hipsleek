@@ -1,0 +1,36 @@
+data cell{
+ int val;
+}.
+
+//(4)
+
+slk_simplify x::cell<_> * y::cell<_> & x!=y & x!=null & n>0.
+
+slk_simplify x=y.
+
+slk_simplify x::cell<_> * y::cell<_> & x=y.
+
+slk_simplify x::cell<_> * y::cell<_> & x!=y & x!=null.
+
+slk_simplify x::cell<_> * x::cell<_> & true.
+
+/*
+# ex8e5f.slk
+
+# fix true as outcome of gist
+
+slk_simplify x::cell<_> * y::cell<_> & x!=y & x!=null.
+
+!!! fomega = gist {[x,y] : (((0=0)))} given {[x,y] : ((((x > 0) & (y > 0)) & (x != y)))};
+Simplify  (1): x::cell<Anon_11>@M * y::cell<Anon_12>@M&x=In_1 & y=In_2&
+{FLOW,(20,21)=__norm#E}[]
+
+# fix normalization of heap formula
+
+slk_simplify x::cell<_> * x::cell<_> & true.
+
+Simplify  (5): x::cell<Anon_17>@M * x::cell<Anon_18>@M&{FLOW,(20,21)=__norm#E}[]
+
+*/
+
+//checkentail x::cell<_> * y::cell<_> & x!=y |- x!=null.

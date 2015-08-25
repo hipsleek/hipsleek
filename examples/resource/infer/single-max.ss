@@ -55,10 +55,11 @@ void f()
   ensures  stk::RS<nn> * mx::RS_mark<hh> & RR(nn,hh);
 {
   add_stk(2); //add stack frame used
-  g(); h();
+
+  g(); 
+  h();
   //h(); g();
   //dprint;
   sub_stk(2); //add stack frame used
 }
-*/
 

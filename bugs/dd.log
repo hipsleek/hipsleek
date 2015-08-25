@@ -1,0 +1,7 @@
+xpure_perm
+heap_entail_conjunct_helper
+heap_entail_empty_rhs_heap
+merge_mems
+remove_dupl_conj_mix_formula
+simplify_htrue
+infer_collect_hp_rel_empty_rhs

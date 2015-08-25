@@ -1,0 +1,17 @@
+data str {
+  int val;
+  str next;
+}.
+
+
+pred tt5<> == self=null 
+ or self::str<_,null>
+ or self::str<_,q> * q::tt5<>
+inv true.
+
+/*
+# strings/ex8d7.slk -dre "compute_base"
+
+
+
+*/

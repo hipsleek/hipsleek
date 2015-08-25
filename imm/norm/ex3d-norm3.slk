@@ -7,7 +7,7 @@ pred ll<n> == self=null & n=0 or
 
 //3
 checkentail x::ll<nnn>@A * y::ll<mmm>@A & x=y |- nnn=mmm.
-//print residue.
+print residue.
 expect Valid.
 // should not work for list segment
 

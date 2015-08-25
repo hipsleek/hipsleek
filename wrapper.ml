@@ -62,6 +62,56 @@ let wrap_norm flag norm f a =
   with _ as e ->
     raise e
 
+let toggle f flag =
+  if flag then infer_const_obj # set f
+  else infer_const_obj # reset f
+
+(* let wrap_pure_field et f a = *)
+(*   let old_flag = infer_const_obj # get INF_PURE_FIELD  in *)
+(*   let new_flag = (match et with *)
+(*       | None -> infer_const_obj # get INF_PURE_FIELD  (\* !opt_classic *\) *)
+(*       | Some b -> b) in *)
+(*   if new_flag!=old_flag then toggle INF_PURE_FIELD new_flag; *)
+(*   try *)
+(*     let res = f a in *)
+(*     (\* restore flag sa_pure_field *\) *)
+(*     toggle INF_PURE_FIELD old_flag; *)
+(*     res *)
+(*   with _ as e -> *)
+(*     (toggle INF_PURE_FIELD old_flag; *)
+(*      raise e) *)
+
+let wrap_gen attr et f a =
+  let old_flag = infer_const_obj # get attr  in
+  let new_flag = (match et with
+      | None -> infer_const_obj # get attr  (* !opt_classic *)
+      | Some b -> b) in
+  if new_flag!=old_flag then toggle attr new_flag;
+  try
+    let res = f a in
+    (* restore flag sa_pure_field *)
+    toggle attr old_flag;
+    res
+  with _ as e ->
+    (toggle attr old_flag;
+     raise e)
+
+let wrap_pure_field et f a = wrap_gen INF_PURE_FIELD et f a
+
+(* let wrap_pure_field et f a = *)
+(*   let flag = !Globals.sa_pure_field in *)
+(*   sa_pure_field := (match et with *)
+(*       | None -> infer_const_obj # get INF_PURE_FIELD  (\* !opt_classic *\) *)
+(*       | Some b -> b); *)
+(*   try *)
+(*     let res = f a in *)
+(*     (\* restore flag sa_pure_field *\) *)
+(*     Globals.sa_pure_field := flag; *)
+(*     res *)
+(*   with _ as e -> *)
+(*     (Globals.sa_pure_field := flag; *)
+(*      raise e) *)
+
 let wrap_classic et f a =
   let flag = !do_classic_frame_rule in
   do_classic_frame_rule := (match et with
@@ -75,6 +125,27 @@ let wrap_classic et f a =
   with _ as e ->
     (do_classic_frame_rule := flag;
      raise e)
+
+(* Some f - set allow_field_imm t f *)
+(* None - use the default option *)
+let wrap_field_imm et f a =
+  let flag = !allow_field_ann in
+  let flag2 = !imm_merge in
+  allow_field_ann := (match et with
+      | None -> infer_const_obj # get INF_FIELD_IMM  (* !opt_classic *)
+      | Some b -> b);
+  if !allow_field_ann then imm_merge :=true;
+  try
+    let res = f a in
+    allow_field_ann := flag;
+    imm_merge := flag2;
+    res
+  with _ as e ->
+    (allow_field_ann := flag;
+     imm_merge := flag2;
+     raise e)
+
+
 
 (* let wrap_efa_exc et f a = *)
 (*   let flag = !enable_error_as_exc in *)
@@ -104,22 +175,22 @@ let wrap_classic et f a =
 (* !!! **wrapper.ml#102:RESTORE:[@err_must] *)
 
 let wrap_inf_obj iobj f a =
-  (* let () = x_binfo_hp (add_str "wrap_inf_obj" string_of_inf_const) iobj no_pos in *)
-  (* let () = x_binfo_hp (add_str "BEFORE" pr_id) infer_const_obj#string_of no_pos in *)
+  let () = y_tinfo_hp (add_str "wrap_inf_obj" string_of_inf_const) iobj in
+  let () = y_tinfo_hp (add_str "BEFORE" pr_id) infer_const_obj#string_of in
   let flag = not(infer_const_obj # get iobj) in
   let () = if flag then infer_const_obj # set iobj in
-  (* let () = x_binfo_hp (add_str "AFTER" pr_id) infer_const_obj#string_of no_pos in *)
+  let () = y_tinfo_hp (add_str "AFTER" pr_id) infer_const_obj#string_of in
   try
     let res = f a in
     if flag then infer_const_obj # reset iobj;
     (* let () = x_binfo_hp (add_str "RESTORE" pr_id) infer_const_obj#string_of no_pos in *)
     res
   with _ as e ->
-      begin
-        if flag then infer_const_obj # reset iobj;
-        (* let () = x_binfo_hp (add_str "RESTORE" pr_id) infer_const_obj#string_of no_pos in *)
-        raise e
-      end
+    begin
+      if flag then infer_const_obj # reset iobj;
+      (* let () = x_binfo_hp (add_str "RESTORE" pr_id) infer_const_obj#string_of no_pos in *)
+      raise e
+    end
 
 let wrap_err_dis f a =
   wrap_inf_obj INF_DE_EXC f a
@@ -251,6 +322,15 @@ let wrap_no_filtering f a =
 let wrap_silence_output f a =
   wrap_one_bool Gen.silence_output true f a
 
+let wrap_wo_int_to_imm f a =
+  wrap_one_bool  Globals.int2imm_conv false f a
+
+let wrap_with_int_to_imm f a =
+  wrap_one_bool  Globals.int2imm_conv true f a
+
+let wrap_dis_non_linear f a =
+  wrap_two_bools  Globals.non_linear_flag Globals.filtering_flag false f a
+
 (* let wrap_redlog_only f a = *)
 (*   wrap_one_bool Redlog.dis_omega true f a *)
 
@@ -306,3 +386,8 @@ let wrap_arr_as_var f a =
 let wrap_arr_as_var f a =
   Debug.no_1 "wrap_arr_as_var" pr_none pr_none (wrap_arr_as_var f) a
 
+let wrap_pre_post_process f_pre f_post f a =
+  let a = f_pre a in
+  let res = f a in
+  let res = f_post res in
+  res
