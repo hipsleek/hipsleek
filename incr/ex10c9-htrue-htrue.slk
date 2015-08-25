@@ -2,9 +2,19 @@ data cell {
  int val;
 }.
 
+/* FIXED */
 
-infer [] htrue * x::cell<_> |- true.
+infer [] htrue * x::cell<1> |- true.
+expect Valid.
 print residue.
+capture_residue $r2. 
+// should be htrue (inex)
+
+infer_exact [] $r2 |- x::cell<1>.
+expect Valid.
+
+infer_exact [] $r2 |- x::cell<2>.
+expect Fail.
 
 
 /*
