@@ -8256,16 +8256,19 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
     in
     let h1, _, _, _, _, _ = split_components estate_orig1.CF.es_formula in
     let lhs1 = {lhs with formula_base_heap = h1;} in
-    (* WN : need to be careful with fix below *)
-    let flag = h2 == HEmp && !Globals.do_classic_frame_rule in
+    (* TODO:WN : need to be careful with fix below *)
+    let flag = h2 = HEmp && !Globals.do_classic_frame_rule  && not(is_folding) in
     let hprel_in_h1 = CF.get_hprel_h_formula h1 in
-    if flag && h1!=HEmp then
+    if flag && (h1!=HEmp && not(!Globals.old_classic_rhs_emp)) then
       begin
         let () = x_binfo_hp (add_str "XXXX(h1)" !CF.print_h_formula) h1 no_pos in
         let () = x_binfo_hp (add_str "XXXX(hp_rel)" (pr_list pr_none)) hprel_in_h1 no_pos in
+        let () = x_binfo_hp (add_str "do_classic_frame_rule" string_of_bool) !Globals.do_classic_frame_rule no_pos in
+        let () = x_binfo_hp (add_str "is_folding" string_of_bool) is_folding no_pos  in
         ()
       end;
-    if flag &&  (* h1!=HEmp *)  hprel_in_h1!= []  then
+    if flag &&  ((h1!=HEmp && not(!Globals.old_classic_rhs_emp)) 
+                 ||  (hprel_in_h1!= [] && !Globals.old_classic_rhs_emp))  then
       let fail_ctx = mkFailContext mem_leak estate_orig1 conseq None pos in
       let es_string = Cprinter.string_of_formula estate_orig1.es_formula in
       let err_msg = es_string^ ": possible memory leak failure : residue is forbidden." in
@@ -8276,7 +8279,6 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
     else
       let () = x_tinfo_pp ("else ..Need to normalize h2 :"^(!print_h_formula h2)) no_pos in
       let () = x_tinfo_hp (add_str "TODO : not set classic_flag" string_of_bool) classic_flag no_pos in
-      let () = x_tinfo_hp (add_str "do_classic_frame_rule" string_of_bool) !Globals.do_classic_frame_rule no_pos in
       let () = x_tinfo_hp (add_str "h2" !print_h_formula) h2 no_pos in
       let () = x_tinfo_hp (add_str "estate_orig1" Cprinter.string_of_entail_state_short) estate_orig1 no_pos in
       let () = x_tinfo_hp (add_str "lhs1" !CF.print_formula) (CF.Base lhs1) no_pos in
