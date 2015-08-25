@@ -2699,7 +2699,11 @@ let process_pairwise (f : meta_formula) =
     print_result rs num_id
   with _ -> print_exc num_id
 
+
 let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) etype =
+  let () = x_tinfo_pp "inside process_infer" no_pos in
+  let () = x_tinfo_hp (add_str "itype" (pr_list string_of_inf_const)) itype no_pos in
+  let () = x_tinfo_hp (add_str "etype" (pr_option string_of_bool)) etype no_pos in
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let is_tnt_flag = List.mem INF_TERM itype in
   let is_infer_imm_pre_flag = List.mem INF_IMM_PRE itype in
@@ -2711,6 +2715,10 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
   let dfailure_anlysis = if List.mem INF_EFA itype then false else
     if List.mem INF_DFA itype then true else !Globals.disable_failure_explaining
   in
+  let etype = match etype with
+    | Some f -> etype
+    | None -> if List.mem INF_CLASSIC itype then Some true else None
+  in
   let is_arr_as_var_flag = List.mem INF_ARR_AS_VAR itype in
   let old_dfa = !Globals.disable_failure_explaining in
   let _ = Globals.disable_failure_explaining := dfailure_anlysis in
@@ -2720,15 +2728,12 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
   let () = if l_err_exc then
       Globals.enable_error_as_exc := false
   in
+  (* let run_infer x = wrap_classic etype (run_infer_one_pass_set_states itype ivars [iante0]) x in *)
+  let num_id = "\nEntail "^nn in
   let run_infer x = wrap_classic etype (run_infer_one_pass_set_states itype ivars [iante0]) x in
   let run_infer x = 
     if is_field_imm_flag then wrap_field_imm (Some true) run_infer x
     else run_infer x in
-  let num_id = "\nEntail "^nn in
-  let run_infer x = wrap_classic etype (run_infer_one_pass_set_states itype ivars [iante0]) x in
-  (* let run_infer x =  *)
-  (*   if is_field_imm_flag then wrap_field_imm (Some true) run_infer x *)
-  (*   else run_infer x in *)
   let run_infer x = 
     if is_arr_as_var_flag then wrap_arr_as_var run_infer x
     else run_infer x in
@@ -2758,6 +2763,12 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
   let _ = Globals.disable_failure_explaining := old_dfa in
   let () = Globals.enable_error_as_exc := gl_efa_exc in
   r
+
+let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) etype =
+  let pr1 = add_str "itype" (pr_list string_of_inf_const) in
+  let pr2 = add_str "ivars" (pr_list pr_id) in
+  let pr3 = add_str "etype" (pr_option string_of_bool) in
+  Debug.no_3 "process_infer" pr1 pr2 pr3 pr_none (fun _ _ _ -> process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) etype) itype ivars etype
 
 let process_capture_residue (lvar : ident) =
   let flist = match !CF.residues with

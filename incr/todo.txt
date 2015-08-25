@@ -1006,6 +1006,29 @@ Starting Omega.../usr/local/bin/oc
 # EXPECTS
 # inferred hprel: [H(p)&p=null |#| x::node<_,p> --> P(p)&true]
 =====================================================================
+# ex15e.slk 
+
+# _exact and @classic gives different outcomes..
+
+!!! **solver.ml#7618:base_lhs :
+ H(p) * x::node<flted_11_15,p>@M&p=null & flted_11_15=1&
+{FLOW,(20,21)=__norm#E}[]
+!!! **solver.ml#8264:!Globals.do_classic_frame_rule:false
+Entail (1) : Valid. 
+Residue:
+ <1>H(p) * x::node<flted_11_15,p>@M&p=null & flted_11_15=1&{FLOW,(20,21)=__norm#E}[]
+
+
+!!! **solver.ml#7617:prep_h1(for classic): : H(p) * x::node<flted_14_27,p>@M
+!!! **solver.ml#7618:base_lhs :
+ H(p) * x::node<flted_14_27,p>@M&p=null & flted_14_27=1&
+{FLOW,(20,21)=__norm#E}[]
+!!! **solver.ml#8264:!Globals.do_classic_frame_rule:true
+!!! **infer.ml#3635:rhs: emp&{FLOW,(1,26)=__flow#E}[]
+Entail (2) : Valid. 
+Residue:
+ <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#|3  --> emp&true]
 =====================================================================
 =====================================================================
 =====================================================================

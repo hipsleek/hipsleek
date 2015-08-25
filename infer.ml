@@ -3632,7 +3632,7 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) rhs0 mix_rf pos =
       (* let () = x_tinfo_hp (add_str "extr_hd" (pr_option !CP.print_sv)) extr_hd no_pos in *)
       let rhs_f = (CF.Base rhs_b) in
       let () = x_tinfo_hp (add_str "lhs(after)" !CF.print_formula) lhs no_pos in
-      let () = x_binfo_hp (add_str "rhs" !CF.print_formula) rhs_f no_pos in
+      let () = x_tinfo_hp (add_str "rhs" !CF.print_formula) rhs_f no_pos in
       let () = x_tinfo_hp (add_str "(hp,args)"  (pr_pair !CP.print_sv !CP.print_svl)) (hp,args) no_pos in
       let hprel_lst = match extr_ans with
         | None -> []
