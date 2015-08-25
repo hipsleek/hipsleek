@@ -3160,7 +3160,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
           (CF.invert_list_partial_context_outcome CF.invert_ctx_branch_must_fail CF.invert_fail_branch_must_fail ans1,prf)
         end
       else
-        (* let () = print_string_quiet "start struct checking \n" in *)
+        let () = x_binfo_hp (add_str "do_classic_frame_rule" string_of_bool) !Globals.do_classic_frame_rule pos in
         let rs_struc , prf = x_add heap_entail_struc_list_partial_context_init prog false false fn_state (snd posts) None None None pos (Some pid) in
         rs_struc, prf
         (*let () = print_string_quiet "stop struct checking \n" in*)
@@ -4350,8 +4350,16 @@ let rec check_prog iprog (prog : prog_decl) =
     let scc, ini_hpdefs =
       Da.find_rel_args_groups_scc prog scc (* scc,[] *)
     in
-    let has_infer_shape_proc = x_add_1 Pi.is_infer_shape_scc scc in
+    let has_infer_shape_pre_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_PRE in
+    let has_infer_shape_post_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_POST in
+    let has_infer_shape_prepost_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_PRE_POST in
+    let has_infer_shape_proc = (x_add_1 Pi.is_infer_shape_scc scc) || has_infer_shape_pre_proc ||
+      has_infer_shape_post_proc || has_infer_shape_prepost_proc in
     let has_infer_pre_proc = Pi.is_infer_pre_scc scc in
+
+    let () = if (has_infer_shape_pre_proc || has_infer_shape_prepost_proc) then
+      Iincr.add_prepost_shape_relation_scc prog Iincr.add_pre_shape_relation scc in
+
     let () = if (not(has_infer_shape_proc) && has_infer_pre_proc) then Pi.add_pre_relation_scc prog scc in
     let has_infer_post_proc = Pi.is_infer_post_scc scc in
     let () = if (not(has_infer_shape_proc)) then x_add Pi.add_post_relation_scc prog scc in

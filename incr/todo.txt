@@ -926,7 +926,7 @@ infer_collect_hp_rel_empty_rhs#1@1 EXIT:(true, es_formula:
  es_infer_vars_hp_rel: [H],[ H(p)&p=null --> emp])
 
 =====================================================================
-# ex15a.slk 
+# ex15a.slk : FIXED
 
 infer [H,P] H(p) * x::node<1,p> & p=null |- P(p).
 
@@ -948,7 +948,7 @@ find_guard inp3 :[(H,[p])]
 find_guard inp4 :[p]
 find_guard@2 EXIT:NONE
 =====================================================================
-# ex15b.slk 
+# ex15b.slk: FIXED
 
 infer [H,P,@pure_field] H(p) * x::node<1,p> & p=null |- P(p).
 
@@ -960,7 +960,7 @@ EXPECTS:
   H(p)&p=null | x::node<v,p> & v=1 --> P(p)
 which shows the heap context of p?
 =====================================================================
-# ex15c.slk 
+# ex15c.slk: FIXED
 
 infer [H,P] H(p) * x::node<1,p> & p=null |- P1(p).
 // inferred hprel: [H(p)&p=null --> P1(p)&true]

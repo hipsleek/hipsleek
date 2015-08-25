@@ -28,8 +28,6 @@ print residue.
 expect Fail.
 
 
-
-/*
 //2
 infer [H,P1] H(p) * x::node<1,p> & p=null |- P1(p).
 // inferred hprel: [H(p)&p=null --> P1(p)&true]
@@ -47,7 +45,6 @@ infer [H,P] H(p) * x::node<1,p>  |- P(p,x).
 print residue.
 expect Valid.
 
-*/
 
 /*
 # ex15c.slk 
