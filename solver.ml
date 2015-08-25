@@ -7584,7 +7584,6 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                           (*    !rhs_rest_emp *)
                           (* else true *)
                           (* in *)
-                          let is_rhs_emp = not is_folding && !rhs_rest_emp in
                           (* infer hp_rel *)
                           (*consume htrue in RHS*)
                           (* if (h2=HTrue || Cformula.is_HRel h2) && !Globals.do_classic_frame_rule && is_rhs_emp (\* not(is_folding) *\) then *)
@@ -7606,6 +7605,11 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                               end
                             else h1
                           ) in
+                          let is_lhs_emp =  
+                            if (!Globals.do_classic_frame_rule && (h2 = HEmp)) then
+                              Some (is_classic_lhs_emp prog h1 ante pos) 
+                            else None
+                          in
                           (* let estate = {estate with es_formula = Base base_lhs} in *)
                           (* let h1 = prep_h1 in *)
                           let () = x_tinfo_hp (add_str "h1: " !CF.print_h_formula) h1 no_pos in
@@ -7622,13 +7626,20 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                           (*use global var is dangerous, should pass as parameter*)
                           (*Do "h2 = HEmp" and "is_rhs_emp" 
                             already imply "!rhs_rest_emp" ??? Loc: not correct. examples of SMT compete will fail. *)
-                          if (!Globals.do_classic_frame_rule && is_rhs_emp
-                              (* !rhs_rest_emp && (\*remove this since it is untrackable*\) *)
-                              && not (is_resourceless_h_formula prog prep_h1)
+                          let flag = not (is_resourceless_h_formula prog prep_h1)
                               (* && (prep_h1 != HEmp) && (prep_h1 != HFalse) *)
+                              && not (is_classic_lending_hformula(prep_h1)) in
+                          let new_flag = match is_lhs_emp with
+                            | None -> false
+                            | Some f -> not f in
+                          let is_rhs_emp = not is_folding && !rhs_rest_emp in
+                          if (!Globals.do_classic_frame_rule && (h2 = HEmp)
+                              && is_rhs_emp
+                              && new_flag
                               && (not ( Cformula.is_HRel prep_h1))
-                              && not (is_classic_lending_hformula(prep_h1))
-                              && (h2 = HEmp)) then (
+                              ) 
+                              (* !rhs_rest_emp && (\*remove this since it is untrackable*\) *)
+                          then (
                             (* WN : shouldn't we fail if no_infer_hp_rel *)
                             if  (* not *) (Infer.no_infer_hp_rel estate) then
                               let () = x_tinfo_pp "no_infer_hp_rel? " no_pos in
