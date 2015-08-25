@@ -767,7 +767,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       (* let () = cond_path # reset in *)
       (* let () = cond_path # push 0 in *)
       let ctx = CF.add_path_id ctx (None,0) 0 in
-      let etype = if !Globals.do_classic_frame_rule then Some (!Globals.do_classic_frame_rule) else
+      let etype = if (check_is_classic ()) then Some ((check_is_classic ())) else
           (* run-fast-test: classic2, classic2a *)
           etype0  (* None *)
       in
@@ -1987,11 +1987,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             (* let () = x_tinfo_hp (add_str "struc_vheap" Cprinter.string_of_struc_formula) struc_vheap no_pos in *)
             (* let () = print_endline ("unfolded:" ^(Cprinter.string_of_list_failesc_context unfolded)) in *)
             (* do not allow leak detection in binding*)
-            let do_classic_frame = !Globals.do_classic_frame_rule in
-            let () = Globals.do_classic_frame_rule := false in
-            let rs_prim, prf = x_add heap_entail_struc_list_failesc_context_init 5 prog false  true unfolded struc_vheap None None None pos (Some pid) in
+            (* let do_classic_frame = (check_is_classic ()) in *)
+            (* let () = Wrapper.set_classic  false in *)
+            let fn = heap_entail_struc_list_failesc_context_init 5 prog false  true unfolded struc_vheap None None None pos in
+            let rs_prim, prf = x_add Wrapper.wrap_classic (Some false) fn (Some pid) in
             (* recover classic_frame for mem leak detection at post proving*)
-            let () = Globals.do_classic_frame_rule := do_classic_frame in
+            (* let () = Wrapper.set_classic  do_classic_frame in *)
             let () = consume_all := false in
             let () = CF.must_consistent_list_failesc_context "bind 3" rs_prim  in
             (* let () = print_endline ("rs_prim:" ^(Cprinter.string_of_list_failesc_context rs_prim)) in *)
@@ -3160,7 +3161,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
           (CF.invert_list_partial_context_outcome CF.invert_ctx_branch_must_fail CF.invert_fail_branch_must_fail ans1,prf)
         end
       else
-        let () = x_binfo_hp (add_str "do_classic_frame_rule" string_of_bool) !Globals.do_classic_frame_rule pos in
+        let () = x_binfo_hp (add_str "do_classic_frame_rule" string_of_bool) (check_is_classic ()) pos in
         let rs_struc , prf = x_add heap_entail_struc_list_partial_context_init prog false false fn_state (snd posts) None None None pos (Some pid) in
         rs_struc, prf
         (*let () = print_string_quiet "stop struct checking \n" in*)

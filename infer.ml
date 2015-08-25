@@ -2703,7 +2703,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
       (defined_hps, lhs_selected_hpargs)
   in
   (*********CLASSIC************)
-  let classic_defined, classic_lhs_sel_hpargs= if !Globals.do_classic_frame_rule && (CF.is_empty_heap rhs_rest)  then
+  let classic_defined, classic_lhs_sel_hpargs= if (check_is_classic ()) && (CF.is_empty_heap rhs_rest)  then
       (*/norm/sp-7b1: need compare pred name + pred args*)
       (* let lhs_sel_hps = List.map fst lhs_selected_hpargs in *)
       let truef = CF.mkTrue (CF.mkNormalFlow()) pos in
@@ -2734,7 +2734,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   (*/norm/sp-7b1*)
   in
   (*********CLASSIC**sa/demo/xisa-remove2; bugs/bug-classic-4a**********)
-  let classic_ptrs = if false (* !Globals.do_classic_frame_rule *) && (CF.is_empty_heap rhs_rest) then
+  let classic_ptrs = if false (* (check_is_classic ()) *) && (CF.is_empty_heap rhs_rest) then
       let acc_ptrs = List.fold_left (fun ls (_, args) -> ls@args) [] (lhs_selected_hpargs1@rhs_sel_hpargs@(List.map (fun (a,b,_,_) -> (a,b)) total_defined_hps)) in
       let cl_acc_ptrs= CF.look_up_reachable_ptr_args prog hds hvs acc_ptrs in
       List.fold_left (fun ls hd -> let sv = hd.CF.h_formula_data_node in
@@ -3440,7 +3440,7 @@ let infer_collect_hp_rel prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_se
             (* x_tinfo_hp (add_str  "  rhs " Cprinter.prtt_string_of_h_formula) rhs0 pos; *)
             DD.ninfo_hprint (add_str  "  rhs_rest " Cprinter.prtt_string_of_h_formula) rhs_rest pos;
             DD.ninfo_hprint (add_str  "  unmatch " Cprinter.string_of_h_formula) rhs0b pos;
-            x_tinfo_hp (add_str  "  classic " string_of_bool) !Globals.do_classic_frame_rule pos
+            x_tinfo_hp (add_str  "  classic " string_of_bool) (check_is_classic ()) pos
           in
           let post_hps,prog_vars =
             get_prog_vars es.CF.es_infer_vars_sel_hp_rel rhs0b pk in
@@ -3485,7 +3485,7 @@ let infer_collect_hp_rel prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_se
               if rhs_hps <> [] then
                 let truef = (CF.mkTrue (CF.mkNormalFlow()) pos) in
                 let lhs, new_es =
-                  if false (* !Globals.do_classic_frame_rule *) then
+                  if false (* (check_is_classic ()) *) then
                     let rest_args = CF.h_fv rhs_rest in
                     let lhds, lhvs, lhrs = CF.get_hp_rel_bformula lhs_b1 in
                     let helper (hp,eargs,_)=(hp,List.concat (List.map CP.afv eargs)) in
@@ -3682,7 +3682,7 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) rhs0 mix_rf pos =
         | x::_ -> x
       with _ ->
         PK_Unknown in
-    if no_infer_hp_rel es0 || MCP.isTrivMTerm mix_rf || ( pk != PK_POST && not !Globals.do_classic_frame_rule) then
+    if no_infer_hp_rel es0 || MCP.isTrivMTerm mix_rf || ( pk != PK_POST && not (check_is_classic ())) then
       (false, es0,[])
     else
       let ivs = es0.es_infer_vars_hp_rel in
@@ -3710,7 +3710,7 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) rhs0 mix_rf pos =
           let _ =
             x_tinfo_pp ">>>>>> infer_hp_rel <<<<<<" pos;
             x_tinfo_hp (add_str  "  lhs " Cprinter.string_of_formula) lhs0 pos;
-            x_tinfo_hp (add_str  "  classic " string_of_bool) !Globals.do_classic_frame_rule pos
+            x_tinfo_hp (add_str  "  classic " string_of_bool) (check_is_classic ()) pos
           in
           (*TOFIX: detect HEmp or HTrue *)
           let rhs_b0 = formula_base_of_heap (CF.HEmp) pos in
@@ -3846,7 +3846,7 @@ let infer_collect_hp_rel_classsic_x prog (es:entail_state) rhs pos =
         x_tinfo_hp (add_str  "  es_heap " Cprinter.string_of_h_formula) es.CF.es_heap pos;
         x_tinfo_hp (add_str  "  lhs " Cprinter.string_of_formula) lhs pos;
         x_tinfo_hp (add_str  "  unmatch " Cprinter.string_of_h_formula) rhs pos;
-        x_tinfo_hp (add_str  "  classic " string_of_bool) !Globals.do_classic_frame_rule pos
+        x_tinfo_hp (add_str  "  classic " string_of_bool) (check_is_classic ()) pos
       in
       let l_hpargs = CF.get_HRels_f lhs in
       let l_non_infer_hps = CP.diff_svl lhrs ivs in

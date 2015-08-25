@@ -118,25 +118,28 @@ let wrap_pure_field et f a = wrap_gen INF_PURE_FIELD et f a
 (*     (Globals.sa_pure_field := flag; *)
 (*      raise e) *)
 
-let wrap_classic et f a =
-  let flag = !do_classic_frame_rule in
-  do_classic_frame_rule := (match et with
-      | None -> infer_const_obj # get INF_CLASSIC  (* !opt_classic *)
-      | Some b -> b);
-  try
-    let res = f a in
-    (* restore flag do_classic_frame_rule  *)
-    do_classic_frame_rule := flag;
-    res
-  with _ as e ->
-    (do_classic_frame_rule := flag;
-     raise e)
+(* let wrap_classic et f a = *)
+(*   let flag = !do_classic_frame_rule in *)
+(*   do_classic_frame_rule := (match et with *)
+(*       | None -> infer_const_obj # get INF_CLASSIC  (\* !opt_classic *\) *)
+(*       | Some b -> b); *)
+(*   try *)
+(*     let res = f a in *)
+(*     (\* restore flag do_classic_frame_rule  *\) *)
+(*     do_classic_frame_rule := flag; *)
+(*     res *)
+(*   with _ as e -> *)
+(*     (do_classic_frame_rule := flag; *)
+(*      raise e) *)
 
-(* let wrap_classic et f a = wrap_gen INF_CLASSIC et f a *)
+let wrap_classic et f a = wrap_gen INF_CLASSIC et f a
 
 let wrap_classic_local obj et f a = wrap_gen_local obj INF_CLASSIC et f a
 
-let check_is_classic () = !do_classic_frame_rule
+    (* !do_classic_frame_rule *)
+
+(* let set_classic f  = let () = x_binfo_pp "should use wrap_classic instead" no_pos in *)
+(*                          () *)
 
 (* Some f - set allow_field_imm t f *)
 (* None - use the default option *)

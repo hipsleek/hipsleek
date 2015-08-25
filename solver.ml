@@ -38,7 +38,7 @@ module CVP = CvpermUtils
 module LO = Label_only.LOne
 (* module ME = Musterr *)
 
-let check_is_classic = Wrapper.check_is_classic
+(* let check_is_classic = Wrapper.check_is_classic *)
 
 let self_var vdn = CP.SpecVar (Named vdn (* v_def.view_data_name *), self, Unprimed)
 
