@@ -3534,8 +3534,10 @@ let infer_collect_hp_rel prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_se
                 lselected_hpargs,rselected_hpargs,defined_hps, unk_svl,unk_pure,unk_map,new_lhs_hps,lvi_ni_svl, classic_nodes, ass_guard =
               find_undefined_selective_pointers prog lhs_b1 mix_lf1 rhs rhs_rest
                 (rhs_h_matched_set) leqs1 reqs1 pos es.CF.es_infer_hp_unk_map post_hps subst_prog_vars in
-            if not is_found_mis then
-              let () = Debug.info_zprint (lazy (">>>>>> mismatch ptr" ^ (Cprinter.prtt_string_of_h_formula rhs) ^" is not found (or inst) in the lhs <<<<<<")) pos in
+            if not is_found_mis ||
+              List.exists (fun (hp,_) -> not (CP.mem_svl hp ivs)) rselected_hpargs (*incr/ex15c(1)*)
+            then
+              let () = x_tinfo_hp (add_str ">>>>>> mismatch ptr" pr_id) ((Cprinter.prtt_string_of_h_formula rhs) ^" is not found (or inst) in the lhs <<<<<<") pos in
               (false, es, rhs, None, None)
             else
               (* let rhs_b1 = CF.formula_base_of_heap rhs pos in *)
@@ -3551,7 +3553,7 @@ let infer_collect_hp_rel prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_se
               let r_new_hfs,ass_lhs_b, m,rvhp_rels, r_post_hps,hp_rel_list,n_es_heap_opt, ass_lhs =
                 generate_constraints prog es rhs n_lhs_b1 ass_guard rhs_b1
                   defined_hps1 ls_unknown_ptrs unk_pure unk_svl
-                (* no_es_history *) lselected_hpargs2 (List.filter (fun (hp,_) -> CP.mem_svl hp ivs) rselected_hpargs)
+                (* no_es_history *) lselected_hpargs2 ((* List.filter (fun (hp,_) -> CP.mem_svl hp ivs) *) rselected_hpargs)
                   hds hvs lhras lhrs rhras rhrs leqs1 reqs1 eqNull subst_prog_vars lvi_ni_svl classic_nodes pos in
               (* generate assumption for memory error *)
               let oerror_es = generate_error_constraints prog es ass_lhs rhs
@@ -3712,7 +3714,7 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) rhs0 mix_rf pos =
           in
           (*TOFIX: detect HEmp or HTrue *)
           let rhs_b0 = formula_base_of_heap (CF.HEmp) pos in
-          let rhs_htrue_b0 = formula_base_of_heap (CF.HTrue) pos in
+          (* let rhs_htrue_b0 = formula_base_of_heap (CF.HTrue) pos in *)
           (********** BASIC INFO LHS, RHS **********)
           let l_hpargs = CF.get_HRels lhs_b0.CF.formula_base_heap in
           let l_non_infer_hps = CP.diff_svl lhrs ivs in
@@ -3768,7 +3770,8 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) rhs0 mix_rf pos =
 let infer_collect_hp_rel_empty_rhs i prog (es:entail_state) rhs0 rhs_p pos =
   let pr1 = Cprinter.string_of_formula in
   let pr2 = Cprinter.string_of_mix_formula in
-  let pr3 =  (pr_triple string_of_bool Cprinter.string_of_estate_infer_hp (pr_list_ln Cprinter.string_of_hprel_short)) in
+  let pr3 =  (pr_triple (add_str "Res" string_of_bool) (add_str "Sel HP"Cprinter.string_of_estate_infer_hp)
+      (add_str "Inferred Relations" (pr_list_ln Cprinter.string_of_hprel_short))) in
   let pr4 = Cprinter.string_of_h_formula in
   Debug.no_3_num i "infer_collect_hp_rel_empty_rhs" pr1 pr4 pr2 pr3
     ( fun _ _ _ -> infer_collect_hp_rel_empty_rhs prog es rhs0 rhs_p pos) es.CF.es_formula rhs0 rhs_p

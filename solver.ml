@@ -13143,7 +13143,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                           (* r *)
                           let msg = "infer_heap_node" in
                           (CF.mkFailCtx_in (Basic_Reason (mkFailContext (* "infer_heap_node" *) msg estate (Base rhs_b) None pos,
-                                                          CF.mk_failure_may ("Cannot infer: infer_collect_hp_rel 3b") sl_error, estate.es_trace))
+                                                          CF.mk_failure_may ("M_unmatched_rhs (infer_collect_hp_rel 3b)") sl_error, estate.es_trace))
                              ((convert_to_may_es estate), msg, Failure_May msg) (mk_cex false), NoAlias)
                           (* let s = "15.5 no match for rhs data node: " ^ *)
                           (*   (CP.string_of_spec_var (let _ , ptr = CF.get_ptr_from_data_w_hrel rhs in ptr)) ^ " (must-bug)."in *)
