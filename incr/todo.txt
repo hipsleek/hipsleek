@@ -1122,7 +1122,7 @@ For @shape_post, we need to simplify the base-case:
 1:113:iprocess_action inp1 :seq:[(0,infer_dangling),(0,split_base),(0,partition (pre, pre-oblg, post, post-oblg))]
 
 =====================================================================
-# ex14c.slk
+# ex14c.slk (WN to resolve)
 
 # This warning can be resolved by making size_1699 implicit or existential.
 
@@ -1142,6 +1142,19 @@ RHS:
          (exists size_1673: v_node_40_1637'::sll_size<size_1673>@M&
          {FLOW,(4,5)=__norm#E}[]
 =====================================================================
+# ex14d.slk (WN to resolve)
+
+# Why is there a free_var warning; and how did it manage
+  to prove it. Is that still treated as implicit?
+
+!!! **WARNING****solver.ml#4228:FREE VAR IN HEAP RHS :[b_71]
+LHS:
+  x::ll<a>@M&
+v_bool_37_1647' & x'=null & x'=x & v_int_38_1638'=0 & res=v_int_38_1638'&
+{FLOW,(4,5)=__norm#E}[]
+RHS:
+ EBase 
+   (exists : x::ll<b_71>@M&post_1653(b_71,a,res,flow)&{FLOW,(4,5)=__norm#E}[]
 =====================================================================
 =====================================================================
 =====================================================================

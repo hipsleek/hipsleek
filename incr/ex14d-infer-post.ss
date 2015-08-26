@@ -1,0 +1,69 @@
+/* singly linked lists */
+//../hip ex14-infer-shape-pre-post.ss --classic
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}
+
+pred_extn size[R]<k> ==
+   k=0 // base case
+   or R::size<i> & k=1+i // recursive case
+  inv k>=0;
+
+/* view for a singly linked list */
+ll<n> == self = null & n = 0
+	or self::node<_, q> * q::ll<n-1>
+  inv n >= 0;
+
+sll<> == self = null 
+	or self::node<_, q> * q::sll<>
+  inv true;
+
+HeapPred H(node a).
+//HeapPred G(node a, node b).
+HeapPred H1(node a).
+
+
+int size_helper(node x)
+/*
+  infer[H]
+  requires H(x)  ensures true;//H1(x);
+*/
+  infer[@post_n] 
+  requires x::ll<a>
+  ensures (exists b: x::ll<b>);
+{
+  if (x==null) 
+    return 0;
+  else {
+    return 1+ size_helper(x.next);
+  }
+}
+
+/*
+# ex14d.slk (WN to resolve)
+
+# Why is there a free_var warning; and how did it manage
+  to prove it. Is that still treated as implicit?
+
+!!! **WARNING****solver.ml#4228:FREE VAR IN HEAP RHS :[b_71]
+LHS:
+  x::ll<a>@M&
+v_bool_37_1647' & x'=null & x'=x & v_int_38_1638'=0 & res=v_int_38_1638'&
+{FLOW,(4,5)=__norm#E}[]
+RHS:
+ EBase 
+   (exists : x::ll<b_71>@M&post_1653(b_71,a,res,flow)&{FLOW,(4,5)=__norm#E}[]
+
+==================================
+
+Post Inference result:
+size_helper$node
+ EBase 
+   exists (Expl)[](Impl)[a](ex)[]x::ll<a>@M&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+   EAssume 
+     (exists b_71: x::ll<b_71>@M&res>=0 & res=b_71 & res=a&
+     {FLOW,(4,5)=__norm#E}[]
+
+*/
