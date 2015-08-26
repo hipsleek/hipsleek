@@ -4254,11 +4254,13 @@ let pred_norm_seg_x iprog prog unk_hps hp_defs=
   (****************END**INTERNAL***************)
   let () = Debug.ninfo_hprint (add_str " step 1" pr_id) "checking" no_pos in
   let to_norm_def, rest = List.fold_left (fun (acc_to, acc_rest) def -> begin
+    try
       let need_seg_opt = need_cutpoint def in
       match need_seg_opt with
         | Some conf ->
               (acc_to@[conf], acc_rest)
         | None -> (acc_to, acc_rest@[def])
+    with _ -> (acc_to, acc_rest@[def])
   end
   ) ([],[]) hp_defs in
   let () = Debug.ninfo_hprint (add_str " step 2" pr_id) "generating" no_pos in

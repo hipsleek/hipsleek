@@ -1,0 +1,73 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+HeapPred H(node a).
+
+
+infer_exact [H] H(p) * x::node<_,p> |- true.
+// <1>x::node<Anon_12,p>@M&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H(p)&true --> emp&true]
+expect Valid.
+
+infer_exact [H] H(p) * x::node<_,p> & p!=null |- true.
+// <1>x::node<Anon_12,p>@M&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H(p)&true --> emp&true]
+expect Valid.
+
+infer_exact [] H(p) * x::node<_,p> |- true.
+print residue.
+// emp
+expect Valid.
+
+infer_exact [] x::node<_,p> |- true.
+print residue.
+// emp
+expect Valid.
+
+//(5)
+infer_exact [] x::node<_,p> & p=null |- true.
+print residue.
+// emp
+expect Valid.
+
+print residue.
+
+/*
+# ex10b9.slk -dre "generate_co\|extract_hre\|simplify_lhs_rhs" 
+
+infer_exact [H] H(p) * H(q) & p=null & n=5 |- emp.
+print residue.
+infer_exact [H] H(p) * x::node<_,p> |- true.
+
+print residue.
+
+# How come classic here still has a residue!
+
+<1>x::node<Anon_12,p>@M&{FLOW,(20,21)=__norm#E}[]
+  inferred hprel: [H(p)&true --> emp&true]
+
+(==solver.ml#8232==)
+infer_collect_hp_rel_empty_rhs#1@2@1
+infer_collect_hp_rel_empty_rhs#1 inp1 : x::node<Anon_12,p>@M&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel_empty_rhs#1 inp2 : true
+infer_collect_hp_rel_empty_rhs#1@2 EXIT:(false, es_formula: 
+ x::node<Anon_12,p>@M&{FLOW,(20,21)=__norm#E}[],[])
+
+(==solver.ml#7711==)
+heap_entail_empty_rhs_heap#1@1
+heap_entail_empty_rhs_heap#1 inp1 :es:
+  x::node<Anon_12,p>@M&{FLOW,(20,21)=__norm#E}[]
+ 
+heap_entail_empty_rhs_heap#1 inp2 :lhs: x::node<Anon_12,p>@M&{FLOW,(20,21)=__norm#E}[]
+heap_entail_empty_rhs_heap#1 inp3 :rhs: true
+heap_entail_empty_rhs_heap#1 inp4 :is_folding:false
+heap_entail_empty_rhs_heap#1@1 EXIT: [
+   x::node<Anon_12,p>@M&{FLOW,(20,21)=__norm#E}[]
+  ]
+
+*/

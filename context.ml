@@ -1791,7 +1791,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                        end
                    in
                    (* let acts1= *)
-                   (*   if !do_classic_frame_rule && (Cfutil.is_fold_form  prog vl estate.CF.es_formula vr rhs reqset) then *)
+                   (*   if check_is_classic () && (Cfutil.is_fold_form  prog vl estate.CF.es_formula vr rhs reqset) then *)
                    (*     acts@[(1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))] *)
                    (*   else *)
                    (*     acts *)

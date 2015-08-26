@@ -767,7 +767,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       (* let () = cond_path # reset in *)
       (* let () = cond_path # push 0 in *)
       let ctx = CF.add_path_id ctx (None,0) 0 in
-      let etype = if !Globals.do_classic_frame_rule then Some (!Globals.do_classic_frame_rule) else
+      let etype = if (check_is_classic ()) then Some ((check_is_classic ())) else
           (* run-fast-test: classic2, classic2a *)
           etype0  (* None *)
       in
@@ -1987,11 +1987,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             (* let () = x_tinfo_hp (add_str "struc_vheap" Cprinter.string_of_struc_formula) struc_vheap no_pos in *)
             (* let () = print_endline ("unfolded:" ^(Cprinter.string_of_list_failesc_context unfolded)) in *)
             (* do not allow leak detection in binding*)
-            let do_classic_frame = !Globals.do_classic_frame_rule in
-            let () = Globals.do_classic_frame_rule := false in
-            let rs_prim, prf = x_add heap_entail_struc_list_failesc_context_init 5 prog false  true unfolded struc_vheap None None None pos (Some pid) in
+            (* let do_classic_frame = (check_is_classic ()) in *)
+            (* let () = Wrapper.set_classic  false in *)
+            let fn = heap_entail_struc_list_failesc_context_init 5 prog false  true unfolded struc_vheap None None None pos in
+            let rs_prim, prf = x_add Wrapper.wrap_classic (Some false) fn (Some pid) in
             (* recover classic_frame for mem leak detection at post proving*)
-            let () = Globals.do_classic_frame_rule := do_classic_frame in
+            (* let () = Wrapper.set_classic  do_classic_frame in *)
             let () = consume_all := false in
             let () = CF.must_consistent_list_failesc_context "bind 3" rs_prim  in
             (* let () = print_endline ("rs_prim:" ^(Cprinter.string_of_list_failesc_context rs_prim)) in *)
@@ -3160,7 +3161,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
           (CF.invert_list_partial_context_outcome CF.invert_ctx_branch_must_fail CF.invert_fail_branch_must_fail ans1,prf)
         end
       else
-        (* let () = print_string_quiet "start struct checking \n" in *)
+        let () = x_binfo_hp (add_str "do_classic_frame_rule" string_of_bool) (check_is_classic ()) pos in
         let rs_struc , prf = x_add heap_entail_struc_list_partial_context_init prog false false fn_state (snd posts) None None None pos (Some pid) in
         rs_struc, prf
         (*let () = print_string_quiet "stop struct checking \n" in*)
@@ -4350,8 +4351,20 @@ let rec check_prog iprog (prog : prog_decl) =
     let scc, ini_hpdefs =
       Da.find_rel_args_groups_scc prog scc (* scc,[] *)
     in
-    let has_infer_shape_proc = x_add_1 Pi.is_infer_shape_scc scc in
+    let has_infer_shape_pre_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_PRE in
+    let has_infer_shape_post_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_POST in
+    let has_infer_shape_prepost_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_PRE_POST in
+    let has_infer_shape_proc = (x_add_1 Pi.is_infer_shape_scc scc) || has_infer_shape_pre_proc ||
+      has_infer_shape_post_proc || has_infer_shape_prepost_proc in
     let has_infer_pre_proc = Pi.is_infer_pre_scc scc in
+
+    (* let () = if (has_infer_shape_pre_proc || has_infer_shape_prepost_proc) then *)
+    (*   Iincr.add_prepost_shape_relation_scc prog Iincr.add_pre_shape_relation scc in *)
+
+    (* let () = if (has_infer_shape_post_proc) then *)
+    (*   Iincr.add_prepost_shape_relation_scc prog Iincr.add_post_shape_relation scc in *)
+
+
     let () = if (not(has_infer_shape_proc) && has_infer_pre_proc) then Pi.add_pre_relation_scc prog scc in
     let has_infer_post_proc = Pi.is_infer_post_scc scc in
     let () = if (not(has_infer_shape_proc)) then x_add Pi.add_post_relation_scc prog scc in
@@ -4578,6 +4591,14 @@ let rec check_prog iprog (prog : prog_decl) =
     (*   with Not_found -> scc *)
     (* in *)
   in
+  let rec process_cmd iprog cprog verified_sccs icmd=
+    match icmd with
+      | Icmd.I_Norm {cmd_res_scc = scc} ->
+            verify_scc_incr cprog verified_sccs scc
+      | Icmd.I_Seq cmds
+      | Icmd.I_Search cmds (*TOFIX*) ->
+            List.fold_left (fun _ (_, cmd) ->  process_cmd iprog cprog verified_sccs cmd) (cprog, verified_sccs) cmds
+  in
   (********************************************************)
   (********************************************************)
   (********************************************************)
@@ -4648,7 +4669,10 @@ let rec check_prog iprog (prog : prog_decl) =
         else
           (* let () = List.iter (fun proc -> *)
           (* DD.info_hprint (add_str "xxxx3  " Cprinter.string_of_struc_formula) (proc.proc_static_specs) no_pos) scc in *)
-          verify_scc_incr prog verified_sccs scc
+          if !Globals.old_incr_infer then verify_scc_incr prog verified_sccs scc
+            else
+              let icmd = Icmd.compute_cmd prog scc in
+              process_cmd iprog prog verified_sccs icmd
       in
       prog, n_verified_sccs
     ) (prog,[]) proc_scc

@@ -1,0 +1,142 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+HeapPred H(node a).
+
+//(1)
+infer_exact [H] H(p) & p=null |- emp.
+print residue.
+expect Valid.
+//expect_infer Valid R{emp}.
+// <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H(p)&p=null --> emp&true]
+
+//(2)
+infer_exact [H] H(p) * H(q) & p=null |- emp.
+// infer_classic, then infer_empty
+print residue.
+expect Valid.
+/*
+<1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#|3  --> emp&true; 
+                  H(q)&true |#|3  --> emp&true]
+*/
+
+//(3)
+infer_exact [H] H(p) * H(q) & p=null |- true.
+// infer_empty
+print residue.
+expect Valid.
+/*
+ <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#|3  --> emp&true; 
+                  H(q)&true |#|3  --> emp&true]
+*/
+
+//(4)
+infer_exact [H] H(p) & p=null |- emp.
+// infer_empty
+print residue.
+expect Valid.
+// <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H(p)&p=null |#|3  --> emp&true]
+
+//(5)
+infer_exact [H] H(p) & p=null |- true.
+// infer_empty
+print residue.
+expect Valid.
+// <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H(p)&p=null |#|3  --> emp&true]
+
+
+//(6)
+infer_exact [H] H(p) |- emp.
+// infer_empty
+print residue.
+expect Valid.
+// <1>emp&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H(p)&true |#|3  --> emp&true]
+
+
+//(7)
+infer_exact [H] H(p) |- true.
+// infer_empty
+print residue.
+expect Valid.
+// <1>emp&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H(p)&true |#|3  --> emp&true]
+
+//(8)
+infer_exact [H] H(p) * x::node<_,p> |- true.
+// <1>x::node<Anon_12,p>@M&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H(p)&true --> emp&true]
+// # EXPECTS
+// inferred hprel: [H(p)&true |#| x::node<_,p> --> emp&true]
+print residue.
+expect Valid.
+
+//(9)
+infer_exact [H] H(p) * x::node<_,p> & p=null |- true.
+// <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H(p)&p=null |#|3  --> emp&true]
+// # EXPECTS
+// inferred hprel: [H(p)&true |#| x::node<_,p> & p=nill --> emp&true]
+print residue.
+expect Valid.
+
+//(10)
+infer_exact [H] H(p) * x::node<_,p> |- emp.
+//Entail (1) : Fail.(must) cause: x::node<Anon_12,p>@M&{FLOW,(20,21)=__norm#E}[]:memory leak failure : residue is forbidden.
+print residue.
+expect Fail.
+
+//(11)
+infer_exact [H] H(p) * x::node<_,p> & p=null |- emp.
+//Entail (1) : Fail.(must) cause: x::node<Anon_12,p>@M&{FLOW,(20,21)=__norm#E}[]:memory leak failure : residue is forbidden.
+print residue.
+expect Fail.
+
+//(12)
+infer [] emp |- emp.
+print residue.
+// <1>emp&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
+
+//(13)
+infer [] emp |- true.
+print residue.
+// <1>emp&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
+
+//(14)
+infer [] true |- emp.
+print residue.
+// <1>htrue&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
+
+//(15)
+infer [] true |- true.
+print residue.
+// <1>htrue&{FLOW,(20,21)=__norm#E}[]
+// # EXPECTS
+// <1>emp&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
+
+/*
+# ex10b8.slk -dre "generate_co\|extract_hre\|simplify_lhs_rhs" 
+
+//(15)
+infer [] true |- true.
+print residue.
+// <1>htrue&{FLOW,(20,21)=__norm#E}[]
+// # EXPECTS
+// <1>emp&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
+
+*/

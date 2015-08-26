@@ -907,6 +907,8 @@ let allow_lemma_fold = ref true
 let allow_lemma_norm = ref false
 let old_norm_w_coerc = ref false
 
+let old_incr_infer = ref false
+
 (* Enable exhaustive normalization using lemmas *)
 let allow_exhaustive_norm = ref true
 
@@ -1016,7 +1018,7 @@ let pred_elim_dangling = ref true
 (* let sa_inlining = ref false *)
 
 let sa_sp_split_base = ref false
-let sa_pure_field = ref false
+(* let sa_pure_field = ref false *)
 
 let sa_pure = ref true
 
@@ -1272,8 +1274,14 @@ let assert_nonlinear = ref false
 let assert_unsound_false = ref false
 let assert_no_glob_vars = ref false
 
+let new_rm_htrue = ref true
+
 let old_collect_false = ref false
+let old_collect_hprel = ref false
+let old_infer_hprel_classic = ref false
+let old_classic_rhs_emp = ref false
 let warn_nonempty_perm_vars = ref false
+let warn_trans_context = ref false
 let warn_free_vars_conseq = ref false
 let old_infer_collect = ref false
 let old_base_case_unfold = ref false
@@ -1736,7 +1744,7 @@ class inf_obj  =
     method is_field_imm = self # get INF_FIELD_IMM
     method is_arr_as_var  = self # get INF_ARR_AS_VAR
     method is_imm  = self # get INF_IMM
-    method is_pure_field  = self # get INF_PURE_FIELD || !sa_pure_field
+    method is_pure_field  = self # get INF_PURE_FIELD (* || !sa_pure_field *)
     (* immutability inference *)
     method is_field = (self # get INF_FIELD_IMM)
     method is_shape  = self # get INF_SHAPE
@@ -1876,6 +1884,7 @@ class inf_obj_sub  =
       let () = no # set_list arr in
       (* let () = print_endline ("Cloning :"^(no #string_of)) in *)
       no
+    method empty = arr <- []
   end;;
 
 let clone_sub_infer_const_obj_all () =
@@ -1923,8 +1932,10 @@ let do_infer_inv = ref false
 let do_test_inv = ref true (* false *)
 
 (** for classic frame rule of separation logic *)
-let opt_classic = ref false                (* option --classic is turned on or not? *)
-let do_classic_frame_rule = ref false      (* use classic frame rule or not? *)
+(* let opt_classic = ref false                (\* option --classic is turned on or not? *\) *)
+(* replaced by check_is_classic () & infer_const_obj *)
+(* let do_classic_frame_rule = ref false      (\* use classic frame rule or not? *\) *)
+
 let dis_impl_var = ref false (* Disable implicit vars *)
 
 let show_unexpected_ents = ref true
@@ -2477,5 +2488,7 @@ let prim_method_names = [ nondet_int_proc_name ]
 let is_prim_method pn = 
   List.exists (fun mn -> String.compare pn mn == 0) prim_method_names
 
+let check_is_classic_local obj = obj (* infer_const_obj *) # get INF_CLASSIC
 
+let check_is_classic () = check_is_classic_local infer_const_obj
 

@@ -1,0 +1,67 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+HeapPred H(node a).
+HeapPred P(node a,node@NI b).
+HeapPred P1(node a).
+
+
+//1a
+infer [H,P] H(p) * x::node<1,p> & p=null |- P1(p).
+// inferred hprel: [H(p)&p=null --> P1(p)&true]
+// # How come still inferring P1?
+print residue.
+
+expect Fail.
+
+//1b
+infer [H,P] H(p) * x::node<1,p>  |- P1(p).
+// inferred hprel: [H(p) | x::node<_,p>--> emp&true]
+//OR inferred hprel: [H(p) | x::node<_,p> --> htrue&true]
+// # EXPECTS : FAIL
+print residue.
+expect Fail.
+
+
+//2
+infer [H,P1] H(p) * x::node<1,p> & p=null |- P1(p).
+// inferred hprel: [H(p)&p=null --> P1(p)&true]
+// # EXPECTS : [H(p)&p=null | true --> P1(p)&true]
+print residue.
+expect Valid.
+
+
+//3
+infer [H,P] H(p) * x::node<1,p>  |- P(p,x).
+// inferred hprel: [H(p)&p=null --> P1(p)&true]
+//<1>H(p) * x::node<flted_23_44,p>@M&p=null & flted_23_44=1&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [emp&p=null --> P(p,x@NI)&true]
+// # EXPECTS : [H(p) | x::node<_,p> --> P(p,x)&true]
+print residue.
+expect Valid.
+
+
+/*
+# ex15c.slk 
+
+infer [H,P] H(p) * x::node<1,p> & p=null |- P1(p).
+// inferred hprel: [H(p)&p=null --> P1(p)&true]
+// # How come still inferring P1?
+
+infer [H,P1] H(p) * x::node<1,p> & p=null |- P1(p).
+// inferred hprel: [H(p)&p=null --> P1(p)&true]
+// # EXPECTS : [H(p)&p=null | x::node<_,p> --> P1(p)&true]
+
+infer [H,P] H(p) * x::node<1,p> & p=null |- P(p,x).
+// inferred hprel: [H(p)&p=null --> P1(p)&true]
+//<1>H(p) * x::node<flted_23_44,p>@M&p=null & flted_23_44=1&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [emp&p=null --> P(p,x@NI)&true]
+// # EXPECTS : [H(p)&p=null | x::node<_,p> --> P(p,x)&true]
+
+
+*/

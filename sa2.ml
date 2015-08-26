@@ -34,11 +34,11 @@ let collect_ho_ass iprog cprog is_pre def_hps (acc_constrs, post_no_def) cs=
   (* if infer_hps = [] then (acc_constrs, post_no_def) else *)
   let log_str = if is_pre then PK_Pre_Oblg else PK_Post_Oblg in
   let  _ = DD.info_zprint (lazy (((string_of_proving_kind log_str) ^ ":\n" ^ (Cprinter.string_of_hprel_short cs)))) no_pos in
-  let tmp = !Globals.do_classic_frame_rule in
-  let () = Globals.do_classic_frame_rule := true in
+  (* let tmp = (check_is_classic ()) in *)
+  (* let () = Wrapper.set_classic  true in *)
   let f = wrap_proving_kind log_str (Sacore.do_entail_check infer_hps iprog cprog) in
-  let new_constrs = f cs in
-  let () = Globals.do_classic_frame_rule := tmp in
+  let new_constrs = Wrapper.wrap_classic (Some true) f cs in
+  (* let () = Wrapper.set_classic  tmp in *)
   (acc_constrs@new_constrs, post_no_def@linfer_hps)
 
 (*input in fb

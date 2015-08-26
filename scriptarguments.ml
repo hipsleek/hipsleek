@@ -286,9 +286,9 @@ let common_arguments = [
   (* Exception(compute_fixpoint_aux@5):Failure("compute_def:Error in translating the input for fixcalc") *)
   (* Exception(compute_fixpoint#5@4):Failure("compute_def:Error in translating the input for fixcalc") *)
   ("--trace-all", Arg.Set Globals.trace_all,
-  "Trace all proof paths");
+   "Trace all proof paths");
   ("--log-cvcl", Arg.String Cvclite.set_log_file,
-  "Log all CVC Lite formula to specified log file");
+   "Log all CVC Lite formula to specified log file");
   (* ("--log-cvc3", Arg.String Cvc3.set_log_file, *)
   ("--log-cvc3", Arg.Unit Cvc3.set_log_file,    "Log all formulae sent to CVC3 in file allinput.cvc3");
   ("--log-omega", Arg.Set Omega.log_all_flag,
@@ -314,9 +314,17 @@ linput.rl");
   ("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
   ("--en-weaker-pre", Arg.Set Globals.weaker_pre_flag,"Enable Weaker Pre-Condition to be Inferred");
   ("--dis-weaker-pre", Arg.Clear Globals.weaker_pre_flag,"Disable Weaker Pre-Condition to be Inferred");
+  ("--warn-trans-context", Arg.Set Globals.warn_trans_context,"Enable Warning of Non-empty Perm Vars");
   ("--warn-nonempty-perm-vars", Arg.Set Globals.warn_nonempty_perm_vars,"Enable Warning of Non-empty Perm Vars");
   (* WN : this excludes ann_vars and ho_vars, but include perm_vars *)
   ("--warn-free-vars-conseq", Arg.Set Globals.warn_free_vars_conseq,"Enable Warning of Non-empty free heap vars in conseq");
+  ("--new-rm-htrue", Arg.Set Globals.new_rm_htrue,"Enable removal of htrue from ante");
+  ("--old-classic-rhs-emp", Arg.Set Globals.old_classic_rhs_emp,"Use old handling of classic rhs emp");
+  ("--new-classic-rhs-emp", Arg.Clear Globals.old_classic_rhs_emp,"Use new handling of classic rhs emp");
+  ("--old-incr-infer", Arg.Set Globals.old_incr_infer,"Use old inference system");
+  ("--old-rm-htrue", Arg.Clear Globals.new_rm_htrue,"Disable removal of htrue from ante");
+  ("--old-infer-hprel-classic", Arg.Set Globals.old_infer_hprel_classic,"Enable infer hp_rel handling of classic (seems redundant)");
+  ("--old-collect-hprel", Arg.Set Globals.old_collect_hprel,"Enable Old False which invokes infer_hp_rel without classic");
   ("--old-collect-false", Arg.Set Globals.old_collect_false,"Enable Old False Collection Method (to detect unsoundness)");
   ("--old-base-case-unfold", Arg.Set Globals.old_base_case_unfold,"Enable Old BaseCaseUnfold Method");
   ("--old-infer-collect", Arg.Set Globals.old_infer_collect,"Enable Old Infer Collect Method");
@@ -432,8 +440,8 @@ linput.rl");
          Globals.simpl_unfold2 := true;
          Globals.simpl_unfold3 := true;*)
        (*Globals.elim_exists_flag := false;
-         	Globals.simplify_imply := false;
-         	Globals.filtering_flag := false;*)
+         Globals.simplify_imply := false;
+         Globals.filtering_flag := false;*)
        Globals.ann_vp := false;),
    "enable support for quantifier elimination in PAinfinity ");
   ("--en-inf-qe-coq", Arg.Unit( fun _ ->
@@ -978,7 +986,11 @@ linput.rl");
      ( fun _ -> 
          Globals.infer_const_obj # set Globals.INF_PURE_FIELD
      ), "enable the inference of pure field property");
-  ("--sa-dis-pure-field", Arg.Clear Globals.sa_pure_field, "disable the inference of pure field property");
+  ("--sa-dis-pure-field", 
+   Arg.Unit
+     ( fun _ -> 
+         Globals.infer_const_obj # reset Globals.INF_PURE_FIELD
+     ),"disable the inference of pure field property");
   ("--sa-ext", Arg.Set Globals.sa_ex, "enable the inference of shape and pure property (predicate level)");
   ("--sa-pure", Arg.Set Globals.sa_pure, "enable the inference of shape and pure property");
   ("--sa-dis-ext", Arg.Clear Globals.sa_ex, "disable the inference of shape and pure property");

@@ -1375,7 +1375,7 @@ let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 g_infer_type infer_ls
   in
   let is_infer_shape_pre ()=
     (* now, consider local spec only *)
-    List.exists (fun it -> it = INF_SHAPE || it = INF_SHAPE_PRE) infer_lst
+    List.exists (fun it -> it = INF_SHAPE || it = INF_SHAPE_PRE || it = INF_SHAPE_PRE_POST) infer_lst
   in
   let is_infer_shape_post ()=
     (* now, consider local spec only *)
@@ -1544,16 +1544,23 @@ let genESpec_wNI body_header body_opt args ret pos=
   else
     let ss, n_hp_dcls,args_wi =
       match body_header.proc_static_specs with
-      | F.EList [] -> if Globals.infer_const_obj # is_shape || Globals.infer_const_obj # is_shape_pre || Globals.infer_const_obj # is_shape_post then
+      | F.EList [] -> if Globals.infer_const_obj # is_shape
+          (* Globals.infer_const_obj # is_shape_pre || Globals.infer_const_obj # is_shape_pre_post || *)
+          (* Globals.infer_const_obj # is_shape_post *)
+        then
           let ss, hps, args_wi = genESpec body_header.proc_mingled_name body_opt args ret
               (F.mkTrue_nf pos) (F.mkTrue_nf pos) INF_SHAPE [] pos in
           (* let () = print_gen_spec ss hps in *)
           let () = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
           (ss,hps,args_wi)
         else (body_header.proc_static_specs,[],body_header.proc_args_wi)
-      | F.EInfer i_sf -> if Globals.infer_const_obj # is_shape || i_sf.F.formula_inf_obj # is_shape ||
-           Globals.infer_const_obj # is_shape_pre || i_sf.F.formula_inf_obj # is_shape_pre ||
-            Globals.infer_const_obj # is_shape_post || i_sf.F.formula_inf_obj # is_shape_post
+      | F.EInfer i_sf -> if Globals.infer_const_obj # is_shape ||
+          i_sf.F.formula_inf_obj # is_shape
+           (* Globals.infer_const_obj # is_shape_pre || *)
+          (* Globals.infer_const_obj # is_shape_pre_post || *)
+          (* i_sf.F.formula_inf_obj # is_shape_pre || *)
+          (* i_sf.F.formula_inf_obj # is_shape_pre_post || *)
+            (* Globals.infer_const_obj # is_shape_post || i_sf.F.formula_inf_obj # is_shape_post *)
         then
           let is_simpl, pre0,post0 = F.get_pre_post i_sf.F.formula_inf_continuation in
           if is_simpl then

@@ -1,0 +1,113 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+HeapPred H(node a).
+
+//(1)
+infer_exact [H] H(p) & p=null |- emp.
+print residue.
+//expect_infer Valid R{emp}.
+// <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H(p)&p=null --> emp&true]
+
+infer_exact [H] H(p) |- emp.
+print residue.
+//<1>emp&{FLOW,(20,21)=__norm#E}[]
+//inferred hprel: [H(p)&true |#|3  --> emp&true]
+
+
+infer_exact [H] H(p) & p=null & n=5 |- emp.
+print residue.
+// <1>emp&n=5 & p=null&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H(p)&p=null |#|3  --> emp&true]
+
+
+infer_exact [H] H(p) * H(q) & p=null & n=5 |- emp.
+print residue.
+/*
+!!! **solver.ml#7635:WN : Why a diffrent way to infer_collect_hp_rel_classsic
+ <1>emp&n=5 & p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#|3  --> emp&true; 
+                  H(q)&true |#|3  --> emp&true]
+
+(==solver.ml#7636==)
+infer_collect_hp_rel_classsic#0@23@22@21@20@19
+infer_collect_hp_rel_classsic#0 inp1 : H(p) * H(q)&n=5 & p=null&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel_classsic#0 inp2 : emp
+infer_collect_hp_rel_classsic#0@23 EXIT:(true, es_formula: 
+ emp&n=5 & p=null&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [H]
+ es_infer_hp_rel: [H(p)&p=null |#|  --> emp; H(q) |#|  --> emp])
+
+(==solver.ml#8236==)
+infer_collect_hp_rel_empty_rhs#1@26@25@24@22@21@20@19
+infer_collect_hp_rel_empty_rhs#1 inp1 : emp&n=5 & p=null&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel_empty_rhs#1 inp2 : emp
+infer_collect_hp_rel_empty_rhs#1 inp3 : true
+infer_collect_hp_rel_empty_rhs#1@26 EXIT:(false, es_formula: 
+ emp&n=5 & p=null&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [H]
+ es_infer_hp_rel: [H(p)&p=null |#|  --> emp; H(q) |#|  --> emp],[])
+
+(==solver.ml#7711==)
+heap_entail_empty_rhs_heap#1@25@24@22@21@20@19
+heap_entail_empty_rhs_heap#1 inp1 :es:
+  emp&n=5 & p=null&{FLOW,(20,21)=__norm#E}[]
+ 
+ es_infer_vars_hp_rel: [H]
+ es_infer_hp_rel: [H(p)&p=null |#|  --> emp; H(q) |#|  --> emp]
+heap_entail_empty_rhs_heap#1 inp2 :lhs: emp&n=5 & p=null&{FLOW,(20,21)=__norm#E}[]
+heap_entail_empty_rhs_heap#1 inp3 :rhs: true
+heap_entail_empty_rhs_heap#1 inp4 :is_folding:false
+heap_entail_empty_rhs_heap#1@25 EXIT: [
+   emp&n=5 & p=null&{FLOW,(20,21)=__norm#E}[]
+  ]
+
+(==solver.ml#7663==)
+heap_entail_conjunct_helper#4@24@22@21@20@19
+heap_entail_conjunct_helper#4 inp1 :  emp&n=5 & p=null&{FLOW,(20,21)=__norm#E}[]
+ 
+ es_infer_vars_hp_rel: [H]
+ es_infer_hp_rel: [H(p)&p=null |#|  --> emp; H(q) |#|  --> emp]
+heap_entail_conjunct_helper#4 inp2 : emp&{FLOW,(20,21)=__norm#E}[]
+heap_entail_conjunct_helper#4@24 EXIT: [
+   emp&n=5 & p=null&{FLOW,(20,21)=__norm#E}[]
+  ]
+
+(==solver.ml#7314==)
+heap_entail_conjunct_helper#3@22@21@20@19
+heap_entail_conjunct_helper#3 inp1 :  H(p) * H(q)&n=5 & p=null&{FLOW,(20,21)=__norm#E}[]
+ 
+ es_infer_vars_hp_rel: [H]
+heap_entail_conjunct_helper#3 inp2 : emp&{FLOW,(20,21)=__norm#E}[]
+heap_entail_conjunct_helper#3@22 EXIT: [
+   emp&n=5 & p=null&{FLOW,(20,21)=__norm#E}[]
+  ]
+*/
+
+/*
+# ex10b7.slk -dre "generate_co\|extract_hre\|simplify_lhs_rhs" 
+
+ infer_exact [H] H(p) |- emp.
+
+# GOT below. Why did we not infer H(p) --> emp
+
+Need to make below much more general to return
+a list of hprel & its residue.
+
+Implemeted as:
+
+(* (==infer.ml#3554==) *)
+(* extract_hrel_head_list@9@6 *)
+(* extract_hrel_head_list inp1 : H(p)&p=null&{FLOW,(20,21)=__norm#E}[] *)
+(* extract_hrel_head_list@9 EXIT:Some(([(H,[ p])], emp&p=null&{FLOW,(20,21)=__norm#E}[])) *)
+let extract_hrel_head_list (f0:formula) =
+  let rec helper f =
+    match f with
+
+*/

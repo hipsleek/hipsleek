@@ -1879,8 +1879,16 @@ WARNING: _0:0_0:0:* between overlapping heaps: ( x::cellp( f2_310)<v_319>@M, x::
 
 # this is being investigated from --warn-nonempty-perm-vars
 ===================================================================
+Total number of errors: 1 in files:
+  infer/infer14.slk({E16#Valid}).
 ===================================================================
+Total number of errors: 1 in files: (FIXED)
+  classic/classic1b.slk({E19#Fail},{E22#Fail},{E23#Fail},{E25#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' 
 ===================================================================
+Total number of errors: 2 in files:
+  lemmas/nlseg4e.slk({L2#Valid})
+   lemmas/nlseg4e1.slk({E1#Valid},{E2#Valid},{E3#Valid}).
 ===================================================================
 ===================================================================
 ===================================================================

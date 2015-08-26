@@ -1794,6 +1794,13 @@ Total verification time: 68.20 second
         Number of false contexts: 77
 
 ====================================================================
+Problems below:
+
+--new-classic-rhs-emp
+Total number of errors: 3 in files:
+  classic/classic4.slk({E1#Valid},{E3#Valid},{E5#Valid},{E7#Valid}) 
+  lemmas/nlseg4e.slk({L2#Valid}) 
+  lemmas/nlseg4e1.slk({E1#Valid},{E2#Valid},{E3#Valid}).
 ====================================================================
 ====================================================================
 ====================================================================
