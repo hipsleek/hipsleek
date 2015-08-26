@@ -614,6 +614,7 @@ let rec create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
               with Not_found -> report_error no_pos ("create_void_pointer_casting_proc: Unknown data type: " ^ base_data)
             ) 
         ) in
+        let () = x_binfo_hp (add_str "XXXdata_name,param" pr_id) (data_name^param) no_pos in
         let cast_proc = (
           typ_name ^ " " ^ proc_name ^ " (void_star p)\n" ^
           "  case { \n" ^
@@ -623,7 +624,7 @@ let rec create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
           "                 ensures res::" ^ data_name ^ param ^ " & o>=0; \n" ^
           "  }\n"
         ) in
-        let _ = Debug.ninfo_zprint (lazy ((" cast_proc:\n  " ^ cast_proc))) no_pos in
+        let _ = Debug.binfo_zprint (lazy (("XXX cast_proc:\n  " ^ cast_proc))) no_pos in
         let pd = Parser.parse_c_aux_proc "void_pointer_casting_proc" cast_proc in
         Hashtbl.add tbl_aux_proc proc_name pd;
         pd
@@ -632,6 +633,11 @@ let rec create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
   (* return *)
   proc_decl
 
+let create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
+  let pr1 = pr_id in
+  let pr2 = Iprinter.string_of_proc_decl in
+  Debug.no_1 "create_void_pointer_casting_proc" 
+    pr1 pr2 create_void_pointer_casting_proc (typ_name: string)
 
 (* check if a type is pointer type *)
 let is_pointer_typ_name (typ_name: string) : bool =
