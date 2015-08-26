@@ -2884,7 +2884,7 @@ let get_h_formula_data_fr_hnode hn=
 
 
 (*history from func calls*)
-let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selected_hpargs rhs_selected_hpargs
+let simplify_lhs_rhs prog es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selected_hpargs rhs_selected_hpargs
     crt_holes history unk_svl prog_vars lvi_ni_svl classic_nodes=
   let partition_i_ni_svl (hp,args)=
     (* let () = Debug.info_zprint (lazy  ("    args:" ^ (!CP.print_svl hd) ^ ": "^(!CP.print_svl args))) no_pos in *)
@@ -2942,12 +2942,29 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selected_h
   let () = Debug.ninfo_hprint (add_str  "    svl" !CP.print_svl) svl no_pos in
   let () = Debug.ninfo_hprint (add_str  "    keep_root_hrels" !CP.print_svl) keep_root_hrels no_pos in
   let () = Debug.ninfo_hprint (add_str  "    classic_nodes" !CP.print_svl) classic_nodes no_pos in
-  let lhs_b1,rhs_b1 = Sautil.keep_data_view_hrel_nodes_two_fbs prog lhs_b rhs_b
+  let lhs_b1a,rhs_b1a = Sautil.keep_data_view_hrel_nodes_two_fbs prog lhs_b rhs_b
       (hds@filter_his) hvs (lhp_args@rhp_args) leqs reqs [] (svl@keep_root_hrels@classic_nodes)
       (lhs_keep_rootvars@keep_root_hrels) lhp_args lhs_args_ni
       rhs_selected_hps rhs_keep_rootvars rhs_args_ni
       unk_svl (CP.remove_dups_svl prog_vars) in
   (***************************)
+  let lhs_b1,rhs_b1 = if not (es.CF.es_infer_obj # is_pure_field_all) then
+    let l_pure_fields =  CF.find_close (List.filter (fun sv -> not (CP.is_node_typ sv)) lhs_args_ni) (leqs@reqs) in
+    let r_pure_fields =  CF.find_close (List.filter (fun sv -> not (CP.is_node_typ sv)) rhs_args_ni) (leqs@reqs) in
+    let () = Debug.ninfo_hprint (add_str  "l_pure_fields" !CP.print_svl) l_pure_fields no_pos in
+    let () = Debug.ninfo_hprint (add_str  "r_pure_fields" !CP.print_svl) r_pure_fields no_pos in
+    (*lhs*)
+    let new_lhs_b1 = if l_pure_fields=[] then lhs_b1a else
+      let lhs_p = (MCP.pure_of_mix (lhs_b1a.CF.formula_base_pure)) in
+      let l_keep_svl = CP.diff_svl (CP.fv lhs_p) l_pure_fields in
+      {lhs_b1a with CF.formula_base_pure = MCP.mix_of_pure (CP.filter_var_new lhs_p l_keep_svl) } in
+    (*rhs*)
+    let new_rhs_b1 = if r_pure_fields=[] then rhs_b1a else
+      let rhs_p = (MCP.pure_of_mix (rhs_b1a.CF.formula_base_pure)) in
+      let r_keep_svl = CP.diff_svl (CP.fv rhs_p) r_pure_fields in
+      {rhs_b1a with CF.formula_base_pure = MCP.mix_of_pure (CP.filter_var_new rhs_p r_keep_svl) } in
+    (new_lhs_b1, new_rhs_b1)
+  else lhs_b1a,rhs_b1a in
   (*subst holes*)
   let lhs_b1 = {lhs_b1 with CF.formula_base_heap = Immutable.apply_subs_h_formula crt_holes lhs_b1.CF.formula_base_heap} in
   let rhs_b1 = {rhs_b1 with CF.formula_base_heap = Immutable.apply_subs_h_formula crt_holes rhs_b1.CF.formula_base_heap} in
@@ -2965,12 +2982,12 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selected_h
   (* let lhs_b4,rhs_b4 = Sautil.rename_hp_args lhs_b3 rhs_b3 in *)
   (CF.prune_irr_neq_formula prog_vars lhs_b3 rhs_b3,rhs_b3)
 
-let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs
+let simplify_lhs_rhs prog es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs
     lhs_selected_hpargs rhs_selected_hpargs crt_holes history unk_svl prog_vars lvi_ni_svl classic_nodes=
   let pr = Cprinter.string_of_formula_base in
   let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
   DD.no_3 "simplify_lhs_rhs" pr1 pr pr (pr_pair pr pr)
-    (fun _ _ _ -> simplify_lhs_rhs prog lhs_b rhs_b
+    (fun _ _ _ -> simplify_lhs_rhs prog es lhs_b rhs_b
         leqs reqs hds hvs lhrs rhrs lhs_selected_hpargs rhs_selected_hpargs crt_holes history unk_svl prog_vars lvi_ni_svl classic_nodes )
     lhs_selected_hpargs lhs_b rhs_b
 
@@ -3300,7 +3317,7 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
   let total_unk_svl = CP.remove_dups_svl (group_unk_svl@unk_svl) in
   let new_rhs_b0 = {new_rhs_b with 
                     CF.formula_base_heap =  CF.check_imm_mis rhs new_rhs_b.CF.formula_base_heap} in
-  let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog lhs_b0 new_rhs_b0 leqs reqs hds hvs lhras (rhras@new_hrels)
+  let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog es lhs_b0 new_rhs_b0 leqs reqs hds hvs lhras (rhras@new_hrels)
       (lselected_hpargs) (rselected_hpargs@(List.map (fun (hp,eargs,_) -> (hp, List.concat (List.map CP.afv eargs)))
                                               new_hrels)) es.CF.es_crt_holes ((* es.CF.es_heap:: *)(*no_es_history*) sel_his)
       total_unk_svl prog_vars lvi_ni_svl classic_nodes in
@@ -3761,7 +3778,7 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) lhs_b rhs0 mix_rf pos
     (*   CP.spec_var * CF.CP.spec_var list -> CF.hprel option *)
     let generate_constrs lhs_b rhs_b leqs reqs hds hvs lhras (hp,args)=
       (* WN : Why did this simplify_lhs_rhs has so many parameters? *)
-      let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhras []
+      let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog es0 lhs_b rhs_b leqs reqs hds hvs lhras []
           [(hp,args)] [] [] [] [] [] [] [] in
       let lhs0 = (CF.Base new_lhs_b) in
       (* WN : Why do we remove !=null? *)
@@ -3778,11 +3795,13 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) lhs_b rhs0 mix_rf pos
       let () = x_tinfo_hp (add_str "lhs(after)" !CF.print_formula) lhs no_pos in
       let () = x_tinfo_hp (add_str "rhs" !CF.print_formula) rhs_f no_pos in
       let () = x_tinfo_hp (add_str "(hp,args)"  (pr_pair !CP.print_sv !CP.print_svl)) (hp,args) no_pos in
-      let ass_guard = x_add find_guard hds leqs [(hp,args)] [] in
+      let ( _,lmf,_,_,_,_) = CF.split_components lhs in
+      let leqNulls = CF.find_close (MCP.get_null_ptrs lmf) leqs in
+      let ass_guard = x_add find_guard hds leqs [(hp,CP.diff_svl args leqNulls)] [] in
       let hprel_lst = match extr_ans with
         | None -> []
         | Some (lst,f) ->
-          List.map (fun (hp,args,p) -> 
+          List.map (fun (hp,args,p) ->
               let knd = CP.RelAssume [hp] in
               let args2 = List.map (fun e -> 
                   match e with Var (sv,_) -> sv

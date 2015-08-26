@@ -69,6 +69,7 @@ Residue:
 [[ COND ==>  COND ==>  InferHeap]]
 */
 
+HeapPred H2(node a,int n).
 
 infer [H2,@classic,@pure_field] H2(p,1) * x::node<2,p>  |- true.
 print residue.
@@ -81,7 +82,6 @@ print residue.
                    true]
 */
 
-HeapPred H2(node a,int n).
 
 infer [H2,@classic] H2(p,1) * x::node<2,p>  |- true.
 print residue.
