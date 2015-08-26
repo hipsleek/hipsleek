@@ -455,9 +455,13 @@ let pr_add_str ?(lvl=(!glob_lvl)) lbl pr x =
     if should_break str then pr_vwrap_nocut ~indent:true lbl pr x
     else pr_hwrap lbl pr x) x
 
-let pr_add_str_cut ?(lvl=(!glob_lvl)) lbl pr x =
-  pr_add_str ~lvl lbl pr x;
-  wrap_pr_1 lvl (fun () -> fmt_cut()) ()
+let pr_add_str_cut ?(lvl=(!glob_lvl)) ?(emp_test=fun x -> false) lbl pr x =
+  if emp_test x then ()
+  else
+    begin
+      pr_add_str ~lvl lbl pr x;
+      wrap_pr_1 lvl (fun () -> fmt_cut()) ()
+    end
 
 let pr_add_str_opt ?(lvl=(!glob_lvl)) lbl pr = function
   | None -> ()
@@ -4281,6 +4285,10 @@ let pr_barrier_decl v =
   pr_vwrap  ("prune invs:"^( string_of_int(List.length v.barrier_prune_invariants) )^":") pr_prune_invariants v.barrier_prune_invariants;
   fmt_close_box ()
 
+let pr_bool b = fmt_string (string_of_bool b)
+
+let pr_list_id b = fmt_string (pr_list pr_id b)
+
 (* pretty printing for a view *)
 let pr_view_decl v =
   pr_mem:=false;
@@ -4312,48 +4320,48 @@ let pr_view_decl v =
     (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_view_arg_lbl
        (CP.combine_labels_w_view_arg v.view_labels  (List.map fst v.view_params_orig)); fmt_string "= ") ())
   pr_struc_formula v.view_formula;
-  pr_add_str_cut  "view vars: "  pr_list_of_spec_var v.view_vars;
+  pr_add_str_cut ~emp_test:Gen.is_empty "view vars: "  pr_list_of_spec_var v.view_vars;
   (* pr_vwrap  "ann vars: "  pr_list_of_annot_arg (List.map fst v.view_ann_params); *)
-  pr_add_str_cut  "ann vars (0 - not a posn): "  pr_list_of_annot_arg_posn v.view_ann_params;
-  pr_add_str_cut  "cont vars: "  pr_list_of_spec_var v.view_cont_vars;
+  pr_add_str_cut  ~emp_test:Gen.is_empty "ann vars (0 - not a posn): "  pr_list_of_annot_arg_posn v.view_ann_params;
+  pr_add_str_cut  ~emp_test:(Gen.is_empty) "cont vars: "  pr_list_of_spec_var v.view_cont_vars;
   pr_add_str_cut  "inv: "  pr_mix_formula v.view_user_inv;
   pr_add_str_opt_cut  "baga inv: "  pr_ef_pure_disj v.view_baga_inv;
   pr_add_str_opt_cut  "baga over inv: " pr_ef_pure_disj v.view_baga_over_inv;
   pr_add_str_opt_cut  "baga over inv (unfolded): " pr_ef_pure_disj v.view_baga_x_over_inv;
   pr_add_str_opt_cut  "baga under inv: " pr_ef_pure_disj v.view_baga_under_inv;
-  pr_add_str_cut  "inv_lock: "  (pr_opt pr_formula) v.view_inv_lock;
+  pr_add_str_cut   ~emp_test:Gen.is_None  "inv_lock: "  (pr_opt pr_formula) v.view_inv_lock;
   pr_add_str_cut  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_un_struc_formula;
   if (v.view_is_tail_recursive) then pr_vwrap  "linear formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_linear_formula ;
   pr_add_str_cut "xform: " pr_mix_formula v.view_x_formula;
-  pr_add_str_cut  "is_recursive?: " fmt_string (string_of_bool v.view_is_rec);
-  pr_add_str_cut  "is_primitive?: " fmt_string (string_of_bool v.view_is_prim);
-  pr_add_str_cut  "is_touching?: " fmt_string (string_of_bool v.view_is_touching);
-  pr_add_str_cut  "is_segmented?: " fmt_string (string_of_bool v.view_is_segmented);
-  pr_add_str_cut  "is_tail_recursive?: " fmt_string (string_of_bool v.view_is_tail_recursive);
-  pr_add_str_cut  "residents: " pr_list_of_spec_var v.view_residents;
-  pr_add_str_cut  "forward_ptrs: " pr_list_of_spec_var v.view_forward_ptrs;
-  pr_add_str_cut  "backward_ptrs: " pr_list_of_spec_var v.view_backward_ptrs;
-  pr_add_str_cut  "forward_fields: "
+  pr_add_str_cut ~emp_test:(fun b -> b==false) "is_recursive?: "  pr_bool v.view_is_rec;
+  pr_add_str_cut ~emp_test:(fun b -> b==false) "is_primitive?: " pr_bool  v.view_is_prim;
+  pr_add_str_cut ~emp_test:(fun b -> b==false) "is_touching?: " pr_bool  v.view_is_touching;
+  pr_add_str_cut ~emp_test:(fun b -> b==false) "is_segmented?: " pr_bool  v.view_is_segmented;
+  pr_add_str_cut ~emp_test:(fun b -> b==false) "is_tail_recursive?: " pr_bool   v.view_is_tail_recursive;
+  pr_add_str_cut ~emp_test:Gen.is_empty "residents: " pr_list_of_spec_var v.view_residents;
+  pr_add_str_cut ~emp_test:Gen.is_empty "forward_ptrs: " pr_list_of_spec_var v.view_forward_ptrs;
+  pr_add_str_cut ~emp_test:Gen.is_empty "backward_ptrs: " pr_list_of_spec_var v.view_backward_ptrs;
+  pr_add_str_cut ~emp_test:Gen.is_empty "forward_fields: "
     (pr_list_none (fun (d,f) -> fmt_string (d.data_name ^ "." ^ f))) v.view_forward_fields;
-  pr_add_str_cut  "backward_fields: "
+  pr_add_str_cut ~emp_test:Gen.is_empty "backward_fields: "
     (pr_list_none (fun (d,f) -> fmt_string (d.data_name ^ "." ^ f))) v.view_backward_fields;
   pr_add_str_cut  "same_xpure?: " fmt_string
     (if v.view_xpure_flag then "YES" else "NO");
   pr_add_str_cut  "view_data_name: " fmt_string v.view_data_name;
   (* pr_vwrap  "view_type_of_self: " (pr_opt string_of_typ) v.view_type_of_self; *)
-  pr_add_str_cut  "self preds: " fmt_string (Gen.Basic.pr_list (fun x -> x) v.view_pt_by_self);
-  pr_add_str_cut  "materialized vars: " pr_mater_prop_list v.view_materialized_vars;
-  pr_add_str_cut  "addr vars: " pr_list_of_spec_var v.view_addr_vars;
-  pr_add_str_cut  "uni_vars: " fmt_string (string_of_spec_var_list v.view_uni_vars);
-  pr_add_str_cut  "bag of addr: " pr_list_of_spec_var v.view_baga;
+  pr_add_str_cut ~emp_test:Gen.is_empty  "self preds: " pr_list_id v.view_pt_by_self;
+  pr_add_str_cut ~emp_test:Gen.is_empty "materialized vars: " pr_mater_prop_list v.view_materialized_vars;
+  pr_add_str_cut ~emp_test:Gen.is_empty "addr vars: " pr_list_of_spec_var v.view_addr_vars;
+  pr_add_str_cut ~emp_test:Gen.is_empty "uni_vars: " pr_list_of_spec_var v.view_uni_vars;
+  pr_add_str_cut ~emp_test:Gen.is_empty "bag of addr: " pr_list_of_spec_var v.view_baga;
   (match v.view_raw_base_case with
    | None -> ()
    | Some s -> pr_vwrap  "raw base case: " pr_formula s);
   f_base_case v.view_base_case;
-  pr_add_str_cut  "view_complex_inv: " (pr_opt pr_mix_formula) v.view_complex_inv;
-  pr_add_str_cut  "prune branches: " (fun c-> pr_seq "," pr_formula_label_br c) v.view_prune_branches;
-  pr_add_str_cut  "prune conditions: " pr_case_guard v.view_prune_conditions;
-  pr_add_str_cut  "prune baga conditions: "
+  pr_add_str_cut  ~emp_test:Gen.is_None "view_complex_inv: " (pr_opt pr_mix_formula) v.view_complex_inv;
+  pr_add_str_cut  ~emp_test:Gen.is_empty "prune branches: " (fun c-> pr_seq "," pr_formula_label_br c) v.view_prune_branches;
+  pr_add_str_cut  ~emp_test:Gen.is_empty "prune conditions: " pr_case_guard v.view_prune_conditions;
+  pr_add_str_cut ~emp_test:Gen.is_empty "prune baga conditions: "
     (fun c-> fmt_string
         (String.concat "," (List.map (fun (bl,(lbl,_))-> "("^(string_of_spec_var_list bl)^")-"^(string_of_int lbl)) c))) v.view_prune_conditions_baga;
   let i = string_of_int(List.length v.view_prune_invariants) in

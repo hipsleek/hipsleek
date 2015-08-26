@@ -30,7 +30,8 @@ int size_helper(node x)
   infer[H]
   requires H(x)  ensures true;//H1(x);
 */
-  infer[@post_n] 
+  infer[//@post_n
+  ] 
   requires x::ll<a>
   ensures (exists b: x::ll<b>);
 {
@@ -42,7 +43,33 @@ int size_helper(node x)
 }
 
 /*
-# ex14d.slk (WN to resolve)
+# ex14d.slk --pcp
+
+static  EInfer []
+   EBase 
+     exists (Expl)[](Impl)[a](ex)[]x::ll<a>@M&{FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         (exists b_71: x::ll<b_71>@M&{FLOW,(4,5)=__norm#E}[]
+dynamic  EBase 
+   hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+# (exists b: in post seems to have disappeared and became implicit later ..
+
+id: 15; caller: []; line: 36; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [] globals: [@flow,@ver_post]
+ checkentail x::ll<a>@M&
+v_bool_38_1647' & x'=null & x'=x & v_int_39_1638'=0 & res=v_int_39_1638' & 
+MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  (exists : x::ll<b_71>@M&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+    emp&
+v_bool_38_1647' & x'=null & x'=x & v_int_39_1638'=0 & res=v_int_39_1638' & 
+b_71=a&{FLOW,(4,5)=__norm#E}[]
+   ]
+
+---------------------------------------------
 
 # Why is there a free_var warning; and how did it manage
   to prove it. Is that still treated as implicit?
