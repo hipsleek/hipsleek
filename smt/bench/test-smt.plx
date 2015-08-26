@@ -34,7 +34,7 @@ my $not_found_files = "";
 my $timeout_count = 0;
 my $timeout_files = "";
 
-my $timeout = 0;
+my $timeout = 300;
 my $total_time = 0;
 my $print_short;
 my $print_time;

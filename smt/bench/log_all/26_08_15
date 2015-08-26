@@ -1,0 +1,60 @@
+Date: 26/08/2015
+Timeout: 100s
+Total number of error results:
+  latest/UDB_entl/dll-vc12.smt2: OK (may)  expected Fail.
+  latest/FDB_entl/dll-vc12.smt2: OK (may)  expected Fail
+  latest/UDB_entl/dll-vc13.smt2: OK (may)  expected Fail
+  latest/FDB_entl/dll-vc13.smt2: OK (may)  expected Fail
+  latest/UDB_entl/nll-vc13.smt2: OK (may)  expected Fail
+  latest/FDB_entl/nll-vc13.smt2: OK (may)  expected Fail
+  latest/UDB_entl/nll-vc15.smt2: OK (may)  expected Fail
+  latest/FDB_entl/nll-vc15.smt2: OK (may)  expected Fail
+  latest/UDB_entl/nll-vc16.smt2: OK (may)  expected Fail
+  latest/FDB_entl/nll-vc16.smt2: OK (may)  expected Fail
+  latest/sll0a_entl/clones-01-e07.tptp.smt2: OK (may)    expected Fail
+  latest/sll0a_entl/clones-01-e08.tptp.smt2: OK (may)    expected Fail
+  latest/sll0a_entl/clones-01-e09.tptp.smt2: OK (may)    expected Fail
+  latest/sll0a_entl/clones-01-e10.tptp.smt2: OK (may)    expected Fail
+  latest/sll0a_entl/smallfoot-vc29.tptp.smt2: OK (may)   expected Fail
+  latest/sll0a_entl/smallfoot-vc30.tptp.smt2: OK (may)   expected Fail
+  latest/sll0a_entl/smallfoot-vc32.tptp.smt2: OK (may)   expected Fail
+  latest/sll0a_entl/smallfoot-vc33.tptp.smt2: OK (may)   expected Fail
+  latest/sll0a_entl/smallfoot-vc35.tptp.smt2: OK (may)   expected Fail
+  latest/sll0a_entl/smallfoot-vc37.tptp.smt2: OK (may)   expected Fail
+  latest/sll0a_entl/smallfoot-vc31.tptp.smt2: OK (may)   expected Fail
+
+Total number of unexpected results: 21 in files:
+ latest/UDB_entl/dll-vc05.smt2
+ latest/FDB_entl/dll-vc05.smt2
+ latest/UDB_entl/dll-vc06.smt2
+ latest/FDB_entl/dll-vc06.smt2
+ latest/UDB_entl/dll-vc10.smt2
+ latest/FDB_entl/dll-vc10.smt2
+ latest/UDB_entl/dll-vc11.smt2
+ latest/FDB_entl/dll-vc11.smt2
+ latest/UDB_entl/nll-vc14.smt2
+ latest/FDB_entl/nll-vc14.smt2
+ latest/UDB_entl/odd-lseg3_slk-5.smt2
+ latest/sll0a_entl/bolognesa-10-e02.tptp.smt2
+ latest/sll0a_entl/bolognesa-10-e03.tptp.smt2
+ latest/sll0a_entl/bolognesa-11-e01.tptp.smt2
+ latest/sll0a_entl/bolognesa-12-e01.tptp.smt2
+ latest/sll0a_entl/bolognesa-15-e01.tptp.smt2
+ latest/sll0a_entl/bolognesa-15-e02.tptp.smt2
+ latest/UDB_sat/inconsistent-ls-of-ls.defs.smt2
+ latest/UDB_entl/13.tst.smt2
+ latest/UDB_entl/14.tst.smt2
+ latest/UDB_entl/17.tst.smt2
+
+
+Total number of timeout files: 10 in:
+ latest/UDB_entl/skl2-vc03.smt2
+ latest/FDB_entl/skl2-vc03.smt2
+ latest/UDB_entl/skl3-vc02.smt2
+ latest/FDB_entl/skl3-vc02.smt2
+ latest/UDB_entl/skl3-vc03.smt2
+ latest/FDB_entl/skl3-vc03.smt2
+ latest/UDB_sat/succ-circuit04.defs.smt2
+ latest/UDB_sat/succ-circuit05.defs.smt2
+ latest/UDB_sat/succ-circuit06.defs.smt2
+ latest/sll0a_entl/smallfoot-vc28.tptp.smt2
