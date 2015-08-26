@@ -7595,19 +7595,20 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                           (*   heap_entail_conjunct_helper_x prog is_folding new_ctx n_conseq n_rhs_h_matched_set pos *)
                           (* else *)
                           let base_lhs = CF.get_formula_base ante in
-                          let prep_h1 = (
-                            (* preproces h1 for checking HEmp in classic reasoning *)
-                            if ((check_is_classic ()) && (h2 = HEmp)) then 
-                              begin
-                                (* Why "do_unfold_for_classic_reasoning" could change !rhs_rest_emp?*)
-                                (* for ll<n> & n=0 cases *)
-                                let prep_ante = do_unfold_for_classic_reasoning prog ante pos in
-                                match prep_ante with
-                                | CF.Or _ -> h1
-                                | _ -> let h,_,_,_,_,_ = split_components prep_ante in h
-                              end
-                            else h1
-                          ) in
+                          let prep_h1 = h1 in
+                          (* let prep_h1 = ( *)
+                          (*   (\* preproces h1 for checking HEmp in classic reasoning *\) *)
+                          (*   if ((check_is_classic ()) && (h2 = HEmp)) then  *)
+                          (*     begin *)
+                          (*       (\* Why "do_unfold_for_classic_reasoning" could change !rhs_rest_emp?*\) *)
+                          (*       (\* for ll<n> & n=0 cases *\) *)
+                          (*       let prep_ante = do_unfold_for_classic_reasoning prog ante pos in *)
+                          (*       match prep_ante with *)
+                          (*       | CF.Or _ -> h1 *)
+                          (*       | _ -> let h,_,_,_,_,_ = split_components prep_ante in h *)
+                          (*     end *)
+                          (*   else h1 *)
+                          (* ) in *)
                           let is_lhs_emp =  
                             if ((check_is_classic ()) && (h2 = HEmp)) then
                               Some (is_classic_lhs_emp prog h1 ante pos) 
@@ -7617,7 +7618,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                           (* let h1 = prep_h1 in *)
                           let () = x_tinfo_hp (add_str "h1: " !CF.print_h_formula) h1 no_pos in
                           let () = x_tinfo_hp (add_str "h2: " !CF.print_h_formula) h2 no_pos in
-                          let () = x_tinfo_hp (add_str "prep_h1(for classic): " !CF.print_h_formula) prep_h1 no_pos in
+                          (* let () = x_tinfo_hp (add_str "prep_h1(for classic): " !CF.print_h_formula) prep_h1 no_pos in *)
                           let () = x_tinfo_hp (add_str "base_lhs " !CF.print_formula) (Base base_lhs) no_pos in
                          (* let () = x_tinfo_hp (add_str "rhs_rest_emp: " string_of_bool) (!rhs_rest_emp) no_pos in *)
                           (* let () = x_tinfo_hp (add_str "is_folding: " string_of_bool) (is_folding) no_pos in *)
@@ -7629,9 +7630,9 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                           (*use global var is dangerous, should pass as parameter*)
                           (*Do "h2 = HEmp" and "is_rhs_emp" 
                             already imply "!rhs_rest_emp" ??? Loc: not correct. examples of SMT compete will fail. *)
-                          let flag = not (is_resourceless_h_formula prog prep_h1)
-                              (* && (prep_h1 != HEmp) && (prep_h1 != HFalse) *)
-                              && not (is_classic_lending_hformula(prep_h1)) in
+                          (* let flag = not (is_resourceless_h_formula prog prep_h1) *)
+                          (*     (\* && (prep_h1 != HEmp) && (prep_h1 != HFalse) *\) *)
+                          (*     && not (is_classic_lending_hformula(prep_h1)) in *)
                           let new_flag = match is_lhs_emp with
                             | None -> false
                             | Some f -> not f in
