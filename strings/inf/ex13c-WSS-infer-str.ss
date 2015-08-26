@@ -24,7 +24,7 @@ BADS<> ==
 HeapPred P(char_star x).
 
 void while1(ref char_star s)
-  infer [P,@classic]
+  infer [P,@classic,@pure_field]
   requires P(s)
   ensures true;
 /*
