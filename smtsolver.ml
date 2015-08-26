@@ -4,9 +4,7 @@ open GlobProver
 open Gen.Basic
 open VarGen
 module CP = Cpure
-
 module StringSet = Set.Make(String)
-
 let set_prover_type () = Others.last_tp_used # set Others.Z3
 let set_proof_string str = Others.last_proof_string # set str
 let set_proof_result str = Others.last_proof_result # set str
@@ -1156,11 +1154,17 @@ let imply ante conseq timeout =
 let imply ante conseq timeout =
   Gen.Profiling.no_3 "smt_imply" imply ante conseq timeout
 
+let rec drop list =
+ (* let () = print_string (string_of_int (List.length list)^"\n") in *)
+  if (List.length list) > 6 then drop (List.tl list) else list
+
 let imply_ops pr_weak pr_strong ante conseq timeout = 
   let f = x_add smt_imply pr_weak pr_strong ante conseq Z3 timeout in
- 
   let input = to_smt pr_weak pr_strong ante (Some conseq) Z3 in
-  let () = set_proof_string ("IMPLY:"^input^"\n") in
+  let input_list = Str.split (Str.regexp "\n") input in
+  let new_input_list = drop input_list in
+  let new_input = String.concat "\n" new_input_list in
+  let () = set_proof_string ("IMPLY:"^new_input^"\n") in
 
   if (not f && !Globals.allow_array_inst) then instantiate_array_vars_before_imply pr_weak pr_strong ante conseq Z3 timeout
   else f
@@ -1202,7 +1206,10 @@ let smt_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) (prover: 
   (* let () = print_endline ("#### [smt_is_sat] f = " ^ (!CP.print_formula f)) in *)
 
   let sat_formula = to_smt pr_weak pr_strong f None prover in
-  let () = set_proof_string ("SAT:"^sat_formula^"\n") in
+  let input_list = Str.split (Str.regexp "\n") sat_formula in
+  let new_input_list = drop input_list in
+  let new_input = String.concat "\n" new_input_list in
+  let () = set_proof_string ("SAT:"^new_input^"\n") in
 
   let res, should_run_smt = (
     (* (false, true) in *)
