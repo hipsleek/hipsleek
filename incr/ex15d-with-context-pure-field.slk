@@ -16,6 +16,9 @@ print residue.
  inferred hprel: [H(p)&p=null |#|3  --> emp&true]
 */
 
+infer [H,P,@classic,@pure_field] H(p) * x::node<1,p> & p=null |- true.
+print residue.
+
 /*
 # ex15f.slk (working)
 

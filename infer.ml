@@ -3054,54 +3054,37 @@ let generate_error_constraints prog es lhs rhs_hf lhs_hps es_cond_path pos=
     (fun  _ _ _ ->  generate_error_constraints_x prog (es:entail_state) lhs rhs_hf lhs_hps es_cond_path pos)
     es lhs rhs_hf
 
-let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
-    ls_unknown_ptrs unk_pure unk_svl (* no_es_history *) lselected_hpargs rselected_hpargs  hds hvs lhras lhrs rhras rhrs leqs reqs eqNull prog_vars lvi_ni_svl classic_nodes pos =
-  (*****************INTERNAL********************)
-  let update_fb (fb,r_hprels,post_hps, hps,hfs) (is_pre, unknown_ptrs) =
-    match unknown_ptrs with
-    | [] -> (fb,r_hprels,post_hps,hps,hfs)
-    | _ ->
-      let (hf,vhp_rels) = Sautil.add_raw_hp_rel prog is_pre false unknown_ptrs pos in
-      begin
-        match hf with
-        | HRel hp ->
-          let new_post_hps = if is_pre then post_hps else (post_hps@[vhp_rels]) in
-          ((CF.mkAnd_fb_hf fb hf pos), r_hprels@[vhp_rels], new_post_hps,
-           hps@[hp], hfs@[hf])
-        | _ -> report_error pos "infer.generate_constraints: add_raw_hp_rel should return a hrel"
-      end
-  in
 
-  (*if guard exists in the lhs, remove it*)
-  let check_guard guard_opt lhs_b_orig lhs_b rhs_b=
-    let process_guard_old guard=
-      let g_hds = Sautil.get_hdnodes_hf guard in
-      let l_hds,_, l_hrels = CF.get_hp_rel_bformula lhs_b in
-      let _,_, r_hrels = CF.get_hp_rel_bformula rhs_b in
-      (* check useful guard:
-         A guard is useful if
-         vars(G) /\ (ws-vs) != []
-      *)
-      let largs = List.fold_left (fun ls (_,eargs,_)->
-          ls@(List.fold_left List.append [] (List.map CP.afv eargs))) [] l_hrels in
-      let rargs = List.fold_left (fun ls (_,eargs,_)->
-          ls@(List.fold_left List.append [] (List.map CP.afv eargs))) [] r_hrels in
-      if (CP.intersect_svl (CF.h_fv guard) (CP.diff_svl rargs largs) = []) then
-        (*  None *)
-        (* else if (CP.intersect_svl (CF.h_fv guard) (CP.intersect_svl (CF.fv (CF.Base lhs_b)) (CF.fv (CF.Base rhs_b))) = []) then *)
-        None
-      else
-        let l_hd_svl = List.map (fun hd -> hd.CF.h_formula_data_node) l_hds in
-        let inter_svl = List.fold_left (fun res hd ->
-            if CP.mem_svl hd.CF.h_formula_data_node l_hd_svl then
-              (res@[hd.CF.h_formula_data_node])
-            else res
-          ) [] g_hds in
-        let new_guard = if inter_svl = [] then (Some guard) else
-            let guard1 = CF.drop_hnodes_hf guard inter_svl in
-            if guard1 = CF.HEmp then None else (Some guard1)
-        in
-        match new_guard with
+(*if guard exists in the lhs, remove it*)
+let check_guard es guard_opt lhs_b_orig lhs_b rhs_b pos=
+  let process_guard_old guard=
+    let g_hds = Sautil.get_hdnodes_hf guard in
+    let l_hds,_, l_hrels = CF.get_hp_rel_bformula lhs_b in
+    let _,_, r_hrels = CF.get_hp_rel_bformula rhs_b in
+    (* check useful guard:
+       A guard is useful if
+       vars(G) /\ (ws-vs) != []
+    *)
+    let largs = List.fold_left (fun ls (_,eargs,_)->
+        ls@(List.fold_left List.append [] (List.map CP.afv eargs))) [] l_hrels in
+    let rargs = List.fold_left (fun ls (_,eargs,_)->
+        ls@(List.fold_left List.append [] (List.map CP.afv eargs))) [] r_hrels in
+    if (CP.intersect_svl (CF.h_fv guard) (CP.diff_svl rargs largs) = []) then
+      (*  None *)
+      (* else if (CP.intersect_svl (CF.h_fv guard) (CP.intersect_svl (CF.fv (CF.Base lhs_b)) (CF.fv (CF.Base rhs_b))) = []) then *)
+      None
+    else
+      let l_hd_svl = List.map (fun hd -> hd.CF.h_formula_data_node) l_hds in
+      let inter_svl = List.fold_left (fun res hd ->
+          if CP.mem_svl hd.CF.h_formula_data_node l_hd_svl then
+            (res@[hd.CF.h_formula_data_node])
+          else res
+      ) [] g_hds in
+      let new_guard = if inter_svl = [] then (Some guard) else
+        let guard1 = CF.drop_hnodes_hf guard inter_svl in
+        if guard1 = CF.HEmp then None else (Some guard1)
+      in
+      match new_guard with
         | None -> None
         | Some hf -> let g_svl = CF.h_fv hf in
           let () = DD.ninfo_hprint (add_str  "  g_svl" !CP.print_svl) g_svl pos in
@@ -3162,14 +3145,131 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
     match guard_opt with
     | None -> None
     | Some hf -> process_guard hf
+
+(* type: Sautil.CF.h_formula option -> *)
+(*   CF.formula_base -> CF.formula_base -> CF.formula_base -> CF.formula option *)
+let check_guard es guard_opt lhs_b_orig lhs_b rhs_b pos=
+  let prh = pr_option !CF.print_h_formula in
+  Debug.no_1 "check_guard" prh (pr_option !CF.print_formula)
+      (fun _ -> check_guard es guard_opt lhs_b_orig lhs_b rhs_b pos) guard_opt
+
+
+let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
+    ls_unknown_ptrs unk_pure unk_svl (* no_es_history *) lselected_hpargs rselected_hpargs  hds hvs lhras lhrs rhras rhrs leqs reqs eqNull prog_vars lvi_ni_svl classic_nodes pos =
+  (*****************INTERNAL********************)
+  let update_fb (fb,r_hprels,post_hps, hps,hfs) (is_pre, unknown_ptrs) =
+    match unknown_ptrs with
+    | [] -> (fb,r_hprels,post_hps,hps,hfs)
+    | _ ->
+      let (hf,vhp_rels) = Sautil.add_raw_hp_rel prog is_pre false unknown_ptrs pos in
+      begin
+        match hf with
+        | HRel hp ->
+          let new_post_hps = if is_pre then post_hps else (post_hps@[vhp_rels]) in
+          ((CF.mkAnd_fb_hf fb hf pos), r_hprels@[vhp_rels], new_post_hps,
+           hps@[hp], hfs@[hf])
+        | _ -> report_error pos "infer.generate_constraints: add_raw_hp_rel should return a hrel"
+      end
   in
-  (* type: Sautil.CF.h_formula option -> *)
-  (*   CF.formula_base -> CF.formula_base -> CF.formula_base -> CF.formula option *)
-  let check_guard guard_opt lhs_b_orig lhs_b rhs_b=
-    let prh = pr_option !CF.print_h_formula in
-    Debug.no_1 "check_guard" prh (pr_option !CF.print_formula)
-      (fun _ -> check_guard guard_opt lhs_b_orig lhs_b rhs_b) guard_opt
-  in
+
+  (* (\*if guard exists in the lhs, remove it*\) *)
+  (* let check_guard guard_opt lhs_b_orig lhs_b rhs_b= *)
+  (*   let process_guard_old guard= *)
+  (*     let g_hds = Sautil.get_hdnodes_hf guard in *)
+  (*     let l_hds,_, l_hrels = CF.get_hp_rel_bformula lhs_b in *)
+  (*     let _,_, r_hrels = CF.get_hp_rel_bformula rhs_b in *)
+  (*     (\* check useful guard: *)
+  (*        A guard is useful if *)
+  (*        vars(G) /\ (ws-vs) != [] *)
+  (*     *\) *)
+  (*     let largs = List.fold_left (fun ls (_,eargs,_)-> *)
+  (*         ls@(List.fold_left List.append [] (List.map CP.afv eargs))) [] l_hrels in *)
+  (*     let rargs = List.fold_left (fun ls (_,eargs,_)-> *)
+  (*         ls@(List.fold_left List.append [] (List.map CP.afv eargs))) [] r_hrels in *)
+  (*     if (CP.intersect_svl (CF.h_fv guard) (CP.diff_svl rargs largs) = []) then *)
+  (*       (\*  None *\) *)
+  (*       (\* else if (CP.intersect_svl (CF.h_fv guard) (CP.intersect_svl (CF.fv (CF.Base lhs_b)) (CF.fv (CF.Base rhs_b))) = []) then *\) *)
+  (*       None *)
+  (*     else *)
+  (*       let l_hd_svl = List.map (fun hd -> hd.CF.h_formula_data_node) l_hds in *)
+  (*       let inter_svl = List.fold_left (fun res hd -> *)
+  (*           if CP.mem_svl hd.CF.h_formula_data_node l_hd_svl then *)
+  (*             (res@[hd.CF.h_formula_data_node]) *)
+  (*           else res *)
+  (*         ) [] g_hds in *)
+  (*       let new_guard = if inter_svl = [] then (Some guard) else *)
+  (*           let guard1 = CF.drop_hnodes_hf guard inter_svl in *)
+  (*           if guard1 = CF.HEmp then None else (Some guard1) *)
+  (*       in *)
+  (*       match new_guard with *)
+  (*       | None -> None *)
+  (*       | Some hf -> let g_svl = CF.h_fv hf in *)
+  (*         let () = DD.ninfo_hprint (add_str  "  g_svl" !CP.print_svl) g_svl pos in *)
+  (*         let p = (MCP.pure_of_mix lhs_b.CF.formula_base_pure) in *)
+  (*         let () = DD.ninfo_hprint (add_str  "  p" !CP.print_formula) p pos in *)
+  (*         let g_pure = CP.filter_var p g_svl in *)
+  (*         let () = DD.ninfo_hprint (add_str  "  g_pure" !CP.print_formula) g_pure pos in *)
+  (*         let p_orig = (MCP.pure_of_mix lhs_b_orig.CF.formula_base_pure) in *)
+  (*         let () = DD.ninfo_hprint (add_str  "  p_orig" !CP.print_formula) p_orig pos in *)
+  (*         let g_pure_orig = CP.filter_var p_orig g_svl in *)
+  (*         let () = DD.ninfo_hprint (add_str  "  g_pure_orig" !CP.print_formula) g_pure_orig pos in *)
+  (*         let g_pure_rem = Gen.BList.difference_eq (CP.equalFormula) (CP.split_conjunctions g_pure_orig) *)
+  (*             (CP.split_conjunctions g_pure) in *)
+  (*         Some (CF.Base {lhs_b with CF.formula_base_heap= hf; *)
+  (*                                   CF.formula_base_pure = (MCP.mix_of_pure (CP.join_disjunctions g_pure_rem));} ) *)
+  (*   in *)
+  (*    (\* - rose tree need to remove guard that captured in LHS already *)
+  (*      - tree-2: need handle pure of guard for path-sensitive *)
+  (*   *\) *)
+  (*   let process_guard guard = *)
+  (*     let g_hds = Sautil.get_hdnodes_hf guard in *)
+  (*     let l_hds,_, l_hrels = CF.get_hp_rel_bformula lhs_b in *)
+  (*     let _,_, r_hrels = CF.get_hp_rel_bformula rhs_b in *)
+  (*     let l_hd_svl = List.map (fun hd -> hd.CF.h_formula_data_node) l_hds in *)
+  (*     let inter_svl = List.fold_left (fun res hd -> *)
+  (*         if CP.mem_svl hd.CF.h_formula_data_node l_hd_svl then *)
+  (*           (res@[hd.CF.h_formula_data_node]) *)
+  (*         else res *)
+  (*       ) [] g_hds in *)
+  (*     let new_guard = if inter_svl = [] then (Some guard) else *)
+  (*         let guard1 = CF.drop_hnodes_hf guard inter_svl in *)
+  (*         if guard1 = CF.HEmp then None (\* rose-tree *\) *)
+  (*         else (Some guard1) *)
+  (*     in *)
+  (*     match new_guard with *)
+  (*     | None -> None *)
+  (*     | Some hf -> *)
+  (*       let g_svl0 = CF.get_node_args hf in *)
+  (*       let () = DD.ninfo_hprint (add_str  "  g_svl0" !CP.print_svl) g_svl0 pos in *)
+  (*       let g_svl = if es.CF.es_infer_obj # is_pure_field_all then g_svl0 else *)
+  (*         List.filter (CP.is_node_typ) g_svl0 *)
+  (*       in *)
+  (*       let () = DD.ninfo_hprint (add_str  "  g_svl" !CP.print_svl) g_svl pos in *)
+  (*       let p = (MCP.pure_of_mix lhs_b.CF.formula_base_pure) in *)
+  (*       let () = DD.ninfo_hprint (add_str  "  p" !CP.print_formula) p pos in *)
+  (*       let g_pure = CP.filter_var p g_svl in *)
+  (*       let () = DD.ninfo_hprint (add_str  "  g_pure" !CP.print_formula) g_pure pos in *)
+  (*       let p_orig = (MCP.pure_of_mix lhs_b_orig.CF.formula_base_pure) in *)
+  (*       let () = DD.ninfo_hprint (add_str  "  p_orig" !CP.print_formula) p_orig pos in *)
+  (*       let g_pure_orig = CP.filter_var p_orig g_svl in *)
+  (*       let () = DD.ninfo_hprint (add_str  "  g_pure_orig" !CP.print_formula) g_pure_orig pos in *)
+  (*       let g_pure_rem = Gen.BList.difference_eq (CP.equalFormula) (CP.split_conjunctions g_pure_orig) *)
+  (*           (CP.split_conjunctions g_pure) in *)
+  (*       Some (CF.Base {lhs_b with CF.formula_base_heap= hf; *)
+  (*                                 CF.formula_base_pure = (MCP.mix_of_pure (CP.join_disjunctions g_pure_rem));} ) *)
+  (*   in *)
+  (*   (\***************END****************\) *)
+  (*   match guard_opt with *)
+  (*   | None -> None *)
+  (*   | Some hf -> process_guard hf *)
+  (* in *)
+  (* (\* type: Sautil.CF.h_formula option -> *\) *)
+  (* (\*   CF.formula_base -> CF.formula_base -> CF.formula_base -> CF.formula option *\) *)
+  (* let check_guard guard_opt lhs_b_orig lhs_b rhs_b= *)
+  (*   let prh = pr_option !CF.print_h_formula in *)
+  (*   Debug.no_1 "check_guard" prh (pr_option !CF.print_formula) *)
+  (*     (fun _ -> check_guard guard_opt lhs_b_orig lhs_b rhs_b) guard_opt *)
+  (* in *)
   (*change to @M for field-ann*)
   let hn_trans_field_mut hn =
     match hn with
@@ -3238,7 +3338,7 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
     let lhs =  CF.remove_neqNull_svl (CP.diff_svl matched_svl (List.map (fun vn -> vn.h_formula_view_node) vnodes)) lhs0 in
     (* let () = DD.ninfo_hprint (add_str  "   lhs_b" Cprinter.prtt_string_of_formula) (CF.Base lhs_b) pos in *)
     (* let () = DD.ninfo_hprint (add_str  "   new_lhs_b" Cprinter.prtt_string_of_formula) (CF.Base new_lhs_b) pos in *)
-    let grd = x_add check_guard ass_guard lhs_b new_lhs_b new_rhs_b in
+    let grd = x_add check_guard es ass_guard lhs_b new_lhs_b new_rhs_b pos in
     (* let rhs = CF.Base new_rhs_b in *)
     let () = x_tinfo_hp (add_str "before_lhs"  Cprinter.prtt_string_of_formula) before_lhs no_pos in
     let () = x_tinfo_hp (add_str "before_rhs"  Cprinter.prtt_string_of_formula) before_rhs no_pos in
@@ -3623,12 +3723,26 @@ let infer_collect_hp_rel i prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
 (*******************************************************)
 (*******************************************************)
 
+(* let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) lhs_b0 rhs0 mix_rf rhs_h_matched_set pos = *)
+(*   let rhs_b0 = {formula_base_heap = rhs0; *)
+(*   formula_base_vperm = CVP.empty_vperm_sets; *)
+(*   formula_base_pure =mix_rf  ;  *)
+(*   formula_base_type = CF.TypeTrue; *)
+(*   formula_base_flow = (CF.mkNormalFlow ()); *)
+(*   formula_base_and = []; *)
+(*   formula_base_label = None; *)
+(*   formula_base_pos = pos;} in *)
+(*   let rhs_rest = CF.HEmp in *)
+(*   let (res,new_estate,n_lhs, n_es_heap_opt, oerror_es, hp_rels) = infer_collect_hp_rel 3 prog es0 rhs0 rhs_rest rhs_h_matched_set lhs_b0 rhs_b0 ~delay_update:true pos in *)
+(*   (res,new_estate, hp_rels) *)
+
+
 (* type: Sautil.C.prog_decl -> *)
 (*   Cformula.entail_state -> *)
 (*   MCP.mix_formula -> *)
 (*   VarGen.loc -> bool * CF.entail_state * Sautil.CF.hprel list *)
 
-let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) rhs0 mix_rf pos =
+let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) lhs_b rhs0 mix_rf pos =
   (*********INTERNAL**********)
   let get_eqset puref =
     let (subs,_) = CP.get_all_vv_eqs puref in
@@ -3664,6 +3778,7 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) rhs0 mix_rf pos =
       let () = x_tinfo_hp (add_str "lhs(after)" !CF.print_formula) lhs no_pos in
       let () = x_tinfo_hp (add_str "rhs" !CF.print_formula) rhs_f no_pos in
       let () = x_tinfo_hp (add_str "(hp,args)"  (pr_pair !CP.print_sv !CP.print_svl)) (hp,args) no_pos in
+      let ass_guard = x_add find_guard hds leqs [(hp,args)] [] in
       let hprel_lst = match extr_ans with
         | None -> []
         | Some (lst,f) ->
@@ -3677,7 +3792,8 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) rhs0 mix_rf pos =
               let lhs = CF.repl_heap_formula new_h lhs in
               let () = x_tinfo_pp "TODO : pure formula should be assumption filtered" no_pos in
               let lhs = CF.repl_pure_formula p lhs in
-              let hprel_ass = CF.mkHprel knd [] [] args2 lhs None rhs_f es_cond_path in
+              let grd = x_add check_guard es0 ass_guard lhs_b new_lhs_b new_rhs_b pos in
+              let hprel_ass = CF.mkHprel knd [] [] args2 lhs grd rhs_f es_cond_path in
               ((hp,args2),hprel_ass)
             ) lst 
       in
@@ -3797,14 +3913,14 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) rhs0 mix_rf pos =
         end
 
 
-let infer_collect_hp_rel_empty_rhs i prog (es:entail_state) rhs0 rhs_p pos =
+let infer_collect_hp_rel_empty_rhs i prog (es:entail_state) lhs_b rhs0 rhs_p pos =
   let pr1 = Cprinter.string_of_formula in
   let pr2 = Cprinter.string_of_mix_formula in
   let pr3 =  (pr_triple (add_str "Res" string_of_bool) (add_str "Sel HP"Cprinter.string_of_estate_infer_hp)
       (add_str "Inferred Relations" (pr_list_ln Cprinter.string_of_hprel_short))) in
   let pr4 = Cprinter.string_of_h_formula in
   Debug.no_3_num i "infer_collect_hp_rel_empty_rhs" pr1 pr4 pr2 pr3
-    ( fun _ _ _ -> infer_collect_hp_rel_empty_rhs prog es rhs0 rhs_p pos) es.CF.es_formula rhs0 rhs_p
+    ( fun _ _ _ -> infer_collect_hp_rel_empty_rhs prog es lhs_b rhs0 rhs_p pos) es.CF.es_formula rhs0 rhs_p
 
 (*******************************************************)
 (*******************************************************)
