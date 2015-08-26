@@ -2342,18 +2342,20 @@ let match_unk_preds prog lhs_hpargs rhs_hp rhs_args=
 (*   'b -> *)
 (*   (CF.CP.spec_var * CF.CP.spec_var) list -> *)
 (*   ('c * CF.CP.spec_var list) list -> CP.spec_var list -> CF.h_formula option *)
-let find_guard (* prog *) lhds (* lhvs *) leqs l_selhpargs rhs_args =
-  let l_args = List.fold_left (fun ls (_,args) -> ls@args) [] l_selhpargs in
-  let l_args1 = CF.find_close l_args leqs in
+let find_guard  prog lhds (* lhvs *) leqs l_selhpargs rhs_args =
+  let l_args1 = List.fold_left (fun ls (_,args) -> ls@args) [] l_selhpargs in
+  let l_args2 = CF.find_close l_args1 leqs in
   let () = Debug.ninfo_hprint (add_str "l_args1"  !CP.print_svl) l_args1 no_pos in
   let () = Debug.ninfo_hprint (add_str "rhs_args"  !CP.print_svl) rhs_args no_pos in
   let diff = CP.diff_svl rhs_args l_args1 in
   (* temporal fix for incr/ex15a/b. TODO *)
   (* if diff = [] then None else *) (*check-tll-1*)
     (*Now we keep heap + pure as pattern (env)*)
+  let l_arg_cl = CF.look_up_rev_reachable_ptr_args prog lhds [] l_args2 in
+  let () = DD.ninfo_hprint (add_str "l_arg_cl " !CP.print_svl) l_arg_cl no_pos in
     let guard_hds = List.filter (fun hd ->
         let svl = (* hd.CF.h_formula_data_node:: *)hd.CF.h_formula_data_arguments in
-        CP.intersect_svl svl l_args1 <> []
+        CP.intersect_svl svl l_arg_cl <> []
       ) lhds
     in
     CF.join_star_conjunctions_opt (List.map (fun hd -> CF.DataNode hd) guard_hds)
@@ -2365,14 +2367,14 @@ let find_guard (* prog *) lhds (* lhvs *) leqs l_selhpargs rhs_args =
 (*   (CP.spec_var * CP.spec_var list) list -> *)
 (*   CP.spec_var list -> CF.h_formula option *)
 
-let find_guard (* prog *) lhds (* lhvs *) leqs l_selhpargs rhs_args=
+let find_guard  prog  lhds (* lhvs *) leqs l_selhpargs rhs_args=
   let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
   let pr2 = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) in
   let pr3 = pr_option Cprinter.prtt_string_of_h_formula
   in
   Debug.no_4 "find_guard" (add_str "left heap" (pr_list !CF.print_h_formula))
     pr1 (add_str "left selected preds" pr2) !CP.print_svl pr3
-    (fun _ _ _ _ -> find_guard (* prog *) lhds (* lhvs *) leqs l_selhpargs rhs_args)
+    (fun _ _ _ _ -> find_guard prog lhds (* lhvs *) leqs l_selhpargs rhs_args)
     (List.map (fun x -> CF.DataNode x) lhds) leqs l_selhpargs rhs_args
 
 (* WN : new more generous find heap_guard condition *)
@@ -2653,7 +2655,7 @@ let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest (* rhs_
           let ass_guard1 = if CP.mem_svl rhs_hp post_hps then
               None
             else
-              x_add find_guard(* _new *) (* prog *) lhds (* lhvs *) leqs [(hp,rhs_args)] rhs_args
+              x_add find_guard(* _new *) prog lhds (* lhvs *) leqs [(hp,rhs_args)] rhs_args
           in
           ([], [(hp,rhs_args)], ass_guard1)
         | None ->
@@ -2664,7 +2666,7 @@ let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest (* rhs_
           let ass_guard1 = if CP.mem_svl rhs_hp post_hps then
               None
             else
-              x_add find_guard (* prog *) lhds (* lhvs *) leqs r2 rhs_args
+              x_add find_guard prog lhds (* lhvs *) leqs r2 rhs_args
           in
           ([r1],r2, ass_guard1)
       in
@@ -2690,7 +2692,7 @@ let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest (* rhs_
       let mis_match_found, ls_unfold_fwd_svl = get_rhs_unfold_fwd_svl is_view h_node h_args (def_vs1) leqNulls ls_lhp_args in
       let ass_guard1 = match n_unmatched with
         | CF.ViewNode vn ->
-          x_add find_guard (* prog *) lhds (* lhvs *) leqs selected_hpargs (vn.CF.h_formula_view_node::h_args)
+          x_add find_guard prog lhds (* lhvs *) leqs selected_hpargs (vn.CF.h_formula_view_node::h_args)
         | _ -> None
       in
       (mis_match_found, ls_unfold_fwd_svl(* @lundefs_args *),[],selected_hpargs, ass_guard1)
@@ -3797,7 +3799,7 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) lhs_b rhs0 mix_rf pos
       let () = x_tinfo_hp (add_str "(hp,args)"  (pr_pair !CP.print_sv !CP.print_svl)) (hp,args) no_pos in
       let ( _,lmf,_,_,_,_) = CF.split_components lhs in
       let leqNulls = CF.find_close (MCP.get_null_ptrs lmf) leqs in
-      let ass_guard = x_add find_guard hds leqs [(hp,CP.diff_svl args leqNulls)] [] in
+      let ass_guard = x_add find_guard prog hds leqs [(hp,CP.diff_svl args leqNulls)] [] in
       let hprel_lst = match extr_ans with
         | None -> []
         | Some (lst,f) ->
