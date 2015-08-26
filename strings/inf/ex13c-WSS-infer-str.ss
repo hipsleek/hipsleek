@@ -43,17 +43,24 @@ void while1(ref char_star s)
 # ex13c.ss
 
 [ // PRE
-(0)P(s)&true --> s::char_star<v_1601,Anon_1602>@M * HP_1603(Anon_1602)&
+(0)P(s)&true |#|3  --> s::char_star<v_1601,Anon_1602>@M * HP_1603(Anon_1602)&
 true,
  // PRE_REC
-(1;0)HP_1603(Anon_1602)&true --> P(Anon_1602)&
+(1;0)HP_1603(Anon_1602)&true |#| s::char_star<v_1601,Anon_1602>@M&
+v_1601!=0 --> P(Anon_1602)&
 true,
  // POST
-(2;0)HP_1603(Anon_1602)&true --> emp&
+(2;0)HP_1603(Anon_1602)&true |#| s::char_star<v_1601,Anon_1602>@M&
+v_1601=0 --> emp&
 true]
+
+
+*********************************************************
+[ P(s_1633) |#| emp&v_1621!=0
+        or emp&v_1624=0
+                ::= P(Anon_1625) * s_1633::char_star<v_1634,Anon_1625>@M
+ or s_1633::char_star<v_1634,Anon_1625>@M (4,5)]
 ----------------
-
-
 
 void while1(ref char_star s)
   infer [P]
@@ -89,6 +96,15 @@ void while1(ref char_star s)
   //   H1(q) | s::chr<v,q> & v=0 --> emp 
   // emp & x'=v & v=0
 }
+
+iprocess_action inp1 :analize dangling
+iprocess_action inp1 :split base
+iprocess_action inp1 :(pre) synthesize:[HP_1603]
+iprocess_action inp1 :(pre) synthesize:[P]
+iprocess_action inp1 :norm seg
+iprocess_action inp1 :pre, pre-oblg, post, post-oblg
+iprocess_action inp1 :seq:(0,analize dangling);(0,split base);(0,pre, pre-oblg, post, post-oblg)
+
 
   P(s) -> s::chr<v,q>*H1(q)
   H1(q) | s::chr<v,q> & v!=0 --> P(q) 

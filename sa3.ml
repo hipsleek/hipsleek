@@ -2764,6 +2764,7 @@ and infer_shapes_proper iprog prog proc_name callee_hps is need_preprocess detec
 and iprocess_action_x iprog prog proc_name callee_hps is act need_preprocess detect_dang=
   let rec_fct l_is l_act = iprocess_action iprog prog proc_name callee_hps l_is l_act need_preprocess detect_dang in
   match act with
+  | IC.I_pre_add_dangling -> failwith "to be implemented"
   | IC.I_infer_dang -> infer_analize_dang prog is
   (* | IC.I_pre_trans_closure -> infer_pre_trans_closure prog is *)
   | IC.I_split_base -> infer_split_base prog is

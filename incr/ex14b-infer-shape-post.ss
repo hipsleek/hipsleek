@@ -25,7 +25,9 @@ int size_helper(node x)
   infer[H]
   requires H(x)  ensures true;//H1(x);
 */
-  infer[@shape_prepost] requires true ensures true;
+  infer[@shape_post] 
+  requires x::sll<>
+  ensures true;
 
 {
   if (x==null) 
@@ -36,21 +38,32 @@ int size_helper(node x)
 }
 
 /*
-# ex14.ss
+# ex14b.ss
+
+  infer[@shape_post] 
+  requires x::sll<>
+  ensures true;
 
 For @shape_post, we need to simplify the base-case:
 
-[ GP_1765(x_1792) ::= x_1792::node<Anon_1793,q_1780>@M * GP_1765(q_1780)
- or x_1792::sll<>@M&x_1792=null
- (4,5),
- HP_1636(x_1663) ::= x_1663::sll<>@M(4,5)]
+[ GP_1636(x_1663) ::= x_1663::node<Anon_1664,q_1651>@M * GP_1636(q_1651)
+ or x_1663::sll<>@M&x_1663=null
+ (4,5)]
 
 # EXPECTS:
 
 [ GP_1765(x_1792) ::= 
    x_1792::node<Anon_1793,q_1780>@M * GP_1765(q_1780)
    or x_1792=null(4,5),
- HP_1636(x_1663) ::= x_1663::sll<>@M(4,5)]
+
+# Maybe can add this to post_synthesis
+
+1:43:iprocess_action inp1 :infer_dangling
+1:57:iprocess_action inp1 :split_base
+1:71:iprocess_action inp1 :post_synthesize
+1:85:iprocess_action inp1 :norm_seg
+1:99:iprocess_action inp1 :partition (pre, pre-oblg, post, post-oblg)
+1:113:iprocess_action inp1 :seq:[(0,infer_dangling),(0,split_base),(0,partition (pre, pre-oblg, post, post-oblg))]
 
 */
 

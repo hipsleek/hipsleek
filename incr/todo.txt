@@ -1094,7 +1094,53 @@ check_guard@2
 check_guard inp1 :Some( x::node<flted_11_16,p>@M)
 check_guard@2 EXIT:Some( x::node<flted_11_16,p>@M&{FLOW,(20,21)=__norm#E}[])
 =====================================================================
+# ex14b.ss
+
+  infer[@shape_post] 
+  requires x::sll<>
+  ensures true;
+
+For @shape_post, we need to simplify the base-case:
+
+[ GP_1636(x_1663) ::= x_1663::node<Anon_1664,q_1651>@M * GP_1636(q_1651)
+ or x_1663::sll<>@M&x_1663=null
+ (4,5)]
+
+# EXPECTS:
+
+[ GP_1765(x_1792) ::= 
+   x_1792::node<Anon_1793,q_1780>@M * GP_1765(q_1780)
+   or x_1792=null(4,5),
+
+# need to simplify (specialise/unfold) on base-case in post_synthesis
+
+1:43:iprocess_action inp1 :infer_dangling
+1:57:iprocess_action inp1 :split_base
+1:71:iprocess_action inp1 :post_synthesis
+1:85:iprocess_action inp1 :norm_seg
+1:99:iprocess_action inp1 :partition (pre, pre-oblg, post, post-oblg)
+1:113:iprocess_action inp1 :seq:[(0,infer_dangling),(0,split_base),(0,partition (pre, pre-oblg, post, post-oblg))]
+
 =====================================================================
+# ex14c.slk
+
+# This warning can be resolved by making size_1699 implicit or existential.
+
+!!! **imminfer.ml#122:!should_infer_imm_pre:false
+Checking procedure size_helper$node... 
+!!! **WARNING****solver.ml#4228:FREE VAR IN HEAP RHS :[size_1699]
+LHS:  x'::node<Anon_1695,q_1696>@M * q_1696::sll_size<size_1694>@M&
+size_1672=size_1694+1 & 0<=size_1694 & !(v_bool_37_1642') & x'!=null & 
+x'=x & v_int_40_1640'=1 & v_node_40_1637'=q_1696&{FLOW,(4,5)=__norm#E}[]
+RHS:
+ EInfer @size[]
+   EBase 
+     v_node_40_1637'::sll_size<size_1699>@M&{FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         (exists size_1673: v_node_40_1637'::sll_size<size_1673>@M&
+         {FLOW,(4,5)=__norm#E}[]
 =====================================================================
 =====================================================================
 =====================================================================

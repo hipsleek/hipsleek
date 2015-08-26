@@ -3117,25 +3117,42 @@ let pr_only_lhs_rhs (lhs,rhs) =
 
 let string_of_only_lhs_rhs (e) : string =  poly_string_of_pr  pr_only_lhs_rhs e
 
+
+let pr_hp_ref_def s = fmt_string (string_of_hp_rel_def s)
+
+let pr_list_int s = fmt_string ((pr_list_round string_of_int) s)
+
 let pr_infer_state is =
   fmt_open_box 1;
-  fmt_string (string_of_spec_var_list (List.map fst is.is_link_hpargs));
-  fmt_string (string_of_spec_var_list (List.map fst is.is_dang_hpargs));
-  fmt_string (pr_list_round string_of_int is.is_cond_path);
-  fmt_string (pr_list_ln string_of_hprel_short is.is_constrs);
-  fmt_string (pr_list_ln string_of_hprel_short is.is_all_constrs);
-  fmt_string (pr_list_ln string_of_hp_rel_def is.is_hp_defs);
+  (* fmt_string (string_of_spec_var_list (List.map fst is.is_link_hpargs)); *)
+  (* fmt_string (string_of_spec_var_list (List.map fst is.is_dang_hpargs)); *)
+  (* fmt_string (pr_list_round string_of_int is.is_cond_path); *)
+  (* fmt_string (pr_list_ln string_of_hprel_short is.is_constrs); *)
+  (* fmt_string (pr_list_ln string_of_hprel_short is.is_all_constrs); *)
+  (* fmt_string (pr_list_ln string_of_hp_rel_def is.is_hp_defs); *)
+  pr_wrap_test "Link_HPargs: " Gen.is_empty (fun x -> fmt_string (string_of_spec_var_list x)) (List.map fst is.is_link_hpargs);
+  pr_wrap_test "Dang_HPargs: " Gen.is_empty (fun x -> fmt_string (string_of_spec_var_list x)) (List.map fst is.is_dang_hpargs);
+  pr_wrap_test "cond_path: " Gen.is_empty (pr_list_int) is.is_cond_path;
+  pr_wrap_test "RA: " Gen.is_empty (pr_seq "" pr_hprel_short) is.is_constrs;
+  pr_wrap_test "All_RA: " Gen.is_empty (pr_seq "" pr_hprel_short) is.is_all_constrs;
+  pr_wrap_test "hp_defs: " Gen.is_empty (pr_seq "" pr_hp_ref_def) is.is_hp_defs;
   fmt_close()
 
 let string_of_infer_state is: string =  poly_string_of_pr  pr_infer_state is
 
 let pr_infer_state_short is =
   fmt_open_box 1;
-  fmt_string (string_of_spec_var_list (List.map fst is.is_link_hpargs));
-  fmt_string (pr_list_round string_of_int is.is_cond_path);
-  fmt_string (pr_list_ln string_of_hprel_short is.is_constrs);
-  fmt_string (pr_list_ln string_of_hprel_short is.is_all_constrs);
-  fmt_string (pr_list_ln string_of_hp_rel_def is.is_hp_defs);
+  (* fmt_string (string_of_spec_var_list (List.map fst is.is_link_hpargs)); *)
+  (* fmt_string (pr_list_round string_of_int is.is_cond_path); *)
+  (* fmt_string (pr_list_ln string_of_hprel_short is.is_constrs); *)
+  (* fmt_string (pr_list_ln string_of_hprel_short is.is_all_constrs); *)
+  (* fmt_string (pr_list_ln string_of_hp_rel_def is.is_hp_defs); *)
+  pr_wrap_test "Link_HPargs: " Gen.is_empty (fun x -> fmt_string (string_of_spec_var_list x)) (List.map fst is.is_link_hpargs);
+  pr_wrap_test "Dang_HPargs: " Gen.is_empty (fun x -> fmt_string (string_of_spec_var_list x)) (List.map fst is.is_dang_hpargs);
+  pr_wrap_test "cond_path: " Gen.is_empty (pr_list_int) is.is_cond_path;
+  pr_wrap_test "RA: " Gen.is_empty (pr_seq "" pr_hprel_short) is.is_constrs;
+  pr_wrap_test "All_RA: " Gen.is_empty (pr_seq "" pr_hprel_short) is.is_all_constrs;
+  pr_wrap_test "hp_defs: " Gen.is_empty (pr_seq "" pr_hp_ref_def) is.is_hp_defs;
   fmt_close()
 
 let string_of_infer_state_short is: string =  poly_string_of_pr  pr_infer_state_short is
