@@ -4351,11 +4351,11 @@ let rec check_prog iprog (prog : prog_decl) =
     let scc, ini_hpdefs =
       Da.find_rel_args_groups_scc prog scc (* scc,[] *)
     in
-    let has_infer_shape_pre_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_PRE in
-    let has_infer_shape_post_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_POST in
-    let has_infer_shape_prepost_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_PRE_POST in
-    let has_infer_shape_proc = (x_add_1 Pi.is_infer_shape_scc scc) || has_infer_shape_pre_proc ||
-      has_infer_shape_post_proc || has_infer_shape_prepost_proc in
+    (* let has_infer_shape_pre_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_PRE in *)
+    (* let has_infer_shape_post_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_POST in *)
+    (* let has_infer_shape_prepost_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_PRE_POST in *)
+    let has_infer_shape_proc = (x_add_1 Pi.is_infer_shape_scc scc) (* || has_infer_shape_pre_proc || *)
+      (* has_infer_shape_post_proc || has_infer_shape_prepost_proc *) in
     let has_infer_pre_proc = Pi.is_infer_pre_scc scc in
 
     (* let () = if (has_infer_shape_pre_proc || has_infer_shape_prepost_proc) then *)
@@ -4591,13 +4591,22 @@ let rec check_prog iprog (prog : prog_decl) =
     (*   with Not_found -> scc *)
     (* in *)
   in
-  let rec process_cmd iprog cprog verified_sccs icmd=
+  let rec process_cmd iprog cprog verified_sccs scc icmd=
     match icmd with
-      | Icmd.I_Norm {cmd_res_scc = scc} ->
-            verify_scc_incr cprog verified_sccs scc
+      | Icmd.I_Norm {cmd_res_infs = infs} ->
+            let iscc,_ = List.split (Iincr.reset_infer_const_scc infs scc) in
+            let () = if List.exists (fun it -> it = INF_SHAPE_PRE) infs then
+              let () = Iincr.add_prepost_shape_relation_scc cprog Iincr.add_pre_shape_relation iscc in
+              ()
+            else if List.exists (fun it -> it = INF_SHAPE_POST) infs then
+              let () = Iincr.add_prepost_shape_relation_scc cprog Iincr.add_post_shape_relation scc in
+              ()
+            else () in
+            verify_scc_incr cprog verified_sccs iscc
       | Icmd.I_Seq cmds
       | Icmd.I_Search cmds (*TOFIX*) ->
-            List.fold_left (fun _ (_, cmd) ->  process_cmd iprog cprog verified_sccs cmd) (cprog, verified_sccs) cmds
+            List.fold_left (fun (acc_cprog, _) (_, cmd) ->  process_cmd iprog acc_cprog verified_sccs scc cmd)
+                (cprog, verified_sccs) cmds
   in
   (********************************************************)
   (********************************************************)
@@ -4672,7 +4681,7 @@ let rec check_prog iprog (prog : prog_decl) =
           if !Globals.old_incr_infer then verify_scc_incr prog verified_sccs scc
             else
               let icmd = Icmd.compute_cmd prog scc in
-              process_cmd iprog prog verified_sccs icmd
+              process_cmd iprog prog verified_sccs scc icmd
       in
       prog, n_verified_sccs
     ) (prog,[]) proc_scc
