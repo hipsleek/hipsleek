@@ -17,6 +17,7 @@ module TP = Tpdispatcher
 
 type iaction =
   | I_infer_dang
+  | I_pre_add_dangling
   (* | I_pre_trans_closure *)
   | I_split_base
   | I_partition (* pre, pre-oblg, post, post-oblg *)
@@ -32,21 +33,21 @@ type iaction =
 and iaction_wt = (int * iaction)
 (* -1 : unknown, 0 : mandatory; >0 : optional (lower value has higher priority) *)
 
-
 let rec string_of_iaction act=
   match act with
-  | I_infer_dang -> "analize dangling"
+  | I_infer_dang -> "infer_dangling"
+  | I_pre_add_dangling -> "pre_add_dangling"
   (* | I_pre_trans_closure -> "find transitive closure" *)
-  | I_split_base ->  "split base"
-  | I_partition -> "pre, pre-oblg, post, post-oblg"
-  | I_pre_synz (hps,_) -> ("(pre) synthesize:" ^ (!CP.print_svl hps))
-  | I_pre_fix hps -> ("(pre fix) synthesize:" ^ (!CP.print_svl hps))
-  | I_pre_oblg -> "pre-oblg"
-  | I_post_synz -> "post-preds synthesize"
-  | I_post_fix hps -> ("(post fix) synthesize:" ^ (!CP.print_svl hps))
-  | I_post_oblg -> "post-oblg"
-  | I_norm_seg -> "norm seg"
-  | I_seq ls_act -> "seq:" ^ (String.concat ";" (List.map (pr_pair string_of_int string_of_iaction) ls_act))
+  | I_split_base ->  "split_base"
+  | I_partition -> "partition (pre, pre-oblg, post, post-oblg)"
+  | I_pre_synz (hps,_) -> (add_str "pre_synthesize" !CP.print_svl) hps
+  | I_pre_fix hps -> (add_str "pre_fix_synthesize" !CP.print_svl) hps
+  | I_pre_oblg -> "pre_oblg"
+  | I_post_synz -> "post_synthesize"
+  | I_post_fix hps -> (add_str "post_fix_synthesize" !CP.print_svl) hps
+  | I_post_oblg -> "post_oblg"
+  | I_norm_seg -> "norm_seg"
+  | I_seq ls_act -> add_str "seq" (pr_list (pr_pair string_of_int string_of_iaction)) ls_act
 
 let mk_is constrs all_constrs link_hpargs dang_hpargs unk_map sel_hps post_hps cond_path iflow
     hp_equivs hpdefs=

@@ -97,6 +97,15 @@ void while1(ref char_star s)
   // emp & x'=v & v=0
 }
 
+iprocess_action inp1 :analize dangling
+iprocess_action inp1 :split base
+iprocess_action inp1 :(pre) synthesize:[HP_1603]
+iprocess_action inp1 :(pre) synthesize:[P]
+iprocess_action inp1 :norm seg
+iprocess_action inp1 :pre, pre-oblg, post, post-oblg
+iprocess_action inp1 :seq:(0,analize dangling);(0,split base);(0,pre, pre-oblg, post, post-oblg)
+
+
   P(s) -> s::chr<v,q>*H1(q)
   H1(q) | s::chr<v,q> & v!=0 --> P(q) 
   H1(q) | s::chr<v,q> & v=0 --> emp
