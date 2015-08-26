@@ -4351,8 +4351,8 @@ let rec check_prog iprog (prog : prog_decl) =
     let scc, ini_hpdefs =
       Da.find_rel_args_groups_scc prog scc (* scc,[] *)
     in
-    (* let has_infer_shape_pre_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_PRE in *)
-    (* let has_infer_shape_post_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_POST in *)
+    let has_infer_shape_pre_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_PRE in
+    let has_infer_shape_post_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_POST in
     (* let has_infer_shape_prepost_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_PRE_POST in *)
     let has_infer_shape_proc = (x_add_1 Pi.is_infer_shape_scc scc) (* || has_infer_shape_pre_proc || *)
       (* has_infer_shape_post_proc || has_infer_shape_prepost_proc *) in
@@ -4364,7 +4364,8 @@ let rec check_prog iprog (prog : prog_decl) =
     (* let () = if (has_infer_shape_post_proc) then *)
     (*   Iincr.add_prepost_shape_relation_scc prog Iincr.add_post_shape_relation scc in *)
 
-
+    let () = x_tinfo_hp (add_str "has_infer_shape_proc" string_of_bool) has_infer_shape_proc no_pos in
+    let () = x_tinfo_hp (add_str "has_infer_pre_proc" string_of_bool) has_infer_pre_proc no_pos in
     let () = if (not(has_infer_shape_proc) && has_infer_pre_proc) then Pi.add_pre_relation_scc prog scc in
     let has_infer_post_proc = Pi.is_infer_post_scc scc in
     let () = if (not(has_infer_shape_proc)) then x_add Pi.add_post_relation_scc prog scc in
@@ -4460,6 +4461,7 @@ let rec check_prog iprog (prog : prog_decl) =
     let () = if (has_infer_shape_proc && has_infer_post_proc) then x_add Pi.add_post_relation_scc prog scc in
     let () = if (has_infer_shape_proc && (has_infer_pre_proc || has_infer_post_proc)) then wrap_reverify_scc reverify_scc prog scc true in
     let () = if (has_infer_pre_proc || has_infer_post_proc) then Pi.infer_pure prog scc in
+    let () = x_tinfo_hp (add_str "stk_of_static_specs (pure)" (pr_list (fun p -> (Cprinter.string_of_struc_formula p.proc_stk_of_static_specs # top)))) scc no_pos in
     (* let () = List.iter (fun proc -> *)
     (*     DD.ninfo_hprint (add_str "spec after infer post" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in *)
 
@@ -4473,11 +4475,10 @@ let rec check_prog iprog (prog : prog_decl) =
     (* let () = prog.prog_rel_decls # reset in *)
     (* let () = prog.prog_rel_decls # push_list rem_pure_inf_prog_rel_decls in *)
     let () = DD.ninfo_hprint (add_str "has_infer_post_proc" string_of_bool) has_infer_post_proc no_pos in
-    (* Resume other infer *)
-
-    let scc = if (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) 
+    (* Resume other infer. *)
+    let scc = if (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) && not (has_infer_shape_pre_proc || has_infer_shape_post_proc)
               then Pi.resume_infer_obj_scc scc old_specs else scc in
-
+    let () = x_tinfo_hp (add_str "stk_of_static_specs (resume)" (pr_list (fun p -> (Cprinter.string_of_struc_formula p.proc_stk_of_static_specs # top)))) scc no_pos in
     (* Reverify *)
     (* let has_infer_others_proc = (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) && Pi.is_infer_others_scc scc in *)
     (* let () = if has_infer_others_proc then wrap_reverify_scc reverify_scc prog scc false in                                           *)

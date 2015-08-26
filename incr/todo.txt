@@ -821,7 +821,7 @@ shape+pure
 
 
 =====================================================================
-#ex13a FIXED (by Prof Chin)
+#ex13a
 #ex13b
 
 GOT
@@ -851,7 +851,7 @@ to support @shape_post
 support for c program
 
 =====================================================================
-#ex14
+#ex14: DONE
 
 to support @shape_pre_post
 
