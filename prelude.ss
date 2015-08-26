@@ -529,7 +529,7 @@ relation nondet_int__(int x).
 relation nondet_bool__(bool x).
 */
 
-relation nondet_int__(int r).
+//relation nondet_int__(int r).
 
 int rand_int ()
 requires true

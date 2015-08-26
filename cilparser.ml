@@ -602,7 +602,7 @@ let rec create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
           | "bool"  -> "<_,o>"
           | "float" -> "<_,o>"
           | "void"  -> "<_,o>"
-          | "char"  -> "<_,o>"
+          | "char"  -> "<o,_>"
           | _ -> (
               try 
                 let data_decl = Hashtbl.find tbl_data_decl (Globals.Named base_data) in
@@ -614,17 +614,24 @@ let rec create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
               with Not_found -> report_error no_pos ("create_void_pointer_casting_proc: Unknown data type: " ^ base_data)
             ) 
         ) in
-        let () = x_binfo_hp (add_str "XXXdata_name,param" pr_id) (data_name^param) no_pos in
+        let () = x_ninfo_hp (add_str "data_name,param" pr_id) (data_name^param) no_pos in
         let cast_proc = (
-          typ_name ^ " " ^ proc_name ^ " (void_star p)\n" ^
-          "  case { \n" ^
-          "    p =  null -> ensures res = null; \n" ^
-          "    p != null -> requires p::memLoc<h,s> & h\n" ^ 
-          (* "                 ensures res::" ^ data_name ^ param ^ " * res::memLoc<h,s> & h; \n" ^ *)
-          "                 ensures res::" ^ data_name ^ param ^ " & o>=0; \n" ^
-          "  }\n"
+          match base_data with
+          | "char" -> typ_name ^ " " ^ proc_name ^ " (void_star p)\n" ^
+                      "  case { \n" ^
+                      "    p =  null -> ensures res = null; \n" ^
+                      "    p != null -> requires p::memLoc<h,s> & h\n" ^ 
+                      "                 ensures res::" ^ "char_star" ^ param ^ " & o>0; \n" ^
+                      "  }\n"
+          | _ -> typ_name ^ " " ^ proc_name ^ " (void_star p)\n" ^
+                 "  case { \n" ^
+                 "    p =  null -> ensures res = null; \n" ^
+                 "    p != null -> requires p::memLoc<h,s> & h\n" ^ 
+                 (* "                 ensures res::" ^ data_name ^ param ^ " * res::memLoc<h,s> & h; \n" ^ *)
+                 "                 ensures res::" ^ data_name ^ param ^ " & o>=0; \n" ^
+                 "  }\n"
         ) in
-        let _ = Debug.binfo_zprint (lazy (("XXX cast_proc:\n  " ^ cast_proc))) no_pos in
+        let _ = Debug.ninfo_zprint (lazy (("cast_proc:\n  " ^ cast_proc))) no_pos in
         let pd = Parser.parse_c_aux_proc "void_pointer_casting_proc" cast_proc in
         Hashtbl.add tbl_aux_proc proc_name pd;
         pd
