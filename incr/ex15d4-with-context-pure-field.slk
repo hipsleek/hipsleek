@@ -6,92 +6,27 @@ data node {
 	node next;
 }.
 
-HeapPred H(node a).
-HeapPred P(node a).
-
-pred  lseg<p> == self=p or self::node<_,q>*q::lseg<p>.
-
-infer [H,P,@classic] H(p) * x::node<1,p> & p=null |- true.
-print residue.
-/*
- <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
- inferred hprel: [H(p)&p=null |#| x::node<flted_14_37,p>@M&true --> emp&true]
-*/
-
-infer [H,P,@classic,@pure_field] H(p) * x::node<1,p> & p=null |- true.
-print residue.
-/*
- <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
- inferred hprel: [H(p)&p=null |#| x::node<flted_21_49,p>@M&
-                   flted_21_49=1 --> emp&true]
-*/
-
-infer [H,@classic] H(p) * x::lseg<p> |- true.
-print residue.
-/*
- <1>emp&{FLOW,(20,21)=__norm#E}[]
- inferred hprel: [H(p)&true |#|3  --> emp&true]
-*/
-
-infer [H,@classic] H(p) * x::node<1,p> * y::node<_,x> |- true.
-print residue.
-/*
- <1>emp&{FLOW,(20,21)=__norm#E}[]
- inferred hprel: [H(p)&true |#| x::node<flted_36_66,p>@M&true --> emp&true]
-*/
-
-
-infer [H,@classic] H(p) * x::node<1,null> & p=null |- true.
-print residue.
-/*
-<1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
- inferred hprel: [H(p)&p=null |#|3  --> emp&true]
-*/
-
-
-infer [H,@classic] H(p) * x::node<1,p> & p=null |- true.
-print residue.
-/*
- <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
- inferred hprel: [H(p)&p=null |#| x::node<flted_52_95,p>@M&true --> emp&true]
-*/
-
-/*
-# ex15f.slk (working)
-
-infer [H,P,@classic] H(p) * x::node<1,p> & p=null 
-  |- P(p) * htrue.
-print residue.
-Entail (2) : Valid. 
-Residue:
- <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
- inferred hprel: [H(p)&p=null |#| x::node<flted_15_28,p>@M&true --> P(p)&true]
-[[ COND ==>  COND ==>  InferHeap]]
-*/
-
-
-infer [H2,@classic,@pure_field] H2(p,1) * x::node<2,p>  |- true.
-print residue.
-/*
-# int considered an @NI ptr?
-
- <1>emp&{FLOW,(20,21)=__norm#E}[]
- inferred hprel: [H2(p,flted_74_111@NI)&
-                   flted_74_111=1 |#| x::node<flted_74_110,p>@M&true --> emp&
-                   true]
-*/
-
 HeapPred H2(node a,int n).
 
 infer [H2,@classic] H2(p,1) * x::node<2,p>  |- true.
 print residue.
 /*
+# ex15d4.slk
+
 # int considered an @NI ptr?
 
  <1>emp&{FLOW,(20,21)=__norm#E}[]
  inferred hprel: [H2(p,flted_74_111@NI)&
                    flted_74_111=1 |#| x::node<flted_74_110,p>@M&true --> emp&
                    true]
+
+# EXPECTS
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H2(p,flted_74_111@NI)&
+                   true |#| x::node<flted_74_110,p>@M&true --> emp&
+                   true]
+
+
 */
 
 /*

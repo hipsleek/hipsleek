@@ -31,8 +31,6 @@ EXPECTS:
  inferred hprel: [H(p)&true |#| 
      x::node<flted_36_66,p> * y::node<_,x>--> emp&true]
 
-
-
 (==infer.ml#3781==)
 find_guard@1
 find_guard inp1 :left heap:[ x::node<flted_11_16,p>@M, y::node<Anon_12,x>@M]
