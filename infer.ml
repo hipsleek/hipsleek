@@ -2408,8 +2408,9 @@ let find_guard_new prog lhds lhvs leqs l_selhpargs rhs_args=
   3.  x::<_,p> * H (p,p1) --> G(x): p and p1 are NOT forwarded
   3a. z::node2<_,l,r> * HP_577(l) * G1(r) --> G1(z) : l,r are NOT forwarded
 *)
-let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest rhs_h_matched_set leqs reqs pos
-    total_unk_map post_hps prog_vars=
+
+let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest (* rhs_h_matched_set *) leqs reqs pos
+    (* total_unk_map *) post_hps prog_vars=
   let get_rhs_unfold_fwd_svl is_view h_node h_args def_svl leqNulls lhs_hpargs=
     let rec parition_helper node_name hpargs=
       match hpargs with
@@ -2751,8 +2752,32 @@ let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest rhs_h_m
   (mis_match_found, (* undefs1@lundefs_args *) ls_undef,hds,hvs,lhrs,rhrs,leqNulls@reqNulls, lhs_selected_hpargs1,rhs_sel_hpargs, total_defined_hps,
    CP.remove_dups_svl (unk_svl),unk_xpure,unk_map1,new_lhs_hps,vioated_ni_svl,classic_ptrs, ass_guard)
 
-let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest rhs_h_matched_set leqs reqs pos
-    total_unk_map post_hps prog_vars=
+(* type: Sautil.C.prog_decl -> *)
+(*   CF.formula_base -> *)
+(*   MCP.mix_formula -> *)
+(*   CF.h_formula -> *)
+(*   CF.h_formula -> *)
+(*   'a -> *)
+(*   (CP.spec_var * CP.spec_var) list -> *)
+(*   (CP.spec_var * CP.spec_var) list -> *)
+(*   VarGen.loc -> *)
+(*   'b -> *)
+(*   CP.spec_var list -> *)
+(*   CF.CP.spec_var list -> *)
+(*   bool * (bool * (CP.spec_var * Globals.hp_arg_kind) list) list * *)
+(*   CF.h_formula_data list * CF.h_formula_view list * *)
+(*   (CF.CP.spec_var * CF.CP.exp list * VarGen.loc) list * *)
+(*   (CF.CP.spec_var * CF.CP.exp list * VarGen.loc) list * *)
+(*   Slicing.CP.spec_var list * *)
+(*   (Sautil.CF.CP.spec_var * CF.CP.spec_var list) list * *)
+(*   (CF.CP.spec_var * CF.CP.spec_var list) list * *)
+(*   (Sautil.CP.spec_var * CF.CP.spec_var list * Sautil.CF.formula_base * *)
+(*    Sautil.CF.formula) *)
+(*   list * CP.spec_var list * CP.formula * 'c list * *)
+(*   (Cast.F.h_formula * (Sautil.CP.spec_var * CF.CP.spec_var list)) list * *)
+(*   'd list * CF.CP.spec_var list * CF.h_formula option *)
+let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest (* rhs_h_matched_set *) leqs reqs pos
+    (* total_unk_map *) post_hps prog_vars=
   let pr1 = Cprinter.string_of_formula_base in
   let pr2 = Cprinter.prtt_string_of_h_formula in
   let pr3 = pr_list (pr_pair !CP.print_sv !print_svl) in
@@ -2768,13 +2793,13 @@ let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest rhs_h_m
     let pr = pr_hexa string_of_bool pr4 pr3 pr3 pr6 pr8 in
     pr (is_found, undefs,selected_hpargs,rhs_sel_hpargs,defined_hps,ass_guard)
   in
-  Debug.no_3 "find_undefined_selective_pointers" 
-    (add_str "unmatched" pr2) 
-    (add_str "rhs_h_matched_set" !print_svl) 
+  Debug.no_2 "find_undefined_selective_pointers"
+    (add_str "unmatched" pr2)
+    (* (add_str "rhs_h_matched_set" !print_svl) *)
     (add_str "lfb" pr1)
     pr5
-    ( fun _ _ _ -> find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest
-        rhs_h_matched_set leqs reqs pos total_unk_map post_hps prog_vars) unmatched rhs_h_matched_set lfb
+    ( fun _ _ -> find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest
+        (* rhs_h_matched_set *) leqs reqs pos (* total_unk_map *) post_hps prog_vars) unmatched (* rhs_h_matched_set *) lfb
 
 
 (*
@@ -3538,7 +3563,7 @@ let infer_collect_hp_rel prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_se
             let is_found_mis, ls_unknown_ptrs,hds,hvs,lhras,rhras,eqNull,
                 lselected_hpargs,rselected_hpargs,defined_hps, unk_svl,unk_pure,unk_map,new_lhs_hps,lvi_ni_svl, classic_nodes, ass_guard =
               find_undefined_selective_pointers prog lhs_b1 mix_lf1 rhs rhs_rest
-                (rhs_h_matched_set) leqs1 reqs1 pos es.CF.es_infer_hp_unk_map post_hps subst_prog_vars in
+                (* (rhs_h_matched_set) *) leqs1 reqs1 pos (* es.CF.es_infer_hp_unk_map *) post_hps subst_prog_vars in
             if not is_found_mis ||
               List.exists (fun (hp,_) -> not (CP.mem_svl hp ivs)) rselected_hpargs (*incr/ex15c(1)*)
             then
