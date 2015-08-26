@@ -1,10 +1,28 @@
-
 #include <stdlib.h>
 
-extern int __VERIFIER_nondet_int(void);
+/*@
+WFS<> ==
+  self::char_star<0,q>*q::BADS<> 
+  or self::char_star<v,q>*q::WFS<> & v!=0 
+  inv true;
 
-/* Returns some null-terminated string. */
-char* __VERIFIER_nondet_String(void) {
+WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true;
+
+BADS<> ==
+  self::char_star<v,q>*q::BADS<> 
+  inv true;
+
+*/
+extern int __VERIFIER_nondet_int(void);
+char* __VERIFIER_nondet_String(void)
+    /*@
+     requires true
+     ensures res::WFS<>;
+    */ 
+{  
     int length = __VERIFIER_nondet_int();
     if (length < 1) {
         length = 1;
@@ -16,18 +34,29 @@ char* __VERIFIER_nondet_String(void) {
 
 
 char *(cstrchr)(const char *s, int c)
+  /*@
+     requires s::WFS<>
+     ensures res::char_star<0,q>*q::BADS<>
+     or res::char_star<c, q>*q::WFS<>;
+  */
  {
-     while (*s != '\0' && *s != (char)c)
-         s++;
+      while (*s != '\0' && *s != (char)c)
+        /*@
+          requires s::WFS<>
+          ensures s::WFSeg<s'>*s'::char_star<0,q>*q::BADS<>
+          or s::WFSeg<s'>*s'::char_star<c,q>*q::WFS<>; 
+       */
+        s++;
      return ( (*s == c) ? (char *) s : 0 );
  }
 
-int main() {
+int main() 
+{
     return *cstrchr(__VERIFIER_nondet_String(),__VERIFIER_nondet_int());
 }
 
 /*
-# ex10.c
+# ex10.c (FIXED)
 
 We cannot cast into char_pointer at the moment?
 

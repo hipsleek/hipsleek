@@ -602,7 +602,7 @@ let rec create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
           | "bool"  -> "<_,o>"
           | "float" -> "<_,o>"
           | "void"  -> "<_,o>"
-          | "char"  -> "<o,_>"
+          | "char"  -> "<o,q>"
           | _ -> (
               try 
                 let data_decl = Hashtbl.find tbl_data_decl (Globals.Named base_data) in
@@ -621,7 +621,7 @@ let rec create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
                       "  case { \n" ^
                       "    p =  null -> ensures res = null; \n" ^
                       "    p != null -> requires p::memLoc<h,s> & h\n" ^ 
-                      "                 ensures res::" ^ "char_star" ^ param ^ " & o>0; \n" ^
+                      "                 ensures res::" ^ "char_star" ^ param ^ " *q::BADS<> & o>0; \n" ^
                       "  }\n"
           | _ -> typ_name ^ " " ^ proc_name ^ " (void_star p)\n" ^
                  "  case { \n" ^
@@ -715,11 +715,17 @@ and create_int_to_pointer_casting_proc (pointer_typ_name: string) : Iast.proc_de
       Hashtbl.find tbl_aux_proc proc_name
     with Not_found -> (
         let cast_proc = (
-          pointer_typ_name ^ " " ^ proc_name ^ " (int p)\n" ^
-          "  case { \n" ^
-          "    p =  0 -> ensures res =  null; \n" ^
-          "    p != 0 -> ensures res != null; \n" ^
-          "  }\n"
+          match pointer_typ_name with
+          | "char_star" -> pointer_typ_name ^ " " ^ proc_name ^ " (int p)\n" ^
+                           "  case { \n" ^
+                           "    p =  0 -> ensures res::char_star<0,q>*q::BADS<>; \n" ^
+                           "    p != 0 -> ensures res::char_star<p,q>*q::BADS<> & p!=0; \n" ^
+                           "  }\n"
+          | _ -> pointer_typ_name ^ " " ^ proc_name ^ " (int p)\n" ^
+                 "  case { \n" ^
+                 "    p =  0 -> ensures res =  null; \n" ^
+                 "    p != 0 -> ensures res != null; \n" ^
+                 "  }\n"
         ) in
         let pd = Parser.parse_c_aux_proc "int_to_pointer_casting_proc" cast_proc in
         Hashtbl.add tbl_aux_proc proc_name pd;
