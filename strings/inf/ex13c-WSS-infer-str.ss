@@ -6,6 +6,9 @@ data char_star {
 }
 */
 
+pred_prim Dangling<>
+inv true;
+
 WSS<p> ==
   self::WFSeg<q>*q::char_star<0,p> 
   inv self!=null;
@@ -13,6 +16,11 @@ WSS<p> ==
 WFSeg<p> ==
   self=p 
   or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true;
+
+WFS<> ==
+  self::char_star<0,_> 
+  or self::char_star<v,q>*q::WFS<> & v!=0
   inv true;
 
 /*
@@ -28,6 +36,8 @@ void while1(ref char_star s)
   requires P(s)
   ensures true;
 /*
+  requires s::WFS<> 
+  ensures true;
   requires s::WSS<p> 
   ensures s::WFSeg<s'>*s'::char_star<0,p> ;
 */
@@ -40,7 +50,36 @@ void while1(ref char_star s)
 }
 
 /*
-# ex13c.ss
+# ex13c.ss -dre "iprocess_a\|add_dang" 
+
+# GOT
+
+!!! **syn.ml#15:TODO : this proc is to add dangling references
+(==sa3.ml#2771==)
+add_dangling@3@2@1
+add_dangling inp1 : 
+  All_RA: [(0)P(s) |#|  --> s::char_star<v_1618,Anon_1619>@M * 
+                            HP_1620(Anon_1619); 
+           (1;0)HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+            v_1618!=0 --> P(Anon_1619); 
+           (2;0)HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+            v_1618=0 --> emp]
+add_dangling@3 EXIT: 
+  All_RA: [(0)P(s) |#|  --> s::char_star<v_1618,Anon_1619>@M * 
+                            HP_1620(Anon_1619); 
+           (1;0)HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+            v_1618!=0 --> P(Anon_1619); 
+           (2;0)HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+            v_1618=0 --> emp]
+
+# EXPECTS emp to be converted to Dangling<Anon_1619>
+
+  All_RA: [(0)P(s) |#|  --> s::char_star<v_1618,Anon_1619>@M * 
+                            HP_1620(Anon_1619); 
+           (1;0)HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+            v_1618!=0 --> P(Anon_1619); 
+           (2;0)HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+            v_1618=0 --> Dangling<Anon_1619>]
 
 [ // PRE
 (0)P(s)&true |#|3  --> s::char_star<v_1601,Anon_1602>@M * HP_1603(Anon_1602)&

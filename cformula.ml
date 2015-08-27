@@ -19361,3 +19361,8 @@ let rm_htrue_estate es =
 
 let collect_impl_expl_context c =
    (fold_context (fun xs es -> es.es_gen_impl_vars @ (es.es_gen_expl_vars @ xs)) [] c)
+
+let remove_inf_cmd_spec new_spec = match new_spec with
+  | EInfer s -> s.formula_inf_continuation
+  | _ -> new_spec
+  

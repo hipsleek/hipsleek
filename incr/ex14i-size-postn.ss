@@ -31,9 +31,14 @@ int size_helper(node x)
   requires H(x)  ensures true;//H1(x);
 */
 
-  infer[@size]
+  infer[@size,@post_n]
   requires x::sll<>
   ensures x::sll<>;
+/*
+  infer[@post_n]
+  requires x::ll<n>
+  ensures x::ll<m>;
+*/
 {
   if (x==null) 
     return 0;

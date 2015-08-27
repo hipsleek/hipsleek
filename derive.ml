@@ -200,7 +200,7 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
   let ls_dname_pos = Iast.look_up_field_ann prog orig_view.Cast.view_data_name extn_props in
   (*formula: extend with new args*)
   let fs,labels = List.split orig_view.Cast.view_un_struc_formula in
-  let fs1 = List.map (Cfutil.subst_views_form lower_map_views) fs in
+  let fs1 = List.map (fun f -> fst (Cfutil.subst_views_form lower_map_views false f)) fs in
   let fs = List.map Cformula.elim_exists (List.map Cfutil.fresh_exists fs1) in
   let pos = view_derv.Iast.view_pos in
   let () =  Debug.ninfo_hprint (add_str "   orig_view.Cast.view_data_name: " (pr_id )) orig_view.Cast.view_data_name pos in

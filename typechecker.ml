@@ -4045,6 +4045,7 @@ let reverify_proc prog proc do_infer =
       let () = x_binfo_hp (add_str "inside reverify" pr_id) (stk_vars # string_of_no_ln) no_pos in
       let pr_flag = not(!phase_infer_ind) in
       let new_spec = proc.proc_stk_of_static_specs # top in
+      let new_spec = CF.remove_inf_cmd_spec new_spec in
       if !Globals.print_proc && pr_flag && (not !Globals.web_compile_flag) then
         print_string_quiet ("Procedure " ^ proc.proc_name ^ ":\n" ^ (Cprinter.string_of_proc_decl 3 proc) ^ "\n\n");
       if pr_flag then
@@ -4592,12 +4593,12 @@ let rec check_prog iprog (prog : prog_decl) =
     (*for each, incrementally infer*)
     (* let map_views = Iincr.extend_views iprog prog "size" scc in *)
     (* let new_scc = List.map (Iincr.extend_inf iprog prog "size") scc in *)
-    let _ = List.map (fun proc ->
-        let res = x_add Iincr.extend_pure_props_view iprog prog Rev_ast.rev_trans_formula Astsimp.trans_view proc in
-        let () =  Debug.info_hprint (add_str "SPEC AFTER EXTENDED SIZE" (Cprinter.string_of_struc_formula))
-          (proc.Cast.proc_stk_of_static_specs # top) no_pos in
-        res
-    ) scc in
+    (* let _ = List.map (fun proc -> *)
+    (*     let res = x_add Iincr.extend_pure_props_view iprog prog Rev_ast.rev_trans_formula Astsimp.trans_view proc in *)
+    (*     let () =  Debug.info_hprint (add_str "SPEC AFTER EXTENDED SIZE" (Cprinter.string_of_struc_formula)) *)
+    (*       (proc.Cast.proc_stk_of_static_specs # top) no_pos in *)
+    (*     res *)
+    (* ) scc in *)
     let r = verify_scc_helper prog verified_sccs scc in
     let () = Globals.sae := old_infer_err_flag in
     r
@@ -4608,15 +4609,26 @@ let rec check_prog iprog (prog : prog_decl) =
   let rec process_cmd iprog cprog verified_sccs scc icmd=
     match icmd with
       | Icmd.I_Norm {cmd_res_infs = infs} ->
-            let iscc,_ = List.split (Iincr.reset_infer_const_scc infs scc) in
+            let iscc,_ = List.split (Iincr.set_infer_const_scc infs scc) in
             let () = if List.exists (fun it -> it = INF_SHAPE_PRE) infs then
               let () = Iincr.add_prepost_shape_relation_scc cprog Iincr.add_pre_shape_relation iscc in
               ()
             else if List.exists (fun it -> it = INF_SHAPE_POST) infs then
               let () = Iincr.add_prepost_shape_relation_scc cprog Iincr.add_post_shape_relation scc in
               ()
+            else if List.exists (fun it -> it = INF_SIZE) infs then
+              let _ = List.map (fun proc ->
+                  let res = x_add Iincr.extend_pure_props_view iprog prog Rev_ast.rev_trans_formula Astsimp.trans_view proc in
+                  let todo_unk = Iincr.reset_infer_const_scc [INF_SIZE] iscc in
+                  let () =  Debug.info_hprint (add_str "SPEC AFTER EXTENDED SIZE" (Cprinter.string_of_struc_formula))
+                    (proc.Cast.proc_stk_of_static_specs # top) no_pos in
+                  res
+              ) iscc in
+              ()
             else () in
-            verify_scc_incr cprog verified_sccs iscc
+            let res = verify_scc_incr cprog verified_sccs iscc in
+            (* let todo_unk = Iincr.reset_infer_const_scc infs iscc in *)
+            res
       | Icmd.I_Seq cmds
       | Icmd.I_Search cmds (*TOFIX*) ->
             List.fold_left (fun (acc_cprog, _) (_, cmd) ->  process_cmd iprog acc_cprog verified_sccs scc cmd)
@@ -4691,13 +4703,19 @@ let rec check_prog iprog (prog : prog_decl) =
           case_verify_scc_helper prog verified_sccs scc
         else
           (* let () = List.iter (fun proc -> *)
-          (* DD.info_hprint (add_str "xxxx3  " Cprinter.string_of_struc_formula) (proc.proc_static_specs) no_pos) scc in *)
+          (* DD.info_hprint (add_str "  " Cprinter.string_of_struc_formula) (proc.Cast.proc_stk_of_static_specs # top) no_pos) scc in *)
           if !Globals.old_incr_infer then verify_scc_incr prog verified_sccs scc
             else
               let icmd = Icmd.compute_cmd prog scc in
               process_cmd iprog prog verified_sccs scc icmd
       in
-      prog, n_verified_sccs
+      let no_verified_sccs = List.map (fun scc -> List.map (fun proc ->
+          let spec = proc.proc_stk_of_static_specs # top in
+          let new_spec = CF.remove_inf_cmd_spec spec in
+          let () = proc.proc_stk_of_static_specs # push_pr "typechecker:after_cmd" new_spec in
+          proc
+      ) scc ) n_verified_sccs in
+      prog, no_verified_sccs
     ) (prog,[]) proc_scc
   in
 

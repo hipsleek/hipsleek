@@ -1788,6 +1788,7 @@ class inf_obj  =
     method set c  = if self#get c then () else arr <- c::arr
     method set_list l  = List.iter (fun c -> self # set c) l
     method reset c  = arr <- List.filter (fun x-> not(c==x)) arr
+    method reset_list l  = arr <- List.filter (fun x-> List.for_all (fun c -> not (c=x)) l) arr
     (* method mk_or (o2:inf_obj) =  *)
     (*   let o1 = o2 # clone in *)
     (*   let l = self # get_lst in *)

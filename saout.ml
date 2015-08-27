@@ -815,12 +815,14 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps
       if inf_obj # is_pre || inf_obj # is_shape_pre || inf_obj # is_shape_post || inf_obj # is_post || inf_obj # is_term then
         let new_inf_obj = inf_obj # clone in
         let _ = new_inf_obj # reset INF_SHAPE in
+        let _ = new_inf_obj # reset INF_SHAPE_PRE in
+        let _ = new_inf_obj # reset INF_SHAPE_POST in
         let new_inf_vars = List.filter (fun sv -> not (Cpure.is_hprel_typ sv)) ei.CF.formula_inf_vars in
         CF.EInfer {ei with
-                   CF.formula_inf_obj = new_inf_obj;
-                   (* CF.formula_inf_continuation = sf; *) (* Loc: why it duplicate Infer header?*)
-                   CF.formula_inf_vars = new_inf_vars
-                  }
+            CF.formula_inf_obj = new_inf_obj;
+            (* CF.formula_inf_continuation = sf; *) (* Loc: why it duplicate Infer header?*)
+            CF.formula_inf_vars = new_inf_vars
+        }
       else sf
     | _ -> sf
   in
@@ -915,7 +917,7 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps
       (* let () = proc_stk_of_static_specs # reset in *)
       (* let () = proc_stk_of_static_specs # push_list n_proc_stk_of_static_specs in *)
       let proc1 = { proc with C.proc_static_specs= n_stk_spec (* n_static_spec *);
-          C.proc_dynamic_specs= n_stk_spec (* n_dynamic_spec *);
+          C.proc_dynamic_specs=  n_dynamic_spec;
           (* C.proc_stk_of_static_specs =  n_stk_specs; *)
       }
       in

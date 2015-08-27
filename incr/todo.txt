@@ -1254,7 +1254,28 @@ bottomupgen([post_1650], [2], SimHeur);fixcalc: debugApply: substitution does no
 ExceptionLoc.Exc_located(_, _)Occurred!
 
 =====================================================================
-# ex14h.ss --reverify
+# ex14h.ss --reverify: FIXED
+
+# Removed inference command, but still two copies of x::HP_1638<>.
+  Why is this so?
+
+ requires x::HP_1638<>@M * x::HP_1708<>@M&truerequires emp&
+MayLoop[]
+ ensures htrue&true{,(4,5)=__norm#E};
+
+-------------------------
+#ex14h2.ss (FIXED by Loc)
+
+  infer[@shape_pre,@classic] 
+  requires true 
+  ensures htrue;
+
+# Why did we get below?
+
+ requires x::sll<>@M * x::HP_1805<>@M&truerequires emp&
+MayLoop[]
+ ensures htrue&true{,(4,5)=__norm#E};
+-------------------------
 
 # Why did re-verify infer shape again? This
   caused pre-condition to be false!
@@ -1282,7 +1303,7 @@ Checking procedure size_helper$node...
 truerequires emp&MayLoop[]
  ensures htrue&true{,(4,5)=__norm#E};
 =====================================================================
-# ex15g.slk
+# ex15g.slk: FIXED
 
 infer [H,P] H(p) * x::node<1,p> & p=null 
   |- P(p).
@@ -1298,7 +1319,39 @@ print residue.
  <1>x::node<flted_23_28,p>@M&p=null & flted_23_28=1&{FLOW,(20,21)=__norm#E}[]
  inferred hprel: [H(p)&p=null |#|  --> P(p)&true
 =====================================================================
+@ ex17a.slk
+
+to synthesize lemma
+
+checkentail (exists a_1655: a'::lseg_one<a_1655>@M&a_1655=null)
+ |-  a'::sll_two<>.
+
+# Possible solution: we attempt lemma synthesis either top-down
+  or on-demand. On demand, based on the above, it would attempt for:
+
+   self::sll_two<> <- self::lseg_one<a> & a=null
+
+  to be added. However, this may complicate the SLEEK procedure
+  itself. So, we probably need general top-down lemma synthesis
+  command , and have that called either on-demand or top-down.
+
+  In this case, can you try:
+
+    lemma_infer[U] self::sll_two<> <- self::lseg<a> & U<a>
+    lemma_infer[U] self::sll_two<> <-> self::lseg<a> & U<a>
+
+   To see if you can develop some top-level synthesis commands.
+   As a special-case, the following is a lemma tester:
+
+    lemma_infer[] self::sll_two<> <-> self::lseg<a> & a=null
+
 =====================================================================
+# ex17.ss (FIXED)
+
+To strip anonymous variables.
+
+!!! **WARNING****astsimp.ml#8758:Post-condition has existentially quantified free vars:[(Anon_14,);(Anon_15,)]
+Starting Omega.../usr/local/bin/oc
 =====================================================================
 =====================================================================
 =====================================================================

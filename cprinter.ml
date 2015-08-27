@@ -3160,7 +3160,7 @@ let pr_infer_state_short is =
   pr_wrap_test "Link_HPargs: " Gen.is_empty (fun x -> fmt_string (string_of_spec_var_list x)) (List.map fst is.is_link_hpargs);
   pr_wrap_test "Dang_HPargs: " Gen.is_empty (fun x -> fmt_string (string_of_spec_var_list x)) (List.map fst is.is_dang_hpargs);
   pr_wrap_test "cond_path: " Gen.is_empty (pr_list_int) is.is_cond_path;
-  pr_wrap_test "RA: " Gen.is_empty (pr_seq "" pr_hprel_short) is.is_constrs;
+  (* pr_wrap_test "RA: " Gen.is_empty (pr_seq "" pr_hprel_short) is.is_constrs; *)
   pr_wrap_test "All_RA: " Gen.is_empty (pr_seq "" pr_hprel_short) is.is_all_constrs;
   pr_wrap_test "hp_defs: " Gen.is_empty (pr_seq "" pr_hp_ref_def) is.is_hp_defs;
   fmt_close()

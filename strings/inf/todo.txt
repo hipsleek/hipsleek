@@ -105,6 +105,38 @@ void while1(ref char_star s)
   U(x,q) -> x=q
   U(x,q) -> x::chr<v,q1>*U(q1,q) & v!=0
 ===========================================================================
+# infer-str
+# ex13c.ss -dre "iprocess_a\|add_dang" 
+
+# GOT
+
+!!! **syn.ml#15:TODO : this proc is to add dangling references
+(==sa3.ml#2771==)
+add_dangling@3@2@1
+add_dangling inp1 : 
+  All_RA: [(0)P(s) |#|  --> s::char_star<v_1618,Anon_1619>@M * 
+                            HP_1620(Anon_1619); 
+           (1;0)HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+            v_1618!=0 --> P(Anon_1619); 
+           (2;0)HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+            v_1618=0 --> emp]
+add_dangling@3 EXIT: 
+  All_RA: [(0)P(s) |#|  --> s::char_star<v_1618,Anon_1619>@M * 
+                            HP_1620(Anon_1619); 
+           (1;0)HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+            v_1618!=0 --> P(Anon_1619); 
+           (2;0)HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+            v_1618=0 --> emp]
+
+# EXPECTS emp to be converted to Dangling<Anon_1619>
+  where
+
+  All_RA: [(0)P(s) |#|  --> s::char_star<v_1618,Anon_1619>@M * 
+                            HP_1620(Anon_1619); 
+           (1;0)HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+            v_1618!=0 --> P(Anon_1619); 
+           (2;0)HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+            v_1618=0 --> Dangling<Anon_1619>]
 ===========================================================================
 ===========================================================================
 ===========================================================================
