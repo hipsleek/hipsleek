@@ -2479,7 +2479,7 @@ let is_view_node_segmented vn prog =
   let vdcl = Cast.look_up_view_def_raw 62 prog.Cast.prog_view_decls vn.h_formula_view_name in
   vdcl.Cast.view_is_segmented
 
-let subst_views_form_x map_views f=
+let subst_views_form_x map_views is_pre f=
   (***************INTERNAL****************)
   let rec refresh_der_args args orig_args (pure_r,res)=
     match args with
@@ -2506,15 +2506,20 @@ let subst_views_form_x map_views f=
         | Base b ->
               let new_hf, ex_quans = hf_fct [] b.formula_base_heap in
               let new_f = Base {b with formula_base_heap = new_hf} in
-              add_quantifiers ex_quans new_f
+              let new_f1 =  if is_pre then new_f else
+                add_quantifiers ex_quans new_f
+              in
+              (new_f1, ex_quans)
         | Exists _ ->
               let quans ,base = split_quantifiers f in
-              let new_base = helper base in
-              add_quantifiers quans new_base
+              let new_base, svl = helper base in
+              (add_quantifiers quans new_base, svl)
         | Or orf ->
-              Or {orf with formula_or_f1 = helper orf.formula_or_f1;
-                  formula_or_f2 = helper orf.formula_or_f2;
-              }
+              let new_f1, svl1 = helper orf.formula_or_f1 in
+              let new_f2, svl2 = helper orf.formula_or_f2 in
+              Or {orf with formula_or_f1 = new_f1;
+                  formula_or_f2 = new_f2;
+              }, svl1@svl2
     in
     helper f0
   in
@@ -2545,14 +2550,41 @@ let subst_views_form_x map_views f=
   (*************END**INTERNAL****************)
   (formula_map_add_ex (hview_subst_trans)) f
 
-let subst_views_form map_views f=
+(*
+  is_pre = true: do NOT add quans variables/impl will be added afterward
+  is_pre = false: do add quans variables
+ *)
+let subst_views_form map_views is_pre f=
   let pr1 = !print_formula in
   let pr2 =  pr_pair (pr_pair pr_id !CP.print_svl) (pr_pair pr_id !CP.print_svl) in
-  Debug.no_2 "subst_views_form" (pr_list pr2) pr1 pr1
-      (fun _ _ -> subst_views_form_x map_views f) map_views f
+  Debug.no_2 "subst_views_form" (pr_list pr2) pr1 (pr_pair pr1 !CP.print_svl)
+      (fun _ _ -> subst_views_form_x map_views is_pre f) map_views f
 
 let subst_views_struc map_views cf=
-  struc_formula_trans_heap_node [] (subst_views_form map_views) cf
+  let rec struc_formula_trans_heap_node formula_fct f=
+    let recf = struc_formula_trans_heap_node formula_fct in
+    match f with
+      | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd (recf) b.formula_case_branches}
+      | EBase b ->
+            let f1, new_impl1 = formula_fct true b.formula_struc_base in
+            let impl_vs = b.formula_struc_implicit_inst in
+            let new_impl2 = (impl_vs@new_impl1) in
+            let () =  x_tinfo_hp (add_str "new impl2" (!CP.print_svl)) new_impl2 no_pos in
+            EBase {b with
+                formula_struc_continuation = Gen.map_opt (recf) b.formula_struc_continuation;
+                formula_struc_implicit_inst = new_impl2;
+                formula_struc_base= f1;
+            }
+      | EAssume ea-> begin
+          let f1,_ = formula_fct false ea.formula_assume_simpl in
+          let ass_sf =  (recf) ea.formula_assume_struc in
+          EAssume {ea with  formula_assume_simpl =  f1;
+              formula_assume_struc =ass_sf  }
+        end
+      | EInfer b -> EInfer {b with formula_inf_continuation = (recf) b.formula_inf_continuation}
+      | EList l -> EList (Gen.map_l_snd (recf) l)
+  in
+  struc_formula_trans_heap_node (subst_views_form map_views) cf
 
 let get_closed_view prog (init_vns: string list)=
   let rec dfs_find_closure working_vns done_vns=

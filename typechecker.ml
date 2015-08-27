@@ -4592,12 +4592,12 @@ let rec check_prog iprog (prog : prog_decl) =
     (*for each, incrementally infer*)
     (* let map_views = Iincr.extend_views iprog prog "size" scc in *)
     (* let new_scc = List.map (Iincr.extend_inf iprog prog "size") scc in *)
-    let _ = List.map (fun proc ->
-        let res = x_add Iincr.extend_pure_props_view iprog prog Rev_ast.rev_trans_formula Astsimp.trans_view proc in
-        let () =  Debug.info_hprint (add_str "SPEC AFTER EXTENDED SIZE" (Cprinter.string_of_struc_formula))
-          (proc.Cast.proc_stk_of_static_specs # top) no_pos in
-        res
-    ) scc in
+    (* let _ = List.map (fun proc -> *)
+    (*     let res = x_add Iincr.extend_pure_props_view iprog prog Rev_ast.rev_trans_formula Astsimp.trans_view proc in *)
+    (*     let () =  Debug.info_hprint (add_str "SPEC AFTER EXTENDED SIZE" (Cprinter.string_of_struc_formula)) *)
+    (*       (proc.Cast.proc_stk_of_static_specs # top) no_pos in *)
+    (*     res *)
+    (* ) scc in *)
     let r = verify_scc_helper prog verified_sccs scc in
     let () = Globals.sae := old_infer_err_flag in
     r
@@ -4614,6 +4614,14 @@ let rec check_prog iprog (prog : prog_decl) =
               ()
             else if List.exists (fun it -> it = INF_SHAPE_POST) infs then
               let () = Iincr.add_prepost_shape_relation_scc cprog Iincr.add_post_shape_relation scc in
+              ()
+            else if List.exists (fun it -> it = INF_SIZE) infs then
+              let _ = List.map (fun proc ->
+                  let res = x_add Iincr.extend_pure_props_view iprog prog Rev_ast.rev_trans_formula Astsimp.trans_view proc in
+                  let () =  Debug.info_hprint (add_str "SPEC AFTER EXTENDED SIZE" (Cprinter.string_of_struc_formula))
+                    (proc.Cast.proc_stk_of_static_specs # top) no_pos in
+                  res
+              ) scc in
               ()
             else () in
             verify_scc_incr cprog verified_sccs iscc
