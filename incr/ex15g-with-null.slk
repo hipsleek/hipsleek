@@ -9,10 +9,13 @@ data node {
 HeapPred H(node a).
 HeapPred P(node a).
 
+/*
 
 infer [H,@classic] H(p) * x::node<1,p> & p=null 
   |- htrue.
 print residue.
+*/
+
 /*
 Starting Omega.../usr/local/bin/oc
  <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]

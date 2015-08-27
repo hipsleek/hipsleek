@@ -4709,7 +4709,13 @@ let rec check_prog iprog (prog : prog_decl) =
               let icmd = Icmd.compute_cmd prog scc in
               process_cmd iprog prog verified_sccs scc icmd
       in
-      prog, n_verified_sccs
+      let no_verified_sccs = List.map (fun scc -> List.map (fun proc ->
+          let spec = proc.proc_stk_of_static_specs # top in
+          let new_spec = CF.remove_inf_cmd_spec spec in
+          let () = proc.proc_stk_of_static_specs # push_pr "typechecker:after_cmd" new_spec in
+          proc
+      ) scc ) n_verified_sccs in
+      prog, no_verified_sccs
     ) (prog,[]) proc_scc
   in
 

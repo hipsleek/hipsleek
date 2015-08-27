@@ -819,10 +819,10 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps
         let _ = new_inf_obj # reset INF_SHAPE_POST in
         let new_inf_vars = List.filter (fun sv -> not (Cpure.is_hprel_typ sv)) ei.CF.formula_inf_vars in
         CF.EInfer {ei with
-                   CF.formula_inf_obj = new_inf_obj;
-                   (* CF.formula_inf_continuation = sf; *) (* Loc: why it duplicate Infer header?*)
-                   CF.formula_inf_vars = new_inf_vars
-                  }
+            CF.formula_inf_obj = new_inf_obj;
+            (* CF.formula_inf_continuation = sf; *) (* Loc: why it duplicate Infer header?*)
+            CF.formula_inf_vars = new_inf_vars
+        }
       else sf
     | _ -> sf
   in
