@@ -1,0 +1,44 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+HeapPred H(node a).
+HeapPred P(node a).
+
+
+infer [H,@classic] H(p) * x::node<1,p> & p=null 
+  |- htrue.
+print residue.
+/*
+Starting Omega.../usr/local/bin/oc
+ <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#|3  --> emp&true]
+
+*/
+
+infer [H,P] H(p) * x::node<1,p> & p=null 
+  |- P(p).
+print residue.
+
+/*
+# ex15g.slk
+
+infer [H,P] H(p) * x::node<1,p> & p=null 
+  |- P(p).
+print residue.
+
+# GOT
+
+ <1>x::node<flted_23_28,p>@M&p=null & flted_23_28=1&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#| x::node<flted_23_28,p>@M&true --> P(p)&true
+
+# EXPECTS
+
+ <1>x::node<flted_23_28,p>@M&p=null & flted_23_28=1&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#|  --> P(p)&true
+
+*/

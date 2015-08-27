@@ -1254,7 +1254,49 @@ bottomupgen([post_1650], [2], SimHeur);fixcalc: debugApply: substitution does no
 ExceptionLoc.Exc_located(_, _)Occurred!
 
 =====================================================================
+# ex14h.ss --reverify
+
+# Why did re-verify infer shape again? This
+  caused pre-condition to be false!
+# I think need to strip of the previous inference commands
+  when re-verifying.
+
+!!! INFERRED SHAPE SPEC:
+ EInfer @leak,@shape_pre[]
+   EBase 
+     x::HP_1638<>@M * x::HP_1708<>@M&{FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         htrue&{FLOW,(4,5)=__norm#E}[]
+         struct:EBase 
+                  htrue&{FLOW,(4,5)=__norm#E}[]
+!!! **typechecker.ml#4045:inside reverify:[x]
+Checking procedure size_helper$node... 
+
+
+******************************
+******* SPECIFICATION2 ********
+******************************
+ infer[@leak, @shape_pre ]requires x::HP_1638<>@M * x::HP_1708<>@M&
+truerequires emp&MayLoop[]
+ ensures htrue&true{,(4,5)=__norm#E};
 =====================================================================
+# ex15g.slk
+
+infer [H,P] H(p) * x::node<1,p> & p=null 
+  |- P(p).
+print residue.
+
+# GOT
+
+ <1>x::node<flted_23_28,p>@M&p=null & flted_23_28=1&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#| x::node<flted_23_28,p>@M&true --> P(p)&true
+
+# EXPECTS
+
+ <1>x::node<flted_23_28,p>@M&p=null & flted_23_28=1&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#|  --> P(p)&true
 =====================================================================
 =====================================================================
 =====================================================================
