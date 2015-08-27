@@ -832,16 +832,16 @@ and heap_fv ?(vartype=Global_var.var_with_none) (f:formula):(ident*primed) list 
     let qvars = if vartype # is_exists then [] else qvars in
     Gen.BList.difference_eq (=) (Gen.BList.remove_dups_eq (=) hvars@avars) qvars
 
-  | Or b-> Gen.BList.remove_dups_eq (=) ((heap_fv ~var_type:var_type b.formula_or_f1)@(heap_fv ~var_type:var_type b.formula_or_f2))
+  | Or b-> Gen.BList.remove_dups_eq (=) ((heap_fv ~vartype:vartype b.formula_or_f1)@(heap_fv ~vartype:vartype b.formula_or_f2))
 
 and struc_hp_fv ?(vartype=Global_var.var_with_none) (f:struc_formula): (ident*primed) list =  match f with
-  | EBase b-> Gen.BList.difference_eq (=) ((Gen.fold_opt (struc_hp_fv ~var_type:var_type) b.formula_struc_continuation)
-                                           @(heap_fv ~var_type:var_type b.formula_struc_base)) 
+  | EBase b-> Gen.BList.difference_eq (=) ((Gen.fold_opt (struc_hp_fv ~vartype:vartype) b.formula_struc_continuation)
+                                           @(heap_fv ~vartype:vartype b.formula_struc_base)) 
                 (b.formula_struc_explicit_inst@b.formula_struc_implicit_inst)
-  | ECase b-> Gen.fold_l_snd (struc_hp_fv ~var_type:var_type) b.formula_case_branches
-  | EAssume b-> heap_fv ~var_type:var_type b.formula_assume_simpl
-  | EInfer b -> struc_hp_fv ~var_type:var_type b.formula_inf_continuation
-  | EList b -> Gen.BList.remove_dups_eq (=) (Gen.fold_l_snd (struc_hp_fv ~var_type:var_type) b)
+  | ECase b-> Gen.fold_l_snd (struc_hp_fv ~vartype:vartype) b.formula_case_branches
+  | EAssume b-> heap_fv ~vartype:vartype b.formula_assume_simpl
+  | EInfer b -> struc_hp_fv ~vartype:vartype b.formula_inf_continuation
+  | EList b -> Gen.BList.remove_dups_eq (=) (Gen.fold_l_snd (struc_hp_fv ~vartype:vartype) b)
 
 and struc_case_fv (f:struc_formula): (ident*primed) list =  match f with
   | EBase b-> Gen.BList.difference_eq (=)(Gen.fold_opt struc_case_fv b.formula_struc_continuation)
