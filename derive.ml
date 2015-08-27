@@ -340,10 +340,10 @@ let trans_view_one_derv_wrapper prog rev_form_fnc trans_view_fnc lower_map_views
   if List.for_all (fun (l_extn_view,_,_) ->
       String.compare l_extn_view extn_view_name !=0) orig_view.Cast.view_domains then
     let r = trans_view_one_derv_x prog rev_form_fnc trans_view_fnc lower_map_views cviews derv view_derv in
-    let () =  Debug.ninfo_hprint (add_str "   pure extension" pr_id) (derv.Iast.view_name ^ ": extend " ^ orig_view_name ^ " to " ^ extn_view_name ^"\n") no_pos in
+    let () =  Debug.info_hprint (add_str "   pure extension" pr_id) (derv.Iast.view_name ^ ": extend " ^ orig_view_name ^ " to " ^ extn_view_name ^"\n") no_pos in
     (true,r)
   else
-    let () =  Debug.ninfo_hprint (add_str "   pure extension" pr_id) (orig_view_name ^ " has been extended to " ^ extn_view_name^ " already \n") no_pos in
+    let () =  Debug.info_hprint (add_str "   pure extension" pr_id) (orig_view_name ^ " has been extended to " ^ extn_view_name^ " already \n") no_pos in
     (false,orig_view)
 
 let trans_view_one_derv (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower_map_views
