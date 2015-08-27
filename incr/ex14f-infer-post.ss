@@ -33,7 +33,7 @@ int size_helper(node x)
   infer[//@post_n
   ] 
   requires x::ll<aaa>
-  ensures (exists bbb: x::ll<bbb>);
+  ensures  x::ll<aaa2>;
 {
   if (x==null) 
     return 0;

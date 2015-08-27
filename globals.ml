@@ -1284,6 +1284,7 @@ let old_post_conv_impl = ref false
 let old_post_impl_to_ex = ref true
 let warn_nonempty_perm_vars = ref false
 let warn_trans_context = ref false
+let warn_post_free_vars = ref false
 let warn_free_vars_conseq = ref false
 let old_infer_collect = ref false
 let old_base_case_unfold = ref false
