@@ -4691,7 +4691,7 @@ let rec check_prog iprog (prog : prog_decl) =
           case_verify_scc_helper prog verified_sccs scc
         else
           (* let () = List.iter (fun proc -> *)
-          (* DD.info_hprint (add_str "xxxx3  " Cprinter.string_of_struc_formula) (proc.proc_static_specs) no_pos) scc in *)
+          (* DD.info_hprint (add_str "  " Cprinter.string_of_struc_formula) (proc.Cast.proc_stk_of_static_specs # top) no_pos) scc in *)
           if !Globals.old_incr_infer then verify_scc_incr prog verified_sccs scc
             else
               let icmd = Icmd.compute_cmd prog scc in
