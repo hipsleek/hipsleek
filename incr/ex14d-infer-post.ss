@@ -30,8 +30,7 @@ int size_helper(node x)
   infer[H]
   requires H(x)  ensures true;//H1(x);
 */
-  infer[@post_n
-  ] 
+  infer[@post_n] 
   requires x::ll<a>
   ensures x::ll<b>;
 {
@@ -43,7 +42,23 @@ int size_helper(node x)
 }
 
 /*
-# ex14d.slk --pcp
+# ex14d.slk --new-post-conv-impl
+
+  infer[@post_n] 
+  requires x::ll<a>
+  ensures x::ll<b>;
+
+# Why fixcalc failure with --new-post-conv-impl 
+       (from exists --> impl in post)
+
+!!! **fixcalc.ml#1040:Input of fixcalc: :post_1650:={[a,a] -> [res,flow] -> []: (res=0 && a=0 ||  (exists (v_int_41_1685: (exists (a_1672: (exists (b_1681:0<=b_1681 && post_1650(b_1681,a_1672,v_int_41_1685,flow)))  && a_1672=a-(1)))  && v_int_41_1685=res-(1)))  && 1<=a)
+};
+bottomupgen([post_1650], [2], SimHeur);fixcalc: debugApply: substitution does not have unique args: [((SizeVar "a",Unprimed),(SizeVar "b_1681",Unprimed)),((SizeVar "a",Unprimed),(SizeVar "a_1672",Unprimed)),((SizeVar "res",Unprimed),(SizeVar "v_int_41_1685",Unprimed)),((SizeVar "flow",Unprimed),(SizeVar "flow",Unprimed))]
+
+!!! PROBLEM with fix-point calculation
+ExceptionLoc.Exc_located(_, _)Occurred!
+
+-----------------------------------
 
   requires (exists a: x::ll<a>)
   ensures (exists b: x::ll<b>);
