@@ -1256,6 +1256,27 @@ ExceptionLoc.Exc_located(_, _)Occurred!
 =====================================================================
 # ex14h.ss --reverify
 
+# Removed inference command, but still two copies of x::HP_1638<>.
+  Why is this so?
+
+ requires x::HP_1638<>@M * x::HP_1708<>@M&truerequires emp&
+MayLoop[]
+ ensures htrue&true{,(4,5)=__norm#E};
+
+-------------------------
+#ex14h2.ss
+
+  infer[@shape_pre,@classic] 
+  requires true 
+  ensures htrue;
+
+# Why did we get below?
+
+ requires x::sll<>@M * x::HP_1805<>@M&truerequires emp&
+MayLoop[]
+ ensures htrue&true{,(4,5)=__norm#E};
+-------------------------
+
 # Why did re-verify infer shape again? This
   caused pre-condition to be false!
 # I think need to strip of the previous inference commands

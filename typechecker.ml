@@ -4045,6 +4045,7 @@ let reverify_proc prog proc do_infer =
       let () = x_binfo_hp (add_str "inside reverify" pr_id) (stk_vars # string_of_no_ln) no_pos in
       let pr_flag = not(!phase_infer_ind) in
       let new_spec = proc.proc_stk_of_static_specs # top in
+      let new_spec = CF.remove_inf_cmd_spec new_spec in
       if !Globals.print_proc && pr_flag && (not !Globals.web_compile_flag) then
         print_string_quiet ("Procedure " ^ proc.proc_name ^ ":\n" ^ (Cprinter.string_of_proc_decl 3 proc) ^ "\n\n");
       if pr_flag then
