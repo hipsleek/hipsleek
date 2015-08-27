@@ -30,10 +30,10 @@ int size_helper(node x)
   infer[H]
   requires H(x)  ensures true;//H1(x);
 */
-  infer[//@post_n
+  infer[@post_n
   ] 
-  requires (exists a: x::ll<a>)
-  ensures (exists b: x::ll<b>);
+  requires x::ll<a>
+  ensures x::ll<b>;
 {
   if (x==null) 
     return 0;
