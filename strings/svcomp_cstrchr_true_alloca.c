@@ -1,7 +1,6 @@
 /*
  * Date: 17.12.2013
  * Author: Thomas Ströder
- * not memory safe
  */
 #include <stdlib.h>
 
@@ -24,28 +23,8 @@ BADS<> ==
 
 extern int __VERIFIER_nondet_int(void);
 
-/* Returns some null-terminated string. */
-char* __VERIFIER_nondet_String(void)
-  /*@
-     requires true
-     ensures res::WFS<>;
-  */ 
-{
-    int length = __VERIFIER_nondet_int();
-    if (length < 1) {
-        length = 1;
-    }
-    char* nondetString = (char*) alloca(length * sizeof(char));
-    nondetString[length-1] = '\0';
-    return nondetString;
-}
-
-
-
-
-
 char *(cstrchr)(const char *s, int c)
-  /*@
+ /*@
      requires s::WFS<>
      ensures res::char_star<0,q>*q::BADS<>
      or res::char_star<c, q>*q::WFS<>;
@@ -64,8 +43,20 @@ char *(cstrchr)(const char *s, int c)
      return ( (*s == c) ? (char *) s : 0 );
  }
 
-int main() {
-    return *cstrchr(__VERIFIER_nondet_String(),__VERIFIER_nondet_int());
+int main()
+/*@
+   requires true 
+   ensures res = 0;
+*/ 
+{
+    int length = __VERIFIER_nondet_int();
+    if (length < 1) {
+        length = 1;
+    }
+    char* nondetString = (char*) alloca(length * sizeof(char));
+    nondetString[length-1] = '\0';
+    cstrchr(nondetString,__VERIFIER_nondet_int());
+    return 0;
 }
 
 

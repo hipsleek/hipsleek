@@ -1,4 +1,4 @@
-# ex21.c --pip
+# ex21.c --pip (FIXED by Muoi)
 
 {
   *x = *x+1;
@@ -18,7 +18,7 @@ __get_char_(addr_a) = 1
 (95, ):foo(addr_a)}
 }
 ==================================================================
-# ex21.c (default branch)
+# ex21.c (default branch) (FIXED by Muoi)
 
 # error at PCP stage
 
@@ -40,13 +40,33 @@ Message: number of arguments does not match in New?? int_star
 Exception occurred: Failure("number of arguments does not match in New?? int_star")
 Error3(s) detected at main 
 ==================================================================
+# svcomp_cstrcmp_true_alloca.c
+
+!!! **main.ml#1180:WARNING : Logging not done on finalizeStop z3... 48 invocations caught
+
+Exception occurred: Failure("field name value is not found")
 ==================================================================
+# svcomp_cstrcspn_true_alloca.c
+
+ERROR: at svcomp_cstrcspn_true_alloca.c_37:21_37:29
+Message: argument types do not match 4
+
+!!! **main.ml#1180:WARNING : Logging not done on finalizeStop z3... 48 invocations caught
+
 ==================================================================
+# svcomp_cstrlen_true_alloca.c
+
+Need to add sized pred
 ==================================================================
+# svcomp_cstrncat_alloca.c
 ==================================================================
+# svcomp_cstrncmp_true_alloca.c
 ==================================================================
+# svcomp_cstrncpy_alloca.c
 ==================================================================
+# svcomp_cstrpbrk_true_alloca.c
 ==================================================================
+# svcomp_cstrspn_true_alloca.c
 ==================================================================
 ==================================================================
 ==================================================================
