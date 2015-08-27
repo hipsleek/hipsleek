@@ -80,7 +80,7 @@ let update_infer_const_struc_formula add_infs minus_infs sf0 =
       (fun _ _ _ -> update_infer_const_struc_formula add_infs minus_infs sf0)
       add_infs minus_infs sf0
 
-let reset_infer_const_struc_formula add_infs sf0 =
+let set_infer_const_struc_formula add_infs sf0 =
   let rec recf sf= match sf with
     | CF.EList el -> CF.EList (List.map (fun (lbl,sf) ->
           (lbl,recf sf)) el)
@@ -105,12 +105,43 @@ let reset_infer_const_struc_formula add_infs sf0 =
   in
   recf sf0
 
-let reset_infer_const_struc_formula add_infs sf0 =
+let set_infer_const_struc_formula add_infs sf0 =
+  let pr1 =  Cprinter.string_of_struc_formula in
+  let pr2 = pr_list string_of_inf_const in
+  Debug.no_2 "set_infer_const_struc_formula" pr2 pr1 pr1
+      (fun _ _ -> set_infer_const_struc_formula add_infs sf0)
+      add_infs sf0
+
+let reset_infer_const_struc_formula removed_infs sf0 =
+  let rec recf sf= match sf with
+    | CF.EList el -> CF.EList (List.map (fun (lbl,sf) ->
+          (lbl,recf sf)) el)
+    | CF.EBase eb ->
+          let cont = eb.CF.formula_struc_continuation in (
+              match cont with
+                | None -> sf
+                | Some cont -> CF.EBase {eb with CF.formula_struc_continuation = Some (recf cont)} )
+    | CF.EAssume ea -> sf
+    | CF.EInfer ei ->
+          let inf_obj = ei.CF.formula_inf_obj in
+          let new_inf_obj = inf_obj # clone in
+          let () =  new_inf_obj # reset_list ( Gen.BList.remove_dups_eq (=) (removed_infs)) in
+          CF.EInfer {ei with
+              CF.formula_inf_obj = new_inf_obj}
+    | CF.ECase ec -> CF.ECase { ec with
+          CF.formula_case_branches = List.map (fun (pf,sf) ->
+              (pf,recf sf)
+          ) ec.CF.formula_case_branches
+      }
+  in
+  recf sf0
+
+let reset_infer_const_struc_formula removed_infs sf0 =
   let pr1 =  Cprinter.string_of_struc_formula in
   let pr2 = pr_list string_of_inf_const in
   Debug.no_2 "reset_infer_const_struc_formula" pr2 pr1 pr1
-      (fun _ _ -> reset_infer_const_struc_formula add_infs sf0)
-      add_infs sf0
+      (fun _ _ -> reset_infer_const_struc_formula removed_infs sf0)
+      removed_infs sf0
 
 let update_infer_const_proc add_infs minus_infs proc=
   let spec = proc.Cast.proc_stk_of_static_specs # top in
@@ -119,9 +150,16 @@ let update_infer_const_proc add_infs minus_infs proc=
   let () = x_tinfo_hp (add_str "new_spec" Cprinter.string_of_struc_formula) new_spec no_pos in
   (proc,new_spec)                       (* spec or new_spec *)
 
-let reset_infer_const_proc add_infs proc=
+let set_infer_const_proc add_infs proc=
   let spec = proc.Cast.proc_stk_of_static_specs # top in
-  let new_spec = reset_infer_const_struc_formula add_infs spec in
+  let new_spec = set_infer_const_struc_formula add_infs spec in
+  let () = proc.Cast.proc_stk_of_static_specs # push_pr "pi:377" new_spec in
+  let () = x_tinfo_hp (add_str "new_spec" Cprinter.string_of_struc_formula) new_spec no_pos in
+  (proc,new_spec) 
+
+let reset_infer_const_proc removed_infs proc=
+  let spec = proc.Cast.proc_stk_of_static_specs # top in
+  let new_spec = reset_infer_const_struc_formula removed_infs spec in
   let () = proc.Cast.proc_stk_of_static_specs # push_pr "pi:377" new_spec in
   let () = x_tinfo_hp (add_str "new_spec" Cprinter.string_of_struc_formula) new_spec no_pos in
   (proc,new_spec) 
@@ -129,8 +167,11 @@ let reset_infer_const_proc add_infs proc=
 let update_infer_const_scc add_infs minus_infs scc =
   List.map (update_infer_const_proc add_infs minus_infs ) scc
 
-let reset_infer_const_scc add_infs scc =
-  List.map (reset_infer_const_proc add_infs ) scc
+let set_infer_const_scc add_infs scc =
+  List.map (set_infer_const_proc add_infs ) scc
+
+let reset_infer_const_scc removed_infs scc =
+  List.map (reset_infer_const_proc removed_infs ) scc
 
 
 (**)

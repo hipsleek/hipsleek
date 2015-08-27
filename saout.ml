@@ -815,6 +815,8 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps
       if inf_obj # is_pre || inf_obj # is_shape_pre || inf_obj # is_shape_post || inf_obj # is_post || inf_obj # is_term then
         let new_inf_obj = inf_obj # clone in
         let _ = new_inf_obj # reset INF_SHAPE in
+        let _ = new_inf_obj # reset INF_SHAPE_PRE in
+        let _ = new_inf_obj # reset INF_SHAPE_POST in
         let new_inf_vars = List.filter (fun sv -> not (Cpure.is_hprel_typ sv)) ei.CF.formula_inf_vars in
         CF.EInfer {ei with
                    CF.formula_inf_obj = new_inf_obj;

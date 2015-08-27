@@ -4609,7 +4609,7 @@ let rec check_prog iprog (prog : prog_decl) =
   let rec process_cmd iprog cprog verified_sccs scc icmd=
     match icmd with
       | Icmd.I_Norm {cmd_res_infs = infs} ->
-            let iscc,_ = List.split (Iincr.reset_infer_const_scc infs scc) in
+            let iscc,_ = List.split (Iincr.set_infer_const_scc infs scc) in
             let () = if List.exists (fun it -> it = INF_SHAPE_PRE) infs then
               let () = Iincr.add_prepost_shape_relation_scc cprog Iincr.add_pre_shape_relation iscc in
               ()
@@ -4619,13 +4619,16 @@ let rec check_prog iprog (prog : prog_decl) =
             else if List.exists (fun it -> it = INF_SIZE) infs then
               let _ = List.map (fun proc ->
                   let res = x_add Iincr.extend_pure_props_view iprog prog Rev_ast.rev_trans_formula Astsimp.trans_view proc in
+                  let todo_unk = Iincr.reset_infer_const_scc [INF_SIZE] iscc in
                   let () =  Debug.info_hprint (add_str "SPEC AFTER EXTENDED SIZE" (Cprinter.string_of_struc_formula))
                     (proc.Cast.proc_stk_of_static_specs # top) no_pos in
                   res
               ) iscc in
               ()
             else () in
-            verify_scc_incr cprog verified_sccs iscc
+            let res = verify_scc_incr cprog verified_sccs iscc in
+            (* let todo_unk = Iincr.reset_infer_const_scc infs iscc in *)
+            res
       | Icmd.I_Seq cmds
       | Icmd.I_Search cmds (*TOFIX*) ->
             List.fold_left (fun (acc_cprog, _) (_, cmd) ->  process_cmd iprog acc_cprog verified_sccs scc cmd)
