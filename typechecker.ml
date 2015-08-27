@@ -853,8 +853,12 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                   (* below seems to cause problem for verification *)
                   (* see bug-sort-ll.ss *)
                   if  pre_ctr # get > 0 then
-                    let (impl_vs,new_post) = CF.lax_impl_of_post post_cond in
-                    let new_post_struc, impl_struc = CF.lax_impl_of_struc_post post_struc in
+                    let (impl_vs,new_post) = 
+                      if !Globals.old_post_conv_impl then CF.lax_impl_of_post post_cond
+                      else ([],post_cond) in
+                    let new_post_struc, impl_struc = 
+                      if !Globals.old_post_conv_impl then F.lax_impl_of_struc_post post_struc
+                      else (post_struc,[]) in
                     if impl_vs!=[] then
                       begin
                         (* TODO:WN this could be a loss of completeness *)
@@ -862,7 +866,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                         (* Here astsmpl.ml : seems impl --> exists *)
                         (* It seems impl --> exists by astsimpl.ml *)
                         x_binfo_pp ">>>>>> Convert Exists to Implicit Vars for Post-Cond <<<<<<" pos;
-                        x_binfo_pp ("Extra Impl Vars :"^(Cprinter.string_of_spec_var_list impl_vs)) pos;
+                        x_binfo_pp ("New Impl Vars :"^(Cprinter.string_of_spec_var_list impl_vs)) pos;
                         x_dinfo_pp ("Post Struc Vars :"^(Cprinter.string_of_spec_var_list impl_struc)) pos;
                         x_dinfo_pp ("New Post Cond :"^(Cprinter.string_of_formula new_post)) pos
                       end;
@@ -3165,7 +3169,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
           (CF.invert_list_partial_context_outcome CF.invert_ctx_branch_must_fail CF.invert_fail_branch_must_fail ans1,prf)
         end
       else
-        let () = x_binfo_hp (add_str "do_classic_frame_rule" string_of_bool) (check_is_classic ()) pos in
+        let () = x_tinfo_hp (add_str "do_classic_frame_rule" string_of_bool) (check_is_classic ()) pos in
         let rs_struc , prf = x_add heap_entail_struc_list_partial_context_init prog false false fn_state (snd posts) None None None pos (Some pid) in
         rs_struc, prf
         (*let () = print_string_quiet "stop struct checking \n" in*)

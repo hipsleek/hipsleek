@@ -1210,10 +1210,13 @@ RHS:
          struct:EBase 
                   (exists b_70: x::ll<b_70>@M&{FLOW,(4,5)=__norm#E}[])
 =====================================================================
-# ex14d.slk --pcp
+# ex14d.slk --pcp (FIXED with --old-post-conv-impl)
 
   requires (exists a: x::ll<a>)
   ensures (exists b: x::ll<b>);
+
+!!! **typechecker.ml#868:>>>>>> Convert Exists to Implicit Vars for Post-Cond <<<<<<
+!!! **typechecker.ml#869:New Impl Vars :[b_71]
 
 # EBase exists not lifted outwards:
 
