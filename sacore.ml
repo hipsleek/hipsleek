@@ -4336,6 +4336,37 @@ let simplify_trim_unsat_view_branches cprog def=
       (fun _ -> simplify_trim_unsat_view_branches cprog def) def
 
 (*
+this simplify may overlap with split base case for post.
+*)
+let simplify_defined_pred def=
+  let elim_defined_pred_g (f,og)=
+    if CF.is_trivial_f f then (f,og)
+    else
+      let hp_rels = CF.get_HRels_f f in
+      if hp_rels = [] then (f,og)
+      else
+        let ( _,mf,_,_,_,_) = CF.split_components f in
+        let eqNulls = CP.remove_dups_svl ( MCP.get_null_ptrs mf) in
+        if eqNulls = [] then (f,og)
+        else
+          let defined_hps = List.fold_left (fun acc (hp,args) -> if CP.diff_svl args eqNulls = [] then
+            acc@[hp] else acc
+          ) [] hp_rels in
+          let nf = if defined_hps=[] then f
+          else fst (CF.drop_hrel_f f defined_hps)
+          in
+          let () = Debug.ninfo_hprint (add_str "nf" !CF.print_formula) nf no_pos in
+          (nf, og)
+  in
+  let elimed_rhs = List.map elim_defined_pred_g def.CF.def_rhs in
+  {def with CF.def_rhs = elimed_rhs}
+
+let simplify_defined_pred def=
+  let pr1 = Cprinter.string_of_hp_rel_def in
+  Debug.no_1 "simplify_defined_pred" pr1 pr1
+      (fun _ -> simplify_defined_pred def) def
+
+(*
   - this function simplifies the raw output of the synthesis
   - preserve equivalence
   - now, apply for post only
@@ -4344,7 +4375,10 @@ let simplify_def prog defs=
   let simplify_post def=
     (*simplify one branch, post*)
     (*post synthesis usually includes views of pre-synthesis. do trim unsat branches*)
-    simplify_trim_unsat_view_branches prog def
+    let def1 = simplify_trim_unsat_view_branches prog def in
+    (* this simplify may overlap with split base case for post. *)
+    (* simplify_defined_pred def1 *)
+    def1
   in
   List.map simplify_post defs
 

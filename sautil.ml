@@ -1866,8 +1866,8 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
     else
       (fb, [(hp,args,f3, rhs)],[], new_hps)
   in
-  (*check hp is recursive or post_hp?*)
-  if (CP.mem_svl hp r_hps || CP.mem_svl hp post_hps) then (lhsb, [], [(hp,args)], []) else
+  (* check hp is recursive or post_hp? elim below check for x::node<_,p> * H(p) & p=null ==> H(x) *)
+  (* if (CP.mem_svl hp r_hps || CP.mem_svl hp post_hps) then (lhsb, [], [(hp,args)], []) else *)
     let closed_args = CF.look_up_reachable_ptr_args prog hds hvs args in
     let undef_args = lookup_undef_args closed_args [] def_ptrs in
     if undef_args<> [] then
