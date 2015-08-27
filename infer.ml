@@ -2375,10 +2375,13 @@ let find_guard  prog  lhds (* lhvs *) leqs null_ptrs l_selhpargs rhs_args=
   let pr2 = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) in
   let pr3 = pr_option Cprinter.prtt_string_of_h_formula
   in
-  Debug.no_4 "find_guard" (add_str "left heap" (pr_list !CF.print_h_formula))
-    pr1 (add_str "left selected preds" pr2) !CP.print_svl pr3
-    (fun _ _ _ _ -> find_guard prog lhds (* lhvs *) leqs null_ptrs l_selhpargs rhs_args)
-    (List.map (fun x -> CF.DataNode x) lhds) leqs l_selhpargs rhs_args
+  Debug.no_5 "find_guard" (add_str "left heap" (pr_list !CF.print_h_formula))
+    (add_str "lhs_eqs" pr1) 
+    (add_str "null_ptrs" !CP.print_svl)
+    (add_str "left selected preds" pr2) 
+    (add_str "rhs arg" !CP.print_svl) pr3
+    (fun _ _ _ _ _ -> find_guard prog lhds (* lhvs *) leqs null_ptrs l_selhpargs rhs_args)
+    (List.map (fun x -> CF.DataNode x) lhds) leqs null_ptrs l_selhpargs rhs_args
 
 (* WN : new more generous find heap_guard condition *)
 (* do we need to consider predicates? incomplete .. *)

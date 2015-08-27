@@ -20,6 +20,17 @@ Starting Omega.../usr/local/bin/oc
  <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
  inferred hprel: [H(p)&p=null |#|3  --> emp&true]
 
+find_guard@1
+find_guard inp1 :left heap:[ x::node<flted_13_16,p>@M]
+find_guard inp2 :lhs_eqs:[]
+find_guard inp3 :null_ptrs:[p]
+find_guard inp4 :left selected preds:[(H,[])]
+find_guard inp5 :rhs arg:[]
+find_guard@1 EXIT:None
+
+Entail (1) : Valid. 
+
+
 */
 
 infer [H,P] H(p) * x::node<1,p> & p=null 
@@ -27,11 +38,20 @@ infer [H,P] H(p) * x::node<1,p> & p=null
 print residue.
 
 /*
-# ex15g.slk
+# ex15g.slk -dre "find_g"
 
 infer [H,P] H(p) * x::node<1,p> & p=null 
   |- P(p).
 print residue.
+
+(==infer.ml#2664==)
+find_guard@2
+find_guard inp1 :left heap:[ x::node<flted_36_28,p>@M]
+find_guard inp2 :lhs_eqs:[]
+find_guard inp3 :null_ptrs:[p]
+find_guard inp4 :left selected preds:[(H,[p])]
+find_guard inp5 :rhs arg:[p]
+find_guard@2 EXIT:None
 
 # GOT
 
