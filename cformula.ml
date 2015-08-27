@@ -133,7 +133,7 @@ and struc_base_formula =
     formula_struc_explicit_inst : Cpure.spec_var list;
     formula_struc_implicit_inst : Cpure.spec_var list;
         (*
-           vars_free, vars_linking, vars_astextracted
+           vars_free, vars_linking, vars_extracted
         *)
     formula_struc_exists : Cpure.spec_var list;
     formula_struc_base : formula;
@@ -2938,6 +2938,7 @@ and fv ?(vartype=Global_var.var_with_none) (f : formula) : CP.spec_var list =
         formula_exists_flow = fl;
         formula_exists_label = lbl;
         formula_exists_pos = pos }) ->
+      let qvars = if vartype # is_exists then [] else qvars in
       let fvars = aux (Base ({
           formula_base_heap = h;
           formula_base_pure = p;

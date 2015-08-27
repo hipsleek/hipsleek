@@ -8833,9 +8833,9 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
                 @1! possib_impl:[(x,'),(a,),(res2,)]
                 @1! p:[(x,'),(Anon_11,'),(next_21_514,')]
               *)
-        let () = x_tinfo_hp (add_str "all_expl" pr_l_v)  all_expl pos in
-        let () = x_tinfo_hp (add_str "possib_impl" pr_l_v)  posib_impl pos in
-        let () = x_tinfo_hp (add_str "p_vars" pr_l_v) p_vars pos in
+        let () = x_binfo_hp (add_str "all_expl" pr_l_v)  all_expl pos in
+        let () = x_binfo_hp (add_str "possib_impl" pr_l_v)  posib_impl pos in
+        let () = x_binfo_hp (add_str "p_vars" pr_l_v) p_vars pos in
         let () = if not(allow_post_vars) && (List.length (inters (all_expl@posib_impl) p_vars))>0 then   
             Error.report_error {Error.error_loc = pos; Error.error_text = "post variables should not appear here"} else () in
         let nc,h2 = match b.IF.formula_struc_continuation with 

@@ -1156,7 +1156,30 @@ RHS:
  EBase 
    (exists : x::ll<b_71>@M&post_1653(b_71,a,res,flow)&{FLOW,(4,5)=__norm#E}[]
 =====================================================================
+# ex14f.slk --pcp
+
+  infer[//@post_n
+  ] 
+  requires x::ll<a>
+  ensures x::ll<b>;
+
+# implicit converted to exists?
+
+       EAssume 
+         (exists b_71: x::ll<b_71>@M&{FLOW,(4,5)=__norm#E}[])
+         struct:EBase 
+                  (exists b_70: x::ll<b_70>@M&{FLOW,(4,5)=__norm#E}[])
 =====================================================================
+# ex14d.slk --pcp
+
+  requires (exists a: x::ll<a>)
+  ensures (exists b: x::ll<b>);
+
+# EBase exists not lifted outwards:
+
+   EBase 
+     (exists a_72: x::ll<a_72>@M&{FLOW,(4,5)=__norm#E}[])
+
 =====================================================================
 =====================================================================
 =====================================================================

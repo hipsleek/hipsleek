@@ -32,7 +32,7 @@ int size_helper(node x)
 */
   infer[//@post_n
   ] 
-  requires (exists a: x::ll<a>)
+  requires x::ll<a>
   ensures (exists b: x::ll<b>);
 {
   if (x==null) 
@@ -43,13 +43,24 @@ int size_helper(node x)
 }
 
 /*
-# ex14d.slk --pcp
+# ex14e.slk --pcp
 
-  requires (exists a: x::ll<a>)
-  ensures (exists b: x::ll<b>);
+       EAssume 
+         (exists b_71: x::ll<b_71>@M&{FLOW,(4,5)=__norm#E}[])
+         struct:EBase 
+                  (exists b_70: x::ll<b_70>@M&{FLOW,(4,5)=__norm#E}[])
 
-# EBase exists not lifted outwards:
+static  EInfer []
+   EBase 
+     exists (Expl)[](Impl)[a](ex)[]x::ll<a>@M&{FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         (exists b_71: x::ll<b_71>@M&{FLOW,(4,5)=__norm#E}[]
+dynamic  EBase 
+   hfalse&false&{FLOW,(4,5)=__norm#E}[]
 
+# EBase does not capture existential var !
    EBase 
      (exists a_72: x::ll<a_72>@M&{FLOW,(4,5)=__norm#E}[])
 

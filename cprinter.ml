@@ -507,6 +507,10 @@ let pr_sharp_angle ?(lvl=(!glob_lvl)) op f xs =
 (** print a sequence with cut after separator*)
 let pr_seq ?(lvl=(!glob_lvl)) op f xs = pr_args ~lvl None (Some "A") op "[" "]" "; " f xs
 
+let pr_seq_opt ?(lvl=(!glob_lvl)) op f xs = 
+  if xs==[] then ()
+  else pr_seq ~lvl:lvl op f xs
+
 let pr_seq_ln ?(lvl=(!glob_lvl)) op f xs = pr_args ~lvl None (Some "A") op "[" "]" ";\n " f xs
 
 (** print a sequence with cut after separator in a VBOX*)
@@ -2395,7 +2399,8 @@ and pr_formula_1 e =
              formula_exists_label = lbl;
              formula_exists_pos = pos}) ->
     (match lbl with | None -> fmt_string ((* "lbl: None" *)""); | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
-    fmt_string "(exists "; pr_list_of_spec_var svs; fmt_string ": ";
+    let flag = not(svs==[]) in
+    if flag then fmt_string "(exists "; pr_list_of_spec_var svs; fmt_string ": ";
     pr_formula_base ({
         formula_base_heap = h;
         formula_base_vperm = vp;
@@ -2404,7 +2409,8 @@ and pr_formula_1 e =
         formula_base_flow = fl;
         formula_base_and = a;
         formula_base_label = lbl;
-        formula_base_pos = pos; })
+        formula_base_pos = pos; });
+    if flag then fmt_string ")"
 (* pr_h_formula h;                                        *)
 (* (if not(MP.isConstMTrue p) then                        *)
 (*   (pr_cut_after "&" ; pr_mix_formula p))               *)
@@ -3360,9 +3366,9 @@ let rec pr_struc_formula  (e:struc_formula) = match e with
         if not(Gen.is_empty(ee@ii@ei)) then
           begin
             fmt_string "exists ";
-            pr_seq "(Expl)" pr_spec_var ei;
-            pr_seq "(Impl)" pr_spec_var ii;
-            pr_seq "(ex)" pr_spec_var ee;
+            pr_seq_opt "(Expl)" pr_spec_var ei;
+            pr_seq_opt "(Impl)" pr_spec_var ii;
+            pr_seq_opt "(Exist)" pr_spec_var ee;
           end;
         pr_formula fb) fb;
     (match cont with
@@ -3390,7 +3396,7 @@ let rec pr_struc_formula  (e:struc_formula) = match e with
       pr_seq_nocut "ref " pr_spec_var x;
       fmt_cut ());
     wrap_box ("B",0) pr_formula b;
-    if !print_assume_struc then
+    if true (* !print_assume_struc *) then
       (fmt_cut (); fmt_string "struct:";
        wrap_box ("B",0) pr_struc_formula s)
     else ();
