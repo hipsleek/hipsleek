@@ -1,0 +1,47 @@
+
+
+data node {
+	int val;
+	node next;
+}
+
+
+lseg_one<p> == self = p
+	or self::node<_, q> * q::lseg_one<p>
+  inv true;
+
+sll_two<> == self = null 
+	or self::node<_, q> * q::sll_two<>
+  inv true;
+
+
+bool bool_nondet()
+  requires emp & true ensures emp & true;
+
+node new_node()
+  requires emp & true ensures res::node<_,_>;
+
+PostPred G(node x, node y).
+void create (ref node x)
+  requires true ensures x'::lseg_one<x>;//'
+
+
+void check (ref node x)
+  requires x::sll_two<> ensures x::sll_two<> & x'=x;//'
+
+void main()
+{
+  node a = null;
+
+  create(a);
+
+  check(a);
+}
+
+
+/*
+
+checkentail (exists a_1655: a'::lseg_one<a_1655>@M&a_1655=null)
+ |-  a'::sll_two<>.
+
+ */
