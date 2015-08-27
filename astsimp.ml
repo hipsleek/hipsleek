@@ -8746,6 +8746,7 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
     (*   print_string ("\n warning "^(string_of_loc (IF.pos_of_formula f))^" quantifying: "^(Iprinter.string_of_var_list need_quant)^"\n") in *)
     x_tinfo_hp (add_str "need_quant" pr_ident_list) need_quant no_pos;
     let need_quant = hack_filter_global_rel prog need_quant in
+    let anon_vs,need_quant = List.partition IP.is_anon_ident need_quant in
     let flag = not(need_quant==[]) in
     let msg = (add_str "Post-condition has existentially quantified free vars" pr_ident_list) need_quant in
     if !Globals.warn_post_free_vars && flag then
@@ -8756,9 +8757,9 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
     else if !Globals.old_post_impl_to_ex && flag (* need_quant!=[] *) then 
       begin
         let () = x_winfo_pp msg no_pos in
-        IF.push_exists need_quant f
+        IF.push_exists (need_quant@anon_vs) f
       end
-    else f
+    else IF.push_exists anon_vs f
   in
   let ilinearize_formula ?(impl_to_ex=true) (f:IF.formula)(h:(ident*primed) list): IF.formula =
     let pr1 = !IF.print_formula in

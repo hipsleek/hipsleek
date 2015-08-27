@@ -2369,7 +2369,6 @@ let find_guard  prog lhds (* lhvs *) leqs null_ptrs l_selhpargs rhs_args =
 (*   (CP.spec_var * CP.spec_var) list -> *)
 (*   (CP.spec_var * CP.spec_var list) list -> *)
 (*   CP.spec_var list -> CF.h_formula option *)
-
 let find_guard  prog  lhds (* lhvs *) leqs null_ptrs l_selhpargs rhs_args=
   let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
   let pr2 = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) in

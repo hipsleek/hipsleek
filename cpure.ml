@@ -4306,7 +4306,9 @@ and remove_dups_spec_var_list vl = Gen.BList.remove_dups_eq eq_spec_var vl
 and remove_spec_var (sv : spec_var) (vars : spec_var list) =
   List.filter (fun v -> not (eq_spec_var sv v)) vars
 
-and is_anon_var (SpecVar (_,n,_):spec_var) : bool = ((String.length n) > 5) && ((String.compare (String.sub n 0 5) "Anon_") == 0)
+and is_anon_var (SpecVar (_,n,p):spec_var) : bool = 
+  Ipure.is_anon_ident (n,p)
+(* ((String.length n) > 5) && ((String.compare (String.sub n 0 5) "Anon_") == 0) *)
 
 (* substitution *)
 

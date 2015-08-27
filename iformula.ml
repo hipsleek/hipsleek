@@ -942,13 +942,15 @@ and add_quantifiers (qvars : (ident*primed) list) (f : formula) : formula = matc
     mkExists new_qvars h p vp f a pos (*TO CHECK*)
   | _ -> failwith ("add_quantifiers: invalid argument")
 
-and push_exists (qvars : (ident*primed) list) (f : formula) = match f with
-  | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
-    let new_f1 = push_exists qvars f1 in
-    let new_f2 = push_exists qvars f2 in
-    let resform = mkOr new_f1 new_f2 pos in
-    resform
-  | _ -> add_quantifiers qvars f
+and push_exists (qvars : (ident*primed) list) (f : formula) = 
+  let rec aux f = match f with
+    | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
+      let new_f1 = aux f1 in
+      let new_f2 = aux f2 in
+      let resform = mkOr new_f1 new_f2 pos in
+      resform
+    | _ -> add_quantifiers qvars f
+  in if qvars==[] then f else aux f
 
 and formula_to_struc_formula (f:formula):struc_formula =
   let rec helper (f:formula):struc_formula = match f with
