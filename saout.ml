@@ -915,7 +915,7 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps
       (* let () = proc_stk_of_static_specs # reset in *)
       (* let () = proc_stk_of_static_specs # push_list n_proc_stk_of_static_specs in *)
       let proc1 = { proc with C.proc_static_specs= n_stk_spec (* n_static_spec *);
-          C.proc_dynamic_specs= n_stk_spec (* n_dynamic_spec *);
+          C.proc_dynamic_specs=  n_dynamic_spec;
           (* C.proc_stk_of_static_specs =  n_stk_specs; *)
       }
       in

@@ -4621,7 +4621,7 @@ let rec check_prog iprog (prog : prog_decl) =
                   let () =  Debug.info_hprint (add_str "SPEC AFTER EXTENDED SIZE" (Cprinter.string_of_struc_formula))
                     (proc.Cast.proc_stk_of_static_specs # top) no_pos in
                   res
-              ) scc in
+              ) iscc in
               ()
             else () in
             verify_scc_incr cprog verified_sccs iscc
