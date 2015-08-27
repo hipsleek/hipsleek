@@ -4128,6 +4128,12 @@ let pred_seg_split_hp iprog prog unk_hps ass_stk hpdef_stk (hp_defs: CF.hp_rel_d
 (*=============**************************================*)
 (*=============END PRED SPLIT================*)
 (*=============**************************================*)
+
+
+(***************************************************************)
+         (*=========== NORMALIZATION FOR RAW DEF===========*)
+(***************************************************************)
+
 let pred_norm_disj_x iprog prog unk_hps hp_defs=
 
   (1,[])
@@ -4278,3 +4284,76 @@ let pred_norm_seg iprog prog unk_hps hp_defs=
   Debug.no_2 "pred_norm_seg" pr2 pr1 pr1
     (fun _ _ -> pred_norm_seg_x iprog prog unk_hps hp_defs)
     unk_hps hp_defs
+
+(***************************************************************)
+         (*===========END NORMALIZATION===========*)
+(***************************************************************)
+
+
+(***************************************************************)
+          (*=========== SIMPLIFICATION FOR RAW DEF===========*)
+(***************************************************************)
+
+(*
+  x::ll<> & x=null <=> x=null
+*)
+let simplify_trim_unsat_view_branches cprog def=
+  let unfold_ptrs f vptrs=
+    List.fold_left (fun (f,ss) sv0 ->
+        let sv = CP.subst_var_par ss sv0 in
+        let nf,ss1 = Solver.unfold_nth 9 (cprog, None) f sv true 0 no_pos in
+        (nf, ss@ss1)
+      ) (f, []) vptrs
+  in
+  let trim_unsat_g (f,og)=
+    if CF.is_trivial_f f then (f,og)
+    else
+      (* get view_nodes. then unfold *)
+      let vptrs = CF.get_vptrs f in
+      let () = Debug.ninfo_hprint (add_str "vptrs" !CP.print_svl) vptrs no_pos in
+      if vptrs = [] then (f,og)
+      else
+        let unfolded_f,_ = unfold_ptrs f vptrs in
+        let () = Debug.ninfo_hprint (add_str "unfolded_f" !CF.print_formula) unfolded_f no_pos in
+        (* unfold step already do trim. this only works for base case. *)
+        let unfolded_vptrs = CF.get_vptrs unfolded_f in
+        let nf = if unfolded_vptrs = [] then CF.simplify_pure_f unfolded_f else f
+        (* let goods,unsat_list = x_add_1 Solver.find_unsat cprog unfolded_f in *)
+        (* if unsat_list = [] then (f,og) *)
+        (* else *)
+        (*   let nf = match goods with *)
+        (*     | x::[]-> x *)
+        (*     | _ -> List.fold_left ( fun a c -> CF.mkOr c a no_pos) (CF.mkFalse (CF.mkTrueFlow ()) no_pos) goods *)
+        in
+        (nf,og)
+  in
+  let trimed_rhs = List.map trim_unsat_g def.CF.def_rhs in
+  {def with CF.def_rhs = trimed_rhs}
+
+let simplify_trim_unsat_view_branches cprog def=
+  let pr1 = Cprinter.string_of_hp_rel_def in
+  Debug.no_1 "simplify_trim_unsat_view_branches" pr1 pr1
+      (fun _ -> simplify_trim_unsat_view_branches cprog def) def
+
+(*
+  - this function simplifies the raw output of the synthesis
+  - preserve equivalence
+  - now, apply for post only
+ *)
+let simplify_def prog defs=
+  let simplify_post def=
+    (*simplify one branch, post*)
+    (*post synthesis usually includes views of pre-synthesis. do trim unsat branches*)
+    simplify_trim_unsat_view_branches prog def
+  in
+  List.map simplify_post defs
+
+
+let simplify_def prog defs=
+  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  Debug.no_1 "simplify_def" pr1 pr1
+    (fun _ -> simplify_def prog defs) defs
+
+(***************************************************************)
+          (*===========END SIMPLIFICATION===========*)
+(***************************************************************)
