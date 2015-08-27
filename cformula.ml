@@ -19358,3 +19358,6 @@ let rm_htrue_estate es =
 (* let rm_htrue_context c = *)
 (*   let () = x_binfo_pp "TODO : to be implemented .." no_pos in *)
 (*   c *)
+
+let collect_impl_expl_context c =
+   (fold_context (fun xs es -> es.es_gen_impl_vars @ (es.es_gen_expl_vars @ xs)) [] c)

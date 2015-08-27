@@ -857,8 +857,12 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                     let new_post_struc, impl_struc = CF.lax_impl_of_struc_post post_struc in
                     if impl_vs!=[] then
                       begin
-                        x_dinfo_pp ">>>>>> Convert Exists to Implicit Vars for Post-Cond <<<<<<" pos;
-                        x_dinfo_pp ("Extra Vars :"^(Cprinter.string_of_spec_var_list impl_vs)) pos;
+                        (* TODO:WN this could be a loss of completeness *)
+                        (* In astsmpl.ml : seems impl --> exists *)
+                        (* Here astsmpl.ml : seems impl --> exists *)
+                        (* It seems impl --> exists by astsimpl.ml *)
+                        x_binfo_pp ">>>>>> Convert Exists to Implicit Vars for Post-Cond <<<<<<" pos;
+                        x_binfo_pp ("Extra Impl Vars :"^(Cprinter.string_of_spec_var_list impl_vs)) pos;
                         x_dinfo_pp ("Post Struc Vars :"^(Cprinter.string_of_spec_var_list impl_struc)) pos;
                         x_dinfo_pp ("New Post Cond :"^(Cprinter.string_of_formula new_post)) pos
                       end;
@@ -4584,7 +4588,7 @@ let rec check_prog iprog (prog : prog_decl) =
     (*for each, incrementally infer*)
     (* let map_views = Iincr.extend_views iprog prog "size" scc in *)
     (* let new_scc = List.map (Iincr.extend_inf iprog prog "size") scc in *)
-    let _ = List.map (Iincr.extend_pure_props_view iprog prog Rev_ast.rev_trans_formula Astsimp.trans_view) scc in
+    let _ = List.map (fun v -> x_add Iincr.extend_pure_props_view iprog prog Rev_ast.rev_trans_formula Astsimp.trans_view v) scc in
     let r = verify_scc_helper prog verified_sccs scc in
     let () = Globals.sae := old_infer_err_flag in
     r

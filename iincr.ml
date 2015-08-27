@@ -332,7 +332,7 @@ let extend_views iprog prog rev_formula_fnc trans_view_fnc ext_pred_names proc=
   (* (orig_view, der_view) list *)
   let old_view_scc = !Astsimp.view_scc in
   let () = Astsimp.view_scc := [] in
-  let map_ext_views = Derive.expose_pure_extn iprog prog rev_formula_fnc trans_view_fnc vdcls pure_extn_views in
+  let map_ext_views = x_add Derive.expose_pure_extn iprog prog rev_formula_fnc trans_view_fnc vdcls pure_extn_views in
   let () = Astsimp.view_scc := old_view_scc in
   let prog = Astsimp.fill_base_case prog in
   map_ext_views
@@ -353,7 +353,7 @@ let extend_inf iprog prog map_views proc=
   let proc1 = {proc0 with Cast.proc_dynamic_specs = n_dyn_spec} in
   proc1
 
-let extend_pure_props_view_x iprog cprog rev_formula_fnc trans_view_fnc proc=
+let extend_pure_props_view iprog cprog rev_formula_fnc trans_view_fnc proc=
   let inf_props = proc_extract_inf_props cprog proc.Cast.proc_name in
   let props = List.fold_left (fun acc io ->
       begin
@@ -375,4 +375,4 @@ let extend_pure_props_view iprog cprog rev_formula_fnc trans_view_fnc proc=
      "dynamic spec:"  ^ (pr1 p.Cast.proc_dynamic_specs) ^ "\n"
   in
   Debug.no_1 "extend_pure_props_view" pr2 pr2
-      (fun _ -> extend_pure_props_view_x iprog cprog rev_formula_fnc trans_view_fnc proc) proc
+      (fun _ -> extend_pure_props_view iprog cprog rev_formula_fnc trans_view_fnc proc) proc

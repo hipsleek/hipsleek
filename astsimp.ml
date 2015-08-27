@@ -2175,7 +2175,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
           begin
             let () = match under_f with
               | None -> ()
-              | _ -> x_binfo_pp ("View defn for " ^ vn ^ " has precise invariant\n") no_pos
+              | _ -> x_winfo_pp ("View defn for " ^ vn ^ " has precise invariant\n") no_pos
             in
             let pf = pure_of_mix vdef.C.view_user_inv in
             let (disj_form,disj_f) = CP.split_disjunctions_deep_sp pf in
@@ -2708,13 +2708,13 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                   let () = x_tinfo_hp (add_str "fixc" Cprinter.string_of_pure_formula) fixc no_pos in
                   let () = x_tinfo_hp (add_str "body" Cprinter.string_of_pure_formula) body no_pos in
                   let () = x_tinfo_hp (add_str "user_inv" Cprinter.string_of_pure_formula) user_inv no_pos in
-                  let () = x_binfo_pp "WARNING: TODO fixpt check" no_pos in
+                  let () = x_winfo_pp "WARNING: TODO fixpt check" no_pos in
                   if ((* true *) Tpdispatcher.imply_raw body user_inv) then
-                    let () = x_binfo_hp (add_str "User supplied is more precise" Cprinter.string_of_pure_formula) user_inv no_pos in
+                    let () = x_winfo_hp (add_str "User supplied is more precise" Cprinter.string_of_pure_formula) user_inv no_pos in
                     user_inv
                   else
-                    let () = x_binfo_hp (add_str "User supplied is unsound" Cprinter.string_of_pure_formula) user_inv no_pos in
-                    let () = x_binfo_hp (add_str "Using fixcalc version" Cprinter.string_of_pure_formula) fixc no_pos in
+                    let () = x_winfo_hp (add_str "User supplied is unsound" Cprinter.string_of_pure_formula) user_inv no_pos in
+                    let () = x_winfo_hp (add_str "Using fixcalc version" Cprinter.string_of_pure_formula) fixc no_pos in
                     fixc
               in better
             )  infer_vs_user in
@@ -2800,7 +2800,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
           let unfold_cnt = new Gen.change_flag in
           let rec unfold precise old_invs =
             if unfold_cnt # exceed 10 then
-              let () = x_binfo_pp "WARNING : Unfolding for baga-inv exceeded 10" no_pos in
+              let () = x_winfo_pp "WARNING : Unfolding for baga-inv exceeded 10" no_pos in
               old_invs
             else
               let () = unfold_cnt # inc in
@@ -8833,9 +8833,9 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
                 @1! possib_impl:[(x,'),(a,),(res2,)]
                 @1! p:[(x,'),(Anon_11,'),(next_21_514,')]
               *)
-        let () = x_binfo_hp (add_str "all_expl" pr_l_v)  all_expl pos in
-        let () = x_binfo_hp (add_str "possib_impl" pr_l_v)  posib_impl pos in
-        let () = x_binfo_hp (add_str "p_vars" pr_l_v) p_vars pos in
+        let () = x_tinfo_hp (add_str "all_expl" pr_l_v)  all_expl pos in
+        let () = x_tinfo_hp (add_str "possib_impl" pr_l_v)  posib_impl pos in
+        let () = x_tinfo_hp (add_str "p_vars" pr_l_v) p_vars pos in
         let () = if not(allow_post_vars) && (List.length (inters (all_expl@posib_impl) p_vars))>0 then   
             Error.report_error {Error.error_loc = pos; Error.error_text = "post variables should not appear here"} else () in
         let nc,h2 = match b.IF.formula_struc_continuation with 
