@@ -1281,6 +1281,7 @@ let old_collect_hprel = ref false
 let old_infer_hprel_classic = ref false
 let old_classic_rhs_emp = ref false
 let old_post_conv_impl = ref false
+let old_post_impl_to_ex = ref true
 let warn_nonempty_perm_vars = ref false
 let warn_trans_context = ref false
 let warn_free_vars_conseq = ref false

@@ -1122,11 +1122,23 @@ For @shape_post, we need to simplify the base-case:
 1:113:iprocess_action inp1 :seq:[(0,infer_dangling),(0,split_base),(0,partition (pre, pre-oblg, post, post-oblg))]
 
 =====================================================================
-# ex14c.slk -dre ".*_extn\|extend_" (Loc to fix): FIXED
+# ex14c.slk 
 
   infer[@size] 
   requires x::sll<>
   ensures x::sll<>;
+
+# How come no printing?
+
+!!!    pure extension:
+sll_size: extend sll to size
+
+!!! **imminfer.ml#122:!should_infer_imm_pre:false
+Checking procedure size_helper$node... 
+Procedure size_helper$node SUCCESS.
+
+======================================================
+# ex14c.slk -dre ".*_extn\|extend_"  (Loc to fix): FIXED
 
 # This warning can be resolved by making size_1699 implicit
 

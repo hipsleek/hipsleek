@@ -12,9 +12,9 @@ pred_extn size[R]<k> ==
   inv k>=0;
 
 /* view for a singly linked list */
-ll<n> == self = null & n = 0
-	or self::node<_, q> * q::ll<n-1>
-  inv n >= 0;
+ll<n,m> == self = null & n = 0 & m=0
+  or self::node<_, q> * q::ll<n-1,m-2>
+  inv n >= 0 & m>=0;
 
 sll<> == self = null 
 	or self::node<_, q> * q::sll<>
@@ -32,13 +32,17 @@ int size_helper(node x)
 */
   infer[//@post_n
   ] 
-  requires x::ll<aaa>
-  ensures (exists bbb: x::ll<bbb>);
+  requires x::ll<a1,a2>
+  ensures x::ll<a1,a2> ;
+//  ensures (exists aa1,aa2: x::ll<aa1,aa2> & aa1=a1 &aa2=a2) ;
+//ensures (exists bbb: x::ll<bbb,bbb>);
 {
   if (x==null) 
     return 0;
   else {
-    return 1+ size_helper(x.next);
+    int t = size_helper(x.next);
+    dprint;
+    return 1+ t;
   }
 }
 

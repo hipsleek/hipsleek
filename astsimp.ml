@@ -8729,7 +8729,7 @@ and case_normalize_struc_formula i prog (h:(ident*primed) list)(p:(ident*primed)
 and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ident*primed) list)(f:IF.struc_formula) 
     allow_primes allow_post_vars (lax_implicit:bool) strad_vs :IF.struc_formula* ((ident*primed)list) =     
 
-  let ilinearize_formula (f:IF.formula)(h:(ident*primed) list): IF.formula = 
+  let ilinearize_formula ?(impl_to_ex=true) (f:IF.formula)(h:(ident*primed) list): IF.formula = 
     let need_quant = Gen.BList.difference_eq (=) (IF.all_fv f) h in
     let vars = List.filter (fun (c1,c2)->(c2==Primed && c1<>Globals.ls_name && c1<>Globals.lsmu_name)) need_quant in
     let () = if vars!=[] then 
@@ -8746,7 +8746,14 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
     (*   print_string ("\n warning "^(string_of_loc (IF.pos_of_formula f))^" quantifying: "^(Iprinter.string_of_var_list need_quant)^"\n") in *)
     x_tinfo_hp (add_str "need_quant" pr_ident_list) need_quant no_pos;
     let need_quant = hack_filter_global_rel prog need_quant in
-    IF.push_exists need_quant f in
+    if !Globals.old_post_impl_to_ex then IF.push_exists need_quant f
+    else f
+  in
+  let ilinearize_formula ?(impl_to_ex=true) (f:IF.formula)(h:(ident*primed) list): IF.formula =
+    let pr1 = !IF.print_formula in
+    let pr2 = string_of_primed_ident_list in
+    Debug.no_2 "ilinearize_formula" pr1 pr2 pr1 (ilinearize_formula ~impl_to_ex:impl_to_ex) f h
+  in
   (* let () = print_string ("case_normalize_struc_formula :: CHECK POINT 0 ==> f = " ^ Iprinter.string_of_struc_formula f ^ "\n") in *)
   let nf = convert_struc2 prog f in
   (* let () = print_string ("\ncase_normalize_struc_formula :: CHECK POINT 0.5 ==> f = " ^ Iprinter.string_of_struc_formula nf) in *)
@@ -8763,7 +8770,7 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
   (*convert anonym to exists*)
   let rec helper2 (h_vars:(ident*primed) list)(p_vars:(ident*primed) list)(nf:IF.struc_formula) allow_primes allow_post_vars 
       (lax_implicit:bool) strad_vs =   
-    let rec helper (hv:(ident*primed) list) strad_vs vars (f0:IF.struc_formula):IF.struc_formula* ((ident*primed)list) = 
+    let rec helper (hv:(ident*primed) list) strad_vs infer_vars (f0:IF.struc_formula):IF.struc_formula* ((ident*primed)list) = 
       let diff = Gen.BList.difference_eq (=) in
       let rdups = Gen.BList.remove_dups_eq (=) in
       let inters = Gen.BList.intersect_eq (=)  in
@@ -8778,15 +8785,18 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
         let nb,nh,_ = x_add case_normalize_renamed_formula prog hp strad_vs onb ann_vars in
         (*let nb_struc = case_normalize_renamed_struc_formula prog hp stread_vs onb_struc in*)
         x_tinfo_hp (add_str "nb(bef ilinearize)" Iprinter.string_of_formula) nb no_pos;
-        let nb = ilinearize_formula nb (hp@strad_vs) in
-        (*let nb_struc = ilinearize_struc_formula nb_struc np in*)
+        let pr = string_of_primed_ident_list in
+        x_tinfo_hp (add_str "hp" pr) hp no_pos;
+        x_tinfo_hp (add_str "strad_vs" pr) strad_vs no_pos;
+        let nb = ilinearize_formula ~impl_to_ex:(not !Globals.old_post_impl_to_ex) nb (hp@strad_vs) in
+        (*let nb_sscrtruc = ilinearize_struc_formula nb_struc np in*)
         x_tinfo_hp (add_str "nb(after ilinearize)" Iprinter.string_of_formula) nb no_pos;
         let vars_list = IF.all_fv nb in
         let nb_old = nb in
-        let nb = IF.prune_exists nb vars in (* Remove exists_vars included in infer_vars *) 
+        let nb = IF.prune_exists nb infer_vars in (* Remove exists_vars included in infer_vars *) 
         (*let nb_struc = IF.prune_exists_struc nb_struc vars in*)
         let nb_struc,_ = helper2 hv p_vars b.IF.formula_assume_struc true true  false strad_vs in
-        let non_ex_vars = hv@p_vars@strad_vs@vars in
+        let non_ex_vars = hv@p_vars@strad_vs@infer_vars in
         (* no automatic wrapping of exists for post-condition *)
         let nb_struc = IF.wrap_post_struc_ex (non_ex_vars) nb_struc in
         (* Debug.ninfo_hprint (add_str "simp_form(before)" Iprinter.string_of_formula) nb_old no_pos; *)
@@ -8803,7 +8813,7 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
       | IF.ECase b->
         let r1,r2 = List.fold_left (fun (a1,a2)(c1,c2)->
             let r12 = inters (Ipure.fv c1) hv in
-            let r21,r22 = helper hv strad_vs vars c2 in
+            let r21,r22 = helper hv strad_vs infer_vars c2 in
             (((c1,r21)::a1),r12::r22::a2)
           ) ([],[]) b.IF.formula_case_branches in             
         (IF.ECase {b with IF.formula_case_branches = r1 },rdups (List.concat r2))
@@ -8841,7 +8851,7 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
         let nc,h2 = match b.IF.formula_struc_continuation with 
           | None-> (None,[]) 
           | Some l-> 
-            let r1,r2 = helper h1prm new_strad_vs vars l in 
+            let r1,r2 = helper h1prm new_strad_vs infer_vars l in 
             (Some r1,r2) in
         (* Debug.ninfo_hprint (add_str "struc_cont" (pr_option Iprinter.string_of_struc_formula)) nc no_pos; *)
         let implvar = diff (IF.unbound_heap_fv onb) all_vars in
@@ -8859,7 +8869,7 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
       | IF.EInfer b -> (* Tricky thing *)
         (IF.EInfer {b with IF.formula_inf_continuation = fst (helper hv strad_vs b.IF.formula_inf_vars b.IF.formula_inf_continuation)}, [])
       | IF.EList b -> 
-        let ll1, ll2 = map_l_snd_res (helper hv strad_vs vars) b in   
+        let ll1, ll2 = map_l_snd_res (helper hv strad_vs infer_vars) b in   
         (IF.EList ll1, rdups (List.concat ll2))
     in    
     let pr = fun _ -> 
