@@ -821,7 +821,7 @@ shape+pure
 
 
 =====================================================================
-#ex13a
+#ex13a: dup with ex14b
 #ex13b
 
 GOT
@@ -1094,7 +1094,7 @@ check_guard@2
 check_guard inp1 :Some( x::node<flted_11_16,p>@M)
 check_guard@2 EXIT:Some( x::node<flted_11_16,p>@M&{FLOW,(20,21)=__norm#E}[])
 =====================================================================
-# ex14b.ss
+# ex14b.ss: DONE
 
   infer[@shape_post] 
   requires x::sll<>
@@ -1122,7 +1122,7 @@ For @shape_post, we need to simplify the base-case:
 1:113:iprocess_action inp1 :seq:[(0,infer_dangling),(0,split_base),(0,partition (pre, pre-oblg, post, post-oblg))]
 
 =====================================================================
-# ex14c.slk -dre ".*_extn\|extend_" (Loc to fix)
+# ex14c.slk -dre ".*_extn\|extend_" (Loc to fix): FIXED
 
   infer[@size] 
   requires x::sll<>
