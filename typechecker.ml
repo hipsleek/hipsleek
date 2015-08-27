@@ -853,12 +853,20 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                   (* below seems to cause problem for verification *)
                   (* see bug-sort-ll.ss *)
                   if  pre_ctr # get > 0 then
-                    let (impl_vs,new_post) = CF.lax_impl_of_post post_cond in
-                    let new_post_struc, impl_struc = CF.lax_impl_of_struc_post post_struc in
+                    let (impl_vs,new_post) = 
+                      if !Globals.old_post_conv_impl then CF.lax_impl_of_post post_cond
+                      else ([],post_cond) in
+                    let new_post_struc, impl_struc = 
+                      if !Globals.old_post_conv_impl then F.lax_impl_of_struc_post post_struc
+                      else (post_struc,[]) in
                     if impl_vs!=[] then
                       begin
-                        x_dinfo_pp ">>>>>> Convert Exists to Implicit Vars for Post-Cond <<<<<<" pos;
-                        x_dinfo_pp ("Extra Vars :"^(Cprinter.string_of_spec_var_list impl_vs)) pos;
+                        (* TODO:WN this could be a loss of completeness *)
+                        (* In astsmpl.ml : seems impl --> exists *)
+                        (* Here astsmpl.ml : seems impl --> exists *)
+                        (* It seems impl --> exists by astsimpl.ml *)
+                        x_binfo_pp ">>>>>> Convert Exists to Implicit Vars for Post-Cond <<<<<<" pos;
+                        x_binfo_pp ("New Impl Vars :"^(Cprinter.string_of_spec_var_list impl_vs)) pos;
                         x_dinfo_pp ("Post Struc Vars :"^(Cprinter.string_of_spec_var_list impl_struc)) pos;
                         x_dinfo_pp ("New Post Cond :"^(Cprinter.string_of_formula new_post)) pos
                       end;
@@ -3161,7 +3169,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
           (CF.invert_list_partial_context_outcome CF.invert_ctx_branch_must_fail CF.invert_fail_branch_must_fail ans1,prf)
         end
       else
-        let () = x_binfo_hp (add_str "do_classic_frame_rule" string_of_bool) (check_is_classic ()) pos in
+        let () = x_tinfo_hp (add_str "do_classic_frame_rule" string_of_bool) (check_is_classic ()) pos in
         let rs_struc , prf = x_add heap_entail_struc_list_partial_context_init prog false false fn_state (snd posts) None None None pos (Some pid) in
         rs_struc, prf
         (*let () = print_string_quiet "stop struct checking \n" in*)
@@ -4353,9 +4361,9 @@ let rec check_prog iprog (prog : prog_decl) =
     in
     let has_infer_shape_pre_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_PRE in
     let has_infer_shape_post_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_POST in
-    let has_infer_shape_prepost_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_PRE_POST in
-    let has_infer_shape_proc = (x_add_1 Pi.is_infer_shape_scc scc) || has_infer_shape_pre_proc ||
-      has_infer_shape_post_proc || has_infer_shape_prepost_proc in
+    (* let has_infer_shape_prepost_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_PRE_POST in *)
+    let has_infer_shape_proc = (x_add_1 Pi.is_infer_shape_scc scc) (* || has_infer_shape_pre_proc || *)
+      (* has_infer_shape_post_proc || has_infer_shape_prepost_proc *) in
     let has_infer_pre_proc = Pi.is_infer_pre_scc scc in
 
     (* let () = if (has_infer_shape_pre_proc || has_infer_shape_prepost_proc) then *)
@@ -4364,7 +4372,8 @@ let rec check_prog iprog (prog : prog_decl) =
     (* let () = if (has_infer_shape_post_proc) then *)
     (*   Iincr.add_prepost_shape_relation_scc prog Iincr.add_post_shape_relation scc in *)
 
-
+    let () = x_tinfo_hp (add_str "has_infer_shape_proc" string_of_bool) has_infer_shape_proc no_pos in
+    let () = x_tinfo_hp (add_str "has_infer_pre_proc" string_of_bool) has_infer_pre_proc no_pos in
     let () = if (not(has_infer_shape_proc) && has_infer_pre_proc) then Pi.add_pre_relation_scc prog scc in
     let has_infer_post_proc = Pi.is_infer_post_scc scc in
     let () = if (not(has_infer_shape_proc)) then x_add Pi.add_post_relation_scc prog scc in
@@ -4460,6 +4469,7 @@ let rec check_prog iprog (prog : prog_decl) =
     let () = if (has_infer_shape_proc && has_infer_post_proc) then x_add Pi.add_post_relation_scc prog scc in
     let () = if (has_infer_shape_proc && (has_infer_pre_proc || has_infer_post_proc)) then wrap_reverify_scc reverify_scc prog scc true in
     let () = if (has_infer_pre_proc || has_infer_post_proc) then Pi.infer_pure prog scc in
+    let () = x_tinfo_hp (add_str "stk_of_static_specs (pure)" (pr_list (fun p -> (Cprinter.string_of_struc_formula p.proc_stk_of_static_specs # top)))) scc no_pos in
     (* let () = List.iter (fun proc -> *)
     (*     DD.ninfo_hprint (add_str "spec after infer post" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in *)
 
@@ -4473,11 +4483,10 @@ let rec check_prog iprog (prog : prog_decl) =
     (* let () = prog.prog_rel_decls # reset in *)
     (* let () = prog.prog_rel_decls # push_list rem_pure_inf_prog_rel_decls in *)
     let () = DD.ninfo_hprint (add_str "has_infer_post_proc" string_of_bool) has_infer_post_proc no_pos in
-    (* Resume other infer *)
-
-    let scc = if (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) 
+    (* Resume other infer. *)
+    let scc = if (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) && not (has_infer_shape_pre_proc || has_infer_shape_post_proc)
               then Pi.resume_infer_obj_scc scc old_specs else scc in
-
+    let () = x_tinfo_hp (add_str "stk_of_static_specs (resume)" (pr_list (fun p -> (Cprinter.string_of_struc_formula p.proc_stk_of_static_specs # top)))) scc no_pos in
     (* Reverify *)
     (* let has_infer_others_proc = (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) && Pi.is_infer_others_scc scc in *)
     (* let () = if has_infer_others_proc then wrap_reverify_scc reverify_scc prog scc false in                                           *)
@@ -4583,7 +4592,12 @@ let rec check_prog iprog (prog : prog_decl) =
     (*for each, incrementally infer*)
     (* let map_views = Iincr.extend_views iprog prog "size" scc in *)
     (* let new_scc = List.map (Iincr.extend_inf iprog prog "size") scc in *)
-    let _ = List.map (Iincr.extend_pure_props_view iprog prog Rev_ast.rev_trans_formula Astsimp.trans_view) scc in
+    let _ = List.map (fun proc ->
+        let res = x_add Iincr.extend_pure_props_view iprog prog Rev_ast.rev_trans_formula Astsimp.trans_view proc in
+        let () =  Debug.info_hprint (add_str "SPEC AFTER EXTENDED SIZE" (Cprinter.string_of_struc_formula))
+          (proc.Cast.proc_stk_of_static_specs # top) no_pos in
+        res
+    ) scc in
     let r = verify_scc_helper prog verified_sccs scc in
     let () = Globals.sae := old_infer_err_flag in
     r
@@ -4591,13 +4605,22 @@ let rec check_prog iprog (prog : prog_decl) =
     (*   with Not_found -> scc *)
     (* in *)
   in
-  let rec process_cmd iprog cprog verified_sccs icmd=
+  let rec process_cmd iprog cprog verified_sccs scc icmd=
     match icmd with
-      | Icmd.I_Norm {cmd_res_scc = scc} ->
-            verify_scc_incr cprog verified_sccs scc
+      | Icmd.I_Norm {cmd_res_infs = infs} ->
+            let iscc,_ = List.split (Iincr.reset_infer_const_scc infs scc) in
+            let () = if List.exists (fun it -> it = INF_SHAPE_PRE) infs then
+              let () = Iincr.add_prepost_shape_relation_scc cprog Iincr.add_pre_shape_relation iscc in
+              ()
+            else if List.exists (fun it -> it = INF_SHAPE_POST) infs then
+              let () = Iincr.add_prepost_shape_relation_scc cprog Iincr.add_post_shape_relation scc in
+              ()
+            else () in
+            verify_scc_incr cprog verified_sccs iscc
       | Icmd.I_Seq cmds
       | Icmd.I_Search cmds (*TOFIX*) ->
-            List.fold_left (fun _ (_, cmd) ->  process_cmd iprog cprog verified_sccs cmd) (cprog, verified_sccs) cmds
+            List.fold_left (fun (acc_cprog, _) (_, cmd) ->  process_cmd iprog acc_cprog verified_sccs scc cmd)
+                (cprog, verified_sccs) cmds
   in
   (********************************************************)
   (********************************************************)
@@ -4672,7 +4695,7 @@ let rec check_prog iprog (prog : prog_decl) =
           if !Globals.old_incr_infer then verify_scc_incr prog verified_sccs scc
             else
               let icmd = Icmd.compute_cmd prog scc in
-              process_cmd iprog prog verified_sccs icmd
+              process_cmd iprog prog verified_sccs scc icmd
       in
       prog, n_verified_sccs
     ) (prog,[]) proc_scc

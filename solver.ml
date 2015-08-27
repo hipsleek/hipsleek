@@ -2387,7 +2387,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
         let rels = Infer.collect_rel_list_context rs0 in
         if rels!=[] && !Globals.old_infer_collect then
           begin
-            let () = x_binfo_hp (add_str "RelInferred (simplified/solver.ml)" (pr_list Cprinter.string_of_lhs_rhs)) rels no_pos in
+            let () = x_winfo_hp (add_str "RelInferred (simplified/solver.ml)" (pr_list Cprinter.string_of_lhs_rhs)) rels no_pos in
             let () = Infer.infer_rel_stk # push_list_pr rels in
             let () = Log.current_infer_rel_stk # push_list rels in
             ()
@@ -3681,7 +3681,7 @@ and wrap_collect_rel_lpc f a =
   else
     let inf_lst = CF.collect_infer_rel_list_partial_context lc in
     let () = Infer.infer_rel_stk # push_list inf_lst in
-    let () =  if inf_lst!=[] then if inf_lst!=[] then x_binfo_hp (add_str "collect_rel (HIP)" (pr_list CP.print_lhs_rhs)) inf_lst no_pos in
+    let () =  if inf_lst!=[] then if inf_lst!=[] then x_tinfo_hp (add_str "collect_rel (HIP)" (pr_list CP.print_lhs_rhs)) inf_lst no_pos in
     (* let () = x_tinfo_hp (add_str "XXXX lpc" Cprinter.string_of_list_partial_context_short) lc no_pos in *)
     ans
 
@@ -3691,7 +3691,7 @@ and wrap_collect_rel_lfc f a =
   else
     let inf_lst = CF.collect_infer_rel_list_failesc_context lc in
     let () = Infer.infer_rel_stk # push_list inf_lst in
-    let () =  if inf_lst!=[] then x_binfo_hp (add_str "collect_rel (HIP)lfc" (pr_list CP.print_lhs_rhs)) inf_lst no_pos in
+    let () =  if inf_lst!=[] then x_tinfo_hp (add_str "collect_rel (HIP)lfc" (pr_list CP.print_lhs_rhs)) inf_lst no_pos in
     ans
 
 
@@ -4222,11 +4222,14 @@ and heap_entail_conjunct_lhs_struc p is_folding  has_post ctx conseq (tid:CP.spe
 and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (has_post:bool) (ctx_00 : context) 
     (conseq : struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid : (list_context * proof) =
   let fv_s = CF.struc_fv ~vartype:Global_var.var_with_heap_only conseq in
+  let impl_expl_vs = CF.collect_impl_expl_context ctx_00 in
+  let fv_s = CP.diff_svl fv_s impl_expl_vs in
   if fv_s!=[]  then
     begin
       let msg = ("FREE VAR IN HEAP RHS :"^(!CP.print_svl fv_s)) in
       let () = x_winfo_pp msg no_pos in
-      let () = print_endline_quiet ((add_str "\nLHS" Cprinter.string_of_context_short) ctx_00) in
+      let () = print_endline_quiet ((add_str "\nimpl/expl vars" !CP.print_svl) impl_expl_vs) in
+      let () = print_endline_quiet ((add_str "LHS" Cprinter.string_of_context_short) ctx_00) in
       (* let () = x_binfo_hp (add_str "fv_conseq (heap only)" !CP.print_svl) fv_s no_pos in *)
       let () = print_endline_quiet ((add_str "RHS" Cprinter.string_of_struc_formula) conseq) in
       if !Globals.warn_free_vars_conseq then
@@ -4295,7 +4298,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                        (combine_context_and_unsat_now prog ctx) f in	
                  if (d==[] && case_vs!=[] && !Globals.infer_case_as_or_flag) then
                    begin
-                     let () = x_binfo_pp "WARNING (WN) : inferring case imprecisely " no_pos in
+                     let () = x_winfo_pp "WARNING (WN) : inferring case imprecisely " no_pos in
                      (* WN : why do we add case LHS to infer_pure?? *)
                      (* WN : why do we combine result as union? it should be OR *)
                      (* place to add case LHS to infer_pure *)
@@ -5482,7 +5485,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
           else
             match res_ctx_opt with
             | None -> 
-              x_binfo_hp (add_str "WARNING : Inferred pure not added" !print_pure_f) pf no_pos;
+              x_winfo_hp (add_str "WARNING : Inferred pure not added" !print_pure_f) pf no_pos;
               new_estate
             (* contra due to direct vars *)
             (* WN :why did we rely on !=null !! *)
@@ -7656,7 +7659,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                             else
                             if !Globals.old_infer_hprel_classic then
                               let () = x_tinfo_hp (add_str "h1 " !CF.print_h_formula) h1 no_pos in
-                              let () = x_binfo_pp "WN : Why a diffrent way to infer_collect_hp_rel_classsic" no_pos in
+                              let () = x_winfo_pp "WN : Why a diffrent way to infer_collect_hp_rel_classsic" no_pos in
                               let r, new_es = x_add Infer.infer_collect_hp_rel_classsic 0 prog estate h2 pos in
                               let l_h, l_p, l_vp, l_fl, l_t, l_a = CF.split_components new_es.es_formula in
                               let is_mem = Gen.BList.mem_eq CP.eq_spec_var in
@@ -8285,10 +8288,10 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
     let is_not_lhs_emp =
       if flag && (not(!Globals.old_classic_rhs_emp)) then
         begin
-          let () = x_binfo_hp (add_str "XXXX(h1)" !CF.print_h_formula) h1 no_pos in
-          let () = x_binfo_hp (add_str "XXXX(hp_rel)" (pr_list pr_none)) hprel_in_h1 no_pos in
-          let () = x_binfo_hp (add_str "do_classic_frame_rule" string_of_bool) (check_is_classic ()) no_pos in
-          let () = x_binfo_hp (add_str "is_folding" string_of_bool) is_folding no_pos  in
+          let () = x_tinfo_hp (add_str "XXXX(h1)" !CF.print_h_formula) h1 no_pos in
+          let () = x_tinfo_hp (add_str "XXXX(hp_rel)" (pr_list pr_none)) hprel_in_h1 no_pos in
+          let () = x_tinfo_hp (add_str "do_classic_frame_rule" string_of_bool) (check_is_classic ()) no_pos in
+          let () = x_tinfo_hp (add_str "is_folding" string_of_bool) is_folding no_pos  in
           not(is_classic_lhs_emp prog h1 ante pos)
         end
       else false 
@@ -9739,10 +9742,10 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
     let () = x_tinfo_hp (add_str "impl_inst(subs)" pr_subs) lst_impl no_pos in
     let () = x_tinfo_hp (add_str "ex_subs" pr_subs) lst_ex no_pos in
     let () = if !Globals.assert_no_glob_vars && lst_glob!=[] then 
-        let () = x_binfo_hp (add_str "impl_vars" !print_svl) impl_vars no_pos in
-        let () = x_binfo_hp (add_str "glob_vs" !print_svl) glob_vs no_pos in
-        let () = x_binfo_hp (add_str "evars" !print_svl) evars no_pos in
-        let () = x_binfo_hp (add_str "ivars" !print_svl) ivars no_pos in
+        let () = x_winfo_hp (add_str "impl_vars" !print_svl) impl_vars no_pos in
+        let () = x_winfo_hp (add_str "glob_vs" !print_svl) glob_vs no_pos in
+        let () = x_winfo_hp (add_str "evars" !print_svl) evars no_pos in
+        let () = x_winfo_hp (add_str "ivars" !print_svl) ivars no_pos in
         failwith ("non-empty global vars "^msg) 
     in
     let to_conseq = List.fold_left  (fun e (l,r) -> CP.mkAnd e (CP.mkEqVar l r no_pos) no_pos) (CP.mkTrue no_pos) lst_glob in

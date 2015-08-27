@@ -133,7 +133,7 @@ and struc_base_formula =
     formula_struc_explicit_inst : Cpure.spec_var list;
     formula_struc_implicit_inst : Cpure.spec_var list;
         (*
-           vars_free, vars_linking, vars_astextracted
+           vars_free, vars_linking, vars_extracted
         *)
     formula_struc_exists : Cpure.spec_var list;
     formula_struc_base : formula;
@@ -2938,6 +2938,7 @@ and fv ?(vartype=Global_var.var_with_none) (f : formula) : CP.spec_var list =
         formula_exists_flow = fl;
         formula_exists_label = lbl;
         formula_exists_pos = pos }) ->
+      let qvars = if vartype # is_exists then [] else qvars in
       let fvars = aux (Base ({
           formula_base_heap = h;
           formula_base_pure = p;
@@ -5569,10 +5570,12 @@ let rec look_up_rev_data_node ls node_name=
   match ls with
   | [] -> []
   | dn::ds ->
-    if CP.mem_svl node_name dn.h_formula_data_arguments then
-      [dn.h_formula_data_node]
-    else
-      look_up_data_node ds node_name
+        let () = Debug.ninfo_hprint (add_str "node_name"  !CP.print_sv) node_name no_pos in
+        let () = Debug.ninfo_hprint (add_str "dn"  (fun dn -> !print_h_formula (DataNode dn))) dn no_pos in
+        if CP.mem_svl node_name dn.h_formula_data_arguments then
+          [dn.h_formula_data_node]
+        else
+          look_up_rev_data_node ds node_name
 
 let rec look_up_view_node ls node_name=
   match ls with
@@ -5595,8 +5598,16 @@ let look_up_ptr_args_one_node prog hd_nodes hv_nodes node_name=
 
 let look_up_rev_ptr_node_one_node prog hd_nodes hv_nodes node_name=
   let ptrs = look_up_rev_data_node hd_nodes node_name in
+  let () = Debug.ninfo_hprint (add_str "ptrs"  !CP.print_svl) ptrs no_pos in
   if ptrs = [] then look_up_rev_view_node hv_nodes node_name
   else ptrs
+
+let look_up_rev_ptr_node_one_node prog hd_nodes hv_nodes node_name=
+  let pr1 hv = !print_h_formula (ViewNode hv) in
+  let pr2 hn = !print_h_formula (DataNode hn) in
+  Debug.no_3 "look_up_rev_ptr_node_one_node" (pr_list pr2) (pr_list pr1) !CP.print_sv !CP.print_svl
+      (fun _ _ _ -> look_up_rev_ptr_node_one_node prog hd_nodes hv_nodes node_name)
+      hd_nodes hv_nodes node_name
 
 (*should improve: should take care hrel also*)
 let look_up_reachable_ptr_args prog hd_nodes hv_nodes node_names=
@@ -5628,6 +5639,7 @@ let look_up_rev_reachable_ptr_args_x prog hd_nodes hv_nodes node_names=
     let new_ptrs = List.concat
         (List.map (look_up_rev_ptr_node_one_node prog hd_nodes hv_nodes)
            inc_ptrs) in
+    let () = Debug.ninfo_hprint (add_str "new_ptrs"  !CP.print_svl) new_ptrs no_pos in
     let diff_ptrs = List.filter (fun id -> not (CP.mem_svl id old_ptrs)) new_ptrs in
     let diff_ptrs = Gen.BList.remove_dups_eq CP.eq_spec_var diff_ptrs in
     if diff_ptrs = [] then old_ptrs
@@ -6077,7 +6089,26 @@ let rec struc_formula_drop_infer unk_hps f =
                       formula_struc_base = formula_trans_heap_node drop_unk b.formula_struc_base;
                       formula_struc_continuation = Gen.map_opt recf b.formula_struc_continuation}
   | EAssume b -> EAssume {b with formula_assume_simpl = formula_trans_heap_node drop_unk b.formula_assume_simpl}
-  | EInfer b-> recf b.formula_inf_continuation
+  | EInfer b->
+        recf b.formula_inf_continuation
+  | EList l-> EList (Gen.map_l_snd recf l)
+
+let rec struc_formula_drop_unk unk_hps f =
+  let recf = struc_formula_drop_unk unk_hps in
+  let drop_unk hn =
+    match hn with
+    | HRel (hp,_, _)->
+      if CP.mem_svl hp unk_hps then HEmp else hn
+    | _ -> hn
+  in
+  match f with
+  | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd recf b.formula_case_branches}
+  | EBase b -> EBase {b with
+                      formula_struc_base = formula_trans_heap_node drop_unk b.formula_struc_base;
+                      formula_struc_continuation = Gen.map_opt recf b.formula_struc_continuation}
+  | EAssume b -> EAssume {b with formula_assume_simpl = formula_trans_heap_node drop_unk b.formula_assume_simpl}
+  | EInfer b->
+        EInfer {b with formula_inf_continuation  = recf b.formula_inf_continuation}
   | EList l-> EList (Gen.map_l_snd recf l)
 
 let formula_map hf_fct f0=
@@ -19327,3 +19358,6 @@ let rm_htrue_estate es =
 (* let rm_htrue_context c = *)
 (*   let () = x_binfo_pp "TODO : to be implemented .." no_pos in *)
 (*   c *)
+
+let collect_impl_expl_context c =
+   (fold_context (fun xs es -> es.es_gen_impl_vars @ (es.es_gen_expl_vars @ xs)) [] c)

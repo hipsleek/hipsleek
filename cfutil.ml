@@ -2500,29 +2500,50 @@ let subst_views_form_x map_views f=
               (der_vn, pure_svl, CP.subst_var_list sst svl)
             else lookup_map rest vn v_args
   in
-  let rec hview_subst_trans hn = match hn with
+  let formula_map_add_ex hf_fct f0=
+    let rec helper f=
+      match f with
+        | Base b ->
+              let new_hf, ex_quans = hf_fct [] b.formula_base_heap in
+              let new_f = Base {b with formula_base_heap = new_hf} in
+              add_quantifiers ex_quans new_f
+        | Exists _ ->
+              let quans ,base = split_quantifiers f in
+              let new_base = helper base in
+              add_quantifiers quans new_base
+        | Or orf ->
+              Or {orf with formula_or_f1 = helper orf.formula_or_f1;
+                  formula_or_f2 = helper orf.formula_or_f2;
+              }
+    in
+    helper f0
+  in
+  let rec hview_subst_trans impl_svl hn = match hn with
     | ViewNode vn -> begin
         try
           let der_vn,impl_vars, der_args = lookup_map map_views vn.h_formula_view_name vn.h_formula_view_arguments in
           let () =  Debug.ninfo_hprint (add_str "der_args" (!CP.print_svl)) der_args no_pos in
+          let () =  Debug.ninfo_hprint (add_str "impl_vars" (!CP.print_svl)) impl_vars no_pos in
           let args_orig,_ = List.fold_left (fun (r,i) sv -> (r@[(CP.SVArg sv, i)], i+1)) ([],0) der_args in
           let args_annot,_ = List.fold_left (fun (r,i) sv -> (r@[(CP.ImmAnn (CP.ConstAnn Mutable),i)], i+1) ) ([],0) der_args in
-          ViewNode {vn with h_formula_view_name = der_vn;
+          (ViewNode {vn with h_formula_view_name = der_vn;
           h_formula_view_arguments = der_args ;
           h_formula_view_annot_arg = args_annot;
-          h_formula_view_args_orig = args_orig;}
-        with Not_found -> hn
+          h_formula_view_args_orig = args_orig;}, impl_svl@impl_vars)
+        with Not_found -> (hn, impl_svl)
       end
     | Star { h_formula_star_h1 = hf1;
       h_formula_star_h2 = hf2;
       h_formula_star_pos = pos} ->
-          Star {h_formula_star_h1 = hview_subst_trans hf1;
-          h_formula_star_h2 = hview_subst_trans hf2;
-          h_formula_star_pos = pos}
-    | _ -> hn
+          let nhf1, impl_svl1 = hview_subst_trans impl_svl hf1 in
+          let nhf2, impl_svl2 = hview_subst_trans impl_svl1 hf2 in
+          (Star {h_formula_star_h1 = nhf1;
+          h_formula_star_h2 = nhf2;
+          h_formula_star_pos = pos}, impl_svl2)
+    | _ -> (hn, impl_svl)
   in
   (*************END**INTERNAL****************)
-  (formula_map (hview_subst_trans)) f
+  (formula_map_add_ex (hview_subst_trans)) f
 
 let subst_views_form map_views f=
   let pr1 = !print_formula in

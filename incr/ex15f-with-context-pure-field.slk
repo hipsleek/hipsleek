@@ -21,6 +21,22 @@ Residue:
 [[ COND ==>  COND ==>  InferHeap]]
 */
 
+infer [H,P,@classic] H(p) * x::node<1,p> & p=null 
+  |- P(p).
+print residue.
+
+infer [H,P] H(p) * x::node<1,p> & p=null 
+  |- P(p) * htrue.
+print residue.
+
+infer [H,P] H(p) * x::node<1,p> * htrue & p=null 
+  |- P(p) * htrue.
+print residue.
+
+infer [H,P] H(p) * x::node<1,p> * htrue & p=null 
+  |- P(p) * emp.
+print residue.
+
 /*
 # ex15f.slk 
 

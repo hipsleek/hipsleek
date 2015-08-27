@@ -2319,9 +2319,11 @@ let infer_post_synthesize_x prog proc_name callee_hps is need_preprocess detect_
   (* (\*before inlining, we try do inter-unify*\) *)
   (* let post_defs2a = if !Globals.pred_unify_inter then Sacore.pred_unify_inter prog dang_hps post_defs2 else  post_defs2 in *)
   (* let post_defs3 = def_subst_fix prog dang_hps (post_defs2a@top_guard_hp_defs) in *)
+  (* simplify *)
+  let post_defs2 = Sacore.simplify_def prog post_defs1 in
   {is with Cformula.is_constrs = [];
            Cformula.is_hp_equivs = is.Cformula.is_hp_equivs@unify_equiv_map2;
-           Cformula.is_hp_defs = post_defs1@top_guard_hp_defs (* post_defs3@tupled_defs *)}
+           Cformula.is_hp_defs = post_defs2@top_guard_hp_defs (* post_defs3@tupled_defs *)}
 
 let infer_post_synthesize prog proc_name callee_hps is need_preprocess detect_dang=
   let pr1 = Cprinter.string_of_infer_state_short in

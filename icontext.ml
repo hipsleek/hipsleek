@@ -43,8 +43,8 @@ let rec string_of_iaction act=
   | I_pre_synz (hps,_) -> (add_str "pre_synthesize" !CP.print_svl) hps
   | I_pre_fix hps -> (add_str "pre_fix_synthesize" !CP.print_svl) hps
   | I_pre_oblg -> "pre_oblg"
-  | I_post_synz -> "post_synthesize"
-  | I_post_fix hps -> (add_str "post_fix_synthesize" !CP.print_svl) hps
+  | I_post_synz -> "post_synthesis"
+  | I_post_fix hps -> (add_str "post_fix_synthesis" !CP.print_svl) hps
   | I_post_oblg -> "post_oblg"
   | I_norm_seg -> "norm_seg"
   | I_seq ls_act -> add_str "seq" (pr_list (pr_pair string_of_int string_of_iaction)) ls_act

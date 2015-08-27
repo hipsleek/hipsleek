@@ -46,7 +46,7 @@ let get_infer_const_scc scc =
   Gen.BList.remove_dups_eq (=) infs
 
 
-let rec update_infer_const_struc_formula add_infs minus_infs sf0 =
+let update_infer_const_struc_formula add_infs minus_infs sf0 =
   let rec recf sf= match sf with
     | CF.EList el -> CF.EList (List.map (fun (lbl,sf) ->
           (lbl,recf sf)) el)
@@ -73,6 +73,45 @@ let rec update_infer_const_struc_formula add_infs minus_infs sf0 =
   in
   recf sf0
 
+let update_infer_const_struc_formula add_infs minus_infs sf0 =
+  let pr1 =  Cprinter.string_of_struc_formula in
+  let pr2 = pr_list string_of_inf_const in
+  Debug.no_3 "update_infer_const_struc_formula" pr2 pr2 pr1 pr1
+      (fun _ _ _ -> update_infer_const_struc_formula add_infs minus_infs sf0)
+      add_infs minus_infs sf0
+
+let reset_infer_const_struc_formula add_infs sf0 =
+  let rec recf sf= match sf with
+    | CF.EList el -> CF.EList (List.map (fun (lbl,sf) ->
+          (lbl,recf sf)) el)
+    | CF.EBase eb ->
+          let cont = eb.CF.formula_struc_continuation in (
+              match cont with
+                | None -> sf
+                | Some cont -> CF.EBase {eb with CF.formula_struc_continuation = Some (recf cont)} )
+    | CF.EAssume ea -> sf
+    | CF.EInfer ei ->
+          let inf_obj = ei.CF.formula_inf_obj in
+          let new_inf_obj = inf_obj # clone in
+          let ()  = new_inf_obj # empty in
+          let () =  new_inf_obj # set_list ( Gen.BList.remove_dups_eq (=) (add_infs)) in
+          CF.EInfer {ei with
+              CF.formula_inf_obj = new_inf_obj}
+    | CF.ECase ec -> CF.ECase { ec with
+          CF.formula_case_branches = List.map (fun (pf,sf) ->
+              (pf,recf sf)
+          ) ec.CF.formula_case_branches
+      }
+  in
+  recf sf0
+
+let reset_infer_const_struc_formula add_infs sf0 =
+  let pr1 =  Cprinter.string_of_struc_formula in
+  let pr2 = pr_list string_of_inf_const in
+  Debug.no_2 "reset_infer_const_struc_formula" pr2 pr1 pr1
+      (fun _ _ -> reset_infer_const_struc_formula add_infs sf0)
+      add_infs sf0
+
 let update_infer_const_proc add_infs minus_infs proc=
   let spec = proc.Cast.proc_stk_of_static_specs # top in
   let new_spec = update_infer_const_struc_formula add_infs minus_infs spec in
@@ -80,8 +119,18 @@ let update_infer_const_proc add_infs minus_infs proc=
   let () = x_tinfo_hp (add_str "new_spec" Cprinter.string_of_struc_formula) new_spec no_pos in
   (proc,new_spec)                       (* spec or new_spec *)
 
+let reset_infer_const_proc add_infs proc=
+  let spec = proc.Cast.proc_stk_of_static_specs # top in
+  let new_spec = reset_infer_const_struc_formula add_infs spec in
+  let () = proc.Cast.proc_stk_of_static_specs # push_pr "pi:377" new_spec in
+  let () = x_tinfo_hp (add_str "new_spec" Cprinter.string_of_struc_formula) new_spec no_pos in
+  (proc,new_spec) 
+
 let update_infer_const_scc add_infs minus_infs scc =
   List.map (update_infer_const_proc add_infs minus_infs ) scc
+
+let reset_infer_const_scc add_infs scc =
+  List.map (reset_infer_const_proc add_infs ) scc
 
 
 (**)
@@ -283,7 +332,7 @@ let extend_views iprog prog rev_formula_fnc trans_view_fnc ext_pred_names proc=
   (* (orig_view, der_view) list *)
   let old_view_scc = !Astsimp.view_scc in
   let () = Astsimp.view_scc := [] in
-  let map_ext_views = Derive.expose_pure_extn iprog prog rev_formula_fnc trans_view_fnc vdcls pure_extn_views in
+  let map_ext_views = x_add Derive.expose_pure_extn iprog prog rev_formula_fnc trans_view_fnc vdcls pure_extn_views in
   let () = Astsimp.view_scc := old_view_scc in
   let prog = Astsimp.fill_base_case prog in
   map_ext_views
@@ -304,7 +353,7 @@ let extend_inf iprog prog map_views proc=
   let proc1 = {proc0 with Cast.proc_dynamic_specs = n_dyn_spec} in
   proc1
 
-let extend_pure_props_view_x iprog cprog rev_formula_fnc trans_view_fnc proc=
+let extend_pure_props_view iprog cprog rev_formula_fnc trans_view_fnc proc=
   let inf_props = proc_extract_inf_props cprog proc.Cast.proc_name in
   let props = List.fold_left (fun acc io ->
       begin
@@ -326,4 +375,4 @@ let extend_pure_props_view iprog cprog rev_formula_fnc trans_view_fnc proc=
      "dynamic spec:"  ^ (pr1 p.Cast.proc_dynamic_specs) ^ "\n"
   in
   Debug.no_1 "extend_pure_props_view" pr2 pr2
-      (fun _ -> extend_pure_props_view_x iprog cprog rev_formula_fnc trans_view_fnc proc) proc
+      (fun _ -> extend_pure_props_view iprog cprog rev_formula_fnc trans_view_fnc proc) proc

@@ -821,7 +821,7 @@ shape+pure
 
 
 =====================================================================
-#ex13a
+#ex13a: dup with ex14b
 #ex13b
 
 GOT
@@ -851,9 +851,25 @@ to support @shape_post
 support for c program
 
 =====================================================================
-#ex14
+#ex14: DONE
 
 to support @shape_pre_post
+
+
+EInfer @leak,@shape_pre[]
+   EInfer @leak,@shape_pre[]
+     EBase 
+       x::sll<>@M&{FLOW,(4,5)=__norm#E}[]
+       EBase 
+         emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           htrue&{FLOW,(4,5)=__norm#E}[]
+
+
+=====================================================================
+ex14a-
+
+shape_prepost,size,post_n
 
 =====================================================================
 # ex10b6.slk (FIXED)
@@ -1077,6 +1093,221 @@ find_guard@1 EXIT:Some( x::node<flted_11_16,p>@M)
 check_guard@2
 check_guard inp1 :Some( x::node<flted_11_16,p>@M)
 check_guard@2 EXIT:Some( x::node<flted_11_16,p>@M&{FLOW,(20,21)=__norm#E}[])
+=====================================================================
+# ex14b.ss: DONE
+
+  infer[@shape_post] 
+  requires x::sll<>
+  ensures true;
+
+For @shape_post, we need to simplify the base-case:
+
+[ GP_1636(x_1663) ::= x_1663::node<Anon_1664,q_1651>@M * GP_1636(q_1651)
+ or x_1663::sll<>@M&x_1663=null
+ (4,5)]
+
+# EXPECTS:
+
+[ GP_1765(x_1792) ::= 
+   x_1792::node<Anon_1793,q_1780>@M * GP_1765(q_1780)
+   or x_1792=null(4,5),
+
+# need to simplify (specialise/unfold) on base-case in post_synthesis
+
+1:43:iprocess_action inp1 :infer_dangling
+1:57:iprocess_action inp1 :split_base
+1:71:iprocess_action inp1 :post_synthesis
+1:85:iprocess_action inp1 :norm_seg
+1:99:iprocess_action inp1 :partition (pre, pre-oblg, post, post-oblg)
+1:113:iprocess_action inp1 :seq:[(0,infer_dangling),(0,split_base),(0,partition (pre, pre-oblg, post, post-oblg))]
+
+=====================================================================
+# ex14c.slk 
+
+  infer[@size] 
+  requires x::sll<>
+  ensures x::sll<>;
+
+# How come no printing?
+
+!!!    pure extension:
+sll_size: extend sll to size
+
+!!! **imminfer.ml#122:!should_infer_imm_pre:false
+Checking procedure size_helper$node... 
+Procedure size_helper$node SUCCESS.
+
+======================================================
+# ex14c.slk -dre ".*_extn\|extend_"  (Loc to fix): FIXED
+
+# This warning can be resolved by making size_1699 implicit
+
+# Spec must have below to support linking with post-cond later:
+
+   formula_struc_implicit_inst : Cpure.spec_var list;
+   EBase Impl [size_1699]
+     v_node_40_1637'::sll_size<size_1699>@M&{FLOW,(4,5)=__norm#E}[]
+
+# Current:
+
+!!! **WARNING****solver.ml#4230:FREE VAR IN HEAP RHS :[size_1699]
+impl/expl vars:[]
+LHS:  x'::node<Anon_1695,q_1696>@M * q_1696::sll_size<size_1694>@M&
+size_1672=size_1694+1 & 0<=size_1694 & !(v_bool_37_1642') & x'!=null & 
+x'=x & v_int_40_1640'=1 & v_node_40_1637'=q_1696&{FLOW,(4,5)=__norm#E}[]
+RHS:
+ EInfer @size[]
+   EBase 
+     v_node_40_1637'::sll_size<size_1699>@M&{FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         (exists size_1673: v_node_40_1637'::sll_size<size_1673>@M&
+         {FLOW,(4,5)=__norm#E}[])
+         struct:EBase 
+                  (exists size_1673: v_node_40_1637'::sll_size<size_1673>@M&
+                  {FLOW,(4,5)=__norm#E}[])
+
+# TO FIX :
+(==typechecker.ml#4591==)
+extend_pure_props_view@1
+
+extend_pure_props_view@1 EXIT:top spec: EInfer @size[]
+   EBase 
+     x::sll_size<size_1672>@M&{FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         (exists size_1673: x::sll_size<size_1673>@M&{FLOW,(4,5)=__norm#E}[])
+         struct:EBase 
+                  x::sll_size<size_1674>@M&{FLOW,(4,5)=__norm#E}[]
+static spec: EInfer @size[]
+   EBase 
+     x::sll_size<size_1675>@M&{FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         (exists size_1676: x::sll_size<size_1676>@M&{FLOW,(4,5)=__norm#E}[])
+         struct:EBase 
+                  x::sll_size<size_1677>@M&{FLOW,(4,5)=__norm#E}[]
+dynamic spec: EBase 
+   hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+
+===================================================================
+# ex14d.slk (FIXED - was implicit)
+
+# Why is there a free_var warning; and how did it manage
+  to prove it. Is that still treated as implicit?
+
+!!! **WARNING****solver.ml#4228:FREE VAR IN HEAP RHS :[b_71]
+LHS:
+  x::ll<a>@M&
+v_bool_37_1647' & x'=null & x'=x & v_int_38_1638'=0 & res=v_int_38_1638'&
+{FLOW,(4,5)=__norm#E}[]
+RHS:
+ EBase 
+   (exists : x::ll<b_71>@M&post_1653(b_71,a,res,flow)&{FLOW,(4,5)=__norm#E}[]
+=====================================================================
+# ex14f.slk --pcp (FIXED with warnings)
+
+  infer[//@post_n
+  ] 
+  requires x::ll<a>
+  ensures x::ll<b>;
+
+# implicit converted to exists?
+
+       EAssume 
+         (exists b_71: x::ll<b_71>@M&{FLOW,(4,5)=__norm#E}[])
+         struct:EBase 
+                  (exists b_70: x::ll<b_70>@M&{FLOW,(4,5)=__norm#E}[])
+=====================================================================
+# ex14d.slk --pcp (FIXED with --old-post-conv-impl)
+
+  requires (exists a: x::ll<a>)
+  ensures (exists b: x::ll<b>);
+
+!!! **typechecker.ml#868:>>>>>> Convert Exists to Implicit Vars for Post-Cond <<<<<<
+!!! **typechecker.ml#869:New Impl Vars :[b_71]
+
+# EBase exists not lifted outwards:
+
+   EBase 
+     (exists a_72: x::ll<a_72>@M&{FLOW,(4,5)=__norm#E}[])
+
+=====================================================================
+# ex14d.slk --new-post-conv-impl
+
+  infer[@post_n] 
+  requires x::ll<a>
+  ensures x::ll<b>;
+
+# Why fixcalc failure with --new-post-conv-impl 
+       (from exists --> impl in post)
+
+!!! **fixcalc.ml#1040:Input of fixcalc: :post_1650:={[a,a] -> [res,flow] -> []: (res=0 && a=0 ||  (exists (v_int_41_1685: (exists (a_1672: (exists (b_1681:0<=b_1681 && post_1650(b_1681,a_1672,v_int_41_1685,flow)))  && a_1672=a-(1)))  && v_int_41_1685=res-(1)))  && 1<=a)
+};
+bottomupgen([post_1650], [2], SimHeur);fixcalc: debugApply: substitution does not have unique args: [((SizeVar "a",Unprimed),(SizeVar "b_1681",Unprimed)),((SizeVar "a",Unprimed),(SizeVar "a_1672",Unprimed)),((SizeVar "res",Unprimed),(SizeVar "v_int_41_1685",Unprimed)),((SizeVar "flow",Unprimed),(SizeVar "flow",Unprimed))]
+
+!!! PROBLEM with fix-point calculation
+ExceptionLoc.Exc_located(_, _)Occurred!
+
+=====================================================================
+# ex14h.ss --reverify
+
+# Why did re-verify infer shape again? This
+  caused pre-condition to be false!
+# I think need to strip of the previous inference commands
+  when re-verifying.
+
+!!! INFERRED SHAPE SPEC:
+ EInfer @leak,@shape_pre[]
+   EBase 
+     x::HP_1638<>@M * x::HP_1708<>@M&{FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         htrue&{FLOW,(4,5)=__norm#E}[]
+         struct:EBase 
+                  htrue&{FLOW,(4,5)=__norm#E}[]
+!!! **typechecker.ml#4045:inside reverify:[x]
+Checking procedure size_helper$node... 
+
+
+******************************
+******* SPECIFICATION2 ********
+******************************
+ infer[@leak, @shape_pre ]requires x::HP_1638<>@M * x::HP_1708<>@M&
+truerequires emp&MayLoop[]
+ ensures htrue&true{,(4,5)=__norm#E};
+=====================================================================
+# ex15g.slk
+
+infer [H,P] H(p) * x::node<1,p> & p=null 
+  |- P(p).
+print residue.
+
+# GOT
+
+ <1>x::node<flted_23_28,p>@M&p=null & flted_23_28=1&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#| x::node<flted_23_28,p>@M&true --> P(p)&true
+
+# EXPECTS
+
+ <1>x::node<flted_23_28,p>@M&p=null & flted_23_28=1&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#|  --> P(p)&true
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
 =====================================================================
 =====================================================================
 =====================================================================

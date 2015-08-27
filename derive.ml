@@ -562,7 +562,7 @@ let leverage_self_info xform formulas anns data_name=
 (*     BUILD PURE EXTN MAP  *)
 (*****************************************************************************************)
 
-let expose_pure_extn_one_view_x iprog cprog rev_formula_fnc trans_view_fnc lower_map_views (view: Cast.view_decl) extn_view=
+let expose_pure_extn_one_view iprog cprog rev_formula_fnc trans_view_fnc lower_map_views (view: Cast.view_decl) extn_view=
   let get_extns d_name=
     let d_dclr = Iast.look_up_data_def 67 no_pos iprog.Iast.prog_data_decls d_name in
     let extn_fields = List.fold_left (fun acc ((t,_),_,_,props) -> begin
@@ -627,13 +627,13 @@ let expose_pure_extn_one_view iprog cprog rev_trans_formula trans_view lower_map
               ^ (pr1 v.Cast.view_domains) in
   let pr3 v =  v.Cast.view_name ^ "<" ^ (!CP.print_svl v.Cast.view_vars) ^ ">" in
   Debug.no_2 "expose_pure_extn_one_view" pr2 pr3 pr2
-    (fun _ _ -> expose_pure_extn_one_view_x iprog cprog rev_trans_formula trans_view lower_map_views view extn_view)
+    (fun _ _ -> expose_pure_extn_one_view iprog cprog rev_trans_formula trans_view lower_map_views view extn_view)
     view extn_view
 (*
   build extn map.
   pair extn prop in views with view_extn
 *)
-let expose_pure_extn_x iprog cprog rev_trans_formula trans_view views extn_views=
+let expose_pure_extn iprog cprog rev_trans_formula trans_view views extn_views=
   List.fold_left (fun acc v ->
       let lst_view = List.fold_left (fun r extn_view ->
           expose_pure_extn_one_view iprog cprog rev_trans_formula trans_view acc v extn_view
@@ -648,7 +648,7 @@ let expose_pure_extn iprog cprog rev_trans_formula trans_view views extn_views=
               ^ (pr1 v.Cast.view_domains) in
   let pr3 =  pr_pair (pr_pair pr_id !CP.print_svl) (pr_pair pr_id !CP.print_svl) in
   Debug.no_2 "expose_pure_extn" (pr_list_ln pr2) (pr_list_ln pr2) (pr_list pr3)
-      (fun _ _ -> expose_pure_extn_x iprog cprog rev_trans_formula trans_view views extn_views)
+      (fun _ _ -> expose_pure_extn iprog cprog rev_trans_formula trans_view views extn_views)
       views extn_views
 
 (*****************************************************************************************)
