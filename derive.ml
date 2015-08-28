@@ -344,7 +344,7 @@ let trans_view_one_derv_wrapper prog rev_form_fnc trans_view_fnc lower_map_views
     let () = x_binfo_hp (add_str "(raw) new view (donot have base case, addr, material)" Cprinter.string_of_view_decl(* _short *)) new_vdef no_pos in
     (true,new_vdef)
   else
-    let () =  x_binfo_hp (add_str "   pure extension" pr_id) (orig_view_name ^ " has been extended to " ^ extn_view_name^ " already \n") no_pos in
+    let () =  x_dinfo_hp (add_str "   pure extension" pr_id) (orig_view_name ^ " has been extended to " ^ extn_view_name^ " already \n") no_pos in
     (false,orig_view)
 
 let trans_view_one_derv (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower_map_views
