@@ -804,7 +804,7 @@ and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
       | Cil.MinusPI | Cil.MinusPP -> ("minus", "-")
       | Cil.PlusPI | Cil.IndexPI -> (
 	match t1, t2 with
-          | Cil.TPtr(Cil.TInt(charkind,_),_), _ -> ("plus", "+")
+          | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), _ -> ("plus", "+")
           | _, Cil.TPtr(Cil.TInt(Cil.IChar,_),_) -> ("plus", "+")
           | _, _ -> ("add", "+")
       )
