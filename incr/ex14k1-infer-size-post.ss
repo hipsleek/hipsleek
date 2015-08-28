@@ -100,6 +100,90 @@ size_helper$node
      (exists bb: x::ll<bb>@M&res>=0 & res=bb & res=aa&
      {FLOW,(4,5)=__norm#E}[])
 
+=====
+
+
+ view ll{}[]<n:int>= 
+  view_domains: 
+   
+view ll<n:int>= 
+    EList
+      :EBase 
+         (* lbl: *){246}->emp&self=null & n=0&{FLOW,(1,28)=__flow#E}[]
+      || :EBase 
+            exists (Impl)[Anon_12; 
+            q](* lbl: *){247}->(exists flted_16_33: (* lbl: *){247}->
+            self::node<Anon_12,q>@M * q::ll<flted_16_33>@M&flted_16_33+1=n&
+            {FLOW,(1,28)=__flow#E}[])
+      
+  view vars: n
+  ann vars (0 - not a posn): (@M,0),(@M,0)
+  inv: 0<=n
+  
+  baga over inv: [([], 0<=n)]
+  baga over inv (unfolded): [([self], 1<=n),([], self=null & n=0)]
+  
+  unstructured formula: (* lbl: *){246}->emp&self=null & n=0&
+                        {FLOW,(1,28)=__flow#E}[]|| (* lbl: *){247}->(exists flted_16_33,
+                                                   Anon_12,
+                                                   q: (* lbl: *){247}->
+                                                   self::node<Anon_12,q>@M * 
+                                                   q::ll<flted_16_33>@M&
+                                                   flted_16_33+1=n&
+                                                   {FLOW,(1,28)=__flow#E}[])
+  xform: ((1<=n & self!=null) | (self=null & n=0))
+  is_recursive?: true
+  same_xpure?: NO
+  view_data_name: node
+  materialized vars: [(self,partial,[])]
+  addr vars: self
+  
+  raw base case: 
+  (* lbl: *){246}->emp&self=null & n=0&{FLOW,(1,28)=__flow#E}[]
+
+base case: (n=0 | self=null)->self=null & n=0
+  
+  view sll_size{}[]<size_1651:int>= 
+  view_domains: (size,0,1)
+  
+ view sll_size<size_1651:int>= 
+    EList
+      :EBase 
+         (* lbl: *){261}->emp&self=null & size_1651=0&
+         {FLOW,(1,28)=__flow#E}[]
+      || :EBase 
+            exists (Impl)[Anon_1652; 
+            q_1653](* lbl: *){262}->(exists size_1654: (* lbl: *){262}->
+            self::node<Anon_1652,q_1653>@M * q_1653::sll_size<size_1654>@M&
+            size_1651=size_1654+1 & 0<=size_1654&{FLOW,(1,28)=__flow#E}[])
+      
+  view vars: size_1651
+  ann vars (0 - not a posn): (@M,0),(@M,0)
+  inv: size_1651>=0
+  
+  baga over inv: [([], size_1651>=0)]
+  baga over inv (unfolded): [([], size_1651>=0)]
+  
+  unstructured formula: (* lbl: *){261}->emp&self=null & size_1651=0&
+                        {FLOW,(1,28)=__flow#E}[]|| (* lbl: *){262}->(exists size_1654,
+                                                   Anon_1652,
+                                                   q_1653: (* lbl: *){262}->
+                                                   self::node<Anon_1652,q_1653>@M * 
+                                                   q_1653::sll_size<size_1654>@M&
+                                                   size_1651=size_1654+1 & 
+                                                   0<=size_1654&
+                                                   {FLOW,(1,28)=__flow#E}[])
+  xform: size_1651>=0
+  is_recursive?: true
+  same_xpure?: NO
+  view_data_name: node
+  
+  raw base case: 
+  (* lbl: *){261}->emp&self=null & size_1651=0&{FLOW,(1,28)=__flow#E}[]
+  
+
+
+
 */
 
 

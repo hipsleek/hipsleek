@@ -5963,7 +5963,8 @@ and new_slk_log_g (conseq:formula) hec_num pos result es  =
   let it = CF.infer_type_of_entail_state es in
   let esv = es.es_infer_vars in
   let () = (* x_add *) Log.add_sleek_logging (Some es) false 0. it esv (check_is_classic ()) caller 
-    (* avoid *) false hec_num slk_no es.es_formula (* orig_ante *) conseq es.es_heap es.es_evars (Some result) pos in
+    (* avoid *) false hec_num slk_no es.es_formula (* orig_ante *) conseq es.es_heap es.es_evars 
+      es.es_gen_impl_vars (Some result) pos in
   ()
 
 
@@ -7245,10 +7246,10 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     | Ctx es -> Some es
     | _ -> None in (* WN : info seems before entailment *)
   let hec a b c =
-    let (ante,consumed_heap,evars,infer_type,infer_vars) =
+    let (ante,consumed_heap,evars,impl_vars,infer_type,infer_vars) =
       match ctx0 with
       | OCtx _ -> (CF.mkTrue (CF.mkTrueFlow ()) pos (* impossible *),
-                   CF.HEmp, [], None, [])
+                   CF.HEmp, [],[], None, [])
       | Ctx estate ->
         let proving_kind = find_impt_proving_kind () in
         let lex_lhs =
@@ -7268,7 +7269,7 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
         in
         let es = List.fold_left (fun es lv -> fst
                                     (CF.combine_and es (MCP.mix_of_pure lv))) estate.es_formula lex_lhs in
-        (es,estate.es_heap,estate.es_evars,CF.infer_type_of_entail_state estate,
+        (es,estate.es_heap,estate.es_evars,estate.es_gen_impl_vars,CF.infer_type_of_entail_state estate,
          (estate.es_infer_vars@estate.es_infer_vars_rel@estate.es_infer_vars_hp_rel@estate.es_infer_vars_templ))
     in
     (* WN : what if evars not used in the conseq? *)
@@ -7284,7 +7285,7 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     let logger fr tt timeout =
       let () =
         x_add Log.add_sleek_logging es_opt timeout tt infer_type infer_vars (check_is_classic ()) 
-          caller avoid hec_num slk_no ante conseq consumed_heap evars
+          caller avoid hec_num slk_no ante conseq consumed_heap evars impl_vars
           (match fr with Some (lc,_) -> Some lc | None -> None) pos in
       ("sleek",(string_of_int slk_no))
     in
