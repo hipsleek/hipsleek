@@ -796,7 +796,7 @@ and create_bool_casting_proc (typ: Globals.typ) : Iast.proc_decl =
       proc_decl
     )
 
-(*char_star + char?*)
+(*char_star - char_star?*)
 and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
   let typ1 = translate_typ t1 no_pos in
   let typ2 = translate_typ t2 no_pos in
@@ -1485,6 +1485,12 @@ and translate_exp_binary (op: Cil.binop) (exp1: Cil.exp) (exp2: Cil.exp)
   let t2 = typ_of_cil_exp exp2 in
   match (t1, t2) with
   (* pointer arithmetic *)
+  | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), Cil.TPtr(Cil.TInt(Cil.IChar,_),_) -> 
+    let o = translate_binary_operator op pos in
+    let binexp = Iast.mkBinary o e1 e2 None pos in
+    let target_typ = translate_typ expected_typ pos in
+    let newexp = Iast.mkCast target_typ binexp pos in 
+    newexp
   | Cil.TInt(Cil.IChar, _), Cil.TPtr(Cil.TInt(Cil.IChar, _), _)
   | Cil.TPtr(Cil.TInt(Cil.IChar, _), _) , Cil.TInt(Cil.IChar, _) ->
     let pointer_arith_proc = create_pointer_arithmetic_proc op t1 t2 in
