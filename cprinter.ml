@@ -2804,7 +2804,7 @@ let pr_hprel hpa=
 
 let skip_cond_path_trace l = Gen.is_empty l || not(!Globals.cond_path_trace)
 
-let pr_hprel_short hpa=
+let pr_hprel_short hpa =
   fmt_open_box 1;
   (* fmt_string "hprel(1)"; *)
   pr_wrap_test_nocut "" skip_cond_path_trace (fun p -> fmt_string ((pr_list_round_sep ";" (fun s -> string_of_int s)) p)) hpa.hprel_path;
@@ -3165,7 +3165,7 @@ let pr_infer_state_short is =
   pr_wrap_test "hp_defs: " Gen.is_empty (pr_seq "" pr_hp_ref_def) is.is_hp_defs;
   fmt_close()
 
-let string_of_infer_state_short is: string =  poly_string_of_pr  pr_infer_state_short is
+let string_of_infer_state_short is: string = poly_string_of_pr pr_infer_state_short is
 
 let rec pr_numbered_list_formula_trace_ho (e:(context * (formula*formula_trace)) list) (count:int) f =
   match e with

@@ -4896,10 +4896,9 @@ type hprel= {
   predef_svl: CP.spec_var list; (* not needed *)
   hprel_lhs: formula;
   hprel_guard: formula option;
-  (*capture the ctx when we want to capture relations
-    of more than one field. ususally it is heap nodes
-    guard is used in unfolding pre-preds
-  *)
+  (* capture the ctx when we want to capture relations *)
+  (* of more than one field. ususally it is heap nodes *)
+  (* guard is used in unfolding pre-preds              *)
   hprel_rhs: formula;
   hprel_path: cond_path_type;
   hprel_proving_kind: Others.proving_kind;
@@ -4950,7 +4949,7 @@ and infer_state = {
   is_prefix_hps: CP.spec_var list;
   is_cond_path: cond_path_type;
   is_flow: nflow;
- is_hp_equivs: (CP.spec_var*CP.spec_var) list;
+  is_hp_equivs: (CP.spec_var*CP.spec_var) list;
   is_hp_defs: hp_rel_def list;
 }
 

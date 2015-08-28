@@ -164,8 +164,8 @@ type rel_cat =
   | HPRelDefn of (spec_var * spec_var * spec_var list) (*hp name * root * arguments*)
   | HPRelLDefn of spec_var list
   | RelAssume of spec_var list
-  | RankDecr of spec_var list
-  | RankBnd of spec_var
+  (* | RankDecr of spec_var list *)
+  (* | RankBnd of spec_var       *)
 
 
 type xpure_view = {
@@ -537,10 +537,13 @@ let print_rel_cat rel_cat = match rel_cat with
   | HPRelDefn (v,r,args) -> "HP_RELDEFN " ^ (!print_sv v)
   | HPRelLDefn vs -> "HP_REL_L_DEFN " ^ (!print_svl vs)
   | RelAssume v -> "RELASS " ^ (!print_svl v)
-  | RankDecr vs -> "RANKDEC " ^ (!print_svl vs)
-  | RankBnd v -> "RANKBND " ^ (!print_sv v)
+  (* | RankDecr vs -> "RANKDEC " ^ (!print_svl vs) *)
+  (* | RankBnd v -> "RANKBND " ^ (!print_sv v)     *)
+
 let print_lhs_rhs (cat,l,r) = (print_rel_cat cat)^": ("^(!print_formula l)^") --> "^(!print_formula r)
+
 let print_only_lhs_rhs (l,r) = "("^(!print_formula l)^") --> "^(!print_formula r)
+
 let string_of_infer_rel = print_lhs_rhs
 
 
