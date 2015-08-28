@@ -1370,6 +1370,10 @@ Starting Omega.../usr/local/bin/oc
           self::node<Anon_1652,q_1653>@M * q_1653::sll_size<size_1654>@M&
           size_1651=size_1654+1 & 0<=size_1654&{FLOW,(1,28)=__flow#E}[])
  
+ view vars: size_1651
+  ann vars (0 - not a posn): (@M,0),(@M,0)
+  inv: size_1651>=0
+
 # Why did we get, and not also size_1676=0 ?
 
 RELDEFN post_1678: ( res=0 & size_1676=size_1675 & 0<=size_1675) -->  post_1678(size_1676,size_1675,res,flow)]
