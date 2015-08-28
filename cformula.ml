@@ -6211,7 +6211,7 @@ let rec get_ptrs_group_hf hf0=
     | HEmp | HVar _ ->[]
   in helper hf0
 
-and get_node_args hf0=
+and get_node_args hf0 =
   let rec helper hf=
     match hf with
     | Star {h_formula_star_h1 = hf1;
@@ -6230,7 +6230,11 @@ and get_node_args hf0=
     | DataNode hd -> hd.h_formula_data_arguments
     | ViewNode hv -> hv.h_formula_view_arguments
     | ThreadNode ht -> []
-    | HRel _
+    | HRel (hrel, el, _) -> List.map (fun e ->
+        match e with
+        | CP.Var (sv, _) -> sv
+        | _ -> report_error no_pos ("Unexpected exp (not CP.Var) in HRel " ^ 
+              (CP.name_of_spec_var hrel) ^ "'s arguments.")) el
     | Hole _ | FrmHole _
     | HTrue
     | HFalse
@@ -17584,6 +17588,30 @@ let collect_heap_args_formula (f:formula) (sv:CP.spec_var) : (CP.spec_var list *
     !print_formula !print_sv (pr_pair !print_svl (fun v -> v))
     collect_heap_args_formula_x f sv
 
+let collect_feasible_heap_args_formula null_aliases (f: formula) : CP.spec_var list = 
+  let rec helper f = 
+    match f with
+    | Base ({ formula_base_heap = h; formula_base_pure = p; })
+    | Exists ({ formula_exists_heap = h; formula_exists_pure = p; }) ->
+      let heaps = split_star_conjunctions h in
+      let heaps = List.filter (fun h ->
+          match h with | HEmp | HTrue -> false | _ -> true) heaps
+      in
+      let heap_args = Gen.BList.remove_dups_eq CP.eq_spec_var 
+          (List.concat (List.map (fun h ->
+            let heap_node = try [get_node_var h] with _ -> []
+            in heap_node @ (get_node_args h)) heaps)) in
+      if is_empty null_aliases then heap_args
+      else
+        List.filter (fun arg -> Gen.BList.mem_eq CP.eq_spec_var arg null_aliases) heap_args
+    | Or ({ formula_or_f1 = f1; formula_or_f2 = f2; }) ->
+      (helper f1) @ (helper f2)
+  in helper f
+
+let collect_feasible_heap_args_formula null_aliases (f: formula) : CP.spec_var list = 
+  Debug.no_2 "collect_feasible_heap_args_formula" !print_svl !print_formula !print_svl
+    collect_feasible_heap_args_formula null_aliases f
+
 let collect_all_heap_vars_formula (f: formula): CP.spec_var list =
   let rec helper f =
     match f with
@@ -19364,4 +19392,3 @@ let collect_impl_expl_context c =
 let remove_inf_cmd_spec new_spec = match new_spec with
   | EInfer s -> s.formula_inf_continuation
   | _ -> new_spec
-  

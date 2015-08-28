@@ -678,6 +678,67 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
     view_ef_pure_disj = None;
   }
 
+let mk_view_prim v_name v_args v_inv pos =
+  let mix_true = MP.mkMTrue pos in
+  {
+    view_name = v_name;
+    view_vars = v_args;
+    view_pos = pos;
+    view_is_hrel = None;
+    view_is_prim = true;
+    view_data_name = "";
+    view_ho_vars = [];
+    view_cont_vars = [];
+    view_seg_opz = None;
+    view_case_vars = [];
+    view_uni_vars = [];
+    view_labels = [];
+    view_modes = [];
+    view_type_of_self = None;
+    view_is_touching = false;
+    view_is_segmented = false;
+    view_is_tail_recursive = false;
+    view_residents = [];
+    view_forward_ptrs = [];
+    view_forward_fields = [];
+    view_backward_ptrs = [];
+    view_backward_fields = [];
+    view_kind = View_PRIM;
+    view_prop_extns =  [];
+    view_parent_name = None;
+    view_domains = [];
+    view_contains_L_ann = false;
+    view_ann_params = [];
+    view_params_orig = [];
+    view_partially_bound_vars = [];
+    view_materialized_vars = [];
+    view_formula = F.mkETrue (F.mkTrueFlow ()) pos;
+    view_user_inv = v_inv;
+    view_mem = None;
+    view_inv_lock = None;
+    view_fixcalc = None;
+    view_x_formula = mix_true;
+    view_baga_inv = None;
+    view_baga_over_inv = None;
+    view_baga_x_over_inv = None;
+    view_baga_under_inv = None;
+    view_xpure_flag = false;
+    view_baga = CP.BagaSV.mkEmpty;
+    view_addr_vars = [];
+    view_complex_inv = None;
+    view_un_struc_formula = [];
+    view_linear_formula = [];
+    view_base_case = None;
+    view_prune_branches= [];
+    view_is_rec = false;
+    view_pt_by_self = [];
+    view_prune_conditions = [];
+    view_prune_conditions_baga = [];
+    view_prune_invariants = [];
+    view_raw_base_case= None;
+    view_ef_pure_disj = None;
+  }
+
 (** An Hoa [22/08/2011] Extract data field information **)
 
 let is_primitive_proc p = (*p.proc_body==None*) not p.proc_is_main
