@@ -636,7 +636,7 @@ let process_list_lemma ldef_lst  =
   let lem_infer_fnct r1 r2 =
     let _ = begin
       let rel_defs = if not (!Globals.pred_syn_modular) then
-          Sa2.rel_def_stk
+          (* Sa2.rel_def_stk *) Cformula.rel_def_stk
         else Cformula.rel_def_stk
       in
       if not(rel_defs# is_empty) then
@@ -1209,7 +1209,7 @@ let run_pairwise (iante0 : meta_formula) =
 let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let _ = CF.residues := None in
   let _ = Infer.rel_ass_stk # reset in
-  let _ = Sa2.rel_def_stk # reset in
+  (* let _ = Sa2.rel_def_stk # reset in *)
   let _ = CF.rel_def_stk # reset in
   let _ = Iast.set_iprog iprog in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline_quiet ("INPUT 6: \n ### 1 ante = " ^ (string_of_meta_formula iante0) ^"\n ### conseq = " ^ (string_of_meta_formula iconseq0)) else () in
@@ -1557,7 +1557,7 @@ let process_shape_infer pre_hps post_hps=
   let ls_hprel, ls_inferred_hps,_ =
     if List.length sel_hps> 0 && List.length hp_lst_assume > 0 then
       let infer_shape_fnc =  if not (!Globals.pred_syn_modular) then
-          Sa2.infer_shapes
+          (* Sa2.infer_shapes *) Sa3.infer_shapes
         else Sa3.infer_shapes (* Sa.infer_hps *)
       in
       infer_shape_fnc iprog !cprog "" constrs2
@@ -1567,7 +1567,7 @@ let process_shape_infer pre_hps post_hps=
   let _ =
     begin
       let rel_defs = if not (!Globals.pred_syn_modular) then
-          Sa2.rel_def_stk
+          (* Sa2.rel_def_stk *) CF.rel_def_stk
         else CF.rel_def_stk
       in
       if not(rel_defs# is_empty) then
@@ -2084,6 +2084,9 @@ let process_shape_divide pre_hps post_hps=
   let _ = List.iter pr_one ls_cond_danghps_constrs in
   ()
 
+(*
+the below function is obsolete.
+*)
 let process_shape_conquer sel_ids cond_paths=
   let _ = Debug.ninfo_pprint "process_shape_conquer\n" no_pos in
   let ls_pr_defs = !sleek_hprel_defns in
@@ -2102,14 +2105,15 @@ let process_shape_conquer sel_ids cond_paths=
         (pr_list_ln Cprinter.string_of_hp_rel_def_short) in
     let ls_path_defs_settings = List.map (fun (path,link_hpargs, defs) ->
         (path, defs, [],link_hpargs,[])) ls_path_link_defs in
-    Sa2.infer_shapes_conquer iprog !cprog "" ls_path_defs_settings sel_hps
+    (* Sa2.infer_shapes_conquer  iprog !cprog "" ls_path_defs_settings sel_hps *)
+    Sa3.infer_shapes_conquer_old  iprog !cprog "" ls_path_defs_settings sel_hps
     (* else *)
     (*   Sa3.infer_shapes iprog !cprog "" constrs2 *)
     (*       sel_hps sel_post_hps unk_map unk_hpargs link_hpargs true false *)
   in
   let _ =
     begin
-      let rel_defs =  Sa2.rel_def_stk in
+      let rel_defs =  (* Sa2 *)CF.rel_def_stk in
       if not(rel_defs# is_empty) then
         let defs = List.sort CF.hpdef_cmp (rel_defs # get_stk) in
         print_endline_quiet "";
@@ -2124,7 +2128,7 @@ let process_shape_conquer sel_ids cond_paths=
   in
   ()
 
-  
+
 let process_shape_postObl pre_hps post_hps=
   let hp_lst_assume = !sleek_hprel_assumes in
   let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
@@ -2136,17 +2140,22 @@ let process_shape_postObl pre_hps post_hps=
     | [] -> []
     | (_, a)::_ -> a
   in
-  let ls_inferred_hps, ls_hprel, _, _ =
+  let ls_inferred_hps, ls_hprel =
     if List.length sel_hps> 0 && List.length hp_lst_assume > 0 then
-      let infer_shape_fnc = Sa2.infer_shapes_from_fresh_obligation in
-      infer_shape_fnc iprog !cprog "" false cond_path constrs2 [] []
-        sel_hps sel_post_hps [] unk_hpargs link_hpargs true unk_map false
-        [] [] []
-    else [], [],[],[]
+      (* let infer_shape_fnc = Sa2.infer_shapes_from_fresh_obligation in *)
+      (* infer_shape_fnc iprog !cprog "" false cond_path constrs2 [] [] *)
+      (*   sel_hps sel_post_hps [] unk_hpargs link_hpargs true unk_map false *)
+      (*   [] [] [] *)
+      let iflow = !norm_flow_int in
+      let is = Icontext.mk_is constrs2 constrs2 link_hpargs unk_hpargs unk_map sel_hps sel_post_hps cond_path iflow [] [] in
+      let infer_shape_fnc = Sa3.infer_shapes_from_fresh_obligation in
+      let final_is = infer_shape_fnc iprog !cprog iflow "" [] false is sel_hps sel_post_hps true true [] in
+      final_is.CF.is_hp_defs, final_is.CF.is_constrs
+    else [], []
   in
   let _ = begin
     if (ls_hprel <> []) then
-      let pr = pr_list_ln Cprinter.string_of_hp_rel_def in
+      let pr = pr_list_ln Cprinter.string_of_hprel_short in
       print_endline_quiet "";
       print_endline_quiet "\n************************************************";
       print_endline_quiet "*******relational definition (obligation)********";
@@ -2257,7 +2266,7 @@ let process_shape_infer_prop pre_hps post_hps=
   in
   let ls_hprel, (* ls_inferred_hps *) _ ,_=
     let infer_shape_fnc =  if not (!Globals.pred_syn_modular) then
-        Sa2.infer_shapes
+        (* Sa2 *)Sa3.infer_shapes
       else Sa3.infer_shapes (* Sa.infer_hps *)
     in
     infer_shape_fnc iprog !cprog "" hp_lst_assume

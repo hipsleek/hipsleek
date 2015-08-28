@@ -233,7 +233,7 @@ let process_lib_file prog =
     let lib_prog = parse_file_full lib false in
     (*each template data of lib, find corres. data in progs, generate corres. view*)
     let tmpl_data_decls = List.filter (fun dd -> dd.Iast.data_is_template) lib_prog.Iast.prog_data_decls in
-    let horm_views = Sa.generate_horm_view tmpl_data_decls lib_prog.Iast.prog_view_decls prog.Iast.prog_data_decls in
+    let horm_views = Sa3.generate_horm_view tmpl_data_decls lib_prog.Iast.prog_view_decls prog.Iast.prog_data_decls in
     (ddecls@lib_prog.Iast.prog_data_decls),(vdecls@lib_prog.Iast.prog_view_decls@horm_views)
   in
   let ddecls,vdecls = List.fold_left parse_one_lib ([],[]) !Globals.lib_files in
