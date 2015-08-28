@@ -1394,6 +1394,17 @@ size_1676=size_1675&{FLOW,(4,5)=__norm#E}[]
    es_infer_rel: [RELDEFN post_1678: ( res=0 & size_1676=size_1675 & 0<=size_1675) -->  post_1678(size_1676,size_1675,res,flow)]
    ]
 =====================================================================
+# ex17b.slk
+
+lemma_infer_pred [H] self::lseg_one<q> * H(q) -> self::sll_two<>.
+
+lemma_infer_pred [H]  self::sll_two<> <- self::lseg_one<q> * H(q).
+
+# Why is above not working?
+
+Entailing lemma lem_14: Fail. (cex)(must) cause: exception in lemma proving
+!!! fixpoint1:[]
+Entail 1: Fail.(may) cause:Nothing_to_do?Cond_action []
 =====================================================================
 =====================================================================
 =====================================================================

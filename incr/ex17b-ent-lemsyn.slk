@@ -1,0 +1,33 @@
+
+data node {
+	int val;
+	node next;
+}.
+
+
+pred lseg_one<p> == self = p
+	or self::node<_, q> * q::lseg_one<p>
+  inv true.
+
+pred sll_two<> == self = null 
+	or self::node<_, q> * q::sll_two<>
+  inv true.
+
+
+HeapPred H(node a).
+//lemma_infer_pred [H] self::lseg_one<q> * H(q) -> self::sll_two<>.
+lemma_infer_pred [H]  self::sll_two<> <- self::lseg_one<q> * H(q).
+print residue.
+/*
+# ex17b.slk
+
+lemma_infer_pred [H] self::lseg_one<q> * H(q) -> self::sll_two<>.
+
+# Why is below not working?
+
+Entailing lemma lem_14: Fail. (cex)(must) cause: exception in lemma proving
+!!! fixpoint1:[]
+Entail 1: Fail.(may) cause:Nothing_to_do?Cond_action []
+
+
+*/
