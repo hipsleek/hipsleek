@@ -1406,6 +1406,16 @@ Entailing lemma lem_14: Fail. (cex)(must) cause: exception in lemma proving
 !!! fixpoint1:[]
 Entail 1: Fail.(may) cause:Nothing_to_do?Cond_action []
 =====================================================================
+# ex17c.slk
+
+lemma_infer_pred [K] self::ll<> -> self::lseg<p> * K(p).
+
+Starting Omega.../usr/local/bin/oc
+
+!!! WARNING logtime exception:0.
+!!! WARNING logtime exception:0.049134exception in lemma "lem_11" check
+
+Entailing lemma lem_11: Fail. (cex)(must) cause: exception in lemma proving
 =====================================================================
 =====================================================================
 =====================================================================
