@@ -4933,7 +4933,7 @@ and hp_rel_def = {
   def_rhs : ((* cond_path_type * *) formula_guard) list;
   def_flow: nflow option;
 }
-(*  SHAPE ANALYSIS stages *(
+(*  SHAPE ANALYSIS stages *)
 (* hprel --synthesis--> hp_rel_def --normalization-->  hprel_def *)
     (* hprel_def -trans--> view_decl *)
 
