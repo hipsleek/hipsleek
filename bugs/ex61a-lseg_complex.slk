@@ -1,0 +1,35 @@
+data node {
+   node nxt;
+}.
+
+pred lseg<p> == self=p 
+  or (exists a: self::node<a> * a::lseg<p>)
+ inv true.
+
+lemma_safe "SPLIT" self::lseg<p> <-> (exists u: self::lseg<u>*u::lseg<p>).
+
+lemma_safe "NON_EMPTY1" self::node<u1>* u1::lseg<p> 
+       <-> (exists last: self::lseg<last>*last::node<p>).
+
+lemma_safe "NON_EMPTY2" self::lseg<p> & self!=p
+       <-> (exists last: self::lseg<last>*last::node<p>).
+
+checkentail_exact x::node<u> * u::lseg<p> |- x::lseg<v>*v::node<p>.
+
+checkentail x::node<u> * u::lseg<p> * p::node<_>|- x::lseg<v>*v::node<p>.
+
+checkentail x::node<u> * u::lseg<p> |- x::lseg<v>*v::node<p>*p::node<_>.
+
+/*
+# ex61a-lseg_complex.slk --lem-norm-w-coerc
+
+# Why does normalize with coercion go into a loop?
+
+ntailing lemma SPLIT: Valid.
+
+Valid Lemmas : [SPLIT:<==>] added to lemma store.
+
+!!! WARNING : split equiv lemma into two -> lemmas 
+!!! **WARNING****solver.ml#14480:into normalization_with_coerc? why?
+
+*/

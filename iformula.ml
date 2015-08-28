@@ -206,6 +206,9 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
                         h_formula_heap2_label : formula_label option;
                         h_formula_heap2_pos : loc }
 
+let mk_hrel id cl pos =
+  HRel(id,cl,pos)
+
 let mk_absent_ann = Ipure_D.ConstAnn Accs
 let print_pure_formula = ref(fun (c:Ipure.formula) -> "printer not initialized")
 (* Interactive command line *)
@@ -222,6 +225,7 @@ let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized"
 (* 		in Hashtbl.add !linking_exp_list zero 0 *)
 
 let apply_one_imm (fr,t) a = match a with
+  | P.NoAnn -> a
   | P.ConstAnn _ -> a
   | P.PolyAnn (sv, pos) -> P.PolyAnn ((if P.eq_var sv fr then t else sv), pos)
 
@@ -646,6 +650,7 @@ and ann_opt_to_ann_lst (ann_opt_lst: P.ann option list) (default_ann: P.ann): P.
   | (None) :: t      ->  default_ann :: (ann_opt_to_ann_lst t default_ann) 
 
 and fv_imm ann = match ann with
+  | P.NoAnn -> []
   | P.ConstAnn _ -> []
   | P.PolyAnn (id,_) -> [id]
 

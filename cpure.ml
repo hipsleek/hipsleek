@@ -117,6 +117,14 @@ let is_form_typ sv = match sv with
   | SpecVar (FORM, _, _) -> true
   | _ -> false
 
+let is_otype (t : typ) : bool = match t with
+  | TVar _ | Named _ -> true
+  | _ -> false (* | _ -> false *) (* An Hoa *)
+
+let is_btype (t : typ) : bool = match t with
+  | Bool -> true
+  | _ -> false (* | _ -> false *) (* An Hoa *)
+
 let is_node_typ sv = match sv with
   | SpecVar (Named _,_,_) -> true
   | _ -> false
@@ -356,6 +364,10 @@ let get_rel_from_imm_ann p = match p with
   | PostImm f
   | PreImm  f -> f
 
+let extr_spec_var e = match e with 
+  | Var(v,_) -> v
+  | _ -> x_report_error no_pos "extr_spec_var : did not encounter var" 
+
 let rec compare_term_ann a1 a2 =
   match a1, a2 with 
   | Term, Term -> 0
@@ -583,11 +595,17 @@ let is_bool_res_var = function
   | Var (x,_) -> is_bool_typ x (* && is_res_spec_var x *)
   | _ -> false
 
+(* let type_of_spec_var (sv : spec_var) = match sv with *)
+(*   | SpecVar (t, _, p) -> t  *)
+
 let primed_of_spec_var (sv : spec_var) : primed = match sv with
   | SpecVar (_, _, p) -> p 
 
 let name_of_spec_var (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, _) -> v
+
+let primed_ident_of_spec_var (sv : spec_var) = match sv with
+  | SpecVar (_, v, p) -> (v,p)
 
 let name_of_sv (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, _) -> v
@@ -613,6 +631,8 @@ let full_name_of_spec_var (sv : spec_var) : ident = match sv with
 let type_of_spec_var (sv : spec_var) : typ =
   match sv with
   | SpecVar (t, _, _) -> t
+
+let type_of_spec_var_list (sv : spec_var list) : typ list = List.map type_of_spec_var sv
 
 let is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
 
@@ -680,7 +700,7 @@ let string_of_ann a = match a with
   | PolyAnn v -> "PolyAnn"
   | TempAnn v -> "TempAnn"
   | TempRes _ -> "TempRes"
-  | NoAnn -> "@[]"
+  | NoAnn -> "@[NOANN]"
 
 let rec string_of_imm_helper imm = 
   match imm with
@@ -691,7 +711,7 @@ let rec string_of_imm_helper imm =
   | TempAnn(t) -> "@[" ^ (string_of_imm_helper t) ^ "]"
   | TempRes(l,r) -> "@[" ^ (string_of_imm_helper l) ^ ", " ^ (string_of_imm_helper r) ^ "]"
   | PolyAnn(v) -> "@" ^ (string_of_spec_var v)
-  | NoAnn -> "@[]"
+  | NoAnn -> "@[NOANN]"
 
 let rec string_of_imm imm = 
   if not !print_ann then ""
@@ -2282,6 +2302,11 @@ and is_formula_arith (f:formula) :bool =
   Debug.no_1 "is_formula_arith" !print_formula string_of_bool
     is_formula_arith_x f
 
+and is_exp_ann (e:exp) : bool =
+  match e with
+  | Var (sv, _) -> is_ann_typ sv
+  | AConst (_, _) -> true
+  | _ -> false
 (* smart constructor *)
 
 (*Create a locklevel of a lock sv*)
@@ -2986,7 +3011,7 @@ and split_conjunctions_x =  function
 
 and split_conjunctions f =  
   let pr = !print_formula in
-  Debug.DebugEmpty.no_1 "split_conjunctions" pr (pr_list pr) split_conjunctions_x f 
+  Debug.no_1 "split_conjunctions" pr (pr_list pr) split_conjunctions_x f 
 
 
 and join_conjunctions fl = conj_of_list fl no_pos
@@ -3893,10 +3918,6 @@ and are_same_types (t1 : typ) (t2 : typ) = match t1 with
       | _ -> false  
     end
   | _ -> t1 = t2
-
-and is_otype (t : typ) : bool = match t with
-  | TVar _ | Named _ -> true
-  | _ -> false (* | _ -> false *) (* An Hoa *)
 
 and name_of_type (t : typ) : ident = 
   string_of_typ t
@@ -5759,6 +5780,7 @@ module PtrSV = Ptr(SV);;
 module BagaSV = Gen.Baga(PtrSV);;
 module EMapSV = Gen.EqMap(SV);;
 module DisjSetSV = Gen.DisjSet(PtrSV);;
+module SetSV = Set.Make(SV);;
 
 type baga_sv = BagaSV.baga
 
@@ -7544,6 +7566,8 @@ let exp_to_imm (e:exp) : ann =
   | AConst(a,loc) -> ConstAnn a
   | Var(v,loc)    -> PolyAnn v
   | _ -> NoAnn
+
+let mkSubAnn_from_imm ?pos1:(loc1=no_pos) ?pos2:(loc2=no_pos) a1  a2 = mkSubAnn (imm_to_exp a1 loc1) (imm_to_exp a2 loc2)
 
 (* get arguments of bformula and allowing constants *)
 let get_bform_eq_args_with_const (bf:b_formula) =
@@ -10905,9 +10929,9 @@ let drop_nonlinear_formula_rev (f:formula) : formula =
   let nf = drop_formula pr_strong pr_weak f in
   (* let c = cnt#get in *)
   (* if (c) > 0 then *)
-  (*   let () = x_binfo_hp (add_str "non-linear detected" string_of_int) c no_pos in *)
-  (*   let () = x_binfo_hp (add_str "DROP non-linear (BFE)" pr) f no_pos in *)
-  (*   let () = x_binfo_hp (add_str "DROP non-linear (AFT)" pr) nf no_pos in *)
+  (*   let () = x_tinfo_hp (add_str "non-linear detected" string_of_int) c no_pos in *)
+  (*   let () = x_tinfo_hp (add_str "DROP non-linear (BFE)" pr) f no_pos in *)
+  (*   let () = x_tinfo_hp (add_str "DROP non-linear (AFT)" pr) nf no_pos in *)
     nf
   (* else nf *)
 
@@ -14861,24 +14885,31 @@ let create_view_arg_list_from_map (map: view_arg list) (hargs: spec_var list) (a
 let create_view_arg_list_from_pos_map (map: (view_arg*int) list) (hargs: spec_var list) (annot: (annot_arg*int) list) = 
   try
     (* update the annotations first *)
-    let () = Debug.ninfo_pprint ("annot: " ^(string_of_int (List.length annot)  )) no_pos in
-    let () = Debug.ninfo_pprint ("annot: " ^(pr_list (string_of_int ) (List.map snd annot))) no_pos in
+    let () = x_tinfo_pp ("annot: " ^(string_of_int (List.length annot)  )) no_pos in
+    let () = x_tinfo_hp (add_str "annot: "  (pr_list string_of_int)) (List.map snd annot) no_pos in
+    let () = x_tinfo_hp (add_str "hargs: " !print_svl)  hargs  no_pos in
     let view_args_pos = List.map (fun (va,p) -> 
         try 
-
           let () = Debug.ninfo_pprint ("p: " ^(string_of_int p)) no_pos in
-          let (a,p) = List.find (fun (_,i) ->           let () = Debug.ninfo_pprint ("i: " ^(string_of_int i)) no_pos in p == i) annot in
+          let (a,p) = List.find (fun (_,i) ->
+              let () = Debug.ninfo_pprint ("i: " ^(string_of_int i)) no_pos in p == i) annot in
           (annot_arg_to_view_arg a, p)
         with Not_found -> (va,0)) map in
-    let () = Debug.ninfo_pprint ("view_args_pos: " ^(string_of_int (List.length view_args_pos)  )) no_pos in
+    let () = x_tinfo_pp ("view_args_pos: " ^(string_of_int (List.length view_args_pos)  )) no_pos in
     let temp_pos = Gen.range 1 (List.length view_args_pos) in
     let view_arg_temp_pos = List.combine view_args_pos temp_pos in
     let to_be_updated, already_updated = List.partition (fun ((va,p),tp) -> p == 0 ) view_arg_temp_pos in
-    let () = Debug.ninfo_pprint ("to_be_updated: " ^(string_of_int (List.length to_be_updated)  )) no_pos in
-    let () = Debug.ninfo_pprint ("hargs: "^ (string_of_int (List.length  hargs)))  no_pos in
-    let new_update = try  List.map (fun (((va,_),p),sv) -> ((sv_to_view_arg sv,0),p) ) (List.combine to_be_updated hargs) 
+    let () = x_tinfo_hp (add_str "to_be_updated: " string_of_int) (List.length to_be_updated) no_pos in
+    let new_update = try  
+        (* type: (((view_arg * int) * int) * spec_var) list *)
+        let new_com = List.combine to_be_updated hargs in
+        let pr = pr_list (pr_pair (pr_pair (pr_pair print_view_arg string_of_int) string_of_int) !print_sv) in
+        let () = x_tinfo_hp (add_str "new_com" pr) new_com no_pos in
+        List.map (fun (((va,_),p),sv) -> ((sv_to_view_arg sv,0),p) ) new_com
       with Invalid_argument s -> 
-        raise (Invalid_argument (s ^ " at Cpure.create_view_arg_list_from_pos_map 000") )
+        (* TODO : to use gen_pos *)
+        List.map (fun sv -> ((sv_to_view_arg sv,0),0)) hargs
+        (* raise (Invalid_argument (s ^ " at Cpure.create_view_arg_list_from_pos_map 000") ) *)
     in
     let full_updated = new_update@already_updated in
     let updated_in_orig_pos = List.sort (fun (_,p1) (_,p2) -> p1 - p2) full_updated in

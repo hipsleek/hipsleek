@@ -150,7 +150,8 @@ let fresh_data_v_x f0=
   (* let fr_v_sps2 = CP.fresh_spec_vars v_sps3 in *)
   (* let sst = List.combine v_sps3 fr_v_sps2 in *)
   (* subst sst f0 *)
-  if not !Globals.sa_pure_field then
+  if not (Globals.infer_const_obj # is_pure_field) 
+  (* !Globals.sa_pure_field *) then
     formula_trans_heap_node fresh_hf f0
   else f0
 
@@ -932,7 +933,7 @@ let unfold_non_rec_views prog unfold_fnc is_view_rec_fnc f=
     f
 let check_inconsistency hf mixf=
   let new_mf = xpure_for_hnodes hf in
-  let cmb_mf = MCP.merge_mems new_mf mixf true in
+  let cmb_mf = x_add MCP.merge_mems new_mf mixf true in
   not (TP.is_sat_raw cmb_mf)
 
 let check_inconsistency_f f0 pure_f=

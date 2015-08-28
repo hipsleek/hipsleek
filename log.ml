@@ -315,7 +315,7 @@ class last_commands =
     val mutable z3_cnt = 0
     val mutable oc_cnt = 0
     val mutable cache_cnt = 0
-    val sleek_stk = new Gen.stack_noexc (-1,-1) (fun (a,_) -> string_of_int a) (fun (a,_) (b,_) -> a==b)
+    val sleek_stk = new Gen.stack_noexc "sleek_stk" (-1,-1) (fun (a,_) -> string_of_int a) (fun (a,_) (b,_) -> a==b)
     (* method set_sleek_num no = sleek_no <- no *)
     method get_sleek_no_only = fst(sleek_stk # top_no_exc)
     method get_proof_num =
@@ -434,20 +434,20 @@ let add_proof_tbl pno plog =
     Hashtbl.add proof_log_tbl pno plog
 
 let sleek_log_stk : sleek_log_entry  Gen.stack_filter 
-  = new Gen.stack_filter string_of_sleek_log_entry (==) (fun e -> not(e.sleek_proving_avoid))
+  = new Gen.stack_filter "sleek_log_stk" string_of_sleek_log_entry (==) (fun e -> not(e.sleek_proving_avoid))
 
 (* let sleek_proving_kind = ref (POST : sleek_proving_kind) *)
 let sleek_proving_id = ref (0 : int)
 
 (* let current_hprel_ass = ref ([] : CF.hprel list) *)
-let current_infer_rel_stk : CP.infer_rel_type Gen.stack_pr = new Gen.stack_pr 
+let current_infer_rel_stk : CP.infer_rel_type Gen.stack_pr = new Gen.stack_pr "current-infer-rel-stk"
   CP.string_of_infer_rel (==)
 
 let current_hprel_ass_stk : CF.hprel  Gen.stack_pr 
-  = new Gen.stack_pr Cprinter.string_of_hprel_short (==) 
+  = new Gen.stack_pr "current-hprel-ass-stk" Cprinter.string_of_hprel_short (==) 
 
 let current_tntrel_ass_stk : Tid.tntrel Gen.stack_pr = 
-  new Gen.stack_pr string_of_tntrel (==) 
+  new Gen.stack_pr "current-tntrel-ass-stk" string_of_tntrel (==) 
 
 (* let get_sleek_proving_id () = *)
 (*   let r = !sleek_proving_id in *)
@@ -456,7 +456,7 @@ let current_tntrel_ass_stk : Tid.tntrel Gen.stack_pr =
 
 (* let proof_log_list  = ref [] (\*For printing to text file with the original order of proof execution*\) *)
 let proof_log_stk : proof_log  Gen.stack_filter 
-  = new Gen.stack_filter string_of_proof_log_entry (fun e1 e2 -> e1.log_id==e2.log_id) (fun e -> true)
+  = new Gen.stack_filter "proof_log_stk" string_of_proof_log_entry (fun e1 e2 -> e1.log_id==e2.log_id) (fun e -> true)
 (* 	if (proving_kind # string_of)<>"TRANS_PROC" then *)
 (* true) *)
 (*     log_proving_kind : Others.proving_kind; *)

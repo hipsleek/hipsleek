@@ -1,0 +1,19 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred sll<> == self = null 
+	or self::node<_, q> * q::sll<>
+  inv true.
+
+HeapPred H(node a).
+
+//1
+infer_exact [H] H(x) * x::sll<> & x=null |- true.
+print residue.
+
+
+//2
+infer [H] x::sll<> & x=null |-  H(x).
+print residue.
