@@ -5,31 +5,31 @@ data node {
 }.
 
 
-pred lseg_one<p> == self = p
-	or self::node<_, q> * q::lseg_one<p>
+pred lseg<p> == self = p
+	or self::node<_, q> * q::lseg<p>
   inv true.
 
-pred sll_two<> == self = null 
-	or self::node<_, q> * q::sll_two<>
+pred sll<> == self = null 
+	or self::node<_, q> * q::sll<>
   inv true.
 
-lemma_safe self::sll_two<> <- self::lseg_one<q> * q::sll_two<>.
+lemma_safe self::sll<> <- self::lseg<q> * q::sll<>.
 
-checkentail x::lseg_one<null> |- x::sll_two<>.
+checkentail x::lseg<null> |- x::sll<>.
 print residue.
 
-checkentail x::lseg_one<null> |- x::lseg_one<q> * q::sll_two<>.
-print residue.
+//checkentail x::lseg<null> |- x::lseg<q> * q::sll<>.
+//print residue.
 /*
 # ex17d1.slk
 
 How come cannot have:
 
- checkentail x::lseg_one<null> |- x::sll_two<>.
+ checkentail x::lseg<null> |- x::sll<>.
 
 But can prove:
 
- checkentail x::lseg_one<null> |- x::lseg_one<q> * q::sll_two<>.
+ checkentail x::lseg<null> |- x::lseg<q> * q::sll<>.
 
 # refine strategy..
 
@@ -42,6 +42,6 @@ Residue:
 
 /*
 HeapPred H(node a).
-lemma_infer_pred [H] self::lseg_one<q> * H(q) -> self::sll_two<>.
+lemma_infer_pred [H] self::lseg<q> * H(q) -> self::sll<>.
 print residue.
 */
