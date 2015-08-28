@@ -3,22 +3,7 @@
  * Author: Thomas Ströder
  */
 #include <stdlib.h>
-/*@
-WFS<> ==
-  self::char_star<0,q>*q::BADS<> 
-  or self::char_star<v,q>*q::WFS<> & v!=0 
-  inv true;
 
-WFSeg<p> ==
-  self=p 
-  or self::char_star<v,q>*q::WFSeg<p> & v!=0
-  inv true;
-
-BADS<> ==
-  self::char_star<v,q>*q::BADS<> 
-  inv true;
-
-*/
 extern int __VERIFIER_nondet_int(void);
 
 int (cstrlen)(const char *s)

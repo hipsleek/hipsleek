@@ -5,21 +5,21 @@
 #include <stdlib.h>
 
 /*@
-WFS<> ==
-  self::char_star<0,q>*q::BADS<> 
-  or self::char_star<v,q>*q::WFS<> & v!=0 
-  inv true;
+WFS<n> ==
+  self::char_star<0,q>*q::BADS<> & n=0
+  or self::char_star<v,q>*q::WFS<n-1> & v!=0 
+  inv n>=0;
 
-WFSeg<p> ==
-  self=p 
-  or self::char_star<v,q>*q::WFSeg<p> & v!=0
-  inv true;
+WFSeg<p, n> ==
+  self=p & n=0
+  or self::char_star<v,q>*q::WFSeg<p, n-1> & v!=0
+  inv n>=0;
 
 BADS<> ==
   self::char_star<v,q>*q::BADS<> 
   inv true;
 
-lemma_safe self::WFS<> -> self::BADS<>.
+lemma_safe self::WFS<n> -> self::BADS<>.
 
 */
 
@@ -27,7 +27,7 @@ extern int __VERIFIER_nondet_int(void);
 
 int (cstrcmp)(const char *s1, const char *s2)
   /*@
-     requires s1::WFS<> * s2::WFS<>
+     requires s1::WFS<n1> * s2::WFS<n2>
      ensures true;
   */
  {
@@ -37,9 +37,9 @@ int (cstrcmp)(const char *s1, const char *s2)
         are identical.  */
      while (*s1 != '\0' && *s1 == *s2) 
        /*@
-          requires s1::WFS<> * s2::BADS<>
-          ensures s1::WFSeg<s1'>*s1'::char_star<0,q1>*q1::BADS<> * s2'::BADS<>
-          or s1::WFSeg<s1'>*s1'::char_star<c1,q>*q::WFS<>*s2::WFSeg<s2'>*s2'::char_star<c2,qq>*qq::BADS<>;
+          requires s1::WFS<n1> * s2::BADS<>
+          ensures s1::WFSeg<s1',n1>*s1'::char_star<0,q1>*q1::BADS<> * s2'::BADS<>
+          or s1::WFSeg<s1',m1>*s1'::char_star<c1,q>*q::WFS<n1-m1-1>*s2::WFSeg<s2',m2>*s2'::char_star<c2,qq>*qq::BADS<>;
        */
      {
          s1++;
@@ -52,7 +52,7 @@ int (cstrcmp)(const char *s1, const char *s2)
      return ((uc1 < uc2) ? -1 : (uc1 > uc2));
  }
 
-int main() {
+/*int main() {
     int length1 = __VERIFIER_nondet_int();
     int length2 = __VERIFIER_nondet_int();
     if (length1 < 1) {
@@ -67,3 +67,5 @@ int main() {
     nondetString2[length2-1] = '\0';
     return cstrcmp(nondetString1,nondetString2);
 }
+
+*/

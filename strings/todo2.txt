@@ -55,8 +55,8 @@ Message: argument types do not match 4
 
 ==================================================================
 # svcomp_cstrlen_true_alloca.c
-
-Need to add sized pred
+char_star p, s;
+Not supported yet: p-s
 ==================================================================
 # svcomp_cstrncat_alloca.c
 ==================================================================
