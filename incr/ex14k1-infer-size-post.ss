@@ -31,15 +31,15 @@ int size_helper(node x)
   infer[H]
   requires H(x)  ensures true;//H1(x);
 */
-//  infer[@shape_prepost,@classic] requires true ensures true;
-  infer[@size,@post_n] requires x::sll<> ensures x::sll<>;
+infer[@shape_prepost,@classic] requires true ensures true;
+//  infer[@size,@post_n] requires x::sll<> ensures x::sll<>;
 //  infer[@post_n] requires x::ll<aa> ensures x::ll<bb>;
 
 {
   if (x==null) 
     return 0;
   else {
-    return 1+ size_helper(x.next);
+    return 2+ size_helper(x.next);
   }
 }
 

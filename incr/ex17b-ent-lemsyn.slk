@@ -23,7 +23,9 @@ print residue.
 
 lemma_infer_pred [H] self::lseg_one<q> * H(q) -> self::sll_two<>.
 
-# Why is below not working?
+lemma_infer_pred [H]  self::sll_two<> <- self::lseg_one<q> * H(q).
+
+# Why is above not working?
 
 Entailing lemma lem_14: Fail. (cex)(must) cause: exception in lemma proving
 !!! fixpoint1:[]
