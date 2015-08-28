@@ -43,6 +43,10 @@ void main()
 
 
 /*
+# ex17z.ss
+
+  Added BaseCaseFold inside lemma
+
 # ex17.ss (FIXED)
 
 To strip anonymous variables.

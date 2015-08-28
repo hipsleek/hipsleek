@@ -2228,7 +2228,9 @@ and process_infer_heap_match_x ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs
       []
     else [(2,M_infer_heap (rhs_node,rhs_rest))]
   in
-  if (is_view rhs_node) && (get_view_original rhs_node) then
+  (* WN : we need base-case fold after lemma see incr/ex17b1.slk *)
+  (* does removing original cause loop? can we use counting? *)
+  if (is_view rhs_node) (* && (get_view_original rhs_node) *) then
     let r = (2, M_base_case_fold { match_res_lhs_node = HEmp;
                                    match_res_lhs_rest = lhs_h;
                                    match_res_holes = [];

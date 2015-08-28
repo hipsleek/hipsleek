@@ -1,4 +1,3 @@
-
 data node {
 	int val;
 	node next;
@@ -13,10 +12,13 @@ pred sll<> == self = null
 	or self::node<_, q> * q::sll<>
   inv true.
 
-lemma_safe self::sll<> <- self::lseg<q> * q::sll<>.
+lemma_unsafe self::sll<> <- self::lseg<q> * q::sll<>.
 
 checkentail x::lseg<null> |- x::sll<>.
 print residue.
+
+//checkentail x=fd & fd=null |- x::sll<>.
+//print residue.
 
 //checkentail x::lseg<null> |- x::lseg<q> * q::sll<>.
 //print residue.
