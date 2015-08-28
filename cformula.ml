@@ -4933,24 +4933,27 @@ and hp_rel_def = {
   def_rhs : ((* cond_path_type * *) formula_guard) list;
   def_flow: nflow option;
 }
-
+(*  SHAPE ANALYSIS stages *(
+(* hprel --synthesis--> hp_rel_def --normalization-->  hprel_def *)
+    (* hprel_def -trans--> view_decl *)
 
 (* to convert to using hp_rel_def_new *)
 
 (* and infer_rel_type =  (CP.rel_cat * CP.formula * CP.formula) *)
-
 and infer_state = {
   is_constrs : hprel list; (*current processing*)
   is_all_constrs : hprel list;
   is_link_hpargs : (CP.spec_var * CP.spec_var list) list;
-  is_dang_hpargs : (CP.spec_var * CP.spec_var list) list; (*dangling hps = link hps = unknown. to remove one of them*)
+  is_dang_hpargs : (CP.spec_var * CP.spec_var list) list; 
+     (*dangling hps = link hps = unknown. to remove one of them*)
   is_unk_map: ((CP.spec_var * int list)  * CP.xpure_view) list ;
+    (* unk_map : obsolete? *)
   is_sel_hps: CP.spec_var list;
   is_post_hps: CP.spec_var list;
   is_prefix_hps: CP.spec_var list;
   is_cond_path: cond_path_type;
   is_flow: nflow;
- is_hp_equivs: (CP.spec_var*CP.spec_var) list;
+  is_hp_equivs: (CP.spec_var*CP.spec_var) list;
   is_hp_defs: hp_rel_def list;
 }
 
