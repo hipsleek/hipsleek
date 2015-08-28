@@ -923,6 +923,7 @@ let sac = ref false
 let sa_pred_case = ref false
 
 let sags = ref true
+let sa_prefix_emp = ref true
 
 let sa_gen_slk = ref false
 let gen_fixcalc = ref false
@@ -1015,7 +1016,7 @@ let pred_elim_dangling = ref true
 (* let sa_inlining = ref false *)
 
 let sa_sp_split_base = ref false
-let sa_pure_field = ref false
+(* let sa_pure_field = ref false *)
 
 let sa_pure = ref true
 
@@ -1283,7 +1284,7 @@ let adhoc_flag_1 = ref false
 let adhoc_flag_2 = ref false
 let adhoc_flag_3 = ref false
 let old_keep_absent = ref false
-let old_empty_to_conseq = ref false
+let old_empty_to_conseq = ref true (* false *)
 let weaker_pre_flag = ref true
 
 let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
@@ -1357,6 +1358,7 @@ let pre_residue_lvl = ref 0
 (* Lvl -1 - never add any pre to residue *)
 
 let check_coercions = ref false
+let eager_coercions = ref true
 let dump_lemmas = ref false
 let dump_lemmas_med = ref false
 
@@ -1530,6 +1532,10 @@ type infer_type =
   | INF_POST (* For infer[@post] *)
   | INF_PRE (* For infer[@pre] *)
   | INF_SHAPE (* For infer[@shape] *)
+  | INF_SHAPE_PRE (* For infer[@shape_post] *)
+  | INF_SHAPE_POST (* For infer[@shape_post] *)
+  | INF_SHAPE_PRE_POST (* For infer[@shape_prepost] *)
+  | INF_PURE_FIELD (* For infer[@pure_field] *)
   | INF_ERROR (* For infer[@error] *)
   | INF_DE_EXC (* For infer[@dis_err] *)
   | INF_ERR_MUST (* For infer[@err_must] *)
@@ -1564,6 +1570,9 @@ let string_of_inf_const x =
   | INF_POST -> "@post"
   | INF_PRE -> "@pre"
   | INF_SHAPE -> "@shape"
+  | INF_SHAPE_PRE -> "@shape_pre"
+  | INF_SHAPE_POST -> "@shape_post"
+  | INF_SHAPE_PRE_POST -> "@shape_prepost"
   | INF_ERROR -> "@error"
   | INF_DE_EXC -> "@dis_err"
   | INF_ERR_MUST -> "@err_must"
@@ -1572,6 +1581,7 @@ let string_of_inf_const x =
   | INF_ERR_MAY -> "@err_may"
   | INF_SIZE -> "@size"
   | INF_IMM -> "@imm"
+  | INF_PURE_FIELD -> "@pure_field"
   | INF_FIELD_IMM -> "@field_imm"
   | INF_ARR_AS_VAR -> "@arrvar"
   | INF_EFA -> "@efa"
@@ -1676,9 +1686,13 @@ class inf_obj  =
         helper "@pre"           INF_PRE;
         helper "@post"          INF_POST;
         helper "@imm"           INF_IMM;
+        helper "@pure_field"    INF_PURE_FIELD;
         helper "@field_imm"     INF_FIELD_IMM;
         helper "@arrvar"        INF_ARR_AS_VAR;
         helper "@shape"         INF_SHAPE;
+        helper "@shape_pre"     INF_SHAPE_PRE;
+        helper "@shape_post"    INF_SHAPE_POST;
+        helper "@shape_prepost" INF_SHAPE_PRE_POST;
         helper "@error"         INF_ERROR;
         helper "@dis_err"       INF_DE_EXC;
         helper "@err_may"       INF_ERR_MAY;
@@ -1689,6 +1703,7 @@ class inf_obj  =
         helper "@dfa"           INF_DFA;
         helper "@flow"          INF_FLOW;
         helper "@leak"          INF_CLASSIC;
+        helper "@classic"       INF_CLASSIC;
         helper "@par"           INF_PAR;
         helper "@ver_post"      INF_VER_POST; (* @ato, @arr_to_var *)
         helper "@imm_pre"       INF_IMM_PRE;
@@ -1721,9 +1736,13 @@ class inf_obj  =
     method is_field_imm = self # get INF_FIELD_IMM
     method is_arr_as_var  = self # get INF_ARR_AS_VAR
     method is_imm  = self # get INF_IMM
+    method is_pure_field  = self # get INF_PURE_FIELD (* || !sa_pure_field *)
     (* immutability inference *)
     method is_field = (self # get INF_FIELD_IMM)
     method is_shape  = self # get INF_SHAPE
+    method is_shape_pre  = self # get INF_SHAPE_PRE
+    method is_shape_post  = self # get INF_SHAPE_POST
+    method is_shape_pre_post  = self # get INF_SHAPE_PRE_POST
     (* shape inference *)
     method is_error  = self # get INF_ERROR
     method is_dis_err  = self # get INF_DE_EXC
@@ -1833,6 +1852,7 @@ class inf_obj_sub  =
                                   && infer_const_obj # is_err_must)
     method is_classic_all  = super # is_classic || infer_const_obj # is_classic
     method is_imm_all  = super # is_imm || infer_const_obj # is_imm
+    method is_pure_field_all  = super # is_pure_field || infer_const_obj # is_pure_field
     (* method is__all  = super # is_ || infer_const_obj # is_ *)
     method is_ver_post_all  = super # is_ver_post || infer_const_obj # is_ver_post
     method is_par_all  = super # is_par || infer_const_obj # is_par

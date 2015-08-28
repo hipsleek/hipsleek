@@ -61,7 +61,10 @@ int main()
 }
 
 
-/*=============================================================
+/*
+# was ex12f.c with full spec
+
+=============================================================
 Why this post condition cannot be derived?
 
 Message: Post condition cannot be derived.
@@ -69,6 +72,14 @@ Procedure while_23_5$char_star~char_star FAIL.(2)
 Exception Failure("Post condition cannot be derived.") Occurred!
 Error(s) detected when checking procedure while_23_5$char_star~char_star
 
+Message: Post condition cannot be derived.
+Procedure while_23_5$char_star~char_star FAIL.(2)
+Exception Failure("Post condition cannot be derived.") Occurred!
+Error(s) detected when checking procedure while_23_5$char_star~char_star
+
+
+--> while (*s++!='\0'){} is different from while(*s!='\0'){s++} --> How to solve?
+*/
 
 --> while (*s++!='\0'){} is different from while(*s!='\0'){s++} --> How to solve?
 */

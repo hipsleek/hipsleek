@@ -1,0 +1,33 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+HeapPred H(node a).
+HeapPred P(node a).
+
+infer [H,P] H(p) * x::node<1,p> & p=null |- P(p).
+
+
+print residue.
+
+
+
+/*
+# ex15a.slk 
+
+infer [H,P] H(p) * x::node<1,p> & p=null |- P(p).
+
+ <1>x::node<Anon_12,p>@M&p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null --> P(p)&true]
+[[ COND ==>  InferHeap]]
+
+EXPECTS:
+  H(p)&p=null | x::node<_,p> --> P(p)
+which shows the heap context of p..
+
+
+*/

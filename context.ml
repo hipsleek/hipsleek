@@ -991,7 +991,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
         match rhs_node with
         | HRel (hp2,e2,_) -> 
           if CP.eq_spec_var hp hp2 then
-            let () = x_binfo_pp "same HRel in LHS & RHS" no_pos in
+            let () = x_tinfo_pp "same HRel in LHS & RHS" no_pos in
             (* WN : this needs to be properly implemented *)
             [] (* form_match_on_two_hrel [hp] "" [hp2] prog hp e rhs_node aset f f0 emap  *)
           else []
