@@ -1433,6 +1433,22 @@ Can conclude:
 Thus:
   self::sll_two<> <- self::lseg_one<q> * q::sll_two<>
 =====================================================================
+# ex17d1.slk
+
+How come cannot have:
+
+ checkentail x::lseg_one<null> |- x::sll_two<>.
+
+But can prove:
+
+ checkentail x::lseg_one<null> |- x::lseg_one<q> * q::sll_two<>.
+
+# refine strategy..
+
+Entail 2: Valid. 
+Residue:
+ <1>emp&q=null&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  Match(x,x) ==>  COND ==>  BaseCaseFold]]
 =====================================================================
 =====================================================================
 =====================================================================
