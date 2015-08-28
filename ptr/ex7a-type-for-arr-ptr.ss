@@ -16,7 +16,7 @@ lemma_safe self::arr_seg<p,n>&n=a+b & a>=0 & b>=0 & p=self+n
 
 arr_seg<p,n> == case {
    n=0 -> [] self=p & n=0;
-   n!=0 -> [] self::arr_int<_,q>*q::arr_seg<p,n-1> & q=self+1;
+   n!=0 -> [] self::arr_int<_,q>*q::arr_seg<p,n-1>;
    }
 inv n>=0 &  self+n=p;
     /*
@@ -27,7 +27,7 @@ arr_seg<p,n> == self=p & n=0
     */
 
 arr_seg2<p,n> == self=p & n=0
-  or self::arr_int<5,q>*q::arr_seg2<p,n-1> & q=self+1
+  or self::arr_int<5,q>*q::arr_seg2<p,n-1> //& q=self+1
   inv n>=0 &  self+n=p;
 
 void upd_arr(arr_int a, int v)
@@ -43,8 +43,11 @@ int get_arr(arr_int a)
   ensures res=v;
 
 void foo2(arr_int a,int i)
-  requires a::arr_seg<p,n> & n=10-i+5 & i>=0 & i<=10
-  ensures a::arr_seg2<q,10-i> *q::arr_seg<p,5> & q=a+(10-i)
+  requires a::arr_seg<p,n> & n=10-i+mm & i>=0 & i<=10 & mm>=0
+  ensures a::arr_seg2<q,10-i> *q::arr_seg<p,mm> & q=a+(10-i)
+  ;
+  requires a::arr_seg<p,n> & n=10-i & i>=0 & i<=10 
+  ensures a::arr_seg2<q,10-i> & q=a+(10-i) & q=p
   ;
 
 {
