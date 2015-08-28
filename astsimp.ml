@@ -1937,8 +1937,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
          (* let xf = pure_of_mix xform' in *)
          (* let xf = strip_exists_pure xf in *)
          (* let (subs,_) = x_add_1 Mcpure.get_all_vv_eqs_mix xform' in *)
-         (* let () = Debug.info_hprint (add_str "xform(mix)" Cprinter.string_of_mix_formula) xform' no_pos in *)
-         (* let () = Debug.info_hprint (add_str "view_addr_vars" !Cast.print_svl) addr_vars no_pos in *)
+         let () = Debug.ninfo_hprint (add_str "xform(mix)" Cprinter.string_of_mix_formula) xform' no_pos in
+         let () = Debug.ninfo_hprint (add_str "view_addr_vars" !Cast.print_svl) addr_vars no_pos in
          (* let () = Debug.info_hprint (add_str "view_vars" !Cast.print_svl) vdef.C.view_vars no_pos in *)
          let baga = (match ms.CF.mem_formula_mset with | [] -> [] | h::_ -> h) in
          (* let () = Debug.info_hprint (add_str "view_baga" !Cast.print_svl) baga no_pos in *)
