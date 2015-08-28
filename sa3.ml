@@ -2768,7 +2768,7 @@ and iprocess_action_x iprog prog proc_name callee_hps is act need_preprocess det
   match act with
   | IC.I_pre_add_dangling -> failwith "to be implemented"
   | IC.I_infer_dang -> 
-    let is = x_add_1 Syn.add_dangling prog is in
+    let is = x_add_1 Syn.syn_preds prog is in
     infer_analize_dang prog is
   (* | IC.I_pre_trans_closure -> infer_pre_trans_closure prog is *)
   | IC.I_split_base -> infer_split_base prog is

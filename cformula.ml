@@ -2009,6 +2009,11 @@ and is_hole (h : h_formula) = match h with
   | Hole _ -> true
   | _ -> false
 
+and is_hrel (h: h_formula) =
+  match h with
+  | HRel _ -> true
+  | _ -> false
+
 and is_hformula_contain_htrue (h: h_formula) : bool =
   match h with
   | Star { h_formula_star_h1 = h1;
@@ -5141,6 +5146,15 @@ let subst_hpdef ss hpdef=
     hprel_def_guard = n_guard;
     hprel_def_body = n_body;
   }
+
+let subst_hprel_constr sst hprel =
+  let n_guard = subst_opt sst hprel.hprel_guard in
+  let n_lhs = subst sst hprel.hprel_lhs in
+  let n_rhs = subst sst hprel.hprel_rhs in
+  { hprel with
+    hprel_lhs = n_lhs;
+    hprel_rhs = n_rhs;
+    hprel_guard = n_guard; }
 
 let hp_def_cmp (d1:hp_rel_def) (d2:hp_rel_def) =
   try
@@ -12971,7 +12985,7 @@ let join_conjunct_opt l = match l with
   | h::t -> Some (List.fold_left (fun a c-> mkOr c a no_pos) h t)
 
 let join_star_conjunctions (hs : h_formula list) : h_formula  = 
-  List.fold_left(fun a c-> mkStarH a c no_pos ) HEmp hs
+  List.fold_left (fun a c-> mkStarH a c no_pos ) HEmp hs
 
 let join_star_conjunctions_opt_x (hs : h_formula list) : (h_formula option)  = 
   match hs with
