@@ -17,22 +17,24 @@ pred sll<> == self = null
 HeapPred H(node a).
 //lemma_infer_pred [H] self::lseg<q> * H(q) -> self::sll<>.
 // fail due to complex lemma
-lemma_infer_pred [H]  self::sll<> <- self::lseg<q> * H(q).
+//lemma_infer_pred [H]  self::sll<> <- self::lseg<q> * H(q).
+// Valid
+
+lemma_infer_pred [H]  self::sll<> -> self::lseg<q> * H(q).
 print residue.
-//lemma_infer_pred [H]  self::sll<> -> self::lseg<q> * H(q).
-//print residue.
 /*
-# ex17b.slk
+# ex17h.slk
 
-lemma_infer_pred [H] self::lseg<q> * H(q) -> self::sll<>.
-
-lemma_infer_pred [H]  self::sll<> <- self::lseg<q> * H(q).
+lemma_infer_pred [H]  self::sll<> -> self::lseg<q> * H(q).
 
 # Why is above not working?
 
+Starting Omega.../usr/local/bin/oc
+
+!!! WARNING logtime exception:0.000326
+!!! WARNING logtime exception:0.0307exception in lemma "lem_14" check
+
 Entailing lemma lem_14: Fail. (cex)(must) cause: exception in lemma proving
-!!! fixpoint1:[]
-Entail 1: Fail.(may) cause:Nothing_to_do?Cond_action []
 
 
 */

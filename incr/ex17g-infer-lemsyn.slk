@@ -1,0 +1,100 @@
+
+data node {
+	int val;
+	node next;
+}.
+
+pred lseg<p> == self = p
+	or self::node<_, qq> * qq::lseg<p>
+  inv true.
+
+pred sll<> == self = null 
+	or self::node<_, rr> * rr::sll<>
+  inv true.
+
+/*
+checkentail (exists a_1655: a'::lseg<a_1655>@M&a_1655=null)
+ |-  a'::sll<>.
+*/
+
+HeapPred H(node a).
+
+lemma_safe self::sll<> <- self::lseg<ss> * H(ss) .
+print residue.
+
+
+//lemma_safe self::sll<> <- self::lseg<q> * q::sll<>.
+// above is provable
+
+/*
+# ex17g.slk --dlpi (WN to fix)
+
+lemma_safe self::sll<> <- self::lseg<q> * H(q) .
+print residue.
+
+# Why same q on both LHS & RHS?
+
+!!! **WARNING****solver.ml#4230:FREE VAR IN HEAP RHS :[q]
+impl/expl vars:[]
+LHS:
+  q_64::lseg<q>@M * H(q)&
+Anon_65=Anon_63 & q_66=q_64 & Anon_65=Anon_63 & q_66=q_64&
+{FLOW,(20,21)=__norm#E}[]
+RHS:
+ EBase 
+   q_66::lseg<q>@M * H(q)&{FLOW,(20,21)=__norm#E}[]
+
+
+# below is Not normalized!
+ body_norm:  EBase 
+   self::lseg<ss>@M * H(ss)&{FLOW,(20,21)=__norm#E}[]
+
+!!! **lem_store.ml#41:XXXX add_RIGHT_coercion
+!!! **lem_store.ml#42:[Lemma "lem_14":  self::sll<>@M&{FLOW,(20,21)=__norm#E}[]<== (exists ss_49: self::lseg<ss_49>@M * H(ss_49)&{FLOW,(20,21)=__norm#E}[])
+ head match:sll
+ body view:lseg
+ coercion_univ_vars: []
+ materialized vars:  [(self,full,[lseg]); (ss,full,[H])]
+ coercion_case: Simple
+ head:  self::sll<>@M&{FLOW,(20,21)=__norm#E}[]
+ body:  (exists ss_49: self::lseg<ss_49>@M * H(ss_49)&{FLOW,(20,21)=__norm#E}[])
+ head_norm:  self::sll<>@M&{FLOW,(20,21)=__norm#E}[]
+ body_norm:  EBase 
+   self::lseg<ss>@M * H(ss)&{FLOW,(20,21)=__norm#E}[]
+ coercion_univ_vars: []
+ coercion_case: Simple
+ coercion_origin: user-given
+ coercion_kind: LEM_SAFE
+ coercion_fold: None
+]
+
+
+
+# how come unfolding use the the same g, and not
+  a renaming of implicit?
+
+INPUT 0: [][H] 
+ ### ante =  H(q)&self_lem_14=q&{FLOW,(20,21)=__norm#E}[]
+ or (exists p_58,Anon_59,
+    q_60: self_lem_14::node<Anon_59,q_60>@M * q_60::lseg<p_58>@M * H(q)&
+    p_58=q&{FLOW,(20,21)=__norm#E}[])
+ 
+ ### conseq =  EBase 
+   self_lem_14::sll<>@M&{FLOW,(20,21)=__norm#E}[]
+
+# Did we use library of lemma synthesis?
+
+self::lseg<q> * q::sll<> |- self::sll<>
+
+self::node<_,r>*r::lseg<q> * q::sll<> |- self::sll<>
+
+self::node<_,r>*r::lseg<q> * q::sll<> |- self::sll<>
+
+self::node<_,r>*r::lseg<q> * q::sll<> |- self::node<_,rr>*rr::sll<>
+
+r::lseg<q> * q::sll<> |- r::sll<>
+
+r::lseg<q> * q::sll<> |- r::sll<>
+
+*/
+

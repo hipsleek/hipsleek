@@ -4455,14 +4455,15 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
           let new_body = CF.normalize 1 c.C.coercion_body (CF.formula_of_mix_formula c_guard no_pos) no_pos in
           let () = Debug.ninfo_hprint (add_str "new_body_norm" Cprinter.string_of_formula) new_body no_pos in
           let new_body = CF.push_exists c.C.coercion_univ_vars new_body in
-          let () = Debug.ninfo_hprint (add_str "new_body_norm (after push exists)" Cprinter.string_of_formula) new_body no_pos in
+          let () = x_tinfo_hp (add_str "new_body (after push exists)" Cprinter.string_of_formula) new_body no_pos in
           (* let new_body_norm =  c.C.coercion_body_norm in *)
-          (* let new_body_norm = CF.struc_formula_of_formula new_body no_pos in *)
-          let new_body_norm = CF.normalize_struc c.C.coercion_body_norm (CF.mkBase_rec (CF.formula_of_mix_formula c_guard no_pos) None no_pos) in
+          let new_body_norm = CF.struc_formula_of_formula new_body no_pos in
+          let new_body_norm = CF.normalize_struc new_body_norm (* c.C.coercion_body_norm *) (CF.mkBase_rec (CF.formula_of_mix_formula c_guard no_pos) None no_pos) in
+          let () = x_tinfo_hp (add_str "new_body_norm" Cprinter.string_of_struc_formula) new_body_norm no_pos in
           let new_body_norm = CF.push_struc_exists c.C.coercion_univ_vars new_body_norm in
           (*                 let new_body_norm = CF.push_exists c.C.coercion_univ_vars new_body_norm in *)
-          let () = Debug.ninfo_hprint (add_str "new_body_norm" Cprinter.string_of_struc_formula) new_body_norm no_pos in
-          let () = Debug.ninfo_hprint (add_str "old_body_norm" Cprinter.string_of_struc_formula) c.C.coercion_body_norm no_pos in
+          let () = x_tinfo_hp (add_str "new_body_norm" Cprinter.string_of_struc_formula) new_body_norm no_pos in
+          let () = x_tinfo_hp (add_str "old_body_norm" Cprinter.string_of_struc_formula) c.C.coercion_body_norm no_pos in
           (* let new_body_norm = CF.normalize_struc c.C.coercion_body_norm *)
           (*   (CF.mkBase_rec (CF.formula_of_mix_formula c_guard no_pos) None no_pos) in *)
           (* let new_body_norm = CF.push_struc_exists c.C.coercion_univ_vars new_body_norm in *)

@@ -665,7 +665,7 @@ let process_list_lemma ldef_lst  =
     in
     r2 
   in
-  Lemma.process_list_lemma_helper ldef_lst iprog !cprog lem_infer_fnct 
+  x_add Lemma.process_list_lemma_helper ldef_lst iprog !cprog lem_infer_fnct 
 
 (* let lst = ldef_lst.Iast.coercion_list_elems in *)
 (* (\* why do we check residue for ctx? do we really need a previous context? *\) *)

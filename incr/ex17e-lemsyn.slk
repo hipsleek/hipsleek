@@ -42,8 +42,8 @@ print residue.
 [[ Fold ==>  SEARCH ==>  Match(self,self) ==>  SEARCH ==>  (Lemma <== lem_14(q,q_69)) ==>  COND ==>  Match(q,q_69) ==>  COND ==>  InferHeap]]
 */
 
-lemma_safe self::sll_two<> <- self::lseg_one<q> * q::sll_two<>.
-// above is derivable 
+//lemma_safe self::sll_two<> <- self::lseg_one<q> * q::sll_two<>.
+// above is provable
 
 /*
 #ex17c.slk

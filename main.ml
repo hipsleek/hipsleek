@@ -573,7 +573,7 @@ let process_source_full source =
   (* else cprog.Cast.prog_view_decls *)
   (* in *)
   (* ========= lemma process (normalize, translate, verify) ========= *)
-  let () = List.iter (fun x -> Lemma.process_list_lemma_helper x tiprog cprog (fun a b -> b)) tiprog.Iast.prog_coercion_decls in
+  let () = List.iter (fun x -> x_add Lemma.process_list_lemma_helper x tiprog cprog (fun a b -> b)) tiprog.Iast.prog_coercion_decls in
   (* ========= end - lemma process (normalize, translate, verify) ========= *)
   let c = cprog in
   let () = if !Globals.gen_coq_file 

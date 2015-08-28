@@ -4819,12 +4819,15 @@ let string_of_coerc_opt op c =
          ^"\n coercion_univ_vars: "^(string_of_spec_var_list c.coercion_univ_vars)
          ^"\n materialized vars: "^(string_of_mater_prop_list c.coercion_mater_vars)
          ^"\n coercion_case: "^(string_of_coercion_case c.Cast.coercion_case)
+         ^"\n head: "^(string_of_formula c.coercion_head)
+         ^"\n body: "^(string_of_formula c.coercion_body)
          ^"\n head_norm: "^(string_of_formula c.coercion_head_norm)
          ^"\n body_norm: "^(string_of_struc_formula c.coercion_body_norm)
          ^"\n coercion_univ_vars: "^(string_of_spec_var_list c.coercion_univ_vars)
          ^"\n coercion_case: "^(string_of_coercion_case c.Cast.coercion_case)
          ^"\n coercion_origin: "^(string_of_coercion_origin c.Cast.coercion_origin)
          ^"\n coercion_kind: " ^ (string_of_lemma_kind c.Cast.coercion_kind)
+         ^"\n coercion_fold: " ^ ((pr_option string_of_view_decl) c.Cast.coercion_fold_def # get)
          ^"\n";;
 
 let string_of_coerc_short c = string_of_coerc_opt 2 c;;

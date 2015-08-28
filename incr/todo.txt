@@ -1319,7 +1319,7 @@ print residue.
  <1>x::node<flted_23_28,p>@M&p=null & flted_23_28=1&{FLOW,(20,21)=__norm#E}[]
  inferred hprel: [H(p)&p=null |#|  --> P(p)&true
 =====================================================================
-@ ex17a.slk
+@ ex17a.slk (FIXED)
 
 to synthesize lemma
 
@@ -1353,7 +1353,7 @@ To strip anonymous variables.
 !!! **WARNING****astsimp.ml#8758:Post-condition has existentially quantified free vars:[(Anon_14,);(Anon_15,)]
 Starting Omega.../usr/local/bin/oc
 =====================================================================
-# ex14k1.ss
+# ex14k1.ss (FIXED with more complex view)
 
   infer[@size,@post_n] requires x::sll<> ensures x::sll<>;
 
@@ -1394,7 +1394,7 @@ size_1676=size_1675&{FLOW,(4,5)=__norm#E}[]
    es_infer_rel: [RELDEFN post_1678: ( res=0 & size_1676=size_1675 & 0<=size_1675) -->  post_1678(size_1676,size_1675,res,flow)]
    ]
 =====================================================================
-# ex17b.slk
+# ex17b.slk (first is a complex lemma)
 
 lemma_infer_pred [H] self::lseg_one<q> * H(q) -> self::sll_two<>.
 
@@ -1406,7 +1406,7 @@ Entailing lemma lem_14: Fail. (cex)(must) cause: exception in lemma proving
 !!! fixpoint1:[]
 Entail 1: Fail.(may) cause:Nothing_to_do?Cond_action []
 =====================================================================
-# ex17c.slk
+# ex17e.slk (FIXED)
 
 lemma_infer_pred [K] self::ll<> -> self::lseg<p> * K(p).
 
@@ -1417,7 +1417,7 @@ Starting Omega.../usr/local/bin/oc
 
 Entailing lemma lem_11: Fail. (cex)(must) cause: exception in lemma proving
 =====================================================================
-#ex17c.slk  (WN to fix)
+#ex17e.slk  (FIXED)
 
 lemma_infer_pred [H]  self::sll_two<> <- self::lseg_one<q> * H(q).
 
@@ -1433,7 +1433,7 @@ Can conclude:
 Thus:
   self::sll_two<> <- self::lseg_one<q> * q::sll_two<>
 =====================================================================
-# ex17d1.slk
+# ex17d1.slk (FIXED)
 
 How come cannot have:
 
@@ -1462,8 +1462,66 @@ Residue:
                                    match_res_rhs_rest = rhs_rest; }) in 
 
 =====================================================================
+# ex17f.slk (FIXED with sound body_norm)
+
+lemma_infer_pred [H] self::sll_two<> <- self::lseg_one<q> * H(q) .
+print residue.
+
+# Why same q on both LHS & RHS?
+
+!!! **WARNING****solver.ml#4230:FREE VAR IN HEAP RHS :[q]
+impl/expl vars:[]
+LHS:
+  q_64::lseg_one<q>@M * H(q)&
+Anon_65=Anon_63 & q_66=q_64 & Anon_65=Anon_63 & q_66=q_64&
+{FLOW,(20,21)=__norm#E}[]
+RHS:
+ EBase 
+   q_66::lseg_one<q>@M * H(q)&{FLOW,(20,21)=__norm#E}[]
+
+# Did we use library of lemma synthesis?
 =====================================================================
+# ex17f.slk --dlpi (WN/Andreea to fix)
+
+lemma_infer_pred [H] self::sll_two<> <- self::lseg_one<q> * H(q) .
+print residue.
+
+# folding lemma should have _fold view ..
+
+!!! **lem_store.ml#41:XXXX add_RIGHT_coercion
+!!! **lem_store.ml#42:[Lemma "lem_14":  self::sll<>@M&{FLOW,(20,21)=__norm#E}[]<== (exists q_49: self::lseg<q_49>@M * H(q_49)&{FLOW,(20,21)=__norm#E}[])
+ head match:sll
+ body view:lseg
+ coercion_univ_vars: []
+ materialized vars:  [(q,full,[H]); (self,full,[lseg])]
+ coercion_case: Simple
+ head:  self::sll<>@M&{FLOW,(20,21)=__norm#E}[]
+ body:  (exists q_49: self::lseg<q_49>@M * H(q_49)&{FLOW,(20,21)=__norm#E}[])
+ head_norm:  self::sll<>@M&{FLOW,(20,21)=__norm#E}[]
+ body_norm:  EBase 
+   (exists q_50: self::lseg<q_50>@M * H(q_50)&{FLOW,(20,21)=__norm#E}[])
+ coercion_univ_vars: []
+ coercion_case: Simple
+ coercion_origin: user-given
+ coercion_kind: LEM_INFER_PRED
+ coercion_fold: None
+]
+
 =====================================================================
+# ex17h1.slk (WN to fix)
+
+lemma_infer_pred [H]  self::sll<> -> self::lseg<q> * H(q).
+
+# Why is above not working?
+
+Starting Omega.../usr/local/bin/oc
+
+!!! WARNING logtime exception:0.000326
+!!! WARNING logtime exception:0.0307exception in lemma "lem_14" check
+
+Entailing lemma lem_14: Fail. (cex)(must) cause: exception in lemma proving
+
+# Can we use wrapping to handle lemma synthesis?
 =====================================================================
 =====================================================================
 =====================================================================
