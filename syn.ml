@@ -14,6 +14,18 @@ module CEQ = Checkeq
 let mem = Gen.BList.mem_eq CP.eq_spec_var
 let diff = Gen.BList.difference_eq CP.eq_spec_var
 
+let rec partition_by_key key_of key_eq ls = 
+  match ls with
+  | [] -> []
+  | e::es ->
+    let ke = key_of e in 
+    let same_es, other_es = List.partition (fun e -> key_eq ke (key_of e)) es in
+    (ke, e::same_es)::(partition_by_key key_of key_eq other_es)
+
+(***************************)
+(***** ADDING DANGLING *****)
+(***************************)
+
 let dangling_view_name = "Dangling"
 
 let mk_dangling_view_prim = 
@@ -54,12 +66,18 @@ let add_dangling_hprel (hpr: CF.hprel) =
   Debug.no_1 "add_dangling_hprel" pr (pr_pair pr string_of_bool) add_dangling_hprel hpr
 
 let add_dangling prog (is: CF.infer_state) = 
-  let () = x_binfo_pp "TODO : this proc is to add dangling references" no_pos in
+  let () = x_binfo_pp "Step 1: Adding dangling references" no_pos in
   let is_all_constrs, has_dangling_vars = List.split (List.map add_dangling_hprel is.CF.is_all_constrs) in
+  let has_dangling_vars = or_list has_dangling_vars in
   let prog =
-    if or_list has_dangling_vars then
+    if has_dangling_vars then
       { prog with Cast.prog_view_decls = prog.Cast.prog_view_decls @ [mk_dangling_view_prim]; }
     else prog
+  in
+  let () =
+    if has_dangling_vars then
+      x_binfo_hp (add_str "Detected dangling vars" (pr_list Cprinter.string_of_hprel_short)) is_all_constrs no_pos
+    else x_binfo_pp "No dangling vars is detected" no_pos
   in
   { is with CF.is_all_constrs = is_all_constrs }
 
@@ -67,3 +85,16 @@ let add_dangling prog is =
   let pr2 = Cprinter.string_of_infer_state_short in
   Debug.no_1 "add_dangling" pr2 pr2
     (fun _ -> add_dangling prog is) is
+
+(*********************)
+(***** UNFOLDING *****)
+(*********************)
+let key_of_hprel (hpr: CF.hprel) = 
+  let hpr_lhs = hpr.hprel_lhs in
+  let lhs_h, _, _, _, _, _ = CF.split_components hpr.hprel_lhs in
+  match lhs_h with
+  | HRel (hpr_sv, _, _) -> hpr_sv
+  | _ -> failwith ("Unexpected formula in the LHS of a hprel " ^ (Cprinter.string_of_hprel_short hpr))
+
+let paritition_hprel_list hprels = 
+  partition_by_key key_of_hprel CP.eq_spec_var hprels
