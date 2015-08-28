@@ -2319,6 +2319,8 @@ module type DAG =
     (* DAG inner type *)
     type t
     (* Create an empty DAG *)
+    (* val create : unit -> t *)
+    val mkEmpty : t
     val create : unit -> t
     (* Add a pair of < relation to DAG *)
     val add : t -> (e * e) -> unit
@@ -2372,6 +2374,7 @@ module Make_DAG(Eq : EQ_TYPE) : DAG with type e := Eq.t =
       connect t v1 v2
     let add_list t xs = List.iter (add t) xs
     let create () = { tbl = M.empty; top = mk_dummy_vertex () }
+    let mkEmpty = { tbl = M.empty; top = mk_dummy_vertex () }
     let vertex_eq v1 v2 = Eq.eq (node_of v1) (node_of v2)
     let rec has_path_v v1 v2 =
       List.fold_right (fun v acc -> (has_path_v v v2) || acc) (adjacent_of v1)
@@ -2387,6 +2390,86 @@ module Make_DAG(Eq : EQ_TYPE) : DAG with type e := Eq.t =
     let is_gte_opt t e1 e2 = 
       try Some (not (has_path_exc t e1 e2)) with Not_found -> None
     let fold t f init = List.fold_left f init (List.map fst (M.bindings t.tbl))
+  end
+
+
+module Make_POSET(Eq : EQ_TYPE) (* : DAG with type e := Eq.t  *)=
+  struct
+    module M = Map.Make(Eq)
+    type key = Eq.t
+    type node = Node of (key * node list)
+    type poset = node M.t
+    type e = key
+    type t = poset
+
+    (* return the value in the node *)
+    let node_of v = match v with Node (n,_) -> n
+
+    (* tail of the node *)
+    let adjacent_of v = match v with Node (_,n) -> n
+
+    (* creates a node with head e and tail vs *)
+    let mk_vertex (e: key) (vs: node list) = Node(e, vs)
+
+    (* bot node *)
+    let mk_dummy_vertex () = Node(Eq.zero, [])
+
+    (* empty poset *)
+    let mkEmpty: poset = M.empty
+
+    (* adds a Node to the map *)
+    let add_vertex (map: poset) (e:key): poset * node =
+      let v = mk_vertex e [] in
+      let map:poset = M.add e v map in 
+      map,v
+
+    let mem map e = M.mem e map
+    let find map e = M.find e map
+    
+    (* connect v2 to v1 *)
+    let connect map v1 v2 =
+      let e1 = node_of v1 in
+      let vs = adjacent_of v1 in
+      let new_e1 = mk_vertex e1 (v2::vs) in
+      (* t.tbl <- M.remove e1 t.tbl; *)
+      M.add e1 new_e1 map
+    
+    (* adds an ordered pair to the poset *)
+    let add map (e1, e2) =
+      let () = print_endline "poset: add" in
+      let map, v1 = try map, find map e1 with Not_found -> add_vertex map e1 in
+      let map, v2 = try map, find map e2 with Not_found -> add_vertex map e2 in
+      (* (\* connect t t.top v1; *\) *)
+      connect map v1 v2
+
+    (* adds a list of pairs to the poset *)
+    let add_list (map: node M.t) (xs: (M.key * M.key) list) : node M.t  = 
+      List.fold_left (fun acc x -> add acc x) map xs
+
+    (* to be removed? *)
+    let vertex_eq v1 v2 = Eq.eq (node_of v1) (node_of v2)
+
+    let rec has_path_v v1 v2 =
+      List.fold_right (fun v acc -> (has_path_v v v2) || acc) (adjacent_of v1)
+                      (vertex_eq v1 v2)
+
+    let has_path_exc t e1 e2 =
+      has_path_v (find t e1) (find t e2)
+
+    let has_path t e1 e2 =
+      try has_path_v (find t e1) (find t e2) with Not_found -> false
+
+    let is_lt t e1 e2 = has_path t e1 e2
+
+    let is_gte t e1 e2 = not (is_lt t e1 e2)
+
+    let is_lt_opt t e1 e2 =
+      try Some (has_path_exc t e1 e2) with Not_found -> None
+
+    let is_gte_opt t e1 e2 =
+      try Some (not (has_path_exc t e1 e2)) with Not_found -> None
+
+    let fold t f init = List.fold_left f init (List.map fst (M.bindings t))
   end
 
 
@@ -2408,7 +2491,20 @@ module GenRel
     (* support for disj set *)
     module DSet = DisjSet(PEq)
     (* support for subann *)
-    module SubP = Make_DAG(Sub)
+    module SubP = Make_POSET(Sub)
+
+    type genrel =  EMap.emap * DSet.dpart * SubP.poset
+
+    let emap = ref EMap.mkEmpty
+    let dset = ref DSet.mkEmpty
+    let subp = ref SubP.mkEmpty
+
+    let mkEmpty: EMap.emap * DSet.dpart * (t list) = (EMap.mkEmpty, DSet.mkEmpty, [])
+    let merge (emap1,dset1,subp1) (emap2,dset2,subp2) =
+      let emap = EMap.merge_eset emap1 emap2 in
+      let dset = DSet.merge_disj_set dset1 dset2 in
+      let subp = subp1@subp2 in
+      (emap,dset,subp)
 
     let add_eq (emap: EMap.emap) (dset: DSet.dpart) (e1:t) (e2:t) =
       if DSet.is_disj PEq.eq dset e1 e2 then raise EqConflict
@@ -2423,13 +2519,20 @@ module GenRel
         let ds12 = DSet.star_disj_set ds1 ds2 in
         DSet.merge_disj_set dset ds12
 
-    (* let is_sub (emap: EMap.emap) (dset: DSet.dpart) (subp: SubP.t) (e1:t) (e2:t) = *)
+    let is_sub (emap: EMap.emap) (subp: SubP.t) (e1:t) (e2:t) =
       (* check if e1 == e2 or if any of e1'<:e2' , e1' = alias(e1), e2'= alias(e2) *)
+      let is_lt e1 e2 = Basic.map_opt_def false (fun x -> x) (SubP.is_lt_opt subp e1 e2) in
+      let is_lt_lst e1_lst e2 = List.fold_left (fun acc e1 -> acc || (is_lt e1 e2)) false e1_lst in
+      let ae1 = EMap.find_equiv_all_new e1 emap in
+      let ae2 = EMap.find_equiv_all_new e2 emap in
+      List.fold_left (fun acc e2 -> acc || (is_lt_lst ae1 e2)) false ae2
 
     let add_subtype (emap: EMap.emap) (dset: DSet.dpart) (subp: SubP.t) (e1:t) (e2:t) =
-      match SubP.is_lt_opt subp e2 e1 with
-      | None   -> let () = SubP.add subp (e1,e2) in emap
-      | Some _ -> add_eq emap dset e1 e2 (* e1<:e2 & e2<:e1 ---> e1=e2 *)
+      if not(is_sub emap subp e2 e1) then let subp = SubP.add subp (e1,e2) in emap
+      else add_eq emap dset e1 e2 (* e1<:e2 & e2<:e1 ---> e1=e2 *)
+
+    (* let add_subtype (lst: t * t list) (e1: t) (e2: t) = (e1, e2)::lst *)
+
   end
 
 include Basic
