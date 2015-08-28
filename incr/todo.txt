@@ -1417,6 +1417,21 @@ Starting Omega.../usr/local/bin/oc
 
 Entailing lemma lem_11: Fail. (cex)(must) cause: exception in lemma proving
 =====================================================================
+#ex17c.slk
+
+lemma_infer_pred [H]  self::sll_two<> <- self::lseg_one<q> * H(q).
+
+# can we automate above lemma synthesis?
+
+After collecting below:
+ inferred hprel: [H(q)&true |#|3  --> q::sll_two<>@M&true]
+ inferred hprel: [H(p)&true |#|3  --> H(p)&true]
+
+Can conclude:
+[   H(q)&true |#|3  --> q::sll_two<>@M&true]
+
+Thus:
+  self::sll_two<> <- self::lseg_one<q> * q::sll_two<>
 =====================================================================
 =====================================================================
 =====================================================================
