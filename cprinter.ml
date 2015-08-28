@@ -2840,7 +2840,7 @@ let pr_hprel_short_inst cprog post_hps hpa=
     (fun p -> fmt_string ((pr_list_round_sep ";" (fun s -> string_of_int s)) p)) hpa.hprel_path;
   (* prtt_pr_formula_inst cprog *)print_formula hpa.hprel_lhs;
   let () = match hpa.hprel_guard with
-    | None -> fmt_string " |#|3 " (* () *)
+    | None -> (* fmt_string " |#|3 " *) ()
     (* fmt_string " NONE " *)
     | Some hf ->
       begin

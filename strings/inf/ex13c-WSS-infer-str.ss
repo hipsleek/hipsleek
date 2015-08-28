@@ -82,17 +82,14 @@ add_dangling@3 EXIT:
             v_1618=0 --> Dangling<Anon_1619>]
 
 [ // PRE
-(0)P(s)&true |#|3  --> s::char_star<v_1601,Anon_1602>@M * HP_1603(Anon_1602)&
-true,
- // PRE_REC
-(1;0)HP_1603(Anon_1602)&true |#| s::char_star<v_1601,Anon_1602>@M&
-v_1601!=0 --> P(Anon_1602)&
-true,
+(0)P(s)&true |#|3  --> s::char_star<v_1601,Anon_1602>@M 
+     * HP_1603(Anon_1602)& true,
+// PRE_REC
+(1;0)HP_1603(Anon_1602)&true |#| 
+    s::char_star<v_1601,Anon_1602>@M& v_1601!=0 --> P(Anon_1602)&true,
  // POST
-(2;0)HP_1603(Anon_1602)&true |#| s::char_star<v_1601,Anon_1602>@M&
-v_1601=0 --> emp&
-true]
-
+(2;0)HP_1603(Anon_1602)&true |#| 
+    s::char_star<v_1601,Anon_1602>@M & v_1601=0 --> emp&true]
 
 *********************************************************
 [ P(s_1633) |#| emp&v_1621!=0
@@ -102,7 +99,7 @@ true]
 ----------------
 
 void while1(ref char_star s)
-  infer [P]
+  infer [P,@classic,@pure_field]
   requires P(s)
   ensures true;
 {
@@ -145,6 +142,9 @@ iprocess_action inp1 :pre, pre-oblg, post, post-oblg
 iprocess_action inp1 :seq:(0,analize dangling);(0,split base);(0,pre, pre-oblg, post, post-oblg)
 
 
+
+Relational assumptions
+----------------------
   P(s) -> s::chr<v,q>*H1(q)
   H1(q) | s::chr<v,q> & v!=0 --> P(q) 
   H1(q) | s::chr<v,q> & v=0 --> emp
@@ -154,7 +154,7 @@ iprocess_action inp1 :seq:(0,analize dangling);(0,split base);(0,pre, pre-oblg, 
   H1(q) | s::chr<v,q> & v!=0 --> P(q) 
   H1(q) | s::chr<v,q> & v=0 --> D(q)
 
-==> specialize
+==> specialize (unfold)
   P(s) -> s::chr<v,q> * P(q) & v!=0
   P(s) -> s::chr<v,q> * D(q) & v=0
 
@@ -166,7 +166,7 @@ iprocess_action inp1 :seq:(0,analize dangling);(0,split base);(0,pre, pre-oblg, 
   P(x,d) -> U(x,q) * q::chr<0,d>
 
 ==> segmented-pred
-  P(x,d) -> U(x,q) * q::chr<v,d>
+  P(x,d) -> U(x,q) * q::chr<0,d>
   U(x,q) -> x=q
   U(x,q) -> x::chr<v,q1>*U(q1,q) & v!=0
 
