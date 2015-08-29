@@ -3767,7 +3767,7 @@ let infer_collect_hp_rel i prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
 (*   'b -> *)
 (*   MCP.mix_formula -> *)
 (*   VarGen.loc -> bool * CF.entail_state * Sautil.CF.hprel list *)
-(* this method must not be called under is_folding *)
+(* this method must not be called under is_folding since H(..) --> emp will be collected *)
 let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) (* lhs_b rhs0 *) mix_rf pos =
   (*********INTERNAL**********)
   let get_eqset puref =

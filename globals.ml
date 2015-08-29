@@ -907,6 +907,7 @@ let allow_lemma_fold = ref true
 let allow_lemma_norm = ref false
 let old_norm_w_coerc = ref false
 
+let old_do_match_infer_heap = ref true
 let old_incr_infer = ref false
 
 (* Enable exhaustive normalization using lemmas *)
@@ -1282,6 +1283,7 @@ let old_infer_hprel_classic = ref false
 let old_classic_rhs_emp = ref false
 let old_post_conv_impl = ref true (* affected by incr/ex14d.ss *)
 let old_post_impl_to_ex = ref true
+let warn_do_match_infer_heap = ref false
 let warn_nonempty_perm_vars = ref false
 let warn_trans_context = ref false
 let warn_post_free_vars = ref false

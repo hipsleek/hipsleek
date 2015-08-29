@@ -45,7 +45,7 @@ void main()
 /*
 # ex17z.ss
 
-  Added BaseCaseFold inside lemma
+  Scheduled BaseCaseFold inside lemma application
 
 # ex17.ss (FIXED)
 
