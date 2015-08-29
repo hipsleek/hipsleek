@@ -1890,6 +1890,20 @@ Total number of errors: 2 in files:
   lemmas/nlseg4e.slk({L2#Valid})
    lemmas/nlseg4e1.slk({E1#Valid},{E2#Valid},{E3#Valid}).
 ===================================================================
+# ex55f.slk (FIXED with --old-do-match-infer-heap)
+
+infer [H1]  H1(y) |- y::node<a,null> .
+
+Residue:
+ <1>HP_27(flted_9_26)&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H1(y)&
+                   true |#|3  --> y::node<a_25,flted_9_26>@M * 
+                                  HP_27(flted_9_26)&
+                   true]
+ [[ COND ==>  InferHeap]]
+
+# EXPECTS
+    HP_27(flted_9_26)&true |#|3  --> emp&flted_9_26=null]
 ===================================================================
 ===================================================================
 ===================================================================

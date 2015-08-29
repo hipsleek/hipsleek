@@ -1019,6 +1019,9 @@ let string_of_coerc_decl c =
   ^ "\t origin: " ^ (string_of_coerc_origin c.coercion_origin) ^ "\n"
   ^ "\t head: " ^ (string_of_formula c.coercion_head) ^ "\n"
   ^ "\t body:" ^ (string_of_formula c.coercion_body) ^ "\n"
+
+let string_of_coercion c = string_of_coerc_decl c
+
 (* pretty printing for one parameter *) 
 let string_of_param par = match par.param_mod with 
   | NoMod          -> (string_of_typ par.param_type) ^ " " ^ par.param_name
