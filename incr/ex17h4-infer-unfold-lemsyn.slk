@@ -1,0 +1,49 @@
+
+data node {
+	int val;
+	node next;
+}.
+
+
+pred lseg<p> == self = p
+	or self::node<_, q> * q::lseg<p>
+  inv true.
+
+pred sll<> == self = null 
+	or self::node<_, q> * q::sll<>
+  inv true.
+
+
+HeapPred H(node a).
+//lemma_infer_pred [H] self::lseg<q> * H(q) -> self::sll<>.
+// fail due to complex lemma
+//lemma_infer_pred [H]  self::sll<> <- self::lseg<q> * H(q).
+// Valid
+
+//lemma_infer_pred [H]  self::sll<> -> self::lseg<qqq> * H(qqq).
+lemma_unsafe  self::sll<> -> self::lseg<qqq> * H(qqq).
+
+//infer [H,@classic]  self=null |- self::lseg<qqq> * H(qqq).
+//print residue.
+
+//infer [H,@classic]  self::node<_,q>*q::sll<> |- self::lseg<qqq> * H(qqq).
+//print residue.
+
+infer [H,@classic]  H(x) |- H(x).
+print residue.
+
+/*
+# ex17h4.slk (Loc : please fix)
+
+infer [H,@classic]  H(x) |- H(x).
+print residue.
+
+# GOT before which is trivially true.
+  Can we discard such hprel?
+
+<1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(x)&true |#|3  --> H(x)&true]
+[[ COND ==>  InferHeap]]
+
+
+*/

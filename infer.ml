@@ -3739,8 +3739,8 @@ let infer_collect_hp_rel i prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
   let pr4 = Cprinter.string_of_estate_infer_hp in
   let pr5 =  pr_penta string_of_bool pr4 Cprinter.string_of_h_formula
       (pr_option Cprinter.string_of_h_formula) (pr_option pr2) in
-  Debug.no_2_num i "infer_collect_hp_rel" (* pr2 *) (add_str "lhs" pr1) (add_str "rhs" pr1) pr5
-    ( fun _ _ -> infer_collect_hp_rel prog es rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos) (* es *) lhs_b rhs_b
+  Debug.no_3_num i "infer_collect_hp_rel0" (* pr2 *) (add_str "lhs" pr1) (add_str "rhs" pr1) (add_str "es" pr2) pr5
+    ( fun _ _ _ -> infer_collect_hp_rel prog es rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos) (* es *) lhs_b rhs_b es
 
 
 (*******************************************************)
@@ -3763,10 +3763,12 @@ let infer_collect_hp_rel i prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
 
 (* type: Sautil.C.prog_decl -> *)
 (*   Cformula.entail_state -> *)
+(*   'a -> *)
+(*   'b -> *)
 (*   MCP.mix_formula -> *)
 (*   VarGen.loc -> bool * CF.entail_state * Sautil.CF.hprel list *)
-
-let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) lhs_b rhs0 mix_rf pos =
+(* this method must not be called under is_folding *)
+let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) (* lhs_b rhs0 *) mix_rf pos =
   (*********INTERNAL**********)
   let get_eqset puref =
     let (subs,_) = CP.get_all_vv_eqs puref in
@@ -3880,9 +3882,9 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) lhs_b rhs0 mix_rf pos
           let r_emap0 = get_eqset (MCP.pure_of_mix mix_rf) in
           (* let () = DD.ninfo_hprint (add_str "   sst0: " pr) (sst0) pos in *)
           let _ =
-            x_tinfo_pp ">>>>>> infer_hp_rel <<<<<<" pos;
-            x_tinfo_hp (add_str  "  lhs " Cprinter.string_of_formula) lhs0 pos;
-            x_tinfo_hp (add_str  "  classic " string_of_bool) (check_is_classic ()) pos
+            x_binfo_pp ">>>>>> infer_hp_rel <<<<<<" pos;
+            x_binfo_hp (add_str  "  lhs " Cprinter.string_of_formula) lhs0 pos;
+            x_binfo_hp (add_str  "  classic " string_of_bool) (check_is_classic ()) pos
           in
           (*TOFIX: detect HEmp or HTrue *)
           let rhs_b0 = formula_base_of_heap (CF.HEmp) pos in
@@ -3939,14 +3941,14 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) lhs_b rhs0 mix_rf pos
         end
 
 
-let infer_collect_hp_rel_empty_rhs i prog (es:entail_state) lhs_b rhs0 rhs_p pos =
+let infer_collect_hp_rel_empty_rhs i prog (es:entail_state) (* lhs_b rhs0 *) rhs_p pos =
   let pr1 = Cprinter.string_of_formula in
   let pr2 = Cprinter.string_of_mix_formula in
   let pr3 =  (pr_triple (add_str "Res" string_of_bool) (add_str "Sel HP"Cprinter.string_of_estate_infer_hp)
       (add_str "Inferred Relations" (pr_list_ln Cprinter.string_of_hprel_short))) in
   let pr4 = Cprinter.string_of_h_formula in
-  Debug.no_3_num i "infer_collect_hp_rel_empty_rhs" pr1 pr4 pr2 pr3
-    ( fun _ _ _ -> infer_collect_hp_rel_empty_rhs prog es lhs_b rhs0 rhs_p pos) es.CF.es_formula rhs0 rhs_p
+  Debug.no_2_num i "infer_collect_hp_rel_empty_rhs" pr1 (* pr4 *) pr2 pr3
+    ( fun _ _ -> infer_collect_hp_rel_empty_rhs prog es (* lhs_b rhs0 *) rhs_p pos) es.CF.es_formula (* rhs0 *) rhs_p
 
 (*******************************************************)
 (*******************************************************)

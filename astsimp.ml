@@ -47,6 +47,7 @@ type trans_exp_type =
 (* let view_args_map = CP.view_args_map *)
 
 let pr_v_decls l = pr_list (fun v -> v.I.view_name) l
+let pr_pil = pr_primed_ident_list
 
 let ihp_decl = ref ([]: I.hp_decl list)
 (* let strip_exists_pure f = *)
@@ -4268,19 +4269,19 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
     | v ->
       let c_hd, c_guard,c_vp, c_fl, c_t, c_a = CF.split_components c.C.coercion_head in
       let new_body = c.C.coercion_body in
-      let () = x_binfo_hp (add_str "coercion_body" Cprinter.string_of_formula) new_body no_pos in
+      let () = x_tinfo_hp (add_str "coercion_body" Cprinter.string_of_formula) new_body no_pos in
       let new_body = CF.normalize 1 new_body (CF.formula_of_mix_formula c_guard no_pos) no_pos in
-      let () = x_binfo_hp (add_str "new_body" Cprinter.string_of_formula) new_body no_pos in
+      let () = x_tinfo_hp (add_str "new_body" Cprinter.string_of_formula) new_body no_pos in
       let new_body = CF.push_exists c.C.coercion_univ_vars new_body in
-      let () = x_binfo_hp (add_str "new_body (after push exists)" Cprinter.string_of_formula) new_body no_pos in
+      let () = x_tinfo_hp (add_str "new_body (after push exists)" Cprinter.string_of_formula) new_body no_pos in
       (* let new_body_norm =  c.C.coercion_body_norm in *)
       let new_body_norm = CF.struc_formula_of_formula new_body no_pos in
       let new_body_norm = CF.normalize_struc new_body_norm (* c.C.coercion_body_norm *) (CF.mkBase_rec (CF.formula_of_mix_formula c_guard no_pos) None no_pos) in
-      let () = x_binfo_hp (add_str "new_body_norm" Cprinter.string_of_struc_formula) new_body_norm no_pos in
+      let () = x_tinfo_hp (add_str "new_body_norm" Cprinter.string_of_struc_formula) new_body_norm no_pos in
       let new_body_norm = CF.push_struc_exists c.C.coercion_univ_vars new_body_norm in
       (*                 let new_body_norm = CF.push_exists c.C.coercion_univ_vars new_body_norm in *)
-      let () = x_binfo_hp (add_str "new_body_norm" Cprinter.string_of_struc_formula) new_body_norm no_pos in
-      let () = x_binfo_hp (add_str "old_body_norm" Cprinter.string_of_struc_formula) c.C.coercion_body_norm no_pos in
+      let () = x_tinfo_hp (add_str "new_body_norm" Cprinter.string_of_struc_formula) new_body_norm no_pos in
+      let () = x_tinfo_hp (add_str "old_body_norm" Cprinter.string_of_struc_formula) c.C.coercion_body_norm no_pos in
       (* let new_body_norm = CF.normalize_struc c.C.coercion_body_norm *)
       (*   (CF.mkBase_rec (CF.formula_of_mix_formula c_guard no_pos) None no_pos) in *)
       (* let new_body_norm = CF.push_struc_exists c.C.coercion_univ_vars new_body_norm in *)
@@ -4417,13 +4418,15 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let quant = true in
   let (n_tl,cs_body_norm) = trans_I2C_struc_formula 4 prog false quant (* fv_names *) lhs_fnames0 wf n_tl false 
       true (*check_pre*) in
+  let () = y_tinfo_hp (add_str "cs_body_norm(I2C)" !CF.print_struc_formula) cs_body_norm in
   let cs_body_norm =
-    if (coer.I.coercion_kind = LEM_PROP) then
+    if (coer.I.coercion_kind == LEM_PROP) then
       cs_body_norm
     else
       CF.struc_add_origs_to_first_node self lhs_view_name cs_body_norm [coer.I.coercion_name] false
   in
   let cs_body_norm = CF.add_struc_original false cs_body_norm in
+  let () = y_tinfo_hp (add_str "cs_body_norm(add_original)" !CF.print_struc_formula) cs_body_norm in
   (* let cs_body_norm = CF.reset_struc_origins cs_body_norm in *)
   (* c_head_norm is used only for proving r2l part of a lemma (right & equiv lemmas) *)
   let (qvars, form) = IF.split_quantifiers i_lhs (* coer.I.coercion_head *) in 
@@ -6367,7 +6370,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
           C.exp_par_case_else = c.I.exp_par_case_else;
           C.exp_par_case_pos = cpos; }
       in
-      let trans_lend_heap = snd (trans_formula prog false free_vars true p.I.exp_par_lend_heap n_tl false) in
+      let trans_lend_heap = snd (x_add trans_formula prog false free_vars true p.I.exp_par_lend_heap n_tl false) in
       if CF.isLend_formula trans_lend_heap then
         (C.Par {
             C.exp_par_vperm = x_add trans_vperm_sets p.I.exp_par_vperm n_tl pos;
@@ -6798,7 +6801,7 @@ and trans_case_coverage_x  prepost_flag (instant:Cpure.spec_var list)(f:CF.struc
           (* let () = print_string ( *)
           (*     (List.fold_left (fun a c1-> a^" "^ (Cprinter.string_of_spec_var c1)) "\nall:" (Cpure.fv all))^"\n"^ *)
           (*         (List.fold_left (fun a c1-> a^" "^ (Cprinter.string_of_spec_var c1)) "instant:" instant)^"\n")in *)
-          Debug.info_pprint ("WARNING : LHS vars: "^lhs_vars^"; Guards in pre/post use unknown vars:"^var_case) no_pos 
+          x_tinfo_pp ("WARNING : LHS vars: "^lhs_vars^"; Guards in pre/post use unknown vars:"^var_case) no_pos 
           (* Error.report_error {  Err.error_loc = b.CF.formula_case_pos; *)
           (* Err.error_text = "all guard free vars must be instantiated";}  *)
       in
@@ -7002,7 +7005,7 @@ and trans_I2C_struc_formula_x ?(idpl=[]) (prog : I.prog_decl) (prepost_flag:bool
   let rec trans_struc_formula (fvars : ident list) (tl:spec_var_type_list) (f0 : IF.struc_formula) : (spec_var_type_list*CF.struc_formula) = (
     match f0 with
     | IF.EAssume b ->   (*add res, self*)
-      let (n_tl,f) = trans_formula prog true (self::res_name::eres_name::fvars) false b.IF.formula_assume_simpl tl true in
+      let (n_tl,f) = x_add trans_formula prog true (self::res_name::eres_name::fvars) false b.IF.formula_assume_simpl tl true in
       let (n_tl,f_struc) = trans_I2C_struc_formula_x prog prepost_flag true (res_name::eres_name::fvars) b.IF.formula_assume_struc n_tl check_self_sp false in
       (n_tl,CF.mkEAssume [] f f_struc b.IF.formula_assume_lbl b.IF.formula_assume_ensures_type)
     | IF.ECase b-> (
@@ -7030,10 +7033,12 @@ and trans_I2C_struc_formula_x ?(idpl=[]) (prog : I.prog_decl) (prepost_flag:bool
           | Some x -> let (n_tl,cf) = trans_struc_formula (fvars @ (fst (List.split(IF.heap_fv b.IF.formula_struc_base)))) tl x in 
             (n_tl,Some cf) 
         ) in
-        let (n_tl,nb) = trans_formula prog quantify fvars false b.IF.formula_struc_base n_tl false in
+        let (n_tl,nb) = x_add trans_formula prog quantify fvars false b.IF.formula_struc_base n_tl false in
         let ex_inst = List.map (fun c-> trans_var_safe c UNK n_tl b.IF.formula_struc_pos) b.IF.formula_struc_explicit_inst in
         let ext_impl = List.map (fun c-> trans_var_safe c UNK n_tl b.IF.formula_struc_pos) b.IF.formula_struc_implicit_inst in
         let ext_exis = List.map (fun c-> trans_var_safe c UNK n_tl b.IF.formula_struc_pos) b.IF.formula_struc_exists in
+        let () = y_tinfo_hp (add_str "new_base" !CF.print_formula) nb in
+        let () = y_tinfo_hp (add_str "impl_vars" !CP.print_svl) ext_impl in
         let cf = CF.EBase { CF.formula_struc_explicit_inst = ex_inst;
                             CF.formula_struc_implicit_inst = ext_impl;
                             CF.formula_struc_exists = ext_exis;
@@ -7096,7 +7101,7 @@ and trans_I2C_struc_formula_x ?(idpl=[]) (prog : I.prog_decl) (prepost_flag:bool
   let cfvhp1 = List.map (fun c-> trans_var_safe (c,Primed) UNK n_tl (IF.pos_of_struc_formula f0)) fvars in
   let cfvhp2 = List.map (fun sv -> match sv with | CP.SpecVar (t,v,_) -> CP.SpecVar(t,v,Unprimed)) cfvhp1 in
   let cfvhp = (cfvhp1@cfvhp2) in
-  let r = trans_case_coverage prepost_flag cfvhp r in
+  let r = x_add trans_case_coverage prepost_flag cfvhp r in
   let tmp_vars  =  (CF.struc_post_fv r) in 
   let post_fv = List.map CP.name_of_spec_var tmp_vars in
   let () = Debug.ninfo_hprint (add_str "tmp_vars" (!CP.print_svl)) tmp_vars no_pos in
@@ -7536,7 +7541,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                      IF.h_formula_heap_pos = pos;
                      IF.h_formula_heap_label = pi;} ->
         (* expand the dereference heap node first *)
-        let trans_f f tl = trans_formula prog false [] false f tl false in
+        let trans_f f tl = x_add trans_formula prog false [] false f tl false in
         let (tl, ho_args) = List.fold_left (fun (tl, r) a -> 
             let (ntl, b) = trans_f a.IF.rflow_base tl in 
             (ntl, ({ CF.rflow_kind = a.IF.rflow_kind; 
@@ -8884,10 +8889,16 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
             let r1,r2 = helper h1prm new_strad_vs infer_vars l in 
             (Some r1,r2) in
         (* Debug.ninfo_hprint (add_str "struc_cont" (pr_option Iprinter.string_of_struc_formula)) nc no_pos; *)
+        let implvar = (IF.unbound_heap_fv onb) in
+        let () = y_tinfo_hp (add_str "impl_var" pr_pil) implvar in
         let implvar = diff (IF.unbound_heap_fv onb) all_vars in
+        let () = y_tinfo_hp (add_str "all_vars" pr_pil) all_vars in
+        let () = y_tinfo_hp (add_str "impl_var" pr_pil) implvar in
         let () = if (List.length (diff implvar (IF.heap_fv onb @ fold_opt IF.struc_hp_fv nc)))>0 then 
             Error.report_error {Error.error_loc = pos; Error.error_text = ("malfunction: some implicit vars are not heap_vars\n")} else () in
+        let () = y_tinfo_hp (add_str "impl_var" pr_pil) implvar in
         let implvar = hack_filter_global_rel prog implvar in
+        let () = y_tinfo_hp (add_str "impl_var(after filter_global_rel)" pr_pil) implvar in
         (IF.EBase {
             IF.formula_struc_base = nb;
             IF.formula_struc_implicit_inst =implvar;                    
@@ -10766,10 +10777,10 @@ and trans_expected_ass prog ass =
     let if1, if2 = constr in
     let if1 = case_normalize_formula prog [] if1 in
     let n_tl = x_add gather_type_info_formula prog if1 [] false in
-    let (n_tl,f1) = trans_formula prog false [] false if1 n_tl false in
+    let (n_tl,f1) = x_add trans_formula prog false [] false if1 n_tl false in
     let if2 = case_normalize_formula prog [] if2 in
     let n_tl = x_add gather_type_info_formula prog if2 n_tl false in
-    let (n_tl,f2) = trans_formula prog false [] false if2 n_tl false in
+    let (n_tl,f2) = x_add trans_formula prog false [] false if2 n_tl false in
     (f1,f2)
   in
   let helper assl = List.map (fun one_ass -> trans_constr prog (one_ass.Iast.ass_lhs,one_ass.Iast.ass_rhs)) assl in         
