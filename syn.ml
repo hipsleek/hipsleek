@@ -98,59 +98,49 @@ let heap_entail_formula prog (ante: CF.formula) (conseq: CF.formula) =
   | CF.FailCtx _ -> (false, residue_f)
   | CF.SuccCtx lst -> (true, residue_f) 
 
+let heap_entail_formula prog (ante: CF.formula) (conseq: CF.formula) =
+  let pr1 = !CF.print_formula in
+  let pr2 = pr_pair string_of_bool pr1 in
+  Debug.no_2 "Syn.heap_entail_formula" pr1 pr1 pr2 
+    (fun _ _ -> heap_entail_formula prog ante conseq) ante conseq 
+
+let combine_Star f1 f2 = 
+  CF.mkStar f1 f2 CF.Flow_combine no_pos
+
+let add_back_hrel ctx hrel = 
+  let hrel_f = CF.mkBase_simp hrel (MCP.mkMTrue no_pos) in
+  combine_Star ctx hrel_f
+
 let unfolding_one_hrel_def prog ctx (hrel_def: CF.hprel) =
   let pos = no_pos in
   let hrd_guard = hrel_def.hprel_guard in
   match hrd_guard with
-  | None -> Some (CF.mkStar ctx hrel_def.hprel_rhs CF.Flow_combine no_pos)
+  | None -> Some (combine_Star ctx hrel_def.hprel_rhs)
   | Some g ->
     let guard_h, guard_p, _, _, _, _ = CF.split_components g in
     let guard_h_f = CF.mkBase_simp guard_h (MCP.mkMTrue pos) in
     let rs, residue = heap_entail_formula prog ctx guard_h_f in
     if rs then
-      let comb_f = CF.mkStar g residue CF.Flow_combine no_pos in
-      Some (CF.mkStar comb_f hrel_def.hprel_rhs CF.Flow_combine no_pos)
+      let comb_f = combine_Star g residue in
+      Some (combine_Star comb_f hrel_def.hprel_rhs)
     else None
 
-let unfolding_one_hrel prog ctx hprel_name hrel hrel_defs =
+let unfolding_one_hrel_def prog ctx (hrel_def: CF.hprel) =
+  let pr1 = !CF.print_formula in
+  let pr2 = Cprinter.string_of_hprel_short in
+  Debug.no_2 "unfolding_one_hrel_def" pr1 pr2 (pr_option pr1)
+    (fun _ _ -> unfolding_one_hrel_def prog ctx hrel_def) ctx hrel_def
+
+let unfolding_one_hrel prog ctx hprel_name hrel hprel_groups =
   let pos = no_pos in
   let hrel_name, hrel_args = sig_of_hrel hrel in
   if CP.eq_spec_var hprel_name hrel_name then
-    let hrel_f = CF.mkBase_simp hrel (MCP.mkMTrue pos) in
-    [CF.mkStar ctx hrel_f CF.Flow_combine no_pos]
+    [add_back_hrel ctx hrel]
   else
-    let unfolding_ctx_list = List.fold_left (fun acc hrel_def ->
-        let unfolding_ctx = unfolding_one_hrel_def prog ctx hrel_def in
-        match unfolding_ctx with
-        | None -> acc
-        | Some ctx -> acc @ [ctx]) [] hrel_defs 
-    in
-    if is_empty unfolding_ctx_list then
-      let hrel_f = CF.mkBase_simp hrel (MCP.mkMTrue pos) in
-      [CF.mkStar ctx hrel_f CF.Flow_combine no_pos]
-    else unfolding_ctx_list
-
-let unfolding_one_hrel prog ctx hprel_name hrel hrel_defs =
-  let pr1 = !CF.print_formula in
-  let pr2 = !CF.print_h_formula in
-  let pr3 = pr_list Cprinter.string_of_hprel_short in
-  Debug.no_3 "unfolding_one_hrel" pr1 pr2 pr3 (pr_list pr1)
-    (fun _ _ _ -> unfolding_one_hrel prog ctx hprel_name hrel hrel_defs) 
-    ctx hrel hrel_defs
-
-let rec unfolding_hprel prog hprel_groups (hpr: CF.hprel): CF.hprel list =
-  let hpr_name, hpr_args = sig_of_hprel hpr in 
-  let hpr_rhs = hpr.hprel_rhs in
-  let rhs_h, rhs_p, _, _, _, _ = CF.split_components hpr_rhs in
-  let rhs_hrels, rhs_hpreds = List.partition CF.is_hrel (CF.split_star_conjunctions rhs_h) in
-  (* TODO: Sort rhs_hrels *)
-  let ctx = CF.mkBase_simp (CF.join_star_conjunctions rhs_hpreds) rhs_p in
-  List.fold_left (fun acc hrel ->
-    let hrel_name, hrel_args = sig_of_hrel hrel in
-    let hrel_defs, rem_hrel_groups = List.partition (fun (hpr_sv, _) -> 
+    let hrel_defs = List.filter (fun (hpr_sv, _) -> 
         CP.eq_spec_var hpr_sv hrel_name) hprel_groups in
     let hrel_defs = List.concat (List.map snd hrel_defs) in
-    if is_empty hrel_defs then acc
+    if is_empty hrel_defs then [add_back_hrel ctx hrel]
     else
       let subst_hrel_defs = List.map (
         fun hprel ->
@@ -160,25 +150,69 @@ let rec unfolding_hprel prog hprel_groups (hpr: CF.hprel): CF.hprel list =
           with _ -> failwith ("Mismatch number of arguments of " ^ (!CP.print_sv hrel_name))
         ) hrel_defs
       in
-      let unfolding_hprs = List.map (fun unfolding_rhs -> { hpr with hprel_rhs = unfolding_rhs }) 
-          (unfolding_one_hrel prog ctx hpr_name hrel subst_hrel_defs)
+      let unfolding_ctx_list = List.fold_left (fun acc hrel_def ->
+          let unfolding_ctx = unfolding_one_hrel_def prog ctx hrel_def in
+          match unfolding_ctx with
+          | None -> acc
+          | Some ctx -> acc @ [ctx]) [] subst_hrel_defs 
       in
-      let () = x_binfo_hp (add_str 
-            ("Unfolding " ^ (CP.name_of_spec_var hpr_name) ^ "'s body") 
-            (pr_list Cprinter.string_of_hprel_short)) 
-          unfolding_hprs no_pos 
-      in
-      acc @ unfolding_hprs
-    ) [] rhs_hrels
+      if is_empty unfolding_ctx_list then
+        [add_back_hrel ctx hrel]
+      else unfolding_ctx_list
+
+let unfolding_one_hrel prog ctx hprel_name hrel hprel_groups =
+  let pr1 = !CF.print_formula in
+  let pr2 = !CF.print_h_formula in
+  Debug.no_2 "unfolding_one_hrel" pr1 pr2 (pr_list pr1)
+    (fun _ _ -> unfolding_one_hrel prog ctx hprel_name hrel hprel_groups) 
+    ctx hrel
+
+let rec unfolding_hrel_list prog ctx hprel_name hrel_list hprel_groups =
+  match hrel_list with
+  | [] -> [ctx]
+  | hr::hrl ->
+    let ctx_list = unfolding_one_hrel prog ctx hprel_name hr hprel_groups in
+    List.concat (List.map (fun ctx -> 
+        unfolding_hrel_list prog ctx hprel_name hrl hprel_groups) ctx_list)
+
+let unfolding_hrel_list prog ctx hprel_name hrel_list hprel_groups =
+  let pr1 = !CF.print_formula in
+  let pr2 = pr_list !CF.print_h_formula in
+  Debug.no_2 "unfolding_hrel_list" pr1 pr2 (pr_list pr1)
+    (fun _ _ -> unfolding_hrel_list prog ctx hprel_name hrel_list hprel_groups) 
+    ctx hrel_list
+
+let rec unfolding_hprel prog hprel_groups (hpr: CF.hprel): CF.hprel list =
+  let hpr_name, hpr_args = sig_of_hprel hpr in 
+  let hpr_rhs = hpr.hprel_rhs in
+  let rhs_h, rhs_p, _, _, _, _ = CF.split_components hpr_rhs in
+  let rhs_hrels, rhs_hpreds = List.partition CF.is_hrel (CF.split_star_conjunctions rhs_h) in
+  let ctx = CF.mkBase_simp (CF.join_star_conjunctions rhs_hpreds) rhs_p in
+  let unfolding_ctx_list = unfolding_hrel_list prog ctx hpr_name rhs_hrels hprel_groups in
+  let unfolding_hpr_list = List.map (fun unfolding_rhs -> 
+      { hpr with hprel_rhs = unfolding_rhs }) unfolding_ctx_list in
+  unfolding_hpr_list
 
 let unfolding_hprel prog hprel_groups (hpr: CF.hprel): CF.hprel list =
   let pr = Cprinter.string_of_hprel_short in
   Debug.no_1 "unfolding_hprel" pr (pr_list pr)
     (fun _ -> unfolding_hprel prog hprel_groups hpr) hpr
 
+let sort_hprel_list hprel_list = hprel_list
+
+let unfolding_hprel_list prog hprel_list =
+  let rec helper hprel_groups hprel_list =
+    match hprel_list with
+    | [] -> []
+    | hpr::hprl ->
+      (unfolding_hprel prog hprel_groups hpr) @ (helper hprel_groups hprl)
+  in
+  let hprel_groups = partition_hprel_list hprel_list in
+  let sorted_hprel_list = sort_hprel_list hprel_list in
+  helper hprel_groups sorted_hprel_list
+
 let unfolding prog hprels = 
-  let hprel_groups = partition_hprel_list hprels in
-  List.concat (List.map (unfolding_hprel prog hprel_groups) hprels)
+  unfolding_hprel_list prog hprels
 
 let unfolding prog hprels = 
   let pr = pr_list Cprinter.string_of_hprel_short in

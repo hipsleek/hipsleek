@@ -5148,13 +5148,33 @@ let subst_hpdef ss hpdef=
   }
 
 let subst_hprel_constr sst hprel =
-  let n_guard = subst_opt sst hprel.hprel_guard in
-  let n_lhs = subst sst hprel.hprel_lhs in
-  let n_rhs = subst sst hprel.hprel_rhs in
+  let fr, t = List.split sst in
+  let all_fv = (fv hprel.hprel_lhs) @ (fv hprel.hprel_rhs) @
+    (match hprel.hprel_guard with None -> [] | Some g -> fv g) 
+  in
+  let subst_f f =
+    (* Name clashing *)
+    let clashed_svl = Gen.BList.intersect_eq CP.eq_spec_var t all_fv in
+    if is_empty clashed_svl then subst sst f 
+    else
+      let fresh_svl = CP.fresh_spec_vars clashed_svl in
+      let avoid_clash_sst = List.combine clashed_svl fresh_svl in
+      subst sst (subst avoid_clash_sst f)
+  in
+  let n_guard = map_opt subst_f hprel.hprel_guard in
+  let n_lhs = subst_f hprel.hprel_lhs in
+  let n_rhs = subst_f hprel.hprel_rhs in
   { hprel with
     hprel_lhs = n_lhs;
     hprel_rhs = n_rhs;
     hprel_guard = n_guard; }
+
+let subst_hprel_constr sst hprel =
+  let pr1 = !print_hprel_short in
+  let pr2 = !CP.print_sv in
+  let pr3 = pr_list (pr_pair pr2 pr2) in
+  Debug.no_2 "subst_hprel_constr" pr1 pr3 pr1
+    (fun _ _ -> subst_hprel_constr sst hprel) hprel sst
 
 let hp_def_cmp (d1:hp_rel_def) (d2:hp_rel_def) =
   try
