@@ -1544,7 +1544,7 @@ print residue.
  inferred hprel: [H(x)&true |#|3  --> H(x)&true]
 [[ COND ==>  InferHeap]]
 =====================================================================
-# ex17f1.slk --dpli
+# ex17f1.slk --dlpi (FIXED)
 
 lemma_infer_pred [H] self::sll<> <- self::lseg<q> * H(q) .
 print residue.
@@ -1553,7 +1553,7 @@ print residue.
 
 !!! **lem_store.ml#41:XXXX add_RIGHT_coercion
 !!! **lem_store.ml#42:[Lemma "lem_14":  self::sll<>@M&{FLOW,(20,21)=__norm#E}[]<== (exists q_49: self::lseg<q_49>@M * H(q_49)&{FLOW,(20,21)=__norm#E}[])
- head match:sll
+ head match:slpli
  body view:lseg
  coercion_univ_vars: []
  materialized vars:  [(q,full,[H]); (self,full,[lseg])]

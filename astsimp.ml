@@ -48,6 +48,7 @@ type trans_exp_type =
 
 let pr_v_decls l = pr_list (fun v -> v.I.view_name) l
 let pr_pil = pr_primed_ident_list
+let pr_mater_vars = add_str "mater_vars " Cprinter.string_of_mater_prop_list
 
 let ihp_decl = ref ([]: I.hp_decl list)
 (* let strip_exists_pure f = *)
@@ -65,6 +66,22 @@ let view_scc : (ident list) list ref = ref []
 (* list of views that are recursive *)
 let view_rec : (ident list) ref = ref []
 
+(* let rec look_up_hp_def_raw (defs : hp_decl list) (name : ident) = match defs with *)
+
+let is_not_global_hp_def prog i =
+      try
+        let todo_unk = I.look_up_hp_def_raw prog.I.prog_hp_decls i 
+        in false
+      with _ -> true
+
+let is_not_global_rel prog i =
+      try
+        let todo_unk = I.look_up_rel_def_raw prog.I.prog_rel_decls i 
+        in false
+      with _ -> true
+
+let hack_filter_global_rel prog ls =
+  List.filter (fun (i,_) -> is_not_global_rel prog i) ls
 
 (* Add this to adapt to the ret_int problem. Because in string_of_typ in globals, bool will return "boolean", which will cause a lot of trouble.*)
 let rec new_string_of_typ (x:typ) : string = match x with
@@ -3232,7 +3249,7 @@ and find_m_prop_heap params eq_f h =
   let pr1 = Cprinter.string_of_spec_var_list in
   (* let prr = pr_list Cprinter.string_of_mater_property in *)
   let prr x = Cprinter.string_of_mater_prop_list x in (*string_of_int (List.length x) in*)
-  Debug.no_2 "find_m_prop_heap" pr pr1 prr (fun _ _ -> find_m_prop_heap_x params eq_f h) h params
+  Debug.no_2 "find_m_prop_heap" pr pr1 prr (* pr_mater_vars *) (fun _ _ -> find_m_prop_heap_x params eq_f h) h params
 
 and find_m_prop_heap_x params eq_f h = 
   let rec helper h =
@@ -4474,6 +4491,12 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
     (  
       let args = CF.fv_simple_formula c_lhs in 
       let m_vars = find_materialized_prop args [] c_rhs in
+      let m_vars = List.map (fun m -> let vs = m.Cast.mater_target_view in
+                              let vs = List.filter (fun v -> (is_not_global_rel prog v) 
+                                                             &&  (is_not_global_hp_def prog v) ) vs in
+                              {m with Cast.mater_target_view = vs}) m_vars in
+      let m_vars = List.filter (fun m -> m.Cast.mater_target_view!=[]) m_vars in
+      let () = y_tinfo_hp pr_mater_vars m_vars in
       let c_coer ={ C.coercion_type = coer_type;
                     C.coercion_type_orig = None;
                     C.coercion_exact= coer.I.coercion_exact;
@@ -8316,11 +8339,6 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
     pr1 (add_str "avail_vs" pr) (add_str "expl" pr) (add_str "ann_vs" pr)  Iprinter.string_of_formula pr_out
     (fun _ _ _ _ _ -> case_normalize_renamed_formula_x prog avail_vars posib_expl f ann_vars) prog avail_vars posib_expl  ann_vars f
 
-and hack_filter_global_rel prog ls =
-  List.filter (fun (i,_) -> 
-      try
-        let todo_unk = I.look_up_rel_def_raw prog.I.prog_rel_decls i in false
-      with _ -> true) ls
 
 (*moved the liniarization to case_normalize_renamed_formula*)
 and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib_expl (f:IF.formula) ann_vars:
