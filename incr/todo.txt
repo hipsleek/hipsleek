@@ -1508,9 +1508,14 @@ print residue.
 ]
 
 =====================================================================
-# ex17h1.slk (WN to fix)
+# ex17h1.slk (FIXED)
 
 lemma_infer_pred [H]  self::sll<> -> self::lseg<q> * H(q).
+
+
+ inferred hprel: [emp&qqq_56=null |#|3  --> H(qqq_56)&true; 
+                  qqq_61::node<Anon_59,q_60>@M * q_60::sll<>@M&
+                   true |#|3  --> H(qqq_61)&true]
 
 # Why is above not working?
 
@@ -1539,7 +1544,26 @@ print residue.
  inferred hprel: [H(x)&true |#|3  --> H(x)&true]
 [[ COND ==>  InferHeap]]
 =====================================================================
+# ex17f1.slk --dpli
+
+lemma_infer_pred [H] self::sll<> <- self::lseg<q> * H(q) .
+print residue.
+
+# Why do we have materialised (q,full,[H])?
+
+!!! **lem_store.ml#41:XXXX add_RIGHT_coercion
+!!! **lem_store.ml#42:[Lemma "lem_14":  self::sll<>@M&{FLOW,(20,21)=__norm#E}[]<== (exists q_49: self::lseg<q_49>@M * H(q_49)&{FLOW,(20,21)=__norm#E}[])
+ head match:sll
+ body view:lseg
+ coercion_univ_vars: []
+ materialized vars:  [(q,full,[H]); (self,full,[lseg])]
+ coercion_case: Simple
+
 =====================================================================
+# ex17f1.slk --dpli
+
+# use wrapper to call check_coercion? and collect result after
+
 =====================================================================
 =====================================================================
 =====================================================================
