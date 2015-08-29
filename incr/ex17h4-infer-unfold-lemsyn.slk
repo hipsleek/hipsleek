@@ -20,14 +20,25 @@ HeapPred H(node a).
 //lemma_infer_pred [H]  self::sll<> <- self::lseg<q> * H(q).
 // Valid
 
-lemma_safe  self::sll<> -> self::lseg<qqq> * qqq::sll<>.
+//lemma_infer_pred [H]  self::sll<> -> self::lseg<qqq> * H(qqq).
+lemma_unsafe  self::sll<> -> self::lseg<qqq> * H(qqq).
+
+//infer [H,@classic]  self=null |- self::lseg<qqq> * H(qqq).
 //print residue.
+
+//infer [H,@classic]  self::node<_,q>*q::sll<> |- self::lseg<qqq> * H(qqq).
+//print residue.
+
+infer [H,@classic]  H(x) |- H(x).
+print residue.
+
 /*
-# ex17h2.slk
+# ex17h4.slk 
 
-lemma_safe  self::sll<> -> self::lseg<q> * q::sll<>.
+infer [H,@classic]  H(x) |- H(x).
+print residue.
 
-# This lemma can be proven 
+
 
 
 */

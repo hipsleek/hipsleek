@@ -1514,6 +1514,10 @@ lemma_infer_pred [H]  self::sll<> -> self::lseg<q> * H(q).
 
 # Why is above not working?
 
+Contrast this to ex17h2 which works:
+  lemma_safe  self::sll<> -> self::lseg<q> * q::sll<>.
+
+
 Starting Omega.../usr/local/bin/oc
 
 !!! WARNING logtime exception:0.000326
@@ -1523,6 +1527,17 @@ Entailing lemma lem_14: Fail. (cex)(must) cause: exception in lemma proving
 
 # Can we use wrapping to handle lemma synthesis?
 =====================================================================
+# ex17h4.slk (Loc : please fix)
+
+infer [H,@classic]  H(x) |- H(x).
+print residue.
+
+# GOT before which is trivially true.
+  Can we discard such hprel?
+
+<1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(x)&true |#|3  --> H(x)&true]
+[[ COND ==>  InferHeap]]
 =====================================================================
 =====================================================================
 =====================================================================
