@@ -1486,7 +1486,9 @@ RHS:
 lemma_infer_pred [H] self::sll_two<> <- self::lseg_one<q> * H(q) .
 print residue.
 
-# folding lemma should have _fold view ..
+# folding lemma should have _fold view but NONE below
+
+ coercion_fold: None
 
 !!! **lem_store.ml#41:XXXX add_RIGHT_coercion
 !!! **lem_store.ml#42:[Lemma "lem_14":  self::sll<>@M&{FLOW,(20,21)=__norm#E}[]<== (exists q_49: self::lseg<q_49>@M * H(q_49)&{FLOW,(20,21)=__norm#E}[])
