@@ -1716,15 +1716,15 @@ and add_pre_to_cprog_one cprog c =
 
 and add_pre_to_cprog cprog = 
   { cprog with C.new_proc_decls = C.proc_decls_map (fun c -> 
-       (* let ns = add_pre cprog c.C.proc_static_specs in *)
-       (* (\*to handle @C. should handle copy on prim types?*\) *)
-       (* let ns_caller = if c.C.proc_by_copy_params = [] then ns else *)
-       (*   trans_copy_spec_4caller c.C.proc_by_copy_params ns *)
-       (* in *)
-       (* let () = c.C.proc_stk_of_static_specs # push ns_caller in *)
-       (* c *)
-       add_pre_to_cprog_one cprog c
-     ) cprog.C.new_proc_decls; }   
+        (* let ns = add_pre cprog c.C.proc_static_specs in *)
+        (* (\*to handle @C. should handle copy on prim types?*\) *)
+        (* let ns_caller = if c.C.proc_by_copy_params = [] then ns else *)
+        (*   trans_copy_spec_4caller c.C.proc_by_copy_params ns *)
+        (* in *)
+        (* let () = c.C.proc_stk_of_static_specs # push ns_caller in *)
+        (* c *)
+        add_pre_to_cprog_one cprog c
+      ) cprog.C.new_proc_decls; }   
 
 and sat_warnings cprog = 
   let sat_warnings_op () =
@@ -4255,6 +4255,49 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
     let c_head_norm = CF.struc_to_formula cs_head_norm in
     (n_tl,c_head_norm)
   in
+  (* type: IF.formula -> *)
+  (*   Globals.ident list -> *)
+  (*   bool -> *)
+  (*   Typeinfer.spec_var_type_list -> Typeinfer.spec_var_type_list * CF.formula *)
+  let trans_head new_head fnames quant n_tl=
+    Debug.no_3 "trans_head" !IF.print_formula (pr_list pr_id) (add_str "quant" string_of_bool) (fun (_,f) -> !CF.print_formula f)
+      (fun _ _ _ -> trans_head new_head fnames quant n_tl) new_head fnames quant in
+  (* type: C.F.formula -> C.coercion_decl -> C.coercion_decl *)
+  let change_univ c_head_norm_rlem c = match c.C.coercion_univ_vars with
+    (* move LHS guard to RHS regardless of universal lemma *)
+    | v ->
+      let c_hd, c_guard,c_vp, c_fl, c_t, c_a = CF.split_components c.C.coercion_head in
+      let new_body = c.C.coercion_body in
+      let () = x_binfo_hp (add_str "coercion_body" Cprinter.string_of_formula) new_body no_pos in
+      let new_body = CF.normalize 1 new_body (CF.formula_of_mix_formula c_guard no_pos) no_pos in
+      let () = x_binfo_hp (add_str "new_body" Cprinter.string_of_formula) new_body no_pos in
+      let new_body = CF.push_exists c.C.coercion_univ_vars new_body in
+      let () = x_binfo_hp (add_str "new_body (after push exists)" Cprinter.string_of_formula) new_body no_pos in
+      (* let new_body_norm =  c.C.coercion_body_norm in *)
+      let new_body_norm = CF.struc_formula_of_formula new_body no_pos in
+      let new_body_norm = CF.normalize_struc new_body_norm (* c.C.coercion_body_norm *) (CF.mkBase_rec (CF.formula_of_mix_formula c_guard no_pos) None no_pos) in
+      let () = x_binfo_hp (add_str "new_body_norm" Cprinter.string_of_struc_formula) new_body_norm no_pos in
+      let new_body_norm = CF.push_struc_exists c.C.coercion_univ_vars new_body_norm in
+      (*                 let new_body_norm = CF.push_exists c.C.coercion_univ_vars new_body_norm in *)
+      let () = x_binfo_hp (add_str "new_body_norm" Cprinter.string_of_struc_formula) new_body_norm no_pos in
+      let () = x_binfo_hp (add_str "old_body_norm" Cprinter.string_of_struc_formula) c.C.coercion_body_norm no_pos in
+      (* let new_body_norm = CF.normalize_struc c.C.coercion_body_norm *)
+      (*   (CF.mkBase_rec (CF.formula_of_mix_formula c_guard no_pos) None no_pos) in *)
+      (* let new_body_norm = CF.push_struc_exists c.C.coercion_univ_vars new_body_norm in *)
+      {c with
+       C.coercion_type = Iast.Right;
+       C.coercion_head = CF.mkBase c_hd (mkMTrue no_pos) c_vp c_t c_fl c_a no_pos;
+       (* C.coercion_head_norm = new_head_norm; *)
+       C.coercion_body = new_body;
+       C.coercion_head_norm = c_head_norm_rlem; (*w/o guard*)
+       C.coercion_body_norm = new_body_norm;
+       C.coercion_univ_vars = [];} in
+  (* type: C.F.formula -> C.coercion_decl -> C.coercion_decl *)
+  let change_univ c_head_norm_rlem c = 
+    let lp = Cprinter.string_of_coerc_short in
+    Debug.no_2 "change_univ" !CF.print_formula lp lp
+      change_univ c_head_norm_rlem c
+  in
   (*******************************)
   let i_lhs = coer.I.coercion_head in
   let lhs_vars = IF.all_fv i_lhs in
@@ -4319,11 +4362,11 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
             | CF.ViewNode vn -> vn.CF.h_formula_view_name
             | CF.DataNode dn -> dn.CF.h_formula_data_name
             | _ -> let ()= let b = 
-              match coer.I.coercion_kind with
-              | RLEM -> true | _ -> false in 
-              if b
-              then () 
-              else print_string ("[astimp] Warning: head node of ramification is neither a view node nor a data node "^(Cprinter.string_of_h_formula head)^" \n") in "")
+                             match coer.I.coercion_kind with
+                             | RLEM -> true | _ -> false in 
+                     if b
+                     then () 
+                     else print_string ("[astimp] Warning: head node of ramification is neither a view node nor a data node "^(Cprinter.string_of_h_formula head)^" \n") in "")
         | _ -> 
           let () = print_string "[astsimp] Warning: lhs head node of a coercion is neither a view node nor a data node\n" in 
           ""
@@ -4448,33 +4491,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
                     C.coercion_kind = coer.I.coercion_kind;
                     C.coercion_origin = coer.I.coercion_origin;
                   } in
-      let change_univ c = match c.C.coercion_univ_vars with
-        (* move LHS guard to RHS regardless of universal lemma *)
-        | v ->
-          let c_hd, c_guard,c_vp, c_fl, c_t, c_a = CF.split_components c.C.coercion_head in
-          let new_body = CF.normalize 1 c.C.coercion_body (CF.formula_of_mix_formula c_guard no_pos) no_pos in
-          let () = Debug.ninfo_hprint (add_str "new_body_norm" Cprinter.string_of_formula) new_body no_pos in
-          let new_body = CF.push_exists c.C.coercion_univ_vars new_body in
-          let () = x_tinfo_hp (add_str "new_body (after push exists)" Cprinter.string_of_formula) new_body no_pos in
-          (* let new_body_norm =  c.C.coercion_body_norm in *)
-          let new_body_norm = CF.struc_formula_of_formula new_body no_pos in
-          let new_body_norm = CF.normalize_struc new_body_norm (* c.C.coercion_body_norm *) (CF.mkBase_rec (CF.formula_of_mix_formula c_guard no_pos) None no_pos) in
-          let () = x_tinfo_hp (add_str "new_body_norm" Cprinter.string_of_struc_formula) new_body_norm no_pos in
-          let new_body_norm = CF.push_struc_exists c.C.coercion_univ_vars new_body_norm in
-          (*                 let new_body_norm = CF.push_exists c.C.coercion_univ_vars new_body_norm in *)
-          let () = x_tinfo_hp (add_str "new_body_norm" Cprinter.string_of_struc_formula) new_body_norm no_pos in
-          let () = x_tinfo_hp (add_str "old_body_norm" Cprinter.string_of_struc_formula) c.C.coercion_body_norm no_pos in
-          (* let new_body_norm = CF.normalize_struc c.C.coercion_body_norm *)
-          (*   (CF.mkBase_rec (CF.formula_of_mix_formula c_guard no_pos) None no_pos) in *)
-          (* let new_body_norm = CF.push_struc_exists c.C.coercion_univ_vars new_body_norm in *)
-          {c with
-           C.coercion_type = Iast.Right;
-           C.coercion_head = CF.mkBase c_hd (mkMTrue no_pos) c_vp c_t c_fl c_a no_pos;
-           (* C.coercion_head_norm = new_head_norm; *)
-           C.coercion_body = new_body;
-           C.coercion_head_norm = c_head_norm_rlem; (*w/o guard*)
-           C.coercion_body_norm = new_body_norm;
-           C.coercion_univ_vars = [];} in
+      let change_univ x = change_univ c_head_norm_rlem x in
       match coer_type with
       | I.Left -> 
         let c_coer = {c_coer with 
@@ -4971,7 +4988,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             if flag1 && flag2 then get_binop_call b_op
             else get_binop_call_safe_int b_op
            )
-           else get_binop_call b_op in
+            else get_binop_call b_op in
          let new_e = I.CallNRecv {
              I.exp_call_nrecv_method = b_call;
              I.exp_call_nrecv_lock = None;
@@ -5000,14 +5017,14 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
               else
                 (E.push_scope ();
                  (let todo_unk = List.map2 
-                     (fun vi ti -> let alpha = E.alpha_name vi in
-                       E.add vi (E.VarInfo{
-                           E.var_name = vi;
-                           E.var_alpha = alpha;
-                           E.var_type = ti;})) 
-                     vs
-                     (* An Hoa [22/08/2011] : Convert hard code of data fields typ extraction into *)
-                     (List.map I.get_field_typ ddef.I.data_fields) in
+                      (fun vi ti -> let alpha = E.alpha_name vi in
+                        E.add vi (E.VarInfo{
+                            E.var_name = vi;
+                            E.var_alpha = alpha;
+                            E.var_type = ti;})) 
+                      vs
+                      (* An Hoa [22/08/2011] : Convert hard code of data fields typ extraction into *)
+                      (List.map I.get_field_typ ddef.I.data_fields) in
                   let vs_types = List.map (fun fld -> x_add trans_type prog (I.get_field_typ fld) (I.get_field_pos fld)) ddef.I.data_fields in
                   let vt = x_add trans_type prog vi.E.var_type pos in
                   let (ce, te) = helper e in
@@ -5204,9 +5221,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
            with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = "trans_exp :: case CallNRecv :: forked procedure " ^ (mingled_forked_mn ^ " is not found");})
         (*======== <<<<FORK ==========*)
       else if (mn=Globals.init_name) 
-           || (mn=Globals.finalize_name) 
-           || (mn=Globals.acquire_name)
-           || (mn=Globals.release_name) then
+              || (mn=Globals.finalize_name) 
+              || (mn=Globals.acquire_name)
+              || (mn=Globals.release_name) then
         (*=====================================*)
         (*========== INIT/FINALIZE >>>=========*)
         (*=====================================*)
@@ -8028,100 +8045,100 @@ and trans_pure_b_formula (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b_f
 and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b_formula =
   let (pf, sl) = b0 in
   let npf =  let rec helper pf = 
-    match pf with
-    | IP.Frm ((v,p),pos) ->
-      let v_type = Cpure.type_of_spec_var (trans_var (v,Unprimed) tlist pos) in
-      let sv = CP.SpecVar (v_type, v, p) in
-      CP.Frm (sv, pos)
-    | IP.BConst (b, pos) -> CP.BConst (b, pos)
-    | IP.BVar ((v, p), pos) -> CP.BVar (CP.SpecVar (C.bool_type, v, p), pos)
-    | IP.LexVar (t_ann, ls1, ls2, pos) ->
-      let cle = List.map (fun e -> x_add trans_pure_exp e tlist) ls1 in
-      let clt = List.map (fun e -> x_add trans_pure_exp e tlist) ls2 in
-      CP.LexVar {
-        CP.lex_ann = trans_term_ann t_ann tlist;
-        CP.lex_exp = cle;
-        CP.lex_fid = "";
-        CP.lex_tmp = clt;
-        CP.lex_loc = pos; }
-    | IP.ImmRel (r, cond, pos) -> CP.ImmRel(helper r, trans_imm_ann cond tlist, pos)
-    | IP.Lt (e1, e2, pos) ->
-      let pe1 = x_add trans_pure_exp e1 tlist in
-      let pe2 = x_add trans_pure_exp e2 tlist in CP.mkLt pe1 pe2 pos
-    | IP.Lte (e1, e2, pos) ->
-      let pe1 = x_add trans_pure_exp e1 tlist in
-      let pe2 = x_add trans_pure_exp e2 tlist in CP.mkLte pe1 pe2 pos
-    | IP.SubAnn (e1, e2, pos) ->
-      let pe1 = x_add trans_pure_exp e1 tlist in
-      let pe2 = x_add trans_pure_exp e2 tlist in CP.SubAnn(pe1,pe2,pos)
-    | IP.Gt (e1, e2, pos) ->
-      let pe1 = x_add trans_pure_exp e1 tlist in
-      let pe2 = x_add trans_pure_exp e2 tlist in CP.mkGt pe1 pe2 pos
-    | IP.Gte (e1, e2, pos) ->
-      let pe1 = x_add trans_pure_exp e1 tlist in
-      let pe2 = x_add trans_pure_exp e2 tlist in CP.mkGte pe1 pe2 pos
-    | IP.Eq (e1, e2, pos) ->
-      let pe1 = x_add trans_pure_exp e1 tlist in
-      let pe2 = x_add trans_pure_exp e2 tlist in 
-      (check_dfrac_wf pe1 pe2 pos; CP.mkEq pe1 pe2 pos)
-    | IP.Neq (e1, e2, pos) ->
-      let pe1 = x_add trans_pure_exp e1 tlist in
-      let pe2 = x_add trans_pure_exp e2 tlist in CP.mkNeq pe1 pe2 pos
-    | IP.EqMax (e1, e2, e3, pos) ->
-      let pe1 = x_add trans_pure_exp e1 tlist in
-      let pe2 = x_add trans_pure_exp e2 tlist in
-      let pe3 = x_add trans_pure_exp e3 tlist in CP.EqMax (pe1, pe2, pe3, pos)
-    | IP.EqMin (e1, e2, e3, pos) ->
-      let pe1 = x_add trans_pure_exp e1 tlist in
-      let pe2 = x_add trans_pure_exp e2 tlist in
-      let pe3 = x_add trans_pure_exp e3 tlist in CP.EqMin (pe1, pe2, pe3, pos)
-    | IP.BagIn ((v, p), e, pos) ->
-      let pe = x_add trans_pure_exp e tlist in CP.BagIn ((trans_var (v,p) tlist pos), pe, pos)
-    | IP.BagNotIn ((v, p), e, pos) ->
-      let pe = x_add trans_pure_exp e tlist in
-      CP.BagNotIn ((trans_var (v,p) tlist pos), pe, pos)
-    | IP.BagSub (e1, e2, pos) ->
-      let pe1 = x_add trans_pure_exp e1 tlist in
-      let pe2 = x_add trans_pure_exp e2 tlist in CP.BagSub (pe1, pe2, pos)
-    | IP.BagMax ((v1, p1), (v2, p2), pos) ->
-      CP.BagMax (CP.SpecVar (C.int_type, v1, p1),CP.SpecVar (C.bag_type, v2, p2), pos)
-    | IP.BagMin ((v1, p1), (v2, p2), pos) ->
-      CP.BagMin (CP.SpecVar (C.int_type, v1, p1), CP.SpecVar (C.bag_type, v2, p2), pos)
-    (* | IP.VarPerm (ct,ls,pos) ->                                 *)
-    (*       let func (v,p) =                                      *)
-    (*         CP.SpecVar (UNK,v,p) (*TO CHECK: ignore type info*) *)
-    (*       in                                                    *)
-    (*       let ls1 = List.map func ls in                         *)
-    (*       CP.VarPerm (ct,ls1,pos)                               *)
-    | IP.ListIn (e1, e2, pos) ->
-      let pe1 = x_add trans_pure_exp e1 tlist in
-      let pe2 = x_add trans_pure_exp e2 tlist in CP.ListIn (pe1, pe2, pos)
-    | IP.ListNotIn (e1, e2, pos) ->
-      let pe1 = x_add trans_pure_exp e1 tlist in
-      let pe2 = x_add trans_pure_exp e2 tlist in CP.ListNotIn (pe1, pe2, pos)
-    | IP.ListAllN (e1, e2, pos) ->
-      let pe1 = x_add trans_pure_exp e1 tlist in
-      let pe2 = x_add trans_pure_exp e2 tlist in CP.ListAllN (pe1, pe2, pos)
-    | IP.ListPerm (e1, e2, pos) ->
-      let pe1 = x_add trans_pure_exp e1 tlist in
-      let pe2 = x_add trans_pure_exp e2 tlist in CP.ListPerm (pe1, pe2, pos)
-    | IP.RelForm (r, args, pos) ->    
-      let nv = trans_var_safe (r,Unprimed) (RelT[]) tlist pos in
-      (* Match types of arguments with relation signature *)
-      let cpargs = x_add trans_pure_exp_list args tlist in
-      CP.RelForm (nv, cpargs, pos) (* An Hoa : Translate IP.RelForm to CP.RelForm *)
-    | IP.XPure ({IP.xpure_view_node = vn ;
-                 IP.xpure_view_name = r;
-                 IP.xpure_view_arguments = args;
-                 IP.xpure_view_remaining_branches = brs;
-                 IP.xpure_view_pos = pos}) -> 
-      let nargs = List.map (fun arg -> trans_var (arg,Unprimed) tlist pos) args in 
-      CP.XPure {CP.xpure_view_node = None ;
-                CP.xpure_view_name = r;
-                CP.xpure_view_arguments = nargs;
-                CP.xpure_view_remaining_branches = brs;
-                CP.xpure_view_pos = pos
-               }
+               match pf with
+               | IP.Frm ((v,p),pos) ->
+                 let v_type = Cpure.type_of_spec_var (trans_var (v,Unprimed) tlist pos) in
+                 let sv = CP.SpecVar (v_type, v, p) in
+                 CP.Frm (sv, pos)
+               | IP.BConst (b, pos) -> CP.BConst (b, pos)
+               | IP.BVar ((v, p), pos) -> CP.BVar (CP.SpecVar (C.bool_type, v, p), pos)
+               | IP.LexVar (t_ann, ls1, ls2, pos) ->
+                 let cle = List.map (fun e -> x_add trans_pure_exp e tlist) ls1 in
+                 let clt = List.map (fun e -> x_add trans_pure_exp e tlist) ls2 in
+                 CP.LexVar {
+                   CP.lex_ann = trans_term_ann t_ann tlist;
+                   CP.lex_exp = cle;
+                   CP.lex_fid = "";
+                   CP.lex_tmp = clt;
+                   CP.lex_loc = pos; }
+               | IP.ImmRel (r, cond, pos) -> CP.ImmRel(helper r, trans_imm_ann cond tlist, pos)
+               | IP.Lt (e1, e2, pos) ->
+                 let pe1 = x_add trans_pure_exp e1 tlist in
+                 let pe2 = x_add trans_pure_exp e2 tlist in CP.mkLt pe1 pe2 pos
+               | IP.Lte (e1, e2, pos) ->
+                 let pe1 = x_add trans_pure_exp e1 tlist in
+                 let pe2 = x_add trans_pure_exp e2 tlist in CP.mkLte pe1 pe2 pos
+               | IP.SubAnn (e1, e2, pos) ->
+                 let pe1 = x_add trans_pure_exp e1 tlist in
+                 let pe2 = x_add trans_pure_exp e2 tlist in CP.SubAnn(pe1,pe2,pos)
+               | IP.Gt (e1, e2, pos) ->
+                 let pe1 = x_add trans_pure_exp e1 tlist in
+                 let pe2 = x_add trans_pure_exp e2 tlist in CP.mkGt pe1 pe2 pos
+               | IP.Gte (e1, e2, pos) ->
+                 let pe1 = x_add trans_pure_exp e1 tlist in
+                 let pe2 = x_add trans_pure_exp e2 tlist in CP.mkGte pe1 pe2 pos
+               | IP.Eq (e1, e2, pos) ->
+                 let pe1 = x_add trans_pure_exp e1 tlist in
+                 let pe2 = x_add trans_pure_exp e2 tlist in 
+                 (check_dfrac_wf pe1 pe2 pos; CP.mkEq pe1 pe2 pos)
+               | IP.Neq (e1, e2, pos) ->
+                 let pe1 = x_add trans_pure_exp e1 tlist in
+                 let pe2 = x_add trans_pure_exp e2 tlist in CP.mkNeq pe1 pe2 pos
+               | IP.EqMax (e1, e2, e3, pos) ->
+                 let pe1 = x_add trans_pure_exp e1 tlist in
+                 let pe2 = x_add trans_pure_exp e2 tlist in
+                 let pe3 = x_add trans_pure_exp e3 tlist in CP.EqMax (pe1, pe2, pe3, pos)
+               | IP.EqMin (e1, e2, e3, pos) ->
+                 let pe1 = x_add trans_pure_exp e1 tlist in
+                 let pe2 = x_add trans_pure_exp e2 tlist in
+                 let pe3 = x_add trans_pure_exp e3 tlist in CP.EqMin (pe1, pe2, pe3, pos)
+               | IP.BagIn ((v, p), e, pos) ->
+                 let pe = x_add trans_pure_exp e tlist in CP.BagIn ((trans_var (v,p) tlist pos), pe, pos)
+               | IP.BagNotIn ((v, p), e, pos) ->
+                 let pe = x_add trans_pure_exp e tlist in
+                 CP.BagNotIn ((trans_var (v,p) tlist pos), pe, pos)
+               | IP.BagSub (e1, e2, pos) ->
+                 let pe1 = x_add trans_pure_exp e1 tlist in
+                 let pe2 = x_add trans_pure_exp e2 tlist in CP.BagSub (pe1, pe2, pos)
+               | IP.BagMax ((v1, p1), (v2, p2), pos) ->
+                 CP.BagMax (CP.SpecVar (C.int_type, v1, p1),CP.SpecVar (C.bag_type, v2, p2), pos)
+               | IP.BagMin ((v1, p1), (v2, p2), pos) ->
+                 CP.BagMin (CP.SpecVar (C.int_type, v1, p1), CP.SpecVar (C.bag_type, v2, p2), pos)
+               (* | IP.VarPerm (ct,ls,pos) ->                                 *)
+               (*       let func (v,p) =                                      *)
+               (*         CP.SpecVar (UNK,v,p) (*TO CHECK: ignore type info*) *)
+               (*       in                                                    *)
+               (*       let ls1 = List.map func ls in                         *)
+               (*       CP.VarPerm (ct,ls1,pos)                               *)
+               | IP.ListIn (e1, e2, pos) ->
+                 let pe1 = x_add trans_pure_exp e1 tlist in
+                 let pe2 = x_add trans_pure_exp e2 tlist in CP.ListIn (pe1, pe2, pos)
+               | IP.ListNotIn (e1, e2, pos) ->
+                 let pe1 = x_add trans_pure_exp e1 tlist in
+                 let pe2 = x_add trans_pure_exp e2 tlist in CP.ListNotIn (pe1, pe2, pos)
+               | IP.ListAllN (e1, e2, pos) ->
+                 let pe1 = x_add trans_pure_exp e1 tlist in
+                 let pe2 = x_add trans_pure_exp e2 tlist in CP.ListAllN (pe1, pe2, pos)
+               | IP.ListPerm (e1, e2, pos) ->
+                 let pe1 = x_add trans_pure_exp e1 tlist in
+                 let pe2 = x_add trans_pure_exp e2 tlist in CP.ListPerm (pe1, pe2, pos)
+               | IP.RelForm (r, args, pos) ->    
+                 let nv = trans_var_safe (r,Unprimed) (RelT[]) tlist pos in
+                 (* Match types of arguments with relation signature *)
+                 let cpargs = x_add trans_pure_exp_list args tlist in
+                 CP.RelForm (nv, cpargs, pos) (* An Hoa : Translate IP.RelForm to CP.RelForm *)
+               | IP.XPure ({IP.xpure_view_node = vn ;
+                            IP.xpure_view_name = r;
+                            IP.xpure_view_arguments = args;
+                            IP.xpure_view_remaining_branches = brs;
+                            IP.xpure_view_pos = pos}) -> 
+                 let nargs = List.map (fun arg -> trans_var (arg,Unprimed) tlist pos) args in 
+                 CP.XPure {CP.xpure_view_node = None ;
+                           CP.xpure_view_name = r;
+                           CP.xpure_view_arguments = nargs;
+                           CP.xpure_view_remaining_branches = brs;
+                           CP.xpure_view_pos = pos
+                          }
     in helper pf in
   (*let () = print_string("\nC_B_Form: "^(Cprinter.string_of_b_formula (npf,None))) in*)
   match sl with
@@ -8968,7 +8985,7 @@ and case_normalize_struc_formula_view i prog (h:(ident*primed) list)(p:(ident*pr
     (*let r1 = fst (case_normalize_struc_formula i prog h p f allow_primes allow_post_vars lax_implicit strad_vs) in
       let () = print_string ("\n simpl: "^(Iprinter.string_of_struc_formula r2)^"\n prev: "^ 
       (Iprinter.string_of_struc_formula r1)^"\n") in
-      *) 
+    *) 
     r2
   else fst (case_normalize_struc_formula i prog h p f allow_primes allow_post_vars lax_implicit strad_vs)
 
@@ -9766,9 +9783,9 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
       let lr = hull_invs v_l lr in
       (*let () = print_string ("after hull: "^(String.concat " - " (List.map Cprinter.string_of_pure_formula lr))^"\n") in*)
       let lr = let rec r f = match f with
-        | CP.BForm (l, _) -> [l]
-        | CP.And (f1,f2,_) -> (r f1)@(r f2)
-        | _ -> [] in 
+          | CP.BForm (l, _) -> [l]
+          | CP.And (f1,f2,_) -> (r f1)@(r f2)
+          | _ -> [] in 
         List.concat (List.map r lr) in  
       to_be_added @ (Gen.BList.remove_dups_eq CP.eq_b_formula_no_aset lr) in      
     let l = List.length pure_list in
@@ -10248,8 +10265,8 @@ and irf_traverse_proc (cp: C.prog_decl) (proc: C.proc_decl) (scc: C.IG.V.t list)
       let body, cl = irf_traverse_exp cp b scc in
       Some body, cl
   in let is_rec =
-    if (List.length scc) > 1 then true (* Mutual recursive function *)
-    else List.exists (fun mn -> mn = proc.C.proc_name) call_list
+       if (List.length scc) > 1 then true (* Mutual recursive function *)
+       else List.exists (fun mn -> mn = proc.C.proc_name) call_list
   in { proc with
        C.proc_body = marked_rec_body;
        C.proc_is_recursive = is_rec }
@@ -10644,8 +10661,8 @@ and trans_bdecl_x prog bd =
   ) in
   let (n_tl,l) = aux2 n_tl bd.I.barrier_tr_list in
   let bdef = let fct a l = match l with 
-    | CF.EList l -> a@l 
-    | _ -> (empty_spec_label_def, l)::a in
+      | CF.EList l -> a@l 
+      | _ -> (empty_spec_label_def, l)::a in
     CF.mkEList_no_flatten (List.fold_left (fun a (_,_,l)-> List.fold_left fct a l) [] l) in
   { C.barrier_thc = bd.I.barrier_thc;
     C.barrier_name = bd.I.barrier_name;
