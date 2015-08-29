@@ -104,6 +104,8 @@ let heap_entail_formula prog (ante: CF.formula) (conseq: CF.formula) =
   Debug.no_2 "Syn.heap_entail_formula" pr1 pr1 pr2 
     (fun _ _ -> heap_entail_formula prog ante conseq) ante conseq 
 
+let is_sat f = Tpdispatcher.is_sat_raw f
+
 let combine_Star f1 f2 = 
   CF.mkStar f1 f2 CF.Flow_combine no_pos
 
@@ -121,8 +123,11 @@ let unfolding_one_hrel_def prog ctx (hrel_def: CF.hprel) =
     let guard_h_f = CF.mkBase_simp guard_h (MCP.mkMTrue pos) in
     let rs, residue = heap_entail_formula prog ctx guard_h_f in
     if rs then
-      let comb_f = combine_Star g residue in
-      Some (combine_Star comb_f hrel_def.hprel_rhs)
+      let _, ctx_p, _, _, _, _ = CF.split_components ctx in
+      if is_sat (MCP.merge_mems ctx_p guard_p true) then
+        let comb_f = combine_Star g residue in
+        Some (combine_Star comb_f hrel_def.hprel_rhs)
+      else None
     else None
 
 let unfolding_one_hrel_def prog ctx (hrel_def: CF.hprel) =
