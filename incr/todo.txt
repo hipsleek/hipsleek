@@ -1591,7 +1591,31 @@ inferred hprel: [emp&y=null |#|3  --> H2(y,x)&true;
 # Avoid split, better use:
      H2(x,y) & y=null --> H2(y,x)
 =====================================================================
+# ex17i2.slk (Loc to fix..)
+
+lemma_infer [R] self::sll<> -> self::lseg<q> & R(q) .
+
+# Please remove trivial pure relation too, 
+#  namely  R(q_62)) -->  R(q_62)
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+    or emp&R(q_80)&{FLOW,(20,21)=__norm#E}[]
+    
+ inferred rel: [RELDEFN R: ( q_57=null) -->  R(q_57); 
+                RELDEFN R: ( R(q_62)) -->  R(q_62)]
 =====================================================================
+# ex17i3.slk (WN to fix..)
+
+lemma_infer [R] self::sll<> <- self::lseg<q> & R(q) .
+
+# Why did this fail?
+
+Entailing lemma lem_14: Fail. (no cex)(may) cause: M_unmatched_rhs (infer_collect_hp_rel 3b)
+
+Failed to inferred for lem_14:<== (invalid lemma encountered).
+Residue:
+
+ { }
 =====================================================================
 =====================================================================
 =====================================================================

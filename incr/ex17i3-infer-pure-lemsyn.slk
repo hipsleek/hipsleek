@@ -1,0 +1,36 @@
+
+data node {
+	int val;
+	node next;
+}.
+
+pred lseg<p> == self = p
+	or self::node<_, q> * q::lseg<p>
+  inv true.
+
+pred sll<> == self = null 
+	or self::node<_, q> * q::sll<>
+  inv true.
+
+HeapPred H(node a).
+relation R(node a).
+
+lemma_infer [R] self::sll<> <- self::lseg<q> & R(q) .
+print residue.
+
+/*
+# ex17i3.slk (WN to fix..)
+
+lemma_infer [R] self::sll<> <- self::lseg<q> & R(q) .
+
+# Why did this fail?
+
+Entailing lemma lem_14: Fail. (no cex)(may) cause: M_unmatched_rhs (infer_collect_hp_rel 3b)
+
+Failed to inferred for lem_14:<== (invalid lemma encountered).
+Residue:
+
+ { }
+
+*/
+
