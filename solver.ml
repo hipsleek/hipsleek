@@ -8332,10 +8332,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
         match ctx with
         | FailCtx _ -> ctx
         | SuccCtx cl ->
-          let () = Infer.rel_ass_stk # push_list hprel_ass in
-          let () = Log.current_hprel_ass_stk # push_list hprel_ass in
-          let new_cl =
-            List.map (fun c ->
+              let () = Infer.rel_ass_stk # push_list hprel_ass in
+              let () = Log.current_hprel_ass_stk # push_list hprel_ass in
+              let new_cl = List.map (fun c ->
                 (transform_context
                    (fun es ->
                       let es = {es with CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ hprel_ass;}  in

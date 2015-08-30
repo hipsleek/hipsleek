@@ -1208,6 +1208,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                     let rhs = CF.formula_of_pure_formula rhs_xpure pos in
 
                     let hp_rel = mkHprel_1 knd lhs None rhs es_cond_path in
+                    x_tinfo_pp ("hp_rel" ^ (Cprinter.string_of_hprel_short hp_rel)) pos;
                     (* postpone until heap_entail_after_sat *)
                     let () = rel_ass_stk # push_list ([hp_rel]) in
                     let new_es = {estate with CF.es_infer_hp_rel = estate.CF.es_infer_hp_rel @ [hp_rel];} in
@@ -1423,6 +1424,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                           ) ([], [], []) rel_ass
                         in
                         let i_hps = [] in
+                         x_tinfo_pp ("heap_ass" ^ ((pr_list_ln Cprinter.string_of_hprel_short) heap_ass)) pos;
                         let () = Log.current_hprel_ass_stk # push_list heap_ass in
                         (* postpone until heap_entail_after_sat *)
                         let () = rel_ass_stk # push_list heap_ass in
@@ -3374,7 +3376,8 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
         | _ -> report_error no_pos "INFER.generate_constrains: impossible"
       ), lhs
   in
-  let hp_rel_list0 = hp_rels@defined_hprels in
+  let hp_rel_list0a = hp_rels@defined_hprels in
+  let hp_rel_list0 = List.filter (fun cs -> not (Sautil.is_trivial_constr ~en_arg:true cs)) hp_rel_list0a in
   let ex_ass = (rel_ass_stk # get_stk) in
   let hp_rel_list = Gen.BList.difference_eq Sautil.constr_cmp hp_rel_list0 ex_ass in
   (* postpone until heap_entail_after_sat *)
@@ -3739,7 +3742,7 @@ let infer_collect_hp_rel i prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
   let pr4 = Cprinter.string_of_estate_infer_hp in
   let pr5 =  pr_penta string_of_bool pr4 Cprinter.string_of_h_formula
       (pr_option Cprinter.string_of_h_formula) (pr_option pr2) in
-  Debug.no_3_num i "infer_collect_hp_rel0" (* pr2 *) (add_str "lhs" pr1) (add_str "rhs" pr1) (add_str "es" pr2) pr5
+  Debug.no_3_num i "infer_collect_hp_rel" (* pr2 *) (add_str "lhs" pr1) (add_str "rhs" pr1) (add_str "es" pr2) pr5
     ( fun _ _ _ -> infer_collect_hp_rel prog es rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos) (* es *) lhs_b rhs_b es
 
 
@@ -3942,13 +3945,13 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) (* lhs_b rhs0 *) mix_
 
 
 let infer_collect_hp_rel_empty_rhs i prog (es:entail_state) (* lhs_b rhs0 *) rhs_p pos =
-  let pr1 = Cprinter.string_of_formula in
+  let pr1 =  Cprinter.string_of_estate_infer_hp (* Cprinter.string_of_formula *) in
   let pr2 = Cprinter.string_of_mix_formula in
-  let pr3 =  (pr_triple (add_str "Res" string_of_bool) (add_str "Sel HP"Cprinter.string_of_estate_infer_hp)
+  let pr3 =  (pr_triple (add_str "Res" string_of_bool) (add_str "Sel HP" Cprinter.string_of_estate_infer_hp)
       (add_str "Inferred Relations" (pr_list_ln Cprinter.string_of_hprel_short))) in
   let pr4 = Cprinter.string_of_h_formula in
   Debug.no_2_num i "infer_collect_hp_rel_empty_rhs" pr1 (* pr4 *) pr2 pr3
-    ( fun _ _ -> infer_collect_hp_rel_empty_rhs prog es (* lhs_b rhs0 *) rhs_p pos) es.CF.es_formula (* rhs0 *) rhs_p
+    ( fun _ _ -> infer_collect_hp_rel_empty_rhs prog es (* lhs_b rhs0 *) rhs_p pos) es(* .CF.es_formula *) (* rhs0 *) rhs_p
 
 (*******************************************************)
 (*******************************************************)
@@ -4398,3 +4401,4 @@ let add_infer_hp_contr_to_list_context h_arg_map cp (l:list_context) conseq : li
   let pr3 = !print_list_context in
   Debug.no_4 "add_infer_hp_contr_to_list_context" pr1 pr2 pr3 !CP.print_formula (pr_option pr3)
     (fun _ _ _ _ -> add_infer_hp_contr_to_list_context h_arg_map cp l conseq) h_arg_map cp l conseq
+
