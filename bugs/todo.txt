@@ -1922,7 +1922,7 @@ void append(node x, node tx, node y, node ty)
 Exception Failure("bind failure exception") Occurred!
 
 ==============================================================
-# ex55g1.slk
+# ex55g1.slk (FIXED via ex55g3.slk)
 
 pred lseg<n, p> == self = p & n = 0
          or self::node<next = r> * r::lseg<n - 1, p>
@@ -1935,10 +1935,18 @@ Removing invalid lemma ---> lemma store restored.
 
 # Would case-spec solve this?
 
+==============================================================
+# ex55g1.slk
+
+lemma_safe self::lseg<n, p> & n = a + b & a,b >=0 <-> 
+     self::lseg<a, r> * r::lseg<b, p>.
+
+# should r be implicit, and p free & existential?
+
 # why free var warning?
 
 !!! **lem_store.ml#27:XXXX add_LEFT_coercion
-!!! **lem_store.ml#28:[Lemma "lem_12_left":  self::lseg<n,p>@M&n=b+a & 0<=a & 0<=b&{FLOW,(20,21)=__norm#E}[]==> (exists r: self::lseg<a,r>@M * r::lseg<b,p>@M&{FLOW,(20,21)=__norm#E}[])
+!!! **lem_store.ml#28:[Lemma "lem_12_left":  self::lseg<n,p>@M&n=b+a & 0<=a & 0<=b&{FLOW,(20,21)=__norm#E}[] ==> (exists r: self::lseg<a,r>@M * r::lseg<b,p>@M&{FLOW,(20,21)=__norm#E}[])
  head match:lseg
  body view:lseg
  coercion_univ_vars: [a,b]
@@ -1974,7 +1982,34 @@ RHS:
    0<=b_549&{FLOW,(20,21)=__norm#E}[])
 
 ===================================================================
+# ex55g3.slk (OK)
+
+lemma_safe self::lseg<n, p> & n = a + b & a,b >=0 
+    <-> self::lseg<a, r> * r::lseg<b, p>.
+
+# case-spec below help with proving
+
+pred lseg<n, p> == 
+   case {
+      n=0 -> [] self = p ;
+      n!=0 -> [] self::node<next = r> * r::lseg<n - 1, p>;
+   }     inv n >= 0.
+
 ===================================================================
+# ex55g4.slk --eci
+
+# How come case-spec inference not working?
+
+   view lseg<n:int,p:node>= 
+    EList
+      :EBase 
+         (* lbl: *){3}->emp&self=p & n=0&{FLOW,(1,26)=__flow#E}[]
+      || :EBase 
+            exists (Impl)[Anon_17; r](* lbl: *){4}->(exists p_20,
+            flted_5_19: (* lbl: *){4}->self::node<Anon_17,r>@M * 
+                                       r::lseg<flted_5_19,p_20>@M&
+            flted_5_19+1=n & p_20=p&{FLOW,(1,26)=__flow#E}[])
+
 ===================================================================
 ===================================================================
 ===================================================================
