@@ -3377,7 +3377,9 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
       ), lhs
   in
   let hp_rel_list0a = hp_rels@defined_hprels in
-  let hp_rel_list0 = List.filter (fun cs -> not (Sautil.is_trivial_constr ~en_arg:true cs)) hp_rel_list0a in
+  let hp_rel_list0 = 
+    if !Globals.old_keep_triv_hprel then hp_rel_list0a
+    else List.filter (fun cs -> not (Sautil.is_trivial_constr ~en_arg:true cs)) hp_rel_list0a in
   let ex_ass = (rel_ass_stk # get_stk) in
   let hp_rel_list = Gen.BList.difference_eq Sautil.constr_cmp hp_rel_list0 ex_ass in
   (* postpone until heap_entail_after_sat *)
