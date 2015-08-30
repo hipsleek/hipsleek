@@ -2650,6 +2650,7 @@ infer_cmd:
       (i_consts,il,t,b,Some true)
     | `INFER_INEXACT; il_w_itype = cid_list_w_itype (* il=OPT id_list *); t=meta_constr; `DERIVE; b=extended_meta_constr -> 
       let (_,i_consts,il) = conv_ivars_icmd il_w_itype in
+      let i_consts = List.filter (fun i -> i!=INF_CLASSIC) i_consts in
       (* let il = un_option il [] in  *)
       (i_consts,il,t,b,Some false)
   ]];
