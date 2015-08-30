@@ -4491,11 +4491,19 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
     (  
       let args = CF.fv_simple_formula c_lhs in 
       let m_vars = find_materialized_prop args [] c_rhs in
+      (* change needed for append_tail.ss *)
+      (* materialized vars:  [(self,full,[lseg2]); (t,full,[])] *)
+      (* let m_vars = List.map (fun m -> let vs = m.Cast.mater_target_view in *)
+      (*                         let vs2 = List.filter (fun v -> (is_not_global_rel prog v) *)
+      (*                                                        &&  (is_not_global_hp_def prog v) ) vs in *)
+      (*                         {m with Cast.mater_target_view = vs}) m_vars in *)
+      (* let m_vars = List.filter (fun m -> m.Cast.mater_target_view!=[]) m_vars in *)
       let m_vars = List.map (fun m -> let vs = m.Cast.mater_target_view in
-                              let vs = List.filter (fun v -> (is_not_global_rel prog v) 
+                              let vs2 = List.filter (fun v -> (is_not_global_rel prog v)
                                                              &&  (is_not_global_hp_def prog v) ) vs in
-                              {m with Cast.mater_target_view = vs}) m_vars in
-      let m_vars = List.filter (fun m -> m.Cast.mater_target_view!=[]) m_vars in
+                              (m,vs,vs2)) m_vars in
+      let m_vars = List.filter (fun (m,vs,vs2) -> vs==[] (* no change *) || vs2!=[]) m_vars in
+      let m_vars = List.map (fun (m,vs,vs2) -> {m with Cast.mater_target_view = vs2}) m_vars in
       let () = y_tinfo_hp pr_mater_vars m_vars in
       let c_coer ={ C.coercion_type = coer_type;
                     C.coercion_type_orig = None;

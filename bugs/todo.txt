@@ -1907,7 +1907,7 @@ Residue:
 # EXPECTS
     HP_27(flted_9_26)&true |#|3  --> emp&flted_9_26=null]
 ===================================================================
-# ex55h.ss
+# ex55h.ss (FIXED on filtering cond for mater_list)
 
 
 void append(node x, node tx, node y, node ty)
