@@ -68,10 +68,40 @@ let add_dangling_hprel (hpr: CF.hprel) =
 (*********************)
 (***** UNFOLDING *****)
 (*********************)
+module Ident = struct
+  type t = ident
+  let compare = String.compare
+  let hash = Hashtbl.hash
+  let equal i1 i2 = compare i1 i2 == 0 
+end
+
+module CG = Graph.Persistent.Digraph.Concrete(Ident)
+module CGC = Graph.Components.Make(CG)
+
+let hprel_num = ref 0
+
+let fresh_hprel_num () =
+  hprel_num := !hprel_num + 1;
+  !hprel_num
+
+type hprel_id = {
+  hprel_constr: CF.hprel;
+  hprel_id: int;
+}
+
+let mk_hprel_id hpr = 
+  { hprel_constr = hpr; hprel_id = fresh_hprel_num (); }
+
 let sig_of_hrel (h: CF.h_formula) =
   match h with
   | HRel (hpr_sv, hpr_args, _) -> (hpr_sv, CF.get_node_args h)
   | _ -> failwith ("Expected a HRel h_formula instead of " ^ (!CF.print_h_formula h))
+
+let name_of_hrel (h: CF.h_formula) = 
+  fst (sig_of_hrel h) 
+
+let args_of_hrel (h: CF.h_formula) = 
+  snd (sig_of_hrel h)
 
 let sig_of_hprel (hpr: CF.hprel) =
   let hpr_lhs = hpr.hprel_lhs in
@@ -86,8 +116,8 @@ let name_of_hprel (hpr: CF.hprel) =
 let args_of_hprel (hpr: CF.hprel) = 
   snd (sig_of_hprel hpr)
 
-let partition_hprel_list hprels = 
-  partition_by_key name_of_hprel CP.eq_spec_var hprels
+let partition_hprel_list hprel_ids = 
+  partition_by_key (fun hpri -> name_of_hprel hpri.hprel_constr) CP.eq_spec_var hprel_ids
 
 let heap_entail_formula prog (ante: CF.formula) (conseq: CF.formula) =
   let empty_es = CF.empty_es (CF.mkNormalFlow ()) Label_only.Lab2_List.unlabelled no_pos in
@@ -203,18 +233,59 @@ let unfolding_hprel prog hprel_groups (hpr: CF.hprel): CF.hprel list =
   Debug.no_1 "unfolding_hprel" pr (pr_list pr)
     (fun _ -> unfolding_hprel prog hprel_groups hpr) hpr
 
-let sort_hprel_list hprel_list = hprel_list
+let dependent_graph_of_hprel dg hprel = 
+  let hpr_name = CP.name_of_spec_var (name_of_hprel hprel) in 
+  let hpr_rhs = hprel.hprel_rhs in
+  let rhs_h, _, _, _, _, _ = CF.split_components hpr_rhs in
+  let rhs_hrels = List.filter CF.is_hrel (CF.split_star_conjunctions rhs_h) in
+  let rhs_hrels_name = List.map (fun hr -> CP.name_of_spec_var (name_of_hrel hr)) rhs_hrels in
+  List.fold_left (fun dg hr_name -> CG.add_edge dg hpr_name hr_name) dg rhs_hrels_name
+
+let dependent_graph_of_hprel_list hprel_list =
+  let dg = CG.empty in
+  List.fold_left (fun dg hprel -> dependent_graph_of_hprel dg hprel) dg hprel_list
+
+let sort_hprel_list hprel_list = 
+  let dg = dependent_graph_of_hprel_list hprel_list in
+  let _, scc_f = CGC.scc dg in
+  let compare hpr1 hpr2 =
+    let hpr1_name = CP.name_of_spec_var (name_of_hprel hpr1) in
+    let hpr2_name = CP.name_of_spec_var (name_of_hprel hpr2) in 
+    (scc_f hpr1_name) - (scc_f hpr2_name)
+  in
+  List.sort compare hprel_list
+
+let rec update_hprel_id_groups hprel_id hprel_sv hprel_id_list hprel_id_groups =
+  match hprel_id_groups with
+  | [] -> []
+  | (hpr_sv, hpri_group)::hpri_groups ->
+    if CP.eq_spec_var hpr_sv hprel_sv then
+      let replaced_hpri_group = 
+        hprel_id_list @ 
+        (List.filter (fun hpri -> hpri.hprel_id != hprel_id) hpri_group) 
+      in
+      (hpr_sv, replaced_hpri_group)::hpri_groups
+    else 
+      (hpr_sv, hpri_group)::(update_hprel_id_groups hprel_id hprel_sv hprel_id_list hpri_groups)
 
 let unfolding_hprel_list prog hprel_list =
-  let rec helper hprel_groups hprel_list =
-    match hprel_list with
+  let rec helper hprel_id_groups hprel_id_list =
+    match hprel_id_list with
     | [] -> []
-    | hpr::hprl ->
-      (unfolding_hprel prog hprel_groups hpr) @ (helper hprel_groups hprl)
+    | hpri::hpril ->
+      let hprel_groups = List.map (fun (hprel_sv, hprel_id_list) ->
+          (hprel_sv, List.map (fun hpri -> hpri.hprel_constr) hprel_id_list)
+        ) hprel_id_groups in
+      let unfolding_hpr = unfolding_hprel prog hprel_groups hpri.hprel_constr in
+      let unfolding_hpri = List.map mk_hprel_id unfolding_hpr in
+      let updated_hprel_id_groups = update_hprel_id_groups 
+        hpri.hprel_id (name_of_hprel hpri.hprel_constr) unfolding_hpri hprel_id_groups in
+      unfolding_hpr @ (helper updated_hprel_id_groups hpril)
   in
-  let hprel_groups = partition_hprel_list hprel_list in
   let sorted_hprel_list = sort_hprel_list hprel_list in
-  helper hprel_groups sorted_hprel_list
+  let hprel_id_list = List.map mk_hprel_id sorted_hprel_list in
+  let hprel_id_groups = partition_hprel_list hprel_id_list in
+  helper hprel_id_groups hprel_id_list
 
 let unfolding prog hprels = 
   unfolding_hprel_list prog hprels
@@ -237,11 +308,15 @@ let syn_preds prog (is: CF.infer_state) =
   in
   let () =
     if has_dangling_vars then
-      x_binfo_hp (add_str "Detected dangling vars" (pr_list Cprinter.string_of_hprel_short)) is_all_constrs no_pos
+      x_binfo_hp (add_str "Detected dangling vars" 
+          (pr_list Cprinter.string_of_hprel_short)) is_all_constrs no_pos
     else x_binfo_pp "No dangling vars is detected" no_pos
   in
   let () = x_binfo_pp "Step 2: Unfolding" no_pos in
   let is_all_constrs = unfolding prog is_all_constrs in
+  let () = x_binfo_hp (add_str "Unfolding result" 
+      (pr_list Cprinter.string_of_hprel_short)) is_all_constrs no_pos
+  in
   { is with CF.is_all_constrs = is_all_constrs }
 
 let syn_preds prog is = 
