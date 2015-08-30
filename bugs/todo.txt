@@ -1936,7 +1936,7 @@ Removing invalid lemma ---> lemma store restored.
 # Would case-spec solve this?
 
 ==============================================================
-# ex55g1.slk
+# ex55g1.slk (FIXED by adding existential es_evars)
 
 lemma_safe self::lseg<n, p> & n = a + b & a,b >=0 <-> 
      self::lseg<a, r> * r::lseg<b, p>.
@@ -1980,6 +1980,70 @@ RHS:
    b_551: r_359::lseg<a_548,r_547>@M * r_547::lseg<b_549,p_429>@M&
    b_514=b_551+a_550 & 0<=a_550 & 0<=b_551 & b_514=b_549+a_548 & 0<=a_548 & 
    0<=b_549&{FLOW,(20,21)=__norm#E}[])
+
+--warn-free-vars-conseq
+
+Total number of errors: 30 in files:
+ error at: vperm/ho_vperm_check.ss test1
+error at: vperm/ho_vperm_check.ss test3
+error at: vperm/task_decompose.ss creator
+error at: parahip/cell.ss test
+error at: parahip/ordered-locking.ss func
+error at: parahip/ordered-locking.ss main
+error at: parahip/unordered-locking.ss main
+error at: veribsync/barrier-static-consistency.ss main
+error at: veribsync/barrier-dynamic-exp4.ss main
+error at: veribsync/barrier-dynamic-exp4.ss thread2
+error at: conchip/mapreduce.ss count_helper
+error at: conchip/mapreduce.ss countList
+error at: conchip/mapreduce.ss destroyList
+error at: conchip/mapreduce.ss main
+error at: conchip/mapreduce.ss mapper_helper
+error at: conchip/mapreduce.ss mapper
+error at: conchip/mapreduce.ss reducer1
+error at: conchip/mapreduce.ss reducer2
+error at: conchip/multi-join2.ss main
+error at: conchip/multi-join2.ss thread1
+error at: conchip/multi-join2.ss thread2
+error at: conchip/latch-exp2.ss main
+error at: conchip/latch-exp2.ss thread1
+error at: conchip/deadpool.ss destroyDeadPool
+error at: conchip/deadpool.ss forkHelper
+error at: conchip/deadpool.ss forkThreads
+error at: conchip/deadpool.ss joinHelper
+error at: conchip/deadpool.ss joinThreads
+error at: conchip/deadpool.ss main
+error at: conchip/deadpool.ss thread
+
+Total number of errors: 28 in files:
+ error at: vperm/ho_vperm_check.ss test1
+error at: vperm/ho_vperm_check.ss test3
+error at: vperm/task_decompose.ss creator
+error at: parahip/ordered-locking.ss main
+error at: parahip/unordered-locking.ss main
+error at: veribsync/barrier-static-consistency.ss main
+error at: veribsync/barrier-dynamic-exp4.ss main
+error at: veribsync/barrier-dynamic-exp4.ss thread2
+error at: conchip/mapreduce.ss count_helper
+error at: conchip/mapreduce.ss countList
+error at: conchip/mapreduce.ss destroyList
+error at: conchip/mapreduce.ss main
+error at: conchip/mapreduce.ss mapper_helper
+error at: conchip/mapreduce.ss mapper
+error at: conchip/mapreduce.ss reducer1
+error at: conchip/mapreduce.ss reducer2
+error at: conchip/multi-join2.ss main
+error at: conchip/multi-join2.ss thread1
+error at: conchip/multi-join2.ss thread2
+error at: conchip/latch-exp2.ss main
+error at: conchip/latch-exp2.ss thread1
+error at: conchip/deadpool.ss destroyDeadPool
+error at: conchip/deadpool.ss forkHelper
+error at: conchip/deadpool.ss forkThreads
+error at: conchip/deadpool.ss joinHelper
+error at: conchip/deadpool.ss joinThreads
+error at: conchip/deadpool.ss main
+error at: conchip/deadpool.ss thread
 
 ===================================================================
 # ex55g3.slk (OK)

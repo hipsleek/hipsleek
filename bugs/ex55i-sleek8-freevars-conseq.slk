@@ -1,0 +1,21 @@
+data node { int val ; node next }.
+
+
+pred lseg<n, px> == case {
+     n=0 -> [] self = px & n = 0;
+     n!=0 ->  [] self::node<next = r> * r::lseg<b,px> & b=n-1; 
+     }
+     inv n >= 0.
+
+lemma_unsafe self::lseg<n, ppp> & n = a + b & a,b >=0 <-> self::lseg<a, r> * r::lseg<b, ppp>.
+
+// 1
+//checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 = 3 & n2 = 4.
+//print residue.
+// valid
+
+// 2
+checkentail x::lseg<n1, r1> * r1::lseg<n2, qq> & n1 = 3 & n2 = 4 |- x::lseg<n, qq> & n = 7.
+// valid : after lemma folding fixed
+//print residue.
+
