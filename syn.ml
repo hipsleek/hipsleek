@@ -94,7 +94,7 @@ let mk_hprel_id hpr =
 
 let sig_of_hrel (h: CF.h_formula) =
   match h with
-  | HRel (hpr_sv, hpr_args, _) -> (hpr_sv, CF.get_node_args h)
+  | HRel (hr_sv, hr_args, _) -> (hr_sv, CF.get_node_args h)
   | _ -> failwith ("Expected a HRel h_formula instead of " ^ (!CF.print_h_formula h))
 
 let name_of_hrel (h: CF.h_formula) = 
@@ -107,7 +107,7 @@ let sig_of_hprel (hpr: CF.hprel) =
   let hpr_lhs = hpr.hprel_lhs in
   let lhs_h, _, _, _, _, _ = CF.split_components hpr.hprel_lhs in
   match lhs_h with
-  | HRel (hpr_sv, hpr_args, _) -> (hpr_sv, CF.get_node_args lhs_h)
+  | HRel (hr_sv, hr_args, _) -> (hr_sv, CF.get_node_args lhs_h)
   | _ -> failwith ("Unexpected formula in the LHS of a hprel " ^ (Cprinter.string_of_hprel_short hpr))
 
 let name_of_hprel (hpr: CF.hprel) = 
@@ -294,6 +294,106 @@ let unfolding prog hprels =
   let pr = pr_list Cprinter.string_of_hprel_short in
   Debug.no_1 "unfolding" pr pr (fun _ -> unfolding prog hprels) hprels
 
+(**************************)
+(***** PARAMETERIZING *****)
+(**************************)
+let trans_heap_formula f_h_f (f: CF.formula) = 
+  let somef2 _ f = Some (f, []) in
+  let id2 f _ = (f, []) in
+  let ida _ f = (f, []) in
+  let f_arg = (voidf2, voidf2, voidf2, (voidf2, voidf2, voidf2), voidf2) in
+  CF.trans_formula f () 
+    (nonef2, nonef2, f_h_f, (somef2, somef2, somef2), (somef2, id2, ida, id2, id2)) 
+    f_arg List.concat
+
+let remove_dangling_heap_formula (f: CF.formula) = 
+  let f_h_f _ hf = 
+    match hf with
+    | CF.ViewNode ({ 
+        h_formula_view_node = view_node;
+        h_formula_view_name = view_name; } as v) ->
+      if String.compare view_name dangling_view_name == 0 then
+        Some (CF.HEmp, [view_node])
+      else Some (hf, [])
+    | _ -> None
+  in
+  trans_heap_formula f_h_f f
+
+let remove_dangling_heap_formula (f: CF.formula) = 
+  let pr1 = !CF.print_formula in
+  let pr2 = !CP.print_svl in
+  Debug.no_1 "remove_dangling_heap_formula" pr1 (pr_pair pr1 pr2)
+    remove_dangling_heap_formula f
+  
+let add_dangling_params hrel_name dangling_params (f: CF.formula) = 
+  let f_h_f _ hf = 
+    match hf with
+    | CF.HRel (hr_sv, hr_args, hr_pos) ->
+      if CP.eq_spec_var hr_sv hrel_name then
+        let parameterized_hrel = CF.HRel (hr_sv, hr_args @ dangling_params, hr_pos) in
+        Some (parameterized_hrel, [])
+      else Some (hf, [])
+    | _ -> None
+  in
+  fst (trans_heap_formula f_h_f f)
+
+let add_dangling_params hrel_name dangling_params (f: CF.formula) = 
+  let pr1 = !CF.print_formula in
+  let pr2 = !CP.print_sv in
+  let pr3 = pr_list !CP.print_exp in
+  Debug.no_3 "add_dangling_params" pr1 pr2 pr3 pr1
+    (fun _ _ _ -> add_dangling_params hrel_name dangling_params f)
+    f hrel_name dangling_params
+
+let dangling_parameterizing_hprel (hpr: CF.hprel) =
+  let n_hpr_rhs, dangling_vars = remove_dangling_heap_formula hpr.hprel_rhs in
+  if is_empty dangling_vars then hpr, idf
+  else
+    let fresh_dangling_vars = CP.fresh_spec_vars dangling_vars in
+    let dangling_params = List.map (fun dv -> CP.mkVar dv no_pos) fresh_dangling_vars in
+    let n_hpr_rhs = CF.subst (List.combine dangling_vars fresh_dangling_vars) n_hpr_rhs in
+    let hpr_name = name_of_hprel hpr in
+    let f_update_params_hprel hpr =
+      { hpr with
+        CF.hprel_lhs = add_dangling_params hpr_name dangling_params hpr.CF.hprel_lhs;
+        CF.hprel_rhs = add_dangling_params hpr_name dangling_params hpr.CF.hprel_rhs;
+      }
+    in
+    let f_update_params_hprel hpr =
+      let pr = Cprinter.string_of_hprel_short in
+      Debug.no_1 "f_update_params_hprel" pr pr f_update_params_hprel hpr
+    in
+    { hpr with hprel_rhs = n_hpr_rhs }, f_update_params_hprel
+
+let dangling_parameterizing_hprel (hpr: CF.hprel) =
+  let pr1 = Cprinter.string_of_hprel_short in
+  let pr2 = fun (hpr, _) -> pr1 hpr in
+  Debug.no_1 "dangling_parameterizing_hprel" pr1 pr2 dangling_parameterizing_hprel hpr
+
+let rec dangling_parameterizing hprels =
+  let rec helper_x acc hprels = 
+    match hprels with
+    | [] -> acc
+    | hpr::hprl ->
+      let hpr_wo_dangling, f_update_params = dangling_parameterizing_hprel hpr in
+      let n_hpr = f_update_params hpr_wo_dangling in
+      let n_hprl = List.map f_update_params hprl in
+      let n_acc = List.map f_update_params acc in
+      helper (n_acc @ [n_hpr]) n_hprl
+
+  and helper acc hprels =
+    let pr = pr_list Cprinter.string_of_hprel_short in
+    Debug.no_2 "dangling_parameterizing_helper" pr pr pr
+      helper_x acc hprels
+  in
+  
+  helper [] hprels
+
+let dangling_parameterizing hprels = 
+  let pr = pr_list Cprinter.string_of_hprel_short in
+  Debug.no_1 "parameterizing" pr pr 
+    (fun _ -> dangling_parameterizing hprels) hprels
+
 (****************)
 (***** MAIN *****)
 (****************)
@@ -312,11 +412,19 @@ let syn_preds prog (is: CF.infer_state) =
           (pr_list Cprinter.string_of_hprel_short)) is_all_constrs no_pos
     else x_binfo_pp "No dangling vars is detected" no_pos
   in
+
   let () = x_binfo_pp "Step 2: Unfolding" no_pos in
   let is_all_constrs = unfolding prog is_all_constrs in
   let () = x_binfo_hp (add_str "Unfolding result" 
       (pr_list Cprinter.string_of_hprel_short)) is_all_constrs no_pos
   in
+
+  let () = x_binfo_pp "Step 3: Dangling Parameterizing" no_pos in
+  let is_all_constrs = dangling_parameterizing is_all_constrs in
+  let () = x_binfo_hp (add_str "Parameterizing result" 
+      (pr_list Cprinter.string_of_hprel_short)) is_all_constrs no_pos
+  in
+  
   { is with CF.is_all_constrs = is_all_constrs }
 
 let syn_preds prog is = 
