@@ -38,9 +38,20 @@ print residue.
 
 
 /*
-# ex17i3.slk (WN to fix..)
+# ex17i3.slk 
+
+# Printing is wrong if lemma is placed after entailments..
 
 lemma_infer [R] self::sll<> <- self::lseg<q> & R(q) .
+
+infer [R] R(self) |- self::sll<>.
+print residue.
+expect Valid.
+
+lemma_infer [R] self::sll<> <-> self::lseg<q> & R(q) .
+print residue.
+
+---------------------------------------
 
 # Why did this fail?
 

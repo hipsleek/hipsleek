@@ -3581,7 +3581,6 @@ let trans_formula (e: formula) (arg: 'a) f f_arg f_comb : (formula * 'b) =
 let fold_formula_arg (e: formula) (arg: 'a) (f_f, f_bf, f_e) f_arg (f_comb: 'b list -> 'b) : 'b =
   let trans_func func = (fun a e -> push_opt_val_rev (func a e) e) in
   let new_f = trans_func f_f, trans_func f_bf, trans_func f_e in
-
   (* let () = print_string ("[cpure.ml] fold_formula_arg: \n") in *)
 
   snd (trans_formula e arg new_f f_arg f_comb)
@@ -9089,6 +9088,9 @@ let mkNot_b_norm (bf : b_formula) : b_formula option =
   match r with 
   | None -> None
   | Some bf -> Some (norm_bform_aux bf)
+
+
+
 let filter_constraint_type (ante: formula) (conseq: formula) : (formula) = 
   if (!Globals.enable_constraint_based_filtering) then 
     let conseq_disjs = list_of_disjs conseq in 
@@ -9134,6 +9136,9 @@ let filter_constraint_type (ante: formula) (conseq: formula) : (formula) =
 let filter_constraint_type (ante: formula) (conseq: formula) : (formula) = 
   let pr = !print_formula in
   Debug.no_2 "filter_constraint_type" pr pr pr filter_constraint_type ante conseq
+
+
+
 
 let filter_ante (ante : formula) (conseq : formula) : (formula) =
   let fvar = fv conseq in
@@ -10554,12 +10559,24 @@ let assumption_filter_aggressive is_sat (ante : formula) (conseq : formula) : (f
   if !filtering_flag (*&& (not !allow_pred_spec)*) then
     let ante_ls = List.filter is_sat (split_disjunctions ante) in
     if ante_ls==[] then (mkFalse no_pos,conseq)
-    else 
+    else
       let ante_ls = List.map (fun x -> filter_ante x conseq) ante_ls in
       let ante = join_disjunctions ante_ls in
       (ante, conseq)
   else (ante, conseq)
 
+let filter_bag_constrain ante conseq =
+  let conseq_ls = List.filter is_bag_constraint (split_disjunctions conseq) in
+  if conseq_ls = [] then (mkFalse no_pos, mkTrue no_pos)
+  else
+    let ante = List.fold_left (fun an co -> filter_ante an co) ante conseq_ls in
+    (ante,join_disjunctions conseq_ls)
+;;
+
+let filter_bag_constrain ante conseq =
+  let pr = !print_formula in
+  Debug.no_2 "filter_bag_constrain" pr pr (pr_pair pr pr) filter_bag_constrain ante conseq
+;;
 
 let assumption_filter_aggressive_incomplete (ante : formula) (conseq : formula) : (formula * formula) =
   assumption_filter_aggressive (fun x -> true) ante conseq 

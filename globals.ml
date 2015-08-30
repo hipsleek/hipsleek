@@ -47,7 +47,7 @@ let reverify_flag = ref false
 let reverify_all_flag = ref false
 let ineq_opt_flag = ref false
 
-let ptr_arith_flag = ref false
+let ptr_arith_flag = ref true (* false *)
 
 let illegal_format s = raise (Illegal_Prover_Format s)
 
