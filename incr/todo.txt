@@ -1632,11 +1632,15 @@ error at:
 SLEEK FAILURE (END)
 
 =====================================================================
-# ex17i5.slk (WN to fix..)
+# ex17i5.slk (FIXED but why were ivars and relvars removed earlier??)
 
 infer [R] R(self) |- self::sll<>.
 
 # Why did this fail?
+
+  It seems ivars and relvars were removed but not sure why??? 
+
+  let (_ (* estate *),iv,ivr) = Infer.remove_infer_vars_all estate (* rt *)in
 
 Entail (1) : Fail.(may) cause:M_unmatched_rhs (infer_collect_hp_rel 3b)
 
@@ -1652,6 +1656,11 @@ Residue:
  [[ COND ==>  UnmatchedRHSData]]
  CEX:false
 =====================================================================
+# ex17i6.slk
+
+infer [x@NI] emp |- x::sll<>.
+
+Can support @NI for variables?
 =====================================================================
 =====================================================================
 =====================================================================

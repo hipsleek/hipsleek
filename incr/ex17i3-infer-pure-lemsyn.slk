@@ -16,14 +16,14 @@ HeapPred H(node a).
 relation R(node a).
 
 //lemma_infer [R] self::sll<> <- self::lseg<q> & q=null .
-lemma_infer [R] self::sll<> <- self::lseg<q> & R(q) .
-print residue.
+//lemma_infer [R] self::sll<> <- self::lseg<q> & R(q) .
+//print residue.
 
 infer [R] R(self) |- self=null.
 print residue.
 
-infer [R] R(self) |- self::sll<>.
-print residue.
+//infer [R] R(self) |- self::sll<>.
+//print residue.
 
 /*
 # ex17i3.slk (WN to fix..)

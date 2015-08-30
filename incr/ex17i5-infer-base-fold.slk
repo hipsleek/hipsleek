@@ -9,7 +9,7 @@ pred sll<> == self = null
   inv true.
 
 HeapPred H(node a).
-relation R(node a).
+relation RR(node a).
 
 //lemma_infer [R] self::sll<> <- self::lseg<q> & q=null .
 //lemma_infer [R] self::sll<> <- self::lseg<q> & R(q) .
@@ -22,8 +22,23 @@ relation R(node a).
 //print residue.
 //inferred hprel: [H(self)&true |#|3  --> self::sll<>@M&true]
 
-infer [R] R(self) |- self::sll<>.
+infer [RR] RR(self) |- self::sll<>.
 print residue.
+expect Valid.
+
+infer [] emp |- x::sll<>.
+print residue.
+expect Fail.
+
+pred nll<> == self::node<5, q>
+  inv true.
+
+infer [] x::node<v,_> |- x::nll<>.
+expect Fail.
+
+infer [v] x::node<v,_> |- x::nll<>.
+expect Fail.
+
 
 /*
 # ex17i5.slk (WN to fix..)

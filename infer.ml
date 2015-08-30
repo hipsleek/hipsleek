@@ -92,7 +92,7 @@ let no_infer_pure estate = (estate.es_infer_vars == []) && (estate.es_infer_vars
 
 let no_infer_all_all estate = no_infer_pure estate && (no_infer_hp_rel estate) && no_infer_templ estate
 
-
+(* WN: Why is there a need to remove vars_rel? *)
 let remove_infer_vars_all estate =
   let iv = estate.es_infer_vars in
   let ivr = estate.es_infer_vars_rel in
