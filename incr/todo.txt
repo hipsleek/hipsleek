@@ -1569,7 +1569,27 @@ print residue.
 # use wrapper to call check_coercion? and collect result after
 
 =====================================================================
+# ex17h4a.slk
+
+infer [H2,@classic]  H2(x,y) |- H2(y,x).
+
+# expects H2(x,y) --> H2(y,x)
+
+Residue:
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [emp&true |#|3  --> H2(y,x)&true]
+[[ COND ==>  InferHeap]]
 =====================================================================
+# ex17h4b.slk
+
+infer [H2,@classic]  H2(x,y) & y=null |- H2(y,x).
+
+# GOT
+inferred hprel: [emp&y=null |#|3  --> H2(y,x)&true; 
+                  H2(x,y)&y=null |#|3  --> emp&true]
+
+# Avoid split, better use:
+     H2(x,y) & y=null --> H2(y,x)
 =====================================================================
 =====================================================================
 =====================================================================

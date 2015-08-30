@@ -3523,16 +3523,23 @@ let is_trivial f (hp,args)=
   let b1 = List.exists (fun hpargs1 -> check_hp_arg_eq (hp,args) hpargs1) hpargs in
   b1||(is_empty_f f)
 
-let is_trivial_constr cs=
+let is_trivial_constr ?(en_arg=false) cs=
   let l_ohp = CF.extract_hrel_head cs.CF.hprel_lhs in
   let r_ohp = CF.extract_hrel_head cs.CF.hprel_rhs in
   match l_ohp,r_ohp with
-  | Some (hp1), Some (hp2) -> (* if *) CP.eq_spec_var hp1 hp2 (* then *)
-  (* let _,largs = CF.extract_HRel_f cs.CF.hprel_lhs in *)
-  (* let _,rargs = CF.extract_HRel_f cs.CF.hprel_rhs in *)
-  (* eq_spec_var_order_list largs rargs *)
-  (* else false *)
+  | Some (hp1), Some (hp2) -> if CP.eq_spec_var hp1 hp2 then
+      if not en_arg then true else
+        let _,largs = CF.extract_HRel_f cs.CF.hprel_lhs in
+        let _,rargs = CF.extract_HRel_f cs.CF.hprel_rhs in
+        eq_spec_var_order_list largs rargs
+    else false
   | _ -> false
+
+let is_trivial_constr ?(en_arg=false) cs=
+  let pr =Cprinter.string_of_hprel_short in
+  Debug.no_1 "is_trivial_constr" pr string_of_bool
+      (fun _ -> is_trivial_constr ~en_arg:en_arg cs) cs
+
 
 let is_not_left_rec_constr cs=
   let r_ohp = CF.check_and_get_one_hpargs cs.CF.hprel_rhs in
