@@ -1438,13 +1438,20 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                         (rel_ass, [],new_estate)
                     in
                     let () =  x_dinfo_hp (add_str "New estate 1: " !print_entail_state) new_estate pos in
-                    if rel_ass = [] 
+                    if rel_ass == [] 
                     then (Some (new_estate, CP.mkTrue pos),None,[]) 
                     else
-                      let () = x_winfo_pp "To add this to new_estate.es_infer_rel" pos in
-                      let () = x_binfo_hp (add_str "RelInferred (rel_ass)" (pr_list print_lhs_rhs)) rel_ass pos in
-                      let () = infer_rel_stk # push_list rel_ass in
-                      let () = Log.current_infer_rel_stk # push_list rel_ass in
+                      let () = if !Globals.old_infer_collect then 
+                          begin
+                            x_binfo_hp (add_str "RelInferred (rel_ass)" (pr_list print_lhs_rhs)) rel_ass pos;
+                            infer_rel_stk # push_list_pr rel_ass;
+                            Log.current_infer_rel_stk # push_list rel_ass;
+                          end in
+                      (* let () = new_estate.es_infer_rel # push_list rel_ass in *)
+                      (* let () = x_winfo_pp "To add this to new_estate.es_infer_rel" pos in *)
+                      (* let () = x_binfo_hp (add_str "RelInferred (rel_ass)" (pr_list print_lhs_rhs)) rel_ass pos in *)
+                      (* let () = infer_rel_stk # push_list rel_ass in *)
+                      (* let () = Log.current_infer_rel_stk # push_list rel_ass in *)
                       (None,Some inferred_pure,[(new_estate,rel_ass,false)])
               end
               (*                  x_dinfo_pp ">>>>>> infer_pure_m <<<<<<" pos;*)

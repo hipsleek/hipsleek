@@ -8311,7 +8311,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
       let () = x_tinfo_pp ("else ..Need to normalize h2 :"^(!print_h_formula h2)) no_pos in
       let () = x_tinfo_hp (add_str "TODO : not set classic_flag" string_of_bool) classic_flag no_pos in
       let () = x_tinfo_hp (add_str "h2" !print_h_formula) h2 no_pos in
-      let () = x_binfo_hp (add_str "estate_orig1" Cprinter.string_of_entail_state_short) estate_orig1 no_pos in
+      let () = x_tinfo_hp (add_str "estate_orig1" Cprinter.string_of_entail_state_short) estate_orig1 no_pos in
       let () = x_tinfo_hp (add_str "lhs1" !CF.print_formula) (CF.Base lhs1) no_pos in
       let estate_orig1,lhs1 =
         if h2 = HTrue then 
@@ -12554,7 +12554,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
           let new_ante = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos in
           {estate with es_formula = new_ante} 
       in
-      let () = y_binfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate in
+      let () = y_tinfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate in
       (* L2: why not do fold? *)
       if (estate.es_cont != []) then 
         (* let  _ = print_string ("rhs_rest = " ^(Cprinter.string_of_h_formula rhs_rest)^ "base = " ^ (Cprinter.string_of_formula (Base rhs_b)) ^ "\n") in  *)
@@ -15215,7 +15215,7 @@ and apply_right_coercion_a estate coer prog (conseq:CF.formula) resth2 ln2 lhs_b
       *)
       apply_right_coercion_b estate coer prog conseq resth2 ln2 lhs_b rhs_b c2 is_folding pos
     else
-      let (estate,iv,ivr) = Infer.remove_infer_vars_all estate (* rt *)in
+      let (_ (* estate *),iv,ivr) = Infer.remove_infer_vars_all estate (* rt *)in
       let rhs_node = ln2 in
       let rhs_rest = resth2 in
       let () = x_tinfo_hp (add_str "rhs_node" Cprinter.string_of_h_formula) rhs_node no_pos in

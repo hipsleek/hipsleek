@@ -1616,20 +1616,6 @@ Failed to inferred for lem_14:<== (invalid lemma encountered).
 Residue:
 
  { }
-=====================================================================
-# ex17i4.slk (WN to fix..)
-
-lemma_infer [R,@classic] self::sll<> <- self::lseg<q> & q=null .
-
-# How come commands are not accepted?
-  Need to fix parser.
-
-File "ex17i3-infer-pure-lemsyn.slk", line 18, characters 14-15
- error: Stream.Error("[id] expected after COMMA (in [id_list])")
- at:
-Exception processed: Stream.Error("[id] expected after COMMA (in [id_list])")
-error at: 
-SLEEK FAILURE (END)
 
 =====================================================================
 # ex17i5.slk (FIXED but why were ivars and relvars removed earlier??)
@@ -1661,6 +1647,20 @@ Residue:
 infer [x@NI] emp |- x::sll<>.
 
 Can support @NI for variables?
+=====================================================================
+# ex17i4.slk (WN to fix..)
+
+lemma_infer [R,@classic] self::sll<> <- self::lseg<q> & q=null .
+
+# How come @classic commands are not accepted?
+  Need to fix parser.
+
+File "ex17i3-infer-pure-lemsyn.slk", line 18, characters 14-15
+ error: Stream.Error("[id] expected after COMMA (in [id_list])")
+ at:
+Exception processed: Stream.Error("[id] expected after COMMA (in [id_list])")
+error at: 
+SLEEK FAILURE (END)
 =====================================================================
 =====================================================================
 =====================================================================
