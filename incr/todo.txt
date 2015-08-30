@@ -1536,6 +1536,8 @@ Entailing lemma lem_14: Fail. (cex)(must) cause: exception in lemma proving
 =====================================================================
 # ex17h4.slk (Loc : please fix)
 
+# Use old_keep_triv_hprel flag; to keep trivial hprel if true
+
 infer [H,@classic]  H(x) |- H(x).
 print residue.
 
