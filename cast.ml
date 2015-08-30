@@ -285,6 +285,7 @@ and coercion_decl = {
   coercion_univ_vars : P.spec_var list; (* list of universally quantified variables. *)
 
   coercion_infer_vars :  P.spec_var list;
+  coercion_infer_obj : Globals.inf_obj_sub;
   (* coercion_proof : exp; *)
   (* coercion_head_exist : F.formula;   *)
 

@@ -15,7 +15,7 @@ pred sll<> == self = null
 HeapPred H(node a).
 relation R(node a).
 
-lemma_infer [R,@leak] self::sll<> <- self::lseg<q> & q=null .
+lemma_infer [R,@classic] self::sll<> <- self::lseg<q> & q=null .
 //lemma_infer [R] self::sll<> <- self::lseg<q> & R(q) .
 print residue.
 

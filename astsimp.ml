@@ -4516,6 +4516,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
                     C.coercion_impl_vars = []; (* ex_vars; *)
                     C.coercion_univ_vars = univ_vars;
                     C.coercion_infer_vars = ident_list_to_spec_var_list (List.map (fun id -> (id, Unprimed)) coer.I.coercion_infer_vars ) n_tl prog; 
+                    C.coercion_infer_obj = coer.I.coercion_infer_obj;
                     C.coercion_head_view = lhs_name;
                     C.coercion_fold_def = new Gen.mut_option;
                     (* C.vdef_lemma_fold prog c_lhs cs_body_norm; *)
@@ -9033,6 +9034,7 @@ and case_normalize_coerc_x prog (cd: Iast.coercion_decl):Iast.coercion_decl =
     Iast.coercion_type_orig = cd.Iast.coercion_type_orig;
     Iast.coercion_exact = cd.Iast.coercion_exact;
     Iast.coercion_infer_vars = cd.Iast.coercion_infer_vars;
+    Iast.coercion_infer_obj = cd.Iast.coercion_infer_obj;
     Iast.coercion_name = cd.Iast.coercion_name;
     Iast.coercion_head = nch;
     Iast.coercion_body = ncb;

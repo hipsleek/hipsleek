@@ -1604,7 +1604,7 @@ lemma_infer [R] self::sll<> -> self::lseg<q> & R(q) .
  inferred rel: [RELDEFN R: ( q_57=null) -->  R(q_57); 
                 RELDEFN R: ( R(q_62)) -->  R(q_62)]
 =====================================================================
-# ex17i3.slk (WN to fix..)
+# ex17i3.slk (FIXED)
 
 lemma_infer [R] self::sll<> <- self::lseg<q> & R(q) .
 
@@ -1616,6 +1616,21 @@ Failed to inferred for lem_14:<== (invalid lemma encountered).
 Residue:
 
  { }
+
+=====================================================================
+
+# ex17i3.slk 
+
+# Printing is wrong if lemma is placed after entailments..
+
+lemma_infer [R] self::sll<> <- self::lseg<q> & R(q) .
+
+infer [R] R(self) |- self::sll<>.
+print residue.
+expect Valid.
+
+lemma_infer [R] self::sll<> <-> self::lseg<q> & R(q) .
+print residue.
 
 =====================================================================
 # ex17i5.slk (FIXED but why were ivars and relvars removed earlier??)
@@ -1648,7 +1663,7 @@ infer [x@NI] emp |- x::sll<>.
 
 Can support @NI for variables?
 =====================================================================
-# ex17i4.slk (WN to fix..)
+# ex17i4.slk (FIXED)
 
 lemma_infer [R,@classic] self::sll<> <- self::lseg<q> & q=null .
 

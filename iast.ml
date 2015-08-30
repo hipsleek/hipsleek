@@ -273,6 +273,7 @@ and coercion_decl = { coercion_type : coercion_type;
                       coercion_exact : bool;
                       coercion_name : ident;
                       coercion_infer_vars : ident list;
+                      coercion_infer_obj : Globals.inf_obj_sub;
                       coercion_head : F.formula;
                       coercion_body : F.formula;
                       coercion_proof : exp;
@@ -3250,6 +3251,7 @@ let mk_lemma lemma_name kind orig coer_type ihps ihead ibody =
   { coercion_type = coer_type;
     coercion_exact = false;
     coercion_infer_vars = ihps;
+    coercion_infer_obj = new Globals.inf_obj_sub;
     coercion_name = (lemma_name);
     coercion_head = (F.subst_stub_flow F.top_flow ihead);
     coercion_body = (F.subst_stub_flow F.top_flow ibody);
@@ -3273,6 +3275,7 @@ let gen_normalize_lemma_comb ddef =
    coercion_name = lem_name;
    coercion_exact = false;
    coercion_infer_vars = [];
+   coercion_infer_obj = new Globals.inf_obj_sub;
    coercion_head = F.formula_of_heap_1 (F.mkStar (gennode perm1 args1) (gennode perm2 args2) no_pos) no_pos;
    coercion_body = F. mkBase (gennode perm3 args1) pure VP.empty_vperm_sets top_flow [] no_pos;
    coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos };
@@ -3293,6 +3296,7 @@ let gen_normalize_lemma_split ddef =
    coercion_name = lem_name;
    coercion_exact = false;
    coercion_infer_vars = [];
+   coercion_infer_obj = new Globals.inf_obj_sub;
    coercion_head = F.mkBase (gennode perm3 args) pure VP.empty_vperm_sets top_flow [] no_pos;
    coercion_body = F.formula_of_heap_1 (F.mkStar (gennode perm1 args) (gennode perm2 args) no_pos) no_pos;
 

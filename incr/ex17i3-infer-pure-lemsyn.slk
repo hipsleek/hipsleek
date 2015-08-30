@@ -15,23 +15,27 @@ pred sll<> == self = null
 HeapPred H(node a).
 relation R(node a).
 
-
+/*
 infer [R] R(self) |- self=null.
 print residue.
 expect Valid.
 
-infer [R] R(self) |- self::sll<>.
-print residue.
-expect Valid.
 
 lemma_infer [R] self::sll<> <- self::lseg<q> & q=null .
 print residue.
 
 lemma_infer [R] self::sll<> -> self::lseg<q> & R(q) .
 print residue.
+*/
+
+infer [R] R(self) |- self::sll<>.
+print residue.
+expect Valid.
 
 lemma_infer [R] self::sll<> <-> self::lseg<q> & R(q) .
 print residue.
+
+
 
 /*
 # ex17i3.slk (WN to fix..)

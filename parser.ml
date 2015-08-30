@@ -128,6 +128,14 @@ let view_names = new Gen.stack (* list of names of views declared *)
 let hp_names = new Gen.stack (* list of names of heap preds declared *)
 (* let g_rel_defs = new Gen.stack (\* list of relations decl in views *\) *)
 
+let  conv_ivars_icmd il_w_itype =
+  let inf_o = new Globals.inf_obj_sub (* Globals.clone_sub_infer_const_obj () *) (* Globals.infer_const_obj # clone *) in
+  let (i_consts,ivl) = List.fold_left
+      (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r)
+                                         | SndAns r -> (lst_l,r::lst_r)) ([],[]) il_w_itype in
+  let (i_consts,ivl) = (List.rev i_consts,List.rev ivl) in
+  (inf_o,i_consts,ivl)
+
 (****** global vars used by CIL parser *****)
 let is_cparser_mode = ref false
 
@@ -2625,19 +2633,25 @@ infer_type_list:
 (*    | `OSQUARE; t = infer_type; `CSQUARE -> (Some t, []) *)
 (*   ]]; *)
 
+
 infer_cmd:
   [[ `INFER; il_w_itype = cid_list_w_itype; t=meta_constr; `DERIVE; b=extended_meta_constr ->
-      let inf_o = new Globals.inf_obj_sub (* Globals.clone_sub_infer_const_obj () *) (* Globals.infer_const_obj # clone *) in
-      let (i_consts,ivl) = List.fold_left 
-        (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r) 
-          | SndAns r -> (lst_l,r::lst_r)) ([],[]) il_w_itype in
-      let (i_consts,ivl) = (List.rev i_consts,List.rev ivl) in
+      (* let inf_o = new Globals.inf_obj_sub (\* Globals.clone_sub_infer_const_obj () *\) (\* Globals.infer_const_obj # clone *\) in *)
+      (* let (i_consts,ivl) = List.fold_left  *)
+      (*   (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r)  *)
+      (*     | SndAns r -> (lst_l,r::lst_r)) ([],[]) il_w_itype in *)
+      (* let (i_consts,ivl) = (List.rev i_consts,List.rev ivl) in *)
+      let (_,i_consts,ivl) = conv_ivars_icmd il_w_itype in
     (* let k, il = un_option il_w_itype (None, [])  *)
       (i_consts,ivl,t,b,None)
-    | `INFER_EXACT; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
-    let il = un_option il [] in ([],il,t,b,Some true)
-    | `INFER_INEXACT; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
-    let il = un_option il [] in ([],il,t,b,Some false)
+    | `INFER_EXACT;  il_w_itype = cid_list_w_itype (* il=OPT id_list *); t=meta_constr; `DERIVE; b=extended_meta_constr -> 
+      let (_,i_consts,il) = conv_ivars_icmd il_w_itype in
+      (* let il = un_option il [] in  *)
+      (i_consts,il,t,b,Some true)
+    | `INFER_INEXACT; il_w_itype = cid_list_w_itype (* il=OPT id_list *); t=meta_constr; `DERIVE; b=extended_meta_constr -> 
+      let (_,i_consts,il) = conv_ivars_icmd il_w_itype in
+      (* let il = un_option il [] in  *)
+      (i_consts,il,t,b,Some false)
   ]];
 
 captureresidue_cmd:
@@ -2682,6 +2696,7 @@ coercion_decl:
       { coercion_type = cd;
         coercion_exact = false;
         coercion_infer_vars = [];
+        coercion_infer_obj = new Globals.inf_obj_sub;
         coercion_name = (* on; *)
         (let v=on in (if (String.compare v "")==0 then (fresh_any_name "lem") else v));
         (* coercion_head = dc1; *)
@@ -2710,7 +2725,9 @@ coercion_decl_list:
 
 infer_coercion_decl:
     [[
-        `OSQUARE; il=OPT id_list; `CSQUARE;  t = coercion_decl -> {t with coercion_infer_vars = un_option il [] }
+         ivl_w_itype = cid_list_w_itype (* il=OPT id_list *);  t = coercion_decl -> 
+        let (inf_o,i_consts,ivl) = conv_ivars_icmd ivl_w_itype in
+        {t with coercion_infer_vars = ivl; coercion_infer_obj = inf_o;}
     ]];
 
 (* infer_coercion_decl_list: *)
@@ -3329,11 +3346,12 @@ spec:
     `INFER; transpec = opt_transpec; postxf = opt_infer_xpost; postf= opt_infer_post; ivl_w_itype = cid_list_w_itype; s = SELF ->
     (* WN : need to use a list of @sym *)
      (* let inf_o = Globals.infer_const_obj # clone in *)
-     let inf_o = new Globals.inf_obj_sub in
-     let (i_consts,ivl) = List.fold_left
-       (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r)
-         | SndAns r -> (lst_l,r::lst_r)) ([],[]) ivl_w_itype in
-     let (i_consts,ivl) = (List.rev i_consts,List.rev ivl) in
+     (* let inf_o = new Globals.inf_obj_sub in *)
+     (* let (i_consts,ivl) = List.fold_left *)
+     (*   (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r) *)
+     (*     | SndAns r -> (lst_l,r::lst_r)) ([],[]) ivl_w_itype in *)
+     (* let (i_consts,ivl) = (List.rev i_consts,List.rev ivl) in *)
+     let (inf_o,i_consts,ivl) = conv_ivars_icmd ivl_w_itype in
      let () = List.iter (fun itype -> inf_o # set itype) i_consts in
      let ivl_t = List.map (fun e -> (e,Unprimed)) ivl in
      F.EInfer {
