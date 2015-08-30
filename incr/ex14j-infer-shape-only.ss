@@ -1,10 +1,15 @@
 /* singly linked lists */
-
+//../hip ex14-infer-shape-pre-post.ss --classic
 /* representation of a node */
 data node {
 	int val;
 	node next;
 }
+
+pred_extn size[R]<k> ==
+   k=0 // base case
+   or R::size<i> & k=1+i // recursive case
+  inv k>=0;
 
 /* view for a singly linked list */
 ll<n> == self = null & n = 0
@@ -25,7 +30,8 @@ int size_helper(node x)
   infer[H]
   requires H(x)  ensures true;//H1(x);
 */
-  infer[@shape_prepost] requires true ensures true;
+//  infer[@shape_prepost,@classic] requires true ensures true;
+  infer[@size,@post_n] requires x::sll<> ensures x::sll<>;
 
 {
   if (x==null) 

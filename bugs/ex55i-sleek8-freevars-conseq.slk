@@ -1,0 +1,61 @@
+data node { int val ; node next }.
+
+
+pred lseg<n, px> == case {
+     n=0 -> [] self = px & n = 0;
+     n!=0 ->  [] self::node<next = r> * r::lseg<b,px> & b=n-1; 
+     }
+     inv n >= 0.
+
+lemma_unsafe self::lseg<n, ppp> & n = a + b & a,b >=0 <-> self::lseg<a, r> * r::lseg<b, ppp>.
+
+// 1
+//checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 = 3 & n2 = 4.
+//print residue.
+// valid
+
+// 2
+checkentail x::lseg<n1, r1> * r1::lseg<n2, qq> & n1 = 3 & n2 = 4 |- x::lseg<n, qq> & n = 7.
+// valid : after lemma folding fixed
+//print residue.
+
+/*
+# ex55i.slk
+
+# is there exists var t# ex17h4a.slk
+
+infer [H2,@classic]  H2(x,y) |- H2(y,x).
+
+# expects H2(x,y) --> H2(y,x)
+
+Residue:
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [emp&true |#|3  --> H2(y,x)&true]
+[[ COND ==>  InferHeap]]
+=====================================================================
+# ex17h4b.slk
+
+infer [H2,@classic]  H2(x,y) & y=null |- H2(y,x).
+
+# GOT
+inferred hprel: [emp&y=null |#|3  --> H2(y,x)&true; 
+                  H2(x,y)&y=null |#|3  --> emp&true]
+
+# Avoid split, better use:
+     H2(x,y) & y=null --> H2(y,x)racking?
+
+run_infer:
+ x::lseg<n1,r1>@M * r1::lseg<n2,qq>@M&n1=3 & n2=4&{FLOW,(20,21)=__norm#E}[] [] |-  EBase 
+   exists (Impl)[n](exists qq_105: x::lseg<n,qq_105>@M&n=7 & qq_105=qq&
+   {FLOW,(20,21)=__norm#E}[])
+
+!!! **WARNING****solver.ml#4230:FREE VAR IN HEAP RHS :[qq_112]
+impl/expl vars:[n]
+LHS:  x::lseg<n1,r1>@M * r1::lseg<n2,qq>@M&n2=4 & n1=3&{FLOW,(20,21)=__norm#E}[]
+RHS:
+ EBase 
+   (exists r_129,a_130,b_131,a_132,
+   b_133: x::lseg<a_130,r_129>@M * r_129::lseg<b_131,qq_112>@M&
+   n=7 & n=b_133+a_132 & 0<=a_132 & 0<=b_133 & n=b_131+a_130 & 0<=a_130 & 
+   0<=b_131&{FLOW,(20,21)=__norm#E}[])
+*/

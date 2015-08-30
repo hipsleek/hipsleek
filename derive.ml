@@ -200,7 +200,7 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
   let ls_dname_pos = Iast.look_up_field_ann prog orig_view.Cast.view_data_name extn_props in
   (*formula: extend with new args*)
   let fs,labels = List.split orig_view.Cast.view_un_struc_formula in
-  let fs1 = List.map (Cfutil.subst_views_form lower_map_views) fs in
+  let fs1 = List.map (fun f -> fst (Cfutil.subst_views_form lower_map_views false f)) fs in
   let fs = List.map Cformula.elim_exists (List.map Cfutil.fresh_exists fs1) in
   let pos = view_derv.Iast.view_pos in
   let () =  Debug.ninfo_hprint (add_str "   orig_view.Cast.view_data_name: " (pr_id )) orig_view.Cast.view_data_name pos in
@@ -339,11 +339,12 @@ let trans_view_one_derv_wrapper prog rev_form_fnc trans_view_fnc lower_map_views
   let orig_view = x_add Cast.look_up_view_def_raw 52 cviews orig_view_name in
   if List.for_all (fun (l_extn_view,_,_) ->
       String.compare l_extn_view extn_view_name !=0) orig_view.Cast.view_domains then
-    let r = trans_view_one_derv_x prog rev_form_fnc trans_view_fnc lower_map_views cviews derv view_derv in
-    let () =  Debug.info_hprint (add_str "   pure extension" pr_id) (derv.Iast.view_name ^ ": extend " ^ orig_view_name ^ " to " ^ extn_view_name ^"\n") no_pos in
-    (true,r)
+    let new_vdef = trans_view_one_derv_x prog rev_form_fnc trans_view_fnc lower_map_views cviews derv view_derv in
+    let () =  x_binfo_hp (add_str "   pure extension" pr_id) (derv.Iast.view_name ^ ": extend " ^ orig_view_name ^ " to " ^ extn_view_name ^"\n") no_pos in
+    let () = x_binfo_hp (add_str "(raw) new view (donot have base case, addr, material)" Cprinter.string_of_view_decl(* _short *)) new_vdef no_pos in
+    (true,new_vdef)
   else
-    let () =  Debug.info_hprint (add_str "   pure extension" pr_id) (orig_view_name ^ " has been extended to " ^ extn_view_name^ " already \n") no_pos in
+    let () =  x_dinfo_hp (add_str "   pure extension" pr_id) (orig_view_name ^ " has been extended to " ^ extn_view_name^ " already \n") no_pos in
     (false,orig_view)
 
 let trans_view_one_derv (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower_map_views
@@ -562,7 +563,7 @@ let leverage_self_info xform formulas anns data_name=
 (*     BUILD PURE EXTN MAP  *)
 (*****************************************************************************************)
 
-let expose_pure_extn_one_view_x iprog cprog rev_formula_fnc trans_view_fnc lower_map_views (view: Cast.view_decl) extn_view=
+let expose_pure_extn_one_view iprog cprog rev_formula_fnc trans_view_fnc lower_map_views (view: Cast.view_decl) extn_view=
   let get_extns d_name=
     let d_dclr = Iast.look_up_data_def 67 no_pos iprog.Iast.prog_data_decls d_name in
     let extn_fields = List.fold_left (fun acc ((t,_),_,_,props) -> begin
@@ -627,13 +628,13 @@ let expose_pure_extn_one_view iprog cprog rev_trans_formula trans_view lower_map
               ^ (pr1 v.Cast.view_domains) in
   let pr3 v =  v.Cast.view_name ^ "<" ^ (!CP.print_svl v.Cast.view_vars) ^ ">" in
   Debug.no_2 "expose_pure_extn_one_view" pr2 pr3 pr2
-    (fun _ _ -> expose_pure_extn_one_view_x iprog cprog rev_trans_formula trans_view lower_map_views view extn_view)
+    (fun _ _ -> expose_pure_extn_one_view iprog cprog rev_trans_formula trans_view lower_map_views view extn_view)
     view extn_view
 (*
   build extn map.
   pair extn prop in views with view_extn
 *)
-let expose_pure_extn_x iprog cprog rev_trans_formula trans_view views extn_views=
+let expose_pure_extn iprog cprog rev_trans_formula trans_view views extn_views=
   List.fold_left (fun acc v ->
       let lst_view = List.fold_left (fun r extn_view ->
           expose_pure_extn_one_view iprog cprog rev_trans_formula trans_view acc v extn_view
@@ -648,7 +649,7 @@ let expose_pure_extn iprog cprog rev_trans_formula trans_view views extn_views=
               ^ (pr1 v.Cast.view_domains) in
   let pr3 =  pr_pair (pr_pair pr_id !CP.print_svl) (pr_pair pr_id !CP.print_svl) in
   Debug.no_2 "expose_pure_extn" (pr_list_ln pr2) (pr_list_ln pr2) (pr_list pr3)
-      (fun _ _ -> expose_pure_extn_x iprog cprog rev_trans_formula trans_view views extn_views)
+      (fun _ _ -> expose_pure_extn iprog cprog rev_trans_formula trans_view views extn_views)
       views extn_views
 
 (*****************************************************************************************)

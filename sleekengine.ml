@@ -636,7 +636,7 @@ let process_list_lemma ldef_lst  =
   let lem_infer_fnct r1 r2 =
     let _ = begin
       let rel_defs = if not (!Globals.pred_syn_modular) then
-          Sa2.rel_def_stk
+          (* Sa2.rel_def_stk *) Cformula.rel_def_stk
         else Cformula.rel_def_stk
       in
       if not(rel_defs# is_empty) then
@@ -665,7 +665,7 @@ let process_list_lemma ldef_lst  =
     in
     r2 
   in
-  Lemma.process_list_lemma_helper ldef_lst iprog !cprog lem_infer_fnct 
+  x_add Lemma.process_list_lemma_helper ldef_lst iprog !cprog lem_infer_fnct 
 
 (* let lst = ldef_lst.Iast.coercion_list_elems in *)
 (* (\* why do we check residue for ctx? do we really need a previous context? *\) *)
@@ -1031,7 +1031,7 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
     (* let _ = print_string (" before norm: " ^(Iprinter.string_of_formula mf)^"\n") in *)
     let wf = x_add Astsimp.case_normalize_formula iprog h mf in
     let n_tl = x_add Typeinfer.gather_type_info_formula iprog wf tlist false in
-    let (n_tl,r) = Astsimp.trans_formula iprog quant fv_idents false wf n_tl false in
+    let (n_tl,r) = x_add Astsimp.trans_formula iprog quant fv_idents false wf n_tl false in
     (* let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
     (* let _ = print_string (" after sf: " ^(Cprinter.string_of_formula r)^"\n") in *)
     let svl = Cformula.fv r in
@@ -1105,7 +1105,7 @@ let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:T
     let wf = Astsimp.case_normalize_formula_not_rename iprog h mf in
     let n_tl = x_add Typeinfer.gather_type_info_formula iprog wf tlist false in
     (*let () = print_endline ("WF: " ^ Iprinter.string_of_formula wf ) in *)
-    let (n_tl,r) = Astsimp.trans_formula iprog quant fv_idents false wf n_tl false in
+    let (n_tl,r) = x_add Astsimp.trans_formula iprog quant fv_idents false wf n_tl false in
     (* let () = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
     (* let () = print_string (" after sf: " ^(Cprinter.string_of_formula r)^"\n") in *)
     (n_tl,r)
@@ -1209,7 +1209,7 @@ let run_pairwise (iante0 : meta_formula) =
 let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let _ = CF.residues := None in
   let _ = Infer.rel_ass_stk # reset in
-  let _ = Sa2.rel_def_stk # reset in
+  (* let _ = Sa2.rel_def_stk # reset in *)
   let _ = CF.rel_def_stk # reset in
   let _ = Iast.set_iprog iprog in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline_quiet ("INPUT 6: \n ### 1 ante = " ^ (string_of_meta_formula iante0) ^"\n ### conseq = " ^ (string_of_meta_formula iconseq0)) else () in
@@ -1557,7 +1557,7 @@ let process_shape_infer pre_hps post_hps=
   let ls_hprel, ls_inferred_hps,_ =
     if List.length sel_hps> 0 && List.length hp_lst_assume > 0 then
       let infer_shape_fnc =  if not (!Globals.pred_syn_modular) then
-          Sa2.infer_shapes
+          (* Sa2.infer_shapes *) Sa3.infer_shapes
         else Sa3.infer_shapes (* Sa.infer_hps *)
       in
       infer_shape_fnc iprog !cprog "" constrs2
@@ -1567,7 +1567,7 @@ let process_shape_infer pre_hps post_hps=
   let _ =
     begin
       let rel_defs = if not (!Globals.pred_syn_modular) then
-          Sa2.rel_def_stk
+          (* Sa2.rel_def_stk *) CF.rel_def_stk
         else CF.rel_def_stk
       in
       if not(rel_defs# is_empty) then
@@ -2084,6 +2084,9 @@ let process_shape_divide pre_hps post_hps=
   let _ = List.iter pr_one ls_cond_danghps_constrs in
   ()
 
+(*
+the below function is obsolete.
+*)
 let process_shape_conquer sel_ids cond_paths=
   let _ = Debug.ninfo_pprint "process_shape_conquer\n" no_pos in
   let ls_pr_defs = !sleek_hprel_defns in
@@ -2102,14 +2105,15 @@ let process_shape_conquer sel_ids cond_paths=
         (pr_list_ln Cprinter.string_of_hp_rel_def_short) in
     let ls_path_defs_settings = List.map (fun (path,link_hpargs, defs) ->
         (path, defs, [],link_hpargs,[])) ls_path_link_defs in
-    Sa2.infer_shapes_conquer iprog !cprog "" ls_path_defs_settings sel_hps
+    (* Sa2.infer_shapes_conquer  iprog !cprog "" ls_path_defs_settings sel_hps *)
+    Sa3.infer_shapes_conquer_old  iprog !cprog "" ls_path_defs_settings sel_hps
     (* else *)
     (*   Sa3.infer_shapes iprog !cprog "" constrs2 *)
     (*       sel_hps sel_post_hps unk_map unk_hpargs link_hpargs true false *)
   in
   let _ =
     begin
-      let rel_defs =  Sa2.rel_def_stk in
+      let rel_defs =  (* Sa2 *)CF.rel_def_stk in
       if not(rel_defs# is_empty) then
         let defs = List.sort CF.hpdef_cmp (rel_defs # get_stk) in
         print_endline_quiet "";
@@ -2124,7 +2128,7 @@ let process_shape_conquer sel_ids cond_paths=
   in
   ()
 
-  
+
 let process_shape_postObl pre_hps post_hps=
   let hp_lst_assume = !sleek_hprel_assumes in
   let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
@@ -2136,17 +2140,22 @@ let process_shape_postObl pre_hps post_hps=
     | [] -> []
     | (_, a)::_ -> a
   in
-  let ls_inferred_hps, ls_hprel, _, _ =
+  let ls_inferred_hps, ls_hprel =
     if List.length sel_hps> 0 && List.length hp_lst_assume > 0 then
-      let infer_shape_fnc = Sa2.infer_shapes_from_fresh_obligation in
-      infer_shape_fnc iprog !cprog "" false cond_path constrs2 [] []
-        sel_hps sel_post_hps [] unk_hpargs link_hpargs true unk_map false
-        [] [] []
-    else [], [],[],[]
+      (* let infer_shape_fnc = Sa2.infer_shapes_from_fresh_obligation in *)
+      (* infer_shape_fnc iprog !cprog "" false cond_path constrs2 [] [] *)
+      (*   sel_hps sel_post_hps [] unk_hpargs link_hpargs true unk_map false *)
+      (*   [] [] [] *)
+      let iflow = !norm_flow_int in
+      let is = Icontext.mk_is constrs2 constrs2 link_hpargs unk_hpargs unk_map sel_hps sel_post_hps cond_path iflow [] [] in
+      let infer_shape_fnc = Sa3.infer_shapes_from_fresh_obligation in
+      let final_is = infer_shape_fnc iprog !cprog iflow "" [] false is sel_hps sel_post_hps true true [] in
+      final_is.CF.is_hp_defs, final_is.CF.is_constrs
+    else [], []
   in
   let _ = begin
     if (ls_hprel <> []) then
-      let pr = pr_list_ln Cprinter.string_of_hp_rel_def in
+      let pr = pr_list_ln Cprinter.string_of_hprel_short in
       print_endline_quiet "";
       print_endline_quiet "\n************************************************";
       print_endline_quiet "*******relational definition (obligation)********";
@@ -2257,7 +2266,7 @@ let process_shape_infer_prop pre_hps post_hps=
   in
   let ls_hprel, (* ls_inferred_hps *) _ ,_=
     let infer_shape_fnc =  if not (!Globals.pred_syn_modular) then
-        Sa2.infer_shapes
+        (* Sa2 *)Sa3.infer_shapes
       else Sa3.infer_shapes (* Sa.infer_hps *)
     in
     infer_shape_fnc iprog !cprog "" hp_lst_assume
@@ -2699,7 +2708,11 @@ let process_pairwise (f : meta_formula) =
     print_result rs num_id
   with _ -> print_exc num_id
 
+
 let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) etype =
+  let () = x_tinfo_pp "inside process_infer" no_pos in
+  let () = x_tinfo_hp (add_str "itype" (pr_list string_of_inf_const)) itype no_pos in
+  let () = x_tinfo_hp (add_str "etype" (pr_option string_of_bool)) etype no_pos in
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let is_tnt_flag = List.mem INF_TERM itype in
   let is_infer_imm_pre_flag = List.mem INF_IMM_PRE itype in
@@ -2711,6 +2724,10 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
   let dfailure_anlysis = if List.mem INF_EFA itype then false else
     if List.mem INF_DFA itype then true else !Globals.disable_failure_explaining
   in
+  let etype = match etype with
+    | Some f -> etype
+    | None -> if List.mem INF_CLASSIC itype then Some true else None
+  in
   let is_arr_as_var_flag = List.mem INF_ARR_AS_VAR itype in
   let old_dfa = !Globals.disable_failure_explaining in
   let _ = Globals.disable_failure_explaining := dfailure_anlysis in
@@ -2720,15 +2737,12 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
   let () = if l_err_exc then
       Globals.enable_error_as_exc := false
   in
+  (* let run_infer x = wrap_classic etype (run_infer_one_pass_set_states itype ivars [iante0]) x in *)
+  let num_id = "\nEntail "^nn in
   let run_infer x = wrap_classic etype (run_infer_one_pass_set_states itype ivars [iante0]) x in
   let run_infer x = 
     if is_field_imm_flag then wrap_field_imm (Some true) run_infer x
     else run_infer x in
-  let num_id = "\nEntail "^nn in
-  let run_infer x = wrap_classic etype (run_infer_one_pass_set_states itype ivars [iante0]) x in
-  (* let run_infer x =  *)
-  (*   if is_field_imm_flag then wrap_field_imm (Some true) run_infer x *)
-  (*   else run_infer x in *)
   let run_infer x = 
     if is_arr_as_var_flag then wrap_arr_as_var run_infer x
     else run_infer x in
@@ -2758,6 +2772,12 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
   let _ = Globals.disable_failure_explaining := old_dfa in
   let () = Globals.enable_error_as_exc := gl_efa_exc in
   r
+
+let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) etype =
+  let pr1 = add_str "itype" (pr_list string_of_inf_const) in
+  let pr2 = add_str "ivars" (pr_list pr_id) in
+  let pr3 = add_str "etype" (pr_option string_of_bool) in
+  Debug.no_3 "process_infer" pr1 pr2 pr3 pr_none (fun _ _ _ -> process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) etype) itype ivars etype
 
 let process_capture_residue (lvar : ident) =
   let flist = match !CF.residues with

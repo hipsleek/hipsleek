@@ -62,6 +62,9 @@ let rec add_post_relation prog proc sf rel_name rel_type rel_vars = match sf wit
     let rel_decl = {rel_name = rel_name; rel_vars = rel_vars; rel_formula = rel_formula} in
     (* let () = prog.prog_rel_decls <- prog.prog_rel_decls@[rel_decl] in *)
     let () = prog.prog_rel_decls # push rel_decl in
+    (*L2: to update its definition after inference*)
+    let _= Smtsolver.add_relation rel_decl.rel_name rel_decl.rel_vars rel_decl.rel_formula in
+    let _= Z3.add_relation rel_decl.rel_name rel_decl.rel_vars rel_decl.rel_formula in
     let rel_spec_var = CP.mk_typed_spec_var rel_type rel_name in
     (* let rel_args = (List.map (fun (_,id) -> CP.mkVar (CP.mk_spec_var id) no_pos) proc.proc_args)@[CP.mkVar (CP.mk_spec_var res_name) no_pos] in *)
     let rel_args = List.map (fun sv -> CP.mkVar sv no_pos) rel_vars in
@@ -112,6 +115,9 @@ let rec add_pre_relation prog proc sf rel_name rel_type rel_vars = match sf with
     let rel_decl = {rel_name = rel_name; rel_vars = rel_vars; rel_formula = rel_formula} in
     (* let () = prog.prog_rel_decls <- prog.prog_rel_decls@[rel_decl] in *)
     let () = prog.prog_rel_decls # push rel_decl in
+    (*L2: to update its definition after inference*)
+    let _= Smtsolver.add_relation rel_decl.rel_name rel_decl.rel_vars rel_decl.rel_formula in
+    let _= Z3.add_relation rel_decl.rel_name rel_decl.rel_vars rel_decl.rel_formula in
     let rel_spec_var = CP.mk_typed_spec_var rel_type rel_name in
     let rel_args = List.map (fun sv -> CP.mkVar sv no_pos) rel_vars in
     let new_rel = CP.mkRel rel_spec_var rel_args no_pos in

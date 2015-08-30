@@ -62,9 +62,13 @@ let wrap_norm flag norm f a =
   with _ as e ->
     raise e
 
-let toggle f flag =
-  if flag then infer_const_obj # set f
-  else infer_const_obj # reset f
+let toggle_local obj f flag =
+  if flag then (* infer_const_ *)obj # set f
+  else (* infer_const_ *)obj # reset f
+
+let toggle f flag = toggle_local infer_const_obj f flag
+  (* if flag then infer_const_obj # set f *)
+  (* else infer_const_obj # reset f *)
 
 (* let wrap_pure_field et f a = *)
 (*   let old_flag = infer_const_obj # get INF_PURE_FIELD  in *)
@@ -81,20 +85,22 @@ let toggle f flag =
 (*     (toggle INF_PURE_FIELD old_flag; *)
 (*      raise e) *)
 
-let wrap_gen attr et f a =
-  let old_flag = infer_const_obj # get attr  in
+let wrap_gen_local obj attr et f a =
+  let old_flag = obj (* infer_const_obj *) # get attr  in
   let new_flag = (match et with
-      | None -> infer_const_obj # get attr  (* !opt_classic *)
+      | None -> obj (* infer_const_obj *) # get attr  (* !opt_classic *)
       | Some b -> b) in
-  if new_flag!=old_flag then toggle attr new_flag;
+  if new_flag!=old_flag then toggle_local obj attr new_flag;
   try
     let res = f a in
     (* restore flag sa_pure_field *)
-    toggle attr old_flag;
+    toggle_local obj attr old_flag;
     res
   with _ as e ->
-    (toggle attr old_flag;
+    (toggle_local obj attr old_flag;
      raise e)
+
+let wrap_gen attr et f a = wrap_gen_local infer_const_obj attr et f a
 
 let wrap_pure_field et f a = wrap_gen INF_PURE_FIELD et f a
 
@@ -112,19 +118,28 @@ let wrap_pure_field et f a = wrap_gen INF_PURE_FIELD et f a
 (*     (Globals.sa_pure_field := flag; *)
 (*      raise e) *)
 
-let wrap_classic et f a =
-  let flag = !do_classic_frame_rule in
-  do_classic_frame_rule := (match et with
-      | None -> infer_const_obj # get INF_CLASSIC  (* !opt_classic *)
-      | Some b -> b);
-  try
-    let res = f a in
-    (* restore flag do_classic_frame_rule  *)
-    do_classic_frame_rule := flag;
-    res
-  with _ as e ->
-    (do_classic_frame_rule := flag;
-     raise e)
+(* let wrap_classic et f a = *)
+(*   let flag = !do_classic_frame_rule in *)
+(*   do_classic_frame_rule := (match et with *)
+(*       | None -> infer_const_obj # get INF_CLASSIC  (\* !opt_classic *\) *)
+(*       | Some b -> b); *)
+(*   try *)
+(*     let res = f a in *)
+(*     (\* restore flag do_classic_frame_rule  *\) *)
+(*     do_classic_frame_rule := flag; *)
+(*     res *)
+(*   with _ as e -> *)
+(*     (do_classic_frame_rule := flag; *)
+(*      raise e) *)
+
+let wrap_classic et f a = wrap_gen INF_CLASSIC et f a
+
+let wrap_classic_local obj et f a = wrap_gen_local obj INF_CLASSIC et f a
+
+    (* !do_classic_frame_rule *)
+
+(* let set_classic f  = let () = x_binfo_pp "should use wrap_classic instead" no_pos in *)
+(*                          () *)
 
 (* Some f - set allow_field_imm t f *)
 (* None - use the default option *)
@@ -239,7 +254,7 @@ let wrap_par_case_check f c =
   with _ as e ->
     (ho_always_split := flag;
      raise e)
-      1
+    (* 1 *)
 
 let wrap_set_infer_type t f a =
   let flag = infer_const_obj # is_infer_type t in

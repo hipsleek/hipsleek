@@ -821,7 +821,7 @@ shape+pure
 
 
 =====================================================================
-#ex13a
+#ex13a: dup with ex14b
 #ex13b
 
 GOT
@@ -851,12 +851,28 @@ to support @shape_post
 support for c program
 
 =====================================================================
-#ex14
+#ex14: DONE
 
 to support @shape_pre_post
 
+
+EInfer @leak,@shape_pre[]
+   EInfer @leak,@shape_pre[]
+     EBase 
+       x::sll<>@M&{FLOW,(4,5)=__norm#E}[]
+       EBase 
+         emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           htrue&{FLOW,(4,5)=__norm#E}[]
+
+
 =====================================================================
-# ex10b6.slk
+ex14a-
+
+shape_prepost,size,post_n
+
+=====================================================================
+# ex10b6.slk (FIXED)
 
  infer_exact [H] H(p) |- emp.
 
@@ -876,7 +892,7 @@ Residue:
  CEX:true
 
 =====================================================================
-# ex10b7.slk -dre "generate_co\|extract_hre\|simplify_lhs_rhs" 
+# ex10b7.slk -dre "generate_co\|extract_hre\|simplify_lhs_rhs" (FIXED)
 
  infer_exact [H] H(p) |- emp.
 
@@ -916,7 +932,7 @@ Residue:
  <1>emp&n=5 & p=null&{FLOW,(20,21)=__norm#E}[]
  inferred hprel: [H(p)&p=null --> emp&true; H(q)&true --> emp&true]
 =====================================================================
-../sleek ex10b7-classic-H-with-null-emp-rhs.slk -dre "infer_co"
+../sleek ex10b7-classic-H-with-null-emp-rhs.slk -dre "infer_co" (FIXED)
 
 infer_collect_hp_rel_empty_rhs#1@1
 infer_collect_hp_rel_empty_rhs#1 inp1 : H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
@@ -926,7 +942,7 @@ infer_collect_hp_rel_empty_rhs#1@1 EXIT:(true, es_formula:
  es_infer_vars_hp_rel: [H],[ H(p)&p=null --> emp])
 
 =====================================================================
-# ex15a.slk 
+# ex15a.slk : FIXED
 
 infer [H,P] H(p) * x::node<1,p> & p=null |- P(p).
 
@@ -937,8 +953,18 @@ infer [H,P] H(p) * x::node<1,p> & p=null |- P(p).
 EXPECTS:
   H(p)&p=null | x::node<_,p> --> P(p)
 which shows the heap context of p..
+
+# need to fix find_guard
+
+(==infer.ml#2606==)
+find_guard@2@1
+find_guard inp1 :left heap:[ x::node<flted_12_16,p>@M]
+find_guard inp2 :[]
+find_guard inp3 :[(H,[p])]
+find_guard inp4 :[p]
+find_guard@2 EXIT:NONE
 =====================================================================
-# ex15b.slk 
+# ex15b.slk: FIXED
 
 infer [H,P,@pure_field] H(p) * x::node<1,p> & p=null |- P(p).
 
@@ -949,6 +975,724 @@ infer [H,P,@pure_field] H(p) * x::node<1,p> & p=null |- P(p).
 EXPECTS:
   H(p)&p=null | x::node<v,p> & v=1 --> P(p)
 which shows the heap context of p?
+=====================================================================
+# ex15c.slk: FIXED
+
+infer [H,P] H(p) * x::node<1,p> & p=null |- P1(p).
+// inferred hprel: [H(p)&p=null --> P1(p)&true]
+// # How come still inferring P1?
+
+infer [H,P1] H(p) * x::node<1,p> & p=null |- P1(p).
+// inferred hprel: [H(p)&p=null --> P1(p)&true]
+// # EXPECTS : [H(p)&p=null | x::node<_,p> --> P1(p)&true]
+
+infer [H,P] H(p) * x::node<1,p> & p=null |- P(p,x).
+// inferred hprel: [H(p)&p=null --> P1(p)&true]
+//<1>H(p) * x::node<flted_23_44,p>@M&p=null & flted_23_44=1&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [emp&p=null --> P(p,x@NI)&true]
+// # EXPECTS : [H(p)&p=null | x::node<_,p> --> P(p,x)&true]
+=====================================================================
+--new-rm-htrue (FOUND problem in solver.ml)
+
+pls2nus@loris-laptop:~/hg/sl_spare/examples/working$ hg bisect -b
+The first bad revision is:
+changeset:   16501:2d85d0214410
+branch:      infer-incr
+parent:      16499:9253e46ab2ea
+user:        chinwn@loris-laptop
+date:        Tue Aug 25 06:40:58 2015 +0800
+summary:     debugging ex10c9 for htrue removal
+
+Total number of errors: 14 in files:
+  sleek7.slk({E1#Valid},{E10#Valid},{E2#Valid},{E3#Valid},{E6#Valid},{E7#Valid},{E8#Valid}) sleek8.slk({E1#Valid},{E12#Valid},{E13#Valid},{E14#Valid},{E16#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) sleek8.slk({E1#Valid},{E12#Valid},{E13#Valid},{E14#Valid},{E16#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) sleek9.slk({E1#Valid},{E3#Valid},{E4#Valid}) sleek12-lend.slk({E1#Valid}) classic/classic1b.slk({E19#Fail},{E22#Fail},{E23#Fail},{E25#Fail}) classic/classic4.slk({E1#Valid},{E3#Valid},{E5#Valid},{E7#Valid}) lemmas/lseg.slk({L1#Valid},{L2#Valid}) lemmas/rlseg.slk({L3#Valid}) lemmas/lseg_case.slk({L1#Valid},{L3#Valid}) lemmas/nlseg4e.slk({L2#Valid}) lemmas/nlseg4e1.slk({E1#Valid},{E2#Valid},{E3#Valid}) lemmas/sll_tailL.slk({L1#Valid}) lemmas/lseg_complex.slk({E1#Valid},{E2#Valid}).
+
+Starting hip-sleek tests:
+Total number of errors: 13 in files:
+  sleek7.slk({E1#Valid},{E10#Valid},{E2#Valid},{E3#Valid},{E6#Valid},{E7#Valid},{E8#Valid}) 
+sleek8.slk({E1#Valid},{E12#Valid},{E13#Valid},{E14#Valid},{E16#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) sleek8.slk({E1#Valid},{E12#Valid},{E13#Valid},{E14#Valid},{E16#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) sleek9.slk({E1#Valid},{E3#Valid},{E4#Valid}) sleek12-lend.slk({E1#Valid}) classic/classic4.slk({E1#Valid},{E3#Valid},{E5#Valid},{E7#Valid}) lemmas/lseg.slk({L1#Valid},{L2#Valid}) lemmas/rlseg.slk({L3#Valid}) lemmas/lseg_case.slk({L1#Valid},{L3#Valid}) lemmas/nlseg4e.slk({L2#Valid}) lemmas/nlseg4e1.slk({E1#Valid},{E2#Valid},{E3#Valid}) lemmas/sll_tailL.slk({L1#Valid}) lemmas/lseg_complex.slk({E1#Valid},{E2#Valid}).
+=====================================================================
+# ex15d.slk : FIXED
+
+infer [H,P,@classic] H(p) * x::node<1,p> & p=null |- true.
+
+Starting Omega.../usr/local/bin/oc
+ <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#|3  --> emp&true]
+
+# EXPECTS
+# inferred hprel: [H(p)&p=null |#| x::node<_,p> --> P(p)&true]
+=====================================================================
+# ex15e.slk (FIXED)
+
+# _exact and @classic gives different outcomes..
+
+!!! **solver.ml#7618:base_lhs :
+ H(p) * x::node<flted_11_15,p>@M&p=null & flted_11_15=1&
+{FLOW,(20,21)=__norm#E}[]
+!!! **solver.ml#8264:!Globals.do_classic_frame_rule:false
+Entail (1) : Valid. 
+Residue:
+ <1>H(p) * x::node<flted_11_15,p>@M&p=null & flted_11_15=1&{FLOW,(20,21)=__norm#E}[]
+
+
+!!! **solver.ml#7617:prep_h1(for classic): : H(p) * x::node<flted_14_27,p>@M
+!!! **solver.ml#7618:base_lhs :
+ H(p) * x::node<flted_14_27,p>@M&p=null & flted_14_27=1&
+{FLOW,(20,21)=__norm#E}[]
+!!! **solver.ml#8264:!Globals.do_classic_frame_rule:true
+!!! **infer.ml#3635:rhs: emp&{FLOW,(1,26)=__flow#E}[]
+Entail (2) : Valid. 
+Residue:
+ <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#|3  --> emp&true]
+=====================================================================
+# ex15d3.slk 
+
+infer [H,@classic] H(p) * x::node<1,p> & p=null |- true.
+
+ <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#| x::node<flted_52_95,p>@M&true --> emp&true]
+
+# Since p=null, maybe below is sufficient:
+
+ inferred hprel: [H(p)&p=null --> emp&true]
+
+
+(==infer.ml#3781==)
+find_guard@12
+find_guard inp1 :left heap:[ x::node<flted_22_34,p>@M]
+find_guard inp2 :[]
+find_guard inp3 :left selected preds:[(H,[p])]
+find_guard inp4 :[]
+find_guard@12 EXIT:Some( x::node<flted_22_34,p>@M)
+
+=====================================================================
+# ex15d2.slk 
+
+infer [H,@classic] H(p) * x::node<1,p> * y::node<_,x> |- true.
+
+GOT:
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&true |#| x::node<flted_36_66,p>@M&true --> emp&true]
+
+EXPECTS:
+--------
+ inferred hprel: [H(p)&true |#| 
+     x::node<flted_36_66,p> * y::node<_,x>--> emp&true]
+
+(==infer.ml#3781==)
+find_guard@1
+find_guard inp1 :left heap:[ x::node<flted_11_16,p>@M, y::node<Anon_12,x>@M]
+find_guard inp2 :[]
+find_guard inp3 :left selected preds:[(H,[p])]
+find_guard inp4 :[]
+find_guard@1 EXIT:Some( x::node<flted_11_16,p>@M)
+
+(==infer.ml#3795==)
+check_guard@2
+check_guard inp1 :Some( x::node<flted_11_16,p>@M)
+check_guard@2 EXIT:Some( x::node<flted_11_16,p>@M&{FLOW,(20,21)=__norm#E}[])
+=====================================================================
+# ex14b.ss: DONE
+
+  infer[@shape_post] 
+  requires x::sll<>
+  ensures true;
+
+For @shape_post, we need to simplify the base-case:
+
+[ GP_1636(x_1663) ::= x_1663::node<Anon_1664,q_1651>@M * GP_1636(q_1651)
+ or x_1663::sll<>@M&x_1663=null
+ (4,5)]
+
+# EXPECTS:
+
+[ GP_1765(x_1792) ::= 
+   x_1792::node<Anon_1793,q_1780>@M * GP_1765(q_1780)
+   or x_1792=null(4,5),
+
+# need to simplify (specialise/unfold) on base-case in post_synthesis
+
+1:43:iprocess_action inp1 :infer_dangling
+1:57:iprocess_action inp1 :split_base
+1:71:iprocess_action inp1 :post_synthesis
+1:85:iprocess_action inp1 :norm_seg
+1:99:iprocess_action inp1 :partition (pre, pre-oblg, post, post-oblg)
+1:113:iprocess_action inp1 :seq:[(0,infer_dangling),(0,split_base),(0,partition (pre, pre-oblg, post, post-oblg))]
+
+=====================================================================
+# ex14c.slk 
+
+  infer[@size] 
+  requires x::sll<>
+  ensures x::sll<>;
+
+# How come no printing?
+
+!!!    pure extension:
+sll_size: extend sll to size
+
+!!! **imminfer.ml#122:!should_infer_imm_pre:false
+Checking procedure size_helper$node... 
+Procedure size_helper$node SUCCESS.
+
+======================================================
+# ex14c.slk -dre ".*_extn\|extend_"  (Loc to fix): FIXED
+
+# This warning can be resolved by making size_1699 implicit
+
+# Spec must have below to support linking with post-cond later:
+
+   formula_struc_implicit_inst : Cpure.spec_var list;
+   EBase Impl [size_1699]
+     v_node_40_1637'::sll_size<size_1699>@M&{FLOW,(4,5)=__norm#E}[]
+
+# Current:
+
+!!! **WARNING****solver.ml#4230:FREE VAR IN HEAP RHS :[size_1699]
+impl/expl vars:[]
+LHS:  x'::node<Anon_1695,q_1696>@M * q_1696::sll_size<size_1694>@M&
+size_1672=size_1694+1 & 0<=size_1694 & !(v_bool_37_1642') & x'!=null & 
+x'=x & v_int_40_1640'=1 & v_node_40_1637'=q_1696&{FLOW,(4,5)=__norm#E}[]
+RHS:
+ EInfer @size[]
+   EBase 
+     v_node_40_1637'::sll_size<size_1699>@M&{FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         (exists size_1673: v_node_40_1637'::sll_size<size_1673>@M&
+         {FLOW,(4,5)=__norm#E}[])
+         struct:EBase 
+                  (exists size_1673: v_node_40_1637'::sll_size<size_1673>@M&
+                  {FLOW,(4,5)=__norm#E}[])
+
+# TO FIX :
+(==typechecker.ml#4591==)
+extend_pure_props_view@1
+
+extend_pure_props_view@1 EXIT:top spec: EInfer @size[]
+   EBase 
+     x::sll_size<size_1672>@M&{FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         (exists size_1673: x::sll_size<size_1673>@M&{FLOW,(4,5)=__norm#E}[])
+         struct:EBase 
+                  x::sll_size<size_1674>@M&{FLOW,(4,5)=__norm#E}[]
+static spec: EInfer @size[]
+   EBase 
+     x::sll_size<size_1675>@M&{FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         (exists size_1676: x::sll_size<size_1676>@M&{FLOW,(4,5)=__norm#E}[])
+         struct:EBase 
+                  x::sll_size<size_1677>@M&{FLOW,(4,5)=__norm#E}[]
+dynamic spec: EBase 
+   hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+
+===================================================================
+# ex14d.slk (FIXED - was implicit)
+
+# Why is there a free_var warning; and how did it manage
+  to prove it. Is that still treated as implicit?
+
+!!! **WARNING****solver.ml#4228:FREE VAR IN HEAP RHS :[b_71]
+LHS:
+  x::ll<a>@M&
+v_bool_37_1647' & x'=null & x'=x & v_int_38_1638'=0 & res=v_int_38_1638'&
+{FLOW,(4,5)=__norm#E}[]
+RHS:
+ EBase 
+   (exists : x::ll<b_71>@M&post_1653(b_71,a,res,flow)&{FLOW,(4,5)=__norm#E}[]
+=====================================================================
+# ex14f.slk --pcp (FIXED with warnings)
+
+  infer[//@post_n
+  ] 
+  requires x::ll<a>
+  ensures x::ll<b>;
+
+# implicit converted to exists?
+
+       EAssume 
+         (exists b_71: x::ll<b_71>@M&{FLOW,(4,5)=__norm#E}[])
+         struct:EBase 
+                  (exists b_70: x::ll<b_70>@M&{FLOW,(4,5)=__norm#E}[])
+=====================================================================
+# ex14d.slk --pcp (FIXED with --old-post-conv-impl)
+
+  requires (exists a: x::ll<a>)
+  ensures (exists b: x::ll<b>);
+
+!!! **typechecker.ml#868:>>>>>> Convert Exists to Implicit Vars for Post-Cond <<<<<<
+!!! **typechecker.ml#869:New Impl Vars :[b_71]
+
+# EBase exists not lifted outwards:
+
+   EBase 
+     (exists a_72: x::ll<a_72>@M&{FLOW,(4,5)=__norm#E}[])
+
+=====================================================================
+# ex14d.slk --new-post-conv-impl
+
+  infer[@post_n] 
+  requires x::ll<a>
+  ensures x::ll<b>;
+
+# Why fixcalc failure with --new-post-conv-impl 
+       (from exists --> impl in post)
+
+!!! **fixcalc.ml#1040:Input of fixcalc: :post_1650:={[a,a] -> [res,flow] -> []: (res=0 && a=0 ||  (exists (v_int_41_1685: (exists (a_1672: (exists (b_1681:0<=b_1681 && post_1650(b_1681,a_1672,v_int_41_1685,flow)))  && a_1672=a-(1)))  && v_int_41_1685=res-(1)))  && 1<=a)
+};
+bottomupgen([post_1650], [2], SimHeur);fixcalc: debugApply: substitution does not have unique args: [((SizeVar "a",Unprimed),(SizeVar "b_1681",Unprimed)),((SizeVar "a",Unprimed),(SizeVar "a_1672",Unprimed)),((SizeVar "res",Unprimed),(SizeVar "v_int_41_1685",Unprimed)),((SizeVar "flow",Unprimed),(SizeVar "flow",Unprimed))]
+
+!!! PROBLEM with fix-point calculation
+ExceptionLoc.Exc_located(_, _)Occurred!
+
+=====================================================================
+# ex14h.ss --reverify: FIXED
+
+# Removed inference command, but still two copies of x::HP_1638<>.
+  Why is this so?
+
+ requires x::HP_1638<>@M * x::HP_1708<>@M&truerequires emp&
+MayLoop[]
+ ensures htrue&true{,(4,5)=__norm#E};
+
+-------------------------
+#ex14h2.ss (FIXED by Loc)
+
+  infer[@shape_pre,@classic] 
+  requires true 
+  ensures htrue;
+
+# Why did we get below?
+
+ requires x::sll<>@M * x::HP_1805<>@M&truerequires emp&
+MayLoop[]
+ ensures htrue&true{,(4,5)=__norm#E};
+-------------------------
+
+# Why did re-verify infer shape again? This
+  caused pre-condition to be false!
+# I think need to strip of the previous inference commands
+  when re-verifying.
+
+!!! INFERRED SHAPE SPEC:
+ EInfer @leak,@shape_pre[]
+   EBase 
+     x::HP_1638<>@M * x::HP_1708<>@M&{FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         htrue&{FLOW,(4,5)=__norm#E}[]
+         struct:EBase 
+                  htrue&{FLOW,(4,5)=__norm#E}[]
+!!! **typechecker.ml#4045:inside reverify:[x]
+Checking procedure size_helper$node... 
+
+
+******************************
+******* SPECIFICATION2 ********
+******************************
+ infer[@leak, @shape_pre ]requires x::HP_1638<>@M * x::HP_1708<>@M&
+truerequires emp&MayLoop[]
+ ensures htrue&true{,(4,5)=__norm#E};
+=====================================================================
+# ex15g.slk: FIXED
+
+infer [H,P] H(p) * x::node<1,p> & p=null 
+  |- P(p).
+print residue.
+
+# GOT
+
+ <1>x::node<flted_23_28,p>@M&p=null & flted_23_28=1&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#| x::node<flted_23_28,p>@M&true --> P(p)&true
+
+# EXPECTS
+
+ <1>x::node<flted_23_28,p>@M&p=null & flted_23_28=1&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#|  --> P(p)&true
+=====================================================================
+@ ex17a.slk (FIXED)
+
+to synthesize lemma
+
+checkentail (exists a_1655: a'::lseg_one<a_1655>@M&a_1655=null)
+ |-  a'::sll_two<>.
+
+# Possible solution: we attempt lemma synthesis either top-down
+  or on-demand. On demand, based on the above, it would attempt for:
+
+   self::sll_two<> <- self::lseg_one<a> & a=null
+
+  to be added. However, this may complicate the SLEEK procedure
+  itself. So, we probably need general top-down lemma synthesis
+  command , and have that called either on-demand or top-down.
+
+  In this case, can you try:
+
+    lemma_infer[U] self::sll_two<> <- self::lseg<a> & U<a>
+    lemma_infer[U] self::sll_two<> <-> self::lseg<a> & U<a>
+
+   To see if you can develop some top-level synthesis commands.
+   As a special-case, the following is a lemma tester:
+
+    lemma_infer[] self::sll_two<> <-> self::lseg<a> & a=null
+
+=====================================================================
+# ex17.ss (FIXED)
+
+To strip anonymous variables.
+
+!!! **WARNING****astsimp.ml#8758:Post-condition has existentially quantified free vars:[(Anon_14,);(Anon_15,)]
+Starting Omega.../usr/local/bin/oc
+=====================================================================
+# ex14k1.ss (FIXED with more complex view)
+
+  infer[@size,@post_n] requires x::sll<> ensures x::sll<>;
+
+# Print the invariant of the view definition sll_size!
+
+!!! **derive.ml#344:new view:
+ view sll_size<size_1651:int>= 
+  EList
+    :EBase 
+       (* lbl: *){261}->emp&self=null & size_1651=0&{FLOW,(1,28)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[Anon_1652; 
+          q_1653](* lbl: *){262}->(exists size_1654: (* lbl: *){262}->
+          self::node<Anon_1652,q_1653>@M * q_1653::sll_size<size_1654>@M&
+          size_1651=size_1654+1 & 0<=size_1654&{FLOW,(1,28)=__flow#E}[])
+ 
+ view vars: size_1651
+  ann vars (0 - not a posn): (@M,0),(@M,0)
+  inv: size_1651>=0
+
+# Why did we get, and not also size_1676=0 ?
+
+RELDEFN post_1678: ( res=0 & size_1676=size_1675 & 0<=size_1675) -->  post_1678(size_1676,size_1675,res,flow)]
+
+# below is sleek proof, is it due to lack of invariant?
+
+id: 15; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ post_1678]; c_heap: emp; others: [@post] globals: [@flow,@ver_post]
+ checkentail x::sll_size<size_1675>@M&
+v_bool_39_1645' & x'=null & x'=x & v_int_40_1636'=0 & res=v_int_40_1636' & 
+MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  : x::sll_size<size_1676>@M&post_1678(size_1676,size_1675,res,flow)&
+{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+    emp&
+v_bool_39_1645' & x'=null & x'=x & v_int_40_1636'=0 & res=v_int_40_1636' & 
+size_1676=size_1675&{FLOW,(4,5)=__norm#E}[]
+   es_infer_rel: [RELDEFN post_1678: ( res=0 & size_1676=size_1675 & 0<=size_1675) -->  post_1678(size_1676,size_1675,res,flow)]
+   ]
+=====================================================================
+# ex17b.slk (first is a complex lemma)
+
+lemma_infer_pred [H] self::lseg_one<q> * H(q) -> self::sll_two<>.
+
+lemma_infer_pred [H]  self::sll_two<> <- self::lseg_one<q> * H(q).
+
+# Why is above not working?
+
+Entailing lemma lem_14: Fail. (cex)(must) cause: exception in lemma proving
+!!! fixpoint1:[]
+Entail 1: Fail.(may) cause:Nothing_to_do?Cond_action []
+=====================================================================
+# ex17e.slk (FIXED)
+
+lemma_infer_pred [K] self::ll<> -> self::lseg<p> * K(p).
+
+Starting Omega.../usr/local/bin/oc
+
+!!! WARNING logtime exception:0.
+!!! WARNING logtime exception:0.049134exception in lemma "lem_11" check
+
+Entailing lemma lem_11: Fail. (cex)(must) cause: exception in lemma proving
+=====================================================================
+#ex17e.slk  (FIXED)
+
+lemma_infer_pred [H]  self::sll_two<> <- self::lseg_one<q> * H(q).
+
+# can we automate above lemma synthesis?
+
+After collecting below:
+ inferred hprel: [H(q)&true |#|3  --> q::sll_two<>@M&true]
+ inferred hprel: [H(p)&true |#|3  --> H(p)&true]
+
+Can conclude:
+[   H(q)&true |#|3  --> q::sll_two<>@M&true]
+
+Thus:
+  self::sll_two<> <- self::lseg_one<q> * q::sll_two<>
+=====================================================================
+# ex17d1.slk (FIXED)
+
+How come cannot have:
+
+ checkentail x::lseg_one<null> |- x::sll_two<>.
+
+But can prove:
+
+ checkentail x::lseg_one<null> |- x::lseg_one<q> * q::sll_two<>.
+
+# refine strategy..
+
+Entail 2: Valid. 
+Residue:
+ <1>emp&q=null&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  Match(x,x) ==>  COND ==>  BaseCaseFold]]
+
+# problem caused by not allowing base-case-fold inside lemma
+  application:
+
+  if (is_view rhs_node) (* && (get_view_original rhs_node) *) then
+    let r = (2, M_base_case_fold { match_res_lhs_node = HEmp;
+                                   match_res_lhs_rest = lhs_h;
+                                   match_res_holes = [];
+                                   match_res_type = Root;
+                                   match_res_rhs_node = rhs_node;
+                                   match_res_rhs_rest = rhs_rest; }) in 
+
+=====================================================================
+# ex17f.slk (FIXED with sound body_norm)
+
+lemma_infer_pred [H] self::sll_two<> <- self::lseg_one<q> * H(q) .
+print residue.
+
+# Why same q on both LHS & RHS?
+
+!!! **WARNING****solver.ml#4230:FREE VAR IN HEAP RHS :[q]
+impl/expl vars:[]
+LHS:
+  q_64::lseg_one<q>@M * H(q)&
+Anon_65=Anon_63 & q_66=q_64 & Anon_65=Anon_63 & q_66=q_64&
+{FLOW,(20,21)=__norm#E}[]
+RHS:
+ EBase 
+   q_66::lseg_one<q>@M * H(q)&{FLOW,(20,21)=__norm#E}[]
+
+# Did we use library of lemma synthesis?
+=====================================================================
+# ex17f.slk --dlpi (WN/Andreea to fix)
+
+lemma_infer_pred [H] self::sll_two<> <- self::lseg_one<q> * H(q) .
+print residue.
+
+# folding lemma should have _fold view but NONE below
+
+ coercion_fold: None
+
+!!! **lem_store.ml#41:XXXX add_RIGHT_coercion
+!!! **lem_store.ml#42:[Lemma "lem_14":  self::sll<>@M&{FLOW,(20,21)=__norm#E}[]<== (exists q_49: self::lseg<q_49>@M * H(q_49)&{FLOW,(20,21)=__norm#E}[])
+ head match:sll
+ body view:lseg
+ coercion_univ_vars: []
+ materialized vars:  [(q,full,[H]); (self,full,[lseg])]
+ coercion_case: Simple
+ head:  self::sll<>@M&{FLOW,(20,21)=__norm#E}[]
+ body:  (exists q_49: self::lseg<q_49>@M * H(q_49)&{FLOW,(20,21)=__norm#E}[])
+ head_norm:  self::sll<>@M&{FLOW,(20,21)=__norm#E}[]
+ body_norm:  EBase 
+   (exists q_50: self::lseg<q_50>@M * H(q_50)&{FLOW,(20,21)=__norm#E}[])
+ coercion_univ_vars: []
+ coercion_case: Simple
+ coercion_origin: user-given
+ coercion_kind: LEM_INFER_PRED
+ coercion_fold: None
+]
+
+=====================================================================
+# ex17h1.slk (FIXED)
+
+lemma_infer_pred [H]  self::sll<> -> self::lseg<q> * H(q).
+
+
+ inferred hprel: [emp&qqq_56=null |#|3  --> H(qqq_56)&true; 
+                  qqq_61::node<Anon_59,q_60>@M * q_60::sll<>@M&
+                   true |#|3  --> H(qqq_61)&true]
+
+# Why is above not working?
+
+Contrast this to ex17h2 which works:
+  lemma_safe  self::sll<> -> self::lseg<q> * q::sll<>.
+
+
+Starting Omega.../usr/local/bin/oc
+
+!!! WARNING logtime exception:0.000326
+!!! WARNING logtime exception:0.0307exception in lemma "lem_14" check
+
+Entailing lemma lem_14: Fail. (cex)(must) cause: exception in lemma proving
+
+# Can we use wrapping to handle lemma synthesis?
+=====================================================================
+# ex17h4.slk (Loc : please fix)
+
+# Use old_keep_triv_hprel flag; to keep trivial hprel if true
+
+infer [H,@classic]  H(x) |- H(x).
+print residue.
+
+# GOT below which is trivially true.
+  Can we discard such hprel?
+
+<1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(x)&true |#|3  --> H(x)&true]
+[[ COND ==>  InferHeap]]
+=====================================================================
+# ex17f1.slk --dlpi (FIXED)
+
+lemma_infer_pred [H] self::sll<> <- self::lseg<q> * H(q) .
+print residue.
+
+# Why do we have materialised (q,full,[H])?
+
+!!! **lem_store.ml#41:XXXX add_RIGHT_coercion
+!!! **lem_store.ml#42:[Lemma "lem_14":  self::sll<>@M&{FLOW,(20,21)=__norm#E}[]<== (exists q_49: self::lseg<q_49>@M * H(q_49)&{FLOW,(20,21)=__norm#E}[])
+ head match:slpli
+ body view:lseg
+ coercion_univ_vars: []
+ materialized vars:  [(q,full,[H]); (self,full,[lseg])]
+ coercion_case: Simple
+
+=====================================================================
+# ex17f1.slk --dpli
+
+# use wrapper to call check_coercion? and collect result after
+
+=====================================================================
+# ex17h4a.slk
+
+infer [H2,@classic]  H2(x,y) |- H2(y,x).
+
+# expects H2(x,y) --> H2(y,x)
+
+Residue:
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [emp&true |#|3  --> H2(y,x)&true]
+[[ COND ==>  InferHeap]]
+=====================================================================
+# ex17h4b.slk
+
+infer [H2,@classic]  H2(x,y) & y=null |- H2(y,x).
+
+# GOT
+inferred hprel: [emp&y=null |#|3  --> H2(y,x)&true; 
+                  H2(x,y)&y=null |#|3  --> emp&true]
+
+# Avoid split, better use:
+     H2(x,y) & y=null --> H2(y,x)
+=====================================================================
+# ex17i2.slk (Loc to fix..)
+
+lemma_infer [R] self::sll<> -> self::lseg<q> & R(q) .
+
+# Please remove trivial pure relation too, 
+#  namely  R(q_62)) -->  R(q_62)
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+    or emp&R(q_80)&{FLOW,(20,21)=__norm#E}[]
+    
+ inferred rel: [RELDEFN R: ( q_57=null) -->  R(q_57); 
+                RELDEFN R: ( R(q_62)) -->  R(q_62)]
+=====================================================================
+# ex17i3.slk (FIXED)
+
+lemma_infer [R] self::sll<> <- self::lseg<q> & R(q) .
+
+# Why did this fail?
+
+Entailing lemma lem_14: Fail. (no cex)(may) cause: M_unmatched_rhs (infer_collect_hp_rel 3b)
+
+Failed to inferred for lem_14:<== (invalid lemma encountered).
+Residue:
+
+ { }
+
+=====================================================================
+
+# ex17i3.slk 
+
+# Printing is wrong if lemma is placed after entailments..
+
+lemma_infer [R] self::sll<> <- self::lseg<q> & R(q) .
+
+infer [R] R(self) |- self::sll<>.
+print residue.
+expect Valid.
+
+lemma_infer [R] self::sll<> <-> self::lseg<q> & R(q) .
+print residue.
+
+=====================================================================
+# ex17i5.slk (FIXED but why were ivars and relvars removed earlier??)
+
+infer [R] R(self) |- self::sll<>.
+
+# Why did this fail?
+
+  It seems ivars and relvars were removed but not sure why??? 
+
+  let (_ (* estate *),iv,ivr) = Infer.remove_infer_vars_all estate (* rt *)in
+
+Entail (1) : Fail.(may) cause:M_unmatched_rhs (infer_collect_hp_rel 3b)
+
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: infer_heap_node
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ COND ==>  UnmatchedRHSData]]
+ CEX:false
+=====================================================================
+# ex17i6.slk
+
+infer [x@NI] emp |- x::sll<>.
+
+Can support @NI for variables?
+=====================================================================
+# ex17i4.slk (FIXED)
+
+lemma_infer [R,@classic] self::sll<> <- self::lseg<q> & q=null .
+
+# How come @classic commands are not accepted?
+  Need to fix parser.
+
+File "ex17i3-infer-pure-lemsyn.slk", line 18, characters 14-15
+ error: Stream.Error("[id] expected after COMMA (in [id_list])")
+ at:
+Exception processed: Stream.Error("[id] expected after COMMA (in [id_list])")
+error at: 
+SLEEK FAILURE (END)
+=====================================================================
+# ex17i7a.slk (Loc to fix)
+
+lemma_infer [R] self::sll<> <- self::lseg<q> & R(q) .
+
+# Remove redundant rel_ass..
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+    or emp&R(q_80)&{FLOW,(20,21)=__norm#E}[]
+    
+ <1>emp&R(self_lem_14)&{FLOW,(20,21)=__norm#E}[]
+    or emp&R(q_68)&{FLOW,(20,21)=__norm#E}[]
+    
+ inferred rel: [RELASS [R]: ( R(self_lem_14)) -->  self_lem_14=null; 
+                RELDEFN R: ( R(q_68)) -->  R(q_68)]
+=====================================================================
+=====================================================================
 =====================================================================
 =====================================================================
 =====================================================================

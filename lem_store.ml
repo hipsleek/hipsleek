@@ -19,13 +19,29 @@ class lemma_store =
 
     method add_left_coercion lem =
       let len = List.length lem in
-      if len>0 then num_left_lem <- num_left_lem + len;
+      if len>0 then 
+        begin
+        num_left_lem <- num_left_lem + len;
+        if !Globals.dump_lem_proc then 
+            begin
+              y_binfo_pp "XXXX add_LEFT_coercion";
+              y_binfo_hp (pr_list !lem_pr) lem;
+            end
+        end;
       left_lem # push_list lem;
       num_left_lem_stk # push len
 
     method add_right_coercion lem =
       let len = List.length lem in
-      if len>0 then num_right_lem <- num_right_lem + len;
+      if len>0 then
+        begin
+          num_right_lem <- num_right_lem + len;
+          if !Globals.dump_lem_proc then 
+            begin
+              y_binfo_pp "XXXX add_RIGHT_coercion";
+              y_binfo_hp (pr_list !lem_pr) lem;
+            end
+        end;
       right_lem # push_list lem;
       num_right_lem_stk # push len
 

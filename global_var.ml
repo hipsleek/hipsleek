@@ -41,6 +41,7 @@ let var_with_implicit =
   let () = v # set_implicit in
   v
 
+(* excludes HRel arguments *)
 let var_with_heap_only =
   let v = new var_types in
   let () = v # set_heap_only in

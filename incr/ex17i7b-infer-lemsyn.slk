@@ -1,0 +1,40 @@
+
+data node {
+	int val;
+	node next;
+}.
+
+pred lseg<p> == self = p
+	or self::node<_, q> * q::lseg<p>
+  inv true.
+
+pred sll<> == self = null 
+	or self::node<_, q> * q::sll<>
+  inv true.
+
+HeapPred H(node a).
+relation R(node a).
+
+
+lemma_infer [R] self::sll<> <- self::lseg<q> & R(q) .
+print residue.
+
+/*
+# ex17i7a.slk (Loc to fix)
+
+lemma_infer [R] self::sll<> <- self::lseg<q> & R(q) .
+
+# Remove redundant rel_ass..
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+    or emp&R(q_80)&{FLOW,(20,21)=__norm#E}[]
+    
+ <1>emp&R(self_lem_14)&{FLOW,(20,21)=__norm#E}[]
+    or emp&R(q_68)&{FLOW,(20,21)=__norm#E}[]
+    
+ inferred rel: [RELASS [R]: ( R(self_lem_14)) -->  self_lem_14=null; 
+                RELDEFN R: ( R(q_68)) -->  R(q_68)]
+
+
+*/
+

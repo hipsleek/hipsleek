@@ -20,6 +20,8 @@ module SY_CEQ = Syn_checkeq
 
 exception SA_NO_BASE_CASE of (CP.spec_var * (CP.spec_var list) * (CF.formula list)) (*hp without base case*)
 
+exception SA_GUARD
+
 (*hp_name * args * unk_args * condition * lhs * guard* rhs *)
 type par_def_w_name =  CP.spec_var * CP.spec_var list * CP.spec_var list * CP.formula * (CF.formula option) * (CF.formula option) *
                        (CF.formula option)
@@ -1864,8 +1866,8 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
     else
       (fb, [(hp,args,f3, rhs)],[], new_hps)
   in
-  (*check hp is recursive or post_hp?*)
-  if (CP.mem_svl hp r_hps || CP.mem_svl hp post_hps) then (lhsb, [], [(hp,args)], []) else
+  (* check hp is recursive or post_hp? elim below check for x::node<_,p> * H(p) & p=null ==> H(x) *)
+  (* if (CP.mem_svl hp r_hps || CP.mem_svl hp post_hps) then (lhsb, [], [(hp,args)], []) else *)
     let closed_args = CF.look_up_reachable_ptr_args prog hds hvs args in
     let undef_args = lookup_undef_args closed_args [] def_ptrs in
     if undef_args<> [] then
@@ -2868,7 +2870,7 @@ let pattern_matching_with_guard_x rhs1 rhs2 guard match_svl check_pure=
     match sel_pats with
     | [args] -> args
     | [] -> []
-    | _ -> report_error no_pos "sau.pattern_matching_with_guard 1"
+    | _ -> (* raise SA_GUARD *) report_error no_pos "sau.pattern_matching_with_guard 1"
   in
   let apply_parttern locs hd_name f=
     let pr1 = Cprinter.prtt_string_of_formula in
@@ -2897,12 +2899,13 @@ let pattern_matching_with_guard_x rhs1 rhs2 guard match_svl check_pure=
       let inter_rhs2 =  apply_parttern hd_locs hd_name rhs2 in
       ( inter_rhs1, inter_rhs2, hd.CF.h_formula_data_node)
     (* | CF.ViewNode vd -> *)
-    | _ -> report_error no_pos "sau. pattern_matching_with_guard 3"
+    | _ -> (* raise SA_GUARD *) report_error no_pos "sau. pattern_matching_with_guard 3"
   in
   (************END INTERNAL ***********)
   match guard with
   | None -> (false, rhs1, guard)
   | Some f -> begin
+      try
       let hf = match (CF.heap_of f) with
         | [a] -> a
         | _ -> report_error no_pos "SAU.pattern_matching_with_guard 3"
@@ -2927,6 +2930,7 @@ let pattern_matching_with_guard_x rhs1 rhs2 guard match_svl check_pure=
           else
             (true, nrhs1, (Some n_lguard))
       | _ -> (false,rhs1, guard)
+      with _ ->  (false,rhs1, guard)
     end
 
 let pattern_matching_with_guard rhs1 rhs2 (guard: CF.formula option)
@@ -3120,7 +3124,7 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2 (lguard1: CF.formu
               let r = CF.mkStar n_rhs1 r_res2 CF.Flow_combine (CF.pos_of_formula n_rhs1) in
               (* let () = Debug.info_zprint (lazy (("    l: " ^ (Cprinter.string_of_formula l)))) no_pos in *)
               (* let () = Debug.info_zprint (lazy (("    r: " ^ (Cprinter.string_of_formula r)))) no_pos in *)
-              (Some (l, r,subst1, sst,n_lguard1))
+              (Some (l, r, subst1, sst, n_lguard1))
             else None
       end
   in
@@ -3519,16 +3523,23 @@ let is_trivial f (hp,args)=
   let b1 = List.exists (fun hpargs1 -> check_hp_arg_eq (hp,args) hpargs1) hpargs in
   b1||(is_empty_f f)
 
-let is_trivial_constr cs=
+let is_trivial_constr ?(en_arg=false) cs=
   let l_ohp = CF.extract_hrel_head cs.CF.hprel_lhs in
   let r_ohp = CF.extract_hrel_head cs.CF.hprel_rhs in
   match l_ohp,r_ohp with
-  | Some (hp1), Some (hp2) -> (* if *) CP.eq_spec_var hp1 hp2 (* then *)
-  (* let _,largs = CF.extract_HRel_f cs.CF.hprel_lhs in *)
-  (* let _,rargs = CF.extract_HRel_f cs.CF.hprel_rhs in *)
-  (* eq_spec_var_order_list largs rargs *)
-  (* else false *)
+  | Some (hp1), Some (hp2) -> if CP.eq_spec_var hp1 hp2 then
+      if not en_arg then true else
+        let _,largs = CF.extract_HRel_f cs.CF.hprel_lhs in
+        let _,rargs = CF.extract_HRel_f cs.CF.hprel_rhs in
+        eq_spec_var_order_list largs rargs
+    else false
   | _ -> false
+
+let is_trivial_constr ?(en_arg=false) cs=
+  let pr =Cprinter.string_of_hprel_short in
+  Debug.no_1 "is_trivial_constr" pr string_of_bool
+      (fun _ -> is_trivial_constr ~en_arg:en_arg cs) cs
+
 
 let is_not_left_rec_constr cs=
   let r_ohp = CF.check_and_get_one_hpargs cs.CF.hprel_rhs in

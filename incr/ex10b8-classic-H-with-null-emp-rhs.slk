@@ -9,81 +9,134 @@ data node {
 HeapPred H(node a).
 
 //(1)
-//infer_exact [H] H(p) & p=null |- emp.
-//print residue.
+infer_exact [H] H(p) & p=null |- emp.
+print residue.
+expect Valid.
 //expect_infer Valid R{emp}.
 // <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
 // inferred hprel: [H(p)&p=null --> emp&true]
 
-
-//infer_exact [H] H(p) * H(q) & p=null |- emp.
+//(2)
+infer_exact [H] H(p) * H(q) & p=null |- emp.
 // infer_classic, then infer_empty
+print residue.
+expect Valid.
+/*
+<1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#|3  --> emp&true; 
+                  H(q)&true |#|3  --> emp&true]
+*/
 
-//infer_exact [H] H(p) * H(q) & p=null |- true.
+//(3)
+infer_exact [H] H(p) * H(q) & p=null |- true.
 // infer_empty
+print residue.
+expect Valid.
+/*
+ <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#|3  --> emp&true; 
+                  H(q)&true |#|3  --> emp&true]
+*/
 
-//infer_exact [H] H(p) & p=null |- emp.
+//(4)
+infer_exact [H] H(p) & p=null |- emp.
 // infer_empty
+print residue.
+expect Valid.
+// <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H(p)&p=null |#|3  --> emp&true]
 
-//infer_exact [H] H(p) & p=null |- true.
+//(5)
+infer_exact [H] H(p) & p=null |- true.
 // infer_empty
+print residue.
+expect Valid.
+// <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H(p)&p=null |#|3  --> emp&true]
 
-//infer_exact [H] H(p) |- emp.
+
+//(6)
+infer_exact [H] H(p) |- emp.
 // infer_empty
+print residue.
+expect Valid.
+// <1>emp&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H(p)&true |#|3  --> emp&true]
 
-//infer_exact [H] H(p) |- true.
+
+//(7)
+infer_exact [H] H(p) |- true.
 // infer_empty
+print residue.
+expect Valid.
+// <1>emp&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H(p)&true |#|3  --> emp&true]
 
-//infer_exact [H] H(p) * x::node<_,p> |- true.
+//(8)
+infer_exact [H] H(p) * x::node<_,p> |- true.
 // <1>x::node<Anon_12,p>@M&{FLOW,(20,21)=__norm#E}[]
 // inferred hprel: [H(p)&true --> emp&true]
+// # EXPECTS
+// inferred hprel: [H(p)&true |#| x::node<_,p> --> emp&true]
+print residue.
+expect Valid.
 
-//infer_exact [H] H(p) * x::node<_,p> & p=null |- true.
-// BUG:
-//<1>x::node<Anon_12,p>@M&p=null&{FLOW,(20,21)=__norm#E}[]
-// inferred hprel: [H(p)&p=null --> emp&true]
-// <1>x::node<Anon_12,p>@M&{FLOW,(20,21)=__norm#E}[]
+//(9)
+infer_exact [H] H(p) * x::node<_,p> & p=null |- true.
+// <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H(p)&p=null |#|3  --> emp&true]
+// # EXPECTS
+// inferred hprel: [H(p)&true |#| x::node<_,p> & p=nill --> emp&true]
+print residue.
+expect Valid.
 
-//infer_exact [H] H(p) * x::node<_,p> |- emp.
-//Entail (1) : Fail.(must) cause: x::node<Anon_12,p>@M&{FLOW,(20,21)=__norm#E}[]:memory leak failure : residue is forbidden.
-
-
-//infer_exact [H] H(p) * x::node<_,p> & p=null |- emp.
+//(10)
+infer_exact [H] H(p) * x::node<_,p> |- emp.
 //Entail (1) : Fail.(must) cause: x::node<Anon_12,p>@M&{FLOW,(20,21)=__norm#E}[]:memory leak failure : residue is forbidden.
 print residue.
+expect Fail.
 
+//(11)
+infer_exact [H] H(p) * x::node<_,p> & p=null |- emp.
+//Entail (1) : Fail.(must) cause: x::node<Anon_12,p>@M&{FLOW,(20,21)=__norm#E}[]:memory leak failure : residue is forbidden.
+print residue.
+expect Fail.
 
+//(12)
+infer [] emp |- emp.
+print residue.
+// <1>emp&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
+
+//(13)
+infer [] emp |- true.
+print residue.
+// <1>emp&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
+
+//(14)
+infer [] true |- emp.
+print residue.
+// <1>htrue&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
+
+//(15)
+infer [] true |- true.
+print residue.
+// <1>htrue&{FLOW,(20,21)=__norm#E}[]
+// # EXPECTS
+// <1>emp&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
 
 /*
 # ex10b8.slk -dre "generate_co\|extract_hre\|simplify_lhs_rhs" 
 
-infer_exact [H] H(p) * H(q) & p=null & n=5 |- emp.
+//(15)
+infer [] true |- true.
 print residue.
+// <1>htrue&{FLOW,(20,21)=__norm#E}[]
+// # EXPECTS
+// <1>emp&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
 
-# How come a diff way to infer_collect_hp_rel_classsic ??
-  Can merge with infer_collect_hp_rel_empty_rhs ?
-
-Residue:
- <1>emp&n=5 & p=null&{FLOW,(20,21)=__norm#E}[]
- inferred hprel: [H(p)&p=null --> emp&true; H(q)&true --> emp&true]
-
-
-# WHY infer_collect not invoked at all
-
-# Why did we not infer:
-    H(p) & p=null -> emp
-    H(q) -> emp
-
-Need to make below much more general to return
-a list of hprel & its residue.
-
-Implemeted as:
-
-(* (==infer.ml#3554==) *)
-(* extract_hrel_head_list@9@6 *)
-(* extract_hrel_head_list inp1 : H(p)&p=null&{FLOW,(20,21)=__norm#E}[] *)
-(* extract_hrel_head_list@9 EXIT:Some(([(H,[ p])], emp&p=null&{FLOW,(20,21)=__norm#E}[])) *)
-let extract_hrel_head_list (f0:formula) =
-  let rec helper f =
-    match f with
 */

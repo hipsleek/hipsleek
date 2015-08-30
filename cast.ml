@@ -285,6 +285,7 @@ and coercion_decl = {
   coercion_univ_vars : P.spec_var list; (* list of universally quantified variables. *)
 
   coercion_infer_vars :  P.spec_var list;
+  coercion_infer_obj : Globals.inf_obj_sub;
   (* coercion_proof : exp; *)
   (* coercion_head_exist : F.formula;   *)
 
@@ -1214,14 +1215,14 @@ let look_up_templ_def_raw (defs: templ_decl list) (name : ident) =
 let look_up_ut_def_raw (defs: ut_decl list) (name : ident) = 
   List.find (fun d -> d.ut_name = name) defs
 
-let rec look_up_hp_def_raw_x (defs : hp_decl list) (name : ident) = match defs with
-  | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw_x rest name
+let rec look_up_hp_def_raw (defs : hp_decl list) (name : ident) = match defs with
+  | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw rest name
   | [] -> raise Not_found
 
-let look_up_hp_def_raw defs name=
-  let pr1 = !print_hp_decl in
-  Debug.no_1 "look_up_hp_def_raw" pr_id pr1
-    (fun _ -> look_up_hp_def_raw_x defs name) name
+(* let look_up_hp_def_raw defs name= *)
+(*   let pr1 = !print_hp_decl in *)
+(*   Debug.no_1 "look_up_hp_def_raw" pr_id pr1 *)
+(*     (fun _ -> look_up_hp_def_raw defs name) name *)
 
 let look_up_hp_parts decls hp=
   let hp_dc = look_up_hp_def_raw decls hp in

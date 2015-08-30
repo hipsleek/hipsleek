@@ -9,14 +9,66 @@ data node {
 HeapPred H(node a).
 
 //(1)
-//infer_exact [H] H(p) & p=null |- emp.
-//print residue.
+infer_exact [H] H(p) & p=null |- emp.
+print residue.
 //expect_infer Valid R{emp}.
 // <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
 // inferred hprel: [H(p)&p=null --> emp&true]
+expect Valid.
 
 infer_exact [H] H(p) |- emp.
 print residue.
+// <1>emp&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H(p)&true |#|3  --> emp&true]
+expect Valid.
+
+infer_exact [H] H(p) |- true.
+print residue.
+//<1>emp&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H(p)&true |#|3  --> emp&true]
+expect Valid.
+
+infer_inexact [H] H(p) |- true.
+print residue.
+// <1>H(p)&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
+
+
+infer_inexact [H] H(p) |- emp.
+print residue.
+// <1>H(p)&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
+
+
+infer_inexact [H] H(p)*H(q) & q=null |- emp.
+print residue.
+//  <1>H(p) * H(q)&q=null&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
+
+infer_inexact [H] H(p)*H(q) & q=null |- true.
+print residue.
+//  <1>H(p) * H(q)&q=null&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
+
+infer_inexact [H] emp & q=null |- true.
+print residue.
+//  <1>H(p) * H(q)&q=null&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
+
+infer_inexact [H] q=null |- true.
+print residue.
+//  <1>H(p) * H(q)&q=null&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
+
+infer_inexact [H] true |- true.
+print residue.
+//  <1>htrue&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
+
+infer_inexact [H] htrue & q=null |- true.
+print residue.
+expect Valid.
+
 
 /*
 # ex10b6.slk

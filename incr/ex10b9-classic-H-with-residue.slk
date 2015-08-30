@@ -9,22 +9,31 @@ data node {
 HeapPred H(node a).
 
 
-//infer_exact [H] H(p) * x::node<_,p> |- true.
+infer_exact [H] H(p) * x::node<_,p> |- true.
 // <1>x::node<Anon_12,p>@M&{FLOW,(20,21)=__norm#E}[]
 // inferred hprel: [H(p)&true --> emp&true]
+expect Valid.
 
 infer_exact [H] H(p) * x::node<_,p> & p!=null |- true.
 // <1>x::node<Anon_12,p>@M&{FLOW,(20,21)=__norm#E}[]
 // inferred hprel: [H(p)&true --> emp&true]
+expect Valid.
 
-//infer_exact [] H(p) * x::node<_,p> |- true.
+infer_exact [] H(p) * x::node<_,p> |- true.
+print residue.
 // emp
+expect Valid.
 
-//infer_exact [] x::node<_,p> |- true.
+infer_exact [] x::node<_,p> |- true.
+print residue.
 // emp
+expect Valid.
 
-//xinfer_exact [] x::node<_,p> & p=null |- true.
+//(5)
+infer_exact [] x::node<_,p> & p=null |- true.
+print residue.
 // emp
+expect Valid.
 
 print residue.
 

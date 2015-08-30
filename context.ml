@@ -1791,7 +1791,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                        end
                    in
                    (* let acts1= *)
-                   (*   if !do_classic_frame_rule && (Cfutil.is_fold_form  prog vl estate.CF.es_formula vr rhs reqset) then *)
+                   (*   if check_is_classic () && (Cfutil.is_fold_form  prog vl estate.CF.es_formula vr rhs reqset) then *)
                    (*     acts@[(1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))] *)
                    (*   else *)
                    (*     acts *)
@@ -2228,7 +2228,9 @@ and process_infer_heap_match_x ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs
       []
     else [(2,M_infer_heap (rhs_node,rhs_rest))]
   in
-  if (is_view rhs_node) && (get_view_original rhs_node) then
+  (* WN : we need base-case fold after lemma see incr/ex17b1.slk *)
+  (* does removing original cause loop? should we use counting? *)
+  if (is_view rhs_node) (* && (get_view_original rhs_node) *) then
     let r = (2, M_base_case_fold { match_res_lhs_node = HEmp;
                                    match_res_lhs_rest = lhs_h;
                                    match_res_holes = [];
