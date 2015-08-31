@@ -3211,6 +3211,7 @@ opt_pred:
   [[ OPT [ x = `PRED] -> 1]];
 type_decl:
   [[ t= data_decl  -> Data t
+   | t = data_decl; `SEMICOLON -> Data t
    | t= template_data_decl  -> Data t
    | c=class_decl -> Data c
    | e=enum_decl  -> Enum e
