@@ -2456,6 +2456,7 @@ let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest (* rhs_
       let () = Debug.ninfo_zprint (lazy  ("     niu_svl_ni:" ^((pr_list (pr_pair !CP.print_sv print_arg_kind) ) niu_svl_ni))) no_pos in
       (*old: args1@not_in_used_svl*)
       (*not_in_used_svl: NI*)
+      let () = DD.ninfo_hprint (add_str  "Globals.infer_const_obj # is_pure_field " string_of_bool) Globals.infer_const_obj # is_pure_field pos in
       let args11 = if Globals.infer_const_obj # is_pure_field 
       (* !Globals.sa_pure_field *) then
           let args11 = List.map (fun sv ->
@@ -2666,6 +2667,7 @@ let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest (* rhs_
   (*two cases: rhs unfold (mis-match is a node) and lhs fold (mis-match is a unk hp)*)
   let mis_match_found, ls_fwd_svl,rhs_sel_hpargs,lhs_selected_hpargs,ass_guard =
     if CF.is_HRel n_unmatched then
+      let () = DD.ninfo_hprint (add_str  "Globals.infer_const_obj # is_pure_field " string_of_bool) Globals.infer_const_obj # is_pure_field pos in
       let rhs_hp, rhs_args= CF.extract_HRel n_unmatched in
       (*depend on the purpose of geting framing spec*)
       (*svl: framing heap*)
@@ -2965,7 +2967,8 @@ let simplify_lhs_rhs prog es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selecte
   let () = Debug.ninfo_hprint (add_str  "    svl" !CP.print_svl) svl no_pos in
   let () = Debug.ninfo_hprint (add_str  "    keep_root_hrels" !CP.print_svl) keep_root_hrels no_pos in
   let () = Debug.ninfo_hprint (add_str  "    classic_nodes" !CP.print_svl) classic_nodes no_pos in
-  let lhs_b1a,rhs_b1a = Sautil.keep_data_view_hrel_nodes_two_fbs prog lhs_b rhs_b
+  let () = DD.ninfo_hprint (add_str  "es.es_infer_obj # is_pure_field_all " string_of_bool) es.es_infer_obj # is_pure_field_all no_pos in
+  let lhs_b1a,rhs_b1a = Sautil.keep_data_view_hrel_nodes_two_fbs prog es.CF.es_infer_obj # is_pure_field_all lhs_b rhs_b
       (hds@filter_his) hvs (lhp_args@rhp_args) leqs reqs [] (svl@keep_root_hrels@classic_nodes)
       (lhs_keep_rootvars@keep_root_hrels) lhp_args lhs_args_ni
       rhs_selected_hps rhs_keep_rootvars rhs_args_ni
@@ -3005,7 +3008,7 @@ let simplify_lhs_rhs prog es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selecte
   (*args of one hp must be diff --
     inside Sautil.keep_data_view_hrel_nodes_two_fbs*)
   (* let lhs_b4,rhs_b4 = Sautil.rename_hp_args lhs_b3 rhs_b3 in *)
-  (CF.prune_irr_neq_formula prog_vars lhs_b3 rhs_b3,rhs_b3)
+  (CF.prune_irr_neq_formula ~en_pure_field:es.CF.es_infer_obj # is_pure_field_all prog_vars lhs_b3 rhs_b3,rhs_b3)
 
 let simplify_lhs_rhs prog es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs
     lhs_selected_hpargs rhs_selected_hpargs crt_holes history unk_svl prog_vars lvi_ni_svl classic_nodes=

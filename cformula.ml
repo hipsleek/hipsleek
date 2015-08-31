@@ -5823,14 +5823,15 @@ and get_ptrs_w_args_f (f: formula)=
     CP.remove_dups_svl (get_ptrs_w_args fe.formula_exists_heap)
   | _ -> report_error no_pos "CF.get_ptrs_w_args_f: not handle yet"
 
-and get_ptrs_w_args (f: h_formula): CP.spec_var list = match f with
+and get_ptrs_w_args ?(en_pure_field=false) (f: h_formula): CP.spec_var list = match f with
   | DataNode {h_formula_data_node = c;
-              h_formula_data_arguments = args} -> [c]@(List.filter CP.is_node_typ args)
+              h_formula_data_arguments = args} ->
+        [c]@(if en_pure_field then args else List.filter CP.is_node_typ args)
   | ViewNode {h_formula_view_node = c;
               h_formula_view_ho_arguments = ho_args;
               h_formula_view_arguments = args} ->
     let hovars = List.concat (List.map (apply_rflow_formula get_ptrs_w_args_f) ho_args) in
-    [c]@(List.filter CP.is_node_typ args)@hovars
+    [c]@(if en_pure_field then args else List.filter CP.is_node_typ args)@hovars
   | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
   | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2}
   | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2}
@@ -5915,10 +5916,10 @@ let filter_var_pure r (f0:formula) =
   in
   helper f0
 
-let prune_irr_neq_formula_x must_kept_svl lhs_b rhs_b =
+let prune_irr_neq_formula_x ?(en_pure_field=false) must_kept_svl lhs_b rhs_b =
   let r_svl = fv (Base rhs_b) in
   let rec helper fb=
-    let ptrs = get_ptrs_w_args fb.formula_base_heap in
+    let ptrs = get_ptrs_w_args ~en_pure_field:en_pure_field fb.formula_base_heap in
     let keep_svl = (ptrs@r_svl@must_kept_svl) in
     let _,np2 = CP.prune_irr_neq (MCP.pure_of_mix fb.formula_base_pure) (CP.remove_dups_svl keep_svl) in
     let np3 = CP.filter_var_new np2 keep_svl in
@@ -5927,10 +5928,10 @@ let prune_irr_neq_formula_x must_kept_svl lhs_b rhs_b =
   in
   helper lhs_b
 
-let prune_irr_neq_formula must_kept_svl lhs_b rhs_b=
+let prune_irr_neq_formula ?(en_pure_field=false) must_kept_svl lhs_b rhs_b=
   let pr1 = !print_formula_base in
   Debug.no_3 "prune_irr_neq_formula" !CP.print_svl pr1 pr1 pr1
-    (fun _ _ _ -> prune_irr_neq_formula_x must_kept_svl lhs_b rhs_b)
+    (fun _ _ _ -> prune_irr_neq_formula_x ~en_pure_field:en_pure_field must_kept_svl lhs_b rhs_b)
     must_kept_svl lhs_b rhs_b
 
 let rec flatten_nodes_h (f0: h_formula) =
