@@ -576,6 +576,15 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc =
               print_endline_quiet "*************************************";
               ()
           in
+          (* TOFIX: *)
+          let () = if CF.rel_def_stk# get_stk = [] then () else
+            let () = print_endline_quiet "\n*********************************************************" in
+            let () = print_endline_quiet ("*******INFERRED LAMMA" ^"********") in
+            let () =  print_endline_quiet ((pr_list_ln Cprinter.string_of_coerc_med) left) in
+            let () = print_endline_quiet "*************************************"in
+            ()
+          in
+          (* *)
           (*right*)
           (*shape*)
           let rr,rshapes = if right = [] then [],[] else
