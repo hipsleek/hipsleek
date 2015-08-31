@@ -2229,7 +2229,11 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
             List.map (fun (lhs,rhs) -> (pairwise_proc lhs,rhs)) inf_rel_ls
           else inf_rel_ls in
         (* let () = x_tinfo_hp (add_str "Rel Inferred (b4 wrap_exists):" (pr_list print_only_lhs_rhs)) inf_rel_ls pos in *)
-        let inf_rel_ls = List.concat (List.map wrap_exists inf_rel_ls) in
+        let inf_rel_ls0 = List.concat (List.map wrap_exists inf_rel_ls) in
+        let inf_rel_ls = if !Globals.old_keep_triv_relass then inf_rel_ls0
+        else
+          List.filter (fun rel -> not (CP.is_trivial_rel rel)) inf_rel_ls0
+        in
         let () = x_binfo_hp (add_str "Rel Inferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos in
         (* -------------------------------------------------------------- *)
         (* let () = x_tinfo_hp (add_str "Rel Inferred (after drop_array)" (pr_list print_lhs_rhs)) inf_rel_ls pos in *)
