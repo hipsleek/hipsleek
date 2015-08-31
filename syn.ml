@@ -293,7 +293,7 @@ let unfolding prog hprels =
   unfolding_hprel_list prog hprels
 
 let unfolding prog hprels = 
-  let pr = pr_list Cprinter.string_of_hprel_short in
+  let pr = Cprinter.string_of_hprel_list_short in
   Debug.no_1 "unfolding" pr pr (fun _ -> unfolding prog hprels) hprels
 
 (**************************)
@@ -384,7 +384,7 @@ let rec dangling_parameterizing hprels =
       helper (n_acc @ [n_hpr]) n_hprl
 
   and helper acc hprels =
-    let pr = pr_list Cprinter.string_of_hprel_short in
+    let pr = Cprinter.string_of_hprel_list_short in
     Debug.no_2 "dangling_parameterizing_helper" pr pr pr
       helper_x acc hprels
   in
@@ -392,7 +392,7 @@ let rec dangling_parameterizing hprels =
   helper [] hprels
 
 let dangling_parameterizing hprels = 
-  let pr = pr_list Cprinter.string_of_hprel_short in
+  let pr = Cprinter.string_of_hprel_list_short in
   Debug.no_1 "parameterizing" pr pr 
     (fun _ -> dangling_parameterizing hprels) hprels
 
@@ -400,7 +400,7 @@ let dangling_parameterizing hprels =
 (***** MAIN *****)
 (****************)
 let syn_preds prog (is: CF.infer_state) = 
-  let () = x_binfo_pp "Step 1: Adding dangling references" no_pos in
+  let () = x_binfo_pp ">>>>> Step 1: Adding dangling references <<<<<" no_pos in
   let is_all_constrs, has_dangling_vars = List.split (List.map add_dangling_hprel is.CF.is_all_constrs) in
   let has_dangling_vars = or_list has_dangling_vars in
   let prog =
@@ -411,22 +411,21 @@ let syn_preds prog (is: CF.infer_state) =
   let () =
     if has_dangling_vars then
       x_binfo_hp (add_str "Detected dangling vars" 
-          (pr_list Cprinter.string_of_hprel_short)) is_all_constrs no_pos
+          Cprinter.string_of_hprel_list_short) is_all_constrs no_pos
     else x_binfo_pp "No dangling vars is detected" no_pos
   in
 
-  let () = x_binfo_pp "Step 2: Unfolding" no_pos in
+  let () = x_binfo_pp ">>>>> Step 2: Unfolding <<<<<" no_pos in
   let is_all_constrs = unfolding prog is_all_constrs in
   let () = x_binfo_hp (add_str "Unfolding result" 
-      (pr_list Cprinter.string_of_hprel_short)) is_all_constrs no_pos
+      Cprinter.string_of_hprel_list_short) is_all_constrs no_pos
   in
 
-  let () = x_binfo_pp "Step 3: Dangling Parameterizing" no_pos in
+  let () = x_binfo_pp ">>>>> Step 3: Dangling Parameterizing <<<<<" no_pos in
   let is_all_constrs = dangling_parameterizing is_all_constrs in
   let () = x_binfo_hp (add_str "Parameterizing result" 
-      (pr_list Cprinter.string_of_hprel_short)) is_all_constrs no_pos
+      Cprinter.string_of_hprel_list_short) is_all_constrs no_pos
   in
-  
   { is with CF.is_all_constrs = is_all_constrs }
 
 let syn_preds prog is = 

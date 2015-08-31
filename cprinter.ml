@@ -2823,6 +2823,11 @@ let pr_hprel_short hpa =
   fmt_string (if !Globals.sae then (String.concat "," (List.map string_of_flow hpa.hprel_flow)) else "" );
   fmt_close()
 
+let pr_hprel_list_short hprl = 
+  fmt_open_box 1;
+  pr_wrap_test "" Gen.is_empty (pr_seq "" pr_hprel_short) hprl;
+  fmt_close()
+
 let pr_hprel_short_inst cprog post_hps hpa=
   let print_formula = if !print_html then
       prtt_pr_formula_inst_html cprog post_hps
@@ -3072,6 +3077,8 @@ let pr_pair_path_dang (path, hp)=
 let string_of_hprel hp = poly_string_of_pr pr_hprel hp
 
 let string_of_hprel_short hp = poly_string_of_pr pr_hprel_short hp
+
+let string_of_hprel_list_short hpl = poly_string_of_pr pr_hprel_list_short hpl
 
 let string_of_hprel_short_inst prog post_hps hp =
   poly_string_of_pr (pr_hprel_short_inst prog post_hps) hp
