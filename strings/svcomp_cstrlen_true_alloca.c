@@ -4,6 +4,22 @@
  */
 #include <stdlib.h>
 
+/*@
+WFS<> ==
+  self::char_star<0,q>*q::BADS<> 
+  or self::char_star<v,q>*q::WFS<> & v!=0 
+  inv true;
+
+WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true;
+
+BADS<> ==
+  self::char_star<v,q>*q::BADS<> 
+  inv true;
+*/
+
 extern int __VERIFIER_nondet_int(void);
 
 int (cstrlen)(const char *s)
@@ -11,6 +27,10 @@ int (cstrlen)(const char *s)
      const char *p = s;
      /* Loop over the data in s.  */
      while (*p != '\0')
+       /*@
+          requires p::WFS<> 
+          ensures p::WFSeg<p'>*p'::char_star<0,q>*q::BADS<>;
+       */
          p++;
      return (int)(p - s);
  }

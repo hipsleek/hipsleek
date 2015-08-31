@@ -1,19 +1,57 @@
 #include <stdlib.h>
 
+/*@
+WFS<> ==
+  self::char_star<0,q>*q::BADS<> 
+  or self::char_star<v,q>*q::WFS<> & v!=0 
+  inv true;
+
+WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true;
+
+BADS<> ==
+  self::char_star<v,q>*q::BADS<> 
+  inv true;
+
+lemma_safe self::WFS<> -> self::BADS<>.
+
+lemma_safe self::WFSeg<p> <- self::WFSeg<q>*q::WFSeg<p> .
+
+lemma_safe self::WFS<> <-> self::WFSeg<q>*q::char_star<0,q2>*q2::BADS<> .
+
+*/
+
 extern int __VERIFIER_nondet_int(void);
 
 char *(cstrncat)(char *s1, const char *s2, int n)
+  /*@
+     requires s1::WFS<> * s2::WFS<> & n!= 0
+     ensures s1::WFS<> * s2::WFS<> & res = s1
+          or s1::WFS<> * s2::WFSeg<qq>*qq::BADS<> & res = s1;
+  */
  {
      char *s = s1;
      /* Loop over the data in s1.  */
      while (*s != '\0')
+       /*@
+          requires s::WFS<> 
+          ensures s::WFSeg<s'>*s'::char_star<0,q>*q::BADS<>;
+       */
          s++;
      /* s now points to s1's trailing null character, now copy
         up to n bytes from s1 into s stopping if a null character
         is encountered in s2.
         It is not safe to use strncpy here since it copies EXACTLY n
         characters, NULL padding if necessary.  */
-     while (n != 0 && (*s = *s2++) != '\0') {
+     while (n != 0 && (*s = *s2++) != '\0')
+       /*@
+          requires s::char_star<0,q> * q::BADS<> * s2::WFS<> & n!=0
+          ensures s2::WFSeg<qq>*qq::char_star<0,s2'>*s2'::BADS<> * s::char_star<0,s'>*s'::char_star<_,q2>*q2::BADS<>
+                  or s::char_star<0,s'> * s'::char_star<_,q2>*q2::BADS<>*s2::WFSeg<s2'>*s2'::BADS<> & n = 0;
+       */
+     {
          n--;
          s++;
      }
@@ -22,7 +60,12 @@ char *(cstrncat)(char *s1, const char *s2, int n)
      return s1;
  }
 
-int main() {
+int main() 
+  /*@
+     requires true
+     ensures res = 0;
+  */
+{
     int length1 = __VERIFIER_nondet_int();
     int length2 = __VERIFIER_nondet_int();
     int n = __VERIFIER_nondet_int();

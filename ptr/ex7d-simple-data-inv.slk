@@ -5,7 +5,7 @@ data arr_int {
   int val;
   //int val2;
   arr_int next; /* this is virtual link automatically generated*/
-}  inv self+1=next //& next!=null // inv to be automatically generated
+}  inv 1 = next + (-self) //& next!=null // inv to be automatically generated
 .
 
 checkentail x::arr_int<_,_> |- x!=null.
@@ -30,4 +30,10 @@ expect Valid.
 
 
 checkentail x::arr_int<_,p> |- p!=null.
+expect Valid.
+
+checkentail x::arr_int<_,p> |- x = p + (- 1).
+expect Valid.
+
+checkentail x::arr_int<_,p> |- 1 = p + (-x) .
 expect Valid.

@@ -17,7 +17,7 @@ BADS<> ==
 
 lemma_safe self::WFSeg<p,n1+n2> <- self::WFSeg<q,n1>*q::WFSeg<p,n2>.
 
-lemma_safe self::WFS<n> <-> self::WFSeg<q,n-1>*q::char_star<0,q2>*q2::BADS<> .
+lemma_safe self::WFS<n> <-> self::WFSeg<q,n>*q::char_star<0,q2>*q2::BADS<> .
 
 */
 

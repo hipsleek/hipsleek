@@ -52,7 +52,7 @@ int (cstrcmp)(const char *s1, const char *s2)
      return ((uc1 < uc2) ? -1 : (uc1 > uc2));
  }
 
-/*int main() {
+int main() {
     int length1 = __VERIFIER_nondet_int();
     int length2 = __VERIFIER_nondet_int();
     if (length1 < 1) {
@@ -67,5 +67,3 @@ int (cstrcmp)(const char *s1, const char *s2)
     nondetString2[length2-1] = '\0';
     return cstrcmp(nondetString1,nondetString2);
 }
-
-*/

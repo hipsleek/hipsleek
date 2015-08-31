@@ -3,7 +3,7 @@ data str {
   int val;
   str next;
 } 
-  inv next=1+self.
+  inv next=1+self;
 
 WFS<p> ==
   self::str<0,p>
