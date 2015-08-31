@@ -2234,7 +2234,7 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
         else
           List.filter (fun rel -> not (CP.is_trivial_rel rel)) inf_rel_ls0
         in
-        let () = x_tinfo_hp (add_str "Rel Inferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos in
+        let () = x_tinfo_hp (add_str "Rel Inferred (removed trivial)" (pr_list print_lhs_rhs)) inf_rel_ls pos in
         (* -------------------------------------------------------------- *)
         (* let () = x_tinfo_hp (add_str "Rel Inferred (after drop_array)" (pr_list print_lhs_rhs)) inf_rel_ls pos in *)
         (* -------------------------------------------------------------- *)
@@ -3528,8 +3528,10 @@ let infer_collect_hp_rel prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_se
     let cl_lnull_ptrs = CP.find_eq_closure l_emap l_null_ptrs in
     let emap0 = CP.EMapSV.merge_eset l_emap r_emap in
     let cl_rnull_ptrs = CP.find_eq_closure emap0 r_null_ptrs in
+    let () = Debug.ninfo_hprint (add_str  "cl_rnull_ptrs" !CP.print_svl) cl_rnull_ptrs no_pos in
     let rhs_uncheck_null_ptrs = CP.diff_svl cl_rnull_ptrs cl_lnull_ptrs in
-    CP.diff_svl rhs_args rhs_uncheck_null_ptrs != []
+    let () = Debug.ninfo_hprint (add_str  "rhs_uncheck_null_ptrs" !CP.print_svl) rhs_uncheck_null_ptrs no_pos in
+    CP.intersect_svl rhs_uncheck_null_ptrs rhs_args != []
   in
   let exist_uncheck_rhs_null_ptrs l_emap r_emap l_null_ptrs r_null_ptrs rhs_args=
     let pr1 = !CP.print_svl in

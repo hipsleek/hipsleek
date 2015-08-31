@@ -14,6 +14,12 @@ HeapPred K(node s).
 
 lemma_infer_pred [K] self::ll<> -> self::lseg<p> * K(p).
 //print residue.
+
+/*
+infer [K] emp&self_lem_11=null |- self_lem_11::lseg<p_47>@M * K(p_47).
+print residue.
+*/
+
 /*
 # ex17c.slk
 

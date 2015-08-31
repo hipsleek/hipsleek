@@ -1677,7 +1677,7 @@ Exception processed: Stream.Error("[id] expected after COMMA (in [id_list])")
 error at: 
 SLEEK FAILURE (END)
 =====================================================================
-# ex17i7a.slk (Loc to fix)
+# ex17i7a.slk (Loc to fix): FIXED
 
 lemma_infer [R] self::sll<> <- self::lseg<q> & R(q) .
 
