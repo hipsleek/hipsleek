@@ -482,6 +482,7 @@ let preprocess_fixpoint_computation cprog xpure_fnc lhs oblgs rel_ids post_rel_i
   (*grp_post_rel_flag*)1
 
 let manage_infer_pred_lemmas repo iprog cprog xpure_fnc =
+  (****************************)
   let print_res r=
     if r = [] then () else
       let () = Debug.info_hprint (add_str "fixpoint"
@@ -489,6 +490,43 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc =
       let () = print_endline_quiet "" in
       ()
   in
+  let print_relational_ass_shape hprels =
+    if hprels = [] then () else begin
+      print_endline_quiet "";
+      print_endline_quiet "*************************************";
+      print_endline_quiet "*******shape relational assumptions ********";
+      print_endline_quiet "*************************************";
+    end;
+    let ras = List.rev(hprels) in
+    let ras1 = if !Globals.print_en_tidy then List.map Cfout.rearrange_rel ras else ras in
+    let pr = pr_list_ln (fun x -> Cprinter.string_of_hprel_short_inst cprog [] x) in
+    let ()  = print_endline_quiet (pr (ras1)) in
+    ()
+  in
+  let print_relational_def_shape defs0 =
+    let defs0 = List.sort CF.hpdef_cmp defs0 in
+    if defs0 = [] then () else
+      let defs = if !Globals.print_en_tidy then List.map Cfout.rearrange_def defs0 else defs0 in
+      print_endline_quiet "\n*********************************************************";
+      let () = print_endline_quiet ("*******relational definition" ^"********") in
+      print_endline_quiet "*********************************************************";
+      let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
+      print_endline_quiet (pr1 defs);
+      print_endline_quiet "*************************************";
+      ()
+  in
+  let print_inferred_lemma coer=
+    let () = print_endline_quiet "\n*********************************************************" in
+    let () = print_endline_quiet ("*******INFERRED LAMMA" ^"********") in
+    let () =  print_endline_quiet ((Cprinter.string_of_coerc_med) coer) in
+    let () = print_endline_quiet "*************************************"in
+    ()
+  in
+  (* TOFIX: *)
+  let plug_inffers coer defs=
+    coer
+  in
+  (****************************)
   let rec helper coercs rel_fixs hp_rels res_so_far=
     match coercs with
     | [] -> (rel_fixs, hp_rels, Some res_so_far)
@@ -503,18 +541,8 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc =
         | None ->
           (* let hprels = List.fold_left (fun r_ass lc -> r_ass@(Infer.collect_hp_rel_list_context lc)) [] lcs in *)
               let hprels = Infer.rel_ass_stk # get_stk in
-              let () = if hprels = [] then () else begin
-                    print_endline_quiet "";
-                    print_endline_quiet "*************************************";
-                    print_endline_quiet "*******shape relational assumptions ********";
-                    print_endline_quiet "*************************************";
-                  end;
-                let ras = List.rev(hprels) in
-                let ras1 = if !Globals.print_en_tidy then List.map Cfout.rearrange_rel ras else ras in
-                let pr = pr_list_ln (fun x -> Cprinter.string_of_hprel_short_inst cprog [] x) in
-                let ()  = print_endline_quiet (pr (ras1)) in
-                ()
-              in
+              let () =  print_relational_ass_shape hprels in
+              let () = Infer.rel_ass_stk # reset in
           let (_,hp_rest) = List.partition (fun hp ->
               match hp.CF.hprel_kind with
               | CP.RelDefn _ -> true
@@ -532,20 +560,37 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc =
           let rl, lshapes =
             if left = [] then [],[] else
               (*shape*)
-              let post_hps, post_rel_ids, sel_hps, rel_ids = match left  with
-                | [] -> [],[],[],[]
-                | [coer] -> (CP.remove_dups_svl (CF.get_hp_rel_name_formula coer.C.coercion_body),
+              let is_left, post_hps, post_rel_ids, sel_hps, rel_ids = match left  with
+                | [] -> false,[],[],[],[]
+                | [coer] -> (true,CP.remove_dups_svl (CF.get_hp_rel_name_formula coer.C.coercion_body),
                              CP.remove_dups_svl (List.map fst (CP.get_list_rel_args (CF.get_pure coer.C.coercion_body))),
                              List.filter (fun sv -> CP.is_hprel_typ sv) coer.C.coercion_infer_vars,
                              List.filter (fun sv -> CP.is_rel_typ sv) coer.C.coercion_infer_vars
                             )
                 | _ -> report_error no_pos "LEMMA: manage_infer_pred_lemmas"
               in
-              let lshape = if sel_hps = [] || hp_lst_assume = [] then [] else
+              let lshape = if is_left then
+                let l_coer = List.hd left in
+                let lshape = if sel_hps = [] || hp_lst_assume = [] then [] else
                   let _, hp_defs, _ = !infer_shapes iprog cprog "temp" hp_lst_assume sel_hps post_hps
-                      [] [] [] true true (!norm_flow_int) in
+                    [] [] [] true true (!norm_flow_int) in
                   hp_defs
+                in
+                let defs0 = CF.rel_def_stk# get_stk in
+                let () = print_relational_def_shape defs0 in
+                (* to incorp inferred result into lemma *)
+                let inferred_coer = if defs0 = [] then l_coer
+                else
+                  let new_coer = plug_inffers l_coer defs0 in
+                  (* print shape inference result *)
+                  let () =  print_inferred_lemma new_coer in
+                  new_coer
+                in
+                let () = CF.rel_def_stk# reset in
+                lshape
+              else []
               in
+
               (*pure fixpoint*)
               let rl = if rel_ids = [] || oblgs = [] then [] else
                   let pre_invs, pre_rel_oblgs, post_rel_oblgs = partition_pure_oblgs oblgs post_rel_ids in
@@ -560,31 +605,6 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc =
               in
               rl,lshape
           in
-          (*to incorp inferred result into lemma *)
-          (* print shape inference result *)
-          let () =
-            let defs0 = List.sort CF.hpdef_cmp CF.rel_def_stk# get_stk in
-            if defs0 = [] then () else
-              let defs = if !Globals.print_en_tidy then List.map Cfout.rearrange_def defs0 else defs0 in
-              print_endline_quiet "\n*********************************************************";
-              let () =
-                print_endline_quiet ("*******relational definition" ^"********")
-              in
-              print_endline_quiet "*********************************************************";
-              let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
-              print_endline_quiet (pr1 defs);
-              print_endline_quiet "*************************************";
-              ()
-          in
-          (* TOFIX: *)
-          let () = if CF.rel_def_stk# get_stk = [] then () else
-            let () = print_endline_quiet "\n*********************************************************" in
-            let () = print_endline_quiet ("*******INFERRED LAMMA" ^"********") in
-            let () =  print_endline_quiet ((pr_list_ln Cprinter.string_of_coerc_med) left) in
-            let () = print_endline_quiet "*************************************"in
-            ()
-          in
-          (* *)
           (*right*)
           (*shape*)
           let rr,rshapes = if right = [] then [],[] else
