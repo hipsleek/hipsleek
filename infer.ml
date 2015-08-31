@@ -2234,7 +2234,7 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
         else
           List.filter (fun rel -> not (CP.is_trivial_rel rel)) inf_rel_ls0
         in
-        let () = x_binfo_hp (add_str "Rel Inferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos in
+        let () = x_tinfo_hp (add_str "Rel Inferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos in
         (* -------------------------------------------------------------- *)
         (* let () = x_tinfo_hp (add_str "Rel Inferred (after drop_array)" (pr_list print_lhs_rhs)) inf_rel_ls pos in *)
         (* -------------------------------------------------------------- *)
@@ -3524,6 +3524,19 @@ let get_eqset puref =
 *)
 let infer_collect_hp_rel prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b0 rhs_b0 pos =
   (*********INTERNAL**********)
+  let exist_uncheck_rhs_null_ptrs l_emap r_emap l_null_ptrs r_null_ptrs rhs_args=
+    let cl_lnull_ptrs = CP.find_eq_closure l_emap l_null_ptrs in
+    let emap0 = CP.EMapSV.merge_eset l_emap r_emap in
+    let cl_rnull_ptrs = CP.find_eq_closure emap0 r_null_ptrs in
+    let rhs_uncheck_null_ptrs = CP.diff_svl cl_rnull_ptrs cl_lnull_ptrs in
+    CP.diff_svl rhs_args rhs_uncheck_null_ptrs != []
+  in
+  let exist_uncheck_rhs_null_ptrs l_emap r_emap l_null_ptrs r_null_ptrs rhs_args=
+    let pr1 = !CP.print_svl in
+    Debug.no_3 "exist_uncheck_rhs_null_ptrs" pr1 pr1 (add_str "SEL rhs args" pr1) string_of_bool
+        (fun _ _ _ -> exist_uncheck_rhs_null_ptrs l_emap r_emap l_null_ptrs r_null_ptrs rhs_args)
+        l_null_ptrs r_null_ptrs rhs_args
+  in
   (**********END INTERNAL***********)
   if CF.isStrictConstTrue_wo_flow es0.CF.es_formula ||
      (CF.get_hp_rel_name_formula es0.CF.es_formula = [] && CF.get_hp_rel_name_h_formula rhs0 = [])
@@ -3711,6 +3724,8 @@ let infer_collect_hp_rel prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_se
                 (* (rhs_h_matched_set) *) leqs1 reqs1 pos (* es.CF.es_infer_hp_unk_map *) post_hps subst_prog_vars in
             if not is_found_mis ||
               List.exists (fun (hp,_) -> not (CP.mem_svl hp ivs)) rselected_hpargs (*incr/ex15c(1)*)
+              || exist_uncheck_rhs_null_ptrs l_emap0 (CP.EMapSV.merge_eset r_emap r_eqsetmap) (MCP.get_null_ptrs mix_lf1) (MCP.get_null_ptrs mix_rf)
+              (List.fold_left (fun acc (_, args) -> acc@args) [] rselected_hpargs)
             then
               let () = x_tinfo_hp (add_str ">>>>>> mismatch ptr" pr_id) ((Cprinter.prtt_string_of_h_formula rhs) ^" is not found (or inst) in the lhs <<<<<<") pos in
               (false, es, rhs, None, None)

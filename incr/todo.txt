@@ -1534,7 +1534,7 @@ Entailing lemma lem_14: Fail. (cex)(must) cause: exception in lemma proving
 
 # Can we use wrapping to handle lemma synthesis?
 =====================================================================
-# ex17h4.slk (Loc : please fix)
+# ex17h4.slk (Loc : please fix): FIXED
 
 # Use old_keep_triv_hprel flag; to keep trivial hprel if true
 
@@ -1591,7 +1591,7 @@ inferred hprel: [emp&y=null |#|3  --> H2(y,x)&true;
 # Avoid split, better use:
      H2(x,y) & y=null --> H2(y,x)
 =====================================================================
-# ex17i2.slk (Loc to fix..)
+# ex17i2.slk (Loc to fix..): FIXED
 
 lemma_infer [R] self::sll<> -> self::lseg<q> & R(q) .
 
@@ -1699,7 +1699,7 @@ print residue.
 // inferred hprel: [H2(x,flted_34_60)&flted_34_60=null |#|3  --> H2(x,y)&true
 // # redundant
 
-infer [H2,@classic]  H2(x,y) |- H2(x,null).
+infer [H2,@classic]  H2(x,y) |- H2(x,null). FIXED
 print residue.
 // <1>emp&{FLOW,(20,21)=__norm#E}[]
 // inferred hprel: [H2(x,y)&true |#|3  --> H2(x,flted_37_79)&true]
