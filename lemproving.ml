@@ -110,13 +110,15 @@ let run_entail_check_helper ctx (iante: lem_formula) (iconseq: lem_formula) (inf
 (*   None       -->  forbid residue in RHS when the option --classic is turned on *)
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
-let run_entail_check_x ctx (iante : lem_formula) (iconseq : lem_formula) (inf_vars: CP.spec_var list) (cprog: C.prog_decl) (exact : bool option) =
+let run_entail_check inf_obj ctx (iante : lem_formula) (iconseq : lem_formula) (inf_vars: CP.spec_var list) (cprog: C.prog_decl) (exact_flag : bool option) =
   let () = x_tinfo_pp "run_entail_check_x" no_pos in
-  if (!Globals.allow_lemma_residue)
-  then wrap_classic (Some false) (* inexact *) (run_entail_check_helper ctx iante iconseq inf_vars) cprog
-  else wrap_classic (Some true) (* exact *) (run_entail_check_helper ctx iante iconseq inf_vars) cprog
+  let allow_r = match exact_flag with
+    | None -> if (!Globals.allow_lemma_residue) then Some false (* inexact *) else Some true (* exact *) 
+    | _ -> exact_flag in
+  (* TODO:WN Using wrap_inf_obj_obly cos inf_obj is not properly propated *)
+  wrap_inf_obj_only inf_obj (wrap_classic allow_r (run_entail_check_helper ctx iante iconseq inf_vars)) cprog
 
-let run_entail_check ctx (iante : lem_formula) (iconseq : lem_formula) 
+let run_entail_check inf_obj ctx (iante : lem_formula) (iconseq : lem_formula) 
     (inf_vars: CP.spec_var list) (cprog: C.prog_decl) (exact : bool option) =
   let pr_ctx = add_str "ctx: " Cprinter.string_of_list_context in
   let pr_ante = add_str "ante: " string_of_lem_formula in
@@ -130,7 +132,7 @@ let run_entail_check ctx (iante : lem_formula) (iconseq : lem_formula)
   ) in
   Debug.no_5 "run_entail_check"
     pr_ctx pr_ante pr_conseq pr_vars pr_exact pr_out
-    (fun _ _ _ _ _ -> run_entail_check_x ctx iante iconseq inf_vars cprog exact) 
+    (fun _ _ _ _ _ -> run_entail_check inf_obj ctx iante iconseq inf_vars cprog exact) 
     ctx iante iconseq inf_vars exact
 
 let print_exc (check_id: string) =
@@ -146,13 +148,16 @@ let process_coercion_check coerc iante iconseq (inf_vars: CP.spec_var list) iexa
       let () = x_binfo_hp (add_str "i-ante" string_of_lem_formula) iante no_pos in
       let () = x_binfo_hp (add_str "i-conseq" string_of_lem_formula) iconseq no_pos in ()
     else () in
+  let inf_obj = coerc.Cast.coercion_infer_obj in
+  let () = y_binfo_hp (add_str "coerc:infer_obj" (fun e -> e # string_of)) inf_obj in
   let empty_es = CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
-  let empty_es = { empty_es with CF.es_infer_obj = coerc.Cast.coercion_infer_obj } in
+  let empty_es = { empty_es with CF.es_infer_obj = inf_obj } in
   let empty_ctx = CF.Ctx empty_es in
   let dummy_ctx = CF.SuccCtx [empty_ctx] in
   (* CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos]  *)
   try 
-    let (b,lc) as res = run_entail_check dummy_ctx iante iconseq inf_vars cprog (if iexact then Some true else None) in
+    (* TODO:WN local inf_obj not properly propagated *)
+    let (b,lc) as res = run_entail_check inf_obj dummy_ctx iante iconseq inf_vars cprog (if iexact then Some true else None) in
     (* let () = Debug.info_hprint (add_str "inf_vars" !CP.print_svl) inf_vars no_pos in *)
     (* (if inf_vars!=[] then *)
     (*   let () = Debug.info_pprint "writing to residue " no_pos in *)

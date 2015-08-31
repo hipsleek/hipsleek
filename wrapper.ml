@@ -207,6 +207,16 @@ let wrap_inf_obj iobj f a =
       raise e
     end
 
+let wrap_inf_obj_lst lst f a =
+  let rec aux lst f = match lst with
+    | [] -> f a
+    | i::lst -> aux lst (wrap_inf_obj i f)
+  in aux lst f
+
+let wrap_inf_obj_only io f a =
+  let lst = io # get_lst in
+  wrap_inf_obj_lst lst f a
+
 let wrap_err_dis f a =
   wrap_inf_obj INF_DE_EXC f a
 
