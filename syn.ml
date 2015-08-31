@@ -153,20 +153,20 @@ let unfolding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
   | Some g ->
     let guard_h, guard_p, _, _, _, _ = CF.split_components g in
     let guard_h_f = CF.mkBase_simp guard_h (MCP.mkMTrue pos) in
-    (* Prevent self-recursive pred to avoid infinite unfolding *)
-    let hrel_name = name_of_hrel hrel in
-    let hprel_rhs_fv = CF.fv hrel_def.hprel_rhs in
-    if mem hrel_name hprel_rhs_fv then
-      failwith "Unfolding self-recursive predicate is not allowed to avoid possibly infinite unfolding!"
-    else
-      let rs, residue = heap_entail_formula prog ctx guard_h_f in
-      if rs then
-        let _, ctx_p, _, _, _, _ = CF.split_components ctx in
-        if is_sat (MCP.merge_mems ctx_p guard_p true) then
+    let rs, residue = heap_entail_formula prog ctx guard_h_f in
+    if rs then
+      let _, ctx_p, _, _, _, _ = CF.split_components ctx in
+      if is_sat (MCP.merge_mems ctx_p guard_p true) then
+        (* Prevent self-recursive pred to avoid infinite unfolding *)
+        let hrel_name = name_of_hrel hrel in
+        let hprel_rhs_fv = CF.fv hrel_def.hprel_rhs in
+        if mem hrel_name hprel_rhs_fv then
+          failwith "Unfolding self-recursive predicate is not allowed to avoid possibly infinite unfolding!"
+        else
           let comb_f = combine_Star g residue in
           Some (combine_Star comb_f hrel_def.hprel_rhs)
-        else None
       else None
+    else None
 
 let unfolding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
   let pr1 = !CF.print_formula in
