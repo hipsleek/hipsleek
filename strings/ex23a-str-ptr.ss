@@ -21,11 +21,11 @@ WFSeg<p> ==
   or self::char_str<v,q>*q::WFSeg<p> & v!=0
   inv true;
 
-char_star plus_plus_str(char_star x)
+char_str plus_plus_str(char_str x)
 requires x::char_str<_,q>@L & Term[] 
 ensures  res=q ;
 
-int get_str(char_star x)
+int get_str(char_str x)
   requires x::char_str<v,_>@L & Term[]
   ensures res=v;
 
