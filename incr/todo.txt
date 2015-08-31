@@ -1569,7 +1569,7 @@ print residue.
 # use wrapper to call check_coercion? and collect result after
 
 =====================================================================
-# ex17h4a.slk
+# ex17h4a.slk  FIXED
 
 infer [H2,@classic]  H2(x,y) |- H2(y,x).
 
@@ -1580,7 +1580,7 @@ Residue:
  inferred hprel: [emp&true |#|3  --> H2(y,x)&true]
 [[ COND ==>  InferHeap]]
 =====================================================================
-# ex17h4b.slk
+# ex17h4b.slk  FIXED
 
 infer [H2,@classic]  H2(x,y) & y=null |- H2(y,x).
 
