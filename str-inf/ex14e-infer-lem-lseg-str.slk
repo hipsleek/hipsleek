@@ -23,8 +23,11 @@ pred WFG<p> ==
   HeapPred U(char_star x,char_star y).
 
   //lemma_infer_pred [U] self::WFG<p> <- U(self,q)*q::char_star<0,p>.
-  lemma_infer_pred [U,@classic] self::WFG<p> <- self::WFSeg<q>*U(q,p).
+  //lemma_infer [U,@classic] self::WFG<p> <- self::WFSeg<q>*U(q,p).
+  // Failed to inferred for lem_12:<== (invalid lemma encountered)
+  lemma_infer [U,@classic] self::WFG<p> -> self::WFSeg<q>*U(q,p).
   //lemma_infer_pred [U,@classic] self::WFG<p> -> self::WFSeg<q>*U(q,p).
+  print residue.
 
 /*
 # ex14e.slk

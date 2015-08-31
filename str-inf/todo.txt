@@ -168,6 +168,28 @@ Entailing lemma lem_12: Fail. (cex)(may) cause:  emp&flted_25_131=0&{FLOW,(20,21
 !!! **infer.ml#3899:  classic :true
 Entailing lemma lem_12: Fail. (cex)(may) cause:  emp&{FLOW,(20,21)=__norm#E}[]: possible memory leak failure : residue is forbidden.
 ===========================================================================
+# ex14g.slk
+
+  infer [U,@classic,@pure_field] 
+   self::char_star<0,p> |- self::WFSeg<q>*U(q,p) .
+
+# What happen to the pure field inference?
+
+<1>emp&self=q&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [q::char_star<flted_33_173,p>@M&true |#|3  --> U(q,p)&true]
+[[ Fold ==>  COND ==>  InferHeap]]
+
+id: 4; caller: []; line: 0; classic: true; kind: Sleek_Entail(1); hec_num: 1; evars: []; impl_vars: [q]; infer_vars: [ U]; c_heap: emp; others: [@pure_field,@leak] globals: [@leak,@pure_field]
+ checkentail self::char_star<flted_33_104,p>@M&flted_33_104=0&{FLOW,(20,21)=__norm#E}[]
+ |-  self::WFSeg<q>@M * U(q,p)&{FLOW,(20,21)=__norm#E}[]. 
+hprel_ass: [ q::char_star<flted_33_104,p>@M |#|  --> U(q,p)]
+ho_vars: nothing?
+res:  1[
+    emp&self=q & flted_33_104=0&{FLOW,(20,21)=__norm#E}[]
+   es_infer_hp_rel: [q::char_star<flted_33_104,p>@M |#|  --> U(q,p)]
+   ]
+
+
 ===========================================================================
 ===========================================================================
 ===========================================================================
