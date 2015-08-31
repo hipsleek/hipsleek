@@ -1464,7 +1464,7 @@ let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs
   let () = Debug.ninfo_zprint (lazy (("keep_vars: " ^ (!CP.print_svl keep_vars)))) no_pos in
   (* let () = Debug.info_zprint (lazy (("lkeep_vars: " ^ (!CP.print_svl lkeep_vars)))) no_pos in *)
   (* let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in *)
-  (* let () = Debug.info_zprint (lazy (("lkeep_hpargs: " ^ (pr1 lkeep_hpargs)))) no_pos in *)
+  let () = Debug.ninfo_zprint (lazy (("lkeep_hpargs: " ^ ((pr_list (pr_pair !CP.print_sv !CP.print_svl)) lkeep_hpargs)))) no_pos in
   (*remove dups*)
   (* let lkeep_nodes = look_up_dups_node prog hd_nodes hv_nodes c_lhs_hpargs keep_vars  *)
   (*  (List.fold_left close_def rhs_svl eqs ) in *)
