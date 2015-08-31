@@ -482,6 +482,13 @@ let preprocess_fixpoint_computation cprog xpure_fnc lhs oblgs rel_ids post_rel_i
   (*grp_post_rel_flag*)1
 
 let manage_infer_pred_lemmas repo iprog cprog xpure_fnc =
+  let print_res r=
+    if r = [] then () else
+      let () = Debug.info_hprint (add_str "fixpoint"
+          (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in
+      let () = print_endline_quiet "" in
+      ()
+  in
   let rec helper coercs rel_fixs hp_rels res_so_far=
     match coercs with
     | [] -> (rel_fixs, hp_rels, Some res_so_far)
@@ -494,7 +501,20 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc =
         Lem_store.all_lemma # pop_coercion;
         match invalid_lem with
         | None ->
-          let hprels = List.fold_left (fun r_ass lc -> r_ass@(Infer.collect_hp_rel_list_context lc)) [] lcs in
+          (* let hprels = List.fold_left (fun r_ass lc -> r_ass@(Infer.collect_hp_rel_list_context lc)) [] lcs in *)
+              let hprels = Infer.rel_ass_stk # get_stk in
+              let () = if hprels = [] then () else begin
+                    print_endline_quiet "";
+                    print_endline_quiet "*************************************";
+                    print_endline_quiet "*******shape relational assumptions ********";
+                    print_endline_quiet "*************************************";
+                  end;
+                let ras = List.rev(hprels) in
+                let ras1 = if !Globals.print_en_tidy then List.map Cfout.rearrange_rel ras else ras in
+                let pr = pr_list_ln (fun x -> Cprinter.string_of_hprel_short_inst cprog [] x) in
+                let ()  = print_endline_quiet (pr (ras1)) in
+                ()
+              in
           let (_,hp_rest) = List.partition (fun hp ->
               match hp.CF.hprel_kind with
               | CP.RelDefn _ -> true
@@ -532,12 +552,29 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc =
                   let proc_spec = CF.mkETrue_nf no_pos in
                   let pre_rel_ids = CP.diff_svl rel_ids post_rel_ids in
                   let r = Fixpoint.rel_fixpoint_wrapper pre_invs [] pre_rel_oblgs post_rel_oblgs pre_rel_ids post_rel_ids proc_spec 1 in
-                  let () = Debug.info_hprint (add_str "fixpoint"
-                                                (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in
-                  let () = print_endline_quiet "" in
+                  (* let () = Debug.info_hprint (add_str "fixpoint" *)
+                  (*                               (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in *)
+                  (* let () = print_endline_quiet "" in *)
+                  let () = print_res r in
                   r
               in
               rl,lshape
+          in
+          (*to incorp inferred result into lemma *)
+          (* print shape inference result *)
+          let () =
+            let defs0 = List.sort CF.hpdef_cmp CF.rel_def_stk# get_stk in
+            if defs0 = [] then () else
+              let defs = if !Globals.print_en_tidy then List.map Cfout.rearrange_def defs0 else defs0 in
+              print_endline_quiet "\n*********************************************************";
+              let () =
+                print_endline_quiet ("*******relational definition" ^"********")
+              in
+              print_endline_quiet "*********************************************************";
+              let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
+              print_endline_quiet (pr1 defs);
+              print_endline_quiet "*************************************";
+              ()
           in
           (*right*)
           (*shape*)
@@ -586,9 +623,11 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc =
                     | _ -> report_error no_pos "LEMMA: manage_infer_pred_lemmas 3"
                   in
                   let r = Fixpoint.rel_fixpoint_wrapper pre_inv_ext pre_fmls pre_rel_oblgs post_rel_oblgs pre_rel_ids post_rel_ids proc_spec grp_post_rel_flag in
-                  let () = Debug.info_hprint (add_str "fixpoint"
-                                                (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in
-                  let () = print_endline_quiet "" in
+                  (* let () = if r = [] then () else *)
+                  (*   Debug.info_hprint (add_str "fixpoint" *)
+                  (*       (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in *)
+                  (* let () = print_endline_quiet "" in *)
+                  let () = print_res r in
                   r
               in
               (rr,hp_defs)
@@ -697,9 +736,9 @@ let process_list_lemma_helper ldef_lst iprog cprog lem_infer_fnct =
     | LEM_UNSAFE     -> manage_unsafe_lemmas ~force_pr:true lst iprog cprog 
     | LEM_SAFE       -> manage_safe_lemmas ~force_pr:true  lst iprog cprog 
     | LEM_INFER      -> snd (manage_infer_lemmas lst iprog cprog)
-    | LEM_INFER_PRED      -> let r1,_,r2 = manage_infer_pred_lemmas lst iprog cprog Cvutil.xpure_heap in 
+    | LEM_INFER_PRED      -> let r1,r2,r3 = manage_infer_pred_lemmas lst iprog cprog Cvutil.xpure_heap in 
       let todo_unk = lem_infer_fnct r1 r2 in
-      r2
+      r3
     | RLEM           -> manage_unsafe_lemmas lst iprog cprog
   in
   (* let () = if enable_printing then Debug.ninfo_pprint "============ end - Processing lemmas ============\n" no_pos else () in *)

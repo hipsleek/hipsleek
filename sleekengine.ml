@@ -634,13 +634,14 @@ let print_residue residue =
 
 let process_list_lemma ldef_lst  =
   let lem_infer_fnct r1 r2 =
-    let _ = begin
+    let () = begin
       let rel_defs = if not (!Globals.pred_syn_modular) then
           (* Sa2.rel_def_stk *) Cformula.rel_def_stk
         else Cformula.rel_def_stk
       in
       if not(rel_defs# is_empty) then
-        let defs0 = List.sort CF.hpdef_cmp (rel_defs # get_stk) in
+        let defs0 = List.sort CF.hpdef_cmp (rel_defs # get_stk)  in
+        let hp_defs0 = List.sort CF.hp_def_cmp r2  in
         (* let pre_preds,post_pred,rem = List.fold_left ( fun (r1,r2,r3) d -> *)
         (*     match d.CF.hprel_def_kind with *)
         (*       | CP.HPRelDefn (hp,_,_) -> if (CP.mem_svl hp sel_post_hps) then (r1,r2@[d],r3) else *)
@@ -650,20 +651,24 @@ let process_list_lemma ldef_lst  =
         let defs1 = if !Globals.print_en_tidy then List.map Cfout.rearrange_def defs0 else defs0 in
         print_endline_quiet "";
         print_endline_quiet "\n*************************************";
-        print_endline_quiet "*******relational definition ********";
+        print_endline_quiet "*******relational definition (intermediate) ********";
         print_endline_quiet "*************************************";
-        let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
-        print_endline_quiet (pr1 defs1);
+        (* let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in *)
+        (* print_endline_quiet (pr1 defs1); *)
+        let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
+        print_endline_quiet (pr1 hp_defs0);
         print_endline_quiet "*************************************"
     end
     in
-    let _ =
-      let _ = Debug.info_hprint (add_str "fixpoint1"
-                                   (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r1 no_pos in
-      let _ = print_endline_quiet "" in
-      ()
+    let () =
+      if r1 = [] then ()
+      else
+        let () = Debug.info_hprint (add_str "fixpoint1"
+            (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r1 no_pos in
+        let () = print_endline_quiet "" in
+        ()
     in
-    r2 
+    r2
   in
   x_add Lemma.process_list_lemma_helper ldef_lst iprog !cprog lem_infer_fnct 
 
