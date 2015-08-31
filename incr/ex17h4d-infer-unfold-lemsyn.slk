@@ -22,15 +22,9 @@ HeapPred H2(node a, node b).
 // Valid
 
 //lemma_infer_pred [H]  self::sll<> -> self::lseg<qqq> * H(qqq).
-lemma_unsafe  self::sll<> -> self::lseg<qqq> * H(qqq).
+//lemma_unsafe  self::sll<> -> self::lseg<qqq> * H(qqq).
 
-
-infer [H2,@classic]  H2(x,y) |- H2(y,x).
-print residue.
-
-infer [H2,@classic]  H2(x,y) |- H2(x,y).
-print residue.
-
+// ex17h4d.slk
 infer [H2,@classic]  H2(x,null) |- H2(x,y).
 print residue.
 //<1>emp&{FLOW,(20,21)=__norm#E}[]

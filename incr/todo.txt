@@ -1692,6 +1692,19 @@ lemma_infer [R] self::sll<> <- self::lseg<q> & R(q) .
  inferred rel: [RELASS [R]: ( R(self_lem_14)) -->  self_lem_14=null; 
                 RELDEFN R: ( R(q_68)) -->  R(q_68)]
 =====================================================================
+# ex17h4d.slk
+infer [H2,@classic]  H2(x,null) |- H2(x,y).
+print residue.
+//<1>emp&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H2(x,flted_34_60)&flted_34_60=null |#|3  --> H2(x,y)&true
+// # redundant
+
+infer [H2,@classic]  H2(x,y) |- H2(x,null).
+print residue.
+// <1>emp&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H2(x,y)&true |#|3  --> H2(x,flted_37_79)&true]
+// unsound
+expect Fail.
 =====================================================================
 =====================================================================
 =====================================================================
