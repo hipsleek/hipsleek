@@ -24,7 +24,7 @@ class lemma_store =
         num_left_lem <- num_left_lem + len;
         if !Globals.dump_lem_proc then 
             begin
-              y_binfo_pp "XXXX add_LEFT_coercion";
+              (* y_binfo_pp "XXXX add_LEFT_coercion"; *)
               y_binfo_hp (pr_list !lem_pr) lem;
             end
         end;
@@ -38,7 +38,7 @@ class lemma_store =
           num_right_lem <- num_right_lem + len;
           if !Globals.dump_lem_proc then 
             begin
-              y_binfo_pp "XXXX add_RIGHT_coercion";
+              (* y_binfo_pp "XXXX add_RIGHT_coercion"; *)
               y_binfo_hp (pr_list !lem_pr) lem;
             end
         end;
