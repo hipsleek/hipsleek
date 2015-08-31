@@ -406,33 +406,35 @@ let dangling_parameterizing hprels =
 (***** MAIN *****)
 (****************)
 let syn_preds prog (is: CF.infer_state) = 
-  let () = x_binfo_pp ">>>>> Step 1: Adding dangling references <<<<<" no_pos in
-  let is_all_constrs, has_dangling_vars = List.split (List.map add_dangling_hprel is.CF.is_all_constrs) in
-  let has_dangling_vars = or_list has_dangling_vars in
-  let prog =
-    if has_dangling_vars then
-      { prog with Cast.prog_view_decls = prog.Cast.prog_view_decls @ [mk_dangling_view_prim]; }
-    else prog
-  in
-  let () =
-    if has_dangling_vars then
-      x_binfo_hp (add_str "Detected dangling vars" 
-          Cprinter.string_of_hprel_list_short) is_all_constrs no_pos
-    else x_binfo_pp "No dangling vars is detected" no_pos
-  in
-
-  let () = x_binfo_pp ">>>>> Step 2: Unfolding <<<<<" no_pos in
-  let is_all_constrs = unfolding prog is_all_constrs in
-  let () = x_binfo_hp (add_str "Unfolding result" 
-      Cprinter.string_of_hprel_list_short) is_all_constrs no_pos
-  in
-
-  let () = x_binfo_pp ">>>>> Step 3: Dangling Parameterizing <<<<<" no_pos in
-  let is_all_constrs = dangling_parameterizing is_all_constrs in
-  let () = x_binfo_hp (add_str "Parameterizing result" 
-      Cprinter.string_of_hprel_list_short) is_all_constrs no_pos
-  in
-  { is with CF.is_all_constrs = is_all_constrs }
+  if !Globals.inf_string then
+    let () = x_binfo_pp ">>>>> Step 1: Adding dangling references <<<<<" no_pos in
+    let is_all_constrs, has_dangling_vars = List.split (List.map add_dangling_hprel is.CF.is_all_constrs) in
+    let has_dangling_vars = or_list has_dangling_vars in
+    let prog =
+      if has_dangling_vars then
+        { prog with Cast.prog_view_decls = prog.Cast.prog_view_decls @ [mk_dangling_view_prim]; }
+      else prog
+    in
+    let () =
+      if has_dangling_vars then
+        x_binfo_hp (add_str "Detected dangling vars" 
+            Cprinter.string_of_hprel_list_short) is_all_constrs no_pos
+      else x_binfo_pp "No dangling vars is detected" no_pos
+    in
+  
+    let () = x_binfo_pp ">>>>> Step 2: Unfolding <<<<<" no_pos in
+    let is_all_constrs = unfolding prog is_all_constrs in
+    let () = x_binfo_hp (add_str "Unfolding result" 
+        Cprinter.string_of_hprel_list_short) is_all_constrs no_pos
+    in
+  
+    let () = x_binfo_pp ">>>>> Step 3: Dangling Parameterizing <<<<<" no_pos in
+    let is_all_constrs = dangling_parameterizing is_all_constrs in
+    let () = x_binfo_hp (add_str "Parameterizing result" 
+        Cprinter.string_of_hprel_list_short) is_all_constrs no_pos
+    in
+    { is with CF.is_all_constrs = is_all_constrs }
+  else is
 
 let syn_preds prog is = 
   let pr2 = Cprinter.string_of_infer_state_short in
