@@ -29,10 +29,35 @@ pred WFG<p> ==
   //lemma_infer [U,@classic,@pure_field] self::WFG<p> -> self::WFSeg<q>*U(q,p).
   //print residue.
 
+
+  infer [U,@pure_field] 
+   x::char_star<n,p> & n=0 |- U(x,p) .
+  print residue.
+  /*
+  inferred hprel: [x::char_star<n,p>@M&true |#|3  --> U(x,p)&true]
+   # EXPECTs
+   hprel: [x::char_star<n,p>@M& n=0  --> U(x,p)&true]
+  */
+
+  infer [U,@pure_field] 
+   x::char_star<0,p>  |- U(x,p) .
+  print residue.
+  /*
+   hprel: [x::char_star<flted_42_129,p>@M&true |#|3  --> U(x,p)&true]
+   # EXPECTs
+   hprel: [x::char_star<flted_42_129,p>@M& = flted_42_129null  --> U(x,p)&true]
+  */
+
   infer [U,@classic,@pure_field] 
    self::char_star<0,p> |- self::WFSeg<q>*U(q,p) .
   print residue.
- 
+/*
+<1>emp&self=q&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [q::char_star<flted_52_120,p>@M&true |#|3  --> U(q,p)&true]
+   # EXPECTs
+   hprel: [x::char_star<flted_42_129,p>@M& = flted_42_129null  --> U(x,p)&true]
+*/
+
 /*
 # ex14g.slk
 
