@@ -143,11 +143,13 @@ let add_back_hrel ctx hrel =
   let hrel_f = CF.mkBase_simp hrel (MCP.mkMTrue no_pos) in
   combine_Star ctx hrel_f
 
-let unfolding_one_hrel_def prog ctx (hrel_def: CF.hprel) =
+let unfolding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
   let pos = no_pos in
   let hrd_guard = hrel_def.hprel_guard in
   match hrd_guard with
-  | None -> Some (combine_Star ctx hrel_def.hprel_rhs)
+  | None -> 
+    (* Some (combine_Star ctx hrel_def.hprel_rhs) *)
+    Some (add_back_hrel ctx hrel)
   | Some g ->
     let guard_h, guard_p, _, _, _, _ = CF.split_components g in
     let guard_h_f = CF.mkBase_simp guard_h (MCP.mkMTrue pos) in
@@ -160,11 +162,11 @@ let unfolding_one_hrel_def prog ctx (hrel_def: CF.hprel) =
       else None
     else None
 
-let unfolding_one_hrel_def prog ctx (hrel_def: CF.hprel) =
+let unfolding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
   let pr1 = !CF.print_formula in
   let pr2 = Cprinter.string_of_hprel_short in
   Debug.no_2 "unfolding_one_hrel_def" pr1 pr2 (pr_option pr1)
-    (fun _ _ -> unfolding_one_hrel_def prog ctx hrel_def) ctx hrel_def
+    (fun _ _ -> unfolding_one_hrel_def prog ctx hrel hrel_def) ctx hrel_def
 
 let unfolding_one_hrel prog ctx hprel_name hrel hprel_groups =
   let pos = no_pos in
@@ -186,7 +188,7 @@ let unfolding_one_hrel prog ctx hprel_name hrel hprel_groups =
         ) hrel_defs
       in
       let unfolding_ctx_list = List.fold_left (fun acc hrel_def ->
-          let unfolding_ctx = unfolding_one_hrel_def prog ctx hrel_def in
+          let unfolding_ctx = unfolding_one_hrel_def prog ctx hrel hrel_def in
           match unfolding_ctx with
           | None -> acc
           | Some ctx -> acc @ [ctx]) [] subst_hrel_defs 
