@@ -4,6 +4,7 @@ open VarGen
 
 let debug_on = ref false
 let devel_debug_on = ref false
+let devel_debug_sleek_proof = ref (-1)
 let debug_print = ref false (* to support more printing for debugging *)
 let devel_debug_print_orig_conseq = ref false
 let debug_pattern_on = ref false

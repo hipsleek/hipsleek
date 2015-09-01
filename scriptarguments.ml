@@ -202,6 +202,13 @@ let common_arguments = [
    "Turn off brief tracing");
   ("-dd", Arg.Set Debug.devel_debug_on,
    "Turn on devel_debug on short and normal output");
+  ("-dd-esl", Arg.Int (fun n -> 
+       Globals.proof_logging_txt:=true; 
+       Globals.sleek_logging_txt:=true;
+       Debug.devel_debug_on:=false;
+       Debug.devel_debug_sleek_proof := n;
+     ),
+   "Turn on devel_debug for a particular sleek proof");
   ("-dd-short", Arg.Unit (fun () -> Debug.devel_debug_on := true; Globals.debug_level := Globals.Short),
    "Turn on devel_debug only short output");
   ("-dd-long", Arg.Unit (fun () -> Debug.devel_debug_on := true; Globals.debug_level := Globals.Long),

@@ -318,8 +318,26 @@ let wrap_one_bool flag new_value f a =
   let restore_fn (flag,old_value) = flag := old_value in
   wrap_gen save_fn set_fn restore_fn flag f a
 
-let wrap_dd f a =
-  wrap_one_bool Debug.devel_debug_on true f a
+let wrap_after code f a =
+  try
+    let r = f a in
+    let () = code () in
+    r
+  with e ->
+    let () = code () in
+    raise e
+   
+let print_header s =
+  print_endline_quiet "\n=====================================";
+  print_endline_quiet ("   "^s);
+  print_endline_quiet "====================================="
+
+let wrap_dd s f a =
+  let s1 = "START -dd "^s in
+  let s2 = "END   -dd "^s in
+  let () = print_header s1 in
+  wrap_after (fun () -> print_header s2) 
+    (wrap_one_bool Debug.devel_debug_on true f) a
 
 let wrap_two_bools flag1 flag2 new_value f a =
   let save_fn (flag1,flag2) = (flag1,flag2,!flag1,!flag2) in

@@ -7284,7 +7284,7 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     let slk_no = (* if avoid then 0 else *) (Log.last_cmd # start_sleek 3) in
     (* let () = Log.last_sleek_command # set (Some (ante,conseq)) in *)
     let () = hec_stack # push slk_no in
-    let () = y_binfo_hp (add_str "slk no" string_of_int) slk_no in
+    (* let () = y_binfo_hp (add_str "slk no" string_of_int) slk_no in *)
     let logger fr tt timeout =
       let () =
         x_add Log.add_sleek_logging es_opt timeout tt infer_type infer_vars (check_is_classic ()) 
@@ -7292,9 +7292,12 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
           (match fr with Some (lc,_) -> Some lc | None -> None) pos in
       ("sleek",(string_of_int slk_no))
     in
-    let r = if true (* slk_no=3 *) then
+    let r = 
+      if not(slk_no = !Debug.devel_debug_sleek_proof) then
         Timelog.log_wrapper "sleek-hec" logger (hec a b) c 
-      else Wrapper.wrap_dd (Timelog.log_wrapper "sleek-hec" logger (hec a b)) c
+      else 
+        let s = "Sleek Proof No "^(string_of_int slk_no) in
+        Wrapper.wrap_dd s (Timelog.log_wrapper "sleek-hec" logger (hec a b)) c
     in
     (* let tstart = Gen.Profiling.get_time () in		 *)
     (* let r = hec a b c in *)
