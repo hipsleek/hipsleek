@@ -1285,6 +1285,7 @@ let old_post_conv_impl = ref true (* affected by incr/ex14d.ss *)
 let old_post_impl_to_ex = ref true
 let old_keep_triv_relass = ref false
 let old_mater_coercion = ref false
+let old_infer_heap = ref false
 let warn_do_match_infer_heap = ref false
 let warn_nonempty_perm_vars = ref false
 let warn_trans_context = ref false

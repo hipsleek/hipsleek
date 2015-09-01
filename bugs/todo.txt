@@ -2090,7 +2090,21 @@ Bugs with some lemmas due to changes in context.ml
 
 
 ===================================================================
+--new-infer-heap
+
+ infer/infer1.slk({E1#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid}) 
+infer/infer2.slk({E5#Valid}) 
+ infer/infer5.slk({E4#Valid}) 
+ infer/infer6.slk({E1#Valid}) 
+ infer/infer7.slk({E10#Valid}) 
+ infer/infer8.slk({E1#Valid},{E10#Valid},{E2#Valid},{E29#Valid},{E3#Valid}) infer/infer13.slk({E1#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid}) infer/infer14.slk({E1#Valid},{E11#Valid},{E13#Valid},{E14#Valid},{E16#Valid},{E17#Valid},{E18#Valid},{E2#Valid},{E29#Valid},{E3#Valid}) 
+ infer/infer15.slk({E1#Valid}) 
+ lemmas/dseg-new.slk({L2#Fail}).
 ===================================================================
+--old-infer-heap
+
+Total number of errors: 1 in files:
+  lemmas/dseg-new.slk({L2#Fail}).
 ===================================================================
 ===================================================================
 ===================================================================

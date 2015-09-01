@@ -1072,7 +1072,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
         let c = CP.name_of_spec_var hp in
         let cmm = x_add coerc_mater_match_gen c vs right_name r_vargs aset f in
         let () = x_tinfo_hp (add_str "coerc_mater_match (HREL)" (pr_list pr_helper_res)) cmm no_pos in
-        if common==[] then []
+        if common==[] || !Globals.old_infer_heap then []
         else if cmm=[] then [(HEmp, f, [], Root)]
         else cmm
         (* [] *) (* [(f,rhs_node,[],Root)] *)
@@ -2137,12 +2137,6 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          (* if (vl_view_orig || vl_self_pts==[]) then ua *)
          (* else if (left_ls != []) then (1,M_lemma (m_res,Some (List.hd left_ls))) *)
          else (1,M_Nothing_to_do ("matching data with deriv self-rec LHS node "^(string_of_match_res m_res)))
-       | HRel (hn1, args1, _), HRel (hn2, args2, _) -> 
-         let () = x_binfo_pp "HRel vs HREL\n" no_pos in
-         let pr_sv = Cprinter.string_of_spec_var in
-         if CP.eq_spec_var hn1 hn2 then (1,M_match m_res)
-         else (-1,M_Nothing_to_do ("Mis-matched HRel from "^(pr_sv hn1)^","^(pr_sv hn2)))
-         ;
        | ViewNode vl, HRel (h_name, args, _) -> (* cant it reach this branch? *)
          pr_debug "VIEW vs HREL\n";
          let h_name = Cpure.name_of_spec_var h_name in
@@ -2159,8 +2153,17 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
            | l1::[] -> l1
            | _      -> (-1, norm_search_action l)
          in res
-       | DataNode _,  HRel _
-       | HRel _, _            -> (1,M_Nothing_to_do (string_of_match_res m_res))
+       (* TODO:old_infer_heap *)
+       | HRel (hn1, args1, _), HRel (hn2, args2, _) -> 
+         let () = x_binfo_pp "HRel vs HREL\n" no_pos in
+         let pr_sv = Cprinter.string_of_spec_var in
+         if CP.eq_spec_var hn1 hn2 then (1,M_match m_res)
+         else (-1,M_Nothing_to_do ("Mis-matched HRel from "^(pr_sv hn1)^","^(pr_sv hn2)))
+         ;
+       | HRel (h_name, args, _), rhs -> 
+         (* TODO : check if h_name in the infer_vars *)
+         (2,M_infer_heap (rhs,HEmp))
+       | DataNode _,  HRel _  -> (1,M_Nothing_to_do (string_of_match_res m_res))
        | _ -> report_error no_pos "process_one_match unexpected formulas 1\n"	
       )
     | MaterializedArg (mv,ms) ->
