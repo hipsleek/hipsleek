@@ -891,13 +891,17 @@ and spatial_ctx_extract_hrel_on_lhs prog hp e rhs_node aset (lhs_node: Cformula.
                h_formula_view_arguments = vs1;
                h_formula_view_name = c}) -> 
     let args = CP.diff_svl (get_all_sv lhs_node) [hp] in
-    (* let () = DD.info_zprint (lazy (("  args: " ^ (!CP.print_svl args)))) no_pos in *)
+    (* let args = (get_all_sv lhs_node) in *)
+    let () = x_binfo_hp (add_str "args" !CP.print_svl) args no_pos in
+    let () = x_binfo_hp (add_str "hp" !CP.print_sv) hp no_pos in
+    let () = x_binfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node no_pos in
+    let () = x_binfo_hp (add_str "lhs_node" !CF.print_h_formula) lhs_node no_pos in
     if args = [] then [] else
       let root, _  = Sautil.find_root prog [hp] args  [] in
       let root_aset = CP.EMapSV.find_equiv_all root emap in
       let root_aset = root::root_aset in
       (* let e = List.fold_left (fun a v-> CP.is_var v then  a@[CP.exp_to_spec_var v] else a) []  e in *)
-      let cmm = coerc_mater_match_with_unk_hp prog (CP.name_of_spec_var hp) c args vs1 aset lhs_node l_f root_aset in 
+      let cmm = coerc_mater_match_with_unk_hp prog (CP.name_of_spec_var hp) c args (p1::vs1) aset lhs_node l_f root_aset in 
       cmm
   | _ -> []
 
@@ -1016,7 +1020,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
           let p1_eq = CP.EMapSV.find_equiv_all p1 emap in
           let p1_eq = p1::p1_eq in
           let cmm = coerc_mater_match_with_unk_hp prog c
-              (CP.name_of_spec_var hp) vs1 [] aset f f0 p1_eq in
+              (CP.name_of_spec_var hp) (p1::vs1) [] aset f f0 p1_eq in
           cmm
         | _ -> 
           (* if (subtype_ann imm1 imm) then *)
