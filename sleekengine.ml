@@ -656,14 +656,14 @@ let process_list_lemma ldef_lst  =
     (*     print_endline_quiet "*************************************" *)
     end
     in
-    let () =
-      if r1 = [] then ()
-      else
-        let () = Debug.info_hprint (add_str "fixpoint1"
-            (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r1 no_pos in
-        let () = print_endline_quiet "" in
-        ()
-    in
+    (* let () = *)
+    (*   if r1 = [] then () *)
+    (*   else *)
+    (*     let () = Debug.info_hprint (add_str "fixpoint1" *)
+    (*         (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r1 no_pos in *)
+    (*     let () = print_endline_quiet "" in *)
+    (*     () *)
+    (* in *)
     r2
   in
   x_add Lemma.process_list_lemma_helper ldef_lst iprog !cprog lem_infer_fnct 
