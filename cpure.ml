@@ -25,6 +25,8 @@ let sp_add_prime v p = match v with
 
 let mk_spec_var id = SpecVar (UNK,id,Unprimed)
 
+let unknown_spec_var = mk_spec_var "__UNKNOWN"
+
 let mk_typed_spec_var t id = SpecVar (t,id,Unprimed)
 
 let mk_zero = mk_typed_spec_var Globals.null_type Globals.null_name 
@@ -7526,6 +7528,7 @@ let conv_exp_to_var (e:exp) : (spec_var * loc) option =
   match e with
   | IConst(i,loc) -> Some (mk_sp_const i,loc)
   | Null loc -> Some (null_var,loc)
+  | Var (sv,p) -> Some (sv,p)
   | _ -> None
 
 let conv_ann_exp_to_var (e:exp) : (spec_var * loc) option = 

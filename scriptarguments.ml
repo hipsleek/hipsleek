@@ -200,8 +200,20 @@ let common_arguments = [
    "Turn on brief tracing");
   ("--dis-trace", Arg.Clear Debug.trace_on,
    "Turn off brief tracing");
-  ("-dd", Arg.Set Debug.devel_debug_on,
+  ("-dd", Arg.Unit (fun _ ->
+      Debug.devel_debug_on :=true;
+      Debug.devel_debug_steps :=true
+     ),
    "Turn on devel_debug on short and normal output");
+  ("-dd-steps", Arg.Set Debug.devel_debug_steps,
+   "Turn on tracing of entailment proving steps ");
+  ("-dd-esl", Arg.Int (fun n -> 
+       Globals.proof_logging_txt:=true; 
+       Globals.sleek_logging_txt:=true;
+       Debug.devel_debug_on:=false;
+       Debug.devel_debug_sleek_proof := n;
+     ),
+   "Turn on devel_debug for a particular sleek proof");
   ("-dd-short", Arg.Unit (fun () -> Debug.devel_debug_on := true; Globals.debug_level := Globals.Short),
    "Turn on devel_debug only short output");
   ("-dd-long", Arg.Unit (fun () -> Debug.devel_debug_on := true; Globals.debug_level := Globals.Long),

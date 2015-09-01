@@ -120,10 +120,15 @@ res:  1[
  coercion_infer_obj: []
 
 ===========================================================================
-# ex14g4.slk --esl (Loc?)
+# ex14g4.slk -dd-esl 4 
+# DIFFERS from ex14g3.slk -dd-esl 11
 
-  lemma_infer [U,@pure_field]
-       self::WFG<p> -> (exists q: self::WFSeg<q>*U(q,p)).
+# Why are the dumps of the two proofs different?
+
+infer [U,@pure_field,@classic]
+ (exists v_126, q_127: self_lem_12::char_star<v_126,q_127>@M * q_127::WFG<p>@M&v_126!=0 )
+ |-  (exists q_109: self_lem_12::WFSeg<q_109>@M * U(q_109,p)). 
+   print residue.
 
 # GOT
 
@@ -131,7 +136,7 @@ Residue:
  <1>emp&v_115!=0&{FLOW,(20,21)=__norm#E}[]
 [[ Fold ==>  SEARCH ==>  Match(self_lem_12,self_lem_12) ==>  SEARCH ==>  (Lemma ==> lem_12(q_116,q_129)) ==> (left: lem_12) ==>  COND ==>  Match(q_116,q_129) ==>  COND ==>  InferHeap]]
 
-# DIFFERS from ex14g3.slk --esl
+# DIFFERS from ex14g3.slk -dd-esl 11
 # HIDDEN
 
 HIDE! id: 17<:11; caller: [11]; line: 30; classic: true; kind: Verify_Lemma; hec_num: 1; evars: [q_142]; impl_vars: []; infer_vars: [ U]; c_heap: emp; others:  es_infer_obj: [] globals: [@pure_field,@leak]
@@ -152,7 +157,9 @@ q_127: self_lem_12::char_star<v_126,q_127>@M * q_127::WFG<p>@M&v_126!=0&
 {FLOW,(20,21)=__norm#E}[])
  |-  (exists q_109: self_lem_12::WFSeg<q_109>@M * U(q_109,p)&
 {FLOW,(20,21)=__norm#E}[]). 
+
 hprel_ass: [ q_142::char_star<v_140,q_141>@M * q_141::WFG<p>@M |#|  --> U(q_142,p)]
+
 ho_vars: nothing?
 res:  2[
     emp&v_140!=0&{FLOW,(20,21)=__norm#E}[]
@@ -245,6 +252,47 @@ spatial_ctx_extract@2 EXIT:list of match_res:
  RHS: self::WFG<p_143>@M
  lhs_rest: U(self,q) * q::char_star<flted_27_130,p>@M
  rhs_rest: emp]
+===========================================================================
+# ex14b2 --dd-steps
+
+# Can we schedule a matching of UNKNOWN predicates?
+
+!!! **context.ml#2435:process_matches (steps) :
+ ### LHS : U(self,q) * q::char_star<flted_27_130,p>@M
+ ### RHS : U(self,q_149)
+ ### matches :[]
+===========================================================================
+# ex14b2 --dd-steps
+
+# Why are there so many NothingToDo? They did not come
+  from compute_actions?
+
+!!! **solver.ml#12212:process_action (steps) :
+ ### action : NothingToDo => No duplicated nodes!
+ ### estate : ex_formula : U(self,q) * q::char_star<flted_27_130,p>@M&flted_27_130=0&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ ### conseq :
+ (exists flted_25_144,
+q_145: U(self,q_145) * q_145::char_star<flted_25_144,p_143>@M&flted_25_144=0&
+{FLOW,(20,21)=__norm#E}[])
+===========================================================================
+# ex14b3.slk -dd-steps (Loc to fix)
+
+# schedule do_match to work with UNK predicates..
+
+!!! **context.ml#2435:process_matches (steps) :
+ ### LHS : U(self,q) * q::char_star<flted_8_16,p>@M
+ ### RHS : U(self,q1_38)
+ ### matches :[]
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
 ===========================================================================
 ===========================================================================
 ===========================================================================
