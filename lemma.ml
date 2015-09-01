@@ -598,7 +598,7 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc =
   in
   let print_inferred_lemma coer=
     let () = print_endline_quiet "\n*********************************************************" in
-    let () = print_endline_quiet ("*******INFERRED LAMMA" ^"********") in
+    let () = print_endline_quiet ("*******INFERRED LEMMA" ^"********") in
     let () =  print_endline_quiet ((Cprinter.string_of_coerc_med) coer) in
     let () = print_endline_quiet "*************************************"in
     ()
@@ -741,6 +741,7 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc =
           in
           (* print shape inference result *)
           let () =  List.iter print_inferred_lemma (l_coers@r_coers) in
+          let () = Lem_store.all_lemma # add_coercion l_coers r_coers  in
           (* let _=  print_endline "*************************************" in *)
           helper rest (rel_fixs@rl@rr) (hp_rels@lshapes@rshapes) (res_so_far@lcs)
         | Some _ -> (rel_fixs,hp_rels, None)
