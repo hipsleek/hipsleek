@@ -72,24 +72,45 @@ q_126: U(self,q_126) * q_126::char_star<flted_25_125,p>@M&flted_25_125=0&
 
 # no lemma scheduled?
 
-!!! **lemma.ml#259:
-Updated lemma store with unsafe repo::[lem_12]
-(==solver.ml#11027==)
-compute_actions@1
-compute_actions inp1 :EQ ptr:[(p_143,p)]
-compute_actions inp2 :LHS heap: U(self,q) * q::char_star<flted_27_130,p>@M
-compute_actions inp3 :LHS pure: flted_27_130=0
-compute_actions inp4 :RHS cand:[ self::WFG<p_143>@M]
-compute_actions inp5 :RHS pure: p_143=p
-compute_actions inp6 :right alias:[p_143]
-compute_actions@1 EXIT: COND =>[
+(==context.ml#2631==)
+choose_context@3@2@1
+choose_context inp1 :LHS node: U(self,q) * q::char_star<flted_27_130,p>@M
+choose_context inp2 :RHS node: self::WFG<p_143>@M
+choose_context inp3 :LHS pure: flted_27_130=0
+choose_context inp4 :RHS pure: p_143=p
+choose_context inp5 :right aliase:[(p_143,p)]
+choose_context@3 EXIT:[]
+
+(==context.ml#2347==)
+process_infer_heap_match@5@4@2@1
+process_infer_heap_match inp1 :lhs_h: U(self,q) * q::char_star<flted_27_130,p>@M
+process_infer_heap_match inp2 :lhs_p: flted_27_130=0
+process_infer_heap_match inp3 :rhs_node: self::WFG<p_143>@M
+process_infer_heap_match inp4 :rhs_rest: emp
+process_infer_heap_match@5 EXIT: Prio:-1
+ COND =>[
   Prio:2
   InferHeap => ( self::WFG<p_143>@M, emp)
    ;
   Prio:2
-  BaseCaseFold =>
-    LHS: emp
-    RHS: self::WFG<p_143>@M;
+  BaseCaseFold =>;
+  Prio:4
+  UnmatchedRHSData =>  self::WFG<p_143>@M
+  ]
+
+(==mcpure.ml#2286==)
+process_matches@4@2@1
+process_matches inp1 :lhs_h: U(self,q) * q::char_star<flted_27_130,p>@M
+process_matches inp2 :matches:[]
+process_matches inp3 :rhs_node: self::WFG<p_143>@M
+process_matches inp4 :rhs_rest: emp
+process_matches@4 EXIT: Prio:-1
+ COND =>[
+  Prio:2
+  InferHeap => ( self::WFG<p_143>@M, emp)
+   ;
+  Prio:2
+  BaseCaseFold =>;
   Prio:4
   UnmatchedRHSData =>  self::WFG<p_143>@M
   ]

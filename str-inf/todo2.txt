@@ -214,6 +214,24 @@ compute_actions@1 EXIT: COND =>[
   UnmatchedRHSData =>  self::WFG<p_143>@M
   ]
 ===========================================================================
+# ex14b2.slk
+
+!!! **context.ml#1000:common:[self]
+!!! **context.ml#1001:f: U(self,q)
+!!! **context.ml#1002:f0: U(self,q) * q::char_star<flted_27_130,p>@M
+
+(==mcpure.ml#2286==)
+spatial_ctx_extract@2@1
+spatial_ctx_extract inp1 :h_formula: U(self,q) * q::char_star<flted_27_130,p>@M
+spatial_ctx_extract inp2 :imm:@M
+spatial_ctx_extract inp3 :aset:[self]
+spatial_ctx_extract inp4 :rhs_node: self::WFG<p_143>@M
+spatial_ctx_extract@2 EXIT:list of match_res:
+[ Type: Root
+ LHS: self::WFG<p_143>@M
+ RHS: self::WFG<p_143>@M
+ lhs_rest: U(self,q) * q::char_star<flted_27_130,p>@M
+ rhs_rest: emp]
 ===========================================================================
 ===========================================================================
 ===========================================================================

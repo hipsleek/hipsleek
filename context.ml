@@ -81,6 +81,9 @@ and action =
 
 and action_wt = (int * action)  (* -1 : unknown, 0 : mandatory; >0 : optional (lower value has higher priority) *) 
 
+let pr_sv = CP.string_of_spec_var
+let pr_svl = CP.string_of_spec_var_list
+
 let get_rhs_rest_emp_flag act old_is_rhs_emp =
   match act with
   | M_match m
@@ -442,7 +445,9 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
       in
       List.concat (List.map colaps fltr) 
     in
+    (* what is the purpose of p=p? *)
     let eqns = (p, p) :: eqns' in
+    let () = y_binfo_hp (add_str "eqns" (pr_list (pr_pair pr_sv pr_sv))) eqns in
     let emap = CP.EMapSV.build_eset eqns' in
     let () = x_tinfo_hp (add_str "emap" CP.EMapSV.string_of) emap no_pos in
     (* let emap = CP.EMapSV.build_eset eqns in *)
@@ -892,6 +897,8 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
   let () = x_tinfo_hp (add_str "lhs?" !CF.print_h_formula) f0 no_pos in
   let () = x_tinfo_hp (add_str "rhs" !CF.print_h_formula) rhs_node no_pos in
   let () = x_tinfo_hp (add_str "aset" !CP.print_svl) aset no_pos in
+  (* type: CF.h_formula -> *)
+  (*   (CF.h_formula * CF.h_formula * (CF.h_formula * int) list * match_type) list *)
   let rec helper f = match f with    (* f is formula in LHS *)
     | HTrue -> []
     | HFalse -> []
@@ -988,14 +995,21 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
     | HRel (hp,e,l) ->
       begin
         (* let vv = CF.mk_HRel_as_view hp e l in *)
-        match rhs_node with
-        | HRel (hp2,e2,_) -> 
-          if CP.eq_spec_var hp hp2 then
-            let () = x_tinfo_pp "same HRel in LHS & RHS" no_pos in
-            (* WN : this needs to be properly implemented *)
-            [] (* form_match_on_two_hrel [hp] "" [hp2] prog hp e rhs_node aset f f0 emap  *)
-          else []
-        | _ -> spatial_ctx_extract_hrel_on_lhs prog hp e rhs_node aset f f0 emap
+        let vs = List.concat (List.map CP.afv e) in
+        let common = CP.intersect_svl vs aset in
+        let () = y_binfo_hp (add_str "common" pr_svl) common in
+        let () = y_binfo_hp (add_str "f" !CF.print_h_formula) f in
+        let () = y_binfo_hp (add_str "f0" !CF.print_h_formula) f0 in
+        if common==[] then []
+        else [(f,rhs_node,[],Root)]
+        (* match rhs_node with *)
+        (* | HRel (hp2,e2,_) ->  *)
+        (*   if CP.eq_spec_var hp hp2 then *)
+        (*     let () = x_tinfo_pp "same HRel in LHS & RHS" no_pos in *)
+        (*     (\* WN : this needs to be properly implemented *\) *)
+        (*     [] (\* form_match_on_two_hrel [hp] "" [hp2] prog hp e rhs_node aset f f0 emap  *\) *)
+        (*   else [] *)
+        (* | _ -> spatial_ctx_extract_hrel_on_lhs prog hp e rhs_node aset f f0 emap *)
       end
     | Star ({h_formula_star_h1 = f1;
              h_formula_star_h2 = f2;
@@ -2120,7 +2134,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
        | ViewNode vl, HRel (h_name, _, _) ->
          let h_name = Cpure.name_of_spec_var h_name in
          let vl_name = vl.h_formula_view_name in
-         let alternative = process_infer_heap_match ~vperm_set:rhs_vperm_set prog estate lhs_h lhs_p is_normalizing rhs reqset (rhs_node,rhs_rest) in
+         let alternative = x_add (process_infer_heap_match ~vperm_set:rhs_vperm_set) prog estate lhs_h lhs_p is_normalizing rhs reqset (rhs_node,rhs_rest) in
          process_one_match_mater_unk_w_view vl_name h_name m_res ms alternative 
        | ViewNode vl, DataNode dr ->
          let () = pr_hdebug (add_str "cyclic " pr_id) " 5" in
@@ -2344,7 +2358,7 @@ and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:m
   let () = x_tinfo_hp (add_str "sel_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_hp_rel no_pos in
   let () = x_tinfo_hp (add_str "sel_post_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_post_hp_rel no_pos in
   match l with
-  | [] ->  process_infer_heap_match ~vperm_set:rhs_vperm_set prog estate lhs_h lhs_p is_normalizing conseq reqset (rhs_node,rhs_rest)
+  | [] ->  x_add (process_infer_heap_match ~vperm_set:rhs_vperm_set) prog estate lhs_h lhs_p is_normalizing conseq reqset (rhs_node,rhs_rest)
   (* let r0 = (2,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in *)
   (* let ptr_vs = estate.es_infer_vars in *)
   (* let ptr_vs = List.filter (fun v -> CP.is_otype(CP.type_of_spec_var v)) ptr_vs in *)
@@ -2517,7 +2531,7 @@ and drop_unmatched_action l=
   )
 
 and sort_wt_match opt (ys: action_wt list) : action_wt list =
-  match (choose_match opt ys) with
+  match (x_add choose_match opt ys) with
   | None -> sort_wt ys
   | Some a -> 
     (* let () = print_endline "WN : Found a must_action_stk match" in  *)
