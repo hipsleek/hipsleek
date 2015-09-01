@@ -42,5 +42,26 @@ Entailing lemma 2: Fail. (cex)(may) cause: UnionR[ self_2::node<Anon_137,lm_139,
  rhs_rest: emp,base case unfold failed]]
 
 Failed to prove 2:<== in current context.
-R
+
+Entailing lemma 2: Fail. (no cex)(may) cause: Nothing_to_do? Type: WArg
+ LHS: p_120::dseg<self_2,rm,last_122>@M
+ RHS: self_2::rlseg<rm_123>@M
+ lhs_rest: self_2::node<Anon_119,lm_121,p_120>@M
+ rhs_rest: emp
+
+Failed to prove 2:<== in current context.
+Removing invalid lemma ---> lemma store restored.
+
+====
+pls2nus@loris-laptop:~/hg/sl_spare$ hg bisect -g
+The first bad revision is:
+changeset:   16688:ae47980f69f8
+branch:      fix-incr
+parent:      16687:88a142a54836
+parent:      16686:7e7fdef44ba0
+user:        chinwn@loris-laptop
+date:        Wed Sep 02 04:55:01 2015 +0800
+summary:     to fix ex14b3.slk with match of unknown predicates
+
+
 */
