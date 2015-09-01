@@ -120,7 +120,10 @@ res:  1[
  coercion_infer_obj: []
 
 ===========================================================================
-# ex14g4.slk --esl (Loc?)
+# ex14g4.slk -dd-esl 4 
+# DIFFERS from ex14g3.slk -dd-esl 11
+
+# Why are the dumps of the two proofs different?
 
 infer [U,@pure_field,@classic]
  (exists v_126, q_127: self_lem_12::char_star<v_126,q_127>@M * q_127::WFG<p>@M&v_126!=0 )
@@ -133,7 +136,7 @@ Residue:
  <1>emp&v_115!=0&{FLOW,(20,21)=__norm#E}[]
 [[ Fold ==>  SEARCH ==>  Match(self_lem_12,self_lem_12) ==>  SEARCH ==>  (Lemma ==> lem_12(q_116,q_129)) ==> (left: lem_12) ==>  COND ==>  Match(q_116,q_129) ==>  COND ==>  InferHeap]]
 
-# DIFFERS from ex14g3.slk --esl
+# DIFFERS from ex14g3.slk -dd-esl 11
 
 id: 11; caller: []; line: 0; classic: true; kind: Verify_Lemma; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ U]; c_heap: emp; others:  es_infer_obj: [] globals: [@pure_field,@leak]
  checkentail (exists v_126,
