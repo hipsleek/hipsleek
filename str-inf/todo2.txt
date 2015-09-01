@@ -132,6 +132,19 @@ Residue:
 [[ Fold ==>  SEARCH ==>  Match(self_lem_12,self_lem_12) ==>  SEARCH ==>  (Lemma ==> lem_12(q_116,q_129)) ==> (left: lem_12) ==>  COND ==>  Match(q_116,q_129) ==>  COND ==>  InferHeap]]
 
 # DIFFERS from ex14g3.slk --esl
+# HIDDEN
+
+HIDE! id: 17<:11; caller: [11]; line: 30; classic: true; kind: Verify_Lemma; hec_num: 1; evars: [q_142]; impl_vars: []; infer_vars: [ U]; c_heap: emp; others:  es_infer_obj: [] globals: [@pure_field,@leak]
+ checkentail self_lem_12::char_star<v_140,q_141>@M * q_141::WFG<p>@M&v_140!=0&
+{FLOW,(20,21)=__norm#E}[]
+ |-  (exists q_142: U(q_142,p)&self_lem_12=q_142&{FLOW,(20,21)=__norm#E}[]). 
+hprel_ass: [ q_142::char_star<v_140,q_141>@M * q_141::WFG<p>@M |#|  --> U(q_142,p)]
+ho_vars: nothing?
+res:  1[
+    emp&v_140!=0&{FLOW,(20,21)=__norm#E}[]
+   es_infer_hp_rel: [q_142::char_star<v_140,q_141>@M * q_141::WFG<p>@M |#|  --> U(q_142,p)]
+   ]
+
 
 id: 11; caller: []; line: 0; classic: true; kind: Verify_Lemma; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ U]; c_heap: emp; others:  es_infer_obj: [] globals: [@pure_field,@leak]
  checkentail (exists v_126,
