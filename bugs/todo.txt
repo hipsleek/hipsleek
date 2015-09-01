@@ -2090,8 +2090,36 @@ Bugs with some lemmas due to changes in context.ml
 
 
 ===================================================================
+--new-infer-heap
+
+ infer/infer1.slk({E1#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid}) 
+infer/infer2.slk({E5#Valid}) 
+ infer/infer5.slk({E4#Valid}) 
+ infer/infer6.slk({E1#Valid}) 
+ infer/infer7.slk({E10#Valid}) 
+ infer/infer8.slk({E1#Valid},{E10#Valid},{E2#Valid},{E29#Valid},{E3#Valid}) infer/infer13.slk({E1#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid}) infer/infer14.slk({E1#Valid},{E11#Valid},{E13#Valid},{E14#Valid},{E16#Valid},{E17#Valid},{E18#Valid},{E2#Valid},{E29#Valid},{E3#Valid}) 
+ infer/infer15.slk({E1#Valid}) 
+ lemmas/dseg-new.slk({L2#Fail}).
 ===================================================================
+--old-infer-heap
+
+Total number of errors: 1 in files:
+  lemmas/dseg-new.slk({L2#Fail}).
 ===================================================================
+ex55k-dseg-new-unsound.slk --lem-en-lhs-unfold --old-empty-to-conseq --dis-lem-gen
+
+pred dseg<lm, rm:node,last> == self=rm & lm=last
+  or self::node<_,lm, p> * p::dseg<self,rm,last>.
+
+pred rlseg<rm> == self:node=rm
+  or self::rlseg<q> * q::node<_,_,rm>.
+
+lemma_safe "2" self::rlseg<rm> <- exists lm,last: self::dseg<lm,rm,last>.
+
+# why can we prove this without lem_generation?
+
+Entailing lemma 2: Valid.
+Valid Lemmas : [2:<==] added to lemma store.
 ===================================================================
 ===================================================================
 ===================================================================

@@ -19378,7 +19378,11 @@ let remove_inf_cmd_spec new_spec = match new_spec with
   
 let un_opt e = match (CP.conv_exp_to_var e) with
   | Some (sv,_) -> sv
-  | None -> failwith "Failure of un_opt proc" 
+  | None -> 
+    let () = y_winfo_pp " UNKNOWN spec_var used " in
+    let () = y_binfo_hp (add_str "exp is var?" !CP.print_exp) e in
+    CP.unknown_spec_var
+
 
 let name_of_h_formula x =
   match x with

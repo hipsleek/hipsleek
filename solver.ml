@@ -7284,6 +7284,7 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     let slk_no = (* if avoid then 0 else *) (Log.last_cmd # start_sleek 3) in
     (* let () = Log.last_sleek_command # set (Some (ante,conseq)) in *)
     let () = hec_stack # push slk_no in
+    (* let () = y_binfo_hp (add_str "slk no" string_of_int) slk_no in *)
     let logger fr tt timeout =
       let () =
         x_add Log.add_sleek_logging es_opt timeout tt infer_type infer_vars (check_is_classic ()) 
@@ -7291,7 +7292,13 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
           (match fr with Some (lc,_) -> Some lc | None -> None) pos in
       ("sleek",(string_of_int slk_no))
     in
-    let r = Timelog.log_wrapper "sleek-hec" logger (hec a b) c in
+    let r = 
+      if not(slk_no = !Debug.devel_debug_sleek_proof) then
+        Timelog.log_wrapper "sleek-hec" logger (hec a b) c 
+      else 
+        let s = "Sleek Proof No "^(string_of_int slk_no) in
+        Wrapper.wrap_dd s (Timelog.log_wrapper "sleek-hec" logger (hec a b)) c
+    in
     (* let tstart = Gen.Profiling.get_time () in		 *)
     (* let r = hec a b c in *)
     (* let tstop = Gen.Profiling.get_time () in *)
@@ -7350,6 +7357,10 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
   | Ctx estate -> 
     x_tinfo_hp (add_str "ctx0.es_heap bef" (Cprinter.string_of_h_formula)) estate.es_heap no_pos;
     let ante0 = estate.es_formula in
+    (* let () = y_binfo_pp "==================================================" in *)
+    (* let () = y_binfo_hp (add_str "LHS " Cprinter.string_of_formula) ante0 in *)
+    (* let () = y_binfo_hp (add_str "RHS " Cprinter.string_of_formula) conseq in *)
+    (* let () = y_binfo_pp "==================================================" in *)
     (*print_string ("\nAN HOA CHECKPOINT :: Antecedent: " ^ (Cprinter.string_of_formula ante))*)
     let ante = if(!Globals.allow_mem) then Mem.ramify_starminus_in_formula ante0 prog.prog_view_decls else ante0 in
     (*let ante = if(!Globals.allow_field_ann) then Mem.compact_nodes_with_same_name_in_formula ante else ante in *)
@@ -12196,11 +12207,14 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
   Debug.ninfo_hprint (add_str "process_action rhs_b" !CF.print_formula_base) rhs_b pos;
   if not(Context.is_complex_action a) then
     begin
-      x_dinfo_zp (lazy ("process_action :"
+      if !Debug.devel_debug_on || !Debug.devel_debug_steps then
+        begin
+          x_binfo_zp (lazy ("process_action (steps) :"
                         ^ ((add_str "\n ### action " Context.string_of_action_res) a)
                         ^ ((add_str "\n ### estate " Cprinter.string_of_entail_state_short) estate)
                         ^ ((add_str "\n ### conseq " Cprinter.string_of_formula) conseq)
                         ^ "\n"))  pos 
+        end
     end;
   (*add tracing into the entailment state*)
   let action_name:string = Context.string_of_action_name a in
