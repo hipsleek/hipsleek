@@ -1001,7 +1001,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
         let () = y_binfo_hp (add_str "f" !CF.print_h_formula) f in
         let () = y_binfo_hp (add_str "f0" !CF.print_h_formula) f0 in
         if common==[] then []
-        else [(f,rhs_node,[],Root)]
+        else [] (* [(f,rhs_node,[],Root)] *)
         (* match rhs_node with *)
         (* | HRel (hp2,e2,_) ->  *)
         (*   if CP.eq_spec_var hp hp2 then *)
