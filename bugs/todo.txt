@@ -2075,6 +2075,20 @@ pred lseg<n, p> ==
             flted_5_19+1=n & p_20=p&{FLOW,(1,26)=__flow#E}[])
 
 ===================================================================
+# rft sleek
+
+Bugs with some lemmas due to changes in context.ml
+
+ sleek9.slk({E3#Valid},{E4#Valid}) 
+ lemmas/app-tail.slk({E1#Valid}) 
+ lemmas/ll_tail.slk(no result  for {E}) 
+ lemmas/nlseg4e.slk({L2#Valid}) 
+ lemmas/nlseg4e1.slk({E2#Valid},{E3#Valid},{E4#Fail},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid}) 
+ lemmas/sll_tailL.slk({L2#Valid}) 
+ lemmas/dseg-new.slk({L3#Valid}) lemmas/dseg1.slk({L1#Valid}) 
+ lemmas/lseg_complex.slk({E3#Fail}).
+
+
 ===================================================================
 ===================================================================
 ===================================================================
