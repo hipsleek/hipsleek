@@ -318,6 +318,9 @@ let wrap_one_bool flag new_value f a =
   let restore_fn (flag,old_value) = flag := old_value in
   wrap_gen save_fn set_fn restore_fn flag f a
 
+let wrap_dd f a =
+  wrap_one_bool Debug.devel_debug_on true f a
+
 let wrap_two_bools flag1 flag2 new_value f a =
   let save_fn (flag1,flag2) = (flag1,flag2,!flag1,!flag2) in
   let set_fn (flag1,flag2) = (flag1 := new_value; flag2:=new_value) in
