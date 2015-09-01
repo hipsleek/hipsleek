@@ -621,7 +621,13 @@ let print_residue residue =
             else
               print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
                                (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
-          in ()
+          in
+          let () = print_endline_quiet "*************************************" in
+          let () = y_winfo_pp "Global assumption list\n" in 
+          let ras = Infer.rel_ass_stk # get_stk in
+          let () = print_endline_quiet ((pr_list_ln Cprinter.string_of_hprel_short) (ras)) in
+          let () = print_endline_quiet "*************************************" in
+          ()
         else
           (* let () = Debug.info_pprint "b" no_pos in *)
         if print then
