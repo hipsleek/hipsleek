@@ -3357,7 +3357,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
         print_endline_quiet "\n*********************************************************";
         let () = if !Globals.sae then print_endline_quiet ("*******relational definition (flow= " ^(!Cformula.print_flow flow_int) ^")********")
           else
-            print_endline_quiet ("*******relational definition " ^"********")
+            print_endline_quiet ("*******relational definition" ^"********")
         in
         print_endline_quiet "*********************************************************";
         if !Globals.testing_flag then print_endline_quiet "<dstart>";

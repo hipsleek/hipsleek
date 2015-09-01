@@ -11,9 +11,31 @@ pred lseg<p> == self=p
 inv true.
 
 HeapPred K(node s).
+relation R(node s).
 
-lemma_infer_pred [K] self::ll<> -> self::lseg<p> * K(p).
+
+lemma_infer_pred [K] "shape" self::ll<> -> self::lseg<p> * K(p).
 //print residue.
+
+/*
+checkentail x::ll<> |- x::lseg<p> * p::ll<>.
+print residue.
+
+*/
+
+lemma_infer_pred [R] "pure" self::ll<> -> self::lseg<p> & R(p).
+
+checkentail x::ll<> |- x::lseg<null>.
+print residue.
+
+//lemma_safe self::ll<> -> self::lseg<p> * p::ll<>.
+
+/*
+infer [K] emp&self_lem_11=null |- self_lem_11::lseg<p_47>@M * K(p_47).
+print residue.
+*/
+
+
 /*
 # ex17c.slk
 

@@ -321,6 +321,8 @@ linput.rl");
   (* WN : this excludes ann_vars and ho_vars, but include perm_vars *)
   ("--warn-free-vars-conseq", Arg.Set Globals.warn_free_vars_conseq,"Enable Warning of Non-empty free heap vars in conseq");
   ("--new-rm-htrue", Arg.Set Globals.new_rm_htrue,"Enable removal of htrue from ante");
+  ("--old-mater-coercion", Arg.Set Globals.old_mater_coercion,"Use Old Mater Coercion Selection");
+  ("--new-mater-coercion", Arg.Clear Globals.old_mater_coercion,"Use New Mater Coercion Selection");
   ("--old-keep-triv-relass", Arg.Set Globals.old_keep_triv_relass,"Keep trivial relation assume (hp_rel and pure relation) during inference");
   ("--new-keep-triv-relass", Arg.Clear Globals.old_keep_triv_relass,"Remove trivial relation assume during inference");
   ("--old-post-impl-to-ex", Arg.Set Globals.old_post_impl_to_ex,"Convert impl to exist vars in post-condition");

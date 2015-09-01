@@ -134,6 +134,7 @@ let  conv_ivars_icmd il_w_itype =
       (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r)
                                          | SndAns r -> (lst_l,r::lst_r)) ([],[]) il_w_itype in
   let (i_consts,ivl) = (List.rev i_consts,List.rev ivl) in
+  let () = inf_o # set_list i_consts in 
   (inf_o,i_consts,ivl)
 
 (****** global vars used by CIL parser *****)
@@ -2650,6 +2651,7 @@ infer_cmd:
       (i_consts,il,t,b,Some true)
     | `INFER_INEXACT; il_w_itype = cid_list_w_itype (* il=OPT id_list *); t=meta_constr; `DERIVE; b=extended_meta_constr -> 
       let (_,i_consts,il) = conv_ivars_icmd il_w_itype in
+      let i_consts = List.filter (fun i -> i!=INF_CLASSIC) i_consts in
       (* let il = un_option il [] in  *)
       (i_consts,il,t,b,Some false)
   ]];
@@ -2727,6 +2729,7 @@ infer_coercion_decl:
     [[
          ivl_w_itype = cid_list_w_itype (* il=OPT id_list *);  t = coercion_decl -> 
         let (inf_o,i_consts,ivl) = conv_ivars_icmd ivl_w_itype in
+        (* let () = DD.binfo_hprint (add_str "PPPP inf_obj" (fun e -> e # string_of)) inf_o no_pos in *)
         {t with coercion_infer_vars = ivl; coercion_infer_obj = inf_o;}
     ]];
 

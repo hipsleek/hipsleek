@@ -1534,7 +1534,7 @@ Entailing lemma lem_14: Fail. (cex)(must) cause: exception in lemma proving
 
 # Can we use wrapping to handle lemma synthesis?
 =====================================================================
-# ex17h4.slk (Loc : please fix)
+# ex17h4.slk (Loc : please fix): FIXED
 
 # Use old_keep_triv_hprel flag; to keep trivial hprel if true
 
@@ -1569,7 +1569,7 @@ print residue.
 # use wrapper to call check_coercion? and collect result after
 
 =====================================================================
-# ex17h4a.slk
+# ex17h4a.slk  FIXED
 
 infer [H2,@classic]  H2(x,y) |- H2(y,x).
 
@@ -1580,7 +1580,7 @@ Residue:
  inferred hprel: [emp&true |#|3  --> H2(y,x)&true]
 [[ COND ==>  InferHeap]]
 =====================================================================
-# ex17h4b.slk
+# ex17h4b.slk  FIXED
 
 infer [H2,@classic]  H2(x,y) & y=null |- H2(y,x).
 
@@ -1591,7 +1591,7 @@ inferred hprel: [emp&y=null |#|3  --> H2(y,x)&true;
 # Avoid split, better use:
      H2(x,y) & y=null --> H2(y,x)
 =====================================================================
-# ex17i2.slk (Loc to fix..)
+# ex17i2.slk (Loc to fix..): FIXED
 
 lemma_infer [R] self::sll<> -> self::lseg<q> & R(q) .
 
@@ -1677,7 +1677,7 @@ Exception processed: Stream.Error("[id] expected after COMMA (in [id_list])")
 error at: 
 SLEEK FAILURE (END)
 =====================================================================
-# ex17i7a.slk (Loc to fix)
+# ex17i7a.slk (Loc to fix): FIXED
 
 lemma_infer [R] self::sll<> <- self::lseg<q> & R(q) .
 
@@ -1692,6 +1692,19 @@ lemma_infer [R] self::sll<> <- self::lseg<q> & R(q) .
  inferred rel: [RELASS [R]: ( R(self_lem_14)) -->  self_lem_14=null; 
                 RELDEFN R: ( R(q_68)) -->  R(q_68)]
 =====================================================================
+# ex17h4d.slk
+infer [H2,@classic]  H2(x,null) |- H2(x,y).
+print residue.
+//<1>emp&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H2(x,flted_34_60)&flted_34_60=null |#|3  --> H2(x,y)&true
+// # redundant
+
+infer [H2,@classic]  H2(x,y) |- H2(x,null). FIXED
+print residue.
+// <1>emp&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H2(x,y)&true |#|3  --> H2(x,flted_37_79)&true]
+// unsound
+expect Fail.
 =====================================================================
 =====================================================================
 =====================================================================

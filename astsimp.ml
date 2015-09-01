@@ -4657,7 +4657,11 @@ and find_view_name_x (f0 : CF.formula) (v : ident) pos =
              CF.h_formula_view_arguments = _;
              CF.h_formula_view_pos = _
            } -> if (CP.name_of_spec_var p) = v then c else ""
-       | CF.HTrue | CF.HFalse | CF.HEmp | CF.HVar _ | CF.HRel _ | CF.Hole _ | CF.FrmHole _ -> "")
+       | CF.HRel(n,args,_) ->
+         let vs = List.concat (List.map (CP.afv) args) in
+         if List.exists (fun i -> CP.name_of_spec_var i = v) vs then (CP.name_of_spec_var n)
+         else ""
+       | CF.HTrue | CF.HFalse | CF.HEmp | CF.HVar _ | CF.Hole _ | CF.FrmHole _ -> "")
     in find_view_heap h
   | CF.Or _ ->
     Err.report_error

@@ -490,7 +490,7 @@ let add_sleek_logging (es_opt:Cformula.entail_state option) timeout_flag stime i
     (* let () = Debug.info_pprint "logging .." no_pos in *)
     let (ho_vars_map,str) = match es_opt with
       | None -> ([],""); 
-      | Some es -> (es.es_ho_vars_map, es.es_infer_obj # string_of) in
+      | Some es -> (es.es_ho_vars_map, " es_infer_obj: "^(es.es_infer_obj # string_of)) in
     let str = str^" globals: "^(Globals.infer_const_obj # string_of) in
     let (stk_slk_no,src,slk_parent_no) = last_cmd # get_sleek_no in
     if slk_no != stk_slk_no then print_endline_quiet ("LOGGING ERROR : inconsistent slk_no problem "
