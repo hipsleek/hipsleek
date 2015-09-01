@@ -524,7 +524,9 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc =
   in
   (* TOFIX: *)
   let plug_inffers coer defs=
-    coer
+    let new_head, new_body = Saout.plug_shape_into_lemma iprog cprog [] [] coer.Cast.coercion_head coer.Cast.coercion_body defs in
+    {coer with Cast.coercion_head = new_head;
+        Cast.coercion_body = new_body}
   in
   (****************************)
   let rec helper coercs rel_fixs hp_rels res_so_far=
@@ -581,7 +583,7 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc =
                 (* to incorp inferred result into lemma *)
                 let inferred_coer = if defs0 = [] then l_coer
                 else
-                  let new_coer = plug_inffers l_coer defs0 in
+                  let new_coer = plug_inffers l_coer lshape in
                   (* print shape inference result *)
                   let () =  print_inferred_lemma new_coer in
                   new_coer
