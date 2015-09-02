@@ -2175,8 +2175,13 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          (* TODO : check if h_name in the infer_vars *)
          (2,M_infer_heap (rhs,HEmp))
        | DataNode _,  HRel _  -> 
-         (1,M_base_case_fold m_res)
-              (* M_Nothing_to_do ("9:"^(string_of_match_res m_res)) *)
+         (* failwith "TBI"  *)
+         let act1 = M_base_case_fold m_res in
+         let act2 = M_infer_heap (rhs_node,rhs_rest) in
+         let wt = 1 in
+         (* (wt,Search_action [(wt,act1)(\* ;(wt,act2) *\)]) *)
+         (wt,act1)
+       (* M_Nothing_to_do ("9:"^(string_of_match_res m_res)) *)
        | _ -> report_error no_pos "process_one_match unexpected formulas 1\n"	
       )
     | MaterializedArg (mv,ms) ->

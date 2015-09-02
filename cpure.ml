@@ -15402,3 +15402,10 @@ let syn_checkeq = ref(fun (ls:ident list) (a:formula) (c:formula) (m: ((spec_var
 
 let is_exists_svl v vs =
   List.exists (eq_spec_var v) vs 
+
+let exp_to_sv e = match (conv_exp_to_var e) with
+  | Some (sv,_) -> sv
+  | None -> 
+    let () = y_winfo_pp " UNKNOWN spec_var used " in
+    let () = y_binfo_hp (add_str "exp is var?" !print_exp) e in
+    unknown_spec_var

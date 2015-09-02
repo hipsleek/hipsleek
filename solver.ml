@@ -11424,15 +11424,25 @@ and do_right_lemma_w_fold coer prog estate conseq rhs_node rhs_rest rhs_b is_fol
       do_fold prog (Some (iv,ivr,vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos 
   in  ((* Infer.restore_infer_vars iv  *)cl,prf)
 
+and  do_base_fold_hp_rel estate pos hp vs =
+  let msg = "do_base_fold_hp_rel (TBI)"^((pr_pair !CP.print_sv !CP.print_svl) (hp,vs)) in
+      (Errctx.mkFailCtx_may x_loc msg estate pos,Unknown)
+  (* failwith "TBI" *)
+
 (* incr/ex17i5.slk failed if ivr removed from estate *)
 and do_base_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos=
   let (_ (* estate *),iv,ivr) = Infer.remove_infer_vars_all estate (* rt *)in
   match rhs_node with
-  | HRel (hp,arg,_) ->
+  | HRel (hp,args,_) ->
     (* hp in ivr *)
-    (* failwith "TBI" *)
-    let msg = "BaseCaseFold on Unknown Pred (not on inferred list)" in
-     (Errctx.mkFailCtx_may x_loc msg estate pos,Unknown)
+    (* let i_hp_vs = estate.CF.es_infer_vars_hp_rel in *)
+    (* let () = y_binfo_hp (add_str "i_hp_vs" !CP.print_svl) i_hp_vs in *)
+    if CF.is_exists_hp_rel hp estate then
+      let vs = List.map CP.exp_to_sv args in
+      do_base_fold_hp_rel estate pos hp vs
+    else
+      let msg = "BaseCaseFold on Unknown Pred (not on inferred list)" in
+      (Errctx.mkFailCtx_may x_loc msg estate pos,Unknown)
   | _ ->
     
     let vd = (vdef_fold_use_bc prog rhs_node) in

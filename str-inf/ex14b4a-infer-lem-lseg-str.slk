@@ -27,18 +27,54 @@ pred WFG<p> ==
      self::WFG<p> -> U(self,q)*q::char_star<0,p>.
 */
 
-  infer [U,@classic,@pure_field] self::char_star<0,p> 
-   |- U(self,q)*q::char_star<0,p> .
+ infer [U,@classic,@pure_field] self::char_star<0,p> |- U(self,q)*q::char_star<0,p> .
+//infer [U,@classic,@pure_field] self::char_star<0,p> |- U(self,p) .
 
   print residue.
 
 /*
-# ex14ba.slk --dlpi
+# ex14ba.slk --dd-steps
 
   infer [U,@classic,@pure_field] self::char_star<0,p> 
     |- U(self,q)*q::char_star<0,p>
 
+Entail (1) : Fail.(may) cause:**solver.ml#11429:
 
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: do_base_fold_hp_rel (TBI)(U,[self,q])
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ BaseCaseFold]]
+ CEX:true
+
+# Below is now scheduled as a M_base_case_fold
+
+       | DataNode _,  HRel _  -> 
+         (* failwith "TBI"  *)
+         let act1 = M_base_case_fold m_res in
+         let act2 = M_infer_heap (rhs_node,HEmp) in
+         let wt = 2 in
+         (wt,Search_action [(wt,act1);(wt,act2)])
+
+I would expect to have:
+   self=q <- U(self,q) 
+to be generated as a hprel_ass, and
+then self=q added as a fold_def prior to do_fold
+===========================================================
+
+ infer [U,@classic,@pure_field] self::char_star<0,p> 
+   |- U(self,p) .
+
+
+<1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [self::char_star<flted_31_104,p>@M&
+                   flted_31_104=0 |#|3  --> U(self,p)&true]
+[[ SEARCH ==>  InferHeap]]
 
 
 */
