@@ -13,6 +13,7 @@ inv true.
 HeapPred K(node s).
 relation R(node s).
 
+lemma_safe "pure" self::ll<> -> self::lseg<p> & p=null.
 
 lemma_infer_pred [K] "shape" self::ll<> -> self::lseg<p> * K(p).
 //print residue.
@@ -23,7 +24,7 @@ print residue.
 
 */
 
-lemma_infer_pred [R] "pure" self::ll<> -> self::lseg<p> & R(p).
+//lemma_infer_pred [R] "pure" self::ll<> -> self::lseg<p> & R(p).
 
 checkentail x::ll<> |- x::lseg<null>.
 print residue.

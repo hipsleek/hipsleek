@@ -1292,6 +1292,7 @@ let warn_trans_context = ref false
 let warn_post_free_vars = ref false
 let warn_free_vars_conseq = ref false
 let old_infer_collect = ref false
+let old_infer_hp_collect = ref false
 let old_base_case_unfold = ref false
 let old_impl_gather = ref false
 let old_parse_fix = ref false
