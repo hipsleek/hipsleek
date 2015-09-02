@@ -260,7 +260,7 @@ let collect_hp_rel_fail_type ft0=
   let rec helper ft=
     match ft with
     | CF.Basic_Reason (fc,_,_)
-    | CF.ContinuationErr (fc,_) -> fc.CF.fc_current_lhs.CF.es_infer_hp_rel
+    | CF.ContinuationErr (fc,_) -> fc.CF.fc_current_lhs.CF.es_infer_hp_rel # get_stk_recent
     | CF.Or_Reason (ft1, ft2)
     | CF.And_Reason (ft1, ft2)
     | CF.Union_Reason (ft1, ft2)
@@ -1210,9 +1210,14 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                     let hp_rel = mkHprel_1 knd lhs None rhs es_cond_path in
                     let () = DD.ninfo_hprint (add_str "hp_rel" Cprinter.string_of_hprel_short) hp_rel no_pos in
                     (* postpone until heap_entail_after_sat *)
-                    let () = rel_ass_stk # push_list ([hp_rel]) in
-                    let new_es = {estate with CF.es_infer_hp_rel = estate.CF.es_infer_hp_rel @ [hp_rel];} in
-                    (Some (new_es, CP.mkTrue pos),None,[])
+                    if !Globals.old_infer_hp_collect then 
+                      begin
+                        x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) [hp_rel] pos;
+                        rel_ass_stk # push_list ([hp_rel])
+                      end;
+                    (* let new_es = {estate with CF.es_infer_hp_rel = estate.CF.es_infer_hp_rel # push_list [hp_rel];} in *)
+                    let () = estate.CF.es_infer_hp_rel # push_list [hp_rel] in
+                    (Some (estate, CP.mkTrue pos),None,[])
                 end
             | Some f ->
               x_dinfo_pp ">>>>>> infer_pure_m <<<<<<" pos;
@@ -1427,12 +1432,17 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                         let () = x_tinfo_hp (add_str "heap_ass" (pr_list_ln Cprinter.string_of_hprel_short)) heap_ass no_pos in
                         let () = Log.current_hprel_ass_stk # push_list heap_ass in
                         (* postpone until heap_entail_after_sat *)
-                        let () = rel_ass_stk # push_list heap_ass in
+                         if !Globals.old_infer_hp_collect then 
+                           begin
+                             x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) heap_ass pos;
+                             rel_ass_stk # push_list heap_ass
+                           end;
                         (*drop inferred hpred*)
                         let n_es_formula,_ = CF.drop_hrel_f new_estate.CF.es_formula i_hps in
-                        let new_es = {new_estate with CF.es_infer_hp_rel = estate.CF.es_infer_hp_rel @ heap_ass;
+                        let new_es = {new_estate with (* CF.es_infer_hp_rel = estate.CF.es_infer_hp_rel # push_list heap_ass; *)
                                                       CF.es_formula = n_es_formula;
                                      } in
+                        let () = new_es.CF.es_infer_hp_rel # push_list heap_ass in
                         (rel_ass1, heap_ass,new_es)
                       else
                         (rel_ass, [],new_estate)
@@ -3083,13 +3093,19 @@ let generate_error_constraints_x prog es lhs rhs_hf lhs_hps es_cond_path pos=
         (* let hp_rel_list = Gen.BList.difference_eq Sautil.constr_cmp hp_rel_list0 ex_ass in *)
         let hp_rel_list = [ehp_rel] in
         (* postpone until heap_entail_after_sat *)
-        let () = rel_ass_stk # push_list hp_rel_list in
-        let () = Log.current_hprel_ass_stk # push_list (hp_rel_list) in
+        if !Globals.old_infer_hp_collect then 
+          begin
+            x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) hp_rel_list pos;
+            let () = rel_ass_stk # push_list hp_rel_list in
+            let () = Log.current_hprel_ass_stk # push_list (hp_rel_list) in
+            ()
+          end;
         (* update es.formula *)
         let n_es_form = mkAnd_pure es.es_formula neg_prhs pos in
         let n_es_form_e = CF.substitute_flow_into_f !error_flow_int n_es_form in
-        let new_es = {es with CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ hp_rel_list;
+        let new_es = {es with (* CF.es_infer_hp_rel = es.CF.es_infer_hp_rel # push_list hp_rel_list; *)
                               CF.es_formula = n_es_form_e} in
+        let () =  new_es.CF.es_infer_hp_rel # push_list hp_rel_list in
         Some new_es
 
 let generate_error_constraints prog es lhs rhs_hf lhs_hps es_cond_path pos=
@@ -3491,11 +3507,12 @@ let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
     (* let n_ivr = if CF.is_empty_heap rhs_rest then CP.diff_svl es.CF.es_infer_vars_rel (CF.h_fv rhs) else es.CF.es_infer_vars_rel in *)
     let new_es = {es with CF.es_infer_vars_hp_rel = n_ihvr;
                           (* CF.es_infer_vars_rel =  n_ivr; *)
-                          CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ hp_rel_list;
+                          (* CF.es_infer_hp_rel = es.CF.es_infer_hp_rel # push_list hp_rel_list; *)
                           CF.es_infer_hp_unk_map = (es.CF.es_infer_hp_unk_map@unk_map);
                           CF.es_infer_vars_sel_post_hp_rel = (es.CF.es_infer_vars_sel_post_hp_rel @ post_hps);
                           CF.es_crt_holes = es.CF.es_crt_holes@new_holes;
                           CF.es_formula = new_es_formula1} in
+    let () = new_es.CF.es_infer_hp_rel # push_list hp_rel_list in
     x_tinfo_hp (add_str "  residue before matching: " Cprinter.string_of_formula) new_es.CF.es_formula pos;
     x_tinfo_hp (add_str "  new_es_formula: "  Cprinter.string_of_formula) new_es_formula pos;
     x_tinfo_hp (add_str "  new_lhs: "  Cprinter.string_of_h_formula) new_lhs pos;
@@ -3705,10 +3722,16 @@ let infer_collect_hp_rel prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_se
                 let rhs = CF.Base rhs_b1 in
                 let hprel_ass = [CF.mkHprel_1 knd lhs None rhs es_cond_path] in
                 (* postpone until heap_entail_after_sat? *)
-                let () = rel_ass_stk # push_list hprel_ass in
-                let () = Log.current_hprel_ass_stk # push_list hprel_ass in
-                let new_es1 = {new_es with CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @  hprel_ass;
-                                           CF.es_infer_vars_sel_post_hp_rel = (es.CF.es_infer_vars_sel_post_hp_rel @ post_hps);} in
+                if !Globals.old_infer_hp_collect then 
+                  begin
+                    x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short))  hprel_ass pos;
+                    let () = rel_ass_stk # push_list hprel_ass in
+                    let () = Log.current_hprel_ass_stk # push_list hprel_ass in
+                    ()
+                  end;
+                let new_es1 = {new_es with (* CF.es_infer_hp_rel = es.CF.es_infer_hp_rel # push_list  hprel_ass; *)
+                    CF.es_infer_vars_sel_post_hp_rel = (es.CF.es_infer_vars_sel_post_hp_rel @ post_hps);} in
+                let () = new_es1.CF.es_infer_hp_rel # push_list  hprel_ass in
                 (true, new_es1, rhs0, None, None)
               else
                 constant_checking prog rhs lhs_b0 rhs_b es
@@ -4074,11 +4097,12 @@ let infer_collect_hp_rel_classsic_x prog (es:entail_state) rhs pos =
         (**************REFINE RES*******************)
         let n_es_formula, _ = CF.drop_hrel_f es.es_formula defined_hps in
         let new_es = {es with (* CF. es_infer_vars_hp_rel = es.CF.es_infer_vars_hp_rel@rvhp_rels; *)
-                      CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ ls_ass;
+                      (* CF.es_infer_hp_rel = es.CF.es_infer_hp_rel # pust_list ls_ass; *)
                       (* CF.es_infer_hp_unk_map = (es.CF.es_infer_hp_unk_map@unk_map); *)
                       (* CF.es_infer_vars_sel_post_hp_rel = (es.CF.es_infer_vars_sel_post_hp_rel @ post_hps); *)
                       CF.es_formula = n_es_formula}
         in
+        let () = new_es.CF.es_infer_hp_rel # push_list ls_ass in
         x_tinfo_hp (add_str  "  new residue " Cprinter.string_of_formula) new_es.CF.es_formula pos;
         (true, new_es)
     end
@@ -4427,9 +4451,18 @@ let add_infer_hp_contr_to_list_context h_arg_map cps (l:list_context) rhs_p : li
                 (res_rels@[new_rel])
       ) [] new_cps in
     let new_rels1 = Gen.BList.difference_eq Sautil.constr_cmp new_rels (rel_ass_stk # get_stk) in
-    let () = rel_ass_stk # push_list (new_rels1) in
-    let () = Log.current_hprel_ass_stk # push_list (new_rels1) in
-    let scc_f es = Ctx {es with es_infer_hp_rel = es.es_infer_hp_rel@new_rels1;} in
+    if !Globals.old_infer_hp_collect then 
+      begin
+        x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) new_rels1 no_pos;
+        let () = rel_ass_stk # push_list (new_rels1) in
+        let () = Log.current_hprel_ass_stk # push_list (new_rels1) in
+        ()
+      end;
+    let scc_f es =
+      let es = {es with es_infer_hp_rel = es.CF.es_infer_hp_rel # clone;} in
+      let () = es.CF.es_infer_hp_rel # push_list new_rels1 in
+      Ctx es
+    in
     Some (transform_list_context (scc_f, (fun a -> a)) l)
   with Not_found -> None
 
