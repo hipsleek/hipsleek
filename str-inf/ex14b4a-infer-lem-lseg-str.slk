@@ -1,0 +1,44 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred WSS<p> ==
+  self::WFSeg<q>*q::char_star<0,p> 
+  inv self!=null.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred WFG<p> ==
+  self::char_star<0,p>
+  or self::char_star<v,q>*q::WFG<p> & v!=0
+  inv self!=null.
+
+  //lemma_safe self::WFG<p> -> self::WFSeg<q>*q::char_star<0,p>.
+  //lemma_safe self::WFG<p> <- self::WFSeg<q>*q::char_star<0,p>.
+
+  HeapPred U(char_star x,char_star y).
+
+/*
+  lemma_infer [U,@classic,@pure_field] 
+     self::WFG<p> -> U(self,q)*q::char_star<0,p>.
+*/
+
+  infer [U,@classic,@pure_field] self::char_star<0,p> 
+   |- U(self,q)*q::char_star<0,p> .
+
+  print residue.
+
+/*
+# ex14ba.slk --dlpi
+
+  infer [U,@classic,@pure_field] self::char_star<0,p> 
+    |- U(self,q)*q::char_star<0,p>
+
+
+
+
+*/

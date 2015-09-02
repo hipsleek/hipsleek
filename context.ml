@@ -467,8 +467,10 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
       (*     spatial_ctx_accfold_extract prog lhs_h lhs_p rhs_node rhs_rest *)
       (*   else []                                                          *)
       (* ) in                                                               *)
-      let mt_res = spatial_ctx_extract prog lhs_h paset imm pimm rhs_node rhs_rest emap in
-      let mt_res = filter_match_res_list mt_res rhs_node in
+      let mt_res = x_add spatial_ctx_extract prog lhs_h paset imm pimm rhs_node rhs_rest emap in
+      (* WN: why is there a need to filter out root parameters? *)
+      (*  affects str-inf/ex14b[23].slk *)
+      (* let mt_res = x_add filter_match_res_list mt_res rhs_node in *)
       (* (accfold_res @ mt_res) *)
       mt_res
   | HTrue -> (

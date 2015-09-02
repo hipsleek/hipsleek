@@ -22,9 +22,13 @@ pred WFG<p> ==
 
   HeapPred U(char_star x,char_star y).
 
-  lemma_unsafe self::WFG<p> <- U(self,q)*q::char_star<0,p>.
-
-  infer[U,@classic] U(self,q)*q::char_star<0,p> |- self::WFG<p>.
+  lemma_infer [U,@classic,@pure_field] 
+     self::WFG<p> -> U(self,q)*q::char_star<0,p>.
+/*
+  lemma_infer_pred [U,@classic,@pure_field] 
+     self::WFG<p> <- U(self,q)*q::char_star<0,p>.
+*/
+  //infer[U,@classic] U(self,q)*q::char_star<0,p> |- self::WFG<p>.
   print residue.
 
 /*
