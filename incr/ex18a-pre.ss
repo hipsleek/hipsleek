@@ -20,7 +20,7 @@ HeapPred G(node a).
 
 
 int size_helper(node x)
-  infer[H,G]
+  infer[H]
   requires H(x)  ensures emp;
 {
   if (x==null) 

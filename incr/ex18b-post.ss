@@ -20,7 +20,7 @@ HeapPred G(node a).
 
 
 int size_helper(node x)
-  infer[H,G]
+  infer[G]
   requires x::sll<> ensures  G(x);
 {
   if (x==null) 
