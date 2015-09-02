@@ -234,7 +234,7 @@ let clear_entailment_history_es (es :entail_state) :context =
     es_infer_vars_sel_hp_rel = es.es_infer_vars_sel_hp_rel;
     es_infer_vars_sel_post_hp_rel = es.es_infer_vars_sel_post_hp_rel;
     es_infer_hp_unk_map = es.es_infer_hp_unk_map;
-    es_infer_hp_rel = es.es_infer_hp_rel;
+    es_infer_hp_rel = es.es_infer_hp_rel # clone;
     es_var_zero_perm = es.es_var_zero_perm;
     es_ho_vars_map = es.es_ho_vars_map; (*TOCHECK*)
   }
@@ -2522,7 +2522,7 @@ and process_fold_result_x (ivars,ivars_rel) prog is_folding estate
                                  es_infer_pure_thus = fold_es.es_infer_pure_thus;
                                  es_infer_term_rel = fold_es.es_infer_term_rel;
                                  es_infer_rel = fold_es.es_infer_rel # clone;
-                                 es_infer_hp_rel = fold_es.es_infer_hp_rel;
+                                 es_infer_hp_rel = fold_es.es_infer_hp_rel # clone;
                                  es_imm_last_phase = fold_es.es_imm_last_phase;
                                  es_group_lbl = fold_es.es_group_lbl;
                                  es_term_err = fold_es.es_term_err;
@@ -8345,12 +8345,17 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
         match ctx with
         | FailCtx _ -> ctx
         | SuccCtx cl ->
-              let () = Infer.rel_ass_stk # push_list hprel_ass in
-              let () = Log.current_hprel_ass_stk # push_list hprel_ass in
+              if !Globals.old_infer_hp_collect then 
+                begin
+                  x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) hprel_ass pos;
+                  let () = Infer.rel_ass_stk # push_list hprel_ass in
+                  let () = Log.current_hprel_ass_stk # push_list hprel_ass in
+                  ()
+                end;
               let new_cl = List.map (fun c ->
                 (transform_context
                    (fun es ->
-                      let es = {es with CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ hprel_ass;}  in
+                      let () = es.CF.es_infer_hp_rel # push_list hprel_ass in
                       Ctx es
                    ) c)) cl in
           SuccCtx(new_cl) in
@@ -9489,7 +9494,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
                         es_infer_pure_thus = estate.es_infer_pure_thus;
                         es_infer_term_rel = estate.es_infer_term_rel;
                         es_infer_rel = estate.es_infer_rel # clone;
-                        es_infer_hp_rel = estate.es_infer_hp_rel;
+                        es_infer_hp_rel = estate.es_infer_hp_rel # clone;
                         es_group_lbl = estate.es_group_lbl;
                         es_term_err = estate.es_term_err;
                         es_trace = estate.es_trace;
