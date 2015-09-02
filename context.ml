@@ -2179,8 +2179,10 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          let act1 = M_base_case_fold m_res in
          let act2 = M_infer_heap (rhs_node,rhs_rest) in
          let wt = 1 in
-         (* (wt,Search_action [(wt,act1)(\* ;(wt,act2) *\)]) *)
-         (wt,act1)
+         (* old method do not use base_case_fold *)
+         if !Globals.old_base_case_fold_hprel then (wt,act2)
+         else (* (wt,act1) *)
+           (wt,Search_action [(wt,act1);(wt,act2)])
        (* M_Nothing_to_do ("9:"^(string_of_match_res m_res)) *)
        | _ -> report_error no_pos "process_one_match unexpected formulas 1\n"	
       )
