@@ -1,0 +1,35 @@
+data node {
+  int val;
+  node prev;
+  node next;
+}.
+
+// use --lem-en-lhs-unfold
+
+pred lseg<rm> == self=rm
+  or self::node<_,_, p> * p::lseg<rm>.
+
+pred rlseg<rm> == self:node=rm
+  or self::rlseg<q> * q::node<_,_,rm>.
+
+lemma_safe "2" self::rlseg<rm> <- self::lseg<rm>.
+
+/*
+# ex55m.slk
+
+pred lseg<rm> == self=rm
+  or self::node<_,_, p> * p::lseg<rm>.
+
+pred rlseg<rm> == self:node=rm
+  or self::rlseg<q> * q::node<_,_,rm>.
+
+lemma_safe "2" self::rlseg<rm> <- self::lseg<rm>.
+
+Entailing lemma 2: Fail. (cex)(may) cause: OrL[
+residue is forbidden.(1),
+valid
+]
+
+Failed to prove 2:<== in current context.
+Removing invalid lemma (lemma store restored).
+*/

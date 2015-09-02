@@ -200,8 +200,13 @@ let common_arguments = [
    "Turn on brief tracing");
   ("--dis-trace", Arg.Clear Debug.trace_on,
    "Turn off brief tracing");
-  ("-dd", Arg.Set Debug.devel_debug_on,
+  ("-dd", Arg.Unit (fun _ ->
+      Debug.devel_debug_on :=true;
+      Debug.devel_debug_steps :=true
+     ),
    "Turn on devel_debug on short and normal output");
+  ("-dd-steps", Arg.Set Debug.devel_debug_steps,
+   "Turn on tracing of entailment proving steps ");
   ("-dd-esl", Arg.Int (fun n -> 
        Globals.proof_logging_txt:=true; 
        Globals.sleek_logging_txt:=true;
@@ -328,6 +333,8 @@ linput.rl");
   (* WN : this excludes ann_vars and ho_vars, but include perm_vars *)
   ("--warn-free-vars-conseq", Arg.Set Globals.warn_free_vars_conseq,"Enable Warning of Non-empty free heap vars in conseq");
   ("--new-rm-htrue", Arg.Set Globals.new_rm_htrue,"Enable removal of htrue from ante");
+  ("--old-infer-heap", Arg.Set Globals.old_infer_heap,"Use old method of scheduling Infer_Heap");
+  ("--new-infer-heap", Arg.Clear Globals.old_infer_heap,"Use new method of scheduling Infer_Heap");
   ("--old-mater-coercion", Arg.Set Globals.old_mater_coercion,"Use Old Mater Coercion Selection");
   ("--new-mater-coercion", Arg.Clear Globals.old_mater_coercion,"Use New Mater Coercion Selection");
   ("--old-keep-triv-relass", Arg.Set Globals.old_keep_triv_relass,"Keep trivial relation assume (hp_rel and pure relation) during inference");
