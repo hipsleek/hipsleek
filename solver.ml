@@ -7637,7 +7637,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                           let () = x_tinfo_hp (add_str "h2: " !CF.print_h_formula) h2 no_pos in
                           (* let () = x_tinfo_hp (add_str "prep_h1(for classic): " !CF.print_h_formula) prep_h1 no_pos in *)
                           let () = x_tinfo_hp (add_str "base_lhs " !CF.print_formula) (Base base_lhs) no_pos in
-                         (* let () = x_tinfo_hp (add_str "rhs_rest_emp: " string_of_bool) (!rhs_rest_emp) no_pos in *)
+                          (* let () = x_tinfo_hp (add_str "rhs_rest_emp: " string_of_bool) (!rhs_rest_emp) no_pos in *)
                           (* let () = x_tinfo_hp (add_str "is_folding: " string_of_bool) (is_folding) no_pos in *)
                           (* let () = x_tinfo_hp (add_str "(check_is_classic ())" string_of_bool) ((check_is_classic ())) no_pos in *)
                           (* let () = x_tinfo_hp (add_str "is_rhs_emp" string_of_bool) (is_rhs_emp) no_pos in *)
@@ -7658,8 +7658,8 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                               && is_rhs_emp
                               && new_flag
                               && (not ( Cformula.is_HRel prep_h1))
-                              ) 
-                              (* !rhs_rest_emp && (\*remove this since it is untrackable*\) *)
+                             ) 
+                          (* !rhs_rest_emp && (\*remove this since it is untrackable*\) *)
                           then (
                             (* WN : shouldn't we fail if no_infer_hp_rel *)
                             if  (* not *) (Infer.no_infer_hp_rel estate) then
@@ -8339,25 +8339,25 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
             else estate_orig1,lhs1 
         else 
           let () = x_tinfo_pp "not HTrue branch?" no_pos in
-         estate_orig1,lhs1 in
+          estate_orig1,lhs1 in
       let ctx, proof = heap_entail_empty_rhs_heap_one_flow prog conseq is_folding estate_orig1 lhs1 rhs_p rhs_matched_set pos in
       let new_ctx =
         match ctx with
         | FailCtx _ -> ctx
         | SuccCtx cl ->
-              if !Globals.old_infer_hp_collect then 
-                begin
-                  x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) hprel_ass pos;
-                  let () = Infer.rel_ass_stk # push_list hprel_ass in
-                  let () = Log.current_hprel_ass_stk # push_list hprel_ass in
-                  ()
-                end;
-              let new_cl = List.map (fun c ->
-                (transform_context
-                   (fun es ->
-                      let () = es.CF.es_infer_hp_rel # push_list hprel_ass in
-                      Ctx es
-                   ) c)) cl in
+          if !Globals.old_infer_hp_collect then 
+            begin
+              x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) hprel_ass pos;
+              let () = Infer.rel_ass_stk # push_list hprel_ass in
+              let () = Log.current_hprel_ass_stk # push_list hprel_ass in
+              ()
+            end;
+          let new_cl = List.map (fun c ->
+              (transform_context
+                 (fun es ->
+                    let () = es.CF.es_infer_hp_rel # push_list hprel_ass in
+                    Ctx es
+                 ) c)) cl in
           SuccCtx(new_cl) in
       new_ctx, proof
   in
@@ -9553,18 +9553,18 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
   end
 
 and is_classic_lhs_emp prog h1 ante pos =
-      let h1_unfold =
-          let prep_ante = do_unfold_for_classic_reasoning prog ante pos in
-          match prep_ante with
-          | CF.Or _ -> h1
-          | _ -> let h,_,_,_,_,_ = split_components prep_ante in h
-        (* if flag then *)
-        (* else h1 *)
-      in 
-      let () = x_tinfo_hp (add_str "h1_unfold" !CF.print_h_formula) h1_unfold no_pos 
-      in
-      h1_unfold==HEmp || (is_resourceless_h_formula prog h1_unfold)
-         || (is_classic_lending_hformula h1_unfold)
+  let h1_unfold =
+    let prep_ante = do_unfold_for_classic_reasoning prog ante pos in
+    match prep_ante with
+    | CF.Or _ -> h1
+    | _ -> let h,_,_,_,_,_ = split_components prep_ante in h
+    (* if flag then *)
+    (* else h1 *)
+  in 
+  let () = x_tinfo_hp (add_str "h1_unfold" !CF.print_h_formula) h1_unfold no_pos 
+  in
+  h1_unfold==HEmp || (is_resourceless_h_formula prog h1_unfold)
+  || (is_classic_lending_hformula h1_unfold)
 
 and do_unfold_for_classic_reasoning prog (f: CF.formula) (pos : loc) =
   let pr_in = Cprinter.string_of_formula in
@@ -9853,22 +9853,22 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
   end
 
 and do_match_inst_perm_vars l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars glob_vs =
- do_match_inst_perm_vars_x l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars glob_vs
-  (* let pr_out (rho,lbl,ante,conseq) = *)
-  (*   let s1 = pr_pair Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula (ante,conseq) in *)
-  (*   let s2 = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var) rho in *)
-  (*   "rho: "^s2^"\n to_ante; to_conseq: "^s1 *)
-  (* in *)
-  (* Debug.no_6 "do_match_inst_perm_vars"  *)
-  (*   (string_of_cperm ()) *)
-  (*   (string_of_cperm ()) *)
-  (*   (add_str "evars" string_of_spec_var_list) *)
-  (*   (add_str "impl_vars" string_of_spec_var_list) *)
-  (*   (add_str "l_args" string_of_spec_var_list) *)
-  (*   (add_str "r_args" string_of_spec_var_list) *)
-  (*   pr_out *)
-  (*   (fun _ _ _ _ _ _ -> do_match_inst_perm_vars_x l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars glob_vs)  *)
-  (*   l_perm r_perm evars impl_vars l_args r_args *)
+  do_match_inst_perm_vars_x l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars glob_vs
+(* let pr_out (rho,lbl,ante,conseq) = *)
+(*   let s1 = pr_pair Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula (ante,conseq) in *)
+(*   let s2 = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var) rho in *)
+(*   "rho: "^s2^"\n to_ante; to_conseq: "^s1 *)
+(* in *)
+(* Debug.no_6 "do_match_inst_perm_vars"  *)
+(*   (string_of_cperm ()) *)
+(*   (string_of_cperm ()) *)
+(*   (add_str "evars" string_of_spec_var_list) *)
+(*   (add_str "impl_vars" string_of_spec_var_list) *)
+(*   (add_str "l_args" string_of_spec_var_list) *)
+(*   (add_str "r_args" string_of_spec_var_list) *)
+(*   pr_out *)
+(*   (fun _ _ _ _ _ _ -> do_match_inst_perm_vars_x l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars glob_vs)  *)
+(*   l_perm r_perm evars impl_vars l_args r_args *)
 
 (*Modified a set of vars in estate to reflect instantiation
   when matching 2 perm vars*)
@@ -11427,22 +11427,32 @@ and do_right_lemma_w_fold coer prog estate conseq rhs_node rhs_rest rhs_b is_fol
 (* incr/ex17i5.slk failed if ivr removed from estate *)
 and do_base_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos=
   let (_ (* estate *),iv,ivr) = Infer.remove_infer_vars_all estate (* rt *)in
-  let vd = (vdef_fold_use_bc prog rhs_node) in
-  let (cl,prf) =
-    match vd with
-    (* CF.mk_failure_must "99" Globals.sl_error)), NoAlias) *)
-    | None ->
-      let err_msg =  "No base-case for folding"  in
-      (CF.mkFailCtx_in (Basic_Reason (mkFailContext (* "No base-case for folding" *)err_msg estate (CF.formula_of_heap HFalse pos) None pos, 
-                                      CF.mk_failure_must "99" Globals.sl_error, estate.es_trace)) ((convert_to_must_es estate), err_msg, Failure_Must err_msg) (mk_cex true), NoAlias)
-    | Some vd ->
-      (* WN->Loc : this caused failure for cll-d.slk *)
-      (* let old_classic_flag = !do_classic_frame_rule in *)
-      (* let () = do_classic_frame_rule := (is_empty_heap rhs_rest) in *)
-      let r = do_fold prog (Some (iv,ivr,vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos in
-      (* let () = do_classic_frame_rule := old_classic_flag in *)
-      r
-  in  ((* Infer.restore_infer_vars iv  *)cl,prf)
+  match rhs_node with
+  | HRel (hp,arg,_) ->
+    (* hp in ivr *)
+    (* failwith "TBI" *)
+    let msg = "BaseCaseFold on Unknown Pred (not on inferred list)" in
+     (Errctx.mkFailCtx_may x_loc msg estate pos,Unknown)
+  | _ ->
+    
+    let vd = (vdef_fold_use_bc prog rhs_node) in
+    let (cl,prf) =
+      match vd with
+      (* CF.mk_failure_must "99" Globals.sl_error)), NoAlias) *)
+      | None ->
+        let err_msg =  "No base-case for folding"  in
+
+        (Errctx.mkFailCtx_must x_loc err_msg estate pos,NoAlias)
+        (* (CF.mkFailCtx_in (Basic_Reason (mkFailContext (\* "No base-case for folding" *\)err_msg estate (CF.formula_of_heap HFalse pos) None pos,  *)
+        (*                                 CF.mk_failure_must "99" Globals.sl_error, estate.es_trace)) ((convert_to_must_es estate), err_msg, Failure_Must err_msg) (mk_cex true), NoAlias) *)
+      | Some vd ->
+        (* WN->Loc : this caused failure for cll-d.slk *)
+        (* let old_classic_flag = !do_classic_frame_rule in *)
+        (* let () = do_classic_frame_rule := (is_empty_heap rhs_rest) in *)
+        let r = do_fold prog (Some (iv,ivr,vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos in
+        (* let () = do_classic_frame_rule := old_classic_flag in *)
+        r
+    in  ((* Infer.restore_infer_vars iv  *)cl,prf)
 
 and do_base_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos=
   let pr2 x = Cprinter.string_of_list_context_short (fst x) in
@@ -12215,10 +12225,10 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
       if !Debug.devel_debug_on || !Debug.devel_debug_steps then
         begin
           x_binfo_zp (lazy ("process_action (steps) :"
-                        ^ ((add_str "\n ### action " Context.string_of_action_res) a)
-                        ^ ((add_str "\n ### estate " Cprinter.string_of_entail_state_short) estate)
-                        ^ ((add_str "\n ### conseq " Cprinter.string_of_formula) conseq)
-                        ^ "\n"))  pos 
+                            ^ ((add_str "\n ### action " Context.string_of_action_res) a)
+                            ^ ((add_str "\n ### estate " Cprinter.string_of_entail_state_short) estate)
+                            ^ ((add_str "\n ### conseq " Cprinter.string_of_formula) conseq)
+                            ^ "\n"))  pos 
         end
     end;
   (*add tracing into the entailment state*)
@@ -12563,6 +12573,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
       let estate =
         if Infer.no_infer_rel estate then estate
         else 
+          (* WN : what is the purpose of this normalization? *)
           let lhs_h, lhs_p, _, _, _, lhs_a = CF.split_components estate.es_formula in
           let lhs_alias = MCP.ptr_equations_without_null lhs_p in
           let lhs_aset = CP.EMapSV.build_eset lhs_alias in

@@ -19399,3 +19399,4 @@ let name_of_h_formula x =
 let name_of_formula x =
   let (h,_,_,_,_,_) = split_components x in
   name_of_h_formula h
+
