@@ -1003,7 +1003,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
           let () = y_binfo_hp (add_str "SCE-lhs" pr) f in
           let () = y_binfo_hp (add_str "SCE-rhs_node" pr) rhs_node in
           if CP.is_exists_svl p1 vs then 
-            failwith "TBI"
+            [] (* failwith "TBI" *)
           else []
         | _      ->
           if ((CP.mem p1 aset) (* && (subtyp) *)) then 
@@ -1082,8 +1082,9 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
         let cmm = x_add coerc_mater_match_gen c vs right_name r_vargs aset f in
         let () = x_tinfo_hp (add_str "coerc_mater_match (HREL)" (pr_list pr_helper_res)) cmm no_pos in
         if common==[] || !Globals.old_infer_heap then []
-        else if cmm=[] then [(HEmp, f, [], Root)]
-        else cmm
+        else [(HEmp, f, [], Root)]@cmm
+        (* else if cmm=[] then [(HEmp, f, [], Root)] *)
+        (* else cmm *)
         (* [] *) (* [(f,rhs_node,[],Root)] *)
         (* match rhs_node with *)
         (* | HRel (hp2,e2,_) ->  *)
