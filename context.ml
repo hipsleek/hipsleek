@@ -997,7 +997,14 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
                  h_formula_data_imm = imm1;
                  h_formula_data_param_imm = pimm1}) -> (
         match rhs_node with
-        | HRel _ -> []
+        | HRel (h,args,_) -> 
+          let n,vs = CF.name_of_h_formula rhs_node in
+          let pr = !CF.print_h_formula in
+          let () = y_binfo_hp (add_str "SCE-lhs" pr) f in
+          let () = y_binfo_hp (add_str "SCE-rhs_node" pr) rhs_node in
+          if CP.is_exists_svl p1 vs then 
+            failwith "TBI"
+          else []
         | _      ->
           if ((CP.mem p1 aset) (* && (subtyp) *)) then 
             if ( (not !Globals.allow_field_ann) && produces_hole imm) then
