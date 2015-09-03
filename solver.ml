@@ -11425,7 +11425,8 @@ and do_right_lemma_w_fold coer prog estate conseq rhs_node rhs_rest rhs_b is_fol
       do_fold prog (Some (iv,ivr,vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos 
   in  ((* Infer.restore_infer_vars iv  *)cl,prf)
 
-and do_base_fold_hp_rel_x prog estate pos hp vs=
+and do_base_fold_hp_rel_x prog estate pos hp vs
+                                conseq rhs_node rhs_rest rhs_b is_folding iv ivr=
   let ivs = estate.es_infer_vars_hp_rel in
   if not (CP.mem_svl hp ivs) || vs=[] then
     let msg = "do_base_fold_hp_rel"^((pr_pair !CP.print_sv !CP.print_svl) (hp,vs)) in
@@ -11457,7 +11458,13 @@ and do_base_fold_hp_rel_x prog estate pos hp vs=
         ()
       end;
     let () = estate.CF.es_infer_hp_rel # push_list [hp_rel] in
-    (* let vd = Some ([],[],lhs) in *)
+    let vdecl = Cast.mk_view_decl_for_hp_rel (CP.name_of_spec_var hp) (List.map (fun sv -> (sv, NI)) (List.tl vs)) false pos in
+    let vdecl_w_def = {vdecl with Cast.view_formula = CF.struc_formula_of_formula lhs pos;
+        Cast.view_un_struc_formula = [(lhs, (fresh_int (),""))];
+    } in
+    let rhs_node1 = CF.mkViewNode (List.hd vs) (CP.name_of_spec_var hp) (List.tl vs) pos in
+    do_fold prog (Some (iv,ivr,vdecl_w_def)) estate conseq rhs_node1 rhs_rest rhs_b is_folding pos
+    (* let vd = Some ([],[],vdecl_w_def) in *)
     (* let rhs_p = MCP.pure_of_mix (rhs_b.CF.formula_base_pure) in *)
     (* let fold_ctx = Ctx { estate with *)
     (*     (\* without unsat_flag reset: *)
@@ -11475,16 +11482,17 @@ and do_base_fold_hp_rel_x prog estate pos hp vs=
     (*     es_aux_conseq = rhs_p; *)
     (*     es_must_error = None; *)
     (* } in *)
-    (* do_fold_w_ctx fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_folding pos *)
-    let msg = "do_base_fold_hp_rel (TBI)"^((pr_pair !CP.print_sv !CP.print_svl) (hp,vs)) in
-    (Errctx.mkFailCtx_may x_loc msg estate pos,Unknown)
+    (* do_fold_w_ctx fold_ctx prog estate conseq rhs_node1 vd rhs_rest rhs_b is_folding pos *)
+    (* let msg = "do_base_fold_hp_rel (TBI)"^((pr_pair !CP.print_sv !CP.print_svl) (hp,vs)) in *)
+    (* (Errctx.mkFailCtx_may x_loc msg estate pos,Unknown) *)
         (* failwith "TBI" *)
 
-and do_base_fold_hp_rel prog estate pos hp vs =
+and do_base_fold_hp_rel prog estate pos hp vs conseq rhs_node rhs_rest rhs_b is_folding iv ivr=
   let pr1 x = Cprinter.string_of_list_context_short (fst x) in
   Debug.no_3 "do_base_fold_hp_rel"
     Cprinter.string_of_entail_state !CP.print_sv !CP.print_svl pr1
-    (fun _ _ _ -> do_base_fold_hp_rel_x prog estate pos hp vs) estate hp vs
+    (fun _ _ _ -> do_base_fold_hp_rel_x prog estate pos hp vs
+    conseq rhs_node rhs_rest rhs_b is_folding iv ivr) estate hp vs
 
 (* incr/ex17i5.slk failed if ivr removed from estate *)
 and do_base_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos=
@@ -11496,7 +11504,7 @@ and do_base_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos=
     (* let () = y_binfo_hp (add_str "i_hp_vs" !CP.print_svl) i_hp_vs in *)
     if CF.is_exists_hp_rel hp estate then
       let vs = List.map CP.exp_to_sv args in
-      do_base_fold_hp_rel prog estate pos hp vs
+      do_base_fold_hp_rel prog estate pos hp vs conseq rhs_node rhs_rest rhs_b is_folding iv ivr
     else
       let msg = "BaseCaseFold on Unknown Pred (not on inferred list)" in
       (Errctx.mkFailCtx_may x_loc msg estate pos,Unknown)
