@@ -585,13 +585,13 @@ let _ =
         let r = Cformula.get_res_residue () in
         let str_res = if r then "unsat" else
             let msg =
-              (*conver may error into unknown*)
+              (*convert may error into unknown*)
               match !Globals.smt_is_must_failure with
               | None ->  "sat"
               | Some b -> if b then "sat" else "unknown"
             in msg
         in
-        print_endline_quiet (str_res)
+        print_endline (str_res)
       else ()
     in
     if (not !Globals.web_compile_flag) then 

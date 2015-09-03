@@ -1172,7 +1172,7 @@ linput.rl");
      (fun _ ->
         (* Globals.show_unexpected_ents := true;  *)
         (*this flag is one that is  diff with compared to --smt-compete *)
-        compete_mode:=true; (* main flag *)
+        compete_mode:=false; (* main flag *)
         Globals.smt_compete_mode :=true;
         Debug.trace_on := true;
         Debug.devel_debug_on:= false;
@@ -1184,7 +1184,7 @@ linput.rl");
         Globals.lemma_syn := true;
         Globals.acc_fold := true;
         Globals.smart_lem_search := true;
-        (* Globals.en_pred_sat (); *)
+        Globals.en_pred_sat ();
         Globals.gen_baga_inv := false;
         (* Globals.do_infer_inv := true; *)
         Globals.graph_norm := true;

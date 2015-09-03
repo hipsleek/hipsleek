@@ -293,8 +293,8 @@ let start_prover() =
   )
   with e -> (
       if (!compete_mode) then (
-        print_endline "Unable to run the prover Omega!";
-        print_endline "Please make sure its executable file (oc) is installed";
+        print_endline_quiet "Unable to run the prover Omega!";
+        print_endline_quiet "Please make sure its executable file (oc) is installed";
       );
       raise e
     )

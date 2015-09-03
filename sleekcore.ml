@@ -87,7 +87,7 @@ let sleek_unsat_check isvl cprog ante=
     (true, CF.SuccCtx [init_ctx], [])
   else
     (false, CF.FailCtx (CF.Trivial_Reason
-                          ( {CF.fe_kind = CF.Failure_Must "lhs is not unsat"; CF.fe_name = "unsat check";CF.fe_locs=[]}, []),  init_ctx, CF.mk_cex true),
+        ( {CF.fe_kind = CF.Failure_Must "lhs is not unsat"; CF.fe_name = "unsat check";CF.fe_locs=[]}, []),  init_ctx, CF.mk_cex true),
      [])
 
 
