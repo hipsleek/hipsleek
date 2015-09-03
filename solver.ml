@@ -9454,29 +9454,78 @@ and do_base_case_unfold_only prog ante conseq estate lhs_node rhs_node  is_foldi
     (fun _ _ _ _ -> do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_folding pos rhs_b) 
     ante conseq lhs_node rhs_node 
 
-and do_base_unfold_hp_rel_x prog estate pos hp vs=
-  let () = y_winfo_pp "do_base_unfold_hp_rel (TBI)" in 
-  None
+and do_unfold_hp_rel_x prog estate conseq is_folding pos hp vs=
+  let rec subst_hprel_2_view hp args vn hf=
+    match hf with
+      | HRel (hp1, eargs1, _) ->
+            let args1 = List.map CP.exp_to_sv eargs1 in
+            if CP.eq_spec_var hp hp1 && CP.eq_spec_var_order_list args args1 then vn
+        else hf
+      | CF.Star {CF.h_formula_star_h1 = hf1;
+               CF.h_formula_star_h2 = hf2;
+               CF.h_formula_star_pos = pos} ->
+            F.Star {CF.h_formula_star_h1 = subst_hprel_2_view hp args vn hf1;
+               CF.h_formula_star_h2 = subst_hprel_2_view hp args vn hf2;
+               CF.h_formula_star_pos = pos}
+      | _ -> hf
+  in
+  let () = y_winfo_pp "do_base_unfold_hp_rel (TBI)" in
+  let knd = CP.RelAssume [hp] in
+  let es_cond_path = CF.get_es_cond_path estate in
+  let matched_svl = [] in
+  let grd = None in
+  let rhs_p = CP.gen_cl_eqs pos (CP.remove_dups_svl vs) (CP.mkTrue pos) in
+  let rhs = CF.formula_of_pure_formula rhs_p pos in
+  let lhs = CF.formula_of_heap (CF.HRel (hp,List.map (fun sv -> CP.Var (sv, pos)) vs,pos)) pos in
+  let hp_rel = CF.mkHprel knd [] [] matched_svl lhs grd rhs es_cond_path in
+  if !Globals.old_infer_hp_collect then 
+    begin
+      x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) [hp_rel] no_pos;
+      let () = Infer.rel_ass_stk # push_list ([hp_rel]) in
+      let () = Log.current_hprel_ass_stk # push_list ([hp_rel]) in
+      ()
+    end;
+  let () = estate.CF.es_infer_hp_rel # push_list [hp_rel] in
+  let vdecl = Cast.mk_view_decl_for_hp_rel (CP.name_of_spec_var hp) (List.map (fun sv -> (sv, NI)) (List.tl vs)) false pos in
+  let vdecl_w_def = {vdecl with Cast.view_formula = CF.struc_formula_of_formula rhs pos;
+      Cast.view_un_struc_formula = [(rhs, (fresh_int (),""))];
+      view_raw_base_case = Some rhs;
+      Cast.view_base_case = Some (rhs_p, MCP.mix_of_pure rhs_p);
+  } in
+  let () = prog.Cast.prog_view_decls <- prog.Cast.prog_view_decls@[vdecl_w_def] in
+  let lhs_node = CF.mkViewNode (List.hd vs) (CP.name_of_spec_var hp) (List.tl vs) pos in
+  let estate = {estate with es_formula = formula_map (subst_hprel_2_view hp vs lhs_node) estate.CF.es_formula} in
+  let unfold_num = 1 in
+  let delta1,_ = unfold_nth 1 (prog,None) estate.es_formula (List.hd vs) true unfold_num pos in (* update unfold_num *)
+  let ctx1 = build_context (Ctx estate) delta1 pos in
+  let rec prune_helper c =
+    match c with
+      | OCtx (c1,c2) -> OCtx(prune_helper c1, prune_helper c2)
+      | Ctx es -> Ctx ({es with es_formula = prune_preds prog false (*true*) es.es_formula})
+  in
+  let res_rs, prf1 = x_add heap_entail_one_context 8 prog is_folding (prune_helper ctx1) (*ctx1*) conseq None None None pos in
+  let prf = mkUnfold (Ctx estate) conseq lhs_node prf1 in
+  (res_rs, prf)
 
-and do_base_unfold_hp_rel prog estate pos hp vs=
+and do_unfold_hp_rel prog estate conseq is_folding pos hp vs=
   let pr1 = pr_none in
-  Debug.no_3 "do_base_unfold_hp_rel"
+  Debug.no_3 "do_unfold_hp_rel"
     Cprinter.string_of_entail_state !CP.print_sv !CP.print_svl pr1
-    (fun _ _ _ -> do_base_unfold_hp_rel_x prog estate pos hp vs) estate hp vs
+    (fun _ _ _ -> do_unfold_hp_rel_x prog estate conseq is_folding pos hp vs) estate hp vs
 
 and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_folding pos rhs_b =
   if (is_data lhs_node) then None
   else begin
     (x_dinfo_zp (lazy ("do_base_case_unfold attempt for : " ^
                        (Cprinter.string_of_h_formula lhs_node))) pos);
-    match lhs_node with
-      | HRel (hp,args,_) ->
-            if CF.is_exists_hp_rel hp estate then
-              let vs = List.map CP.exp_to_sv args in
-              do_base_unfold_hp_rel prog estate pos hp vs
-            else
-              None
-      | _ ->
+    (* match lhs_node with *)
+    (*   | HRel (hp,args,_) -> *)
+    (*         if CF.is_exists_hp_rel hp estate then *)
+    (*           let vs = List.map CP.exp_to_sv args in *)
+    (*           do_base_unfold_hp_rel prog estate pos hp vs *)
+    (*         else *)
+    (*           None *)
+    (*   | _ -> *)
     (* c1,v1,p1 *)
             let lhs_name,lhs_arg,lhs_var = get_node_name 19 lhs_node, get_node_args lhs_node , get_node_var lhs_node in
             let () = Gen.Profiling.push_time "empty_predicate_testing" in
@@ -12600,8 +12649,17 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
       in
       do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos
 
-    | Context.M_unfold ({Context.match_res_lhs_node=lhs_node},unfold_num) -> 
+    | Context.M_unfold ({Context.match_res_lhs_node=lhs_node},unfold_num) -> begin
       x_tinfo_hp (add_str "M_unfold" (fun _ -> "")) () pos;
+      match lhs_node with
+        | HRel (hp,args,_) ->
+              if CF.is_exists_hp_rel hp estate && args !=[] then
+              let vs = List.map CP.exp_to_sv args in
+              do_unfold_hp_rel prog estate conseq is_folding pos hp vs
+              else
+                 let msg = "BaseCaseFold on Unknown Pred (not on inferred list)" in
+                 (Errctx.mkFailCtx_may x_loc msg estate pos,Unknown)
+        | _ ->
       let lhs_var = get_node_var lhs_node in
       (* WN : why is there a need for es_infer_invs *)
       (*let estate = x_add Infer.infer_for_unfold prog estate lhs_node pos in*)
@@ -12624,7 +12682,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
         let res_rs, prf1 = x_add heap_entail_one_context 8 prog is_folding (prune_helper ctx1) (*ctx1*) conseq None None None pos in
         let prf = mkUnfold (Ctx estate) conseq lhs_node prf1 in
         (res_rs, prf)
-
+      end
     | Context.M_base_case_unfold {
         Context.match_res_lhs_node = lhs_node;
         Context.match_res_rhs_node = rhs_node;}->

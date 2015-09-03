@@ -2180,7 +2180,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          ;
        | HRel (h_name, args, _), rhs -> 
          (* TODO : check if h_name in the infer_vars *)
-             let act1 = M_base_case_unfold m_res in
+             let act1 = M_unfold (m_res, 1) in
              let act2 = M_infer_heap (rhs,HEmp) in
              let wt = 2 in
              (* old method do not use base_case_unfold *)
