@@ -21,7 +21,9 @@ shape_add_dangling [P,HP_1620].
 
 print relAssumes.
 
-shape_unfold [P,HP_1620].
+shape_unfold [P].
+//shape_unfold [HP_1620].
+//shape_unfold [P,HP_1620].
 
 print relAssumes.
 

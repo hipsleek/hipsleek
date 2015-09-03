@@ -200,11 +200,18 @@ let unfolding_one_hrel prog ctx hprel_name hrel hprel_groups =
           with _ -> failwith ("Mismatch number of arguments of " ^ (!CP.print_sv hrel_name))
         ) hrel_defs
       in
+      let guarded_hrel_defs, unguarded_hrel_defs = List.partition (fun hrel_def ->
+          match hrel_def.CF.hprel_guard with Some _ -> true | None -> false) subst_hrel_defs in
       let unfolding_ctx_list = List.fold_left (fun acc hrel_def ->
           let unfolding_ctx = unfolding_one_hrel_def prog ctx hrel hrel_def in
           match unfolding_ctx with
           | None -> acc
-          | Some ctx -> acc @ [ctx]) [] subst_hrel_defs 
+          | Some ctx -> acc @ [ctx]) [] guarded_hrel_defs 
+      in
+      let unfolding_ctx_list = 
+        if is_empty unguarded_hrel_defs 
+        then unfolding_ctx_list
+        else unfolding_ctx_list @ [add_back_hrel ctx hrel]
       in
       if is_empty unfolding_ctx_list then
         [add_back_hrel ctx hrel]
@@ -217,13 +224,15 @@ let unfolding_one_hrel prog ctx hprel_name hrel hprel_groups =
     (fun _ _ -> unfolding_one_hrel prog ctx hprel_name hrel hprel_groups) 
     ctx hrel
 
-let rec unfolding_hrel_list prog ctx hprel_name hrel_list hprel_groups =
-  match hrel_list with
-  | [] -> [ctx]
-  | hr::hrl ->
-    let ctx_list = unfolding_one_hrel prog ctx hprel_name hr hprel_groups in
-    List.concat (List.map (fun ctx -> 
-        unfolding_hrel_list prog ctx hprel_name hrl hprel_groups) ctx_list)
+let unfolding_hrel_list prog ctx hprel_name hrel_list hprel_groups =
+  let rec helper ctx hrel_list = 
+    match hrel_list with
+    | [] -> [ctx]
+    | hr::hrl ->
+      let ctx_list = unfolding_one_hrel prog ctx hprel_name hr hprel_groups in
+      List.concat (List.map (fun ctx -> helper ctx hrl) ctx_list)
+  in
+  helper ctx hrel_list
 
 let unfolding_hrel_list prog ctx hprel_name hrel_list hprel_groups =
   let pr1 = !CF.print_formula in
@@ -283,24 +292,44 @@ let rec update_hprel_id_groups hprel_id hprel_sv hprel_id_list hprel_id_groups =
     else 
       (hpr_sv, hpri_group)::(update_hprel_id_groups hprel_id hprel_sv hprel_id_list hpri_groups)
 
+let rec helper_unfolding_hprel_list_x prog hprel_id_groups hprel_id_list =
+  match hprel_id_list with
+  | [] -> []
+  | hpri::hpril ->
+    let hprel_groups = List.map (fun (hprel_sv, hprel_id_list) ->
+        (hprel_sv, List.map (fun hpri -> hpri.hprel_constr) hprel_id_list)
+      ) hprel_id_groups in
+    let unfolding_hpr = unfolding_hprel prog hprel_groups hpri.hprel_constr in
+    let unfolding_hpri = List.map mk_hprel_id unfolding_hpr in
+    let updated_hprel_id_groups = update_hprel_id_groups 
+      hpri.hprel_id (name_of_hprel hpri.hprel_constr) unfolding_hpri hprel_id_groups in
+    unfolding_hpr @ (helper_unfolding_hprel_list prog updated_hprel_id_groups hpril)
+
+and helper_unfolding_hprel_list prog hprel_id_groups hprel_id_list =
+  let pr1 = Cprinter.string_of_hprel_list_short in
+  let pr2 hpril = pr1 (List.map (fun hpri -> hpri.hprel_constr) hpril) in
+  let pr3 = pr_list (pr_pair !CP.print_sv pr2) in
+  Debug.no_2 "helper_unfolding_hprel_list" pr2 pr3 pr1
+    (fun _ _ -> helper_unfolding_hprel_list_x prog hprel_id_groups hprel_id_list)
+    hprel_id_list hprel_id_groups
+
 let unfolding_hprel_list prog hprel_list =
-  let rec helper hprel_id_groups hprel_id_list =
-    match hprel_id_list with
-    | [] -> []
-    | hpri::hpril ->
-      let hprel_groups = List.map (fun (hprel_sv, hprel_id_list) ->
-          (hprel_sv, List.map (fun hpri -> hpri.hprel_constr) hprel_id_list)
-        ) hprel_id_groups in
-      let unfolding_hpr = unfolding_hprel prog hprel_groups hpri.hprel_constr in
-      let unfolding_hpri = List.map mk_hprel_id unfolding_hpr in
-      let updated_hprel_id_groups = update_hprel_id_groups 
-        hpri.hprel_id (name_of_hprel hpri.hprel_constr) unfolding_hpri hprel_id_groups in
-      unfolding_hpr @ (helper updated_hprel_id_groups hpril)
-  in
   let sorted_hprel_list = sort_hprel_list hprel_list in
   let hprel_id_list = List.map mk_hprel_id sorted_hprel_list in
   let hprel_id_groups = partition_hprel_list hprel_id_list in
-  helper hprel_id_groups hprel_id_list
+  helper_unfolding_hprel_list prog hprel_id_groups hprel_id_list
+
+let selective_unfolding prog other_hprels hprels = 
+  let sorted_hprel_list = sort_hprel_list hprels in
+  let hprel_id_list = List.map mk_hprel_id sorted_hprel_list in
+  let other_hprel_id_list = List.map mk_hprel_id other_hprels in
+  let hprel_id_groups = partition_hprel_list (hprel_id_list @ other_hprel_id_list) in 
+  helper_unfolding_hprel_list prog hprel_id_groups hprel_id_list
+
+let selective_unfolding prog other_hprels hprels = 
+  let pr = Cprinter.string_of_hprel_list_short in
+  Debug.no_2 "selective_unfolding" pr pr pr 
+    (fun _ _ -> selective_unfolding prog other_hprels hprels) other_hprels hprels
 
 let unfolding prog hprels = 
   unfolding_hprel_list prog hprels

@@ -1621,7 +1621,10 @@ let process_shape_add_dangling hps =
   process_sleek_hprel_assumes hps Syn.add_dangling_hprel_list
 
 let process_shape_unfold hps =
-  process_sleek_hprel_assumes hps (Syn.unfolding !cprog)
+  let sel_hprel_assume_list, others = select_hprel_assume !sleek_hprel_assumes hps in
+  let res = Syn.selective_unfolding !cprog others sel_hprel_assume_list in
+  (* let res = Syn.unfolding !cprog sel_hprel_assume_list in *)
+  update_sleek_hprel_assumes (res @ others)
 
 let process_shape_param_dangling hps =
   process_sleek_hprel_assumes hps Syn.dangling_parameterizing
