@@ -38,43 +38,60 @@ pred WFG<p> ==
   infer [U,@classic,@pure_field] self::char_star<0,p> 
     |- U(self,q)*q::char_star<0,p>
 
-Entail (1) : Fail.(may) cause:**solver.ml#11429:
-
-Residue:
-
- MaybeErr Context: 
-   fe_kind: MAY
-   fe_name: separation entailment
-   fe_locs: {
-     fc_message: do_base_fold_hp_rel (TBI)(U,[self,q])
-     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
-   }
- [[ BaseCaseFold]]
- CEX:true
-
-# Below is now scheduled as a M_base_case_fold
-
-       | DataNode _,  HRel _  -> 
-         (* failwith "TBI"  *)
-         let act1 = M_base_case_fold m_res in
-         let act2 = M_infer_heap (rhs_node,HEmp) in
-         let wt = 2 in
-         (wt,Search_action [(wt,act1);(wt,act2)])
-
-I would expect to have:
-   self=q <- U(self,q) 
-to be generated as a hprel_ass, and
-then self=q added as a fold_def prior to do_fold
-===========================================================
-
- infer [U,@classic,@pure_field] self::char_star<0,p> 
-   |- U(self,p) .
-
+# extra base-case-fold relass. is it spurious?
 
 <1>emp&{FLOW,(20,21)=__norm#E}[]
  inferred hprel: [self::char_star<flted_31_104,p>@M&
-                   flted_31_104=0 |#|3  --> U(self,p)&true]
+                   flted_31_104=0 |#|3  --> U(self,p)&true; 
+                  emp&self=p |#|3  --> U(self,p)&true]
 [[ SEARCH ==>  InferHeap]]
+
+# -dd-steps did not trace process_action..
+
+!!! **solver.ml#11463:HPRelInferred:[ emp&self=p |#|  --> U(self,p)]
+(==solver.ml#13429==)
+process_action#4@2@1
+process_action#4 inp1 : BaseCaseFold =>
+   LHS: self::char_star<flted_31_104,p>@M
+   RHS: U(self,p)
+process_action#4 inp2 :estate:  self::char_star<flted_31_104,p>@M&flted_31_104=0&{FLOW,(20,21)=__norm#E}[]
+ es_infer_obj: [@pure_field,@leak]
+ es_trace:  SEARCH
+ es_infer_vars_hp_rel: [U]
+process_action#4 inp3 :conseq: U(self,p)&{FLOW,(20,21)=__norm#E}[]
+process_action#4 inp4 :lhs_b: self::char_star<flted_31_104,p>@M&flted_31_104=0&{FLOW,(20,21)=__norm#E}[]
+process_action#4 inp5 :rhs_b: U(self,p)&{FLOW,(20,21)=__norm#E}[]
+process_action#4@2 EXIT:
+ctx length:0 
+ Context: MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: 
+   fe_locs: {
+     fc_message: memory leak
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ SEARCH ==>  BaseCaseFold]]
+ CEX:true
+
+-------------------------------------
+# Below was from a prior step..
+  
+ es_infer_hp_rel: [emp&self=p |#|  --> U(self,p)]
+
+(==solver.ml#13429==)
+process_action#4@3@1
+process_action#4 inp1 : InferHeap => ( U(self,p), emp)
+  
+process_action#4 inp2 :estate:  self::char_star<flted_31_104,p>@M&flted_31_104=0&{FLOW,(20,21)=__norm#E}[]
+ es_infer_hp_rel: [emp&self=p |#|  --> U(self,p)]
+ es_infer_obj: [@pure_field,@leak]
+ es_trace:  SEARCH
+ es_infer_vars_hp_rel: [U]
+ es_infer_hp_rel: [emp&self=p |#|  --> U(self,p)]
+process_action#4 inp3 :conseq: U(self,p)&{FLOW,(20,21)=__norm#E}[]
+process_action#4 inp4 :lhs_b: self::char_star<flted_31_104,p>@M&flted_31_104=0&{FLOW,(20,21)=__norm#E}[]
+process_action#4 inp5 :rhs_b: U(self,p)&{FLOW,(20,21)=__norm#E}[]
+process_action#4@3 EXIT:
 
 
 */

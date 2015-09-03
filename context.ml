@@ -121,7 +121,7 @@ let is_steps_action a = match a with
   | Cond_action _ 
   | M_Nothing_to_do _ 
   | Seq_action _ -> false
-  | _ -> false
+  | _ -> true
 
 (* let is_search_action_wt (_,a) = is_complex_action a *)
 

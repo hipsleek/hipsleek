@@ -13424,9 +13424,11 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
       end
     | Context.Search_action l ->
       (* let cur_rhs_rest_emp = !rhs_rest_emp in *)
+      let old_estate = estate in
       let r = List.map (fun (_,a1) ->
           (* let () = rhs_rest_emp := cur_rhs_rest_emp in *)
-          x_add x_add process_action 4 14 prog estate conseq lhs_b rhs_b a1 rhs_h_matched_set is_folding pos
+          let dupl_estate = {estate with CF.es_infer_hp_rel = estate.es_infer_hp_rel # clone;  es_infer_rel = estate.es_infer_rel # clone   } in
+          x_add process_action 4 14 prog dupl_estate conseq lhs_b rhs_b a1 rhs_h_matched_set is_folding pos
         ) l in
       Debug.ninfo_hprint (add_str "Search action context list" (pr_list (fun x -> Cprinter.string_of_list_context (fst x)))) r no_pos;
       if r = [] then

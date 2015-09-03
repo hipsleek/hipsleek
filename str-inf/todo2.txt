@@ -301,13 +301,19 @@ q_145: U(self,q_145) * q_145::char_star<flted_25_144,p_143>@M&flted_25_144=0&
  ### RHS : U(self,q1_38)
  ### matches :[]
 ===========================================================================
-# ex14b4a.slk --dd-steps
+# ex14b4a.slk --dd-steps (FIXED)
 
 Added an option:
    --new-base-case-fold-hprel
 
   infer [U,@classic,@pure_field] self::char_star<0,p> 
     |- U(self,q)*q::char_star<0,p>
+
+# Answer:
+
+ <1>emp&self=q&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [emp&self=q |#|3  --> U(self,q)&true]
+[[ SEARCH ==>  BaseCaseFold ==>  SEARCH ==>  Match(self,q)]]
 
 # 11429 is location of base_case_fold operation..
 
